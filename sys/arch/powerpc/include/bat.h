@@ -1,4 +1,4 @@
-/*	$OpenBSD: bat.h,v 1.5 2014/10/27 21:56:57 kettenis Exp $	*/
+/*	$OpenBSD: bat.h,v 1.6 2015/03/31 16:00:38 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,6 +59,11 @@ struct bat {
 #define BAT_BL_64M      0x000007fc
 #define BAT_BL_128M     0x00000ffc
 #define BAT_BL_256M     0x00001ffc
+/* Extended Block Lengths (7455+) */
+#define	BAT_BL_512M	0x00003ffc
+#define	BAT_BL_1G	0x00007ffc
+#define	BAT_BL_2G	0x0000fffc
+#define	BAT_BL_4G	0x0001fffc
 
 #ifdef	_KERNEL
 extern struct bat battable[16];

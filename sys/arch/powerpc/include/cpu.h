@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.60 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.61 2015/03/31 16:00:38 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -150,7 +150,12 @@ extern struct cpu_info cpu_info[PPC_MAXPROCS];
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth != 0)
 
-extern	int ppc_cpuidle;
+extern int ppc_cpuidle;
+extern int ppc_proc_is_64b;
+extern int ppc_nobat;
+
+void	cpu_bootstrap(void);
+
 /*
  * This is used during profiling to integrate system time.
  */
@@ -385,8 +390,6 @@ ppc_intr_disable(void)
 }
 
 int ppc_cpuspeed(int *);
-void ppc_check_procid(void);
-extern int ppc_proc_is_64b;
 
 /*
  * PowerPC CPU types
@@ -409,6 +412,7 @@ extern int ppc_proc_is_64b;
 #define	PPC_CPU_MPC7450		0x8000
 #define	PPC_CPU_MPC7455		0x8001
 #define	PPC_CPU_MPC7457		0x8002
+#define	PPC_CPU_MPC83xx		0x8083
 
 /*
  * This needs to be included late since it relies on definitions higher

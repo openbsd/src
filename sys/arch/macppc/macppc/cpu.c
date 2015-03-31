@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.80 2015/03/31 15:51:05 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.81 2015/03/31 16:00:38 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -45,7 +45,7 @@
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
+#include <powerpc/bat.h>
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <powerpc/hid.h>
@@ -529,7 +529,6 @@ struct cpu_hatch_data {
 	uint64_t hid4;
 	uint64_t hid5;
 	int l2cr;
-	int sdr1;
 	int running;
 };
 
@@ -581,7 +580,6 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	h->ci = ci;
 	h->running = 0;
 	h->hid0 = ppc_mfhid0();
-	h->sdr1 = ppc_mfsdr1();
 	if (ppc_proc_is_64b) {
 		h->hid1 = ppc64_mfhid1();
 		h->hid4 = ppc64_mfhid4();
@@ -672,8 +670,7 @@ void
 cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
-	int intrstate;
-	int scratch, i, s;
+	int intrstate, s;
 
         /* Initialize timebase. */
 	ppc_mttb(0);
@@ -681,10 +678,6 @@ cpu_hatch(void)
 	/* Initialize curcpu(). */
 	ppc_mtsprg0((u_int)h->ci);
 
-	/*
-	 * Initialize BAT registers to unmapped to not generate
-	 * overlapping mappings below.
-	 */
 	ppc_mtibat0u(0);
 	ppc_mtibat1u(0);
 	ppc_mtibat2u(0);
@@ -693,26 +686,6 @@ cpu_hatch(void)
 	ppc_mtdbat1u(0);
 	ppc_mtdbat2u(0);
 	ppc_mtdbat3u(0);
-
-	/*
-	 * Now setup fixed bat registers
-	 *
-	 * Note that we still run in real mode, and the BAT
-	 * registers were cleared above.
-	 */
-	/* IBAT0 used for initial 256 MB segment */
-	ppc_mtibat0l(battable[0].batl);
-	ppc_mtibat0u(battable[0].batu);
-
-	/* DBAT0 used similar */
-	ppc_mtdbat0l(battable[0].batl);
-	ppc_mtdbat0u(battable[0].batu);
-
-	/*
-	 * Initialize segment registers.
-	 */
-	for (i = 0; i < 16; i++)
-		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
 
 	if (ppc_proc_is_64b) {
 		/*
@@ -743,13 +716,11 @@ cpu_hatch(void)
 
 		ppc_mtl2cr(h->l2cr);
 	}
-	ppc_mtsdr1(h->sdr1);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
-		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+	pmap_enable_mmu();
 
 	/* XXX OpenPIC */
 	{

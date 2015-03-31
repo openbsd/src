@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.55 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.56 2015/03/31 16:00:38 mpi Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -134,6 +134,7 @@ boolean_t pteclrbits(struct vm_page *pg, u_int mask, u_int clear);
 #define	__HAVE_PMAP_DIRECT
 
 void pmap_bootstrap(u_int kernelstart, u_int kernelend);
+void pmap_enable_mmu();
 
 void pmap_pinit(struct pmap *);
 void pmap_release(struct pmap *);

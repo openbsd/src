@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_subr.c,v 1.6 2015/03/31 15:51:05 mpi Exp $	*/
+/*	$OpenBSD: cpu_subr.c,v 1.7 2015/03/31 16:00:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -19,21 +19,22 @@
 
 #include <sys/param.h>
 
-#include <machine/cpu.h>
+#include <powerpc/cpu.h>
+
+int		ppc_cpuidle;		/* Support DOZE, NAP or DEEP NAP? */
+int		ppc_altivec;		/* CPU has altivec support. */
+int		ppc_proc_is_64b;	/* CPU is 64bit */
+int		ppc_nobat;		/* Do not use BAT registers. */
 
 struct patch {
 	uint32_t *s;
 	uint32_t *e;
 };
-extern struct patch	rfi_start, nop32_start, nop64_start;
-extern uint32_t		rfi_inst, rfid_inst, nop_inst;
-
-int		ppc_cpuidle;	/* Support DOZE, NAP or DEEP NAP? */
-int		ppc_altivec;
-int		ppc_proc_is_64b;
+extern struct patch	rfi_start, nop32_start, nopbat_start;
+extern uint32_t		rfid_inst, nop_inst;
 
 void
-ppc_check_procid(void)
+cpu_bootstrap(void)
 {
 	uint32_t cpu;
 	uint32_t *inst;
@@ -45,22 +46,44 @@ ppc_check_procid(void)
 	case PPC_CPU_IBM970:
 	case PPC_CPU_IBM970FX:
 	case PPC_CPU_IBM970MP:
+		ppc_nobat = 1;
 		ppc_proc_is_64b = 1;
+
 		for (p = &rfi_start; p->s; p++) {
 			for (inst = p->s; inst < p->e; inst++)
 				*inst = rfid_inst;
 			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
 		}
-		for (p = &nop64_start; p->s; p++) {
+		break;
+	case PPC_CPU_MPC83xx:
+		ppc_mtibat4u(0);
+		ppc_mtibat5u(0);
+		ppc_mtibat6u(0);
+		ppc_mtibat7u(0);
+		ppc_mtdbat4u(0);
+		ppc_mtdbat5u(0);
+		ppc_mtdbat6u(0);
+		ppc_mtdbat7u(0);
+		/* FALLTHROUGH */
+	default:
+		ppc_mtibat0u(0);
+		ppc_mtibat1u(0);
+		ppc_mtibat2u(0);
+		ppc_mtibat3u(0);
+		ppc_mtdbat0u(0);
+		ppc_mtdbat1u(0);
+		ppc_mtdbat2u(0);
+		ppc_mtdbat3u(0);
+
+		for (p = &nop32_start; p->s; p++) {
 			for (inst = p->s; inst < p->e; inst++)
 				*inst = nop_inst;
 			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
 		}
+	}
 
-		break;
-	default:
-		ppc_proc_is_64b = 0;
-		for (p = &nop32_start; p->s; p++) {
+	if (ppc_nobat) {
+		for (p = &nopbat_start; p->s; p++) {
 			for (inst = p->s; inst < p->e; inst++)
 				*inst = nop_inst;
 			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));

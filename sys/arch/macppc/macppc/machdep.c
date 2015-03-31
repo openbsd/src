@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.168 2015/02/06 09:27:17 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.169 2015/03/31 16:00:38 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 
 #include <dev/cons.h>
 
-#include <machine/bat.h>
 #include <machine/pmap.h>
 #include <powerpc/powerpc.h>
 #include <machine/trap.h>
@@ -97,8 +96,6 @@ struct pool ppc_vecpl;
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
-
-struct bat battable[16];
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -160,7 +157,7 @@ initppc(startkernel, endkernel, args)
 #endif
 	extern void callback(void *);
 	extern void *msgbuf_addr;
-	int exc, scratch;
+	int exc;
 
 	proc0.p_cpu = &cpu_info[0];
 	proc0.p_addr = proc0paddr;
@@ -170,40 +167,12 @@ initppc(startkernel, endkernel, args)
 
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
-	ppc_check_procid();
+	cpu_bootstrap();
 
 	/*
-	 * Initialize BAT registers to unmapped to not generate
-	 * overlapping mappings below.
+	 * Initialize pmap module.
 	 */
-	ppc_mtibat0u(0);
-	ppc_mtibat1u(0);
-	ppc_mtibat2u(0);
-	ppc_mtibat3u(0);
-	ppc_mtdbat0u(0);
-	ppc_mtdbat1u(0);
-	ppc_mtdbat2u(0);
-	ppc_mtdbat3u(0);
-
-	/*
-	 * Set up initial BAT table to only map the lowest 256 MB area
-	 */
-	battable[0].batl = BATL(0x00000000, BAT_M);
-	battable[0].batu = BATU(0x00000000, BAT_BL_256M);
-
-	/*
-	 * Now setup fixed bat registers
-	 *
-	 * Note that we still run in real mode, and the BAT
-	 * registers were cleared above.
-	 */
-	/* DBAT0 used for initial 256 MB segment */
-	ppc_mtdbat0l(battable[0].batl);
-	ppc_mtdbat0u(battable[0].batu);
-
-	/* IBAT0 only covering the kernel .text */
-	ppc_mtibat0l(battable[0].batl);
-	ppc_mtibat0u(BATU(0x00000000, BAT_BL_8M));
+	pmap_bootstrap(startkernel, endkernel);
 
 	/*
 	 * Set up trap vectors
@@ -263,50 +232,10 @@ initppc(startkernel, endkernel, args)
 
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
-
-	uvmexp.pagesize = 4096;
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-
-	/* now that we know physmem size, map physical memory with BATs */
-	if (physmem > atop(0x10000000)) {
-		battable[0x1].batl = BATL(0x10000000, BAT_M);
-		battable[0x1].batu = BATU(0x10000000, BAT_BL_256M);
-	}
-	if (physmem > atop(0x20000000)) {
-		battable[0x2].batl = BATL(0x20000000, BAT_M);
-		battable[0x2].batu = BATU(0x20000000, BAT_BL_256M);
-	}
-	if (physmem > atop(0x30000000)) {
-		battable[0x3].batl = BATL(0x30000000, BAT_M);
-		battable[0x3].batu = BATU(0x30000000, BAT_BL_256M);
-	}
-	if (physmem > atop(0x40000000)) {
-		battable[0x4].batl = BATL(0x40000000, BAT_M);
-		battable[0x4].batu = BATU(0x40000000, BAT_BL_256M);
-	}
-	if (physmem > atop(0x50000000)) {
-		battable[0x5].batl = BATL(0x50000000, BAT_M);
-		battable[0x5].batu = BATU(0x50000000, BAT_BL_256M);
-	}
-	if (physmem > atop(0x60000000)) {
-		battable[0x6].batl = BATL(0x60000000, BAT_M);
-		battable[0x6].batu = BATU(0x60000000, BAT_BL_256M);
-	}
-	if (physmem > atop(0x70000000)) {
-		battable[0x7].batl = BATL(0x70000000, BAT_M);
-		battable[0x7].batu = BATU(0x70000000, BAT_BL_256M);
-	}
-
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
-		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+	pmap_enable_mmu();
 
 	/*
 	 * use the memory provided by pmap_bootstrap for message buffer

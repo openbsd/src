@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.143 2015/03/31 15:51:05 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.144 2015/03/31 16:00:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -85,11 +85,14 @@
 
 #include <machine/pcb.h>
 #include <powerpc/powerpc.h>
+#include <powerpc/bat.h>
 #include <machine/pmap.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
+
+struct bat battable[16];
 
 struct dumpmem dumpmem[VM_PHYSSEG_MAX];
 u_int ndumpmem;
@@ -1566,6 +1569,11 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	struct pmapvp *vp2;
 
 	/*
+	 * set the page size (default value is 4K which is ok)
+	 */
+	uvm_setpagesize();
+
+	/*
 	 * Get memory.
 	 */
 	pmap_avail_setup();
@@ -1630,7 +1638,17 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		}
 	}
 
-	if (ppc_proc_is_64b) {
+	/*
+	 * Initialize kernel pmap and hardware.
+	 */
+#if NPMAPS >= PPC_KERNEL_SEGMENT / 16
+	usedsr[PPC_KERNEL_SEGMENT / 16 / (sizeof usedsr[0] * 8)]
+		|= 1 << ((PPC_KERNEL_SEGMENT / 16) % (sizeof usedsr[0] * 8));
+#endif
+	for (i = 0; i < 16; i++)
+		pmap_kernel()->pm_sr[i] = (PPC_KERNEL_SEG0 + i) | SR_NOEXEC;
+
+	if (ppc_nobat) {
 		vp1 = pmap_steal_avail(sizeof (struct pmapvp), 4);
 		bzero (vp1, sizeof(struct pmapvp));
 		pmap_kernel()->pm_vp[0] = vp1;
@@ -1645,39 +1663,56 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 				vp2->vp[k] = pted;
 			}
 		}
+
+		/* first segment contains executable pages */
+		pmap_kernel()->pm_exec[0]++;
+		pmap_kernel()->pm_sr[0] &= ~SR_NOEXEC;
+	} else {
+		/*
+		 * Setup fixed BAT registers.
+		 *
+		 * Note that we still run in real mode, and the BAT
+		 * registers were cleared in cpu_bootstrap().
+		 */
+		battable[0].batl = BATL(0x00000000, BAT_M);
+		if (physmem > atop(0x08000000))
+			battable[0].batu = BATU(0x00000000, BAT_BL_256M);
+		else
+			battable[0].batu = BATU(0x00000000, BAT_BL_128M);
+
+		/* Map physical memory with BATs. */
+		if (physmem > atop(0x10000000)) {
+			battable[0x1].batl = BATL(0x10000000, BAT_M);
+			battable[0x1].batu = BATU(0x10000000, BAT_BL_256M);
+		}
+		if (physmem > atop(0x20000000)) {
+			battable[0x2].batl = BATL(0x20000000, BAT_M);
+			battable[0x2].batu = BATU(0x20000000, BAT_BL_256M);
+		}
+		if (physmem > atop(0x30000000)) {
+			battable[0x3].batl = BATL(0x30000000, BAT_M);
+			battable[0x3].batu = BATU(0x30000000, BAT_BL_256M);
+		}
+		if (physmem > atop(0x40000000)) {
+			battable[0x4].batl = BATL(0x40000000, BAT_M);
+			battable[0x4].batu = BATU(0x40000000, BAT_BL_256M);
+		}
+		if (physmem > atop(0x50000000)) {
+			battable[0x5].batl = BATL(0x50000000, BAT_M);
+			battable[0x5].batu = BATU(0x50000000, BAT_BL_256M);
+		}
+		if (physmem > atop(0x60000000)) {
+			battable[0x6].batl = BATL(0x60000000, BAT_M);
+			battable[0x6].batu = BATU(0x60000000, BAT_BL_256M);
+		}
+		if (physmem > atop(0x70000000)) {
+			battable[0x7].batl = BATL(0x70000000, BAT_M);
+			battable[0x7].batu = BATU(0x70000000, BAT_BL_256M);
+		}
 	}
 
 	ppc_kvm_stolen += reserve_dumppages( (caddr_t)(VM_MIN_KERNEL_ADDRESS +
 	    ppc_kvm_stolen));
-
-
-	/*
-	 * Initialize kernel pmap and hardware.
-	 */
-#if NPMAPS >= PPC_KERNEL_SEGMENT / 16
-	usedsr[PPC_KERNEL_SEGMENT / 16 / (sizeof usedsr[0] * 8)]
-		|= 1 << ((PPC_KERNEL_SEGMENT / 16) % (sizeof usedsr[0] * 8));
-#endif
-	for (i = 0; i < 16; i++) {
-		pmap_kernel()->pm_sr[i] = (PPC_KERNEL_SEG0 + i) | SR_NOEXEC;
-		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
-	}
-
-	if (ppc_proc_is_64b) {
-		/* first segment contains executable pages */
-		pmap_kernel()->pm_exec[0]++;
-		pmap_kernel()->pm_sr[0] &= ~SR_NOEXEC;
-
-		asm volatile ("sync; mtsdr1 %0; isync"
-		    :: "r"((u_int)pmap_ptable64 | HTABSIZE_64));
-	} else 
-		asm volatile ("sync; mtsdr1 %0; isync"
-		    :: "r"((u_int)pmap_ptable32 | (pmap_ptab_mask >> 10)));
-
-	pmap_avail_fixup();
-
-
-	tlbia();
 
 	pmap_avail_fixup();
 	for (mp = pmap_avail; mp->size; mp++) {
@@ -1688,6 +1723,37 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		uvm_page_physload(atop(mp->start), atop(mp->start+mp->size),
 		    atop(mp->start), atop(mp->start+mp->size), 0);
 	}
+}
+
+void
+pmap_enable_mmu(void)
+{
+	uint32_t scratch, sdr1;
+	int i;
+
+	if (!ppc_nobat) {
+		/* DBAT0 used for initial segment */
+		ppc_mtdbat0l(battable[0].batl);
+		ppc_mtdbat0u(battable[0].batu);
+
+		/* IBAT0 only covering the kernel .text */
+		ppc_mtibat0l(battable[0].batl);
+		ppc_mtibat0u(BATU(0x00000000, BAT_BL_8M));
+	}
+
+	for (i = 0; i < 16; i++)
+		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
+
+	if (ppc_proc_is_64b)
+		sdr1 = (uint32_t)pmap_ptable64 | HTABSIZE_64;
+	else
+		sdr1 = (uint32_t)pmap_ptable32 | (pmap_ptab_mask >> 10);
+
+	asm volatile ("sync; mtsdr1 %0; isync" :: "r"(sdr1));
+	tlbia();
+
+	asm volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync; isync"
+	    : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 }
 
 /*
