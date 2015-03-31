@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.51 2015/03/31 11:46:26 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.52 2015/03/31 12:16:02 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1044,9 +1044,6 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
-
-	if (sort_opts_vals.cflag && sort_opts_vals.mflag)
-		errx(1, "%c:%c: mutually exclusive flags", 'm', 'c');
 
 	if (keys_num == 0) {
 		keys_num = 1;
