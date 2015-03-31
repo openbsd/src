@@ -1,14 +1,23 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2015/01/23 21:21:23 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2015/03/31 22:57:56 djm Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 
 REGRESS_FAIL_EARLY= yes
 
-# XXX detect from ssh binary? 
+# XXX detect from ssh binary?
+SSH1?=		no
 OPENSSL?=	yes
+
 .if (${OPENSSL:L} == "yes")
-CFLAGS+=	-DWITH_OPENSSL -DWITH_SSH1
+CFLAGS+=	-DWITH_OPENSSL
+.else
+# SSH v.1 requires OpenSSL.
+SSH1=		no
+.endif
+
+.if (${SSH1:L} == "yes")
+CFLAGS+=	-DWITH_SSH1
 .endif
 
 # enable warnings
