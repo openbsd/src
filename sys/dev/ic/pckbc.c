@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.46 2015/03/16 01:49:11 jcs Exp $ */
+/* $OpenBSD: pckbc.c,v 1.47 2015/03/31 02:27:30 jcs Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -40,7 +40,6 @@
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
-#include <dev/pckbc/pmsreg.h>
 
 #include "pckbd.h"
 
@@ -271,12 +270,24 @@ pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot, int force)
 	found = (config_found_sm((struct device *)sc, &pa, pckbcprint,
 	    force ? pckbc_submatch_locators : pckbc_submatch) != NULL);
 
-	if (found && !t->t_slotdata[slot]) {
+	if ((found || slot == PCKBC_AUX_SLOT) && !t->t_slotdata[slot]) {
 		t->t_slotdata[slot] = malloc(sizeof(struct pckbc_slotdata),
 					     M_DEVBUF, M_NOWAIT);
 		if (t->t_slotdata[slot] == NULL)
 			return 0;
 		pckbc_init_slotdata(t->t_slotdata[slot]);
+
+		if (!found && slot == PCKBC_AUX_SLOT) {
+			/*
+			 * Some machines don't handle disabling the aux slot
+			 * completely and still generate data when the mouse is
+			 * moved, so setup a dummy interrupt handler to discard
+			 * this slot's data.
+			 */
+			pckbc_set_inputhandler(t, PCKBC_AUX_SLOT, NULL, sc,
+			    NULL);
+			found = 1;
+		}
 	}
 	return (found);
 }
