@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.10 2015/03/31 12:49:37 bluhm Exp $
+#	$OpenBSD: stests,v 1.11 2015/03/31 14:53:00 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -64,11 +64,15 @@ trap "rm -f -- -k in in1 out xx -k xsort linecount fields; exit" 0 1 2 13 15
 
 #	"sum" must be dumb; insensitive to the
 #	order of lines within a file.
-#	System V sum is suitable; sum -5 is the v10 equivalent.
+#	System V sum is suitable; we use perl's builtin sum support.
 
 PATH=.:$PATH
 export PATH
 cat <<'!' >xsort; chmod +x xsort
+
+	sum() {
+		perl -e 'local $/; $sum = unpack("%32W*",<>) % 65535; $total = tell(STDIN); print "$sum $total\n"'
+	}
 
 	X=$1; shift
 
@@ -79,7 +83,7 @@ cat <<'!' >xsort; chmod +x xsort
 			cmp xx out >/dev/null && exit 0
 			echo $TEST$X comparison failed
 		else
-			test "`cksum <in`" = "`cksum <xx`" && exit 0
+			test "`sum <in`" = "`sum <xx`" && exit 0
 			echo $TEST$X checksum failed
 		fi
 	else
@@ -109,7 +113,7 @@ rm -f out -o
 
 $SORTPROG -c in 2>/dev/null && echo ${TEST}A failed
 
-xsort B || echo '"cksum"' is probably unsuitable - see comments
+xsort B || echo '"sum"' is probably unsuitable - see comments
 
 $o $SORTPROG +0 in -o in || echo ${TEST}c failed
 
