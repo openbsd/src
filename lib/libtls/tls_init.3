@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.18 2015/02/22 15:09:54 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.19 2015/03/31 14:03:38 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 22 2015 $
+.Dd $Mdocdate: March 31 2015 $
 .Dt TLS 3
 .Os
 .Sh NAME
@@ -50,6 +50,7 @@
 .Nm tls_connect_fds ,
 .Nm tls_connect_servername ,
 .Nm tls_connect_socket ,
+.Nm tls_accept_fds ,
 .Nm tls_accept_socket ,
 .Nm tls_read ,
 .Nm tls_write
@@ -120,6 +121,8 @@
 .Ft "int"
 .Fn tls_connect_socket "struct tls *ctx" "int s" "const char *servername"
 .Ft "int"
+.Fn tls_accept_fds "struct tls *tls" "struct tls **cctx" "int fd_read" "int fd_write"
+.Ft "int"
 .Fn tls_accept_socket "struct tls *tls" "struct tls **cctx" "int socket"
 .Ft "int"
 .Fn tls_read "struct tls *ctx" "void *buf" "size_t buflen" "size_t *outlen"
@@ -180,6 +183,9 @@ file descriptors by calling
 A server can accept a new client connection by calling
 .Fn tls_accept_socket
 on an already established socket connection.
+Alternatively, a new client connection can be accepted over a pair of existing
+file descriptors by calling
+.Fn tls_accept_fds .
 .Pp
 Two functions are provided for input and output,
 .Fn tls_read
@@ -356,6 +362,16 @@ connects a client context to a pair of existing file descriptors.
 .It
 .Fn tls_connect_socket
 connects a client context to an already established socket connection.
+.It
+.Fn tls_accept_fds
+creates a new context suitable for reading and writing on an existing pair of
+file descriptors and returns it in
+.Fa *cctx .
+A configured server context should be passed in
+.Fa ctx
+and
+.Fa *cctx
+should be initialized to NULL.
 .It
 .Fn tls_accept_socket
 creates a new context suitable for reading and writing on an already
