@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.125 2015/03/30 19:17:06 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.126 2015/03/31 21:23:34 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2015 $
+.Dd $Mdocdate: March 31 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1757,10 +1757,12 @@ or otherwise the exit status of the last command executed.
 A
 .Em while loop
 continuously executes a set of commands
-as long as the command has a zero exit status.
+as long as the command or command list being tested in
+.Ar condition
+has a zero exit status.
 Its format is:
 .Bd -unfilled -offset indent
-.No while Ar command
+.No while Ar condition
 do
 .No "   " Ar command
 .No "   " Ar ...
@@ -1778,10 +1780,12 @@ or otherwise the exit status of the last command executed.
 An
 .Em until loop
 continuously executes a set of commands
-as long as the command has a non-zero exit status.
+as long as the command or command list being tested in
+.Ar condition
+has a non-zero exit status.
 Its format is:
 .Bd -unfilled -offset indent
-.No until Ar command
+.No until Ar condition
 do
 .No "   " Ar command
 .No "   " Ar ...
@@ -1825,25 +1829,25 @@ or otherwise the exit status of the last command executed.
 .Pp
 An
 .Em if conditional
-is used to execute commands depending on the exit status of other commands.
+is used to execute commands depending on the exit status of the command or
+command list being tested.
 Its format is:
 .Bd -unfilled -offset indent
-.No if Ar command
+.No if Ar conditional
 then
 .No "   " Ar command
-.Pp
-.No elif Ar command
+.No "   " Ar ...
+.No elif Ar conditional
 then
 .No "   " Ar command
-.Ar ...
-.Pp
-.No else Ar command
+.No "   " Ar ...
+.No else
+.No "   " Ar command
+.No "   " Ar ...
 fi
 .Ed
 .Pp
-Firstly the
-.Ar command
-following
+Firstly the command(s) following
 .Qq if
 is executed;
 if its exit status is zero,
@@ -1873,6 +1877,7 @@ The
 and
 .Qq else
 blocks are optional.
+.Pp
 Multiple commands may be given by grouping them in lists,
 as described above,
 or by separating them with newlines.
