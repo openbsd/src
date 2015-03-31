@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.112 2015/02/06 08:07:09 henning Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.113 2015/03/31 11:47:09 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -377,9 +377,9 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	ifv->ifv_if.if_baudrate = p->if_baudrate;
 
 	if (p->if_capabilities & IFCAP_VLAN_MTU)
-		ifv->ifv_if.if_mtu = p->if_mtu;
+		ifv->ifv_if.if_mtu = p->if_hardmtu;
 	else
-		ifv->ifv_if.if_mtu = p->if_mtu - EVL_ENCAPLEN;
+		ifv->ifv_if.if_mtu = p->if_hardmtu - EVL_ENCAPLEN;
 
 	ifv->ifv_if.if_flags = p->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
