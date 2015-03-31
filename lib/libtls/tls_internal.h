@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.11 2015/02/22 14:50:41 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.12 2015/03/31 12:21:27 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -77,6 +77,7 @@ int tls_host_port(const char *hostport, char **host, char **port);
 int tls_set_error(struct tls *ctx, char *fmt, ...)
     __attribute__((__format__ (printf, 2, 3)))
     __attribute__((__nonnull__ (2)));
-int tls_ssl_error(struct tls *ctx, int ssl_ret, const char *prefix);
+int tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret,
+    const char *prefix);
 
 #endif /* HEADER_TLS_INTERNAL_H */

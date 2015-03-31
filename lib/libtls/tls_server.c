@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.5 2015/02/07 09:50:09 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.6 2015/03/31 12:21:27 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -131,7 +131,7 @@ tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
 	}
 
 	if ((ret = SSL_accept(conn_ctx->ssl_conn)) != 1) {
-		err = tls_ssl_error(conn_ctx, ret, "accept");
+		err = tls_ssl_error(ctx, conn_ctx->ssl_conn, ret, "accept");
 		if (err == TLS_READ_AGAIN || err == TLS_WRITE_AGAIN) {
 			return (err);
 		}

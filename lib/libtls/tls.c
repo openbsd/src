@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.7 2015/02/07 09:50:09 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.8 2015/03/31 12:21:27 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -237,13 +237,13 @@ tls_reset(struct tls *ctx)
 }
 
 int
-tls_ssl_error(struct tls *ctx, int ssl_ret, const char *prefix)
+tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret, const char *prefix)
 {
 	const char *errstr = "unknown error";
 	unsigned long err;
 	int ssl_err;
 
-	ssl_err = SSL_get_error(ctx->ssl_conn, ssl_ret);
+	ssl_err = SSL_get_error(ssl_conn, ssl_ret);
 	switch (ssl_err) {
 	case SSL_ERROR_NONE:
 		return (0);
@@ -301,7 +301,7 @@ tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
 		return (0);
 	}
 
-	return tls_ssl_error(ctx, ssl_ret, "read"); 
+	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read"); 
 }
 
 int
@@ -320,7 +320,7 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 		return (0);
 	}
 
-	return tls_ssl_error(ctx, ssl_ret, "write"); 
+	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write"); 
 }
 
 int
