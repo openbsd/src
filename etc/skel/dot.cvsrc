@@ -1,5 +1,6 @@
-# $OpenBSD: dot.cvsrc,v 1.1 2013/03/31 21:46:53 espie Exp $
+# $OpenBSD: dot.cvsrc,v 1.2 2015/03/31 18:34:40 naddy Exp $
 #
 diff -uNp
 update -P
 checkout -P
+rdiff -u
