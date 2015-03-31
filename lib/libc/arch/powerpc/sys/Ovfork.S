@@ -1,4 +1,4 @@
-/* $OpenBSD: Ovfork.S,v 1.2 2002/10/07 04:47:12 drahn Exp $ */
+/* $OpenBSD: Ovfork.S,v 1.3 2015/03/31 04:32:02 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -27,5 +27,4 @@
 
 #include "SYS.h"
 
-/* pid = vfork() */
 RSYSCALL(vfork)

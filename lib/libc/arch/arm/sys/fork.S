@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: fork.S,v 1.3 2015/03/31 04:32:01 guenther Exp $	*/
 /*	$NetBSD: fork.S,v 1.5 2003/08/07 16:42:04 agc Exp $	*/
 
 /*-
@@ -34,15 +34,4 @@
 
 #include "SYS.h"
 
-/*
- * pid = fork();
- *
- * On return from the SWI:
- * r1 == 0 in parent process, r1 == 1 in child process.
- * r0 == pid of child in parent, r0 == pid of parent in child.
- */
-
-_SYSCALL(fork,fork)
-	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
-	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
-	mov	r15, r14
+RSYSCALL(fork)

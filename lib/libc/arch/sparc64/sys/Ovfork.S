@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.2 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.3 2015/03/31 04:32:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,16 +35,6 @@
 
 #include <machine/asm.h>
 
-/*
- * pid = vfork();
- *
- * %o1 == 0 in parent process, 1 in child process.
- * %o0 == pid of child in parent, pid of parent in child.
- */
-
 #include "SYS.h"
 
-SYSCALL(vfork)
-	dec	%o1		/* from 1 to 0 in child, 0 to -1 in parent */
-	retl
-	 and	%o0, %o1, %o0	/* return 0 in child, pid in parent */
+RSYSCALL(vfork)

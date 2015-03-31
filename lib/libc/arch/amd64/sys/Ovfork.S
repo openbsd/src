@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.3 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.4 2015/03/31 04:32:01 guenther Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -39,19 +39,10 @@
 
 #include "SYS.h"
 
-/*
- * pid = vfork();
- *
- * %edx == 0 in parent process, %edx == 1 in child process.
- * %eax == pid of child in parent, %eax == pid of parent in child.
- *
- */
 SYSENTRY(vfork)
 	popq	%r9		/* my rta into r9 */
 	SYSTRAP(vfork)
 	jc	err
-	decl	%edx
-	andl	%edx,%eax
 	jmp	*%r9
 err:
 	pushq	%r9

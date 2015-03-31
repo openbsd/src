@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.5 2011/04/04 12:42:39 guenther Exp $ */
+/*	$OpenBSD: fork.S,v 1.6 2015/03/31 04:32:02 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,25 +33,4 @@
 
 #include "SYS.h"
 
-FRAMESZ= MKFSIZ(1,1)
-GPOFF= FRAMESZ-2*REGSZ
-
-SYSLEAF(fork, FRAMESZ)
-	PTR_SUBU sp, FRAMESZ
-	SETUP_GP64(GPOFF, fork)
-	.set	reorder
-	li	v0, SYS_fork	# pid = fork()
-	syscall
-	bne	a3, zero, 2f
-	beq	v1, zero, 1f	# v1 == 0 in parent, 1 in child
-	move	v0, zero
-1:
-	RESTORE_GP64
-	PTR_ADDU sp, FRAMESZ
-	j	ra
-2:
-	LA	t9, CERROR
-	RESTORE_GP64
-	PTR_ADDU sp, FRAMESZ
-	jr	t9
-SYSEND(fork)
+RSYSCALL(fork)

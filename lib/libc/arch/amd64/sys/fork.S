@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.2 2005/12/13 00:10:48 jsg Exp $	*/
+/*	$OpenBSD: fork.S,v 1.3 2015/03/31 04:32:01 guenther Exp $	*/
 /*	$NetBSD: fork.S,v 1.2 2003/02/13 02:50:51 nathanw Exp $	*/
 
 /*-
@@ -39,7 +39,4 @@
 
 #include "SYS.h"
 
-SYSCALL(fork)
-	decl	%edx	/* from 1 to 0 in child, 0 to -1 in parent */
-	andl	%edx,%eax
-	ret		/* pid = fork(); */
+RSYSCALL(fork)

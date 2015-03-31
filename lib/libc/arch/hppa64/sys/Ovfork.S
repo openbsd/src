@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.4 2011/04/21 14:12:20 jsing Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.5 2015/03/31 04:32:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999,2002 Michael Shalayeff
@@ -37,9 +37,8 @@ SYSENTRY(vfork)
 	.import	__cerror, code
 	comb,<>	%r0, arg4, __cerror
 	copy	arg7, %rp
-	addi	-1, %ret1, %ret1
 	bv	%r0(%rp)
-	and	%ret1, %ret0, %ret0
+	nop
 SYSEXIT(vfork)
 
 	.end

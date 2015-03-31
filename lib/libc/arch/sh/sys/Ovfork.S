@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.2 2015/03/31 04:32:02 guenther Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.5 2003/08/07 16:42:20 agc Exp $	*/
 
 /*-
@@ -37,27 +37,4 @@
 
 #include "SYS.h"
 
-/*
- * pid = vfork();
- *
- * r1 == 0 in parent process, r1 == 1 in child process.
- * r0 == pid of child in parent, r0 == pid of parent in child.
- *
- */
-SYSENTRY(vfork)
-	mov.l	.L_SYS_vfork, r0
-	trapa	#0x80
-	bf	err
-
-	add	#0xff, r1	/* from 1 to 0 in child, 0 to -1 in parent */
-	rts
-	 and	r1, r0		/* 0 in child, child pid in parent */
-
-err:
-	JUMP_CERROR
-
-	.align	2
-.L_SYS_vfork:
-	.long	SYS_vfork
-
-	SET_ENTRY_SIZE(vfork)
+RSYSCALL(vfork)
