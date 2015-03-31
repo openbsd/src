@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.37 2015/03/27 12:29:54 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.38 2015/03/31 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -358,16 +358,6 @@ ssl23_client_hello(SSL *s)
 			    SSL_R_NO_CIPHERS_AVAILABLE);
 			return -1;
 		}
-#ifdef OPENSSL_MAX_TLS1_2_CIPHER_LENGTH
-		/*
-		 * Some servers hang if client hello > 256 bytes
-		 * as hack workaround chop number of supported ciphers
-		 * to keep it well below this if we use TLS v1.2
-		 */
-		if (TLS1_get_version(s) >= TLS1_2_VERSION &&
-		    i > OPENSSL_MAX_TLS1_2_CIPHER_LENGTH)
-			i = OPENSSL_MAX_TLS1_2_CIPHER_LENGTH & ~1;
-#endif
 		s2n(i, p);
 		p += i;
 
