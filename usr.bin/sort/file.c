@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.4 2015/03/30 19:59:07 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.5 2015/03/31 19:50:54 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -526,8 +526,8 @@ openfile(const char *fn, const char *mode)
 			fflush(stdout);
 
 			if (mode[0] == 'r')
-				len = sort_asprintf(&cmd, "cat %s | %s -d",
-				    fn, compress_program);
+				len = sort_asprintf(&cmd, "%s -d < %s",
+				    compress_program, fn);
 			else if (mode[0] == 'w')
 				len = sort_asprintf(&cmd, "%s > %s",
 				    compress_program, fn);
