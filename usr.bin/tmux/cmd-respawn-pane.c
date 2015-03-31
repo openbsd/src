@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.13 2014/10/20 22:34:31 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.14 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,7 +59,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (!args_has(self->args, 'k') && wp->fd != -1) {
 		if (window_pane_index(wp, &idx) != 0)
 			fatalx("index not found");
-		cmdq_error(cmdq, "pane still active: %s:%u.%u",
+		cmdq_error(cmdq, "pane still active: %s:%d.%u",
 		    s->name, wl->idx, idx);
 		return (CMD_RETURN_ERROR);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.7 2015/02/07 23:43:41 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.8 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -147,7 +147,7 @@ colour_tostring(int c)
 	static char	s[32];
 
 	if (c & 0x100) {
-		xsnprintf(s, sizeof s, "colour%u", c & ~0x100);
+		xsnprintf(s, sizeof s, "colour%d", c & ~0x100);
 		return (s);
 	}
 

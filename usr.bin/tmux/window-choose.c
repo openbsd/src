@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.59 2015/02/05 10:29:43 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.60 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -98,7 +98,7 @@ window_choose_add(struct window_pane *wp, struct window_choose_data *wcd)
 	item->pos = ARRAY_LENGTH(&data->list) - 1;
 	item->state = 0;
 
-	data->width = xsnprintf(tmp, sizeof tmp , "%u", item->pos);
+	data->width = xsnprintf(tmp, sizeof tmp , "%d", item->pos);
 }
 
 void

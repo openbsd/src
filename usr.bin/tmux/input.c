@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.72 2015/01/20 08:18:04 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.73 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1717,7 +1717,7 @@ void
 input_exit_osc(struct input_ctx *ictx)
 {
 	u_char	*p = ictx->input_buf;
-	int	 option;
+	u_int	 option;
 
 	if (ictx->flags & INPUT_DISCARD)
 		return;

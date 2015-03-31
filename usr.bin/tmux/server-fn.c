@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.78 2015/01/06 09:12:53 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.79 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,9 +41,9 @@ server_fill_environ(struct session *s, struct environ *env)
 
 		idx = s->id;
 	} else
-		idx = -1;
+		idx = (u_int)-1;
 	pid = getpid();
-	xsnprintf(var, sizeof var, "%s,%ld,%d", socket_path, pid, idx);
+	xsnprintf(var, sizeof var, "%s,%ld,%u", socket_path, pid, idx);
 	environ_set(env, "TMUX", var);
 }
 

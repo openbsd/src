@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.85 2014/10/20 23:27:14 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.86 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -557,7 +557,7 @@ client_dispatch_wait(void *data0)
 		data = imsg.data;
 		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
 
-		log_debug("got %d from server", imsg.hdr.type);
+		log_debug("got %u from server", imsg.hdr.type);
 		switch (imsg.hdr.type) {
 		case MSG_EXIT:
 		case MSG_SHUTDOWN:
@@ -604,7 +604,7 @@ client_dispatch_wait(void *data0)
 				fatalx("bad MSG_VERSION size");
 
 			fprintf(stderr, "protocol version mismatch "
-			    "(client %u, server %u)\n", PROTOCOL_VERSION,
+			    "(client %d, server %u)\n", PROTOCOL_VERSION,
 			    imsg.hdr.peerid);
 			client_exitval = 1;
 
@@ -648,7 +648,7 @@ client_dispatch_attached(void)
 		data = imsg.data;
 		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
 
-		log_debug("got %d from server", imsg.hdr.type);
+		log_debug("got %u from server", imsg.hdr.type);
 		switch (imsg.hdr.type) {
 		case MSG_DETACH:
 		case MSG_DETACHKILL:

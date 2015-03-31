@@ -1,4 +1,4 @@
-/* $OpenBSD: server-window.c,v 1.31 2014/04/17 07:36:45 nicm Exp $ */
+/* $OpenBSD: server-window.c,v 1.32 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -90,7 +90,7 @@ server_window_check_bell(struct session *s, struct winlink *wl)
 		if (c->session->curw->window == w)
 			status_message_set(c, "Bell in current window");
 		else if (action == BELL_ANY)
-			status_message_set(c, "Bell in window %u", wl->idx);
+			status_message_set(c, "Bell in window %d", wl->idx);
 	}
 
 	return (1);
@@ -124,7 +124,7 @@ server_window_check_activity(struct session *s, struct winlink *wl)
 			c = ARRAY_ITEM(&clients, i);
 			if (c == NULL || c->session != s)
 				continue;
-			status_message_set(c, "Activity in window %u", wl->idx);
+			status_message_set(c, "Activity in window %d", wl->idx);
 		}
 	}
 
@@ -175,7 +175,7 @@ server_window_check_silence(struct session *s, struct winlink *wl)
 			c = ARRAY_ITEM(&clients, i);
 			if (c == NULL || c->session != s)
 				continue;
-			status_message_set(c, "Silence in window %u", wl->idx);
+			status_message_set(c, "Silence in window %d", wl->idx);
 		}
 	}
 

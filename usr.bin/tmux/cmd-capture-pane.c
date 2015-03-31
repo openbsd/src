@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.30 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.31 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -74,7 +74,7 @@ cmd_capture_pane_pending(struct args *args, struct window_pane *wp,
 				tmp[0] = line[i];
 				tmp[1] = '\0';
 			} else
-				xsnprintf(tmp, sizeof tmp, "\\%03o", line[i]);
+				xsnprintf(tmp, sizeof tmp, "\\%03hho", line[i]);
 			buf = cmd_capture_pane_append(buf, len, tmp,
 			    strlen(tmp));
 		}

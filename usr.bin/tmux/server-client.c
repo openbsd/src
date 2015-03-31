@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.128 2015/02/06 17:17:12 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.129 2015/03/31 17:45:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -824,7 +824,7 @@ server_client_msg_dispatch(struct client *c)
 			continue;
 		}
 
-		log_debug("got %d from client %d", imsg.hdr.type, c->ibuf.fd);
+		log_debug("got %u from client %d", imsg.hdr.type, c->ibuf.fd);
 		switch (imsg.hdr.type) {
 		case MSG_IDENTIFY_FLAGS:
 		case MSG_IDENTIFY_TERM:
