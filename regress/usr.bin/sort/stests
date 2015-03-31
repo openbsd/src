@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.8 2015/03/30 19:49:09 millert Exp $
+#	$OpenBSD: stests,v 1.9 2015/03/31 12:11:52 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -114,7 +114,7 @@ xsort B || echo '"cksum"' is probably unsuitable - see comments
 $o $SORTPROG +0 in -o in || echo ${TEST}c failed
 
 #---------------------------------------------------------------
-TEST=02; echo $TEST	# output from -c
+TEST=02; echo $TEST	# output from -c, none from -C
 cat <<! >in
 x
 y
@@ -122,8 +122,10 @@ y
 
 $SORTPROG -cr in >out 2>xx && echo ${TEST}A failed
 test -s out && echo ${TEST}B failed
-test -s xx && echo option -c is noisy "(probably legal)"
-test -s xx || echo option -c is quiet "(legal, not classical)"
+test -s xx || echo ${TEST}C failed
+$SORTPROG -Cr in >out 2>xx && echo ${TEST}D failed
+test -s out && echo ${TEST}E failed
+test -s xx && echo ${TEST}F failed
 
 #---------------------------------------------------------------
 TEST=03; echo $TEST	# -n
