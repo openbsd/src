@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.9 2015/03/31 12:11:52 millert Exp $
+#	$OpenBSD: stests,v 1.10 2015/03/31 12:49:37 bluhm Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -974,3 +974,27 @@ BEGIN {
 }'
 
 xsort A -u
+#---------------------------------------------------------------
+TEST=42; echo $TEST	# overwrite permissions
+
+omask=`umask`
+:> in
+:> out
+
+umask 000
+chmod 0643 out
+$SORTPROG -o out in
+ls -l out | grep -e -rw-r---wx -q || echo ${TEST}A failed
+chmod u-w out
+$SORTPROG -o out in 2>/dev/null && echo ${TEST}B failed
+chmod 0643 out
+$SORTPROG -o out in out
+ls -l out | grep -e -rw-r---wx -q || echo ${TEST}C failed
+umask 071
+$SORTPROG -o out out
+ls -l out | grep -e -rw-r---wx -q || echo ${TEST}D failed
+chmod u-w out
+$SORTPROG -o out out 2>/dev/null && echo ${TEST}F failed
+
+rm -f in out
+umask $omask
