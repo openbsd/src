@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.50 2015/03/30 22:20:53 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.51 2015/03/31 11:46:26 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -861,7 +861,7 @@ main(int argc, char *argv[])
 	    { false, false, false, false, false, false };
 
 	result = 0;
-	outfile = sort_strdup("-");
+	outfile = "-";
 	real_outfile = NULL;
 
 	struct sort_mods *sm = &default_sort_mods_object;
@@ -869,6 +869,8 @@ main(int argc, char *argv[])
 	init_tmp_files();
 
 	set_signal_handler();
+
+	atexit(clear_tmp_files);
 
 	set_hw_params();
 	set_locale();
@@ -923,8 +925,7 @@ main(int argc, char *argv[])
 				sort_opts_vals.mflag = true;
 				break;
 			case 'o':
-				sort_free(outfile);
-				outfile = sort_strdup(optarg);
+				outfile = optarg;
 				break;
 			case 's':
 				sort_opts_vals.sflag = true;
@@ -1098,20 +1099,25 @@ main(int argc, char *argv[])
 	set_random_seed();
 
 	/* Case when the outfile equals one of the input files: */
-	if (strcmp(outfile, "-")) {
-		int i;
+	if (strcmp(outfile, "-") != 0) {
+		struct stat sb;
+		int fd, i;
 
 		for (i = 0; i < argc; ++i) {
 			if (strcmp(argv[i], outfile) == 0) {
-				real_outfile = sort_strdup(outfile);
-				for (;;) {
-					const size_t size = strlen(outfile) + strlen(".tmp") + 1;
-					outfile = sort_realloc(outfile, size);
-					strlcat(outfile, ".tmp", size);
-					if (access(outfile, F_OK) < 0)
-						break;
-				}
+				if (stat(outfile, &sb) == -1)
+					err(2, "%s", outfile);
+				if (access(outfile, W_OK) == -1)
+					err(2, "%s", outfile);
+				real_outfile = outfile;
+				sort_asprintf(&outfile, "%s.XXXXXXXXXX",
+				    real_outfile);
+				if ((fd = mkstemp(outfile)) == -1 ||
+				    fchmod(fd, sb.st_mode & ALLPERMS) == -1)
+					err(2, "%s", outfile);
+				close(fd);
 				tmp_file_atexit(outfile);
+				break;
 			}
 		}
 	}
@@ -1166,13 +1172,10 @@ main(int argc, char *argv[])
 	}
 
 	if (real_outfile) {
-		unlink(real_outfile);
 		if (rename(outfile, real_outfile) < 0)
 			err(2, "%s", real_outfile);
-		sort_free(real_outfile);
+		sort_free(outfile);
 	}
-
-	sort_free(outfile);
 
 	return result;
 }
