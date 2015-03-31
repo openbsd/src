@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.79 2014/10/09 13:58:40 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.80 2015/03/31 15:51:05 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -172,54 +172,6 @@ ppc64_setperf(int speed)
 		if (ppc64_slew_voltage)
 			ppc64_slew_voltage(FREQ_FULL);
 		ppc64_scale_frequency(FREQ_FULL);
-	}
-}
-
-int ppc_proc_is_64b;
-extern u_int32_t rfi_inst, rfid_inst, nop_inst;
-struct patch {
-	u_int32_t *s;
-	u_int32_t *e;
-};
-extern struct patch rfi_start;
-extern struct patch nop32_start;
-extern struct patch nop64_start;
-
-
-void
-ppc_check_procid()
-{
-	u_int32_t cpu, pvr;
-	u_int32_t *inst;
-	struct patch *p;
-
-	pvr = ppc_mfpvr();
-	cpu = pvr >> 16;
-
-	switch (cpu) {
-	case PPC_CPU_IBM970:
-	case PPC_CPU_IBM970FX:
-	case PPC_CPU_IBM970MP:
-		ppc_proc_is_64b = 1;
-		for (p = &rfi_start; p->s; p++) {
-			for (inst = p->s; inst < p->e; inst++)
-				*inst = rfid_inst;
-			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
-		}
-		for (p = &nop64_start; p->s; p++) {
-			for (inst = p->s; inst < p->e; inst++)
-				*inst = nop_inst;
-			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
-		}
-
-		break;
-	default:
-		ppc_proc_is_64b = 0;
-		for (p = &nop32_start; p->s; p++) {
-			for (inst = p->s; inst < p->e; inst++)
-				*inst = nop_inst;
-			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
-		}
 	}
 }
 

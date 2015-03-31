@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_subr.c,v 1.5 2014/09/06 10:15:52 mpi Exp $	*/
+/*	$OpenBSD: cpu_subr.c,v 1.6 2015/03/31 15:51:05 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -21,8 +21,52 @@
 
 #include <machine/cpu.h>
 
+struct patch {
+	uint32_t *s;
+	uint32_t *e;
+};
+extern struct patch	rfi_start, nop32_start, nop64_start;
+extern uint32_t		rfi_inst, rfid_inst, nop_inst;
+
 int		ppc_cpuidle;	/* Support DOZE, NAP or DEEP NAP? */
 int		ppc_altivec;
+int		ppc_proc_is_64b;
+
+void
+ppc_check_procid(void)
+{
+	uint32_t cpu;
+	uint32_t *inst;
+	struct patch *p;
+
+	cpu = ppc_mfpvr() >> 16;
+
+	switch (cpu) {
+	case PPC_CPU_IBM970:
+	case PPC_CPU_IBM970FX:
+	case PPC_CPU_IBM970MP:
+		ppc_proc_is_64b = 1;
+		for (p = &rfi_start; p->s; p++) {
+			for (inst = p->s; inst < p->e; inst++)
+				*inst = rfid_inst;
+			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
+		}
+		for (p = &nop64_start; p->s; p++) {
+			for (inst = p->s; inst < p->e; inst++)
+				*inst = nop_inst;
+			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
+		}
+
+		break;
+	default:
+		ppc_proc_is_64b = 0;
+		for (p = &nop32_start; p->s; p++) {
+			for (inst = p->s; inst < p->e; inst++)
+				*inst = nop_inst;
+			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
+		}
+	}
+}
 
 void
 ppc_mtscomc(u_int32_t val)

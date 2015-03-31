@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.142 2015/02/09 13:35:44 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.143 2015/03/31 15:51:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1564,8 +1564,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	int i, k;
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
-
-	ppc_check_procid();
 
 	/*
 	 * Get memory.

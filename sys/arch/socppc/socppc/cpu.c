@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 2014/09/06 10:15:52 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.9 2015/03/31 15:51:05 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -93,26 +93,4 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	hid0 |= HID0_DOZE | HID0_DPM;
 	ppc_mthid0(hid0);
 	ppc_cpuidle = 1;
-}
-
-int ppc_proc_is_64b;
-extern u_int32_t nop_inst;
-struct patch {
-	u_int32_t *s;
-	u_int32_t *e;
-};
-extern struct patch nop32_start;
-
-void
-ppc_check_procid()
-{
-	u_int32_t *inst;
-	struct patch *p;
-
-	ppc_proc_is_64b = 0;
-	for (p = &nop32_start; p->s; p++) {
-		for (inst = p->s; inst < p->e; inst++)
-			*inst = nop_inst;
-		syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
-	}
 }
