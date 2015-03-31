@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.11 2015/03/31 14:53:00 millert Exp $
+#	$OpenBSD: stests,v 1.12 2015/03/31 16:31:42 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -18,11 +18,15 @@
 export SORTPROG
 
 # Tests for the Unix sort utility
-# Test Posix features except for locale.
+# Test POSIX features except for locale.
 # Test some nonstandard features if present.
 
 # Other tests should be made for files too big to fit in memory.
 
+# Currently we only test the C locale
+LANG=C
+LC_ALL=C
+export LANG LC_ALL
 
 # Initialize switches for nonstandard features.
 # Use parenthesized settings for supported features.
