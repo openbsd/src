@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.61 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.62 2015/03/31 04:35:50 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
 	pcb->pcb_esp = (int)sf;
+	pcb->pcb_ebp = 0;
 }
 
 /*
