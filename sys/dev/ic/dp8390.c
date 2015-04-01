@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.49 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.50 2015/04/01 14:29:54 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -859,10 +859,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-/*
- * Retrieve packet from buffer memory and send to the next level up via
- * ether_input().  If there is a BPF listener, give a copy to BPF, too.
- */
 void
 dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
 {

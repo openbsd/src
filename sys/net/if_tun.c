@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.134 2015/03/18 12:23:15 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.135 2015/04/01 14:29:54 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -872,7 +872,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		ether_input_mbuf(ifp, top);
 		splx(s);
 
-		ifp->if_ipackets++; /* ibytes are counted in ether_input */
+		ifp->if_ipackets++;
 
 		return (0);
 	}

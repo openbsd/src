@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.61 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.62 2015/04/01 14:29:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1014,10 +1014,11 @@ tl_newbuf(struct tl_softc *sc, struct tl_chain_onefrag *c)
  *
  * To make things as fast as possible, we have the chip DMA directly
  * into mbufs. This saves us from having to do a buffer copy: we can
- * just hand the mbufs directly to ether_input(). Once the frame has
- * been sent on its way, the 'list' structure is assigned a new buffer
- * and moved to the end of the RX chain. As long we we stay ahead of
- * the chip, it will always think it has an endless receive channel.
+ * just hand the mbufs directly to the network stack. Once the frame
+ * has been sent on its way, the 'list' structure is assigned a new
+ * buffer and moved to the end of the RX chain. As long we we stay
+ * ahead of the chip, it will always think it has an endless receive
+ * channel.
  *
  * If we happen to fall behind and the chip manages to fill up all of
  * the buffers, it will generate an end of channel interrupt and wait
@@ -1076,14 +1077,6 @@ tl_intvec_rxeof(void *xsc, u_int32_t type)
 
 		m->m_pkthdr.len = m->m_len = total_len;
 #if NBPFILTER > 0
-		/*
-	 	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 	 * don't pass it up to the ether_input() layer unless it's
-	 	 * a broadcast packet, multicast packet, matches our ethernet
-	 	 * address or the interface is in promiscuous mode. If we don't
-	 	 * want the packet, just forget it. We leave the mbuf in place
-	 	 * since it can be used again later.
-	 	 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
