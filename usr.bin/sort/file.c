@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.5 2015/03/31 19:50:54 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 2015/04/01 19:06:18 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -170,9 +170,8 @@ new_tmp_file_name(void)
 	static size_t tfcounter = 0;
 	static const char *fn = ".bsdsort.";
 	char *ret;
-	int len;
 
-	len = sort_asprintf(&ret, "%s/%s%d.%lu", tmpdir, fn, (int)getpid(),
+	sort_asprintf(&ret, "%s/%s%d.%lu", tmpdir, fn, (int)getpid(),
 	    (unsigned long)(tfcounter++));
 	tmp_file_atexit(ret);
 	return ret;
@@ -521,15 +520,14 @@ openfile(const char *fn, const char *mode)
 
 		if (is_tmp && (compress_program != NULL)) {
 			char *cmd;
-			int len;
 
 			fflush(stdout);
 
 			if (mode[0] == 'r')
-				len = sort_asprintf(&cmd, "%s -d < %s",
+				sort_asprintf(&cmd, "%s -d < %s",
 				    compress_program, fn);
 			else if (mode[0] == 'w')
-				len = sort_asprintf(&cmd, "%s > %s",
+				sort_asprintf(&cmd, "%s > %s",
 				    compress_program, fn);
 			else
 				err(2, "Wrong file mode");
