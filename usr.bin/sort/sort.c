@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.64 2015/04/01 21:37:47 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.65 2015/04/01 21:41:59 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -431,14 +431,20 @@ check_mutually_exclusive_flags(char c, bool *mef_flags)
 
 		if (mec != c) {
 			if (mef_flags[i]) {
-				if (found_this)
-					errx(1, "%c:%c: mutually exclusive flags", c, mec);
+				if (found_this) {
+					errx(2,
+					    "%c:%c: mutually exclusive flags",
+					    c, mec);
+				}
 				found_others = true;
 				fo_index = i;
 			}
 		} else {
-			if (found_others)
-				errx(1, "%c:%c: mutually exclusive flags", c, mutually_exclusive_flags[fo_index]);
+			if (found_others) {
+				errx(2,
+				    "%c:%c: mutually exclusive flags",
+				    c, mutually_exclusive_flags[fo_index]);
+			}
 			mef_flags[i] = true;
 			found_this = true;
 		}
