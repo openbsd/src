@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.41 2015/03/29 14:08:25 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.42 2015/04/01 15:23:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -266,9 +266,11 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
 	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_ino,
-	    IPL_NET, 0, vnet_tx_intr, sc, sc->sc_dv.dv_xname);
+	    IPL_NET, BUS_INTR_ESTABLISH_MPSAFE, vnet_tx_intr,
+	    sc, sc->sc_dv.dv_xname);
 	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_ino,
-	    IPL_NET, 0, vnet_rx_intr, sc, sc->sc_dv.dv_xname);
+	    IPL_NET, BUS_INTR_ESTABLISH_MPSAFE, vnet_rx_intr,
+	    sc, sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
 		printf(", can't establish interrupt\n");
 		return;
@@ -659,8 +661,10 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		/* Configure multicast now that we can. */
 		vnet_setmulti(sc, 1);
 
+		KERNEL_LOCK();
 		ifp->if_flags &= ~IFF_OACTIVE;
 		vnet_start(ifp);
+		KERNEL_UNLOCK();
 	}
 }
 
@@ -741,8 +745,9 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 		/* Pass it on. */
 		ml_enqueue(&ml, m);
+		KERNEL_LOCK();
 		if_input(ifp, &ml);
-
+		KERNEL_UNLOCK();
 
 	skip:
 		dm->tag.stype = VIO_SUBTYPE_ACK;
@@ -850,7 +855,9 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 				idx = 0;
 		}
 
+		KERNEL_LOCK();
 		if_input(ifp, &ml);
+		KERNEL_UNLOCK();
 
 		if (ack_end_idx == -1) {
 			dm->tag.stype = VIO_SUBTYPE_NACK;
@@ -887,12 +894,14 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		if (count > 0 && sc->sc_peer_state != VIO_DP_ACTIVE)
 			vnet_send_dring_data(sc, cons);
 
+		KERNEL_LOCK();
 		if (count < (sc->sc_vd->vd_nentries - 1))
 			ifp->if_flags &= ~IFF_OACTIVE;
 		if (count == 0)
 			ifp->if_timer = 0;
 
 		vnet_start(ifp);
+		KERNEL_UNLOCK();
 		break;
 	}
 
@@ -1318,6 +1327,7 @@ vnet_link_state(struct vnet_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int link_state = LINK_STATE_DOWN;
 
+	KERNEL_LOCK();
 	if (ISSET(sc->sc_vio_state, VIO_RCV_RDX) &&
 	    ISSET(sc->sc_vio_state, VIO_ACK_RDX))
 		link_state = LINK_STATE_FULL_DUPLEX;
@@ -1325,6 +1335,7 @@ vnet_link_state(struct vnet_softc *sc)
 		ifp->if_link_state = link_state;
 		if_link_state_change(ifp);
 	}
+	KERNEL_UNLOCK();
 }
 
 void
@@ -1346,6 +1357,7 @@ vnet_setmulti(struct vnet_softc *sc, int set)
 	mi.tag.stype_env = VNET_MCAST_INFO;
 	mi.tag.sid = sc->sc_local_sid;
 	mi.set = set ? 1 : 0;
+	KERNEL_LOCK();
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		/* XXX What about multicast ranges? */
@@ -1365,6 +1377,7 @@ vnet_setmulti(struct vnet_softc *sc, int set)
 		mi.count = count;
 		vnet_sendmsg(sc, &mi, sizeof(mi));
 	}
+	KERNEL_UNLOCK();
 }
 
 void
