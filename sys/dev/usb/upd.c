@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.13 2015/01/11 03:08:38 deraadt Exp $ */
+/*	$OpenBSD: upd.c,v 1.14 2015/04/01 11:44:44 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -183,7 +183,8 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 	     sc->sc_num_sensors < sc->sc_max_sensors; ) {
 		DPRINTF(("upd: repid=%d\n", item.report_ID));
 		if (item.kind != hid_feature ||
-		    item.report_ID < 0)
+		    item.report_ID < 0 ||
+		    item.report_ID >= sc->sc_max_repid)
 			continue;
 
 		if ((entry = upd_lookup_usage_entry(&item)) == NULL)
@@ -192,11 +193,10 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 		/* filter repeated usages, avoid duplicated sensors */
 		sensor = upd_lookup_sensor(sc, entry->usage_pg,
 		    entry->usage_id);
-		if (sensor && sensor->attached)
+		if (sensor != NULL)
 			continue;
 
 		sensor = &sc->sc_sensors[sc->sc_num_sensors];
-		/* keep our copy of hid_item */
 		memcpy(&sensor->hitem, &item, sizeof(struct hid_item));
 		strlcpy(sensor->ksensor.desc, entry->usage_name,
 		    sizeof(sensor->ksensor.desc));
@@ -208,8 +208,7 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 		sensor->attached = 1;
 		sc->sc_num_sensors++;
 
-		if (item.report_ID >= sc->sc_max_repid ||
-		    sc->sc_reports[item.report_ID].enabled)
+		if (sc->sc_reports[item.report_ID].enabled)
 			continue;
 
 		sc->sc_reports[item.report_ID].size = hid_report_size(desc,
