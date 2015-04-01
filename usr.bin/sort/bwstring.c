@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.c,v 1.6 2015/04/01 20:58:13 millert Exp $	*/
+/*	$OpenBSD: bwstring.c,v 1.7 2015/04/01 22:38:08 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -93,7 +93,8 @@ initialise_months(void)
 				if (*tmp == '\0')
 					continue;
 				len = strlen(tmp);
-				m = sort_malloc(SIZEOF_WCHAR_STRING(len + 1));
+				m = sort_reallocarray(NULL, len + 1,
+				    sizeof(wchar_t));
 				if (mbstowcs(m, tmp, len) == (size_t)-1) {
 					sort_free(m);
 					continue;
