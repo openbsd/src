@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.67 2015/04/01 22:24:02 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.68 2015/04/01 22:49:47 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -318,32 +318,48 @@ parse_memory_buffer_value(const char *value)
 	membuf = strtoll(value, &endptr, 10);
 	if (endptr == value || (long long)membuf < 0 ||
 	    (errno == ERANGE && membuf == LLONG_MAX))
-		errx(2, "invalid memory buffer size: %s", value);
+		goto invalid;
 
 	switch (*endptr) {
 	case 'Y':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case 'Z':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case 'E':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case 'P':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case 'T':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case 'G':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case 'M':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case '\0':
 	case 'K':
+		if (membuf > ULLONG_MAX / 1024)
+			goto invalid;
 		membuf *= 1024;
 		/* FALLTHROUGH */
 	case 'b':
@@ -357,6 +373,8 @@ parse_memory_buffer_value(const char *value)
 		membuf = available_free_memory;
 	}
 	return membuf;
+invalid:
+	errx(2, "invalid memory buffer size: %s", value);
 }
 
 /*
