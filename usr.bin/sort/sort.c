@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.57 2015/04/01 20:24:12 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.58 2015/04/01 20:28:04 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -561,18 +561,18 @@ parse_pos(const char *s, struct key_specs *ks, bool *mef_flags, bool second)
 
 	if (second) {
 		errno = 0;
-		ks->f2 = (size_t) strtoul(f, NULL, 10);
+		ks->f2 = (size_t)strtoul(f, NULL, 10);
 		if (errno != 0)
-			err(2, "-k");
+			goto end;
 		if (ks->f2 == 0) {
 			warn("0 field in key specs");
 			goto end;
 		}
 	} else {
 		errno = 0;
-		ks->f1 = (size_t) strtoul(f, NULL, 10);
+		ks->f1 = (size_t)strtoul(f, NULL, 10);
 		if (errno != 0)
-			err(2, "-k");
+			goto end;
 		if (ks->f1 == 0) {
 			warn("0 field in key specs");
 			goto end;
@@ -588,14 +588,14 @@ parse_pos(const char *s, struct key_specs *ks, bool *mef_flags, bool second)
 
 		if (second) {
 			errno = 0;
-			ks->c2 = (size_t) strtoul(c, NULL, 10);
+			ks->c2 = (size_t)strtoul(c, NULL, 10);
 			if (errno != 0)
-				err(2, "-k");
+				goto end;
 		} else {
 			errno = 0;
-			ks->c1 = (size_t) strtoul(c, NULL, 10);
+			ks->c1 = (size_t)strtoul(c, NULL, 10);
 			if (errno != 0)
-				err(2, "-k");
+				goto end;
 			if (ks->c1 == 0) {
 				warn("0 column in key specs");
 				goto end;
