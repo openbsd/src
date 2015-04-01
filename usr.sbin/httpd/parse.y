@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2015/03/09 15:46:45 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.67 2015/04/01 04:51:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1907,6 +1907,8 @@ server_inherit(struct server *src, const char *name,
 		fatal("out of memory");
 	dst->srv_conf.tls_cert = NULL;
 	dst->srv_conf.tls_key = NULL;
+	dst->srv_conf.tls_cert_len = 0;
+	dst->srv_conf.tls_key_len = 0;
 
 	if (src->srv_conf.return_uri != NULL &&
 	    (dst->srv_conf.return_uri =
