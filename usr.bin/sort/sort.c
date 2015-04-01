@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.60 2015/04/01 21:13:07 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.61 2015/04/01 21:16:17 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -619,10 +619,8 @@ parse_pos(const char *s, struct key_specs *ks, bool *mef_flags, bool second)
 
 end:
 
-	if (c)
-		sort_free(c);
-	if (f)
-		sort_free(f);
+	sort_free(c);
+	sort_free(f);
 	regfree(&re);
 
 	return ret;
@@ -739,10 +737,8 @@ parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
 	ret = 0;
 
 end:
-	if (c)
-		sort_free(c);
-	if (f)
-		sort_free(f);
+	sort_free(c);
+	sort_free(f);
 	regfree(&re);
 
 	return ret;

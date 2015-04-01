@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.8 2015/04/01 20:58:13 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 2015/04/01 21:16:17 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -746,15 +746,13 @@ file_reader_clean(struct file_reader *fr)
 		if (fr->fd)
 			close(fr->fd);
 
-		if (fr->buffer)
-			sort_free(fr->buffer);
+		sort_free(fr->buffer);
 
 		if (fr->file)
 			if (fr->file != stdin)
 				closefile(fr->file, fr->fname);
 
-		if (fr->fname)
-			sort_free(fr->fname);
+		sort_free(fr->fname);
 
 		memset(fr, 0, sizeof(struct file_reader));
 	}
