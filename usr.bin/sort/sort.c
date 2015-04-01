@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.65 2015/04/01 21:41:59 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.66 2015/04/01 21:45:50 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -143,8 +143,6 @@ static const struct option long_options[] = {
 static bool
 sort_modifier_empty(struct sort_mods *sm)
 {
-	if (sm == NULL)
-		return true;
 	return !(sm->Mflag || sm->Vflag || sm->nflag || sm->gflag ||
 	    sm->rflag || sm->Rflag || sm->hflag || sm->dflag || sm->fflag);
 }
@@ -171,9 +169,6 @@ read_fns_from_file0(const char *fn)
 	char *line = NULL;
 	size_t linesize = 0;
 	ssize_t linelen;
-
-	if (fn == NULL)
-		return;
 
 	f = fopen(fn, "r");
 	if (f == NULL)
@@ -240,13 +235,11 @@ set_hw_params(void)
 static void
 conv_mbtowc(wchar_t *wc, const char *c, const wchar_t def)
 {
-	if (wc && c) {
-		int res;
+	int res;
 
-		res = mbtowc(wc, c, MB_CUR_MAX);
-		if (res < 1)
-			*wc = def;
-	}
+	res = mbtowc(wc, c, MB_CUR_MAX);
+	if (res < 1)
+		*wc = def;
 }
 
 /*
@@ -260,20 +253,18 @@ set_locale(void)
 
 	setlocale(LC_ALL, "");
 
+	/* Obtain LC_NUMERIC info */
 	lc = localeconv();
 
-	if (lc) {
-		/* obtain LC_NUMERIC info */
-		/* Convert to wide char form */
-		conv_mbtowc(&symbol_decimal_point, lc->decimal_point,
-		    symbol_decimal_point);
-		conv_mbtowc(&symbol_thousands_sep, lc->thousands_sep,
-		    symbol_thousands_sep);
-		conv_mbtowc(&symbol_positive_sign, lc->positive_sign,
-		    symbol_positive_sign);
-		conv_mbtowc(&symbol_negative_sign, lc->negative_sign,
-		    symbol_negative_sign);
-	}
+	/* Convert to wide char form */
+	conv_mbtowc(&symbol_decimal_point, lc->decimal_point,
+	    symbol_decimal_point);
+	conv_mbtowc(&symbol_thousands_sep, lc->thousands_sep,
+	    symbol_thousands_sep);
+	conv_mbtowc(&symbol_positive_sign, lc->positive_sign,
+	    symbol_positive_sign);
+	conv_mbtowc(&symbol_negative_sign, lc->negative_sign,
+	    symbol_negative_sign);
 
 	if (getenv("GNUSORT_NUMERIC_COMPATIBILITY"))
 		gnusort_numeric_compatibility = true;
@@ -321,55 +312,51 @@ set_tmpdir(void)
 static unsigned long long
 parse_memory_buffer_value(const char *value)
 {
-	if (value == NULL)
-		return available_free_memory;
-	else {
-		char *endptr;
-		unsigned long long membuf;
+	char *endptr;
+	unsigned long long membuf;
 
-		membuf = strtoll(value, &endptr, 10);
-		if (endptr == value || (long long)membuf < 0 ||
-		    (errno == ERANGE && membuf == LLONG_MAX))
-			errx(2, "invalid memory buffer size: %s", value);
+	membuf = strtoll(value, &endptr, 10);
+	if (endptr == value || (long long)membuf < 0 ||
+	    (errno == ERANGE && membuf == LLONG_MAX))
+		errx(2, "invalid memory buffer size: %s", value);
 
-		switch (*endptr) {
-		case 'Y':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case 'Z':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case 'E':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case 'P':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case 'T':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case 'G':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case 'M':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case '\0':
-		case 'K':
-			membuf *= 1024;
-			/* FALLTHROUGH */
-		case 'b':
-			break;
-		case '%':
-			membuf = (available_free_memory * membuf) /
-			    100;
-			break;
-		default:
-			warnc(EINVAL, "%s", optarg);
-			membuf = available_free_memory;
-		}
-		return membuf;
+	switch (*endptr) {
+	case 'Y':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case 'Z':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case 'E':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case 'P':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case 'T':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case 'G':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case 'M':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case '\0':
+	case 'K':
+		membuf *= 1024;
+		/* FALLTHROUGH */
+	case 'b':
+		break;
+	case '%':
+		membuf = (available_free_memory * membuf) /
+		    100;
+		break;
+	default:
+		warnc(EINVAL, "%s", optarg);
+		membuf = available_free_memory;
 	}
+	return membuf;
 }
 
 /*
@@ -470,55 +457,54 @@ set_sort_opts(void)
 static bool
 set_sort_modifier(struct sort_mods *sm, int c)
 {
-	if (sm) {
-		switch (c){
-		case 'b':
-			sm->bflag = true;
-			break;
-		case 'd':
-			sm->dflag = true;
-			break;
-		case 'f':
-			sm->fflag = true;
-			break;
-		case 'g':
-			sm->gflag = true;
-			need_hint = true;
-			break;
-		case 'i':
-			sm->iflag = true;
-			break;
-		case 'R':
-			sm->Rflag = true;
-			need_random = true;
-			break;
-		case 'M':
-			initialise_months();
-			sm->Mflag = true;
-			need_hint = true;
-			break;
-		case 'n':
-			sm->nflag = true;
-			need_hint = true;
-			print_symbols_on_debug = true;
-			break;
-		case 'r':
-			sm->rflag = true;
-			break;
-		case 'V':
-			sm->Vflag = true;
-			break;
-		case 'h':
-			sm->hflag = true;
-			need_hint = true;
-			print_symbols_on_debug = true;
-			break;
-		default:
-			return false;
-		}
-		sort_opts_vals.complex_sort = true;
-		sm->func = get_sort_func(sm);
+	switch (c) {
+	case 'b':
+		sm->bflag = true;
+		break;
+	case 'd':
+		sm->dflag = true;
+		break;
+	case 'f':
+		sm->fflag = true;
+		break;
+	case 'g':
+		sm->gflag = true;
+		need_hint = true;
+		break;
+	case 'i':
+		sm->iflag = true;
+		break;
+	case 'R':
+		sm->Rflag = true;
+		need_random = true;
+		break;
+	case 'M':
+		initialise_months();
+		sm->Mflag = true;
+		need_hint = true;
+		break;
+	case 'n':
+		sm->nflag = true;
+		need_hint = true;
+		print_symbols_on_debug = true;
+		break;
+	case 'r':
+		sm->rflag = true;
+		break;
+	case 'V':
+		sm->Vflag = true;
+		break;
+	case 'h':
+		sm->hflag = true;
+		need_hint = true;
+		print_symbols_on_debug = true;
+		break;
+	default:
+		return false;
 	}
+	sort_opts_vals.complex_sort = true;
+	sm->func = get_sort_func(sm);
+
 	return true;
 }
 
@@ -624,7 +610,6 @@ parse_pos(const char *s, struct key_specs *ks, bool *mef_flags, bool second)
 	ret = 0;
 
 end:
-
 	sort_free(c);
 	sort_free(f);
 	regfree(&re);
@@ -642,7 +627,7 @@ parse_k(const char *s, struct key_specs *ks)
 	bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS] =
 	    { false, false, false, false, false, false };
 
-	if (s && *s) {
+	if (*s != '\0') {
 		char *sptr;
 
 		sptr = strchr(s, ',');
@@ -679,8 +664,7 @@ parse_k(const char *s, struct key_specs *ks)
  * Parse POS in +POS -POS option.
  */
 static int
-parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
-    size_t sopts_size)
+parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts, size_t sopts_size)
 {
 	regex_t re;
 	regmatch_t pmatch[4];
@@ -713,7 +697,7 @@ parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
 	f[len] = '\0';
 
 	errno = 0;
-	*nf = (size_t) strtoul(f, NULL, 10);
+	*nf = (size_t)strtoul(f, NULL, 10);
 	if (errno != 0)
 		errx(2, "Invalid key position");
 
@@ -725,7 +709,7 @@ parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
 		c[len] = '\0';
 
 		errno = 0;
-		*nc = (size_t) strtoul(c, NULL, 10);
+		*nc = (size_t)strtoul(c, NULL, 10);
 		if (errno != 0)
 			errx(2, "Invalid key position");
 	}
@@ -876,7 +860,6 @@ main(int argc, char *argv[])
 		check_mutually_exclusive_flags(c, mef_flags);
 
 		if (!set_sort_modifier(sm, c)) {
-
 			switch (c) {
 			case 'c':
 				sort_opts_vals.cflag = true;
@@ -905,10 +888,8 @@ main(int argc, char *argv[])
 				memset(&(keys[keys_num - 1]), 0,
 				    sizeof(struct key_specs));
 
-				if (parse_k(optarg, &(keys[keys_num - 1]))
-				    < 0) {
+				if (parse_k(optarg, &(keys[keys_num - 1])) < 0)
 					errc(2, EINVAL, "-k %s", optarg);
-				}
 
 				break;
 			}
