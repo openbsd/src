@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.55 2015/04/01 20:10:19 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.56 2015/04/01 20:20:22 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -683,7 +683,8 @@ parse_k(const char *s, struct key_specs *ks)
  * Parse POS in +POS -POS option.
  */
 static int
-parse_pos_obs(const char *s, int *nf, int *nc, char *sopts)
+parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
+    size_t sopts_size)
 {
 	regex_t re;
 	regmatch_t pmatch[4];
@@ -737,6 +738,8 @@ parse_pos_obs(const char *s, int *nf, int *nc, char *sopts)
 
 		len = pmatch[3].rm_eo - pmatch[3].rm_so;
 
+		if (len >= sopts_size)
+			errx(2, "Invalid key position");
 		strncpy(sopts, s + pmatch[3].rm_so, len);
 		sopts[len] = '\0';
 	}
@@ -768,13 +771,14 @@ fix_obsolete_keys(int *argc, char **argv)
 		arg1 = argv[i];
 
 		if (strlen(arg1) > 1 && arg1[0] == '+') {
-			int c1, f1;
+			size_t c1, f1;
 			char sopts1[128];
 
 			sopts1[0] = 0;
 			c1 = f1 = 0;
 
-			if (parse_pos_obs(arg1 + 1, &f1, &c1, sopts1) < 0)
+			if (parse_pos_obs(arg1 + 1, &f1, &c1, sopts1,
+			    sizeof(sopts1)) < 0)
 				continue;
 			else {
 				f1 += 1;
@@ -784,20 +788,21 @@ fix_obsolete_keys(int *argc, char **argv)
 
 					if (strlen(arg2) > 1 &&
 					    arg2[0] == '-') {
-						int c2, f2;
+						size_t c2, f2;
 						char sopts2[128];
 
 						sopts2[0] = 0;
 						c2 = f2 = 0;
 
 						if (parse_pos_obs(arg2 + 1,
-						    &f2, &c2, sopts2) >= 0) {
+						    &f2, &c2, sopts2,
+						    sizeof(sopts2)) >= 0) {
 							int j;
 							if (c2 > 0)
 								f2 += 1;
 							snprintf(sopt,
 							    sizeof(sopt),
-							    "-k%d.%d%s,%d.%d%s",
+							    "-k%zu.%zu%s,%zu.%zu%s",
 							    f1, c1, sopts1, f2,
 							    c2, sopts2);
 							argv[i] = sort_strdup(sopt);
@@ -808,7 +813,7 @@ fix_obsolete_keys(int *argc, char **argv)
 						}
 					}
 				}
-				snprintf(sopt, sizeof(sopt), "-k%d.%d%s",
+				snprintf(sopt, sizeof(sopt), "-k%zu.%zu%s",
 				    f1, c1, sopts1);
 				argv[i] = sort_strdup(sopt);
 			}
