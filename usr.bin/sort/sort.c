@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.53 2015/03/31 16:40:16 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.54 2015/04/01 19:56:01 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1017,14 +1017,15 @@ main(int argc, char *argv[])
 				break;
 			case BS_OPT:
 			{
-				errno = 0;
-				long mof = strtol(optarg, NULL, 10);
-				if (errno != 0)
-					err(2, "--batch-size");
-				if (mof >= 2)
-					max_open_files = (size_t) mof + 1;
-			}
+				const char *errstr;
+
+				max_open_files = strtonum(optarg, 2,
+				    UINT_MAX - 1, &errstr) + 1;
+				if (errstr != NULL)
+					errx(2, "--batch-size argument is %s",
+					    errstr);
 				break;
+			}
 			case VERSION_OPT:
 				printf("%s\n", VERSION);
 				exit(EXIT_SUCCESS);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.50 2015/03/21 21:47:37 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.51 2015/04/01 19:56:01 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 21 2015 $
+.Dd $Mdocdate: April 1 2015 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -293,6 +293,7 @@ Specify maximum number of files that can be opened by
 at once.
 This option affects behavior when having many input files or using
 temporary files.
+The minimum value is 2.
 The default value is 16.
 .It Fl Fl compress-program Ns = Ns Ar program
 Use
