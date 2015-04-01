@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.150 2015/02/11 00:16:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.151 2015/04/01 19:45:21 mlarkin Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -176,6 +176,7 @@
 	.globl	_C_LABEL(cpu_perf_edx)
 	.globl	_C_LABEL(cpu_apmi_edx)
 	.globl	_C_LABEL(cold), _C_LABEL(cnvmem), _C_LABEL(extmem)
+	.globl	_C_LABEL(cpu_pae)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(boothowto), _C_LABEL(bootdev), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr), _C_LABEL(PTDpaddr), _C_LABEL(PTDsize)
@@ -204,6 +205,7 @@ _C_LABEL(lapic_tpr):
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, 486, 586 or 686
 _C_LABEL(cpu_id):	.long	0	# saved from 'cpuid' instruction
+_C_LABEL(cpu_pae):	.long	0	# are we using PAE paging mode?
 _C_LABEL(cpu_miscinfo):	.long	0	# misc info (apic/brand id) from 'cpuid'
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid' instruction
 _C_LABEL(ecpu_feature): .long	0	# extended feature flags from 'cpuid'
