@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2015/04/01 21:16:17 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2015/04/01 21:22:41 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1056,7 +1056,8 @@ merge_files_array(size_t argc, char **argv, const char *fn_out)
 		if (f_out == NULL)
 			err(2, "%s", fn_out);
 
-		fh = sort_malloc((argc + 1) * sizeof(struct file_header *));
+		fh = sort_reallocarray(NULL, argc + 1,
+		    sizeof(struct file_header *));
 
 		for (i = 0; i < argc; i++)
 			file_header_init(fh + i, argv[i], (size_t) i);
