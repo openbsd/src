@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.56 2015/04/01 20:20:22 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.57 2015/04/01 20:24:12 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -554,9 +554,9 @@ parse_pos(const char *s, struct key_specs *ks, bool *mef_flags, bool second)
 		goto end;
 
 	len = pmatch[1].rm_eo - pmatch[1].rm_so;
-	f = sort_malloc((len + 1) * sizeof(char));
 
-	strncpy(f, s + pmatch[1].rm_so, len);
+	f = sort_malloc(len + 1);
+	memcpy(f, s + pmatch[1].rm_so, len);
 	f[len] = '\0';
 
 	if (second) {
@@ -581,9 +581,9 @@ parse_pos(const char *s, struct key_specs *ks, bool *mef_flags, bool second)
 
 	if (pmatch[2].rm_eo > pmatch[2].rm_so) {
 		len = pmatch[2].rm_eo - pmatch[2].rm_so - 1;
-		c = sort_malloc((len + 1) * sizeof(char));
 
-		strncpy(c, s + pmatch[2].rm_so + 1, len);
+		c = sort_malloc(len + 1);
+		memcpy(c, s + pmatch[2].rm_so + 1, len);
 		c[len] = '\0';
 
 		if (second) {
@@ -658,9 +658,9 @@ parse_k(const char *s, struct key_specs *ks)
 
 			if (size1 < 1)
 				return -1;
-			pos1 = sort_malloc((size1 + 1) * sizeof(char));
 
-			strncpy(pos1, s, size1);
+			pos1 = sort_malloc(size1 + 1);
+			memcpy(pos1, s, size1);
 			pos1[size1] = '\0';
 
 			ret = parse_pos(pos1, ks, mef_flags, false);
@@ -711,9 +711,9 @@ parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
 		goto end;
 
 	len = pmatch[1].rm_eo - pmatch[1].rm_so;
-	f = sort_malloc((len + 1) * sizeof(char));
 
-	strncpy(f, s + pmatch[1].rm_so, len);
+	f = sort_malloc(len + 1);
+	memcpy(f, s + pmatch[1].rm_so, len);
 	f[len] = '\0';
 
 	errno = 0;
@@ -723,9 +723,9 @@ parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
 
 	if (pmatch[2].rm_eo > pmatch[2].rm_so) {
 		len = pmatch[2].rm_eo - pmatch[2].rm_so - 1;
-		c = sort_malloc((len + 1) * sizeof(char));
 
-		strncpy(c, s + pmatch[2].rm_so + 1, len);
+		c = sort_malloc((len + 1) * sizeof(char));
+		memcpy(c, s + pmatch[2].rm_so + 1, len);
 		c[len] = '\0';
 
 		errno = 0;
@@ -740,7 +740,7 @@ parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
 
 		if (len >= sopts_size)
 			errx(2, "Invalid key position");
-		strncpy(sopts, s + pmatch[3].rm_so, len);
+		memcpy(sopts, s + pmatch[3].rm_so, len);
 		sopts[len] = '\0';
 	}
 
