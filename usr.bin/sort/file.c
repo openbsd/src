@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.7 2015/04/01 20:17:56 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 2015/04/01 20:58:13 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -106,7 +106,6 @@ static LIST_HEAD(CLEANABLE_FILES, CLEANABLE_FILE) tmp_files;
 void
 init_tmp_files(void)
 {
-
 	LIST_INIT(&tmp_files);
 }
 
@@ -116,7 +115,6 @@ init_tmp_files(void)
 void
 tmp_file_atexit(const char *tmp_file)
 {
-
 	if (tmp_file) {
 		struct CLEANABLE_FILE *item =
 		    sort_malloc(sizeof(struct CLEANABLE_FILE));
@@ -184,7 +182,6 @@ new_tmp_file_name(void)
 void
 file_list_init(struct file_list *fl, bool tmp)
 {
-
 	if (fl) {
 		fl->count = 0;
 		fl->sz = 0;
@@ -199,7 +196,6 @@ file_list_init(struct file_list *fl, bool tmp)
 void
 file_list_add(struct file_list *fl, char *fn, bool allocate)
 {
-
 	if (fl && fn) {
 		if (fl->count >= fl->sz || fl->fns == NULL) {
 			fl->sz = fl->sz * 2 + 1;
@@ -217,7 +213,6 @@ file_list_add(struct file_list *fl, char *fn, bool allocate)
 void
 file_list_populate(struct file_list *fl, int argc, char **argv, bool allocate)
 {
-
 	if (fl && argv) {
 		int i;
 
@@ -233,7 +228,6 @@ file_list_populate(struct file_list *fl, int argc, char **argv, bool allocate)
 void
 file_list_clean(struct file_list *fl)
 {
-
 	if (fl) {
 		if (fl->fns) {
 			size_t i;
@@ -261,7 +255,6 @@ file_list_clean(struct file_list *fl)
 void
 sort_list_init(struct sort_list *l)
 {
-
 	if (l) {
 		l->count = 0;
 		l->size = 0;
@@ -276,7 +269,6 @@ sort_list_init(struct sort_list *l)
 void
 sort_list_add(struct sort_list *l, struct bwstring *str)
 {
-
 	if (l && str) {
 		size_t indx = l->count;
 
@@ -302,7 +294,6 @@ sort_list_add(struct sort_list *l, struct bwstring *str)
 void
 sort_list_clean(struct sort_list *l)
 {
-
 	if (l) {
 		if (l->list) {
 			size_t i;
@@ -333,7 +324,6 @@ sort_list_clean(struct sort_list *l)
 void
 sort_list_dump(struct sort_list *l, const char *fn)
 {
-
 	if (l && fn) {
 		FILE *f;
 
@@ -749,7 +739,6 @@ file_reader_readline(struct file_reader *fr)
 static void
 file_reader_clean(struct file_reader *fr)
 {
-
 	if (fr) {
 		if (fr->mmapaddr)
 			munmap(fr->mmapaddr, fr->mmapsize);
@@ -774,7 +763,6 @@ file_reader_clean(struct file_reader *fr)
 void
 file_reader_free(struct file_reader *fr)
 {
-
 	if (fr) {
 		file_reader_clean(fr);
 		sort_free(fr);
@@ -822,7 +810,6 @@ procfile(const char *fsrc, struct sort_list *list, struct file_list *fl)
 static int
 file_header_cmp(struct file_header *f1, struct file_header *f2)
 {
-
 	if (f1 == f2)
 		return 0;
 	else {
@@ -847,7 +834,6 @@ file_header_cmp(struct file_header *f1, struct file_header *f2)
 static void
 file_header_init(struct file_header **fh, const char *fn, size_t file_pos)
 {
-
 	if (fh && fn) {
 		struct bwstring *line;
 
@@ -876,7 +862,6 @@ file_header_init(struct file_header **fh, const char *fn, size_t file_pos)
 static void
 file_header_close(struct file_header **fh)
 {
-
 	if (fh && *fh) {
 		if ((*fh)->fr) {
 			file_reader_free((*fh)->fr);
@@ -914,7 +899,6 @@ file_header_swap(struct file_header **fh, size_t i1, size_t i2)
 static void
 file_header_heap_swim(struct file_header **fh, size_t indx)
 {
-
 	if (indx > 0) {
 		size_t parent_index;
 
@@ -964,7 +948,6 @@ file_header_heap_sink(struct file_header **fh, size_t indx, size_t size)
 static void
 file_header_list_rearrange_from_header(struct file_header **fh, size_t size)
 {
-
 	file_header_heap_sink(fh, 0, size);
 }
 
@@ -974,7 +957,6 @@ file_header_list_rearrange_from_header(struct file_header **fh, size_t size)
 static void
 file_header_list_push(struct file_header *f, struct file_header **fh, size_t size)
 {
-
 	fh[size++] = f;
 	file_header_heap_swim(fh, size - 1);
 }
@@ -990,7 +972,6 @@ struct last_printed
 static void
 file_header_print(struct file_header *fh, FILE *f_out, struct last_printed *lp)
 {
-
 	if (fh && fh->fr && f_out && fh->si && fh->si->str) {
 		if (sort_opts_vals.uflag) {
 			if ((lp->str == NULL) || (str_list_coll(lp->str, &(fh->si)))) {
@@ -1010,7 +991,6 @@ file_header_print(struct file_header *fh, FILE *f_out, struct last_printed *lp)
 static void
 file_header_read_next(struct file_header *fh)
 {
-
 	if (fh && fh->fr) {
 		struct bwstring *tmp;
 
@@ -1068,7 +1048,6 @@ file_headers_merge(size_t fnum, struct file_header **fh, FILE *f_out)
 static void
 merge_files_array(size_t argc, char **argv, const char *fn_out)
 {
-
 	if (argv && fn_out) {
 		struct file_header **fh;
 		FILE *f_out;
@@ -1101,7 +1080,6 @@ merge_files_array(size_t argc, char **argv, const char *fn_out)
 static int
 shrink_file_list(struct file_list *fl)
 {
-
 	if (fl == NULL || (size_t)fl->count < max_open_files)
 		return 0;
 	else {
@@ -1146,7 +1124,6 @@ shrink_file_list(struct file_list *fl)
 void
 merge_files(struct file_list *fl, const char *fn_out)
 {
-
 	if (fl && fn_out) {
 		while (shrink_file_list(fl));
 
@@ -1157,7 +1134,6 @@ merge_files(struct file_list *fl, const char *fn_out)
 static const char *
 get_sort_method_name(int sm)
 {
-
 	if (sm == SORT_MERGESORT)
 		return "mergesort";
 	else if (sort_opts_vals.sort_method == SORT_RADIXSORT)

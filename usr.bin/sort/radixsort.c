@@ -1,4 +1,4 @@
-/*	$OpenBSD: radixsort.c,v 1.2 2015/03/17 17:49:27 millert Exp $	*/
+/*	$OpenBSD: radixsort.c,v 1.3 2015/04/01 20:58:13 millert Exp $	*/
 
 /*-
  * Copyright (C) 2012 Oleg Moskalenko <mom040267@gmail.com>
@@ -138,7 +138,6 @@ add_to_sublevel(struct sort_level *sl, struct sort_list_item *item, size_t indx)
 static inline void
 add_leaf(struct sort_level *sl, struct sort_list_item *item)
 {
-
 	if (++(sl->leaves_num) > sl->leaves_sz) {
 		sl->leaves_sz = sl->leaves_num + 128;
 		sl->leaves = sort_reallocarray(sl->leaves, sl->leaves_sz,
@@ -177,7 +176,6 @@ place_item(struct sort_level *sl, size_t item)
 static void
 free_sort_level(struct sort_level *sl)
 {
-
 	if (sl) {
 		if (sl->leaves)
 			sort_free(sl->leaves);

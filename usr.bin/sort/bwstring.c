@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.c,v 1.5 2015/03/20 15:55:22 millert Exp $	*/
+/*	$OpenBSD: bwstring.c,v 1.6 2015/04/01 20:58:13 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -143,7 +143,6 @@ wide_str_coll(const wchar_t *s1, const wchar_t *s2)
 void
 bwsprintf(FILE *f, struct bwstring *bws, const char *prefix, const char *suffix)
 {
-
 	if (sort_mb_cur_max == 1)
 		fprintf(f, "%s%s%s", prefix, bws->data.cstr, suffix);
 	else
@@ -153,21 +152,18 @@ bwsprintf(FILE *f, struct bwstring *bws, const char *prefix, const char *suffix)
 const void *
 bwsrawdata(const struct bwstring *bws)
 {
-
 	return &(bws->data);
 }
 
 size_t
 bwsrawlen(const struct bwstring *bws)
 {
-
 	return (sort_mb_cur_max == 1) ? bws->len : SIZEOF_WCHAR_STRING(bws->len);
 }
 
 size_t
 bws_memsize(const struct bwstring *bws)
 {
-
 	return (sort_mb_cur_max == 1) ? (bws->len + 2 + sizeof(struct bwstring)) :
 	    (SIZEOF_WCHAR_STRING(bws->len + 1) + sizeof(struct bwstring));
 }
@@ -175,7 +171,6 @@ bws_memsize(const struct bwstring *bws)
 void
 bws_setlen(struct bwstring *bws, size_t newlen)
 {
-
 	if (bws && newlen != bws->len && newlen <= bws->len) {
 		bws->len = newlen;
 		if (sort_mb_cur_max == 1)
@@ -235,7 +230,6 @@ bwsdup(const struct bwstring *s)
 struct bwstring *
 bwssbdup(const wchar_t *str, size_t len)
 {
-
 	if (str == NULL)
 		return (len == 0) ? bwsalloc(0) : NULL;
 	else {
@@ -317,7 +311,6 @@ bwscsbdup(const unsigned char *str, size_t len)
 void
 bwsfree(struct bwstring *s)
 {
-
 	sort_free(s);
 }
 
@@ -387,7 +380,6 @@ struct bwstring *
 bwsnocpy(struct bwstring *dst, const struct bwstring *src, size_t offset,
     size_t size)
 {
-
 	if (offset >= src->len) {
 		dst->data.wstr[0] = 0;
 		dst->len = 0;
@@ -420,7 +412,6 @@ bwsnocpy(struct bwstring *dst, const struct bwstring *src, size_t offset,
 size_t
 bwsfwrite(struct bwstring *bws, FILE *f, bool zero_ended)
 {
-
 	if (sort_mb_cur_max == 1) {
 		size_t len = bws->len;
 
@@ -525,7 +516,7 @@ bwsfgetln(FILE *f, size_t *len, bool zero_ended, struct reader_buffer *rb)
 		}
 		rb->fgetwln_z_buffer[*len] = 0;
 
-		if (sort_mb_cur_max == 1)
+		if (sort_mb_cur_max == 1) {
 			while (!feof(f)) {
 				int c;
 
@@ -549,7 +540,7 @@ bwsfgetln(FILE *f, size_t *len, bool zero_ended, struct reader_buffer *rb)
 				rb->fgetwln_z_buffer[*len] = c;
 				rb->fgetwln_z_buffer[++(*len)] = 0;
 			}
-		else
+		} else {
 			while (!feof(f)) {
 				wint_t c = 0;
 
@@ -573,6 +564,7 @@ bwsfgetln(FILE *f, size_t *len, bool zero_ended, struct reader_buffer *rb)
 				rb->fgetwln_z_buffer[*len] = c;
 				rb->fgetwln_z_buffer[++(*len)] = 0;
 			}
+		}
 
 line_read_done:
 		/* we do not count the last 0 */
@@ -904,11 +896,9 @@ bwstod(struct bwstring *s0, bool *empty)
  * a month name, it returns (number of the month - 1),
  * while if there is no match, it just return -1.
  */
-
 int
 bws_month_score(const struct bwstring *s0)
 {
-
 	if (sort_mb_cur_max == 1) {
 		const char *end, *s;
 		int i;
@@ -949,7 +939,6 @@ bws_month_score(const struct bwstring *s0)
 struct bwstring *
 ignore_leading_blanks(struct bwstring *str)
 {
-
 	if (sort_mb_cur_max == 1) {
 		unsigned char *dst, *end, *src;
 
@@ -1109,7 +1098,6 @@ dictionary_order(struct bwstring *str)
 struct bwstring *
 ignore_case(struct bwstring *str)
 {
-
 	if (sort_mb_cur_max == 1) {
 		unsigned char *end, *s;
 
@@ -1137,7 +1125,6 @@ ignore_case(struct bwstring *str)
 void
 bws_disorder_warnx(struct bwstring *s, const char *fn, size_t pos)
 {
-
 	if (sort_mb_cur_max == 1)
 		warnx("%s:%zu: disorder: %s", fn, pos + 1, s->data.cstr);
 	else

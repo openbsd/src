@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.58 2015/04/01 20:28:04 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.59 2015/04/01 20:58:13 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -143,7 +143,6 @@ static const struct option long_options[] = {
 static bool
 sort_modifier_empty(struct sort_mods *sm)
 {
-
 	if (sm == NULL)
 		return true;
 	return !(sm->Mflag || sm->Vflag || sm->nflag || sm->gflag ||
@@ -156,7 +155,6 @@ sort_modifier_empty(struct sort_mods *sm)
 static __dead void
 usage(int exit_val)
 {
-
 	fprintf(exit_val ? stderr : stdout,
 	    "usage: %s [-bCcdfgHhiMmnRrsuVz] [-k field1[,field2]] [-o output] "
 	    "[-S size]\n\t[-T dir] [-t char] [file ...]\n", getprogname());
@@ -242,7 +240,6 @@ set_hw_params(void)
 static void
 conv_mbtowc(wchar_t *wc, const char *c, const wchar_t def)
 {
-
 	if (wc && c) {
 		int res;
 
@@ -324,7 +321,6 @@ set_tmpdir(void)
 static unsigned long long
 parse_memory_buffer_value(const char *value)
 {
-
 	if (value == NULL)
 		return available_free_memory;
 	else {
@@ -382,7 +378,6 @@ parse_memory_buffer_value(const char *value)
 static void
 sig_handler(int sig __unused)
 {
-
 	clear_tmp_files();
 	_exit(2);
 }
@@ -416,7 +411,6 @@ set_signal_handler(void)
 static void
 unknown(const char *what)
 {
-
 	errx(2, "Unknown feature: %s", what);
 }
 
@@ -457,7 +451,6 @@ check_mutually_exclusive_flags(char c, bool *mef_flags)
 static void
 set_sort_opts(void)
 {
-
 	memset(&default_sort_mods_object, 0,
 	    sizeof(default_sort_mods_object));
 	memset(&sort_opts_vals, 0, sizeof(sort_opts_vals));
@@ -471,7 +464,6 @@ set_sort_opts(void)
 static bool
 set_sort_modifier(struct sort_mods *sm, int c)
 {
-
 	if (sm) {
 		switch (c){
 		case 'b':
