@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.43 2015/03/27 17:36:56 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.44 2015/04/01 12:48:00 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -155,7 +155,6 @@ mansearch(const struct mansearch *search,
 		int argc, char *argv[],
 		struct manpage **res, size_t *sz)
 {
-	int		 fd, rc, c, indexbit;
 	int64_t		 pageid;
 	uint64_t	 outbit, iterbit;
 	char		 buf[PATH_MAX];
@@ -169,23 +168,20 @@ mansearch(const struct mansearch *search,
 	struct ohash	 htab;
 	unsigned int	 idx;
 	size_t		 i, j, cur, maxres;
+	int		 c, chdir_status, getcwd_status, indexbit;
+
+	if (argc == 0 || (e = exprcomp(search, argc, argv)) == NULL) {
+		*sz = 0;
+		return(0);
+	}
 
 	info.calloc = hash_calloc;
 	info.alloc = hash_alloc;
 	info.free = hash_free;
 	info.key_offset = offsetof(struct match, pageid);
 
-	*sz = cur = maxres = 0;
-	sql = NULL;
+	cur = maxres = 0;
 	*res = NULL;
-	fd = -1;
-	e = NULL;
-	rc = 0;
-
-	if (0 == argc)
-		goto out;
-	if (NULL == (e = exprcomp(search, argc, argv)))
-		goto out;
 
 	if (NULL != search->outkey) {
 		outbit = TYPE_Nd;
@@ -202,19 +198,18 @@ mansearch(const struct mansearch *search,
 		outbit = 0;
 
 	/*
-	 * Save a descriptor to the current working directory.
-	 * Since pathnames in the "paths" variable might be relative,
-	 * and we'll be chdir()ing into them, we need to keep a handle
-	 * on our current directory from which to start the chdir().
+	 * Remember the original working directory, if possible.
+	 * This will be needed if the second or a later directory
+	 * is given as a relative path.
+	 * Do not error out if the current directory is not
+	 * searchable: Maybe it won't be needed after all.
 	 */
 
-	if (NULL == getcwd(buf, PATH_MAX)) {
-		perror("getcwd");
-		goto out;
-	} else if (-1 == (fd = open(buf, O_RDONLY, 0))) {
-		perror(buf);
-		goto out;
-	}
+	if (getcwd(buf, PATH_MAX) == NULL) {
+		getcwd_status = 0;
+		(void)strlcpy(buf, strerror(errno), sizeof(buf));
+	} else
+		getcwd_status = 1;
 
 	sql = sql_statement(e);
 
@@ -226,15 +221,23 @@ mansearch(const struct mansearch *search,
 	 * scan it for our match expression.
 	 */
 
+	chdir_status = 0;
 	for (i = 0; i < paths->sz; i++) {
-		if (-1 == fchdir(fd)) {
-			perror(buf);
-			free(*res);
-			break;
-		} else if (-1 == chdir(paths->paths[i])) {
+		if (chdir_status && paths->paths[i][0] != '/') {
+			if ( ! getcwd_status) {
+				fprintf(stderr, "%s: getcwd: %s\n",
+				    paths->paths[i], buf);
+				continue;
+			} else if (chdir(buf) == -1) {
+				perror(buf);
+				continue;
+			}
+		}
+		if (chdir(paths->paths[i]) == -1) {
 			perror(paths->paths[i]);
 			continue;
 		}
+		chdir_status = 1;
 
 		c = sqlite3_open_v2(MANDOC_DB, &db,
 		    SQLITE_OPEN_READONLY, NULL);
@@ -362,17 +365,12 @@ mansearch(const struct mansearch *search,
 			break;
 	}
 	qsort(*res, cur, sizeof(struct manpage), manpage_compare);
-	rc = 1;
-out:
-	if (-1 != fd) {
-		if (-1 == fchdir(fd))
-			perror(buf);
-		close(fd);
-	}
+	if (chdir_status && getcwd_status && chdir(buf) == -1)
+		perror(buf);
 	exprfree(e);
 	free(sql);
 	*sz = cur;
-	return(rc);
+	return(1);
 }
 
 void
