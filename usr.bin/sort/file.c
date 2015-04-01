@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.10 2015/04/01 21:22:41 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.11 2015/04/01 21:27:18 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -198,9 +198,9 @@ file_list_add(struct file_list *fl, char *fn, bool allocate)
 {
 	if (fl && fn) {
 		if (fl->count >= fl->sz || fl->fns == NULL) {
-			fl->sz = fl->sz * 2 + 1;
-			fl->fns = sort_reallocarray(fl->fns, fl->sz,
-			    sizeof(char *));
+			fl->fns = sort_reallocarray(fl->fns,
+			    fl->sz ? fl->sz : (fl->sz = 1), 2 * sizeof(char *));
+			fl->sz *= 2;
 		}
 		fl->fns[fl->count] = allocate ? sort_strdup(fn) : fn;
 		fl->count += 1;
