@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.63 2015/04/01 21:21:38 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.64 2015/04/01 21:37:47 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -329,7 +329,7 @@ parse_memory_buffer_value(const char *value)
 
 		membuf = strtoll(value, &endptr, 10);
 		if (endptr == value || (long long)membuf < 0 ||
-		    (errno == ERANGE && membuf == LONG_MAX))
+		    (errno == ERANGE && membuf == LLONG_MAX))
 			errx(2, "invalid memory buffer size: %s", value);
 
 		switch (*endptr) {
