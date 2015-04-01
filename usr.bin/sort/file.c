@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.13 2015/04/01 22:24:02 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.14 2015/04/01 22:43:16 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <unistd.h>
 #include <wchar.h>
@@ -116,10 +117,15 @@ void
 tmp_file_atexit(const char *tmp_file)
 {
 	struct CLEANABLE_FILE *item;
+	sigset_t mask, oldmask;
 
 	item = sort_malloc(sizeof(struct CLEANABLE_FILE));
 	item->fn = sort_strdup(tmp_file);
+
+	sigfillset(&mask);
+	sigprocmask(SIG_BLOCK, &mask, &oldmask);
 	LIST_INSERT_HEAD(&tmp_files, item, files);
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
 /*
