@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.324 2015/03/29 01:05:02 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.325 2015/04/01 04:00:55 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -142,6 +142,8 @@ int	if_group_egress_build(void);
 
 void	if_link_state_change_task(void *);
 
+void	if_input_process(void *);
+
 #ifdef DDB
 void	ifa_print_all(void);
 #endif
@@ -155,6 +157,8 @@ void	net_tick(void *);
 int	net_livelocked(void);
 int	ifq_congestion;
 
+struct taskq *softnettq;
+
 /*
  * Network interface utility routines.
  *
@@ -165,6 +169,11 @@ void
 ifinit()
 {
 	timeout_set(&net_tick_to, net_tick, &net_tick_to);
+
+	softnettq = taskq_create("softnet", 1, IPL_NET,
+	    TASKQ_MPSAFE | TASKQ_CANTSLEEP);
+	if (softnettq == NULL)
+		panic("unable to create softnet taskq");
 
 	net_tick(&net_tick_to);
 }
@@ -431,28 +440,68 @@ if_start(struct ifnet *ifp)
 	}
 }
 
+struct mbuf_queue if_input_queue = MBUF_QUEUE_INITIALIZER(8192, IPL_NET);
+struct task if_input_task = TASK_INITIALIZER(if_input_process, &if_input_queue);
+
 void
 if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
 	struct mbuf *m;
-	struct ifih *ifih;
 
 	splassert(IPL_NET);
 
-	while ((m = ml_dequeue(ml)) != NULL) {
+	MBUF_LIST_FOREACH(ml, m) {
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	}
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
+	if (ifp->if_bpf) {
+		MBUF_LIST_FOREACH(ml, m)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
+	}
 #endif
 
+	mq_enlist(&if_input_queue, ml);
+	task_add(softnettq, &if_input_task);
+}
+
+void
+ether_input_mbuf(struct ifnet *ifp, struct mbuf *m)
+{
+	mq_enqueue(&if_input_queue, m);
+	task_add(softnettq, &if_input_task);
+}
+
+void
+if_input_process(void *xmq)
+{
+	struct mbuf_queue *mq = xmq;
+	struct mbuf_list ml;
+	struct mbuf *m;
+	struct ifnet *ifp;
+	struct ifih *ifih;
+	int mit = 0;
+	int s;
+
+	mq_delist(mq, &ml);
+	if (ml_empty(&ml))
+		return;
+
+	KERNEL_LOCK();
+	s = splnet();
+	while ((m = ml_dequeue(&ml)) != NULL) {
+		if ((++mit & 0x1f) == 0)
+			yield();
+
+		ifp = m->m_pkthdr.rcvif;
 		SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
 			if ((*ifih->ifih_input)(ifp, NULL, m))
 				break;
 		}
 	}
+	splx(s);
+	KERNEL_UNLOCK();
 }
 
 void
