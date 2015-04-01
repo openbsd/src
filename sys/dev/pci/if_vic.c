@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.86 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.87 2015/04/01 16:09:21 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -78,8 +78,8 @@
 #define   VIC_CMD_IFF_PROMISC	0x0001		/* Promiscous enabled */
 #define   VIC_CMD_IFF_BROADCAST	0x0002		/* Broadcast enabled */
 #define   VIC_CMD_IFF_MULTICAST	0x0004		/* Multicast enabled */
-#define  VIC_CMD_INTR_DISABLE	0x0020	/* Enable interrupts */
-#define  VIC_CMD_INTR_ENABLE	0x0040	/* Disable interrupts */
+#define  VIC_CMD_INTR_DISABLE	0x0020	/* Disable interrupts */
+#define  VIC_CMD_INTR_ENABLE	0x0040	/* Enable interrupts */
 #define  VIC_CMD_Tx_DONE	0x0100	/* Tx done register */
 #define  VIC_CMD_NUM_Rx_BUF	0x0200	/* Number of Rx buffers */
 #define  VIC_CMD_NUM_Tx_BUF	0x0400	/* Number of Tx buffers */
