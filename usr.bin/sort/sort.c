@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.54 2015/04/01 19:56:01 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.55 2015/04/01 20:10:19 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -331,50 +331,46 @@ parse_memory_buffer_value(const char *value)
 		char *endptr;
 		unsigned long long membuf;
 
-		endptr = NULL;
-		errno = 0;
 		membuf = strtoll(value, &endptr, 10);
+		if (endptr == value || (long long)membuf < 0 ||
+		    (errno == ERANGE && membuf == LONG_MAX))
+			errx(2, "invalid memory buffer size: %s", value);
 
-		if (errno != 0) {
-			warn("Wrong memory buffer specification");
+		switch (*endptr) {
+		case 'Y':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case 'Z':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case 'E':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case 'P':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case 'T':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case 'G':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case 'M':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case '\0':
+		case 'K':
+			membuf *= 1024;
+			/* FALLTHROUGH */
+		case 'b':
+			break;
+		case '%':
+			membuf = (available_free_memory * membuf) /
+			    100;
+			break;
+		default:
+			warnc(EINVAL, "%s", optarg);
 			membuf = available_free_memory;
-		} else {
-			switch (*endptr){
-			case 'Y':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case 'Z':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case 'E':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case 'P':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case 'T':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case 'G':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case 'M':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case '\0':
-			case 'K':
-				membuf *= 1024;
-				/* FALLTHROUGH */
-			case 'b':
-				break;
-			case '%':
-				membuf = (available_free_memory * membuf) /
-				    100;
-				break;
-			default:
-				warnc(EINVAL, "%s", optarg);
-				membuf = available_free_memory;
-			}
 		}
 		return membuf;
 	}
