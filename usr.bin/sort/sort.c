@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.59 2015/04/01 20:58:13 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.60 2015/04/01 21:13:07 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -758,11 +758,9 @@ fix_obsolete_keys(int *argc, char **argv)
 	int i;
 
 	for (i = 1; i < *argc; i++) {
-		char *arg1;
+		const char *arg1 = argv[i];
 
-		arg1 = argv[i];
-
-		if (strlen(arg1) > 1 && arg1[0] == '+') {
+		if (arg1[0] == '+') {
 			size_t c1, f1;
 			char sopts1[128];
 
@@ -772,43 +770,39 @@ fix_obsolete_keys(int *argc, char **argv)
 			if (parse_pos_obs(arg1 + 1, &f1, &c1, sopts1,
 			    sizeof(sopts1)) < 0)
 				continue;
-			else {
-				f1 += 1;
-				c1 += 1;
-				if (i + 1 < *argc) {
-					char *arg2 = argv[i + 1];
 
-					if (strlen(arg2) > 1 &&
-					    arg2[0] == '-') {
-						size_t c2, f2;
-						char sopts2[128];
+			f1 += 1;
+			c1 += 1;
+			if (i + 1 < *argc) {
+				const char *arg2 = argv[i + 1];
 
-						sopts2[0] = 0;
-						c2 = f2 = 0;
+				if (arg2[0] == '-') {
+					size_t c2, f2;
+					char sopts2[128];
 
-						if (parse_pos_obs(arg2 + 1,
-						    &f2, &c2, sopts2,
-						    sizeof(sopts2)) >= 0) {
-							int j;
-							if (c2 > 0)
-								f2 += 1;
-							snprintf(sopt,
-							    sizeof(sopt),
-							    "-k%zu.%zu%s,%zu.%zu%s",
-							    f1, c1, sopts1, f2,
-							    c2, sopts2);
-							argv[i] = sort_strdup(sopt);
-							for (j = i + 1; j + 1 < *argc; j++)
-								argv[j] = argv[j + 1];
-							*argc -= 1;
-							continue;
-						}
+					sopts2[0] = 0;
+					c2 = f2 = 0;
+
+					if (parse_pos_obs(arg2 + 1, &f2, &c2,
+					    sopts2, sizeof(sopts2)) >= 0) {
+						int j;
+						if (c2 > 0)
+							f2 += 1;
+						snprintf(sopt, sizeof(sopt),
+						    "-k%zu.%zu%s,%zu.%zu%s",
+						    f1, c1, sopts1, f2,
+						    c2, sopts2);
+						argv[i] = sort_strdup(sopt);
+						for (j = i + 1; j + 1 < *argc; j++)
+							argv[j] = argv[j + 1];
+						*argc -= 1;
+						continue;
 					}
 				}
-				snprintf(sopt, sizeof(sopt), "-k%zu.%zu%s",
-				    f1, c1, sopts1);
-				argv[i] = sort_strdup(sopt);
 			}
+			snprintf(sopt, sizeof(sopt), "-k%zu.%zu%s",
+			    f1, c1, sopts1);
+			argv[i] = sort_strdup(sopt);
 		}
 	}
 }
