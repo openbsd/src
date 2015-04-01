@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.61 2015/04/01 21:16:17 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.62 2015/04/01 21:18:43 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -959,20 +959,18 @@ main(int argc, char *argv[])
 				sort_opts_vals.zflag = true;
 				break;
 			case SORT_OPT:
-				if (optarg) {
-					if (!strcmp(optarg, "general-numeric"))
-						set_sort_modifier(sm, 'g');
-					else if (!strcmp(optarg, "human-numeric"))
-						set_sort_modifier(sm, 'h');
-					else if (!strcmp(optarg, "numeric"))
-						set_sort_modifier(sm, 'n');
-					else if (!strcmp(optarg, "month"))
-						set_sort_modifier(sm, 'M');
-					else if (!strcmp(optarg, "random"))
-						set_sort_modifier(sm, 'R');
-					else
-						unknown(optarg);
-				}
+				if (!strcmp(optarg, "general-numeric"))
+					set_sort_modifier(sm, 'g');
+				else if (!strcmp(optarg, "human-numeric"))
+					set_sort_modifier(sm, 'h');
+				else if (!strcmp(optarg, "numeric"))
+					set_sort_modifier(sm, 'n');
+				else if (!strcmp(optarg, "month"))
+					set_sort_modifier(sm, 'M');
+				else if (!strcmp(optarg, "random"))
+					set_sort_modifier(sm, 'R');
+				else
+					unknown(optarg);
 				break;
 			case QSORT_OPT:
 				sort_opts_vals.sort_method = SORT_QSORT;
