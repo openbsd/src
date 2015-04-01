@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.62 2015/04/01 21:18:43 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.63 2015/04/01 21:21:38 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -714,7 +714,7 @@ parse_pos_obs(const char *s, size_t *nf, size_t *nc, char *sopts,
 	if (pmatch[2].rm_eo > pmatch[2].rm_so) {
 		len = pmatch[2].rm_eo - pmatch[2].rm_so - 1;
 
-		c = sort_malloc((len + 1) * sizeof(char));
+		c = sort_malloc(len + 1);
 		memcpy(c, s + pmatch[2].rm_so + 1, len);
 		c[len] = '\0';
 
