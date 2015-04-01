@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2015/04/01 21:33:01 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2015/04/01 22:24:02 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -664,8 +664,8 @@ file_reader_readline(struct file_reader *fr)
 			if (remsz > (READ_CHUNK >> 1)) {
 				search_start = fr->cbsz - fr->strbeg;
 				fr->cbsz += READ_CHUNK;
-				fr->buffer = sort_realloc(fr->buffer,
-				    fr->cbsz);
+				fr->buffer = sort_reallocarray(fr->buffer,
+				    1, fr->cbsz);
 				bsz1 = fread(fr->buffer + fr->bsz, 1,
 				    READ_CHUNK, fr->file);
 				if (bsz1 == 0) {

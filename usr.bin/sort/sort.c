@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.66 2015/04/01 21:45:50 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.67 2015/04/01 22:24:02 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1018,7 +1018,7 @@ main(int argc, char *argv[])
 
 	if (keys_num == 0) {
 		keys_num = 1;
-		keys = sort_realloc(keys, sizeof(struct key_specs));
+		keys = sort_reallocarray(keys, 1, sizeof(struct key_specs));
 		memset(&(keys[0]), 0, sizeof(struct key_specs));
 		keys[0].c1 = 1;
 		keys[0].pos1b = default_sort_mods->bflag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2015/04/01 20:58:13 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2015/04/01 22:24:02 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -67,17 +67,6 @@ void
 sort_free(void *ptr)
 {
 	free(ptr);
-}
-
-/*
- * realloc() wrapper.
- */
-void *
-sort_realloc(void *ptr, size_t size)
-{
-	if ((ptr = realloc(ptr, size)) == NULL)
-		err(2, NULL);
-	return ptr;
 }
 
 /*
