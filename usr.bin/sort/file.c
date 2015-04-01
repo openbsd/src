@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.6 2015/04/01 19:06:18 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.7 2015/04/01 20:17:56 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -167,12 +167,13 @@ file_is_tmp(const char *fn)
 char *
 new_tmp_file_name(void)
 {
-	static size_t tfcounter = 0;
-	static const char *fn = ".bsdsort.";
 	char *ret;
+	int fd;
 
-	sort_asprintf(&ret, "%s/%s%d.%lu", tmpdir, fn, (int)getpid(),
-	    (unsigned long)(tfcounter++));
+	sort_asprintf(&ret, "%s/.bsdsort.XXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(ret)) == -1)
+		err(2, "%s", ret);
+	close(fd);
 	tmp_file_atexit(ret);
 	return ret;
 }
