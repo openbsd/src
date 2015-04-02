@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.69 2015/04/02 12:43:08 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.70 2015/04/02 20:56:00 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -404,7 +404,7 @@ set_signal_handler(void)
 
 	for (i = 0; signals[i] != 0; i++) {
 		if (sigaction(signals[i], &sa, NULL) < 0) {
-			warn("sigaction(%d)", i);
+			warn("sigaction(%s)", strsignal(signals[i]));
 			continue;
 		}
 	}
