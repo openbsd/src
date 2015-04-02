@@ -1,4 +1,4 @@
-/*	$OpenBSD: radixsort.c,v 1.3 2015/04/01 20:58:13 millert Exp $	*/
+/*	$OpenBSD: radixsort.c,v 1.4 2015/04/02 20:58:43 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2012 Oleg Moskalenko <mom040267@gmail.com>
@@ -177,8 +177,7 @@ static void
 free_sort_level(struct sort_level *sl)
 {
 	if (sl) {
-		if (sl->leaves)
-			sort_free(sl->leaves);
+		sort_free(sl->leaves);
 
 		if (sl->level > 0)
 			sort_free(sl->tosort);
@@ -191,8 +190,7 @@ free_sort_level(struct sort_level *sl)
 
 			for (i = 0; i < sln; ++i) {
 				slc = sl->sublevels[i];
-				if (slc)
-					free_sort_level(slc);
+				free_sort_level(slc);
 			}
 
 			sort_free(sl->sublevels);
@@ -208,10 +206,8 @@ run_sort_level_next(struct sort_level *sl)
 	struct sort_level *slc;
 	size_t i, sln, tosort_num;
 
-	if (sl->sublevels) {
-		sort_free(sl->sublevels);
-		sl->sublevels = NULL;
-	}
+	sort_free(sl->sublevels);
+	sl->sublevels = NULL;
 
 	switch (sl->tosort_num){
 	case 0:
