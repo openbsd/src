@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.73 2015/04/02 21:04:06 tobias Exp $	*/
+/*	$OpenBSD: sort.c,v 1.74 2015/04/02 21:09:51 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -41,6 +41,7 @@
 #include <regex.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -368,6 +369,9 @@ parse_memory_buffer_value(const char *value)
 	case 'b':
 		break;
 	case '%':
+		if (available_free_memory != 0 &&
+		    membuf > ULLONG_MAX / available_free_memory)
+			goto invalid;
 		membuf = (available_free_memory * membuf) /
 		    100;
 		break;
@@ -375,6 +379,8 @@ parse_memory_buffer_value(const char *value)
 		warnc(EINVAL, "%s", optarg);
 		membuf = available_free_memory;
 	}
+	if (membuf > SIZE_MAX)
+		goto invalid;
 	return membuf;
 invalid:
 	errx(2, "invalid memory buffer size: %s", value);
