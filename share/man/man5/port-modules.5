@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.186 2015/03/27 08:17:00 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.187 2015/04/02 13:58:55 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2015 $
+.Dd $Mdocdate: April 2 2015 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -979,6 +979,12 @@ and
 May affect the
 .Ar test
 target.
+If
+.Ev MODPY_PI
+is set to Yes it will set
+.Ev MASTER_SITES .
+The subdirectory can be overriden with
+.Ev MODPY_PI_DIR .
 .Pp
 Python 2.x places .pyc files in the same directory as the associated .py file.
 Python 3.x places these in a separate __pycache__ directory and uses an
