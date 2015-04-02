@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.413 2015/02/24 14:05:50 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.414 2015/04/02 18:36:51 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 24 2015 $
+.Dd $Mdocdate: April 2 2015 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1095,18 +1095,18 @@ However, the extra
 .Sq bootstrap
 rule is needed to take build cycles into account.
 For instance, the
-.Pa devel/dconf,-editor
-subpackage depends on most of GNOME, which in turn requires
-.Pa devel/dconf,-main
+.Pa net/avahi,-gtk3
+has dependencies which in turn requires
+.Pa net/avahi,-main
 to build.
 So
-.Pa devel/dconf
+.Pa net/avahi
 has
-.Li PSEUDO_FLAVORS = no_editor bootstrap
-and the GNOME build first builds
-.Pa devel/dconf,no_editor,bootstrap,-main
+.Li PSEUDO_FLAVORS = no_gui no_mono no_qt3 no_qt4 bootstrap
+and the bulk build first builds
+.Pa net/avahi,no_gui,no_mono,no_qt3,no_qt4,bootstrap,-main
 which is later used to rebuild
-.Pa devel/dconf .
+.Pa net/avahi .
 .It Ev BUILD_PKGPATH
 Full
 .Xr pkgpath 7
