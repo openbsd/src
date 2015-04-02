@@ -1,15 +1,15 @@
-/*	$OpenBSD: libmdoc.h,v 1.68 2015/02/02 04:26:03 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.69 2015/04/02 22:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -37,17 +37,17 @@ struct	mdoc {
 #define	MDOC_SMOFF	 (1 << 9) /* spacing is off */
 #define	MDOC_NODELIMC	 (1 << 10) /* disable closing delimiter handling */
 	enum mdoc_next	  next; /* where to put the next node */
-	struct mdoc_node *last; /* the last node parsed */
-	struct mdoc_node *first; /* the first node parsed */
-	struct mdoc_node *last_es; /* the most recent Es node */
+	struct roff_node *last; /* the last node parsed */
+	struct roff_node *first; /* the first node parsed */
+	struct roff_node *last_es; /* the most recent Es node */
 	struct mdoc_meta  meta; /* document meta-data */
-	enum mdoc_sec	  lastnamed;
-	enum mdoc_sec	  lastsec;
+	enum roff_sec	  lastnamed;
+	enum roff_sec	  lastsec;
 	struct roff	 *roff;
 };
 
 #define	MACRO_PROT_ARGS	struct mdoc *mdoc, \
-			enum mdoct tok, \
+			int tok, \
 			int line, \
 			int ppos, \
 			int *pos, \
@@ -100,28 +100,28 @@ void		  mdoc_macro(MACRO_PROT_ARGS);
 void		  mdoc_word_alloc(struct mdoc *, int, int, const char *);
 void		  mdoc_word_append(struct mdoc *, const char *);
 void		  mdoc_elem_alloc(struct mdoc *, int, int,
-			enum mdoct, struct mdoc_arg *);
-struct mdoc_node *mdoc_block_alloc(struct mdoc *, int, int,
-			enum mdoct, struct mdoc_arg *);
-struct mdoc_node *mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
-void		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
-struct mdoc_node *mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
-struct mdoc_node *mdoc_endbody_alloc(struct mdoc *, int, int, enum mdoct,
-			struct mdoc_node *, enum mdoc_endbody);
-void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
-void		  mdoc_node_relink(struct mdoc *, struct mdoc_node *);
+			int, struct mdoc_arg *);
+struct roff_node *mdoc_block_alloc(struct mdoc *, int, int,
+			int, struct mdoc_arg *);
+struct roff_node *mdoc_head_alloc(struct mdoc *, int, int, int);
+void		  mdoc_tail_alloc(struct mdoc *, int, int, int);
+struct roff_node *mdoc_body_alloc(struct mdoc *, int, int, int);
+struct roff_node *mdoc_endbody_alloc(struct mdoc *, int, int, int,
+			struct roff_node *, enum mdoc_endbody);
+void		  mdoc_node_delete(struct mdoc *, struct roff_node *);
+void		  mdoc_node_relink(struct mdoc *, struct roff_node *);
 void		  mdoc_hash_init(void);
-enum mdoct	  mdoc_hash_find(const char *);
+int		  mdoc_hash_find(const char *);
 const char	 *mdoc_a2att(const char *);
 const char	 *mdoc_a2st(const char *);
 const char	 *mdoc_a2arch(const char *);
-void		  mdoc_valid_pre(struct mdoc *, struct mdoc_node *);
+void		  mdoc_valid_pre(struct mdoc *, struct roff_node *);
 void		  mdoc_valid_post(struct mdoc *);
-void		  mdoc_argv(struct mdoc *, int, enum mdoct,
+void		  mdoc_argv(struct mdoc *, int, int,
 			struct mdoc_arg **, int *, char *);
 void		  mdoc_argv_free(struct mdoc_arg *);
 enum margserr	  mdoc_args(struct mdoc *, int,
-			int *, char *, enum mdoct, char **);
+			int *, char *, int, char **);
 void		  mdoc_macroend(struct mdoc *);
 enum mdelim	  mdoc_isdelim(const char *);
 

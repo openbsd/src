@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.128 2015/04/02 21:03:18 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.129 2015/04/02 22:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -81,19 +81,19 @@ const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
 const	char * const *mdoc_macronames = __mdoc_macronames;
 const	char * const *mdoc_argnames = __mdoc_argnames;
 
-static	void		  mdoc_node_free(struct mdoc_node *);
+static	void		  mdoc_node_free(struct roff_node *);
 static	void		  mdoc_node_unlink(struct mdoc *,
-				struct mdoc_node *);
+				struct roff_node *);
 static	void		  mdoc_free1(struct mdoc *);
 static	void		  mdoc_alloc1(struct mdoc *);
-static	struct mdoc_node *node_alloc(struct mdoc *, int, int,
-				enum mdoct, enum roff_type);
-static	void		  node_append(struct mdoc *, struct mdoc_node *);
+static	struct roff_node *node_alloc(struct mdoc *, int, int,
+				int, enum roff_type);
+static	void		  node_append(struct mdoc *, struct roff_node *);
 static	int		  mdoc_ptext(struct mdoc *, int, char *, int);
 static	int		  mdoc_pmacro(struct mdoc *, int, char *, int);
 
 
-const struct mdoc_node *
+const struct roff_node *
 mdoc_node(const struct mdoc *mdoc)
 {
 
@@ -135,7 +135,7 @@ mdoc_alloc1(struct mdoc *mdoc)
 	memset(&mdoc->meta, 0, sizeof(struct mdoc_meta));
 	mdoc->flags = 0;
 	mdoc->lastnamed = mdoc->lastsec = SEC_NONE;
-	mdoc->last = mandoc_calloc(1, sizeof(struct mdoc_node));
+	mdoc->last = mandoc_calloc(1, sizeof(*mdoc->last));
 	mdoc->first = mdoc->last;
 	mdoc->last->type = ROFFT_ROOT;
 	mdoc->last->tok = MDOC_MAX;
@@ -199,7 +199,7 @@ mdoc_endparse(struct mdoc *mdoc)
 void
 mdoc_addeqn(struct mdoc *mdoc, const struct eqn *ep)
 {
-	struct mdoc_node *n;
+	struct roff_node *n;
 
 	n = node_alloc(mdoc, ep->ln, ep->pos, MDOC_MAX, ROFFT_EQN);
 	n->eqn = ep;
@@ -212,7 +212,7 @@ mdoc_addeqn(struct mdoc *mdoc, const struct eqn *ep)
 void
 mdoc_addspan(struct mdoc *mdoc, const struct tbl_span *sp)
 {
-	struct mdoc_node *n;
+	struct roff_node *n;
 
 	n = node_alloc(mdoc, sp->line, 0, MDOC_MAX, ROFFT_TBL);
 	n->span = sp;
@@ -275,7 +275,7 @@ mdoc_macro(MACRO_PROT_ARGS)
 
 
 static void
-node_append(struct mdoc *mdoc, struct mdoc_node *p)
+node_append(struct mdoc *mdoc, struct roff_node *p)
 {
 
 	assert(mdoc->last);
@@ -352,13 +352,13 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 	}
 }
 
-static struct mdoc_node *
+static struct roff_node *
 node_alloc(struct mdoc *mdoc, int line, int pos,
-		enum mdoct tok, enum roff_type type)
+	int tok, enum roff_type type)
 {
-	struct mdoc_node *p;
+	struct roff_node *p;
 
-	p = mandoc_calloc(1, sizeof(struct mdoc_node));
+	p = mandoc_calloc(1, sizeof(*p));
 	p->sec = mdoc->lastsec;
 	p->line = line;
 	p->pos = pos;
@@ -379,19 +379,19 @@ node_alloc(struct mdoc *mdoc, int line, int pos,
 }
 
 void
-mdoc_tail_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
+mdoc_tail_alloc(struct mdoc *mdoc, int line, int pos, int tok)
 {
-	struct mdoc_node *p;
+	struct roff_node *p;
 
 	p = node_alloc(mdoc, line, pos, tok, ROFFT_TAIL);
 	node_append(mdoc, p);
 	mdoc->next = MDOC_NEXT_CHILD;
 }
 
-struct mdoc_node *
-mdoc_head_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
+struct roff_node *
+mdoc_head_alloc(struct mdoc *mdoc, int line, int pos, int tok)
 {
-	struct mdoc_node *p;
+	struct roff_node *p;
 
 	assert(mdoc->first);
 	assert(mdoc->last);
@@ -401,10 +401,10 @@ mdoc_head_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
 	return(p);
 }
 
-struct mdoc_node *
-mdoc_body_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
+struct roff_node *
+mdoc_body_alloc(struct mdoc *mdoc, int line, int pos, int tok)
 {
-	struct mdoc_node *p;
+	struct roff_node *p;
 
 	p = node_alloc(mdoc, line, pos, tok, ROFFT_BODY);
 	node_append(mdoc, p);
@@ -412,11 +412,11 @@ mdoc_body_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok)
 	return(p);
 }
 
-struct mdoc_node *
-mdoc_endbody_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok,
-		struct mdoc_node *body, enum mdoc_endbody end)
+struct roff_node *
+mdoc_endbody_alloc(struct mdoc *mdoc, int line, int pos, int tok,
+		struct roff_node *body, enum mdoc_endbody end)
 {
-	struct mdoc_node *p;
+	struct roff_node *p;
 
 	body->flags |= MDOC_ENDED;
 	body->parent->flags |= MDOC_ENDED;
@@ -429,11 +429,11 @@ mdoc_endbody_alloc(struct mdoc *mdoc, int line, int pos, enum mdoct tok,
 	return(p);
 }
 
-struct mdoc_node *
+struct roff_node *
 mdoc_block_alloc(struct mdoc *mdoc, int line, int pos,
-		enum mdoct tok, struct mdoc_arg *args)
+	int tok, struct mdoc_arg *args)
 {
-	struct mdoc_node *p;
+	struct roff_node *p;
 
 	p = node_alloc(mdoc, line, pos, tok, ROFFT_BLOCK);
 	p->args = args;
@@ -462,9 +462,9 @@ mdoc_block_alloc(struct mdoc *mdoc, int line, int pos,
 
 void
 mdoc_elem_alloc(struct mdoc *mdoc, int line, int pos,
-		enum mdoct tok, struct mdoc_arg *args)
+	int tok, struct mdoc_arg *args)
 {
-	struct mdoc_node *p;
+	struct roff_node *p;
 
 	p = node_alloc(mdoc, line, pos, tok, ROFFT_ELEM);
 	p->args = args;
@@ -485,7 +485,7 @@ mdoc_elem_alloc(struct mdoc *mdoc, int line, int pos,
 void
 mdoc_word_alloc(struct mdoc *mdoc, int line, int pos, const char *p)
 {
-	struct mdoc_node *n;
+	struct roff_node *n;
 
 	n = node_alloc(mdoc, line, pos, MDOC_MAX, ROFFT_TEXT);
 	n->string = roff_strdup(mdoc->roff, p);
@@ -496,7 +496,7 @@ mdoc_word_alloc(struct mdoc *mdoc, int line, int pos, const char *p)
 void
 mdoc_word_append(struct mdoc *mdoc, const char *p)
 {
-	struct mdoc_node	*n;
+	struct roff_node	*n;
 	char			*addstr, *newstr;
 
 	n = mdoc->last;
@@ -509,7 +509,7 @@ mdoc_word_append(struct mdoc *mdoc, const char *p)
 }
 
 static void
-mdoc_node_free(struct mdoc_node *p)
+mdoc_node_free(struct roff_node *p)
 {
 
 	if (p->type == ROFFT_BLOCK || p->type == ROFFT_ELEM)
@@ -522,7 +522,7 @@ mdoc_node_free(struct mdoc_node *p)
 }
 
 static void
-mdoc_node_unlink(struct mdoc *mdoc, struct mdoc_node *n)
+mdoc_node_unlink(struct mdoc *mdoc, struct roff_node *n)
 {
 
 	/* Adjust siblings. */
@@ -559,7 +559,7 @@ mdoc_node_unlink(struct mdoc *mdoc, struct mdoc_node *n)
 }
 
 void
-mdoc_node_delete(struct mdoc *mdoc, struct mdoc_node *p)
+mdoc_node_delete(struct mdoc *mdoc, struct roff_node *p)
 {
 
 	while (p->child) {
@@ -573,7 +573,7 @@ mdoc_node_delete(struct mdoc *mdoc, struct mdoc_node *p)
 }
 
 void
-mdoc_node_relink(struct mdoc *mdoc, struct mdoc_node *p)
+mdoc_node_relink(struct mdoc *mdoc, struct roff_node *p)
 {
 
 	mdoc_node_unlink(mdoc, p);
@@ -587,8 +587,8 @@ mdoc_node_relink(struct mdoc *mdoc, struct mdoc_node *p)
 static int
 mdoc_ptext(struct mdoc *mdoc, int line, char *buf, int offs)
 {
+	struct roff_node *n;
 	char		 *c, *ws, *end;
-	struct mdoc_node *n;
 
 	assert(mdoc->last);
 	n = mdoc->last;
@@ -703,9 +703,9 @@ mdoc_ptext(struct mdoc *mdoc, int line, char *buf, int offs)
 static int
 mdoc_pmacro(struct mdoc *mdoc, int ln, char *buf, int offs)
 {
-	struct mdoc_node *n;
+	struct roff_node *n;
 	const char	 *cp;
-	enum mdoct	  tok;
+	int		  tok;
 	int		  i, sv;
 	char		  mac[5];
 
@@ -859,7 +859,7 @@ mdoc_isdelim(const char *p)
 }
 
 void
-mdoc_deroff(char **dest, const struct mdoc_node *n)
+mdoc_deroff(char **dest, const struct roff_node *n)
 {
 	char	*cp;
 	size_t	 sz;

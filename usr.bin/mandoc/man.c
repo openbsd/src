@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.98 2015/04/02 21:03:18 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.99 2015/04/02 22:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,20 +48,19 @@ const	char *const __man_macronames[MAN_MAX] = {
 const	char * const *man_macronames = __man_macronames;
 
 static	void		 man_alloc1(struct man *);
-static	void		 man_breakscope(struct man *, enum mant);
+static	void		 man_breakscope(struct man *, int);
 static	void		 man_descope(struct man *, int, int);
 static	void		 man_free1(struct man *);
-static	struct man_node	*man_node_alloc(struct man *, int, int,
-				enum roff_type, enum mant);
-static	void		 man_node_append(struct man *, struct man_node *);
-static	void		 man_node_free(struct man_node *);
-static	void		 man_node_unlink(struct man *,
-				struct man_node *);
+static	struct roff_node *man_node_alloc(struct man *, int, int,
+				enum roff_type, int);
+static	void		 man_node_append(struct man *, struct roff_node *);
+static	void		 man_node_free(struct roff_node *);
+static	void		 man_node_unlink(struct man *, struct roff_node *);
 static	int		 man_ptext(struct man *, int, char *, int);
 static	int		 man_pmacro(struct man *, int, char *, int);
 
 
-const struct man_node *
+const struct roff_node *
 man_node(const struct man *man)
 {
 
@@ -147,7 +146,7 @@ man_alloc1(struct man *man)
 
 	memset(&man->meta, 0, sizeof(struct man_meta));
 	man->flags = 0;
-	man->last = mandoc_calloc(1, sizeof(struct man_node));
+	man->last = mandoc_calloc(1, sizeof(*man->last));
 	man->first = man->last;
 	man->last->type = ROFFT_ROOT;
 	man->last->tok = MAN_MAX;
@@ -156,7 +155,7 @@ man_alloc1(struct man *man)
 
 
 static void
-man_node_append(struct man *man, struct man_node *p)
+man_node_append(struct man *man, struct roff_node *p)
 {
 
 	assert(man->last);
@@ -211,13 +210,13 @@ man_node_append(struct man *man, struct man_node *p)
 	}
 }
 
-static struct man_node *
+static struct roff_node *
 man_node_alloc(struct man *man, int line, int pos,
-		enum roff_type type, enum mant tok)
+		enum roff_type type, int tok)
 {
-	struct man_node *p;
+	struct roff_node *p;
 
-	p = mandoc_calloc(1, sizeof(struct man_node));
+	p = mandoc_calloc(1, sizeof(*p));
 	p->line = line;
 	p->pos = pos;
 	p->type = type;
@@ -230,9 +229,9 @@ man_node_alloc(struct man *man, int line, int pos,
 }
 
 void
-man_elem_alloc(struct man *man, int line, int pos, enum mant tok)
+man_elem_alloc(struct man *man, int line, int pos, int tok)
 {
-	struct man_node *p;
+	struct roff_node *p;
 
 	p = man_node_alloc(man, line, pos, ROFFT_ELEM, tok);
 	man_node_append(man, p);
@@ -240,9 +239,9 @@ man_elem_alloc(struct man *man, int line, int pos, enum mant tok)
 }
 
 void
-man_head_alloc(struct man *man, int line, int pos, enum mant tok)
+man_head_alloc(struct man *man, int line, int pos, int tok)
 {
-	struct man_node *p;
+	struct roff_node *p;
 
 	p = man_node_alloc(man, line, pos, ROFFT_HEAD, tok);
 	man_node_append(man, p);
@@ -250,9 +249,9 @@ man_head_alloc(struct man *man, int line, int pos, enum mant tok)
 }
 
 void
-man_body_alloc(struct man *man, int line, int pos, enum mant tok)
+man_body_alloc(struct man *man, int line, int pos, int tok)
 {
-	struct man_node *p;
+	struct roff_node *p;
 
 	p = man_node_alloc(man, line, pos, ROFFT_BODY, tok);
 	man_node_append(man, p);
@@ -260,9 +259,9 @@ man_body_alloc(struct man *man, int line, int pos, enum mant tok)
 }
 
 void
-man_block_alloc(struct man *man, int line, int pos, enum mant tok)
+man_block_alloc(struct man *man, int line, int pos, int tok)
 {
-	struct man_node *p;
+	struct roff_node *p;
 
 	p = man_node_alloc(man, line, pos, ROFFT_BLOCK, tok);
 	man_node_append(man, p);
@@ -272,7 +271,7 @@ man_block_alloc(struct man *man, int line, int pos, enum mant tok)
 void
 man_word_alloc(struct man *man, int line, int pos, const char *word)
 {
-	struct man_node	*n;
+	struct roff_node *n;
 
 	n = man_node_alloc(man, line, pos, ROFFT_TEXT, MAN_MAX);
 	n->string = roff_strdup(man->roff, word);
@@ -283,7 +282,7 @@ man_word_alloc(struct man *man, int line, int pos, const char *word)
 void
 man_word_append(struct man *man, const char *word)
 {
-	struct man_node	*n;
+	struct roff_node *n;
 	char		*addstr, *newstr;
 
 	n = man->last;
@@ -300,7 +299,7 @@ man_word_append(struct man *man, const char *word)
  * node from its context; for that, see man_node_unlink().
  */
 static void
-man_node_free(struct man_node *p)
+man_node_free(struct roff_node *p)
 {
 
 	free(p->string);
@@ -308,7 +307,7 @@ man_node_free(struct man_node *p)
 }
 
 void
-man_node_delete(struct man *man, struct man_node *p)
+man_node_delete(struct man *man, struct roff_node *p)
 {
 
 	while (p->child)
@@ -321,7 +320,7 @@ man_node_delete(struct man *man, struct man_node *p)
 void
 man_addeqn(struct man *man, const struct eqn *ep)
 {
-	struct man_node	*n;
+	struct roff_node *n;
 
 	n = man_node_alloc(man, ep->ln, ep->pos, ROFFT_EQN, MAN_MAX);
 	n->eqn = ep;
@@ -335,7 +334,7 @@ man_addeqn(struct man *man, const struct eqn *ep)
 void
 man_addspan(struct man *man, const struct tbl_span *sp)
 {
-	struct man_node	*n;
+	struct roff_node *n;
 
 	man_breakscope(man, MAN_MAX);
 	n = man_node_alloc(man, sp->line, 0, ROFFT_TBL, MAN_MAX);
@@ -436,9 +435,9 @@ man_ptext(struct man *man, int line, char *buf, int offs)
 static int
 man_pmacro(struct man *man, int ln, char *buf, int offs)
 {
-	struct man_node	*n;
+	struct roff_node *n;
 	const char	*cp;
-	enum mant	 tok;
+	int		 tok;
 	int		 i, ppos;
 	int		 bline;
 	char		 mac[5];
@@ -534,9 +533,9 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 }
 
 void
-man_breakscope(struct man *man, enum mant tok)
+man_breakscope(struct man *man, int tok)
 {
-	struct man_node	*n;
+	struct roff_node *n;
 
 	/*
 	 * An element next line scope is open,
@@ -594,7 +593,7 @@ man_breakscope(struct man *man, enum mant tok)
  * point will also be adjusted accordingly.
  */
 static void
-man_node_unlink(struct man *man, struct man_node *n)
+man_node_unlink(struct man *man, struct roff_node *n)
 {
 
 	/* Adjust siblings. */
@@ -639,7 +638,7 @@ man_mparse(const struct man *man)
 }
 
 void
-man_deroff(char **dest, const struct man_node *n)
+man_deroff(char **dest, const struct roff_node *n)
 {
 	char	*cp;
 	size_t	 sz;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.213 2015/04/02 21:03:18 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.214 2015/04/02 22:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -42,7 +42,7 @@ struct	termpair {
 #define	DECL_ARGS struct termp *p, \
 		  struct termpair *pair, \
 		  const struct mdoc_meta *meta, \
-		  struct mdoc_node *n
+		  struct roff_node *n
 
 struct	termact {
 	int	(*pre)(DECL_ARGS);
@@ -52,14 +52,14 @@ struct	termact {
 static	int	  a2width(const struct termp *, const char *);
 
 static	void	  print_bvspace(struct termp *,
-			const struct mdoc_node *,
-			const struct mdoc_node *);
+			const struct roff_node *,
+			const struct roff_node *);
 static	void	  print_mdoc_node(DECL_ARGS);
 static	void	  print_mdoc_nodelist(DECL_ARGS);
 static	void	  print_mdoc_head(struct termp *, const void *);
 static	void	  print_mdoc_foot(struct termp *, const void *);
 static	void	  synopsis_pre(struct termp *,
-			const struct mdoc_node *);
+			const struct roff_node *);
 
 static	void	  termp____post(DECL_ARGS);
 static	void	  termp__t_post(DECL_ARGS);
@@ -252,7 +252,7 @@ void
 terminal_mdoc(void *arg, const struct mdoc *mdoc)
 {
 	const struct mdoc_meta	*meta;
-	struct mdoc_node	*n;
+	struct roff_node	*n;
 	struct termp		*p;
 
 	p = (struct termp *)arg;
@@ -547,10 +547,10 @@ a2width(const struct termp *p, const char *v)
  */
 static void
 print_bvspace(struct termp *p,
-	const struct mdoc_node *bl,
-	const struct mdoc_node *n)
+	const struct roff_node *bl,
+	const struct roff_node *n)
 {
-	const struct mdoc_node	*nn;
+	const struct roff_node	*nn;
 
 	assert(n);
 
@@ -608,7 +608,7 @@ static int
 termp_it_pre(DECL_ARGS)
 {
 	char			buf[24];
-	const struct mdoc_node *bl, *nn;
+	const struct roff_node *bl, *nn;
 	size_t			ncols, dcol;
 	int			i, offset, width;
 	enum mdoc_list		type;
@@ -1265,7 +1265,7 @@ termp_xr_pre(DECL_ARGS)
  * macro combos).
  */
 static void
-synopsis_pre(struct termp *p, const struct mdoc_node *n)
+synopsis_pre(struct termp *p, const struct roff_node *n)
 {
 	/*
 	 * Obviously, if we're not in a SYNOPSIS or no prior macros
@@ -1513,7 +1513,7 @@ termp_fn_pre(DECL_ARGS)
 static int
 termp_fa_pre(DECL_ARGS)
 {
-	const struct mdoc_node	*nn;
+	const struct roff_node	*nn;
 
 	if (n->parent->tok != MDOC_Fo) {
 		term_fontpush(p, TERMFONT_UNDER);
@@ -1539,7 +1539,7 @@ static int
 termp_bd_pre(DECL_ARGS)
 {
 	size_t			 tabwidth, lm, len, rm, rmax;
-	struct mdoc_node	*nn;
+	struct roff_node	*nn;
 	int			 offset;
 
 	if (n->type == ROFFT_BLOCK) {
@@ -2168,7 +2168,7 @@ termp_li_pre(DECL_ARGS)
 static int
 termp_lk_pre(DECL_ARGS)
 {
-	const struct mdoc_node *link, *descr;
+	const struct roff_node *link, *descr;
 
 	if (NULL == (link = n->child))
 		return(0);

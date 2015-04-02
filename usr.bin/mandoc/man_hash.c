@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_hash.c,v 1.20 2015/04/02 21:03:18 schwarze Exp $ */
+/*	$OpenBSD: man_hash.c,v 1.21 2015/04/02 22:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,11 +75,11 @@ man_hash_init(void)
 	}
 }
 
-enum mant
+int
 man_hash_find(const char *tmp)
 {
 	int		 x, y, i;
-	enum mant	 tok;
+	int		 tok;
 
 	if ('\0' == (x = tmp[0]))
 		return(MAN_MAX);
@@ -92,7 +92,7 @@ man_hash_find(const char *tmp)
 		if (UCHAR_MAX == (y = table[x + i]))
 			return(MAN_MAX);
 
-		tok = (enum mant)y;
+		tok = y;
 		if (0 == strcmp(tmp, man_macronames[tok]))
 			return(tok);
 	}

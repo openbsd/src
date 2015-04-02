@@ -1,4 +1,4 @@
-/*	$OpenBSD: libman.h,v 1.43 2015/03/20 12:53:43 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.44 2015/04/02 22:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -7,9 +7,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -31,14 +31,14 @@ struct	man {
 #define	MAN_LITERAL	(1 << 4) /* Literal input. */
 #define	MAN_NEWLINE	(1 << 6) /* first macro/text in a line */
 	enum man_next	 next; /* where to put the next node */
-	struct man_node	*last; /* the last parsed node */
-	struct man_node	*first; /* the first parsed node */
+	struct roff_node *last; /* the last parsed node */
+	struct roff_node *first; /* the first parsed node */
 	struct man_meta	 meta; /* document meta-data */
 	struct roff	*roff;
 };
 
 #define	MACRO_PROT_ARGS	  struct man *man, \
-			  enum mant tok, \
+			  int tok, \
 			  int line, \
 			  int ppos, \
 			  int *pos, \
@@ -59,15 +59,15 @@ __BEGIN_DECLS
 
 void		  man_word_alloc(struct man *, int, int, const char *);
 void		  man_word_append(struct man *, const char *);
-void		  man_block_alloc(struct man *, int, int, enum mant);
-void		  man_head_alloc(struct man *, int, int, enum mant);
-void		  man_body_alloc(struct man *, int, int, enum mant);
-void		  man_elem_alloc(struct man *, int, int, enum mant);
-void		  man_node_delete(struct man *, struct man_node *);
+void		  man_block_alloc(struct man *, int, int, int);
+void		  man_head_alloc(struct man *, int, int, int);
+void		  man_body_alloc(struct man *, int, int, int);
+void		  man_elem_alloc(struct man *, int, int, int);
+void		  man_node_delete(struct man *, struct roff_node *);
 void		  man_hash_init(void);
-enum mant	  man_hash_find(const char *);
+int		  man_hash_find(const char *);
 void		  man_macroend(struct man *);
 void		  man_valid_post(struct man *);
-void		  man_unscope(struct man *, const struct man_node *);
+void		  man_unscope(struct man *, const struct roff_node *);
 
 __END_DECLS

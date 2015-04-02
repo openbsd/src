@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.102 2015/04/02 21:03:18 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.103 2015/04/02 22:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,7 +34,7 @@
 #define	INDENT		 5
 
 #define	MDOC_ARGS	  const struct mdoc_meta *meta, \
-			  struct mdoc_node *n, \
+			  struct roff_node *n, \
 			  struct html *h
 
 #ifndef MIN
@@ -51,7 +51,7 @@ static	void		  print_mdoc_head(MDOC_ARGS);
 static	void		  print_mdoc_node(MDOC_ARGS);
 static	void		  print_mdoc_nodelist(MDOC_ARGS);
 static	void		  synopsis_pre(struct html *,
-				const struct mdoc_node *);
+				const struct roff_node *);
 
 static	void		  a2width(const char *, struct roffsu *);
 
@@ -291,7 +291,7 @@ a2width(const char *p, struct roffsu *su)
  * See the same function in mdoc_term.c for documentation.
  */
 static void
-synopsis_pre(struct html *h, const struct mdoc_node *n)
+synopsis_pre(struct html *h, const struct roff_node *n)
 {
 
 	if (NULL == n->prev || ! (MDOC_SYNPRETTY & n->flags))
@@ -820,7 +820,7 @@ mdoc_it_pre(MDOC_ARGS)
 	struct roffsu	 su;
 	enum mdoc_list	 type;
 	struct htmlpair	 tag[2];
-	const struct mdoc_node *bl;
+	const struct roff_node *bl;
 
 	bl = n->parent;
 	while (bl && MDOC_Bl != bl->tok)
@@ -1124,7 +1124,7 @@ mdoc_bd_pre(MDOC_ARGS)
 {
 	struct htmlpair		 tag[2];
 	int			 comp, sv;
-	struct mdoc_node	*nn;
+	struct roff_node	*nn;
 	struct roffsu		 su;
 
 	if (n->type == ROFFT_HEAD)
@@ -1310,7 +1310,7 @@ mdoc_er_pre(MDOC_ARGS)
 static int
 mdoc_fa_pre(MDOC_ARGS)
 {
-	const struct mdoc_node	*nn;
+	const struct roff_node	*nn;
 	struct htmlpair		 tag;
 	struct tag		*t;
 
