@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.16 2015/04/02 12:21:18 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.17 2015/04/02 12:48:28 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -482,41 +482,30 @@ openfile(const char *fn, const char *mode)
 {
 	FILE *file;
 
-	if (strcmp(fn, "-") == 0) {
-		return (mode && mode[0] == 'r') ? stdin : stdout;
-	} else {
-		mode_t orig_file_mask = 0;
-		int is_tmp = file_is_tmp(fn);
+	if (strcmp(fn, "-") == 0)
+		return (mode[0] == 'r') ? stdin : stdout;
 
-		if (is_tmp && (mode[0] == 'w'))
-			orig_file_mask = umask(S_IWGRP | S_IWOTH |
-			    S_IRGRP | S_IROTH);
+	if (file_is_tmp(fn) && (compress_program != NULL)) {
+		char *cmd;
 
-		if (is_tmp && (compress_program != NULL)) {
-			char *cmd;
+		fflush(stdout);
 
-			fflush(stdout);
+		if (mode[0] == 'r')
+			sort_asprintf(&cmd, "%s -d < %s",
+			    compress_program, fn);
+		else if (mode[0] == 'w')
+			sort_asprintf(&cmd, "%s > %s",
+			    compress_program, fn);
+		else
+			err(2, "invalid file mode");
 
-			if (mode[0] == 'r')
-				sort_asprintf(&cmd, "%s -d < %s",
-				    compress_program, fn);
-			else if (mode[0] == 'w')
-				sort_asprintf(&cmd, "%s > %s",
-				    compress_program, fn);
-			else
-				err(2, "Wrong file mode");
+		if ((file = popen(cmd, mode)) == NULL)
+			err(2, "%s", compress_program);
 
-			if ((file = popen(cmd, mode)) == NULL)
-				err(2, NULL);
+		sort_free(cmd);
 
-			sort_free(cmd);
-
-		} else if ((file = fopen(fn, mode)) == NULL)
-			err(2, "%s", fn);
-
-		if (is_tmp && (mode[0] == 'w'))
-			umask(orig_file_mask);
-	}
+	} else if ((file = fopen(fn, mode)) == NULL)
+		err(2, "%s", fn);
 
 	return file;
 }
