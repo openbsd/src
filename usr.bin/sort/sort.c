@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.70 2015/04/02 20:56:00 tobias Exp $	*/
+/*	$OpenBSD: sort.c,v 1.71 2015/04/02 20:57:34 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -302,7 +302,7 @@ set_tmpdir(void)
 
 		td = getenv("TMPDIR");
 		if (td != NULL)
-			tmpdir = sort_strdup(td);
+			tmpdir = td;
 	}
 }
 
@@ -925,7 +925,7 @@ main(int argc, char *argv[])
 				    parse_memory_buffer_value(optarg);
 				break;
 			case 'T':
-				tmpdir = sort_strdup(optarg);
+				tmpdir = optarg;
 				break;
 			case 't':
 				while (strlen(optarg) > 1) {
@@ -993,10 +993,10 @@ main(int argc, char *argv[])
 				sort_opts_vals.sort_method = SORT_RADIXSORT;
 				break;
 			case RANDOMSOURCE_OPT:
-				random_source = strdup(optarg);
+				random_source = optarg;
 				break;
 			case COMPRESSPROGRAM_OPT:
-				compress_program = strdup(optarg);
+				compress_program = optarg;
 				break;
 			case FF_OPT:
 				read_fns_from_file0(optarg);
