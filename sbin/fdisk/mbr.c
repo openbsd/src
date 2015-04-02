@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.51 2015/03/30 17:11:49 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.52 2015/04/02 18:00:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -160,6 +160,7 @@ MBR_print(struct mbr *mbr, char *units)
 	int i;
 
 	/* Header */
+	printf("Offset: %lld\t", (long long)mbr->offset);
 	printf("Signature: 0x%X\n", (int)mbr->signature);
 	PRT_print(0, NULL, units);
 

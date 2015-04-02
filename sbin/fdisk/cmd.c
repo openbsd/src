@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.81 2015/03/26 20:32:10 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.82 2015/04/02 18:00:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,7 +49,6 @@ Xreinit(char *args, struct mbr *mbr)
 
 	/* Tell em we did something */
 	printf("In memory copy is initialized to:\n");
-	printf("Offset: %lld\t", (long long)mbr->offset);
 	MBR_print(mbr, args);
 	printf("Use 'write' to update disk.\n");
 
@@ -260,7 +259,6 @@ Xprint(char *args, struct mbr *mbr)
 {
 
 	DISK_printgeometry(args);
-	printf("Offset: %lld\t", (long long)mbr->offset);
 	MBR_print(mbr, args);
 
 	return (CMD_CONT);
