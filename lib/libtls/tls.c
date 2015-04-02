@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.8 2015/03/31 12:21:27 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.9 2015/04/02 13:19:15 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -326,12 +326,15 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 int
 tls_close(struct tls *ctx)
 {
-	/* XXX - handle case where multiple calls are required. */
+	int ssl_ret;
+
 	if (ctx->ssl_conn != NULL) {
-		if (SSL_shutdown(ctx->ssl_conn) == -1) {
-			tls_set_error(ctx, "SSL shutdown failed");
-			goto err;
-		}
+		ssl_ret = SSL_shutdown(ctx->ssl_conn);
+		if (ssl_ret == 0)
+			ssl_ret = SSL_shutdown(ctx->ssl_conn);
+		if (ssl_ret < 0)
+			return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret,
+			    "shutdown");
 	}
 
 	if (ctx->socket != -1) {

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.21 2015/04/02 05:54:22 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.22 2015/04/02 13:19:15 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -407,6 +407,7 @@ will return 0 on success and -1 on error.
 Functions that return a pointer will return NULL on error.
 .Pp
 The
+.Fn tls_close ,
 .Fn tls_read
 and
 .Fn tls_write
@@ -424,8 +425,10 @@ A write operation is necessary to continue.
 .El
 .Pp
 The caller should call the appropriate function, or in the case of the
+.Fn tls_close
+and the
 .Fn tls_accept
-or
+and
 .Fn tls_connect
 function families, repeat the call.
 .Sh ERRORS
