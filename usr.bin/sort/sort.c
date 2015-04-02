@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.68 2015/04/01 22:49:47 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.69 2015/04/02 12:43:08 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -394,8 +394,8 @@ static void
 set_signal_handler(void)
 {
 	struct sigaction sa;
-	int i, signals[] = {SIGTERM, SIGHUP, SIGINT, SIGQUIT, SIGUSR1, SIGUSR2,
-	    SIGPIPE, SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF, 0};
+	int i, signals[] = {SIGTERM, SIGHUP, SIGINT, SIGUSR1, SIGUSR2,
+	    SIGPIPE, SIGXCPU, SIGXFSZ, 0};
 
 	memset(&sa, 0, sizeof(sa));
 	sigfillset(&sa.sa_mask);
