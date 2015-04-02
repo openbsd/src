@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.29 2015/02/05 00:13:34 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.30 2015/04/02 21:03:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -7,9 +7,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -24,6 +24,7 @@
 #include <time.h>
 
 #include "mandoc.h"
+#include "roff.h"
 #include "mdoc.h"
 #include "man.h"
 #include "main.h"
@@ -64,33 +65,33 @@ print_mdoc(const struct mdoc_node *n, int indent)
 	t = p = NULL;
 
 	switch (n->type) {
-	case MDOC_ROOT:
+	case ROFFT_ROOT:
 		t = "root";
 		break;
-	case MDOC_BLOCK:
+	case ROFFT_BLOCK:
 		t = "block";
 		break;
-	case MDOC_HEAD:
+	case ROFFT_HEAD:
 		t = "block-head";
 		break;
-	case MDOC_BODY:
+	case ROFFT_BODY:
 		if (n->end)
 			t = "body-end";
 		else
 			t = "block-body";
 		break;
-	case MDOC_TAIL:
+	case ROFFT_TAIL:
 		t = "block-tail";
 		break;
-	case MDOC_ELEM:
+	case ROFFT_ELEM:
 		t = "elem";
 		break;
-	case MDOC_TEXT:
+	case ROFFT_TEXT:
 		t = "text";
 		break;
-	case MDOC_TBL:
+	case ROFFT_TBL:
 		break;
-	case MDOC_EQN:
+	case ROFFT_EQN:
 		t = "eqn";
 		break;
 	default:
@@ -99,38 +100,38 @@ print_mdoc(const struct mdoc_node *n, int indent)
 	}
 
 	switch (n->type) {
-	case MDOC_TEXT:
+	case ROFFT_TEXT:
 		p = n->string;
 		break;
-	case MDOC_BODY:
+	case ROFFT_BODY:
 		p = mdoc_macronames[n->tok];
 		break;
-	case MDOC_HEAD:
+	case ROFFT_HEAD:
 		p = mdoc_macronames[n->tok];
 		break;
-	case MDOC_TAIL:
+	case ROFFT_TAIL:
 		p = mdoc_macronames[n->tok];
 		break;
-	case MDOC_ELEM:
-		p = mdoc_macronames[n->tok];
-		if (n->args) {
-			argv = n->args->argv;
-			argc = n->args->argc;
-		}
-		break;
-	case MDOC_BLOCK:
+	case ROFFT_ELEM:
 		p = mdoc_macronames[n->tok];
 		if (n->args) {
 			argv = n->args->argv;
 			argc = n->args->argc;
 		}
 		break;
-	case MDOC_TBL:
+	case ROFFT_BLOCK:
+		p = mdoc_macronames[n->tok];
+		if (n->args) {
+			argv = n->args->argv;
+			argc = n->args->argc;
+		}
 		break;
-	case MDOC_EQN:
+	case ROFFT_TBL:
+		break;
+	case ROFFT_EQN:
 		p = "EQ";
 		break;
-	case MDOC_ROOT:
+	case ROFFT_ROOT:
 		p = "root";
 		break;
 	default:
@@ -167,7 +168,7 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		print_box(n->eqn->root->first, indent + 4);
 	if (n->child)
 		print_mdoc(n->child, indent +
-		    (n->type == MDOC_BLOCK ? 2 : 4));
+		    (n->type == ROFFT_BLOCK ? 2 : 4));
 	if (n->next)
 		print_mdoc(n->next, indent);
 }
@@ -184,27 +185,27 @@ print_man(const struct man_node *n, int indent)
 	t = p = NULL;
 
 	switch (n->type) {
-	case MAN_ROOT:
+	case ROFFT_ROOT:
 		t = "root";
 		break;
-	case MAN_ELEM:
+	case ROFFT_ELEM:
 		t = "elem";
 		break;
-	case MAN_TEXT:
+	case ROFFT_TEXT:
 		t = "text";
 		break;
-	case MAN_BLOCK:
+	case ROFFT_BLOCK:
 		t = "block";
 		break;
-	case MAN_HEAD:
+	case ROFFT_HEAD:
 		t = "block-head";
 		break;
-	case MAN_BODY:
+	case ROFFT_BODY:
 		t = "block-body";
 		break;
-	case MAN_TBL:
+	case ROFFT_TBL:
 		break;
-	case MAN_EQN:
+	case ROFFT_EQN:
 		t = "eqn";
 		break;
 	default:
@@ -213,24 +214,24 @@ print_man(const struct man_node *n, int indent)
 	}
 
 	switch (n->type) {
-	case MAN_TEXT:
+	case ROFFT_TEXT:
 		p = n->string;
 		break;
-	case MAN_ELEM:
+	case ROFFT_ELEM:
 		/* FALLTHROUGH */
-	case MAN_BLOCK:
+	case ROFFT_BLOCK:
 		/* FALLTHROUGH */
-	case MAN_HEAD:
+	case ROFFT_HEAD:
 		/* FALLTHROUGH */
-	case MAN_BODY:
+	case ROFFT_BODY:
 		p = man_macronames[n->tok];
 		break;
-	case MAN_ROOT:
+	case ROFFT_ROOT:
 		p = "root";
 		break;
-	case MAN_TBL:
+	case ROFFT_TBL:
 		break;
-	case MAN_EQN:
+	case ROFFT_EQN:
 		p = "EQ";
 		break;
 	default:
@@ -254,7 +255,7 @@ print_man(const struct man_node *n, int indent)
 		print_box(n->eqn->root->first, indent + 4);
 	if (n->child)
 		print_man(n->child, indent +
-		    (n->type == MAN_BLOCK ? 2 : 4));
+		    (n->type == ROFFT_BLOCK ? 2 : 4));
 	if (n->next)
 		print_man(n->next, indent);
 }

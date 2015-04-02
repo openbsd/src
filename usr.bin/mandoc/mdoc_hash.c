@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_hash.c,v 1.16 2014/11/28 19:25:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc_hash.c,v 1.17 2015/04/02 21:03:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "roff.h"
 #include "mdoc.h"
 #include "libmdoc.h"
 

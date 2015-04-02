@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.h,v 1.49 2015/01/24 02:41:32 schwarze Exp $ */
+/*	$OpenBSD: man.h,v 1.50 2015/04/02 21:03:18 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,17 +58,6 @@ enum	mant {
 	MAN_MAX
 };
 
-enum	man_type {
-	MAN_TEXT,
-	MAN_ELEM,
-	MAN_ROOT,
-	MAN_BLOCK,
-	MAN_HEAD,
-	MAN_BODY,
-	MAN_TBL,
-	MAN_EQN
-};
-
 struct	man_meta {
 	char		*msec; /* `TH' section (1, 3p, etc.) */
 	char		*date; /* `TH' normalised date */
@@ -91,7 +80,7 @@ struct	man_node {
 #define	MAN_VALID	(1 << 0) /* has been validated */
 #define	MAN_EOS		(1 << 2) /* at sentence boundary */
 #define	MAN_LINE	(1 << 3) /* first macro/text on line */
-	enum man_type	 type; /* AST node type */
+	enum roff_type	 type; /* AST node type */
 	char		*string; /* TEXT node argument */
 	struct man_node	*head; /* BLOCK node HEAD ptr */
 	struct man_node *tail; /* BLOCK node TAIL ptr */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.97 2015/01/30 21:28:21 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.98 2015/04/02 21:03:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -8,9 +8,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -25,11 +25,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "man.h"
-#include "mandoc.h"
 #include "mandoc_aux.h"
-#include "libman.h"
+#include "mandoc.h"
+#include "roff.h"
+#include "man.h"
 #include "libmandoc.h"
+#include "libman.h"
 
 const	char *const __man_macronames[MAN_MAX] = {
 	"br",		"TH",		"SH",		"SS",
@@ -51,7 +52,7 @@ static	void		 man_breakscope(struct man *, enum mant);
 static	void		 man_descope(struct man *, int, int);
 static	void		 man_free1(struct man *);
 static	struct man_node	*man_node_alloc(struct man *, int, int,
-				enum man_type, enum mant);
+				enum roff_type, enum mant);
 static	void		 man_node_append(struct man *, struct man_node *);
 static	void		 man_node_free(struct man_node *);
 static	void		 man_node_unlink(struct man *,
@@ -119,7 +120,7 @@ int
 man_parseln(struct man *man, int ln, char *buf, int offs)
 {
 
-	if (man->last->type != MAN_EQN || ln > man->last->line)
+	if (man->last->type != ROFFT_EQN || ln > man->last->line)
 		man->flags |= MAN_NEWLINE;
 
 	return (roff_getcontrol(man->roff, buf, &offs) ?
@@ -148,7 +149,7 @@ man_alloc1(struct man *man)
 	man->flags = 0;
 	man->last = mandoc_calloc(1, sizeof(struct man_node));
 	man->first = man->last;
-	man->last->type = MAN_ROOT;
+	man->last->type = ROFFT_ROOT;
 	man->last->tok = MAN_MAX;
 	man->next = MAN_NEXT_CHILD;
 }
@@ -160,7 +161,7 @@ man_node_append(struct man *man, struct man_node *p)
 
 	assert(man->last);
 	assert(man->first);
-	assert(p->type != MAN_ROOT);
+	assert(p->type != ROFFT_ROOT);
 
 	switch (man->next) {
 	case MAN_NEXT_SIBLING:
@@ -181,16 +182,16 @@ man_node_append(struct man *man, struct man_node *p)
 	p->parent->nchild++;
 
 	switch (p->type) {
-	case MAN_BLOCK:
+	case ROFFT_BLOCK:
 		if (p->tok == MAN_SH || p->tok == MAN_SS)
 			man->flags &= ~MAN_LITERAL;
 		break;
-	case MAN_HEAD:
-		assert(p->parent->type == MAN_BLOCK);
+	case ROFFT_HEAD:
+		assert(p->parent->type == ROFFT_BLOCK);
 		p->parent->head = p;
 		break;
-	case MAN_BODY:
-		assert(p->parent->type == MAN_BLOCK);
+	case ROFFT_BODY:
+		assert(p->parent->type == ROFFT_BLOCK);
 		p->parent->body = p;
 		break;
 	default:
@@ -200,9 +201,9 @@ man_node_append(struct man *man, struct man_node *p)
 	man->last = p;
 
 	switch (p->type) {
-	case MAN_TBL:
+	case ROFFT_TBL:
 		/* FALLTHROUGH */
-	case MAN_TEXT:
+	case ROFFT_TEXT:
 		man_valid_post(man);
 		break;
 	default:
@@ -212,7 +213,7 @@ man_node_append(struct man *man, struct man_node *p)
 
 static struct man_node *
 man_node_alloc(struct man *man, int line, int pos,
-		enum man_type type, enum mant tok)
+		enum roff_type type, enum mant tok)
 {
 	struct man_node *p;
 
@@ -233,7 +234,7 @@ man_elem_alloc(struct man *man, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
-	p = man_node_alloc(man, line, pos, MAN_ELEM, tok);
+	p = man_node_alloc(man, line, pos, ROFFT_ELEM, tok);
 	man_node_append(man, p);
 	man->next = MAN_NEXT_CHILD;
 }
@@ -243,7 +244,7 @@ man_head_alloc(struct man *man, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
-	p = man_node_alloc(man, line, pos, MAN_HEAD, tok);
+	p = man_node_alloc(man, line, pos, ROFFT_HEAD, tok);
 	man_node_append(man, p);
 	man->next = MAN_NEXT_CHILD;
 }
@@ -253,7 +254,7 @@ man_body_alloc(struct man *man, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
-	p = man_node_alloc(man, line, pos, MAN_BODY, tok);
+	p = man_node_alloc(man, line, pos, ROFFT_BODY, tok);
 	man_node_append(man, p);
 	man->next = MAN_NEXT_CHILD;
 }
@@ -263,7 +264,7 @@ man_block_alloc(struct man *man, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
-	p = man_node_alloc(man, line, pos, MAN_BLOCK, tok);
+	p = man_node_alloc(man, line, pos, ROFFT_BLOCK, tok);
 	man_node_append(man, p);
 	man->next = MAN_NEXT_CHILD;
 }
@@ -273,7 +274,7 @@ man_word_alloc(struct man *man, int line, int pos, const char *word)
 {
 	struct man_node	*n;
 
-	n = man_node_alloc(man, line, pos, MAN_TEXT, MAN_MAX);
+	n = man_node_alloc(man, line, pos, ROFFT_TEXT, MAN_MAX);
 	n->string = roff_strdup(man->roff, word);
 	man_node_append(man, n);
 	man->next = MAN_NEXT_SIBLING;
@@ -322,7 +323,7 @@ man_addeqn(struct man *man, const struct eqn *ep)
 {
 	struct man_node	*n;
 
-	n = man_node_alloc(man, ep->ln, ep->pos, MAN_EQN, MAN_MAX);
+	n = man_node_alloc(man, ep->ln, ep->pos, ROFFT_EQN, MAN_MAX);
 	n->eqn = ep;
 	if (ep->ln > man->last->line)
 		n->flags |= MAN_LINE;
@@ -337,7 +338,7 @@ man_addspan(struct man *man, const struct tbl_span *sp)
 	struct man_node	*n;
 
 	man_breakscope(man, MAN_MAX);
-	n = man_node_alloc(man, sp->line, 0, MAN_TBL, MAN_MAX);
+	n = man_node_alloc(man, sp->line, 0, ROFFT_TBL, MAN_MAX);
 	n->span = sp;
 	man_node_append(man, n);
 	man->next = MAN_NEXT_SIBLING;
@@ -509,7 +510,7 @@ man_pmacro(struct man *man, int ln, char *buf, int offs)
 
 	if (man->quick && tok == MAN_SH) {
 		n = man->last;
-		if (n->type == MAN_BODY &&
+		if (n->type == ROFFT_BODY &&
 		    strcmp(n->prev->child->string, "NAME"))
 			return(2);
 	}
@@ -546,7 +547,7 @@ man_breakscope(struct man *man, enum mant tok)
 	if (man->flags & MAN_ELINE && (tok == MAN_MAX ||
 	    ! (man_macros[tok].flags & MAN_NSCOPED))) {
 		n = man->last;
-		assert(n->type != MAN_TEXT);
+		assert(n->type != ROFFT_TEXT);
 		if (man_macros[n->tok].flags & MAN_NSCOPED)
 			n = n->parent;
 
@@ -568,14 +569,14 @@ man_breakscope(struct man *man, enum mant tok)
 	if (man->flags & MAN_BLINE && (tok == MAN_MAX ||
 	    man_macros[tok].flags & MAN_BSCOPE)) {
 		n = man->last;
-		if (n->type == MAN_TEXT)
+		if (n->type == ROFFT_TEXT)
 			n = n->parent;
 		if ( ! (man_macros[n->tok].flags & MAN_BSCOPE))
 			n = n->parent;
 
-		assert(n->type == MAN_HEAD);
+		assert(n->type == ROFFT_HEAD);
 		n = n->parent;
-		assert(n->type == MAN_BLOCK);
+		assert(n->type == ROFFT_BLOCK);
 		assert(man_macros[n->tok].flags & MAN_SCOPED);
 
 		mandoc_vmsg(MANDOCERR_BLK_LINE, man->parse,
@@ -643,7 +644,7 @@ man_deroff(char **dest, const struct man_node *n)
 	char	*cp;
 	size_t	 sz;
 
-	if (n->type != MAN_TEXT) {
+	if (n->type != ROFFT_TEXT) {
 		for (n = n->child; n; n = n->next)
 			man_deroff(dest, n);
 		return;

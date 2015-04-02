@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.139 2015/02/12 12:20:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.140 2015/04/02 21:03:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -7,9 +7,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -24,10 +24,11 @@
 #include <string.h>
 #include <time.h>
 
-#include "mdoc.h"
 #include "mandoc.h"
-#include "libmdoc.h"
+#include "roff.h"
+#include "mdoc.h"
 #include "libmandoc.h"
+#include "libmdoc.h"
 
 static	void		blk_full(MACRO_PROT_ARGS);
 static	void		blk_exp_close(MACRO_PROT_ARGS);
@@ -215,7 +216,7 @@ mdoc_macroend(struct mdoc *mdoc)
 	    mdoc->last->parent : mdoc->last;
 
 	for ( ; n; n = n->parent)
-		if (n->type == MDOC_BLOCK &&
+		if (n->type == ROFFT_BLOCK &&
 		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT)
 			mandoc_msg(MANDOCERR_BLK_NOEND, mdoc->parse,
 			    n->line, n->pos, mdoc_macronames[n->tok]);
@@ -285,10 +286,10 @@ rew_pending(struct mdoc *mdoc, const struct mdoc_node *n)
 		rew_last(mdoc, n);
 
 		switch (n->type) {
-		case MDOC_HEAD:
+		case ROFFT_HEAD:
 			mdoc_body_alloc(mdoc, n->line, n->pos, n->tok);
 			return;
-		case MDOC_BLOCK:
+		case ROFFT_BLOCK:
 			break;
 		default:
 			return;
@@ -301,8 +302,8 @@ rew_pending(struct mdoc *mdoc, const struct mdoc_node *n)
 			if ((n = n->parent) == NULL)
 				return;
 
-			if (n->type == MDOC_BLOCK ||
-			    n->type == MDOC_HEAD) {
+			if (n->type == ROFFT_BLOCK ||
+			    n->type == ROFFT_HEAD) {
 				if (n->flags & MDOC_ENDED)
 					break;
 				else
@@ -364,9 +365,9 @@ rew_elem(struct mdoc *mdoc, enum mdoct tok)
 	struct mdoc_node *n;
 
 	n = mdoc->last;
-	if (MDOC_ELEM != n->type)
+	if (n->type != ROFFT_ELEM)
 		n = n->parent;
-	assert(MDOC_ELEM == n->type);
+	assert(n->type == ROFFT_ELEM);
 	assert(tok == n->tok);
 	rew_last(mdoc, n);
 }
@@ -385,7 +386,7 @@ dword(struct mdoc *mdoc, int line, int col, const char *p,
 
 	if (may_append &&
 	    ! (mdoc->flags & (MDOC_SYNOPSIS | MDOC_KEEP | MDOC_SMOFF)) &&
-	    d == DELIM_NONE && mdoc->last->type == MDOC_TEXT &&
+	    d == DELIM_NONE && mdoc->last->type == ROFFT_TEXT &&
 	    mdoc_isdelim(mdoc->last->string) == DELIM_NONE) {
 		mdoc_word_append(mdoc, p);
 		return;
@@ -520,13 +521,13 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 		/* Remember the start of our own body. */
 
-		if (n->type == MDOC_BODY && atok == n->tok) {
+		if (n->type == ROFFT_BODY && atok == n->tok) {
 			if (n->end == ENDBODY_NOT)
 				body = n;
 			continue;
 		}
 
-		if (n->type != MDOC_BLOCK || n->tok == MDOC_Nm)
+		if (n->type != ROFFT_BLOCK || n->tok == MDOC_Nm)
 			continue;
 
 		if (n->tok == MDOC_It) {
@@ -871,7 +872,7 @@ blk_full(MACRO_PROT_ARGS)
 					n->flags |= MDOC_BROKEN;
 				continue;
 			}
-			if (n->type != MDOC_BLOCK)
+			if (n->type != ROFFT_BLOCK)
 				continue;
 
 			if (tok == MDOC_It && n->tok == MDOC_Bl) {
@@ -1014,7 +1015,7 @@ blk_full(MACRO_PROT_ARGS)
 
 		/*
 		 * Emit leading punctuation (i.e., punctuation before
-		 * the MDOC_HEAD) for non-phrase types.
+		 * the ROFFT_HEAD) for non-phrase types.
 		 */
 
 		if (head == NULL &&
@@ -1084,7 +1085,7 @@ blk_full(MACRO_PROT_ARGS)
 				n->flags |= MDOC_BROKEN;
 			continue;
 		}
-		if (n->type == MDOC_BLOCK &&
+		if (n->type == ROFFT_BLOCK &&
 		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
 			n->flags = MDOC_BROKEN;
 			head->flags = MDOC_ENDED;
@@ -1169,7 +1170,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 				n->flags |= MDOC_BROKEN;
 			continue;
 		}
-		if (n->type == MDOC_BLOCK &&
+		if (n->type == ROFFT_BLOCK &&
 		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
 			n->flags |= MDOC_BROKEN;
 			if ( ! (body->flags & MDOC_ENDED)) {
@@ -1450,7 +1451,7 @@ phrase_ta(MACRO_PROT_ARGS)
 	for (n = mdoc->last; n != NULL; n = n->parent) {
 		if (n->flags & MDOC_ENDED)
 			continue;
-		if (n->tok == MDOC_It && n->type == MDOC_BODY)
+		if (n->tok == MDOC_It && n->type == ROFFT_BODY)
 			body = n;
 		if (n->tok == MDOC_Bl)
 			break;

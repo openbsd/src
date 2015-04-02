@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.62 2015/03/20 14:47:20 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.63 2015/04/02 21:03:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -8,9 +8,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
@@ -23,8 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "man.h"
 #include "mandoc.h"
+#include "roff.h"
+#include "man.h"
 #include "libmandoc.h"
 #include "libman.h"
 
@@ -41,11 +42,11 @@ static	void		 in_line_eoln(MACRO_PROT_ARGS);
 static	int		 man_args(struct man *, int,
 				int *, char *, char **);
 
-static	void		 rew_scope(enum man_type,
+static	void		 rew_scope(enum roff_type,
 				struct man *, enum mant);
-static	enum rew	 rew_dohalt(enum mant, enum man_type,
+static	enum rew	 rew_dohalt(enum mant, enum roff_type,
 				const struct man_node *);
-static	enum rew	 rew_block(enum mant, enum man_type,
+static	enum rew	 rew_block(enum mant, enum roff_type,
 				const struct man_node *);
 
 const	struct man_macro __man_macros[MAN_MAX] = {
@@ -113,7 +114,7 @@ man_unscope(struct man *man, const struct man_node *to)
 				if (man->flags & MAN_ELINE)
 					man->flags &= ~MAN_ELINE;
 				else {
-					assert(n->type == MAN_HEAD);
+					assert(n->type == ROFFT_HEAD);
 					n = n->parent;
 					man->flags &= ~MAN_BLINE;
 				}
@@ -122,7 +123,7 @@ man_unscope(struct man *man, const struct man_node *to)
 				man_node_delete(man, man->last);
 				continue;
 			}
-			if (n->type == MAN_BLOCK &&
+			if (n->type == ROFFT_BLOCK &&
 			    man_macros[n->tok].fp == blk_exp)
 				mandoc_msg(MANDOCERR_BLK_NOEND,
 				    man->parse, n->line, n->pos,
@@ -153,11 +154,11 @@ man_unscope(struct man *man, const struct man_node *to)
 }
 
 static enum rew
-rew_block(enum mant ntok, enum man_type type, const struct man_node *n)
+rew_block(enum mant ntok, enum roff_type type, const struct man_node *n)
 {
 
-	if (type == MAN_BLOCK && ntok == n->parent->tok &&
-	    n->parent->type == MAN_BODY)
+	if (type == ROFFT_BLOCK && n->parent->tok == ntok &&
+	    n->parent->type == ROFFT_BODY)
 		return(REW_REWIND);
 	return(ntok == n->tok ? REW_HALT : REW_NOHALT);
 }
@@ -168,18 +169,18 @@ rew_block(enum mant ntok, enum man_type type, const struct man_node *n)
  * sections and subsections).
  */
 static enum rew
-rew_dohalt(enum mant tok, enum man_type type, const struct man_node *n)
+rew_dohalt(enum mant tok, enum roff_type type, const struct man_node *n)
 {
 	enum rew	 c;
 
 	/* We cannot progress beyond the root ever. */
-	if (MAN_ROOT == n->type)
+	if (n->type == ROFFT_ROOT)
 		return(REW_HALT);
 
 	assert(n->parent);
 
 	/* Normal nodes shouldn't go to the level of the root. */
-	if (MAN_ROOT == n->parent->type)
+	if (n->parent->type == ROFFT_ROOT)
 		return(REW_REWIND);
 
 	/* Already-validated nodes should be closed out. */
@@ -241,7 +242,7 @@ rew_dohalt(enum mant tok, enum man_type type, const struct man_node *n)
  * scopes.  When a scope is closed, it must be validated and actioned.
  */
 static void
-rew_scope(enum man_type type, struct man *man, enum mant tok)
+rew_scope(enum roff_type type, struct man *man, enum mant tok)
 {
 	struct man_node	*n;
 	enum rew	 c;
@@ -286,7 +287,7 @@ blk_close(MACRO_PROT_ARGS)
 		if ( ! man_args(man, line, pos, buf, &p))
 			break;
 		for (nn = man->last->parent; nn; nn = nn->parent)
-			if (nn->tok == ntok && nn->type == MAN_BLOCK)
+			if (nn->tok == ntok && nn->type == ROFFT_BLOCK)
 				nrew++;
 		target = strtol(p, &p, 10);
 		if (*p != '\0')
@@ -310,13 +311,13 @@ blk_close(MACRO_PROT_ARGS)
 	}
 
 	for (nn = man->last->parent; nn; nn = nn->parent)
-		if (nn->tok == ntok && nn->type == MAN_BLOCK && ! --nrew)
+		if (nn->tok == ntok && nn->type == ROFFT_BLOCK && ! --nrew)
 			break;
 
 	if (nn == NULL) {
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, man->parse,
 		    line, ppos, man_macronames[tok]);
-		rew_scope(MAN_BLOCK, man, MAN_PP);
+		rew_scope(ROFFT_BLOCK, man, MAN_PP);
 	} else {
 		line = man->last->line;
 		ppos = man->last->pos;
@@ -339,7 +340,7 @@ blk_exp(MACRO_PROT_ARGS)
 	char		*p;
 	int		 la;
 
-	rew_scope(MAN_BLOCK, man, tok);
+	rew_scope(ROFFT_BLOCK, man, tok);
 	man_block_alloc(man, line, ppos, tok);
 	man_head_alloc(man, line, ppos, tok);
 	head = man->last;
@@ -358,8 +359,8 @@ blk_exp(MACRO_PROT_ARGS)
 }
 
 /*
- * Parse an implicit-block macro.  These contain a MAN_HEAD and a
- * MAN_BODY contained within a MAN_BLOCK.  Rules for closing out other
+ * Parse an implicit-block macro.  These contain a ROFFT_HEAD and a
+ * ROFFT_BODY contained within a ROFFT_BLOCK.  Rules for closing out other
  * scopes, such as `SH' closing out an `SS', are defined in the rew
  * routines.
  */
@@ -370,8 +371,8 @@ blk_imp(MACRO_PROT_ARGS)
 	char		*p;
 	struct man_node	*n;
 
-	rew_scope(MAN_BODY, man, tok);
-	rew_scope(MAN_BLOCK, man, tok);
+	rew_scope(ROFFT_BODY, man, tok);
+	rew_scope(ROFFT_BLOCK, man, tok);
 	man_block_alloc(man, line, ppos, tok);
 	man_head_alloc(man, line, ppos, tok);
 	n = man->last;
@@ -399,7 +400,7 @@ blk_imp(MACRO_PROT_ARGS)
 
 	/* Close out the head and open the body. */
 
-	rew_scope(MAN_HEAD, man, tok);
+	rew_scope(ROFFT_HEAD, man, tok);
 	man_body_alloc(man, line, ppos, tok);
 }
 
@@ -432,7 +433,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 		if ( ! man_args(man, line, pos, buf, &p))
 			break;
 		if (man_macros[tok].flags & MAN_JOIN &&
-		    man->last->type == MAN_TEXT)
+		    man->last->type == ROFFT_TEXT)
 			man_word_append(man, p);
 		else
 			man_word_alloc(man, line, la, p);
@@ -459,7 +460,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 		return;
 	}
 
-	assert(man->last->type != MAN_ROOT);
+	assert(man->last->type != ROFFT_ROOT);
 	man->next = MAN_NEXT_SIBLING;
 
 	/*
@@ -471,7 +472,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 	for ( ; man->last; man->last = man->last->parent) {
 		if (man->last == n)
 			break;
-		if (man->last->type == MAN_ROOT)
+		if (man->last->type == ROFFT_ROOT)
 			break;
 		man_valid_post(man);
 	}
@@ -482,7 +483,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 	 * Same here regarding whether we're back at the root.
 	 */
 
-	if (man->last->type != MAN_ROOT)
+	if (man->last->type != ROFFT_ROOT)
 		man_valid_post(man);
 }
 
