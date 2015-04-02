@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.17 2015/04/02 12:48:28 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.18 2015/04/02 21:04:06 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -46,7 +46,6 @@
 #include "file.h"
 #include "radixsort.h"
 
-unsigned long long free_memory = 1000000;
 unsigned long long available_free_memory = 1000000;
 
 bool use_mmap;

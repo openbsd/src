@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.72 2015/04/02 21:00:08 tobias Exp $	*/
+/*	$OpenBSD: sort.c,v 1.73 2015/04/02 21:04:06 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -200,6 +200,7 @@ read_fns_from_file0(const char *fn)
 static void
 set_hw_params(void)
 {
+	unsigned long long free_memory;
 	long long user_memory;
 	struct rlimit rl;
 	size_t len;
@@ -219,8 +220,10 @@ set_hw_params(void)
 		} else {
 			warn("Can't set resource limit to max data size");
 		}
-	} else
+	} else {
+		free_memory = 1000000;
 		warn("Can't get resource limit for data size");
+	}
 
 	/* We prefer to use temp files rather than swap space. */
 	if (user_memory != -1 && free_memory > user_memory)
