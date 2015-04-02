@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.121 2015/01/03 20:22:56 uaa Exp $
+#	$OpenBSD: files.usb,v 1.122 2015/04/02 14:24:02 jasper Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -420,7 +420,7 @@ device	uow: onewirebus
 attach	uow at uhub
 file	dev/usb/uow.c			uow
 
-# Research In Motion Blackberry
+# Research In Motion BlackBerry
 device	uberry {}
 attach	uberry at uhub
 file	dev/usb/uberry.c		uberry

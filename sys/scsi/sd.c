@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.259 2015/03/08 20:49:38 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.260 2015/04/02 14:24:02 jasper Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -203,7 +203,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		scsi_start(sc_link, SSS_START, sd_autoconf);
 
 	/*
-	 * Some devices (e.g. Blackberry Pearl) won't admit they have
+	 * Some devices (e.g. BlackBerry Pearl) won't admit they have
 	 * media loaded unless its been locked in.
 	 */
 	if ((sc_link->flags & SDEV_REMOVABLE) != 0)

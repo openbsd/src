@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2015/01/04 20:55:38 uaa Exp $
+#	$OpenBSD: GENERIC,v 1.49 2015/04/02 14:24:02 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -160,7 +160,7 @@ rsu*		at uhub?	# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
 zyd*		at uhub?	# Zydas ZD1211
-uberry*		at uhub?	# Research In Motion Blackberry 
+uberry*		at uhub?	# Research In Motion BlackBerry 
 udcf*		at uhub?	# Gude Expert mouseCLOCK
 uthum*		at uhidev?	# TEMPerHUM sensor
 ugold*		at uhidev?	# gold TEMPer sensor

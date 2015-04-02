@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.247 2015/03/24 12:00:39 dlg Exp $g
+#	$OpenBSD: GENERIC,v 1.248 2015/04/02 14:24:02 jasper Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -271,7 +271,7 @@ url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
-uberry*	at uhub?		# Research In Motion Blackberry
+uberry*	at uhub?		# Research In Motion BlackBerry
 ugen*	at uhub?		# USB Generic driver
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB

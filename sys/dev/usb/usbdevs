@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.645 2015/02/16 14:51:44 sthen Exp $
+$OpenBSD: usbdevs,v 1.646 2015/04/02 14:24:02 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3520,9 +3520,9 @@ product REALTEK RTL8192SU	0xc512	RTL8192SU
 product RENESAS RX610		0x0053	RX610 RX-Stick
 
 /* Research In Motion products */
-product RIM BLACKBERRY		0x0001	Blackberry
+product RIM BLACKBERRY		0x0001	BlackBerry
 product RIM PEARL_DUAL		0x0004	RIM Mass Storage Device
-product RIM PEARL		0x0006	Blackberry pearl
+product RIM PEARL		0x0006	BlackBerry pearl
 
 /* Ricoh products */
 product RICOH VGPVCC2		0x1830	VGP-VCC2 Camera
