@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.42 2015/04/01 15:23:32 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.43 2015/04/02 09:46:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -745,9 +745,7 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 		/* Pass it on. */
 		ml_enqueue(&ml, m);
-		KERNEL_LOCK();
 		if_input(ifp, &ml);
-		KERNEL_UNLOCK();
 
 	skip:
 		dm->tag.stype = VIO_SUBTYPE_ACK;
@@ -855,9 +853,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 				idx = 0;
 		}
 
-		KERNEL_LOCK();
 		if_input(ifp, &ml);
-		KERNEL_UNLOCK();
 
 		if (ack_end_idx == -1) {
 			dm->tag.stype = VIO_SUBTYPE_NACK;
