@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.19 2015/03/31 14:03:38 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.20 2015/04/02 05:53:08 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2015 $
+.Dd $Mdocdate: April 2 2015 $
 .Dt TLS 3
 .Os
 .Sh NAME
@@ -410,9 +410,11 @@ The
 .Fn tls_read
 and
 .Fn tls_write
-functions and the
+functions, along with the
+.Fn tls_accept
+and
 .Fn tls_connect
-family of functions have two special return values.
+function families, have two special return values:
 .Pp
 .Bl -tag -width "TLS_WRITE_AGAIN" -offset indent -compact
 .It Dv TLS_READ_AGAIN
@@ -421,9 +423,11 @@ A read operation is necessary to continue.
 A write operation is necessary to continue.
 .El
 .Pp
-The caller should call the appropriate function, or in the case of
-.Fn tls_connect ,
-repeat the call.
+The caller should call the appropriate function, or in the case of the
+.Fn tls_accept
+or
+.Fn tls_connect
+function families, repeat the call.
 .Sh ERRORS
 The
 .Fn tls_error
