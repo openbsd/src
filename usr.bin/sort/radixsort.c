@@ -1,4 +1,4 @@
-/*	$OpenBSD: radixsort.c,v 1.4 2015/04/02 20:58:43 tobias Exp $	*/
+/*	$OpenBSD: radixsort.c,v 1.5 2015/04/02 21:00:08 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2012 Oleg Moskalenko <mom040267@gmail.com>
@@ -79,7 +79,7 @@ static struct level_stack *g_ls;
  * Push sort level to the stack
  */
 static inline void
-push_ls(struct sort_level* sl)
+push_ls(struct sort_level *sl)
 {
 	struct level_stack *new_ls;
 
@@ -209,7 +209,7 @@ run_sort_level_next(struct sort_level *sl)
 	sort_free(sl->sublevels);
 	sl->sublevels = NULL;
 
-	switch (sl->tosort_num){
+	switch (sl->tosort_num) {
 	case 0:
 		goto end;
 	case 1:
