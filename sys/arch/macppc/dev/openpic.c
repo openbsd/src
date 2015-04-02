@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.77 2015/04/02 10:58:20 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.78 2015/04/02 11:12:24 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -209,8 +209,6 @@ openpic_attach(struct device *parent, struct device  *self, void *aux)
 
 	intr_establish_func  = openpic_intr_establish;
 	intr_disestablish_func  = openpic_intr_disestablish;
-	mac_intr_establish_func  = openpic_intr_establish;
-	mac_intr_disestablish_func  = openpic_intr_disestablish;
 #ifdef MULTIPROCESSOR
 	intr_send_ipi_func = openpic_send_ipi;
 #endif

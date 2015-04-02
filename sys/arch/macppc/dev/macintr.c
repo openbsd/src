@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.50 2015/01/04 13:01:42 mpi Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.51 2015/04/02 11:12:24 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -127,8 +127,6 @@ int macintr_prog_button (void *arg);
 
 intr_establish_t macintr_establish;
 intr_disestablish_t macintr_disestablish;
-extern intr_establish_t *mac_intr_establish_func;
-extern intr_disestablish_t *mac_intr_disestablish_func;
 
 ppc_splraise_t macintr_splraise;
 ppc_spllower_t macintr_spllower;
@@ -201,8 +199,6 @@ macintr_attach(struct device *parent, struct device *self, void *aux)
 	install_extint(mac_ext_intr);
 	intr_establish_func  = macintr_establish;
 	intr_disestablish_func  = macintr_disestablish;
-	mac_intr_establish_func  = macintr_establish;
-	mac_intr_disestablish_func  = macintr_disestablish;
 
 	ppc_intr_func.raise = macintr_splraise;
 	ppc_intr_func.lower = macintr_spllower;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.11 2014/07/02 15:34:43 tobiasu Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.12 2015/04/02 11:12:24 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -69,8 +69,6 @@ intr_establish_t mac_intr_establish;
 intr_disestablish_t mac_intr_disestablish;
 extern intr_establish_t *intr_establish_func;
 extern intr_disestablish_t *intr_disestablish_func;
-extern intr_establish_t *mac_intr_establish_func;
-extern intr_disestablish_t *mac_intr_disestablish_func;
 extern intr_send_ipi_t *intr_send_ipi_func;
 
 
