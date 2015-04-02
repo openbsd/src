@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.h,v 1.63 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc.h,v 1.64 2015/04/02 23:47:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -172,16 +172,6 @@ enum	mdocargt {
 	MDOC_ARG_MAX
 };
 
-struct	mdoc_meta {
-	char		 *msec; /* `Dt' section (1, 3p, etc.) */
-	char		 *vol; /* `Dt' volume (implied) */
-	char		 *arch; /* `Dt' arch (i386, etc.) */
-	char		 *date; /* `Dd' normalised date */
-	char		 *title; /* `Dt' title (FOO, etc.) */
-	char		 *os; /* `Os' system (OpenBSD, etc.) */
-	char		 *name; /* leading `Nm' name */
-};
-
 /*
  * An argument to a macro (multiple values = `-column xxx yyy').
  */
@@ -295,7 +285,7 @@ __BEGIN_DECLS
 struct	mdoc;
 
 const struct roff_node *mdoc_node(const struct mdoc *);
-const struct mdoc_meta *mdoc_meta(const struct mdoc *);
+const struct roff_meta *mdoc_meta(const struct mdoc *);
 void mdoc_deroff(char **, const struct roff_node *);
 
 __END_DECLS

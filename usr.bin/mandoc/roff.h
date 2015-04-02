@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.11 2015/04/02 22:06:17 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.12 2015/04/02 23:47:43 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,4 +103,15 @@ struct	roff_node {
 	enum roff_type	  type;    /* AST node type. */
 	enum roff_sec	  sec;     /* Current named section. */
 	enum mdoc_endbody end;     /* BODY */
+};
+
+struct	roff_meta {
+	char		 *msec;    /* Manual section, usually a digit. */
+	char		 *vol;     /* Manual volume title. */
+	char		 *os;      /* Operating system. */
+	char		 *arch;    /* Machine architecture. */
+	char		 *title;   /* Manual title, usually CAPS. */
+	char		 *name;    /* Leading manual name. */
+	char		 *date;    /* Normalized date. */
+	int		  hasbody; /* Document is not empty. */
 };

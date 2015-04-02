@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.142 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.143 2015/04/02 23:47:43 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -120,7 +120,7 @@ enum	stmt {
 	STMT__MAX
 };
 
-typedef	int (*mdoc_fp)(struct mpage *, const struct mdoc_meta *,
+typedef	int (*mdoc_fp)(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 
 struct	mdoc_handler {
@@ -146,28 +146,28 @@ static	void	 mpages_free(void);
 static	void	 mpages_merge(struct mparse *);
 static	void	 names_check(void);
 static	void	 parse_cat(struct mpage *, int);
-static	void	 parse_man(struct mpage *, const struct man_meta *,
+static	void	 parse_man(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	void	 parse_mdoc(struct mpage *, const struct mdoc_meta *,
+static	void	 parse_mdoc(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_body(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_body(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_head(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_head(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_Fd(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_Fd(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	void	 parse_mdoc_fname(struct mpage *, const struct roff_node *);
-static	int	 parse_mdoc_Fn(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_Fn(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_Fo(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_Fo(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_Nd(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_Nd(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_Nm(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_Nm(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_Sh(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_Sh(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
-static	int	 parse_mdoc_Xr(struct mpage *, const struct mdoc_meta *,
+static	int	 parse_mdoc_Xr(struct mpage *, const struct roff_meta *,
 			const struct roff_node *);
 static	void	 putkey(const struct mpage *, char *, uint64_t);
 static	void	 putkeys(const struct mpage *, char *, size_t, uint64_t);
@@ -1425,7 +1425,7 @@ putmdockey(const struct mpage *mpage,
 }
 
 static void
-parse_man(struct mpage *mpage, const struct man_meta *meta,
+parse_man(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 	const struct roff_node *head, *body;
@@ -1551,7 +1551,7 @@ parse_man(struct mpage *mpage, const struct man_meta *meta,
 }
 
 static void
-parse_mdoc(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
@@ -1584,7 +1584,7 @@ parse_mdoc(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_Fd(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_Fd(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 	char		*start, *end;
@@ -1649,7 +1649,7 @@ parse_mdoc_fname(struct mpage *mpage, const struct roff_node *n)
 }
 
 static int
-parse_mdoc_Fn(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_Fn(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
@@ -1666,7 +1666,7 @@ parse_mdoc_Fn(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_Fo(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_Fo(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
@@ -1680,7 +1680,7 @@ parse_mdoc_Fo(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_Xr(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_Xr(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 	char	*cp;
@@ -1700,7 +1700,7 @@ parse_mdoc_Xr(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_Nd(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_Nd(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
@@ -1710,7 +1710,7 @@ parse_mdoc_Nd(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_Nm(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_Nm(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
@@ -1732,7 +1732,7 @@ parse_mdoc_Nm(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_Sh(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_Sh(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
@@ -1740,7 +1740,7 @@ parse_mdoc_Sh(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_head(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_head(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 
@@ -1748,7 +1748,7 @@ parse_mdoc_head(struct mpage *mpage, const struct mdoc_meta *meta,
 }
 
 static int
-parse_mdoc_body(struct mpage *mpage, const struct mdoc_meta *meta,
+parse_mdoc_body(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
 

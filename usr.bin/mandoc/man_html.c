@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.67 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.68 2015/04/02 23:47:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,7 +35,7 @@
 
 #define	INDENT		  5
 
-#define	MAN_ARGS	  const struct man_meta *man, \
+#define	MAN_ARGS	  const struct roff_meta *man, \
 			  const struct roff_node *n, \
 			  struct mhtml *mh, \
 			  struct html *h
@@ -346,8 +346,8 @@ man_root_post(MAN_ARGS)
 	PAIR_CLASS_INIT(&tag, "foot-os");
 	print_otag(h, TAG_TD, 1, &tag);
 
-	if (man->source)
-		print_text(h, man->source);
+	if (man->os)
+		print_text(h, man->os);
 	print_tagq(h, t);
 }
 

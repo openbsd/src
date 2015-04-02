@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.69 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.70 2015/04/02 23:47:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,7 +40,7 @@ struct	mdoc {
 	struct roff_node *last; /* the last node parsed */
 	struct roff_node *first; /* the first node parsed */
 	struct roff_node *last_es; /* the most recent Es node */
-	struct mdoc_meta  meta; /* document meta-data */
+	struct roff_meta  meta; /* document meta-data */
 	enum roff_sec	  lastnamed;
 	enum roff_sec	  lastsec;
 	struct roff	 *roff;

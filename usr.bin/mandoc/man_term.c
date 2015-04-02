@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.125 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.126 2015/04/02 23:47:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -47,7 +47,7 @@ struct	mtermp {
 #define	DECL_ARGS	  struct termp *p, \
 			  struct mtermp *mt, \
 			  struct roff_node *n, \
-			  const struct man_meta *meta
+			  const struct roff_meta *meta
 
 struct	termact {
 	int		(*pre)(DECL_ARGS);
@@ -58,8 +58,10 @@ struct	termact {
 
 static	void		  print_man_nodelist(DECL_ARGS);
 static	void		  print_man_node(DECL_ARGS);
-static	void		  print_man_head(struct termp *, const void *);
-static	void		  print_man_foot(struct termp *, const void *);
+static	void		  print_man_head(struct termp *,
+				const struct roff_meta *);
+static	void		  print_man_foot(struct termp *,
+				const struct roff_meta *);
 static	void		  print_bvspace(struct termp *,
 				const struct roff_node *, int);
 
@@ -137,7 +139,7 @@ void
 terminal_man(void *arg, const struct man *man)
 {
 	struct termp		*p;
-	const struct man_meta	*meta;
+	const struct roff_meta	*meta;
 	struct roff_node	*n;
 	struct mtermp		 mt;
 
@@ -1010,13 +1012,11 @@ print_man_nodelist(DECL_ARGS)
 }
 
 static void
-print_man_foot(struct termp *p, const void *arg)
+print_man_foot(struct termp *p, const struct roff_meta *meta)
 {
-	const struct man_meta	*meta;
 	char			*title;
 	size_t			 datelen, titlen;
 
-	meta = (const struct man_meta *)arg;
 	assert(meta->title);
 	assert(meta->msec);
 	assert(meta->date);
@@ -1028,8 +1028,8 @@ print_man_foot(struct termp *p, const void *arg)
 
 	/*
 	 * Temporary, undocumented option to imitate mdoc(7) output.
-	 * In the bottom right corner, use the source instead of
-	 * the title.
+	 * In the bottom right corner, use the operating system
+	 * instead of the title.
 	 */
 
 	if ( ! p->mdocstyle) {
@@ -1039,14 +1039,14 @@ print_man_foot(struct termp *p, const void *arg)
 		}
 		mandoc_asprintf(&title, "%s(%s)",
 		    meta->title, meta->msec);
-	} else if (meta->source) {
-		title = mandoc_strdup(meta->source);
+	} else if (meta->os) {
+		title = mandoc_strdup(meta->os);
 	} else {
 		title = mandoc_strdup("");
 	}
 	datelen = term_strlen(p, meta->date);
 
-	/* Bottom left corner: manual source. */
+	/* Bottom left corner: operating system. */
 
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
 	p->trailspace = 1;
@@ -1054,8 +1054,8 @@ print_man_foot(struct termp *p, const void *arg)
 	p->rmargin = p->maxrmargin > datelen ?
 	    (p->maxrmargin + term_len(p, 1) - datelen) / 2 : 0;
 
-	if (meta->source)
-		term_word(p, meta->source);
+	if (meta->os)
+		term_word(p, meta->os);
 	term_flushln(p);
 
 	/* At the bottom in the middle: manual date. */
@@ -1082,14 +1082,12 @@ print_man_foot(struct termp *p, const void *arg)
 }
 
 static void
-print_man_head(struct termp *p, const void *arg)
+print_man_head(struct termp *p, const struct roff_meta *meta)
 {
-	const struct man_meta	*meta;
 	const char		*volume;
 	char			*title;
 	size_t			 vollen, titlen;
 
-	meta = (const struct man_meta *)arg;
 	assert(meta->title);
 	assert(meta->msec);
 
