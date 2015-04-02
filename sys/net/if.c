@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.325 2015/04/01 04:00:55 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.326 2015/04/02 09:46:01 kettenis Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -457,8 +457,10 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
+		KERNEL_LOCK();
 		MBUF_LIST_FOREACH(ml, m)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
+		KERNEL_UNLOCK();
 	}
 #endif
 
