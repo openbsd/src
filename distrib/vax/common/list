@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.38 2015/04/02 16:13:25 deraadt Exp $
+#	$OpenBSD: list,v 1.39 2015/04/02 20:51:04 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS sys/arch/vax/stand
@@ -49,7 +49,7 @@ LINK	instbin					usr/bin/encrypt
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
-LINK	instbin					usr/bin/more usr/bin/less 
+LINK	instbin					usr/bin/more usr/bin/less
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
 #LINK	instbin					usr/sbin/bad144
