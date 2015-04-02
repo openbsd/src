@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2015/04/01 22:24:02 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2015/04/02 20:30:45 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -28,7 +28,6 @@
  */
 
 #include <err.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
