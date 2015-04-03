@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.7 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.8 2015/04/03 06:48:58 mpi Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -559,6 +559,7 @@ sxie_recv(struct sxie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t fbc, reg;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint16_t pktstat;
 	int16_t pktlen;
@@ -567,7 +568,7 @@ sxie_recv(struct sxie_softc *sc)
 trynext:
 	fbc = SXIREAD4(sc, SXIE_RXFBC);
 	if (!fbc)
-		return;
+		goto done;
 
 	/*
 	 * first bit of MSB is packet valid flag,
@@ -600,7 +601,6 @@ trynext:
 		pktlen = SXIE_MAX_PKT_SIZE; /* XXX is truncating ok? */
 
 	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = pktlen;
 	/* XXX m->m_pkthdr.csum_flags ? */
 	m_adj(m, ETHER_ALIGN);
@@ -614,15 +614,12 @@ trynext:
 	    SXIE_RXIO, (uint32_t *)&rxbuf[0], rlen >> 2);
 	memcpy(mtod(m, char *), (char *)&rxbuf[0], pktlen);
 
-	/* push the packet up */
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-	ether_input_mbuf(ifp, m);
+	ml_enqueue(&ml, m);
 	goto trynext;
 err_out:
 	ifp->if_ierrors++;
+done:
+	if_input(ifp, &ml);
 }
 
 int
