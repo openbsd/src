@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.74 2015/04/02 21:09:51 tobias Exp $	*/
+/*	$OpenBSD: sort.c,v 1.75 2015/04/03 10:07:25 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -856,7 +856,7 @@ set_random_seed(void)
 int
 main(int argc, char *argv[])
 {
-	char *outfile, *real_outfile;
+	char *outfile, *real_outfile, *sflag;
 	int c, result;
 	size_t i;
 	bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS] =
@@ -865,6 +865,7 @@ main(int argc, char *argv[])
 	result = 0;
 	outfile = "-";
 	real_outfile = NULL;
+	sflag = NULL;
 
 	struct sort_mods *sm = &default_sort_mods_object;
 
@@ -930,8 +931,7 @@ main(int argc, char *argv[])
 				sort_opts_vals.sflag = true;
 				break;
 			case 'S':
-				available_free_memory =
-				    parse_memory_buffer_value(optarg);
+				sflag = optarg;
 				break;
 			case 'T':
 				tmpdir = optarg;
@@ -1042,6 +1042,9 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if (sflag != NULL)
+		available_free_memory = parse_memory_buffer_value(sflag);
 
 	if (keys_num == 0) {
 		keys_num = 1;
