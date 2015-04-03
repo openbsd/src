@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.11 2015/02/16 16:18:02 schwarze Exp $
+.\"	$OpenBSD: man.1,v 1.12 2015/04/03 08:45:27 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: April 3 2015 $
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -381,7 +381,8 @@ Specifies the pagination program to use when
 .Ev MANPAGER
 is not defined.
 If neither PAGER nor MANPAGER is defined,
-.Pa /usr/bin/more Fl s
+.Xr more 1
+.Fl s
 will be used.
 .El
 .Sh FILES

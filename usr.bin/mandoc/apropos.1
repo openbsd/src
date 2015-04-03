@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apropos.1,v 1.30 2015/03/29 21:12:00 bentley Exp $
+.\"	$OpenBSD: apropos.1,v 1.31 2015/04/03 08:45:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2015 $
+.Dd $Mdocdate: April 3 2015 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -365,7 +365,8 @@ Specifies the pagination program to use when
 .Ev MANPAGER
 is not defined.
 If neither PAGER nor MANPAGER is defined,
-.Pa /usr/bin/more Fl s
+.Xr more 1
+.Fl s
 will be used.
 .El
 .Sh FILES
