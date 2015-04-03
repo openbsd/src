@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.825 2015/03/28 17:03:11 rpe Exp $
+#	$OpenBSD: install.sub,v 1.826 2015/04/03 17:03:15 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -1559,7 +1559,7 @@ set_timezone() {
 	waitcgiinfo
 	if [[ -n $CGI_TZ ]]; then
 		_tz=$CGI_TZ
-		[[ -n $_tz ]] && isin "$_tz" `cat $_zonefile` && TZ=$_tz
+		[[ -n $_tz ]] && isin "$_tz" $(<$_zonefile) && TZ=$_tz
 	fi
 
 	# If neither the base or HTTP_LIST gave a hint, and this is the
@@ -1575,7 +1575,7 @@ set_timezone() {
 			continue;;
 		esac
 
-		while isin "$_zonepath/" $(cat $_zonefile); do
+		while isin "$_zonepath/" $(<$_zonefile); do
 			ask "What sub-timezone of '$_zonepath' are you in? ('?' for list)"
 			_zsed=$(echo $_zonepath/ | sed 's,/,\\/,g')
 			resp=${resp%%*(/)}
@@ -1586,7 +1586,7 @@ set_timezone() {
 			esac
 		done
 
-		if isin "$_zonepath" $(cat $_zonefile); then
+		if isin "$_zonepath" $(<$_zonefile); then
 			TZ=${_zonepath#$_zoneroot}
 			return
 		fi
@@ -2134,7 +2134,7 @@ if ! $AUTO; then
 	(
 		while :; do
 			lock
-			if test -e /tmp/update && [[ "`dmesg`" != "`cat /tmp/update`" ]]; then
+			if test -e /tmp/update && [[ "$(dmesg)" != "$(</tmp/update)" ]]; then
 				dmesg >/tmp/update
 				kill -TERM 2>/dev/null $$ || exit 1
 			fi
