@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.76 2015/04/03 10:37:24 tobias Exp $	*/
+/*	$OpenBSD: sort.c,v 1.77 2015/04/03 12:52:48 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1041,6 +1041,10 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if (sort_opts_vals.cflag && argc > 1)
+		errx(2, "only one input file is allowed with the -%c flag",
+		    sort_opts_vals.csilentflag ? 'C' : 'c');
 
 	if (sflag != NULL)
 		available_free_memory = parse_memory_buffer_value(sflag);
