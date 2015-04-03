@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.64 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.65 2015/04/03 16:59:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -399,7 +399,7 @@ blk_imp(MACRO_PROT_ARGS)
 
 	/* Close out the head and open the body. */
 
-	rew_scope(ROFFT_HEAD, man, tok);
+	man_unscope(man, n);
 	man_body_alloc(man, line, ppos, tok);
 }
 
