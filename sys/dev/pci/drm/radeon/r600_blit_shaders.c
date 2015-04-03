@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600_blit_shaders.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: r600_blit_shaders.c,v 1.2 2015/04/03 12:24:34 jsg Exp $	*/
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  *
@@ -26,6 +26,7 @@
  */
 
 #include <sys/param.h>
+#include <dev/pci/drm/drmP.h>
 
 /*
  * R6xx+ cards need to use the 3D engine to blit data which requires
@@ -37,7 +38,7 @@
  * shader instructions.
  */
 
-const uint32_t r6xx_default_state[] =
+const u32 r6xx_default_state[] =
 {
 	0xc0002400, /* START_3D_CMDBUF */
 	0x00000000,
@@ -363,7 +364,7 @@ const uint32_t r6xx_default_state[] =
 	0x00000000,
 };
 
-const uint32_t r7xx_default_state[] =
+const u32 r7xx_default_state[] =
 {
 	0xc0012800, /* CONTEXT_CONTROL */
 	0x80000000,
@@ -680,7 +681,7 @@ const uint32_t r7xx_default_state[] =
 };
 
 /* same for r6xx/r7xx */
-const uint32_t r6xx_vs[] =
+const u32 r6xx_vs[] =
 {
 	0x00000004,
 	0x81000000,
@@ -700,7 +701,7 @@ const uint32_t r6xx_vs[] =
 	0x00000000,
 };
 
-const uint32_t r6xx_ps[] =
+const u32 r6xx_ps[] =
 {
 	0x00000002,
 	0x80800000,
@@ -712,7 +713,7 @@ const uint32_t r6xx_ps[] =
 	0x00000000,
 };
 
-const uint32_t r6xx_ps_size = nitems(r6xx_ps);
-const uint32_t r6xx_vs_size = nitems(r6xx_vs);
-const uint32_t r6xx_default_size = nitems(r6xx_default_state);
-const uint32_t r7xx_default_size = nitems(r7xx_default_state);
+const u32 r6xx_ps_size = ARRAY_SIZE(r6xx_ps);
+const u32 r6xx_vs_size = ARRAY_SIZE(r6xx_vs);
+const u32 r6xx_default_size = ARRAY_SIZE(r6xx_default_state);
+const u32 r7xx_default_size = ARRAY_SIZE(r7xx_default_state);
