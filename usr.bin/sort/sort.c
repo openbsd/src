@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.75 2015/04/03 10:07:25 tobias Exp $	*/
+/*	$OpenBSD: sort.c,v 1.76 2015/04/03 10:37:24 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -857,12 +857,11 @@ int
 main(int argc, char *argv[])
 {
 	char *outfile, *real_outfile, *sflag;
-	int c, result;
+	int c;
 	size_t i;
 	bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS] =
 	    { false, false, false, false, false, false };
 
-	result = 0;
 	outfile = "-";
 	real_outfile = NULL;
 	sflag = NULL;
@@ -1094,6 +1093,9 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (sort_opts_vals.cflag)
+		return check(argc ? *argv : "-");
+
 	set_random_seed();
 
 	/* Case when the outfile equals one of the input files: */
@@ -1120,7 +1122,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (!sort_opts_vals.cflag && !sort_opts_vals.mflag) {
+	if (!sort_opts_vals.mflag) {
 		struct file_list fl;
 		struct sort_list list;
 
@@ -1158,9 +1160,7 @@ main(int argc, char *argv[])
 		 * sort_list_clean(&list);
 		 */
 
-	} else if (sort_opts_vals.cflag) {
-		result = (argc == 0) ? (check("-")) : (check(*argv));
-	} else if (sort_opts_vals.mflag) {
+	} else {
 		struct file_list fl;
 
 		file_list_init(&fl, false);
@@ -1175,5 +1175,5 @@ main(int argc, char *argv[])
 		sort_free(outfile);
 	}
 
-	return result;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.19 2015/04/02 22:14:51 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.20 2015/04/03 10:37:24 tobias Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -344,13 +344,13 @@ sort_list_dump(struct sort_list *l, const char *fn)
 int
 check(const char *fn)
 {
-	struct bwstring *s1, *s2, *s1disorder, *s2disorder;
+	struct bwstring *s1, *s2;
 	struct file_reader *fr;
 	struct keys_array *ka1, *ka2;
 	int res;
 	size_t pos, posdisorder;
 
-	s1 = s2 = s1disorder = s2disorder = NULL;
+	s1 = s2 = NULL;
 	ka1 = ka2 = NULL;
 
 	fr = file_reader_init(fn);
@@ -359,10 +359,8 @@ check(const char *fn)
 	pos = 1;
 	posdisorder = 1;
 
-	if (fr == NULL) {
+	if (fr == NULL)
 		err(2, "%s", fn);
-		goto end;
-	}
 
 	s1 = file_reader_readline(fr);
 	if (s1 == NULL)
@@ -399,10 +397,10 @@ check(const char *fn)
 
 		if ((sort_opts_vals.uflag && (cmp <= 0)) || (cmp < 0)) {
 			if (!(sort_opts_vals.csilentflag)) {
-				s2disorder = bwsdup(s2);
+				bws_disorder_warnx(s2, fn, posdisorder);
 				posdisorder = pos;
 				if (debug_sort)
-					s1disorder = bwsdup(s1);
+					bws_disorder_warnx(s1, fn, posdisorder);
 			}
 			res = 1;
 			goto end;
@@ -432,16 +430,14 @@ end:
 		sort_free(ka1);
 	}
 
-	if (s1)
-		bwsfree(s1);
+	bwsfree(s1);
 
 	if (ka2) {
 		clean_keys_array(s2, ka2);
 		sort_free(ka2);
 	}
 
-	if (s2)
-		bwsfree(s2);
+	bwsfree(s2);
 
 	if (fn == NULL || *fn == 0 || strcmp(fn, "-") == 0) {
 		for (;;) {
@@ -454,22 +450,7 @@ end:
 
 	file_reader_free(fr);
 
-	if (s2disorder) {
-		bws_disorder_warnx(s2disorder, fn, posdisorder);
-		if (s1disorder) {
-			bws_disorder_warnx(s1disorder, fn, posdisorder);
-			if (s1disorder != s2disorder)
-				bwsfree(s1disorder);
-		}
-		bwsfree(s2disorder);
-		s1disorder = NULL;
-		s2disorder = NULL;
-	}
-
-	if (res)
-		exit(res);
-
-	return 0;
+	return res;
 }
 
 /*
