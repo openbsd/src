@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.46 2015/03/24 22:28:10 bcallah Exp $	*/
+/*	$OpenBSD: display.c,v 1.47 2015/04/03 22:10:29 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -17,24 +17,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
 
 #include "def.h"
 #include "kbd.h"
-
-/*
- * You can change these back to the types
- * implied by the name if you get tight for space. If you
- * make both of them "int" you get better code on the VAX.
- * They do nothing if this is not Gosling redisplay, except
- * for change the size of a structure that isn't used.
- * A bit of a cheat.
- */
-#define	XCHAR	int
-#define	XSHORT	int
-
-#ifdef	STANDOUT_GLITCH
-#include <term.h>
-#endif
 
 /*
  * A video structure always holds
@@ -46,7 +32,7 @@ struct video {
 	short	v_hash;		/* Hash code, for compares.	 */
 	short	v_flag;		/* Flag word.			 */
 	short	v_color;	/* Color of the line.		 */
-	XSHORT	v_cost;		/* Cost of display.		 */
+	int	v_cost;		/* Cost of display.		 */
 	char	*v_text;	/* The actual characters.	 */
 };
 
@@ -58,14 +44,11 @@ struct video {
  * SCORE structures hold the optimal
  * trace trajectory, and the cost of redisplay, when
  * the dynamic programming redisplay code is used.
- * If no fancy redisplay, this isn't used. The trace index
- * fields can be "char", and the cost a "short", but
- * this makes the code worse on the VAX.
  */
 struct score {
-	XCHAR	s_itrace;	/* "i" index for track back.	 */
-	XCHAR	s_jtrace;	/* "j" index for trace back.	 */
-	XSHORT	s_cost;		/* Display cost.		 */
+	int	s_itrace;	/* "i" index for track back.	 */
+	int	s_jtrace;	/* "j" index for trace back.	 */
+	int	s_cost;		/* Display cost.		 */
 };
 
 void	vtmove(int, int);
