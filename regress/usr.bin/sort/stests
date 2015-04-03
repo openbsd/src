@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.14 2015/04/03 16:30:50 millert Exp $
+#	$OpenBSD: stests,v 1.15 2015/04/03 20:28:32 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -652,7 +652,7 @@ sort -k2,2.1b -k2r in >xx &&
 sort -b -k2,2 -k2 in >xx && 
 	$SORTPROG -c -t: -k8n xx 2>/dev/null || echo ${TEST}G failed
 sort -b -k2,2b -k2 in >xx &&			# perhaps same as G
-	$SORTPROG -c -t: -k3n xx 2>/dev/null || echo ${TEST}H failed\
+	$SORTPROG -c -t: -k8n xx 2>/dev/null || echo ${TEST}H failed\
  "(standard is not clear on this)"
 
 #---------------------------------------------------------------
