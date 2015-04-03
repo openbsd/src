@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.18 2015/02/12 04:56:03 kettenis Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.19 2015/04/03 13:10:59 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -33,6 +33,17 @@
 #include "i915_drv.h"
 #include "intel_drv.h"
 #include <dev/pci/drm/drm_crtc_helper.h>
+
+#define LP_RING(d) (&((struct drm_i915_private *)(d))->ring[RCS])
+
+#define BEGIN_LP_RING(n) \
+	intel_ring_begin(LP_RING(dev_priv), (n))
+
+#define OUT_RING(x) \
+	intel_ring_emit(LP_RING(dev_priv), x)
+
+#define ADVANCE_LP_RING() \
+	intel_ring_advance(LP_RING(dev_priv))
 
 void
 i915_kernel_lost_context(struct drm_device * dev)
@@ -310,10 +321,6 @@ i915_load_modeset_init(struct drm_device *dev)
 #if 0
 	intel_register_dsm_handler();
 #endif
-
-	/* IIR "flip pending" bit means done if this bit is set */
-	if (IS_GEN3(dev) && (I915_READ(ECOSKPD) & ECO_FLIP_DONE))
-		dev_priv->flip_pending_is_done = true;
 
 #ifdef notyet
 	ret = vga_switcheroo_register_client(dev->pdev, &i915_switcheroo_ops);

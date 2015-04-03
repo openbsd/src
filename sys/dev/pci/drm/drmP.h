@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.181 2015/02/12 08:48:32 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.182 2015/04/03 13:10:59 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -484,6 +484,7 @@ struct drm_dmamem {
 	int			nsegs;
 	bus_dma_segment_t	segs[1];
 };
+typedef struct drm_dmamem drm_dma_handle_t;
 
 struct drm_buf_entry {
 	struct drm_dmamem	**seglist;

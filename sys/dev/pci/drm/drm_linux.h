@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.7 2015/02/12 11:11:45 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.8 2015/04/03 13:10:59 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -18,7 +18,14 @@
 #define IRQ_NONE	0
 #define IRQ_HANDLED	1
 
+typedef bus_addr_t dma_addr_t;
+typedef bus_addr_t phys_addr_t;
+typedef int wait_queue_head_t;
+
 #define __force
+#define __always_unused
+#define __read_mostly
+
 #define KERN_INFO
 #define KERN_WARNING
 #define KERN_NOTICE
@@ -71,6 +78,8 @@
 #define dev_debug(dev, fmt, arg...) 				\
 	    do { } while(0)
 #endif
+
+typedef struct mutex spinlock_t;
 
 static inline void
 spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags)

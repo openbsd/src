@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.75 2015/02/12 04:56:03 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.76 2015/04/03 13:10:59 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -62,6 +62,17 @@
 #endif
 
 extern struct mutex mchdev_lock;
+
+#define IS_I9XX(dev)	(INTEL_INFO(dev)->gen >= 3)
+/* MCH IFP BARs */
+#define I915_IFPADDR	0x60
+#define I965_IFPADDR	0x70
+
+struct inteldrm_file {
+	struct drm_file	file_priv;
+	struct {
+	} mm;
+};
 
 /*
  * Override lid status (0=autodetect, 1=autodetect disabled [default],
@@ -910,7 +921,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	intel_detect_pch(dev_priv);
+	intel_detect_pch(dev);
 
 	/*
 	 * i945G/GM report MSI capability despite not actually supporting it.
@@ -1000,7 +1011,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	intel_opregion_setup(dev);
 	intel_setup_bios(dev);
-	intel_setup_gmbus(dev_priv);
+	intel_setup_gmbus(dev);
 
 	/* XXX would be a lot nicer to get agp info before now */
 	uvm_page_physload(atop(dev_priv->mm.gtt_base_addr),
@@ -2026,8 +2037,9 @@ intel_pch_match(struct pci_attach_args *pa)
 }
 
 void
-intel_detect_pch(struct inteldrm_softc *dev_priv)
+intel_detect_pch(struct drm_device *dev)
 {
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct pci_attach_args	pa;
 	unsigned short id;
 	if (pci_find_device(&pa, intel_pch_match) == 0) {
