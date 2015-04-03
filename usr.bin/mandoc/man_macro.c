@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.65 2015/04/03 16:59:34 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.66 2015/04/03 23:17:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,24 +29,13 @@
 #include "libmandoc.h"
 #include "libman.h"
 
-enum	rew {
-	REW_REWIND,
-	REW_NOHALT,
-	REW_HALT
-};
-
 static	void		 blk_close(MACRO_PROT_ARGS);
 static	void		 blk_exp(MACRO_PROT_ARGS);
 static	void		 blk_imp(MACRO_PROT_ARGS);
 static	void		 in_line_eoln(MACRO_PROT_ARGS);
 static	int		 man_args(struct man *, int,
 				int *, char *, char **);
-
-static	void		 rew_scope(enum roff_type, struct man *, int);
-static	enum rew	 rew_dohalt(int, enum roff_type,
-				const struct roff_node *);
-static	enum rew	 rew_block(int, enum roff_type,
-				const struct roff_node *);
+static	void		 rew_scope(struct man *, int);
 
 const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* br */
@@ -152,119 +141,46 @@ man_unscope(struct man *man, const struct roff_node *to)
 	    MAN_NEXT_CHILD : MAN_NEXT_SIBLING;
 }
 
-static enum rew
-rew_block(int ntok, enum roff_type type, const struct roff_node *n)
-{
-
-	if (type == ROFFT_BLOCK && n->parent->tok == ntok &&
-	    n->parent->type == ROFFT_BODY)
-		return(REW_REWIND);
-	return(ntok == n->tok ? REW_HALT : REW_NOHALT);
-}
-
-/*
- * There are three scope levels: scoped to the root (all), scoped to the
- * section (all less sections), and scoped to subsections (all less
- * sections and subsections).
- */
-static enum rew
-rew_dohalt(int tok, enum roff_type type, const struct roff_node *n)
-{
-	enum rew	 c;
-
-	/* We cannot progress beyond the root ever. */
-	if (n->type == ROFFT_ROOT)
-		return(REW_HALT);
-
-	assert(n->parent);
-
-	/* Normal nodes shouldn't go to the level of the root. */
-	if (n->parent->type == ROFFT_ROOT)
-		return(REW_REWIND);
-
-	/* Already-validated nodes should be closed out. */
-	if (MAN_VALID & n->flags)
-		return(REW_NOHALT);
-
-	/* First: rewind to ourselves. */
-	if (type == n->type && tok == n->tok) {
-		if (man_macros[n->tok].fp == blk_exp)
-			return(REW_HALT);
-		else
-			return(REW_REWIND);
-	}
-
-	/*
-	 * Next follow the implicit scope-smashings as defined by man.7:
-	 * section, sub-section, etc.
-	 */
-
-	switch (tok) {
-	case MAN_SH:
-		break;
-	case MAN_SS:
-		/* Rewind to a section, if a block. */
-		if (REW_NOHALT != (c = rew_block(MAN_SH, type, n)))
-			return(c);
-		break;
-	case MAN_RS:
-		/* Preserve empty paragraphs before RS. */
-		if (0 == n->nchild && (MAN_P == n->tok ||
-		    MAN_PP == n->tok || MAN_LP == n->tok))
-			return(REW_HALT);
-		/* Rewind to a subsection, if a block. */
-		if (REW_NOHALT != (c = rew_block(MAN_SS, type, n)))
-			return(c);
-		/* Rewind to a section, if a block. */
-		if (REW_NOHALT != (c = rew_block(MAN_SH, type, n)))
-			return(c);
-		break;
-	default:
-		/* Rewind to an offsetter, if a block. */
-		if (REW_NOHALT != (c = rew_block(MAN_RS, type, n)))
-			return(c);
-		/* Rewind to a subsection, if a block. */
-		if (REW_NOHALT != (c = rew_block(MAN_SS, type, n)))
-			return(c);
-		/* Rewind to a section, if a block. */
-		if (REW_NOHALT != (c = rew_block(MAN_SH, type, n)))
-			return(c);
-		break;
-	}
-
-	return(REW_NOHALT);
-}
-
 /*
  * Rewinding entails ascending the parse tree until a coherent point,
  * for example, the `SH' macro will close out any intervening `SS'
  * scopes.  When a scope is closed, it must be validated and actioned.
  */
 static void
-rew_scope(enum roff_type type, struct man *man, int tok)
+rew_scope(struct man *man, int tok)
 {
 	struct roff_node *n;
-	enum rew	 c;
 
-	for (n = man->last; n; n = n->parent) {
-		/*
-		 * Whether we should stop immediately (REW_HALT), stop
-		 * and rewind until this point (REW_REWIND), or keep
-		 * rewinding (REW_NOHALT).
-		 */
-		c = rew_dohalt(tok, type, n);
-		if (REW_HALT == c)
+	/* Preserve empty paragraphs before RS. */
+
+	n = man->last;
+	if (tok == MAN_RS && n->nchild == 0 &&
+	    (n->tok == MAN_P || n->tok == MAN_PP || n->tok == MAN_LP))
+		return;
+
+	for (;;) {
+		if (n->type == ROFFT_ROOT)
 			return;
-		if (REW_REWIND == c)
-			break;
+		if (n->flags & MAN_VALID) {
+			n = n->parent;
+			continue;
+		}
+		if (n->type != ROFFT_BLOCK) {
+			if (n->parent->type == ROFFT_ROOT) {
+				man_unscope(man, n);
+				return;
+			} else {
+				n = n->parent;
+				continue;
+			}
+		}
+		if (tok != MAN_SH && (n->tok == MAN_SH ||
+		    (tok != MAN_SS && (n->tok == MAN_SS ||
+		     man_macros[n->tok].fp == blk_exp))))
+			return;
+		man_unscope(man, n);
+		n = man->last;
 	}
-
-	/*
-	 * Rewind until the current point.  Warn if we're a roff
-	 * instruction that's mowing over explicit scopes.
-	 */
-
-	man_unscope(man, n);
 }
 
 
@@ -316,7 +232,7 @@ blk_close(MACRO_PROT_ARGS)
 	if (nn == NULL) {
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, man->parse,
 		    line, ppos, man_macronames[tok]);
-		rew_scope(ROFFT_BLOCK, man, MAN_PP);
+		rew_scope(man, MAN_PP);
 	} else {
 		line = man->last->line;
 		ppos = man->last->pos;
@@ -339,7 +255,7 @@ blk_exp(MACRO_PROT_ARGS)
 	char		*p;
 	int		 la;
 
-	rew_scope(ROFFT_BLOCK, man, tok);
+	rew_scope(man, tok);
 	man_block_alloc(man, line, ppos, tok);
 	man_head_alloc(man, line, ppos, tok);
 	head = man->last;
@@ -370,8 +286,7 @@ blk_imp(MACRO_PROT_ARGS)
 	char		*p;
 	struct roff_node *n;
 
-	rew_scope(ROFFT_BODY, man, tok);
-	rew_scope(ROFFT_BLOCK, man, tok);
+	rew_scope(man, tok);
 	man_block_alloc(man, line, ppos, tok);
 	man_head_alloc(man, line, ppos, tok);
 	n = man->last;
