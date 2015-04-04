@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.37 2015/02/09 11:54:24 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.38 2015/04/04 15:04:49 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -95,7 +95,8 @@ send_packet(int fd, struct iface *iface, void *pkt, size_t len,
 
 	if (sendto(fd, pkt, len, 0, (struct sockaddr *)dst,
 	    sizeof(*dst)) == -1) {
-		log_warn("send_packet: error sending packet");
+		log_warn("send_packet: error sending packet to %s",
+		    inet_ntoa(dst->sin_addr));
 		return (-1);
 	}
 
@@ -157,7 +158,9 @@ disc_recv_packet(int fd, short event, void *bula)
 	/* find a matching interface */
 	if ((fd == leconf->ldp_discovery_socket) &&
 	    (iface = disc_find_iface(ifindex, src.sin_addr)) == NULL) {
-		log_debug("disc_recv_packet: cannot find a matching interface");
+		log_debug("disc_recv_packet: cannot find a matching subnet "
+		    "on interface index %d for %s", ifindex,
+		    inet_ntoa(src.sin_addr));
 		return;
 	}
 
