@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.126 2015/04/02 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.127 2015/04/04 11:43:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -531,6 +531,17 @@ post_HP(DECL_ARGS)
 	switch (n->type) {
 	case ROFFT_BODY:
 		term_newln(p);
+
+		/*
+		 * Compatibility with a groff bug.
+		 * The .HP macro uses the undocumented .tag request
+		 * which causes a line break and cancels no-space
+		 * mode even if there isn't any output.
+		 */
+
+		if (n->child == NULL)
+			term_vspace(p);
+
 		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND);
 		p->trailspace = 0;
 		p->offset = mt->offset;

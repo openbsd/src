@@ -24,8 +24,12 @@ DDEESSCCRRIIPPTTIIOONN
                        hopefully 12n.
 
            outer text
-       regular text
+       nesting HP and RS inside RS:
+              outer text
+
+
+                  inner text
 
 
 
-OpenBSD                        November 18, 2012                  RS-NESTED(1)
+OpenBSD                          April 4, 2015                    RS-NESTED(1)

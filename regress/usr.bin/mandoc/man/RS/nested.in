@@ -1,4 +1,4 @@
-.TH RS-NESTED 1 "November 18, 2012" OpenBSD
+.TH RS-NESTED 1 "April 4, 2015" OpenBSD
 .SH NAME
 RS-nested \- various blocks nested inside reset blocks
 .SH DESCRIPTION
@@ -34,4 +34,11 @@ and which indent the next line will have - hopefully 12n.
 .PP
 outer text
 .RE
-regular text
+nesting HP and RS inside RS:
+.RS
+outer text
+.HP 2n
+.RS 4n
+inner text
+.RE
+.RE
