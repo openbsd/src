@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.40 2015/03/21 18:34:01 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.41 2015/04/04 16:21:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -89,7 +89,6 @@ struct kif_node		*kif_update(u_short, int, struct if_data *,
 
 struct kroute_node	*kroute_match(in_addr_t);
 
-int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *, struct sockaddr_dl *);
@@ -190,9 +189,6 @@ kr_init(int fs)
 	kr_state.rtseq = 1;
 
 	if (fetchtable() == -1)
-		return (-1);
-
-	if (protect_lo() == -1)
 		return (-1);
 
 	event_set(&kr_state.ev, kr_state.fd, EV_READ | EV_PERSIST,
@@ -762,28 +758,6 @@ kroute_match(in_addr_t key)
 }
 
 /* misc */
-int
-protect_lo(void)
-{
-	struct kroute_node	*kr;
-
-	/* special protection for 127/8 */
-	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-		log_warn("protect_lo");
-		return (-1);
-	}
-	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
-	kr->r.prefixlen = 8;
-	kr->r.flags = F_CONNECTED;
-	kr->r.local_label = NO_LABEL;
-	kr->r.remote_label = NO_LABEL;
-
-	if (RB_INSERT(kroute_tree, &krt, kr) != NULL)
-		free(kr);	/* kernel route already there, no problem */
-
-	return (0);
-}
-
 u_int8_t
 prefixlen_classful(in_addr_t ina)
 {
