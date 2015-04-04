@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.17 2015/01/15 23:51:04 deraadt Exp $
+/*	$OpenBSD: ldpctl.c,v 1.18 2015/04/04 16:29:48 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -372,11 +372,9 @@ show_lib_msg(struct imsg *imsg)
 		if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
 		    rt->prefixlen) == -1)
 			err(1, NULL);
-		if (!rt->in_use) {
-			if (asprintf(&remote, "-") == -1)
-				err(1, NULL);
-		} else if (rt->connected || rt->remote_label == NO_LABEL) {
-			if (asprintf(&remote, "Untagged") == -1)
+
+		if (rt->remote_label == NO_LABEL) {
+			if (asprintf(&remote, "No Label") == -1)
 				err(1, NULL);
 		} else if (rt->remote_label == MPLS_LABEL_IMPLNULL) {
 			if (asprintf(&remote, "Pop tag") == -1)
