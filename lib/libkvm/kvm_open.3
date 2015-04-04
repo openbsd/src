@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.17 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.18 2015/04/04 18:53:18 jca Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_open.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: April 4 2015 $
 .Dt KVM_OPEN 3
 .Os
 .Sh NAME
@@ -46,9 +46,9 @@
 .In fcntl.h
 .In kvm.h
 .Ft kvm_t *
-.Fn kvm_open "const char *execfile" "const char *corefile" "char *swapfile" "int flags" "const char *errstr"
+.Fn kvm_open "const char *execfile" "const char *corefile" "const char *swapfile" "int flags" "const char *errstr"
 .Ft kvm_t *
-.Fn kvm_openfiles "const char *execfile" "const char *corefile" "char *swapfile" "int flags" "char *errbuf"
+.Fn kvm_openfiles "const char *execfile" "const char *corefile" "const char *swapfile" "int flags" "char *errbuf"
 .Ft int
 .Fn kvm_close "kvm_t *kd"
 .Sh DESCRIPTION
