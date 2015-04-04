@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtendS.c,v 1.8 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: crtendS.c,v 1.9 2015/04/04 18:05:05 guenther Exp $	*/
 /*	$NetBSD: crtend.c,v 1.1 1997/04/16 19:38:24 thorpej Exp $	*/
 
 #include <sys/types.h>
@@ -10,10 +10,8 @@ static init_f __CTOR_LIST__[1]
 static init_f __DTOR_LIST__[1]
     __used __attribute__((section(".dtors"))) = { (void *)0 };	/* XXX */
 
-#if (__GNUC__ > 2)
 static void * __JCR_END__[]
     __used __attribute__((section(".jcr"), aligned(sizeof(void*)))) = { 0 };
-#endif
 
 MD_SECTION_EPILOGUE(".init");
 MD_SECTION_EPILOGUE(".fini");

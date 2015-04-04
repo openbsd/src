@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.17 2013/12/28 18:38:42 kettenis Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.18 2015/04/04 18:05:05 guenther Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -63,13 +63,12 @@ static const char __EH_FRAME_BEGIN__[]
  * java class registration hooks
  */
 
-#if (__GNUC__ > 2)
 static void *__JCR_LIST__[]
     __attribute__((section(".jcr"), aligned(sizeof(void*)))) = { };
 
 extern void _Jv_RegisterClasses (void *)
     __attribute__((weak));
-#endif
+
 
 /*
  * Include support for the __cxa_atexit/__cxa_finalize C++ abi for
@@ -79,7 +78,6 @@ extern void _Jv_RegisterClasses (void *)
  *     http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
  */
 
-#if (__GNUC__ > 2)
 void *__dso_handle = NULL;
 __asm(".hidden  __dso_handle");
 
@@ -92,7 +90,7 @@ atexit(void (*fn)(void))
 {
 	return (__cxa_atexit((void (*)(void *))fn, NULL, NULL));
 }
-#endif
+
 
 static const init_f __CTOR_LIST__[1]
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
@@ -154,12 +152,8 @@ __do_init()
 		initialized = 1;
 
 		__register_frame_info(__EH_FRAME_BEGIN__, &object);
-
-#if (__GNUC__ > 2)
 		if (__JCR_LIST__[0] && _Jv_RegisterClasses)
 			_Jv_RegisterClasses(__JCR_LIST__);
-#endif
-
 		(__ctors)();
 
 		atexit(__fini);

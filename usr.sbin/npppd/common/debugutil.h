@@ -49,12 +49,8 @@ extern int debuglevel;
 
 /* adapted from FreeBSD:/usr/include/sys/cdefs */
 #ifndef __printflike
-#if __GNUC__ < 2 || __GNUC__ == 2 && __GNUC_MINOR__ < 7
-#define __printflike(fmtarg, firstvararg)
-#else
 #define __printflike(fmtarg, firstvararg) \
 		__attribute__((__format__ (__printf__, fmtarg, firstvararg)))
-#endif
 #endif
 
 #ifdef __cplusplus
