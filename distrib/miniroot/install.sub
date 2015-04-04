@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.826 2015/04/03 17:03:15 rpe Exp $
+#	$OpenBSD: install.sub,v 1.827 2015/04/04 11:06:33 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
@@ -82,6 +82,7 @@ waitcgiinfo() {
 # Utils functions
 #-------------------------------------------------------------------------------
 
+# Sort and print provided arguments.
 bsort() {
 	local _l _a=$1 _b
 
@@ -219,23 +220,29 @@ makedev() {
 	[[ -z $(cd /dev && sh MAKEDEV "$@" 2>&1) ]]
 }
 
+# Sort and print information from dmesg.boot using sed expression $1.
 scan_dmesg() {
 	bsort $(sed -n "$1" /var/run/dmesg.boot)
 }
 
+# Extract device names from hw.disknames matching sed expression $1.
 scan_disknames() {
 	local IFS=,
 	bsort $(for _n in $(sysctl -n hw.disknames); do echo "${_n%%:*} "; done | sed -n "$1")
 }
 
+# Return list of disk devices.
 get_dkdevs () {
 	echo $(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
 }
 
+# Return list of CDROM devices.
 get_cddevs () {
 	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 }
 
+# Return list of network devices. Filter out dynamically created network
+# pseudo-devices except vlan.
 get_ifdevs() {
 	local _if _iflist=$(rmel vlan $(ifconfig -C))
 
@@ -245,6 +252,7 @@ get_ifdevs() {
 	done
 }
 
+# Ask for the device that contains the install/upgrade media.
 get_drive() {
 	ask_which "$1" "contains the $MODE media" "$2" "$3"
 	[[ $resp == done ]] && return 1
@@ -252,7 +260,7 @@ get_drive() {
 	return 0
 }
 
-# Return the device name for the supplied device, which may be a disklabel UID.
+# Return the device name of the device $1, which may be a disklabel UID.
 getdevname() {
 	local _dev=$1
 	if [[ ${#_dev} == 18 && $_dev == +([0-9a-f]).[a-p] ||
@@ -596,9 +604,9 @@ __EOT
 	mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
 }
 
-# Output '<UP | DOWN> [<addr> <netmask> <rest of inet line>]'.
-#
 # $1 == interface
+# Obtain and output the inet information related to interface $1.
+# Should output '<UP/DOWN> <addr> <netmask> <rest of inet line> '.
 v4_info() {
 	ifconfig $1 inet | sed -n '
 		1s/.*<UP,.*/UP/p
@@ -607,7 +615,7 @@ v4_info() {
 		/inet/s///p'
 }
 
-# Convert a hex value to dotted decimal format.
+# Convert a hex value passed as argument $1 to dotted decimal format.
 hextodec() {
 	local _d _b
 
@@ -617,10 +625,14 @@ hextodec() {
 	echo ${_d#.}
 }
 
-# Create an entry in the hosts file. If an entry with the
-# same symbolic name and address family already exists, delete it.
-# $1 - IP address (v6 if it contains ':', else v4)
-# $2 - symbolic name
+# Create an entry in the hosts file. If an entry with the same symbolic name and
+# address family already exists, delete it.
+#
+# Parameters:
+#
+#    $1 = IP address (v6 if it contains ':', else v4)
+#    $2 = symbolic name
+#
 addhostent() {
 	local _addr=$1 _name=$2 _delim="."
 
@@ -635,6 +647,14 @@ addhostent() {
 	echo "$_addr $_name" >>/tmp/hosts
 }
 
+# Configure IPv4 interface.
+#
+# Parameters:
+#
+#    $1 = name of the network device
+#    $2 = hostname to use for dhcp request
+#    $3 = /path/to/hostname.if
+#
 v4_config() {
 	local _ifs=$1 _name=$2 _hn=$3 _prompt _addr _mask
 
@@ -676,10 +696,8 @@ v4_config() {
 	esac
 }
 
-# Obtain and output the inet6 information related to the given
-# interface. Should output '<UP/DOWN> <addr> <prefixlen> <rest of inet line> '.
-#
-# $1 == interface
+# Obtain and output the inet6 information related to interface $1.
+# Should output '<UP/DOWN> <addr> <prefixlen> <rest of inet line> '.
 v6_info() {
 	ifconfig $1 inet6 | sed -n '
 		1s/.*<UP,.*/UP/p
@@ -689,6 +707,7 @@ v6_info() {
 		/inet6/s///p'
 }
 
+# Set up IPv6 default route on interface $1.
 v6_defroute() {
 	local _if=$1 _prompt _resp _routers
 
@@ -714,6 +733,14 @@ v6_defroute() {
 		echo "$_resp" >>/tmp/mygate
 }
 
+# Configure IPv6 interface.
+#
+# Parameters:
+#
+#    $1 = name of the network device
+#    $2 = hostname to use for dhcp request
+#    $3 = /path/to/hostname.if
+#
 v6_config() {
 	local _ifs=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
 
@@ -820,6 +847,7 @@ ieee80211_config() {
 	fi
 }
 
+# Set up IPv4 and IPv6 interface configuration.
 configure_ifs() {
 	local _first _ifdevs _ifs _name _hn _vl=0 _vd _vi _p _tags
 
@@ -929,6 +957,7 @@ configure_ifs() {
 	done
 }
 
+# Set up IPv4 default route.
 v4_defroute() {
 	local _dr _prompt=" or 'none'"
 
@@ -1287,6 +1316,8 @@ install_http() {
 	fi
 }
 
+# Ask for the path to the set files on an already mounted filesystem and start
+# the set installation.
 install_mounted_fs() {
 	local _dir
 
@@ -1305,6 +1336,7 @@ install_mounted_fs() {
 	install_files "file://$_dir" "$(ls $_dir/)"
 }
 
+# Install sets from CD-ROM.
 install_cdrom() {
 	local _drive=$1
 
@@ -1313,6 +1345,8 @@ install_cdrom() {
 	install_mounted_fs
 }
 
+# Ask for the disk device containing the set files, mount it and start the set
+# installation. 
 install_disk() {
 	if ! ask_yn "Is the disk partition already mounted?"; then
 		get_drive "disk" '$(bsort $(get_dkdevs))' \
@@ -1323,6 +1357,7 @@ install_disk() {
 	install_mounted_fs
 }
 
+# Ask for the nfs share details, mount it and start the set installation.
 install_nfs() {
 	local _tcp
 
@@ -1343,6 +1378,8 @@ install_nfs() {
 	install_mounted_fs
 }
 
+# Mount filesystem containing the set files on device $1, optionally ask the
+# user for the device name.
 mount_mnt2() {
 	local _dev=$1 _opts _file=/tmp/parts.$1 _parts
 
@@ -1378,6 +1415,7 @@ mount_mnt2() {
 # Functions used in install.sh/upgrade.sh and it's associates
 #-------------------------------------------------------------------------------
 
+# Ask for terminal type if on console, otherwise ask for/set keyboard layout.
 set_term() {
 	local _layouts
 
@@ -1399,6 +1437,7 @@ set_term() {
 	fi
 }
 
+# Configure the network.
 donetconfig() {
 	local _dn _ns _n
 
@@ -1454,6 +1493,8 @@ donetconfig() {
 	fi
 }
 
+# Ask user about daemon startup on boot, X Window usage and console setup.
+# The actual configuration is done later in apply().
 questions() {
 	local _d _cdef=no
 
@@ -1497,6 +1538,7 @@ questions() {
 	fi
 }
 
+# Gather information for setting up the user later in apply().
 user_setup() {
 	local _q="Setup a user? (enter a lower-case loginname, or 'no')"
 
@@ -1540,6 +1582,7 @@ user_setup() {
 
 }
 
+# Set TZ variable based on zonefile $1 and user selection.
 set_timezone() {
 	local _zonefile=$1 _zonepath _zsed _tz _zoneroot=/usr/share/zoneinfo
 
@@ -1616,6 +1659,7 @@ get_rootinfo() {
 	SWAPDEV=${ROOTDISK}b
 }
 
+# Start interface using the on-disk hostname.if file passed as argument $1.
 # Much of this is gratuitously stolen from /etc/netstart.
 ifstart () {
 	local _hn=$1 if=${1#/mnt/etc/hostname.}
@@ -1713,6 +1757,7 @@ ifstart () {
 	done <$_hn
 }
 
+# Configure the network during upgrade based on the on-disk configuration.
 enable_network() {
 	local _f _gw _trunks _svlans _vlans
 
@@ -1769,6 +1814,9 @@ enable_network() {
 	route -qn add -net 127 127.0.0.1 -reject >/dev/null
 }
 
+# Fetch the list of mirror servers and installer choices from previous runs if
+# available from ftplist.cgi. Start the ftp process in the background, but kill
+# it if it takes longer than 12 seconds.
 startcgiinfo() {
 	# If no networks are configured, we do not need the httplist file.
 	((NIFS < 1)) && return
@@ -1877,8 +1925,8 @@ check_fs() {
 	[[ -n $_fail ]] && exit
 }
 
-# Must mount filesystems manually, one at a time, so we can make
-# sure the mount points exist.
+# Must mount filesystems manually, one at a time, so we can make sure the mount
+# points exist.
 mount_fs() {
 	local _async=$1 _dev _mp _fstype _opt _rest _msg _fail
 
@@ -1910,9 +1958,9 @@ feed_random() {
 	fi
 }
 
-# Ask the user for locations of sets, and then install whatever sets the
-# user selects from that location. Repeat as many times as the user
-# needs to get all desired sets.
+# Ask the user for locations of sets, and then install whatever sets the user
+# selects from that location. Repeat as many times as the user needs to get all
+# desired sets.
 install_sets() {
 	local _cddevs=$(get_cddevs) _d _locs="disk http"
 
@@ -1955,6 +2003,7 @@ install_sets() {
 	done
 }
 
+# Apply configuration settings based on the previously gathered information.
 apply() {
 	[[ $sshd == n ]] && echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
 	if [[ $sshd_disableroot == y ]]; then
@@ -1987,6 +2036,13 @@ apply() {
 	ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
 }
 
+# Return string suitable for the encrypted password field in master.passwd.
+#
+# 1) Without argument, return a single '*'.
+# 2) Return argument unchanged if it looks like a encrypted password string
+#    or if it consists of just 13 asterisks.
+# 3) Otherwise return encrypted password string.
+#
 encr_pwd() {
 	local _p=$1
 	if [[ -z $_p ]]; then
@@ -1999,6 +2055,7 @@ encr_pwd() {
 	fi
 }
 
+# Store entropy for the next boot.
 store_random() {
 	dd if=/dev/random of=/mnt/var/db/host.random bs=65536 count=1 \
 		status=none
@@ -2006,6 +2063,7 @@ store_random() {
 	chmod 600 /mnt/var/db/host.random /mnt/etc/random.seed
 }
 
+# Final steps common for installations and upgrades.
 finish_up() {
 	local _dev _mp _fstype _rest
 
