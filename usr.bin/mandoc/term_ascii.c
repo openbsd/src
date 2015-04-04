@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.31 2015/03/27 21:17:16 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.32 2015/04/04 17:46:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,7 +34,7 @@
 
 static	struct termp	 *ascii_init(enum termenc, const struct mchars *,
 				const struct manoutput *);
-static	double		  ascii_hspan(const struct termp *,
+static	int		  ascii_hspan(const struct termp *,
 				const struct roffsu *);
 static	size_t		  ascii_width(const struct termp *, int);
 static	void		  ascii_advance(struct termp *, size_t);
@@ -42,7 +42,7 @@ static	void		  ascii_begin(struct termp *);
 static	void		  ascii_end(struct termp *);
 static	void		  ascii_endline(struct termp *);
 static	void		  ascii_letter(struct termp *, int);
-static	void		  ascii_setwidth(struct termp *, int, size_t);
+static	void		  ascii_setwidth(struct termp *, int, int);
 
 static	void		  locale_advance(struct termp *, size_t);
 static	void		  locale_endline(struct termp *);
@@ -127,15 +127,16 @@ locale_alloc(const struct mchars *mchars, const struct manoutput *outopts)
 }
 
 static void
-ascii_setwidth(struct termp *p, int iop, size_t width)
+ascii_setwidth(struct termp *p, int iop, int width)
 {
 
+	width /= 24;
 	p->rmargin = p->defrmargin;
 	if (iop > 0)
 		p->defrmargin += width;
 	else if (iop == 0)
-		p->defrmargin = width ? width : p->lastrmargin;
-	else if (p->defrmargin > width)
+		p->defrmargin = width ? (size_t)width : p->lastrmargin;
+	else if (p->defrmargin > (size_t)width)
 		p->defrmargin -= width;
 	else
 		p->defrmargin = 0;
@@ -208,52 +209,45 @@ ascii_advance(struct termp *p, size_t len)
 		putchar(' ');
 }
 
-static double
+static int
 ascii_hspan(const struct termp *p, const struct roffsu *su)
 {
 	double		 r;
 
-	/*
-	 * Approximate based on character width.
-	 * None of these will be actually correct given that an inch on
-	 * the screen depends on character size, terminal, etc., etc.
-	 */
 	switch (su->unit) {
 	case SCALE_BU:
-		r = su->scale * 10.0 / 240.0;
+		r = su->scale;
 		break;
 	case SCALE_CM:
-		r = su->scale * 10.0 / 2.54;
+		r = su->scale * 240.0 / 2.54;
 		break;
 	case SCALE_FS:
-		r = su->scale * 2730.666;
+		r = su->scale * 65536.0;
 		break;
 	case SCALE_IN:
-		r = su->scale * 10.0;
+		r = su->scale * 240.0;
 		break;
 	case SCALE_MM:
-		r = su->scale / 100.0;
-		break;
-	case SCALE_PC:
-		r = su->scale * 10.0 / 6.0;
-		break;
-	case SCALE_PT:
-		r = su->scale * 10.0 / 72.0;
+		r = su->scale * 0.24;
 		break;
 	case SCALE_VS:
-		r = su->scale * 2.0 - 1.0;
+		/* FALLTHROUGH */
+	case SCALE_PC:
+		r = su->scale * 40.0;
+		break;
+	case SCALE_PT:
+		r = su->scale * 10.0 / 3.0;
 		break;
 	case SCALE_EN:
 		/* FALLTHROUGH */
 	case SCALE_EM:
-		r = su->scale;
+		r = su->scale * 24.0;
 		break;
 	default:
 		abort();
 		/* NOTREACHED */
 	}
-
-	return(r);
+	return(r > 0.0 ? r + 0.01 : r - 0.01);
 }
 
 const char *

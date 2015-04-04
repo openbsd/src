@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.215 2015/04/02 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.216 2015/04/04 17:46:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -531,7 +531,7 @@ a2width(const struct termp *p, const char *v)
 		SCALE_HS_INIT(&su, term_strlen(p, v));
 		su.scale /= term_strlen(p, "0");
 	}
-	return(term_hspan(p, &su));
+	return(term_hspan(p, &su) / 24);
 }
 
 /*

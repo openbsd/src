@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.56 2015/04/02 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.57 2015/04/04 17:46:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -95,9 +95,9 @@ struct	termp {
 	void		(*end)(struct termp *);
 	void		(*endline)(struct termp *);
 	void		(*advance)(struct termp *, size_t);
-	void		(*setwidth)(struct termp *, int, size_t);
+	void		(*setwidth)(struct termp *, int, int);
 	size_t		(*width)(const struct termp *, int);
-	double		(*hspan)(const struct termp *,
+	int		(*hspan)(const struct termp *,
 				const struct roffsu *);
 	const void	 *argf;		/* arg for headf/footf */
 	struct termp_ps	 *ps;
