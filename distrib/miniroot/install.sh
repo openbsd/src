@@ -1,8 +1,10 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.261 2015/03/28 00:03:05 rpe Exp $
+#	$OpenBSD: install.sh,v 1.262 2015/04/04 14:21:01 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
+#
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

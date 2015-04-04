@@ -1,8 +1,10 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.84 2015/03/28 00:03:05 rpe Exp $
+#	$OpenBSD: upgrade.sh,v 1.85 2015/04/04 14:21:01 rpe Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
+#
 # All rights reserved.
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
