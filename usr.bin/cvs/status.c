@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.95 2015/04/04 14:19:10 stsp Exp $	*/
+/*	$OpenBSD: status.c,v 1.96 2015/04/04 14:20:11 stsp Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -121,6 +121,7 @@ cvs_status_local(struct cvs_file *cf)
 	size_t len;
 	RCSNUM *head;
 	const char *status;
+	struct rcs_delta *rdp;
 	char buf[PATH_MAX + CVS_REV_BUFSZ + 128];
 	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
 	struct rcs_sym *sym;
@@ -210,6 +211,16 @@ cvs_status_local(struct cvs_file *cf)
 	}
 
 	cvs_printf("   Repository revision:\t%s\n", buf);
+
+	if (cf->file_rcs != NULL && head != NULL) {
+		rdp = rcs_findrev(cf->file_rcs, head);
+		if (rdp == NULL) {
+			fatal("cvs_status_local: No head revision delta");
+		}
+
+		cvs_printf("   Commit Identifier:\t%s\n",
+		    (rdp->rd_commitid != NULL) ? rdp->rd_commitid : "(none)");
+	}
 
 	if (cf->file_ent != NULL) {
 		if (cf->file_ent->ce_tag != NULL)
