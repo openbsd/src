@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.27 2014/12/08 20:56:11 guenther Exp $	*/
+/*	$OpenBSD: stat.h,v 1.28 2015/04/04 18:06:08 jca Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -198,6 +198,10 @@ int	mkdir(const char *, mode_t);
 int	mkfifo(const char *, mode_t);
 int	stat(const char *, struct stat *);
 mode_t	umask(mode_t);
+#if __POSIX_VISIBLE >= 200112L || __XPG_VISIBLE >= 420 || __BSD_VISIBLE
+int	fchmod(int, mode_t);
+int	lstat(const char *, struct stat *);
+#endif
 #if __POSIX_VISIBLE >= 200809
 int	fchmodat(int, const char *, mode_t, int);
 int	fstatat(int, const char *, struct stat *, int);
@@ -211,8 +215,6 @@ int	futimens(int, const struct timespec [2]);
 int	chflags(const char *, unsigned int);
 int	chflagsat(int, const char *, unsigned int, int);
 int	fchflags(int, unsigned int);
-int	fchmod(int, mode_t);
-int	lstat(const char *, struct stat *);
 int	isfdtype(int, int);
 #endif
 __END_DECLS
