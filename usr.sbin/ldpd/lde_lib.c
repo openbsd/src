@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.31 2013/10/15 20:21:25 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.32 2015/04/04 15:15:44 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -45,6 +45,7 @@ struct rt_node	*rt_add(struct in_addr, u_int8_t);
 struct rt_lsp	*rt_lsp_find(struct rt_node *, struct in_addr, u_int8_t);
 struct rt_lsp	*rt_lsp_add(struct rt_node *, struct in_addr, u_int8_t);
 void		 rt_lsp_del(struct rt_lsp *);
+int		 lde_nbr_is_nexthop(struct rt_node *, struct lde_nbr *);
 
 RB_PROTOTYPE(fec_tree, fec, entry, fec_compare)
 RB_GENERATE(fec_tree, fec, entry, fec_compare)
@@ -123,12 +124,23 @@ fec_clear(struct fec_tree *fh, void (*free_cb)(void *))
 }
 
 /* routing table functions */
+int
+lde_nbr_is_nexthop(struct rt_node *rn, struct lde_nbr *ln)
+{
+	struct rt_lsp		*rl;
+
+	LIST_FOREACH(rl, &rn->lsp, entry)
+		if (lde_address_find(ln, &rl->nexthop))
+			return (1);
+
+	return (0);
+}
+
 void
 rt_dump(pid_t pid)
 {
 	struct fec		*f;
 	struct rt_node		*rr;
-	struct rt_lsp		*rl;
 	struct lde_map		*me;
 	static struct ctl_rt	 rtctl;
 
@@ -139,30 +151,21 @@ rt_dump(pid_t pid)
 		rtctl.flags = rr->flags;
 		rtctl.local_label = rr->local_label;
 
-		LIST_FOREACH(rl, &rr->lsp, entry) {
-			rtctl.nexthop = rl->nexthop;
-			rtctl.remote_label = rl->remote_label;
-			rtctl.in_use = 1;
-
-			if (rtctl.nexthop.s_addr == htonl(INADDR_ANY))
-				rtctl.connected = 1;
-			else
-				rtctl.connected = 0;
+		LIST_FOREACH(me, &rr->downstream, entry) {
+			rtctl.in_use = lde_nbr_is_nexthop(rr, me->nexthop);
+			rtctl.nexthop = me->nexthop->id;
+			rtctl.remote_label = me->label;
 
 			lde_imsg_compose_ldpe(IMSG_CTL_SHOW_LIB, 0, pid,
 			    &rtctl, sizeof(rtctl));
 		}
-		if (LIST_EMPTY(&rr->lsp)) {
-			LIST_FOREACH(me, &rr->downstream, entry) {
-				rtctl.in_use = 0;
-				rtctl.connected = 0;
-				/* we don't know the nexthop use id instead */
-				rtctl.nexthop = me->nexthop->id;
-				rtctl.remote_label = me->label;
+		if (LIST_EMPTY(&rr->downstream)) {
+			rtctl.in_use = 0;
+			rtctl.nexthop.s_addr = INADDR_ANY;
+			rtctl.remote_label = NO_LABEL;
 
-				lde_imsg_compose_ldpe(IMSG_CTL_SHOW_LIB, 0, pid,
-				    &rtctl, sizeof(rtctl));
-			}
+			lde_imsg_compose_ldpe(IMSG_CTL_SHOW_LIB, 0, pid,
+			    &rtctl, sizeof(rtctl));
 		}
 	}
 }
