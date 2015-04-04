@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.181 2011/09/20 12:43:45 nicm Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.182 2015/04/04 14:19:10 stsp Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -249,6 +249,7 @@ struct cvs_ent {
 	char		*ce_name;
 	char		*ce_opts;
 	char		*ce_tag;
+	char		*ce_time;
 	time_t		 ce_date;
 	time_t		 ce_mtime;
 	u_int16_t	 ce_type;

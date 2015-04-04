@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.103 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: entries.c,v 1.104 2015/04/04 14:19:10 stsp Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -151,6 +151,7 @@ cvs_ent_parse(const char *entry)
 	ent->ce_rev = NULL;
 	ent->ce_date = -1;
 	ent->ce_tag = NULL;
+	ent->ce_time = NULL;
 
 	if (ent->ce_type == CVS_ENT_FILE) {
 		if (*fields[2] == '-') {
@@ -186,6 +187,8 @@ cvs_ent_parse(const char *entry)
 			p = fields[3];
 			if (strncmp(fields[3], "Result of merge+", 16) == 0)
 				p += 16;
+
+			ent->ce_time = xstrdup(p);
 
 			/* Date field can be a '+=' with remote to indicate
 			 * conflict.  In this case do nothing. */
@@ -383,6 +386,9 @@ cvs_ent_free(struct cvs_ent *ent)
 {
 	if (ent->ce_rev != NULL)
 		rcsnum_free(ent->ce_rev);
+	if (ent->ce_time != NULL)
+		xfree(ent->ce_time);
+
 	xfree(ent->ce_buf);
 	xfree(ent);
 }

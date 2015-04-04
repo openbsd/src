@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.94 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: status.c,v 1.95 2015/04/04 14:19:10 stsp Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -176,9 +176,8 @@ cvs_status_local(struct cvs_file *cf)
 		rcsnum_tostr(cf->file_ent->ce_rev, revbuf, sizeof(revbuf));
 
 		if (cf->file_ent->ce_conflict == NULL) {
-			ctime_r(&(cf->file_ent->ce_mtime), timebuf);
-			if (timebuf[strlen(timebuf) - 1] == '\n')
-				timebuf[strlen(timebuf) - 1] = '\0';
+			(void)strlcpy(timebuf, cf->file_ent->ce_time,
+			    sizeof(timebuf));
 		} else {
 			len = strlcpy(timebuf, cf->file_ent->ce_conflict,
 			    sizeof(timebuf));
