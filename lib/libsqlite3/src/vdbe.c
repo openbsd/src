@@ -608,6 +608,9 @@ int sqlite3VdbeExec(
 #endif
     nVmStep++;
     pOp = &aOp[pc];
+#ifdef SQLITE_ENABLE_STMT_SCANSTATUS
+    if( p->anExec ) p->anExec[pc]++;
+#endif
 
     /* Only allow tracing if SQLITE_DEBUG is defined.
     */
@@ -2633,7 +2636,10 @@ case OP_MakeRecord: {
     nHdr += serial_type<=127 ? 1 : sqlite3VarintLen(serial_type);
   }while( (--pRec)>=pData0 );
 
-  /* Add the initial header varint and total the size */
+  /* EVIDENCE-OF: R-22564-11647 The header begins with a single varint
+  ** which determines the total number of bytes in the header. The varint
+  ** value is the size of the header in bytes including the size varint
+  ** itself. */
   testcase( nHdr==126 );
   testcase( nHdr==127 );
   if( nHdr<=126 ){
@@ -2667,7 +2673,11 @@ case OP_MakeRecord: {
   pRec = pData0;
   do{
     serial_type = pRec->uTemp;
+    /* EVIDENCE-OF: R-06529-47362 Following the size varint are one or more
+    ** additional varints, one per column. */
     i += putVarint32(&zNewRecord[i], serial_type);            /* serial type */
+    /* EVIDENCE-OF: R-64536-51728 The values for each column in the record
+    ** immediately follow the header. */
     j += sqlite3VdbeSerialPut(&zNewRecord[j], pRec, serial_type); /* content */
   }while( (++pRec)<=pLast );
   assert( i==nHdr );
@@ -3802,10 +3812,10 @@ case OP_Found: {        /* jump, in3 */
   }else{
     pIdxKey = sqlite3VdbeAllocUnpackedRecord(
         pC->pKeyInfo, aTempRec, sizeof(aTempRec), &pFree
-    ); 
+    );
     if( pIdxKey==0 ) goto no_mem;
     assert( pIn3->flags & MEM_Blob );
-    assert( (pIn3->flags & MEM_Zero)==0 );  /* zeroblobs already expanded */
+    ExpandBlob(pIn3);
     sqlite3VdbeRecordUnpack(pC->pKeyInfo, pIn3->n, pIn3->z, pIdxKey);
   }
   pIdxKey->default_rc = 0;
@@ -3813,8 +3823,8 @@ case OP_Found: {        /* jump, in3 */
     /* For the OP_NoConflict opcode, take the jump if any of the
     ** input fields are NULL, since any key with a NULL will not
     ** conflict */
-    for(ii=0; ii<r.nField; ii++){
-      if( r.aMem[ii].flags & MEM_Null ){
+    for(ii=0; ii<pIdxKey->nField; ii++){
+      if( pIdxKey->aMem[ii].flags & MEM_Null ){
         pc = pOp->p2 - 1; VdbeBranchTaken(1,2);
         break;
       }
@@ -4499,9 +4509,9 @@ case OP_Sort: {        /* jump */
 **
 ** The next use of the Rowid or Column or Next instruction for P1 
 ** will refer to the first entry in the database table or index.
-** If the table or index is empty and P2>0, then jump immediately to P2.
-** If P2 is 0 or if the table or index is not empty, fall through
-** to the following instruction.
+** If the table or index is empty, jump immediately to P2.
+** If the table or index is not empty, fall through to the following 
+** instruction.
 **
 ** This opcode leaves the cursor configured to move in forward order,
 ** from the beginning toward the end.  In other words, the cursor is
@@ -5417,6 +5427,9 @@ case OP_Program: {        /* jump */
     pFrame->token = pProgram->token;
     pFrame->aOnceFlag = p->aOnceFlag;
     pFrame->nOnceFlag = p->nOnceFlag;
+#ifdef SQLITE_ENABLE_STMT_SCANSTATUS
+    pFrame->anExec = p->anExec;
+#endif
 
     pEnd = &VdbeFrameMem(pFrame)[pFrame->nChildMem];
     for(pMem=VdbeFrameMem(pFrame); pMem!=pEnd; pMem++){
@@ -5434,6 +5447,7 @@ case OP_Program: {        /* jump */
   pFrame->pParent = p->pFrame;
   pFrame->lastRowid = lastRowid;
   pFrame->nChange = p->nChange;
+  pFrame->nDbChange = p->db->nChange;
   p->nChange = 0;
   p->pFrame = pFrame;
   p->aMem = aMem = &VdbeFrameMem(pFrame)[-1];
@@ -5444,6 +5458,9 @@ case OP_Program: {        /* jump */
   p->nOp = pProgram->nOp;
   p->aOnceFlag = (u8 *)&p->apCsr[p->nCursor];
   p->nOnceFlag = pProgram->nOnce;
+#ifdef SQLITE_ENABLE_STMT_SCANSTATUS
+  p->anExec = 0;
+#endif
   pc = -1;
   memset(p->aOnceFlag, 0, p->nOnceFlag);
 
@@ -5688,8 +5705,8 @@ case OP_AggFinal: {
 /* Opcode: Checkpoint P1 P2 P3 * *
 **
 ** Checkpoint database P1. This is a no-op if P1 is not currently in
-** WAL mode. Parameter P2 is one of SQLITE_CHECKPOINT_PASSIVE, FULL
-** or RESTART.  Write 1 or 0 into mem[P3] if the checkpoint returns
+** WAL mode. Parameter P2 is one of SQLITE_CHECKPOINT_PASSIVE, FULL,
+** RESTART, or TRUNCATE.  Write 1 or 0 into mem[P3] if the checkpoint returns
 ** SQLITE_BUSY or not, respectively.  Write the number of pages in the
 ** WAL after the checkpoint into mem[P3+1] and the number of pages
 ** in the WAL that have been checkpointed after the checkpoint
@@ -5707,6 +5724,7 @@ case OP_Checkpoint: {
   assert( pOp->p2==SQLITE_CHECKPOINT_PASSIVE
        || pOp->p2==SQLITE_CHECKPOINT_FULL
        || pOp->p2==SQLITE_CHECKPOINT_RESTART
+       || pOp->p2==SQLITE_CHECKPOINT_TRUNCATE
   );
   rc = sqlite3Checkpoint(db, pOp->p1, pOp->p2, &aRes[1], &aRes[2]);
   if( rc==SQLITE_BUSY ){

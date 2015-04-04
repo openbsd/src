@@ -34,6 +34,11 @@
  with SQLITE_OMIT_WAL."
 #endif
 
+#if !SQLITE_OS_WINNT && SQLITE_MAX_MMAP_SIZE>0
+#  error "Memory mapped files require support from the Windows NT kernel,\
+ compile with SQLITE_MAX_MMAP_SIZE=0."
+#endif
+
 /*
 ** Are most of the Win32 ANSI APIs available (i.e. with certain exceptions
 ** based on the sub-platform)?
@@ -163,10 +168,11 @@
 
 /*
 ** Do we need to manually define the Win32 file mapping APIs for use with WAL
-** mode (e.g. these APIs are available in the Windows CE SDK; however, they
-** are not present in the header file)?
+** mode or memory mapped files (e.g. these APIs are available in the Windows
+** CE SDK; however, they are not present in the header file)?
 */
-#if SQLITE_WIN32_FILEMAPPING_API && !defined(SQLITE_OMIT_WAL)
+#if SQLITE_WIN32_FILEMAPPING_API && \
+        (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0)
 /*
 ** Two of the file mapping APIs are different under WinRT.  Figure out which
 ** set we need.
@@ -194,7 +200,7 @@ WINBASEAPI LPVOID WINAPI MapViewOfFile(HANDLE, DWORD, DWORD, DWORD, SIZE_T);
 ** This file mapping API is common to both Win32 and WinRT.
 */
 WINBASEAPI BOOL WINAPI UnmapViewOfFile(LPCVOID);
-#endif /* SQLITE_WIN32_FILEMAPPING_API && !defined(SQLITE_OMIT_WAL) */
+#endif /* SQLITE_WIN32_FILEMAPPING_API */
 
 /*
 ** Some Microsoft compilers lack this definition.
@@ -487,7 +493,7 @@ static struct win_syscall {
         LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE))aSyscall[5].pCurrent)
 
 #if (!SQLITE_OS_WINRT && defined(SQLITE_WIN32_HAS_ANSI) && \
-        !defined(SQLITE_OMIT_WAL))
+        (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0))
   { "CreateFileMappingA",      (SYSCALL)CreateFileMappingA,      0 },
 #else
   { "CreateFileMappingA",      (SYSCALL)0,                       0 },
@@ -497,7 +503,7 @@ static struct win_syscall {
         DWORD,DWORD,DWORD,LPCSTR))aSyscall[6].pCurrent)
 
 #if SQLITE_OS_WINCE || (!SQLITE_OS_WINRT && defined(SQLITE_WIN32_HAS_WIDE) && \
-        !defined(SQLITE_OMIT_WAL))
+        (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0))
   { "CreateFileMappingW",      (SYSCALL)CreateFileMappingW,      0 },
 #else
   { "CreateFileMappingW",      (SYSCALL)0,                       0 },
@@ -837,7 +843,8 @@ static struct win_syscall {
         LPOVERLAPPED))aSyscall[48].pCurrent)
 #endif
 
-#if SQLITE_OS_WINCE || (!SQLITE_OS_WINRT && !defined(SQLITE_OMIT_WAL))
+#if SQLITE_OS_WINCE || (!SQLITE_OS_WINRT && \
+        (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0))
   { "MapViewOfFile",           (SYSCALL)MapViewOfFile,           0 },
 #else
   { "MapViewOfFile",           (SYSCALL)0,                       0 },
@@ -907,7 +914,7 @@ static struct win_syscall {
 #define osUnlockFileEx ((BOOL(WINAPI*)(HANDLE,DWORD,DWORD,DWORD, \
         LPOVERLAPPED))aSyscall[58].pCurrent)
 
-#if SQLITE_OS_WINCE || !defined(SQLITE_OMIT_WAL)
+#if SQLITE_OS_WINCE || !defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0
   { "UnmapViewOfFile",         (SYSCALL)UnmapViewOfFile,         0 },
 #else
   { "UnmapViewOfFile",         (SYSCALL)0,                       0 },
@@ -970,7 +977,7 @@ static struct win_syscall {
 #define osGetFileInformationByHandleEx ((BOOL(WINAPI*)(HANDLE, \
         FILE_INFO_BY_HANDLE_CLASS,LPVOID,DWORD))aSyscall[66].pCurrent)
 
-#if SQLITE_OS_WINRT && !defined(SQLITE_OMIT_WAL)
+#if SQLITE_OS_WINRT && (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0)
   { "MapViewOfFileFromApp",    (SYSCALL)MapViewOfFileFromApp,    0 },
 #else
   { "MapViewOfFileFromApp",    (SYSCALL)0,                       0 },
@@ -1034,7 +1041,7 @@ static struct win_syscall {
 
 #define osGetProcessHeap ((HANDLE(WINAPI*)(VOID))aSyscall[74].pCurrent)
 
-#if SQLITE_OS_WINRT && !defined(SQLITE_OMIT_WAL)
+#if SQLITE_OS_WINRT && (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0)
   { "CreateFileMappingFromApp", (SYSCALL)CreateFileMappingFromApp, 0 },
 #else
   { "CreateFileMappingFromApp", (SYSCALL)0,                      0 },
@@ -1196,8 +1203,8 @@ int sqlite3_win32_reset_heap(){
   int rc;
   MUTEX_LOGIC( sqlite3_mutex *pMaster; ) /* The main static mutex */
   MUTEX_LOGIC( sqlite3_mutex *pMem; )    /* The memsys static mutex */
-  MUTEX_LOGIC( pMaster = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MASTER); )
-  MUTEX_LOGIC( pMem = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MEM); )
+  MUTEX_LOGIC( pMaster = sqlite3_mutex_alloc(SQLITE_MUTEX_STATIC_MASTER); )
+  MUTEX_LOGIC( pMem = sqlite3_mutex_alloc(SQLITE_MUTEX_STATIC_MEM); )
   sqlite3_mutex_enter(pMaster);
   sqlite3_mutex_enter(pMem);
   winMemAssertMagic();
@@ -2472,7 +2479,7 @@ static int winRead(
   int amt,                   /* Number of bytes to read */
   sqlite3_int64 offset       /* Begin reading at this offset */
 ){
-#if !SQLITE_OS_WINCE
+#if !SQLITE_OS_WINCE && !defined(SQLITE_WIN32_NO_OVERLAPPED)
   OVERLAPPED overlapped;          /* The offset for ReadFile. */
 #endif
   winFile *pFile = (winFile*)id;  /* file handle */
@@ -2504,7 +2511,7 @@ static int winRead(
   }
 #endif
 
-#if SQLITE_OS_WINCE
+#if SQLITE_OS_WINCE || defined(SQLITE_WIN32_NO_OVERLAPPED)
   if( winSeekFile(pFile, offset) ){
     OSTRACE(("READ file=%p, rc=SQLITE_FULL\n", pFile->h));
     return SQLITE_FULL;
@@ -2576,13 +2583,13 @@ static int winWrite(
   }
 #endif
 
-#if SQLITE_OS_WINCE
+#if SQLITE_OS_WINCE || defined(SQLITE_WIN32_NO_OVERLAPPED)
   rc = winSeekFile(pFile, offset);
   if( rc==0 ){
 #else
   {
 #endif
-#if !SQLITE_OS_WINCE
+#if !SQLITE_OS_WINCE && !defined(SQLITE_WIN32_NO_OVERLAPPED)
     OVERLAPPED overlapped;        /* The offset for WriteFile. */
 #endif
     u8 *aRem = (u8 *)pBuf;        /* Data yet to be written */
@@ -2590,14 +2597,14 @@ static int winWrite(
     DWORD nWrite;                 /* Bytes written by each WriteFile() call */
     DWORD lastErrno = NO_ERROR;   /* Value returned by GetLastError() */
 
-#if !SQLITE_OS_WINCE
+#if !SQLITE_OS_WINCE && !defined(SQLITE_WIN32_NO_OVERLAPPED)
     memset(&overlapped, 0, sizeof(OVERLAPPED));
     overlapped.Offset = (LONG)(offset & 0xffffffff);
     overlapped.OffsetHigh = (LONG)((offset>>32) & 0x7fffffff);
 #endif
 
     while( nRem>0 ){
-#if SQLITE_OS_WINCE
+#if SQLITE_OS_WINCE || defined(SQLITE_WIN32_NO_OVERLAPPED)
       if( !osWriteFile(pFile->h, aRem, nRem, &nWrite, 0) ){
 #else
       if( !osWriteFile(pFile->h, aRem, nRem, &nWrite, &overlapped) ){
@@ -2610,7 +2617,7 @@ static int winWrite(
         lastErrno = osGetLastError();
         break;
       }
-#if !SQLITE_OS_WINCE
+#if !SQLITE_OS_WINCE && !defined(SQLITE_WIN32_NO_OVERLAPPED)
       offset += nWrite;
       overlapped.Offset = (LONG)(offset & 0xffffffff);
       overlapped.OffsetHigh = (LONG)((offset>>32) & 0x7fffffff);

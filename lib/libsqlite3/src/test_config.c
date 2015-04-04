@@ -41,7 +41,7 @@
 ** procedures use this to determine when tests should be omitted.
 */
 static void set_options(Tcl_Interp *interp){
-#ifdef HAVE_MALLOC_USABLE_SIZE
+#if HAVE_MALLOC_USABLE_SIZE
   Tcl_SetVar2(interp, "sqlite_options", "malloc_usable_size", "1",
               TCL_GLOBAL_ONLY);
 #else
@@ -153,6 +153,12 @@ static void set_options(Tcl_Interp *interp){
   Tcl_SetVar2(interp, "sqlite_options", "analyze", "0", TCL_GLOBAL_ONLY);
 #else
   Tcl_SetVar2(interp, "sqlite_options", "analyze", "1", TCL_GLOBAL_ONLY);
+#endif
+
+#ifdef SQLITE_ENABLE_API_ARMOR
+  Tcl_SetVar2(interp, "sqlite_options", "api_armor", "1", TCL_GLOBAL_ONLY);
+#else
+  Tcl_SetVar2(interp, "sqlite_options", "api_armor", "0", TCL_GLOBAL_ONLY);
 #endif
 
 #ifdef SQLITE_ENABLE_ATOMIC_WRITE
@@ -482,6 +488,12 @@ Tcl_SetVar2(interp, "sqlite_options", "mergesort", "1", TCL_GLOBAL_ONLY);
   Tcl_SetVar2(interp, "sqlite_options", "stat3", "1", TCL_GLOBAL_ONLY);
 #else
   Tcl_SetVar2(interp, "sqlite_options", "stat3", "0", TCL_GLOBAL_ONLY);
+#endif
+
+#ifdef SQLITE_ENABLE_STMT_SCANSTATUS
+  Tcl_SetVar2(interp, "sqlite_options", "scanstatus", "1", TCL_GLOBAL_ONLY);
+#else
+  Tcl_SetVar2(interp, "sqlite_options", "scanstatus", "0", TCL_GLOBAL_ONLY);
 #endif
 
 #if !defined(SQLITE_ENABLE_LOCKING_STYLE)

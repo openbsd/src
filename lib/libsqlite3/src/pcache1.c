@@ -296,7 +296,7 @@ static PgHdr1 *pcache1AllocPage(PCache1 *pCache){
     pPg = 0;
   }
 #else
-  pPg = pcache1Alloc(sizeof(PgHdr1) + pCache->szPage + pCache->szExtra);
+  pPg = pcache1Alloc(ROUND8(sizeof(PgHdr1)) + pCache->szPage + pCache->szExtra);
   p = (PgHdr1 *)&((u8 *)pPg)[pCache->szPage];
 #endif
   pcache1EnterMutex(pCache->pGroup);
@@ -980,6 +980,11 @@ void sqlite3PCacheSetDefault(void){
   };
   sqlite3_config(SQLITE_CONFIG_PCACHE2, &defaultMethods);
 }
+
+/*
+** Return the size of the header on each page of this PCACHE implementation.
+*/
+int sqlite3HeaderSizePcache1(void){ return ROUND8(sizeof(PgHdr1)); }
 
 #ifdef SQLITE_ENABLE_MEMORY_MANAGEMENT
 /*

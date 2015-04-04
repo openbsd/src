@@ -134,6 +134,13 @@ int sqlite3_complete(const char *zSql){
   };
 #endif /* SQLITE_OMIT_TRIGGER */
 
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( zSql==0 ){
+    (void)SQLITE_MISUSE_BKPT;
+    return 0;
+  }
+#endif
+
   while( *zSql ){
     switch( *zSql ){
       case ';': {  /* A semicolon */

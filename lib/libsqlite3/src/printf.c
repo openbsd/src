@@ -15,17 +15,6 @@
 #include "sqliteInt.h"
 
 /*
-** If the strchrnul() library function is available, then set
-** HAVE_STRCHRNUL.  If that routine is not available, this module
-** will supply its own.  The built-in version is slower than
-** the glibc version so the glibc version is definitely preferred.
-*/
-#if !defined(HAVE_STRCHRNUL)
-# define HAVE_STRCHRNUL 0
-#endif
-
-
-/*
 ** Conversion types fall into various categories as defined by the
 ** following enumeration.
 */
@@ -223,6 +212,13 @@ void sqlite3VXPrintf(
   PrintfArguments *pArgList = 0; /* Arguments for SQLITE_PRINTF_SQLFUNC */
   char buf[etBUFSIZE];       /* Conversion buffer */
 
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( ap==0 ){
+    (void)SQLITE_MISUSE_BKPT;
+    sqlite3StrAccumReset(pAccum);
+    return;
+  }
+#endif
   bufpt = 0;
   if( bFlags ){
     if( (bArgList = (bFlags & SQLITE_PRINTF_SQLFUNC))!=0 ){
@@ -763,6 +759,11 @@ static int sqlite3StrAccumEnlarge(StrAccum *p, int N){
     char *zOld = (p->zText==p->zBase ? 0 : p->zText);
     i64 szNew = p->nChar;
     szNew += N + 1;
+    if( szNew+p->nChar<=p->mxAlloc ){
+      /* Force exponential buffer size growth as long as it does not overflow,
+      ** to avoid having to call this routine too often */
+      szNew += p->nChar;
+    }
     if( szNew > p->mxAlloc ){
       sqlite3StrAccumReset(p);
       setStrAccumError(p, STRACCUM_TOOBIG);
@@ -779,6 +780,7 @@ static int sqlite3StrAccumEnlarge(StrAccum *p, int N){
       assert( p->zText!=0 || p->nChar==0 );
       if( zOld==0 && p->nChar>0 ) memcpy(zNew, p->zText, p->nChar);
       p->zText = zNew;
+      p->nAlloc = sqlite3DbMallocSize(p->db, zNew);
     }else{
       sqlite3StrAccumReset(p);
       setStrAccumError(p, STRACCUM_NOMEM);
@@ -948,6 +950,13 @@ char *sqlite3_vmprintf(const char *zFormat, va_list ap){
   char *z;
   char zBase[SQLITE_PRINT_BUF_SIZE];
   StrAccum acc;
+
+#ifdef SQLITE_ENABLE_API_ARMOR  
+  if( zFormat==0 ){
+    (void)SQLITE_MISUSE_BKPT;
+    return 0;
+  }
+#endif
 #ifndef SQLITE_OMIT_AUTOINIT
   if( sqlite3_initialize() ) return 0;
 #endif
@@ -990,6 +999,13 @@ char *sqlite3_mprintf(const char *zFormat, ...){
 char *sqlite3_vsnprintf(int n, char *zBuf, const char *zFormat, va_list ap){
   StrAccum acc;
   if( n<=0 ) return zBuf;
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( zBuf==0 || zFormat==0 ) {
+    (void)SQLITE_MISUSE_BKPT;
+    if( zBuf && n>0 ) zBuf[0] = 0;
+    return zBuf;
+  }
+#endif
   sqlite3StrAccumInit(&acc, zBuf, n, 0);
   acc.useMalloc = 0;
   sqlite3VXPrintf(&acc, 0, zFormat, ap);

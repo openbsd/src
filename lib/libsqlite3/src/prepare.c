@@ -394,9 +394,11 @@ int sqlite3Init(sqlite3 *db, char **pzErrMsg){
   int commit_internal = !(db->flags&SQLITE_InternChanges);
   
   assert( sqlite3_mutex_held(db->mutex) );
+  assert( sqlite3BtreeHoldsMutex(db->aDb[0].pBt) );
   assert( db->init.busy==0 );
   rc = SQLITE_OK;
   db->init.busy = 1;
+  ENC(db) = SCHEMA_ENC(db);
   for(i=0; rc==SQLITE_OK && i<db->nDb; i++){
     if( DbHasProperty(db, i, DB_SchemaLoaded) || i==1 ) continue;
     rc = sqlite3InitOne(db, i, pzErrMsg);
@@ -709,9 +711,12 @@ static int sqlite3LockAndPrepare(
   const char **pzTail       /* OUT: End of parsed string */
 ){
   int rc;
-  assert( ppStmt!=0 );
+
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( ppStmt==0 ) return SQLITE_MISUSE_BKPT;
+#endif
   *ppStmt = 0;
-  if( !sqlite3SafetyCheckOk(db) ){
+  if( !sqlite3SafetyCheckOk(db)||zSql==0 ){
     return SQLITE_MISUSE_BKPT;
   }
   sqlite3_mutex_enter(db->mutex);
@@ -818,9 +823,11 @@ static int sqlite3Prepare16(
   const char *zTail8 = 0;
   int rc = SQLITE_OK;
 
-  assert( ppStmt );
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( ppStmt==0 ) return SQLITE_MISUSE_BKPT;
+#endif
   *ppStmt = 0;
-  if( !sqlite3SafetyCheckOk(db) ){
+  if( !sqlite3SafetyCheckOk(db)||zSql==0 ){
     return SQLITE_MISUSE_BKPT;
   }
   if( nBytes>=0 ){
