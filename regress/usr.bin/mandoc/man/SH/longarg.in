@@ -1,0 +1,9 @@
+.TH SH-LONGARG 1 "April 4, 2015" OpenBSD
+.SH NAME
+SH-longarg \- long section header lines
+.SH
+DESCRIPTION
+initial text
+.SH "This section has a really ridiculously long title\
+ which won't even fit on the line."
+custom section text

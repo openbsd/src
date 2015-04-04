@@ -1,0 +1,9 @@
+.TH SS-LONGARG 1 "April 4, 2015" OpenBSD
+.SH NAME
+SS-longarg \- long subsection header lines
+.SH
+DESCRIPTION
+initial text
+.SS
+This subsection has a ridiculously long title which won't even fit on the line.
+subsection text

@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2015/03/20 16:09:25 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2015/04/04 18:52:12 schwarze Exp $
 
-REGRESS_TARGETS	= broken broken_eline empty_before noarg
+REGRESS_TARGETS	= broken broken_eline empty_before longarg noarg
 LINT_TARGETS	= broken broken_eline empty_before noarg
 
 # groff-1.22.3 defects:

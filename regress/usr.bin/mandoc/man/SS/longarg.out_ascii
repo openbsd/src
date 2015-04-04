@@ -1,0 +1,17 @@
+SS-LONGARG(1)               General Commands Manual              SS-LONGARG(1)
+
+
+
+NNAAMMEE
+       SS-longarg - long subsection header lines
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text
+
+   TThhiiss ssuubbsseeccttiioonn hhaass aa rriiddiiccuulloouussllyy lloonngg ttiittllee wwhhiicchh wwoonn''tt eevveenn ffiitt oonn tthhee
+       lliinnee..
+       subsection text
+
+
+
+OpenBSD                          April 4, 2015                   SS-LONGARG(1)
