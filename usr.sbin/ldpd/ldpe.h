@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.34 2015/03/21 18:34:01 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.35 2015/04/04 15:09:47 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -158,8 +158,7 @@ int	 if_set_tos(int, int);
 int	 if_set_reuse(int, int);
 
 /* adjacency.c */
-struct adj	*adj_new(struct nbr *, struct hello_source *, u_int16_t,
-    struct in_addr);
+struct adj	*adj_new(struct nbr *, struct hello_source *, struct in_addr);
 void		 adj_del(struct adj *);
 struct adj	*adj_find(struct nbr *, struct hello_source *);
 void		 adj_start_itimer(struct adj *);

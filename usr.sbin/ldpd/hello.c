@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.24 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: hello.c,v 1.25 2015/04/04 15:09:47 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -177,12 +177,12 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	if (!nbr) {
 		/* create new adjacency and new neighbor */
 		nbr = nbr_new(lsr_id, transport_addr);
-		adj = adj_new(nbr, &source, holdtime, transport_addr);
+		adj = adj_new(nbr, &source, transport_addr);
 	} else {
 		adj = adj_find(nbr, &source);
 		if (!adj) {
 			/* create new adjacency for existing neighbor */
-			adj = adj_new(nbr, &source, holdtime, transport_addr);
+			adj = adj_new(nbr, &source, transport_addr);
 
 			if (nbr->addr.s_addr != transport_addr.s_addr)
 				log_warnx("recv_hello: neighbor %s: multiple "
