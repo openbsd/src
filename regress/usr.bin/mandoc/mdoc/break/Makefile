@@ -1,7 +1,11 @@
-# $OpenBSD: Makefile,v 1.2 2015/02/12 13:52:12 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2015/04/05 14:43:10 schwarze Exp $
 
-REGRESS_TARGETS	= brokenbreaker twice two
-LINT_TARGETS	= brokenbreaker twice two
+REGRESS_TARGETS	= brokenbreaker twice tail two
+LINT_TARGETS	= brokenbreaker twice tail two
+
+# It's hard to keep stuff together in next-line scope.
+
+SKIP_TMAN	= tail
 
 # groff-1.22.3 defect:
 # - non-matching enclosure end macro prints a closing delimiter

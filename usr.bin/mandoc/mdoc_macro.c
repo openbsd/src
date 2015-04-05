@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.141 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.142 2015/04/05 14:43:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -254,7 +254,9 @@ rew_last(struct mdoc *mdoc, const struct roff_node *to)
 {
 	struct roff_node *n, *np;
 
-	assert(to);
+	if (to->flags & MDOC_VALID)
+		return;
+
 	mdoc->next = MDOC_NEXT_SIBLING;
 	while (mdoc->last != to) {
 		/*
@@ -623,10 +625,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 	for (j = 0; ; j++) {
 		lastarg = *pos;
 
-		if (j == maxargs && n != NULL) {
-			rew_pending(mdoc, n);
-			n = NULL;
-		}
+		if (j == maxargs && n != NULL)
+			rew_last(mdoc, n);
 
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
 		if (ac == ARGS_PUNCT || ac == ARGS_EOLN)
@@ -641,10 +641,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		if (n != NULL) {
-			rew_pending(mdoc, n);
-			n = NULL;
-		}
+		if (n != NULL)
+			rew_last(mdoc, n);
 		mdoc->flags &= ~MDOC_NEWLINE;
 		mdoc_macro(mdoc, ntok, line, lastarg, pos, buf);
 		break;

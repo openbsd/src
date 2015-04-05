@@ -1,0 +1,14 @@
+BREAK-TAIL(1)               General Commands Manual              BREAK-TAIL(1)
+
+NNAAMMEE
+     bbrreeaakk--ttaaiill - tail arguments on broken blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     Explicitly broken: <ao [bo ac> bc] tail
+
+     Implicitly broken: <aq [bo eol>] tail
+
+           it <ao ac> tail
+                   list body
+
+OpenBSD                          April 5, 2015                         OpenBSD
