@@ -1,4 +1,4 @@
-@(#) $Id: INSTALL,v 1.4 2007/10/07 16:41:05 deraadt Exp $ (LBL)
+@(#) $Id: INSTALL,v 1.5 2015/04/05 17:02:57 guenther Exp $ (LBL)
 
 If you have not built libpcap, do so first.  See the README
 file in this directory for the ftp location.
@@ -71,7 +71,6 @@ extract.h	- alignment definitions
 fddi.h		- Fiber Distributed Data Interface definitions
 gmt2local.c	- time conversion routines
 gmt2local.h	- time conversion prototypes
-gnuc.h		- XXX
 igrp.h		- Interior Gateway Routing Protocol definitions
 interface.h	- globals, prototypes and definitions
 ipx.h		- IPX definitions

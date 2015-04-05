@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsignal.c,v 1.4 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: setsignal.c,v 1.5 2015/04/05 17:02:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -31,7 +31,6 @@
 #include <string.h>
 #endif
 
-#include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif

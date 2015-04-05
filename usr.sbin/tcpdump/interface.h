@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.64 2014/11/20 03:56:33 jsg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.65 2015/04/05 17:02:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,13 +20,12 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.64 2014/11/20 03:56:33 jsg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.65 2015/04/05 17:02:57 guenther Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
 #define tcpdump_interface_h
 
-#include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
