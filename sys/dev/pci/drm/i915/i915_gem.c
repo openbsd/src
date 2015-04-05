@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.85 2015/02/12 08:48:32 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.86 2015/04/05 11:53:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -78,11 +78,6 @@ static long i915_gem_purge(struct drm_i915_private *dev_priv, long target);
 static void i915_gem_shrink_all(struct drm_i915_private *dev_priv);
 #endif
 static void i915_gem_object_truncate(struct drm_i915_gem_object *obj);
-
-static inline int timespec_to_jiffies(const struct timespec *);
-static inline int timespec_valid(const struct timespec *);
-static struct timespec ns_to_timespec(const int64_t);
-static inline int64_t timespec_to_ns(const struct timespec *);
 
 extern int ticks;
 
@@ -332,27 +327,6 @@ drm_clflush_virt_range(void *addr, size_t len)
 	pmap_flush_cache((vaddr_t)addr, len);
 }
 
-static inline unsigned long
-__copy_to_user(void *to, const void *from, unsigned len)
-{
-	if (copyout(from, to, len))
-		return len;
-	return 0;
-}
-
-static inline unsigned long
-__copy_to_user_inatomic(void *to, const void *from, unsigned len)
-{
-	struct cpu_info *ci = curcpu();
-	int error;
-
-	ci->ci_inatomic = 1;
-	error = copyout(from, to, len);
-	ci->ci_inatomic = 0;
-
-	return (error ? len : 0);
-}
-
 static inline int
 __copy_to_user_swizzled(char __user *cpu_vaddr,
 			const char *gpu_vaddr, int gpu_offset,
@@ -377,27 +351,6 @@ __copy_to_user_swizzled(char __user *cpu_vaddr,
 	}
 
 	return 0;
-}
-
-static inline unsigned long
-__copy_from_user(void *to, const void *from, unsigned len)
-{
-	if (copyin(from, to, len))
-		return len;
-	return 0;
-}
-
-static inline unsigned long
-__copy_from_user_inatomic_nocache(void *to, const void *from, unsigned len)
-{
-	struct cpu_info *ci = curcpu();
-	int error;
-
-	ci->ci_inatomic = 1;
-	error = copyin(from, to, len);
-	ci->ci_inatomic = 0;
-
-	return (error ? len : 0);
 }
 
 static inline int
@@ -1832,7 +1785,11 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 	obj->madv = __I915_MADV_PURGED;
 }
 
-// i915_gem_object_is_purgeable
+static inline int
+i915_gem_object_is_purgeable(struct drm_i915_gem_object *obj)
+{
+	return obj->madv == I915_MADV_DONTNEED;
+}
 
 static void
 i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
@@ -4649,54 +4606,3 @@ i915_gem_inactive_shrink(struct shrinker *shrinker, struct shrink_control *sc)
 	return cnt;
 }
 #endif /* notyet */
-
-#define NSEC_PER_SEC	1000000000L
-
-static inline int64_t
-timespec_to_ns(const struct timespec *ts)
-{
-	return ((ts->tv_sec * NSEC_PER_SEC) + ts->tv_nsec);
-}
-
-static inline int
-timespec_to_jiffies(const struct timespec *ts)
-{
-	long long to_ticks;
-
-	to_ticks = (long long)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
-	if (to_ticks > INT_MAX)
-		to_ticks = INT_MAX;
-
-	return ((int)to_ticks);
-}
-
-static struct timespec
-ns_to_timespec(const int64_t nsec)
-{
-	struct timespec ts;
-	int32_t rem;
-
-	if (nsec == 0) {
-		ts.tv_sec = 0;
-		ts.tv_nsec = 0;
-		return (ts);
-	}
-
-	ts.tv_sec = nsec / NSEC_PER_SEC;
-	rem = nsec % NSEC_PER_SEC;
-	if (rem < 0) {
-		ts.tv_sec--;
-		rem += NSEC_PER_SEC;
-	}
-	ts.tv_nsec = rem;
-	return (ts);
-}
-
-static inline int
-timespec_valid(const struct timespec *ts)
-{
-	if (ts->tv_sec < 0 || ts->tv_sec > 100000000 ||
-	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return (0);
-	return (1);
-}

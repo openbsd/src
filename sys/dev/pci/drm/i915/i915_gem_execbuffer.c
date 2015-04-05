@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.35 2015/02/12 08:48:32 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.36 2015/04/05 11:53:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -265,7 +265,7 @@ i915_gem_execbuffer_relocate_object(struct drm_i915_gem_object *obj,
 			count = ARRAY_SIZE(stack_reloc);
 		remain -= count;
 
-		if (DRM_COPY_FROM_USER(r, user_relocs, count*sizeof(r[0])))
+		if (__copy_from_user_inatomic(r, user_relocs, count*sizeof(r[0])))
 			return -EFAULT;
 
 		do {
@@ -276,7 +276,7 @@ i915_gem_execbuffer_relocate_object(struct drm_i915_gem_object *obj,
 				return ret;
 
 			if (r->presumed_offset != offset &&
-			    DRM_COPY_TO_USER(&user_relocs->presumed_offset,
+			    __copy_to_user_inatomic(&user_relocs->presumed_offset,
 						    &r->presumed_offset,
 						    sizeof(r->presumed_offset))) {
 				return -EFAULT;
@@ -560,7 +560,7 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 
 		user_relocs = (void __user *)(uintptr_t)exec[i].relocs_ptr;
 
-		if (DRM_COPY_FROM_USER(reloc+total, user_relocs,
+		if (copy_from_user(reloc+total, user_relocs,
 				   exec[i].relocation_count * sizeof(*reloc))) {
 			ret = -EFAULT;
 			mutex_lock(&dev->struct_mutex);
@@ -577,7 +577,7 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 		 * relocations were valid.
 		 */
 		for (j = 0; j < exec[i].relocation_count; j++) {
-			if (DRM_COPY_TO_USER(&user_relocs[j].presumed_offset,
+			if (copy_to_user(&user_relocs[j].presumed_offset,
 					 &invalid_offset,
 					 sizeof(invalid_offset))) {
 				ret = -EFAULT;
@@ -1230,7 +1230,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 			  args->buffer_count);
 		return -ENOMEM;
 	}
-	ret = DRM_COPY_FROM_USER(exec2_list,
+	ret = copy_from_user(exec2_list,
 			     (struct drm_i915_relocation_entry __user *)
 			     (uintptr_t) args->buffers_ptr,
 			     sizeof(*exec2_list) * args->buffer_count);
@@ -1244,7 +1244,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	ret = i915_gem_do_execbuffer(dev, data, file, args, exec2_list);
 	if (!ret) {
 		/* Copy the new buffer offsets back to the user's exec list. */
-		ret = DRM_COPY_TO_USER((void __user *)(uintptr_t)args->buffers_ptr,
+		ret = copy_to_user((void __user *)(uintptr_t)args->buffers_ptr,
 				   exec2_list,
 				   sizeof(*exec2_list) * args->buffer_count);
 		if (ret) {

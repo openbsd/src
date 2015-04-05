@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.8 2015/04/03 13:10:59 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.9 2015/04/05 11:53:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -109,6 +109,66 @@ spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
 #define write_lock(rwl)			rw_enter_write(rwl)
 #define write_unlock(rwl)		rw_exit_write(rwl)
 
+
+#define NSEC_PER_SEC	1000000000L
+
+extern struct timespec ns_to_timespec(const int64_t);
+
+static inline int64_t
+timespec_to_ns(const struct timespec *ts)
+{
+	return ((ts->tv_sec * NSEC_PER_SEC) + ts->tv_nsec);
+}
+
+static inline int
+timespec_to_jiffies(const struct timespec *ts)
+{
+	long long to_ticks;
+
+	to_ticks = (long long)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+
+	return ((int)to_ticks);
+}
+
+static inline int
+timespec_valid(const struct timespec *ts)
+{
+	if (ts->tv_sec < 0 || ts->tv_sec > 100000000 ||
+	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
+		return (0);
+	return (1);
+}
+
+static inline unsigned long
+__copy_to_user(void *to, const void *from, unsigned len)
+{
+	if (copyout(from, to, len))
+		return len;
+	return 0;
+}
+
+static inline unsigned long
+copy_to_user(void *to, const void *from, unsigned len)
+{
+	return __copy_to_user(to, from, len);
+}
+
+static inline unsigned long
+__copy_from_user(void *to, const void *from, unsigned len)
+{
+	if (copyin(from, to, len))
+		return len;
+	return 0;
+}
+
+static inline unsigned long
+copy_from_user(void *to, const void *from, unsigned len)
+{
+	return __copy_from_user(to, from, len);
+}
+
 #if defined(__i386__) || defined(__amd64__)
 
 static inline void
@@ -154,6 +214,40 @@ kunmap_atomic(void *addr)
 	extern void pmap_tmpunmap_pa(void);
 	pmap_tmpunmap_pa();
 #endif
+}
+
+static inline unsigned long
+__copy_to_user_inatomic(void *to, const void *from, unsigned len)
+{
+	struct cpu_info *ci = curcpu();
+	int inatomic = ci->ci_inatomic;
+	int error;
+
+	ci->ci_inatomic = 1;
+	error = copyout(from, to, len);
+	ci->ci_inatomic = inatomic;
+
+	return (error ? len : 0);
+}
+
+static inline unsigned long
+__copy_from_user_inatomic(void *to, const void *from, unsigned len)
+{
+	struct cpu_info *ci = curcpu();
+	int inatomic = ci->ci_inatomic;
+	int error;
+
+	ci->ci_inatomic = 1;
+	error = copyin(from, to, len);
+	ci->ci_inatomic = inatomic;
+
+	return (error ? len : 0);
+}
+
+static inline unsigned long
+__copy_from_user_inatomic_nocache(void *to, const void *from, unsigned len)
+{
+	return __copy_from_user_inatomic(to, from, len);
 }
 
 #endif
