@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.142 2015/04/05 14:43:10 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.143 2015/04/05 22:43:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,9 +40,11 @@ static	void		in_line_argn(MACRO_PROT_ARGS);
 static	void		in_line(MACRO_PROT_ARGS);
 static	void		phrase_ta(MACRO_PROT_ARGS);
 
-static	void		dword(struct mdoc *, int, int, const char *,
-				 enum mdelim, int);
 static	void		append_delims(struct mdoc *, int, int *, char *);
+static	void		dword(struct mdoc *, int, int, const char *,
+				enum mdelim, int);
+static	int		find_pending(struct mdoc *, int, int, int,
+				struct roff_node *);
 static	int		lookup(struct mdoc *, int, int, int, const char *);
 static	int		macro_or_word(MACRO_PROT_ARGS, int);
 static	int		parse_rest(struct mdoc *, int, int, int *, char *);
@@ -370,6 +372,44 @@ rew_elem(struct mdoc *mdoc, int tok)
 	assert(n->type == ROFFT_ELEM);
 	assert(tok == n->tok);
 	rew_last(mdoc, n);
+}
+
+/*
+ * If there is an open sub-block of the target requiring
+ * explicit close-out, postpone closing out the target until
+ * the rew_pending() call closing out the sub-block.
+ */
+static int
+find_pending(struct mdoc *mdoc, int tok, int line, int ppos,
+	struct roff_node *target)
+{
+	struct roff_node	*n;
+	int			 irc;
+
+	irc = 0;
+	for (n = mdoc->last; n != NULL && n != target; n = n->parent) {
+		if (n->flags & MDOC_ENDED) {
+			if ( ! (n->flags & MDOC_VALID))
+				n->flags |= MDOC_BROKEN;
+			continue;
+		}
+		if (n->type == ROFFT_BLOCK &&
+		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
+			irc = 1;
+			n->flags = MDOC_BROKEN;
+			if (target->type == ROFFT_HEAD)
+				target->flags = MDOC_ENDED;
+			else if ( ! (target->flags & MDOC_ENDED)) {
+				mandoc_vmsg(MANDOCERR_BLK_NEST,
+				    mdoc->parse, line, ppos,
+				    "%s breaks %s", mdoc_macronames[tok],
+				    mdoc_macronames[n->tok]);
+				mdoc_endbody_alloc(mdoc, line, ppos,
+				    tok, target, ENDBODY_NOSPACE);
+			}
+		}
+	}
+	return(irc);
 }
 
 /*
@@ -1068,26 +1108,7 @@ blk_full(MACRO_PROT_ARGS)
 		append_delims(mdoc, line, pos, buf);
 	if (body != NULL)
 		goto out;
-
-	/*
-	 * If there is an open (i.e., unvalidated) sub-block requiring
-	 * explicit close-out, postpone switching the current block from
-	 * head to body until the rew_pending() call closing out that
-	 * sub-block.
-	 */
-	for (n = mdoc->last; n && n != head; n = n->parent) {
-		if (n->flags & MDOC_ENDED) {
-			if ( ! (n->flags & MDOC_VALID))
-				n->flags |= MDOC_BROKEN;
-			continue;
-		}
-		if (n->type == ROFFT_BLOCK &&
-		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
-			n->flags = MDOC_BROKEN;
-			head->flags = MDOC_ENDED;
-		}
-	}
-	if (head->flags & MDOC_ENDED)
+	if (find_pending(mdoc, tok, line, ppos, head))
 		return;
 
 	/* Close out scopes to remain in a consistent state. */
@@ -1153,34 +1174,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 	if (body == NULL)
 		body = mdoc_body_alloc(mdoc, line, ppos, tok);
 
-	/*
-	 * If there is an open sub-block requiring explicit close-out,
-	 * postpone closing out the current block until the
-	 * rew_pending() call closing out the sub-block.
-	 */
-
-	for (n = mdoc->last; n && n != body && n != blk->parent;
-	     n = n->parent) {
-		if (n->flags & MDOC_ENDED) {
-			if ( ! (n->flags & MDOC_VALID))
-				n->flags |= MDOC_BROKEN;
-			continue;
-		}
-		if (n->type == ROFFT_BLOCK &&
-		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
-			n->flags |= MDOC_BROKEN;
-			if ( ! (body->flags & MDOC_ENDED)) {
-				mandoc_vmsg(MANDOCERR_BLK_NEST,
-				    mdoc->parse, line, ppos,
-				    "%s breaks %s", mdoc_macronames[tok],
-				    mdoc_macronames[n->tok]);
-				mdoc_endbody_alloc(mdoc, line, ppos,
-				    tok, body, ENDBODY_NOSPACE);
-			}
-		}
-	}
-	assert(n == body);
-	if (body->flags & MDOC_ENDED)
+	if (find_pending(mdoc, tok, line, ppos, body))
 		return;
 
 	rew_last(mdoc, body);
