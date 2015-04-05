@@ -58,7 +58,7 @@
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
-./usr/lib/libsqlite3.so.29.0
+./usr/lib/libsqlite3.so.30.0
 ./usr/lib/libssl.so.32.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
