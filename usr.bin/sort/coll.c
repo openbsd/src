@@ -1,4 +1,4 @@
-/*	$OpenBSD: coll.c,v 1.8 2015/04/02 22:14:51 deraadt Exp $	*/
+/*	$OpenBSD: coll.c,v 1.9 2015/04/05 13:56:04 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -406,11 +406,13 @@ preproc(struct bwstring *s, struct keys_array *ka)
 		struct bwstring *ret = NULL;
 		struct sort_mods *sm = default_sort_mods;
 
+#ifdef GNUSORT_COMPATIBILITY
 		if (sm->bflag) {
 			if (ret == NULL)
 				ret = bwsdup(s);
 			ret = ignore_leading_blanks(ret);
 		}
+#endif
 		if (sm->dflag) {
 			if (ret == NULL)
 				ret = bwsdup(s);
