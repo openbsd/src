@@ -1,4 +1,4 @@
-/*	$OpenBSD: coll.c,v 1.9 2015/04/05 13:56:04 millert Exp $	*/
+/*	$OpenBSD: coll.c,v 1.10 2015/04/05 13:59:26 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1101,9 +1101,10 @@ gnumcoll(struct key_value *kv1, struct key_value *kv2,
 		d1 = bwstod(kv1->k, &empty1);
 		err1 = errno;
 
-		if (empty1)
+		if (empty1) {
 			kv1->hint->v.gh.notnum = true;
-		else if (err1 == 0) {
+			kv1->hint->status = HS_INITIALIZED;
+		} else if (err1 == 0) {
 			kv1->hint->v.gh.d = d1;
 			kv1->hint->v.gh.nan = is_nan(d1);
 			kv1->hint->status = HS_INITIALIZED;
@@ -1118,9 +1119,10 @@ gnumcoll(struct key_value *kv1, struct key_value *kv2,
 		d2 = bwstod(kv2->k, &empty2);
 		err2 = errno;
 
-		if (empty2)
+		if (empty2) {
 			kv2->hint->v.gh.notnum = true;
-		else if (err2 == 0) {
+			kv2->hint->status = HS_INITIALIZED;
+		} else if (err2 == 0) {
 			kv2->hint->v.gh.d = d2;
 			kv2->hint->v.gh.nan = is_nan(d2);
 			kv2->hint->status = HS_INITIALIZED;
@@ -1132,10 +1134,15 @@ gnumcoll(struct key_value *kv1, struct key_value *kv2,
 
 	if (kv1->hint->status == HS_INITIALIZED &&
 	    kv2->hint->status == HS_INITIALIZED) {
+#ifdef GNUSORT_COMPATIBILITY
 		if (kv1->hint->v.gh.notnum)
 			return kv2->hint->v.gh.notnum ? 0 : -1;
 		else if (kv2->hint->v.gh.notnum)
 			return 1;
+#else
+		if (kv1->hint->v.gh.notnum && kv2->hint->v.gh.notnum)
+			return 0;
+#endif
 
 		if (kv1->hint->v.gh.nan)
 			return kv2->hint->v.gh.nan ?
@@ -1166,11 +1173,16 @@ gnumcoll(struct key_value *kv1, struct key_value *kv2,
 		err2 = errno;
 	}
 
-	/* Non-value case: */
+	/* Non-value case */
+#ifdef GNUSORT_COMPATIBILITY
 	if (empty1)
 		return empty2 ? 0 : -1;
 	else if (empty2)
 		return 1;
+#else
+	if (empty1 && empty2)
+		return 0;
+#endif
 
 	/* NAN case */
 	if (is_nan(d1))
