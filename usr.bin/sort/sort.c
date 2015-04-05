@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.77 2015/04/03 12:52:48 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.78 2015/04/05 13:54:06 millert Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -53,7 +53,12 @@
 #include "file.h"
 #include "sort.h"
 
-#define	OPTIONS	"bCcdfgHhik:Mmno:RrS:st:T:uVz"
+#ifdef GNUSORT_COMPATIBILITY
+# define PERMUTE	""
+#else
+# define PERMUTE	"+"
+#endif
+#define	OPTIONS	PERMUTE"bCcdfgHhik:Mmno:RrS:st:T:uVz"
 
 static bool need_random;
 static const char *random_source;
@@ -859,14 +864,13 @@ main(int argc, char *argv[])
 	char *outfile, *real_outfile, *sflag;
 	int c;
 	size_t i;
+	struct sort_mods *sm = &default_sort_mods_object;
 	bool mef_flags[NUMBER_OF_MUTUALLY_EXCLUSIVE_FLAGS] =
 	    { false, false, false, false, false, false };
 
 	outfile = "-";
 	real_outfile = NULL;
 	sflag = NULL;
-
-	struct sort_mods *sm = &default_sort_mods_object;
 
 	init_tmp_files();
 
@@ -1038,9 +1042,15 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-
 	argc -= optind;
 	argv += optind;
+
+#ifndef GNUSORT_COMPATIBILITY
+	if (argc > 2 && strcmp(argv[argc - 2], "-o") == 0) {
+		outfile = argv[argc - 1];
+		argc -= 2;
+	}
+#endif
 
 	if (sort_opts_vals.cflag && argc > 1)
 		errx(2, "only one input file is allowed with the -%c flag",
