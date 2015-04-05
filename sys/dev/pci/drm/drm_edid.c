@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.11 2015/02/11 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.12 2015/04/05 12:53:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -370,7 +370,7 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 carp:
 	if (print_bad_edid) {
 		dev_warn(connector->dev->dev, "%s: EDID block %d invalid.\n",
-		    drm_get_connector_name(connector), j);
+			 drm_get_connector_name(connector), j);
 	}
 	connector->bad_edid_counter++;
 

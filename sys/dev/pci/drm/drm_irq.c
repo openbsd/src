@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.59 2015/02/12 08:48:32 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.60 2015/04/05 12:53:41 kettenis Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -466,7 +466,7 @@ EXPORT_SYMBOL(drm_irq_uninstall);
 int drm_control(struct drm_device *dev, void *data,
 		struct drm_file *file_priv)
 {
-	struct drm_control	*ctl = data;
+	struct drm_control *ctl = data;
 
 	/* Handle drivers who used to require IRQ setup no longer does. */
 	if (!(dev->driver->flags & DRIVER_IRQ))
