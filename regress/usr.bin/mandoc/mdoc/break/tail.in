@@ -5,17 +5,33 @@
 .Nm break-tail
 .Nd tail arguments on broken blocks
 .Sh DESCRIPTION
-Explicitly broken:
+Broken by a partial explicit block:
 .Ao ao
 .Bo bo ac
 .Ac bc
 .Bc tail
+.Ao ao
+.Bo bo ac
+.Ac bc
+.Bc Po po pc
+.Pc tail
 .Pp
-Implicitly broken:
+Broken by a partial implicit block:
 .Aq aq Bo bo eol
 .Bc tail
+.Aq aq Bo bo eol
+.Bc Po po pc
+.Pc tail
+.Pp
+Broken by a full implicit block:
 .Bl -tag -width Ds -offset indent
 .It it Ao ao ac
 .Ac tail
+list body
+.El
+.Bl -tag -width Ds -offset indent
+.It it Ao ao ac
+.Ac Po po pc
+.Pc tail
 list body
 .El

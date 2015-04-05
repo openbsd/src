@@ -4,11 +4,18 @@ NNAAMMEE
      bbrreeaakk--ttaaiill - tail arguments on broken blocks
 
 DDEESSCCRRIIPPTTIIOONN
-     Explicitly broken: <ao [bo ac> bc] tail
+     Broken by a partial explicit block: <ao [bo ac> bc] tail <ao [bo ac> bc]
+     (po pc) tail
 
-     Implicitly broken: <aq [bo eol>] tail
+     Broken by a partial implicit block: <aq [bo eol>] tail <aq [bo eol>] (po
+     pc) tail
+
+     Broken by a full implicit block:
 
            it <ao ac> tail
+                   list body
+
+           it <ao ac> (po pc) tail
                    list body
 
 OpenBSD                          April 5, 2015                         OpenBSD

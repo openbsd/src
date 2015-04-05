@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.143 2015/04/05 22:43:40 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.144 2015/04/05 23:04:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -525,8 +525,9 @@ blk_exp_close(MACRO_PROT_ARGS)
 	struct roff_node *itblk;	/* An It block starting later. */
 	struct roff_node *later;	/* A sub-block starting later. */
 	struct roff_node *n;		/* Search back to our block. */
+	struct roff_node *target;	/* For find_pending(). */
 
-	int		 j, lastarg, maxargs, nl;
+	int		 j, lastarg, maxargs, nl, pending;
 	enum margserr	 ac;
 	int		 atok, ntok;
 	char		*p;
@@ -688,8 +689,19 @@ blk_exp_close(MACRO_PROT_ARGS)
 		break;
 	}
 
-	if (n != NULL)
-		rew_pending(mdoc, n);
+	if (n != NULL) {
+		if (n != mdoc->last && n->flags & MDOC_BROKEN) {
+			target = n;
+			do
+				target = target->parent;
+			while ( ! (target->flags & MDOC_ENDED));
+			pending = find_pending(mdoc, ntok, line, ppos,
+			    target);
+		} else
+			pending = 0;
+		if ( ! pending)
+			rew_pending(mdoc, n);
+	}
 	if (nl)
 		append_delims(mdoc, line, pos, buf);
 }
