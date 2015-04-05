@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.828 2015/04/04 14:21:01 rpe Exp $
+#	$OpenBSD: install.sub,v 1.829 2015/04/05 12:37:14 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -808,7 +808,7 @@ ieee80211_config() {
 			;;
 		\?)	ieee80211_scan $_ifs |
 				sed -n 's/^\([^ ]*\) chan .* bssid \([^ ]*\) .*$/	\1 (\2)/p' |
-				less -XEN
+				cat -n | more -ce
 			;;
 		*)	_nwid=$resp;;
 		esac
@@ -1259,7 +1259,7 @@ install_http() {
 		case $resp in
 		done)	return;;
 		"?")	[[ -s $HTTP_LIST ]] || continue
-			less -XEN < $HTTP_LIST
+			cat -n < $HTTP_LIST | more -ce
 			;;
 		+([0-9]))
 			# A numeric hostname is ignored. A number is only used
