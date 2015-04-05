@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.75 2015/04/03 19:35:48 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.76 2015/04/05 23:25:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -29,7 +29,7 @@
  * TODO:
  *	call sti procs asynchronously;
  *	implement console scroll-back;
- *	X11 support.
+ *	X11 support on more models.
  */
 
 #include <sys/param.h>
@@ -64,15 +64,15 @@ int	sti_putchar(void *, int, int, u_int, long);
 void	sti_unpack_attr(void *, long, int *, int *, int *);
 
 struct wsdisplay_emulops sti_emulops = {
-	sti_cursor,
-	sti_mapchar,
-	sti_putchar,
-	sti_copycols,
-	sti_erasecols,
-	sti_copyrows,
-	sti_eraserows,
-	sti_alloc_attr,
-	sti_unpack_attr
+	.cursor = sti_cursor,
+	.mapchar = sti_mapchar,
+	.putchar = sti_putchar,
+	.copycols = sti_copycols,
+	.erasecols = sti_erasecols,
+	.copyrows = sti_copyrows,
+	.eraserows = sti_eraserows,
+	.alloc_attr = sti_alloc_attr,
+	.unpack_attr = sti_unpack_attr
 };
 
 int	sti_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
@@ -100,6 +100,7 @@ void	sti_bmove(struct sti_screen *, int, int, int, int, int, int,
 int	sti_init(struct sti_screen *, int);
 #define	STI_TEXTMODE	0x01
 #define	STI_CLEARSCR	0x02
+#define	STI_FBMODE	0x04
 int	sti_inqcfg(struct sti_screen *, struct sti_inqconfout *);
 int	sti_setcment(struct sti_screen *, u_int, u_char, u_char, u_char);
 
@@ -113,6 +114,13 @@ void	sti_region_setup(struct sti_screen *);
 int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, bus_addr_t *, u_int);
 int	sti_screen_setup(struct sti_screen *, int);
+
+int	ngle_default_putcmap(struct sti_screen *, u_int, u_int);
+
+void	ngle_artist_setupfb(struct sti_screen *);
+void	ngle_elk_setupfb(struct sti_screen *);
+void	ngle_timber_setupfb(struct sti_screen *);
+int	ngle_putcmap(struct sti_screen *, u_int, u_int);
 
 #if NSTI_PCI > 0
 #define	STI_ENABLE_ROM(sc) \
@@ -297,7 +305,7 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	 * entries populated, especially on older devices.
 	 */
 
-	for (i = STI_END; !dd->dd_pacode[i]; i--)
+	for (i = STI_END; dd->dd_pacode[i] == 0; i--)
 		;
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
 	if (rom->rom_devtype == STI_DEVTYPE1)
@@ -352,19 +360,19 @@ sti_rom_setup(struct sti_rom *rom, bus_space_tag_t iot, bus_space_tag_t memt,
 	    (rom->rom_code + (dd->dd_pacode[(i)] - dd->dd_pacode[0]) / \
 	      (rom->rom_devtype == STI_DEVTYPE1? 4 : 1)))
 
-	rom->init	= (sti_init_t)	O(STI_INIT_GRAPH);
-	rom->mgmt	= (sti_mgmt_t)	O(STI_STATE_MGMT);
-	rom->unpmv	= (sti_unpmv_t)	O(STI_FONT_UNPMV);
-	rom->blkmv	= (sti_blkmv_t)	O(STI_BLOCK_MOVE);
-	rom->test	= (sti_test_t)	O(STI_SELF_TEST);
-	rom->exhdl	= (sti_exhdl_t)	O(STI_EXCEP_HDLR);
+	rom->init	= (sti_init_t)O(STI_INIT_GRAPH);
+	rom->mgmt	= (sti_mgmt_t)O(STI_STATE_MGMT);
+	rom->unpmv	= (sti_unpmv_t)O(STI_FONT_UNPMV);
+	rom->blkmv	= (sti_blkmv_t)O(STI_BLOCK_MOVE);
+	rom->test	= (sti_test_t)O(STI_SELF_TEST);
+	rom->exhdl	= (sti_exhdl_t)O(STI_EXCEP_HDLR);
 	rom->inqconf	= (sti_inqconf_t)O(STI_INQ_CONF);
 	rom->scment	= (sti_scment_t)O(STI_SCM_ENT);
-	rom->dmac	= (sti_dmac_t)	O(STI_DMA_CTRL);
-	rom->flowc	= (sti_flowc_t)	O(STI_FLOW_CTRL);
+	rom->dmac	= (sti_dmac_t)O(STI_DMA_CTRL);
+	rom->flowc	= (sti_flowc_t)O(STI_FLOW_CTRL);
 	rom->utiming	= (sti_utiming_t)O(STI_UTIMING);
-	rom->pmgr	= (sti_pmgr_t)	O(STI_PROC_MGR);
-	rom->util	= (sti_util_t)	O(STI_UTIL);
+	rom->pmgr	= (sti_pmgr_t)O(STI_PROC_MGR);
+	rom->util	= (sti_util_t)O(STI_UTIL);
 
 #undef	O
 
@@ -391,7 +399,6 @@ sti_region_setup(struct sti_screen *scr)
 	bus_addr_t *bases = rom->bases;
 	struct sti_dd *dd = &rom->rom_dd;
 	struct sti_cfg *cc = &scr->scr_cfg;
-	bus_space_handle_t bh;
 	struct sti_region regions[STI_REGION_MAX], *r;
 	u_int regno, regcnt;
 	bus_addr_t addr;
@@ -457,13 +464,15 @@ sti_region_setup(struct sti_screen *scr)
 		}
 
 		if (bus_space_map(memt, addr, r->length << PGSHIFT,
-		    r->cache ? BUS_SPACE_MAP_CACHEABLE : 0, &bh)) {
+		    BUS_SPACE_MAP_LINEAR | (r->cache ?
+		    BUS_SPACE_MAP_CACHEABLE : 0), &rom->regh[regno]) != 0) {
+			rom->regh[regno] = romh;	/* XXX */
 #ifdef STIDEBUG
 			printf("already mapped region\n");
 #endif
 		} else {
-			/* XXX should use bus_space_vaddr */
-			addr = (bus_addr_t)bh;
+			addr = (bus_addr_t)
+			    bus_space_vaddr(memt, rom->regh[regno]);
 			if (regno == 1) {
 				scr->fbaddr = addr;
 				scr->fblen = r->length << PGSHIFT;
@@ -623,6 +632,73 @@ sti_screen_setup(struct sti_screen *scr, int flags)
 	scr->scr_screenlist.nscreens = 1;
 	scr->scr_screenlist.screens =
 	    (const struct wsscreen_descr **)scr->scr_scrlist;
+
+#ifndef SMALL_KERNEL
+	/*
+	 * Decide which board-specific routines to use.
+	 */
+
+	switch (dd->dd_grid[0]) {
+	case STI_DD_CRX:
+		scr->setupfb = ngle_elk_setupfb;
+		scr->putcmap = ngle_putcmap;
+
+		scr->reg10_value = 0x13601000;
+		if (scr->scr_bpp > 8)
+			scr->reg12_value = NGLE_BUFF1_CMAP3;
+		else
+			scr->reg12_value = NGLE_BUFF1_CMAP0;
+		scr->cmap_finish_register = NGLE_REG_1;
+		break;
+
+	case STI_DD_TIMBER:
+		scr->setupfb = ngle_timber_setupfb;
+		scr->putcmap = ngle_putcmap;
+
+		scr->reg10_value = 0x13602000;
+		scr->reg12_value = NGLE_BUFF1_CMAP0;
+		scr->cmap_finish_register = NGLE_REG_1;
+		break;
+
+	case STI_DD_ARTIST:
+		scr->setupfb = ngle_artist_setupfb;
+		scr->putcmap = ngle_putcmap;
+
+		scr->reg10_value = 0x13601000;
+		scr->reg12_value = NGLE_ARTIST_CMAP0;
+		scr->cmap_finish_register = NGLE_REG_26;
+		break;
+
+	case STI_DD_EG:
+		scr->setupfb = ngle_artist_setupfb;
+		scr->putcmap = ngle_putcmap;
+
+		scr->reg10_value = 0x13601000;
+		if (scr->scr_bpp > 8) {
+			scr->reg12_value = NGLE_BUFF1_CMAP3;
+			scr->cmap_finish_register = NGLE_REG_1;
+		} else {
+			scr->reg12_value = NGLE_ARTIST_CMAP0;
+			scr->cmap_finish_register = NGLE_REG_26;
+		}
+		break;
+
+	case STI_DD_GRX:
+	case STI_DD_CRX24:
+	case STI_DD_EVRX:
+	case STI_DD_3X2V:
+	case STI_DD_DUAL_CRX:
+	case STI_DD_HCRX:
+	case STI_DD_LEGO:
+	case STI_DD_SUMMIT:
+	case STI_DD_PINNACLE:
+	default:
+		scr->setupfb = NULL;
+		scr->putcmap =
+		    rom->scment == NULL ? NULL : ngle_default_putcmap;
+		break;
+	}
+#endif
 
 	return (0);
 
@@ -867,10 +943,16 @@ sti_init(struct sti_screen *scr, int mode)
 
 	bzero(&a, sizeof(a));
 
-	a.flags.flags = STI_INITF_WAIT | STI_INITF_CMB | STI_INITF_EBET |
-	    (mode & STI_TEXTMODE ? STI_INITF_TEXT | STI_INITF_PBET |
-	     STI_INITF_PBETI | STI_INITF_ICMT : 0) |
-	    (mode & STI_CLEARSCR ? STI_INITF_CLEAR : 0);
+	a.flags.flags = STI_INITF_WAIT | STI_INITF_EBET;
+	if (mode & STI_TEXTMODE) {
+		a.flags.flags |= STI_INITF_TEXT /* | STI_INITF_PNTS */ |
+		    STI_INITF_ICMT | STI_INITF_CMB;
+		if (mode & STI_CLEARSCR)
+			a.flags.flags |= STI_INITF_CLEAR;
+	} else if (mode & STI_FBMODE) {
+		a.flags.flags |= STI_INITF_NTEXT /* | STI_INITF_PTS */;
+	}
+
 	a.in.text_planes = 1;
 	a.in.ext_in = &a.ein;
 #ifdef STIDEBUG
@@ -961,6 +1043,11 @@ sti_setcment(struct sti_screen *scr, u_int i, u_char r, u_char g, u_char b)
 	a.in.value = (r << 16) | (g << 8) | b;
 
 	(*rom->scment)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
+#ifdef STIDEBUG
+	if (a.out.errno)
+		printf("sti_setcment(%d, %u, %u, %u): %d\n",
+		    i, r, g, b, a.out.errno);
+#endif
 
 	return a.out.errno;
 }
@@ -973,23 +1060,39 @@ int
 sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
-	struct sti_rom *rom = scr->scr_rom;
 	struct wsdisplay_fbinfo *wdf;
 	struct wsdisplay_cmap *cmapp;
 	u_int mode, idx, count;
-	int i, ret;
+	int ret;
 
 	ret = 0;
 	switch (cmd) {
 	case WSDISPLAYIO_SMODE:
 		mode = *(u_int *)data;
-		if (scr->scr_wsmode == WSDISPLAYIO_MODE_EMUL &&
-		    mode == WSDISPLAYIO_MODE_DUMBFB)
-			ret = sti_init(scr, 0);
-		else if (scr->scr_wsmode == WSDISPLAYIO_MODE_DUMBFB &&
-		    mode == WSDISPLAYIO_MODE_EMUL)
-			ret = sti_init(scr, STI_TEXTMODE);
-		scr->scr_wsmode = mode;
+		switch (mode) {
+		case WSDISPLAYIO_MODE_EMUL:
+			if (scr->scr_wsmode != WSDISPLAYIO_MODE_EMUL)
+				ret = sti_init(scr, STI_TEXTMODE);
+			break;
+		case WSDISPLAYIO_MODE_DUMBFB:
+			if (scr->scr_wsmode != WSDISPLAYIO_MODE_DUMBFB) {
+				if (scr->setupfb != NULL)
+					scr->setupfb(scr);
+				else
+#if 0
+					ret = sti_init(scr, STI_FBMODE);
+#else
+					ret = EINVAL;
+#endif
+			}
+			break;
+		case WSDISPLAYIO_MODE_MAPPED:
+		default:
+			ret = EINVAL;
+			break;
+		}
+		if (ret == 0)
+			scr->scr_wsmode = mode;
 		break;
 
 	case WSDISPLAYIO_GTYPE:
@@ -1001,18 +1104,28 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->height = scr->scr_cfg.scr_height;
 		wdf->width  = scr->scr_cfg.scr_width;
 		wdf->depth  = scr->scr_bpp;
-		if (rom->scment == NULL)
+		if (scr->putcmap == NULL || scr->scr_bpp > 8)
 			wdf->cmsize = 0;
 		else
 			wdf->cmsize = STI_NCMAP;
 		break;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = scr->scr_cfg.fb_width;
+		if (scr->scr_bpp > 8)
+			*(u_int *)data = scr->scr_cfg.fb_width * 4;
+		else
+			*(u_int *)data = scr->scr_cfg.fb_width;
+		break;
+
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		if (scr->scr_bpp > 8)
+			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
+		else
+			*(u_int *)data = WSDISPLAYIO_DEPTH_8;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
-		if (rom->scment == NULL)
+		if (scr->putcmap == NULL || scr->scr_bpp > 8)
 			return ENODEV;
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
@@ -1028,7 +1141,7 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_PUTCMAP:
-		if (rom->scment == NULL)
+		if (scr->putcmap == NULL || scr->scr_bpp > 8)
 			return ENODEV;
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
@@ -1041,19 +1154,7 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		if ((ret = copyin(cmapp->blue, &scr->scr_bcmap[idx], count)))
 			break;
-		for (i = idx + count - 1; i >= (int)idx; i--)
-			if ((ret = sti_setcment(scr, i, scr->scr_rcmap[i],
-			    scr->scr_gcmap[i], scr->scr_bcmap[i]))) {
-#ifdef STIDEBUG
-				printf("sti_ioctl: "
-				    "sti_setcment(%d, %u, %u, %u): %d\n", i,
-				    (u_int)scr->scr_rcmap[i],
-				    (u_int)scr->scr_gcmap[i],
-				    (u_int)scr->scr_bcmap[i], ret);
-#endif
-				ret = EINVAL;
-				break;
-			}
+		ret = scr->putcmap(scr, idx, count);
 		break;
 
 	case WSDISPLAYIO_SVIDEO:
@@ -1070,12 +1171,26 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 sti_mmap(void *v, off_t offset, int prot)
 {
-#if 0
 	struct sti_screen *scr = (struct sti_screen *)v;
+#if 0
+	struct sti_rom *rom = scr->scr_rom;
+#endif
+	paddr_t pa;
+
+	if ((offset & PAGE_MASK) != 0)
+		return -1;
+
+	if (offset < 0 || offset >= scr->fblen)
+		return -1;
+
+#if 0 /* XXX not all platforms provide bus_space_mmap() yet */
+	pa = bus_space_mmap(rom->memt, scr->fbaddr, offset, prot,
+	    BUS_SPACE_MAP_LINEAR);
+#else
+	pa = scr->fbaddr + offset;
 #endif
 
-	/* XXX not finished */
-	return -1;
+	return pa;
 }
 
 int
@@ -1331,3 +1446,184 @@ sti_unpack_attr(void *v, long attr, int *fg, int *bg, int *ul)
 	if (ul != NULL)
 		*ul = 0;
 }
+
+int
+ngle_default_putcmap(struct sti_screen *scr, u_int idx, u_int count)
+{
+	int i, ret;
+
+	for (i = idx + count - 1; i >= (int)idx; i--)
+		if ((ret = sti_setcment(scr, i, scr->scr_rcmap[i],
+		    scr->scr_gcmap[i], scr->scr_bcmap[i])))
+			return EINVAL;
+
+	return 0;
+}
+
+#ifndef SMALL_KERNEL
+
+void	ngle_setup_hw(bus_space_tag_t, bus_space_handle_t);
+void	ngle_setup_fb(bus_space_tag_t, bus_space_handle_t, uint32_t);
+void	ngle_setup_attr_planes(struct sti_screen *scr);
+void	ngle_setup_bt458(struct sti_screen *scr);
+
+#define	ngle_bt458_write(memt, memh, r, v) \
+	bus_space_write_4(memt, memh, NGLE_REG_RAMDAC + ((r) << 2), (v) << 24)
+
+void
+ngle_artist_setupfb(struct sti_screen *scr)
+{
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	ngle_setup_bt458(scr);
+
+	ngle_setup_hw(memt, memh);
+	ngle_setup_fb(memt, memh, scr->reg10_value);
+
+	ngle_setup_attr_planes(scr);
+
+	ngle_setup_hw(memt, memh);
+	bus_space_write_4(memt, memh, NGLE_REG_21,
+	    bus_space_read_4(memt, memh, NGLE_REG_21) | 0x0a000000);
+	bus_space_write_4(memt, memh, NGLE_REG_27,
+	    bus_space_read_4(memt, memh, NGLE_REG_27) | 0x00800000);
+}
+
+void
+ngle_elk_setupfb(struct sti_screen *scr)
+{
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	ngle_setup_bt458(scr);
+
+	ngle_setup_hw(memt, memh);
+	ngle_setup_fb(memt, memh, scr->reg10_value);
+
+	ngle_setup_attr_planes(scr);
+
+	ngle_setup_hw(memt, memh);
+	/* enable overlay planes in Bt458 command register */
+	ngle_bt458_write(memt, memh, 0x0c, 0x06);
+	ngle_bt458_write(memt, memh, 0x0e, 0x43);
+}
+
+void
+ngle_timber_setupfb(struct sti_screen *scr)
+{
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	ngle_setup_bt458(scr);
+
+	ngle_setup_hw(memt, memh);
+	/* enable overlay planes in Bt458 command register */
+	ngle_bt458_write(memt, memh, 0x0c, 0x06);
+	ngle_bt458_write(memt, memh, 0x0e, 0x43);
+}
+
+void
+ngle_setup_bt458(struct sti_screen *scr)
+{
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	ngle_setup_hw(memt, memh);
+	/* set Bt458 read mask register to all planes */
+	ngle_bt458_write(memt, memh, 0x08, 0x04);
+	ngle_bt458_write(memt, memh, 0x0a, 0xff);
+}
+
+void
+ngle_setup_attr_planes(struct sti_screen *scr)
+{
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+
+	ngle_setup_hw(memt, memh);
+	bus_space_write_4(memt, memh, NGLE_REG_11, 0x2ea0d000);
+	bus_space_write_4(memt, memh, NGLE_REG_14, 0x23000302);
+	bus_space_write_4(memt, memh, NGLE_REG_12, scr->reg12_value);
+	bus_space_write_4(memt, memh, NGLE_REG_8, 0xffffffff);
+
+	bus_space_write_4(memt, memh, NGLE_REG_6, 0x00000000);
+	bus_space_write_4(memt, memh, NGLE_REG_9,
+	    (scr->scr_cfg.scr_width << 16) | scr->scr_cfg.scr_height);
+	bus_space_write_4(memt, memh, NGLE_REG_6, 0x05000000);
+	bus_space_write_4(memt, memh, NGLE_REG_9, 0x00040001);
+
+	ngle_setup_hw(memt, memh);
+	bus_space_write_4(memt, memh, NGLE_REG_12, 0x00000000);
+
+	ngle_setup_fb(memt, memh, scr->reg10_value);
+}
+
+int
+ngle_putcmap(struct sti_screen *scr, u_int idx, u_int count)
+{
+	struct sti_rom *rom = scr->scr_rom;
+	bus_space_tag_t memt = rom->memt;
+	bus_space_handle_t memh = rom->regh[2];
+	uint8_t *r, *g, *b;
+	uint32_t cmap_finish;
+
+	if (scr->scr_bpp > 8)
+		cmap_finish = 0x83000100;
+	else
+		cmap_finish = 0x80000100;
+
+	r = scr->scr_rcmap + idx;
+	g = scr->scr_gcmap + idx;
+	b = scr->scr_bcmap + idx;
+
+	ngle_setup_hw(memt, memh);
+	bus_space_write_4(memt, memh, NGLE_REG_10, 0xbbe0f000);
+	bus_space_write_4(memt, memh, NGLE_REG_14, 0x03000300);
+	bus_space_write_4(memt, memh, NGLE_REG_13, 0xffffffff);
+
+	while (count-- != 0) {
+		ngle_setup_hw(memt, memh);
+		bus_space_write_4(memt, memh, NGLE_REG_3, 0x400 | (idx << 2));
+		bus_space_write_4(memt, memh, NGLE_REG_4,
+		    (*r << 16) | (*g << 8) | *b);
+
+		idx++;
+		r++, g++, b++;
+	}
+
+	bus_space_write_4(memt, memh, NGLE_REG_2, 0x400);
+	bus_space_write_4(memt, memh, scr->cmap_finish_register, cmap_finish);
+	ngle_setup_fb(memt, memh, scr->reg10_value);
+
+
+	return 0;
+}
+
+void
+ngle_setup_hw(bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	uint8_t stat;
+
+	do {
+		stat = bus_space_read_1(memt, memh, NGLE_REG_15b0);
+		if (stat == 0)
+			stat = bus_space_read_1(memt, memh, NGLE_REG_15b0);
+	} while (stat != 0);
+}
+
+void
+ngle_setup_fb(bus_space_tag_t memt, bus_space_handle_t memh, uint32_t reg10)
+{
+	ngle_setup_hw(memt, memh);
+	bus_space_write_4(memt, memh, NGLE_REG_10, reg10);
+	bus_space_write_4(memt, memh, NGLE_REG_14, 0x83000300);
+	ngle_setup_hw(memt, memh);
+	bus_space_write_1(memt, memh, NGLE_REG_16b1, 1);
+}
+#endif	/* SMALL_KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.13 2009/01/28 17:37:40 miod Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -121,6 +121,19 @@ struct	sti_dd {
 	u_int8_t	dd_grrev;	/* 0x06 global rom revision */
 	u_int8_t	dd_lrrev;	/* 0x07 local rom revision */
 	u_int32_t	dd_grid[2];	/* 0x08 graphics id */
+#define	STI_DD_CRX		0x26D1482A	/* single-head CRX */
+#define	STI_DD_GRX		0x26D1488C	/* gray-scale GRX */
+#define	STI_DD_CRX24		0x26D148EE	/* CRX+ */
+#define	STI_DD_EVRX		0x27134C9F	/* 425e on-board */
+#define	STI_DD_3X2V		0x27134CB4	/* 382 on-board */
+#define	STI_DD_TIMBER		0x27F12392	/* on-board 710, older 715 */
+#define	STI_DD_DUAL_CRX		0x27FCCB6D	/* dual-head CRX */
+#define	STI_DD_ARTIST		0x2B4DED6D	/* on-board 712/715, also GSC */
+#define	STI_DD_HCRX		0x2BCB015A
+#define	STI_DD_EG		0x2D08C0A7	/* Visualize EG */
+#define	STI_DD_SUMMIT		0x2FC1066B	/* Visualize FX2, FX4, FX6 */
+#define	STI_DD_PINNACLE		0x35ACDA16	/* Visualize FXe */
+#define	STI_DD_LEGO		0x35ACDA30	/* Visualize FX5, FX10 */
 	u_int32_t	dd_fntaddr;	/* 0x10 font start address */
 	u_int32_t	dd_maxst;	/* 0x14 max state storage */
 	u_int32_t	dd_romend;	/* 0x18 rom last address */
@@ -616,5 +629,64 @@ typedef struct sti_utilout {
 } __packed *sti_utilout_t;
 
 STI_DEP(util);
+
+/*
+ * NGLE register layout.
+ * Based upon xc/programs/Xserver/hw/hp/ngle/dregs.h
+ */
+#define	NGLE_REG_1		0x000118
+#define	NGLE_REG_28		0x000420
+#define	NGLE_REG_2		0x000480
+#define	NGLE_REG_3		0x0004a0	/* palette index */
+#define	NGLE_REG_22		0x0005a0
+#define	NGLE_REG_23		0x0005c0
+#define	NGLE_REG_4		0x000600	/* palette data */
+#define	NGLE_REG_5		0x0006a0	/* cursor data */
+#define	NGLE_REG_6		0x000800
+#define	NGLE_REG_7		0x000804
+#define	NGLE_REG_24		0x000808
+#define	NGLE_REG_8		0x000820
+#define	NGLE_REG_73		0x000944
+#define	NGLE_REG_9		0x000a04
+#define	NGLE_REG_25		0x000b00
+#define	NGLE_REG_RAMDAC		0x001000
+#define	NGLE_REG_10		0x018000
+#define	NGLE_REG_11		0x018004	/* dest coords */
+#define	NGLE_REG_12		0x01800c	/* control plane register */
+#define	NGLE_REG_35		0x018010	/* fg color */
+#define	NGLE_REG_36		0x018014
+#define	NGLE_REG_13		0x018018	/* image planemask */
+#define	NGLE_REG_14		0x01801c	/* raster op */
+#define	NGLE_REG_15		0x200000
+#define	NGLE_REG_15b0		0x200000	/* busy register */
+#define	NGLE_REG_16		0x200004
+#define	NGLE_REG_16b1		0x200005
+#define	NGLE_REG_16b3		0x200007
+#define	NGLE_REG_34		0x200008	/* # of fifo slots */
+#define	NGLE_REG_17		0x200100	/* cursor coordinates */
+#define	NGLE_REG_18		0x200104	/* cursor enable */
+#define	NGLE_REG_26		0x200118
+#define	NGLE_REG_19		0x200200
+#define	NGLE_REG_20		0x200208	/* cursor geometry */
+#define	NGLE_REG_21		0x200218	/* Artist misc video */
+#define	NGLE_REG_27		0x200308	/* Artist misc ctrl */
+#define	NGLE_REG_29		0x210000	/* HCRX cursor coord & enable */
+#define	NGLE_REG_30		0x210004	/* HCRX cursor address */
+#define	NGLE_REG_31		0x210008	/* HCRX cursor data */
+#define	NGLE_REG_38		0x210020	/* colormap data */
+#define	NGLE_REG_41		0x210024
+#define	NGLE_REG_42		0x210028
+#define	NGLE_REG_43		0x21002c
+#define	NGLE_REG_44		0x210030
+#define	NGLE_REG_45		0x210034
+#define	NGLE_REG_32		0x21003c
+#define	NGLE_REG_33		0x210040	/* HCRX misc video */
+#define	NGLE_REG_39		0x210120
+#define	NGLE_REG_40		0x210130
+
+#define	NGLE_BUFF0_CMAP0	0x00001e02
+#define	NGLE_BUFF1_CMAP0	0x02001e02
+#define	NGLE_BUFF1_CMAP3	0x0c001e02
+#define	NGLE_ARTIST_CMAP0	0x00000102
 
 #endif /* _IC_STIREG_H_ */

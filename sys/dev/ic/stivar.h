@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.24 2009/02/06 22:51:04 miod Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.25 2015/04/05 23:25:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -30,6 +30,7 @@
 #define _IC_STIVAR_H_
 
 struct sti_softc;
+struct sti_screen;
 
 /*
  * STI ROM information - one per device
@@ -40,11 +41,15 @@ struct sti_rom {
 
 	bus_space_tag_t		 iot, memt;	/* XXX iot unused */
 	bus_space_handle_t	 romh;
+	bus_space_handle_t	 regh[STI_REGION_MAX];
 	bus_addr_t		*bases;
 
 	struct sti_dd		 rom_dd;	/* in word format */
-
 	vaddr_t			 rom_code;
+
+	/*
+	 * ROM-provided function pointers
+	 */
 	sti_init_t		 init;
 	sti_mgmt_t		 mgmt;
 	sti_unpmv_t		 unpmv;
@@ -96,6 +101,16 @@ struct sti_screen {
 	struct	wsscreen_descr	 scr_wsd;
 	struct	wsscreen_descr	*scr_scrlist[1];
 	struct	wsscreen_list	 scr_screenlist;
+
+	/*
+	 * Board-specific function data and pointers
+	 */
+	void			(*setupfb)(struct sti_screen *);
+	int			(*putcmap)(struct sti_screen *, u_int, u_int);
+
+	uint32_t		reg10_value;
+	uint32_t		reg12_value;
+	bus_addr_t		cmap_finish_register;
 };
 
 /*
