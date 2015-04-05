@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.13 2015/04/05 11:53:53 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.14 2015/04/05 13:04:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -626,7 +626,7 @@ EXPORT_SYMBOL(drm_connector_cleanup);
 
 void drm_connector_unplug_all(struct drm_device *dev)
 {
-#ifdef notyet
+#ifdef __linux__
 	struct drm_connector *connector;
 
 	/* taking the mode config mutex ends up in a clash with sysfs */
@@ -693,7 +693,6 @@ int drm_plane_init(struct drm_device *dev, struct drm_plane *plane,
 	plane->funcs = funcs;
 	plane->format_types = kmalloc(sizeof(uint32_t) * format_count,
 				      GFP_KERNEL);
-
 	if (!plane->format_types) {
 		DRM_DEBUG_KMS("out of memory when allocating plane\n");
 		drm_mode_object_put(dev, &plane->base);
@@ -1142,14 +1141,12 @@ EXPORT_SYMBOL(drm_mode_config_cleanup);
 static void drm_crtc_convert_to_umode(struct drm_mode_modeinfo *out,
 				      const struct drm_display_mode *in)
 {
-#ifdef notyet
 	WARN(in->hdisplay > USHRT_MAX || in->hsync_start > USHRT_MAX ||
 	     in->hsync_end > USHRT_MAX || in->htotal > USHRT_MAX ||
 	     in->hskew > USHRT_MAX || in->vdisplay > USHRT_MAX ||
 	     in->vsync_start > USHRT_MAX || in->vsync_end > USHRT_MAX ||
 	     in->vtotal > USHRT_MAX || in->vscan > USHRT_MAX,
 	     "timing values too large for mode info\n");
-#endif
 
 	out->clock = in->clock;
 	out->hdisplay = in->hdisplay;
@@ -1312,7 +1309,9 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 	if (card_res->count_crtcs >= crtc_count) {
 		copied = 0;
 		crtc_id = (uint32_t __user *)(unsigned long)card_res->crtc_id_ptr;
-		/* if (file_priv->master->minor->type == DRM_MINOR_CONTROL) { */
+#if 0
+		if (file_priv->master->minor->type == DRM_MINOR_CONTROL) {
+#endif
 			list_for_each_entry(crtc, &dev->mode_config.crtc_list,
 					    head) {
 				DRM_DEBUG_KMS("[CRTC:%d]\n", crtc->base.id);
@@ -1323,7 +1322,8 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 				}
 				copied++;
 			}
-		/* } else {
+#if 0
+		} else {
 			for (i = 0; i < mode_group->num_crtcs; i++) {
 				if (copyout(&mode_group->id_list[i],
 				    crtc_id + copied,
@@ -1333,7 +1333,8 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 				}
 				copied++;
 			}
-		} */
+		}
+#endif
 	}
 	card_res->count_crtcs = crtc_count;
 
