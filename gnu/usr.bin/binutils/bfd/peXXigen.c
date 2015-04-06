@@ -661,7 +661,7 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
   {
     asection *sec;
     bfd_vma dsize = 0;
-    bfd_vma isize = SA(abfd->sections->filepos);
+    bfd_vma isize = 0;
     bfd_vma tsize = 0;
 
     for (sec = abfd->sections; sec; sec = sec->next)
@@ -679,7 +679,8 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
 	   fix, strip munges the file.  */
 	if (coff_section_data (abfd, sec) != NULL
 	    && pei_section_data (abfd, sec) != NULL)
-	  isize += SA (FA (pei_section_data (abfd, sec)->virt_size));
+	  isize = (sec->vma - extra->ImageBase
+		   + SA (FA (pei_section_data (abfd, sec)->virt_size)));
       }
 
     aouthdr_in->dsize = dsize;
