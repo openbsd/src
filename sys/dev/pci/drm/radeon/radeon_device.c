@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.11 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.12 2015/04/06 12:25:10 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1185,9 +1185,6 @@ void radeon_device_fini(struct radeon_device *rdev)
 	radeon_debugfs_remove_files(rdev);
 #endif
 }
-
-#define console_lock()
-#define console_unlock()
 
 /*
  * Suspend & resume.

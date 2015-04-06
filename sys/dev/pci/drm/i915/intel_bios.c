@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.9 2015/02/12 04:56:03 kettenis Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.10 2015/04/06 12:25:10 jsg Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -678,56 +678,6 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
 	},
 	{ }
 };
-
-extern char *hw_vendor, *hw_prod;
-
-static bool
-dmi_found(const struct dmi_system_id *dsi)
-{
-	int i, slot;
-
-	for (i = 0; i < nitems(dsi->matches); i++) {
-		slot = dsi->matches[i].slot;
-		switch (slot) {
-		case DMI_NONE:
-			break;
-		case DMI_SYS_VENDOR:
-		case DMI_BOARD_VENDOR:
-			if (hw_vendor != NULL &&
-			    !strcmp(hw_vendor, dsi->matches[i].substr))
-				break;
-			else
-				return false;
-		case DMI_PRODUCT_NAME:
-		case DMI_BOARD_NAME:
-			if (hw_prod != NULL &&
-			    !strcmp(hw_prod, dsi->matches[i].substr))
-				break;
-			else
-				return false;
-		default:
-			return false;
-		}
-	}
-
-	return true;
-}
-
-int
-dmi_check_system(const struct dmi_system_id *sysid)
-{
-	const struct dmi_system_id *dsi;
-	int num = 0;
-
-	for (dsi = sysid; dsi->matches[0].slot != 0 ; dsi++) {
-		if (dmi_found(dsi)) {
-			num++;
-			if (dsi->callback && dsi->callback(dsi))
-				break;
-		}
-	}
-	return (num);
-}
 
 #define VGA_BIOS_ADDR	0xc0000
 #define VGA_BIOS_LEN	0x10000

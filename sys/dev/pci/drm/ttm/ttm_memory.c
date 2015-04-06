@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.c,v 1.8 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.c,v 1.9 2015/04/06 12:25:10 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -515,8 +515,6 @@ int ttm_mem_global_alloc(struct ttm_mem_global *glob, uint64_t memory,
 					 interruptible);
 }
 EXPORT_SYMBOL(ttm_mem_global_alloc);
-
-#define page_to_pfn(pp) (VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
 
 int ttm_mem_global_alloc_page(struct ttm_mem_global *glob,
 			      struct vm_page *page,

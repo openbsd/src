@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600.c,v 1.17 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: r600.c,v 1.18 2015/04/06 12:25:10 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1499,16 +1499,6 @@ u32 r6xx_remap_render_backend(struct radeon_device *rdev,
 	}
 
 	return data;
-}
-
-static inline uint32_t hweight32(uint32_t x)
-{
-	x = (x & 0x55555555) + ((x & 0xaaaaaaaa) >> 1);
-	x = (x & 0x33333333) + ((x & 0xcccccccc) >> 2);
-	x = (x + (x >> 4)) & 0x0f0f0f0f;
-	x = (x + (x >> 8));
-	x = (x + (x >> 16)) & 0x000000ff;
-	return x;
 }
 
 int r600_count_pipe_bits(uint32_t val)

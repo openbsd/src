@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.11 2015/04/06 08:14:00 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.12 2015/04/06 12:25:10 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -113,9 +113,13 @@ spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
 #define wake_up_all(x)			wakeup(x)
 #define wake_up_all_locked(x)		wakeup(x)
 
+#define NSEC_PER_USEC	1000L
 #define NSEC_PER_SEC	1000000000L
+#define KHZ2PICOS(a)	(1000000000UL/(a))
 
 extern struct timespec ns_to_timespec(const int64_t);
+extern int64_t timeval_to_ns(const struct timeval *);
+extern struct timeval ns_to_timeval(const int64_t);
 
 static inline int64_t
 timespec_to_ns(const struct timespec *ts)
@@ -142,6 +146,12 @@ timespec_valid(const struct timespec *ts)
 	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
 		return (0);
 	return (1);
+}
+
+static inline int64_t
+abs64(int64_t x)
+{
+	return (x < 0 ? -x : x);
 }
 
 static inline unsigned long
@@ -174,6 +184,84 @@ copy_from_user(void *to, const void *from, unsigned len)
 
 #define get_user(x, ptr)	-copyin(ptr, &(x), sizeof(x))
 #define put_user(x, ptr)	-copyout(&(x), ptr, sizeof(x))
+
+static __inline uint16_t
+hweight16(uint32_t x)
+{
+	x = (x & 0x5555) + ((x & 0xaaaa) >> 1);
+	x = (x & 0x3333) + ((x & 0xcccc) >> 2);
+	x = (x + (x >> 4)) & 0x0f0f;
+	x = (x + (x >> 8)) & 0x00ff;
+	return (x);
+}
+
+static inline uint32_t
+hweight32(uint32_t x)
+{
+	x = (x & 0x55555555) + ((x & 0xaaaaaaaa) >> 1);
+	x = (x & 0x33333333) + ((x & 0xcccccccc) >> 2);
+	x = (x + (x >> 4)) & 0x0f0f0f0f;
+	x = (x + (x >> 8));
+	x = (x + (x >> 16)) & 0x000000ff;
+	return x;
+}
+
+#define console_lock()
+#define console_unlock()
+
+#ifndef PCI_MEM_START
+#define PCI_MEM_START	0
+#endif
+
+#ifndef PCI_MEM_END
+#define PCI_MEM_END	0xffffffff
+#endif
+
+enum dmi_field {
+        DMI_NONE,
+        DMI_BIOS_VENDOR,
+        DMI_BIOS_VERSION,
+        DMI_BIOS_DATE,
+        DMI_SYS_VENDOR,
+        DMI_PRODUCT_NAME,
+        DMI_PRODUCT_VERSION,
+        DMI_PRODUCT_SERIAL,
+        DMI_PRODUCT_UUID,
+        DMI_BOARD_VENDOR,
+        DMI_BOARD_NAME,
+        DMI_BOARD_VERSION,
+        DMI_BOARD_SERIAL,
+        DMI_BOARD_ASSET_TAG,
+        DMI_CHASSIS_VENDOR,
+        DMI_CHASSIS_TYPE,
+        DMI_CHASSIS_VERSION,
+        DMI_CHASSIS_SERIAL,
+        DMI_CHASSIS_ASSET_TAG,
+        DMI_STRING_MAX,
+};
+
+struct dmi_strmatch {
+	unsigned char slot;
+	char substr[79];
+};
+
+struct dmi_system_id {
+        int (*callback)(const struct dmi_system_id *);
+        const char *ident;
+        struct dmi_strmatch matches[4];
+};
+#define	DMI_MATCH(a, b) {(a), (b)}
+#define	DMI_EXACT_MATCH(a, b) {(a), (b)}
+int dmi_check_system(const struct dmi_system_id *);
+
+#define memcpy_toio(d, s, n) memcpy(d, s, n)
+
+#define page_to_phys(page)	(VM_PAGE_TO_PHYS(page)
+#define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
+#define offset_in_page(off)	((off) & PAGE_MASK)
+
+#define round_up(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
+#define round_down(x, y) (((x) / (y)) * (y))
 
 #if defined(__i386__) || defined(__amd64__)
 

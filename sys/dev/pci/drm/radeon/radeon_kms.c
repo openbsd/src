@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.36 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.37 2015/04/06 12:25:10 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -32,14 +32,6 @@
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon_asic.h"
 #include <dev/pci/drm/drm_pciids.h>
-
-#ifndef PCI_MEM_START
-#define PCI_MEM_START	0
-#endif
-
-#ifndef PCI_MEM_END
-#define PCI_MEM_END	0xffffffff
-#endif
 
 /* can't include radeon_drv.h due to duplicated defines in radeon_reg.h */
 

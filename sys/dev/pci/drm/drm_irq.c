@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.60 2015/04/05 12:53:41 kettenis Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.61 2015/04/06 12:25:10 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -54,9 +54,6 @@
  */
 #define DRM_REDUNDANT_VBLIRQ_THRESH_NS 1000000
 
-int64_t	 timeval_to_ns(const struct timeval *);
-struct timeval ns_to_timeval(const int64_t);
-
 #ifdef DRM_VBLANK_DEBUG
 #define DPRINTF(x...)	do { printf(x); } while(/* CONSTCOND */ 0)
 #else
@@ -109,44 +106,6 @@ static void clear_vblank_timestamps(struct drm_device *dev, int crtc)
 {
 	memset(&dev->_vblank_time[crtc * DRM_VBLANKTIME_RBSIZE], 0,
 		DRM_VBLANKTIME_RBSIZE * sizeof(struct timeval));
-}
-
-#define NSEC_PER_USEC	1000L
-#define NSEC_PER_SEC	1000000000L
-
-int64_t
-timeval_to_ns(const struct timeval *tv)
-{
-	return ((int64_t)tv->tv_sec * NSEC_PER_SEC) +
-		tv->tv_usec * NSEC_PER_USEC;
-}
-
-struct timeval
-ns_to_timeval(const int64_t nsec)
-{
-	struct timeval tv;
-	int32_t rem;
-
-	if (nsec == 0) {
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		return (tv);
-	}
-
-	tv.tv_sec = nsec / NSEC_PER_SEC;
-	rem = nsec % NSEC_PER_SEC;
-	if (rem < 0) {
-		tv.tv_sec--;
-		rem += NSEC_PER_SEC;
-	}
-	tv.tv_usec = rem / 1000;
-	return (tv);
-}
-
-static inline int64_t
-abs64(int64_t x)
-{
-	return (x < 0 ? -x : x);
 }
 
 /*

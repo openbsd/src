@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_modes.c,v 1.4 2015/02/11 07:01:36 jsg Exp $	*/
+/*	$OpenBSD: drm_modes.c,v 1.5 2015/04/06 12:25:10 jsg Exp $	*/
 /*
  * Copyright © 1997-2003 by The XFree86 Project, Inc.
  * Copyright © 2007 Dave Airlie
@@ -33,8 +33,6 @@
 
 #include "drmP.h"
 #include "drm_crtc.h"
-
-#define KHZ2PICOS(a) (1000000000UL/(a))
 
 void	 drm_mode_validate_clocks(struct drm_device *, struct list_head *,
 	     int *, int *, int);
