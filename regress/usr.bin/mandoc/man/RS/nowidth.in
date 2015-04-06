@@ -1,0 +1,20 @@
+.TH RS-NESTED 1 "April 6, 2015" OpenBSD
+.SH NAME
+RS-nowidth \- indentation blocks not specifying a width
+.SH DESCRIPTION
+regular text
+.RS
+top-level indented list
+.RE
+regular text
+.TP 2n
+\(bu
+bullet list
+.RS
+indented text
+.RE
+regular text
+.RS
+top-level indented list
+.RE
+regular text

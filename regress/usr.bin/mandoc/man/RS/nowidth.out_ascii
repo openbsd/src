@@ -1,0 +1,21 @@
+RS-NESTED(1)                General Commands Manual               RS-NESTED(1)
+
+
+
+NNAAMMEE
+       RS-nowidth - indentation blocks not specifying a width
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+              top-level indented list
+       regular text
+
+       +o bullet list
+         indented text
+       regular text
+         top-level indented list
+       regular text
+
+
+
+OpenBSD                          April 6, 2015                    RS-NESTED(1)

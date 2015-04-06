@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.129 2015/04/04 18:52:12 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.130 2015/04/06 13:34:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -877,7 +877,9 @@ pre_RS(DECL_ARGS)
 
 	n = n->parent->head;
 	n->aux = SHRT_MAX + 1;
-	if (n->child != NULL && a2roffsu(n->child->string, &su, SCALE_EN))
+	if (n->child == NULL)
+		n->aux = mt->lmargin[mt->lmargincur];
+	else if (a2roffsu(n->child->string, &su, SCALE_EN))
 		n->aux = term_hspan(p, &su) / 24;
 	if (n->aux < 0 && (size_t)(-n->aux) > mt->offset)
 		n->aux = -mt->offset;
