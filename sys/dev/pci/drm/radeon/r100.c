@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.14 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: r100.c,v 1.15 2015/04/06 14:10:59 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -894,7 +894,7 @@ int r100_copy_blit(struct radeon_device *rdev,
 	/* radeon pitch is /64 */
 	pitch = stride_bytes / 64;
 	stride_pixels = stride_bytes / 4;
-	num_loops = howmany(num_gpu_pages, 8191);
+	num_loops = DIV_ROUND_UP(num_gpu_pages, 8191);
 
 	/* Ask for enough room for blit + flush + fence */
 	ndw = 64 + (10 * num_loops);

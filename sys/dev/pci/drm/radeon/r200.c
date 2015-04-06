@@ -1,4 +1,4 @@
-/*	$OpenBSD: r200.c,v 1.2 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: r200.c,v 1.3 2015/04/06 14:10:59 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -95,7 +95,7 @@ int r200_copy_dma(struct radeon_device *rdev,
 
 	/* radeon pitch is /64 */
 	size = num_gpu_pages << RADEON_GPU_PAGE_SHIFT;
-	num_loops = howmany(size, 0x1FFFFF);
+	num_loops = DIV_ROUND_UP(size, 0x1FFFFF);
 	r = radeon_ring_lock(rdev, ring, num_loops * 4 + 64);
 	if (r) {
 		DRM_ERROR("radeon: moving bo (%d).\n", r);

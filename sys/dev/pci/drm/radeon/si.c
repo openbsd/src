@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.21 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.22 2015/04/06 14:10:59 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -4054,7 +4054,7 @@ int si_copy_dma(struct radeon_device *rdev,
 	}
 
 	size_in_bytes = (num_gpu_pages << RADEON_GPU_PAGE_SHIFT);
-	num_loops = howmany(size_in_bytes, 0xfffff);
+	num_loops = DIV_ROUND_UP(size_in_bytes, 0xfffff);
 	r = radeon_ring_lock(rdev, ring, num_loops * 5 + 11);
 	if (r) {
 		DRM_ERROR("radeon: moving bo (%d).\n", r);

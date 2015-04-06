@@ -1,4 +1,4 @@
-/*	$OpenBSD: rv770.c,v 1.5 2014/02/09 12:33:44 jsg Exp $	*/
+/*	$OpenBSD: rv770.c,v 1.6 2015/04/06 14:10:59 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -917,7 +917,7 @@ int rv770_copy_dma(struct radeon_device *rdev,
 	}
 
 	size_in_dw = (num_gpu_pages << RADEON_GPU_PAGE_SHIFT) / 4;
-	num_loops = howmany(size_in_dw, 0xFFFF);
+	num_loops = DIV_ROUND_UP(size_in_dw, 0xFFFF);
 	r = radeon_ring_lock(rdev, ring, num_loops * 5 + 8);
 	if (r) {
 		DRM_ERROR("radeon: moving bo (%d).\n", r);
