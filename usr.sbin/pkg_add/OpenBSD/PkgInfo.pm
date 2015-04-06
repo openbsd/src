@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.33 2014/07/18 16:57:41 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.34 2015/04/06 11:14:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -372,6 +372,30 @@ sub find_by_path
 	}
 }
 
+sub may_check_data
+{
+	my ($self, $handle, $pkgname, $state, $r) = @_;
+	# don't check installed packages
+	return if  $handle->trusted;
+	require OpenBSD::PackingList;
+	$$r //= $handle->plist;
+	if ($$r->is_signed) {
+		if ($state->defines('nosig')) {
+			$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR #1",
+			    $pkgname);
+		} else {
+			if (!$$r->check_signature($state)) {
+				$state->fatal("#1 is corrupted", $pkgname);
+			}
+		}
+	}
+	for my $name (OpenBSD::PackageInfo::info_names()) {
+		if ($$r->has($name)) {
+			$$r->get($name)->may_verify_digest($state);
+		}
+	}
+}
+
 sub print_info
 {
 	my ($self, $state, $pkg, $handle) = @_;
@@ -379,10 +403,12 @@ sub print_info
 		$state->errsay("Error printing info for #1: no info ?", $pkg);
 		return;
 	}
+	my $plist;
 	if ($state->opt('I')) {
 		if ($state->opt('q')) {
 			$state->say("#1", $pkg);
 		} else {
+			$self->may_check_data($handle, $pkg, $state, \$plist);
 			my $l = 20 - length($pkg);
 			$l = 1 if $l <= 0;
 			$state->say("#1#2#3", $pkg, " "x$l,
@@ -390,6 +416,7 @@ sub print_info
 		}
 	} else {
 		if ($state->opt('c')) {
+			$self->may_check_data($handle, $pkg, $state, \$plist);
 			$state->header($handle);
 			$state->banner("Comment:");
 			$state->say("#1\n", get_comment($handle->info));
@@ -400,29 +427,32 @@ sub print_info
 			$state->printfile_sorted($handle->info.REQUIRED_BY);
 		}
 		if ($state->opt('d')) {
+			$self->may_check_data($handle, $pkg, $state, \$plist);
 			$state->header($handle);
 			$state->banner("Description:");
 			$state->print_description($handle->info);
 		}
 		if ($state->opt('M') && -f $handle->info.DISPLAY) {
+			$self->may_check_data($handle, $pkg, $state, \$plist);
 			$state->header($handle);
 			$state->banner("Install notice:");
 			$state->printfile($handle->info.DISPLAY);
 		}
 		if ($state->opt('U') && -f $handle->info.UNDISPLAY) {
+			$self->may_check_data($handle, $pkg, $state, \$plist);
 			$state->header($handle);
 			$state->banner("Deinstall notice:");
 			$state->printfile($handle->info.UNDISPLAY);
 		}
-		my $plist;
 		my $needplist = $state->hasanyopt('fsSC');
 		if ($needplist || $state->opt('L')) {
 			require OpenBSD::PackingList;
 
+			$self->may_check_data($handle, $pkg, $state, \$plist);
 			if ($needplist) {
-				$plist = $handle->plist;
+				$plist //= $handle->plist;
 			} else {
-				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
+				$plist //= $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
 			$state->fatal("bad packing-list for #1", $handle->url)
 			    unless defined $plist;
