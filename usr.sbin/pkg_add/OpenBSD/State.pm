@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.33 2014/11/30 15:56:15 espie Exp $
+# $OpenBSD: State.pm,v 1.34 2015/04/06 11:07:24 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -347,6 +347,20 @@ sub defines
 	my ($self, $k) = @_;
 	return $self->{subst}->value($k);
 }
+
+OpenBSD::Auto::cache(signer_list,
+	sub {
+		my $self = shift;
+		if ($self->defines('SIGNER')) {
+			return [split /,/, $self->{subst}->value('SIGNER')];
+		} else {
+			if ($self->defines('FW_UPDATE')) {
+				return [qr{^.*fw$}];
+			} else {
+				return [qr{^.*pkg$}];
+			}
+		}
+	});
 
 my @signal_name = ();
 sub fillup_names

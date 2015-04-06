@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.33 2015/02/09 11:01:08 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.34 2015/04/06 11:07:24 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -144,20 +144,6 @@ sub ntogo_string
 	    $self->f(" (#1)", $self->ntodo($offset // 0)) :
 	    $self->f("");
 }
-
-OpenBSD::Auto::cache(signer_list,
-	sub {
-		my $self = shift;
-		if ($self->defines('SIGNER')) {
-			return [split /,/, $self->{subst}->value('SIGNER')];
-		} else {
-			if ($self->defines('FW_UPDATE')) {
-				return [qr{^.*fw$}];
-			} else {
-				return [qr{^.*pkg$}];
-			}
-		}
-	});
 
 package OpenBSD::AddCreateDelete;
 use OpenBSD::Error;
