@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.44 2014/07/10 21:12:33 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.45 2015/04/06 11:13:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -45,6 +45,11 @@ sub name
 {
 	my $self = shift;
 	return $self->{name};
+}
+
+sub trusted
+{
+	return 0;
 }
 
 OpenBSD::Auto::cache(pkgname,
@@ -361,5 +366,11 @@ sub plist
 	require OpenBSD::PackingList;
 	return OpenBSD::PackingList->from_installation($self->name, $code);
 }
+
+sub trusted
+{
+	return 1;
+}
+
 
 1;
