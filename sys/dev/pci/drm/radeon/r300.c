@@ -1,4 +1,4 @@
-/*	$OpenBSD: r300.c,v 1.6 2015/02/12 08:48:32 jsg Exp $	*/
+/*	$OpenBSD: r300.c,v 1.7 2015/04/06 03:49:47 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -317,7 +317,7 @@ int r300_mc_wait_for_idle(struct radeon_device *rdev)
 		if (tmp & R300_MC_IDLE) {
 			return 0;
 		}
-		udelay(1);
+		DRM_UDELAY(1);
 	}
 	return -1;
 }
