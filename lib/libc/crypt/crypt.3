@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.44 2014/12/08 20:46:04 tedu Exp $
+.\" $OpenBSD: crypt.3,v 1.45 2015/04/06 20:49:41 tedu Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: December 8 2014 $
+.Dd $Mdocdate: April 6 2015 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -58,8 +58,7 @@ and
 .Pp
 The
 .Fn crypt
-function performs password hashing based on the
-NBS Data Encryption Standard (DES).
+function performs password hashing.
 Additional code has been added to deter key search attempts and to use
 stronger hashing algorithms.
 .Pp
@@ -71,15 +70,7 @@ string
 typically a user's typed password.
 The second,
 .Fa setting ,
-is in one of three forms:
-if it begins with an underscore
-.Pq Ql _
-then an extended format is used
-in interpreting both the
-.Fa key
-and the
-.Fa setting ,
-as outlined below.
+currently supports a single form.
 If it begins
 with a string character
 .Pq Ql $
@@ -87,28 +78,6 @@ and a number then a different algorithm is used depending on the number.
 At the moment
 .Ql $2
 chooses Blowfish hashing; see below for more information.
-.Ss Extended crypt
-The
-.Fa key
-is divided into groups of 8 characters (the last group is null-padded)
-and the low-order 7 bits of each character (56 bits per group) are
-used to form the DES key as follows:
-the first group of 56 bits becomes the initial DES key.
-For each additional group, the XOR of the encryption of the current DES
-key with itself and the group bits becomes the next DES key.
-.Pp
-The
-.Fa setting
-is a 9-character array consisting of an underscore followed
-by 4 bytes of iteration count and 4 bytes of salt.
-These are encoded as printable characters, 6 bits per character,
-least significant character first.
-The values 0 to 63 are encoded as
-.Dq \&./0-9A-Za-z .
-This allows 24 bits for both
-.Fa count
-and
-.Fa salt .
 .Ss Blowfish crypt
 The Blowfish version of crypt has 128 bits of
 .Fa salt
@@ -141,42 +110,6 @@ A valid Blowfish password looks like this:
 The whole Blowfish password string is passed as
 .Fa setting
 for interpretation.
-.Ss Traditional crypt
-The first 8 bytes of the
-.Fa key
-are null-padded, and the low-order 7 bits of
-each character is used to form the 56-bit DES key.
-.Pp
-The
-.Fa setting
-is a 2-character array of the ASCII-encoded salt.
-Thus only 12 bits of
-.Fa salt
-are used.
-.Fa count
-is set to 25.
-.Ss DES Algorithm
-The
-.Fa salt
-introduces disorder in the DES
-algorithm in one of 16777216 or 4096 possible ways
-(i.e., with 24 or 12 bits: if bit
-.Em i
-of the
-.Fa salt
-is set, then bits
-.Em i
-and
-.Em i+24
-are swapped in the DES E-box output).
-.Pp
-The DES key is used to encrypt a 64-bit constant using
-.Fa count
-iterations of DES.
-The value returned is a NUL-terminated
-string, 20 or 13 bytes (plus NUL) in length, consisting of the
-.Fa setting
-followed by the encoded 64-bit encryption.
 .Sh RETURN VALUES
 The function
 .Fn crypt
@@ -196,20 +129,16 @@ A rotor-based
 .Fn crypt
 function appeared in
 .At v3 .
-The current style
+A DES-based
 .Fn crypt
 first appeared in
 .At v7 .
-.Sh AUTHORS
-.An David Burren Aq Mt davidb@werj.com.au
-wrote the original DES functions.
+.Fn bcrypt
+first appeared in
+.Ox 2.1 .
 .Sh BUGS
 The
 .Fn crypt
 function returns a pointer to static data, and subsequent calls to
 .Fn crypt
 will modify the same object.
-.Pp
-With DES hashing, passwords containing the byte 0x80 use less key entropy
-than other passwords.
-This is an implementation bug, not a bug in the DES cipher.
