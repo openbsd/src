@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.12 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.13 2015/04/06 15:43:15 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -18,6 +18,19 @@
 #define IRQ_NONE	0
 #define IRQ_HANDLED	1
 
+typedef u_int64_t u64;
+typedef u_int32_t u32;
+typedef u_int16_t u16;
+typedef u_int8_t u8;
+
+typedef int32_t s32;
+typedef int64_t s64;
+
+typedef uint16_t __le16;
+typedef uint16_t __be16;
+typedef uint32_t __le32;
+typedef uint32_t __be32;
+
 typedef bus_addr_t dma_addr_t;
 typedef bus_addr_t phys_addr_t;
 typedef int wait_queue_head_t;
@@ -25,6 +38,36 @@ typedef int wait_queue_head_t;
 #define __force
 #define __always_unused
 #define __read_mostly
+#define __iomem
+#define __must_check
+#define __init
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define __BIG_ENDIAN
+#else
+#define __LITTLE_ENDIAN
+#endif
+
+#define le16_to_cpu(x) letoh16(x)
+#define le32_to_cpu(x) letoh32(x)
+#define cpu_to_le16(x) htole16(x)
+#define cpu_to_le32(x) htole32(x)
+
+#define be32_to_cpup(x) betoh32(*x)
+
+#define lower_32_bits(n)	((u32)(n))
+#define upper_32_bits(_val)	((u32)(((_val) >> 16) >> 16))
+#define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) -1)
+
+#define EXPORT_SYMBOL(x)
+#define MODULE_FIRMWARE(x)
+#define ARRAY_SIZE nitems
+
+#define ERESTARTSYS	EINTR
+#define ETIME		ETIMEDOUT
+#define EREMOTEIO	EIO
+#define EPROTO		EIO
+#define ENOTSUPP	ENOTSUP
 
 #define KERN_INFO
 #define KERN_WARNING
@@ -79,6 +122,90 @@ typedef int wait_queue_head_t;
 	    do { } while(0)
 #endif
 
+#define unlikely(x)	__builtin_expect(!!(x), 0)
+#define likely(x)	__builtin_expect(!!(x), 1)
+
+#define BUG()								\
+do {									\
+	panic("BUG at %s:%d", __FILE__, __LINE__);			\
+} while (0)
+
+#define BUG_ON(x) KASSERT(!(x))
+
+#define BUILD_BUG_ON(x) CTASSERT(!(x))
+
+#define WARN(condition, fmt...) ({ 					\
+	int __ret = !!(condition);					\
+	if (__ret)							\
+		printf(fmt);						\
+	unlikely(__ret);						\
+})
+
+#define WARN_ONCE(condition, fmt...) ({					\
+	static int __warned;						\
+	int __ret = !!(condition);					\
+	if (__ret && !__warned) {					\
+		printf(fmt);						\
+		__warned = 1;						\
+	}								\
+	unlikely(__ret);						\
+})
+
+#define _WARN_STR(x) #x
+
+#define WARN_ON(condition) ({						\
+	int __ret = !!(condition);					\
+	if (__ret)							\
+		printf("WARNING %s failed at %s:%d\n",			\
+		    _WARN_STR(condition), __FILE__, __LINE__);		\
+	unlikely(__ret);						\
+})
+
+#define WARN_ON_ONCE(condition) ({					\
+	static int __warned;						\
+	int __ret = !!(condition);					\
+	if (__ret && !__warned) {					\
+		printf("WARNING %s failed at %s:%d\n",			\
+		    _WARN_STR(condition), __FILE__, __LINE__);		\
+		__warned = 1;						\
+	}								\
+	unlikely(__ret);						\
+})
+
+#define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-ELAST)
+
+static inline void *
+ERR_PTR(long error)
+{
+	return (void *) error;
+}
+
+static inline long
+PTR_ERR(const void *ptr)
+{
+	return (long) ptr;
+}
+
+static inline long
+IS_ERR(const void *ptr)
+{
+        return IS_ERR_VALUE((unsigned long)ptr);
+}
+
+static inline long
+IS_ERR_OR_NULL(const void *ptr)
+{
+        return !ptr || IS_ERR_VALUE((unsigned long)ptr);
+}
+
+#define container_of(ptr, type, member) ({                      \
+	__typeof( ((type *)0)->member ) *__mptr = (ptr);        \
+	(type *)( (char *)__mptr - offsetof(type,member) );})
+
+#ifndef __DECONST
+#define __DECONST(type, var)    ((type)(__uintptr_t)(const void *)(var))
+#endif
+
 typedef struct mutex spinlock_t;
 
 static inline void
@@ -121,6 +248,11 @@ extern struct timespec ns_to_timespec(const int64_t);
 extern int64_t timeval_to_ns(const struct timeval *);
 extern struct timeval ns_to_timeval(const int64_t);
 
+#define jiffies_to_msecs(x)	(((int64_t)(x)) * 1000 / hz)
+#define msecs_to_jiffies(x)	(((int64_t)(x)) * hz / 1000)
+#define time_after(a,b)		((long)(b) - (long)(a) < 0)
+#define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
+
 static inline int64_t
 timespec_to_ns(const struct timespec *ts)
 {
@@ -146,6 +278,68 @@ timespec_valid(const struct timespec *ts)
 	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
 		return (0);
 	return (1);
+}
+
+#define GFP_ATOMIC	M_NOWAIT
+#define GFP_KERNEL	(M_WAITOK | M_CANFAIL)
+#define __GFP_NOWARN	0
+#define __GFP_NORETRY	0
+
+static inline void *
+kmalloc(size_t size, int flags)
+{
+	return malloc(size, M_DRM, flags);
+}
+
+static inline void *
+kmalloc_array(size_t n, size_t size, int flags)
+{
+	if (n == 0 || SIZE_MAX / n < size)
+		return NULL;
+	return malloc(n * size, M_DRM, flags);
+}
+
+static inline void *
+kcalloc(size_t n, size_t size, int flags)
+{
+	if (n == 0 || SIZE_MAX / n < size)
+		return NULL;
+	return malloc(n * size, M_DRM, flags | M_ZERO);
+}
+
+static inline void *
+kzalloc(size_t size, int flags)
+{
+	return malloc(size, M_DRM, flags | M_ZERO);
+}
+
+static inline void
+kfree(void *objp)
+{
+	free(objp, M_DRM, 0);
+}
+
+static inline void *
+vzalloc(unsigned long size)
+{
+	return malloc(size, M_DRM, M_WAITOK | M_CANFAIL | M_ZERO);
+}
+
+static inline void
+vfree(void *objp)
+{
+	free(objp, M_DRM, 0);
+}
+
+#define min_t(t, a, b) ({ \
+	t __min_a = (a); \
+	t __min_b = (b); \
+	__min_a < __min_b ? __min_a : __min_b; })
+
+static inline uint64_t
+div_u64(uint64_t x, uint32_t y)
+{
+	return (x / y);
 }
 
 static inline int64_t
@@ -254,14 +448,68 @@ struct dmi_system_id {
 #define	DMI_EXACT_MATCH(a, b) {(a), (b)}
 int dmi_check_system(const struct dmi_system_id *);
 
+struct pci_dev {
+	uint16_t	vendor;
+	uint16_t	device;
+	uint16_t	subsystem_vendor;
+	uint16_t	subsystem_device;
+};
+#define PCI_ANY_ID (uint16_t) (~0U)
+
 #define memcpy_toio(d, s, n) memcpy(d, s, n)
 
-#define page_to_phys(page)	(VM_PAGE_TO_PHYS(page)
+#define page_to_phys(page)	(VM_PAGE_TO_PHYS(page))
 #define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
 #define offset_in_page(off)	((off) & PAGE_MASK)
 
 #define round_up(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
 #define round_down(x, y) (((x) / (y)) * (y))
+#define roundup2(x, y) (((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
+#define DIV_ROUND_UP(x, y)	(((x) + ((y) - 1)) / (y))
+#define DIV_ROUND_CLOSEST(x, y)	(((x) + ((y) / 2)) / (y))
+
+static inline unsigned long
+roundup_pow_of_two(unsigned long x)
+{
+	return (1UL << flsl(x - 1));
+}
+
+#define PAGE_ALIGN(addr)	(((addr) + PAGE_MASK) & ~PAGE_MASK)
+#define IS_ALIGNED(x, y)	(((x) & ((y) - 1)) == 0)
+
+static __inline void
+udelay(unsigned long usecs)
+{
+	DELAY(usecs);
+}
+
+static __inline void
+usleep_range(unsigned long min, unsigned long max)
+{
+	DELAY(min);
+}
+
+static __inline void
+mdelay(unsigned long msecs)
+{
+	int loops = msecs;
+	while (loops--)
+		DELAY(1000);
+}
+
+static inline uint32_t ror32(uint32_t word, unsigned int shift)
+{
+	return (word >> shift) | (word << (32 - shift));
+}
+
+#ifdef __macppc__
+static __inline int
+of_machine_is_compatible(const char *model)
+{
+	extern char *hw_prod;
+	return (strcmp(model, hw_prod) == 0);
+}
+#endif
 
 #if defined(__i386__) || defined(__amd64__)
 

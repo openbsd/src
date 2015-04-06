@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.185 2015/04/06 12:25:10 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.186 2015/04/06 15:43:15 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -75,12 +75,6 @@
 
 #define __OS_HAS_AGP		(NAGP > 0)
 
-#if BYTE_ORDER == BIG_ENDIAN
-#define __BIG_ENDIAN
-#else
-#define __LITTLE_ENDIAN
-#endif
-
 				/* Internal types and structures */
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
@@ -91,12 +85,6 @@
 #define DRM_SUSER(p)		(suser(p, 0) == 0)
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
 
-#define PAGE_ALIGN(addr)	(((addr) + PAGE_MASK) & ~PAGE_MASK)
-#define roundup2(x, y)	(((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
-#define jiffies_to_msecs(x)	(((int64_t)(x)) * 1000 / hz)
-#define msecs_to_jiffies(x)	(((int64_t)(x)) * hz / 1000)
-#define time_after(a,b)		((long)(b) - (long)(a) < 0)
-#define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
 #define drm_msleep(x, msg)	delay(x * 1000)
 
 extern struct cfdriver drm_cd;
@@ -111,183 +99,7 @@ extern struct cfdriver drm_cd;
 	}								\
 } while (0)
 
-/* linux compat */
-typedef u_int64_t u64;
-typedef u_int32_t u32;
-typedef u_int16_t u16;
-typedef u_int8_t u8;
-
-typedef int32_t s32;
-typedef int64_t s64;
-
-typedef uint16_t __le16;
-typedef uint16_t __be16;
-typedef uint32_t __le32;
-typedef uint32_t __be32;
-
-#define EXPORT_SYMBOL(x)
-#define MODULE_FIRMWARE(x)
-#define __iomem
-#define __must_check
-#define __init
-#define ARRAY_SIZE nitems
 #define DRM_ARRAY_SIZE nitems
-#define DIV_ROUND_UP(x, y)	(((x) + ((y) - 1)) / (y))
-#define DIV_ROUND_CLOSEST(x, y)	(((x) + ((y) / 2)) / (y))
-
-#define ERESTARTSYS EINTR
-#define ETIME ETIMEDOUT
-#define EREMOTEIO EIO
-#define EPROTO EIO
-#define ENOTSUPP ENOTSUP
-
-#define unlikely(x)	__builtin_expect(!!(x), 0)
-#define likely(x)	__builtin_expect(!!(x), 1)
-
-#define	IS_ALIGNED(x, y)	(((x) & ((y) - 1)) == 0)
-
-#define BUG()								\
-do {									\
-	panic("BUG at %s:%d", __FILE__, __LINE__);			\
-} while (0)
-
-#define BUG_ON(x) KASSERT(!(x))
-
-#define BUILD_BUG_ON(x) CTASSERT(!(x))
-
-#define WARN(condition, fmt...) ({ 					\
-	int __ret = !!(condition);					\
-	if (__ret)							\
-		printf(fmt);						\
-	unlikely(__ret);						\
-})
-
-#define WARN_ONCE(condition, fmt...) ({					\
-	static int __warned;						\
-	int __ret = !!(condition);					\
-	if (__ret && !__warned) {					\
-		printf(fmt);						\
-		__warned = 1;						\
-	}								\
-	unlikely(__ret);						\
-})
-
-#define _WARN_STR(x) #x
-
-#define WARN_ON(condition) ({						\
-	int __ret = !!(condition);					\
-	if (__ret)							\
-		printf("WARNING %s failed at %s:%d\n",			\
-		    _WARN_STR(condition), __FILE__, __LINE__);		\
-	unlikely(__ret);						\
-})
-
-#define WARN_ON_ONCE(condition) ({					\
-	static int __warned;						\
-	int __ret = !!(condition);					\
-	if (__ret && !__warned) {					\
-		printf("WARNING %s failed at %s:%d\n",			\
-		    _WARN_STR(condition), __FILE__, __LINE__);		\
-		__warned = 1;						\
-	}								\
-	unlikely(__ret);						\
-})
-
-#define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-ELAST)
-
-static inline void *
-ERR_PTR(long error)
-{
-	return (void *) error;
-}
-
-static inline long
-PTR_ERR(const void *ptr)
-{
-	return (long) ptr;
-}
-
-static inline long
-IS_ERR(const void *ptr)
-{
-        return IS_ERR_VALUE((unsigned long)ptr);
-}
-
-static inline long
-IS_ERR_OR_NULL(const void *ptr)
-{
-        return !ptr || IS_ERR_VALUE((unsigned long)ptr);
-}
-
-#define container_of(ptr, type, member) ({                      \
-	__typeof( ((type *)0)->member ) *__mptr = (ptr);        \
-	(type *)( (char *)__mptr - offsetof(type,member) );})
-
-#ifndef __DECONST
-#define __DECONST(type, var)    ((type)(__uintptr_t)(const void *)(var))
-#endif
-
-#define GFP_ATOMIC	M_NOWAIT
-#define GFP_KERNEL	(M_WAITOK | M_CANFAIL)
-#define __GFP_NOWARN	0
-#define __GFP_NORETRY	0
-
-static inline void *
-kmalloc(size_t size, int flags)
-{
-	return malloc(size, M_DRM, flags);
-}
-
-static inline void *
-kmalloc_array(size_t n, size_t size, int flags)
-{
-	if (n == 0 || SIZE_MAX / n < size)
-		return NULL;
-	return malloc(n * size, M_DRM, flags);
-}
-
-static inline void *
-kcalloc(size_t n, size_t size, int flags)
-{
-	if (n == 0 || SIZE_MAX / n < size)
-		return NULL;
-	return malloc(n * size, M_DRM, flags | M_ZERO);
-}
-
-static inline void *
-kzalloc(size_t size, int flags)
-{
-	return malloc(size, M_DRM, flags | M_ZERO);
-}
-
-static inline void
-kfree(void *objp)
-{
-	free(objp, M_DRM, 0);
-}
-
-static inline void *
-vzalloc(unsigned long size)
-{
-	return malloc(size, M_DRM, M_WAITOK | M_CANFAIL | M_ZERO);
-}
-
-static inline void
-vfree(void *objp)
-{
-	free(objp, M_DRM, 0);
-}
-
-#define min_t(t, a, b) ({ \
-	t __min_a = (a); \
-	t __min_b = (b); \
-	__min_a < __min_b ? __min_a : __min_b; })
-
-static inline uint64_t
-div_u64(uint64_t x, uint32_t y)
-{
-	return (x / y);
-}
 
 /* DRM_READMEMORYBARRIER() prevents reordering of reads.
  * DRM_WRITEMEMORYBARRIER() prevents reordering of writes.
@@ -338,55 +150,7 @@ div_u64(uint64_t x, uint32_t y)
 #define	DRM_COPY_TO_USER(user, kern, size)	copyout(kern, user, size)
 #define	DRM_COPY_FROM_USER(kern, user, size)	copyin(user, kern, size)
 
-#define le16_to_cpu(x) letoh16(x)
-#define le32_to_cpu(x) letoh32(x)
-#define cpu_to_le16(x) htole16(x)
-#define cpu_to_le32(x) htole32(x)
-
-#define be32_to_cpup(x) betoh32(*x)
-
-#ifdef __macppc__
-static __inline int
-of_machine_is_compatible(const char *model)
-{
-	extern char *hw_prod;
-	return (strcmp(model, hw_prod) == 0);
-}
-#endif
-
-static inline unsigned long
-roundup_pow_of_two(unsigned long x)
-{
-	return (1UL << flsl(x - 1));
-}
-
-static inline uint32_t ror32(uint32_t word, unsigned int shift)
-{
-	return (word >> shift) | (word << (32 - shift));
-}
-
 #define DRM_UDELAY(udelay)	DELAY(udelay)
-
-static __inline void
-udelay(unsigned long usecs)
-{
-	DELAY(usecs);
-}
-
-static __inline void
-usleep_range(unsigned long min, unsigned long max)
-{
-	DELAY(min);
-}
-
-static __inline void
-mdelay(unsigned long msecs)
-{
-	int loops = msecs;
-	while (loops--)
-		DELAY(1000);
-}
-
 #define	drm_can_sleep()	(hz & 1)
 
 #define DRM_WAIT_ON(ret, queue, lock,  timeout, msg, condition ) do {	\
@@ -453,8 +217,6 @@ mdelay(unsigned long msecs)
 #else
 #define DRM_DEBUG_DRIVER(fmt, arg...) do { } while(/* CONSTCOND */ 0)
 #endif
-
-#define PCI_ANY_ID (uint16_t) (~0U)
 
 struct drm_pcidev {
 	uint16_t vendor;
@@ -611,10 +373,6 @@ struct drm_mem {
 #define DRM_ATI_GART_IGP  3
 #define DRM_ATI_GART_R600 4
 
-#define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) -1)
-#define lower_32_bits(n)	((u32)(n))
-#define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))
-
 /*
  *  Locking protocol:
  * All drm object are uvm objects, as such they have a reference count and
@@ -762,13 +520,6 @@ struct drm_cmdline_mode {
 	bool cvt;
 	bool margins;
 	enum drm_connector_force force;
-};
-
-struct pci_dev {
-	uint16_t	vendor;
-	uint16_t	device;
-	uint16_t	subsystem_vendor;
-	uint16_t	subsystem_device;
 };
 
 /** 
