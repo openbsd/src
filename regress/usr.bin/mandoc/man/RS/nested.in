@@ -15,6 +15,16 @@ outer
 text
 .RE
 regular text
+.IP tag 6n
+tagged text (6n)
+.RS
+outer text (saved 6n)
+.RS
+inner text (default indent)
+.RE
+outer text
+.RE
+regular text
 .RS 4n
 outer text (4n)
 .RS 2n

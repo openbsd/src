@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.130 2015/04/06 13:34:54 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.131 2015/04/06 14:58:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -893,7 +893,7 @@ pre_RS(DECL_ARGS)
 	if (++mt->lmarginsz < MAXMARGINS)
 		mt->lmargincur = mt->lmarginsz;
 
-	mt->lmargin[mt->lmargincur] = mt->lmargin[mt->lmargincur - 1];
+	mt->lmargin[mt->lmargincur] = term_len(p, p->defindent);
 	return(1);
 }
 

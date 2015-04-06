@@ -11,6 +11,12 @@ DDEESSCCRRIIPPTTIIOONN
                      inner text (default indent)
               outer text
        regular text
+
+       tag   tagged text (6n)
+             outer text (saved 6n)
+                    inner text (default indent)
+             outer text
+       regular text
            outer text (4n)
              inner text (2n)
            outer text
@@ -25,10 +31,10 @@ DDEESSCCRRIIPPTTIIOONN
 
            outer text
        nesting HP and RS inside RS:
-              outer text
+             outer text
 
 
-                  inner text
+                 inner text
 
 
 
