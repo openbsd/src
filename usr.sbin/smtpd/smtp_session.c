@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.227 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.228 2015/04/06 13:47:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -661,12 +661,12 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		fprintf(s->ofile, "Received: ");
 		if (! (s->listener->flags & F_MASK_SOURCE)) {
-			fprintf(s->ofile, "from %s (%s [%s]);\n\t",
+			fprintf(s->ofile, "from %s (%s [%s])",
 			    s->evp.helo,
 			    s->hostname,
 			    ss_to_text(&s->ss));
 		}
-		fprintf(s->ofile, "by %s (%s) with %sSMTP%s%s id %08x;\n",
+		fprintf(s->ofile, "\n\tby %s (%s) with %sSMTP%s%s id %08x",
 		    s->smtpname,
 		    SMTPD_NAME,
 		    s->flags & SF_EHLO ? "E" : "",
@@ -677,7 +677,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (s->flags & SF_SECURE) {
 			x = SSL_get_peer_certificate(s->io.ssl);
 			fprintf(s->ofile,
-			    "\tTLS version=%s cipher=%s bits=%d verify=%s;\n",
+			    "\n\tTLS version=%s cipher=%s bits=%d verify=%s",
 			    SSL_get_cipher_version(s->io.ssl),
 			    SSL_get_cipher_name(s->io.ssl),
 			    SSL_get_cipher_bits(s->io.ssl, NULL),
@@ -687,12 +687,12 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 
 		if (s->rcptcount == 1) {
-			fprintf(s->ofile, "\tfor <%s@%s>;\n",
+			fprintf(s->ofile, "\n\tfor <%s@%s>",
 			    s->evp.rcpt.user,
 			    s->evp.rcpt.domain);
 		}
 
-		fprintf(s->ofile, "\t%s\n", time_to_text(time(NULL)));
+		fprintf(s->ofile, ";\n\t%s\n", time_to_text(time(NULL)));
 
 		smtp_enter_state(s, STATE_BODY);
 		smtp_reply(s, "354 Enter mail, end with \".\""
