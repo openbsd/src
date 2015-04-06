@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_cs.c,v 1.3 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_cs.c,v 1.4 2015/04/06 11:05:54 jsg Exp $	*/
 /*
  * Copyright 2008 Jerome Glisse.
  * All Rights Reserved.
@@ -47,11 +47,11 @@ static int radeon_cs_parser_relocs(struct radeon_cs_parser *p)
 	p->dma_reloc_idx = 0;
 	/* FIXME: we assume that each relocs use 4 dwords */
 	p->nrelocs = chunk->length_dw / 4;
-	p->relocs_ptr = drm_calloc(p->nrelocs, sizeof(void *));
+	p->relocs_ptr = kcalloc(p->nrelocs, sizeof(void *), GFP_KERNEL);
 	if (p->relocs_ptr == NULL) {
 		return -ENOMEM;
 	}
-	p->relocs = drm_calloc(p->nrelocs, sizeof(struct radeon_cs_reloc));
+	p->relocs = kcalloc(p->nrelocs, sizeof(struct radeon_cs_reloc), GFP_KERNEL);
 	if (p->relocs == NULL) {
 		return -ENOMEM;
 	}
@@ -176,7 +176,7 @@ int radeon_cs_parser_init(struct radeon_cs_parser *p, void *data)
 	p->chunk_relocs_idx = -1;
 	p->chunk_flags_idx = -1;
 	p->chunk_const_ib_idx = -1;
-	p->chunks_array = drm_calloc(cs->num_chunks, sizeof(uint64_t));
+	p->chunks_array = kcalloc(cs->num_chunks, sizeof(uint64_t), GFP_KERNEL);
 	if (p->chunks_array == NULL) {
 		return -ENOMEM;
 	}
@@ -187,7 +187,7 @@ int radeon_cs_parser_init(struct radeon_cs_parser *p, void *data)
 	}
 	p->cs_flags = 0;
 	p->nchunks = cs->num_chunks;
-	p->chunks = drm_calloc(p->nchunks, sizeof(struct radeon_cs_chunk));
+	p->chunks = kcalloc(p->nchunks, sizeof(struct radeon_cs_chunk), GFP_KERNEL);
 	if (p->chunks == NULL) {
 		return -ENOMEM;
 	}
