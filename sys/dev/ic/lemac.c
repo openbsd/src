@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.18 2014/12/22 02:28:51 tedu Exp $ */
+/* $OpenBSD: lemac.c,v 1.19 2015/04/06 09:13:55 miod Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -69,7 +69,7 @@ void	lemac_ifmedia_status(struct ifnet *const, struct ifmediareq *);
 void	lemac_ifstart(struct ifnet *);
 void	lemac_init(struct lemac_softc *);
 void	lemac_init_adapmem(struct lemac_softc *);
-void	lemac_input(struct lemac_softc *, bus_size_t, size_t);
+struct mbuf *lemac_input(struct lemac_softc *, bus_size_t, size_t);
 void	lemac_multicast_filter(struct lemac_softc *);
 void	lemac_multicast_op(u_int16_t *, const u_char *, int);
 int	lemac_read_eeprom(struct lemac_softc *);
@@ -255,17 +255,15 @@ lemac_init_adapmem(struct lemac_softc *sc)
 		LEMAC_OUTB(sc, LEMAC_REG_FMQ, pg);
 }
 
-void
+struct mbuf *
 lemac_input(struct lemac_softc *sc, bus_size_t offset, size_t length)
 {
 	struct ether_header eh;
 	struct mbuf *m;
 
 	if (length - sizeof(eh) > ETHERMTU ||
-	    length - sizeof(eh) < ETHERMIN) {
-		sc->sc_if.if_ierrors++;
-		return;
-	}
+	    length - sizeof(eh) < ETHERMIN)
+		return NULL;
 	if (LEMAC_USE_PIO_MODE(sc)) {
 		LEMAC_INSB(sc, LEMAC_REG_DAT, sizeof(eh), (void *)&eh);
 	} else {
@@ -273,16 +271,13 @@ lemac_input(struct lemac_softc *sc, bus_size_t offset, size_t length)
 	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		sc->sc_if.if_ierrors++;
-		return;
-	}
+	if (m == NULL)
+		return NULL;
 	if (length + 2 > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
-			sc->sc_if.if_ierrors++;
-			return;
+			return NULL;
 		}
 	}
 	m->m_data += 2;
@@ -298,30 +293,17 @@ lemac_input(struct lemac_softc *sc, bus_size_t offset, size_t length)
 			m->m_data[length - 1] = LEMAC_GET8(sc,
 			    offset + length - 1);
 	}
-#if NBPFILTER > 0
-	if (sc->sc_if.if_bpf != NULL) {
-		m->m_pkthdr.len = m->m_len = length;
-		bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_IN);
-	}
 
-	/*
-	 * If this is single cast but not to us
-	 * drop it!
-	 */
-	if ((eh.ether_dhost[0] & 1) == 0 &&
-	    !LEMAC_ADDREQUAL(eh.ether_dhost, sc->sc_arpcom.ac_enaddr)) {
-		m_freem(m);
-		return;
-	}
-#endif
 	m->m_pkthdr.len = m->m_len = length;
-	m->m_pkthdr.rcvif = &sc->sc_if;
-	ether_input_mbuf(&sc->sc_if, m);
+	return m;
 }
 
 void
 lemac_rne_intr(struct lemac_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *m;
 	int rxcount;
 
 	sc->sc_cntrs.cntr_rne_intrs++;
@@ -330,7 +312,7 @@ lemac_rne_intr(struct lemac_softc *sc)
 		unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
 		u_int32_t rxlen;
 
-		sc->sc_if.if_ipackets++;
+		ifp->if_ipackets++;
 		if (LEMAC_USE_PIO_MODE(sc)) {
 			LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
 			LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);
@@ -347,15 +329,20 @@ lemac_rne_intr(struct lemac_softc *sc)
 			 * Get receive length - subtract out checksum.
 			 */
 			rxlen = ((rxlen >> 8) & 0x7FF) - 4;
-			lemac_input(sc, sizeof(rxlen), rxlen);
-		} else {
-			sc->sc_if.if_ierrors++;
-		}
+			m = lemac_input(sc, sizeof(rxlen), rxlen);
+		} else
+			m = NULL;
+
+		if (m != NULL)
+			ml_enqueue(&ml, m);
+		else
+			ifp->if_ierrors++;
+
 		/* Return this page to Free Memory Queue */
 		LEMAC_OUTB(sc, LEMAC_REG_FMQ, rxpg);
 	}  /* end while (recv_count--) */
 
-	return;
+	if_input(ifp, &ml);
 }
 
 /*
