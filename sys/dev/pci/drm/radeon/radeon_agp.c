@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_agp.c,v 1.3 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_agp.c,v 1.4 2015/04/06 06:12:25 jsg Exp $	*/
 /*
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
@@ -129,7 +129,6 @@ int radeon_agp_init(struct radeon_device *rdev)
 {
 #if __OS_HAS_AGP
 	struct radeon_agpmode_quirk *p = radeon_agpmode_quirk_list;
-	struct drm_device *ddev = rdev->ddev;
 	struct drm_agp_mode mode;
 	struct drm_agp_info info;
 	paddr_t start, end;
@@ -152,11 +151,11 @@ int radeon_agp_init(struct radeon_device *rdev)
 		return ret;
 	}
 
-	if ((ddev->agp->info.ai_aperture_size >> 20) < 32) {
+	if ((rdev->ddev->agp->info.ai_aperture_size >> 20) < 32) {
 		drm_agp_release(rdev->ddev);
 		dev_warn(rdev->dev, "AGP aperture too small (%zuM) "
 			"need at least 32M, disabling AGP\n",
-			ddev->agp->info.ai_aperture_size >> 20);
+			rdev->ddev->agp->info.ai_aperture_size >> 20);
 		return -EINVAL;
 	}
 
@@ -237,15 +236,15 @@ int radeon_agp_init(struct radeon_device *rdev)
 	}
 
 	mode.mode &= ~RADEON_AGP_FW_MODE; /* disable fw */
-	ret = drm_agp_enable(ddev, mode);
+	ret = drm_agp_enable(rdev->ddev, mode);
 	if (ret) {
 		DRM_ERROR("Unable to enable AGP (mode = 0x%lx)\n", mode.mode);
-		drm_agp_release(ddev);
+		drm_agp_release(rdev->ddev);
 		return ret;
 	}
 
-	rdev->mc.agp_base = ddev->agp->info.ai_aperture_base;
-	rdev->mc.gtt_size = ddev->agp->info.ai_aperture_size;
+	rdev->mc.agp_base = rdev->ddev->agp->info.ai_aperture_base;
+	rdev->mc.gtt_size = rdev->ddev->agp->info.ai_aperture_size;
 	rdev->mc.gtt_start = rdev->mc.agp_base;
 	rdev->mc.gtt_end = rdev->mc.gtt_start + rdev->mc.gtt_size - 1;
 	dev_info(rdev->dev, "GTT: %lluM 0x%08llX - 0x%08llX\n",

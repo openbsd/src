@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.9 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.10 2015/04/06 06:12:25 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1393,7 +1393,6 @@ int radeon_resume_kms(struct drm_device *dev)
  */
 int radeon_gpu_reset(struct radeon_device *rdev)
 {
-	struct drm_device *dev = rdev->ddev;
 	unsigned ring_sizes[RADEON_NUM_RINGS];
 	uint32_t *ring_data[RADEON_NUM_RINGS];
 
@@ -1451,7 +1450,7 @@ retry:
 		}
 	}
 
-	drm_helper_resume_force_mode(dev);
+	drm_helper_resume_force_mode(rdev->ddev);
 
 	ttm_bo_unlock_delayed_workqueue(&rdev->mman.bdev, resched);
 	if (r) {
