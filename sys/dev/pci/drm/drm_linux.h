@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.10 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.11 2015/04/06 08:14:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -171,6 +171,9 @@ copy_from_user(void *to, const void *from, unsigned len)
 {
 	return __copy_from_user(to, from, len);
 }
+
+#define get_user(x, ptr)	-copyin(ptr, &(x), sizeof(x))
+#define put_user(x, ptr)	-copyout(&(x), ptr, sizeof(x))
 
 #if defined(__i386__) || defined(__amd64__)
 

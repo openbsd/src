@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.14 2015/04/05 13:04:41 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.15 2015/04/06 08:14:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -1295,8 +1295,7 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 		copied = 0;
 		fb_id = (uint32_t __user *)(unsigned long)card_res->fb_id_ptr;
 		list_for_each_entry(fb, &file_priv->fbs, filp_head) {
-			if (copyout(&fb->base.id, fb_id + copied,
-			    sizeof(fb->base.id)) != 0) {
+			if (put_user(fb->base.id, fb_id + copied)) {
 				ret = -EFAULT;
 				goto out;
 			}
@@ -1315,8 +1314,7 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 			list_for_each_entry(crtc, &dev->mode_config.crtc_list,
 					    head) {
 				DRM_DEBUG_KMS("[CRTC:%d]\n", crtc->base.id);
-				if (copyout(&crtc->base.id, crtc_id + copied,
-				    sizeof(crtc->base.id)) != 0) {
+				if (put_user(crtc->base.id, crtc_id + copied)) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1325,9 +1323,8 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 #if 0
 		} else {
 			for (i = 0; i < mode_group->num_crtcs; i++) {
-				if (copyout(&mode_group->id_list[i],
-				    crtc_id + copied,
-				    sizeof(mode_group->id_list[i])) != 0) {
+				if (put_user(mode_group->id_list[i],
+					     crtc_id + copied)) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1350,8 +1347,8 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 					    head) {
 				DRM_DEBUG_KMS("[ENCODER:%d:%s]\n", encoder->base.id,
 						drm_get_encoder_name(encoder));
-				if (copyout(&encoder->base.id, encoder_id +
-				    copied, sizeof(encoder->base.id)) != 0) {
+				if (put_user(encoder->base.id, encoder_id +
+					     copied)) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1360,9 +1357,8 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 #if 0
 		} else {
 			for (i = mode_group->num_crtcs; i < mode_group->num_crtcs + mode_group->num_encoders; i++) {
-				if (copyout(&mode_group->id_list[i],
-				    encoder_id + copied,
-				    sizeof(mode_group->id_list[i])) != 0) {
+				if (put_user(mode_group->id_list[i],
+					     encoder_id + copied)) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1387,9 +1383,8 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 				DRM_DEBUG_KMS("[CONNECTOR:%d:%s]\n",
 					connector->base.id,
 					drm_get_connector_name(connector));
-				if (copyout(&connector->base.id,
-				    connector_id + copied,
-				    sizeof(connector->base.id)) != 0) {
+				if (put_user(connector->base.id,
+					     connector_id + copied)) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1400,9 +1395,8 @@ int drm_mode_getresources(struct drm_device *dev, void *data,
 			int start = mode_group->num_crtcs +
 				mode_group->num_encoders;
 			for (i = start; i < start + mode_group->num_connectors; i++) {
-				if (copyout(&mode_group->id_list[i],
-				    connector_id + copied,
-				    sizeof(mode_grou->id_list[i])) != 0) {
+				if (put_user(mode_group->id_list[i],
+					     connector_id + copied)) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1588,16 +1582,14 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 		prop_ptr = (uint32_t __user *)(unsigned long)(out_resp->props_ptr);
 		prop_values = (uint64_t __user *)(unsigned long)(out_resp->prop_values_ptr);
 		for (i = 0; i < connector->properties.count; i++) {
-			if (copyout(&connector->properties.ids[i],
-			    prop_ptr + copied,
-			    sizeof(connector->properties.ids[i])) != 0) {
+			if (put_user(connector->properties.ids[i],
+				     prop_ptr + copied)) {
 				ret = -EFAULT;
 				goto out;
 			}
 
-			if (copyout(&connector->properties.values[i],
-			    prop_values + copied,
-			    sizeof(connector->properties.values[i])) != 0) {
+			if (put_user(connector->properties.values[i],
+				     prop_values + copied)) {
 				ret = -EFAULT;
 				goto out;
 			}
@@ -1611,9 +1603,8 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 		encoder_ptr = (uint32_t __user *)(unsigned long)(out_resp->encoders_ptr);
 		for (i = 0; i < DRM_CONNECTOR_MAX_ENCODER; i++) {
 			if (connector->encoder_ids[i] != 0) {
-				if (copyout(&connector->encoder_ids[i],
-				    encoder_ptr + copied,
-				    sizeof(connector->encoder_ids[i])) != 0) {
+				if (put_user(connector->encoder_ids[i],
+					     encoder_ptr + copied)) {
 					ret = -EFAULT;
 					goto out;
 				}
@@ -1697,8 +1688,7 @@ int drm_mode_getplane_res(struct drm_device *dev, void *data,
 		plane_ptr = (uint32_t __user *)(unsigned long)plane_resp->plane_id_ptr;
 
 		list_for_each_entry(plane, &config->plane_list, head) {
-			if (copyout(&plane->base.id, plane_ptr + copied,
-			    sizeof(plane->base.id))) {
+			if (put_user(plane->base.id, plane_ptr + copied)) {
 				ret = -EFAULT;
 				goto out;
 			}
@@ -2052,8 +2042,7 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 
 		for (i = 0; i < crtc_req->count_connectors; i++) {
 			set_connectors_ptr = (uint32_t __user *)(unsigned long)crtc_req->set_connectors_ptr;
-			if (copyin(&set_connectors_ptr[i], &out_id,
-			    sizeof(out_id)) != 0) {
+			if (get_user(out_id, &set_connectors_ptr[i])) {
 				ret = -EFAULT;
 				goto out;
 			}
@@ -3117,16 +3106,12 @@ int drm_mode_getproperty_ioctl(struct drm_device *dev,
 			blob_length_ptr = (uint32_t __user *)(unsigned long)out_resp->values_ptr;
 
 			list_for_each_entry(prop_blob, &property->enum_blob_list, head) {
-				if (copyout(&prop_blob->base.id,
-				    blob_id_ptr + copied,
-				    sizeof(prop_blob->base.id)) != 0) {
+				if (put_user(prop_blob->base.id, blob_id_ptr + copied)) {
 					ret = -EFAULT;
 					goto done;
 				}
 
-				if (copyout(&prop_blob->length,
-				    blob_length_ptr + copied,
-				    sizeof(prop_blob->length)) != 0) {
+				if (put_user(prop_blob->length, blob_length_ptr + copied)) {
 					ret = -EFAULT;
 					goto done;
 				}
@@ -3370,15 +3355,13 @@ int drm_mode_obj_get_properties_ioctl(struct drm_device *dev, void *data,
 		prop_values_ptr = (uint64_t __user *)(unsigned long)
 				  (arg->prop_values_ptr);
 		for (i = 0; i < props_count; i++) {
-			if (copyout(&obj->properties->ids[i],
-			    props_ptr + copied,
-			    sizeof(obj->properties->ids[i])) != 0) {
+			if (put_user(obj->properties->ids[i],
+				     props_ptr + copied)) {
 				ret = -EFAULT;
 				goto out;
 			}
-			if (copyout(&obj->properties->values[i],
-			    prop_values_ptr + copied,
-			    sizeof(obj->properties->values[i])) != 0) {
+			if (put_user(obj->properties->values[i],
+				     prop_values_ptr + copied)) {
 				ret = -EFAULT;
 				goto out;
 			}
