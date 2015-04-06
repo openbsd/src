@@ -267,8 +267,11 @@ typedef struct
    of just 4 bytes long.  */
 typedef struct 
 {
+#ifdef AOUTHDRSZ64
+  AOUTHDR64 standard;
+#else
   AOUTHDR standard;
-
+#endif
   /* NT extra fields; see internal.h for descriptions.  */
   char  ImageBase[8];
   char  SectionAlignment[4];
@@ -294,7 +297,12 @@ typedef struct
   /* IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];  */
   char  DataDirectory[16][2][4]; /* 16 entries, 2 elements/entry, 4 chars.  */
 } PEPAOUTHDR;
+
+#ifdef AOUTHDRSZ64
+#define PEPAOUTSZ	(AOUTHDRSZ64 + 196 + 5 * 4) /* = 240 */
+#else
 #define PEPAOUTSZ	240
+#endif
   
 #undef  E_FILNMLEN
 #define E_FILNMLEN	18	/* # characters in a file name.  */

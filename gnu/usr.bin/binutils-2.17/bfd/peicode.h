@@ -1071,6 +1071,12 @@ pe_ILF_object_p (bfd * abfd)
 #endif
       break;
 
+    case IMAGE_FILE_MACHINE_AMD64:
+#ifdef AMD64MAGIC
+      magic = AMD64MAGIC;
+#endif
+      break;
+
     case IMAGE_FILE_MACHINE_M68K:
 #ifdef MC68AGIC
       magic = MC68MAGIC;

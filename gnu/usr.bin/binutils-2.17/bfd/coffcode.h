@@ -1883,6 +1883,12 @@ coff_set_arch_mach_hook (bfd *abfd, void * filehdr)
       arch = bfd_arch_i386;
       break;
 #endif
+#ifdef AMD64MAGIC
+    case AMD64MAGIC:
+      arch = bfd_arch_i386;
+      machine = bfd_mach_x86_64;
+      break;
+#endif
 #ifdef IA64MAGIC
     case IA64MAGIC:
       arch = bfd_arch_ia64;
@@ -2713,12 +2719,17 @@ coff_set_flags (bfd * abfd,
       return TRUE;
 #endif
 
-#ifdef I386MAGIC
+#if defined(I386MAGIC) || defined(AMD64MAGIC)
     case bfd_arch_i386:
+#if defined(I386MAGIC)
       *magicp = I386MAGIC;
+#endif
 #ifdef LYNXOS
       /* Just overwrite the usual value if we're doing Lynx.  */
       *magicp = LYNXCOFFMAGIC;
+#endif
+#if defined AMD64MAGIC
+      *magicp = AMD64MAGIC;
 #endif
       return TRUE;
 #endif
@@ -3751,6 +3762,7 @@ coff_write_object_contents (bfd * abfd)
     internal_f.f_flags |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
 #endif
 
+#ifndef COFF_WITH_pex64
 #ifdef COFF_WITH_PE
   internal_f.f_flags |= IMAGE_FILE_32BIT_MACHINE;
 #else
@@ -3758,6 +3770,7 @@ coff_write_object_contents (bfd * abfd)
     internal_f.f_flags |= F_AR32WR;
   else
     internal_f.f_flags |= F_AR32W;
+#endif
 #endif
 
 #ifdef TI_TARGET_ID
@@ -3854,6 +3867,8 @@ coff_write_object_contents (bfd * abfd)
 #define __A_MAGIC_SET__
 #if defined(LYNXOS)
     internal_a.magic = LYNXCOFFMAGIC;
+#elif defined AMD64
+    internal_a.magic = IMAGE_NT_OPTIONAL_HDR64_MAGIC;
 #else  /* LYNXOS */
     internal_a.magic = ZMAGIC;
 #endif /* LYNXOS */

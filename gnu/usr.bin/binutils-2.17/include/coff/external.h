@@ -57,6 +57,19 @@ AOUTHDR;
 #define AOUTSZ 28
 #endif
 
+typedef struct external_aouthdr64
+{
+  char magic[2];	/* Type of file.			*/
+  char vstamp[2];	/* Version stamp.			*/
+  char tsize[4];	/* Text size in bytes, padded to FW bdry*/
+  char dsize[4];	/* Initialized data "  ".		*/
+  char bsize[4];	/* Uninitialized data "   ".		*/
+  char entry[4];	/* Entry pt.				*/
+  char text_start[4];	/* Base of text used for this file. 	*/
+}
+AOUTHDR64;
+#define AOUTHDRSZ64	24
+
 #ifndef DO_NOT_DEFINE_SCNHDR
 /********************** SECTION HEADER **********************/
 
