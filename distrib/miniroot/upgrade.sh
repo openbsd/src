@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.85 2015/04/04 14:21:01 rpe Exp $
+#	$OpenBSD: upgrade.sh,v 1.86 2015/04/06 21:36:56 rpe Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -35,9 +35,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-#	OpenBSD installation script.
+#	OpenBSD upgrade script.
 
-# install.sub needs to know the MODE.
+# Install.sub needs to know the MODE.
 MODE=upgrade
 
 # Include common subroutines and initialization code.
@@ -73,6 +73,7 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 # Configure the network.
 enable_network
 
+# Fetch the list of mirror servers and installer choices from previous runs.
 startcgiinfo
 
 # Create fstab for use during upgrade.
@@ -85,9 +86,10 @@ check_fs
 umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
 mount_fs
 
+# Feed the random pool some entropy before we read from it.
 feed_random
 
-# Install sets.
+# Ask the user for locations, and install whatever sets the user selected.
 install_sets
 
 # XXX To be removed after 5.8 is released.

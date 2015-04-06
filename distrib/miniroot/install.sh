@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.262 2015/04/04 14:21:01 rpe Exp $
+#	$OpenBSD: install.sh,v 1.263 2015/04/06 21:36:56 rpe Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -57,19 +57,24 @@
 
 #	OpenBSD installation script.
 
-# install.sub needs to know the MODE.
+# Install.sub needs to know the MODE.
 MODE=install
 
 # Include common subroutines and initialization code.
 . install.sub
 
+# Ask for/set the system hostname and add the hostname specific siteXX set. 
 ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
 [[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
 echo
+
+# Configure the network.
 donetconfig
 
+# If there's network connectivity, fetch list of mirror servers and installer
+# choices from previous runs.
 ((NIFS != 0)) && startcgiinfo
 
 echo
@@ -80,17 +85,22 @@ while :; do
 	echo "The root password must be set."
 done
 
+# Ask for the root user public ssh key during autoinstall.
 rootkey=
 $AUTO && ask "Public ssh key for root account?" none &&
 	[[ $resp != none ]] && rootkey=$resp
 
+# Ask user about daemon startup on boot, X Window usage and console setup.
 questions
+
+# Gather information for setting up the initial user account.
 user_setup
 
+# Set TZ variable based on zonefile and user selection.
 set_timezone /var/tzlist
 echo
 
-# Configure disks.
+# Get information about ROOTDISK, etc.
 get_rootinfo
 
 DISK=
@@ -103,6 +113,7 @@ rm -f /tmp/fstab*
 
 ask_yn "Use DUIDs rather than device names in fstab?" yes && FSTABFLAG=-F
 
+# Configure the disk(s).
 while :; do
 	DISKS_DONE=$(addel "$DISK" $DISKS_DONE)
 	_DKDEVS=$(rmel "$DISK" $_DKDEVS)
@@ -218,11 +229,16 @@ for _mp in $(bsort $_fsent); do
 	echo " 1 2"
 done >>/tmp/fstab
 
+# Create a skeletal but useful /etc/fstab.
 munge_fstab
+
+# Use async options for faster mounts of the filesystems.
 mount_fs "-o async"
 
+# Feed the random pool some entropy before we read from it.
 feed_random
 
+# Ask the user for locations, and install whatever sets the user selected.
 install_sets
 
 # If we did not succeed at setting TZ yet, we try again
@@ -308,8 +324,10 @@ done)
 
 echo "done."
 
+# Apply configuration settings based on information from questions().
 apply
 
+# Create user account based on information from user_setup().
 if [[ -n $user ]]; then
 	_encr=$(encr_pwd "$userpass")
 	_home=/home/$user
@@ -329,11 +347,12 @@ if [[ -n $user ]]; then
 w
 q" | ed /mnt/etc/group 2>/dev/null
 
-	# Add public ssh key to authorized_keys.
+	# During autoinstall, add public ssh key to authorized_keys.
 	[[ -n "$userkey" ]] &&
 		print -r -- "$userkey" >> $_home/.ssh/authorized_keys
 fi
 
+# Store root password and rebuild password database.
 if [[ -n "$_rootpass" ]]; then
 	_encr=$(encr_pwd "$_rootpass")
 	echo "1,s@^root::@root:${_encr}:@
@@ -342,7 +361,7 @@ q" | ed /mnt/etc/master.passwd 2>/dev/null
 fi
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
-# Add public ssh key to authorized_keys.
+# During autoinstall, add root user's public ssh key to authorized_keys.
 [[ -n "$rootkey" ]] && (
 	umask 077
 	mkdir /mnt/root/.ssh
