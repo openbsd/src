@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.34 2015/04/06 11:14:58 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.35 2015/04/06 12:19:35 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -376,7 +376,7 @@ sub may_check_data
 {
 	my ($self, $handle, $pkgname, $state, $r) = @_;
 	# don't check installed packages
-	return if  $handle->trusted;
+	return if  $handle->trusted || $handle->{checked};
 	require OpenBSD::PackingList;
 	$$r //= $handle->plist;
 	if ($$r->is_signed) {
@@ -394,6 +394,7 @@ sub may_check_data
 			$$r->get($name)->may_verify_digest($state);
 		}
 	}
+	$handle->{checked} = 1;
 }
 
 sub print_info
