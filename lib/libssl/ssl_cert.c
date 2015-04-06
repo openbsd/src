@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.49 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.50 2015/04/06 04:09:59 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -712,7 +712,6 @@ SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack, const char *dir)
 	char *path = NULL;
 	int ret = 0;
 
-	CRYPTO_w_lock(CRYPTO_LOCK_READDIR);
 	dirp = opendir(dir);
 	if (dirp) {
 		struct dirent *dp;
@@ -732,6 +731,5 @@ SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack, const char *dir)
 		ERR_asprintf_error_data("opendir ('%s')", dir);
 		SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
 	}
-	CRYPTO_w_unlock(CRYPTO_LOCK_READDIR);
 	return ret;
 }
