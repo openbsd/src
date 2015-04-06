@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.13 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: r100.c,v 1.14 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -63,8 +63,6 @@ MODULE_FIRMWARE(FIRMWARE_R520);
  * r100,rv100,rs100,rv200,rs200,r200,rv250,rs300,rv280
  * and others in some cases.
  */
-
-u32	 r100_get_accessible_vram(struct radeon_device *);
 
 static bool r100_is_in_vblank(struct radeon_device *rdev, int crtc)
 {
@@ -2824,8 +2822,7 @@ static void r100_vram_get_type(struct radeon_device *rdev)
 	}
 }
 
-u32
-r100_get_accessible_vram(struct radeon_device *rdev)
+static u32 r100_get_accessible_vram(struct radeon_device *rdev)
 {
 	u32 aper_size;
 	pcireg_t reg;

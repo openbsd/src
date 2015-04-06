@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_i2c.c,v 1.4 2014/02/10 01:32:13 jsg Exp $	*/
+/*	$OpenBSD: atombios_i2c.c,v 1.5 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -36,10 +36,8 @@ extern void radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le);
 #define ATOM_MAX_HW_I2C_WRITE 2
 #define ATOM_MAX_HW_I2C_READ  255
 
-int	 radeon_process_i2c_ch(struct radeon_i2c_chan *, u8, u8, u8 *, u8);
-
-int
-radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
+#ifdef notyet
+static int radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 				 u8 slave_addr, u8 flags,
 				 u8 *buf, u8 num)
 {
@@ -97,7 +95,6 @@ radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 	return 0;
 }
 
-#ifdef notyet
 int radeon_atom_hw_i2c_xfer(struct i2c_controller *i2c_adap,
 			    struct i2c_msg *msgs, int num)
 {

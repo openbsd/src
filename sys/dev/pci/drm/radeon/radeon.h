@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.11 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.12 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1956,8 +1956,6 @@ int radeon_vm_bo_set_addr(struct radeon_device *rdev,
 			  uint32_t flags);
 int radeon_vm_bo_rmv(struct radeon_device *rdev,
 		     struct radeon_bo_va *bo_va);
-
-void radeon_hotplug_work_func(void *arg1);
 
 /* audio */
 void r600_audio_update_hdmi(void *arg1);

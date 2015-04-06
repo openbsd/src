@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.7 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.8 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -35,11 +35,6 @@
 
 #define RADEON_WAIT_IDLE_TIMEOUT 200
 
-int	 radeon_driver_irq_handler_kms(void *);
-void	 radeon_driver_irq_preinstall_kms(struct drm_device *);
-int	 radeon_driver_irq_postinstall_kms(struct drm_device *);
-void	 radeon_driver_irq_uninstall_kms(struct drm_device *);
-
 /**
  * radeon_driver_irq_handler_kms - irq handler for KMS
  *
@@ -75,8 +70,7 @@ radeon_driver_irq_handler_kms(void *arg)
  * and calls the hotplug handler for each one, then sends
  * a drm hotplug event to alert userspace.
  */
-void
-radeon_hotplug_work_func(void *arg1)
+static void radeon_hotplug_work_func(void *arg1)
 {
 	struct radeon_device *rdev = arg1;
 	struct drm_device *dev = rdev->ddev;
@@ -177,8 +171,7 @@ void radeon_driver_irq_uninstall_kms(struct drm_device *dev)
  * Returns true if MSIs should be enabled, false if MSIs
  * should not be enabled.
  */
-bool
-radeon_msi_ok(struct radeon_device *rdev)
+bool radeon_msi_ok(struct radeon_device *rdev)
 {
 	/* RV370/RV380 was first asic with MSI support */
 	if (rdev->family < CHIP_RV380)

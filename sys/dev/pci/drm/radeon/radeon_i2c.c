@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_i2c.c,v 1.4 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_i2c.c,v 1.5 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -39,14 +39,6 @@ extern int radeon_atom_hw_i2c_xfer(struct i2c_controller *i2c_adap,
 				   struct i2c_msg *msgs, int num);
 #endif
 extern u32 radeon_atom_hw_i2c_func(struct i2c_controller *adap);
-
-int	 pre_xfer(void *);
-void	 post_xfer(void *);
-int	 get_clock(void *);
-int	 get_data(void *);
-void	 set_clock(void *, int);
-void	 set_data(void *, int);
-u32	 radeon_get_i2c_prescale(struct radeon_device *);
 
 /**
  * radeon_ddc_probe
@@ -91,8 +83,7 @@ bool radeon_ddc_probe(struct radeon_connector *radeon_connector, bool use_aux)
 
 /* bit banging i2c */
 
-int
-pre_xfer(void *cookie)
+static int pre_xfer(void *cookie)
 {
 	struct radeon_i2c_chan *i2c = cookie;
 	struct radeon_device *rdev = i2c->dev->dev_private;
@@ -160,8 +151,7 @@ pre_xfer(void *cookie)
 	return 0;
 }
 
-void
-post_xfer(void *cookie)
+static void post_xfer(void *cookie)
 {
 	struct radeon_i2c_chan *i2c = cookie;
 	struct radeon_device *rdev = i2c->dev->dev_private;
@@ -178,8 +168,7 @@ post_xfer(void *cookie)
 	temp = RREG32(rec->mask_data_reg);
 }
 
-int
-get_clock(void *i2c_priv)
+static int get_clock(void *i2c_priv)
 {
 	struct radeon_i2c_chan *i2c = i2c_priv;
 	struct radeon_device *rdev = i2c->dev->dev_private;
@@ -194,8 +183,7 @@ get_clock(void *i2c_priv)
 }
 
 
-int
-get_data(void *i2c_priv)
+static int get_data(void *i2c_priv)
 {
 	struct radeon_i2c_chan *i2c = i2c_priv;
 	struct radeon_device *rdev = i2c->dev->dev_private;
@@ -209,8 +197,7 @@ get_data(void *i2c_priv)
 	return (val != 0);
 }
 
-void
-set_clock(void *i2c_priv, int clock)
+static void set_clock(void *i2c_priv, int clock)
 {
 	struct radeon_i2c_chan *i2c = i2c_priv;
 	struct radeon_device *rdev = i2c->dev->dev_private;
@@ -223,8 +210,7 @@ set_clock(void *i2c_priv, int clock)
 	WREG32(rec->en_clk_reg, val);
 }
 
-void
-set_data(void *i2c_priv, int data)
+static void set_data(void *i2c_priv, int data)
 {
 	struct radeon_i2c_chan *i2c = i2c_priv;
 	struct radeon_device *rdev = i2c->dev->dev_private;
@@ -329,8 +315,8 @@ radeon_write_byte(void *cookie, u_int8_t byte, int flags)
 
 /* hw i2c */
 
-u32
-radeon_get_i2c_prescale(struct radeon_device *rdev)
+#ifdef notyet
+static u32 radeon_get_i2c_prescale(struct radeon_device *rdev)
 {
 	u32 sclk = rdev->pm.current_sclk;
 	u32 prescale = 0;
@@ -420,7 +406,6 @@ radeon_get_i2c_prescale(struct radeon_device *rdev)
 /* hw i2c engine for r1xx-4xx hardware
  * hw can buffer up to 15 bytes
  */
-#ifdef notyet
 static int r100_hw_i2c_xfer(struct i2c_controller *i2c_adap,
 			    struct i2c_msg *msgs, int num)
 {

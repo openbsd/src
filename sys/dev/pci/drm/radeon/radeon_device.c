@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.10 2015/04/06 06:12:25 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.11 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -91,18 +91,6 @@ static const char radeon_family_name[][16] = {
 	"VERDE",
 	"LAST",
 };
-
-unsigned int	 radeon_vga_set_decode(void *, bool);
-void		 radeon_check_arguments(struct radeon_device *);
-
-uint32_t	 cail_pll_read(struct card_info *, uint32_t);
-void		 cail_pll_write(struct card_info *, uint32_t, uint32_t);
-uint32_t	 cail_mc_read(struct card_info *, uint32_t);
-void		 cail_mc_write(struct card_info *, uint32_t, uint32_t);
-void		 cail_reg_write(struct card_info *, uint32_t, uint32_t);
-uint32_t	 cail_reg_read(struct card_info *, uint32_t);
-void		 cail_ioreg_write(struct card_info *, uint32_t, uint32_t);
-uint32_t	 cail_ioreg_read(struct card_info *, uint32_t);
 
 /**
  * radeon_surface_init - Clear GPU surface registers.
@@ -599,8 +587,7 @@ void radeon_dummy_page_fini(struct radeon_device *rdev)
  * Provides a PLL register accessor for the atom interpreter (r4xx+).
  * Returns the value of the PLL register.
  */
-uint32_t
-cail_pll_read(struct card_info *info, uint32_t reg)
+static uint32_t cail_pll_read(struct card_info *info, uint32_t reg)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 	uint32_t r;
@@ -618,8 +605,7 @@ cail_pll_read(struct card_info *info, uint32_t reg)
  *
  * Provides a PLL register accessor for the atom interpreter (r4xx+).
  */
-void
-cail_pll_write(struct card_info *info, uint32_t reg, uint32_t val)
+static void cail_pll_write(struct card_info *info, uint32_t reg, uint32_t val)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 
@@ -635,8 +621,7 @@ cail_pll_write(struct card_info *info, uint32_t reg, uint32_t val)
  * Provides an MC register accessor for the atom interpreter (r4xx+).
  * Returns the value of the MC register.
  */
-uint32_t
-cail_mc_read(struct card_info *info, uint32_t reg)
+static uint32_t cail_mc_read(struct card_info *info, uint32_t reg)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 	uint32_t r;
@@ -654,8 +639,7 @@ cail_mc_read(struct card_info *info, uint32_t reg)
  *
  * Provides a MC register accessor for the atom interpreter (r4xx+).
  */
-void
-cail_mc_write(struct card_info *info, uint32_t reg, uint32_t val)
+static void cail_mc_write(struct card_info *info, uint32_t reg, uint32_t val)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 
@@ -671,8 +655,7 @@ cail_mc_write(struct card_info *info, uint32_t reg, uint32_t val)
  *
  * Provides a MMIO register accessor for the atom interpreter (r4xx+).
  */
-void
-cail_reg_write(struct card_info *info, uint32_t reg, uint32_t val)
+static void cail_reg_write(struct card_info *info, uint32_t reg, uint32_t val)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 
@@ -688,8 +671,7 @@ cail_reg_write(struct card_info *info, uint32_t reg, uint32_t val)
  * Provides an MMIO register accessor for the atom interpreter (r4xx+).
  * Returns the value of the MMIO register.
  */
-uint32_t
-cail_reg_read(struct card_info *info, uint32_t reg)
+static uint32_t cail_reg_read(struct card_info *info, uint32_t reg)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 	uint32_t r;
@@ -707,8 +689,7 @@ cail_reg_read(struct card_info *info, uint32_t reg)
  *
  * Provides a IO register accessor for the atom interpreter (r4xx+).
  */
-void
-cail_ioreg_write(struct card_info *info, uint32_t reg, uint32_t val)
+static void cail_ioreg_write(struct card_info *info, uint32_t reg, uint32_t val)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 
@@ -724,8 +705,7 @@ cail_ioreg_write(struct card_info *info, uint32_t reg, uint32_t val)
  * Provides an IO register accessor for the atom interpreter (r4xx+).
  * Returns the value of the IO register.
  */
-uint32_t
-cail_ioreg_read(struct card_info *info, uint32_t reg)
+static uint32_t cail_ioreg_read(struct card_info *info, uint32_t reg)
 {
 	struct radeon_device *rdev = info->dev->dev_private;
 	uint32_t r;
@@ -840,8 +820,7 @@ void radeon_combios_fini(struct radeon_device *rdev)
  * Returns VGA resource flags.
  */
 #ifdef notyet
-unsigned int
-radeon_vga_set_decode(void *cookie, bool state)
+static unsigned int radeon_vga_set_decode(void *cookie, bool state)
 {
 	struct radeon_device *rdev = cookie;
 	radeon_vga_set_state(rdev, state);
@@ -874,8 +853,7 @@ static bool radeon_check_pot_argument(int arg)
  * Validates certain module parameters and updates
  * the associated values used by the driver (all asics).
  */
-void
-radeon_check_arguments(struct radeon_device *rdev)
+static void radeon_check_arguments(struct radeon_device *rdev)
 {
 	/* vramlimit must be a power of two */
 	if (!radeon_check_pot_argument(radeon_vram_limit)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.c,v 1.8 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.c,v 1.9 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -38,10 +38,9 @@
 #endif
 
 
-int	 radeon_ttm_init(struct radeon_device *);
-void	 radeon_ttm_fini(struct radeon_device *);
-void	 radeon_bo_clear_surface_reg(struct radeon_bo *);
-void	 radeon_bo_clear_va(struct radeon_bo *);
+int radeon_ttm_init(struct radeon_device *rdev);
+void radeon_ttm_fini(struct radeon_device *rdev);
+static void radeon_bo_clear_surface_reg(struct radeon_bo *bo);
 
 /*
  * To exclude mutual BO access we rely on bo_reserve exclusion, as all
@@ -460,8 +459,7 @@ out:
 	return 0;
 }
 
-void
-radeon_bo_clear_surface_reg(struct radeon_bo *bo)
+static void radeon_bo_clear_surface_reg(struct radeon_bo *bo)
 {
 	struct radeon_device *rdev = bo->rdev;
 	struct radeon_surface_reg *reg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.10 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.11 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,24 +40,13 @@ static const char *radeon_pm_state_type_name[5] = {
 };
 #endif
 
-#ifdef notyet
-static void radeon_dynpm_idle_work_handler(struct work_struct *work);
-#endif
-int radeon_debugfs_pm_init(struct radeon_device *rdev);
+static void radeon_dynpm_idle_work_handler(void *);
+static void radeon_dynpm_idle_tick(void *);
+static int radeon_debugfs_pm_init(struct radeon_device *rdev);
 static bool radeon_pm_in_vbl(struct radeon_device *rdev);
 static bool radeon_pm_debug_check_in_vbl(struct radeon_device *rdev, bool finish);
 static void radeon_pm_update_profile(struct radeon_device *rdev);
 static void radeon_pm_set_clocks(struct radeon_device *rdev);
-
-void	 radeon_pm_acpi_event_handler(struct radeon_device *);
-ssize_t	 radeon_get_pm_profile(struct device *, struct device_attribute *, char *);
-ssize_t	 radeon_get_pm_method(struct device *, struct device_attribute *, char *);
-ssize_t	 radeon_set_pm_profile(struct device *, struct device_attribute *,
-	     const char *, size_t);
-ssize_t	 radeon_set_pm_method(struct device *, struct device_attribute *,
-	     const char *, size_t);
-void	 radeon_dynpm_idle_tick(void *);
-void	 radeon_dynpm_idle_work_handler(void *);
 
 extern int ticks;
 
@@ -91,9 +80,7 @@ void radeon_pm_acpi_event_handler(struct radeon_device *rdev)
 	}
 }
 
-int	power_supply_is_system_supplied(void);
-
-int
+static int
 power_supply_is_system_supplied(void)
 {
 	/* XXX return 0 if on battery */
@@ -352,8 +339,7 @@ static void radeon_pm_print_states(struct radeon_device *rdev)
 }
 
 #ifdef notyet
-ssize_t
-radeon_get_pm_profile(struct device *dev,
+static ssize_t radeon_get_pm_profile(struct device *dev,
 				     struct device_attribute *attr,
 				     char *buf)
 {
@@ -368,8 +354,7 @@ radeon_get_pm_profile(struct device *dev,
 			(cp == PM_PROFILE_HIGH) ? "high" : "default");
 }
 
-ssize_t
-radeon_set_pm_profile(struct device *dev,
+static ssize_t radeon_set_pm_profile(struct device *dev,
 				     struct device_attribute *attr,
 				     const char *buf,
 				     size_t count)
@@ -404,8 +389,7 @@ fail:
 	return count;
 }
 
-ssize_t
-radeon_get_pm_method(struct device *dev,
+static ssize_t radeon_get_pm_method(struct device *dev,
 				    struct device_attribute *attr,
 				    char *buf)
 {
@@ -417,8 +401,7 @@ radeon_get_pm_method(struct device *dev,
 			(pm == PM_METHOD_DYNPM) ? "dynpm" : "profile");
 }
 
-ssize_t
-radeon_set_pm_method(struct device *dev,
+static ssize_t radeon_set_pm_method(struct device *dev,
 				    struct device_attribute *attr,
 				    const char *buf,
 				    size_t count)
@@ -670,11 +653,10 @@ int radeon_pm_init(struct radeon_device *rdev)
 		ret = device_create_file(rdev->dev, &dev_attr_power_method);
 		if (ret)
 			DRM_ERROR("failed to create device file for power method\n");
-
+#endif
 		if (radeon_debugfs_pm_init(rdev)) {
 			DRM_ERROR("Failed to register debugfs file for PM!\n");
 		}
-#endif
 
 #ifdef DRMDEBUG
 		DRM_INFO("radeon: power management initialized\n");
@@ -819,16 +801,14 @@ static bool radeon_pm_debug_check_in_vbl(struct radeon_device *rdev, bool finish
 	return in_vbl;
 }
 
-void
-radeon_dynpm_idle_tick(void *arg)
+static void radeon_dynpm_idle_tick(void *arg)
 {
 	struct radeon_device *rdev = arg;
 
 	task_add(systq, &rdev->pm.dynpm_idle_task);
 }
 
-void
-radeon_dynpm_idle_work_handler(void *arg1)
+static void radeon_dynpm_idle_work_handler(void *arg1)
 {
 	struct radeon_device *rdev = arg1;
 	int resched;
@@ -919,8 +899,7 @@ static struct drm_info_list radeon_pm_info_list[] = {
 };
 #endif
 
-int
-radeon_debugfs_pm_init(struct radeon_device *rdev)
+static int radeon_debugfs_pm_init(struct radeon_device *rdev)
 {
 #if defined(CONFIG_DEBUG_FS)
 	return radeon_debugfs_add_files(rdev, radeon_pm_info_list, ARRAY_SIZE(radeon_pm_info_list));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_display.c,v 1.9 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_display.c,v 1.10 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -32,8 +32,6 @@
 
 #include <dev/pci/drm/drm_crtc_helper.h>
 #include <dev/pci/drm/drm_edid.h>
-
-void	 radeon_unpin_work_func(void *);
 
 static void avivo_crtc_load_lut(struct drm_crtc *crtc)
 {
@@ -248,8 +246,7 @@ static void radeon_crtc_destroy(struct drm_crtc *crtc)
 /*
  * Handle unpin events outside the interrupt handler proper.
  */
-void
-radeon_unpin_work_func(void *arg1)
+static void radeon_unpin_work_func(void *arg1)
 {
 	struct radeon_unpin_work *work = arg1;
 	int r;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.7 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.8 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -60,9 +60,6 @@ static struct fb_ops radeonfb_ops = {
 };
 #endif
 
-int radeonfb_create_pinned_object(struct radeon_fbdev *,
-    struct drm_mode_fb_cmd2 *, struct drm_gem_object **);
-
 void radeondrm_burner_cb(void *);
 
 int radeon_align_pitch(struct radeon_device *rdev, int width, int bpp, bool tiled)
@@ -103,8 +100,7 @@ static void radeonfb_destroy_pinned_object(struct drm_gem_object *gobj)
 	drm_gem_object_unreference_unlocked(gobj);
 }
 
-int
-radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
+static int radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
 					 struct drm_mode_fb_cmd2 *mode_cmd,
 					 struct drm_gem_object **gobj_p)
 {

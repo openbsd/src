@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.20 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: si.c,v 1.21 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -58,11 +58,6 @@ extern void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev);
 extern void evergreen_mc_stop(struct radeon_device *rdev, struct evergreen_mc_save *save);
 extern void evergreen_mc_resume(struct radeon_device *rdev, struct evergreen_mc_save *save);
 extern u32 evergreen_get_number_of_dram_channels(struct radeon_device *rdev);
-
-void	 si_rlc_fini(struct radeon_device *);
-int	 si_rlc_init(struct radeon_device *);
-void	 si_vram_gtt_location(struct radeon_device *, struct radeon_mc *);
-void	 si_rlc_start(struct radeon_device *);
 
 /* get temperature in millidegrees */
 int si_get_temp(struct radeon_device *rdev)
@@ -2367,8 +2362,7 @@ static void si_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc)
 			mc->gtt_size >> 20, mc->gtt_start, mc->gtt_end);
 }
 
-void
-si_vram_gtt_location(struct radeon_device *rdev,
+static void si_vram_gtt_location(struct radeon_device *rdev,
 				 struct radeon_mc *mc)
 {
 	if (mc->mc_vram_size > 0xFFC0000000ULL) {
@@ -3227,8 +3221,7 @@ static void si_rlc_stop(struct radeon_device *rdev)
 	WREG32(RLC_CNTL, 0);
 }
 
-void
-si_rlc_start(struct radeon_device *rdev)
+static void si_rlc_start(struct radeon_device *rdev)
 {
 	WREG32(RLC_CNTL, RLC_ENABLE);
 }

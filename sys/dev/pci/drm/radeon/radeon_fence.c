@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fence.c,v 1.4 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: radeon_fence.c,v 1.5 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -37,8 +37,6 @@
 #endif
 
 #include <dev/pci/drm/refcount.h>
-
-bool	 radeon_fence_any_seq_signaled(struct radeon_device *, u64 *);
 
 extern int ticks;
 
@@ -409,8 +407,7 @@ int radeon_fence_wait(struct radeon_fence *fence, bool intr)
 	return 0;
 }
 
-bool
-radeon_fence_any_seq_signaled(struct radeon_device *rdev, u64 *seq)
+static bool radeon_fence_any_seq_signaled(struct radeon_device *rdev, u64 *seq)
 {
 	unsigned i;
 

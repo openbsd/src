@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600_audio.c,v 1.2 2015/01/27 03:17:36 dlg Exp $	*/
+/*	$OpenBSD: r600_audio.c,v 1.3 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -30,13 +30,10 @@
 #include "radeon_asic.h"
 #include "atom.h"
 
-bool	 radeon_dig_encoder(struct drm_encoder *);
-
 /*
  * check if enc_priv stores radeon_encoder_atom_dig
  */
-bool
-radeon_dig_encoder(struct drm_encoder *encoder)
+static bool radeon_dig_encoder(struct drm_encoder *encoder)
 {
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
 	switch (radeon_encoder->encoder_id) {
@@ -122,8 +119,7 @@ struct r600_audio r600_audio_status(struct radeon_device *rdev)
 /*
  * update all hdmi interfaces with current audio parameters
  */
-void
-r600_audio_update_hdmi(void *arg1)
+void r600_audio_update_hdmi(void *arg1)
 {
 	struct radeon_device *rdev = arg1;
 	struct drm_device *dev = rdev->ddev;

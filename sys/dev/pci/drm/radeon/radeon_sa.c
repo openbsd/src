@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_sa.c,v 1.6 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: radeon_sa.c,v 1.7 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2011 Red Hat Inc.
  * All Rights Reserved.
@@ -47,11 +47,6 @@
 
 static void radeon_sa_bo_remove_locked(struct radeon_sa_bo *sa_bo);
 static void radeon_sa_bo_try_free(struct radeon_sa_manager *sa_manager);
-bool	 radeon_sa_bo_try_alloc(struct radeon_sa_manager *, struct radeon_sa_bo *,
-	     unsigned, unsigned);
-bool	 radeon_sa_event(struct radeon_sa_manager *, unsigned, unsigned);
-bool	 radeon_sa_bo_next_hole(struct radeon_sa_manager *, struct radeon_fence **,
-	     unsigned *);
 
 int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 			      struct radeon_sa_manager *sa_manager,
@@ -196,8 +191,7 @@ static inline unsigned radeon_sa_bo_hole_eoffset(struct radeon_sa_manager *sa_ma
 	return sa_manager->size;
 }
 
-bool
-radeon_sa_bo_try_alloc(struct radeon_sa_manager *sa_manager,
+static bool radeon_sa_bo_try_alloc(struct radeon_sa_manager *sa_manager,
 				   struct radeon_sa_bo *sa_bo,
 				   unsigned size, unsigned align)
 {
@@ -231,8 +225,7 @@ radeon_sa_bo_try_alloc(struct radeon_sa_manager *sa_manager,
  * Check if either there is a fence we can wait for or
  * enough free memory to satisfy the allocation directly
  */
-bool
-radeon_sa_event(struct radeon_sa_manager *sa_manager,
+static bool radeon_sa_event(struct radeon_sa_manager *sa_manager,
 			    unsigned size, unsigned align)
 {
 	unsigned soffset, eoffset, wasted;
@@ -255,8 +248,7 @@ radeon_sa_event(struct radeon_sa_manager *sa_manager,
 	return false;
 }
 
-bool
-radeon_sa_bo_next_hole(struct radeon_sa_manager *sa_manager,
+static bool radeon_sa_bo_next_hole(struct radeon_sa_manager *sa_manager,
 				   struct radeon_fence **fences,
 				   unsigned *tries)
 {

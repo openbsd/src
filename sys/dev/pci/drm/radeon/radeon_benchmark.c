@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_benchmark.c,v 1.2 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_benchmark.c,v 1.3 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  *
@@ -35,13 +35,7 @@
 
 extern int ticks;
 
-int	radeon_benchmark_do_move(struct radeon_device *, unsigned, uint64_t,
-	    uint64_t, int, int);
-void	radeon_benchmark_log_results(int, unsigned, unsigned int, unsigned,
-	    unsigned, char *);
-
-int
-radeon_benchmark_do_move(struct radeon_device *rdev, unsigned size,
+static int radeon_benchmark_do_move(struct radeon_device *rdev, unsigned size,
 				    uint64_t saddr, uint64_t daddr,
 				    int flag, int n)
 {
@@ -84,8 +78,7 @@ exit_do_move:
 }
 
 
-void
-radeon_benchmark_log_results(int n, unsigned size,
+static void radeon_benchmark_log_results(int n, unsigned size,
 					 unsigned int time,
 					 unsigned sdomain, unsigned ddomain,
 					 char *kind)

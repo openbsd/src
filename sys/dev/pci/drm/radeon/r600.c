@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600.c,v 1.16 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: r600.c,v 1.17 2015/04/06 07:38:49 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -98,10 +98,6 @@ static void r600_gpu_init(struct radeon_device *rdev);
 void r600_fini(struct radeon_device *rdev);
 void r600_irq_disable(struct radeon_device *rdev);
 static void r600_pcie_gen2_enable(struct radeon_device *rdev);
-int r600_ih_ring_alloc(struct radeon_device *rdev);
-void r600_ih_ring_fini(struct radeon_device *rdev);
-void r600_vram_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc);
-void r600_rlc_start(struct radeon_device *rdev);
 
 /* get temperature in millidegrees */
 int rv6xx_get_temp(struct radeon_device *rdev)
@@ -1114,8 +1110,7 @@ static void r600_mc_program(struct radeon_device *rdev)
  * Note: GTT start, end, size should be initialized before calling this
  * function on AGP platform.
  */
-void
-r600_vram_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc)
+static void r600_vram_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc)
 {
 	u64 size_bf, size_af;
 
@@ -3296,8 +3291,7 @@ void r600_rlc_stop(struct radeon_device *rdev)
 	WREG32(RLC_CNTL, 0);
 }
 
-void
-r600_rlc_start(struct radeon_device *rdev)
+static void r600_rlc_start(struct radeon_device *rdev)
 {
 	WREG32(RLC_CNTL, RLC_ENABLE);
 }
