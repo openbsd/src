@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.43 2015/02/12 08:48:32 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.44 2015/04/06 05:35:29 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7226,7 +7226,7 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 	obj = work->old_fb_obj;
 
 	atomic_clear_int(&obj->pending_flip, 1 << intel_crtc->plane);
-	wakeup(&dev_priv->pending_flip_queue);
+	wake_up(&dev_priv->pending_flip_queue);
 
 	task_add(systq, &work->task);
 

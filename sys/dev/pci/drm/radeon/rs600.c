@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs600.c,v 1.7 2015/02/12 11:11:45 jsg Exp $	*/
+/*	$OpenBSD: rs600.c,v 1.8 2015/04/06 05:35:29 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -726,7 +726,7 @@ int rs600_irq_process(struct radeon_device *rdev)
 			if (rdev->irq.crtc_vblank_int[0]) {
 				drm_handle_vblank(rdev->ddev, 0);
 				rdev->pm.vblank_sync = true;
-				wakeup(&rdev->irq.vblank_queue);
+				wake_up(&rdev->irq.vblank_queue);
 			}
 			if (atomic_read(&rdev->irq.pflip[0]))
 				radeon_crtc_handle_flip(rdev, 0);
@@ -735,7 +735,7 @@ int rs600_irq_process(struct radeon_device *rdev)
 			if (rdev->irq.crtc_vblank_int[1]) {
 				drm_handle_vblank(rdev->ddev, 1);
 				rdev->pm.vblank_sync = true;
-				wakeup(&rdev->irq.vblank_queue);
+				wake_up(&rdev->irq.vblank_queue);
 			}
 			if (atomic_read(&rdev->irq.pflip[1]))
 				radeon_crtc_handle_flip(rdev, 1);

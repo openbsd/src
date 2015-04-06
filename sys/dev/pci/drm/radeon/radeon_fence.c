@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fence.c,v 1.3 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_fence.c,v 1.4 2015/04/06 05:35:29 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -191,7 +191,7 @@ void radeon_fence_process(struct radeon_device *rdev, int ring)
 
 	if (wake) {
 		rdev->fence_drv[ring].last_activity = ticks;
-		wakeup(&rdev->fence_queue);
+		wake_up_all(&rdev->fence_queue);
 	}
 }
 
@@ -885,7 +885,7 @@ void radeon_fence_driver_fini(struct radeon_device *rdev)
 			/* no need to trigger GPU reset as we are unloading */
 			radeon_fence_driver_force_completion(rdev);
 		}
-		wakeup(&rdev->fence_queue);
+		wake_up_all(&rdev->fence_queue);
 		radeon_scratch_free(rdev, rdev->fence_drv[ring].scratch_reg);
 		rdev->fence_drv[ring].initialized = false;
 	}

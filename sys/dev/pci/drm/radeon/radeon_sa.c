@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_sa.c,v 1.5 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_sa.c,v 1.6 2015/04/06 05:35:29 jsg Exp $	*/
 /*
  * Copyright 2011 Red Hat Inc.
  * All Rights Reserved.
@@ -407,7 +407,7 @@ void radeon_sa_bo_free(struct radeon_device *rdev, struct radeon_sa_bo **sa_bo,
 	} else {
 		radeon_sa_bo_remove_locked(*sa_bo);
 	}
-	wakeup(&sa_manager->wq);
+	wake_up_all_locked(&sa_manager->wq);
 	spin_unlock(&sa_manager->wq_lock);
 	*sa_bo = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.13 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.14 2015/04/06 05:35:29 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -262,7 +262,7 @@ int ttm_bo_reserve_locked(struct ttm_buffer_object *bo,
 		 */
 		if (unlikely((bo->val_seq - sequence < (1 << 31))
 			     || !bo->seq_valid))
-			wakeup(&bo->event_queue);
+			wake_up_all(&bo->event_queue);
 
 		bo->val_seq = sequence;
 		bo->seq_valid = true;
@@ -311,7 +311,7 @@ void ttm_bo_unreserve_locked(struct ttm_buffer_object *bo)
 {
 	ttm_bo_add_to_lru(bo);
 	atomic_set(&bo->reserved, 0);
-	wakeup(&bo->event_queue);
+	wake_up_all(&bo->event_queue);
 }
 
 void ttm_bo_unreserve(struct ttm_buffer_object *bo)
@@ -499,7 +499,7 @@ static void ttm_bo_cleanup_memtype_use(struct ttm_buffer_object *bo)
 	ttm_bo_mem_put(bo, &bo->mem);
 
 	atomic_set(&bo->reserved, 0);
-	wakeup(&bo->event_queue);
+	wake_up_all(&bo->event_queue);
 
 	/*
 	 * Since the final reference to this bo may not be dropped by
@@ -542,7 +542,7 @@ static void ttm_bo_cleanup_refs_or_queue(struct ttm_buffer_object *bo)
 
 	if (!ret) {
 		atomic_set(&bo->reserved, 0);
-		wakeup(&bo->event_queue);
+		wake_up_all(&bo->event_queue);
 	}
 
 	refcount_acquire(&bo->list_kref);
@@ -594,7 +594,7 @@ static int ttm_bo_cleanup_refs_and_unlock(struct ttm_buffer_object *bo,
 		spin_unlock(&bdev->fence_lock);
 
 		atomic_set(&bo->reserved, 0);
-		wakeup(&bo->event_queue);
+		wake_up_all(&bo->event_queue);
 		spin_unlock(&glob->lru_lock);
 
 		ret = driver->sync_obj_wait(sync_obj, false, interruptible);
@@ -633,7 +633,7 @@ static int ttm_bo_cleanup_refs_and_unlock(struct ttm_buffer_object *bo,
 
 	if (ret || unlikely(list_empty(&bo->ddestroy))) {
 		atomic_set(&bo->reserved, 0);
-		wakeup(&bo->event_queue);
+		wake_up_all(&bo->event_queue);
 		spin_unlock(&glob->lru_lock);
 		return ret;
 	}
@@ -1899,7 +1899,7 @@ out:
 	 */
 
 	atomic_set(&bo->reserved, 0);
-	wakeup(&bo->event_queue);
+	wake_up_all(&bo->event_queue);
 	if (refcount_release(&bo->list_kref))
 		ttm_bo_release_list(bo);
 	return ret;

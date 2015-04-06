@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.15 2015/02/12 11:11:45 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.16 2015/04/06 05:35:29 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -3075,7 +3075,7 @@ restart_ih:
 					if (rdev->irq.crtc_vblank_int[0]) {
 						drm_handle_vblank(ddev, 0);
 						rdev->pm.vblank_sync = true;
-						wakeup(&rdev->irq.vblank_queue);
+						wake_up(&rdev->irq.vblank_queue);
 					}
 					if (atomic_read(&rdev->irq.pflip[0]))
 						radeon_crtc_handle_flip(rdev, 0);
@@ -3101,7 +3101,7 @@ restart_ih:
 					if (rdev->irq.crtc_vblank_int[1]) {
 						drm_handle_vblank(ddev, 1);
 						rdev->pm.vblank_sync = true;
-						wakeup(&rdev->irq.vblank_queue);
+						wake_up(&rdev->irq.vblank_queue);
 					}
 					if (atomic_read(&rdev->irq.pflip[1]))
 						radeon_crtc_handle_flip(rdev, 1);
@@ -3127,7 +3127,7 @@ restart_ih:
 					if (rdev->irq.crtc_vblank_int[2]) {
 						drm_handle_vblank(ddev, 2);
 						rdev->pm.vblank_sync = true;
-						wakeup(&rdev->irq.vblank_queue);
+						wake_up(&rdev->irq.vblank_queue);
 					}
 					if (atomic_read(&rdev->irq.pflip[2]))
 						radeon_crtc_handle_flip(rdev, 2);
@@ -3153,7 +3153,7 @@ restart_ih:
 					if (rdev->irq.crtc_vblank_int[3]) {
 						drm_handle_vblank(ddev, 3);
 						rdev->pm.vblank_sync = true;
-						wakeup(&rdev->irq.vblank_queue);
+						wake_up(&rdev->irq.vblank_queue);
 					}
 					if (atomic_read(&rdev->irq.pflip[3]))
 						radeon_crtc_handle_flip(rdev, 3);
@@ -3179,7 +3179,7 @@ restart_ih:
 					if (rdev->irq.crtc_vblank_int[4]) {
 						drm_handle_vblank(ddev, 4);
 						rdev->pm.vblank_sync = true;
-						wakeup(&rdev->irq.vblank_queue);
+						wake_up(&rdev->irq.vblank_queue);
 					}
 					if (atomic_read(&rdev->irq.pflip[4]))
 						radeon_crtc_handle_flip(rdev, 4);
@@ -3205,7 +3205,7 @@ restart_ih:
 					if (rdev->irq.crtc_vblank_int[5]) {
 						drm_handle_vblank(ddev, 5);
 						rdev->pm.vblank_sync = true;
-						wakeup(&rdev->irq.vblank_queue);
+						wake_up(&rdev->irq.vblank_queue);
 					}
 					if (atomic_read(&rdev->irq.pflip[5]))
 						radeon_crtc_handle_flip(rdev, 5);

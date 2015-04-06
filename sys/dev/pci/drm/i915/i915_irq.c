@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.21 2015/02/12 11:11:45 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.22 2015/04/06 05:35:29 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -349,7 +349,7 @@ static void notify_ring(struct drm_device *dev,
 
 //	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
 
-	wakeup(ring);
+	wake_up_all(ring);
 	if (i915_enable_hangcheck) {
 		dev_priv->hangcheck_count = 0;
 		timeout_add_msec(&dev_priv->hangcheck_timer,
@@ -1467,7 +1467,7 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 		 * Wakeup waiting processes so they don't hang
 		 */
 		for_each_ring(ring, dev_priv, i)
-			wakeup(ring);
+			wake_up_all(ring);
 	}
 
 	task_add(systq, &dev_priv->error_task);
@@ -1679,7 +1679,7 @@ static bool i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
 			*err = true;
 		}
 #else
-		wakeup(ring);
+		wake_up_all(ring);
 #endif
 		return true;
 	}
