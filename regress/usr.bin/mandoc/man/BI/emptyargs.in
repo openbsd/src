@@ -1,0 +1,10 @@
+.TH BI-EMPTYARGS 1 "April 6, 2015" OpenBSD
+.SH NAME
+BI-emptyargs \- empty arguments to font alternation macros
+.SH DESCRIPTION
+leading text
+.TP 6n
+.BI bold italic "" ""
+.BI bold "" "" italic 
+.PP
+trailing text
