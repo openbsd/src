@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.182 2015/04/03 13:10:59 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.183 2015/04/06 09:23:19 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -1022,6 +1022,11 @@ drm_sysfs_connector_add(struct drm_connector *connector)
 
 static inline void
 drm_sysfs_connector_remove(struct drm_connector *connector)
+{
+}
+
+static inline void
+drm_sysfs_hotplug_event(struct drm_device *dev)
 {
 }
 

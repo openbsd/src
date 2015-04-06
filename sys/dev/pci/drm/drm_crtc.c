@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.15 2015/04/06 08:14:00 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.16 2015/04/06 09:23:19 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -626,13 +626,11 @@ EXPORT_SYMBOL(drm_connector_cleanup);
 
 void drm_connector_unplug_all(struct drm_device *dev)
 {
-#ifdef __linux__
 	struct drm_connector *connector;
 
 	/* taking the mode config mutex ends up in a clash with sysfs */
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head)
 		drm_sysfs_connector_remove(connector);
-#endif
 }
 EXPORT_SYMBOL(drm_connector_unplug_all);
 
