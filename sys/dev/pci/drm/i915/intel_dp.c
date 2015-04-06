@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.22 2015/02/10 03:39:41 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.23 2015/04/06 10:56:37 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -549,7 +549,7 @@ intel_dp_aux_native_read(struct intel_dp *intel_dp,
 		ret = intel_dp_aux_ch(intel_dp, msg, msg_bytes,
 				      reply, reply_bytes);
 		if (ret == 0)
-			return -EIO;
+			return -EPROTO;
 		if (ret < 0)
 			return ret;
 		ack = reply[0];
@@ -631,7 +631,7 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			break;
 		case AUX_NATIVE_REPLY_NACK:
 			DRM_DEBUG_KMS("aux_ch native nack\n");
-			return -EIO;
+			return -EREMOTEIO;
 		case AUX_NATIVE_REPLY_DEFER:
 			/*
 			 * For now, just give more slack to branch devices. We
@@ -649,7 +649,7 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 		default:
 			DRM_ERROR("aux_ch invalid native reply 0x%02x\n",
 				  reply[0]);
-			return -EIO;
+			return -EREMOTEIO;
 		}
 
 		switch (reply[0] & AUX_I2C_REPLY_MASK) {
@@ -660,19 +660,19 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			return reply_bytes - 1;
 		case AUX_I2C_REPLY_NACK:
 			DRM_DEBUG_KMS("aux_i2c nack\n");
-			return -EIO;
+			return -EREMOTEIO;
 		case AUX_I2C_REPLY_DEFER:
 			DRM_DEBUG_KMS("aux_i2c defer\n");
 			udelay(100);
 			break;
 		default:
 			DRM_ERROR("aux_i2c invalid reply 0x%02x\n", reply[0]);
-			return -EIO;
+			return -EREMOTEIO;
 		}
 	}
 
 	DRM_ERROR("too many retries, giving up\n");
-	return -EIO;
+	return -EREMOTEIO;
 }
 
 static int

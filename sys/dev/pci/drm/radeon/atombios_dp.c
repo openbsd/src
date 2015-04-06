@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_dp.c,v 1.4 2014/08/08 16:38:23 jsg Exp $	*/
+/*	$OpenBSD: atombios_dp.c,v 1.5 2015/04/06 10:56:37 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -293,14 +293,14 @@ int radeon_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			break;
 		case AUX_NATIVE_REPLY_NACK:
 			DRM_DEBUG_KMS("aux_ch native nack\n");
-			return -EIO;
+			return -EREMOTEIO;
 		case AUX_NATIVE_REPLY_DEFER:
 			DRM_DEBUG_KMS("aux_ch native defer\n");
 			udelay(400);
 			continue;
 		default:
 			DRM_ERROR("aux_ch invalid native reply 0x%02x\n", ack);
-			return -EIO;
+			return -EREMOTEIO;
 		}
 
 		switch (ack & AUX_I2C_REPLY_MASK) {
@@ -310,19 +310,19 @@ int radeon_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			return ret;
 		case AUX_I2C_REPLY_NACK:
 			DRM_DEBUG_KMS("aux_i2c nack\n");
-			return -EIO;
+			return -EREMOTEIO;
 		case AUX_I2C_REPLY_DEFER:
 			DRM_DEBUG_KMS("aux_i2c defer\n");
 			udelay(400);
 			break;
 		default:
 			DRM_ERROR("aux_i2c invalid reply 0x%02x\n", ack);
-			return -EIO;
+			return -EREMOTEIO;
 		}
 	}
 
 	DRM_DEBUG_KMS("aux i2c too many retries, giving up\n");
-	return -EIO;
+	return -EREMOTEIO;
 }
 
 /***** general DP utility functions *****/

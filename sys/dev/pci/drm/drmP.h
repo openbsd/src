@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.183 2015/04/06 09:23:19 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.184 2015/04/06 10:56:37 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -136,6 +136,10 @@ typedef uint32_t __be32;
 #define DIV_ROUND_CLOSEST(x, y)	(((x) + ((y) / 2)) / (y))
 
 #define ERESTARTSYS EINTR
+#define ETIME ETIMEDOUT
+#define EREMOTEIO EIO
+#define EPROTO EIO
+#define ENOTSUPP ENOTSUP
 
 #define unlikely(x)	__builtin_expect(!!(x), 0)
 #define likely(x)	__builtin_expect(!!(x), 1)

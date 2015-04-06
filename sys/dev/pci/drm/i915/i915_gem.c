@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.86 2015/04/05 11:53:53 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.87 2015/04/06 10:56:37 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1161,7 +1161,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	case 0: /* Timeout */
 		if (timeout)
 			timeout->tv_sec = timeout->tv_nsec = 0;
-		return -ETIMEDOUT;
+		return -ETIME;
 	default: /* Completed */
 		WARN_ON(end < 0); /* We're not aware of other errors */
 		return 0;
@@ -2543,7 +2543,7 @@ i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 	 * on this IOCTL with a 0 timeout (like busy ioctl)
 	 */
 	if (!args->timeout_ns) {
-		ret = -ETIMEDOUT;
+		ret = -ETIME;
 		goto out;
 	}
 

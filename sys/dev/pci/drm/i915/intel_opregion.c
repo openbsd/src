@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_opregion.c,v 1.5 2014/03/24 17:06:49 kettenis Exp $	*/
+/*	$OpenBSD: intel_opregion.c,v 1.6 2015/04/06 10:56:37 jsg Exp $	*/
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
  * Copyright 2008 Red Hat <mjg@redhat.com>
@@ -495,7 +495,7 @@ int intel_opregion_setup(struct drm_device *dev)
 	DRM_DEBUG_DRIVER("graphic opregion physical addr: 0x%x\n", asls);
 	if (asls == 0) {
 		DRM_DEBUG_DRIVER("ACPI OpRegion not supported!\n");
-		return -ENOTSUP;
+		return -ENOTSUPP;
 	}
 
 	if (bus_space_map(dev_priv->bst, asls, OPREGION_SIZE,
