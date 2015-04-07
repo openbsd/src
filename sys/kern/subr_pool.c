@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.183 2015/04/07 11:07:56 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.184 2015/04/07 11:15:02 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -160,8 +160,6 @@ void	 pool_print_pagelist(struct pool_pagelist *, int (*)(const char *, ...)
 void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...)
 	     __attribute__((__format__(__kprintf__,1,2))));
 #endif
-
-#define pool_sleep(pl) msleep(pl, &pl->pr_mtx, PSWP, pl->pr_wchan, 0)
 
 /* stale page garbage collectors */
 void	pool_gc_sched(void *);
