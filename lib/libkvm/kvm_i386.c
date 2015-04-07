@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.25 2015/01/09 03:43:52 mlarkin Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.26 2015/04/07 05:50:40 guenther Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -59,17 +59,43 @@
 #include <machine/pte.h>
 
 /*
+ * We access both normal and PAE entries in 32bit chunks.
+ * Use a local name to avoid conflicting with the kernel's maybe-public,
+ * maybe-not p[td]_entry_t typedefs.
+ */
+typedef u_long ptd_entry_t;
+
+/*
  * These must match the values in pmap.c/pmapae.c
+ * First the non-PAE versions
  */
 #define PD_MASK		0xffc00000	/* page directory address bits */
 #define PT_MASK		0x003ff000	/* page table address bits */
-#define pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
-#define ptei(VA)	(((VA) & PT_MASK) >> PAGE_SHIFT)
 
+/*
+ * PAE versions
+ *
+ * paddr_t is still 32bits, so the top 32bits of PDEs and PTEs only
+ * matters for the NX bit...which libkvm doesn't care about
+ */
+#define PAE_PDSHIFT	21
+#define PAE_PD_MASK	0xffe00000	/* page directory address bits */
+#define PAE_PT_MASK	0x001ff000	/* page table address bits */
+
+#define PG_FRAME	0xfffff000
+
+static int cpu_pae;
 
 struct vmstate {
-	pd_entry_t *PTD;
+	ptd_entry_t *PTD;
+	ptd_entry_t PD_mask;
+	ptd_entry_t PT_mask;
+	int PD_shift;
+	int PG_shift;
 };
+
+#define pdei(vm,VA)	(((VA) & (vm)->PD_mask) >> (vm)->PD_shift)
+#define ptei(vm,VA)	(((VA) & (vm)->PT_mask) >> PAGE_SHIFT)
 
 void
 _kvm_freevtop(kvm_t *kd)
@@ -86,11 +112,11 @@ _kvm_freevtop(kvm_t *kd)
 int
 _kvm_initvtop(kvm_t *kd)
 {
-	struct nlist nl[2];
+	struct nlist nl[4];
 	struct vmstate *vm;
-	u_long pa;
+	u_long pa, PTDsize;
 
-	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
+	vm = _kvm_malloc(kd, sizeof(*vm));
 	if (vm == NULL)
 		return (-1);
 	kd->vmst = vm;
@@ -98,22 +124,45 @@ _kvm_initvtop(kvm_t *kd)
 	vm->PTD = NULL;
 
 	nl[0].n_name = "_PTDpaddr";
-	nl[1].n_name = NULL;
+	nl[1].n_name = "_PTDsize";
+	nl[2].n_name = "_cpu_pae";
+	nl[3].n_name = NULL;
 
 	if (kvm_nlist(kd, nl) != 0) {
 		_kvm_err(kd, kd->program, "bad namelist");
 		return (-1);
 	}
 
+	if (_kvm_pread(kd, kd->pmfd, &cpu_pae, sizeof cpu_pae,
+	    _kvm_pa2off(kd, nl[2].n_value - KERNBASE)) != sizeof cpu_pae)
+		goto invalid;
+
+	if (_kvm_pread(kd, kd->pmfd, &PTDsize, sizeof PTDsize,
+	    _kvm_pa2off(kd, nl[1].n_value - KERNBASE)) != sizeof PTDsize)
+		goto invalid;
+
 	if (_kvm_pread(kd, kd->pmfd, &pa, sizeof pa,
-	    (off_t)_kvm_pa2off(kd, nl[0].n_value - KERNBASE)) != sizeof pa)
+	    _kvm_pa2off(kd, nl[0].n_value - KERNBASE)) != sizeof pa)
 		goto invalid;
 
-	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, kd->nbpg);
+	vm->PTD = _kvm_malloc(kd, PTDsize);
 
-	if (_kvm_pread(kd, kd->pmfd, vm->PTD, kd->nbpg,
-	    (off_t)_kvm_pa2off(kd, pa)) != kd->nbpg)
+	if (_kvm_pread(kd, kd->pmfd, vm->PTD, PTDsize,
+	    _kvm_pa2off(kd, pa)) != PTDsize)
 		goto invalid;
+
+	if (cpu_pae) {
+		vm->PD_mask = PAE_PD_MASK;
+		vm->PT_mask = PAE_PT_MASK;
+		/* -1 here because entries are twice as large */
+		vm->PD_shift = PAE_PDSHIFT - 1;
+		vm->PG_shift = PAGE_SHIFT - 1;
+	} else {
+		vm->PD_mask = PD_MASK;
+		vm->PT_mask = PT_MASK;
+		vm->PD_shift = PDSHIFT;
+		vm->PG_shift = PAGE_SHIFT;
+	}
 
 	return (0);
 
@@ -133,7 +182,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	u_long offset, pte_pa;
 	struct vmstate *vm;
-	pt_entry_t pte;
+	ptd_entry_t pte;
 
 	if (!kd->vmst) {
 		_kvm_err(kd, 0, "vatop called before initvtop");
@@ -156,17 +205,19 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		*pa = va;
 		return (kd->nbpg - (int)offset);
 	}
-	if ((vm->PTD[pdei(va)] & PG_V) == 0)
+	if ((vm->PTD[pdei(vm,va)] & PG_V) == 0)
 		goto invalid;
 
-	pte_pa = (vm->PTD[pdei(va)] & PG_FRAME) +
-	    (ptei(va) * sizeof(pt_entry_t));
+	pte_pa = (vm->PTD[pdei(vm,va)] & PG_FRAME) +
+	    (ptei(vm,va) * sizeof(ptd_entry_t));
 
 	/* XXX READ PHYSICAL XXX */
 	if (_kvm_pread(kd, kd->pmfd, &pte, sizeof pte,
-	    (off_t)_kvm_pa2off(kd, pte_pa)) != sizeof pte)
+	    _kvm_pa2off(kd, pte_pa)) != sizeof pte)
 		goto invalid;
 
+	if ((pte & PG_V) == 0)
+		goto invalid;
 	*pa = (pte & PG_FRAME) + offset;
 	return (kd->nbpg - (int)offset);
 
