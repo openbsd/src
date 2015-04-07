@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.27 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: qe.c,v 1.28 2015/04/07 14:59:06 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -318,7 +318,6 @@ qe_get(sc, idx, totlen)
 	struct qe_softc *sc;
 	int idx, totlen;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	struct mbuf *top, **mp;
 	int len, pad, boff = 0;
@@ -329,7 +328,6 @@ qe_get(sc, idx, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
@@ -401,6 +399,7 @@ qe_read(sc, idx, len)
 	int idx, len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
@@ -423,16 +422,8 @@ qe_read(sc, idx, len)
 	}
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-	/* Pass the packet up. */
-	ether_input_mbuf(ifp, m);
+	ml_enqueue(&ml, m);
+	if_input(ifp, &ml);
 }
 
 /*
