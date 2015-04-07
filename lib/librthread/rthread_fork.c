@@ -1,8 +1,8 @@
-/*	$OpenBSD: rthread_fork.c,v 1.10 2013/11/29 16:27:40 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.11 2015/04/07 01:27:07 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
- * Copyright (c) 2008 Philip Guenther <guenther@gmail.com>
+ * Copyright (c) 2008 Philip Guenther <guenther@openbsd.org>
  * Copyright (c) 2003 Daniel Eischen <deischen@freebsd.org>
  * All rights reserved.
  *
@@ -45,18 +45,6 @@
 #include "thread_private.h"	/* in libc/include */
 
 #include "rthread.h"
-
-struct rthread_atfork {
-	TAILQ_ENTRY(rthread_atfork) next;
-	void (*prepare)(void);
-	void (*parent)(void);
-	void (*child)(void);
-};
-
-static TAILQ_HEAD(atfork_listhead, rthread_atfork) _atfork_list =
-    TAILQ_HEAD_INITIALIZER(_atfork_list);
-
-static struct _spinlock _atfork_lock = _SPINLOCK_UNLOCKED;
 
 pid_t   _thread_sys_fork(void);
 pid_t   _thread_sys_vfork(void);
@@ -144,49 +132,13 @@ _dofork(int is_vfork)
 }
 
 pid_t
-fork(void)
+_thread_fork(void)
 {
-	struct rthread_atfork *p;
-	pid_t newid;
-
-	_spinlock(&_atfork_lock);
-	TAILQ_FOREACH_REVERSE(p, &_atfork_list, atfork_listhead, next)
-		if (p->prepare)
-			p->prepare();
-	newid = _dofork(0);
-	if (newid == 0) {
-		TAILQ_FOREACH(p, &_atfork_list, next)
-			if (p->child)
-				p->child();
-	} else {
-		TAILQ_FOREACH(p, &_atfork_list, next)
-			if (p->parent)
-				p->parent();
-	}
-	_spinunlock(&_atfork_lock);
-	return newid;
+	return _dofork(0);
 }
 
 pid_t
 vfork(void)
 {
 	return _dofork(1);
-}
-
-int
-pthread_atfork(void (*prepare)(void), void (*parent)(void),
-    void (*child)(void))
-{
-	struct rthread_atfork *af;
-
-	if ((af = malloc(sizeof *af)) == NULL)
-		return (ENOMEM);
-
-	af->prepare = prepare;
-	af->parent = parent;
-	af->child = child;
-	_spinlock(&_atfork_lock);
-	TAILQ_INSERT_TAIL(&_atfork_list, af, next);
-	_spinunlock(&_atfork_lock);
-	return (0);
 }

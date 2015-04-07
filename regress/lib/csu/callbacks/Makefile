@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2014/11/23 08:46:49 guenther Exp $
+#	$OpenBSD: Makefile,v 1.2 2015/04/07 01:27:07 guenther Exp $
 
-SUBDIR+= libaa libab atexit
-# not yet: pthread_atfork
+SUBDIR+= libaa libab atexit pthread_atfork
 
 install:
 

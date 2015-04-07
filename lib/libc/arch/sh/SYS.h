@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.5 2014/06/04 20:13:49 matthew Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.6 2015/04/07 01:27:06 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -40,6 +40,8 @@
 #define	SYSENTRY(x)					\
 	WEAK_ALIAS(x,_thread_sys_ ## x);		\
 	ENTRY(_thread_sys_ ## x)
+#define	SYSENTRY_HIDDEN(x)				\
+	ENTRY(_thread_sys_ ## x)
 
 #define SYSTRAP(x)					\
 		mov.l	903f, r0;			\
@@ -55,6 +57,9 @@
 
 #define _SYSCALL_NOERROR(x,y)				\
 		SYSENTRY(x);				\
+		SYSTRAP(y)
+#define _SYSCALL_HIDDEN_NOERROR(x,y)			\
+		SYSENTRY_HIDDEN(x);			\
 		SYSTRAP(y)
 
 #ifdef __PIC__
@@ -88,6 +93,11 @@
 	911:	JUMP_CERROR;				\
 		_SYSCALL_NOERROR(x,y);			\
 		bf	911b
+#define _SYSCALL_HIDDEN(x,y)				\
+		.text;					\
+	911:	JUMP_CERROR;				\
+		_SYSCALL_HIDDEN_NOERROR(x,y);		\
+		bf	911b
 
 #define SYSCALL_NOERROR(x)				\
 		_SYSCALL_NOERROR(x,x)
@@ -105,10 +115,13 @@
 		rts;					\
 		 nop
 
-#define RSYSCALL_NOERROR(x)				\
-		PSEUDO_NOERROR(x,x)
+#define PSEUDO_HIDDEN(x,y)				\
+		_SYSCALL_HIDDEN(x,y);			\
+		rts;					\
+		 nop
 
-#define RSYSCALL(x)					\
-		PSEUDO(x,x)
+#define RSYSCALL_NOERROR(x)		PSEUDO_NOERROR(x,x)
+#define RSYSCALL(x)			PSEUDO(x,x)
+#define RSYSCALL_HIDDEN(x)		PSEUDO_HIDDEN(x,x)
 
 	.globl	CERROR

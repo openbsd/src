@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2014/11/23 08:46:49 guenther Exp $
+# $OpenBSD: Makefile,v 1.2 2015/04/07 01:27:07 guenther Exp $
 
 .include <bsd.obj.mk>
 
@@ -31,7 +31,7 @@ NOMAN=
 
 CLEANFILES=	parent_out child_out
 
-TESTS=		0
+TESTS=		0 1 2 3
 
 regress-pthread_atfork: ${PROG}
 	for i in ${TESTS}; do \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.9 2014/06/04 20:13:49 matthew Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.10 2015/04/07 01:27:06 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,13 @@
 
 
 #define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
+
 #define SYSENTRY(x)							\
 	ENTRY(_thread_sys_ ## x);					\
 	.weak _C_LABEL(x);						\
 	_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
+#define SYSENTRY_HIDDEN(x)						\
+	ENTRY(_thread_sys_ ## x)					\
 
 #define CERROR		_C_LABEL(__cerror)
 #define _CERROR		_C_LABEL(___cerror)
@@ -51,6 +54,9 @@
 
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\
+	SYSTRAP(y)
+#define _SYSCALL_HIDDEN_NOERROR(x,y)					\
+	SYSENTRY_HIDDEN(x);						\
 	SYSTRAP(y)
 
 #ifdef __PIC__
@@ -60,11 +66,22 @@
 	jmp *%rcx;							\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
+#define _SYSCALL_HIDDEN(x,y)						\
+	.text; _ALIGN_TEXT;						\
+	2: mov PIC_GOT(CERROR), %rcx;					\
+	jmp *%rcx;							\
+	_SYSCALL_HIDDEN_NOERROR(x,y);					\
+	jc 2b
 #else
 #define _SYSCALL(x,y)							\
 	.text; _ALIGN_TEXT;						\
 	2: jmp CERROR;							\
 	_SYSCALL_NOERROR(x,y);						\
+	jc 2b
+#define _SYSCALL_HIDDEN(x,y)						\
+	.text; _ALIGN_TEXT;						\
+	2: jmp CERROR;							\
+	_SYSCALL_HIDDEN_NOERROR(x,y);					\
 	jc 2b
 #endif
 
@@ -81,15 +98,16 @@
 #define PSEUDO(x,y)							\
 	_SYSCALL(x,y);							\
 	ret
+#define PSEUDO_HIDDEN(x,y)						\
+	_SYSCALL_HIDDEN(x,y);						\
+	ret
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)
 
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
-
-#define	WSYSCALL(weak,strong)						\
-	WEAK_ALIAS(weak,strong);					\
-	PSEUDO(strong,weak)
+#define RSYSCALL_HIDDEN(x)						\
+	PSEUDO_HIDDEN(x,x)
 
 	.globl	CERROR

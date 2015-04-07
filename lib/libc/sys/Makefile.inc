@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.124 2014/12/08 20:56:11 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.125 2015/04/07 01:27:07 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -11,7 +11,7 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S \
 	sigsuspend.S syscall.S tfork_thread.S
 
 # glue to offer userland wrappers for some syscalls
-SRCS+=	posix_madvise.c
+SRCS+=	posix_madvise.c w_fork.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pthread_atfork_test.c,v 1.1 2014/11/23 08:46:49 guenther Exp $       */
+/*      $OpenBSD: pthread_atfork_test.c,v 1.2 2015/04/07 01:27:07 guenther Exp $       */
 
 /*
  * Copyright (c) 2014 Philip Guenther <guenther@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/wait.h>
 #include <dlfcn.h>
 #include <err.h>
 #include <pthread.h>
@@ -86,7 +87,7 @@ int
 main(int argc, char **argv)
 {
 	pid_t pid;
-	int test;
+	int test, status;
 
 	otherf = fdopen(3, "w");
 	if (otherf == NULL)
@@ -150,5 +151,6 @@ main(int argc, char **argv)
 	fflush(otherf);
 	pid = fork();
 
+	waitpid(pid, &status, 0);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.20 2014/07/11 09:51:37 kettenis Exp $ */
+/*	$OpenBSD: atexit.c,v 1.21 2015/04/07 01:27:07 guenther Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -35,6 +35,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "atexit.h"
+#include "atfork.h"
 #include "thread_private.h"
 
 struct atexit *__atexit;
@@ -161,6 +162,23 @@ restart:
 		__atexit = NULL;
 	}
 	_ATEXIT_UNLOCK();
+
+	/*
+	 * If unloading a DSO, unregister any atfork handlers registered
+	 * by it.  Skip the locking if the list is currently empty.
+	 */
+	if (dso != NULL && TAILQ_FIRST(&_atfork_list) != NULL) {
+		struct atfork_fn *af, *afnext;
+
+		_ATFORK_LOCK();
+		TAILQ_FOREACH_SAFE(af, &_atfork_list, fn_next, afnext)
+			if (af->fn_dso == dso) {
+				TAILQ_REMOVE(&_atfork_list, af, fn_next);
+				free(af);
+			}
+		_ATFORK_UNLOCK();
+
+	}
 }
 
 /*

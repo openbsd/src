@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.19 2014/06/04 20:13:49 matthew Exp $
+ *	$OpenBSD: SYS.h,v 1.20 2015/04/07 01:27:06 guenther Exp $
  */
 
 #include <machine/asm.h>
@@ -49,6 +49,8 @@
 			ENTRY(_thread_sys_ ## x);	\
 			.weak _C_LABEL(x);		\
 			_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
+#define	SYSENTRY_HIDDEN(x)				\
+			ENTRY(_thread_sys_ ## x)
 
 #define	__DO_SYSCALL(x)					\
 			movl $(SYS_ ## x),%eax;		\
@@ -61,6 +63,9 @@
 /* perform a syscall */
 #define	_SYSCALL_NOERROR(x,y)				\
 		SYSENTRY(x);				\
+			__DO_SYSCALL(y);
+#define	_SYSCALL_HIDDEN_NOERROR(x,y)			\
+		SYSENTRY_HIDDEN(x);			\
 			__DO_SYSCALL(y);
 
 #define	SYSCALL_NOERROR(x)				\
@@ -77,6 +82,15 @@
 			jmp *%ecx;			\
 		_SYSCALL_NOERROR(x,y)			\
 			jc 2b
+#define	_SYSCALL_HIDDEN(x,y)				\
+			.text;				\
+			.align 2;			\
+		2:	PIC_PROLOGUE;			\
+			movl PIC_GOT(CERROR), %ecx;	\
+			PIC_EPILOGUE;			\
+			jmp *%ecx;			\
+		_SYSCALL_HIDDEN_NOERROR(x,y)		\
+			jc 2b
 #else
 #define	_SYSCALL(x,y)					\
 			.text;				\
@@ -84,6 +98,13 @@
 		2:					\
 			jmp PIC_PLT(CERROR);		\
 		_SYSCALL_NOERROR(x,y)			\
+			jc 2b
+#define	_SYSCALL_HIDDEN(x,y)				\
+			.text;				\
+			.align 2;			\
+		2:					\
+			jmp PIC_PLT(CERROR);		\
+		_SYSCALL_HIDDEN_NOERROR(x,y)		\
 			jc 2b
 #endif
 
@@ -99,9 +120,14 @@
 #define	PSEUDO(x,y)					\
 		_SYSCALL(x,y);				\
 			ret
+#define	PSEUDO_HIDDEN(x,y)				\
+		_SYSCALL_HIDDEN(x,y);			\
+			ret
 
 /* perform a syscall with the same name, set errno, return */
 #define	RSYSCALL(x)					\
 			PSEUDO(x,x);
+#define	RSYSCALL_HIDDEN(x)				\
+			PSEUDO_HIDDEN(x,x)
 
 	.globl	CERROR

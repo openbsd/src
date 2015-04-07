@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.25 2011/10/16 06:29:56 guenther Exp $ */
+/* $OpenBSD: thread_private.h,v 1.26 2015/04/07 01:27:07 guenther Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -160,6 +160,18 @@ void	_thread_atexit_unlock(void);
 						_thread_atexit_unlock();\
 				} while (0)
 
+void	_thread_atfork_lock(void);
+void	_thread_atfork_unlock(void);
+
+#define _ATFORK_LOCK()		do {					\
+					if (__isthreaded)		\
+						_thread_atfork_lock();	\
+				} while (0)
+#define _ATFORK_UNLOCK()	do {					\
+					if (__isthreaded)		\
+						_thread_atfork_unlock();\
+				} while (0)
+
 void	_thread_arc4_lock(void);
 void	_thread_arc4_unlock(void);
 
@@ -171,5 +183,10 @@ void	_thread_arc4_unlock(void);
 					if (__isthreaded)		\
 						_thread_arc4_unlock();\
 				} while (0)
+
+/*
+ * Wrapper for _thread_sys_fork()
+ */
+pid_t	_thread_fork(void);
 
 #endif /* _THREAD_PRIVATE_H_ */

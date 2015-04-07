@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.16 2014/06/04 20:13:49 matthew Exp $ */
+/*	$OpenBSD: SYS.h,v 1.17 2015/04/07 01:27:07 guenther Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -66,6 +66,7 @@
 				__SYSCALL(_thread_sys_,x,x)
 #define	RSYSCALL(x)		__ALIAS(_thread_sys_,x)		\
 				__PSEUDO(_thread_sys_,x,x)
+#define	RSYSCALL_HIDDEN(x)	__PSEUDO(_thread_sys_,x,x)
 #define	PSEUDO(x,y)		__ALIAS(_thread_sys_,x)		\
 				__PSEUDO(_thread_sys_,x,y)
 #define	PSEUDO_NOERROR(x,y)	__ALIAS(_thread_sys_,x)		\

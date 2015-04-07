@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2014/06/04 20:13:49 matthew Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.16 2015/04/07 01:27:06 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -68,9 +68,11 @@
 				sc ; \
 				PSEUDO_NOERROR_SUFFIX
 
-#define	PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
-				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
+#define	PSEUDO_HIDDEN(x,y)	PSEUDO_PREFIX(_thread_sys_,x,y) ; \
 				sc ; \
 				PSEUDO_SUFFIX
+#define	PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
+				PSEUDO_HIDDEN(x,y)
 
 #define RSYSCALL(x)		PSEUDO(x,x)
+#define RSYSCALL_HIDDEN(x)	PSEUDO_HIDDEN(x,x)

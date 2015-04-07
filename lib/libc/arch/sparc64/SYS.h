@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.11 2014/06/04 20:13:49 matthew Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.12 2015/04/07 01:27:07 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,8 @@
 
 #define _CAT(x,y) x##y
 
-#define	__ENTRY(p,x)	ENTRY(_CAT(p,x)) ; .weak x; x = _CAT(p,x)
+#define	__ENTRY(p,x)		ENTRY(_CAT(p,x)) ; .weak x; x = _CAT(p,x)
+#define	__ENTRY_HIDDEN(p,x)	ENTRY(_CAT(p,x))
 
 /*
  * ERROR branches to cerror.  This is done with a macro so that I can
@@ -71,9 +72,14 @@
  */
 #define	_SYSCALL(p,x,y) \
 	__ENTRY(p,x); mov _CAT(SYS_,y),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
+#define	_SYSCALL_HIDDEN(p,x,y) \
+	__ENTRY_HIDDEN(p,x); mov _CAT(SYS_,y),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
 
 #define	__SYSCALL(p,x) \
 	_SYSCALL(p,x,x)
+
+#define	__SYSCALL_HIDDEN(p,x) \
+	_SYSCALL_HIDDEN(p,x,x)
 
 /*
  * RSYSCALL is used when the system call should just return.  Here
@@ -81,8 +87,11 @@
  * and avoid a branch.
  */
 #define	__RSYSCALL(p,x) \
-	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
-	t ST_SYSCALL; ERROR()
+	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; \
+	add %o7,8,%g2; t ST_SYSCALL; ERROR()
+#define	__RSYSCALL_HIDDEN(p,x) \
+	__ENTRY_HIDDEN(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; \
+	add %o7,8,%g2; t ST_SYSCALL; ERROR()
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
@@ -126,6 +135,7 @@
 
 #define	SYSCALL(x)		__SYSCALL(_thread_sys_,x)
 #define	RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
+#define	RSYSCALL_HIDDEN(x)	__RSYSCALL_HIDDEN(_thread_sys_,x)
 #define	RSYSCALL_NOERROR(x,y)	__RSYSCALL_NOERROR(_thread_sys_,x,y)
 #define	PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)

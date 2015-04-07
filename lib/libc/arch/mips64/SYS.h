@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.6 2014/06/04 20:13:49 matthew Exp $ 
+ *      $OpenBSD: SYS.h,v 1.7 2015/04/07 01:27:06 guenther Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -71,9 +71,24 @@
 			PTR_ADDU sp,32;			\
 			jr	t9;			\
 		__END2(p,x)
+#define __PSEUDO_HIDDEN(p,x,y)   			\
+		LEAF(p ## x,32);			\
+			PTR_SUBU sp,32;			\
+			SETUP_GP64(16,__CLABEL2(p,x));	\
+			__DO_SYSCALL(y);		\
+			bne	a3,zero,err;		\
+			RESTORE_GP64;			\
+			PTR_ADDU sp,32;			\
+			j	ra;			\
+		err:	LA	t9,CERROR;		\
+			RESTORE_GP64;			\
+			PTR_ADDU sp,32;			\
+			jr	t9;			\
+		END(p ## x)
 
 
 #define RSYSCALL(x)		__PSEUDO(_thread_sys_,x,x)
+#define RSYSCALL_HIDDEN(x)	__PSEUDO_HIDDEN(_thread_sys_,x,x)
 #define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 

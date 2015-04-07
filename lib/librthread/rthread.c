@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.79 2014/11/16 05:26:20 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.80 2015/04/07 01:27:07 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -736,6 +736,8 @@ static void *__libc_overrides[] __used = {
 	&_thread_arc4_unlock,
 	&_thread_atexit_lock,
 	&_thread_atexit_unlock,
+	&_thread_atfork_lock,
+	&_thread_atfork_unlock,
 	&_thread_malloc_lock,
 	&_thread_malloc_unlock,
 	&_thread_mutex_destroy,

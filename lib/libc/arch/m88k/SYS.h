@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.18 2014/06/04 20:13:49 matthew Exp $*/
+/*	$OpenBSD: SYS.h,v 1.19 2015/04/07 01:27:06 guenther Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -83,9 +83,15 @@
 	__ENTRY(p,x);							\
 	__ALIAS(p,x);							\
 	__DO_SYSCALL(y)
+#define	__SYSCALL_HIDDEN__NOERROR(p,x,y)				\
+	__ENTRY(p,x);							\
+	__DO_SYSCALL(y)
 
 #define	__SYSCALL(p,x,y)						\
 	__SYSCALL__NOERROR(p,x,y);					\
+	br CERROR
+#define	__SYSCALL_HIDDEN(p,x,y)						\
+	__SYSCALL_HIDDEN__NOERROR(p,x,y);				\
 	br CERROR
 
 #define	__PSEUDO_NOERROR(p,x,y)						\
@@ -97,6 +103,10 @@
 	__SYSCALL(p,x,y);						\
 	jmp %r1;							\
 	__END(p,x)
+#define	__PSEUDO_HIDDEN(p,x,y)						\
+	__SYSCALL_HIDDEN(p,x,y);					\
+	jmp %r1;							\
+	__END(p,x)
 
 /*
  * System calls entry points are really named _thread_sys_{syscall},
@@ -105,6 +115,7 @@
  */
 #define	SYSCALL(x)		__SYSCALL(_thread_sys_,x,x)
 #define	RSYSCALL(x)		__PSEUDO(_thread_sys_,x,x)
+#define	RSYSCALL_HIDDEN(x)	__PSEUDO_HIDDEN(_thread_sys_,x,x)
 #define	PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 #define	SYSENTRY(x)		__ENTRY(_thread_sys_,x);		\
