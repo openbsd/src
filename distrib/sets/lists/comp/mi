@@ -5593,7 +5593,6 @@
 ./usr/share/man/man3/timerisset.3
 ./usr/share/man/man3/timersub.3
 ./usr/share/man/man3/times.3
-./usr/share/man/man3/timezone.3
 ./usr/share/man/man3/timingsafe_bcmp.3
 ./usr/share/man/man3/timingsafe_memcmp.3
 ./usr/share/man/man3/tls_accept_fds.3

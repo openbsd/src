@@ -7,7 +7,7 @@
 ./etc/firmware/tigon2
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/lib/libc.so.78.1
+./usr/lib/libc.so.79.0
 ./usr/lib/libcrypto.so.32.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
@@ -31,7 +31,7 @@
 ./usr/lib/libpanelw.so.6.0
 ./usr/lib/libpcap.so.8.0
 ./usr/lib/libperl.so.17.0
-./usr/lib/libpthread.so.18.1
+./usr/lib/libpthread.so.19.0
 ./usr/lib/libreadline.so.4.0
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
