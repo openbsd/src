@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.36 2015/03/13 17:23:37 deraadt Exp $	*/
+/*	$OpenBSD: private.h,v 1.37 2015/04/07 01:47:04 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -14,6 +14,7 @@
 #define PCTS			1
 #define ALL_STATE		1
 #define STD_INSPIRED		1
+#define USG_COMPAT		1
 
 /*
 ** This header is for use ONLY with the time conversion code.

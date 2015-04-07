@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.67 2015/02/06 05:51:06 doug Exp $
+#	$OpenBSD: Makefile.inc,v 1.68 2015/04/07 01:47:04 millert Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -21,7 +21,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         setprogname.c setjmperr.c setmode.c setproctitle.c shm_open.c \
         siginterrupt.c siglist.c signal.c signame.c \
         sigsetops.c sleep.c statvfs.c strtofflags.c sysconf.c sysctl.c \
-        syslog.c syslog_r.c telldir.c time.c times.c timezone.c \
+        syslog.c syslog_r.c telldir.c time.c times.c \
         tolower_.c ttyname.c \
         ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c \
         utime.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c \
@@ -56,7 +56,7 @@ MAN+=	__tfork_thread.3 alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
 	scandir.3 setjmp.3 setmode.3 setproctitle.3 shm_open.3 \
 	siginterrupt.3 signal.3 \
 	sigsetops.3 sleep.3 statvfs.3 sysconf.3 sysctl.3 strtofflags.3 \
-	syslog.3 time.3 times.3 timezone.3 toascii.3 tolower.3 toupper.3 \
+	syslog.3 time.3 times.3 toascii.3 tolower.3 toupper.3 \
 	ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
 MLINKS+=__tfork_thread.3 __tfork.2

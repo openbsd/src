@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.27 2015/03/17 19:31:30 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.28 2015/04/07 01:47:04 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -135,6 +135,10 @@ size_t strftime(char *__restrict, size_t, const char *__restrict,
 		__attribute__ ((__bounded__(__string__,1,2)));
 time_t time(time_t *);
 
+#if __XPG_VISIBLE >= 300
+extern int daylight;
+extern long timezone;
+#endif
 #if __XPG_VISIBLE >= 400
 char *strptime(const char *__restrict, const char *__restrict,
 		struct tm *__restrict);
@@ -166,7 +170,6 @@ int clock_getcpuclockid(pid_t, clockid_t *);
 #endif
 
 #if __BSD_VISIBLE
-char *timezone(int, int);
 void tzsetwall(void);
 time_t timelocal(struct tm *);
 time_t timegm(struct tm *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.51 2015/02/16 17:51:48 tedu Exp $ */
+/*	$OpenBSD: localtime.c,v 1.52 2015/04/07 01:47:04 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -198,7 +198,7 @@ char *			tzname[2] = {
 static struct tm	tm;
 
 #ifdef USG_COMPAT
-time_t			timezone = 0;
+long			timezone = 0;
 int			daylight = 0;
 #endif /* defined USG_COMPAT */
 
