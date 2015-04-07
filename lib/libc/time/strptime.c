@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.19 2015/02/09 13:32:51 tedu Exp $ */
+/*	$OpenBSD: strptime.c,v 1.20 2015/04/07 01:49:11 millert Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "private.h"
 #include "tzfile.h"
 
 #define	_ctloc(x)		(_CurrentTimeLocale->x)
@@ -99,7 +100,7 @@ _strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 		fields = 0;
 	}
 
-	bp = (unsigned char *)buf;
+	bp = (const unsigned char *)buf;
 	while ((c = *fmt) != '\0') {
 		/* Clear `alternate' modifier prior to new conversion. */
 		alt_format = 0;
@@ -487,7 +488,7 @@ literal:
 					tm->TM_GMTOFF = -5 - i;
 #endif
 #ifdef TM_ZONE
-					tm->TM_ZONE = __UNCONST(nast[i]);
+					tm->TM_ZONE = (char *)nast[i];
 #endif
 					bp = ep;
 					continue;
@@ -499,7 +500,7 @@ literal:
 					tm->TM_GMTOFF = -4 - i;
 #endif
 #ifdef TM_ZONE
-					tm->TM_ZONE = __UNCONST(nadt[i]);
+					tm->TM_ZONE = (char *)nadt[i];
 #endif
 					bp = ep;
 					continue;
