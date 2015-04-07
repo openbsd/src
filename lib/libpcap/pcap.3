@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.41 2015/01/16 04:12:45 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.42 2015/04/07 02:38:14 lteo Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: April 7 2015 $
 .Dt PCAP 3
 .Os
 .Sh NAME
@@ -169,7 +169,7 @@ at packets on the network.
 .Fa source
 is a string that specifies the network device to open.
 .Fa snaplen
-specifies the maximum number of bytes to capture.
+specifies the maximum number of bytes to capture from one packet.
 .Fa promisc
 specifies if the interface is to be put into promiscuous mode.
 (Note that even if this parameter is false, the interface
@@ -209,7 +209,7 @@ for writing.
 The name
 .Ql -
 is a synonym for
-.Dv stdin .
+.Dv stdout .
 .Dv NULL
 is returned on failure.
 .Fa p
@@ -229,7 +229,7 @@ can be used to get the error text.
 .Pp
 .Fn pcap_dump_fopen
 allows the use of savefile functions on the already-opened stream
-.Dq f .
+.Fa f .
 .Pp
 .Fn pcap_lookupdev
 returns a pointer to a network device suitable for use with
@@ -276,7 +276,7 @@ pointer which is passed in from
 .Fn pcap_dispatch ,
 a pointer to the
 .Fa pcap_pkthdr
-struct (which precede the actual network headers and data),
+struct (which precedes the actual network headers and data),
 and a
 .Fa u_char
 pointer to the packet data.
@@ -351,7 +351,7 @@ return when live read timeouts occur.
 Rather, specifying a non-zero read timeout to
 .Fn pcap_open_live
 and then calling
-.Fn pcap_dispatch
+.Fn pcap_loop
 allows the reception and processing of any packets that arrive when the
 timeout occurs.
 A negative
@@ -490,10 +490,11 @@ It is typically used when just using libpcap for compiling BPF code.
 .Pp
 .Fn pcap_fopen_offline
 may be used to read dumped data from an existing open stream
-.Dq fp .
+.Fa fp .
 .Pp
 .Fn pcap_lib_version
 returns a string describing the version of libpcap.
+.Pp
 .Fn pcap_datalink_val_to_name
 and
 .Fn pcap_datalink_val_to_description
