@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.h,v 1.8 2015/03/31 10:36:52 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.h,v 1.9 2015/04/07 14:36:34 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -29,7 +29,6 @@
 extern int cons_backlight_available;
 
 void ofwconprobe(void);
-void ofwconsinit(void);
 
 struct rasops_info;
 void ofwconsswitch(struct rasops_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.169 2015/03/31 16:00:38 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.170 2015/04/07 14:36:34 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -306,10 +306,6 @@ initppc(startkernel, endkernel, args)
 		(caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
 		EX_NOCOALESCE|EX_NOWAIT);
 
-	/*
-	 * Now we can set up the console as mapping is enabled.
-	 */
-	ofwconsinit();
 	/* while using openfirmware, run userconfig */
 	if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG
