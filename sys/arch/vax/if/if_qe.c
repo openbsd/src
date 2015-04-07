@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.30 2014/12/23 21:39:12 miod Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.31 2015/04/07 14:02:51 mpi Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -534,6 +534,7 @@ qeintr(void *arg)
 	struct qe_cdata *qc = sc->sc_qedata;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	int csr, status1, status2, len;
 
@@ -542,7 +543,7 @@ qeintr(void *arg)
 	QE_WCSR(QE_CSR_CSR, QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT |
 	    QE_RCV_INT | QE_ILOOP);
 
-	if (csr & QE_RCV_INT)
+	if (csr & QE_RCV_INT) {
 		while (qc->qc_recv[sc->sc_nextrx].qe_status1 != QE_NOTYET) {
 			status1 = qc->qc_recv[sc->sc_nextrx].qe_status1;
 			status2 = qc->qc_recv[sc->sc_nextrx].qe_status2;
@@ -551,23 +552,10 @@ qeintr(void *arg)
 			len = ((status1 & QE_RBL_HI) |
 			    (status2 & QE_RBL_LO)) + 60;
 			qe_add_rxbuf(sc, sc->sc_nextrx);
-			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
 			eh = mtod(m, struct ether_header *);
-#if NBPFILTER > 0
-			if (ifp->if_bpf) {
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0)) {
-					m_freem(m);
-					continue;
-				}
-			}
-#endif
 			/*
 			 * ALLMULTI means PROMISC in this driver.
 			 */
@@ -580,10 +568,12 @@ qeintr(void *arg)
 			}
 
 			if ((status1 & QE_ESETUP) == 0)
-				ether_input_mbuf(ifp, m);
+				ml_enqueue(&ml, m);
 			else
 				m_freem(m);
 		}
+		if_input(ifp, &ml);
+	}
 
 	if (csr & (QE_XMIT_INT|QE_XL_INVALID)) {
 		while (qc->qc_xmit[sc->sc_lastack].qe_status1 != QE_NOTYET) {
