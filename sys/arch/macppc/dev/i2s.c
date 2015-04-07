@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.25 2015/03/24 16:29:09 mpi Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.26 2015/04/07 09:54:11 mpi Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -126,10 +126,10 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 	iirq_type = intr[5] ? IST_LEVEL : IST_EDGE;
 
 	/* intr_establish(cirq, cirq_type, IPL_AUDIO, i2s_intr, sc); */
-	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO, i2s_intr,
-	    sc, sc->sc_dev.dv_xname);
-	mac_intr_establish(parent, iirq, iirq_type, IPL_AUDIO, i2s_iintr,
-	    sc, sc->sc_dev.dv_xname);
+	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO | IPL_MPSAFE,
+	    i2s_intr, sc, sc->sc_dev.dv_xname);
+	mac_intr_establish(parent, iirq, iirq_type, IPL_AUDIO | IPL_MPSAFE,
+	    i2s_iintr, sc, sc->sc_dev.dv_xname);
 
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
@@ -1158,11 +1158,11 @@ i2s_gpio_init(struct i2s_softc *sc, int node, struct device *parent)
 
 	if (hp_detect_intr != -1)
 		mac_intr_establish(parent, hp_detect_intr, IST_EDGE,
-		    IPL_AUDIO, i2s_cint, sc, sc->sc_dev.dv_xname);
+		    IPL_AUDIO | IPL_MPSAFE, i2s_cint, sc, sc->sc_dev.dv_xname);
 
 	if (line_detect_intr != -1)
 		mac_intr_establish(parent, line_detect_intr, IST_EDGE,
-		    IPL_AUDIO, i2s_cint, sc, sc->sc_dev.dv_xname);
+		    IPL_AUDIO | IPL_MPSAFE, i2s_cint, sc, sc->sc_dev.dv_xname);
 
 	/* Enable headphone interrupt? */
 	macobio_write(sc->sc_hp_detect, 0x80);
