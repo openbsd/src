@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.25 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.26 2015/04/07 19:31:42 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -271,7 +271,7 @@ void	vio_rxtick(void *);
 int	vio_tx_intr(struct virtqueue *);
 int	vio_txeof(struct virtqueue *);
 void	vio_tx_drain(struct vio_softc *);
-int	vio_encap(struct vio_softc *, int, struct mbuf *, struct mbuf **);
+int	vio_encap(struct vio_softc *, int, struct mbuf *);
 void	vio_txtick(void *);
 
 /* other control */
@@ -738,7 +738,7 @@ again:
 		}
 		if (r != 0)
 			panic("enqueue_prep for a tx buffer: %d", r);
-		r = vio_encap(sc, slot, m, &sc->sc_tx_mbufs[slot]);
+		r = vio_encap(sc, slot, m);
 		if (r != 0) {
 #if VIRTIO_DEBUG
 			if (r != ENOBUFS)
@@ -758,10 +758,6 @@ again:
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m != sc->sc_tx_mbufs[slot]) {
-			m_freem(m);
-			m = sc->sc_tx_mbufs[slot];
-		}
 
 		hdr = &sc->sc_tx_hdrs[slot];
 		memset(hdr, 0, sc->sc_hdr_size);
@@ -1144,45 +1140,31 @@ vio_txeof(struct virtqueue *vq)
 }
 
 int
-vio_encap(struct vio_softc *sc, int slot, struct mbuf *m,
-	      struct mbuf **mnew)
+vio_encap(struct vio_softc *sc, int slot, struct mbuf *m)
 {
 	struct virtio_softc	*vsc = sc->sc_virtio;
 	bus_dmamap_t		 dmap= sc->sc_tx_dmamaps[slot];
-	struct mbuf		*m0 = NULL;
 	int			 r;
 
 	r = bus_dmamap_load_mbuf(vsc->sc_dmat, dmap, m,
 	    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-	if (r == 0) {
-		*mnew = m;
-		return r;
-	}
-	if (r != EFBIG)
-		return r;
-	/* EFBIG: mbuf chain is too fragmented */
-	MGETHDR(m0, M_DONTWAIT, MT_DATA);
-	if (m0 == NULL)
-		return ENOBUFS;
-	if (m->m_pkthdr.len > MHLEN) {
-		MCLGETI(m0, M_DONTWAIT, NULL, m->m_pkthdr.len);
-		if (!(m0->m_flags & M_EXT)) {
-			m_freem(m0);
-			return ENOBUFS;
-		}
-	}
-	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
-	m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
-	r = bus_dmamap_load_mbuf(vsc->sc_dmat, dmap, m0,
-	    BUS_DMA_NOWAIT|BUS_DMA_WRITE);
-	if (r != 0) {
-		m_freem(m0);
+	switch (r) {
+	case 0:
+		break;
+	case EFBIG:
+		if ((r = m_defrag(m, M_DONTWAIT)) == 0 &&
+		    (r = bus_dmamap_load_mbuf(vsc->sc_dmat, dmap, m,
+		     BUS_DMA_WRITE|BUS_DMA_NOWAIT)) == 0)
+			break;
+
+		/* FALLTHROUGH */
+	default:
 		printf("%s: tx dmamap load error %d\n", sc->sc_dev.dv_xname,
 		    r);
 		return ENOBUFS;
 	}
-	*mnew = m0;
-	return 0;
+	sc->sc_tx_mbufs[slot] = m;
+	return r;
 }
 
 /* free all the mbufs already put on vq; called from if_stop(disable) */
