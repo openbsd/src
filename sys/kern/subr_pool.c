@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.182 2015/03/20 11:33:17 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.183 2015/04/07 11:07:56 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -40,6 +40,8 @@
 #include <sys/syslog.h>
 #include <sys/rwlock.h>
 #include <sys/sysctl.h>
+#include <sys/task.h>
+#include <sys/timeout.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -160,6 +162,14 @@ void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...)
 #endif
 
 #define pool_sleep(pl) msleep(pl, &pl->pr_mtx, PSWP, pl->pr_wchan, 0)
+
+/* stale page garbage collectors */
+void	pool_gc_sched(void *);
+struct timeout pool_gc_tick = TIMEOUT_INITIALIZER(pool_gc_sched, NULL);
+void	pool_gc_pages(void *);
+struct task pool_gc_task = TASK_INITIALIZER(pool_gc_pages, NULL);
+int pool_wait_free = 1;
+int pool_wait_gc = 8;
 
 static inline int
 phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
@@ -691,7 +701,7 @@ pool_put(struct pool *pp, void *v)
 	/* is it time to free a page? */
 	if (pp->pr_nidle > pp->pr_maxpages &&
 	    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
-	    (ticks - ph->ph_tick) > hz) {
+	    (ticks - ph->ph_tick) > (hz * pool_wait_free)) {
 		freeph = ph;
 		pool_p_remove(pp, freeph);
 	}
@@ -1349,6 +1359,47 @@ done:
 	rw_exit_read(&pool_lock);
 
 	return (rv);
+}
+
+void
+pool_gc_sched(void *null)
+{
+	task_add(systqmp, &pool_gc_task);
+}
+
+void
+pool_gc_pages(void *null)
+{
+	extern int ticks;
+	struct pool *pp;
+	struct pool_item_header *ph, *freeph;
+	int s;
+
+	rw_enter_read(&pool_lock);
+	s = splvm(); /* XXX go to splvm until all pools _setipl properly */
+	SIMPLEQ_FOREACH(pp, &pool_head, pr_poollist) {
+		if (pp->pr_nidle <= pp->pr_minpages || /* guess */
+		    !mtx_enter_try(&pp->pr_mtx)) /* try */
+			continue;
+
+		/* is it time to free a page? */
+		if (pp->pr_nidle > pp->pr_minpages &&
+		    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
+		    (ticks - ph->ph_tick) > (hz * pool_wait_gc)) {
+			freeph = ph;
+			pool_p_remove(pp, freeph);
+		} else
+			freeph = NULL;
+
+		mtx_leave(&pp->pr_mtx);
+
+		if (freeph != NULL)
+			pool_p_free(pp, freeph);
+	}
+	splx(s);
+	rw_exit_read(&pool_lock);
+
+	timeout_add_sec(&pool_gc_tick, 1);
 }
 
 /*
