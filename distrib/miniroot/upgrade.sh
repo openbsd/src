@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.86 2015/04/06 21:36:56 rpe Exp $
+#	$OpenBSD: upgrade.sh,v 1.87 2015/04/07 09:59:38 rpe Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -37,7 +37,7 @@
 
 #	OpenBSD upgrade script.
 
-# Install.sub needs to know the MODE.
+# install.sub needs to know the MODE.
 MODE=upgrade
 
 # Include common subroutines and initialization code.
@@ -76,7 +76,7 @@ enable_network
 # Fetch the list of mirror servers and installer choices from previous runs.
 startcgiinfo
 
-# Create fstab for use during upgrade.
+# Create a skeletal /etc/fstab which is usable for the upgrade process.
 munge_fstab
 
 # fsck -p non-root filesystems in /etc/fstab.
