@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.232 2015/02/06 22:10:43 benno Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.233 2015/04/07 10:46:20 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1391,7 +1391,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 					    BPF_DIRECTION_IN);
 #endif
 				m->m_flags |= M_PROTO1;
-				ether_input(ifl->ifp, eh, m);
+				ether_input(m, eh);
 				ifl->ifp->if_ipackets++;
 				m = NULL;
 			}
@@ -1448,7 +1448,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			m->m_pkthdr.ph_rtableid = ifl->ifp->if_rdomain;
 			if (ifp->if_type == IFT_GIF) {
 				m->m_flags |= M_PROTO1;
-				ether_input(ifl->ifp, eh, m);
+				ether_input(m, eh);
 				m = NULL;
 			}
 			return (m);
@@ -1624,7 +1624,7 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		    BPF_DIRECTION_IN);
 #endif
 
-	ether_input(ifp, NULL, m1);
+	ether_input(m1, NULL);
 	ifp->if_ipackets++;
 }
 

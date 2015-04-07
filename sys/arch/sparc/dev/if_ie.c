@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.50 2015/01/11 15:35:38 miod Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.51 2015/04/07 10:46:20 mpi Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -1354,7 +1354,7 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	ether_input(&sc->sc_arpcom.ac_if, &eh, m);
+	ether_input(m, &eh);
 }
 
 static void

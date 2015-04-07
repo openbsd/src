@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.326 2015/04/02 09:46:01 kettenis Exp $	*/
+/*	$OpenBSD: if.c,v 1.327 2015/04/07 10:46:20 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ if_input_process(void *xmq)
 
 		ifp = m->m_pkthdr.rcvif;
 		SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
-			if ((*ifih->ifih_input)(ifp, NULL, m))
+			if ((*ifih->ifih_input)(m, NULL))
 				break;
 		}
 	}

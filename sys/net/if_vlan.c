@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.113 2015/03/31 11:47:09 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.114 2015/04/07 10:46:20 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -352,7 +352,7 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 	}
 
 	ifv->ifv_if.if_ipackets++;
-	ether_input(&ifv->ifv_if, eh, m);
+	ether_input(m, eh);
 
 	return (0);
 }

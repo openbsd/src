@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.190 2015/03/17 14:51:27 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.191 2015/04/07 10:46:20 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -454,15 +454,15 @@ bad:
  * the ether header, which is provided separately.
  */
 int
-ether_input(struct ifnet *ifp0, void *hdr, struct mbuf *m)
+ether_input(struct mbuf *m, void *hdr)
 {
+	struct ifnet *ifp0, *ifp;
 	struct ether_header *eh = hdr;
 	struct ifqueue *inq;
 	u_int16_t etype;
 	int s, llcfound = 0;
 	struct llc *l;
 	struct arpcom *ac;
-	struct ifnet *ifp = ifp0;
 #if NTRUNK > 0
 	int i = 0;
 #endif
@@ -470,7 +470,9 @@ ether_input(struct ifnet *ifp0, void *hdr, struct mbuf *m)
 	struct ether_header *eh_tmp;
 #endif
 
+
 	/* mark incoming routing table */
+	ifp = ifp0 = m->m_pkthdr.rcvif;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (eh == NULL) {

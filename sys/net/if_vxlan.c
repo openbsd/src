@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.22 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.23 2015/04/07 10:46:20 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -537,7 +537,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 #endif
 
 	ifp->if_ipackets++;
-	ether_input(ifp, eh, m);
+	ether_input(m, eh);
 
 	/* success */
 	return (1);
