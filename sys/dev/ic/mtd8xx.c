@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.24 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.25 2015/04/08 12:58:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -874,6 +874,7 @@ mtd_intr(void *xsc)
 static void
 mtd_rxeof(struct mtd_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct mtd_rx_desc *cur_rx;
@@ -912,7 +913,7 @@ mtd_rxeof(struct mtd_softc *sc)
 				continue;
 			} else {
 				mtd_init(ifp);
-				return;
+				break;
 			}
 		}
 
@@ -934,12 +935,10 @@ mtd_rxeof(struct mtd_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	sc->mtd_cdata.mtd_rx_prod = i;
 }
