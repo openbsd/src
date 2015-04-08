@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.88 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.89 2015/04/08 14:02:43 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -58,6 +58,7 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
+#define Debugger()	__asm volatile("ta 1; nop");
 #else
 #define Debugger()
 #define db_printf	printf
@@ -1522,18 +1523,9 @@ pmap_release(struct pmap *pm)
 						pa = data & TLB_PA_MASK;
 						pv = pa_to_pvh(pa);
 						if (pv != NULL) {
-
-#ifdef DEBUG
 							printf("pmap_release: pm=%p page %llx still in use\n", pm, 
 							       (unsigned long long)(((u_int64_t)i<<STSHIFT)|((u_int64_t)k<<PDSHIFT)|((u_int64_t)j<<PTSHIFT)));
 							Debugger();
-#endif
-							/* Save REF/MOD info */
-							pv->pv_va |= pmap_tte2flags(data);
-
-							pmap_remove_pv(pm, 
-								       (long)((u_int64_t)i<<STSHIFT)|((long)k<<PDSHIFT)|((long)j<<PTSHIFT), 
-								       pa);
 						}
 					}
 					stxa(pdirentp, ASI_PHYS_CACHED, 0);
