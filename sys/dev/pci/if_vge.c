@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.60 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.61 2015/04/08 10:07:47 mpi Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -983,6 +983,7 @@ vge_rx_list_init(struct vge_softc *sc)
 void
 vge_rxeof(struct vge_softc *sc)
 {
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	struct ifnet		*ifp;
 	int			i, total_len;
@@ -1119,7 +1120,6 @@ vge_rxeof(struct vge_softc *sc)
 		m->m_data += ETHER_ALIGN;
 #endif
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
 
 		/* Do RX checksumming */
 
@@ -1140,16 +1140,14 @@ vge_rxeof(struct vge_softc *sc)
 		}
 #endif
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 		lim++;
 		if (lim == VGE_RX_DESC_CNT)
 			break;
 	}
+
+	if_input(ifp, &ml);
 
 	/* Flush the RX DMA ring */
 	bus_dmamap_sync(sc->sc_dmat,

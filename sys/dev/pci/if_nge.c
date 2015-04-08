@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.81 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.82 2015/04/08 10:07:47 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1002,6 +1002,7 @@ nge_newbuf(struct nge_softc *sc, struct nge_desc *c, struct mbuf *m)
 void
 nge_rxeof(struct nge_softc *sc)
 {
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct nge_desc		*cur_rx;
@@ -1076,7 +1077,6 @@ nge_rxeof(struct nge_softc *sc)
 			m = m0;
 #ifndef __STRICT_ALIGNMENT
 		} else {
-			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
 #endif
@@ -1091,14 +1091,6 @@ nge_rxeof(struct nge_softc *sc)
 		}
 #endif
 
-#if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
 		/* Do IP checksum checking. */
 		if (extsts & NGE_RXEXTSTS_IPPKT) {
 			if (!(extsts & NGE_RXEXTSTS_IPCSUMERR))
@@ -1111,8 +1103,10 @@ nge_rxeof(struct nge_softc *sc)
 				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		}
 
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	sc->nge_cdata.nge_rx_prod = i;
 }

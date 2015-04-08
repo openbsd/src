@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.58 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.59 2015/04/08 10:07:47 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -922,6 +922,7 @@ wb_newbuf(sc, c)
 void wb_rxeof(sc)
 	struct wb_softc		*sc;
 {
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
         struct ifnet		*ifp;
 	struct wb_chain_onefrag	*cur_rx;
 	int			total_len = 0;
@@ -947,7 +948,7 @@ void wb_rxeof(sc)
 				"bug, forcing reset\n", sc->sc_dev.dv_xname);
 			wb_fixmedia(sc);
 			wb_init(sc);
-			return;
+			break;
 		}
 
 		if (rxstat & WB_RXSTAT_RXERR) {
@@ -978,18 +979,10 @@ void wb_rxeof(sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		/* pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
-	return;
+	if_input(ifp, &ml);
 }
 
 void wb_rxeoc(sc)

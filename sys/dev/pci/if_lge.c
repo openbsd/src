@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.64 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.65 2015/04/08 10:07:47 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -680,6 +680,7 @@ lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
 void
 lge_rxeof(struct lge_softc *sc, int cnt)
 {
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct lge_rx_desc	*cur_rx;
@@ -727,19 +728,10 @@ lge_rxeof(struct lge_softc *sc, int cnt)
 			}
 			m = m0;
 		} else {
-			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
 
 		ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
 
 		/* Do IP checksum checking. */
 		if (rxsts & LGE_RXSTS_ISIP) {
@@ -755,8 +747,10 @@ lge_rxeof(struct lge_softc *sc, int cnt)
 				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		}
 
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	sc->lge_cdata.lge_rx_cons = i;
 }

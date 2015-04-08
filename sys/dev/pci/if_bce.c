@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.43 2015/03/14 03:38:48 jsg Exp $ */
+/* $OpenBSD: if_bce.c,v 1.44 2015/04/08 10:07:47 mpi Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -694,6 +694,7 @@ void
 bce_rxintr(struct bce_softc *sc)
 {
 	struct ifnet *ifp = &sc->bce_ac.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct rx_pph *pph;
 	struct mbuf *m;
 	int curr;
@@ -741,17 +742,7 @@ bce_rxintr(struct bce_softc *sc)
 		    BCE_PREPKT_HEADER_SIZE, len, ETHER_ALIGN, ifp);
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 		/* re-check current in case it changed */
 		curr = (bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
@@ -760,6 +751,9 @@ bce_rxintr(struct bce_softc *sc)
 		if (curr >= BCE_NRXDESC)
 			curr = BCE_NRXDESC - 1;
 	}
+
+	if_input(ifp, &ml);
+
 	sc->bce_rxin = curr;
 }
 

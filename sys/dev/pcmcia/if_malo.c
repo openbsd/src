@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.82 2015/03/14 03:38:49 jsg Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.83 2015/04/08 10:07:47 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -925,6 +925,7 @@ cmalo_rx(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct malo_rx_desc *rxdesc;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint8_t *data;
 	uint16_t psize;
@@ -972,16 +973,18 @@ cmalo_rx(struct malo_softc *sc)
 		return;
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
 	/* push the frame up to the network stack if not in monitor mode */
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		ether_input_mbuf(ifp, m);
 		ifp->if_ipackets++;
+		ml_enqueue(&ml, m);
+		if_input(ifp, &ml);
+#if NBPFILTER > 0
+	} else {
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
 	}
+
 }
 
 void
