@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.106 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.107 2015/04/08 14:19:28 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -147,7 +147,7 @@ void			 pfr_enqueue_addrs(struct pfr_ktable *,
 void			 pfr_mark_addrs(struct pfr_ktable *);
 struct pfr_kentry	*pfr_lookup_addr(struct pfr_ktable *,
 			    struct pfr_addr *, int);
-struct pfr_kentry	*pfr_create_kentry(struct pfr_addr *, u_int32_t);
+struct pfr_kentry	*pfr_create_kentry(struct pfr_addr *);
 void			 pfr_destroy_kentries(struct pfr_kentryworkq *);
 void			 pfr_destroy_kentry(struct pfr_kentry *);
 void			 pfr_insert_kentries(struct pfr_ktable *,
@@ -305,7 +305,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				ad.pfra_fback = PFR_FB_NONE;
 		}
 		if (p == NULL && q == NULL) {
-			p = pfr_create_kentry(&ad, kt->pfrkt_flags);
+			p = pfr_create_kentry(&ad);
 			if (p == NULL)
 				senderr(ENOMEM);
 			if (pfr_route_kentry(tmpkt, p)) {
@@ -481,7 +481,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				ad.pfra_fback = PFR_FB_DUPLICATE;
 				goto _skip;
 			}
-			p = pfr_create_kentry(&ad, kt->pfrkt_flags);
+			p = pfr_create_kentry(&ad);
 			if (p == NULL)
 				senderr(ENOMEM);
 			if (pfr_route_kentry(tmpkt, p)) {
@@ -817,7 +817,7 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 }
 
 struct pfr_kentry *
-pfr_create_kentry(struct pfr_addr *ad, u_int32_t flags)
+pfr_create_kentry(struct pfr_addr *ad)
 {
 	struct pfr_kentry_all	*ke;
 
@@ -914,7 +914,7 @@ pfr_insert_kentry(struct pfr_ktable *kt, struct pfr_addr *ad, time_t tzero)
 	p = pfr_lookup_addr(kt, ad, 1);
 	if (p != NULL)
 		return (0);
-	p = pfr_create_kentry(ad, kt->pfrkt_flags);
+	p = pfr_create_kentry(ad);
 	if (p == NULL)
 		return (EINVAL);
 
@@ -1611,7 +1611,7 @@ _skip:
 			senderr(EINVAL);
 		if (pfr_lookup_addr(shadow, &ad, 1) != NULL)
 			continue;
-		p = pfr_create_kentry(&ad, kt->pfrkt_flags);
+		p = pfr_create_kentry(&ad);
 		if (p == NULL)
 			senderr(ENOMEM);
 		if (pfr_route_kentry(shadow, p)) {
@@ -1621,7 +1621,7 @@ _skip:
 		SLIST_INSERT_HEAD(&addrq, p, pfrke_workq);
 		xaddr++;
 		if (p->pfrke_type == PFRKE_COST)
-			kt->pfrkt_refcntcost++;		
+			kt->pfrkt_refcntcost++;
 		pfr_ktable_winfo_update(kt, p);
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
