@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.141 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.142 2015/04/08 09:29:49 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4494,6 +4494,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	struct ieee80211_frame *wh;
 	struct ieee80211_rateset *rs;
 	struct ieee80211_channel *c;
+	struct ifnet *ifp = &ic->ic_if;
 	uint8_t *buf, *frm;
 	uint16_t rxchain, dwell_active, dwell_passive;
 	uint8_t txant;
@@ -4546,7 +4547,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	/* Use the first valid TX antenna. */
 	txant = IWN_LSB(sc->txchainmask);
 	tx->rflags |= IWN_RFLAG_ANT(txant);
-	
+
 	/*
 	 * Only do active scanning if we're announcing a probe request
 	 * for a given SSID (or more, if we ever add it to the driver.)
@@ -4572,6 +4573,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
 	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
 	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, etherbroadcastaddr);
