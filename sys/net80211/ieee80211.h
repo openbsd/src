@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.50 2013/01/17 02:51:56 claudio Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.51 2015/04/08 21:35:57 sthen Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -327,6 +327,7 @@ enum {
 	IEEE80211_ELEMID_EDCAPARMS		= 12,
 	IEEE80211_ELEMID_CHALLENGE		= 16,
 	/* 17-31 reserved for challenge text extension */
+	IEEE80211_ELEMID_CSA			= 37,	/* 11h */
 	IEEE80211_ELEMID_ERP			= 42,
 	IEEE80211_ELEMID_HTCAPS			= 45,	/* 11n */
 	IEEE80211_ELEMID_QOS_CAP		= 46,
