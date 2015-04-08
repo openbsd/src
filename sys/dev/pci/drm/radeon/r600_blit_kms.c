@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600_blit_kms.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: r600_blit_kms.c,v 1.2 2015/04/08 04:03:06 jsg Exp $	*/
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  * Copyright 2009 Red Hat Inc.
@@ -555,13 +555,13 @@ int r600_blit_init(struct radeon_device *rdev)
 		return r;
 	}
 	if (rdev->family >= CHIP_RV770)
-		memcpy(ptr + rdev->r600_blit.state_offset,
+		memcpy_toio(ptr + rdev->r600_blit.state_offset,
 			    r7xx_default_state, rdev->r600_blit.state_len * 4);
 	else
-		memcpy(ptr + rdev->r600_blit.state_offset,
+		memcpy_toio(ptr + rdev->r600_blit.state_offset,
 			    r6xx_default_state, rdev->r600_blit.state_len * 4);
 	if (num_packet2s)
-		memcpy(ptr + rdev->r600_blit.state_offset + (rdev->r600_blit.state_len * 4),
+		memcpy_toio(ptr + rdev->r600_blit.state_offset + (rdev->r600_blit.state_len * 4),
 			    packet2s, num_packet2s * 4);
 	for (i = 0; i < r6xx_vs_size; i++)
 		*(u32 *)((unsigned long)ptr + rdev->r600_blit.vs_offset + i * 4) = cpu_to_le32(r6xx_vs[i]);

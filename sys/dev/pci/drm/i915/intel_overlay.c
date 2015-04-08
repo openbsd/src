@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.13 2015/02/12 02:12:02 kettenis Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.14 2015/04/08 04:03:06 jsg Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -556,8 +556,9 @@ static const u16 uv_static_hcoeffs[N_HORIZ_UV_TAPS * N_PHASES] = {
 
 static void update_polyphase_filter(struct overlay_registers __iomem *regs)
 {
-	memcpy(regs->Y_HCOEFS, y_static_hcoeffs, sizeof(y_static_hcoeffs));
-	memcpy(regs->UV_HCOEFS, uv_static_hcoeffs, sizeof(uv_static_hcoeffs));
+	memcpy_toio(regs->Y_HCOEFS, y_static_hcoeffs, sizeof(y_static_hcoeffs));
+	memcpy_toio(regs->UV_HCOEFS, uv_static_hcoeffs,
+		    sizeof(uv_static_hcoeffs));
 }
 
 static bool update_scaling_factors(struct intel_overlay *overlay,
@@ -1391,7 +1392,7 @@ void intel_setup_overlay(struct drm_device *dev)
 	if (!regs)
 		goto out_unpin_bo;
 
-	memset(regs, 0, sizeof(struct overlay_registers));
+	memset_io(regs, 0, sizeof(struct overlay_registers));
 	update_polyphase_filter(regs);
 	update_reg_attrs(overlay, regs);
 

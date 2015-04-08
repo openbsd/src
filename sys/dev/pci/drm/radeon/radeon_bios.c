@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.4 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.5 2015/04/08 04:03:06 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -121,10 +121,8 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 		bus_space_unmap(bst, bsh, size);
 		return false;
 	}
-
-	memcpy(rdev->bios, bios, size);
+	memcpy_fromio(rdev->bios, bios, size);
 	bus_space_unmap(bst, bsh, size);
-
 	return true;
 }
 

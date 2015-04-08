@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen_blit_kms.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: evergreen_blit_kms.c,v 1.2 2015/04/08 04:03:06 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -702,22 +702,22 @@ int evergreen_blit_init(struct radeon_device *rdev)
 	}
 
 	if (rdev->family < CHIP_CAYMAN) {
-		memcpy(ptr + rdev->r600_blit.state_offset,
+		memcpy_toio(ptr + rdev->r600_blit.state_offset,
 			    evergreen_default_state, rdev->r600_blit.state_len * 4);
 
 		if (num_packet2s)
-			memcpy(ptr + rdev->r600_blit.state_offset + (rdev->r600_blit.state_len * 4),
+			memcpy_toio(ptr + rdev->r600_blit.state_offset + (rdev->r600_blit.state_len * 4),
 				    packet2s, num_packet2s * 4);
 		for (i = 0; i < evergreen_vs_size; i++)
 			*(u32 *)((unsigned long)ptr + rdev->r600_blit.vs_offset + i * 4) = cpu_to_le32(evergreen_vs[i]);
 		for (i = 0; i < evergreen_ps_size; i++)
 			*(u32 *)((unsigned long)ptr + rdev->r600_blit.ps_offset + i * 4) = cpu_to_le32(evergreen_ps[i]);
 	} else {
-		memcpy(ptr + rdev->r600_blit.state_offset,
+		memcpy_toio(ptr + rdev->r600_blit.state_offset,
 			    cayman_default_state, rdev->r600_blit.state_len * 4);
 
 		if (num_packet2s)
-			memcpy(ptr + rdev->r600_blit.state_offset + (rdev->r600_blit.state_len * 4),
+			memcpy_toio(ptr + rdev->r600_blit.state_offset + (rdev->r600_blit.state_len * 4),
 				    packet2s, num_packet2s * 4);
 		for (i = 0; i < cayman_vs_size; i++)
 			*(u32 *)((unsigned long)ptr + rdev->r600_blit.vs_offset + i * 4) = cpu_to_le32(cayman_vs[i]);

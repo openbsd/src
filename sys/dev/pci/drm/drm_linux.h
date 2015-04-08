@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.14 2015/04/08 02:28:13 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.15 2015/04/08 04:03:06 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -456,7 +456,9 @@ struct pci_dev {
 };
 #define PCI_ANY_ID (uint16_t) (~0U)
 
-#define memcpy_toio(d, s, n) memcpy(d, s, n)
+#define memcpy_toio(d, s, n)	memcpy(d, s, n)
+#define memcpy_fromio(d, s, n)	memcpy(d, s, n)
+#define memset_io(d, b, n)	memset(d, b, n)
 
 #define page_to_phys(page)	(VM_PAGE_TO_PHYS(page))
 #define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
