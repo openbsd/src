@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.42 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.43 2015/04/08 04:23:15 guenther Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -60,15 +60,6 @@ union hdr {
 	Elf32_Ehdr elf32;
 	Elf64_Ehdr elf64;
 };
-
-/* a funky nlist overload for reading 32bit a.out on 64bit toys */
-struct nlist32 {
-	u_int32_t	strx;
-	u_int8_t	type;
-	u_int8_t	other;
-	u_int16_t	desc;
-	u_int32_t	value;
-} __packed;
 
 int armap;
 int demangle;
