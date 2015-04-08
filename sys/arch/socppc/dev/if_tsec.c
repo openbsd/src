@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.35 2015/03/10 11:17:55 mpi Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.36 2015/04/08 10:49:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -253,6 +253,7 @@ struct tsec_softc {
 #define sc_lladdr	sc_ac.ac_enaddr
 	struct mii_data		sc_mii;
 #define sc_media	sc_mii.mii_media
+	int			sc_link;
 
 	struct tsec_dmamem	*sc_txring;
 	struct tsec_buf		*sc_txbuf;
@@ -521,6 +522,8 @@ tsec_start(struct ifnet *ifp)
 		return;
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
+	if (!sc->sc_link)
+		return;
 
 	idx = sc->sc_tx_prod;
 	while ((sc->sc_txdesc[idx].td_status & TSEC_TX_TO1) == 0) {
@@ -688,15 +691,21 @@ tsec_mii_statchg(struct device *self)
 	case IFM_1000_CX:
 	case IFM_1000_T:
 		maccfg2 |= TSEC_MACCFG2_IF_GMII;
+		sc->sc_link = 1;
 		break;
 	case IFM_100_TX:
 		ecntrl |= TSEC_ECNTRL_R100M;
 		maccfg2 |= TSEC_MACCFG2_IF_MII;
+		sc->sc_link = 1;
 		break;
 	case IFM_10_T:
 		ecntrl &= ~TSEC_ECNTRL_R100M;
 		maccfg2 |= TSEC_MACCFG2_IF_MII;
+		sc->sc_link = 1;
 		break;
+	default:
+		sc->sc_link = 0;
+		return;
 	}
 
 	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
