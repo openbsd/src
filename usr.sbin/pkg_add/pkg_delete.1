@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.49 2014/09/08 01:27:55 schwarze Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.50 2015/04/08 17:25:58 millert Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: April 8 2015 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ should be waived.
 Recognized keywords include:
 .Bl -tag -width "dependenciesXX"
 .It Ar baddepend
-force the deletion of packages even if they reference inexistent dependencies.
+force the deletion of packages even if they reference nonexistent dependencies.
 .It Ar dependencies
 also delete the whole set of packages that depends upon the requested packages.
 .It Ar nonroot
