@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.170 2015/04/07 14:36:34 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.171 2015/04/08 15:58:25 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -124,8 +124,6 @@ int allowaperture = 0;
 
 void dumpsys(void);
 int lcsplx(int ipl);	/* called from LCore */
-void ppc_intr_setup(intr_establish_t *establish,
-    intr_disestablish_t *disestablish);
 void *ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type,
     int level, int (*func)(void *), void *arg, const char *name);
 
@@ -816,12 +814,6 @@ cpu_unidle(struct cpu_info *ci)
 }
 #endif
 
-/*
- * one attempt at interrupt stuff..
- *
- */
-#include <dev/pci/pcivar.h>
-
 int ppc_configed_intr_cnt = 0;
 struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
 
@@ -853,13 +845,6 @@ ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type, int level,
 
 intr_establish_t *intr_establish_func = (intr_establish_t *)ppc_intr_establish;
 intr_disestablish_t *intr_disestablish_func;
-
-void
-ppc_intr_setup(intr_establish_t *establish, intr_disestablish_t *disestablish)
-{
-	intr_establish_func = establish;
-	intr_disestablish_func = disestablish;
-}
 
 intr_send_ipi_t ppc_no_send_ipi;
 intr_send_ipi_t *intr_send_ipi_func = ppc_no_send_ipi;
