@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.16 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.17 2015/04/08 21:44:16 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -322,6 +322,10 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 			printf(", challenge");
 			if (vflag)
 				ieee80211_print_element(data, len);
+			break;
+		case IEEE80211_ELEMID_CSA:
+			printf(", csa (chan %u count %u%s)", data[1], data[2],
+			    (data[0] == 1) ? " noTX" : "");
 			break;
 		case IEEE80211_ELEMID_ERP:
 			printf(", erp");
