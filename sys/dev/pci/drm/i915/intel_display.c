@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.45 2015/04/06 10:03:34 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.46 2015/04/08 03:21:13 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -6168,8 +6168,7 @@ static void g4x_write_eld(struct drm_connector *connector,
 	if (!eld[0])
 		return;
 
-	if (eld[2] < (uint8_t)len)
-		len = eld[2];
+	len = min_t(uint8_t, eld[2], len);
 	DRM_DEBUG_DRIVER("ELD size %d\n", len);
 	for (i = 0; i < len; i++)
 		I915_WRITE(G4X_HDMIW_HDMIEDID, *((uint32_t *)eld + i));
@@ -6253,7 +6252,7 @@ static void haswell_write_eld(struct drm_connector *connector,
 	i = (i >> 29) & DIP_PORT_SEL_MASK;		/* DIP_Port_Select, 0x1 = PortB */
 	DRM_DEBUG_DRIVER("port num:%d\n", i);
 
-	len = eld[2] < 21 ? eld[2] : 21;	/* 84 bytes of hw ELD buffer */
+	len = min_t(uint8_t, eld[2], 21);	/* 84 bytes of hw ELD buffer */
 	DRM_DEBUG_DRIVER("ELD size %d\n", len);
 	for (i = 0; i < len; i++)
 		I915_WRITE(hdmiw_hdmiedid, *((uint32_t *)eld + i));
@@ -6329,7 +6328,7 @@ static void ironlake_write_eld(struct drm_connector *connector,
 	i &= ~IBX_ELD_ADDRESS;
 	I915_WRITE(aud_cntl_st, i);
 
-	len = eld[2] < 21 ? eld[2] : 21;	/* 84 bytes of hw ELD buffer */
+	len = min_t(uint8_t, eld[2], 21);	/* 84 bytes of hw ELD buffer */
 	DRM_DEBUG_DRIVER("ELD size %d\n", len);
 	for (i = 0; i < len; i++)
 		I915_WRITE(hdmiw_hdmiedid, *((uint32_t *)eld + i));

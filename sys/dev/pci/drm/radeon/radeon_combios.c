@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_combios.c,v 1.6 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_combios.c,v 1.7 2015/04/08 03:21:13 jsg Exp $	*/
 /*
  * Copyright 2004 ATI Technologies Inc., Markham, Ontario
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -1211,8 +1211,7 @@ struct radeon_encoder_lvds *radeon_combios_get_lvds_info(struct radeon_encoder
 			 lvds->native_mode.vdisplay);
 
 		lvds->panel_vcc_delay = RBIOS16(lcd_info + 0x2c);
-		if (2000 < lvds->panel_vcc_delay)
-			lvds->panel_vcc_delay = 2000;
+		lvds->panel_vcc_delay = min_t(u16, lvds->panel_vcc_delay, 2000);
 
 		lvds->panel_pwr_delay = RBIOS8(lcd_info + 0x24);
 		lvds->panel_digon_delay = RBIOS16(lcd_info + 0x38) & 0xf;

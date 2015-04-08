@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.17 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.18 2015/04/08 03:21:13 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -931,10 +931,8 @@ static bool intel_sdvo_write_infoframe(struct intel_sdvo *intel_sdvo,
 
 	for (i = 0; i < hbuf_size; i += 8) {
 		memset(tmp, 0, 8);
-		if (i < length) {
-			unsigned min = 8 < length - i ? 8 : length - i;
-			memcpy(tmp, data + i, min);
-		}
+		if (i < length)
+			memcpy(tmp, data + i, min_t(unsigned, 8, length - i));
 
 		if (!intel_sdvo_set_value(intel_sdvo,
 					  SDVO_CMD_SET_HBUF_DATA,
