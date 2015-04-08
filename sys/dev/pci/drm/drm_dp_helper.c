@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_dp_helper.c,v 1.4 2013/09/02 06:25:27 jsg Exp $	*/
+/*	$OpenBSD: drm_dp_helper.c,v 1.5 2015/04/08 04:24:40 jsg Exp $	*/
 /*
  * Copyright © 2009 Keith Packard
  *
@@ -316,17 +316,17 @@ EXPORT_SYMBOL(drm_dp_get_adjust_request_pre_emphasis);
 
 void drm_dp_link_train_clock_recovery_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE]) {
 	if (dpcd[DP_TRAINING_AUX_RD_INTERVAL] == 0)
-		DELAY(100);
+		udelay(100);
 	else
-		DELAY(dpcd[DP_TRAINING_AUX_RD_INTERVAL] * 4 * 1000);
+		mdelay(dpcd[DP_TRAINING_AUX_RD_INTERVAL] * 4);
 }
 EXPORT_SYMBOL(drm_dp_link_train_clock_recovery_delay);
 
 void drm_dp_link_train_channel_eq_delay(u8 dpcd[DP_RECEIVER_CAP_SIZE]) {
 	if (dpcd[DP_TRAINING_AUX_RD_INTERVAL] == 0)
-		DELAY(400);
+		udelay(400);
 	else
-		DELAY(dpcd[DP_TRAINING_AUX_RD_INTERVAL] * 4 * 1000);
+		mdelay(dpcd[DP_TRAINING_AUX_RD_INTERVAL] * 4);
 }
 EXPORT_SYMBOL(drm_dp_link_train_channel_eq_delay);
 

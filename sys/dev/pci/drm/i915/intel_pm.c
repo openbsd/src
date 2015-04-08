@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.29 2015/02/12 06:30:56 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.30 2015/04/08 04:24:40 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2406,7 +2406,7 @@ static void ironlake_enable_drps(struct drm_device *dev)
 	}
 	if (retries == 0)
 		DRM_ERROR("stuck trying to change perf mode\n");
-	DELAY(1000);
+	mdelay(1);
 
 	ironlake_set_drps(dev, fstart);
 
@@ -2437,10 +2437,10 @@ static void ironlake_disable_drps(struct drm_device *dev)
 
 	/* Go back to the starting frequency */
 	ironlake_set_drps(dev, dev_priv->ips.fstart);
-	DELAY(1000);
+	mdelay(1);
 	rgvswctl |= MEMCTL_CMD_STS;
 	I915_WRITE(MEMSWCTL, rgvswctl);
-	DELAY(1000);
+	mdelay(1);
 
 	spin_unlock_irq(&mchdev_lock);
 }

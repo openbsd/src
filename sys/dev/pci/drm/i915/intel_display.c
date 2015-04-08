@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.46 2015/04/08 03:21:13 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.47 2015/04/08 04:24:40 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -1067,7 +1067,7 @@ void intel_wait_for_pipe_off(struct drm_device *dev, int pipe)
 		/* Wait for the display line to settle */
 		for (retries = 100; retries > 0; retries--) {
 			last_line = I915_READ(reg) & line_mask;
-			DELAY(5000);
+			mdelay(5);
 			if ((I915_READ(reg) & line_mask) == last_line)
 				break;
 		}
