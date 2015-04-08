@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.13 2015/04/06 15:43:15 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.14 2015/04/08 02:28:13 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -461,6 +461,15 @@ struct pci_dev {
 #define page_to_phys(page)	(VM_PAGE_TO_PHYS(page))
 #define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
 #define offset_in_page(off)	((off) & PAGE_MASK)
+
+typedef int pgprot_t;
+#define pgprot_val(v)	(v)
+#define PAGE_KERNEL	0
+
+void	*kmap(struct vm_page *);
+void	 kunmap(void *addr);
+void	*vmap(struct vm_page **, unsigned int, unsigned long, pgprot_t);
+void	 vunmap(void *, size_t);
 
 #define round_up(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
 #define round_down(x, y) (((x) / (y)) * (y))

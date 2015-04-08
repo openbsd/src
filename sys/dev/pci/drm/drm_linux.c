@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.2 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.3 2015/04/08 02:28:13 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  *
@@ -117,3 +117,65 @@ dmi_check_system(const struct dmi_system_id *sysid)
 	}
 	return (num);
 }
+
+void *
+kmap(struct vm_page *pg)
+{
+	vaddr_t va;
+
+#if defined (__HAVE_PMAP_DIRECT)
+	va = pmap_map_direct(pg);
+#else
+	va = uvm_km_valloc_wait(phys_map, PAGE_SIZE);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
+	pmap_update(pmap_kernel());
+#endif
+	return (void *)va;
+}
+
+void
+kunmap(void *addr)
+{
+	vaddr_t va = (vaddr_t)addr;
+
+#if defined (__HAVE_PMAP_DIRECT)
+	pmap_unmap_direct(va);
+#else
+	pmap_kremove(va, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+	uvm_km_free_wakeup(phys_map, va, PAGE_SIZE);
+#endif
+}
+
+void *
+vmap(struct vm_page **pages, unsigned int npages, unsigned long flags,
+     pgprot_t prot)
+{
+	vaddr_t va;
+	paddr_t pa;
+	int i;
+
+	va = uvm_km_valloc_wait(phys_map, PAGE_SIZE * npages);
+	if (va == 0)
+		return NULL;
+	for (i = 0; i < npages; i++) {
+		pa = VM_PAGE_TO_PHYS(pages[i]) | prot;
+		pmap_enter(pmap_kernel(), va + (i * PAGE_SIZE), pa,
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
+		pmap_update(pmap_kernel());
+	}
+
+	return (void *)va;
+}
+
+void
+vunmap(void *addr, size_t size)
+{
+	vaddr_t va = (vaddr_t)addr;
+
+	pmap_remove(pmap_kernel(), va, va + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(phys_map, va, size);
+}
+

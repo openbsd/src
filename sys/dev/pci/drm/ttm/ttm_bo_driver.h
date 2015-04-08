@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_driver.h,v 1.3 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_driver.h,v 1.4 2015/04/08 02:28:13 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 Vmware, Inc., Palo Alto, CA., USA
@@ -37,10 +37,6 @@
 #include <dev/pci/drm/ttm/ttm_module.h>
 #include <dev/pci/drm/drm_mm.h>
 #include <dev/pci/drm/drm_global.h>
-
-typedef int pgprot_t;
-#define pgprot_val(v)	(v)
-#define PAGE_KERNEL	0
 
 struct ttm_backend_func {
 	/**

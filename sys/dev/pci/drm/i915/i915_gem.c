@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.88 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.89 2015/04/08 02:28:13 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -288,35 +288,6 @@ static int i915_gem_object_needs_bit17_swizzle(struct drm_i915_gem_object *obj)
 
 	return dev_priv->mm.bit_6_swizzle_x == I915_BIT_6_SWIZZLE_9_10_17 &&
 		obj->tiling_mode != I915_TILING_NONE;
-}
-
-static void *
-kmap(struct vm_page *pg)
-{
-	vaddr_t va;
-
-#if defined (__HAVE_PMAP_DIRECT)
-	va = pmap_map_direct(pg);
-#else
-	va = uvm_km_valloc_wait(phys_map, PAGE_SIZE);
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
-	pmap_update(pmap_kernel());
-#endif
-	return (void *)va;
-}
-
-static void
-kunmap(void *addr)
-{
-	vaddr_t va = (vaddr_t)addr;
-
-#if defined (__HAVE_PMAP_DIRECT)
-	pmap_unmap_direct(va);
-#else
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, va, PAGE_SIZE);
-#endif
 }
 
 static inline void

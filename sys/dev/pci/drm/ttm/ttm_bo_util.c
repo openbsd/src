@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.10 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.11 2015/04/08 02:28:13 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -37,11 +37,6 @@ int	 ttm_mem_reg_ioremap(struct ttm_bo_device *, struct ttm_mem_reg *,
 	     void **);
 void	 ttm_mem_reg_iounmap(struct ttm_bo_device *, struct ttm_mem_reg *,
 	     void *);
-
-void	*kmap(struct vm_page *);
-void	 kunmap(void *addr);
-void	*vmap(struct vm_page **, unsigned int, unsigned long, pgprot_t);
-void	 vunmap(void *, size_t);
 
 void ttm_bo_free_old_node(struct ttm_buffer_object *bo)
 {
@@ -517,69 +512,6 @@ static int ttm_bo_ioremap(struct ttm_buffer_object *bo,
 			    bo->mem.bus.bsh);
 	}
 	return (!map->virtual) ? -ENOMEM : 0;
-}
-
-void *
-kmap(struct vm_page *pg)
-{
-	vaddr_t va;
-
-#if defined (__HAVE_PMAP_DIRECT)
-	va = pmap_map_direct(pg);
-#else
-	va = uvm_km_valloc(kernel_map, PAGE_SIZE);
-	if (va == 0)
-		return (NULL);
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
-	pmap_update(pmap_kernel());
-#endif
-	return (void *)va;
-}
-
-void
-kunmap(void *addr)
-{
-	vaddr_t va = (vaddr_t)addr;
-
-#if defined (__HAVE_PMAP_DIRECT)
-	pmap_unmap_direct(va);
-#else
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, va, PAGE_SIZE);
-#endif
-}
-
-void *
-vmap(struct vm_page **pages, unsigned int npages, unsigned long flags,
-     pgprot_t prot)
-{
-	vaddr_t va;
-	paddr_t pa;
-	int i;
-
-	va = uvm_km_valloc(kernel_map, PAGE_SIZE * npages);
-	if (va == 0)
-		return NULL;
-	for (i = 0; i < npages; i++) {
-		pa = VM_PAGE_TO_PHYS(pages[i]) | prot;
-		pmap_enter(pmap_kernel(), va + (i * PAGE_SIZE), pa,
-		    PROT_READ | PROT_WRITE,
-		    PROT_READ | PROT_WRITE | PMAP_WIRED);
-		pmap_update(pmap_kernel());
-	}
-
-	return (void *)va;
-}
-
-void
-vunmap(void *addr, size_t size)
-{
-	vaddr_t va = (vaddr_t)addr;
-
-	pmap_remove(pmap_kernel(), va, va + size);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, va, size);
 }
 
 static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
