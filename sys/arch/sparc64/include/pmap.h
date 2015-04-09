@@ -39,6 +39,7 @@
 #ifdef	_KERNEL
 #include <sys/queue.h>
 #endif
+#include <sys/mutex.h>
 #endif
 
 /*
@@ -108,6 +109,7 @@ struct page_size_map {
 extern struct page_size_map page_size_map[];
 
 struct pmap {
+	struct mutex pm_mtx;
 	int pm_ctx;		/* Current context */
 	int pm_refs;		/* ref count */
 	/* 
@@ -201,10 +203,12 @@ typedef struct pv_entry {
 /* PV flags encoded in the low bits of the VA of the first pv_entry */
 
 struct vm_page_md {
+	struct mutex pvmtx;
 	struct pv_entry pvent;
 };
 
 #define VM_MDPAGE_INIT(pg) do {			\
+	mtx_init(&(pg)->mdpage.pvmtx, IPL_VM);	\
 	(pg)->mdpage.pvent.pv_next = NULL;	\
 	(pg)->mdpage.pvent.pv_pmap = NULL;	\
 	(pg)->mdpage.pvent.pv_va = 0;		\
