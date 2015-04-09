@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.26 2015/02/06 23:21:59 millert Exp $	*/
+/*	$OpenBSD: elf.c,v 1.27 2015/04/09 04:46:18 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -376,7 +376,6 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 		type = elf_shn2type(eh, sym->st_shndx, NULL);
 		np->n_type = type < 0? N_TEXT : type;
 		if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-			np->n_type = N_INDR;
 			np->n_other = 'W';
 		} else if (sn != NULL && *sn != 0 &&
 		    strcmp(sn, ELF_INIT) &&

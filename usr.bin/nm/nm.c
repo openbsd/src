@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.43 2015/04/08 04:23:15 guenther Exp $	*/
+/*	$OpenBSD: nm.c,v 1.44 2015/04/09 04:46:18 guenther Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -710,12 +710,8 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 		(void)printf("\n%s:\n", name);
 
 	/* print out symbols */
-	for (i = 0; i < nnames; i++) {
-		if (show_extensions && snames[i] != names &&
-		    SYMBOL_TYPE((snames[i] -1)->n_type) == N_INDR)
-			continue;
+	for (i = 0; i < nnames; i++)
 		print_symbol(name, snames[i]);
-	}
 
 	free(snames);
 	free(names);
@@ -745,9 +741,7 @@ print_symbol(const char *name, struct nlist *sym)
 	 */
 	if (!print_only_undefined_symbols) {
 		/* print symbol's value */
-		if (SYMBOL_TYPE(sym->n_type) == N_UNDF ||
-		    (show_extensions && SYMBOL_TYPE(sym->n_type) == N_INDR &&
-		    sym->n_value == 0))
+		if (SYMBOL_TYPE(sym->n_type) == N_UNDF)
 			(void)printf("        ");
 		else
 			(void)printf("%08lx", sym->n_value);
@@ -759,10 +753,7 @@ print_symbol(const char *name, struct nlist *sym)
 			(void)printf(" %c ", typeletter(sym));
 	}
 
-	if (SYMBOL_TYPE(sym->n_type) == N_INDR && show_extensions)
-		printf("%s -> %s\n", symname(sym), symname(sym+1));
-	else
-		(void)puts(symname(sym));
+	(void)puts(symname(sym));
 }
 
 /*
@@ -796,8 +787,6 @@ typeletter(struct nlist *np)
 		return(ext? 'F' : 'W');
 	case N_TEXT:
 		return(ext? 'T' : 't');
-	case N_INDR:
-		return(ext? 'I' : 'i');
 	case N_SIZE:
 		return(ext? 'S' : 's');
 	case N_UNDF:
