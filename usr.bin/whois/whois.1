@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.32 2013/03/05 16:09:10 sthen Exp $
+.\"	$OpenBSD: whois.1,v 1.33 2015/04/09 19:29:53 sthen Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd $Mdocdate: March 5 2013 $
+.Dd $Mdocdate: April 9 2015 $
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -97,8 +97,11 @@ By default
 .Nm
 constructs the name of a whois server to use from the top-level domain
 .Pq Tn TLD
-of the supplied (single) argument, and appending
-.Qq Li .whois-servers.net .
+of the supplied (single) argument.
+For newer generic domains (gTLDs), a lookup for whois.nic.tld is attempted.
+For other TLDs, or if this lookup fails,
+.Qq Li .whois-servers.net
+is appended to the TLD.
 This effectively allows a suitable whois server to be selected
 automatically for a large number of
 .Tn TLDs .

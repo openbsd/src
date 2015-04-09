@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.46 2014/01/03 15:25:18 millert Exp $   */
+/*      $OpenBSD: whois.c,v 1.47 2015/04/09 19:29:53 sthen Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -278,6 +278,12 @@ choose_server(const char *name, const char *country)
 	char *nserver;
 	char *ep;
 	size_t len;
+	struct addrinfo hints, *res;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = 0;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
 
 	if (country != NULL)
 		qhead = country;
@@ -299,8 +305,33 @@ choose_server(const char *name, const char *country)
 	if ((nserver = realloc(server, len)) == NULL)
 		err(1, "realloc");
 	server = nserver;
-	strlcpy(server, qhead, len);
-	strlcat(server, QNICHOST_TAIL, len);
+
+	/*
+	 * Post-2003 ("new") gTLDs are all supposed to have "whois.nic.domain"
+	 * (per registry agreement), some older gTLDs also support this...
+	 */
+	strlcpy(server, "whois.nic.", len);
+	strlcat(server, qhead, len);
+
+	/* most ccTLDs don't do this, but QNICHOST/whois-servers mostly works */
+	if ((strlen(qhead) == 2 ||
+	    /* and is required for most of the <=2003 TLDs/gTLDs */
+	    strncasecmp(qhead, "org", 3) == 0 ||
+	    strncasecmp(qhead, "com", 3) == 0 ||
+	    strncasecmp(qhead, "net", 3) == 0 ||
+	    strncasecmp(qhead, "cat", 3) == 0 ||
+	    strncasecmp(qhead, "pro", 3) == 0 ||
+	    strncasecmp(qhead, "info", 4) == 0 ||
+	    strncasecmp(qhead, "aero", 4) == 0 ||
+	    strncasecmp(qhead, "jobs", 4) == 0 ||
+	    strncasecmp(qhead, "mobi", 4) == 0 ||
+	    strncasecmp(qhead, "museum", 6) == 0 ||
+	     /* for others, if whois.nic.TLD doesn't exist, try whois-servers */
+	    getaddrinfo(server, NULL, &hints, &res) != 0)) {
+		strlcpy(server, qhead, len);
+		strlcat(server, QNICHOST_TAIL, len);
+	}
+
 	return (server);
 }
 
