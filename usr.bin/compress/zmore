@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: zmore,v 1.7 2014/05/07 21:42:50 zhuk Exp $
+# $OpenBSD: zmore,v 1.8 2015/04/09 19:37:35 millert Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -29,7 +29,7 @@ while test $# -ne 0; do
 			shift
 			break
 			;;
-		-*)
+		-*|+*)
 			flags="$flags $1"
 			shift
 			;;
