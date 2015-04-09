@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.76 2015/04/08 19:39:29 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.77 2015/04/09 16:48:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -339,11 +339,6 @@ server_read_http(struct bufferevent *bev, void *arg)
 			 * the carriage return? And some browsers seem to
 			 * include the line length in the content-length.
 			 */
-			if (clt->clt_toread != 0) {
-				/* We already read Content-Length */
-				server_abort_http(clt, 400, errstr);
-				goto abort;
-			}
 			clt->clt_toread = strtonum(value, 0, LLONG_MAX,
 			    &errstr);
 			if (errstr) {
