@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.93 2015/03/20 12:04:09 dlg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.94 2015/04/09 02:08:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -751,7 +751,7 @@ struct rl_stats {
 #define RL_JUMBO_MTU_6K		\
 	((6 * 1024) - ETHER_HDR_LEN - ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 #define RL_JUMBO_MTU_7K		\
-	(RL_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
+	((7 * 1024) - ETHER_HDR_LEN - ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 #define RL_JUMBO_MTU_9K		\
 	((9 * 1024) - ETHER_HDR_LEN - ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 #define RL_MTU			ETHERMTU
