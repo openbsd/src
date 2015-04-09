@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.107 2015/04/08 14:19:28 mikeb Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.108 2015/04/09 12:04:14 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -877,6 +877,9 @@ pfr_destroy_kentry(struct pfr_kentry *ke)
 {
 	if (ke->pfrke_counters)
 		pool_put(&pfr_kcounters_pl, ke->pfrke_counters);
+	if (ke->pfrke_type == PFRKE_COST || ke->pfrke_type == PFRKE_ROUTE)
+		pfi_kif_unref(((struct pfr_kentry_all *)ke)->pfrke_rkif,
+		    PFI_KIF_REF_ROUTE);
 	pool_put(&pfr_kentry_pl[ke->pfrke_type], ke);
 }
 
