@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.313 2015/03/18 12:04:26 dlg Exp $
+#	$OpenBSD: files.pci,v 1.314 2015/04/09 18:58:22 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -290,14 +290,6 @@ file	dev/pci/ppb.c			ppb
 # Cyclades Cyclom-8/16/32
 attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
-
-# Lan Media Corporation T1/HSSI/DS3 adapter
-device	lmc: ifnet, sppp, ifmedia
-attach	lmc at pci
-file	dev/pci/if_lmc.c		lmc
-file	dev/pci/if_lmc_common.c		lmc
-file	dev/pci/if_lmc_media.c		lmc
-file	dev/pci/if_lmc_obsd.c		lmc
 
 # Myson Century MTD800/MTD803/MTD891
 attach	mtd at pci with mtd_pci
@@ -723,15 +715,6 @@ file	dev/pci/if_malo_pci.c		malo_pci
 #
 attach	bwi at pci with bwi_pci
 file	dev/pci/if_bwi_pci.c		bwi_pci
-
-# Sangoma PCI card
-device	san: ifnet, ifmedia, sppp
-attach	san at pci
-file	dev/pci/if_sandrv.c		san
-file	dev/pci/if_san_common.c		san
-file	dev/pci/if_san_obsd.c		san
-file	dev/pci/if_san_te1.c		san
-file	dev/pci/if_san_xilinx.c		san
 
 # PIIX4 power management controller
 device	piixpm: i2cbus
