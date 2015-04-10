@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.187 2015/04/10 05:31:25 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.188 2015/04/10 05:52:09 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -155,7 +155,14 @@ extern struct cfdriver drm_cd;
 #define	DRM_COPY_FROM_USER(kern, user, size)	copyin(user, kern, size)
 
 #define DRM_UDELAY(udelay)	DELAY(udelay)
-#define	drm_can_sleep()	(hz & 1)
+
+static inline bool
+drm_can_sleep(void)
+{
+	if (in_atomic() || in_dbg_master() || irqs_disabled())
+		return false;
+	return true;
+}
 
 #define DRM_WAIT_ON(ret, queue, lock,  timeout, msg, condition ) do {	\
 	mtx_enter(lock);						\
