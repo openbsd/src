@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.114 2015/04/07 10:46:20 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.115 2015/04/10 02:08:08 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -377,9 +377,9 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	ifv->ifv_if.if_baudrate = p->if_baudrate;
 
 	if (p->if_capabilities & IFCAP_VLAN_MTU)
-		ifv->ifv_if.if_mtu = p->if_hardmtu;
+		ifv->ifv_if.if_mtu = p->if_mtu;
 	else
-		ifv->ifv_if.if_mtu = p->if_hardmtu - EVL_ENCAPLEN;
+		ifv->ifv_if.if_mtu = p->if_mtu - EVL_ENCAPLEN;
 
 	ifv->ifv_if.if_flags = p->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
@@ -561,9 +561,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMTU:
 		if (ifv->ifv_p != NULL) {
 			if (ifv->ifv_p->if_capabilities & IFCAP_VLAN_MTU)
-				p_mtu = ifv->ifv_p->if_mtu;
+				p_mtu = ifv->ifv_p->if_hardmtu;
 			else
-				p_mtu = ifv->ifv_p->if_mtu - EVL_ENCAPLEN;
+				p_mtu = ifv->ifv_p->if_hardmtu - EVL_ENCAPLEN;
 			
 			if (ifr->ifr_mtu > p_mtu || ifr->ifr_mtu < ETHERMIN)
 				error = EINVAL;
