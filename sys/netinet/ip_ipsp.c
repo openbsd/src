@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.204 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.205 2015/04/10 12:31:55 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -124,6 +124,7 @@ struct xformsw *xformswNXFORMSW = &xformsw[nitems(xformsw)];
 
 #define	TDB_HASHSIZE_INIT	32
 
+static SIPHASH_KEY tdbkey;
 static struct tdb **tdbh = NULL;
 static struct tdb **tdbaddr = NULL;
 static struct tdb **tdbsrc = NULL;
@@ -138,34 +139,15 @@ int
 tdb_hash(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
     u_int8_t proto)
 {
-	static u_int32_t mult1 = 0, mult2 = 0;
-	u_int8_t *ptr = (u_int8_t *) dst;
-	int i, shift;
-	u_int64_t hash;
-	int val32 = 0;
+	SIPHASH_CTX ctx;
 
-	while (mult1 == 0)
-		mult1 = arc4random();
-	while (mult2 == 0)
-		mult2 = arc4random();
+	SipHash24_Init(&ctx, &tdbkey);
+	SipHash24_Update(&ctx, &rdomain, sizeof(rdomain));
+	SipHash24_Update(&ctx, &spi, sizeof(spi));
+	SipHash24_Update(&ctx, &proto, sizeof(proto));
+	SipHash24_Update(&ctx, dst, SA_LEN(&dst->sa));
 
-	hash = (spi ^ proto ^ rdomain) * mult1;
-	for (i = 0; i < SA_LEN(&dst->sa); i++) {
-		val32 = (val32 << 8) | ptr[i];
-		if (i % 4 == 3) {
-			hash ^= val32 * mult2;
-			val32 = 0;
-		}
-	}
-
-	if (i % 4 != 0)
-		hash ^= val32 * mult2;
-
-	shift = ffs(tdb_hashmask + 1);
-	while ((hash & ~tdb_hashmask) != 0)
-		hash = (hash >> shift) ^ (hash & tdb_hashmask);
-
-	return hash;
+	return (SipHash24_End(&ctx) & tdb_hashmask);
 }
 
 /*
@@ -590,6 +572,7 @@ tdb_rehash(void)
 
 	tdb_hashmask = (tdb_hashmask << 1) | 1;
 
+	arc4random_buf(&tdbkey, sizeof(tdbkey));
 	new_tdbh = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *), M_TDB,
 	    M_WAITOK | M_ZERO);
 	new_tdbaddr = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *), M_TDB,
@@ -646,6 +629,7 @@ puttdb(struct tdb *tdbp)
 	int s = splsoftnet();
 
 	if (tdbh == NULL) {
+		arc4random_buf(&tdbkey, sizeof(tdbkey));
 		tdbh = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *),
 		    M_TDB, M_WAITOK | M_ZERO);
 		tdbaddr = mallocarray(tdb_hashmask + 1, sizeof(struct tdb *),
