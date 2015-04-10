@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.19 2014/11/12 16:29:04 millert Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.20 2015/04/10 18:05:51 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -227,15 +227,16 @@ cl_optchange(SCR *sp, int opt, char *str, u_long *valp)
 	clp = CLP(sp);
 
 	switch (opt) {
+	case O_TERM:
+		F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
+		/* FALLTHROUGH */
 	case O_COLUMNS:
 	case O_LINES:
-	case O_TERM:
 		/*
-		 * Changing the columns, lines or terminal require that
-		 * we restart the screen.
+		 * Changing the terminal type requires that we reinitialize
+		 * curses, while resizing does not.
 		 */
 		F_SET(sp->gp, G_SRESTART);
-		F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
 		break;
 	case O_MESG:
 		(void)cl_omesg(sp, clp, !*valp);

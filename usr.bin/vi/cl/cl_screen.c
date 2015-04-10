@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_screen.c,v 1.22 2014/11/12 16:29:04 millert Exp $	*/
+/*	$OpenBSD: cl_screen.c,v 1.23 2015/04/10 18:05:51 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -52,7 +52,9 @@ cl_screen(SCR *sp, u_int32_t flags)
 
 	/* See if the current information is incorrect. */
 	if (F_ISSET(gp, G_SRESTART)) {
-		if (cl_quit(gp))
+		if ((!F_ISSET(sp, SC_SCR_EX | SC_SCR_VI) ||
+		    resizeterm(O_VAL(sp, O_LINES), O_VAL(sp, O_COLUMNS))) &&
+		    cl_quit(gp))
 			return (1);
 		F_CLR(gp, G_SRESTART);
 	}
@@ -222,18 +224,14 @@ cl_vi_init(SCR *sp)
 	cl_putenv("COLUMNS", NULL, (u_long)O_VAL(sp, O_COLUMNS));
 
 	/*
+	 * The terminal is aways initialized, either in `main`, or by a
+	 * previous call to newterm(3).
+	 */
+	(void)del_curterm(cur_term);
+
+	/*
 	 * We don't care about the SCREEN reference returned by newterm, we
 	 * never have more than one SCREEN at a time.
-	 *
-	 * XXX
-	 * The SunOS initscr() can't be called twice.  Don't even think about
-	 * using it.  It fails in subtle ways (e.g. select(2) on fileno(stdin)
-	 * stops working).  (The SVID notes that applications should only call
-	 * initscr() once.)
-	 *
-	 * XXX
-	 * The HP/UX newterm doesn't support the NULL first argument, so we
-	 * have to specify the terminal type.
 	 */
 	errno = 0;
 	if (newterm(ttype, stdout, stdin) == NULL) {
@@ -394,6 +392,9 @@ cl_vi_end(GS *gp)
 
 	/* End curses window. */
 	(void)endwin();
+
+	/* Free the SCREEN created by newterm(3). */
+	delscreen(set_term(NULL));
 
 	/*
 	 * XXX
