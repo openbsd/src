@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.66 2015/03/18 12:23:15 dlg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.67 2015/04/10 11:02:12 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -102,12 +102,11 @@ int pipex_prune = 1;			/* walk list every seconds */
 /* pipex traffic queue */
 struct ifqueue pipexinq;
 struct ifqueue pipexoutq;
-struct pipex_tag {
-	struct pipex_session *session;
-	int			proto;
-};
 void *pipex_softintr = NULL;
 Static void pipex_softintr_handler(void *);
+
+/* borrow an mbuf pkthdr field */
+#define ph_ppp_proto ether_vtag
 
 /* from udp_usrreq.c */
 extern int udpcksum;
@@ -716,9 +715,9 @@ pipex_softintr_handler(void *dummy)
 Static void
 pipex_ppp_dequeue(void)
 {
+	struct pipex_session *pkt_session;
+	u_int16_t proto;
 	struct mbuf *m;
-	struct m_tag *mtag;
-	struct pipex_tag *tag;
 	int c, s;
 
 	/* ppp output */
@@ -731,20 +730,24 @@ pipex_ppp_dequeue(void)
 		}
 		splx(s);
 
-		mtag = m_tag_find(m, PACKET_TAG_PIPEX, NULL);
-		if (mtag == NULL) {
+		pkt_session = m->m_pkthdr.ph_cookie;
+		if (pkt_session == NULL) {
 			m_freem(m);
 			continue;
 		}
-		tag = (struct pipex_tag *)(mtag + 1);
-		if (tag->session->is_multicast != 0) {
+		proto = m->m_pkthdr.ph_ppp_proto;
+
+		m->m_pkthdr.ph_cookie = NULL;
+		m->m_pkthdr.ph_ppp_proto = 0;
+
+		if (pkt_session->is_multicast != 0) {
 			struct pipex_session *session;
 			struct mbuf *m0;
 
 			LIST_FOREACH(session, &pipex_session_list,
 			    session_list) {
 				if (session->pipex_iface !=
-				    tag->session->pipex_iface)
+				    pkt_session->pipex_iface)
 					continue;
 				if (session->ip_forward == 0 &&
 				    session->ip6_forward == 0)
@@ -754,11 +757,11 @@ pipex_ppp_dequeue(void)
 					session->stat.oerrors++;
 					continue;
 				}
-				pipex_ppp_output(m0, session, tag->proto);
+				pipex_ppp_output(m0, session, proto);
 			}
 			m_freem(m);
 		} else
-			pipex_ppp_output(m, tag->session, tag->proto);
+			pipex_ppp_output(m, pkt_session, proto);
 	}
 
 	/* ppp input */
@@ -771,13 +774,12 @@ pipex_ppp_dequeue(void)
 		}
 		splx(s);
 
-		mtag = m_tag_find(m, PACKET_TAG_PIPEX, NULL);
-		if (mtag == NULL) {
+		pkt_session = m->m_pkthdr.ph_cookie;
+		if (pkt_session == NULL) {
 			m_freem(m);
 			continue;
 		}
-		tag = (struct pipex_tag *)(mtag + 1);
-		pipex_ppp_input(m, tag->session, 0);
+		pipex_ppp_input(m, pkt_session, 0);
 	}
 
 	/*
@@ -794,9 +796,11 @@ Static int
 pipex_ppp_enqueue(struct mbuf *m0, struct pipex_session *session,
     struct ifqueue *queue)
 {
-	struct pipex_tag *tag;
-	struct m_tag *mtag;
 	int s;
+
+	m0->m_pkthdr.ph_cookie = session;
+	/* XXX need to support other protocols */
+	m0->m_pkthdr.ph_ppp_proto = PPP_IP;
 
 	s = splnet();
 	if (IF_QFULL(queue)) {
@@ -804,16 +808,6 @@ pipex_ppp_enqueue(struct mbuf *m0, struct pipex_session *session,
 		splx(s);
 		goto fail;
 	}
-	mtag = m_tag_get(PACKET_TAG_PIPEX, sizeof(struct pipex_tag), M_NOWAIT);
-	if (mtag == NULL) {
-		splx(s);
-		goto fail;
-	}
-	m_tag_prepend(m0, mtag);
-	tag = (struct pipex_tag *)(mtag + 1);
-	tag->session = session;
-	tag->proto = PPP_IP;	/* XXX need to support other protocols */
-
 	IF_ENQUEUE(queue, m0);
 	splx(s);
 
@@ -907,8 +901,6 @@ pipex_output(struct mbuf *m0, int af, int off,
 {
 	struct pipex_session *session;
 	struct ip ip;
-	struct pipex_tag *tag;
-	struct m_tag *mtag;
 	struct mbuf *mret;
 
 	session = NULL;
@@ -923,20 +915,6 @@ pipex_output(struct mbuf *m0, int af, int off,
 				session = pipex_lookup_by_ip_address(ip.ip_dst);
 		}
 		if (session != NULL) {
-			for (mtag = m_tag_find(m0, PACKET_TAG_PIPEX, NULL);
-			    mtag != NULL;
-			    mtag = m_tag_find(m0, PACKET_TAG_PIPEX, mtag)) {
-				tag = (struct pipex_tag *)(mtag + 1);
-				if (tag->session == session) {
-					/*
-					 * Don't encapsulate encapsulated
-					 * packets.
-					 */
-					m_freem(m0);
-					return (NULL);
-				}
-			}
-
 			if (session == pipex_iface->multicast_session) {
 				mret = m0;
 				m0 = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
@@ -1071,8 +1049,6 @@ Static void
 pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 {
 	int proto, hlen = 0;
-	struct m_tag *mtag;
-	struct pipex_tag *tag;
 
 	KASSERT(m0->m_pkthdr.len >= PIPEX_PPPMINLEN);
 	proto = pipex_ppp_proto(m0, session, 0, &hlen);
@@ -1104,16 +1080,6 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 		return;
 	}
 #endif
-	/* delete mtag from decapsulated packet */
-	for (mtag = m_tag_find(m0, PACKET_TAG_PIPEX, NULL); mtag;
-	    mtag = m_tag_find(m0, PACKET_TAG_PIPEX, mtag)) {
-		tag = (struct pipex_tag *)(mtag + 1);
-		if (tag->session == session) {
-			m_tag_delete(m0, mtag);
-			break;
-		}
-	}
-
 	switch (proto) {
 	case PPP_IP:
 		if (session->ip_forward == 0)

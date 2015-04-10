@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.187 2015/02/10 03:46:30 lteo Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.188 2015/04/10 11:02:12 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -462,7 +462,6 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_GRE			0x0080  /* GRE processing done */
 #define PACKET_TAG_DLT			0x0100 /* data link layer type */
 #define PACKET_TAG_PF_DIVERT		0x0200 /* pf(4) diverted packet */
-#define PACKET_TAG_PIPEX		0x0400 /* pipex session cache */
 #define PACKET_TAG_PF_REASSEMBLED	0x0800 /* pf reassembled ipv6 packet */
 #define PACKET_TAG_SRCROUTE		0x1000 /* IPv4 source routing options */
 #define PACKET_TAG_TUNNEL		0x2000	/* Tunnel endpoint address */
@@ -470,7 +469,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define MTAG_BITS \
     ("\20\1IPSEC_IN_DONE\2IPSEC_OUT_DONE\3IPSEC_IN_CRYPTO_DONE" \
     "\4IPSEC_OUT_CRYPTO_NEEDED\5IPSEC_PENDING_TDB\6BRIDGE\7GIF\10GRE\11DLT" \
-    "\12PF_DIVERT\13PIPEX\14PF_REASSEMBLED\15SRCROUTE\16TUNNEL")
+    "\12PF_DIVERT\14PF_REASSEMBLED\15SRCROUTE\16TUNNEL")
 
 /*
  * Maximum tag payload length (that is excluding the m_tag structure).
