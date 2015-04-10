@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.13 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.14 2015/04/10 19:59:19 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -43,9 +43,9 @@
 #define MINSEG_INDIRECT		2 /* use indirect if nsegs >= this value */
 
 #if VIRTIO_DEBUG
-#define VIRITO_ASSERT(x)	KASSERT(x)
+#define VIRTIO_ASSERT(x)	KASSERT(x)
 #else
-#define VIRITO_ASSERT(x)
+#define VIRTIO_ASSERT(x)
 #endif
 
 void		 virtio_init_vq(struct virtio_softc *,
@@ -510,7 +510,7 @@ virtio_enqueue_prep(struct virtqueue *vq, int *slotp)
 {
 	struct vq_entry *qe1;
 
-	VIRITO_ASSERT(slotp != NULL);
+	VIRTIO_ASSERT(slotp != NULL);
 
 	qe1 = vq_alloc_entry(vq);
 	if (qe1 == NULL)
@@ -532,8 +532,8 @@ virtio_enqueue_reserve(struct virtqueue *vq, int slot, int nsegs)
 	int indirect;
 	struct vq_entry *qe1 = &vq->vq_entries[slot];
 
-	VIRITO_ASSERT(qe1->qe_next == -1);
-	VIRITO_ASSERT(1 <= nsegs && nsegs <= vq->vq_num);
+	VIRTIO_ASSERT(qe1->qe_next == -1);
+	VIRTIO_ASSERT(1 <= nsegs && nsegs <= vq->vq_num);
 
 	if ((vq->vq_indirect != NULL) &&
 	    (nsegs >= MINSEG_INDIRECT) &&
@@ -603,8 +603,8 @@ virtio_enqueue(struct virtqueue *vq, int slot, bus_dmamap_t dmamap, int write)
 	int i;
 	int s = qe1->qe_next;
 
-	VIRITO_ASSERT(s >= 0);
-	VIRITO_ASSERT(dmamap->dm_nsegs > 0);
+	VIRTIO_ASSERT(s >= 0);
+	VIRTIO_ASSERT(dmamap->dm_nsegs > 0);
 	if (dmamap->dm_nsegs > vq->vq_maxnsegs) {
 #if VIRTIO_DEBUG
 		for (i = 0; i < dmamap->dm_nsegs; i++) {
@@ -637,10 +637,10 @@ virtio_enqueue_p(struct virtqueue *vq, int slot, bus_dmamap_t dmamap,
 	struct vring_desc *vd = qe1->qe_desc_base;
 	int s = qe1->qe_next;
 
-	VIRITO_ASSERT(s >= 0);
+	VIRTIO_ASSERT(s >= 0);
 	/* XXX todo: handle more segments */
-	VIRITO_ASSERT(dmamap->dm_nsegs == 1);
-	VIRITO_ASSERT((dmamap->dm_segs[0].ds_len > start) &&
+	VIRTIO_ASSERT(dmamap->dm_nsegs == 1);
+	VIRTIO_ASSERT((dmamap->dm_segs[0].ds_len > start) &&
 	    (dmamap->dm_segs[0].ds_len >= start + len));
 
 	vd[s].addr = dmamap->dm_segs[0].ds_addr + start;
@@ -896,7 +896,7 @@ virtio_nused(struct virtqueue *vq)
 	uint16_t	n;
 
 	n = (uint16_t)(vq->vq_used->idx - vq->vq_used_idx);
-	VIRITO_ASSERT(n <= vq->vq_num);
+	VIRTIO_ASSERT(n <= vq->vq_num);
 
 	return n;
 }
