@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.14 2015/04/10 19:59:19 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.15 2015/04/10 20:00:26 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 void		 virtio_init_vq(struct virtio_softc *,
 				struct virtqueue *, int);
 void		 vq_free_entry(struct virtqueue *, struct vq_entry *);
-void		 vq_free_entry_locked(struct virtqueue *, struct vq_entry *);
 struct vq_entry	*vq_alloc_entry(struct virtqueue *);
 
 struct cfdriver virtio_cd = {
@@ -460,13 +459,6 @@ void
 vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
 {
 	SIMPLEQ_INSERT_TAIL(&vq->vq_freelist, qe, qe_list);
-	return;
-}
-
-void
-vq_free_entry_locked(struct virtqueue *vq, struct vq_entry *qe)
-{
-	SIMPLEQ_INSERT_TAIL(&vq->vq_freelist, qe, qe_list);
 }
 
 /*
@@ -723,10 +715,10 @@ virtio_enqueue_abort(struct virtqueue *vq, int slot)
 	vd = &vq->vq_desc[0];
 	while (vd[s].flags & VRING_DESC_F_NEXT) {
 		s = vd[s].next;
-		vq_free_entry_locked(vq, qe);
+		vq_free_entry(vq, qe);
 		qe = &vq->vq_entries[s];
 	}
-	vq_free_entry_locked(vq, qe);
+	vq_free_entry(vq, qe);
 	return 0;
 }
 
@@ -777,10 +769,10 @@ virtio_dequeue_commit(struct virtqueue *vq, int slot)
 
 	while (vd[s].flags & VRING_DESC_F_NEXT) {
 		s = vd[s].next;
-		vq_free_entry_locked(vq, qe);
+		vq_free_entry(vq, qe);
 		qe = &vq->vq_entries[s];
 	}
-	vq_free_entry_locked(vq, qe);
+	vq_free_entry(vq, qe);
 
 	return 0;
 }
