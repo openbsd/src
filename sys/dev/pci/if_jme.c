@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.38 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.39 2015/04/10 16:04:47 mpi Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1615,6 +1615,7 @@ jme_rxpkt(struct jme_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct jme_desc *desc;
 	struct jme_rxdesc *rxd;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *mp, *m;
 	uint32_t flags, status;
 	int cons, count, nsegs;
@@ -1726,20 +1727,16 @@ jme_rxpkt(struct jme_softc *sc)
 			}
 #endif
 
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap_ether(ifp->if_bpf, m,
-				    BPF_DIRECTION_IN);
-#endif
-
 			ifp->if_ipackets++;
-			/* Pass it on. */
-			ether_input_mbuf(ifp, m);
+
+			ml_enqueue(&ml, m);
 
 			/* Reset mbuf chains. */
 			JME_RXCHAIN_RESET(sc);
 		}
 	}
+
+	if_input(ifp, &ml);
 
 	sc->jme_cdata.jme_rx_cons += nsegs;
 	sc->jme_cdata.jme_rx_cons %= JME_RX_RING_CNT;
