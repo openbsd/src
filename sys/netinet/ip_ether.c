@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.70 2014/12/19 17:14:40 tedu Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.71 2015/04/10 13:58:20 dlg Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -280,8 +280,6 @@ void
 mplsip_decap(struct mbuf *m, int iphlen)
 {
 	struct gif_softc *sc;
-	struct ifqueue *ifq;
-	int s;
 
 	etheripstat.etherip_ipackets++;
 
@@ -330,22 +328,12 @@ mplsip_decap(struct mbuf *m, int iphlen)
 	pf_pkt_addr_changed(m);
 #endif
 
-	ifq = &mplsintrq;
-	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
+	if (niq_enqueue(&mplsintrq, m) != 0) {
 		etheripstat.etherip_qfull++;
-		splx(s);
 
 		DPRINTF(("mplsip_input(): packet dropped because of full "
 		    "queue\n"));
-		return;
 	}
-	IF_ENQUEUE(ifq, m);
-	schednetisr(NETISR_MPLS);
-	splx(s);
-	return;
 }
 #endif
 

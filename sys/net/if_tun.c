@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.135 2015/04/01 14:29:54 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.136 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -780,10 +780,9 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
-	struct ifqueue		*ifq;
+	struct niqueue		*ifq;
 	u_int32_t		*th;
 	struct mbuf		*top, **mp, *m;
-	int			 isr;
 	int			 error=0, s, tlen, mlen;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
@@ -887,12 +886,10 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	switch (ntohl(*th)) {
 	case AF_INET:
 		ifq = &ipintrq;
-		isr = NETISR_IP;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
 		break;
 #endif
 	default:
@@ -900,20 +897,14 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		return (EAFNOSUPPORT);
 	}
 
-	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		splx(s);
+	if (niq_enqueue(ifq, m) != 0) {
 		ifp->if_collisions++;
-		m_freem(top);
-		if_congestion();
 		return (ENOBUFS);
 	}
-	IF_ENQUEUE(ifq, top);
-	schednetisr(isr);
+
 	ifp->if_ipackets++;
 	ifp->if_ibytes += top->m_pkthdr.len;
-	splx(s);
+
 	return (error);
 }
 

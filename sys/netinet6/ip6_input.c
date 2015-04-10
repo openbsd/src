@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.140 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.141 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -113,7 +113,7 @@
 #endif
 
 struct in6_ifaddrhead in6_ifaddr;
-struct ifqueue ip6intrq;
+struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IPV6);
 
 struct ip6stat ip6stat;
 
@@ -144,7 +144,6 @@ ip6_init(void)
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW &&
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
-	IFQ_SET_MAXLEN(&ip6intrq, IFQ_MAXLEN);
 	TAILQ_INIT(&in6_ifaddr);
 	ip6_randomid_init();
 	nd6_init();
@@ -168,17 +167,10 @@ ip6_init2(void *dummy)
 void
 ip6intr(void)
 {
-	int s;
 	struct mbuf *m;
 
-	for (;;) {
-		s = splnet();
-		IF_DEQUEUE(&ip6intrq, m);
-		splx(s);
-		if (m == NULL)
-			return;
+	while ((m = niq_dequeue(&ip6intrq)) != NULL)
 		ip6_input(m);
-	}
 }
 
 extern struct	route_in6 ip6_forward_rt;
@@ -1452,7 +1444,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 		return (error);
 	case IPV6CTL_IFQUEUE:
-		return (sysctl_ifq(name + 1, namelen - 1,
+		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));
 	default:
 		if (name[0] < IPV6CTL_MAXID)

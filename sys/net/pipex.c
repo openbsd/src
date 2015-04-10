@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.67 2015/04/10 11:02:12 dlg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.68 2015/04/10 13:58:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1127,7 +1127,7 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 {
 	struct ifnet *ifp;
 	struct ip *ip;
-	int s, len;
+	int len;
 	int is_idle;
 
 	/* change recvif */
@@ -1189,28 +1189,21 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 		bpf_mtap_af(ifp->if_bpf, AF_INET, m0, BPF_DIRECTION_IN);
 #endif
 
-	s = splnet();
-	if (IF_QFULL(&ipintrq)) {
-		IF_DROP(&ipintrq);
+	if (niq_enqueue(&ipintrq, m0) != 0) {
 		ifp->if_collisions++;
-		if_congestion();
-		splx(s);
-		goto drop;
+		goto dropped;
 	}
-	IF_ENQUEUE(&ipintrq, m0);
-	schednetisr(NETISR_IP);
 
 	ifp->if_ipackets++;
 	ifp->if_ibytes += len;
 	session->stat.ipackets++;
 	session->stat.ibytes += len;
 
-	splx(s);
-
 	return;
 drop:
 	if (m0 != NULL)
 		m_freem(m0);
+dropped:
 	session->stat.ierrors++;
 }
 
@@ -1220,7 +1213,7 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 {
 	struct ifnet *ifp;
 	struct ip6_hdr *ip6;
-	int s, len;
+	int len;
 
 	/* change recvif */
 	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
@@ -1263,28 +1256,18 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m0, BPF_DIRECTION_IN);
 #endif
 
-	s = splnet();
-	if (IF_QFULL(&ip6intrq)) {
-		IF_DROP(&ip6intrq);
+	if (niq_enqueue(&ip6intrq, m0) != 0) {
 		ifp->if_collisions++;
-		if_congestion();
-		splx(s);
-		goto drop;
+		goto dropped;
 	}
-	IF_ENQUEUE(&ip6intrq, m0);
-	schednetisr(NETISR_IPV6);
 
 	ifp->if_ipackets++;
 	ifp->if_ibytes += len;
 	session->stat.ipackets++;
 	session->stat.ibytes += len;
 
-	splx(s);
-
 	return;
-drop:
-	if (m0 != NULL)
-		m_freem(m0);
+dropped:
 	session->stat.ierrors++;
 }
 #endif

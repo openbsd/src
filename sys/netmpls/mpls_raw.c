@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.10 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.11 2015/04/10 13:58:20 dlg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -135,7 +135,7 @@ mpls_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case MPLSCTL_IFQUEUE:
-		return (sysctl_ifq(name + 1, namelen - 1,
+		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &mplsintrq));
 	default:
 		return sysctl_int_arr(mplsctl_vars, name, namelen,

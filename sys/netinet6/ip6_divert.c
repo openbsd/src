@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.32 2015/01/24 00:29:06 deraadt Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.33 2015/04/10 13:58:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -86,11 +86,10 @@ int
 divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
-	struct ifqueue *inq;
 	struct sockaddr_in6 *sin6;
 	struct socket *so;
 	struct ifaddr *ifa;
-	int s, error = 0, min_hdrlen = 0, nxt = 0, off, dir;
+	int error = 0, min_hdrlen = 0, nxt = 0, off, dir;
 	struct ip6_hdr *ip6;
 
 	m->m_pkthdr.rcvif = NULL;
@@ -159,8 +158,6 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		}
 		m->m_pkthdr.rcvif = ifa->ifa_ifp;
 
-		inq = &ip6intrq;
-
 		/*
 		 * Recalculate the protocol checksum for the inbound packet
 		 * since the userspace application may have modified the packet
@@ -168,10 +165,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		 */
 		in6_proto_cksum_out(m, NULL);
 
-		s = splnet();
-		IF_INPUT_ENQUEUE(inq, m);
-		schednetisr(NETISR_IPV6);
-		splx(s);
+		niq_enqueue(&ip6intrq, m); /* return error on q full? */
 	} else {
 		error = ip6_output(m, NULL, &inp->inp_route6,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, NULL);

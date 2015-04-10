@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.31 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.32 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -303,7 +303,9 @@ pppread(struct tty *tp, struct uio *uio, int flag)
 	    splx(s);
 	    return 0;
 	}
-	if (!IF_IS_EMPTY(&sc->sc_inq))
+	/* Get the packet from the input queue */
+	m0 = mq_dequeue(&sc->sc_inq);
+	if (m0 != NULL)
 	    break;
 	if ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0
 	    && (tp->t_state & TS_ISOPEN)) {
@@ -323,9 +325,6 @@ pppread(struct tty *tp, struct uio *uio, int flag)
 
     /* Pull place-holder byte out of canonical queue */
     getc(&tp->t_canq);
-
-    /* Get the packet from the input queue */
-    IF_DEQUEUE(&sc->sc_inq, m0);
     splx(s);
 
     for (m = m0; m && uio->uio_resid; m = m->m_next)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.36 2015/02/10 21:56:10 miod Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.37 2015/04/10 13:58:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -317,9 +317,9 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 /*	struct pppx_dev *pxd = pppx_dev2pxd(dev);	*/
 	struct pppx_hdr *th;
 	struct mbuf *top, **mp, *m;
-	struct ifqueue *ifq;
+	struct niqueue *ifq;
 	int tlen, mlen;
-	int isr, s, error = 0;
+	int error = 0;
 
 	if (uio->uio_resid < sizeof(*th) || uio->uio_resid > MCLBYTES)
 		return (EMSGSIZE);
@@ -381,12 +381,10 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	switch (ntohl(th->pppx_proto)) {
 	case AF_INET:
 		ifq = &ipintrq;
-		isr = NETISR_IP;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
 		break;
 #endif
 	default:
@@ -394,16 +392,8 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 		return (EAFNOSUPPORT);
 	}
 
-	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		splx(s);
-		m_freem(top);
+	if (niq_enqueue(ifq, m) != 0)
 		return (ENOBUFS);
-	}
-	IF_ENQUEUE(ifq, top);
-	schednetisr(isr);
-	splx(s);
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.247 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.248 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/netisr.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -113,7 +114,7 @@ int	ip_frags = 0;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
-struct	ifqueue ipintrq;
+struct niqueue ipintrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IP);
 
 struct pool ipqent_pool;
 struct pool ipq_pool;
@@ -169,7 +170,6 @@ ip_init(void)
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
-	IFQ_SET_MAXLEN(&ipintrq, IFQ_MAXLEN);
 	if (ip_mtudisc != 0)
 		ip_mtudisc_timeout_q =
 		    rt_timer_queue_create(ip_mtudisc_timeout);
@@ -192,18 +192,12 @@ void
 ipintr(void)
 {
 	struct mbuf *m;
-	int s;
 
-	for (;;) {
-		/*
-		 * Get next datagram off input queue and get IP header
-		 * in first mbuf.
-		 */
-		s = splnet();
-		IF_DEQUEUE(&ipintrq, m);
-		splx(s);
-		if (m == NULL)
-			return;
+	/*
+	 * Get next datagram off input queue and get IP header
+	 * in first mbuf.
+	 */
+	while ((m = niq_dequeue(&ipintrq)) != NULL) {
 #ifdef	DIAGNOSTIC
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("ipintr no HDR");
@@ -1616,7 +1610,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 				       ipsec_def_comp,
 				       sizeof(ipsec_def_comp)));
 	case IPCTL_IFQUEUE:
-	        return (sysctl_ifq(name + 1, namelen - 1,
+	        return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));
 	case IPCTL_STATS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp,

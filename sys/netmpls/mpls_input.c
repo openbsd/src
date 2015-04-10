@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.42 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.43 2015/04/10 13:58:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,7 @@
 
 #include <netmpls/mpls.h>
 
-struct ifqueue	mplsintrq;
+struct niqueue	mplsintrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_MPLS);
 
 #ifdef MPLS_DEBUG
 #define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)
@@ -57,22 +57,15 @@ struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
 void
 mpls_init(void)
 {
-	IFQ_SET_MAXLEN(&mplsintrq, IFQ_MAXLEN);
 }
 
 void
 mplsintr(void)
 {
 	struct mbuf *m;
-	int s;
 
-	for (;;) {
-		/* Get next datagram of input queue */
-		s = splnet();
-		IF_DEQUEUE(&mplsintrq, m);
-		splx(s);
-		if (m == NULL)
-			return;
+	/* Get next datagram of input queue */
+	while ((m = niq_dequeue(&mplsintrq)) != NULL) {
 #ifdef DIAGNOSTIC
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("mplsintr no HDR");
@@ -91,7 +84,7 @@ mpls_input(struct mbuf *m)
 	struct rtentry *rt = NULL;
 	struct rt_mpls *rt_mpls;
 	u_int8_t ttl;
-	int i, s, hasbos;
+	int i, hasbos;
 
 	if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
 		m_freem(m);
@@ -158,10 +151,7 @@ mpls_input(struct mbuf *m)
 do_v4:
 					if (mpls_ip_adjttl(m, ttl))
 						goto done;
-					s = splnet();
-					IF_INPUT_ENQUEUE(&ipintrq, m);
-					schednetisr(NETISR_IP);
-					splx(s);
+					niq_enqueue(&ipintrq, m);
 					goto done;
 				}
 				continue;
@@ -171,10 +161,7 @@ do_v4:
 do_v6:
 					if (mpls_ip6_adjttl(m, ttl))
 						goto done;
-					s = splnet();
-					IF_INPUT_ENQUEUE(&ip6intrq, m);
-					schednetisr(NETISR_IPV6);
-					splx(s);
+					niq_enqueue(&ip6intrq, m);
 					goto done;
 				}
 				continue;
@@ -241,19 +228,13 @@ do_v6:
 			case AF_INET:
 				if (mpls_ip_adjttl(m, ttl))
 					break;
-				s = splnet();
-				IF_INPUT_ENQUEUE(&ipintrq, m);
-				schednetisr(NETISR_IP);
-				splx(s);
+				niq_enqueue(&ipintrq, m);
 				break;
 #ifdef INET6
 			case AF_INET6:
 				if (mpls_ip6_adjttl(m, ttl))
 					break;
-				s = splnet();
-				IF_INPUT_ENQUEUE(&ip6intrq, m);
-				schednetisr(NETISR_IPV6);
-				splx(s);
+				niq_enqueue(&ip6intrq, m);
 				break;
 #endif
 			default:

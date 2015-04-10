@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.32 2015/01/24 00:29:06 deraadt Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.33 2015/04/10 13:58:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -82,11 +82,10 @@ int
 divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
-	struct ifqueue *inq;
 	struct sockaddr_in *sin;
 	struct socket *so;
 	struct ifaddr *ifa;
-	int s, error = 0, min_hdrlen = 0, dir;
+	int error = 0, min_hdrlen = 0, dir;
 	struct ip *ip;
 	u_int16_t off;
 
@@ -149,8 +148,6 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		}
 		m->m_pkthdr.rcvif = ifa->ifa_ifp;
 
-		inq = &ipintrq;
-
 		/*
 		 * Recalculate IP and protocol checksums for the inbound packet
 		 * since the userspace application may have modified the packet
@@ -160,10 +157,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		ip->ip_sum = in_cksum(m, off);
 		in_proto_cksum_out(m, NULL);
 
-		s = splnet();
-		IF_INPUT_ENQUEUE(inq, m);
-		schednetisr(NETISR_IP);
-		splx(s);
+		niq_enqueue(&ipintrq, m);
 	} else {
 		error = ip_output(m, NULL, &inp->inp_route,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.192 2015/04/10 08:48:24 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.193 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -458,9 +458,9 @@ ether_input(struct mbuf *m, void *hdr)
 {
 	struct ifnet *ifp0, *ifp;
 	struct ether_header *eh = hdr;
-	struct ifqueue *inq;
+	struct niqueue *inq;
 	u_int16_t etype;
-	int s, llcfound = 0;
+	int llcfound = 0;
 	struct llc *l;
 	struct arpcom *ac;
 #if NTRUNK > 0
@@ -607,22 +607,15 @@ ether_input(struct mbuf *m, void *hdr)
 		}
 	}
 
-	/*
-	 * Schedule softnet interrupt and enqueue packet within the same spl.
-	 */
-	s = splnet();
 decapsulate:
-
 	switch (etype) {
 	case ETHERTYPE_IP:
-		schednetisr(NETISR_IP);
 		inq = &ipintrq;
 		break;
 
 	case ETHERTYPE_ARP:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
-		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
 		break;
 
@@ -630,14 +623,13 @@ decapsulate:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
 		revarpinput(m);	/* XXX queue? */
-		goto done;
+		return (1);
 
 #ifdef INET6
 	/*
 	 * Schedule IPv6 software interrupt for incoming IPv6 packet.
 	 */
 	case ETHERTYPE_IPV6:
-		schednetisr(NETISR_IPV6);
 		inq = &ip6intrq;
 		break;
 #endif /* INET6 */
@@ -645,14 +637,12 @@ decapsulate:
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
 #ifndef PPPOE_SERVER
-		if (m->m_flags & (M_MCAST | M_BCAST)) {
-			m_freem(m);
-			goto done;
-		}
+		if (m->m_flags & (M_MCAST | M_BCAST))
+			goto dropanyway;
 #endif
 		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
 		if (m == NULL)
-			goto done;
+			return (1);
 
 		eh_tmp = mtod(m, struct ether_header *);
 		/*
@@ -667,7 +657,7 @@ decapsulate:
 
 			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
 				pipex_pppoe_input(m, session);
-				goto done;
+				return (1);
 			}
 		}
 #endif
@@ -675,15 +665,12 @@ decapsulate:
 			inq = &pppoediscinq;
 		else
 			inq = &pppoeinq;
-
-		schednetisr(NETISR_PPPOE);
 		break;
 #endif
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MCAST:
 		inq = &mplsintrq;
-		schednetisr(NETISR_MPLS);
 		break;
 #endif
 	default:
@@ -702,21 +689,19 @@ decapsulate:
 				m_adj(m, 6);
 				M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
 				if (m == NULL)
-					goto done;
+					return (1);
 				*mtod(m, struct ether_header *) = *eh;
 				goto decapsulate;
 			}
-			goto dropanyway;
-		dropanyway:
 		default:
-			m_freem(m);
-			goto done;
+			goto dropanyway;
 		}
 	}
 
-	IF_INPUT_ENQUEUE(inq, m);
-done:
-	splx(s);
+	niq_enqueue(inq, m);
+	return (1);
+dropanyway:
+	m_freem(m);
 	return (1);
 }
 

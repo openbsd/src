@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.328 2015/04/10 08:48:24 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.329 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -126,7 +126,8 @@ void	if_attachsetup(struct ifnet *);
 void	if_attachdomain1(struct ifnet *);
 void	if_attach_common(struct ifnet *);
 
-void	if_detach_queues(struct ifnet *, struct ifqueue *);
+int	if_detach_filter(void *, const struct mbuf *);
+void	if_detach_queues(struct ifnet *, struct niqueue *);
 void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 
@@ -605,7 +606,7 @@ if_detach(struct ifnet *ifp)
 	 */
 #define IF_DETACH_QUEUES(x) \
 do { \
-	extern struct ifqueue x; \
+	extern struct niqueue x; \
 	if_detach_queues(ifp, & x); \
 } while (0)
 	IF_DETACH_QUEUES(arpintrq);
@@ -657,38 +658,31 @@ do { \
 	splx(s);
 }
 
-void
-if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
+int
+if_detach_filter(void *ctx, const struct mbuf *m)
 {
-	struct mbuf *m, *prev = NULL, *next;
-	int prio;
+	struct ifnet *ifp = ctx;
 
-	for (prio = 0; prio <= IFQ_MAXPRIO; prio++) {
-		for (m = q->ifq_q[prio].head; m; m = next) {
-			next = m->m_nextpkt;
 #ifdef DIAGNOSTIC
-			if ((m->m_flags & M_PKTHDR) == 0) {
-				prev = m;
-				continue;
-			}
+	if ((m->m_flags & M_PKTHDR) == 0)
+		return (0);
 #endif
-			if (m->m_pkthdr.rcvif != ifp) {
-				prev = m;
-				continue;
-			}
 
-			if (prev)
-				prev->m_nextpkt = m->m_nextpkt;
-			else
-				q->ifq_q[prio].head = m->m_nextpkt;
-			if (q->ifq_q[prio].tail == m)
-				q->ifq_q[prio].tail = prev;
-			q->ifq_len--;
+	return (m->m_pkthdr.rcvif == ifp);
+}
 
-			m->m_nextpkt = NULL;
-			m_freem(m);
-			IF_DROP(q);
-		}
+void
+if_detach_queues(struct ifnet *ifp, struct niqueue *niq)
+{
+	struct mbuf *m0, *m;
+
+	m0 = niq_filter(niq, if_detach_filter, ifp);
+	while (m0 != NULL) {
+		m = m0;
+		m0 = m->m_nextpkt;
+
+		m->m_nextpkt = NULL;
+		m_freem(m);
 	}
 }
 

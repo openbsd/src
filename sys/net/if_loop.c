@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.64 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.65 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -203,8 +203,7 @@ int
 looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
-	int s, isr;
-	struct ifqueue *ifq = 0;
+	struct niqueue *ifq = NULL;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
@@ -231,18 +230,15 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	case AF_INET:
 		ifq = &ipintrq;
-		isr = NETISR_IP;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
 		break;
 #endif /* INET6 */
 #ifdef MPLS
 	case AF_MPLS:
 		ifq = &mplsintrq;
-		isr = NETISR_MPLS;
 		break;
 #endif /* MPLS */
 	default:
@@ -251,18 +247,13 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		m_freem(m);
 		return (EAFNOSUPPORT);
 	}
-	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
-		splx(s);
+
+	if (niq_enqueue(ifq, m) != 0)
 		return (ENOBUFS);
-	}
-	IF_ENQUEUE(ifq, m);
-	schednetisr(isr);
+
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
-	splx(s);
+
 	return (0);
 }
 

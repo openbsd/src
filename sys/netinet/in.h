@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.112 2015/02/09 12:18:19 claudio Exp $	*/
+/*	$OpenBSD: in.h,v 1.113 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -785,7 +785,7 @@ __END_DECLS
 
 #ifdef _KERNEL
 extern	   int inetctlerrmap[];
-extern	   struct ifqueue ipintrq;	/* ip packet input queue */
+extern	   struct niqueue ipintrq;	/* ip packet input queue */
 extern	   struct in_addr zeroin_addr;
 
 struct mbuf;

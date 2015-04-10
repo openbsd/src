@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.30 2015/03/26 11:02:44 mpi Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.31 2015/04/10 13:58:20 dlg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -160,7 +160,7 @@ void	mpe_input6(struct mbuf *, struct ifnet *, struct sockaddr_mpls *,
 extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
 			struct mbuf *, struct mbuf *, struct proc *);
 
-extern struct ifqueue	mplsintrq;	/* MPLS input queue */
+extern struct niqueue	mplsintrq;	/* MPLS input queue */
 extern int		mpls_defttl;
 extern int		mpls_mapttl_ip;
 extern int		mpls_mapttl_ip6;

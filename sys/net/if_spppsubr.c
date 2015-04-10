@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.131 2015/03/18 12:23:15 dlg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.132 2015/04/10 13:58:20 dlg Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -437,11 +437,10 @@ void
 sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ppp_header ht;
-	struct ifqueue *inq = 0;
+	struct niqueue *inq = NULL;
 	struct sppp *sp = (struct sppp *)ifp;
 	struct timeval tv;
 	int debug = ifp->if_flags & IFF_DEBUG;
-	int s;
 
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
@@ -458,9 +457,10 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			    SPP_FMT "input packet is too small, %d bytes\n",
 			    SPP_ARGS(ifp), m->m_pkthdr.len);
 	  drop:
+		m_freem (m);
+	  dropped:
 		++ifp->if_ierrors;
 		++ifp->if_iqdrops;
-		m_freem (m);
 		return;
 	}
 
@@ -538,7 +538,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 		case PPP_IP:
 			if (sp->state[IDX_IPCP] == STATE_OPENED) {
-				schednetisr (NETISR_IP);
 				inq = &ipintrq;
 				sp->pp_last_activity = tv.tv_sec;
 			}
@@ -551,7 +550,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 		case PPP_IPV6:
 			if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
-				schednetisr (NETISR_IPV6);
 				inq = &ip6intrq;
 				sp->pp_last_activity = tv.tv_sec;
 			}
@@ -580,12 +578,10 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			m_freem (m);
 			return;
 		case ETHERTYPE_IP:
-			schednetisr (NETISR_IP);
 			inq = &ipintrq;
 			break;
 #ifdef INET6
 		case ETHERTYPE_IPV6:
-			schednetisr (NETISR_IPV6);
 			inq = &ip6intrq;
 			break;
 #endif
@@ -605,20 +601,13 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	if (! (ifp->if_flags & IFF_UP) || ! inq)
 		goto drop;
 
-	/* Check queue. */
-	s = splnet();
-	if (IF_QFULL (inq)) {
+	if (niq_enqueue(inq, m) != 0) {
 		/* Queue overflow. */
-		IF_DROP(inq);
-		splx(s);
 		if (debug)
 			log(LOG_DEBUG, SPP_FMT "protocol queue overflow\n",
 				SPP_ARGS(ifp));
-		if_congestion();
-		goto drop;
+		goto dropped;
 	}
-	IF_ENQUEUE(inq, m);
-	splx(s);
 }
 
 /*

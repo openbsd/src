@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.42 2015/03/26 11:02:44 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.43 2015/04/10 13:58:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -371,7 +371,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
     u_int8_t ttl)
 {
 	struct ip	*ip;
-	int		 s, hlen;
+	int		 hlen;
 
 	/* label -> AF lookup */
 
@@ -408,10 +408,8 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	if (ifp && ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_IN);
 #endif
-	s = splnet();
-	IF_INPUT_ENQUEUE(&ipintrq, m);
-	schednetisr(NETISR_IP);
-	splx(s);
+
+	niq_enqueue(&ipintrq, m);
 }
 
 #ifdef INET6
@@ -420,7 +418,6 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
     u_int8_t ttl)
 {
 	struct ip6_hdr *ip6hdr;
-	int s;
 
 	/* label -> AF lookup */
 
@@ -443,9 +440,7 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 	if (ifp && ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m, BPF_DIRECTION_IN);
 #endif
-	s = splnet();
-	IF_INPUT_ENQUEUE(&ip6intrq, m);
-	schednetisr(NETISR_IPV6);
-	splx(s);
+
+	niq_enqueue(&ip6intrq, m);
 }
 #endif	/* INET6 */

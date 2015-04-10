@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.81 2015/03/18 12:23:15 dlg Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.82 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ ppp_clone_create(struct if_clone *ifc, int unit)
     sc->sc_if.if_output = pppoutput;
     sc->sc_if.if_start = ppp_ifstart;
     IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);
-    IFQ_SET_MAXLEN(&sc->sc_inq, IFQ_MAXLEN);
+    mq_init(&sc->sc_inq, IFQ_MAXLEN, IPL_NET);
     IFQ_SET_MAXLEN(&sc->sc_fastq, IFQ_MAXLEN);
     IFQ_SET_MAXLEN(&sc->sc_rawq, IFQ_MAXLEN);
     IFQ_SET_READY(&sc->sc_if.if_snd);
@@ -329,12 +329,8 @@ pppdealloc(struct ppp_softc *sc)
 	    break;
 	m_freem(m);
     }
-    for (;;) {
-	IF_DEQUEUE(&sc->sc_inq, m);
-	if (m == NULL)
-	    break;
+    while ((m = mq_dequeue(&sc->sc_inq)) != NULL)
 	m_freem(m);
-    }
     for (;;) {
 	IF_DEQUEUE(&sc->sc_fastq, m);
 	if (m == NULL)
@@ -398,7 +394,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 
     switch (cmd) {
     case FIONREAD:
-	*(int *)data = IFQ_LEN(&sc->sc_inq);
+	*(int *)data = mq_len(&sc->sc_inq);
 	break;
 
     case PPPIOCGUNIT:
@@ -1225,7 +1221,6 @@ static void
 ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 {
     struct ifnet *ifp = &sc->sc_if;
-    struct ifqueue *inq;
     int s, ilen, xlen, proto, rv;
     u_char *cp, adrs, ctrl;
     struct mbuf *mp, *dmp = NULL;
@@ -1462,44 +1457,44 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	m->m_pkthdr.len -= PPP_HDRLEN;
 	m->m_data += PPP_HDRLEN;
 	m->m_len -= PPP_HDRLEN;
-	schednetisr(NETISR_IP);
-	inq = &ipintrq;
+
+	if (niq_enqueue(&ipintrq, m) != 0)
+		rv = 0; /* failure */
+	else
+		rv = 1; /* ipintrq success */
 	break;
 
     default:
 	/*
 	 * Some other protocol - place on input queue for read().
 	 */
-	inq = &sc->sc_inq;
-	rv = 1;
+	if (mq_enqueue(&sc->sc_inq, m) != 0) {
+		if_congestion();
+		rv = 0; /* failure */
+	} else
+		rv = 2; /* input queue */
 	break;
     }
 
-    /*
-     * Put the packet on the appropriate input queue.
-     */
-    s = splnet();
-    if (IF_QFULL(inq)) {
-	IF_DROP(inq);
-	splx(s);
+    if (rv == 0) {
+	/* failure */
 	if (sc->sc_flags & SC_DEBUG)
 	    printf("%s: input queue full\n", ifp->if_xname);
 	ifp->if_iqdrops++;
-	if_congestion();
-	goto bad;
+	goto dropped;
     }
-    IF_ENQUEUE(inq, m);
-    splx(s);
+
     ifp->if_ipackets++;
     ifp->if_ibytes += ilen;
 
-    if (rv)
+    if (rv == 2)
 	(*sc->sc_ctlp)(sc);
 
     return;
 
  bad:
     m_freem(m);
+ dropped:
     sc->sc_if.if_ierrors++;
     sc->sc_stats.ppp_ierrors++;
 }

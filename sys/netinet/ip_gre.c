@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.53 2015/03/18 01:12:16 mcbride Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.54 2015/04/10 13:58:20 dlg Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -93,8 +93,7 @@ int
 gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
 	struct greip *gip;
-	int s;
-	struct ifqueue *ifq;
+	struct niqueue *ifq;
 	struct gre_softc *sc;
 	u_short flags;
 	u_int af;
@@ -168,7 +167,6 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 		        ifq = &ip6intrq;
-			schednetisr(NETISR_IPV6);
 			af = AF_INET6;
 			break;
 #endif
@@ -181,7 +179,6 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 		case ETHERTYPE_MPLS:
 		case ETHERTYPE_MPLS_MCAST:
 			ifq = &mplsintrq;
-			schednetisr(NETISR_MPLS);
 			af = AF_MPLS;
 			break;
 #endif
@@ -209,9 +206,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	pf_pkt_addr_changed(m);
 #endif
 
-	s = splnet();		/* possible */
-	IF_INPUT_ENQUEUE(ifq, m);
-	splx(s);
+	niq_enqueue(ifq, m);
 
 	return (1);	/* packet is done, no further processing needed */
 }
@@ -271,9 +266,8 @@ gre_mobile_input(struct mbuf *m, ...)
 {
 	struct ip *ip;
 	struct mobip_h *mip;
-	struct ifqueue *ifq;
 	struct gre_softc *sc;
-	int hlen, s;
+	int hlen;
 	va_list ap;
 	u_char osrc = 0;
 	int msiz;
@@ -339,16 +333,12 @@ gre_mobile_input(struct mbuf *m, ...)
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(m,(ip->ip_hl << 2));
 
-	ifq = &ipintrq;
-
 #if NBPFILTER > 0
         if (sc->sc_if.if_bpf)
 		bpf_mtap_af(sc->sc_if.if_bpf, AF_INET, m, BPF_DIRECTION_IN);
 #endif
 
-	s = splnet();       /* possible */
-	IF_INPUT_ENQUEUE(ifq, m);
-	splx(s);
+	niq_enqueue(&ipintrq, m);
 }
 
 /*

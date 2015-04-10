@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.149 2015/03/24 12:58:43 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.150 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/if_types.h>
+#include <net/netisr.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -97,7 +98,8 @@ void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
-struct	ifqueue arpintrq;
+/* XXX hate magic numbers */
+struct	niqueue arpintrq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
 int	arpinit_done;
@@ -159,7 +161,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 		arpinit_done = 1;
 		pool_init(&arp_pool, sizeof(struct llinfo_arp), 0, 0, 0, "arp",
 		    NULL);
-		IFQ_SET_MAXLEN(&arpintrq, 50);	/* XXX hate magic numbers */
 		/*
 		 * We generate expiration times from time.tv_sec
 		 * so avoid accidently creating permanent routes.
@@ -497,14 +498,9 @@ arpintr(void)
 {
 	struct mbuf *m;
 	struct arphdr *ar;
-	int s, len;
+	int len;
 
-	for (;;) {
-		s = splnet();
-		IF_DEQUEUE(&arpintrq, m);
-		splx(s);
-		if (m == NULL)
-			break;
+	while ((m = niq_dequeue(&arpintrq)) != NULL) {
 #ifdef DIAGNOSTIC
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");

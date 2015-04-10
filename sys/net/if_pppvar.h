@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.15 2003/12/07 15:41:27 markus Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.16 2015/04/10 13:58:20 dlg Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -98,7 +98,7 @@ struct ppp_softc {
 	u_int16_t sc_mru;		/* max receive unit */
 	pid_t	sc_xfer;		/* used in transferring unit */
 	struct	ifqueue sc_rawq;	/* received packets */
-	struct	ifqueue sc_inq;		/* queue of input packets for daemon */
+	struct	mbuf_queue sc_inq;	/* queue of input packets for daemon */
 	struct	ifqueue sc_fastq;	/* interactive output packet q */
 	struct	mbuf *sc_togo;		/* output packet ready to go */
 	struct	mbuf *sc_npqueue;	/* output packets not to be sent yet */

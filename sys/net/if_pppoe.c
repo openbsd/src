@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.44 2015/03/14 03:38:51 jsg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.45 2015/04/10 13:58:20 dlg Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -48,6 +48,7 @@
 #include <net/if_types.h>
 #include <net/if_sppp.h>
 #include <net/if_pppoe.h>
+#include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
@@ -146,8 +147,8 @@ struct pppoe_softc {
 };
 
 /* incoming traffic will be queued here */
-struct ifqueue pppoediscinq;
-struct ifqueue pppoeinq;
+struct niqueue pppoediscinq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_PPPOE);
+struct niqueue pppoeinq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_PPPOE);
 
 /* input routines */
 static void pppoe_disc_input(struct mbuf *);
@@ -200,9 +201,6 @@ pppoeattach(int count)
 {
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
-
-	IFQ_SET_MAXLEN(&pppoediscinq, IFQ_MAXLEN);
-	IFQ_SET_MAXLEN(&pppoeinq, IFQ_MAXLEN);
 }
 
 /* Create a new interface. */
@@ -359,27 +357,14 @@ void
 pppoeintr(void)
 {
 	struct mbuf *m;
-	int s;
 
 	splsoftassert(IPL_SOFTNET);
-	
-	for (;;) {
-		s = splnet();
-		IF_DEQUEUE(&pppoediscinq, m);
-		splx(s);
-		if (m == NULL)
-			break;
-		pppoe_disc_input(m);
-	}
 
-	for (;;) {
-		s = splnet();
-		IF_DEQUEUE(&pppoeinq, m);
-		splx(s);
-		if (m == NULL)
-			break;
+	while ((m = niq_dequeue(&pppoediscinq)) != NULL)
+		pppoe_disc_input(m);
+
+	while ((m = niq_dequeue(&pppoeinq)) != NULL)
 		pppoe_data_input(m);
-	}
 }
 
 /* Analyze and handle a single received packet while not in session state. */
