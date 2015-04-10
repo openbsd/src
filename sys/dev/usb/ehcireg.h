@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.19 2014/03/11 10:24:42 mpi Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.20 2015/04/10 13:56:42 mpi Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -205,10 +205,8 @@ struct ehci_itd {
 #define EHCI_ITD_GET_OFFS(x)	(((x) >> 0) & 0xfff)
 #define EHCI_ITD_SET_OFFS(x)	(((x) & 0xfff) << 0)
 	volatile ehci_isoc_bufr_ptr_t   itd_bufr[7];
-#define EHCI_ITD_GET_BPTR(x)	((x) & 0xfffff000)
-#define EHCI_ITD_SET_BPTR(x)	((x) & 0xfffff000)
-#define EHCI_ITD_GET_EP(x)	(((x) >> 8) & 0xf)
-#define EHCI_ITD_SET_EP(x)	(((x) & 0xf) << 8)
+#define EHCI_ITD_GET_ENDPT(x)	(((x) >> 8) & 0xf)
+#define EHCI_ITD_SET_ENDPT(x)	(((x) & 0xf) << 8)
 #define EHCI_ITD_GET_DADDR(x)	((x) & 0x7f)
 #define EHCI_ITD_SET_DADDR(x)	((x) & 0x7f)
 #define EHCI_ITD_GET_DIR(x)	(((x) >> 11) & 1)
@@ -222,10 +220,9 @@ struct ehci_itd {
 #define EHCI_ITD_ALIGN		32
 
 /* Split Transaction Isochronous Transfer Descriptor */
-#define EHCI_SITD_NBUFFERS	2
 struct ehci_sitd {
-	ehci_link_t	sitd_next;
-	u_int32_t	sitd_endp;
+	volatile ehci_link_t		sitd_next;
+	volatile u_int32_t		sitd_endp;
 #define EHCI_SITD_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
 #define EHCI_SITD_SET_ADDR(x)	(x)
 #define EHCI_SITD_GET_ENDPT(x)	(((x) >>  8) & 0xf) /* endpoint no */
@@ -236,13 +233,13 @@ struct ehci_sitd {
 #define EHCI_SITD_SET_PORT(x)	((x) << 23)
 #define EHCI_SITD_GET_DIR(x)	(((x) >> 31) & 0x1) /* direction */
 #define EHCI_SITD_SET_DIR(x)	((x) << 31)
-	u_int32_t	sitd_sched;
+	volatile u_int32_t		sitd_sched;
 #define EHCI_SITD_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
 #define EHCI_SITD_SET_SMASK(x)	((x) <<  0)
 #define EHCI_SITD_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
 #define EHCI_SITD_SET_CMASK(x)	((x) <<  8)
-	u_int32_t	sitd_trans;
-#define EHCI_SITD_GET_STATUS(x)	(((x) >>  0) & 0xff) /* status */
+	volatile u_int32_t		sitd_trans;
+#define  EHCI_SITD_IOC		0x80000000
 #define  EHCI_SITD_ACTIVE	0x80
 #define  EHCI_SITD_ERR		0x40
 #define  EHCI_SITD_BUFERR	0x20
@@ -250,17 +247,11 @@ struct ehci_sitd {
 #define  EHCI_SITD_XACTERR	0x08
 #define  EHCI_SITD_MISSEDMICRO	0x04
 #define  EHCI_SITD_SPLITXSTATE	0x02
-#define EHCI_SITD_GET_CPROG(x)	(((x) >>  8) & 0xff) /* c-mask progress */
-#define EHCI_SITD_SET_CPROG(x)	((x) <<  8)
-#define EHCI_SITD_GET_BYTES(x)	(((x) >> 16) &  0x7ff) /* bytes to transfer */
-#define EHCI_SITD_SET_BYTES(x)	((x) << 16)
+#define EHCI_SITD_GET_LEN(x)	(((x) >> 16) & 0x3ff) /* bytes to transfer */
+#define EHCI_SITD_SET_LEN(x)	(((x) & 0x3ff) << 16)
 #define EHCI_SITD_GET_PG(x)	(((x) >> 30) & 0x1) /* buffer page */
 #define EHCI_SITD_SET_PG(x)	((x) << 30)
-#define EHCI_SITD_IOC		0x80000000 /* interrupt on complete */
-	ehci_physaddr_t	sitd_buffer[EHCI_SITD_NBUFFERS];
-/* page (buffer) 0 */
-#define EHCI_SITD_GET_OFFSET(x)	(((x) >>  0) & 0xfff) /* current offset */
-/* page (buffer) 1 */
+	volatile ehci_physaddr_t	sitd_bufr[2];
 #define EHCI_SITD_GET_TCOUNT(x)	(((x) >>  0) & 0x7) /* transaction count */
 #define EHCI_SITD_SET_TCOUNT(x)	((x) << 0)
 #define EHCI_SITD_GET_TP(x)	(((x) >>  3) & 0x3) /* transaction position */
@@ -269,8 +260,8 @@ struct ehci_sitd {
 #define  EHCI_SITD_TP_BEGIN	0x1
 #define  EHCI_SITD_TP_MIDDLE	0x2
 #define  EHCI_SITD_TP_END	0x3
-	ehci_link_t	sitd_back;
-	ehci_physaddr_t sitd_buffer_hi[EHCI_SITD_NBUFFERS]; /* 64bit */
+	volatile ehci_link_t		sitd_back;
+	volatile ehci_physaddr_t	sitd_bufr_hi[2]; /* 64bit */
 };
 #define EHCI_SITD_ALIGN		32
 

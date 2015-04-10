@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.34 2014/09/01 08:13:02 mpi Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.35 2015/04/10 13:56:42 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -56,7 +56,10 @@ struct ehci_soft_qh {
 #define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
 
 struct ehci_soft_itd {
-	struct ehci_itd itd;
+	union {
+		struct ehci_itd itd;
+		struct ehci_sitd sitd;
+	};
 	union {
 		struct {
 			/* soft_itds links in a periodic frame*/
@@ -77,13 +80,22 @@ struct ehci_soft_itd {
 #define EHCI_ITD_CHUNK (EHCI_PAGE_SIZE / EHCI_ITD_SIZE)
 
 struct ehci_xfer {
-	struct usbd_xfer xfer;
-	TAILQ_ENTRY(ehci_xfer) inext; /* list of active xfers */
-	struct ehci_soft_qtd *sqtdstart;
-	struct ehci_soft_qtd *sqtdend;
-	struct ehci_soft_itd *itdstart;
-	struct ehci_soft_itd *itdend;
-	u_int32_t ehci_xfer_flags;
+	struct usbd_xfer	xfer;
+	TAILQ_ENTRY(ehci_xfer)	inext;		/* List of active xfers */
+	union {
+		struct {
+			struct ehci_soft_qtd *start, *end;
+		} sqtd;				/* Ctrl/Bulk/Interrupt TD */
+		struct {
+			struct ehci_soft_itd *start, *end;
+		} itd;				/* Isochronous TD */
+	} _TD;
+#define sqtdstart	_TD.sqtd.start
+#define sqtdend		_TD.sqtd.end
+#define itdstart	_TD.itd.start
+#define itdend		_TD.itd.end
+
+	uint32_t		ehci_xfer_flags;
 #ifdef DIAGNOSTIC
 	int isdone;
 #endif
