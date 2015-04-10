@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.16 2015/04/10 05:31:25 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.17 2015/04/10 12:06:52 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -513,6 +513,21 @@ static inline uint32_t ror32(uint32_t word, unsigned int shift)
 	return (word >> shift) | (word << (32 - shift));
 }
 
+static inline int
+irqs_disabled(void)
+{
+	return (cold);
+}
+
+static inline int
+in_dbg_master(void)
+{
+#ifdef DDB
+	return (db_is_active);
+#endif
+	return (0);
+}
+
 #ifdef __macppc__
 static __inline int
 of_machine_is_compatible(const char *model)
@@ -542,21 +557,6 @@ static inline int
 in_atomic(void)
 {
 	return curcpu()->ci_inatomic;
-}
-
-static inline int
-irqs_disabled(void)
-{
-	return (cold);
-}
-
-static inline int
-in_dbg_master(void)
-{
-#ifdef DDB
-	return (db_is_active);
-#endif
-	return (0);
 }
 
 static inline void *

@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.189 2015/04/10 06:00:39 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.190 2015/04/10 12:06:52 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -159,7 +159,11 @@ extern struct cfdriver drm_cd;
 static inline bool
 drm_can_sleep(void)
 {
+#if defined(__i386__) || defined(__amd64__)
 	if (in_atomic() || in_dbg_master() || irqs_disabled())
+#else
+	if (in_dbg_master() || irqs_disabled())
+#endif
 		return false;
 	return true;
 }
