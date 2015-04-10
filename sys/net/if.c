@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.327 2015/04/07 10:46:20 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.328 2015/04/10 08:48:24 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -521,22 +521,12 @@ nettxintr(void)
 	splx(s);
 }
 
-/*
- * Detach an interface from everything in the kernel.  Also deallocate
- * private resources.
- */
 void
-if_detach(struct ifnet *ifp)
+if_deactivate(struct ifnet *ifp)
 {
-	struct ifaddr *ifa;
-	struct ifg_list *ifg;
-	int s = splnet();
-	struct domain *dp;
+	int s;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_start = if_detached_start;
-	ifp->if_ioctl = if_detached_ioctl;
-	ifp->if_watchdog = NULL;
+	s = splnet();
 
 	/*
 	 * Call detach hooks from head to tail.  To make sure detach
@@ -544,12 +534,6 @@ if_detach(struct ifnet *ifp)
 	 * the hooks have to be added to the head!
 	 */
 	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
-
-	/* Remove the watchdog timeout */
-	timeout_del(ifp->if_slowtimo);
-
-	/* Remove the link state task */
-	task_del(systq, ifp->if_linkstatetask);
 
 #if NBRIDGE > 0
 	/* Remove the interface from any bridge it is part of.  */
@@ -562,6 +546,36 @@ if_detach(struct ifnet *ifp)
 	if (ifp->if_carp && ifp->if_type != IFT_CARP)
 		carp_ifdetach(ifp);
 #endif
+
+	splx(s);
+}
+
+/*
+ * Detach an interface from everything in the kernel.  Also deallocate
+ * private resources.
+ */
+void
+if_detach(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	struct ifg_list *ifg;
+	struct domain *dp;
+	int s;
+
+	/* Undo pseudo-driver changes. */
+	if_deactivate(ifp);
+
+	s = splnet();
+	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_start = if_detached_start;
+	ifp->if_ioctl = if_detached_ioctl;
+	ifp->if_watchdog = NULL;
+
+	/* Remove the watchdog timeout */
+	timeout_del(ifp->if_slowtimo);
+
+	/* Remove the link state task */
+	task_del(systq, ifp->if_linkstatetask);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);

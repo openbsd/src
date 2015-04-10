@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.191 2015/04/07 10:46:20 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.192 2015/04/10 08:48:24 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -801,6 +801,9 @@ ether_ifdetach(struct ifnet *ifp)
 	struct arpcom *ac = (struct arpcom *)ifp;
 	struct ifih *ether_ifih;
 	struct ether_multi *enm;
+
+	/* Undo pseudo-driver changes. */
+	if_deactivate(ifp);
 
 	ether_ifih = SLIST_FIRST(&ifp->if_inputs);
 	SLIST_REMOVE_HEAD(&ifp->if_inputs, ifih_next);
