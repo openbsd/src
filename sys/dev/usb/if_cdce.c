@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.63 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.64 2015/04/10 08:41:43 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -726,6 +726,7 @@ cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct cdce_softc	*sc = c->cdce_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mbuf		*m;
+	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	int			 total_len = 0;
 	int			 s;
 
@@ -767,25 +768,16 @@ cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 	ifp->if_ipackets++;
-
 	m->m_pkthdr.len = m->m_len = total_len;
-	m->m_pkthdr.rcvif = ifp;
-
-	s = splnet();
+	ml_enqueue(&ml, m);
 
 	if (cdce_newbuf(sc, c, NULL) == ENOBUFS) {
 		ifp->if_ierrors++;
-		goto done1;
+		goto done;
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	ether_input_mbuf(ifp, m);
-
-done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
 
 done:

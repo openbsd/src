@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.78 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.79 2015/04/10 08:41:43 mpi Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -676,6 +676,7 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct kue_chain	*c = priv;
 	struct kue_softc	*sc = c->kue_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	int			total_len = 0;
 	int			s;
@@ -728,26 +729,15 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
+	ml_enqueue(&ml, m);
 
-	m->m_pkthdr.rcvif = ifp;
-
-	s = splnet();
-
-	/* XXX ugly */
 	if (kue_newbuf(sc, c, NULL) == ENOBUFS) {
 		ifp->if_ierrors++;
-		goto done1;
+		goto done;
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	DPRINTFN(10,("%s: %s: deliver %d\n", sc->kue_dev.dv_xname,
-		    __func__, m->m_len));
-	ether_input_mbuf(ifp, m);
- done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
 
  done:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.35 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.36 2015/04/10 08:41:43 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -361,6 +361,7 @@ cdcef_rxeof(struct usbf_xfer *xfer, void *priv,
 	struct cdcef_softc	*sc = priv;
 	int total_len = 0;
 	struct ifnet		*ifp = GET_IFP(sc);
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m = NULL;
 
 
@@ -403,32 +404,24 @@ cdcef_rxeof(struct usbf_xfer *xfer, void *priv,
 		goto done;
 	}
 
-	s = splnet();
 	if (ifp->if_flags & IFF_RUNNING) {
 		m = cdcef_newbuf();
 		if (m == NULL) {
 			/* message? */
 			ifp->if_ierrors++;
-			goto done1;
+			goto done;
 		}
 
 		m->m_pkthdr.len = m->m_len = total_len;
 		bcopy(sc->sc_buffer_out, mtod(m, char *), total_len);
-		m->m_pkthdr.rcvif = ifp;
 
 		ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
-done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
-
 done:
 	/* Setup another xfer. */
 	usbf_setup_xfer(xfer, sc->sc_pipe_out, sc, sc->sc_buffer_out,

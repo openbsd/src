@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.63 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.64 2015/04/10 08:41:43 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -421,6 +421,7 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct upl_chain	*c = priv;
 	struct upl_softc	*sc = c->upl_sc;
 	struct ifnet		*ifp = &sc->sc_if;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	int			total_len = 0;
 	int			s;
@@ -456,31 +457,16 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
+	ml_enqueue(&ml, m);
 
-	m->m_pkthdr.rcvif = ifp;
-
-	s = splnet();
-
-	/* XXX ugly */
 	if (upl_newbuf(sc, c, NULL) == ENOBUFS) {
 		ifp->if_ierrors++;
-		goto done1;
+		goto done;
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-	}
-#endif
-
-	DPRINTFN(10,("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
-		    __func__, m->m_len));
-
-	ether_input_mbuf(ifp, m);
-
- done1:
+	s = splnet();
+	if_input(ifp, &ml);
 	splx(s);
-
  done:
 #if 1
 	/* Setup new transfer. */
