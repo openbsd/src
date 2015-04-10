@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.416 2015/04/10 07:23:14 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.417 2015/04/10 16:00:08 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -987,15 +987,27 @@ command and keys modified or removed with
 .Ic bind-key
 and
 .Ic unbind-key .
-One command accepts an argument,
-.Ic copy-pipe ,
-which copies the selection and pipes it to a command.
+If
+.Ic append-selection ,
+.Ic copy-selection ,
+or
+.Ic start-named-buffer
+are given the
+.Fl x
+flag,
+.Nm
+will not exit copy mode after copying.
+.Ic copy-pipe
+copies the selection and pipes it to a command.
 For example the following will bind
+.Ql C-w
+not to exit after copying and
 .Ql C-q
 to copy the selection into
 .Pa /tmp
 as well as the paste buffer:
 .Bd -literal -offset indent
+bind-key -temacs-copy C-w copy-selection -x
 bind-key -temacs-copy C-q copy-pipe "cat >/tmp/out"
 .Ed
 .Pp
