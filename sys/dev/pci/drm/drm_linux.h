@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.15 2015/04/08 04:03:06 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.16 2015/04/10 05:31:25 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -542,6 +542,21 @@ static inline int
 in_atomic(void)
 {
 	return curcpu()->ci_inatomic;
+}
+
+static inline int
+irqs_disabled(void)
+{
+	return (cold);
+}
+
+static inline int
+in_dbg_master(void)
+{
+#ifdef DDB
+	return (db_is_active);
+#endif
+	return (0);
 }
 
 static inline void *
