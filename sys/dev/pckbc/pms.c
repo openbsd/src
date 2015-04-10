@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.58 2015/03/26 01:30:22 jsg Exp $ */
+/* $OpenBSD: pms.c,v 1.59 2015/04/10 08:48:08 stsp Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -137,6 +137,7 @@ struct elantech_softc {
 #define ELANTECH_F_HAS_ROCKER		0x02
 #define ELANTECH_F_2FINGER_PACKET	0x04
 #define ELANTECH_F_HW_V1_OLD		0x08
+#define ELANTECH_F_CRC_ENABLED		0x10
 	int fw_version;
 
 	int min_x, min_y;
@@ -1812,6 +1813,9 @@ elantech_get_hwinfo_v3(struct pms_softc *sc)
 	elantech->fw_version = fw_version;
 	elantech->flags |= ELANTECH_F_REPORTS_PRESSURE;
 
+	if ((fw_version & 0x4000) == 0x4000)
+		elantech->flags |= ELANTECH_F_CRC_ENABLED;
+
 	if (elantech_set_absolute_mode_v3(sc))
 		return (-1);
 
@@ -2164,14 +2168,23 @@ pms_sync_elantech_v2(struct pms_softc *sc, int data)
 int
 pms_sync_elantech_v3(struct pms_softc *sc, int data)
 {
+	struct elantech_softc *elantech = sc->elantech;
+
 	switch (sc->inputstate) {
 	case 0:
+		if (elantech->flags & ELANTECH_F_CRC_ENABLED)
+			break;
 		if ((data & 0x0c) != 0x04 && (data & 0x0c) != 0x0c)
 			return (-1);
 		break;
 	case 3:
-		if ((data & 0xcf) != 0x02 && (data & 0xce) != 0x0c)
-			return (-1);
+		if (elantech->flags & ELANTECH_F_CRC_ENABLED) {
+			if ((data & 0x09) != 0x08 && (data & 0x09) != 0x09)
+				return (-1);
+		} else {
+			if ((data & 0xcf) != 0x02 && (data & 0xce) != 0x0c)
+				return (-1);
+		}
 		break;
 	}
 
@@ -2256,11 +2269,6 @@ pms_proc_elantech_v3(struct pms_softc *sc)
 	struct elantech_softc *elantech = sc->elantech;
 	int x, y, w, z;
 
-	/* The hardware sends this packet when in debounce state.
-	 * The packet should be ignored. */
-	if (!memcmp(sc->packet, debounce_pkt, sizeof(debounce_pkt)))
-		return;
-
 	x = ((sc->packet[1] & 0x0f) << 8 | sc->packet[2]);
 	y = ((sc->packet[4] & 0x0f) << 8 | sc->packet[5]);
 	z = 0;
@@ -2271,10 +2279,19 @@ pms_proc_elantech_v3(struct pms_softc *sc)
 		 * and a tail packet. We report a single event and ignore
 		 * the tail packet.
 		 */
-		if ((sc->packet[0] & 0x0c) != 0x04 &&
-		    (sc->packet[3] & 0xcf) != 0x02) {
-			/* not the head packet -- ignore */
-			return;
+		if (elantech->flags & ELANTECH_F_CRC_ENABLED) {
+			if ((sc->packet[3] & 0x09) != 0x08)
+				return;
+		} else {
+			/* The hardware sends this packet when in debounce state.
+	 		 * The packet should be ignored. */
+			if (!memcmp(sc->packet, debounce_pkt, sizeof(debounce_pkt)))
+				return;
+			if ((sc->packet[0] & 0x0c) != 0x04 &&
+	    		(sc->packet[3] & 0xcf) != 0x02) {
+				/* not the head packet -- ignore */
+				return;
+			}
 		}
 	}
 
