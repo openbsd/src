@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.188 2015/04/10 05:52:09 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.189 2015/04/10 06:00:39 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -89,7 +89,7 @@
 #define DRM_SUSER(p)		(suser(p, 0) == 0)
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
 
-#define drm_msleep(x, msg)	delay(x * 1000)
+#define drm_msleep(x, msg)	mdelay(x)
 
 extern struct cfdriver drm_cd;
 
