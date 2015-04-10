@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.90 2015/04/09 16:56:52 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.91 2015/04/10 18:08:31 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2805,7 +2805,7 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 	if (CPU_ISSUN4US || CPU_ISSUN4V)
 		return;
 
-	pv = pa_to_pvh(pa);
+	pv = &pg->mdpage.pvent;
 	if (pv == NULL)
 		return;
 
