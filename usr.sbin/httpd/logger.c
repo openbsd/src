@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.11 2015/02/08 00:00:59 reyk Exp $	*/
+/*	$OpenBSD: logger.c,v 1.12 2015/04/11 14:52:49 jsing Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -118,12 +118,20 @@ logger_open_file(const char *name)
 	iov[1].iov_base = log->log_name;
 	iov[1].iov_len = strlen(log->log_name) + 1;
 
-	proc_composev_imsg(env->sc_ps, PROC_PARENT, -1, IMSG_LOG_OPEN, -1,
-	    iov, 2);
+	if (proc_composev_imsg(env->sc_ps, PROC_PARENT, -1, IMSG_LOG_OPEN, -1,
+	    iov, 2) != 0) {
+		log_warn("%s: failed to compose IMSG_LOG_OPEN imsg", __func__);
+		goto err;
+	}
 
 	TAILQ_INSERT_TAIL(&log_files, log, log_entry);
 
 	return (log);
+
+err:
+	free(log);
+
+	return (NULL);
 }
 
 int

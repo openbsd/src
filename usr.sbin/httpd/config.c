@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.36 2015/02/23 11:48:41 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.37 2015/04/11 14:52:49 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -212,12 +212,22 @@ config_setserver(struct httpd *env, struct server *srv)
 					fd = -1;
 				else if ((fd = dup(srv->srv_s)) == -1)
 					return (-1);
-				proc_composev_imsg(ps, id, n,
-				    IMSG_CFG_SERVER, fd, iov, c);
+				if (proc_composev_imsg(ps, id, n,
+				    IMSG_CFG_SERVER, fd, iov, c) != 0) {
+					log_warn("%s: failed to compose "
+					    "IMSG_CFG_SERVER imsg for `%s'",
+					    __func__, srv->srv_conf.name);
+					return (-1);
+				}
 			}
 		} else {
-			proc_composev_imsg(ps, id, -1, IMSG_CFG_SERVER, -1,
-			    iov, c);
+			if (proc_composev_imsg(ps, id, -1, IMSG_CFG_SERVER, -1,
+			    iov, c) != 0) {
+				log_warn("%s: failed to compose "
+				    "IMSG_CFG_SERVER imsg for `%s'",
+				    __func__, srv->srv_conf.name);
+				return (-1);
+			}
 		}
 	}
 

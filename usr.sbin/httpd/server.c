@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.61 2015/03/15 22:08:45 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.62 2015/04/11 14:52:49 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1010,7 +1010,11 @@ server_sendlog(struct server_config *srv_conf, int cmd, const char *emsg, ...)
 	iov[1].iov_base = msg;
 	iov[1].iov_len = strlen(msg) + 1;
 
-	proc_composev_imsg(env->sc_ps, PROC_LOGGER, -1, cmd, -1, iov, 2);
+	if (proc_composev_imsg(env->sc_ps, PROC_LOGGER, -1, cmd, -1, iov,
+	    2) != 0) {
+		log_warn("%s: failed to compose imsg", __func__);
+		return;
+	}
 }
 
 void
