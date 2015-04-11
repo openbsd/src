@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.19 2015/04/11 05:10:13 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.20 2015/04/11 14:39:37 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+typedef int irqreturn_t;
 #define IRQ_NONE	0
 #define IRQ_HANDLED	1
 
