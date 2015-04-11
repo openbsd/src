@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.17 2014/11/18 02:37:30 tedu Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.18 2015/04/11 16:23:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -766,7 +766,7 @@ sr_raid5_xor(void *a, void *b, int len)
 void
 sr_raid5_rebuild(struct sr_discipline *sd)
 {
-	int64_t strip_no, strip_size, strip_bits, i, psz, rb;
+	int64_t strip_no, strip_size, strip_bits, i, psz, rb, restart;
 	int64_t chunk_count, chunk_strips, chunk_lba, chunk_size, row_size;
 	struct sr_workunit *wu_r, *wu_w;
 	int s, slept, percent = 0, old_percent = -1;
@@ -790,14 +790,30 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 	chunk_strips = (chunk_size << DEV_BSHIFT) >> strip_bits;
 	row_size = (chunk_count << strip_bits) >> DEV_BSHIFT;
 
-	/* XXX - handle restarts. */
 	DNPRINTF(SR_D_REBUILD, "%s: %s sr_raid5_rebuild volume size = %lld, "
 	    "chunk count = %lld, chunk size = %lld, chunk strips = %lld, "
 	    "row size = %lld\n", DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 	    sd->sd_meta->ssdi.ssd_size, chunk_count, chunk_size, chunk_strips,
 	    row_size);
 
-	for (strip_no = 0; strip_no < chunk_strips; strip_no++) {
+	restart = sd->sd_meta->ssd_rebuild / row_size;
+	if (restart > chunk_strips) {
+		printf("%s: bogus rebuild restart offset, starting from 0\n",
+		    DEVNAME(sd->sd_sc));
+		restart = 0;
+	}
+	if (restart != 0) {
+		psz = sd->sd_meta->ssdi.ssd_size;
+		rb = sd->sd_meta->ssd_rebuild;
+		if (rb > 0)
+			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
+		else
+			percent = 0;
+		printf("%s: resuming rebuild on %s at %d%%\n",
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, percent);
+	}
+
+	for (strip_no = restart; strip_no < chunk_strips; strip_no++) {
 		chunk_lba = (strip_size >> DEV_BSHIFT) * strip_no +
 		    sd->sd_meta->ssd_data_offset;
 
