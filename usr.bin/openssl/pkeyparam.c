@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.4 2015/04/11 15:21:42 jsing Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.5 2015/04/11 15:41:57 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -147,6 +147,7 @@ pkeyparam_main(int argc, char **argv)
 		if (!(in = BIO_new_file(pkeyparam_config.infile, "r"))) {
 			BIO_printf(bio_err, "Can't open input file %s\n",
 			    pkeyparam_config.infile);
+			goto end;
 		}
 	} else
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
