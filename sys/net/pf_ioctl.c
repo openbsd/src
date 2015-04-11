@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.284 2015/03/14 03:38:51 jsg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.285 2015/04/11 13:00:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -155,12 +155,7 @@ pfattach(int num)
 	    "pfruleitem", NULL);
 	pool_init(&pf_queue_pl, sizeof(struct pf_queuespec), 0, 0, 0, 
 	    "pfqueue", NULL);
-	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
-	    "hfscclass", NULL);
-	pool_init(&hfsc_classq_pl, sizeof(struct hfsc_classq), 0, 0, PR_WAITOK,
-	    "hfscclassq", NULL);
-	pool_init(&hfsc_internal_sc_pl, sizeof(struct hfsc_internal_sc), 0, 0,
-	    PR_WAITOK, "hfscintsc", NULL);
+	hfsc_initialize();
 	pfr_initialize();
 	pfi_initialize();
 	pf_osfp_initialize();

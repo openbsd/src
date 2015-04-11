@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.16 2015/03/03 11:14:00 henning Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.17 2015/04/11 13:00:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -121,6 +121,8 @@ struct hfsc_class	*hfsc_clh2cph(struct hfsc_if *, u_int32_t);
 
 #define	HFSC_HT_INFINITY	0xffffffffffffffffLL /* infinite time value */
 
+struct pool	hfsc_class_pl, hfsc_classq_pl, hfsc_internal_sc_pl;
+
 u_int64_t
 hfsc_microuptime(void)
 {
@@ -153,6 +155,17 @@ hfsc_grow_class_tbl(struct hfsc_if *hif, u_int howmany)
 	hif->hif_allocated = howmany;
 
 	free(old, M_DEVBUF, 0);
+}
+
+void
+hfsc_initialize(void)
+{
+	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
+	    "hfscclass", NULL);
+	pool_init(&hfsc_classq_pl, sizeof(struct hfsc_classq), 0, 0, PR_WAITOK,
+	    "hfscclassq", NULL);
+	pool_init(&hfsc_internal_sc_pl, sizeof(struct hfsc_internal_sc), 0, 0,
+	    PR_WAITOK, "hfscintsc", NULL);
 }
 
 int

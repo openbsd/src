@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.6 2014/04/19 16:02:17 henning Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.7 2015/04/11 13:00:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -258,6 +258,7 @@ struct hfsc_if {
 
 struct ifnet; struct ifqueue; struct pf_queuespec;
 
+void		 hfsc_initialize(void);
 int		 hfsc_attach(struct ifnet *);
 int		 hfsc_detach(struct ifnet *);
 void		 hfsc_purge(struct ifqueue *);
