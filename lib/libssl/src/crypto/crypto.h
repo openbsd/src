@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.33 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: crypto.h,v 1.34 2015/04/11 16:16:15 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -347,8 +347,6 @@ int CRYPTO_is_mem_check_on(void);
 
 const char *SSLeay_version(int type);
 unsigned long SSLeay(void);
-
-int OPENSSL_issetugid(void);
 
 /* An opaque type representing an implementation of "ex_data" support */
 typedef struct st_CRYPTO_EX_DATA_IMPL	CRYPTO_EX_DATA_IMPL;
