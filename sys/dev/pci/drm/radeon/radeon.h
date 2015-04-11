@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.12 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.13 2015/04/11 05:10:13 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -597,7 +597,7 @@ union radeon_irq_stat_regs {
 
 struct radeon_irq {
 	bool				installed;
-	struct mutex			lock;
+	spinlock_t			lock;
 	atomic_t			ring_int[RADEON_NUM_RINGS];
 	bool				crtc_vblank_int[RADEON_MAX_CRTCS];
 	atomic_t			pflip[RADEON_MAX_CRTCS];
@@ -1604,7 +1604,7 @@ struct radeon_device {
 	bus_addr_t			rmmio_base;
 	bus_size_t			rmmio_size;
 	/* protects concurrent MM_INDEX/DATA based register access */
-	struct mutex			mmio_idx_lock;
+	spinlock_t mmio_idx_lock;
 	bus_space_handle_t		rmmio;
 	radeon_rreg_t			mc_rreg;
 	radeon_wreg_t			mc_wreg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.30 2015/04/08 04:24:40 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.31 2015/04/11 05:10:13 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2315,7 +2315,7 @@ err_unref:
 /**
  * Lock protecting IPS related data structures
  */
-struct mutex mchdev_lock;
+DEFINE_SPINLOCK(mchdev_lock);
 
 /* Global for IPS driver to get at the current i915 device. Protected by
  * mchdev_lock. */

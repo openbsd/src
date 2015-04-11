@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_page_alloc.c,v 1.8 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: ttm_page_alloc.c,v 1.9 2015/04/11 05:10:13 jsg Exp $	*/
 /*
  * Copyright (c) Red Hat Inc.
 
@@ -63,7 +63,7 @@
  * @npages: Number of pages in pool.
  */
 struct ttm_page_pool {
-	struct mutex		lock;
+	spinlock_t		lock;
 	bool			fill_lock;
 	struct pglist		list;
 	int			ttm_page_alloc_flags;

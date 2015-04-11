@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.18 2015/04/11 02:59:05 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.19 2015/04/11 05:10:13 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -207,6 +207,7 @@ IS_ERR_OR_NULL(const void *ptr)
 #endif
 
 typedef struct mutex spinlock_t;
+#define DEFINE_SPINLOCK(x)	struct mutex x
 
 static inline void
 spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.22 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.23 2015/04/11 05:10:13 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -297,7 +297,7 @@ static void i915_hotplug_work_func(void *arg1)
 }
 
 /* defined intel_pm.c */
-extern struct mutex mchdev_lock;
+extern spinlock_t mchdev_lock;
 
 static void ironlake_handle_rps_change(struct drm_device *dev)
 {

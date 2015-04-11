@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.59 2015/04/11 02:24:43 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.60 2015/04/11 05:10:13 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -608,7 +608,7 @@ struct intel_gen6_power_mgmt {
 	u32 pm_iir;
 	/* lock - irqsave spinlock that protectects the work_struct and
 	 * pm_iir. */
-	struct mutex lock;
+	spinlock_t lock;
 
 	/* The below variables an all the rps hw state are protected by
 	 * dev->struct mutext. */

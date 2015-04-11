@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_manager.c,v 1.3 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_manager.c,v 1.4 2015/04/11 05:10:13 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2010 VMware, Inc., Palo Alto, CA., USA
@@ -42,7 +42,7 @@
 
 struct ttm_range_manager {
 	struct drm_mm mm;
-	struct mutex lock;
+	spinlock_t lock;
 };
 
 static int ttm_bo_man_get_node(struct ttm_mem_type_manager *man,
