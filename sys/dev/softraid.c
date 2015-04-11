@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.350 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: softraid.c,v 1.351 2015/04/11 17:10:17 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -99,6 +99,8 @@ void			sr_copy_internal_data(struct scsi_xfer *,
 int			sr_scsi_ioctl(struct scsi_link *, u_long,
 			    caddr_t, int);
 int			sr_bio_ioctl(struct device *, u_long, caddr_t);
+int			sr_bio_handler(struct sr_softc *,
+			    struct sr_discipline *, u_long, struct bio *);
 int			sr_ioctl_inq(struct sr_softc *, struct bioc_inq *);
 int			sr_ioctl_vol(struct sr_softc *, struct bioc_vol *);
 int			sr_ioctl_disk(struct sr_softc *, struct bioc_disk *);
@@ -107,11 +109,11 @@ int			sr_ioctl_setstate(struct sr_softc *,
 int			sr_ioctl_createraid(struct sr_softc *,
 			    struct bioc_createraid *, int, void *);
 int			sr_ioctl_deleteraid(struct sr_softc *,
-			    struct bioc_deleteraid *);
+			    struct sr_discipline *, struct bioc_deleteraid *);
 int			sr_ioctl_discipline(struct sr_softc *,
-			    struct bioc_discipline *);
+			    struct sr_discipline *, struct bioc_discipline *);
 int			sr_ioctl_installboot(struct sr_softc *,
-			    struct bioc_installboot *);
+			    struct sr_discipline *, struct bioc_installboot *);
 void			sr_chunks_unwind(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_discipline_free(struct sr_discipline *);
@@ -2465,12 +2467,19 @@ sr_scsi_probe(struct scsi_link *link)
 int
 sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	DNPRINTF(SR_D_IOCTL, "%s: sr_scsi_ioctl cmd: %#x\n",
-	    DEVNAME((struct sr_softc *)link->adapter_softc), cmd);
+	struct sr_softc		*sc = link->adapter_softc;
+	struct sr_discipline	*sd;
 
-	/* Pass bio ioctls through to bio handler. */
+	sd = sc->sc_targets[link->target];
+	if (sd == NULL)
+		return (ENODEV);
+
+	DNPRINTF(SR_D_IOCTL, "%s: %s sr_scsi_ioctl cmd: %#x\n",
+	    DEVNAME(sc), sd->sd_meta->ssd_devname, cmd);
+
+	/* Pass bio ioctls through to the bio handler. */
 	if (IOCGROUP(cmd) == 'B')
-		return (sr_bio_ioctl(link->adapter_softc, cmd, addr));
+		return (sr_bio_handler(sc, sd, cmd, (struct bio *)addr));
 
 	switch (cmd) {
 	case DIOCGCACHE:
@@ -2484,11 +2493,19 @@ sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 int
 sr_bio_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
-	struct sr_softc		*sc = (struct sr_softc *)dev;
-	struct bio		*bio = (struct bio *)addr;
+	DNPRINTF(SR_D_IOCTL, "%s: sr_bio_ioctl\n", DEVNAME(sc));
+
+	return sr_bio_handler((struct sr_softc *)dev, NULL, cmd,
+	    (struct bio *)addr);
+}
+
+int
+sr_bio_handler(struct sr_softc *sc, struct sr_discipline *sd, u_long cmd,
+    struct bio *bio)
+{
 	int			rv = 0;
 
-	DNPRINTF(SR_D_IOCTL, "%s: sr_bio_ioctl ", DEVNAME(sc));
+	DNPRINTF(SR_D_IOCTL, "%s: sr_bio_handler ", DEVNAME(sc));
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -2497,53 +2514,54 @@ sr_bio_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 	switch (cmd) {
 	case BIOCINQ:
 		DNPRINTF(SR_D_IOCTL, "inq\n");
-		rv = sr_ioctl_inq(sc, (struct bioc_inq *)addr);
+		rv = sr_ioctl_inq(sc, (struct bioc_inq *)bio);
 		break;
 
 	case BIOCVOL:
 		DNPRINTF(SR_D_IOCTL, "vol\n");
-		rv = sr_ioctl_vol(sc, (struct bioc_vol *)addr);
+		rv = sr_ioctl_vol(sc, (struct bioc_vol *)bio);
 		break;
 
 	case BIOCDISK:
 		DNPRINTF(SR_D_IOCTL, "disk\n");
-		rv = sr_ioctl_disk(sc, (struct bioc_disk *)addr);
+		rv = sr_ioctl_disk(sc, (struct bioc_disk *)bio);
 		break;
 
 	case BIOCALARM:
 		DNPRINTF(SR_D_IOCTL, "alarm\n");
-		/*rv = sr_ioctl_alarm(sc, (struct bioc_alarm *)addr); */
+		/*rv = sr_ioctl_alarm(sc, (struct bioc_alarm *)bio); */
 		break;
 
 	case BIOCBLINK:
 		DNPRINTF(SR_D_IOCTL, "blink\n");
-		/*rv = sr_ioctl_blink(sc, (struct bioc_blink *)addr); */
+		/*rv = sr_ioctl_blink(sc, (struct bioc_blink *)bio); */
 		break;
 
 	case BIOCSETSTATE:
 		DNPRINTF(SR_D_IOCTL, "setstate\n");
-		rv = sr_ioctl_setstate(sc, (struct bioc_setstate *)addr);
+		rv = sr_ioctl_setstate(sc, (struct bioc_setstate *)bio);
 		break;
 
 	case BIOCCREATERAID:
 		DNPRINTF(SR_D_IOCTL, "createraid\n");
-		rv = sr_ioctl_createraid(sc, (struct bioc_createraid *)addr,
+		rv = sr_ioctl_createraid(sc, (struct bioc_createraid *)bio,
 		    1, NULL);
 		break;
 
 	case BIOCDELETERAID:
 		DNPRINTF(SR_D_IOCTL, "deleteraid\n");
-		rv = sr_ioctl_deleteraid(sc, (struct bioc_deleteraid *)addr);
+		rv = sr_ioctl_deleteraid(sc, sd, (struct bioc_deleteraid *)bio);
 		break;
 
 	case BIOCDISCIPLINE:
 		DNPRINTF(SR_D_IOCTL, "discipline\n");
-		rv = sr_ioctl_discipline(sc, (struct bioc_discipline *)addr);
+		rv = sr_ioctl_discipline(sc, sd, (struct bioc_discipline *)bio);
 		break;
 
 	case BIOCINSTALLBOOT:
 		DNPRINTF(SR_D_IOCTL, "installboot\n");
-		rv = sr_ioctl_installboot(sc, (struct bioc_installboot *)addr);
+		rv = sr_ioctl_installboot(sc, sd,
+		    (struct bioc_installboot *)bio);
 		break;
 
 	default:
@@ -3492,6 +3510,9 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		}
 
 		link = scsi_get_link(sc->sc_scsibus, target, 0);
+		if (link == NULL)
+			goto unwind;
+
 		dev = link->device_softc;
 		DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s at target %d\n",
 		    DEVNAME(sc), dev->dv_xname, sd->sd_target);
@@ -3556,22 +3577,24 @@ unwind:
 }
 
 int
-sr_ioctl_deleteraid(struct sr_softc *sc, struct bioc_deleteraid *bd)
+sr_ioctl_deleteraid(struct sr_softc *sc, struct sr_discipline *sd,
+    struct bioc_deleteraid *bd)
 {
-	struct sr_discipline	*sd;
 	int			rv = 1;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_deleteraid %s\n",
 	    DEVNAME(sc), bd->bd_dev);
 
-	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
-		if (!strncmp(sd->sd_meta->ssd_devname, bd->bd_dev,
-		    sizeof(sd->sd_meta->ssd_devname)))
-			break;
-	}
 	if (sd == NULL) {
-		sr_error(sc, "volume %s not found", bd->bd_dev);
-		goto bad;
+		TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
+			if (!strncmp(sd->sd_meta->ssd_devname, bd->bd_dev,
+			    sizeof(sd->sd_meta->ssd_devname)))
+				break;
+		}
+		if (sd == NULL) {
+			sr_error(sc, "volume %s not found", bd->bd_dev);
+			goto bad;
+		}
 	}
 
 	sd->sd_deleted = 1;
@@ -3584,9 +3607,9 @@ bad:
 }
 
 int
-sr_ioctl_discipline(struct sr_softc *sc, struct bioc_discipline *bd)
+sr_ioctl_discipline(struct sr_softc *sc, struct sr_discipline *sd,
+    struct bioc_discipline *bd)
 {
-	struct sr_discipline	*sd;
 	int			rv = 1;
 
 	/* Dispatch a discipline specific ioctl. */
@@ -3594,14 +3617,16 @@ sr_ioctl_discipline(struct sr_softc *sc, struct bioc_discipline *bd)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_discipline %s\n", DEVNAME(sc),
 	    bd->bd_dev);
 
-	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
-		if (!strncmp(sd->sd_meta->ssd_devname, bd->bd_dev,
-		    sizeof(sd->sd_meta->ssd_devname)))
-			break;
-	}
 	if (sd == NULL) {
-		sr_error(sc, "volume %s not found", bd->bd_dev);
-		goto bad;
+		TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
+			if (!strncmp(sd->sd_meta->ssd_devname, bd->bd_dev,
+			    sizeof(sd->sd_meta->ssd_devname)))
+				break;
+		}
+		if (sd == NULL) {
+			sr_error(sc, "volume %s not found", bd->bd_dev);
+			goto bad;
+		}
 	}
 
 	if (sd->sd_ioctl_handler)
@@ -3612,10 +3637,10 @@ bad:
 }
 
 int
-sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
+sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
+    struct bioc_installboot *bb)
 {
 	void			*bootblk = NULL, *bootldr = NULL;
-	struct sr_discipline	*sd;
 	struct sr_chunk		*chunk;
 	struct sr_meta_opt_item *omi;
 	struct sr_meta_boot	*sbm;
@@ -3628,14 +3653,16 @@ sr_ioctl_installboot(struct sr_softc *sc, struct bioc_installboot *bb)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_installboot %s\n", DEVNAME(sc),
 	    bb->bb_dev);
 
-	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
-		if (!strncmp(sd->sd_meta->ssd_devname, bb->bb_dev,
-		    sizeof(sd->sd_meta->ssd_devname)))
-			break;
-	}
 	if (sd == NULL) {
-		sr_error(sc, "volume %s not found", bb->bb_dev);
-		goto done;
+		TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
+			if (!strncmp(sd->sd_meta->ssd_devname, bb->bb_dev,
+			    sizeof(sd->sd_meta->ssd_devname)))
+				break;
+		}
+		if (sd == NULL) {
+			sr_error(sc, "volume %s not found", bb->bb_dev);
+			goto done;
+		}
 	}
 
 	bzero(duid, sizeof(duid));
