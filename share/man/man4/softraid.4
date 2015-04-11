@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.39 2015/02/16 16:38:54 naddy Exp $
+.\"	$OpenBSD: softraid.4,v 1.40 2015/04/11 16:37:34 jsing Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: April 11 2015 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -78,14 +78,14 @@ though at the cost of write speed.
 Unlike traditional RAID 1,
 .Nm
 supports the use of more than two chunks in a RAID 1 setup.
-.\" .It RAID 5
-.\" A striping discipline with
-.\" .Em floating parity
-.\" across all chunks.
-.\" It stripes data across chunks and provides parity to prevent data loss of
-.\" a single chunk failure.
-.\" Read performance is increased;
-.\" write performance does incur additional overhead.
+.It RAID 5
+A striping discipline with
+.Em floating parity
+across all chunks.
+It stripes data across chunks and provides parity to prevent data loss of
+a single chunk failure.
+Read performance is increased;
+write performance does incur additional overhead.
 .It CRYPTO
 An
 .Em encrypting
@@ -198,9 +198,9 @@ The RAID 1 discipline does not initialize the mirror upon creation.
 This is by design because all sectors that are read are written first.
 There is no point in wasting a lot of time syncing random data.
 .Pp
-.\" The RAID 5 discipline do not initialize the parity upon creation.
-.\" This is due to the scrub functionality not being currently implemented.
-.\" .Pp
+The RAID 5 discipline does not initialize parity upon creation, instead parity
+is only updated upon write.
+.Pp
 Currently there is no automated mechanism to recover from failed disks.
 .Pp
 Sparc hardware needs to use fstype
