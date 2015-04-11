@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.190 2015/04/10 12:06:52 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.191 2015/04/11 04:36:10 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -677,6 +677,8 @@ void	*drm_alloc(size_t);
 void	*drm_calloc(size_t, size_t);
 void	*drm_realloc(void *, size_t, size_t);
 void	 drm_free(void *);
+
+#include "drm_mem_util.h"
 
 /* XXX until we get PAT support */
 #define drm_core_ioremap_wc drm_core_ioremap

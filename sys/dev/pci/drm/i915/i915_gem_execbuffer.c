@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.36 2015/04/05 11:53:53 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.37 2015/04/11 04:36:10 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -542,12 +542,11 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 	for (i = 0; i < count; i++)
 		total += exec[i].relocation_count;
 
-	reloc_offset = mallocarray(count, sizeof(*reloc_offset), M_DRM,
-	    M_WAITOK);
-	reloc = mallocarray(total, sizeof(*reloc), M_DRM, M_WAITOK);
+	reloc_offset = drm_malloc_ab(count, sizeof(*reloc_offset));
+	reloc = drm_malloc_ab(total, sizeof(*reloc));
 	if (reloc == NULL || reloc_offset == NULL) {
-		drm_free(reloc);
-		drm_free(reloc_offset);
+		drm_free_large(reloc);
+		drm_free_large(reloc_offset);
 		mutex_lock(&dev->struct_mutex);
 		return -ENOMEM;
 	}
@@ -633,8 +632,8 @@ i915_gem_execbuffer_relocate_slow(struct drm_device *dev,
 	 */
 
 err:
-	drm_free(reloc);
-	drm_free(reloc_offset);
+	drm_free_large(reloc);
+	drm_free_large(reloc_offset);
 	return ret;
 }
 
@@ -1225,6 +1224,9 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 
 	exec2_list = kmalloc(sizeof(*exec2_list)*args->buffer_count,
 			     GFP_KERNEL | __GFP_NOWARN | __GFP_NORETRY);
+	if (exec2_list == NULL)
+		exec2_list = drm_malloc_ab(sizeof(*exec2_list),
+					   args->buffer_count);
 	if (exec2_list == NULL) {
 		DRM_DEBUG("Failed to allocate exec list for %d buffers\n",
 			  args->buffer_count);
@@ -1237,7 +1239,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	if (ret != 0) {
 		DRM_DEBUG("copy %d exec entries failed %d\n",
 			  args->buffer_count, ret);
-		drm_free(exec2_list);
+		drm_free_large(exec2_list);
 		return -EFAULT;
 	}
 
@@ -1255,7 +1257,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		}
 	}
 
-	drm_free(exec2_list);
+	drm_free_large(exec2_list);
 	return ret;
 }
 

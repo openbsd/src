@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_mem_util.h,v 1.2 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: drm_mem_util.h,v 1.3 2015/04/11 04:36:10 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -49,14 +49,13 @@ static __inline__ void *drm_calloc_large(size_t nmemb, size_t size)
 /* Modeled after cairo's malloc_ab, it's like calloc but without the zeroing. */
 static __inline__ void *drm_malloc_ab(size_t nmemb, size_t size)
 {
-	printf("%s stub\n", __func__);
-	return NULL;
+	return (mallocarray(nmemb, size, M_DRM, M_WAITOK | M_CANFAIL));
 #ifdef notyet
 	if (size != 0 && nmemb > SIZE_MAX / size)
 		return NULL;
 
 	if (size * nmemb <= PAGE_SIZE)
-	    return malloc(nmemb * size, M_DRM, M_WAITOK);
+	    return kmalloc(nmemb * size, GFP_KERNEL);
 
 	return __vmalloc(size * nmemb,
 			 GFP_KERNEL | __GFP_HIGHMEM, PAGE_KERNEL);
