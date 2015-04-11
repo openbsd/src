@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_list.c,v 1.17 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: eng_list.c,v 1.18 2015/04/11 16:03:21 deraadt Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -386,12 +386,7 @@ ENGINE_by_id(const char *id)
 		return iterator;
 	/* Prevent infinite recusrion if we're looking for the dynamic engine. */
 	if (strcmp(id, "dynamic")) {
-		if (issetugid() == 0) {
-			load_dir = getenv("OPENSSL_ENGINES");
-			if (load_dir == NULL)
-				load_dir = ENGINESDIR;
-		} else
-			load_dir = ENGINESDIR;
+		load_dir = ENGINESDIR;
 
 		iterator = ENGINE_by_id("dynamic");
 		if (!iterator ||

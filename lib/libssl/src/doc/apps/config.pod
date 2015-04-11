@@ -43,11 +43,8 @@ The value string undergoes variable expansion. This can be done by
 including the form B<$var> or B<${var}>: this will substitute the value
 of the named variable in the current section. It is also possible to
 substitute a value from another section using the syntax B<$section::name>
-or B<${section::name}>. By using the form B<$ENV::name> environment
-variables can be substituted. It is also possible to assign values to
-environment variables by using the name B<ENV::name>, this will work
-if the program looks up environment variables using the B<CONF> library
-instead of calling B<getenv()> directly.
+or B<${section::name}>. An old form using B<$ENV::name> has been deprecated
+because it is unsafe.
 
 It is possible to escape certain characters by using any kind of quote
 or the B<\> character. By making the last character of a line a B<\>

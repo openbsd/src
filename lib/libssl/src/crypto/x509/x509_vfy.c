@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.40 2015/02/11 02:17:59 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.41 2015/04/11 16:03:21 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -483,12 +483,6 @@ check_chain_extensions(X509_STORE_CTX *ctx)
 	} else {
 		allow_proxy_certs =
 		    !!(ctx->param->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
-#if 0
-		/* A hack to keep people who don't want to modify their
-		   software happy */
-		if (issetugid() == 0 && getenv("OPENSSL_ALLOW_PROXY_CERTS"))
-			allow_proxy_certs = 1;
-#endif
 		purpose = ctx->param->purpose;
 	}
 

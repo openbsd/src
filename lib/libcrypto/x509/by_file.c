@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.18 2015/02/05 01:33:22 reyk Exp $ */
+/* $OpenBSD: by_file.c,v 1.19 2015/04/11 16:03:21 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,21 +94,13 @@ by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     char **ret)
 {
 	int ok = 0;
-	char *file = NULL;
 
 	switch (cmd) {
 	case X509_L_FILE_LOAD:
 		if (argl == X509_FILETYPE_DEFAULT) {
-			if (issetugid() == 0)
-				file = getenv(X509_get_default_cert_file_env());
-			if (file)
-				ok = (X509_load_cert_crl_file(ctx, file,
-				    X509_FILETYPE_PEM) != 0);
-			else
-				ok = (X509_load_cert_crl_file(ctx,
-				    X509_get_default_cert_file(),
-				    X509_FILETYPE_PEM) != 0);
-
+			ok = (X509_load_cert_crl_file(ctx,
+			    X509_get_default_cert_file(),
+			    X509_FILETYPE_PEM) != 0);
 			if (!ok) {
 				X509err(X509_F_BY_FILE_CTRL,
 				    X509_R_LOADING_DEFAULTS);

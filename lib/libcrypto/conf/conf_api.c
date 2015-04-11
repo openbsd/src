@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.14 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: conf_api.c,v 1.15 2015/04/11 16:03:21 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,7 +130,6 @@ char *
 _CONF_get_string(const CONF *conf, const char *section, const char *name)
 {
 	CONF_VALUE *v, vv;
-	char *p;
 
 	if (name == NULL)
 		return (NULL);
@@ -141,14 +140,6 @@ _CONF_get_string(const CONF *conf, const char *section, const char *name)
 			v = lh_CONF_VALUE_retrieve(conf->data, &vv);
 			if (v != NULL)
 				return (v->value);
-			if (strcmp(section, "ENV") == 0) {
-				if (issetugid() == 0)
-					p = getenv(name);
-				else
-					p = NULL;
-				if (p != NULL)
-					return (p);
-			}
 		}
 		vv.section = "default";
 		vv.name = (char *)name;
@@ -157,11 +148,8 @@ _CONF_get_string(const CONF *conf, const char *section, const char *name)
 			return (v->value);
 		else
 			return (NULL);
-	} else {
-		if (issetugid())
-			return (NULL);
-		return (getenv(name));
-	}
+	} else
+		return (NULL);
 }
 
 static unsigned long
