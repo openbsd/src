@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.58 2015/04/05 11:53:53 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.59 2015/04/11 02:24:43 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1652,7 +1652,7 @@ struct dma_buf *i915_gem_prime_export(struct drm_device *dev,
 #endif
 
 /* i915_drv.c */
-void i915_gem_chipset_flush(struct drm_device *);
+void intel_gtt_chipset_flush(struct drm_device *);
 int intel_gpu_reset(struct drm_device *);
 int i915_reset(struct drm_device *);
 void inteldrm_timeout(void *);
@@ -1690,13 +1690,11 @@ void i915_gem_init_global_gtt(struct drm_device *dev,
 			      unsigned long end);
 int i915_gem_gtt_init(struct drm_device *dev);
 void i915_gem_gtt_fini(struct drm_device *dev);
-#ifdef notyet
 static inline void i915_gem_chipset_flush(struct drm_device *dev)
 {
 	if (INTEL_INFO(dev)->gen < 6)
-		intel_gtt_chipset_flush();
+		intel_gtt_chipset_flush(dev);
 }
-#endif
 
 
 /* i915_gem_evict.c */
