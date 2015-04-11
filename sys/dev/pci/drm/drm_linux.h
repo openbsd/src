@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.17 2015/04/10 12:06:52 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.18 2015/04/11 02:59:05 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -335,6 +335,11 @@ vfree(void *objp)
 	t __min_a = (a); \
 	t __min_b = (b); \
 	__min_a < __min_b ? __min_a : __min_b; })
+
+#define max_t(t, a, b) ({ \
+	t __max_a = (a); \
+	t __max_b = (b); \
+	__max_a > __max_b ? __max_a : __max_b; })
 
 static inline uint64_t
 div_u64(uint64_t x, uint32_t y)

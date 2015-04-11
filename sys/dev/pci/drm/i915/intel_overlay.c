@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.14 2015/04/08 04:03:06 jsg Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.15 2015/04/11 02:59:05 jsg Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -692,12 +692,6 @@ static u32 overlay_cmd_reg(struct put_image_params *params)
 	return cmd;
 }
 
-static inline u32
-max_u32(u32 a, u32 b)
-{
-	return (a > b ? a : b);
-}
-
 static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 				      struct drm_i915_gem_object *new_bo,
 				      struct put_image_params *params)
@@ -773,7 +767,7 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 				      params->src_w/uv_hscale);
 		tmp_V = calc_swidthsw(overlay->dev, params->offset_V,
 				      params->src_w/uv_hscale);
-		swidthsw |= max_u32(tmp_U, tmp_V) << 16;
+		swidthsw |= max_t(u32, tmp_U, tmp_V) << 16;
 		sheight |= (params->src_h/uv_vscale) << 16;
 		regs->OBUF_0U = new_bo->gtt_offset + params->offset_U;
 		regs->OBUF_0V = new_bo->gtt_offset + params->offset_V;
