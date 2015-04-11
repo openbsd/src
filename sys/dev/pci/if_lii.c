@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.35 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.36 2015/04/11 14:40:42 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -893,6 +893,7 @@ lii_intr(void *v)
 void
 lii_rxintr(struct lii_softc *sc)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct rx_pkt *rxp;
 	struct mbuf *m;
@@ -929,19 +930,15 @@ lii_rxintr(struct lii_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
 		/* Copy the packet withhout the FCS */
 		m->m_pkthdr.len = m->m_len = size;
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
 		++ifp->if_ipackets;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	LII_WRITE_4(sc, LII_MB_RXD_RD_IDX, sc->sc_rxcur);
 }
