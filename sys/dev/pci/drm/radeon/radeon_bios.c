@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.5 2015/04/08 04:03:06 jsg Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.6 2015/04/12 12:14:30 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -554,7 +554,7 @@ static bool legacy_read_disabled_bios(struct radeon_device *rdev)
 	crtc_ext_cntl = RREG32(RADEON_CRTC_EXT_CNTL);
 	fp2_gen_cntl = 0;
 
-	if (rdev->ddev->pci_device == PCI_PRODUCT_ATI_RADEON_QY) {
+	if (rdev->ddev->pci_device == PCI_DEVICE_ID_ATI_RADEON_QY) {
 		fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
 	}
 
@@ -591,7 +591,7 @@ static bool legacy_read_disabled_bios(struct radeon_device *rdev)
 		(RADEON_CRTC_SYNC_TRISTAT |
 		 RADEON_CRTC_DISPLAY_DIS)));
 
-	if (rdev->ddev->pci_device == PCI_PRODUCT_ATI_RADEON_QY) {
+	if (rdev->ddev->pci_device == PCI_DEVICE_ID_ATI_RADEON_QY) {
 		WREG32(RADEON_FP2_GEN_CNTL, (fp2_gen_cntl & ~RADEON_FP2_ON));
 	}
 
@@ -609,7 +609,7 @@ static bool legacy_read_disabled_bios(struct radeon_device *rdev)
 		WREG32(RADEON_CRTC2_GEN_CNTL, crtc2_gen_cntl);
 	}
 	WREG32(RADEON_CRTC_EXT_CNTL, crtc_ext_cntl);
-	if (rdev->ddev->pci_device == PCI_PRODUCT_ATI_RADEON_QY) {
+	if (rdev->ddev->pci_device == PCI_DEVICE_ID_ATI_RADEON_QY) {
 		WREG32(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
 	}
 	return r;

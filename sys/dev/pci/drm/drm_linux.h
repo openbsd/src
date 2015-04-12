@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.22 2015/04/12 05:31:23 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.23 2015/04/12 12:14:30 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -472,6 +472,17 @@ struct pci_dev {
 	uint16_t	subsystem_device;
 };
 #define PCI_ANY_ID (uint16_t) (~0U)
+
+#define PCI_VENDOR_ID_ASUSTEK	PCI_VENDOR_ASUSTEK
+#define PCI_VENDOR_ID_ATI	PCI_VENDOR_ATI
+#define PCI_VENDOR_ID_DELL	PCI_VENDOR_DELL
+#define PCI_VENDOR_ID_HP	PCI_VENDOR_HP
+#define PCI_VENDOR_ID_IBM	PCI_VENDOR_IBM
+#define PCI_VENDOR_ID_INTEL	PCI_VENDOR_INTEL
+#define PCI_VENDOR_ID_SONY	PCI_VENDOR_SONY
+#define PCI_VENDOR_ID_VIA	PCI_VENDOR_VIATECH
+
+#define PCI_DEVICE_ID_ATI_RADEON_QY	PCI_PRODUCT_ATI_RADEON_QY
 
 #define memcpy_toio(d, s, n)	memcpy(d, s, n)
 #define memcpy_fromio(d, s, n)	memcpy(d, s, n)
