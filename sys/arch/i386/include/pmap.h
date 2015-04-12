@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.73 2015/04/12 18:37:54 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.74 2015/04/12 21:37:33 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -240,8 +240,10 @@ void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
 void pmap_kremove(vaddr_t, vsize_t);
 void pmap_zero_page(struct vm_page *);
 void pmap_copy_page(struct vm_page *, struct vm_page *);
+struct pv_entry *pmap_alloc_pv(struct pmap *, int);
 void pmap_enter_pv(struct vm_page *, struct pv_entry *,
     struct pmap *, vaddr_t, struct vm_page *);
+void pmap_free_pv(struct pmap *, struct pv_entry *);
 void pmap_free_pvs(struct pmap *, struct pv_entry *);
 boolean_t pmap_clear_attrs(struct vm_page *, int);
 static void pmap_page_protect(struct vm_page *, vm_prot_t);

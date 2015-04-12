@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.173 2015/04/12 19:21:32 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.174 2015/04/12 21:37:33 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -294,7 +294,7 @@
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 #define PTE_BASE	((pt_entry_t *) (PDSLOT_PTE * NBPD))
-#define APTE_BASE       ((pt_entry_t *) (PDSLOT_APTE * NBPD))
+#define APTE_BASE	((pt_entry_t *) (PDSLOT_APTE * NBPD))
 #define PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * NBPG)))
 #define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
 #define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
@@ -318,8 +318,7 @@
  *
  *  vtopte: return a pointer to the PTE mapping a VA
  */
-#define	vtopte(VA)	(PTE_BASE + atop((vaddr_t)VA))
-
+#define vtopte(VA)	(PTE_BASE + atop((vaddr_t)VA))
 
 /*
  * PTP macros:
@@ -331,25 +330,34 @@
  *           NBPD == number of bytes a PTP can map (4MB)
  */
 
-#define	ptp_i2o(I)	((I) * NBPG)	/* index => offset */
-#define	ptp_o2i(O)	((O) / NBPG)	/* offset => index */
-#define	ptp_i2v(I)	((I) * NBPD)	/* index => VA */
-#define	ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
+#define ptp_i2o(I)	((I) * NBPG)	/* index => offset */
+#define ptp_o2i(O)	((O) / NBPG)	/* offset => index */
+#define ptp_i2v(I)	((I) * NBPD)	/* index => VA */
+#define ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
 
-#define	PDE(pm,i)	(((pd_entry_t *)(pm)->pm_pdir)[(i)])
+/*
+ * Access PD and PT
+ */
+#define PDE(pm,i)	(((pd_entry_t *)(pm)->pm_pdir)[(i)])
 
 /*
  * here we define the data types for PDEs and PTEs
  */
-typedef	u_int32_t pd_entry_t;		/* PDE */
-typedef	u_int32_t pt_entry_t;		/* PTE */
+typedef u_int32_t pd_entry_t;		/* PDE */
+typedef u_int32_t pt_entry_t;		/* PTE */
+
+/*
+ * Number of PTEs per cache line.  4 byte pte, 64-byte cache line
+ * Used to avoid false sharing of cache lines.
+ */
+#define NPTECL			16
 
 /*
  * global data structures
  */
 
-/* the kernel's pmap (proc0) */
-struct	pmap __attribute__ ((aligned (32))) kernel_pmap_store;
+/* The kernel's pmap (proc0), 32 byte aligned in case we are using PAE */
+struct pmap __attribute__ ((aligned (32))) kernel_pmap_store;
 
 /*
  * nkpde is the number of kernel PTPs allocated for the kernel at
@@ -360,9 +368,6 @@ struct	pmap __attribute__ ((aligned (32))) kernel_pmap_store;
 
 int nkpde = NKPTP;
 int nkptp_max = 1024 - (KERNBASE / NBPD) - 1;
-#ifdef NKPDE
-#error "obsolete NKPDE: use NKPTP"
-#endif
 
 extern int cpu_pae;
 
@@ -376,7 +381,7 @@ int pmap_pg_g = 0;
 /*
  * pmap_pg_wc: if our processor supports PAT then we set this
  * to be the pte bits for Write Combining. Else we fall back to
- * UC- so mtrrs can override the cacheability;
+ * UC- so mtrrs can override the cacheability
  */
 int pmap_pg_wc = PG_UCMINUS;
 
@@ -386,6 +391,20 @@ int pmap_pg_wc = PG_UCMINUS;
 
 uint32_t protection_codes[8];		/* maps MI prot to i386 prot code */
 boolean_t pmap_initialized = FALSE;	/* pmap_init done yet? */
+
+/*
+ * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
+ * MAXCPUS*NPTECL array of PTE's, to avoid cache line thrashing
+ * due to false sharing.
+ */
+
+#ifdef MULTIPROCESSOR
+#define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
+#define VASLEW(va,id) ((va)+(id)*NPTECL*NBPG)
+#else
+#define PTESLEW(pte, id) (pte)
+#define VASLEW(va,id) (va)
+#endif
 
 /*
  * pv management structures.
@@ -428,26 +447,6 @@ struct pmap_head pmaps;
 struct pool pmap_pmap_pool;
 
 /*
- * Number of PTE's per cache line.  4 byte pte, 64-byte cache line
- * Used to avoid false sharing of cache lines.
- */
-#define NPTECL			16
-
-/*
- * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * MAXCPUS*NPTECL array of PTE's, to avoid cache line thrashing
- * due to false sharing.
- */
-
-#ifdef MULTIPROCESSOR
-#define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
-#define VASLEW(va,id) ((va)+(id)*NPTECL*NBPG)
-#else
-#define PTESLEW(pte, id) (pte)
-#define VASLEW(va,id) (va)
-#endif
-
-/*
  * special VAs and the PTEs that map them
  */
 
@@ -458,13 +457,6 @@ caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 /*
  * local prototypes
  */
-
-struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes in pmap.h */
-void		 pmap_enter_pv(struct vm_page *, struct pv_entry *,
-    struct pmap *, vaddr_t, struct vm_page *);
-void		 pmap_free_pv(struct pmap *, struct pv_entry *);
-void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
-
 struct vm_page	*pmap_alloc_ptp_86(struct pmap *, int, pt_entry_t);
 struct vm_page	*pmap_get_ptp_86(struct pmap *, int);
 pt_entry_t	*pmap_map_ptes_86(struct pmap *);
@@ -483,10 +475,6 @@ void		 pmap_sync_flags_pte_86(struct vm_page *, pt_entry_t);
 
 void		 pmap_drop_ptp(struct pmap *, vaddr_t, struct vm_page *,
     pt_entry_t *);
-
-void		 pmap_apte_flush(void);
-void		 pmap_exec_account(struct pmap *, vaddr_t, pt_entry_t,
-		    pt_entry_t);
 
 void		 setcslimit(struct pmap *, struct trapframe *, struct pcb *,
 		     vaddr_t);

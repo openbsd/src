@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.29 2015/04/12 19:21:32 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.30 2015/04/12 21:37:33 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -335,23 +335,23 @@
  * because cr3 is only 32 bits wide.
  *
  */
-#define	PG_FRAME	0xffffff000ULL	/* page frame mask */
-#define	PG_LGFRAME	0xfffe00000ULL	/* large (2M) page frame mask */
+#define PG_FRAME	0xffffff000ULL	/* page frame mask */
+#define PG_LGFRAME	0xfffe00000ULL	/* large (2M) page frame mask */
 
 /*
- * Redefine the PDSHIFT, NBPD
+ * Redefine the PDSHIFT and NBPD macros for PAE
  */
-#undef	PDSHIFT
-#define	PDSHIFT		21		/* page directory address shift */
-#undef	NBPD
-#define	NBPD		(1U << PDSHIFT)	/* # bytes mapped by PD (2MB) */
+#undef PDSHIFT
+#define PDSHIFT		21		/* page directory address shift */
+#undef NBPD
+#define NBPD		(1U << PDSHIFT)	/* # bytes mapped by PD (2MB) */
 
-#undef	PDSLOT_PTE
-#define	PDSLOT_PTE	(1660U)	/* 1660: for recursive PDP map */
-#undef	PDSLOT_KERN
-#define	PDSLOT_KERN	(1664U)	/* 1664: start of kernel space */
-#undef	PDSLOT_APTE
-#define	PDSLOT_APTE	(2044U)	/* 2044: alternative recursive slot */
+#undef PDSLOT_PTE
+#define PDSLOT_PTE	(1660U)	/* 1660: for recursive PDP map */
+#undef PDSLOT_KERN
+#define PDSLOT_KERN	(1664U)	/* 1664: start of kernel space */
+#undef PDSLOT_APTE
+#define PDSLOT_APTE	(2044U)	/* 2044: alternative recursive slot */
 
 /*
  * The following defines give the virtual addresses of various MMU
@@ -360,25 +360,25 @@
  * PTD_BASE and APTD_BASE: the base VA of the recursive mapping of the PTD
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
-#define	PTE_BASE	((pt_entry_t *) (PDSLOT_PTE * NBPD) )
-#define	APTE_BASE	((pt_entry_t *) (PDSLOT_APTE * NBPD) )
-#define	PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * NBPG)))
-#define	APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
-#define	PDP_PDE		(PDP_BASE + PDSLOT_PTE)
-#define	APDP_PDE	(PDP_BASE + PDSLOT_APTE)
+#define PTE_BASE	((pt_entry_t *) (PDSLOT_PTE * NBPD) )
+#define APTE_BASE	((pt_entry_t *) (PDSLOT_APTE * NBPD) )
+#define PDP_BASE ((pd_entry_t *)(((char *)PTE_BASE) + (PDSLOT_PTE * NBPG)))
+#define APDP_BASE ((pd_entry_t *)(((char *)APTE_BASE) + (PDSLOT_APTE * NBPG)))
+#define PDP_PDE		(PDP_BASE + PDSLOT_PTE)
+#define APDP_PDE	(PDP_BASE + PDSLOT_APTE)
 
 /*
  * pdei/ptei: generate index into PDP/PTP from a VA
  */
-#define	PD_MASK		0xffe00000	/* page directory address bits */
-#define	PT_MASK		0x001ff000	/* page table address bits */
-#define	pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
-#define	ptei(VA)	(((VA) & PT_MASK) >> PGSHIFT)
+#define PD_MASK		0xffe00000	/* page directory address bits */
+#define PT_MASK		0x001ff000	/* page table address bits */
+#define pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
+#define ptei(VA)	(((VA) & PT_MASK) >> PGSHIFT)
 
 /*
  * Mach derived conversion macros
  */
-#define	i386_round_pdr(x)	((((unsigned)(x)) + ~PD_MASK) & PD_MASK)
+#define i386_round_pdr(x)	((((unsigned)(x)) + ~PD_MASK) & PD_MASK)
 
 /*
  * various address macros
@@ -386,8 +386,7 @@
  *  vtopte: return a pointer to the PTE mapping a VA
  *
  */
-#define	vtopte(VA)	(PTE_BASE + atop((vaddr_t)VA))
-
+#define vtopte(VA)	(PTE_BASE + atop((vaddr_t)VA))
 
 /*
  * PTP macros:
@@ -395,8 +394,8 @@
  *   A PTP's offset is the byte-offset in the PTE space that this PTP is at.
  *   A PTP's VA is the first VA mapped by that PTP.
  *
- * Note that NBPG == number of bytes in a PTP (4096 bytes == 1024 entries)
- *           NBPD == number of bytes a PTP can map (4MB)
+ * Note that NBPG == number of bytes in a PTP (4096 bytes == 512 entries)
+ *           NBPD == number of bytes a PTP can map (2MB)
  */
 
 #define	ptp_i2o(I)	((I) * NBPG)	/* index => offset */
@@ -410,13 +409,13 @@
 #define	PDE(pm,i)	(((pd_entry_t *)(pm)->pm_pdir)[(i)])
 
 /*
- * here we define the data types for PDEs and PTEs
+ * here we define the data types for PDEs and PTEs for PAE
  */
 typedef u_int64_t pd_entry_t;	/* PDE */
 typedef u_int64_t pt_entry_t;	/* PTE */
 
 /*
- * Number of PTE's per cache line. 8 byte pte, 64-byte cache line
+ * Number of PTEs per cache line. 8 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
  */
 #define	NPTECL		8
@@ -455,25 +454,17 @@ extern struct pmap_head pmaps;
 /*
  * local prototypes
  */
-struct pv_entry *pmap_add_pvpage(struct pv_page *, boolean_t);
-struct pv_entry *pmap_alloc_pv(struct pmap *, int); /* see codes in pmap.h */
-struct pv_entry *pmap_alloc_pvpage(struct pmap *, int);
-void		 pmap_enter_pv(struct vm_page *, struct pv_entry *,
-    struct pmap *, vaddr_t, struct vm_page *);
-void		 pmap_free_pv(struct pmap *, struct pv_entry *);
-void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
 void		 pmap_free_pv_doit(struct pv_entry *);
-void		 pmap_free_pvpage(void);
 struct vm_page	*pmap_alloc_ptp_pae(struct pmap *, int, pt_entry_t);
 struct vm_page	*pmap_get_ptp_pae(struct pmap *, int);
 pt_entry_t	*pmap_map_ptes_pae(struct pmap *);
-void            pmap_do_remove_pae(struct pmap *, vaddr_t, vaddr_t, int);
+void		 pmap_unmap_ptes_pae(struct pmap *);
+void		 pmap_do_remove_pae(struct pmap *, vaddr_t, vaddr_t, int);
 void		 pmap_remove_ptes_pae(struct pmap *, struct vm_page *,
 		     vaddr_t, vaddr_t, vaddr_t, int);
 boolean_t	 pmap_remove_pte_pae(struct pmap *, struct vm_page *,
 		     pt_entry_t *, vaddr_t, int);
 void		 pmap_sync_flags_pte_pae(struct vm_page *, pt_entry_t);
-void		 pmap_unmap_ptes_pae(struct pmap *);
 
 static __inline u_int
 pmap_pte2flags(pt_entry_t pte)
