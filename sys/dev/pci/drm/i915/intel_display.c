@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.47 2015/04/08 04:24:40 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.48 2015/04/12 11:26:54 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -410,15 +410,9 @@ u32 intel_dpio_read(struct drm_i915_private *dev_priv, int reg)
 {
 	unsigned long flags;
 	u32 val = 0;
-	int retries;
 
 	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
-	for (retries = 50; retries > 0; retries--) {
-		if ((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0)
-			break;
-		DELAY(100);
-	}
-	if (retries == 0) {
+	if (wait_for_atomic_us((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0, 100)) {
 		DRM_ERROR("DPIO idle wait timed out\n");
 		goto out_unlock;
 	}
@@ -426,12 +420,7 @@ u32 intel_dpio_read(struct drm_i915_private *dev_priv, int reg)
 	I915_WRITE(DPIO_REG, reg);
 	I915_WRITE(DPIO_PKT, DPIO_RID | DPIO_OP_READ | DPIO_PORTID |
 		   DPIO_BYTE);
-	for (retries = 50; retries > 0; retries--) {
-		if ((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0)
-			break;
-		DELAY(100);
-	}
-	if (retries == 0) {
+	if (wait_for_atomic_us((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0, 100)) {
 		DRM_ERROR("DPIO read wait timed out\n");
 		goto out_unlock;
 	}
@@ -446,15 +435,9 @@ static void intel_dpio_write(struct drm_i915_private *dev_priv, int reg,
 			     u32 val)
 {
 	unsigned long flags;
-	int retries;
 
 	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
-	for (retries = 50; retries > 0; retries--) {
-		if ((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0)
-			break;
-		DELAY(100);
-	}
-	if (retries == 0) {
+	if (wait_for_atomic_us((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0, 100)) {
 		DRM_ERROR("DPIO idle wait timed out\n");
 		goto out_unlock;
 	}
@@ -463,12 +446,7 @@ static void intel_dpio_write(struct drm_i915_private *dev_priv, int reg,
 	I915_WRITE(DPIO_REG, reg);
 	I915_WRITE(DPIO_PKT, DPIO_RID | DPIO_OP_WRITE | DPIO_PORTID |
 		   DPIO_BYTE);
-	for (retries = 50; retries > 0; retries--) {
-		if ((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0)
-			break;
-		DELAY(100);
-	}
-	if (retries == 0)
+	if (wait_for_atomic_us((I915_READ(DPIO_PKT) & DPIO_BUSY) == 0, 100))
 		DRM_ERROR("DPIO write wait timed out\n");
 
 out_unlock:
@@ -962,16 +940,10 @@ static void ironlake_wait_for_vblank(struct drm_device *dev, int pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 frame, frame_reg = PIPEFRAME(pipe);
-	int retries;
 
 	frame = I915_READ(frame_reg);
 
-	for (retries = 50; retries > 0; retries--) {
-		if (I915_READ_NOTRACE(frame_reg) != frame)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for(I915_READ_NOTRACE(frame_reg) != frame, 50))
 		DRM_DEBUG_KMS("vblank wait timed out\n");
 }
 
@@ -987,7 +959,6 @@ void intel_wait_for_vblank(struct drm_device *dev, int pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int pipestat_reg = PIPESTAT(pipe);
-	int retries;
 
 	if (INTEL_INFO(dev)->gen >= 5) {
 		ironlake_wait_for_vblank(dev, pipe);
@@ -1011,12 +982,9 @@ void intel_wait_for_vblank(struct drm_device *dev, int pipe)
 		   I915_READ(pipestat_reg) | PIPE_VBLANK_INTERRUPT_STATUS);
 
 	/* Wait for vblank interrupt bit to set */
-	for (retries = 50; retries > 0; retries--) {
-		if (I915_READ(pipestat_reg) & PIPE_VBLANK_INTERRUPT_STATUS)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for(I915_READ(pipestat_reg) &
+		     PIPE_VBLANK_INTERRUPT_STATUS,
+		     50))
 		DRM_DEBUG_KMS("vblank wait timed out\n");
 }
 
@@ -1042,22 +1010,18 @@ void intel_wait_for_pipe_off(struct drm_device *dev, int pipe)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	enum transcoder cpu_transcoder = intel_pipe_to_cpu_transcoder(dev_priv,
 								      pipe);
-	int retries;
 
 	if (INTEL_INFO(dev)->gen >= 4) {
 		int reg = PIPECONF(cpu_transcoder);
 
 		/* Wait for the Pipe State to go off */
-		for (retries = 100; retries > 0; retries--) {
-			if ((I915_READ(reg) & I965_PIPECONF_ACTIVE) == 0)
-				break;
-			DELAY(1000);
-		}
-		if (retries == 0)
+		if (wait_for((I915_READ(reg) & I965_PIPECONF_ACTIVE) == 0,
+			     100))
 			WARN(1, "pipe_off wait timed out\n");
 	} else {
 		u32 last_line, line_mask;
 		int reg = PIPEDSL(pipe);
+		unsigned long timeout = ticks + msecs_to_jiffies(100);
 
 		if (IS_GEN2(dev))
 			line_mask = DSL_LINEMASK_GEN2;
@@ -1065,13 +1029,12 @@ void intel_wait_for_pipe_off(struct drm_device *dev, int pipe)
 			line_mask = DSL_LINEMASK_GEN3;
 
 		/* Wait for the display line to settle */
-		for (retries = 100; retries > 0; retries--) {
+		do {
 			last_line = I915_READ(reg) & line_mask;
 			mdelay(5);
-			if ((I915_READ(reg) & line_mask) == last_line)
-				break;
-		}
-		if (retries == 0)
+		} while (((I915_READ(reg) & line_mask) != last_line) &&
+			 time_after(timeout, ticks));
+		if (time_after(ticks, timeout))
 			WARN(1, "pipe_off wait timed out\n");
 	}
 }
@@ -1540,15 +1503,9 @@ intel_sbi_write(struct drm_i915_private *dev_priv, u16 reg, u32 value,
 {
 	unsigned long flags;
 	u32 tmp;
-	int retries;
 
 	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
-	for (retries = 100; retries > 0; retries--) {
-		if ((I915_READ(SBI_CTL_STAT) & SBI_BUSY) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(SBI_CTL_STAT) & SBI_BUSY) == 0, 100)) {
 		DRM_ERROR("timeout waiting for SBI to become ready\n");
 		goto out_unlock;
 	}
@@ -1562,12 +1519,8 @@ intel_sbi_write(struct drm_i915_private *dev_priv, u16 reg, u32 value,
 		tmp = SBI_CTL_DEST_MPHY | SBI_CTL_OP_IOWR;
 	I915_WRITE(SBI_CTL_STAT, SBI_BUSY | tmp);
 
-	for (retries = 100; retries > 0; retries--) {
-		if ((I915_READ(SBI_CTL_STAT) & (SBI_BUSY | SBI_RESPONSE_FAIL)) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(SBI_CTL_STAT) & (SBI_BUSY | SBI_RESPONSE_FAIL)) == 0,
+				100)) {
 		DRM_ERROR("timeout waiting for SBI to complete write transaction\n");
 		goto out_unlock;
 	}
@@ -1582,15 +1535,9 @@ intel_sbi_read(struct drm_i915_private *dev_priv, u16 reg,
 {
 	unsigned long flags;
 	u32 value = 0;
-	int retries;
 
 	spin_lock_irqsave(&dev_priv->dpio_lock, flags);
-	for (retries = 100; retries > 0; retries--) {
-		if ((I915_READ(SBI_CTL_STAT) & SBI_BUSY) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(SBI_CTL_STAT) & SBI_BUSY) == 0, 100)) {
 		DRM_ERROR("timeout waiting for SBI to become ready\n");
 		goto out_unlock;
 	}
@@ -1603,12 +1550,8 @@ intel_sbi_read(struct drm_i915_private *dev_priv, u16 reg,
 		value = SBI_CTL_DEST_MPHY | SBI_CTL_OP_IORD;
 	I915_WRITE(SBI_CTL_STAT, value | SBI_BUSY);
 
-	for (retries = 100; retries > 0; retries--) {
-		if ((I915_READ(SBI_CTL_STAT) & (SBI_BUSY | SBI_RESPONSE_FAIL)) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(SBI_CTL_STAT) & (SBI_BUSY | SBI_RESPONSE_FAIL)) == 0,
+				100)) {
 		DRM_ERROR("timeout waiting for SBI to complete read transaction\n");
 		goto out_unlock;
 	}
@@ -1718,7 +1661,6 @@ static void ironlake_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 	struct drm_device *dev = dev_priv->dev;
 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
 	uint32_t reg, val, pipeconf_val;
-	int retries;
 
 	/* PCH only available on ILK+ */
 	BUG_ON(dev_priv->info->gen < 5);
@@ -1765,12 +1707,7 @@ static void ironlake_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 		val |= TRANS_PROGRESSIVE;
 
 	I915_WRITE(reg, val | TRANS_ENABLE);
-	for (retries = 100; retries > 0; retries--) {
-		if (I915_READ(reg) & TRANS_STATE_ENABLE)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for(I915_READ(reg) & TRANS_STATE_ENABLE, 100))
 		DRM_ERROR("failed to enable transcoder %d\n", pipe);
 }
 
@@ -1778,7 +1715,6 @@ static void lpt_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 				      enum transcoder cpu_transcoder)
 {
 	u32 val, pipeconf_val;
-	int retries;
 
 	/* PCH only available on ILK+ */
 	BUG_ON(dev_priv->info->gen < 5);
@@ -1802,12 +1738,7 @@ static void lpt_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 		val |= TRANS_PROGRESSIVE;
 
 	I915_WRITE(TRANSCONF(TRANSCODER_A), val);
-	for (retries = 100; retries > 0; retries--) {
-		if (I915_READ(_TRANSACONF) & TRANS_STATE_ENABLE)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for(I915_READ(_TRANSACONF) & TRANS_STATE_ENABLE, 100))
 		DRM_ERROR("Failed to enable PCH transcoder\n");
 }
 
@@ -1816,7 +1747,6 @@ static void ironlake_disable_pch_transcoder(struct drm_i915_private *dev_priv,
 {
 	struct drm_device *dev = dev_priv->dev;
 	uint32_t reg, val;
-	int retries;
 
 	/* FDI relies on the transcoder */
 	assert_fdi_tx_disabled(dev_priv, pipe);
@@ -1830,12 +1760,7 @@ static void ironlake_disable_pch_transcoder(struct drm_i915_private *dev_priv,
 	val &= ~TRANS_ENABLE;
 	I915_WRITE(reg, val);
 	/* wait for PCH transcoder off, transcoder state */
-	for (retries = 50; retries > 0; retries--) {
-		if ((I915_READ(reg) & TRANS_STATE_ENABLE) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for((I915_READ(reg) & TRANS_STATE_ENABLE) == 0, 50))
 		DRM_ERROR("failed to disable transcoder %d\n", pipe);
 
 	if (!HAS_PCH_IBX(dev)) {
@@ -1850,18 +1775,12 @@ static void ironlake_disable_pch_transcoder(struct drm_i915_private *dev_priv,
 static void lpt_disable_pch_transcoder(struct drm_i915_private *dev_priv)
 {
 	u32 val;
-	int retries;
 
 	val = I915_READ(_TRANSACONF);
 	val &= ~TRANS_ENABLE;
 	I915_WRITE(_TRANSACONF, val);
 	/* wait for PCH transcoder off, transcoder state */
-	for (retries = 50; retries > 0; retries--) {
-		if ((I915_READ(_TRANSACONF) & TRANS_STATE_ENABLE) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for((I915_READ(_TRANSACONF) & TRANS_STATE_ENABLE) == 0, 50))
 		DRM_ERROR("Failed to disable PCH transcoder\n");
 
 	/* Workaround: clear timing override bit. */
@@ -3389,17 +3308,12 @@ void intel_cpt_verify_modeset(struct drm_device *dev, int pipe)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int dslreg = PIPEDSL(pipe);
 	u32 temp;
-	int retries;
 
 	temp = I915_READ(dslreg);
 	udelay(500);
-	for (retries = 10; retries > 0; retries--) {
-		if (I915_READ(dslreg) != temp)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
-		DRM_ERROR("mode set failed: pipe %d stuck\n", pipe);
+	if (wait_for(I915_READ(dslreg) != temp, 5)) {
+		if (wait_for(I915_READ(dslreg) != temp, 5))
+			DRM_ERROR("mode set failed: pipe %d stuck\n", pipe);
 	}
 }
 
@@ -4459,7 +4373,6 @@ static void vlv_update_pll(struct drm_crtc *crtc,
 	u32 bestn, bestm1, bestm2, bestp1, bestp2;
 	bool is_sdvo;
 	u32 temp;
-	int retries;
 
 	is_sdvo = intel_pipe_has_type(crtc, INTEL_OUTPUT_SDVO) ||
 		intel_pipe_has_type(crtc, INTEL_OUTPUT_HDMI);
@@ -4503,12 +4416,7 @@ static void vlv_update_pll(struct drm_crtc *crtc,
 	dpll |= DPLL_VCO_ENABLE;
 	I915_WRITE(DPLL(pipe), dpll);
 	POSTING_READ(DPLL(pipe));
-	for (retries = 1; retries > 0; retries--) {
-		if ((I915_READ(DPLL(pipe)) & DPLL_LOCK_VLV) == DPLL_LOCK_VLV)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for(((I915_READ(DPLL(pipe)) & DPLL_LOCK_VLV) == DPLL_LOCK_VLV), 1))
 		DRM_ERROR("DPLL %d failed to lock\n", pipe);
 
 	intel_dpio_write(dev_priv, DPIO_FASTCLK_DISABLE, 0x620);
@@ -5083,7 +4991,6 @@ static void lpt_init_pch_refclk(struct drm_device *dev)
 	bool has_vga = false;
 	bool is_sdv = false;
 	u32 tmp;
-	int retries;
 
 	list_for_each_entry(encoder, &mode_config->encoder_list, base.head) {
 		switch (encoder->type) {
@@ -5116,24 +5023,17 @@ static void lpt_init_pch_refclk(struct drm_device *dev)
 		tmp |= FDI_MPHY_IOSFSB_RESET_CTL;
 		I915_WRITE(SOUTH_CHICKEN2, tmp);
 
-		for (retries = 100; retries > 0; retries--) {
-			if (I915_READ(SOUTH_CHICKEN2) & FDI_MPHY_IOSFSB_RESET_STATUS)
-				break;
-			DELAY(100);
-		}
-		if (retries == 0)
+		if (wait_for_atomic_us(I915_READ(SOUTH_CHICKEN2) &
+				       FDI_MPHY_IOSFSB_RESET_STATUS, 100))
 			DRM_ERROR("FDI mPHY reset assert timeout\n");
 
 		tmp = I915_READ(SOUTH_CHICKEN2);
 		tmp &= ~FDI_MPHY_IOSFSB_RESET_CTL;
 		I915_WRITE(SOUTH_CHICKEN2, tmp);
 
-		for (retries = 100; retries > 0; retries--) {
-			if ((I915_READ(SOUTH_CHICKEN2) & FDI_MPHY_IOSFSB_RESET_STATUS) == 0)
-				break;
-			DELAY(100);
-		}
-		if (retries == 0)
+		if (wait_for_atomic_us((I915_READ(SOUTH_CHICKEN2) &
+				        FDI_MPHY_IOSFSB_RESET_STATUS) == 0,
+				       100))
 			DRM_ERROR("FDI mPHY reset de-assert timeout\n");
 	}
 

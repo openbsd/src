@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.77 2015/04/11 02:24:43 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.78 2015/04/12 11:26:54 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1415,9 +1415,9 @@ static int i965_reset_complete(struct drm_device *dev)
 
 static int i965_do_reset(struct drm_device *dev)
 {
+	int ret;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	pcireg_t reg;
-	int retries;
 
 	/*
 	 * Set the domains we want to reset (GRDOM/bits 2 and 3) as
@@ -1428,68 +1428,36 @@ static int i965_do_reset(struct drm_device *dev)
 	reg |= ((GRDOM_RENDER | GRDOM_RESET_ENABLE) << 24);
 	pci_conf_write(dev_priv->pc, dev_priv->tag, I965_GDRST, reg);
 
-	for (retries = 500; retries > 0 ; retries--) {
-		if (i965_reset_complete(dev))
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
-		DRM_ERROR("965 reset timed out\n");
-		return -ETIMEDOUT;
-	}
+	ret =  wait_for(i965_reset_complete(dev), 500);
+	if (ret)
+		return ret;
 
 	/* We can't reset render&media without also resetting display ... */
 	reg = pci_conf_read(dev_priv->pc, dev_priv->tag, I965_GDRST);
 	reg |= ((GRDOM_MEDIA | GRDOM_RESET_ENABLE) << 24);
 	pci_conf_write(dev_priv->pc, dev_priv->tag, I965_GDRST, reg);
 
-	for (retries = 500; retries > 0 ; retries--) {
-		if (i965_reset_complete(dev))
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
-		DRM_ERROR("965 reset 2 timed out\n");
-		return -ETIMEDOUT;
-	}
-
-	return (0);
+	return wait_for(i965_reset_complete(dev), 500);
 }
 
 static int ironlake_do_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 gdrst;
-	int retries;
+	int ret;
 
 	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
 	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
 		   gdrst | GRDOM_RENDER | GRDOM_RESET_ENABLE);
-	for (retries = 500; retries > 0 ; retries--) {
-		if (I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
-		DRM_ERROR("ironlake reset timed out\n");
-		return -ETIMEDOUT;		
-	}
+	ret = wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
+	if (ret)
+		return ret;
 
 	/* We can't reset render&media without also resetting display ... */
 	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
 	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
 		   gdrst | GRDOM_MEDIA | GRDOM_RESET_ENABLE);
-	for (retries = 500; retries > 0 ; retries--) {
-		if (I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
-		DRM_ERROR("ironlake reset timed out\n");
-		return -ETIMEDOUT;		
-	}
-	
-	return (0);
+	return wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
 }
 
 static int gen6_do_reset(struct drm_device *dev)
@@ -1497,7 +1465,6 @@ static int gen6_do_reset(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = 0;
 	unsigned long irqflags;
-	int retries;
 
 	/* Hold gt_lock across reset to prevent any register access
 	 * with forcewake not set correctly
@@ -1513,15 +1480,7 @@ static int gen6_do_reset(struct drm_device *dev)
 	I915_WRITE_NOTRACE(GEN6_GDRST, GEN6_GRDOM_FULL);
 
 	/* Spin waiting for the device to ack the reset request */
-	for (retries = 500; retries > 0 ; retries--) {
-		if ((I915_READ_NOTRACE(GEN6_GDRST) & GEN6_GRDOM_FULL) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
-		DRM_ERROR("gen6 reset timed out\n");
-		ret = -ETIMEDOUT;
-	}
+	ret = wait_for((I915_READ_NOTRACE(GEN6_GDRST) & GEN6_GRDOM_FULL) == 0, 500);
 
 	/* If reset with a user forcewake, try to restore, otherwise turn it off */
 	if (dev_priv->forcewake_count)

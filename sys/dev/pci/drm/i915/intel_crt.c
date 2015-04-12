@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.10 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.11 2015/04/12 11:26:54 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -250,7 +250,6 @@ static bool intel_ironlake_crt_detect_hotplug(struct drm_connector *connector)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 adpa;
 	bool ret;
-	int retries;
 
 	/* The first time through, trigger an explicit detection cycle */
 	if (crt->force_hotplug_required) {
@@ -268,13 +267,8 @@ static bool intel_ironlake_crt_detect_hotplug(struct drm_connector *connector)
 
 		I915_WRITE(PCH_ADPA, adpa);
 
-		for (retries = 1000; retries > 0; retries--) {
-			if ((I915_READ(PCH_ADPA) &
-			    ADPA_CRT_HOTPLUG_FORCE_TRIGGER) == 0)
-				break;
-			DELAY(1000);
-		}
-		if (retries == 0)
+		if (wait_for((I915_READ(PCH_ADPA) & ADPA_CRT_HOTPLUG_FORCE_TRIGGER) == 0,
+			     1000))
 			DRM_DEBUG_KMS("timed out waiting for FORCE_TRIGGER");
 
 		if (turn_off_dac) {
@@ -301,7 +295,6 @@ static bool valleyview_crt_detect_hotplug(struct drm_connector *connector)
 	u32 adpa;
 	bool ret;
 	u32 save_adpa;
-	int retries;
 
 	save_adpa = adpa = I915_READ(ADPA);
 	DRM_DEBUG_KMS("trigger hotplug detect cycle: adpa=0x%x\n", adpa);
@@ -310,14 +303,8 @@ static bool valleyview_crt_detect_hotplug(struct drm_connector *connector)
 
 	I915_WRITE(ADPA, adpa);
 
-
-	for (retries = 1000; retries > 0; retries--) {
-		if ((I915_READ(PCH_ADPA) &
-		    ADPA_CRT_HOTPLUG_FORCE_TRIGGER) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(ADPA) & ADPA_CRT_HOTPLUG_FORCE_TRIGGER) == 0,
+		     1000)) {
 		DRM_DEBUG_KMS("timed out waiting for FORCE_TRIGGER");
 		I915_WRITE(ADPA, save_adpa);
 	}
@@ -351,7 +338,7 @@ static bool intel_crt_detect_hotplug(struct drm_connector *connector)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 hotplug_en, orig, stat;
 	bool ret = false;
-	int i, tries = 0, retries;
+	int i, tries = 0;
 
 	if (HAS_PCH_SPLIT(dev))
 		return intel_ironlake_crt_detect_hotplug(connector);
@@ -375,13 +362,9 @@ static bool intel_crt_detect_hotplug(struct drm_connector *connector)
 		/* turn on the FORCE_DETECT */
 		I915_WRITE(PORT_HOTPLUG_EN, hotplug_en);
 		/* wait for FORCE_DETECT to go off */
-		for (retries = 1000; retries > 0; retries--) {
-			if ((I915_READ(PORT_HOTPLUG_EN) &
-			    CRT_HOTPLUG_FORCE_DETECT) == 0)
-				break;
-			DELAY(1000);
-		}
-		if (retries == 0)
+		if (wait_for((I915_READ(PORT_HOTPLUG_EN) &
+			      CRT_HOTPLUG_FORCE_DETECT) == 0,
+			     1000))
 			DRM_DEBUG_KMS("timed out waiting for FORCE_DETECT to go off");
 	}
 

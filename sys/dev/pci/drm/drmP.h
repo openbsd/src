@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.192 2015/04/12 03:54:10 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.193 2015/04/12 11:26:54 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -88,6 +88,8 @@
 /* DRM_SUSER returns true if the user is superuser */
 #define DRM_SUSER(p)		(suser(p, 0) == 0)
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
+
+extern int ticks;
 
 #define drm_msleep(x, msg)	mdelay(x)
 

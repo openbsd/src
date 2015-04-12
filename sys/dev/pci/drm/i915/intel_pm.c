@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.31 2015/04/11 05:10:13 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.32 2015/04/12 11:26:54 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -62,7 +62,6 @@ static void i8xx_disable_fbc(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 fbc_ctl;
-	int retries;
 
 	/* Disable compression */
 	fbc_ctl = I915_READ(FBC_CONTROL);
@@ -73,12 +72,7 @@ static void i8xx_disable_fbc(struct drm_device *dev)
 	I915_WRITE(FBC_CONTROL, fbc_ctl);
 
 	/* Wait for compressing bit to clear */
-	for (retries = 10; retries > 0; retries--) {
-		if ((I915_READ(FBC_STATUS) & FBC_STAT_COMPRESSING) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(FBC_STATUS) & FBC_STAT_COMPRESSING) == 0, 10)) {
 		DRM_DEBUG_KMS("FBC idle timed out\n");
 		return;
 	}
@@ -2350,7 +2344,6 @@ static void ironlake_enable_drps(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 rgvmodectl = I915_READ(MEMMODECTL);
 	u8 fmax, fmin, fstart, vstart;
-	int retries;
 
 	spin_lock_irq(&mchdev_lock);
 
@@ -2399,12 +2392,7 @@ static void ironlake_enable_drps(struct drm_device *dev)
 	rgvmodectl |= MEMMODE_SWMODE_EN;
 	I915_WRITE(MEMMODECTL, rgvmodectl);
 
-	for (retries = 10; retries > 0; retries--) {
-		if ((I915_READ(MEMSWCTL) & MEMCTL_CMD_STS) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for_atomic((I915_READ(MEMSWCTL) & MEMCTL_CMD_STS) == 0, 10))
 		DRM_ERROR("stuck trying to change perf mode\n");
 	mdelay(1);
 
@@ -2765,16 +2753,12 @@ void ironlake_teardown_rc6(struct drm_device *dev)
 static void ironlake_disable_rc6(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	int retries;
 
 	if (I915_READ(PWRCTXA)) {
 		/* Wake the GPU, prevent RC6, then restore RSTDBYCTL */
 		I915_WRITE(RSTDBYCTL, I915_READ(RSTDBYCTL) | RCX_SW_EXIT);
-		for (retries = 50; retries > 0; retries--) {
-			if ((I915_READ(RSTDBYCTL) & RSX_STATUS_MASK) == RSX_STATUS_ON)
-				break;
-			DELAY(1000);
-		}
+		wait_for(((I915_READ(RSTDBYCTL) & RSX_STATUS_MASK) == RSX_STATUS_ON),
+			 50);
 
 		I915_WRITE(PWRCTXA, 0);
 		POSTING_READ(PWRCTXA);
@@ -4108,7 +4092,7 @@ void intel_init_power_wells(struct drm_device *dev)
 		HSW_PWR_WELL_CTL2,
 		HSW_PWR_WELL_CTL4
 	};
-	int i, retries;
+	int i;
 
 	if (!IS_HASWELL(dev))
 		return;
@@ -4120,12 +4104,7 @@ void intel_init_power_wells(struct drm_device *dev)
 
 		if ((well & HSW_PWR_WELL_STATE) == 0) {
 			I915_WRITE(power_wells[i], well & HSW_PWR_WELL_ENABLE);
-			for (retries = 20; retries > 0; retries--) {
-				if (I915_READ(power_wells[i]) & HSW_PWR_WELL_STATE)
-					break;
-				DELAY(1000);
-			}
-			if (retries == 0)
+			if (wait_for((I915_READ(power_wells[i]) & HSW_PWR_WELL_STATE), 20))
 				DRM_ERROR("Error enabling power well %lx\n", power_wells[i]);
 		}
 	}
@@ -4260,7 +4239,6 @@ void intel_init_pm(struct drm_device *dev)
 static void __gen6_gt_wait_for_thread_c0(struct drm_i915_private *dev_priv)
 {
 	u32 gt_thread_status_mask;
-	int retries;
 
 	if (IS_HASWELL(dev_priv->dev))
 		gt_thread_status_mask = GEN6_GT_THREAD_STATUS_CORE_MASK_HSW;
@@ -4270,13 +4248,7 @@ static void __gen6_gt_wait_for_thread_c0(struct drm_i915_private *dev_priv)
 	/* w/a for a sporadic read returning 0 by waiting for the GT
 	 * thread to wake up.
 	 */
-	for (retries = 500; retries > 0; retries--) {
-		if ((I915_READ_NOTRACE(GEN6_GT_THREAD_STATUS_REG) &
-		    gt_thread_status_mask) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for_atomic_us((I915_READ_NOTRACE(GEN6_GT_THREAD_STATUS_REG) & gt_thread_status_mask) == 0, 500))
 		DRM_ERROR("GT thread status wait timed out\n");
 }
 
@@ -4289,23 +4261,22 @@ static void __gen6_gt_force_wake_reset(struct drm_i915_private *dev_priv)
 static void __gen6_gt_force_wake_get(struct drm_i915_private *dev_priv)
 {
 	u32 forcewake_ack;
-	int count;
 
 	if (IS_HASWELL(dev_priv->dev))
 		forcewake_ack = FORCEWAKE_ACK_HSW;
 	else
 		forcewake_ack = FORCEWAKE_ACK;
 
-	count = 0;
-	while (count++ < 50 && (I915_READ_NOTRACE(forcewake_ack) & 1))
-		DELAY(10);
+	if (wait_for_atomic((I915_READ_NOTRACE(forcewake_ack) & 1) == 0,
+			    FORCEWAKE_ACK_TIMEOUT_MS))
+		DRM_ERROR("Timed out waiting for forcewake old ack to clear.\n");
 
 	I915_WRITE_NOTRACE(FORCEWAKE, FORCEWAKE_KERNEL);
 	POSTING_READ(ECOBUS); /* something from same cacheline, but !FORCEWAKE */
 
-	count = 0;
-	while (count++ < 50 && (I915_READ_NOTRACE(forcewake_ack) & 1) == 0)
-		DELAY(10);
+	if (wait_for_atomic((I915_READ_NOTRACE(forcewake_ack) & 1),
+			    FORCEWAKE_ACK_TIMEOUT_MS))
+		DRM_ERROR("Timed out waiting for forcewake to ack request.\n");
 
 	__gen6_gt_wait_for_thread_c0(dev_priv);
 }
@@ -4320,24 +4291,23 @@ static void __gen6_gt_force_wake_mt_reset(struct drm_i915_private *dev_priv)
 static void __gen6_gt_force_wake_mt_get(struct drm_i915_private *dev_priv)
 {
 	u32 forcewake_ack;
-	int count;
 
 	if (IS_HASWELL(dev_priv->dev))
 		forcewake_ack = FORCEWAKE_ACK_HSW;
 	else
 		forcewake_ack = FORCEWAKE_MT_ACK;
 
-	count = 0;
-	while (count++ < 50 && (I915_READ_NOTRACE(forcewake_ack) & 1))
-		DELAY(10);
+	if (wait_for_atomic((I915_READ_NOTRACE(forcewake_ack) & 1) == 0,
+			    FORCEWAKE_ACK_TIMEOUT_MS))
+		DRM_ERROR("Timed out waiting for forcewake old ack to clear.\n");
 
 	I915_WRITE_NOTRACE(FORCEWAKE_MT, _MASKED_BIT_ENABLE(FORCEWAKE_KERNEL));
 	/* something from same cacheline, but !FORCEWAKE_MT */
 	POSTING_READ(ECOBUS);
 
-	count = 0;
-	while (count++ < 50 && (I915_READ_NOTRACE(forcewake_ack) & 1) == 0)
-		DELAY(10);
+	if (wait_for_atomic((I915_READ_NOTRACE(forcewake_ack) & 1),
+			    FORCEWAKE_ACK_TIMEOUT_MS))
+		DRM_ERROR("Timed out waiting for forcewake to ack request.\n");
 
 	__gen6_gt_wait_for_thread_c0(dev_priv);
 }
@@ -4425,17 +4395,15 @@ static void vlv_force_wake_reset(struct drm_i915_private *dev_priv)
 
 static void vlv_force_wake_get(struct drm_i915_private *dev_priv)
 {
-	int count;
-
-	count = 0;
-	while (count++ < 50 && (I915_READ_NOTRACE(FORCEWAKE_ACK_VLV) & 1))
-		DELAY(10);
+	if (wait_for_atomic((I915_READ_NOTRACE(FORCEWAKE_ACK_VLV) & 1) == 0,
+			    FORCEWAKE_ACK_TIMEOUT_MS))
+		DRM_ERROR("Timed out waiting for forcewake old ack to clear.\n");
 
 	I915_WRITE_NOTRACE(FORCEWAKE_VLV, _MASKED_BIT_ENABLE(FORCEWAKE_KERNEL));
 
-	count = 0;
-	while (count++ < 50 && (I915_READ_NOTRACE(FORCEWAKE_ACK_VLV) & 1) == 0)
-		DELAY(10);
+	if (wait_for_atomic((I915_READ_NOTRACE(FORCEWAKE_ACK_VLV) & 1),
+			    FORCEWAKE_ACK_TIMEOUT_MS))
+		DRM_ERROR("Timed out waiting for forcewake to ack request.\n");
 
 	__gen6_gt_wait_for_thread_c0(dev_priv);
 }
@@ -4522,7 +4490,6 @@ void intel_pm_init(struct drm_device *dev)
 
 int sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 {
-	int retries;
 	WARN_ON(!mutex_is_locked(&dev_priv->rps.hw_lock));
 
 	if (I915_READ(GEN6_PCODE_MAILBOX) & GEN6_PCODE_READY) {
@@ -4533,12 +4500,8 @@ int sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 	I915_WRITE(GEN6_PCODE_DATA, *val);
 	I915_WRITE(GEN6_PCODE_MAILBOX, GEN6_PCODE_READY | mbox);
 
-	for (retries = 500; retries > 0; retries--) {
-		if ((I915_READ(GEN6_PCODE_MAILBOX) & GEN6_PCODE_READY) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(GEN6_PCODE_MAILBOX) & GEN6_PCODE_READY) == 0,
+		     500)) {
 		DRM_ERROR("timeout waiting for pcode read (%d) to finish\n", mbox);
 		return -ETIMEDOUT;
 	}
@@ -4551,7 +4514,6 @@ int sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 
 int sandybridge_pcode_write(struct drm_i915_private *dev_priv, u8 mbox, u32 val)
 {
-	int retries;
 	WARN_ON(!mutex_is_locked(&dev_priv->rps.hw_lock));
 
 	if (I915_READ(GEN6_PCODE_MAILBOX) & GEN6_PCODE_READY) {
@@ -4562,12 +4524,8 @@ int sandybridge_pcode_write(struct drm_i915_private *dev_priv, u8 mbox, u32 val)
 	I915_WRITE(GEN6_PCODE_DATA, val);
 	I915_WRITE(GEN6_PCODE_MAILBOX, GEN6_PCODE_READY | mbox);
 
-	for (retries = 500; retries > 0; retries--) {
-		if ((I915_READ(GEN6_PCODE_MAILBOX) & GEN6_PCODE_READY) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0) {
+	if (wait_for((I915_READ(GEN6_PCODE_MAILBOX) & GEN6_PCODE_READY) == 0,
+		     500)) {
 		DRM_ERROR("timeout waiting for pcode write (%d) to finish\n", mbox);
 		return -ETIMEDOUT;
 	}

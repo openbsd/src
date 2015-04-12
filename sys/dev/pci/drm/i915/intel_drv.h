@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_drv.h,v 1.5 2014/01/23 03:49:53 jsg Exp $	*/
+/*	$OpenBSD: intel_drv.h,v 1.6 2015/04/12 11:26:54 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007-2008 Intel Corporation
@@ -33,6 +33,39 @@
 #include <dev/pci/drm/drm_crtc_helper.h>
 #include <dev/pci/drm/drm_fb_helper.h>
 #include <dev/pci/drm/drm_dp_helper.h>
+
+#define _wait_for(COND, MS, W) ({ \
+	int ret__ = 0;							\
+	int retries__;							\
+	for (retries__ = MS; retries__ > 0; retries__--) {		\
+		if ((COND))						\
+			break;						\
+		if (W && drm_can_sleep())  {				\
+			drm_msleep(1, "wfc");				\
+		} else {						\
+			mdelay(1);					\
+		}							\
+	}								\
+	if (retries__ == 0)						\
+	    ret__ = -ETIMEDOUT;						\
+	ret__;								\
+})
+
+#define wait_for_atomic_us(COND, US) ({ \
+	int ret__ = 0;							\
+	int retries__;							\
+	for (retries__ = US; retries__ > 0; retries__--) {		\
+		if ((COND))						\
+			break;						\
+		DELAY(1);						\
+	}								\
+	if (retries__ == 0)						\
+	    ret__ = -ETIMEDOUT;						\
+	ret__;								\
+})
+
+#define wait_for(COND, MS) _wait_for(COND, MS, 1)
+#define wait_for_atomic(COND, MS) _wait_for(COND, MS, 0)
 
 #define KHz(x) (1000*x)
 #define MHz(x) KHz(1000*x)

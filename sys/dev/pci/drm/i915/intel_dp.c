@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.23 2015/04/06 10:56:37 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.24 2015/04/12 11:26:54 jsg Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -1000,22 +1000,17 @@ static void ironlake_wait_panel_status(struct intel_dp *intel_dp,
 {
 	struct drm_device *dev = intel_dp_to_dev(intel_dp);
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	int retries;
 
 	DRM_DEBUG_KMS("mask %08x value %08x status %08x control %08x\n",
 		      mask, value,
 		      I915_READ(PCH_PP_STATUS),
 		      I915_READ(PCH_PP_CONTROL));
 
-	for (retries = 5000; retries > 0; retries--) {
-		if ((I915_READ(PCH_PP_STATUS) & mask) == value)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (_wait_for((I915_READ(PCH_PP_STATUS) & mask) == value, 5000, 10)) {
 		DRM_ERROR("Panel status timeout: status %08x control %08x\n",
 			  I915_READ(PCH_PP_STATUS),
 			  I915_READ(PCH_PP_CONTROL));
+	}
 }
 
 static void ironlake_wait_panel_on(struct intel_dp *intel_dp)
@@ -1728,7 +1723,6 @@ intel_dp_set_link_train(struct intel_dp *intel_dp,
 	enum port port = intel_dig_port->port;
 	int ret;
 	uint32_t temp;
-	int retries;
 
 	if (IS_HASWELL(dev)) {
 		temp = I915_READ(DP_TP_CTL(port));
@@ -1744,13 +1738,8 @@ intel_dp_set_link_train(struct intel_dp *intel_dp,
 			temp |= DP_TP_CTL_LINK_TRAIN_IDLE;
 			I915_WRITE(DP_TP_CTL(port), temp);
 
-			for (retries = 100; retries > 0; retries--) {
-				if (I915_READ(DP_TP_STATUS(port)) &
-				    DP_TP_STATUS_IDLE_DONE)
-					break;
-				DELAY(100);
-			}
-			if (retries == 0)
+			if (wait_for((I915_READ(DP_TP_STATUS(port)) &
+				      DP_TP_STATUS_IDLE_DONE), 1))
 				DRM_ERROR("Timed out waiting for DP idle patterns\n");
 
 			temp &= ~DP_TP_CTL_LINK_TRAIN_MASK;

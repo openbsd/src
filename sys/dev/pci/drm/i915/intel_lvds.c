@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_lvds.c,v 1.13 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: intel_lvds.c,v 1.14 2015/04/12 11:26:54 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -100,7 +100,6 @@ static void intel_enable_lvds(struct intel_encoder *encoder)
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->base.crtc);
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 ctl_reg, lvds_reg, stat_reg;
-	int retries;
 
 	if (HAS_PCH_SPLIT(dev)) {
 		ctl_reg = PCH_PP_CONTROL;
@@ -132,12 +131,7 @@ static void intel_enable_lvds(struct intel_encoder *encoder)
 
 	I915_WRITE(ctl_reg, I915_READ(ctl_reg) | POWER_TARGET_ON);
 	POSTING_READ(lvds_reg);
-	for (retries = 1000; retries > 0; retries--) {
-		if ((I915_READ(stat_reg) & PP_ON) != 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for((I915_READ(stat_reg) & PP_ON) != 0, 1000))
 		DRM_ERROR("timed out waiting for panel to power on\n");
 
 	intel_panel_enable_backlight(dev, intel_crtc->pipe);
@@ -149,7 +143,6 @@ static void intel_disable_lvds(struct intel_encoder *encoder)
 	struct intel_lvds_encoder *lvds_encoder = to_lvds_encoder(&encoder->base);
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 ctl_reg, lvds_reg, stat_reg;
-	int retries;
 
 	if (HAS_PCH_SPLIT(dev)) {
 		ctl_reg = PCH_PP_CONTROL;
@@ -164,12 +157,7 @@ static void intel_disable_lvds(struct intel_encoder *encoder)
 	intel_panel_disable_backlight(dev);
 
 	I915_WRITE(ctl_reg, I915_READ(ctl_reg) & ~POWER_TARGET_ON);
-	for (retries = 1000; retries > 0; retries--) {
-		if ((I915_READ(stat_reg) & PP_ON) == 0)
-			break;
-		DELAY(1000);
-	}
-	if (retries == 0)
+	if (wait_for((I915_READ(stat_reg) & PP_ON) == 0, 1000))
 		DRM_ERROR("timed out waiting for panel to power off\n");
 
 	if (lvds_encoder->pfit_control) {
