@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.89 2015/04/08 02:28:13 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.90 2015/04/12 03:54:10 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -4304,9 +4304,7 @@ i915_gem_load(struct drm_device *dev)
 	i915_gem_reset_fences(dev);
 
 	i915_gem_detect_bit_6_swizzle(dev);
-#if 0
 	init_waitqueue_head(&dev_priv->pending_flip_queue);
-#endif
 
 	dev_priv->mm.interruptible = true;
 

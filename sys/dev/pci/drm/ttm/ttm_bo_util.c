@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.12 2015/04/08 04:03:06 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.13 2015/04/12 03:54:10 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -447,9 +447,7 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	 * TODO: Explicit member copy would probably be better here.
 	 */
 
-#ifdef notyet
 	init_waitqueue_head(&fbo->event_queue);
-#endif
 	INIT_LIST_HEAD(&fbo->ddestroy);
 	INIT_LIST_HEAD(&fbo->lru);
 	INIT_LIST_HEAD(&fbo->swap);

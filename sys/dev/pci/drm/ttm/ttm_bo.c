@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.14 2015/04/06 05:35:29 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.15 2015/04/12 03:54:10 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -1235,9 +1235,7 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 	refcount_init(&bo->list_kref, 1);
 	atomic_set(&bo->cpu_writers, 0);
 	atomic_set(&bo->reserved, 1);
-#ifdef notyet
 	init_waitqueue_head(&bo->event_queue);
-#endif
 	INIT_LIST_HEAD(&bo->lru);
 	INIT_LIST_HEAD(&bo->ddestroy);
 	INIT_LIST_HEAD(&bo->swap);

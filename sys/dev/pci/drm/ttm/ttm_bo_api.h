@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_api.h,v 1.2 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_api.h,v 1.3 2015/04/12 03:54:10 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -207,7 +207,7 @@ struct ttm_buffer_object {
 
 	u_int kref;
 	u_int list_kref;
-	int event_queue;
+	wait_queue_head_t event_queue;
 
 	/**
 	 * Members protected by the bo::reserved lock.

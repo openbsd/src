@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.61 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.62 2015/04/12 03:54:10 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -236,7 +236,7 @@ int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 
 	dev->num_crtcs = num_crtcs;
 
-	dev->vbl_queue = kmalloc(sizeof(int) * num_crtcs,
+	dev->vbl_queue = kmalloc(sizeof(wait_queue_head_t) * num_crtcs,
 				 GFP_KERNEL);
 	if (!dev->vbl_queue)
 		goto err;
@@ -281,6 +281,7 @@ int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 
 	/* Zero per-crtc vblank stuff */
 	for (i = 0; i < num_crtcs; i++) {
+		init_waitqueue_head(&dev->vbl_queue[i]);
 		atomic_set(&dev->_vblank_count[i], 0);
 		atomic_set(&dev->vblank_refcount[i], 0);
 	}

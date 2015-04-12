@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.20 2015/04/11 14:39:37 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.21 2015/04/12 03:54:10 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -34,7 +34,6 @@ typedef uint32_t __be32;
 
 typedef bus_addr_t dma_addr_t;
 typedef bus_addr_t phys_addr_t;
-typedef int wait_queue_head_t;
 
 #define __force
 #define __always_unused
@@ -237,6 +236,17 @@ spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
 #define read_unlock(rwl)		rw_exit_read(rwl)
 #define write_lock(rwl)			rw_enter_write(rwl)
 #define write_unlock(rwl)		rw_exit_write(rwl)
+
+struct wait_queue_head {
+	struct mutex lock;
+};
+typedef struct wait_queue_head wait_queue_head_t;
+
+static inline void
+init_waitqueue_head(wait_queue_head_t *wq)
+{
+	mtx_init(&wq->lock, IPL_NONE);
+}
 
 #define wake_up(x)			wakeup(x)
 #define wake_up_all(x)			wakeup(x)

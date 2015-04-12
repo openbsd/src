@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.191 2015/04/11 04:36:10 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.192 2015/04/12 03:54:10 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -592,7 +592,7 @@ struct drm_device {
 	uint32_t		 max_vblank_count;
 	struct mutex		 event_lock;
 
-	int			*vbl_queue;
+	wait_queue_head_t	*vbl_queue;
 	atomic_t		*_vblank_count;
 	struct timeval		*_vblank_time;
 	struct mutex		 vblank_time_lock;

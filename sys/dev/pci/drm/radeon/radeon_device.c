@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.12 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.13 2015/04/12 03:54:10 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1023,9 +1023,7 @@ int radeon_device_init(struct radeon_device *rdev,
 	rw_init(&rdev->gpu_clock_mutex, "gpuclk");
 	rw_init(&rdev->pm.mclk_lock, "mclk");
 	rw_init(&rdev->exclusive_lock, "rdnexc");
-#ifdef notyet
 	init_waitqueue_head(&rdev->irq.vblank_queue);
-#endif
 	r = radeon_gem_init(rdev);
 	if (r)
 		return r;
