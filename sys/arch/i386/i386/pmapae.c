@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.28 2015/04/12 18:37:53 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.29 2015/04/12 19:21:32 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -194,10 +194,10 @@
  *                                               p h y s i c a l  a d d r
  *
  * the i386 caches PTEs in a TLB.   it is important to flush out old
- * TLB mappings when making a change to a mappings.   writing to the
+ * TLB mappings when making a change to a mapping.   writing to the
  * %cr3 will flush the entire TLB.    newer processors also have an
  * instruction that will invalidate the mapping of a single page (which
- * is useful if you are changing a single mappings because it preserves
+ * is useful if you are changing a single mapping because it preserves
  * all the cached TLB entries).
  *
  * as shows, bits 31-12 of the PTE contain PA of the page being mapped.
@@ -254,8 +254,8 @@
  *
  * Note: A recursive PDP mapping provides a way to map all the PTEs for
  * a 4GB address space into a linear chunk of virtual memory.  In other
- * words, the PTE for page 0 is the first int mapped into the 2MB recursive
- * area.  The PTE for page 1 is the second int.  The very last int in the
+ * words, the PTE for page 0 is the first 8b mapped into the 2MB recursive
+ * area.  The PTE for page 1 is the second 8b.  The very last 8b in the
  * 2MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
  * address).
  *
@@ -274,7 +274,7 @@
  *
  * What happens if the pmap layer is asked to perform an operation
  * on a pmap that is not the one which is currently active?  In that
- * case we take the PA of the PDP of non-active pmap and put it in
+ * case we take the PA of the PDP of the non-active pmap and put it in
  * slots 2044-7 of the active pmap.  This causes the non-active pmap's
  * PTEs to get mapped in the final 4MB of the 4GB address space
  * (e.g. starting at 0xffc00000).
@@ -301,8 +301,8 @@
  * Note that the PDE#1660 VA (0xcf8033e0) is defined as "PTE_BASE".
  * Note that the PDE#2044 VA (0xff803fe0) is defined as "APTE_BASE".
  *
- * Starting at VA 0xcf8033e0 the current active PDPs (%cr3) acts as a
- * PDPTP and references four consequetly mapped pages:
+ * Starting at VA 0xcf8033e0 the current active PDPs (%cr3) act as a
+ * PDPTP and reference four consecutively mapped pages:
  *
  * PTP#1660-3 == PDP(%cr3) => maps VA 0xcf800000 -> 0xd0000000
  *   +----+
@@ -331,79 +331,10 @@
  * Note that in the APTE_BASE space, the APDP appears at VA
  * "APDP_BASE" (0xffffc000).
  *
- * unfortunately we cannot use recursive PDPT from the page tables
- * because in their infinite wisdom they have defined cr3 32 bits!
+ * unfortunately, we cannot use recursive PDPT from the page tables
+ * because cr3 is only 32 bits wide.
  *
  */
-/*
- * memory allocation
- *
- *  - there are three data structures that we must dynamically allocate:
- *
- * [A] new process' page directory page (PDP)
- *	- plan 1: done at pmap_create() we use
- *	  uvm_km_alloc(kernel_map, PAGE_SIZE)  [fka kmem_alloc] to do this
- *	  allocation.
- *
- * if we are low in free physical memory then we sleep in
- * uvm_km_alloc -- in this case this is ok since we are creating
- * a new pmap and should not be holding any locks.
- *
- * if the kernel is totally out of virtual space
- * (i.e. uvm_km_alloc returns NULL), then we panic.
- *
- * XXX: the fork code currently has no way to return an "out of
- * memory, try again" error code since uvm_fork [fka vm_fork]
- * is a void function.
- *
- * [B] new page tables pages (PTP)
- * 	call uvm_pagealloc()
- * 		=> success: zero page, add to pm_pdir
- * 		=> failure: we are out of free vm_pages, let pmap_enter()
- *		   tell UVM about it.
- *
- * note: for kernel PTPs, we start with NKPTP of them.   as we map
- * kernel memory (at uvm_map time) we check to see if we've grown
- * the kernel pmap.   if so, we call the optional function
- * pmap_growkernel() to grow the kernel PTPs in advance.
- *
- * [C] pv_entry structures
- *	- plan 1: try to allocate one off the free list
- *		=> success: done!
- *		=> failure: no more free pv_entrys on the list
- *	- plan 2: try to allocate a new pv_page to add a chunk of
- *	pv_entrys to the free list
- *		[a] obtain a free, unmapped, VA in kmem_map.  either
- *		we have one saved from a previous call, or we allocate
- *		one now using a "vm_map_lock_try" in uvm_map
- *		=> success: we have an unmapped VA, continue to [b]
- *		=> failure: unable to lock kmem_map or out of VA in it.
- *			move on to plan 3.
- *		[b] allocate a page in kmem_object for the VA
- *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: kmem_object locked, no free vm_pages, etc.
- *			save VA for later call to [a], go to plan 3.
- *	If we fail, we simply let pmap_enter() tell UVM about it.
- */
-/*
- * locking
- *
- * we have the following locks that we must contend with:
- *
- * "simple" locks:
- *
- * - pmap lock (per pmap, part of uvm_object)
- *   this lock protects the fields in the pmap structure including
- *   the non-kernel PDEs in the PDP, and the PTEs.  it also locks
- *   in the alternate PTE space (since that is determined by the
- *   entry in the PDP).
- *
- * - pmaps_lock
- *   this lock protects the list of active pmaps (headed by "pmaps").
- *   we lock it when adding or removing pmaps from this list.
- *
- */
-
 #define	PG_FRAME	0xffffff000ULL	/* page frame mask */
 #define	PG_LGFRAME	0xfffe00000ULL	/* large (2M) page frame mask */
 

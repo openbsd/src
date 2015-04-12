@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.172 2015/04/12 18:37:53 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.173 2015/04/12 19:21:32 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -156,10 +156,10 @@
  *                                                p h y s i c a l  a d d r
  *
  * the i386 caches PTEs in a TLB.   it is important to flush out old
- * TLB mappings when making a change to a mappings.   writing to the
+ * TLB mappings when making a change to a mapping.   writing to the
  * %cr3 will flush the entire TLB.    newer processors also have an
  * instruction that will invalidate the mapping of a single page (which
- * is useful if you are changing a single mappings because it preserves
+ * is useful if you are changing a single mapping because it preserves
  * all the cached TLB entries).
  *
  * as shows, bits 31-12 of the PTE contain PA of the page being mapped.
@@ -235,7 +235,7 @@
  *
  * What happens if the pmap layer is asked to perform an operation
  * on a pmap that is not the one which is currently active?  In that
- * case we take the PA of the PDP of non-active pmap and put it in
+ * case we take the PA of the PDP of the non-active pmap and put it in
  * slot 1023 of the active pmap.  This causes the non-active pmap's
  * PTEs to get mapped in the final 4MB of the 4GB address space
  * (e.g. starting at 0xffc00000).
@@ -283,44 +283,6 @@
  * Note that in the APTE_BASE space, the APDP appears at VA
  * "APDP_BASE" (0xfffff000).
  */
-
-/*
- * memory allocation
- *
- *  - there are three data structures that we must dynamically allocate:
- *
- * [A] new process' page directory page (PDP)
- *	- plan 1: done at pmap_create() we use
- *	  uvm_km_alloc(kernel_map, PAGE_SIZE)  [fka kmem_alloc] to do this
- *	  allocation.
- *
- * if we are low in free physical memory then we sleep in
- * uvm_km_alloc -- in this case this is ok since we are creating
- * a new pmap and should not be holding any locks.
- *
- * if the kernel is totally out of virtual space
- * (i.e. uvm_km_alloc returns NULL), then we panic.
- *
- * XXX: the fork code currently has no way to return an "out of
- * memory, try again" error code since uvm_fork [fka vm_fork]
- * is a void function.
- *
- * [B] new page tables pages (PTP)
- * 	call uvm_pagealloc()
- * 		=> success: zero page, add to pm_pdir
- * 		=> failure: we are out of free vm_pages, let pmap_enter()
- *		   tell UVM about it.
- *
- * note: for kernel PTPs, we start with NKPTP of them.   as we map
- * kernel memory (at uvm_map time) we check to see if we've grown
- * the kernel pmap.   if so, we call the optional function
- * pmap_growkernel() to grow the kernel PTPs in advance.
- *
- * [C] pv_entry structures
- *	call pool_get()
- *	If we fail, we simply let pmap_enter() tell UVM about it.
- */
-
 #define PG_FRAME	0xfffff000	/* page frame mask */
 #define PG_LGFRAME	0xffc00000	/* large (4M) page frame mask */
 
