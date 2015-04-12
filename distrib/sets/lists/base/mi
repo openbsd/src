@@ -4519,6 +4519,8 @@
 ./var/nsd/run
 ./var/nsd/run/xfr
 ./var/nsd/zones
+./var/nsd/zones/master
+./var/nsd/zones/slave
 ./var/quotas
 ./var/run
 ./var/spool
