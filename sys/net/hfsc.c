@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.18 2015/04/12 09:58:46 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.19 2015/04/12 12:22:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -132,7 +132,7 @@ struct hfsc_class {
 	struct hfsc_class *cl_siblings;	/* sibling classes */
 	struct hfsc_class *cl_children;	/* child classes */
 
-	struct hfsc_classq *cl_q;	/* class queue structure */
+	struct hfsc_classq cl_q;	/* class queue structure */
 /*	struct red	*cl_red;*/	/* RED state */
 	struct altq_pktattr *cl_pktattr; /* saved header used by ECN */
 
@@ -265,7 +265,7 @@ struct hfsc_class	*hfsc_clh2cph(struct hfsc_if *, u_int32_t);
 #define	HFSC_CLK_PER_TICK	(HFSC_FREQ / hz)
 #define	HFSC_HT_INFINITY	0xffffffffffffffffLL /* infinite time value */
 
-struct pool	hfsc_class_pl, hfsc_classq_pl, hfsc_internal_sc_pl;
+struct pool	hfsc_class_pl, hfsc_internal_sc_pl;
 
 u_int64_t
 hfsc_microuptime(void)
@@ -306,8 +306,6 @@ hfsc_initialize(void)
 {
 	pool_init(&hfsc_class_pl, sizeof(struct hfsc_class), 0, 0, PR_WAITOK,
 	    "hfscclass", NULL);
-	pool_init(&hfsc_classq_pl, sizeof(struct hfsc_classq), 0, 0, PR_WAITOK,
-	    "hfscclassq", NULL);
 	pool_init(&hfsc_internal_sc_pl, sizeof(struct hfsc_internal_sc), 0, 0,
 	    PR_WAITOK, "hfscintsc", NULL);
 }
@@ -453,7 +451,7 @@ hfsc_purge(struct ifqueue *ifq)
 	struct hfsc_class	*cl;
 
 	for (cl = hif->hif_rootclass; cl != NULL; cl = hfsc_nextclass(cl))
-		if (cl->cl_q->qlen > 0)
+		if (cl->cl_q.qlen > 0)
 			hfsc_purgeq(cl);
 	hif->hif_ifq->ifq_len = 0;
 }
@@ -475,13 +473,12 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	}
 
 	cl = pool_get(&hfsc_class_pl, PR_WAITOK | PR_ZERO);
-	cl->cl_q = pool_get(&hfsc_classq_pl, PR_WAITOK | PR_ZERO);
 	cl->cl_actc = hfsc_actlist_alloc();
 
 	if (qlimit == 0)
 		qlimit = HFSC_DEFAULT_QLIMIT;
-	cl->cl_q->qlimit = qlimit;
-	cl->cl_q->qlen = 0;
+	cl->cl_q.qlimit = qlimit;
+	cl->cl_q.qlen = 0;
 	cl->cl_flags = flags;
 
 	if (rsc != NULL && (rsc->m1 != 0 || rsc->m2 != 0)) {
@@ -557,8 +554,6 @@ err_ret:
 		pool_put(&hfsc_internal_sc_pl, cl->cl_rsc);
 	if (cl->cl_usc != NULL)
 		pool_put(&hfsc_internal_sc_pl, cl->cl_usc);
-	if (cl->cl_q != NULL)
-		pool_put(&hfsc_classq_pl, cl->cl_q);
 	pool_put(&hfsc_class_pl, cl);
 	return (NULL);
 }
@@ -576,7 +571,7 @@ hfsc_class_destroy(struct hfsc_class *cl)
 
 	s = splnet();
 
-	if (cl->cl_q->qlen > 0)
+	if (cl->cl_q.qlen > 0)
 		hfsc_purgeq(cl);
 
 	if (cl->cl_parent != NULL) {
@@ -614,7 +609,6 @@ hfsc_class_destroy(struct hfsc_class *cl)
 		pool_put(&hfsc_internal_sc_pl, cl->cl_fsc);
 	if (cl->cl_rsc != NULL)
 		pool_put(&hfsc_internal_sc_pl, cl->cl_rsc);
-	pool_put(&hfsc_classq_pl, cl->cl_q);
 	pool_put(&hfsc_class_pl, cl);
 
 	return (0);
@@ -671,7 +665,7 @@ hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 
 	/* successfully queued. */
-	if (cl->cl_q->qlen == 1)
+	if (cl->cl_q.qlen == 1)
 		hfsc_set_active(cl, m->m_pkthdr.len);
 
 	return (0);
@@ -751,10 +745,10 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 	if (realtime)
 		cl->cl_cumul += m->m_pkthdr.len;
 
-	if (cl->cl_q->qlen > 0) {
+	if (cl->cl_q.qlen > 0) {
 		if (cl->cl_rsc != NULL) {
 			/* update ed */
-			next_len = cl->cl_q->tail->m_nextpkt->m_pkthdr.len;
+			next_len = cl->cl_q.tail->m_nextpkt->m_pkthdr.len;
 
 			if (realtime)
 				hfsc_update_ed(cl, next_len);
@@ -789,17 +783,17 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 {
 	struct mbuf *m0;
 
-	if (cl->cl_q->qlen >= cl->cl_q->qlimit)
+	if (cl->cl_q.qlen >= cl->cl_q.qlimit)
 		return (-1);
 
-	if ((m0 = cl->cl_q->tail) != NULL)
+	if ((m0 = cl->cl_q.tail) != NULL)
 		m->m_nextpkt = m0->m_nextpkt;
 	else
 		m0 = m;
 
 	m0->m_nextpkt = m;
-	cl->cl_q->tail = m;
-	cl->cl_q->qlen++;
+	cl->cl_q.tail = m;
+	cl->cl_q.qlen++;
 
 	return (0);
 }
@@ -809,13 +803,13 @@ hfsc_getq(struct hfsc_class *cl)
 {
 	struct mbuf	*m, *m0;
 
-	if ((m = cl->cl_q->tail) == NULL)
+	if ((m = cl->cl_q.tail) == NULL)
 		return (NULL);
 	if ((m0 = m->m_nextpkt) != m)
 		m->m_nextpkt = m0->m_nextpkt;
 	else 
-		cl->cl_q->tail = NULL;
-	cl->cl_q->qlen--;
+		cl->cl_q.tail = NULL;
+	cl->cl_q.qlen--;
 	m0->m_nextpkt = NULL;
 	return (m0);
 }
@@ -823,9 +817,9 @@ hfsc_getq(struct hfsc_class *cl)
 struct mbuf *
 hfsc_pollq(struct hfsc_class *cl)
 {
-	if (!cl->cl_q->tail)
+	if (!cl->cl_q.tail)
 		return (NULL);
-	return (cl->cl_q->tail->m_nextpkt);
+	return (cl->cl_q.tail->m_nextpkt);
 }
 
 void
@@ -833,7 +827,7 @@ hfsc_purgeq(struct hfsc_class *cl)
 {
 	struct mbuf *m;
 
-	if (cl->cl_q->qlen == 0)
+	if (cl->cl_q.qlen == 0)
 		return;
 
 	while ((m = hfsc_getq(cl)) != NULL) {
@@ -1010,7 +1004,7 @@ hfsc_update_vf(struct hfsc_class *cl, int len, u_int64_t cur_time)
 	u_int64_t f, myf_bound, delta;
 	int go_passive;
 
-	go_passive = (cl->cl_q->qlen == 0);
+	go_passive = (cl->cl_q.qlen == 0);
 
 	for (; cl->cl_parent != NULL; cl = cl->cl_parent) {
 		cl->cl_total += len;
@@ -1606,13 +1600,13 @@ hfsc_getclstats(struct hfsc_class_stats *sp, struct hfsc_class *cl)
 	sp->cur_time = hfsc_microuptime();
 	sp->machclk_freq = HFSC_FREQ;
 
-	sp->qlength = cl->cl_q->qlen;
-	sp->qlimit = cl->cl_q->qlimit;
+	sp->qlength = cl->cl_q.qlen;
+	sp->qlimit = cl->cl_q.qlimit;
 	sp->xmit_cnt = cl->cl_stats.xmit_cnt;
 	sp->drop_cnt = cl->cl_stats.drop_cnt;
 	sp->period = cl->cl_stats.period;
 
-	sp->qtype = cl->cl_q->qtype;
+	sp->qtype = cl->cl_q.qtype;
 }
 
 /* convert a class handle to the corresponding class pointer */
