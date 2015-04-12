@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.21 2015/04/12 03:54:10 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.22 2015/04/12 05:31:23 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -476,6 +476,20 @@ struct pci_dev {
 #define memcpy_toio(d, s, n)	memcpy(d, s, n)
 #define memcpy_fromio(d, s, n)	memcpy(d, s, n)
 #define memset_io(d, b, n)	memset(d, b, n)
+
+static inline u32
+ioread32(const volatile void __iomem *addr)
+{
+	u32 r;
+	memcpy(&r, (void *)addr, 4);
+	return (r);
+}
+
+static inline void
+iowrite32(u32 val, volatile void __iomem *addr)
+{
+	memcpy((void *)addr, &val, 4);
+}
 
 #define page_to_phys(page)	(VM_PAGE_TO_PHYS(page))
 #define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)

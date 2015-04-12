@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.15 2015/04/11 02:59:05 jsg Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.16 2015/04/12 05:31:23 jsg Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -601,16 +601,19 @@ static bool update_scaling_factors(struct intel_overlay *overlay,
 	overlay->old_xscale = xscale;
 	overlay->old_yscale = yscale;
 
-	regs->YRGBSCALE = (((yscale & FRACT_MASK) << 20) |
+	iowrite32(((yscale & FRACT_MASK) << 20) |
 		  ((xscale >> FP_SHIFT)  << 16) |
-		  ((xscale & FRACT_MASK) << 3));
+		  ((xscale & FRACT_MASK) << 3),
+		 &regs->YRGBSCALE);
 
-	regs->UVSCALE = (((yscale_UV & FRACT_MASK) << 20) |
+	iowrite32(((yscale_UV & FRACT_MASK) << 20) |
 		  ((xscale_UV >> FP_SHIFT)  << 16) |
-		  ((xscale_UV & FRACT_MASK) << 3));
+		  ((xscale_UV & FRACT_MASK) << 3),
+		 &regs->UVSCALE);
 
-	regs->UVSCALEV = ((((yscale    >> FP_SHIFT) << 16) |
-		   ((yscale_UV >> FP_SHIFT) << 0)));
+	iowrite32((((yscale    >> FP_SHIFT) << 16) |
+		   ((yscale_UV >> FP_SHIFT) << 0)),
+		 &regs->UVSCALEV);
 
 	if (scale_changed)
 		update_polyphase_filter(regs);
@@ -625,24 +628,26 @@ static void update_colorkey(struct intel_overlay *overlay,
 
 	switch (overlay->crtc->base.fb->bits_per_pixel) {
 	case 8:
-		regs->DCLRKV = 0;
-		regs->DCLRKM = CLK_RGB8I_MASK | DST_KEY_ENABLE;
+		iowrite32(0, &regs->DCLRKV);
+		iowrite32(CLK_RGB8I_MASK | DST_KEY_ENABLE, &regs->DCLRKM);
 		break;
 
 	case 16:
 		if (overlay->crtc->base.fb->depth == 15) {
-			regs->DCLRKV = RGB15_TO_COLORKEY(key);
-			regs->DCLRKM = CLK_RGB15_MASK | DST_KEY_ENABLE;
+			iowrite32(RGB15_TO_COLORKEY(key), &regs->DCLRKV);
+			iowrite32(CLK_RGB15_MASK | DST_KEY_ENABLE,
+				  &regs->DCLRKM);
 		} else {
-			regs->DCLRKV = RGB16_TO_COLORKEY(key);
-			regs->DCLRKM = CLK_RGB16_MASK | DST_KEY_ENABLE;
+			iowrite32(RGB16_TO_COLORKEY(key), &regs->DCLRKV);
+			iowrite32(CLK_RGB16_MASK | DST_KEY_ENABLE,
+				  &regs->DCLRKM);
 		}
 		break;
 
 	case 24:
 	case 32:
-		regs->DCLRKV = key;
-		regs->DCLRKM = CLK_RGB24_MASK | DST_KEY_ENABLE;
+		iowrite32(key, &regs->DCLRKV);
+		iowrite32(CLK_RGB24_MASK | DST_KEY_ENABLE, &regs->DCLRKM);
 		break;
 	}
 }
@@ -730,7 +735,7 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 			oconfig |= OCONF_CSC_MODE_BT709;
 		oconfig |= overlay->crtc->pipe == 0 ?
 			OCONF_PIPE_A : OCONF_PIPE_B;
-		regs->OCONFIG = oconfig;
+		iowrite32(oconfig, &regs->OCONFIG);
 		intel_overlay_unmap_regs(overlay, regs);
 
 		ret = intel_overlay_on(overlay);
@@ -744,8 +749,8 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 		goto out_unpin;
 	}
 
-	regs->DWINPOS = (params->dst_y << 16) | params->dst_x;
-	regs->DWINSZ = (params->dst_h << 16) | params->dst_w;
+	iowrite32((params->dst_y << 16) | params->dst_x, &regs->DWINPOS);
+	iowrite32((params->dst_h << 16) | params->dst_w, &regs->DWINSZ);
 
 	if (params->format & I915_OVERLAY_YUV_PACKED)
 		tmp_width = packed_width_bytes(params->format, params->src_w);
@@ -755,7 +760,7 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 	swidth = params->src_w;
 	swidthsw = calc_swidthsw(overlay->dev, params->offset_Y, tmp_width);
 	sheight = params->src_h;
-	regs->OBUF_0Y = new_bo->gtt_offset + params->offset_Y;
+	iowrite32(new_bo->gtt_offset + params->offset_Y, &regs->OBUF_0Y);
 	ostride = params->stride_Y;
 
 	if (params->format & I915_OVERLAY_YUV_PLANAR) {
@@ -769,21 +774,21 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 				      params->src_w/uv_hscale);
 		swidthsw |= max_t(u32, tmp_U, tmp_V) << 16;
 		sheight |= (params->src_h/uv_vscale) << 16;
-		regs->OBUF_0U = new_bo->gtt_offset + params->offset_U;
-		regs->OBUF_0V = new_bo->gtt_offset + params->offset_V;
+		iowrite32(new_bo->gtt_offset + params->offset_U, &regs->OBUF_0U);
+		iowrite32(new_bo->gtt_offset + params->offset_V, &regs->OBUF_0V);
 		ostride |= params->stride_UV << 16;
 	}
 
-	regs->SWIDTH = swidth;
-	regs->SWIDTHSW = swidthsw;
-	regs->SHEIGHT = sheight;
-	regs->OSTRIDE = ostride;
+	iowrite32(swidth, &regs->SWIDTH);
+	iowrite32(swidthsw, &regs->SWIDTHSW);
+	iowrite32(sheight, &regs->SHEIGHT);
+	iowrite32(ostride, &regs->OSTRIDE);
 
 	scale_changed = update_scaling_factors(overlay, regs, params);
 
 	update_colorkey(overlay, regs);
 
-	regs->OCMD = overlay_cmd_reg(params);
+	iowrite32(overlay_cmd_reg(params), &regs->OCMD);
 
 	intel_overlay_unmap_regs(overlay, regs);
 
@@ -822,7 +827,7 @@ int intel_overlay_switch_off(struct intel_overlay *overlay)
 		return ret;
 
 	regs = intel_overlay_map_regs(overlay);
-	regs->OCMD = 0;
+	iowrite32(0, &regs->OCMD);
 	intel_overlay_unmap_regs(overlay, regs);
 
 	ret = intel_overlay_off(overlay);
@@ -1191,8 +1196,9 @@ out_free:
 static void update_reg_attrs(struct intel_overlay *overlay,
 			     struct overlay_registers __iomem *regs)
 {
-	regs->OCLRC0 = (overlay->contrast << 18) | (overlay->brightness & 0xff);
-	regs->OCLRC1 = overlay->saturation;
+	iowrite32((overlay->contrast << 18) | (overlay->brightness & 0xff),
+		  &regs->OCLRC0);
+	iowrite32(overlay->saturation, &regs->OCLRC1);
 }
 
 static bool check_gamma_bounds(u32 gamma1, u32 gamma2)
