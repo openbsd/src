@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.19 2015/04/12 12:22:26 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.20 2015/04/12 14:09:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -109,7 +109,6 @@ struct hfsc_classq {
 	struct mbuf	*tail;	 /* Tail of packet queue */
 	int		 qlen;	 /* Queue length (in number of packets) */
 	int		 qlimit; /* Queue limit (in number of packets*) */
-	int		 qtype;	 /* Queue type */
 };
 
 /* for TAILQ based ellist and actlist implementation */
@@ -1606,7 +1605,7 @@ hfsc_getclstats(struct hfsc_class_stats *sp, struct hfsc_class *cl)
 	sp->drop_cnt = cl->cl_stats.drop_cnt;
 	sp->period = cl->cl_stats.period;
 
-	sp->qtype = cl->cl_q.qtype;
+	sp->qtype = 0;
 }
 
 /* convert a class handle to the corresponding class pointer */
