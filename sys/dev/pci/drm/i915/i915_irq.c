@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.24 2015/04/11 14:39:37 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.25 2015/04/12 17:10:07 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -32,6 +32,7 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
+#include "i915_trace.h"
 #include "intel_drv.h"
 
 /* For display hotplug interrupt */
@@ -347,7 +348,7 @@ static void notify_ring(struct drm_device *dev,
 	if (ring->obj == NULL)
 		return;
 
-//	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
+	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
 
 	wake_up_all(ring);
 	if (i915_enable_hangcheck) {

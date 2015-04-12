@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.23 2015/04/12 12:14:30 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.24 2015/04/12 17:10:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -264,6 +264,18 @@ extern struct timeval ns_to_timeval(const int64_t);
 #define msecs_to_jiffies(x)	(((int64_t)(x)) * hz / 1000)
 #define time_after(a,b)		((long)(b) - (long)(a) < 0)
 #define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
+
+static inline void
+set_normalized_timespec(struct timespec *ts, time_t sec, int64_t nsec)
+{
+	while (nsec > NSEC_PER_SEC) {
+		nsec -= NSEC_PER_SEC;
+		sec++;
+	}
+
+	ts->tv_sec = sec;
+	ts->tv_nsec = nsec;
+}
 
 static inline int64_t
 timespec_to_ns(const struct timespec *ts)

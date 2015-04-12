@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.27 2015/04/12 11:26:54 jsg Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.28 2015/04/12 17:10:07 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -31,6 +31,7 @@
 #include <dev/pci/drm/drmP.h>
 #include "i915_drv.h"
 #include <dev/pci/drm/i915_drm.h>
+#include "i915_trace.h"
 #include "intel_drv.h"
 
 /*
@@ -1362,7 +1363,7 @@ static int ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 	if (ret != -ENOSPC)
 		return ret;
 
-//	trace_i915_ring_wait_begin(ring);
+	trace_i915_ring_wait_begin(ring);
 	/* With GEM the hangcheck timer should kick us out of the loop,
 	 * leaving it early runs the risk of corrupting GEM state (due
 	 * to running on almost untested codepaths). But on resume
@@ -1374,7 +1375,7 @@ static int ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 		ring->head = I915_READ_HEAD(ring);
 		ring->space = ring_space(ring);
 		if (ring->space >= n) {
-//			trace_i915_ring_wait_end(ring);
+			trace_i915_ring_wait_end(ring);
 			return 0;
 		}
 
@@ -1392,7 +1393,7 @@ static int ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 		if (ret)
 			return ret;
 	} while (!time_after(ticks, end));
-//	trace_i915_ring_wait_end(ring);
+	trace_i915_ring_wait_end(ring);
 	return -EBUSY;
 }
 
@@ -1884,7 +1885,7 @@ intel_ring_flush_all_caches(struct intel_ring_buffer *ring)
 	if (ret)
 		return ret;
 
-//	trace_i915_gem_ring_flush(ring, 0, I915_GEM_GPU_DOMAINS);
+	trace_i915_gem_ring_flush(ring, 0, I915_GEM_GPU_DOMAINS);
 
 	ring->gpu_caches_dirty = false;
 	return 0;
@@ -1904,7 +1905,7 @@ intel_ring_invalidate_all_caches(struct intel_ring_buffer *ring)
 	if (ret)
 		return ret;
 
-//	trace_i915_gem_ring_flush(ring, I915_GEM_GPU_DOMAINS, flush_domains);
+	trace_i915_gem_ring_flush(ring, I915_GEM_GPU_DOMAINS, flush_domains);
 
 	ring->gpu_caches_dirty = false;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.90 2015/04/12 03:54:10 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.91 2015/04/12 17:10:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1126,7 +1126,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 		return (int)end;
 	case 0: /* Timeout */
 		if (timeout)
-			timeout->tv_sec = timeout->tv_nsec = 0;
+			set_normalized_timespec(timeout, 0, 0);
 		return -ETIME;
 	default: /* Completed */
 		WARN_ON(end < 0); /* We're not aware of other errors */
@@ -2216,7 +2216,7 @@ i915_add_request(struct intel_ring_buffer *ring,
 		}
 		if (was_empty) {
 			timeout_add_sec(&dev_priv->mm.retire_timer, 1);
-			intel_mark_busy(ring->dev);
+			intel_mark_busy(dev_priv->dev);
 		}
 	}
 
@@ -3016,6 +3016,42 @@ static bool i915_gem_valid_gtt_space(struct drm_device *dev,
 
 static void i915_gem_verify_gtt(struct drm_device *dev)
 {
+#if WATCH_GTT
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_gem_object *obj;
+	int err = 0;
+
+	list_for_each_entry(obj, &dev_priv->mm.gtt_list, gtt_list) {
+		if (obj->gtt_space == NULL) {
+			printk(KERN_ERR "object found on GTT list with no space reserved\n");
+			err++;
+			continue;
+		}
+
+		if (obj->cache_level != obj->gtt_space->color) {
+			printk(KERN_ERR "object reserved space [%08lx, %08lx] with wrong color, cache_level=%x, color=%lx\n",
+			       obj->gtt_space->start,
+			       obj->gtt_space->start + obj->gtt_space->size,
+			       obj->cache_level,
+			       obj->gtt_space->color);
+			err++;
+			continue;
+		}
+
+		if (!i915_gem_valid_gtt_space(dev,
+					      obj->gtt_space,
+					      obj->cache_level)) {
+			printk(KERN_ERR "invalid GTT space found at [%08lx, %08lx] - color=%x\n",
+			       obj->gtt_space->start,
+			       obj->gtt_space->start + obj->gtt_space->size,
+			       obj->cache_level);
+			err++;
+			continue;
+		}
+	}
+
+	WARN_ON(err);
+#endif
 }
 
 /**
@@ -3906,6 +3942,8 @@ void i915_gem_free_object(struct drm_gem_object *gem_obj)
 	struct drm_i915_gem_object *obj = to_intel_bo(gem_obj);
 	struct drm_device *dev = obj->base.dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
+
+	trace_i915_gem_object_destroy(obj);
 
 	if (obj->phys_obj)
 		i915_gem_detach_phys_object(dev, obj);

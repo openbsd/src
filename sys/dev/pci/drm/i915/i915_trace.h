@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_trace.h,v 1.10 2013/12/15 11:42:10 kettenis Exp $	*/
+/*	$OpenBSD: i915_trace.h,v 1.11 2015/04/12 17:10:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -21,7 +21,17 @@ trace_i915_gem_object_create(struct drm_i915_gem_object *obj)
 }
 
 static inline void
+trace_i915_gem_object_destroy(struct drm_i915_gem_object *obj)
+{
+}
+
+static inline void
 trace_i915_gem_request_add(struct intel_ring_buffer *ring, u32 seqno)
+{
+}
+
+static inline void
+trace_i915_gem_request_complete(struct intel_ring_buffer *ring, u32 seqno)
 {
 }
 
@@ -37,6 +47,26 @@ trace_i915_gem_request_wait_begin(struct intel_ring_buffer *ring, u32 seqno)
 
 static inline void
 trace_i915_gem_request_wait_end(struct intel_ring_buffer *ring, u32 seqno)
+{
+}
+
+static inline void
+trace_i915_ring_wait_begin(struct intel_ring_buffer *ring)
+{
+}
+
+static inline void
+trace_i915_ring_wait_end(struct intel_ring_buffer *ring)
+{
+}
+
+static inline void
+trace_i915_flip_request(int plane, struct drm_i915_gem_object *obj)
+{
+}
+
+static inline void
+trace_i915_flip_complete(int plane, struct drm_i915_gem_object *obj)
 {
 }
 
@@ -80,5 +110,17 @@ trace_i915_gem_evict(struct drm_device *dev, u32 size, u32 align, bool mappable)
 
 static inline void
 trace_i915_gem_evict_everything(struct drm_device *dev)
+{
+}
+
+static inline void
+trace_i915_gem_ring_dispatch(struct intel_ring_buffer *ring, u32 seqno,
+			     u32 flags)
+{
+}
+
+static inline void
+trace_i915_gem_ring_flush(struct intel_ring_buffer *ring, u32 invalidate,
+			     u32 flush)
 {
 }

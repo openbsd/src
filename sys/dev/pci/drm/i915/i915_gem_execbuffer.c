@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.37 2015/04/11 04:36:10 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.38 2015/04/12 17:10:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1093,9 +1093,9 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 			goto err;
 #ifdef __linux__
 	}
+#endif
 
 	trace_i915_gem_ring_dispatch(ring, intel_ring_get_seqno(ring), flags);
-#endif
 
 	i915_gem_execbuffer_move_to_active(&objects, ring);
 	i915_gem_execbuffer_retire_commands(dev, file, ring);

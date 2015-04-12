@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.48 2015/04/12 11:26:54 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.49 2015/04/12 17:10:07 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -30,6 +30,7 @@
 #include "intel_drv.h"
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
+#include "i915_trace.h"
 #include <dev/pci/drm/drm_dp_helper.h>
 #include <dev/pci/drm/drm_crtc_helper.h>
 
@@ -7129,7 +7130,7 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 
 	task_add(systq, &work->task);
 
-//	trace_i915_flip_complete(intel_crtc->plane, work->pending_flip_obj);
+	trace_i915_flip_complete(intel_crtc->plane, work->pending_flip_obj);
 }
 
 void intel_finish_page_flip(struct drm_device *dev, int pipe)
@@ -7514,7 +7515,7 @@ static int intel_crtc_page_flip(struct drm_crtc *crtc,
 	intel_mark_fb_busy(obj);
 	mutex_unlock(&dev->struct_mutex);
 
-//	trace_i915_flip_request(intel_crtc->plane, obj);
+	trace_i915_flip_request(intel_crtc->plane, obj);
 
 	return 0;
 
