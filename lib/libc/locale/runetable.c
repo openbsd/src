@@ -376,7 +376,7 @@ _RuneLocale _DefaultRuneLocale = {
     { 0, NULL },
     { 0, NULL },
     NULL, 0,
-    "646",
+    "US-ASCII",
    &_citrus_ctype_none,
     {
 	    { NULL, NULL, NULL },
