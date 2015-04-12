@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.92 2013/11/19 09:00:43 mpi Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.93 2015/04/12 18:37:53 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -73,8 +73,18 @@
 
 #include "ioapic.h"
 
+#include "acpi.h"
+
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
+#endif
+
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
+#endif
+
+#ifdef MULTIPROCESSOR
+#include <machine/mpbiosvar.h>
 #endif
 
 /*
@@ -116,6 +126,27 @@ cpu_configure(void)
 
 #ifdef KVM86
 	kvm86_init();
+#endif
+#ifdef notyet
+	pmap_bootstrap_pae();
+#endif
+
+#if defined(MULTIPROCESSOR) || \
+    (NACPI > 0 && !defined(SMALL_KERNEL))
+	/* install the lowmem ptp after boot args for 1:1 mappings */
+	pmap_prealloc_lowmem_ptp();
+#endif
+
+#ifdef MULTIPROCESSOR
+	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,          /* virtual */
+	    (paddr_t)MP_TRAMPOLINE,                     /* physical */
+	    PROT_READ | PROT_WRITE | PROT_EXEC);        /* protection */
+#endif
+
+#if NACPI > 0 && !defined(SMALL_KERNEL)
+	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,        /* virtual */
+	    (paddr_t)ACPI_TRAMPOLINE,                   /* physical */
+	    PROT_READ | PROT_WRITE | PROT_EXEC);        /* protection */
 #endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)

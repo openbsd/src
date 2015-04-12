@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.567 2015/02/08 04:41:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.568 2015/04/12 18:37:53 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -115,6 +115,7 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/biosvar.h>
+#include <machine/pte.h>
 #ifdef MULTIPROCESSOR
 #include <machine/mpbiosvar.h>
 #endif /* MULTIPROCESSOR */
@@ -2997,7 +2998,6 @@ fix_f00f(void)
 	struct region_descriptor region;
 	vaddr_t va;
 	void *p;
-	pt_entry_t *pte;
 
 	/* Allocate two new pages */
 	va = uvm_km_zalloc(kernel_map, NBPG*2);
@@ -3012,8 +3012,7 @@ fix_f00f(void)
 	    GCODE_SEL);
 
 	/* Map first page RO */
-	pte = PTE_BASE + atop(va);
-	*pte &= ~PG_RW;
+	pmap_pte_setbits(va, 0, PG_RW);
 
 	/* Reload idtr */
 	setregion(&region, idt, sizeof(idt_region) - 1);
@@ -3185,9 +3184,6 @@ init386(paddr_t first_avail)
 		panic("no BIOS memory map supplied");
 #endif
  
-	/* install the lowmem ptp after boot args for 1:1 mappings */
-	pmap_prealloc_lowmem_ptp(round_page((paddr_t)(bootargv + bootargc)));
-
 	/*
 	 * account all the memory passed in the map from /boot
 	 * calculate avail_end and count the physmem.
@@ -3333,24 +3329,6 @@ init386(paddr_t first_avail)
 	}
 #ifdef DEBUG
 	printf("\n");
-#endif
-
-#if defined(MULTIPROCESSOR) || \
-    (NACPI > 0 && !defined(SMALL_KERNEL))
-	/* install the lowmem ptp after boot args for 1:1 mappings */
-	pmap_prealloc_lowmem_ptp(PTP0_PA);
-#endif
-
-#ifdef MULTIPROCESSOR
-	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,		/* virtual */
-	    (paddr_t)MP_TRAMPOLINE,			/* physical */
-	    PROT_READ | PROT_WRITE | PROT_EXEC);	/* protection */
-#endif
-
-#if NACPI > 0 && !defined(SMALL_KERNEL)
-	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,	/* virtual */
-	    (paddr_t)ACPI_TRAMPOLINE,			/* physical */
-	    PROT_READ | PROT_WRITE | PROT_EXEC);	/* protection */
 #endif
 
 	tlbflush();

@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86.c,v 1.9 2015/02/11 05:54:48 dlg Exp $ */
+/* $OpenBSD: kvm86.c,v 1.10 2015/04/12 18:37:53 mlarkin Exp $ */
 /* $NetBSD: kvm86.c,v 1.10 2005/12/26 19:23:59 perry Exp $ */
 /*
  * Copyright (c) 2002
@@ -46,6 +46,8 @@ extern int kvm86_call(struct trapframe *);
 extern void kvm86_ret(struct trapframe *, int);
 
 #define PGTABLE_SIZE	((1024 + 64) * 1024 / PAGE_SIZE)
+
+typedef uint32_t pt_entry_t;
 
 struct kvm86_data {
 	pt_entry_t pgtbl[PGTABLE_SIZE];

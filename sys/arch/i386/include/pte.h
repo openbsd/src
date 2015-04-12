@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.20 2015/03/13 23:23:13 mlarkin Exp $	*/
+/*	$OpenBSD: pte.h,v 1.21 2015/04/12 18:37:54 mlarkin Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -37,33 +37,12 @@
 #ifndef _MACHINE_PTE_H_
 #define _MACHINE_PTE_H_
 
-#if !defined(_LOCORE)
-
-/*
- * here we define the data types for PDEs and PTEs
- */
-
-typedef u_int32_t pd_entry_t;		/* PDE */
-typedef u_int32_t pt_entry_t;		/* PTE */
-
-#endif
-
 /*
  * now we define various for playing with virtual addresses
  */
 
 #define	PDSHIFT		22		/* offset of PD index in VA */
 #define	NBPD		(1 << PDSHIFT)	/* # bytes mapped by PD (4MB) */
-#define	PDOFSET		(NBPD-1)	/* mask for non-PD part of VA */
-#if 0 /* not used? */
-#define	NPTEPD		(NBPD / PAGE_SIZE)	/* # of PTEs in a PD */
-#else
-#define	PTES_PER_PTP	(NBPD / PAGE_SIZE)	/* # of PTEs in a PTP */
-#endif
-
-#define PAGE_MASK_L2	(NBPD - 1)
-
-#define	i386_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
 
 /*
  * here we define the bits of the PDE/PTE, as described above:
@@ -87,8 +66,6 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
 #define	PG_PATLG	0x00001000	/* PAT on large pages */
-#define PG_FRAME	0xfffff000	/* page frame mask */
-#define PG_LGFRAME	0xffc00000	/* large (4M) page frame mask */
 
 /* Cacheability bits when we are using PAT */
 #define	PG_WB		(0)		/* The default */

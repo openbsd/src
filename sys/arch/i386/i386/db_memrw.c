@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.14 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.15 2015/04/12 18:37:53 mlarkin Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /*
@@ -43,6 +43,11 @@
 
 #include <ddb/db_access.h>
 
+#define PG_LGFRAME	0xffc00000	/* large (4M) page frame mask */
+#define PG_LGFRAME_PAE	0xffe00000	/* large (2M) page frame mask */
+
+extern int cpu_pae;
+
 /*
  * Read bytes from kernel address space for debugger.
  */
@@ -63,9 +68,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 static void
 db_write_text(vaddr_t addr, size_t size, char *data)
 {
-	pt_entry_t *pte, oldpte, tmppte;
 	vaddr_t pgva;
 	size_t limit;
+	uint32_t bits;
 	char *dst;
 
 	if (size == 0)
@@ -77,10 +82,9 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		/*
 		 * Get the PTE for the page.
 		 */
-		pte = kvtopte(addr);
-		oldpte = *pte;
+		bits = pmap_pte_bits(addr);
 
-		if ((oldpte & PG_V) == 0) {
+		if ((bits & PG_V) == 0) {
 			printf(" address %p not a valid page\n", dst);
 			return;
 		}
@@ -88,9 +92,12 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		/*
 		 * Get the VA for the page.
 		 */
-		if (oldpte & PG_PS)
-			pgva = (vaddr_t)dst & PG_LGFRAME;
-		else
+		if (bits & PG_PS) {
+			if (cpu_pae)
+				pgva = (vaddr_t)dst & PG_LGFRAME_PAE;
+			else
+				pgva = (vaddr_t)dst & PG_LGFRAME;
+		 } else
 			pgva = trunc_page((vaddr_t)dst);
 
 		/*
@@ -99,7 +106,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		 * total size.
 		 */
 #ifdef NBPD_L2
-		if (oldpte & PG_PS)
+		if (bits & PG_PS)
 			limit = NBPD_L2 - ((vaddr_t)dst & (NBPD_L2 - 1));
 		else
 #endif
@@ -108,9 +115,8 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			limit = size;
 		size -= limit;
 
-		tmppte = (oldpte & ~PG_KR) | PG_KW;
-		*pte = tmppte;
 		pmap_update_pg(pgva);
+		pmap_pte_setbits(addr, PG_RW, 0);
 
 		/*
 		 * Page is now writable.  Do as much access as we
@@ -122,9 +128,8 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		/*
 		 * Restore the old PTE.
 		 */
-		*pte = oldpte;
-
 		pmap_update_pg(pgva);
+		pmap_pte_setbits(addr, 0, bits);
 		
 	} while (size != 0);
 }

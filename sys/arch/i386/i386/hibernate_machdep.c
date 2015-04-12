@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.44 2015/01/09 03:43:52 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.45 2015/04/12 18:37:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -58,6 +58,13 @@ extern	int ndumpmem;
 extern  struct dumpmem dumpmem[];
 extern	bios_memmap_t *bios_memmap;
 extern	struct hibernate_state *hibernate_state;
+
+/*
+ * Hibernate always uses non-PAE page tables during resume, so
+ * redefine masks and pt_entry_t sizes in case PAE is in use.
+ */
+#define PAGE_MASK_L2    (NBPD - 1)
+typedef uint32_t pt_entry_t;
 
 /*
  * i386 MD Hibernate functions

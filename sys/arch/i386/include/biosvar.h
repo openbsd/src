@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.61 2013/11/02 15:02:27 kettenis Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.62 2015/04/12 18:37:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -34,9 +34,6 @@
 #define	BOOTARG_LEN	(PAGE_SIZE * 1)
 #define	BOOTBIOS_ADDR	(0x7c00)
 #define	BOOTBIOS_MAXSEC	((1 << 28) - 1)
-
-	/* physical page for ptp 0 need for various tramps */
-#define PTP0_PA		(PAGE_SIZE * 3)	
 
 	/* BIOS configure flags */
 #define	BIOSF_BIOS32	0x0001

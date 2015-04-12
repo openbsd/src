@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.137 2014/12/16 21:40:05 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.138 2015/04/12 18:37:54 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -458,6 +458,7 @@ void	mp_setperf_init(void);
 void	vm86_gpfault(struct proc *, int);
 #endif /* VM86 */
 
+int	cpu_paenable(void *);
 #endif /* _KERNEL */
 
 /* 

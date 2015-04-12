@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpcib.c,v 1.11 2014/09/14 14:17:23 jsg Exp $ */
+/*	$OpenBSD: piixpcib.c,v 1.12 2015/04/12 18:37:54 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2007 Stefan Sperling <stsp@stsp.in-berlin.de>
@@ -115,6 +115,8 @@ extern void	pcibattach(struct device *, struct device *, void *);
 extern void	p3_update_cpuspeed(void);
 #endif
 
+extern int cpu_pae;
+
 struct cfattach piixpcib_ca = {
 	sizeof(struct piixpcib_softc),
 	piixpcib_match,
@@ -194,6 +196,9 @@ piixpcib_configure_speedstep(struct piixpcib_softc *sc)
 	sc->sc_smi_data = PIIXPCIB_DEFAULT_SMI_DATA;
 	sc->sc_command = PIIXPCIB_DEFAULT_COMMAND;
 	sc->sc_flags = 0;
+
+	if (cpu_pae)
+		return ENODEV;
 
 	piixpcib_int15_gsic_call(sc);
 
