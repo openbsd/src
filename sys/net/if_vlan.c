@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.115 2015/04/10 02:08:08 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.116 2015/04/13 08:52:51 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -305,8 +305,20 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 		    etype == ifv->ifv_type)
 			break;
 	}
-	if (ifv == NULL)
-		return (1);
+
+	if (ifv == NULL) {
+#if NBRIDGE > 0
+		/*
+		 * If the packet hasn't been through its bridge(4) give
+		 * it a chance.
+		 */
+		if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
+			return (1);
+#endif
+		ifp->if_noproto++;
+		m_freem(m);
+		return (0);
+	}
 
 	if ((ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
