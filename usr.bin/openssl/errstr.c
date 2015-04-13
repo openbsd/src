@@ -1,4 +1,4 @@
-/* $OpenBSD: errstr.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: errstr.c,v 1.2 2015/04/13 15:02:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,27 @@
 #include <openssl/lhash.h>
 #include <openssl/ssl.h>
 
+struct {
+	int stats;
+} errstr_config;
+
+struct option errstr_options[] = {
+	{
+		.name = "stats",
+		.desc = "Print debugging statistics for the hash table",
+		.type = OPTION_FLAG,
+		.opt.flag = &errstr_config.stats,
+	},
+	{ NULL },
+};
+
+static void
+errstr_usage()
+{
+	fprintf(stderr, "usage: errstr [-stats] errno ...\n");
+	options_usage(errstr_options);
+}
+
 int errstr_main(int, char **);
 
 int
@@ -75,8 +96,16 @@ errstr_main(int argc, char **argv)
 	int i, ret = 0;
 	char buf[256];
 	unsigned long l;
+	int argsused;
 
-	if ((argc > 1) && (strcmp(argv[1], "-stats") == 0)) {
+	memset(&errstr_config, 0, sizeof(errstr_config));
+
+	if (options_parse(argc, argv, errstr_options, NULL, &argsused) != 0) {
+		errstr_usage();
+		return (1);
+	}
+
+	if (errstr_config.stats) {
 		BIO *out = NULL;
 
 		out = BIO_new(BIO_s_file());
@@ -90,16 +119,15 @@ errstr_main(int argc, char **argv)
 		}
 		if (out != NULL)
 			BIO_free_all(out);
-		argc--;
-		argv++;
 	}
-	for (i = 1; i < argc; i++) {
+
+	for (i = argsused; i < argc; i++) {
 		if (sscanf(argv[i], "%lx", &l)) {
 			ERR_error_string_n(l, buf, sizeof buf);
 			printf("%s\n", buf);
 		} else {
 			printf("%s: bad error code\n", argv[i]);
-			printf("usage: errstr [-stats] <errno> ...\n");
+			errstr_usage();
 			ret++;
 		}
 	}
