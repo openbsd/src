@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.139 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: dc.c,v 1.140 2015/04/13 08:45:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2143,7 +2143,7 @@ dc_rxeof(struct dc_softc *sc)
 		/* No errors; receive the packet. */	
 		total_len -= ETHER_CRC_LEN;
 
-		m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN, ifp);
+		m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN);
 		dc_newbuf(sc, i, m);
 		DC_INC(i, DC_RX_LIST_CNT);
 		if (m0 == NULL) {

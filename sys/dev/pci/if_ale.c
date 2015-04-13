@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.37 2015/03/24 10:09:06 mpi Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.38 2015/04/13 08:45:48 mpi Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1532,7 +1532,7 @@ ale_rxeof(struct ale_softc *sc)
 		 * on these low-end consumer ethernet controller.
 		 */
 		m = m_devget((char *)(rs + 1), length - ETHER_CRC_LEN,
-		    ETHER_ALIGN, ifp);
+		    ETHER_ALIGN);
 		if (m == NULL) {
 			ifp->if_iqdrops++;
 			ale_rx_update_page(sc, &rx_page, length, &prod);

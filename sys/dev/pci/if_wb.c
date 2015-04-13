@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.59 2015/04/08 10:07:47 mpi Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.60 2015/04/13 08:45:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -970,7 +970,7 @@ void wb_rxeof(sc)
 		total_len -= ETHER_CRC_LEN;
 
 		m = m_devget(cur_rx->wb_buf + sizeof(u_int64_t), total_len,
-		    ETHER_ALIGN, ifp);
+		    ETHER_ALIGN);
 		wb_newbuf(sc, cur_rx);
 		if (m == NULL) {
 			ifp->if_ierrors++;

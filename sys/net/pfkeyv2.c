@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.139 2015/03/26 12:21:37 mikeb Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.140 2015/04/13 08:45:48 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -137,7 +137,7 @@ extern struct pool ipsec_policy_pool;
 int
 pfdatatopacket(void *data, int len, struct mbuf **packet)
 {
-	if (!(*packet = m_devget(data, len, 0, NULL)))
+	if (!(*packet = m_devget(data, len, 0)))
 		return (ENOMEM);
 
 	/* Make sure, all data gets zeroized on free */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.83 2015/04/08 10:07:47 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.84 2015/04/13 08:45:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -966,7 +966,7 @@ cmalo_rx(struct malo_softc *sc)
 
 	/* prepare mbuf */
 	m = m_devget(sc->sc_data + rxdesc->pkgoffset,
-	    rxdesc->pkglen, ETHER_ALIGN, ifp);
+	    rxdesc->pkglen, ETHER_ALIGN);
 	if (m == NULL) {
 		DPRINTF(1, "RX m_devget failed\n");
 		ifp->if_ierrors++;

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.44 2015/04/08 10:07:47 mpi Exp $ */
+/* $OpenBSD: if_bce.c,v 1.45 2015/04/13 08:45:48 mpi Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -739,7 +739,7 @@ bce_rxintr(struct bce_softc *sc)
 		len -= ETHER_CRC_LEN;
 
 		m = m_devget(sc->bce_data + i * MCLBYTES +
-		    BCE_PREPKT_HEADER_SIZE, len, ETHER_ALIGN, ifp);
+		    BCE_PREPKT_HEADER_SIZE, len, ETHER_ALIGN);
 		ifp->if_ipackets++;
 
 		ml_enqueue(&ml, m);

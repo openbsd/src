@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.202 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.203 2015/04/13 08:45:48 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ m_clpool(u_int pktlen)
 }
 
 struct mbuf *
-m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
+m_clget(struct mbuf *m, int how, u_int pktlen)
 {
 	struct mbuf *m0 = NULL;
 	struct pool *pp;
@@ -1024,7 +1024,7 @@ extpacket:
  * Routine to copy from device local memory into mbufs.
  */
 struct mbuf *
-m_devget(char *buf, int totlen, int off, struct ifnet *ifp)
+m_devget(char *buf, int totlen, int off)
 {
 	struct mbuf	*m;
 	struct mbuf	*top, **mp;
@@ -1040,7 +1040,6 @@ m_devget(char *buf, int totlen, int off, struct ifnet *ifp)
 	if (m == NULL)
 		return (NULL);
 
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 
 	len = MHLEN;

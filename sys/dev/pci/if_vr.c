@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.139 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.140 2015/04/13 08:45:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -898,8 +898,7 @@ vr_rxeof(struct vr_softc *sc)
 #ifdef __STRICT_ALIGNMENT
 		{
 			struct mbuf *m0;
-			m0 = m_devget(mtod(m, caddr_t), total_len,
-			    ETHER_ALIGN, ifp);
+			m0 = m_devget(mtod(m, caddr_t), total_len, ETHER_ALIGN);
 			m_freem(m);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;

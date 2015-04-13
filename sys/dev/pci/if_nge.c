@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.82 2015/04/08 10:07:47 mpi Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.83 2015/04/13 08:45:48 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1066,8 +1066,7 @@ nge_rxeof(struct nge_softc *sc)
 		 */
 		if (nge_newbuf(sc, cur_rx, NULL) == ENOBUFS) {
 #endif
-			m0 = m_devget(mtod(m, char *), total_len,
-			    ETHER_ALIGN, ifp);
+			m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN);
 			nge_newbuf(sc, cur_rx, m);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;

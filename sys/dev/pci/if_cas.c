@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.39 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.40 2015/04/13 08:45:48 mpi Exp $	*/
 
 /*
  *
@@ -1196,7 +1196,7 @@ cas_rint(struct cas_softc *sc)
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 			cp = rxs->rxs_kva + off * 256 + ETHER_ALIGN;
-			m = m_devget(cp, len, ETHER_ALIGN, ifp);
+			m = m_devget(cp, len, ETHER_ALIGN);
 
 			if (word[0] & CAS_RC0_RELEASE_HDR)
 				cas_add_rxbuf(sc, idx);
@@ -1222,7 +1222,7 @@ cas_rint(struct cas_softc *sc)
 
 			/* XXX We should not be copying the packet here. */
 			cp = rxs->rxs_kva + off + ETHER_ALIGN;
-			m = m_devget(cp, len, ETHER_ALIGN, ifp);
+			m = m_devget(cp, len, ETHER_ALIGN);
 
 			if (word[0] & CAS_RC0_RELEASE_DATA)
 				cas_add_rxbuf(sc, idx);

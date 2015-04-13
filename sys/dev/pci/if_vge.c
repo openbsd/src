@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.61 2015/04/08 10:07:47 mpi Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.62 2015/04/13 08:45:48 mpi Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1077,7 +1077,7 @@ vge_rxeof(struct vge_softc *sc)
 			}
 
 			m0 = m_devget(mtod(m, char *),
-			    total_len - ETHER_CRC_LEN, ETHER_ALIGN, ifp);
+			    total_len - ETHER_CRC_LEN, ETHER_ALIGN);
 			vge_newbuf(sc, i, m);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.188 2015/04/10 11:02:12 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.189 2015/04/13 08:45:48 mpi Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -301,8 +301,8 @@ struct mbuf {
 	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
 
-#define MCLGET(m, how) (void) m_clget((m), (how), NULL, MCLBYTES)
-#define MCLGETI(m, how, ifp, l) m_clget((m), (how), (ifp), (l))
+#define MCLGET(m, how) (void) m_clget((m), (how), MCLBYTES)
+#define MCLGETI(m, how, ifp, l) m_clget((m), (how), (l))
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
@@ -425,7 +425,7 @@ struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
 int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
-struct mbuf *m_clget(struct mbuf *, int, struct ifnet *, u_int);
+struct mbuf *m_clget(struct mbuf *, int, u_int);
 void	m_extref(struct mbuf *, struct mbuf *);
 void	m_extfree_pool(caddr_t, u_int, void *);
 void	m_adj(struct mbuf *, int);
@@ -434,7 +434,7 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	m_copydata(struct mbuf *, int, int, caddr_t);
 void	m_cat(struct mbuf *, struct mbuf *);
-struct mbuf *m_devget(char *, int, int, struct ifnet *);
+struct mbuf *m_devget(char *, int, int);
 int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
 int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);
