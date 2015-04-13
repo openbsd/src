@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.79 2015/04/13 16:45:52 mikeb Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.80 2015/04/13 16:48:01 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -400,7 +400,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 			/* Find an appropriate SA from the existing ones. */
 			ipo->ipo_tdb =
-			    gettdbbyaddr(rdomain,
+			    gettdbbydst(rdomain,
 				dignore ? &sdst : &ipo->ipo_dst,
 				ipo->ipo_sproto,
 				srcid ? srcid : ipo->ipo_srcid,
@@ -1063,7 +1063,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 				ipsec_update_policy(inp, inp->inp_ipo, af,
 				    IPSP_DIRECTION_OUT);
 
-				tdb = gettdbbyaddr(rtable_l2(inp->inp_rtableid),
+				tdb = gettdbbydst(rtable_l2(inp->inp_rtableid),
 				    &inp->inp_ipo->ipo_dst,
 				    inp->inp_ipo->ipo_sproto,
 				    inp->inp_ipo->ipo_srcid,
@@ -1080,7 +1080,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ipsec_update_policy(inp, &sipon, af,
 			    IPSP_DIRECTION_OUT);
 
-			tdb = gettdbbyaddr(rtable_l2(inp->inp_rtableid),
+			tdb = gettdbbydst(rtable_l2(inp->inp_rtableid),
 			    &sipon.ipo_dst, IPPROTO_ESP, NULL,
 			    NULL, NULL, &sipon.ipo_addr, &sipon.ipo_mask);
 		}

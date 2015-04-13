@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.162 2015/04/13 16:45:52 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.163 2015/04/13 16:48:01 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -271,7 +271,7 @@ struct tdb {				/* tunnel descriptor block */
 	 * queues in those three tables.
 	 */
 	struct tdb	*tdb_hnext;	/* dst/spi/sproto table */
-	struct tdb	*tdb_anext;	/* dst/sproto table */
+	struct tdb	*tdb_dnext;	/* dst/sproto table */
 	struct tdb	*tdb_snext;	/* src/sproto table */
 	struct tdb	*tdb_inext;
 	struct tdb	*tdb_onext;
@@ -504,7 +504,7 @@ void	tdb_add_inp(struct tdb *, struct inpcb *, int);
 uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,
 		union sockaddr_union *, u_int8_t, int *);
 struct	tdb *gettdb(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
-struct	tdb *gettdbbyaddr(u_int, union sockaddr_union *, u_int8_t,
+struct	tdb *gettdbbydst(u_int, union sockaddr_union *, u_int8_t,
 		struct ipsec_ref *, struct ipsec_ref *, struct ipsec_ref *,
 		struct sockaddr_encap *, struct sockaddr_encap *);
 struct	tdb *gettdbbysrc(u_int, union sockaddr_union *, u_int8_t,
