@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.207 2015/04/13 16:48:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.208 2015/04/13 16:52:26 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -359,7 +359,8 @@ ipsp_aux_match(struct tdb *tdb,
 			return 0;
 
 	/* Check for filter matches. */
-	if (tdb->tdb_filter.sen_type) {
+	if (pfilter != NULL && pfiltermask != NULL &&
+	    tdb->tdb_filter.sen_type) {
 		/*
 		 * XXX We should really be doing a subnet-check (see
 		 * whether the TDB-associated filter is a subset
