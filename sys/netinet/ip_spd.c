@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.80 2015/04/13 16:48:01 mikeb Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.81 2015/04/13 16:50:43 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -327,17 +327,6 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	/* Outgoing packet policy check. */
 	if (direction == IPSP_DIRECTION_OUT) {
 		/*
-		 * Fetch the incoming TDB based on the SPI passed
-		 * in ipsecflow and use it's dstid when looking
-		 * up the outgoing TDB.
-		 */
-		if (ipsecflowinfo &&
-		   (tdbin = gettdb(rdomain, ipsecflowinfo, &ssrc,
-		    ipo->ipo_sproto)) != NULL) {
-			srcid = tdbin->tdb_dstid;
-			dstid = tdbin->tdb_srcid;
-		}
-		/*
 		 * If the packet is destined for the policy-specified
 		 * gateway/endhost, and the socket has the BYPASS
 		 * option set, skip IPsec processing.
@@ -353,6 +342,18 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				*error = 0;
 				return NULL;
 			}
+		}
+
+		/*
+		 * Fetch the incoming TDB based on the SPI passed
+		 * in ipsecflow and use it's dstid when looking
+		 * up the outgoing TDB.
+		 */
+		if (ipsecflowinfo &&
+		   (tdbin = gettdb(rdomain, ipsecflowinfo, &ssrc,
+		    ipo->ipo_sproto)) != NULL) {
+			srcid = tdbin->tdb_dstid;
+			dstid = tdbin->tdb_srcid;
 		}
 
 		/* Check that the cached TDB (if present), is appropriate. */
