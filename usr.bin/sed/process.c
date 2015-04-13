@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.21 2014/12/12 03:22:35 jsg Exp $	*/
+/*	$OpenBSD: process.c,v 1.22 2015/04/13 05:11:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -67,7 +67,7 @@ static int		 substitute(struct s_command *);
 
 struct s_appends *appends;	/* Array of pointers to strings to append. */
 static int appendx;		/* Index into appends array. */
-int appendnum;			/* Size of appends array. */
+size_t appendnum;		/* Size of appends array. */
 
 static int lastaddr;		/* Set by applies if last address of a range. */
 static int sdone;		/* If any substitutes since last line input. */
@@ -103,8 +103,8 @@ redirect:
 			case 'a':
 				if (appendx >= appendnum) {
 					appends = xreallocarray(appends,
-					    appendnum *= 2,
-					    sizeof(struct s_appends));
+					    appendnum,
+					    2 * sizeof(struct s_appends));
 					appendnum *= 2;
 				}
 				appends[appendx].type = AP_STRING;
@@ -196,10 +196,12 @@ redirect:
 				flush_appends();
 				exit(0);
 			case 'r':
-				if (appendx >= appendnum)
+				if (appendx >= appendnum) {
 					appends = xreallocarray(appends,
-					    appendnum *= 2,
-					    sizeof(struct s_appends));
+					    appendnum,
+					    2 * sizeof(struct s_appends));
+					appendnum *= 2;
+				}
 				appends[appendx].type = AP_FILE;
 				appends[appendx].s = cp->t;
 				appends[appendx].len = strlen(cp->t);

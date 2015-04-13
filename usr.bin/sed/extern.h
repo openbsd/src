@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2015/01/19 15:30:52 krw Exp $ */
+/*	$OpenBSD: extern.h,v 1.9 2015/04/13 05:11:23 deraadt Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ extern struct s_appends *appends;
 extern regmatch_t *match;
 extern size_t maxnsub;
 extern u_long linenum;
-extern int appendnum;
+extern size_t appendnum;
 extern int lastline;
 extern int Eflag, aflag, eflag, nflag;
 extern char *fname;
