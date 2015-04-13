@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.205 2015/04/10 12:31:55 dlg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.206 2015/04/13 16:45:52 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -384,8 +384,8 @@ ipsp_aux_match(struct tdb *tdb,
 struct tdb *
 gettdbbyaddr(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
     struct ipsec_ref *srcid, struct ipsec_ref *dstid,
-    struct ipsec_ref *local_cred, struct mbuf *m, int af,
-    struct sockaddr_encap *filter, struct sockaddr_encap *filtermask)
+    struct ipsec_ref *local_cred, struct sockaddr_encap *filter,
+    struct sockaddr_encap *filtermask)
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
@@ -417,8 +417,7 @@ gettdbbyaddr(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 struct tdb *
 gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
     struct ipsec_ref *srcid, struct ipsec_ref *dstid,
-    struct mbuf *m, int af, struct sockaddr_encap *filter,
-    struct sockaddr_encap *filtermask)
+    struct sockaddr_encap *filter, struct sockaddr_encap *filtermask)
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;

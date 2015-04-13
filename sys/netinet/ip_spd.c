@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.78 2015/03/14 03:38:52 jsg Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.79 2015/04/13 16:45:52 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -405,8 +405,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				ipo->ipo_sproto,
 				srcid ? srcid : ipo->ipo_srcid,
 				dstid ? dstid : ipo->ipo_dstid,
-				ipo->ipo_local_cred, m, af,
-				&ipo->ipo_addr, &ipo->ipo_mask);
+				ipo->ipo_local_cred, &ipo->ipo_addr,
+				&ipo->ipo_mask);
 			if (ipo->ipo_tdb) {
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
@@ -519,7 +519,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			    gettdbbysrc(rdomain,
 				dignore ? &ssrc : &ipo->ipo_dst,
 				ipo->ipo_sproto, ipo->ipo_srcid,
-				ipo->ipo_dstid, m, af, &ipo->ipo_addr,
+				ipo->ipo_dstid, &ipo->ipo_addr,
 				&ipo->ipo_mask);
 			if (ipo->ipo_tdb)
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
@@ -1010,7 +1010,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 				    &inp->inp_ipo->ipo_dst,
 				    inp->inp_ipo->ipo_sproto,
 				    inp->inp_ipo->ipo_srcid,
-				    inp->inp_ipo->ipo_dstid, m, af,
+				    inp->inp_ipo->ipo_dstid,
 				    &inp->inp_ipo->ipo_addr,
 				    &inp->inp_ipo->ipo_mask) != NULL) {
 					*error = -EINVAL;
@@ -1068,7 +1068,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 				    inp->inp_ipo->ipo_sproto,
 				    inp->inp_ipo->ipo_srcid,
 				    inp->inp_ipo->ipo_dstid,
-				    inp->inp_ipo->ipo_local_cred, m, af,
+				    inp->inp_ipo->ipo_local_cred,
 				    &inp->inp_ipo->ipo_addr,
 				    &inp->inp_ipo->ipo_mask);
 			}
@@ -1082,8 +1082,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 			tdb = gettdbbyaddr(rtable_l2(inp->inp_rtableid),
 			    &sipon.ipo_dst, IPPROTO_ESP, NULL,
-			    NULL, NULL, m, af, &sipon.ipo_addr,
-			    &sipon.ipo_mask);
+			    NULL, NULL, &sipon.ipo_addr, &sipon.ipo_mask);
 		}
 
 		/* If we found an appropriate SA... */
