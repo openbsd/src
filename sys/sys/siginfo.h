@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.10 2013/08/13 05:52:26 guenther Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.11 2015/04/14 16:40:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -95,7 +95,7 @@ union sigval {
 #define NSIGTRAP	2
 
 /*
- * SIGCLD signal codes
+ * SIGCHLD signal codes
  */
 #define CLD_EXITED	1	/* child has exited */
 #define CLD_KILLED	2	/* child was killed */
@@ -135,7 +135,7 @@ typedef struct {
 	int	si_errno;			/* error from errno.h */
 	union {
 		int	_pad[SI_PAD];		/* for future growth */
-		struct {			/* kill(), SIGCLD, siqqueue() */
+		struct {			/* kill(), SIGCHLD */
 			pid_t	_pid;		/* process ID */
 			union {
 				struct {
