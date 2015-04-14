@@ -1,4 +1,4 @@
-/* $OpenBSD: errstr.c,v 1.2 2015/04/13 15:02:23 jsing Exp $ */
+/* $OpenBSD: errstr.c,v 1.3 2015/04/14 10:54:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -93,10 +94,11 @@ int errstr_main(int, char **);
 int
 errstr_main(int argc, char **argv)
 {
-	int i, ret = 0;
+	unsigned long ulval;
+	char *ularg, *ep;
+	int argsused, i;
 	char buf[256];
-	unsigned long l;
-	int argsused;
+	int ret = 0;
 
 	memset(&errstr_config, 0, sizeof(errstr_config));
 
@@ -106,30 +108,35 @@ errstr_main(int argc, char **argv)
 	}
 
 	if (errstr_config.stats) {
-		BIO *out = NULL;
+		BIO *out;
 
-		out = BIO_new(BIO_s_file());
-		if ((out != NULL) && BIO_set_fp(out, stdout, BIO_NOCLOSE)) {
-			lh_ERR_STRING_DATA_node_stats_bio(
-			    ERR_get_string_table(), out);
-			lh_ERR_STRING_DATA_stats_bio(ERR_get_string_table(),
-			    out);
-			lh_ERR_STRING_DATA_node_usage_stats_bio(
-			    ERR_get_string_table(), out);
+		if ((out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL) {
+			fprintf(stderr, "Out of memory");
+			return (1);
 		}
-		if (out != NULL)
-			BIO_free_all(out);
+
+		lh_ERR_STRING_DATA_node_stats_bio(ERR_get_string_table(), out);
+		lh_ERR_STRING_DATA_stats_bio(ERR_get_string_table(), out);
+		lh_ERR_STRING_DATA_node_usage_stats_bio(
+			    ERR_get_string_table(), out);
+
+		BIO_free_all(out);
 	}
 
 	for (i = argsused; i < argc; i++) {
-		if (sscanf(argv[i], "%lx", &l)) {
-			ERR_error_string_n(l, buf, sizeof buf);
-			printf("%s\n", buf);
-		} else {
-			printf("%s: bad error code\n", argv[i]);
-			errstr_usage();
+		errno = 0;
+		ularg = argv[i];
+		ulval = strtoul(ularg, &ep, 16);
+		if (strchr(ularg, '-') != NULL ||
+		    (ularg[0] == '\0' || *ep != '\0') ||
+		    (errno == ERANGE && ulval == ULONG_MAX)) {
+			printf("%s: bad error code\n", ularg);
 			ret++;
+			continue;
 		}
+
+		ERR_error_string_n(ulval, buf, sizeof(buf));
+		printf("%s\n", buf);
 	}
 
 	return (ret);
