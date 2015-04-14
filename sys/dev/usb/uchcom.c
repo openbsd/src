@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.23 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.24 2015/04/14 07:57:33 mpi Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -814,9 +814,6 @@ uchcom_close_intr_pipe(struct uchcom_softc *sc)
 {
 	usbd_status err;
 
-	if (usbd_is_dying(sc->sc_udev))
-		return;
-
 	if (sc->sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
@@ -911,9 +908,6 @@ void
 uchcom_close(void *arg, int portno)
 {
 	struct uchcom_softc *sc = arg;
-
-	if (usbd_is_dying(sc->sc_udev))
-		return;
 
 	uchcom_close_intr_pipe(sc);
 }
