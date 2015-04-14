@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2014/11/20 13:34:45 jmc Exp $
+#	$OpenBSD: Makefile,v 1.42 2015/04/14 21:25:54 nicm Exp $
 
 .include <bsd.own.mk>
 
@@ -9,24 +9,11 @@ HDRS=	event.h evutil.h
 MAN=	event.3 evbuffer_new.3
 MLINKS=	event.3 event_init.3 \
 	event.3 event_dispatch.3 \
-	event.3 event_loop.3 \
-	event.3 event_loopexit.3 \
-	event.3 event_loopbreak.3 \
 	event.3 event_set.3 \
-	event.3 event_base_dispatch.3 \
-	event.3 event_base_loop.3 \
-	event.3 event_base_loopexit.3 \
-	event.3 event_base_loopbreak.3 \
-	event.3 event_base_set.3 \
-	event.3 event_base_free.3 \
 	event.3 event_add.3 \
 	event.3 event_del.3 \
-	event.3 event_once.3 \
-	event.3 event_base_once.3 \
 	event.3 event_pending.3 \
 	event.3 event_initialized.3 \
-	event.3 event_priority_init.3 \
-	event.3 event_priority_set.3 \
 	event.3 evtimer_set.3 \
 	event.3 evtimer_add.3 \
 	event.3 evtimer_del.3 \
@@ -37,6 +24,22 @@ MLINKS=	event.3 event_init.3 \
 	event.3 signal_del.3 \
 	event.3 signal_pending.3 \
 	event.3 signal_initialized.3 \
+	event.3 event_once.3 \
+	event.3 event_loop.3 \
+	event.3 event_loopexit.3 \
+	event.3 event_loopbreak.3 \
+	event.3 event_asr_run.3 \
+	event.3 event_asr_abort.3 \
+	event.3 event_priority_init.3 \
+	event.3 event_priority_set.3 \
+	event.3 event_base_dispatch.3 \
+	event.3 event_base_loop.3 \
+	event.3 event_base_loopexit.3 \
+	event.3 event_base_loopbreak.3 \
+	event.3 event_base_set.3 \
+	event.3 event_base_once.3 \
+	event.3 event_base_free.3 \
+	event.3 bufferevent_base_set.3 \
 	event.3 bufferevent_new.3 \
 	event.3 bufferevent_free.3 \
 	event.3 bufferevent_write.3 \
@@ -45,9 +48,6 @@ MLINKS=	event.3 event_init.3 \
 	event.3 bufferevent_enable.3 \
 	event.3 bufferevent_disable.3 \
 	event.3 bufferevent_settimeout.3 \
-	event.3 bufferevent_base_set.3 \
-	event.3 event_asr_run.3 \
-	event.3 event_asr_abort.3 \
 	evbuffer_new.3 evbuffer_free.3 \
 	evbuffer_new.3 evbuffer_setcb.3 \
 	evbuffer_new.3 evbuffer_expand.3 \

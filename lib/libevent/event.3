@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.47 2014/11/20 00:02:44 dlg Exp $
+.\"	$OpenBSD: event.3,v 1.48 2015/04/14 21:25:54 nicm Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,30 +23,17 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 20 2014 $
+.Dd $Mdocdate: April 14 2015 $
 .Dt EVENT 3
 .Os
 .Sh NAME
 .Nm event_init ,
 .Nm event_dispatch ,
-.Nm event_loop ,
-.Nm event_loopexit ,
-.Nm event_loopbreak ,
 .Nm event_set ,
-.Nm event_base_dispatch ,
-.Nm event_base_loop ,
-.Nm event_base_loopexit ,
-.Nm event_base_loopbreak ,
-.Nm event_base_set ,
-.Nm event_base_free ,
 .Nm event_add ,
 .Nm event_del ,
-.Nm event_once ,
-.Nm event_base_once ,
 .Nm event_pending ,
 .Nm event_initialized ,
-.Nm event_priority_init ,
-.Nm event_priority_set ,
 .Nm evtimer_set ,
 .Nm evtimer_add ,
 .Nm evtimer_del ,
@@ -57,6 +44,22 @@
 .Nm signal_del ,
 .Nm signal_pending ,
 .Nm signal_initialized ,
+.Nm event_once ,
+.Nm event_loop ,
+.Nm event_loopexit ,
+.Nm event_loopbreak ,
+.Nm event_asr_run ,
+.Nm event_asr_abort,
+.Nm event_priority_init ,
+.Nm event_priority_set ,
+.Nm event_base_dispatch ,
+.Nm event_base_loop ,
+.Nm event_base_loopexit ,
+.Nm event_base_loopbreak ,
+.Nm event_base_set ,
+.Nm event_base_once ,
+.Nm event_base_free ,
+.Nm bufferevent_base_set ,
 .Nm bufferevent_new ,
 .Nm bufferevent_free ,
 .Nm bufferevent_write ,
@@ -65,9 +68,6 @@
 .Nm bufferevent_enable ,
 .Nm bufferevent_disable ,
 .Nm bufferevent_settimeout ,
-.Nm bufferevent_base_set ,
-.Nm event_asr_run ,
-.Nm event_asr_abort
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .In sys/time.h
@@ -76,64 +76,70 @@
 .Fn "event_init" "void"
 .Ft int
 .Fn "event_dispatch" "void"
-.Ft int
-.Fn "event_loop" "int flags"
-.Ft int
-.Fn "event_loopexit" "struct timeval *tv"
-.Ft int
-.Fn "event_loopbreak" "void"
 .Ft void
 .Fn "event_set" "struct event *ev" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg"
 .Ft int
-.Fn "event_base_dispatch" "struct event_base *base"
-.Ft int
-.Fn "event_base_loop" "struct event_base *base" "int flags"
-.Ft int
-.Fn "event_base_loopexit" "struct event_base *base" "struct timeval *tv"
-.Ft int
-.Fn "event_base_loopbreak" "struct event_base *base"
-.Ft int
-.Fn "event_base_set" "struct event_base *base" "struct event *"
-.Ft void
-.Fn "event_base_free" "struct event_base *base"
-.Ft int
-.Fn "event_add" "struct event *ev" "struct timeval *tv"
+.Fn "event_add" "struct event *ev" "const struct timeval *tv"
 .Ft int
 .Fn "event_del" "struct event *ev"
 .Ft int
-.Fn "event_once" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "struct timeval *tv"
-.Ft int
-.Fn "event_base_once" "struct event_base *base" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "struct timeval *tv"
-.Ft int
-.Fn "event_pending" "struct event *ev" "short event" "struct timeval *tv"
+.Fn "event_pending" "struct event *ev" "short event" "const struct timeval *tv"
 .Ft int
 .Fn "event_initialized" "struct event *ev"
-.Ft int
-.Fn "event_priority_init" "int npriorities"
-.Ft int
-.Fn "event_priority_set" "struct event *ev" "int priority"
 .Ft void
 .Fn "evtimer_set" "struct event *ev" "void (*fn)(int, short, void *)" "void *arg"
 .Ft void
-.Fn "evtimer_add" "struct event *ev" "struct timeval *"
+.Fn "evtimer_add" "struct event *ev" "const struct timeval *tv"
 .Ft void
 .Fn "evtimer_del" "struct event *ev"
 .Ft int
-.Fn "evtimer_pending" "struct event *ev" "struct timeval *tv"
+.Fn "evtimer_pending" "struct event *ev" "const struct timeval *tv"
 .Ft int
 .Fn "evtimer_initialized" "struct event *ev"
 .Ft void
 .Fn "signal_set" "struct event *ev" "int signal" "void (*fn)(int, short, void *)" "void *arg"
 .Ft void
-.Fn "signal_add" "struct event *ev" "struct timeval *"
+.Fn "signal_add" "struct event *ev" "const struct timeval *tv"
 .Ft void
 .Fn "signal_del" "struct event *ev"
 .Ft int
-.Fn "signal_pending" "struct event *ev" "struct timeval *tv"
+.Fn "signal_pending" "struct event *ev" "const struct timeval *tv"
 .Ft int
 .Fn "signal_initialized" "struct event *ev"
+.Ft int
+.Fn "event_once" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "const struct timeval *tv"
+.Ft int
+.Fn "event_loop" "int flags"
+.Ft int
+.Fn "event_loopexit" "const struct timeval *tv"
+.Ft int
+.Fn "event_loopbreak" "void"
+.Ft "struct event_asr *"
+.Fn event_asr_run "struct asr_query *aq" "void (*fn)(struct asr_result *, void *)" "void *arg"
+.Ft "void"
+.Fn event_asr_abort "struct event_asr *eva"
+.Ft int
+.Fn "event_priority_init" "int npriorities"
+.Ft int
+.Fn "event_priority_set" "struct event *ev" "int priority"
+.Ft int
+.Fn "event_base_dispatch" "struct event_base *base"
+.Ft int
+.Fn "event_base_loop" "struct event_base *base" "int flags"
+.Ft int
+.Fn "event_base_loopexit" "struct event_base *base" "const struct timeval *tv"
+.Ft int
+.Fn "event_base_loopbreak" "struct event_base *base"
+.Ft int
+.Fn "event_base_set" "struct event_base *base" "struct event *ev"
+.Ft int
+.Fn "event_base_once" "struct event_base *base" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "const struct timeval *tv"
+.Ft void
+.Fn "event_base_free" "struct event_base *base"
+.Ft int
+.Fn "bufferevent_base_set" "struct event_base *base" "struct bufferevent *bufev"
 .Ft "struct bufferevent *"
-.Fn "bufferevent_new" "int fd" "evbuffercb readcb" "evbuffercb writecb" "everrorcb" "void *cbarg"
+.Fn "bufferevent_new" "int fd" "evbuffercb readcb" "evbuffercb writecb" "everrorcb errorcb" "void *cbarg"
 .Ft void
 .Fn "bufferevent_free" "struct bufferevent *bufev"
 .Ft int
@@ -148,12 +154,6 @@
 .Fn "bufferevent_disable" "struct bufferevent *bufev" "short event"
 .Ft void
 .Fn "bufferevent_settimeout" "struct bufferevent *bufev" "int timeout_read" "int timeout_write"
-.Ft int
-.Fn "bufferevent_base_set" "struct event_base *base" "struct bufferevent *bufev"
-.Ft "struct event_asr *"
-.Fn event_asr_run "struct asr_query *aq" "void (*fn)(struct asr_result *, void *)" "void *"
-.Ft "void"
-.Fn event_asr_abort "struct event_asr *eva"
 .Sh DESCRIPTION
 The
 .Nm event
