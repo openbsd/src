@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.4 2015/02/08 10:22:45 doug Exp $ */
+/* $OpenBSD: s_time.c,v 1.5 2015/04/14 11:45:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,8 +84,6 @@
 
 #define SSL_CONNECT_NAME	"localhost:4433"
 
- /*#define TEST_CERT "client.pem" *//* no default cert. */
-
 #define BUFSIZZ 1024*10
 
 #define MYBUFSIZ 1024*8
@@ -100,188 +98,139 @@ extern int verify_depth;
 extern int verify_error;
 
 static void s_time_usage(void);
-static int parseArgs(int argc, char **argv);
 static SSL *doConnection(SSL * scon);
-static void s_time_init(void);
 
-/***********************************************************************
- * Static data declarations
- */
-
-/* static char *port=PORT_STR;*/
-static char *host = SSL_CONNECT_NAME;
-static char *t_cert_file = NULL;
-static char *t_key_file = NULL;
-static char *CApath = NULL;
-static char *CAfile = NULL;
-static char *tm_cipher = NULL;
-static int tm_verify = SSL_VERIFY_NONE;
-static int maxTime = SECONDS;
 static SSL_CTX *tm_ctx = NULL;
 static const SSL_METHOD *s_time_meth = NULL;
-static char *s_www_path = NULL;
 static long bytes_read = 0;
-static int st_bugs = 0;
-static int perform = 0;
-static int t_nbio = 0;
 
-static void
-s_time_init(void)
-{
-	host = SSL_CONNECT_NAME;
-	t_cert_file = NULL;
-	t_key_file = NULL;
-	CApath = NULL;
-	CAfile = NULL;
-	tm_cipher = NULL;
-	tm_verify = SSL_VERIFY_NONE;
-	maxTime = SECONDS;
-	tm_ctx = NULL;
-	s_time_meth = NULL;
-	s_www_path = NULL;
-	bytes_read = 0;
-	st_bugs = 0;
-	perform = 0;
+struct {
+	int bugs;
+	char *CAfile;
+	char *CApath;
+	char *certfile;
+	char *cipher;
+	char *host;
+	char *keyfile;
+	int maxtime;
+	int nbio;
+	int perform;
+	int ssl3;
+	int verify;
+	int verify_depth;
+	char *www_path;
+} s_time_config;
 
-	t_nbio = 0;
-}
+struct option s_time_options[] = {
+	{
+		.name = "bugs",
+		.desc = "Enable workarounds for known SSL/TLS bugs",
+		.type = OPTION_FLAG,
+		.opt.flag = &s_time_config.bugs,
+	},
+	{
+		.name = "CAfile",
+		.argname = "file",
+		.desc = "File containing trusted certificates in PEM format",
+		.type = OPTION_ARG,
+		.opt.arg = &s_time_config.CAfile,
+	},
+	{
+		.name = "CApath",
+		.argname = "path",
+		.desc = "Directory containing trusted certificates",
+		.type = OPTION_ARG,
+		.opt.arg = &s_time_config.CApath,
+	},
+	{
+		.name = "cert",
+		.argname = "file",
+		.desc = "Client certificate to use, if one is requested",
+		.type = OPTION_ARG,
+		.opt.arg = &s_time_config.certfile,
+	},
+	{
+		.name = "cipher",
+		.argname = "list",
+		.desc = "List of cipher suites to send to the server",
+		.type = OPTION_ARG,
+		.opt.arg = &s_time_config.cipher,
+	},
+	{
+		.name = "connect",
+		.argname = "host:port",
+		.desc = "Host and port to connect to (default "
+		    SSL_CONNECT_NAME ")",
+		.type = OPTION_ARG,
+		.opt.arg = &s_time_config.host,
+	},
+	{
+		.name = "key",
+		.argname = "file",
+		.desc = "Client private key to use, if one is required",
+		.type = OPTION_ARG,
+		.opt.arg = &s_time_config.keyfile,
+	},
+	{
+		.name = "nbio",
+		.desc = "Use non-blocking I/O",
+		.type = OPTION_FLAG,
+		.opt.flag = &s_time_config.nbio,
+	},
+	{
+		.name = "new",
+		.desc = "Use a new session ID for each connection",
+		.type = OPTION_VALUE,
+		.opt.value = &s_time_config.perform,
+		.value = 1,
+	},
+	{
+		.name = "reuse",
+		.desc = "Reuse the same session ID for each connection",
+		.type = OPTION_VALUE,
+		.opt.value = &s_time_config.perform,
+		.value = 2,
+	},
+	{
+		.name = "ssl3",
+		.desc = "Only use SSLv3",
+		.type = OPTION_FLAG,
+		.opt.flag = &s_time_config.ssl3,
+	},
+	{
+		.name = "time",
+		.argname = "seconds",
+		.desc = "Duration to perform timing tests for (default 30)",
+		.type = OPTION_ARG_INT,
+		.opt.value = &s_time_config.maxtime,
+	},
+	{
+		.name = "verify",
+		.argname = "depth",
+		.desc = "Enable peer certificate verification with given depth",
+		.type = OPTION_ARG_INT,
+		.opt.value = &s_time_config.verify_depth,
+	},
+	{
+		.name = "www",
+		.argname = "page",
+		.desc = "Page to GET from the server (default none)",
+		.type = OPTION_ARG,
+		.opt.arg = &s_time_config.www_path,
+	},
+	{ NULL },
+};
 
-/***********************************************************************
- * usage - display usage message
- */
 static void
 s_time_usage(void)
 {
-	static const char umsg[] = "\
--time arg     - max number of seconds to collect data, default %d\n\
--verify arg   - turn on peer certificate verification, arg == depth\n\
--cert arg     - certificate file to use, PEM format assumed\n\
--key arg      - RSA file to use, PEM format assumed, key is in cert file\n\
-                file if not specified by this option\n\
--CApath arg   - PEM format directory of CA's\n\
--CAfile arg   - PEM format file of CA's\n\
--cipher       - preferred cipher to use, play with 'openssl ciphers'\n\n";
-
-	printf("usage: s_time <args>\n\n");
-
-	printf("-connect host:port - host:port to connect to (default is %s)\n", SSL_CONNECT_NAME);
-	printf("-nbio         - Run with non-blocking IO\n");
-	printf("-ssl2         - Just use SSLv2\n");
-	printf("-ssl3         - Just use SSLv3\n");
-	printf("-bugs         - Turn on SSL bug compatibility\n");
-	printf("-new          - Just time new connections\n");
-	printf("-reuse        - Just time connection reuse\n");
-	printf("-www page     - Retrieve 'page' from the site\n");
-	printf(umsg, SECONDS);
-}
-
-/***********************************************************************
- * parseArgs - Parse command line arguments and initialize data
- *
- * Returns 0 if ok, -1 on bad args
- */
-static int
-parseArgs(int argc, char **argv)
-{
-	int badop = 0;
-	const char *errstr;
-
-	verify_depth = 0;
-	verify_error = X509_V_OK;
-
-	argc--;
-	argv++;
-
-	while (argc >= 1) {
-		if (strcmp(*argv, "-connect") == 0) {
-			if (--argc < 1)
-				goto bad;
-			host = *(++argv);
-		}
-		else if (strcmp(*argv, "-reuse") == 0)
-			perform = 2;
-		else if (strcmp(*argv, "-new") == 0)
-			perform = 1;
-		else if (strcmp(*argv, "-verify") == 0) {
-			tm_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
-			if (--argc < 1)
-				goto bad;
-			verify_depth = strtonum(*(++argv), 0, INT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-			BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
-
-		} else if (strcmp(*argv, "-cert") == 0) {
-
-			if (--argc < 1)
-				goto bad;
-			t_cert_file = *(++argv);
-
-		} else if (strcmp(*argv, "-key") == 0) {
-
-			if (--argc < 1)
-				goto bad;
-			t_key_file = *(++argv);
-
-		} else if (strcmp(*argv, "-CApath") == 0) {
-
-			if (--argc < 1)
-				goto bad;
-			CApath = *(++argv);
-
-		} else if (strcmp(*argv, "-CAfile") == 0) {
-
-			if (--argc < 1)
-				goto bad;
-			CAfile = *(++argv);
-
-		} else if (strcmp(*argv, "-cipher") == 0) {
-
-			if (--argc < 1)
-				goto bad;
-			tm_cipher = *(++argv);
-		}
-		else if (strcmp(*argv, "-nbio") == 0) {
-			t_nbio = 1;
-		}
-		else if (strcmp(*argv, "-www") == 0) {
-			if (--argc < 1)
-				goto bad;
-			s_www_path = *(++argv);
-			if (strlen(s_www_path) > MYBUFSIZ - 100) {
-				BIO_printf(bio_err, "-www option too long\n");
-				badop = 1;
-			}
-		} else if (strcmp(*argv, "-bugs") == 0)
-			st_bugs = 1;
-		else if (strcmp(*argv, "-ssl3") == 0)
-			s_time_meth = SSLv3_client_method();
-		else if (strcmp(*argv, "-time") == 0) {
-
-			if (--argc < 1)
-				goto bad;
-			maxTime = strtonum(*(++argv), 0, INT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-		} else {
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
-			badop = 1;
-			break;
-		}
-
-		argc--;
-		argv++;
-	}
-
-	if (perform == 0)
-		perform = 3;
-
-	if (badop) {
-bad:
-		s_time_usage();
-		return -1;
-	}
-	return 0;		/* Valid args */
+	fprintf(stderr,
+	    "usage: s_time "
+	    "[-bugs] [-CAfile file] [-CApath directory] [-cert file]\n"
+	    "    [-cipher cipherlist] [-connect host:port] [-key keyfile]\n"
+	    "    [-nbio] [-new] [-reuse] [-ssl3] [-time seconds]\n"
+	    "    [-verify depth] [-www page]\n\n");
+	options_usage(s_time_options);
 }
 
 /***********************************************************************
@@ -312,27 +261,54 @@ s_time_main(int argc, char **argv)
 	int ret = 1, i;
 	char buf[1024 * 8];
 	int ver;
-
-	s_time_init();
-
+	
 	s_time_meth = SSLv23_client_method();
 
-	/* parse the command line arguments */
-	if (parseArgs(argc, argv) < 0)
+	verify_depth = 0;
+	verify_error = X509_V_OK;
+
+	memset(&s_time_config, 0, sizeof(s_time_config));
+
+	s_time_config.host = SSL_CONNECT_NAME;
+	s_time_config.maxtime = SECONDS;
+	s_time_config.perform = 3;
+	s_time_config.verify = SSL_VERIFY_NONE;
+	s_time_config.verify_depth = -1;
+
+	if (options_parse(argc, argv, s_time_options, NULL, NULL) != 0) {
+		s_time_usage();
 		goto end;
+	}
+
+	if (s_time_config.ssl3)
+		s_time_meth = SSLv3_client_method();
+
+	if (s_time_config.verify_depth >= 0) {
+		s_time_config.verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
+		verify_depth = s_time_config.verify_depth;
+		BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
+	}
+
+	if (s_time_config.www_path != NULL &&
+	    strlen(s_time_config.www_path) > MYBUFSIZ - 100) {
+		BIO_printf(bio_err, "-www option too long\n");
+		goto end;
+	}
 
 	if ((tm_ctx = SSL_CTX_new(s_time_meth)) == NULL)
 		return (1);
 
 	SSL_CTX_set_quiet_shutdown(tm_ctx, 1);
 
-	if (st_bugs)
+	if (s_time_config.bugs)
 		SSL_CTX_set_options(tm_ctx, SSL_OP_ALL);
-	SSL_CTX_set_cipher_list(tm_ctx, tm_cipher);
-	if (!set_cert_stuff(tm_ctx, t_cert_file, t_key_file))
+	SSL_CTX_set_cipher_list(tm_ctx, s_time_config.cipher);
+	if (!set_cert_stuff(tm_ctx, s_time_config.certfile,
+	    s_time_config.keyfile))
 		goto end;
 
-	if ((!SSL_CTX_load_verify_locations(tm_ctx, CAfile, CApath)) ||
+	if ((!SSL_CTX_load_verify_locations(tm_ctx, s_time_config.CAfile,
+	    s_time_config.CApath)) ||
 	    (!SSL_CTX_set_default_verify_paths(tm_ctx))) {
 		/*
 		 * BIO_printf(bio_err,"error setting default verify
@@ -341,20 +317,21 @@ s_time_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		/* goto end; */
 	}
-	if (tm_cipher == NULL)
-		tm_cipher = getenv("SSL_CIPHER");
+	if (s_time_config.cipher == NULL)
+		s_time_config.cipher = getenv("SSL_CIPHER");
 
-	if (tm_cipher == NULL) {
+	if (s_time_config.cipher == NULL) {
 		fprintf(stderr, "No CIPHER specified\n");
 	}
-	if (!(perform & 1))
+	if (!(s_time_config.perform & 1))
 		goto next;
-	printf("Collecting connection statistics for %d seconds\n", maxTime);
+	printf("Collecting connection statistics for %d seconds\n",
+	    s_time_config.maxtime);
 
 	/* Loop and time how long it takes to make connections */
 
 	bytes_read = 0;
-	finishtime = (long) time(NULL) + maxTime;
+	finishtime = (long) time(NULL) + s_time_config.maxtime;
 	tm_Time_F(START);
 	for (;;) {
 		if (finishtime < (long) time(NULL))
@@ -362,9 +339,9 @@ s_time_main(int argc, char **argv)
 		if ((scon = doConnection(NULL)) == NULL)
 			goto end;
 
-		if (s_www_path != NULL) {
+		if (s_time_config.www_path != NULL) {
 			int retval = snprintf(buf, sizeof buf,
-			    "GET %s HTTP/1.0\r\n\r\n", s_www_path);
+			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
 			if ((size_t)retval >= sizeof buf) {
 				fprintf(stderr, "URL too long\n");
 				goto end;
@@ -403,9 +380,9 @@ s_time_main(int argc, char **argv)
 	}
 	totalTime += tm_Time_F(STOP);	/* Add the time for this iteration */
 
-	i = (int) ((long) time(NULL) - finishtime + maxTime);
+	i = (int) ((long) time(NULL) - finishtime + s_time_config.maxtime);
 	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double) nConn / totalTime), bytes_read);
-	printf("%d connections in %ld real seconds, %ld bytes read per connection\n", nConn, (long) time(NULL) - finishtime + maxTime, bytes_read / nConn);
+	printf("%d connections in %ld real seconds, %ld bytes read per connection\n", nConn, (long) time(NULL) - finishtime + s_time_config.maxtime, bytes_read / nConn);
 
 	/*
 	 * Now loop and time connections using the same session id over and
@@ -413,7 +390,7 @@ s_time_main(int argc, char **argv)
 	 */
 
 next:
-	if (!(perform & 2))
+	if (!(s_time_config.perform & 2))
 		goto end;
 	printf("\n\nNow timing with session id reuse.\n");
 
@@ -422,9 +399,9 @@ next:
 		fprintf(stderr, "Unable to get connection\n");
 		goto end;
 	}
-	if (s_www_path != NULL) {
+	if (s_time_config.www_path != NULL) {
 		int retval = snprintf(buf, sizeof buf,
-		    "GET %s HTTP/1.0\r\n\r\n", s_www_path);
+		    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
 		if ((size_t)retval >= sizeof buf) {
 			fprintf(stderr, "URL too long\n");
 			goto end;
@@ -443,7 +420,7 @@ next:
 	nConn = 0;
 	totalTime = 0.0;
 
-	finishtime = (long) time(NULL) + maxTime;
+	finishtime = (long) time(NULL) + s_time_config.maxtime;
 
 	printf("starting\n");
 	bytes_read = 0;
@@ -455,9 +432,9 @@ next:
 		if ((doConnection(scon)) == NULL)
 			goto end;
 
-		if (s_www_path) {
+		if (s_time_config.www_path) {
 			int retval = snprintf(buf, sizeof buf,
-			    "GET %s HTTP/1.0\r\n\r\n", s_www_path);
+			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
 			if ((size_t)retval >= sizeof buf) {
 				fprintf(stderr, "URL too long\n");
 				goto end;
@@ -495,7 +472,7 @@ next:
 
 
 	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double) nConn / totalTime), bytes_read);
-	printf("%d connections in %ld real seconds, %ld bytes read per connection\n", nConn, (long) time(NULL) - finishtime + maxTime, bytes_read / nConn);
+	printf("%d connections in %ld real seconds, %ld bytes read per connection\n", nConn, (long) time(NULL) - finishtime + s_time_config.maxtime, bytes_read / nConn);
 
 	ret = 0;
 end:
@@ -529,7 +506,7 @@ doConnection(SSL * scon)
 		return (NULL);
 
 /*	BIO_set_conn_port(conn,port);*/
-	BIO_set_conn_hostname(conn, host);
+	BIO_set_conn_hostname(conn, s_time_config.host);
 
 	if (scon == NULL)
 		serverCon = SSL_new(tm_ctx);
