@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.81 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: in6.h,v 1.82 2015/04/14 14:18:37 mikeb Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -432,8 +432,6 @@ int	in6_addrscope(struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int);
 void 	in6_get_rand_ifid(struct ifnet *, struct in6_addr *);
 int	in6_mask2len(struct in6_addr *, u_char *);
-
-char	*ip6_sprintf(struct in6_addr *);
 
 struct inpcb;
 
