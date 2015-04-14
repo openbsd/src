@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.30 2015/04/12 21:37:33 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.31 2015/04/14 05:21:51 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -532,14 +532,11 @@ pmap_unmap_ptes_pae(struct pmap *pmap)
 
 	if (!pmap_is_curpmap(pmap)) {
 #if defined(MULTIPROCESSOR)
-		int ef = read_eflags();
-		disable_intr();
 		APDP_PDE[0] = 0;
 		APDP_PDE[1] = 0;
 		APDP_PDE[2] = 0;
 		APDP_PDE[3] = 0;
 		pmap_apte_flush();
-		write_eflags(ef);
 #endif
 	}
 }
