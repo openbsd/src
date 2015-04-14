@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.12 2015/01/13 10:48:24 bluhm Exp $ */
+/* $OpenBSD: s_client.c,v 1.13 2015/04/14 12:56:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,10 +170,6 @@
  /*#define TEST_CERT "client.pem" *//* no default cert. */
 
 #define BUFSIZZ 1024*8
-
-extern int verify_depth;
-extern int verify_error;
-extern int verify_return_error;
 
 static int c_nbio = 0;
 static int c_Pause = 0;
