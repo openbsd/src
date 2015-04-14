@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.57 2015/04/10 13:58:20 dlg Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.58 2015/04/14 14:20:01 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -391,6 +391,9 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 #ifdef INET6
 	struct ip6_hdr *ip6, *ip6o;
 #endif /* INET6 */
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 
 	/* XXX Deal with empty TDB source/destination addresses. */
 
@@ -405,7 +408,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 
 			DPRINTF(("ipip_output(): unspecified tunnel endpoind "
 			    "address in SA %s/%08x\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+			    ntohl(tdb->tdb_spi)));
 
 			ipipstat.ipips_unspec++;
 			m_freem(m);
@@ -490,7 +494,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 
 			DPRINTF(("ipip_output(): unspecified tunnel endpoind "
 			    "address in SA %s/%08x\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+			    ntohl(tdb->tdb_spi)));
 
 			ipipstat.ipips_unspec++;
 			m_freem(m);

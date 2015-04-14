@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.114 2014/12/28 10:02:37 tedu Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.115 2015/04/14 14:20:01 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -533,6 +533,9 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	u_int32_t btsx, esn;
 	u_int8_t hl;
 	int rplen;
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 
 	struct cryptodesc *crda = NULL;
 	struct cryptop *crp;
@@ -555,29 +558,30 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		case 1:
 			m_freem(m);
 			DPRINTF(("ah_input(): replay counter wrapped for "
-			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
-			    ntohl(tdb->tdb_spi)));
+			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_wrap++;
 			return ENOBUFS;
 		case 2:
 			m_freem(m);
 			DPRINTF(("ah_input(): old packet received in "
-			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
-			    ntohl(tdb->tdb_spi)));
+			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
 			return ENOBUFS;
 		case 3:
 			m_freem(m);
 			DPRINTF(("ah_input(): duplicate packet received in "
-			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
-			    ntohl(tdb->tdb_spi)));
+			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
 			return ENOBUFS;
 		default:
 			m_freem(m);
 			DPRINTF(("ah_input(): bogus value from "
 			    "checkreplaywindow() in SA %s/%08x\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+			    ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
 			return ENOBUFS;
 		}
@@ -585,9 +589,10 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	/* Verify AH header length. */
 	if (hl * sizeof(u_int32_t) != ahx->authsize + rplen - AH_FLENGTH) {
-		DPRINTF(("ah_input(): bad authenticator length %d for packet "
+		DPRINTF(("ah_input(): bad authenticator length %ld for packet "
 		    "in SA %s/%08x\n", hl * sizeof(u_int32_t),
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+		    ntohl(tdb->tdb_spi)));
 
 		ahstat.ahs_badauthl++;
 		m_freem(m);
@@ -738,6 +743,9 @@ ah_input_cb(void *op)
 	u_int32_t btsx, esn;
 	u_int8_t prot;
 	caddr_t ptr;
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 
 	crp = (struct cryptop *) op;
 
@@ -807,7 +815,8 @@ ah_input_cb(void *op)
 
 			DPRINTF(("ah_input(): authentication failed for "
 			    "packet in SA %s/%08x\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+			    ntohl(tdb->tdb_spi)));
 
 			ahstat.ahs_badauth++;
 			error = EACCES;
@@ -841,29 +850,30 @@ ah_input_cb(void *op)
 			break;
 		case 1:
 			DPRINTF(("ah_input(): replay counter wrapped for "
-			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
-			    ntohl(tdb->tdb_spi)));
+			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_wrap++;
 			error = ENOBUFS;
 			goto baddone;
 		case 2:
 			DPRINTF(("ah_input_cb(): old packet received in "
-			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
-			    ntohl(tdb->tdb_spi)));
+			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
 			error = ENOBUFS;
 			goto baddone;
 		case 3:
 			DPRINTF(("ah_input_cb(): duplicate packet received in "
-			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
-			    ntohl(tdb->tdb_spi)));
+			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
 			error = ENOBUFS;
 			goto baddone;
 		default:
 			DPRINTF(("ah_input_cb(): bogus value from "
 			    "checkreplaywindow() in SA %s/%08x\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+			    ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
 			error = ENOBUFS;
 			goto baddone;
@@ -878,7 +888,7 @@ ah_input_cb(void *op)
 		m_freem(m);
 
 		DPRINTF(("ah_input(): bad mbuf chain for packet in SA "
-		    "%s/%08x\n", ipsp_address(tdb->tdb_dst),
+		    "%s/%08x\n", ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 
 		return EINVAL;
@@ -976,6 +986,9 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct ah *ah;
 #if NBPFILTER > 0
 	struct ifnet *encif;
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 
 	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) != NULL) {
 		encif->if_opackets++;
@@ -1004,7 +1017,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	 */
 	if ((tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0)) {
 		DPRINTF(("ah_output(): SA %s/%08x should have expired\n",
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ahstat.ahs_wrap++;
 		return EINVAL;
@@ -1018,7 +1032,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if (rplen + ahx->authsize + m->m_pkthdr.len > IP_MAXPACKET) {
 			DPRINTF(("ah_output(): packet in SA %s/%08x got too "
 			    "big\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+			    ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ahstat.ahs_toobig++;
 			return EMSGSIZE;
@@ -1030,8 +1045,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		/* Check for IPv6 maximum packet size violations. */
 		if (rplen + ahx->authsize + m->m_pkthdr.len > IPV6_MAXPACKET) {
 			DPRINTF(("ah_output(): packet in SA %s/%08x "
-			    "got too big\n", ipsp_address(tdb->tdb_dst),
-			    ntohl(tdb->tdb_spi)));
+			    "got too big\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ahstat.ahs_toobig++;
 			return EMSGSIZE;
@@ -1042,7 +1057,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	default:
 		DPRINTF(("ah_output(): unknown/unsupported protocol "
 		    "family %d, SA %s/%08x\n", tdb->tdb_dst.sa.sa_family,
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ahstat.ahs_nopf++;
 		return EPFNOSUPPORT;
@@ -1101,7 +1117,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	mi = m_inject(m, skip, rplen + ahx->authsize, M_DONTWAIT);
 	if (mi == NULL) {
 		DPRINTF(("ah_output(): failed to inject AH header for SA "
-		    "%s/%08x\n", ipsp_address(tdb->tdb_dst),
+		    "%s/%08x\n", ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 
 		m_freem(m);

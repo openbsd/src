@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.56 2015/01/24 00:29:06 deraadt Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.57 2015/04/14 14:20:01 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -80,6 +80,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
 
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
+
 	/* Check that the transform is allowed by the administrator. */
 	if ((tdb->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
 	    (tdb->tdb_sproto == IPPROTO_AH && !ah_enable) ||
@@ -100,8 +104,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	/* Check if the SPI is invalid. */
 	if (tdb->tdb_flags & TDBF_INVALID) {
 		DPRINTF(("ipsp_process_packet(): attempt to use invalid "
-		    "SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst),
-		    ntohl(tdb->tdb_spi), tdb->tdb_sproto));
+		    "SA %s/%08x/%u\n", ipsp_address(&tdb->tdb_dst, buf,
+		    sizeof(buf)), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
 		m_freem(m);
 		return ENXIO;
 	}
@@ -119,8 +123,9 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	default:
 		DPRINTF(("ipsp_process_packet(): attempt to use "
 		    "SA %s/%08x/%u for protocol family %d\n",
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi),
-		    tdb->tdb_sproto, tdb->tdb_dst.sa.sa_family));
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+		    ntohl(tdb->tdb_spi), tdb->tdb_sproto,
+		    tdb->tdb_dst.sa.sa_family));
 		m_freem(m);
 		return ENXIO;
 	}
@@ -576,7 +581,7 @@ ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
 		tdbp->tdb_mtu = mtu;
 		tdbp->tdb_mtutimeout = time_second + ip_mtudisc_timeout;
 		DPRINTF(("ipsec_adjust_mtu: "
-		    "spi %08x mtu %d adjust %d mbuf %p\n",
+		    "spi %08x mtu %d adjust %ld mbuf %p\n",
 		    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
 		    adjust, m));
 	}

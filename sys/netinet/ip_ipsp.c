@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.209 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.210 2015/04/14 14:20:01 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -845,6 +845,9 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 {
 	struct xformsw *xsp;
 	int err;
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 
 	for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++) {
 		if (xsp->xf_type == alg) {
@@ -854,8 +857,8 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 	}
 
 	DPRINTF(("tdb_init(): no alg %d for spi %08x, addr %s, proto %d\n",
-	    alg, ntohl(tdbp->tdb_spi), ipsp_address(tdbp->tdb_dst),
-	    tdbp->tdb_sproto));
+	    alg, ntohl(tdbp->tdb_spi), ipsp_address(&tdbp->tdb_dst, buf,
+	    sizeof(buf)), tdbp->tdb_sproto));
 
 	return EINVAL;
 }
@@ -925,24 +928,17 @@ tdb_add_inp(struct tdb *tdb, struct inpcb *inp, int inout)
 #ifdef ENCDEBUG
 /* Return a printable string for the address. */
 const char *
-ipsp_address(union sockaddr_union sa)
+ipsp_address(union sockaddr_union *sa, char *buf, socklen_t size)
 {
-	static char ipspbuf[4][INET6_ADDRSTRLEN];
-	static int ipspround = 0;
-	char *buf;
-
-	ipspround = (ipspround + 1) % 4;
-	buf = ipspbuf[ipspround];
-
-	switch (sa.sa.sa_family) {
+	switch (sa->sa.sa_family) {
 	case AF_INET:
-		return inet_ntop(AF_INET, &sa.sin.sin_addr,
-		    buf, INET_ADDRSTRLEN);
+		return inet_ntop(AF_INET, &sa->sin.sin_addr,
+		    buf, (size_t)size);
 
 #ifdef INET6
 	case AF_INET6:
-		return inet_ntop(AF_INET6, &sa.sin6.sin6_addr,
-		    buf, INET6_ADDRSTRLEN);
+		return inet_ntop(AF_INET6, &sa->sin6.sin6_addr,
+		    buf, (size_t)size);
 #endif /* INET6 */
 
 	default:

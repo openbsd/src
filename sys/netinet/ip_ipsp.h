@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.164 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.165 2015/04/14 14:20:01 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -480,7 +480,7 @@ do {									\
 /* Misc. */
 uint8_t	get_sa_require(struct inpcb *);
 #ifdef ENCDEBUG
-const char *ipsp_address(union sockaddr_union);
+const char *ipsp_address(union sockaddr_union *, char *, socklen_t);
 #endif /* ENCDEBUG */
 
 /* TDB management routines */

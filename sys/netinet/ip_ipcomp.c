@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.40 2015/03/14 03:38:52 jsg Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.41 2015/04/14 14:20:01 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -211,6 +211,9 @@ ipcomp_input_cb(op)
 	struct tdb *tdb;
 	struct ipcomp  *ipcomp;
 	caddr_t addr;
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 
 	crp = (struct cryptop *) op;
 
@@ -293,7 +296,8 @@ ipcomp_input_cb(op)
 	if (m1 == NULL) {
 		ipcompstat.ipcomps_hdrops++;
 		DPRINTF(("ipcomp_input_cb(): bad mbuf chain, IPCA %s/%08x\n",
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+		    ntohl(tdb->tdb_spi)));
 		error = EINVAL;
 		goto baddone;
 	}
@@ -377,6 +381,9 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	struct cryptop *crp;
 	struct tdb_crypto *tc;
 	struct mbuf    *mi, *mo;
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 #if NBPFILTER > 0
 	struct ifnet *encif;
 
@@ -409,8 +416,9 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 		 * worry
 		 */
 		if (m->m_pkthdr.len + hlen > IP_MAXPACKET) {
-			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x "
+			    "got too big\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ipcompstat.ipcomps_toobig++;
 			return EMSGSIZE;
@@ -421,8 +429,9 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	case AF_INET6:
 		/* Check for IPv6 maximum packet size violations */
 		if (m->m_pkthdr.len + hlen > IPV6_MAXPACKET) {
-			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x "
+			    "got too big\n", ipsp_address(&tdb->tdb_dst, buf,
+			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			m_freem(m);
 			ipcompstat.ipcomps_toobig++;
 			return EMSGSIZE;
@@ -430,8 +439,9 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 #endif /* INET6 */
 
 	default:
-		DPRINTF(("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
-		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
+		DPRINTF(("ipcomp_output(): unknown/unsupported protocol "
+		    "family %d, IPCA %s/%08x\n", tdb->tdb_dst.sa.sa_family,
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
 		ipcompstat.ipcomps_nopf++;
@@ -474,7 +484,8 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 		if (n == NULL) {
 			DPRINTF(("ipcomp_output(): bad mbuf chain, IPCA %s/%08x\n",
-			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
+			    ntohl(tdb->tdb_spi)));
 			ipcompstat.ipcomps_hdrops++;
 			m_freem(m);
 			return ENOBUFS;
@@ -552,6 +563,9 @@ ipcomp_output_cb(cp)
 	struct ip6_hdr *ip6;
 #endif
 	struct ipcomp  *ipcomp;
+#ifdef ENCDEBUG
+	char buf[INET6_ADDRSTRLEN];
+#endif
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -610,8 +624,8 @@ ipcomp_output_cb(cp)
 	mo = m_inject(m, skip, IPCOMP_HLENGTH, M_DONTWAIT);
 	if (mo == NULL) {
 		DPRINTF(("ipcomp_output_cb(): failed to inject IPCOMP header "
-		    "for IPCA %s/%08x\n",
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    "for IPCA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
+		     sizeof(buf)), ntohl(tdb->tdb_spi)));
 		ipcompstat.ipcomps_wrap++;
 		error = ENOBUFS;
 		goto baddone;
@@ -639,8 +653,8 @@ ipcomp_output_cb(cp)
 #endif
 	default:
 		DPRINTF(("ipcomp_output_cb(): unsupported protocol family %d, "
-		    "IPCA %s/%08x\n",
-		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
+		    "IPCA %s/%08x\n", tdb->tdb_dst.sa.sa_family,
+		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
 		ipcompstat.ipcomps_nopf++;
 		error = EPFNOSUPPORT;
