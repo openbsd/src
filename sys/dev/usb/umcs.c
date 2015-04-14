@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.2 2015/03/14 03:38:50 jsg Exp $ */
+/* $OpenBSD: umcs.c,v 1.3 2015/04/14 14:38:17 mpi Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -46,6 +46,7 @@
 #include <sys/malloc.h>
 #include <sys/tty.h>
 #include <sys/device.h>
+#include <sys/task.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -75,6 +76,9 @@
 struct umcs_port {
 	struct ucom_softc 	*ucom;		/* ucom subdevice */
 	unsigned int		 pn;		/* physical port number */
+	int			 flags;
+#define	UMCS_STATCHG		 0x01
+
 	uint8_t			 lcr;		/* local line control reg. */
 	uint8_t			 mcr;		/* local modem control reg. */
 };
@@ -91,6 +95,7 @@ struct umcs_softc {
 	uint8_t			 sc_numports;	/* number of ports */
 
 	int			 sc_init_done;
+	struct task		 sc_status_task;
 };
 
 int	umcs_get_reg(struct umcs_softc *, uint8_t, uint8_t *);
@@ -107,6 +112,7 @@ int	umcs_match(struct device *, void *, void *);
 void	umcs_attach(struct device *, struct device *, void *);
 int	umcs_detach(struct device *, int);
 void	umcs_intr(struct usbd_xfer *, void *, usbd_status);
+void	umcs_status_task(void *);
 
 void	umcs_get_status(void *, int, uint8_t *, uint8_t *);
 void	umcs_set(void *, int, int, int);
@@ -318,6 +324,8 @@ umcs_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_subdevs[i].ucom = (struct ucom_softc *)
 		    config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 	}
+
+	task_set(&sc->sc_status_task, umcs_status_task, sc);
 }
 
 int
@@ -468,6 +476,8 @@ int
 umcs_detach(struct device *self, int flags)
 {
 	struct umcs_softc *sc = (struct umcs_softc *)self;
+
+	task_del(systq, &sc->sc_status_task);
 
 	if (sc->sc_ipipe != NULL) {
 		usbd_abort_pipe(sc->sc_ipipe);
@@ -795,11 +805,27 @@ umcs_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		case UMCS_ISR_RXHASDATA:
 		case UMCS_ISR_RXTIMEOUT:
 		case UMCS_ISR_MSCHANGE:
-			ucom_status_change(sc->sc_subdevs[i].ucom);
+			sc->sc_subdevs[i].flags |= UMCS_STATCHG;
+			task_add(systq, &sc->sc_status_task);
 			break;
 		default:
 			/* Do nothing */
 			break;
 		}
+	}
+}
+
+void
+umcs_status_task(void *arg)
+{
+	struct umcs_softc *sc = arg;
+	int i;
+
+	for (i = 0; i < sc->sc_numports; i++) {
+		if ((sc->sc_subdevs[i].flags & UMCS_STATCHG) == 0)
+			continue;
+
+		sc->sc_subdevs[i].flags &= ~UMCS_STATCHG;
+		ucom_status_change(sc->sc_subdevs[i].ucom);
 	}
 }
