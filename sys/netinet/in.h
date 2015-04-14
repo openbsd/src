@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.113 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: in.h,v 1.114 2015/04/14 12:22:15 mikeb Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -294,10 +294,10 @@ struct ip_opts {
 #define IP_ESP_NETWORK_LEVEL	22   /* int; full-packet encryption */
 #define IP_IPSEC_LOCAL_ID	23   /* buf; IPsec local ID */
 #define IP_IPSEC_REMOTE_ID	24   /* buf; IPsec remote ID */
-#define IP_IPSEC_LOCAL_CRED	25   /* buf; IPsec local credentials */
-#define IP_IPSEC_REMOTE_CRED	26   /* buf; IPsec remote credentials */
-#define IP_IPSEC_LOCAL_AUTH	27   /* buf; IPsec local auth material */
-#define IP_IPSEC_REMOTE_AUTH	28   /* buf; IPsec remote auth material */
+#define IP_IPSEC_LOCAL_CRED	25   /* buf; was: IPsec local credentials */
+#define IP_IPSEC_REMOTE_CRED	26   /* buf; was: IPsec remote credentials */
+#define IP_IPSEC_LOCAL_AUTH	27   /* buf; was: IPsec local auth material */
+#define IP_IPSEC_REMOTE_AUTH	28   /* buf; was: IPsec remote auth material */
 #define IP_IPCOMP_LEVEL		29   /* int; compression used */
 #define IP_RECVIF		30   /* bool; receive reception if w/dgram */
 #define IP_RECVTTL		31   /* bool; receive IP TTL w/dgram */

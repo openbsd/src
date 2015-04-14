@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.48 2015/03/26 12:21:37 mikeb Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.49 2015/04/14 12:22:15 mikeb Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -119,11 +119,6 @@
 #define BITMAP_X_SA2                   (1LL << SADB_X_EXT_SA2)
 #define BITMAP_X_DST2                  (1LL << SADB_X_EXT_DST2)
 #define BITMAP_X_POLICY                (1LL << SADB_X_EXT_POLICY)
-#define BITMAP_X_LOCAL_CREDENTIALS     (1LL << SADB_X_EXT_LOCAL_CREDENTIALS)
-#define BITMAP_X_REMOTE_CREDENTIALS    (1LL << SADB_X_EXT_REMOTE_CREDENTIALS)
-#define BITMAP_X_LOCAL_AUTH            (1LL << SADB_X_EXT_LOCAL_AUTH)
-#define BITMAP_X_REMOTE_AUTH           (1LL << SADB_X_EXT_REMOTE_AUTH)
-#define BITMAP_X_CREDENTIALS           (BITMAP_X_LOCAL_CREDENTIALS | BITMAP_X_REMOTE_CREDENTIALS | BITMAP_X_LOCAL_AUTH | BITMAP_X_REMOTE_AUTH)
 #define BITMAP_X_FLOW                  (BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE)
 #define BITMAP_X_SUPPORTED_COMP        (1LL << SADB_X_EXT_SUPPORTED_COMP)
 #define BITMAP_X_UDPENCAP              (1LL << SADB_X_EXT_UDPENCAP)
@@ -138,15 +133,15 @@ uint64_t sadb_exts_allowed_in[SADB_MAX+1] =
 	/* GETSPI */
 	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SPIRANGE,
 	/* UPDATE */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG | BITMAP_X_TAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG | BITMAP_X_TAP,
 	/* ADD */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_LIFETIME_LASTUSE | BITMAP_X_TAG | BITMAP_X_TAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_LIFETIME_LASTUSE | BITMAP_X_TAG | BITMAP_X_TAP,
 	/* DELETE */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* GET */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* ACQUIRE */
-	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_CREDENTIALS,
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL,
 	/* REGISTER */
 	0,
 	/* EXPIRE */
@@ -210,15 +205,15 @@ uint64_t sadb_exts_allowed_out[SADB_MAX+1] =
 	/* GETSPI */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* UPDATE */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG | BITMAP_X_TAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG | BITMAP_X_TAP,
 	/* ADD */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG | BITMAP_X_TAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_FLOW | BITMAP_X_UDPENCAP | BITMAP_X_TAG | BITMAP_X_TAP,
 	/* DELETE */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* GET */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_UDPENCAP | BITMAP_X_LIFETIME_LASTUSE | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_FLOW_TYPE | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_TAG | BITMAP_X_TAP,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_UDPENCAP | BITMAP_X_LIFETIME_LASTUSE | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_FLOW_TYPE | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_TAG | BITMAP_X_TAP,
 	/* ACQUIRE */
-	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_CREDENTIALS,
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL,
 	/* REGISTER */
 	BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT | BITMAP_X_SUPPORTED_COMP,
 	/* EXPIRE */
@@ -649,65 +644,6 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: reserved field"
 				    " set in KEY extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return (EINVAL);
-			}
-		}
-		break;
-		case SADB_X_EXT_LOCAL_AUTH:
-		case SADB_X_EXT_REMOTE_AUTH:
-		{
-			struct sadb_x_cred *sadb_cred =
-			    (struct sadb_x_cred *)p;
-
-			if (i < sizeof(struct sadb_x_cred)) {
-				DPRINTF(("pfkeyv2_parsemessage: bad header "
-				    "length for AUTH extension header %d\n",
-				    sadb_ext->sadb_ext_type));
-				return (EINVAL);
-			}
-
-			if (sadb_cred->sadb_x_cred_type > SADB_X_AUTHTYPE_MAX) {
-				DPRINTF(("pfkeyv2_parsemessage: unknown auth "
-				    "type %d in AUTH extension header %d\n",
-				    sadb_cred->sadb_x_cred_type,
-				    sadb_ext->sadb_ext_type));
-				return (EINVAL);
-			}
-
-			if (sadb_cred->sadb_x_cred_reserved) {
-				DPRINTF(("pfkeyv2_parsemessage: reserved field"
-				    " set in AUTH extension header %d\n",
-				    sadb_ext->sadb_ext_type));
-				return (EINVAL);
-			}
-		}
-		break;
-		case SADB_X_EXT_LOCAL_CREDENTIALS:
-		case SADB_X_EXT_REMOTE_CREDENTIALS:
-		{
-			struct sadb_x_cred *sadb_cred =
-			    (struct sadb_x_cred *)p;
-
-			if (i < sizeof(struct sadb_x_cred)) {
-				DPRINTF(("pfkeyv2_parsemessage: bad header "
-				    "length of CREDENTIALS extension header "
-				    "%d\n", sadb_ext->sadb_ext_type));
-				return (EINVAL);
-			}
-
-			if (sadb_cred->sadb_x_cred_type > SADB_X_CREDTYPE_MAX) {
-				DPRINTF(("pfkeyv2_parsemessage: unknown "
-				    "credential type %d in CREDENTIALS "
-				    "extension header %d\n",
-				    sadb_cred->sadb_x_cred_type,
-				    sadb_ext->sadb_ext_type));
-				return (EINVAL);
-			}
-
-			if (sadb_cred->sadb_x_cred_reserved) {
-				DPRINTF(("pfkeyv2_parsemessage: reserved "
-				    "field set in CREDENTIALS extension "
-				    "header %d\n", sadb_ext->sadb_ext_type));
 				return (EINVAL);
 			}
 		}

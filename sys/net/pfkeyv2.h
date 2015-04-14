@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.65 2014/12/28 10:02:37 tedu Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.66 2015/04/14 12:22:15 mikeb Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -199,13 +199,6 @@ struct sadb_x_policy {
 	u_int32_t sadb_x_policy_seq;
 };
 
-struct sadb_x_cred {
-	uint16_t sadb_x_cred_len;
-	uint16_t sadb_x_cred_exttype;
-	uint16_t sadb_x_cred_type;
-	uint16_t sadb_x_cred_reserved;
-};
-
 struct sadb_x_udpencap {
 	uint16_t sadb_x_udpencap_len;
 	uint16_t sadb_x_udpencap_exttype;
@@ -365,24 +358,6 @@ struct sadb_x_tap {
 #define PFKEYV2_SENDMESSAGE_BROADCAST  3
 #endif /* _KERNEL */
 
-#define SADB_X_CREDTYPE_NONE         0
-#define SADB_X_CREDTYPE_X509         1   /* ASN1 encoding of the certificate */
-#define SADB_X_CREDTYPE_KEYNOTE      2   /* NUL-terminated buffer */
-#define SADB_X_CREDTYPE_MAX          3
-
-#ifdef _KERNEL
-#define PFKEYV2_AUTH_LOCAL           0
-#define PFKEYV2_AUTH_REMOTE          1
-
-#define PFKEYV2_CRED_LOCAL           0
-#define PFKEYV2_CRED_REMOTE          1
-#endif /* _KERNEL */
-
-#define SADB_X_AUTHTYPE_NONE         0
-#define SADB_X_AUTHTYPE_PASSPHRASE   1
-#define SADB_X_AUTHTYPE_RSA          2
-#define SADB_X_AUTHTYPE_MAX          2
-
 #define SADB_X_FLOW_TYPE_USE           1
 #define SADB_X_FLOW_TYPE_ACQUIRE       2
 #define SADB_X_FLOW_TYPE_REQUIRE       3
@@ -452,22 +427,18 @@ int pfdatatopacket(void *, int, struct mbuf **);
 void export_address(void **, struct sockaddr *);
 void export_identity(void **, struct tdb *, int);
 void export_lifetime(void **, struct tdb *, int);
-void export_credentials(void **, struct tdb *, int);
 void export_sa(void **, struct tdb *);
 void export_flow(void **, u_int8_t, struct sockaddr_encap *,
     struct sockaddr_encap *, void **);
 void export_key(void **, struct tdb *, int);
-void export_auth(void **, struct tdb *, int);
 void export_udpencap(void **, struct tdb *);
 void export_tag(void **, struct tdb *);
 void export_tap(void **, struct tdb *);
 
-void import_auth(struct tdb *, struct sadb_x_cred *, int);
 void import_address(struct sockaddr *, struct sadb_address *);
 void import_identity(struct tdb *, struct sadb_ident *, int);
 void import_key(struct ipsecinit *, struct sadb_key *, int);
 void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
-void import_credentials(struct tdb *, struct sadb_x_cred *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 void import_flow(struct sockaddr_encap *, struct sockaddr_encap *,
     struct sadb_address *, struct sadb_address *, struct sadb_address *,

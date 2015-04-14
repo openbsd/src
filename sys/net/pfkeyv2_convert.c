@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.47 2015/02/06 03:04:49 blambert Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.48 2015/04/14 12:22:15 mikeb Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -700,82 +700,6 @@ export_address(void **p, struct sockaddr *sa)
 }
 
 /*
- * Import authentication information into the TDB.
- */
-void
-import_auth(struct tdb *tdb, struct sadb_x_cred *sadb_auth, int dstauth)
-{
-	struct ipsec_ref **ipr;
-
-	if (!sadb_auth)
-		return;
-
-	if (dstauth == PFKEYV2_AUTH_REMOTE)
-		ipr = &tdb->tdb_remote_auth;
-	else
-		ipr = &tdb->tdb_local_auth;
-
-	*ipr = malloc(EXTLEN(sadb_auth) - sizeof(struct sadb_x_cred) +
-	    sizeof(struct ipsec_ref), M_CREDENTIALS, M_WAITOK);
-	(*ipr)->ref_len = EXTLEN(sadb_auth) - sizeof(struct sadb_x_cred);
-
-	switch (sadb_auth->sadb_x_cred_type) {
-	case SADB_X_AUTHTYPE_PASSPHRASE:
-		(*ipr)->ref_type = IPSP_AUTH_PASSPHRASE;
-		break;
-	case SADB_X_AUTHTYPE_RSA:
-		(*ipr)->ref_type = IPSP_AUTH_RSA;
-		break;
-	default:
-		free(*ipr, M_CREDENTIALS, 0);
-		*ipr = NULL;
-		return;
-	}
-	(*ipr)->ref_count = 1;
-	(*ipr)->ref_malloctype = M_CREDENTIALS;
-	bcopy((void *) sadb_auth + sizeof(struct sadb_x_cred),
-	    (*ipr) + 1, (*ipr)->ref_len);
-}
-
-/*
- * Import a set of credentials into the TDB.
- */
-void
-import_credentials(struct tdb *tdb, struct sadb_x_cred *sadb_cred, int dstcred)
-{
-	struct ipsec_ref **ipr;
-
-	if (!sadb_cred)
-		return;
-
-	if (dstcred == PFKEYV2_CRED_REMOTE)
-		ipr = &tdb->tdb_remote_cred;
-	else
-		ipr = &tdb->tdb_local_cred;
-
-	*ipr = malloc(EXTLEN(sadb_cred) - sizeof(struct sadb_x_cred) +
-	    sizeof(struct ipsec_ref), M_CREDENTIALS, M_WAITOK);
-	(*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_x_cred);
-
-	switch (sadb_cred->sadb_x_cred_type) {
-	case SADB_X_CREDTYPE_X509:
-		(*ipr)->ref_type = IPSP_CRED_X509;
-		break;
-	case SADB_X_CREDTYPE_KEYNOTE:
-		(*ipr)->ref_type = IPSP_CRED_KEYNOTE;
-		break;
-	default:
-		free(*ipr, M_CREDENTIALS, 0);
-		*ipr = NULL;
-		return;
-	}
-	(*ipr)->ref_count = 1;
-	(*ipr)->ref_malloctype = M_CREDENTIALS;
-	bcopy((void *) sadb_cred + sizeof(struct sadb_x_cred),
-	    (*ipr) + 1, (*ipr)->ref_len);
-}
-
-/*
  * Import an identity payload into the TDB.
  */
 void
@@ -817,60 +741,6 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 	(*ipr)->ref_malloctype = M_CREDENTIALS;
 	bcopy((void *) sadb_ident + sizeof(struct sadb_ident), (*ipr) + 1,
 	    (*ipr)->ref_len);
-}
-
-void
-export_credentials(void **p, struct tdb *tdb, int dstcred)
-{
-	struct ipsec_ref **ipr;
-	struct sadb_x_cred *sadb_cred = (struct sadb_x_cred *) *p;
-
-	if (dstcred == PFKEYV2_CRED_REMOTE)
-		ipr = &tdb->tdb_remote_cred;
-	else
-		ipr = &tdb->tdb_local_cred;
-
-	sadb_cred->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
-	    PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
-
-	switch ((*ipr)->ref_type) {
-	case IPSP_CRED_KEYNOTE:
-		sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_KEYNOTE;
-		break;
-	case IPSP_CRED_X509:
-		sadb_cred->sadb_x_cred_type = SADB_X_CREDTYPE_X509;
-		break;
-	}
-	*p += sizeof(struct sadb_x_cred);
-	bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
-	*p += PADUP((*ipr)->ref_len);
-}
-
-void
-export_auth(void **p, struct tdb *tdb, int dstauth)
-{
-	struct ipsec_ref **ipr;
-	struct sadb_x_cred *sadb_auth = (struct sadb_x_cred *) *p;
-
-	if (dstauth == PFKEYV2_AUTH_REMOTE)
-		ipr = &tdb->tdb_remote_auth;
-	else
-		ipr = &tdb->tdb_local_auth;
-
-	sadb_auth->sadb_x_cred_len = (sizeof(struct sadb_x_cred) +
-	    PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
-
-	switch ((*ipr)->ref_type) {
-	case IPSP_AUTH_PASSPHRASE:
-		sadb_auth->sadb_x_cred_type = SADB_X_AUTHTYPE_PASSPHRASE;
-		break;
-	case IPSP_AUTH_RSA:
-		sadb_auth->sadb_x_cred_type = SADB_X_AUTHTYPE_RSA;
-		break;
-	}
-	*p += sizeof(struct sadb_x_cred);
-	bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
-	*p += PADUP((*ipr)->ref_len);
 }
 
 void

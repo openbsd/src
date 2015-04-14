@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.287 2015/02/08 04:40:50 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.288 2015/04/14 12:22:15 mikeb Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -912,18 +912,6 @@ findpcb:
 			    tdb->tdb_srcid != NULL) {
 				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
 				tdb->tdb_srcid->ref_count++;
-			}
-			if (inp->inp_ipsec_remotecred == NULL &&
-			    tdb->tdb_remote_cred != NULL) {
-				inp->inp_ipsec_remotecred =
-				    tdb->tdb_remote_cred;
-				tdb->tdb_remote_cred->ref_count++;
-			}
-			if (inp->inp_ipsec_remoteauth == NULL &&
-			    tdb->tdb_remote_auth != NULL) {
-				inp->inp_ipsec_remoteauth =
-				    tdb->tdb_remote_auth;
-				tdb->tdb_remote_auth->ref_count++;
 			}
 		} else { /* Just reset */
 		        TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
@@ -3710,15 +3698,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	  if (inp->inp_ipo != NULL) {
 		  newinp->inp_ipo = inp->inp_ipo;
 		  inp->inp_ipo->ipo_ref_count++;
-	  }
-	  if (inp->inp_ipsec_remotecred != NULL) {
-		  newinp->inp_ipsec_remotecred = inp->inp_ipsec_remotecred;
-		  inp->inp_ipsec_remotecred->ref_count++;
-	  }
-	  if (inp->inp_ipsec_remoteauth != NULL) {
-		  newinp->inp_ipsec_remoteauth
-		      = inp->inp_ipsec_remoteauth;
-		  inp->inp_ipsec_remoteauth->ref_count++;
 	  }
 	}
 #endif /* IPSEC */

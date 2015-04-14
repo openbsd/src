@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.168 2015/02/10 03:07:56 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.169 2015/04/14 12:22:15 mikeb Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -538,10 +538,6 @@ in_pcbdetach(struct inpcb *inp)
 	if (inp->inp_tdb_out)
 		TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out, inp,
 			     inp_tdb_out_next);
-	if (inp->inp_ipsec_remotecred)
-		ipsp_reffree(inp->inp_ipsec_remotecred);
-	if (inp->inp_ipsec_remoteauth)
-		ipsp_reffree(inp->inp_ipsec_remoteauth);
 	if (inp->inp_ipo)
 		ipsec_delete_policy(inp->inp_ipo);
 #endif

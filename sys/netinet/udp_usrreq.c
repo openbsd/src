@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.196 2015/03/04 11:10:55 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.197 2015/04/14 12:22:15 mikeb Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -631,18 +631,6 @@ udp_input(struct mbuf *m, ...)
 			    tdb->tdb_srcid != NULL) {
 				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
 				tdb->tdb_srcid->ref_count++;
-			}
-			if (inp->inp_ipsec_remotecred == NULL &&
-			    tdb->tdb_remote_cred != NULL) {
-				inp->inp_ipsec_remotecred =
-				    tdb->tdb_remote_cred;
-				tdb->tdb_remote_cred->ref_count++;
-			}
-			if (inp->inp_ipsec_remoteauth == NULL &&
-			    tdb->tdb_remote_auth != NULL) {
-				inp->inp_ipsec_remoteauth =
-				    tdb->tdb_remote_auth;
-				tdb->tdb_remote_auth->ref_count++;
 			}
 		} else { /* Just reset */
 			TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,

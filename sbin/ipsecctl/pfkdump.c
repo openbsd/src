@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.37 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.38 2015/04/14 12:22:15 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -52,8 +52,6 @@ static void	print_addr(struct sadb_ext *, struct sadb_msg *);
 static void	print_key(struct sadb_ext *, struct sadb_msg *);
 static void	print_life(struct sadb_ext *, struct sadb_msg *);
 static void	print_ident(struct sadb_ext *, struct sadb_msg *);
-static void	print_auth(struct sadb_ext *, struct sadb_msg *);
-static void	print_cred(struct sadb_ext *, struct sadb_msg *);
 static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
 static void	print_tag(struct sadb_ext *, struct sadb_msg *);
 static void	print_tap(struct sadb_ext *, struct sadb_msg *);
@@ -100,11 +98,7 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_SA2,		"sa2",			print_sa },
 	{ SADB_X_EXT_DST2,		"dst2",			print_addr },
 	{ SADB_X_EXT_POLICY,		"policy",		print_policy },
-	{ SADB_X_EXT_LOCAL_AUTH,	"local_auth",		print_auth },
 	{ SADB_X_EXT_SUPPORTED_COMP,	"supported_comp",	print_supp },
-	{ SADB_X_EXT_REMOTE_AUTH,	"remote_auth",		print_auth },
-	{ SADB_X_EXT_LOCAL_CREDENTIALS,	"local_cred",		print_cred },
-	{ SADB_X_EXT_REMOTE_CREDENTIALS,"remote_cred",		print_cred },
 	{ SADB_X_EXT_UDPENCAP,		"udpencap",		print_udpenc },
 	{ SADB_X_EXT_LIFETIME_LASTUSE,	"lifetime_lastuse",	print_life },
 	{ SADB_X_EXT_TAG,		"tag",			print_tag },
@@ -160,12 +154,6 @@ struct idname auth_types[] = {
 	{ 0,				NULL,			NULL }
 };
 
-struct idname cred_types[] = {
-	{ SADB_X_CREDTYPE_X509,		"x509-asn1",		NULL },
-	{ SADB_X_CREDTYPE_KEYNOTE,	"keynote",		NULL },
-	{ 0,				NULL,			NULL }
-};
-
 struct idname enc_types[] = {
 	{ SADB_EALG_NONE,		"none",			NULL },
 	{ SADB_EALG_3DESCBC,		"3des-cbc",		NULL },
@@ -191,13 +179,6 @@ struct idname comp_types[] = {
 	{ SADB_X_CALG_OUI,		"oui",			NULL },
 	{ SADB_X_CALG_DEFLATE,		"deflate",		NULL },
 	{ SADB_X_CALG_LZS,		"lzs",			NULL },
-	{ 0,				NULL,			NULL }
-};
-
-struct idname xauth_types[] = {
-	{ SADB_X_AUTHTYPE_NONE,		"none",			NULL },
-	{ SADB_X_AUTHTYPE_PASSPHRASE,	"passphrase",		NULL },
-	{ SADB_X_AUTHTYPE_RSA,		"rsa",			NULL },
 	{ 0,				NULL,			NULL }
 };
 
@@ -547,25 +528,6 @@ print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 	printf("type %s id %llu: %s",
 	    lookup_name(identity_types, ident->sadb_ident_type),
 	    ident->sadb_ident_id, (char *)(ident + 1));
-}
-
-/* ARGSUSED1 */
-static void
-print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
-{
-	struct sadb_x_cred *x_cred = (struct sadb_x_cred *)ext;
-
-	printf("type %s",
-	    lookup_name(xauth_types, x_cred->sadb_x_cred_type));
-}
-
-/* ARGSUSED1 */
-static void
-print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
-{
-	struct sadb_x_cred *x_cred = (struct sadb_x_cred *)ext;
-	printf("type %s",
-	    lookup_name(cred_types, x_cred->sadb_x_cred_type));
 }
 
 /* ARGSUSED1 */

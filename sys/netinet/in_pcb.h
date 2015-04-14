@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.87 2014/11/15 10:55:47 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.88 2015/04/14 12:22:15 mikeb Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -140,8 +140,6 @@ struct inpcb {
 	TAILQ_ENTRY(inpcb) inp_tdb_in_next, inp_tdb_out_next;
 	struct tdb     *inp_tdb_in, *inp_tdb_out;
 	struct ipsec_policy *inp_ipo;
-	struct ipsec_ref *inp_ipsec_remotecred;
-	struct ipsec_ref *inp_ipsec_remoteauth;
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
 	int	inp_cksum6;

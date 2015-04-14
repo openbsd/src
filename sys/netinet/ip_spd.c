@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.81 2015/04/13 16:50:43 mikeb Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.82 2015/04/14 12:22:15 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -368,7 +368,6 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			if (!ipsp_aux_match(ipo->ipo_tdb,
 			    srcid ? srcid : ipo->ipo_srcid,
 			    dstid ? dstid : ipo->ipo_dstid,
-			    ipo->ipo_local_cred, NULL,
 			    &ipo->ipo_addr, &ipo->ipo_mask))
 				goto nomatchout;
 
@@ -406,8 +405,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				ipo->ipo_sproto,
 				srcid ? srcid : ipo->ipo_srcid,
 				dstid ? dstid : ipo->ipo_dstid,
-				ipo->ipo_local_cred, &ipo->ipo_addr,
-				&ipo->ipo_mask);
+				&ipo->ipo_addr, &ipo->ipo_mask);
 			if (ipo->ipo_tdb) {
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
@@ -494,9 +492,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/*
 			 * We only need to check that the correct
 			 * security protocol and security gateway are
-			 * set; credentials/IDs will be the same,
-			 * since the cached entry is linked on this
-			 * policy.
+			 * set; IDs will be the same since the cached
+			 * entry is linked on this policy.
 			 */
 			if (ipo->ipo_sproto == ipo->ipo_tdb->tdb_sproto &&
 			    !memcmp(&ipo->ipo_tdb->tdb_src,
@@ -609,10 +606,6 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 		ipsp_reffree(ipo->ipo_srcid);
 	if (ipo->ipo_dstid)
 		ipsp_reffree(ipo->ipo_dstid);
-	if (ipo->ipo_local_cred)
-		ipsp_reffree(ipo->ipo_local_cred);
-	if (ipo->ipo_local_auth)
-		ipsp_reffree(ipo->ipo_local_auth);
 
 	if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
 		ipsec_in_use--;
@@ -765,15 +758,10 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	struct ipsec_acquire *ipa;
 
 	/*
-	 * If this is a socket policy, it has to have authentication
-	 * information accompanying it --- can't tell key mgmt. to
-	 * "find" it for us. This avoids abusing key mgmt. to authenticate
-	 * on an application's behalf, even if the application doesn't
-	 * have/know (and shouldn't) the appropriate authentication
-	 * material (passphrase, private key, etc.)
+	 * ACQUIRE on local sockets is restricted to avoid abuse of
+	 * authentication keys that the IKE daemon has already loaded.
 	 */
-	if (ipo->ipo_flags & IPSP_POLICY_SOCKET &&
-	    ipo->ipo_local_auth == NULL)
+	if (ipo->ipo_flags & IPSP_POLICY_SOCKET)
 		return EINVAL;
 
 	/* Check whether request has been made already. */
@@ -969,9 +957,9 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			if (tdbp->tdb_sproto == inp->inp_ipo->ipo_sproto &&
 			    !memcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
 			    SA_LEN(&tdbp->tdb_src.sa)) &&
-			    ipsp_aux_match(tdbp, inp->inp_ipo->ipo_srcid, 
-			    inp->inp_ipo->ipo_dstid, NULL, NULL,
-			    &inp->inp_ipo->ipo_addr, &inp->inp_ipo->ipo_mask))
+			    ipsp_aux_match(tdbp, inp->inp_ipo->ipo_srcid,
+			    inp->inp_ipo->ipo_dstid, &inp->inp_ipo->ipo_addr,
+			    &inp->inp_ipo->ipo_mask))
 				goto justreturn;
 			else {
 				*error = -EINVAL;
@@ -992,8 +980,8 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			    !memcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
 			    SA_LEN(&tdbp->tdb_src.sa)) &&
 			    ipsp_aux_match(tdbp, inp->inp_ipo->ipo_srcid,
-			    inp->inp_ipo->ipo_dstid, NULL, NULL,
-			    &inp->inp_ipo->ipo_addr, &inp->inp_ipo->ipo_mask))
+			    inp->inp_ipo->ipo_dstid, &inp->inp_ipo->ipo_addr,
+			    &inp->inp_ipo->ipo_mask))
 				goto justreturn;
 
 			/*
@@ -1069,7 +1057,6 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 				    inp->inp_ipo->ipo_sproto,
 				    inp->inp_ipo->ipo_srcid,
 				    inp->inp_ipo->ipo_dstid,
-				    inp->inp_ipo->ipo_local_cred,
 				    &inp->inp_ipo->ipo_addr,
 				    &inp->inp_ipo->ipo_mask);
 			}
@@ -1082,8 +1069,8 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			    IPSP_DIRECTION_OUT);
 
 			tdb = gettdbbydst(rtable_l2(inp->inp_rtableid),
-			    &sipon.ipo_dst, IPPROTO_ESP, NULL,
-			    NULL, NULL, &sipon.ipo_addr, &sipon.ipo_mask);
+			    &sipon.ipo_dst, IPPROTO_ESP, NULL, NULL,
+			    &sipon.ipo_addr, &sipon.ipo_mask);
 		}
 
 		/* If we found an appropriate SA... */

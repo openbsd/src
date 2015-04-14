@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.163 2015/04/13 16:48:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.164 2015/04/14 12:22:15 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -215,8 +215,6 @@ struct ipsec_policy {
 
 	struct ipsec_ref	*ipo_srcid;
 	struct ipsec_ref	*ipo_dstid;
-	struct ipsec_ref	*ipo_local_cred;
-	struct ipsec_ref	*ipo_local_auth;
 
 	TAILQ_HEAD(ipo_acquires_head, ipsec_acquire) ipo_acquires; /* List of acquires */
 	TAILQ_ENTRY(ipsec_policy)	ipo_tdb_next;	/* List TDB policies */
@@ -243,16 +241,6 @@ struct ipsec_policy {
 #define	NOTIFY_SATYPE_AUTH	2	/* SA should do authentication */
 #define	NOTIFY_SATYPE_TUNNEL	4	/* SA should use tunneling */
 #define NOTIFY_SATYPE_COMP	5       /* SA (IPCA) should use compression */
-
-/* Authentication types */
-#define	IPSP_AUTH_NONE		0
-#define	IPSP_AUTH_PASSPHRASE	1
-#define	IPSP_AUTH_RSA		2
-
-/* Credential types */
-#define	IPSP_CRED_NONE		0
-#define	IPSP_CRED_KEYNOTE	1
-#define	IPSP_CRED_X509		2
 
 /* Identity types */
 #define	IPSP_IDENTITY_NONE		0
@@ -354,12 +342,8 @@ struct tdb {				/* tunnel descriptor block */
 
 	u_int8_t	tdb_iv[4];	/* Used for HALF-IV ESP */
 
-	struct ipsec_ref	*tdb_local_cred;
-	struct ipsec_ref	*tdb_remote_cred;
 	struct ipsec_ref	*tdb_srcid;	/* Source ID for this SA */
 	struct ipsec_ref	*tdb_dstid;	/* Destination ID for this SA */
-	struct ipsec_ref	*tdb_local_auth;/* Local authentication material */
-	struct ipsec_ref	*tdb_remote_auth;/* Remote authentication material */
 
 	u_int32_t	tdb_mtu;	/* MTU at this point in the chain */
 	u_int64_t	tdb_mtutimeout;	/* When to ignore this entry */
@@ -505,7 +489,7 @@ uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,
 		union sockaddr_union *, u_int8_t, int *);
 struct	tdb *gettdb(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
 struct	tdb *gettdbbydst(u_int, union sockaddr_union *, u_int8_t,
-		struct ipsec_ref *, struct ipsec_ref *, struct ipsec_ref *,
+		struct ipsec_ref *, struct ipsec_ref *,
 		struct sockaddr_encap *, struct sockaddr_encap *);
 struct	tdb *gettdbbysrc(u_int, union sockaddr_union *, u_int8_t,
 		struct ipsec_ref *, struct ipsec_ref *,
@@ -603,8 +587,7 @@ void	ipsp_reffree(struct ipsec_ref *);
 void	ipsp_skipcrypto_mark(struct tdb_ident *);
 void	ipsp_skipcrypto_unmark(struct tdb_ident *);
 int	ipsp_aux_match(struct tdb *, struct ipsec_ref *, struct ipsec_ref *,
-	    struct ipsec_ref *, struct ipsec_ref *, struct sockaddr_encap *,
-	    struct sockaddr_encap *);
+	    struct sockaddr_encap *, struct sockaddr_encap *);
 
 int	ipsec_common_input(struct mbuf *, int, int, int, int, int);
 int	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int,

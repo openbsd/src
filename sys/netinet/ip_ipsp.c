@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.208 2015/04/13 16:52:26 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.209 2015/04/14 12:22:15 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -324,17 +324,15 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 }
 
 /*
- * Check that credentials and IDs match. Return true if so. The t*
- * range of arguments contains information from TDBs; the p*
- * range of arguments contains information from policies or
- * already established TDBs.
+ * Check that IDs match. Return true if so. The t* range of
+ * arguments contains information from TDBs; the p* range of
+ * arguments contains information from policies or already
+ * established TDBs.
  */
 int
 ipsp_aux_match(struct tdb *tdb,
     struct ipsec_ref *psrcid,
     struct ipsec_ref *pdstid,
-    struct ipsec_ref *plcred,
-    struct ipsec_ref *prcred,
     struct sockaddr_encap *pfilter,
     struct sockaddr_encap *pfiltermask)
 {
@@ -346,16 +344,6 @@ ipsp_aux_match(struct tdb *tdb,
 	if (pdstid != NULL)
 		if (tdb->tdb_dstid == NULL ||
 		    !ipsp_ref_match(tdb->tdb_dstid, pdstid))
-			return 0;
-
-	if (plcred != NULL)
-		if (tdb->tdb_local_cred == NULL ||
-		   !ipsp_ref_match(tdb->tdb_local_cred, plcred))
-			return 0;
-
-	if (prcred != NULL)
-		if (tdb->tdb_remote_cred == NULL ||
-		    !ipsp_ref_match(tdb->tdb_remote_cred, prcred))
 			return 0;
 
 	/* Check for filter matches. */
@@ -385,8 +373,7 @@ ipsp_aux_match(struct tdb *tdb,
 struct tdb *
 gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
     struct ipsec_ref *srcid, struct ipsec_ref *dstid,
-    struct ipsec_ref *local_cred, struct sockaddr_encap *filter,
-    struct sockaddr_encap *filtermask)
+    struct sockaddr_encap *filter, struct sockaddr_encap *filtermask)
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
@@ -401,9 +388,9 @@ gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (!memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))) {
-			/* Do IDs and local credentials match ? */
-			if (!ipsp_aux_match(tdbp, srcid, dstid,
-			    local_cred, NULL, filter, filtermask))
+			/* Do IDs match ? */
+			if (!ipsp_aux_match(tdbp, srcid, dstid, filter,
+			    filtermask))
 				continue;
 			break;
 		}
@@ -434,8 +421,8 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (!memcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))) {
 			/* Check whether IDs match */
-			if (!ipsp_aux_match(tdbp, dstid, srcid, NULL, NULL,
-			    filter, filtermask))
+			if (!ipsp_aux_match(tdbp, dstid, srcid, filter,
+			    filtermask))
 				continue;
 			break;
 		}
@@ -824,16 +811,6 @@ tdb_free(struct tdb *tdbp)
 	timeout_del(&tdbp->tdb_stimer_tmo);
 	timeout_del(&tdbp->tdb_sfirst_tmo);
 
-	if (tdbp->tdb_local_auth) {
-		ipsp_reffree(tdbp->tdb_local_auth);
-		tdbp->tdb_local_auth = NULL;
-	}
-
-	if (tdbp->tdb_remote_auth) {
-		ipsp_reffree(tdbp->tdb_remote_auth);
-		tdbp->tdb_remote_auth = NULL;
-	}
-
 	if (tdbp->tdb_srcid) {
 		ipsp_reffree(tdbp->tdb_srcid);
 		tdbp->tdb_srcid = NULL;
@@ -842,16 +819,6 @@ tdb_free(struct tdb *tdbp)
 	if (tdbp->tdb_dstid) {
 		ipsp_reffree(tdbp->tdb_dstid);
 		tdbp->tdb_dstid = NULL;
-	}
-
-	if (tdbp->tdb_local_cred) {
-		ipsp_reffree(tdbp->tdb_local_cred);
-		tdbp->tdb_local_cred = NULL;
-	}
-
-	if (tdbp->tdb_remote_cred) {
-		ipsp_reffree(tdbp->tdb_remote_cred);
-		tdbp->tdb_remote_cred = NULL;
 	}
 
 #if NPF > 0

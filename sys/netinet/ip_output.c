@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.276 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.277 2015/04/14 12:22:15 mikeb Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1145,16 +1145,8 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 #endif
 			break;
 
-		case IP_IPSEC_REMOTE_CRED:
-		case IP_IPSEC_REMOTE_AUTH:
-			/* Can't set the remote credential or key */
-			error = EOPNOTSUPP;
-			break;
-
 		case IP_IPSEC_LOCAL_ID:
 		case IP_IPSEC_REMOTE_ID:
-		case IP_IPSEC_LOCAL_CRED:
-		case IP_IPSEC_LOCAL_AUTH:
 #ifndef IPSEC
 			error = EOPNOTSUPP;
 #else
@@ -1175,28 +1167,11 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 						inp->inp_ipo->ipo_srcid = NULL;
 					}
 					break;
-
 				case IP_IPSEC_REMOTE_ID:
 					if (inp->inp_ipo != NULL &&
 					    inp->inp_ipo->ipo_dstid != NULL) {
 						ipsp_reffree(inp->inp_ipo->ipo_dstid);
 						inp->inp_ipo->ipo_dstid = NULL;
-					}
-					break;
-
-				case IP_IPSEC_LOCAL_CRED:
-					if (inp->inp_ipo != NULL &&
-					    inp->inp_ipo->ipo_local_cred != NULL) {
-						ipsp_reffree(inp->inp_ipo->ipo_local_cred);
-						inp->inp_ipo->ipo_local_cred = NULL;
-					}
-					break;
-
-				case IP_IPSEC_LOCAL_AUTH:
-					if (inp->inp_ipo != NULL &&
-					    inp->inp_ipo->ipo_local_auth != NULL) {
-						ipsp_reffree(inp->inp_ipo->ipo_local_auth);
-						inp->inp_ipo->ipo_local_auth = NULL;
 					}
 					break;
 				}
@@ -1259,28 +1234,6 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 					if (inp->inp_ipo->ipo_dstid != NULL)
 						ipsp_reffree(inp->inp_ipo->ipo_dstid);
 					inp->inp_ipo->ipo_dstid = ipr;
-				}
-				break;
-			case IP_IPSEC_LOCAL_CRED:
-				if (ipr->ref_type < IPSP_CRED_KEYNOTE ||
-				    ipr->ref_type > IPSP_CRED_X509) {
-					free(ipr, M_CREDENTIALS, iprlen);
-					error = EINVAL;
-				} else {
-					if (inp->inp_ipo->ipo_local_cred != NULL)
-						ipsp_reffree(inp->inp_ipo->ipo_local_cred);
-					inp->inp_ipo->ipo_local_cred = ipr;
-				}
-				break;
-			case IP_IPSEC_LOCAL_AUTH:
-				if (ipr->ref_type < IPSP_AUTH_PASSPHRASE ||
-				    ipr->ref_type > IPSP_AUTH_RSA) {
-					free(ipr, M_CREDENTIALS, iprlen);
-					error = EINVAL;
-				} else {
-					if (inp->inp_ipo->ipo_local_auth != NULL)
-						ipsp_reffree(inp->inp_ipo->ipo_local_auth);
-					inp->inp_ipo->ipo_local_auth = ipr;
 				}
 				break;
 			}
@@ -1461,10 +1414,6 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 		case IP_IPSEC_LOCAL_ID:
 		case IP_IPSEC_REMOTE_ID:
-		case IP_IPSEC_LOCAL_CRED:
-		case IP_IPSEC_REMOTE_CRED:
-		case IP_IPSEC_LOCAL_AUTH:
-		case IP_IPSEC_REMOTE_AUTH:
 #ifndef IPSEC
 			error = EOPNOTSUPP;
 #else
@@ -1481,24 +1430,6 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				if (inp->inp_ipo != NULL)
 					ipr = inp->inp_ipo->ipo_dstid;
 				opt16val = IPSP_IDENTITY_NONE;
-				break;
-			case IP_IPSEC_LOCAL_CRED:
-				if (inp->inp_ipo != NULL)
-					ipr = inp->inp_ipo->ipo_local_cred;
-				opt16val = IPSP_CRED_NONE;
-				break;
-			case IP_IPSEC_REMOTE_CRED:
-				ipr = inp->inp_ipsec_remotecred;
-				opt16val = IPSP_CRED_NONE;
-				break;
-			case IP_IPSEC_LOCAL_AUTH:
-				if (inp->inp_ipo != NULL)
-					ipr = inp->inp_ipo->ipo_local_auth;
-				opt16val = IPSP_AUTH_NONE;
-				break;
-			case IP_IPSEC_REMOTE_AUTH:
-				ipr = inp->inp_ipsec_remoteauth;
-				opt16val = IPSP_AUTH_NONE;
 				break;
 			}
 			if (ipr == NULL)
