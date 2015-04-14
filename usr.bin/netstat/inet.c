@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.140 2015/02/12 01:49:02 claudio Exp $	*/
+/*	$OpenBSD: inet.c,v 1.141 2015/04/14 17:53:13 mikeb Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1445,8 +1445,6 @@ inpcb_dump(u_long off, short protocol, int af)
 	pp("%p", inp_tdb_in, ", ");
 	pp("%p", inp_tdb_out, ", ");
 	pp("%p", inp_ipo, "\n ");
-	pp("%p", inp_ipsec_remotecred, ", ");
-	pp("%p", inp_ipsec_remoteauth, "\n ");
 	p("%d", inp_cksum6, "\n ");
 	pp("%p", inp_icmp6filt, "\n ");
 	pp("%p", inp_pf_sk, "\n ");
