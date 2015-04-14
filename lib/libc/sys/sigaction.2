@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.68 2014/12/14 07:42:50 schwarze Exp $
+.\"	$OpenBSD: sigaction.2,v 1.69 2015/04/14 17:05:28 millert Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: December 14 2014 $
+.Dd $Mdocdate: April 14 2015 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -352,7 +352,7 @@ If the
 option is enabled, the canonical way to declare it is:
 .Bd -literal -offset indent
 void
-handler(int sig, siginfo_t *sip, struct sigcontext *scp)
+handler(int sig, siginfo_t *sip, void *ctx)
 .Ed
 .Pp
 Here
@@ -375,13 +375,19 @@ The function specified in
 .Fa sa_sigaction
 will be called instead of the function specified by
 .Fa sa_handler
-(Note that in some implementations these are in fact the same).
-.Fa scp
-is a pointer to the
+(note that in some implementations these are in fact the same).
+.Fa ctx
+may be cast to a pointer to
+.Fa ucontext_t
+which can be used to restore the thread's context from before the signal.
+On
+.Ox ,
+.Fa ucontext_t
+is an alias for the
 .Fa sigcontext
-structure (defined in
-.In signal.h ) ,
-used to restore the context from before the signal.
+structure defined in
+.In signal.h .
+The contents of this structure are machine-dependent.
 .Sh ERRORS
 .Fn sigaction
 will fail and no new signal handler will be installed if one
