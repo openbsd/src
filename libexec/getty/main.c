@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2015/01/16 05:53:49 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2015/04/14 02:24:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -185,7 +185,15 @@ main(int argc, char *argv[])
 	 * J. Gettys - MIT Project Athena.
 	 */
 	if (argc <= 2 || strcmp(argv[2], "-") == 0) {
-		snprintf(ttyn, sizeof ttyn, "%s", ttyname(0));
+		if ((tname = ttyname(0)) == NULL) {
+			syslog(LOG_ERR, "stdin: %m");
+			exit(1);
+		}
+		if (strlcpy(ttyn, tname, sizeof(ttyn)) >= sizeof(ttyn)) {
+			errno = ENAMETOOLONG;
+			syslog(LOG_ERR, "%s: %m", tname);
+			exit(1);
+		}
 	} else {
 		int i;
 
