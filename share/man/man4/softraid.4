@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.40 2015/04/11 16:37:34 jsing Exp $
+.\"	$OpenBSD: softraid.4,v 1.41 2015/04/14 19:10:13 miod Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 11 2015 $
+.Dd $Mdocdate: April 14 2015 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -202,11 +202,6 @@ The RAID 5 discipline does not initialize parity upon creation, instead parity
 is only updated upon write.
 .Pp
 Currently there is no automated mechanism to recover from failed disks.
-.Pp
-Sparc hardware needs to use fstype
-.Dq 4.2BSD
-instead of
-.Dq RAID .
 .Pp
 Certain RAID levels can protect against some data loss
 due to component failure.
