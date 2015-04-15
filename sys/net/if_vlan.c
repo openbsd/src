@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.116 2015/04/13 08:52:51 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.117 2015/04/15 09:58:44 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -277,6 +277,7 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 	struct vlan_taghash	*tagh;
 	u_int			 tag;
 	u_int16_t		 etype;
+	struct ether_header	*eh1;
 
 	if (m->m_flags & M_VLANTAG) {
 		etype = ETHERTYPE_VLAN;
@@ -363,8 +364,14 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 		}
 	}
 
+	M_PREPEND(m, sizeof(*eh1), M_DONTWAIT);
+	if (m == NULL)
+		return (-1);
+	eh1 = mtod(m, struct ether_header *);
+	memmove(eh1, eh, sizeof(*eh1));
+
 	ifv->ifv_if.if_ipackets++;
-	ether_input(m, eh);
+	ether_input_mbuf(&ifv->ifv_if, m);
 
 	return (0);
 }
