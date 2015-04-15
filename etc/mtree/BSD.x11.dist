@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.37 2014/08/25 19:15:42 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.38 2015/04/15 07:41:53 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -68,6 +68,8 @@
                     ..
                     pixmaps
                     ..
+                ..
+                epoxy
                 ..
                 fontconfig
                 ..
