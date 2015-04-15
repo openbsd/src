@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/11 18:25:50 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2015/04/15 21:29:15 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -105,6 +105,13 @@ run-regress-frag6-opt: addr.py
 	@echo '\n======== $@ ========'
 	@echo Check ping6 destination option reassembly
 	${SUDO} ${PYTHON}frag6_opt.py
+
+# The ethernet frame has some padding that must be ignored by reassembly
+TARGETS +=	frag6-padding
+run-regress-frag6-padding: addr.py
+	@echo '\n======== $@ ========'
+	@echo Check ping6 ethernet padding
+	${SUDO} ${PYTHON}frag6_padding.py
 
 # fragmented packet with head overlapping first fragment
 TARGETS +=	frag6-overhead0
