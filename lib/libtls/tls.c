@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.10 2015/04/15 16:05:23 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.11 2015/04/15 16:08:43 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -246,11 +246,8 @@ tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret, const char *prefix)
 	ssl_err = SSL_get_error(ssl_conn, ssl_ret);
 	switch (ssl_err) {
 	case SSL_ERROR_NONE:
-		return (0);
-
 	case SSL_ERROR_ZERO_RETURN:
-		tls_set_error(ctx, "%s failed: TLS connection closed", prefix);
-		return (-1);
+		return (0);
 
 	case SSL_ERROR_WANT_READ:
 		return (TLS_READ_AGAIN);
@@ -301,6 +298,8 @@ tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
 		return (0);
 	}
 
+	*outlen = 0;
+
 	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read"); 
 }
 
@@ -319,6 +318,8 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 		*outlen = (size_t)ssl_ret;
 		return (0);
 	}
+
+	*outlen = 0;
 
 	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write"); 
 }
