@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.133 2015/02/10 21:56:09 miod Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.134 2015/04/15 09:48:18 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -619,15 +619,15 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 		*(int *)data = dev->buf_pgid;
 		return 0;
 	case DRM_IOCTL_VERSION:
-		return (drm_version(dev, data, file_priv));
+		return -drm_version(dev, data, file_priv);
 	case DRM_IOCTL_GET_UNIQUE:
-		return (drm_getunique(dev, data, file_priv));
+		return -drm_getunique(dev, data, file_priv);
 	case DRM_IOCTL_GET_MAGIC:
-		return (drm_getmagic(dev, data, file_priv));
+		return -drm_getmagic(dev, data, file_priv);
 	case DRM_IOCTL_WAIT_VBLANK:
-		return (drm_wait_vblank(dev, data, file_priv));
+		return -drm_wait_vblank(dev, data, file_priv);
 	case DRM_IOCTL_MODESET_CTL:
-		return (drm_modeset_ctl(dev, data, file_priv));
+		return -drm_modeset_ctl(dev, data, file_priv);
 	case DRM_IOCTL_GEM_CLOSE:
 		return -drm_gem_close_ioctl(dev, data, file_priv);
 
@@ -652,11 +652,11 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 	if (file_priv->authenticated == 1) {
 		switch (cmd) {
 		case DRM_IOCTL_GEM_FLINK:
-			return (drm_gem_flink_ioctl(dev, data, file_priv));
+			return -drm_gem_flink_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_GEM_OPEN:
 			return -drm_gem_open_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_GET_CAP:
-			return (drm_getcap(dev, data, file_priv));
+			return -drm_getcap(dev, data, file_priv);
 		}
 	}
 
@@ -664,13 +664,13 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 	if (file_priv->master == 1) {
 		switch(cmd) {
 		case DRM_IOCTL_SET_VERSION:
-			return (drm_setversion(dev, data, file_priv));
+			return -drm_setversion(dev, data, file_priv);
 		case DRM_IOCTL_IRQ_BUSID:
-			return (drm_irq_by_busid(dev, data, file_priv));
+			return -drm_irq_by_busid(dev, data, file_priv);
 		case DRM_IOCTL_AUTH_MAGIC:
-			return (drm_authmagic(dev, data, file_priv));
+			return -drm_authmagic(dev, data, file_priv);
 		case DRM_IOCTL_CONTROL:
-			return (drm_control(dev, data, file_priv));
+			return -drm_control(dev, data, file_priv);
 		case DRM_IOCTL_ADD_DRAW:
 		case DRM_IOCTL_RM_DRAW:
 		case DRM_IOCTL_UPDATE_DRAW:
@@ -773,6 +773,8 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	mtx_leave(&dev->quiesce_mtx);
 
 	error = drm_do_ioctl(dev, minor(kdev), cmd, data);
+	if (error < 0 && error != ERESTART && error != EJUSTRETURN)
+		printf("%s: cmd 0x%lx errno %d\n", __func__, cmd, error);
 
 	mtx_enter(&dev->quiesce_mtx);
 	dev->quiesce_count--;
@@ -1008,7 +1010,7 @@ drm_getunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	if (u->unique_len >= dev->unique_len) {
 		if (DRM_COPY_TO_USER(u->unique, dev->unique, dev->unique_len))
-			return EFAULT;
+			return -EFAULT;
 	}
 	u->unique_len = dev->unique_len;
 
@@ -1039,7 +1041,7 @@ drm_getcap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		req->value = drm_timestamp_monotonic;
 		break;
 	default:
-		return EINVAL;
+		return -EINVAL;
 	}
 	return 0;
 }
@@ -1059,7 +1061,7 @@ drm_version(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	name##_len = strlen( value );					\
 	if ( len && name ) {						\
 		if ( DRM_COPY_TO_USER( name, value, len ) )		\
-			return EFAULT;				\
+			return -EFAULT;				\
 	}
 
 	version->version_major = dev->driver->major;
@@ -1096,7 +1098,7 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (ver.drm_di_major != -1) {
 		if (ver.drm_di_major != DRM_IF_MAJOR || ver.drm_di_minor < 1 ||
 		    ver.drm_di_minor > DRM_IF_MINOR) {
-			return EINVAL;
+			return -EINVAL;
 		}
 		if_version = DRM_IF_VERSION(ver.drm_di_major, ver.drm_dd_minor);
 		dev->if_version = imax(if_version, dev->if_version);
@@ -1106,7 +1108,7 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		if (ver.drm_dd_major != dev->driver->major ||
 		    ver.drm_dd_minor < 0 ||
 		    ver.drm_dd_minor > dev->driver->minor)
-			return EINVAL;
+			return -EINVAL;
 	}
 
 	return 0;
@@ -1199,7 +1201,7 @@ drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 
 	DRM_DEBUG("%u\n", auth->magic);
-	return (0);
+	return 0;
 }
 
 /**
@@ -1210,12 +1212,12 @@ drm_authmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_file	*p;
 	struct drm_auth	*auth = data;
-	int		 ret = EINVAL;
+	int		 ret = -EINVAL;
 
 	DRM_DEBUG("%u\n", auth->magic);
 
 	if (auth->magic == 0)
-		return (ret);
+		return ret;
 
 	mutex_lock(&dev->struct_mutex);
 	SPLAY_FOREACH(p, drm_file_tree, &dev->files) {
@@ -1228,7 +1230,7 @@ drm_authmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 	mutex_unlock(&dev->struct_mutex);
 
-	return (ret);
+	return ret;
 }
 
 struct uvm_pagerops drm_pgops = {
@@ -1518,11 +1520,11 @@ drm_gem_flink_ioctl(struct drm_device *dev, void *data,
 	struct drm_gem_object	*obj;
 
 	if (!(dev->driver->flags & DRIVER_GEM))
-		return (ENODEV);
+		return -ENODEV;
 
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
 	if (obj == NULL)
-		return (ENOENT);
+		return -ENOENT;
 
 	mtx_enter(&dev->obj_name_lock);
 	if (!obj->name) {
@@ -1541,7 +1543,7 @@ again:
 
 	drm_unref(&obj->uobj);
 
-	return (0);
+	return 0;
 }
 
 /**

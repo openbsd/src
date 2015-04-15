@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.62 2015/04/12 03:54:10 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.63 2015/04/15 09:48:19 kettenis Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -336,14 +336,14 @@ int drm_irq_install(struct drm_device *dev)
 	int	ret;
 
 	if (dev->irq == 0 || dev->dev_private == NULL)
-		return (EINVAL);
+		return -EINVAL;
 
 	DRM_DEBUG("irq=%d\n", dev->irq);
 
 	mutex_lock(&dev->struct_mutex);
 	if (dev->irq_enabled) {
 		mutex_unlock(&dev->struct_mutex);
-		return (EBUSY);
+		return -EBUSY;
 	}
 	dev->irq_enabled = 1;
 	mutex_unlock(&dev->struct_mutex);
@@ -358,12 +358,12 @@ int drm_irq_install(struct drm_device *dev)
 			dev->driver->irq_postinstall(dev);
 	}
 
-	return (0);
+	return 0;
 err:
 	mutex_lock(&dev->struct_mutex);
 	dev->irq_enabled = 0;
 	mutex_unlock(&dev->struct_mutex);
-	return (ret);
+	return ret;
 }
 EXPORT_SYMBOL(drm_irq_install);
 
@@ -382,7 +382,7 @@ int drm_irq_uninstall(struct drm_device *dev)
 	mutex_lock(&dev->struct_mutex);
 	if (!dev->irq_enabled) {
 		mutex_unlock(&dev->struct_mutex);
-		return (EINVAL);
+		return -EINVAL;
 	}
 
 	dev->irq_enabled = 0;
@@ -408,7 +408,7 @@ int drm_irq_uninstall(struct drm_device *dev)
 
 	dev->driver->irq_uninstall(dev);
 
-	return (0);
+	return 0;
 }
 EXPORT_SYMBOL(drm_irq_uninstall);
 
@@ -430,7 +430,7 @@ int drm_control(struct drm_device *dev, void *data,
 
 	/* Handle drivers who used to require IRQ setup no longer does. */
 	if (!(dev->driver->flags & DRIVER_IRQ))
-		return (0);
+		return 0;
 
 	switch (ctl->func) {
 	case DRM_INST_HANDLER:
@@ -438,14 +438,14 @@ int drm_control(struct drm_device *dev, void *data,
 			return 0;
 		if (dev->if_version < DRM_IF_VERSION(1, 2) &&
 		    ctl->irq != dev->irq)
-			return (EINVAL);
-		return (drm_irq_install(dev));
+			return -EINVAL;
+		return drm_irq_install(dev);
 	case DRM_UNINST_HANDLER:
 		if (drm_core_check_feature(dev, DRIVER_MODESET))
 			return 0;
-		return (drm_irq_uninstall(dev));
+		return drm_irq_uninstall(dev);
 	default:
-		return (EINVAL);
+		return -EINVAL;
 	}
 }
 
