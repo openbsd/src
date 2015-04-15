@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.46 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.47 2015/04/15 16:43:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,6 +42,7 @@
 #include <limits.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,16 +77,19 @@ static char *basedir;				/* dir holding master.passwd */
 static int clean;				/* what to remove on cleanup */
 static int hasyp;				/* are we running YP? */
 
-void	cleanup(void);
-void	error(char *);
-void	errorc(int, char *);
-void	errorx(char *);
-void	cp(char *, char *, mode_t);
-void	mv(char *, char *);
-int	scan(FILE *, struct passwd *, int *);
-void	usage(void);
-char	*changedir(char *path, char *dir);
-void	db_store(FILE *, FILE *, DB *, DB *,struct passwd *, int, char *, uid_t);
+void		cleanup(void);
+__dead void	fatal(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+__dead void	fatalc(int, const char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+__dead void	fatalx(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+void		cp(char *, char *, mode_t);
+void		mv(char *, char *);
+int		scan(FILE *, struct passwd *, int *);
+void		usage(void);
+char		*changedir(char *path, char *dir);
+void		db_store(FILE *, FILE *, DB *, DB *,struct passwd *, int, char *, uid_t);
 
 int
 main(int argc, char **argv)
@@ -165,7 +169,7 @@ main(int argc, char **argv)
 		err(1, NULL);
 	/* Open the original password file */
 	if (!(fp = fopen(pname, "r")))
-		error(pname);
+		fatal("%s", pname);
 
 	/* Check only if password database is valid */
 	if (checkonly) {
@@ -177,7 +181,7 @@ main(int argc, char **argv)
 	}
 
 	if (fstat(fileno(fp), &st) == -1)
-		error(pname);
+		fatal("%s", pname);
 
 	/* Tweak openinfo values for large passwd files. */
 	if (st.st_size > (off_t)100*1024)
@@ -189,7 +193,7 @@ main(int argc, char **argv)
 	if (username) {
 		dp = dbopen(_PATH_MP_DB, O_RDONLY, 0, DB_HASH, NULL);
 		if (dp == NULL)
-			error(_PATH_MP_DB);
+			fatal(_PATH_MP_DB);
 		buf[0] = _PW_KEYBYNAME;
 		strlcpy(buf + 1, username, sizeof(buf) - 1);
 		key.data = (u_char *)buf;
@@ -219,7 +223,7 @@ main(int argc, char **argv)
 		    O_RDWR|O_CREAT|O_EXCL, PERM_SECURE, DB_HASH, &openinfo);
 	}
 	if (!edp)
-		error(buf);
+		fatal("%s", buf);
 	if (fchown(edp->fd(edp), (uid_t)-1, shadow) != 0)
 		warn("%s: unable to set group to %s", _PATH_SMP_DB,
 		    SHADOW_GROUP);
@@ -240,7 +244,7 @@ main(int argc, char **argv)
 			    DB_HASH, &openinfo);
 		}
 		if (dp == NULL)
-			error(buf);
+			fatal("%s", buf);
 		clean |= FILE_INSECURE;
 	} else
 		dp = NULL;
@@ -256,9 +260,9 @@ main(int argc, char **argv)
 		(void)snprintf(buf, sizeof(buf), "%s.orig", pname);
 		if ((tfd = open(buf,
 		    O_WRONLY|O_CREAT|O_EXCL, PERM_INSECURE)) < 0)
-			error(buf);
+			fatal("%s", buf);
 		if ((oldfp = fdopen(tfd, "w")) == NULL)
-			error(buf);
+			fatal("%s", buf);
 		clean |= FILE_ORIG;
 	}
 
@@ -296,25 +300,25 @@ main(int argc, char **argv)
 		data.size = 0;
 
 		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
+			fatal("put");
 
 		if (dp && (dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
+			fatal("put");
 	}
 
 	if ((edp->close)(edp))
-		error("close edp");
+		fatal("close edp");
 	if (dp && (dp->close)(dp))
-		error("close dp");
+		fatal("close dp");
 	if (makeold) {
 		if (fclose(oldfp) == EOF)
-			error("close old");
+			fatal("close old");
 	}
 
 	/* Set master.passwd permissions, in case caller forgot. */
 	(void)fchmod(fileno(fp), S_IRUSR|S_IWUSR);
 	if (fclose(fp) != 0)
-		error("fclose");
+		fatal("fclose");
 
 	/* Install as the real password files. */
 	if (!secureonly) {
@@ -364,7 +368,7 @@ scan(FILE *fp, struct passwd *pw, int *flags)
 	*flags = 0;
 	if (!pw_scan(line, pw, flags)) {
 		warnx("at line #%d", lcnt);
-fmt:		errorc(EFTYPE, pname);
+fmt:		fatalc(EFTYPE, "%s", pname);
 	}
 
 	return (1);
@@ -377,24 +381,16 @@ cp(char *from, char *to, mode_t mode)
 	int from_fd, rcount, to_fd, wcount;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0)
-		error(from);
+		fatal("%s", from);
 	if ((to_fd = open(to, O_WRONLY|O_CREAT|O_EXCL, mode)) < 0)
-		error(to);
+		fatal("%s", to);
 	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 		wcount = write(to_fd, buf, rcount);
-		if (rcount != wcount || wcount == -1) {
-			int sverrno = errno;
-
-			(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-			errorc(sverrno, buf);
-		}
+		if (rcount != wcount || wcount == -1)
+			fatal("%s to %s", from, to);
 	}
-	if (rcount < 0) {
-		int sverrno = errno;
-
-		(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-		errorc(sverrno, buf);
-	}
+	if (rcount < 0)
+		fatal("%s to %s", from, to);
 	close(to_fd);
 	close(from_fd);
 }
@@ -402,41 +398,43 @@ cp(char *from, char *to, mode_t mode)
 void
 mv(char *from, char *to)
 {
-	char buf[PATH_MAX * 2];
-
-	if (rename(from, to)) {
-		int sverrno = errno;
-
-		(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-		errorc(sverrno, buf);
-	}
+	if (rename(from, to))
+		fatal("%s to %s", from, to);
 }
 
 void
-error(char *name)
+fatal(const char *fmt, ...)
 {
+	va_list ap;
 
-	warn("%s", name);
+	va_start(ap, fmt);
+	vwarn(fmt, ap);
+	va_end(ap);
 	cleanup();
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 void
-errorc(int code, char *name)
+fatalc(int code, const char *fmt, ...)
 {
+	va_list ap;
 
-	warnc(code, "%s", name);
+	va_start(ap, fmt);
+	vwarnc(code, fmt, ap);
+	va_end(ap);
 	cleanup();
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 void
-errorx(char *name)
+fatalx(const char *fmt, ...)
 {
+	va_list ap;
 
-	warnx("%s", name);
+	va_start(ap, fmt);
+	vwarnx(fmt, ap);
 	cleanup();
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 void
@@ -465,7 +463,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: pwd_mkdb [-c] [-p | -s] [-d directory] [-u username] file\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 char *
@@ -523,7 +521,7 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 				    pw->pw_name, pw->pw_uid, pw->pw_gid,
 				    pw->pw_gecos, pw->pw_dir, pw->pw_shell)
 				    == EOF)
-					error("write old");
+					fatal("write old");
 		}
 
 		/* Are we updating a specific record? */
@@ -586,7 +584,7 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 
 		/* Write the secure record. */
 		if ((edp->put)(edp, &key, &data, dbmode) == -1)
-			error("put");
+			fatal("put");
 
 		if (dp == NULL)
 			continue;
@@ -604,11 +602,11 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 
 		/* Write the insecure record. */
 		if ((dp->put)(dp, &key, &data, dbmode) == -1)
-			error("put");
+			fatal("put");
 	}
 	if (firsttime) {
 		firsttime = 0;
 		if (username && !found && olduid != UID_MAX)
-			errorx("can't find user in master.passwd");
+			fatalx("can't find user in master.passwd");
 	}
 }
