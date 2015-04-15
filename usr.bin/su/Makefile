@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.8 2001/05/29 21:40:35 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 2015/04/15 02:10:25 deraadt Exp $
 
 PROG=	su
 BINOWN=	root
 BINMODE=4555
-
+COPTS=-Wall
 .include <bsd.prog.mk>
