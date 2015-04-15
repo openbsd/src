@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.66 2015/01/16 06:40:13 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.67 2015/04/15 02:12:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -118,7 +118,7 @@ main(int argc, char **argv)
 	prio = getpriority(PRIO_PROCESS, 0);
 	if (errno)
 		prio = 0;
-	(void)setpriority(PRIO_PROCESS, 0, -2);
+	setpriority(PRIO_PROCESS, 0, -2);
 	openlog("su", LOG_CONS, 0);
 
 	if ((as = auth_open()) == NULL) {
@@ -254,8 +254,8 @@ main(int argc, char **argv)
 				if (login_getcapbool(lc, "requirehome", 0)) {
 					auth_err(as, 1, "%s", pwd->pw_dir);
 				} else {
-					(void)printf("No home directory %s!\n", pwd->pw_dir);
-					(void)printf("Logging in with home = \"/\".\n");
+					printf("No home directory %s!\n", pwd->pw_dir);
+					printf("Logging in with home = \"/\".\n");
 					if (chdir("/") < 0)
 						auth_err(as, 1, "/");
 				}
@@ -305,7 +305,7 @@ main(int argc, char **argv)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
 		    username, user, ontty());
 
-	(void)setpriority(PRIO_PROCESS, 0, prio);
+	setpriority(PRIO_PROCESS, 0, prio);
 	if (emlogin) {
 		flags = LOGIN_SETALL & ~LOGIN_SETPATH;
 		/*
@@ -417,7 +417,7 @@ getloginname(void)
 	int ch;
 
 	for (;;) {
-		(void)printf("login: ");
+		printf("login: ");
 		for (p = nbuf; (ch = getchar()) != '\n'; ) {
 			if (ch == EOF)
 				return (NULL);
@@ -426,7 +426,7 @@ getloginname(void)
 		}
 		if (p > nbuf) {
 			if (nbuf[0] == '-') {
-				(void)fprintf(stderr,
+				fprintf(stderr,
 				    "login names may not start with '-'.\n");
 			} else {
 				*p = '\0';
