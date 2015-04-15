@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.6 2015/04/14 12:56:36 jsing Exp $ */
+/* $OpenBSD: s_time.c,v 1.7 2015/04/15 16:33:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,6 +94,8 @@
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define SECONDS	30
+extern int verify_depth;
+extern int verify_error;
 
 static void s_time_usage(void);
 static SSL *doConnection(SSL * scon);
@@ -300,7 +302,15 @@ s_time_main(int argc, char **argv)
 
 	if (s_time_config.bugs)
 		SSL_CTX_set_options(tm_ctx, SSL_OP_ALL);
-	SSL_CTX_set_cipher_list(tm_ctx, s_time_config.cipher);
+
+	if (s_time_config.cipher != NULL) {
+		if (!SSL_CTX_set_cipher_list(tm_ctx, s_time_config.cipher)) {
+			BIO_printf(bio_err, "error setting cipher list\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
 	if (!set_cert_stuff(tm_ctx, s_time_config.certfile,
 	    s_time_config.keyfile))
 		goto end;
@@ -315,12 +325,7 @@ s_time_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		/* goto end; */
 	}
-	if (s_time_config.cipher == NULL)
-		s_time_config.cipher = getenv("SSL_CIPHER");
 
-	if (s_time_config.cipher == NULL) {
-		fprintf(stderr, "No CIPHER specified\n");
-	}
 	if (!(s_time_config.perform & 1))
 		goto next;
 	printf("Collecting connection statistics for %d seconds\n",
