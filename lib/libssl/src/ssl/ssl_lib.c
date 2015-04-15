@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.102 2015/03/27 12:26:41 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.103 2015/04/15 16:25:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1410,11 +1410,10 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p)
 }
 
 STACK_OF(SSL_CIPHER) *
-ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
-    STACK_OF(SSL_CIPHER) **skp)
+ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num)
 {
 	const SSL_CIPHER	*c;
-	STACK_OF(SSL_CIPHER)	*sk;
+	STACK_OF(SSL_CIPHER)	*sk = NULL;
 	int			 i;
 	unsigned long		 cipher_id;
 	uint16_t		 cipher_value;
@@ -1428,13 +1427,10 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 		    SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 		return (NULL);
 	}
-	if (skp == NULL || *skp == NULL) {
-		sk = sk_SSL_CIPHER_new_null(); /* change perhaps later */
-		if (sk == NULL)
-			goto err;
-	} else {
-		sk = *skp;
-		sk_SSL_CIPHER_zero(sk);
+
+	if ((sk = sk_SSL_CIPHER_new_null()) == NULL) {
+		SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
+		goto err;
 	}
 
 	for (i = 0; i < num; i += SSL3_CIPHER_VALUE_SIZE) {
@@ -1486,13 +1482,11 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num,
 		}
 	}
 
-	if (skp != NULL)
-		*skp = sk;
 	return (sk);
 
 err:
-	if (skp == NULL || *skp == NULL)
-		sk_SSL_CIPHER_free(sk);
+	sk_SSL_CIPHER_free(sk);
+
 	return (NULL);
 }
 
