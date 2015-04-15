@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.249 2015/04/07 10:46:20 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.250 2015/04/15 15:14:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -745,20 +745,12 @@ carp_clone_create(ifc, unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = carp_ioctl;
 	ifp->if_start = carp_start;
-	ifp->if_output = carp_output;
-	ifp->if_type = IFT_CARP;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = ETHER_HDR_LEN;
-	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
-
-	if_alloc_sadl(ifp);
-	LIST_INIT(&sc->sc_ac.ac_multiaddrs);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
-#endif
+	ether_ifattach(ifp);
+	ifp->if_type = IFT_CARP;
+	ifp->if_output = carp_output;
 
 	/* Hook carp_addr_updated to cope with address and route changes. */
 	sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
@@ -805,19 +797,9 @@ int
 carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
-	struct arpcom *ac = (struct arpcom *)ifp;
-	struct ether_multi *enm;
 
 	carpdetach(sc);
-
-	/* XXX should be converted to ether_ifattach() and ether_ifdetach() */
-	for (enm = LIST_FIRST(&ac->ac_multiaddrs);
-	    enm != NULL;
-	    enm = LIST_FIRST(&ac->ac_multiaddrs)) {
-		LIST_REMOVE(enm, enm_list);
-		free(enm, M_IFMADDR, 0);
-	}
-
+	ether_ifdetach(ifp);
 	if_detach(ifp);
 	carp_destroy_vhosts(ifp->if_softc);
 	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
