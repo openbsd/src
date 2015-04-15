@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.90 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.91 2015/04/15 03:52:45 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -389,7 +389,6 @@ pmap_map_ptes(struct pmap *pmap, pt_entry_t **ptepp, pd_entry_t ***pdeppp, paddr
 
 	*ptepp = PTE_BASE;
 	*pdeppp = normal_pdes;
-	return;
 }
 
 void
