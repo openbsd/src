@@ -77,7 +77,7 @@ func TestTLSBasic(t *testing.T) {
 	}
 	defer func() {
 		if err := tls.Close(); err != nil {
-			t.Logf("Close failed: %v", err)
+			t.Fatalf("Close failed: %v", err)
 		}
 	}()
 
