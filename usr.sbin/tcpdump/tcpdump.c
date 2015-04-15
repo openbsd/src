@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.68 2015/02/09 23:00:14 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.69 2015/04/15 02:32:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -197,10 +197,6 @@ pcap_list_linktypes(pcap_t *p)
 		pcap_print_linktype(dltlist[n]);
 	}
 }
-
-extern int optind;
-extern int opterr;
-extern char *optarg;
 
 int
 main(int argc, char **argv)
