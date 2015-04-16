@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg.conf.5,v 1.7 2015/04/16 14:11:29 espie Exp $
+.\"	$OpenBSD: pkg.conf.5,v 1.8 2015/04/16 19:59:28 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie
 .\"
@@ -76,13 +76,13 @@ Special sequences
 .Sq %c ,
 .Sq %m ,
 .Sq %v
-will be expanded to 
+will be expanded to
 .Sq package architecture ,
 .Sq OS version or snapshots ,
 .Sq full mirror path
 and
 .Sq OS version
-respectively, e.g,
+respectively, e.g.\&
 .Bd -literal -offset indent
 installpath = http://somesite/pub/OpenBSD/%c/packages/%a/
 installpath += http://othersite/%m/
