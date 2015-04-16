@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.184 2015/04/10 15:33:20 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.185 2015/04/16 14:23:48 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3392,7 +3392,7 @@ ehci_alloc_itd_chain(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	struct ehci_xfer *ex = (struct ehci_xfer *)xfer;
 	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
 	const uint32_t mps = UGETW(ed->wMaxPacketSize);
-	struct ehci_soft_itd *itd, *pitd = NULL;
+	struct ehci_soft_itd *itd = NULL, *pitd = NULL;
 	int i, j, nframes, uframes, ufrperframe;
 	int offs = 0, trans_count = 0;
 
@@ -3505,7 +3505,6 @@ ehci_alloc_itd_chain(struct ehci_softc *sc, struct usbd_xfer *xfer)
 		pitd = itd;
 	}
 
-	itd->xfer_next = NULL;
 	ex->itdend = itd;
 
 	return (0);
@@ -3517,7 +3516,7 @@ ehci_alloc_sitd_chain(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	struct ehci_xfer *ex = (struct ehci_xfer *)xfer;
 	struct usbd_device *hshub = xfer->device->myhsport->parent;
 	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
-	struct ehci_soft_itd *itd, *pitd = NULL;
+	struct ehci_soft_itd *itd = NULL, *pitd = NULL;
 	uint8_t smask, cmask, tp, uf;
 	int i, nframes, offs = 0;
 	uint32_t endp;
@@ -3588,7 +3587,6 @@ ehci_alloc_sitd_chain(struct ehci_softc *sc, struct usbd_xfer *xfer)
 		pitd = itd;
 	}
 
-	itd->xfer_next = NULL;
 	ex->itdend = itd;
 
 	return (0);
