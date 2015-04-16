@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.298 2015/03/24 12:00:39 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.299 2015/04/16 09:09:49 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -173,6 +173,7 @@ usb*	at xhci?
 # USB devices
 uhub*	at usb?			# USB Hubs
 uhub*	at uhub?		# USB Hubs
+ualea*	at uhub?		# Araneus Alea II TRNG
 umodem*	at uhub?		# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub?		# Handspring Visor

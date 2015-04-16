@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 2015/01/03 21:24:19 uaa Exp $
+#	$OpenBSD: GENERIC,v 1.99 2015/04/16 09:09:49 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -66,10 +66,11 @@ cdcef*		at usbf?		# CDC ethernet function
 
 # USB bus support
 usb*		at ohci?
-uhub*		at usb?			# USB Root Hub
-uhub*		at uhub?		# USB Hub
 
 # USB devices
+uhub*		at usb?			# USB Root Hub
+uhub*		at uhub?		# USB Hub
+ualea*		at uhub?		# Araneus Alea II TRNG
 umodem*		at uhub?		# USB Modems/Serial
 ucom*		at umodem?
 uvisor*		at uhub?		# Handspring Visor

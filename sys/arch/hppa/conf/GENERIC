@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.168 2015/01/03 21:24:19 uaa Exp $
+#	$OpenBSD: GENERIC,v 1.169 2015/04/16 09:09:49 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -119,6 +119,7 @@ url*	at uhub?		# Realtek RTL8150L based adapters
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 
 # untested USB devices
+ualea*	at uhub?		# Araneus Alea II TRNG
 umodem*	at uhub?		# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub?		# Handspring Visor
