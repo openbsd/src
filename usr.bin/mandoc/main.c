@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.137 2015/04/03 08:45:27 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.138 2015/04/16 16:35:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -552,10 +552,8 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 		return(0);
 
 found:
-	fprintf(stderr, "%s: outdated mandoc.db lacks %s(%s) entry,\n"
-	    "     consider running  # makewhatis %s\n",
-	    progname, name, sec, paths->paths[ipath]);
-
+	fprintf(stderr, "%s: outdated mandoc.db lacks %s(%s) entry, run "
+	    "makewhatis %s\n", progname, name, sec, paths->paths[ipath]);
 	*res = mandoc_reallocarray(*res, ++*ressz, sizeof(struct manpage));
 	page = *res + (*ressz - 1);
 	page->file = file;
