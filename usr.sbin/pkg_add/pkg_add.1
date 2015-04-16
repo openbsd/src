@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.130 2015/04/16 13:40:56 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.131 2015/04/16 14:11:29 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -759,9 +759,10 @@ implicitly by an empty directory name, or explicitly by a single
 period
 .Pq Ql \&./ .
 Special sequences
+.Sq %a ,
 .Sq %c ,
-.Sq %v ,
-.Sq %a 
+.Sq %m ,
+.Sq %v
 will be expanded with the same semantics as
 .Ar installpath
 in

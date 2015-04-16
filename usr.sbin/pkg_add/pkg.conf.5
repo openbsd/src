@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg.conf.5,v 1.6 2015/04/16 13:40:56 espie Exp $
+.\"	$OpenBSD: pkg.conf.5,v 1.7 2015/04/16 14:11:29 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie
 .\"
@@ -72,17 +72,20 @@ Used for accessing packages if the environment variable
 is not defined and no further options are defined.
 .Pp
 Special sequences
+.Sq %a ,
 .Sq %c ,
-.Sq %v ,
-.Sq %a 
+.Sq %m ,
+.Sq %v
 will be expanded to 
+.Sq package architecture ,
 .Sq OS version or snapshots ,
-.Sq OS version ,
+.Sq full mirror path
 and
-.Sq package architecture
+.Sq OS version
 respectively, e.g,
 .Bd -literal -offset indent
 installpath = http://somesite/pub/OpenBSD/%c/packages/%a/
+installpath += http://othersite/%m/
 .Ed
 .Pp
 should work.
