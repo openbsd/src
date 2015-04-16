@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.165 2015/04/14 14:20:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.166 2015/04/16 19:24:13 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -222,7 +222,6 @@ struct ipsec_policy {
 };
 
 #define	IPSP_POLICY_NONE	0x0000	/* No flags set */
-#define	IPSP_POLICY_SOCKET	0x0001	/* Socket-attached policy */
 #define	IPSP_POLICY_STATIC	0x0002	/* Static policy */
 
 #define	IPSP_IPSEC_USE		0	/* Use if existing, don't acquire */
@@ -231,16 +230,6 @@ struct ipsec_policy {
 #define	IPSP_PERMIT		3	/* Permit traffic through */
 #define	IPSP_DENY		4	/* Deny traffic */
 #define	IPSP_IPSEC_DONTACQ	5	/* Require, but don't acquire */
-
-/* Notification types */
-#define	NOTIFY_SOFT_EXPIRE	0	/* Soft expiration of SA */
-#define	NOTIFY_HARD_EXPIRE	1	/* Hard expiration of SA */
-#define	NOTIFY_REQUEST_SA	2	/* Establish an SA */
-
-#define	NOTIFY_SATYPE_CONF	1	/* SA should do encryption */
-#define	NOTIFY_SATYPE_AUTH	2	/* SA should do authentication */
-#define	NOTIFY_SATYPE_TUNNEL	4	/* SA should use tunneling */
-#define NOTIFY_SATYPE_COMP	5       /* SA (IPCA) should use compression */
 
 /* Identity types */
 #define	IPSP_IDENTITY_NONE		0
@@ -358,8 +347,6 @@ struct tdb {				/* tunnel descriptor block */
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
 
-	TAILQ_HEAD(tdb_inp_head_in, inpcb)	tdb_inp_in;
-	TAILQ_HEAD(tdb_inp_head_out, inpcb)	tdb_inp_out;
 	TAILQ_HEAD(tdb_policy_head, ipsec_policy)	tdb_policy_head;
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 };
@@ -455,36 +442,12 @@ extern struct comp_algo comp_algo_deflate;
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 extern TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head;
 
-/* Check if a given tdb has encryption, authentication and/or tunneling */
-#define	TDB_ATTRIB(x) (((x)->tdb_encalgxform ? NOTIFY_SATYPE_CONF : 0) | \
-		       ((x)->tdb_authalgxform ? NOTIFY_SATYPE_AUTH : 0) | \
-		       ((x)->tdb_compalgxform ? NOTIFY_SATYPE_COMP : 0))
-
-/* Traverse spi chain and get attributes */
-
-#define	SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP)				\
-do {									\
-	int s = splsoftnet();						\
-	struct tdb *tmptdb = (TDBP);					\
-									\
-	(have) = 0;							\
-	while (tmptdb && tmptdb->tdb_xform) {				\
-	        if (tmptdb == NULL || tmptdb->tdb_flags & TDBF_INVALID)	\
-			break;						\
-		(have) |= TDB_ATTRIB(tmptdb);				\
-		tmptdb = tmptdb->TDB_DIR;				\
-	}								\
-	splx(s);							\
-} while (/* CONSTCOND */ 0)
-
 /* Misc. */
-uint8_t	get_sa_require(struct inpcb *);
 #ifdef ENCDEBUG
 const char *ipsp_address(union sockaddr_union *, char *, socklen_t);
 #endif /* ENCDEBUG */
 
 /* TDB management routines */
-void	tdb_add_inp(struct tdb *, struct inpcb *, int);
 uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,
 		union sockaddr_union *, u_int8_t, int *);
 struct	tdb *gettdb(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
@@ -595,7 +558,6 @@ int	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int,
 int	ipsec_delete_policy(struct ipsec_policy *);
 ssize_t	ipsec_hdrsz(struct tdb *);
 void	ipsec_adjust_mtu(struct mbuf *, u_int32_t);
-struct	ipsec_policy *ipsec_add_policy(struct inpcb *, int, int);
 struct	ipsec_acquire *ipsec_get_acquire(u_int32_t);
 
 #endif /* _KERNEL */

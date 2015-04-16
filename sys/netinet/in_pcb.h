@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.88 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.89 2015/04/16 19:24:13 markus Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -131,15 +131,7 @@ struct inpcb {
 #define SL_ESP_TRANS      1             /* ESP transport level */
 #define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
 #define SL_IPCOMP         3             /* Compression level */
-	u_int     inp_secrequire:4,     /* Condensed State from above */
-	          inp_secresult:4;	/* Result from Key Management */
-#define SR_FAILED         1             /* Negotiation failed permanently */
-#define SR_SUCCESS        2             /* SA successfully established */
-#define SR_WAIT           3             /* Waiting for SA */
 	u_char	inp_ip_minttl;		/* minimum TTL or drop */
-	TAILQ_ENTRY(inpcb) inp_tdb_in_next, inp_tdb_out_next;
-	struct tdb     *inp_tdb_in, *inp_tdb_out;
-	struct ipsec_policy *inp_ipo;
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
 	int	inp_cksum6;

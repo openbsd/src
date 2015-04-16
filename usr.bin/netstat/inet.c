@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.141 2015/04/14 17:53:13 mikeb Exp $	*/
+/*	$OpenBSD: inet.c,v 1.142 2015/04/16 19:24:13 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1439,12 +1439,7 @@ inpcb_dump(u_long off, short protocol, int af)
 	p("%u", inp_seclevel[1], ", ");
 	p("%u", inp_seclevel[2], ", ");
 	p("%u", inp_seclevel[3], "\n ");
-	p("%#x", inp_secrequire, ", ");
-	p("%#x", inp_secresult, "\n ");
 	p("%u", inp_ip_minttl, "\n ");
-	pp("%p", inp_tdb_in, ", ");
-	pp("%p", inp_tdb_out, ", ");
-	pp("%p", inp_ipo, "\n ");
 	p("%d", inp_cksum6, "\n ");
 	pp("%p", inp_icmp6filt, "\n ");
 	pp("%p", inp_pf_sk, "\n ");

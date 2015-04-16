@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.210 2015/04/14 14:20:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.211 2015/04/16 19:24:13 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -745,10 +745,6 @@ tdb_alloc(u_int rdomain)
 
 	tdbp = malloc(sizeof(*tdbp), M_TDB, M_WAITOK | M_ZERO);
 
-	/* Init Incoming SA-Binding Queues. */
-	TAILQ_INIT(&tdbp->tdb_inp_out);
-	TAILQ_INIT(&tdbp->tdb_inp_in);
-
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
 	/* Record establishment time. */
@@ -770,7 +766,6 @@ void
 tdb_free(struct tdb *tdbp)
 {
 	struct ipsec_policy *ipo;
-	struct inpcb *inp;
 
 	if (tdbp->tdb_xform) {
 		(*(tdbp->tdb_xform->xf_zeroize))(tdbp);
@@ -781,19 +776,6 @@ tdb_free(struct tdb *tdbp)
 	/* Cleanup pfsync references */
 	pfsync_delete_tdb(tdbp);
 #endif
-
-	/* Cleanup inp references. */
-	for (inp = TAILQ_FIRST(&tdbp->tdb_inp_in); inp;
-	    inp = TAILQ_FIRST(&tdbp->tdb_inp_in)) {
-		TAILQ_REMOVE(&tdbp->tdb_inp_in, inp, inp_tdb_in_next);
-		inp->inp_tdb_in = NULL;
-	}
-
-	for (inp = TAILQ_FIRST(&tdbp->tdb_inp_out); inp;
-	    inp = TAILQ_FIRST(&tdbp->tdb_inp_out)) {
-		TAILQ_REMOVE(&tdbp->tdb_inp_out, inp, inp_tdb_out_next);
-		inp->inp_tdb_out = NULL;
-	}
 
 	/* Cleanup SPD references. */
 	for (ipo = TAILQ_FIRST(&tdbp->tdb_policy_head); ipo;
@@ -861,68 +843,6 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 	    sizeof(buf)), tdbp->tdb_sproto));
 
 	return EINVAL;
-}
-
-/*
- * Check which transformations are required.
- */
-u_int8_t
-get_sa_require(struct inpcb *inp)
-{
-	u_int8_t sareq = 0;
-
-	if (inp != NULL) {
-		sareq |= inp->inp_seclevel[SL_AUTH] >= IPSEC_LEVEL_USE ?
-		    NOTIFY_SATYPE_AUTH : 0;
-		sareq |= inp->inp_seclevel[SL_ESP_TRANS] >= IPSEC_LEVEL_USE ?
-		    NOTIFY_SATYPE_CONF : 0;
-		sareq |= inp->inp_seclevel[SL_ESP_NETWORK] >= IPSEC_LEVEL_USE ?
-		    NOTIFY_SATYPE_TUNNEL : 0;
-	} else {
-		/*
-		 * Code left for documentation purposes, these
-		 * conditions are always evaluated to false.
-		 */
-		sareq |= IPSEC_AUTH_LEVEL_DEFAULT >= IPSEC_LEVEL_USE ?
-		    NOTIFY_SATYPE_AUTH : 0;
-		sareq |= IPSEC_ESP_TRANS_LEVEL_DEFAULT >= IPSEC_LEVEL_USE ?
-		    NOTIFY_SATYPE_CONF : 0;
-		sareq |= IPSEC_ESP_NETWORK_LEVEL_DEFAULT >= IPSEC_LEVEL_USE ?
-		    NOTIFY_SATYPE_TUNNEL : 0;
-	}
-
-	return (sareq);
-}
-
-/*
- * Add an inpcb to the list of inpcb which reference this tdb directly.
- */
-void
-tdb_add_inp(struct tdb *tdb, struct inpcb *inp, int inout)
-{
-	if (inout) {
-		if (inp->inp_tdb_in) {
-			if (inp->inp_tdb_in == tdb)
-				return;
-
-			TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
-			    inp_tdb_in_next);
-		}
-
-		inp->inp_tdb_in = tdb;
-		TAILQ_INSERT_TAIL(&tdb->tdb_inp_in, inp, inp_tdb_in_next);
-	} else {
-		if (inp->inp_tdb_out) {
-			if (inp->inp_tdb_out == tdb)
-				return;
-
-			TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out, inp,
-			    inp_tdb_out_next);
-		}
-
-		inp->inp_tdb_out = tdb;
-		TAILQ_INSERT_TAIL(&tdb->tdb_inp_out, inp, inp_tdb_out_next);
-	}
 }
 
 #ifdef ENCDEBUG

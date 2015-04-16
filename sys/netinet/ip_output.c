@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.277 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.278 2015/04/16 19:24:13 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -942,11 +942,6 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 	struct mbuf *m = *mp;
 	int optval = 0;
 	struct proc *p = curproc; /* XXX */
-#ifdef IPSEC
-	struct ipsec_ref *ipr;
-	size_t iprlen;
-	u_int16_t opt16val;
-#endif
 	int error = 0;
 	u_int rtid = 0;
 
@@ -1089,21 +1084,6 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			}
 
-			/* Unlink cached output TDB to force a re-search */
-			if (inp->inp_tdb_out) {
-				int s = splsoftnet();
-				TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out,
-				    inp, inp_tdb_out_next);
-				splx(s);
-			}
-
-			if (inp->inp_tdb_in) {
-				int s = splsoftnet();
-				TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
-				    inp, inp_tdb_in_next);
-				splx(s);
-			}
-
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 				if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
@@ -1140,119 +1120,12 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				inp->inp_seclevel[SL_IPCOMP] = optval;
 				break;
 			}
-			if (!error)
-				inp->inp_secrequire = get_sa_require(inp);
 #endif
 			break;
 
 		case IP_IPSEC_LOCAL_ID:
 		case IP_IPSEC_REMOTE_ID:
-#ifndef IPSEC
 			error = EOPNOTSUPP;
-#else
-			if (m == NULL || m->m_len < 2) {
-				error = EINVAL;
-				break;
-			}
-
-			m_copydata(m, 0, 2, (caddr_t) &opt16val);
-
-			/* If the type is 0, then we cleanup and return */
-			if (opt16val == 0) {
-				switch (optname) {
-				case IP_IPSEC_LOCAL_ID:
-					if (inp->inp_ipo != NULL &&
-					    inp->inp_ipo->ipo_srcid != NULL) {
-						ipsp_reffree(inp->inp_ipo->ipo_srcid);
-						inp->inp_ipo->ipo_srcid = NULL;
-					}
-					break;
-				case IP_IPSEC_REMOTE_ID:
-					if (inp->inp_ipo != NULL &&
-					    inp->inp_ipo->ipo_dstid != NULL) {
-						ipsp_reffree(inp->inp_ipo->ipo_dstid);
-						inp->inp_ipo->ipo_dstid = NULL;
-					}
-					break;
-				}
-
-				error = 0;
-				break;
-			}
-
-			/* Can't have an empty payload */
-			if (m->m_len == 2) {
-				error = EINVAL;
-				break;
-			}
-
-			/* Allocate if needed */
-			if (inp->inp_ipo == NULL) {
-				inp->inp_ipo = ipsec_add_policy(inp,
-				    AF_INET, IPSP_DIRECTION_OUT);
-				if (inp->inp_ipo == NULL) {
-					error = ENOBUFS;
-					break;
-				}
-			}
-
-			iprlen = sizeof(struct ipsec_ref) + m->m_len - 2;
-			ipr = malloc(iprlen, M_CREDENTIALS, M_NOWAIT);
-			if (ipr == NULL) {
-				error = ENOBUFS;
-				break;
-			}
-
-			ipr->ref_count = 1;
-			ipr->ref_malloctype = M_CREDENTIALS;
-			ipr->ref_len = m->m_len - 2;
-			ipr->ref_type = opt16val;
-			m_copydata(m, 2, m->m_len - 2, (caddr_t)(ipr + 1));
-
-			switch (optname) {
-			case IP_IPSEC_LOCAL_ID:
-				/* Check valid types and NUL-termination */
-				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
-				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
-				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					free(ipr, M_CREDENTIALS, iprlen);
-					error = EINVAL;
-				} else {
-					if (inp->inp_ipo->ipo_srcid != NULL)
-						ipsp_reffree(inp->inp_ipo->ipo_srcid);
-					inp->inp_ipo->ipo_srcid = ipr;
-				}
-				break;
-			case IP_IPSEC_REMOTE_ID:
-				/* Check valid types and NUL-termination */
-				if (ipr->ref_type < IPSP_IDENTITY_PREFIX ||
-				    ipr->ref_type > IPSP_IDENTITY_CONNECTION ||
-				    ((char *)(ipr + 1))[ipr->ref_len - 1]) {
-					free(ipr, M_CREDENTIALS, iprlen);
-					error = EINVAL;
-				} else {
-					if (inp->inp_ipo->ipo_dstid != NULL)
-						ipsp_reffree(inp->inp_ipo->ipo_dstid);
-					inp->inp_ipo->ipo_dstid = ipr;
-				}
-				break;
-			}
-
-			/* Unlink cached output TDB to force a re-search */
-			if (inp->inp_tdb_out) {
-				int s = splsoftnet();
-				TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out,
-				    inp, inp_tdb_out_next);
-				splx(s);
-			}
-
-			if (inp->inp_tdb_in) {
-				int s = splsoftnet();
-				TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
-				    inp, inp_tdb_in_next);
-				splx(s);
-			}
-#endif
 			break;
 		case SO_RTABLE:
 			if (m == NULL || m->m_len < sizeof(u_int)) {
@@ -1414,51 +1287,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 		case IP_IPSEC_LOCAL_ID:
 		case IP_IPSEC_REMOTE_ID:
-#ifndef IPSEC
 			error = EOPNOTSUPP;
-#else
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
-			m->m_len = sizeof(u_int16_t);
-			ipr = NULL;
-			switch (optname) {
-			case IP_IPSEC_LOCAL_ID:
-				if (inp->inp_ipo != NULL)
-					ipr = inp->inp_ipo->ipo_srcid;
-				opt16val = IPSP_IDENTITY_NONE;
-				break;
-			case IP_IPSEC_REMOTE_ID:
-				if (inp->inp_ipo != NULL)
-					ipr = inp->inp_ipo->ipo_dstid;
-				opt16val = IPSP_IDENTITY_NONE;
-				break;
-			}
-			if (ipr == NULL)
-				*mtod(m, u_int16_t *) = opt16val;
-			else {
-				size_t len;
-
-				len = m->m_len + ipr->ref_len;
-				if (len > MCLBYTES) {
-					 m_free(m);
-					 error = EINVAL;
-					 break;
-				}
-				/* allocate mbuf cluster for larger option */
-				if (len > MLEN) {
-					 MCLGET(m, M_WAITOK);
-					 if ((m->m_flags & M_EXT) == 0) {
-						 m_free(m);
-						 error = ENOBUFS;
-						 break;
-					 }
-
-				}
-				m->m_len = len;
-				*mtod(m, u_int16_t *) = ipr->ref_type;
-				m_copyback(m, sizeof(u_int16_t), ipr->ref_len,
-				    ipr + 1, M_NOWAIT);
-			}
-#endif
 			break;
 		case SO_RTABLE:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);

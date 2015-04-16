@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.142 2015/04/16 19:18:10 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.143 2015/04/16 19:24:13 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1330,15 +1330,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		case SADB_SATYPE_UNSPEC:
 			s = splsoftnet();
 
-			/*
-			 * Go through the list of policies, delete those that
-			 * are not socket-attached.
-			 */
 			for (ipo = TAILQ_FIRST(&ipsec_policy_head);
 			    ipo != NULL; ipo = tmpipo) {
 				tmpipo = TAILQ_NEXT(ipo, ipo_list);
-				if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET) &&
-				    ipo->ipo_rdomain == rdomain)
+				if (ipo->ipo_rdomain == rdomain)
 					ipsec_delete_policy(ipo);
 			}
 			splx(s);
@@ -2280,10 +2275,6 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg)
 	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
 	void *buffer = 0;
 	int i, buflen, error = 0;
-
-	/* Do not dump policies attached to a socket. */
-	if (ipo->ipo_flags & IPSP_POLICY_SOCKET)
-		return (0);
 
 	if (w->w_where) {
 		void *headers[SADB_EXT_MAX + 1];

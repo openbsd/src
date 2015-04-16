@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.169 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.170 2015/04/16 19:24:13 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -530,17 +530,6 @@ in_pcbdetach(struct inpcb *inp)
 	} else
 #endif
 		ip_freemoptions(inp->inp_moptions);
-#ifdef IPSEC
-	/* IPsec cleanup here */
-	if (inp->inp_tdb_in)
-		TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
-			     inp, inp_tdb_in_next);
-	if (inp->inp_tdb_out)
-		TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out, inp,
-			     inp_tdb_out_next);
-	if (inp->inp_ipo)
-		ipsec_delete_policy(inp->inp_ipo);
-#endif
 #if NPF > 0
 	if (inp->inp_pf_sk) {
 		struct pf_state_key	*sk;

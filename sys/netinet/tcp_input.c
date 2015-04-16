@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.288 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.289 2015/04/16 19:24:13 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -895,29 +895,6 @@ findpcb:
 	if (error) {
 		tcpstat.tcps_rcvnosec++;
 		goto drop;
-	}
-
-	/* Latch SA */
-	if (inp->inp_tdb_in != tdb) {
-		if (tdb) {
-		        tdb_add_inp(tdb, inp, 1);
-			if (inp->inp_ipo == NULL) {
-				inp->inp_ipo = ipsec_add_policy(inp, af,
-				    IPSP_DIRECTION_OUT);
-				if (inp->inp_ipo == NULL) {
-					goto drop;
-				}
-			}
-			if (inp->inp_ipo->ipo_dstid == NULL &&
-			    tdb->tdb_srcid != NULL) {
-				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
-				tdb->tdb_srcid->ref_count++;
-			}
-		} else { /* Just reset */
-		        TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
-				     inp_tdb_in_next);
-			inp->inp_tdb_in = NULL;
-		}
 	}
 #endif /* IPSEC */
 
@@ -3694,11 +3671,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	  struct inpcb *newinp = sotoinpcb(so);
 	  bcopy(inp->inp_seclevel, newinp->inp_seclevel,
 		sizeof(inp->inp_seclevel));
-	  newinp->inp_secrequire = inp->inp_secrequire;
-	  if (inp->inp_ipo != NULL) {
-		  newinp->inp_ipo = inp->inp_ipo;
-		  inp->inp_ipo->ipo_ref_count++;
-	  }
 	}
 #endif /* IPSEC */
 #ifdef INET6

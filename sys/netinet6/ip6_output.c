@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.168 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.169 2015/04/16 19:24:13 markus Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1263,11 +1263,6 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 	struct mbuf *m = *mp;
 	int error, optval;
 	struct proc *p = curproc; /* For IPSec and rdomain */
-#ifdef IPSEC
-	struct tdb *tdb;
-	struct tdb_ident *tdbip, tdbi;
-	int s;
-#endif
 	u_int rtid = 0;
 
 	error = optval = 0;
@@ -1599,24 +1594,7 @@ do { \
 				break;
 
 			case IPSEC6_OUTSA:
-#ifndef IPSEC
 				error = EINVAL;
-#else
-				if (m == NULL ||
-				    m->m_len != sizeof(struct tdb_ident)) {
-					error = EINVAL;
-					break;
-				}
-				tdbip = mtod(m, struct tdb_ident *);
-				s = splsoftnet();
-				tdb = gettdb(tdbip->rdomain, tdbip->spi,
-				    &tdbip->dst, tdbip->proto);
-				if (tdb == NULL)
-					error = ESRCH;
-				else
-					tdb_add_inp(tdb, inp, 0);
-				splx(s);
-#endif
 				break;
 
 			case IPV6_AUTH_LEVEL:
@@ -1675,8 +1653,6 @@ do { \
 					inp->inp_seclevel[SL_IPCOMP] = optval;
 					break;
 				}
-				if (!error)
-					inp->inp_secrequire = get_sa_require(inp);
 #endif
 				break;
 			case SO_RTABLE:
@@ -1897,25 +1873,7 @@ do { \
 				break;
 
 			case IPSEC6_OUTSA:
-#ifndef IPSEC
 				error = EINVAL;
-#else
-				s = splsoftnet();
-				if (inp->inp_tdb_out == NULL) {
-					error = ENOENT;
-				} else {
-					tdbi.spi = inp->inp_tdb_out->tdb_spi;
-					tdbi.dst = inp->inp_tdb_out->tdb_dst;
-					tdbi.proto = inp->inp_tdb_out->tdb_sproto;
-					tdbi.rdomain =
-					    inp->inp_tdb_out->tdb_rdomain;
-					*mp = m = m_get(M_WAIT, MT_SOOPTS);
-					m->m_len = sizeof(tdbi);
-					bcopy((caddr_t)&tdbi, mtod(m, caddr_t),
-					    m->m_len);
-				}
-				splx(s);
-#endif
 				break;
 
 			case IPV6_AUTH_LEVEL:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.197 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.198 2015/04/16 19:24:13 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -614,34 +614,9 @@ udp_input(struct mbuf *m, ...)
 		udpstat.udps_nosec++;
 		goto bad;
 	}
-
-	/* Latch SA only if the socket is connected */
-	if (inp->inp_tdb_in != tdb &&
-	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
-		if (tdb) {
-			tdb_add_inp(tdb, inp, 1);
-			if (inp->inp_ipo == NULL) {
-				inp->inp_ipo = ipsec_add_policy(inp,
-				    srcsa.sa.sa_family, IPSP_DIRECTION_OUT);
-				if (inp->inp_ipo == NULL) {
-					goto bad;
-				}
-			}
-			if (inp->inp_ipo->ipo_dstid == NULL &&
-			    tdb->tdb_srcid != NULL) {
-				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
-				tdb->tdb_srcid->ref_count++;
-			}
-		} else { /* Just reset */
-			TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
-			    inp_tdb_in_next);
-			inp->inp_tdb_in = NULL;
-		}
-	}
 	/* create ipsec options while we know that tdb cannot be modified */
 	if (tdb)
 		ipsecflowinfo = tdb->tdb_spi;
-
 #endif /*IPSEC */
 
 	opts = NULL;
