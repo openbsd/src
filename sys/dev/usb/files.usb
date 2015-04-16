@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.122 2015/04/02 14:24:02 jasper Exp $
+#	$OpenBSD: files.usb,v 1.123 2015/04/16 08:55:21 mpi Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -170,6 +170,11 @@ attach	uoakv at uhidbus
 file	dev/usb/uoakv.c			uoakv
 
 # Misc
+# Araneus Alea II TRNG
+device	ualea
+attach	ualea at uhub
+file	dev/usb/ualea.c			ualea
+
 # Gude Expert mouseCLOCK DCF77 time signal station receiver
 device	udcf
 attach	udcf at uhub
