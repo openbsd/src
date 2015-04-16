@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.104 2015/04/02 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.105 2015/04/16 20:21:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -348,7 +348,9 @@ print_mdoc(MDOC_ARGS)
 	} else
 		t = print_otag(h, TAG_DIV, 1, &tag);
 
+	mdoc_root_pre(meta, n, h);
 	print_mdoc_nodelist(meta, n, h);
+	mdoc_root_post(meta, n, h);
 	print_tagq(h, t);
 }
 
@@ -389,9 +391,6 @@ print_mdoc_node(MDOC_ARGS)
 	n->flags &= ~MDOC_ENDED;
 
 	switch (n->type) {
-	case ROFFT_ROOT:
-		child = mdoc_root_pre(meta, n, h);
-		break;
 	case ROFFT_TEXT:
 		/* No tables in this mode... */
 		assert(NULL == h->tblt);
@@ -449,9 +448,6 @@ print_mdoc_node(MDOC_ARGS)
 	print_stagq(h, t);
 
 	switch (n->type) {
-	case ROFFT_ROOT:
-		mdoc_root_post(meta, n, h);
-		break;
 	case ROFFT_EQN:
 		break;
 	default:
