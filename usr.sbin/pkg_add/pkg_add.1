@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.131 2015/04/16 14:11:29 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.132 2015/04/16 20:01:39 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -285,7 +285,7 @@ don't filter out package versions older than what's currently installed.
 .It Ar FW_UPDATE
 set by
 .Xr fw_update 1
-to separate firmwares from normal packages.
+to separate firmware from normal packages.
 .It Ar installed
 in update mode, reinstall an existing package with the same update signature.
 .It Ar libdepends
@@ -310,7 +310,7 @@ Defaults to any key matching
 .Sq *pkg
 for packages, and any key matching
 .Sq *fw
-for firmwares.
+for firmware.
 .It Ar unsigned
 allow the installation of unsigned packages without warnings/errors
 (necessary for
