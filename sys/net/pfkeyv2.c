@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.141 2015/04/14 12:22:15 mikeb Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.142 2015/04/16 19:18:10 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -616,13 +616,13 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	/* Export source identity, if present */
 	if (sa->tdb_srcid) {
 		headers[SADB_EXT_IDENTITY_SRC] = p;
-		export_identity(&p, sa, PFKEYV2_IDENTITY_SRC);
+		export_identity(&p, &sa->tdb_srcid);
 	}
 
 	/* Export destination identity, if present */
 	if (sa->tdb_dstid) {
 		headers[SADB_EXT_IDENTITY_DST] = p;
-		export_identity(&p, sa, PFKEYV2_IDENTITY_DST);
+		export_identity(&p, &sa->tdb_dstid);
 	}
 
 	/* Export authentication key, if present */
@@ -995,10 +995,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    PFKEYV2_AUTHENTICATION_KEY);
 			import_key(&ii, headers[SADB_EXT_KEY_ENCRYPT],
 			    PFKEYV2_ENCRYPTION_KEY);
-			import_identity(newsa, headers[SADB_EXT_IDENTITY_SRC],
-			    PFKEYV2_IDENTITY_SRC);
-			import_identity(newsa, headers[SADB_EXT_IDENTITY_DST],
-			    PFKEYV2_IDENTITY_DST);
+			import_identity(&newsa->tdb_srcid,
+			    headers[SADB_EXT_IDENTITY_SRC]);
+			import_identity(&newsa->tdb_dstid,
+			    headers[SADB_EXT_IDENTITY_DST]);
 			import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
 			    headers[SADB_X_EXT_SRC_FLOW],
 			    headers[SADB_X_EXT_SRC_MASK],
@@ -1151,10 +1151,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			import_key(&ii, headers[SADB_EXT_KEY_ENCRYPT],
 			    PFKEYV2_ENCRYPTION_KEY);
 
-			import_identity(newsa, headers[SADB_EXT_IDENTITY_SRC],
-			    PFKEYV2_IDENTITY_SRC);
-			import_identity(newsa, headers[SADB_EXT_IDENTITY_DST],
-			    PFKEYV2_IDENTITY_DST);
+			import_identity(&newsa->tdb_srcid,
+			    headers[SADB_EXT_IDENTITY_SRC]);
+			import_identity(&newsa->tdb_dstid,
+			    headers[SADB_EXT_IDENTITY_DST]);
 
 			import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
 			    headers[SADB_X_EXT_SRC_FLOW],
@@ -1623,11 +1623,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 
 		if ((sid = headers[SADB_EXT_IDENTITY_SRC]) != NULL) {
-			int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) -
-			    sizeof(struct sadb_ident);
-
-			ipo->ipo_srcid = malloc(clen + sizeof(struct ipsec_ref),
-			    M_CREDENTIALS, M_NOWAIT);
+			import_identity(&ipo->ipo_srcid, sid);
 			if (ipo->ipo_srcid == NULL) {
 				if (exists)
 					ipsec_delete_policy(ipo);
@@ -1637,19 +1633,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				rval = ENOBUFS;
 				goto ret;
 			}
-			ipo->ipo_srcid->ref_type = sid->sadb_ident_type;
-			ipo->ipo_srcid->ref_len = clen;
-			ipo->ipo_srcid->ref_count = 1;
-			ipo->ipo_srcid->ref_malloctype = M_CREDENTIALS;
-			bcopy(sid + 1, ipo->ipo_srcid + 1, ipo->ipo_srcid->ref_len);
 		}
 
 		if ((sid = headers[SADB_EXT_IDENTITY_DST]) != NULL) {
-			int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) -
-			    sizeof(struct sadb_ident);
-
-			ipo->ipo_dstid = malloc(clen + sizeof(struct ipsec_ref),
-			    M_CREDENTIALS, M_NOWAIT);
+			import_identity(&ipo->ipo_dstid, sid);
 			if (ipo->ipo_dstid == NULL) {
 				if (exists)
 					ipsec_delete_policy(ipo);
@@ -1663,12 +1650,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				rval = ENOBUFS;
 				goto ret;
 			}
-			ipo->ipo_dstid->ref_type = sid->sadb_ident_type;
-			ipo->ipo_dstid->ref_len = clen;
-			ipo->ipo_dstid->ref_count = 1;
-			ipo->ipo_dstid->ref_malloctype = M_CREDENTIALS;
-			bcopy(sid + 1, ipo->ipo_dstid + 1,
-			    ipo->ipo_dstid->ref_len);
 		}
 
 		/* Flow type */
@@ -1808,7 +1789,6 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
     union sockaddr_union *laddr, u_int32_t *seq, struct sockaddr_encap *ddst)
 {
 	void *p, *headers[SADB_EXT_MAX + 1], *buffer = NULL;
-	struct sadb_ident *srcid, *dstid;
 	struct sadb_comb *sadb_comb;
 	struct sadb_address *sadd;
 	struct sadb_prop *sa_prop;
@@ -1883,24 +1863,12 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	if (ipo->ipo_srcid) {
 		headers[SADB_EXT_IDENTITY_SRC] = p;
-		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid->ref_len);
-		srcid = (struct sadb_ident *) headers[SADB_EXT_IDENTITY_SRC];
-		srcid->sadb_ident_len = (sizeof(struct sadb_ident) +
-		    PADUP(ipo->ipo_srcid->ref_len)) / sizeof(u_int64_t);
-		srcid->sadb_ident_type = ipo->ipo_srcid->ref_type;
-		bcopy(ipo->ipo_srcid + 1, headers[SADB_EXT_IDENTITY_SRC] +
-		    sizeof(struct sadb_ident), ipo->ipo_srcid->ref_len);
+		export_identity(&p, &ipo->ipo_srcid);
 	}
 
 	if (ipo->ipo_dstid) {
 		headers[SADB_EXT_IDENTITY_DST] = p;
-		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
-		dstid = (struct sadb_ident *) headers[SADB_EXT_IDENTITY_DST];
-		dstid->sadb_ident_len = (sizeof(struct sadb_ident) +
-		    PADUP(ipo->ipo_dstid->ref_len)) / sizeof(u_int64_t);
-		dstid->sadb_ident_type = ipo->ipo_dstid->ref_type;
-		bcopy(ipo->ipo_dstid + 1, headers[SADB_EXT_IDENTITY_DST] +
-		    sizeof(struct sadb_ident), ipo->ipo_dstid->ref_len);
+		export_identity(&p, &ipo->ipo_dstid);
 	}
 
 	headers[SADB_EXT_PROPOSAL] = p;
@@ -2179,7 +2147,6 @@ int
 pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
     int *lenp)
 {
-	struct sadb_ident *ident;
 	int i, rval, perm;
 	void *p;
 
@@ -2277,23 +2244,11 @@ pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
 	perm = suser(curproc, 0);
 	if (perm == 0 && ipo->ipo_srcid) {
 		headers[SADB_EXT_IDENTITY_SRC] = p;
-		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid->ref_len);
-		ident = (struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC];
-		ident->sadb_ident_len = (sizeof(struct sadb_ident) +
-		    PADUP(ipo->ipo_srcid->ref_len)) / sizeof(uint64_t);
-		ident->sadb_ident_type = ipo->ipo_srcid->ref_type;
-		bcopy(ipo->ipo_srcid + 1, headers[SADB_EXT_IDENTITY_SRC] +
-		    sizeof(struct sadb_ident), ipo->ipo_srcid->ref_len);
+		export_identity(&p, &ipo->ipo_srcid);
 	}
 	if (perm == 0 && ipo->ipo_dstid) {
 		headers[SADB_EXT_IDENTITY_DST] = p;
-		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
-		ident = (struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST];
-		ident->sadb_ident_len = (sizeof(struct sadb_ident) +
-		    PADUP(ipo->ipo_dstid->ref_len)) / sizeof(uint64_t);
-		ident->sadb_ident_type = ipo->ipo_dstid->ref_type;
-		bcopy(ipo->ipo_dstid + 1, headers[SADB_EXT_IDENTITY_DST] +
-		    sizeof(struct sadb_ident), ipo->ipo_dstid->ref_len);
+		export_identity(&p, &ipo->ipo_dstid);
 	}
 
 	rval = 0;
