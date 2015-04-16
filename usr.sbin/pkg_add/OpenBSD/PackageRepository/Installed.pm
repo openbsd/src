@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.30 2015/04/16 09:32:23 espie Exp $
+# $OpenBSD: Installed.pm,v 1.31 2015/04/16 13:29:16 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -31,32 +31,13 @@ my ($version, $current);
 sub expand_locations
 {
 	my ($class, $string, $state) = @_;
+	require OpenBSD::Paths;
 	if ($string eq '%a') {
-		require OpenBSD::PackingElement;
-		return OpenBSD::PackingElement::Arch::arch();
-	} else {
-		if (!defined $version) {
-			require OpenBSD::Paths;
-			open my $cmd, '-|', 
-			    OpenBSD::Paths->sysctl, '-n', 'kern.version';
-			my $line = <$cmd>;
-			close($cmd);
-			if ($line =~ m/^OpenBSD (\d\.\d)(\S*)\s/) {
-				$version = $1;
-				if ($2 eq '-current') {
-					$current = 'snapshots';
-				} else {
-					$current = $version;
-				}
-			} else {
-				$state->fatal("Can't figure out version");
-			}
-		}
-		if ($string eq '%c') {
-			return $current;
-		} else {
-			return $version;
-		}
+		return OpenBSD::Paths->architecture;
+	} elsif ($string eq '%v') {
+		return OpenBSD::Paths->os_version;
+	} elsif ($string eq '%c') {
+		return OpenBSD::Paths->os_directory;
 	}
 }
 

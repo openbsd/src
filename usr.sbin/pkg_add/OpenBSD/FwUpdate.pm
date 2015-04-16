@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.17 2015/02/15 09:54:21 espie Exp $
+# $OpenBSD: FwUpdate.pm,v 1.18 2015/04/16 13:29:16 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -28,15 +28,9 @@ our @ISA = qw(OpenBSD::PkgAdd::State);
 sub find_path
 {
 	my $state = shift;
-	open my $cmd, '-|', OpenBSD::Paths->sysctl, '-n', 'kern.version';
-	my $line = <$cmd>;
-	close($cmd);
-	if ($line =~ m/^OpenBSD (\d\.\d)(\S*)\s/) {
-		my ($version, $tag) = ($1, $2);
-		if ($tag eq '-current') {
-			$version = 'snapshots';
-		}
-		$state->{path} = "http://firmware.openbsd.org/firmware/$version/";
+	my $dir = OpenBSD::Paths->os_directory;
+	if (defined $dir) {
+		$state->{path} = "http://firmware.openbsd.org/firmware/$dir/";
 	} else {
 		$state->fatal("Couldn't find/parse OS version");
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.240 2015/04/16 09:32:23 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.241 2015/04/16 13:29:16 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1748,17 +1748,6 @@ sub stringize($)
 	return join(',', @{$self->{arches}});
 }
 
-my ($machine_arch, $arch);
-
-sub arch
-{
-		if (!defined $arch) {
-			my $cmd = OpenBSD::Paths->uname." -m";
-			chomp($arch = `$cmd`);
-		}
-		return $arch;
-}
-
 sub check
 {
 	my ($self, $forced_arch) = @_;
@@ -1772,12 +1761,8 @@ sub check
 				next;
 			}
 		}
-		if (!defined $machine_arch) {
-			my $cmd = OpenBSD::Paths->arch." -s";
-			chomp($machine_arch = `$cmd`);
-		}
-		return 1 if $ok eq $machine_arch;
-		return 1 if $ok eq arch();
+		return 1 if $ok eq OpenBSD::Paths->machine_architecture;
+		return 1 if $ok eq OpenBSD::Paths->architecture;
 	}
 	return;
 }

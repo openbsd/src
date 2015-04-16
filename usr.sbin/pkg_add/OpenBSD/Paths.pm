@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.30 2014/08/26 17:47:24 jsing Exp $
+# $OpenBSD: Paths.pm,v 1.31 2015/04/16 13:29:16 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -73,5 +73,59 @@ sub xlocatedb() { "/usr/X11R6/lib/locate/xorg.db" }
 sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1", "fonts.scale") }
 sub man_cruft() { ("whatis.db", "mandoc.db", "mandoc.index") }
 sub info_cruft() { ("dir") }
+
+# a bit of code, OS-dependent stuff that's run-time detected and has no
+# home yet.
+
+my ($machine_arch, $arch, $osversion, $osdirectory);
+
+sub architecture
+{
+	if (!defined $arch) {
+		my $cmd = uname()." -m";
+		chomp($arch = `$cmd`);
+	}
+	return $arch;
+}
+
+sub machine_architecture
+{
+	if (!defined $machine_arch) {
+		my $cmd = arch()." -s";
+		chomp($machine_arch = `$cmd`);
+	}
+	return $machine_arch;
+}
+
+sub compute_osversion
+{
+	open my $cmd, '-|', OpenBSD::Paths->sysctl, '-n', 'kern.version';
+	my $line = <$cmd>;
+	close($cmd);
+	if ($line =~ m/^OpenBSD (\d\.\d)(\S*)\s/) {
+		$osversion = $1;
+		if ($2 eq '-current') {
+			$osdirectory = 'snapshots';
+		} else {
+			$osdirectory = $osversion;
+		}
+	}
+}
+
+sub os_version
+{
+	if (!defined $osversion) {
+		compute_osversion();
+	}
+	return $osversion;
+}
+
+sub os_directory
+{
+	if (!defined $osversion) {
+		compute_osversion();
+	}
+	return $osdirectory;
+}
 
 1;
