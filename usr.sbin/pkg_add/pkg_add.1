@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.129 2014/11/17 23:03:37 sthen Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.130 2015/04/16 13:40:56 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: November 17 2014 $
+.Dd $Mdocdate: April 16 2015 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -758,6 +758,14 @@ The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
 period
 .Pq Ql \&./ .
+Special sequences
+.Sq %c ,
+.Sq %v ,
+.Sq %a 
+will be expanded with the same semantics as
+.Ar installpath
+in
+.Xr pkg.conf 5 .
 .It Ev PKG_TMPDIR
 Temporary area where package information files will be extracted, instead of
 .Pa /var/tmp .
