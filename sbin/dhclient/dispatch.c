@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.100 2015/02/06 04:18:20 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.101 2015/04/16 15:14:31 gsoares Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -88,7 +88,7 @@ get_hw_address(void)
 	}
 
 	if (!found)
-		error("%s: not found", ifi->name);
+		error("%s: no such interface", ifi->name);
 
 	freeifaddrs(ifap);
 }
