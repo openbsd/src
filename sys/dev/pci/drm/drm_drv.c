@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.134 2015/04/15 09:48:18 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.135 2015/04/17 00:54:41 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -94,11 +94,174 @@ int	 drm_name_cmp(struct drm_gem_object *, struct drm_gem_object *);
 int	 drm_fault(struct uvm_faultinfo *, vaddr_t, vm_page_t *, int, int,
 	     vm_fault_t, vm_prot_t, int);
 boolean_t	 drm_flush(struct uvm_object *, voff_t, voff_t, int);
+int	 drm_setunique(struct drm_device *, void *, struct drm_file *);
+int	 drm_noop(struct drm_device *, void *, struct drm_file *);
 
 SPLAY_PROTOTYPE(drm_obj_tree, drm_handle, entry, drm_handle_cmp);
 SPLAY_PROTOTYPE(drm_name_tree, drm_gem_object, entry, drm_name_cmp);
 
 int	 drm_getcap(struct drm_device *, void *, struct drm_file *);
+
+#define DRM_IOCTL_DEF(ioctl, _func, _flags) \
+	[DRM_IOCTL_NR(ioctl)] = {.cmd = ioctl, .func = _func, .flags = _flags, .cmd_drv = 0}
+
+/** Ioctl table */
+static struct drm_ioctl_desc drm_ioctls[] = {
+	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_UNIQUE, drm_getunique, 0),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAGIC, drm_getmagic, 0),
+	DRM_IOCTL_DEF(DRM_IOCTL_IRQ_BUSID, drm_irq_by_busid, DRM_MASTER|DRM_ROOT_ONLY),
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAP, drm_getmap, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_CLIENT, drm_getclient, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_STATS, drm_getstats, DRM_UNLOCKED),
+#endif
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_CAP, drm_getcap, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_SET_VERSION, drm_setversion, DRM_MASTER),
+
+	DRM_IOCTL_DEF(DRM_IOCTL_SET_UNIQUE, drm_setunique, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_BLOCK, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_UNBLOCK, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_AUTH_MAGIC, drm_authmagic, DRM_AUTH|DRM_MASTER),
+
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_ADD_MAP, drm_addmap_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_RM_MAP, drm_rmmap_ioctl, DRM_AUTH),
+
+	DRM_IOCTL_DEF(DRM_IOCTL_SET_SAREA_CTX, drm_setsareactx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_SAREA_CTX, drm_getsareactx, DRM_AUTH),
+#else
+	DRM_IOCTL_DEF(DRM_IOCTL_SET_SAREA_CTX, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_SAREA_CTX, drm_noop, DRM_AUTH),
+#endif
+
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_SET_MASTER, drm_setmaster_ioctl, DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_DROP_MASTER, drm_dropmaster_ioctl, DRM_ROOT_ONLY),
+
+	DRM_IOCTL_DEF(DRM_IOCTL_ADD_CTX, drm_addctx, DRM_AUTH|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_RM_CTX, drm_rmctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_MOD_CTX, drm_modctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_GET_CTX, drm_getctx, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_IOCTL_SWITCH_CTX, drm_switchctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_NEW_CTX, drm_newctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+#else
+	DRM_IOCTL_DEF(DRM_IOCTL_MOD_CTX, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_SWITCH_CTX, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_NEW_CTX, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+#endif
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_RES_CTX, drm_resctx, DRM_AUTH),
+#endif
+
+	DRM_IOCTL_DEF(DRM_IOCTL_ADD_DRAW, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_RM_DRAW, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_LOCK, drm_lock, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_IOCTL_UNLOCK, drm_unlock, DRM_AUTH),
+#endif
+
+	DRM_IOCTL_DEF(DRM_IOCTL_FINISH, drm_noop, DRM_AUTH),
+
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_ADD_BUFS, drm_addbufs, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_MARK_BUFS, drm_markbufs, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_INFO_BUFS, drm_infobufs, DRM_AUTH),
+#else
+	DRM_IOCTL_DEF(DRM_IOCTL_MARK_BUFS, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_INFO_BUFS, drm_noop, DRM_AUTH),
+#endif
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_MAP_BUFS, drm_mapbufs, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_IOCTL_FREE_BUFS, drm_freebufs, DRM_AUTH),
+	/* The DRM_IOCTL_DMA ioctl should be defined by the driver. */
+	DRM_IOCTL_DEF(DRM_IOCTL_DMA, NULL, DRM_AUTH),
+#endif
+
+	DRM_IOCTL_DEF(DRM_IOCTL_CONTROL, drm_control, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+
+#if defined(__linux__) && defined(__OS_HAS_AGP)
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ACQUIRE, drm_agp_acquire_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_RELEASE, drm_agp_release_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ENABLE, drm_agp_enable_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_INFO, drm_agp_info_ioctl, DRM_AUTH),
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ALLOC, drm_agp_alloc_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_FREE, drm_agp_free_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_BIND, drm_agp_bind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_AGP_UNBIND, drm_agp_unbind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+#endif
+
+#ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_SG_ALLOC, drm_sg_alloc_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF(DRM_IOCTL_SG_FREE, drm_sg_free, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+#endif
+
+	DRM_IOCTL_DEF(DRM_IOCTL_WAIT_VBLANK, drm_wait_vblank, DRM_UNLOCKED),
+
+	DRM_IOCTL_DEF(DRM_IOCTL_MODESET_CTL, drm_modeset_ctl, 0),
+
+	DRM_IOCTL_DEF(DRM_IOCTL_UPDATE_DRAW, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+
+	DRM_IOCTL_DEF(DRM_IOCTL_GEM_CLOSE, drm_gem_close_ioctl, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_GEM_FLINK, drm_gem_flink_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_GEM_OPEN, drm_gem_open_ioctl, DRM_AUTH|DRM_UNLOCKED),
+
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETRESOURCES, drm_mode_getresources, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+
+#ifdef notyet
+	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_HANDLE_TO_FD, drm_prime_handle_to_fd_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_FD_TO_HANDLE, drm_prime_fd_to_handle_ioctl, DRM_AUTH|DRM_UNLOCKED),
+#endif
+
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANERESOURCES, drm_mode_getplane_res, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCRTC, drm_mode_getcrtc, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETCRTC, drm_mode_setcrtc, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANE, drm_mode_getplane, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETPLANE, drm_mode_setplane, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_CURSOR, drm_mode_cursor_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETGAMMA, drm_mode_gamma_get_ioctl, DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETGAMMA, drm_mode_gamma_set_ioctl, DRM_MASTER|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETENCODER, drm_mode_getencoder, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCONNECTOR, drm_mode_getconnector, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ATTACHMODE, drm_mode_attachmode_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DETACHMODE, drm_mode_detachmode_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPROPERTY, drm_mode_getproperty_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETPROPERTY, drm_mode_connector_property_set_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPROPBLOB, drm_mode_getblob_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETFB, drm_mode_getfb, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB, drm_mode_addfb, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB2, drm_mode_addfb2, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_RMFB, drm_mode_rmfb, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_PAGE_FLIP, drm_mode_page_flip_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DIRTYFB, drm_mode_dirtyfb_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_CREATE_DUMB, drm_mode_create_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_MAP_DUMB, drm_mode_mmap_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DESTROY_DUMB, drm_mode_destroy_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_GETPROPERTIES, drm_mode_obj_get_properties_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_SETPROPERTY, drm_mode_obj_set_property_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
+};
+
+#define DRM_CORE_IOCTL_COUNT	ARRAY_SIZE( drm_ioctls )
+
+int
+drm_setunique(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
+{
+	/*
+	 * Deprecated in DRM version 1.1, and will return EBUSY
+	 * when setversion has
+	 * requested version 1.1 or greater.
+	 */
+	return (-EBUSY);
+}
+
+/** No-op ioctl. */
+int drm_noop(struct drm_device *dev, void *data,
+	     struct drm_file *file_priv)
+{
+	return 0;
+}
 
 /*
  * attach drm to a pci-based driver.
@@ -591,13 +754,18 @@ int
 drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 {
 	struct drm_file *file_priv;
+	struct drm_ioctl_desc *ioctl;
+	drm_ioctl_t *func;
+	unsigned int nr = DRM_IOCTL_NR(cmd);
+	int retcode = -EINVAL;
+	unsigned int usize, asize;
 
 	mutex_lock(&dev->struct_mutex);
 	file_priv = drm_find_file_by_minor(dev, minor);
 	mutex_unlock(&dev->struct_mutex);
 	if (file_priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	++file_priv->ioctl_count;
@@ -618,141 +786,51 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 	case TIOCGPGRP:
 		*(int *)data = dev->buf_pgid;
 		return 0;
-	case DRM_IOCTL_VERSION:
-		return -drm_version(dev, data, file_priv);
-	case DRM_IOCTL_GET_UNIQUE:
-		return -drm_getunique(dev, data, file_priv);
-	case DRM_IOCTL_GET_MAGIC:
-		return -drm_getmagic(dev, data, file_priv);
-	case DRM_IOCTL_WAIT_VBLANK:
-		return -drm_wait_vblank(dev, data, file_priv);
-	case DRM_IOCTL_MODESET_CTL:
-		return -drm_modeset_ctl(dev, data, file_priv);
-	case DRM_IOCTL_GEM_CLOSE:
-		return -drm_gem_close_ioctl(dev, data, file_priv);
-
-	/*
-	 * no-oped ioctls, we don't check permissions on them because
-	 * they do nothing. they'll be removed as soon as userland is
-	 * definitely purged
-	 */
-	case DRM_IOCTL_SET_SAREA_CTX:
-	case DRM_IOCTL_BLOCK:
-	case DRM_IOCTL_UNBLOCK:
-	case DRM_IOCTL_MOD_CTX:
-	case DRM_IOCTL_MARK_BUFS:
-	case DRM_IOCTL_FINISH:
-	case DRM_IOCTL_INFO_BUFS:
-	case DRM_IOCTL_SWITCH_CTX:
-	case DRM_IOCTL_NEW_CTX:
-	case DRM_IOCTL_GET_SAREA_CTX:
-		return (0);
 	}
 
-	if (file_priv->authenticated == 1) {
-		switch (cmd) {
-		case DRM_IOCTL_GEM_FLINK:
-			return -drm_gem_flink_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_GEM_OPEN:
-			return -drm_gem_open_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_GET_CAP:
-			return -drm_getcap(dev, data, file_priv);
-		}
+	if ((nr >= DRM_CORE_IOCTL_COUNT) &&
+	    ((nr < DRM_COMMAND_BASE) || (nr >= DRM_COMMAND_END)))
+		return (-EINVAL);
+	if ((nr >= DRM_COMMAND_BASE) && (nr < DRM_COMMAND_END) &&
+	    (nr < DRM_COMMAND_BASE + dev->driver->num_ioctls)) {
+		uint32_t drv_size;
+		ioctl = &dev->driver->ioctls[nr - DRM_COMMAND_BASE];
+		drv_size = IOCPARM_LEN(ioctl->cmd_drv);
+		usize = asize = IOCPARM_LEN(cmd);
+		if (drv_size > asize)
+			asize = drv_size;
+	} else if ((nr >= DRM_COMMAND_END) || (nr < DRM_COMMAND_BASE)) {
+		uint32_t drv_size;
+		ioctl = &drm_ioctls[nr];
+
+		drv_size = IOCPARM_LEN(ioctl->cmd_drv);
+		usize = asize = IOCPARM_LEN(cmd);
+		if (drv_size > asize)
+			asize = drv_size;
+		cmd = ioctl->cmd;
+	} else
+		return (-EINVAL);
+
+	func = ioctl->func;
+	if (!func) {
+		DRM_DEBUG("no function\n");
+		return (-EINVAL);
 	}
 
-	/* master is always root */
-	if (file_priv->master == 1) {
-		switch(cmd) {
-		case DRM_IOCTL_SET_VERSION:
-			return -drm_setversion(dev, data, file_priv);
-		case DRM_IOCTL_IRQ_BUSID:
-			return -drm_irq_by_busid(dev, data, file_priv);
-		case DRM_IOCTL_AUTH_MAGIC:
-			return -drm_authmagic(dev, data, file_priv);
-		case DRM_IOCTL_CONTROL:
-			return -drm_control(dev, data, file_priv);
-		case DRM_IOCTL_ADD_DRAW:
-		case DRM_IOCTL_RM_DRAW:
-		case DRM_IOCTL_UPDATE_DRAW:
-			/*
-			 * Support removed from kernel since it's not used.
-			 * just return zero until userland stops calling this
-			 * ioctl.
-			 */
-			return (0);
-		case DRM_IOCTL_SET_UNIQUE:
-		/*
-		 * Deprecated in DRM version 1.1, and will return EBUSY
-		 * when setversion has
-		 * requested version 1.1 or greater.
-		 */
-			return (EBUSY);
-		case DRM_IOCTL_MODE_GETRESOURCES:
-			return -drm_mode_getresources(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETPLANERESOURCES:
-			return -drm_mode_getplane_res(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETCRTC:
-			return -drm_mode_getcrtc(dev, data, file_priv);
-		case DRM_IOCTL_MODE_SETCRTC:
-			return -drm_mode_setcrtc(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETPLANE:
-			return -drm_mode_getplane(dev, data, file_priv);
-		case DRM_IOCTL_MODE_SETPLANE:
-			return -drm_mode_setplane(dev, data, file_priv);
-		case DRM_IOCTL_MODE_CURSOR:
-			return -drm_mode_cursor_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETGAMMA:
-			return -drm_mode_gamma_get_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_SETGAMMA:
-			return -drm_mode_gamma_set_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETENCODER:
-			return -drm_mode_getencoder(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETCONNECTOR:
-			return -drm_mode_getconnector(dev, data, file_priv);
-		case DRM_IOCTL_MODE_ATTACHMODE:
-			return -drm_mode_attachmode_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_DETACHMODE:
-			return -drm_mode_detachmode_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETPROPERTY:
-			return -drm_mode_getproperty_ioctl(dev, data, 
-			    file_priv);
-		case DRM_IOCTL_MODE_SETPROPERTY:
-			return -drm_mode_connector_property_set_ioctl(dev, 
-			    data, file_priv);
-		case DRM_IOCTL_MODE_GETPROPBLOB:
-			return -drm_mode_getblob_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_GETFB:
-			return -drm_mode_getfb(dev, data, file_priv);
-		case DRM_IOCTL_MODE_ADDFB:
-			return -drm_mode_addfb(dev, data, file_priv);
-		case DRM_IOCTL_MODE_ADDFB2:
-			return -drm_mode_addfb2(dev, data, file_priv);
-		case DRM_IOCTL_MODE_RMFB:
-			return -drm_mode_rmfb(dev, data, file_priv);
-		case DRM_IOCTL_MODE_PAGE_FLIP:
-			return -drm_mode_page_flip_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_DIRTYFB:
-			return -drm_mode_dirtyfb_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_CREATE_DUMB:
-			return -drm_mode_create_dumb_ioctl(dev, data, 
-			    file_priv);
-		case DRM_IOCTL_MODE_MAP_DUMB:
-			return -drm_mode_mmap_dumb_ioctl(dev, data, file_priv);
-		case DRM_IOCTL_MODE_DESTROY_DUMB:
-			return -drm_mode_destroy_dumb_ioctl(dev, data, 
-			    file_priv);
-		case DRM_IOCTL_MODE_OBJ_GETPROPERTIES:
-			return -drm_mode_obj_get_properties_ioctl(dev, data,
-			    file_priv);
-		case DRM_IOCTL_MODE_OBJ_SETPROPERTY:
-			return -drm_mode_obj_set_property_ioctl(dev, data,
-			    file_priv);
-		}
+	if (((ioctl->flags & DRM_ROOT_ONLY) && !DRM_SUSER(curproc)) ||
+	    ((ioctl->flags & DRM_AUTH) && !file_priv->authenticated) ||
+	    ((ioctl->flags & DRM_MASTER) && !file_priv->master))
+		return (-EACCES);
+
+	if (ioctl->flags & DRM_UNLOCKED)
+		retcode = func(dev, data, file_priv);
+	else {
+		/* XXX lock */
+		retcode = func(dev, data, file_priv);
+		/* XXX unlock */
 	}
-	if (dev->driver->ioctl != NULL)
-		return (dev->driver->ioctl(dev, cmd, data, file_priv));
-	else
-		return (EINVAL);
+
+	return (retcode);
 }
 
 /* drmioctl is called whenever a process performs an ioctl on /dev/drm.
@@ -772,7 +850,7 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	dev->quiesce_count++;
 	mtx_leave(&dev->quiesce_mtx);
 
-	error = drm_do_ioctl(dev, minor(kdev), cmd, data);
+	error = -drm_do_ioctl(dev, minor(kdev), cmd, data);
 	if (error < 0 && error != ERESTART && error != EJUSTRETURN)
 		printf("%s: cmd 0x%lx errno %d\n", __func__, cmd, error);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.60 2015/04/11 05:10:13 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.61 2015/04/17 00:54:42 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1360,9 +1360,7 @@ struct drm_i915_file_private {
 #define INTEL_RC6p_ENABLE			(1<<1)
 #define INTEL_RC6pp_ENABLE			(1<<2)
 
-#ifdef notyet
 extern struct drm_ioctl_desc i915_ioctls[];
-#endif
 extern int i915_max_ioctl;
 extern unsigned int i915_fbpercrtc __always_unused;
 extern int i915_panel_ignore_lid __read_mostly;

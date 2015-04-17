@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.193 2015/04/12 11:26:54 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.194 2015/04/17 00:54:41 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -248,6 +248,41 @@ struct drm_pcidev {
 struct drm_file;
 struct drm_device;
 
+/**
+ * Ioctl function type.
+ *
+ * \param inode device inode.
+ * \param file_priv DRM file private pointer.
+ * \param cmd command.
+ * \param arg argument.
+ */
+typedef int drm_ioctl_t(struct drm_device *dev, void *data,
+			struct drm_file *file_priv);
+
+typedef int drm_ioctl_compat_t(struct file *filp, unsigned int cmd,
+			       unsigned long arg);
+
+#define DRM_AUTH	0x1
+#define DRM_MASTER	0x2
+#define DRM_ROOT_ONLY	0x4
+#define DRM_CONTROL_ALLOW 0x8
+#define DRM_UNLOCKED	0x10
+
+struct drm_ioctl_desc {
+	unsigned int cmd;
+	int flags;
+	drm_ioctl_t *func;
+	unsigned int cmd_drv;
+};
+
+/**
+ * Creates a driver or general drm_ioctl_desc array entry for the given
+ * ioctl, for use by drm_ioctl().
+ */
+
+#define DRM_IOCTL_DEF_DRV(ioctl, _func, _flags)			\
+	[DRM_IOCTL_NR(DRM_##ioctl)] = {.cmd = DRM_##ioctl, .func = _func, .flags = _flags, .cmd_drv = DRM_IOCTL_##ioctl}
+
 struct drm_buf {
 	int		  idx;	       /* Index into master buflist	     */
 	int		  total;       /* Buffer size			     */
@@ -457,8 +492,6 @@ struct drm_mode_handle {
 struct drm_driver_info {
 	int	(*firstopen)(struct drm_device *);
 	int	(*open)(struct drm_device *, struct drm_file *);
-	int	(*ioctl)(struct drm_device*, u_long, caddr_t,
-		    struct drm_file *);
 	void	(*close)(struct drm_device *, struct drm_file *);
 	void	(*lastclose)(struct drm_device *);
 	struct uvm_object *(*mmap)(struct drm_device *, voff_t, vsize_t);
@@ -508,6 +541,9 @@ struct drm_driver_info {
 	const char *name;		/* Simple driver name		   */
 	const char *desc;		/* Longer driver name		   */
 	const char *date;		/* Date of last major changes.	   */
+
+	struct drm_ioctl_desc *ioctls;
+	int num_ioctls;
 
 #define DRIVER_AGP		0x1
 #define DRIVER_AGP_REQUIRE	0x2

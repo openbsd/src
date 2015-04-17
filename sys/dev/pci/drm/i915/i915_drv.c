@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.78 2015/04/12 11:26:54 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.79 2015/04/17 00:54:42 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -436,7 +436,6 @@ const static struct drm_pcidev inteldrm_pciidlist[] = {		/* aka */
 static struct drm_driver_info inteldrm_driver = {
 	.buf_priv_size		= 1,	/* No dev_priv */
 	.file_priv_size		= sizeof(struct inteldrm_file),
-	.ioctl			= inteldrm_ioctl,
 	.open 			= i915_driver_open,
 	.close			= i915_driver_close,
 	.lastclose		= i915_driver_lastclose,
@@ -450,6 +449,7 @@ static struct drm_driver_info inteldrm_driver = {
 	.dumb_map_offset	= i915_gem_mmap_gtt,
 	.dumb_destroy		= i915_gem_dumb_destroy,
 
+	.ioctls			= i915_ioctls,
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
 	.date			= DRIVER_DATE,
@@ -894,6 +894,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (dev_priv->info->gen >= 6)
 		inteldrm_driver.flags &= ~(DRIVER_AGP | DRIVER_AGP_REQUIRE);
 
+	inteldrm_driver.num_ioctls = i915_max_ioctl;
+
 	/* All intel chipsets need to be treated as agp, so just pass one */
 	dev = dev_priv->dev = (struct drm_device *)
 	    drm_attach_pci(&inteldrm_driver, pa, 1, 1, self);
@@ -1165,107 +1167,6 @@ struct cfattach inteldrm_ca = {
 struct cfdriver inteldrm_cd = {
 	0, "inteldrm", DV_DULL
 };
-
-int
-inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
-    struct drm_file *file_priv)
-{
-	struct inteldrm_softc	*dev_priv = dev->dev_private;
-	int			 error = 0;
-
-	dev_priv->entries++;
-
-	error = -inteldrm_doioctl(dev, cmd, data, file_priv);
-
-	dev_priv->entries--;
-	return (error);
-}
-
-int
-inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
-    struct drm_file *file_priv)
-{
-	if (file_priv->authenticated == 1) {
-		switch (cmd) {
-		case DRM_IOCTL_I915_GETPARAM:
-			return (i915_getparam(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_EXECBUFFER2:
-			return (i915_gem_execbuffer2(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_BUSY:
-			return (i915_gem_busy_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_THROTTLE:
-			return (i915_gem_ring_throttle(dev, file_priv));
-		case DRM_IOCTL_I915_GEM_MMAP:
-			return (i915_gem_mmap_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_MMAP_GTT:
-			return (i915_gem_mmap_gtt_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_CREATE:
-			return (i915_gem_create_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_PREAD:
-			return (i915_gem_pread_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_PWRITE:
-			return (i915_gem_pwrite_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_SET_DOMAIN:
-			return (i915_gem_set_domain_ioctl(dev, data,
-			    file_priv));
-		case DRM_IOCTL_I915_GEM_SET_TILING:
-			return (i915_gem_set_tiling(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_GET_TILING:
-			return (i915_gem_get_tiling(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_GET_APERTURE:
-			return (i915_gem_get_aperture_ioctl(dev, data,
-			    file_priv));
-		case DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID:
-			return (intel_get_pipe_from_crtc_id(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_MADVISE:
-			return (i915_gem_madvise_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_SW_FINISH:
-			return (i915_gem_sw_finish_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_SET_CACHING:
-			return (i915_gem_set_caching_ioctl(dev, data,
-			    file_priv));
-		case DRM_IOCTL_I915_GEM_GET_CACHING:
-			return (i915_gem_get_caching_ioctl(dev, data,
-			    file_priv));
-		case DRM_IOCTL_I915_GEM_WAIT:
-			return (i915_gem_wait_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_CONTEXT_CREATE:
-			return (i915_gem_context_create_ioctl(dev, data,
-			    file_priv));
-		case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
-			return (i915_gem_context_destroy_ioctl(dev, data,
-			    file_priv));
-		default:
-			break;
-		}
-	}
-
-	if (file_priv->master == 1) {
-		switch (cmd) {
-		case DRM_IOCTL_I915_SETPARAM:
-			return (i915_setparam(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_INIT:
-			return (i915_gem_init_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_ENTERVT:
-			return (i915_gem_entervt_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_LEAVEVT:
-			return (i915_gem_leavevt_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_PIN:
-			return (i915_gem_pin_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_GEM_UNPIN:
-			return (i915_gem_unpin_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_OVERLAY_PUT_IMAGE:
-			return (intel_overlay_put_image(dev, data, file_priv));
-		case DRM_IOCTL_I915_OVERLAY_ATTRS:
-			return (intel_overlay_attrs(dev, data, file_priv));
-		case DRM_IOCTL_I915_GET_SPRITE_COLORKEY:
-			return (intel_sprite_get_colorkey(dev, data, file_priv));
-		case DRM_IOCTL_I915_SET_SPRITE_COLORKEY:
-			return (intel_sprite_set_colorkey(dev, data, file_priv));
-		}
-	}
-	return -EINVAL;
-}
 
 void
 i915_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)

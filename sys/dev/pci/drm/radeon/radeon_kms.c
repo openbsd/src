@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.37 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.38 2015/04/17 00:54:42 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -73,8 +73,6 @@ void	radeon_disable_vblank_kms(struct drm_device *, int);
 int	radeon_get_vblank_timestamp_kms(struct drm_device *, int, int *,
 	    struct timeval *, unsigned);
 
-int	radeondrm_ioctl_kms(struct drm_device *, u_long, caddr_t, struct drm_file *);
-int	radeon_ioctl_kms(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	radeon_dma_ioctl_kms(struct drm_device *, struct drm_dma *, struct drm_file *);
 
 int	radeon_cp_init_kms(struct drm_device *, void *, struct drm_file *);
@@ -111,6 +109,9 @@ int	radeondrm_detach_kms(struct device *, int);
 int	radeondrm_activate_kms(struct device *, int);
 void	radeondrm_attachhook(void *);
 int	radeondrm_forcedetach(struct radeon_device *);
+
+extern struct drm_ioctl_desc radeon_ioctls_kms[];
+extern int radeon_max_kms_ioctl;
 
 struct cfattach radeondrm_ca = {
         sizeof (struct radeon_device), radeondrm_probe, radeondrm_attach_kms,
@@ -187,7 +188,6 @@ static struct drm_driver_info kms_driver = {
 	    DRIVER_AGP | DRIVER_MTRR | DRIVER_PCI_DMA | DRIVER_SG |
 	    DRIVER_IRQ | DRIVER_DMA | DRIVER_GEM | DRIVER_MODESET,
 	.buf_priv_size = 0,
-	.ioctl = radeondrm_ioctl_kms,
 	.firstopen = radeon_driver_firstopen_kms,
 	.open = radeon_driver_open_kms,
 	.mmap = radeon_mmap,
@@ -213,6 +213,7 @@ static struct drm_driver_info kms_driver = {
 	.irq_postinstall = radeon_driver_irq_postinstall_kms,
 	.irq_uninstall = radeon_driver_irq_uninstall_kms,
 	.irq_handler = radeon_driver_irq_handler_kms,
+	.ioctls = radeon_ioctls_kms,
 	.gem_init_object = radeon_gem_object_init,
 	.gem_free_object = radeon_gem_object_free,
 	.gem_open_object = radeon_gem_object_open,
@@ -564,6 +565,8 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	    NULL, NULL);
 
 	printf("\n");
+
+	kms_driver.num_ioctls = radeon_max_kms_ioctl;
 
 	dev = (struct drm_device *)drm_attach_pci(&kms_driver, pa, is_agp,
 	    rdev->console, self);
@@ -1346,106 +1349,48 @@ KMS_INVALID_IOCTL(radeon_cp_setparam_kms)
 KMS_INVALID_IOCTL(radeon_surface_alloc_kms)
 KMS_INVALID_IOCTL(radeon_surface_free_kms)
 
-int
-radeondrm_ioctl_kms(struct drm_device *dev, u_long cmd, caddr_t data,
-    struct drm_file *file_priv)
-{
-	return -(radeon_ioctl_kms(dev, cmd, data, file_priv));
-}
 
-int
-radeon_ioctl_kms(struct drm_device *dev, u_long cmd, caddr_t data,
-    struct drm_file *file_priv)
-{
-	if (file_priv->authenticated == 1) {
-		switch (cmd) {
-		case DRM_IOCTL_RADEON_CP_IDLE:
-			return (radeon_cp_idle_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_CP_RESUME:
-			return (radeon_cp_resume_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_RESET:
-			return (radeon_engine_reset_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_FULLSCREEN:
-			return (radeon_fullscreen_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_SWAP:
-			return (radeon_cp_swap_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_CLEAR:
-			return (radeon_cp_clear_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_VERTEX:
-			return (radeon_cp_vertex_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_INDICES:
-			return (radeon_cp_indices_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_TEXTURE:
-			return (radeon_cp_texture_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_STIPPLE:
-			return (radeon_cp_stipple_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_VERTEX2:
-			return (radeon_cp_vertex2_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_CMDBUF:
-			return (radeon_cp_cmdbuf_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GETPARAM:
-			return (radeon_cp_getparam_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_FLIP:
-			return (radeon_cp_flip_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_ALLOC:
-			return (radeon_mem_alloc_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_FREE:
-			return (radeon_mem_free_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_IRQ_EMIT:
-			return (radeon_irq_emit_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_IRQ_WAIT:
-			return (radeon_irq_wait_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_SETPARAM:
-			return (radeon_cp_setparam_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_SURF_ALLOC:
-			return (radeon_surface_alloc_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_SURF_FREE:
-			return (radeon_surface_free_kms(dev, data, file_priv));
-		/* KMS */
-		case DRM_IOCTL_RADEON_GEM_INFO:
-			return (radeon_gem_info_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_CREATE:
-			return (radeon_gem_create_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_MMAP:
-			return (radeon_gem_mmap_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_SET_DOMAIN:
-			return (radeon_gem_set_domain_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_PREAD:
-			return (radeon_gem_pread_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_PWRITE:
-			return (radeon_gem_pwrite_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_WAIT_IDLE:
-			return (radeon_gem_wait_idle_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_CS:
-			return (radeon_cs_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_INFO:
-			return (radeon_info_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_SET_TILING:
-			return (radeon_gem_set_tiling_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_GET_TILING:
-			return (radeon_gem_get_tiling_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_BUSY:
-			return (radeon_gem_busy_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_GEM_VA:
-			return (radeon_gem_va_ioctl(dev, data, file_priv));
-		}
-	}
-
-	if (file_priv->master == 1) {
-		switch (cmd) {
-		case DRM_IOCTL_RADEON_CP_INIT:
-			return (radeon_cp_init_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_CP_START:
-			return (radeon_cp_start_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_CP_STOP:
-			return (radeon_cp_stop_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_CP_RESET:
-			return (radeon_cp_reset_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_INDIRECT:
-			return (radeon_cp_indirect_kms(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_INIT_HEAP:
-			return (radeon_mem_init_heap_kms(dev, data, file_priv));
-		}
-	}
-	return -EINVAL;
-}
+struct drm_ioctl_desc radeon_ioctls_kms[] = {
+	DRM_IOCTL_DEF_DRV(RADEON_CP_INIT, radeon_cp_init_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_START, radeon_cp_start_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_STOP, radeon_cp_stop_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_RESET, radeon_cp_reset_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_IDLE, radeon_cp_idle_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_RESUME, radeon_cp_resume_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_RESET, radeon_engine_reset_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_FULLSCREEN, radeon_fullscreen_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SWAP, radeon_cp_swap_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_CLEAR, radeon_cp_clear_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_VERTEX, radeon_cp_vertex_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_INDICES, radeon_cp_indices_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_TEXTURE, radeon_cp_texture_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_STIPPLE, radeon_cp_stipple_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_INDIRECT, radeon_cp_indirect_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_VERTEX2, radeon_cp_vertex2_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_CMDBUF, radeon_cp_cmdbuf_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_GETPARAM, radeon_cp_getparam_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_FLIP, radeon_cp_flip_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_ALLOC, radeon_mem_alloc_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_FREE, radeon_mem_free_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_INIT_HEAP, radeon_mem_init_heap_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_IRQ_EMIT, radeon_irq_emit_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_IRQ_WAIT, radeon_irq_wait_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SETPARAM, radeon_cp_setparam_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SURF_ALLOC, radeon_surface_alloc_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SURF_FREE, radeon_surface_free_kms, DRM_AUTH),
+	/* KMS */
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_INFO, radeon_gem_info_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_CREATE, radeon_gem_create_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_MMAP, radeon_gem_mmap_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_SET_DOMAIN, radeon_gem_set_domain_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_PREAD, radeon_gem_pread_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_PWRITE, radeon_gem_pwrite_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_WAIT_IDLE, radeon_gem_wait_idle_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_CS, radeon_cs_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_INFO, radeon_info_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_SET_TILING, radeon_gem_set_tiling_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_GET_TILING, radeon_gem_get_tiling_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_BUSY, radeon_gem_busy_ioctl, DRM_AUTH|DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_VA, radeon_gem_va_ioctl, DRM_AUTH|DRM_UNLOCKED),
+};
+int radeon_max_kms_ioctl = DRM_ARRAY_SIZE(radeon_ioctls_kms);
