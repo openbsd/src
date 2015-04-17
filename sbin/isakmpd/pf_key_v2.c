@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.193 2015/04/14 12:22:15 mikeb Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.194 2015/04/17 10:04:37 mikeb Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -1728,7 +1728,7 @@ pf_key_v2_convert_id(u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 		    (int) *reslen, res));
 		return res;
 
-	case IPSEC_ID_IPV4_ADDR:	/* XXX CONNECTION ? */
+	case IPSEC_ID_IPV4_ADDR:
 		if (inet_ntop(AF_INET, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 		    addrbuf, ADDRESS_MAX) == NULL)
 			return 0;
@@ -1742,7 +1742,7 @@ pf_key_v2_convert_id(u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 		    "IPv4 address %s", res));
 		return res;
 
-	case IPSEC_ID_IPV6_ADDR:	/* XXX CONNECTION ? */
+	case IPSEC_ID_IPV6_ADDR:
 		if (inet_ntop(AF_INET6,
 		    id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 		    addrbuf, ADDRESS_MAX) == NULL)
@@ -2612,10 +2612,6 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		}
 		/* Check for valid type. */
 		switch (srcident->sadb_ident_type) {
-		case SADB_X_IDENTTYPE_CONNECTION:
-			/* XXX */
-			break;
-
 		case SADB_IDENTTYPE_PREFIX:
 			/* Determine what the address family is. */
 			srcid = memchr(srcident + 1, ':', slen);
@@ -2760,10 +2756,6 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 
 		/* Check for valid type. */
 		switch (dstident->sadb_ident_type) {
-		case SADB_X_IDENTTYPE_CONNECTION:
-			/* XXX */
-			break;
-
 		case SADB_IDENTTYPE_PREFIX:
 			/* Determine what the address family is. */
 			dstid = memchr(dstident + 1, ':', slen);

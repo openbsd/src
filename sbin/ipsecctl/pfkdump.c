@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.38 2015/04/14 12:22:15 mikeb Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.39 2015/04/17 10:04:37 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -196,7 +196,6 @@ struct idname identity_types[] = {
 	{ SADB_IDENTTYPE_PREFIX,	"prefix",		NULL },
 	{ SADB_IDENTTYPE_FQDN,		"fqdn",			NULL },
 	{ SADB_IDENTTYPE_USERFQDN,	"ufqdn",		NULL },
-	{ SADB_X_IDENTTYPE_CONNECTION,	"x_connection",		NULL },
 	{ 0,				NULL,			NULL }
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.67 2015/04/16 19:18:10 markus Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.68 2015/04/17 10:04:37 mikeb Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -333,8 +333,7 @@ struct sadb_x_tap {
 #define SADB_IDENTTYPE_PREFIX       1
 #define SADB_IDENTTYPE_FQDN         2
 #define SADB_IDENTTYPE_USERFQDN     3
-#define SADB_X_IDENTTYPE_CONNECTION 4
-#define SADB_IDENTTYPE_MAX          4
+#define SADB_IDENTTYPE_MAX          3
 
 #define SADB_KEY_FLAGS_MAX 0
 
