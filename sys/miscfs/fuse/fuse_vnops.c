@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.23 2015/02/19 10:22:20 tedu Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.24 2015/04/17 04:43:21 guenther Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -478,7 +478,7 @@ fusefs_setattr(void *v)
 		io->fi_flags |= FUSE_FATTR_SIZE;
 	}
 
-	if (vap->va_atime.tv_sec != VNOVAL) {
+	if (vap->va_atime.tv_nsec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 			error = EROFS;
 			goto out;
@@ -488,7 +488,7 @@ fusefs_setattr(void *v)
 		io->fi_flags |= FUSE_FATTR_ATIME;
 	}
 
-	if (vap->va_mtime.tv_sec != VNOVAL) {
+	if (vap->va_mtime.tv_nsec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 			error = EROFS;
 			goto out;
@@ -497,6 +497,7 @@ fusefs_setattr(void *v)
 		fbuf->fb_vattr.va_mtime.tv_nsec = vap->va_mtime.tv_nsec;
 		io->fi_flags |= FUSE_FATTR_MTIME;
 	}
+	/* XXX should set a flag if (vap->va_vaflags & VA_UTIMES_CHANGE) */
 
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {

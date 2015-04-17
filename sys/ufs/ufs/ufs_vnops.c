@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.120 2015/03/14 03:38:53 jsg Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.121 2015/04/17 04:43:21 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -420,7 +420,9 @@ ufs_setattr(void *v)
 		if (vap->va_size < oldsize)
 			hint |= NOTE_TRUNCATE;
 	}
-	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
+	if ((vap->va_vaflags & VA_UTIMES_CHANGE) ||
+	    vap->va_atime.tv_nsec != VNOVAL ||
+	    vap->va_mtime.tv_nsec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != DIP(ip, uid) &&
@@ -428,19 +430,21 @@ ufs_setattr(void *v)
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
-		if (vap->va_mtime.tv_sec != VNOVAL)
+		if (vap->va_mtime.tv_nsec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		if (vap->va_atime.tv_sec != VNOVAL) {
+		else if (vap->va_vaflags & VA_UTIMES_CHANGE)
+			ip->i_flag |= IN_CHANGE;
+		if (vap->va_atime.tv_nsec != VNOVAL) {
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME) ||
 			    (ip->i_flag & (IN_CHANGE | IN_UPDATE)))
 				ip->i_flag |= IN_ACCESS;
 		}
 		ufs_itimes(vp);
-		if (vap->va_mtime.tv_sec != VNOVAL) {
+		if (vap->va_mtime.tv_nsec != VNOVAL) {
 			DIP_ASSIGN(ip, mtime, vap->va_mtime.tv_sec);
 			DIP_ASSIGN(ip, mtimensec, vap->va_mtime.tv_nsec);
 		}
-		if (vap->va_atime.tv_sec != VNOVAL) {
+		if (vap->va_atime.tv_nsec != VNOVAL) {
 			DIP_ASSIGN(ip, atime, vap->va_atime.tv_sec);
 			DIP_ASSIGN(ip, atimensec, vap->va_atime.tv_nsec);
 		}

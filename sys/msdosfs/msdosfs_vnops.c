@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.99 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.100 2015/04/17 04:43:21 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -451,7 +451,9 @@ msdosfs_setattr(void *v)
 		if (error)
 			return error;
 	}
-	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
+	if ((vap->va_vaflags & VA_UTIMES_CHANGE) ||
+	    vap->va_atime.tv_nsec != VNOVAL ||
+	    vap->va_mtime.tv_nsec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EINVAL);
 		if (cred->cr_uid != pmp->pm_uid &&
@@ -461,12 +463,12 @@ msdosfs_setattr(void *v)
 			return (error);
 		if (vp->v_type != VDIR) {
 			if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
-			    vap->va_atime.tv_sec != VNOVAL) {
+			    vap->va_atime.tv_nsec != VNOVAL) {
 				dep->de_flag &= ~DE_ACCESS;
 				unix2dostime(&vap->va_atime, &dep->de_ADate,
 				    NULL, NULL);
 			}
-			if (vap->va_mtime.tv_sec != VNOVAL) {
+			if (vap->va_mtime.tv_nsec != VNOVAL) {
 				dep->de_flag &= ~DE_UPDATE;
 				unix2dostime(&vap->va_mtime, &dep->de_MDate,
 				    &dep->de_MTime, NULL);

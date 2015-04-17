@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.126 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.127 2015/04/17 04:43:21 guenther Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1751,7 +1751,7 @@ nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full)
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	}
-	if (a->va_atime.tv_sec != VNOVAL) {
+	if (a->va_atime.tv_nsec != VNOVAL) {
 		if (a->va_atime.tv_sec != time_second) {
 			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
@@ -1764,7 +1764,7 @@ nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full)
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
 	}
-	if (a->va_mtime.tv_sec != VNOVAL) {
+	if (a->va_mtime.tv_nsec != VNOVAL) {
 		if (a->va_mtime.tv_sec != time_second) {
 			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
@@ -1870,11 +1870,13 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	switch (fxdr_unsigned(int, *tl)) {
 	case NFSV3SATTRTIME_TOCLIENT:
+		va->va_vaflags |= VA_UTIMES_CHANGE;
 		va->va_vaflags &= ~VA_UTIMES_NULL;
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		fxdr_nfsv3time(tl, &va->va_atime);
 		break;
 	case NFSV3SATTRTIME_TOSERVER:
+		va->va_vaflags |= VA_UTIMES_CHANGE;
 		getnanotime(&va->va_atime);
 		break;
 	};
@@ -1882,11 +1884,13 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	switch (fxdr_unsigned(int, *tl)) {
 	case NFSV3SATTRTIME_TOCLIENT:
+		va->va_vaflags |= VA_UTIMES_CHANGE;
 		va->va_vaflags &= ~VA_UTIMES_NULL;
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		fxdr_nfsv3time(tl, &va->va_mtime);
 		break;
 	case NFSV3SATTRTIME_TOSERVER:
+		va->va_vaflags |= VA_UTIMES_CHANGE;
 		getnanotime(&va->va_mtime);
 		break;
 	};
@@ -1895,4 +1899,23 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 	*mp = info.nmi_md;
 nfsmout:
 	return (error);
+}
+
+void
+txdr_nfsv2time(const struct timespec *from, struct nfsv2_time *to)
+{
+	if (from->tv_nsec == VNOVAL) {
+		to->nfsv2_sec = nfs_xdrneg1;
+		to->nfsv2_usec = nfs_xdrneg1;
+	} else if (from->tv_sec == -1) {
+		/*
+		 * can't request a time of -1; send
+		 * -1.000001 == {-2,999999} instead
+		 */
+		to->nfsv2_sec = htonl(-2);
+		to->nfsv2_usec = htonl(999999);
+	} else {
+		to->nfsv2_sec = htonl(from->tv_sec);
+		to->nfsv2_usec = htonl(from->tv_nsec / 1000);
+	}
 }

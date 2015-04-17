@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.24 2015/02/27 23:56:03 millert Exp $
+.\"	$OpenBSD: utimes.2,v 1.25 2015/04/17 04:43:20 guenther Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 27 2015 $
+.Dd $Mdocdate: April 17 2015 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -75,8 +75,7 @@ The access time is set to the value of the first element, and the
 modification time is set to the value of the second element.
 The caller must be the owner of the file or be the superuser.
 .Pp
-In either case, the inode-change-time of the file is set to the current
-time.
+In either case, the file status change time is set to the current time.
 .Pp
 The
 .Fn utimensat
@@ -294,15 +293,13 @@ and
 function calls appeared in
 .Ox 5.0 .
 .Sh CAVEATS
-.St -p1003.1-2008
-specifies that
-.Fn utimensat
-and
-.Fn futimens
-shall mark the last file status change timestamp (i.e.\&
-.Fa st_ctim )
-for update upon successful completion.
-However, currently some filesystems (e.g. UFS)
-will not do so if
+Some filesystems, such as FAT, use the same timestamp for both
+modification and file status change;
+on those filesystems, the file status change timestamp will not be
+updated if
 .Dv UTIME_OMIT
 is specified for the modification timestamp argument.
+Similarly, on NFS the file status change timestamp will not be
+updated if
+.Dv UTIME_OMIT
+is specified for both the access and the modification timestamp arguments.

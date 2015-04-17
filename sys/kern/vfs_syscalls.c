@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.217 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.218 2015/04/17 04:43:20 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2283,6 +2283,10 @@ dovutimens(struct proc *p, struct vnode *vp, struct timespec ts[2])
 #endif
 
 	VATTR_NULL(&vattr);
+
+	/*  make sure ctime is updated even if neither mtime nor atime is */
+	vattr.va_vaflags = VA_UTIMES_CHANGE;
+
 	if (ts[0].tv_nsec == UTIME_NOW || ts[1].tv_nsec == UTIME_NOW) {
 		if (ts[0].tv_nsec == UTIME_NOW && ts[1].tv_nsec == UTIME_NOW)
 			vattr.va_vaflags |= VA_UTIMES_NULL;
@@ -2294,29 +2298,22 @@ dovutimens(struct proc *p, struct vnode *vp, struct timespec ts[2])
 			ts[1] = now;
 	}
 
-	/*
-	 * XXX: Ideally the filesystem code would check tv_nsec ==
-	 * UTIME_OMIT instead of tv_sec == VNOVAL, but until then we
-	 * need to fudge tv_sec if it happens to equal VNOVAL.
-	 */
-	if (ts[0].tv_nsec == UTIME_OMIT)
-		ts[0].tv_sec = VNOVAL;
-	else if (ts[0].tv_sec == VNOVAL)
-		ts[0].tv_sec = VNOVAL - 1;
-
-	if (ts[1].tv_nsec == UTIME_OMIT)
-		ts[1].tv_sec = VNOVAL;
-	else if (ts[1].tv_sec == VNOVAL)
-		ts[1].tv_sec = VNOVAL - 1;
+	if (ts[0].tv_nsec != UTIME_OMIT) {
+		if (ts[0].tv_nsec < 0 || ts[0].tv_nsec >= 1000000000)
+			return (EINVAL);
+		vattr.va_atime = ts[0];
+	}
+	if (ts[1].tv_nsec != UTIME_OMIT) {
+		if (ts[1].tv_nsec < 0 || ts[1].tv_nsec >= 1000000000)
+			return (EINVAL);
+		vattr.va_mtime = ts[1];
+	}
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
-	else {
-		vattr.va_atime = ts[0];
-		vattr.va_mtime = ts[1];
+	else
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
 	vput(vp);
 	return (error);
 }

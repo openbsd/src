@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_subs.h,v 1.9 2013/08/13 05:52:25 guenther Exp $	*/
+/*	$OpenBSD: xdr_subs.h,v 1.10 2015/04/17 04:43:21 guenther Exp $	*/
 /*	$NetBSD: xdr_subs.h,v 1.11 1996/02/18 11:54:12 fvdl Exp $	*/
 
 /*
@@ -60,13 +60,9 @@
 	else \
 		(t)->tv_nsec = 0; \
 } while (0)
-#define	txdr_nfsv2time(f, t) do { \
-	((struct nfsv2_time *)(t))->nfsv2_sec = htonl((f)->tv_sec); \
-	if ((f)->tv_nsec != -1) \
-		((struct nfsv2_time *)(t))->nfsv2_usec = htonl((f)->tv_nsec / 1000); \
-	else \
-		((struct nfsv2_time *)(t))->nfsv2_usec = 0xffffffff; \
-} while (0)
+
+struct nfsv2_time;
+void txdr_nfsv2time(const struct timespec *_from, struct nfsv2_time *_to);
 
 #define	fxdr_nfsv3time(f, t) do { \
 	(t)->tv_sec = ntohl(((struct nfsv3_time *)(f))->nfsv3_sec); \

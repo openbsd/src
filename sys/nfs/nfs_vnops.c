@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.162 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.163 2015/04/17 04:43:21 guenther Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -565,8 +565,10 @@ nfs_setattr(void *v)
 	 * Disallow write attempts if the filesystem is mounted read-only.
 	 */
 	if ((vap->va_uid != (uid_t)VNOVAL ||
-	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
-	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL) &&
+	    vap->va_gid != (gid_t)VNOVAL ||
+	    vap->va_atime.tv_nsec != VNOVAL ||
+	    vap->va_mtime.tv_nsec != VNOVAL ||
+	    vap->va_mode != (mode_t)VNOVAL) &&
 	    (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return (EROFS);
 	if (vap->va_size != VNOVAL) {
@@ -577,8 +579,8 @@ nfs_setattr(void *v)
 		case VBLK:
 		case VSOCK:
 		case VFIFO:
-			if (vap->va_mtime.tv_sec == VNOVAL &&
-			    vap->va_atime.tv_sec == VNOVAL &&
+			if (vap->va_mtime.tv_nsec == VNOVAL &&
+			    vap->va_atime.tv_nsec == VNOVAL &&
 			    vap->va_mode == (mode_t)VNOVAL &&
 			    vap->va_uid == (uid_t)VNOVAL &&
 			    vap->va_gid == (gid_t)VNOVAL)
@@ -604,8 +606,8 @@ nfs_setattr(void *v)
 			np->n_size = np->n_vattr.va_size = vap->va_size;
 			uvm_vnp_setsize(vp, np->n_size);
 		};
-	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
-		vap->va_atime.tv_sec != VNOVAL) &&
+	} else if ((vap->va_mtime.tv_nsec != VNOVAL ||
+		vap->va_atime.tv_nsec != VNOVAL) &&
 		vp->v_type == VREG &&
 		(error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 		    ap->a_p)) == EINTR)
@@ -2172,6 +2174,7 @@ nfs_readdirrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 				ndp = (struct nfs_dirent *)
 				    uiop->uio_iov->iov_base;
 				dp = &ndp->dirent;
+				memset(dp, 0, sizeof(dp));
 				dp->d_fileno = fileno;
 				dp->d_namlen = len;
 				dp->d_reclen = tlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.21 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.22 2015/04/17 04:43:21 guenther Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ tmpfs_getattr(void *v)
 	return 0;
 }
 
-#define GOODTIME(tv)	((tv)->tv_sec != VNOVAL || (tv)->tv_nsec != VNOVAL)
+#define GOODTIME(tv)	((tv)->tv_nsec != VNOVAL)
 /* XXX Should this operation be atomic?  I think it should, but code in
  * XXX other places (e.g., ufs) doesn't seem to be... */
 int
@@ -519,13 +519,12 @@ tmpfs_setattr(void *v)
 	if (error == 0 && (vap->va_mode != VNOVAL))
 		error = tmpfs_chmod(vp, vap->va_mode, cred, p);
 
-	if (error == 0 && (GOODTIME(&vap->va_atime)
-	    || GOODTIME(&vap->va_mtime))) {
+	if (error == 0 && ((vap->va_vaflags & VA_UTIMES_CHANGE)
+	    || GOODTIME(&vap->va_atime)
+	    || GOODTIME(&vap->va_mtime)))
 		error = tmpfs_chtimes(vp, &vap->va_atime, &vap->va_mtime,
 		    vap->va_vaflags, cred, p);
-		if (error == 0)
-			return 0;
-	}
+
 	return error;
 }
 
