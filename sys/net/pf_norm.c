@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.175 2015/03/14 03:38:51 jsg Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.176 2015/04/17 16:42:50 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -467,8 +467,10 @@ pf_join_fragment(struct pf_fragment *frag)
 	frent = TAILQ_FIRST(&frag->fr_queue);
 	TAILQ_REMOVE(&frag->fr_queue, frent, fr_next);
 
-	/* Magic from ip_input */
 	m = frent->fe_m;
+	/* Strip off any trailing bytes */
+	m_adj(m, (frent->fe_hdrlen + frent->fe_len) - m->m_pkthdr.len);
+	/* Magic from ip_input */
 	m2 = m->m_next;
 	m->m_next = NULL;
 	m_cat(m, m2);
@@ -480,6 +482,8 @@ pf_join_fragment(struct pf_fragment *frag)
 		m2 = frent->fe_m;
 		/* Strip off ip header */
 		m_adj(m2, frent->fe_hdrlen);
+		/* Strip off any trailing bytes */
+		m_adj(m2, frent->fe_len - m2->m_pkthdr.len);
 		pool_put(&pf_frent_pl, frent);
 		pf_nfrents--;
 		m_cat(m, m2);
