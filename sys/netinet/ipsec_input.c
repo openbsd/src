@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.129 2015/04/14 14:20:01 mikeb Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.130 2015/04/17 11:04:02 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -323,8 +323,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
  * filtering and other sanity checks on the processed packet.
  */
 int
-ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
-    struct m_tag *mt)
+ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 {
 	int af, sproto;
 	u_char prot;
@@ -514,11 +513,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 
 	/*
 	 * Record what we've done to the packet (under what SA it was
-	 * processed). If we've been passed an mtag, it means the packet
-	 * was already processed by an ethernet/crypto combo card and
-	 * thus has a tag attached with all the right information, but
-	 * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
-	 * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
+	 * processed).
 	 */
 	if (tdbp->tdb_sproto != IPPROTO_IPCOMP) {
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,

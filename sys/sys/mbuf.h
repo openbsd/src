@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.189 2015/04/13 08:45:48 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.190 2015/04/17 11:04:02 mikeb Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -454,8 +454,6 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 /* Packet tag types */
 #define PACKET_TAG_IPSEC_IN_DONE	0x0001  /* IPsec applied, in */
 #define PACKET_TAG_IPSEC_OUT_DONE	0x0002  /* IPsec applied, out */
-#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE	0x0004  /* NIC IPsec crypto done */
-#define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED 0x0008  /* NIC IPsec crypto req'ed */
 #define PACKET_TAG_IPSEC_PENDING_TDB	0x0010  /* Reminder to do IPsec */
 #define PACKET_TAG_BRIDGE		0x0020  /* Bridge processing done */
 #define PACKET_TAG_GIF			0x0040  /* GIF processing done */

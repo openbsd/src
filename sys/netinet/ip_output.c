@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.278 2015/04/16 19:24:13 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.279 2015/04/17 11:04:01 mikeb Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -272,9 +272,7 @@ reroute:
 		/* Loop detection */
 		for (mtag = m_tag_first(m); mtag != NULL;
 		    mtag = m_tag_next(m, mtag)) {
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
-			    mtag->m_tag_id !=
-			    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
+			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
 				continue;
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			if (tdbi->spi == tdb->tdb_spi &&
@@ -602,18 +600,6 @@ sendit:
 		/* Callee frees mbuf */
 		error = ipsp_process_packet(m, tdb, AF_INET, 0);
 		return error;  /* Nothing more to be done */
-	}
-
-	/*
-	 * If we got here and IPsec crypto processing didn't happen, drop it.
-	 */
-	if (ipsec_in_use && (mtag = m_tag_find(m,
-	    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL)) != NULL) {
-		/* Notify IPsec to do its own crypto. */
-		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
-		m_freem(m);
-		error = EHOSTUNREACH;
-		goto done;
 	}
 #endif /* IPSEC */
 

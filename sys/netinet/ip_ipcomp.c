@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.41 2015/04/14 14:20:01 mikeb Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.42 2015/04/17 11:04:01 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -171,8 +171,6 @@ ipcomp_input(m, tdb, skip, protoff)
 	crdc->crd_skip = skip + hlen;
 	crdc->crd_len = m->m_pkthdr.len - (skip + hlen);
 	crdc->crd_inject = skip;
-
-	tc->tc_ptr = 0;
 
 	/* Decompression operation */
 	crdc->crd_alg = ipcompx->type;
@@ -349,7 +347,7 @@ ipcomp_input_cb(op)
 	m_copyback(m, protoff, sizeof(u_int8_t), &nproto, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
-	error = ipsec_common_input_cb(m, tdb, skip, protoff, NULL);
+	error = ipsec_common_input_cb(m, tdb, skip, protoff);
 	splx(s);
 	return error;
 

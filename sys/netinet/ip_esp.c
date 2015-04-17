@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.130 2015/04/14 14:20:01 mikeb Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.131 2015/04/17 11:04:01 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -334,7 +334,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	struct cryptop *crp;
 	struct tdb_crypto *tc;
 	int plen, alen, hlen;
-	struct m_tag *mtag;
 	u_int32_t btsx, esn;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
@@ -431,23 +430,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;       /* Turn off checking */
 	}
 
-#ifdef notyet
-	/* Find out if we've already done crypto */
-	for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, NULL);
-	     mtag != NULL;
-	     mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, mtag)) {
-		struct tdb_ident *tdbi;
-
-		tdbi = (struct tdb_ident *) (mtag + 1);
-		if (tdbi->proto == tdb->tdb_sproto && tdbi->spi == tdb->tdb_spi &&
-		    tdbi->rdomain == tdb->tdb_rdomain && !memcmp(&tdbi->dst,
-		    &tdb->tdb_dst, sizeof(union sockaddr_union)))
-			break;
-	}
-#else
-	mtag = NULL;
-#endif
-
 	/* Get crypto descriptors */
 	crp = crypto_getreq(esph && espx ? 2 : 1);
 	if (crp == NULL) {
@@ -458,7 +440,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	/* Get IPsec-specific opaque pointer */
-	if (esph == NULL || mtag != NULL)
+	if (esph == NULL)
 		tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
 	else
 		tc = malloc(sizeof(*tc) + alen, M_XDATA, M_NOWAIT | M_ZERO);
@@ -469,8 +451,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		espstat.esps_crypto++;
 		return ENOBUFS;
 	}
-
-	tc->tc_ptr = (caddr_t) mtag;
 
 	if (esph) {
 		crda = crp->crp_desc;
@@ -496,9 +476,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 
 		/* Copy the authenticator */
-		if (mtag == NULL)
-			m_copydata(m, m->m_pkthdr.len - alen, alen,
-			    (caddr_t)(tc + 1));
+		m_copydata(m, m->m_pkthdr.len - alen, alen, (caddr_t)(tc + 1));
 	} else
 		crde = crp->crp_desc;
 
@@ -533,10 +511,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 	}
 
-	if (mtag == NULL)
-		return crypto_dispatch(crp);
-	else
-		return esp_input_cb(crp);
+	return crypto_dispatch(crp);
 }
 
 /*
@@ -551,7 +526,6 @@ esp_input_cb(void *op)
 	struct auth_hash *esph;
 	struct tdb_crypto *tc;
 	struct cryptop *crp;
-	struct m_tag *mtag;
 	struct tdb *tdb;
 	u_int32_t btsx, esn;
 	caddr_t ptr;
@@ -564,7 +538,6 @@ esp_input_cb(void *op)
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
-	mtag = (struct m_tag *) tc->tc_ptr;
 
 	m = (struct mbuf *) crp->crp_buf;
 	if (m == NULL) {
@@ -607,28 +580,22 @@ esp_input_cb(void *op)
 
 	/* If authentication was performed, check now. */
 	if (esph != NULL) {
-		/*
-		 * If we have a tag, it means an IPsec-aware NIC did the
-		 * verification for us.
-		 */
-		if (mtag == NULL) {
-			/* Copy the authenticator from the packet */
-			m_copydata(m, m->m_pkthdr.len - esph->authsize,
-			    esph->authsize, aalg);
+		/* Copy the authenticator from the packet */
+		m_copydata(m, m->m_pkthdr.len - esph->authsize,
+		    esph->authsize, aalg);
 
-			ptr = (caddr_t) (tc + 1);
+		ptr = (caddr_t) (tc + 1);
 
-			/* Verify authenticator */
-			if (timingsafe_bcmp(ptr, aalg, esph->authsize)) {
-				free(tc, M_XDATA, 0);
-				DPRINTF(("esp_input_cb(): authentication "
-				    "failed for packet in SA %s/%08x\n",
-				    ipsp_address(&tdb->tdb_dst, buf,
-				    sizeof(buf)), ntohl(tdb->tdb_spi)));
-				espstat.esps_badauth++;
-				error = EACCES;
-				goto baddone;
-			}
+		/* Verify authenticator */
+		if (timingsafe_bcmp(ptr, aalg, esph->authsize)) {
+			free(tc, M_XDATA, 0);
+			DPRINTF(("esp_input_cb(): authentication "
+			    "failed for packet in SA %s/%08x\n",
+			    ipsp_address(&tdb->tdb_dst, buf,
+				sizeof(buf)), ntohl(tdb->tdb_spi)));
+			espstat.esps_badauth++;
+			error = EACCES;
+			goto baddone;
 		}
 
 		/* Remove trailing authenticator */
@@ -778,7 +745,7 @@ esp_input_cb(void *op)
 	m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
-	error = ipsec_common_input_cb(m, tdb, skip, protoff, mtag);
+	error = ipsec_common_input_cb(m, tdb, skip, protoff);
 	splx(s);
 	return (error);
 
@@ -1068,10 +1035,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 	}
 
-	if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
-		return crypto_dispatch(crp);
-	else
-		return esp_output_cb(crp);
+	return crypto_dispatch(crp);
 }
 
 /*

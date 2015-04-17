@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.234 2015/04/13 08:52:51 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.235 2015/04/17 11:04:01 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -151,7 +151,6 @@ void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
 int bridge_ipsec(struct bridge_softc *, struct ifnet *,
     struct ether_header *, int, struct llc *,
     int, int, int, struct mbuf *);
-#define ICMP_DEFLEN MHLEN
 #endif
 int     bridge_clone_create(struct if_clone *, int);
 int	bridge_clone_destroy(struct ifnet *ifp);
@@ -947,9 +946,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct ether_addr *dst;
 	struct bridge_softc *sc;
 	int s, error, len;
-#ifdef IPSEC
-	struct m_tag *mtag;
-#endif /* IPSEC */
 
 	/* ifp must be a member interface of the bridge. */ 
 	if (ifp->if_bridgeport == NULL) {
@@ -994,18 +990,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		struct mbuf *mc;
 		int used = 0;
 
-#ifdef IPSEC
-		/*
-		 * Don't send out the packet if IPsec is needed, and
-		 * notify IPsec to do its own crypto for now.
-		 */
-		if ((mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED,
-		    NULL)) != NULL) {
-			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
-			m_freem(m);
-			return (0);
-		}
-#endif /* IPSEC */
 		bridge_span(sc, NULL, m);
 
 		TAILQ_FOREACH(p, &sc->sc_iflist, next) {

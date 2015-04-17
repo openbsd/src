@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.911 2015/04/11 13:00:12 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.912 2015/04/17 11:04:01 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5451,9 +5451,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct pf_src_node	*sns[PF_SN_MAX];
 	int			 error = 0;
 	unsigned int		 rtableid;
-#ifdef IPSEC
-	struct m_tag		*mtag;
-#endif /* IPSEC */
 
 	if (m == NULL || *m == NULL || r == NULL ||
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
@@ -5541,19 +5538,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		}
 		ip = mtod(m0, struct ip *);
 	}
-
-	/* Copied from ip_output. */
-#ifdef IPSEC
-	/*
-	 * If we got here and IPsec crypto processing didn't happen, drop it.
-	 */
-	if ((mtag = m_tag_find(m0, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL))
-	    != NULL) {
-		/* Notify IPsec to do its own crypto. */
-		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
-		goto bad;
-	}
-#endif /* IPSEC */
 
 	in_proto_cksum_out(m0, ifp);
 

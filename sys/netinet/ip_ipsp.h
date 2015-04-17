@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.168 2015/04/17 10:04:37 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.169 2015/04/17 11:04:01 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -268,7 +268,6 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_SOFT_FIRSTUSE	0x00400	/* Soft expiration */
 #define	TDBF_PFS		0x00800	/* Ask for PFS from Key Mgmt. */
 #define	TDBF_TUNNELING		0x01000	/* Force IP-IP encapsulation */
-#define	TDBF_SKIPCRYPTO		0x08000	/* Skip actual crypto processing */
 #define	TDBF_USEDTUNNEL		0x10000	/* Appended a tunnel header in past */
 #define	TDBF_UDPENCAP		0x20000	/* UDP encapsulation */
 #define	TDBF_PFSYNC		0x40000	/* TDB will be synced */
@@ -364,7 +363,6 @@ struct tdb_crypto {
 	u_int8_t		tc_proto;
 	int			tc_protoff;
 	int			tc_skip;
-	caddr_t			tc_ptr;
 	u_int			tc_rdomain;
 };
 
@@ -545,14 +543,11 @@ struct	tdb *ipsp_spd_inp(struct mbuf *, int, int, int *, int,
 int	ipsp_is_unspecified(union sockaddr_union);
 int	ipsp_ref_match(struct ipsec_ref *, struct ipsec_ref *);
 void	ipsp_reffree(struct ipsec_ref *);
-void	ipsp_skipcrypto_mark(struct tdb_ident *);
-void	ipsp_skipcrypto_unmark(struct tdb_ident *);
 int	ipsp_aux_match(struct tdb *, struct ipsec_ref *, struct ipsec_ref *,
 	    struct sockaddr_encap *, struct sockaddr_encap *);
 
 int	ipsec_common_input(struct mbuf *, int, int, int, int, int);
-int	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int,
-	    struct m_tag *);
+int	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
 int	ipsec_delete_policy(struct ipsec_policy *);
 ssize_t	ipsec_hdrsz(struct tdb *);
 void	ipsec_adjust_mtu(struct mbuf *, u_int32_t);

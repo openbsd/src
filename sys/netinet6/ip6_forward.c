@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.72 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.73 2015/04/17 11:04:02 mikeb Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -206,9 +206,7 @@ reroute:
 		/* Loop detection */
 		for (mtag = m_tag_first(m); mtag != NULL;
 		    mtag = m_tag_next(m, mtag)) {
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
-			    mtag->m_tag_id !=
-			    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
+			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
 				continue;
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			if (tdbi->spi == tdb->tdb_spi &&

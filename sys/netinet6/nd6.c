@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.133 2015/03/25 17:39:33 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.134 2015/04/17 11:04:02 mikeb Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1648,9 +1648,6 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	struct rtentry *rt = rt0;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
-#ifdef IPSEC
-	struct m_tag *mtag;
-#endif /* IPSEC */
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -1780,21 +1777,6 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	return (0);
 
   sendpkt:
-#ifdef IPSEC
-	/*
-	 * If we got here and IPsec crypto processing didn't happen, drop it.
-	 */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL);
-#endif /* IPSEC */
-
-#ifdef IPSEC
-	if (mtag != NULL) {
-		/* Tell IPsec to do its own crypto. */
-		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
-		error = EACCES;
-		goto bad;
-	}
-#endif /* IPSEC */
 	return ((*ifp->if_output)(ifp, m, sin6tosa(dst), rt));
 
   bad:

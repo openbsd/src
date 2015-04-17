@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.169 2015/04/16 19:24:13 markus Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.170 2015/04/17 11:04:02 mikeb Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -268,9 +268,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		/* Loop detection */
 		for (mtag = m_tag_first(m); mtag != NULL;
 		    mtag = m_tag_next(m, mtag)) {
-			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
-			    mtag->m_tag_id !=
-			    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
+			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
 				continue;
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			if (tdbi->spi == tdb->tdb_spi &&
