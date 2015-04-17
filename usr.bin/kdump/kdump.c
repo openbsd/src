@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.99 2015/04/17 06:14:36 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.100 2015/04/17 06:33:30 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -56,6 +56,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <netdb.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -1632,16 +1633,21 @@ clockname(int clockid)
 
 /*
  * [g|s]etsockopt's level argument can either be SOL_SOCKET or a value
- * referring to a line in /etc/protocols . It might be appropriate
- * to use getprotoent(3) here.
+ * referring to a line in /etc/protocols.
  */
 static void
-sockoptlevelname(int level)
+sockoptlevelname(int optname)
 {
-	if (level == SOL_SOCKET)
-		(void)printf("SOL_SOCKET");
-	else
-		pdecint(level);
+	struct protoent *pe;
+
+	if (arg1 == SOL_SOCKET) {
+		(void)printf("SOL_SOCKET,");
+		sockoptname(optname);
+	} else {
+		pe = getprotobynumber(arg1);
+		(void)printf("%u<%s>,%d", arg1,
+		    pe != NULL ? pe->p_name : "unknown", optname);
+	}
 }
 
 static void
