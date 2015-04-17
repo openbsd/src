@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.46 2015/03/17 19:31:30 millert Exp $	*/
+/*	$OpenBSD: date.c,v 1.47 2015/04/17 16:47:47 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ int
 main(int argc, char *argv[])
 {
 	struct timezone tz;
+	const char *errstr;
 	struct tm *tp;
 	int ch, rflag;
 	char *format, buf[1024], *outzone = NULL;
@@ -87,12 +88,10 @@ main(int argc, char *argv[])
 				err(1, "cannot unsetenv TZ");
 			break;
 		case 't':		/* minutes west of GMT */
-					/* error check; don't allow "PST" */
-			if (isdigit((unsigned char)*optarg)) {
-				tz.tz_minuteswest = atoi(optarg);
-				break;
-			}
-			/* FALLTHROUGH */
+			tz.tz_minuteswest = strtonum(optarg, 0, 24*60-1, &errstr);
+			if (errstr)
+				errx(1, "-t %s: %s", optarg, errstr);
+			break;
 		case 'z':
 			outzone = optarg;
 			break;
