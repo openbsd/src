@@ -1,4 +1,4 @@
-/*	$OpenBSD: ualea.c,v 1.1 2015/04/16 08:55:21 mpi Exp $ */
+/*	$OpenBSD: ualea.c,v 1.2 2015/04/17 07:17:51 mpi Exp $ */
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -36,9 +36,10 @@
 #include <dev/rndvar.h>
 
 #define ALEA_IFACE		0
+#define ALEA_ENDPOINT		1
 #define ALEA_MSECS		100
-#define ALEA_READ_TIMEOUT	1000
-#define ALEA_BUFSIZ		((1024/8)*100)	/* 100 kbits */
+#define ALEA_READ_TIMEOUT	5000
+#define ALEA_BUFSIZ		128
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
@@ -101,7 +102,8 @@ ualea_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
+		    UE_GET_ADDR(ed->bEndpointAddress) == ALEA_ENDPOINT) {
 			ep_ibulk = ed->bEndpointAddress;
 			break;
 		}
