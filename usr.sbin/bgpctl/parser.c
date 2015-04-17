@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.69 2014/11/19 21:11:41 tedu Exp $ */
+/*	$OpenBSD: parser.c,v 1.70 2015/04/17 07:51:09 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -386,8 +386,6 @@ const struct token	*match_token(int *argc, char **argv[],
 			    const struct token []);
 void			 show_valid_args(const struct token []);
 int			 parse_addr(const char *, struct bgpd_addr *);
-int			 parse_prefix(const char *, size_t, struct bgpd_addr *,
-			     u_int8_t *);
 int			 parse_asnum(const char *, size_t, u_int32_t *);
 int			 parse_number(const char *, struct parse_result *,
 			     enum token_type);

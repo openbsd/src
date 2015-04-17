@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.26 2013/10/09 08:56:38 phessler Exp $ */
+/*	$OpenBSD: parser.h,v 1.27 2015/04/17 07:51:09 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -76,3 +76,5 @@ struct parse_result {
 
 __dead void		 usage(void);
 struct parse_result	*parse(int, char *[]);
+int			 parse_prefix(const char *, size_t, struct bgpd_addr *,
+			     u_int8_t *);

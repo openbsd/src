@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.177 2015/02/11 23:47:25 phessler Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.178 2015/04/17 07:51:09 phessler Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -95,9 +95,6 @@ void		 show_mrt_msg(struct mrt_bgp_msg *, void *);
 void		 mrt_to_bgpd_addr(union mrt_addr *, struct bgpd_addr *);
 void		 network_bulk(struct parse_result *);
 const char	*print_auth_method(enum auth_method);
-
-/* parser.c */
-int		 parse_prefix(const char *, struct bgpd_addr *, u_int8_t *);
 
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
@@ -1692,7 +1689,7 @@ network_bulk(struct parse_result *res)
 				if (strchr(b, '#') != NULL)
 					break;
 				bzero(&net, sizeof(net));
-				parse_prefix(b, &h, &len);
+				parse_prefix(b, strlen(b), &h, &len);
 				memcpy(&net.prefix, &h, sizeof(h));
 				net.prefixlen = len;
 
