@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.6 2014/03/18 21:09:28 kettenis Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.7 2015/04/17 12:38:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -29,10 +29,9 @@
 #define _MACHINE_MUTEX_H_
 
 struct mutex {
-	int mtx_lock;
+	void *mtx_owner;
 	int mtx_wantipl;
 	int mtx_oldipl;
-	void *mtx_owner;
 };
 
 /*
@@ -49,29 +48,19 @@ struct mutex {
 #define __MUTEX_IPL(ipl) (ipl)
 #endif
 
-#define MUTEX_INITIALIZER(ipl) { 0, __MUTEX_IPL((ipl)), IPL_NONE, NULL }
+#define MUTEX_INITIALIZER(ipl) { NULL, __MUTEX_IPL((ipl)), IPL_NONE }
 
 void __mtx_init(struct mutex *, int);
 #define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
 #ifdef DIAGNOSTIC
-#ifdef MULTIPROCESSOR
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock == 0)					\
-		panic("mutex %p not held in %s", (mtx), __func__);	\
 	if ((mtx)->mtx_owner != curcpu())				\
-		panic("mutex %p held by cpu %p in %s",			\
-		    (mtx), (mtx)->mtx_owner, __func__);			\
-} while (0)
-#else
-#define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock == 0)					\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
-#endif
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock != 0)					\
+	if ((mtx)->mtx_owner == curcpu())				\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 #else
