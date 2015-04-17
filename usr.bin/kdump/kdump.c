@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.98 2015/01/26 04:38:23 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.99 2015/04/17 06:14:36 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -550,7 +550,6 @@ static void (*formatters[])(int) = {
 	rebootoptname,
 	flockname,
 	sockoptname,
-	sockdomainname,
 	sockipprotoname,
 	socktypename,
 	sockflagsname,
@@ -633,7 +632,6 @@ enum {
 	Rebootoptname,
 	Flockname,
 	Sockoptname,
-	Sockdomainname,
 	Sockipprotoname,
 	Socktypename,
 	Sockflagsname,
@@ -773,7 +771,7 @@ static const formatter scargs[][8] = {
     [SYS___thrsleep]	= { Pptr, Clockname, Pptr, Pptr, Pptr },
     [SYS_fsync]		= { Pfd },
     [SYS_setpriority]	= { Prioname, Ppid_t, Pdecint },
-    [SYS_socket]	= { Sockdomainname, Socktypename, Sockprotoname },
+    [SYS_socket]	= { Sockfamilyname, Socktypename, Sockprotoname },
     [SYS_connect]	= { Pfd, Pptr, Pucount },
     [SYS_getdents]	= { Pfd, Pptr, Pbigsize },
     [SYS_getpriority]	= { Prioname, Ppid_t },
@@ -799,7 +797,7 @@ static const formatter scargs[][8] = {
     [SYS_mkfifo]	= { Ppath, Modename },
     [SYS_sendto]	= { Pfd, Pptr, Pbigsize, Sendrecvflagsname },
     [SYS_shutdown]	= { Pfd, Shutdownhowname },
-    [SYS_socketpair]	= { Sockdomainname, Socktypename, Sockprotoname, Pptr },
+    [SYS_socketpair]	= { Sockfamilyname, Socktypename, Sockprotoname, Pptr },
     [SYS_mkdir]		= { Ppath, Modename },
     [SYS_rmdir]		= { Ppath },
     [SYS_adjtime]	= { Pptr, Pptr },
