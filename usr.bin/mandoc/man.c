@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.101 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.102 2015/04/18 16:34:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -147,6 +147,7 @@ man_alloc1(struct roff_man *man)
 {
 
 	memset(&man->meta, 0, sizeof(man->meta));
+	man->macroset = MACROSET_MAN;
 	man->flags = 0;
 	man->last = mandoc_calloc(1, sizeof(*man->last));
 	man->first = man->last;

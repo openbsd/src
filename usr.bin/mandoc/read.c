@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.109 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.110 2015/04/18 16:34:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -42,10 +42,7 @@
 #define	REPARSE_LIMIT	1000
 
 struct	mparse {
-	struct roff_man	 *pman; /* persistent man parser */
-	struct roff_man	 *pmdoc; /* persistent mdoc parser */
 	struct roff_man	 *man; /* man parser */
-	struct roff_man	 *mdoc; /* mdoc parser */
 	struct roff	 *roff; /* roff parser (!NULL) */
 	const struct mchars *mchars; /* character table */
 	char		 *sodest; /* filename pointed to by .so */
@@ -288,23 +285,23 @@ choose_parser(struct mparse *curp)
 	}
 
 	if (format == MPARSE_MDOC) {
-		if (NULL == curp->pmdoc)
-			curp->pmdoc = mdoc_alloc(
+		if (curp->man == NULL)
+			curp->man = mdoc_alloc(
 			    curp->roff, curp, curp->defos,
 			    MPARSE_QUICK & curp->options ? 1 : 0);
-		assert(curp->pmdoc);
-		curp->mdoc = curp->pmdoc;
+		else
+			curp->man->macroset = MACROSET_MDOC;
 		return;
 	}
 
 	/* Fall back to man(7) as a last resort. */
 
-	if (NULL == curp->pman)
-		curp->pman = man_alloc(
+	if (curp->man == NULL)
+		curp->man = man_alloc(
 		    curp->roff, curp, curp->defos,
 		    MPARSE_QUICK & curp->options ? 1 : 0);
-	assert(curp->pman);
-	curp->man = curp->pman;
+	else
+		curp->man->macroset = MACROSET_MAN;
 }
 
 /*
@@ -570,7 +567,8 @@ rerun:
 		 * parsers with each one.
 		 */
 
-		if ( ! (curp->man || curp->mdoc))
+		if (curp->man == NULL ||
+		    curp->man->macroset == MACROSET_NONE)
 			choose_parser(curp);
 
 		/*
@@ -584,17 +582,17 @@ rerun:
 
 		if (rr == ROFF_TBL) {
 			while ((span = roff_span(curp->roff)) != NULL)
-				if (curp->man == NULL)
-					mdoc_addspan(curp->mdoc, span);
+				if (curp->man->macroset == MACROSET_MDOC)
+					mdoc_addspan(curp->man, span);
 				else
 					man_addspan(curp->man, span);
 		} else if (rr == ROFF_EQN) {
-			if (curp->man == NULL)
-				mdoc_addeqn(curp->mdoc, roff_eqn(curp->roff));
+			if (curp->man->macroset == MACROSET_MDOC)
+				mdoc_addeqn(curp->man, roff_eqn(curp->roff));
 			else
 				man_addeqn(curp->man, roff_eqn(curp->roff));
-		} else if ((curp->man == NULL ?
-		    mdoc_parseln(curp->mdoc, curp->line, ln.buf, of) :
+		} else if ((curp->man->macroset == MACROSET_MDOC ?
+		    mdoc_parseln(curp->man, curp->line, ln.buf, of) :
 		    man_parseln(curp->man, curp->line, ln.buf, of)) == 2)
 				break;
 
@@ -682,22 +680,14 @@ static void
 mparse_end(struct mparse *curp)
 {
 
-	if (curp->mdoc == NULL &&
-	    curp->man == NULL &&
-	    curp->sodest == NULL) {
-		if (curp->options & MPARSE_MDOC)
-			curp->mdoc = curp->pmdoc;
-		else {
-			if (curp->pman == NULL)
-				curp->pman = man_alloc(
-				    curp->roff, curp, curp->defos,
-				    curp->options & MPARSE_QUICK ? 1 : 0);
-			curp->man = curp->pman;
-		}
-	}
-	if (curp->mdoc)
-		mdoc_endparse(curp->mdoc);
-	if (curp->man)
+	if (curp->man == NULL && curp->sodest == NULL)
+		curp->man = man_alloc(curp->roff, curp, curp->defos,
+		    curp->options & MPARSE_QUICK ? 1 : 0);
+	if (curp->man->macroset == MACROSET_NONE)
+		curp->man->macroset = MACROSET_MAN;
+	if (curp->man->macroset == MACROSET_MDOC)
+		mdoc_endparse(curp->man);
+	else
 		man_endparse(curp->man);
 	roff_endparse(curp->roff);
 }
@@ -879,11 +869,11 @@ mparse_alloc(int options, enum mandoclevel wlevel, mandocmsg mmsg,
 	curp->mchars = mchars;
 	curp->roff = roff_alloc(curp, curp->mchars, options);
 	if (curp->options & MPARSE_MDOC)
-		curp->pmdoc = mdoc_alloc(
+		curp->man = mdoc_alloc(
 		    curp->roff, curp, curp->defos,
 		    curp->options & MPARSE_QUICK ? 1 : 0);
 	if (curp->options & MPARSE_MAN)
-		curp->pman = man_alloc(
+		curp->man = man_alloc(
 		    curp->roff, curp, curp->defos,
 		    curp->options & MPARSE_QUICK ? 1 : 0);
 
@@ -896,16 +886,17 @@ mparse_reset(struct mparse *curp)
 
 	roff_reset(curp->roff);
 
-	if (curp->mdoc)
-		mdoc_reset(curp->mdoc);
-	if (curp->man)
-		man_reset(curp->man);
+	if (curp->man != NULL) {
+		if (curp->man->macroset == MACROSET_MDOC)
+			mdoc_reset(curp->man);
+		else
+			man_reset(curp->man);
+		curp->man->macroset = MACROSET_NONE;
+	}
 	if (curp->secondary)
 		curp->secondary->sz = 0;
 
 	curp->file_status = MANDOCLEVEL_OK;
-	curp->mdoc = NULL;
-	curp->man = NULL;
 
 	free(curp->sodest);
 	curp->sodest = NULL;
@@ -915,10 +906,10 @@ void
 mparse_free(struct mparse *curp)
 {
 
-	if (curp->pmdoc)
-		mdoc_free(curp->pmdoc);
-	if (curp->pman)
-		man_free(curp->pman);
+	if (curp->man->macroset == MACROSET_MDOC)
+		mdoc_free(curp->man);
+	if (curp->man->macroset == MACROSET_MAN)
+		man_free(curp->man);
 	if (curp->roff)
 		roff_free(curp->roff);
 	if (curp->secondary)
@@ -930,17 +921,14 @@ mparse_free(struct mparse *curp)
 }
 
 void
-mparse_result(struct mparse *curp, struct roff_man **mdoc,
-	struct roff_man **man, char **sodest)
+mparse_result(struct mparse *curp, struct roff_man **man,
+	char **sodest)
 {
 
 	if (sodest && NULL != (*sodest = curp->sodest)) {
-		*mdoc = NULL;
 		*man = NULL;
 		return;
 	}
-	if (mdoc)
-		*mdoc = curp->mdoc;
 	if (man)
 		*man = curp->man;
 }
