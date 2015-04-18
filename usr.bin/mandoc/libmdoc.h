@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.71 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.72 2015/04/18 17:01:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -80,7 +80,6 @@ struct roff_node *mdoc_endbody_alloc(struct roff_man *, int, int, int,
 			struct roff_node *, enum mdoc_endbody);
 void		  mdoc_node_delete(struct roff_man *, struct roff_node *);
 void		  mdoc_node_relink(struct roff_man *, struct roff_node *);
-void		  mdoc_hash_init(void);
 int		  mdoc_hash_find(const char *);
 const char	 *mdoc_a2att(const char *);
 const char	 *mdoc_a2st(const char *);

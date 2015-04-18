@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.102 2015/04/18 16:34:03 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.103 2015/04/18 17:01:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -99,8 +99,6 @@ man_alloc(struct roff *roff, struct mparse *parse,
 	struct roff_man	*p;
 
 	p = mandoc_calloc(1, sizeof(*p));
-
-	man_hash_init();
 	p->parse = parse;
 	p->defos = defos;
 	p->quick = quick;

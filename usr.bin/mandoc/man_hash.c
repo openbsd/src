@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_hash.c,v 1.21 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: man_hash.c,v 1.22 2015/04/18 17:01:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,14 +45,13 @@
 static	unsigned char	 table[26 * HASH_DEPTH];
 
 
-/*
- * XXX - this hash has global scope, so if intended for use as a library
- * with multiple callers, it will need re-invocation protection.
- */
 void
 man_hash_init(void)
 {
 	int		 i, j, x;
+
+	if (*table != '\0')
+		return;
 
 	memset(table, UCHAR_MAX, sizeof(table));
 

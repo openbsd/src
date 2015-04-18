@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_hash.c,v 1.18 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_hash.c,v 1.19 2015/04/18 17:01:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,15 +30,14 @@
 static	unsigned char	 table[27 * 12];
 
 
-/*
- * XXX - this hash has global scope, so if intended for use as a library
- * with multiple callers, it will need re-invocation protection.
- */
 void
 mdoc_hash_init(void)
 {
 	int		 i, j, major;
 	const char	*p;
+
+	if (*table != '\0')
+		return;
 
 	memset(table, UCHAR_MAX, sizeof(table));
 
