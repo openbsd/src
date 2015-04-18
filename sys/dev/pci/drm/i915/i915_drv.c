@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.79 2015/04/17 00:54:42 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.80 2015/04/18 11:05:32 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -74,60 +74,94 @@ struct inteldrm_file {
 	} mm;
 };
 
-/*
- * Override lid status (0=autodetect, 1=autodetect disabled [default],
- * -1=force lid closed, -2=force lid open)
- */
-int i915_panel_ignore_lid = 1;
+#ifdef __linux__
+static int i915_modeset __read_mostly = -1;
+module_param_named(modeset, i915_modeset, int, 0400);
+MODULE_PARM_DESC(modeset,
+		"Use kernel modesetting [KMS] (0=DRM_I915_KMS from .config, "
+		"1=on, -1=force vga console preference [default])");
+#endif
 
-/* Enable powersavings, fbc, downclocking, etc. (default: true) */
-unsigned int i915_powersave = 1;
+unsigned int i915_fbpercrtc __always_unused = 0;
+module_param_named(fbpercrtc, i915_fbpercrtc, int, 0400);
 
-/* Use semaphores for inter-ring sync (default: -1 (use per-chip defaults)) */
-int i915_semaphores = -1;
+int i915_panel_ignore_lid __read_mostly = 1;
+module_param_named(panel_ignore_lid, i915_panel_ignore_lid, int, 0600);
+MODULE_PARM_DESC(panel_ignore_lid,
+		"Override lid status (0=autodetect, 1=autodetect disabled [default], "
+		"-1=force lid closed, -2=force lid open)");
 
-/*
- * Enable frame buffer compression for power savings
- * (default: -1 (use per-chip default))
- */
-int i915_enable_fbc = -1;
+unsigned int i915_powersave __read_mostly = 1;
+module_param_named(powersave, i915_powersave, int, 0600);
+MODULE_PARM_DESC(powersave,
+		"Enable powersavings, fbc, downclocking, etc. (default: true)");
 
-/*
- * Enable power-saving render C-state 6.
- * Different stages can be selected via bitmask values
- * (0 = disable; 1 = enable rc6; 2 = enable deep rc6; 4 = enable deepest rc6).
- * For example, 3 would enable rc6 and deep rc6, and 7 would enable everything.
- * default: -1 (use per-chip default)
- */
-int i915_enable_rc6 = -1;
+int i915_semaphores __read_mostly = -1;
+module_param_named(semaphores, i915_semaphores, int, 0600);
+MODULE_PARM_DESC(semaphores,
+		"Use semaphores for inter-ring sync (default: -1 (use per-chip defaults))");
 
-/* Use panel (LVDS/eDP) downclocking for power savings (default: false) */
-unsigned int i915_lvds_downclock = 0;
+int i915_enable_rc6 __read_mostly = -1;
+module_param_named(i915_enable_rc6, i915_enable_rc6, int, 0400);
+MODULE_PARM_DESC(i915_enable_rc6,
+		"Enable power-saving render C-state 6. "
+		"Different stages can be selected via bitmask values "
+		"(0 = disable; 1 = enable rc6; 2 = enable deep rc6; 4 = enable deepest rc6). "
+		"For example, 3 would enable rc6 and deep rc6, and 7 would enable everything. "
+		"default: -1 (use per-chip default)");
 
-/*
- * Specify LVDS channel mode
- * (0=probe BIOS [default], 1=single-channel, 2=dual-channel)
- */
-int i915_lvds_channel_mode = 0;
+int i915_enable_fbc __read_mostly = -1;
+module_param_named(i915_enable_fbc, i915_enable_fbc, int, 0600);
+MODULE_PARM_DESC(i915_enable_fbc,
+		"Enable frame buffer compression for power savings "
+		"(default: -1 (use per-chip default))");
 
-/*
- * Use Spread Spectrum Clock with panels [LVDS/eDP]
- * (default: auto from VBT)
- */
-int i915_panel_use_ssc = -1;
+unsigned int i915_lvds_downclock __read_mostly = 0;
+module_param_named(lvds_downclock, i915_lvds_downclock, int, 0400);
+MODULE_PARM_DESC(lvds_downclock,
+		"Use panel (LVDS/eDP) downclocking for power savings "
+		"(default: false)");
 
-/*
- * Override/Ignore selection of SDVO panel mode in the VBT
- * (-2=ignore, -1=auto [default], index in VBT BIOS table)
- */
-int i915_vbt_sdvo_panel_type = -1;
+int i915_lvds_channel_mode __read_mostly;
+module_param_named(lvds_channel_mode, i915_lvds_channel_mode, int, 0600);
+MODULE_PARM_DESC(lvds_channel_mode,
+		 "Specify LVDS channel mode "
+		 "(0=probe BIOS [default], 1=single-channel, 2=dual-channel)");
 
-/*
- * Periodically check GPU activity for detecting hangs.
- * WARNING: Disabling this can cause system wide hangs.
- * (default: true)
- */
-bool i915_enable_hangcheck = true;
+int i915_panel_use_ssc __read_mostly = -1;
+module_param_named(lvds_use_ssc, i915_panel_use_ssc, int, 0600);
+MODULE_PARM_DESC(lvds_use_ssc,
+		"Use Spread Spectrum Clock with panels [LVDS/eDP] "
+		"(default: auto from VBT)");
+
+int i915_vbt_sdvo_panel_type __read_mostly = -1;
+module_param_named(vbt_sdvo_panel_type, i915_vbt_sdvo_panel_type, int, 0600);
+MODULE_PARM_DESC(vbt_sdvo_panel_type,
+		"Override/Ignore selection of SDVO panel mode in the VBT "
+		"(-2=ignore, -1=auto [default], index in VBT BIOS table)");
+
+static bool i915_try_reset __read_mostly = true;
+module_param_named(reset, i915_try_reset, bool, 0600);
+MODULE_PARM_DESC(reset, "Attempt GPU resets (default: true)");
+
+bool i915_enable_hangcheck __read_mostly = true;
+module_param_named(enable_hangcheck, i915_enable_hangcheck, bool, 0644);
+MODULE_PARM_DESC(enable_hangcheck,
+		"Periodically check GPU activity for detecting hangs. "
+		"WARNING: Disabling this can cause system wide hangs. "
+		"(default: true)");
+
+int i915_enable_ppgtt __read_mostly = -1;
+module_param_named(i915_enable_ppgtt, i915_enable_ppgtt, int, 0600);
+MODULE_PARM_DESC(i915_enable_ppgtt,
+		"Enable PPGTT (default: true)");
+
+unsigned int i915_preliminary_hw_support __read_mostly = 0;
+module_param_named(preliminary_hw_support, i915_preliminary_hw_support, int, 0600);
+MODULE_PARM_DESC(preliminary_hw_support,
+		"Enable preliminary hardware support. "
+		"Enable Haswell and ValleyView Support. "
+		"(default: false)");
 
 const struct intel_device_info *
 	i915_get_device_id(int);
@@ -1451,10 +1485,8 @@ int i915_reset(struct drm_device *dev)
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret;
 
-#ifdef notyet
 	if (!i915_try_reset)
 		return 0;
-#endif
 
 	mutex_lock(&dev->struct_mutex);
 

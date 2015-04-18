@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.c,v 1.11 2015/04/06 09:23:19 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.c,v 1.12 2015/04/18 11:05:32 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -67,6 +67,7 @@ void drm_helper_move_panel_connectors_to_head(struct drm_device *dev)
 EXPORT_SYMBOL(drm_helper_move_panel_connectors_to_head);
 
 static bool drm_kms_helper_poll = true;
+module_param_named(poll, drm_kms_helper_poll, bool, 0600);
 
 static void drm_mode_validate_flag(struct drm_connector *connector,
 				   int flags)

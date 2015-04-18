@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.12 2015/04/05 12:53:41 kettenis Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.13 2015/04/18 11:05:32 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -156,8 +156,10 @@ int drm_edid_header_is_valid(const u8 *raw_edid)
 }
 EXPORT_SYMBOL(drm_edid_header_is_valid);
 
-/* Minimum number of valid EDID header bytes (0-8, default 6) */
-static int edid_fixup = 6;
+static int edid_fixup __read_mostly = 6;
+module_param_named(edid_fixup, edid_fixup, int, 0400);
+MODULE_PARM_DESC(edid_fixup,
+		 "Minimum number of valid EDID header bytes (0-8, default 6)");
 
 /*
  * Sanity check the EDID block (base or extension).  Return 0 if the block

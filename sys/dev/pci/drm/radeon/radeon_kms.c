@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.38 2015/04/17 00:54:42 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.39 2015/04/18 11:05:32 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -122,56 +122,74 @@ struct cfdriver radeondrm_cd = {
 	NULL, "radeondrm", DV_DULL
 };
 
-/* Disable AGP writeback for scratch registers */
 int radeon_no_wb;
-
-/* Disable/Enable modesetting */
 int radeon_modeset = 1;
-
-/* Disable/Enable dynamic clocks */
 int radeon_dynclks = -1;
-
-/* Enable ATOMBIOS modesetting for R4xx */
 int radeon_r4xx_atom = 0;
-
-/* AGP Mode (-1 == PCI) */
 int radeon_agpmode = 0;
-
-/* Restrict VRAM for testing */
 int radeon_vram_limit = 0;
-
-/* Size of PCIE/IGP gart to setup in megabytes (32, 64, etc) */
 int radeon_gart_size = 512; /* default gart size */
-
-/* Run benchmark */
 int radeon_benchmarking = 0;
-
-/* Run tests */
 int radeon_testing = 0;
-
-/* Force connector table */
 int radeon_connector_table = 0;
-
-/* TV enable (0 = disable) */
 int radeon_tv = 1;
-
-/* Audio enable (1 = enable) */
 int radeon_audio = 0;
-
-/* Display Priority (0 = auto, 1 = normal, 2 = high) */
 int radeon_disp_priority = 0;
-
-/* hw i2c engine enable (0 = disable) */
 int radeon_hw_i2c = 0;
-
-/* PCIE Gen2 mode (-1 = auto, 0 = disable, 1 = enable) */
 int radeon_pcie_gen2 = -1;
-
-/* MSI support (1 = enable, 0 = disable, -1 = auto) */
 int radeon_msi = -1;
-
-/* GPU lockup timeout in ms (defaul 10000 = 10 seconds, 0 = disable) */
 int radeon_lockup_timeout = 10000;
+
+MODULE_PARM_DESC(no_wb, "Disable AGP writeback for scratch registers");
+module_param_named(no_wb, radeon_no_wb, int, 0444);
+
+MODULE_PARM_DESC(modeset, "Disable/Enable modesetting");
+module_param_named(modeset, radeon_modeset, int, 0400);
+
+MODULE_PARM_DESC(dynclks, "Disable/Enable dynamic clocks");
+module_param_named(dynclks, radeon_dynclks, int, 0444);
+
+MODULE_PARM_DESC(r4xx_atom, "Enable ATOMBIOS modesetting for R4xx");
+module_param_named(r4xx_atom, radeon_r4xx_atom, int, 0444);
+
+MODULE_PARM_DESC(vramlimit, "Restrict VRAM for testing");
+module_param_named(vramlimit, radeon_vram_limit, int, 0600);
+
+MODULE_PARM_DESC(agpmode, "AGP Mode (-1 == PCI)");
+module_param_named(agpmode, radeon_agpmode, int, 0444);
+
+MODULE_PARM_DESC(gartsize, "Size of PCIE/IGP gart to setup in megabytes (32, 64, etc)");
+module_param_named(gartsize, radeon_gart_size, int, 0600);
+
+MODULE_PARM_DESC(benchmark, "Run benchmark");
+module_param_named(benchmark, radeon_benchmarking, int, 0444);
+
+MODULE_PARM_DESC(test, "Run tests");
+module_param_named(test, radeon_testing, int, 0444);
+
+MODULE_PARM_DESC(connector_table, "Force connector table");
+module_param_named(connector_table, radeon_connector_table, int, 0444);
+
+MODULE_PARM_DESC(tv, "TV enable (0 = disable)");
+module_param_named(tv, radeon_tv, int, 0444);
+
+MODULE_PARM_DESC(audio, "Audio enable (1 = enable)");
+module_param_named(audio, radeon_audio, int, 0444);
+
+MODULE_PARM_DESC(disp_priority, "Display Priority (0 = auto, 1 = normal, 2 = high)");
+module_param_named(disp_priority, radeon_disp_priority, int, 0444);
+
+MODULE_PARM_DESC(hw_i2c, "hw i2c engine enable (0 = disable)");
+module_param_named(hw_i2c, radeon_hw_i2c, int, 0444);
+
+MODULE_PARM_DESC(pcie_gen2, "PCIE Gen2 mode (-1 = auto, 0 = disable, 1 = enable)");
+module_param_named(pcie_gen2, radeon_pcie_gen2, int, 0444);
+
+MODULE_PARM_DESC(msi, "MSI support (1 = enable, 0 = disable, -1 = auto)");
+module_param_named(msi, radeon_msi, int, 0444);
+
+MODULE_PARM_DESC(lockup_timeout, "GPU lockup timeout in ms (defaul 10000 = 10 seconds, 0 = disable)");
+module_param_named(lockup_timeout, radeon_lockup_timeout, int, 0444);
 
 /*
  * set if the mountroot hook has a fatal error
