@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.58 2015/01/16 06:40:15 deraadt Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.59 2015/04/18 03:15:46 guenther Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ uid_t uid;
 gid_t gid;
 
 void	copy(int, char *, int, char *, off_t, int);
-int	compare(int, const char *, size_t, int, const char *, size_t);
+int	compare(int, const char *, off_t, int, const char *, off_t);
 void	install(char *, char *, u_long, u_int);
 void	install_dir(char *);
 void	strip(char *);
@@ -202,7 +202,7 @@ void
 install(char *from_name, char *to_name, u_long fset, u_int flags)
 {
 	struct stat from_sb, to_sb;
-	struct utimbuf utb;
+	struct timespec ts[2];
 	int devnull, from_fd, to_fd, serrno, files_match = 0;
 	char *p;
 
@@ -258,8 +258,8 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 	if (!devnull) {
 		if (docompare && !safecopy) {
 			files_match = !(compare(from_fd, from_name,
-					(size_t)from_sb.st_size, to_fd,
-					to_name, (size_t)to_sb.st_size));
+					from_sb.st_size, to_fd,
+					to_name, to_sb.st_size));
 
 			/* Truncate "to" file for copy unless we match */
 			if (!files_match) {
@@ -304,17 +304,17 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 			errc(EX_OSERR, serrno, "%s", tempfile);
 		}
 
-		if (compare(temp_fd, tempfile, (size_t)temp_sb.st_size, to_fd,
-			    to_name, (size_t)to_sb.st_size) == 0) {
+		if (compare(temp_fd, tempfile, temp_sb.st_size, to_fd,
+			    to_name, to_sb.st_size) == 0) {
 			/*
 			 * If target has more than one link we need to
 			 * replace it in order to snap the extra links.
 			 * Need to preserve target file times, though.
 			 */
 			if (to_sb.st_nlink != 1) {
-				utb.actime = to_sb.st_atime;
-				utb.modtime = to_sb.st_mtime;
-				(void)utime(tempfile, &utb);
+				ts[0] = to_sb.st_atim;
+				ts[1] = to_sb.st_mtim;
+				futimens(temp_fd, ts);
 			} else {
 				files_match = 1;
 				(void)unlink(tempfile);
@@ -328,9 +328,9 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 	 * Preserve the timestamp of the source file if necessary.
 	 */
 	if (dopreserve && !files_match) {
-		utb.actime = from_sb.st_atime;
-		utb.modtime = from_sb.st_mtime;
-		(void)utime(safecopy ? tempfile : to_name, &utb);
+		ts[0] = from_sb.st_atim;
+		ts[1] = from_sb.st_mtim;
+		futimens(to_fd, ts);
 	}
 
 	/*
@@ -480,12 +480,12 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size,
  *	compare two files; non-zero means files differ
  */
 int
-compare(int from_fd, const char *from_name, size_t from_len, int to_fd,
-    const char *to_name, size_t to_len)
+compare(int from_fd, const char *from_name, off_t from_len, int to_fd,
+    const char *to_name, off_t to_len)
 {
 	caddr_t p1, p2;
-	size_t length, remainder;
-	off_t from_off, to_off;
+	size_t length;
+	off_t from_off, to_off, remainder;
 	int dfound;
 
 	if (from_len == 0 && from_len == to_len)
