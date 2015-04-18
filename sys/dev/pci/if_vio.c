@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.26 2015/04/07 19:31:42 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.27 2015/04/18 14:38:38 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1152,19 +1152,17 @@ vio_encap(struct vio_softc *sc, int slot, struct mbuf *m)
 	case 0:
 		break;
 	case EFBIG:
-		if ((r = m_defrag(m, M_DONTWAIT)) == 0 &&
-		    (r = bus_dmamap_load_mbuf(vsc->sc_dmat, dmap, m,
-		     BUS_DMA_WRITE|BUS_DMA_NOWAIT)) == 0)
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(vsc->sc_dmat, dmap, m,
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) == 0)
 			break;
 
 		/* FALLTHROUGH */
 	default:
-		printf("%s: tx dmamap load error %d\n", sc->sc_dev.dv_xname,
-		    r);
 		return ENOBUFS;
 	}
 	sc->sc_tx_mbufs[slot] = m;
-	return r;
+	return 0;
 }
 
 /* free all the mbufs already put on vq; called from if_stop(disable) */
