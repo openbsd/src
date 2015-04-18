@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.70 2015/04/02 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.71 2015/04/18 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,37 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-enum	mdoc_next {
-	MDOC_NEXT_SIBLING = 0,
-	MDOC_NEXT_CHILD
-};
-
-struct	mdoc {
-	struct mparse	 *parse; /* parse pointer */
-	const char	 *defos; /* default argument for .Os */
-	int		  quick; /* abort parse early */
-	int		  flags; /* parse flags */
-#define	MDOC_LITERAL	 (1 << 1) /* in a literal scope */
-#define	MDOC_PBODY	 (1 << 2) /* in the document body */
-#define	MDOC_NEWLINE	 (1 << 3) /* first macro/text in a line */
-#define	MDOC_PHRASELIT	 (1 << 4) /* literal within a partila phrase */
-#define	MDOC_PPHRASE	 (1 << 5) /* within a partial phrase */
-#define	MDOC_FREECOL	 (1 << 6) /* `It' invocation should close */
-#define	MDOC_SYNOPSIS	 (1 << 7) /* SYNOPSIS-style formatting */
-#define	MDOC_KEEP	 (1 << 8) /* in a word keep */
-#define	MDOC_SMOFF	 (1 << 9) /* spacing is off */
-#define	MDOC_NODELIMC	 (1 << 10) /* disable closing delimiter handling */
-	enum mdoc_next	  next; /* where to put the next node */
-	struct roff_node *last; /* the last node parsed */
-	struct roff_node *first; /* the first node parsed */
-	struct roff_node *last_es; /* the most recent Es node */
-	struct roff_meta  meta; /* document meta-data */
-	enum roff_sec	  lastnamed;
-	enum roff_sec	  lastsec;
-	struct roff	 *roff;
-};
-
-#define	MACRO_PROT_ARGS	struct mdoc *mdoc, \
+#define	MACRO_PROT_ARGS	struct roff_man *mdoc, \
 			int tok, \
 			int line, \
 			int ppos, \
@@ -97,32 +67,32 @@ extern	const struct mdoc_macro *const mdoc_macros;
 __BEGIN_DECLS
 
 void		  mdoc_macro(MACRO_PROT_ARGS);
-void		  mdoc_word_alloc(struct mdoc *, int, int, const char *);
-void		  mdoc_word_append(struct mdoc *, const char *);
-void		  mdoc_elem_alloc(struct mdoc *, int, int,
+void		  mdoc_word_alloc(struct roff_man *, int, int, const char *);
+void		  mdoc_word_append(struct roff_man *, const char *);
+void		  mdoc_elem_alloc(struct roff_man *, int, int,
 			int, struct mdoc_arg *);
-struct roff_node *mdoc_block_alloc(struct mdoc *, int, int,
+struct roff_node *mdoc_block_alloc(struct roff_man *, int, int,
 			int, struct mdoc_arg *);
-struct roff_node *mdoc_head_alloc(struct mdoc *, int, int, int);
-void		  mdoc_tail_alloc(struct mdoc *, int, int, int);
-struct roff_node *mdoc_body_alloc(struct mdoc *, int, int, int);
-struct roff_node *mdoc_endbody_alloc(struct mdoc *, int, int, int,
+struct roff_node *mdoc_head_alloc(struct roff_man *, int, int, int);
+void		  mdoc_tail_alloc(struct roff_man *, int, int, int);
+struct roff_node *mdoc_body_alloc(struct roff_man *, int, int, int);
+struct roff_node *mdoc_endbody_alloc(struct roff_man *, int, int, int,
 			struct roff_node *, enum mdoc_endbody);
-void		  mdoc_node_delete(struct mdoc *, struct roff_node *);
-void		  mdoc_node_relink(struct mdoc *, struct roff_node *);
+void		  mdoc_node_delete(struct roff_man *, struct roff_node *);
+void		  mdoc_node_relink(struct roff_man *, struct roff_node *);
 void		  mdoc_hash_init(void);
 int		  mdoc_hash_find(const char *);
 const char	 *mdoc_a2att(const char *);
 const char	 *mdoc_a2st(const char *);
 const char	 *mdoc_a2arch(const char *);
-void		  mdoc_valid_pre(struct mdoc *, struct roff_node *);
-void		  mdoc_valid_post(struct mdoc *);
-void		  mdoc_argv(struct mdoc *, int, int,
+void		  mdoc_valid_pre(struct roff_man *, struct roff_node *);
+void		  mdoc_valid_post(struct roff_man *);
+void		  mdoc_argv(struct roff_man *, int, int,
 			struct mdoc_arg **, int *, char *);
 void		  mdoc_argv_free(struct mdoc_arg *);
-enum margserr	  mdoc_args(struct mdoc *, int,
+enum margserr	  mdoc_args(struct roff_man *, int,
 			int *, char *, int, char **);
-void		  mdoc_macroend(struct mdoc *);
+void		  mdoc_macroend(struct roff_man *);
 enum mdelim	  mdoc_isdelim(const char *);
 
 __END_DECLS

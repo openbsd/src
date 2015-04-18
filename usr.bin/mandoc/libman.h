@@ -1,4 +1,4 @@
-/*	$OpenBSD: libman.h,v 1.45 2015/04/02 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.46 2015/04/18 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,28 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-enum	man_next {
-	MAN_NEXT_SIBLING = 0,
-	MAN_NEXT_CHILD
-};
-
-struct	man {
-	struct mparse	*parse; /* parse pointer */
-	const char	*defos; /* default OS argument for .TH */
-	int		 quick; /* abort parse early */
-	int		 flags; /* parse flags */
-#define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
-#define	MAN_BLINE	(1 << 2) /* Next-line block scope. */
-#define	MAN_LITERAL	(1 << 4) /* Literal input. */
-#define	MAN_NEWLINE	(1 << 6) /* first macro/text in a line */
-	enum man_next	 next; /* where to put the next node */
-	struct roff_node *last; /* the last parsed node */
-	struct roff_node *first; /* the first parsed node */
-	struct roff_meta meta; /* document meta-data */
-	struct roff	*roff;
-};
-
-#define	MACRO_PROT_ARGS	  struct man *man, \
+#define	MACRO_PROT_ARGS	  struct roff_man *man, \
 			  int tok, \
 			  int line, \
 			  int ppos, \
@@ -57,17 +36,17 @@ extern	const struct man_macro *const man_macros;
 
 __BEGIN_DECLS
 
-void		  man_word_alloc(struct man *, int, int, const char *);
-void		  man_word_append(struct man *, const char *);
-void		  man_block_alloc(struct man *, int, int, int);
-void		  man_head_alloc(struct man *, int, int, int);
-void		  man_body_alloc(struct man *, int, int, int);
-void		  man_elem_alloc(struct man *, int, int, int);
-void		  man_node_delete(struct man *, struct roff_node *);
+void		  man_word_alloc(struct roff_man *, int, int, const char *);
+void		  man_word_append(struct roff_man *, const char *);
+void		  man_block_alloc(struct roff_man *, int, int, int);
+void		  man_head_alloc(struct roff_man *, int, int, int);
+void		  man_body_alloc(struct roff_man *, int, int, int);
+void		  man_elem_alloc(struct roff_man *, int, int, int);
+void		  man_node_delete(struct roff_man *, struct roff_node *);
 void		  man_hash_init(void);
 int		  man_hash_find(const char *);
-void		  man_macroend(struct man *);
-void		  man_valid_post(struct man *);
-void		  man_unscope(struct man *, const struct roff_node *);
+void		  man_macroend(struct roff_man *);
+void		  man_valid_post(struct roff_man *);
+void		  man_unscope(struct roff_man *, const struct roff_node *);
 
 __END_DECLS

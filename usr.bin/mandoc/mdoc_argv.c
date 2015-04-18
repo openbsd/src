@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.58 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.59 2015/04/18 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,12 +50,12 @@ struct	mdocarg {
 };
 
 static	void		 argn_free(struct mdoc_arg *, int);
-static	enum margserr	 args(struct mdoc *, int, int *,
+static	enum margserr	 args(struct roff_man *, int, int *,
 				char *, enum argsflag, char **);
 static	int		 args_checkpunct(const char *, int);
-static	void		 argv_multi(struct mdoc *, int,
+static	void		 argv_multi(struct roff_man *, int,
 				struct mdoc_argv *, int *, char *);
-static	void		 argv_single(struct mdoc *, int,
+static	void		 argv_single(struct roff_man *, int,
 				struct mdoc_argv *, int *, char *);
 
 static	const enum argvflag argvflags[MDOC_ARG_MAX] = {
@@ -274,7 +274,7 @@ static	const struct mdocarg mdocargs[MDOC_MAX] = {
  * Some flags take no argument, some one, some multiple.
  */
 void
-mdoc_argv(struct mdoc *mdoc, int line, int tok,
+mdoc_argv(struct roff_man *mdoc, int line, int tok,
 	struct mdoc_arg **reta, int *pos, char *buf)
 {
 	struct mdoc_argv	  tmpv;
@@ -411,7 +411,7 @@ argn_free(struct mdoc_arg *p, int iarg)
 }
 
 enum margserr
-mdoc_args(struct mdoc *mdoc, int line, int *pos,
+mdoc_args(struct roff_man *mdoc, int line, int *pos,
 	char *buf, int tok, char **v)
 {
 	struct roff_node *n;
@@ -442,7 +442,7 @@ mdoc_args(struct mdoc *mdoc, int line, int *pos,
 }
 
 static enum margserr
-args(struct mdoc *mdoc, int line, int *pos,
+args(struct roff_man *mdoc, int line, int *pos,
 		char *buf, enum argsflag fl, char **v)
 {
 	char		*p, *pp;
@@ -652,7 +652,7 @@ args_checkpunct(const char *buf, int i)
 }
 
 static void
-argv_multi(struct mdoc *mdoc, int line,
+argv_multi(struct roff_man *mdoc, int line,
 		struct mdoc_argv *v, int *pos, char *buf)
 {
 	enum margserr	 ac;
@@ -674,7 +674,7 @@ argv_multi(struct mdoc *mdoc, int line,
 }
 
 static void
-argv_single(struct mdoc *mdoc, int line,
+argv_single(struct roff_man *mdoc, int line,
 		struct mdoc_argv *v, int *pos, char *buf)
 {
 	enum margserr	 ac;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.87 2015/04/02 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.88 2015/04/18 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,7 +33,7 @@
 #include "libmandoc.h"
 #include "libman.h"
 
-#define	CHKARGS	  struct man *man, struct roff_node *n
+#define	CHKARGS	  struct roff_man *man, struct roff_node *n
 
 typedef	void	(*v_check)(CHKARGS);
 
@@ -96,7 +96,7 @@ static	v_check man_valids[MAN_MAX] = {
 
 
 void
-man_valid_post(struct man *man)
+man_valid_post(struct roff_man *man)
 {
 	struct roff_node *n;
 	v_check		*cp;

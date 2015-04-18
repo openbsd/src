@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.201 2015/04/02 22:06:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.202 2015/04/18 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -38,8 +38,8 @@
 
 /* FIXME: .Bl -diag can't have non-text children in HEAD. */
 
-#define	PRE_ARGS  struct mdoc *mdoc, struct roff_node *n
-#define	POST_ARGS struct mdoc *mdoc
+#define	PRE_ARGS  struct roff_man *mdoc, struct roff_node *n
+#define	POST_ARGS struct roff_man *mdoc
 
 enum	check_ineq {
 	CHECK_LT,
@@ -55,10 +55,10 @@ struct	valids {
 	v_post	 post;
 };
 
-static	void	 check_text(struct mdoc *, int, int, char *);
-static	void	 check_argv(struct mdoc *,
+static	void	 check_text(struct roff_man *, int, int, char *);
+static	void	 check_argv(struct roff_man *,
 			struct roff_node *, struct mdoc_argv *);
-static	void	 check_args(struct mdoc *, struct roff_node *);
+static	void	 check_args(struct roff_man *, struct roff_node *);
 static	int	 child_an(const struct roff_node *);
 static	enum roff_sec	a2sec(const char *);
 static	size_t		macro2len(int);
@@ -291,7 +291,7 @@ static	const char * const secnames[SEC__MAX] = {
 
 
 void
-mdoc_valid_pre(struct mdoc *mdoc, struct roff_node *n)
+mdoc_valid_pre(struct roff_man *mdoc, struct roff_node *n)
 {
 	v_pre	 p;
 
@@ -317,7 +317,7 @@ mdoc_valid_pre(struct mdoc *mdoc, struct roff_node *n)
 }
 
 void
-mdoc_valid_post(struct mdoc *mdoc)
+mdoc_valid_post(struct roff_man *mdoc)
 {
 	struct roff_node *n;
 	v_post p;
@@ -360,7 +360,7 @@ mdoc_valid_post(struct mdoc *mdoc)
 }
 
 static void
-check_args(struct mdoc *mdoc, struct roff_node *n)
+check_args(struct roff_man *mdoc, struct roff_node *n)
 {
 	int		 i;
 
@@ -373,7 +373,7 @@ check_args(struct mdoc *mdoc, struct roff_node *n)
 }
 
 static void
-check_argv(struct mdoc *mdoc, struct roff_node *n, struct mdoc_argv *v)
+check_argv(struct roff_man *mdoc, struct roff_node *n, struct mdoc_argv *v)
 {
 	int		 i;
 
@@ -382,7 +382,7 @@ check_argv(struct mdoc *mdoc, struct roff_node *n, struct mdoc_argv *v)
 }
 
 static void
-check_text(struct mdoc *mdoc, int ln, int pos, char *p)
+check_text(struct roff_man *mdoc, int ln, int pos, char *p)
 {
 	char		*cp;
 
@@ -1037,7 +1037,7 @@ post_defaults(POST_ARGS)
 		return;
 
 	nn = mdoc->last;
-	mdoc->next = MDOC_NEXT_CHILD;
+	mdoc->next = ROFF_NEXT_CHILD;
 
 	switch (nn->tok) {
 	case MDOC_Ar:
@@ -1065,7 +1065,7 @@ post_at(POST_ARGS)
 
 	n = mdoc->last;
 	if (n->child == NULL) {
-		mdoc->next = MDOC_NEXT_CHILD;
+		mdoc->next = ROFF_NEXT_CHILD;
 		mdoc_word_alloc(mdoc, n->line, n->pos, "AT&T UNIX");
 		mdoc->last = n;
 		return;
@@ -1493,7 +1493,7 @@ post_bk(POST_ARGS)
 }
 
 static void
-post_sm(struct mdoc *mdoc)
+post_sm(struct roff_man *mdoc)
 {
 	struct roff_node	*nch;
 
@@ -2304,7 +2304,7 @@ post_ex(POST_ARGS)
 		return;
 	}
 
-	mdoc->next = MDOC_NEXT_CHILD;
+	mdoc->next = ROFF_NEXT_CHILD;
 	mdoc_word_alloc(mdoc, n->line, n->pos, mdoc->meta.name);
 	mdoc->last = n;
 }

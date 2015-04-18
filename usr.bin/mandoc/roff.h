@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.h,v 1.12 2015/04/02 23:47:43 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.13 2015/04/18 16:04:40 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -56,6 +56,11 @@ enum	roff_type {
 	ROFFT_TEXT,
 	ROFFT_TBL,
 	ROFFT_EQN
+};
+
+enum	roff_next {
+	ROFF_NEXT_SIBLING = 0,
+	ROFF_NEXT_CHILD
 };
 
 /*
@@ -114,4 +119,33 @@ struct	roff_meta {
 	char		 *name;    /* Leading manual name. */
 	char		 *date;    /* Normalized date. */
 	int		  hasbody; /* Document is not empty. */
+};
+
+struct	roff_man {
+	struct roff_meta  meta;    /* Document meta-data. */
+	struct mparse	 *parse;   /* Parse pointer. */
+	struct roff	 *roff;    /* Roff parser state data. */
+	const char	 *defos;   /* Default operating system. */
+	struct roff_node *first;   /* The first node parsed. */
+	struct roff_node *last;    /* The last node parsed. */
+	struct roff_node *last_es; /* The most recent Es node. */
+	int		  quick;   /* Abort parse early. */
+	int		  flags;   /* Parse flags. */
+#define	MDOC_LITERAL	 (1 << 1)  /* In a literal scope. */
+#define	MDOC_PBODY	 (1 << 2)  /* In the document body. */
+#define	MDOC_NEWLINE	 (1 << 3)  /* First macro/text in a line. */
+#define	MDOC_PHRASELIT	 (1 << 4)  /* Literal within a partial phrase. */
+#define	MDOC_PPHRASE	 (1 << 5)  /* Within a partial phrase. */
+#define	MDOC_FREECOL	 (1 << 6)  /* `It' invocation should close. */
+#define	MDOC_SYNOPSIS	 (1 << 7)  /* SYNOPSIS-style formatting. */
+#define	MDOC_KEEP	 (1 << 8)  /* In a word keep. */
+#define	MDOC_SMOFF	 (1 << 9)  /* Spacing is off. */
+#define	MDOC_NODELIMC	 (1 << 10) /* Disable closing delimiter handling. */
+#define	MAN_ELINE	 (1 << 11) /* Next-line element scope. */
+#define	MAN_BLINE	 (1 << 12) /* Next-line block scope. */
+#define	MAN_LITERAL	  MDOC_LITERAL
+#define	MAN_NEWLINE	  MDOC_NEWLINE
+	enum roff_sec	  lastsec; /* Last section seen. */
+	enum roff_sec	  lastnamed; /* Last standard section seen. */
+	enum roff_next	  next;    /* Where to put the next node. */
 };

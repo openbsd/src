@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.144 2015/04/05 23:04:22 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.145 2015/04/18 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,18 +40,19 @@ static	void		in_line_argn(MACRO_PROT_ARGS);
 static	void		in_line(MACRO_PROT_ARGS);
 static	void		phrase_ta(MACRO_PROT_ARGS);
 
-static	void		append_delims(struct mdoc *, int, int *, char *);
-static	void		dword(struct mdoc *, int, int, const char *,
+static	void		append_delims(struct roff_man *, int, int *, char *);
+static	void		dword(struct roff_man *, int, int, const char *,
 				enum mdelim, int);
-static	int		find_pending(struct mdoc *, int, int, int,
+static	int		find_pending(struct roff_man *, int, int, int,
 				struct roff_node *);
-static	int		lookup(struct mdoc *, int, int, int, const char *);
+static	int		lookup(struct roff_man *, int, int, int, const char *);
 static	int		macro_or_word(MACRO_PROT_ARGS, int);
-static	int		parse_rest(struct mdoc *, int, int, int *, char *);
+static	int		parse_rest(struct roff_man *, int, int, int *, char *);
 static	int		rew_alt(int);
-static	void		rew_elem(struct mdoc *, int);
-static	void		rew_last(struct mdoc *, const struct roff_node *);
-static	void		rew_pending(struct mdoc *, const struct roff_node *);
+static	void		rew_elem(struct roff_man *, int);
+static	void		rew_last(struct roff_man *, const struct roff_node *);
+static	void		rew_pending(struct roff_man *,
+				const struct roff_node *);
 
 const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* Ap */
@@ -206,7 +207,7 @@ const	struct mdoc_macro * const mdoc_macros = __mdoc_macros;
  * are errors.
  */
 void
-mdoc_macroend(struct mdoc *mdoc)
+mdoc_macroend(struct roff_man *mdoc)
 {
 	struct roff_node *n;
 
@@ -231,7 +232,7 @@ mdoc_macroend(struct mdoc *mdoc)
  * or as a line macro if from == MDOC_MAX.
  */
 static int
-lookup(struct mdoc *mdoc, int from, int line, int ppos, const char *p)
+lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 {
 	int	 res;
 
@@ -252,14 +253,14 @@ lookup(struct mdoc *mdoc, int from, int line, int ppos, const char *p)
  * Rewind up to and including a specific node.
  */
 static void
-rew_last(struct mdoc *mdoc, const struct roff_node *to)
+rew_last(struct roff_man *mdoc, const struct roff_node *to)
 {
 	struct roff_node *n, *np;
 
 	if (to->flags & MDOC_VALID)
 		return;
 
-	mdoc->next = MDOC_NEXT_SIBLING;
+	mdoc->next = ROFF_NEXT_SIBLING;
 	while (mdoc->last != to) {
 		/*
 		 * Save the parent here, because we may delete the
@@ -281,7 +282,7 @@ rew_last(struct mdoc *mdoc, const struct roff_node *to)
  * Rewind up to a specific block, including all blocks that broke it.
  */
 static void
-rew_pending(struct mdoc *mdoc, const struct roff_node *n)
+rew_pending(struct roff_man *mdoc, const struct roff_node *n)
 {
 
 	for (;;) {
@@ -362,7 +363,7 @@ rew_alt(int tok)
 }
 
 static void
-rew_elem(struct mdoc *mdoc, int tok)
+rew_elem(struct roff_man *mdoc, int tok)
 {
 	struct roff_node *n;
 
@@ -380,7 +381,7 @@ rew_elem(struct mdoc *mdoc, int tok)
  * the rew_pending() call closing out the sub-block.
  */
 static int
-find_pending(struct mdoc *mdoc, int tok, int line, int ppos,
+find_pending(struct roff_man *mdoc, int tok, int line, int ppos,
 	struct roff_node *target)
 {
 	struct roff_node	*n;
@@ -417,7 +418,7 @@ find_pending(struct mdoc *mdoc, int tok, int line, int ppos,
  * Punctuation consists of those tokens found in mdoc_isdelim().
  */
 static void
-dword(struct mdoc *mdoc, int line, int col, const char *p,
+dword(struct roff_man *mdoc, int line, int col, const char *p,
 		enum mdelim d, int may_append)
 {
 
@@ -451,7 +452,7 @@ dword(struct mdoc *mdoc, int line, int col, const char *p,
 }
 
 static void
-append_delims(struct mdoc *mdoc, int line, int *pos, char *buf)
+append_delims(struct roff_man *mdoc, int line, int *pos, char *buf)
 {
 	char		*p;
 	int		 la;
@@ -615,7 +616,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 			 */
 
 			if (maxargs)
-				mdoc->next = MDOC_NEXT_CHILD;
+				mdoc->next = ROFF_NEXT_CHILD;
 			break;
 		}
 
@@ -1384,7 +1385,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 	if ((tok == MDOC_Pp || tok == MDOC_Lp) &&
 	    ! (mdoc->flags & MDOC_SYNOPSIS)) {
 		n = mdoc->last;
-		if (mdoc->next == MDOC_NEXT_SIBLING)
+		if (mdoc->next == ROFF_NEXT_SIBLING)
 			n = n->parent;
 		if (n->tok == MDOC_Nm)
 			rew_last(mdoc, mdoc->last->parent);
@@ -1410,7 +1411,7 @@ in_line_eoln(MACRO_PROT_ARGS)
  * or until the next macro, call that macro, and return 1.
  */
 static int
-parse_rest(struct mdoc *mdoc, int tok, int line, int *pos, char *buf)
+parse_rest(struct roff_man *mdoc, int tok, int line, int *pos, char *buf)
 {
 	int		 la;
 

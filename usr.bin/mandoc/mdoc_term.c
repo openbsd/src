@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.216 2015/04/04 17:46:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.217 2015/04/18 16:04:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -249,7 +249,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 
 
 void
-terminal_mdoc(void *arg, const struct mdoc *mdoc)
+terminal_mdoc(void *arg, const struct roff_man *mdoc)
 {
 	const struct roff_meta	*meta;
 	struct roff_node	*n;
