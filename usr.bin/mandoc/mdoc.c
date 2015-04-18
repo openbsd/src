@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.133 2015/04/18 17:01:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.134 2015/04/18 17:28:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -84,8 +84,6 @@ const	char * const *mdoc_argnames = __mdoc_argnames;
 static	void		  mdoc_node_free(struct roff_node *);
 static	void		  mdoc_node_unlink(struct roff_man *,
 				struct roff_node *);
-static	void		  mdoc_free1(struct roff_man *);
-static	void		  mdoc_alloc1(struct roff_man *);
 static	struct roff_node *node_alloc(struct roff_man *, int, int,
 				int, enum roff_type);
 static	void		  node_append(struct roff_man *, struct roff_node *);
@@ -105,88 +103,6 @@ mdoc_meta(const struct roff_man *mdoc)
 {
 
 	return(&mdoc->meta);
-}
-
-/*
- * Frees volatile resources (parse tree, meta-data, fields).
- */
-static void
-mdoc_free1(struct roff_man *mdoc)
-{
-
-	if (mdoc->first)
-		mdoc_node_delete(mdoc, mdoc->first);
-	free(mdoc->meta.msec);
-	free(mdoc->meta.vol);
-	free(mdoc->meta.arch);
-	free(mdoc->meta.date);
-	free(mdoc->meta.title);
-	free(mdoc->meta.os);
-	free(mdoc->meta.name);
-}
-
-/*
- * Allocate all volatile resources (parse tree, meta-data, fields).
- */
-static void
-mdoc_alloc1(struct roff_man *mdoc)
-{
-
-	memset(&mdoc->meta, 0, sizeof(mdoc->meta));
-	mdoc->macroset = MACROSET_MDOC;
-	mdoc->flags = 0;
-	mdoc->lastnamed = mdoc->lastsec = SEC_NONE;
-	mdoc->last = mandoc_calloc(1, sizeof(*mdoc->last));
-	mdoc->first = mdoc->last;
-	mdoc->last->type = ROFFT_ROOT;
-	mdoc->last->tok = MDOC_MAX;
-	mdoc->next = ROFF_NEXT_CHILD;
-}
-
-/*
- * Free up volatile resources (see mdoc_free1()) then re-initialises the
- * data with mdoc_alloc1().  After invocation, parse data has been reset
- * and the parser is ready for re-invocation on a new tree; however,
- * cross-parse non-volatile data is kept intact.
- */
-void
-mdoc_reset(struct roff_man *mdoc)
-{
-
-	mdoc_free1(mdoc);
-	mdoc_alloc1(mdoc);
-}
-
-/*
- * Completely free up all volatile and non-volatile parse resources.
- * After invocation, the pointer is no longer usable.
- */
-void
-mdoc_free(struct roff_man *mdoc)
-{
-
-	mdoc_free1(mdoc);
-	free(mdoc);
-}
-
-/*
- * Allocate volatile and non-volatile parse resources.
- */
-struct roff_man *
-mdoc_alloc(struct roff *roff, struct mparse *parse,
-	const char *defos, int quick)
-{
-	struct roff_man	*p;
-
-	p = mandoc_calloc(1, sizeof(*p));
-
-	p->parse = parse;
-	p->defos = defos;
-	p->quick = quick;
-	p->roff = roff;
-
-	mdoc_alloc1(p);
-	return(p);
 }
 
 void

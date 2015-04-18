@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.103 2015/04/18 17:01:28 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.104 2015/04/18 17:28:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -47,10 +47,8 @@ const	char *const __man_macronames[MAN_MAX] = {
 
 const	char * const *man_macronames = __man_macronames;
 
-static	void		 man_alloc1(struct roff_man *);
 static	void		 man_breakscope(struct roff_man *, int);
 static	void		 man_descope(struct roff_man *, int, int);
-static	void		 man_free1(struct roff_man *);
 static	struct roff_node *man_node_alloc(struct roff_man *, int, int,
 				enum roff_type, int);
 static	void		 man_node_append(struct roff_man *,
@@ -77,38 +75,6 @@ man_meta(const struct roff_man *man)
 }
 
 void
-man_reset(struct roff_man *man)
-{
-
-	man_free1(man);
-	man_alloc1(man);
-}
-
-void
-man_free(struct roff_man *man)
-{
-
-	man_free1(man);
-	free(man);
-}
-
-struct roff_man *
-man_alloc(struct roff *roff, struct mparse *parse,
-	const char *defos, int quick)
-{
-	struct roff_man	*p;
-
-	p = mandoc_calloc(1, sizeof(*p));
-	p->parse = parse;
-	p->defos = defos;
-	p->quick = quick;
-	p->roff = roff;
-
-	man_alloc1(p);
-	return(p);
-}
-
-void
 man_endparse(struct roff_man *man)
 {
 
@@ -126,34 +92,6 @@ man_parseln(struct roff_man *man, int ln, char *buf, int offs)
 	    man_pmacro(man, ln, buf, offs) :
 	    man_ptext(man, ln, buf, offs));
 }
-
-static void
-man_free1(struct roff_man *man)
-{
-
-	if (man->first)
-		man_node_delete(man, man->first);
-	free(man->meta.title);
-	free(man->meta.os);
-	free(man->meta.date);
-	free(man->meta.vol);
-	free(man->meta.msec);
-}
-
-static void
-man_alloc1(struct roff_man *man)
-{
-
-	memset(&man->meta, 0, sizeof(man->meta));
-	man->macroset = MACROSET_MAN;
-	man->flags = 0;
-	man->last = mandoc_calloc(1, sizeof(*man->last));
-	man->first = man->last;
-	man->last->type = ROFFT_ROOT;
-	man->last->tok = MAN_MAX;
-	man->next = ROFF_NEXT_CHILD;
-}
-
 
 static void
 man_node_append(struct roff_man *man, struct roff_node *p)

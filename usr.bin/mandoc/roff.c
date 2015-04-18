@@ -1,6 +1,6 @@
-/*	$OpenBSD: roff.c,v 1.136 2015/04/04 13:52:59 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.137 2015/04/18 17:28:08 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2011, 2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,6 +26,7 @@
 
 #include "mandoc.h"
 #include "mandoc_aux.h"
+#include "roff.h"
 #include "libmandoc.h"
 #include "libroff.h"
 
@@ -410,6 +411,8 @@ static	const char	*roff_getstrn(const struct roff *,
 static	enum rofferr	 roff_insec(ROFF_ARGS);
 static	enum rofferr	 roff_it(ROFF_ARGS);
 static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
+static	void		 roff_man_alloc1(struct roff_man *);
+static	void		 roff_man_free1(struct roff_man *);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	enum rofft	 roff_parse(struct roff *, char *, int *,
 				int, int);
@@ -894,6 +897,71 @@ roff_alloc(struct mparse *parse, const struct mchars *mchars, int options)
 	roffhash_init();
 
 	return(r);
+}
+
+static void
+roff_man_free1(struct roff_man *man)
+{
+
+	if (man->first != NULL) {
+		if (man->macroset == MACROSET_MDOC)
+			mdoc_node_delete(man, man->first);
+		else
+			man_node_delete(man, man->first);
+	}
+	free(man->meta.msec);
+	free(man->meta.vol);
+	free(man->meta.os);
+	free(man->meta.arch);
+	free(man->meta.title);
+	free(man->meta.name);
+	free(man->meta.date);
+}
+
+static void
+roff_man_alloc1(struct roff_man *man)
+{
+
+	memset(&man->meta, 0, sizeof(man->meta));
+	man->first = mandoc_calloc(1, sizeof(*man->first));
+	man->first->type = ROFFT_ROOT;
+	man->last = man->first;
+	man->last_es = NULL;
+	man->flags = 0;
+	man->macroset = MACROSET_NONE;
+	man->lastsec = man->lastnamed = SEC_NONE;
+	man->next = ROFF_NEXT_CHILD;
+}
+
+void
+roff_man_reset(struct roff_man *man)
+{
+
+	roff_man_free1(man);
+	roff_man_alloc1(man);
+}
+
+void
+roff_man_free(struct roff_man *man)
+{
+
+	roff_man_free1(man);
+	free(man);
+}
+
+struct roff_man *
+roff_man_alloc(struct roff *roff, struct mparse *parse,
+	const char *defos, int quick)
+{
+	struct roff_man *man;
+
+	man = mandoc_calloc(1, sizeof(*man));
+	man->parse = parse;
+	man->roff = roff;
+	man->defos = defos;
+	man->quick = quick;
+	roff_man_alloc1(man);
+	return(man);
 }
 
 /*

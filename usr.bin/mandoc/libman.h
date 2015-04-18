@@ -1,4 +1,4 @@
-/*	$OpenBSD: libman.h,v 1.47 2015/04/18 17:01:28 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.48 2015/04/18 17:28:08 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -42,7 +42,6 @@ void		  man_block_alloc(struct roff_man *, int, int, int);
 void		  man_head_alloc(struct roff_man *, int, int, int);
 void		  man_body_alloc(struct roff_man *, int, int, int);
 void		  man_elem_alloc(struct roff_man *, int, int, int);
-void		  man_node_delete(struct roff_man *, struct roff_node *);
 int		  man_hash_find(const char *);
 void		  man_macroend(struct roff_man *);
 void		  man_valid_post(struct roff_man *);
