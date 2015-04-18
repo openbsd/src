@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.134 2015/04/18 17:28:08 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.135 2015/04/18 17:50:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -90,20 +90,6 @@ static	void		  node_append(struct roff_man *, struct roff_node *);
 static	int		  mdoc_ptext(struct roff_man *, int, char *, int);
 static	int		  mdoc_pmacro(struct roff_man *, int, char *, int);
 
-
-const struct roff_node *
-mdoc_node(const struct roff_man *mdoc)
-{
-
-	return(mdoc->first);
-}
-
-const struct roff_meta *
-mdoc_meta(const struct roff_man *mdoc)
-{
-
-	return(&mdoc->meta);
-}
 
 void
 mdoc_endparse(struct roff_man *mdoc)

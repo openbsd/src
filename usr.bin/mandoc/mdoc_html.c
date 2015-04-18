@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.106 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.107 2015/04/18 17:50:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -46,7 +46,6 @@ struct	htmlmdoc {
 	void		(*post)(MDOC_ARGS);
 };
 
-static	void		  print_mdoc(MDOC_ARGS);
 static	void		  print_mdoc_head(MDOC_ARGS);
 static	void		  print_mdoc_node(MDOC_ARGS);
 static	void		  print_mdoc_nodelist(MDOC_ARGS);
@@ -262,15 +261,6 @@ static	const char * const lists[LIST_MAX] = {
 };
 
 
-void
-html_mdoc(void *arg, const struct roff_man *mdoc)
-{
-
-	print_mdoc(mdoc_meta(mdoc), mdoc_node(mdoc)->child,
-	    (struct html *)arg);
-	putchar('\n');
-}
-
 /*
  * Calculate the scaling unit passed in a `-width' argument.  This uses
  * either a native scaling unit (e.g., 1i, 2m) or the string length of
@@ -329,29 +319,32 @@ synopsis_pre(struct html *h, const struct roff_node *n)
 	}
 }
 
-static void
-print_mdoc(MDOC_ARGS)
+void
+html_mdoc(void *arg, const struct roff_man *mdoc)
 {
-	struct tag	*t, *tt;
 	struct htmlpair	 tag;
+	struct html	*h;
+	struct tag	*t, *tt;
 
 	PAIR_CLASS_INIT(&tag, "mandoc");
+	h = (struct html *)arg;
 
 	if ( ! (HTML_FRAGMENT & h->oflags)) {
 		print_gen_decls(h);
 		t = print_otag(h, TAG_HTML, 0, NULL);
 		tt = print_otag(h, TAG_HEAD, 0, NULL);
-		print_mdoc_head(meta, n, h);
+		print_mdoc_head(&mdoc->meta, mdoc->first->child, h);
 		print_tagq(h, tt);
 		print_otag(h, TAG_BODY, 0, NULL);
 		print_otag(h, TAG_DIV, 1, &tag);
 	} else
 		t = print_otag(h, TAG_DIV, 1, &tag);
 
-	mdoc_root_pre(meta, n, h);
-	print_mdoc_nodelist(meta, n, h);
-	mdoc_root_post(meta, n, h);
+	mdoc_root_pre(&mdoc->meta, mdoc->first->child, h);
+	print_mdoc_nodelist(&mdoc->meta, mdoc->first->child, h);
+	mdoc_root_post(&mdoc->meta, mdoc->first->child, h);
 	print_tagq(h, t);
+	putchar('\n');
 }
 
 static void

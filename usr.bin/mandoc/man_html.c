@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.69 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.70 2015/04/18 17:50:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,7 +52,6 @@ struct	htmlman {
 
 static	void		  print_bvspace(struct html *,
 				const struct roff_node *);
-static	void		  print_man(MAN_ARGS);
 static	void		  print_man_head(MAN_ARGS);
 static	void		  print_man_nodelist(MAN_ARGS);
 static	void		  print_man_node(MAN_ARGS);
@@ -146,33 +145,28 @@ void
 html_man(void *arg, const struct roff_man *man)
 {
 	struct mhtml	 mh;
-
-	memset(&mh, 0, sizeof(struct mhtml));
-	print_man(man_meta(man), man_node(man), &mh, (struct html *)arg);
-	putchar('\n');
-}
-
-static void
-print_man(MAN_ARGS)
-{
-	struct tag	*t, *tt;
 	struct htmlpair	 tag;
+	struct html	*h;
+	struct tag	*t, *tt;
 
+	memset(&mh, 0, sizeof(mh));
 	PAIR_CLASS_INIT(&tag, "mandoc");
+	h = (struct html *)arg;
 
 	if ( ! (HTML_FRAGMENT & h->oflags)) {
 		print_gen_decls(h);
 		t = print_otag(h, TAG_HTML, 0, NULL);
 		tt = print_otag(h, TAG_HEAD, 0, NULL);
-		print_man_head(man, n, mh, h);
+		print_man_head(&man->meta, man->first, &mh, h);
 		print_tagq(h, tt);
 		print_otag(h, TAG_BODY, 0, NULL);
 		print_otag(h, TAG_DIV, 1, &tag);
 	} else
 		t = print_otag(h, TAG_DIV, 1, &tag);
 
-	print_man_nodelist(man, n, mh, h);
+	print_man_nodelist(&man->meta, man->first, &mh, h);
 	print_tagq(h, t);
+	putchar('\n');
 }
 
 static void
