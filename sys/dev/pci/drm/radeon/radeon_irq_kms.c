@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.8 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.9 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -44,8 +44,7 @@
  * radeon_irq_process is a macro that points to the per-asic
  * irq handler callback.
  */
-int
-radeon_driver_irq_handler_kms(void *arg)
+irqreturn_t radeon_driver_irq_handler_kms(void *arg)
 {
 	struct drm_device *dev = arg;
 	struct radeon_device *rdev = dev->dev_private;

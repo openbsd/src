@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_combios.c,v 1.7 2015/04/08 03:21:13 jsg Exp $	*/
+/*	$OpenBSD: radeon_combios.c,v 1.8 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2004 ATI Technologies Inc., Markham, Ontario
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -50,11 +50,6 @@ radeon_add_legacy_connector(struct drm_device *dev,
 extern void
 radeon_add_legacy_encoder(struct drm_device *dev, uint32_t encoder_enum,
 			  uint32_t supported_device);
-
-
-void radeon_combios_connected_scratch_regs(struct drm_connector *connector,
-				      struct drm_encoder *encoder,
-				      bool connected);
 
 /* old legacy ATI BIOS routines */
 

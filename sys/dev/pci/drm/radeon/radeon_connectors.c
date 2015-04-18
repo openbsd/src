@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_connectors.c,v 1.5 2015/04/06 09:23:19 jsg Exp $	*/
+/*	$OpenBSD: radeon_connectors.c,v 1.6 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -40,11 +40,6 @@ extern void
 radeon_atombios_connected_scratch_regs(struct drm_connector *connector,
 				       struct drm_encoder *encoder,
 				       bool connected);
-void	 radeon_add_atom_connector(struct drm_device *, uint32_t, uint32_t, int,
-	     struct radeon_i2c_bus_rec *, uint32_t, uint16_t, struct radeon_hpd *,
-	     struct radeon_router *);
-void	 radeon_add_legacy_connector(struct drm_device *, uint32_t, uint32_t, int,
-	     struct radeon_i2c_bus_rec *, uint16_t, struct radeon_hpd *);
 
 void radeon_connector_hotplug(struct drm_connector *connector)
 {

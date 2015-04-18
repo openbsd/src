@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_object.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
+/*	$OpenBSD: ttm_object.h,v 1.2 2015/04/18 14:47:35 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -270,6 +270,6 @@ extern struct ttm_object_device *ttm_object_device_init
 
 extern void ttm_object_device_release(struct ttm_object_device **p_tdev);
 
-#define ttm_base_object_free(__object, __base)\
+#define ttm_base_object_kfree(__object, __base)\
 	kfree_rcu(__object, __base.rhead)
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_api.h,v 1.3 2015/04/12 03:54:10 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_api.h,v 1.4 2015/04/18 14:47:35 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -138,7 +138,7 @@ struct ttm_tt;
  *
  * @bdev: Pointer to the buffer object device structure.
  * @type: The bo type.
- * @destroy: Destruction function. If NULL, free is used.
+ * @destroy: Destruction function. If NULL, kfree is used.
  * @num_pages: Actual number of pages.
  * @addr_space_offset: Address space offset.
  * @acc_size: Accounted size for this object.
@@ -473,7 +473,7 @@ size_t ttm_bo_dma_acc_size(struct ttm_bo_device *bdev,
  * point to the shmem object backing a GEM object if TTM is used to back a
  * GEM user interface.
  * @acc_size: Accounted size for this object.
- * @destroy: Destroy function. Use NULL for free().
+ * @destroy: Destroy function. Use NULL for kfree().
  *
  * This function initializes a pre-allocated struct ttm_buffer_object.
  * As this object may be part of a larger structure, this function,
@@ -481,7 +481,7 @@ size_t ttm_bo_dma_acc_size(struct ttm_bo_device *bdev,
  * enables driver-specific objects derived from a ttm_buffer_object.
  * On successful return, the object kref and list_kref are set to 1.
  * If a failure occurs, the function will call the @destroy function, or
- * free() if @destroy is NULL. Thus, after a failure, dereferencing @bo is
+ * kfree() if @destroy is NULL. Thus, after a failure, dereferencing @bo is
  * illegal and will likely cause memory corruption.
  *
  * Returns
@@ -521,7 +521,7 @@ extern int ttm_bo_init(struct ttm_bo_device *bdev,
  * @p_bo: On successful completion *p_bo points to the created object.
  *
  * This function allocates a ttm_buffer_object, and then calls ttm_bo_init
- * on that object. The destroy function is set to free().
+ * on that object. The destroy function is set to kfree().
  * Returns
  * -ENOMEM: Out of memory.
  * -EINVAL: Invalid placement flags.

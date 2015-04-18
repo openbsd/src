@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_driver.h,v 1.4 2015/04/08 02:28:13 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_driver.h,v 1.5 2015/04/18 14:47:35 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 Vmware, Inc., Palo Alto, CA., USA
@@ -485,7 +485,7 @@ struct ttm_bo_global {
 	struct vm_page *dummy_read_page;
 	struct ttm_mem_shrink shrink;
 	struct rwlock device_list_mutex;
-	struct mutex lru_lock;
+	spinlock_t lru_lock;
 
 	/**
 	 * Protected by device_list_mutex.
@@ -534,9 +534,9 @@ struct ttm_bo_device {
 	struct list_head device_list;
 	struct ttm_bo_global *glob;
 	struct ttm_bo_driver *driver;
-	struct rwlock vm_lock;
+	rwlock_t vm_lock;
 	struct ttm_mem_type_manager man[TTM_NUM_MEM_TYPES];
-	struct mutex fence_lock;
+	spinlock_t fence_lock;
 
 	bus_space_tag_t iot;
 	bus_space_tag_t memt;
@@ -795,9 +795,9 @@ extern void ttm_mem_io_unlock(struct ttm_mem_type_manager *man);
  * to make room for a buffer already reserved. (Buffers are reserved before
  * they are evicted). The following algorithm prevents such deadlocks from
  * occurring:
- * 1) Buffers are reserved with the lru mutex held. Upon successful
+ * 1) Buffers are reserved with the lru spinlock held. Upon successful
  * reservation they are removed from the lru list. This stops a reserved buffer
- * from being evicted. However the lru mutex is released between the time
+ * from being evicted. However the lru spinlock is released between the time
  * a buffer is selected for eviction and the time it is reserved.
  * Therefore a check is made when a buffer is reserved for eviction, that it
  * is still the first buffer in the lru list, before it is removed from the
@@ -847,7 +847,7 @@ extern int ttm_bo_reserve(struct ttm_buffer_object *bo,
  *
  * Must be called with struct ttm_bo_global::lru_lock held,
  * and will not remove reserved buffers from the lru lists.
- * The function may release the LRU mutex if it needs to sleep.
+ * The function may release the LRU spinlock if it needs to sleep.
  * Otherwise identical to ttm_bo_reserve.
  *
  * Returns:

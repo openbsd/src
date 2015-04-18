@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.17 2015/04/08 02:28:13 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.18 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -500,11 +500,11 @@ i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj)
 
 	for (i = 0; i < page_count; i++) {
 		struct vm_page *page = obj->pages[i];
-		char new_bit_17 = VM_PAGE_TO_PHYS(page) >> 17;
+		char new_bit_17 = page_to_phys(page) >> 17;
 		if ((new_bit_17 & 0x1) !=
 		    (test_bit(i, obj->bit_17) != 0)) {
 			i915_gem_swizzle_page(page);
-			atomic_clearbits_int(&page->pg_flags, PG_CLEAN);
+			set_page_dirty(page);
 		}
 	}
 }
@@ -531,7 +531,7 @@ i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
 
 	for (i = 0; i < page_count; i++) {
 		struct vm_page *page = obj->pages[i];
-		if (VM_PAGE_TO_PHYS(page) & (1 << 17))
+		if (page_to_phys(page) & (1 << 17))
 			set_bit(i, obj->bit_17);
 		else
 			clear_bit(i, obj->bit_17);

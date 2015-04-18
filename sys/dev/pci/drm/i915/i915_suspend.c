@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_suspend.c,v 1.5 2015/02/10 01:39:32 jsg Exp $	*/
+/*	$OpenBSD: i915_suspend.c,v 1.6 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  *
  * Copyright 2008 (c) Intel Corporation
@@ -625,7 +625,7 @@ static void i915_save_display(struct drm_device *dev)
 	dev_priv->regfile.saveDSPARB = I915_READ(DSPARB);
 
 	/* This is only meaningful in non-KMS mode */
-	/* Don't save them in KMS mode */
+	/* Don't regfile.save them in KMS mode */
 	i915_save_modeset_reg(dev);
 
 	/* LVDS state */
@@ -675,10 +675,10 @@ static void i915_save_display(struct drm_device *dev)
 			dev_priv->regfile.savePIPEA_DP_LINK_N = I915_READ(_PIPEA_DP_LINK_N);
 			dev_priv->regfile.savePIPEB_DP_LINK_N = I915_READ(_PIPEB_DP_LINK_N);
 		}
-		/* FIXME: save TV & SDVO state */
+		/* FIXME: regfile.save TV & SDVO state */
 	}
 
-	/* Only save FBC state on the platform that supports FBC */
+	/* Only regfile.save FBC state on the platform that supports FBC */
 	if (I915_HAS_FBC(dev)) {
 		if (HAS_PCH_SPLIT(dev)) {
 			dev_priv->regfile.saveDPFC_CB_BASE = I915_READ(ILK_DPFC_CB_BASE);

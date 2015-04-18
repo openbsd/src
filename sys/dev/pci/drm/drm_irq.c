@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.63 2015/04/15 09:48:19 kettenis Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.64 2015/04/18 14:47:34 jsg Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -396,10 +396,10 @@ int drm_irq_uninstall(struct drm_device *dev)
 	if (dev->num_crtcs) {
 		spin_lock_irqsave(&dev->vbl_lock, irqflags);
 		for (i = 0; i < dev->num_crtcs; i++) {
-			wakeup(&dev->vbl_queue[i]);
+			DRM_WAKEUP(&dev->vbl_queue[i]);
 			dev->vblank_enabled[i] = 0;
 			dev->last_vblank[i] =
-			    dev->driver->get_vblank_counter(dev, i);
+				dev->driver->get_vblank_counter(dev, i);
 		}
 		spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
 	}
@@ -481,9 +481,9 @@ void drm_calc_timestamping_constants(struct drm_crtc *crtc)
 		 * line duration, frame duration and pixel duration in
 		 * nanoseconds:
 		 */
-		pixeldur_ns = (s64) 1000000000 / dotclock;
-		linedur_ns  = (s64) ((u64) crtc->hwmode.crtc_htotal *
-					      1000000000) / dotclock;
+		pixeldur_ns = (s64) div64_u64(1000000000, dotclock);
+		linedur_ns  = (s64) div64_u64(((u64) crtc->hwmode.crtc_htotal *
+					      1000000000), dotclock);
 		framedur_ns = (s64) crtc->hwmode.crtc_vtotal * linedur_ns;
 	} else
 		DRM_ERROR("crtc %d: Can't calculate constants, dotclock = 0!\n",
@@ -980,6 +980,7 @@ void drm_vblank_put(struct drm_device *dev, int crtc)
 	    (drm_vblank_offdelay > 0))
 		timeout_add_msec(&dev->vblank_disable_timer, drm_vblank_offdelay);
 }
+EXPORT_SYMBOL(drm_vblank_put);
 
 /**
  * drm_vblank_off - disable vblank events on a CRTC
@@ -999,7 +1000,7 @@ void drm_vblank_off(struct drm_device *dev, int crtc)
 
 	spin_lock_irqsave(&dev->vbl_lock, irqflags);
 	vblank_disable_and_save(dev, crtc);
-	wakeup(&dev->vbl_queue[crtc]);
+	DRM_WAKEUP(&dev->vbl_queue[crtc]);
 
 	list = &dev->vbl_events;
 	/* Send any queued vblank events, lest the natives grow disquiet */
@@ -1024,6 +1025,7 @@ void drm_vblank_off(struct drm_device *dev, int crtc)
 
 	spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
 }
+EXPORT_SYMBOL(drm_vblank_off);
 
 /**
  * drm_vblank_pre_modeset - account for vblanks across mode sets
@@ -1394,7 +1396,7 @@ bool drm_handle_vblank(struct drm_device *dev, int crtc)
 			  crtc, (int) diff_ns);
 	}
 
-	wakeup(&dev->vbl_queue[crtc]);
+	DRM_WAKEUP(&dev->vbl_queue[crtc]);
 	drm_handle_vblank_events(dev, crtc);
 
 	spin_unlock_irqrestore(&dev->vblank_time_lock, irqflags);

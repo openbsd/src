@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_clocks.c,v 1.2 2014/07/03 18:58:21 kettenis Exp $	*/
+/*	$OpenBSD: radeon_clocks.c,v 1.3 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -35,10 +35,6 @@
 #if defined(__macppc__) || defined(__sparc64__)
 #include <dev/ofw/openfirm.h>
 #endif
-
-uint32_t	 radeon_legacy_get_engine_clock(struct radeon_device *);
-uint32_t	 radeon_legacy_get_memory_clock(struct radeon_device *);
-void		 radeon_legacy_set_engine_clock(struct radeon_device *, uint32_t);
 
 /* 10 khz */
 uint32_t radeon_legacy_get_engine_clock(struct radeon_device *rdev)

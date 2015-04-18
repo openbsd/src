@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_atomic.h,v 1.11 2013/10/01 20:06:57 kettenis Exp $ */
+/* $OpenBSD: drm_atomic.h,v 1.12 2015/04/18 14:47:34 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -120,6 +120,7 @@ atomic_inc_not_zero(atomic_t *p)
 /* FIXME */
 #define atomic_set_int(p, bits)		atomic_setbits_int(p,bits)
 #define atomic_clear_int(p, bits)	atomic_clearbits_int(p,bits)
+#define atomic_clear_mask(bits, p)	atomic_clearbits_int(p,bits)
 #define atomic_fetchadd_int(p, n) __sync_fetch_and_add(p, n)
 #define atomic_fetchsub_int(p, n) __sync_fetch_and_sub(p, n)
 

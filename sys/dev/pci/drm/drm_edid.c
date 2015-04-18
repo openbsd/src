@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.13 2015/04/18 11:05:32 jsg Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.14 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -923,9 +923,9 @@ static struct drm_display_mode *drm_mode_detailed(struct drm_device *dev,
 		return NULL;
 
 	if (quirks & EDID_QUIRK_135_CLOCK_TOO_HIGH)
-		timing->pixel_clock = htole16(1088);
+		timing->pixel_clock = cpu_to_le16(1088);
 
-	mode->clock = letoh16(timing->pixel_clock) * 10;
+	mode->clock = le16_to_cpu(timing->pixel_clock) * 10;
 
 	mode->hdisplay = hactive;
 	mode->hsync_start = mode->hdisplay + hsync_offset;
@@ -1362,7 +1362,7 @@ static int drm_cvt_modes(struct drm_connector *connector,
 	const u8 empty[3] = { 0, 0, 0 };
 
 	for (i = 0; i < 4; i++) {
-		int width, height;
+		int uninitialized_var(width), height;
 		cvt = &(timing->data.other_data.data.cvt[i]);
 
 		if (!memcmp(cvt->code, empty, 3))

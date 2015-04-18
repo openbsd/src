@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_encoders.c,v 1.8 2014/08/08 16:35:56 jsg Exp $	*/
+/*	$OpenBSD: atombios_encoders.c,v 1.9 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -31,12 +31,6 @@
 #include "atom.h"
 
 extern int atom_debug;
-
-u8	 atombios_get_backlight_level(struct radeon_encoder *);
-void	 atombios_set_backlight_level(struct radeon_encoder *, u8);
-void	 radeon_atom_backlight_init(struct radeon_encoder *);
-void	 radeon_add_atom_encoder(struct drm_device *, uint32_t,
-	     uint32_t, u16);
 
 static u8
 radeon_atom_get_backlight_level_from_reg(struct radeon_device *rdev)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_atombios.c,v 1.6 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon_atombios.c,v 1.7 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -60,14 +60,6 @@ radeon_add_legacy_encoder(struct drm_device *dev, uint32_t encoder_enum,
 /* local */
 static int radeon_atom_get_max_vddc(struct radeon_device *rdev, u8 voltage_type,
 				    u16 voltage_id, u16 *voltage);
-bool radeon_atom_get_tv_timings(struct radeon_device *rdev, int index,
-				struct drm_display_mode *mode);
-uint32_t radeon_atom_get_engine_clock(struct radeon_device *rdev);
-uint32_t radeon_atom_get_memory_clock(struct radeon_device *rdev);
-void radeon_atom_set_engine_clock(struct radeon_device *rdev, uint32_t eng_clock);
-void radeon_atom_set_memory_clock(struct radeon_device *rdev, uint32_t mem_clock);
-void radeon_atombios_connected_scratch_regs(struct drm_connector *connector,
-				       struct drm_encoder *encoder, bool connected);
 
 union atom_supported_devices {
 	struct _ATOM_SUPPORTED_DEVICES_INFO info;

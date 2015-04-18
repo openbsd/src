@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.26 2015/04/18 11:41:28 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.27 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -41,6 +41,8 @@ typedef bus_addr_t phys_addr_t;
 #define __iomem
 #define __must_check
 #define __init
+
+#define uninitialized_var(x) x
 
 #if BYTE_ORDER == BIG_ENDIAN
 #define __BIG_ENDIAN
@@ -86,8 +88,17 @@ typedef bus_addr_t phys_addr_t;
 #define pr_fmt(fmt) fmt
 #endif
 
+#define printk_once(fmt, arg...) ({		\
+	static int __warned;			\
+	if (!__warned) {			\
+		printf(fmt, ## arg);		\
+		__warned = 1;			\
+	}					\
+})
+
 #define printk(fmt, arg...)	printf(fmt, ## arg)
 #define pr_warn(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
+#define pr_warn_once(fmt, arg...)	printk_once(pr_fmt(fmt), ## arg)
 #define pr_notice(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
 #define pr_crit(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
 #define pr_err(fmt, arg...)	printf(pr_fmt(fmt), ## arg)
@@ -221,6 +232,7 @@ IS_ERR_OR_NULL(const void *ptr)
 #define __DECONST(type, var)    ((type)(__uintptr_t)(const void *)(var))
 #endif
 
+typedef struct rwlock rwlock_t;
 typedef struct mutex spinlock_t;
 #define DEFINE_SPINLOCK(x)	struct mutex x
 
@@ -279,6 +291,8 @@ extern struct timeval ns_to_timeval(const int64_t);
 #define msecs_to_jiffies(x)	(((int64_t)(x)) * hz / 1000)
 #define time_after(a,b)		((long)(b) - (long)(a) < 0)
 #define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
+#define get_seconds()		time_second
+#define getrawmonotonic(x)	nanouptime(x)
 
 static inline void
 set_normalized_timespec(struct timespec *ts, time_t sec, int64_t nsec)
@@ -382,6 +396,12 @@ vfree(void *objp)
 
 static inline uint64_t
 div_u64(uint64_t x, uint32_t y)
+{
+	return (x / y);
+}
+
+static inline uint64_t
+div64_u64(uint64_t x, uint64_t y)
 {
 	return (x / y);
 }
@@ -532,6 +552,7 @@ iowrite32(u32 val, volatile void __iomem *addr)
 #define page_to_phys(page)	(VM_PAGE_TO_PHYS(page))
 #define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
 #define offset_in_page(off)	((off) & PAGE_MASK)
+#define set_page_dirty(page)	atomic_clearbits_int(&page->pg_flags, PG_CLEAN)
 
 typedef int pgprot_t;
 #define pgprot_val(v)	(v)
@@ -595,6 +616,13 @@ in_dbg_master(void)
 	return (db_is_active);
 #endif
 	return (0);
+}
+
+static inline int
+power_supply_is_system_supplied(void)
+{
+	/* XXX return 0 if on battery */
+	return (1);
 }
 
 #ifdef __macppc__

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.82 2015/04/18 11:41:28 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.83 2015/04/18 14:47:34 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -178,10 +178,6 @@ void	inteldrm_timeout(void *);
 void	i915_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 void	i965_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 
-int	i915_drm_freeze(struct drm_device *);
-int	__i915_drm_thaw(struct drm_device *);
-int	i915_drm_thaw(struct drm_device *);
-
 #define INTEL_VGA_DEVICE(id, info) {		\
 	.class = PCI_CLASS_DISPLAY << 16,	\
 	.class_mask = 0xff0000,			\
@@ -359,7 +355,7 @@ static const struct intel_device_info intel_haswell_m_info = {
 	.has_force_wake = 1,
 };
 
-const static struct drm_pcidev inteldrm_pciidlist[] = {		/* aka */
+static const struct drm_pcidev inteldrm_pciidlist[] = {		/* aka */
 	INTEL_VGA_DEVICE(0x3577, &intel_i830_info),		/* I830_M */
 	INTEL_VGA_DEVICE(0x2562, &intel_845g_info),		/* 845_G */
 	INTEL_VGA_DEVICE(0x3582, &intel_i85x_info),		/* I855_GM */
@@ -516,8 +512,7 @@ inteldrm_probe(struct device *parent, void *match, void *aux)
 	    inteldrm_pciidlist));
 }
 
-bool
-i915_semaphore_is_enabled(struct drm_device *dev)
+bool i915_semaphore_is_enabled(struct drm_device *dev)
 {
 	if (INTEL_INFO(dev)->gen < 6)
 		return 0;
@@ -534,8 +529,7 @@ i915_semaphore_is_enabled(struct drm_device *dev)
 	return 1;
 }
 
-int
-i915_drm_freeze(struct drm_device *dev)
+static int i915_drm_freeze(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -572,8 +566,7 @@ i915_drm_freeze(struct drm_device *dev)
 	return 0;
 }
 
-int
-__i915_drm_thaw(struct drm_device *dev)
+static int __i915_drm_thaw(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int error = 0;
@@ -604,8 +597,7 @@ __i915_drm_thaw(struct drm_device *dev)
 	return error;
 }
 
-int
-i915_drm_thaw(struct drm_device *dev)
+static int i915_drm_thaw(struct drm_device *dev)
 {
 	int error = 0;
 
@@ -1493,12 +1485,12 @@ int i915_reset(struct drm_device *dev)
 	i915_gem_reset(dev);
 
 	ret = -ENODEV;
-	if (time_second - dev_priv->last_gpu_reset < 5)
+	if (get_seconds() - dev_priv->last_gpu_reset < 5)
 		DRM_ERROR("GPU hanging too fast, declaring wedged!\n");
 	else
 		ret = intel_gpu_reset(dev);
 
-	dev_priv->last_gpu_reset = time_second;
+	dev_priv->last_gpu_reset = get_seconds();
 	if (ret) {
 		DRM_ERROR("Failed to reset chip.\n");
 		mutex_unlock(&dev->struct_mutex);
@@ -1780,3 +1772,49 @@ __i915_write(16, w)
 __i915_write(32, l)
 __i915_write(64, q)
 #undef __i915_write
+
+static const struct register_whitelist {
+	uint64_t offset;
+	uint32_t size;
+	uint32_t gen_bitmask; /* support gens, 0x10 for 4, 0x30 for 4 and 5, etc. */
+} whitelist[] = {
+	{ RING_TIMESTAMP(RENDER_RING_BASE), 8, 0xF0 },
+};
+
+int i915_reg_read_ioctl(struct drm_device *dev,
+			void *data, struct drm_file *file)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_reg_read *reg = data;
+	struct register_whitelist const *entry = whitelist;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(whitelist); i++, entry++) {
+		if (entry->offset == reg->offset &&
+		    (1 << INTEL_INFO(dev)->gen & entry->gen_bitmask))
+			break;
+	}
+
+	if (i == ARRAY_SIZE(whitelist))
+		return -EINVAL;
+
+	switch (entry->size) {
+	case 8:
+		reg->val = I915_READ64(reg->offset);
+		break;
+	case 4:
+		reg->val = I915_READ(reg->offset);
+		break;
+	case 2:
+		reg->val = I915_READ16(reg->offset);
+		break;
+	case 1:
+		reg->val = I915_READ8(reg->offset);
+		break;
+	default:
+		WARN_ON(1);
+		return -EINVAL;
+	}
+
+	return 0;
+}

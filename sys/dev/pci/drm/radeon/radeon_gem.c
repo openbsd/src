@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_gem.c,v 1.6 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: radeon_gem.c,v 1.7 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -29,12 +29,6 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon.h"
-
-int	 radeon_gem_object_init(struct drm_gem_object *);
-void	 radeon_gem_object_free(struct drm_gem_object *);
-int	 radeon_gem_set_domain(struct drm_gem_object *, uint32_t, uint32_t);
-int	 radeon_gem_object_open(struct drm_gem_object *, struct drm_file *);
-void	 radeon_gem_object_close(struct drm_gem_object *, struct drm_file *);
 
 int radeon_gem_object_init(struct drm_gem_object *obj)
 {
@@ -468,7 +462,8 @@ int radeon_gem_va_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (args->offset < RADEON_VA_RESERVED_SIZE) {
-		DRM_ERROR("offset 0x%lX is in reserved area 0x%X\n",
+		dev_err(&dev->pdev->dev,
+			"offset 0x%lX is in reserved area 0x%X\n",
 			(unsigned long)args->offset,
 			RADEON_VA_RESERVED_SIZE);
 		args->operation = RADEON_VA_RESULT_ERROR;

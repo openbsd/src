@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen_cs.c,v 1.5 2015/04/06 14:32:55 jsg Exp $	*/
+/*	$OpenBSD: evergreen_cs.c,v 1.6 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -39,10 +39,6 @@ int r600_dma_cs_next_reloc(struct radeon_cs_parser *p,
 			   struct radeon_cs_reloc **cs_reloc);
 static int evergreen_cs_packet_next_reloc(struct radeon_cs_parser *p,
 					  struct radeon_cs_reloc **cs_reloc);
-int evergreen_cs_parse(struct radeon_cs_parser *p);
-int evergreen_dma_cs_parse(struct radeon_cs_parser *p);
-int evergreen_ib_parse(struct radeon_device *rdev, struct radeon_ib *ib);
-int evergreen_dma_ib_parse(struct radeon_device *rdev, struct radeon_ib *ib);
 
 struct evergreen_cs_track {
 	u32			group_size;

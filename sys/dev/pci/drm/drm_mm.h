@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_mm.h,v 1.2 2013/09/12 13:03:31 jsg Exp $	*/
+/*	$OpenBSD: drm_mm.h,v 1.3 2015/04/18 14:47:34 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright 2006-2008 Tungsten Graphics, Inc., Cedar Park, TX. USA.
@@ -65,7 +65,7 @@ struct drm_mm {
 	struct drm_mm_node head_node;
 	struct list_head unused_nodes;
 	int num_unused;
-	struct mutex unused_lock;
+	spinlock_t unused_lock;
 	unsigned int scan_check_range : 1;
 	unsigned scan_alignment;
 	unsigned long scan_color;

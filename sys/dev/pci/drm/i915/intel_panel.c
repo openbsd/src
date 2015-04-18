@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_panel.c,v 1.9 2015/04/18 11:05:32 jsg Exp $	*/
+/*	$OpenBSD: intel_panel.c,v 1.10 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright © 2006-2010 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -197,9 +197,7 @@ u32 intel_panel_get_max_backlight(struct drm_device *dev)
 		/* XXX add code here to query mode clock or hardware clock
 		 * and program max PWM appropriately.
 		 */
-#ifdef notyet
 		pr_warn_once("fixme: max PWM is zero\n");
-#endif
 		return 1;
 	}
 

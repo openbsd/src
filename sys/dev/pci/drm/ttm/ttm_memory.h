@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.h,v 1.3 2015/02/10 10:50:49 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.h,v 1.4 2015/04/18 14:47:35 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -75,7 +75,7 @@ struct ttm_mem_global {
 	struct taskq *swap_queue;
 	struct task task;
 	bool task_queued;
-	struct mutex lock;
+	spinlock_t lock;
 	struct ttm_mem_zone *zones[TTM_MEM_MAX_ZONES];
 	unsigned int num_zones;
 	struct ttm_mem_zone *zone_kernel;

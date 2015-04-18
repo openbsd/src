@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.93 2015/04/18 11:41:28 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.94 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -488,13 +488,11 @@ i915_gem_shmem_pread(struct drm_device *dev,
 
 #ifdef __linux__
 		page = sg_page(sg);
-		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
-			(page_to_phys(page) & (1 << 17)) != 0;
 #else
 		page = obj->pages[i];
-		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
-			(VM_PAGE_TO_PHYS(page) & (1 << 17)) != 0;
 #endif
+		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
+			(page_to_phys(page) & (1 << 17)) != 0;
 
 		ret = shmem_pread_fast(page, shmem_page_offset, page_length,
 				       user_data, page_do_bit17_swizzling,
@@ -854,13 +852,11 @@ i915_gem_shmem_pwrite(struct drm_device *dev,
 
 #ifdef __linux__
 		page = sg_page(sg);
-		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
-			(page_to_phys(page) & (1 << 17)) != 0;
 #else
 		page = obj->pages[i];
-		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
-			(VM_PAGE_TO_PHYS(page) & (1 << 17)) != 0;
 #endif
+		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
+			(page_to_phys(page) & (1 << 17)) != 0;
 
 		ret = shmem_pwrite_fast(page, shmem_page_offset, page_length,
 					user_data, page_do_bit17_swizzling,
@@ -879,11 +875,9 @@ i915_gem_shmem_pwrite(struct drm_device *dev,
 		mutex_lock(&dev->struct_mutex);
 
 next_page:
-#ifdef __linux__
 		set_page_dirty(page);
+#ifdef __linux__
 		mark_page_accessed(page);
-#else
-		atomic_clearbits_int(&page->pg_flags, PG_CLEAN);
 #endif
 
 		if (ret)
@@ -1063,7 +1057,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 		return -ENODEV;
 
 	/* Record current time in case interrupted by signal, or wedged * */
-	nanouptime(&before);
+	getrawmonotonic(&before);
 
 #define EXIT_COND \
 	(i915_seqno_passed(ring->get_seqno(ring, false), seqno) || \
@@ -1108,7 +1102,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 			end = ret;
 	} while (end == 0 && wait_forever);
 
-	nanouptime(&now);
+	getrawmonotonic(&now);
 
 	ring->irq_put(ring);
 	trace_i915_gem_request_wait_end(ring, seqno);

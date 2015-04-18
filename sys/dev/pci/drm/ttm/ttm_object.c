@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_object.c,v 1.7 2015/04/11 05:10:13 jsg Exp $	*/
+/*	$OpenBSD: ttm_object.c,v 1.8 2015/04/18 14:47:35 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2009 VMware, Inc., Palo Alto, CA., USA
@@ -59,7 +59,7 @@
 
 struct ttm_object_file {
 	struct ttm_object_device *tdev;
-	struct rwlock lock;
+	rwlock_t lock;
 	struct list_head ref_list;
 	struct drm_open_hash ref_hash[TTM_REF_NUM];
 	int refcount;

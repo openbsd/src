@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ring.c,v 1.6 2015/02/10 06:19:36 jsg Exp $	*/
+/*	$OpenBSD: radeon_ring.c,v 1.7 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -32,8 +32,6 @@
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
-
-extern int ticks;
 
 /*
  * IB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen.c,v 1.18 2015/04/06 14:10:59 jsg Exp $	*/
+/*	$OpenBSD: evergreen.c,v 1.19 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -50,13 +50,6 @@ void evergreen_fini(struct radeon_device *rdev);
 void evergreen_pcie_gen2_enable(struct radeon_device *rdev);
 extern void cayman_cp_int_cntl_setup(struct radeon_device *rdev,
 				     int ring, u32 cp_int_cntl);
-void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev);
-u32 evergreen_get_number_of_dram_channels(struct radeon_device *rdev);
-void evergreen_mc_stop(struct radeon_device *rdev, struct evergreen_mc_save *save);
-void evergreen_mc_resume(struct radeon_device *rdev, struct evergreen_mc_save *save);
-void evergreen_mc_program(struct radeon_device *rdev);
-int evergreen_mc_init(struct radeon_device *rdev);
-void evergreen_irq_suspend(struct radeon_device *rdev);
 
 void evergreen_tiling_fields(unsigned tiling_flags, unsigned *bankw,
 			     unsigned *bankh, unsigned *mtaspect,

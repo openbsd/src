@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.33 2015/04/18 11:41:29 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.34 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2402,7 +2402,7 @@ static void ironlake_enable_drps(struct drm_device *dev)
 		I915_READ(0x112e0);
 	dev_priv->ips.last_time1 = jiffies_to_msecs(ticks);
 	dev_priv->ips.last_count2 = I915_READ(0x112f4);
-	nanouptime(&dev_priv->ips.last_time2);
+	getrawmonotonic(&dev_priv->ips.last_time2);
 
 	spin_unlock_irq(&mchdev_lock);
 }
@@ -3113,7 +3113,7 @@ static void __i915_update_gfx_val(struct drm_i915_private *dev_priv)
 
 	assert_spin_locked(&mchdev_lock);
 
-	nanouptime(&now);
+	getrawmonotonic(&now);
 	timespecsub(&now, &dev_priv->ips.last_time2, &diff1);
 
 	/* Don't divide by 0 */

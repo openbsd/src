@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.49 2015/04/12 17:10:07 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.50 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -1973,12 +1973,7 @@ intel_pin_and_fence_fb_obj(struct drm_device *dev,
 		DRM_ERROR("Y tiled not allowed for scan out buffers\n");
 		return -EINVAL;
 	default:
-#ifdef notyet
 		BUG();
-#else
-		DRM_ERROR("invalid tiling mode %d", obj->tiling_mode);
-		return -EINVAL;
-#endif
 	}
 
 	dev_priv->mm.interruptible = false;
@@ -7125,7 +7120,8 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 
 	obj = work->old_fb_obj;
 
-	atomic_clear_int(&obj->pending_flip, 1 << intel_crtc->plane);
+	atomic_clear_mask(1 << intel_crtc->plane,
+			  &obj->pending_flip);
 	wake_up(&dev_priv->pending_flip_queue);
 
 	task_add(systq, &work->task);

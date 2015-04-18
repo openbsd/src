@@ -1,4 +1,4 @@
-/*	$OpenBSD: r600_blit_kms.c,v 1.2 2015/04/08 04:03:06 jsg Exp $	*/
+/*	$OpenBSD: r600_blit_kms.c,v 1.3 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  * Copyright 2009 Red Hat Inc.
@@ -31,18 +31,6 @@
 #include "r600d.h"
 #include "r600_blit_shaders.h"
 #include "radeon_blit_common.h"
-
-int r600_blit_init(struct radeon_device *rdev);
-void r600_blit_fini(struct radeon_device *rdev);
-int r600_blit_prepare_copy(struct radeon_device *rdev, unsigned num_gpu_pages,
-			   struct radeon_fence **fence, struct radeon_sa_bo **vb,
-			   struct radeon_semaphore **sem);
-void r600_blit_done_copy(struct radeon_device *rdev, struct radeon_fence **fence,
-			 struct radeon_sa_bo *vb, struct radeon_semaphore *sem);
-void r600_kms_blit_copy(struct radeon_device *rdev,
-			u64 src_gpu_addr, u64 dst_gpu_addr,
-			unsigned num_gpu_pages,
-			struct radeon_sa_bo *vb);
 
 /* emits 21 on rv770+, 23 on r600 */
 static void

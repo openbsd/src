@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fence.c,v 1.7 2015/04/18 11:41:29 jsg Exp $	*/
+/*	$OpenBSD: radeon_fence.c,v 1.8 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -35,8 +35,6 @@
 #include "radeon_trace.h"
 
 #include <dev/pci/drm/refcount.h>
-
-extern int ticks;
 
 /*
  * Fences

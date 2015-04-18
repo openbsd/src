@@ -1,4 +1,4 @@
-/*	$OpenBSD: ni.c,v 1.9 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: ni.c,v 1.10 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -41,7 +41,6 @@ extern void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev);
 extern void evergreen_pcie_gen2_enable(struct radeon_device *rdev);
 extern void si_rlc_fini(struct radeon_device *rdev);
 extern int si_rlc_init(struct radeon_device *rdev);
-void cayman_cp_int_cntl_setup(struct radeon_device *rdev, int ring, u32 cp_int_cntl);
 
 #define EVERGREEN_PFP_UCODE_SIZE 1120
 #define EVERGREEN_PM4_UCODE_SIZE 1376

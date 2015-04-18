@@ -1,4 +1,4 @@
-/*	$OpenBSD: rv770.c,v 1.6 2015/04/06 14:10:59 jsg Exp $	*/
+/*	$OpenBSD: rv770.c,v 1.7 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1229,7 +1229,7 @@ static void rv770_pcie_gen2_enable(struct radeon_device *rdev)
 	/* x2 cards have a special sequence */
 	if (ASIC_IS_X2(rdev))
 		return;
-	
+
 	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret != 0)
 		return;

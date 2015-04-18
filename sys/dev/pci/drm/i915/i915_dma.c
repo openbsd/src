@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.20 2015/04/17 00:54:42 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.21 2015/04/18 14:47:34 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -334,6 +334,7 @@ i915_load_modeset_init(struct drm_device *dev)
 	if (ret)
 		goto cleanup_vga_switcheroo;
 #endif
+
 	intel_modeset_init(dev);
 
 	ret = i915_gem_init(dev);
@@ -359,7 +360,7 @@ i915_load_modeset_init(struct drm_device *dev)
 	/* We're off and running w/KMS */
 	dev_priv->mm.suspended = 0;
 
-	return (0);
+	return 0;
 
 cleanup_irq:
 	drm_irq_uninstall(dev);
@@ -390,8 +391,7 @@ i915_driver_lastclose(struct drm_device *dev)
 		DRM_ERROR("failed to idle hardware: %d\n", ret);
 }
 
-int
-i915_driver_open(struct drm_device *dev, struct drm_file *file)
+int i915_driver_open(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_file_private *file_priv;
 

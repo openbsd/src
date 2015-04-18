@@ -1,4 +1,4 @@
-/*	$OpenBSD: atom.c,v 1.6 2015/02/11 07:01:37 jsg Exp $	*/
+/*	$OpenBSD: atom.c,v 1.7 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
@@ -79,8 +79,6 @@ static int atom_dst_to_src[8][4] = {
 	{4, 5, 6, 7},
 };
 static int atom_def_dst[8] = { 0, 0, 1, 2, 0, 1, 2, 3 };
-
-extern int ticks;
 
 static int debug_depth = 0;
 #ifdef ATOM_DEBUG

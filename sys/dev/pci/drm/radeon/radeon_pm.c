@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_pm.c,v 1.11 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_pm.c,v 1.12 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,8 +48,6 @@ static bool radeon_pm_debug_check_in_vbl(struct radeon_device *rdev, bool finish
 static void radeon_pm_update_profile(struct radeon_device *rdev);
 static void radeon_pm_set_clocks(struct radeon_device *rdev);
 
-extern int ticks;
-
 int radeon_pm_get_type_index(struct radeon_device *rdev,
 			     enum radeon_pm_state_type ps_type,
 			     int instance)
@@ -78,13 +76,6 @@ void radeon_pm_acpi_event_handler(struct radeon_device *rdev)
 			mutex_unlock(&rdev->pm.mutex);
 		}
 	}
-}
-
-static int
-power_supply_is_system_supplied(void)
-{
-	/* XXX return 0 if on battery */
-	return (1);
 }
 
 static void radeon_pm_update_profile(struct radeon_device *rdev)

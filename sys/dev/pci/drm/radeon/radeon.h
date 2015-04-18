@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.14 2015/04/12 03:54:10 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.15 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -50,7 +50,7 @@
  *  situation the init path must succeed up to the memory controller
  *  initialization point. Failure before this point are considered as
  *  fatal error. Here is the init callchain :
- *      radeon_device_init  perform common structure, rwlock initialization
+ *      radeon_device_init  perform common structure, mutex initialization
  *      asic_init           setup the GPU memory layout and perform all
  *                          one time initialization (failure in this
  *                          function are considered fatal)

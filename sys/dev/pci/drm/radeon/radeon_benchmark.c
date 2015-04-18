@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_benchmark.c,v 1.3 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_benchmark.c,v 1.4 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  *
@@ -32,8 +32,6 @@
 
 #define RADEON_BENCHMARK_ITERATIONS 1024
 #define RADEON_BENCHMARK_COMMON_MODES_N 17
-
-extern int ticks;
 
 static int radeon_benchmark_do_move(struct radeon_device *rdev, unsigned size,
 				    uint64_t saddr, uint64_t daddr,

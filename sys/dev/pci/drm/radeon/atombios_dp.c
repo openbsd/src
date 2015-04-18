@@ -1,4 +1,4 @@
-/*	$OpenBSD: atombios_dp.c,v 1.5 2015/04/06 10:56:37 jsg Exp $	*/
+/*	$OpenBSD: atombios_dp.c,v 1.6 2015/04/18 14:47:34 jsg Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -45,8 +45,6 @@ static char *pre_emph_names[] = {
         "0dB", "3.5dB", "6dB", "9.5dB"
 };
 #endif
-
-void	radeon_atom_copy_swap(u8 *, u8 *, u8, bool);
 
 /***** radeon AUX functions *****/
 

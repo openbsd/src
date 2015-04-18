@@ -1,4 +1,4 @@
-/*	$OpenBSD: evergreen_blit_kms.c,v 1.2 2015/04/08 04:03:06 jsg Exp $	*/
+/*	$OpenBSD: evergreen_blit_kms.c,v 1.3 2015/04/18 14:47:35 jsg Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -33,8 +33,6 @@
 #include "evergreen_blit_shaders.h"
 #include "cayman_blit_shaders.h"
 #include "radeon_blit_common.h"
-
-int evergreen_blit_init(struct radeon_device *rdev);
 
 /* emits 17 */
 static void
