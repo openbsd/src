@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.81 2015/04/18 11:21:12 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.82 2015/04/18 11:41:28 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -49,8 +49,8 @@
 #include <dev/pci/drm/drm.h>
 #include <dev/pci/drm/i915_drm.h>
 #include "i915_drv.h"
-#include "intel_drv.h"
 #include "i915_trace.h"
+#include "intel_drv.h"
 
 #include <machine/pmap.h>
 

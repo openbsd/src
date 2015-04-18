@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.61 2015/04/17 00:54:42 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.62 2015/04/18 11:41:28 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1338,6 +1338,8 @@ struct drm_i915_file_private {
 #define HAS_L3_GPU_CACHE(dev) (IS_IVYBRIDGE(dev) || IS_HASWELL(dev))
 
 #define GT_FREQUENCY_MULTIPLIER 50
+
+#include "i915_trace.h"
 
 /**
  * RC6 is a special power stage which allows the GPU to enter an very

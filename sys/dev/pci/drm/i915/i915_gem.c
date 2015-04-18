@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.92 2015/04/17 00:54:42 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.93 2015/04/18 11:41:28 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -3200,9 +3200,9 @@ i915_gem_clflush_object(struct drm_i915_gem_object *obj)
 	if (obj->cache_level != I915_CACHE_NONE)
 		return;
 
-#if 0
 	trace_i915_gem_object_clflush(obj);
 
+#if 0
 	drm_clflush_sg(obj->pages);
 #else
 {

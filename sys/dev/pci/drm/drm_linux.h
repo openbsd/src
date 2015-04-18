@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.25 2015/04/18 11:05:32 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.26 2015/04/18 11:41:28 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -175,6 +175,17 @@ do {									\
 	}								\
 	unlikely(__ret);						\
 })
+
+#define TP_PROTO(x...) x
+
+#define DEFINE_EVENT(template, name, proto, args) \
+static inline void trace_##name(proto) {}
+
+#define TRACE_EVENT(name, proto, args, struct, assign, print) \
+static inline void trace_##name(proto) {}
+
+#define DECLARE_EVENT_CLASS(name, proto, args, tstruct, assign, print) \
+static inline void trace_##name(proto) {}
 
 #define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-ELAST)
 

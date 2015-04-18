@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fence.c,v 1.6 2015/04/12 03:54:10 jsg Exp $	*/
+/*	$OpenBSD: radeon_fence.c,v 1.7 2015/04/18 11:41:29 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -32,9 +32,7 @@
 #include <dev/pci/drm/drmP.h>
 #include "radeon_reg.h"
 #include "radeon.h"
-#ifdef notyet
 #include "radeon_trace.h"
-#endif
 
 #include <dev/pci/drm/refcount.h>
 
@@ -116,9 +114,7 @@ int radeon_fence_emit(struct radeon_device *rdev,
 	(*fence)->seq = ++rdev->fence_drv[ring].sync_seq[ring];
 	(*fence)->ring = ring;
 	radeon_fence_ring_emit(rdev, ring, *fence);
-#ifdef notyet
 	trace_radeon_fence_emit(rdev->ddev, (*fence)->seq);
-#endif
 	return 0;
 }
 
@@ -303,9 +299,7 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 target_seq,
 		/* Save current last activity valuee, used to check for GPU lockups */
 		last_activity = rdev->fence_drv[ring].last_activity;
 
-#ifdef notyet
 		trace_radeon_fence_wait_begin(rdev->ddev, seq);
-#endif
 		radeon_irq_kms_sw_irq_get(rdev, ring);
 		r = timeout;
 		while (r > 0) {
@@ -324,9 +318,7 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 target_seq,
 		if (unlikely(r < 0)) {
 			return r;
 		}
-#ifdef notyet
 		trace_radeon_fence_wait_end(rdev->ddev, seq);
-#endif
 
 		if (unlikely(!signaled)) {
 			/* we were interrupted for some reason and fence
@@ -476,9 +468,7 @@ static int radeon_fence_wait_any_seq(struct radeon_device *rdev,
 			timeout = 1;
 		}
 
-#ifdef notyet
 		trace_radeon_fence_wait_begin(rdev->ddev, target_seq[ring]);
-#endif
 		for (i = 0; i < RADEON_NUM_RINGS; ++i) {
 			if (target_seq[i]) {
 				radeon_irq_kms_sw_irq_get(rdev, i);
@@ -505,9 +495,7 @@ static int radeon_fence_wait_any_seq(struct radeon_device *rdev,
 		if (unlikely(r < 0)) {
 			return r;
 		}
-#ifdef notyet
 		trace_radeon_fence_wait_end(rdev->ddev, target_seq[ring]);
-#endif
 
 		if (unlikely(!signaled)) {
 			/* we were interrupted for some reason and fence

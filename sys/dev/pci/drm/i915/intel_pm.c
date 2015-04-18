@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.32 2015/04/12 11:26:54 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.33 2015/04/18 11:41:29 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2488,7 +2488,7 @@ void gen6_set_rps(struct drm_device *dev, u8 val)
 
 	dev_priv->rps.cur_delay = val;
 
-//	trace_intel_gpu_freq_change(val * 50);
+	trace_intel_gpu_freq_change(val * 50);
 }
 
 static void gen6_disable_rps(struct drm_device *dev)

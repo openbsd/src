@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_semaphore.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
+/*	$OpenBSD: radeon_semaphore.c,v 1.3 2015/04/18 11:41:29 jsg Exp $	*/
 /*
  * Copyright 2011 Christian König.
  * All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 #include <dev/pci/drm/drmP.h>
 #include "radeon.h"
-
+#include "radeon_trace.h"
 
 int radeon_semaphore_create(struct radeon_device *rdev,
 			    struct radeon_semaphore **semaphore)
@@ -57,6 +57,8 @@ int radeon_semaphore_create(struct radeon_device *rdev,
 void radeon_semaphore_emit_signal(struct radeon_device *rdev, int ring,
 			          struct radeon_semaphore *semaphore)
 {
+	trace_radeon_semaphore_signale(ring, semaphore);
+
 	--semaphore->waiters;
 	radeon_semaphore_ring_emit(rdev, ring, &rdev->ring[ring], semaphore, false);
 }
@@ -64,6 +66,8 @@ void radeon_semaphore_emit_signal(struct radeon_device *rdev, int ring,
 void radeon_semaphore_emit_wait(struct radeon_device *rdev, int ring,
 			        struct radeon_semaphore *semaphore)
 {
+	trace_radeon_semaphore_wait(ring, semaphore);
+
 	++semaphore->waiters;
 	radeon_semaphore_ring_emit(rdev, ring, &rdev->ring[ring], semaphore, true);
 }

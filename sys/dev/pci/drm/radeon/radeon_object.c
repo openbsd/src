@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.c,v 1.9 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.c,v 1.10 2015/04/18 11:41:29 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -33,9 +33,7 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/radeon_drm.h>
 #include "radeon.h"
-#ifdef notyet
 #include "radeon_trace.h"
-#endif
 
 
 int radeon_ttm_init(struct radeon_device *rdev);
@@ -160,9 +158,7 @@ int radeon_bo_create(struct radeon_device *rdev,
 	}
 	*bo_ptr = bo;
 
-#ifdef notyet
 	trace_radeon_bo_create(bo);
-#endif
 
 	return 0;
 }
