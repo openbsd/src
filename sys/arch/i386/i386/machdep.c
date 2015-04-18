@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.568 2015/04/12 18:37:53 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.569 2015/04/18 22:16:21 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2532,15 +2532,15 @@ cpu_kick(struct cpu_info *ci)
 {
 	/* only need to kick other CPUs */
 	if (ci != curcpu()) {
-		if (ci->ci_mwait != NULL) {
+		if (cpu_mwait_size > 0) {
 			/*
 			 * If not idling, then send an IPI, else
 			 * just clear the "keep idling" bit.
 			 */
-			if ((ci->ci_mwait[0] & MWAIT_IN_IDLE) == 0)
+			if ((ci->ci_mwait & MWAIT_IN_IDLE) == 0)
 				i386_send_ipi(ci, I386_IPI_NOP);
 			else
-				atomic_clearbits_int(&ci->ci_mwait[0],
+				atomic_clearbits_int(&ci->ci_mwait,
 				    MWAIT_KEEP_IDLING);
 		} else {
 			/* no mwait, so need an IPI */
@@ -2565,12 +2565,12 @@ signotify(struct proc *p)
 void
 cpu_unidle(struct cpu_info *ci)
 {
-	if (ci->ci_mwait != NULL) {
+	if (cpu_mwait_size > 0) {
 		/*
 		 * Just clear the "keep idling" bit; if it wasn't
 		 * idling then we didn't need to do anything anyway.
 		 */
-		atomic_clearbits_int(&ci->ci_mwait[0], MWAIT_KEEP_IDLING);
+		atomic_clearbits_int(&ci->ci_mwait, MWAIT_KEEP_IDLING);
 		return;
 	}
 

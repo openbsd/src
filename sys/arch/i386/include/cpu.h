@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.138 2015/04/12 18:37:54 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.139 2015/04/18 22:16:21 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -126,8 +126,7 @@ struct cpu_info {
 	struct cpu_functions *ci_func;	/* start/stop functions */
 	void (*cpu_setup)(struct cpu_info *);	/* proc-dependant init */
 
-	u_int		*ci_mwait;
-/* bits in ci_mwait[0] */
+	volatile u_int	ci_mwait;
 #define	MWAIT_IN_IDLE		0x1	/* don't need IPI to wake */
 #define	MWAIT_KEEP_IDLING	0x2	/* cleared by other cpus to wake me */
 #define	MWAIT_IDLING		(MWAIT_IN_IDLE | MWAIT_KEEP_IDLING)
@@ -213,6 +212,8 @@ extern struct cpu_info	*cpu_info[MAXCPUS];
 
 extern void cpu_boot_secondary_processors(void);
 extern void cpu_init_idle_pcbs(void);
+
+extern u_int cpu_mwait_size;
 
 void cpu_kick(struct cpu_info *);
 void cpu_unidle(struct cpu_info *);

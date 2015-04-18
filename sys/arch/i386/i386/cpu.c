@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.61 2015/02/11 05:54:48 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.62 2015/04/18 22:16:21 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -789,7 +789,6 @@ void
 cpu_idle_mwait_cycle(void)
 {
 	struct cpu_info *ci = curcpu();
-	volatile int *state = &ci->ci_mwait[0];
 
 	if ((read_eflags() & PSL_I) == 0)
 		panic("idle with interrupts blocked!");
@@ -808,18 +807,18 @@ cpu_idle_mwait_cycle(void)
 	 * something to the queue and called cpu_unidle() between
 	 * the check in sched_idle() and here.
 	 */
-	atomic_setbits_int(state, MWAIT_IDLING);
+	atomic_setbits_int(&ci->ci_mwait, MWAIT_IDLING);
 	if (ci->ci_schedstate.spc_whichqs == 0) {
-		monitor(state, 0, 0);
-		if ((*state & MWAIT_IDLING) == MWAIT_IDLING)
+		monitor(&ci->ci_mwait, 0, 0);
+		if ((ci->ci_mwait & MWAIT_IDLING) == MWAIT_IDLING)
 			mwait(0, 0);
 	}
 
 	/* done idling; let cpu_kick() know that an IPI is required */
-	atomic_clearbits_int(state, MWAIT_IDLING);
+	atomic_clearbits_int(&ci->ci_mwait, MWAIT_IDLING);
 }
 
-unsigned int mwait_size;
+u_int cpu_mwait_size;
 
 void
 cpu_init_mwait(struct device *dv)
@@ -851,40 +850,15 @@ cpu_init_mwait(struct device *dv)
 	    (largest & (sizeof(int)-1)))
 		printf(" (bogus)");
 	else
-		mwait_size = largest;
+		cpu_mwait_size = largest;
 	printf("\n");
-	/* XXX disable mwait: ACPI says not to use it on too many systems */
-	mwait_size = 0;
 }
 
 void
 cpu_enable_mwait(void)
 {
-	unsigned long area;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	if (mwait_size == 0)
-		return;
-
-	/*
-	 * Allocate the area, with a bit extra so that we can align
-	 * to a multiple of mwait_size
-	 */
-	area = (unsigned long)malloc((ncpus * mwait_size) + mwait_size
-	    - sizeof(int), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (area == 0) {
-		printf("cpu0: mwait failed\n");
-	} else {
-		/* round to a multiple of mwait_size  */
-		area = ((area + mwait_size - sizeof(int)) / mwait_size)
-		    * mwait_size;
-		CPU_INFO_FOREACH(cii, ci) {
-			ci->ci_mwait = (int *)area;
-			area += mwait_size;
-		}
+	if (cpu_mwait_size > 0)
 		cpu_idle_cycle_fcn = &cpu_idle_mwait_cycle;
-	}
 }
 #endif /* MULTIPROCESSOR */
 
