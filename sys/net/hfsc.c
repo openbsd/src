@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.20 2015/04/12 14:09:40 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.21 2015/04/18 11:12:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -106,9 +106,8 @@ struct hfsc_runtime_sc {
 };
 
 struct hfsc_classq {
-	struct mbuf	*tail;	 /* Tail of packet queue */
-	int		 qlen;	 /* Queue length (in number of packets) */
-	int		 qlimit; /* Queue limit (in number of packets*) */
+	struct mbuf_list q;	 /* Queue of packets */
+	int		 qlimit; /* Queue limit */
 };
 
 /* for TAILQ based ellist and actlist implementation */
@@ -450,7 +449,7 @@ hfsc_purge(struct ifqueue *ifq)
 	struct hfsc_class	*cl;
 
 	for (cl = hif->hif_rootclass; cl != NULL; cl = hfsc_nextclass(cl))
-		if (cl->cl_q.qlen > 0)
+		if (ml_len(&cl->cl_q.q) > 0)
 			hfsc_purgeq(cl);
 	hif->hif_ifq->ifq_len = 0;
 }
@@ -463,6 +462,9 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	struct hfsc_class *cl, *p;
 	int i, s;
 
+	if (qlimit == 0)
+		qlimit = HFSC_DEFAULT_QLIMIT;
+
 	if (hif->hif_classes >= hif->hif_allocated) {
 		u_int newslots = hfsc_more_slots(hif->hif_allocated);
 
@@ -474,10 +476,8 @@ hfsc_class_create(struct hfsc_if *hif, struct hfsc_sc *rsc,
 	cl = pool_get(&hfsc_class_pl, PR_WAITOK | PR_ZERO);
 	cl->cl_actc = hfsc_actlist_alloc();
 
-	if (qlimit == 0)
-		qlimit = HFSC_DEFAULT_QLIMIT;
+	ml_init(&cl->cl_q.q);
 	cl->cl_q.qlimit = qlimit;
-	cl->cl_q.qlen = 0;
 	cl->cl_flags = flags;
 
 	if (rsc != NULL && (rsc->m1 != 0 || rsc->m2 != 0)) {
@@ -570,7 +570,7 @@ hfsc_class_destroy(struct hfsc_class *cl)
 
 	s = splnet();
 
-	if (cl->cl_q.qlen > 0)
+	if (ml_len(&cl->cl_q.q) > 0)
 		hfsc_purgeq(cl);
 
 	if (cl->cl_parent != NULL) {
@@ -664,7 +664,7 @@ hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 
 	/* successfully queued. */
-	if (cl->cl_q.qlen == 1)
+	if (ml_len(&cl->cl_q.q) == 1)
 		hfsc_set_active(cl, m->m_pkthdr.len);
 
 	return (0);
@@ -744,10 +744,10 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 	if (realtime)
 		cl->cl_cumul += m->m_pkthdr.len;
 
-	if (cl->cl_q.qlen > 0) {
+	if (ml_len(&cl->cl_q.q) > 0) {
 		if (cl->cl_rsc != NULL) {
 			/* update ed */
-			next_len = cl->cl_q.tail->m_nextpkt->m_pkthdr.len;
+			next_len = cl->cl_q.q.ml_head->m_pkthdr.len;
 
 			if (realtime)
 				hfsc_update_ed(cl, next_len);
@@ -780,19 +780,10 @@ hfsc_deferred(void *arg)
 int
 hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 {
-	struct mbuf *m0;
-
-	if (cl->cl_q.qlen >= cl->cl_q.qlimit)
+	if (ml_len(&cl->cl_q.q) >= cl->cl_q.qlimit)
 		return (-1);
 
-	if ((m0 = cl->cl_q.tail) != NULL)
-		m->m_nextpkt = m0->m_nextpkt;
-	else
-		m0 = m;
-
-	m0->m_nextpkt = m;
-	cl->cl_q.tail = m;
-	cl->cl_q.qlen++;
+	ml_enqueue(&cl->cl_q.q, m);
 
 	return (0);
 }
@@ -800,25 +791,14 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 struct mbuf *
 hfsc_getq(struct hfsc_class *cl)
 {
-	struct mbuf	*m, *m0;
-
-	if ((m = cl->cl_q.tail) == NULL)
-		return (NULL);
-	if ((m0 = m->m_nextpkt) != m)
-		m->m_nextpkt = m0->m_nextpkt;
-	else 
-		cl->cl_q.tail = NULL;
-	cl->cl_q.qlen--;
-	m0->m_nextpkt = NULL;
-	return (m0);
+	return (ml_dequeue(&cl->cl_q.q));
 }
 
 struct mbuf *
 hfsc_pollq(struct hfsc_class *cl)
 {
-	if (!cl->cl_q.tail)
-		return (NULL);
-	return (cl->cl_q.tail->m_nextpkt);
+	/* XXX */
+	return (cl->cl_q.q.ml_head);
 }
 
 void
@@ -826,7 +806,7 @@ hfsc_purgeq(struct hfsc_class *cl)
 {
 	struct mbuf *m;
 
-	if (cl->cl_q.qlen == 0)
+	if (ml_empty(&cl->cl_q.q))
 		return;
 
 	while ((m = hfsc_getq(cl)) != NULL) {
@@ -1003,7 +983,7 @@ hfsc_update_vf(struct hfsc_class *cl, int len, u_int64_t cur_time)
 	u_int64_t f, myf_bound, delta;
 	int go_passive;
 
-	go_passive = (cl->cl_q.qlen == 0);
+	go_passive = ml_empty(&cl->cl_q.q);
 
 	for (; cl->cl_parent != NULL; cl = cl->cl_parent) {
 		cl->cl_total += len;
@@ -1599,7 +1579,7 @@ hfsc_getclstats(struct hfsc_class_stats *sp, struct hfsc_class *cl)
 	sp->cur_time = hfsc_microuptime();
 	sp->machclk_freq = HFSC_FREQ;
 
-	sp->qlength = cl->cl_q.qlen;
+	sp->qlength = ml_len(&cl->cl_q.q);
 	sp->qlimit = cl->cl_q.qlimit;
 	sp->xmit_cnt = cl->cl_stats.xmit_cnt;
 	sp->drop_cnt = cl->cl_stats.drop_cnt;
