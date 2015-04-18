@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.62 2015/01/16 00:19:12 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.63 2015/04/18 18:28:37 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -647,6 +647,7 @@ main(int argc, char **argv)
 	char **args;
 	char *filename = NULL;
 	char *policypath = NULL;
+	const char *errstr;
 	struct timeval tv;
 	pid_t pidattach = 0;
 	int usex11 = 1;
@@ -707,7 +708,8 @@ main(int argc, char **argv)
 		case 'p':
 			if (setcredentials)
 				usage();
-			if ((pidattach = atoi(optarg)) == 0) {
+			pidattach = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr) {
 				warnx("bad pid: %s", optarg);
 				usage();
 			}

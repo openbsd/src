@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.55 2015/02/07 10:07:15 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.56 2015/04/18 18:28:38 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -50,6 +50,8 @@ int
 main(int argc, char *argv[])
 {
 	char *sys = NULL;
+	const char *errstr;
+	int baud;
 	int i, pair[2];
 
 	vinit();
@@ -81,7 +83,12 @@ main(int argc, char *argv[])
 
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			vsetnum(BAUDRATE, atoi(&argv[1][1]));
+			baud = strtonum(&argv[1][1], 0, INT_MAX, &errstr);
+			if (errstr) {
+				fprintf(stderr, "incorrect speed: %s\n", errstr);
+				exit(1);
+			}
+			vsetnum(BAUDRATE, baud);
 			break;
 
 		default:

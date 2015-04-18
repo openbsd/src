@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.35 2015/01/16 00:19:12 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.36 2015/04/18 18:28:37 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -615,9 +615,10 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			filter_templates(emulation);
 			continue;
 		} else if (!strncasecmp(line, "template ", 9)) {
-			int count = atoi(line + 9);
+			const char *errstr;
+			int count = strtonum(line + 9, 1, INT_MAX, &errstr);
 
-			if (count == 0 ||
+			if (errstr ||
 			    filter_template(fd, policy, count) == -1) {
 				printf("Syntax error.\n");
 				continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.27 2014/03/20 20:39:13 naddy Exp $	*/
+/*	$OpenBSD: skey.c,v 1.28 2015/04/18 18:28:38 deraadt Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <err.h>
 #include <unistd.h>
+#include <limits.h>
 #include <skey.h>
 
 void    usage(char *);
@@ -37,6 +38,7 @@ main(int argc, char *argv[])
 	int     n, i, cnt = 1, pass = 0, hexmode = 0;
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
 	char	buf[33], *seed, *slash;
+	const char *errstr;
 
 	/* If we were called as otp-METHOD, set algorithm based on that */
 	if ((slash = strrchr(argv[0], '/')))
@@ -56,7 +58,9 @@ main(int argc, char *argv[])
 			case 'n':
 				if (++i == argc)
 					usage(argv[0]);
-				cnt = atoi(argv[i]);
+				cnt = strtonum(argv[i], 1, SKEY_MAX_SEQ -1, &errstr);
+				if (errstr)
+					usage(argv[0]);
 				break;
 			case 'p':
 				if (++i == argc)
@@ -96,19 +100,15 @@ main(int argc, char *argv[])
 		*slash++ = '\0';
 		seed = slash;
 
-		if ((n = atoi(argv[i])) < 0) {
-			warnx("%d not positive", n);
-			usage(argv[0]);
-		} else if (n > SKEY_MAX_SEQ) {
-			warnx("%d is larger than max (%d)", n, SKEY_MAX_SEQ);
+		n = strtonum(argv[i], 0, SKEY_MAX_SEQ, &errstr);
+		if (errstr) {
+			warnx("%s: %s", argv[i], errstr);
 			usage(argv[0]);
 		}
 	} else {
-		if ((n = atoi(argv[i])) < 0) {
-			warnx("%d not positive", n);
-			usage(argv[0]);
-		} else if (n > SKEY_MAX_SEQ) {
-			warnx("%d is larger than max (%d)", n, SKEY_MAX_SEQ);
+		n = strtonum(argv[i], 0, SKEY_MAX_SEQ, &errstr);
+		if (errstr) {
+			warnx("%s: %s", argv[i], errstr);
 			usage(argv[0]);
 		}
 		seed = argv[++i];

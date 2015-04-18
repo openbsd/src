@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.19 2014/10/08 04:55:03 deraadt Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.20 2015/04/18 18:28:38 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <limits.h>
 #include <ctype.h>
 #include <err.h>
 #include <util.h>
@@ -181,33 +182,46 @@ main(int argc, char *argv[])
 	int rate = -1, gaplen = -1, secsize = -1, steps = -1;
 	int fill = 0xf6, quiet = 0, verify = 1, verify_only = 0;
 	int fd, c, track, error, tracks_per_dot, bytes_per_track, errs;
+	const char *errstr;
 	char *devname;
 	struct fd_type fdt;
 
 	while((c = getopt(argc, argv, "c:s:h:r:g:S:F:t:i:qvn")) != -1)
 		switch (c) {
 		case 'c':       /* # of cyls */
-			cyls = atoi(optarg);
+			cyls = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-c %s: %s", optarg, errstr);
 			break;
 
 		case 's':       /* # of secs per track */
-			secs = atoi(optarg);
+			secs = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-s %s: %s", optarg, errstr);
 			break;
 
 		case 'h':       /* # of heads */
-			heads = atoi(optarg);
+			heads = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-h %s: %s", optarg, errstr);
 			break;
 
 		case 'r':       /* transfer rate, kilobyte/sec */
-			rate = atoi(optarg);
+			rate = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-r %s: %s", optarg, errstr);
 			break;
 
 		case 'g':       /* length of GAP3 to format with */
-			gaplen = atoi(optarg);
+			gaplen = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-g %s: %s", optarg, errstr);
 			break;
 
 		case 'S':       /* sector size shift factor (1 << S)*128 */
-			secsize = atoi(optarg);
+			secsize = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-S %s: %s", optarg, errstr);
 			break;
 
 		case 'F':       /* fill byte, C-like notation allowed */
@@ -215,11 +229,15 @@ main(int argc, char *argv[])
 			break;
 
 		case 't':       /* steps per track */
-			steps = atoi(optarg);
+			steps = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-t %s: %s", optarg, errstr);
 			break;
 
 		case 'i':       /* interleave factor */
-			intleave = atoi(optarg);
+			intleave = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-i %s: %s", optarg, errstr);
 			break;
 
 		case 'q':

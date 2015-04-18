@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.21 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.22 2015/04/18 18:28:38 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ifaddrs.h>
 #include "defs.h"
 #include "pathnames.h"
@@ -261,6 +262,7 @@ BpfGetIntfName(char **errmsg)
 {
 	int minunit = 999, n;
 	char *cp;
+	const char *errstr;
 	static char device[IFNAMSIZ];
 	static char errbuf[128] = "No Error!";
 	struct ifaddrs *ifap, *ifa, *mp = NULL;
@@ -288,8 +290,8 @@ BpfGetIntfName(char **errmsg)
 
 		for (cp = ifa->ifa_name; !isdigit((unsigned char)*cp); ++cp)
 			;
-		n = atoi(cp);
-		if (n < minunit) {
+		n = strtonum(cp, 0, INT_MAX, &errstr);
+		if (errstr == NULL && n < minunit) {
 			minunit = n;
 			mp = ifa;
 		}

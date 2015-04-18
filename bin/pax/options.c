@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.89 2015/03/15 21:53:09 guenther Exp $	*/
+/*	$OpenBSD: options.c,v 1.90 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -223,6 +223,7 @@ pax_options(int argc, char **argv)
 	unsigned i;
 	unsigned int flg = 0;
 	unsigned int bflg = 0;
+	const char *errstr;
 	char *pt;
 
 	/*
@@ -462,9 +463,12 @@ pax_options(int argc, char **argv)
 			flg |= CEF;
 			if (strcmp(NONE, optarg) == 0)
 				maxflt = -1;
-			else if ((maxflt = atoi(optarg)) < 0) {
-				paxwarn(1, "Error count value must be positive");
-				pax_usage();
+			else {
+				maxflt = strtonum(optarg, 0, INT_MAX, &errstr);
+				if (errstr) {
+					paxwarn(1, "Error count value: %s", errstr);
+					pax_usage();
+				}
 			}
 			break;
 		case 'G':
@@ -1079,6 +1083,7 @@ mkpath(path)
 static void
 cpio_options(int argc, char **argv)
 {
+	const char *errstr;
 	int c;
 	unsigned i;
 	char *str;
@@ -1214,7 +1219,12 @@ cpio_options(int argc, char **argv)
 				/*
 				 * set block size in bytes
 				 */
-				wrblksz = atoi(optarg);
+				wrblksz = strtonum(optarg, 0, INT_MAX, &errstr);
+				if (errstr) {
+					paxwarn(1, "Invalid block size %s: %s",
+					    optarg, errstr);
+					pax_usage();
+				}
 				break;
 			case 'E':
 				/*

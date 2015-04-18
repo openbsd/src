@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.13 2013/11/27 13:32:02 okan Exp $	*/
+/*	$OpenBSD: logger.c,v 1.14 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -155,10 +156,15 @@ pencode(char *s)
 int
 decode(char *name, CODE *codetab)
 {
+	int n;
 	CODE *c;
 
-	if (isdigit((unsigned char)*name))
-		return (atoi(name));
+	if (isdigit((unsigned char)*name)) {
+		const char *errstr;
+		int n = strtonum(name, 0, INT_MAX, &errstr);
+		if (!errstr)
+			return (n);
+	}
 
 	for (c = codetab; c->c_name; c++)
 		if (!strcasecmp(name, c->c_name))

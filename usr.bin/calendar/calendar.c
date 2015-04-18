@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.30 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.31 2015/04/18 18:28:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -68,6 +69,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
+	const char *errstr;
 	char *caldir;
 
 	(void)setlocale(LC_ALL, "");
@@ -95,12 +97,16 @@ main(int argc, char *argv[])
 			break;
 
 		case 'A': /* days after current date */
-			f_dayAfter = atoi(optarg);
+			f_dayAfter = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-A %s: %s", optarg, errstr);
 			f_SetdayAfter = 1;
 			break;
 
 		case 'B': /* days before current date */
-			f_dayBefore = atoi(optarg);
+			f_dayBefore = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-B %s: %s", optarg, errstr);
 			break;
 
 		default:

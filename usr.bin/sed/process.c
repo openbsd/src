@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.22 2015/04/13 05:11:23 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.23 2015/04/18 18:28:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -457,12 +457,14 @@ lputs(char *s)
 	static int termwidth = -1;
 
 	if (termwidth == -1) {
+		termwidth = 0;
 		if ((p = getenv("COLUMNS")))
-			termwidth = atoi(p);
-		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+			termwidth = strtonum(p, 0, INT_MAX, NULL);
+		if (termwidth == 0 &&
+		    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
 		    win.ws_col > 0)
 			termwidth = win.ws_col;
-		else
+		if (termwidth == 0)
 			termwidth = 60;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.19 2015/01/16 06:40:01 deraadt Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.20 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <fstab.h>
 #include <util.h>
@@ -116,6 +117,7 @@ extern	char *__progname;	/* from crt0.o */
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	int	c;
 
 	if (strcmp(__progname, "swapon") == 0)
@@ -149,8 +151,9 @@ main(int argc, char *argv[])
 
 		case 'p':
 			pflag = 1;
-			/* XXX strtol() */
-			pri = atoi(optarg);
+			pri = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-p %s: %s", errstr, optarg);
 			break;
 
 		case 's':

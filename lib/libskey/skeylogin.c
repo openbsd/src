@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.56 2015/01/16 16:48:52 deraadt Exp $
+ * $OpenBSD: skeylogin.c,v 1.57 2015/04/18 18:28:37 deraadt Exp $
  */
 
 #ifdef	QUOTA
@@ -95,6 +95,7 @@ skeygetent(int fd, struct skey *mp, const char *name)
 {
 	char *cp, filename[PATH_MAX], *last;
 	struct stat statbuf;
+	const char *errstr;
 	size_t nread;
 	FILE *keyfile;
 
@@ -154,7 +155,9 @@ skeygetent(int fd, struct skey *mp, const char *name)
 		goto bad_keyfile;
 	if ((cp = strtok_r(NULL, " \t\n\r", &last)) == NULL)
 		goto bad_keyfile;
-	mp->n = atoi(cp);	/* XXX - use strtol() */
+	mp->n = strtonum(cp, 0, UINT_MAX, &errstr);
+	if (errstr)
+		goto bad_keyfile;
 	if ((mp->seed = strtok_r(NULL, " \t\n\r", &last)) == NULL)
 		goto bad_keyfile;
 	if ((mp->val = strtok_r(NULL, " \t\n\r", &last)) == NULL)

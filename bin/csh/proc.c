@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.26 2015/02/08 06:09:50 tedu Exp $	*/
+/*	$OpenBSD: proc.c,v 1.27 2015/04/18 18:28:36 deraadt Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -931,6 +932,7 @@ void
 dokill(Char **v, struct command *t)
 {
     int signum = SIGTERM;
+    const char *errstr;
     char *name;
 
     v++;
@@ -940,8 +942,8 @@ dokill(Char **v, struct command *t)
 		if (!Isdigit(v[1][0]))
 		    stderror(ERR_NAME | ERR_BADSIG);
 
-		signum = atoi(short2str(v[1]));
-		if (signum < 0 || signum >= NSIG)
+		signum = strtonum(short2str(v[1]), 0, NSIG-1, &errstr);
+		if (errstr)
 		    stderror(ERR_NAME | ERR_BADSIG);
 		else if (signum == 0)
 		    (void) fputc('0', cshout); /* 0's symbolic name is '0' */
@@ -958,8 +960,8 @@ dokill(Char **v, struct command *t)
 	    return;
 	}
 	if (Isdigit(v[0][1])) {
-	    signum = atoi(short2str(v[0] + 1));
-	    if (signum < 0 || signum >= NSIG)
+	    signum = strtonum(short2str(v[0] + 1), 0, NSIG-1, &errstr);
+	    if (errstr)
 		stderror(ERR_NAME | ERR_BADSIG);
 	}
 	else {
@@ -1147,12 +1149,18 @@ pfind(Char *cp)
 	return (pprevious);
     }
     if (Isdigit(cp[1])) {
-	int     idx = atoi(short2str(cp + 1));
+	const char *errstr;
+	int     idx = strtonum(short2str(cp + 1), 1, INT_MAX, &errstr);
 
+	if (errstr) {
+		stderror(ERR_NAME | ERR_NOSUCHJOB);
+		return (0);
+	}
 	for (pp = proclist.p_next; pp; pp = pp->p_next)
 	    if (pp->p_index == idx && pp->p_pid == pp->p_jobid)
 		return (pp);
 	stderror(ERR_NAME | ERR_NOSUCHJOB);
+	return (0);
     }
     np = NULL;
     for (pp = proclist.p_next; pp; pp = pp->p_next)

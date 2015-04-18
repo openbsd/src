@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.34 2015/03/20 01:53:05 millert Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.35 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ static int hasopt(const char *, const char *);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	struct fstab *fs;
 	int i, rval = 0;
 	char *vfstype = NULL;
@@ -139,7 +140,10 @@ main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			maxrun = atoi(optarg);
+			maxrun = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-l %s: %s", optarg, errstr);
+
 			break;
 
 		case 'T':

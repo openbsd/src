@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.13 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.14 2015/04/18 18:28:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -46,6 +46,7 @@
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -68,6 +69,7 @@ int
 main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
+	const char *errstr;
 	int ch;
 	struct sigaction sigchild, sigalarm;
 	int grace_period = 30;
@@ -75,15 +77,15 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "d:g:")) != (-1)) {
 		switch (ch) {
 		case 'd':
-			debug_level = atoi(optarg);
-			if (!debug_level) {
+			debug_level = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr) {
 				usage();
 				/* NOTREACHED */
 			}
 			break;
 		case 'g':
-			grace_period = atoi(optarg);
-			if (!grace_period) {
+			grace_period = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr) {
 				usage();
 				/* NOTREACHED */
 			}

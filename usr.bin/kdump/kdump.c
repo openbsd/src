@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.100 2015/04/17 06:33:30 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.101 2015/04/18 18:28:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -170,6 +170,7 @@ main(int argc, char *argv[])
 	int ch, silent;
 	size_t ktrlen, size;
 	int trpoints = ALL_POINTS;
+	const char *errstr;
 	void *m;
 
 	def_emul = current = &emulations[0];	/* native */
@@ -193,13 +194,17 @@ main(int argc, char *argv[])
 			tail = 1;
 			break;
 		case 'm':
-			maxdata = atoi(optarg);
+			maxdata = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-m %s: %s", optarg, errstr);
 			break;
 		case 'n':
 			fancy = 0;
 			break;
 		case 'p':
-			pid_opt = atoi(optarg);
+			pid_opt = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-p %s: %s", optarg, errstr);
 			break;
 		case 'R':
 			timestamp = 2;	/* relative timestamp */

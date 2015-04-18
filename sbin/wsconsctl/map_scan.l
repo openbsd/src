@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_scan.l,v 1.4 2012/07/14 08:28:47 shadchin Exp $	*/
+/*	$OpenBSD: map_scan.l,v 1.5 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: map_scan.l 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -34,6 +34,7 @@
 
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+#include <limits.h>
 #include <err.h>
 #include "wsconsctl.h"
 #include "y.tab.h"
@@ -81,7 +82,11 @@ keysym {
 	}
 
 [0-9]+ {
-		yylval.ival = atoi(yytext);
+		const char *errstr;
+
+		yylval.ival = strtonum(yytext, 0, INT_MAX, &errstr);
+		if (errstr)
+			errx(1, "%s: %s", yytext, errstr);
 		return(T_NUMBER);
 	}
 

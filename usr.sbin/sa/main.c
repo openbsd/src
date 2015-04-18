@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2013/11/24 01:06:19 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2015/04/18 18:28:38 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -72,6 +72,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int error = 0;
+	const char *errstr;
 	extern char *__progname;
 
 	while ((ch = getopt(argc, argv, "abcdDfijkKlmnqrstuv:")) != -1)
@@ -156,7 +157,10 @@ main(int argc, char **argv)
 		case 'v':
 			/* cull junk */
 			vflag = 1;
-			cutoff = atoi(optarg);
+			/* XXX cutoff could be converted to quad_t? */
+			cutoff = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-v $s: %s", optarg, errstr);
 			break;
 		case '?':
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.51 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.52 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -390,8 +389,13 @@ save_core(void)
 		if (ferror(fp))
 err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 		bounds = 0;
-	} else
-		bounds = atoi(buf);
+	} else {
+		const char *errstr;
+
+		bounds = strtonum(buf, 0, INT_MAX, &errstr);
+		if (errstr)
+			syslog(LOG_WARNING, "bounds was corrupt: %s", errstr);
+	}
 	if (fp != NULL)
 		(void)fclose(fp);
 	if ((fp = fopen(path, "w")) == NULL)
@@ -607,8 +611,13 @@ check_space(void)
 	else {
 		if (fgets(buf, sizeof(buf), fp) == NULL)
 			minfree = 0;
-		else
-			minfree = atoi(buf);
+		else {
+			const char *errstr;
+
+			minfree = strtonum(buf, 0, LLONG_MAX, &errstr);
+			syslog(LOG_WARNING,
+			    "minfree was corrupt: %s", errstr);
+		}
 		(void)fclose(fp);
 	}
 

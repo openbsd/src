@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.62 2015/03/12 01:03:00 claudio Exp $	 */
+/* $Id: main.c,v 1.63 2015/04/18 18:28:38 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -296,13 +296,12 @@ cmd_delay(const char *buf)
 void
 cmd_count(const char *buf)
 {
+	const char *errstr;
 	int ms;
-	ms = atoi(buf);
 
-	if (ms <= 0 || ms > lines - HEADER_LINES)
+	maxprint = strtonum(buf, 1, lines - HEADER_LINES, &errstr);
+	if (errstr)
 		maxprint = lines - HEADER_LINES;
-	else
-		maxprint = ms;
 }
 
 
@@ -380,6 +379,7 @@ int
 main(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX];
+	const char *errstr;
 	extern char *optarg;
 	extern int optind;
 	double delay = 5;
@@ -418,9 +418,9 @@ main(int argc, char *argv[])
 			interactive = 0;
 			break;
 		case 'd':
-			countmax = atoi(optarg);
-			if (countmax < 0)
-				countmax = 0;
+			countmax = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-d %s: %s", optarg, errstr);
 			break;
 		case 'i':
 			interactive = 1;
@@ -438,11 +438,9 @@ main(int argc, char *argv[])
 				delay = 5;
 			break;
 		case 'w':
-			rawwidth = atoi(optarg);
-			if (rawwidth < 1)
-				rawwidth = DEFAULT_WIDTH;
-			if (rawwidth >= MAX_LINE_BUF)
-				rawwidth = MAX_LINE_BUF - 1;
+			rawwidth = strtonum(optarg, 1, MAX_LINE_BUF-1, &errstr);
+			if (errstr)
+				errx(1, "-w %s: %s", optarg, errstr);
 			break;
 		default:
 			usage();

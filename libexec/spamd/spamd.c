@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.126 2015/03/12 20:07:20 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.127 2015/04/18 18:28:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1246,22 +1246,21 @@ main(int argc, char *argv[])
 			bind_address = optarg;
 			break;
 		case 'B':
-			i = atoi(optarg);
-			maxblack = i;
+			maxblack = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-B %s: %s", optarg, errstr);
 			break;
 		case 'c':
-			i = atoi(optarg);
-			if (i > maxfiles) {
-				fprintf(stderr,
-				    "%d > system max of %d connections\n",
-				    i, maxfiles);
+			maxcon = strtonum(optarg, 1, maxfiles, &errstr);
+			if (errstr) {
+				fprintf(stderr, "-c %s: %sn", optarg, errstr);
 				usage();
 			}
-			maxcon = i;
 			break;
 		case 'p':
-			i = atoi(optarg);
-			port = i;
+			port = strtonum(optarg, 1, USHRT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-p %s: %s", optarg, errstr);
 			break;
 		case 'd':
 			debug = 1;
@@ -1290,16 +1289,14 @@ main(int argc, char *argv[])
 				errx(1, "-h arg too long");
 			break;
 		case 's':
-			i = strtonum(optarg, 0, 10, &errstr);
+			stutter = strtonum(optarg, 0, 10, &errstr);
 			if (errstr)
 				usage();
-			stutter = i;
 			break;
 		case 'S':
-			i = strtonum(optarg, 0, 90, &errstr);
+			grey_stutter = strtonum(optarg, 0, 90, &errstr);
 			if (errstr)
 				usage();
-			grey_stutter = i;
 			break;
 		case 'M':
 			low_prio_mx_ip = optarg;
@@ -1311,9 +1308,9 @@ main(int argc, char *argv[])
 			verbose = 1;
 			break;
 		case 'w':
-			window = atoi(optarg);
-			if (window <= 0)
-				usage();
+			window = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-w %s: %s", optarg, errstr);
 			break;
 		case 'Y':
 			if (sync_addhost(optarg, sync_port) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.210 2015/02/13 00:02:21 guenther Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.211 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -102,6 +102,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include <machine/cpu.h>
@@ -1297,6 +1298,8 @@ sysctl_bios(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	if (indx == BIOS_DISKINFO) {
+		const char *errstr;
+
 		if (*bufpp == NULL) {
 			char name[BUFSIZ];
 
@@ -1312,7 +1315,11 @@ sysctl_bios(char *string, char **bufpp, int mib[], int flags, int *typep)
 			warnx("%s: incomplete specification", string);
 			return (-1);
 		}
-		mib[3] = atoi(name);
+		mib[3] = strtonum(name, 0, INT_MAX, &errstr);
+		if (errstr) {
+			warnx("%s: %s", string, errstr);
+			return (-1);
+		}
 		*typep = CTLTYPE_STRUCT;
 		return (4);
 	} else {
@@ -1802,6 +1809,7 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx, stor, i;
 	char *name, bufp[SYSCTL_BUFSIZ], *buf, *ptr;
+	const char *errstr;
 	struct list lp;
 	size_t size;
 
@@ -1839,7 +1847,9 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 			free(lp.list);
 			return (-1);
 		}
-		mib[3] = atoi(name);
+		mib[3] = strtonum(name, 0, INT_MAX, &errstr);
+		if (errstr)
+			return -1;
 		return (4);
 	} else if (mib[2] == KERN_MALLOC_BUCKETS) {
 		*typep = CTLTYPE_STRING;
@@ -2398,7 +2408,13 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	numt = -1;
 	for (i = 0; typename[i] != '\0'; i++)
 		if (isdigit((unsigned char)typename[i])) {
-			numt = atoi(&typename[i]);
+			const char *errstr;
+
+			numt = strtonum(&typename[i], 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("%s: %s", string, errstr);
+				return (-1);
+			}
 			typename[i] = '\0';
 			break;
 		}
@@ -2702,7 +2718,14 @@ sysctl_emul(char *string, char *newval, int flags)
 		mib[2] = emul_names[i].index;
 		len = sizeof(int);
 		if (newval) {
-			enabled = atoi(newval);
+			const char *errstr;
+
+			enabled = strtonum(newval, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("%s: %s is %s", string, newval, errstr);
+				print = 0;
+				continue;
+			}
 			if (sysctl(mib, 4, &old, &len, &enabled, len) == -1) {
 				warn("%s", string);
 				print = 0;

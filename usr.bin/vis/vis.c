@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.16 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: vis.c,v 1.17 2015/04/18 18:28:38 deraadt Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <err.h>
 #include <vis.h>
 
@@ -50,6 +51,7 @@ __dead void usage(void);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	FILE *fp;
 	int ch;
 
@@ -80,10 +82,11 @@ main(int argc, char *argv[])
 			eflags |= VIS_NOSLASH;
 			break;
 		case 'F':
-			if ((foldwidth = atoi(optarg))<5) {
+			foldwidth = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "%s: %s", optarg, errstr);
+			if (foldwidth < 5)
 				errx(1, "can't fold lines to less than 5 cols");
-				/* NOTREACHED */
-			}
 			/*FALLTHROUGH*/
 		case 'f':
 			fold = 1;	/* fold output lines to 80 cols */

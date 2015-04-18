@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.28 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.29 2015/04/18 18:28:38 deraadt Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "pathnames.h"
 
@@ -78,6 +79,7 @@ main(int argc, char *argv[])
 	int ch, Jflag, nargs, nflag, nline;
 	size_t linelen;
 	char *endptr;
+	const char *errstr;
 
 	inpline = replstr = NULL;
 	ep = environ;
@@ -125,19 +127,23 @@ main(int argc, char *argv[])
 			replstr = optarg;
 			break;
 		case 'L':
-			Lflag = atoi(optarg);
+			Lflag = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-L %s: %s", optarg, errstr);
 			break;
 		case 'n':
 			nflag = 1;
-			if ((nargs = atoi(optarg)) <= 0)
-				errx(1, "illegal argument count");
+			nargs = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-n %s: %s", optarg, errstr);
 			break;
 		case 'o':
 			oflag = 1;
 			break;
 		case 'P':
-			if ((maxprocs = atoi(optarg)) <= 0)
-				errx(1, "max. processes must be >0");
+			maxprocs = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-P %s: %s", optarg, errstr);
 			break;
 		case 'p':
 			pflag = 1;
@@ -151,7 +157,9 @@ main(int argc, char *argv[])
 				errx(1, "replacements must be a number");
 			break;
 		case 's':
-			nline = atoi(optarg);
+			nline = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-s %s: %s", optarg, errstr);
 			break;
 		case 't':
 			tflag = 1;

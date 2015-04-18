@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.19 2015/01/16 00:19:12 deraadt Exp $	*/
+/*	$OpenBSD: lex.l,v 1.20 2015/04/18 18:28:37 deraadt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -103,7 +103,14 @@ as		{ return AS; }
 "<"		{ return LESSER; }
 ">"		{ return GREATER; }
 [\_\$A-Za-z][\.\(\)\/A-Za-z_\-0-9]*\$? { yylval.string = strdup(yytext); return STRING; }
-[0-9]+		{ yylval.number = atoi(yytext); return NUMBER; }
+[0-9]+		{
+		  const char *errstr;
+		  yylval.number = strtonum(yytext, 0, INT_MAX, &errstr);
+		  if (errstr) {
+			yyerror("number %s: %s", yytext, errstr);
+		  }
+		  return NUMBER;
+		}
 \"		{ BEGIN(quote);
 		  *quotestr = '\0';
 		  quoteescape = 0;

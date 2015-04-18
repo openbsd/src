@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.69 2015/04/15 02:32:28 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.70 2015/04/18 18:28:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -209,6 +210,7 @@ main(int argc, char **argv)
 	struct bpf_program *fcode;
 	u_char *pcap_userdata;
 	u_int dirfilt = 0, dlt = (u_int) -1;
+	const char *errstr;
 
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
@@ -235,9 +237,10 @@ main(int argc, char **argv)
 			break;
 
 		case 'c':
-			cnt = atoi(optarg);
-			if (cnt <= 0)
-				error("invalid packet count %s", optarg);
+			cnt = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				error("invalid packet count %s: %s",
+				    optarg, errstr);
 			break;
 
 		case 'D':
@@ -307,9 +310,9 @@ main(int argc, char **argv)
 			break;
 
 		case 's':
-			snaplen = atoi(optarg);
-			if (snaplen <= 0)
-				error("invalid snaplen %s", optarg);
+			snaplen = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				error("invalid snaplen %s: %s", optarg, errstr);
 			break;
 
 		case 'S':

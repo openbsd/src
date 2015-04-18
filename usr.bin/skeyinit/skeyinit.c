@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.56 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.57 2015/04/18 18:28:38 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -52,6 +52,7 @@ main(int argc, char **argv)
 	char	seed[SKEY_MAX_SEED_LEN + 1];
 	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
 	char    lastc, me[UT_NAMESIZE + 1], *p, *auth_type;
+	const char *errstr;
 	u_int32_t noise;
 	struct skey skey;
 	struct passwd *pp;
@@ -108,7 +109,8 @@ main(int argc, char **argv)
 			case 'n':
 				if (argv[++i] == NULL || argv[i][0] == '\0')
 					usage();
-				if ((n = atoi(argv[i])) < 1 || n >= SKEY_MAX_SEQ)
+				n = strtonum(argv[i], 1, SKEY_MAX_SEQ - 1, &errstr);
+				if (errstr)
 					errx(1, "count must be > 0 and < %d",
 					     SKEY_MAX_SEQ);
 				break;
@@ -324,6 +326,7 @@ secure_mode(int *count, char *key, char *seed, size_t seedlen,
     char *buf, size_t bufsiz)
 {
 	char *p, newseed[SKEY_MAX_SEED_LEN + 2];
+	const char *errstr;
 	int i, n;
 
 	(void)puts("You need the 6 words generated from the \"skey\" command.");
@@ -335,11 +338,11 @@ secure_mode(int *count, char *key, char *seed, size_t seedlen,
 		    SKEY_MAX_SEQ);
 		(void)fgets(buf, bufsiz, stdin);
 		clearerr(stdin);
-		n = atoi(buf);
-		if (n > 0 && n < SKEY_MAX_SEQ)
+		n = strtonum(buf, 1, SKEY_MAX_SEQ-1, &errstr);
+		if (!errstr)
 			break;	/* Valid range */
-		(void)fprintf(stderr, "ERROR: Count must be between 1 and %d\n",
-			     SKEY_MAX_SEQ);
+		fprintf(stderr, "ERROR: Count must be between 1 and %d\n",
+		    SKEY_MAX_SEQ - 1);
 	}
 
 	for (i = 0; ; i++) {
@@ -492,6 +495,7 @@ convert_db(void)
 	FILE *newfile;
 	char buf[256], *logname, *hashtype, *seed, *val, *cp;
 	char filename[PATH_MAX];
+	const char *errstr;
 	int fd, n;
 
 	if ((keyfile = fopen(_PATH_SKEYKEYS, "r")) == NULL)
@@ -516,7 +520,9 @@ convert_db(void)
 		hashtype = cp;
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
-		n = atoi(cp);
+		n = strtonum(cp, 0, SKEY_MAX_SEQ, &errstr);
+		if (errstr)
+			continue;
 		if ((seed = strtok(NULL, " \t")) == NULL)
 			continue;
 		if ((val = strtok(NULL, " \t")) == NULL)

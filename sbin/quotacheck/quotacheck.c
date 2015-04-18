@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.37 2015/02/07 02:09:14 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.38 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ main(int argc, char *argv[])
 	struct quotaname *auxdata;
 	int i, argnum, maxrun, errs, ch;
 	u_int64_t done = 0;	/* XXX supports maximum 64 filesystems */
+	const char *errstr;
 	char *name;
 
 	errs = maxrun = 0;
@@ -151,7 +152,9 @@ main(int argc, char *argv[])
 			gflag = 1;
 			break;
 		case 'l':
-			maxrun = atoi(optarg);
+			maxrun = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "-l %s: %s", optarg, errstr);
 			break;
 		case 'u':
 			uflag = 1;

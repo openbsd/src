@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.40 2013/09/04 15:49:18 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.41 2015/04/18 18:28:36 deraadt Exp $	*/
 
 /*
  * Process and job control
@@ -1428,11 +1428,17 @@ static Job *
 j_lookup(const char *cp, int *ecodep)
 {
 	Job		*j, *last_match;
+	const char	*errstr;
 	Proc		*p;
 	int		len, job = 0;
 
 	if (digit(*cp)) {
-		job = atoi(cp);
+		job = strtonum(cp, 1, INT_MAX, &errstr);
+		if (errstr) {
+			if (ecodep)
+				*ecodep = JL_NOSUCH;
+			return (Job *) 0;
+		}
 		/* Look for last_proc->pid (what $! returns) first... */
 		for (j = job_list; j != (Job *) 0; j = j->next)
 			if (j->last_proc && j->last_proc->pid == job)
@@ -1467,7 +1473,9 @@ j_lookup(const char *cp, int *ecodep)
 
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
-		job = atoi(cp);
+		job = strtonum(cp, 1, INT_MAX, &errstr);
+		if (errstr)
+			break;
 		for (j = job_list; j != (Job *) 0; j = j->next)
 			if (j->job == job)
 				return j;

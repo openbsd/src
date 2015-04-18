@@ -47,7 +47,7 @@
 
 static const char copyright[] =
     #include "version.h"
-    "@(#) $Author: miod $\n"
+    "@(#) $Author: deraadt $\n"
     "@(#) $URL: http://dotat.at/prog/unifdef $\n"
 ;
 
@@ -252,6 +252,7 @@ static const char      *xstrdup(const char *, const char *);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	int opt;
 
 	while ((opt = getopt(argc, argv, "i:D:U:f:I:M:o:x:bBcdehKklmnsStV")) != -1)
@@ -332,9 +333,9 @@ main(int argc, char *argv[])
 			version();
 			break;
 		case 'x':
-			exitmode = atoi(optarg);
-			if(exitmode < 0 || exitmode > 2)
-				usage();
+			exitmode = strtonum(optarg, 0, 2, &errstr);
+			if (errstr)
+				errx(1, "-x %s: %s", optarg, errstr);
 			break;
 		default:
 			usage();

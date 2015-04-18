@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.29 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.30 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -158,19 +158,15 @@ gid_t
 a_gid(char *s)
 {
 	struct group *gr;
+	const char *errstr;
 	char *gname;
 	gid_t gid;
 
 	if ((gr = getgrnam(s)) != NULL)
-		gid = gr->gr_gid;
-	else {
-		for (gname = s; isdigit((unsigned char)*s); ++s)
-			;
-		if (!*s)
-			gid = atoi(gname);
-		else
-			errx(1, "unknown group id: %s", gname);
-	}
+		return gr->gr_gid;
+	gid = strtonum(s, 0, GID_MAX, &errstr);
+	if (errstr)
+		errx(1, "group is %s: %s", errstr, s);
 	return (gid);
 }
 
@@ -178,19 +174,15 @@ uid_t
 a_uid(char *s)
 {
 	struct passwd *pw;
+	const char *errstr;
 	char *uname;
 	uid_t uid;
 
 	if ((pw = getpwnam(s)) != NULL)
-		uid = pw->pw_uid;
-	else {
-		for (uname = s; isdigit((unsigned char)*s); ++s)
-			;
-		if (!*s)
-			uid = atoi(uname);
-		else
-			errx(1, "unknown user id: %s", uname);
-	}
+		return pw->pw_uid;
+	uid = strtonum(s, 0, UID_MAX, &errstr);
+	if (errstr)
+		errx(1, "user is %s: %s", errstr, s);
 	return (uid);
 }
 

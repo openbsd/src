@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.137 2015/01/30 19:00:56 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.138 2015/04/18 18:28:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -766,7 +766,13 @@ domem(void)
 		siz = sizeof(struct kmembuckets);
 		i = 0;
 		while ((ap = strsep(&bufp, ",")) != NULL) {
-			mib[3] = atoi(ap);
+			const char *errstr;
+
+			mib[3] = strtonum(ap, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("kernel lied about %d being a number", mib[3]);
+				return;
+			}
 
 			if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
 			    NULL, 0) < 0) {

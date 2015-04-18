@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.39 2014/03/31 20:54:37 sobrado Exp $	*/
+/*	$OpenBSD: ls.c,v 1.40 2015/04/18 18:28:36 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <util.h>
 
 #include "ls.h"
@@ -99,22 +100,27 @@ ls_main(int argc, char *argv[])
 	static char dot[] = ".", *dotav[] = { dot, NULL };
 	struct winsize win;
 	int ch, fts_options, notused;
-	int kflag = 0;
+	int kflag = 0, width = 0;
 	char *p;
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
 		if ((p = getenv("COLUMNS")) != NULL)
-			termwidth = atoi(p);
-		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+			width = strtonum(p, 1, INT_MAX, NULL);
+		if (width == 0 &&
+		    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
 		    win.ws_col > 0)
-			termwidth = win.ws_col;
+			width = win.ws_col;
+		if (width)
+			termwidth = width;
 		f_column = f_nonprint = 1;
 	} else {
 		f_singlecol = 1;
 		/* retrieve environment variable, in case of explicit -C */
 		if ((p = getenv("COLUMNS")) != NULL)
-			termwidth = atoi(p);
+			width = strtonum(p, 0, INT_MAX, NULL);
+		if (width)
+			termwidth = width;
 	}
 
 	/* Root is -A automatically. */

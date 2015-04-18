@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.16 2014/05/18 08:08:50 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.17 2015/04/18 18:28:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <ohash.h>
 
 #include "stats.h"
@@ -137,6 +138,7 @@ main(int argc, char *argv[])
 	uint32_t v;
 	uint32_t h;
 	uint32_t slots;
+	const char *errstr;
 	const char *e;
 	char **occupied;
 	char **t;
@@ -146,11 +148,13 @@ main(int argc, char *argv[])
 	if (argc != 3)
 		exit(1);
 
-	tn = atoi(argv[1]);
-	if (!tn)
+	tn = strtonum(argv[1], 1, INT_MAX, &errstr);
+	if (errstr)
 		exit(1);
 	t = table[tn-1];
-	slots = atoi(argv[2]);
+	slots = strtonum(argv[2], 0, INT_MAX, &errstr);
+	if (errstr)
+		exit(1);
 	if (slots) {
 		occupied = calloc(slots, sizeof(char *));
 		if (!occupied)

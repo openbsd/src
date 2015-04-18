@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.31 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.32 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -211,7 +211,9 @@ main(int argc, char *argv[])
 static int
 rpid(const char *p)
 {
+	const char *errstr;
 	static int first;
+	pid_t pid;
 
 	if (first++) {
 		warnx("only one -g or -p flag is permitted.");
@@ -221,7 +223,12 @@ rpid(const char *p)
 		warnx("illegal process id.");
 		usage();
 	}
-	return(atoi(p));
+	pid = strtonum(p, 1, INT_MAX, &errstr);
+	if (errstr) {
+		warnx("illegal process id: %s", errstr);
+		usage();
+	}
+	return pid;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.90 2015/02/06 22:29:00 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.91 2015/04/18 18:28:37 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -1149,7 +1149,7 @@ charsperline(void)
 	if (ioctl(0, TIOCGWINSZ, &ws) != -1)
 		columns = ws.ws_col;
 	if (columns == 0 && (cp = getenv("COLUMNS")))
-		columns = atoi(cp);
+		columns = strtonum(cp, 1, INT_MAX, NULL);
 	if (columns == 0)
 		columns = 80;   /* last resort */
 	return columns;

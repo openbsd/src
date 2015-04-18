@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.50 2013/06/10 21:09:27 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.51 2015/04/18 18:28:36 deraadt Exp $	*/
 
 /*
  * execute command tree
@@ -1234,6 +1234,7 @@ do_selectargs(char **ap, bool print_menu)
 	static const char *const read_args[] = {
 		"read", "-r", "REPLY", (char *) 0
 	};
+	const char *errstr;
 	char *s;
 	int i, argct;
 
@@ -1252,8 +1253,10 @@ do_selectargs(char **ap, bool print_menu)
 			return (char *) 0;
 		s = str_val(global("REPLY"));
 		if (*s) {
-			i = atoi(s);
-			return (i >= 1 && i <= argct) ? ap[i - 1] : null;
+			i = strtonum(s, 1, argct, &errstr);
+			if (errstr)
+				return null;
+			return ap[i - 1];
 		}
 		print_menu = 1;
 	}
