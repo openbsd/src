@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2015/04/18 05:14:05 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -562,12 +562,8 @@ syscall(struct trapframe *frame)
 		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame->tf_rip -= frame->tf_err;
+		/* Back up over the syscall instruction (2 bytes) */
+		frame->tf_rip -= 2;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */

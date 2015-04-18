@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.120 2015/01/11 19:34:52 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.121 2015/04/18 05:14:05 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -531,7 +531,7 @@ syscall(struct trapframe *frame)
 	caddr_t params;
 	struct sysent *callp;
 	struct proc *p;
-	int error, opc, nsys;
+	int error, nsys;
 	register_t code, args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int ocpl = lapic_tpr;
@@ -545,7 +545,6 @@ syscall(struct trapframe *frame)
 #endif
 	p = curproc;
 	p->p_md.md_regs = frame;
-	opc = frame->tf_eip;
 	code = frame->tf_eax;
 
 	nsys = p->p_p->ps_emul->e_nsysent;
@@ -640,12 +639,8 @@ syscall(struct trapframe *frame)
 		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame->tf_eip = opc - frame->tf_err;
+		/* Back up over the int$80 (2 bytes) that made the syscall */
+		frame->tf_eip -= 2;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
