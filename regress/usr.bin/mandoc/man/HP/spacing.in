@@ -6,30 +6,52 @@ Normal text.
 .HP
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
+.sp 1v
+Vertical spacing an a third line.
+.br
+A fourth line.
 .HP -10n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP -4n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP 0n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP 1n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP 2n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP 4n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP 8n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP 16n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
+.br
+And a second line.
 .HP 78n
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.

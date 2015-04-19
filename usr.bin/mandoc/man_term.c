@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.135 2015/04/19 13:59:37 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.136 2015/04/19 19:43:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -479,6 +479,17 @@ pre_sp(DECL_ARGS)
 	else
 		for (i = 0; i < len; i++)
 			term_vspace(p);
+
+	/*
+	 * Handle an explicit break request in the same way
+	 * as an overflowing line.
+	 */
+
+	if (p->flags & TERMP_BRIND) {
+		p->offset = p->rmargin;
+		p->rmargin = p->maxrmargin;
+		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND);
+	}
 
 	return(0);
 }
