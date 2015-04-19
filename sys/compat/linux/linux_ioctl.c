@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ioctl.c,v 1.11 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: linux_ioctl.c,v 1.12 2015/04/19 08:37:32 ratchov Exp $	*/
 /*	$NetBSD: linux_ioctl.c,v 1.14 1996/04/05 00:01:28 christos Exp $	*/
 
 /*
@@ -48,9 +48,6 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_ioctl.h>
 
-#include <compat/ossaudio/ossaudio.h>
-#define LINUX_TO_OSS(v) (v)	/* do nothing, same ioctl() encoding */
-
 /*
  * Most ioctl command are just converted to their OpenBSD values,
  * and passed on. The ones that take structure pointers and (flag)
@@ -71,12 +68,6 @@ linux_sys_ioctl(p, v, retval)
 	} */ *uap = v;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
-	case 'M':
-		return oss_ioctl_mixer(p, LINUX_TO_OSS(v), retval);
-	case 'Q':
-		return oss_ioctl_sequencer(p, LINUX_TO_OSS(v), retval);
-	case 'P':
-		return oss_ioctl_audio(p, LINUX_TO_OSS(v), retval);
 	case 't':
 	case 'f':
 	case 'T':	/* XXX MIDI sequencer uses 'T' as well */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ioctl.h,v 1.7 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_ioctl.h,v 1.8 2015/04/19 08:37:32 ratchov Exp $	*/
 /*	$NetBSD: linux_ioctl.h,v 1.4 1996/04/05 00:01:36 christos Exp $	*/
 
 /*
@@ -79,8 +79,6 @@
 #define	LINUX_IOCGROUP(x)	_LINUX_IOC_TYPE(x)
 
 struct linux_sys_ioctl_args;
-int linux_ioctl_audio(struct proc *, struct linux_sys_ioctl_args *,
-    register_t *);
 int linux_machdepioctl(struct proc *, void *, register_t *);
 int linux_ioctl_termios(struct proc *, void *, register_t *);
 int linux_ioctl_cdrom(struct proc *, void *, register_t *);
