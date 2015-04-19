@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489reg.h,v 1.2 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: i82489reg.h,v 1.3 2015/04/19 19:45:21 sf Exp $	*/
 /*	$NetBSD: i82489reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -141,3 +141,8 @@
 #define LAPIC_BASE		0xfee00000
 
 #define LAPIC_IRQ_MASK(i)	(1 << ((i) + 1))
+
+#define	MSR_X2APIC_BASE		0x800
+#define	MSR_X2APIC_EOI		(MSR_X2APIC_BASE+0x0b)	/* End Int. W */
+#define	MSR_X2APIC_ID		(MSR_X2APIC_BASE+0x02)	/* ID. RW */
+#define	X2APIC_ID_MASK		0xff

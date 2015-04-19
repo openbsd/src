@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093reg.h,v 1.4 2011/06/05 19:36:25 deraadt Exp $	*/
+/*	$OpenBSD: i82093reg.h,v 1.5 2015/04/19 19:45:21 sf Exp $	*/
 /* 	$NetBSD: i82093reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -112,8 +112,13 @@
 
 #ifdef _KERNEL
 
-#define ioapic_asm_ack(num) \
-	movl	$0,(_C_LABEL(local_apic)+LAPIC_EOI)(%rip)
+#include <machine/codepatch.h>
+
+#define ioapic_asm_ack(num) 					 \
+	CODEPATCH_START						;\
+	movl	$0,(_C_LABEL(local_apic)+LAPIC_EOI)(%rip)	;\
+	CODEPATCH_END(CPTAG_EOI)
+
 
 #ifdef MULTIPROCESSOR
 

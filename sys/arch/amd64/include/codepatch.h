@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.1 2015/01/16 10:17:51 sf Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.2 2015/04/19 19:45:21 sf Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -48,5 +48,6 @@ void codepatch_call(uint16_t tag, void *func);
 
 #define CPTAG_STAC		1
 #define CPTAG_CLAC		2
+#define CPTAG_EOI		3
 
 #endif /* _MACHINE_CODEPATCH_H_ */

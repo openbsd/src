@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.38 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.39 2015/04/19 19:45:21 sf Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -38,6 +38,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/codepatch.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/pmap.h>
@@ -88,12 +89,120 @@ struct pic local_pic = {
 	lapic_setup,
 };
 
+extern int x2apic_eoi;
+int x2apic_enabled = 0;
+
+u_int32_t x2apic_readreg(int reg);
+u_int32_t x2apic_cpu_number();
+void x2apic_writereg(int reg, u_int32_t val);
+int x2apic_ipi(int vec, int target, int dl);
+
+u_int32_t i82489_readreg(int reg);
+u_int32_t i82489_cpu_number();
+void i82489_writereg(int reg, u_int32_t val);
+int i82489_ipi(int vec, int target, int dl);
+
+u_int32_t (*lapic_readreg)(int)			= i82489_readreg;
+void (*lapic_writereg)(int, u_int32_t)		= i82489_writereg;
+#ifdef MULTIPROCESSOR
+int (*x86_ipi)(int vec, int target, int dl)	= i82489_ipi;
+#endif
+
+u_int32_t
+i82489_readreg(int reg)
+{
+	return *((volatile u_int32_t *)(((volatile u_int8_t *)local_apic)
+	    + reg));
+}
+
+u_int32_t
+i82489_cpu_number()
+{
+	return i82489_readreg(LAPIC_ID) >> LAPIC_ID_SHIFT;
+}
+
+void
+i82489_writereg(int reg, u_int32_t val)
+{
+	*((volatile u_int32_t *)(((volatile u_int8_t *)local_apic) + reg)) =
+	    val;
+}
+
+u_int32_t
+x2apic_readreg(int reg)
+{
+	return rdmsr(MSR_X2APIC_BASE + (reg >> 4));
+}
+
+u_int32_t
+x2apic_cpu_number()
+{
+	return x2apic_readreg(LAPIC_ID) & X2APIC_ID_MASK;
+}
+
+void
+x2apic_writereg(int reg, u_int32_t val)
+{
+	wrmsr(MSR_X2APIC_BASE + (reg >> 4), val);
+}
+
+static inline void
+x2apic_writeicr(u_int32_t hi, u_int32_t lo)
+{
+	u_int32_t msr = MSR_X2APIC_BASE + (LAPIC_ICRLO >> 4);
+	__asm volatile("wrmsr" : : "a" (lo), "d" (hi), "c" (msr));
+}
+
+u_int32_t
+lapic_cpu_number()
+{
+	if (x2apic_enabled)
+		return x2apic_cpu_number();
+	return i82489_cpu_number();
+}
+
+
 void
 lapic_map(paddr_t lapic_base)
 {
 	int s;
 	pt_entry_t *pte;
-	vaddr_t va = (vaddr_t)&local_apic;
+	vaddr_t va;
+
+	/*
+	 * On real hardware, x2apic must only be enabled if interrupt remapping
+	 * is also enabled. See 10.12.7 of the SDM vol 3.
+	 * On hypervisors, this is not necessary. Hypervisors can implement
+	 * x2apic support even if the host CPU does not support it.
+	 * Until we support interrupt remapping, use x2apic only if the
+	 * hypervisor flag is also set.
+	 */
+	if ((cpu_ecxfeature&CPUIDECX_X2APIC) && (cpu_ecxfeature&CPUIDECX_HV)) {
+		u_int64_t msr;
+
+		disable_intr();
+		s = lapic_tpr;
+
+		msr = rdmsr(MSR_APICBASE);
+		msr |= APICBASE_ENABLE_X2APIC;
+		wrmsr(MSR_APICBASE, msr);
+
+		lapic_readreg = x2apic_readreg;
+		lapic_writereg = x2apic_writereg;
+#ifdef MULTIPROCESSOR
+		x86_ipi = x2apic_ipi;
+#endif
+		x2apic_enabled = 1;
+
+		codepatch_call(CPTAG_EOI, &x2apic_eoi);
+
+		lapic_writereg(LAPIC_TPRI, s);
+		enable_intr();
+
+		return;
+	}
+
+	va = (vaddr_t)&local_apic;
 
 	disable_intr();
 	s = lapic_tpr;
@@ -121,13 +230,13 @@ lapic_map(paddr_t lapic_base)
 void
 lapic_enable(void)
 {
-	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
+	lapic_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
 }
 
 void
 lapic_disable(void)
 {
-	i82489_writereg(LAPIC_SVR, 0);
+	lapic_writereg(LAPIC_SVR, 0);
 }
 
 void
@@ -141,9 +250,9 @@ lapic_set_lvt(void)
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir(ci->ci_dev->dv_xname, "prelint", 0, 0,
-		    i82489_readreg(LAPIC_LVINT0));
+		    lapic_readreg(LAPIC_LVINT0));
 		apic_format_redir(ci->ci_dev->dv_xname, "prelint", 1, 0,
-		    i82489_readreg(LAPIC_LVINT1));
+		    lapic_readreg(LAPIC_LVINT1));
 	}
 #endif
 
@@ -152,9 +261,9 @@ lapic_set_lvt(void)
 	 * Disable ExtINT by default when using I/O APICs.
 	 */
 	if (nioapics > 0) {
-		lint0 = i82489_readreg(LAPIC_LVINT0);
+		lint0 = lapic_readreg(LAPIC_LVINT0);
 		lint0 |= LAPIC_LVT_MASKED;
-		i82489_writereg(LAPIC_LVINT0, lint0);
+		lapic_writereg(LAPIC_LVINT0, lint0);
 	}
 #endif
 
@@ -193,24 +302,24 @@ lapic_set_lvt(void)
 				    mpi->ioapic_pin);
 #endif
 			if (mpi->ioapic_pin == 0)
-				i82489_writereg(LAPIC_LVINT0, mpi->redir);
+				lapic_writereg(LAPIC_LVINT0, mpi->redir);
 			else
-				i82489_writereg(LAPIC_LVINT1, mpi->redir);
+				lapic_writereg(LAPIC_LVINT1, mpi->redir);
 		}
 	}
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir(ci->ci_dev->dv_xname, "timer", 0, 0,
-		    i82489_readreg(LAPIC_LVTT));
+		    lapic_readreg(LAPIC_LVTT));
 		apic_format_redir(ci->ci_dev->dv_xname, "pcint", 0, 0,
-		    i82489_readreg(LAPIC_PCINT));
+		    lapic_readreg(LAPIC_PCINT));
 		apic_format_redir(ci->ci_dev->dv_xname, "lint", 0, 0,
-		    i82489_readreg(LAPIC_LVINT0));
+		    lapic_readreg(LAPIC_LVINT0));
 		apic_format_redir(ci->ci_dev->dv_xname, "lint", 1, 0,
-		    i82489_readreg(LAPIC_LVINT1));
+		    lapic_readreg(LAPIC_LVINT1));
 		apic_format_redir(ci->ci_dev->dv_xname, "err", 0, 0,
-		    i82489_readreg(LAPIC_LVERR));
+		    lapic_readreg(LAPIC_LVERR));
 	}
 #endif
 }
@@ -253,7 +362,7 @@ lapic_boot_init(paddr_t lapic_base)
 static __inline u_int32_t
 lapic_gettick(void)
 {
-	return i82489_readreg(LAPIC_CCR_TIMER);
+	return lapic_readreg(LAPIC_CCR_TIMER);
 }
 
 #include <sys/kernel.h>		/* for hz */
@@ -292,10 +401,10 @@ lapic_startclock(void)
 	 * then set divisor,
 	 * then unmask and set the vector.
 	 */
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M);
-	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
+	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M);
+	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	lapic_writereg(LAPIC_ICR_TIMER, lapic_tval);
+	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
 }
 
 void
@@ -350,9 +459,9 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	 * Configure timer to one-shot, interrupt masked,
 	 * large positive number.
 	 */
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_M);
-	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg(LAPIC_ICR_TIMER, 0x80000000);
+	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_M);
+	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	lapic_writereg(LAPIC_ICR_TIMER, 0x80000000);
 
 	disable_intr();
 
@@ -390,10 +499,10 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		lapic_tval = (lapic_per_second * 2) / hz;
 		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
 
-		i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M |
+		lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M |
 		    LAPIC_TIMER_VECTOR);
-		i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-		i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
+		lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+		lapic_writereg(LAPIC_ICR_TIMER, lapic_tval);
 
 		/*
 		 * Compute fixed-point ratios between cycles and
@@ -480,7 +589,7 @@ i82489_icr_wait(void)
 
 #ifdef MULTIPROCESSOR
 int
-x86_ipi_init(int target)
+i82489_ipi_init(int target)
 {
 
 	if ((target & LAPIC_DEST_MASK) == 0)
@@ -502,7 +611,7 @@ x86_ipi_init(int target)
 }
 
 int
-x86_ipi(int vec, int target, int dl)
+i82489_ipi(int vec, int target, int dl)
 {
 	int s;
 
@@ -521,6 +630,49 @@ x86_ipi(int vec, int target, int dl)
 	splx(s);
 
 	return 0;
+}
+
+int
+x2apic_ipi_init(int target)
+{
+	u_int64_t hi = 0;
+
+	if ((target & LAPIC_DEST_MASK) == 0)
+		hi = target & 0xff;
+
+	x2apic_writeicr(hi, (target & LAPIC_DEST_MASK) | LAPIC_DLMODE_INIT |
+	    LAPIC_LVL_ASSERT );
+
+	i8254_delay(10000);
+
+	x2apic_writeicr(0, (target & LAPIC_DEST_MASK) | LAPIC_DLMODE_INIT |
+	    LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
+
+	return 0;
+}
+
+int
+x2apic_ipi(int vec, int target, int dl)
+{
+	u_int64_t hi = 0, lo;
+
+	if ((target & LAPIC_DEST_MASK) == 0)
+		hi = target & 0xff;
+
+	lo = (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT;
+
+	x2apic_writeicr(hi, lo);
+
+	return 0;
+}
+
+int
+x86_ipi_init(int target)
+{
+	if (x2apic_enabled)
+		return x2apic_ipi_init(target);
+	else
+		return i82489_ipi_init(target);
 }
 #endif /* MULTIPROCESSOR */
 
@@ -542,9 +694,9 @@ lapic_hwmask(struct pic *pic, int pin)
 	u_int32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
-	val = i82489_readreg(reg);
+	val = lapic_readreg(reg);
 	val |= LAPIC_LVT_MASKED;
-	i82489_writereg(reg, val);
+	lapic_writereg(reg, val);
 }
 
 void
@@ -554,9 +706,9 @@ lapic_hwunmask(struct pic *pic, int pin)
 	u_int32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
-	val = i82489_readreg(reg);
+	val = lapic_readreg(reg);
 	val &= ~LAPIC_LVT_MASKED;
-	i82489_writereg(reg, val);
+	lapic_writereg(reg, val);
 }
 
 void

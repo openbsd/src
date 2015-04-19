@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.36 2015/02/07 00:26:37 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.37 2015/04/19 19:45:21 sf Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -77,6 +77,8 @@
 #include <machine/trap.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
+#include <machine/codepatch.h>
+#include <machine/specialreg.h>
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -309,6 +311,20 @@ calltrap:
 /* XXX See comment in locore.s */
 #define	XINTR(name,num)		Xintr_##name##num
 
+	.globl _C_LABEL(x2apic_eoi)
+_C_LABEL(x2apic_eoi):
+	pushq   %rax
+	pushq   %rcx
+	pushq   %rdx
+	mov     $MSR_X2APIC_EOI,%ecx
+	mov     $0,%eax
+	mov     $0,%edx
+	wrmsr
+	popq    %rdx
+	popq    %rcx
+	popq    %rax
+	ret
+
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
 IDTVEC(recurse_lapic_ipi)
@@ -321,7 +337,9 @@ IDTVEC(intr_lapic_ipi)
 	pushq	$0		
 	pushq	$T_ASTFLT
 	INTRENTRY		
+	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	CODEPATCH_END(CPTAG_EOI)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_IPI,%ebx
 	jae	2f
@@ -403,7 +421,9 @@ IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
 	pushq	$T_ASTFLT
 	INTRENTRY		
+	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	CODEPATCH_END(CPTAG_EOI)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f

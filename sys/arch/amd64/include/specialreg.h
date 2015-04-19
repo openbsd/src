@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.34 2015/03/25 20:59:30 kettenis Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.35 2015/04/19 19:45:21 sf Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -275,6 +275,7 @@
 #define	MSR_CTR0		0x012	/* P5 only (trap on P6) */
 #define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_APICBASE		0x01b
+#define APICBASE_ENABLE_X2APIC	0x400
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID    0x02c   /* Pentium 4 only */
 #define	MSR_TEST_CTL		0x033

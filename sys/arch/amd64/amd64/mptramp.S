@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.11 2014/12/08 07:49:17 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.12 2015/04/19 19:45:21 sf Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -187,15 +187,31 @@ _TRMP_LABEL(mptramp_longmode)
 
 	
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
+	.globl  _C_LABEL(x2apic_enabled)
+	movl	x2apic_enabled,%eax
+	testl	%eax,%eax
+	jz	1f
+
+	mov     $MSR_APICBASE,%ecx
+	mov     $0,%edx
+	rdmsr
+	orl     $APICBASE_ENABLE_X2APIC,%eax
+	wrmsr
+	mov     $MSR_X2APIC_ID,%ecx
+	rdmsr
+	andl    $X2APIC_ID_MASK,%eax
+	jmp	2f
+1:
 	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
 	shrl	$LAPIC_ID_SHIFT,%eax
+2:
 	xorq	%rcx,%rcx
-1:
+3:
 	movq	_C_LABEL(cpu_info)(,%rcx,8),%rdi
 	incq	%rcx
 	movl	CPU_INFO_APICID(%rdi),%edx
 	cmpl	%eax,%edx
-	jne	1b
+	jne	3b
 
 	movq	CPU_INFO_IDLE_PCB(%rdi),%rsi
 

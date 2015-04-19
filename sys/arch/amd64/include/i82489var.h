@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.14 2014/01/21 09:40:55 kettenis Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.15 2015/04/19 19:45:21 sf Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -37,28 +37,14 @@
  * Software definitions belonging to Local APIC driver.
  */
 
-static __inline__ u_int32_t i82489_readreg(int);
-static __inline__ void i82489_writereg(int, u_int32_t);
-
 #ifdef _KERNEL
 extern volatile u_int32_t local_apic[];
 extern volatile u_int32_t lapic_tpr;
 #endif
 
-static __inline__ u_int32_t
-i82489_readreg(int reg)
-{
-	return *((volatile u_int32_t *)(((volatile u_int8_t *)local_apic)
-	    + reg));
-}
-
-static __inline__ void
-i82489_writereg(int reg, u_int32_t val)
-{
-	*((volatile u_int32_t *)(((volatile u_int8_t *)local_apic) + reg)) = val;
-}
-
-#define lapic_cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
+extern u_int32_t (*lapic_readreg)(int);
+extern void (*lapic_writereg)(int, u_int32_t);
+u_int32_t lapic_cpu_number(void);
 
 /*
  * "spurious interrupt vector"; vector used by interrupt which was
