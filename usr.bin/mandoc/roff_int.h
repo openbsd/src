@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_int.h,v 1.2 2015/04/19 14:25:05 schwarze Exp $	*/
+/*	$OpenBSD: roff_int.h,v 1.3 2015/04/19 14:57:16 schwarze Exp $	*/
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,6 +23,8 @@ struct roff_node *roff_node_alloc(struct roff_man *, int, int,
 void		  roff_node_append(struct roff_man *, struct roff_node *);
 void		  roff_word_alloc(struct roff_man *, int, int, const char *);
 void		  roff_word_append(struct roff_man *, const char *);
+void		  roff_elem_alloc(struct roff_man *, int, int, int);
+struct roff_node *roff_block_alloc(struct roff_man *, int, int, int);
 struct roff_node *roff_head_alloc(struct roff_man *, int, int, int);
 struct roff_node *roff_body_alloc(struct roff_man *, int, int, int);
 void		  roff_addeqn(struct roff_man *, const struct eqn *);

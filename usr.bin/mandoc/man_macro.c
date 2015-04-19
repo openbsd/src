@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.69 2015/04/19 14:25:05 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.70 2015/04/19 14:57:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -257,7 +257,7 @@ blk_exp(MACRO_PROT_ARGS)
 	int		 la;
 
 	rew_scope(man, tok);
-	man_block_alloc(man, line, ppos, tok);
+	roff_block_alloc(man, line, ppos, tok);
 	head = roff_head_alloc(man, line, ppos, tok);
 
 	la = *pos;
@@ -287,8 +287,7 @@ blk_imp(MACRO_PROT_ARGS)
 	struct roff_node *n;
 
 	rew_scope(man, tok);
-	man_block_alloc(man, line, ppos, tok);
-	n = man->last;
+	n = roff_block_alloc(man, line, ppos, tok);
 	if (n->tok == MAN_SH || n->tok == MAN_SS)
 		man->flags &= ~MAN_LITERAL;
 	n = roff_head_alloc(man, line, ppos, tok);
@@ -327,7 +326,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 	char		*p;
 	struct roff_node *n;
 
-	man_elem_alloc(man, line, ppos, tok);
+	roff_elem_alloc(man, line, ppos, tok);
 	n = man->last;
 
 	for (;;) {

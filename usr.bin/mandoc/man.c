@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.108 2015/04/19 14:25:05 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.109 2015/04/19 14:57:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,26 +72,6 @@ man_parseln(struct roff_man *man, int ln, char *buf, int offs)
 	    man_ptext(man, ln, buf, offs));
 }
 
-void
-man_elem_alloc(struct roff_man *man, int line, int pos, int tok)
-{
-	struct roff_node *p;
-
-	p = roff_node_alloc(man, line, pos, ROFFT_ELEM, tok);
-	roff_node_append(man, p);
-	man->next = ROFF_NEXT_CHILD;
-}
-
-void
-man_block_alloc(struct roff_man *man, int line, int pos, int tok)
-{
-	struct roff_node *p;
-
-	p = roff_node_alloc(man, line, pos, ROFFT_BLOCK, tok);
-	roff_node_append(man, p);
-	man->next = ROFF_NEXT_CHILD;
-}
-
 static void
 man_descope(struct roff_man *man, int line, int offs)
 {
@@ -137,7 +117,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 		/* Allocate a blank entry. */
 		if (man->last->tok != MAN_SH &&
 		    man->last->tok != MAN_SS) {
-			man_elem_alloc(man, line, offs, MAN_sp);
+			roff_elem_alloc(man, line, offs, MAN_sp);
 			man->next = ROFF_NEXT_SIBLING;
 		}
 		return(1);
