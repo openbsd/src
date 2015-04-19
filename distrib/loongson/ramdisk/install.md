@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2015/02/12 08:44:47 rpe Exp $
+#	$OpenBSD: install.md,v 1.16 2015/04/19 00:37:36 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ md_prep_fdisk() {
 			fdisk -e $_disk <<__EOT >/dev/null
 re
 e 0
-
+83
 
 1
 $((_s * 2048))
