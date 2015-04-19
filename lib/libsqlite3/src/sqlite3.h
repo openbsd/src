@@ -44,10 +44,19 @@ extern "C" {
 
 
 /*
-** Add the ability to override 'extern'
+** Provide the ability to override linkage features of the interface.
 */
 #ifndef SQLITE_EXTERN
 # define SQLITE_EXTERN extern
+#endif
+#ifndef SQLITE_API
+# define SQLITE_API
+#endif
+#ifndef SQLITE_CDECL
+# define SQLITE_CDECL
+#endif
+#ifndef SQLITE_STDCALL
+# define SQLITE_STDCALL
 #endif
 
 /*
@@ -103,8 +112,8 @@ extern "C" {
 ** [sqlite3_libversion_number()], [sqlite3_sourceid()],
 ** [sqlite_version()] and [sqlite_source_id()].
 */
-#define SQLITE_VERSION        "3.8.8.3"
-#define SQLITE_VERSION_NUMBER 3008008
+#define SQLITE_VERSION        "3.8.9"
+#define SQLITE_VERSION_NUMBER 3008009
 #define SQLITE_SOURCE_ID      "OpenBSD"
 
 /*
@@ -744,14 +753,16 @@ struct sqlite3_io_methods {
 ** of the [sqlite3_io_methods] object and for the [sqlite3_file_control()]
 ** interface.
 **
+** <ul>
+** <li>[[SQLITE_FCNTL_LOCKSTATE]]
 ** The [SQLITE_FCNTL_LOCKSTATE] opcode is used for debugging.  This
 ** opcode causes the xFileControl method to write the current state of
 ** the lock (one of [SQLITE_LOCK_NONE], [SQLITE_LOCK_SHARED],
 ** [SQLITE_LOCK_RESERVED], [SQLITE_LOCK_PENDING], or [SQLITE_LOCK_EXCLUSIVE])
 ** into an integer that the pArg argument points to. This capability
-** is used during testing and only needs to be supported when SQLITE_TEST
-** is defined.
-** <ul>
+** is used during testing and is only available when the SQLITE_TEST
+** compile-time option is used.
+**
 ** <li>[[SQLITE_FCNTL_SIZE_HINT]]
 ** The [SQLITE_FCNTL_SIZE_HINT] opcode is used by SQLite to give the VFS
 ** layer a hint of how large the database file will grow to be during the
@@ -876,7 +887,9 @@ struct sqlite3_io_methods {
 ** [PRAGMA] processing continues.  ^If the [SQLITE_FCNTL_PRAGMA]
 ** file control returns [SQLITE_OK], then the parser assumes that the
 ** VFS has handled the PRAGMA itself and the parser generates a no-op
-** prepared statement.  ^If the [SQLITE_FCNTL_PRAGMA] file control returns
+** prepared statement if result string is NULL, or that returns a copy
+** of the result string if the string is non-NULL.
+** ^If the [SQLITE_FCNTL_PRAGMA] file control returns
 ** any result code other than [SQLITE_OK] or [SQLITE_NOTFOUND], that means
 ** that the VFS encountered an error while handling the [PRAGMA] and the
 ** compilation of the PRAGMA fails with an error.  ^The [SQLITE_FCNTL_PRAGMA]
@@ -934,12 +947,19 @@ struct sqlite3_io_methods {
 ** pointed to by the pArg argument.  This capability is used during testing
 ** and only needs to be supported when SQLITE_TEST is defined.
 **
+** <li>[[SQLITE_FCNTL_WAL_BLOCK]]
+** The [SQLITE_FCNTL_WAL_BLOCK] is a signal to the VFS layer that it might
+** be advantageous to block on the next WAL lock if the lock is not immediately
+** available.  The WAL subsystem issues this signal during rare
+** circumstances in order to fix a problem with priority inversion.
+** Applications should <em>not</em> use this file-control.
+**
 ** </ul>
 */
 #define SQLITE_FCNTL_LOCKSTATE               1
-#define SQLITE_GET_LOCKPROXYFILE             2
-#define SQLITE_SET_LOCKPROXYFILE             3
-#define SQLITE_LAST_ERRNO                    4
+#define SQLITE_FCNTL_GET_LOCKPROXYFILE       2
+#define SQLITE_FCNTL_SET_LOCKPROXYFILE       3
+#define SQLITE_FCNTL_LAST_ERRNO              4
 #define SQLITE_FCNTL_SIZE_HINT               5
 #define SQLITE_FCNTL_CHUNK_SIZE              6
 #define SQLITE_FCNTL_FILE_POINTER            7
@@ -958,6 +978,13 @@ struct sqlite3_io_methods {
 #define SQLITE_FCNTL_SYNC                   21
 #define SQLITE_FCNTL_COMMIT_PHASETWO        22
 #define SQLITE_FCNTL_WIN32_SET_HANDLE       23
+#define SQLITE_FCNTL_WAL_BLOCK              24
+
+/* deprecated names */
+#define SQLITE_GET_LOCKPROXYFILE      SQLITE_FCNTL_GET_LOCKPROXYFILE
+#define SQLITE_SET_LOCKPROXYFILE      SQLITE_FCNTL_SET_LOCKPROXYFILE
+#define SQLITE_LAST_ERRNO             SQLITE_FCNTL_LAST_ERRNO
+
 
 /*
 ** CAPI3REF: Mutex Handle
@@ -1518,7 +1545,7 @@ struct sqlite3_mem_methods {
 **   <li> [sqlite3_memory_used()]
 **   <li> [sqlite3_memory_highwater()]
 **   <li> [sqlite3_soft_heap_limit64()]
-**   <li> [sqlite3_status()]
+**   <li> [sqlite3_status64()]
 **   </ul>)^
 ** ^Memory allocation statistics are enabled by default unless SQLite is
 ** compiled with [SQLITE_DEFAULT_MEMSTATUS]=0 in which case memory
@@ -1729,7 +1756,6 @@ struct sqlite3_mem_methods {
 ** compiled for Windows with the [SQLITE_WIN32_MALLOC] pre-processor macro
 ** defined. ^SQLITE_CONFIG_WIN32_HEAPSIZE takes a 32-bit unsigned integer value
 ** that specifies the maximum size of the created heap.
-** </dl>
 **
 ** [[SQLITE_CONFIG_PCACHE_HDRSZ]]
 ** <dt>SQLITE_CONFIG_PCACHE_HDRSZ
@@ -2219,6 +2245,10 @@ void sqlite3_free_table(char **result);
 **
 ** These routines are work-alikes of the "printf()" family of functions
 ** from the standard C library.
+** These routines understand most of the common K&R formatting options,
+** plus some additional non-standard formats, detailed below.
+** Note that some of the more obscure formatting options from recent
+** C-library standards are omitted from this implementation.
 **
 ** ^The sqlite3_mprintf() and sqlite3_vmprintf() routines write their
 ** results into memory obtained from [sqlite3_malloc()].
@@ -2251,7 +2281,7 @@ void sqlite3_free_table(char **result);
 ** These routines all implement some additional formatting
 ** options that are useful for constructing SQL statements.
 ** All of the usual printf() formatting options apply.  In addition, there
-** is are "%q", "%Q", and "%z" options.
+** is are "%q", "%Q", "%w" and "%z" options.
 **
 ** ^(The %q option works like %s in that it substitutes a nul-terminated
 ** string from the argument list.  But %q also doubles every '\'' character.
@@ -2303,6 +2333,12 @@ void sqlite3_free_table(char **result);
 **
 ** The code above will render a correct SQL statement in the zSQL
 ** variable even if the zText variable is a NULL pointer.
+**
+** ^(The "%w" formatting option is like "%q" except that it expects to
+** be contained within double-quotes instead of single quotes, and it
+** escapes the double-quote character instead of the single-quote
+** character.)^  The "%w" formatting option is intended for safely inserting
+** table and column names into a constructed SQL statement.
 **
 ** ^(The "%z" formatting option works like "%s" but with the
 ** addition that after the string has been read and copied into
@@ -2966,11 +3002,13 @@ sqlite3_int64 sqlite3_uri_int64(const char*, const char*, sqlite3_int64);
 /*
 ** CAPI3REF: Error Codes And Messages
 **
-** ^The sqlite3_errcode() interface returns the numeric [result code] or
-** [extended result code] for the most recent failed sqlite3_* API call
-** associated with a [database connection]. If a prior API call failed
-** but the most recent API call succeeded, the return value from
-** sqlite3_errcode() is undefined.  ^The sqlite3_extended_errcode()
+** ^If the most recent sqlite3_* API call associated with 
+** [database connection] D failed, then the sqlite3_errcode(D) interface
+** returns the numeric [result code] or [extended result code] for that
+** API call.
+** If the most recent API call was successful,
+** then the return value from sqlite3_errcode() is undefined.
+** ^The sqlite3_extended_errcode()
 ** interface is the same except that it always returns the 
 ** [extended result code] even when extended result codes are
 ** disabled.
@@ -3159,16 +3197,14 @@ int sqlite3_limit(sqlite3*, int id, int newVal);
 ** interfaces use UTF-8, and sqlite3_prepare16() and sqlite3_prepare16_v2()
 ** use UTF-16.
 **
-** ^If the nByte argument is less than zero, then zSql is read up to the
-** first zero terminator. ^If nByte is non-negative, then it is the maximum
-** number of  bytes read from zSql.  ^When nByte is non-negative, the
-** zSql string ends at either the first '\000' or '\u0000' character or
-** the nByte-th byte, whichever comes first. If the caller knows
-** that the supplied string is nul-terminated, then there is a small
-** performance advantage to be gained by passing an nByte parameter that
-** is equal to the number of bytes in the input string <i>including</i>
-** the nul-terminator bytes as this saves SQLite from having to
-** make a copy of the input string.
+** ^If the nByte argument is negative, then zSql is read up to the
+** first zero terminator. ^If nByte is positive, then it is the
+** number of bytes read from zSql.  ^If nByte is zero, then no prepared
+** statement is generated.
+** If the caller knows that the supplied string is nul-terminated, then
+** there is a small performance advantage to passing an nByte parameter that
+** is the number of bytes in the input string <i>including</i>
+** the nul-terminator.
 **
 ** ^If pzTail is not NULL then *pzTail is made to point to the first byte
 ** past the end of the first SQL statement in zSql.  These routines only
@@ -4197,8 +4233,8 @@ int sqlite3_create_function_v2(
 ** These functions are [deprecated].  In order to maintain
 ** backwards compatibility with older code, these functions continue 
 ** to be supported.  However, new applications should avoid
-** the use of these functions.  To help encourage people to avoid
-** using these functions, we are not going to tell you what they do.
+** the use of these functions.  To encourage programmers to avoid
+** these functions, we will not explain what they do.
 */
 #ifndef SQLITE_OMIT_DEPRECATED
 SQLITE_DEPRECATED int sqlite3_aggregate_count(sqlite3_context*);
@@ -5054,6 +5090,11 @@ void *sqlite3_update_hook(
 ** future releases of SQLite.  Applications that care about shared
 ** cache setting should set it explicitly.
 **
+** Note: This method is disabled on MacOS X 10.7 and iOS version 5.0
+** and will always return SQLITE_MISUSE. On those systems, 
+** shared cache mode should be enabled per-database connection via 
+** [sqlite3_open_v2()] with [SQLITE_OPEN_SHAREDCACHE].
+**
 ** This interface is threadsafe on processors where writing a
 ** 32-bit integer is atomic.
 **
@@ -5581,7 +5622,7 @@ int sqlite3_create_module_v2(
 */
 struct sqlite3_vtab {
   const sqlite3_module *pModule;  /* The module for this virtual table */
-  int nRef;                       /* NO LONGER USED */
+  int nRef;                       /* Number of open cursors */
   char *zErrMsg;                  /* Error message from sqlite3_mprintf() */
   /* Virtual table implementations will typically add additional fields */
 };
@@ -6253,12 +6294,13 @@ int sqlite3_test_control(int op, ...);
 #define SQLITE_TESTCTRL_BYTEORDER               22
 #define SQLITE_TESTCTRL_ISINIT                  23
 #define SQLITE_TESTCTRL_SORTER_MMAP             24
-#define SQLITE_TESTCTRL_LAST                    24
+#define SQLITE_TESTCTRL_IMPOSTER                25
+#define SQLITE_TESTCTRL_LAST                    25
 
 /*
 ** CAPI3REF: SQLite Runtime Status
 **
-** ^This interface is used to retrieve runtime status information
+** ^These interfaces are used to retrieve runtime status information
 ** about the performance of SQLite, and optionally to reset various
 ** highwater marks.  ^The first argument is an integer code for
 ** the specific parameter to measure.  ^(Recognized integer codes
@@ -6272,19 +6314,22 @@ int sqlite3_test_control(int op, ...);
 ** ^(Other parameters record only the highwater mark and not the current
 ** value.  For these latter parameters nothing is written into *pCurrent.)^
 **
-** ^The sqlite3_status() routine returns SQLITE_OK on success and a
-** non-zero [error code] on failure.
+** ^The sqlite3_status() and sqlite3_status64() routines return
+** SQLITE_OK on success and a non-zero [error code] on failure.
 **
-** This routine is threadsafe but is not atomic.  This routine can be
-** called while other threads are running the same or different SQLite
-** interfaces.  However the values returned in *pCurrent and
-** *pHighwater reflect the status of SQLite at different points in time
-** and it is possible that another thread might change the parameter
-** in between the times when *pCurrent and *pHighwater are written.
+** If either the current value or the highwater mark is too large to
+** be represented by a 32-bit integer, then the values returned by
+** sqlite3_status() are undefined.
 **
 ** See also: [sqlite3_db_status()]
 */
 int sqlite3_status(int op, int *pCurrent, int *pHighwater, int resetFlag);
+int sqlite3_status64(
+  int op,
+  sqlite3_int64 *pCurrent,
+  sqlite3_int64 *pHighwater,
+  int resetFlag
+);
 
 
 /*
@@ -6954,20 +6999,20 @@ typedef struct sqlite3_backup sqlite3_backup;
 ** is not a permanent error and does not affect the return value of
 ** sqlite3_backup_finish().
 **
-** [[sqlite3_backup__remaining()]] [[sqlite3_backup_pagecount()]]
+** [[sqlite3_backup_remaining()]] [[sqlite3_backup_pagecount()]]
 ** <b>sqlite3_backup_remaining() and sqlite3_backup_pagecount()</b>
 **
-** ^Each call to sqlite3_backup_step() sets two values inside
-** the [sqlite3_backup] object: the number of pages still to be backed
-** up and the total number of pages in the source database file.
-** The sqlite3_backup_remaining() and sqlite3_backup_pagecount() interfaces
-** retrieve these two values, respectively.
-**
-** ^The values returned by these functions are only updated by
-** sqlite3_backup_step(). ^If the source database is modified during a backup
-** operation, then the values are not updated to account for any extra
-** pages that need to be updated or the size of the source database file
-** changing.
+** ^The sqlite3_backup_remaining() routine returns the number of pages still
+** to be backed up at the conclusion of the most recent sqlite3_backup_step().
+** ^The sqlite3_backup_pagecount() routine returns the total number of pages
+** in the source database at the conclusion of the most recent
+** sqlite3_backup_step().
+** ^(The values returned by these functions are only updated by
+** sqlite3_backup_step(). If the source database is modified in a way that
+** changes the size of the source database or the number of pages remaining,
+** those changes are not reflected in the output of sqlite3_backup_pagecount()
+** and sqlite3_backup_remaining() until after the next
+** sqlite3_backup_step().)^
 **
 ** <b>Concurrent Usage of Database Handles</b>
 **
