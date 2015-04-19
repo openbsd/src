@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.26 2015/01/30 17:31:20 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.27 2015/04/19 20:34:56 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -130,7 +130,8 @@ tbl_cdata(struct tbl_node *tbl, int ln, const char *p, int pos)
 		if (p[pos] == tbl->opts.tab) {
 			tbl->part = TBL_PART_DATA;
 			pos++;
-			getdata(tbl, tbl->last_span, ln, p, &pos);
+			while (p[pos] != '\0')
+				getdata(tbl, tbl->last_span, ln, p, &pos);
 			return(1);
 		} else if (p[pos] == '\0') {
 			tbl->part = TBL_PART_DATA;

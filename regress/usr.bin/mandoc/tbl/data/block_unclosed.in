@@ -9,6 +9,11 @@ lll.
 begin:T{
 middle
 T}:end
+T{
+begin
+T}:middle:T{
+end
+T}
 incomplete:T{
 block
 .TE
