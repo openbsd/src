@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.118 2015/03/23 09:36:25 dlg Exp $	*/
+/*	$OpenBSD: ping.c,v 1.119 2015/04/19 12:45:37 dlg Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -72,10 +72,16 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <siphash.h>
 
 struct tv64 {
 	u_int64_t	tv64_sec;
 	u_int64_t	tv64_nsec;
+};
+
+struct payload {
+	struct tv64	tv64;
+	u_int8_t	mac[SIPHASH_DIGEST_LENGTH];
 };
 
 #define	DEFDATALEN	(64 - 8)		/* default data length */
@@ -155,6 +161,7 @@ quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
 int bufspace = IP_MAXPACKET;
 
 struct tv64 tv64_offset;
+SIPHASH_KEY mac_key;
 
 void fill(char *, char *);
 void catcher(int signo);
@@ -199,7 +206,7 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	preload = 0;
-	datap = &outpack[8 + sizeof(struct tv64)];
+	datap = &outpack[8 + sizeof(struct payload)];
 	while ((ch = getopt(argc, argv,
 	    "DEI:LRS:c:defi:l:np:qs:T:t:V:vw:")) != -1)
 		switch(ch) {
@@ -341,6 +348,7 @@ main(int argc, char *argv[])
 		usage();
 
 	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
+	arc4random_buf(&mac_key, sizeof(mac_key));
 
 	memset(&interstr, 0, sizeof(interstr));
 
@@ -372,13 +380,13 @@ main(int argc, char *argv[])
 	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))
 		warnx("No audible output for flood pings");
 
-	if (datalen >= sizeof(struct tv64))	/* can we time transfer */
+	if (datalen >= sizeof(struct payload))	/* can we time transfer */
 		timing = 1;
 	packlen = datalen + MAXIPLEN + MAXICMPLEN;
 	if (!(packet = malloc((size_t)packlen)))
 		err(1, "malloc");
 	if (!(options & F_PINGFILLED))
-		for (i = sizeof(struct tv64); i < datalen; ++i)
+		for (i = sizeof(struct payload); i < datalen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
@@ -619,16 +627,26 @@ pinger(void)
 	CLR(ntohs(icp->icmp_seq) % mx_dup_ck);
 
 	if (timing) {
+		SIPHASH_CTX ctx;
 		struct timespec ts;
-		struct tv64 tv64;
+		struct payload payload;
+		struct tv64 *tv64 = &payload.tv64;
 
 		if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 			err(1, "clock_gettime(CLOCK_MONOTONIC)");
-		tv64.tv64_sec = htobe64((u_int64_t)ts.tv_sec +
+		tv64->tv64_sec = htobe64((u_int64_t)ts.tv_sec +
 		    tv64_offset.tv64_sec);
-		tv64.tv64_nsec = htobe64((u_int64_t)ts.tv_nsec +
+		tv64->tv64_nsec = htobe64((u_int64_t)ts.tv_nsec +
 		    tv64_offset.tv64_nsec);
-		memcpy(&outpack[8], &tv64, sizeof(tv64));
+
+		SipHash24_Init(&ctx, &mac_key);
+		SipHash24_Update(&ctx, tv64, sizeof(*tv64));
+		SipHash24_Update(&ctx, &ident, sizeof(ident));
+		SipHash24_Update(&ctx, &whereto.sin_addr,
+		    sizeof(whereto.sin_addr));
+		SipHash24_Final(&payload.mac, &ctx);
+
+		memcpy(&outpack[8], &payload, sizeof(payload));
 	}
 
 	cc = datalen + 8;			/* skips ICMP portion */
@@ -703,15 +721,32 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		if (icp->icmp_id != ident)
 			return;			/* 'Twas not our ECHO */
 		++nreceived;
-		if (cc >= 8 + sizeof(struct tv64)) {
-			struct tv64 tv64;
+		if (cc >= 8 + sizeof(struct payload)) {
+			SIPHASH_CTX ctx;
+			struct payload payload;
+			struct tv64 *tv64 = &payload.tv64;
+			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
 
-			timinginfo++;
 			pkttime = (char *)icp->icmp_data;
-			memcpy(&tv64, pkttime, sizeof(tv64));
-			tp.tv_sec = betoh64(tv64.tv64_sec) -
+			memcpy(&payload, pkttime, sizeof(payload));
+
+			SipHash24_Init(&ctx, &mac_key);
+			SipHash24_Update(&ctx, tv64, sizeof(*tv64));
+			SipHash24_Update(&ctx, &ident, sizeof(ident));
+			SipHash24_Update(&ctx, &whereto.sin_addr,
+			    sizeof(whereto.sin_addr));
+			SipHash24_Final(mac, &ctx);
+
+			if (timingsafe_memcmp(mac, &payload.mac,
+			    sizeof(mac)) != 0) {
+				(void)printf("signature mismatch!\n");
+				return;
+			}
+			timinginfo++;
+
+			tp.tv_sec = betoh64(tv64->tv64_sec) -
 			    tv64_offset.tv64_sec;
-			tp.tv_nsec = betoh64(tv64.tv64_nsec) -
+			tp.tv_nsec = betoh64(tv64->tv64_nsec) -
 			    tv64_offset.tv64_nsec;
 
 			timespecsub(&ts, &tp, &ts);
@@ -743,18 +778,20 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			    inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
 			    ntohs(icp->icmp_seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
-			if (cc >= 8 + sizeof(struct tv64))
+			if (cc >= 8 + sizeof(struct payload)) {
 				(void)printf(" time=%d.%03d ms",
 				    (int)(triptime / 1000),
 				    (int)(triptime % 1000));
+			}
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
 			if (cc - 8 < datalen)
 				(void)printf(" (TRUNC!)");
-			cp = (u_char *)&icp->icmp_data[sizeof(struct tv64)];
-			dp = &outpack[8 + sizeof(struct tv64)];
-			for (i = 8 + sizeof(struct tv64); i < cc && i < datalen;
+			cp = (u_char *)&icp->icmp_data[sizeof(struct payload)];
+			dp = &outpack[8 + sizeof(struct payload)];
+			for (i = 8 + sizeof(struct payload);
+			    i < cc && i < datalen;
 			    ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d "
@@ -1271,7 +1308,7 @@ fill(char *bp, char *patp)
 
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXPAYLOAD - (8 + sizeof(struct tv64) + ii);
+		    kk <= MAXPAYLOAD - (8 + sizeof(struct payload) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
