@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.62 2015/04/18 22:16:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.63 2015/04/19 06:27:17 sf Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -77,6 +77,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/codepatch.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -167,69 +168,23 @@ struct cfdriver cpu_cd = {
 #ifndef SMALL_KERNEL
 void	replacesmap(void);
 
-extern int _copyout_stac;
-extern int _copyout_clac;
-extern int _copyin_stac;
-extern int _copyin_clac;
-extern int _copy_fault_clac;
-extern int _copyoutstr_stac;
-extern int _copyinstr_stac;
-extern int _copystr_fault_clac;
-extern int _ucas_32_stac;
-extern int _ucas_32_clac;
 extern int _stac;
 extern int _clac;
-
-static const struct {
-	void *daddr;
-	void *saddr;
-} ireplace[] = {
-	{ &_copyout_stac, &_stac },
-	{ &_copyout_clac, &_clac },
-	{ &_copyin_stac, &_stac },
-	{ &_copyin_clac, &_clac },
-	{ &_copy_fault_clac, &_clac },
-	{ &_copyoutstr_stac, &_stac },
-	{ &_copyinstr_stac, &_stac },
-	{ &_copystr_fault_clac, &_clac },
-	{ &_ucas_32_stac, &_stac },
-	{ &_ucas_32_clac, &_clac },
-};
 
 void
 replacesmap(void)
 {
 	static int replacedone = 0;
-	int i, s;
-	vaddr_t nva;
+	int s;
 
 	if (replacedone)
 		return;
 	replacedone = 1;
 
 	s = splhigh();
-	/*
-	 * Create writeable aliases of memory we need
-	 * to write to as kernel is mapped read-only
-	 */
-	nva = (vaddr_t)km_alloc(2 * PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
 
-	for (i = 0; i < nitems(ireplace); i++) {
-		paddr_t kva = trunc_page((paddr_t)ireplace[i].daddr);
-		paddr_t po = (paddr_t)ireplace[i].daddr & PAGE_MASK;
-		paddr_t pa1, pa2;
-
-		pmap_extract(pmap_kernel(), kva, &pa1);
-		pmap_extract(pmap_kernel(), kva + PAGE_SIZE, &pa2);
-		pmap_kenter_pa(nva, pa1, PROT_READ | PROT_WRITE);
-		pmap_kenter_pa(nva + PAGE_SIZE, pa2, PROT_READ | PROT_WRITE);
-		pmap_update(pmap_kernel());
-
-		/* replace 3 byte nops with stac/clac instructions */
-		bcopy(ireplace[i].saddr, (void *)(nva + po), 3);
-	}
-
-	km_free((void *)nva, 2 * PAGE_SIZE, &kv_any, &kp_none);
+	codepatch_replace(CPTAG_STAC, &_stac, 3);
+	codepatch_replace(CPTAG_CLAC, &_clac, 3);
 
 	splx(s);
 }
