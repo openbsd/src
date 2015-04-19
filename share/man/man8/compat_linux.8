@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.48 2014/09/08 04:40:30 doug Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.49 2015/04/19 08:58:02 ratchov Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: April 19 2015 $
 .Dt COMPAT_LINUX 8
 .Os
 .Sh NAME
@@ -41,8 +41,6 @@
 supports running Linux binaries.
 This only applies to i386 systems and the ELF binary format.
 Most programs should work, including the ones that use the Linux SVGAlib.
-Additionally, OSS audio is emulated, so Linux binaries can access the
-native audio transparently.
 Programs that will not work include those that use i386-specific calls,
 such as enabling virtual 8086 mode.
 .Pp
@@ -102,10 +100,6 @@ directory will have to be created, namely:
 Be warned: the first link mentioned here makes SVGAlib binaries
 work, but may confuse others, so it may be necessary to remove it again at
 some point.
-.Ss Programs using OSS (Linux) audio
-Only the DSP device is emulated, the following link should be created:
-.Pp
-.D1 /emul/linux/dev/dsp -> /dev/audio
 .Ss Other links Linux binaries may require
 CD-ROM support requires a link to the CD-ROM device, similar to:
 .Pp
