@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.22 2014/05/08 06:03:30 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.23 2015/04/19 21:34:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -517,58 +517,6 @@ layout_resize_pane(struct window_pane *wp, enum layout_type type, int change)
 	layout_fix_offsets(wp->window->layout_root);
 	layout_fix_panes(wp->window, wp->window->sx, wp->window->sy);
 	notify_window_layout_changed(wp->window);
-}
-
-/* Resize pane based on mouse events. */
-void
-layout_resize_pane_mouse(struct client *c)
-{
-	struct window		*w;
-	struct window_pane	*wp;
-	struct mouse_event	*m = &c->tty.mouse;
-	int		      	 pane_border;
-
-	w = c->session->curw->window;
-
-	pane_border = 0;
-	if (m->event & MOUSE_EVENT_DRAG && m->flags & MOUSE_RESIZE_PANE) {
-		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if (!window_pane_visible(wp))
-				continue;
-
-			if (wp->xoff + wp->sx == m->lx &&
-			    wp->yoff <= 1 + m->ly &&
-			    wp->yoff + wp->sy >= m->ly) {
-				layout_resize_pane(wp, LAYOUT_LEFTRIGHT,
-				    m->x - m->lx);
-				pane_border = 1;
-			}
-			if (wp->yoff + wp->sy == m->ly &&
-			    wp->xoff <= 1 + m->lx &&
-			    wp->xoff + wp->sx >= m->lx) {
-				layout_resize_pane(wp, LAYOUT_TOPBOTTOM,
-				    m->y - m->ly);
-				pane_border = 1;
-			}
-		}
-		if (pane_border)
-			server_redraw_window(w);
-	} else if (m->event & MOUSE_EVENT_DOWN) {
-		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if ((wp->xoff + wp->sx == m->x &&
-			    wp->yoff <= 1 + m->y &&
-			    wp->yoff + wp->sy >= m->y) ||
-			    (wp->yoff + wp->sy == m->y &&
-			    wp->xoff <= 1 + m->x &&
-			    wp->xoff + wp->sx >= m->x)) {
-				pane_border = 1;
-			}
-		}
-	}
-	if (pane_border)
-		m->flags |= MOUSE_RESIZE_PANE;
-	else
-		m->flags &= ~MOUSE_RESIZE_PANE;
 }
 
 /* Helper function to grow pane. */

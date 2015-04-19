@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.176 2015/04/19 21:05:27 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.177 2015/04/19 21:34:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -241,6 +241,10 @@ tty_start_tty(struct tty *tty)
 	tty->flags |= TTY_STARTED;
 
 	tty_force_cursor_colour(tty, "");
+
+	tty->mouse_drag_flag = 0;
+	tty->mouse_drag_update = NULL;
+	tty->mouse_drag_release = NULL;
 }
 
 void

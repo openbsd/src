@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.28 2015/02/05 10:29:43 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.29 2015/04/19 21:34:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -95,7 +95,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 			}
 			return (CMD_RETURN_ERROR);
 		}
-		cmdq_run(cmdq, cmdlist);
+		cmdq_run(cmdq, cmdlist, NULL);
 		cmd_list_free(cmdlist);
 		return (CMD_RETURN_NORMAL);
 	}
@@ -152,7 +152,7 @@ cmd_if_shell_callback(struct job *job)
 	cmdq1->emptyfn = cmd_if_shell_done;
 	cmdq1->data = cdata;
 
-	cmdq_run(cmdq1, cmdlist);
+	cmdq_run(cmdq1, cmdlist, NULL);
 	cmd_list_free(cmdlist);
 }
 

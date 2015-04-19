@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.28 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.29 2015/04/19 21:34:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -151,7 +151,7 @@ cmd_command_prompt_callback(void *data, const char *s)
 		return (0);
 	}
 
-	cmdq_run(c->cmdq, cmdlist);
+	cmdq_run(c->cmdq, cmdlist, NULL);
 	cmd_list_free(cmdlist);
 
 	if (c->prompt_callbackfn != (void *) &cmd_command_prompt_callback)

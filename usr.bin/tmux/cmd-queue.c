@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.22 2015/02/12 09:56:19 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.23 2015/04/19 21:34:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "tmux.h"
@@ -132,9 +133,9 @@ cmdq_guard(struct cmd_q *cmdq, const char *guard, int flags)
 
 /* Add command list to queue and begin processing if needed. */
 void
-cmdq_run(struct cmd_q *cmdq, struct cmd_list *cmdlist)
+cmdq_run(struct cmd_q *cmdq, struct cmd_list *cmdlist, struct mouse_event *m)
 {
-	cmdq_append(cmdq, cmdlist);
+	cmdq_append(cmdq, cmdlist, m);
 
 	if (cmdq->item == NULL) {
 		cmdq->cmd = NULL;
@@ -144,7 +145,7 @@ cmdq_run(struct cmd_q *cmdq, struct cmd_list *cmdlist)
 
 /* Add command list to queue. */
 void
-cmdq_append(struct cmd_q *cmdq, struct cmd_list *cmdlist)
+cmdq_append(struct cmd_q *cmdq, struct cmd_list *cmdlist, struct mouse_event *m)
 {
 	struct cmd_q_item	*item;
 
@@ -152,6 +153,11 @@ cmdq_append(struct cmd_q *cmdq, struct cmd_list *cmdlist)
 	item->cmdlist = cmdlist;
 	TAILQ_INSERT_TAIL(&cmdq->queue, item, qentry);
 	cmdlist->references++;
+
+	if (m != NULL)
+		memcpy(&item->mouse, m, sizeof item->mouse);
+	else
+		item->mouse.valid = 0;
 }
 
 /* Continue processing command queue. Returns 1 if finishes empty. */
