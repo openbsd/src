@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.80 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.81 2015/04/19 21:46:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -351,6 +351,7 @@ server_unlink_window(struct session *s, struct winlink *wl)
 		server_destroy_session_group(s);
 	else
 		server_redraw_session_group(s);
+	session_renumber_windows(s);
 }
 
 void
