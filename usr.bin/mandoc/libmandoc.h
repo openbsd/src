@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.44 2015/04/18 17:28:08 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.45 2015/04/19 13:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -53,14 +53,12 @@ int		 mandoc_strntoi(const char *, size_t, int);
 const char	*mandoc_a2msec(const char*);
 
 void		 mdoc_hash_init(void);
-void		 mdoc_node_delete(struct roff_man *, struct roff_node *);
 int		 mdoc_parseln(struct roff_man *, int, char *, int);
 void		 mdoc_endparse(struct roff_man *);
 void		 mdoc_addspan(struct roff_man *, const struct tbl_span *);
 void		 mdoc_addeqn(struct roff_man *, const struct eqn *);
 
 void		 man_hash_init(void);
-void		 man_node_delete(struct roff_man *, struct roff_node *);
 int		 man_parseln(struct roff_man *, int, char *, int);
 void		 man_endparse(struct roff_man *);
 void		 man_addspan(struct roff_man *, const struct tbl_span *);

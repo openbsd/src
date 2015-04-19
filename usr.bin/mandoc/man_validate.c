@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.88 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.89 2015/04/19 13:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,6 +31,7 @@
 #include "roff.h"
 #include "man.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libman.h"
 
 #define	CHKARGS	  struct roff_man *man, struct roff_node *n
@@ -254,7 +255,7 @@ check_par(CHKARGS)
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		if (0 == n->body->nchild)
-			man_node_delete(man, n);
+			roff_node_delete(man, n);
 		break;
 	case ROFFT_BODY:
 		if (0 == n->nchild)
@@ -282,7 +283,7 @@ post_IP(CHKARGS)
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		if (0 == n->head->nchild && 0 == n->body->nchild)
-			man_node_delete(man, n);
+			roff_node_delete(man, n);
 		break;
 	case ROFFT_BODY:
 		if (0 == n->parent->head->nchild && 0 == n->nchild)
@@ -386,7 +387,7 @@ post_TH(CHKARGS)
 	 * Remove the `TH' node after we've processed it for our
 	 * meta-data.
 	 */
-	man_node_delete(man, man->last);
+	roff_node_delete(man, man->last);
 }
 
 static void
@@ -507,7 +508,7 @@ post_vs(CHKARGS)
 		 * Don't warn about this because it occurs in pod2man
 		 * and would cause considerable (unfixable) warnage.
 		 */
-		man_node_delete(man, n);
+		roff_node_delete(man, n);
 		break;
 	default:
 		break;

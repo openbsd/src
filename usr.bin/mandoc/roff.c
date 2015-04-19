@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.137 2015/04/18 17:28:08 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.138 2015/04/19 13:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2009-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,13 +28,17 @@
 #include "mandoc_aux.h"
 #include "roff.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libroff.h"
+#include "libmdoc.h"
 
 /* Maximum number of nested if-else conditionals. */
 #define	RSTACK_MAX	128
 
 /* Maximum number of string expansions per line, to break infinite loops. */
 #define	EXPAND_LIMIT	1000
+
+/* --- data types --------------------------------------------------------- */
 
 enum	rofft {
 	ROFF_ab,
@@ -372,6 +376,8 @@ struct	predef {
 #define	PREDEF(__name, __str) \
 	{ (__name), (__str) },
 
+/* --- function prototypes ------------------------------------------------ */
+
 static	enum rofft	 roffhash_find(const char *, size_t);
 static	void		 roffhash_init(void);
 static	void		 roffnode_cleanscope(struct roff *);
@@ -435,6 +441,8 @@ static	enum rofferr	 roff_EN(ROFF_ARGS);
 static	enum rofferr	 roff_T_(ROFF_ARGS);
 static	enum rofferr	 roff_unsupp(ROFF_ARGS);
 static	enum rofferr	 roff_userdef(ROFF_ARGS);
+
+/* --- constant data ------------------------------------------------------ */
 
 /* See roffhash_find() */
 
@@ -732,6 +740,8 @@ static	int	 roffit_lines;  /* number of lines to delay */
 static	char	*roffit_macro;  /* nil-terminated macro line */
 
 
+/* --- request table ------------------------------------------------------ */
+
 static void
 roffhash_init(void)
 {
@@ -784,6 +794,8 @@ roffhash_find(const char *p, size_t s)
 	return(ROFF_MAX);
 }
 
+/* --- stack of request blocks -------------------------------------------- */
+
 /*
  * Pop the current node off of the stack of roff instructions currently
  * pending.
@@ -823,6 +835,8 @@ roffnode_push(struct roff *r, enum rofft tok, const char *name,
 
 	r->last = p;
 }
+
+/* --- roff parser state data management ---------------------------------- */
 
 static void
 roff_free1(struct roff *r)
@@ -899,16 +913,14 @@ roff_alloc(struct mparse *parse, const struct mchars *mchars, int options)
 	return(r);
 }
 
+/* --- syntax tree state data management ---------------------------------- */
+
 static void
 roff_man_free1(struct roff_man *man)
 {
 
-	if (man->first != NULL) {
-		if (man->macroset == MACROSET_MDOC)
-			mdoc_node_delete(man, man->first);
-		else
-			man_node_delete(man, man->first);
-	}
+	if (man->first != NULL)
+		roff_node_delete(man, man->first);
 	free(man->meta.msec);
 	free(man->meta.vol);
 	free(man->meta.os);
@@ -963,6 +975,180 @@ roff_man_alloc(struct roff *roff, struct mparse *parse,
 	roff_man_alloc1(man);
 	return(man);
 }
+
+/* --- syntax tree handling ----------------------------------------------- */
+
+struct roff_node *
+roff_node_alloc(struct roff_man *man, int line, int pos,
+	enum roff_type type, int tok)
+{
+	struct roff_node	*n;
+
+	n = mandoc_calloc(1, sizeof(*n));
+	n->line = line;
+	n->pos = pos;
+	n->tok = tok;
+	n->type = type;
+	n->sec = man->lastsec;
+
+	if (man->flags & MDOC_SYNOPSIS)
+		n->flags |= MDOC_SYNPRETTY;
+	else
+		n->flags &= ~MDOC_SYNPRETTY;
+	if (man->flags & MDOC_NEWLINE)
+		n->flags |= MDOC_LINE;
+	man->flags &= ~MDOC_NEWLINE;
+
+	return(n);
+}
+
+void
+roff_node_append(struct roff_man *man, struct roff_node *n)
+{
+
+	switch (man->next) {
+	case ROFF_NEXT_SIBLING:
+		man->last->next = n;
+		n->prev = man->last;
+		n->parent = man->last->parent;
+		break;
+	case ROFF_NEXT_CHILD:
+		man->last->child = n;
+		n->parent = man->last;
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+	n->parent->nchild++;
+
+	/*
+	 * Copy over the normalised-data pointer of our parent.  Not
+	 * everybody has one, but copying a null pointer is fine.
+	 */
+
+	switch (n->type) {
+	case ROFFT_BODY:
+		if (n->end != ENDBODY_NOT)
+			break;
+		/* FALLTHROUGH */
+	case ROFFT_TAIL:
+		/* FALLTHROUGH */
+	case ROFFT_HEAD:
+		n->norm = n->parent->norm;
+		break;
+	default:
+		break;
+	}
+
+	if (man->macroset == MACROSET_MDOC)
+		mdoc_valid_pre(man, n);
+
+	switch (n->type) {
+	case ROFFT_HEAD:
+		assert(n->parent->type == ROFFT_BLOCK);
+		n->parent->head = n;
+		break;
+	case ROFFT_BODY:
+		if (n->end)
+			break;
+		assert(n->parent->type == ROFFT_BLOCK);
+		n->parent->body = n;
+		break;
+	case ROFFT_TAIL:
+		assert(n->parent->type == ROFFT_BLOCK);
+		n->parent->tail = n;
+		break;
+	default:
+		break;
+	}
+	man->last = n;
+}
+
+struct roff_node *
+roff_head_alloc(struct roff_man *man, int line, int pos, int tok)
+{
+	struct roff_node	*n;
+
+	n = roff_node_alloc(man, line, pos, ROFFT_HEAD, tok);
+	roff_node_append(man, n);
+	man->next = ROFF_NEXT_CHILD;
+	return(n);
+}
+
+struct roff_node *
+roff_body_alloc(struct roff_man *man, int line, int pos, int tok)
+{
+	struct roff_node	*n;
+
+	n = roff_node_alloc(man, line, pos, ROFFT_BODY, tok);
+	roff_node_append(man, n);
+	man->next = ROFF_NEXT_CHILD;
+	return(n);
+}
+
+void
+roff_node_unlink(struct roff_man *man, struct roff_node *n)
+{
+
+	/* Adjust siblings. */
+
+	if (n->prev)
+		n->prev->next = n->next;
+	if (n->next)
+		n->next->prev = n->prev;
+
+	/* Adjust parent. */
+
+	if (n->parent != NULL) {
+		n->parent->nchild--;
+		if (n->parent->child == n)
+			n->parent->child = n->next;
+		if (n->parent->last == n)
+			n->parent->last = n->prev;
+	}
+
+	/* Adjust parse point. */
+
+	if (man == NULL)
+		return;
+	if (man->last == n) {
+		if (n->prev == NULL) {
+			man->last = n->parent;
+			man->next = ROFF_NEXT_CHILD;
+		} else {
+			man->last = n->prev;
+			man->next = ROFF_NEXT_SIBLING;
+		}
+	}
+	if (man->first == n)
+		man->first = NULL;
+}
+
+void
+roff_node_free(struct roff_node *n)
+{
+
+	if (n->args != NULL)
+		mdoc_argv_free(n->args);
+	if (n->type == ROFFT_BLOCK || n->type == ROFFT_ELEM)
+		free(n->norm);
+	free(n->string);
+	free(n);
+}
+
+void
+roff_node_delete(struct roff_man *man, struct roff_node *n)
+{
+
+	while (n->child != NULL)
+		roff_node_delete(man, n->child);
+	assert(n->nchild == 0);
+	roff_node_unlink(man, n);
+	roff_node_free(n);
+}
+
+/* --- main functions of the roff parser ---------------------------------- */
 
 /*
  * In the current line, expand escape sequences that tend to get
@@ -1383,6 +1569,8 @@ roff_parse(struct roff *r, char *buf, int *pos, int ln, int ppos)
 	return(t);
 }
 
+/* --- handling of request blocks ----------------------------------------- */
+
 static enum rofferr
 roff_cblock(ROFF_ARGS)
 {
@@ -1692,6 +1880,8 @@ roff_cond_text(ROFF_ARGS)
 	}
 	return(rr ? ROFF_CONT : ROFF_IGN);
 }
+
+/* --- handling of numeric and conditional expressions -------------------- */
 
 /*
  * Parse a single signed integer number.  Stop at the first non-digit.
@@ -2210,6 +2400,8 @@ roff_evalnum(struct roff *r, int ln, const char *v,
 	return(1);
 }
 
+/* --- register management ------------------------------------------------ */
+
 void
 roff_setreg(struct roff *r, const char *name, int val, char sign)
 {
@@ -2373,6 +2565,8 @@ roff_rr(ROFF_ARGS)
 	}
 	return(ROFF_IGN);
 }
+
+/* --- handler functions for roff requests -------------------------------- */
 
 static enum rofferr
 roff_rm(ROFF_ARGS)
@@ -2718,6 +2912,8 @@ roff_so(ROFF_ARGS)
 	return(ROFF_SO);
 }
 
+/* --- user defined strings and macros ------------------------------------ */
+
 static enum rofferr
 roff_userdef(ROFF_ARGS)
 {
@@ -2985,6 +3181,8 @@ roff_freestr(struct roffkv *r)
 		free(n);
 	}
 }
+
+/* --- accessors and utility functions ------------------------------------ */
 
 const struct tbl_span *
 roff_span(const struct roff *r)

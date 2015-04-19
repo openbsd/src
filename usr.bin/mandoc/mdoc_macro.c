@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.145 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.146 2015/04/19 13:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,6 +28,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libmdoc.h"
 
 static	void		blk_full(MACRO_PROT_ARGS);
@@ -290,7 +291,7 @@ rew_pending(struct roff_man *mdoc, const struct roff_node *n)
 
 		switch (n->type) {
 		case ROFFT_HEAD:
-			mdoc_body_alloc(mdoc, n->line, n->pos, n->tok);
+			roff_body_alloc(mdoc, n->line, n->pos, n->tok);
 			return;
 		case ROFFT_BLOCK:
 			break;
@@ -1020,9 +1021,9 @@ blk_full(MACRO_PROT_ARGS)
 	 */
 
 	if (tok == MDOC_Nd) {
-		head = mdoc_head_alloc(mdoc, line, ppos, tok);
+		head = roff_head_alloc(mdoc, line, ppos, tok);
 		rew_last(mdoc, head);
-		body = mdoc_body_alloc(mdoc, line, ppos, tok);
+		body = roff_body_alloc(mdoc, line, ppos, tok);
 	}
 
 	if (tok == MDOC_Bk)
@@ -1045,7 +1046,7 @@ blk_full(MACRO_PROT_ARGS)
 			 */
 			if (body != NULL)
 				rew_last(mdoc, body);
-			body = mdoc_body_alloc(mdoc, line, ppos, tok);
+			body = roff_body_alloc(mdoc, line, ppos, tok);
 			break;
 		}
 		if (tok == MDOC_Bd || tok == MDOC_Bk) {
@@ -1080,7 +1081,7 @@ blk_full(MACRO_PROT_ARGS)
 		/* Open a head if one hasn't been opened. */
 
 		if (head == NULL)
-			head = mdoc_head_alloc(mdoc, line, ppos, tok);
+			head = roff_head_alloc(mdoc, line, ppos, tok);
 
 		if (ac == ARGS_PHRASE ||
 		    ac == ARGS_PEND ||
@@ -1092,7 +1093,7 @@ blk_full(MACRO_PROT_ARGS)
 			 */
 
 			rew_last(mdoc, body == NULL ? head : body);
-			body = mdoc_body_alloc(mdoc, line, ppos, tok);
+			body = roff_body_alloc(mdoc, line, ppos, tok);
 
 			/*
 			 * Process phrases: set whether we're in a
@@ -1116,7 +1117,7 @@ blk_full(MACRO_PROT_ARGS)
 	if (blk->flags & MDOC_VALID)
 		return;
 	if (head == NULL)
-		head = mdoc_head_alloc(mdoc, line, ppos, tok);
+		head = roff_head_alloc(mdoc, line, ppos, tok);
 	if (nl && tok != MDOC_Bd && tok != MDOC_Bl && tok != MDOC_Rs)
 		append_delims(mdoc, line, pos, buf);
 	if (body != NULL)
@@ -1127,7 +1128,7 @@ blk_full(MACRO_PROT_ARGS)
 	/* Close out scopes to remain in a consistent state. */
 
 	rew_last(mdoc, head);
-	body = mdoc_body_alloc(mdoc, line, ppos, tok);
+	body = roff_body_alloc(mdoc, line, ppos, tok);
 out:
 	if (mdoc->flags & MDOC_FREECOL) {
 		rew_last(mdoc, body);
@@ -1158,7 +1159,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 	 */
 
 	blk = mdoc_block_alloc(mdoc, line, ppos, tok, NULL);
-	rew_last(mdoc, mdoc_head_alloc(mdoc, line, ppos, tok));
+	rew_last(mdoc, roff_head_alloc(mdoc, line, ppos, tok));
 
 	/*
 	 * Open the body scope "on-demand", that is, after we've
@@ -1179,13 +1180,13 @@ blk_part_imp(MACRO_PROT_ARGS)
 		}
 
 		if (body == NULL)
-			body = mdoc_body_alloc(mdoc, line, ppos, tok);
+			body = roff_body_alloc(mdoc, line, ppos, tok);
 
 		if (macro_or_word(mdoc, tok, line, la, pos, buf, 1))
 			break;
 	}
 	if (body == NULL)
-		body = mdoc_body_alloc(mdoc, line, ppos, tok);
+		body = roff_body_alloc(mdoc, line, ppos, tok);
 
 	if (find_pending(mdoc, tok, line, ppos, body))
 		return;
@@ -1236,11 +1237,11 @@ blk_part_exp(MACRO_PROT_ARGS)
 		}
 
 		if (head == NULL) {
-			head = mdoc_head_alloc(mdoc, line, ppos, tok);
+			head = roff_head_alloc(mdoc, line, ppos, tok);
 			if (tok == MDOC_Eo)  /* Not parsed. */
 				dword(mdoc, line, la, p, DELIM_MAX, 0);
 			rew_last(mdoc, head);
-			mdoc_body_alloc(mdoc, line, ppos, tok);
+			roff_body_alloc(mdoc, line, ppos, tok);
 			if (tok == MDOC_Eo)
 				continue;
 		}
@@ -1252,8 +1253,8 @@ blk_part_exp(MACRO_PROT_ARGS)
 	/* Clean-up to leave in a consistent state. */
 
 	if (head == NULL) {
-		rew_last(mdoc, mdoc_head_alloc(mdoc, line, ppos, tok));
-		mdoc_body_alloc(mdoc, line, ppos, tok);
+		rew_last(mdoc, roff_head_alloc(mdoc, line, ppos, tok));
+		roff_body_alloc(mdoc, line, ppos, tok);
 	}
 	if (nl)
 		append_delims(mdoc, line, pos, buf);
@@ -1469,6 +1470,6 @@ phrase_ta(MACRO_PROT_ARGS)
 	/* Advance to the next column. */
 
 	rew_last(mdoc, body);
-	mdoc_body_alloc(mdoc, line, ppos, MDOC_It);
+	roff_body_alloc(mdoc, line, ppos, MDOC_It);
 	parse_rest(mdoc, MDOC_MAX, line, pos, buf);
 }

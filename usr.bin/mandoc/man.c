@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.105 2015/04/18 17:50:02 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.106 2015/04/19 13:50:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,6 +30,7 @@
 #include "roff.h"
 #include "man.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libman.h"
 
 const	char *const __man_macronames[MAN_MAX] = {
@@ -49,13 +50,6 @@ const	char * const *man_macronames = __man_macronames;
 
 static	void		 man_breakscope(struct roff_man *, int);
 static	void		 man_descope(struct roff_man *, int, int);
-static	struct roff_node *man_node_alloc(struct roff_man *, int, int,
-				enum roff_type, int);
-static	void		 man_node_append(struct roff_man *,
-				struct roff_node *);
-static	void		 man_node_free(struct roff_node *);
-static	void		 man_node_unlink(struct roff_man *,
-				struct roff_node *);
 static	int		 man_ptext(struct roff_man *, int, char *, int);
 static	int		 man_pmacro(struct roff_man *, int, char *, int);
 
@@ -79,107 +73,13 @@ man_parseln(struct roff_man *man, int ln, char *buf, int offs)
 	    man_ptext(man, ln, buf, offs));
 }
 
-static void
-man_node_append(struct roff_man *man, struct roff_node *p)
-{
-
-	assert(man->last);
-	assert(man->first);
-	assert(p->type != ROFFT_ROOT);
-
-	switch (man->next) {
-	case ROFF_NEXT_SIBLING:
-		man->last->next = p;
-		p->prev = man->last;
-		p->parent = man->last->parent;
-		break;
-	case ROFF_NEXT_CHILD:
-		man->last->child = p;
-		p->parent = man->last;
-		break;
-	default:
-		abort();
-		/* NOTREACHED */
-	}
-
-	assert(p->parent);
-	p->parent->nchild++;
-
-	switch (p->type) {
-	case ROFFT_BLOCK:
-		if (p->tok == MAN_SH || p->tok == MAN_SS)
-			man->flags &= ~MAN_LITERAL;
-		break;
-	case ROFFT_HEAD:
-		assert(p->parent->type == ROFFT_BLOCK);
-		p->parent->head = p;
-		break;
-	case ROFFT_BODY:
-		assert(p->parent->type == ROFFT_BLOCK);
-		p->parent->body = p;
-		break;
-	default:
-		break;
-	}
-
-	man->last = p;
-
-	switch (p->type) {
-	case ROFFT_TBL:
-		/* FALLTHROUGH */
-	case ROFFT_TEXT:
-		man_valid_post(man);
-		break;
-	default:
-		break;
-	}
-}
-
-static struct roff_node *
-man_node_alloc(struct roff_man *man, int line, int pos,
-		enum roff_type type, int tok)
-{
-	struct roff_node *p;
-
-	p = mandoc_calloc(1, sizeof(*p));
-	p->line = line;
-	p->pos = pos;
-	p->type = type;
-	p->tok = tok;
-
-	if (man->flags & MAN_NEWLINE)
-		p->flags |= MAN_LINE;
-	man->flags &= ~MAN_NEWLINE;
-	return(p);
-}
-
 void
 man_elem_alloc(struct roff_man *man, int line, int pos, int tok)
 {
 	struct roff_node *p;
 
-	p = man_node_alloc(man, line, pos, ROFFT_ELEM, tok);
-	man_node_append(man, p);
-	man->next = ROFF_NEXT_CHILD;
-}
-
-void
-man_head_alloc(struct roff_man *man, int line, int pos, int tok)
-{
-	struct roff_node *p;
-
-	p = man_node_alloc(man, line, pos, ROFFT_HEAD, tok);
-	man_node_append(man, p);
-	man->next = ROFF_NEXT_CHILD;
-}
-
-void
-man_body_alloc(struct roff_man *man, int line, int pos, int tok)
-{
-	struct roff_node *p;
-
-	p = man_node_alloc(man, line, pos, ROFFT_BODY, tok);
-	man_node_append(man, p);
+	p = roff_node_alloc(man, line, pos, ROFFT_ELEM, tok);
+	roff_node_append(man, p);
 	man->next = ROFF_NEXT_CHILD;
 }
 
@@ -188,8 +88,8 @@ man_block_alloc(struct roff_man *man, int line, int pos, int tok)
 {
 	struct roff_node *p;
 
-	p = man_node_alloc(man, line, pos, ROFFT_BLOCK, tok);
-	man_node_append(man, p);
+	p = roff_node_alloc(man, line, pos, ROFFT_BLOCK, tok);
+	roff_node_append(man, p);
 	man->next = ROFF_NEXT_CHILD;
 }
 
@@ -198,9 +98,10 @@ man_word_alloc(struct roff_man *man, int line, int pos, const char *word)
 {
 	struct roff_node *n;
 
-	n = man_node_alloc(man, line, pos, ROFFT_TEXT, MAN_MAX);
+	n = roff_node_alloc(man, line, pos, ROFFT_TEXT, MAN_MAX);
 	n->string = roff_strdup(man->roff, word);
-	man_node_append(man, n);
+	roff_node_append(man, n);
+	man_valid_post(man);
 	man->next = ROFF_NEXT_SIBLING;
 }
 
@@ -219,39 +120,16 @@ man_word_append(struct roff_man *man, const char *word)
 	man->next = ROFF_NEXT_SIBLING;
 }
 
-/*
- * Free all of the resources held by a node.  This does NOT unlink a
- * node from its context; for that, see man_node_unlink().
- */
-static void
-man_node_free(struct roff_node *p)
-{
-
-	free(p->string);
-	free(p);
-}
-
-void
-man_node_delete(struct roff_man *man, struct roff_node *p)
-{
-
-	while (p->child)
-		man_node_delete(man, p->child);
-
-	man_node_unlink(man, p);
-	man_node_free(p);
-}
-
 void
 man_addeqn(struct roff_man *man, const struct eqn *ep)
 {
 	struct roff_node *n;
 
-	n = man_node_alloc(man, ep->ln, ep->pos, ROFFT_EQN, MAN_MAX);
+	n = roff_node_alloc(man, ep->ln, ep->pos, ROFFT_EQN, MAN_MAX);
 	n->eqn = ep;
 	if (ep->ln > man->last->line)
 		n->flags |= MAN_LINE;
-	man_node_append(man, n);
+	roff_node_append(man, n);
 	man->next = ROFF_NEXT_SIBLING;
 	man_descope(man, ep->ln, ep->pos);
 }
@@ -262,9 +140,10 @@ man_addspan(struct roff_man *man, const struct tbl_span *sp)
 	struct roff_node *n;
 
 	man_breakscope(man, MAN_MAX);
-	n = man_node_alloc(man, sp->line, 0, ROFFT_TBL, MAN_MAX);
+	n = roff_node_alloc(man, sp->line, 0, ROFFT_TBL, MAN_MAX);
 	n->span = sp;
-	man_node_append(man, n);
+	roff_node_append(man, n);
+	man_valid_post(man);
 	man->next = ROFF_NEXT_SIBLING;
 	man_descope(man, sp->line, 0);
 }
@@ -286,7 +165,7 @@ man_descope(struct roff_man *man, int line, int offs)
 		return;
 	man->flags &= ~MAN_BLINE;
 	man_unscope(man, man->last->parent);
-	man_body_alloc(man, line, offs, man->last->tok);
+	roff_body_alloc(man, line, offs, man->last->tok);
 }
 
 static int
@@ -453,7 +332,7 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 	man->flags &= ~MAN_BLINE;
 
 	man_unscope(man, man->last->parent);
-	man_body_alloc(man, ln, ppos, man->last->tok);
+	roff_body_alloc(man, ln, ppos, man->last->tok);
 	return(1);
 }
 
@@ -480,7 +359,7 @@ man_breakscope(struct roff_man *man, int tok)
 		    tok == MAN_MAX ? "TS" : man_macronames[tok],
 		    man_macronames[n->tok]);
 
-		man_node_delete(man, n);
+		roff_node_delete(man, n);
 		man->flags &= ~MAN_ELINE;
 	}
 
@@ -508,50 +387,9 @@ man_breakscope(struct roff_man *man, int tok)
 		    tok == MAN_MAX ? "TS" : man_macronames[tok],
 		    man_macronames[n->tok]);
 
-		man_node_delete(man, n);
+		roff_node_delete(man, n);
 		man->flags &= ~MAN_BLINE;
 	}
-}
-
-/*
- * Unlink a node from its context.  If "man" is provided, the last parse
- * point will also be adjusted accordingly.
- */
-static void
-man_node_unlink(struct roff_man *man, struct roff_node *n)
-{
-
-	/* Adjust siblings. */
-
-	if (n->prev)
-		n->prev->next = n->next;
-	if (n->next)
-		n->next->prev = n->prev;
-
-	/* Adjust parent. */
-
-	if (n->parent) {
-		n->parent->nchild--;
-		if (n->parent->child == n)
-			n->parent->child = n->prev ? n->prev : n->next;
-	}
-
-	/* Adjust parse point, if applicable. */
-
-	if (man && man->last == n) {
-		/*XXX: this can occur when bailing from validation. */
-		/*assert(NULL == n->next);*/
-		if (n->prev) {
-			man->last = n->prev;
-			man->next = ROFF_NEXT_SIBLING;
-		} else {
-			man->last = n->parent;
-			man->next = ROFF_NEXT_CHILD;
-		}
-	}
-
-	if (man && man->first == n)
-		man->first = NULL;
 }
 
 const struct mparse *
