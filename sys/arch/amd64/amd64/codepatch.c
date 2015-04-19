@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.1 2015/01/16 10:17:51 sf Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.2 2015/04/19 06:30:20 sf Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -90,8 +90,10 @@ void *codepatch_maprw(vaddr_t *nva, vaddr_t dest)
 
 void codepatch_unmaprw(vaddr_t nva)
 {
-	if (nva != 0)
-		km_free((void *)nva, 2 * PAGE_SIZE, &kv_any, &kp_none);
+	if (nva == 0)
+		return;
+	pmap_kremove(nva, 2 * PAGE_SIZE);
+	km_free((void *)nva, 2 * PAGE_SIZE, &kv_any, &kp_none);
 }
 
 /* Patch with NOPs */
