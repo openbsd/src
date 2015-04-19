@@ -62,7 +62,7 @@ int sqlite3_threadsafe(void){ return SQLITE_THREADSAFE; }
 ** I/O active are written using this function.  These messages
 ** are intended for debugging activity only.
 */
-/* not-private */ void (*sqlite3IoTrace)(const char*, ...) = 0;
+SQLITE_API void (SQLITE_CDECL *sqlite3IoTrace)(const char*, ...) = 0;
 #endif
 
 /*
@@ -127,6 +127,11 @@ int sqlite3_initialize(void){
     return rc;
   }
 #endif
+
+  /* If the following assert() fails on some obscure processor/compiler
+  ** combination, the work-around is to set the correct pointer
+  ** size at compile-time using -DSQLITE_PTRSIZE=n compile-time option */
+  assert( SQLITE_PTRSIZE==sizeof(char*) );
 
   /* If SQLite is already completely initialized, then this call
   ** to sqlite3_initialize() should be a no-op.  But the initialization
@@ -340,26 +345,28 @@ int sqlite3_config(int op, ...){
     */
 #if defined(SQLITE_THREADSAFE) && SQLITE_THREADSAFE>0  /* IMP: R-54466-46756 */
     case SQLITE_CONFIG_SINGLETHREAD: {
-      /* Disable all mutexing */
-      sqlite3GlobalConfig.bCoreMutex = 0;
-      sqlite3GlobalConfig.bFullMutex = 0;
+      /* EVIDENCE-OF: R-02748-19096 This option sets the threading mode to
+      ** Single-thread. */
+      sqlite3GlobalConfig.bCoreMutex = 0;  /* Disable mutex on core */
+      sqlite3GlobalConfig.bFullMutex = 0;  /* Disable mutex on connections */
       break;
     }
 #endif
 #if defined(SQLITE_THREADSAFE) && SQLITE_THREADSAFE>0 /* IMP: R-20520-54086 */
     case SQLITE_CONFIG_MULTITHREAD: {
-      /* Disable mutexing of database connections */
-      /* Enable mutexing of core data structures */
-      sqlite3GlobalConfig.bCoreMutex = 1;
-      sqlite3GlobalConfig.bFullMutex = 0;
+      /* EVIDENCE-OF: R-14374-42468 This option sets the threading mode to
+      ** Multi-thread. */
+      sqlite3GlobalConfig.bCoreMutex = 1;  /* Enable mutex on core */
+      sqlite3GlobalConfig.bFullMutex = 0;  /* Disable mutex on connections */
       break;
     }
 #endif
 #if defined(SQLITE_THREADSAFE) && SQLITE_THREADSAFE>0 /* IMP: R-59593-21810 */
     case SQLITE_CONFIG_SERIALIZED: {
-      /* Enable all mutexing */
-      sqlite3GlobalConfig.bCoreMutex = 1;
-      sqlite3GlobalConfig.bFullMutex = 1;
+      /* EVIDENCE-OF: R-41220-51800 This option sets the threading mode to
+      ** Serialized. */
+      sqlite3GlobalConfig.bCoreMutex = 1;  /* Enable mutex on core */
+      sqlite3GlobalConfig.bFullMutex = 1;  /* Enable mutex on connections */
       break;
     }
 #endif
@@ -471,7 +478,8 @@ int sqlite3_config(int op, ...){
     case SQLITE_CONFIG_HEAP: {
       /* EVIDENCE-OF: R-19854-42126 There are three arguments to
       ** SQLITE_CONFIG_HEAP: An 8-byte aligned pointer to the memory, the
-      ** number of bytes in the memory buffer, and the minimum allocation size. */
+      ** number of bytes in the memory buffer, and the minimum allocation size.
+      */
       sqlite3GlobalConfig.pHeap = va_arg(ap, void*);
       sqlite3GlobalConfig.nHeap = va_arg(ap, int);
       sqlite3GlobalConfig.mnReq = va_arg(ap, int);
@@ -576,7 +584,9 @@ int sqlite3_config(int op, ...){
       ** compile-time maximum mmap size set by the SQLITE_MAX_MMAP_SIZE
       ** compile-time option.
       */
-      if( mxMmap<0 || mxMmap>SQLITE_MAX_MMAP_SIZE ) mxMmap = SQLITE_MAX_MMAP_SIZE;
+      if( mxMmap<0 || mxMmap>SQLITE_MAX_MMAP_SIZE ){
+        mxMmap = SQLITE_MAX_MMAP_SIZE;
+      }
       if( szMmap<0 ) szMmap = SQLITE_DEFAULT_MMAP_SIZE;
       if( szMmap>mxMmap) szMmap = mxMmap;
       sqlite3GlobalConfig.mxMmap = mxMmap;
@@ -1414,7 +1424,7 @@ int sqlite3_busy_handler(
   void *pArg
 ){
 #ifdef SQLITE_ENABLE_API_ARMOR
-  if( !sqlite3SafetyCheckOk(db) ) return SQLITE_MISUSE;
+  if( !sqlite3SafetyCheckOk(db) ) return SQLITE_MISUSE_BKPT;
 #endif
   sqlite3_mutex_enter(db->mutex);
   db->busyHandler.xFunc = xBusy;
@@ -2420,7 +2430,19 @@ int sqlite3ParseUri(
     if( !zFile ) return SQLITE_NOMEM;
 
     iIn = 5;
-#ifndef SQLITE_ALLOW_URI_AUTHORITY
+#ifdef SQLITE_ALLOW_URI_AUTHORITY
+    if( strncmp(zUri+5, "///", 3)==0 ){
+      iIn = 7;
+      /* The following condition causes URIs with five leading / characters
+      ** like file://///host/path to be converted into UNCs like //host/path.
+      ** The correct URI for that UNC has only two or four leading / characters
+      ** file://host/path or file:////host/path.  But 5 leading slashes is a 
+      ** common error, we are told, so we handle it as a special case. */
+      if( strncmp(zUri+7, "///", 3)==0 ){ iIn++; }
+    }else if( strncmp(zUri+5, "//localhost/", 12)==0 ){
+      iIn = 16;
+    }
+#else
     /* Discard the scheme and authority segments of the URI. */
     if( zUri[5]=='/' && zUri[6]=='/' ){
       iIn = 7;
@@ -2707,6 +2729,9 @@ static int openDatabase(
 #if !defined(SQLITE_DEFAULT_AUTOMATIC_INDEX) || SQLITE_DEFAULT_AUTOMATIC_INDEX
                  | SQLITE_AutoIndex
 #endif
+#if SQLITE_DEFAULT_CKPTFULLFSYNC
+                 | SQLITE_CkptFullFSync
+#endif
 #if SQLITE_DEFAULT_FILE_FORMAT<4
                  | SQLITE_LegacyFileFmt
 #endif
@@ -2860,7 +2885,8 @@ static int openDatabase(
 opendb_out:
   sqlite3_free(zOpen);
   if( db ){
-    assert( db->mutex!=0 || isThreadsafe==0 || sqlite3GlobalConfig.bFullMutex==0 );
+    assert( db->mutex!=0 || isThreadsafe==0
+           || sqlite3GlobalConfig.bFullMutex==0 );
     sqlite3_mutex_leave(db->mutex);
   }
   rc = sqlite3_errcode(db);
@@ -3142,12 +3168,18 @@ int sqlite3_table_column_metadata(
   Table *pTab = 0;
   Column *pCol = 0;
   int iCol = 0;
-
   char const *zDataType = 0;
   char const *zCollSeq = 0;
   int notnull = 0;
   int primarykey = 0;
   int autoinc = 0;
+
+
+#ifdef SQLITE_ENABLE_API_ARMOR
+  if( !sqlite3SafetyCheckOk(db) || zTableName==0 ){
+    return SQLITE_MISUSE_BKPT;
+  }
+#endif
 
   /* Ensure the database schema has been loaded */
   sqlite3_mutex_enter(db->mutex);
@@ -3295,7 +3327,7 @@ int sqlite3_file_control(sqlite3 *db, const char *zDbName, int op, void *pArg){
     sqlite3BtreeLeave(pBtree);
   }
   sqlite3_mutex_leave(db->mutex);
-  return rc;   
+  return rc;
 }
 
 /*
@@ -3596,6 +3628,35 @@ int sqlite3_test_control(int op, ...){
     */
     case SQLITE_TESTCTRL_ISINIT: {
       if( sqlite3GlobalConfig.isInit==0 ) rc = SQLITE_ERROR;
+      break;
+    }
+
+    /*  sqlite3_test_control(SQLITE_TESTCTRL_IMPOSTER, db, dbName, onOff, tnum);
+    **
+    ** This test control is used to create imposter tables.  "db" is a pointer
+    ** to the database connection.  dbName is the database name (ex: "main" or
+    ** "temp") which will receive the imposter.  "onOff" turns imposter mode on
+    ** or off.  "tnum" is the root page of the b-tree to which the imposter
+    ** table should connect.
+    **
+    ** Enable imposter mode only when the schema has already been parsed.  Then
+    ** run a single CREATE TABLE statement to construct the imposter table in
+    ** the parsed schema.  Then turn imposter mode back off again.
+    **
+    ** If onOff==0 and tnum>0 then reset the schema for all databases, causing
+    ** the schema to be reparsed the next time it is needed.  This has the
+    ** effect of erasing all imposter tables.
+    */
+    case SQLITE_TESTCTRL_IMPOSTER: {
+      sqlite3 *db = va_arg(ap, sqlite3*);
+      sqlite3_mutex_enter(db->mutex);
+      db->init.iDb = sqlite3FindDbName(db, va_arg(ap,const char*));
+      db->init.busy = db->init.imposterTable = va_arg(ap,int);
+      db->init.newTnum = va_arg(ap,int);
+      if( db->init.busy==0 && db->init.newTnum>0 ){
+        sqlite3ResetAllSchemasOfConnection(db);
+      }
+      sqlite3_mutex_leave(db->mutex);
       break;
     }
   }

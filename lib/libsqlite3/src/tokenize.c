@@ -390,10 +390,7 @@ int sqlite3RunParser(Parse *pParse, const char *zSql, char **pzErrMsg){
   sqlite3 *db = pParse->db;       /* The database connection */
   int mxSqlLen;                   /* Max length of an SQL string */
 
-
-#ifdef SQLITE_ENABLE_API_ARMOR
-  if( zSql==0 || pzErrMsg==0 ) return SQLITE_MISUSE_BKPT;
-#endif
+  assert( zSql!=0 );
   mxSqlLen = db->aLimit[SQLITE_LIMIT_SQL_LENGTH];
   if( db->nVdbeActive==0 ){
     db->u1.isInterrupted = 0;
@@ -462,9 +459,11 @@ abort_parse:
     sqlite3Parser(pEngine, 0, pParse->sLastToken, pParse);
   }
 #ifdef YYTRACKMAXSTACKDEPTH
+  sqlite3_mutex_enter(sqlite3MallocMutex());
   sqlite3StatusSet(SQLITE_STATUS_PARSER_STACK,
       sqlite3ParserStackPeak(pEngine)
   );
+  sqlite3_mutex_leave(sqlite3MallocMutex());
 #endif /* YYDEBUG */
   sqlite3ParserFree(pEngine, sqlite3_free);
   db->lookaside.bEnabled = enableLookaside;

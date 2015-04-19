@@ -24,6 +24,11 @@
 #include "msvc.h"
 
 /*
+** Special setup for VxWorks
+*/
+#include "vxworks.h"
+
+/*
 ** These #defines should enable >2GB file support on POSIX if the
 ** underlying operating system supports it.  If the OS lacks
 ** large file support, or if the OS is windows, these should be no-ops.
@@ -590,6 +595,20 @@ typedef INT8_TYPE i8;              /* 1-byte signed integer */
 typedef INT16_TYPE LogEst;
 
 /*
+** Set the SQLITE_PTRSIZE macro to the number of bytes in a pointer
+*/
+#ifndef SQLITE_PTRSIZE
+# if defined(__SIZEOF_POINTER__)
+#   define SQLITE_PTRSIZE __SIZEOF_POINTER__
+# elif defined(i386)     || defined(__i386__)   || defined(_M_IX86) ||    \
+       defined(_M_ARM)   || defined(__arm__)    || defined(__x86)
+#   define SQLITE_PTRSIZE 4
+# else
+#   define SQLITE_PTRSIZE 8
+# endif
+#endif
+
+/*
 ** Macros to determine whether the machine is big or little endian,
 ** and whether or not that determination is run-time or compile-time.
 **
@@ -1087,11 +1106,13 @@ struct sqlite3 {
     u8 iDb;                     /* Which db file is being initialized */
     u8 busy;                    /* TRUE if currently initializing */
     u8 orphanTrigger;           /* Last statement is orphaned TEMP trigger */
+    u8 imposterTable;           /* Building an imposter table */
   } init;
   int nVdbeActive;              /* Number of VDBEs currently running */
   int nVdbeRead;                /* Number of active VDBEs that read or write */
   int nVdbeWrite;               /* Number of active VDBEs that read and write */
   int nVdbeExec;                /* Number of nested calls to VdbeExec() */
+  int nVDestroy;                /* Number of active OP_VDestroy operations */
   int nExtension;               /* Number of loaded extensions */
   void **aExtension;            /* Array of shared library handles */
   void (*xTrace)(void*,const char*);        /* Trace function */
@@ -2043,8 +2064,14 @@ struct Expr {
 #define EP_MemToken  0x010000 /* Need to sqlite3DbFree() Expr.zToken */
 #define EP_NoReduce  0x020000 /* Cannot EXPRDUP_REDUCE this Expr */
 #define EP_Unlikely  0x040000 /* unlikely() or likelihood() function */
-#define EP_Constant  0x080000 /* Node is a constant */
+#define EP_ConstFunc 0x080000 /* Node is a SQLITE_FUNC_CONSTANT function */
 #define EP_CanBeNull 0x100000 /* Can be null despite NOT NULL constraint */
+#define EP_Subquery  0x200000 /* Tree contains a TK_SELECT operator */
+
+/*
+** Combinations of two or more EP_* flags
+*/
+#define EP_Propagate (EP_Collate|EP_Subquery) /* Propagate these bits up tree */
 
 /*
 ** These macros can be used to test, set, or clear bits in the 
@@ -2243,7 +2270,7 @@ struct SrcList {
 #define WHERE_OMIT_OPEN_CLOSE  0x0010 /* Table cursors are already open */
 #define WHERE_FORCE_TABLE      0x0020 /* Do not use an index-only search */
 #define WHERE_ONETABLE_ONLY    0x0040 /* Only code the 1st table in pTabList */
-                          /*   0x0080 // not currently used */
+#define WHERE_NO_AUTOINDEX     0x0080 /* Disallow automatic indexes */
 #define WHERE_GROUPBY          0x0100 /* pOrderBy is really a GROUP BY */
 #define WHERE_DISTINCTBY       0x0200 /* pOrderby is really a DISTINCT clause */
 #define WHERE_WANT_DISTINCT    0x0400 /* All output needs to be distinct */
@@ -2362,6 +2389,7 @@ struct Select {
 #define SF_MaybeConvert    0x0400  /* Need convertCompoundSelectToSubquery() */
 #define SF_Recursive       0x0800  /* The recursive part of a recursive CTE */
 #define SF_MinMaxAgg       0x1000  /* Aggregate containing min() or max() */
+#define SF_Converted       0x2000  /* By convertCompoundSelectToSubquery() */
 
 
 /*
@@ -2680,7 +2708,8 @@ struct AuthContext {
 #define OPFLAG_LENGTHARG     0x40    /* OP_Column only used for length() */
 #define OPFLAG_TYPEOFARG     0x80    /* OP_Column only used for typeof() */
 #define OPFLAG_BULKCSR       0x01    /* OP_Open** used to open bulk cursor */
-#define OPFLAG_P2ISREG       0x02    /* P2 to OP_Open** is a register number */
+#define OPFLAG_SEEKEQ        0x02    /* OP_Open** cursor uses EQ seek only */
+#define OPFLAG_P2ISREG       0x04    /* P2 to OP_Open** is a register number */
 #define OPFLAG_PERMUTE       0x01    /* OP_Compare: use the permutation */
 
 /*
@@ -3084,9 +3113,14 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
   int sqlite3MutexEnd(void);
 #endif
 
-int sqlite3StatusValue(int);
-void sqlite3StatusAdd(int, int);
+sqlite3_int64 sqlite3StatusValue(int);
+void sqlite3StatusUp(int, int);
+void sqlite3StatusDown(int, int);
 void sqlite3StatusSet(int, int);
+
+/* Access to mutexes used by sqlite3_status() */
+sqlite3_mutex *sqlite3Pcache1Mutex(void);
+sqlite3_mutex *sqlite3MallocMutex(void);
 
 #ifndef SQLITE_OMIT_FLOATING_POINT
   int sqlite3IsNaN(double);
@@ -3152,6 +3186,7 @@ ExprList *sqlite3ExprListAppend(Parse*,ExprList*,Expr*);
 void sqlite3ExprListSetName(Parse*,ExprList*,Token*,int);
 void sqlite3ExprListSetSpan(Parse*,ExprList*,ExprSpan*);
 void sqlite3ExprListDelete(sqlite3*, ExprList*);
+u32 sqlite3ExprListFlags(const ExprList*);
 int sqlite3Init(sqlite3*, char**);
 int sqlite3InitCallback(void*, int, char**, char**);
 void sqlite3Pragma(Parse*,Token*,Token*,Token*,int);
@@ -3466,7 +3501,7 @@ int sqlite3ReadSchema(Parse *pParse);
 CollSeq *sqlite3FindCollSeq(sqlite3*,u8 enc, const char*,int);
 CollSeq *sqlite3LocateCollSeq(Parse *pParse, const char*zName);
 CollSeq *sqlite3ExprCollSeq(Parse *pParse, Expr *pExpr);
-Expr *sqlite3ExprAddCollateToken(Parse *pParse, Expr*, const Token*);
+Expr *sqlite3ExprAddCollateToken(Parse *pParse, Expr*, const Token*, int);
 Expr *sqlite3ExprAddCollateString(Parse*,Expr*,const char*);
 Expr *sqlite3ExprSkipCollate(Expr*);
 int sqlite3CheckCollSeq(Parse *, CollSeq *);
@@ -3735,12 +3770,11 @@ void sqlite3MemJournalOpen(sqlite3_file *);
 int sqlite3MemJournalSize(void);
 int sqlite3IsMemJournal(sqlite3_file *);
 
+void sqlite3ExprSetHeightAndFlags(Parse *pParse, Expr *p);
 #if SQLITE_MAX_EXPR_DEPTH>0
-  void sqlite3ExprSetHeight(Parse *pParse, Expr *p);
   int sqlite3SelectExprHeight(Select *);
   int sqlite3ExprCheckHeight(Parse*, int);
 #else
-  #define sqlite3ExprSetHeight(x,y)
   #define sqlite3SelectExprHeight(x) 0
   #define sqlite3ExprCheckHeight(x,y)
 #endif
@@ -3770,7 +3804,7 @@ void sqlite3Put4byte(u8*, u32);
 #ifdef SQLITE_ENABLE_IOTRACE
 # define IOTRACE(A)  if( sqlite3IoTrace ){ sqlite3IoTrace A; }
   void sqlite3VdbeIOTraceSql(Vdbe*);
-SQLITE_EXTERN void (*sqlite3IoTrace)(const char*,...);
+SQLITE_API SQLITE_EXTERN void (SQLITE_CDECL *sqlite3IoTrace)(const char*,...);
 #else
 # define IOTRACE(A)
 # define sqlite3VdbeIOTraceSql(X)
