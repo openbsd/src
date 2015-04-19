@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.116 2015/02/09 12:47:18 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.117 2015/04/19 21:05:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -704,6 +704,8 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	wp->pipe_event = NULL;
 
 	wp->saved_grid = NULL;
+
+	memcpy(&wp->colgc, &grid_default_cell, sizeof wp->colgc);
 
 	screen_init(&wp->base, sx, sy, hlimit);
 	wp->screen = &wp->base;

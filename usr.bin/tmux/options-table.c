@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.53 2015/02/06 15:09:34 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.54 2015/04/19 21:05:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -666,6 +666,16 @@ const struct options_table_entry window_options_table[] = {
 	{ .name = "utf8",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0 /* overridden in main() */
+	},
+
+	{ .name = "window-active-style",
+	  .type = OPTIONS_TABLE_STYLE,
+	  .default_str = "default"
+	},
+
+	{ .name = "window-style",
+	  .type = OPTIONS_TABLE_STYLE,
+	  .default_str = "default"
 	},
 
 	{ .name = "window-status-activity-attr",
