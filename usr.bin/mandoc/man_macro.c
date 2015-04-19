@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.68 2015/04/19 13:50:10 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.69 2015/04/19 14:25:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -262,7 +262,7 @@ blk_exp(MACRO_PROT_ARGS)
 
 	la = *pos;
 	if (man_args(man, line, pos, buf, &p))
-		man_word_alloc(man, line, la, p);
+		roff_word_alloc(man, line, la, p);
 
 	if (buf[*pos] != '\0')
 		mandoc_vmsg(MANDOCERR_ARG_EXCESS,
@@ -299,7 +299,7 @@ blk_imp(MACRO_PROT_ARGS)
 		la = *pos;
 		if ( ! man_args(man, line, pos, buf, &p))
 			break;
-		man_word_alloc(man, line, la, p);
+		roff_word_alloc(man, line, la, p);
 	}
 
 	/*
@@ -350,9 +350,9 @@ in_line_eoln(MACRO_PROT_ARGS)
 			break;
 		if (man_macros[tok].flags & MAN_JOIN &&
 		    man->last->type == ROFFT_TEXT)
-			man_word_append(man, p);
+			roff_word_append(man, p);
 		else
-			man_word_alloc(man, line, la, p);
+			roff_word_alloc(man, line, la, p);
 	}
 
 	/*

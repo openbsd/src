@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.137 2015/04/19 13:59:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.138 2015/04/19 14:25:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -92,31 +92,6 @@ mdoc_endparse(struct roff_man *mdoc)
 {
 
 	mdoc_macroend(mdoc);
-}
-
-void
-mdoc_addeqn(struct roff_man *mdoc, const struct eqn *ep)
-{
-	struct roff_node *n;
-
-	n = roff_node_alloc(mdoc, ep->ln, ep->pos, ROFFT_EQN, TOKEN_NONE);
-	n->eqn = ep;
-	if (ep->ln > mdoc->last->line)
-		n->flags |= MDOC_LINE;
-	roff_node_append(mdoc, n);
-	mdoc->next = ROFF_NEXT_SIBLING;
-}
-
-void
-mdoc_addspan(struct roff_man *mdoc, const struct tbl_span *sp)
-{
-	struct roff_node *n;
-
-	n = roff_node_alloc(mdoc, sp->line, 0, ROFFT_TBL, TOKEN_NONE);
-	n->span = sp;
-	roff_node_append(mdoc, n);
-	mdoc_valid_post(mdoc);
-	mdoc->next = ROFF_NEXT_SIBLING;
 }
 
 /*
@@ -253,33 +228,6 @@ mdoc_elem_alloc(struct roff_man *mdoc, int line, int pos,
 }
 
 void
-mdoc_word_alloc(struct roff_man *mdoc, int line, int pos, const char *p)
-{
-	struct roff_node *n;
-
-	n = roff_node_alloc(mdoc, line, pos, ROFFT_TEXT, TOKEN_NONE);
-	n->string = roff_strdup(mdoc->roff, p);
-	roff_node_append(mdoc, n);
-	mdoc_valid_post(mdoc);
-	mdoc->next = ROFF_NEXT_SIBLING;
-}
-
-void
-mdoc_word_append(struct roff_man *mdoc, const char *p)
-{
-	struct roff_node	*n;
-	char			*addstr, *newstr;
-
-	n = mdoc->last;
-	addstr = roff_strdup(mdoc->roff, p);
-	mandoc_asprintf(&newstr, "%s %s", n->string, addstr);
-	free(addstr);
-	free(n->string);
-	n->string = newstr;
-	mdoc->next = ROFF_NEXT_SIBLING;
-}
-
-void
 mdoc_node_relink(struct roff_man *mdoc, struct roff_node *p)
 {
 
@@ -385,7 +333,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 		return(1);
 	}
 
-	mdoc_word_alloc(mdoc, line, offs, buf+offs);
+	roff_word_alloc(mdoc, line, offs, buf+offs);
 
 	if (mdoc->flags & MDOC_LITERAL)
 		return(1);

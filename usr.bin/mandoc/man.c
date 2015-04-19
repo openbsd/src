@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.107 2015/04/19 13:59:37 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.108 2015/04/19 14:25:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,7 +48,6 @@ const	char *const __man_macronames[MAN_MAX] = {
 
 const	char * const *man_macronames = __man_macronames;
 
-static	void		 man_breakscope(struct roff_man *, int);
 static	void		 man_descope(struct roff_man *, int, int);
 static	int		 man_ptext(struct roff_man *, int, char *, int);
 static	int		 man_pmacro(struct roff_man *, int, char *, int);
@@ -93,61 +92,6 @@ man_block_alloc(struct roff_man *man, int line, int pos, int tok)
 	man->next = ROFF_NEXT_CHILD;
 }
 
-void
-man_word_alloc(struct roff_man *man, int line, int pos, const char *word)
-{
-	struct roff_node *n;
-
-	n = roff_node_alloc(man, line, pos, ROFFT_TEXT, TOKEN_NONE);
-	n->string = roff_strdup(man->roff, word);
-	roff_node_append(man, n);
-	man_valid_post(man);
-	man->next = ROFF_NEXT_SIBLING;
-}
-
-void
-man_word_append(struct roff_man *man, const char *word)
-{
-	struct roff_node *n;
-	char		*addstr, *newstr;
-
-	n = man->last;
-	addstr = roff_strdup(man->roff, word);
-	mandoc_asprintf(&newstr, "%s %s", n->string, addstr);
-	free(addstr);
-	free(n->string);
-	n->string = newstr;
-	man->next = ROFF_NEXT_SIBLING;
-}
-
-void
-man_addeqn(struct roff_man *man, const struct eqn *ep)
-{
-	struct roff_node *n;
-
-	n = roff_node_alloc(man, ep->ln, ep->pos, ROFFT_EQN, TOKEN_NONE);
-	n->eqn = ep;
-	if (ep->ln > man->last->line)
-		n->flags |= MAN_LINE;
-	roff_node_append(man, n);
-	man->next = ROFF_NEXT_SIBLING;
-	man_descope(man, ep->ln, ep->pos);
-}
-
-void
-man_addspan(struct roff_man *man, const struct tbl_span *sp)
-{
-	struct roff_node *n;
-
-	man_breakscope(man, TOKEN_NONE);
-	n = roff_node_alloc(man, sp->line, 0, ROFFT_TBL, TOKEN_NONE);
-	n->span = sp;
-	roff_node_append(man, n);
-	man_valid_post(man);
-	man->next = ROFF_NEXT_SIBLING;
-	man_descope(man, sp->line, 0);
-}
-
 static void
 man_descope(struct roff_man *man, int line, int offs)
 {
@@ -176,7 +120,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 	/* Literal free-form text whitespace is preserved. */
 
 	if (man->flags & MAN_LITERAL) {
-		man_word_alloc(man, line, offs, buf + offs);
+		roff_word_alloc(man, line, offs, buf + offs);
 		man_descope(man, line, offs);
 		return(1);
 	}
@@ -220,7 +164,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 
 		buf[i] = '\0';
 	}
-	man_word_alloc(man, line, offs, buf + offs);
+	roff_word_alloc(man, line, offs, buf + offs);
 
 	/*
 	 * End-of-sentence check.  If the last character is an unescaped
