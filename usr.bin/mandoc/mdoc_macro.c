@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.146 2015/04/19 13:50:10 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.147 2015/04/19 13:59:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -230,16 +230,16 @@ mdoc_macroend(struct roff_man *mdoc)
 
 /*
  * Look up the macro at *p called by "from",
- * or as a line macro if from == MDOC_MAX.
+ * or as a line macro if from == TOKEN_NONE.
  */
 static int
 lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 {
 	int	 res;
 
-	if (from == MDOC_MAX || mdoc_macros[from].flags & MDOC_PARSED) {
+	if (from == TOKEN_NONE || mdoc_macros[from].flags & MDOC_PARSED) {
 		res = mdoc_hash_find(p);
-		if (res != MDOC_MAX) {
+		if (res != TOKEN_NONE) {
 			if (mdoc_macros[res].flags & MDOC_CALLABLE)
 				return(res);
 			if (res != MDOC_br && res != MDOC_sp && res != MDOC_ll)
@@ -247,7 +247,7 @@ lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 				    mdoc->parse, line, ppos, p);
 		}
 	}
-	return(MDOC_MAX);
+	return(TOKEN_NONE);
 }
 
 /*
@@ -463,7 +463,8 @@ append_delims(struct roff_man *mdoc, int line, int *pos, char *buf)
 
 	for (;;) {
 		la = *pos;
-		if (mdoc_args(mdoc, line, pos, buf, MDOC_MAX, &p) == ARGS_EOLN)
+		if (mdoc_args(mdoc, line, pos, buf, TOKEN_NONE, &p) ==
+		    ARGS_EOLN)
 			break;
 		dword(mdoc, line, la, p, DELIM_MAX, 1);
 
@@ -496,21 +497,21 @@ macro_or_word(MACRO_PROT_ARGS, int parsed)
 	int		 ntok;
 
 	p = buf + ppos;
-	ntok = MDOC_MAX;
+	ntok = TOKEN_NONE;
 	if (*p == '"')
 		p++;
 	else if (parsed && ! (mdoc->flags & MDOC_PHRASELIT))
 		ntok = lookup(mdoc, tok, line, ppos, p);
 
-	if (ntok == MDOC_MAX) {
-		dword(mdoc, line, ppos, p, DELIM_MAX, tok == MDOC_MAX ||
+	if (ntok == TOKEN_NONE) {
+		dword(mdoc, line, ppos, p, DELIM_MAX, tok == TOKEN_NONE ||
 		    mdoc_macros[tok].flags & MDOC_JOIN);
 		return(0);
 	} else {
 		if (mdoc_macros[tok].fp == in_line_eoln)
 			rew_elem(mdoc, tok);
 		mdoc_macro(mdoc, ntok, line, ppos, pos, buf);
-		if (tok == MDOC_MAX)
+		if (tok == TOKEN_NONE)
 			append_delims(mdoc, line, pos, buf);
 		return(1);
 	}
@@ -675,10 +676,10 @@ blk_exp_close(MACRO_PROT_ARGS)
 		if (ac == ARGS_PUNCT || ac == ARGS_EOLN)
 			break;
 
-		ntok = ac == ARGS_QWORD ? MDOC_MAX :
+		ntok = ac == ARGS_QWORD ? TOKEN_NONE :
 		    lookup(mdoc, tok, line, lastarg, p);
 
-		if (ntok == MDOC_MAX) {
+		if (ntok == TOKEN_NONE) {
 			dword(mdoc, line, lastarg, p, DELIM_MAX,
 			    MDOC_JOIN & mdoc_macros[tok].flags);
 			continue;
@@ -779,7 +780,7 @@ in_line(MACRO_PROT_ARGS)
 		}
 
 		ntok = (ac == ARGS_QWORD || (tok == MDOC_Fn && !cnt)) ?
-		    MDOC_MAX : lookup(mdoc, tok, line, la, p);
+		    TOKEN_NONE : lookup(mdoc, tok, line, la, p);
 
 		/*
 		 * In this case, we've located a submacro and must
@@ -788,7 +789,7 @@ in_line(MACRO_PROT_ARGS)
 		 * or raise a warning.
 		 */
 
-		if (ntok != MDOC_MAX) {
+		if (ntok != TOKEN_NONE) {
 			if (scope)
 				rew_elem(mdoc, tok);
 			if (nc && ! cnt) {
@@ -1105,7 +1106,7 @@ blk_full(MACRO_PROT_ARGS)
 				mdoc->flags |= MDOC_PPHRASE;
 			if (ac == ARGS_PEND && lac == ARGS_PPHRASE)
 				mdoc->flags |= MDOC_PPHRASE;
-			parse_rest(mdoc, MDOC_MAX, line, &la, buf);
+			parse_rest(mdoc, TOKEN_NONE, line, &la, buf);
 			mdoc->flags &= ~MDOC_PPHRASE;
 			continue;
 		}
@@ -1335,9 +1336,9 @@ in_line_argn(MACRO_PROT_ARGS)
 		}
 
 		ntok = (ac == ARGS_QWORD || (tok == MDOC_Pf && state == 0)) ?
-		    MDOC_MAX : lookup(mdoc, tok, line, la, p);
+		    TOKEN_NONE : lookup(mdoc, tok, line, la, p);
 
-		if (ntok != MDOC_MAX) {
+		if (ntok != TOKEN_NONE) {
 			if (state >= 0) {
 				rew_elem(mdoc, tok);
 				state = -2;
@@ -1471,5 +1472,5 @@ phrase_ta(MACRO_PROT_ARGS)
 
 	rew_last(mdoc, body);
 	roff_body_alloc(mdoc, line, ppos, MDOC_It);
-	parse_rest(mdoc, MDOC_MAX, line, pos, buf);
+	parse_rest(mdoc, TOKEN_NONE, line, pos, buf);
 }

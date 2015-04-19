@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.89 2015/04/19 13:50:10 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.90 2015/04/19 13:59:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -503,7 +503,7 @@ post_vs(CHKARGS)
 		    "%s after %s", man_macronames[n->tok],
 		    man_macronames[n->parent->tok]);
 		/* FALLTHROUGH */
-	case MAN_MAX:
+	case TOKEN_NONE:
 		/*
 		 * Don't warn about this because it occurs in pod2man
 		 * and would cause considerable (unfixable) warnage.

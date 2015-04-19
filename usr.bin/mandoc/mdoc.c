@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.136 2015/04/19 13:50:10 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.137 2015/04/19 13:59:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,6 +34,7 @@
 #include "libmdoc.h"
 
 const	char *const __mdoc_macronames[MDOC_MAX + 1] = {
+	"text",
 	"Ap",		"Dd",		"Dt",		"Os",
 	"Sh",		"Ss",		"Pp",		"D1",
 	"Dl",		"Bd",		"Ed",		"Bl",
@@ -64,8 +65,8 @@ const	char *const __mdoc_macronames[MDOC_MAX + 1] = {
 	"Lk",		"Mt",		"Brq",		"Bro",
 	"Brc",		"%C",		"Es",		"En",
 	"Dx",		"%Q",		"br",		"sp",
-	"%U",		"Ta",		"ll",		"text",
-	};
+	"%U",		"Ta",		"ll",
+};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
 	"split",		"nosplit",		"ragged",
@@ -79,7 +80,7 @@ const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
 	"symbolic",		"nested",		"centered"
 	};
 
-const	char * const *mdoc_macronames = __mdoc_macronames;
+const	char * const *mdoc_macronames = __mdoc_macronames + 1;
 const	char * const *mdoc_argnames = __mdoc_argnames;
 
 static	int		  mdoc_ptext(struct roff_man *, int, char *, int);
@@ -98,7 +99,7 @@ mdoc_addeqn(struct roff_man *mdoc, const struct eqn *ep)
 {
 	struct roff_node *n;
 
-	n = roff_node_alloc(mdoc, ep->ln, ep->pos, ROFFT_EQN, MDOC_MAX);
+	n = roff_node_alloc(mdoc, ep->ln, ep->pos, ROFFT_EQN, TOKEN_NONE);
 	n->eqn = ep;
 	if (ep->ln > mdoc->last->line)
 		n->flags |= MDOC_LINE;
@@ -111,7 +112,7 @@ mdoc_addspan(struct roff_man *mdoc, const struct tbl_span *sp)
 {
 	struct roff_node *n;
 
-	n = roff_node_alloc(mdoc, sp->line, 0, ROFFT_TBL, MDOC_MAX);
+	n = roff_node_alloc(mdoc, sp->line, 0, ROFFT_TBL, TOKEN_NONE);
 	n->span = sp;
 	roff_node_append(mdoc, n);
 	mdoc_valid_post(mdoc);
@@ -148,7 +149,7 @@ mdoc_parseln(struct roff_man *mdoc, int ln, char *buf, int offs)
 void
 mdoc_macro(MACRO_PROT_ARGS)
 {
-	assert(tok < MDOC_MAX);
+	assert(tok > TOKEN_NONE && tok < MDOC_MAX);
 
 	if (mdoc->flags & MDOC_PBODY) {
 		if (tok == MDOC_Dt) {
@@ -256,7 +257,7 @@ mdoc_word_alloc(struct roff_man *mdoc, int line, int pos, const char *p)
 {
 	struct roff_node *n;
 
-	n = roff_node_alloc(mdoc, line, pos, ROFFT_TEXT, MDOC_MAX);
+	n = roff_node_alloc(mdoc, line, pos, ROFFT_TEXT, TOKEN_NONE);
 	n->string = roff_strdup(mdoc->roff, p);
 	roff_node_append(mdoc, n);
 	mdoc_valid_post(mdoc);
@@ -428,9 +429,9 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 
 	mac[i] = '\0';
 
-	tok = (i > 1 && i < 4) ? mdoc_hash_find(mac) : MDOC_MAX;
+	tok = (i > 1 && i < 4) ? mdoc_hash_find(mac) : TOKEN_NONE;
 
-	if (tok == MDOC_MAX) {
+	if (tok == TOKEN_NONE) {
 		mandoc_msg(MANDOCERR_MACRO, mdoc->parse,
 		    ln, sv, buf + sv - 1);
 		return(1);

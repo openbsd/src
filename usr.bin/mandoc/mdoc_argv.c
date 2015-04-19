@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.59 2015/04/18 16:04:40 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.60 2015/04/19 13:59:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -420,7 +420,7 @@ mdoc_args(struct roff_man *mdoc, int line, int *pos,
 
 	if (v == NULL)
 		v = &v_local;
-	fl = tok == MDOC_MAX ? ARGSFL_NONE : mdocargs[tok].flags;
+	fl = tok == TOKEN_NONE ? ARGSFL_NONE : mdocargs[tok].flags;
 	if (tok != MDOC_It)
 		return(args(mdoc, line, pos, buf, fl, v));
 
