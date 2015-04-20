@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.12 2014/10/08 17:35:58 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.13 2015/04/20 14:48:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -290,9 +290,9 @@ utf8_build(void)
 		while (*ptr != NULL) {
 			node = *ptr;
 			if (item->last < node->first)
-				ptr = &(node->left);
+				ptr = &node->left;
 			else if (item->first > node->last)
-				ptr = &(node->right);
+				ptr = &node->right;
 		}
 		*ptr = item;
 	}
