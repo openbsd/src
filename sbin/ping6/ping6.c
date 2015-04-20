@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.105 2015/03/23 10:36:24 dlg Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.106 2015/04/20 00:46:32 dlg Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -109,16 +109,22 @@
 #include <poll.h>
 
 #include <md5.h>
+#include <siphash.h>
 
 struct tv64 {
 	u_int64_t tv64_sec;
 	u_int64_t tv64_nsec;
 };
 
+struct payload {
+	struct tv64	tv64;
+	u_int8_t	mac[SIPHASH_DIGEST_LENGTH];
+};
+
 #define MAXPACKETLEN	131072
 #define	IP6LEN		40
 #define ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
-#define ICMP6ECHOTMLEN sizeof(struct tv64)
+#define ICMP6ECHOTMLEN sizeof(struct payload)
 #define ICMP6_NIQLEN	(ICMP6ECHOLEN + 8)
 /* FQDN case, 64 bits of nonce + 32 bits ttl */
 #define ICMP6_NIRLEN	(ICMP6ECHOLEN + 12)
@@ -198,6 +204,7 @@ double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
 struct tv64 tv64_offset;	/* random offset for time values */
+SIPHASH_KEY mac_key;
 
 /* for node addresses */
 u_short naflags;
@@ -578,7 +585,7 @@ main(int argc, char *argv[])
 
 
 	if ((options & F_NOUSERDATA) == 0) {
-		if (datalen >= sizeof(struct tv64)) {
+		if (datalen >= sizeof(struct payload)) {
 			/* we can time transfer */
 			timing = 1;
 		} else
@@ -805,6 +812,7 @@ main(int argc, char *argv[])
 		warn("setsockopt(IPV6_RECVHOPLIMIT)"); /* XXX err? */
 
 	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
+	arc4random_buf(&mac_key, sizeof(mac_key));
 
 	printf("PING6(%lu=40+8+%lu bytes) ", (unsigned long)(40 + pingerlen()),
 	    (unsigned long)(pingerlen() - 8));
@@ -1074,16 +1082,27 @@ pinger(void)
 		icp->icmp6_id = htons(ident);
 		icp->icmp6_seq = ntohs(seq);
 		if (timing) {
+			SIPHASH_CTX ctx;
 			struct timespec ts;
-			struct tv64 tv64;
+			struct payload payload;
+			struct tv64 *tv64 = &payload.tv64;
 
 			if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 				err(1, "clock_gettime(CLOCK_MONOTONIC)");
-			tv64.tv64_sec = htobe64((u_int64_t)ts.tv_sec +
+			tv64->tv64_sec = htobe64((u_int64_t)ts.tv_sec +
 			    tv64_offset.tv64_sec);
-			tv64.tv64_nsec = htobe64((u_int64_t)ts.tv_nsec +
+			tv64->tv64_nsec = htobe64((u_int64_t)ts.tv_nsec +
 			    tv64_offset.tv64_nsec);
-			memcpy(&outpack[ICMP6ECHOLEN], &tv64, sizeof(tv64));
+
+			SipHash24_Init(&ctx, &mac_key);
+			SipHash24_Update(&ctx, tv64, sizeof(*tv64));
+			SipHash24_Update(&ctx, &ident, sizeof(ident));
+			SipHash24_Update(&ctx,
+			    &icp->icmp6_seq, sizeof(icp->icmp6_seq));
+			SipHash24_Final(&payload.mac, &ctx);
+
+			memcpy(&outpack[ICMP6ECHOLEN],
+			    &payload, sizeof(payload));
 		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
@@ -1212,7 +1231,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct timespec ts, tp;
-	struct tv64 tv64;
+	struct payload payload;
+	struct tv64 *tv64;
 	double triptime = 0;
 	int dupflag;
 	size_t off;
@@ -1255,10 +1275,28 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
-			memcpy(&tv64, icp + 1, sizeof(tv64));
-			tp.tv_sec = betoh64(tv64.tv64_sec) -
+			SIPHASH_CTX ctx;
+			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
+
+			memcpy(&payload, icp + 1, sizeof(payload));
+			tv64 = &payload.tv64;
+
+			SipHash24_Init(&ctx, &mac_key);
+			SipHash24_Update(&ctx, tv64, sizeof(*tv64));
+			SipHash24_Update(&ctx, &ident, sizeof(ident));
+			SipHash24_Update(&ctx,
+			    &icp->icmp6_seq, sizeof(icp->icmp6_seq));
+			SipHash24_Final(mac, &ctx);
+
+			if (timingsafe_memcmp(mac, &payload.mac,
+			    sizeof(mac)) != 0) {
+				(void)printf("signature mismatch!\n");
+				return;
+			}
+
+			tp.tv_sec = betoh64(tv64->tv64_sec) -
 			    tv64_offset.tv64_sec;
-			tp.tv_nsec = betoh64(tv64.tv64_nsec) -
+			tp.tv_nsec = betoh64(tv64->tv64_nsec) -
 			    tv64_offset.tv64_nsec;
 			timespecsub(&ts, &tp, &ts);
 			triptime = ((double)ts.tv_sec) * 1000.0 +
@@ -2328,7 +2366,7 @@ fill(char *bp, char *patp)
 /* xxx */
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXDATALEN - (8 + sizeof(struct tv64) + ii);
+		    kk <= MAXDATALEN - (8 + sizeof(struct payload) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
