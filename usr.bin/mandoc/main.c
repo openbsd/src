@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.141 2015/04/19 15:10:04 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.142 2015/04/20 09:54:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -331,13 +331,17 @@ main(int argc, char *argv[])
 		    argc, argv, &res, &sz))
 			usage(search.argmode);
 
-		if (sz == 0 && search.argmode == ARG_NAME)
-			fs_search(&search, &conf.manpath,
-			    argc, argv, &res, &sz);
+		if (sz == 0) {
+			if (search.argmode == ARG_NAME)
+				fs_search(&search, &conf.manpath,
+				    argc, argv, &res, &sz);
+			else
+				fprintf(stderr,
+				    "%s: nothing appropriate\n",
+				    progname);
+		}
 
 		if (sz == 0) {
-			fprintf(stderr, "%s: nothing appropriate\n",
-			    progname);
 			rc = MANDOCLEVEL_BADARG;
 			goto out;
 		}
