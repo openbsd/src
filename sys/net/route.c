@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.208 2015/03/26 11:02:44 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.209 2015/04/20 09:12:57 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1268,7 +1268,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 
 	/* If there is no loopback entry, allocate one. */
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
-	if (rt == NULL || !ISSET(rt->rt_flags, flags));
+	if (rt == NULL || !ISSET(rt->rt_flags, flags))
 		error = rt_ifa_add(ifa, RTF_UP | flags, ifa->ifa_addr);
 	if (rt)
 		rtfree(rt);
