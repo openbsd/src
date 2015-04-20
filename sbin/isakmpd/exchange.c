@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.135 2014/01/23 01:04:28 deraadt Exp $	 */
+/* $OpenBSD: exchange.c,v 1.136 2015/04/20 17:22:18 mikeb Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -978,8 +978,13 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 			 * continue responding if our phase 1 exchange is
 			 * still waiting for step 1 (i.e still half-open).
 			 */
-			if (exchange_lookup_active(name, 1))
+			exchange = exchange_lookup_active(name, 1);
+			if (exchange) {
+				LOG_DBG((LOG_EXCHANGE, 40,
+				    "exchange_establish: %s exchange already "
+				    "exists as %p", name, exchange));
 				return 0;
+			}
 		} else {
 			name = conf_get_str("Phase 1", "Default");
 			if (!name) {
