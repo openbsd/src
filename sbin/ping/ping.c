@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.120 2015/04/19 12:56:42 dlg Exp $	*/
+/*	$OpenBSD: ping.c,v 1.121 2015/04/20 00:36:51 dlg Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -648,6 +648,7 @@ pinger(void)
 		SipHash24_Init(&ctx, &mac_key);
 		SipHash24_Update(&ctx, tv64, sizeof(*tv64));
 		SipHash24_Update(&ctx, &ident, sizeof(ident));
+		SipHash24_Update(&ctx, &icp->icmp_seq, sizeof(icp->icmp_seq));
 		SipHash24_Update(&ctx, &whereto.sin_addr,
 		    sizeof(whereto.sin_addr));
 		SipHash24_Final(&payload.mac, &ctx);
@@ -747,6 +748,8 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			SipHash24_Init(&ctx, &mac_key);
 			SipHash24_Update(&ctx, tv64, sizeof(*tv64));
 			SipHash24_Update(&ctx, &ident, sizeof(ident));
+			SipHash24_Update(&ctx, &icp->icmp_seq,
+			    sizeof(icp->icmp_seq));
 			SipHash24_Update(&ctx, &whereto.sin_addr,
 			    sizeof(whereto.sin_addr));
 			SipHash24_Final(mac, &ctx);
