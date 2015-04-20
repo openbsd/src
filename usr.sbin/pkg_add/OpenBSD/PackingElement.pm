@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.241 2015/04/16 13:29:16 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.242 2015/04/20 13:10:54 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1145,7 +1145,9 @@ sub new
 sub destate
 {
 	my ($self, $state) = @_;
-	$state->{owners}{$self->{name}} = $self->{uid};
+	my $uid = $self->{uid};
+	$uid =~ s/^\!//;
+	$state->{owners}{$self->{name}} = $uid;
 }
 
 sub check
@@ -1206,7 +1208,9 @@ sub new
 sub destate
 {
 	my ($self, $state) = @_;
-	$state->{groups}{$self->{name}} = $self->{gid};
+	my $gid = $self->{gid};
+	$gid =~ s/^\!//;
+	$state->{groups}{$self->{name}} = $gid;
 }
 
 sub check
