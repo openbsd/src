@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.20 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.21 2015/04/20 15:34:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,8 +31,8 @@ enum cmd_retval	 cmd_unbind_key_mode_table(struct cmd *, struct cmd_q *, int);
 
 const struct cmd_entry cmd_unbind_key_entry = {
 	"unbind-key", "unbind",
-	"acnt:", 0, 1,
-	"[-acn] [-t mode-table] key",
+	"acnt:T:", 0, 1,
+	"[-acn] [-t mode-table] [-T key-table] key",
 	0,
 	cmd_unbind_key_exec
 };
@@ -40,9 +40,9 @@ const struct cmd_entry cmd_unbind_key_entry = {
 enum cmd_retval
 cmd_unbind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 {
-	struct args		*args = self->args;
-	struct key_binding	*bd;
-	int			 key;
+	struct args	*args = self->args;
+	int		 key;
+	const char	*tablename;
 
 	if (!args_has(args, 'a')) {
 		if (args->argc != 1) {
@@ -66,16 +66,31 @@ cmd_unbind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (cmd_unbind_key_mode_table(self, cmdq, key));
 
 	if (key == KEYC_NONE) {
-		while (!RB_EMPTY(&key_bindings)) {
-			bd = RB_ROOT(&key_bindings);
-			key_bindings_remove(bd->key);
+		tablename = args_get(args, 'T');
+		if (tablename == NULL) {
+			key_bindings_remove_table("root");
+			key_bindings_remove_table("prefix");
+			return (CMD_RETURN_NORMAL);
 		}
+		if (key_bindings_get_table(tablename, 0) == NULL) {
+			cmdq_error(cmdq, "table %s doesn't exist", tablename);
+			return (CMD_RETURN_ERROR);
+		}
+		key_bindings_remove_table(tablename);
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (!args_has(args, 'n'))
-		key |= KEYC_PREFIX;
-	key_bindings_remove(key);
+	if (args_has(args, 'T')) {
+		tablename = args_get(args, 'T');
+		if (key_bindings_get_table(tablename, 0) == NULL) {
+			cmdq_error(cmdq, "table %s doesn't exist", tablename);
+			return (CMD_RETURN_ERROR);
+		}
+	} else if (args_has(args, 'n'))
+		tablename = "root";
+	else
+		tablename = "prefix";
+	key_bindings_remove(tablename, key);
 	return (CMD_RETURN_NORMAL);
 }
 
