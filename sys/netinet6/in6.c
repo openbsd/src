@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.154 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: in6.c,v 1.155 2015/04/20 08:53:36 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1010,9 +1010,8 @@ void
 in6_purgeaddr(struct ifaddr *ifa)
 {
 	struct ifnet *ifp = ifa->ifa_ifp;
-	struct in6_ifaddr *tmp, *ia6 = ifatoia6(ifa);
+	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct in6_multi_mship *imm;
-	int ia6_count = 0;
 
 	/* stop DAD processing */
 	nd6_dad_stop(ifa);
@@ -1037,35 +1036,8 @@ in6_purgeaddr(struct ifaddr *ifa)
 			ia6->ia_flags &= ~IFA_ROUTE;
 	}
 
-	/* Remove ownaddr's loopback rtentry, if it exists.
-	 *
-	 * Some of BSD variants do not remove cloned routes from an
-	 * interface direct route, when removing the direct route (see
-	 * comments in net/net_osdep.h).  Even for variants that do
-	 * remove cloned routes, they could fail to remove the cloned
-	 * routes when we handle multiple addresses that share a common
-	 * prefix.  So, we should remove the route corresponding to the
-	 * deleted address.
-	 *
-	 * Delete the entry only if exact one ifa exists.  More than one
-	 * ifa can exist if we assign a same single address to multiple
-	 * (probably p2p) interfaces.
-	 * XXX: we should avoid such a configuration in IPv6...
-	 */
-	TAILQ_FOREACH(tmp, &in6_ifaddr, ia_list) {
-		if (tmp->ia_ifp->if_rdomain != ifp->if_rdomain)
-			continue;
-
-		if (IN6_ARE_ADDR_EQUAL(&tmp->ia_addr.sin6_addr,
-		    &ia6->ia_addr.sin6_addr)) {
-			ia6_count++;
-			if (ia6_count > 1)
-				break;
-		}
-	}
-
-	if (ia6_count == 1)
-		rt_ifa_dellocal(&(ia6->ia_ifa));
+	/* Remove ownaddr's loopback rtentry, if it exists. */
+	rt_ifa_dellocal(&(ia6->ia_ifa));
 
 	/*
 	 * leave from multicast groups we have joined for the interface
