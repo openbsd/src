@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.155 2015/04/20 08:53:36 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.156 2015/04/20 09:07:42 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -751,7 +751,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * install the new destination.  Note that the interface must be
 	 * p2p or loopback (see the check above.)
 	 */
-	if (dst6.sin6_family == AF_INET6 &&
+	if ((ifp->if_flags & IFF_POINTOPOINT) && dst6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia6->ia_dstaddr.sin6_addr)) {
 	    	struct ifaddr *ifa = &ia6->ia_ifa;
 
@@ -1020,7 +1020,8 @@ in6_purgeaddr(struct ifaddr *ifa)
 	 * delete route to the destination of the address being purged.
 	 * The interface must be p2p or loopback in this case.
 	 */
-	if ((ia6->ia_flags & IFA_ROUTE) != 0 && ia6->ia_dstaddr.sin6_len != 0) {
+	if ((ifp->if_flags & IFF_POINTOPOINT) && (ia6->ia_flags & IFA_ROUTE) &&
+	    ia6->ia_dstaddr.sin6_len != 0) {
 		int e;
 
 		if ((e = rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr)) != 0) {
@@ -1364,7 +1365,8 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	 * direct route.
 	 */
 	plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL); /* XXX */
-	if (plen == 128 && ia6->ia_dstaddr.sin6_family == AF_INET6) {
+	if ((ifp->if_flags & IFF_POINTOPOINT) && plen == 128 &&
+	    ia6->ia_dstaddr.sin6_family == AF_INET6) {
 		ifa = &ia6->ia_ifa;
 		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST, ifa->ifa_dstaddr);
 		if (error != 0)
