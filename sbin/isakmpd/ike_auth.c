@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.112 2014/08/25 08:00:48 doug Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.113 2015/04/21 01:44:47 jsg Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -200,7 +200,6 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 				free(keyfile);
 				goto ignorekeynote;
 			}
-			size = (size_t)sb.st_size;
 
 			if (fstat(fd, &sb) < 0) {
 				log_print("ike_auth_get_key: fstat failed");
