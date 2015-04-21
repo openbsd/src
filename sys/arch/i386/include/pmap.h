@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.74 2015/04/12 21:37:33 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.75 2015/04/21 00:07:51 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct pmap {
 	vaddr_t pm_hiexec;		/* highest executable mapping */
 	int pm_flags;			/* see below */
 
-	struct	segment_descriptor pm_codeseg;	/* cs descriptor for process */
+	struct segment_descriptor pm_codeseg;	/* cs descriptor for process */
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
@@ -178,7 +178,6 @@ struct pv_page {
 	struct pv_entry pvents[PVE_PER_PVPAGE];
 };
 
-
 /*
  * pv_entrys are dynamically allocated in chunks from a single page.
  * we keep track of how many pv_entrys are in use for each page and
@@ -186,7 +185,7 @@ struct pv_page {
  * entire allocation system.
  */
 
-extern char	PTD[];
+extern char PTD[];
 extern struct pmap kernel_pmap_store; /* kernel pmap */
 extern int nkptp_max;
 

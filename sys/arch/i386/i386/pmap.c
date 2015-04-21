@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.174 2015/04/12 21:37:33 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.175 2015/04/21 00:07:51 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -473,7 +473,7 @@ struct pool_allocator pmap_pv_page_allocator = {
 
 void		 pmap_sync_flags_pte_86(struct vm_page *, pt_entry_t);
 
-void		 pmap_drop_ptp(struct pmap *, vaddr_t, struct vm_page *,
+void		 pmap_drop_ptp_86(struct pmap *, vaddr_t, struct vm_page *,
     pt_entry_t *);
 
 void		 setcslimit(struct pmap *, struct trapframe *, struct pcb *,
@@ -1192,7 +1192,7 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, struct pmap *pmap,
 	pve->pv_va = va;
 	pve->pv_ptp = ptp;			/* NULL for kernel pmap */
 	pve->pv_next = pg->mdpage.pv_list;	/* add to ... */
-	pg->mdpage.pv_list = pve;			/* ... locked list */
+	pg->mdpage.pv_list = pve;		/* ... locked list */
 }
 
 /*
@@ -1275,7 +1275,7 @@ pmap_get_ptp_86(struct pmap *pmap, int pde_index)
 		ptp = uvm_pagelookup(&pmap->pm_obj, ptp_i2o(pde_index));
 #ifdef DIAGNOSTIC
 		if (ptp == NULL)
-			panic("pmap_get_ptp: unmanaged user PTP");
+			panic("pmap_get_ptp_86: unmanaged user PTP");
 #endif
 		pmap->pm_ptphint = ptp;
 		return(ptp);
@@ -1286,7 +1286,7 @@ pmap_get_ptp_86(struct pmap *pmap, int pde_index)
 }
 
 void
-pmap_drop_ptp(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
+pmap_drop_ptp_86(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
     pt_entry_t *ptes)
 {
 	i386_atomic_testset_ul(&PDE(pm, pdei(va)), 0);
@@ -1351,7 +1351,7 @@ pmap_pinit_pd_86(struct pmap *pmap)
 	/* allocate PDP */
 	pmap->pm_pdir = uvm_km_alloc(kernel_map, NBPG);
 	if (pmap->pm_pdir == 0)
-		panic("pmap_pinit: kernel_map out of virtual space!");
+		panic("pmap_pinit_pd_86: kernel_map out of virtual space!");
 	pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
 			    &pmap->pm_pdirpa);
 	pmap->pm_pdirsize = NBPG;
@@ -1545,6 +1545,7 @@ pmap_switch(struct proc *o, struct proc *p)
 		curcpu()->ci_curpmap = pmap;
 		lcr3(pmap->pm_pdirpa);
 	}
+	lcr3(pmap->pm_pdirpa);
 
 	/*
 	 * Set the correct descriptor value (i.e. with the
@@ -1790,7 +1791,7 @@ pmap_remove_ptes_86(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 			ptp->wire_count--;		/* dropping a PTE */
 
 		/*
-		 * Unnecessary work if not PG_VLIST.
+		 * Unnecessary work if not PG_PVLIST.
 		 */
 		pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
 
@@ -1800,15 +1801,15 @@ pmap_remove_ptes_86(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
 			if (pg != NULL)
-				panic("pmap_remove_ptes: managed page without "
-				      "PG_PVLIST for 0x%lx", startva);
+				panic("pmap_remove_ptes_86: managed page "
+				     "without PG_PVLIST for 0x%lx", startva);
 #endif
 			continue;
 		}
 
 #ifdef DIAGNOSTIC
 		if (pg == NULL)
-			panic("pmap_remove_ptes: unmanaged page marked "
+			panic("pmap_remove_ptes_86: unmanaged page marked "
 			      "PG_PVLIST, va = 0x%lx, pa = 0x%lx",
 			      startva, (u_long)(opte & PG_FRAME));
 #endif
@@ -1907,8 +1908,8 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 				ptp = PHYS_TO_VM_PAGE(ptppa);
 #ifdef DIAGNOSTIC
 				if (ptp == NULL)
-					panic("pmap_remove: unmanaged PTP "
-					      "detected");
+					panic("pmap_do_remove_86: unmanaged "
+					      "PTP detected");
 #endif
 			}
 		}
@@ -1917,7 +1918,7 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 		/* If PTP is no longer being used, free it. */
 		if (ptp && ptp->wire_count <= 1) {
-			pmap_drop_ptp(pmap, va, ptp, ptes);
+			pmap_drop_ptp_86(pmap, va, ptp, ptes);
 			TAILQ_INSERT_TAIL(&empty_ptps, ptp, pageq);
 		}
 
@@ -1961,13 +1962,14 @@ pmap_page_remove_86(struct vm_page *pg)
 		if (pve->pv_ptp && (PDE(pve->pv_pmap, pdei(pve->pv_va)) &
 				    PG_FRAME)
 		    != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
-			printf("pmap_page_remove: pg=%p: va=%lx, pv_ptp=%p\n",
+			printf("pmap_page_remove_86: pg=%p: va=%lx, "
+				"pv_ptp=%p\n",
 				pg, pve->pv_va, pve->pv_ptp);
-			printf("pmap_page_remove: PTP's phys addr: "
+			printf("pmap_page_remove_86: PTP's phys addr: "
 				"actual=%x, recorded=%lx\n",
 				(PDE(pve->pv_pmap, pdei(pve->pv_va)) &
 				PG_FRAME), VM_PAGE_TO_PHYS(pve->pv_ptp));
-			panic("pmap_page_remove: mapped managed page has "
+			panic("pmap_page_remove_86: mapped managed page has "
 				"invalid pv_ptp field");
 }
 #endif
@@ -1982,7 +1984,7 @@ pmap_page_remove_86(struct vm_page *pg)
 
 		/* update the PTP reference count.  free if last reference. */
 		if (pve->pv_ptp && --pve->pv_ptp->wire_count <= 1) {
-			pmap_drop_ptp(pve->pv_pmap, pve->pv_va,
+			pmap_drop_ptp_86(pve->pv_pmap, pve->pv_va,
 			    pve->pv_ptp, ptes);
 			TAILQ_INSERT_TAIL(&empty_ptps, pve->pv_ptp, pageq);
 		}
@@ -2283,10 +2285,10 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
 	if (va >= VM_MAX_KERNEL_ADDRESS)
-		panic("pmap_enter: too big");
+		panic("pmap_enter_86: too big");
 
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
-		panic("pmap_enter: trying to map over PDP/APDP!");
+		panic("pmap_enter_86: trying to map over PDP/APDP!");
 
 	/* sanity check: kernel PTPs should already have been pre-allocated */
 	if (va >= VM_MIN_KERNEL_ADDRESS &&
@@ -2313,7 +2315,7 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 				error = ENOMEM;
 				goto out;
 			}
-			panic("pmap_enter: get ptp failed");
+			panic("pmap_enter_86: get ptp failed");
 		}
 	}
 	/*
@@ -2380,14 +2382,14 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 #endif
 			pmap_sync_flags_pte_86(pg, opte);
 			pve = pmap_remove_pv(pg, pmap, va);
-			pg = NULL; /* This is not page we are looking for */
+			pg = NULL; /* This is not the page we are looking for */
 		}
 	} else {	/* opte not valid */
 		resident_count++;
 		if (wired)
 			wired_count++;
 		if (ptp)
-			ptp_count++;      /* count # of valid entries */
+			ptp_count++;	/* count # of valid entries */
 	}
 
 	/*
@@ -2408,7 +2410,7 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 					error = ENOMEM;
 					goto out;
 				}
-				panic("pmap_enter: no pv entries available");
+				panic("pmap_enter_86: no pv entries available");
 			}
 			freepve = NULL;
 		}
