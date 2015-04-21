@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.176 2015/04/21 04:40:40 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.177 2015/04/21 18:47:57 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1536,7 +1536,6 @@ pmap_switch(struct proc *o, struct proc *p)
 		curcpu()->ci_curpmap = pmap;
 		lcr3(pmap->pm_pdirpa);
 	}
-	lcr3(pmap->pm_pdirpa);
 
 	/*
 	 * Set the correct descriptor value (i.e. with the
