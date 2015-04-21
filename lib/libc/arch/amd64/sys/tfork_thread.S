@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.3 2012/08/22 17:19:34 pascal Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.4 2015/04/21 01:24:28 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -61,8 +61,8 @@ ENTRY(__tfork_thread)
 	/*
 	 * Check to see if we are in the parent or child
 	 */
-	cmpl	$0, %edx
-	jnz	1f
+	cmpl	$0, %eax
+	jz	1f
 	ret
 
 	/*
