@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.421 2015/04/20 15:34:56 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.422 2015/04/21 22:32:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 20 2015 $
+.Dd $Mdocdate: April 21 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -163,7 +163,8 @@ If the socket is accidentally removed, the
 .Dv SIGUSR1
 signal may be sent to the
 .Nm
-server process to recreate it.
+server process to recreate it (note that this will fail if any parent
+directories are missing).
 .It Fl l
 Behave as a login shell.
 This flag currently has no effect and is for compatibility with other shells
@@ -2004,7 +2005,8 @@ is bound in
 .Ar mode-table :
 the binding for command mode with
 .Fl c
-or for normal mode without. See the
+or for normal mode without.
+See the
 .Sx WINDOWS AND PANES
 section and the
 .Ic list-keys
