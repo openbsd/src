@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.79 2015/02/08 01:39:06 blambert Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.80 2015/04/21 01:46:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -289,8 +289,11 @@ pfe_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (0);		/* XXX */
 		memcpy(s, imsg->data, sizeof(*s));
 		TAILQ_FOREACH(t, &env->sc_sessions, se_entry) {
-			if (t->se_id == s->se_id)	/* duplicate registration */
+			/* duplicate registration */
+			if (t->se_id == s->se_id) {
+				free(s);
 				return (0);
+			}
 			if (t->se_id > s->se_id)
 				break;
 		}
