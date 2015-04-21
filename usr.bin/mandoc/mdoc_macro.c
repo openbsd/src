@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.149 2015/04/19 14:57:16 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.150 2015/04/21 16:13:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -289,18 +289,21 @@ rew_pending(struct roff_man *mdoc, const struct roff_node *n)
 	for (;;) {
 		rew_last(mdoc, n);
 
-		switch (n->type) {
-		case ROFFT_HEAD:
-			roff_body_alloc(mdoc, n->line, n->pos, n->tok);
-			return;
-		case ROFFT_BLOCK:
-			break;
-		default:
-			return;
-		}
-
-		if ( ! (n->flags & MDOC_BROKEN))
-			return;
+		if (mdoc->last == n) {
+			switch (n->type) {
+			case ROFFT_HEAD:
+				roff_body_alloc(mdoc, n->line, n->pos,
+				    n->tok);
+				return;
+			case ROFFT_BLOCK:
+				break;
+			default:
+				return;
+			}
+			if ( ! (n->flags & MDOC_BROKEN))
+				return;
+		} else
+			n = mdoc->last;
 
 		for (;;) {
 			if ((n = n->parent) == NULL)
