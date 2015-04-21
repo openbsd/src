@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.45 2015/04/20 15:34:56 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.46 2015/04/21 15:34:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -221,7 +221,7 @@ key_bindings_init(void)
 		"bind -n MouseDown1Pane select-pane -t=\\; send-keys -M",
 		"bind -n MouseDrag1Border resize-pane -M",
 		"bind -n MouseDown1Status select-window -t=",
-		"bind -n MouseDrag1Pane copy-mode -M",
+		"bind -n MouseDrag1Pane if -Ft= '#{mouse_any_flag}' 'if -Ft= \"#{pane_in_mode}\" \"copy-mode -M\" \"send-keys -M\"' 'copy-mode -M'",
 	};
 	u_int		 i;
 	struct cmd_list	*cmdlist;
