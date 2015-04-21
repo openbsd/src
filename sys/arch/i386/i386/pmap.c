@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.175 2015/04/21 00:07:51 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.176 2015/04/21 04:40:40 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -405,15 +405,6 @@ boolean_t pmap_initialized = FALSE;	/* pmap_init done yet? */
 #define PTESLEW(pte, id) (pte)
 #define VASLEW(va,id) (va)
 #endif
-
-/*
- * pv management structures.
- */
-struct pool pmap_pv_pool;
-
-#define PVE_LOWAT (PVE_PER_PVPAGE / 2) /* free pv_entry low water mark */
-#define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
-					/* high water mark */
 
 /*
  * pv management structures.
