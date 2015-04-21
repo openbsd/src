@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.119 2015/04/20 07:50:49 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.120 2015/04/21 22:38:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -519,6 +519,7 @@ window_unzoom(struct window *w)
 	w->flags &= ~WINDOW_ZOOMED;
 	layout_free(w);
 	w->layout_root = w->saved_layout_root;
+	w->saved_layout_root = NULL;
 
 	TAILQ_FOREACH(wp, &w->panes, entry) {
 		wp->layout_cell = wp->saved_layout_cell;
