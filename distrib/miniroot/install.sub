@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.831 2015/04/20 15:31:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.832 2015/04/21 10:58:28 henning Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -337,7 +337,7 @@ get_responsefile() {
 	if [[ -n $_server && -n $_mode ]]; then
 		_mac=$(ifconfig $_ifdev | sed 's/.*lladdr \(.*\)/\1/p;d')
 		for _rf in {$_mac-,}$_mode; do
-			_url=http://$_server/$_rf.conf
+			_url="http://$_server/$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
 				action=$_mode
