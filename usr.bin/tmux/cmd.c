@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.99 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.100 2015/04/21 22:42:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -781,14 +781,14 @@ cmd_lookup_index(struct session *s, const char *name, int *ambiguous)
 	const char	*errstr;
 	u_int		 idx;
 
+	idx = strtonum(name, 0, INT_MAX, &errstr);
+	if (errstr == NULL)
+		return (idx);
+
 	if ((wl = cmd_lookup_window(s, name, ambiguous)) != NULL)
 		return (wl->idx);
 	if (*ambiguous)
 		return (-1);
-
-	idx = strtonum(name, 0, INT_MAX, &errstr);
-	if (errstr == NULL)
-		return (idx);
 
 	return (-1);
 }
