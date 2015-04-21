@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.647 2015/02/26 18:27:45 sthen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.648 2015/04/21 16:34:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -209,6 +209,11 @@ struct pool_opts {
 
 } pool_opts;
 
+struct divertspec {
+	struct node_host	*addr;
+	u_int16_t		 port;
+};
+
 struct redirspec {
 	struct redirection      *rdr;
 	struct pool_opts         pool_opts;
@@ -257,10 +262,8 @@ struct filter_opts {
 	u_int			 rtableid;
 	u_int8_t		 prio;
 	u_int8_t		 set_prio[2];
-	struct {
-		struct node_host	*addr;
-		u_int16_t		port;
-	}			 divert, divert_packet;
+	struct divertspec	 divert;
+	struct divertspec	 divert_packet;
 	struct redirspec	 nat;
 	struct redirspec	 rdr;
 	struct redirspec	 rroute;
@@ -342,6 +345,7 @@ void		 expand_label_nr(const char *, char *, size_t);
 void		 expand_label(char *, size_t, const char *, u_int8_t,
 		    struct node_host *, struct node_port *, struct node_host *,
 		    struct node_port *, u_int8_t);
+int		 expand_divertspec(struct pf_rule *, struct divertspec *);
 int		 collapse_redirspec(struct pf_pool *, struct pf_rule *,
 		    struct redirspec *rs, u_int8_t);
 int		 apply_redirspec(struct pf_pool *, struct pf_rule *,
@@ -1849,30 +1853,8 @@ pfrule		: action dir logquick interface af proto fromto
 				}
 				free($8.queues.pqname);
 			}
-			if ((r.divert.port = $8.divert.port)) {
-				if (r.direction == PF_OUT) {
-					if ($8.divert.addr) {
-						yyerror("address specified "
-						    "for outgoing divert");
-						YYERROR;
-					}
-					bzero(&r.divert.addr,
-					    sizeof(r.divert.addr));
-				} else {
-					if (!$8.divert.addr) {
-						yyerror("no address specified "
-						    "for incoming divert");
-						YYERROR;
-					}
-					if ($8.divert.addr->af != r.af) {
-						yyerror("address family "
-						    "mismatch for divert");
-						YYERROR;
-					}
-					r.divert.addr =
-					    $8.divert.addr->addr.v.a.addr;
-				}
-			}
+			if (expand_divertspec(&r, &$8.divert))
+				YYERROR;
 			r.divert_packet.port = $8.divert_packet.port;
 
 			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, &$8.rroute, $6,
@@ -4331,6 +4313,46 @@ expand_queue(char *qname, struct node_if *interfaces, struct queue_opts *opts)
 	);
 
 	FREE_LIST(struct node_if, interfaces);
+	return (0);
+}
+
+int
+expand_divertspec(struct pf_rule *r, struct divertspec *ds)
+{
+	struct node_host *n;
+
+	if (ds->port == 0)
+		return (0);
+
+	r->divert.port = ds->port;
+
+	if (r->direction == PF_OUT) {
+		if (ds->addr) {
+			yyerror("address specified for outgoing divert");
+			return (1);
+		}
+		bzero(&r->divert.addr, sizeof(r->divert.addr));
+		return (0);
+	}
+
+	if (!ds->addr) {
+		yyerror("no address specified for incoming divert");
+		return (1);
+	}
+	if (r->af) {
+		n = ds->addr;
+		for (n = ds->addr; n != NULL; n = n->next)
+			if (n->af == r->af)
+				break;
+		if (n == NULL) {
+			yyerror("address family mismatch for divert");
+			return (1);
+		}
+		r->divert.addr = n->addr.v.a.addr;
+	} else {
+		r->af = ds->addr->af;
+		r->divert.addr = ds->addr->addr.v.a.addr;
+	}
 	return (0);
 }
 
