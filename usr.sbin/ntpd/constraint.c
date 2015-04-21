@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.7 2015/03/14 05:10:11 bcook Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.8 2015/04/21 01:49:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -740,6 +740,7 @@ tls_readline(struct tls *tls, size_t *lenp, size_t *maxlength,
 			goto again;
 		if (ret != 0) {
 			/* SSL read error, ignore */
+			free(buf);
 			return (NULL);
 		}
 
