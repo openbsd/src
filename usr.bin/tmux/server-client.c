@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.132 2015/04/20 15:34:56 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.133 2015/04/21 15:21:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -391,7 +391,7 @@ server_client_check_mouse(struct client *c)
 		c->tty.mouse_drag_release = NULL;
 
 		c->tty.mouse_drag_flag = 0;
-		return (KEYC_NONE);
+		return (KEYC_MOUSE); /* not a key, but still may want to pass */
 	}
 
 	/* Convert to a key binding. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.42 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.43 2015/04/21 15:21:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -251,5 +251,6 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 		buf[len++] = x + 33;
 		buf[len++] = y + 33;
 	}
+	log_debug("writing mouse %.*s", (int)len, buf);
 	bufferevent_write(wp->event, buf, len);
 }
