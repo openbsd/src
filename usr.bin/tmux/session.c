@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.46 2014/10/22 23:18:53 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.47 2015/04/22 15:32:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -309,16 +309,16 @@ session_detach(struct session *s, struct winlink *wl)
 }
 
 /* Return if session has window. */
-struct winlink *
+int
 session_has(struct session *s, struct window *w)
 {
 	struct winlink	*wl;
 
 	RB_FOREACH(wl, winlinks, &s->windows) {
 		if (wl->window == w)
-			return (wl);
+			return (1);
 	}
-	return (NULL);
+	return (0);
 }
 
 struct winlink *
