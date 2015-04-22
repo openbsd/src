@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.177 2015/04/21 18:47:57 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.178 2015/04/22 06:26:23 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ typedef u_int32_t pd_entry_t;		/* PDE */
 typedef u_int32_t pt_entry_t;		/* PTE */
 
 /*
- * Number of PTEs per cache line.  4 byte pte, 64-byte cache line
+ * Number of PTEs per cache line. 4 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
  */
 #define NPTECL			16
@@ -519,7 +519,7 @@ pmap_map_ptes_86(struct pmap *pmap)
 	opde = *APDP_PDE;
 #if defined(MULTIPROCESSOR) && defined(DIAGNOSTIC)
 	if (pmap_valid_entry(opde))
-		panic("pmap_map_ptes: APTE valid");
+		panic("pmap_map_ptes_86: APTE valid");
 #endif
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
 		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V |
@@ -1613,7 +1613,7 @@ pmap_zero_phys_86(paddr_t pa)
 
 #ifdef DIAGNOSTIC
 	if (*zpte)
-		panic("pmap_zero_phys: lock botch");
+		panic("pmap_zero_phys_86: lock botch");
 #endif
 
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
@@ -1637,7 +1637,7 @@ pmap_zero_page_uncached_86(paddr_t pa)
 
 #ifdef DIAGNOSTIC
 	if (*zpte)
-		panic("pmap_zero_page_uncached: lock botch");
+		panic("pmap_zero_page_uncached_86: lock botch");
 #endif
 
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_N;	/* map in */
@@ -1717,7 +1717,7 @@ pmap_copy_page_86(struct vm_page *srcpg, struct vm_page *dstpg)
 
 #ifdef DIAGNOSTIC
 	if (*spte || *dpte)
-		panic("pmap_copy_page: lock botch");
+		panic("pmap_copy_page_86: lock botch");
 #endif
 
 	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW;
@@ -2047,7 +2047,7 @@ pmap_clear_attrs_86(struct vm_page *pg, int clearbits)
 	u_long clearflags;
 	int result;
 
-	clearflags = pmap_pte2flags(clearbits);	
+	clearflags = pmap_pte2flags(clearbits);
 
 	result = pg->pg_flags & clearflags;
 	if (result)
@@ -2538,7 +2538,7 @@ out:
 }
 
 #ifdef DEBUG
-void pmap_dump(struct pmap *, vaddr_t, vaddr_t);
+void		 pmap_dump_86(struct pmap *, vaddr_t, vaddr_t);
 
 /*
  * pmap_dump: dump all the mappings from a pmap
