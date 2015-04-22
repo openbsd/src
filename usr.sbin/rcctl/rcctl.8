@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.16 2015/01/08 09:03:26 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.17 2015/04/22 16:25:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2015 $
+.Dd $Mdocdate: April 22 2015 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -50,24 +50,24 @@ The following commands are available
 .Po
 .Ar variable
 can be one of
-.Ar flags ,
-.Ar status ,
-.Ar timeout
+.Cm flags ,
+.Cm status ,
+.Cm timeout
 or
-.Ar user
+.Cm user
 .Pc :
 .Bl -tag -width Ds
 .It Cm enable Ar service | daemon
 Alias for
-.Dq Cm set Ar service | daemon Cm status Ar on .
+.Dq Cm set Ar service | daemon Cm status on .
 .It Cm disable Ar service | daemon
 Alias for
-.Dq Cm set Ar service | daemon Cm status Ar off .
+.Dq Cm set Ar service | daemon Cm status off .
 .It Cm get Ar service | daemon Op Ar variable
 Display the value of
 .Ar service
 or
-.Ar daemon_variable .
+.Ar daemon Ns _ Ns Ar variable .
 If
 .Ar variable
 is empty, display all
@@ -77,26 +77,26 @@ or
 variables and values in a format
 compatible with
 .Xr rc.conf 8 .
-.It Cm set Ar service | daemon Cm variable Op Ar arguments
+.It Cm set Ar service | daemon variable Op Ar arguments
 For a daemon, set the variable
-.Ar daemon Ns _variable
+.Ar daemon Ns _ Ns Ar variable
 to the specified
 .Ar arguments .
 If
-.Cm variable
+.Ar variable
 is already set,
-.Ar daemon Ns _variable
+.Ar daemon Ns _ Ns Ar variable
 is reset to the optionally provided
 .Ar arguments
 or to its default value.
 .Pp
 The
-.Ar status Cm variable
-must be provided with
-the
-.Ar on
+.Cm status
+.Ar variable
+must be provided with the
+.Cm on
 or
-.Ar off
+.Cm off
 .Ar arguments .
 It is used to enable or disable
 .Ar service
@@ -146,9 +146,9 @@ returns with the exit status of the
 .Xr rc.d 8
 .Ar daemon
 script.
-.Nm Cm get Ar daemon | service Op status
+.Nm Cm get Ar daemon | service Op Cm status
 exits with 0 if the daemon or service is enabled and 1 if it is not.
-.Nm Cm getdef Ar daemon | service Op status
+.Nm Cm getdef Ar daemon | service Op Cm status
 exits with 0 if the daemon or service is enabled by default
 and 1 if it is not.
 Otherwise, the
