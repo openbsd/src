@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.26 2015/02/12 01:49:02 claudio Exp $	*/
+/*	$OpenBSD: unix.c,v 1.27 2015/04/22 18:07:32 bluhm Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -110,8 +110,8 @@ unpcb_dump(u_long off)
 	pp("%p", unp_vnode, ", ");
 	pull("%llu", unp_ino, "\n ");
 	pp("%p", unp_conn, ", ");
-	pp("%p", unp_refs, ", ");
-	pp("%p", unp_nextref, "\n ");
+	printf("unp_refs %p, ", SLIST_FIRST(&unp.unp_refs));
+	printf("unp_nextref %p\n ", SLIST_NEXT(&unp, unp_nextref));
 	pp("%p", unp_addr, "\n ");
 	p("%#.8x", unp_flags, "\n ");
 	p("%u", unp_connid.uid, ", ");
