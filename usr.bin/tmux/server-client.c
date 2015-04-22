@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.133 2015/04/21 15:21:41 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.134 2015/04/22 15:30:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -720,11 +720,7 @@ server_client_loop(void)
 	 * Any windows will have been redrawn as part of clients, so clear
 	 * their flags now. Also check pane focus and resize.
 	 */
-	for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
-		w = ARRAY_ITEM(&windows, i);
-		if (w == NULL)
-			continue;
-
+	RB_FOREACH(w, windows, &windows) {
 		w->flags &= ~WINDOW_REDRAW;
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->fd != -1) {
