@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.117 2015/04/15 09:58:44 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.118 2015/04/22 06:42:11 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -47,6 +47,7 @@
  * will not modify the ethernet header.
  */
 
+#include "bridge.h"
 #include "vlan.h"
 
 #include <sys/param.h>
