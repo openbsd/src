@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.120 2015/04/21 22:38:50 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.121 2015/04/22 15:05:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -245,16 +245,6 @@ winlink_stack_remove(struct winlink_stack *stack, struct winlink *wl)
 	}
 }
 
-int
-window_index(struct window *s, u_int *i)
-{
-	for (*i = 0; *i < ARRAY_LENGTH(&windows); (*i)++) {
-		if (s == ARRAY_ITEM(&windows, *i))
-			return (0);
-	}
-	return (-1);
-}
-
 struct window *
 window_find_by_id(u_int id)
 {
@@ -341,7 +331,11 @@ window_destroy(struct window *w)
 
 	window_unzoom(w);
 
-	if (window_index(w, &i) != 0)
+	for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
+		if (w == ARRAY_ITEM(&windows, i))
+			break;
+	}
+	if (i == ARRAY_LENGTH(&windows))
 		fatalx("index not found");
 	ARRAY_SET(&windows, i, NULL);
 	while (!ARRAY_EMPTY(&windows) && ARRAY_LAST(&windows) == NULL)

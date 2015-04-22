@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.119 2015/04/21 22:32:40 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.120 2015/04/22 15:05:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -389,6 +389,7 @@ void
 server_signal_callback(int sig, unused short events, unused void *data)
 {
 	int	fd;
+
 	switch (sig) {
 	case SIGTERM:
 		server_shutdown = 1;
