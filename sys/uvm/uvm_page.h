@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.57 2015/02/07 01:46:27 kettenis Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.58 2015/04/22 03:48:52 dlg Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -290,8 +290,8 @@ int		vm_physseg_find(paddr_t, int *);
 
 #define uvm_lock_pageq()	/* lock */
 #define uvm_unlock_pageq()	/* unlock */
-#define uvm_lock_fpageq()	mtx_enter(&uvm.fpageqlock);
-#define uvm_unlock_fpageq()	mtx_leave(&uvm.fpageqlock);
+#define uvm_lock_fpageq()	mtx_enter(&uvm.fpageqlock)
+#define uvm_unlock_fpageq()	mtx_leave(&uvm.fpageqlock)
 
 #define	UVM_PAGEZERO_TARGET	(uvmexp.free / 8)
 
