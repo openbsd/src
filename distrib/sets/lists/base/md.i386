@@ -1563,6 +1563,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/biosvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/bus.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/cdefs.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/codepatch.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/conf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/cpu.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/cpufunc.ph

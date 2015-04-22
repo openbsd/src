@@ -557,6 +557,7 @@
 ./usr/include/i386/biosvar.h
 ./usr/include/i386/bus.h
 ./usr/include/i386/cdefs.h
+./usr/include/i386/codepatch.h
 ./usr/include/i386/conf.h
 ./usr/include/i386/cpu.h
 ./usr/include/i386/cpufunc.h
