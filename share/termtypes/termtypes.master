@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.51 2015/01/07 16:52:05 dcoppa Exp $
+# $OpenBSD: termtypes.master,v 1.52 2015/04/22 12:50:12 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.51 $
-#	$Date: 2015/01/07 16:52:05 $
+#	$Revision: 1.52 $
+#	$Date: 2015/04/22 12:50:12 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -1054,26 +1054,26 @@ nsterm+7|AppKit Terminal.app v41+ basic capabilities w/ASCII charset,
 	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H,
 	cud=\E[%p1%dB, cud1=^J, cuf=\E[%p1%dC, cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[A,
-	dl=\E[%p1%dM, dl1=\E[M, ed=\E[J, el=\E[K, el1=\E[1K,
-	home=\E[H, ht=^I, hts=\EH, il=\E[%p1%dL, il1=\E[L, ind=^J,
-	invis=\E[8m, kbs=\177, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC,
-	kcuu1=\EOA, kent=\EOM, rc=\E8, rev=\E[7m, ri=\EM,
+	dim=\E[2m, dl=\E[%p1%dM, dl1=\E[M, ed=\E[J, el=\E[K,
+	el1=\E[1K, home=\E[H, ht=^I, hts=\EH, il=\E[%p1%dL, il1=\E[L,
+	ind=^J, invis=\E[8m, kbs=\177, kcub1=\EOD, kcud1=\EOB,
+	kcuf1=\EOC, kcuu1=\EOA, kent=\EOM, rc=\E8, rev=\E[7m, ri=\EM,
 	rmam=\E[?7l, rmkx=\E[?1l\E>, rmso=\E[m, rmul=\E[m,
 	rs2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h, sc=\E7,
-	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
+	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p7%t;8%;m,
 	sgr0=\E[m, smam=\E[?7h, smkx=\E[?1h\E=, smso=\E[7m,
 	smul=\E[4m, tbc=\E[3g, use=vt100+enq, use=vt100+pfkeys,
 
 nsterm+acs|AppKit Terminal.app v41+ basic capabilities w/VT100 alternate-charset,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	enacs=\E(B\E)0, rmacs=^O,
-	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smacs=^N, use=nsterm+7,
 
 nsterm+mac|AppKit Terminal.app v41+ basic capabilities w/MacRoman alternate-charset,
 	acsc=+\335\,\334-\366.\3770#`\327a\:f\241g\261h#i\360jjkkllmmnno\370p\370q\321rrssttuuvvwwxxy\262z\263{\271|\255}\243~\245,
 	enacs=\E(B\E)0, rmacs=^O,
-	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smacs=^N, use=nsterm+7,
 
 # compare with xterm+sl-twm
@@ -1248,10 +1248,11 @@ nsterm|Apple_Terminal|AppKit Terminal.app,
 #
 # NOTE: When tack tests (csr) + (nel) iTerm.app crashes, so (csr) is
 # disabled.
-iTerm.app|iTerm.app terminal emulator for Mac OS X,
+iTerm.app|iterm|iTerm.app terminal emulator for Mac OS X,
 	bce, bw@,
-	csr@, kend=\EOF, khome=\EOH, use=xterm+256setaf,
-	use=nsterm-16color,
+	csr@, dim@, kend=\EOF, khome=\EOH,
+	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	use=xterm+256setaf, use=nsterm-16color,
 
 # xnuppc - Darwin PowerPC Console (a.k.a. "darwin")
 #
@@ -3423,6 +3424,17 @@ vt520|DEC VT520,
 vt525|DEC VT525,
 	use=vt520,
 
+# I just got a brand new Boundless VT520 with that company's "ANSI 2011"
+# Keyboard, which replaces the old LK41R-AA keyboard.
+#
+# In trying to get the function keys to work, I had to cobble my own
+# terminfo.src entry, since the existing vt520 entry doesn't include most of
+# the function keys.  If I blend the entries for "vt420f" and "vt220+keypad"
+# I seem to get them all -Mike Gran
+vt520ansi|Boundless VT520 ANSI,
+	use=ansi+rca, use=vt420f, use=vt220+keypad,
+	use=ansi+tabs,
+
 #### VT100 emulations
 #
 
@@ -4078,24 +4090,25 @@ xterm-basic|modern xterm terminal emulator - common,
 	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H,
 	cud=\E[%p1%dB, cud1=^J, cuf=\E[%p1%dC, cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[A,
-	cvvis=\E[?12;25h, dch=\E[%p1%dP, dch1=\E[P, dl=\E[%p1%dM,
-	dl1=\E[M, ech=\E[%p1%dX, ed=\E[J, el=\E[K, el1=\E[1K,
-	flash=\E[?5h$<100/>\E[?5l, home=\E[H, hpa=\E[%i%p1%dG,
-	ht=^I, hts=\EH, ich=\E[%p1%d@, il=\E[%p1%dL, il1=\E[L,
-	ind=^J, invis=\E[8m, is2=\E[!p\E[?3;4l\E[4l\E>,
-	kmous=\E[M, meml=\El, memu=\Em, op=\E[39;49m, rc=\E8,
-	rev=\E[7m, ri=\EM, rmacs=\E(B, rmam=\E[?7l,
-	rmcup=\E[?1049l, rmir=\E[4l, rmkx=\E[?1l\E>,
-	rmm=\E[?1034l, rmso=\E[27m, rmul=\E[24m, rs1=\Ec,
-	rs2=\E[!p\E[?3;4l\E[4l\E>, sc=\E7, setab=\E[4%p1%dm,
-	setaf=\E[3%p1%dm,
+	cvvis=\E[?12;25h, dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m,
+	dl=\E[%p1%dM, dl1=\E[M, ech=\E[%p1%dX, ed=\E[J, el=\E[K,
+	el1=\E[1K, flash=\E[?5h$<100/>\E[?5l, home=\E[H,
+	hpa=\E[%i%p1%dG, ht=^I, hts=\EH, ich=\E[%p1%d@,
+	il=\E[%p1%dL, il1=\E[L, ind=^J, invis=\E[8m,
+	is2=\E[!p\E[?3;4l\E[4l\E>, kmous=\E[M, meml=\El,
+	memu=\Em, op=\E[39;49m, rc=\E8, rev=\E[7m, ri=\EM,
+	ritm=\E[23m, rmacs=\E(B, rmam=\E[?7l, rmcup=\E[?1049l,
+	rmir=\E[4l, rmkx=\E[?1l\E>, rmm=\E[?1034l, rmso=\E[27m,
+	rmul=\E[24m, rs1=\Ec, rs2=\E[!p\E[?3;4l\E[4l\E>, sc=\E7,
+	setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
 	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
 	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
-	sgr0=\E(B\E[m, smacs=\E(0, smam=\E[?7h, smcup=\E[?1049h,
-	smir=\E[4h, smkx=\E[?1h\E=, smm=\E[?1034h, smso=\E[7m,
-	smul=\E[4m, tbc=\E[3g, vpa=\E[%i%p1%dd, E3=\E[3;J,
-	use=ansi+pp, use=xterm+kbs, use=vt100+enq,
+	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p5%t;2%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
+	sgr0=\E(B\E[m, sitm=\E[3m, smacs=\E(0, smam=\E[?7h,
+	smcup=\E[?1049h, smir=\E[4h, smkx=\E[?1h\E=,
+	smm=\E[?1034h, smso=\E[7m, smul=\E[4m, tbc=\E[3g,
+	vpa=\E[%i%p1%dd, E3=\E[3;J, use=ansi+pp, use=xterm+kbs,
+	use=vt100+enq,
 
 # From: David J. MacKenzie <djm@va.pubnix.com>, 14 Nov 1997
 # In retrospect, something like xterm-r6 was intended here -TD
@@ -4152,19 +4165,6 @@ xterm-256color|xterm with 256 colors,
 	use=xterm+256color, use=xterm-new,
 xterm-88color|xterm with 88 colors,
 	use=xterm+88color, use=xterm-256color,
-
-# These two are used to demonstrate the any-event mouse support, i.e., by
-# using an extended name "XM" which tells ncurses to put the terminal into
-# a special mode when initializing the xterm mouse.
-xterm+sm+1002|testing xterm-mouse,
-	XM=\E[?1002%?%p1%{1}%=%th%el%;, use=xterm-new,
-xterm+sm+1003|testing xterm-mouse,
-	XM=\E[?1003%?%p1%{1}%=%th%el%;, use=xterm-new,
-
-xterm-1002|testing xterm-mouse,
-	use=xterm+sm+1002, use=xterm-new,
-xterm-1003|testing xterm-mouse,
-	use=xterm+sm+1003, use=xterm-new,
 
 # This chunk is based on suggestions by Ailin Nemui and Nicholas Marriott, who
 # asked for some of xterm's advanced features to be added to its terminfo
@@ -4366,6 +4366,132 @@ xterm-nic|xterm with ich/ich1 suppressed for non-curses programs,
 # From: Mark Sheppard <kimble@mistral.co.uk>, 4 May 1996
 xterm1|xterm terminal emulator ignoring the alternate screen buffer,
 	rmcup@, smcup@, use=xterm,
+
+#### XTERM Mouse
+# The xterm mouse protocol is used by other terminal emulators.
+# In this section, two extended capabilities are used to illustrate the mouse
+# protocol: XM and xm.  The "XM" capability is recognized by ncurses to allow
+# enabling/disabling other mouse protocols.  The "xm" capability describes the
+# mouse response; currently there is no interpreter which would use this
+# information to make the mouse support completely data-driven.
+
+# Here is the "original" xterm mouse protocol.
+#
+# First seen in X10.3, February 1986, this likely dates from 1985 based on the
+# copyright dates in the sources.  A comment in charproc.c notes "MIT bogus
+# sequence", referring to the fact that it does not correspond to a "real"
+# terminal.  The mouse responses for the X10 protocol are sent only for
+# button-presses.
+xterm+x10mouse|X10 xterm mouse protocol,
+	kmous=\E[M, XM=\E[?9%?%p1%{1}%=%th%el%;,
+	xm=\E[M%p3%' '%+%c%p2%'!'%+%c%p1%'!'%+%c,
+xterm-x10mouse|X10 xterm mouse,
+	use=xterm+x10mouse, use=xterm,
+
+# Here is the conventional xterm mouse protocol, introduced with X11R1 in
+# September 1987.
+#
+# The mouse responses for the X11 protocol covered button releases, as well as
+# modifiers:
+#  shift    4
+#  alt/meta 8 (technically the "mod1" mask, because X11 has no such keys)
+#  control 16
+#
+# The modifiers are not reflected in this description because as used in xterm
+# they are normally inaccessible because the translations resources assign
+# shift and control to other features.  However, they are important because
+# they take up space in the first byte of the response.  The other bits of this
+# byte are used to encode the button number for both presses and releases.
+# In the X11 protocol, any button-release is encoded with "3" (the lowest 2
+# bits in the byte).  Later work on XFree86 xterm used the remaining 3 bits to
+# provide additional features, e.g., wheel mouse.
+#
+# X11R1's xterm also supported an "emacs" mouse protocol, with final character
+# "t" or "T", which was activated by double-clicking.  The "t" response was
+# used when the starting/ending positions were the same.
+#
+# X11R3 (February 1988) added the highlight/tracking mode.
+#
+# X11R4 (December 1989) added the control sequences document, listing the
+# control sequences for the X10/X11 protocols without descriptions.  It also
+# mentioned the "emacs" ("T") response.  Comments in button.c referred to the
+# X11 protocol as "DEC vt200 compatible", although DEC offered no such terminal.
+#
+# X11R5 (November 1993) gave a description of the mouse protocol.
+#
+# X11R6 (January 1995) moved the control sequences document out of the xterm
+# source-directory to xc/doc/specs/xterm, polishing the formatting but adding
+# no new information.
+xterm+x11mouse|X11 xterm mouse protocol,
+	kmous=\E[M, XM=\E[?1000%?%p1%{1}%=%th%el%;,
+	xm=\E[M%?%p4%t3%e%p3%' '%+%c%;%p2%'!'%+%c%p1%'!'%+%c,
+xterm-x11mouse|X11 mouse,
+	use=xterm+x11mouse, use=xterm,
+
+# Here is a suggested description of the xterm highlighting protocol.
+# A more complicated example could be constructed to account for the "t"
+# response.
+xterm+x11hilite|X11 xterm mouse protocol with highlight,
+	kmous=\E[M, XM=\E[?1001%?%p1%{1}%=%th%el%;,
+	xm=\E[%p7%'!'%+%p6%'!'%+%c%p9%'!'%+%c%p8%'!'%+%c%p2%'!'%+%c%p1%'!'%+%cT,
+xterm-x11hilite|X11 mouse with highlight,
+	use=xterm+x11mouse, use=xterm,
+
+# The preceding were the sources from X Consortium.  Other sources (or patches)
+# were available.  Starting in mid-1995, XFree86 developers collected some of
+# those changes and began improvements, e.g., to support color.  This was, by
+# the way, around the same time that rxvt developers began implementing color,
+# though dates (and attributions) are not well documented.  I became interested
+# in xterm in late 1995, and involved in early 1996.  To complete the picture,
+# CDE's dtterm was introduced around the same time, with no mouse protocol -TD
+
+# xterm patch #83 (1998/10/7), added Jason Bacon's changes to provide an
+# "any-event" mouse mode. 
+xterm+sm+1002|xterm any-event mouse,
+	kmous=\E[M, XM=\E[?1002%?%p1%{1}%=%th%el%;,
+xterm-1002|xterm any-event mouse,
+	use=xterm+sm+1002, use=xterm,
+
+xterm+sm+1003|testing xterm-mouse,
+	kmous=\E[M, XM=\E[?1003%?%p1%{1}%=%th%el%;,
+
+xterm-1003|testing xterm-mouse,
+	use=xterm+sm+1003, use=xterm,
+
+# xterm patch #116 (1999/9/25) added Stephen P Wall's changes to support DEC
+# locator mode.
+
+# xterm patch #120 (1999/10/28) added my change to support wheel mouse, by
+# dropping support for the X11 mouse protocol's shift-modifier and using
+# available bits in the first byte of the response to encode buttons 4 and 5.
+# xterm patch #126 (2000/2/8) amended that change to avoid conflicting with
+# older configurations which might have used the obsolete modifiers.
+
+# xterm patch #262 (2010/8/30) added Ryan Johnson's changes to provide a mode
+# where the coordinates in the mouse response would be encoded in UTF-8,
+# thereby extending the range of coordinates past 222=(255-33).  This is the
+# "1005" mouse mode.
+xterm+sm+1005|xterm UTF-8 mouse,
+	kmous=\E[M, XM=\E[?1005;1000%?%p1%{1}%=%th%el%;,
+	xm=\E[M%?%p4%t3%e%p3%' '%+%c%;%p2%'!'%+%u%p1%'!'%+%u,
+xterm-1005|xterm UTF-8 mouse,
+	use=xterm+sm+1005, use=xterm,
+
+# xterm patch #277 (2012/1/7) provides a mode where the mouse response uses
+# SGR-style parameters.
+#
+# Someone stated that the 1005 mouse mode would not be handled properly in luit.
+# (By the way, this is a problem with the X11 protocol).  A more plausible
+# criticism is that the responses provided by the 1005 mode are not distinct
+# from the non-1005 responses.
+#
+# As an alternative (and fixing the longstanding limitation of X11 mouse
+# protocol regarding button-releases), I provided this:
+xterm+sm+1006|xterm SGR-mouse,
+	kmous=\E[<, XM=\E[?1006;1000%?%p1%{1}%=%th%el%;,
+	xm=\E[<%p1%d;%p2%d;%p3%d;%?%p4%tM%em%;,
+xterm-1006|xterm SGR-mouse,
+	use=xterm+sm+1006, use=xterm,
 
 #### KTERM
 # (kterm: this had extension capabilities ":KJ:TY=ascii:" -- esr)
@@ -4601,7 +4727,10 @@ gnome-2008|GNOME Terminal snapshot 2.22.3,
 #
 # Testing with tack shows that flash does not/has not worked -TD
 vte-2012|VTE 0.34.1,
-	flash@, ritm=\E[23m, sitm=\E[3m, use=vte-2008,
+	ncv#16,
+	dim=\E[2m, flash@, invis=\E[8m, ritm=\E[23m,
+	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p5%t;2%;%?%p7%t;8%;%?%p1%p3%|%t;7%;m%?%p9%t\016%e\017%;,
+	sitm=\E[3m, use=vte-2008,
 # Version 3.6.1 sets TERM to xterm-256color (still hardcoded), which has
 # 61 differences from a correct entry for gnome terminal.
 gnome-2012|GNOME Terminal 3.6.0,
@@ -4703,6 +4832,9 @@ kvt|KDE terminal,
 # Updated for konsole 1.6.6:
 #    add control-key modifiers for function-keys, etc.
 #
+# Updated for konsole 2.12.4:
+#    add sitm/ritm
+#
 # vttest menu 1 shows that both konsole and gnome terminal do wrapping
 # different from xterm (and vt100's).  They have the same behavior in this
 # detail, but it is unclear which copies the other.
@@ -4714,11 +4846,11 @@ konsole-base|KDE console window,
 	hpa=\E[%i%p1%dG, indn=\E[%p1%dS, kbs=\177, kdch1=\E[3~,
 	kend=\E[4~, kf1@, kf10@, kf11@, kf12@, kf13@, kf14@, kf15@, kf16@,
 	kf17@, kf18@, kf19@, kf2@, kf20@, kf3@, kf4@, kf5@, kf6@, kf7@, kf8@,
-	kf9@, kfnd@, khome=\E[1~, kslt@, rin=\E[%p1%dT, rmam=\E[?7l,
-	rmso=\E[27m, rmul=\E[24m,
+	kf9@, kfnd@, khome=\E[1~, kslt@, rin=\E[%p1%dT, ritm=\E[23m,
+	rmam=\E[?7l, rmso=\E[27m, rmul=\E[24m,
 	rs2=\E7\E[r\E8\E[m\E[?7h\E[?1;3;4;6l\E[4l\E>\E[?1000l\E[?25h,
 	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;,
-	sgr0=\E[0m\017, smam=\E[?7h, vpa=\E[%i%p1%dd,
+	sgr0=\E[0m\017, sitm=\E[3m, smam=\E[?7h, vpa=\E[%i%p1%dd,
 	use=ecma+color, use=xterm-r6,
 konsole-linux|KDE console window with linux keyboard,
 	kf1=\E[[A, kf10=\E[21~, kf11=\E[23~, kf12=\E[24~, kf13@,
@@ -4771,8 +4903,8 @@ mlterm|multi lingual terminal emulator,
 # mlterm.ti; this entry is based on testing with tack and vttest -TD
 mlterm3|multi lingual terminal emulator,
 	kf1=\E[11~, kf2=\E[12~, kf3=\E[13~, kf4=\E[14~,
-	use=xterm+app, use=xterm+pcf0, use=xterm+pcc2,
-	use=xterm+pce2, use=mlterm2,
+	ritm=\E[23m, sitm=\E[3m, use=xterm+app, use=xterm+pcf0,
+	use=xterm+pcc2, use=xterm+pce2, use=mlterm2,
 
 # This is mlterm 2.9.3's mlterm.ti, with some additions/corrections -TD
 #
@@ -4987,6 +5119,25 @@ rxvt+pcfkeys|fragment for PC-style fkeys,
 	kLFT5=\EOd, kNXT5=\E[6\^, kNXT6=\E[6@, kPRV5=\E[5\^,
 	kPRV6=\E[5@, kRIT5=\EOc, kUP=\E[a, kUP5=\EOa,
 
+# rxvt was originally "xvt", first announced in April 1993:
+#	http://www.informatica.co.cr/linux-desktops/research/1993/0416.html
+#
+# Though its change-log does not mention this, John Davis has stated that he
+# was the author of the changes to use the bce ("new color model") which was
+# incorporated into rxvt 2.11 (June 15, 1995).  The change-log does not give
+# dates, nor give developer's names.  Initial color support was added for rxvt
+# "2.0", which was sometime in 1994.
+#
+# rxvt had usable color support with 2.16 (April 2, 1996), with some help by my work on
+# vttest, as well as bug reports to Mark Olesen.  For instance, the fix
+# mentioned here
+#	http://web.archiveorange.com/archive/v/6ETvLb5wHtbbzCaS4S9J
+# was from one of my bug-reports -TD
+#
+# While the color model both for xterm and rxvt was based on Linux console,
+# Olesen (or possibly Davis) diverged in one respect from Linux's bce color
+# behavior: inserting/deleting characters does not fill the newly empty cell
+# with the default background color.
 rxvt|rxvt terminal emulator (X Window System),
 	ncv@,
 	hpa=\E[%i%p1%dG, kf0=\E[21~, sgr0=\E[m\017,
@@ -5071,6 +5222,23 @@ rxvt-unicode-256color|rxvt-unicode terminal with 256 colors (X Window System),
 #
 # mrxvt is based on rxvt 2.7.11, but has by default XTERM_FKEYS defined, which
 # makes its function-keys different from other flavors of rxvt -TD
+#
+# Testing with tack:
+# +	made custom description (below) to work, though it sets TERM=xterm.
+#
+# Testing with vttest:
+# +	While "based on" rxvt, some of the basic functionality is broken.  The
+#	window collapses to a single line when running several of the screens
+#	in vttest, e.g., the tests for cursor movement, screen features,
+#	double-sized characters.
+# +	The vt52 test works properly, but this is an exception.  Due to the
+#	other bug(s) most of vttest is untestable.
+# +	the color test using ECH shows a gap in the bce model, like rxvt.
+#
+# Testing with xterm "vttest" scripts:
+# +	resize.pl does not work because mrxvt does implement CSI 18 t
+#	(not in rxvt, but not documented by mrxvt) but not CSI 19 t.
+# +	none of the "dynamic colors" (OSC colors) scripts work.
 mrxvt|multitabbed rxvt,
 	XT,
 	kEND=\E[8;2~, kHOM=\E[7;2~, kcub1=\E[D, kcud1=\E[B,
@@ -5340,9 +5508,11 @@ decansi|ANSI emulation with DEC compatibility hacks,
 	u7=\E[6n, vpa=\E[%i%p1%dd,
 
 #### VWM
+# http://vwm.sourceforge.net/
 #
-# vwmterm is a terminal emulator written for the VWM console window manager
-#
+# VWM 2.0.2 (2009-05-01)
+# vwmterm is a terminal emulator written for the VWM console window manager.
+# This version is obsolete, replaced by libvterm in 2.1.0 (2009-10-23).
 vwmterm|(vwm term),
 	am, bce, ccc, mir, msgr, npc, xenl, xon,
 	colors#8, pairs#64,
@@ -5518,7 +5688,7 @@ st-256color|stterm-256color|simpleterm with 256 colors,
 	use=xterm+256color, use=st,
 
 #### TERMINATOR
-# http://software.jessies.org/terminator/
+# https://code.google.com/p/jessies/
 # Tested using their Debian package org.jessies.terminator 6.104.3256 on 64-bit
 # Debian/current -TD (2011/8/20)
 #
@@ -5589,7 +5759,7 @@ terminator|Terminator no line wrap,
 #### TERMINOLOGY
 # http://enlightenment.org
 #
-# Tested terminology-0.3.0, using tack and vttest.  This is not a vt100
+# Tested terminology-0.3.0, 0.6.1, using tack and vttest.  This is not a vt100
 # emulator, nor is it compatible with xterm, but it uses a few features from
 # both -TD
 #
@@ -5605,20 +5775,21 @@ terminator|Terminator no line wrap,
 #	no blink
 #	uses bce model for colors, but (see below) fails the vttest screens
 #	has partial support for 256color feature.
-#	tack cursor-keys:
+#	tack function-keys (a subset of xterm+pcf0), and
+#	tack cursor-keys (a subset of xterm+pce2):
 #			ctrl+shift (ignored)
 #		2	shift
 #			shift-alt modifier -> shift (2)
 #		3	alt
 #		4
 #		5	ctrl
-#	tack modifiers do not work for fkeys
+#	tack modifiers did not work for fkeys in 0.3.0; subset works in 0.6.1
 #	ctrl + khome/kend works - none of the other modifiers do
 # vttest -
 #	spits lots of messages from termptyesc.c especially in vttest.
 #	no 132-column mode
 #	fails menu 1, 2 (definitely not vt100-compatible)
-#	primary and
+#	primary (claims vt420 with several options, apparently none work) and
 #	secondary report says (perhaps... vt420): \E[>41;285;0c
 #	CHA, HPR, VPA, CNL, CPL work
 #	BCE with ED/EL - fail
@@ -5629,6 +5800,10 @@ terminator|Terminator no line wrap,
 #	X10 and Normal mouse work
 #	Any-event mouse works
 #	Mouse button-event works
+#
+# This description uses xterm+pcf0, which is misleading because the program
+# does not handle combinations of modifiers - but listing them all would
+# involve more effort than its developers spent -TD
 terminology|EFL-based terminal emulator,
 	mc5i@, xon@,
 	blink@, ed@, el@, el1@, invis=\E[8m, kLFT=\E[1;2D,
@@ -5643,7 +5818,7 @@ terminology|EFL-based terminal emulator,
 	kLFT3=\E[1;3D, kLFT4=\E[1;4D, kLFT5=\E[1;5D,
 	kLFT6=\E[1;6D, kLFT7=\E[1;7D, kRIT3=\E[1;3C,
 	kRIT4=\E[1;4C, kRIT5=\E[1;5C, kRIT6=\E[1;6C,
-	kRIT7=\E[1;7C, kUP=\E[1;2A, use=vt100,
+	kRIT7=\E[1;7C, kUP=\E[1;2A, use=xterm+pcf0, use=vt100,
 	use=xterm+256setaf,
 
 ######## UNIX VIRTUAL TERMINALS, VIRTUAL CONSOLES, AND TELNET CLIENTS
@@ -5722,7 +5897,56 @@ eterm-color|Emacs term.el terminal emulator term-protocol-version 0.96,
 #      S0   (str)   Switch charset 'G0' to the specified charset.
 #      E0   (str)   Switch charset 'G0' back to standard charset.
 #
-# tested with screen 3.09.08
+# Initially tested with screen 3.09.08
+#
+# According to its manual page
+#
+#      Screen is a full-screen window manager that multiplexes a physical
+#      terminal between several processes (typically interactive shells).  Each
+#      virtual terminal provides the functions of a DEC VT100 terminal and, in
+#      addition, several control functions from the ISO 6429 (ECMA 48, ANSI
+#      X3.64) and ISO 2022 standards (e.g.  insert/delete line and support for
+#      multiple character sets).
+#
+# However, there is a design error in its support for video highlights.  The
+# program uses a table (rendlist) which equates the SGR codes to terminal
+# capabilities.  That, and color-decoding are hardcoded in screen; its behavior
+# is modified only by the presence or absence of the corresponding capabilities.
+# Not by their values.
+#
+# If screen sets the TERMCAP variable, it uses hardcoded strings which
+# correspond to the rendlist table.
+#
+# The table gives this information:
+#
+#	SGR	capability
+#	---	---------
+#	1	bold
+#	2	dim
+#	3	standout
+#	4	underline
+#	5	blink
+#	-	(unused 6)
+#	7	reverse
+#	-	(unused 8-21)
+#	22	reset bold, standout and dim
+#	23	reset standout
+#	24	reset underline
+#	25	reset blink
+#	-	(unused 26)
+#	27	reset reverse
+#
+# ECMA-48 differs from this: 3 and 23 set and reset italics, respectively.
+# ECMA-48 does not define "standout" - that is a termcap/terminfo abstraction.
+# Without some redesign of screen, it is not possible to extend the set of
+# capabilities.  Substitution would be possible, e.g., sending italics in
+# place of underline.
+#
+# Because screen uses hard-coded parsing, it does not check if two capabilities
+# use the same value.  For example, changing standout to be the same as any of
+# the other capabilities will confuse screen.  Curses applications which use
+# sgr are not impacted (because that usually resets all capabilities before
+# setting any), but termcap applications do not use sgr -TD
 screen|VT 100/ANSI X3.64 virtual terminal,
 	OTbs, OTpt, am, km, mir, msgr, xenl, G0,
 	colors#8, cols#80, it#8, lines#24, ncv@, pairs#64, U8#1,
@@ -5807,6 +6031,12 @@ screen-256color-bce-s|GNU Screen with 256 colors, BCE, and status line,
 screen+fkeys|function-keys according to screen,
 	kend=\E[4~, kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS, kfnd@,
 	khome=\E[1~, kslt@,
+
+# See explanation before "screen" entry.  Cancel italics so that applications
+# do not assume screen supports the feature.  Add this tweak to entries which
+# extend screen for terminals which do support italics.
+screen+italics|screen cannot support italics,
+	ritm@, sitm@,
 #
 # Here are a few customized entries which are useful -TD
 #
@@ -5827,8 +6057,8 @@ screen+fkeys|function-keys according to screen,
 screen.xterm-xfree86|screen.xterm-new|screen customized for modern xterm,
 	bce@, bw,
 	invis@, kIC@, kNXT@, kPRV@, meml@, memu@,
-	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m,
-	E3@, use=screen+fkeys, use=xterm-new,
+	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p5%t;2%;m,
+	E3@, use=screen+italics, use=screen+fkeys, use=xterm-new,
 # xterm-r6 does not really support khome/kend unless it is propped up by
 # the translations resource.
 screen.xterm-r6|screen customized for X11R6 xterm,
@@ -5850,11 +6080,11 @@ screen.Eterm|screen in Eterm,
 screen.mrxvt|screen in mrxvt,
 	use=screen+fkeys, use=mrxvt,
 screen.vte|screen in any VTE-based terminal,
-	use=screen+fkeys, use=vte,
+	use=screen+italics, use=screen+fkeys, use=vte,
 screen.gnome|screen in GNOME Terminal,
-	use=screen+fkeys, use=gnome,
+	use=screen+italics, use=screen+fkeys, use=gnome,
 screen.konsole|screen in KDE console window,
-	use=screen+fkeys, use=konsole,
+	use=screen+italics, use=screen+fkeys, use=konsole,
 # fix the backspace key
 screen.linux|screen in linux console,
 	bw,
@@ -5877,7 +6107,7 @@ screen.mlterm|screen in mlterm,
 #	defbce on
 screen-bce.xterm-new|screen optimized for modern xterm,
 	bce,
-	ech@, use=screen.xterm-new,
+	ech@, use=screen+italics, use=screen.xterm-new,
 screen-bce.rxvt|screen optimized for rxvt,
 	bce,
 	ech@, use=screen.rxvt,
@@ -5889,10 +6119,10 @@ screen-bce.mrxvt|screen optimized for mrxvt,
 	ech@, use=screen.mrxvt,
 screen-bce.gnome|screen optimized for GNOME-Terminal,
 	bce,
-	ech@, use=screen.gnome,
+	ech@, use=screen+italics, use=screen.gnome,
 screen-bce.konsole|screen optimized for KDE console window,
 	bce,
-	ech@, use=screen.konsole,
+	ech@, use=screen+italics, use=screen.konsole,
 screen-bce.linux|screen optimized for linux console,
 	bce,
 	ech@, use=screen.linux,
@@ -7860,10 +8090,10 @@ adm20|lear siegler adm20,
 	sgr0=\E(, smso=\E),
 adm21|lear siegler adm21,
 	xmc#1,
-	bel=^G, cr=^M, cud1=^J, dch1=\EW, dl1=30*\ER, ed=\EY, el=\ET,
-	ich1=\EQ, il1=30*\EE, ind=^J, invis@, kbs=^H, kcub1=^H,
-	kcud1=^J, kcuf1=^L, kcuu1=^K, khome=^^, use=adm+sgr,
-	use=adm3a,
+	bel=^G, cr=^M, cud1=^J, dch1=\EW, dl1=\ER$<30*>, ed=\EY,
+	el=\ET, ich1=\EQ, il1=\EE$<30*>, ind=^J, invis@, kbs=^H,
+	kcub1=^H, kcud1=^J, kcuf1=^L, kcuu1=^K, khome=^^,
+	use=adm+sgr, use=adm3a,
 # (adm22: ":em=:" was an obvious typo for ":ei=:"; also,
 # removed obsolete ":kn#7:ma=j^Jk^P^K^Pl ^R^L^L :";
 # removed bogus-looking \200 from before <cup>. -- esr)
@@ -11630,8 +11860,8 @@ att605-pc|ATT 605 in pc term mode,
 	kdl1=\E[M, kend=\E[F, kf1=\E[M, kf10=\E[V, kf2=\E[N,
 	kf3=\E[O, kf4=\E[P, kf5=\E[Q, kf6=\E[R, kf7=\E[S, kf8=\E[T,
 	kf9=\E[U, khome=\E[H, kich1=\E[@, knp=\E[G, kpp=\E[I,
-	rmsc=400\E[50;0|, smsc=250\E[?11l\E[50;1|, xoffc=g,
-	xonc=e, use=att605,
+	rmsc=\E[50;0|$<400>, smsc=\E[?11l\E[50;1|$<250>,
+	xoffc=g, xonc=e, use=att605,
 att605-w|AT&T 605-w 132 column 102 key keyboard,
 	cols#132, wsl#132,
 	is1=\E[8;0|\E[?4;5;13;15l\E[13;20l\E[?3;7h\E[12h\E(B\E)0,
@@ -13814,7 +14044,7 @@ dg210|dg-ansi|Data General 210/211,
 dg211|Data General d211,
 	cnorm=^L, cvvis=^L^R, ht=^I, ind@, kbs=^Y, kf0@, kf1@, kf2@, kf3@,
 	kf4@, kf5@, kf6@, kf7@, kf8@, kf9@, lf0@, nel=^M^Z, rmcup=^L,
-	rmso=\036E$<\0/>, smcup=^L^R, smso=\036D$<5/>, use=dg200,
+	rmso=\036E$<0/>, smcup=^L^R, smso=\036D$<5/>, use=dg200,
 
 # dg450 from Cornell (not official)
 dg450|dg6134|data general 6134,
@@ -14795,7 +15025,7 @@ sb1|beehive superbee,
 	smso=\E_1, smul=\E_0, tbc=\E3,
 sbi|superbee|beehive superbee at Indiana U.,
 	xsb,
-	cr=\r$<1>, il1=1\EN\EL$<9>\EQ \EP$<9> \EO\ER\EA,
+	cr=\r$<1>, il1=\EN$<1>\EL$<9>\EQ \EP$<9> \EO\ER\EA,
 	use=sb1,
 # Alternate (older) description of Superbee - f1=escape, f2=^C.
 # Note: there are at least 3 kinds of superbees in the world.  The sb1
@@ -18188,7 +18418,7 @@ osexec|Osborne executive,
 #
 
 # See
-#	http://www.minix3.org/manpages/man4/console.4.html
+#	http://www.minix3.org/manpages/html4/console.html
 minix|minix console (v3),
 	acsc=+\020\,\021-\030.^Y0\333`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~p\304q\304r\304s_t\303u\264v\301w\302x\263y\363z\362{\343|\330}\234~\376,
 	kdch1=\177, kend=\E[Y, kf0=\E[21~, kf1=\E[11~, kf10=\E[21~,
@@ -18333,7 +18563,7 @@ megatek|pegasus workstation terminal emulator,
 xerox820|x820|Xerox 820,
 	am,
 	cols#80, lines#24,
-	bel=^G, clear=1^Z, cr=^M, cub1=^H, cud1=^J, cuf1=^L,
+	bel=^G, clear=\032$<1>, cr=^M, cub1=^H, cud1=^J, cuf1=^L,
 	cup=\E=%p1%{32}%+%c%p2%{32}%+%c, cuu1=^K, ed=^Q, el=^X,
 	home=^^, ind=^J,
 
@@ -19384,7 +19614,7 @@ h19|heath|h19-b|heathkit|heath-19|z19|zenith|heathkit h19,
 	clear=\EE, cnorm=\Ey4, cr=^M, cub1=^H, cud1=\EB, cuf1=\EC,
 	cup=\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EA, cvvis=\Ex4,
 	dch1=\EN, ed=\EJ, el=\EK, fsl=\Ek\Ey5, home=\EH, ht=^I, ind=^J,
-	ip=<1.5/>, kbs=^H, kcub1=\ED, kcud1=\EB, kcuf1=\EC,
+	ip=$<1.5/>, kbs=^H, kcub1=\ED, kcud1=\EB, kcuf1=\EC,
 	kcuu1=\EA, kf1=\ES, kf2=\ET, kf3=\EU, kf4=\EV, kf5=\EW,
 	kf6=\EP, kf7=\EQ, kf8=\ER, khome=\EH, lf6=blue, lf7=red,
 	lf8=white, ri=\EI, rmacs=\EG, rmir=\EO, rmso=\Eq, smacs=\EF,
@@ -20144,12 +20374,11 @@ ti924-8|Texas Instruments 924 VDT 8859/1 8 bit CTRL,
 	cup=%i\E[%p1%d;%p2%dH, cuu1=\E[A, cvvis=\E[?31h,
 	dl1=\E[M, ed=\E[J, el=\E[K, home=\E[H, ht=^I, hts=\EH,
 	il1=\E[L, ind=\ED, kbs=^H, kcub1=\E[D, kcud1=\E[B,
-	kcuf1=\E[C, kcuu1=\E[A, kdch1=P$<\233>, kf1=P$<\217>,
-	kf2=Q$<\217>, kf3=R$<\217>, kf4=S$<\217>, kf5=~$<\23316>,
-	kf6=~$<\23317>, kf7=~$<\23318>, kf8=~$<\23319>,
-	kf9=~$<\23320>, kich1=@$<\233>, rc=\E8, rev=\E[7m, ri=\EM,
-	rmso=\E[m, rmul=\E[m, sc=\E7, sgr0=\E[m, smso=\E[7m,
-	smul=\E[4m, tbc=\E[3g,
+	kcuf1=\E[C, kcuu1=\E[A, kdch1=\233P, kf1=\217P, kf2=\217Q,
+	kf3=\217R, kf4=\217S, kf5=\23316~, kf6=\23317~,
+	kf7=\23318~, kf8=\23319~, kf9=\23320~, kich1=\233@, rc=\E8,
+	rev=\E[7m, ri=\EM, rmso=\E[m, rmul=\E[m, sc=\E7, sgr0=\E[m,
+	smso=\E[7m, smul=\E[4m, tbc=\E[3g,
 ti924w|Texas Instruments 924 VDT 7 bit - 132 column mode,
 	cols#132, use=ti924,
 ti924-8w|Texas Instruments 924 VDT 8 bit - 132 column mode,
@@ -20818,7 +21047,7 @@ aj510|Anderson-Jacobson model 510,
 	cols#80, lines#24,
 	clear=^L, cub1=^H, cuf1=\EX,
 	cup=\E#%p1%{32}%+%c%p2%{32}%+%c, cuu1=\EY,
-	dch1=.1*\E'D, dl1=\E&D$<2*/>, ed=\E'P, el=\E'L, ich1=,
+	dch1=\E'D$<.1*>, dl1=\E&D$<2*/>, ed=\E'P, el=\E'L, ich1=,
 	il1=\E&I$<2*/>, ip=$<.1*/>, kcub1=\EW, kcud1=\EZ,
 	kcuf1=\EX, kcuu1=\EY, pad=\177, rmcup=\E"N, rmir=\E'J,
 	rmso=\E"I, rmul=\E"U, smcup=\E"N, smir=\E'I, smso=\E"I,
@@ -21791,7 +22020,18 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 # TS is a string capability which acts like "tsl", but uses no parameter and
 #    goes to the first column of the "status line".
 # XM is a string capability which overrides ncurses's built-in string which
-#    enables xterm mouse mode.
+#    enables/disables xterm mouse mode.
+# xm shows the format of the mouse responses.  Parameters are (from zero):
+#	p1 = y-ordinate
+#	p2 = x-ordinate
+#	p3 = button
+#	p4 = state, e.g., pressed or released
+#	p6 = y-ordinate starting region
+#	p7 = x-ordinate starting region
+#	p8 = y-ordinate ending region
+#	p9 = x-ordinate ending region
+# Other extensions, used in xm:
+#	%u = UTF-8
 #
 #### Miscellaneous extensions:
 #
@@ -23345,5 +23585,49 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	  get the 256-color feature half-implemented -TD
 #	* updated "st" entry (leaving the 0.1.1 version as "simpleterm") to
 #	  0.4.1 -TD
+#
+# 2014-05-03
+#	* add vt520ansi (Mike Gran)
+#
+# 2014-05-24
+#	* correct several entries which had termcap-style padding used in
+#	  terminfo: adm21, aj510, alto-h19, att605-pc, x820 -TD
+#	* correct syntax for padding in some entries: dg211, h19 -TD
+#	* correct ti924-8 which had confused padding versus octal escapes -TD
+#	* correct padding in sbi entry -TD
+#
+# 2014-06-07
+#	* update xterm-new to patch #305 -TD
+#	+ change screen's smso to use SGR 7 (ECMA-80 reverse) rather than SGR 3
+#	  (italic).  This was a long-ago typo in screen 3.1.1 which was
+#	  overlooked until a few terminal emulators implemented the feature -TD
+#
+# 2014-06-09
+#	> fix regression in screen terminfo entries (reports by Christian
+#	  Ebert, Gabriele Balducci) -TD
+#	+ revert the change to screen; see notes for why this did not work -TD
+#	+ cancel sitm/ritm for entries which extend "screen", to work around
+#	  screen's hardcoded behavior for SGR 3 -TD
+#
+# 2014-06-14
+#	+ modify sgr for screen.xterm-new to support dim capability -TD
+#	+ add dim capability to nsterm+7 -TD
+#	+ cancel dim capability for iterm -TD
+#	+ add dim, invis capabilities to vte-2012 -TD
+#	+ add sitm/ritm to konsole-base and mlterm3 -TD
+#
+# 2014-10-06
+#	+ add xterm-1005 and xterm-1006 entries, with suggested extension
+#	  capability "xm" -TD
+#
+# 2014-10-07
+#	+ update test-report for mrxvt -TD
+#
+# 2014-10-11
+#	+ add xterm-x10mouse, xterm-x11mouse, etc. -TD
+#
+# 2014-10-18
+#	+ reviewed terminology 0.6.1, add function key definitions.  None of
+#	  the vt100-compatibility issues were improved -TD
 #
 ######## SHANTIH!  SHANTIH!  SHANTIH!
