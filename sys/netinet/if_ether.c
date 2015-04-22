@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.150 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.151 2015/04/22 04:12:22 jsg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -357,7 +357,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 {
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	struct mbuf *mh;
 	char addr[INET_ADDRSTRLEN];
 	int error;
