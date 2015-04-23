@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.21 2014/12/01 06:55:05 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.22 2015/04/23 09:45:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -49,7 +49,6 @@
 #define PIPEX_HASH_SIZE			(PIPEX_MAX_SESSION/PIPEX_HASH_DIV)
 #define PIPEX_HASH_MASK			(PIPEX_HASH_SIZE-1)	
 #define PIPEX_CLOSE_TIMEOUT		30
-#define PIPEX_DEQUEUE_LIMIT		(IFQ_MAXLEN >> 1)
 #define	PIPEX_PPPMINLEN			5
 	/* minimum PPP header length is 1 and minimum ppp payload length is 4 */
 
@@ -427,7 +426,7 @@ Static struct mbuf           *ip_is_idle_packet (struct mbuf *, int *);
 Static void                  pipex_session_log (struct pipex_session *, int, const char *, ...)  __attribute__((__format__(__printf__,3,4)));
 Static uint32_t              pipex_sockaddr_hash_key(struct sockaddr *);
 Static int                   pipex_sockaddr_compar_addr(struct sockaddr *, struct sockaddr *);
-Static int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct ifqueue *);
+Static int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct mbuf_queue *);
 Static void                  pipex_ppp_dequeue (void);
 Static void                  pipex_timer_start (void);
 Static void                  pipex_timer_stop (void);

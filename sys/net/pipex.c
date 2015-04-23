@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.68 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.69 2015/04/23 09:45:24 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -100,8 +100,8 @@ struct timeout pipex_timer_ch; 		/* callout timer context */
 int pipex_prune = 1;			/* walk list every seconds */
 
 /* pipex traffic queue */
-struct ifqueue pipexinq;
-struct ifqueue pipexoutq;
+struct mbuf_queue pipexinq = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
+struct mbuf_queue pipexoutq = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
 void *pipex_softintr = NULL;
 Static void pipex_softintr_handler(void *);
 
@@ -144,9 +144,7 @@ pipex_init(void)
 		LIST_INIT(&pipex_id_hashtable[i]);
 	for (i = 0; i < nitems(pipex_peer_addr_hashtable); i++)
 		LIST_INIT(&pipex_peer_addr_hashtable[i]);
-	/* queue and softintr init */
-	IFQ_SET_MAXLEN(&pipexinq, IFQ_MAXLEN);
-	IFQ_SET_MAXLEN(&pipexoutq, IFQ_MAXLEN);
+	/* softintr init */
 	pipex_softintr =
 	    softintr_establish(IPL_SOFTNET, pipex_softintr_handler, NULL);
 }
@@ -718,18 +716,11 @@ pipex_ppp_dequeue(void)
 	struct pipex_session *pkt_session;
 	u_int16_t proto;
 	struct mbuf *m;
-	int c, s;
+	struct mbuf_list ml;
 
 	/* ppp output */
-	for (c = 0; c < PIPEX_DEQUEUE_LIMIT; c++) {
-		s = splnet();
-		IF_DEQUEUE(&pipexoutq, m);
-		if (m == NULL) {
-			splx(s);
-			break;
-		}
-		splx(s);
-
+	mq_delist(&pipexoutq, &ml);
+	while ((m = ml_dequeue(&ml)) != NULL) {
 		pkt_session = m->m_pkthdr.ph_cookie;
 		if (pkt_session == NULL) {
 			m_freem(m);
@@ -765,15 +756,8 @@ pipex_ppp_dequeue(void)
 	}
 
 	/* ppp input */
-	for (c = 0; c < PIPEX_DEQUEUE_LIMIT; c++) {
-		s = splnet();
-		IF_DEQUEUE(&pipexinq, m);
-		if (m == NULL) {
-			splx(s);
-			break;
-		}
-		splx(s);
-
+	mq_delist(&pipexinq, &ml);
+	while ((m = ml_dequeue(&ml)) != NULL) {
 		pkt_session = m->m_pkthdr.ph_cookie;
 		if (pkt_session == NULL) {
 			m_freem(m);
@@ -781,42 +765,21 @@ pipex_ppp_dequeue(void)
 		}
 		pipex_ppp_input(m, pkt_session, 0);
 	}
-
-	/*
-	 * When packet remains in queue, it is necessary
-	 * to re-schedule software interrupt.
-	 */
-	s = splnet();
-	if (!IF_IS_EMPTY(&pipexinq) || !IF_IS_EMPTY(&pipexoutq))
-		softintr_schedule(pipex_softintr);
-	splx(s);
 }
 
 Static int
 pipex_ppp_enqueue(struct mbuf *m0, struct pipex_session *session,
-    struct ifqueue *queue)
+    struct mbuf_queue *mq)
 {
-	int s;
-
 	m0->m_pkthdr.ph_cookie = session;
 	/* XXX need to support other protocols */
 	m0->m_pkthdr.ph_ppp_proto = PPP_IP;
 
-	s = splnet();
-	if (IF_QFULL(queue)) {
-		IF_DROP(queue);
-		splx(s);
-		goto fail;
-	}
-	IF_ENQUEUE(queue, m0);
-	splx(s);
+	if (mq_enqueue(mq, m0) != 0)
+		return (1);
 
 	softintr_schedule(pipex_softintr);
 	return (0);
-
-fail:
-	/* caller is responsible for freeing m0 */
-	return (1);
 }
 
 /***********************************************************************
@@ -878,7 +841,7 @@ pipex_timer(void *ignored_arg)
 			 * mbuf queued in pipexinq or pipexoutq may have a
 			 * refererce to this session.
 			 */
-			if (!IF_IS_EMPTY(&pipexinq) || !IF_IS_EMPTY(&pipexoutq))
+			if (!mq_empty(&pipexinq) || !mq_empty(&pipexoutq))
 				continue;
 
 			pipex_destroy_session(session);
@@ -966,7 +929,7 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 			is_idle = 0;
 			m0 = ip_is_idle_packet(m0, &is_idle);
 			if (m0 == NULL)
-				goto drop;
+				goto dropped;
 			if (is_idle == 0)
 				/* update expire time */
 				session->stat.idle_time = 0;
@@ -976,19 +939,20 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 		if ((session->ppp_flags & PIPEX_PPP_ADJUST_TCPMSS) != 0) {
 			m0 = adjust_tcp_mss(m0, session->peer_mru);
 			if (m0 == NULL)
-				goto drop;
+				goto dropped;
 		}
 	} else
 		m0->m_flags &= ~(M_BCAST|M_MCAST);
 
 	/* output ip packets to the session tunnel */
 	if (pipex_ppp_enqueue(m0, session, &pipexoutq))
-		goto drop;
+		goto dropped;
 
 	return;
 drop:
 	if (m0 != NULL)
 		m_freem(m0);
+dropped:
 	session->stat.oerrors++;
 }
 
@@ -1323,10 +1287,13 @@ pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
 	}
 
 	/* input ppp packets to kernel session */
-	if (pipex_ppp_enqueue(m0, session, &pipexinq) == 0)
+	if (pipex_ppp_enqueue(m0, session, &pipexinq) != 0)
+		goto dropped;
+	else
 		return (NULL);
 drop:
 	m_freem(m0);
+dropped:
 	session->stat.ierrors++;
 	return (NULL);
 
@@ -3071,10 +3038,10 @@ pipex_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &pipex_enable));
 	case PIPEXCTL_INQ:
-	        return (sysctl_ifq(name + 1, namelen - 1,
+	        return (sysctl_mq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &pipexinq));
 	case PIPEXCTL_OUTQ:
-	        return (sysctl_ifq(name + 1, namelen - 1,
+	        return (sysctl_mq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &pipexoutq));
 	default:
 		return (ENOPROTOOPT);

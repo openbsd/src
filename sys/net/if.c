@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.329 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.330 2015/04/23 09:45:24 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2162,8 +2162,8 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 }
 
 int
-sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct ifqueue *ifq)
+sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct mbuf_queue *mq)
 {
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
@@ -2171,34 +2171,12 @@ sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	switch (name[0]) {
 	case IFQCTL_LEN:
-		return (sysctl_rdint(oldp, oldlenp, newp, ifq->ifq_len));
+		return (sysctl_rdint(oldp, oldlenp, newp, mq_len(mq)));
 	case IFQCTL_MAXLEN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ifq->ifq_maxlen));
+		    &mq->mq_maxlen)); /* XXX directly accessing maxlen */
 	case IFQCTL_DROPS:
-		return (sysctl_rdint(oldp, oldlenp, newp, ifq->ifq_drops));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
-}
-
-int
-sysctl_niq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct niqueue *niq)
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case IFQCTL_LEN:
-		return (sysctl_rdint(oldp, oldlenp, newp, niq_len(niq)));
-	case IFQCTL_MAXLEN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &niq->ni_q.mq_maxlen)); /* XXX */
-	case IFQCTL_DROPS:
-		return (sysctl_rdint(oldp, oldlenp, newp, niq_drops(niq)));
+		return (sysctl_rdint(oldp, oldlenp, newp, mq_drops(mq)));
 	default:
 		return (EOPNOTSUPP);
 	}

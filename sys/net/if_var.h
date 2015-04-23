@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.24 2015/04/07 10:46:20 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.25 2015/04/23 09:45:24 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -411,6 +411,8 @@ int		niq_enlist(struct niqueue *, struct mbuf_list *);
 #define niq_filter(_q, _f, _c)		mq_filter(&(_q)->ni_q, (_f), (_c))
 #define niq_len(_q)			mq_len(&(_q)->ni_q)
 #define niq_drops(_q)			mq_drops(&(_q)->ni_q)
+#define sysctl_niq(_n, _l, _op, _olp, _np, _nl, _niq) \
+    sysctl_mq((_n), (_l), (_op), (_olp), (_np), (_nl), &(_niq)->ni_q)
 
 extern struct ifnet_head ifnet;
 extern struct ifnet *lo0ifp;
@@ -441,10 +443,8 @@ void	if_clone_detach(struct if_clone *);
 int	if_clone_create(const char *);
 int	if_clone_destroy(const char *);
 
-int     sysctl_ifq(int *, u_int, void *, size_t *, void *, size_t,
-	    struct ifqueue *);
-int     sysctl_niq(int *, u_int, void *, size_t *, void *, size_t,
-	    struct niqueue *);
+int     sysctl_mq(int *, u_int, void *, size_t *, void *, size_t,
+	    struct mbuf_queue *);
 
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
