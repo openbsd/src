@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.110 2015/04/23 15:35:39 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.111 2015/04/23 16:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -315,50 +315,4 @@ man_mparse(const struct roff_man *man)
 
 	assert(man && man->parse);
 	return(man->parse);
-}
-
-void
-man_deroff(char **dest, const struct roff_node *n)
-{
-	char	*cp;
-	size_t	 sz;
-
-	if (n->type != ROFFT_TEXT) {
-		for (n = n->child; n; n = n->next)
-			man_deroff(dest, n);
-		return;
-	}
-
-	/* Skip leading whitespace and escape sequences. */
-
-	cp = n->string;
-	while ('\0' != *cp) {
-		if ('\\' == *cp) {
-			cp++;
-			mandoc_escape((const char **)&cp, NULL, NULL);
-		} else if (isspace((unsigned char)*cp))
-			cp++;
-		else
-			break;
-	}
-
-	/* Skip trailing whitespace. */
-
-	for (sz = strlen(cp); sz; sz--)
-		if (0 == isspace((unsigned char)cp[sz-1]))
-			break;
-
-	/* Skip empty strings. */
-
-	if (0 == sz)
-		return;
-
-	if (NULL == *dest) {
-		*dest = mandoc_strndup(cp, sz);
-		return;
-	}
-
-	mandoc_asprintf(&cp, "%s %*s", *dest, (int)sz, cp);
-	free(*dest);
-	*dest = cp;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.140 2015/04/19 14:57:16 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.141 2015/04/23 16:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1226,6 +1226,52 @@ roff_node_delete(struct roff_man *man, struct roff_node *n)
 	assert(n->nchild == 0);
 	roff_node_unlink(man, n);
 	roff_node_free(n);
+}
+
+void
+deroff(char **dest, const struct roff_node *n)
+{
+	char	*cp;
+	size_t	 sz;
+
+	if (n->type != ROFFT_TEXT) {
+		for (n = n->child; n != NULL; n = n->next)
+			deroff(dest, n);
+		return;
+	}
+
+	/* Skip leading whitespace and escape sequences. */
+
+	cp = n->string;
+	while (*cp != '\0') {
+		if ('\\' == *cp) {
+			cp++;
+			mandoc_escape((const char **)&cp, NULL, NULL);
+		} else if (isspace((unsigned char)*cp))
+			cp++;
+		else
+			break;
+	}
+
+	/* Skip trailing whitespace. */
+
+	for (sz = strlen(cp); sz; sz--)
+		if ( ! isspace((unsigned char)cp[sz-1]))
+			break;
+
+	/* Skip empty strings. */
+
+	if (sz == 0)
+		return;
+
+	if (*dest == NULL) {
+		*dest = mandoc_strndup(cp, sz);
+		return;
+	}
+
+	mandoc_asprintf(&cp, "%s %*s", *dest, (int)sz, cp);
+	free(*dest);
+	*dest = cp;
 }
 
 /* --- main functions of the roff parser ---------------------------------- */

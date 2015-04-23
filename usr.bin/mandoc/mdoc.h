@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.h,v 1.66 2015/04/18 17:50:02 schwarze Exp $ */
+/*	$OpenBSD: mdoc.h,v 1.67 2015/04/23 16:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -279,11 +279,3 @@ extern	const char *const *mdoc_macronames;
 
 /* Names of macro args.  Index is enum mdocargt. */
 extern	const char *const *mdoc_argnames;
-
-__BEGIN_DECLS
-
-struct	roff_man;
-
-void mdoc_deroff(char **, const struct roff_node *);
-
-__END_DECLS

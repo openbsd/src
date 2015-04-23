@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.146 2015/04/18 17:50:02 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.147 2015/04/23 16:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1458,7 +1458,7 @@ parse_man(struct mpage *mpage, const struct roff_meta *meta,
 			 */
 
 			title = NULL;
-			man_deroff(&title, body);
+			deroff(&title, body);
 			if (NULL == title)
 				return;
 
@@ -1702,7 +1702,7 @@ parse_mdoc_Nd(struct mpage *mpage, const struct roff_meta *meta,
 {
 
 	if (n->type == ROFFT_BODY)
-		mdoc_deroff(&mpage->desc, n);
+		deroff(&mpage->desc, n);
 	return(0);
 }
 
