@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.101 2015/01/16 06:40:22 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.102 2015/04/23 17:11:42 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -256,18 +256,6 @@ removehomedir(const char *user, uid_t uid, const char *dir)
 	if (rmdir(dir) < 0) {
 		warnx("Unable to remove all files in `%s'", dir);
 		return 0;
-	}
-	return 1;
-}
-
-/* return 1 if all of `s' is numeric */
-static int
-is_number(char *s)
-{
-	for ( ; *s ; s++) {
-		if (!isdigit((unsigned char) *s)) {
-			return 0;
-		}
 	}
 	return 1;
 }
@@ -827,7 +815,7 @@ read_defaults(user_t *up)
 				}
 				up->u_preserve = (strncmp(cp, "true", 4) == 0) ? 1 :
 						  (strncmp(cp, "yes", 3) == 0) ? 1 :
-						   atoi(cp);
+						   strtonum(optarg, INT_MIN, INT_MAX, NULL);
 			} else if (strncmp(s, "expire", 6) == 0) {
 				for (cp = s + 6 ; isspace((unsigned char)*cp); cp++) {
 				}
@@ -952,6 +940,38 @@ expand_len(const char *p, const char *username)
 	return alen;
 }
 
+/* see if we can find out the user struct */
+static struct passwd *
+find_user_info(const char *name)
+{
+	struct passwd	*pwp;
+	const char 	*errstr;
+	uid_t		uid;
+
+	if ((pwp = getpwnam(name)) == NULL) {
+		uid = strtonum(name, -1, UID_MAX, &errstr);
+		if (errstr == NULL)
+			pwp = getpwuid(uid);
+	}
+	return pwp;
+}
+
+/* see if we can find out the group struct */
+static struct group *
+find_group_info(const char *name)
+{
+	struct group	*grp;
+	const char 	*errstr;
+	gid_t		gid;
+
+	if ((grp = getgrnam(name)) == NULL) {
+		gid = strtonum(name, -1, GID_MAX, &errstr);
+		if (errstr == NULL)
+			grp = getgrgid(gid);
+	}
+	return grp;
+}
+
 /* add a user */
 static int
 adduser(char *login_name, user_t *up)
@@ -1069,15 +1089,13 @@ adduser(char *login_name, user_t *up)
 			errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
 		}
 		gid = up->u_uid;
-	} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
-		gid = grp->gr_gid;
-	} else if (is_number(up->u_primgrp) &&
-		   (grp = getgrgid((gid_t)atoi(up->u_primgrp))) != NULL) {
-		gid = grp->gr_gid;
 	} else {
-		(void) close(ptmpfd);
-		pw_abort();
-		errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
+		if ((grp = find_group_info(up->u_primgrp)) == NULL) {
+			(void) close(ptmpfd);
+			pw_abort();
+			errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
+		}
+		gid = grp->gr_gid;
 	}
 	/* check name isn't already in use */
 	if (!(up->u_flags & F_DUPUID) && getpwnam(login_name) != NULL) {
@@ -1538,15 +1556,14 @@ moduser(char *login_name, char *newlogin, user_t *up)
 					errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
 				}
 				pwp->pw_gid = up->u_uid;
-			} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
-				pwp->pw_gid = grp->gr_gid;
-			} else if (is_number(up->u_primgrp) &&
-				   (grp = getgrgid((gid_t)atoi(up->u_primgrp))) != NULL) {
-				pwp->pw_gid = grp->gr_gid;
 			} else {
-				(void) close(ptmpfd);
-				pw_abort();
-				errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
+				if ((grp = find_group_info(up->u_primgrp)) == NULL) {
+					(void) close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "group %s not found",
+					    up->u_primgrp);
+				}
+				pwp->pw_gid = grp->gr_gid;
 			}
 		}
 		if (up->u_flags & F_INACTIVE) {
@@ -1686,37 +1703,6 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	return 1;
 }
 
-
-/* see if we can find out the user struct */
-static struct passwd *
-find_user_info(char *name)
-{
-	struct passwd	*pwp;
-
-	if ((pwp = getpwnam(name)) != NULL) {
-		return pwp;
-	}
-	if (is_number(name) && (pwp = getpwuid((uid_t)atoi(name))) != NULL) {
-		return pwp;
-	}
-	return NULL;
-}
-
-/* see if we can find out the group struct */
-static struct group *
-find_group_info(char *name)
-{
-	struct group	*grp;
-
-	if ((grp = getgrnam(name)) != NULL) {
-		return grp;
-	}
-	if (is_number(name) && (grp = getgrgid((gid_t)atoi(name))) != NULL) {
-		return grp;
-	}
-	return NULL;
-}
-
 /* print out usage message, and then exit */
 void
 usermgmt_usage(const char *prog)
@@ -1779,6 +1765,7 @@ int
 useradd(int argc, char **argv)
 {
 	user_t	u;
+	const char *errstr;
 	int	defaultfield;
 	int	bigD;
 	int	c;
@@ -1854,10 +1841,10 @@ useradd(int argc, char **argv)
 			memsave(&u.u_shell, optarg, strlen(optarg));
 			break;
 		case 'u':
-			if (!is_number(optarg)) {
+			u.u_uid = strtonum(optarg, -1, UID_MAX, &errstr);
+			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-u uid], the uid must be numeric");
 			}
-			u.u_uid = atoi(optarg);
 			break;
 		case 'v':
 			verbose = 1;
@@ -1900,6 +1887,7 @@ usermod(int argc, char **argv)
 	user_t	u;
 	char	newuser[MaxUserNameLen + 1];
 	int	c, have_new_user;
+	const char *errstr;
 
 	(void) memset(&u, 0, sizeof(u));
 	(void) memset(newuser, 0, sizeof(newuser));
@@ -1987,11 +1975,11 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_SHELL;
 			break;
 		case 'u':
-			if (!is_number(optarg)) {
+			u.u_uid = strtonum(optarg, -1, UID_MAX, &errstr);
+			u.u_flags |= F_UID;
+			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-u uid], the uid must be numeric");
 			}
-			u.u_uid = atoi(optarg);
-			u.u_flags |= F_UID;
 			break;
 		case 'v':
 			verbose = 1;
@@ -2046,7 +2034,7 @@ userdel(int argc, char **argv)
 			defaultfield = 1;
 			u.u_preserve = (strcmp(optarg, "true") == 0) ? 1 :
 					(strcmp(optarg, "yes") == 0) ? 1 :
-					 atoi(optarg);
+					 strtonum(optarg, INT_MIN, INT_MAX, NULL);
 			break;
 		case 'r':
 			rmhome = 1;
@@ -2103,16 +2091,17 @@ groupadd(int argc, char **argv)
 	int	dupgid;
 	int	gid;
 	int	c;
+	const char *errstr;
 
 	gid = GID_MAX;
 	dupgid = 0;
 	while ((c = getopt(argc, argv, "g:ov")) != -1) {
 		switch(c) {
 		case 'g':
-			if (!is_number(optarg)) {
+			gid = strtonum(optarg, -1, GID_MAX, &errstr);
+			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-g gid], the gid must be numeric");
 			}
-			gid = atoi(optarg);
 			break;
 		case 'o':
 			dupgid = 1;
@@ -2186,6 +2175,7 @@ int
 groupmod(int argc, char **argv)
 {
 	struct group	*grp;
+	const char	*errstr;
 	char		buf[LINE_MAX];
 	char		*newname;
 	char		**cpp;
@@ -2200,10 +2190,10 @@ groupmod(int argc, char **argv)
 	while ((c = getopt(argc, argv, "g:n:ov")) != -1) {
 		switch(c) {
 		case 'g':
-			if (!is_number(optarg)) {
+			gid = strtonum(optarg, -1, GID_MAX, &errstr);
+			if (errstr != NULL) {
 				errx(EXIT_FAILURE, "When using [-g gid], the gid must be numeric");
 			}
-			gid = atoi(optarg);
 			break;
 		case 'o':
 			dupgid = 1;
