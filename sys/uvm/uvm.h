@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.57 2014/10/03 17:41:00 kettenis Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.58 2015/04/23 09:56:23 dlg Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -59,8 +59,6 @@ struct uvm {
 	/* Lock order: pageqlock, then fpageqlock. */
 	struct mutex fpageqlock;	/* lock for free page q  + pdaemon */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
-	boolean_t page_idle_zero;	/* TRUE if we should try to zero
-					   pages in the idle loop */
 	struct uvm_pmr_control pmr_control; /* pmemrange data */
 
 		/* page daemon trigger */

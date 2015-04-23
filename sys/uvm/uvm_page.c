@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.137 2015/03/14 03:38:53 jsg Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.138 2015/04/23 09:56:23 dlg Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -100,11 +100,6 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * of the things necessary to do idle page zero'ing efficiently.
  * We therefore provide a way to disable it from machdep code here.
  */
-/*
- * XXX disabled until we can find a way to do this without causing
- * problems for either cpu caches or DMA latency.
- */
-boolean_t vm_page_zero_enable = FALSE;
 
 /*
  * local variables
@@ -154,7 +149,6 @@ uvm_pageinsert(struct vm_page *pg)
 static __inline void
 uvm_pageremove(struct vm_page *pg)
 {
-
 	KASSERT(pg->pg_flags & PG_TABLED);
 	RB_REMOVE(uvm_objtree, &pg->uobject->memt, pg);
 
@@ -288,9 +282,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	uvmexp.anonmin = uvmexp.anonminpct * 256 / 100;
 	uvmexp.vnodemin = uvmexp.vnodeminpct * 256 / 100;
 	uvmexp.vtextmin = uvmexp.vtextminpct * 256 / 100;
-
-  	/* determine if we should zero pages in the idle loop. */
-	uvm.page_idle_zero = vm_page_zero_enable;
 
 	uvm.page_init_done = TRUE;
 }
@@ -1065,9 +1056,6 @@ uvm_pagefree(struct vm_page *pg)
 #endif
 
 	uvm_pmr_freepages(pg, 1);
-
-	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
-		uvm.page_idle_zero = vm_page_zero_enable;
 }
 
 /*
