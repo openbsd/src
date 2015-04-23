@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.191 2015/02/06 01:37:11 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.192 2015/04/23 17:03:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1041,6 +1041,12 @@ relay_accept(int fd, short event, void *arg)
 	if ((con = calloc(1, sizeof(*con))) == NULL)
 		goto err;
 
+	/* Pre-allocate log buffer */
+	con->se_haslog = 0;
+	con->se_log = evbuffer_new();
+	if (con->se_log == NULL)
+		goto err;
+
 	con->se_in.s = s;
 	con->se_in.ssl = NULL;
 	con->se_out.s = -1;
@@ -1091,14 +1097,6 @@ relay_accept(int fd, short event, void *arg)
 	con->se_out.output = evbuffer_new();
 	if (con->se_out.output == NULL) {
 		relay_close(con, "failed to allocate output buffer");
-		return;
-	}
-
-	/* Pre-allocate log buffer */
-	con->se_haslog = 0;
-	con->se_log = evbuffer_new();
-	if (con->se_log == NULL) {
-		relay_close(con, "failed to allocate log buffer");
 		return;
 	}
 
