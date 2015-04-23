@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.52 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.53 2015/04/23 02:55:15 jsg Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -662,7 +662,7 @@ vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	/* XXX: Figure out the length of the last component. */
 	cp = cnp->cn_nameptr;
 	while (*cp && (*cp != '/')) {
-		*cp++;
+		cp++;
 	}
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
 		panic("relookup: bad len");
