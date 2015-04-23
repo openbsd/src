@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.109 2015/04/19 14:57:16 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.110 2015/04/23 15:35:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,13 +52,6 @@ static	void		 man_descope(struct roff_man *, int, int);
 static	int		 man_ptext(struct roff_man *, int, char *, int);
 static	int		 man_pmacro(struct roff_man *, int, char *, int);
 
-
-void
-man_endparse(struct roff_man *man)
-{
-
-	man_macroend(man);
-}
 
 int
 man_parseln(struct roff_man *man, int ln, char *buf, int offs)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.75 2015/04/19 14:25:05 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.76 2015/04/23 15:35:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -83,7 +83,6 @@ void		  mdoc_argv(struct roff_man *, int, int,
 			struct mdoc_arg **, int *, char *);
 enum margserr	  mdoc_args(struct roff_man *, int,
 			int *, char *, int, char **);
-void		  mdoc_macroend(struct roff_man *);
 enum mdelim	  mdoc_isdelim(const char *);
 
 __END_DECLS
