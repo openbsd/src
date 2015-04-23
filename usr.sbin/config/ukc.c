@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.18 2011/10/02 22:20:50 edd Exp $ */
+/*	$OpenBSD: ukc.c,v 1.19 2015/04/23 05:58:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -180,9 +180,6 @@ init(void)
 	struct cfdata *cd;
 	short	*ln;
 	int	*p;
-#ifdef NOTDEF
-	struct winsize w;
-#endif
 
 	if ((cd = get_cfdata(0)) == NULL)	/* get first item */
 		errx(1, "failed to get first cfdata");
@@ -216,25 +213,4 @@ init(void)
 
 	if ((fd = open("/dev/tty", O_RDWR)) < 0)
 		fd = 2;
-
-#ifdef NOTDEF
-	if (ioctl(fd, TIOCGWINSZ, &w) == 0)
-		printf("row %d col %d\n", w.ws_row, w.ws_col);
-
-	if ((s = getenv("LINES")) != NULL)
-		sc_height = atoi(s);
-	else
-		sc_height = tgetnum("li");
-
-	if (sc_height <= 0)
-		sc_height = 24;
-
-	if ((s = getenv("COLUMNS")) != NULL)
-		sc_width = atoi(s);
-	else
-		sc_width = tgetnum("co");
-
-	if (sc_width <= 0)
-		sc_width = 80;
-#endif
 }
