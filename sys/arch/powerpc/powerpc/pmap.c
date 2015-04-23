@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.144 2015/03/31 16:00:38 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.145 2015/04/23 14:42:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1056,7 +1056,7 @@ pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
 	s = splvm();
 
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		vaddr_t va = pted->pted_va & PAGE_MASK;
+		vaddr_t va = pted->pted_va & ~PAGE_MASK;
 		pmap_t pm = pted->pted_pmap;
 		struct pte_64 *ptp64;
 		struct pte_32 *ptp32;
