@@ -1,4 +1,4 @@
-/* $OpenBSD: file.h,v 1.25 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: file.h,v 1.26 2015/04/24 16:47:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -21,9 +21,6 @@
 
 /* Bytes to read if can't use the whole file. */
 #define FILE_READ_SIZE (256 * 1024)
-
-/* User to drop to if run as root. */
-#define FILE_USER "nobody"
 
 /* text.c */
 const char	*text_get_type(const void *, size_t);

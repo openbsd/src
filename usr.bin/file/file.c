@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.29 2015/04/24 16:30:06 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.30 2015/04/24 16:47:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -91,8 +91,8 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	struct input_file	*files = NULL;
-	int			 nfiles, opt, i, width = 0;
+	struct input_file	 inf;
+	int			 opt, i, width = 0;
 	FILE			*f;
 	struct magic		*m;
 	char			*home, *path;
@@ -136,13 +136,6 @@ main(int argc, char **argv)
 	} else if (argc == 0)
 		usage();
 
-	nfiles = argc;
-	if (nfiles != 0) {
-		files = xcalloc(nfiles, sizeof *files);
-		for (i = 0; i < argc; i++)
-			open_file(&files[i], argv[i], &width);
-	}
-
 	home = getenv("HOME");
 	if (home == NULL || *home == '\0') {
 		pw = getpwuid(getuid());
@@ -167,26 +160,17 @@ main(int argc, char **argv)
 	if (f == NULL)
 		err(1, "%s", path);
 
-	if (geteuid() == 0) {
-		pw = getpwnam(FILE_USER);
-		if (pw == NULL)
-			errx(1, "unknown user %s", FILE_USER);
-		if (setgroups(1, &pw->pw_gid) != 0)
-			err(1, "setgroups");
-		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) != 0)
-			err(1, "setresgid");
-		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
-			err(1, "setresuid");
-	}
-
 	m = magic_load(f, path, cflag || Wflag);
 	if (cflag) {
 		magic_dump(m);
 		exit(0);
 	}
 
-	for (i = 0; i < nfiles; i++)
-		test_file(m, &files[i], width);
+	for (i = 0; i < argc; i++) {
+		memset(&inf, 0, sizeof inf);
+		open_file(&inf, argv[i], &width);
+		test_file(m, &inf, width);
+	}
 	exit(0);
 }
 
@@ -282,7 +266,7 @@ fill_buffer(struct input_file *inf)
 		}
 		if (got == 0)
 			break;
-		next = (char*)next + got;
+		next = (char *)next + got;
 		left -= got;
 	}
 
@@ -508,10 +492,14 @@ test_file(struct magic *m, struct input_file *inf, int width)
 		printf("%s\n", inf->result);
 	else
 		printf("%-*s %s\n", width, inf->label, inf->result);
+	free(inf->result);
 
 	if (inf->mapped && inf->base != NULL)
 		munmap(inf->base, inf->size);
 	inf->base = NULL;
 
-	free(inf->result);
+	if (inf->fd != -1)
+		close(inf->fd);
+	free((void *)inf->label);
+	free((void *)inf->path);
 }
