@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.27 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.28 2015/04/24 16:28:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -154,6 +154,10 @@ main(int argc, char **argv)
 	if (home != NULL) {
 		xasprintf(&path, "%s/.magic", home);
 		f = fopen(path, "r");
+		if (f == NULL && errno != ENOENT)
+			err(1, "%s", path);
+		if (f == NULL)
+			free(path);
 	} else
 		f = NULL;
 	if (f == NULL) {
