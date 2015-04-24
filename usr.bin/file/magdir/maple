@@ -1,4 +1,4 @@
-#	$OpenBSD: maple,v 1.2 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: maple,v 1.3 2015/04/24 16:24:42 nicm Exp $
 
 #------------------------------------------------------------------------------
 # maple:  file(1) magic for maple files
@@ -33,7 +33,7 @@
 # that is {VERSION major_version miunor_version computer_type version_string}
 0	string	{VERSION\ 	Maple worksheet
 >9	string	>\0	version %.1s.
->>>11	string	>\0	%.1s
+>>11	string	>\0	%.1s
 
 # .mps
 0	string	\0\0\001$	Maple something
