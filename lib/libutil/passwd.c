@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.53 2014/08/15 03:51:40 guenther Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.54 2015/04/24 21:13:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -291,6 +291,28 @@ pw_equal(const struct passwd *pw1, const struct passwd *pw2)
 	    strcmp(pw1->pw_shell, pw2->pw_shell) == 0);
 }
 
+static int
+pw_write_entry(FILE *to, const struct passwd *pw)
+{
+	char	gidstr[16], uidstr[16];
+
+	/* Preserve gid/uid -1 */
+	if (pw->pw_gid == (gid_t)-1)
+		strlcpy(gidstr, "-1", sizeof(gidstr));
+	else
+		snprintf(gidstr, sizeof(gidstr), "%u", (u_int)pw->pw_gid);
+
+	if (pw->pw_uid == (uid_t)-1)
+		strlcpy(uidstr, "-1", sizeof(uidstr));
+	else
+		snprintf(uidstr, sizeof(uidstr), "%u", (u_int)pw->pw_uid);
+
+	return fprintf(to, "%s:%s:%s:%s:%s:%lld:%lld:%s:%s:%s\n",
+	    pw->pw_name, pw->pw_passwd, uidstr, gidstr, pw->pw_class,
+	    (long long)pw->pw_change, (long long)pw->pw_expire,
+	    pw->pw_gecos, pw->pw_dir, pw->pw_shell);
+}
+
 void
 pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 {
@@ -313,8 +335,7 @@ pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 			pw_error(NULL, 0, 1);
 		}
 		if (done) {
-			(void)fprintf(to, "%s", buf);
-			if (ferror(to))
+			if (fputs(buf, to))
 				goto fail;
 			continue;
 		}
@@ -325,8 +346,7 @@ pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 		*p = '\0';
 		if (strcmp(buf, opw ? opw->pw_name : pw->pw_name)) {
 			*p = ':';
-			(void)fprintf(to, "%s", buf);
-			if (ferror(to))
+			if (fputs(buf, to))
 				goto fail;
 			continue;
 		}
@@ -340,23 +360,14 @@ pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 				pw_error(NULL, 0, 1);
 			}
 		}
-		(void)fprintf(to, "%s:%s:%u:%u:%s:%lld:%lld:%s:%s:%s\n",
-		    pw->pw_name, pw->pw_passwd, (u_int)pw->pw_uid,
-		    (u_int)pw->pw_gid, pw->pw_class, (long long)pw->pw_change,
-		    (long long)pw->pw_expire, pw->pw_gecos, pw->pw_dir,
-		    pw->pw_shell);
-		done = 1;
-		if (ferror(to))
+		if (pw_write_entry(to, pw) == -1)
 			goto fail;
+		done = 1;
 	}
-	if (!done)
-		(void)fprintf(to, "%s:%s:%u:%u:%s:%lld:%lld:%s:%s:%s\n",
-		    pw->pw_name, pw->pw_passwd, (u_int)pw->pw_uid,
-		    (u_int)pw->pw_gid, pw->pw_class, (long long)pw->pw_change,
-		    (long long)pw->pw_expire, pw->pw_gecos,
-		    pw->pw_dir, pw->pw_shell);
+	if (!done && pw_write_entry(to, pw) == -1)
+		goto fail;
 
-	if (ferror(to))
+	if (ferror(to) || fflush(to))
 fail:
 		pw_error(NULL, 0, 1);
 	free(master);
@@ -366,11 +377,11 @@ fail:
 int
 pw_scan(char *bp, struct passwd *pw, int *flags)
 {
-	u_long id;
 	int root;
-	char *p, *sh, *p2;
+	char *p, *sh;
+	const char *errstr;
 
-	if (flags != (int *)NULL)
+	if (flags != NULL)
 		*flags = 0;
 
 	if (!(p = strsep(&bp, ":")) || *p == '\0')	/* login */
@@ -383,39 +394,31 @@ pw_scan(char *bp, struct passwd *pw, int *flags)
 
 	if (!(p = strsep(&bp, ":")))			/* uid */
 		goto fmt;
-	id = strtoul(p, &p2, 10);
-	if (root && id) {
+	pw->pw_uid = strtonum(p, -1, UID_MAX, &errstr);
+	if (errstr != NULL) {
+		if (*p != '\0') {
+			warnx("uid is %s", errstr);
+			return (0);
+		}
+		if (flags != NULL)
+			*flags |= _PASSWORD_NOUID;
+	}
+	if (root && pw->pw_uid) {
 		warnx("root uid should be 0");
 		return (0);
 	}
-	if (*p2 != '\0') {
-		warnx("illegal uid field");
-		return (0);
-	}
-	if (id > UID_MAX) {
-		/* errno is set to ERANGE by strtoul(3) */
-		warnx("uid greater than %u", UID_MAX-1);
-		return (0);
-	}
-	pw->pw_uid = (uid_t)id;
-	if ((*p == '\0') && (flags != (int *)NULL))
-		*flags |= _PASSWORD_NOUID;
 
 	if (!(p = strsep(&bp, ":")))			/* gid */
 		goto fmt;
-	id = strtoul(p, &p2, 10);
-	if (*p2 != '\0') {
-		warnx("illegal gid field");
-		return (0);
+	pw->pw_gid = strtonum(p, -1, GID_MAX, &errstr);
+	if (errstr != NULL) {
+		if (*p != '\0') {
+			warnx("gid is %s", errstr);
+			return (0);
+		}
+		if (flags != NULL)
+			*flags |= _PASSWORD_NOGID;
 	}
-	if (id > UID_MAX) {
-		/* errno is set to ERANGE by strtoul(3) */
-		warnx("gid greater than %u", UID_MAX-1);
-		return (0);
-	}
-	pw->pw_gid = (gid_t)id;
-	if ((*p == '\0') && (flags != (int *)NULL))
-		*flags |= _PASSWORD_NOGID;
 
 	pw->pw_class = strsep(&bp, ":");		/* class */
 	if (!(p = strsep(&bp, ":")))			/* change */
