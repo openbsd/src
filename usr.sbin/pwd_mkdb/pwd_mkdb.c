@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.47 2015/04/15 16:43:11 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.48 2015/04/24 21:14:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -481,6 +481,29 @@ changedir(char *path, char *dir)
 	return (fixed);
 }
 
+int
+write_old_entry(FILE *to, const struct passwd *pw)
+{
+	char gidstr[16], uidstr[16];
+
+	if (to == NULL)
+		return (0);
+
+	/* Preserve gid/uid -1 */
+	if (pw->pw_gid == (gid_t)-1)
+		strlcpy(gidstr, "-1", sizeof(gidstr));
+	else
+		snprintf(gidstr, sizeof(gidstr), "%u", (u_int)pw->pw_gid);
+
+	if (pw->pw_uid == (uid_t)-1)
+		strlcpy(uidstr, "-1", sizeof(uidstr));
+	else
+		snprintf(uidstr, sizeof(uidstr), "%u", (u_int)pw->pw_uid);
+
+	return (fprintf(to, "%s:*:%s:%s:%s:%s:%s\n", pw->pw_name, uidstr,
+	    gidstr, pw->pw_gecos, pw->pw_dir, pw->pw_shell));
+}
+
 void
 db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 	 int keytype, char *username, uid_t olduid)
@@ -516,12 +539,8 @@ db_store(FILE *fp, FILE *oldfp, DB *edp, DB *dp, struct passwd *pw,
 			}
 
 			/* Create V7 format password file entry. */
-			if (oldfp != NULL)
-				if (fprintf(oldfp, "%s:*:%u:%u:%s:%s:%s\n",
-				    pw->pw_name, pw->pw_uid, pw->pw_gid,
-				    pw->pw_gecos, pw->pw_dir, pw->pw_shell)
-				    == EOF)
-					fatal("write old");
+			if (write_old_entry(oldfp, pw) == -1)
+				fatal("write old");
 		}
 
 		/* Are we updating a specific record? */
