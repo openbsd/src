@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.28 2015/04/24 16:28:00 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.29 2015/04/24 16:30:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -405,9 +405,9 @@ try_access(struct input_file *inf)
 	if (inf->fd != -1)
 		return (0);
 
-	if (inf->sb.st_mode & 0222)
+	if (inf->sb.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH))
 		strlcat(tmp, "writable, ", sizeof tmp);
-	if (inf->sb.st_mode & 0111)
+	if (inf->sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))
 		strlcat(tmp, "executable, ", sizeof tmp);
 	if (S_ISREG(inf->sb.st_mode))
 		strlcat(tmp, "regular file, ", sizeof tmp);
