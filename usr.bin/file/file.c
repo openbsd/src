@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.30 2015/04/24 16:47:32 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.31 2015/04/24 17:10:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -57,7 +57,8 @@ extern char	*__progname;
 
 __dead void	 usage(void);
 
-static void	 open_file(struct input_file *, const char *, int *);
+static void	 prepare_file(struct input_file *, const char *, int *);
+static void	 open_file(struct input_file *);
 static void	 read_link(struct input_file *);
 static void	 test_file(struct magic *, struct input_file *, int);
 
@@ -91,7 +92,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	struct input_file	 inf;
+	struct input_file	*files = NULL;
 	int			 opt, i, width = 0;
 	FILE			*f;
 	struct magic		*m;
@@ -166,19 +167,21 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
+	files = xcalloc(argc, sizeof *files);
+	for (i = 0; i < argc; i++)
+		prepare_file(&files[i], argv[i], &width);
 	for (i = 0; i < argc; i++) {
-		memset(&inf, 0, sizeof inf);
-		open_file(&inf, argv[i], &width);
-		test_file(m, &inf, width);
+		open_file(&files[i]);
+		test_file(m, &files[i], width);
 	}
 	exit(0);
 }
 
 static void
-open_file(struct input_file *inf, const char *path, int *width)
+prepare_file(struct input_file *inf, const char *path, int *width)
 {
 	char	*label;
-	int	 n, retval;
+	int	 n;
 
 	inf->path = xstrdup(path);
 
@@ -186,6 +189,12 @@ open_file(struct input_file *inf, const char *path, int *width)
 	if (n > *width)
 		*width = n;
 	inf->label = label;
+}
+
+static void
+open_file(struct input_file *inf)
+{
+	int	 retval;
 
 	retval = lstat(inf->path, &inf->sb);
 	if (retval == -1) {
