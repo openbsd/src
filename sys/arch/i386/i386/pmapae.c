@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.34 2015/04/24 12:52:38 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.35 2015/04/24 19:41:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1081,7 +1081,7 @@ pmap_do_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		 * be VM_MAX_ADDRESS.
 		 */
 
-		if (pdei(va) == PDSLOT_PTE)
+		if (pdei(va) >= PDSLOT_PTE && pdei(va) <= (PDSLOT_PTE + 3))
 			/* XXXCDC: ugly hack to avoid freeing PDP here */
 			continue;
 
@@ -1344,7 +1344,7 @@ pmap_write_protect_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 		 */
 
 		/* XXXCDC: ugly hack to avoid freeing PDP here */
-		if (pdei(va) == PDSLOT_PTE)
+		if (pdei(va) >= PDSLOT_PTE && pdei(va) <= (PDSLOT_PTE + 3))
 			continue;
 
 		/* empty block? */
