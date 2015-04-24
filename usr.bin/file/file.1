@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.38 2015/04/24 20:32:34 jmc Exp $
+.\" $OpenBSD: file.1,v 1.39 2015/04/24 20:57:51 nicm Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -36,7 +36,7 @@
 .Nd determine file type
 .Sh SYNOPSIS
 .Nm
-.Op Fl bciLsW
+.Op Fl bchiLsW
 .Ar
 .Sh DESCRIPTION
 The
@@ -77,9 +77,11 @@ meaning anything else.
 The options are as follows:
 .Bl -tag -width indent
 .It Fl b
-Do not prepend filenames to output lines.
+Does not prepend filenames to output lines.
 .It Fl c
-Print a summary of the parsed magic file; usually used for debugging.
+Prints a summary of the parsed magic file; usually used for debugging.
+.It Fl h
+Causes symlinks not to be followed.
 .It Fl i , -mime , -mime-type
 Causes the file command to output MIME type strings rather than the more
 traditional human-readable ones.
@@ -96,7 +98,7 @@ to attempt to read all files, not only those which
 .Xr stat 2
 reports are ordinary files.
 .It Fl W
-Display warnings when parsing the magic file or applying its tests.
+Displays warnings when parsing the magic file or applying its tests.
 Usually used for debugging.
 .El
 .Sh FILES
