@@ -1,4 +1,4 @@
-/* $OpenBSD: text.c,v 1.1 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: text.c,v 1.2 2015/04/24 16:45:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -138,7 +138,7 @@ text_try_words(const void *base, size_t size, int flags)
 	size_t		 wordlen;
 	u_int		 i;
 
-	end = (char*)base + size;
+	end = (char *)base + size;
 	for (cp = base; cp != end; /* nothing */) {
 		while (cp != end && isspace((u_char)*cp))
 			cp++;

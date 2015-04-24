@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.1 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.2 2015/04/24 16:45:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -864,10 +864,10 @@ fail:
 static void
 magic_free_line(struct magic_line *ml)
 {
-	free((void*)ml->type_string);
+	free((void *)ml->type_string);
 
-	free((void*)ml->mimetype);
-	free((void*)ml->result);
+	free((void *)ml->mimetype);
+	free((void *)ml->result);
 
 	free(ml);
 }
