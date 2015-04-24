@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.h,v 1.4 2001/01/29 01:58:29 niklas Exp $	*/
+/*	$OpenBSD: exf.h,v 1.5 2015/04/24 21:48:31 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -35,13 +35,9 @@ struct _exf {
 
 	LIST_HEAD(_markh, _lmark) marks;/* Linked list of file MARK's. */
 
-	/*
-	 * XXX
-	 * Mtime should be a struct timespec, but time_t is more portable.
-	 */
 	dev_t	 mdev;			/* Device. */
 	ino_t	 minode;		/* Inode. */
-	time_t	 mtime;			/* Last modification time. */
+	struct timespec	mtim;		/* Last modification time. */
 
 	int	 fcntl_fd;		/* Fcntl locking fd; see exf.c. */
 

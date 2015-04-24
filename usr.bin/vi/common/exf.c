@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.35 2015/04/19 01:10:59 millert Exp $	*/
+/*	$OpenBSD: exf.c,v 1.36 2015/04/24 21:48:31 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -13,6 +13,7 @@
 
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 /*
  * We include <sys/file.h>, because the flock(2) and open(2) #defines
@@ -30,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "common.h"
@@ -209,7 +211,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 		if (!LF_ISSET(FS_OPENERR))
 			F_SET(frp, FR_NEWFILE);
 
-		time(&ep->mtime);
+		(void)clock_gettime(CLOCK_REALTIME, &ep->mtim);
 	} else {
 		/*
 		 * XXX
@@ -228,7 +230,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 		ep->mdev = sb.st_dev;
 		ep->minode = sb.st_ino;
 
-		ep->mtime = sb.st_mtime;
+		ep->mtim = sb.st_mtim;
 
 		if (!S_ISREG(sb.st_mode))
 			msgq_str(sp, M_ERR, oname,
@@ -800,7 +802,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 		if (noname && !LF_ISSET(FS_FORCE | FS_APPEND) &&
 		    ((F_ISSET(ep, F_DEVSET) &&
 		    (sb.st_dev != ep->mdev || sb.st_ino != ep->minode)) ||
-		    sb.st_mtime != ep->mtime)) {
+		    timespeccmp(&sb.st_mtim, &ep->mtim, !=))) {
 			msgq_str(sp, M_ERR, name, LF_ISSET(FS_POSSIBLE) ?
 "250|%s: file modified more recently than this copy; use ! to override" :
 "251|%s: file modified more recently than this copy");
@@ -864,13 +866,13 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	 */
 	if (noname) {
 		if (stat(name, &sb))
-			time(&ep->mtime);
+			(void)clock_gettime(CLOCK_REALTIME, &ep->mtim);
 		else {
 			F_SET(ep, F_DEVSET);
 			ep->mdev = sb.st_dev;
 			ep->minode = sb.st_ino;
 
-			ep->mtime = sb.st_mtime;
+			ep->mtim = sb.st_mtim;
 		}
 	}
 

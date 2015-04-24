@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_msg.c,v 1.13 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: vs_msg.c,v 1.14 2015/04/24 21:48:31 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "../common/common.h"
@@ -59,7 +60,7 @@ vs_busy(SCR *sp, const char *msg, busy_t btype)
 	GS *gp;
 	VI_PRIVATE *vip;
 	static const char flagc[] = "|/-\\";
-	struct timeval tv;
+	struct timespec ts, ts_diff;
 	size_t len, notused;
 	const char *p;
 
@@ -84,7 +85,7 @@ vs_busy(SCR *sp, const char *msg, busy_t btype)
 
 		/* Initialize state for updates. */
 		vip->busy_ch = 0;
-		(void)gettimeofday(&vip->busy_tv, NULL);
+		(void)clock_gettime(CLOCK_MONOTONIC, &vip->busy_ts);
 
 		/* Save the current cursor. */
 		(void)gp->scr_cursor(sp, &vip->busy_oldy, &vip->busy_oldx);
@@ -117,11 +118,18 @@ vs_busy(SCR *sp, const char *msg, busy_t btype)
 			break;
 
 		/* Update no more than every 1/8 of a second. */
-		(void)gettimeofday(&tv, NULL);
-		if (((tv.tv_sec - vip->busy_tv.tv_sec) * 1000000 +
-		    (tv.tv_usec - vip->busy_tv.tv_usec)) < 125000)
+		(void)clock_gettime(CLOCK_MONOTONIC, &ts);
+		ts_diff = ts;
+		ts_diff.tv_sec -= vip->busy_ts.tv_sec;
+		ts_diff.tv_nsec -= vip->busy_ts.tv_nsec;
+		if (ts_diff.tv_nsec < 0) {
+			ts_diff.tv_sec--;
+			ts_diff.tv_nsec += 1000000000;
+		}
+		if ((ts_diff.tv_sec == 0 && ts_diff.tv_nsec < 125000000) ||
+		    ts_diff.tv_sec < 0)
 			return;
-		vip->busy_tv = tv;
+		vip->busy_ts = ts;
 
 		/* Display the update. */
 		if (vip->busy_ch == sizeof(flagc) - 1)

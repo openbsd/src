@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.25 2015/04/21 01:41:42 jsg Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.26 2015/04/24 21:48:31 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -244,7 +245,7 @@ cscope_add(SCR *sp, EXCMD *cmdp, char *dname)
 	csc->dname = csc->buf;
 	csc->dlen = len;
 	memcpy(csc->dname, dname, len);
-	csc->mtime = sb.st_mtime;
+	csc->mtim = sb.st_mtim;
 
 	/* Get the search paths for the cscope. */
 	if (get_paths(sp, csc))
@@ -765,7 +766,8 @@ csc_file(SCR *sp, CSC *csc, char *name, char **dirp, size_t *dlenp,
 		if (stat(buf, &sb) == 0) {
 			*dirp = *pp;
 			*dlenp = strlen(*pp);
-			*isolderp = sb.st_mtime < csc->mtime;
+			*isolderp = timespeccmp(
+			    &sb.st_mtim, &csc->mtim, <);
 			return;
 		}
 	}

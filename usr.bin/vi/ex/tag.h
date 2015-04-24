@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.h,v 1.5 2013/12/01 19:26:37 krw Exp $	*/
+/*	$OpenBSD: tag.h,v 1.6 2015/04/24 21:48:31 brynet Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -23,7 +23,7 @@ struct _csc {
 	char	*dname;		/* Base directory of this cscope connection. */
 	size_t	 dlen;		/* Length of base directory. */
 	pid_t	 pid;		/* PID of the connected cscope process. */
-	time_t	 mtime;		/* Last modification time of cscope database. */
+	struct timespec	 mtim;	/* Last modification time of cscope database. */
 
 	FILE	*from_fp;	/* from cscope: FILE. */
 	int	 from_fd;	/* from cscope: file descriptor. */
