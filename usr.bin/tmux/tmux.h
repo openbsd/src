@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.497 2015/04/22 15:32:33 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.498 2015/04/24 22:19:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1613,7 +1613,7 @@ int	options_table_find(const char *, const struct options_table_entry **,
 
 /* job.c */
 extern struct joblist all_jobs;
-struct job *job_run(const char *, struct session *,
+struct job *job_run(const char *, struct session *, int,
 	    void (*)(struct job *), void (*)(void *), void *);
 void	job_free(struct job *);
 void	job_died(struct job *, int);

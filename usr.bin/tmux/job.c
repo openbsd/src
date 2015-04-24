@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.34 2014/10/20 23:27:14 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.35 2015/04/24 22:19:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,7 +41,7 @@ struct joblist	all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
 
 /* Start a job running, if it isn't already. */
 struct job *
-job_run(const char *cmd, struct session *s,
+job_run(const char *cmd, struct session *s, int cwd,
     void (*callbackfn)(struct job *), void (*freefn)(void *), void *data)
 {
 	struct job	*job;
@@ -66,6 +66,9 @@ job_run(const char *cmd, struct session *s,
 		return (NULL);
 	case 0:		/* child */
 		clear_signals(1);
+
+		if (cwd != -1 && fchdir(cwd) != 0)
+			chdir("/");
 
 		environ_push(&env);
 		environ_free(&env);

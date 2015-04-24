@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.125 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.126 2015/04/24 22:19:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -515,7 +515,7 @@ status_find_job(struct client *c, char **iptr)
 
 	/* If not found at all, start the job and add to the tree. */
 	if (so == NULL) {
-		job_run(cmd, NULL, status_job_callback, status_job_free, c);
+		job_run(cmd, NULL, -1, status_job_callback, status_job_free, c);
 		c->references++;
 
 		so = xmalloc(sizeof *so);
