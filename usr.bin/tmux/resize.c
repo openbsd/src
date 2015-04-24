@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.16 2015/04/22 15:32:33 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.17 2015/04/24 23:17:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,7 @@ recalculate_sizes(void)
 	struct client		*c;
 	struct window		*w;
 	struct window_pane	*wp;
-	u_int			 i, ssx, ssy, has, limit;
+	u_int			 ssx, ssy, has, limit;
 	int			 flag, has_status, is_zoomed, forced;
 
 	RB_FOREACH(s, sessions, &sessions) {
@@ -57,9 +57,8 @@ recalculate_sizes(void)
 
 		s->attached = 0;
 		ssx = ssy = UINT_MAX;
-		for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-			c = ARRAY_ITEM(&clients, i);
-			if (c == NULL || c->flags & CLIENT_SUSPENDED)
+		TAILQ_FOREACH(c, &clients, entry) {
+			if (c->flags & CLIENT_SUSPENDED)
 				continue;
 			if (c->session == s) {
 				if (c->tty.sx < ssx)

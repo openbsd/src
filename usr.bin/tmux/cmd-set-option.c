@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.73 2015/04/24 21:38:18 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.74 2015/04/24 23:17:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -91,7 +91,6 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct options				*oo;
 	struct window				*w;
 	const char				*optstr, *valstr;
-	u_int					 i;
 
 	/* Get the option name and value. */
 	optstr = args->argv[0];
@@ -186,9 +185,8 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	/* Update sizes and redraw. May not need it but meh. */
 	recalculate_sizes();
-	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-		c = ARRAY_ITEM(&clients, i);
-		if (c != NULL && c->session != NULL)
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session != NULL)
 			server_redraw_client(c);
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.498 2015/04/24 22:19:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.499 2015/04/24 23:17:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1349,8 +1349,10 @@ struct client {
 
 	struct cmd_q	*cmdq;
 	int		 references;
+
+	TAILQ_ENTRY(client) entry;
 };
-ARRAY_DECL(clients, struct client *);
+TAILQ_HEAD(clients, client);
 
 /* Parsed arguments structures. */
 struct args_entry {

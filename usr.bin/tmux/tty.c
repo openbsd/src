@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.177 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.178 2015/04/24 23:17:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -708,7 +708,6 @@ tty_write(
 {
 	struct window_pane	*wp = ctx->wp;
 	struct client		*c;
-	u_int		 	 i;
 
 	/* wp can be NULL if updating the screen but not the terminal. */
 	if (wp == NULL)
@@ -719,9 +718,8 @@ tty_write(
 	if (!window_pane_visible(wp) || wp->flags & PANE_DROP)
 		return;
 
-	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-		c = ARRAY_ITEM(&clients, i);
-		if (c == NULL || c->session == NULL || c->tty.term == NULL)
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session == NULL || c->tty.term == NULL)
 			continue;
 		if (c->flags & CLIENT_SUSPENDED)
 			continue;
