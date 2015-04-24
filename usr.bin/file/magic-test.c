@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.1 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.2 2015/04/24 17:19:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -137,7 +137,7 @@ magic_add_result(struct magic_state *ms, struct magic_line *ml,
 
 static void
 magic_add_string(struct magic_state *ms, struct magic_line *ml,
-    const char* s, size_t slen)
+    const char *s, size_t slen)
 {
 	char	*out;
 	size_t	 outlen, offset;
