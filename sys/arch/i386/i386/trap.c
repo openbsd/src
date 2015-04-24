@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.121 2015/04/18 05:14:05 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.122 2015/04/24 12:52:38 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -140,6 +140,8 @@ trap(struct trapframe *frame)
 	if (frame->tf_err & PGEX_W) {
 		vftype = PROT_WRITE;
 		ftype = PROT_READ | PROT_WRITE;
+	} else if (frame->tf_err & PGEX_I) {
+		ftype = vftype = PROT_EXEC;
 	} else
 		ftype = vftype = PROT_READ;
 
