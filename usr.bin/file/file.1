@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.37 2015/04/24 17:34:57 nicm Exp $
+.\" $OpenBSD: file.1,v 1.38 2015/04/24 20:32:34 jmc Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -36,10 +36,8 @@
 .Nd determine file type
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Op Fl bciLsW
 .Ar
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -75,12 +73,13 @@ terminal),
 or
 .Em data
 meaning anything else.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width indent
 .It Fl b
 Do not prepend filenames to output lines.
 .It Fl c
-Print a summary of the parsed magic file, usually used for debugging.
+Print a summary of the parsed magic file; usually used for debugging.
 .It Fl i , -mime , -mime-type
 Causes the file command to output MIME type strings rather than the more
 traditional human-readable ones.
@@ -110,12 +109,16 @@ default magic file
 .Sh SEE ALSO
 .Xr magic 5
 .Sh AUTHORS
+.An -nosplit
 .Nm
 commands have appeared in many previous versions of
 .Ux .
-This version was written by Nicholas Marriott for
+This version was written by
+.An Nicholas Marriott
+for
 .Ox 5.8
-to replace the previous version originally written by Ian Darwin.
+to replace the previous version originally written by
+.An Ian Darwin .
 .Pp
 There is a large number of contributors to the magic files; many are listed in
 the source files.
