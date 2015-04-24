@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.36 2015/04/24 16:24:11 nicm Exp $
+.\" $OpenBSD: file.1,v 1.37 2015/04/24 17:34:57 nicm Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -56,7 +56,9 @@ These are loaded from the
 .Pa /etc/magic
 file (or
 .Pa ~/.magic
-instead if it exists).
+instead if it exists and
+.Nm
+is not running as root).
 The file format is described in
 .Xr magic 5 .
 .It

@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.31 2015/04/24 17:10:50 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.32 2015/04/24 17:34:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -137,23 +137,25 @@ main(int argc, char **argv)
 	} else if (argc == 0)
 		usage();
 
-	home = getenv("HOME");
-	if (home == NULL || *home == '\0') {
-		pw = getpwuid(getuid());
-		if (pw != NULL)
-			home = pw->pw_dir;
-		else
-			home = NULL;
+	f = NULL;
+	if (geteuid() != 0 && !issetugid()) {
+		home = getenv("HOME");
+		if (home == NULL || *home == '\0') {
+			pw = getpwuid(getuid());
+			if (pw != NULL)
+				home = pw->pw_dir;
+			else
+				home = NULL;
+		}
+		if (home != NULL) {
+			xasprintf(&path, "%s/.magic", home);
+			f = fopen(path, "r");
+			if (f == NULL && errno != ENOENT)
+				err(1, "%s", path);
+			if (f == NULL)
+				free(path);
+		}
 	}
-	if (home != NULL) {
-		xasprintf(&path, "%s/.magic", home);
-		f = fopen(path, "r");
-		if (f == NULL && errno != ENOENT)
-			err(1, "%s", path);
-		if (f == NULL)
-			free(path);
-	} else
-		f = NULL;
 	if (f == NULL) {
 		path = xstrdup("/etc/magic");
 		f = fopen(path, "r");
