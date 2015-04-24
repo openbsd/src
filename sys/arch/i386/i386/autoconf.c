@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.93 2015/04/12 18:37:53 mlarkin Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.94 2015/04/24 19:53:43 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -127,9 +127,7 @@ cpu_configure(void)
 #ifdef KVM86
 	kvm86_init();
 #endif
-#ifdef notyet
 	pmap_bootstrap_pae();
-#endif
 
 #if defined(MULTIPROCESSOR) || \
     (NACPI > 0 && !defined(SMALL_KERNEL))
