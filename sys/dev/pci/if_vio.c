@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.27 2015/04/18 14:38:38 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.28 2015/04/24 12:53:35 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -740,13 +740,11 @@ again:
 			panic("enqueue_prep for a tx buffer: %d", r);
 		r = vio_encap(sc, slot, m);
 		if (r != 0) {
-#if VIRTIO_DEBUG
-			if (r != ENOBUFS)
-				printf("%s: error %d\n", __func__, r);
-#endif
 			virtio_enqueue_abort(vq, slot);
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			m_freem(m);
+			ifp->if_oerrors++;
+			continue;
 		}
 		r = virtio_enqueue_reserve(vq, slot,
 		    sc->sc_tx_dmamaps[slot]->dm_nsegs + 1);
