@@ -1,475 +1,513 @@
-/*	$OpenBSD: file.c,v 1.26 2015/01/16 18:08:15 millert Exp $ */
+/* $OpenBSD: file.c,v 1.27 2015/04/24 16:24:11 nicm Exp $ */
+
 /*
- * Copyright (c) Ian F. Darwin 1986-1995.
- * Software written by Ian F. Darwin and others;
- * maintained 1995-present by Christos Zoulas and others.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *  
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-/*
- * file - find type of a file or files - main program.
+ * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER
+ * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+
+#include <errno.h>
+#include <libgen.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "file.h"
 #include "magic.h"
+#include "xmalloc.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <limits.h>
-#include <string.h>
-#ifdef RESTORE_TIME
-# if (__COHERENT__ >= 0x420)
-#  include <sys/utime.h>
-# else
-#  ifdef USE_UTIMES
-#   include <sys/time.h>
-#  else
-#   include <utime.h>
-#  endif
-# endif
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>	/* for read() */
-#endif
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif
-#ifdef HAVE_WCHAR_H
-#include <wchar.h>
-#endif
-
-#include <getopt.h>
-#ifndef HAVE_GETOPT_LONG
-int getopt_long(int argc, char * const *argv, const char *optstring, const struct option *longopts, int *longindex);
-#endif
-
-#include <netinet/in.h>		/* for byte swapping */
-
-#include "patchlevel.h"
-
-
-#ifdef S_IFLNK
-#define SYMLINKFLAG "Lh"
-#else
-#define SYMLINKFLAG ""
-#endif
-
-# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNprsvz0] [-e test] [-f namefile] [-F separator] [-m magicfiles] file...\n" \
-		"       %s -C -m magicfiles\n"
-
-private int 		/* Global command-line options 		*/
-	bflag = 0,	/* brief output format	 		*/
-	nopad = 0,	/* Don't pad output			*/
-	nobuffer = 0,   /* Do not buffer stdout 		*/
-	nulsep = 0;	/* Append '\0' to the separator		*/
-
-private const char *magicfile = 0;	/* where the magic is	*/
-private const char *default_magicfile = MAGIC;
-private const char *separator = ":";	/* Default field separator	*/
-
-extern char *__progname;		/* used throughout 		*/
-
-private struct magic_set *magic;
-
-private void unwrap(char *);
-private void usage(void);
-private void help(void);
-
-int main(int, char *[]);
-private void process(const char *, int);
-private void load(const char *, int);
-
-
-/*
- * main - parse arguments and handle options
- */
-int
-main(int argc, char *argv[])
+struct input_file
 {
-	int c;
-	size_t i;
-	int action = 0, didsomefiles = 0, errflg = 0;
-	int flags = 0;
-	char *home, *usermagic;
-	struct stat sb;
-	static const char hmagic[] = "/.magic";
-#define OPTSTRING	"bcCde:f:F:hikLm:nNprsvz0"
-	int longindex;
-	static const struct option long_options[] =
-	{
-#define OPT(shortname, longname, opt, doc)      \
-    {longname, opt, NULL, shortname},
-#define OPT_LONGONLY(longname, opt, doc)        \
-    {longname, opt, NULL, 0},
-#include "file_opts.h"
-#undef OPT
-#undef OPT_LONGONLY
-    {0, 0, NULL, 0}
+	struct magic	*m;
+
+	const char	*path;
+	const char	*label;
+
+	int		 fd;
+	struct stat	 sb;
+	const char	*error;
+
+	void		*base;
+	size_t           size;
+	int		 mapped;
+	char		*result;
+
+	char		 link_path[PATH_MAX];
+	const char	*link_error;
+	int		 link_target;
 };
 
-	static const struct {
-		const char *name;
-		int value;
-	} nv[] = {
-		{ "apptype",	MAGIC_NO_CHECK_APPTYPE },
-		{ "ascii",	MAGIC_NO_CHECK_ASCII },
-		{ "compress",	MAGIC_NO_CHECK_COMPRESS },
-		{ "elf",	MAGIC_NO_CHECK_ELF },
-		{ "soft",	MAGIC_NO_CHECK_SOFT },
-		{ "tar",	MAGIC_NO_CHECK_TAR },
-		{ "tokens",	MAGIC_NO_CHECK_TOKENS },
-	};
+extern char	*__progname;
 
-	/* makes islower etc work for other langs */
-	(void)setlocale(LC_CTYPE, "");
+__dead void	 usage(void);
 
-#ifdef __EMX__
-	/* sh-like wildcard expansion! Shouldn't hurt at least ... */
-	_wildcard(&argc, &argv);
-#endif
+static void	 open_file(struct input_file *, const char *, int *);
+static void	 read_link(struct input_file *);
+static void	 test_file(struct magic *, struct input_file *, int);
 
-	magicfile = default_magicfile;
-	if ((usermagic = getenv("MAGIC")) != NULL)
-		magicfile = usermagic;
-	else
-		if ((home = getenv("HOME")) != NULL) {
-			size_t len = strlen(home) + sizeof(hmagic);
-			if ((usermagic = malloc(len)) != NULL) {
-				(void)strlcpy(usermagic, home, len);
-				(void)strlcat(usermagic, hmagic, len);
-				if (stat(usermagic, &sb)<0) 
-					free(usermagic);
-				else
-					magicfile = usermagic;
-			}
-		}
+static int	 try_stat(struct input_file *);
+static int	 try_empty(struct input_file *);
+static int	 try_access(struct input_file *);
+static int	 try_text(struct input_file *);
+static int	 try_magic(struct input_file *);
+static int	 try_unknown(struct input_file *);
 
-#ifdef S_IFLNK
-	flags |= getenv("POSIXLY_CORRECT") ? MAGIC_SYMLINK : 0;
-#endif
-	while ((c = getopt_long(argc, argv, OPTSTRING, long_options,
-	    &longindex)) != -1)
-		switch (c) {
-		case 0 :
-			switch (longindex) {
-			case 0:
-				help();
-				break;
-			case 10:
-				flags |= MAGIC_MIME_TYPE;
-				break;
-			case 11:
-				flags |= MAGIC_MIME_ENCODING;
-				break;
-			}
-			break;
-		case '0':
-			nulsep = 1;
-			break;
-		case 'b':
-			bflag++;
-			break;
-		case 'c':
-			action = FILE_CHECK;
-			break;
-		case 'C':
-			action = FILE_COMPILE;
-			break;
-		case 'd':
-			flags |= MAGIC_DEBUG|MAGIC_CHECK;
-			break;
-		case 'e':
-			for (i = 0; i < sizeof(nv) / sizeof(nv[0]); i++)
-				if (strcmp(nv[i].name, optarg) == 0)
-					break;
+static int	 bflag;
+static int	 cflag;
+static int	 iflag;
+static int	 Lflag;
+static int	 sflag;
+static int	 Wflag;
 
-			if (i == sizeof(nv) / sizeof(nv[0]))
-				errflg++;
-			else
-				flags |= nv[i].value;
-			break;
-			
-		case 'f':
-			if(action)
-				usage();
-			load(magicfile, flags);
-			unwrap(optarg);
-			++didsomefiles;
-			break;
-		case 'F':
-			separator = optarg;
-			break;
-		case 'i':
-			flags |= MAGIC_MIME;
-			break;
-		case 'k':
-			flags |= MAGIC_CONTINUE;
-			break;
-		case 'm':
-			magicfile = optarg;
-			break;
-		case 'n':
-			++nobuffer;
-			break;
-		case 'N':
-			++nopad;
-			break;
-#if defined(HAVE_UTIME) || defined(HAVE_UTIMES)
-		case 'p':
-			flags |= MAGIC_PRESERVE_ATIME;
-			break;
-#endif
-		case 'r':
-			flags |= MAGIC_RAW;
-			break;
-		case 's':
-			flags |= MAGIC_DEVICES;
-			break;
-		case 'v':
-			(void)fprintf(stderr, "%s-%d.%.2d\n", __progname,
-				       FILE_VERSION_MAJOR, patchlevel);
-			(void)fprintf(stderr, "magic file from %s\n",
-				       magicfile);
-			return 1;
-		case 'z':
-			flags |= MAGIC_COMPRESS;
-			break;
-#ifdef S_IFLNK
-		case 'L':
-			flags |= MAGIC_SYMLINK;
-			break;
-		case 'h':
-			flags &= ~MAGIC_SYMLINK;
-			break;
-#endif
-		case '?':
-		default:
-			errflg++;
-			break;
-		}
+static struct option longopts[] = {
+	{ "mime",      no_argument, NULL, 'i' },
+	{ "mime-type", no_argument, NULL, 'i' },
+	{ NULL,        0,           NULL, 0   }
+};
 
-	if (errflg) {
-		usage();
-	}
-
-	switch(action) {
-	case FILE_CHECK:
-	case FILE_COMPILE:
-		magic = magic_open(flags|MAGIC_CHECK);
-		if (magic == NULL) {
-			(void)fprintf(stderr, "%s: %s\n", __progname,
-			    strerror(errno));
-			return 1;
-		}
-		c = action == FILE_CHECK ? magic_check(magic, magicfile) :
-		    magic_compile(magic, magicfile);
-		if (c == -1) {
-			(void)fprintf(stderr, "%s: %s\n", __progname,
-			    magic_error(magic));
-			return -1;
-		}
-		return 0;
-	default:
-		load(magicfile, flags);
-		break;
-	}
-
-	if (optind == argc) {
-		if (!didsomefiles) {
-			usage();
-		}
-	}
-	else {
-		size_t j, wid, nw;
-		for (wid = 0, j = (size_t)optind; j < (size_t)argc; j++) {
-			nw = file_mbswidth(argv[j]);
-			if (nw > wid)
-				wid = nw;
-		}
-		/*
-		 * If bflag is only set twice, set it depending on
-		 * number of files [this is undocumented, and subject to change]
-		 */
-		if (bflag == 2) {
-			bflag = optind >= argc - 1;
-		}
-		for (; optind < argc; optind++)
-			process(argv[optind], wid);
-	}
-
-	c = magic->haderr ? 1 : 0;
-	magic_close(magic);
-	return c;
-}
-
-
-private void
-/*ARGSUSED*/
-load(const char *m, int flags)
-{
-	if (magic || m == NULL)
-		return;
-	magic = magic_open(flags);
-	if (magic == NULL) {
-		(void)fprintf(stderr, "%s: %s\n", __progname, strerror(errno));
-		exit(1);
-	}
-	if (magic_load(magic, magicfile) == -1) {
-		(void)fprintf(stderr, "%s: %s\n",
-		    __progname, magic_error(magic));
-		exit(1);
-	}
-}
-
-/*
- * unwrap -- read a file of filenames, do each one.
- */
-private void
-unwrap(char *fn)
-{
-	char buf[PATH_MAX];
-	FILE *f;
-	int wid = 0, cwid;
-
-	if (strcmp("-", fn) == 0) {
-		f = stdin;
-		wid = 1;
-	} else {
-		if ((f = fopen(fn, "r")) == NULL) {
-			(void)fprintf(stderr, "%s: Cannot open `%s' (%s).\n",
-			    __progname, fn, strerror(errno));
-			exit(1);
-		}
-
-		while (fgets(buf, sizeof(buf), f) != NULL) {
-			buf[strcspn(buf, "\n")] = '\0';
-			cwid = file_mbswidth(buf);
-			if (cwid > wid)
-				wid = cwid;
-		}
-
-		rewind(f);
-	}
-
-	while (fgets(buf, sizeof(buf), f) != NULL) {
-		buf[strcspn(buf, "\n")] = '\0';
-		process(buf, wid);
-		if(nobuffer)
-			(void)fflush(stdout);
-	}
-
-	(void)fclose(f);
-}
-
-/*
- * Called for each input file on the command line (or in a list of files)
- */
-private void
-process(const char *inname, int wid)
-{
-	const char *type;
-	int std_in = strcmp(inname, "-") == 0;
-
-	if (wid > 0 && !bflag) {
-		(void)printf("%s", std_in ? "/dev/stdin" : inname);
-		if (nulsep)
-			(void)putc('\0', stdout);
-		else
-			(void)printf("%s", separator);
-		(void)printf("%*s ",
-		    (int) (nopad ? 0 : (wid - file_mbswidth(inname))), "");
-	}
-
-	type = magic_file(magic, std_in ? NULL : inname);
-	if (type == NULL)
-		(void)printf("ERROR: %s\n", magic_error(magic));
-	else
-		(void)printf("%s\n", type);
-}
-
-size_t
-file_mbswidth(const char *s)
-{
-#if defined(HAVE_WCHAR_H) && defined(HAVE_MBRTOWC) && defined(HAVE_WCWIDTH)
-	size_t bytesconsumed, old_n, n, width = 0;
-	mbstate_t state;
-	wchar_t nextchar;
-	(void)memset(&state, 0, sizeof(mbstate_t));
-	old_n = n = strlen(s);
-	int w;
-
-	while (n > 0) {
-		bytesconsumed = mbrtowc(&nextchar, s, n, &state);
-		if (bytesconsumed == (size_t)(-1) ||
-		    bytesconsumed == (size_t)(-2)) {
-			/* Something went wrong, return something reasonable */
-			return old_n;
-		}
-		if (s[0] == '\n') {
-			/*
-			 * do what strlen() would do, so that caller
-			 * is always right
-			 */
-			width++;
-		} else {
-			w = wcwidth(nextchar);
-			if (w > 0)
-				width += w;
-		}
-
-		s += bytesconsumed, n -= bytesconsumed;
-	}
-	return width;
-#else
-	return strlen(s);
-#endif
-}
-
-private void
+__dead void
 usage(void)
 {
-	(void)fprintf(stderr, USAGE, __progname, __progname);
-	(void)fputs("Try `file --help' for more information.\n", stderr);
+	fprintf(stderr, "usage: %s [-bchiLsW] [file ...]\n", __progname);
 	exit(1);
 }
 
-private void
-help(void)
+int
+main(int argc, char **argv)
 {
-	(void)fputs(
-"Usage: file [OPTION...] [FILE...]\n"
-"Determine type of FILEs.\n"
-"\n", stderr);
-#define OPT(shortname, longname, opt, doc)      \
-        fprintf(stderr, "  -%c, --" longname doc, shortname);
-#define OPT_LONGONLY(longname, opt, doc)        \
-        fprintf(stderr, "      --" longname doc);
-#include "file_opts.h"
-#undef OPT
-#undef OPT_LONGONLY
+	struct input_file	*files = NULL;
+	int			 nfiles, opt, i, width = 0;
+	FILE			*f;
+	struct magic		*m;
+	char			*home, *path;
+	struct passwd		*pw;
+
+	for (;;) {
+		opt = getopt_long(argc, argv, "bchiLsW", longopts, NULL);
+		if (opt == -1)
+			break;
+		switch (opt) {
+		case 'b':
+			bflag = 1;
+			break;
+		case 'c':
+			cflag = 1;
+			break;
+		case 'h':
+			Lflag = 0;
+			break;
+		case 'i':
+			iflag = 1;
+			break;
+		case 'L':
+			Lflag = 1;
+			break;
+		case 's':
+			sflag = 1;
+			break;
+		case 'W':
+			Wflag = 1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+	if (cflag) {
+		if (argc != 0)
+			usage();
+	} else if (argc == 0)
+		usage();
+
+	nfiles = argc;
+	if (nfiles != 0) {
+		files = xcalloc(nfiles, sizeof *files);
+		for (i = 0; i < argc; i++)
+			open_file(&files[i], argv[i], &width);
+	}
+
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0') {
+		pw = getpwuid(getuid());
+		if (pw != NULL)
+			home = pw->pw_dir;
+		else
+			home = NULL;
+	}
+	if (home != NULL) {
+		xasprintf(&path, "%s/.magic", home);
+		f = fopen(path, "r");
+	} else
+		f = NULL;
+	if (f == NULL) {
+		path = xstrdup("/etc/magic");
+		f = fopen(path, "r");
+	}
+	if (f == NULL)
+		err(1, "%s", path);
+
+	if (geteuid() == 0) {
+		pw = getpwnam(FILE_USER);
+		if (pw == NULL)
+			errx(1, "unknown user %s", FILE_USER);
+		if (setgroups(1, &pw->pw_gid) != 0)
+			err(1, "setgroups");
+		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) != 0)
+			err(1, "setresgid");
+		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
+			err(1, "setresuid");
+	}
+
+	m = magic_load(f, path, cflag || Wflag);
+	if (cflag) {
+		magic_dump(m);
+		exit(0);
+	}
+
+	for (i = 0; i < nfiles; i++)
+		test_file(m, &files[i], width);
 	exit(0);
+}
+
+static void
+open_file(struct input_file *inf, const char *path, int *width)
+{
+	char	*label;
+	int	 n, retval;
+
+	inf->path = xstrdup(path);
+
+	n = xasprintf(&label, "%s:", inf->path);
+	if (n > *width)
+		*width = n;
+	inf->label = label;
+
+	retval = lstat(inf->path, &inf->sb);
+	if (retval == -1) {
+		inf->error = strerror(errno);
+		return;
+	}
+
+	if (S_ISLNK(inf->sb.st_mode))
+		read_link(inf);
+	inf->fd = open(inf->path, O_RDONLY|O_NONBLOCK);
+}
+
+static void
+read_link(struct input_file *inf)
+{
+	struct stat	 sb;
+	char		 path[PATH_MAX];
+	char		*copy, *root;
+	int		 used;
+	ssize_t		 size;
+
+	size = readlink(inf->path, path, sizeof path);
+	if (size == -1) {
+		inf->link_error = strerror(errno);
+		return;
+	}
+	path[size] = '\0';
+
+	if (*path == '/')
+		strlcpy(inf->link_path, path, sizeof inf->link_path);
+	else {
+		copy = xstrdup(inf->path);
+
+		root = dirname(copy);
+		if (*root == '\0' || strcmp(root, ".") == 0 ||
+		    strcmp (root, "/") == 0)
+			strlcpy(inf->link_path, path, sizeof inf->link_path);
+		else {
+			used = snprintf(inf->link_path, sizeof inf->link_path,
+			    "%s/%s", root, path);
+			if (used < 0 || (size_t)used >= sizeof inf->link_path) {
+				inf->link_error = strerror(ENAMETOOLONG);
+				return;
+			}
+		}
+
+		free(copy);
+	}
+
+	if (Lflag) {
+		if (stat(inf->path, &inf->sb) == -1)
+			inf->error = strerror(errno);
+	} else {
+		if (stat(inf->link_path, &sb) == -1)
+			inf->link_target = errno;
+	}
+}
+
+static void *
+fill_buffer(struct input_file *inf)
+{
+	static void	*buffer;
+	ssize_t		 got;
+	size_t		 left;
+	void		*next;
+
+	if (buffer == NULL)
+		buffer = xmalloc(FILE_READ_SIZE);
+
+	next = buffer;
+	left = inf->size;
+	while (left != 0) {
+		got = read(inf->fd, next, left);
+		if (got == -1) {
+			if (errno == EINTR)
+				continue;
+			return NULL;
+		}
+		if (got == 0)
+			break;
+		next = (char*)next + got;
+		left -= got;
+	}
+
+	return buffer;
+}
+
+static int
+load_file(struct input_file *inf)
+{
+	int	available;
+
+	inf->size = inf->sb.st_size;
+	if (inf->size > FILE_READ_SIZE)
+		inf->size = FILE_READ_SIZE;
+	if (S_ISFIFO(inf->sb.st_mode)) {
+		if (ioctl(inf->fd, FIONREAD, &available) == -1) {
+			xasprintf(&inf->result,  "cannot read '%s' (%s)",
+			    inf->path, strerror(errno));
+			return (1);
+		}
+		inf->size = available;
+	} else if (!S_ISREG(inf->sb.st_mode) && inf->size == 0)
+		inf->size = FILE_READ_SIZE;
+	if (inf->size == 0)
+		return (0);
+
+	inf->base = mmap(NULL, inf->size, PROT_READ, MAP_PRIVATE, inf->fd, 0);
+	if (inf->base == MAP_FAILED) {
+		inf->base = fill_buffer(inf);
+		if (inf->base == NULL) {
+			xasprintf(&inf->result, "cannot read '%s' (%s)",
+			    inf->path, strerror(errno));
+			return (1);
+		}
+	} else
+		inf->mapped = 1;
+	return (0);
+}
+
+static int
+try_stat(struct input_file *inf)
+{
+	if (inf->error != NULL) {
+		xasprintf(&inf->result, "cannot stat '%s' (%s)", inf->path,
+		    inf->error);
+		return (1);
+	}
+	if (sflag) {
+		switch (inf->sb.st_mode & S_IFMT) {
+		case S_IFBLK:
+		case S_IFCHR:
+		case S_IFIFO:
+		case S_IFREG:
+			return (0);
+		}
+	}
+
+	if (iflag && (inf->sb.st_mode & S_IFMT) != S_IFREG) {
+		xasprintf(&inf->result, "application/x-not-regular-file");
+		return (1);
+	}
+
+
+	switch (inf->sb.st_mode & S_IFMT) {
+	case S_IFDIR:
+		xasprintf(&inf->result, "directory");
+		return (1);
+	case S_IFLNK:
+		if (inf->link_error != NULL) {
+			xasprintf(&inf->result, "unreadable symlink '%s' (%s)",
+			    inf->path, inf->link_error);
+			return (1);
+		}
+		if (inf->link_target == ELOOP)
+			xasprintf(&inf->result, "symbolic link in a loop");
+		else if (inf->link_target != 0) {
+			xasprintf(&inf->result, "broken symbolic link to '%s'",
+			    inf->link_path);
+		} else {
+			xasprintf(&inf->result, "symbolic link to '%s'",
+			    inf->link_path);
+		}
+		return (1);
+	case S_IFSOCK:
+		xasprintf(&inf->result, "socket");
+		return (1);
+	case S_IFBLK:
+		xasprintf(&inf->result, "block special (%ld/%ld)",
+		    (long)major(inf->sb.st_rdev), (long)minor(inf->sb.st_rdev));
+		return (1);
+	case S_IFCHR:
+		xasprintf(&inf->result, "character special (%ld/%ld)",
+		    (long)major(inf->sb.st_rdev), (long)minor(inf->sb.st_rdev));
+		return (1);
+	case S_IFIFO:
+		xasprintf(&inf->result, "fifo (named pipe)");
+		return (1);
+	}
+	return (0);
+}
+
+static int
+try_empty(struct input_file *inf)
+{
+	if (inf->size != 0)
+		return (0);
+
+	if (iflag)
+		xasprintf(&inf->result, "application/x-empty");
+	else
+		xasprintf(&inf->result, "empty");
+	return (1);
+}
+
+static int
+try_access(struct input_file *inf)
+{
+	char tmp[256] = "";
+
+	if (inf->fd != -1)
+		return (0);
+
+	if (inf->sb.st_mode & 0222)
+		strlcat(tmp, "writable, ", sizeof tmp);
+	if (inf->sb.st_mode & 0111)
+		strlcat(tmp, "executable, ", sizeof tmp);
+	if (S_ISREG(inf->sb.st_mode))
+		strlcat(tmp, "regular file, ", sizeof tmp);
+	strlcat(tmp, "no read permission", sizeof tmp);
+
+	inf->result = xstrdup(tmp);
+	return (1);
+}
+
+static int
+try_text(struct input_file *inf)
+{
+	const char	*type, *s;
+	int		 flags;
+
+	flags = MAGIC_TEST_TEXT;
+	if (iflag)
+		flags |= MAGIC_TEST_MIME;
+
+	type = text_get_type(inf->base, inf->size);
+	if (type == NULL)
+		return (0);
+
+	s = magic_test(inf->m, inf->base, inf->size, flags);
+	if (s != NULL) {
+		inf->result = xstrdup(s);
+		return (1);
+	}
+
+	s = text_try_words(inf->base, inf->size, flags);
+	if (s != NULL) {
+		if (iflag)
+			inf->result = xstrdup(s);
+		else
+			xasprintf(&inf->result, "%s %s text", type, s);
+		return (1);
+	}
+
+	if (iflag)
+		inf->result = xstrdup("text/plain");
+	else
+		xasprintf(&inf->result, "%s text", type);
+	return (1);
+}
+
+static int
+try_magic(struct input_file *inf)
+{
+	const char	*s;
+	int		 flags;
+
+	flags = 0;
+	if (iflag)
+		flags |= MAGIC_TEST_MIME;
+
+	s = magic_test(inf->m, inf->base, inf->size, flags);
+	if (s != NULL) {
+		inf->result = xstrdup(s);
+		return (1);
+	}
+	return (0);
+}
+
+static int
+try_unknown(struct input_file *inf)
+{
+	if (iflag)
+		xasprintf(&inf->result, "application/x-not-regular-file");
+	else
+		xasprintf(&inf->result, "data");
+	return (1);
+}
+
+static void
+test_file(struct magic *m, struct input_file *inf, int width)
+{
+	int	stop;
+
+	inf->m = m;
+
+	stop = 0;
+	if (!stop)
+		stop = try_stat(inf);
+	if (!stop)
+		stop = try_access(inf);
+	if (!stop)
+		stop = load_file(inf);
+	if (!stop)
+		stop = try_empty(inf);
+	if (!stop)
+		stop = try_magic(inf);
+	if (!stop)
+		stop = try_text(inf);
+	if (!stop)
+		stop = try_unknown(inf);
+
+	if (bflag)
+		printf("%s\n", inf->result);
+	else
+		printf("%-*s %s\n", width, inf->label, inf->result);
+
+	if (inf->mapped && inf->base != NULL)
+		munmap(inf->base, inf->size);
+	inf->base = NULL;
+
+	free(inf->result);
 }
