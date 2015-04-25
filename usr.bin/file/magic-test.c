@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.2 2015/04/24 17:19:06 deraadt Exp $ */
+/* $OpenBSD: magic-test.c,v 1.3 2015/04/25 16:35:47 brynet Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -243,9 +243,9 @@ magic_test_type_short(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BESHORT)
-		value = betoh16(value);
+		value = be16toh(value);
 	if (ml->type == MAGIC_TYPE_LESHORT)
-		value = letoh16(value);
+		value = le16toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (int16_t)ml->type_operand;
@@ -269,9 +269,9 @@ magic_test_type_long(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BELONG)
-		value = betoh32(value);
+		value = be32toh(value);
 	if (ml->type == MAGIC_TYPE_LELONG)
-		value = letoh32(value);
+		value = le32toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (int32_t)ml->type_operand;
@@ -295,9 +295,9 @@ magic_test_type_quad(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BEQUAD)
-		value = betoh64(value);
+		value = be64toh(value);
 	if (ml->type == MAGIC_TYPE_LEQUAD)
-		value = letoh64(value);
+		value = le64toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (int64_t)ml->type_operand;
@@ -343,9 +343,9 @@ magic_test_type_ushort(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_UBESHORT)
-		value = betoh16(value);
+		value = be16toh(value);
 	if (ml->type == MAGIC_TYPE_ULESHORT)
-		value = letoh16(value);
+		value = le16toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (uint16_t)ml->type_operand;
@@ -369,9 +369,9 @@ magic_test_type_ulong(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_UBELONG)
-		value = betoh32(value);
+		value = be32toh(value);
 	if (ml->type == MAGIC_TYPE_ULELONG)
-		value = letoh32(value);
+		value = le32toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (uint32_t)ml->type_operand;
@@ -395,9 +395,9 @@ magic_test_type_uquad(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value, sizeof value) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_UBEQUAD)
-		value = betoh64(value);
+		value = be64toh(value);
 	if (ml->type == MAGIC_TYPE_ULEQUAD)
-		value = letoh64(value);
+		value = le64toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (uint64_t)ml->type_operand;
@@ -421,9 +421,9 @@ magic_test_type_float(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value0, sizeof value0) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BEFLOAT)
-		value0 = betoh32(value0);
+		value0 = be32toh(value0);
 	if (ml->type == MAGIC_TYPE_LEFLOAT)
-		value0 = letoh32(value0);
+		value0 = le32toh(value0);
 	memcpy(&value, &value0, sizeof value);
 
 	if (ml->type_operator != ' ')
@@ -446,9 +446,9 @@ magic_test_type_double(struct magic_line *ml, struct magic_state *ms)
 	if (magic_copy_from(ms, -1, &value0, sizeof value0) != 0)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BEDOUBLE)
-		value0 = betoh64(value0);
+		value0 = be64toh(value0);
 	if (ml->type == MAGIC_TYPE_LEDOUBLE)
-		value0 = letoh64(value0);
+		value0 = le64toh(value0);
 	memcpy(&value, &value0, sizeof value);
 
 	if (ml->type_operator != ' ')
@@ -583,10 +583,10 @@ magic_test_type_date(struct magic_line *ml, struct magic_state *ms)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BEDATE ||
 	    ml->type == MAGIC_TYPE_BELDATE)
-		value = betoh32(value);
+		value = be32toh(value);
 	if (ml->type == MAGIC_TYPE_LEDATE ||
 	    ml->type == MAGIC_TYPE_LELDATE)
-		value = letoh32(value);
+		value = le32toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (int32_t)ml->type_operand;
@@ -625,10 +625,10 @@ magic_test_type_qdate(struct magic_line *ml, struct magic_state *ms)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BEQDATE ||
 	    ml->type == MAGIC_TYPE_BEQLDATE)
-		value = betoh64(value);
+		value = be64toh(value);
 	if (ml->type == MAGIC_TYPE_LEQDATE ||
 	    ml->type == MAGIC_TYPE_LEQLDATE)
-		value = letoh64(value);
+		value = le64toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (int64_t)ml->type_operand;
@@ -667,10 +667,10 @@ magic_test_type_udate(struct magic_line *ml, struct magic_state *ms)
 		return (0);
 	if (ml->type == MAGIC_TYPE_BEDATE ||
 	    ml->type == MAGIC_TYPE_BELDATE)
-		value = betoh32(value);
+		value = be32toh(value);
 	if (ml->type == MAGIC_TYPE_LEDATE ||
 	    ml->type == MAGIC_TYPE_LELDATE)
-		value = letoh32(value);
+		value = le32toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (uint32_t)ml->type_operand;
@@ -709,10 +709,10 @@ magic_test_type_uqdate(struct magic_line *ml, struct magic_state *ms)
 		return (0);
 	if (ml->type == MAGIC_TYPE_UBEQDATE ||
 	    ml->type == MAGIC_TYPE_UBEQLDATE)
-		value = betoh64(value);
+		value = be64toh(value);
 	if (ml->type == MAGIC_TYPE_ULEQDATE ||
 	    ml->type == MAGIC_TYPE_ULEQLDATE)
-		value = letoh64(value);
+		value = le64toh(value);
 
 	if (ml->type_operator == '&')
 		value &= (uint64_t)ml->type_operand;
@@ -1018,22 +1018,22 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 		case 's':
 			if (magic_copy_from(ms, next, &s, sizeof s) != 0)
 				return (0);
-			wanted = letoh16(s);
+			wanted = le16toh(s);
 			break;
 		case 'S':
 			if (magic_copy_from(ms, next, &s, sizeof s) != 0)
 				return (0);
-			wanted = betoh16(s);
+			wanted = be16toh(s);
 			break;
 		case 'l':
 			if (magic_copy_from(ms, next, &l, sizeof l) != 0)
 				return (0);
-			wanted = letoh16(l);
+			wanted = le16toh(l);
 			break;
 		case 'L':
 			if (magic_copy_from(ms, next, &l, sizeof l) != 0)
 				return (0);
-			wanted = betoh16(l);
+			wanted = be16toh(l);
 			break;
 		}
 
