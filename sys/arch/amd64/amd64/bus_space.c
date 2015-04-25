@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.25 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.26 2015/04/25 21:31:24 guenther Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -694,7 +694,7 @@ x86_bus_space_io_read_region_1(bus_space_handle_t h,
 	int dummy3;
 	int __x;
 	u_int32_t port = h + o;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"1:	inb %w1,%%al				;"
 	"	stosb					;"
 	"	incl %1					;"
@@ -714,7 +714,7 @@ x86_bus_space_io_read_region_2(bus_space_handle_t h,
 	int dummy3;
 	int __x;
 	u_int32_t port = h + o;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"1:	inw %w1,%%ax				;"
 	"	stosw					;"
 	"	addl $2,%1				;"
@@ -734,7 +734,7 @@ x86_bus_space_io_read_region_4(bus_space_handle_t h,
 	int dummy3;
 	int __x;
 	u_int32_t port = h + o;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"1:	inl %w1,%%eax				;"
 	"	stosl					;"
 	"	addl $4,%1				;"
@@ -813,7 +813,7 @@ x86_bus_space_io_write_region_1(bus_space_handle_t h,
 	int dummy3;
 	int __x;
 	u_int32_t port = h + o;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"1:	lodsb					;"
 	"	outb %%al,%w1				;"
 	"	incl %1					;"
@@ -833,7 +833,7 @@ x86_bus_space_io_write_region_2(bus_space_handle_t h,
 	int dummy3;
 	int __x;
 	u_int32_t port = h + o;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"1:	lodsw					;"
 	"	outw %%ax,%w1				;"
 	"	addl $2,%1				;"
@@ -853,7 +853,7 @@ x86_bus_space_io_write_region_4(bus_space_handle_t h,
 	int dummy3;
 	int __x;
 	u_int32_t port = h + o;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"1:	lodsl					;"
 	"	outl %%eax,%w1				;"
 	"	addl $4,%1				;"
@@ -1066,7 +1066,7 @@ x86_bus_space_mem_read_multi_1(bus_space_handle_t h, bus_size_t o,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"1:	movb (%2),%%al				;"
 	"	stosb					;"
 	"	loop 1b"				:
@@ -1083,7 +1083,7 @@ x86_bus_space_mem_read_multi_2(bus_space_handle_t h, bus_size_t o,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"1:	movw (%2),%%ax				;"
 	"	stosw					;"
 	"	loop 1b"				:
@@ -1100,7 +1100,7 @@ x86_bus_space_mem_read_multi_4(bus_space_handle_t h, bus_size_t o,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"1:	movl (%2),%%eax				;"
 	"	stosl					;"
 	"	loop 1b"				:
@@ -1117,7 +1117,7 @@ x86_bus_space_mem_read_multi_8(bus_space_handle_t h, bus_size_t o,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"1:	movq (%2),%%rax				;"
 	"	stosq					;"
 	"	loop 1b"				:
@@ -1133,7 +1133,7 @@ x86_bus_space_mem_read_region_1(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsb"					:
 	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
@@ -1148,7 +1148,7 @@ x86_bus_space_mem_read_region_2(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile(" cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsw"					:
 	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
@@ -1163,7 +1163,7 @@ x86_bus_space_mem_read_region_4(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsl"					:
 	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
@@ -1178,7 +1178,7 @@ x86_bus_space_mem_read_region_8(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsq"					:
 	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
@@ -1206,7 +1206,7 @@ x86_bus_space_mem_write_multi_1(bus_space_handle_t h,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"1:	lodsb					;"
 	"	movb %%al,(%2)				;"
 	"	loop 1b"				:
@@ -1222,7 +1222,7 @@ x86_bus_space_mem_write_multi_2(bus_space_handle_t h,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"1:	lodsw					;"
 	"	movw %%ax,(%2)				;"
 	"	loop 1b"				:
@@ -1238,7 +1238,7 @@ x86_bus_space_mem_write_multi_4(bus_space_handle_t h,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"1:	lodsl					;"
 	"	movl %%eax,(%2)				;"
 	"	loop 1b"				:
@@ -1254,7 +1254,7 @@ x86_bus_space_mem_write_multi_8(bus_space_handle_t h,
 	int dummy2;
 	void *dummy3;
 	int __x;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"1:	lodsq					;"
 	"	movq %%rax,(%2)				;"
 	"	loop 1b"				:
@@ -1269,7 +1269,7 @@ x86_bus_space_mem_write_region_1(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsb"					:
 	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
@@ -1284,7 +1284,7 @@ x86_bus_space_mem_write_region_2(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsw"					:
 	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
@@ -1299,7 +1299,7 @@ x86_bus_space_mem_write_region_4(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsl"					:
 	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
@@ -1314,7 +1314,7 @@ x86_bus_space_mem_write_region_8(bus_space_handle_t h,
 	int dummy1;
 	void *dummy2;
 	int dummy3;
-	__asm volatile("cld				;"
+	__asm volatile(
 	"	repne					;"
 	"	movsq"					:
 	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:

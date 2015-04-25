@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.155 2015/04/24 12:52:38 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.156 2015/04/25 21:31:24 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -544,7 +544,6 @@ try586:	/* Use the `cpuid' instruction. */
 	subl	%edi,%ecx			# size of tables
 	shrl	$2,%ecx
 	xorl	%eax, %eax
-	cld
 	rep
 	stosl
 
@@ -764,8 +763,7 @@ ENTRY(kcopy)
 	subl	%esi,%eax
 	cmpl	%ecx,%eax		# overlapping?
 	jb	1f
-	cld				# nope, copy forward
-	shrl	$2,%ecx			# copy by 32-bit words
+	shrl	$2,%ecx			# nope, copy forward by 32-bit words
 	rep
 	movsl
 	movl	24+FPADD(%esp),%ecx
@@ -852,7 +850,6 @@ ENTRY(copyout)
 	SMAP_STAC
 
 	/* bcopy(%esi, %edi, %eax); */
-	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
@@ -904,7 +901,6 @@ ENTRY(copyin)
 	ja	_C_LABEL(copy_fault)
 
 	/* bcopy(%esi, %edi, %eax); */
-	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
 	rep
@@ -974,7 +970,6 @@ ENTRY(copyoutstr)
 	movl	%eax,20+FPADD(%esp)
 
 1:	incl	%edx
-	cld
 
 1:	decl	%edx
 	jz	2f
@@ -1030,7 +1025,6 @@ ENTRY(copyinstr)
 	movl	%eax,20+FPADD(%esp)
 
 1:	incl	%edx
-	cld
 
 1:	decl	%edx
 	jz	2f
@@ -1090,7 +1084,6 @@ ENTRY(copystr)
 	movl	16+FPADD(%esp),%edi		# edi = to
 	movl	20+FPADD(%esp),%edx		# edx = maxlen
 	incl	%edx
-	cld
 
 1:	decl	%edx
 	jz	4f
@@ -1538,7 +1531,6 @@ ENTRY(bzero)
 	movl	8(%esp),%edi
 	movl	12(%esp),%edx
 
-	cld				/* set fill direction forward */
 	xorl	%eax,%eax		/* set fill data to 0 */
 
 	/*
@@ -1618,7 +1610,6 @@ ENTRY(i686_pagezero)
 
 	movl	12(%esp), %edi
 	movl	$1024, %ecx
-	cld
 
 	ALIGN_TEXT
 1:
@@ -1679,7 +1670,6 @@ ENTRY(cpu_paenable)
 	movl	%edi, %cr3
 	addl	$KERNBASE, %edi /* and make it back virtual again */
 	movl	$8, %ecx
-	cld
 	rep
 	movsl
 

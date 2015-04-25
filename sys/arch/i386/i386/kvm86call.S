@@ -1,4 +1,4 @@
-/* $OpenBSD: kvm86call.S,v 1.6 2010/04/05 22:42:43 kettenis Exp $ */
+/* $OpenBSD: kvm86call.S,v 1.7 2015/04/25 21:31:24 guenther Exp $ */
 /* $NetBSD: kvm86call.S,v 1.7 2006/04/11 17:14:07 drochner Exp $ */
 
 /*-
@@ -74,7 +74,6 @@ ENTRY(kvm86_call)
 	movl	vm86frame,%edi		/* target frame location */
 	movl    SCRARGFRAME,%esi	/* source (set on entry) */
 	movl	$FRAMESIZE/4,%ecx	/* sizeof(struct trapframe)/4 */
-	cld
 	rep
 	movsl				/* copy frame to new stack */
 
@@ -163,7 +162,6 @@ ENTRY(kvm86_ret)
 	movl	8(%ebp),%esi		/* source */
 	movl	SCRARGFRAME,%edi	/* destination */
 	movl	$FRAMESIZE/4,%ecx	/* size */
-	cld
 	rep
 	movsl				/* copy frame to original frame */
 

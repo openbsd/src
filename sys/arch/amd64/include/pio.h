@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.4 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: pio.h,v 1.5 2015/04/25 21:31:24 guenther Exp $	*/
 /*	$NetBSD: pio.h,v 1.2 2003/02/27 11:22:46 fvdl Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ insb(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm volatile("cld\n\trepne\n\tinsb"			:
+	__asm volatile("repne\n\tinsb"				:
 			 "=D" (dummy1), "=c" (dummy2) 		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
 			 "memory");
@@ -108,7 +108,7 @@ insw(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm volatile("cld\n\trepne\n\tinsw"			:
+	__asm volatile("repne\n\tinsw"				:
 			 "=D" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
 			 "memory");
@@ -138,7 +138,7 @@ insl(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm volatile("cld\n\trepne\n\tinsl"			:
+	__asm volatile("repne\n\tinsl"				:
 			 "=D" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
 			 "memory");
@@ -165,7 +165,7 @@ outsb(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm volatile("cld\n\trepne\n\toutsb"			:
+	__asm volatile("repne\n\toutsb"				:
 			 "=S" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt));
 }
@@ -191,7 +191,7 @@ outsw(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm volatile("cld\n\trepne\n\toutsw"			:
+	__asm volatile("repne\n\toutsw"				:
 			 "=S" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt));
 }
@@ -217,7 +217,7 @@ outsl(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
-	__asm volatile("cld\n\trepne\n\toutsl"			:
+	__asm volatile("repne\n\toutsl"				:
 			 "=S" (dummy1), "=c" (dummy2)		:
 			 "d" (port), "0" (addr), "1" (cnt));
 }

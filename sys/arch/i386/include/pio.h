@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.11 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: pio.h,v 1.12 2015/04/25 21:31:24 guenther Exp $	*/
 /*	$NetBSD: pio.h,v 1.13 1996/03/08 20:15:23 cgd Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ __inb(int port)
 static __inline void
 insb(int port, void *addr, int cnt)
 {
-	__asm volatile("cld\n\trepne\n\tinsb"
+	__asm volatile("repne\n\tinsb"
 	    : "+D" (addr), "+c" (cnt) : "d" (port) : "memory", "cc");
 }
 
@@ -102,7 +102,7 @@ __inw(int port)
 static __inline void
 insw(int port, void *addr, int cnt)
 {
-	__asm volatile("cld\n\trepne\n\tinsw"
+	__asm volatile("repne\n\tinsw"
 	    : "+D" (addr), "+c" (cnt) : "d" (port) : "memory", "cc");
 }
 
@@ -128,7 +128,7 @@ __inl(int port)
 static __inline void
 insl(int port, void *addr, int cnt)
 {
-	__asm volatile("cld\n\trepne\n\tinsl"
+	__asm volatile("repne\n\tinsl"
 	    : "+D" (addr), "+c" (cnt) : "d" (port) : "memory", "cc");
 }
 
@@ -150,7 +150,7 @@ __outb(int port, u_int8_t data)
 static __inline void
 outsb(int port, const void *addr, int cnt)
 {
-	__asm volatile("cld\n\trepne\n\toutsb"
+	__asm volatile("repne\n\toutsb"
 	    : "+S" (addr), "+c" (cnt) : "d" (port) : "cc");
 }
 
@@ -172,7 +172,7 @@ __outw(int port, u_int16_t data)
 static __inline void
 outsw(int port, const void *addr, int cnt)
 {
-	__asm volatile("cld\n\trepne\n\toutsw"
+	__asm volatile("repne\n\toutsw"
 	    : "+S" (addr), "+c" (cnt) : "d" (port) : "cc");
 }
 
@@ -194,7 +194,7 @@ __outl(int port, u_int32_t data)
 static __inline void
 outsl(int port, const void *addr, int cnt)
 {
-	__asm volatile("cld\n\trepne\n\toutsl"
+	__asm volatile("repne\n\toutsl"
 	    : "+S" (addr), "+c" (cnt) : "d" (port) : "cc");
 }
 
