@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.72 2015/03/14 03:52:42 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.73 2015/04/25 15:28:18 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -56,6 +56,9 @@ rde_filter(struct filter_head *rules, struct rde_aspath **new,
 			continue;
 		if (f->peer.peerid != 0 &&
 		    f->peer.peerid != peer->conf.id)
+			continue;
+		if (f->peer.remote_as != 0 &&
+		    f->peer.remote_as != peer->conf.remote_as)
 			continue;
 		if (rde_filter_match(f, asp, prefix, prefixlen, peer, from)) {
 			if (asp != NULL && new != NULL) {
@@ -416,6 +419,12 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		if (peer != NULL && fb != NULL && fb->peer.peerid != 0 &&
 		    fb->peer.peerid != peer->conf.id) {
 			fb = TAILQ_NEXT(fb, entry);
+			continue;
+		}
+
+		if (peer != NULL && fa != NULL && fa->peer.remote_as != 0 &&
+		    fa->peer.remote_as != peer->conf.remote_as) {
+			fa = TAILQ_NEXT(fa, entry);
 			continue;
 		}
 

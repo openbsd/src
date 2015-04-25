@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.93 2013/11/13 09:14:48 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.94 2015/04/25 15:28:18 phessler Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -542,6 +542,8 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 			printf("group ? ");
 		else
 			printf("group \"%s\" ", p->conf.group);
+	} else if (r->peer.remote_as) {
+		printf("AS %s ", log_as(r->peer.remote_as));
 	} else
 		printf("any ");
 

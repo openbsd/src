@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.16 2015/01/16 06:40:15 deraadt Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.17 2015/04/25 15:28:18 phessler Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "bgpd.h"
 #include "irrfilter.h"
 
 int	 process_policies(FILE *, struct policy_head *);
@@ -195,7 +196,7 @@ void
 print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
     struct irr_prefix *prefix)
 {
-	char	*peer = "any";
+	char	 peer[PEER_DESCR_LEN];
 	char	*action = "";
 	char	*dir;
 	char	*srcas[2] = { "", "" };
@@ -208,7 +209,9 @@ print_rule(FILE *fh, struct policy_item *pi, char *sourceas,
 		dir = "to";
 
 	if (pi->peer_addr)
-		peer = pi->peer_addr;
+		snprintf(peer, PEER_DESCR_LEN, "%s", pi->peer_addr);
+	else
+		snprintf(peer, PEER_DESCR_LEN, "AS %s", log_as(pi->peer_as));
 
 	if (pi->action)
 		action = action_torule(pi->action);

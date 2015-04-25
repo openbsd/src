@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.278 2015/03/14 03:52:42 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.279 2015/04/25 15:28:18 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1457,7 +1457,7 @@ filter_peer	: ANY		{
 			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
 			    NULL)
 				fatal(NULL);
-			$$->p.groupid = $$->p.peerid = 0;
+			$$->p.remote_as = $$->p.groupid = $$->p.peerid = 0;
 			$$->next = NULL;
 			for (p = peer_l; p != NULL; p = p->next)
 				if (!memcmp(&p->conf.remote_addr,
@@ -1471,13 +1471,20 @@ filter_peer	: ANY		{
 				YYERROR;
 			}
 		}
+ 		| AS as4number	{
+			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->p.groupid = $$->p.peerid = 0;
+			$$->p.remote_as = $2;
+		}
 		| GROUP STRING	{
 			struct peer *p;
 
 			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
 			    NULL)
 				fatal(NULL);
-			$$->p.peerid = 0;
+			$$->p.remote_as = $$->p.peerid = 0;
 			$$->next = NULL;
 			for (p = peer_l; p != NULL; p = p->next)
 				if (!strcmp(p->conf.group, $2)) {
