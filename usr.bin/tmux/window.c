@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.122 2015/04/22 15:30:11 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.123 2015/04/25 18:09:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -251,6 +251,21 @@ winlink_stack_remove(struct winlink_stack *stack, struct winlink *wl)
 			return;
 		}
 	}
+}
+
+struct window *
+window_find_by_id_str(const char* s)
+{
+	const char	*errstr;
+	u_int		 id;
+
+	if (*s != '@')
+		return (NULL);
+
+	id = strtonum(s + 1, 0, UINT_MAX, &errstr);
+	if (errstr != NULL)
+		return (NULL);
+	return (window_find_by_id(id));
 }
 
 struct window *
@@ -653,7 +668,21 @@ window_printable_flags(struct session *s, struct winlink *wl)
 	return (xstrdup(flags));
 }
 
-/* Find pane in global tree by id. */
+struct window_pane *
+window_pane_find_by_id_str(const char *s)
+{
+	const char	*errstr;
+	u_int		 id;
+
+	if (*s != '%')
+		return (NULL);
+
+	id = strtonum(s + 1, 0, UINT_MAX, &errstr);
+	if (errstr != NULL)
+		return (NULL);
+	return (window_pane_find_by_id(id));
+}
+
 struct window_pane *
 window_pane_find_by_id(u_int id)
 {

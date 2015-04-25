@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.23 2015/04/20 15:34:56 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.24 2015/04/25 18:09:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -99,10 +99,12 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		} else {
 			if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
 				return (CMD_RETURN_ERROR);
-			w = cmd_lookup_windowid(tflag);
-			if (w == NULL &&
-			    (wp = cmd_lookup_paneid(tflag)) != NULL)
-				w = wp->window;
+			w = window_find_by_id_str(tflag);
+			if (w == NULL) {
+				wp = window_pane_find_by_id_str(tflag);
+				if (wp != NULL)
+					w = wp->window;
+			}
 			if (w != NULL)
 				wl = winlink_find_by_window(&s->windows, w);
 		}
