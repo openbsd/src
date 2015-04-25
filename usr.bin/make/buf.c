@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.25 2012/11/07 14:18:41 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.26 2015/04/25 15:33:47 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -67,7 +67,9 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -86,6 +88,13 @@
 #define DO_STAT_BUF(a, b)
 #endif
 
+static void
+fatal_overflow()
+{
+	fprintf(stderr, "buffer size overflow\n");
+	exit(2);
+}
+
 /* BufExpand(bp, nb)
  *	Expand buffer bp to hold upto nb additional
  *	chars.	Makes sure there's room for an extra '\0' char at
@@ -97,7 +106,11 @@ do {							\
 	DO_STAT_BUF(bp, nb);				\
 							\
 	do {						\
-		size *= 2 ;				\
+		if (size <= SIZE_MAX/2) {		\
+			size *= 2 ;			\
+		} else {				\
+			fatal_overflow();		\
+		}					\
 	} while (size - occupied < (nb)+1+BUF_MARGIN);	\
 	(bp)->buffer = (bp)->inPtr = (bp)->endPtr = 	\
 		erealloc((bp)->buffer, size);		\

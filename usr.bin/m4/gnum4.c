@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.48 2015/03/14 23:00:43 millert Exp $ */
+/* $OpenBSD: gnum4.c,v 1.49 2015/04/25 15:33:47 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -208,8 +208,11 @@ addchars(const char *c, size_t n)
 	while (current + n > bufsize) {
 		if (bufsize == 0)
 			bufsize = 1024;
-		else
+		else if (bufsize <= SIZE_MAX/2) {
 			bufsize *= 2;
+		} else {
+			errx(1, "size overflow");
+		}
 		buffer = xrealloc(buffer, bufsize, NULL);
 	}
 	memcpy(buffer+current, c, n);
