@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.2 2015/04/24 16:45:32 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.3 2015/04/25 18:44:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -401,6 +401,8 @@ magic_get_string(char **line, char *out, size_t *outlen)
 		}
 
 		switch (c = *++cp) {
+		case '\0': /* end of line */
+			return (-1);
 		case ' ':
 			*out++ = ' ';
 			break;
