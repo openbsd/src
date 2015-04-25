@@ -373,6 +373,10 @@ C<POSIX::setlocale()> function:
         # restore the old locale
         setlocale(LC_CTYPE, $old_locale);
 
+This simultaneously affects all threads of the program, so it may be
+problematic to use locales in threaded applications except where there
+is a single locale applicable to all threads.
+
 The first argument of C<setlocale()> gives the B<category>, the second the
 B<locale>.  The category tells in what aspect of data processing you
 want to apply locale-specific rules.  Category names are discussed in
@@ -539,7 +543,7 @@ alphabetically in your system is called).
 
 You can test out changing these variables temporarily, and if the
 new settings seem to help, put those settings into your shell startup
-files.  Consult your local documentation for the exact details.  For in
+files.  Consult your local documentation for the exact details.  For
 Bourne-like shells (B<sh>, B<ksh>, B<bash>, B<zsh>):
 
 	LC_ALL=en_US.ISO8859-1
@@ -551,7 +555,7 @@ locale "En_US"--and in Cshish shells (B<csh>, B<tcsh>)
 
 	setenv LC_ALL en_US.ISO8859-1
 
-or if you have the "env" application you can do in any shell
+or if you have the "env" application you can do (in any shell)
 
 	env LC_ALL=en_US.ISO8859-1 perl ...
 
@@ -712,7 +716,7 @@ alphabets, but where do "E<aacute>" and "E<aring>" belong?  And while
 "color" follows "chocolate" in English, what about in traditional Spanish?
 
 The following collations all make sense and you may meet any of them
-if you "use locale".
+if you C<"use locale">.
 
 	A B C D E a b c d e
 	A a B b C c D d E e
@@ -749,7 +753,7 @@ C<$equal_in_locale> will be true if the collation locale specifies a
 dictionary-like ordering that ignores space characters completely and
 which folds case.
 
-Perl only supports single-byte locales for C<LC_COLLATE>.  This means
+Perl currently only supports single-byte locales for C<LC_COLLATE>.  This means
 that a UTF-8 locale likely will just give you machine-native ordering.
 Use L<Unicode::Collate> for the full implementation of the Unicode
 Collation Algorithm.
@@ -808,15 +812,16 @@ information on all these.)
 
 The C<LC_CTYPE> locale also provides the map used in transliterating
 characters between lower and uppercase.  This affects the case-mapping
-functions--C<fc()>, C<lc()>, C<lcfirst()>, C<uc()>, and C<ucfirst()>; case-mapping
+functions--C<fc()>, C<lc()>, C<lcfirst()>, C<uc()>, and C<ucfirst()>;
+case-mapping
 interpolation with C<\F>, C<\l>, C<\L>, C<\u>, or C<\U> in double-quoted
 strings and C<s///> substitutions; and case-independent regular expression
 pattern matching using the C<i> modifier.
 
 Finally, C<LC_CTYPE> affects the (deprecated) POSIX character-class test
 functions--C<POSIX::isalpha()>, C<POSIX::islower()>, and so on.  For
-example, if you move from the "C" locale to a 7-bit Scandinavian one,
-you may find--possibly to your surprise--that "|" moves from the
+example, if you move from the "C" locale to a 7-bit ISO 646 one,
+you may find--possibly to your surprise--that C<"|"> moves from the
 C<POSIX::ispunct()> class to C<POSIX::isalpha()>.
 Unfortunately, this creates big problems for regular expressions. "|" still
 means alternation even though it matches C<\w>.
@@ -824,7 +829,7 @@ means alternation even though it matches C<\w>.
 Starting in v5.20, Perl supports UTF-8 locales for C<LC_CTYPE>, but
 otherwise Perl only supports single-byte locales, such as the ISO 8859
 series.  This means that wide character locales, for example for Asian
-languages, are not supported.  The UTF-8 locale support is actually a
+languages, are not well-supported.  The UTF-8 locale support is actually a
 superset of POSIX locales, because it is really full Unicode behavior
 as if no locale were in effect at all (except for tainting; see
 L</SECURITY>).  POSIX locales, even UTF-8 ones,
@@ -837,7 +842,11 @@ For releases v5.16 and v5.18, C<S<use locale 'not_characters>> could be
 used as a workaround for this (see L</Unicode and UTF-8>).
 
 Note that there are quite a few things that are unaffected by the
-current locale.  All the escape sequences for particular characters,
+current locale.  Any literal character is the native character for the
+given platform.  Hence 'A' means the character at code point 65 on ASCII
+platforms, and 193 on EBCDIC.  That may or may not be an 'A' in the
+current locale, if that locale even has an 'A'.
+Similarly, all the escape sequences for particular characters,
 C<\n> for example, always mean the platform's native one.  This means,
 for example, that C<\N> in regular expressions (every character
 but new-line) works on the platform character set.
@@ -940,7 +949,7 @@ results.  Here are a few possibilities:
 
 Regular expression checks for safe file names or mail addresses using
 C<\w> may be spoofed by an C<LC_CTYPE> locale that claims that
-characters such as "E<gt>" and "|" are alphanumeric.
+characters such as C<"E<gt>"> and C<"|"> are alphanumeric.
 
 =item *
 
@@ -1397,9 +1406,10 @@ the characters in the upper half of the Latin-1 range (128 - 255)
 properly under C<LC_CTYPE>.  To see if a character is a particular type
 under a locale, Perl uses the functions like C<isalnum()>.  Your C
 library may not work for UTF-8 locales with those functions, instead
-only working under the newer wide library functions like C<iswalnum()>.
-However, they are treated like single-byte locales, and will have the
-restrictions described below.
+only working under the newer wide library functions like C<iswalnum()>,
+which Perl does not use.
+These multi-byte locales are treated like single-byte locales, and will
+have the restrictions described below.
 
 For single-byte locales,
 Perl generally takes the tack to use locale rules on code points that can fit
@@ -1419,7 +1429,7 @@ Unicode, C<\p{Alpha}> will never match it, regardless of locale.  A similar
 issue occurs with C<\N{...}>.  Prior to v5.20, It is therefore a bad
 idea to use C<\p{}> or
 C<\N{}> under plain C<use locale>--I<unless> you can guarantee that the
-locale will be a ISO8859-1.  Use POSIX character classes instead.
+locale will be ISO8859-1.  Use POSIX character classes instead.
 
 Another problem with this approach is that operations that cross the
 single byte/multiple byte boundary are not well-defined, and so are
@@ -1471,9 +1481,9 @@ byte, and Unicode rules for those that can't is not uniformly applied.
 Pre-v5.12, it was somewhat haphazard; in v5.12 it was applied fairly
 consistently to regular expression matching except for bracketed
 character classes; in v5.14 it was extended to all regex matches; and in
-v5.16 to the casing operations such as C<"\L"> and C<uc()>.  For
-collation, in all releases, the system's C<strxfrm()> function is called,
-and whatever it does is what you get.
+v5.16 to the casing operations such as C<\L> and C<uc()>.  For
+collation, in all releases so far, the system's C<strxfrm()> function is
+called, and whatever it does is what you get.
 
 =head1 BUGS
 

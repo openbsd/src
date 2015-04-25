@@ -102,7 +102,12 @@ $cat > UU/cc.cbu <<'EOCCBU'
 # has prompted the user for the C compiler to use.
 
 case "$cc" in
-*gcc*) ;;
+*gcc*)
+  # With cc we can use -c99, but with gcc we just can't use C99 headers.
+  # (There is a hidden define __c99 that cc uses, but trying to use that
+  # with gcc leads into magnificent explosions.)
+  i_stdint='undef'
+  ;;
 *) ccversion=`cc -version 2>&1` ;;
 esac
 
@@ -237,6 +242,7 @@ case "$cc" in
 
 	# Warnings to turn off because the source code hasn't
 	# been cleaned up enough yet to satisfy the IRIX cc.
+	# 1047: macro redefinitions (in IRIX' own system headers!)
 	# 1184: "=" is used where where "==" may have been intended.
 	# 1552: The variable "foobar" is set but never used.
 	woff=1184,1552
@@ -284,6 +290,9 @@ case "$cc" in
                '-O') optimize='-O3 -OPT:Olimit=0:space=ON' ;;
                *) ;;
             esac
+	    # Perl source has just grown too chummy with c99
+	    # (headerwise, not code-wise: we use <stdint.h> and such)
+	    ccflags="$ccflags -c99"
 	     ;;
 	*6.2*)                        # Ragnarok 6.2
 	     ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff"
@@ -349,6 +358,26 @@ case "$ccversion" in
     cd ..; cppstdin=`pwd`/cppstdin; cd UU
     cpprun="$cppstdin"
     ;;
+esac
+
+# There is a devious bug in the MIPSpro 7.4 compiler:
+# memcmp() is an inlined intrinsic, and "sometimes" it gets compiled wrong.
+#
+# In Perl the most obvious hit is regcomp.c:S_regpposixcc(),
+# causing bus errors when compiling the POSIX character classes like
+# /[[:digit:]], which means that miniperl cannot build perl.
+# (That is almost only the one victim: one single test in re/pat fails, also.)
+#
+# Therefore let's turn the inline intrinsics off and let the normal
+# libc versions be used instead. This may cause a performance hit
+# but a little slower is better than zero speed.
+#
+# MIPSpro C 7.4.1m is supposed to have fixed this bug.
+#
+case "$ccversion" in
+"MIPSpro Compilers: Version 7.4")
+  ccflags="$ccflags -U__INLINE_INTRINSICS"
+  ;;
 esac
 
 EOCCBU
@@ -645,3 +674,8 @@ EOCBU
 # Helmut Jarausch reports that Perl's malloc is rather unusable
 # with IRIX, and SGI confirms the problem.
 usemymalloc=${usemymalloc:-false}
+
+# Configure finds <fcntl.h> but then thinks it can use <sys/file.h>
+# instead; in IRIX this is not true because the prototype of fcntl()
+# requires explicit include of <fcntl.h>
+i_fcntl=define

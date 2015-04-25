@@ -1766,7 +1766,7 @@ A scratchpad keeps SVs which are lexicals for the current unit and are
 targets for opcodes.  A previous version of this document
 stated that one can deduce that an SV lives on a scratchpad
 by looking on its flags: lexicals have C<SVs_PADMY> set, and
-I<target>s have C<SVs_PADTMP> set.  But this have never been fully true.
+I<target>s have C<SVs_PADTMP> set.  But this has never been fully true.
 C<SVs_PADMY> could be set on a variable that no longer resides in any pad.
 While I<target>s do have C<SVs_PADTMP> set, it can also be set on variables
 that have never resided in a pad, but nonetheless act like I<target>s.

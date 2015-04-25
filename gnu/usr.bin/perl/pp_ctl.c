@@ -590,6 +590,7 @@ PP(pp_formline)
                         break;
                 }
                 itembytes = s - item;
+                chophere = s;
 		break;
 	    }
 
@@ -678,7 +679,7 @@ PP(pp_formline)
 	    goto append;
 
 	case FF_CHOP: /* (for ^*) chop the current item */
-	    {
+	    if (sv != &PL_sv_no) {
 		const char *s = chophere;
 		if (chopspace) {
 		    while (isSPACE(*s))
@@ -704,11 +705,11 @@ PP(pp_formline)
 		const char *const send = s + len;
 
 		item_is_utf8 = DO_UTF8(sv);
+		chophere = s + len;
 		if (!len)
 		    break;
 		trans = 0;
 		gotsome = TRUE;
-		chophere = s + len;
 		source = (U8 *) s;
 		to_copy = len;
 		while (s < send) {

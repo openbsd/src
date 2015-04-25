@@ -69,7 +69,7 @@ References can be created in several ways.
 X<\> X<backslash>
 
 By using the backslash operator on a variable, subroutine, or value.
-(This works much like the & (address-of) operator in C.)  
+(This works much like the & (address-of) operator in C.)
 This typically creates I<another> reference to a variable, because
 there's already a reference to the variable in the symbol table.  But
 the symbol table reference might go away, and you'll still have the
@@ -107,7 +107,7 @@ as using square brackets--instead it's the same as creating
 a list of references!
 
     @list = (\$a, \@b, \%c);
-    @list = \($a, @b, %c);	# same thing!
+    @list = \($a, @b, %c);      # same thing!
 
 As a special case, C<\(@foo)> returns a list of references to the contents
 of C<@foo>, not a reference to C<@foo> itself.  Likewise for C<%foo>,
@@ -122,8 +122,8 @@ A reference to an anonymous hash can be created using curly
 brackets:
 
     $hashref = {
-	'Adam'  => 'Eve',
-	'Clyde' => 'Bonnie',
+        'Adam'  => 'Eve',
+        'Clyde' => 'Bonnie',
     };
 
 Anonymous hash and array composers like these can be intermixed freely to
@@ -190,8 +190,8 @@ template without using eval().  Here's a small example of how
 closures work:
 
     sub newprint {
-	my $x = shift;
-	return sub { my $y = shift; print "$x, $y!\n"; };
+        my $x = shift;
+        return sub { my $y = shift; print "$x, $y!\n"; };
     }
     $h = newprint("Howdy");
     $g = newprint("Greetings");
@@ -297,20 +297,20 @@ and directory handles, though.)  However, if you assign the incoming
 value to a scalar instead of a typeglob as we do in the examples
 below, there's no risk of that happening.
 
-    splutter(*STDOUT);		# pass the whole glob
-    splutter(*STDOUT{IO});	# pass both file and dir handles
+    splutter(*STDOUT);          # pass the whole glob
+    splutter(*STDOUT{IO});      # pass both file and dir handles
 
     sub splutter {
-	my $fh = shift;
-	print $fh "her um well a hmmm\n";
+        my $fh = shift;
+        print $fh "her um well a hmmm\n";
     }
 
-    $rec = get_rec(*STDIN);	# pass the whole glob
+    $rec = get_rec(*STDIN);     # pass the whole glob
     $rec = get_rec(*STDIN{IO}); # pass both file and dir handles
 
     sub get_rec {
-	my $fh = shift;
-	return scalar <$fh>;
+        my $fh = shift;
+        return scalar <$fh>;
     }
 
 =back
@@ -365,7 +365,7 @@ Admittedly, it's a little silly to use the curlies in this case, but
 the BLOCK can contain any arbitrary expression, in particular,
 subscripted expressions:
 
-    &{ $dispatch{$index} }(1,2,3);	# call correct routine
+    &{ $dispatch{$index} }(1,2,3);      # call correct routine
 
 Because of being able to omit the curlies for the simple case of C<$$x>,
 people often make the mistake of viewing the dereferencing symbols as
@@ -374,10 +374,10 @@ though, you could use parentheses instead of braces.  That's not the case.
 Consider the difference below; case 0 is a short-hand version of case 1,
 I<not> case 2:
 
-    $$hashref{"KEY"}   = "VALUE";	# CASE 0
-    ${$hashref}{"KEY"} = "VALUE";	# CASE 1
-    ${$hashref{"KEY"}} = "VALUE";	# CASE 2
-    ${$hashref->{"KEY"}} = "VALUE";	# CASE 3
+    $$hashref{"KEY"}   = "VALUE";       # CASE 0
+    ${$hashref}{"KEY"} = "VALUE";       # CASE 1
+    ${$hashref{"KEY"}} = "VALUE";       # CASE 2
+    ${$hashref->{"KEY"}} = "VALUE";     # CASE 3
 
 Case 2 is also deceptive in that you're accessing a variable
 called %hashref, not dereferencing through $hashref to the hash
@@ -440,7 +440,7 @@ numerically to see whether they refer to the same location.
 X<reference, numeric context>
 
     if ($ref1 == $ref2) {  # cheap numeric compare of references
-	print "refs 1 and 2 refer to the same thing\n";
+        print "refs 1 and 2 refer to the same thing\n";
     }
 
 Using a reference as a string produces both its referent's type,
@@ -543,14 +543,14 @@ value.
 People frequently expect it to work like this.  So it does.
 
     $name = "foo";
-    $$name = 1;			# Sets $foo
-    ${$name} = 2;		# Sets $foo
-    ${$name x 2} = 3;		# Sets $foofoo
-    $name->[0] = 4;		# Sets $foo[0]
-    @$name = ();		# Clears @foo
-    &$name();			# Calls &foo()
+    $$name = 1;                 # Sets $foo
+    ${$name} = 2;               # Sets $foo
+    ${$name x 2} = 3;           # Sets $foofoo
+    $name->[0] = 4;             # Sets $foo[0]
+    @$name = ();                # Clears @foo
+    &$name();                   # Calls &foo()
     $pack = "THAT";
-    ${"${pack}::$name"} = 5;	# Sets $THAT::foo without eval
+    ${"${pack}::$name"} = 5;    # Sets $THAT::foo without eval
 
 This is powerful, and slightly dangerous, in that it's possible
 to intend (with the utmost sincerity) to use a hard reference, and
@@ -571,8 +571,8 @@ a symbol table, and thus are invisible to this mechanism.  For example:
     local $value = 10;
     $ref = "value";
     {
-	my $value = 20;
-	print $$ref;
+        my $value = 20;
+        print $$ref;
     }
 
 This will still print 10, not 20.  Remember that local() affects package
@@ -602,8 +602,8 @@ construct is I<not> considered to be a symbolic reference when you're
 using strict refs:
 
     use strict 'refs';
-    ${ bareword };	# Okay, means $bareword.
-    ${ "bareword" };	# Error, symbolic reference.
+    ${ bareword };      # Okay, means $bareword.
+    ${ "bareword" };    # Error, symbolic reference.
 
 Similarly, because of all the subscripting that is done using single words,
 the same rule applies to any bareword that is used for subscripting a hash.
@@ -655,13 +655,13 @@ that generated HTML font changes for the various colors:
 
 The red() and green() functions would be similar.  To create these,
 we'll assign a closure to a typeglob of the name of the function we're
-trying to build.  
+trying to build.
 
     @colors = qw(red blue green yellow orange purple violet);
     for my $name (@colors) {
-        no strict 'refs';	# allow symbol table manipulation
+        no strict 'refs';       # allow symbol table manipulation
         *$name = *{uc $name} = sub { "<FONT COLOR='$name'>@_</FONT>" };
-    } 
+    }
 
 Now all those different functions appear to exist independently.  You can
 call red(), RED(), blue(), BLUE(), green(), etc.  This technique saves on
@@ -699,7 +699,7 @@ operator, as they are created on the fly. If you are accustomed to using
 nested subroutines in other programming languages with their own private
 variables, you'll have to work at it a bit in Perl.  The intuitive coding
 of this type of thing incurs mysterious warnings about "will not stay
-shared" due to the reasons explained above. 
+shared" due to the reasons explained above.
 For example, this won't work:
 
     sub outer {

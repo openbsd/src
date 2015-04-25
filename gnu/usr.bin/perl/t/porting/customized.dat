@@ -1,4 +1,12 @@
-Digest::MD5 cpan/Digest-MD5/t/files.t c1417867017210ce3d199eb9d55d8ef61fdf1a83
+CPAN cpan/CPAN/lib/CPAN/Author.pm 792d7c8fbe6ed45e1244e589a8b712878c5dd2a5
+CPAN cpan/CPAN/lib/CPAN/CacheMgr.pm 132adb7f96014ec7ded45457044ed925d3181475
+CPAN cpan/CPAN/lib/CPAN/FTP.pm 3f0d5fc572c8749a566d73ca892c6c89ce3fb676
+CPAN cpan/CPAN/lib/CPAN/HandleConfig.pm e52052b6ef6d1d664f0ffa6cf01d48a8d1321520
+CPAN cpan/CPAN/lib/CPAN/HTTP/Client.pm 242842ca566fd8e3d776deb549ff758a571ca2e3
+CPAN cpan/CPAN/lib/CPAN/Index.pm 73aee30450127c5ac4dc05abc2c10a8accd4b198
+CPAN cpan/CPAN/lib/CPAN/LWP/UserAgent.pm e09525b0c2377c5ac28b7fad1b6d70c57e343913
+CPAN cpan/CPAN/lib/CPAN/Mirrors.pm 580e74746abaf1628d533015d5b529d82a470af4
+Digest::MD5 cpan/Digest-MD5/t/files.t bdbe05b705d9da305fedce7a9f4b6ba63250c7cf
 Encode cpan/Encode/bin/enc2xs f60036fd3574ec05c9aab7f4db00a828d5dea92d
 Encode cpan/Encode/Byte/Makefile.PL 0986e25f981a3bf182a13a0060d28d4efedd87e6
 Encode cpan/Encode/CN/Makefile.PL 5507a49d822d0c1d14e967f4595e29e9c873540b
@@ -12,6 +20,7 @@ Encode cpan/Encode/Symbol/Makefile.PL 4beddbbd00f638b7de9c6cd0821d9d38020a8218
 Encode cpan/Encode/TW/Makefile.PL 0cc44f95e59f45c0fb3b66bde41525f13c19a25c
 Module::Build cpan/Module-Build/lib/Module/Build/ConfigData.pm 85eb9656e68d1f256737dc52d86b5d0fed28f832
 PerlIO::via::QuotedPrint cpan/PerlIO-via-QuotedPrint/t/QuotedPrint.t ca39f0146e89de02c746e199c45dcb3e5edad691
+Pod::Parser cpan/Pod-Parser/lib/Pod/PlainText.pm f0b490545b4e52e141450d1192d0ca00bd8d7a82
 Text::Balanced cpan/Text-Balanced/t/01_compile.t 1598cf491a48fa546260a2ec41142abe84da533d
 Text::Balanced cpan/Text-Balanced/t/02_extbrk.t 6ba1b64a4604e822dc2260b8ffcea6b406339ee8
 Text::Balanced cpan/Text-Balanced/t/03_extcbk.t 3307c980af28963414cab799c427b359ef3b8657

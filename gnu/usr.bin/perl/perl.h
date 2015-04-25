@@ -681,6 +681,15 @@
 #  endif
 #endif
 
+/* EVC 4 SDK headers includes a bad definition of MB_CUR_MAX in stdlib.h
+  which is included from stdarg.h. Bad definition not present in SD 2008
+  SDK headers. wince.h is not yet included, so we cant fix this from there
+  since by then MB_CUR_MAX will be defined from stdlib.h.
+  cewchar.h includes a correct definition of MB_CUR_MAX and it is copied here
+  since cewchar.h can't be included this early */
+#if defined(UNDER_CE) && (_MSC_VER < 1300)
+#  define MB_CUR_MAX 1
+#endif
 #ifdef I_STDARG
 #  include <stdarg.h>
 #else
@@ -1105,14 +1114,6 @@ EXTERN_C int usleep(unsigned int);
 
 #if defined(WIN32) && defined(PERL_IMPLICIT_SYS)
 #  define WIN32SCK_IS_STDSCK		/* don't pull in custom wsock layer */
-#endif
-
-/* In Tru64 use the 4.4BSD struct msghdr, not the 4.3 one.
- * This is important for using IPv6.
- * For OSF/1 3.2, however, defining _SOCKADDR_LEN would be
- * a bad idea since it breaks send() and recv(). */
-#if defined(__osf__) && defined(__alpha) && !defined(_SOCKADDR_LEN) && !defined(DEC_OSF1_3_X)
-#   define _SOCKADDR_LEN
 #endif
 
 #if defined(HAS_SOCKET) && !defined(WIN32) /* WIN32 handles sockets via win32.h */
@@ -1795,6 +1796,16 @@ typedef NVTYPE NV;
 
 #ifdef I_IEEEFP
 #   include <ieeefp.h>
+#endif
+
+#ifdef USING_MSVC6
+/* VC6 has broken NaN semantics: NaN == NaN returns true instead of false,
+ * and for example NaN < IV_MIN. */
+#  define NAN_COMPARE_BROKEN
+#endif
+#if defined(__DECC) && defined(__osf__)
+/* Also Tru64 cc has broken NaN comparisons. */
+#  define NAN_COMPARE_BROKEN
 #endif
 
 #ifdef USE_LONG_DOUBLE

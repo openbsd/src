@@ -4806,7 +4806,7 @@ PerlIO_printf(Perl_debug_log, "LHS=%"UVdf" RHS=%"UVdf"\n",
 	    min++;
 	    if (flags & SCF_DO_STCLASS) {
                 bool invert = 0;
-                SV* my_invlist = sv_2mortal(_new_invlist(0));
+                SV* my_invlist = NULL;
                 U8 namedclass;
 
                 /* See commit msg 749e076fceedeb708a624933726e7989f2302f6a */
@@ -4905,7 +4905,7 @@ PerlIO_printf(Perl_debug_log, "LHS=%"UVdf" RHS=%"UVdf"\n",
                     /* FALL THROUGH */
 		case POSIXA:
                     if (FLAGS(scan) == _CC_ASCII) {
-                        my_invlist = PL_XPosix_ptrs[_CC_ASCII];
+                        my_invlist = invlist_clone(PL_XPosix_ptrs[_CC_ASCII]);
                     }
                     else {
                         _invlist_intersection(PL_XPosix_ptrs[FLAGS(scan)],
@@ -4942,6 +4942,7 @@ PerlIO_printf(Perl_debug_log, "LHS=%"UVdf" RHS=%"UVdf"\n",
                         assert(flags & SCF_DO_STCLASS_OR);
                         ssc_union(data->start_class, my_invlist, invert);
                     }
+                    SvREFCNT_dec(my_invlist);
 		}
 		if (flags & SCF_DO_STCLASS_OR)
 		    ssc_and(pRExC_state, data->start_class, (regnode_charclass *) and_withp);
@@ -12000,7 +12001,17 @@ tryagain:
                         && is_PROBLEMATIC_LOCALE_FOLD_cp(ender)))
                 {
                     if (UTF) {
-                        const STRLEN unilen = reguni(pRExC_state, ender, s);
+
+                        /* Normally, we don't need the representation of the
+                         * character in the sizing pass--just its size, but if
+                         * folding, we have to actually put the character out
+                         * even in the sizing pass, because the size could
+                         * change as we juggle things at the end of this loop
+                         * to avoid splitting a too-full node in the middle of
+                         * a potential multi-char fold [perl #123539] */
+                        const STRLEN unilen = (SIZE_ONLY && ! FOLD)
+                                               ? UNISKIP(ender)
+                                               : (uvchr_to_utf8((U8*)s, ender) - (U8*)s);
                         if (unilen > 0) {
                            s   += unilen;
                            len += unilen;
@@ -12012,6 +12023,10 @@ tryagain:
                          * be the correct final value, so subtract one to
                          * cancel out the increment that follows */
                         len--;
+                    }
+                    else if (FOLD) {
+                        /* See comment above for [perl #123539] */
+                        *(s++) = (char) ender;
                     }
                     else {
                         REGC((char)ender, s++);

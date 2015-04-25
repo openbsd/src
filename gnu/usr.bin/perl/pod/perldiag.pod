@@ -440,6 +440,11 @@ that wasn't a symbol table entry.
 (P) An internal request asked to add a hash entry to something that
 wasn't a symbol table entry.
 
+=item Bad symbol for scalar
+
+(P) An internal request asked to add a scalar entry to something that
+wasn't a symbol table entry.
+
 =item Bareword found in conditional
 
 (W bareword) The compiler found a bareword where it expected a
@@ -970,6 +975,13 @@ unable to locate this library.  See L<DynaLoader>.
 functioning as a class, but that package doesn't define that particular
 method, nor does any of its base classes.  See L<perlobj>.
 
+=item Can't locate object method "%s" via package "%s" (perhaps you forgot
+to load "%s"?)
+
+(F) You called a method on a class that did not exist, and the method
+could not be found in UNIVERSAL.  This often means that a method
+requires a package that has not been loaded.
+
 =item Can't locate package %s for @%s::ISA
 
 (W syntax) The @ISA array contained the name of another package that
@@ -1391,9 +1403,10 @@ uses the character values modulus 256 instead, as if you had provided:
 =item "\c%c" is more clearly written simply as "%s"
 
 (W syntax) The C<\cI<X>> construct is intended to be a way to specify
-non-printable characters.  You used it for a printable one, which is better
-written as simply itself, perhaps preceded by a backslash for non-word
-characters.
+non-printable characters.  You used it for a printable one, which
+is better written as simply itself, perhaps preceded by a backslash
+for non-word characters.  Doing it the way you did is not portable
+between ASCII and EBCDIC platforms.
 
 =item Cloning substitution context is unimplemented
 
@@ -2202,7 +2215,7 @@ of Perl are likely to eliminate these arbitrary limitations.
 =item Ignoring zero length \N{} in character class in regex; marked by
 S<<-- HERE> in m/%s/
 
-(W regexp) Named Unicode character escapes C<(\N{...})> may return a
+(W regexp) Named Unicode character escapes (C<\N{...}>) may return a
 zero-length sequence.  When such an escape is used in a character class
 its behaviour is not well defined.  Check that the correct escape has
 been used, and the correct charname handler is in scope.
@@ -2563,7 +2576,7 @@ a module that is a MRO plugin.  See L<mro> and L<perlmroapi>.
 =item Invalid negative number (%s) in chr
 
 (W utf8) You passed a negative number to C<chr>.  Negative numbers are
-not valid characters numbers, so it return the Unicode replacement
+not valid character numbers, so it returns the Unicode replacement
 character (U+FFFD).
 
 =item invalid option -D%c, use -D'' to see choices
@@ -3082,6 +3095,8 @@ can vary from one line to the next.
 
 (F) Missing right brace in C<\x{...}>, C<\p{...}>, C<\P{...}>, or C<\N{...}>.
 
+=item Missing right brace on \N{}
+
 =item Missing right brace on \N{} or unescaped left brace after \N
 
 (F) C<\N> has two meanings.
@@ -3305,7 +3320,7 @@ probably not what you want.
 =item \N{} in character class restricted to one character in regex; marked
 by S<<-- HERE> in m/%s/
 
-(F) Named Unicode character escapes C<(\N{...})> may return a
+(F) Named Unicode character escapes (C<\N{...}>) may return a
 multi-character sequence.  Such an escape may not be used in
 a character class, because character classes always match one
 character of input.  Check that the correct escape has been used,
@@ -4148,12 +4163,6 @@ the nesting limit is exceeded.
 (F) An error occurred during the implicit output invoked by the C<-p>
 command-line switch.  (This output goes to STDOUT unless you've
 redirected it with select().)
-
-=item (perhaps you forgot to load "%s"?)
-
-(F) This is an educated guess made in conjunction with the message
-"Can't locate object method \"%s\" via package \"%s\"".  It often means
-that a method requires a package that has not been loaded.
 
 =item Perl folding rules are not up-to-date for 0x%X; please use the perlbug 
 utility to report; in regex; marked by S<<-- HERE> in m/%s/
@@ -6754,7 +6763,7 @@ Something Very Wrong.
 
 =item Zero length \N{} in regex; marked by S<<-- HERE> in m/%s/
 
-(F) Named Unicode character escapes C<(\N{...})> may return a zero-length
+(F) Named Unicode character escapes (C<\N{...}>) may return a zero-length
 sequence.  Such an escape was used in an extended character class, i.e.
 C<(?[...])>, which is not permitted.  Check that the correct escape has
 been used, and the correct charnames handler is in scope.  The S<<-- HERE>

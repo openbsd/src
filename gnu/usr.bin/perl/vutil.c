@@ -587,11 +587,7 @@ VER_NV:
 
 	/* may get too much accuracy */ 
 	char tbuf[64];
-#ifdef __vax__
-	SV *sv = SvNVX(ver) > 10e37 ? newSV(64) : 0;
-#else
 	SV *sv = SvNVX(ver) > 10e50 ? newSV(64) : 0;
-#endif
 	char *buf;
 #ifdef USE_LOCALE_NUMERIC
         const char * const cur_numeric = setlocale(LC_NUMERIC, NULL);

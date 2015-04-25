@@ -6,7 +6,7 @@ BEGIN {
     require 'test.pl';
 }
 use warnings;
-plan( tests => 182 );
+plan( tests => 183 );
 
 # these shouldn't hang
 {
@@ -122,6 +122,8 @@ cmp_ok("@b",'eq','1 2 3 4','reverse then sort');
 @b = sort CORE::reverse (4,1,3,2);
 cmp_ok("@b",'eq','1 2 3 4','CORE::reverse then sort');
 
+eval  { @b = sort CORE::revers (4,1,3,2); };
+like($@, qr/^Undefined sort subroutine "CORE::revers" called at /);
 
 
 sub twoface { no warnings 'redefine'; *twoface = sub { $a <=> $b }; &twoface }

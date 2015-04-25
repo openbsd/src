@@ -458,7 +458,7 @@ characters are strange, it's a C<-B> file; otherwise it's a C<-T> file.
 Also, any file containing a zero byte in the examined portion is
 considered a binary file.  (If executed within the scope of a L<S<use
 locale>|perllocale> which includes C<LC_CTYPE>, odd characters are
-anything that isn't a printable nor space in the current locale.) If
+anything that isn't a printable nor space in the current locale.)  If
 C<-T> or C<-B> is used on a filehandle, the current IO buffer is
 examined
 rather than the first block.  Both C<-T> and C<-B> return true on an empty
@@ -744,7 +744,8 @@ Returns the context of the current pure perl subroutine call.  In scalar
 context, returns the caller's package name if there I<is> a caller (that is, if
 we're in a subroutine or C<eval> or C<require>) and the undefined value
 otherwise.  caller never returns XS subs and they are skipped.  The next pure
-perl sub will appear instead of the XS sub in caller's return values. In list
+perl sub will appear instead of the XS
+sub in caller's return values.  In list
 context, caller returns
 
     # 0         1          2
@@ -762,7 +763,7 @@ to go back before the current one.
      = caller($i);
 
 Here, $subroutine is the function that the caller called (rather than the
-function containing the caller). Note that $subroutine may be C<(eval)> if
+function containing the caller).  Note that $subroutine may be C<(eval)> if
 the frame is not a subroutine call, but an C<eval>.  In such a case
 additional elements $evaltext and
 C<$is_require> are set: C<$is_require> is true if the frame is created by a
@@ -1380,11 +1381,12 @@ straightforward.  Although exists() will return false for deleted entries,
 deleting array elements never changes indices of existing values; use shift()
 or splice() for that.  However, if any deleted elements fall at the end of an
 array, the array's size shrinks to the position of the highest element that
-still tests true for exists(), or to 0 if none do. In other words, an
+still tests true for exists(), or to 0 if none do.  In other words, an
 array won't have trailing nonexistent elements after a delete.
 
-B<WARNING:> Calling delete on array values is deprecated and likely to
-be removed in a future version of Perl.
+B<WARNING:> Calling C<delete> on array values is strongly discouraged.  The
+notion of deleting or checking the existence of Perl array elements is not
+conceptually coherent, and can lead to surprising behavior.
 
 Deleting from C<%ENV> modifies the environment.  Deleting from a hash tied to
 a DBM file deletes the entry from the DBM file.  Deleting from a C<tied> hash
@@ -2061,9 +2063,11 @@ corresponding value is undefined.
     print "True\n"      if $hash{$key};
 
 exists may also be called on array elements, but its behavior is much less
-obvious and is strongly tied to the use of L</delete> on arrays.  B<Be aware>
-that calling exists on array values is deprecated and likely to be removed in
-a future version of Perl.
+obvious and is strongly tied to the use of L</delete> on arrays.
+
+B<WARNING:> Calling C<exists> on array values is strongly discouraged.  The
+notion of deleting or checking the existence of Perl array elements is not
+conceptually coherent, and can lead to surprising behavior.
 
     print "Exists\n"    if exists $array[$index];
     print "Defined\n"   if defined $array[$index];
@@ -3358,7 +3362,7 @@ Respects current LC_CTYPE locale for code points < 256; and uses Unicode
 rules for the remaining code points (this last can only happen if
 the UTF8 flag is also set).  See L<perllocale>.
 
-Starting in v5.20, Perl wil use full Unicode rules if the locale is
+Starting in v5.20, Perl uses full Unicode rules if the locale is
 UTF-8.  Otherwise, there is a deficiency in this scheme, which is that
 case changes that cross the 255/256
 boundary are not well-defined.  For example, the lower case of LATIN CAPITAL
@@ -3673,12 +3677,13 @@ C<{>.  Usually it gets it right, but if it
 doesn't it won't realize something is wrong until it gets to the C<}> and
 encounters the missing (or unexpected) comma.  The syntax error will be
 reported close to the C<}>, but you'll need to change something near the C<{>
-such as using a unary C<+> to give Perl some help:
+such as using a unary C<+> or semicolon to give Perl some help:
 
     %hash = map {  "\L$_" => 1  } @array # perl guesses EXPR. wrong
     %hash = map { +"\L$_" => 1  } @array # perl guesses BLOCK. right
-    %hash = map { ("\L$_" => 1) } @array # this also works
-    %hash = map {  lc($_) => 1  } @array # as does this.
+    %hash = map {; "\L$_" => 1  } @array # this also works
+    %hash = map { ("\L$_" => 1) } @array # as does this
+    %hash = map {  lc($_) => 1  } @array # and this.
     %hash = map +( lc($_) => 1 ), @array # this is EXPR and works!
 
     %hash = map  ( lc($_), 1 ),   @array # evaluates to (1, @array)
@@ -4362,7 +4367,8 @@ existing variable: a package variable of the same name.
 
 This means that when C<use strict 'vars'> is in effect, C<our> lets you use
 a package variable without qualifying it with the package name, but only within
-the lexical scope of the C<our> declaration.
+the lexical scope of the C<our> declaration. This applies immediately--even
+within the same statement.
 
     package Foo;
     use strict;
@@ -4387,6 +4393,16 @@ package variables spring into existence when first used.
     our $foo = 23;   # just like $Foo::foo = 23
 
     print $Foo::foo; # prints 23
+
+Because the variable becomes legal immediately under C<use strict 'vars'>, so
+long as there is no variable with that name is already in scope, you can then
+reference the package variable again even within the same statement.
+
+    package Foo;
+    use strict;
+
+    my  $foo = $foo; # error, undeclared $foo on right-hand side
+    our $foo = $foo; # no errors
 
 If more than one variable is listed, the list must be placed
 in parentheses.
@@ -7645,7 +7661,8 @@ list context is currently not possible this would serve no purpose.
 
 C<state> variables are enabled only when the C<use feature "state"> pragma 
 is in effect, unless the keyword is written as C<CORE::state>.
-See also L<feature>.
+See also L<feature>. Alternately, include a C<use v5.10> or later to the
+current scope.
 
 =item study SCALAR
 X<study>
@@ -8602,15 +8619,19 @@ This is often useful if you need to check the current Perl version before
 C<use>ing library modules that won't work with older versions of Perl.
 (We try not to do this more than we have to.)
 
-C<use VERSION> also enables all features available in the requested
+C<use VERSION> also lexically enables all features available in the requested
 version as defined by the C<feature> pragma, disabling any features
 not in the requested version's feature bundle.  See L<feature>.
 Similarly, if the specified Perl version is greater than or equal to
 5.12.0, strictures are enabled lexically as
 with C<use strict>.  Any explicit use of
 C<use strict> or C<no strict> overrides C<use VERSION>, even if it comes
-before it.  In both cases, the F<feature.pm> and F<strict.pm> files are
-not actually loaded.
+before it.  Later use of C<use VERSION>
+will override all behavior of a previous
+C<use VERSION>, possibly removing the C<strict> and C<feature> added by
+C<use VERSION>.  C<use VERSION> does not
+load the F<feature.pm> or F<strict.pm>
+files.
 
 The C<BEGIN> forces the C<require> and C<import> to happen at compile time.  The
 C<require> makes sure the module is loaded into memory if it hasn't been
@@ -9045,8 +9066,8 @@ and C<${^CHILD_ERROR_NATIVE}>.
 Note that a return value of C<-1> could mean that child processes are
 being automatically reaped, as described in L<perlipc>.
 
-If you use wait in your handler for $SIG{CHLD} it may accidentally for the
-child created by qx() or system().  See L<perlipc> for details.
+If you use C<wait> in your handler for $SIG{CHLD}, it may accidentally wait
+for the child created by qx() or system().  See L<perlipc> for details.
 
 Portability issues: L<perlport/wait>.
 
@@ -9280,8 +9301,6 @@ This keyword is documented in L<perlsub/"Autoloading">.
 
 =item else
 
-=item elseif
-
 =item elsif
 
 =item for
@@ -9297,6 +9316,15 @@ This keyword is documented in L<perlsub/"Autoloading">.
 =item while
 
 These flow-control keywords are documented in L<perlsyn/"Compound Statements">.
+
+=item elseif
+
+The "else if" keyword is spelled C<elsif> in Perl.  There's no C<elif>
+or C<else if> either.  It does parse C<elseif>, but only to warn you
+about not using it.
+
+See the documentation for flow-control keywords in L<perlsyn/"Compound
+Statements">.
 
 =back
 

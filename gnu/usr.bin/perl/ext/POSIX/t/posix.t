@@ -8,7 +8,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 115;
+use Test::More tests => 109;
 
 use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write
 	     errno localeconv dup dup2 lseek access);
@@ -343,24 +343,8 @@ SKIP: {
 	}
     }
 
-    my @lconv = qw(
-        int_frac_digits frac_digits
-        p_cs_precedes   p_sep_by_space
-        n_cs_precedes   n_sep_by_space
-        p_sign_posn     n_sign_posn
-    );
-
-    SKIP: {
-        skip('No HAS_LC_MONETARY_2008', 6) unless $Config{d_lc_monetary_2008};
-
-        push @lconv, qw(
-            int_p_cs_precedes int_p_sep_by_space
-            int_n_cs_precedes int_n_sep_by_space
-            int_p_sign_posn   int_n_sign_posn
-        );
-    }
-        
-    foreach (@lconv) {
+    foreach (qw(int_frac_digits frac_digits p_cs_precedes p_sep_by_space
+		n_cs_precedes n_sep_by_space p_sign_posn n_sign_posn)) {
     SKIP: {
 	    skip("localeconv has no result for $_", 1)
 		unless exists $conv->{$_};

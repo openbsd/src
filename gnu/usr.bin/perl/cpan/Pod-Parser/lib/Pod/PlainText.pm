@@ -29,7 +29,7 @@ use vars qw(@ISA %ESCAPES $VERSION);
 # by Pod::Usage.
 @ISA = qw(Pod::Select);
 
-$VERSION = '2.06';
+$VERSION = '2.07';
 
 BEGIN {
    if ($] < 5.006) {
@@ -596,11 +596,6 @@ sub pod2text {
     }
 }
 
-sub begin_pod {
-    my $self = shift;
-    $$self{EXCLUDE} = 0;
-    $$self{VERBATIM} = 0;
-}
 
 ############################################################################
 # Module return value and documentation

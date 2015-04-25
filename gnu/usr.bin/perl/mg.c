@@ -2270,7 +2270,7 @@ Perl_magic_gettaint(pTHX_ SV *sv, MAGIC *mg)
     PERL_UNUSED_ARG(mg);
 #endif
 
-    TAINT_IF((PL_localizing != 1) && (mg->mg_len & 1));
+    TAINT_IF((PL_localizing != 1) && (mg->mg_len & 1) && IN_PERL_RUNTIME);
     return 0;
 }
 

@@ -34,7 +34,7 @@ For ease of access, the Perl manual has been split up into several sections.
 
 # This section is parsed by Porting/pod_lib.pl for use by pod/buildtoc etc
 
-flag =g  perlmodlib perlapi perlintern
+flag =g  perluniprops perlmodlib perlapi perlintern
 flag =go perltoc
 flag =ro perlcn perljp perlko perltw
 flag =   perlvms
@@ -121,6 +121,7 @@ aux a2p c2ph h2ph h2xs perlbug pl2pm pod2html pod2man s2p splain xsubpp
     perllocale		Perl locale support
     perluniintro	Perl Unicode introduction
     perlunicode 	Perl Unicode support
+    perlunicook 	Perl Unicode cookbook
     perlunifaq		Perl Unicode FAQ
     perluniprops	Index of Unicode properties in Perl
     perlunitut		Perl Unicode tutorial
@@ -179,13 +180,15 @@ aux a2p c2ph h2ph h2xs perlbug pl2pm pod2html pod2man s2p splain xsubpp
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl5201delta	Perl changes in version 5.20.1
     perl5200delta	Perl changes in version 5.20.0
+    perl5184delta	Perl changes in version 5.18.4
     perl5182delta	Perl changes in version 5.18.2
     perl5181delta	Perl changes in version 5.18.1
     perl5180delta	Perl changes in version 5.18.0
-    perl5161delta	Perl changes in version 5.16.1
-    perl5162delta	Perl changes in version 5.16.2
     perl5163delta	Perl changes in version 5.16.3
+    perl5162delta	Perl changes in version 5.16.2
+    perl5161delta	Perl changes in version 5.16.1
     perl5160delta	Perl changes in version 5.16.0
     perl5144delta	Perl changes in version 5.14.4
     perl5143delta	Perl changes in version 5.14.3

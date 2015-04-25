@@ -229,8 +229,7 @@ sub is_locale_utf8 ($) { # Return a boolean as to if core Perl thinks the input
     # go through testing all the locales on the platform.
     if (CORE::fc(chr utf8::unicode_to_native(0xdf)) ne "ss") {
         if ($locale =~ /UTF-?8/i) {
-            diag("Cannot verify $locale with UTF-8 in name is a UTF-8 locale");
-            #ok (0, "Verify $locale with UTF-8 in name is a UTF-8 locale");
+            ok (0, "Verify $locale with UTF-8 in name is a UTF-8 locale");
         }
     }
     else {

@@ -302,10 +302,10 @@ automatically.
     sleep(15);        # Let thread run for awhile
 
     sub sub1 {
-        $a = 0;
+        my $count = 0;
         while (1) {
-            $a++;
-            print("\$a is $a\n");
+            $count++;
+            print("\$count is $count\n");
             sleep(1);
         }
     }
@@ -424,22 +424,22 @@ number of pitfalls.  One pitfall is the race condition:
     use threads;
     use threads::shared;
 
-    my $a :shared = 1;
+    my $x :shared = 1;
     my $thr1 = threads->create(\&sub1);
     my $thr2 = threads->create(\&sub2);
 
     $thr1->join();
     $thr2->join();
-    print("$a\n");
+    print("$x\n");
 
-    sub sub1 { my $foo = $a; $a = $foo + 1; }
-    sub sub2 { my $bar = $a; $a = $bar + 1; }
+    sub sub1 { my $foo = $x; $x = $foo + 1; }
+    sub sub2 { my $bar = $x; $x = $bar + 1; }
 
-What do you think C<$a> will be? The answer, unfortunately, is I<it
-depends>. Both C<sub1()> and C<sub2()> access the global variable C<$a>, once
+What do you think C<$x> will be? The answer, unfortunately, is I<it
+depends>. Both C<sub1()> and C<sub2()> access the global variable C<$x>, once
 to read and once to write.  Depending on factors ranging from your
 thread implementation's scheduling algorithm to the phase of the moon,
-C<$a> can be 2 or 3.
+C<$x> can be 2 or 3.
 
 Race conditions are caused by unsynchronized access to shared
 data.  Without explicit synchronization, there's no way to be sure that
@@ -448,19 +448,19 @@ and the time you update it.  Even this simple code fragment has the
 possibility of error:
 
     use threads;
-    my $a :shared = 2;
-    my $b :shared;
-    my $c :shared;
-    my $thr1 = threads->create(sub { $b = $a; $a = $b + 1; });
-    my $thr2 = threads->create(sub { $c = $a; $a = $c + 1; });
+    my $x :shared = 2;
+    my $y :shared;
+    my $z :shared;
+    my $thr1 = threads->create(sub { $y = $x; $x = $y + 1; });
+    my $thr2 = threads->create(sub { $z = $x; $x = $z + 1; });
     $thr1->join();
     $thr2->join();
 
-Two threads both access C<$a>.  Each thread can potentially be interrupted
-at any point, or be executed in any order.  At the end, C<$a> could be 3
-or 4, and both C<$b> and C<$c> could be 2 or 3.
+Two threads both access C<$x>.  Each thread can potentially be interrupted
+at any point, or be executed in any order.  At the end, C<$x> could be 3
+or 4, and both C<$y> and C<$z> could be 2 or 3.
 
-Even C<$a += 5> or C<$a++> are not guaranteed to be atomic.
+Even C<$x += 5> or C<$x++> are not guaranteed to be atomic.
 
 Whenever your program accesses data or resources that can be accessed
 by other threads, you must take steps to coordinate access or risk
@@ -572,17 +572,17 @@ Consider the following code:
 
     use threads;
 
-    my $a :shared = 4;
-    my $b :shared = 'foo';
+    my $x :shared = 4;
+    my $y :shared = 'foo';
     my $thr1 = threads->create(sub {
-        lock($a);
+        lock($x);
         sleep(20);
-        lock($b);
+        lock($y);
     });
     my $thr2 = threads->create(sub {
-        lock($b);
+        lock($y);
         sleep(20);
-        lock($a);
+        lock($x);
     });
 
 This program will probably hang until you kill it.  The only way it
@@ -590,10 +590,10 @@ won't hang is if one of the two threads acquires both locks
 first.  A guaranteed-to-hang version is more complicated, but the
 principle is the same.
 
-The first thread will grab a lock on C<$a>, then, after a pause during which
+The first thread will grab a lock on C<$x>, then, after a pause during which
 the second thread has probably had time to do some work, try to grab a
-lock on C<$b>.  Meanwhile, the second thread grabs a lock on C<$b>, then later
-tries to grab a lock on C<$a>.  The second lock attempt for both threads will
+lock on C<$y>.  Meanwhile, the second thread grabs a lock on C<$y>, then later
+tries to grab a lock on C<$x>.  The second lock attempt for both threads will
 block, each waiting for the other to release its lock.
 
 This condition is called a deadlock, and it occurs whenever two or
@@ -604,8 +604,8 @@ resource is itself waiting for a lock to be released.
 
 There are a number of ways to handle this sort of problem.  The best
 way is to always have all threads acquire locks in the exact same
-order.  If, for example, you lock variables C<$a>, C<$b>, and C<$c>, always lock
-C<$a> before C<$b>, and C<$b> before C<$c>.  It's also best to hold on to locks for
+order.  If, for example, you lock variables C<$x>, C<$y>, and C<$z>, always lock
+C<$x> before C<$y>, and C<$y> before C<$z>.  It's also best to hold on to locks for
 as short a period of time to minimize the risks of deadlock.
 
 The other synchronization primitives described below can suffer from
@@ -961,9 +961,9 @@ though, regardless of how many CPUs a system might have.
 
 Since kernel threading can interrupt a thread at any time, they will
 uncover some of the implicit locking assumptions you may make in your
-program.  For example, something as simple as C<$a = $a + 2> can behave
-unpredictably with kernel threads if C<$a> is visible to other
-threads, as another thread may have changed C<$a> between the time it
+program.  For example, something as simple as C<$x = $x + 2> can behave
+unpredictably with kernel threads if C<$x> is visible to other
+threads, as another thread may have changed C<$x> between the time it
 was fetched on the right hand side and the time the new value is
 stored.
 

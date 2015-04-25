@@ -15,7 +15,7 @@ BEGIN {
     @INC = '../lib';
     unshift @INC, '.';
     require Config; import Config;
-    if (!$Config{d_setlocale} || $Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/) {
+    if (!$Config{d_setlocale} || $Config{ccflags} =~ /\bD?NO_LOCALE\b/) {
 	print "1..0\n";
 	exit;
     }

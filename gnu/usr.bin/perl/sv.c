@@ -46,25 +46,23 @@
   char *gconvert(double, int, int,  char *);
 #endif
 
-#ifdef PERL_NEW_COPY_ON_WRITE
-#   ifndef SV_COW_THRESHOLD
+#ifndef SV_COW_THRESHOLD
 #    define SV_COW_THRESHOLD                    0   /* COW iff len > K */
-#   endif
-#   ifndef SV_COWBUF_THRESHOLD
+#endif
+#ifndef SV_COWBUF_THRESHOLD
 #    define SV_COWBUF_THRESHOLD                 1250 /* COW iff len > K */
-#   endif
-#   ifndef SV_COW_MAX_WASTE_THRESHOLD
+#endif
+#ifndef SV_COW_MAX_WASTE_THRESHOLD
 #    define SV_COW_MAX_WASTE_THRESHOLD          80   /* COW iff (len - cur) < K */
-#   endif
-#   ifndef SV_COWBUF_WASTE_THRESHOLD
+#endif
+#ifndef SV_COWBUF_WASTE_THRESHOLD
 #    define SV_COWBUF_WASTE_THRESHOLD           80   /* COW iff (len - cur) < K */
-#   endif
-#   ifndef SV_COW_MAX_WASTE_FACTOR_THRESHOLD
+#endif
+#ifndef SV_COW_MAX_WASTE_FACTOR_THRESHOLD
 #    define SV_COW_MAX_WASTE_FACTOR_THRESHOLD   2    /* COW iff len < (cur * K) */
-#   endif
-#   ifndef SV_COWBUF_WASTE_FACTOR_THRESHOLD
+#endif
+#ifndef SV_COWBUF_WASTE_FACTOR_THRESHOLD
 #    define SV_COWBUF_WASTE_FACTOR_THRESHOLD    2    /* COW iff len < (cur * K) */
-#   endif
 #endif
 /* Work around compiler warnings about unsigned >= THRESHOLD when thres-
    hold is 0. */
@@ -930,9 +928,9 @@ struct body_details {
     ? count * body_size					\
     : FIT_ARENA0 (body_size)
 #define FIT_ARENA(count,body_size)			\
-    count 						\
+   (U32)(count 						\
     ? FIT_ARENAn (count, body_size)			\
-    : FIT_ARENA0 (body_size)
+    : FIT_ARENA0 (body_size))
 
 /* Calculate the length to copy. Specifically work out the length less any
    final padding the compiler needed to add.  See the comment in sv_upgrade
@@ -3453,7 +3451,7 @@ must_be_utf8:
 		 * set so starts from there.  Otherwise, can use memory copy to
 		 * get up to where we are now, and then start from here */
 
-		if (invariant_head <= 0) {
+		if (invariant_head == 0) {
 		    d = dst;
 		} else {
 		    Copy(s, dst, invariant_head, char);
@@ -4415,7 +4413,8 @@ Perl_sv_setsv_flags(pTHX_ SV *dstr, SV* sstr, const I32 flags)
 				/* slated for free anyway (and not COW)? */
                     (sflags & (SVs_TEMP|SVf_IsCOW)) == SVs_TEMP
                                 /* or a swipable TARG */
-                 || ((sflags & (SVs_PADTMP|SVf_READONLY|SVf_IsCOW))
+                 || ((sflags & (SVs_PADTMP|SVs_PADMY|SVf_READONLY
+                               |SVf_IsCOW))
                        == SVs_PADTMP
                                 /* whose buffer is worth stealing */
                      && CHECK_COWBUF_THRESHOLD(cur,len)
@@ -4846,10 +4845,10 @@ Perl_sv_sethek(pTHX_ SV *const sv, const HEK *const hek)
 Tells an SV to use C<ptr> to find its string value.  Normally the
 string is stored inside the SV, but sv_usepvn allows the SV to use an
 outside string.  The C<ptr> should point to memory that was allocated
-by L<Newx|perlclib/Memory Management and String Handling>. It must be
+by L<Newx|perlclib/Memory Management and String Handling>.  It must be
 the start of a Newx-ed block of memory, and not a pointer to the
 middle of it (beware of L<OOK|perlguts/Offsets> and copy-on-write),
-and not be from a non-Newx memory allocator like C<malloc>. The
+and not be from a non-Newx memory allocator like C<malloc>.  The
 string length, C<len>, must be supplied.  By default this function
 will C<Renew> (i.e. realloc, move) the memory pointed to by C<ptr>,
 so that pointer should not be freed or used by the programmer after
@@ -13094,14 +13093,16 @@ Perl_ss_dup(pTHX_ PerlInterpreter *proto_perl, CLONE_PARAMS* param)
 	case SAVEt_CLEARPADRANGE:
 	    break;
 	case SAVEt_HELEM:		/* hash element */
+	case SAVEt_SV:			/* scalar reference */
 	    sv = (const SV *)POPPTR(ss,ix);
-	    TOPPTR(nss,ix) = sv_dup_inc(sv, param);
+	    TOPPTR(nss,ix) = SvREFCNT_inc(sv_dup_inc(sv, param));
 	    /* fall through */
 	case SAVEt_ITEM:			/* normal string */
         case SAVEt_GVSV:			/* scalar slot in GV */
-        case SAVEt_SV:				/* scalar reference */
 	    sv = (const SV *)POPPTR(ss,ix);
 	    TOPPTR(nss,ix) = sv_dup_inc(sv, param);
+	    if (type == SAVEt_SV)
+		break;
 	    /* fall through */
 	case SAVEt_FREESV:
 	case SAVEt_MORTALIZESV:
@@ -13119,6 +13120,8 @@ Perl_ss_dup(pTHX_ PerlInterpreter *proto_perl, CLONE_PARAMS* param)
         case SAVEt_SVREF:			/* scalar reference */
 	    sv = (const SV *)POPPTR(ss,ix);
 	    TOPPTR(nss,ix) = sv_dup_inc(sv, param);
+	    if (type == SAVEt_SVREF)
+		SvREFCNT_inc_simple_void((SV *)TOPPTR(nss,ix));
 	    ptr = POPPTR(ss,ix);
 	    TOPPTR(nss,ix) = svp_dup_inc((SV**)ptr, proto_perl);/* XXXXX */
 	    break;
@@ -13271,7 +13274,7 @@ Perl_ss_dup(pTHX_ PerlInterpreter *proto_perl, CLONE_PARAMS* param)
 	    break;
 	case SAVEt_AELEM:		/* array element */
 	    sv = (const SV *)POPPTR(ss,ix);
-	    TOPPTR(nss,ix) = sv_dup_inc(sv, param);
+	    TOPPTR(nss,ix) = SvREFCNT_inc(sv_dup_inc(sv, param));
 	    i = POPINT(ss,ix);
 	    TOPINT(nss,ix) = i;
 	    av = (const AV *)POPPTR(ss,ix);

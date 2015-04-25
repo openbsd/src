@@ -89,8 +89,8 @@ aggregates (arrays and hashes), these will be flattened together into
 one large indistinguishable list.
 
 If no C<return> is found and if the last statement is an expression, its
-value is returned. If the last statement is a loop control structure
-like a C<foreach> or a C<while>, the returned value is unspecified. The
+value is returned.  If the last statement is a loop control structure
+like a C<foreach> or a C<while>, the returned value is unspecified.  The
 empty sub returns the empty list.
 X<subroutine, return value> X<return value> X<return>
 
@@ -247,7 +247,7 @@ core, as are modules whose names are in all lower case.  A subroutine in
 all capitals is a loosely-held convention meaning it will be called
 indirectly by the run-time system itself, usually due to a triggered event.
 Subroutines whose name start with a left parenthesis are also reserved the 
-same way. The following is a list of some subroutines that currently do 
+same way.  The following is a list of some subroutines that currently do 
 special, pre-defined things.
 
 =over
@@ -699,7 +699,7 @@ this.
 X<state> X<state variable> X<static> X<variable, persistent> X<variable, static> X<closure>
 
 There are two ways to build persistent private variables in Perl 5.10.
-First, you can simply use the C<state> feature. Or, you can use closures,
+First, you can simply use the C<state> feature.  Or, you can use closures,
 if you want to stay compatible with releases older than 5.10.
 
 =head3 Persistent variables via state()
@@ -924,7 +924,7 @@ X<local, composite type element> X<local, array element> X<local, hash element>
 
 It's also worth taking a moment to explain what happens when you
 C<local>ize a member of a composite type (i.e. an array or hash element).
-In this case, the element is C<local>ized I<by name>. This means that
+In this case, the element is C<local>ized I<by name>.  This means that
 when the scope of the C<local()> ends, the saved value will be
 restored to the hash element whose key was named in the C<local()>, or
 the array element whose index was named in the C<local()>.  If that
@@ -967,7 +967,7 @@ X<delete> X<local, composite type element> X<local, array element> X<local, hash
 
 You can use the C<delete local $array[$idx]> and C<delete local $hash{key}>
 constructs to delete a composite type entry for the current block and restore
-it when it ends. They return the array/hash value before the localization,
+it when it ends.  They return the array/hash value before the localization,
 which means that they are respectively equivalent to
 
     do {
@@ -986,7 +986,8 @@ and
         $val
     }
 
-except that for those the C<local> is scoped to the C<do> block. Slices are
+except that for those the C<local> is
+scoped to the C<do> block.  Slices are
 also accepted.
 
     my %hash = (
@@ -1030,7 +1031,7 @@ To do this, you have to declare the subroutine to return an lvalue.
 
 The scalar/list context for the subroutine and for the right-hand
 side of assignment is determined as if the subroutine call is replaced
-by a scalar. For example, consider:
+by a scalar.  For example, consider:
 
     data(2,3) = get_data(3,4);
 
@@ -1045,9 +1046,9 @@ and in:
 all the subroutines are called in a list context.
 
 Lvalue subroutines are convenient, but you have to keep in mind that,
-when used with objects, they may violate encapsulation. A normal
+when used with objects, they may violate encapsulation.  A normal
 mutator can check the supplied argument before setting the attribute
-it is protecting, an lvalue subroutine cannot. If you require any
+it is protecting, an lvalue subroutine cannot.  If you require any
 special processing when storing and retrieving the values, consider
 using the CPAN module Sentinel or something similar.
 
@@ -1089,6 +1090,9 @@ any previous C<my sub;> or C<state sub;> declaration.
     sub baz {		# define the "my" sub
 	baz();		# recursive call
     }
+
+It is a known bug that lexical subroutines cannot be used as the C<SUBNAME>
+argument to C<sort>.  This will be fixed in a future version of Perl.
 
 =head3 C<state sub> vs C<my sub>
 
@@ -1445,12 +1449,12 @@ Any backslashed prototype character represents an actual argument
 that must start with that character (optionally preceded by C<my>,
 C<our> or C<local>), with the exception of C<$>, which will
 accept any scalar lvalue expression, such as C<$foo = 7> or
-C<< my_function()->[0] >>. The value passed as part of C<@_> will be a
+C<< my_function()->[0] >>.  The value passed as part of C<@_> will be a
 reference to the actual argument given in the subroutine call,
 obtained by applying C<\> to that argument.
 
 You can use the C<\[]> backslash group notation to specify more than one
-allowed argument type. For example:
+allowed argument type.  For example:
 
     sub myref (\[$@%&*])
 
@@ -1655,7 +1659,7 @@ the constant folding doesn't reduce them to a single constant:
 
 As alluded to earlier you can also declare inlined subs dynamically at
 BEGIN time if their body consists of a lexically-scoped scalar which
-has no other references. Only the first example here will be inlined:
+has no other references.  Only the first example here will be inlined:
 
     BEGIN {
         my $var = 1;
@@ -1711,7 +1715,7 @@ without (with deparse output truncated for clarity):
  };
 
 If you redefine a subroutine that was eligible for inlining, you'll
-get a warning by default. You can use this warning to tell whether or
+get a warning by default.  You can use this warning to tell whether or
 not a particular subroutine is considered inlinable, since it's
 different than the warning for overriding non-inlined subroutines:
 
@@ -1850,7 +1854,7 @@ And, as you'll have noticed from the previous example, if you override
 C<glob>, the C<< <*> >> glob operator is overridden as well.
 
 In a similar fashion, overriding the C<readline> function also overrides
-the equivalent I/O operator C<< <FILEHANDLE> >>. Also, overriding
+the equivalent I/O operator C<< <FILEHANDLE> >>.  Also, overriding
 C<readpipe> also overrides the operators C<``> and C<qx//>.
 
 Finally, some built-ins (e.g. C<exists> or C<grep>) can't be overridden.

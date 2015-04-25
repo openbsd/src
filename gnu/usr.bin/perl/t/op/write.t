@@ -98,7 +98,7 @@ for my $tref ( @NumTests ){
 my $bas_tests = 21;
 
 # number of tests in section 3
-my $bug_tests = 66 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3 + 96 + 11;
+my $bug_tests = 66 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3 + 96 + 11 + 3;
 
 # number of tests in section 4
 my $hmb_tests = 37;
@@ -1935,6 +1935,42 @@ format Potshriggley =
    is $x, undef, 'formats in subs do not leak';
 }
 
+fresh_perl_is(<<'EOP', <<'EXPECT',
+use warnings 'syntax' ;
+format STDOUT =
+^*|^*
+my $x = q/dd/, $x
+.
+write;
+EOP
+dd|
+EXPECT
+	      { stderr => 1 }, '#123245 panic in sv_chop');
+
+fresh_perl_is(<<'EOP', <<'EXPECT',
+use warnings 'syntax' ;
+format STDOUT =
+^*|^*
+my $x = q/dd/
+.
+write;
+EOP
+Not enough format arguments at - line 4.
+dd|
+EXPECT
+	      { stderr => 1 }, '#123245 different panic in sv_chop');
+
+fresh_perl_is(<<'EOP', <<'EXPECT',
+format STDOUT =
+# x at the end to make the spaces visible
+@... x
+q/a/
+.
+write;
+EOP
+a    x
+EXPECT
+	      { stderr => 1 }, '#123538 crash in FF_MORE');
 
 #############################
 ## Section 4

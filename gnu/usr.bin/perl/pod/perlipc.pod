@@ -28,7 +28,7 @@ For example, to trap an interrupt signal, set up a handler like this:
         $shucks++;
         die "Somebody sent me a SIG$signame";
     }
-    $SIG{INT} = __PACKAGE__ . "::catch_zap";  
+    $SIG{INT} = __PACKAGE__ . "::catch_zap";
     $SIG{INT} = \&catch_zap;  # best strategy
 
 Prior to Perl 5.8.0 it was necessary to do as little as you possibly
@@ -61,7 +61,7 @@ have to use POSIX' sigprocmask.
 
 Sending a signal to a negative process ID means that you send the signal
 to the entire Unix process group.  This code sends a hang-up signal to all
-processes in the current process group, and also sets $SIG{HUP} to C<"IGNORE"> 
+processes in the current process group, and also sets $SIG{HUP} to C<"IGNORE">
 so it doesn't kill itself:
 
     # block scope for local
@@ -188,12 +188,15 @@ itself every time the C<SIGHUP> signal is received. The actual code is
 located in the subroutine C<code()>, which just prints some debugging
 info to show that it works; it should be replaced with the real code.
 
-  #!/usr/bin/perl -w
+  #!/usr/bin/perl
+
+  use strict;
+  use warnings;
 
   use POSIX ();
   use FindBin ();
   use File::Basename ();
-  use File::Spec::Functions;
+  use File::Spec::Functions qw(catfile);
 
   $| = 1;
 
@@ -214,9 +217,9 @@ info to show that it works; it should be replaced with the real code.
       print "PID: $$\n";
       print "ARGV: @ARGV\n";
       my $count = 0;
-      while (++$count) {
+      while (1) {
           sleep 2;
-          print "$count\n";
+          print ++$count, "\n";
       }
   }
 
@@ -263,7 +266,7 @@ to execute a new opcode, a signal that arrives during a long-running
 opcode (e.g. a regular expression operation on a very large string) will
 not be seen until the current opcode completes.
 
-If a signal of any given type fires multiple times during an opcode 
+If a signal of any given type fires multiple times during an opcode
 (such as from a fine-grained timer), the handler for that signal will
 be called only once, after the opcode completes; all other
 instances will be discarded.  Furthermore, if your system's signal queue
@@ -327,12 +330,12 @@ On systems that supported it, older versions of Perl used the
 SA_RESTART flag when installing %SIG handlers.  This meant that
 restartable system calls would continue rather than returning when
 a signal arrived.  In order to deliver deferred signals promptly,
-Perl 5.8.0 and later do I<not> use SA_RESTART.  Consequently, 
+Perl 5.8.0 and later do I<not> use SA_RESTART.  Consequently,
 restartable system calls can fail (with $! set to C<EINTR>) in places
 where they previously would have succeeded.
 
 The default C<:perlio> layer retries C<read>, C<write>
-and C<close> as described above; interrupted C<wait> and 
+and C<close> as described above; interrupted C<wait> and
 C<waitpid> calls will always be retried.
 
 =item Signals as "faults"
@@ -469,7 +472,7 @@ to bogus commands will get hit with a signal, which they'd best be prepared
 to handle.  Consider:
 
     open(FH, "|bogus")      || die "can't fork: $!";
-    print FH "bang\n";      #  neither necessary nor sufficient 
+    print FH "bang\n";      #  neither necessary nor sufficient
                             #  to check print retval!
     close(FH)               || die "can't close: $!";
 
@@ -529,7 +532,7 @@ process group leader; the setsid() will fail if you are.  If your
 system doesn't have the setsid() function, open F</dev/tty> and use the
 C<TIOCNOTTY> ioctl() on it instead.  See tty(4) for details.
 
-Non-Unix users should check their C<< I<Your_OS>::Process >> module for 
+Non-Unix users should check their C<< I<Your_OS>::Process >> module for
 other possible solutions.
 
 =head2 Safe Pipe Opens
@@ -559,13 +562,13 @@ you opened whatever your kid writes to I<his> STDOUT.
         }
     } until defined $pid;
 
-    if ($pid) {                 # I am the parent 
+    if ($pid) {                 # I am the parent
         print KID_TO_WRITE @some_data;
         close(KID_TO_WRITE)     || warn "kid exited $?";
     } else {                    # I am the child
         # drop permissions in setuid and/or setgid programs:
-        ($EUID, $EGID) = ($UID, $GID);  
-        open (OUTFILE, "> $PRECIOUS") 
+        ($EUID, $EGID) = ($UID, $GID);
+        open (OUTFILE, "> $PRECIOUS")
                                 || die "can't open $PRECIOUS: $!";
         while (<STDIN>) {
             print OUTFILE;      # child's STDIN is parent's KID_TO_WRITE
@@ -617,7 +620,7 @@ And here's a safe pipe open for writing:
     }
 
 It is very easy to dead-lock a process using this form of open(), or
-indeed with any use of pipe() with multiple subprocesses.  The 
+indeed with any use of pipe() with multiple subprocesses.  The
 example above is "safe" because it is simple and calls exec().  See
 L</"Avoiding Pipe Deadlocks"> for general safety principles, but there
 are extra gotchas with Safe Pipe Opens.
@@ -696,7 +699,7 @@ So for example, instead of using:
 
 One would use either of these:
 
-    open(PS_PIPE, "-|", "ps", "aux") 
+    open(PS_PIPE, "-|", "ps", "aux")
                                 || die "can't open ps pipe: $!";
 
     @ps_args = qw[ ps aux ];
@@ -706,7 +709,7 @@ One would use either of these:
 Because there are more than three arguments to open(), forks the ps(1)
 command I<without> spawning a shell, and reads its standard output via the
 C<PS_PIPE> filehandle.  The corresponding syntax to I<write> to command
-pipes is to use C<"|-"> in place of C<"-|">.  
+pipes is to use C<"|-"> in place of C<"-|">.
 
 This was admittedly a rather silly example, because you're using string
 literals whose content is perfectly safe.  There is therefore no cause to
@@ -774,7 +777,7 @@ except on a Unix system, or at least one purporting POSIX compliance.
 
 =for TODO
 Hold on, is this even true?  First it says that socketpair() is avoided
-for portability, but then it says it probably won't work except on 
+for portability, but then it says it probably won't work except on
 Unixy systems anyway.  Which one of those is true?
 
 Here's an example of using open2():
@@ -819,7 +822,7 @@ reopen the appropriate handles to STDIN and STDOUT and call other processes.
     PARENT_WTR->autoflush(1);
 
     if ($pid = fork()) {
-        close PARENT_RDR; 
+        close PARENT_RDR;
         close PARENT_WTR;
         print CHILD_WTR "Parent Pid $$ is sending this\n";
         chomp($line = <CHILD_RDR>);
@@ -828,12 +831,12 @@ reopen the appropriate handles to STDIN and STDOUT and call other processes.
         waitpid($pid, 0);
     } else {
         die "cannot fork: $!" unless defined $pid;
-        close CHILD_RDR; 
+        close CHILD_RDR;
         close CHILD_WTR;
         chomp($line = <PARENT_RDR>);
         print "Child Pid $$ just read this: '$line'\n";
         print PARENT_WTR "Child Pid $$ is sending this\n";
-        close PARENT_RDR; 
+        close PARENT_RDR;
         close PARENT_WTR;
         exit(0);
     }
@@ -892,7 +895,7 @@ don't need to pass that information.
 One of the major problems with ancient, antemillennial socket code in Perl
 was that it used hard-coded values for some of the constants, which
 severely hurt portability.  If you ever see code that does anything like
-explicitly setting C<$AF_INET = 2>, you know you're in for big trouble.  
+explicitly setting C<$AF_INET = 2>, you know you're in for big trouble.
 An immeasurably superior approach is to use the C<Socket> module, which more
 reliably grants access to the various constants and functions you'll need.
 
@@ -913,7 +916,7 @@ completely different.  The standards specify writing "\015\012" to be
 conformant (be strict in what you provide), but they also recommend
 accepting a lone "\012" on input (be lenient in what you require).
 We haven't always been very good about that in the code in this manpage,
-but unless you're on a Mac from way back in its pre-Unix dark ages, you'll 
+but unless you're on a Mac from way back in its pre-Unix dark ages, you'll
 probably be ok.
 
 =head2 Internet TCP Clients and Servers
@@ -966,7 +969,7 @@ or firewall machine), fill this in with your real address instead.
     my $proto = getprotobyname("tcp");
 
     socket(Server, PF_INET, SOCK_STREAM, $proto)    || die "socket: $!";
-    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))    
+    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
                                                     || die "setsockopt: $!";
     bind(Server, sockaddr_in($port, INADDR_ANY))    || die "bind: $!";
     listen(Server, SOMAXCONN)                       || die "listen: $!";
@@ -1010,7 +1013,7 @@ go back to service a new client.
     my $proto = getprotobyname("tcp");
 
     socket(Server, PF_INET, SOCK_STREAM, $proto)    || die "socket: $!";
-    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))         
+    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
                                                     || die "setsockopt: $!";
     bind(Server, sockaddr_in($port, INADDR_ANY))    || die "bind: $!";
     listen(Server, SOMAXCONN)                       || die "listen: $!";
@@ -1066,7 +1069,7 @@ go back to service a new client.
         unless (defined($pid = fork())) {
             logmsg "cannot fork: $!";
             return;
-        } 
+        }
         elsif ($pid) {
             logmsg "begat $pid";
             return; # I'm the parent
@@ -1096,15 +1099,15 @@ to be reported.  However, the introduction of safe signals (see
 L</Deferred Signals (Safe Signals)> above) in Perl 5.8.0 means that
 accept() might also be interrupted when the process receives a signal.
 This typically happens when one of the forked subprocesses exits and
-notifies the parent process with a CHLD signal.  
+notifies the parent process with a CHLD signal.
 
 If accept() is interrupted by a signal, $! will be set to EINTR.
 If this happens, we can safely continue to the next iteration of
 the loop and another call to accept().  It is important that your
-signal handling code not modify the value of $!, or else this test 
+signal handling code not modify the value of $!, or else this test
 will likely fail.  In the REAPER subroutine we create a local version
 of $! before calling waitpid().  When waitpid() sets $! to ECHILD as
-it inevitably does when it has no more children waiting, it 
+it inevitably does when it has no more children waiting, it
 updates the local copy and leaves the original unchanged.
 
 You should use the B<-T> flag to enable taint checking (see L<perlsec>)
@@ -1137,7 +1140,7 @@ differ from the system on which it's being run:
         printf "%-24s ", $host;
         my $hisiaddr = inet_aton($host)     || die "unknown host";
         my $hispaddr = sockaddr_in($port, $hisiaddr);
-        socket(SOCKET, PF_INET, SOCK_STREAM, $proto)   
+        socket(SOCKET, PF_INET, SOCK_STREAM, $proto)
                                             || die "socket: $!";
         connect(SOCKET, $hispaddr)          || die "connect: $!";
         my $rtime = pack("C4", ());
@@ -1240,11 +1243,11 @@ to be on the localhost, and thus everything works right.
         unless (defined($pid = fork())) {
             logmsg "cannot fork: $!";
             return;
-        } 
+        }
         elsif ($pid) {
             logmsg "begat $pid";
             return; # I'm the parent
-        } 
+        }
         else {
             # I'm the child -- go spawn
         }
@@ -1815,9 +1818,9 @@ The IO::Socket(3) manpage describes the object library, and the Socket(3)
 manpage describes the low-level interface to sockets.  Besides the obvious
 functions in L<perlfunc>, you should also check out the F<modules> file at
 your nearest CPAN site, especially
-L<http://www.cpan.org/modules/00modlist.long.html#ID5_Networking_>.  
+L<http://www.cpan.org/modules/00modlist.long.html#ID5_Networking_>.
 See L<perlmodlib> or best yet, the F<Perl FAQ> for a description
-of what CPAN is and where to get it if the previous link doesn't work 
+of what CPAN is and where to get it if the previous link doesn't work
 for you.
 
 Section 5 of CPAN's F<modules> file is devoted to "Networking, Device

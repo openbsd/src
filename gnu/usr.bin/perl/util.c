@@ -4408,9 +4408,6 @@ Perl_parse_unicode_opts(pTHX_ const char **popt)
 U32
 Perl_seed(pTHX)
 {
-#if defined(__OpenBSD__)
-	return arc4random();
-#else
     dVAR;
     /*
      * This is really just a quick hack which grabs various garbage
@@ -4487,7 +4484,6 @@ Perl_seed(pTHX)
     u += SEED_C5 * (U32)PTR2UV(&when);
 #endif
     return u;
-#endif
 }
 
 void
@@ -5307,10 +5303,10 @@ Perl_get_db_sub(pTHX_ SV **svp, CV *cv)
     if (!PERLDB_SUB_NN) {
 	GV *gv = CvGV(cv);
 
-	if (!svp) {
+	if (gv && !svp) {
 	    gv_efullname3(dbsv, gv, NULL);
 	}
-	else if ( (CvFLAGS(cv) & (CVf_ANON | CVf_CLONED))
+	else if ( (CvFLAGS(cv) & (CVf_ANON | CVf_CLONED)) || !gv
 	     || strEQ(GvNAME(gv), "END")
 	     || ( /* Could be imported, and old sub redefined. */
 		 (GvCV(gv) != cv || !S_gv_has_usable_name(aTHX_ gv))

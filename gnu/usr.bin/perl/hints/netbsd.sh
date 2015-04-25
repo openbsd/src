@@ -89,7 +89,9 @@ case "$osvers" in
 	;;
 esac
 case "$osvers" in
-0.9*|1.*|2.*|3.*|4.*|5.*|6.*)
+0.8*)
+	;;
+*)
 	d_getprotoent_r="$undef"
 	d_getprotobyname_r="$undef"
 	d_getprotobynumber_r="$undef"
@@ -100,6 +102,12 @@ case "$osvers" in
 	d_getservbyport_r="$undef"
 	d_setservent_r="$undef"
 	d_endservent_r="$undef"
+	d_gethostbyname_r="$undef"
+	d_gethostbyaddr2_r="$undef"
+	d_gethostbyaddr_r="$undef"
+	d_sethostent_r="$undef"
+	d_gethostent_r="$undef"
+	d_endhostent_r="$undef"
 	d_getprotoent_r_proto="0"
 	d_getprotobyname_r_proto="0"
 	d_getprotobynumber_r_proto="0"
@@ -110,6 +118,12 @@ case "$osvers" in
 	d_getservbyport_r_proto="0"
 	d_setservent_r_proto="0"
 	d_endservent_r_proto="0"
+	d_gethostbyname_r_proto="0"
+	d_gethostbyaddr2_r_proto="0"
+	d_gethostbyaddr_r_proto="0"
+	d_sethostent_r_proto="0"
+	d_endhostent_r_proto="0"
+	d_gethostent_r_proto="0"
 	;;
 esac
 

@@ -1512,7 +1512,7 @@ Returns a pointer to the string in the SV, or a stringified form of
 the SV if the SV does not contain a string.  The SV may cache the
 stringified version becoming C<SvPOK>.  Handles 'get' magic.  The
 C<len> variable will be set to the length of the string (this is a macro, so
-don't use C<&len>). See also C<SvPVx> for a version which guarantees to
+don't use C<&len>).  See also C<SvPVx> for a version which guarantees to
 evaluate sv only once.
 
 Note that there is no guarantee that the return value of C<SvPV()> is

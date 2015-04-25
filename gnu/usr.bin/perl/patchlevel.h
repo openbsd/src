@@ -15,7 +15,7 @@
 
 #define PERL_REVISION	5		/* age */
 #define PERL_VERSION	20		/* epoch */
-#define PERL_SUBVERSION	1		/* generation */
+#define PERL_SUBVERSION	2		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -134,7 +134,6 @@ hunk.
 static const char * const local_patches[] = {
 	NULL
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
-	,"CVE-2014-4330"
 	,"uncommitted-changes"
 #endif
 	PERL_GIT_UNPUSHED_COMMITS    	/* do not remove this line */

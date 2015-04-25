@@ -146,7 +146,7 @@ if ((-e "testcompile") && (defined($ENV{'COMPILE'}))) {
 }
 
 # Exclude nonxs extensions that are not architecture dependent
-my @nonxs = grep(!/^(Errno|IO\/Compress)$/, split(' ', $Config{'nonxs_ext'}));
+my @nonxs = grep(!/^Errno$/, split(' ', $Config{'nonxs_ext'}));
 
 my @ext_dirs = qw(cpan dist ext);
 foreach my $ext_dir (@ext_dirs) {
@@ -192,7 +192,7 @@ my $installprivlib = "$opts{destdir}$Config{installprivlib}";
 my $installarchlib = "$opts{destdir}$Config{installarchlib}";
 my $installsitelib = "$opts{destdir}$Config{installsitelib}";
 my $installsitearch = "$opts{destdir}$Config{installsitearch}";
-my $installman1dir = "none";
+my $installman1dir = "$opts{destdir}$Config{installman1dir}";
 my $man1ext = $Config{man1ext};
 my $libperl = $Config{libperl};
 # Shared library and dynamic loading suffixes.
@@ -246,9 +246,9 @@ else {
     }
 }
 
-#-f 't/rantests'		|| $Is_W32
-#			|| warn "WARNING: You've never run 'make test' or",
-#				" some tests failed! (Installing anyway.)\n";
+-f 't/rantests'		|| $Is_W32
+			|| warn "WARNING: You've never run 'make test' or",
+				" some tests failed! (Installing anyway.)\n";
 } #if (!$Is_NetWare)
 
 # This will be used to store the packlist
@@ -260,7 +260,7 @@ if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin) {
     if ($Is_Cygwin) {
 	$perldll = $libperl;
     } else {
-	$perldll = 'perl5'.$Config{patchlevel}.'.'.$dlext;
+	$perldll = 'perl5'.$Config{patchlevel}.'.'.$so;
     }
 
     if ($dlsrc ne "dl_none.xs") {
@@ -273,10 +273,6 @@ if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin) {
     chmod(0755, "$installbin/$perldll");
     $packlist->{"$Config{installbin}/$perldll"} = { type => 'file' };
 } # if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin)
-
-# Get the install command and flags from the environment
-my @installcmd = $ENV{"INSTALL"} || "install";
-push(@installcmd, $ENV{"INSTALL_COPY"} || "-c");
 
 # First we install the version-numbered executables.
 
@@ -301,7 +297,10 @@ if ($Is_VMS) {
 }
 elsif ($^O ne 'dos') {
     if (!$Is_NetWare) {
-	install("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext", "0755");
+	safe_unlink("$installbin/$perl_verbase$ver$exe_ext");
+	copy("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext");
+	strip("$installbin/$perl_verbase$ver$exe_ext");
+	chmod(0755, "$installbin/$perl_verbase$ver$exe_ext");
     }
     else {
 	# If installing onto a NetWare server
@@ -373,9 +372,7 @@ elsif ($Is_Cygwin) { # On Cygwin symlink it to CORE to make Makefile happy
     )
 } else {
     # [als] hard-coded 'libperl' name... not good!
-    #@corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
-    @corefiles = <*.h *.inc perl*$Config{lib_ext}>;
-    push(@corefiles,<libperl*.*>) unless defined($ENV{"NOLIBINSTALL"});
+    @corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
 
     # AIX needs perl.exp installed as well.
     push(@corefiles,'perl.exp') if $^O eq 'aix';
@@ -639,21 +636,6 @@ sub copy {
     $packlist->{$xto} = { type => 'file' };
 }
 
-sub install {
-    my($from,$to,$mode) = @_;
-
-    my $xto = $to;
-    my $cmd = join(' ', @installcmd);
-    $cmd .= " -m $mode" if $mode;
-    $cmd .= " -s" if $opts{strip};
-    $cmd .= " $from $to";
-    $xto =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
-    print $opts{verbose} ? "  install $from $xto\n" : "  $xto\n" unless $opts{silent};
-    system($cmd);
-    warn "Couldn't $cmd\n" if $?;
-    $packlist->{$xto} = { type => 'file' };
-}
-
 sub installlib {
     my $dir = $File::Find::dir;
     $dir =~ s!\Alib/?!!;
@@ -749,19 +731,6 @@ sub installlib {
 	return unless $do_installarchlib;
     } else {
 	return unless $do_installprivlib;
-    }
-
-    if ($name eq 'Config_heavy.pl') {
-        open my $ifh, '<', $_ or die $!;
-        $_ = "$_.orig";
-        open my $ofh, '>', $_ or die $!;
-        while (my $l = <$ifh>) {
-            $l =~ s,^(ccflags|cppflags)[^=]*='[^']+,$& -I/usr/local/include,;
-            $l =~ s,^(ldflags|lddlflags)[^=]*='[^']+,$& -L/usr/local/lib,;
-            print $ofh $l;
-        }
-        close $ifh;
-        close $ofh;
     }
 
     if ($Is_NetWare && !$opts{netware} && /\.(?:nlp|nlm|bs)$/) {

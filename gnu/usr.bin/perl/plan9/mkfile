@@ -22,7 +22,7 @@ installman3dir = /sys/man/2
 
 podnames = perl perlbook perldata perldebtut perldiag perldsc perlform perlfunc perlipc perllexwarn perllol perlmod perlmodlib perlmodinstall perlnewmod perlop perlootut perlopentut perlpacktut perlpod perlport perlrequick perlretut perlref perlreftut perlrequick perlrun perlsec perlstyle perlsub perlsyn perltie perltrap perlutil perlunifaq perluniintro perlvar
 faqpodnames = perlfaq perlfaq1 perlfaq2 perlfaq3 perlfaq4 perlfaq5 perlfaq6 perlfaq7 perlfaq8 perlfaq9
-advpodnames = perlapi perlapio perlcall perlclib perlcompile perldebguts perldbmfilter perldebug perldelta perldiag perlebcdic perlembed perlfilter perlfork perlguts perlhack perlintern perliol perllocale perlnumber perlobj perlpodspec perlre perlthrtut perltodo perlunicode perlxs perlxs perlxstut
+advpodnames = perlapi perlapio perlcall perlclib perlcompile perldebguts perldbmfilter perldebug perldelta perldiag perlebcdic perlembed perlfilter perlfork perlguts perlhack perlintern perliol perllocale perlnumber perlobj perlpodspec perlre perlthrtut perltodo perlunicode perlunicook perlxs perlxs perlxstut
 archpodnames = perlaix perlamiga perlbeos perlbs2000 perlce perlcygwin perldgux perldos perlfreebsd perlhpux perlhurd perlirix perlmacos perlmpeix perlnetware perlos2 perlos390 perlos400 perlplan9 perlqnx perlsolaris perltru64 perlvms perlvos perlwin32
 histpods = perl5004delta perl5005delta perl561delta perl56delta perl570delta perl571delta perl572delta perl573delta perl58delta perlhist
 

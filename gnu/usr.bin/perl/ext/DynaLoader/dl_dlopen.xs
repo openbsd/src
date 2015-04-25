@@ -170,8 +170,8 @@ dl_load_file(filename, flags=0)
     char pathbuf[PATH_MAX + 2];
     if (*filename != '/' && strchr(filename, '/')) {
 	if (getcwd(pathbuf, PATH_MAX - strlen(filename))) {
-	    my_strlcat(pathbuf, "/", sizeof(pathbuf));
-	    my_strlcat(pathbuf, filename, sizeof(pathbuf));
+	    strcat(pathbuf, "/");
+	    strcat(pathbuf, filename);
 	    filename = pathbuf;
 	}
     }

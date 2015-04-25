@@ -190,3 +190,7 @@ sub {
  )
 }
  ->(("${\''}")[0,0]);
+
+# [perl #122995] Hang when compiling while(1) in a sub-list
+# No ok() or is() necessary.
+sub foo { () = ($a, my $b, ($c, do { while(1) {} })) }

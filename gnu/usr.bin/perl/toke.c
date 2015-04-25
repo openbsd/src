@@ -2268,9 +2268,10 @@ S_force_word(pTHX_ char *start, int token, int check_keyword, int allow_pack)
 	s = scan_word(s, PL_tokenbuf, sizeof PL_tokenbuf, allow_pack, &len);
 	if (check_keyword) {
 	  char *s2 = PL_tokenbuf;
+	  STRLEN len2 = len;
 	  if (allow_pack && len > 6 && strnEQ(s2, "CORE::", 6))
-	    s2 += 6, len -= 6;
-	  if (keyword(s2, len, 0))
+	    s2 += 6, len2 -= 6;
+	  if (keyword(s2, len2, 0))
 	    return start;
 	}
 	start_force(PL_curforce);
@@ -4071,11 +4072,10 @@ S_intuit_more(pTHX_ char *s)
 		    && !(last_un_char == '$' || last_un_char == '@'
 			 || last_un_char == '&')
 		    && isALPHA(*s) && s[1] && isALPHA(s[1])) {
-		    char *d = tmpbuf;
+		    char *d = s;
 		    while (isALPHA(*s))
-			*d++ = *s++;
-		    *d = '\0';
-		    if (keyword(tmpbuf, d - tmpbuf, 0))
+			s++;
+		    if (keyword(d, s - d, 0))
 			weight -= 150;
 		}
 		if (un_char == last_un_char + 1)

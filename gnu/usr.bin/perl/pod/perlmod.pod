@@ -4,6 +4,27 @@ perlmod - Perl modules (packages and symbol tables)
 
 =head1 DESCRIPTION
 
+=head2 Is this the document you were after?
+
+There are other documents which might contain the information that you're
+looking for:
+
+=over 2
+
+=item This doc
+
+Perl's packages, namespaces, and some info on classes.
+
+=item L<perlnewmod>
+
+Tutorial on making a new module.
+
+=item L<perlmodstyle>
+
+Best practices for making a new module.
+
+=back
+
 =head2 Packages
 X<package> X<namespace> X<variable, global> X<global variable> X<global>
 

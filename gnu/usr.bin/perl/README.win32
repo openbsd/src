@@ -120,10 +120,20 @@ build usually works in this circumstance, but some tests will fail.
 
 =item Microsoft Visual C++
 
-The nmake that comes with Visual C++ will suffice for building.
-You will need to run the VCVARS32.BAT file, usually found somewhere
-like C:\Program Files\Microsoft Visual Studio\VC98\Bin.
-This will set your build environment.
+The nmake that comes with Visual C++ will suffice for building. Visual C
+requires that certain things be set up in the console before Visual C will
+sucessfully run. To make a console box be able to run the C compiler, you will
+need to beforehand, run the C<vcvars32.bat> file to compile for x86-32 and for
+x86-64 C<vcvarsall.bat x64> or C<vcvarsamd64.bat>. On a typical install of a
+Microsoft C compiler product, these batch files will already be in your C<PATH>
+environment variable so you may just type them without an absolute path into
+your console. If you need to find the absolute path to the batch file, it is
+usually found somewhere like C:\Program Files\Microsoft Visual Studio\VC98\Bin.
+With some newer Micrsoft C products (released after ~2004), the installer will
+put a shortcut in the start menu to launch a new console window with the
+console already set up for your target architecture (x86-32 or x86-64 or IA64).
+With the newer compilers, you may also use the older batch files if you choose
+so.
 
 You can also use dmake to build using Visual C++; provided, however,
 you set OSRELEASE to "microsft" (or whatever the directory name
@@ -387,6 +397,13 @@ perl520.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
+If you are advanced enough with building C code, here is a suggestion to speed
+up building perl, and the later C<make test>. Try to keep your PATH enviromental
+variable with the least number of folders possible (remember to keep your C
+compiler's folders there). C<C:\WINDOWS\system32> or C<C:\WINNT\system32>
+depending on your OS version should be first folder in PATH, since "cmd.exe"
+is the most commonly launched program during the build and later testing.
+
 =back
 
 =head2 Testing Perl on Windows
@@ -588,7 +605,7 @@ Look in L<http://www.cpan.org/> for more information on CPAN.
 
 Note that not all of the extensions available from CPAN may work
 in the Windows environment; you should check the information at
-L<http://testers.cpan.org/> before investing too much effort into
+L<http://www.cpantesters.org/> before investing too much effort into
 porting modules that don't readily build.
 
 Most extensions (whether they require a C compiler or not) can
@@ -632,7 +649,8 @@ edit Config.pm to fix it.
 
 If a module implements XSUBs, you will need one of the supported
 C compilers.  You must make sure you have set up the environment for
-the compiler for command-line compilation.
+the compiler for command-line compilation before running C<perl Makefile.PL>
+or any invocation of make.
 
 If a module does not build for some reason, look carefully for
 why it failed, and report problems to the module author.  If
@@ -846,6 +864,14 @@ updating it). The build does complete with
 
 but that may be just luck. Other AntiVirus software may have similar issues.
 
+A git GUI shell extension for Windows such as TortoiseGit will cause the build
+and later C<make test> to run much slower since every file is checked for its
+git status as soon as it is created and/or modified. TortoiseGit doesn't cause
+any test failures or build problems unlike the antivirus software described
+above, but it does cause similar slowness. It is suggested to use Task Manager
+to look for background processes which use high CPU amounts during the building
+process.
+
 Some of the built-in functions do not act exactly as documented in
 L<perlfunc>, and a few are not implemented at all.  To avoid
 surprises, particularly if you have had prior exposure to Perl
@@ -915,6 +941,6 @@ Win9x support was added in 5.6 (Benjamin Stuhl).
 
 Support for 64-bit Windows added in 5.8 (ActiveState Corp).
 
-Last updated: 22 October 2013
+Last updated: 07 October 2014
 
 =cut

@@ -4805,7 +4805,10 @@ Perl_pmruntime(pTHX_ OP *o, OP *expr, bool isreg, I32 floor)
 
     /* for s/// and tr///, last element in list is the replacement; pop it */
 
-    if (is_trans || o->op_type == OP_SUBST) {
+    /* If we have a syntax error causing tokens to be popped and the parser
+       to see PMFUNC '(' expr ')' with no commas in it; e.g., s/${<>{})//,
+       then expr will not be of type OP_LIST, there being no repl.  */
+    if ((is_trans || o->op_type == OP_SUBST) && expr->op_type == OP_LIST) {
 	OP* kid;
 	repl = cLISTOPx(expr)->op_last;
 	kid = cLISTOPx(expr)->op_first;
@@ -4930,8 +4933,17 @@ Perl_pmruntime(pTHX_ OP *o, OP *expr, bool isreg, I32 floor)
 		 * were wrong (e.g. /[(?{}]/ ). Throw away the PL_compcv
 		 * that isn't required now. Note that we have to be pretty
 		 * confident that nothing used that CV's pad while the
-		 * regex was parsed */
-		assert(AvFILLp(PL_comppad) == 0); /* just @_ */
+		 * regex was parsed, except maybe op targets for \Q etc.
+		 * If there were any op targets, though, they should have
+		 * been stolen by constant folding.
+		 */
+#ifdef DEBUGGING
+		PADOFFSET i = 0;
+		assert(PadnamelistMAXNAMED(PL_comppad_name) == 0);
+		while (++i <= AvFILLp(PL_comppad)) {
+		    assert(!PL_curpad[i]);
+		}
+#endif
 		/* But we know that one op is using this CV's slab. */
 		cv_forget_slab(PL_compcv);
 		LEAVE_SCOPE(floor);
@@ -5045,6 +5057,7 @@ Perl_pmruntime(pTHX_ OP *o, OP *expr, bool isreg, I32 floor)
 	     */
 
 	    SvREFCNT_inc_simple_void(PL_compcv);
+	    CvLVALUE_on(PL_compcv);
 	    /* these lines are just an unrolled newANONATTRSUB */
 	    expr = newSVOP(OP_ANONCODE, 0,
 		    MUTABLE_SV(newATTRSUB(floor, 0, NULL, NULL, expr)));
@@ -11251,19 +11264,11 @@ S_inplace_aassign(pTHX_ OP *o) {
 STATIC void
 S_null_listop_in_list_context(pTHX_ OP *o)
 {
-    OP *kid;
-
     PERL_ARGS_ASSERT_NULL_LISTOP_IN_LIST_CONTEXT;
 
     /* This is an OP_LIST in list context. That means we
      * can ditch the OP_LIST and the OP_PUSHMARK within. */
 
-    kid = cLISTOPo->op_first;
-    /* Find the end of the chain of OPs executed within the OP_LIST. */
-    while (kid->op_next != o)
-        kid = kid->op_next;
-
-    kid->op_next = o->op_next; /* patch list out of exec chain */
     op_null(cUNOPo->op_first); /* NULL the pushmark */
     op_null(o); /* NULL the list */
 }
@@ -12006,7 +12011,9 @@ Perl_rpeep(pTHX_ OP *o)
                  * altering the basic op_first/op_sibling layout. */
                 kid = kLISTOP->op_first;
                 assert(
-                      (kid->op_type == OP_NULL && kid->op_targ == OP_NEXTSTATE)
+                      (kid->op_type == OP_NULL
+                      && (  kid->op_targ == OP_NEXTSTATE
+                         || kid->op_targ == OP_DBSTATE  ))
                     || kid->op_type == OP_STUB
                     || kid->op_type == OP_ENTER);
                 nullop->op_next = kLISTOP->op_next;

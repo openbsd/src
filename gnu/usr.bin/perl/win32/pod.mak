@@ -35,8 +35,10 @@ POD = perl.pod	\
 	perl5180delta.pod	\
 	perl5181delta.pod	\
 	perl5182delta.pod	\
+	perl5184delta.pod	\
 	perl5200delta.pod	\
 	perl5201delta.pod	\
+	perl5202delta.pod	\
 	perl561delta.pod	\
 	perl56delta.pod	\
 	perl581delta.pod	\
@@ -134,6 +136,7 @@ POD = perl.pod	\
 	perltoot.pod	\
 	perltrap.pod	\
 	perlunicode.pod	\
+	perlunicook.pod	\
 	perlunifaq.pod	\
 	perluniintro.pod	\
 	perluniprops.pod	\
@@ -165,8 +168,10 @@ MAN = perl.man	\
 	perl5180delta.man	\
 	perl5181delta.man	\
 	perl5182delta.man	\
+	perl5184delta.man	\
 	perl5200delta.man	\
 	perl5201delta.man	\
+	perl5202delta.man	\
 	perl561delta.man	\
 	perl56delta.man	\
 	perl581delta.man	\
@@ -264,6 +269,7 @@ MAN = perl.man	\
 	perltoot.man	\
 	perltrap.man	\
 	perlunicode.man	\
+	perlunicook.man	\
 	perlunifaq.man	\
 	perluniintro.man	\
 	perluniprops.man	\
@@ -295,8 +301,10 @@ HTML = perl.html	\
 	perl5180delta.html	\
 	perl5181delta.html	\
 	perl5182delta.html	\
+	perl5184delta.html	\
 	perl5200delta.html	\
 	perl5201delta.html	\
+	perl5202delta.html	\
 	perl561delta.html	\
 	perl56delta.html	\
 	perl581delta.html	\
@@ -393,6 +401,7 @@ HTML = perl.html	\
 	perltoot.html	\
 	perltrap.html	\
 	perlunicode.html	\
+	perlunicook.html	\
 	perlunifaq.html	\
 	perluniintro.html	\
 	perluniprops.html	\
@@ -425,8 +434,10 @@ TEX = perl.tex	\
 	perl5180delta.tex	\
 	perl5181delta.tex	\
 	perl5182delta.tex	\
+	perl5184delta.tex	\
 	perl5200delta.tex	\
 	perl5201delta.tex	\
+	perl5202delta.tex	\
 	perl561delta.tex	\
 	perl56delta.tex	\
 	perl581delta.tex	\
@@ -524,6 +535,7 @@ TEX = perl.tex	\
 	perltoot.tex	\
 	perltrap.tex	\
 	perlunicode.tex	\
+	perlunicook.tex	\
 	perlunifaq.tex	\
 	perluniintro.tex	\
 	perluniprops.tex	\

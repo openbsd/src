@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter;
 use File::Spec;
+use lib qw( lib );
 use ExtUtils::ParseXS::Constants ();
 
 our $VERSION = '3.24';

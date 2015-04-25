@@ -254,11 +254,6 @@ typedef unsigned short	mode_t;
 #define snprintf	_snprintf
 #define vsnprintf	_vsnprintf
 
-#ifdef USING_MSVC6
-/* VC6 has broken NaN semantics: NaN == NaN returns true instead of false */
-#define NAN_COMPARE_BROKEN 1
-#endif
-
 /* on VC2003, msvcrt.lib is missing these symbols */
 #if _MSC_VER >= 1300 && _MSC_VER < 1400
 #  pragma intrinsic(_rotl64,_rotr64)
@@ -397,8 +392,8 @@ typedef  char *		caddr_t;	/* In malloc.c (core address). */
 
 #ifdef MYMALLOC
 #define EMBEDMYMALLOC	/**/
-/* #define USE_PERL_SBRK	/**/
-/* #define PERL_SBRK_VIA_MALLOC	/**/
+/* #define USE_PERL_SBRK	/ **/
+/* #define PERL_SBRK_VIA_MALLOC	/ **/
 #endif
 
 #ifdef PERL_TEXTMODE_SCRIPTS

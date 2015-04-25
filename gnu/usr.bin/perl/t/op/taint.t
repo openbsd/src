@@ -17,7 +17,7 @@ BEGIN {
 use strict;
 use Config;
 
-plan tests => 816;
+plan tests => 801;
 
 $| = 1;
 
@@ -298,12 +298,6 @@ my $TEST = 'TEST';
     is($res, 1,        "$desc: res value");
     is($one, 'a',      "$desc: \$1 value");
 
-    SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 10 }
   SKIP: {
         skip 'No locale testing without d_setlocale', 10 if(!$Config{d_setlocale});
 
@@ -323,7 +317,6 @@ my $TEST = 'TEST';
         is_tainted($one,   "$desc: \$1 tainted");
         is($res, 1,        "$desc: res value");
         is($one, 'abcd',   "$desc: \$1 value");
-    }
 
         $desc = "match /g with pattern tainted via locale";
 
@@ -348,13 +341,6 @@ my $TEST = 'TEST';
     $s = 'abcd';
     ($res) = $s =~ /$TAINT(.+)/;
     $one = $1;
-    SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 12
-    }
     isnt_tainted($s,   "$desc: s not tainted");
     is_tainted($res,   "$desc: res tainted");
     is_tainted($one,   "$desc: \$1 tainted");
@@ -372,10 +358,9 @@ my $TEST = 'TEST';
     is($res, 'a',      "$desc: res value");
     is($res2,'b',      "$desc: res2 value");
     is($one, 'd',      "$desc: \$1 value");
-    }
 
   SKIP: {
-        skip 'No locale testing without d_setlocale', 12 if(!$Config{d_setlocale}) || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/;
+        skip 'No locale testing without d_setlocale', 12 if(!$Config{d_setlocale});
 
         $desc = "match with pattern tainted via locale, list cxt";
 
@@ -494,13 +479,6 @@ my $TEST = 'TEST';
     is($one, 'd',      "$desc: \$1 value");
 
     $desc = "substitution /ge with pattern tainted";
-    SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 18
-    }
 
     $s = 'abc';
     {
@@ -540,10 +518,9 @@ my $TEST = 'TEST';
     is($s,  'abcd',    "$desc: s value");
     is($res, 'xyz',    "$desc: res value");
     is($one, 'abcd',   "$desc: \$1 value");
-    }
 
   SKIP: {
-        skip 'No locale testing without d_setlocale', 18 if(!$Config{d_setlocale} || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/);
+        skip 'No locale testing without d_setlocale', 18 if(!$Config{d_setlocale});
 
         $desc = "substitution with pattern tainted via locale";
 
@@ -684,13 +661,6 @@ my $TEST = 'TEST';
 	$desc = "use re 'taint': match /g with string tainted";
 
 	$s = 'abcd' . $TAINT;
-    SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 10
-    }
 	$res = $s =~ /(.)/g;
 	$one = $1;
 	is_tainted($s,     "$desc: s tainted");
@@ -698,7 +668,6 @@ my $TEST = 'TEST';
 	is_tainted($one,   "$desc: \$1 tainted");
 	is($res, 1,        "$desc: res value");
 	is($one, 'a',      "$desc: \$1 value");
-    }
 
 	$desc = "use re 'taint': match with string tainted, list cxt";
 
@@ -716,13 +685,6 @@ my $TEST = 'TEST';
 	$s = 'abcd' . $TAINT;
 	($res, $res2) = $s =~ /(.)/g;
 	$one = $1;
-    SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 12
-    }
 	is_tainted($s,     "$desc: s tainted");
 	is_tainted($res,   "$desc: res tainted");
 	is_tainted($res2,  "$desc: res2 tainted");
@@ -730,7 +692,6 @@ my $TEST = 'TEST';
 	is($res, 'a',      "$desc: res value");
 	is($res2,'b',      "$desc: res2 value");
 	is($one, 'd',      "$desc: \$1 value");
-    }
 
 	$desc = "use re 'taint': match with pattern tainted";
 
@@ -755,7 +716,7 @@ my $TEST = 'TEST';
 	is($one, 'a',      "$desc: \$1 value");
 
   SKIP: {
-        skip 'No locale testing without d_setlocale', 10 if(!$Config{d_setlocale} || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/);
+        skip 'No locale testing without d_setlocale', 10 if(!$Config{d_setlocale});
 
         $desc = "use re 'taint': match with pattern tainted via locale";
 
@@ -816,7 +777,7 @@ my $TEST = 'TEST';
 	is($one, 'd',      "$desc: \$1 value");
 
   SKIP: {
-        skip 'No locale testing without d_setlocale', 12 if(!$Config{d_setlocale} || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/);
+        skip 'No locale testing without d_setlocale', 12 if(!$Config{d_setlocale});
 
         $desc = "use re 'taint': match with pattern tainted via locale, list cxt";
 
@@ -865,13 +826,6 @@ my $TEST = 'TEST';
 	is_tainted($one,   "$desc: \$1 tainted");
 	is($s,   'xyz',    "$desc: s value");
 	is($res, 1,        "$desc: res value");
-    SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 18
-    }
 	is($one, 'abcd',   "$desc: \$1 value");
 
 	$desc = "use re 'taint': substitution /g with string tainted";
@@ -897,7 +851,6 @@ my $TEST = 'TEST';
 	is($s,   'abcd',   "$desc: s value");
 	is($res, 'xyz',    "$desc: res value");
 	is($one, 'abcd',   "$desc: \$1 value");
-    }
 
 	$desc = "use re 'taint': substitution /e with string tainted";
 
@@ -985,7 +938,8 @@ my $TEST = 'TEST';
 	is($one, 'abcd',   "$desc: \$1 value");
 
   SKIP: {
-        skip 'No locale testing without d_setlocale', 18 if(!$Config{d_setlocale} || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/);
+        skip 'No locale testing without d_setlocale', 18 if(!$Config{d_setlocale});
+
         $desc = "use re 'taint': substitution with pattern tainted via locale";
 
         $s = 'abcd';
@@ -2257,13 +2211,7 @@ end
     isnt_tainted($b, "regex optimization of single char /[]/i doesn't taint");
 }
 
-SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 4
-    }
+{
     # RT 81230: tainted value during FETCH created extra ref to tied obj
 
     package P81230;
@@ -2394,7 +2342,7 @@ pass("no death when TARG of ref is tainted");
 }
 
 SKIP: {
-    skip 'No locale testing without d_setlocale', 4 if(!$Config{d_setlocale} || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/);
+    skip 'No locale testing without d_setlocale', 4 if(!$Config{d_setlocale});
 
     use feature 'fc';
     BEGIN {
@@ -2434,6 +2382,20 @@ SKIP: {
 $::x = "foo";
 $_ = "$TAINT".reset "x";
 is eval { eval $::x.1 }, 1, 'reset does not taint undef';
+
+# [perl #122669]
+{
+    # See the comment above the first formline test.
+    local $ENV{PATH} = $ENV{PATH};
+    $ENV{PATH} = $old_env_path if $Is_MSWin32;
+    is runperl(
+       switches => [ '-T' ],
+       prog => 'use constant K=>$^X; 0 if K; BEGIN{} use strict; '
+              .'print 122669, qq-\n-',
+       stderr => 1,
+     ), "122669\n",
+        'tainted constant as logop condition should not prevent "use"';
+}
 
 # This may bomb out with the alarm signal so keep it last
 SKIP: {

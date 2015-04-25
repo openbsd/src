@@ -290,6 +290,18 @@ use File::Glob qw(:case);
                 t/yaml_code.yml
                 ),
         ],
+        # Waiting to be merged upstream: see pull request #83
+        'CUSTOMIZED'   => [
+            qw( lib/CPAN/Author.pm
+                lib/CPAN/CacheMgr.pm
+                lib/CPAN/FTP.pm
+                lib/CPAN/HTTP/Client.pm
+                lib/CPAN/HandleConfig.pm
+                lib/CPAN/Index.pm
+                lib/CPAN/LWP/UserAgent.pm
+                lib/CPAN/Mirrors.pm
+                ),
+        ],
     },
 
     # Note: When updating CPAN-Meta the META.* files will need to be regenerated
@@ -948,6 +960,8 @@ use File::Glob qw(:case);
     'Pod::Parser' => {
         'DISTRIBUTION' => 'MAREKR/Pod-Parser-1.62.tar.gz',
         'FILES'        => q[cpan/Pod-Parser],
+        # Waiting to be merged upstream: see CPAN RT#101847
+        'CUSTOMIZED'   => [ qw( lib/Pod/PlainText.pm) ],
     },
 
     'Pod::Perldoc' => {
@@ -1492,9 +1506,6 @@ use File::Glob qw(:case);
                 lib/vars{.pm,.t,_carp.t}
                 lib/vmsish.{pm,t}
                 ],
-    },
-    'openbsd' => {
-        'FILES'      => q[lib/Config_git.pl],
     },
 );
 

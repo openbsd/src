@@ -14,7 +14,8 @@ C<::> or C<'>.  In this case, the part before the last C<::> or
 C<'> is taken to be a I<package qualifier>; see L<perlmod>.
 
 Perl variable names may also be a sequence of digits or a single
-punctuation or control character.  These names are all reserved for
+punctuation or control character (with the literal control character
+form deprecated).  These names are all reserved for
 special uses by Perl; for example, the all-digits names are used
 to hold data captured by backreferences after a regular expression
 match.  Perl has a special syntax for the single-control-character
@@ -370,19 +371,19 @@ X<$;> X<$SUBSEP> X<SUBSCRIPT_SEPARATOR>
 The subscript separator for multidimensional array emulation.  If you
 refer to a hash element as
 
-    $foo{$a,$b,$c}
+    $foo{$x,$y,$z}
 
 it really means
 
-    $foo{join($;, $a, $b, $c)}
+    $foo{join($;, $x, $y, $z)}
 
 But don't put
 
-    @foo{$a,$b,$c}	# a slice--note the @
+    @foo{$x,$y,$z}	# a slice--note the @
 
 which means
 
-    ($foo{$a},$foo{$b},$foo{$c})
+    ($foo{$x},$foo{$y},$foo{$z})
 
 Default is "\034", the same as SUBSEP in B<awk>.  If your keys contain
 binary data there might not be any safe value for C<$;>.

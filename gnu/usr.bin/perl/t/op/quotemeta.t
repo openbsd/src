@@ -128,18 +128,10 @@ is(length(quotemeta($char)), 1, "quotemeta '\\N{U+D8}'  in UTF-8 length");
     is(quotemeta($char), "\\$char", "quotemeta '\\N{U+D7}' locale in UTF-8");
     is(length(quotemeta($char)), 2, "quotemeta '\\N{U+D7}' locale in UTF-8 length");
 
-    SKIP: {
-    if (
-        !$Config::Config{d_setlocale}
-    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-    ) {
-        skip "no locale support", 2
-    }
-        $char = "\N{U+D8}";  # Every non-ASCII Latin1 is quoted in locale.
-        utf8::upgrade($char);
-        is(quotemeta($char), "\\$char", "quotemeta '\\N{U+D8}' locale in UTF-8");
-        is(length(quotemeta($char)), 2, "quotemeta '\\N{U+D8}' locale in UTF-8 length");
-    }
+    $char = "\N{U+D8}";  # Every non-ASCII Latin1 is quoted in locale.
+    utf8::upgrade($char);
+    is(quotemeta($char), "\\$char", "quotemeta '\\N{U+D8}' locale in UTF-8");
+    is(length(quotemeta($char)), 2, "quotemeta '\\N{U+D8}' locale in UTF-8 length");
 
     is(quotemeta("\x{263a}"), "\\\x{263a}", "quotemeta locale Unicode quoted");
     is(length(quotemeta("\x{263a}")), 2, "quotemeta locale Unicode quoted length");

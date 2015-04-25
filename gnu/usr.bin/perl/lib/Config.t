@@ -271,8 +271,8 @@ foreach my $lib (qw(applibexp archlibexp privlibexp sitearchexp sitelibexp
     }
     # So we expect to find it in @INC
 
-    ok (exists $orig_inc{$_}, "Expect $lib '$_' to be in \@INC")
-      or $failed++ for split ':', $dir;
+    ok (exists $orig_inc{$dir}, "Expect $lib '$dir' to be in \@INC")
+      or $failed++;
   }
 }
 _diag ('@INC is:', @orig_inc) if $failed;

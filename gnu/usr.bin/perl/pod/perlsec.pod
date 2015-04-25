@@ -28,9 +28,9 @@ Perl automatically enables a set of special security checks, called I<taint
 mode>, when it detects its program running with differing real and effective
 user or group IDs.  The setuid bit in Unix permissions is mode 04000, the
 setgid bit mode 02000; either or both may be set.  You can also enable taint
-mode explicitly by using the B<-T> command line flag. This flag is
+mode explicitly by using the B<-T> command line flag.  This flag is
 I<strongly> suggested for server programs and any program run on behalf of
-someone else, such as a CGI script. Once taint mode is on, it's on for
+someone else, such as a CGI script.  Once taint mode is on, it's on for
 the remainder of your script.
 
 While in this mode, Perl takes special precautions called I<taint
@@ -234,9 +234,9 @@ Unix-like environments that support #! and setuid or setgid scripts.)
 
 When the taint mode (C<-T>) is in effect, the "." directory is removed
 from C<@INC>, and the environment variables C<PERL5LIB> and C<PERLLIB>
-are ignored by Perl. You can still adjust C<@INC> from outside the
+are ignored by Perl.  You can still adjust C<@INC> from outside the
 program by using the C<-I> command line option as explained in
-L<perlrun>. The two environment variables are ignored because
+L<perlrun>.  The two environment variables are ignored because
 they are obscured, and a user running a program could be unaware that
 they are set, whereas the C<-I> option is clearly visible and
 therefore permitted.
@@ -247,7 +247,7 @@ the C<lib> pragma, e.g.:
   perl -Mlib=/foo program
 
 The benefit of using C<-Mlib=/foo> over C<-I/foo>, is that the former
-will automagically remove any duplicated directories, while the later
+will automagically remove any duplicated directories, while the latter
 will not.
 
 Note that if a tainted string is added to C<@INC>, the following
@@ -271,7 +271,7 @@ your PATH, it makes sure you set the PATH.
 The PATH isn't the only environment variable which can cause problems.
 Because some shells may use the variables IFS, CDPATH, ENV, and
 BASH_ENV, Perl checks that those are either empty or untainted when
-starting subprocesses. You may wish to add something like this to your
+starting subprocesses.  You may wish to add something like this to your
 setid and taint-checking scripts.
 
     delete @ENV{qw(IFS CDPATH ENV BASH_ENV)};   # Make %ENV safer
@@ -280,7 +280,8 @@ It's also possible to get into trouble with other operations that don't
 care whether they use tainted values.  Make judicious use of the file
 tests in dealing with any user-supplied filenames.  When possible, do
 opens and such B<after> properly dropping any special user (or group!)
-privileges. Perl doesn't prevent you from opening tainted filenames for reading,
+privileges.  Perl doesn't prevent you from
+opening tainted filenames for reading,
 so be careful what you print out.  The tainting mechanism is intended to
 prevent stupid mistakes, not to remove the need for thought.
 
@@ -353,7 +354,7 @@ are trapped and namespace access is carefully controlled.  Safe should
 not be considered bullet-proof, though: it will not prevent the foreign
 code to set up infinite loops, allocate gigabytes of memory, or even
 abusing perl bugs to make the host interpreter crash or behave in
-unpredictable ways. In any case it's better avoided completely if you're
+unpredictable ways.  In any case it's better avoided completely if you're
 really concerned about security.
 
 =head2 Security Bugs
@@ -458,17 +459,17 @@ I<Denial of Service> (DoS) attacks.
 Hash Algorithm - Hash algorithms like the one used in Perl are well
 known to be vulnerable to collision attacks on their hash function.
 Such attacks involve constructing a set of keys which collide into
-the same bucket producing inefficient behavior. Such attacks often
+the same bucket producing inefficient behavior.  Such attacks often
 depend on discovering the seed of the hash function used to map the
-keys to buckets. That seed is then used to brute-force a key set which
-can be used to mount a denial of service attack. In Perl 5.8.1 changes
+keys to buckets.  That seed is then used to brute-force a key set which
+can be used to mount a denial of service attack.  In Perl 5.8.1 changes
 were introduced to harden Perl to such attacks, and then later in
 Perl 5.18.0 these features were enhanced and additional protections
 added.
 
 At the time of this writing, Perl 5.18.0 is considered to be
 well-hardened against algorithmic complexity attacks on its hash
-implementation. This is largely owed to the following measures
+implementation.  This is largely owed to the following measures
 mitigate attacks:
 
 =over 4
@@ -476,9 +477,9 @@ mitigate attacks:
 =item Hash Seed Randomization
 
 In order to make it impossible to know what seed to generate an attack
-key set for, this seed is randomly initialized at process start. This
+key set for, this seed is randomly initialized at process start.  This
 may be overridden by using the PERL_HASH_SEED environment variable, see
-L<perlrun/PERL_HASH_SEED>. This environment variable controls how
+L<perlrun/PERL_HASH_SEED>.  This environment variable controls how
 items are actually stored, not how they are presented via
 C<keys>, C<values> and C<each>.
 
@@ -489,14 +490,15 @@ C<values>, and C<each> return items in a per-hash randomized order.
 Modifying a hash by insertion will change the iteration order of that hash.
 This behavior can be overridden by using C<hash_traversal_mask()> from
 L<Hash::Util> or by using the PERL_PERTURB_KEYS environment variable,
-see L<perlrun/PERL_PERTURB_KEYS>. Note that this feature controls the
+see L<perlrun/PERL_PERTURB_KEYS>.  Note that this feature controls the
 "visible" order of the keys, and not the actual order they are stored in.
 
 =item Bucket Order Perturbance
 
 When items collide into a given hash bucket the order they are stored in
-the chain is no longer predictable in Perl 5.18. This has the intention
-to make it harder to observe a collisions. This behavior can be overridden by using
+the chain is no longer predictable in Perl 5.18.  This
+has the intention to make it harder to observe a
+collision.  This behavior can be overridden by using
 the PERL_PERTURB_KEYS environment variable, see L<perlrun/PERL_PERTURB_KEYS>.
 
 =item New Default Hash Function
@@ -508,16 +510,16 @@ it harder to infer the hash seed.
 
 The source code includes multiple hash algorithms to choose from.  While we
 believe that the default perl hash is robust to attack, we have included the
-hash function Siphash as a fall-back option. At the time of release of
+hash function Siphash as a fall-back option.  At the time of release of
 Perl 5.18.0 Siphash is believed to be of cryptographic strength.  This is
 not the default as it is much slower than the default hash.
 
 =back
 
 Without compiling a special Perl, there is no way to get the exact same
-behavior of any versions prior to Perl 5.18.0. The closest one can get
+behavior of any versions prior to Perl 5.18.0.  The closest one can get
 is by setting PERL_PERTURB_KEYS to 0 and setting the PERL_HASH_SEED
-to a known value. We do not advise those settings for production use
+to a known value.  We do not advise those settings for production use
 due to the above security considerations.
 
 B<Perl has never guaranteed any ordering of the hash keys>, and
