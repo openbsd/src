@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.13 2015/04/25 13:23:01 phessler Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.14 2015/04/25 21:44:26 phessler Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -231,22 +231,22 @@ parse_policy(char *key, char *val)
 	while ((tok = strsep(&val, " ")) != NULL) {
 		nextst = PO_NONE;
 		if (dir == IMPORT) {
-			if (!strcmp(tok, "from"))
+			if (!strcasecmp(tok, "from"))
 				nextst = PO_PEER_KEY;
-			else if (!strcmp(tok, "at"))
+			else if (!strcasecmp(tok, "at"))
 				nextst = PO_RTR_KEY;
-			else if (!strcmp(tok, "action"))
+			else if (!strcasecmp(tok, "action"))
 				nextst = PO_ACTION_KEY;
-			else if (!strcmp(tok, "accept"))
+			else if (!strcasecmp(tok, "accept"))
 				nextst = PO_FILTER_KEY;
 		} else if (dir == EXPORT) {
-			if (!strcmp(tok, "to"))
+			if (!strcasecmp(tok, "to"))
 				nextst = PO_PEER_KEY;
-			else if (!strcmp(tok, "at"))
+			else if (!strcasecmp(tok, "at"))
 				nextst = PO_RTR_KEY;
-			else if (!strcmp(tok, "action"))
+			else if (!strcasecmp(tok, "action"))
 				nextst = PO_ACTION_KEY;
-			else if (!strcmp(tok, "announce"))
+			else if (!strcasecmp(tok, "announce"))
 				nextst = PO_FILTER_KEY;
 		}
 
