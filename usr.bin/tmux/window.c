@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.124 2015/04/25 18:33:59 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.125 2015/04/25 18:49:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -256,7 +256,7 @@ winlink_stack_remove(struct winlink_stack *stack, struct winlink *wl)
 }
 
 struct window *
-window_find_by_id_str(const char* s)
+window_find_by_id_str(const char *s)
 {
 	const char	*errstr;
 	u_int		 id;

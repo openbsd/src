@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.35 2015/04/25 18:47:01 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.36 2015/04/25 18:49:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,12 +27,12 @@
 
 #include "tmux.h"
 
-struct cmd_q		*cfg_cmd_q;
-int			 cfg_finished;
-int			 cfg_references;
-char**			 cfg_causes;
-u_int			 cfg_ncauses;
-struct client		*cfg_client;
+struct cmd_q		 *cfg_cmd_q;
+int			  cfg_finished;
+int			  cfg_references;
+char			**cfg_causes;
+u_int			  cfg_ncauses;
+struct client		 *cfg_client;
 
 int
 load_cfg(const char *path, struct cmd_q *cmdq, char **cause)
@@ -114,10 +114,10 @@ cfg_default_done(unused struct cmd_q *cmdq)
 }
 
 void
-cfg_add_cause(const char* fmt, ...)
+cfg_add_cause(const char *fmt, ...)
 {
-	va_list	ap;
-	char*	msg;
+	va_list	 ap;
+	char	*msg;
 
 	va_start(ap, fmt);
 	xvasprintf(&msg, fmt, ap);

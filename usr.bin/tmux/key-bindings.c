@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.46 2015/04/21 15:34:32 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.47 2015/04/25 18:49:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -144,7 +144,7 @@ key_bindings_remove_table(const char *name)
 void
 key_bindings_init(void)
 {
-	static const char* defaults[] = {
+	static const char *defaults[] = {
 		"bind C-b send-prefix",
 		"bind C-o rotate-window",
 		"bind C-z suspend-client",
@@ -225,7 +225,7 @@ key_bindings_init(void)
 	};
 	u_int		 i;
 	struct cmd_list	*cmdlist;
-	char*            cause;
+	char		*cause;
 	int		 error;
 	struct cmd_q	*cmdq;
 
