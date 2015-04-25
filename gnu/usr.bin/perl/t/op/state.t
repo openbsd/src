@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 
-plan tests => 136;
+plan tests => 137;
 
 # Before loading feature.pm, test it with CORE::
 ok eval 'CORE::state $x = 1;', 'CORE::state outside of feature.pm scope';
@@ -446,6 +446,14 @@ foreach my $forbidden (<DATA>) {
     thing2(6);
 }
 
+# [perl #123029] regression in "state" under PERL_NO_COW
+sub rt_123029 {
+    state $s;
+    $s = 'foo'x500;
+    my $c = $s;
+    return defined $s;
+}
+ok(rt_123029(), "state variables don't surprisingly disappear when accessed");
 
 __DATA__
 state ($a) = 1;

@@ -9,7 +9,7 @@ BEGIN { require "./test.pl"; }
 
 # This test depends on t/lib/Devel/switchd*.pm.
 
-plan(tests => 18);
+plan(tests => 19);
 
 my $r;
 
@@ -274,4 +274,14 @@ is(
   ),
   "42\n",
   'UTF8 length caches on $DB::sub are flushed'
+);
+
+# [perl #122771] -d conflicting with sort optimisations
+is(
+  runperl(
+   switches => [ '-Ilib', '-d:switchd_empty' ],
+   prog => 'BEGIN { $^P &= ~0x4 } sort { $$b <=> $$a } (); print qq-42\n-',
+  ),
+  "42\n",
+  '-d does not conflict with sort optimisations'
 );

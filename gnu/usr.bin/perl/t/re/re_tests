@@ -1885,6 +1885,7 @@ A+(*PRUNE)BC(?{})	AAABC	y	$&	AAABC
 [bcd].{2,3}aaaa	Xb\x{100}aaaaa	y	-	-
 '\Awibble\z'm	wibble	y	-	-
 /(alias|status)es$/i	Statuses	y	$1	Status	# [perl #121778]
+(.)(?{$~=$^N})	\x{100}	y	$~	\x{100}		# [perl #123135]
 
 # Keep these lines at the end of the file
 # vim: softtabstop=0 noexpandtab

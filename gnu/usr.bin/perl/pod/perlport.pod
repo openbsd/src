@@ -542,12 +542,12 @@ them on.  External tools are often named differently on different
 platforms, may not be available in the same location, might accept
 different arguments, can behave differently, and often present their
 results in a platform-dependent way.  Thus, you should seldom depend
-on them to produce consistent results. (Then again, if you're calling 
+on them to produce consistent results. (Then again, if you're calling
 I<netstat -a>, you probably don't expect it to run on both Unix and CP/M.)
 
 One especially common bit of Perl code is opening a pipe to B<sendmail>:
 
-    open(MAIL, '|/usr/lib/sendmail -t') 
+    open(MAIL, '|/usr/lib/sendmail -t')
 	or die "cannot fork sendmail: $!";
 
 This is fine for systems programming when sendmail is known to be
@@ -760,7 +760,7 @@ problems in their code that crop up because of lack of testing on other
 platforms; two, to provide users with information about whether
 a given module works on a given platform.
 
-Also see: 
+Also see:
 
 =over 4
 
@@ -805,7 +805,7 @@ are a few of the more popular Unix flavors:
     BSD/OS        bsdos      i386-bsdos
     Darwin        darwin     darwin
     DYNIX/ptx     dynixptx   i386-dynixptx
-    FreeBSD       freebsd    freebsd-i386    
+    FreeBSD       freebsd    freebsd-i386
     Haiku         haiku      BePC-haiku
     Linux         linux      arm-linux
     Linux         linux      armv5tel-linux
@@ -883,8 +883,8 @@ DOSish perls are as follows:
 
      OS            $^O      $Config{archname}   ID    Version
      --------------------------------------------------------
-     MS-DOS        dos        ?                 
-     PC-DOS        dos        ?                 
+     MS-DOS        dos        ?
+     PC-DOS        dos        ?
      OS/2          os2        ?
      Windows 3.1   ?          ?                 0      3 01
      Windows 95    MSWin32    MSWin32-x86       1      4 00
@@ -901,11 +901,11 @@ DOSish perls are as follows:
      Windows 7     MSWin32    MSWin32-x64       2      6 01
      Windows 2008  MSWin32    MSWin32-x86       2      6 01
      Windows 2008  MSWin32    MSWin32-x64       2      6 01
-     Windows CE    MSWin32    ?                 3           
+     Windows CE    MSWin32    ?                 3
      Cygwin        cygwin     cygwin
 
 The various MSWin32 Perl's can distinguish the OS they are running on
-via the value of the fifth element of the list returned from 
+via the value of the fifth element of the list returned from
 Win32::GetOSVersion().  For example:
 
     if ($^O eq 'MSWin32') {
@@ -937,7 +937,7 @@ L<ftp://hobbes.nmsu.edu/pub/os2/dev/emx/>  Also L<perlos2>.
 =item *
 
 Build instructions for Win32 in L<perlwin32>, or under the Cygnus environment
-in L<perlcygwin>.  
+in L<perlcygwin>.
 
 =item *
 
@@ -949,7 +949,7 @@ The ActiveState Pages, L<http://www.activestate.com/>
 
 =item *
 
-The Cygwin environment for Win32; F<README.cygwin> (installed 
+The Cygwin environment for Win32; F<README.cygwin> (installed
 as L<perlcygwin>), L<http://www.cygwin.com/>
 
 =item *
@@ -1099,9 +1099,9 @@ native formats.  It is also now the only way that you should check to
 see if VMS is in a case sensitive mode.
 
 What C<\n> represents depends on the type of file opened.  It usually
-represents C<\012> but it could also be C<\015>, C<\012>, C<\015\012>, 
-C<\000>, C<\040>, or nothing depending on the file organization and 
-record format.  The VMS::Stdio module provides access to the 
+represents C<\012> but it could also be C<\015>, C<\012>, C<\015\012>,
+C<\000>, C<\040>, or nothing depending on the file organization and
+record format.  The VMS::Stdio module provides access to the
 special fopen() requirements of files with unusual attributes on VMS.
 
 TCP/IP stacks are optional on VMS, so socket routines might not be
@@ -1245,7 +1245,7 @@ services for OS/390" (formerly known as OpenEdition), VM/ESA OpenEdition, or
 the BS200 POSIX-BC system (BS2000 is supported in perl 5.6 and greater).
 See L<perlos390> for details.  Note that for OS/400 there is also a port of
 Perl 5.8.1/5.10.0 or later to the PASE which is ASCII-based (as opposed to
-ILE which is EBCDIC-based), see L<perlos400>. 
+ILE which is EBCDIC-based), see L<perlos400>.
 
 As of R2.5 of USS for OS/390 and Version 2.3 of VM/ESA these Unix
 sub-systems do not support the C<#!> shebang trick for script invocation.
@@ -1334,7 +1334,7 @@ as well as on CPAN in the F<ports/> directory.
 =head2 Acorn RISC OS
 
 Because Acorns use ASCII with newlines (C<\n>) in text files as C<\012> like
-Unix, and because Unix filename emulation is turned on by default, 
+Unix, and because Unix filename emulation is turned on by default,
 most simple scripts will probably work "out of the box".  The native
 filesystem is modular, and individual filesystems are free to be
 case-sensitive or insensitive, and are usually case-preserving.  Some
@@ -1408,7 +1408,7 @@ assume that they can spawn a child process which can change the current
 directory without affecting its parent (and everyone else for that
 matter).
 
-Because native operating system filehandles are global and are currently 
+Because native operating system filehandles are global and are currently
 allocated down from 255, with 0 being a reserved value, the Unix emulation
 library emulates Unix filehandles.  Consequently, you can't rely on
 passing C<STDIN>, C<STDOUT>, or C<STDERR> to your children.
@@ -1538,9 +1538,9 @@ Due to issues with various CPUs, math libraries, compilers, and standards,
 results for C<atan2()> may vary depending on any combination of the above.
 Perl attempts to conform to the Open Group/IEEE standards for the results
 returned from C<atan2()>, but cannot force the issue if the system Perl is
-run on does not allow it.  (Tru64, HP-UX 10.20) 
+run on does not allow it.  (Tru64, HP-UX 10.20)
 
-The current version of the standards for C<atan2()> is available at 
+The current version of the standards for C<atan2()> is available at
 L<http://www.opengroup.org/onlinepubs/009695399/functions/atan2.html>.
 
 =item binmode
@@ -1628,8 +1628,8 @@ enabled, a generic number will be encoded in a method compatible with
 the C library _POSIX_EXIT macro so that it can be decoded by other
 programs, particularly ones written in C, like the GNV package.  (VMS)
 
-C<exit()> resets file pointers, which is a problem when called 
-from a child process (created by C<fork()>) in C<BEGIN>.  
+C<exit()> resets file pointers, which is a problem when called
+from a child process (created by C<fork()>) in C<BEGIN>.
 A workaround is to use C<POSIX::_exit>.  (Solaris)
 
     exit unless $Config{archname} =~ /\bsolaris\b/;
@@ -2022,7 +2022,7 @@ Does not automatically flush output handles on some platforms.
 
 The return value is POSIX-like (shifted up by 8 bits), which only allows
 room for a made-up value derived from the severity bits of the native
-32-bit condition code (unless overridden by C<use vmsish 'status'>). 
+32-bit condition code (unless overridden by C<use vmsish 'status'>).
 If the native condition code is one that has a POSIX value encoded, the
 POSIX value will be decoded to extract the expected exit value.
 For more details see L<perlvms/$?>. (VMS)
@@ -2195,7 +2195,7 @@ ensure you have that library installed when building perl.
 
 =back
 
-=head1 EOL Platforms 
+=head1 EOL Platforms
 
 =head2 (Perl 5.20)
 

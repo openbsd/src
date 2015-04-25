@@ -91,6 +91,16 @@ C<experimental::regex_sets>.
 
 Introduced in Perl 5.18
 
+=item Subroutine signatures
+
+Introduced in Perl 5.20.0
+
+Using this feature triggers warnings in the category
+C<experimental::signatures>.
+
+The ticket for this feature is
+L<[perl #121481]|https://rt.perl.org/Ticket/Display.html?id=121481>.
+
 =item Postfix dereference syntax
 
 Introduced in Perl 5.20.0

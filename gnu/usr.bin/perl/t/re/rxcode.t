@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 40;
+plan tests => 42;
 
 $^R = undef;
 like( 'a',  qr/^a(?{1})(?:b(?{2}))?/, 'a =~ ab?' );
@@ -95,3 +95,10 @@ cmp_ok( scalar(@var), '==', 0, '..still nothing pushed (package)' );
 # [perl #78194] $_ in code block aliasing op return values
 "$_" =~ /(?{ is \$_, \$_,
                '[perl #78194] \$_ == \$_ when $_ aliases "$x"' })/;
+
+@a = 1..3;
+like eval { qr/@a(?{})/ }, qr/1 2 3\(\?\{\}\)/, 'qr/@a(?{})/';
+
+# Not a code block, but looks a bit like one.  (Failed an assertion from
+# 5.17.1 to 5.21.6.)
+ok "(?{" =~ qr/\Q(?{/, 'qr/\Q(?{/';

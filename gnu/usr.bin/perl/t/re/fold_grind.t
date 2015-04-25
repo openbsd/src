@@ -8,6 +8,9 @@ BEGIN {
     require './test.pl';
     require Config; import Config;
     skip_all_if_miniperl("no dynamic loading on miniperl, no Encode nor POSIX");
+    if ($^O eq 'dec_osf') {
+      skip_all("$^O cannot handle this test");
+    }
     require './loc_tools.pl';
 }
 

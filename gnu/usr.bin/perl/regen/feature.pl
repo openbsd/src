@@ -361,7 +361,7 @@ read_only_bottom_close_and_rename($h);
 __END__
 package feature;
 
-our $VERSION = '1.36';
+our $VERSION = '1.36_01';
 
 FEATURES
 
@@ -560,6 +560,27 @@ This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
 and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
 
 This feature is available from Perl 5.18 onwards.
+
+=head2 The 'postderef' and 'postderef_qq' features
+
+B<WARNING>: This feature is still experimental and the implementation may
+change in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the
+warning:
+
+  no warnings "experimental::postderef";
+
+The 'postderef' feature allows the use of L<postfix dereference
+syntax|perlref/Postfix Dereference Syntax>.  For example, it will make the
+following two statements equivalent:
+
+  my @x = @{ $h->{a} };
+  my @x = $h->{a}->@*;
+
+The 'postderef_qq' feature extends this, for array and scalar dereference, to
+working inside of double-quotish interpolations.
+
+This feature is available from Perl 5.20 onwards.
 
 =head2 The 'signatures' feature
 

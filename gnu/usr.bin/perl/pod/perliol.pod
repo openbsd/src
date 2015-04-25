@@ -98,7 +98,7 @@ The basic data structure is a PerlIOl:
 	{
 	 PerlIOl *	next;       /* Lower layer */
 	 PerlIO_funcs *	tab;        /* Functions for this layer */
-	 IV		flags;      /* Various flags for state */
+	 U32		flags;      /* Various flags for state */
 	};
 
 A C<PerlIOl *> is a pointer to the struct, and the I<application>

@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.22;
+our $VERSION = 0.23;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();

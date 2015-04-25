@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use Module::CoreList;
-use Test::More tests => 25;
+use Test::More tests => 29;
 
 BEGIN { require_ok('Module::CoreList'); }
 
@@ -89,3 +89,20 @@ is(Module::CoreList->removed_from('CPANPLUS::inc'), 5.010001,
 is(Module::CoreList::removed_from('CPANPLUS::inc'), 5.010001, 
    "CPANPLUS::inc was removed from 5.010001");
 
+{
+    my $warnings_count = 0;
+    local $SIG{__WARN__} = sub { $warnings_count++ };
+    local $^W = 1;
+
+    ok(exists $Module::CoreList::version{5}{strict},
+       "strict was in 5");
+
+    ok(!defined $Module::CoreList::version{5}{strict},
+       "strict had no version in 5");
+
+    is(Module::CoreList::first_release('strict', 1.01), 5.00405,
+       "strict reached 1.01 with 5.00405");
+
+    cmp_ok($warnings_count, '==', 0,
+           "an undefined version does not produce warnings rt#123556");
+}

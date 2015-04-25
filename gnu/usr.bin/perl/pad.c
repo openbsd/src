@@ -56,7 +56,8 @@ at that depth of recursion into the CV.  The 0th slot of a frame AV is an
 AV which is @_.  Other entries are storage for variables and op targets.
 
 Iterating over the PADNAMELIST iterates over all possible pad
-items.  Pad slots for targets (SVs_PADTMP) and GVs end up having &PL_sv_no
+items.  Pad slots for targets (SVs_PADTMP)
+and GVs end up having &PL_sv_undef
 "names", while slots for constants have &PL_sv_no "names" (see
 pad_alloc()).  That &PL_sv_no is used is an implementation detail subject
 to change.  To test for it, use C<PadnamePV(name) && !PadnameLEN(name)>.

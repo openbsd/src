@@ -255,12 +255,12 @@ itself you can fix it up by editing the files once more and then issue:
 
 Now you should create a patch file for all your local changes:
 
-  % git format-patch -M origin..
+  % git format-patch -M blead..
   0001-Rename-Leon-Brocard-to-Orange-Brocard.patch
 
 Or for a lot of changes, e.g. from a topic branch:
 
-  % git format-patch --stdout -M origin.. > topic-branch-changes.patch
+  % git format-patch --stdout -M blead.. > topic-branch-changes.patch
 
 You should now send an email to
 L<perlbug@perl.org|mailto:perlbug@perl.org> with a description of your
@@ -271,8 +271,8 @@ should only send patches to
 L<perl5-porters@perl.org|mailto:perl5-porters@perl.org> directly if the
 patch is not ready to be applied, but intended for discussion.
 
-See the next section for how to configure and use git to send these
-emails for you.
+Please do not use git-send-email(1) to send your patch. See L<Sending
+patch emails|/Sending patch emails> for more information.
 
 If you want to delete your temporary branch, you may do so with:
 
@@ -326,7 +326,7 @@ output.
 
 After you've generated your patch you should sent it
 to perlbug@perl.org (as discussed L<in the previous
-section|/"Patch workflow"> with a normal mail client as an
+section|/"Patch workflow">) with a normal mail client as an
 attachment, along with a description of the patch.
 
 You B<must not> use git-send-email(1) to send patches generated with

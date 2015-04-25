@@ -15,14 +15,14 @@ document that starts with a checklist for your release.
 
 This script is run as:
 
-  perl Porting/make-rmg-checklist \
-      --type [BLEAD-POINT or MAINT or ...] > /tmp/rmg.pod
+    perl Porting/make-rmg-checklist \
+        --type [BLEAD-POINT or MAINT or ...] > /tmp/rmg.pod
 
 You can also pass the C<--html> flag to generate an HTML document instead of
 POD.
 
-  perl Porting/make-rmg-checklist --html \
-      --type [BLEAD-POINT or MAINT or ...] > /tmp/rmg.html
+    perl Porting/make-rmg-checklist --html \
+        --type [BLEAD-POINT or MAINT or ...] > /tmp/rmg.html
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ The checklist of a typical release cycle is as follows:
     a few weeks before the release, a number of steps are performed,
 	including bumping the version to 5.10.2
 
-    ...a few weeks passes...
+    ...a few weeks pass...
 
     perl-5.10.2-RC1 is released
 
@@ -171,14 +171,9 @@ For updating the L<http://dev.perl.org> web pages, either a Github account or
 sweet-talking somebody with a Github account into obedience is needed. This
 is only needed on the day of the release or shortly afterwards.
 
-=for checklist skip RC
-
 =head3 Quotation for release announcement epigraph
 
-I<SKIP this step for RC>
-
-For all except an RC release of perl, you will need a quotation
-to use as an epigraph to your release announcement.
+You will need a quotation to use as an epigraph to your release announcement.
 
 =head2 Building a release - advance actions
 
@@ -326,23 +321,23 @@ C<nmake> instead.
 
 Ensure dual-life CPAN modules are stable, which comes down to:
 
- for each module that fails its regression tests on $current
-     did it fail identically on $previous?
-     if yes, "SEP" (Somebody Else's Problem)
-     else work out why it failed (a bisect is useful for this)
+   for each module that fails its regression tests on $current
+       did it fail identically on $previous?
+       if yes, "SEP" (Somebody Else's Problem)
+       else work out why it failed (a bisect is useful for this)
 
- attempt to group failure causes
+   attempt to group failure causes
 
- for each failure cause
-     is that a regression?
-     if yes, figure out how to fix it
-         (more code? revert the code that broke it)
-     else
-         (presumably) it's relying on something un-or-under-documented
-         should the existing behaviour stay?
-             yes - goto "regression"
-             no - note it in perldelta as a significant bugfix
-             (also, try to inform the module's author)
+   for each failure cause
+       is that a regression?
+       if yes, figure out how to fix it
+           (more code? revert the code that broke it)
+       else
+           (presumably) it's relying on something un-or-under-documented
+           should the existing behaviour stay?
+               yes - goto "regression"
+               no - note it in perldelta as a significant bugfix
+               (also, try to inform the module's author)
 
 =head3 monitor smoke tests for failures
 
@@ -382,7 +377,7 @@ bump the version further.
 
 There is a tool to semi-automate this process:
 
-     $ ./perl -Ilib Porting/bump-perl-version -i 5.10.0 5.10.1
+    $ ./perl -Ilib Porting/bump-perl-version -i 5.10.0 5.10.1
 
 Remember that this tool is largely just grepping for '5.10.0' or whatever,
 so it will generate false positives. Be careful not change text like
@@ -393,8 +388,11 @@ Use git status and git diff to select changes you want to keep.
 Be particularly careful with F<INSTALL>, which contains a mixture of
 C<5.10.0>-type strings, some of which need bumping on every release, and
 some of which need to be left unchanged.
-The line in F<INSTALL> about "is binary incompatible with" requires a
-correct choice of earlier version to declare incompatibility with.
+See below in L<"update INSTALL"> for more details.
+
+For the first RC release leading up to a BLEAD-FINAL release, update the
+description of which releases are now "officially" supported in
+F<pod/perlpolicy.pod>.
 
 When doing a BLEAD-POINT or BLEAD-FINAL release, also make sure the
 C<PERL_API_*> constants in F<patchlevel.h> are in sync with the version
@@ -406,24 +404,28 @@ to guarantee binary compatibility in maint branches.
 After editing, regenerate uconfig.h (this must be run on a system with a
 /bin/sh available):
 
- $ perl regen/uconfig_h.pl
+    $ perl regen/uconfig_h.pl
 
 This might not cause any new changes.
 
+You may have to add stub entries in C<%Module::CoreList::version>,
+C<%Module::CoreList::deprecated> and C<%Module::CoreList::Utils::delta>.
+If so, you must up their version numbers as well.
+
 Test your changes:
 
- $ git clean -xdf   # careful if you don't have local files to keep!
- $ ./Configure -des -Dusedevel
- $ make
- $ make test
+    $ git clean -xdf   # careful if you don't have local files to keep!
+    $ ./Configure -des -Dusedevel
+    $ make
+    $ make test
 
 Commit your changes:
 
- $ git status
- $ git diff
- B<review the delta carefully>
+    $ git status
+    $ git diff
+    B<review the delta carefully>
 
- $ git commit -a -m 'Bump the perl version in various places for 5.x.y'
+    $ git commit -a -m 'Bump the perl version in various places for 5.x.y'
 
 At this point you may want to compare the commit with a previous bump to
 see if they look similar.  See commit f7cf42bb69 for an example of a
@@ -435,8 +437,11 @@ version number.
 
 =head3 update INSTALL
 
-Review and update INSTALL to account for the change in version number;
-in particular, the "Coexistence with earlier versions of perl 5" section.
+Review and update INSTALL to account for the change in version number.
+The lines in F<INSTALL> about "is not binary compatible with" may require a
+correct choice of earlier version to declare incompatibility with. These are
+in the "Changes and Incompatibilities" and "Coexistence with earlier versions
+of perl 5" sections.
 
 Be particularly careful with the section "Upgrading from 5.X.Y or earlier".
 The "X.Y" needs to be changed to the most recent version that we are
@@ -453,7 +458,7 @@ release (so for 5.15.3 this would be 5.15.2).
 
 Check that the copyright years are up to date by running:
 
- $ ./perl t/porting/copyright.t --now
+    $ ./perl t/porting/copyright.t --now
 
 Remedy any test failures by editing README or perl.c accordingly (search for
 the "Copyright"). If updating perl.c, check if the file's own copyright date in
@@ -514,7 +519,7 @@ need to freeze blead during the release. This is less important for
 BLEAD-FINAL, MAINT, and RC releases, since blead will already be frozen in
 those cases. Create the branch by running
 
-  git checkout -b release-5.xx.yy
+    git checkout -b release-5.xx.yy
 
 =head3 build a clean perl
 
@@ -528,12 +533,26 @@ then configure and build perl so that you have a Makefile and porting tools:
 
     $ ./Configure -Dusedevel -des && make
 
+=head3 Check module versions
+
+For each Perl release since the previous release of the current branch, check
+for modules that have identical version numbers but different contents by
+running:
+
+    $ ./perl Porting/cmpVERSION.pl --tag=v5.X.YY
+
+(This is done automatically by F<t/porting/cmp_version.t> for the previous
+release of the current branch, but not for any releases from other branches.)
+
+Any modules that fail will need a version bump, plus a nudge to the upstream
+maintainer for 'cpan' upstream modules.
+
 =head3 update Module::CoreList
 
 =head4 Bump Module::CoreList* $VERSIONs
 
-If necessary, bump C<$Module::CoreList::VERSION> (there's no need to do this for
-every RC; in RC1, bump the version to a new clean number that will
+If necessary, bump C<$Module::CoreList::VERSION> (there's no need to do this
+for every RC; in RC1, bump the version to a new clean number that will
 appear in the final release, and leave as-is for the later RCs and final).
 It may also happen that C<Module::CoreList> has been modified in blead, and
 hence has a new version number already.  (But make sure it is not the same
@@ -543,6 +562,10 @@ C<$Module::CoreList::TieHashDelta::VERSION> and
 C<$Module::CoreList::Utils::VERSION> should always be equal to
 C<$Module::CoreList::VERSION>. If necessary, bump those two versions to match
 before proceeding.
+
+The files to modify are: F<dist/Module-CoreList/lib/Module/CoreList.pm>,
+F<dist/Module-CoreList/lib/Module/CoreList/Utils.pm> and
+F<dist/Module-CoreList/lib/Module/CoreList/TieHashDelta.pm>.
 
 =head4 Update C<Module::CoreList> with module version data for the new release.
 
@@ -588,13 +611,11 @@ This will chug for a while, possibly reporting various warnings about
 badly-indexed CPAN modules unrelated to the modules actually in core.
 Assuming all goes well, it will update
 F<dist/Module-CoreList/lib/Module/CoreList.pm> and possibly
-F<dist/Module-CoreList/lib/Module/CoreList.pod> and/or
 F<dist/Module-CoreList/lib/Module/CoreList/Utils.pm>.
 
 Check those files over carefully:
 
     $ git diff dist/Module-CoreList/lib/Module/CoreList.pm
-    $ git diff dist/Module-CoreList/lib/Module/CoreList.pod
     $ git diff dist/Module-CoreList/lib/Module/CoreList/Utils.pm
 
 =head4 Bump version in Module::CoreList F<Changes>
@@ -607,23 +628,10 @@ Add a perldelta entry for the new Module::CoreList version.
 
 =for checklist skip RC
 
-=head4 Update C<%Module::CoreList::released> and C<CAVEATS>
+=head4 Update C<%Module::CoreList::released>
 
-In addition, if this is a final release (rather than a release candidate):
-
-=over 4
-
-=item *
-
-Update this version's entry in the C<%released> hash with today's date.
-
-=item *
-
-Make sure that the script has correctly updated the C<CAVEATS> section
-(Note, the C<CAVEATS> section is in
-F<dist/Module-CoreList/lib/Module/CoreList.pod>)
-
-=back
+For any release except an RC: Update this version's entry in the C<%released>
+hash with today's date.
 
 =head4 Commit Module::CoreList changes
 
@@ -631,23 +639,33 @@ Finally, commit the new version of Module::CoreList:
 (unless this is for MAINT; in which case commit it to blead first, then
 cherry-pick it back).
 
-    $ git commit -m 'Update Module::CoreList for 5.x.y' dist/Module-CoreList/Changes dist/Module-CoreList/lib/Module/CoreList.pm dist/Module-CoreList/lib/Module/CoreList.pod dist/Module-CoreList/lib/Module/CoreList/Utils.pm
+    $ git commit -m 'Update Module::CoreList for 5.x.y' \
+        dist/Module-CoreList/Changes \
+        dist/Module-CoreList/lib/Module/CoreList.pm \
+        dist/Module-CoreList/lib/Module/CoreList/Utils.pm
 
 =head4 Rebuild and test
 
-Build and test to get the changes into the currently built lib directory and to ensure
-all tests are passing.
+Build and test to get the changes into the currently built lib directory and to
+ensure all tests are passing.
 
 =head3 finalize perldelta
 
 Finalize the perldelta.  In particular, fill in the Acknowledgements
 section, which can be generated with something like:
 
-  $ perl Porting/acknowledgements.pl v5.15.0..HEAD
+    $ perl Porting/acknowledgements.pl v5.15.0..HEAD
 
-Fill in the "New/Updated Modules" sections now that Module::CoreList is updated:
+Fill in the "New/Updated Modules" sections now that Module::CoreList is
+updated:
 
-  $ ./perl -Ilib Porting/corelist-perldelta.pl --mode=update pod/perldelta.pod
+    $ ./perl -Ilib Porting/corelist-perldelta.pl \
+        --mode=update pod/perldelta.pod
+
+For a MAINT release use something like this instead:
+
+    $ ./perl -Ilib Porting/corelist-perldelta.pl 5.020001 5.020002 \
+        --mode=update pod/perldelta.pod
 
 Ideally, also fill in a summary of the major changes to each module for which
 an entry has been added by F<corelist-perldelta.pl>.
@@ -663,7 +681,8 @@ run through pod and spell checkers, e.g.
 Also, you may want to generate and view an HTML version of it to check
 formatting, e.g.
 
-    $ ./perl -Ilib ext/Pod-Html/bin/pod2html pod/perldelta.pod > /tmp/perldelta.html
+    $ ./perl -Ilib ext/Pod-Html/bin/pod2html pod/perldelta.pod > \
+        /tmp/perldelta.html
 
 Another good HTML preview option is http://search.cpan.org/pod2html
 
@@ -744,20 +763,15 @@ from blead:
     $ cp  ..../blead/pod/perlhist.pod pod/
     $ git commit -m 'sync perlhist from blead' pod/perlhist.pod
 
-=for checklist skip RC
-
 =head3 update perlhist.pod
-
-I<You MUST SKIP this step for a RC release>
 
 Add an entry to F<pod/perlhist.pod> with the release date, e.g.:
 
     David    5.10.1       2009-Aug-06
 
-Make sure that the correct pumpking is listed in the left-hand column, and
-if this is the first release under the stewardship of a new pumpking, make
-sure that his or her name is listed in the section entitled
-C<THE KEEPERS OF THE PUMPKIN>.
+List yourself in the left-hand column, and if this is the first release
+that you've ever done, make sure that your name is listed in the section
+entitled C<THE KEEPERS OF THE PUMPKIN>.
 
 I<If you're making a BLEAD-FINAL release>, also update the "SELECTED
 RELEASE SIZES" section with the output of
@@ -779,7 +793,9 @@ a final release, remove it. For example:
      static const char * const local_patches[] = {
              NULL
     +        ,"RC1"
-             PERL_GIT_UNPUSHED_COMMITS /* do not remove this line */
+     #ifdef PERL_GIT_UNCOMMITTED_CHANGES
+             ,"uncommitted-changes"
+     #endif
 
 Be sure to commit your change:
 
@@ -814,7 +830,7 @@ directory, they will still identify themselves using git tags and
 commits. (Note that for an odd-numbered version, perl will install
 itself as C<perl5.x.y>). C<perl -v> will identify itself as:
 
- This is perl 5, version X, subversion Y (v5.X.Y (v5.X.Z-NNN-gdeadbeef))
+    This is perl 5, version X, subversion Y (v5.X.Y (v5.X.Z-NNN-gdeadbeef))
 
 where 5.X.Z is the latest tag, NNN the number of commits since this tag,
 and C<< deadbeef >> commit of that tag.
@@ -848,13 +864,14 @@ up.
 Create a tarball. Use the C<-s> option to specify a suitable suffix for
 the tarball and directory name:
 
- $ cd root/of/perl/tree
- $ make distclean
- $ git clean -xdf       # make sure perl and git agree on files
- $ git status           # and there's nothing lying around
+    $ cd root/of/perl/tree
+    $ make distclean       # make sure distclean works
+    $ git clean -xdf       # make sure perl and git agree on files
+                           # git clean should not output anything!
+    $ git status           # and there's nothing lying around
 
- $ perl Porting/makerel -b -s RC1            # for a release candidate
- $ perl Porting/makerel -b                   # for a final release
+    $ perl Porting/makerel -b -s RC1            # for a release candidate
+    $ perl Porting/makerel -b                   # for a final release
 
 This creates the  directory F<../perl-x.y.z-RC1> or similar, copies all
 the MANIFEST files into it, sets the correct permissions on them, then
@@ -894,6 +911,9 @@ to find willing victims.
 Check that basic configuration and tests work on each test machine:
 
     $ ./Configure -des && make all test
+
+    # Or for a development release:
+    $ ./Configure -Dusedevel -des && make all test
 
 =head4 Run the test harness and install
 
@@ -940,12 +960,15 @@ Bootstrap the CPAN client on the clean install:
 
     $ bin/cpan
 
+    # Or, perhaps:
+    $ bin/cpan5.xx.x
+
 =head4 Install the Inline module with CPAN and test it
 
 Try installing a popular CPAN module that's reasonably complex and that
 has dependencies; for example:
 
-    CPAN> install Inline
+    CPAN> install Inline::C
     CPAN> quit
 
 Check that your perl can run this:
@@ -1046,7 +1069,9 @@ Disarm the F<patchlevel.h> change; for example,
      static const char * const local_patches[] = {
              NULL
     -        ,"RC1"
-             PERL_GIT_UNPUSHED_COMMITS /* do not remove this line */
+     #ifdef PERL_GIT_UNCOMMITTED_CHANGES
+             ,"uncommitted-changes"
+     #endif
 
 Be sure to commit your change:
 
@@ -1064,11 +1089,11 @@ Send a carbon copy to C<noc@metacpan.org>
 
 Merge the (local) release branch back into master now, and delete it.
 
-  git checkout blead
-  git pull
-  git merge release-5.xx.yy
-  git push
-  git branch -d release-5.xx.yy
+    git checkout blead
+    git pull
+    git merge release-5.xx.yy
+    git push
+    git branch -d release-5.xx.yy
 
 Note: The merge will create a merge commit if other changes have been pushed
 to blead while you've been working on your release branch. Do NOT rebase your
@@ -1095,6 +1120,14 @@ header in your message after receiving it back via perl5-porters.
 
 If you have a blog, please consider writing an entry in your blog explaining
 why you chose that particular quote for your epigraph.
+
+=for checklist skip RC
+
+=head3 Release schedule
+
+I<You MUST SKIP this step for RC>
+
+Tick the entry for your release in F<Porting/release_schedule.pod>.
 
 =for checklist skip RC
 
@@ -1176,6 +1209,18 @@ L<"Bump the version number">.
 After bumping the version, follow the section L<"update INSTALL"> to
 ensure all version number references are correct.
 
+(Note: The version is NOT bumped immediately after a MAINT release in order
+to avoid confusion and wasted time arising from bug reports relating to
+"intermediate versions" such as 5.20.1-and-a-bit: If the report is caused
+by a bug that gets fixed in 5.20.2 and this intermediate version already
+calls itself 5.20.2 then much time can be wasted in figuring out why there
+is a failure from something that "should have been fixed". If the bump is
+late then there is a much smaller window of time for such confusing bug
+reports to arise. (The opposite problem -- trying to figure out why there
+*is* a bug in something calling itself 5.20.1 when in fact the bug was
+introduced later -- shouldn't arise for MAINT releases since they should,
+in theory, only contain bug fixes but never regressions.))
+
 =head3 clean build and test
 
 Run a clean build and test to make sure nothing obvious is broken.
@@ -1183,7 +1228,7 @@ Run a clean build and test to make sure nothing obvious is broken.
 In particular, F<Porting/perldelta_template.pod> is intentionally exempted
 from podchecker tests, to avoid false positives about placeholder text.
 However, once it's copied to F<pod/perldelta.pod> the contents can now
-cause test failures. Problems should resolved by doing one of the
+cause test failures. Problems should be resolved by doing one of the
 following:
 
 =over
@@ -1251,9 +1296,9 @@ I<You MUST SKIP this step for RC, BLEAD-POINT>
 
 Copy the perldelta.pod for this release into blead; for example:
 
- $ cd ..../blead
- $ cp -i ../5.10.x/pod/perldelta.pod pod/perl5101delta.pod  # for example
- $ git add pod/perl5101delta.pod
+    $ cd ..../blead
+    $ cp -i ../5.10.x/pod/perldelta.pod pod/perl5101delta.pod  # for example
+    $ git add pod/perl5101delta.pod
 
 Don't forget to set the NAME correctly in the new file (e.g. perl5101delta
 rather than perldelta).
@@ -1278,7 +1323,7 @@ Finally, commit and push:
 Make sure any recent F<pod/perlhist.pod> entries are copied to
 F<perlhist.pod> on blead.  e.g.
 
-          5.8.9         2008-Dec-14
+    5.8.9         2008-Dec-14
 
 =head3 bump RT version number
 
@@ -1300,11 +1345,6 @@ much-needed rest and relaxation>.
 Thanks for releasing perl!
 
 =head2 Building a release - the day after
-
-=head3 link announcement in epigraphs.pod
-
-Add, to your quote to F<Porting/epigraphs.pod>, a link to the release
-announcement in the web-visible mailing list archive.  Commit it.
 
 =for checklist skip BLEAD-FINAL, MAINT, RC
 
@@ -1339,8 +1379,7 @@ Otherwise, run:
 
     $ ./perl -Ilib Porting/corelist.pl cpan
 
-This will update F<dist/Module-CoreList/lib/Module/CoreList.pm>,
-F<dist/Module-CoreList/lib/Module/CoreList.pod> and
+This will update F<dist/Module-CoreList/lib/Module/CoreList.pm> and
 F<dist/Module-CoreList/lib/Module/CoreList/Utils.pm> as it did before,
 but this time adding new sections for the next BLEAD-POINT release.
 
@@ -1363,7 +1402,8 @@ test_porting makefile target to check that they're ok.
 
 Run
 
-    $ ./perl -Ilib -MModule::CoreList -le 'print Module::CoreList->find_version($]) ? "ok" : "not ok"'
+    $ ./perl -Ilib -MModule::CoreList \
+        -le 'print Module::CoreList->find_version($]) ? "ok" : "not ok"'
 
 and check that it outputs "ok" to prove that Module::CoreList now knows
 about blead's current version.

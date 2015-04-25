@@ -467,7 +467,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.20.1.
+options would be nice for perl 5.20.2.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -1023,14 +1023,15 @@ The old perltodo notes "Look at the "reification" code in C<av.c>".
 =head2 Virtualize operating system access
 
 Implement a set of "vtables" that virtualizes operating system access
-(open(), mkdir(), unlink(), readdir(), getenv(), etc.)  At the very
-least these interfaces should take SVs as "name" arguments instead of
-bare char pointers; probably the most flexible and extensible way
-would be for the Perl-facing interfaces to accept HVs.  The system
-needs to be per-operating-system and per-file-system
-hookable/filterable, preferably both from XS and Perl level
-(L<perlport/"Files and Filesystems"> is good reading at this point,
-in fact, all of L<perlport> is.)
+(chdir(), chmod(), dbmopen(), getenv(), glob(), link(), mkdir(), open(),
+opendir(), readdir(), rename(), rmdir(), stat(), sysopen(), uname(),
+unlink(), etc.)  At the very least these interfaces should take SVs as
+"name" arguments instead of bare char pointers; probably the most
+flexible and extensible way would be for the Perl-facing interfaces to
+accept HVs.  The system needs to be per-operating-system and
+per-file-system hookable/filterable, preferably both from XS and Perl
+level (L<perlport/"Files and Filesystems"> is good reading at this
+point, in fact, all of L<perlport> is.)
 
 This has actually already been implemented (but only for Win32),
 take a look at F<iperlsys.h> and F<win32/perlhost.h>.  While all Win32
@@ -1176,7 +1177,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.20.1"
+of 5.20.2"
 
 =head2 make ithreads more robust
 

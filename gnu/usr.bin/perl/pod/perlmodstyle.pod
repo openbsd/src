@@ -178,7 +178,9 @@ been done in Perl, and avoid re-inventing the wheel unless you have a
 good reason.
 
 Good places to look for pre-existing modules include
-http://search.cpan.org/ and asking on modules@perl.org
+L<http://search.cpan.org/> and L<https://metacpan.org>
+and asking on C<module-authors@perl.org>
+(L<http://lists.perl.org/list/module-authors.html>).
 
 If an existing module B<almost> does what you want, consider writing a
 patch, writing a subclass, or otherwise extending the existing module
@@ -370,7 +372,7 @@ which is visible to the user (and most things that aren't!)
 
 =item Parameter passing
 
-Use named parameters. It's easier to use a hash like this:
+Use named parameters.  It's easier to use a hash like this:
 
     $obj->do_something(
 	    name => "wibble",
@@ -566,7 +568,7 @@ Your module should also include a README file describing the module and
 giving pointers to further information (website, author email).  
 
 An INSTALL file should be included, and should contain simple installation 
-instructions. When using ExtUtils::MakeMaker this will usually be:
+instructions.  When using ExtUtils::MakeMaker this will usually be:
 
 =over 4
 
@@ -620,29 +622,38 @@ The most common CPAN version numbering scheme looks like this:
     1.00, 1.10, 1.11, 1.20, 1.30, 1.31, 1.32
 
 A correct CPAN version number is a floating point number with at least 
-2 digits after the decimal. You can test whether it conforms to CPAN by 
+2 digits after the decimal.  You can test whether it conforms to CPAN by 
 using
 
     perl -MExtUtils::MakeMaker -le 'print MM->parse_version(shift)' 'Foo.pm'
 
 If you want to release a 'beta' or 'alpha' version of a module but
 don't want CPAN.pm to list it as most recent use an '_' after the
-regular version number followed by at least 2 digits, eg. 1.20_01. If
+regular version number followed by at least 2 digits, eg. 1.20_01.  If
 you do this, the following idiom is recommended:
 
-  $VERSION = "1.12_01";
-  $XS_VERSION = $VERSION; # only needed if you have XS code
-  $VERSION = eval $VERSION;
+  our $VERSION = "1.12_01"; # so CPAN distribution will have
+                            # right filename
+  our $XS_VERSION = $VERSION; # only needed if you have XS code
+  $VERSION = eval $VERSION; # so "use Module 0.002" won't warn on
+                            # underscore
 
 With that trick MakeMaker will only read the first line and thus read
 the underscore, while the perl interpreter will evaluate the $VERSION
-and convert the string into a number. Later operations that treat
+and convert the string into a number.  Later operations that treat
 $VERSION as a number will then be able to do so without provoking a
 warning about $VERSION not being a number.
 
 Never release anything (even a one-word documentation patch) without
 incrementing the number.  Even a one-word documentation patch should
 result in a change in version at the sub-minor level.
+
+Once picked, it is important to stick to your version scheme, without
+reducing the number of digits.  This is because "downstream" packagers,
+such as the FreeBSD ports system, interpret the version numbers in
+various ways.  If you change the number of digits in your version scheme,
+you can confuse these systems so they get the versions of your module
+out of order, which is obviously bad.
 
 =head2 Pre-requisites
 
@@ -676,7 +687,7 @@ Specify version requirements for other Perl modules in the
 pre-requisites in your Makefile.PL or Build.PL.
 
 Be sure to specify Perl version requirements both in Makefile.PL or
-Build.PL and with C<require 5.6.1> or similar. See the section on
+Build.PL and with C<require 5.6.1> or similar.  See the section on
 C<use VERSION> of L<perlfunc/require> for details.
 
 =head2 Testing
@@ -687,7 +698,8 @@ and the tests should also be available to people installing the modules
 For Module::Build you would use the C<make test> equivalent C<perl Build test>.
 
 The importance of these tests is proportional to the alleged stability of a 
-module. A module which purports to be stable or which hopes to achieve wide 
+module.  A module which purports to be
+stable or which hopes to achieve wide 
 use should adhere to as strict a testing regime as possible.
 
 Useful modules to help you write tests (with minimum impact on your 
@@ -702,8 +714,9 @@ Currently you have the choice between ExtUtils::MakeMaker and the
 more platform independent Module::Build, allowing modules to be installed in a
 consistent manner.
 When using ExtUtils::MakeMaker, you can use "make dist" to create your
-package. Tools exist to help you to build your module in a MakeMaker-friendly
-style. These include ExtUtils::ModuleMaker and h2xs.  See also L<perlnewmod>.
+package.  Tools exist to help you to build your module in a
+MakeMaker-friendly style.  These include ExtUtils::ModuleMaker and h2xs.
+See also L<perlnewmod>.
 
 =head2 Licensing
 

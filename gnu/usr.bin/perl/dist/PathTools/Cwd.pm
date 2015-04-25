@@ -171,7 +171,7 @@ use strict;
 use Exporter;
 use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
 
-$VERSION = '3.48';
+$VERSION = '3.48_01';
 my $xs_version = $VERSION;
 $VERSION =~ tr/_//;
 

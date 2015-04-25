@@ -17,6 +17,200 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.20.2-RC1 - Jonathan "Jonti" Picking, L<"Scampi"|http://www.weebls-stuff.com/other-toons/video/scampi.html>
+
+L<Announced on 2015-02-01 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/02/msg225273.html>
+
+  I've seen things,
+  I've seen them with my eyes;
+  I've seen things,
+  They're often in disguise.
+
+  Like carrots, handbags, cheese, toilets,
+  Russians, planets, hamsters, weddings,
+  Poets, Stalin, Kuala Lumpur!
+  Pygmies, budgies, Kuala Lumpur!
+
+  I've seen things,
+  I've seen them with my eyes;
+  I've seen things,
+  They're often in disguise.
+
+  Like carrots, handbags, cheese...
+
+=head2 v5.21.8 - Bill Watterson, "Scientific Progress Goes 'Boink': A Calvin and Hobbes Collection"
+
+L<Announced on 2015-01-20 by Matthew Horsfall|http://www.nntp.perl.org/group/perl.perl5.porters/2015/01/msg224869.html>
+
+Calvin:   OK Hobbes, press the button and duplicate me.
+Hobbes:   Are you sure this is such a good idea?
+Calvin:   Brother! You doubting Thomases get in the way of more scientific advances with your stupid ethical questions! This is a *BRILLIANT* idea! Hit the button, will ya?
+Hobbes:   I'd hate to be accused of inhibiting scientific progress... Here you go.
+[Box]:    *BOINK*
+Hobbes:   Scientific progress goes "BOINK"?
+Calvin?:  It worked! It worked! I'm a genius!
+Cavlin??: No you're not, you liar! *I* invented this!
+
+=head2 v5.21.7 - Robert Heinlein, The Number of the Beast
+
+L<Announced on 2014-12-20 by Max Maischein|http://www.nntp.perl.org/group/perl.perl5.porters/2014/12/msg223774.html>
+
+     "Zebadiah, Hilda and I salvaged and put everything into the basket.
+      Hilda started to put it into our wardrobe-and it was heavy. So
+      we looked. Packed as tight as when we left Oz. Six bananas-and
+      everything else. Cross my heart. No, go look."
+     "Hmmm- Jake, can you write equations for a picnic basket that
+      refills itself? Will it go on doing so?"
+     "Zeb, equations can be written to describe anything. The description
+      would be simpler for a basket that replenishes itself indefinitely
+      than for one that does it once and stops-I would have to describe
+      the discontinuity."
+
+=head2 v5.21.6 - Jeff Noon, Vurt
+
+L<Announced on 2014-11-20 by Chris 'BinGOs' Williams|http://www.nntp.perl.org/group/perl.perl5.porters/2014/11/msg222448.html>
+
+  GAME CAT
+
+  EXCHANGE MECHANISMS. Sometimes we lose precious
+  things. Friends and colleagues, fellow travellers in the
+  Vurt, sometimes we lose them; even lovers we sometimes
+  lose. And get bad things in exchange: aliens, objects,
+  snakes, and sometimes even death. Things we don't want.
+  This is part of the deal, part of the game deal;
+  all things, in all worlds, must be kept in balance.
+  Kittlings often ask, who decides on the swappings? Now then,
+  some say it's all accidental; that some poor Vurt thing
+  finds himself too close to a door, at too critical a time,
+  just when something real is being lost. Whoosh! Swap time!
+  Others say that some kind of overseer is working the
+  MECHANISMS OF EXCHANGE, deciding the fate of innocents.
+  The Cat can only tease at this, because of the big secrets
+  involved, and because of the levels between you, the reader,
+  and me, the Game Cat. Hey, listen; I've struggled to get
+  where I am today; why should I give you the easy route?
+  Get working, kittlings! Reach up higher. Work the Vurt.
+
+=head2 v5.21.5 - Friso Wiegersma (text), Jean Ferrat (music), Wim Sonneveld (performer), Het Dorp
+
+L<Announced on 2014-10-20 by Abigail|http://www.nntp.perl.org/group/perl.perl5.porters/2014/10/msg221399.html>
+
+  Het Dorp
+
+  Thuis heb ik nog een ansichtkaart
+  waarop een kerk, een kar met paard,
+  een slagerij J. van der Ven.
+  Een kroeg, een juffrouw op de fiets
+  het zegt u hoogstwaarschijnlijk niets,
+  maar 't is waar ik geboren ben.
+  Dit dorp, ik weet nog hoe het was,
+  de boerenkind'ren in de klas,
+  een kar die ratelt op de keien,
+  het raadhuis met een pomp ervoor,
+  een zandweg tussen koren door,
+  het vee, de boerderijen.
+
+  En langs het tuinpad van m'n vader
+  zag ik de hoge bomen staan.
+  Ik was een kind en wist niet beter,
+  dan dat dat nooit voorbij zou gaan.
+
+  Wat leefden ze eenvoudig toen
+  in simp'le huizen tussen groen
+  met boerenbloemen en een heg.
+  Maar blijkbaar leefden ze verkeerd,
+  het dorp is gemoderniseerd
+  en nu zijn ze op de goeie weg.
+  Want ziet, hoe rijk het leven is,
+  ze zien de televisiequiz
+  en wonen in betonnen dozen,
+  met flink veel glas, dan kun je zien
+  hoe of het bankstel staat bij Mien
+  en d'r dressoir met plastic rozen.
+
+  En langs het tuinpad van m'n vader
+  zag ik de hoge bomen staan.
+  Ik was een kind en wist niet beter,
+  dan dat dat nooit voorbij zou gaan.
+
+  De dorpsjeugd klit wat bij elkaar
+  in minirok en beatle-haar
+  en joelt wat mee met beat-muziek.
+  Ik weet wel, het is hun goeie recht,
+  de nieuwe tijd, net wat u zegt,
+  maar het maakt me wat melancholiek.
+  Ik heb hun vaders nog gekend
+  ze kochten zoethout voor een cent
+  ik zag hun moeders touwtjespringen.
+  Dat dorp van toen, het is voorbij,
+  dit is al wat er bleef voor mij:
+  een ansicht en herinneringen.
+
+  Toen ik langs het tuinpad van m'n vader
+  de hoge bomen nog zag staan.
+  Ik was een kind, hoe kon ik weten
+  dat dat voorgoed voorbij zou gaan.
+
+=head2 v5.21.4 - Edgar Allan Poe, The Narrative of Arthur Gordon Pym of Nantucket
+
+L<Announced on 2014-09-20 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2014/09/msg220267.html>
+
+  To-day, being in latitude 83° 20', longitude 43° 5' W. (the sea being
+  of an extraordinarily dark colour), we again saw land from the
+  masthead, and, upon a closer scrutiny, found it to be one of a group
+  of very large islands.  The shore was precipitous, and the interior
+  seemed to be well wooded, a circumstance which occasioned us great
+  joy.  In about four hours from our first discovering the land we came
+  to anchor in ten fathoms, sandy bottom, a league from the coast, as a
+  high surf, with strong ripples here and there, rendered a nearer
+  approach of doubtful expediency.  The two largest boats were now
+  ordered out, and a party, well armed (among whome were Peters and
+  myself), proceeded to look for an opening in the reef which appeared
+  to encircle the island.  After searching about for some time, we
+  discovered an inlet, which we were entering, when we saw four large
+  canoes put off from the shore, filled with men who seemed to be well
+  armed.  We waited for them to come up, and, as they moved with great
+  rapidity, they were soon within hail.  Captain Guy now held up a white
+  handkerchief on the blade of an oar, when the strangers made a full
+  stop, and commenced a loud jabbering all at once, intermingled with
+  occasional shouts, in which we could distinguish the words Anamoo-moo!
+  and Lama-Lama!  They continued this for at least half an hour, during
+  which we had a good opportunity of observing their appearance.
+
+=head2 v5.20.1 - Lorenzo da Ponte, Così fan tutte
+
+L<Announced on 2014-09-14 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2014/09/msg219789.html>
+
+  DORABELLA (as if waking from a daze): Where are they?
+  DON ALFONSO: They've gone.
+  FIORDILIGI: Oh, the cruel bitterness of parting!
+
+  DON ALFONSO:
+  Take heart, my dearest children.
+  Look, in the distance, your lovers are waving to you.
+
+  FIORDILIGI: Bon voyage, my darling!
+  DORABELLA: Bon voyage!
+
+  FIORDILIGI:
+  O heavens! How swiftly the ship is sailing away!
+  It is disappearing already!
+  It is no longer in sight!
+  Oh, may heaven grant it a prosperous voyage!
+
+  DORABELLA: May good luck attend it to the battlefield!
+  DON ALFONSO: And may your sweethearts and my friends be safe!
+
+  FIORDILIGI, DORABELLA, DON ALFONSO:
+  May the wind be gentle,
+  may the sea be calm,
+  and may the elements
+  respond kindly
+  to our wishes.
+
+    -- Lorenzo da Ponte, /Così fan tutte/,
+       trans. Diana Reed
+
 =head2 v5.20.1-RC2 - Lorenzo da Ponte, Così fan tutte
 
 L<Announced on 2014-09-07 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2014/09/msg219446.html>
@@ -510,6 +704,63 @@ L<Announced on 2013-05-20 by Ricardo Signes|http://www.nntp.perl.org/group/perl.
   …that there was nothing wrong with you…
   …that I can't fix…
   …with my hands…
+
+=head2 v5.18.4 - Robert W. Chambers, "The King in Yellow"
+
+L<Announced on 2014-10-01 by Ricardo Signes|http://www.nntp.perl.org/group/perl.perl5.porters/2014/10/msg220770.html>
+
+  Along the shore the cloud waves break,
+  The twin suns sink beneath the lake,
+  The shadows lengthen
+    In Carcosa.
+
+  Strange is the night where black stars rise,
+  And strange moons circle through the skies
+  But stranger still is
+    Lost Carcosa.
+
+  Songs that the Hyades shall sing,
+  Where flap the tatters of the King,
+  Must die unheard in
+    Dim Carcosa.
+
+  Song of my soul, my voice is dead;
+  Die thou, unsung, as tears unshed
+  Shall dry and die in
+    Lost Carcosa.
+
+  -- Cassilda's Song in "The King in Yellow," Act i, Scene 2.
+     Robert W. Chambers
+
+=head2 v5.18.3 - (no epigraph)
+
+(no epigraph)
+
+=head2 v5.18.3-RC2 - Robert W. Chambers, "The King in Yellow"
+
+L<Announced on 2014-09-27|http://nntp.perl.org/group/perl.perl5.porters/220613>
+
+"Ah! I see it now!" I shrieked. "You have seized the throne and the
+empire. Woe! woe to you who are crowned with the crown of the King in
+Yellow!"
+
+    -- Robert W. Chambers, The King in Yellow, Act I, Scene 2.
+
+=head2 v5.18.3-RC1 - Robert W. Chambers, "The King in Yellow"
+
+L<Announced on 2014-09-17|http://nntp.perl.org/group/perl.perl5.porters/220072>
+
+  CAMILLA: You, sir, should unmask.
+
+  STRANGER: Indeed?
+
+  CASSILDA: Indeed it's time. We all have laid aside disguise but you.
+
+  STRANGER: I wear no mask.
+
+  CAMILLA: (Terrified, aside to Cassilda.) No mask? No mask!
+
+  -- Robert W. Chambers, The King in Yellow, Act I, Scene 2.
 
 =head2 v5.18.2 - Miss Manners
 

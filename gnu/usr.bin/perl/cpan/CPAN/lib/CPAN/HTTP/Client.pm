@@ -6,7 +6,7 @@ use vars qw(@ISA);
 use CPAN::HTTP::Credentials;
 use HTTP::Tiny 0.005;
 
-$CPAN::HTTP::Client::VERSION = $CPAN::HTTP::Client::VERSION = "1.9600";
+$CPAN::HTTP::Client::VERSION = $CPAN::HTTP::Client::VERSION = "1.9601";
 
 # CPAN::HTTP::Client is adapted from parts of cpanm by Tatsuhiko Miyagawa
 # and parts of LWP by Gisle Aas

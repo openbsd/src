@@ -242,7 +242,7 @@ for C<my Foo $bar>.
 =for apidoc m|SV *|PAD_SETSV	|PADOFFSET po|SV* sv
 Set the slot at offset C<po> in the current pad to C<sv>
 
-=for apidoc m|void|PAD_SV	|PADOFFSET po
+=for apidoc m|SV *|PAD_SV	|PADOFFSET po
 Get the value at offset C<po> in the current pad
 
 =for apidoc m|SV *|PAD_SVl	|PADOFFSET po

@@ -43,8 +43,8 @@ SKIP:
 { # [perl #64772] IO::Handle->sync fails on an O_RDONLY descriptor
     $Config{d_fsync}
        or skip "No fsync", 1;
-    $^O eq 'aix'
-      and skip "fsync() documented to fail on non-writable handles on AIX", 1;
+    $^O =~ /^(?:aix|irix)$/
+      and skip "fsync() documented to fail on non-writable handles on $^O", 1;
     $^O eq 'cygwin'
       and skip "fsync() on cygwin uses FlushFileBuffers which requires a writable handle", 1;
     open my $fh, "<", "t/io_xs.t"

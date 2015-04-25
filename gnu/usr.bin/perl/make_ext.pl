@@ -443,8 +443,8 @@ EOM
 	    # the Makefile.PL. Altering the atime and mtime backwards by 4
 	    # seconds seems to resolve the issue.
 	    eval {
-		my $ftime = time - 4;
-		utime $ftime, $ftime, 'Makefile.PL';
+        my $ftime = (stat('Makefile.PL'))[9] - 4;
+        utime $ftime, $ftime, 'Makefile.PL';
 	    };
         } elsif ($mname =~ /\A(?:Carp
                             |ExtUtils::CBuilder
@@ -715,7 +715,7 @@ sub just_pm_to_blib {
             # (which it has to deal with, as cpan/foo/bar creates
             # lib/auto/foo/bar, but the EU::MM rule will only
             # rmdir lib/auto/foo/bar, leaving lib/auto/foo
-            _unlink("../../$_")
+            _unlink($_)
                 foreach sort values %pm;
         }
     }

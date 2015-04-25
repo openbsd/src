@@ -24,7 +24,7 @@ require IO::Socket::UNIX if ($^O ne 'epoc' && $^O ne 'symbian');
 
 @ISA = qw(IO::Handle);
 
-$VERSION = "1.37";
+$VERSION = "1.38";
 
 @EXPORT_OK = qw(sockatmark);
 
@@ -499,8 +499,23 @@ C<use> declaration will fail at compile time.
 
 =item connected
 
-If the socket is in a connected state the peer address is returned.
-If the socket is not in a connected state then undef will be returned.
+If the socket is in a connected state, the peer address is returned. If the
+socket is not in a connected state, undef is returned.
+
+Note that connected() considers a half-open TCP socket to be "in a connected
+state".  Specifically, connected() does not distinguish between the
+B<ESTABLISHED> and B<CLOSE-WAIT> TCP states; it returns the peer address,
+rather than undef, in either case.  Thus, in general, connected() cannot
+be used to reliably learn whether the peer has initiated a graceful shutdown
+because in most cases (see below) the local TCP state machine remains in
+B<CLOSE-WAIT> until the local application calls shutdown() or close();
+only at that point does connected() return undef.
+
+The "in most cases" hedge is because local TCP state machine behavior may
+depend on the peer's socket options. In particular, if the peer socket has
+SO_LINGER enabled with a zero timeout, then the peer's close() will generate
+a RST segment, upon receipt of which the local TCP transitions immediately to
+B<CLOSED>, and in that state, connected() I<will> return undef.
 
 =item protocol
 

@@ -473,13 +473,13 @@ its argument so that Unicode characters with code points greater than
 displayed as C<\x..>, and the rest of the characters as themselves:
 
  sub nice_string {
-     join("",
-       map { $_ > 255 ?                  # if wide character...
-              sprintf("\\x{%04X}", $_) :  # \x{...}
-              chr($_) =~ /[[:cntrl:]]/ ?  # else if control character...
-              sprintf("\\x%02X", $_) :    # \x..
-              quotemeta(chr($_))          # else quoted or as themselves
-         } unpack("W*", $_[0]));           # unpack Unicode characters
+        join("",
+        map { $_ > 255                    # if wide character...
+              ? sprintf("\\x{%04X}", $_)  # \x{...}
+              : chr($_) =~ /[[:cntrl:]]/  # else if control character...
+                ? sprintf("\\x%02X", $_)  # \x..
+                : quotemeta(chr($_))      # else quoted or as themselves
+        } unpack("W*", $_[0]));           # unpack Unicode characters
    }
 
 For example,

@@ -6,7 +6,7 @@ use vars qw(@ISA $USER $PASSWD $SETUPDONE);
 use CPAN::HTTP::Credentials;
 # we delay requiring LWP::UserAgent and setting up inheritance until we need it
 
-$CPAN::LWP::UserAgent::VERSION = $CPAN::LWP::UserAgent::VERSION = "1.9600";
+$CPAN::LWP::UserAgent::VERSION = $CPAN::LWP::UserAgent::VERSION = "1.9601";
 
 
 sub config {

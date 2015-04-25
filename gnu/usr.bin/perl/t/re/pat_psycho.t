@@ -21,10 +21,14 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = ('../lib','.');
     require './test.pl';
+    if ($^O eq 'dec_osf') {
+        skip_all("$^O cannot handle this test");
+    }
 }
 
 
 skip_all('$PERL_SKIP_PSYCHO_TEST set') if $ENV{PERL_SKIP_PSYCHO_TEST};
+
 plan tests => 15;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;

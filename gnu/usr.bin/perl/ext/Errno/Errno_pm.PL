@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.20_03";
+our $VERSION = "1.20_05";
 
 my %err = ();
 
@@ -249,9 +249,9 @@ sub write_errno_pm {
 	    my($name,$expr);
 	    next unless ($name, $expr) = /"(.*?)"\s*\[\s*\[\s*(.*?)\s*\]\s*\]/;
 	    next if $name eq $expr;
-	    $expr =~ s/\(?\(\s*[a-z_]\w*\s*\)([^\)]*)\)?/$1/i; # ((type)0xcafebabe) at alia
-	    $expr =~ s/((?:0x)?[0-9a-fA-F]+)[luLU]+\b/$1/g; # 2147483647L et alia
-	    next if $expr =~ m/^[a-zA-Z]+$/; # skip some Win32 functions
+	    $expr =~ s/\(?\(\s*[a-z_]\w*\s*\)\(?([^\)]+)\)?\)?/$1/i; # ((type)0xcafebabe) at alia
+	    $expr =~ s/\b((?:0x)?[0-9a-f]+)[LU]+\b/$1/gi; # 2147483647L et alia
+	    next if $expr =~ m/\b[a-z_]\w*\b/i; # skip expressions containing function names etc
 	    if($expr =~ m/^0[xX]/) {
 		$err{$name} = hex $expr;
 	    }

@@ -7,7 +7,7 @@ BEGIN {
     *bar::is = *is;
     *bar::like = *like;
 }
-plan 120;
+plan 126;
 
 # -------------------- Errors with feature disabled -------------------- #
 
@@ -313,6 +313,39 @@ like runperl(
      ),
      qr/syntax error/,
     'referencing a state sub after a syntax error does not crash';
+{
+  state $stuff;
+  package A {
+    state sub foo{ $stuff .= our $AUTOLOAD }
+    *A::AUTOLOAD = \&foo;
+  }
+  A::bar();
+  is $stuff, 'A::bar', 'state sub assigned to *AUTOLOAD can autoload';
+}
+{
+  state sub quire{qr "quires"}
+  package o { use overload qr => \&quire }
+  ok "quires" =~ bless([], o::), 'state sub used as overload method';
+}
+{
+  local $ENV{PERL5DB} = 'sub DB::DB{}';
+  is(
+    runperl(
+     switches => [ '-d' ],
+     progs => [ split "\n",
+      'use feature qw - lexical_subs state -;
+       no warnings q-experimental::lexical_subs-;
+       sub DB::sub{ print qq|4\n|; goto $DB::sub }
+       state sub foo {print qq|2\n|}
+       foo();
+      '
+     ],
+     stderr => 1
+    ),
+    "4\n2\n",
+    'state subs and DB::sub under -d'
+  );
+}
 
 # -------------------- my -------------------- #
 
@@ -606,6 +639,40 @@ like runperl(
      ),
      qr/syntax error/,
     'referencing a my sub after a syntax error does not crash';
+{
+  state $stuff;
+  package A {
+    my sub foo{ $stuff .= our $AUTOLOAD }
+    *A::AUTOLOAD = \&foo;
+  }
+  A::bar();
+  is $stuff, 'A::bar', 'my sub assigned to *AUTOLOAD can autoload';
+}
+{
+  my sub quire{qr "quires"}
+  package mo { use overload qr => \&quire }
+  ok "quires" =~ bless([], mo::), 'my sub used as overload method';
+}
+
+{
+  local $ENV{PERL5DB} = 'sub DB::DB{}';
+  is(
+    runperl(
+     switches => [ '-d' ],
+     progs => [ split "\n",
+      'use feature qw - lexical_subs state -;
+       no warnings q-experimental::lexical_subs-;
+       sub DB::sub{ print qq|4\n|; goto $DB::sub }
+       my sub foo {print qq|2\n|}
+       foo();
+      '
+     ],
+     stderr => 1
+    ),
+    "4\n2\n",
+    'my subs and DB::sub under -d'
+  );
+}
 
 # -------------------- Interactions (and misc tests) -------------------- #
 

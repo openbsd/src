@@ -125,8 +125,7 @@ are also referred to as the "Perl 5 Porters", "p5p" or just the
 "porters".
 
 A searchable archive of the list is available at
-L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/>.  There is
-also another archive at
+L<http://markmail.org/search/?q=perl5-porters>.  There is also an archive at
 L<http://archive.develooper.com/perl5-porters@perl.org/>.
 
 =head2 perl-changes mailing list

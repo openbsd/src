@@ -15,6 +15,9 @@ $::NO_ENDING = $::NO_ENDING = 1;
 if ( $^O eq "VMS" ) {
   skip_all( "- regen.pl needs porting." );
 }
+if ($^O eq 'dec_osf') {
+    skip_all("$^O cannot handle this test");
+}
 use Config;
 if ( $Config{usecrosscompile} ) {
   skip_all( "Not all files are available during cross-compilation" );

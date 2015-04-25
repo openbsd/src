@@ -264,7 +264,13 @@ is_deeply( \%split_seen, \%exp,
     touch_file($exporter);
     $rv = $base->perl_src();
     ok( -d $rv, "perl_src(): returned a directory" );
-    is( uc($rv), uc(Cwd::realpath($subdir)), "perl_src(): identified directory" );
+    my $rp = Cwd::realpath($subdir);
+  SKIP: {
+      if ($^O eq 'dec_osf' && $rp =~ m[^/cluster/members/]) {
+          skip "Tru64 cluster filesystem", 1;
+      } # SKIP
+      is( uc($rv), uc($rp), "perl_src(): identified directory" );
+    }
     is( $capture, q{}, "perl_src(): no warning, as expected" );
 
     chdir $cwd

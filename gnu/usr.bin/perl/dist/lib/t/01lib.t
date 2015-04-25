@@ -38,6 +38,9 @@ MODULE
 }
 
 END {
+    # rmtree() can indirectly load the XS object for Win32, ensure
+    # we have our original sane @INC
+    local @INC = @OrigINC;
     # cleanup the auto/ directory we created.
     rmtree([$lib_dir[0]]);
 }

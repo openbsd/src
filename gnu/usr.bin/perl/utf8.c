@@ -2509,6 +2509,14 @@ Perl_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 minbits
 SV*
 Perl__core_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 minbits, I32 none, SV* invlist, U8* const flags_p)
 {
+
+    /*NOTE NOTE NOTE - If you want to use "return" in this routine you MUST
+     * use the following define */
+
+#define CORE_SWASH_INIT_RETURN(x)   \
+    PL_curpm= old_PL_curpm;         \
+    return x
+
     /* Initialize and return a swash, creating it if necessary.  It does this
      * by calling utf8_heavy.pl in the general case.  The returned value may be
      * the swash's inversion list instead if the input parameters allow it.
@@ -2554,6 +2562,8 @@ Perl__core_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 m
      * <invlist> is only valid for binary properties */
 
     dVAR;
+    PMOP *old_PL_curpm= PL_curpm; /* save away the old PL_curpm */
+
     SV* retval = &PL_sv_undef;
     HV* swash_hv = NULL;
     const int invlist_swash_boundary =
@@ -2564,6 +2574,10 @@ Perl__core_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 m
 
     assert(listsv != &PL_sv_undef || strNE(name, "") || invlist);
     assert(! invlist || minbits == 1);
+
+    PL_curpm= NULL; /* reset PL_curpm so that we dont get confused between the regex
+                       that triggered the swash init and the swash init perl logic itself.
+                       See perl #122747 */
 
     /* If data was passed in to go out to utf8_heavy to find the swash of, do
      * so */
@@ -2653,7 +2667,7 @@ Perl__core_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 m
 
 		/* If caller wants to handle missing properties, let them */
 		if (flags_p && *flags_p & _CORE_SWASH_INIT_RETURN_IF_UNDEF) {
-		    return NULL;
+                    CORE_SWASH_INIT_RETURN(NULL);
 		}
 		Perl_croak(aTHX_
 			   "Can't find Unicode property definition \"%"SVf"\"",
@@ -2755,7 +2769,8 @@ Perl__core_swash_init(pTHX_ const char* pkg, const char* name, SV *listsv, I32 m
         }
     }
 
-    return retval;
+    CORE_SWASH_INIT_RETURN(retval);
+#undef CORE_SWASH_INIT_RETURN
 }
 
 

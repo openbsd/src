@@ -83,6 +83,11 @@ my %skip;
 @skip{
     'cpan/ExtUtils-MakeMaker/t/lib/MakeMaker/Test/Setup/BFD.pm', # just a test module
     'cpan/ExtUtils-MakeMaker/t/lib/MakeMaker/Test/Setup/XS.pm',  # just a test module
+    'cpan/Module-Build/t/lib/DistGen.pm', # just a test module
+    'cpan/Module-Build/t/lib/MBTest.pm',  # just a test module
+    'cpan/Module-Metadata/t/lib/DistGen.pm',    # just a test module
+    'cpan/Module-Metadata/t/lib/MBTest.pm',     # just a test module
+    'cpan/Module-Metadata/t/lib/Tie/CPHash.pm', # just a test module
     'dist/Attribute-Handlers/demo/MyClass.pm', # it's just demonstration code
     'dist/Exporter/lib/Exporter/Heavy.pm',
     'lib/Carp/Heavy.pm',
@@ -120,6 +125,7 @@ sub pm_file_from_xs {
 			 # look for a .pm in lib/ based on that:
 			 my ($path) = shift =~ m!^(.*)/!;
 			 my ($last) = $path =~ m!([^/]+)\z!;
+			 $last = 'List-Util' if $last eq 'Scalar-List-Utils';
 			 $last =~ tr !-!/!;
 			 return "$path/lib/$last";
 		     }) {
@@ -189,11 +195,11 @@ foreach my $pm_file (sort keys %module_diffs) {
 		and grep $pm_version eq $_, @{$skip_versions{$pm_file}}) {
 		print "ok $count - SKIP $pm_file version $pm_version\n";
 	    } else {
-		print "not ok $count - $pm_file\n";
+		print "not ok $count - $pm_file version $pm_version\n";
 	    }
 	} else {
 	    push @diff, @{$module_diffs{$pm_file}};
-	    print "$pm_file\n";
+	    print "$pm_file version $pm_version\n";
 	}
     }
 }

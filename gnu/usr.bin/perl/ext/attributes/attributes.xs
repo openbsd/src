@@ -97,7 +97,7 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 	    }
 	    break;
 	default:
-	    if (memEQs(name, 6, "shared")) {
+	    if (memEQs(name, len, "shared")) {
 			if (negated)
 			    Perl_croak(aTHX_ "A variable may not be unshared");
 			SvSHARE(sv);

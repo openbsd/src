@@ -85,7 +85,10 @@ IPC::Signal
 kill(3)
 langinfo(3)
 LaTeX::Encode
+Lingua::JA::Romanize::Japanese
 Lingua::KO::Hangul::Util
+Lingua::KO::Romanize::Hangul
+Lingua::ZH::Romanize::Pinyin
 List::Gather
 local::lib
 Log::Message
@@ -190,10 +193,13 @@ Time::Object
 Tk
 Tk::Pod
 tty(1)
+Unicode::CaseFold
 Unicode::Casing
+Unicode::GCString
 Unicode::LineBreak
 Unicode::Regex::Set
 Unicode::Semantics
+Unicode::Tussle
 Unicode::Unihan
 unzip(1)
 Version::Requirements

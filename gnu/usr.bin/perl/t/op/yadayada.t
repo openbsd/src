@@ -8,14 +8,39 @@ BEGIN {
 
 use strict;
 
-plan 5;
+plan 9;
 
-my $err = "Unimplemented at $0 line " . ( __LINE__ + 2 ) . ".\n";
+my $err;
+my $err1 = "Unimplemented at $0 line ";
+my $err2 = ".\n";
 
+$err = $err1 . ( __LINE__ + 1 ) . $err2;
 eval { ... };
+is $@, $err, "Execution of ellipsis statement reported 'Unimplemented' code";
+$@ = '';
 
-is $@, $err;
+note("RT #122661: Semicolon before ellipsis statement disambiguates to indicate block rather than hash reference");
+my @input = (3..5);
+my @transformed;
+$err = $err1 . ( __LINE__ + 1 ) . $err2;
+eval { @transformed = map {; ... } @input; };
+is $@, $err, "Disambiguation case 1";
+$@ = '';
 
+$err = $err1 . ( __LINE__ + 1 ) . $err2;
+eval { @transformed = map {;...} @input; };
+is $@, $err, "Disambiguation case 2";
+$@ = '';
+
+$err = $err1 . ( __LINE__ + 1 ) . $err2;
+eval { @transformed = map {; ...} @input; };
+is $@, $err, "Disambiguation case 3";
+$@ = '';
+
+$err = $err1 . ( __LINE__ + 1 ) . $err2;
+eval { @transformed = map {;... } @input; };
+is $@, $err, "Disambiguation case 4";
+$@ = '';
 
 #
 # Regression tests, making sure ... is still parsable as an operator.

@@ -772,9 +772,9 @@ Unicode considers symbols.
 
 =item [6]
 
-C<\p{SpacePerl}> and C<\p{Space}> match identically starting with Perl
+C<\p{XPerlSpace}> and C<\p{Space}> match identically starting with Perl
 v5.18.  In earlier versions, these differ only in that in non-locale
-matching, C<\p{SpacePerl}> does not match the vertical tab, C<\cK>.
+matching, C<\p{XPerlSpace}> does not match the vertical tab, C<\cK>.
 Same for the two ASCII-only range forms.
 
 =back

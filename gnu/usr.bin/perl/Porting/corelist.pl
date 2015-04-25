@@ -24,7 +24,6 @@ use IO::Uncompress::Gunzip;
 
 my $corelist_file = 'dist/Module-CoreList/lib/Module/CoreList.pm';
 my $utils_file = 'dist/Module-CoreList/lib/Module/CoreList/Utils.pm';
-my $pod_file = 'dist/Module-CoreList/lib/Module/CoreList.pod';
 
 my %lines;
 my %module_to_file;
@@ -302,16 +301,6 @@ $corelist =~ s/^%bug_tracker .*? ;/$tracker/eismx;
 
 write_corelist($corelist,$corelist_file);
 
-open( my $pod_fh, '<', $pod_file );
-my $pod = join( '', <$pod_fh> );
-
-unless ( $pod =~ /and $perl_vstring releases of perl/ ) {
-    warn "Adding $perl_vstring to the list of perl versions covered by Module::CoreList\n";
-    $pod =~ s/(currently\s+covers\s+(?:.*?))\s*and\s+(.*?)\s+releases\s+of\s+perl/$1, $2 and $perl_vstring releases of perl/ism;
-}
-
-write_corelist($pod,$pod_file);
-
 open( my $utils_fh, '<', $utils_file );
 my $utils = join( '', <$utils_fh> );
 close $utils_fh;
@@ -342,7 +331,7 @@ $utils =~ s/^(my %delta\s*=\s*.*?)(^\);)$/$1$utilities_in_release$2/ism;
 write_corelist($utils,$utils_file);
 
 warn "All done. Please check over the following files carefully before committing.\nThanks!\n";
-warn "$corelist_file\n$pod_file\n$utils_file\n";
+warn "$corelist_file\n$utils_file\n";
 
 sub write_corelist {
     my $content = shift;

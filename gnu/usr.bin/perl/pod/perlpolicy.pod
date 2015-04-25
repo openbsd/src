@@ -84,9 +84,9 @@ the Perl community should expect from Perl's developers:
 
 =item *
 
-We "officially" support the two most recent stable release series.  5.12.x
-and earlier are now out of support.  As of the release of 5.18.0, we will
-"officially" end support for Perl 5.14.x, other than providing security
+We "officially" support the two most recent stable release series.  5.14.x
+and earlier are now out of support.  As of the release of 5.20.0, we will
+"officially" end support for Perl 5.16.x, other than providing security
 updates as described below.
 
 =item *
@@ -204,6 +204,14 @@ do our best to smooth the transition path for users of experimental
 features, you should contact the perl5-porters mailinglist if you find
 an experimental feature useful and want to help shape its future.
 
+Experimental features must be experimental in two stable releases before being
+marked non-experimental.  Experimental features will only have their
+experimental status revoked when they no longer have any design-changing bugs
+open against them and when they have remained unchanged in behavior for the
+entire length of a development cycle.  In other words, a feature present in
+v5.20.0 may be marked no longer experimental in v5.22.0 if and only if its
+behavior is unchanged throughout all of v5.21.
+
 =item deprecated
 
 If something in the Perl core is marked as B<deprecated>, we may remove it
@@ -272,7 +280,8 @@ are not acceptable.
 
 =item *
 
-Patches that fix crashing bugs that do not otherwise change Perl's
+Patches that fix crashing bugs, assertion failures and
+memory corruption that do not otherwise change Perl's
 functionality or negatively impact performance are acceptable.
 
 =item *
@@ -512,10 +521,10 @@ protest, but repeated protest in the face of a repeatedly reaffirmed decision
 is not acceptable.
 
 Unacceptable behavior will result in a public and clearly identified warning.
-Repeated unacceptable behavior will result in removal from the mailing list.
-The first removal is for one month.  Subsequent removals will double in length.
-After six months with no warning, a user's ban length is reset.  Removals, like
-warnings, are public.
+Repeated unacceptable behavior will result in removal from the mailing list and
+revocation of rights to update rt.perl.org.  The first removal is for one
+month.  Subsequent removals will double in length.  After six months with no
+warning, a user's ban length is reset.  Removals, like warnings, are public.
 
 The list of moderators will be public knowledge.  At present, it is:
 Aaron Crane, Andy Dougherty, Ricardo Signes, Steffen Müller.

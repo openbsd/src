@@ -23,6 +23,9 @@ trying to do, and you've had to write the code yourself, consider
 packaging up the solution into a module and uploading it to CPAN so that
 others can benefit.
 
+You should also take a look at L<perlmodstyle> for best practices in
+making a module.
+
 =head2 Warning
 
 We're going to primarily concentrate on Perl-only modules here, rather
