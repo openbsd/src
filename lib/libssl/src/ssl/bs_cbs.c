@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.2 2015/02/06 22:22:33 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.3 2015/04/25 15:28:47 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -317,6 +317,7 @@ CBS_peek_asn1_tag(const CBS *cbs, unsigned tag_value)
 	return CBS_data(cbs)[0] == tag_value;
 }
 
+/* Encoding details are in ASN.1: X.690 section 8.3 */
 int
 CBS_get_asn1_uint64(CBS *cbs, uint64_t *out)
 {
@@ -332,11 +333,15 @@ CBS_get_asn1_uint64(CBS *cbs, uint64_t *out)
 	len = CBS_len(&bytes);
 
 	if (len == 0)
-		/* An INTEGER is encoded with at least one octet. */
+		/* An INTEGER is encoded with at least one content octet. */
 		return 0;
 
 	if ((data[0] & 0x80) != 0)
-		/* negative number */
+		/* Negative number. */
+		return 0;
+
+	if (data[0] == 0 && len > 1 && (data[1] & 0x80) == 0)
+		/* Violates smallest encoding rule: excessive leading zeros. */
 		return 0;
 
 	for (i = 0; i < len; i++) {

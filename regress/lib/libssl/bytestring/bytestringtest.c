@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.3 2015/02/16 06:48:17 doug Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.4 2015/04/25 15:28:47 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -607,8 +607,10 @@ static const ASN1_INVALID_UINT64_TEST kAsn1InvalidUint64Tests[] = {
 	{"\x02\x00", 2},
 	/* Negative number. */
 	{"\x02\x01\x80", 3},
-	/* Overflow */
+	/* Overflow. */
 	{"\x02\x09\x01\x00\x00\x00\x00\x00\x00\x00\x00", 11},
+	/* Leading zeros. */
+	{"\x02\x02\x00\x01", 4},
 };
 
 static int
