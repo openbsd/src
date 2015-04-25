@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.209 2015/04/18 22:16:21 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.210 2015/04/25 21:21:02 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -155,7 +155,6 @@ char machine[] = MACHINE;
 void (*cpu_idle_leave_fcn)(void) = NULL;
 void (*cpu_idle_cycle_fcn)(void) = NULL;
 void (*cpu_idle_enter_fcn)(void) = NULL;
-void (*cpu_busy_cycle_fcn)(void) = NULL;
 
 /* the following is used externally for concurrent handlers */
 int setperf_prio = 0;
