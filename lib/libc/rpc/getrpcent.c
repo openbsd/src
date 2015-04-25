@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrpcent.c,v 1.17 2015/04/18 18:28:37 deraadt Exp $ */
+/*	$OpenBSD: getrpcent.c,v 1.18 2015/04/25 21:38:22 miod Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -151,7 +151,7 @@ interpret(char *val, int len)
 	const char *errstr;
 	struct rpcdata *d = _rpcdata();
 	char *p;
-	char *cp, **q;
+	char *cp, *num, **q;
 
 	if (d == NULL)
 		return (0);
@@ -172,13 +172,14 @@ interpret(char *val, int len)
 	d->rpc.r_name = d->line;
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
-	d->rpc.r_number = strtonum(cp, 0, INT_MAX, &errstr);
+	num = cp;
+	cp = strpbrk(cp, " \t");
+	if (cp != NULL)
+		*cp++ = '\0';
+	d->rpc.r_number = strtonum(num, 0, INT_MAX, &errstr);
 	if (errstr)
 		return (0);
 	q = d->rpc.r_aliases = d->rpc_aliases;
-	cp = strpbrk(cp, " \t");
-	if (cp != NULL) 
-		*cp++ = '\0';
 	while (cp && *cp) {
 		if (*cp == ' ' || *cp == '\t') {
 			cp++;
