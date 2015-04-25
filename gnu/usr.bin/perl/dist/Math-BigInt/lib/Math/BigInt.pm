@@ -2677,11 +2677,12 @@ sub objectify {
             next;
         }
 
-        # Don't do anything with undefs.
-
-        unless (defined($a[$i])) {
-            next;
-        }
+#        # Don't do anything with undefs.
+#
+#        unless (defined($a[$i])) {
+#            next;
+#        }
+        $a[$i] //= 0;
 
         # Perl scalars are fed to the appropriate constructor.
 

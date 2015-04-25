@@ -309,14 +309,22 @@ const struct lconv_offset lconv_strings[] = {
 };
 
 const struct lconv_offset lconv_integers[] = {
-    {"int_frac_digits",   offsetof(struct lconv, int_frac_digits)},
-    {"frac_digits",       offsetof(struct lconv, frac_digits)},
-    {"p_cs_precedes",     offsetof(struct lconv, p_cs_precedes)},
-    {"p_sep_by_space",    offsetof(struct lconv, p_sep_by_space)},
-    {"n_cs_precedes",     offsetof(struct lconv, n_cs_precedes)},
-    {"n_sep_by_space",    offsetof(struct lconv, n_sep_by_space)},
-    {"p_sign_posn",       offsetof(struct lconv, p_sign_posn)},
-    {"n_sign_posn",       offsetof(struct lconv, n_sign_posn)},
+    {"int_frac_digits",     offsetof(struct lconv, int_frac_digits)},
+    {"frac_digits",         offsetof(struct lconv, frac_digits)},
+    {"p_cs_precedes",       offsetof(struct lconv, p_cs_precedes)},
+    {"p_sep_by_space",      offsetof(struct lconv, p_sep_by_space)},
+    {"n_cs_precedes",       offsetof(struct lconv, n_cs_precedes)},
+    {"n_sep_by_space",      offsetof(struct lconv, n_sep_by_space)},
+    {"p_sign_posn",         offsetof(struct lconv, p_sign_posn)},
+    {"n_sign_posn",         offsetof(struct lconv, n_sign_posn)},
+#ifdef HAS_LC_MONETARY_2008
+    {"int_p_cs_precedes",   offsetof(struct lconv, int_p_cs_precedes)},
+    {"int_p_sep_by_space",  offsetof(struct lconv, int_p_sep_by_space)},
+    {"int_n_cs_precedes",   offsetof(struct lconv, int_n_cs_precedes)},
+    {"int_n_sep_by_space",  offsetof(struct lconv, int_n_sep_by_space)},
+    {"int_p_sign_posn",     offsetof(struct lconv, int_p_sign_posn)},
+    {"int_n_sign_posn",     offsetof(struct lconv, int_n_sign_posn)},
+#endif
     {NULL, 0}
 };
 

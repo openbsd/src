@@ -540,9 +540,9 @@ Here's how I generate a new patch.  I'll use the hypothetical
 5.004_07 to 5.004_08 patch as an example.
 
 	# unpack perl5.004_07/
-	gzip -d -c perl5.004_07.tar.gz | tar -xof -
+	gzip -d -c perl5.004_07.tar.gz | tar -xf -
 	# unpack perl5.004_08/
-	gzip -d -c perl5.004_08.tar.gz | tar -xof -
+	gzip -d -c perl5.004_08.tar.gz | tar -xf -
 	makepatch perl5.004_07 perl5.004_08 > perl5.004_08.pat
 
 Makepatch will automatically generate appropriate B<rm> commands to remove

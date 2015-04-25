@@ -8,12 +8,8 @@
 #	./Configure -des -Dopenbsd_distribution=defined
 #
 
-# In OpenBSD > 3.7, use perl's malloc [perl #75742]
-case "$osvers" in
-3.[89]*|[4-9]*)
-    test "$usemymalloc" || usemymalloc=y
-    ;;
-esac
+# OpenBSD has a better malloc than perl...
+test "$usemymalloc" || usemymalloc='n'
 
 # malloc wrap works
 case "$usemallocwrap" in
@@ -105,6 +101,13 @@ m88k-3.4)
    ;;
 esac
 
+# Special per-arch specific ccflags
+case "${ARCH}-${osvers}" in
+    vax-*)
+    ccflags="-DUSE_PERL_ATOF=0 $ccflags"
+    ;;
+esac
+
 # This script UU/usethreads.cbu will get 'called-back' by Configure 
 # after it has prompted the user for whether to use threads.
 cat > UU/usethreads.cbu <<'EOCBU'
@@ -144,12 +147,12 @@ case "$openbsd_distribution" in
 	siteprefix='/usr/local'
 	siteprefixexp='/usr/local'
 	# Ports installs non-std libs in /usr/local/lib so look there too
-	locincpth='/usr/local/include'
-	loclibpth='/usr/local/lib'
+	locincpth=''
+	loclibpth=''
 	# Link perl with shared libperl
-	if [ "$usedl" = "$define" -a -r shlib_version ]; then
+	if [ "$usedl" = "$define" -a -r $src/shlib_version ]; then
 		useshrplib=true
-		libperl=`. ./shlib_version; echo libperl.so.${major}.${minor}`
+		libperl=`. $src/shlib_version; echo libperl.so.${major}.${minor}`
 	fi
 	;;
 esac

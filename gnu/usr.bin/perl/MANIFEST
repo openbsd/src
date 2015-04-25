@@ -8,6 +8,7 @@ cflags.SH		A script that emits C compilation flags per file
 Changes			Describe how to peruse changes between releases
 charclass_invlists.h	Compiled-in inversion lists
 config_h.SH		Produces config.h
+config.over		Site-specific overrides for Configure defaults
 configpm		Produces lib/Config.pm
 Configure		Portability tool
 configure.com		Configure-equivalent for VMS
@@ -1724,6 +1725,10 @@ cpan/NEXT/t/dynamically_scoped_regex_vars.t	NEXT
 cpan/NEXT/t/next.t		NEXT
 cpan/NEXT/t/stringify.t		NEXT
 cpan/NEXT/t/unseen.t		NEXT
+cpan/OpenBSD-MkTemp/lib/OpenBSD/MkTemp.pm	OpenBSD::MkTemp
+cpan/OpenBSD-MkTemp/MkTemp.xs	OpenBSD::MkTemp
+cpan/OpenBSD-MkTemp/README	OpenBSD::MkTemp Readme
+cpan/OpenBSD-MkTemp/t/OpenBSD-MkTemp.t	OpenBSD::MkTemp test file
 cpan/Package-Constants/lib/Package/Constants.pm	Package::Constants
 cpan/Package-Constants/t/01_list.t		Package::Constants tests
 cpan/Params-Check/lib/Params/Check.pm	Params::Check
@@ -3587,7 +3592,6 @@ ext/B/B/Terse.pm	Compiler Terse backend
 ext/B/B/Xref.pm		Compiler Xref backend
 ext/B/B.xs		Compiler backend external subroutines
 ext/B/hints/darwin.pl	Hints for named architecture
-ext/B/hints/openbsd.pl	Hints for named architecture
 ext/B/Makefile.PL	Compiler backend makefile writer
 ext/B/O.pm		Compiler front-end module (-MO=...)
 ext/B/t/b.t		See if B works
@@ -4016,6 +4020,7 @@ fakesdio.h			stdio in terms of PerlIO
 feature.h			Feature header
 form.h				Public declarations for formats
 generate_uudmap.c		Generate uudmap.h, the uuencode decoding map
+git_version.h			Pre-generated git_version.h for OpenBSD
 globals.c			File to declare global symbols (for shared library)
 globvar.sym			Global variables that need hiding when embedded
 gv.c				Glob value code
@@ -4161,6 +4166,7 @@ lib/Class/Struct.pm		Declare struct-like datatypes as Perl classes
 lib/Class/Struct.t		See if Class::Struct works
 lib/Config/Extensions.pm	Convenient hash lookup for built extensions
 lib/Config/Extensions.t		See if Config::Extensions works
+lib/Config_git.pl		Pre-generated Config_git.pl for OpenBSD
 lib/Config.t			See if Config works
 lib/CORE.pod			document the CORE namespace
 lib/DBM_Filter/compress.pm	DBM Filter to compress keys/values

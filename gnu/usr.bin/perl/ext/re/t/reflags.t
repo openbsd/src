@@ -56,7 +56,7 @@ ok 'f r e l p' =~ /f r e l p/,
 SKIP: {
   if (
       !$Config::Config{d_setlocale}
-   || $Config::Config{ccflags} =~ /\bD?NO_LOCALE\b/
+   || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
   ) {
     skip "no locale support", 7
   }

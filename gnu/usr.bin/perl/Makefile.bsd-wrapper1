@@ -68,8 +68,10 @@ _quick3p=
     perl5180delta 1			pod/perl5180delta.pod \
     perl5181delta 1			pod/perl5181delta.pod \
     perl5182delta 1			pod/perl5182delta.pod \
+    perl5184delta 1			pod/perl5184delta.pod \
     perl5200delta 1			pod/perl5200delta.pod \
     perl5201delta 1			pod/perl5201delta.pod \
+    perl5202delta 1			pod/perl5202delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -185,6 +187,7 @@ _quick3p=
     perltrap 1				pod/perltrap.pod \
     perltru64 1				pod/perltru64.pod \
     perlunicode 1			pod/perlunicode.pod \
+    perlunicook 1			pod/perlunicook.pod \
     perlunifaq 1			pod/perlunifaq.pod \
     perluniintro 1			pod/perluniintro.pod \
     perluniprops 1			pod/perluniprops.pod \

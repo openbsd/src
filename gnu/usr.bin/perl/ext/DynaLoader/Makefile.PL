@@ -64,8 +64,8 @@ sub MY::static {
 
     return "
 $object : \$(FIRST_MAKEFILE) \$(OBJECT)
-	\$(RM_RF) $object
-	\$(CP) \$(OBJECT) $object
+	#\$(RM_RF) $object
+	#\$(CP) \$(OBJECT) $object
 
 static :: $object
 ";

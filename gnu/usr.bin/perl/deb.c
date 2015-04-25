@@ -236,7 +236,7 @@ Perl_deb_stack_all(pTHX)
 		PerlIO_printf(Perl_debug_log, "\n");
 	    else {
 
-		/* Find the the current context's stack range by searching
+		/* Find the current context's stack range by searching
 		 * forward for any higher contexts using this stack; failing
 		 * that, it will be equal to the size of the stack for old
 		 * stacks, or PL_stack_sp for the current stack

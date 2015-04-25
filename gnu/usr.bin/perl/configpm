@@ -87,6 +87,11 @@ $header_files =~ s/(?=.{64})   # If line is still overlength
 		   (.{1,64})\  # Split at the last convenient space
 		  /$1\n              /gx;
 
+# libpaths that should be truncated after the first path element
+my %Libpathtrunc = map {($_,$_)}
+                   qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
+                      sitelib sitelibexp);
+
 # allowed opts as well as specifies default and initial values
 my %Allowed_Opts = (
     'glossary' => 1,  # --no-glossary  - no glossary file inclusion,
@@ -251,6 +256,9 @@ my %seen_quotes;
     }
     $in_v = $val !~ /$quote\n/;
     next if $in_v;
+
+    # XXX - should use PERLLIB_SEP, not hard-code ':'
+    $val =~ s/^([^:]+).*${quote}\w*$/$1${quote}/ if $Libpathtrunc{$name};
 
     s,/,::,g if $Extensions{$name};
 
