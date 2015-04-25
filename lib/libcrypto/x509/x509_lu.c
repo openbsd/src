@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.19 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.20 2015/04/25 16:02:55 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -252,6 +252,10 @@ X509_STORE_free(X509_STORE *vfy)
 	X509_LOOKUP *lu;
 
 	if (vfy == NULL)
+		return;
+
+	i = CRYPTO_add(&vfy->references, -1, CRYPTO_LOCK_X509_STORE);
+	if (i > 0)
 		return;
 
 	sk = vfy->get_cert_methods;
