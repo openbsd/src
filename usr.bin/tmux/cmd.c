@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.102 2015/04/25 18:09:28 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.103 2015/04/25 18:33:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -117,6 +117,7 @@ const struct cmd_entry *cmd_table[] = {
 };
 
 ARRAY_DECL(client_list, struct client *);
+ARRAY_DECL(sessionslist, struct session *);
 
 int		 cmd_session_better(struct session *, struct session *, int);
 struct session	*cmd_choose_session_list(struct sessionslist *);

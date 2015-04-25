@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.135 2015/04/24 23:17:11 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.136 2015/04/25 18:33:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,7 +94,7 @@ server_client_create(int fd)
 	RB_INIT(&c->status_old);
 
 	c->message_string = NULL;
-	ARRAY_INIT(&c->message_log);
+	TAILQ_INIT(&c->message_log);
 
 	c->prompt_string = NULL;
 	c->prompt_buffer = NULL;
@@ -138,8 +138,7 @@ server_client_open(struct client *c, char **cause)
 void
 server_client_lost(struct client *c)
 {
-	struct message_entry	*msg;
-	u_int			 i;
+	struct message_entry	*msg, *msg1;
 
 	TAILQ_REMOVE(&clients, c, entry);
 	log_debug("lost client %d", c->ibuf.fd);
@@ -175,11 +174,11 @@ server_client_lost(struct client *c)
 	free(c->message_string);
 	if (event_initialized(&c->message_timer))
 		evtimer_del(&c->message_timer);
-	for (i = 0; i < ARRAY_LENGTH(&c->message_log); i++) {
-		msg = &ARRAY_ITEM(&c->message_log, i);
+	TAILQ_FOREACH_SAFE(msg, &c->message_log, entry, msg1) {
 		free(msg->msg);
+		TAILQ_REMOVE(&c->message_log, msg, entry);
+		free(msg);
 	}
-	ARRAY_FREE(&c->message_log);
 
 	free(c->prompt_string);
 	free(c->prompt_buffer);

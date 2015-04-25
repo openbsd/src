@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.123 2015/04/25 18:09:28 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.124 2015/04/25 18:33:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -48,6 +48,8 @@
  * is maintained and a window removed from the global list and destroyed when
  * it reaches zero.
  */
+
+ARRAY_DECL(window_pane_list, struct window_pane *);
 
 /* Global window list. */
 struct windows windows;

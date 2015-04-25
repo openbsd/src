@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.10 2014/10/20 22:29:25 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.11 2015/04/25 18:33:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -130,7 +130,6 @@ cmd_show_messages_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct client		*c;
 	struct message_entry	*msg;
 	char			*tim;
-	u_int			 i;
 	int			 done;
 
 	done = 0;
@@ -156,9 +155,7 @@ cmd_show_messages_exec(struct cmd *self, struct cmd_q *cmdq)
 	if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
-	for (i = 0; i < ARRAY_LENGTH(&c->message_log); i++) {
-		msg = &ARRAY_ITEM(&c->message_log, i);
-
+	TAILQ_FOREACH(msg, &c->message_log, entry) {
 		tim = ctime(&msg->msg_time);
 		*strchr(tim, '\n') = '\0';
 
