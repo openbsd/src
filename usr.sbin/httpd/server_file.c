@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.51 2015/02/12 10:05:29 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.52 2015/04/25 14:40:35 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -352,13 +352,15 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 		} else if (S_ISDIR(st->st_mode)) {
 			namewidth -= 1; /* trailing slash */
 			if (evbuffer_add_printf(evb,
-			    "<a href=\"%s\">%s/</a>%*s%s%20s\n",
+			    "<a href=\"%s%s/\">%s/</a>%*s%s%20s\n",
+			    strchr(escapeduri, ':') != NULL ? "./" : "",
 			    escapeduri, escapedhtml,
 			    MAXIMUM(namewidth, 0), " ", tmstr, "-") == -1)
 				skip = 1;
 		} else if (S_ISREG(st->st_mode)) {
 			if (evbuffer_add_printf(evb,
-			    "<a href=\"%s\">%s</a>%*s%s%20llu\n",
+			    "<a href=\"%s%s\">%s</a>%*s%s%20llu\n",
+			    strchr(escapeduri, ':') != NULL ? "./" : "",
 			    escapeduri, escapedhtml,
 			    MAXIMUM(namewidth, 0), " ",
 			    tmstr, st->st_size) == -1)
