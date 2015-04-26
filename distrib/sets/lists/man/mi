@@ -249,8 +249,10 @@
 ./usr/share/man/man1/perl5180delta.1
 ./usr/share/man/man1/perl5181delta.1
 ./usr/share/man/man1/perl5182delta.1
+./usr/share/man/man1/perl5184delta.1
 ./usr/share/man/man1/perl5200delta.1
 ./usr/share/man/man1/perl5201delta.1
+./usr/share/man/man1/perl5202delta.1
 ./usr/share/man/man1/perl561delta.1
 ./usr/share/man/man1/perl56delta.1
 ./usr/share/man/man1/perl581delta.1
@@ -366,6 +368,7 @@
 ./usr/share/man/man1/perltrap.1
 ./usr/share/man/man1/perltru64.1
 ./usr/share/man/man1/perlunicode.1
+./usr/share/man/man1/perlunicook.1
 ./usr/share/man/man1/perlunifaq.1
 ./usr/share/man/man1/perluniintro.1
 ./usr/share/man/man1/perluniprops.1

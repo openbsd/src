@@ -552,7 +552,6 @@
 ./usr/include/macppc/asm.h
 ./usr/include/macppc/atomic.h
 ./usr/include/macppc/autoconf.h
-./usr/include/macppc/bat.h
 ./usr/include/macppc/bus.h
 ./usr/include/macppc/cdefs.h
 ./usr/include/macppc/conf.h
