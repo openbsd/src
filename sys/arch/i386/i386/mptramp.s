@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.16 2015/04/24 12:52:38 kettenis Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.17 2015/04/26 09:48:29 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -170,19 +170,7 @@ _TRMP_LABEL(mp_startup)
 	
 	movl	$MSR_EFER,%ecx
 	rdmsr
-	movl	%edx, %edi		# %edx is needed by wrmsr below
-
-	# Check if we need to enable NXE
-	movl	$0x80000001, %eax
-	cpuid
-	andl	$CPUID_NXE, %edx
-	xorl	%eax,%eax
-	testl	%edx, %edx
-	jz	1f
 	orl	$EFER_NXE, %eax
-1:
-	movl	%edi, %edx		# Restore saved %edx
-	movl	$MSR_EFER,%ecx
 	wrmsr
 
 nopae:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.156 2015/04/25 21:31:24 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.157 2015/04/26 09:48:29 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1660,7 +1660,7 @@ ENTRY(i686_pagezero)
 ENTRY(cpu_paenable)
 	movl	$-1, %eax
 	testl	$CPUID_PAE, _C_LABEL(cpu_feature)
-	jz	2f
+	jz	1f
 
 	pushl	%esi
 	pushl	%edi
@@ -1677,21 +1677,9 @@ ENTRY(cpu_paenable)
 	orl	$CR4_PAE, %eax
 	movl	%eax, %cr4      /* BANG!!! */
 
-	movl	$MSR_EFER,%ecx
+	movl	$MSR_EFER, %ecx
 	rdmsr
-	movl	%edx, %edi		# %edx is needed by wrmsr below
-
-	# Check if we need to enable NXE
-	movl	$0x80000001, %eax
-	cpuid
-	andl	$CPUID_NXE, %edx
-	xorl	%eax,%eax
-	testl	%edx, %edx
-	jz	1f
 	orl	$EFER_NXE, %eax
-1:
-	movl	%edi, %edx		# Restore saved %edx
-	movl	$MSR_EFER,%ecx
 	wrmsr
 
 	movl	12(%esp), %eax
@@ -1703,7 +1691,7 @@ ENTRY(cpu_paenable)
 	xorl	%eax, %eax
 	popl	%edi
 	popl	%esi
-2:
+1:
 	ret
 
 /*

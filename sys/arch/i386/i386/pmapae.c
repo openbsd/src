@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.35 2015/04/24 19:41:58 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.36 2015/04/26 09:48:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -411,6 +411,8 @@
 typedef u_int64_t pd_entry_t;		/* PDE */
 typedef u_int64_t pt_entry_t;		/* PTE */
 
+#define PG_NX	0x8000000000000000ULL	/* execute-disable */
+
 /*
  * Number of PTEs per cache line. 8 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
@@ -423,7 +425,6 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 
 extern u_int32_t protection_codes[];	/* maps MI prot to i386 prot code */
 extern boolean_t pmap_initialized;	/* pmap_init done yet? */
-pt_entry_t pg_nx;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
@@ -581,7 +582,7 @@ pmap_pte_paddr_pae(vaddr_t va)
  * Switch over to PAE page tables
  */
 void
-pmap_bootstrap_pae()
+pmap_bootstrap_pae(void)
 {
 	extern int cpu_pae, nkpde;
 	struct pmap *kpm = pmap_kernel();
@@ -591,13 +592,11 @@ pmap_bootstrap_pae()
 	vaddr_t va, eva;
 	int i, pn, pe;
 
-	if (!(cpu_feature & CPUID_PAE)){
+	if ((cpu_feature & CPUID_PAE) == 0 ||
+	    (ecpu_feature & CPUID_NXE) == 0)
 		return;
-	}
 
 	cpu_pae = 1;
-	if (ecpu_feature & CPUID_NXE)
-		pg_nx = (1ULL << 63);
 
 	va = (vaddr_t)kpm->pm_pdir;
 	kpm->pm_pdidx[0] = (va + 0*NBPG - KERNBASE) | PG_V;
@@ -1353,7 +1352,7 @@ pmap_write_protect_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 
 		md_prot = protection_codes[prot];
 		if (!(prot & PROT_EXEC))
-			md_prot |= pg_nx;
+			md_prot |= PG_NX;
 		if (va < VM_MAXUSER_ADDRESS)
 			md_prot |= PG_u;
 		else if (va < VM_MAX_ADDRESS)
@@ -1610,7 +1609,7 @@ enter_now:
 
 	npte = pa | protection_codes[prot] | PG_V;
 	if (!(prot & PROT_EXEC))
-		npte |= pg_nx;
+		npte |= PG_NX;
 	pmap_exec_account(pmap, va, opte, npte);
 	if (wired)
 		npte |= PG_W;
