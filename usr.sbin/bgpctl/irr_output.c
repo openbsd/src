@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.17 2015/04/25 15:28:18 phessler Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.18 2015/04/26 11:32:54 phessler Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -97,6 +97,7 @@ process_policies(FILE *fh, struct policy_head *head)
 
 		policy_prettyprint(fh, pi);
 		policy_torule(fh, pi);
+		fflush(fh);
 
 		free(pi->peer_addr);
 		free(pi->action);
