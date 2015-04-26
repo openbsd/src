@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.646 2015/04/02 14:24:02 jasper Exp $
+$OpenBSD: usbdevs,v 1.647 2015/04/26 10:18:19 stsp Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4130,6 +4130,7 @@ product TOSHIBA HSDPA		0x1302	HSDPA
 
 /* TP-Link products */
 product TPLINK RTL8192CU	0x0100	RTL8192CU
+product TPLINK RTL8812AU	0x0101	RTL8812AU
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
