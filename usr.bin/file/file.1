@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.39 2015/04/24 20:57:51 nicm Exp $
+.\" $OpenBSD: file.1,v 1.40 2015/04/26 22:51:32 nicm Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 24 2015 $
+.Dd $Mdocdate: April 26 2015 $
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -94,9 +94,7 @@ Causes symlinks to be followed.
 .It Fl s
 Instructs
 .Nm
-to attempt to read all files, not only those which
-.Xr stat 2
-reports are ordinary files.
+to attempt to read block and character device files, not only regular files.
 .It Fl W
 Displays warnings when parsing the magic file or applying its tests.
 Usually used for debugging.

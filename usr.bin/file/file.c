@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.33 2015/04/26 19:53:50 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.34 2015/04/26 22:51:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -287,22 +287,15 @@ fill_buffer(struct input_file *inf)
 static int
 load_file(struct input_file *inf)
 {
-	int	available;
-
 	inf->size = inf->sb.st_size;
 	if (inf->size > FILE_READ_SIZE)
 		inf->size = FILE_READ_SIZE;
-	if (S_ISFIFO(inf->sb.st_mode)) {
-		if (ioctl(inf->fd, FIONREAD, &available) == -1) {
-			xasprintf(&inf->result,  "cannot read '%s' (%s)",
-			    inf->path, strerror(errno));
-			return (1);
-		}
-		inf->size = available;
-	} else if (!S_ISREG(inf->sb.st_mode) && inf->size == 0)
-		inf->size = FILE_READ_SIZE;
-	if (inf->size == 0)
-		return (0);
+	if (inf->size == 0) {
+		if (!S_ISREG(inf->sb.st_mode))
+			inf->size = FILE_READ_SIZE;
+		else
+			return (0);
+	}
 
 	inf->base = mmap(NULL, inf->size, PROT_READ, MAP_PRIVATE, inf->fd, 0);
 	if (inf->base == MAP_FAILED) {
@@ -329,7 +322,6 @@ try_stat(struct input_file *inf)
 		switch (inf->sb.st_mode & S_IFMT) {
 		case S_IFBLK:
 		case S_IFCHR:
-		case S_IFIFO:
 		case S_IFREG:
 			return (0);
 		}
