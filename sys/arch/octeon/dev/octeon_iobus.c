@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.9 2015/02/11 05:42:17 uebayasi Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.10 2015/04/26 12:24:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -80,14 +80,6 @@ void	 iobus_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    u_int8_t *, bus_size_t);
 void	 iobus_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const u_int8_t *, bus_size_t);
-
-int	 iobus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *);
-void	 iobus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	 iobus_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    bus_size_t, bus_space_handle_t *);
-
-void	*iobus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 
 bus_addr_t iobus_pa_to_device(paddr_t);
 paddr_t	 iobus_device_to_pa(bus_addr_t);

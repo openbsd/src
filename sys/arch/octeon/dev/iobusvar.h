@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobusvar.h,v 1.1 2011/05/08 13:24:55 syuu Exp $	*/
+/*	$OpenBSD: iobusvar.h,v 1.2 2015/04/26 12:24:03 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,5 +48,13 @@ struct iobus_attach_args {
 	bus_space_tag_t  aa_bust;
 	bus_dma_tag_t	 aa_dmat;
 };
+
+int	 iobus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+void	 iobus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	 iobus_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, bus_space_handle_t *);
+
+void	*iobus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 
 #endif	/* _IOBUSVAR_H_ */
