@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.832 2015/04/21 10:58:28 henning Exp $
+#	$OpenBSD: install.sub,v 1.833 2015/04/26 14:49:23 henning Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -304,7 +304,7 @@ retrap() {
 
 # Fetch response file for autoinstall.
 get_responsefile() {
-	local _rf _ifdev _mac _mode _server _lf
+	local _rf _ifdev _mac _mode _lf
 	action=
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
@@ -327,17 +327,17 @@ get_responsefile() {
 		done
 		[[ -n $_ifdev ]] && dhclient $_ifdev || break
 		_lf=/var/db/dhclient.leases.$_ifdev
-		_server=$(sed "/^ *next-server /!d;s///;s/;$//;q" $_lf)
+		export AI_SERVER=$(sed "/^ *next-server /!d;s///;s/;$//;q" $_lf)
 		_mode=$(sed -E '/^ *filename "auto_(install|upgrade)";$/!d;s//\1/;q' $_lf)
 		hostname "$(sed -E '/^ *option host-name "(.*)";$/!d;s//\1/;q' $_lf)"
 	done
 
 	# Fetch response file if server and mode are known, otherwise tell which
 	# one was missing. First try to fetch mac-mode.conf, then mode.conf.
-	if [[ -n $_server && -n $_mode ]]; then
+	if [[ -n $AI_SERVER && -n $_mode ]]; then
 		_mac=$(ifconfig $_ifdev | sed 's/.*lladdr \(.*\)/\1/p;d')
 		for _rf in {$_mac-,}$_mode; do
-			_url="http://$_server/$_rf.conf?path=$HTTP_SETDIR"
+			_url="http://$AI_SERVER/$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if ftp -Vo "/ai.$_mode.conf" "$_url" 2>/dev/null; then
 				action=$_mode
@@ -346,7 +346,7 @@ get_responsefile() {
 			fi
 		done
 	else
-		[[ -z $_server ]] && echo "Could not determine next-server."
+		[[ -z $AI_SERVER ]] && echo "Could not determine next-server."
 		[[ -z $_mode ]] && echo "Could not determine auto mode."
 	fi
 
@@ -354,7 +354,7 @@ get_responsefile() {
 	# server was found in lease file.
 	while :; do
 		ask "Response file location?" \
-			"${_server:+http://$_server/install.conf}"
+			"${AI_SERVER:+http://$_server/install.conf}"
 		[[ -n $resp ]] && _rf=$resp && break
 	done
 
