@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.29 2015/04/26 12:19:24 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.30 2015/04/26 12:27:29 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -726,6 +726,8 @@ vio_start(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
 
 again:
 	for (;;) {
@@ -1117,8 +1119,7 @@ vio_tx_intr(struct virtqueue *vq)
 	int r;
 
 	r = vio_txeof(vq);
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		vio_start(ifp);
+	vio_start(ifp);
 	return r;
 }
 
