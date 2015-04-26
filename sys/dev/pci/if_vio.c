@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.28 2015/04/24 12:53:35 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.29 2015/04/26 12:19:24 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -49,6 +49,9 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -525,7 +528,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 
 	features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
 	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
-	    VIRTIO_NET_F_MRG_RXBUF;
+	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM;
 	/*
 	 * VIRTIO_F_RING_EVENT_IDX can be switched off by setting bit 2 in the
 	 * driver flags, see config(8)
@@ -589,6 +592,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = vio_start;
 	ifp->if_ioctl = vio_ioctl;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	if (features & VIRTIO_NET_F_CSUM)
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
 	IFQ_SET_MAXLEN(&ifp->if_snd, vsc->sc_vqs[1].vq_num - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	ifmedia_init(&sc->sc_media, 0, vio_media_change, vio_media_status);
@@ -738,6 +743,34 @@ again:
 		}
 		if (r != 0)
 			panic("enqueue_prep for a tx buffer: %d", r);
+
+		hdr = &sc->sc_tx_hdrs[slot];
+		memset(hdr, 0, sc->sc_hdr_size);
+		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
+			struct mbuf *mip;
+			struct ip *ip;
+			int ehdrlen = ETHER_HDR_LEN;
+			int ipoff;
+#if NVLAN > 0
+			struct ether_vlan_header *eh;
+
+			eh = mtod(m, struct ether_vlan_header *);
+			if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN))
+				ehdrlen += ETHER_VLAN_ENCAP_LEN;
+#endif
+
+			if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
+				hdr->csum_offset = offsetof(struct tcphdr, th_sum);
+			else
+				hdr->csum_offset = offsetof(struct udphdr, uh_sum);
+
+			mip = m_getptr(m, ehdrlen, &ipoff);
+			KASSERT(mip != NULL && mip->m_len - ipoff >= sizeof(*ip));
+			ip = (struct ip *)(mip->m_data + ipoff);
+			hdr->csum_start = ehdrlen + (ip->ip_hl << 2);
+			hdr->flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
+		}
+
 		r = vio_encap(sc, slot, m);
 		if (r != 0) {
 			virtio_enqueue_abort(vq, slot);
@@ -757,8 +790,6 @@ again:
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
-		hdr = &sc->sc_tx_hdrs[slot];
-		memset(hdr, 0, sc->sc_hdr_size);
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_tx_dmamaps[slot], 0,
 		    sc->sc_tx_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_PREWRITE);
 		VIO_DMAMEM_SYNC(vsc, sc, hdr, sc->sc_hdr_size,
