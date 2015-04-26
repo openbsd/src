@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.56 2015/02/05 10:32:39 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.57 2015/04/26 20:25:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -147,6 +147,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		goto error;
 	}
 	new_wp = window_add_pane(w, hlimit);
+	layout_assign_pane(lc, new_wp);
 
 	path = NULL;
 	if (cmdq->client != NULL && cmdq->client->session == NULL)
@@ -159,7 +160,6 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (window_pane_spawn(new_wp, argc, argv, path, shell, cwd, &env,
 	    s->tio, &cause) != 0)
 		goto error;
-	layout_assign_pane(lc, new_wp);
 
 	server_redraw_window(w);
 
@@ -194,8 +194,10 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 
 error:
 	environ_free(&env);
-	if (new_wp != NULL)
+	if (new_wp != NULL) {
+		layout_close_pane(new_wp);
 		window_remove_pane(w, new_wp);
+	}
 	cmdq_error(cmdq, "create pane failed: %s", cause);
 	free(cause);
 	if (fd != -1)
