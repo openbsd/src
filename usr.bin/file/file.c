@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.32 2015/04/24 17:34:57 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.33 2015/04/26 19:53:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -250,7 +250,7 @@ read_link(struct input_file *inf)
 		if (stat(inf->path, &inf->sb) == -1)
 			inf->error = strerror(errno);
 	} else {
-		if (stat(inf->link_path, &sb) == -1)
+		if (stat(inf->path, &sb) == -1)
 			inf->link_target = errno;
 	}
 }
