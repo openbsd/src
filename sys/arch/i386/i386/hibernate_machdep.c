@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.45 2015/04/12 18:37:53 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.46 2015/04/26 11:09:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -244,6 +244,7 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	paddr_t pa;
 	vaddr_t kern_start_4m_va, kern_end_4m_va, page;
 	vaddr_t piglet_start_va, piglet_end_va;
+	struct pmap *kpm = pmap_kernel();
 
 	/* Identity map PD, PT, and stack pages */
 	pmap_kenter_pa(HIBERNATE_PT_PAGE, HIBERNATE_PT_PAGE, PROT_MASK);
@@ -306,6 +307,17 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 		pa = (paddr_t)(phys_page_number * NBPD);
 		hibernate_enter_resume_mapping(page, pa, 1);
 	}
+
+	/*
+	 * Fill last 8 slots of the new PD with the PAE PDPTEs of the
+	 * kernel pmap, such that we can easily switch back into
+	 * non-PAE mode.  If we're running in non-PAE mode, this will
+	 * just fill the slots with zeroes.
+	 */
+	((uint64_t *)HIBERNATE_PD_PAGE)[508] = kpm->pm_pdidx[0];
+	((uint64_t *)HIBERNATE_PD_PAGE)[509] = kpm->pm_pdidx[1];
+	((uint64_t *)HIBERNATE_PD_PAGE)[510] = kpm->pm_pdidx[2];
+	((uint64_t *)HIBERNATE_PD_PAGE)[511] = kpm->pm_pdidx[3];
 
 	/* Unmap MMU pages (stack remains mapped) */
 	pmap_kremove(HIBERNATE_PT_PAGE, PAGE_SIZE);
