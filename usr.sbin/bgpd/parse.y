@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.279 2015/04/25 15:28:18 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.280 2015/04/26 20:12:03 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netmpls/mpls.h>
@@ -578,6 +579,11 @@ conf_main	: AS as4number		{
 			conf->connectretry = $2;
 		}
 		| SOCKET STRING	restricted {
+			if (strlen($2) >=
+			    sizeof(((struct sockaddr_un *)0)->sun_path)) {
+				yyerror("socket path too long");
+				YYERROR;
+			}
 			if ($3) {
 				free(conf->rcsock);
 				conf->rcsock = $2;
