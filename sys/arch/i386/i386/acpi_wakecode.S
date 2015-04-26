@@ -200,6 +200,15 @@ _C_LABEL(acpi_protected_mode_resume):
 	mov	acpi_saved_cr4,%eax
 	mov	%eax,%cr4
 
+	testl	$CR4_PAE, %eax
+	jz	1f
+
+	movl	$MSR_EFER, %ecx
+	rdmsr
+	orl	$EFER_NXE, %eax
+	wrmsr
+
+1:
 	/*
 	 * Re-enable paging, using the CR3 we stored before suspend
 	 * as our new page table base location. Restore CR0 after
