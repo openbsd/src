@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.52 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.53 2015/04/26 01:23:19 guenther Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -390,8 +390,11 @@ save_core(void)
 err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 		bounds = 0;
 	} else {
-		const char *errstr;
+		const char *errstr = NULL;
+		char *p;
 
+		if ((p = strchr(buf, '\n')) != NULL)
+			*p = '\0';
 		bounds = strtonum(buf, 0, INT_MAX, &errstr);
 		if (errstr)
 			syslog(LOG_WARNING, "bounds was corrupt: %s", errstr);
@@ -613,10 +616,14 @@ check_space(void)
 			minfree = 0;
 		else {
 			const char *errstr;
+			char *p;
 
+			if ((p = strchr(buf, '\n')) != NULL)
+				*p = '\0';
 			minfree = strtonum(buf, 0, LLONG_MAX, &errstr);
-			syslog(LOG_WARNING,
-			    "minfree was corrupt: %s", errstr);
+			if (errstr)
+				syslog(LOG_WARNING,
+				    "minfree was corrupt: %s", errstr);
 		}
 		(void)fclose(fp);
 	}
