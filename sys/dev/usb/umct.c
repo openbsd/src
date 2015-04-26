@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.43 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: umct.c,v 1.44 2015/04/26 06:38:04 jmatthew Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ struct	umct_softc {
 #define UMCTOBUFSIZE 256
 
 void umct_init(struct umct_softc *);
-void umct_set_baudrate(struct umct_softc *, u_int);
+void umct_set_baudrate(struct umct_softc *, u_int, int);
 void umct_set_lcr(struct umct_softc *, u_int);
 void umct_intr(struct usbd_xfer *, void *, usbd_status);
 
@@ -413,7 +413,7 @@ umct_set_lcr(struct umct_softc *sc, u_int data)
 }
 
 void
-umct_set_baudrate(struct umct_softc *sc, u_int rate)
+umct_set_baudrate(struct umct_softc *sc, u_int rate, int cts)
 {
         usb_device_request_t req;
 	uDWord arate;
@@ -447,12 +447,30 @@ umct_set_baudrate(struct umct_softc *sc, u_int rate)
 
 	/* XXX should check */
         (void)usbd_do_request(sc->sc_udev, &req, arate);
+
+	/* unknown request, required after setting baud rate */
+	USETDW(arate, 0);
+	req.bmRequestType = UMCT_SET_REQUEST;
+	req.bRequest = REQ_UNKNOWN1;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_iface_number);
+	USETW(req.wLength, LENGTH_UNKNOWN1);
+	(void)usbd_do_request(sc->sc_udev, &req, arate);
+
+	/* update CTS, also required after setting baud rate */
+	USETDW(arate, cts);
+	req.bmRequestType = UMCT_SET_REQUEST;
+	req.bRequest = REQ_SET_CTS;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_iface_number);
+	USETW(req.wLength, LENGTH_SET_CTS);
+	(void)usbd_do_request(sc->sc_udev, &req, arate);
 }
 
 void
 umct_init(struct umct_softc *sc)
 {
-	umct_set_baudrate(sc, 9600);
+	umct_set_baudrate(sc, 9600, 0);
 	umct_set_lcr(sc, LCR_DATA_BITS_8 | LCR_PARITY_NONE | LCR_STOP_BITS_1);
 }
 
@@ -492,7 +510,7 @@ umct_param(void *addr, int portno, struct termios *t)
 		break;
 	}
 
-	umct_set_baudrate(sc, t->c_ospeed);
+	umct_set_baudrate(sc, t->c_ospeed, ISSET(t->c_cflag, CRTSCTS));
 
 	sc->last_lcr = data;
 	umct_set_lcr(sc, data);

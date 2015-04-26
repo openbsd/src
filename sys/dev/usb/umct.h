@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.h,v 1.4 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: umct.h,v 1.5 2015/04/26 06:38:04 jmatthew Exp $	*/
 /*	$NetBSD: umct.h,v 1.1 2001/03/28 18:42:13 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,12 @@
 
 #define REQ_SET_MCR		10	/* Set Modem Control Register (MCR) */
 #define LENGTH_SET_MCR		1
+
+#define REQ_UNKNOWN1		11	/* Unknown functionality */
+#define LENGTH_UNKNOWN1		1
+
+#define REQ_SET_CTS		12	/* Apparently controls CTS */
+#define LENGTH_SET_CTS		1
 
 /*
  * Baud rate (divisor)
