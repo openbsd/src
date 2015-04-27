@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_subr.c,v 1.7 2015/03/31 16:00:38 mpi Exp $	*/
+/*	$OpenBSD: cpu_subr.c,v 1.8 2015/04/27 07:20:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Martin Pieuchot
@@ -215,7 +215,8 @@ ppc64_mfhid1(void)
 void
 ppc64_mthid1(u_int64_t val)
 {
-	__asm volatile ("mtspr 1009,%0; mtspr 1009,%0; isync;" :: "r" (val));
+	__asm volatile ("sldi %0,%0,32; or %0,%0,%0+1;"
+	    "mtspr 1009,%0; mtspr 1009,%0; isync;" :: "r" (val));
 }
 
 u_int64_t
@@ -231,7 +232,8 @@ ppc64_mfhid4(void)
 void
 ppc64_mthid4(u_int64_t val)
 {
-	__asm volatile ("sync; mtspr 1012,%0; isync;" :: "r" (val));
+	__asm volatile ("sldi %0,%0,32; or %0,%0,%0+1;"
+	    "sync; mtspr 1012,%0; isync;" :: "r" (val));
 }
 
 u_int64_t
@@ -247,5 +249,6 @@ ppc64_mfhid5(void)
 void
 ppc64_mthid5(u_int64_t val)
 {
-	__asm volatile ("sync; mtspr 1014,%0; isync;" :: "r" (val));
+	__asm volatile ("sldi %0,%0,32; or %0,%0,%0+1;"
+	    "sync; mtspr 1014,%0; isync;" :: "r" (val));
 }
