@@ -1,9 +1,12 @@
-# $OpenBSD: Makefile,v 1.13 2015/04/24 16:24:11 nicm Exp $
+# $OpenBSD: Makefile,v 1.14 2015/04/27 13:41:45 nicm Exp $
 
 PROG=   file
 SRCS=   file.c magic-dump.c magic-load.c magic-test.c magic-common.c text.c \
 	xmalloc.c
 MAN=	file.1 magic.5
+
+LDADD=	-lutil
+DPADD=	${LIBUTIL}
 
 CDIAGFLAGS+= -Wno-long-long -Wall -W -Wnested-externs -Wformat=2
 CDIAGFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations
