@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.134 2015/04/17 11:04:02 mikeb Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.135 2015/04/27 14:51:44 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -590,24 +590,8 @@ nd6_purge(struct ifnet *ifp)
 
 	/* Nuke prefix list entries toward ifp */
 	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
-		if (pr->ndpr_ifp == ifp) {
-			/*
-			 * Because if_detach() does *not* release prefixes
-			 * while purging addresses the reference count will
-			 * still be above zero. We therefore reset it to
-			 * make sure that the prefix really gets purged.
-			 */
-			pr->ndpr_refcnt = 0;
-			/*
-			 * Previously, pr->ndpr_addr is removed as well,
-			 * but I strongly believe we don't have to do it.
-			 * nd6_purge() is only called from in6_ifdetach(),
-			 * which removes all the associated interface addresses
-			 * by itself.
-			 * (jinmei@kame.net 20010129)
-			 */
+		if (pr->ndpr_ifp == ifp)
 			prelist_remove(pr);
-		}
 	}
 
 	if (ifp->if_xflags & IFXF_AUTOCONF6) {

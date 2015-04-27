@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.101 2015/03/25 17:39:33 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.102 2015/04/27 14:51:44 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1452,7 +1452,8 @@ nd6_addr_add(void *prptr)
 		pfxlist_onlink_check();
 
 	/* Decrement prefix refcount now that the task is done. */
-	pr->ndpr_refcnt--;
+	if (--pr->ndpr_refcnt == 0)
+		prelist_remove(pr);
 
 	splx(s);
 }

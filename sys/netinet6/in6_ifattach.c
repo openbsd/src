@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.86 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.87 2015/04/27 14:51:44 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -600,9 +600,6 @@ in6_ifdetach(struct ifnet *ifp)
 	ip6_mrouter_detach(ifp);
 #endif
 
-	/* remove neighbor management table */
-	nd6_purge(ifp);
-
 	/* nuke any of IPv6 addresses we have */
 	TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, next) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -612,12 +609,8 @@ in6_ifdetach(struct ifnet *ifp)
 	}
 
 	/*
-	 * remove neighbor management table.  we call it twice just to make
-	 * sure we nuke everything.  maybe we need just one call.
-	 * XXX: since the first call did not release addresses, some prefixes
-	 * might remain.  We should call nd6_purge() again to release the
-	 * prefixes after removing all addresses above.
-	 * (Or can we just delay calling nd6_purge until at this point?)
+	 * Remove neighbor management table.  Must be called after
+	 * purging addresses.
 	 */
 	nd6_purge(ifp);
 
