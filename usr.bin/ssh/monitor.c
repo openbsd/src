@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.146 2015/04/17 04:32:31 djm Exp $ */
+/* $OpenBSD: monitor.c,v 1.147 2015/04/27 01:52:30 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -1518,11 +1518,13 @@ monitor_apply_keystate(struct monitor *pmonitor)
 
 	if ((kex = ssh->kex) != 0) {
 		/* XXX set callbacks */
+#ifdef WITH_OPENSSL
 		kex->kex[KEX_DH_GRP1_SHA1] = kexdh_server;
 		kex->kex[KEX_DH_GRP14_SHA1] = kexdh_server;
 		kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 		kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
 		kex->kex[KEX_ECDH_SHA2] = kexecdh_server;
+#endif
 		kex->kex[KEX_C25519_SHA256] = kexc25519_server;
 		kex->load_host_public_key=&get_hostkey_public_by_type;
 		kex->load_host_private_key=&get_hostkey_private_by_type;

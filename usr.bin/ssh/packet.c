@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.210 2015/03/24 20:10:08 markus Exp $ */
+/* $OpenBSD: packet.c,v 1.211 2015/04/27 01:52:30 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -778,10 +778,12 @@ ssh_packet_set_compress_hooks(struct ssh *ssh, void *ctx,
  * encrypted independently of each other.
  */
 
-#ifdef WITH_OPENSSL
 void
 ssh_packet_set_encryption_key(struct ssh *ssh, const u_char *key, u_int keylen, int number)
 {
+#ifndef WITH_SSH1
+	fatal("no SSH protocol 1 support");
+#else /* WITH_SSH1 */
 	struct session_state *state = ssh->state;
 	const struct sshcipher *cipher = cipher_by_number(number);
 	int r;
@@ -806,8 +808,8 @@ ssh_packet_set_encryption_key(struct ssh *ssh, const u_char *key, u_int keylen, 
 		error("Warning: %s", wmsg);
 		state->cipher_warning_done = 1;
 	}
+#endif /* WITH_SSH1 */
 }
-#endif
 
 /*
  * Finalizes and sends the packet.  If the encryption key has been set,
@@ -2713,23 +2715,27 @@ sshpkt_put_stringb(struct ssh *ssh, const struct sshbuf *v)
 	return sshbuf_put_stringb(ssh->state->outgoing_packet, v);
 }
 
+#ifdef WITH_OPENSSL
 int
 sshpkt_put_ec(struct ssh *ssh, const EC_POINT *v, const EC_GROUP *g)
 {
 	return sshbuf_put_ec(ssh->state->outgoing_packet, v, g);
 }
 
+#ifdef WITH_SSH1
 int
 sshpkt_put_bignum1(struct ssh *ssh, const BIGNUM *v)
 {
 	return sshbuf_put_bignum1(ssh->state->outgoing_packet, v);
 }
+#endif /* WITH_SSH1 */
 
 int
 sshpkt_put_bignum2(struct ssh *ssh, const BIGNUM *v)
 {
 	return sshbuf_put_bignum2(ssh->state->outgoing_packet, v);
 }
+#endif /* WITH_OPENSSL */
 
 /* fetch data from the incoming packet */
 
@@ -2775,23 +2781,27 @@ sshpkt_get_cstring(struct ssh *ssh, char **valp, size_t *lenp)
 	return sshbuf_get_cstring(ssh->state->incoming_packet, valp, lenp);
 }
 
+#ifdef WITH_OPENSSL
 int
 sshpkt_get_ec(struct ssh *ssh, EC_POINT *v, const EC_GROUP *g)
 {
 	return sshbuf_get_ec(ssh->state->incoming_packet, v, g);
 }
 
+#ifdef WITH_SSH1
 int
 sshpkt_get_bignum1(struct ssh *ssh, BIGNUM *v)
 {
 	return sshbuf_get_bignum1(ssh->state->incoming_packet, v);
 }
+#endif /* WITH_SSH1 */
 
 int
 sshpkt_get_bignum2(struct ssh *ssh, BIGNUM *v)
 {
 	return sshbuf_get_bignum2(ssh->state->incoming_packet, v);
 }
+#endif /* WITH_OPENSSL */
 
 int
 sshpkt_get_end(struct ssh *ssh)

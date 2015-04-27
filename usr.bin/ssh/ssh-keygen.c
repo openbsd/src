@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.270 2015/04/24 01:36:01 deraadt Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.271 2015/04/27 01:52:30 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -176,11 +176,14 @@ int prime_test(FILE *, FILE *, u_int32_t, u_int32_t, char *, unsigned long,
 static void
 type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 {
+#ifdef WITH_OPENSSL
 	u_int maxbits, nid;
+#endif
 
 	if (type == KEY_UNSPEC)
 		fatal("unknown key type %s", key_type_name);
 	if (*bitsp == 0) {
+#ifdef WITH_OPENSSL
 		if (type == KEY_DSA)
 			*bitsp = DEFAULT_BITS_DSA;
 		else if (type == KEY_ECDSA) {
@@ -191,13 +194,14 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 				*bitsp = DEFAULT_BITS_ECDSA;
 		}
 		else
+#endif
 			*bitsp = DEFAULT_BITS;
 	}
+#ifdef WITH_OPENSSL
 	maxbits = (type == KEY_DSA) ?
 	    OPENSSL_DSA_MAX_MODULUS_BITS : OPENSSL_RSA_MAX_MODULUS_BITS;
 	if (*bitsp > maxbits)
 		fatal("key bits exceeds maximum %d", maxbits);
-#ifdef WITH_OPENSSL
 	if (type == KEY_DSA && *bitsp != 1024)
 		fatal("DSA keys must be 1024 bits");
 	else if (type != KEY_ECDSA && type != KEY_ED25519 && *bitsp < 768)
