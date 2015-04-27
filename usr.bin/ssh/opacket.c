@@ -72,7 +72,7 @@ ssh_packet_put_raw(struct ssh *ssh, const void *buf, u_int len)
 		fatal("%s: %s", __func__, ssh_err(r));
 }
 
-#ifdef WITH_OPENSSL
+#ifdef WITH_SSH1
 void
 ssh_packet_put_bignum(struct ssh *ssh, BIGNUM * value)
 {
@@ -81,7 +81,9 @@ ssh_packet_put_bignum(struct ssh *ssh, BIGNUM * value)
 	if ((r = sshpkt_put_bignum1(ssh, value)) != 0)
 		fatal("%s: %s", __func__, ssh_err(r));
 }
+#endif
 
+#ifdef WITH_OPENSSL
 void
 ssh_packet_put_bignum2(struct ssh *ssh, BIGNUM * value)
 {
@@ -144,7 +146,7 @@ ssh_packet_get_int64(struct ssh *ssh)
 	return val;
 }
 
-#ifdef WITH_OPENSSL
+#ifdef WITH_SSH1
 void
 ssh_packet_get_bignum(struct ssh *ssh, BIGNUM * value)
 {
@@ -153,7 +155,9 @@ ssh_packet_get_bignum(struct ssh *ssh, BIGNUM * value)
 	if ((r = sshpkt_get_bignum1(ssh, value)) != 0)
 		fatal("%s: %s", __func__, ssh_err(r));
 }
+#endif
 
+#ifdef WITH_OPENSSL
 void
 ssh_packet_get_bignum2(struct ssh *ssh, BIGNUM * value)
 {
