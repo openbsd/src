@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.35 2015/04/27 13:41:45 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.36 2015/04/27 13:52:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -186,16 +186,15 @@ main(int argc, char **argv)
 	}
 	if (magicfp == NULL)
 		err(1, "%s", magicpath);
+	setvbuf(magicfp, NULL, _IOLBF, 0); /* stops stdio calling fstat */
 
 	parent = getpid();
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
 		err(1, "socketpair");
-	switch (pid = fork()) {
-	case 0:
+	pid = sandbox_fork(FILE_USER);
+	if (pid == 0) {
 		close(pair[0]);
 		child(pair[1], parent, argc, argv);
-	case -1:
-		err(1, "fork");
 	}
 	close(pair[1]);
 
@@ -329,19 +328,6 @@ child(int fd, pid_t parent, int argc, char **argv)
 	struct input_file	 inf;
 	int			 i, idx;
 	size_t			 len, width = 0;
-	struct passwd		*pw;
-
-	if (geteuid() == 0) {
-		pw = getpwnam(FILE_USER);
-		if (pw == NULL)
-			errx(1, "unknown user %s", FILE_USER);
-		if (setgroups(1, &pw->pw_gid) != 0)
-			err(1, "setgroups");
-		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) != 0)
-			err(1, "setresgid");
-		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
-			err(1, "setresuid");
-	}
 
 	m = magic_load(magicfp, magicpath, cflag || Wflag);
 	if (cflag) {
