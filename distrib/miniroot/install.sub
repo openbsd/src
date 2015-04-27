@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.833 2015/04/26 14:49:23 henning Exp $
+#	$OpenBSD: install.sub,v 1.834 2015/04/27 23:17:11 djm Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1576,12 +1576,22 @@ user_setup() {
 	userkey=
 	$AUTO && ask "Public ssh key for user $user" none &&
 		[[ $resp != none ]] && userkey=$resp
+}
 
-	if [[ $sshd == y ]]; then
-		ask_yn "Since you set up a user, disable sshd(8) logins to root?" yes
-		sshd_disableroot=$resp
+# Ask user whether or not to allow logins to root in case sshd(8) is enabled.
+# If no user is setup, show a hint to enable root logins, but warn about risks
+# of doing so. During autoinstall ask if a rootkey is provided, even if a user
+# is setup.
+ask_root_sshd() {
+	[[ $sshd == y ]] || return
+	if [[ -z $user ]]; then
+		echo "Since no user was setup, root logins via sshd(8) might be useful."
+		echo "WARNING: root accounts are often targets of password guessing attacks."
 	fi
-
+	if [[ -z $user || -n $rootkey ]]; then
+		ask_yn "Enable sshd(8) logins to root?" no
+		sshd_enableroot=$resp
+	fi
 }
 
 # Set TZ variable based on zonefile $1 and user selection.
@@ -2007,12 +2017,18 @@ install_sets() {
 
 # Apply configuration settings based on the previously gathered information.
 apply() {
-	[[ $sshd == n ]] && echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
-	if [[ $sshd_disableroot == y ]]; then
-		sed "/^#\(PermitRootLogin\) yes/s//\1 no/" \
-			< /mnt/etc/ssh/sshd_config >/tmp/sshd_config
+	local ssh_permitroot=
+
+	if [[ $sshd == y && $sshd_enableroot == y ]]; then
+		ssh_permitroot=yes
+		[[ -n $rootkey ]] && ssh_permitroot=without-password
+		sed "/^#\(PermitRootLogin\) no/s//\1 $ssh_permitroot/" \
+			</mnt/etc/ssh/sshd_config >/tmp/sshd_config
 		cp /tmp/sshd_config /mnt/etc/ssh/sshd_config
+	else
+		echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
 	fi
+
 	if [[ $ntpd == y ]]; then
 		echo "ntpd_flags=" >>/mnt/etc/rc.conf.local
 		[[ $ntpd_server == default ]] && ntpd_server=pool.ntp.org
