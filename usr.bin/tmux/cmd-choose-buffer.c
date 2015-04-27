@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.21 2015/02/05 10:29:43 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.22 2015/04/27 16:25:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -53,7 +53,7 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	u_int				 idx;
 	int				 utf8flag;
 
-	if ((c = cmd_current_client(cmdq)) == NULL) {
+	if ((c = cmd_find_client(cmdq, NULL, 1)) == NULL) {
 		cmdq_error(cmdq, "no client available");
 		return (CMD_RETURN_ERROR);
 	}

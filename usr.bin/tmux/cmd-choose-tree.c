@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.27 2014/10/20 23:35:28 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.28 2015/04/27 16:25:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -87,7 +87,7 @@ cmd_choose_tree_exec(struct cmd *self, struct cmd_q *cmdq)
 	ses_template = win_template = NULL;
 	ses_action = win_action = NULL;
 
-	if ((c = cmd_current_client(cmdq)) == NULL) {
+	if ((c = cmd_find_client(cmdq, NULL, 1)) == NULL) {
 		cmdq_error(cmdq, "no client available");
 		return (CMD_RETURN_ERROR);
 	}

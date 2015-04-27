@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.23 2015/04/24 23:17:11 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.24 2015/04/27 16:25:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,7 +61,7 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	char				*action;
 	u_int			 	 idx, cur;
 
-	if ((c = cmd_current_client(cmdq)) == NULL) {
+	if ((c = cmd_find_client(cmdq, NULL, 1)) == NULL) {
 		cmdq_error(cmdq, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
