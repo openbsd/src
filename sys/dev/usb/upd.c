@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.15 2015/04/27 07:37:19 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.16 2015/04/27 07:41:41 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -101,6 +101,8 @@ int  upd_detach(struct device *, int);
 
 void upd_refresh(void *);
 void upd_update_sensors(struct upd_softc *, uint8_t *, unsigned int, int);
+void upd_update_sensor_value(struct upd_softc *, struct upd_sensor *,
+    uint8_t *, int);
 void upd_intr(struct uhidev *, void *, uint);
 struct upd_usage_entry *upd_lookup_usage_entry(const struct hid_item *);
 struct upd_sensor *upd_lookup_sensor(struct upd_softc *, int, int);
@@ -324,8 +326,7 @@ upd_update_sensors(struct upd_softc *sc, uint8_t *buf, unsigned int len,
     int repid)
 {
 	struct upd_sensor	*sensor;
-	ulong			hdata, batpres;
-	ulong 			adjust;
+	ulong			batpres;
 	int			i;
 
 	sensor = upd_lookup_sensor(sc, HUP_BATTERY, HUB_BATTERY_PRESENT);
@@ -348,27 +349,35 @@ upd_update_sensors(struct upd_softc *sc, uint8_t *buf, unsigned int len,
 			}
 		}
 
-		switch (HID_GET_USAGE(sensor->hitem.usage)) {
-		case HUB_REL_STATEOF_CHARGE:
-		case HUB_ABS_STATEOF_CHARGE:
-		case HUB_REM_CAPACITY:
-		case HUB_FULLCHARGE_CAPACITY:
-			adjust = 1000; /* scale adjust */
-			break;
-		default:
-			adjust = 1; /* no scale adjust */
-			break;
-		}
-
-		hdata = hid_get_data(buf, len, &sensor->hitem.loc);
-
-		sensor->ksensor.value = hdata * adjust;
-		sensor->ksensor.status = SENSOR_S_OK;
-		sensor->ksensor.flags &= ~SENSOR_FINVALID;
-		DPRINTF(("%s: hidget data: %lu\n", DEVNAME(sc), hdata));
+		upd_update_sensor_value(sc, sensor, buf, len);
 	}
 }
 
+void
+upd_update_sensor_value(struct upd_softc *sc, struct upd_sensor *sensor,
+    uint8_t *buf, int len)
+{
+	int64_t	hdata, adjust;
+
+	switch (HID_GET_USAGE(sensor->hitem.usage)) {
+	case HUB_REL_STATEOF_CHARGE:
+	case HUB_ABS_STATEOF_CHARGE:
+	case HUB_REM_CAPACITY:
+	case HUB_FULLCHARGE_CAPACITY:
+		adjust = 1000; /* scale adjust */
+		break;
+	default:
+		adjust = 1; /* no scale adjust */
+		break;
+	}
+
+	hdata = hid_get_data(buf, len, &sensor->hitem.loc);
+	sensor->ksensor.value = hdata * adjust;
+	sensor->ksensor.status = SENSOR_S_OK;
+	sensor->ksensor.flags &= ~SENSOR_FINVALID;
+	DPRINTF(("%s: %s hidget data: %lld\n", DEVNAME(sc),
+	    sensor->ksensor.desc, hdata));
+}
 
 void
 upd_intr(struct uhidev *uh, void *p, uint len)
