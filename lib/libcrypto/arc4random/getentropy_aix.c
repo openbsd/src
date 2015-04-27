@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_aix.c,v 1.1 2015/03/30 11:29:48 bcook Exp $	*/
+/*	$OpenBSD: getentropy_aix.c,v 1.2 2015/04/27 03:34:43 bcook Exp $	*/
 
 /*
  * Copyright (c) 2015 Michael Felt <aixtools@gmail.com>
@@ -222,7 +222,9 @@ getentropy_fallback(void *buf, size_t len)
 	struct timespec ts;
 	struct timeval tv;
 	perfstat_cpu_total_t cpustats;
+#ifdef _AIX61
 	perfstat_cpu_total_wpar_t cpustats_wpar;
+#endif
 	perfstat_partition_total_t lparstats;
 	perfstat_disk_total_t diskinfo;
 	perfstat_netinterface_total_t netinfo;
@@ -257,8 +259,10 @@ getentropy_fallback(void *buf, size_t len)
 			HX(perfstat_cpu_total(NULL, &cpustats,
 			    sizeof(cpustats), 1) == -1, cpustats);
 
+#ifdef _AIX61
 			HX(perfstat_cpu_total_wpar(NULL, &cpustats_wpar,
 			    sizeof(cpustats_wpar), 1) == -1, cpustats_wpar);
+#endif
 
 			HX(perfstat_partition_total(NULL, &lparstats,
 			    sizeof(lparstats), 1) == -1, lparstats);
