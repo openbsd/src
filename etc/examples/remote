@@ -1,60 +1,17 @@
-#	$OpenBSD: remote,v 1.1 2014/07/12 03:52:39 deraadt Exp $
-#	from: @(#)remote	8.1 (Berkeley) 6/10/93
+#	$OpenBSD: remote,v 1.2 2015/04/27 19:12:27 nicm Exp $
 #
-# remote -- remote host description database
-# see tip(1), cgetcap(3), remote(5)
+# Remote host descriptions -- see cu(1), cgetcap(3), tty(4), remote(5)
 #
-# Capabilities used in examples:
+# On OpenBSD the serial ports are typically called /dev/cua* or /dev/tty*.
+# The /dev/cua* calling unit should be used if available (some drivers do not
+# provide it). See tty(4) for more information.
 #
-#   br	baud rate (defaults to 300)
-#   dc	direct connect
-#   dv	device to use for the tty
-#   el	EOL marks (default is NULL)
-#   ie	input EOF marks (default is NULL)
-#   oe	output EOF string (default is NULL)
-#   pa	parity
-#   tc	include the named system description
-#
-# Most OpenBSD architectures use /dev/tty00, /dev/cua00, etc.
-# for the 'standard' serial ports. Some architectures use
-# /dev/ttya, /dev/cuaa, etc. The samples provide descriptions
-# for the first serial port in each style.
-#
-# A few architectures such as the Alpha or HPPA either
-# don't provide a serial port by default or have more complex
-# naming conventions.
-#
-# In all cases make sure you are using the appropriate device
-# name for the port you wish to access.
-#
-# System names can be anything, the samples use the device name
-# for simplicity.
-#
-# NOTE:
-#       a) Multiple :tc=XXX: capabilities are allowed, so that
-#          various general pieces can be assembled into one
-#          system description.
-#       b) Only the first capability with the same name is
-#          used. So capabilities with :tc=XXX: can be
-#          overridden by assigning them a value before
-#          including them. e.g. ":oe=^Z:" in doshost below.
-#
-# See cgetcap(3) for details on capability databases.
-# --------------------------------------------------------------
-
-# General definitions used in :tc=XXX: capabilities below
-#
-direct:\
-	:dc:
-
-doshost:\
-	:oe=^Z:tc=unixhost:
 
 unixhost:\
-	:pa=none:br#9600:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:
+	:br#9600:
 
-tty00|For i386,macppc,vax:\
-	:dv=/dev/tty00:tc=direct:tc=unixhost:
+cua00|For i386,macppc,vax:\
+	:dv=/dev/cua00:tc=unixhost:
 
-ttya|For sparc:\
-	:dv=/dev/ttya:tc=direct:tc=unixhost:
+cuaa|For sparc:\
+	:dv=/dev/cuaa:tc=unixhost:
