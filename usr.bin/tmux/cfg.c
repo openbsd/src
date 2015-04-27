@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.36 2015/04/25 18:49:01 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.37 2015/04/27 22:50:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -140,6 +140,7 @@ cfg_print_causes(struct cmd_q *cmdq)
 
 	free(cfg_causes);
 	cfg_causes = NULL;
+	cfg_ncauses = 0;
 }
 
 void
@@ -161,4 +162,5 @@ cfg_show_causes(struct session *s)
 
 	free(cfg_causes);
 	cfg_causes = NULL;
+	cfg_ncauses = 0;
 }
