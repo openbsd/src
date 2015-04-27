@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.16 2015/04/27 07:41:41 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.17 2015/04/27 09:14:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -86,7 +86,6 @@ struct upd_softc {
 	struct uhidev		 sc_hdev;
 	int			 sc_num_sensors;
 	u_int			 sc_max_repid;
-	u_int			 sc_max_sensors;
 
 	/* sensor framework */
 	struct ksensordev	 sc_sensordev;
@@ -104,7 +103,8 @@ void upd_update_sensors(struct upd_softc *, uint8_t *, unsigned int, int);
 void upd_update_sensor_value(struct upd_softc *, struct upd_sensor *,
     uint8_t *, int);
 void upd_intr(struct uhidev *, void *, uint);
-struct upd_usage_entry *upd_lookup_usage_entry(const struct hid_item *);
+int upd_lookup_usage_entry(void *, int, struct upd_usage_entry *,
+    struct hid_item *);
 struct upd_sensor *upd_lookup_sensor(struct upd_softc *, int, int);
 
 struct cfdriver upd_cd = {
@@ -124,9 +124,9 @@ upd_match(struct device *parent, void *match, void *aux)
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	int			  size;
 	void			 *desc;
-	struct hid_data		 *hdata;
 	struct hid_item		  item;
 	int			  ret = UMATCH_NONE;
+	int			  i;
 
 	if (uha->reportid != UHIDEV_CLAIM_ALLREPORTID)
 		return (ret);
@@ -138,14 +138,12 @@ upd_match(struct device *parent, void *match, void *aux)
 	 * look for at least one sensor of our table
 	 */
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	for (hdata = hid_start_parse(desc, size, hid_feature);
-	     hid_get_item(hdata, &item); ) {
-		if (upd_lookup_usage_entry(&item) != NULL) {
+	for (i = 0; i < nitems(upd_usage_table); i++)
+		if (upd_lookup_usage_entry(desc, size,
+		    upd_usage_table + i, &item)) {
 			ret = UMATCH_VENDOR_PRODUCT;
 			break;
 		}
-	}
-	hid_end_parse(hdata);
 
 	return (ret);
 }
@@ -156,17 +154,16 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 	struct upd_softc	 *sc = (struct upd_softc *)self;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct hid_item		  item;
-	struct hid_data		 *hdata;
 	struct upd_usage_entry	 *entry;
 	struct upd_sensor	 *sensor;
 	int			  size;
+	int			  i;
 	void			 *desc;
 
 	sc->sc_hdev.sc_intr = upd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_reports = NULL;
 	sc->sc_sensors = NULL;
-	sc->sc_max_sensors = nitems(upd_usage_table);
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
@@ -177,27 +174,20 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_reports = mallocarray(sc->sc_max_repid,
 	    sizeof(struct upd_report), M_USBDEV, M_WAITOK | M_ZERO);
-	sc->sc_sensors = mallocarray(sc->sc_max_sensors,
+	sc->sc_sensors = mallocarray(nitems(upd_usage_table),
 	    sizeof(struct upd_sensor), M_USBDEV, M_WAITOK | M_ZERO);
-	size = sc->sc_max_sensors * sizeof(struct upd_sensor);
 	sc->sc_num_sensors = 0;
+
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	for (hdata = hid_start_parse(desc, size, hid_feature);
-	     hid_get_item(hdata, &item) &&
-	     sc->sc_num_sensors < sc->sc_max_sensors; ) {
-		DPRINTF(("upd: repid=%d\n", item.report_ID));
-		if (item.kind != hid_feature ||
-		    item.report_ID < 0 ||
+	for (i = 0; i < nitems(upd_usage_table); i++) {
+		entry = &upd_usage_table[i];
+		if (!upd_lookup_usage_entry(desc, size, entry, &item))
+			continue;
+
+		DPRINTF(("%s: found %s on repid=%d\n", DEVNAME(sc),
+		    entry->usage_name, item.report_ID));
+		if (item.report_ID < 0 ||
 		    item.report_ID >= sc->sc_max_repid)
-			continue;
-
-		if ((entry = upd_lookup_usage_entry(&item)) == NULL)
-			continue;
-
-		/* filter repeated usages, avoid duplicated sensors */
-		sensor = upd_lookup_sensor(sc, entry->usage_pg,
-		    entry->usage_id);
-		if (sensor != NULL)
 			continue;
 
 		sensor = &sc->sc_sensors[sc->sc_num_sensors];
@@ -219,7 +209,6 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 		    size, item.kind, item.report_ID);
 		sc->sc_reports[item.report_ID].enabled = 1;
 	}
-	hid_end_parse(hdata);
 	DPRINTF(("upd: sc_num_sensors=%d\n", sc->sc_num_sensors));
 
 	sc->sc_sensortask = sensor_task_register(sc, upd_refresh, 6);
@@ -291,19 +280,25 @@ upd_refresh(void *arg)
 	}
 }
 
-struct upd_usage_entry *
-upd_lookup_usage_entry(const struct hid_item *hitem)
+int
+upd_lookup_usage_entry(void *desc, int size, struct upd_usage_entry *entry,
+    struct hid_item *item)
 {
-	struct upd_usage_entry	*entry = NULL;
-	int			 i;
+	struct hid_data	*hdata;
+	int 		 ret = 0;
 
-	for (i = 0; i < nitems(upd_usage_table); i++) {
-		entry = &upd_usage_table[i];
-		if (entry->usage_pg == HID_GET_USAGE_PAGE(hitem->usage) &&
-		    entry->usage_id == HID_GET_USAGE(hitem->usage))
-			return (entry);
+	for (hdata = hid_start_parse(desc, size, hid_feature);
+	     hid_get_item(hdata, item); ) {
+		if (item->kind == hid_feature &&
+		    entry->usage_pg == HID_GET_USAGE_PAGE(item->usage) &&
+		    entry->usage_id == HID_GET_USAGE(item->usage)) {
+			ret = 1;
+			break;
+		}
 	}
-	return (NULL);
+	hid_end_parse(hdata);
+
+	return (ret);
 }
 
 struct upd_sensor *
