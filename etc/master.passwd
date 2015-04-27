@@ -44,4 +44,5 @@ _ldapd:*:100:100::0:0:LDAP Daemon:/var/empty:/sbin/nologin
 _iked:*:101:101::0:0:IKEv2 Daemon:/var/empty:/sbin/nologin
 _iscsid:*:102:102::0:0:iSCSI Daemon:/var/empty:/sbin/nologin
 _smtpq:*:103:103::0:0:SMTP Daemon:/var/empty:/sbin/nologin
+_file:*:104:104::0:0:file privsep:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.47 2014/09/20 09:59:52 ajacoutot Exp $
+#	$OpenBSD: aliases,v 1.48 2015/04/27 13:48:06 nicm Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /usr/libexec/mail.local.
@@ -24,6 +24,7 @@ www:	root
 _bgpd: /dev/null
 _dhcp: /dev/null
 _dvmrpd: /dev/null
+_file: /dev/null
 _fingerd: /dev/null
 _ftp: /dev/null
 _hostapd: /dev/null

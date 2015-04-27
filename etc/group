@@ -61,6 +61,7 @@ _ldapd:*:100:
 _iked:*:101:
 _iscsid:*:102:
 _smtpq:*:103:
+_file:*:104:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:

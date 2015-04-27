@@ -1,4 +1,4 @@
-/* $OpenBSD: file.h,v 1.27 2015/04/27 13:41:45 nicm Exp $ */
+/* $OpenBSD: file.h,v 1.28 2015/04/27 13:48:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -23,7 +23,7 @@
 #define FILE_READ_SIZE (256 * 1024)
 
 /* User to drop privileges to in child process. */
-#define FILE_USER "nobody"
+#define FILE_USER "_file"
 
 /* text.c */
 const char	*text_get_type(const void *, size_t);
