@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.14 2015/04/01 11:44:44 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.15 2015/04/27 07:37:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -38,6 +38,8 @@
 #else
 #define DPRINTF(x)
 #endif
+
+#define DEVNAME(sc)	((sc)->sc_hdev.sc_dev.dv_xname)
 
 struct upd_usage_entry {
 	uint8_t			usage_pg;
@@ -164,12 +166,12 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensors = NULL;
 	sc->sc_max_sensors = nitems(upd_usage_table);
 
-	strlcpy(sc->sc_sensordev.xname, sc->sc_hdev.sc_dev.dv_xname,
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_max_repid = uha->parent->sc_nrepid;
 	DPRINTF(("\nupd: devname=%s sc_max_repid=%d\n",
-	    sc->sc_hdev.sc_dev.dv_xname, sc->sc_max_repid));
+	    DEVNAME(sc), sc->sc_max_repid));
 
 	sc->sc_reports = mallocarray(sc->sc_max_repid,
 	    sizeof(struct upd_report), M_USBDEV, M_WAITOK | M_ZERO);
@@ -363,8 +365,7 @@ upd_update_sensors(struct upd_softc *sc, uint8_t *buf, unsigned int len,
 		sensor->ksensor.value = hdata * adjust;
 		sensor->ksensor.status = SENSOR_S_OK;
 		sensor->ksensor.flags &= ~SENSOR_FINVALID;
-		DPRINTF(("%s: hidget data: %lu\n",
-		    sc->sc_sensordev.xname, hdata));
+		DPRINTF(("%s: hidget data: %lu\n", DEVNAME(sc), hdata));
 	}
 }
 
