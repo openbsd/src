@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.5 2015/04/28 11:57:20 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.6 2015/04/28 12:09:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -434,9 +434,11 @@ cmd_find_get_window(struct cmd_find_state *fs, const char *window)
 
 	/* Otherwise try as a session itself. */
 	if (cmd_find_get_session(fs, window) == 0) {
-		fs->wl = fs->s->curw;
-		fs->idx = fs->wl->idx;
-		fs->w = fs->wl->window;
+		if (~fs->flags & CMD_FIND_WINDOW_INDEX) {
+			fs->wl = fs->s->curw;
+			fs->w = fs->wl->window;
+			fs->idx = fs->wl->idx;
+		}
 		return (0);
 	}
 
