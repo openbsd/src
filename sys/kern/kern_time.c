@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.89 2014/12/07 02:58:14 deraadt Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.90 2015/04/28 20:54:18 kettenis Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -460,6 +460,8 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 }
 
 
+struct mutex itimer_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
+
 /*
  * Get value of an interval timer.  The process virtual and
  * profiling virtual time timers are kept internally in the
@@ -488,7 +490,6 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
 	struct itimerval aitv;
-	int s;
 	int which;
 
 	which = SCARG(uap, which);
@@ -496,11 +497,12 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
 	memset(&aitv, 0, sizeof(aitv));
-	s = splclock();
+	mtx_enter(&itimer_mtx);
 	aitv.it_interval.tv_sec  = p->p_p->ps_timer[which].it_interval.tv_sec;
 	aitv.it_interval.tv_usec = p->p_p->ps_timer[which].it_interval.tv_usec;
 	aitv.it_value.tv_sec     = p->p_p->ps_timer[which].it_value.tv_sec;
 	aitv.it_value.tv_usec    = p->p_p->ps_timer[which].it_value.tv_usec;
+	mtx_leave(&itimer_mtx);
 
 	if (which == ITIMER_REAL) {
 		struct timeval now;
@@ -520,7 +522,7 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 				    &aitv.it_value);
 		}
 	}
-	splx(s);
+
 	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
 }
 
@@ -573,12 +575,10 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		}
 		pr->ps_timer[ITIMER_REAL] = aitv;
 	} else {
-		int s;
-
 		itimerround(&aitv.it_interval);
-		s = splclock();
+		mtx_enter(&itimer_mtx);
 		pr->ps_timer[which] = aitv;
-		splx(s);
+		mtx_leave(&itimer_mtx);
 	}
 
 	return (0);
@@ -676,7 +676,7 @@ itimerround(struct timeval *tv)
 int
 itimerdecr(struct itimerval *itp, int usec)
 {
-
+	mtx_enter(&itimer_mtx);
 	if (itp->it_value.tv_usec < usec) {
 		if (itp->it_value.tv_sec == 0) {
 			/* expired, and already in next interval */
@@ -688,8 +688,10 @@ itimerdecr(struct itimerval *itp, int usec)
 	}
 	itp->it_value.tv_usec -= usec;
 	usec = 0;
-	if (timerisset(&itp->it_value))
+	if (timerisset(&itp->it_value)) {
+		mtx_leave(&itimer_mtx);
 		return (1);
+	}
 	/* expired, exactly at end of interval */
 expire:
 	if (timerisset(&itp->it_interval)) {
@@ -701,6 +703,7 @@ expire:
 		}
 	} else
 		itp->it_value.tv_usec = 0;		/* sec is already 0 */
+	mtx_leave(&itimer_mtx);
 	return (0);
 }
 
