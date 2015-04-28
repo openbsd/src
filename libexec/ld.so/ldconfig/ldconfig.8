@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.27 2013/07/10 06:43:38 jmc Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.28 2015/04/28 14:07:16 jmc Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 10 2013 $
+.Dd $Mdocdate: April 28 2015 $
 .Dt LDCONFIG 8
 .Os
 .Sh NAME
@@ -113,12 +113,11 @@ List the current contents of
 on the standard output.
 The hints file will not be modified.
 .It Fl S
-Perform prelinking operations in a safe mode; always copies the binaries
-when prelinking data is added to a file.
+Prebind safely: always copies the binaries
+when prebind information is added to a file.
 Use this to eliminate the possibility that
 .Dv ETXTBUSY
-will occur when attempting to run a binary while prelinking
-is running.
+will occur when attempting to run a binary whilst prebinding.
 .It Fl s
 Do not scan the built-in system directory
 .Pq Dq /usr/lib
@@ -132,17 +131,17 @@ This option cannot be used with
 Switch on verbose mode.
 .El
 .Sh PREBINDING
-Prebinding is loosely based on an earlier concept called Prelinking, which
-also accelerated
-.Xr ld.so 1
-performance but simultaneously impaired address space randomization.
-When prebinding information is added to libraries and programs using
+When prebind information is added to libraries and programs using
 .Fl P ,
 program startup can be significantly improved because
 .Xr ld.so 1
 can initialize the shared library environment much faster.
-Prebinding information adds a small amount of data to the end of each
+Prebind information adds a small amount of data to the end of each
 specified program and associated shared libraries.
+Prebinding is loosely based on an earlier concept called prelinking, which
+also accelerated
+.Xr ld.so 1
+performance but simultaneously impaired address space randomization.
 .Sh SECURITY
 Special care must be taken when loading shared libraries into the address
 space of
