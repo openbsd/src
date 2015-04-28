@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.46 2015/02/11 01:55:40 dlg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.47 2015/04/28 18:39:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -274,7 +274,7 @@ cpu_intr(void *v)
 			mtctl(frame->tf_eiem, CR_EIEM);
 
 #ifdef MULTIPROCESSOR
-			if (pri < IPL_IPI && s < IPL_SCHED)
+			if (pri < IPL_CLOCK)
 				__mp_lock(&kernel_lock);
 #endif
 
@@ -296,7 +296,7 @@ cpu_intr(void *v)
 #endif
 
 #ifdef MULTIPROCESSOR
-			if (pri < IPL_IPI && s < IPL_SCHED)
+			if (pri < IPL_CLOCK)
 				__mp_unlock(&kernel_lock);
 #endif
 			mtctl(0, CR_EIEM);
