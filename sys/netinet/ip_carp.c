@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.253 2015/04/22 06:44:17 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.254 2015/04/28 14:51:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -750,6 +750,7 @@ carp_clone_create(ifc, unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	ifp->if_type = IFT_CARP;
+	ifp->if_sadl->sdl_type = IFT_CARP;
 	ifp->if_output = carp_output;
 
 	/* Hook carp_addr_updated to cope with address and route changes. */
