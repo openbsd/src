@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.834 2015/04/27 23:17:11 djm Exp $
+#	$OpenBSD: install.sub,v 1.835 2015/04/28 21:41:40 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2019,14 +2019,14 @@ install_sets() {
 apply() {
 	local ssh_permitroot=
 
-	if [[ $sshd == y && $sshd_enableroot == y ]]; then
+	if [[ $sshd == n ]]; then
+		echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
+	elif [[ $sshd_enableroot == y ]]; then
 		ssh_permitroot=yes
 		[[ -n $rootkey ]] && ssh_permitroot=without-password
 		sed "/^#\(PermitRootLogin\) no/s//\1 $ssh_permitroot/" \
 			</mnt/etc/ssh/sshd_config >/tmp/sshd_config
 		cp /tmp/sshd_config /mnt/etc/ssh/sshd_config
-	else
-		echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
 	fi
 
 	if [[ $ntpd == y ]]; then
