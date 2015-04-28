@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.36 2015/04/27 13:52:17 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.37 2015/04/28 02:26:43 lteo Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -301,6 +301,7 @@ read_link(struct input_msg *msg, const char *path)
 			    "%s/%s", root, lpath);
 			if (used < 0 || (size_t)used >= sizeof msg->link_path) {
 				msg->link_error = ENAMETOOLONG;
+				free(copy);
 				return;
 			}
 		}
