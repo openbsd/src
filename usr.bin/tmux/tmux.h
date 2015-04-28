@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.502 2015/04/27 16:25:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.503 2015/04/28 10:43:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -965,6 +965,7 @@ struct window {
 	int		 lastlayout;
 	struct layout_cell *layout_root;
 	struct layout_cell *saved_layout_root;
+	char		*old_layout;
 
 	u_int		 sx;
 	u_int		 sy;
