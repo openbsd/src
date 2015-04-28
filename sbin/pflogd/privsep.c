@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.19 2014/06/26 17:56:09 tobias Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.20 2015/04/28 05:54:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -112,7 +112,7 @@ priv_init(void)
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP,  sig_pass_to_chld);
 	signal(SIGINT,  sig_pass_to_chld);
-	signal(SIGQUIT,  sig_pass_to_chld);
+	signal(SIGQUIT, sig_pass_to_chld);
 	signal(SIGCHLD, sig_chld);
 
 	setproctitle("[priv]");
