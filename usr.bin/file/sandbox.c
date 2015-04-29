@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox.c,v 1.1 2015/04/27 13:52:17 nicm Exp $ */
+/* $OpenBSD: sandbox.c,v 1.2 2015/04/29 06:37:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -117,9 +117,9 @@ sandbox_fork(const char *user)
 		return (sandbox_child(user));
 	}
 
-	do
+	do {
 		pid = waitpid(pid, &status, WUNTRACED);
-	while (pid == -1 && errno == EINTR);
+	} while (pid == -1 && errno == EINTR);
 	if (!WIFSTOPPED(status))
 		errx(1, "child not stopped");
 
