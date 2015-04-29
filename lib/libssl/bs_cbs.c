@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.4 2015/04/29 01:16:06 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.5 2015/04/29 01:23:20 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -109,6 +109,9 @@ cbs_get_u(CBS *cbs, uint32_t *out, size_t len)
 	uint32_t result = 0;
 	size_t i;
 	const uint8_t *data;
+
+	if (len < 1 || len > 4)
+		return 0;
 
 	if (!cbs_get(cbs, &data, len))
 		return 0;
