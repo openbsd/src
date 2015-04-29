@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: parse_structinfo.pl,v 1.2 2013/10/19 21:02:50 guenther Exp $
+#	$OpenBSD: parse_structinfo.pl,v 1.3 2015/04/29 06:06:38 guenther Exp $
 #
 # Copyright (c) 2009 Miodrag Vallat.
 # Copyright (c) 2013 Philip Guenther.
@@ -46,6 +46,7 @@
 use strict;
 use warnings;
 use integer;
+use IO::File;
 
 use constant MAX_COLUMN => 72;
 
@@ -57,6 +58,11 @@ my $cur_struct;
 my $max_offs = 0;
 my $max_fsize = 0;
 my $max_ssize = 0;
+
+# Variables used in generating the raw, textual output
+my $txt;		# IO::File to write to
+my @id2struct;		# mapping of objdump's struct ids to @structs idxes
+my @subfield;		# list of subfields to dump at the end
 
 # count of how many times each literal string appears
 my %strings;
@@ -82,31 +88,49 @@ my @fields = ( {
     } );
 sub new_field
 {
-	my($name, $offs, $size, $items) = @_;
+    my($name, $offs, $size, $items, $id) = @_;
 
-	add_string($name);
-	push @fields, {
-		name	=> $name,
-		offs	=> $offs,
-		size	=> $size,
-		items	=> $items // 1,
-		struct	=> scalar(@structs),
-	    };
-	$max_offs = $offs	if $offs > $max_offs;
-	$max_fsize = $size	if $size > $max_fsize;
-	push @{ $offs_to_fields{$offs} }, $#fields;
-	push @{ $size_to_fields{$size} }, $#fields;
+    $items //= 1;
+    add_string($name);
+    push @fields, {
+	    name	=> $name,
+	    offs	=> $offs,
+	    size	=> $size,
+	    items	=> $items,
+	    struct	=> scalar(@structs),
+	};
+    $max_offs = $offs	if $offs > $max_offs;
+    $max_fsize = $size	if $size > $max_fsize;
+    push @{ $offs_to_fields{$offs} }, $#fields;
+    push @{ $size_to_fields{$size} }, $#fields;
+    if ($txt) {
+	raw($offs, $size * $items, $cur_struct->{name}, $name);
+	if (defined $id) {
+	    push @subfield, [ $cur_struct->{name}, $name, $offs, $id ];
+	}
+    }
 }
+
+# Generate textual output for those who are ddb challenged.
+$txt = IO::File->new("db_structinfo.txt", "w")
+			or warn "$0: unable to create db_structinfo.txt: $!";
+sub raw {
+    my($offs, $size, $struct, $member) = @_;
+    $txt->print(join("\t", $offs, $size, $offs+$size, $struct, $member), "\n");
+}
+$txt and $txt->print(join("\t", qw(offset size next struct member)), "\n");
+
 
 while (<>) {
     chomp;	# strip record separator
-    if (m!^struct (\w+) \{ /\* size (\d+) !) {
+    if (m!^struct (\w+) \{ /\* size (\d+) id (\d+) !) {
 	$depth = 1;
 	$cur_struct = {
 		name	 => $1,
 		size	 => $2,
 		fieldmin => scalar(@fields)
 	    };
+	$id2struct[$3] = scalar(@structs);
 	next
     }
 
@@ -163,8 +187,12 @@ while (<>) {
 
 	# Try and gather the field name.
 	# The most common case: not a function pointer or array
-	if (m!\s\**(\w+);\s/\* bitsize!) {
-	    new_field($1, $curoffs, $cursize);
+	if (m!\s(\**)(\w+);\s/\* bitsize!) {
+	    my $pointer = $1 ne "";
+	    my $name = $2;
+	    # check for a struct id to match up
+	    my($id) = !$pointer && m!/\* id (\d+) \*/.*;!;
+	    new_field($name, $curoffs, $cursize, 1, $id);
 	    next
 	}
 
@@ -175,13 +203,16 @@ while (<>) {
 	}
 
 	# Maybe it's an array
-	if (m!\s\**([][:\w]+);\s/\* bitsize!) {
-	    my $name = $1;
+	if (m!\s(\**)([][:\w]+);\s/\* bitsize!) {
+	    my $pointer = $1 ne "";
+	    my $name = $2;
 	    my $items = 1;
 	    while ($name =~ s/\[(\d+)\]:\w+//) {
 		$items *= $1;
 	    }
-	    new_field($name, $curoffs, $cursize / $items, $items);
+	    # check for a struct id to match up
+	    my($id) = !$pointer && m!/\* id (\d+) \*/.*;!;
+	    new_field($name, $curoffs, $cursize / $items, $items, $id);
 	    next
 	}
 
@@ -191,6 +222,23 @@ while (<>) {
 	# Should be nothing left
 	print STDERR "unknown member type: $_\n";
 	next
+    }
+}
+
+# Do all the subfield processing
+# XXX Should recurse into subsub...fields?
+foreach my $sf (@subfield) {
+    my($struct_name, $name, $offs, $id) = @$sf;
+    my $s = $id2struct[$id];
+
+    # We don't remember unions.  No point in doing so
+    next if !defined $s;
+
+    my $struct = $structs[$s];
+    foreach my $i ($struct->{fieldmin} .. $struct->{fieldmax}) {
+	my $f = $fields[$i];
+	raw($offs + $f->{offs}, $f->{size} * $f->{items},
+			$struct_name, "$name.$f->{name}");
     }
 }
 
@@ -270,7 +318,7 @@ sub resolve_string
 # Check for overflow and, if so, print some stats
 if ($soff > 65535 || @structs > 65535 || @fields > 65535) {
     print STDERR <<EOM;
-ERROR: value of range of u_short  Time to change types?
+ERROR: value out of range of u_short  Time to change types?
 
 max string offset: $soff
 max field offset: $max_offs
