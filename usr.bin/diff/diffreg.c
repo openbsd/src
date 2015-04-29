@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.85 2015/02/05 12:59:57 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.86 2015/04/29 04:00:25 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -418,11 +418,11 @@ diffreg(char *file1, char *file2, int flags)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	member = xrealloc(member, slen[1] + 2, sizeof(*member));
+	member = xreallocarray(member, slen[1] + 2, sizeof(*member));
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	class = xrealloc(class, slen[0] + 2, sizeof(*class));
+	class = xreallocarray(class, slen[0] + 2, sizeof(*class));
 
 	klist = xcalloc(slen[0] + 2, sizeof(*klist));
 	clen = 0;
@@ -432,13 +432,13 @@ diffreg(char *file1, char *file2, int flags)
 	xfree(member);
 	xfree(class);
 
-	J = xrealloc(J, len[0] + 2, sizeof(*J));
+	J = xreallocarray(J, len[0] + 2, sizeof(*J));
 	unravel(klist[i]);
 	xfree(clist);
 	xfree(klist);
 
-	ixold = xrealloc(ixold, len[0] + 2, sizeof(*ixold));
-	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(*ixnew));
+	ixold = xreallocarray(ixold, len[0] + 2, sizeof(*ixold));
+	ixnew = xreallocarray(ixnew, len[1] + 2, sizeof(*ixnew));
 	check(f1, f2, flags);
 	output(file1, f1, file2, f2, flags);
 	if (ostdout != -1) {
@@ -570,7 +570,7 @@ prepare(int i, FILE *fd, off_t filesize, int flags)
 	for (j = 0; (h = readhash(fd, flags));) {
 		if (j == sz) {
 			sz = sz * 3 / 2;
-			p = xrealloc(p, sz + 3, sizeof(*p));
+			p = xreallocarray(p, sz + 3, sizeof(*p));
 		}
 		p[++j].value = h;
 	}
@@ -701,7 +701,7 @@ newcand(int x, int y, int pred)
 
 	if (clen == clistlen) {
 		clistlen = clistlen * 11 / 10;
-		clist = xrealloc(clist, clistlen, sizeof(*clist));
+		clist = xreallocarray(clist, clistlen, sizeof(*clist));
 	}
 	q = clist + clen;
 	q->x = x;
@@ -1064,7 +1064,7 @@ proceed:
 		if (context_vec_ptr == context_vec_end - 1) {
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
-			context_vec_start = xrealloc(context_vec_start,
+			context_vec_start = xreallocarray(context_vec_start,
 			    max_context, sizeof(*context_vec_start));
 			context_vec_end = context_vec_start + max_context;
 			context_vec_ptr = context_vec_start + offset;
