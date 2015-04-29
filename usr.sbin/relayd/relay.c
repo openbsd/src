@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.192 2015/04/23 17:03:01 florian Exp $	*/
+/*	$OpenBSD: relay.c,v 1.193 2015/04/29 08:41:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -988,7 +988,7 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 			dst = EVBUFFER_OUTPUT(cre->dst->bev);
 			if (EVBUFFER_LENGTH(dst))
 				return;
-		} else
+		} else if (cre->toread == TOREAD_UNLIMITED || cre->toread == 0)
 			return;
 
 		relay_close(con, "done");
@@ -1263,7 +1263,7 @@ relay_from_table(struct rsession *con)
 			return (-1);
 	}
 	host = rlt->rlt_host[idx];
-	DPRINTF("%s: session %d: table %s host %s, p 0x%08x, idx %d",
+	DPRINTF("%s: session %d: table %s host %s, p 0x%016llx, idx %d",
 	    __func__, con->se_id, table->conf.name, host->conf.name, p, idx);
 	while (host != NULL) {
 		DPRINTF("%s: session %d: host %s", __func__,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.43 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.44 2015/04/29 08:41:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,9 @@
 #include <fnmatch.h>
 #include <siphash.h>
 #include <imsg.h>
+#if DEBUG > 1
+#include <unistd.h>
+#endif
 
 #include "relayd.h"
 #include "http.h"
