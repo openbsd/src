@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.137 2015/04/15 10:11:29 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.138 2015/04/29 16:00:06 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -717,11 +717,13 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 	struct ifnet		*ifp;
 	struct mbuf		*m, *m0;
 	int			 error = 0, len, s;
+	unsigned int		ifindex;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
 
 	ifp = &tp->tun_if;
+	ifindex = ifp->if_index;
 	TUNDEBUG(("%s: read\n", ifp->if_xname));
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
 		TUNDEBUG(("%s: not ready %#x\n", ifp->if_xname, tp->tun_flags));
@@ -732,12 +734,17 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 
 	s = splnet();
 	do {
-		while ((tp->tun_flags & TUN_READY) != TUN_READY)
+		while ((tp->tun_flags & TUN_READY) != TUN_READY) {
 			if ((error = tsleep((caddr_t)tp,
 			    (PZERO + 1)|PCATCH, "tunread", 0)) != 0) {
 				splx(s);
 				return (error);
 			}
+			if ((ifp = if_get(ifindex)) == NULL) {
+				splx(s);
+				return (ENXIO);
+			}
+		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL) {
 			if (tp->tun_flags & TUN_NBIO && ioflag & IO_NDELAY) {
@@ -749,6 +756,10 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 			    (PZERO + 1)|PCATCH, "tunread", 0)) != 0) {
 				splx(s);
 				return (error);
+			}
+			if ((ifp = if_get(ifindex)) == NULL) {
+				splx(s);
+				return (ENXIO);
 			}
 		}
 	} while (m0 == NULL);
