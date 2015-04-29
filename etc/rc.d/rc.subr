@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.93 2015/03/28 07:34:16 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.94 2015/04/29 11:05:16 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,21 +16,29 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+_rc_actions="start stop restart reload check"
+readonly _rc_actions
+
 _rc_err() {
 	[ -n "${1}" ] && echo "${1}" 1>&2
 	[ -n "${2}" ] && exit "${2}" || exit 1
 }
 
-_rc_is_supported() {
-	local _enotsup
-	eval _enotsup=\${rc_$1}
-	[ X"${_enotsup}" != X"NO" ]
+_rc_not_supported() {
+	local _a _enotsup
+	for _a in ${_rc_actions}; do
+		if [ "${1}" == "${_a}" ]; then
+			eval _enotsup=\${rc_$1}
+			break
+		fi
+	done
+	[ X"${_enotsup}" == X"NO" ]
 }
 
 _rc_usage() {
 	local _a _allsup
-	for _a in start stop restart reload check; do
-		_rc_is_supported ${_a} && _allsup="${_allsup:+$_allsup|}${_a}"
+	for _a in ${_rc_actions}; do
+		_rc_not_supported ${_a} || _allsup="${_allsup:+$_allsup|}${_a}"
 	done
 	_rc_err "usage: $0 [-df] ${_allsup}"
 }
@@ -168,11 +176,11 @@ rc_cmd() {
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
 		_rc_err "$0: need root privileges"
 
-	if ! (_rc_is_supported start && _rc_is_supported stop); then
+	if _rc_not_supported start || _rc_not_supported stop; then
 		rc_restart=NO
 	fi
 
-	if ! _rc_is_supported $1; then
+	if _rc_not_supported $1; then
 		[ -n "${INRC}" ] && exit 1
 		_rc_err "$0: $1 is not supported"
 	fi
