@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.7 2015/04/29 01:49:28 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.8 2015/04/29 02:02:46 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -324,7 +324,7 @@ CBB_add_bytes(CBB *cbb, const uint8_t *data, size_t len)
 {
 	uint8_t *dest;
 
-	if (!CBB_flush(cbb) || !cbb_buffer_add(cbb->base, &dest, len))
+	if (!CBB_add_space(cbb, &dest, len))
 		return 0;
 
 	memcpy(dest, data, len);
