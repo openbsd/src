@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.6 2015/04/29 01:39:32 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.7 2015/04/29 01:49:28 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -119,7 +119,7 @@ cbb_buffer_add(struct cbb_buffer_st *base, uint8_t **out, size_t len)
 }
 
 static int
-cbb_buffer_add_u(struct cbb_buffer_st *base, uint32_t v, size_t len_len)
+cbb_add_u(CBB *cbb, uint32_t v, size_t len_len)
 {
 	uint8_t *buf;
 	size_t i;
@@ -130,7 +130,7 @@ cbb_buffer_add_u(struct cbb_buffer_st *base, uint32_t v, size_t len_len)
 	if (len_len > 4)
 		return 0;
 
-	if (!cbb_buffer_add(base, &buf, len_len))
+	if (!CBB_flush(cbb) || !cbb_buffer_add(cbb->base, &buf, len_len))
 		return 0;
 
 	for (i = len_len - 1; i < len_len; i--) {
@@ -343,28 +343,19 @@ CBB_add_space(CBB *cbb, uint8_t **out_data, size_t len)
 int
 CBB_add_u8(CBB *cbb, uint8_t value)
 {
-	if (!CBB_flush(cbb))
-		return 0;
-
-	return cbb_buffer_add_u(cbb->base, value, 1);
+	return cbb_add_u(cbb, value, 1);
 }
 
 int
 CBB_add_u16(CBB *cbb, uint16_t value)
 {
-	if (!CBB_flush(cbb))
-		return 0;
-
-	return cbb_buffer_add_u(cbb->base, value, 2);
+	return cbb_add_u(cbb, value, 2);
 }
 
 int
 CBB_add_u24(CBB *cbb, uint32_t value)
 {
-	if (!CBB_flush(cbb))
-		return 0;
-
-	return cbb_buffer_add_u(cbb->base, value, 3);
+	return cbb_add_u(cbb, value, 3);
 }
 
 int
