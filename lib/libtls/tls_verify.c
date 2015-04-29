@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.7 2015/02/11 06:46:33 jsing Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.8 2015/04/29 00:24:31 doug Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -79,6 +79,7 @@ tls_match_name(const char *cert_name, const char *name)
 	return -1;
 }
 
+/* See RFC 5280 section 4.2.1.6 for SubjectAltName details. */
 int
 tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 {
@@ -132,6 +133,20 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 					break;
 				}
 
+				/*
+				 * Per RFC 5280 section 4.2.1.6:
+				 * " " is a legal domain name, but that
+				 * dNSName must be rejected.
+				 */
+				if (strcmp(data, " ") == 0) {
+					tls_set_error(ctx,
+					    "error verifying name '%s': "
+					    "a dNSName of \" \" must not be "
+					    "used", name);
+					rv = -2;
+					break;
+				}
+
 				if (tls_match_name(data, name) == 0) {
 					rv = 0;
 					break;
@@ -159,6 +174,10 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 				break;
 			}
 
+			/*
+			 * Per RFC 5280 section 4.2.1.6:
+			 * IPv4 must use 4 octets and IPv6 must use 16 octets.
+			 */
 			if (datalen == addrlen &&
 			    memcmp(data, &addrbuf, addrlen) == 0) {
 				rv = 0;
