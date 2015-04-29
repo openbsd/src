@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.3 2015/04/25 15:28:47 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.4 2015/04/29 01:16:06 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -65,10 +65,8 @@ CBS_len(const CBS *cbs)
 int
 CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len)
 {
-	if (*out_ptr != NULL) {
-		free(*out_ptr);
-		*out_ptr = NULL;
-	}
+	free(*out_ptr);
+	*out_ptr = NULL;
 	*out_len = 0;
 
 	if (cbs->len == 0)
@@ -85,9 +83,7 @@ CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len)
 int
 CBS_strdup(const CBS *cbs, char **out_ptr)
 {
-	if (*out_ptr != NULL)
-		free(*out_ptr);
-
+	free(*out_ptr);
 	*out_ptr = strndup((const char*)cbs->data, cbs->len);
 	return (*out_ptr != NULL);
 }
