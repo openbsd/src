@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.293 2015/04/29 09:58:16 henning Exp $	*/
+/*	$OpenBSD: editor.c,v 1.294 2015/04/29 16:46:39 henning Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2377,7 +2377,7 @@ parse_autotable(char *filename)
 {
 	FILE	*cfile;
 	size_t	 len;
-	char	*buf, *p, *t;
+	char	*buf, *t;
 	uint	 idx = 0, pctsum = 0;
 	struct space_allocation *sa;
 
@@ -2393,14 +2393,13 @@ parse_autotable(char *filename)
 		sa = &(alloc_table[0].table[idx]);
 		idx++;
 
-		p = buf;
-		if ((sa->mp = get_token(&p, &len)) == NULL ||
+		if ((sa->mp = get_token(&buf, &len)) == NULL ||
 		    (sa->mp[0] != '/' && strcmp(sa->mp, "swap")))
 			errx(1, "%s: parse error on line %u", filename, idx);
-		if ((t = get_token(&p, &len)) == NULL ||
+		if ((t = get_token(&buf, &len)) == NULL ||
 		    parse_sizerange(t, &sa->minsz, &sa->maxsz) == -1)
 			errx(1, "%s: parse error on line %u", filename, idx);
-		if ((t = get_token(&p, &len)) != NULL &&
+		if ((t = get_token(&buf, &len)) != NULL &&
 		    parse_pct(t, &sa->rate) == -1)
 			errx(1, "%s: parse error on line %u", filename, idx);
 		if (sa->minsz > sa->maxsz)
