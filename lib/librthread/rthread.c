@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.80 2015/04/07 01:27:07 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.81 2015/04/29 06:01:37 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -197,6 +197,7 @@ _rthread_init(void)
 
 	_thread_pagesize = (size_t)sysconf(_SC_PAGESIZE);
 	_rthread_attr_default.guard_size = _thread_pagesize;
+	thread->attr = _rthread_attr_default;
 
 	_rthread_initlib();
 
@@ -429,6 +430,12 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->tid = -1;
 
 	thread->attr = attr != NULL ? *(*attr) : _rthread_attr_default;
+	if (thread->attr.sched_inherit == PTHREAD_INHERIT_SCHED) {
+		pthread_t self = pthread_self();
+
+		thread->attr.sched_policy = self->attr.sched_policy;
+		thread->attr.sched_param = self->attr.sched_param;
+	}
 	if (thread->attr.detach_state == PTHREAD_CREATE_DETACHED)
 		thread->flags |= THREAD_DETACHED;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;

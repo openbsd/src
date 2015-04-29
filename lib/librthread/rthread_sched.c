@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.12 2012/03/22 15:26:04 kurt Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.13 2015/04/29 06:01:37 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -32,9 +32,9 @@ int
 pthread_getschedparam(pthread_t thread, int *policy,
     struct sched_param *param)
 {
-	*policy = thread->sched_policy;
+	*policy = thread->attr.sched_policy;
 	if (param)
-		*param = thread->sched_param;
+		*param = thread->attr.sched_param;
 
 	return (0);
 }
@@ -47,15 +47,16 @@ pthread_setschedparam(pthread_t thread, int policy,
 	if (policy != SCHED_OTHER && policy != SCHED_FIFO &&
 	    policy != SCHED_RR)
 		return (EINVAL);
-	thread->sched_policy = policy;
+	thread->attr.sched_policy = policy;
 	if (param)
-		thread->sched_param = *param;
+		thread->attr.sched_param = *param;
 
 	return (0);
 }
 
 int
-pthread_attr_getschedparam(const pthread_attr_t *attrp, struct sched_param *param)
+pthread_attr_getschedparam(const pthread_attr_t *attrp,
+    struct sched_param *param)
 {
 	*param = (*attrp)->sched_param;
 
@@ -63,7 +64,8 @@ pthread_attr_getschedparam(const pthread_attr_t *attrp, struct sched_param *para
 }
 
 int
-pthread_attr_setschedparam(pthread_attr_t *attrp, const struct sched_param *param)
+pthread_attr_setschedparam(pthread_attr_t *attrp,
+    const struct sched_param *param)
 {
 	(*attrp)->sched_param = *param;
 
@@ -112,13 +114,13 @@ pthread_attr_setinheritsched(pthread_attr_t *attrp, int inherit)
 int
 pthread_getprio(pthread_t thread)
 {
-	return (thread->sched_param.sched_priority);
+	return (thread->attr.sched_param.sched_priority);
 }
 
 int
 pthread_setprio(pthread_t thread, int priority)
 {
-	thread->sched_param.sched_priority = priority;
+	thread->attr.sched_param.sched_priority = priority;
 
 	return (0);
 }
