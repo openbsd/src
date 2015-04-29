@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.5 2015/02/07 06:10:32 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.6 2015/04/29 01:39:32 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -126,6 +126,9 @@ cbb_buffer_add_u(struct cbb_buffer_st *base, uint32_t v, size_t len_len)
 
 	if (len_len == 0)
 		return 1;
+
+	if (len_len > 4)
+		return 0;
 
 	if (!cbb_buffer_add(base, &buf, len_len))
 		return 0;
