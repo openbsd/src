@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.152 2015/04/29 14:48:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.153 2015/04/29 21:57:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -671,6 +671,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 	if (endbody != NULL)
 		n = endbody;
+
+	ntok = TOKEN_NONE;
 	for (j = 0; ; j++) {
 		lastarg = *pos;
 
@@ -698,7 +700,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 	}
 
 	if (n != NULL) {
-		if (n != mdoc->last && n->flags & MDOC_BROKEN) {
+		if (ntok != TOKEN_NONE && n->flags & MDOC_BROKEN) {
 			target = n;
 			do
 				target = target->parent;
