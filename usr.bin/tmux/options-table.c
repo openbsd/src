@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.55 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.56 2015/04/29 15:59:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,6 +59,11 @@ const struct options_table_entry server_options_table[] = {
 	  .minimum = 1,
 	  .maximum = INT_MAX,
 	  .default_num = 20
+	},
+
+	{ .name = "default-terminal",
+	  .type = OPTIONS_TABLE_STRING,
+	  .default_str = "screen"
 	},
 
 	{ .name = "escape-time",
@@ -141,11 +146,6 @@ const struct options_table_entry session_options_table[] = {
 	{ .name = "default-shell",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = _PATH_BSHELL
-	},
-
-	{ .name = "default-terminal",
-	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "screen"
 	},
 
 	{ .name = "destroy-unattached",

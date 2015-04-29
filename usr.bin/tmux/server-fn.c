@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.84 2015/04/24 23:17:11 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.85 2015/04/29 15:59:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,7 @@ server_fill_environ(struct session *s, struct environ *env)
 	long	pid;
 
 	if (s != NULL) {
-		term = options_get_string(&s->options, "default-terminal");
+		term = options_get_string(&global_options, "default-terminal");
 		environ_set(env, "TERM", term);
 
 		idx = s->id;
