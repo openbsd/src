@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.52 2015/04/22 12:50:12 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.53 2015/04/29 16:01:48 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +8,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.52 $
-#	$Date: 2015/04/22 12:50:12 $
+#	$Revision: 1.53 $
+#	$Date: 2015/04/29 16:01:48 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -6162,6 +6162,15 @@ screen3|older VT 100/ANSI X3.64 virtual terminal,
 	rmir=\E[4l, rmkx=\E>, rmso=\E[23m, rmul=\E[24m, rs1=\Ec,
 	sc=\E7, sgr0=\E[m, smir=\E[4h, smkx=\E=, smso=\E[3m,
 	smul=\E[4m, tbc=\E[3g,
+
+# tmux is compatible with screen, but has support for italics, and some of the
+# xterm cursor bits.
+tmux|tmux terminal multiplexer,
+	use=xterm+tmux, use=screen, Ms@, smso=\E[7m, rmso=\E[27m, sitm=\E[3m,
+	ritm=\E[23m,
+
+tmux-256color|tmux with 256 colors,
+	use=xterm+256setaf, use=tmux,
 
 #### NCSA Telnet
 
