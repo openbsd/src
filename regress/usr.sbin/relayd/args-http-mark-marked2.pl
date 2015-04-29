@@ -26,7 +26,7 @@ our %args = (
 	    'match request header log "MyHeader"',
 	],
 	loggrep => {
-	    'User-Agent: BORK' => 1,
+	    '\[User-Agent: BORK\]' => 1,
 	    'MyHeader: FOO' => 0,
 	},
     },

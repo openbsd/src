@@ -16,7 +16,7 @@ our %args = (
 	    "match response header log Transfer-Encoding",
 	],
 	loggrep => {
-		"Transfer-Encoding: chunked" => 1,
+		"{Transfer-Encoding: chunked}" => 1,
 		qr/\[\(null\)\]/ => 0,
 	},
     },
