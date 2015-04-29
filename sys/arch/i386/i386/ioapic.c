@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.34 2014/12/09 06:58:28 doug Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.35 2015/04/29 04:29:23 jsg Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -784,13 +784,14 @@ apic_intr_disestablish(void *arg)
 	unsigned int ioapic = APIC_IRQ_APIC(irq);
 	unsigned int intr = APIC_IRQ_PIN(irq);
 	struct ioapic_softc *sc = ioapic_find(ioapic);
-	struct ioapic_pin *pin = &sc->sc_pins[intr];
+	struct ioapic_pin *pin;
 	struct intrhand **p, *q;
 	int minlevel, maxlevel;
 	extern void intr_calculatemasks(void); /* XXX */
 
 	if (sc == NULL)
 		panic("apic_intr_disestablish: unknown ioapic %d", ioapic);
+	pin = &sc->sc_pins[intr];
 
 	if (intr >= sc->sc_apic_sz)
 		panic("apic_intr_disestablish: bogus irq");
