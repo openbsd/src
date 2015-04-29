@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.199 2015/02/07 02:09:13 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.200 2015/04/29 09:58:16 henning Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -122,8 +122,9 @@ main(int argc, char *argv[])
 	int ch, f, error = 0;
 	struct disklabel *lp;
 	FILE *t;
+	char *autotable = NULL;
 
-	while ((ch = getopt(argc, argv, "ABEf:F:hRb:cdenp:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "ABEf:F:hRb:cdenp:tT:vw")) != -1)
 		switch (ch) {
 		case 'A':
 			aflag = 1;
@@ -170,6 +171,9 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			tflag = 1;
+			break;
+		case 'T':
+			autotable = optarg;
 			break;
 		case 'w':
 			if (op != UNSPEC)
@@ -219,6 +223,9 @@ main(int argc, char *argv[])
 	    &specname);
 	if (f < 0)
 		err(4, "%s", specname);
+
+	if (autotable != NULL)
+		parse_autotable(autotable);
 
 	switch (op) {
 	case EDIT:
@@ -1467,13 +1474,13 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: disklabel    [-Acdtv] [-h | -p unit] disk\t(read)\n");
+	    "usage: disklabel    [-Acdtv] [-h | -p unit] disk\t\t(read)\n");
 	fprintf(stderr,
-	    "       disklabel -w [-Acdnv] disk disktype [packid]\t(write)\n");
+	    "       disklabel -w [-Acdnv] [-T file] disk disktype [packid]\t(write)\n");
 	fprintf(stderr,
-	    "       disklabel -e [-Acdnv] disk\t\t\t(edit)\n");
+	    "       disklabel -e [-Acdnv] [-T file] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "       disklabel -E [-Acdnv] [-F|-f file] disk\t\t(simple editor)"
+	    "       disklabel -E [-Acdnv] [-T file] [-F|-f file] disk\t(simple editor)"
 	    "\n");
 	fprintf(stderr,
 	    "       disklabel -R [-nv] [-F|-f file] disk protofile\t\t(restore)\n\n");

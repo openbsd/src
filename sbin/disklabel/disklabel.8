@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.112 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: disklabel.8,v 1.113 2015/04/29 09:58:16 henning Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: April 29 2015 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -42,20 +42,24 @@
 .Sh SYNOPSIS
 .Nm disklabel
 .Op Fl Acdtv
+.Op Fl T Ar file
 .Op Fl h | p Ar unit
 .Ar disk
 .Nm disklabel
 .Fl w
 .Op Fl Acdnv
+.Op Fl T Ar file
 .Ar disk Ar disktype
 .Op Ar packid
 .Nm disklabel
 .Fl e
 .Op Fl Acdnv
+.Op Fl T Ar file
 .Ar disk
 .Nm disklabel
 .Fl E
 .Op Fl Acdnv
+.Op Fl T Ar file
 .Op Fl F Ns | Ns Fl f Ar file
 .Ar disk
 .Nm disklabel
@@ -196,6 +200,13 @@ file.
 Format the label as a
 .Xr disktab 5
 entry.
+.It Fl T Ar file
+Read the template for automatic allocation from
+.Ar file
+instead of using the builtin one.
+See
+.Sx AUTOMATIC DISK ALLOCATION
+below for the format.
 .It Fl v
 Print additional information during operation
 .Pq verbose mode .
@@ -589,6 +600,29 @@ swap		10% of disk.  80M \(en 2x max physical memory
 .Bd -literal -offset indent -compact
 /		95% of disk. 700M \(en 4G
 swap		 5% of disk.   1M \(en 2x max physical memory
+.Ed
+.Pp
+A template for the automatic allocation can be passed to disklabel using
+the
+.Fl T
+option.
+The template consists of one line per partition, with each line giving
+mountpoint, min-max size range, and percentage of disk, space-separated.
+Max can be unlimited by specifying '*'.
+If only mountpoint and min size are given, the partition is created with that
+exact size.
+.Pp
+.Bd -literal -offset indent -compact
+/		250M
+swap		80-256M	10%
+/tmp		120M-4G	8%
+/var		80M-4G	13%
+/usr		900M-2G 5%
+/usr/X11R6	512M-1G	3%
+/usr/local	2G-10G	10%
+/usr/src	1-2G	2%
+/usr/obj	1.3G-2G	4%
+/home		1G-*	45%
 .Ed
 .Sh FILES
 .Bl -tag -width Pa -compact

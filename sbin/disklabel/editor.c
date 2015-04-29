@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.292 2015/03/17 19:11:55 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.293 2015/04/29 09:58:16 henning Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -73,7 +73,7 @@ struct space_allocation {
 };
 
 /* entries for swap and var are changed by editor_allocspace() */
-const struct space_allocation alloc_big[] = {
+struct space_allocation alloc_big[] = {
 	{   MEG(80),         GIG(1),   5, "/"		},
 	{   MEG(80),       MEG(256),  10, "swap"	},
 	{  MEG(120),         GIG(4),   8, "/tmp"	},
@@ -91,19 +91,19 @@ const struct space_allocation alloc_big[] = {
 	/* Anything beyond this leave for the user to decide */
 };
 
-const struct space_allocation alloc_medium[] = {
+struct space_allocation alloc_medium[] = {
 	{  MEG(800),         GIG(2),   5, "/"		},
 	{   MEG(80),       MEG(256),  10, "swap"	},
 	{  MEG(900),         GIG(3),  78, "/usr"	},
 	{  MEG(256),         GIG(2),   7, "/home"	}
 };
 
-const struct space_allocation alloc_small[] = {
+struct space_allocation alloc_small[] = {
 	{  MEG(700),         GIG(4),  95, "/"		},
 	{    MEG(1),       MEG(256),   5, "swap"	}
 };
 
-const struct space_allocation alloc_stupid[] = {
+struct space_allocation alloc_stupid[] = {
 	{    MEG(1),      MEG(2048), 100, "/"		}
 };
 
@@ -111,15 +111,18 @@ const struct space_allocation alloc_stupid[] = {
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-const struct {
-	const struct space_allocation *table;
+struct alloc_table {
+	struct space_allocation *table;
 	int sz;
-} alloc_table[] = {
+};
+
+struct alloc_table alloc_table_default[] = {
 	{ alloc_big,	nitems(alloc_big) },
 	{ alloc_medium,	nitems(alloc_medium) },
 	{ alloc_small,	nitems(alloc_small) },
 	{ alloc_stupid,	nitems(alloc_stupid) }
 };
+struct alloc_table *alloc_table = alloc_table_default;
 
 void	edit_parms(struct disklabel *);
 void	editor_resize(struct disklabel *, char *);
@@ -157,6 +160,11 @@ u_int64_t max_partition_size(struct disklabel *, int);
 void	display_edit(struct disklabel *, char, u_int64_t);
 int64_t	getphysmem(void);
 void	psize(u_int64_t sz, char unit, struct disklabel *lp);
+char	*get_token(char **, size_t *);
+int	apply_unit(double, u_char, u_int64_t *);
+int	parse_sizespec(const char *, double *, char **);
+int	parse_sizerange(char *, u_int64_t *, u_int64_t *);
+int	parse_pct(char *, int *);
 
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
@@ -578,7 +586,7 @@ again:
 	    lastalloc * sizeof(struct space_allocation));
 
 	/* bump max swap based on phys mem, little physmem gets 2x swap */
-	if (index == 0) {
+	if (index == 0 && alloc_table == alloc_table_default) {
 		if (physmem < MEG(256))
 			alloc[1].minsz = alloc[1].maxsz = 2 * physmem;
 		else
@@ -2362,4 +2370,164 @@ display_edit(struct disklabel *lp, char unit, u_int64_t fr)
 	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
 		display_partition(stdout, lp, i, unit);
+}
+
+void
+parse_autotable(char *filename)
+{
+	FILE	*cfile;
+	size_t	 len;
+	char	*buf, *p, *t;
+	uint	 idx = 0, pctsum = 0;
+	struct space_allocation *sa;
+
+	if ((cfile = fopen(filename, "r")) == NULL)
+		err(1, "%s", filename);
+	if ((alloc_table = calloc(1, sizeof(struct alloc_table))) == NULL)
+		err(1, NULL);
+
+	while ((buf = fgetln(cfile, &len)) != NULL) {
+		if ((alloc_table[0].table = reallocarray(alloc_table[0].table,
+		    idx + 1, sizeof(*sa))) == NULL)
+			err(1, NULL);
+		sa = &(alloc_table[0].table[idx]);
+		idx++;
+
+		p = buf;
+		if ((sa->mp = get_token(&p, &len)) == NULL ||
+		    (sa->mp[0] != '/' && strcmp(sa->mp, "swap")))
+			errx(1, "%s: parse error on line %u", filename, idx);
+		if ((t = get_token(&p, &len)) == NULL ||
+		    parse_sizerange(t, &sa->minsz, &sa->maxsz) == -1)
+			errx(1, "%s: parse error on line %u", filename, idx);
+		if ((t = get_token(&p, &len)) != NULL &&
+		    parse_pct(t, &sa->rate) == -1)
+			errx(1, "%s: parse error on line %u", filename, idx);
+		if (sa->minsz > sa->maxsz)
+			errx(1, "%s: min size > max size on line %u", filename,
+			    idx);
+		pctsum += sa->rate;
+	}
+	if (pctsum > 100)
+		errx(1, "%s: sum of extra space allocation > 100%%", filename);
+	alloc_table[0].sz = idx;
+	fclose(cfile);
+}
+
+char *
+get_token(char **s, size_t *len)
+{
+	char	*p, *r;
+	size_t	 tlen = 0;
+
+	p = *s;
+	while (*len > 0 && !isspace((u_char)*s[0])) {
+		(*s)++;
+		(*len)--;
+		tlen++;
+	}
+	if (tlen == 0)
+		return (NULL);
+
+	/* eat whitespace */
+	while (*len > 0 && isspace((u_char)*s[0])) {
+		(*s)++;
+		(*len)--;
+	}
+
+	tlen++;	/* null termination */
+	if ((r = malloc(tlen)) == NULL)
+		err(1, NULL);
+	strlcpy(r, p, tlen);
+	return (r);
+}
+
+int
+apply_unit(double val, u_char unit, u_int64_t *n)
+{
+	u_int64_t factor = 1;
+
+	switch (tolower(unit)) {
+	case 't':
+		 factor *= 1024;
+		/* FALLTHROUGH */
+	case 'g':
+		 factor *= 1024;
+		/* FALLTHROUGH */
+	case 'm':
+		 factor *= 1024;
+		/* FALLTHROUGH */
+	case 'k':
+		factor *= 1024;
+		break;
+	default:
+		return (-1);
+	}
+
+	val *= factor / DEV_BSIZE;
+	if (val > ULLONG_MAX)
+		return (-1);
+	*n = val;
+	return (0);
+}
+
+int
+parse_sizespec(const char *buf, double *val, char **unit)
+{
+	*val = strtod(buf, unit);
+	if ((*val == 0 && *unit == buf) || *val <= 0)
+		return (-1);
+	if (*unit != NULL && *unit[0] == '\0')
+		*unit = NULL;
+	return (0);
+}
+
+int
+parse_sizerange(char *buf, u_int64_t *min, u_int64_t *max)
+{
+	char	*p, *unit1 = NULL, *unit2 = NULL;
+	double	 val1 = 0, val2 = 0;
+
+	if ((p = strchr(buf, '-')) != NULL) {
+		p[0] = '\0';
+		p++;
+	}
+	*max = 0;
+	if (parse_sizespec(buf, &val1, &unit1) == -1)
+		return (-1);
+	if (p != NULL && p[0] != '\0') {
+		if (p[0] == '*')
+			*max = -1;
+		else
+			if (parse_sizespec(p, &val2, &unit2) == -1)
+				return (-1);
+	}
+	if (unit1 == NULL && (unit1 = unit2) == NULL)
+		return (-1);
+	if (apply_unit(val1, unit1[0], min) == -1)
+		return (-1);
+	if (val2 > 0) {
+		if (apply_unit(val2, unit2[0], max) == -1)
+			return (-1);
+	} else
+		if (*max == 0)
+			*max = *min;
+	free(buf);
+	return (0);	
+}
+
+int
+parse_pct(char *buf, int *n)
+{
+	const char	*errstr;
+
+	if (buf[strlen(buf) - 1] == '%')
+		buf[strlen(buf) - 1] = '\0';
+	*n = strtonum(buf, 0, 100, &errstr);
+	if (errstr) {
+		warnx("parse percent %s: %s", buf, errstr);
+		return (-1);
+	}
+	free(buf);
+	return (0);
 }
