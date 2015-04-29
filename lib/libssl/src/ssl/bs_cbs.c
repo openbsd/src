@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.6 2015/04/29 01:27:34 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.7 2015/04/29 02:11:09 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -84,7 +84,7 @@ int
 CBS_strdup(const CBS *cbs, char **out_ptr)
 {
 	free(*out_ptr);
-	*out_ptr = strndup((const char*)cbs->data, cbs->len);
+	*out_ptr = strndup((const char *)cbs->data, cbs->len);
 	return (*out_ptr != NULL);
 }
 
@@ -251,7 +251,7 @@ CBS_get_any_asn1_element(CBS *cbs, CBS *out, unsigned *out_tag,
 			/* Length should have used short-form encoding. */
 			return 0;
 
-		if ((len32 >> ((num_bytes-1)*8)) == 0)
+		if ((len32 >> ((num_bytes - 1) * 8)) == 0)
 			/* Length should have been at least one byte shorter. */
 			return 0;
 

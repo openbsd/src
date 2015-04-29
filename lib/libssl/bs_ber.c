@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_ber.c,v 1.3 2015/04/29 01:31:39 doug Exp $	*/
+/*	$OpenBSD: bs_ber.c,v 1.4 2015/04/29 02:11:09 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -54,7 +54,7 @@ cbs_find_ber(CBS *orig_in, char *ber_found, unsigned depth)
 			return 0;
 
 		if (CBS_len(&contents) == header_len && header_len > 0 &&
-		    CBS_data(&contents)[header_len-1] == 0x80) {
+		    CBS_data(&contents)[header_len - 1] == 0x80) {
 			*ber_found = 1;
 			return 1;
 		}

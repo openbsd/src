@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.4 2015/02/07 06:10:32 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.5 2015/04/29 02:11:09 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -68,8 +68,8 @@ size_t CBS_len(const CBS *cbs);
 /*
  * CBS_stow copies the current contents of |cbs| into |*out_ptr| and
  * |*out_len|. If |*out_ptr| is not NULL, the contents are freed with
- * OPENSSL_free. It returns one on success and zero on allocation failure. On
- * success, |*out_ptr| should be freed with OPENSSL_free. If |cbs| is empty,
+ * free. It returns one on success and zero on allocation failure. On
+ * success, |*out_ptr| should be freed with free. If |cbs| is empty,
  * |*out_ptr| will be NULL.
  */
 int CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len);
@@ -77,8 +77,8 @@ int CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len);
 /*
  * CBS_strdup copies the current contents of |cbs| into |*out_ptr| as a
  * NUL-terminated C string. If |*out_ptr| is not NULL, the contents are freed
- * with OPENSSL_free. It returns one on success and zero on allocation
- * failure. On success, |*out_ptr| should be freed with OPENSSL_free.
+ * with free. It returns one on success and zero on allocation
+ * failure. On success, |*out_ptr| should be freed with free.
  *
  * NOTE: If |cbs| contains NUL bytes, the string will be truncated. Call
  * |CBS_contains_zero_byte(cbs)| to check for NUL bytes.
@@ -335,7 +335,7 @@ void CBB_cleanup(CBB *cbb);
  * CBB_finish completes any pending length prefix and sets |*out_data| to a
  * malloced buffer and |*out_len| to the length of that buffer. The caller
  * takes ownership of the buffer and, unless the buffer was fixed with
- * |CBB_init_fixed|, must call |OPENSSL_free| when done.
+ * |CBB_init_fixed|, must call |free| when done.
  *
  * It can only be called on a "top level" |CBB|, i.e. one initialised with
  * |CBB_init| or |CBB_init_fixed|. It returns one on success and zero on
