@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.113 2015/04/29 09:58:16 henning Exp $
+.\"	$OpenBSD: disklabel.8,v 1.114 2015/04/29 16:56:31 henning Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -42,8 +42,8 @@
 .Sh SYNOPSIS
 .Nm disklabel
 .Op Fl Acdtv
-.Op Fl T Ar file
 .Op Fl h | p Ar unit
+.Op Fl T Ar file
 .Ar disk
 .Nm disklabel
 .Fl w
@@ -59,8 +59,8 @@
 .Nm disklabel
 .Fl E
 .Op Fl Acdnv
-.Op Fl T Ar file
 .Op Fl F Ns | Ns Fl f Ar file
+.Op Fl T Ar file
 .Ar disk
 .Nm disklabel
 .Fl R
@@ -196,10 +196,6 @@ Restore a disk label that was formatted in a prior operation and
 saved in an
 .Tn ASCII
 file.
-.It Fl t
-Format the label as a
-.Xr disktab 5
-entry.
 .It Fl T Ar file
 Read the template for automatic allocation from
 .Ar file
@@ -207,6 +203,10 @@ instead of using the builtin one.
 See
 .Sx AUTOMATIC DISK ALLOCATION
 below for the format.
+.It Fl t
+Format the label as a
+.Xr disktab 5
+entry.
 .It Fl v
 Print additional information during operation
 .Pq verbose mode .

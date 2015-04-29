@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.200 2015/04/29 09:58:16 henning Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.201 2015/04/29 16:56:31 henning Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1474,13 +1474,13 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: disklabel    [-Acdtv] [-h | -p unit] disk\t\t(read)\n");
+	    "usage: disklabel    [-Acdtv] [-h | -p unit] [-T file] disk\t(read)\n");
 	fprintf(stderr,
 	    "       disklabel -w [-Acdnv] [-T file] disk disktype [packid]\t(write)\n");
 	fprintf(stderr,
 	    "       disklabel -e [-Acdnv] [-T file] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "       disklabel -E [-Acdnv] [-T file] [-F|-f file] disk\t(simple editor)"
+	    "       disklabel -E [-Acdnv] [-F|-f file] [-T file] disk\t(simple editor)"
 	    "\n");
 	fprintf(stderr,
 	    "       disklabel -R [-nv] [-F|-f file] disk protofile\t\t(restore)\n\n");
