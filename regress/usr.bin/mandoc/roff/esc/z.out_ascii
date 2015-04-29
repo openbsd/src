@@ -4,12 +4,13 @@ NNAAMMEE
      eesscc--zz - the roff escape z sequence
 
 DDEESSCCRRIIPPTTIIOONN
-     single z with ASCII char: ><
-     single z with escape char: ><
-     single z with defined string (mytext): >ytext<
-     single z with font escape: >bboolldd<
+     single z with ASCII char: >x<
+     single z with escape char: >O<
+     single z with defined string (mytext): >mytext<
+     single z with font escape: >xxbboolldd<
      single z with nospace escape: > new line<
-     single z with undefined escape: ><
-     double z: ><
+     single z with overstrike: >abc<
+     single z near the end of the line: ><
+     double z: >x<
 
-OpenBSD                          May 28, 2012                          OpenBSD
+OpenBSD                         April 29, 2015                         OpenBSD

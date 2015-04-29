@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.57 2015/04/04 17:46:58 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.58 2015/04/29 18:32:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -67,13 +67,14 @@ struct	termp {
 	int		  overstep;	/* See termp_flushln(). */
 	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;
-#define	TERMP_SENTENCE	 (1 << 1)	/* Space before a sentence. */
-#define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
-#define	TERMP_NONOSPACE	 (1 << 3)	/* No space (no autounset). */
-#define	TERMP_NBRWORD	 (1 << 4)	/* Make next word nonbreaking. */
-#define	TERMP_KEEP	 (1 << 5)	/* Keep words together. */
-#define	TERMP_PREKEEP	 (1 << 6)	/* ...starting with the next one. */
-#define	TERMP_SKIPCHAR	 (1 << 7)	/* Skip the next character. */
+#define	TERMP_SENTENCE	 (1 << 0)	/* Space before a sentence. */
+#define	TERMP_NOSPACE	 (1 << 1)	/* No space before words. */
+#define	TERMP_NONOSPACE	 (1 << 2)	/* No space (no autounset). */
+#define	TERMP_NBRWORD	 (1 << 3)	/* Make next word nonbreaking. */
+#define	TERMP_KEEP	 (1 << 4)	/* Keep words together. */
+#define	TERMP_PREKEEP	 (1 << 5)	/* ...starting with the next one. */
+#define	TERMP_BACKAFTER	 (1 << 6)	/* Back up after next character. */
+#define	TERMP_BACKBEFORE (1 << 7)	/* Back up before next character. */
 #define	TERMP_NOBREAK	 (1 << 8)	/* See term_flushln(). */
 #define	TERMP_BRIND	 (1 << 9)	/* See term_flushln(). */
 #define	TERMP_DANGLE	 (1 << 10)	/* See term_flushln(). */

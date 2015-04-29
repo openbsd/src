@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.50 2015/02/17 17:16:11 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.51 2015/04/29 18:32:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2015 $
+.Dd $Mdocdate: April 29 2015 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -2026,10 +2026,7 @@ Print
 with zero width and height; ignored by
 .Xr mandoc 1 .
 .Ss \ez
-Output the next character without advancing the cursor position;
-approximated in
-.Xr mandoc 1
-by simply skipping the next character.
+Output the next character without advancing the cursor position.
 .Sh COMPATIBILITY
 The
 .Xr mandoc 1

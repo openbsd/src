@@ -1,4 +1,4 @@
-.Dd May 28, 2012
+.Dd April 29, 2015
 .Dt ESC-Z 1
 .Os OpenBSD
 .Sh NAME
@@ -17,6 +17,8 @@ single z with font escape: >\z\fBxbold\fP<
 single z with nospace escape: >\z\c
 new line<
 .br
-single z with undefined escape: >\z\a<
+single z with overstrike: >\z\o'ab'c<
+.br
+single z near the end of the line: >\z<
 .br
 double z: >\z\zx<
