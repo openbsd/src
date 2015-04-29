@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.16 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.17 2015/04/29 00:11:12 doug Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -531,12 +531,8 @@ EC_GROUP_cmp(const EC_GROUP * a, const EC_GROUP * b, BN_CTX * ctx)
 		if (!EC_GROUP_get_order(a, a1, ctx) ||
 		    !EC_GROUP_get_order(b, b1, ctx) ||
 		    !EC_GROUP_get_cofactor(a, a2, ctx) ||
-		    !EC_GROUP_get_cofactor(b, b2, ctx)) {
-			BN_CTX_end(ctx);
-			if (ctx_new)
-				BN_CTX_free(ctx);
-			return -1;
-		}
+		    !EC_GROUP_get_cofactor(b, b2, ctx))
+			goto err;
 		if (BN_cmp(a1, b1) || BN_cmp(a2, b2))
 			r = 1;
 	}

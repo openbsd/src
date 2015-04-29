@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_x931p.c,v 1.7 2015/02/14 15:07:54 jsing Exp $ */
+/* $OpenBSD: bn_x931p.c,v 1.8 2015/04/29 00:11:12 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -202,6 +202,7 @@ BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
 {
 	BIGNUM *t;
 	int i;
+	int ret = 0;
 
 	/* Number of bits for each prime is of the form
 	 * 512+128s for s = 0, 1, ...
@@ -218,23 +219,24 @@ BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
 
 	BN_CTX_start(ctx);
 	if ((t = BN_CTX_get(ctx)) == NULL)
-		return 0;
+		goto err;
 
 	for (i = 0; i < 1000; i++) {
 		if (!BN_rand(Xq, nbits, 1, 0))
-			return 0;
+			goto err;
 		/* Check that |Xp - Xq| > 2^(nbits - 100) */
 		BN_sub(t, Xp, Xq);
 		if (BN_num_bits(t) > (nbits - 100))
 			break;
 	}
 
+	if (i < 1000)
+		ret = 1;
+
+err:
 	BN_CTX_end(ctx);
 
-	if (i < 1000)
-		return 1;
-
-	return 0;
+	return ret;
 }
 
 /* Generate primes using X9.31 algorithm. Of the values p, p1, p2, Xp1

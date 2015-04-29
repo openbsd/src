@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.12 2015/03/21 08:05:20 doug Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.13 2015/04/29 00:11:12 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,8 +161,10 @@ BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 
 	if (BN_ucmp(m, &(recp->N)) < 0) {
 		BN_zero(d);
-		if (!BN_copy(r, m))
+		if (!BN_copy(r, m)) {
+			BN_CTX_end(ctx);
 			return 0;
+		}
 		BN_CTX_end(ctx);
 		return (1);
 	}

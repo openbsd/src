@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.18 2015/02/10 09:50:12 miod Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.19 2015/04/29 00:11:12 doug Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -576,7 +576,7 @@ BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[], BN_CTX *ctx)
 	bn_check_top(a);
 	BN_CTX_start(ctx);
 	if ((s = BN_CTX_get(ctx)) == NULL)
-		return 0;
+		goto err;
 	if (!bn_wexpand(s, 2 * a->top))
 		goto err;
 
