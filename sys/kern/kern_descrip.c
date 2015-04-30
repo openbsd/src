@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.118 2015/04/30 09:20:51 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.119 2015/04/30 21:18:45 millert Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ fd_getfile_mode(struct filedesc *fdp, int fd, int mode)
 
 	fp = fd_getfile(fdp, fd);
 
-	if ((fp->f_flag & mode) == 0)
+	if (fp == NULL || (fp->f_flag & mode) == 0)
 		return (NULL);
 
 	return (fp);
