@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.50 2015/04/01 14:29:54 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.51 2015/04/30 20:55:23 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -485,7 +485,10 @@ dp8390_rint(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct dp8390_ring packet_hdr;
+	struct mbuf *m;
 	int packet_ptr;
 	u_short len;
 	u_char boundary, current;
@@ -508,7 +511,7 @@ loop:
 	 */
 	current = NIC_GET(regt, regh, ED_P1_CURR);
 	if (sc->next_packet == current)
-		return;
+		goto exit;
 
 	/* Set NIC to page 0 registers to update boundary register. */
 	NIC_BARRIER(regt, regh);
@@ -568,17 +571,23 @@ loop:
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
-			dp8390_read(sc,
+			m = dp8390_get(sc,
 			    packet_ptr + sizeof(struct dp8390_ring),
 			    len - sizeof(struct dp8390_ring));
+			if (m == NULL) {
+				ifp->if_ierrors++;
+				goto exit;
+			}
+			ifp->if_ipackets++;
+			ml_enqueue(&ml, m);
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR, "%s: NIC memory corrupt - "
 			    "invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			ifp->if_ierrors++;
 			dp8390_reset(sc);
-			return;
+			goto exit;
 		}
 
 		/* Update next packet pointer. */
@@ -595,6 +604,9 @@ loop:
 	} while (sc->next_packet != current);
 
 	goto loop;
+
+exit:
+	if_input(ifp, &ml);
 }
 
 /* Ethernet interface interrupt processor. */
@@ -858,34 +870,6 @@ dp8390_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	splx(s);
 	return (error);
 }
-
-void
-dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mbuf *m;
-
-	/* Pull packet off interface. */
-	m = dp8390_get(sc, buf, len);
-	if (m == 0) {
-		ifp->if_ierrors++;
-		return;
-	}
-
-	ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to bpf.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	ether_input_mbuf(ifp, m);
-}
-
 
 /*
  * Supporting routines.
