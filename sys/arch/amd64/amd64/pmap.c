@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.91 2015/04/15 03:52:45 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.92 2015/04/30 15:49:02 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -280,7 +280,7 @@ extern int end;
  * local prototypes
  */
 
-void  pmap_enter_pv(struct vm_page *, struct pv_entry *, struct pmap *,
+void pmap_enter_pv(struct vm_page *, struct pv_entry *, struct pmap *,
     vaddr_t, struct vm_page *);
 struct vm_page *pmap_get_ptp(struct pmap *, vaddr_t, pd_entry_t **);
 struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
@@ -306,11 +306,11 @@ void pmap_alloc_level(pd_entry_t **, vaddr_t, int, long *);
 
 void pmap_sync_flags_pte(struct vm_page *, u_long);
 
-void	pmap_tlb_shootpage(struct pmap *, vaddr_t, int);
-void	pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t, int);
-void	pmap_tlb_shoottlb(struct pmap *, int);
+void pmap_tlb_shootpage(struct pmap *, vaddr_t, int);
+void pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t, int);
+void pmap_tlb_shoottlb(struct pmap *, int);
 #ifdef MULTIPROCESSOR
-void	pmap_tlb_shootwait(void);
+void pmap_tlb_shootwait(void);
 #else
 #define	pmap_tlb_shootwait()
 #endif
