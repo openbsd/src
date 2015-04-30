@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox.c,v 1.2 2015/04/29 06:37:14 deraadt Exp $ */
+/* $OpenBSD: sandbox.c,v 1.3 2015/04/30 14:16:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -79,12 +79,11 @@ sandbox_child(const char *user)
 	struct passwd	*pw;
 
 	/*
-	 * If we don't set streams to line buffered explicitly, stdio uses
-	 * isatty() which means ioctl() - too nasty to let through the systrace
-	 * policy.
+	 * If we don't set stream buffering explicitly, stdio calls isatty()
+	 * which means ioctl() - too nasty to let through the systrace policy.
 	 */
 	setvbuf(stdout, NULL, _IOLBF, 0);
-	setvbuf(stderr, NULL, _IOLBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 
 	if (geteuid() == 0) {
 		pw = getpwnam(user);
