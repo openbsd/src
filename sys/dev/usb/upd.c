@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.18 2015/04/30 10:00:50 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.19 2015/04/30 10:09:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -79,8 +79,8 @@ static struct upd_usage_entry upd_usage_roots[] = {
 #define UPD_MAX_SENSORS	(nitems(upd_usage_batdep) + nitems(upd_usage_roots))
 
 struct upd_report {
-	size_t		size;
-	int		enabled;
+	size_t				size;
+	SLIST_HEAD(, upd_sensor)	sensors;
 };
 
 SLIST_HEAD(upd_sensor_head, upd_sensor);
@@ -90,6 +90,7 @@ struct upd_sensor {
 	int				attached;
 	struct upd_sensor_head		children;
 	SLIST_ENTRY(upd_sensor)		dep_next;
+	SLIST_ENTRY(upd_sensor)		rep_next;
 };
 
 struct upd_softc {
@@ -183,6 +184,8 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_reports = mallocarray(sc->sc_max_repid,
 	    sizeof(struct upd_report), M_USBDEV, M_WAITOK | M_ZERO);
+	for (i = 0; i < sc->sc_max_repid; i++)
+		SLIST_INIT(&sc->sc_reports[i].sensors);
 	sc->sc_sensors = mallocarray(UPD_MAX_SENSORS,
 	    sizeof(struct upd_sensor), M_USBDEV, M_WAITOK | M_ZERO);
 	for (i = 0; i < UPD_MAX_SENSORS; i++)
@@ -214,6 +217,7 @@ upd_attach_sensor_tree(struct upd_softc *sc, void *desc, int size,
 	struct hid_item		  item;
 	struct upd_usage_entry	 *entry;
 	struct upd_sensor	 *sensor;
+	struct upd_report	 *report;
 	int			  i;
 
 	for (i = 0; i < nentries; i++) {
@@ -243,11 +247,11 @@ upd_attach_sensor_tree(struct upd_softc *sc, void *desc, int size,
 		upd_attach_sensor_tree(sc, desc, size, entry->nchildren,
 		    entry->children, &sensor->children);
 
-		if (sc->sc_reports[item.report_ID].enabled)
-			continue;
-		sc->sc_reports[item.report_ID].size = hid_report_size(desc,
-		    size, item.kind, item.report_ID);
-		sc->sc_reports[item.report_ID].enabled = 1;
+		report = &sc->sc_reports[item.report_ID];
+		if (SLIST_EMPTY(&report->sensors))
+			report->size = hid_report_size(desc,
+			    size, item.kind, item.report_ID);
+		SLIST_INSERT_HEAD(&report->sensors, sensor, rep_next);
 	}
 }
 
@@ -288,7 +292,7 @@ upd_refresh(void *arg)
 
 	for (repid = 0; repid < sc->sc_max_repid; repid++) {
 		report = &sc->sc_reports[repid];
-		if (!report->enabled)
+		if (SLIST_EMPTY(&report->sensors))
 			continue;
 
 		memset(buf, 0x0, sizeof(buf));
