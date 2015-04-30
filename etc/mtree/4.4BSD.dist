@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.270 2015/04/12 11:49:39 sthen Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.271 2015/04/30 19:02:15 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -771,7 +771,20 @@ var
         ..
         output			gname=daemon mode=0775
         ..
+        # ./var/spool/smtpd
         smtpd			type=dir uname=root gname=wheel mode=0711
+            corrupt		type=dir uname=_smtpq gname=wheel mode=0700
+            ..
+            incoming		type=dir uname=_smtpq gname=wheel mode=0700
+            ..
+            offline		type=dir uname=root gname=wheel mode=1777
+            ..
+            purge		type=dir uname=_smtpq gname=wheel mode=0700
+            ..
+            queue		type=dir uname=_smtpq gname=wheel mode=0700
+            ..
+            temporary		type=dir uname=_smtpq gname=wheel mode=0700
+            ..
         ..
         #sockets		mode=777
         #..
