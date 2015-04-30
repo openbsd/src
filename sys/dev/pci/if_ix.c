@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.118 2015/03/20 10:41:15 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.119 2015/04/30 14:17:26 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -953,8 +953,15 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 			ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
 			break;
 		case IXGBE_LINK_SPEED_1GB_FULL:
-			ifmr->ifm_active |= ((sc->optics == IFM_1000_SX) ?
-			    IFM_1000_SX : IFM_1000_T) | IFM_FDX;
+			switch (sc->optics) {
+			case IFM_1000_SX:
+			case IFM_1000_LX:
+				ifmr->ifm_active |= sc->optics | IFM_FDX;
+				break;
+			default:
+				ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
+				break;
+			}
 			break;
 		case IXGBE_LINK_SPEED_10GB_FULL:
 			ifmr->ifm_active |= sc->optics | IFM_FDX;
@@ -1407,6 +1414,8 @@ ixgbe_setup_optics(struct ix_softc *sc)
 		sc->optics = IFM_10G_CX4;
 	else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_SX)
 		sc->optics = IFM_1000_SX;
+	else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_LX)
+		sc->optics = IFM_1000_LX;
 }
 
 /*********************************************************************
