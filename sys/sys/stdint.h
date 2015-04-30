@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdint.h,v 1.9 2014/04/01 05:04:50 matthew Exp $	*/
+/*	$OpenBSD: stdint.h,v 1.10 2015/04/30 18:19:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -186,7 +186,7 @@ typedef	__uintmax_t		uintmax_t;
 #define	SIG_ATOMIC_MIN		INT32_MIN
 #define	SIG_ATOMIC_MAX		INT32_MAX
 
-/* Limits of size_t (also in limits.h) */
+/* Limit of size_t */
 #ifndef	SIZE_MAX
 #define	SIZE_MAX		UINTPTR_MAX
 #endif
