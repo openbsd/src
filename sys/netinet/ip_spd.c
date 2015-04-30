@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.83 2015/04/16 19:24:13 markus Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.84 2015/04/30 20:12:33 millert Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -687,15 +687,13 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip_src = ddst->sen_ip_src;
 			ipa->ipa_mask.sen_ip_src.s_addr = INADDR_BROADCAST;
-		} else {
-			ipa->ipa_info.sen_ip_src = ipo->ipo_addr.sen_ip_src;
-			ipa->ipa_mask.sen_ip_src = ipo->ipo_mask.sen_ip_src;
-		}
 
-		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip_dst = ddst->sen_ip_dst;
 			ipa->ipa_mask.sen_ip_dst.s_addr = INADDR_BROADCAST;
 		} else {
+			ipa->ipa_info.sen_ip_src = ipo->ipo_addr.sen_ip_src;
+			ipa->ipa_mask.sen_ip_src = ipo->ipo_mask.sen_ip_src;
+
 			ipa->ipa_info.sen_ip_dst = ipo->ipo_addr.sen_ip_dst;
 			ipa->ipa_mask.sen_ip_dst = ipo->ipo_mask.sen_ip_dst;
 		}
@@ -723,15 +721,13 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip6_src = ddst->sen_ip6_src;
 			ipa->ipa_mask.sen_ip6_src = in6mask128;
-		} else {
-			ipa->ipa_info.sen_ip6_src = ipo->ipo_addr.sen_ip6_src;
-			ipa->ipa_mask.sen_ip6_src = ipo->ipo_mask.sen_ip6_src;
-		}
 
-		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip6_dst = ddst->sen_ip6_dst;
 			ipa->ipa_mask.sen_ip6_dst = in6mask128;
 		} else {
+			ipa->ipa_info.sen_ip6_src = ipo->ipo_addr.sen_ip6_src;
+			ipa->ipa_mask.sen_ip6_src = ipo->ipo_mask.sen_ip6_src;
+
 			ipa->ipa_info.sen_ip6_dst = ipo->ipo_addr.sen_ip6_dst;
 			ipa->ipa_mask.sen_ip6_dst = ipo->ipo_mask.sen_ip6_dst;
 		}
