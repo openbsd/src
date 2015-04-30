@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.17 2015/04/27 09:14:45 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.18 2015/04/30 10:00:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/queue.h>
 #include <sys/sensors.h>
 
 #include <dev/usb/hid.h>
@@ -46,9 +47,11 @@ struct upd_usage_entry {
 	uint8_t			usage_id;
 	enum sensor_type	senstype;
 	char			*usage_name; /* sensor string */
+	int			nchildren;
+	struct upd_usage_entry	*children;
 };
 
-static struct upd_usage_entry upd_usage_table[] = {
+static struct upd_usage_entry upd_usage_batdep[] = {
 	{ HUP_BATTERY,	HUB_REL_STATEOF_CHARGE,
 	    SENSOR_PERCENT,	 "RelativeStateOfCharge" },
 	{ HUP_BATTERY,	HUB_ABS_STATEOF_CHARGE,
@@ -61,25 +64,32 @@ static struct upd_usage_entry upd_usage_table[] = {
 	    SENSOR_INDICATOR,	 "Charging" },
 	{ HUP_BATTERY,	HUB_DISCHARGING,
 	    SENSOR_INDICATOR,	 "Discharging" },
-	{ HUP_BATTERY,	HUB_BATTERY_PRESENT,
-	    SENSOR_INDICATOR,	 "BatteryPresent" },
-	{ HUP_POWER,	HUP_SHUTDOWN_IMMINENT,
-	    SENSOR_INDICATOR,	 "ShutdownImminent" },
-	{ HUP_BATTERY,	HUB_AC_PRESENT,
-	    SENSOR_INDICATOR,	 "ACPresent" },
 	{ HUP_BATTERY,	HUB_ATRATE_TIMETOFULL,
 	    SENSOR_TIMEDELTA,	 "AtRateTimeToFull" }
 };
+static struct upd_usage_entry upd_usage_roots[] = {
+	{ HUP_BATTERY,	HUB_BATTERY_PRESENT,
+	    SENSOR_INDICATOR,	 "BatteryPresent",
+	    nitems(upd_usage_batdep),	upd_usage_batdep },
+	{ HUP_POWER,	HUP_SHUTDOWN_IMMINENT,
+	    SENSOR_INDICATOR,	 "ShutdownImminent" },
+	{ HUP_BATTERY,	HUB_AC_PRESENT,
+	    SENSOR_INDICATOR,	 "ACPresent" }
+};
+#define UPD_MAX_SENSORS	(nitems(upd_usage_batdep) + nitems(upd_usage_roots))
 
 struct upd_report {
 	size_t		size;
 	int		enabled;
 };
 
+SLIST_HEAD(upd_sensor_head, upd_sensor);
 struct upd_sensor {
-	struct ksensor		ksensor;
-	struct hid_item		hitem;
-	int			attached;
+	struct ksensor			ksensor;
+	struct hid_item			hitem;
+	int				attached;
+	struct upd_sensor_head		children;
+	SLIST_ENTRY(upd_sensor)		dep_next;
 };
 
 struct upd_softc {
@@ -92,10 +102,13 @@ struct upd_softc {
 	struct sensor_task	*sc_sensortask;
 	struct upd_report	*sc_reports;
 	struct upd_sensor	*sc_sensors;
+	struct upd_sensor_head	 sc_root_sensors;
 };
 
 int  upd_match(struct device *, void *, void *);
 void upd_attach(struct device *, struct device *, void *);
+void upd_attach_sensor_tree(struct upd_softc *, void *, int, int,
+    struct upd_usage_entry *, struct upd_sensor_head *);
 int  upd_detach(struct device *, int);
 
 void upd_refresh(void *);
@@ -134,13 +147,11 @@ upd_match(struct device *parent, void *match, void *aux)
 	DPRINTF(("upd: vendor=0x%04x, product=0x%04x\n", uha->uaa->vendor,
 	    uha->uaa->product));
 
-	/*
-	 * look for at least one sensor of our table
-	 */
+	/* need at least one sensor from root of tree */
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	for (i = 0; i < nitems(upd_usage_table); i++)
+	for (i = 0; i < nitems(upd_usage_roots); i++)
 		if (upd_lookup_usage_entry(desc, size,
-		    upd_usage_table + i, &item)) {
+		    upd_usage_roots + i, &item)) {
 			ret = UMATCH_VENDOR_PRODUCT;
 			break;
 		}
@@ -153,9 +164,6 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct upd_softc	 *sc = (struct upd_softc *)self;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
-	struct hid_item		  item;
-	struct upd_usage_entry	 *entry;
-	struct upd_sensor	 *sensor;
 	int			  size;
 	int			  i;
 	void			 *desc;
@@ -164,6 +172,7 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_reports = NULL;
 	sc->sc_sensors = NULL;
+	SLIST_INIT(&sc->sc_root_sensors);
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
@@ -174,13 +183,41 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_reports = mallocarray(sc->sc_max_repid,
 	    sizeof(struct upd_report), M_USBDEV, M_WAITOK | M_ZERO);
-	sc->sc_sensors = mallocarray(nitems(upd_usage_table),
+	sc->sc_sensors = mallocarray(UPD_MAX_SENSORS,
 	    sizeof(struct upd_sensor), M_USBDEV, M_WAITOK | M_ZERO);
-	sc->sc_num_sensors = 0;
+	for (i = 0; i < UPD_MAX_SENSORS; i++)
+		SLIST_INIT(&sc->sc_sensors[i].children);
 
+	sc->sc_num_sensors = 0;
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	for (i = 0; i < nitems(upd_usage_table); i++) {
-		entry = &upd_usage_table[i];
+	upd_attach_sensor_tree(sc, desc, size, nitems(upd_usage_roots),
+	    upd_usage_roots, &sc->sc_root_sensors);
+	DPRINTF(("upd: sc_num_sensors=%d\n", sc->sc_num_sensors));
+
+	sc->sc_sensortask = sensor_task_register(sc, upd_refresh, 6);
+	if (sc->sc_sensortask == NULL) {
+		printf(", unable to register update task\n");
+		return;
+	}
+	sensordev_install(&sc->sc_sensordev);
+
+	printf("\n");
+
+	DPRINTF(("upd_attach: complete\n"));
+}
+
+void
+upd_attach_sensor_tree(struct upd_softc *sc, void *desc, int size,
+    int nentries, struct upd_usage_entry *entries,
+    struct upd_sensor_head *queue)
+{
+	struct hid_item		  item;
+	struct upd_usage_entry	 *entry;
+	struct upd_sensor	 *sensor;
+	int			  i;
+
+	for (i = 0; i < nentries; i++) {
+		entry = entries + i;
 		if (!upd_lookup_usage_entry(desc, size, entry, &item))
 			continue;
 
@@ -200,27 +237,18 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 		sensor->ksensor.value = 0;
 		sensor_attach(&sc->sc_sensordev, &sensor->ksensor);
 		sensor->attached = 1;
+		SLIST_INSERT_HEAD(queue, sensor, dep_next);
 		sc->sc_num_sensors++;
+
+		upd_attach_sensor_tree(sc, desc, size, entry->nchildren,
+		    entry->children, &sensor->children);
 
 		if (sc->sc_reports[item.report_ID].enabled)
 			continue;
-
 		sc->sc_reports[item.report_ID].size = hid_report_size(desc,
 		    size, item.kind, item.report_ID);
 		sc->sc_reports[item.report_ID].enabled = 1;
 	}
-	DPRINTF(("upd: sc_num_sensors=%d\n", sc->sc_num_sensors));
-
-	sc->sc_sensortask = sensor_task_register(sc, upd_refresh, 6);
-	if (sc->sc_sensortask == NULL) {
-		printf(", unable to register update task\n");
-		return;
-	}
-	sensordev_install(&sc->sc_sensordev);
-
-	printf("\n");
-
-	DPRINTF(("upd_attach: complete\n"));
 }
 
 int
