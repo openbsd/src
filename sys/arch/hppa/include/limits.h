@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.13 2013/08/07 15:34:00 kettenis Exp $	*/
+/*	$OpenBSD: limits.h,v 1.14 2015/04/30 13:42:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,9 +37,6 @@
 #include <sys/cdefs.h>
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE
-#ifndef	SIZE_MAX
-#define	SIZE_MAX	ULONG_MAX	/* max value for a size_t */
-#endif
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
 #endif
 
