@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.59 2015/03/13 18:08:31 sthen Exp $
+ * $OpenBSD: calendar.birthday,v 1.60 2015/04/30 09:12:49 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -155,7 +155,7 @@
 04/15	Jean Genet died in Paris, 1986
 04/16	Charles (Charlie) Chaplin (Sir) born in London, 1889
 04/19	Andre Rene the Giant (Roussimoff) born in Grenoble, France, 1946
-04/20	Adolph Hitler born, 1889
+04/20	Adolf Hitler born, 1889
 04/22	Kant born, 1724
 04/22	Lenin born, the best friend of all the children, 1870
 04/23	Shakespeare born, 1564
@@ -166,7 +166,6 @@
 04/29	William Randolph Hearst born in San Francisco, 1863
 04/29	Albert Hofmann died, 2008
 04/30	Karl Friedrich Gauss born, 1777, mathematician & astronomer
-04/30	Adolph Hitler committed suicide, 1945
 05/01	Little Walter (Marion Walter Jacobs) is born in Alexandria,
 		Louisiana, 1930
 05/02	Dr. Benjamin Spock born, 1903
