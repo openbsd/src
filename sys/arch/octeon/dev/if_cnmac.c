@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.21 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.22 2015/04/30 21:52:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1311,7 +1311,6 @@ octeon_eth_recv_mbuf(struct octeon_eth_softc *sc, uint64_t *work,
 
 	m->m_data = data;
 	m->m_len = m->m_pkthdr.len = (word1 & PIP_WQE_WORD1_LEN) >> 48;
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 #if 0
 	/*
 	 * not readonly buffer
@@ -1409,6 +1408,7 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 {
 	int result = 0;
 	struct ifnet *ifp;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint64_t word2;
 
@@ -1455,16 +1455,13 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 		octeon_eth_send_queue_flush_fetch(sc);
 		octeon_eth_send_queue_flush(sc);
 	}
-	/* XXX */
-
-	OCTEON_ETH_TAP(ifp, m, BPF_DIRECTION_IN);
 
 	/* XXX */
 	if (sc->sc_flush)
 		octeon_eth_send_queue_flush_sync(sc);
-	/* XXX */
 
-	ether_input_mbuf(ifp, m);
+	ml_enqueue(&ml, m);
+	if_input(ifp, &ml);
 
 	return 0;
 
