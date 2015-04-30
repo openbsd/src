@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.20 2014/08/25 14:26:25 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.21 2015/04/30 13:24:36 sthen Exp $	*/
 
 /******************************************************************************
 
@@ -2798,6 +2798,8 @@ enum ixgbe_sfp_type {
 	ixgbe_sfp_type_1g_cu_core1 = 10,
 	ixgbe_sfp_type_1g_sx_core0 = 11,
 	ixgbe_sfp_type_1g_sx_core1 = 12,
+	ixgbe_sfp_type_1g_lx_core0 = 13,
+	ixgbe_sfp_type_1g_lx_core1 = 14,
 	ixgbe_sfp_type_not_present = 0xFFFE,
 	ixgbe_sfp_type_unknown = 0xFFFF
 };
