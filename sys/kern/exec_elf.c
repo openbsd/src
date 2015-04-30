@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.114 2015/04/26 05:30:42 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.115 2015/04/30 03:11:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -559,6 +559,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			    pp->p_offset, interp, pp->p_filesz)) != 0) {
 				goto bad;
 			}
+			if (interp[pp->p_filesz - 1] != '\0')
+				goto bad;
 		} else if (pp->p_type == PT_LOAD) {
 			if (pp->p_filesz > pp->p_memsz) {
 				error = EINVAL;
