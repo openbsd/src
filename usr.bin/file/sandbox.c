@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox.c,v 1.3 2015/04/30 14:16:49 nicm Exp $ */
+/* $OpenBSD: sandbox.c,v 1.4 2015/04/30 14:30:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -116,6 +116,11 @@ sandbox_fork(const char *user)
 		return (sandbox_child(user));
 	}
 
+	/*
+	 * Wait for the child to stop itself with SIGSTOP before assigning the
+	 * policy, before that it might still be calling syscalls the policy
+	 * would block.
+	 */
 	do {
 		pid = waitpid(pid, &status, WUNTRACED);
 	} while (pid == -1 && errno == EINTR);
