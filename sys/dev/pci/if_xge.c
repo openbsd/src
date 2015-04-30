@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.60 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.61 2015/04/30 07:51:07 mpi Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -804,6 +804,7 @@ xge_intr(void *pv)
 	struct xge_softc *sc = pv;
 	struct txd *txd;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	bus_dmamap_t dmp;
 	uint64_t val;
 	int i, lasttx, plen;
@@ -892,7 +893,6 @@ xge_intr(void *pv)
 		plen += m->m_next->m_next->m_next->m_next->m_len =
 		    RXD_CTL3_BUF4SIZ(rxd->rxd_control3);
 #endif
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = plen;
 
 		val = rxd->rxd_control1;
@@ -928,16 +928,13 @@ xge_intr(void *pv)
 		}
 #endif
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 
 		if (++sc->sc_nextrx == NRXREAL)
 			sc->sc_nextrx = 0;
 	}
+
+	if_input(ifp, &ml);
 
 	return (1);
 }

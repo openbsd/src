@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.62 2015/04/01 14:29:54 mpi Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.63 2015/04/30 07:51:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1031,6 +1031,7 @@ tl_intvec_rxeof(void *xsc, u_int32_t type)
 	int			r = 0, total_len = 0;
 	struct ether_header	*eh;
 	struct mbuf		*m;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct ifnet		*ifp;
 	struct tl_chain_onefrag	*cur_rx;
 
@@ -1060,7 +1061,6 @@ tl_intvec_rxeof(void *xsc, u_int32_t type)
 		sc->tl_cdata.tl_rx_tail = cur_rx;
 
 		eh = mtod(m, struct ether_header *);
-		m->m_pkthdr.rcvif = ifp;
 
 		/*
 		 * Note: when the ThunderLAN chip is in 'capture all
@@ -1076,13 +1076,10 @@ tl_intvec_rxeof(void *xsc, u_int32_t type)
 		}
 
 		m->m_pkthdr.len = m->m_len = total_len;
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		/* pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	return(r);
 }

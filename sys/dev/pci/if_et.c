@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.26 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.27 2015/04/30 07:51:07 mpi Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1677,6 +1677,7 @@ void
 et_rxeof(struct et_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct et_rxstatus_data *rxsd = &sc->sc_rx_status;
 	struct et_rxstat_ring *rxst_ring = &sc->sc_rxstat_ring;
 	uint32_t rxs_stat_ring;
@@ -1744,16 +1745,8 @@ et_rxeof(struct et_softc *sc)
 			} else {
 				m->m_pkthdr.len = m->m_len = buflen -
 				    ETHER_CRC_LEN;
-				m->m_pkthdr.rcvif = ifp;
-
-#if NBPFILTER > 0
-				if (ifp->if_bpf != NULL)
-					bpf_mtap(ifp->if_bpf, m,
-					    BPF_DIRECTION_IN);
-#endif
-
+				ml_enqueue(&ml, m);
 				ifp->if_ipackets++;
-				ether_input_mbuf(ifp, m);
 			}
 		} else {
 			ifp->if_ierrors++;
@@ -1777,6 +1770,8 @@ et_rxeof(struct et_softc *sc)
 			rxring_pos |= ET_RX_RING_POS_WRAP;
 		CSR_WRITE_4(sc, rx_ring->rr_posreg, rxring_pos);
 	}
+
+	if_input(ifp, &ml);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.26 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.27 2015/04/30 07:51:07 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1282,6 +1282,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct age_rxdesc *rxd;
 	struct rx_desc *desc;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *mp, *m;
 	uint32_t status, index;
 	int count, nsegs, pktlen;
@@ -1368,7 +1369,6 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 
 			m = sc->age_cdata.age_rxhead;
 			m->m_flags |= M_PKTHDR;
-			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = sc->age_cdata.age_rxlen;
 			/* Set the first mbuf length. */
 			m->m_len = sc->age_cdata.age_rxlen - pktlen;
@@ -1410,18 +1410,14 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			}
 #endif
 
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap_ether(ifp->if_bpf, m, 
-				    BPF_DIRECTION_IN);
-#endif
-			/* Pass it on. */
-			ether_input_mbuf(ifp, m);
+			ml_enqueue(&ml, m);
 
 			/* Reset mbuf chains. */
 			AGE_RXCHAIN_RESET(sc);
 		}
 	}
+
+	if_input(ifp, &ml);
 
 	if (count != nsegs) {
 		sc->age_cdata.age_rx_cons += nsegs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.59 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.60 2015/04/30 07:51:07 mpi Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -854,6 +854,7 @@ stge_rxintr(struct stge_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct stge_descsoft *ds;
 	struct mbuf *m, *tailm;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	uint64_t status;
 	int i, len;
 
@@ -992,24 +993,15 @@ stge_rxintr(struct stge_softc *sc)
 		}
 #endif
 
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
+
+	if_input(ifp, &ml);
 }
 
 /*

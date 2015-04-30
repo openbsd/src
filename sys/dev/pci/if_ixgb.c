@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.63 2014/12/22 02:28:52 tedu Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.64 2015/04/30 07:51:07 mpi Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1705,6 +1705,7 @@ void
 ixgb_rxeof(struct ixgb_softc *sc, int count)
 {
 	struct ifnet   *ifp;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf    *mp;
 	int             eop = 0;
 	int             len;
@@ -1769,7 +1770,6 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 
 			if (eop) {
 				eop_desc = i;
-				sc->fmp->m_pkthdr.rcvif = ifp;
 				ifp->if_ipackets++;
 				ixgb_receive_checksum(sc, current_desc, sc->fmp);
 
@@ -1781,17 +1781,8 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 				}
 #endif
 
-#if NBPFILTER > 0
-				/*
-				 * Handle BPF listeners. Let the BPF
-				 * user see the packet.
-				 */
-				if (ifp->if_bpf)
-					bpf_mtap_ether(ifp->if_bpf, sc->fmp,
-					    BPF_DIRECTION_IN);
-#endif
 
-				ether_input_mbuf(ifp, sc->fmp);
+				ml_enqueue(&ml, sc->fmp);
 				sc->fmp = NULL;
 				sc->lmp = NULL;
 			}
@@ -1860,6 +1851,8 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
                 next_to_use = (sc->num_rx_desc - 1);
         /* Advance the IXGB's Receive Queue #0  "Tail Pointer" */
         IXGB_WRITE_REG(&sc->hw, RDT, next_to_use);
+
+	if_input(ifp, &ml);
 }
 
 /*********************************************************************

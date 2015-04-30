@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.11 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.12 2015/04/30 07:51:07 mpi Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1000,6 +1000,7 @@ vte_rxeof(struct vte_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct vte_rxdesc *rxd;
 	struct mbuf *m;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	uint16_t status, total_len;
 	int cons, prog;
 
@@ -1033,15 +1034,10 @@ vte_rxeof(struct vte_softc *sc)
 		 * It seems there is no way to strip FCS bytes.
 		 */
 		m->m_pkthdr.len = m->m_len = total_len - ETHER_CRC_LEN;
-		m->m_pkthdr.rcvif = ifp;
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 
 	if (prog > 0) {
 		/* Update the consumer index. */

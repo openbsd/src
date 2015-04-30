@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.11 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.12 2015/04/30 07:51:07 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -909,6 +909,7 @@ void
 se_rxeof(struct se_softc *sc)
 {
 	struct mbuf *m;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct se_list_data *ld = &sc->se_ldata;
 	struct se_chain_data *cd = &sc->se_cdata;
@@ -960,15 +961,11 @@ se_rxeof(struct se_softc *sc)
 		m->m_pkthdr.len = m->m_len =
 		    SE_RX_BYTES(rxstat) - SE_RX_PAD_BYTES;
 
+		ml_enqueue(&ml, m);
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-		ether_input_mbuf(ifp, m);
 	}
+
+	if_input(ifp, &ml);
 
 	cd->se_rx_prod = i;
 }
