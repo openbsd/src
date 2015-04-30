@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.138 2015/04/29 16:00:06 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.139 2015/04/30 15:19:50 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -119,6 +119,8 @@ struct	tun_softc *tun_lookup(int);
 void	tun_wakeup(struct tun_softc *);
 int	tun_switch(struct tun_softc *, int);
 
+void	tun_ifattach(struct ifnet *, int);
+void	tun_ifdetach(struct ifnet *);
 int	tuninit(struct tun_softc *);
 int	filt_tunread(struct knote *, long);
 int	filt_tunwrite(struct knote *, long);
@@ -154,26 +156,12 @@ tun_clone_create(struct if_clone *ifc, int unit)
 	return (tun_create(ifc, unit, 0));
 }
 
-int
-tun_create(struct if_clone *ifc, int unit, int flags)
+void
+tun_ifattach(struct ifnet *ifp, int flags)
 {
-	struct tun_softc	*tp;
-	struct ifnet		*ifp;
+	struct tun_softc	*tp = ifp->if_softc;
 	int			 s;
 
-	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (!tp)
-		return (ENOMEM);
-
-	tp->tun_unit = unit;
-	tp->tun_flags = TUN_INITED|TUN_STAYUP;
-
-	ifp = &tp->tun_if;
-	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
-	    unit);
-	ether_fakeaddr(ifp);
-
-	ifp->if_softc = tp;
 	ifp->if_ioctl = tun_ioctl;
 	ifp->if_output = tun_output;
 	ifp->if_start = tunstart;
@@ -203,8 +191,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		if_attach(ifp);
 		ether_ifattach(ifp);
 	}
-	/* force output function to our function */
-	ifp->if_output = tun_output;
 
 	s = splnet();
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
@@ -213,11 +199,10 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	pipex_iface_init(&tp->pipex_iface, ifp);
 #endif
 
-	return (0);
 }
 
-int
-tun_clone_destroy(struct ifnet *ifp)
+void
+tun_ifdetach(struct ifnet *ifp)
 {
 	struct tun_softc	*tp = ifp->if_softc;
 	int			 s;
@@ -240,6 +225,38 @@ tun_clone_destroy(struct ifnet *ifp)
 		ether_ifdetach(ifp);
 
 	if_detach(ifp);
+}
+
+int
+tun_create(struct if_clone *ifc, int unit, int flags)
+{
+	struct tun_softc	*tp;
+	struct ifnet		*ifp;
+
+	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (tp == NULL)
+		return (ENOMEM);
+
+	tp->tun_unit = unit;
+	tp->tun_flags = TUN_INITED|TUN_STAYUP;
+
+	ifp = &tp->tun_if;
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
+	    unit);
+	ether_fakeaddr(ifp);
+	ifp->if_softc = tp;
+
+	tun_ifattach(ifp, flags);
+
+	return (0);
+}
+
+int
+tun_clone_destroy(struct ifnet *ifp)
+{
+	struct tun_softc	*tp = ifp->if_softc;
+
+	tun_ifdetach(ifp);
 
 	free(tp, M_DEVBUF, 0);
 	return (0);
@@ -260,7 +277,7 @@ int
 tun_switch(struct tun_softc *tp, int flags)
 {
 	struct ifnet		*ifp = &tp->tun_if;
-	int			 unit, open, r, s;
+	int			 unit, open, s;
 	struct ifg_list		*ifgl;
 	u_int			ifgr_len;
 	char			*ifgrpnames, *p;
@@ -289,24 +306,17 @@ tun_switch(struct tun_softc *tp, int flags)
 		}
 	}
 
-	/* remove old device and ... */
-	tun_clone_destroy(ifp);
-	/* attach new interface */
-	r = tun_create(&tun_cloner, unit, flags);
+	if (ifp->if_flags & IFF_UP)
+		if_down(ifp);
 
-	if (r == 0) {
-		if ((tp = tun_lookup(unit)) == NULL) {
-			/* this should never fail */
-			r = ENXIO;
-			goto abort;
-		}
+	tun_ifdetach(ifp);
+	tun_ifattach(ifp, flags);
 
-		/* rejoin groups */
-		ifp = &tp->tun_if;
-		for (p = ifgrpnames; p && *p; p += IFNAMSIZ)
-			if_addgroup(ifp, p);
-	}
-	if (open && r == 0) {
+	/* rejoin groups */
+	for (p = ifgrpnames; p && *p; p += IFNAMSIZ)
+		if_addgroup(ifp, p);
+
+	if (open) {
 		/* already opened before ifconfig tunX link0 */
 		s = splnet();
 		tp->tun_flags |= open;
@@ -315,10 +325,10 @@ tun_switch(struct tun_softc *tp, int flags)
 		splx(s);
 		TUNDEBUG(("%s: already open\n", tp->tun_if.if_xname));
 	}
- abort:
 	if (ifgrpnames)
 		free(ifgrpnames, M_TEMP, 0);
-	return (r);
+
+	return (0);
 }
 
 /*
