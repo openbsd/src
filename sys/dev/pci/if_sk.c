@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.174 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.175 2015/04/30 09:25:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1587,6 +1587,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
 	struct if_rxring	*rxr = &sc_if->sk_cdata.sk_rx_ring;
 	struct mbuf		*m;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct sk_chain		*cur_rx;
 	struct sk_rx_desc	*cur_desc;
 	int			cur, total_len = 0;
@@ -1635,22 +1636,16 @@ sk_rxeof(struct sk_if_softc *sc_if)
 			continue;
 		}
 
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
 
+		ml_enqueue(&ml, m);
 		ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		/* pass it on. */
-		ether_input_mbuf(ifp, m);
 	}
 	sc_if->sk_cdata.sk_rx_cons = cur;
 
 	sk_fill_rx_ring(sc_if);
+
+	if_input(ifp, &ml);
 }
 
 void
