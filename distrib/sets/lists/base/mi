@@ -4533,6 +4533,12 @@
 ./var/spool/lock
 ./var/spool/output
 ./var/spool/smtpd
+./var/spool/smtpd/corrupt
+./var/spool/smtpd/incoming
+./var/spool/smtpd/offline
+./var/spool/smtpd/purge
+./var/spool/smtpd/queue
+./var/spool/smtpd/temporary
 ./var/spool/uucp
 ./var/spool/uucppublic
 ./var/tmp
