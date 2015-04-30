@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.29 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: conf_def.c,v 1.30 2015/04/30 15:28:03 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -228,12 +228,11 @@ def_load_bio(CONF *conf, BIO *in, long *line)
 		goto err;
 	}
 
-	section = malloc(10);
+	section = strdup("default");
 	if (section == NULL) {
 		CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	strlcpy(section, "default",10);
 
 	if (_CONF_new_data(conf) == 0) {
 		CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
