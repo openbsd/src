@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.96 2015/02/12 22:27:04 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.97 2015/04/30 09:20:51 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -87,9 +87,7 @@ sys_read(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
 
 	iov.iov_base = SCARG(uap, buf);
@@ -116,11 +114,8 @@ sys_readv(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
-
 	FREF(fp);
 
 	/* dofilereadv() will FRELE the descriptor for us */
@@ -240,9 +235,7 @@ sys_write(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
 
 	iov.iov_base = (void *)SCARG(uap, buf);
@@ -269,11 +262,8 @@ sys_writev(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
-	if ((fp->f_flag & FWRITE) == 0)
-		return (EBADF);
-
 	FREF(fp);
 
 	/* dofilewritev() will FRELE the descriptor for us */
@@ -403,10 +393,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	long long stkbuf[STK_PARAMS / sizeof(long long)];
 
 	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
 		return (EBADF);
 
 	switch (com = SCARG(uap, com)) {

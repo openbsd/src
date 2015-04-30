@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.17 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.18 2015/04/30 09:20:51 mpi Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -461,14 +461,9 @@ linux_ioctl_termios(p, v, retval)
 	int error = 0;
 
 	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
 		return (EBADF);
 	FREF(fp);
-
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
-		error = EBADF;
-		goto out;
-	}
 
 	com = SCARG(uap, com);
 	retval[0] = 0;

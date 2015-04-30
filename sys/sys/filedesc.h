@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.28 2014/05/15 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.29 2015/04/30 09:20:51 mpi Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -132,7 +132,8 @@ void	fdfree(struct proc *p);
 int	fdrelease(struct proc *p, int);
 void	fdremove(struct filedesc *, int);
 void	fdcloseexec(struct proc *);
-struct file *fd_getfile(struct filedesc *, int fd);
+struct file *fd_getfile(struct filedesc *, int);
+struct file *fd_getfile_mode(struct filedesc *, int, int);
 
 int	closef(struct file *, struct proc *);
 int	getsock(struct filedesc *, int, struct file **);

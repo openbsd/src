@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.218 2015/04/17 04:43:20 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.219 2015/04/30 09:20:51 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2824,9 +2824,7 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
@@ -2867,9 +2865,7 @@ sys_preadv(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
@@ -2909,9 +2905,7 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
@@ -2952,9 +2946,7 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;

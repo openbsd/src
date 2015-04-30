@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: linux_cdrom.c,v 1.11 2014/03/26 05:23:42 guenther Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.12 2015/04/30 09:20:51 mpi Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -108,14 +108,9 @@ linux_ioctl_cdrom(p, v, retval)
 
 
 	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
 		return (EBADF);
 	FREF(fp);
-
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
-		error = EBADF;
-		goto out;
-	}
 
 	com = SCARG(uap, com);
 	retval[0] = 0;

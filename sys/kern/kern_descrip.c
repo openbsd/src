@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.117 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.118 2015/04/30 09:20:51 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -187,6 +187,21 @@ fd_getfile(struct filedesc *fdp, int fd)
 		return (NULL);
 
 	if (!FILE_IS_USABLE(fp))
+		return (NULL);
+
+	return (fp);
+}
+
+struct file *
+fd_getfile_mode(struct filedesc *fdp, int fd, int mode)
+{
+	struct file *fp;
+
+	KASSERT(mode != 0);
+
+	fp = fd_getfile(fdp, fd);
+
+	if ((fp->f_flag & mode) == 0)
 		return (NULL);
 
 	return (fp);
