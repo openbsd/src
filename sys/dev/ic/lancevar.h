@@ -1,4 +1,4 @@
-/*	$OpenBSD: lancevar.h,v 1.1 2013/09/24 20:10:58 miod Exp $	*/
+/*	$OpenBSD: lancevar.h,v 1.2 2015/05/01 14:56:18 mpi Exp $	*/
 /*	$NetBSD: lancevar.h,v 1.15 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ void lance_config(struct lance_softc *);
 void lance_reset(struct lance_softc *);
 int lance_init(struct lance_softc *);
 int lance_put(struct lance_softc *, int, struct mbuf *);
-void lance_read(struct lance_softc *, int, int);
+struct mbuf *lance_read(struct lance_softc *, int, int);
 void lance_setladrf(struct arpcom *, uint16_t *);
 
 /*

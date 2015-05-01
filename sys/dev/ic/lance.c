@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.5 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: lance.c,v 1.6 2015/05/01 14:56:18 mpi Exp $	*/
 /*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -358,14 +358,12 @@ lance_put(struct lance_softc *sc, int boff, struct mbuf *m)
 integrate struct mbuf *
 lance_get(struct lance_softc *sc, int boff, int totlen)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m, *top, **mp;
 	int len, pad;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
@@ -403,10 +401,7 @@ lance_get(struct lance_softc *sc, int boff, int totlen)
 	return (top);
 }
 
-/*
- * Pass a packet to the higher levels.
- */
-void
+struct mbuf *
 lance_read(struct lance_softc *sc, int boff, int len)
 {
 	struct mbuf *m;
@@ -422,14 +417,14 @@ lance_read(struct lance_softc *sc, int boff, int len)
 		    sc->sc_dev.dv_xnam, len);
 #endif
 		ifp->if_ierrors++;
-		return;
+		return (NULL);
 	}
 
 	/* Pull packet off interface. */
 	m = lance_get(sc, boff, len);
 	if (m == NULL) {
 		ifp->if_ierrors++;
-		return;
+		return (NULL);
 	}
 
 	ifp->if_ipackets++;
@@ -447,7 +442,7 @@ lance_read(struct lance_softc *sc, int boff, int len)
 	if (ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr) &&
 	    ETHER_CMP(eh->ether_dhost, bcast_enaddr)) {
 		m_freem(m);
-		return;
+		return (NULL);
 	}
 #endif
 
@@ -457,20 +452,10 @@ lance_read(struct lance_softc *sc, int boff, int len)
 	 */
 	if (!ETHER_CMP(eh->ether_shost, sc->sc_arpcom.ac_enaddr)) {
 		m_freem(m);
-		return;
+		return (NULL);
 	}
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	/* Pass the packet up. */
-	ether_input_mbuf(ifp, m);
+	return (m);
 }
 
 void

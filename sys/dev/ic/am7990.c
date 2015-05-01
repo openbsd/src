@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.49 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.50 2015/05/01 14:56:18 mpi Exp $	*/
 /*	$NetBSD: am7990.c,v 1.74 2012/02/02 19:43:02 tls Exp $	*/
 
 /*-
@@ -213,6 +213,8 @@ void
 am7990_rint(struct lance_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *m;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	int bix;
 	int rp;
 	struct lermd rmd;
@@ -258,8 +260,10 @@ am7990_rint(struct lance_softc *sc)
 			if (sc->sc_debug > 1)
 				am7990_recv_print(sc, sc->sc_last_rd);
 #endif
-			lance_read(sc, LE_RBUFADDR(sc, bix),
+			m = lance_read(sc, LE_RBUFADDR(sc, bix),
 			    (int)rmd.rmd3 - 4);
+			if (m != NULL)
+				ml_enqueue(&ml, m);
 		}
 
 		rmd.rmd1_bits = LE_R1_OWN;
@@ -282,6 +286,8 @@ am7990_rint(struct lance_softc *sc)
 	}
 
 	sc->sc_last_rd = bix;
+
+	if_input(ifp, &ml);
 }
 
 void
