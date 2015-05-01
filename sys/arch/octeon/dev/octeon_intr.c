@@ -278,7 +278,7 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 					if (ih->ih_level < IPL_IPI) {
 						sr = getsr();
 						ENABLEIPI();
-						if (ipl < IPL_SCHED)
+						if (ih->ih_level < IPL_CLOCK)
 							__mp_lock(&kernel_lock);
 					}
 #endif
@@ -289,7 +289,7 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 					}
 #ifdef MULTIPROCESSOR
 					if (ih->ih_level < IPL_IPI) {
-						if (ipl < IPL_SCHED)
+						if (ih->ih_level < IPL_CLOCK)
 							__mp_unlock(&kernel_lock);
 						setsr(sr);
 					}

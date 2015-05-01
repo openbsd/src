@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.14 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.15 2015/05/01 11:17:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -163,7 +163,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 					if (ih->ih_level < IPL_IPI) {
 						sr = getsr();
 						ENABLEIPI();
-						if (ipl < IPL_SCHED)
+						if (ih->ih_level < IPL_CLOCK)
 							__mp_lock(&kernel_lock);
 					}
 #endif
@@ -175,7 +175,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 					}
 #ifdef MULTIPROCESSOR
 					if (ih->ih_level < IPL_IPI) {
-						if (ipl < IPL_SCHED)
+						if (ih->ih_level < IPL_CLOCK)
 							__mp_unlock(&kernel_lock);
 						setsr(sr);
 					}

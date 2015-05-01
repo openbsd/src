@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.39 2013/06/03 16:55:22 guenther Exp $ */
+/*	$OpenBSD: clock.c,v 1.40 2015/05/01 11:17:22 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -146,10 +146,9 @@ cp0_int5(uint32_t mask, struct trap_frame *tf)
 	if (tf->ipl < IPL_CLOCK) {
 #ifdef MULTIPROCESSOR
 		register_t sr;
-		/* Enable interrupts at this (hardware) level again */
+
 		sr = getsr();
 		ENABLEIPI();
-		__mp_lock(&kernel_lock);
 #endif
 		while (ci->ci_pendingticks) {
 			cp0_clock_count.ec_count++;
@@ -157,7 +156,6 @@ cp0_int5(uint32_t mask, struct trap_frame *tf)
 			ci->ci_pendingticks--;
 		}
 #ifdef MULTIPROCESSOR
-		__mp_unlock(&kernel_lock);
 		setsr(sr);
 #endif
 	}
