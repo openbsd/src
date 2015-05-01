@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.12 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.13 2015/05/01 01:30:58 millert Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -260,10 +260,11 @@ VOP_IOCTL(struct vnode *vp, u_long command, void *data, int fflag,
 }
 
 int
-VOP_POLL(struct vnode *vp, int events, struct proc *p)
+VOP_POLL(struct vnode *vp, int fflag, int events, struct proc *p)
 {
 	struct vop_poll_args a;
 	a.a_vp = vp;
+	a.a_fflag = fflag;
 	a.a_events = events;
 	a.a_p = p;
 
