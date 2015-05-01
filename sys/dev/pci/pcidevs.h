@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1760 2015/03/18 15:16:52 mcbride Exp 
+ *	OpenBSD: pcidevs,v 1.1761 2015/05/01 12:46:04 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3011,6 +3011,7 @@
 #define	PCI_PRODUCT_INTEL_E5V2_PCIE_9	0x0e09		/* E5 v2 PCIE */
 #define	PCI_PRODUCT_INTEL_E5V2_PCIE_10	0x0e0a		/* E5 v2 PCIE */
 #define	PCI_PRODUCT_INTEL_E5V2_PCIE_11	0x0e0b		/* E5 v2 PCIE */
+#define	PCI_PRODUCT_INTEL_E5V2_R2PCIE	0x0e1d		/* E5 v2 R2PCIE */
 #define	PCI_PRODUCT_INTEL_E5V2_UBOX_1	0x0e1e		/* E5 v2 UBOX */
 #define	PCI_PRODUCT_INTEL_E5V2_UBOX_2	0x0e1f		/* E5 v2 UBOX */
 #define	PCI_PRODUCT_INTEL_E5V2_IOAT_1	0x0e20		/* E5 v2 I/OAT */
@@ -3040,11 +3041,11 @@
 #define	PCI_PRODUCT_INTEL_E5V2_THERMAL_1	0x0eb0		/* E5 v2 Thermal */
 #define	PCI_PRODUCT_INTEL_E5V2_THERMAL_2	0x0eb1		/* E5 v2 Thermal */
 #define	PCI_PRODUCT_INTEL_E5V2_ERR_1	0x0eb2		/* E5 v2 Error */
-#define	PCI_PRODUCT_INTEL_E5V2_ERR_2	0x0be3		/* E5 v2 Error */
+#define	PCI_PRODUCT_INTEL_E5V2_ERR_2	0x0eb3		/* E5 v2 Error */
 #define	PCI_PRODUCT_INTEL_E5V2_THERMAL_3	0x0eb4		/* E5 v2 Thermal */
 #define	PCI_PRODUCT_INTEL_E5V2_THERMAL_4	0x0eb5		/* E5 v2 Thermal */
-#define	PCI_PRODUCT_INTEL_E5V2_ERR_3	0x0be6		/* E5 v2 Error */
-#define	PCI_PRODUCT_INTEL_E5V2_ERR_4	0x0be7		/* E5 v2 Error */
+#define	PCI_PRODUCT_INTEL_E5V2_ERR_3	0x0eb6		/* E5 v2 Error */
+#define	PCI_PRODUCT_INTEL_E5V2_ERR_4	0x0eb7		/* E5 v2 Error */
 #define	PCI_PRODUCT_INTEL_E5V2_PCU_0	0x0ec0		/* E5 v2 PCU */
 #define	PCI_PRODUCT_INTEL_E5V2_PCU_1	0x0ec1		/* E5 v2 PCU */
 #define	PCI_PRODUCT_INTEL_E5V2_PCU_2	0x0ec2		/* E5 v2 PCU */
