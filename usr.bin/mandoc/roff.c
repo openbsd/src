@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.141 2015/04/23 16:17:04 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.142 2015/05/01 16:01:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1020,6 +1020,7 @@ roff_node_append(struct roff_man *man, struct roff_node *n)
 		/* NOTREACHED */
 	}
 	n->parent->nchild++;
+	n->parent->last = n;
 
 	/*
 	 * Copy over the normalised-data pointer of our parent.  Not
