@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.65 2014/07/31 18:14:46 jasper Exp $	*/
+/*	$OpenBSD: aac.c,v 1.66 2015/05/02 18:13:42 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -116,7 +116,7 @@ void	aac_scrub_command(struct aac_command *);
 void	aac_release_command(void *, void *);
 int	aac_alloc_sync_fib(struct aac_softc *, struct aac_fib **, int);
 void	aac_release_sync_fib(struct aac_softc *);
-int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, 
+int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t,
 	    struct aac_fib *, u_int16_t);
 
 void	aac_scsi_cmd(struct scsi_xfer *);
@@ -179,7 +179,7 @@ struct aac_interface aac_sa_interface = {
 	aac_sa_set_interrupts
 };
 
-/* i960Rx interface */    
+/* i960Rx interface */
 int	aac_rx_get_fwstatus(struct aac_softc *);
 void	aac_rx_qnotify(struct aac_softc *, int);
 int	aac_rx_get_istatus(struct aac_softc *);
@@ -199,7 +199,7 @@ struct aac_interface aac_rx_interface = {
 	aac_rx_set_interrupts
 };
 
-/* Rocket/MIPS interface */	
+/* Rocket/MIPS interface */
 int	aac_rkt_get_fwstatus(struct aac_softc *);
 void	aac_rkt_qnotify(struct aac_softc *, int);
 int	aac_rkt_get_istatus(struct aac_softc *);
@@ -274,7 +274,7 @@ aac_attach(struct aac_softc *sc)
 	/* Fill in the prototype scsi_link. */
 	sc->aac_link.adapter_softc = sc;
 	sc->aac_link.adapter = &aac_switch;
-	sc->aac_link.openings = (sc->total_fibs - 8) / 
+	sc->aac_link.openings = (sc->total_fibs - 8) /
 	    (sc->aac_container_count ? sc->aac_container_count : 1);
 	sc->aac_link.adapter_buswidth = AAC_MAX_CONTAINERS;
 	sc->aac_link.adapter_target = AAC_MAX_CONTAINERS;
@@ -348,11 +348,11 @@ aac_startup(struct aac_softc *sc)
 #if 0
 		aac_add_container(sc, mir, 0);
 #else
-		/* 
+		/*
 		 * Check container volume type for validity.  Note
 		 * that many of the possible types may never show up.
 		 */
-		if (mir->Status == ST_OK && 
+		if (mir->Status == ST_OK &&
 		    mir->MntTable[0].VolType != CT_NONE) {
 			int drv_cyls, drv_hds, drv_secs;
 
@@ -1227,7 +1227,7 @@ aac_alloc_commands(struct aac_softc *sc)
 		goto exit_create;
 	}
 
-	if (bus_dmamap_load(sc->aac_dmat, fm->aac_fibmap, fm->aac_fibs, 
+	if (bus_dmamap_load(sc->aac_dmat, fm->aac_fibmap, fm->aac_fibs,
 	    AAC_FIBMAP_SIZE, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->aac_dev.dv_xname);
 		error = ENOBUFS;
@@ -1260,7 +1260,7 @@ aac_alloc_commands(struct aac_softc *sc)
 					 sc->total_fibs));
 		AAC_LOCK_RELEASE(&sc->aac_io_lock);
 		return (0);
-	} 
+	}
 
  exit_load:
 	bus_dmamap_destroy(sc->aac_dmat, fm->aac_fibmap);
@@ -1532,7 +1532,7 @@ aac_init(struct aac_softc *sc)
 	}
 	state++;
 
-	if (bus_dmamap_load(sc->aac_dmat, sc->aac_common_map, sc->aac_common, 
+	if (bus_dmamap_load(sc->aac_dmat, sc->aac_common_map, sc->aac_common,
 	    AAC_COMMON_ALLOCSIZE, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->aac_dev.dv_xname);
 		error = ENOBUFS;
@@ -1547,7 +1547,7 @@ aac_init(struct aac_softc *sc)
 		    ((uint8_t *)sc->aac_common + 8192);
 		sc->aac_common_busaddr += 8192;
 	}
-    
+
 	/* Allocate some FIBs and associated command structs */
 	TAILQ_INIT(&sc->aac_fibmap_tqh);
 	sc->aac_commands = malloc(AAC_MAX_FIBS * sizeof(struct aac_command),
@@ -1561,7 +1561,7 @@ aac_init(struct aac_softc *sc)
 
 	scsi_iopool_init(&sc->aac_iopool, sc,
 	    aac_alloc_command, aac_release_command);
-	
+
 	/*
 	 * Fill in the init structure.  This tells the adapter about the
 	 * physical location of various important shared data structures.
@@ -1580,9 +1580,9 @@ aac_init(struct aac_softc *sc)
 				  offsetof(struct aac_common, ac_printf);
 	ip->PrintfBufferSize = AAC_PRINTF_BUFSIZE;
 
-	/* 
+	/*
 	 * The adapter assumes that pages are 4K in size, except on some
- 	 * broken firmware versions that do the page->byte conversion twice,
+	 * broken firmware versions that do the page->byte conversion twice,
 	 * therefore 'assuming' that this value is in 16MB units (2^24).
 	 * Round up since the granularity is so high.
 	 */
@@ -1599,13 +1599,13 @@ aac_init(struct aac_softc *sc)
 	 * adapter, which is only told about the base of the queue index fields.
 	 *
 	 * The initial values of the indices are assumed to inform the adapter
-	 * of the sizes of the respective queues, and theoretically it could 
+	 * of the sizes of the respective queues, and theoretically it could
 	 * work out the entire layout of the queue structures from this.  We
 	 * take the easy route and just lay this area out like everyone else
 	 * does.
 	 *
-	 * The Linux driver uses a much more complex scheme whereby several 
-	 * header records are kept for each queue.  We use a couple of generic 
+	 * The Linux driver uses a much more complex scheme whereby several
+	 * header records are kept for each queue.  We use a couple of generic
 	 * list manipulation functions which 'know' the size of each list by
 	 * virtue of a table.
 	 */
@@ -1681,7 +1681,7 @@ aac_init(struct aac_softc *sc)
 	/*
 	 * Give the init structure to the controller.
 	 */
-	if (aac_sync_command(sc, AAC_MONKER_INITSTRUCT, 
+	if (aac_sync_command(sc, AAC_MONKER_INITSTRUCT,
 			     sc->aac_common_busaddr +
 			     offsetof(struct aac_common, ac_init), 0, 0, 0,
 			     NULL)) {
@@ -1807,7 +1807,7 @@ aac_release_sync_fib(struct aac_softc *sc)
  * Send a synchronous FIB to the controller and wait for a result.
  */
 int
-aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate, 
+aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	     struct aac_fib *fib, u_int16_t datasize)
 {
 
@@ -2032,7 +2032,7 @@ aac_enqueue_response(struct aac_softc *sc, int queue, struct aac_fib *fib)
 	u_int32_t fib_addr;
 
 	/* Tell the adapter where the FIB is */
-	fib_size = fib->Header.Size; 
+	fib_size = fib->Header.Size;
 	fib_addr = fib->Header.SenderFibAddress;
 	fib->Header.ReceiverFibAddress = fib_addr;
 
@@ -2134,7 +2134,7 @@ aac_rx_get_fwstatus(struct aac_softc *sc)
 int
 aac_fa_get_fwstatus(struct aac_softc *sc)
 {
- 	return (AAC_GETREG4(sc, AAC_FA_FWSTATUS));
+	return (AAC_GETREG4(sc, AAC_FA_FWSTATUS));
 }
 
 int
@@ -2548,11 +2548,11 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 	case WRITE_COMMAND:
 	case WRITE_BIG:
 		AAC_DPRINTF(AAC_D_CMD, ("rw opc %#x ", xs->cmd->opcode));
-			
+
 		/* A read or write operation. */
 		if (xs->cmdlen == 6) {
 			rw = (struct scsi_rw *)xs->cmd;
-			blockno = _3btol(rw->addr) & 
+			blockno = _3btol(rw->addr) &
 				(SRW_TOPADDR << 16 | 0xffff);
 			blockcnt = rw->length ? rw->length : 0x100;
 		} else {
@@ -2640,11 +2640,11 @@ aac_describe_controller(struct aac_softc *sc)
 		aac_release_sync_fib(sc);
 		return;
 	}
-	info = (struct aac_adapter_info *)&fib->data[0];   
+	info = (struct aac_adapter_info *)&fib->data[0];
 
 	printf("%s: %s %dMHz, %dMB cache memory, %s\n", sc->aac_dev.dv_xname,
 	       aac_describe_code(aac_cpu_variant, info->CpuVariant),
-	       info->ClockSpeed, info->BufferMem / (1024 * 1024), 
+	       info->ClockSpeed, info->BufferMem / (1024 * 1024),
 	       aac_describe_code(aac_battery_platform, info->batteryPlatform));
 
 	/* save the kernel revision structure for later use */
@@ -2742,12 +2742,12 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, const char *caller)
 		int i;
 
 		if (br->Command == VM_CtBlockRead) {
-			printf("  BlockRead: container %d  0x%x/%d\n", 
+			printf("  BlockRead: container %d  0x%x/%d\n",
 			    br->ContainerId, br->BlockNumber, br->ByteCount);
 			    sg = &br->SgMap;
 		}
 		if (bw->Command == VM_CtBlockWrite) {
-			printf("  BlockWrite: container %d  0x%x/%d (%s)\n", 
+			printf("  BlockWrite: container %d  0x%x/%d (%s)\n",
 			    bw->ContainerId, bw->BlockNumber, bw->ByteCount,
 			    bw->Stable == CSTABLE ? "stable" : "unstable");
 			sg = &bw->SgMap;
@@ -2783,7 +2783,7 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 		switch(aif->data.EN.type) {
 		case AifEnGeneric:
 			/* Generic notification */
-			printf("\t(Generic) %.*s\n", 
+			printf("\t(Generic) %.*s\n",
 			       (int)sizeof(aif->data.EN.data.EG),
 			       aif->data.EN.data.EG.text);
 			break;
@@ -2797,28 +2797,28 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			break;
 		case AifEnContainerChange:
 			/* Adapter specific container configuration change */
-			printf("\t(ContainerChange) container %d,%d\n", 
-			       aif->data.EN.data.ECC.container[0], 
+			printf("\t(ContainerChange) container %d,%d\n",
+			       aif->data.EN.data.ECC.container[0],
 			       aif->data.EN.data.ECC.container[1]);
 			break;
 		case AifEnDeviceFailure:
 			/* SCSI device failed */
-			printf("\t(DeviceFailure) handle %d\n", 
+			printf("\t(DeviceFailure) handle %d\n",
 			       aif->data.EN.data.EDF.deviceHandle);
 			break;
 		case AifEnMirrorFailover:
 			/* Mirror failover started */
 			printf("\t(MirrorFailover) container %d failed, "
 			       "migrating from slice %d to %d\n",
-			       aif->data.EN.data.EMF.container, 
-			       aif->data.EN.data.EMF.failedSlice, 
+			       aif->data.EN.data.EMF.container,
+			       aif->data.EN.data.EMF.failedSlice,
 			       aif->data.EN.data.EMF.creatingSlice);
 			break;
 		case AifEnContainerEvent:
 			/* Significant container event */
 			printf("\t(ContainerEvent) container %d event %d\n",
 			       aif->data.EN.data.ECE.container,
-			       aif->data.EN.data.ECE.eventType);	
+			       aif->data.EN.data.ECE.eventType);
 			break;
 		case AifEnFileSystemChange:
 			/* File system changed */
@@ -2845,7 +2845,7 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			printf("\t(EnclosureManagement) EMPID %d unit %d "
 			       "event %d\n",
 			       aif->data.EN.data.EEE.empID,
-			       aif->data.EN.data.EEE.unitID, 
+			       aif->data.EN.data.EEE.unitID,
 			       aif->data.EN.data.EEE.eventType);
 			break;
 		case AifEnBatteryEvent:
@@ -2858,7 +2858,7 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 		case AifEnAddContainer:
 			/* A new container was created. */
 			printf("\t(AddContainer)\n");
-			break;		
+			break;
 		case AifEnDeleteContainer:
 			/* A container was deleted. */
 			printf("\t(DeleteContainer)\n");
@@ -2869,15 +2869,15 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			break;
 		case AifEnClusterEvent:
 			/* Some cluster event */
-			printf("\t(ClusterEvent) event %d\n", 
+			printf("\t(ClusterEvent) event %d\n",
 			       aif->data.EN.data.ECLE.eventType);
 			break;
 		case AifEnDiskSetEvent:
 			/* A disk set event occured. */
 			printf("(DiskSetEvent) event %d "
 			       "diskset %lld creator %lld\n",
-			       aif->data.EN.data.EDS.eventType, 
-			       aif->data.EN.data.EDS.DsNum, 
+			       aif->data.EN.data.EDS.eventType,
+			       aif->data.EN.data.EDS.DsNum,
 			       aif->data.EN.data.EDS.CreatorId);
 			break;
 		case AifDenMorphComplete:
@@ -2911,10 +2911,10 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			status = "running"; break;
 		default:
 			status = "unknown status"; break;
-		}		
-	
+		}
+
 		printf("JobProgress (%d) - %s (%d, %d)\n",
-		       aif->seqNumber, status, 
+		       aif->seqNumber, status,
 		       aif->data.PR[0].currentTick,
 		       aif->data.PR[0].finalTick);
 
@@ -2941,12 +2941,12 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			break;
 		case AifJobCtrZero:
 			/* Container clear operation */
-			printf("\t(ContainerZero) container %d\n", 
+			printf("\t(ContainerZero) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			break;
 		case AifJobCtrCopy:
 			/* Container copy operation */
-			printf("\t(ContainerCopy) container %d to %d\n", 
+			printf("\t(ContainerCopy) container %d to %d\n",
 			       aif->data.PR[0].jd.client.container.src,
 			       aif->data.PR[0].jd.client.container.dst);
 			break;
@@ -2974,7 +2974,7 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			break;
 		case AifJobCtrScrubRaid5:
 			/* Container Scrub Raid5 operation */
-			printf("\t(ContainerScrubRaid5) container %d\n", 
+			printf("\t(ContainerScrubRaid5) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			break;
 		case AifJobCtrMorph:
@@ -2996,7 +2996,7 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			break;
 		case AifJobCtrCrazyCache:
 			/* crazy cache */
-			printf("\t(ContainerCrazyCache) container %d\n", 
+			printf("\t(ContainerCrazyCache) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			/* XXX two containers? */
 			break;
