@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.106 2015/04/20 00:46:32 dlg Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.107 2015/05/02 00:32:03 krw Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -334,8 +334,7 @@ main(int argc, char *argv[])
 				errx(1, "invalid socket buffer size");
 			break;
 		case 'c':
-			npackets = (unsigned long)strtonum(optarg, 0,
-			    INT_MAX, &errstr);
+			npackets = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr)
 				errx(1,
 				    "number of packets to transmit is %s: %s",
@@ -365,12 +364,9 @@ main(int argc, char *argv[])
 			options |= F_HOSTNAME;
 			break;
 		case 'h':		/* hoplimit */
-			hoplimit = strtol(optarg, &e, 10);
-			if (*optarg == '\0' || *e != '\0')
-				errx(1, "illegal hoplimit %s", optarg);
-			if (255 < hoplimit || hoplimit < -1)
-				errx(1,
-				    "illegal hoplimit -- %s", optarg);
+			hoplimit = strtonum(optarg, 0, 255, &errstr);
+			if (errstr)
+				errx(1, "hoplimit is %s: %s", errstr, optarg);
 			break;
 		case 'I':
 			ifname = optarg;
@@ -402,9 +398,10 @@ main(int argc, char *argv[])
 				errno = EPERM;
 				errx(1, "Must be superuser to preload");
 			}
-			preload = strtol(optarg, &e, 10);
-			if (preload < 0 || *optarg == '\0' || *e != '\0')
-				errx(1, "illegal preload value -- %s", optarg);
+			preload = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "preload value is %s: %s", errstr,
+				    optarg);
 			break;
 		case 'm':
 			mflag++;
@@ -444,14 +441,10 @@ main(int argc, char *argv[])
 			options |= F_SRCADDR;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtol(optarg, &e, 10);
-			if (datalen <= 0 || *optarg == '\0' || *e != '\0')
-				errx(1, "illegal datalen value -- %s", optarg);
-			if (datalen > MAXDATALEN) {
-				errx(1,
-				    "datalen value too large, maximum is %d",
-				    MAXDATALEN);
-			}
+			datalen = strtonum(optarg, 1, MAXDATALEN, &errstr);
+			if (errstr)
+				errx(1, "datalen value is %s: %s", errstr,
+				    optarg);
 			break;
 		case 't':
 			options &= ~F_NOUSERDATA;
@@ -461,11 +454,11 @@ main(int argc, char *argv[])
 			options |= F_VERBOSE;
 			break;
 		case 'V':
-			rtableid = (unsigned int)strtonum(optarg, 0,
-			    RT_TABLEID_MAX, &errstr);
+			rtableid = strtonum(optarg, 0, RT_TABLEID_MAX,
+			    &errstr);
 			if (errstr)
-				errx(1, "rtable value is %s: %s",
-				    errstr, optarg);
+				errx(1, "rtable value is %s: %s", errstr,
+				    optarg);
 			if (setsockopt(s, SOL_SOCKET, SO_RTABLE, &rtableid,
 			    sizeof(rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
