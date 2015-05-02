@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.28 2015/05/01 18:36:52 jmc Exp $
+ * $OpenBSD: calendar.holiday,v 1.29 2015/05/02 07:05:38 jmc Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -449,7 +449,7 @@
 12/11	Independence Day in Upper Volta
 12/12	Independence Day in Kenya
 12/13	Republic Day in Malta
-12/15	Statue Day in Netherlands Antilles
+12/15	Kingdom Day in the Netherlands
 12/16	Constitution Day in Nepal
 12/16	Day of the Covenant in South Africa
 12/16	National Day in Bahrain
