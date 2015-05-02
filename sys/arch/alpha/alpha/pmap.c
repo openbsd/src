@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.75 2015/02/02 09:29:53 mlarkin Exp $ */
+/* $OpenBSD: pmap.c,v 1.76 2015/05/02 20:50:08 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -268,12 +268,12 @@ struct pool pmap_pv_pool;
  * mappings, so that invalidation of all user mappings does not invalidate
  * kernel mappings (which are consistent across all processes).
  *
- * pmap_next_asn always indicates to the next ASN to use.  When
- * pmap_next_asn exceeds pmap_max_asn, we start a new ASN generation.
+ * pma_asn always indicates to the next ASN to use.  When
+ * pma_asn exceeds pmap_max_asn, we start a new ASN generation.
  *
  * When a new ASN generation is created, the per-process (i.e. non-PG_ASM)
  * TLB entries and the I-cache are flushed, the generation number is bumped,
- * and pmap_next_asn is changed to indicate the first non-reserved ASN.
+ * and pma_asn is changed to indicate the first non-reserved ASN.
  *
  * We reserve ASN #0 for pmaps that use the global kernel_lev1map.  This
  * prevents the following scenario:
@@ -1393,7 +1393,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 #ifdef DEBUG
 		if (pmap_pte_v(pmap_l2pte(pv->pv_pmap, pv->pv_va, NULL)) == 0 ||
-		    pmap_pte_pa(pv->pv_pte) != pa)
+		    pmap_pte_pa(pv->pv_pte) != VM_PAGE_TO_PHYS(pg))
 			panic("pmap_page_protect: bad mapping");
 #endif
 		if (pmap_remove_mapping(pmap, pv->pv_va, pv->pv_pte,
@@ -2452,7 +2452,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, cpuid_t cpu_id)
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
 		printf("pmap_changebit(0x%lx, 0x%lx, 0x%lx)\n",
-		    pa, set, mask);
+		    VM_PAGE_TO_PHYS(pg), set, mask);
 #endif
 
 	/*
@@ -2665,7 +2665,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
 	newpv->pv_pte = pte;
 
 #ifdef DEBUG
-	{
+    {
 	pv_entry_t pv;
 	/*
 	 * Make sure the entry doesn't already exist.
@@ -2676,6 +2676,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
 			panic("pmap_pv_enter: already in pv table");
 		}
 	}
+    }
 #endif
 
 	/*
