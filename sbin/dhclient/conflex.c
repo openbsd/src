@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.30 2015/05/02 12:37:35 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.31 2015/05/02 14:29:32 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -147,25 +147,19 @@ get_token(FILE *cfile)
 			skip_to_eol(cfile);
 			continue;
 		}
+		lexline = l;
+		lexchar = p;
 		if (c == '"') {
-			lexline = l;
-			lexchar = p;
 			ttok = read_string(cfile);
 			break;
 		}
 		if ((isascii(c) && isdigit(c)) || c == '-') {
-			lexline = l;
-			lexchar = p;
 			ttok = read_number(c, cfile);
 			break;
 		} else if (isascii(c) && isalpha(c)) {
-			lexline = l;
-			lexchar = p;
 			ttok = read_num_or_name(c, cfile);
 			break;
 		} else {
-			lexline = l;
-			lexchar = p;
 			tb[0] = c;
 			tb[1] = 0;
 			tval = tb;
