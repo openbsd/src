@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.203 2015/02/08 04:50:32 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.204 2015/05/02 13:15:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -531,12 +531,12 @@ rdroptsl	: forwardmode TO tablespec interface	{
 
 			if ($3->conf.check == CHECK_NOCHECK) {
 				yyerror("table %s has no check", $3->conf.name);
-				purge_table(conf->sc_tables, $3);
+				purge_table(conf, conf->sc_tables, $3);
 				YYERROR;
 			}
 			if (rdr->backup) {
 				yyerror("only one backup table is allowed");
-				purge_table(conf->sc_tables, $3);
+				purge_table(conf, conf->sc_tables, $3);
 				YYERROR;
 			}
 			if (rdr->table) {
@@ -1930,7 +1930,7 @@ routeoptsl	: ROUTE address '/' NUMBER {
 			if (router->rt_gwtable) {
 				yyerror("router %s table already specified",
 				    router->rt_conf.name);
-				purge_table(conf->sc_tables, $3);
+				purge_table(conf, conf->sc_tables, $3);
 				YYERROR;
 			}
 			router->rt_gwtable = $3;
@@ -3091,7 +3091,7 @@ table_inherit(struct table *tb)
 		goto fail;
 	}
 	if ((oldtb = table_findbyconf(conf, tb)) != NULL) {
-		purge_table(NULL, tb);
+		purge_table(conf, NULL, tb);
 		return (oldtb);
 	}
 
@@ -3134,7 +3134,7 @@ table_inherit(struct table *tb)
 	return (tb);
 
  fail:
-	purge_table(NULL, tb);
+	purge_table(conf, NULL, tb);
 	return (NULL);
 }
 

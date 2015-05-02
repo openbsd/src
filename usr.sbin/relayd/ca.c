@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.12 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.13 2015/05/02 13:15:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -417,11 +417,14 @@ rsae_keygen(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 void
 ca_engine_init(struct relayd *x_env)
 {
-	ENGINE		*e;
+	ENGINE		*e = NULL;
 	const char	*errstr, *name;
 
 	if (env == NULL)
 		env = x_env;
+
+	if (rsa_default != NULL)
+		return;
 
 	if ((e = ENGINE_get_default_RSA()) == NULL) {
 		if ((e = ENGINE_new()) == NULL) {

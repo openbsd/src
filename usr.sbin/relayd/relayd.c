@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.138 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.139 2015/05/02 13:15:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -546,12 +546,13 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 void
-purge_table(struct tablelist *head, struct table *table)
+purge_table(struct relayd *env, struct tablelist *head, struct table *table)
 {
 	struct host		*host;
 
 	while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
 		TAILQ_REMOVE(&table->hosts, host, entry);
+		TAILQ_REMOVE(&env->sc_hosts, host, globalentry);
 		if (event_initialized(&host->cte.ev)) {
 			event_del(&host->cte.ev);
 			close(host->cte.s);
