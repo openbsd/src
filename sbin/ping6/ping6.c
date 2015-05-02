@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.107 2015/05/02 00:32:03 krw Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.108 2015/05/02 17:19:42 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ main(int argc, char *argv[])
 			options |= F_HOSTNAME;
 			break;
 		case 'h':		/* hoplimit */
-			hoplimit = strtonum(optarg, 0, 255, &errstr);
+			hoplimit = strtonum(optarg, 0, IPV6_MAXHLIM, &errstr);
 			if (errstr)
 				errx(1, "hoplimit is %s: %s", errstr, optarg);
 			break;
