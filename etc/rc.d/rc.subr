@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.94 2015/04/29 11:05:16 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.95 2015/05/02 09:36:27 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -125,8 +125,7 @@ _rc_parse_conf() {
 	set -A _allowed_keys -- \
 		spamd_black pf ipsec check_quotas accounting \
 		multicast_host multicast_router amd_master \
-		pf_rules ipsec_rules shlib_dirs pkg_scripts \
-		nfs_server
+		shlib_dirs pkg_scripts nfs_server
 
 	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
 	for _rcfile; do
