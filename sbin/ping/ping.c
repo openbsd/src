@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.122 2015/05/02 17:16:07 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.123 2015/05/02 18:03:37 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -215,8 +215,7 @@ main(int argc, char *argv[])
 	    "DEI:LRS:c:defi:l:np:qs:T:t:V:vw:")) != -1)
 		switch(ch) {
 		case 'c':
-			npackets = (unsigned long)strtonum(optarg, 0,
-			    INT_MAX, &errstr);
+			npackets = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr)
 				errx(1,
 				    "number of packets to transmit is %s: %s",
@@ -274,7 +273,7 @@ main(int argc, char *argv[])
 		case 'l':
 			if (getuid())
 				errx(1, "%s", strerror(EPERM));
-			preload = (int)strtonum(optarg, 1, INT_MAX, &errstr);
+			preload = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "preload value is %s: %s",
 				    errstr, optarg);
@@ -293,7 +292,7 @@ main(int argc, char *argv[])
 			options |= F_RROUTE;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = (unsigned int)strtonum(optarg, 0, MAXPAYLOAD, &errstr);
+			datalen = strtonum(optarg, 0, MAXPAYLOAD, &errstr);
 			if (errstr)
 				errx(1, "packet size is %s: %s",
 				    errstr, optarg);
@@ -309,8 +308,7 @@ main(int argc, char *argv[])
 			    optarg[1] == 'x')
 				tos = (int)strtol(optarg, NULL, 16);
 			else
-				tos = (int)strtonum(optarg, 0, 255,
-				    &errstr);
+				tos = strtonum(optarg, 0, 255, &errstr);
 			if (tos < 0 || tos > 255 || errstr || errno)
 				errx(1, "illegal tos value %s", optarg);
 			break;
@@ -322,8 +320,7 @@ main(int argc, char *argv[])
 				errx(1, "ttl value is %s: %s", errstr, optarg);
 			break;
 		case 'V':
-			rtableid = (unsigned int)strtonum(optarg, 0,
-			    RT_TABLEID_MAX, &errstr);
+			rtableid = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
 			if (errstr)
 				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
@@ -336,8 +333,7 @@ main(int argc, char *argv[])
 			options |= F_VERBOSE;
 			break;
 		case 'w':
-			maxwait = (unsigned int)strtonum(optarg, 1, INT_MAX,
-			    &errstr);
+			maxwait = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "maxwait value is %s: %s",
 				    errstr, optarg);
