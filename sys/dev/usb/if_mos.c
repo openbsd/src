@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.29 2015/04/10 08:41:43 mpi Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.30 2015/05/02 10:44:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -702,6 +702,7 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 	if (err) {
 		printf("%s: couldn't get MAC address\n",
 		    sc->mos_dev.dv_xname);
+		splx(s);
 		return;
 	}
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);

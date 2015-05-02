@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.82 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: udl.c,v 1.83 2015/05/02 10:44:29 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1836,6 +1836,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 	}
 	if (i == UDL_CMD_XFER_COUNT) {
 		/* this shouldn't happen */
+		splx(s);
 		return (USBD_IN_USE);
 	}
 	cx = &sc->sc_cmd_xfer[i];
