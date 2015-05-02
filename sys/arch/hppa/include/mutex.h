@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.5 2014/01/30 15:18:51 kettenis Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.6 2015/05/02 10:59:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,12 +28,13 @@
 #ifndef _MACHINE_MUTEX_H_
 #define _MACHINE_MUTEX_H_
 
-#define	MUTEX_LOCKED	{ 0, 0, 0, 0 }
 #define	MUTEX_UNLOCKED	{ 1, 1, 1, 1 }
 
 /* Note: mtx_lock must be 16-byte aligned. */
 struct mutex {
+#ifdef MULTIPROCESSOR
 	volatile int mtx_lock[4];
+#endif
 	int mtx_wantipl;
 	int mtx_oldipl;
 	void *mtx_owner;
@@ -49,25 +50,23 @@ struct mutex {
 #ifdef MULTIPROCESSOR
 #define __MUTEX_IPL(ipl) \
     (((ipl) > IPL_NONE && (ipl) < IPL_AUDIO) ? IPL_AUDIO : (ipl))
+#define MUTEX_INITIALIZER(ipl) { MUTEX_UNLOCKED, __MUTEX_IPL((ipl)), 0, NULL }
 #else
 #define __MUTEX_IPL(ipl) (ipl)
+#define MUTEX_INITIALIZER(ipl) { __MUTEX_IPL((ipl)), 0, NULL }
 #endif
-
-#define MUTEX_INITIALIZER(ipl) { MUTEX_UNLOCKED, __MUTEX_IPL((ipl)), 0, NULL }
 
 void __mtx_init(struct mutex *, int);
 #define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock[0] == 1 && (mtx)->mtx_lock[1] == 1 &&	\
-	    (mtx)->mtx_lock[2] == 1 && (mtx)->mtx_lock[3] == 1)		\
+	if ((mtx)->mtx_owner != curcpu())				\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock[0] != 1 && (mtx)->mtx_lock[1] != 1 &&	\
-	    (mtx)->mtx_lock[2] != 1 && (mtx)->mtx_lock[3] != 1)		\
+	if ((mtx)->mtx_owner == curcpu())				\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.13 2014/06/17 15:43:27 guenther Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.14 2015/05/02 10:59:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -34,82 +34,109 @@
 
 #include <ddb/db_output.h>
 
-static inline int
-try_lock(struct mutex *mtx)
-{
-	volatile int *lock = (int *)(((vaddr_t)mtx->mtx_lock + 0xf) & ~0xf);
-	volatile register_t ret = 0;
+int __mtx_enter_try(struct mutex *);
 
-	/* Note: lock must be 16-byte aligned. */
+#ifdef MULTIPROCESSOR
+/* Note: lock must be 16-byte aligned. */
+#define __mtx_lock(mtx) ((int *)(((vaddr_t)mtx->mtx_lock + 0xf) & ~0xf))
+#endif
+
+void
+__mtx_init(struct mutex *mtx, int wantipl)
+{
+#ifdef MULTIPROCESSOR
+	mtx->mtx_lock[0] = 1;
+	mtx->mtx_lock[1] = 1;
+	mtx->mtx_lock[2] = 1;
+	mtx->mtx_lock[3] = 1;
+#endif
+	mtx->mtx_wantipl = wantipl;
+	mtx->mtx_oldipl = IPL_NONE;
+	mtx->mtx_owner = NULL;
+}
+
+#ifdef MULTIPROCESSOR
+void
+mtx_enter(struct mutex *mtx)
+{
+	while (mtx_enter_try(mtx) == 0)
+		;
+}
+
+int
+mtx_enter_try(struct mutex *mtx)
+{
+	struct cpu_info *ci = curcpu();
+	volatile int *lock = __mtx_lock(mtx);
+	int ret;
+	int s;
+
+ 	if (mtx->mtx_wantipl != IPL_NONE)
+		s = splraise(mtx->mtx_wantipl);
+
+#ifdef DIAGNOSTIC
+	if (__predict_false(mtx->mtx_owner == ci))
+		panic("mtx %p: locking against myself", mtx);
+#endif
+
 	asm volatile (
 		"ldcws      0(%2), %0"
 		: "=&r" (ret), "+m" (lock)
 		: "r" (lock)
 	);
 
-	return ret;
-}
+	if (ret) {
+		mtx->mtx_owner = ci;
+		if (mtx->mtx_wantipl != IPL_NONE)
+			mtx->mtx_oldipl = s;
+#ifdef DIAGNOSTIC
+		ci->ci_mutex_level++;
+#endif
+		membar_enter();
 
-void
-__mtx_init(struct mutex *mtx, int wantipl)
-{
-	mtx->mtx_lock[0] = 1;
-	mtx->mtx_lock[1] = 1;
-	mtx->mtx_lock[2] = 1;
-	mtx->mtx_lock[3] = 1;
-	mtx->mtx_wantipl = wantipl;
-	mtx->mtx_oldipl = IPL_NONE;
-}
+		return (1);
+	}
 
+	if (mtx->mtx_wantipl != IPL_NONE)
+		splx(s);
+
+	return (0);
+}
+#else
 void
 mtx_enter(struct mutex *mtx)
 {
-	int s;
+	struct cpu_info *ci = curcpu();
 
-	for (;;) {
-		if (mtx->mtx_wantipl != IPL_NONE)
-			s = splraise(mtx->mtx_wantipl);
-		if (try_lock(mtx)) {
-			membar_enter();
-			if (mtx->mtx_wantipl != IPL_NONE)
-				mtx->mtx_oldipl = s;
-			mtx->mtx_owner = curcpu();
 #ifdef DIAGNOSTIC
-			curcpu()->ci_mutex_level++;
+	if (__predict_false(mtx->mtx_owner == ci))
+		panic("mtx %p: locking against myself", mtx);
 #endif
-			return;
-		}
-		if (mtx->mtx_wantipl != IPL_NONE)
-			splx(s);
-	}
+
+	if (mtx->mtx_wantipl != IPL_NONE)
+		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
+
+	mtx->mtx_owner = ci;
+
+#ifdef DIAGNOSTIC
+	ci->ci_mutex_level++;
+#endif
 }
 
 int
 mtx_enter_try(struct mutex *mtx)
 {
-	int s;
-	
- 	if (mtx->mtx_wantipl != IPL_NONE)
-		s = splraise(mtx->mtx_wantipl);
-	if (try_lock(mtx)) {
-		membar_enter();
-		if (mtx->mtx_wantipl != IPL_NONE)
-			mtx->mtx_oldipl = s;
-		mtx->mtx_owner = curcpu();
-#ifdef DIAGNOSTIC
-		curcpu()->ci_mutex_level++;
-#endif
-		return 1;
-	}
-	if (mtx->mtx_wantipl != IPL_NONE)
-		splx(s);
-
-	return 0;
+	mtx_enter(mtx);
+	return (1);
 }
+#endif
 
 void
 mtx_leave(struct mutex *mtx)
 {
+#ifdef MULTIPROCESSOR
+	volatile int *lock = __mtx_lock(mtx);
+#endif
 	int s;
 
 	MUTEX_ASSERT_LOCKED(mtx);
@@ -119,12 +146,10 @@ mtx_leave(struct mutex *mtx)
 #endif
 	s = mtx->mtx_oldipl;
 	mtx->mtx_owner = NULL;
+#ifdef MULTIPROCESSOR
+	*lock = 1;
 	membar_exit();
-
-	mtx->mtx_lock[0] = 1;
-	mtx->mtx_lock[1] = 1;
-	mtx->mtx_lock[2] = 1;
-	mtx->mtx_lock[3] = 1;
+#endif
 
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(s);
