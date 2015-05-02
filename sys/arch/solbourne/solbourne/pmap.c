@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2015/05/02 14:33:19 jsg Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -908,9 +908,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	if ((pte = pmap_grow_pte(pmap, va)) == NULL) {
 		DPRINTF(PDB_ENTER, (" -> pmap_grow_pte failed\n"));
-		if (flags & PMAP_CANFAIL)
+		if (flags & PMAP_CANFAIL) {
+			splx(s);
 			return (ENOMEM);
-		else
+		} else
 			panic("pmap_enter: unable to allocate PT");
 	}
 
@@ -1202,8 +1203,10 @@ pg_flushcache(struct vm_page *pg)
 	s = splvm();
 
 	pvl = pg_to_pvl(pg);
-	if (pvl->pv_pmap == NULL)
+	if (pvl->pv_pmap == NULL) {
+		splx(s);
 		return;
+	}
 
 	/*
 	 * Since cache_flush_page() causes the whole cache to be flushed,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.78 2014/12/17 15:05:54 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.79 2015/05/02 14:33:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1610,6 +1610,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		 */
 		for (npv = pv; npv; npv = npv->pv_next) {
 			if (pmap == npv->pv_pmap && va == npv->pv_va) {
+				splx(s);
 				return 0;
 			}
 		}
