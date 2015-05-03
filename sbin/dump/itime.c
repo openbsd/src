@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.19 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: itime.c,v 1.20 2015/05/03 01:44:34 guenther Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -125,7 +125,7 @@ getdumptime(void)
 	int i;
 	char *fname;
 
-	fname = Uflag ? duid : disk;
+	fname = duid ? duid : disk;
 #ifdef FDEBUG
 	msg("Looking for name %s in dumpdates = %s for level = %c\n",
 		fname, dumpdates, level);
@@ -139,7 +139,8 @@ getdumptime(void)
 	 *	and older date
 	 */
 	ITITERATE(i, ddp) {
-		if (strncmp(fname, ddp->dd_name, sizeof(ddp->dd_name)) != 0)
+		if ((strncmp(fname, ddp->dd_name, sizeof(ddp->dd_name)) != 0) &&
+		    (strncmp(disk, ddp->dd_name, sizeof(ddp->dd_name)) != 0))
 			continue;
 		if (ddp->dd_level >= level)
 			continue;
@@ -165,7 +166,7 @@ putdumptime(void)
 		quit("cannot rewrite %s: %s\n", dumpdates, strerror(errno));
 	fd = fileno(df);
 	(void) flock(fd, LOCK_EX);
-	fname = Uflag ? duid : disk;
+	fname = duid ? duid : disk;
 	free((char *)ddatev);
 	ddatev = 0;
 	nddates = 0;
@@ -176,8 +177,10 @@ putdumptime(void)
 		quit("fseek: %s\n", strerror(errno));
 	spcl.c_ddate = 0;
 	ITITERATE(i, dtwalk) {
-		if (strncmp(fname, dtwalk->dd_name,
-				sizeof(dtwalk->dd_name)) != 0)
+		if ((strncmp(fname, dtwalk->dd_name,
+			     sizeof(dtwalk->dd_name)) != 0) &&
+		    (strncmp(disk, dtwalk->dd_name,
+			     sizeof(dtwalk->dd_name)) != 0))
 			continue;
 		if (dtwalk->dd_level != level)
 			continue;

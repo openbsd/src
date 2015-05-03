@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2015/05/03 01:44:34 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 		usage();
 
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "0123456789aB:b:cd:f:h:ns:ST:UuWw")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789aB:b:cd:f:h:ns:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -181,10 +181,6 @@ main(int argc, char *argv[])
 			}
 			Tflag = 1;
 			lastlevel = '?';
-			break;
-
-		case 'U':
-			Uflag = 1;	/* use duids */
 			break;
 
 		case 'u':		/* update /etc/dumpdates */
@@ -394,18 +390,16 @@ main(int argc, char *argv[])
 	}
 	if (ioctl(diskfd, DIOCGDINFO, (char *)&lab) < 0)
 		err(1, "ioctl (DIOCGDINFO)");
-	if (!Uflag)
-		;
-	else if (memcmp(lab.d_uid, &zero_uid, sizeof(lab.d_uid)) == 0) {
-		msg("Cannot find DUID of disk %s\n", disk);
-		exit(X_STARTUP);
-	} else if (asprintf(&duid,
-	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c",
-	    lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
-	    lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7],
-	    disk[strlen(disk)-1]) == -1) {
-		msg("Cannot malloc duid\n");
-		exit(X_STARTUP);
+	
+	if (memcmp(lab.d_uid, &zero_uid, sizeof(lab.d_uid)) != 0) {
+		if (asprintf(&duid,
+		    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c",
+		    lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
+		    lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7],
+		    disk[strlen(disk)-1]) == -1) {
+			msg("Cannot malloc duid\n");
+			exit(X_STARTUP);
+		}
 	}
 	if (!Tflag)
 	        getdumptime();		/* /etc/dumpdates snarfed */
@@ -594,7 +588,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-0123456789acnSUuWw] [-B records] "
+	(void)fprintf(stderr, "usage: %s [-0123456789acnSuWw] [-B records] "
 		      "[-b blocksize] [-d density]\n"
 		      "\t[-f file] [-h level] [-s feet] "
 		      "[-T date] files-to-dump\n",
