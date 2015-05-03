@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.52 2015/04/25 14:40:35 florian Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.53 2015/05/03 18:39:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -36,12 +36,25 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#define MAX_RANGES	4
 
-int	 server_file_access(struct httpd *, struct client *, char *, size_t);
-int	 server_file_request(struct httpd *, struct client *, char *,
-	    struct stat *);
-int	 server_file_index(struct httpd *, struct client *, struct stat *);
-int	 server_file_method(struct client *);
+struct range {
+	off_t	start;
+	off_t	end;
+};
+
+int	 	 server_file_access(struct httpd *, struct client *,
+		    char *, size_t);
+int	 	 server_file_request(struct httpd *, struct client *,
+		    char *, struct stat *);
+int	 	 server_partial_file_request(struct httpd *, struct client *,
+		    char *, struct stat *, char *);
+int	 	 server_file_index(struct httpd *, struct client *,
+		    struct stat *);
+int	 	 server_file_method(struct client *);
+int	 	 parse_range_spec(char *, size_t, struct range *);
+struct range 	*parse_range(char *, size_t, int *);
+int	 	 buffer_add_range(int, struct evbuffer *, struct range *);
 
 int
 server_file_access(struct httpd *env, struct client *clt,
@@ -50,6 +63,7 @@ server_file_access(struct httpd *env, struct client *clt,
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct stat		 st;
+	struct kv		*r, key;
 	char			*newpath;
 	int			 ret;
 
@@ -123,7 +137,13 @@ server_file_access(struct httpd *env, struct client *clt,
 		goto fail;
 	}
 
-	return (server_file_request(env, clt, path, &st));
+	key.kv_key = "Range";
+	r = kv_find(&desc->http_headers, &key);
+	if (r != NULL)
+		return (server_partial_file_request(env, clt, path, &st,
+		    r->kv_value));
+	else
+		return (server_file_request(env, clt, path, &st));
 
  fail:
 	switch (errno) {
@@ -246,6 +266,143 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
 	bufferevent_enable(clt->clt_srvbev, EV_READ);
 	bufferevent_disable(clt->clt_bev, EV_READ);
+
+ done:
+	server_reset_http(clt);
+	return (0);
+ fail:
+	bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
+	bufferevent_free(clt->clt_bev);
+	clt->clt_bev = NULL;
+ abort:
+	if (errstr == NULL)
+		errstr = strerror(errno);
+	server_abort_http(clt, code, errstr);
+	return (-1);
+}
+
+int
+server_partial_file_request(struct httpd *env, struct client *clt, char *path,
+    struct stat *st, char *range_str)
+{
+	struct http_descriptor	*resp = clt->clt_descresp;
+	struct http_descriptor	*desc = clt->clt_descreq;
+	struct media_type	*media, multipart_media;
+	struct range		*range;
+	struct evbuffer		*evb = NULL;
+	size_t			 content_length;
+	int		 	 code = 500, fd = -1, i, nranges, ret;
+	uint32_t		 boundary;
+	char		 	 content_range[64];
+	const char		*errstr = NULL;
+
+	/* Ignore range request for methods other than GET */
+	if (desc->http_method != HTTP_METHOD_GET)
+		return server_file_request(env, clt, path, st);
+
+	if ((range = parse_range(range_str, st->st_size, &nranges)) == NULL) {
+		code = 416;
+		(void)snprintf(content_range, sizeof(content_range),
+		    "bytes */%lld", st->st_size);
+		errstr = content_range;
+		goto abort;
+	}
+
+	/* Now open the file, should be readable or we have another problem */
+	if ((fd = open(path, O_RDONLY)) == -1)
+		goto abort;
+
+	media = media_find(env->sc_mediatypes, path);
+	if ((evb = evbuffer_new()) == NULL) {
+		errstr = "failed to allocate file buffer";
+		goto abort;
+	}
+
+	if (nranges == 1) {
+		(void)snprintf(content_range, sizeof(content_range),
+	    	    "bytes %lld-%lld/%lld", range->start, range->end,
+		    st->st_size);
+		if (kv_add(&resp->http_headers, "Content-Range",
+		    content_range) == NULL)
+			goto abort;
+
+		content_length = range->end - range->start + 1;
+		if (buffer_add_range(fd, evb, range) == 0)
+			goto abort;
+
+	} else {
+		content_length = 0;
+		boundary = arc4random();
+		/* Generate a multipart payload of byteranges */
+		while (nranges--) {
+			if ((i = evbuffer_add_printf(evb, "\r\n--%ud\r\n",
+			    boundary)) == -1)
+				goto abort;
+
+			content_length += i;
+			if ((i = evbuffer_add_printf(evb,
+			    "Content-Type: %s/%s\r\n",
+	    		    media == NULL ? "application" : media->media_type,
+	    		    media == NULL ?
+			    "octet-stream" : media->media_subtype)) == -1)
+				goto abort;
+
+			content_length += i;
+			if ((i = evbuffer_add_printf(evb,
+			    "Content-Range: bytes %lld-%lld/%lld\r\n\r\n",
+			    range->start, range->end, st->st_size)) == -1)
+				goto abort;
+
+			content_length += i;
+			if (buffer_add_range(fd, evb, range) == 0)
+				goto abort;
+
+			content_length += range->end - range->start + 1;
+			range++;
+		}
+
+		if ((i = evbuffer_add_printf(evb, "\r\n--%ud--\r\n",
+		    boundary)) == -1)
+			goto abort;
+
+		content_length += i;
+
+		/* prepare multipart/byteranges media type */
+		(void)strlcpy(multipart_media.media_type, "multipart",
+	    	    sizeof(multipart_media.media_type));
+		(void)snprintf(multipart_media.media_subtype,
+	    	    sizeof(multipart_media.media_subtype),
+	    	    "byteranges; boundary=%ud", boundary);
+		media = &multipart_media;
+	}
+
+	ret = server_response_http(clt, 206, media, content_length,
+	    MINIMUM(time(NULL), st->st_mtim.tv_sec));
+	switch (ret) {
+	case -1:
+		goto fail;
+	case 0:
+		/* Connection is already finished */
+		close(fd);
+		evbuffer_free(evb);
+		evb = NULL;
+		goto done;
+	default:
+		break;
+	}
+
+	if (server_bufferevent_write_buffer(clt, evb) == -1)
+		goto fail;
+
+	evbuffer_free(evb);
+	evb = NULL;
+
+	bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
+	if (clt->clt_persist)
+		clt->clt_toread = TOREAD_HTTP_HEADER;
+	else
+		clt->clt_toread = TOREAD_HTTP_NONE;
+	clt->clt_done = 0;
 
  done:
 	server_reset_http(clt);
@@ -469,3 +626,112 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 	server_close(clt, "unknown event error");
 	return;
 }
+
+struct range *
+parse_range(char *str, size_t file_sz, int *nranges)
+{
+	static struct range	 ranges[MAX_RANGES];
+	int	 	 	 i = 0;
+	char			*p, *q;
+
+	/* Extract range unit */
+	if ((p = strchr(str, '=')) == NULL)
+		return (NULL);
+
+	*p++ = '\0';
+	/* Check if it's a bytes range spec */
+	if (strcmp(str, "bytes") != 0)
+		return (NULL);
+
+	while ((q = strchr(p, ',')) != NULL) {
+		*q++ = '\0';
+
+		/* Extract start and end positions */
+		if (parse_range_spec(p, file_sz, &ranges[i]) == 0)
+			continue;
+
+		i++;
+		if (i == MAX_RANGES)
+			return (NULL);
+
+		p = q;
+	}
+
+	if (parse_range_spec(p, file_sz, &ranges[i]) != 0)
+		i++;
+
+	*nranges = i;
+	return (i ? ranges : NULL);
+}
+
+int
+parse_range_spec(char *str, size_t size, struct range *r)
+{
+	size_t	 	 start_str_len, end_str_len;
+	char		*p, *start_str, *end_str;
+	const char	*errstr;
+
+	if ((p = strchr(str, '-')) == NULL)
+		return (0);
+
+	*p++ = '\0';
+	start_str = str;
+	end_str = p;
+	start_str_len = strlen(start_str);
+	end_str_len = strlen(end_str);
+
+	/* Either 'start' or 'end' is optional but not both */
+	if ((start_str_len == 0) && (end_str_len == 0))
+		return (0);
+
+	if (end_str_len) {
+		r->end = strtonum(end_str, 0, LLONG_MAX, &errstr);
+		if (errstr)
+			return (0);
+
+		if ((size_t)r->end >= size)
+			r->end = size - 1;
+	} else
+		r->end = size - 1;
+
+	if (start_str_len) {
+		r->start = strtonum(start_str, 0, LLONG_MAX, &errstr);
+		if (errstr)
+			return (0);
+
+		if ((size_t)r->start >= size)
+			return (0);
+	} else {
+		r->start = size - r->end;
+		r->end = size - 1;
+	}
+
+	if (r->end < r->start)
+		return (0);
+
+	return (1);
+}
+
+int
+buffer_add_range(int fd, struct evbuffer *evb, struct range *range)
+{
+	char	buf[BUFSIZ];
+	size_t	n, range_sz;
+	ssize_t	nread;
+
+	if (lseek(fd, range->start, SEEK_SET) == -1)
+		return (0);
+
+	range_sz = range->end - range->start + 1;
+	while (range_sz) {
+		n = MINIMUM(range_sz, sizeof(buf));
+		if ((nread = read(fd, buf, n)) == -1)
+			return (0);
+
+		evbuffer_add(evb, buf, nread);
+		range_sz -= nread;
+	}
+
+	return (1);
+}
+
