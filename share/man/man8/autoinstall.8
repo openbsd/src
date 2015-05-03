@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.11 2014/10/23 21:33:21 rpe Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.12 2015/05/03 12:53:36 rpe Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2014 $
+.Dd $Mdocdate: May 3 2015 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -31,21 +31,32 @@ uses DHCP to discover the location of the response
 file and HTTP to fetch the file.
 If that fails, the installer asks for the location which can either be
 an url or a local path.
-.Ss Autoinstall methods
-The first method is to choose '(A)utoinstall' at the install prompt.
+.Pp
+To start unattended installation or upgrade choose '(A)utoinstall' at the
+install prompt.
 If there is only one network interface, the installer fetches the response
 file via that interface.
 If there is more than one network interface, a selection is presented
 and the installer fetches the response file via the selected interface.
 .Pp
-The second method is to netboot the machine.
-In this situation the
+If the machine is netbooted, the
 .Nm
 feature is invoked if the user does not intervene within
 a short time.
 It behaves as if the user selected '(A)utoinstall', but
 always fetches the response file via the netboot interface.
-.Ss Fetching the response file
+.Pp
+If either
+.Pa /auto_install.conf
+or
+.Pa /auto_upgrade.conf
+is found during boot,
+.Nm
+behaves as if the machine is netbooted, but uses the local response file.
+In case both files exist,
+.Pa /auto_install.conf
+takes precedence.
+.Pp
 .Nm
 uses HTTP to fetch one of the files
 .Pa install.conf
@@ -63,7 +74,7 @@ statements
 .Ic next-server
 and
 .Ic filename .
-If the
+If
 .Ar filename
 is
 .Cm auto_install ,
@@ -81,7 +92,7 @@ is a string of six hex octets separated by colons
 representing the MAC
 address of the interface being used to fetch the files.
 .Pp
-If the
+If
 .Ar filename
 is
 .Cm auto_upgrade ,
@@ -112,7 +123,7 @@ or
 .Pp
 Note that in these cases, the HTTP server and TFTP server must
 be on the same machine.
-.Ss Response file format
+.Pp
 The response file is a line-oriented ASCII text file.
 The format of each line is:
 .Pp
@@ -136,6 +147,12 @@ If
 .Nm
 does not find an answer in the response file, the default answer as
 provided by the installer is used.
+.Pp
+The response file may contain answers to questions only available during
+automatic installation providing additional installer features.
+.Pp
+.D1 Public ssh key for root account =
+.D1 Public ssh key for user puffy =
 .Sh FILES
 .Bl -tag -width "/etc/dhcpd.confXXX" -compact
 .It Pa /etc/dhcpd.conf
