@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.83 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.84 2015/05/03 19:44:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -750,7 +750,7 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 void
 setfile(const char *name, int fd, struct stat *fs)
 {
-	struct timeval tv[2];
+	struct timespec ts[2];
 
 	if (name == NULL || cat || testmode)
 		return;
@@ -784,10 +784,10 @@ setfile(const char *name, int fd, struct stat *fs)
 	if (fs->st_flags && fchflags(fd, fs->st_flags))
 		warn("fchflags: %s", name);
 
-	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-	if (futimes(fd, tv))
-		warn("futimes: %s", name);
+	ts[0] = fs->st_atim;
+	ts[1] = fs->st_mtim;
+	if (futimens(fd, ts))
+		warn("futimens: %s", name);
 }
 
 int

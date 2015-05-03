@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.38 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.39 2015/05/03 19:44:59 guenther Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ do_move(char *from, char *to)
 int
 fastcopy(char *from, char *to, struct stat *sbp)
 {
-	struct timeval tval[2];
+	struct timespec ts[2];
 	static u_int32_t blen;
 	static char *bp;
 	int nread, from_fd, to_fd;
@@ -323,9 +323,9 @@ err:		if (unlink(to))
 		if (errno != EOPNOTSUPP || sbp->st_flags != 0)
 			warn("%s: set flags", to);
 
-	TIMESPEC_TO_TIMEVAL(&tval[0], &sbp->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tval[1], &sbp->st_mtimespec);
-	if (utimes(to, tval))
+	ts[0] = sbp->st_atim;
+	ts[1] = sbp->st_mtim;
+	if (futimens(to_fd, ts))
 		warn("%s: set times", to);
 
 	if (close(to_fd)) {

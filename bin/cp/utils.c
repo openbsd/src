@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.36 2015/01/19 00:41:44 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.37 2015/05/03 19:44:58 guenther Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -231,7 +231,7 @@ copy_fifo(struct stat *from_stat, int exists)
 		warn("mkfifo: %s", to.p_path);
 		return (1);
 	}
-	return (pflag ? setfile(from_stat, 0) : 0);
+	return (pflag ? setfile(from_stat, -1) : 0);
 }
 
 int
@@ -245,23 +245,24 @@ copy_special(struct stat *from_stat, int exists)
 		warn("mknod: %s", to.p_path);
 		return (1);
 	}
-	return (pflag ? setfile(from_stat, 0) : 0);
+	return (pflag ? setfile(from_stat, -1) : 0);
 }
 
 
 int
 setfile(struct stat *fs, int fd)
 {
-	static struct timeval tv[2];
+	struct timespec ts[2];
 	int rval;
 
 	rval = 0;
 	fs->st_mode &= S_ISTXT | S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
-	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-	if (utimes(to.p_path, tv)) {
-		warn("utimes: %s", to.p_path);
+	ts[0] = fs->st_atim;
+	ts[1] = fs->st_mtim;
+	if (fd >= 0 ? futimens(fd, ts) :
+	    utimensat(AT_FDCWD, to.p_path, ts, AT_SYMLINK_NOFOLLOW)) {
+		warn("update times: %s", to.p_path);
 		rval = 1;
 	}
 	/*
@@ -270,15 +271,16 @@ setfile(struct stat *fs, int fd)
 	 * the mode; current BSD behavior is to remove all setuid bits on
 	 * chown.  If chown fails, lose setuid/setgid bits.
 	 */
-	if (fd ? fchown(fd, fs->st_uid, fs->st_gid) :
-	    chown(to.p_path, fs->st_uid, fs->st_gid)) {
+	if (fd >= 0 ? fchown(fd, fs->st_uid, fs->st_gid) :
+	    lchown(to.p_path, fs->st_uid, fs->st_gid)) {
 		if (errno != EPERM) {
 			warn("chown: %s", to.p_path);
 			rval = 1;
 		}
 		fs->st_mode &= ~(S_ISTXT | S_ISUID | S_ISGID);
 	}
-	if (fd ? fchmod(fd, fs->st_mode) : chmod(to.p_path, fs->st_mode)) {
+	if (fd >= 0 ? fchmod(fd, fs->st_mode) :
+	    fchmodat(AT_FDCWD, to.p_path, fs->st_mode, AT_SYMLINK_NOFOLLOW)) {
 		warn("chmod: %s", to.p_path);
 		rval = 1;
 	}
@@ -291,7 +293,8 @@ setfile(struct stat *fs, int fd)
 	 * on a file that we copied, i.e., that we didn't create.)
 	 */
 	errno = 0;
-	if (fd ? fchflags(fd, fs->st_flags) : chflags(to.p_path, fs->st_flags))
+	if (fd >= 0 ? fchflags(fd, fs->st_flags) :
+	    chflagsat(AT_FDCWD, to.p_path, fs->st_flags, AT_SYMLINK_NOFOLLOW))
 		if (errno != EOPNOTSUPP || fs->st_flags != 0) {
 			warn("chflags: %s", to.p_path);
 			rval = 1;
