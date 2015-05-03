@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.h,v 1.9 2011/04/10 03:20:58 guenther Exp $	*/
+/*	$OpenBSD: ps.h,v 1.10 2015/05/03 06:23:28 guenther Exp $	*/
 /*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
 
 /*-
@@ -37,14 +37,6 @@ enum type {
 	INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64
 };
 
-struct usave {
-	struct	timeval u_start;
-	struct	rusage u_ru;
-	struct	rusage u_cru;
-	char	u_acflag;
-	char	u_valid;
-};
-
 /* Variables. */
 typedef struct varent {
 	struct varent *next;
@@ -68,8 +60,8 @@ typedef struct var {
 	char	parsed;		/* have we been parsed yet? (avoid dupes) */
 	/*
 	 * The following (optional) elements are hooks for passing information
-	 * to the generic output routines: pvar, evar, uvar (those which print
-	 * simple elements from well known structures: proc, eproc, usave)
+	 * to the generic output routine, pvar(), which prints simple elements
+	 * from struct kinfo_proc
 	 */
 	int	off;		/* offset in structure */
 	enum	type type;	/* type of element */
