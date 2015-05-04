@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_open_pipe.9,v 1.1 2015/05/04 10:12:34 mpi Exp $
+.\" $OpenBSD: usbd_open_pipe.9,v 1.2 2015/05/04 14:18:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Sean Levy <attila@stalphonsos.com>
 .\"
@@ -55,7 +55,7 @@ Do not allow other pipes to use this endpoint while this pipe exists.
 .El
 .It Fa pipe
 A pointer to where the resulting
-.Ql struct usbd_pipe *
+.Vt struct usbd_pipe *
 should be stored if the call is successful.
 .El
 .Pp
@@ -88,7 +88,7 @@ argument, whose interpretation is documented in
 its man page.
 .It Fa pipe
 A pointer to where the resulting
-.Ql struct usbd_pipe *
+.Vt struct usbd_pipe *
 should be stored if the call is successful.
 .It Fa priv
 A pointer to a private cookie untouched by the USB stack for reuse in
