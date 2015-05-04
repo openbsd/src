@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.52 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.53 2015/05/04 10:24:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -596,6 +596,9 @@ bstp_input(struct bstp_state *bs, struct bstp_port *bp,
 	len = ntohs(eh->ether_type);
 	if (len < sizeof(tpdu))
 		goto out;
+
+	m_adj(m, ETHER_HDR_LEN);
+
 	if (m->m_pkthdr.len > len)
 		m_adj(m, len - m->m_pkthdr.len);
 	if ((m = m_pullup(m, sizeof(tpdu))) == NULL)
