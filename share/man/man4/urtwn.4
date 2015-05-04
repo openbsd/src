@@ -1,4 +1,4 @@
-.\" $OpenBSD: urtwn.4,v 1.31 2015/03/30 12:35:15 jung Exp $
+.\" $OpenBSD: urtwn.4,v 1.32 2015/05/04 11:48:05 stsp Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,22 +14,22 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2015 $
+.Dd $Mdocdate: May 4 2015 $
 .Dt URTWN 4
 .Os
 .Sh NAME
 .Nm urtwn
-.Nd Realtek RTL8188CU/RTL8192CU USB IEEE 802.11b/g/n wireless network device
+.Nd Realtek RTL8188CU/RTL8188EU/RTL8192CU USB IEEE 802.11b/g/n wireless network device
 .Sh SYNOPSIS
 .Cd "urtwn* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports USB 2.0 wireless network devices based on Realtek
-RTL8188CUS, RTL8188CE-VAU, RTL8188RU and RTL8192CU chipsets.
+RTL8188CUS, RTL8188CE-VAU, RTL8188EUS, RTL8188RU and RTL8192CU chipsets.
 .Pp
-The RTL8188CUS is a highly integrated 802.11n adapter that combines
-a MAC, a 1T1R capable baseband and an RF in a single chip.
+The RTL8188CUS and RTL8188EUS are a highly integrated 802.11n adapter
+that combines a MAC, a 1T1R capable baseband and an RF in a single chip.
 It operates in the 2GHz spectrum only.
 The RTL8188RU is a high-power variant of the RTL8188CUS.
 The RTL8188CE-VAU is a PCI Express Mini Card adapter that attaches
@@ -83,6 +83,7 @@ which are loaded when an interface is attached:
 .It /etc/firmware/urtwn-rtl8192cfwT
 .It /etc/firmware/urtwn-rtl8192cfwU
 .It /etc/firmware/urtwn-rtl8723fw
+.It /etc/firmware/urtwn-rtl8188eufw
 .El
 .Pp
 A prepackaged version of the firmware can be installed using
@@ -119,6 +120,8 @@ The following adapters should work:
 .It Solwise NET-WL-UMD-606N
 .It TP-Link TL-WN821N v4
 .It TRENDnet TEW-648UBM
+.It TP-LINK TL-WN723N v3
+.It TP-LINK TL-WN725N v2
 .El
 .Sh EXAMPLES
 The following example scans for available networks:
