@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.1 2015/01/21 08:43:55 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.2 2015/05/04 12:51:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -604,9 +604,19 @@ f32_to_adata(unsigned int x)
 	s = (x >> 31);
 	e = (x >> 23) & 0xff;
 	m = (x << 8) | 0x80000000;
-	if (e < 127 - 24)
+
+	/*
+	 * f32 exponent is (e - 127) and the point is after the 31-th
+	 * bit, thus the shift is:
+	 *
+	 * 31 - (BITS - 1) - (e - 127)
+	 *
+	 * to ensure output is in the 0..(2^BITS)-1 range, the minimum
+	 * shift is 31 - (BITS - 1), and maximum shift is 31
+	 */
+	if (e < 127 - (ADATA_BITS - 1))
 		y = 0;
-	else if (e > 127 - 1)
+	else if (e > 127)
 		y = ADATA_UNIT - 1;
 	else
 		y = m >> (127 + (32 - ADATA_BITS) - e);
