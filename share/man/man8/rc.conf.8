@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.25 2015/05/02 09:35:44 ajacoutot Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.26 2015/05/04 22:29:04 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 2 2015 $
+.Dd $Mdocdate: May 4 2015 $
 .Dt RC.CONF 8
 .Os
 .Sh NAME
@@ -73,8 +73,7 @@ is the name of one of the
 .Xr rc.d 8
 daemon control scripts.
 The list of base system daemons, including the information whether
-they are enabled by default and what typical command line options
-are, can be displayed with this command:
+they are enabled by default, can be displayed with this command:
 .Pp
 .Dl grep _flags /etc/rc.conf
 .Pp
