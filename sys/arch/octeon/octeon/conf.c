@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2014/12/11 19:44:17 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.14 2015/05/04 21:45:23 jmatthew Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,7 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 40: */
 	cdev_notdef(),			/* 41: */
 	cdev_notdef(),			/* 42: */
-	cdev_notdef(),			/* 33: */
+	cdev_notdef(),			/* 43: */
 	cdev_audio_init(NAUDIO,audio),	/* 44: /dev/audio */
 	cdev_video_init(NVIDEO,video),	/* 45: generic video I/O */
 	cdev_notdef(),			/* 46: */
@@ -212,7 +212,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 65: */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 67: devices hotplugging */
-	cdev_notdef(),
+	cdev_notdef(),			/* 68: */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 69: vscsi */
 	cdev_disk_init(1,diskmap),	/* 70: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 71: pppx */
