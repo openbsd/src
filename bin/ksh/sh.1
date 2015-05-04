@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.127 2015/04/30 20:19:04 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.128 2015/05/04 19:34:13 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2015 $
+.Dd $Mdocdate: May 4 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -161,6 +161,10 @@ so setting this can prevent accidental logouts
 command).
 .It nolog
 Do not enter function definitions into command history.
+.It posix
+Enable POSIX mode
+(see
+.Sx STANDARDS ) .
 .It vi
 Enable
 .Xr vi 1
@@ -1970,7 +1974,7 @@ The process ID of the most recent background command.
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm :
-.Bl -tag -width "MAILCHECKXXX"
+.Bl -tag -width "POSIXLY_CORRECT"
 .It Ev CDPATH
 Colon separated list of directories used by the
 .Ic cd
@@ -2061,6 +2065,10 @@ is:
 .Bd -literal -offset 2n
 /usr/bin:/bin:/usr/sbin:/sbin:/usr/X11R6/bin:/usr/local/bin
 .Ed
+.It Ev POSIXLY_CORRECT
+Enable POSIX mode
+(see
+.Sx STANDARDS ) .
 .It Ev PPID
 The shell's parent process ID.
 Subshells have the same
@@ -2202,3 +2210,9 @@ built-ins should exit/return from the outermost loop if the argument
 .Ar n
 is greater than the level of loops.
 .El
+.Pp
+Enabling POSIX mode changes some behaviour to make
+.Nm
+adhere more strictly to the
+.St -p1003.1-2008
+specification.
