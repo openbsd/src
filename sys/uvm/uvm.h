@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.58 2015/04/23 09:56:23 dlg Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.59 2015/05/04 10:21:15 dlg Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -38,9 +38,6 @@
 #include <uvm/uvm_glue.h>
 #include <uvm/uvm_km.h>
 #include <uvm/uvm_swap.h>
-#ifdef UVM_SWAP_ENCRYPT
-#include <uvm/uvm_swap_encrypt.h>
-#endif
 
 #include <uvm/uvm_pmemrange.h>
 
