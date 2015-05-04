@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_transfer.9,v 1.5 2014/07/12 16:07:06 mpi Exp $
+.\" $OpenBSD: usbd_transfer.9,v 1.6 2015/05/04 10:12:34 mpi Exp $
 .\"
 .\" Copyright (c) 2013 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 12 2014 $
+.Dd $Mdocdate: May 4 2015 $
 .Dt USBD_TRANSFER 9
 .Os
 .Sh NAME
@@ -31,7 +31,10 @@
 .Fn usbd_transfer "struct usbd_xfer *xfer"
 .Sh DESCRIPTION
 These functions provide a controller independent mechanism to perform USB
-data transfers.
+data transfers.  They make use of a pipe created by
+.Xr usbd_open_pipe 9
+or
+.Xr usbd_open_pipe_intr 9 .
 .Pp
 The function
 .Fn usbd_setup_xfer
@@ -108,4 +111,6 @@ has not been passed via
 .Xr ohci 4 ,
 .Xr uhci 4 ,
 .Xr usb 4 ,
-.Xr tsleep 9
+.Xr tsleep 9 ,
+.Xr usbd_open_pipe 9 ,
+.Xr usbd_open_pipe_intr 9
