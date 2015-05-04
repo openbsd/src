@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.115 2015/02/07 02:50:53 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.116 2015/05/04 02:18:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1036,6 +1036,8 @@ hibernate_preserve_entropy(union hibernate_info *hib)
  * Reads the signature block from swap, checks against the current machine's
  * information. If the information matches, perform a resume by reading the
  * saved image into the pig area, and unpacking.
+ *
+ * Must be called with interrupts enabled.
  */
 void
 hibernate_resume(void)
