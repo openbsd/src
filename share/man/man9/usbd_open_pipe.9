@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_open_pipe.9,v 1.2 2015/05/04 14:18:13 schwarze Exp $
+.\" $OpenBSD: usbd_open_pipe.9,v 1.3 2015/05/04 14:36:26 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Sean Levy <attila@stalphonsos.com>
 .\"
@@ -43,12 +43,13 @@ The
 function takes the following arguments:
 .Bl -tag -width callback
 .It Fa iface
-the USB interface for which the pipe is to be created.
+The USB interface for which the pipe is to be created.
 .It Fa address
 The address of the endpoint in that interface to which the pipe should be
 connected.
 .It Fa flags
-A bitmask of flags.  Currently there is only one flag bit defined:
+A bitmask of flags.
+Currently there is only one flag bit defined:
 .Bl -tag -width xxx -offset indent
 .It Dv USBD_EXCLUSIVE_ACCESS
 Do not allow other pipes to use this endpoint while this pipe exists.
@@ -68,8 +69,8 @@ The USB interface for which the pipe is to be created.
 .It Fa address
 The endpoint in that interface to which the pipe should be connected.
 .It Fa flags
-A bitmask of flags.  These flags are not interpreted in the same
-way as the
+A bitmask of flags.
+These flags are not interpreted in the same way as the
 .Fa flags
 passed to
 .Fn usbd_open_pipe .
@@ -78,7 +79,8 @@ Instead,
 implicitly turns on the
 .Dv USBD_EXCLUSIVE_ACCESS
 bit for the pipe, disallowing multiple interrupt pipes for
-the same endpoint.  The
+the same endpoint.
+The
 .Fa flags
 argument in this case is instead passed directly to
 .Xr usbd_setup_xfer 9
