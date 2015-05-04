@@ -1,6 +1,6 @@
 define(MACHINE,octeon)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.5 2014/10/09 04:37:43 tedu Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.6 2015/05/04 23:48:14 jmatthew Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -67,19 +67,19 @@ _TITLE(spec)
 _DEV(au, 44)
 _DEV(bio, 49)
 _DEV(bpf, 12)
-_DEV(diskmap, 69)
+_DEV(diskmap, 70)
 _DEV(fdesc, 7)
 _DEV(fuse, 53)
 _DEV(hotplug, 67)
 _DEV(pci, 29)
 _DEV(pf, 31)
-_DEV(pppx, 70)
+_DEV(pppx, 71)
 _DEV(rnd, 33)
 _DEV(systrace, 50)
 _DEV(tun, 13)
 _DEV(uk, 32)
 _DEV(vi, 45)
-_DEV(vscsi, 68)
+_DEV(vscsi, 69)
 dnl
 divert(__mddivert)dnl
 dnl
