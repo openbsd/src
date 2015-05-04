@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_hpc.c,v 1.2 2012/10/03 22:46:09 miod Exp $	*/
+/*	$OpenBSD: pckbc_hpc.c,v 1.3 2015/05/04 09:33:45 mpi Exp $	*/
 /* $NetBSD: pckbc_hpc.c,v 1.9 2008/03/15 13:23:24 cube Exp $	 */
 
 /*
@@ -134,8 +134,7 @@ pckbc_hpc_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 
 	if (hpc_intr_establish(msc->sc_irq, IPL_TTY, pckbcintr, sc,
 	    sc->sc_dv.dv_xname) == NULL) {
-		printf("%s: unable to establish interrupt for %s slot\n",
-		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		printf(": unable to establish interrupt");
 	} else {
 		msc->sc_hasintr = 1;
 	}

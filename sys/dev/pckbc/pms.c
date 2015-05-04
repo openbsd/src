@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.59 2015/04/10 08:48:08 stsp Exp $ */
+/* $OpenBSD: pms.c,v 1.60 2015/05/04 09:33:46 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -680,10 +680,10 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_kbctag = pa->pa_tag;
 
-	printf("\n");
-
 	pckbc_set_inputhandler(sc->sc_kbctag, PCKBC_AUX_SLOT,
 	    pmsinput, sc, DEVNAME(sc));
+
+	printf("\n");
 
 	a.accessops = &pms_accessops;
 	a.accesscookie = sc;

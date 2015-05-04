@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_isa.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: pckbc_isa.c,v 1.16 2015/05/04 09:33:46 mpi Exp $	*/
 /*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
@@ -185,10 +185,8 @@ pckbc_isa_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	rv = isa_intr_establish(isc->sc_ic, isc->sc_irq[slot], IST_EDGE,
 	    IPL_TTY, pckbcintr, sc, sc->sc_dv.dv_xname);
 	if (rv == NULL) {
-		printf("%s: unable to establish interrupt for %s slot\n",
-		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		printf(": unable to establish interrupt");
 	} else {
-		printf("%s: using irq %d for %s slot\n", sc->sc_dv.dv_xname,
-		    isc->sc_irq[slot], pckbc_slot_names[slot]);
+		printf(": using irq %d", isc->sc_irq[slot]);
 	}
 }

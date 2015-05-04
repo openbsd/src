@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.41 2015/03/16 01:54:47 jcs Exp $ */
+/* $OpenBSD: pckbd.c,v 1.42 2015/05/04 09:33:46 mpi Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -362,8 +362,6 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	struct wskbddev_attach_args a;
 	u_char cmd[1];
 
-	printf("\n");
-
 	isconsole = pckbd_is_console(pa->pa_tag, pa->pa_slot);
 
 	if (isconsole) {
@@ -403,6 +401,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc;
+
+	printf("\n");
 
 	/*
 	 * Attach the wskbd, saving a handle to it.
