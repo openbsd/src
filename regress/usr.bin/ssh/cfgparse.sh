@@ -1,12 +1,20 @@
-#	$OpenBSD: cfgparse.sh,v 1.3 2015/05/04 01:47:53 dtucker Exp $
+#	$OpenBSD: cfgparse.sh,v 1.4 2015/05/04 01:51:39 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="config parse"
 
-verbose "reparse default config"
-($SUDO ${SSHD} -T -f /dev/null >$OBJ/sshd_config.1 &&
+# We need to use the keys generated for the regression test because sshd -T
+# will fail if we're not running with SUDO (no permissions for real keys) or
+# if we are # running tests on a system that has never had sshd installed
+# (keys won't exist).
+
+grep "HostKey " $OBJ/sshd_config > $OBJ/sshd_config_minimal
+SSHD_KEYS="`cat $OBJ/sshd_config_minimal`"
+
+verbose "reparse minimal config"
+($SUDO ${SSHD} -T -f $OBJ/sshd_config_minimal >$OBJ/sshd_config.1 &&
  $SUDO ${SSHD} -T -f $OBJ/sshd_config.1 >$OBJ/sshd_config.2 &&
- diff $OBJ/sshd_config.1 $OBJ/sshd_config.2) || fail "reparse default config"
+ diff $OBJ/sshd_config.1 $OBJ/sshd_config.2) || fail "reparse minimal config"
 
 verbose "reparse regress config"
 ($SUDO ${SSHD} -T -f $OBJ/sshd_config >$OBJ/sshd_config.1 &&
@@ -24,6 +32,7 @@ EOD
 # test input sets.  should all result in the output above.
 # test 1: addressfamily and port first
 cat > $OBJ/sshd_config.1 <<EOD
+${SSHD_KEYS}
 addressfamily any
 port 1234
 port 5678
