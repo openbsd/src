@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.12 2015/05/03 12:53:36 rpe Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.13 2015/05/04 20:52:02 rpe Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2015 $
+.Dd $Mdocdate: May 4 2015 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -148,11 +148,25 @@ If
 does not find an answer in the response file, the default answer as
 provided by the installer is used.
 .Pp
-The response file may contain answers to questions only available during
-automatic installation providing additional installer features.
-.Pp
-.D1 Public ssh key for root account =
-.D1 Public ssh key for user puffy =
+The response file may contain answers to the following questions, which are
+only available during unattended installation to provide additional installer
+features:
+.Bl -tag -width Ds
+.It Public ssh key for root account = Ar ssh key
+.Ar ssh key
+is stored in
+.Pa /root/.ssh/authorized_keys .
+.It Public ssh key for user puffy = Ar ssh key
+.Ar ssh key
+is stored in
+.Pa ~puffy/.ssh/authorized_keys .
+.It URL to autopartitioning template for disklabel = Ar url
+A template file for
+.Xr disklabel 8
+autopartitioning is fetched from
+.Ar url
+allowing a custom partition layout for the root disk.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/dhcpd.confXXX" -compact
 .It Pa /etc/dhcpd.conf
