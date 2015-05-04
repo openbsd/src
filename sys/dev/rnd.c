@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.173 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.174 2015/05/04 09:38:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -553,7 +553,7 @@ resume_randomness(char *buf, size_t buflen)
 	struct timespec ts;
 
 	if (buf && buflen)
-		_rs_seed(buf, sizeof(buf));
+		_rs_seed(buf, buflen);
 	getnanotime(&ts);
 	add_true_randomness(ts.tv_sec);
 	add_true_randomness(ts.tv_nsec);
