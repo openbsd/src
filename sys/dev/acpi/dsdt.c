@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.216 2015/03/16 20:31:46 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.217 2015/05/04 10:42:06 jmatthew Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2286,6 +2286,9 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 		} else {
 			/* Write to a large field.. create or convert buffer */
 			val = aml_convert(val, AML_OBJTYPE_BUFFER, -1);
+
+			if (blen > (val->length << 3))
+				blen = val->length << 3;
 		}
 		vbit = val->v_buffer;
 	} else {
