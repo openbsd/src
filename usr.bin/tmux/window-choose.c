@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.61 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.62 2015/05/04 13:04:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -559,10 +559,10 @@ window_choose_key(struct window_pane *wp, unused struct client *c,
 			break;
 		if (item->state & TREE_EXPANDED) {
 			window_choose_collapse(wp, item->wcd->tree_session,
-			    item->wcd->idx);
+			    data->selected);
 		} else {
 			window_choose_expand(wp, item->wcd->tree_session,
-			    item->wcd->idx);
+			    data->selected);
 		}
 		window_choose_redraw_screen(wp);
 		break;
