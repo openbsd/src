@@ -1,4 +1,4 @@
-#	$OpenBSD: cfgparse.sh,v 1.2 2015/04/29 05:23:27 dtucker Exp $
+#	$OpenBSD: cfgparse.sh,v 1.3 2015/05/04 01:47:53 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="config parse"
@@ -32,7 +32,7 @@ listenaddress ::1
 EOD
 ($SUDO ${SSHD} -T -f $OBJ/sshd_config.1 | \
  grep 'listenaddress ' >$OBJ/sshd_config.2 &&
- diff -u $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
+ diff $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
  fail "listenaddress order 1"
 # test 2: listenaddress first
 cat > $OBJ/sshd_config.1 <<EOD
@@ -44,7 +44,7 @@ addressfamily any
 EOD
 ($SUDO ${SSHD} -T -f $OBJ/sshd_config.1 | \
  grep 'listenaddress ' >$OBJ/sshd_config.2 &&
- diff -u $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
+ diff $OBJ/sshd_config.0 $OBJ/sshd_config.2) || \
  fail "listenaddress order 2"
 
 # cleanup
