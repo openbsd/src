@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.835 2015/04/28 21:41:40 sthen Exp $
+#	$OpenBSD: install.sub,v 1.836 2015/05/04 19:55:26 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1669,6 +1669,18 @@ get_rootinfo() {
 	ROOTDISK=$resp
 	ROOTDEV=${ROOTDISK}a
 	SWAPDEV=${ROOTDISK}b
+}
+
+# Ask for and download autopartitioning template for disklabel.
+get_disklabel_template() {
+	local _dl=/disklabel.auto
+
+	ask "URL to autopartitioning template for disklabel?" none
+	[[ $resp == none ]] && return 1
+	echo "Fetching $resp"
+	ftp -Vo $_dl "$resp" && [[ -s $_dl ]] && return
+	echo "No autopartitioning template found."
+	exit 1
 }
 
 # Start interface using the on-disk hostname.if file passed as argument $1.

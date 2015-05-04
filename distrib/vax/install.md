@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.42 2014/03/22 02:24:43 krw Exp $
+#	$OpenBSD: install.md,v 1.43 2015/05/04 19:55:27 rpe Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -49,6 +49,11 @@ md_prep_disklabel() {
 
 	_f=/tmp/fstab.$_disk
 	if [[ $_disk == $ROOTDISK ]]; then
+		if $AUTO && get_disklabel_template; then
+			disklabel -T /disklabel.auto $FSTABFLAG $_f -w -A $_disk && return
+			echo "Autopartitioning failed"
+			exit 1
+		fi
 		while :; do
 			echo "The auto-allocated layout for $_disk is:"
 			disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"

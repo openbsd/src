@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.27 2015/03/08 13:13:48 deraadt Exp $
+#	$OpenBSD: install.md,v 1.28 2015/05/04 19:55:26 rpe Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -23,6 +23,11 @@ md_prep_disklabel() {
 
 	_f=/tmp/fstab.$_disk
 	if [[ $_disk == $ROOTDISK ]]; then
+		if $AUTO && get_disklabel_template; then
+			disklabel -T /disklabel.auto $FSTABFLAG $_f -w -A $_disk && return
+			echo "Autopartitioning failed"
+			exit 1
+		fi
 		while :; do
 			echo "The auto-allocated layout for $_disk is:"
 			disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
