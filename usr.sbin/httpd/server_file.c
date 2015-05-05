@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.53 2015/05/03 18:39:58 florian Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.54 2015/05/05 11:10:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,8 @@ int	 	 server_file_request(struct httpd *, struct client *,
 int	 	 server_partial_file_request(struct httpd *, struct client *,
 		    char *, struct stat *, char *);
 int	 	 server_file_index(struct httpd *, struct client *,
+		    struct stat *);
+int		 server_file_modified_since(struct http_descriptor *,
 		    struct stat *);
 int	 	 server_file_method(struct client *);
 int	 	 parse_range_spec(char *, size_t, struct range *);
@@ -228,6 +230,9 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 		code = ret;
 		goto abort;
 	}
+
+	if ((ret = server_file_modified_since(clt->clt_descreq, st)) != -1)
+		return ret;
 
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)
@@ -627,6 +632,26 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 	return;
 }
 
+int
+server_file_modified_since(struct http_descriptor * desc, struct stat * st)
+{
+	struct kv		 key, *since;
+	struct tm		 tm;
+
+	memset(&tm, 0, sizeof(struct tm));
+
+	key.kv_key = "If-Modified-Since";
+	if ((since = kv_find(&desc->http_headers, &key)) != NULL &&
+	    since->kv_value != NULL) {
+		if (strptime(since->kv_value, "%a, %d %h %Y %T %Z", &tm) !=
+		    NULL && timegm(&tm) >= st->st_mtim.tv_sec) {
+			return (304);
+		}
+	}
+
+	return (-1);
+}
+
 struct range *
 parse_range(char *str, size_t file_sz, int *nranges)
 {
@@ -734,4 +759,3 @@ buffer_add_range(int fd, struct evbuffer *evb, struct range *range)
 
 	return (1);
 }
-
