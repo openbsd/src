@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.13 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: packet.c,v 1.14 2015/05/05 01:26:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -65,7 +65,7 @@ upd_ospf_hdr(struct ibuf *buf, struct iface *iface)
 {
 	struct ospf_hdr	*ospf_hdr;
 
-	if ((ospf_hdr = ibuf_seek(buf, 0, sizeof(ospf_hdr))) == NULL)
+	if ((ospf_hdr = ibuf_seek(buf, 0, sizeof(*ospf_hdr))) == NULL)
 		fatalx("upd_ospf_hdr: buf_seek failed");
 
 	/* update length */

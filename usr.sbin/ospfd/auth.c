@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.19 2010/09/02 14:03:21 sobrado Exp $ */
+/*	$OpenBSD: auth.c,v 1.20 2015/05/05 01:26:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -144,7 +144,7 @@ auth_gen(struct ibuf *buf, struct iface *iface)
 	struct ospf_hdr	*ospf_hdr;
 	struct auth_md	*md;
 
-	if ((ospf_hdr = ibuf_seek(buf, 0, sizeof(ospf_hdr))) == NULL)
+	if ((ospf_hdr = ibuf_seek(buf, 0, sizeof(*ospf_hdr))) == NULL)
 		fatalx("auth_gen: buf_seek failed");
 
 	/* update length */

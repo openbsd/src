@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.3 2014/11/18 20:54:28 krw Exp $ */
+/*	$OpenBSD: probe.c,v 1.4 2015/05/05 01:26:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -68,7 +68,7 @@ send_probe(struct iface *iface)
 	inet_aton(AllDVMRPRouters, &dst.sin_addr);
 
 	/* update chksum */
-	dvmrp_hdr = ibuf_seek(buf, 0, sizeof(dvmrp_hdr));
+	dvmrp_hdr = ibuf_seek(buf, 0, sizeof(*dvmrp_hdr));
 	dvmrp_hdr->chksum = in_cksum(buf->buf, buf->wpos);
 
 	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
