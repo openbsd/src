@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.16 2015/04/06 09:23:19 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.17 2015/05/05 02:01:10 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -288,7 +288,7 @@ struct drm_mode_object *drm_mode_object_find(struct drm_device *dev,
 	
 	obj = han->obj;
 	if (obj->type != type) {
-		return NULL;
+		obj = NULL;
 	}
 	rw_exit_write(&dev->mode_config.idr_rwl);
 
