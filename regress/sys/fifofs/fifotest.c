@@ -100,9 +100,11 @@ runtest(char *fifo, int flags, int timeout)
 	dopoll(fd, POLLIN|POLLOUT, "POLLIN|POLLOUT", timeout);
 	dopoll(fd, POLLIN, "POLLIN", timeout);
 	dopoll(fd, POLLOUT, "POLLOUT", timeout);
+	dopoll(fd, 0, "(none)", timeout);
 	doselect(fd, fd, timeout);
 	doselect(fd, -1, timeout);
 	doselect(-1, fd, timeout);
+	doselect(-1, -1, timeout);
 
 	if (write(fd, "test", 4) != 4) {
 		printf("write error: %s\n", strerror(errno));
@@ -113,9 +115,11 @@ runtest(char *fifo, int flags, int timeout)
 	dopoll(fd, POLLIN|POLLOUT, "POLLIN|POLLOUT", timeout);
 	dopoll(fd, POLLIN, "POLLIN", timeout);
 	dopoll(fd, POLLOUT, "POLLOUT", timeout);
+	dopoll(fd, 0, "(none)", timeout);
 	doselect(fd, fd, timeout);
 	doselect(fd, -1, timeout);
 	doselect(-1, fd, timeout);
+	doselect(-1, -1, timeout);
 
 	if ((nread = read(fd, buf, sizeof(buf))) <= 0) {
 		printf("read error: %s\n", (nread == 0) ? "EOF" : strerror(errno));
@@ -175,7 +179,7 @@ eoftest(char *fifo, int flags, int timeout)
 	/*
 	 * Test all combinations of select and poll.
 	 */
-	for (pass = 0; pass < 12; pass++) {
+	for (pass = 0; pass < 16; pass++) {
 		/*
 		 * We run each test twice, once with a fresh fifo,
 		 * and once with a reused one.
@@ -226,15 +230,23 @@ eoftest(char *fifo, int flags, int timeout)
 		    break;
 		case 6:
 		case 7:
-		    doselect(fd, fd, timeout);
+		    dopoll(fd, 0, "(none)", timeout);
 		    break;
 		case 8:
 		case 9:
-		    doselect(fd, -1, timeout);
+		    doselect(fd, fd, timeout);
 		    break;
 		case 10:
 		case 11:
+		    doselect(fd, -1, timeout);
+		    break;
+		case 12:
+		case 13:
 		    doselect(-1, fd, timeout);
+		    break;
+		case 14:
+		case 15:
+		    doselect(-1, -1, timeout);
 		    break;
 		}
 		wait(&status);
@@ -315,8 +327,8 @@ doselect(int rfd, int wfd, int timeout)
 		FD_SET(wfd, wfds);
 	}
 
-	printf("\tselect%s%s\n", rfds ? " read" : "",
-	    wfds ? " write" : "");
+	printf("\tselect%s%s, timeout=%d\n", rfds ? " read" : "",
+	    wfds ? " write" : rfds ? "" : " (none)", timeout);
 
 	alarm(2);
 	nready = select(maxfd + 1, rfds, wfds, NULL, &tv);
