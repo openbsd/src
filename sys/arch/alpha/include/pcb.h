@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.10 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.11 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.5 1996/11/13 22:21:00 cgd Exp $	*/
 
 /*
@@ -55,16 +55,6 @@ struct pcb {
 	struct fpreg	pcb_fp;			/* FP registers		[SW] */
 	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
 	struct cpu_info *volatile pcb_fpcpu;	/* CPU with our FP state[SW] */
-};
-
-/*
- * The pcb is augmented with machine-dependent additional data for
- * core dumps. For the Alpha, that's a trap frame and the floating
- * point registers.
- */
-struct md_coredump {
-	struct	trapframe md_tf;
-	struct	fpreg md_fpstate;
 };
 
 #ifdef _KERNEL

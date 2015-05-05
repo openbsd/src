@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.6 2013/07/17 19:19:29 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.7 2015/05/05 02:13:46 guenther Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -85,15 +85,5 @@ struct pcb
  */
 #define	USER_REGS(p) \
 	(((struct reg *)(&((p)->p_addr->u_pcb.user_state))))
-
-/*
- * The pcb is augmented with machine-dependent additional data for
- * core dumps.  Note that the trapframe here is a copy of the one
- * from the top of the kernel stack (included here so that the kernel
- * stack itself need not be dumped).
- */
-struct md_coredump {
-	struct	trapframe md_tf;
-};
 
 #endif /* _M88K_PCB_H_ */

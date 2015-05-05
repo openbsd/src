@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2014/12/10 15:29:53 mikeb Exp $ */
+/*	$OpenBSD: machdep.c,v 1.62 2015/05/05 02:13:46 guenther Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -62,7 +62,6 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
-#include <sys/kcore.h>
 
 #include <net/if.h>
 

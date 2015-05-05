@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.32 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.33 2015/05/05 02:13:47 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/core.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -369,50 +368,3 @@ cpu_exit(struct proc *p)
 	pmap_deactivate(p);
 	sched_exit(p);
 }
-
-/*
- * cpu_coredump is called to write a core dump header.
- * (should this be defined elsewhere?  machdep.c?)
- */
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	int error;
-	struct md_coredump md_core;
-	struct coreseg cseg;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(md_core);
-
-	md_core.md_tf = *p->p_md.md_tf;
-	md_core.md_wcookie = p->p_addr->u_pcb.pcb_wcookie;
-	if (p->p_md.md_fpstate) {
-		fpusave_proc(p, 1);
-		md_core.md_fpstate = *p->p_md.md_fpstate;
-	} else
-		bzero((caddr_t)&md_core.md_fpstate, 
-		      sizeof(md_core.md_fpstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
-}
-

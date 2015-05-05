@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.14 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.15 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
 
@@ -174,55 +173,6 @@ cpu_exit(struct proc *p)
 {
 	pmap_deactivate(p);
 	sched_exit(p);
-}
-
-/*
- * Dump the machine specific segment at the start of a core dump.
- */
-
-int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
-    struct core *chdr)
-{
-	int error;
-	struct {
-		struct reg regs;
-		struct fpreg fpregs;
-	} cpustate;
-	struct coreseg cseg;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
-
-	/* Save integer registers. */
-	error = process_read_regs(p, &cpustate.regs);
-	if (error)
-		return error;
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &cpustate.fpregs);
-	if (error)
-		return error;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-
-	return error;
 }
 
 /*

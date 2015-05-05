@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.17 2013/05/08 15:36:30 tedu Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.18 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -83,13 +83,5 @@ struct pcb {
 /* the indexes of the %fs/%gs segments in pcb_threadsegs */
 #define	TSEG_FS		0
 #define	TSEG_GS		1
-
-/*    
- * The pcb is augmented with machine-dependent additional data for 
- * core dumps. For the i386, there is nothing to add.
- */     
-struct md_coredump {
-	long	md_pad[8];
-};    
 
 #endif /* _MACHINE_PCB_H_ */

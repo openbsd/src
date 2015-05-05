@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.21 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.22 2015/05/05 02:13:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -28,7 +28,6 @@
 #include <sys/user.h>
 #include <sys/ptrace.h>
 #include <sys/exec.h>
-#include <sys/core.h>
 #include <sys/pool.h>
 
 #include <uvm/uvm_extern.h>
@@ -38,47 +37,6 @@
 #include <machine/pcb.h>
 
 extern struct pool hppa_fppl;
-
-/*
- * Dump the machine specific header information at the start of a core dump.
- */
-int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
-    struct core *core)
-{
-	struct md_coredump md_core;
-	struct coreseg cseg;
-	off_t off;
-	int error;
-
-	CORE_SETMAGIC(*core, COREMAGIC, MID_HPPA20, 0);
-	core->c_hdrsize = ALIGN(sizeof(*core));
-	core->c_seghdrsize = ALIGN(sizeof(cseg));
-	core->c_cpusize = sizeof(md_core);
-
-	process_read_regs(p, &md_core.md_reg);
-	process_read_fpregs(p, &md_core.md_fpreg);
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_HPPA20, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = core->c_cpusize;
-
-#define	write(vp, addr, n) \
-	vn_rdwr(UIO_WRITE, (vp), (caddr_t)(addr), (n), off, \
-	    UIO_SYSSPACE, IO_UNIT, cred, NULL, p)
-
-	off = core->c_hdrsize;
-	if ((error = write(vp, &cseg, core->c_seghdrsize)))
-		return error;
-	off += core->c_seghdrsize;
-	if ((error = write(vp, &md_core, sizeof md_core)))
-		return error;
-
-#undef write
-	core->c_nseg++;
-
-	return error;
-}
 
 void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,

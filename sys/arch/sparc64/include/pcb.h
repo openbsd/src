@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.9 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.10 2015/05/05 02:13:47 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.7 2000/12/29 17:12:05 eeh Exp $ */
 
 /*
@@ -141,18 +141,6 @@ struct pcb {
 	/* the following MUST be aligned on a 64-bit boundary */
 	struct	rwindow64 pcb_rw[PCB_MAXWIN];	/* saved windows */
 	u_int64_t	pcb_rwsp[PCB_MAXWIN];
-};
-
-/*
- * The pcb is augmented with machine-dependent additional data for
- * core dumps.  Note that the trapframe here is a copy of the one
- * from the top of the kernel stack (included here so that the kernel
- * stack itself need not be dumped).
- */
-struct md_coredump {
-	struct	trapframe64 md_tf;
-	struct	fpstate64 md_fpstate;
-	u_int64_t md_wcookie;
 };
 
 #ifndef _KERNEL

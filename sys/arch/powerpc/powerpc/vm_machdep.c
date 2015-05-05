@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.47 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.48 2015/05/05 02:13:47 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -156,43 +155,6 @@ cpu_exit(struct proc *p)
 	
 	pmap_deactivate(p);
 	sched_exit(p);
-}
-
-/*
- * Write the machine-dependent part of a core dump.
- */
-int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
-    struct core *chdr)
-{
-	struct coreseg cseg;
-	struct md_coredump md_core;
-	int error;
-	
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_POWERPC, 0);
-	chdr->c_hdrsize = ALIGN(sizeof *chdr);
-	chdr->c_seghdrsize = ALIGN(sizeof cseg);
-	chdr->c_cpusize = sizeof md_core;
-
-	process_read_regs(p, &(md_core.regs));
-	
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_POWERPC, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.31 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.32 2015/05/05 02:13:47 guenther Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -48,7 +48,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/user.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/signalvar.h>
 
@@ -160,55 +159,6 @@ cpu_exit(p)
 	p->p_addr = (void *)p->p_md.md_uarea;
 #endif
 	sched_exit(p);
-}
-
-/*
- * Dump the machine specific header information at the start of a core dump.
- */
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	struct cpu_info *ci = curcpu();
-	int error;
-	/*register struct user *up = p->p_addr;*/
-	struct coreseg cseg;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MIPS, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof (p -> p_addr -> u_pcb.pcb_regs);
-
-	/*
-	 * Copy floating point state from the FP chip if this process
-	 * has state stored there.
-	 */
-	if (p == ci->ci_fpuproc)
-		save_fpu();
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MIPS, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp,
-			(caddr_t)(&(p -> p_addr -> u_pcb.pcb_regs)),
-			(off_t)chdr -> c_cpusize,
-			(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
-			UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
 }
 
 extern vm_map_t phys_map;

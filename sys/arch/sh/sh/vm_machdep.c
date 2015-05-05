@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2015/05/05 02:13:47 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*
@@ -103,7 +103,6 @@
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
 #include <sys/signalvar.h>
@@ -243,63 +242,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		    sizeof(struct fpreg));
 	}
 #endif
-}
-
-/*
- * Dump the machine specific segment at the start of a core dump.
- */
-struct md_core {
-	struct reg intreg;
-	struct fpreg fpreg;
-};
-
-int
-cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
-    struct core *chdr)
-{
-	struct md_core md_core;
-	struct coreseg cseg;
-	int error;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(md_core);
-
-	/* Save integer registers. */
-	error = process_read_regs(p, &md_core.intreg);
-	if (error)
-		return error;
-
-#ifdef SH4
-	if (CPU_IS_SH4) {
-		error = process_read_fpregs(p, &md_core.fpreg);
-		if (error)
-			return error;
-	}
-#endif
-#ifdef SH3
-	if (CPU_IS_SH3)
-		bzero(&md_core.fpreg, sizeof(md_core.fpreg));
-#endif
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-	return 0;
 }
 
 /*

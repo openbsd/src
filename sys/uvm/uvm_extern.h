@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.131 2015/02/07 08:21:24 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.132 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -167,7 +167,6 @@ typedef int		vm_prot_t;
 
 #ifdef _KERNEL
 struct buf;
-struct core;
 struct mount;
 struct pglist;
 struct vmspace;
@@ -462,8 +461,6 @@ int			uvm_pglistalloc(psize_t, paddr_t, paddr_t,
 void			uvm_pglistfree(struct pglist *);
 void			uvm_pmr_use_inc(paddr_t, paddr_t);
 void			uvm_swap_init(void);
-int			uvm_coredump(struct proc *, struct vnode *, 
-			    struct ucred *, struct core *);
 int			uvm_coredump_walkmap(struct proc *,
 			    void *, int (*)(struct proc *, void *,
 			    struct uvm_coredump_state *), void *);

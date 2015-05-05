@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.42 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2015/05/05 02:13:47 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
-#include <sys/core.h>
 #include <sys/mount.h>
 #include <sys/device.h>
 
@@ -177,56 +176,6 @@ sys_sysarch(p, v, retval)
 
 	return (ENOSYS);
 };
-
-/*
- * Dump the machine specific header information at the start of a core dump.
- * First put all regs in PCB for debugging purposes. This is not an good
- * way to do this, but good for my purposes so far.
- */
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	struct trapframe *tf;
-	struct md_coredump state;
-	struct reg *regs = &state.md_reg;
-	struct coreseg cseg;
-	int error;
-
-	tf = p->p_addr->u_pcb.framep;
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = sizeof(struct core);
-	chdr->c_seghdrsize = sizeof(struct coreseg);
-	chdr->c_cpusize = sizeof(struct md_coredump);
-
-	bcopy(&tf->r0, &regs->r0, 12 * sizeof(int));
-	regs->ap = tf->ap;
-	regs->fp = tf->fp;
-	regs->sp = tf->sp;
-	regs->pc = tf->pc;
-	regs->psl = tf->psl;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
-}
 
 /*
  * Map in a bunch of pages read/writeable for the kernel.

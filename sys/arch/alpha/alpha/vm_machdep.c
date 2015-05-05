@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.42 2014/11/16 12:30:52 deraadt Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.43 2015/05/05 02:13:46 guenther Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/user.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
@@ -45,53 +44,6 @@
 #include <machine/pmap.h>
 #include <machine/reg.h>
 
-
-/*
- * Dump the machine specific header information at the start of a core dump.
- */
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	int error;
-	struct md_coredump cpustate;
-	struct coreseg cseg;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_ALPHA, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
-
-	cpustate.md_tf = *p->p_md.md_tf;
-	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
-	if (p->p_md.md_flags & MDP_FPUSED) {
-		if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-			fpusave_proc(p, 1);
-		cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
-	} else
-		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ALPHA, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
-}
 
 /*
  * cpu_exit is called as the last action during exit.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.55 2015/02/09 09:39:09 miod Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.56 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
-#include <sys/core.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -137,119 +136,9 @@ uvm_grow(struct proc *p, vaddr_t sp)
 #ifndef SMALL_KERNEL
 
 /*
- * uvm_coredump: dump core!
+ * Walk the VA space for a process, invoking 'func' on each present range
+ * that should be included in a coredump.
  */
-
-int
-uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
-    struct core *chdr)
-{
-	struct vmspace *vm = p->p_vmspace;
-	vm_map_t map = &vm->vm_map;
-	vm_map_entry_t entry, safe;
-	vaddr_t start, end, top;
-	struct coreseg cseg;
-	off_t offset, coffset;
-	int csize, chunk, flag, error = 0;
-
-	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
-
-	RB_FOREACH_SAFE(entry, uvm_map_addr, &map->addr, safe) {
-		/* should never happen for a user process */
-		if (UVM_ET_ISSUBMAP(entry)) {
-			panic("uvm_coredump: user process with submap?");
-		}
-
-		if (!(entry->protection & PROT_WRITE) &&
-		    entry->start != p->p_p->ps_sigcode)
-			continue;
-
-		/* Don't dump mmaped devices. */
-		if (entry->object.uvm_obj != NULL &&
-		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj))
-			continue;
-
-		start = entry->start;
-		end = entry->end;
-
-		if (start >= VM_MAXUSER_ADDRESS)
-			continue;
-
-		if (end > VM_MAXUSER_ADDRESS)
-			end = VM_MAXUSER_ADDRESS;
-
-#ifdef MACHINE_STACK_GROWS_UP
-		if ((vaddr_t)vm->vm_maxsaddr <= start &&
-		    start < ((vaddr_t)vm->vm_maxsaddr + MAXSSIZ)) {
-			top = round_page((vaddr_t)vm->vm_maxsaddr +
-			    ptoa(vm->vm_ssize));
-			if (end > top)
-				end = top;
-
-			if (start >= end)
-				continue;
-#else
-		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			top = trunc_page((vaddr_t)vm->vm_minsaddr -
-			    ptoa(vm->vm_ssize));
-			if (start < top)
-				start = top;
-
-			if (start >= end)
-				continue;
-#endif
-			flag = CORE_STACK;
-		} else
-			flag = CORE_DATA;
-
-		/* Set up a new core file segment. */
-		CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(*chdr), flag);
-		cseg.c_addr = start;
-		cseg.c_size = end - start;
-
-		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)&cseg, chdr->c_seghdrsize,
-		    offset, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-		/*
-		 * We might get an EFAULT on objects mapped beyond
-		 * EOF. Ignore the error.
-		 */
-		if (error && error != EFAULT)
-			break;
-
-		offset += chdr->c_seghdrsize;
-
-		coffset = 0;
-		csize = (int)cseg.c_size;
-		do {
-			if (p->p_siglist & sigmask(SIGKILL))
-				return (EINTR);
-
-			/* Rest of the loop sleeps with lock held, so... */
-			yield();
-
-			chunk = MIN(csize, MAXPHYS);
-			error = vn_rdwr(UIO_WRITE, vp,
-			    (caddr_t)(u_long)cseg.c_addr + coffset,
-			    chunk, offset + coffset, UIO_USERSPACE,
-			    IO_UNIT, cred, NULL, p);
-			if (error)
-				return (error);
-
-			coffset += chunk;
-			csize -= chunk;
-		} while (csize > 0);
-		offset += cseg.c_size;
-
-		/* Discard the memory */
-		uvm_unmap(map, cseg.c_addr, cseg.c_addr + cseg.c_size);
-
-		chdr->c_nseg++;
-	}
-
-	return (error);
-}
-
 int
 uvm_coredump_walkmap(struct proc *p, void *iocookie,
     int (*func)(struct proc *, void *, struct uvm_coredump_state *),
@@ -269,7 +158,7 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 
 		/* should never happen for a user process */
 		if (UVM_ET_ISSUBMAP(entry)) {
-			panic("uvm_coredump: user process with submap?");
+			panic("%s: user process with submap?", __func__);
 		}
 
 		if (!(entry->protection & PROT_WRITE) &&

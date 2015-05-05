@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.13 2011/08/22 18:18:35 deraadt Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.14 2015/05/05 02:13:47 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -59,10 +59,6 @@ struct pcb {
 	struct vreg *pcb_vr;    /* Vector unit */
 	struct cpu_info *pcb_fpcpu;
 	struct cpu_info *pcb_veccpu;
-};
-
-struct md_coredump {
-	struct reg regs;
 };
 
 #ifdef	_KERNEL

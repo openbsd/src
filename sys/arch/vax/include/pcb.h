@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.8 2013/11/24 22:08:23 miod Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.9 2015/05/05 02:13:47 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 1996/02/02 18:08:26 mycroft Exp $	*/
 
 /*
@@ -68,11 +68,6 @@ struct pcb {
 
 #define	AST_MASK 0x07000000
 #define	AST_PCB	 0x04000000
-
-/* machine-specific core dump; save regs */
-struct	md_coredump {
-	struct reg md_reg;
-};
 
 #endif /* _MACHINE_PCB_H_ */
 

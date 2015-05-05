@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.36 2015/01/18 10:17:42 jsg Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.37 2015/05/05 02:13:46 guenther Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -89,7 +89,6 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
-#include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
 

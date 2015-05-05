@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.12 2011/07/10 18:12:03 deraadt Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.13 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 2003/04/26 18:39:45 fvdl Exp $	*/
 
 /*-
@@ -88,13 +88,5 @@ struct pcb {
 	struct	pmap *pcb_pmap;		/* back pointer to our pmap */
 	int	pcb_cr0;		/* saved image of CR0 */
 };
-
-/*    
- * The pcb is augmented with machine-dependent additional data for 
- * core dumps. For the i386, there is nothing to add.
- */     
-struct md_coredump {
-	long	md_pad[8];
-};    
 
 #endif /* _MACHINE_PCB_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.179 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.180 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1457,6 +1457,9 @@ coredump(struct proc *p)
 	char name[MAXPATHLEN];
 	const char *dir = "/var/crash";
 
+	if (pr->ps_emul->e_coredump == NULL)
+		return (EINVAL);
+
 	pr->ps_flags |= PS_COREDUMP;
 
 	/*
@@ -1555,45 +1558,6 @@ coredump(struct proc *p)
 	vrele(vp);
 out:
 	crfree(cred);
-	return (error);
-#endif
-}
-
-int
-coredump_trad(struct proc *p, void *cookie)
-{
-#ifdef SMALL_KERNEL
-	return EPERM;
-#else
-	struct coredump_iostate *io = cookie;
-	struct vmspace *vm = io->io_proc->p_vmspace;
-	struct vnode *vp = io->io_vp;
-	struct ucred *cred = io->io_cred;
-	struct core core;
-	int error;
-
-	core.c_midmag = 0;
-	strlcpy(core.c_name, p->p_comm, sizeof(core.c_name));
-	core.c_nseg = 0;
-	core.c_signo = p->p_sisig;
-	core.c_ucode = p->p_sitrapno;
-	core.c_cpusize = 0;
-	core.c_tsize = (u_long)ptoa(vm->vm_tsize);
-	core.c_dsize = (u_long)ptoa(vm->vm_dsize);
-	core.c_ssize = (u_long)round_page(ptoa(vm->vm_ssize));
-	error = cpu_coredump(p, vp, cred, &core);
-	if (error)
-		return (error);
-	/*
-	 * uvm_coredump() spits out all appropriate segments.
-	 * All that's left to do is to write the core header.
-	 */
-	error = uvm_coredump(p, vp, cred, &core);
-	if (error)
-		return (error);
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
-	    (int)core.c_hdrsize, (off_t)0,
-	    UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
 	return (error);
 #endif
 }

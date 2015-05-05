@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.7 2014/07/20 19:47:53 deraadt Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.8 2015/05/05 02:13:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -26,7 +26,6 @@
 #include <sys/hibernate.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
-#include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmemrange.h>

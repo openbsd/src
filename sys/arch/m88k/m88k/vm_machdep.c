@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.24 2015/05/05 02:13:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -49,7 +49,6 @@
 #include <sys/buf.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
 
@@ -129,49 +128,6 @@ cpu_exit(struct proc *p)
 {
 	pmap_deactivate(p);
 	sched_exit(p);
-}
-
-/*
- * Dump the machine specific header information at the start of a core dump.
- */
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	struct reg reg;
-	struct coreseg cseg;
-	int error;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(reg);
-
-	/* Save registers. */
-	error = process_read_regs(p, &reg);
-	if (error)
-		return error;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&reg, sizeof(reg),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-	return 0;
 }
 
 /*

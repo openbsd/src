@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.27 2014/03/22 06:05:45 guenther Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.28 2015/05/05 02:13:46 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -176,10 +176,5 @@ void	sigactsfree(struct process *);
  */
 void	sendsig(sig_t action, int sig, int returnmask, u_long code,
 	    int type, union sigval val);
-struct core;
-struct vnode;
-struct ucred;
-int	cpu_coredump(struct proc *, struct vnode *, struct ucred *,
-			  struct core *);
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */

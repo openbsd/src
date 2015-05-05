@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 2011/11/10 23:15:11 deraadt Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2015/05/05 02:13:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -30,11 +30,5 @@ struct pcb {
 	u_int64_t	pcb_onfault;		/* SW copy fault handler */
 	pa_space_t	pcb_space;		/* copy pmap_space, for asm's sake */
 };
-
-struct md_coredump {
-	struct reg md_reg;
-	struct fpreg md_fpreg;
-}; 
-
 
 #endif /* _MACHINE_PCB_H_ */
