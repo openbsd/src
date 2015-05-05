@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8042reg.h,v 1.8 2013/12/25 21:01:01 miod Exp $	*/
+/*	$OpenBSD: i8042reg.h,v 1.9 2015/05/05 16:27:20 shadchin Exp $	*/
 /*	$NetBSD: i8042reg.h,v 1.7 1998/01/18 14:41:37 drochner Exp $	*/
 
 #define	KBSTATP		4	/* kbd controller status port (I) */
@@ -7,7 +7,7 @@
 #define	 KBS_WARM	0x04	/* kbd input buffer low */
 #define	 KBS_OCMD	0x08	/* kbd output buffer has command */
 #define	 KBS_NOSEC	0x10	/* kbd security lock not engaged */
-#define	 KBS_TERR	0x20	/* kbd transmission error */
+#define	 KBS_AUXDATA	0x20	/* kbd data in buffer from aux port */
 #define	 KBS_RERR	0x40	/* kbd receive error */
 #define	 KBS_PERR	0x80	/* kbd parity error */
 

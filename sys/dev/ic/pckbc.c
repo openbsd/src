@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.47 2015/03/31 02:27:30 jcs Exp $ */
+/* $OpenBSD: pckbc.c,v 1.48 2015/05/05 16:27:20 shadchin Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -153,7 +153,7 @@ pckbc_poll_data1(bus_space_tag_t iot, bus_space_handle_t ioh_d,
 			KBD_DELAY;
 			CPU_BUSY_CYCLE();
 			c = bus_space_read_1(iot, ioh_d, 0);
-			if (checkaux && (stat & 0x20)) { /* aux data */
+			if (checkaux && (stat & KBS_AUXDATA)) {
 				if (slot != PCKBC_AUX_SLOT) {
 					DPRINTF("lost aux 0x%x\n", c);
 					continue;
@@ -998,7 +998,7 @@ pckbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 
 		served = 1;
 
-		slot = (t->t_haveaux && (stat & 0x20)) ?
+		slot = (t->t_haveaux && (stat & KBS_AUXDATA)) ?
 		    PCKBC_AUX_SLOT : PCKBC_KBD_SLOT;
 		q = t->t_slotdata[slot];
 
