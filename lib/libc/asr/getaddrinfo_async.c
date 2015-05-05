@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.35 2015/05/05 16:59:08 jca Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.36 2015/05/05 17:08:44 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -834,6 +834,7 @@ static int
 addrconfig_setup(struct asr_query *as)
 {
 	struct ifaddrs		*ifa, *ifa0;
+	struct sockaddr_in	*sinp;
 	struct sockaddr_in6	*sin6p;
 
 	if (getifaddrs(&ifa0) != 0)
@@ -842,18 +843,23 @@ addrconfig_setup(struct asr_query *as)
 	as->as.ai.flags |= ASYNC_NO_INET | ASYNC_NO_INET6;
 
 	for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_flags & IFF_LOOPBACK)
-			continue;
-
 		if (ifa->ifa_addr == NULL)
 			continue;
 
 		switch (ifa->ifa_addr->sa_family) {
 		case PF_INET:
+			sinp = (struct sockaddr_in *)ifa->ifa_addr;
+
+			if (sinp->sin_addr.s_addr == INADDR_LOOPBACK)
+				continue;
+
 			as->as.ai.flags &= ~ASYNC_NO_INET;
 			break;
 		case PF_INET6:
 			sin6p = (struct sockaddr_in6 *)ifa->ifa_addr;
+
+			if (IN6_IS_ADDR_LOOPBACK(&sin6p->sin6_addr))
+				continue;
 
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6p->sin6_addr))
 				continue;
