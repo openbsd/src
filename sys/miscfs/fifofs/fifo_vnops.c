@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.45 2015/02/12 14:31:02 millert Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.46 2015/05/05 20:14:10 millert Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
+#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
@@ -289,21 +290,41 @@ int
 fifo_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
-	struct file filetmp;
-	const int events = ap->a_events;
+	struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
+	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
+	int events = 0;
 	int revents = 0;
 
-	if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
-		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, events, ap->a_p);
+	/*
+	 * Just return if there are no supported events specified,
+	 * FIFOs don't support out-of-band or high priority data.
+	 */
+	if (ap->a_fflag & FREAD)
+		events |= ap->a_events & (POLLIN | POLLRDNORM);
+	if (ap->a_fflag & FWRITE)
+		events |= ap->a_events & (POLLOUT | POLLWRNORM);
+	if (events == 0)
+		return (0);
+
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (soreadable(rso))
+			revents |= events & (POLLIN | POLLRDNORM);
 	}
-	/* POLLHUP and POLLOUT/POLLWRNORM/POLLWRBAND are mutually exclusive */
-	if (!(revents & POLLHUP)) {
-		if (events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
-			filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
-			if (filetmp.f_data)
-				revents |= soo_poll(&filetmp, events, ap->a_p);
+	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
+	if (rso->so_state & SS_ISDISCONNECTED) {
+		revents |= POLLHUP;
+	} else if (events & (POLLOUT | POLLWRNORM)) {
+		if (sowriteable(wso))
+			revents |= events & (POLLOUT | POLLWRNORM);
+	}
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM)) {
+			selrecord(ap->a_p, &rso->so_rcv.sb_sel);
+			rso->so_rcv.sb_flagsintr |= SB_SEL;
+		}
+		if (events & (POLLOUT | POLLWRNORM)) {
+			selrecord(ap->a_p, &wso->so_snd.sb_sel);
+			wso->so_snd.sb_flagsintr |= SB_SEL;
 		}
 	}
 	return (revents);
