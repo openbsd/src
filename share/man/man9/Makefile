@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.231 2015/05/04 10:12:34 mpi Exp $
+#	$OpenBSD: Makefile,v 1.232 2015/05/05 16:38:20 mikeb Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -143,14 +143,11 @@ MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 kcopy.9
 MLINKS+=crypto.9 crypto_get_driverid.9 \
 	crypto.9 crypto_register.9 \
-	crypto.9 crypto_kregister.9 \
 	crypto.9 crypto_unregister.9 \
 	crypto.9 crypto_done.9 \
-	crypto.9 crypto_kdone.9 \
 	crypto.9 crypto_newsession.9 \
 	crypto.9 crypto_freesession.9 \
 	crypto.9 crypto_dispatch.9 \
-	crypto.9 crypto_kdispatch.9 \
 	crypto.9 crypto_getreq.9 \
 	crypto.9 crypto_freereq.9
 MLINKS+=mi_switch.9 cpu_switchto.9
