@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.157 2015/02/11 23:34:43 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.158 2015/05/05 09:41:43 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -583,6 +583,12 @@ route_output(struct mbuf *m, ...)
 #ifdef MPLS
 	info.rti_mpls = rtm->rtm_mpls;
 #endif
+
+	if (info.rti_info[RTAX_GATEWAY] != NULL &&
+	    info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK &&
+	    (info.rti_flags & RTF_CLONING) == 0) {
+		info.rti_flags |= RTF_LLINFO;
+	}
 
 	switch (rtm->rtm_type) {
 	case RTM_ADD:

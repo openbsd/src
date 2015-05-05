@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.105 2015/02/11 23:34:43 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.106 2015/05/05 09:41:43 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ struct rtentry {
 
 /* mask of RTF flags that are allowed to be modified by RTM_CHANGE */
 #define RTF_FMASK	\
-    (RTF_PROTO1 | RTF_PROTO2 | RTF_PROTO3 | RTF_BLACKHOLE | \
+    (RTF_LLINFO | RTF_PROTO1 | RTF_PROTO2 | RTF_PROTO3 | RTF_BLACKHOLE | \
      RTF_REJECT | RTF_STATIC | RTF_MPLS | RTF_LOCAL | RTF_BROADCAST)
 
 /* Routing priorities used by the different routing protocols */
