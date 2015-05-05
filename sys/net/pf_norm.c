@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.177 2015/04/29 18:05:56 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.178 2015/05/05 23:27:47 chris Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -484,7 +484,7 @@ pf_join_fragment(struct pf_fragment *frag)
 		/* Strip off ip header */
 		m_adj(m2, frent->fe_hdrlen);
 		/* Strip off any trailing bytes */
-		if (frent->fe_len < m2->m_pkthdr.len);
+		if (frent->fe_len < m2->m_pkthdr.len)
 			m_adj(m2, frent->fe_len - m2->m_pkthdr.len);
 		pool_put(&pf_frent_pl, frent);
 		pf_nfrents--;
