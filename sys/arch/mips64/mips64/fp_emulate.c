@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.10 2015/01/02 22:38:46 sebastia Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.11 2015/05/05 21:24:58 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -1624,9 +1624,6 @@ nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGBUS;
 		}
-#ifdef __MIPSEB__
-		va ^= 4;
-#endif
 		if (copyin((const void *)va, &wdata, sizeof wdata) != 0) {
 			sv->sival_ptr = (void *)va;
 			return SIGSEGV;
@@ -1662,9 +1659,6 @@ nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGBUS;
 		}
-#ifdef __MIPSEB__
-		va ^= 4;
-#endif
 		wdata = regs[FPBASE + inst.FQType.fs];
 		if (copyout(&wdata, (void *)va, sizeof wdata) != 0) {
 			sv->sival_ptr = (void *)va;
@@ -1712,9 +1706,6 @@ nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGBUS;
 		}
-#ifdef __MIPSEB__
-		va ^= 4;
-#endif
 		if (copyin((const void *)va, &wdata, sizeof wdata) != 0) {
 			sv->sival_ptr = (void *)va;
 			return SIGSEGV;
@@ -1744,9 +1735,6 @@ nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGBUS;
 		}
-#ifdef __MIPSEB__
-		va ^= 4;
-#endif
 		wdata = regs[FPBASE + inst.IType.rt];
 		if (copyout(&wdata, (void *)va, sizeof wdata) != 0) {
 			sv->sival_ptr = (void *)va;
