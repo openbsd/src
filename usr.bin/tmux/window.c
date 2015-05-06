@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.127 2015/04/28 10:43:14 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.128 2015/05/06 08:35:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -643,7 +643,7 @@ window_destroy_panes(struct window *w)
 	}
 }
 
-/* Return list of printable window flag symbols. No flags is just a space. */
+/* Retuns the printable flags on a window, empty string if no flags set. */
 char *
 window_printable_flags(struct session *s, struct winlink *wl)
 {
@@ -663,8 +663,6 @@ window_printable_flags(struct session *s, struct winlink *wl)
 		flags[pos++] = '-';
 	if (wl->window->flags & WINDOW_ZOOMED)
 		flags[pos++] = 'Z';
-	if (pos == 0)
-		flags[pos++] = ' ';
 	flags[pos] = '\0';
 	return (xstrdup(flags));
 }

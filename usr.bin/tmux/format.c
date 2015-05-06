@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.63 2015/04/21 22:38:49 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.64 2015/05/06 08:35:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -621,6 +621,7 @@ format_defaults_winlink(struct format_tree *ft, struct session *s,
 	    !!(wl->flags & WINLINK_SILENCE));
 	format_add(ft, "window_last_flag", "%d",
 	    !!(wl == TAILQ_FIRST(&s->lastw)));
+	format_add(ft, "window_linked", "%d", session_is_linked(s, wl->window));
 
 	free(flags);
 }
