@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.102 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.103 2015/05/06 02:19:40 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1672,11 +1672,12 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (error)
 		goto out;
 	VATTR_NULL(&va);
-	if (info.nmi_v3)
+	if (info.nmi_v3) {
 		error = nfsm_srvsattr(&info.nmi_md, &va, info.nmi_mrep,
 		    &info.nmi_dpos);
 		if (error)
 			goto nfsmout;
+	}
 	nfsm_strsiz(len2, NFS_MAXPATHLEN);
 	pathcp = malloc(len2 + 1, M_TEMP, M_WAITOK);
 	iv.iov_base = pathcp;
