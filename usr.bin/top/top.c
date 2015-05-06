@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.82 2014/09/17 01:56:54 dlg Exp $	*/
+/*	$OpenBSD: top.c,v 1.83 2015/05/06 07:53:29 mpi Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -360,9 +360,6 @@ main(int argc, char *argv[])
 	/* initialize termcap */
 	init_termcap(interactive);
 
-	/* get the string to use for the process area header */
-	header_text = format_header(uname_field);
-
 	/* initialize display interface */
 	max_topn = display_init(&statics);
 
@@ -472,6 +469,9 @@ restart:
 		/* handle message area */
 		i_message();
 
+		/* get the string to use for the process area header */
+		header_text = format_header(uname_field, ps.threads);
+
 		/* update the header area */
 		i_header(header_text);
 
@@ -502,7 +502,7 @@ restart:
 				char * s;
 
 				s = format_next_process(processes, get_userid,
-				    &pid);
+				    &pid, ps.threads);
 				i_process(i, s, pid == hlpid);
 			}
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.83 2015/01/19 18:01:13 millert Exp $	 */
+/* $OpenBSD: machine.c,v 1.84 2015/05/06 07:53:29 mpi Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -222,13 +222,19 @@ machine_init(struct statics *statics)
 }
 
 char *
-format_header(char *uname_field)
+format_header(char *second_field, int show_threads)
 {
+	char *field_name, *thread_field = "     TID";
 	char *ptr;
 
+	if (show_threads)
+		field_name = thread_field;
+	else
+		field_name = second_field;
+
 	ptr = header + UNAME_START;
-	while (*uname_field != '\0')
-		*ptr++ = *uname_field++;
+	while (*field_name != '\0')
+		*ptr++ = *field_name++;
 	return (header);
 }
 
@@ -489,13 +495,15 @@ format_comm(struct kinfo_proc *kp)
 }
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
+format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid,
+    int show_threads)
 {
 	char *p_wait;
 	struct kinfo_proc *pp;
 	struct handle *hp;
 	int cputime;
 	double pct;
+	char buf[16];
 
 	/* find and remember the next proc structure */
 	hp = (struct handle *) handle;
@@ -512,9 +520,13 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
 	else
 		p_wait = "-";
 
+	if (show_threads)
+		snprintf(buf, sizeof(buf), "%8d", pp->p_tid);
+	else
+		snprintf(buf, sizeof(buf), "%s", (*get_userid)(pp->p_ruid));
+
 	/* format this entry */
-	snprintf(fmt, sizeof fmt, Proc_format,
-	    pp->p_pid, (*get_userid)(pp->p_ruid),
+	snprintf(fmt, sizeof(fmt), Proc_format, pp->p_pid, buf,
 	    pp->p_priority - PZERO, pp->p_nice - NZERO,
 	    format_k(pagetok(PROCSIZE(pp))),
 	    format_k(pagetok(pp->p_vm_rssize)),

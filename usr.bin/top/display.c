@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.48 2014/11/27 14:08:01 espie Exp $	 */
+/* $OpenBSD: display.c,v 1.49 2015/05/06 07:53:29 mpi Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -100,6 +100,7 @@ int y_idlecursor;
 int y_procs;
 extern int ncpu;
 extern int combine_cpus;
+extern struct process_select ps;
 
 int header_status = Yes;
 
