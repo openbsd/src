@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.504 2015/05/06 08:35:39 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.505 2015/05/06 23:56:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,9 +42,6 @@ extern char   **environ;
 
 /* Default global configuration file. */
 #define TMUX_CONF "/etc/tmux.conf"
-
-/* Default prompt history length. */
-#define PROMPT_HISTORY 100
 
 /*
  * Minimum layout cell size, NOT including separator line. The scroll region
