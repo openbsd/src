@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.153 2015/01/22 05:48:17 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.154 2015/05/06 01:03:31 jsg Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -326,6 +326,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 						DL_DEB(("dlopen: failed to open %s\n",
 						    libname));
 						_dl_free(liblist);
+						_dl_free(randomlist);
 						return (1);
 					}
 				}
@@ -337,6 +338,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 				_dl_link_child(liblist[loop].depobj, dynobj);
 			}
 			_dl_free(liblist);
+			_dl_free(randomlist);
 		}
 		dynobj = dynobj->next;
 	}
