@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.112 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.113 2015/05/06 08:37:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -493,24 +493,8 @@ valid_domainpart(const char *s)
 		
 		return 0;
 	}
-	
-nextsub:
-	if (!isalnum((unsigned char)*s))
-		return 0;
-	while (*(++s) != '\0') {
-		if (*s == '.')
-			break;
-		if (isalnum((unsigned char)*s) || *s == '-')
-			continue;
-		return 0;
-	}
-	if (s[-1] == '-')
-		return 0;
-	if (*s == '.') {
-		s++;
-		goto nextsub;
-	}
-	return 1;
+
+	return res_hnok(s);
 }
 
 /*
