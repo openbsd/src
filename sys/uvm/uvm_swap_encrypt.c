@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.21 2015/05/04 10:21:15 dlg Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.22 2015/05/06 04:00:10 dlg Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -85,6 +85,13 @@ swap_encrypt_ctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+void
+swap_key_create(struct swap_key *key)
+{
+	arc4random_buf(key->key, sizeof(key->key));
+	uvm_swpkeyscreated++;
 }
 
 void
