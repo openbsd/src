@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.74 2015/02/06 03:22:00 reyk Exp $
+.\"	$OpenBSD: route.8,v 1.75 2015/05/06 07:55:42 mpi Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: February 6 2015 $
+.Dd $Mdocdate: May 6 2015 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -338,6 +338,7 @@ A specific routing priority can be specified with the optional
 qualifier.
 If no priority is specified the kernel will set a priority depending on the
 RTF_STATIC flag to either RTP_STATIC or RTP_DEFAULT.
+Note that priority 1 is reserved for kernel use.
 .Pp
 The optional
 .Fl mpath
