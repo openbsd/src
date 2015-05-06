@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.100 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.101 2015/05/06 08:52:17 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	struct mbuf *nam;
 	int error;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
@@ -147,7 +147,7 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int error;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = solisten(fp->f_data, SCARG(uap, backlog));
 	FRELE(fp, p);
@@ -198,7 +198,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 
 	if (name && (error = copyin(anamelen, &namelen, sizeof (namelen))))
 		return (error);
-	if ((error = getsock(fdp, sock, &fp)) != 0)
+	if ((error = getsock(p, sock, &fp)) != 0)
 		return (error);
 	headfp = fp;
 	s = splsoftnet();
@@ -315,7 +315,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	struct mbuf *nam = NULL;
 	int error, s;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
@@ -518,7 +518,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 
 	to = NULL;
 
-	if ((error = getsock(p->p_fd, s, &fp)) != 0)
+	if ((error = getsock(p, s, &fp)) != 0)
 		return (error);
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
@@ -684,7 +684,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	int iovlen = 0;
 #endif
 
-	if ((error = getsock(p->p_fd, s, &fp)) != 0)
+	if ((error = getsock(p, s, &fp)) != 0)
 		return (error);
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
@@ -803,7 +803,7 @@ sys_shutdown(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int error;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = soshutdown(fp->f_data, SCARG(uap, how));
 	FRELE(fp, p);
@@ -825,7 +825,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	struct mbuf *m = NULL;
 	int error;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	if (SCARG(uap, valsize) > MCLBYTES) {
 		error = EINVAL;
@@ -876,7 +876,7 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 	socklen_t valsize;
 	int error;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	if (SCARG(uap, val)) {
 		error = copyin(SCARG(uap, avalsize),
@@ -920,7 +920,7 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	socklen_t len;
 	int error;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
 	error = copyin(SCARG(uap, alen), &len, sizeof (len));
 	if (error)
@@ -956,7 +956,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	socklen_t len;
 	int error;
 
-	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
+	if ((error = getsock(p, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
@@ -1016,11 +1016,11 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 }
 
 int
-getsock(struct filedesc *fdp, int fdes, struct file **fpp)
+getsock(struct proc *p, int fdes, struct file **fpp)
 {
 	struct file *fp;
 
-	if ((fp = fd_getfile(fdp, fdes)) == NULL)
+	if ((fp = fd_getfile(p->p_fd, fdes)) == NULL)
 		return (EBADF);
 	if (fp->f_type != DTYPE_SOCKET)
 		return (ENOTSOCK);

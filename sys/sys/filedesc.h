@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.29 2015/04/30 09:20:51 mpi Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.30 2015/05/06 08:52:17 mpi Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ struct file *fd_getfile(struct filedesc *, int);
 struct file *fd_getfile_mode(struct filedesc *, int, int);
 
 int	closef(struct file *, struct proc *);
-int	getsock(struct filedesc *, int, struct file **);
+int	getsock(struct proc *, int, struct file **);
 
 #define	fdplock(fdp)	rw_enter_write(&(fdp)->fd_lock)
 #define	fdpunlock(fdp)	rw_exit_write(&(fdp)->fd_lock)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.60 2015/01/30 23:38:49 millert Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.61 2015/05/06 08:52:17 mpi Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -937,7 +937,7 @@ linux_setsockopt(p, v, retval)
 	if ((error = copyin((caddr_t) uap, (caddr_t) &lsa, sizeof lsa)))
 		return error;
 
-	if ((error = getsock(p->p_fd, lsa.s, &fp)) != 0)
+	if ((error = getsock(p, lsa.s, &fp)) != 0)
 		return error;
 	
 	level = linux_to_bsd_sopt_level(lsa.level);

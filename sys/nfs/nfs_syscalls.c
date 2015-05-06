@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.99 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.100 2015/05/06 08:52:17 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ sys_nfssvc(struct proc *p, void *v, register_t *retval)
 		if (error)
 			return (error);
 
-		error = getsock(p->p_fd, nfsdarg.sock, &fp);
+		error = getsock(p, nfsdarg.sock, &fp);
 		if (error)
 			return (error);
 

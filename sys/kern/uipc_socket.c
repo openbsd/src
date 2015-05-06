@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.137 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.138 2015/05/06 08:52:17 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1076,7 +1076,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		return (EINVAL);
 
 	/* Find sosp, the drain socket where data will be spliced into. */
-	if ((error = getsock(curproc->p_fd, fd, &fp)) != 0)
+	if ((error = getsock(curproc, fd, &fp)) != 0)
 		return (error);
 	sosp = fp->f_data;
 	if (sosp->so_sp == NULL)
