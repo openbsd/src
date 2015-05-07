@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.53 2014/07/12 18:48:51 tedu Exp $ */
+/*	$OpenBSD: auvia.c,v 1.54 2015/05/07 01:55:43 jsg Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -719,7 +719,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				if (p->channels >= 4
 				    && codec->vtbl->set_rate(codec, reg,
 				    &p->sample_rate))
-				return (EINVAL);
+					return (EINVAL);
 				reg = AC97_REG_PCM_LFE_DAC_RATE;
 				if (p->channels == 6
 				    && codec->vtbl->set_rate(codec, reg,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.89 2015/03/14 03:38:53 jsg Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.90 2015/05/07 01:55:44 jsg Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -920,7 +920,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			    (ptmp->pg_flags & PG_BUSY) != 0) {
 				if (lcv == centeridx || (flags & PGO_ALLPAGES)
 				    != 0)
-				done = FALSE;	/* need to do a wait or I/O! */
+					done = FALSE;	/* need to do a wait or I/O! */
 				continue;
 			}
 

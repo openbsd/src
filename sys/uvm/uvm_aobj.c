@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.78 2015/02/08 02:17:08 deraadt Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.79 2015/05/07 01:55:44 jsg Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1074,7 +1074,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				    (flags & PGO_ALLPAGES) != 0)
 					/* need to do a wait or I/O! */
 					done = FALSE;	
-					continue;
+				continue;
 			}
 
 			/*

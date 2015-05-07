@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.75 2015/02/15 21:34:33 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.76 2015/05/07 01:55:43 jsg Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -647,7 +647,7 @@ pmap_rmproc(struct pmap *pm)
 			case SSTOP:
 				if (slpp == NULL ||
 				    slpp->p_slptime < p->p_slptime)
-				slpp = p;
+					slpp = p;
 				continue;
 			}
 		}

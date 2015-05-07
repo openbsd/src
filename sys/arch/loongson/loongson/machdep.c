@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2015/05/05 02:13:46 guenther Exp $ */
+/*	$OpenBSD: machdep.c,v 1.63 2015/05/07 01:55:43 jsg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -302,11 +302,11 @@ loongson_identify(const char *version, int envtype)
 					}
 				}
 
-				if (p != NULL) {
-					pmon_printf("Attempting to match as "
-					    "%s %s\n", p->vendor, p->product);
-					return p;
-				}
+			if (p != NULL) {
+				pmon_printf("Attempting to match as "
+				    "%s %s\n", p->vendor, p->product);
+				return p;
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.5 2015/03/29 03:24:17 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.6 2015/05/07 01:55:43 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -461,7 +461,7 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (bus_space_map(&armv7_bs_tag, SYSCTRL_ADDR, SYSCTRL_SIZE, 0,
 		    &ioh))
-		panic("sunxi_attach: bus_space_map failed!");
+			panic("sunxi_attach: bus_space_map failed!");
 		/* map the part of SRAM dedicated to EMAC to EMAC */
 		bus_space_write_4(&armv7_bs_tag, ioh, 4,
 		    bus_space_read_4(&armv7_bs_tag, ioh, 4) | (5 << 2));

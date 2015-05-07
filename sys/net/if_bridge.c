@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.236 2015/05/04 10:24:08 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.237 2015/05/07 01:55:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1677,11 +1677,11 @@ bridge_span(struct bridge_softc *sc, struct mbuf *morig)
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			continue;
 
-			if (IF_QFULL(&ifp->if_snd)) {
-				IF_DROP(&ifp->if_snd);
-				sc->sc_if.if_oerrors++;
-				continue;
-			}
+		if (IF_QFULL(&ifp->if_snd)) {
+			IF_DROP(&ifp->if_snd);
+			sc->sc_if.if_oerrors++;
+			continue;
+		}
 
 		mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 		if (mc == NULL) {

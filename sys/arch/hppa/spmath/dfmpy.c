@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfmpy.c,v 1.5 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: dfmpy.c,v 1.6 2015/05/07 01:55:43 jsg Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -322,7 +322,7 @@ dbl_fmpy(srcptr1,srcptr2,dstptr,status)
 				    Dbl_isone_lowmantissap2(opnd3p2))) {
 					Dbl_increment(opnd3p1,opnd3p2);
 					if (Dbl_isone_hiddenoverflow(opnd3p1))
-					is_tiny = FALSE;
+						is_tiny = FALSE;
 					Dbl_decrement(opnd3p1,opnd3p2);
 				}
 				break;
