@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgiic.c,v 1.2 2008/04/22 01:44:19 deraadt Exp $	*/
+/*	$OpenBSD: mgiic.c,v 1.3 2015/05/07 00:00:52 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -180,10 +180,11 @@ mgiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
-	if (cmdlen > 0)
+	if (cmdlen > 0) {
 		ret = mgiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen);
 		if (ret != 0)
 			goto done;
+	}
 
 	if (len > 0) {
 		if (I2C_OP_WRITE_P(op))
