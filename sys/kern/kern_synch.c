@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.119 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.120 2015/05/07 18:30:27 mikeb Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 }
 
 /*
- * Same as tsleep, but if we have a mutex provided, then once we've 
+ * Same as tsleep, but if we have a mutex provided, then once we've
  * entered the sleep queue we drop the mutex. After sleeping we re-lock.
  */
 int
@@ -154,12 +154,30 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
 	KASSERT(mtx != NULL);
 
+	if (cold || panicstr) {
+		/*
+		 * After a panic, or during autoconfiguration,
+		 * just give interrupts a chance, then just return;
+		 * don't run any other procs or panic below,
+		 * in case this is the idle process and already asleep.
+		 */
+		spl = MUTEX_OLDIPL(mtx);
+		MUTEX_OLDIPL(mtx) = safepri;
+		mtx_leave(mtx);
+		if ((priority & PNORELOCK) == 0) {
+			mtx_enter(mtx);
+			MUTEX_OLDIPL(mtx) = spl;
+		} else
+			splx(spl);
+		return (0);
+	}
+
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
 	sleep_setup_signal(&sls, priority);
 
 	/* XXX - We need to make sure that the mutex doesn't
-	 * unblock splsched. This can be made a bit more 
+	 * unblock splsched. This can be made a bit more
 	 * correct when the sched_lock is a mutex.
 	 */
 	spl = MUTEX_OLDIPL(mtx);
