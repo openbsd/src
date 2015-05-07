@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.32 2014/07/12 18:48:17 tedu Exp $
+/*	$OpenBSD: trm.c,v 1.33 2015/05/07 01:09:56 jsg Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -2079,10 +2079,12 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	 * Notify cmd done
 	 */
 #ifdef TRM_DEBUG0
-	if ((xs->error != 0) || (xs->status != 0) || ((xs->flags & SCSI_POLL) != 0))
+	if ((xs->error != 0) || (xs->status != 0) ||
+	    ((xs->flags & SCSI_POLL) != 0)) {
 		sc_print_addr(xs->sc_link);
 		printf("trm_FinishSRB. xs->cmd->opcode = 0x%02x, xs->error = %d, xs->status = %d\n",
 		    xs->cmd->opcode, xs->error, xs->status);
+	}
 #endif
 
 	if (ISSET(xs->flags, SCSI_POLL))
