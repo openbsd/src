@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.23 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: zs.c,v 1.24 2015/05/07 02:17:16 jsg Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -717,8 +717,6 @@ zs_set_modes(cs, cflag)
 	 * (Suggested by gwr)
 	 */
 	if (xcs->cs_hwflags & ZS_HWFLAG_NO_DCD) {
-		if (cflag & MDMBUF)
-		printf(" opps\n");
 		if (cflag & MDMBUF)
 			return (EINVAL);
 		cflag |= CLOCAL;
