@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpii.4,v 1.12 2012/11/17 13:05:00 jmc Exp $
+.\"	$OpenBSD: mpii.4,v 1.13 2015/05/07 15:14:02 mikeb Exp $
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
 .\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2012 $
+.Dd $Mdocdate: May 7 2015 $
 .Dt MPII 4
 .Os
 .Sh NAME
@@ -50,8 +50,10 @@ IBM ServeRAID H1110
 LSI SAS 9200-8e, SAS 9207-8i, SAS 9211-4i, SAS 9211-8i
 .El
 .Pp
-Some models of these controllers have varying degrees of support for RAID 0
-and RAID 1.
+Some models of these controllers carry an Integrated RAID (IR) firmware
+providing support for RAID 0, RAID 1, RAID10 or RAID5 using SAS or SATA
+drives.
+All RAID configuration is done through the controllers' BIOSes.
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr intro 4 ,
