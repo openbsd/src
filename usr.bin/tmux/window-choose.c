@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.62 2015/05/04 13:04:10 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.63 2015/05/07 08:08:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "array.h"
 #include "tmux.h"
 
 struct screen *window_choose_init(struct window_pane *);
