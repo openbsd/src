@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.121 2014/10/27 13:55:05 mpi Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.122 2015/05/07 00:16:25 jsg Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -3268,7 +3268,7 @@ allocate_copybuffer(struct wsdisplay_softc *sc)
 		current = *screens_list;
 		if ((current->ncols + 1) * current->nrows > size)
 			size = (current->ncols + 1) * current->nrows;
-			screens_list++;
+		screens_list++;
 	}
 	if (size != sc->sc_copybuffer_size && sc->sc_copybuffer_size != 0) {
 		bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
