@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.6 2015/04/15 15:44:40 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.7 2015/05/07 11:42:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -168,12 +168,12 @@ style_update_new(struct options *oo, const char *name, const char *newname)
 
 	o = options_find1(oo, newname);
 	if (o == NULL)
-		o = options_set_style (oo, newname, "default", 0);
+		o = options_set_style(oo, newname, "default", 0);
 	gc = &o->style;
 
 	o = options_find1(oo, name);
 	if (o == NULL)
-		o = options_set_number (oo, name, 8);
+		o = options_set_number(oo, name, 8);
 	value = o->num;
 
 	if (strstr(name, "-bg") != NULL)

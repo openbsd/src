@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.37 2015/04/27 22:50:35 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.38 2015/05/07 11:42:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -121,7 +121,7 @@ cfg_add_cause(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	xvasprintf(&msg, fmt, ap);
-	va_end (ap);
+	va_end(ap);
 
 	cfg_ncauses++;
 	cfg_causes = xreallocarray(cfg_causes, cfg_ncauses, sizeof *cfg_causes);

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.128 2015/05/06 08:35:39 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.129 2015/05/07 11:42:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -302,7 +302,7 @@ window_create1(u_int sx, u_int sy)
 	w->references = 0;
 
 	w->id = next_window_id++;
-	RB_INSERT (windows, &windows, w);
+	RB_INSERT(windows, &windows, w);
 
 	return (w);
 }
