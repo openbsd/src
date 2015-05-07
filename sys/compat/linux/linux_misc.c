@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.93 2015/05/02 14:43:06 jsg Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.94 2015/05/07 08:53:32 mpi Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1187,7 +1187,7 @@ getdents_common(p, v, retval, is64bit)
 	int error;
 	int nbytes = SCARG(uap, count);
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if (nbytes == 1) {	/* emulating old, broken behaviour */

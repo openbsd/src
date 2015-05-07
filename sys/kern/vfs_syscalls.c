@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.219 2015/04/30 09:20:51 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.220 2015/05/07 08:53:33 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -591,7 +591,7 @@ sys_fstatfs(struct proc *p, void *v, register_t *retval)
 	struct statfs *sp;
 	int error;
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	if (!mp) {
@@ -1883,7 +1883,7 @@ sys_fchflags(struct proc *p, void *v, register_t *retval)
 	struct vnode *vp;
 	int error;
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = fp->f_data;
 	vref(vp);
@@ -1999,7 +1999,7 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, mode) & ~(S_IFMT | ALLPERMS))
 		return (EINVAL);
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2161,7 +2161,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 	uid_t uid = SCARG(uap, uid);
 	gid_t gid = SCARG(uap, gid);
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2376,7 +2376,7 @@ dofutimens(struct proc *p, int fd, struct timespec ts[2])
 	struct vnode *vp;
 	int error;
 
-	if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
+	if ((error = getvnode(p, fd, &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vref(vp);
@@ -2437,7 +2437,7 @@ sys_ftruncate(struct proc *p, void *v, register_t *retval)
 	off_t len;
 	int error;
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	len = SCARG(uap, length);
 	if ((fp->f_flag & FWRITE) == 0 || len < 0) {
@@ -2473,7 +2473,7 @@ sys_fsync(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int error;
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2692,7 +2692,7 @@ sys_getdents(struct proc *p, void *v, register_t *retval)
 
 	if (buflen > INT_MAX)
 		return EINVAL;
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -2783,12 +2783,12 @@ out:
  * On return *fpp is FREF:ed.
  */
 int
-getvnode(struct filedesc *fdp, int fd, struct file **fpp)
+getvnode(struct proc *p, int fd, struct file **fpp)
 {
 	struct file *fp;
 	struct vnode *vp;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
 		return (EBADF);
 
 	if (fp->f_type != DTYPE_VNODE)

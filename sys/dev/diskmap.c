@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskmap.c,v 1.10 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: diskmap.c,v 1.11 2015/05/07 08:53:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -78,11 +78,11 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			goto invalid;
 
 	/* Attempt to open actual device. */
+	if ((error = getvnode(p, fd, &fp)) != 0)
+		goto invalid;
+
 	fdp = p->p_fd;
 	fdplock(fdp);
-
-	if ((error = getvnode(fdp, fd, &fp)) != 0)
-		goto bad;
 
 	ndp.ni_segflg = UIO_SYSSPACE;
 	ndp.ni_dirfd = AT_FDCWD;

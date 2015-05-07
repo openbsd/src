@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.131 2015/05/01 01:30:58 millert Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.132 2015/05/07 08:53:33 mpi Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ void	vn_syncer_add_to_worklist(struct vnode *, int);
 /* misc */
 int	vn_isdisk(struct vnode *, int *);
 int	softdep_fsync(struct vnode *);
-int 	getvnode(struct filedesc *, int, struct file **);
+int 	getvnode(struct proc *, int, struct file **);
 
 /* uvm */
 void	uvm_vnp_setsize(struct vnode *, off_t);
