@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.89 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.90 2015/05/07 01:19:00 jsg Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.89 2014/12/13 21:05:33 doug Exp $
+ * $Id: aic7xxx.c,v 1.90 2015/05/07 01:19:00 jsg Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -1321,7 +1321,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 			    || ahc_sent_msg(ahc, AHCMSG_1B, MSG_ABORT, TRUE)) {
 				if (ahc->msgout_buf[ahc->msgout_index - 1]
 				    == MSG_ABORT_TAG)
-				tag = scb->hscb->tag;
+					tag = scb->hscb->tag;
 				ahc_print_path(ahc, scb);
 				printf("SCB %d - Abort%s Completed.\n",
 				       scb->hscb->tag, tag == SCB_LIST_NULL ?
