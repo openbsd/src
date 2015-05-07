@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.140 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.141 2015/05/07 09:19:31 mikeb Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -297,9 +297,6 @@ tcp_template(tp)
  * In any case the ack and sequence number of the transmitted
  * segment are as specified by the parameters.
  */
-#ifdef INET6
-/* This function looks hairy, because it was so IPv4-dependent. */
-#endif /* INET6 */
 void
 tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
     tcp_seq ack, tcp_seq seq, int flags, u_int rtableid)
@@ -372,10 +369,6 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		flags = TH_ACK;
 #undef xchg
 
-	m->m_len = tlen;
-	m->m_pkthdr.len = tlen;
-	m->m_pkthdr.rcvif = (struct ifnet *) 0;
-	m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 	th->th_seq = htonl(seq);
 	th->th_ack = htonl(ack);
 	th->th_x2 = 0;
@@ -387,6 +380,22 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		win = TCP_MAXWIN;
 	th->th_win = htons((u_int16_t)win);
 	th->th_urp = 0;
+
+	if (tp && (tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
+	    (flags & TH_RST) == 0 && (tp->t_flags & TF_RCVD_TSTMP)) {
+		u_int32_t *lp = (u_int32_t *)(th + 1);
+		/* Form timestamp option as shown in appendix A of RFC 1323. */
+		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
+		*lp++ = htonl(tcp_now + tp->ts_modulate);
+		*lp   = htonl(tp->ts_recent);
+		tlen += TCPOLEN_TSTAMP_APPA;
+		th->th_off = (sizeof(struct tcphdr) + TCPOLEN_TSTAMP_APPA) >> 2;
+	}
+
+	m->m_len = tlen;
+	m->m_pkthdr.len = tlen;
+	m->m_pkthdr.rcvif = (struct ifnet *) 0;
+	m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 
 	/* force routing table */
 	if (tp)
