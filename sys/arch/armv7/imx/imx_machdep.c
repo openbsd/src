@@ -1,4 +1,4 @@
-/*	$OpenBSD: imx_machdep.c,v 1.11 2015/03/29 03:24:17 jsg Exp $	*/
+/*	$OpenBSD: imx_machdep.c,v 1.12 2015/05/08 03:38:26 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -62,6 +62,7 @@ platform_init_cons(void)
 	/* UART2 */
 	case BOARD_ID_IMX6_SABRELITE:
 	case BOARD_ID_IMX6_UDOO:
+	case BOARD_ID_IMX6_NOVENA:
 		paddr = 0x021e8000;
 		break;
 	/* UART4 */
@@ -120,6 +121,10 @@ platform_print_board_type(void)
 	case BOARD_ID_IMX6_UTILITE:
 		amptimer_frequency = 396 * 1000 * 1000;
 		printf("board type: Utilite\n");
+		break;
+	case BOARD_ID_IMX6_NOVENA:
+		amptimer_frequency = 396 * 1000 * 1000;
+		printf("board type: Novena\n");
 		break;
 	case BOARD_ID_IMX6_WANDBOARD:
 		amptimer_frequency = 396 * 1000 * 1000;

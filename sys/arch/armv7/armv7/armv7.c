@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.6 2015/05/07 01:55:43 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.7 2015/05/08 03:38:26 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -169,6 +169,27 @@ struct board_dev utilite_devs[] = {
 	{ "imxgpio",	6 },
 	{ "imxiic",	2 },
 	{ "imxesdhc",	2 },
+	{ "ehci",	0 },
+	{ "imxenet",	0 },
+	{ "ahci",	0 },
+	{ NULL,		0 }
+};
+
+struct board_dev novena_devs[] = {
+	{ "imxccm",	0 },
+	{ "imxiomuxc",	0 },
+	{ "imxdog",	0 },
+	{ "imxocotp",	0 },
+	{ "imxuart",	1 },
+	{ "imxgpio",	0 },
+	{ "imxgpio",	1 },
+	{ "imxgpio",	2 },
+	{ "imxgpio",	3 },
+	{ "imxgpio",	4 },
+	{ "imxgpio",	5 },
+	{ "imxgpio",	6 },
+	{ "imxesdhc",	2 },
+	{ "imxesdhc",	3 },
 	{ "ehci",	0 },
 	{ "imxenet",	0 },
 	{ "ahci",	0 },
@@ -411,6 +432,11 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 		printf(": i.MX6 Utilite\n");
 		imx6_init();
 		sc->sc_board_devs = utilite_devs;
+		break;
+	case BOARD_ID_IMX6_NOVENA:
+		printf(": i.MX6 Novena\n");
+		imx6_init();
+		sc->sc_board_devs = novena_devs;
 		break;
 	case BOARD_ID_IMX6_WANDBOARD:
 		printf(": i.MX6 Wandboard\n");

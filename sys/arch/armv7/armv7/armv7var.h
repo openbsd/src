@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.3 2015/03/29 03:24:17 jsg Exp $ */
+/* $OpenBSD: armv7var.h,v 1.4 2015/05/08 03:38:26 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -76,6 +76,7 @@ int	armv7_submatch(struct device *, void *, void *);
 #define BOARD_ID_IMX6_SABRELITE 3769
 #define BOARD_ID_IMX6_SABRESD 3980
 #define BOARD_ID_SUN4I_A10 4104
+#define BOARD_ID_IMX6_NOVENA 4269
 #define BOARD_ID_IMX6_UTILITE 4273
 #define BOARD_ID_SUN7I_A20 4283
 #define BOARD_ID_IMX6_WANDBOARD 4412
