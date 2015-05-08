@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.58 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: echo.c,v 1.59 2015/05/08 12:35:08 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -821,9 +821,9 @@ ewprintf(const char *fmt, ...)
 }
 
 /*
- * Printf style formatting. This is called by both "ewprintf" and "ereply"
- * to provide formatting services to their clients.  The move to the start
- * of the echo line, and the erase to the end of the echo line, is done by
+ * Printf style formatting. This is called by "ewprintf" to provide
+ * formatting services to its clients.  The move to the start of the
+ * echo line, and the erase to the end of the echo line, is done by
  * the caller. 
  * %c prints the "name" of the supplied character.
  * %k prints the name of the current key (and takes no arguments).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.145 2015/03/25 20:53:31 bcallah Exp $	*/
+/*	$OpenBSD: def.h,v 1.146 2015/05/08 12:35:08 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -460,7 +460,6 @@ int		 eyorn(const char *);
 int		 eynorr(const char *);
 int		 eyesno(const char *);
 void		 ewprintf(const char *fmt, ...);
-char		*ereply(const char *, char *, size_t, ...);
 char		*eread(const char *, char *, size_t, int, ...);
 int		 getxtra(struct list *, struct list *, int, int);
 void		 free_file_list(struct list *);
