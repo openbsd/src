@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.15 2015/05/08 12:30:27 schwarze Exp $	*/
+/*	$OpenBSD: col.c,v 1.16 2015/05/08 16:30:07 schwarze Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -295,7 +295,7 @@ main(int argc, char *argv[])
 
 	/* make sure we leave things in a sane state */
 	if (last_set != CS_NORMAL)
-		PUTC('\017');
+		PUTC(SI);
 
 	/* flush out the last few blank lines */
 	if (max_line > this_line)
@@ -350,7 +350,7 @@ flush_blanks(void)
 	for (i = nb; --i >= 0;)
 		PUTC('\n');
 	if (half) {
-		PUTC('\033');
+		PUTC(ESC);
 		PUTC('\011');
 		if (!nb)
 			PUTC('\r');
@@ -443,10 +443,10 @@ flush_line(LINE *l)
 			if (c->c_set != last_set) {
 				switch (c->c_set) {
 				case CS_NORMAL:
-					PUTC('\017');
+					PUTC(SI);
 					break;
 				case CS_ALTERNATE:
-					PUTC('\016');
+					PUTC(SO);
 				}
 				last_set = c->c_set;
 			}
