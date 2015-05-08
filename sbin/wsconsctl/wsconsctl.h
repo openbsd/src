@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.14 2013/10/20 22:07:57 miod Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.15 2015/05/08 19:12:51 miod Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -53,6 +53,7 @@ struct field {
 #define FLG_WRONLY	0x0002		/* variable cannot be displayed */
 #define FLG_NOAUTO	0x0004		/* skip variable on -a flag */
 #define FLG_MODIFY	0x0008		/* variable may be modified with += */
+#define	FLG_NORDBACK	0x0010		/* do not read back variable after write */
 #define FLG_GET		0x0100		/* read this variable from driver */
 #define FLG_SET		0x0200		/* write this variable to driver */
 #define FLG_INIT	0x0400		/* init (read) before write */

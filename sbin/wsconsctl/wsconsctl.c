@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.28 2012/07/14 08:28:47 shadchin Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.29 2015/05/08 19:12:51 miod Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -264,8 +264,10 @@ main(int argc, char *argv[])
 				if (f->flags & FLG_WRONLY) {
 					pr_field(devname, f, setsep);
 				} else {
-					f->flags |= FLG_GET;
-					(*sw->getval)(devfd);
+					if (!(f->flags & FLG_NORDBACK)) {
+						f->flags |= FLG_GET;
+						(*sw->getval)(devfd);
+					}
 					if (f->flags & FLG_DEAD)
 						continue;
 					pr_field(devname, f, setsep);

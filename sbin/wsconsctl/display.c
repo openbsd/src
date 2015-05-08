@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.19 2013/10/20 22:07:57 miod Exp $	*/
+/*	$OpenBSD: display.c,v 1.20 2015/05/08 19:12:51 miod Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -56,7 +56,7 @@ struct field display_field_tab[] = {
     { "depth",		&depth,		FMT_UINT,	FLG_RDONLY },
     { "emulations",	&emuls,		FMT_EMUL,	FLG_RDONLY },
     { "screentypes",	&screens,	FMT_SCREEN,	FLG_RDONLY },
-    { "focus",		&focus,		FMT_INT,	FLG_MODIFY },
+    { "focus",		&focus,		FMT_INT,	FLG_NORDBACK },
     { "brightness",	&brightness,	FMT_PC,		FLG_MODIFY|FLG_INIT },
     { "contrast",	&contrast,	FMT_PC,		FLG_MODIFY|FLG_INIT },
     { "backlight",	&backlight,	FMT_PC,		FLG_MODIFY|FLG_INIT },
