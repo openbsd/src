@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.509 2015/05/08 16:33:29 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.510 2015/05/08 16:44:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1940,7 +1940,6 @@ int	 attributes_fromstring(const char *);
 
 /* grid.c */
 extern const struct grid_cell grid_default_cell;
-extern const struct grid_cell grid_marker_cell;
 struct grid *grid_create(u_int, u_int, u_int);
 void	 grid_destroy(struct grid *);
 int	 grid_compare(struct grid *, struct grid *);
