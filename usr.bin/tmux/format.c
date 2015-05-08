@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.64 2015/05/06 08:35:39 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.65 2015/05/08 16:18:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -715,8 +715,6 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "cursor_y", "%u", wp->base.cy);
 	format_add(ft, "scroll_region_upper", "%u", wp->base.rupper);
 	format_add(ft, "scroll_region_lower", "%u", wp->base.rlower);
-	format_add(ft, "saved_cursor_x", "%u", wp->ictx.old_cx);
-	format_add(ft, "saved_cursor_y", "%u", wp->ictx.old_cy);
 
 	format_add(ft, "alternate_on", "%d", wp->saved_grid ? 1 : 0);
 	format_add(ft, "alternate_saved_x", "%u", wp->saved_cx);
