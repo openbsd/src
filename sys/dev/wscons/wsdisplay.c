@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.122 2015/05/07 00:16:25 jsg Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.123 2015/05/08 19:17:20 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -144,6 +144,8 @@ void	wsdisplay_suspend_device(struct device *);
 void	wsdisplay_addscreen_print(struct wsdisplay_softc *, int, int);
 void	wsdisplay_closescreen(struct wsdisplay_softc *, struct wsscreen *);
 int	wsdisplay_delscreen(struct wsdisplay_softc *, int, int);
+
+void	wsdisplay_burner_setup(struct wsdisplay_softc *, struct wsscreen *);
 void	wsdisplay_burner(void *v);
 
 struct wsdisplay_softc {
@@ -160,10 +162,10 @@ struct wsdisplay_softc {
 
 #ifdef HAVE_BURNER_SUPPORT
 	struct timeout sc_burner;
-	int	sc_burnoutintvl;
-	int	sc_burninintvl;
-	int	sc_burnout;
-	int	sc_burnman;
+	int	sc_burnoutintvl;	/* delay before blanking */
+	int	sc_burninintvl;		/* delay before unblanking */
+	int	sc_burnout;		/* current sc_burner delay */
+	int	sc_burnman;		/* nonzero if screen blanked */
 	int	sc_burnflags;
 #endif
 
@@ -480,12 +482,12 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 	 */
 	s = spltty();
 	if (sc->sc_focus == scr) {
-		sc->sc_focus = 0;
+		sc->sc_focus = NULL;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 		wsdisplay_update_rawkbd(sc, 0);
 #endif
 	}
-	sc->sc_scr[idx] = 0;
+	sc->sc_scr[idx] = NULL;
 	splx(s);
 
 	/*
@@ -1142,24 +1144,11 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			/* clear cursor */
 			(*scr->scr_dconf->wsemul->reset)
 			    (scr->scr_dconf->wsemulcookie, WSEMUL_CLEARCURSOR);
+		}
 
 #ifdef HAVE_BURNER_SUPPORT
-			/* enable video _immediately_ if it nedes to be... */
-			if (sc->sc_burnman)
-				wsdisplay_burner(sc);
-			/* ...and disable the burner while X is running */
-			if (sc->sc_burnout) {
-				timeout_del(&sc->sc_burner);
-				sc->sc_burnout = 0;
-			}
-		} else {
-			/* reenable the burner after exiting from X */
-			if (!sc->sc_burnman) {
-				sc->sc_burnout = sc->sc_burnoutintvl;
-				wsdisplay_burn(sc, sc->sc_burnflags);
-			}
+		wsdisplay_burner_setup(sc, scr);
 #endif
-		}
 
 		(void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
 		    flag, p);
@@ -1171,7 +1160,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #define d ((struct wsdisplay_font *)data)
 		if (!sc->sc_accessops->load_font)
 			return (EINVAL);
-		d->data = 0;
+		d->data = NULL;
 		error = (*sc->sc_accessops->load_font)(sc->sc_accesscookie,
 		    scr->scr_dconf->emulcookie, d);
 		if (!error)
@@ -1203,40 +1192,46 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		return (0);
 
 	case WSDISPLAYIO_SBURNER:
+	    {
+		struct wsscreen *active;
+
 		if (d->flags & ~(WSDISPLAY_BURN_VBLANK | WSDISPLAY_BURN_KBD |
 		    WSDISPLAY_BURN_MOUSE | WSDISPLAY_BURN_OUTPUT))
-			error = EINVAL;
-		else {
-			error = 0;
-			sc->sc_burnflags = d->flags;
-			/* disable timeout if necessary */
-			if ((sc->sc_burnflags & (WSDISPLAY_BURN_OUTPUT |
-			    WSDISPLAY_BURN_KBD | WSDISPLAY_BURN_MOUSE)) == 0) {
-				if (sc->sc_burnout)
-					timeout_del(&sc->sc_burner);
-			}
+			return EINVAL;
+
+		error = 0;
+		sc->sc_burnflags = d->flags;
+		/* disable timeout if necessary */
+		if ((sc->sc_burnflags & (WSDISPLAY_BURN_OUTPUT |
+		    WSDISPLAY_BURN_KBD | WSDISPLAY_BURN_MOUSE)) == 0) {
+			if (sc->sc_burnout)
+				timeout_del(&sc->sc_burner);
 		}
+
+		active = sc->sc_focus;
+		if (active == NULL)
+			active = scr;
+
 		if (d->on) {
-			error = 0;
 			sc->sc_burninintvl = hz * d->on / 1000;
 			if (sc->sc_burnman) {
 				sc->sc_burnout = sc->sc_burninintvl;
 				/* reinit timeout if changed */
-				if ((scr->scr_flags & SCR_GRAPHICS) == 0)
+				if ((active->scr_flags & SCR_GRAPHICS) == 0)
 					wsdisplay_burn(sc, sc->sc_burnflags);
 			}
 		}
 		if (d->off) {
-			error = 0;
 			sc->sc_burnoutintvl = hz * d->off / 1000;
 			if (!sc->sc_burnman) {
 				sc->sc_burnout = sc->sc_burnoutintvl;
 				/* reinit timeout if changed */
-				if ((scr->scr_flags & SCR_GRAPHICS) == 0)
+				if ((active->scr_flags & SCR_GRAPHICS) == 0)
 					wsdisplay_burn(sc, sc->sc_burnflags);
 			}
 		}
 		return (error);
+	    }
 #undef d
 #endif	/* HAVE_BURNER_SUPPORT */
 	case WSDISPLAYIO_GETSCREEN:
@@ -1664,7 +1659,7 @@ wsdisplay_switch3(void *arg, int error, int waitok)
 
 		if (sc->sc_oldscreen == WSDISPLAY_NULLSCREEN) {
 			printf("wsdisplay_switch3: giving up\n");
-			sc->sc_focus = 0;
+			sc->sc_focus = NULL;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 			wsdisplay_update_rawkbd(sc, 0);
 #endif
@@ -1687,6 +1682,11 @@ wsdisplay_switch3(void *arg, int error, int waitok)
 #endif
 
 	CLR(sc->sc_flags, SC_SWITCHPENDING);
+
+#ifdef HAVE_BURNER_SUPPORT
+	if (!error)
+		wsdisplay_burner_setup(sc, scr);
+#endif
 
 	if (!error && (scr->scr_flags & SCR_WAITACTIVE))
 		wakeup(scr);
@@ -1719,7 +1719,7 @@ wsdisplay_switch2(void *arg, int error, int waitok)
 
 		if (sc->sc_oldscreen == WSDISPLAY_NULLSCREEN) {
 			printf("wsdisplay_switch2: giving up\n");
-			sc->sc_focus = 0;
+			sc->sc_focus = NULL;
 			CLR(sc->sc_flags, SC_SWITCHPENDING);
 			return (error);
 		}
@@ -1769,7 +1769,7 @@ wsdisplay_switch1(void *arg, int error, int waitok)
 	if (no == WSDISPLAY_NULLSCREEN) {
 		CLR(sc->sc_flags, SC_SWITCHPENDING);
 		if (!error) {
-			sc->sc_focus = 0;
+			sc->sc_focus = NULL;
 		}
 		wakeup(sc);
 		return (error);
@@ -1916,7 +1916,7 @@ wsscreen_detach_sync(struct wsscreen *scr)
 {
 	if (!scr->scr_syncops)
 		return (EINVAL);
-	scr->scr_syncops = 0;
+	scr->scr_syncops = NULL;
 	return (0);
 }
 
@@ -2112,7 +2112,7 @@ wsdisplay_unset_cons_kbd(void)
 {
 	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
 	wsdisplay_cons.cn_bell = NULL;
-	wsdisplay_cons_kbd_pollc = 0;
+	wsdisplay_cons_kbd_pollc = NULL;
 }
 
 /*
@@ -2258,6 +2258,33 @@ wsscrollback(void *arg, int op)
 #endif
 
 #ifdef HAVE_BURNER_SUPPORT
+/*
+ * Update screen burner behaviour after either a screen focus change or
+ * a screen mode change.
+ * This is needed to allow X11 to manage screen blanking without any
+ * interference from the kernel.
+ */
+void
+wsdisplay_burner_setup(struct wsdisplay_softc *sc, struct wsscreen *scr)
+{
+	if (scr->scr_flags & SCR_GRAPHICS) {
+		/* enable video _immediately_ if it needs to be... */
+		if (sc->sc_burnman)
+			wsdisplay_burner(sc);
+		/* ...and disable the burner while X is running */
+		if (sc->sc_burnout) {
+			timeout_del(&sc->sc_burner);
+			sc->sc_burnout = 0;
+		}
+	} else {
+		/* reenable the burner after exiting from X */
+		if (!sc->sc_burnman) {
+			sc->sc_burnout = sc->sc_burnoutintvl;
+			wsdisplay_burn(sc, sc->sc_burnflags);
+		}
+	}
+}
+
 void
 wsdisplay_burn(void *v, u_int flags)
 {
