@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.14 2014/10/17 21:27:10 schwarze Exp $	*/
+/*	$OpenBSD: col.c,v 1.15 2015/05/08 12:30:27 schwarze Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@ struct line_str {
 	int	l_needs_sort;		/* set if chars went in out of order */
 };
 
+void	addto_lineno(int *, int);
 LINE   *alloc_line(void);
 void	dowarn(int);
 void	flush_line(LINE *);
@@ -91,7 +92,7 @@ CSET	last_set;		/* char_set of last char printed */
 LINE   *lines;
 int	compress_spaces;	/* if doing space -> tab conversion */
 int	fine;			/* if `fine' resolution (half lines) */
-int	max_bufd_lines;		/* max # lines to keep in memory */
+int	max_bufd_lines;		/* max # of half lines to keep in memory */
 int	nblank_lines;		/* # blanks after last flushed line */
 int	no_backspaces;		/* if not to output any backspaces */
 
@@ -115,7 +116,7 @@ main(int argc, char *argv[])
 	int adjust, opt, warned;
 	const char *errstr;
 
-	max_bufd_lines = 128;
+	max_bufd_lines = 256;
 	compress_spaces = 1;		/* compress spaces into tabs */
 	while ((opt = getopt(argc, argv, "bfhl:x")) != -1)
 		switch (opt) {
@@ -129,7 +130,8 @@ main(int argc, char *argv[])
 			compress_spaces = 1;
 			break;
 		case 'l':		/* buffered line count */
-			max_bufd_lines = strtonum(optarg, 1, INT_MAX, &errstr);
+			max_bufd_lines = strtonum(optarg, 1,
+			    (INT_MAX - BUFFER_MARGIN) / 2, &errstr) * 2;
 			if (errstr != NULL)
 				errx(1, "bad -l argument, %s: %s", errstr, 
 					optarg);
@@ -144,9 +146,6 @@ main(int argc, char *argv[])
 
 	if (optind != argc)
 		usage();
-
-	/* this value is in half lines */
-	max_bufd_lines *= 2;
 
 	adjust = extra_lines = warned = 0;
 	cur_col = 0;
@@ -168,19 +167,19 @@ main(int argc, char *argv[])
 			case ESC:		/* just ignore EOF */
 				switch(getchar()) {
 				case RLF:
-					cur_line -= 2;
+					addto_lineno(&cur_line, -2);
 					break;
 				case RHLF:
-					cur_line--;
+					addto_lineno(&cur_line, -1);
 					break;
 				case FHLF:
-					cur_line++;
+					addto_lineno(&cur_line, 1);
 					if (cur_line > max_line)
 						max_line = cur_line;
 				}
 				continue;
 			case NL:
-				cur_line += 2;
+				addto_lineno(&cur_line, 2);
 				if (cur_line > max_line)
 					max_line = cur_line;
 				cur_col = 0;
@@ -199,65 +198,68 @@ main(int argc, char *argv[])
 				++cur_col;
 				continue;
 			case VT:
-				cur_line -= 2;
+				addto_lineno(&cur_line, -2);
 				continue;
 			}
 			continue;
 		}
 
 		/* Must stuff ch in a line - are we at the right one? */
-		if (cur_line != this_line - adjust) {
+		if (cur_line + adjust != this_line) {
 			LINE *lnew;
-			int nmove;
 
-			adjust = 0;
-			nmove = cur_line - this_line;
-			if (!fine) {
-				/* round up to next line */
-				if (cur_line & 1) {
-					adjust = 1;
-					nmove++;
-				}
-			}
-			if (nmove < 0) {
-				for (; nmove < 0 && l->l_prev; nmove++)
+			/* round up to next line */
+			adjust = !fine && (cur_line & 1);
+
+			if (cur_line + adjust < this_line) {
+				while (cur_line + adjust < this_line &&
+				    l->l_prev != NULL) {
 					l = l->l_prev;
-				if (nmove) {
+					this_line--;
+				}
+				if (cur_line + adjust < this_line) {
 					if (nflushd_lines == 0) {
 						/*
 						 * Allow backup past first
 						 * line if nothing has been
 						 * flushed yet.
 						 */
-						for (; nmove < 0; nmove++) {
+						while (cur_line + adjust
+						    < this_line) {
 							lnew = alloc_line();
 							l->l_prev = lnew;
 							lnew->l_next = l;
 							l = lines = lnew;
 							extra_lines++;
+							this_line--;
 						}
 					} else {
 						if (!warned++)
 							dowarn(cur_line);
-						cur_line -= nmove;
+						cur_line = this_line - adjust;
 					}
 				}
 			} else {
 				/* may need to allocate here */
-				for (; nmove > 0 && l->l_next; nmove--)
+				while (cur_line + adjust > this_line) {
+					if (l->l_next == NULL) {
+						l->l_next = alloc_line();
+						l->l_next->l_prev = l;
+					}
 					l = l->l_next;
-				for (; nmove > 0; nmove--) {
-					lnew = alloc_line();
-					lnew->l_prev = l;
-					l->l_next = lnew;
-					l = lnew;
+					this_line++;
 				}
 			}
-			this_line = cur_line + adjust;
-			nmove = this_line - nflushd_lines;
-			if (nmove >= max_bufd_lines + BUFFER_MARGIN) {
-				nflushd_lines += nmove - max_bufd_lines;
-				flush_lines(nmove - max_bufd_lines);
+			if (this_line > nflushd_lines &&
+			    this_line - nflushd_lines >=
+			    max_bufd_lines + BUFFER_MARGIN) {
+				if (extra_lines) {
+					flush_lines(extra_lines);
+					extra_lines = 0;
+				}
+				flush_lines(this_line - nflushd_lines -
+				    max_bufd_lines);
+				nflushd_lines = this_line - max_bufd_lines;
 			}
 		}
 		/* grow line's buffer? */
@@ -283,25 +285,23 @@ main(int argc, char *argv[])
 			l->l_max_col = cur_col;
 		cur_col++;
 	}
-	if (max_line == 0)
-		exit(0);	/* no lines, so just exit */
+	if (extra_lines)
+		flush_lines(extra_lines);
 
 	/* goto the last line that had a character on it */
 	for (; l->l_next; l = l->l_next)
 		this_line++;
-	flush_lines(this_line - nflushd_lines + extra_lines + 1);
+	flush_lines(this_line - nflushd_lines + 1);
 
 	/* make sure we leave things in a sane state */
 	if (last_set != CS_NORMAL)
 		PUTC('\017');
 
 	/* flush out the last few blank lines */
-	nblank_lines = max_line - this_line;
+	if (max_line > this_line)
+		nblank_lines = max_line - this_line;
 	if (max_line & 1)
 		nblank_lines++;
-	else if (!nblank_lines)
-		/* missing a \n on the last line? */
-		nblank_lines = 2;
 	flush_blanks();
 	exit(0);
 }
@@ -318,7 +318,8 @@ flush_lines(int nflush)
 			flush_blanks();
 			flush_line(l);
 		}
-		nblank_lines++;
+		if (l->l_line || l->l_next)
+			nblank_lines++;
 		if (l->l_line)
 			(void)free((void *)l->l_line);
 		free_line(l);
@@ -455,6 +456,23 @@ flush_line(LINE *l)
 			PUTC('\b');
 		}
 	}
+}
+
+/*
+ * Increment or decrement a line number, checking for overflow.
+ * Stop one below INT_MAX such that the adjust variable is safe.
+ */
+void
+addto_lineno(int *lno, int offset)
+{
+	if (offset > 0) {
+		if (*lno >= INT_MAX - offset)
+			errx(1, "too many lines");
+	} else {
+		if (*lno < INT_MIN - offset)
+			errx(1, "too many reverse line feeds");
+	}
+	*lno += offset;
 }
 
 #define	NALLOC 64
