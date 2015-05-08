@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.4 2014/07/11 08:48:52 bcook Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.5 2015/05/08 21:30:37 miod Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -81,16 +81,19 @@ static int
 do_bio_get_host_ip_tests(void)
 {
 	struct bio_get_host_ip_test *bgit;
-	unsigned char ip[4];
+	union {
+		unsigned char c[4];
+		uint32_t i;
+	} ip;
 	int failed = 0;
 	size_t i;
 	int ret;
 
 	for (i = 0; i < N_BIO_GET_IP_TESTS; i++) {
 		bgit = &bio_get_host_ip_tests[i];
-		memset(ip, 0, sizeof(*ip));
+		memset(&ip, 0, sizeof(ip));
 		
-		ret = BIO_get_host_ip(bgit->input, ip);
+		ret = BIO_get_host_ip(bgit->input, ip.c);
 		if (ret != bgit->ret) {
 			fprintf(stderr, "FAIL: test %zi (\"%s\") %s, want %s\n",
 			    i, bgit->input, ret ? "success" : "failure",
@@ -98,10 +101,10 @@ do_bio_get_host_ip_tests(void)
 			failed = 1;
 			continue;
 		}
-		if (ret && ntohl(*((uint32_t *)ip)) != bgit->ip) {
+		if (ret && ntohl(ip.i) != bgit->ip) {
 			fprintf(stderr, "FAIL: test %zi (\"%s\") returned ip "
 			    "%x != %x\n", i, bgit->input,
-			    ntohl(*((uint32_t *)ip)), bgit->ip);
+			    ntohl(ip.i), bgit->ip);
 			failed = 1;
 		}
 	}
