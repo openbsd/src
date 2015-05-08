@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.507 2015/05/08 16:18:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.508 2015/05/08 16:23:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -821,14 +821,6 @@ struct window_choose_data {
 	struct format_tree	*ft;
 
 	char			*command;
-};
-
-struct window_choose_mode_item {
-	struct window_choose_data	*wcd;
-	char				*name;
-	int				 pos;
-	int				 state;
-#define TREE_EXPANDED 0x1
 };
 
 /* Child window structure. */
