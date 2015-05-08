@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.62 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.63 2015/05/08 16:33:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -37,6 +37,20 @@
  * two sets of bindings to be swapped between. A couple of editing commands
  * (any matching MODEKEYEDIT_SWITCHMODE*) are special-cased to do this.
  */
+
+/* Entry in the default mode key tables. */
+struct mode_key_entry {
+	int			key;
+
+	/*
+	 * Editing mode for vi: 0 is edit mode, keys not in the table are
+	 * returned as MODEKEY_OTHER; 1 is command mode, keys not in the table
+	 * are returned as MODEKEY_NONE. This is also matched on, allowing some
+	 * keys to be bound in edit mode.
+	 */
+	int			mode;
+	enum mode_key_cmd	cmd;
+};
 
 /* Edit keys command strings. */
 const struct mode_key_cmdstr mode_key_cmdstr_edit[] = {
