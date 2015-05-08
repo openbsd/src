@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.137 2015/05/06 07:52:06 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.138 2015/05/08 15:56:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1177,11 +1177,6 @@ server_client_msg_identify(struct client *c, struct imsg *imsg)
 	if (imsg->hdr.type != MSG_IDENTIFY_DONE)
 		return;
 	c->flags |= CLIENT_IDENTIFIED;
-
-#ifdef __CYGWIN__
-	c->fd = open(c->ttyname, O_RDWR|O_NOCTTY);
-	c->cwd = open(".", O_RDONLY);
-#endif
 
 	if (c->flags & CLIENT_CONTROL) {
 		c->stdin_callback = control_callback;
