@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.16 2015/05/08 16:30:07 schwarze Exp $	*/
+/*	$OpenBSD: col.c,v 1.17 2015/05/09 20:36:18 schwarze Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -50,9 +50,6 @@
 #define	SI	'\017'		/* shift in to normal character set */
 #define	SO	'\016'		/* shift out to alternate character set */
 #define	VT	'\013'		/* vertical tab (aka reverse line feed) */
-#define	RLF	'\007'		/* ESC-07 reverse line feed */
-#define	RHLF	'\010'		/* ESC-010 reverse half-line feed */
-#define	FHLF	'\011'		/* ESC-011 forward half-line feed */
 
 /* build up at least this many lines before flushing them out */
 #define	BUFFER_MARGIN		32
@@ -165,14 +162,25 @@ main(int argc, char *argv[])
 				cur_col = 0;
 				continue;
 			case ESC:		/* just ignore EOF */
+				/*
+				 * In the input stream, accept both the
+				 * XPG5 sequences ESC-digit and the
+				 * traditional BSD sequences ESC-ctrl.
+				 */
 				switch(getchar()) {
-				case RLF:
+				case '7':  /* reverse line feed */
+					/* FALLTHROUGH */
+				case '\007':
 					addto_lineno(&cur_line, -2);
 					break;
-				case RHLF:
+				case '8':  /* reverse half-line feed */
+					/* FALLTHROUGH */
+				case '\010':
 					addto_lineno(&cur_line, -1);
 					break;
-				case FHLF:
+				case '9':  /* forward half-line feed */
+					/* FALLTHROUGH */
+				case '\011':
 					addto_lineno(&cur_line, 1);
 					if (cur_line > max_line)
 						max_line = cur_line;
@@ -350,8 +358,12 @@ flush_blanks(void)
 	for (i = nb; --i >= 0;)
 		PUTC('\n');
 	if (half) {
+		/*
+		 * In the output stream, always generate
+		 * escape sequences conforming to XPG5.
+		 */
 		PUTC(ESC);
-		PUTC('\011');
+		PUTC('9');
 		if (!nb)
 			PUTC('\r');
 	}

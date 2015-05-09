@@ -1,4 +1,4 @@
-.\"	$OpenBSD: col.1,v 1.12 2014/10/17 21:10:56 schwarze Exp $
+.\"	$OpenBSD: col.1,v 1.13 2015/05/09 20:36:18 schwarze Exp $
 .\"	$NetBSD: col.1,v 1.4 1995/03/26 05:25:52 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)col.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: October 17 2014 $
+.Dd $Mdocdate: May 9 2015 $
 .Dt COL 1
 .Os
 .Sh NAME
@@ -77,18 +77,33 @@ By default, 128 lines are buffered.
 Output multiple spaces instead of tabs.
 .El
 .Pp
-The control sequences for carriage motion that
+In the input stream,
 .Nm
-understands and their decimal ASCII values are listed in the following
-table:
+understands both the escape sequences of the form escape-digit
+mandated by
+.St -susv2
+and the traditional
+.Bx
+format escape-control-character.
+The control sequences for carriage motion and their ASCII values
+are as follows:
 .Pp
 .Bl -tag -width "escape-backspace" -compact
 .It escape\-bell
 Reverse line feed (27 then 7).
+.It escape\-digit\-7
+Reverse line feed (27 then 55).
 .It escape\-backspace
 Half reverse line feed (27 then 8).
+.It escape\-digit\-8
+Half reverse line feed (27 then 56).
 .It escape\-tab
 Half forward line feed (27 then 9).
+.It escape\-digit\-9
+Half forward line feed (27 then 57).
+In
+.Fl f
+mode, this sequence may also occur in the output stream.
 .It backspace
 Moves back one column (8); ignored in the first column.
 .It carriage return
