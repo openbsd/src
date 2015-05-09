@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.64 2014/08/30 10:44:02 miod Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.65 2015/05/09 17:11:26 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -387,7 +387,9 @@ struct partinfo {
 #define	GPTSIGNATURE		0x5452415020494645LL
 				/* ASCII string "EFI PART" encoded as 64-bit */
 #define	GPTREVISION		0x10000		/* GPT header version 1.0 */
-#define	NGPTPARTITIONS		128
+#define	GPTPARTITIONS		128
+#define	GPTSYSTEM		0x0
+#define	GPTIGNORE		0x1
 #define	GPTDOSACTIVE		0x2
 #define	GPTMINHDRSIZE		92
 #define	GPTMINPARTSIZE		128
@@ -422,12 +424,7 @@ struct gpt_partition {
 				   usually odd */
 	u_int64_t gp_attrs;	/* attribute flags */
 	u_int16_t gp_name[36];	/* partition name, utf-16le */
-	/* the rest of the GPT partition entry, if any, is reserved by UEFI
-	   and must be zero */
 };
-
-#define GPT_PARTSPERSEC(gh)	(DEV_BSIZE / letoh32((gh)->gh_part_size))
-#define GPT_SECOFFSET(gh, n)	((gh)->gh_part_size * n)
 
 #define GPT_UUID_UNUSED \
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
@@ -444,6 +441,9 @@ struct gpt_partition {
 #define GPT_UUID_OPENBSD \
     { 0x82, 0x4c, 0xc7, 0xa0, 0x36, 0xa8, 0x11, 0xe3, \
       0x89, 0x0a, 0x95, 0x25, 0x19, 0xad, 0x3f, 0x61 }
+#define GPT_UUID_CHROMEKERNELFS \
+    { 0xfe, 0x3a, 0x2a, 0x5d, 0x4f, 0x32, 0x41, 0xa7, \
+      0xb7, 0x25, 0xac, 0xcc, 0x32, 0x85, 0xa3, 0x09 }
 #define GPT_UUID_CHROMEROOTFS \
     { 0x3c, 0xb8, 0xe2, 0x02, 0x3b, 0x7e, 0x47, 0xdd, \
       0x8a, 0x3c, 0x7f, 0xf2, 0xa1, 0x3c, 0xfc, 0xec }

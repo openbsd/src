@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.70 2015/04/15 14:06:03 naddy Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.71 2015/05/09 17:11:26 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -94,12 +94,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-#if defined(GPT)
-	error = readgptlabel(bp, strat, lp, NULL, spoofonly);
-	if (error == 0)
-		goto done;
-#endif
-
 	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)
 		goto done;
@@ -140,11 +134,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-#if defined(GPT)
-        if (readgptlabel(bp, strat, lp, &partoff, 1) != 0)
-#endif
-		if (readdoslabel(bp, strat, lp, &partoff, 1) != 0)
-                	goto done;
+	if (readdoslabel(bp, strat, lp, &partoff, 1) != 0)
+		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
