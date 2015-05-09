@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.27 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: wss.c,v 1.28 2015/05/09 10:27:32 jsg Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ mad_write(sc, port, value)
     mtx_enter(&audio_lock);
     bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);
     bus_space_write_1(sc->sc_iot, sc->mad_ioh, port, value & 0xff);
-    mtx_enter(&audio_lock);
+    mtx_leave(&audio_lock);
 }
 
 void
