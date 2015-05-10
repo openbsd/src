@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.81 2015/04/29 06:01:37 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.82 2015/05/10 18:33:15 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -671,8 +671,7 @@ _rthread_dl_lock(int what)
 	static struct pthread_queue lockers = TAILQ_HEAD_INITIALIZER(lockers);
 	static int count = 0;
 
-	if (what == 0)
-	{
+	if (what == 0) {
 		pthread_t self = pthread_self();
 
 		/* lock, possibly recursive */
@@ -689,9 +688,7 @@ _rthread_dl_lock(int what)
 		}
 		count++;
 		_spinunlock(&lock);
-	}
-	else
-	{
+	} else if (what == 1) {
 		/* unlock, possibly recursive */
 		if (--count == 0) {
 			pthread_t next;
@@ -704,6 +701,12 @@ _rthread_dl_lock(int what)
 			if (next != NULL)
 				__thrwakeup(next, 1);
 		}
+	} else {
+		/* reinit: used in child after fork to clear the queue */
+		lock = _SPINLOCK_UNLOCKED_ASSIGN;
+		if (--count == 0)
+			owner = NULL;
+		TAILQ_INIT(&lockers);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.11 2015/04/07 01:27:07 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.12 2015/05/10 18:33:15 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -105,12 +105,12 @@ _dofork(int is_vfork)
 	_thread_malloc_unlock();
 	_thread_atexit_unlock();
 
-#if defined(__ELF__)
-	if (_DYNAMIC)
-		_rthread_dl_lock(1);
-#endif
-
 	if (newid == 0) {
+#if defined(__ELF__)
+		/* reinitialize the lock in the child */
+		if (_DYNAMIC)
+			_rthread_dl_lock(2);
+#endif
 		/* update this thread's structure */
 		me->tid = getthrid();
 		me->donesem.lock = _SPINLOCK_UNLOCKED_ASSIGN;
@@ -128,6 +128,10 @@ _dofork(int is_vfork)
 		/* single threaded now */
 		__isthreaded = 0;
 	}
+#if defined(__ELF__)
+	else if (_DYNAMIC)
+		_rthread_dl_lock(1);
+#endif
 	return newid;
 }
 
