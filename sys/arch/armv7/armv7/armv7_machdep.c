@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.18 2015/01/18 10:17:42 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.19 2015/05/10 05:42:46 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -461,11 +461,13 @@ initarm(void *arg0, void *arg1, void *arg2)
 	 * XXX pmap_bootstrap() needs an enema.
 	 */
 	physical_start = bootconfig.dram[0].address;
-	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
+	physical_end = MIN((uint64_t)physical_start +
+	    (bootconfig.dram[0].pages * PAGE_SIZE), (paddr_t)-PAGE_SIZE);
 
 	{
 		physical_freestart = (((unsigned long)esym - KERNEL_TEXT_BASE +0xfff) & ~0xfff) + memstart;
-		physical_freeend = memstart+memsize;
+		physical_freeend = MIN((uint64_t)memstart+memsize,
+		    (paddr_t)-PAGE_SIZE);
 	}
 
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
