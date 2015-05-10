@@ -6197,9 +6197,6 @@
 ./usr/share/man/man9/crypto_freesession.9
 ./usr/share/man/man9/crypto_get_driverid.9
 ./usr/share/man/man9/crypto_getreq.9
-./usr/share/man/man9/crypto_kdispatch.9
-./usr/share/man/man9/crypto_kdone.9
-./usr/share/man/man9/crypto_kregister.9
 ./usr/share/man/man9/crypto_newsession.9
 ./usr/share/man/man9/crypto_register.9
 ./usr/share/man/man9/crypto_unregister.9
@@ -6667,6 +6664,10 @@
 ./usr/share/man/man9/ulmax.9
 ./usr/share/man/man9/ulmin.9
 ./usr/share/man/man9/uprintf.9
+./usr/share/man/man9/usbd_abort_pipe.9
+./usr/share/man/man9/usbd_close_pipe.9
+./usr/share/man/man9/usbd_open_pipe.9
+./usr/share/man/man9/usbd_open_pipe_intr.9
 ./usr/share/man/man9/usbd_setup_xfer.9
 ./usr/share/man/man9/usbd_transfer.9
 ./usr/share/man/man9/uvm.9
