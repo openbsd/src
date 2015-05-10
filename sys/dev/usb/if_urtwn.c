@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.45 2015/05/10 15:10:46 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.46 2015/05/10 19:40:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -184,6 +184,10 @@ void		urtwn_read_rom(struct urtwn_softc *);
 void		urtwn_r88e_read_rom(struct urtwn_softc *);
 int		urtwn_media_change(struct ifnet *);
 int		urtwn_ra_init(struct urtwn_softc *);
+int		urtwn_r92c_ra_init(struct urtwn_softc *, u_int8_t, u_int32_t,
+		    int, uint32_t, int);
+int		urtwn_r88e_ra_init(struct urtwn_softc *, u_int8_t, u_int32_t,
+		    int, uint32_t, int);
 void		urtwn_tsf_sync_enable(struct urtwn_softc *);
 void		urtwn_set_led(struct urtwn_softc *, int, int);
 void		urtwn_calib_to(void *);
@@ -1083,7 +1087,6 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
-	struct r92c_fw_cmd_macid_cfg cmd;
 	uint32_t rates, basicrates;
 	uint8_t mode;
 	int maxrate, maxbasicrate, error, i, j;
@@ -1114,6 +1117,24 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	DPRINTF(("mode=0x%x rates=0x%08x, basicrates=0x%08x\n",
 	    mode, rates, basicrates));
 
+	if (sc->chip & URTWN_CHIP_88E)
+		error = urtwn_r88e_ra_init(sc, mode, rates, maxrate,
+		    basicrates, maxbasicrate);
+	else
+		error = urtwn_r92c_ra_init(sc, mode, rates, maxrate,
+		    basicrates, maxbasicrate);
+
+	/* Indicate highest supported rate. */
+	ni->ni_txrate = rs->rs_nrates - 1;
+	return (error);
+}
+
+int urtwn_r92c_ra_init(struct urtwn_softc *sc, u_int8_t mode, u_int32_t rates,
+    int maxrate, uint32_t basicrates, int maxbasicrate)
+{
+	struct r92c_fw_cmd_macid_cfg cmd;
+	int error;
+
 	/* Set rates mask for group addressed frames. */
 	cmd.macid = URTWN_MACID_BC | URTWN_MACID_VALID;
 	cmd.mask = htole32(mode << 28 | basicrates);
@@ -1142,8 +1163,28 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(URTWN_MACID_BSS),
 	    maxrate);
 
-	/* Indicate highest supported rate. */
-	ni->ni_txrate = rs->rs_nrates - 1;
+	return (0);
+}
+
+int
+urtwn_r88e_ra_init(struct urtwn_softc *sc, u_int8_t mode, u_int32_t rates,
+    int maxrate, uint32_t basicrates, int maxbasicrate)
+{
+	u_int32_t reg;
+
+	urtwn_write_1(sc, R92C_INIRTS_RATE_SEL, maxbasicrate);
+
+	reg = urtwn_read_4(sc, R92C_RRSR);
+	reg = RW(reg, R92C_RRSR_RATE_BITMAP, rates);
+	urtwn_write_4(sc, R92C_RRSR, reg);
+
+	/* 
+	 * Workaround for performance problems with firmware rate adaptation:
+	 * If the AP only supports 11b rates, disable mixed B/G mode.
+	 */
+	if (mode != R92C_RAID_11B && maxrate <= 3 /* 11M */)
+		sc->sc_flags |= URTWN_FLAG_FORCE_RAID_11B;
+
 	return (0);
 }
 
@@ -1312,6 +1353,9 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		urtwn_write_4(sc, R92C_EDCA_VI_PARAM, 0x005e4317);
 		urtwn_write_4(sc, R92C_EDCA_BE_PARAM, 0x00105320);
 		urtwn_write_4(sc, R92C_EDCA_BK_PARAM, 0x0000a444);
+
+		/* Disable 11b-only AP workaround (see urtwn_r88e_ra_init). */
+		sc->sc_flags &= ~URTWN_FLAG_FORCE_RAID_11B;
 	}
 	switch (cmd->state) {
 	case IEEE80211_S_INIT:
@@ -1417,10 +1461,8 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		urtwn_write_1(sc, R92C_T2T_SIFS + 1, 10);
 
 		/* Intialize rate adaptation. */
-		if (sc->chip & URTWN_CHIP_88E)
-			ni->ni_txrate = ni->ni_rates.rs_nrates-1;
-		else
-			urtwn_ra_init(sc);
+		urtwn_ra_init(sc);
+
 		/* Turn link LED on. */
 		urtwn_set_led(sc, URTWN_LED_LINK, 1);
 
@@ -1981,7 +2023,8 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 	    type == IEEE80211_FC0_TYPE_DATA) {
-		if (ic->ic_curmode == IEEE80211_MODE_11B)
+		if (ic->ic_curmode == IEEE80211_MODE_11B ||
+		    (sc->sc_flags & URTWN_FLAG_FORCE_RAID_11B))
 			raid = R92C_RAID_11B;
 		else
 			raid = R92C_RAID_11BG;
