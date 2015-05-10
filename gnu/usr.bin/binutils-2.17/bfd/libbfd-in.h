@@ -196,6 +196,8 @@ extern void *_bfd_generic_read_ar_hdr
   (bfd *);
 extern void _bfd_ar_spacepad
   (char *, size_t, const char *, long);
+extern void _bfd_ar_spacepadll
+  (char *, size_t, const char *, long long);
 
 extern void *_bfd_generic_read_ar_hdr_mag
   (bfd *, const char *);
