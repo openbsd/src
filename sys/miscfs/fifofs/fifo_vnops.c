@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.46 2015/05/05 20:14:10 millert Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.47 2015/05/10 22:35:39 millert Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -296,28 +296,28 @@ fifo_poll(void *v)
 	int revents = 0;
 
 	/*
-	 * Just return if there are no supported events specified,
 	 * FIFOs don't support out-of-band or high priority data.
 	 */
 	if (ap->a_fflag & FREAD)
 		events |= ap->a_events & (POLLIN | POLLRDNORM);
 	if (ap->a_fflag & FWRITE)
 		events |= ap->a_events & (POLLOUT | POLLWRNORM);
-	if (events == 0)
-		return (0);
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (soreadable(rso))
 			revents |= events & (POLLIN | POLLRDNORM);
 	}
 	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if (rso->so_state & SS_ISDISCONNECTED) {
+	if ((rso->so_state & SS_ISDISCONNECTED) && !(ap->a_events & POLLNOHUP)) {
 		revents |= POLLHUP;
 	} else if (events & (POLLOUT | POLLWRNORM)) {
 		if (sowriteable(wso))
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
 	if (revents == 0) {
+		/* We want to return POLLHUP even if no valid events set. */
+		if (events == 0 && !(ap->a_events & POLLNOHUP))
+			events = POLLIN;
 		if (events & (POLLIN | POLLRDNORM)) {
 			selrecord(ap->a_p, &rso->so_rcv.sb_sel);
 			rso->so_rcv.sb_flagsintr |= SB_SEL;

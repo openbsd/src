@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.97 2015/04/30 09:20:51 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.98 2015/05/10 22:35:38 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -712,7 +712,7 @@ selscan(struct proc *p, fd_set *ibits, fd_set *obits, int nfd, int ni,
 	fd_mask bits;
 	struct file *fp;
 	int n = 0;
-	static const int flag[3] = { POLLIN, POLLOUT, POLLPRI };
+	static const int flag[3] = { POLLIN, POLLOUT|POLLNOHUP, POLLPRI };
 
 	for (msk = 0; msk < 3; msk++) {
 		fd_set *pibits = (fd_set *)&cibits[msk*ni];
@@ -940,8 +940,10 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 	if ((error = copyin(fds, pl, sz)) != 0)
 		goto bad;
 
-	for (i = 0; i < nfds; i++)
+	for (i = 0; i < nfds; i++) {
+		pl[i].events &= ~POLLNOHUP;
 		pl[i].revents = 0;
+	}
 
 	if (tsp != NULL) {
 		getnanouptime(&rts);
