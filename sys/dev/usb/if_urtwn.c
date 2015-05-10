@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.44 2015/05/04 11:46:29 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.45 2015/05/10 15:10:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2413,9 +2413,6 @@ urtwn_fw_reset(struct urtwn_softc *sc)
 	}
 	/* Force 8051 reset. */
 	urtwn_write_2(sc, R92C_SYS_FUNC_EN, reg & ~R92C_SYS_FUNC_EN_CPUEN);
-	urtwn_write_2(sc, R92C_SYS_FUNC_EN,
-	    urtwn_read_2(sc, R92C_SYS_FUNC_EN) |
-	    R92C_SYS_FUNC_EN_CPUEN);
 }
 
 
@@ -2505,6 +2502,10 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 			urtwn_fw_reset(sc);
 		urtwn_write_1(sc, R92C_MCUFWDL, 0);
 	}
+	if (!(sc->chip & URTWN_CHIP_88E))
+		urtwn_write_2(sc, R92C_SYS_FUNC_EN,
+		    urtwn_read_2(sc, R92C_SYS_FUNC_EN) |
+		    R92C_SYS_FUNC_EN_CPUEN);
 
 	urtwn_write_1(sc, R92C_MCUFWDL,
 	    urtwn_read_1(sc, R92C_MCUFWDL) | R92C_MCUFWDL_EN);
