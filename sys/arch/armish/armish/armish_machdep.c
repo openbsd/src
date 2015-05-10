@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.38 2015/05/08 22:56:53 miod Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.39 2015/05/10 15:56:28 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -119,18 +119,10 @@
 #include <armish/dev/iq80321var.h>
 #include <armish/dev/obiovar.h>
 
-
-
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x10000000)
-
-/*
- * The range 0xc1000000 - 0xcfffffff is available for kernel VM space
- * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
- */
-#define KERNEL_VM_SIZE		0x20000000
-
+#define KERNEL_VM_SIZE		VM_KERNEL_SPACE_SIZE
 
 /*
  * Address to call from cpu_reset() to reset the machine.

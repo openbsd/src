@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2014/09/30 01:34:34 tobiasu Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2015/05/10 15:56:28 jsg Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -93,6 +93,5 @@
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) ARM_KERNEL_BASE)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 
 #endif /* _ARM_VMPARAM_H_ */
