@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.h,v 1.14 2008/06/26 05:42:14 ray Exp $ */
+/*	$OpenBSD: mulaw.h,v 1.15 2015/05/11 06:46:21 ratchov Exp $ */
 /*	$NetBSD: mulaw.h,v 1.11 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*-
@@ -32,62 +32,9 @@
 
 /* *_mts versions convert mono to stereo, in addition */
 
-/* Convert 8-bit mu-law to 16 bit unsigned linear. */
-extern void mulaw_to_ulinear16_le(void *, u_char *, int);
-extern void mulaw_to_ulinear16_le_mts(void *, u_char *, int);
-extern void mulaw_to_ulinear16_be(void *, u_char *, int);
-extern void mulaw_to_ulinear16_be_mts(void *, u_char *, int);
-/* Convert 8-bit mu-law to/from 16 bit signed linear. */
-extern void mulaw_to_slinear16_le(void *, u_char *, int);
-extern void mulaw_to_slinear16_le_mts(void *, u_char *, int);
-extern void mulaw_to_slinear16_be(void *, u_char *, int);
-extern void mulaw_to_slinear16_be_mts(void *, u_char *, int);
-extern void slinear16_to_mulaw_le(void *, u_char *, int);
-/* Convert 8-bit mu-law to/from 8 bit unsigned linear. */
-extern void mulaw_to_ulinear8(void *, u_char *, int);
-extern void ulinear8_to_mulaw(void *, u_char *, int);
 /* Convert 8-bit mu-law to/from 8 bit signed linear. */
 extern void mulaw_to_slinear8(void *, u_char *, int);
 extern void slinear8_to_mulaw(void *, u_char *, int);
-/* Convert 8-bit a-law to 16 bit unsigned linear. */
-extern void alaw_to_ulinear16_le(void *, u_char *, int);
-extern void alaw_to_ulinear16_be(void *, u_char *, int);
-/* Convert 8-bit a-law to/from 16 bit signed linear. */
-extern void alaw_to_slinear16_le(void *, u_char *, int);
-extern void alaw_to_slinear16_le_mts(void *, u_char *, int);
-extern void alaw_to_slinear16_be(void *, u_char *, int);
-extern void alaw_to_slinear16_be_mts(void *, u_char *, int);
-extern void slinear16_to_alaw_le(void *, u_char *, int);
-extern void slinear16_to_alaw_be(void *, u_char *, int);
-/* Convert 8-bit a-law to/from 8 bit unsigned linear. */
-extern void alaw_to_ulinear8(void *, u_char *, int);
-extern void ulinear8_to_alaw(void *, u_char *, int);
-/* Convert 8-bit a-law to/from 8 bit signed linear. */
-extern void alaw_to_slinear8(void *, u_char *, int);
-extern void slinear8_to_alaw(void *, u_char *, int);
-/* Convert 8-bit a-law to/from mulaw */
-void alaw_to_mulaw(void *, u_char *, int);
-void mulaw_to_alaw(void *, u_char *, int);
-/* Convert 16-bit signed linear stereo to 8-bit a-law mono */
-void slinear16_to_alaw_le_stm(void *, u_char *, int);
-void slinear16_to_alaw_be_stm(void *, u_char *, int);
-/* Convert 16-bit signed linear stereo to 8-bit mu-law mono */
-void slinear16_to_mulaw_le_stm(void *, u_char *, int);
-void slinear16_to_mulaw_be_stm(void *, u_char *, int);
-
-/* backwards compat for now */
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define mulaw_to_ulinear16 mulaw_to_ulinear16_le 
-#define alaw_to_ulinear16 alaw_to_ulinear16_le
-#define mulaw_to_slinear16 mulaw_to_slinear16_le
-#define mulaw_to_slinear16_mts mulaw_to_slinear16_le_mts
-#define alaw_to_slinear16 alaw_to_slinear16_le
-#define alaw_to_slinear16_mts alaw_to_slinear16_le_mts
-#else
-#define mulaw_to_ulinear16 mulaw_to_ulinear16_be 
-#define alaw_to_ulinear16 alaw_to_ulinear16_be
-#define mulaw_to_slinear16 mulaw_to_slinear16_be
-#define mulaw_to_slinear16_mts mulaw_to_slinear16_be_mts
-#define alaw_to_slinear16 alaw_to_slinear16_be
-#define alaw_to_slinear16_mts alaw_to_slinear16_be_mts
-#endif
+/* Convert 24-bit mu-law to/from 24 bit signed linear. */
+void mulaw24_to_slinear24(void *, u_char *, int);
+void slinear24_to_mulaw24(void *, u_char *, int);

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.80 2015/01/20 17:08:35 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.81 2015/05/11 06:46:21 ratchov Exp $
 
 #
 # macppc-specific configuration info
@@ -162,7 +162,7 @@ device	abtn
 attach	abtn at adb
 file	arch/macppc/dev/abtn.c				abtn
 
-device	awacs: audio, auconv, mulaw
+device	awacs: audio
 attach	awacs at macobio
 file	arch/macppc/dev/awacs.c				awacs
 
@@ -192,27 +192,27 @@ attach	xlights at macobio
 file	arch/macppc/dev/xlights.c			xlights
 
 # snapper audio
-device	snapper: audio, auconv, mulaw, i2s
+device	snapper: audio, i2s
 attach	snapper at macobio
 file	arch/macppc/dev/snapper.c			snapper
 
 # tumbler audio
-device	tumbler: audio, auconv, mulaw, i2s
+device	tumbler: audio, i2s
 attach	tumbler at macobio
 file	arch/macppc/dev/tumbler.c			tumbler
 
 # onyx audio
-device	onyx: audio, auconv, mulaw, i2s
+device	onyx: audio, i2s
 attach	onyx at macobio
 file	arch/macppc/dev/onyx.c				onyx
 
 # aoa audio
-device	aoa: audio, auconv, mulaw, i2s
+device	aoa: audio, i2s
 attach	aoa at macobio
 file	arch/macppc/dev/aoa.c				aoa
 
 # daca audio
-device	daca: audio, auconv, mulaw, i2s
+device	daca: audio, i2s
 attach	daca at macobio
 file	arch/macppc/dev/daca.c				daca
 

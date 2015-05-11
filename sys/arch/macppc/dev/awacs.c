@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.30 2015/04/07 09:54:11 mpi Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.31 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -33,9 +33,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <dev/auconv.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -503,52 +501,10 @@ awacs_query_encoding(void *h, struct audio_encoding *ae)
 {
 	switch (ae->index) {
 	case 0:
-		strlcpy(ae->name, AudioEslinear, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	case 1:
 		strlcpy(ae->name, AudioEslinear_be, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		ae->precision = 16;
 		ae->flags = 0;
-		break;
-	case 2:
-		strlcpy(ae->name, AudioEslinear_le, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	case 3:
-		strlcpy(ae->name, AudioEmulaw, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
-		strlcpy(ae->name, AudioEalaw, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ALAW;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 5:
-		strlcpy(ae->name, AudioEulinear, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ULINEAR;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(ae->name, AudioEulinear_le, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(ae->name, AudioEulinear_be, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
@@ -593,73 +549,12 @@ awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
 			p->sample_rate = 4000;
 		if (p->sample_rate > 50000)
 			p->sample_rate = 50000;
-		if (p->precision > 16)
-			p->precision = 16;
-		if (p->channels > 2)
-			p->channels = 2;
 		
-		p->factor = 1;
-		p->sw_code = NULL;
 		awacs_write_reg(sc, AWACS_BYTE_SWAP, 0);
 
-		switch (p->encoding) {
-
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				p->precision = 16;
-			if (p->channels == 2)
-				p->sw_code = swap_bytes;
-			else {
-				p->factor = 2;
-				p->sw_code = swap_bytes_mts;
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision != 16)
-				p->precision = 16;
-			if (p->channels == 1) {
-				p->factor = 2;
-				p->sw_code = noswap_bytes_mts;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision != 16)
-				p->precision = 16;
-			if (p->channels == 2)
-				p->sw_code = swap_bytes_change_sign16_be;
-			else {
-				p->factor = 2;
-				p->sw_code = swap_bytes_change_sign16_be_mts;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision != 16)
-				p->precision = 16;
-			if (p->channels == 2)
-				p->sw_code = change_sign16_be;
-			else {
-				p->factor = 2;
-				p->sw_code = change_sign16_be_mts;
-			}
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_be;
-				break;
-			} else
-				break;	/* XXX */
-			return (EINVAL);
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_be;
-				break;
-			}
-			return (EINVAL);
-		default:
-			return (EINVAL);
-		}
+		p->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		p->precision = 16;
+		p->channels = 2;
 		p->bps = AUDIO_BPS(p->precision);
 		p->msb = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.38 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.39 2015/05/11 06:46:22 ratchov Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -59,8 +59,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ac97.h>
 
@@ -943,17 +941,7 @@ maestro_query_devinfo(void *self, mixer_devinfo_t *cp)
 struct audio_encoding maestro_tab[] = { 
 	{0, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 0},
 	{1, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 1, 1, 0},
-	{2, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 1, 1, 0},
-	{3, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16, 2, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED},
-	{4, AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE, 16, 2, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED},
-	{5, AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE, 16, 2, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED},
-	{6, AudioEmulaw, AUDIO_ENCODING_ULAW, 8, 1, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED},
-	{7, AudioEalaw, AUDIO_ENCODING_ALAW, 8, 1, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED}
+	{2, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 1, 1, 0}
 };
 
 int
@@ -1046,8 +1034,6 @@ maestro_set_params(void *hdl, int setmode, int usemode,
 	else if (play->sample_rate > 48000)
 		play->sample_rate = 48000;
 
-	play->factor = 1;
-	play->sw_code = NULL;
 	if (play->channels > 2)
 		play->channels = 2;
 
@@ -1055,24 +1041,12 @@ maestro_set_params(void *hdl, int setmode, int usemode,
 	if (play->channels == 2)
 		sc->play.mode |= MAESTRO_STEREO;
 
-	if (play->encoding == AUDIO_ENCODING_ULAW) {
-		play->factor = 2;
-		play->sw_code = mulaw_to_slinear16_le;
-	} else if (play->encoding == AUDIO_ENCODING_ALAW) {
-		play->factor = 2;
-		play->sw_code = alaw_to_slinear16_le;
-	} else if (play->precision == 8) {
+	if (play->precision == 8) {
 		sc->play.mode |= MAESTRO_8BIT;
 		if (play->encoding == AUDIO_ENCODING_ULINEAR_LE ||
 		    play->encoding == AUDIO_ENCODING_ULINEAR_BE)
 		    sc->play.mode |= MAESTRO_UNSIGNED;
 	}
-	else if (play->encoding == AUDIO_ENCODING_ULINEAR_LE)
-		play->sw_code = change_sign16_le;
-	else if (play->encoding == AUDIO_ENCODING_SLINEAR_BE)
-		play->sw_code = swap_bytes;
-	else if (play->encoding == AUDIO_ENCODING_ULINEAR_BE)
-		play->sw_code = change_sign16_swap_bytes_le;
 	else if (play->encoding != AUDIO_ENCODING_SLINEAR_LE)
 		return (EINVAL);
 

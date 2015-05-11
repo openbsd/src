@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.28 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: esa.c,v 1.29 2015/05/11 06:46:22 ratchov Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -61,8 +61,6 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 #include <dev/ic/ac97.h>
 
 #include <dev/pci/esareg.h>
@@ -166,19 +164,7 @@ int		esa_resume(struct esa_softc *);
 
 static audio_encoding_t esa_encoding[] = {
 	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 1, 1, 0 },
-	{ 1, AudioEmulaw, AUDIO_ENCODING_ULAW, 8, 1, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED },
-	{ 2, AudioEalaw, AUDIO_ENCODING_ALAW, 8, 1, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED },
-	{ 3, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 1, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED },
-	{ 4, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 0 },
-	{ 5, AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE, 16, 2, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED },
-	{ 6, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16, 2, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED },
-	{ 7, AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE, 16, 2, 1,
-	    AUDIO_ENCODINGFLAG_EMULATED }
+	{ 1, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 0 }
 };
 
 #define ESA_NENCODINGS 8
@@ -292,47 +278,15 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 		if (p->channels > 2)
 			p->channels = 2;
 
-		p->factor = 1;
-		p->sw_code = 0;
-
 		switch(p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    swap_bytes_change_sign16_le;
-				else
-					p->sw_code =
-					    change_sign16_swap_bytes_le;
-			}
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (p->precision != 8)
+				return EINVAL;
 			break;
 		default:
 			return (EINVAL);
@@ -369,7 +323,7 @@ esa_commit_settings(void *hdl)
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 		       vc->play.data_offset + ESA_SRC3_MODE_OFFSET,
 		       data);
-	if (p->precision * p->factor == 8)
+	if (p->precision == 8)
 		data = 1;
 	else
 		data = 0;
@@ -392,7 +346,7 @@ esa_commit_settings(void *hdl)
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 		       vc->rec.data_offset + ESA_SRC3_MODE_OFFSET,
 		       data);
-	if (r->precision * r->factor == 8)
+	if (r->precision == 8)
 		data = 1;
 	else
 		data = 0;

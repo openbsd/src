@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.17 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.18 2015/05/11 06:46:21 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -229,142 +229,18 @@ mavb_query_encoding(void *hdl, struct audio_encoding *ae)
 {
 	switch (ae->index) {
 	case 0:
-		/* 8-bit Unsigned Linear PCM.  */
-		strlcpy(ae->name, AudioEulinear, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ULINEAR;
-		ae->precision = 8;
-		ae->flags = 0;
-		break;
-	case 1:
-		/* 16-bit Signed Linear PCM.  */
+		/* 24-bit Signed Linear PCM LSB-aligned.  */
 		strlcpy(ae->name, AudioEslinear_be, sizeof ae->name);
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	case 2:
-		/* 8-bit mu-Law Companded.  */
-		strlcpy(ae->name, AudioEmulaw, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->precision = 8;
-		ae->flags = 0;
-		break;
-	case 3:
-		/* 8-bit A-Law Companded.  */
-		strlcpy(ae->name, AudioEalaw, sizeof ae->name);
-		ae->encoding = AUDIO_ENCODING_ALAW;
-		ae->precision = 8;
+		ae->precision = 24;
 		ae->flags = 0;
 		break;
 	default:
 		return (EINVAL);
 	}
 	ae->bps = AUDIO_BPS(ae->precision);
-	ae->msb = 1;
-
+	ae->msb = 0;
 	return (0);
-}
-
-/*
- * For some reason SGI has decided to standardize their sound hardware
- * interfaces on 24-bit PCM even though the AD1843 codec used in the
- * Moosehead A/V Board only supports 16-bit and 8-bit formats.
- * Therefore we must convert everything to 24-bit samples only to have
- * the MACE hardware convert them back into 16-bit samples again.  To
- * complicate matters further, the 24-bit samples are embedded 32-bit
- * integers.  The 8-bit and 16-bit samples are first converted into
- * 24-bit samples by padding them to the right with zeroes.  Then they
- * are sign-extended into 32-bit integers.  This conversion is
- * conveniently done through the software encoding layer of the high
- * level audio driver by using the functions below.  Conversion of
- * mu-law and A-law formats is done by the hardware.
- */
-
-static void
-linear16_to_linear24_be(void *hdl, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc * 2;
-	while ((cc -= 2) >= 0) {
-		q -= 4;
-		q[3] = 0;
-		q[2] = *--p;
-		q[1] = *--p;
-		q[0] = (*p & 0x80) ? 0xff : 0;
-	}
-}
-
-static void
-linear24_to_linear16_be(void *hdl, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	while ((cc -= 4) >= 0) {
-		*q++ = p[1];
-		*q++ = p[2];
-		p += 4;
-	}
-}
-
-static void
-ulinear8_to_ulinear24_be(void *hdl, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc * 4;
-	while (--cc >= 0) {
-		q -= 4;
-		q[3] = 0;
-		q[2] = 0;
-		q[1] = *--p;
-		q[0] = (*p & 0x80) ? 0xff : 0;
-	}
-}
-
-static void
-ulinear24_to_ulinear8_be(void *hdl, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	while ((cc -= 4) >= 0) {
-		*q++ = p[1];
-		p += 4;
-	}
-}
-
-static void
-linear16_to_linear24_be_mts(void *hdl, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc * 4;
-	while ((cc -= 2) >= 0) {
-		q -= 8;
-		q[3] = q[7] = 0;
-		q[2] = q[6] = *--p;
-		q[1] = q[5] = *--p;
-		q[0] = q[4] = (*p & 0x80) ? 0xff : 0;
-	}
-}
-
-static void
-ulinear8_to_ulinear24_be_mts(void *hdl, u_char *p, int cc)
-{
-	u_char *q = p;
-
-	p += cc;
-	q += cc * 8;
-	while (--cc >= 0) {
-		q -= 8;
-		q[3] = q[7] = 0;
-		q[2] = q[6] = 0;
-		q[1] = q[5] = *--p;
-		q[0] = q[4] = (*p & 0x80) ? 0xff : 0;
-	}
 }
 
 void
@@ -372,15 +248,10 @@ mavb_get_default_params(void *hdl, int mode, struct audio_params *p)
 {
 	p->sample_rate = 48000;
 	p->encoding = AUDIO_ENCODING_SLINEAR_BE;
-	p->precision = 16;
-	p->bps = 2;
-	p->msb = 1;
+	p->precision = 24;
+	p->bps = 4;
+	p->msb = 0;
 	p->channels = 2;
-	p->factor = 2;
-	if (mode == AUMODE_PLAY)
-		p->sw_code = linear16_to_linear24_be;
-	else
-		p->sw_code = linear24_to_linear16_be;
 }
 
 static int
@@ -486,52 +357,11 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 	    play->precision, play->channels));
 
 	if (setmode & AUMODE_PLAY) {
-		switch (play->encoding) {
-		case AUDIO_ENCODING_ULAW:
-		case AUDIO_ENCODING_ALAW:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (play->precision != 8)
-				return (EINVAL);
-			switch (play->channels) {
-			case 1:
-				play->factor = 8;
-				play->sw_code = ulinear8_to_ulinear24_be_mts;
-				break;
-			case 2:
-				play->factor = 4;
-				play->sw_code = ulinear8_to_ulinear24_be;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (play->precision == 16) {
-				switch (play->channels) {
-				case 1:
-					play->factor = 4;
-					play->sw_code =
-						linear16_to_linear24_be_mts;
-					break;
-				case 2:
-					play->factor = 2;
-					play->sw_code =
-						linear16_to_linear24_be;
-					break;
-				default:
-					return (EINVAL);
-				}
-			} else {
-				play->factor = 1;
-				play->sw_code = NULL;
-				play->channels = 2;
-				play->precision = 24;
-			}
-			break;
-		default:
-			return (EINVAL);
-		}
-
+		play->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		play->channels = 2;
+		play->precision = 24;
+		play->bps = AUDIO_BPS(play->precision);
+		play->msb = 0;
 		error = mavb_set_play_rate(sc, play->sample_rate);
 		if (error)
 			return (error);
@@ -540,38 +370,14 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 		if (error)
 			return (error);
 
-		play->bps = AUDIO_BPS(play->precision);
-		play->msb = 0;
 	}
 
 	if (setmode & AUMODE_RECORD) {
-		switch (rec->encoding) {
-		case AUDIO_ENCODING_ULAW:
-		case AUDIO_ENCODING_ALAW:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (rec->precision != 8)
-				return (EINVAL);
-			rec->factor = 4;
-			rec->sw_code = ulinear24_to_ulinear8_be;
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (rec->precision == 16) {
-				rec->factor = 2;
-				rec->sw_code = linear24_to_linear16_be;
-			} else {
-				rec->factor = 1;
-				rec->sw_code = NULL;
-				rec->channels = 2;
-				rec->precision = 24;
-				break;
-			}
-			break;
-		default:
-			return (EINVAL);
-		}
-
-		/* stereo to mono conversions not yet implemented */
+		rec->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		rec->channels = 2;
+		rec->precision = 24;
+		rec->bps = AUDIO_BPS(rec->precision);
+		rec->msb = 0;
 
 		error = mavb_set_rec_rate(sc, rec->sample_rate);
 		if (error)
@@ -580,9 +386,6 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 		error = mavb_set_rec_format(sc, rec->encoding);
 		if (error)
 			return (error);
-
-		rec->bps = AUDIO_BPS(rec->precision);
-		rec->msb = 0;
 	}
 
 	return (0);

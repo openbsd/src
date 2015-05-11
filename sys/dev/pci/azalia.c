@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.220 2015/02/10 06:19:44 dlg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.221 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 #include <sys/types.h>
 #include <sys/timeout.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
@@ -3910,8 +3909,6 @@ azalia_get_default_params(void *addr, int mode, struct audio_params *params)
 	params->bps = 2;
 	params->msb = 1;
 	params->channels = 2;
-	params->sw_code = NULL;
-	params->factor = 1;
 }
 
 int
@@ -3944,7 +3941,6 @@ azalia_match_format(codec_t *codec, int mode, audio_params_t *par)
 int
 azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 {
-	void (*swcode)(void *, u_char *, int) = NULL;
 	char *cmode;
 	int i, j;
 	uint ochan, oenc, opre;
@@ -3965,20 +3961,6 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 	}
 
 	i = azalia_match_format(codec, mode, par);
-	if (i == codec->nformats && par->channels == 1) {
-		/* find a 2 channel format and emulate mono */
-		par->channels = 2;
-		i = azalia_match_format(codec, mode, par);
-		if (i != codec->nformats) {
-			par->factor = 2;
-			if (mode == AUMODE_RECORD)
-				swcode = linear16_decimator;
-			else
-				swcode = noswap_bytes_mts;
-			par->channels = 1;
-		}
-	}
-	par->channels = ochan;
 	if (i == codec->nformats && (par->precision != 16 || par->encoding !=
 	    AUDIO_ENCODING_SLINEAR_LE)) {
 		/* try with default encoding/precision */
@@ -3986,20 +3968,6 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 		par->precision = 16;
 		i = azalia_match_format(codec, mode, par);
 	}
-	if (i == codec->nformats && par->channels == 1) {
-		/* find a 2 channel format and emulate mono */
-		par->channels = 2;
-		i = azalia_match_format(codec, mode, par);
-		if (i != codec->nformats) {
-			par->factor = 2;
-			if (mode == AUMODE_RECORD)
-				swcode = linear16_decimator;
-			else
-				swcode = noswap_bytes_mts;
-			par->channels = 1;
-		}
-	}
-	par->channels = ochan;
 	if (i == codec->nformats && par->channels != 2) {
 		/* try with default channels */
 		par->encoding = oenc;
@@ -4045,7 +4013,6 @@ azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 			return EINVAL;
 		}
 	}
-	par->sw_code = swcode;
 	par->bps = AUDIO_BPS(par->precision);
 	par->msb = 1;
 
@@ -4328,11 +4295,8 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 	DPRINTFN(1, ("%s: prec=%d, chan=%d, rate=%ld\n", __func__,
 	    param->precision, param->channels, param->sample_rate));
 
-	/* Only mono is emulated, and it is emulated from stereo. */
-	if (param->sw_code != NULL)
-		ret |= 1;
-	else
-		ret |= param->channels - 1;
+	/* XXX: can channels be >2 ? */
+	ret |= param->channels - 1;
 
 	switch (param->precision) {
 	case 8:

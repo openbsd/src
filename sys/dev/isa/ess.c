@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.20 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: ess.c,v 1.21 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -81,8 +81,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -1121,46 +1119,22 @@ ess_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
 		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	case 4:
+	case 2:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 5:
+	case 3:
 		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return EINVAL;
@@ -1217,30 +1191,14 @@ ess_set_params(void *addr, int setmode, int usemode,
 		if (p->channels > 2)
 			p->channels = 2;
 
-		p->factor = 1;
-		p->sw_code = 0;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
+			if (p->precision != 8)
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 		case AUDIO_ENCODING_ULINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
 			break;
 		default:
 			return (EINVAL);
@@ -1301,7 +1259,7 @@ ess_audio1_trigger_output(void *addr, void *start, void *end, int blksize,
 	ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL, reg);
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		reg |= ESS_AUDIO1_CTRL1_FIFO_SIZE;
 	else
 		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIZE;
@@ -1365,7 +1323,7 @@ ess_audio2_trigger_output(void *addr, void *start, void *end, int blksize,
 	}
 
 	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		reg |= ESS_AUDIO2_CTRL2_FIFO_SIZE;
 	else
 		reg &= ~ESS_AUDIO2_CTRL2_FIFO_SIZE;
@@ -1440,7 +1398,7 @@ ess_audio1_trigger_input(void *addr, void *start, void *end, int blksize,
 	ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL, reg);
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO1_CTRL1);
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		reg |= ESS_AUDIO1_CTRL1_FIFO_SIZE;
 	else
 		reg &= ~ESS_AUDIO1_CTRL1_FIFO_SIZE;

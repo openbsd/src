@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.26 2015/03/03 23:50:37 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.27 2015/05/11 06:46:21 ratchov Exp $
 #
 maxpartitions 16
 
@@ -68,7 +68,7 @@ attach	pcex at cbus
 file	arch/luna88k/cbus/pcex.c			pcex needs-flag
 
 # NEC PC-9801-86 sound board
-device	necsb: audio, auconv, mulaw
+device	necsb: audio
 attach	necsb at cbus
 file	arch/luna88k/cbus/necsb.c			necsb needs-flag
 file	arch/luna88k/cbus/nec86.c			necsb needs-flag

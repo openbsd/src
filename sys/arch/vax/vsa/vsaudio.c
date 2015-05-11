@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsaudio.c,v 1.4 2013/05/15 21:21:11 ratchov Exp $	*/
+/*	$OpenBSD: vsaudio.c,v 1.5 2015/05/11 06:46:21 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -134,7 +134,8 @@ struct am7930_glue vsaudio_glue = {
 	vsaudio_codec_iread16,
 	vsaudio_codec_iwrite16,
 	vsaudio_onopen,
-	vsaudio_onclose
+	vsaudio_onclose,
+	8
 };
 
 /*

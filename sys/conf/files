@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.591 2014/12/28 21:32:44 krw Exp $
+#	$OpenBSD: files,v 1.592 2015/05/11 06:46:21 ratchov Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -23,10 +23,6 @@ define	video {}
 
 # filesystem firmware loading attribute
 define firmload
-
-# audio device attributes
-define	mulaw
-define	auconv
 
 # radio device attributes
 define tea5757
@@ -489,7 +485,7 @@ define	am7930
 file	dev/ic/am7930.c			am7930
 
 # Siemens PSB2160 audio codec, as found in HP systems
-device	arcofi: audio, auconv, mulaw
+device	arcofi: audio
 file	dev/ic/arcofi.c			arcofi
 
 # radio devices, attaches to radio hardware driver
@@ -626,7 +622,6 @@ file ddb/db_variables.c			ddb
 file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
 file ddb/db_usrreq.c			ddb
-file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/cons.c
 file dev/diskmap.c
@@ -641,7 +636,7 @@ file dev/ic/lm700x.c			lm700x
 file dev/ic/tc921x.c			tc921x
 file dev/ic/pt2254a.c			pt2254a
 file dev/midi.c				midi | midibus		needs-flag
-file dev/mulaw.c			mulaw
+file dev/mulaw.c			audio			needs-flag
 file dev/systrace.c			systrace		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c

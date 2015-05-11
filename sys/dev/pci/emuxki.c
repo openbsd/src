@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.47 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.48 2015/05/11 06:46:22 ratchov Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -63,14 +63,10 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
-#include <dev/mulaw.h>
 #include <dev/ic/ac97.h>
 
 #include <dev/pci/emuxkireg.h>
 #include <dev/pci/emuxkivar.h>
-
-#define slinear16_to_ulinear8_le linear16_to_ulinear8_le;
 
 /* autconf goo */
 int  emuxki_match(struct device *, void *, void *);
@@ -2098,46 +2094,10 @@ emuxki_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
@@ -2155,8 +2115,6 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 
 	mode = (voice->use & EMU_VOICE_USE_PLAY) ?
 		AUMODE_PLAY : AUMODE_RECORD;
-	p->factor = 1;
-	p->sw_code = NULL;
 	if (p->channels > 2)
 		p->channels = 2;
 	if (p->precision > 16)
@@ -2171,64 +2129,19 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 		b16 = (p->precision == 16);
 	else {
 		b16 = 1;
-		if (p->precision == 8)
-			p->factor *= 2;
+		p->precision = 16;
 	}
 
 	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		if (mode == AUMODE_PLAY) {
-			p->factor = 2;
-			p->sw_code = mulaw_to_slinear16_le;
-			b16 = 1;
-		} else
-			p->sw_code = slinear16_to_mulaw_le;
-		break;
-
-	case AUDIO_ENCODING_ALAW:
-		if (mode == AUMODE_PLAY) {
-			p->factor = 2;
-			p->sw_code = alaw_to_slinear16_le;
-			b16 = 1;
-		} else
-			p->sw_code = slinear16_to_alaw_le;
-		break;
-
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			if (mode == AUMODE_PLAY)
-				p->sw_code = change_sign8;
-			else
-				p->sw_code = linear16_to_linear8_le;
-		}
+		if (p->precision != 16)
+			return EINVAL;
 		break;
 
 	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 16)
-			p->sw_code = change_sign16_le;
-		else if (mode == AUMODE_RECORD)
-			p->sw_code = slinear16_to_ulinear8_le;
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16)
-			p->sw_code = swap_bytes;
-		else {
-			if (mode == AUMODE_PLAY)
-				p->sw_code = change_sign8;
-			else
-				p->sw_code = linear16_to_linear8_le;
-		}
-		break;
-
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision == 16) {
-			if (mode == AUMODE_PLAY)
-				p->sw_code = swap_bytes_change_sign16_le;
-			else
-				p->sw_code = change_sign16_swap_bytes_le;
-		} else if (mode == AUMODE_RECORD)
-			p->sw_code = slinear16_to_ulinear8_le;
+		if (p->precision != 8)
+			return EINVAL;
 		break;
 
 	default:

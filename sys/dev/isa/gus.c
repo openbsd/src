@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.41 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: gus.c,v 1.42 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -106,8 +106,6 @@
 #include <machine/cpufunc.h>
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -1485,12 +1483,8 @@ gus_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 	struct gus_softc *sc = addr;
 
 	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_ALAW:
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_ULINEAR_BE:
 		break;
 	default:
 		return (EINVAL);
@@ -1520,20 +1514,6 @@ gus_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 	if (setmode & AUMODE_PLAY)
 		sc->sc_orate = p->sample_rate;
 
-	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		p->sw_code = mulaw_to_ulinear8;
-		r->sw_code = ulinear8_to_mulaw;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		p->sw_code = alaw_to_ulinear8;
-		r->sw_code = ulinear8_to_alaw;
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-	case AUDIO_ENCODING_SLINEAR_BE:
-		r->sw_code = p->sw_code = swap_bytes;
-		break;
-	}
 	p->bps = AUDIO_BPS(p->precision);
 	r->bps = AUDIO_BPS(r->precision);
 	p->msb = r->msb = 1;
@@ -3147,54 +3127,29 @@ gus_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 1:
 		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	case 2:
+	case 1:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 3:
+	case 2:
 		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	case 4:
+	case 3:
 		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 5:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
 	default:
 		return(EINVAL);
 		/*NOTREACHED*/

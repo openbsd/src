@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.41 2014/03/15 21:49:47 kettenis Exp $
+#	$OpenBSD: files.sbus,v 1.42 2015/05/11 06:46:22 ratchov Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -51,7 +51,7 @@ file	dev/sbus/if_ti_sbus.c		ti_sbus
 attach	gem at sbus with gem_sbus
 file	dev/sbus/if_gem_sbus.c		gem_sbus
 
-device	audiocs: audio, auconv
+device	audiocs: audio
 attach	audiocs at sbus
 file	dev/sbus/cs4231.c		audiocs
 

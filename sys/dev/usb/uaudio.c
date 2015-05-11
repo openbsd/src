@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.110 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.111 2015/05/11 06:46:22 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdevs.h>
@@ -2355,8 +2354,6 @@ uaudio_get_default_params(void *addr, int mode, struct audio_params *p)
 	p->bps = 2;
 	p->msb = 1;
 	p->channels = 2;
-	p->sw_code = NULL;
-	p->factor = 1;
 
 	/* If the device doesn't support the current mode, there's no
 	 * need to find better parameters.
@@ -3492,9 +3489,6 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 			    __func__, mode == AUMODE_RECORD ? "rec" : "play"));
 			continue;
 		}
-
-		p->sw_code = NULL;
-		p->factor  = 1;
 
 		p->bps = sc->sc_alts[i].asf1desc->bSubFrameSize;
 		p->msb = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.26 2015/04/07 09:54:11 mpi Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.27 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -33,9 +33,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <dev/auconv.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 #include <dev/ofw/openfirm.h>
 #include <macppc/dev/dbdma.h>
 
@@ -60,12 +58,8 @@ struct audio_params i2s_audio_default = {
 	16,		/* precision */
 	2,		/* bps */
 	1,		/* msb */
-	2,		/* channels */
-	NULL,		/* sw_code */
-	1		/* factor */
+	2		/* channels */
 };
-
-struct i2s_mode *i2s_find_mode(u_int, u_int, u_int);
 
 void	i2s_mute(u_int, int);
 int	i2s_cint(void *);
@@ -244,58 +238,10 @@ i2s_query_encoding(h, ae)
 
 	switch (ae->index) {
 	case 0:
-		strlcpy(ae->name, AudioEslinear, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->precision = 16;
-		ae->flags = 0;
-		break;
-	case 1:
 		strlcpy(ae->name, AudioEslinear_be, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		ae->precision = 16;
 		ae->flags = 0;
-		break;
-	case 2:
-		strlcpy(ae->name, AudioEslinear_le, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(ae->name, AudioEulinear_be, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
-		strlcpy(ae->name, AudioEulinear_le, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->precision = 16;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 5:
-		strlcpy(ae->name, AudioEmulaw, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(ae->name, AudioEalaw, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ALAW;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(ae->name, AudioEslinear, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 8:
-		strlcpy(ae->name, AudioEulinear, sizeof(ae->name));
-		ae->encoding = AUDIO_ENCODING_ULINEAR;
-		ae->precision = 8;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		err = EINVAL;
@@ -307,55 +253,12 @@ i2s_query_encoding(h, ae)
 }
 
 
-struct i2s_mode {
-	u_int encoding;
-	u_int precision;
-	u_int channels;
-	void (*sw_code)(void *, u_char *, int);
-	int factor;
-} i2s_modes[] = {
-	{ AUDIO_ENCODING_SLINEAR_LE,  8, 1, linear8_to_linear16_be_mts, 4 },
-	{ AUDIO_ENCODING_SLINEAR_LE,  8, 2, linear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_SLINEAR_LE, 16, 1, swap_bytes_mts, 2 },
-	{ AUDIO_ENCODING_SLINEAR_LE, 16, 2, swap_bytes, 1 },
-	{ AUDIO_ENCODING_SLINEAR_BE,  8, 1, linear8_to_linear16_be_mts, 4 },
-	{ AUDIO_ENCODING_SLINEAR_BE,  8, 2, linear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_SLINEAR_BE, 16, 1, noswap_bytes_mts, 2 },
-	{ AUDIO_ENCODING_SLINEAR_BE, 16, 2, NULL, 1 },
-	{ AUDIO_ENCODING_ULINEAR_LE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
-	{ AUDIO_ENCODING_ULINEAR_LE,  8, 2, ulinear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_ULINEAR_LE, 16, 1, change_sign16_swap_bytes_le_mts, 2 },
-	{ AUDIO_ENCODING_ULINEAR_LE, 16, 2, swap_bytes_change_sign16_be, 1 },
-	{ AUDIO_ENCODING_ULINEAR_BE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
-	{ AUDIO_ENCODING_ULINEAR_BE,  8, 2, ulinear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, change_sign16_be_mts, 2 },
-	{ AUDIO_ENCODING_ULINEAR_BE, 16, 2, change_sign16_be, 1 }
-};
-
-
-struct i2s_mode *
-i2s_find_mode(u_int encoding, u_int precision, u_int channels)
-{
-	struct i2s_mode *m;
-	int i;
-
-	for (i = 0; i < sizeof(i2s_modes)/sizeof(i2s_modes[0]); i++) {
-		m = &i2s_modes[i];
-		if (m->encoding == encoding &&
-		    m->precision == precision &&
-		    m->channels == channels)
-			return (m);
-	}
-	return (NULL);
-}
-
 int
 i2s_set_params(h, setmode, usemode, play, rec)
 	void *h;
 	int setmode, usemode;
 	struct audio_params *play, *rec;
 {
-	struct i2s_mode *m;
 	struct i2s_softc *sc = h;
 	struct audio_params *p;
 	int mode;
@@ -394,53 +297,8 @@ i2s_set_params(h, setmode, usemode, play, rec)
 			p->channels = 2;
 
 		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_LE:
 		case AUDIO_ENCODING_SLINEAR_BE:
-		case AUDIO_ENCODING_ULINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			m = i2s_find_mode(p->encoding, p->precision,
-			    p->channels);
-			if (m == NULL) {
-				printf("mode not found: %u/%u/%u\n",
-				    p->encoding, p->precision, p->channels);
-				return (EINVAL);
-			}
-			p->factor = m->factor;
-			p->sw_code = m->sw_code;
 			break;
-
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				if (p->channels == 1) {
-					p->factor = 4;
-					p->sw_code = mulaw_to_slinear16_be_mts;
-					break;
-				}
-				if (p->channels == 2) {
-					p->factor = 2;
-					p->sw_code = mulaw_to_slinear16_be;
-					break;
-				}
-			} else
-				break; /* XXX */
-			return (EINVAL);
-
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				if (p->channels == 1) {
-					p->factor = 4;
-					p->sw_code = alaw_to_slinear16_be_mts;
-					break;
-				}
-				if (p->channels == 2) {
-					p->factor = 2;
-					p->sw_code = alaw_to_slinear16_be;
-					break;
-				}
-			} else
-				break; /* XXX */
-			return (EINVAL);
-
 		default:
 			return (EINVAL);
 		}

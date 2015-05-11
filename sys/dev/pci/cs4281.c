@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.31 2014/07/12 18:48:51 tedu Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.32 2015/05/11 06:46:22 ratchov Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ac97.h>
 
@@ -448,42 +446,30 @@ cs4281_query_encoding(addr, fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
 		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	case 4:
+	case 2:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 5:
+	case 3:
 		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 6:
+	case 4:
 		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 7:
+	case 5:
 		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
@@ -530,8 +516,6 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 			p->precision = 16;
 		if (p->channels > 2)
 			p->channels = 2;
-		p->factor = 1;
-		p->sw_code = 0;
 
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
@@ -541,20 +525,6 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_BE:
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = mulaw_to_slinear8;
-			} else {
-				p->sw_code = slinear8_to_mulaw;
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = alaw_to_slinear8;
-			} else {
-				p->sw_code = slinear8_to_alaw;
-			}
 			break;
 		default:
 			return (EINVAL);
@@ -634,8 +604,8 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	/* stop playback DMA */
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
 
-	DPRINTF(("param: precision=%d  factor=%d channels=%d encoding=%d\n",
-	       param->precision, param->factor, param->channels,
+	DPRINTF(("param: precision=%d channels=%d encoding=%d\n",
+	       param->precision, param->channels,
 	       param->encoding));
 	for (p = sc->sc_dmas; p != NULL && BUFADDR(p) != start; p = p->next)
 		;
@@ -662,7 +632,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 
 	dma_count = sc->dma_size;
-	if (param->precision * param->factor != 8)
+	if (param->precision != 8)
 		dma_count /= 2;   /* 16 bit */
 	if (param->channels > 1)
 		dma_count /= 2;   /* Stereo */
@@ -674,7 +644,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	/* set playback format */
 	fmt = BA0READ4(sc, CS4281_DMR0) & ~DMRn_FMTMSK;
-	if (param->precision * param->factor == 8)
+	if (param->precision == 8)
 		fmt |= DMRn_SIZE8;
 	if (param->channels == 1)
 		fmt |= DMRn_MONO;
@@ -756,7 +726,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_rn = sc->sc_rs;
 
 	dma_count = sc->dma_size;
-	if (param->precision * param->factor == 8)
+	if (param->precision == 8)
 		dma_count /= 2;
 	if (param->channels > 1)
 		dma_count /= 2;
@@ -768,7 +738,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	/* set recording format */
 	fmt = BA0READ4(sc, CS4281_DMR1) & ~DMRn_FMTMSK;
-	if (param->precision * param->factor == 8)
+	if (param->precision == 8)
 		fmt |= DMRn_SIZE8;
 	if (param->channels == 1)
 		fmt |= DMRn_MONO;

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.117 2014/12/04 21:03:51 tedu Exp $
+#	$OpenBSD: files.isa,v 1.118 2015/05/11 06:46:21 ratchov Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -222,7 +222,7 @@ define	sbdsp {}
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isa_dma, sbdsp, mulaw, auconv, mpu, midibus
+device	sb: audio, isa_dma, sbdsp, mpu, midibus
 file	dev/isa/sb.c			sb
 
 attach	sb at isa with sb_isa
@@ -231,12 +231,12 @@ file	dev/isa/sb_isa.c		sb & (sb_isa | sb_isapnp)
 # Soundcards based on Sierra's Aria chipset.
 # Such as the Prometheus Aria 16 or the Diamond
 # sonic sound.
-device	aria: audio, mulaw
+device	aria: audio
 attach	aria at isa
 file	dev/isa/aria.c			aria
 
 # ProAudio Spectrum
-device	pas: audio, isa_dma, sbdsp, mulaw, auconv
+device	pas: audio, isa_dma, sbdsp
 attach	pas at isa
 file	dev/isa/pas.c			pas
 
@@ -250,21 +250,21 @@ file	dev/isa/ics2101.c		ics2101
 
 
 # Microsoft Windows Sound System
-device	wss: audio, isa_dma, ad1848, auconv
+device	wss: audio, isa_dma, ad1848
 file	dev/isa/wss.c			wss
 
 attach	wss at isa with wss_isa
 file	dev/isa/wss_isa.c		wss & (wss_isa | wss_isapnp)
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess {} : audio, isa_dma, mulaw, auconv, midibus
+device	ess {} : audio, isa_dma, midibus
 file	dev/isa/ess.c			ess
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation.
 
-device	gus: audio, isa_dma, ics2101, ad1848, mulaw, auconv
+device	gus: audio, isa_dma, ics2101, ad1848
 file	dev/isa/gus.c			gus
 
 attach	gus at isa with gus_isa

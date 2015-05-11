@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.26 2014/07/12 18:48:51 tedu Exp $ */
+/*	$OpenBSD: fms.c,v 1.27 2015/05/11 06:46:22 ratchov Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -50,9 +50,6 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
-
 #include <dev/ic/ac97.h>
 #if 0
 #include <dev/ic/mpuvar.h>
@@ -439,52 +436,16 @@ fms_query_encoding(void *addr, struct audio_encoding *fp)
 
 	switch (fp->index) {
 	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 1:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 2:
+	case 1:
 		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return EINVAL;
@@ -532,34 +493,15 @@ fms_set_params(void *addr, int setmode, int usemode, struct audio_params *play,
 	int i;
 
 	if (setmode & AUMODE_PLAY) {
-		play->factor = 1;
-		play->sw_code = 0;
 		switch(play->encoding) {
-		case AUDIO_ENCODING_ULAW:
-			play->factor = 2;
-			play->sw_code = mulaw_to_slinear16_le;
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (play->precision == 8)
-				play->sw_code = change_sign8;
+			if (play->precision != 16)
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (play->precision == 16)
-				play->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			play->factor = 2;
-			play->sw_code = alaw_to_slinear16_le;
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = swap_bytes;
-			else
-				play->sw_code = change_sign8;
-			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = change_sign16_swap_bytes_le;
+			if (play->precision != 8)
+				return EINVAL;
 			break;
 		default:
 			return EINVAL;
@@ -572,38 +514,21 @@ fms_set_params(void *addr, int setmode, int usemode, struct audio_params *play,
 			;
 		play->sample_rate = fms_rates[i].rate;
 		sc->sc_play_reg = (play->channels == 2 ? FM_PLAY_STEREO : 0) |
-		    (play->precision * play->factor == 16 ? FM_PLAY_16BIT : 0) |
+		    (play->precision == 16 ? FM_PLAY_16BIT : 0) |
 		    (i << 8);
 	}
 
 	if (setmode & AUMODE_RECORD) {
 
-		rec->factor = 1;
-		rec->sw_code = 0;
 		switch(rec->encoding) {
-		case AUDIO_ENCODING_ULAW:
-			rec->sw_code = ulinear8_to_mulaw;
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (rec->precision == 8)
-				rec->sw_code = change_sign8;
+			if (rec->precision != 16)
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (rec->precision == 16)
-				rec->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			rec->sw_code = ulinear8_to_alaw;
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (rec->precision == 16)
-				rec->sw_code = swap_bytes;
-			else
-				rec->sw_code = change_sign8;
-			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (rec->precision == 16)
-				rec->sw_code = swap_bytes_change_sign16_le;
+			if (rec->precision != 8)
+				return EINVAL;
 			break;
 		default:
 			return EINVAL;
@@ -617,7 +542,7 @@ fms_set_params(void *addr, int setmode, int usemode, struct audio_params *play,
 		rec->sample_rate = fms_rates[i].rate;
 		sc->sc_rec_reg = 
 		    (rec->channels == 2 ? FM_REC_STEREO : 0) | 
-		    (rec->precision * rec->factor == 16 ? FM_REC_16BIT : 0) |
+		    (rec->precision == 16 ? FM_REC_16BIT : 0) |
 		    (i << 8);
 	}
 	

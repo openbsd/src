@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.28 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.29 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -59,9 +59,6 @@ struct audio_params {
 	u_int	bps;				/* bytes/sample */
 	u_int	msb;				/* data alignment */
 	u_int	channels;			/* mono(1), stereo(2) */
-	/* Software en/decode functions, set if SW coding required by HW */
-	void	(*sw_code)(void *, u_char *, int);
-	int	factor;				/* coding space change */
 };
 
 /* The default audio mode: 8 kHz mono mu-law */

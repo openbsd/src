@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.38 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.39 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -62,8 +62,6 @@ int cmpcidebug = 0;
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 #include <dev/pci/cmpcireg.h>
 #include <dev/pci/cmpcivar.h>
 
@@ -654,46 +652,10 @@ cmpci_query_encoding(void *handle, struct audio_encoding *fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return EINVAL;
@@ -713,8 +675,6 @@ cmpci_get_default_params(void *addr, int mode, struct audio_params *params)
 	params->bps = 2;
 	params->msb = 1;
 	params->channels = 2;
-	params->sw_code = NULL;
-	params->factor = 1;
 }
 
 int
@@ -778,7 +738,6 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 		/* format */
 		if (p->precision > 16)
 			p->precision = 16;
-		p->sw_code = NULL;
 		switch (p->channels) {
 		case 1:
 			md_format = CMPCI_REG_FORMAT_MONO;
@@ -851,83 +810,16 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 			return (EINVAL);
 		}
 		switch (p->encoding) {
-		case AUDIO_ENCODING_ULAW:
-			if (mode & AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-			} else {
-				p->sw_code = ulinear8_to_mulaw;
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode & AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-			} else {
-				p->sw_code = ulinear8_to_alaw;
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-			}
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			switch (p->precision) {
-			case 8:
-				p->sw_code = change_sign8;
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				break;
-			default:
+			if (p->precision != 16)
 				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			switch (p->precision) {
-			case 8:
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				p->sw_code = change_sign8;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				p->sw_code = swap_bytes;
-				break;
-			default:
-				return (EINVAL);
-			}
+			md_format |= CMPCI_REG_FORMAT_16BIT;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			switch (p->precision) {
-			case 8:
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				p->sw_code = change_sign16_le;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			switch (p->precision) {
-			case 8:
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				if (mode & AUMODE_PLAY)
-					p->sw_code =
-					    swap_bytes_change_sign16_le;
-				else
-					p->sw_code =
-					    change_sign16_swap_bytes_le;
-				break;
-			default:
+			if (p->precision != 8)
 				return (EINVAL);
-			}
+			md_format |= CMPCI_REG_FORMAT_8BIT;
 			break;
 		default:
 			return (EINVAL);
@@ -2015,7 +1907,7 @@ cmpci_trigger_output(void *handle, void *start, void *end, int blksize,
 		reg_enable = CMPCI_REG_CH0_ENABLE;
 	}
 
-	chan->bps = (param->channels > 1 ? 2 : 1) * param->bps * param->factor;
+	chan->bps = (param->channels > 1 ? 2 : 1) * param->bps;
 	if (!chan->bps)
 		return EINVAL;
 
@@ -2060,7 +1952,7 @@ cmpci_trigger_input(void *handle, void *start, void *end, int blksize,
 
 	cmpci_set_in_ports(sc);
 
-	chan->bps = param->channels * param->bps * param->factor;
+	chan->bps = param->channels * param->bps;
 	if (!chan->bps)
 		return EINVAL;
 

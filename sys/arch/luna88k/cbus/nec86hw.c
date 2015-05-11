@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hw.c,v 1.1 2014/12/28 13:03:18 aoyama Exp $	*/
+/*	$OpenBSD: nec86hw.c,v 1.2 2015/05/11 06:46:21 ratchov Exp $	*/
 /*	$NecBSD: nec86hw.c,v 1.13 1998/03/14 07:04:54 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -58,8 +58,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #if 0
 #include <dev/ic/ym2203reg.h>
@@ -107,17 +105,13 @@ static struct nec86hw_functable_entry nec86hw_functable[] = {
 	   output function, input function (without resampling),
 	   output function, input function (with resampling) */
 	{ 8, 1, 
-	    nec86fifo_output_mono_8_direct, nec86fifo_input_mono_8_direct,
-	    nec86fifo_output_mono_8_resamp, nec86fifo_input_mono_8_resamp },
+	    nec86fifo_output_mono_8_direct, nec86fifo_input_mono_8_direct },
 	{ 16, 1,
-	    nec86fifo_output_mono_16_direct, nec86fifo_input_mono_16_direct,
-	    nec86fifo_output_mono_16_resamp, nec86fifo_input_mono_16_resamp },
+	    nec86fifo_output_mono_16_direct, nec86fifo_input_mono_16_direct },
 	{ 8, 2,
-	    nec86fifo_output_stereo_8_direct, nec86fifo_input_stereo_8_direct,
-	    nec86fifo_output_stereo_8_resamp, nec86fifo_input_stereo_8_resamp },
+	    nec86fifo_output_stereo_8_direct, nec86fifo_input_stereo_8_direct },
 	{ 16, 2,
-	    nec86fifo_output_stereo_16_direct, nec86fifo_input_stereo_16_direct,
-	    nec86fifo_output_stereo_16_resamp, nec86fifo_input_stereo_16_resamp },
+	    nec86fifo_output_stereo_16_direct, nec86fifo_input_stereo_16_direct },
 };
 #define NFUNCTABLEENTRY	(sizeof(nec86hw_functable) / sizeof(nec86hw_functable[0]))
 
@@ -133,8 +127,8 @@ nec86hw_attach(struct nec86hw_softc *sc)
 	u_int8_t data;
 
 	/* Set default encoding. */
-	sc->func_fifo_output = nec86fifo_output_mono_8_resamp;
-	sc->func_fifo_input = nec86fifo_input_mono_8_resamp;
+	sc->func_fifo_output = nec86fifo_output_mono_8_direct;
+	sc->func_fifo_input = nec86fifo_input_mono_8_direct;
 	(void) nec86hw_set_params(sc, AUMODE_RECORD, 0,
 	    &audio_default, &audio_default);
 	(void) nec86hw_set_params(sc, AUMODE_PLAY,   0,
@@ -222,76 +216,21 @@ nec86hw_set_params(void *addr, int mode, int usemode, struct audio_params *p,
 	if ((p->channels != 1) && (p->channels != 2))
 		return EINVAL;
 
-	enc = p->encoding;
-	prec = p->precision;
-	switch (enc) {
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (prec == 8)
-			enc = AUDIO_ENCODING_SLINEAR;
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (prec == 8)
-			enc = AUDIO_ENCODING_ULINEAR;
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-		if (prec == 16)
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-		if (prec == 16)
-			enc = AUDIO_ENCODING_ULINEAR_LE;
-		break;
-	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_ALAW:
-		break;
-	default:
-		return EINVAL;
+	if (p->precision == 8)
+		p->encoding = AUDIO_ENCODING_ULINEAR_LE;
+	else {
+		p->precision = 16;
+		p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 	}
-
-	p->sw_code = NULL;
-	r->sw_code = NULL;
-	switch (enc) {
-	case AUDIO_ENCODING_ULAW:
-		p->sw_code = mulaw_to_ulinear8;
-		r->sw_code = ulinear8_to_mulaw;
-		enc = AUDIO_ENCODING_ULINEAR;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		p->sw_code = alaw_to_ulinear8;
-		r->sw_code = ulinear8_to_alaw;
-		enc = AUDIO_ENCODING_ULINEAR;
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		p->sw_code = r->sw_code = change_sign16;
-		enc = AUDIO_ENCODING_SLINEAR_LE;
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		p->sw_code = r->sw_code = swap_bytes_change_sign16;
-		enc = AUDIO_ENCODING_SLINEAR_LE;
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		p->sw_code = r->sw_code = swap_bytes;
-		enc = AUDIO_ENCODING_SLINEAR_LE;
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-		p->sw_code = r->sw_code = change_sign8;
-		enc = AUDIO_ENCODING_ULINEAR;
-		break;
-	default:
-		break;
-	}
-
 	sc->channels = p->channels;
 	sc->precision = prec;
 	sc->encoding = enc;
-	sc->sc_orate = p->sample_rate;
 	sc->hw_orate_bits = nec86hw_rate_bits(sc, p->sample_rate);
-	sc->hw_orate = nec86hw_rate_table[rate_type][sc->hw_orate_bits];
-	sc->sc_irate = r->sample_rate;
+	sc->sc_orate = p->sample_rate = sc->hw_orate =
+	    nec86hw_rate_table[rate_type][sc->hw_orate_bits];
 	sc->hw_irate_bits = nec86hw_rate_bits(sc, r->sample_rate);
-	sc->hw_irate = nec86hw_rate_table[rate_type][sc->hw_irate_bits];
+	sc->sc_irate = r->sample_rate = sc->hw_irate =
+	    nec86hw_rate_table[rate_type][sc->hw_irate_bits];
 	return 0;
 }
 
@@ -301,22 +240,6 @@ nec86hw_query_encoding(void *addr, struct audio_encoding *fp)
 
 	switch (fp->index) {
 	case 0:
-		strlcpy(fp->name, AudioEmulaw, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->bps = 1;
-		fp->msb = 1;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEalaw, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->bps = 1;
-		fp->msb = 1;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
 		strlcpy(fp->name, AudioEulinear, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
@@ -324,45 +247,13 @@ nec86hw_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->msb = 1;
 		fp->flags = 0;
 		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->bps = 1;
-		fp->msb = 1;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
-		strlcpy(fp->name, AudioEulinear_le, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->bps = 2;
-		fp->msb = 1;	/* is this OK? */
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_be, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->bps = 2;
-		fp->msb = 1;	/* is this OK? */
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
+	case 1:
 		strlcpy(fp->name, AudioEslinear_le, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->bps = 2;
 		fp->msb = 1;	/* is this OK? */
 		fp->flags = 0;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEslinear_be, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->bps = 2;
-		fp->msb = 1;	/* is this OK? */
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return EINVAL;
@@ -457,26 +348,10 @@ nec86hw_commit_settings(void *addr)
 		return EINVAL;
 	}
 
-	if (sc->sc_orate == sc->hw_orate) {
-		/* No need to resample. */
-		sc->func_fifo_output =
-		    nec86hw_functable[i].func_fifo_output_direct;
-	} else {
-		/* Resampling needed. */
-		sc->func_fifo_output =
-		    nec86hw_functable[i].func_fifo_output_resamp;
-	}
-
-	if (sc->sc_irate == sc->hw_irate) {
-		/* No need to resample. */
-		sc->func_fifo_input =
-		    nec86hw_functable[i].func_fifo_input_direct;
-	} else {
-		/* Resampling needed. */
-		sc->func_fifo_input =
-		    nec86hw_functable[i].func_fifo_input_resamp;
-	}
-
+	sc->func_fifo_output =
+	    nec86hw_functable[i].func_fifo_output_direct;
+	sc->func_fifo_input =
+	    nec86hw_functable[i].func_fifo_input_direct;
 	return 0;
 }
 
@@ -524,10 +399,8 @@ nec86hw_set_output_block(struct nec86hw_softc *sc, int cc)
 	bpf = (sc->channels * sc->precision) / NBBY;	/* bytes per frame */
 	sc->pdma_count = cc / bpf;
 
-	/* Size of the block after the rate-conversion. */
-	hw_blocksize =
-	    (sc->pdma_count * sc->hw_orate) / sc->sc_orate
-	    * (sc->precision / NBBY * 2);
+	/* Size of the block */
+	hw_blocksize = sc->pdma_count * (sc->precision / NBBY * 2);
 
 	/* How many chunks the block should be divided into. */
 	sc->pdma_nchunk =
@@ -578,10 +451,8 @@ nec86hw_set_input_block(struct nec86hw_softc *sc, int cc)
 	    (NEC86_BUFFSIZE * WATERMARK_RATIO_IN) / WATERMARK_MAX_RATIO;
 	maxwatermark = nec86hw_round_watermark(watermark);
 
-	/* Size of the block before the rate-conversion. */
-	hw_blocksize =
-	    (sc->pdma_count * sc->hw_irate + (sc->sc_irate - 1))
-	    / sc->sc_irate * (sc->precision / NBBY * 2);
+	/* Size of the block */
+	hw_blocksize = sc->pdma_count * (sc->precision / NBBY * 2);
 
 	/* How many chunks the block should be divided into. */
 	sc->pdma_nchunk = (hw_blocksize + (maxwatermark - 1)) / maxwatermark;
@@ -1279,133 +1150,6 @@ nec86fifo_output_mono_16_resamp(struct nec86hw_softc *sc, int cc)
 	return rval;
 }
 
-int
-nec86fifo_output_stereo_8_resamp(struct nec86hw_softc *sc, int cc)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *p = sc->pdma_ptr;
-	int i;
-	register int rval;
-	register u_int8_t d, d0_l, d0_r, d1_l, d1_r;
-	register u_long acc, orate, hw_orate;
-
-	rval = 0;
-
-	orate = sc->sc_orate;
-	hw_orate = sc->hw_orate;
-	acc = sc->conv_acc;
-	d0_l = sc->conv_last0_l;
-	d0_r = sc->conv_last0_r;
-	d1_l = sc->conv_last1_l;
-	d1_r = sc->conv_last1_r;
-
-	for (i = 0; i < cc; i++) {
-		d0_l = d1_l;
-		d0_r = d1_r;
-		d1_l = *p++;
-		d1_r = *p++;
-
-		while (acc <= hw_orate) {
-			/* Linear interpolation. (L) */
-			d = ((d0_l * (hw_orate - acc)) + (d1_l * acc))
-			    / hw_orate;
-			/* unsigned -> signed (L) */
-			d ^= 0x80;
-			bus_space_write_1(iot, ioh, NEC86_FIFODATA, d);
-
-			/* Linear interpolation. (R) */
-			d = ((d0_r * (hw_orate - acc)) + (d1_r * acc))
-			    / hw_orate;
-			/* unsigned -> signed (R) */
-			d ^= 0x80;
-			bus_space_write_1(iot, ioh, NEC86_FIFODATA, d);
-
-			acc += orate;
-			rval += 2;
-		}
-
-		acc -= hw_orate;
-	}
-
-	sc->conv_acc = acc;
-	sc->conv_last0_l = d0_l;
-	sc->conv_last0_r = d0_r;
-	sc->conv_last1_l = d1_l;
-	sc->conv_last1_r = d1_r;
-
-	return rval;
-}
-
-int
-nec86fifo_output_stereo_16_resamp(struct nec86hw_softc *sc, int cc)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *p = sc->pdma_ptr;
-	int i;
-	register int rval;
-	register u_short d, d0_l, d0_r, d1_l, d1_r;
-	register u_long acc, orate, hw_orate;
-
-	rval = 0;
-
-	orate = sc->sc_orate;
-	hw_orate = sc->hw_orate;
-	acc = sc->conv_acc;
-
-	d0_l = sc->conv_last0_l;
-	d0_r = sc->conv_last0_r;
-	d1_l = sc->conv_last1_l;
-	d1_r = sc->conv_last1_r;
-
-	for (i = 0; i < cc; i++) {
-		d0_l = d1_l;
-		d0_r = d1_r;
-		/* little endian signed -> unsigned (L) */
-		d1_l = (*p | (*(p + 1) << 8)) ^ 0x8000;
-		p += 2;
-		/* little endian signed -> unsigned (R) */
-		d1_r = (*p | (*(p + 1) << 8)) ^ 0x8000;
-		p += 2;
-
-		while (acc <= hw_orate) {
-			/* Linear interpolation. (L) */
-			d = ((d0_l * (hw_orate - acc)) + (d1_l * acc))
-			    / hw_orate;
-			/* unsigned -> signed (L) */
-			d ^= 0x8000;
-
-			bus_space_write_1(iot, ioh, NEC86_FIFODATA,
-			    (d >> 8) & 0xff); /* -> big endian (L) */
-			bus_space_write_1(iot, ioh, NEC86_FIFODATA, d & 0xff);
-
-			/* Linear interpolation. (R) */
-			d = ((d0_r * (hw_orate - acc)) + (d1_r * acc))
-			    / hw_orate;
-			/* unsigned -> signed (R) */
-			d ^= 0x8000;
-
-			bus_space_write_1(iot, ioh, NEC86_FIFODATA,
-			    (d >> 8) & 0xff); /* -> big endian (R) */
-			bus_space_write_1(iot, ioh, NEC86_FIFODATA, d & 0xff);
-
-			acc += orate;
-			rval += 4;
-		}
-
-		acc -= hw_orate;
-	}
-
-	sc->conv_acc = acc;
-	sc->conv_last0_l = d0_l;
-	sc->conv_last0_r = d0_r;
-	sc->conv_last1_l = d1_l;
-	sc->conv_last1_r = d1_r;
-
-	return rval;
-}
-
 /*
  * Read data from the FIFO ring buffer on the board.
  */
@@ -1532,223 +1276,6 @@ nec86fifo_input_stereo_16_direct(struct nec86hw_softc *sc, int cc)
 		p += 2;
 #endif
 	}
-}
-
-/*
- * Routines to read data with resampling. (linear interpolation)
- */
-void
-nec86fifo_input_mono_8_resamp(struct nec86hw_softc *sc, int cc)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *p = sc->pdma_ptr;
-	int i;
-	register u_int8_t d_l, d_r;
-	register u_int8_t d0, d1;
-	register u_long acc, irate, hw_irate;
-
-	irate = sc->sc_irate;
-	hw_irate = sc->hw_irate;
-	acc = sc->conv_acc;
-	d0 = sc->conv_last0;
-	d1 = sc->conv_last1;
-
-	for (i = 0; i < cc; i++) {
-		while (acc > irate) {
-			d0 = d1;
- 			/* signed -> unsigned (L) */
-			d_l = bus_space_read_1(iot, ioh, NEC86_FIFODATA) ^ 0x80;
- 			/* signed -> unsigned (R) */
-			d_r = bus_space_read_1(iot, ioh, NEC86_FIFODATA) ^ 0x80;
-			/* Fake monoral recording by taking arithmetical mean. */
-			d1 = (d_l + d_r) / 2;
-
-			acc -= irate;
-		}
-
-		/* Linear interpolation. */
-		*p++ = ((d0 * (irate - acc)) + (d1 * acc)) / irate;
-
-		acc += hw_irate;
-	}
-
-	sc->conv_acc = acc;
-	sc->conv_last0 = d0;
-	sc->conv_last1 = d1;
-}
-
-void
-nec86fifo_input_mono_16_resamp(struct nec86hw_softc *sc, int cc)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *p = sc->pdma_ptr;
-	int i;
-	register u_short d, d_l, d_r;
-	register u_short d0, d1;
-	register u_long acc, irate, hw_irate;
-
-	irate = sc->sc_irate;
-	hw_irate = sc->hw_irate;
-	acc = sc->conv_acc;
-	d0 = sc->conv_last0;
-	d1 = sc->conv_last1;
-
-	for (i = 0; i < cc; i++) {
-		while (acc > irate) {
-			d0 = d1;
-			/* big endian signed -> unsigned (L) */
-			d_l = (bus_space_read_1(iot, ioh, NEC86_FIFODATA)
-			    ^ 0x80) << 8;
-			d_l |= bus_space_read_1(iot, ioh, NEC86_FIFODATA);
-			/* big endian signed -> unsigned (R) */
-			d_r = (bus_space_read_1(iot, ioh, NEC86_FIFODATA)
-			    ^ 0x80) << 8;
-			d_r |= bus_space_read_1(iot, ioh, NEC86_FIFODATA);
-			/* Fake monoral recording by taking arithmetical mean. */
-			d1 = (d_l + d_r) / 2;
-
-			acc -= irate;
-		}
-
-		/* Linear interpolation. */
-		d = ((d0 * (irate - acc)) + (d1 * acc)) / irate;
-
-#if BYTE_ORDER == BIG_ENDIAN
-		/* -> big endian signed */
-		*p++ = ((d >> 8) & 0xff) ^ 0x80;
-		*p++ = d & 0xff;
-#else
-		/* -> little endian signed */
-		*p++ = d & 0xff;
-		*p++ = ((d >> 8) & 0xff) ^ 0x80;
-#endif
-
-		acc += hw_irate;
-	}
-
-	sc->conv_acc = acc;
-	sc->conv_last0 = d0;
-	sc->conv_last1 = d1;
-}
-
-void
-nec86fifo_input_stereo_8_resamp(struct nec86hw_softc *sc, int cc)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *p = sc->pdma_ptr;
-	int i;
-	register u_int8_t d0_l, d0_r, d1_l, d1_r;
-	register u_long acc, irate, hw_irate;
-
-	irate = sc->sc_irate;
-	hw_irate = sc->hw_irate;
-	acc = sc->conv_acc;
-	d0_l = sc->conv_last0_l;
-	d0_r = sc->conv_last0_r;
-	d1_l = sc->conv_last1_l;
-	d1_r = sc->conv_last1_r;
-
-	for (i = 0; i < cc; i++) {
-		while (acc > irate) {
-			d0_l = d1_l;
-			d0_r = d1_r;
-			/* signed -> unsigned (L) */
-			d1_l = bus_space_read_1(iot, ioh, NEC86_FIFODATA)
-			    ^ 0x80;
-			/* signed -> unsigned (R) */
-			d1_r = bus_space_read_1(iot, ioh, NEC86_FIFODATA)
-			    ^ 0x80;
-
-			acc -= irate;
-		}
-
-		/* Linear interpolation. (L) */
-		*p++ = ((d0_l * (irate - acc)) + (d1_l * acc)) / irate;
-
-		/* Linear interpolation. (R) */
-		*p++ = ((d0_r * (irate - acc)) + (d1_r * acc)) / irate;
-
-		acc += hw_irate;
-	}
-
-	sc->conv_acc = acc;
-	sc->conv_last0_l = d0_l;
-	sc->conv_last0_r = d0_r;
-	sc->conv_last1_l = d1_l;
-	sc->conv_last1_r = d1_r;
-}
-
-void
-nec86fifo_input_stereo_16_resamp(struct nec86hw_softc *sc, int cc)
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t *p = sc->pdma_ptr;
-	int i;
-	register u_short d, d0_l, d0_r, d1_l, d1_r;
-	register u_long acc, irate, hw_irate;
-
-	irate = sc->sc_irate;
-	hw_irate = sc->hw_irate;
-	acc = sc->conv_acc;
-	d0_l = sc->conv_last0_l;
-	d0_r = sc->conv_last0_r;
-	d1_l = sc->conv_last1_l;
-	d1_r = sc->conv_last1_r;
-
-	for (i = 0; i < cc; i++) {
-		while (acc > irate) {
-			d0_l = d1_l;
-			d0_r = d1_r;
-			/* big endian signed -> unsigned (L) */
-			d1_l = (bus_space_read_1(iot, ioh, NEC86_FIFODATA)
-			    ^ 0x80) << 8;
-			d1_l |= bus_space_read_1(iot, ioh, NEC86_FIFODATA);
-			/* big endian signed -> unsigned (R) */
-			d1_r = (bus_space_read_1(iot, ioh, NEC86_FIFODATA)
-			    ^ 0x80) << 8;
-			d1_r |= bus_space_read_1(iot, ioh, NEC86_FIFODATA);
-
-			acc -= irate;
-		}
-
-		/* Linear interpolation. (L) */
-		d = ((d0_l * (irate - acc)) + (d1_l * acc)) / irate;
-
-#if BYTE_ORDER == BIG_ENDIAN
-		/* -> big endian signed (L) */
-		*p++ = ((d >> 8) & 0xff) ^ 0x80;
-		*p++ = d & 0xff;
-#else
-		/* -> little endian signed (L) */
-		*p++ = d & 0xff;
-		*p++ = ((d >> 8) & 0xff) ^ 0x80;
-#endif
-
-		/* Linear interpolation. (R) */
-		d = ((d0_r * (irate - acc)) + (d1_r * acc)) / irate;
-
-#if BYTE_ORDER == BIG_ENDIAN
-		/* -> big endian signed (R) */
-		*p++ = ((d >> 8) & 0xff) ^ 0x80;
-		*p++ = d & 0xff;
-#else
-		/* -> little endian signed (R) */
-		*p++ = d & 0xff;
-		*p++ = ((d >> 8) & 0xff) ^ 0x80;
-#endif
-
-		acc += hw_irate;
-	}
-
-	sc->conv_acc = acc;
-	sc->conv_last0_l = d0_l;
-	sc->conv_last0_r = d0_r;
-	sc->conv_last1_l = d1_l;
-	sc->conv_last1_r = d1_r;
 }
 
 /*

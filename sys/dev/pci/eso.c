@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.39 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: eso.c,v 1.40 2015/05/11 06:46:22 ratchov Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -45,9 +45,6 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
-
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/mpuvar.h>
 #include <dev/ic/i8237reg.h>
@@ -672,46 +669,22 @@ eso_query_encoding(void *hdl, struct audio_encoding *fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
 		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	case 4:
+	case 2:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 5:
+	case 3:
 		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
@@ -731,8 +704,6 @@ eso_get_default_params(void *addr, int mode, struct audio_params *params)
 	params->bps = 2;
 	params->msb = 1;
 	params->channels = 2;
-	params->sw_code = NULL;
-	params->factor = 1;
 }
 
 int
@@ -760,32 +731,14 @@ eso_set_params(void *hdl, int setmode, int usemode,
 		if (p->channels > 2)
 			p->channels = 2;
 
-		p->factor = 1;
-		p->sw_code = NULL;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
+			if (p->precision != 8)
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 		case AUDIO_ENCODING_ULINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16_le;
-			} else {
-				p->sw_code = ulinear8_to_mulaw;
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16_le;
-			} else {
-				p->sw_code = ulinear8_to_alaw;
-			}
 			break;
 		default:
 			return (EINVAL);
@@ -1726,9 +1679,9 @@ eso_trigger_output(void *hdl, void *start, void *end, int blksize,
 	DPRINTF((
 	    "%s: trigger_output: start %p, end %p, blksize %d, intr %p(%p)\n",
 	    sc->sc_dev.dv_xname, start, end, blksize, intr, arg));
-	DPRINTF(("%s: param: rate %lu, encoding %u, precision %u, channels %u, sw_code %p, factor %d\n",
+	DPRINTF(("%s: param: rate %lu, encoding %u, precision %u, channels %u\n",
 	    sc->sc_dev.dv_xname, param->sample_rate, param->encoding,
-	    param->precision, param->channels, param->sw_code, param->factor));
+	    param->precision, param->channels));
 
 	/* Find DMA buffer. */
 	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) != start;
@@ -1747,7 +1700,7 @@ eso_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	/* Compute drain timeout. */
 	sc->sc_pdrain = hz * (blksize * 3 / 2) / 
-	    (param->sample_rate * param->channels * param->bps * param->factor);
+	    (param->sample_rate * param->channels * param->bps);
 
 	/* DMA transfer count (in `words'!) reload using 2's complement. */
 	blksize = -(blksize >> 1);
@@ -1756,7 +1709,7 @@ eso_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	/* Update DAC to reflect DMA count and audio parameters. */
 	/* Note: we cache A2C2 in order to avoid r/m/w at interrupt time. */
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		sc->sc_a2c2 |= ESO_MIXREG_A2C2_16BIT;
 	else
 		sc->sc_a2c2 &= ~ESO_MIXREG_A2C2_16BIT;
@@ -1802,9 +1755,9 @@ eso_trigger_input(void *hdl, void *start, void *end, int blksize,
 	DPRINTF((
 	    "%s: trigger_input: start %p, end %p, blksize %d, intr %p(%p)\n",
 	    sc->sc_dev.dv_xname, start, end, blksize, intr, arg));
-	DPRINTF(("%s: param: rate %lu, encoding %u, precision %u, channels %u, sw_code %p, factor %d\n",
+	DPRINTF(("%s: param: rate %lu, encoding %u, precision %u, channels %u\n",
 	    sc->sc_dev.dv_xname, param->sample_rate, param->encoding,
-	    param->precision, param->channels, param->sw_code, param->factor));
+	    param->precision, param->channels));
 
 	/*
 	 * If we failed to configure the Audio 1 DMA controller, bail here
@@ -1830,7 +1783,7 @@ eso_trigger_input(void *hdl, void *start, void *end, int blksize,
 
 	/* Compute drain timeout. */
 	sc->sc_rdrain = hz * (blksize * 3 / 2) / 
-	    (param->sample_rate * param->channels * param->bps * param->factor);
+	    (param->sample_rate * param->channels * param->bps);
 
 	/* Set up ADC DMA converter parameters. */
 	actl = eso_read_ctlreg(sc, ESO_CTLREG_ACTL);
@@ -1853,7 +1806,7 @@ eso_trigger_input(void *hdl, void *start, void *end, int blksize,
 
 	/* Set up and enable Audio 1 DMA FIFO. */
 	a1c1 = ESO_CTLREG_A1C1_RESV1 | ESO_CTLREG_A1C1_FIFOENB;
-	if (param->precision * param->factor == 16)
+	if (param->precision == 16)
 		a1c1 |= ESO_CTLREG_A1C1_16BIT;
 	if (param->channels == 2)
 		a1c1 |= ESO_CTLREG_A1C1_STEREO;

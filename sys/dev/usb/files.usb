@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.123 2015/04/16 08:55:21 mpi Exp $
+#	$OpenBSD: files.usb,v 1.124 2015/05/11 06:46:22 ratchov Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -26,7 +26,7 @@ attach	uhub at uhub with uhub_uhub
 define	ucombus {[portno = -1]}
 
 # Audio devices
-device	uaudio: audio, auconv, mulaw
+device	uaudio: audio
 attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
 

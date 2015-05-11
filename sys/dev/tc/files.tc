@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.12 2014/10/18 12:21:57 miod Exp $
+#	$OpenBSD: files.tc,v 1.13 2015/05/11 06:46:22 ratchov Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -24,7 +24,7 @@ attach	le at tc with le_tc:		le24, le_dec_subr
 file	dev/tc/if_le_tc.c		le_tc
 
 # baseboard audio
-device	bba: audio, am7930, mulaw
+device	bba: audio, am7930
 attach	bba at ioasic
 file	dev/tc/bba.c			bba
 

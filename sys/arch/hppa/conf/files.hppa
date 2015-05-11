@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.92 2014/07/11 21:54:37 tedu Exp $
+#	$OpenBSD: files.hppa,v 1.93 2015/05/11 06:46:21 ratchov Exp $
 #
 # hppa-specific configuration info
 
@@ -251,7 +251,7 @@ file	arch/hppa/gsc/arcofi_gsc.c		arcofi_gsc
 
 # CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
 # a.k.a. Audio Type 2 (optional beeper)
-device	harmony: audio, mulaw, auconv
+device	harmony: audio
 attach	harmony at gsc
 file	arch/hppa/gsc/harmony.c			harmony
 

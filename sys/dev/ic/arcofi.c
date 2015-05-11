@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.11 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.12 2015/05/11 06:46:21 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -38,8 +38,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
-#include <dev/mulaw.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -327,9 +325,7 @@ arcofi_query_encoding(void *v, struct audio_encoding *ae)
 {
 	switch (ae->index) {
 	/*
-	 * 8-bit encodings: u-Law and A-Law are native, linear are converted
-	 * to u-Law (alternatively, they could be converted to 16-bit, but
-	 * using u-Law allows us to convert in place).
+	 * 8-bit encodings: u-Law and A-Law are native
 	 */
 	case 0:
 		strlcpy(ae->name, AudioEmulaw, sizeof ae->name);
@@ -343,46 +339,15 @@ arcofi_query_encoding(void *v, struct audio_encoding *ae)
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->flags = 0;
 		break;
-	case 2:
-		strlcpy(ae->name, AudioEslinear, sizeof ae->name);
-		ae->precision = 8;
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(ae->name, AudioEulinear, sizeof ae->name);
-		ae->precision = 8;
-		ae->encoding = AUDIO_ENCODING_ULINEAR;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
 
 	/*
-	 * 16-bit encodings: slinear big-endian is native, unsigned or
-	 * little-endian are converted.
+	 * 16-bit encodings: slinear big-endian is native
 	 */
-	case 4:
+	case 2:
 		strlcpy(ae->name, AudioEslinear_be, sizeof ae->name);
 		ae->precision = 16;
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		ae->flags = 0;
-		break;
-	case 5:
-		strlcpy(ae->name, AudioEslinear_le, sizeof ae->name);
-		ae->precision = 16;
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(ae->name, AudioEulinear_be, sizeof ae->name);
-		ae->precision = 16;
-		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(ae->name, AudioEulinear_le, sizeof ae->name);
-		ae->precision = 16;
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 
 	default:
@@ -415,29 +380,9 @@ arcofi_set_param(struct arcofi_softc *sc, int set, int use, int mode,
 		switch (ap->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			sc->sc_shadow.cr4 |= CR4_ULAW;
-			ap->sw_code = NULL;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			sc->sc_shadow.cr4 &= ~CR4_ULAW;
-			ap->sw_code = NULL;
-			break;
-		case AUDIO_ENCODING_SLINEAR:
-		case AUDIO_ENCODING_SLINEAR_BE:
-		case AUDIO_ENCODING_SLINEAR_LE:
-			sc->sc_shadow.cr4 |= CR4_ULAW;
-			if (mode == AUMODE_PLAY)
-				ap->sw_code = slinear8_to_mulaw;
-			else
-				ap->sw_code = mulaw_to_slinear8;
-			break;
-		case AUDIO_ENCODING_ULINEAR:
-		case AUDIO_ENCODING_ULINEAR_BE:
-		case AUDIO_ENCODING_ULINEAR_LE:
-			sc->sc_shadow.cr4 |= CR4_ULAW;
-			if (mode == AUMODE_PLAY)
-				ap->sw_code = ulinear8_to_mulaw;
-			else
-				ap->sw_code = mulaw_to_ulinear8;
 			break;
 		default:
 			return EINVAL;
@@ -447,29 +392,7 @@ arcofi_set_param(struct arcofi_softc *sc, int set, int use, int mode,
 		break;
 	case 16:
 		switch (ap->encoding) {
-#if BYTE_ORDER == BIG_ENDIAN
-		case AUDIO_ENCODING_SLINEAR:
-#endif
 		case AUDIO_ENCODING_SLINEAR_BE:
-			ap->sw_code = NULL;
-			break;
-#if BYTE_ORDER == LITTLE_ENDIAN
-		case AUDIO_ENCODING_SLINEAR:
-#endif
-		case AUDIO_ENCODING_SLINEAR_LE:
-			ap->sw_code = swap_bytes;
-			break;
-#if BYTE_ORDER == BIG_ENDIAN
-		case AUDIO_ENCODING_ULINEAR:
-#endif
-		case AUDIO_ENCODING_ULINEAR_BE:
-			ap->sw_code = change_sign16_be;
-			break;
-#if BYTE_ORDER == LITTLE_ENDIAN
-		case AUDIO_ENCODING_ULINEAR:
-#endif
-		case AUDIO_ENCODING_ULINEAR_LE:
-			ap->sw_code = swap_bytes_change_sign16_be;
 			break;
 		default:
 			return EINVAL;

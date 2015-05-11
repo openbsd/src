@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.58 2014/10/18 12:21:56 miod Exp $
+#	$OpenBSD: files.vax,v 1.59 2015/05/11 06:46:21 ratchov Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -155,7 +155,7 @@ device	led
 attach	led at mainbus
 file	arch/vax/vax/led.c			led needs-flag
 
-device	vsaudio: audio, am7930, mulaw
+device	vsaudio: audio, am7930
 attach	vsaudio at vsbus
 file	arch/vax/vsa/vsaudio.c			vsaudio
 

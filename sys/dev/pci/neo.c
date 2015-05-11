@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.29 2013/11/15 16:46:27 brad Exp $       */
+/*      $OpenBSD: neo.c,v 1.30 2015/05/11 06:46:22 ratchov Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -43,8 +43,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 #include <dev/ic/ac97.h>
 
 #include <dev/pci/neoreg.h>
@@ -761,46 +759,10 @@ neo_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
@@ -853,44 +815,15 @@ neo_set_params(void *addr, int setmode, int usemode,
 		    NM_PLAYBACK_REG_OFFSET : NM_RECORD_REG_OFFSET;
 		nm_wr(sc, base + NM_RATE_REG_OFFSET, x, 1);
 
-		p->factor = 1;
-		p->sw_code = 0;
 		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
-				else
-					p->sw_code = change_sign16_swap_bytes_le;
-			}
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (p->precision != 8)
+				return EINVAL;
 			break;
 		default:
 			return (EINVAL);
@@ -919,7 +852,7 @@ neo_trigger_output(void *addr, void *start, void *end, int blksize,
 	sc->pintr = intr;
 	sc->parg = arg;
 
-	ssz = (param->precision * param->factor == 16)? 2 : 1;
+	ssz = (param->precision == 16) ? 2 : 1;
 	if (param->channels == 2)
 		ssz <<= 1;
 
@@ -950,7 +883,7 @@ neo_trigger_input(void *addr, void *start, void *end, int blksize,
 	sc->rintr = intr;
 	sc->rarg = arg;
 
-	ssz = (param->precision * param->factor == 16)? 2 : 1;
+	ssz = (param->precision == 16) ? 2 : 1;
 	if (param->channels == 2)
 		ssz <<= 1;
 

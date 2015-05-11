@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.31 2014/07/12 18:48:52 tedu Exp $ */
+/*      $OpenBSD: sv.c,v 1.32 2015/05/11 06:46:22 ratchov Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -48,8 +48,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/i8237reg.h>
 #include <dev/ic/s3_617.h>
@@ -587,47 +585,11 @@ sv_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-        case 4:
+        case 1:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
@@ -643,41 +605,19 @@ sv_set_params(void *addr, int setmode, int usemode,
     struct audio_params *p, struct audio_params *r)
 {
 	struct sv_softc *sc = addr;
-	void (*pswcode)(void *, u_char *buf, int cnt);
-	void (*rswcode)(void *, u_char *buf, int cnt);
         u_int32_t mode, val;
         u_int8_t reg;
 	
-        pswcode = rswcode = 0;
         switch (p->encoding) {
-        case AUDIO_ENCODING_SLINEAR_BE:
-        	if (p->precision == 16)
-                	rswcode = pswcode = swap_bytes;
-		else
-			pswcode = rswcode = change_sign8;
-		break;
         case AUDIO_ENCODING_SLINEAR_LE:
         	if (p->precision != 16)
-			pswcode = rswcode = change_sign8;
+			return EINVAL;
         	break;
         case AUDIO_ENCODING_ULINEAR_BE:
-        	if (p->precision == 16) {
-			pswcode = swap_bytes_change_sign16_le;
-			rswcode = change_sign16_swap_bytes_le;
-		}
-		break;
         case AUDIO_ENCODING_ULINEAR_LE:
-        	if (p->precision == 16)
-			pswcode = rswcode = change_sign16_le;
+        	if (p->precision != 8)
+			return EINVAL;
         	break;
-        case AUDIO_ENCODING_ULAW:
-        	pswcode = mulaw_to_ulinear8;
-                rswcode = ulinear8_to_mulaw;
-                break;
-        case AUDIO_ENCODING_ALAW:
-                pswcode = alaw_to_ulinear8;
-                rswcode = ulinear8_to_alaw;
-                break;
         default:
         	return (EINVAL);
         }
@@ -695,8 +635,6 @@ sv_set_params(void *addr, int setmode, int usemode,
 	if (p->sample_rate > 48000)
 		p->sample_rate = 48000;
 
-        p->sw_code = pswcode;
-        r->sw_code = rswcode;
 	p->bps = AUDIO_BPS(p->precision);
 	r->bps = AUDIO_BPS(r->precision);
 	p->msb = r->msb = 1;

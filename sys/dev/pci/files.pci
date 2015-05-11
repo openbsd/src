@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.314 2015/04/09 18:58:22 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.315 2015/05/11 06:46:22 ratchov Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -112,27 +112,27 @@ attach	ips at pci
 file	dev/pci/ips.c			ips
 
 # Ensoniq AudioPCI S5016, 1371
-device	eap: audio, auconv, mulaw, ac97, midibus
+device	eap: audio, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
 
 # ESS Solo-1 PCI AudioDrive
-device	eso {}: audio, auconv, mulaw, midibus
+device	eso {}: audio, midibus
 attach	eso at pci
 file	dev/pci/eso.c			eso
 
 # Acer Labs M5455
-device	auacer: audio, auconv, mulaw, ac97
+device	auacer: audio, ac97
 attach	auacer at pci
 file	dev/pci/auacer.c		auacer
 
 # Intel 810/820/440MX ICH audio with AC'97
-device	auich: audio, auconv, mulaw, ac97
+device	auich: audio, ac97
 attach	auich at pci
 file	dev/pci/auich.c			auich
 
 # Intel 82801 HDA
-device	azalia: audio, auconv, mulaw, ac97
+device	azalia: audio, ac97
 attach	azalia at pci
 file	dev/pci/azalia.c		azalia
 file	dev/pci/azalia_codec.c		azalia
@@ -143,53 +143,53 @@ attach	envy at pci
 file	dev/pci/envy.c			envy
 
 # Creative Labs EMU10k1 (SBLive! series and PCI512)
-device	emu: audio, auconv, mulaw, ac97
+device	emu: audio, ac97
 attach	emu at pci
 file	dev/pci/emuxki.c		emu
 
 # Trident 4DWAVE based PCI audio (including SiS 7018, ALi M5451)
-device	autri: audio, auconv, mulaw, ac97, midibus
+device	autri: audio, ac97, midibus
 attach	autri at pci
 file	dev/pci/autri.c			autri
 
 # ATI SB200/300/400 series AC'97 Audio
-device	auixp: audio, auconv, mulaw, ac97
+device	auixp: audio, ac97
 attach	auixp at pci
 file	dev/pci/auixp.c			auixp
 
 # CS4280 CrystalClear Audio
-device	clcs: audio, auconv, mulaw, ac97, firmload
+device	clcs: audio, ac97, firmload
 attach	clcs at pci
 file	dev/pci/cs4280.c		clcs
 
 # CS4281 CrystalClear Audio
-device	clct: audio, auconv, mulaw, ac97
+device	clct: audio, ac97
 attach	clct at pci
 file	dev/pci/cs4281.c		clct
 
 # ESS Maestro
-device	maestro: audio, auconv, mulaw, ac97
+device	maestro: audio, ac97
 attach	maestro at pci
 file	dev/pci/maestro.c		maestro
 
 # ESS Maestro3
-device	esa: audio, auconv, mulaw, ac97
+device	esa: audio, ac97
 attach	esa at pci
 file	dev/pci/esa.c			esa
 
 # Yamaha YMF Audio
-device	yds {}: audio, auconv, mulaw, ac97, firmload
+device	yds {}: audio, ac97, firmload
 attach	yds at pci
 file	dev/pci/yds.c			yds
 
 # Forte Media FM801
-device	fms: audio, auconv, mulaw, ac97, midibus, tea5757, radiobus
+device	fms: audio, ac97, midibus, tea5757, radiobus
 attach	fms at pci
 file	dev/pci/fms.c			fms
 file	dev/pci/fmsradio.c		fms & radio
 
 # VIA VT82C686A AC'97 Audio
-device	auvia: audio, auconv, mulaw, ac97
+device	auvia: audio, ac97
 attach	auvia at pci
 file	dev/pci/auvia.c			auvia
 
@@ -272,7 +272,7 @@ attach	siop at pci with siop_pci: siop_pci_common
 file	dev/pci/siop_pci.c		siop_pci
 
 # NeoMagic 256AV and 256ZX
-device	neo: audio, auconv, mulaw, ac97, firmload
+device	neo: audio, ac97, firmload
 attach	neo at pci
 file	dev/pci/neo.c			neo
 
@@ -324,7 +324,7 @@ attach	txp at pci
 file	dev/pci/if_txp.c		txp
 
 # S3 SonicVibes (S3 617)
-device	sv: audio, auconv, mulaw
+device	sv: audio
 attach	sv at pci
 file	dev/pci/sv.c			sv
 
@@ -575,7 +575,7 @@ attach	iwm at pci
 file	dev/pci/if_iwm.c		iwm
 
 # C-Media CMI8x38 Audio Chip
-device	cmpci {}: audio, auconv, mulaw
+device	cmpci {}: audio
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
 

@@ -1,4 +1,4 @@
-# $OpenBSD: files.hpc,v 1.5 2014/04/18 21:55:24 jasper Exp $
+# $OpenBSD: files.hpc,v 1.6 2015/05/11 06:46:21 ratchov Exp $
 # $NetBSD: files.hpc,v 1.14 2009/05/14 01:10:19 macallan Exp $
 
 # IP20 RTC
@@ -22,7 +22,7 @@ device	wdsc: wd33c93ctrl, scsi, hpcdma
 attach	wdsc at hpc
 file	arch/sgi/hpc/wdsc.c			wdsc
 
-device	haltwo: audio, auconv, mulaw
+device	haltwo: audio
 attach	haltwo at hpc
 file	arch/sgi/hpc/haltwo.c			haltwo
 

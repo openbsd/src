@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.145 2014/07/11 21:54:38 tedu Exp $
+#	$OpenBSD: files.sparc64,v 1.146 2015/05/11 06:46:21 ratchov Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -243,7 +243,7 @@ device	sabtty
 attach	sabtty at sab
 file	arch/sparc64/dev/sab.c			sab | sabtty needs-flag
 
-device	audioce: audio, auconv
+device	audioce: audio
 attach	audioce at ebus
 file	arch/sparc64/dev/ce4231.c		audioce
 

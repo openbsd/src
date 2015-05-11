@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.46 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.47 2015/05/11 06:46:22 ratchov Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ int cs4280debug = 0;
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ac97.h>
 
@@ -1020,50 +1018,8 @@ cs4280_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
-	case 4:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
@@ -1116,50 +1072,10 @@ cs4280_set_params(void *addr, int setmode, int usemode,
 			p->precision = 16;
 		if (p->channels > 2)
 			p->channels = 2;
-		p->factor  = 1;
-		p->sw_code = 0;
 
 		/* capturing data is slinear */
 		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (mode == AUMODE_RECORD) {
-				if (p->precision == 16)
-					p->sw_code = swap_bytes;
-			}
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (mode == AUMODE_RECORD) {
-				if (p->precision == 16)
-					p->sw_code = change_sign16_swap_bytes_le;
-				else
-					p->sw_code = change_sign8;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (mode == AUMODE_RECORD) {
-				if (p->precision == 16)
-					p->sw_code = change_sign16_le;
-				else
-					p->sw_code = change_sign8;
-			}
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear8_to_mulaw;
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear8_to_alaw;
-			}
 			break;
 		default:
 			return (EINVAL);
@@ -1445,8 +1361,8 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 	pdtc |= CS4280_MK_PDTC(param->precision * param->channels);
 	BA1WRITE4(sc, CS4280_PDTC, pdtc);
 	
-	DPRINTF(("param: precision=%d  factor=%d channels=%d encoding=%d\n",
-	       param->precision, param->factor, param->channels,
+	DPRINTF(("param: precision=%d  channels=%d encoding=%d\n",
+	       param->precision, param->channels,
 	       param->encoding));
 	for (p = sc->sc_dmas; p != NULL && BUFADDR(p) != start; p = p->next)
 		;
@@ -1483,7 +1399,7 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 	/* set PFIE */
 	pfie = BA1READ4(sc, CS4280_PFIE) & ~PFIE_MASK;
 
-	if (param->precision * param->factor == 8)
+	if (param->precision == 8)
 		pfie |= PFIE_8BIT;
 	if (param->channels == 1)
 		pfie |= PFIE_MONO;

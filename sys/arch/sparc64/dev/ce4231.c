@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.31 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.32 2015/05/11 06:46:21 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -51,7 +51,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
@@ -508,24 +507,6 @@ ce4231_query_encoding(addr, fp)
 		fp->flags = 0;
 		break;
 	case 5:
-		strlcpy(fp->name, AudioEslinear, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEulinear_le, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 8:
 		strlcpy(fp->name, AudioEadpcm, sizeof(fp->name));
 		fp->encoding = AUDIO_ENCODING_ADPCM;
 		fp->precision = 8;
@@ -547,66 +528,32 @@ ce4231_set_params(addr, setmode, usemode, p, r)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
 	int err, bits, enc = p->encoding;
-	void (*pswcode)(void *, u_char *, int cnt) = NULL;
-	void (*rswcode)(void *, u_char *, int cnt) = NULL;
 
 	if (p->precision > 16)
 		p->precision = 16;
 	switch (enc) {
 	case AUDIO_ENCODING_ULAW:
-		if (p->precision != 8)
-			p->precision = 8;
+		p->precision = 8;
 		bits = FMT_ULAW >> 5;
 		break;
 	case AUDIO_ENCODING_ALAW:
-		if (p->precision != 8)
-			p->precision = 8;
+		p->precision = 8;
 		bits = FMT_ALAW >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			bits = FMT_PCM8 >> 5;
-			pswcode = rswcode = change_sign8;
-		} else
-			bits = FMT_TWOS_COMP >> 5;
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-		if (p->precision != 8)
-			p->precision = 8;
-		bits = FMT_PCM8 >> 5;
+		p->precision = 16;
+		bits = FMT_TWOS_COMP >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 8) {
-			bits = FMT_PCM8 >> 5;
-			pswcode = rswcode = change_sign8;
-		} else
-			bits = FMT_TWOS_COMP_BE >> 5;
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-		if (p->precision != 8)
-			p->precision = 8;
-		bits = FMT_PCM8 >> 5;
-		pswcode = rswcode = change_sign8;
+		p->precision = 16;
+		bits = FMT_TWOS_COMP_BE >> 5;
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 8)
-			bits = FMT_PCM8 >> 5;
-		else {
-			bits = FMT_TWOS_COMP >> 5;
-			pswcode = rswcode = change_sign16_le;
-		}
-		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision == 8)
-			bits = FMT_PCM8 >> 5;
-		else {
-			bits = FMT_TWOS_COMP_BE >> 5;
-			pswcode = rswcode = change_sign16_be;
-		}
+		p->precision = 8;
 		break;
 	case AUDIO_ENCODING_ADPCM:
-		if (p->precision != 8)
-			p->precision = 8;
+		p->precision = 8;
 		bits = FMT_ADPCM >> 5;
 		break;
 	default:
@@ -620,8 +567,6 @@ ce4231_set_params(addr, setmode, usemode, p, r)
 	if (err)
 		return (err);
 
-	p->sw_code = pswcode;
-	r->sw_code = rswcode;
 	p->bps = AUDIO_BPS(p->precision);
 	r->bps = AUDIO_BPS(r->precision);
 	p->msb = r->msb = 1;

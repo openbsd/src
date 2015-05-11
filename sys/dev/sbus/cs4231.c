@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.33 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.34 2015/05/11 06:46:22 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -50,7 +50,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>
@@ -559,8 +558,6 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 	int err, bits, enc = p->encoding;
-	void (*pswcode)(void *, u_char *, int cnt) = NULL;
-	void (*rswcode)(void *, u_char *, int cnt) = NULL;
 
 	switch (enc) {
 	case AUDIO_ENCODING_ULAW:
@@ -574,10 +571,7 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 		bits = FMT_ALAW >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			bits = FMT_PCM8 >> 5;
-			pswcode = rswcode = change_sign8;
-		} else if (p->precision == 16)
+		if (p->precision == 16)
 			bits = FMT_TWOS_COMP >> 5;
 		else
 			return (EINVAL);
@@ -588,36 +582,21 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 		bits = FMT_PCM8 >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 8) {
-			bits = FMT_PCM8 >> 5;
-			pswcode = rswcode = change_sign8;
-		} else if (p->precision == 16)
+		if (p->precision == 16)
 			bits = FMT_TWOS_COMP_BE >> 5;
 		else
 			return (EINVAL);
 		break;
-	case AUDIO_ENCODING_SLINEAR:
-		if (p->precision != 8)
-			return (EINVAL);
-		bits = FMT_PCM8 >> 5;
-		pswcode = rswcode = change_sign8;
-		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (p->precision == 8)
 			bits = FMT_PCM8 >> 5;
-		else if (p->precision == 16) {
-			bits = FMT_TWOS_COMP >> 5;
-			pswcode = rswcode = change_sign16_le;
-		} else
+		else
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision == 8)
 			bits = FMT_PCM8 >> 5;
-		else if (p->precision == 16) {
-			bits = FMT_TWOS_COMP_BE >> 5;
-			pswcode = rswcode = change_sign16_be;
-		} else
+		else
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_ADPCM:
@@ -636,8 +615,6 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 	if (err)
 		return (err);
 
-	p->sw_code = pswcode;
-	r->sw_code = rswcode;
 	p->bps = AUDIO_BPS(p->precision);
 	r->bps = AUDIO_BPS(r->precision);
 	p->msb = r->msb = 1;

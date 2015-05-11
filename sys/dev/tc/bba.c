@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.4 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: bba.c,v 1.5 2015/05/11 06:46:22 ratchov Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -125,8 +125,6 @@ void	 bba_codec_iwrite(struct am7930_softc *, int, uint8_t);
 void	 bba_codec_iwrite16(struct am7930_softc *, int, uint16_t);
 void	 bba_onopen(struct am7930_softc *);
 void	 bba_onclose(struct am7930_softc *);
-void	 bba_output_conv(void *, u_char *, int);
-void	 bba_input_conv(void *, u_char *, int);
 
 struct am7930_glue bba_glue = {
 	bba_codec_iread,
@@ -135,9 +133,7 @@ struct am7930_glue bba_glue = {
 	bba_codec_iwrite16,
 	bba_onopen,
 	bba_onclose,
-	4,
-	bba_input_conv,
-	bba_output_conv
+	24
 };
 
 /*
@@ -632,78 +628,6 @@ bba_mappage(void *v, void *mem, off_t offset, int prot)
 
 	return bus_dmamem_mmap(sc->sc_dmat, &seg, 1, offset,
 	    prot, BUS_DMA_WAITOK);
-}
-
-void
-bba_input_conv(void *v, u_char *p, int cc)
-{
-	struct bba_softc *sc = v;
-	u_char *p0 = p;
-	int cc0 = cc;
-	uint32_t *q = (uint32_t *)p;
-
-	DPRINTF(("bba_input_conv(): v=%p p=%p cc=%d\n", v, p, cc));
-
-	/* convert data from dma stream - one byte per longword<23:16> */
-#ifdef __alpha__
-	/* try to avoid smaller than 32 bit accesses whenever possible */
-	if (((vaddr_t)p & 3) == 0) {
-		while (cc >= 4) {
-			uint32_t fp;
-
-			/* alpha is little endian */
-			fp = (*q++ >> 16) & 0xff;
-			fp |= ((*q++ >> 16) & 0xff) << 8;
-			fp |= ((*q++ >> 16) & 0xff) << 16;
-			fp |= ((*q++ >> 16) & 0xff) << 24;
-			*(uint32_t *)p = fp;
-			p += 4;
-			cc -= 4;
-		}
-	}
-#endif
-	while (--cc >= 0)
-		*p++ = (*q++ >> 16) & 0xff;
-
-	/* convert mulaw data to expected encoding if necessary */
-	if (sc->sc_am7930.rec_sw_code != NULL)
-		(*sc->sc_am7930.rec_sw_code)(v, p0, cc0);
-}
-
-void
-bba_output_conv(void *v, u_char *p, int cc)
-{
-	struct bba_softc *sc = v;
-	uint32_t *q = (uint32_t *)p;
-
-	DPRINTF(("bba_output_conv(): v=%p p=%p cc=%d\n", v, p, cc));
-
-	/* convert data to mulaw first if necessary */
-	if (sc->sc_am7930.play_sw_code != NULL)
-		(*sc->sc_am7930.play_sw_code)(v, p, cc);
-
-	/* convert data to dma stream - one byte per longword<23:16> */
-	p += cc;
-	q += cc;
-#ifdef __alpha__
-	/* try to avoid smaller than 32 bit accesses whenever possible */
-	if (((vaddr_t)p & 3) == 0) {
-		while (cc >= 4) {
-			uint32_t fp;
-
-			p -= 4;
-			fp = *(uint32_t *)p;
-			/* alpha is little endian */
-			*--q = ((fp >> 24) & 0xff) << 16;
-			*--q = ((fp >> 16) & 0xff) << 16;
-			*--q = ((fp >> 8) & 0xff) << 16;
-			*--q = (fp & 0xff) << 16;
-			cc -= 4;
-		}
-	}
-#endif
-	while (--cc >= 0)
-		*--q = *--p << 16;
 }
 
 int

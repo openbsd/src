@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.49 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: yds.c,v 1.50 2015/05/11 06:46:22 ratchov Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -54,8 +54,6 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 #include <dev/ic/ac97.h>
 
 #include <machine/bus.h>
@@ -943,7 +941,7 @@ yds_intr(void *p)
 					    N_PLAY_SLOT_CTRL_BANK,
 					BUS_DMASYNC_POSTWRITE|
 					BUS_DMASYNC_POSTREAD);
-			dma = sc->pbankp[nbank]->pgstart * sc->sc_play.factor;
+			dma = sc->pbankp[nbank]->pgstart;
 			cpu = sc->sc_play.offset;
 			blk = sc->sc_play.blksize;
 			len = sc->sc_play.length;
@@ -1106,46 +1104,10 @@ yds_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
 		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
-		break;
-	case 5:
-		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
@@ -1185,46 +1147,15 @@ yds_set_params(void *addr, int setmode, int usemode,
 		if (p->channels > 2)
 			p->channels = 2;
 
-		p->factor = 1;
-		p->sw_code = 0;
 		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
-				else
-					p->sw_code = change_sign16_swap_bytes_le;
-			}
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->precision = 16;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->precision = 16;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (p->precision != 8)
+				return EINVAL;
 			break;
 		default:
 			return (EINVAL);
@@ -1366,13 +1297,6 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	*sc->ptbl = channels;	/* Num of play */
 
-	sc->sc_play.factor = 1;
-	if (param->channels == 2)
-		sc->sc_play.factor *= 2;
-	if (param->precision != 8)
-		sc->sc_play.factor *= 2;
-	l /= sc->sc_play.factor;
-
 	psb = sc->pbankp[0];
 	memset(psb, 0, sizeof(*psb));
 	psb->format = ((channels == 2 ? PSLT_FORMAT_STEREO : 0) |
@@ -1478,12 +1402,6 @@ yds_trigger_input(void *addr, void *start, void *end, int blksize,
 	s = DMAADDR(p);
 	l = ((char *)end - (char *)start);
 	sc->sc_rec.length = l;
-
-	sc->sc_rec.factor = 1;
-	if (param->channels == 2)
-		sc->sc_rec.factor *= 2;
-	if (param->precision != 8)
-		sc->sc_rec.factor *= 2;
 
 	rsb = &sc->rbank[0];
 	memset(rsb, 0, sizeof(*rsb));

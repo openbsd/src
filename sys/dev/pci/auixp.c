@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.34 2015/03/14 03:38:48 jsg Exp $ */
+/* $OpenBSD: auixp.c,v 1.35 2015/05/11 06:46:21 ratchov Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -68,8 +68,6 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 #include <dev/ic/ac97.h>
 
 #include <dev/pci/auixpreg.h>
@@ -222,52 +220,10 @@ auixp_query_encoding(void *hdl, struct audio_encoding *aep)
 {
 	switch (aep->index) {
 	case 0:
-		strlcpy(aep->name, AudioEulinear, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 1:
-		strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(aep->name, AudioEalaw, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ALAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(aep->name, AudioEslinear, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 4:
 		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		aep->precision = 16;
 		aep->flags = 0;
-		break;
-	case 5:
-		strlcpy(aep->name, AudioEulinear_le, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 6:
-		strlcpy(aep->name, AudioEslinear_be, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 7:
-		strlcpy(aep->name, AudioEulinear_be, sizeof aep->name);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
@@ -373,171 +329,10 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 
 	co = (struct auixp_codec *) hdl;
 	if (setmode & AUMODE_PLAY) {
-		play->factor = 1;
-		play->sw_code = NULL;
-		if (play->channels > 2)
-			play->channels = 2;
-		if (play->precision > 16)
-			play->precision = 16;
+		play->channels = 2;
+		play->precision = 16;
 		switch(play->encoding) {
-		case AUDIO_ENCODING_ULAW:
-			switch (play->channels) {
-			case 1:
-				play->factor = 4;
-				play->sw_code = mulaw_to_slinear16_le_mts;
-				break;
-			case 2:
-				play->factor = 2;
-				play->sw_code = mulaw_to_slinear16_le;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			switch (play->precision) {
-			case 8:
-				switch (play->channels) {
-				case 1:
-					play->factor = 4;
-					play->sw_code = linear8_to_linear16_le_mts;
-					break;
-				case 2:
-					play->factor = 2;
-					play->sw_code = linear8_to_linear16_le;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			case 16:
-				switch (play->channels) {
-				case 1:
-					play->factor = 2;
-					play->sw_code = noswap_bytes_mts;
-					break;
-				case 2:
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			switch (play->precision) {
-			case 8:
-				switch (play->channels) {
-				case 1:
-					play->factor = 4;
-					play->sw_code = ulinear8_to_linear16_le_mts;
-					break;
-				case 2:
-					play->factor = 2;
-					play->sw_code = ulinear8_to_linear16_le;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			case 16:
-				switch (play->channels) {
-				case 1:
-					play->factor = 2;
-					play->sw_code = change_sign16_le_mts;
-					break;
-				case 2:
-					play->sw_code = change_sign16_le;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			switch (play->channels) {
-			case 1:
-				play->factor = 4;
-				play->sw_code = alaw_to_slinear16_le_mts;
-				break;
-			case 2:
-				play->factor = 2;
-				play->sw_code = alaw_to_slinear16_le;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			switch (play->precision) {
-			case 8:
-				switch (play->channels) {
-				case 1:
-					play->factor = 4;
-					play->sw_code = linear8_to_linear16_le_mts;
-					break;
-				case 2:
-					play->factor = 2;
-					play->sw_code = linear8_to_linear16_le;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			case 16:
-				switch (play->channels) {
-				case 1:
-					play->factor = 2;
-					play->sw_code = swap_bytes_mts;
-					break;
-				case 2:
-					play->sw_code = swap_bytes;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			switch (play->precision) {
-			case 8:
-				switch (play->channels) {
-				case 1:
-					play->factor = 4;
-					play->sw_code = ulinear8_to_linear16_le_mts;
-					break;
-				case 2:
-					play->factor = 2;
-					play->sw_code = ulinear8_to_linear16_le;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			case 16:
-				switch (play->channels) {
-				case 1:
-					play->factor = 2;
-					play->sw_code = swap_bytes_change_sign16_le_mts;
-					break;
-				case 2:
-					play->sw_code = swap_bytes_change_sign16_le;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			default:
-				return (EINVAL);
-			}
 			break;
 		default:
 			return (EINVAL);
@@ -566,36 +361,10 @@ auixp_set_params(void *hdl, int setmode, int usemode,
 	}
 
 	if (setmode & AUMODE_RECORD) {		
-		rec->factor = 1;
-		rec->sw_code = 0;
-		if (rec->channels > 2)
-			rec->channels = 2;
-		if (rec->precision > 16)
-			rec->precision = 16;
+		rec->channels = 2;
+		rec->precision = 16;
 		switch(rec->encoding) {
-		case AUDIO_ENCODING_ULAW:
-			rec->sw_code = ulinear8_to_mulaw;
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (rec->precision == 8)
-				rec->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (rec->precision == 16)
-				rec->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			rec->sw_code = ulinear8_to_alaw;
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (rec->precision == 16)
-				rec->sw_code = swap_bytes;
-			else
-				rec->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (rec->precision == 16)
-				rec->sw_code = swap_bytes_change_sign16_le;
 			break;
 		default:
 			return (EINVAL);

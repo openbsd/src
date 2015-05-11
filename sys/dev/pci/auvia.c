@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.54 2015/05/07 01:55:43 jsg Exp $ */
+/*	$OpenBSD: auvia.c,v 1.55 2015/05/11 06:46:21 ratchov Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -48,8 +48,6 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/ic/ac97.h>
 
@@ -543,46 +541,10 @@ auvia_query_encoding(void *addr, struct audio_encoding *fp)
 			fp->flags = 0;
 			break;
 		case 1:
-			strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_ULAW;
-			fp->precision = 8;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 2:
-			strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_ALAW;
-			fp->precision = 8;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 3:
-			strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_SLINEAR;
-			fp->precision = 8;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 4:
 			strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			fp->precision = 16;
 			fp->flags = 0;
-			break;
-		case 5:
-			strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 6:
-			strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 7:
-			strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
-			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 			break;
 		default:
 			return (EINVAL);
@@ -603,7 +565,7 @@ auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 
 	if (!(sc->sc_flags & AUVIA_FLAGS_VT8233)) {
 		regval = (p->channels == 2 ? AUVIA_RPMODE_STEREO : 0)
-			| (p->precision * p->factor == 16 ?
+			| (p->precision == 16 ?
 				AUVIA_RPMODE_16BIT : 0)
 			| AUVIA_RPMODE_INTR_FLAG | AUVIA_RPMODE_INTR_EOL
 			| AUVIA_RPMODE_AUTOSTART;
@@ -728,45 +690,15 @@ auvia_set_params(void *addr, int setmode, int usemode,
 			}
  		}
 
-		p->factor = 1;
-		p->sw_code = 0;
 		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = mode == AUMODE_PLAY?
-				    swap_bytes_change_sign16_le :
-				    change_sign16_swap_bytes_le;
+				return EINVAL;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		case AUDIO_ENCODING_SLINEAR:
-		case AUDIO_ENCODING_ULINEAR:
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (p->precision != 8)
+				return EINVAL;
 			break;
 		default:
 			return (EINVAL);
