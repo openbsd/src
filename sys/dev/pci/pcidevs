@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1761 2015/05/01 12:46:04 jsg Exp $
+$OpenBSD: pcidevs,v 1.1762 2015/05/11 20:20:03 jasper Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5954,6 +5954,7 @@ product QUMRANET VIO_BLOCK	0x1001	Virtio Storage
 product QUMRANET VIO_MEM	0x1002	Virtio Memory
 product QUMRANET VIO_CONS	0x1003	Virtio Console
 product QUMRANET VIO_SCSI	0x1004	Virtio SCSI
+product QUMRANET VIO_RNG	0x1005	Virtio RNG
 
 /* Ross -> Pequr -> ServerWorks -> Broadcom ServerWorks products */
 product RCC CMIC_LE		0x0000	CMIC-LE
