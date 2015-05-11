@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.57 2015/05/06 08:35:39 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.58 2015/05/11 10:58:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -483,20 +483,6 @@ const struct options_table_entry window_options_table[] = {
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = "#{?pane_in_mode,[tmux],#{pane_current_command}}"
 	                 "#{?pane_dead,[dead],}"
-	},
-
-	{ .name = "c0-change-trigger",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .default_num = 250,
-	  .minimum = 0,
-	  .maximum = USHRT_MAX
-	},
-
-	{ .name = "c0-change-interval",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .default_num = 100,
-	  .minimum = 1,
-	  .maximum = USHRT_MAX
 	},
 
 	{ .name = "clock-mode-colour",
