@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.427 2015/05/08 16:18:04 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.428 2015/05/11 10:10:16 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 8 2015 $
+.Dd $Mdocdate: May 11 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2885,24 +2885,6 @@ The format (see
 used when the
 .Ic automatic-rename
 option is enabled.
-.Pp
-.It Ic c0-change-interval Ar interval
-.It Ic c0-change-trigger Ar trigger
-These two options configure a simple form of rate limiting for a pane.
-If
-.Nm
-sees more than
-.Ar trigger
-C0 sequences that modify the screen (for example, carriage returns, linefeeds
-or backspaces) in one millisecond, it will stop updating the pane immediately and
-instead redraw it entirely every
-.Ar interval
-milliseconds.
-This helps to prevent fast output (such as
-.Xr yes 1 )
-overwhelming the terminal.
-The default is a trigger of 250 and an interval of 100.
-A trigger of zero disables the rate limiting.
 .Pp
 .It Ic clock-mode-colour Ar colour
 Set clock colour.

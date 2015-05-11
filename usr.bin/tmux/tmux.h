@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.511 2015/05/08 16:48:12 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.512 2015/05/11 10:10:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -843,10 +843,6 @@ struct window_pane {
 	pid_t		 pid;
 	char		 tty[TTY_NAME_MAX];
 	int		 status;
-
-	u_int		 changes;
-	struct event	 changes_timer;
-	u_int		 changes_redraw;
 
 	int		 fd;
 	struct bufferevent *event;
@@ -2107,7 +2103,6 @@ struct window_pane *window_pane_find_by_id_str(const char *);
 struct window_pane *window_pane_find_by_id(u_int);
 struct window_pane *window_pane_create(struct window *, u_int, u_int, u_int);
 void		 window_pane_destroy(struct window_pane *);
-void		 window_pane_timer_start(struct window_pane *);
 int		 window_pane_spawn(struct window_pane *, int, char **,
 		     const char *, const char *, int, struct environ *,
 		     struct termios *, char **);
