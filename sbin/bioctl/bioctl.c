@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.125 2015/04/11 16:37:34 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.126 2015/05/11 12:14:22 pelikan Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -869,7 +869,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	}
 
 	rv = ioctl(devh, BIOCCREATERAID, &create);
-	memset(&kdfinfo, 0, sizeof(kdfinfo));
+	explicit_bzero(&kdfinfo, sizeof(kdfinfo));
 	if (rv == -1)
 		err(1, "BIOCCREATERAID");
 
@@ -1064,8 +1064,8 @@ bio_changepass(char *dev)
 	rv = ioctl(devh, BIOCDISCIPLINE, &bd);
 
 	memset(&kdfhint, 0, sizeof(kdfhint));
-	memset(&kdfinfo1, 0, sizeof(kdfinfo1));
-	memset(&kdfinfo2, 0, sizeof(kdfinfo2));
+	explicit_bzero(&kdfinfo1, sizeof(kdfinfo1));
+	explicit_bzero(&kdfinfo2, sizeof(kdfinfo2));
 
 	if (rv)
 		err(1, "BIOCDISCIPLINE");
@@ -1153,17 +1153,17 @@ derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		/* request user to re-type it */
 		if (readpassphrase("Re-type passphrase: ", verifybuf,
 		    sizeof(verifybuf), rpp_flag) == NULL) {
-			memset(passphrase, 0, sizeof(passphrase));
+			explicit_bzero(passphrase, sizeof(passphrase));
 			errx(1, "unable to read passphrase");
 		}
 		if ((strlen(passphrase) != strlen(verifybuf)) ||
 		    (strcmp(passphrase, verifybuf) != 0)) {
-			memset(passphrase, 0, sizeof(passphrase));
-			memset(verifybuf, 0, sizeof(verifybuf));
+			explicit_bzero(passphrase, sizeof(passphrase));
+			explicit_bzero(verifybuf, sizeof(verifybuf));
 			errx(1, "Passphrases did not match");
 		}
 		/* forget the re-typed one */
-		memset(verifybuf, 0, strlen(verifybuf));
+		explicit_bzero(verifybuf, sizeof(verifybuf));
 	}
 
 	/* derive key from passphrase */
@@ -1172,7 +1172,7 @@ derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		errx(1, "pbkdf2 failed");
 
 	/* forget passphrase */
-	memset(passphrase, 0, sizeof(passphrase));
+	explicit_bzero(passphrase, sizeof(passphrase));
 
 	return;
 }
