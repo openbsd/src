@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1761 2015/05/01 12:46:04 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1762 2015/05/11 20:20:03 jasper Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5959,6 +5959,7 @@
 #define	PCI_PRODUCT_QUMRANET_VIO_MEM	0x1002		/* Virtio Memory */
 #define	PCI_PRODUCT_QUMRANET_VIO_CONS	0x1003		/* Virtio Console */
 #define	PCI_PRODUCT_QUMRANET_VIO_SCSI	0x1004		/* Virtio SCSI */
+#define	PCI_PRODUCT_QUMRANET_VIO_RNG	0x1005		/* Virtio RNG */
 
 /* Ross -> Pequr -> ServerWorks -> Broadcom ServerWorks products */
 #define	PCI_PRODUCT_RCC_CMIC_LE	0x0000		/* CMIC-LE */
