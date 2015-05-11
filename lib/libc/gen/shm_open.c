@@ -1,4 +1,4 @@
-/* $OpenBSD: shm_open.c,v 1.4 2013/11/12 06:09:48 deraadt Exp $ */
+/* $OpenBSD: shm_open.c,v 1.5 2015/05/11 00:42:54 guenther Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -31,6 +31,9 @@
 /* "/tmp/" + sha256 + ".shm" */
 #define SHM_PATH_SIZE (5 + SHA256_DIGEST_STRING_LENGTH + 4)
 
+/* O_CLOEXEC and O_NOFOLLOW are extensions to POSIX */
+#define OK_FLAGS	(O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_NOFOLLOW)
+
 static void
 makeshmpath(const char *origpath, char *shmpath, size_t len)
 {
@@ -47,8 +50,8 @@ shm_open(const char *path, int flags, mode_t mode)
 	struct stat sb;
 	int fd;
 
-	if (flags & ~(O_RDONLY | O_RDWR |
-	    O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_NOFOLLOW)) {
+	if (((flags & O_ACCMODE) != O_RDONLY && (flags & O_ACCMODE) != O_RDWR)
+	    || (flags & ~(O_ACCMODE | OK_FLAGS))) {
 		errno = EINVAL;
 		return -1;
 	}

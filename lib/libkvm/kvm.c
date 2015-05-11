@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.54 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.55 2015/05/11 00:42:54 guenther Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -198,7 +198,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 		_kvm_err(kd, kd->program, "exec file name too long");
 		goto failed;
 	}
-	if (flag & ~O_ACCMODE) {
+	if (flag != O_RDONLY && flag != O_WRONLY && flag != O_RDWR) {
 		_kvm_err(kd, kd->program, "bad flags arg");
 		goto failed;
 	}

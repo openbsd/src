@@ -1,4 +1,4 @@
-/*	$OpenBSD: posix_pty.c,v 1.1 2012/12/03 20:08:33 millert Exp $	*/
+/*	$OpenBSD: posix_pty.c,v 1.2 2015/05/11 00:42:54 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -35,7 +35,8 @@ posix_openpt(int oflag)
 	int fd, mfd = -1;
 
 	/* User must specify O_RDWR in oflag. */
-	if (!(oflag & O_RDWR)) {
+	if ((oflag & O_ACCMODE) != O_RDWR ||
+	    (oflag & ~(O_ACCMODE | O_NOCTTY)) != 0) {
 		errno = EINVAL;
 		return -1;
 	}
