@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.34 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.35 2015/05/11 06:52:35 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -537,12 +537,6 @@ cs4231_query_encoding(void *vsc, struct audio_encoding *fp)
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
-	case 8:
-		strlcpy(fp->name, AudioEadpcm, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
 	default:
 		err = EINVAL;
 	}
@@ -598,11 +592,6 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 			bits = FMT_PCM8 >> 5;
 		else
 			return (EINVAL);
-		break;
-	case AUDIO_ENCODING_ADPCM:
-		if (p->precision != 8)
-			return (EINVAL);
-		bits = FMT_ADPCM >> 5;
 		break;
 	default:
 		return (EINVAL);

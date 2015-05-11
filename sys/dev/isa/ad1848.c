@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.42 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.43 2015/05/11 06:52:35 ratchov Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -978,9 +978,6 @@ ad1848_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 	case AUDIO_ENCODING_ALAW:
 		p->precision = 8;
 		bits = FMT_ALAW;
-		break;
-	case AUDIO_ENCODING_ADPCM:
-		bits = FMT_ADPCM;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
 		if (p->precision == 16)

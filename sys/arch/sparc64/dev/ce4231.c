@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.32 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.33 2015/05/11 06:52:35 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -506,12 +506,6 @@ ce4231_query_encoding(addr, fp)
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
-	case 5:
-		strlcpy(fp->name, AudioEadpcm, sizeof(fp->name));
-		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 8;
-		fp->flags = 0;
-		break;
 	default:
 		err = EINVAL;
 	}
@@ -551,10 +545,6 @@ ce4231_set_params(addr, setmode, usemode, p, r)
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
 		p->precision = 8;
-		break;
-	case AUDIO_ENCODING_ADPCM:
-		p->precision = 8;
-		bits = FMT_ADPCM >> 5;
 		break;
 	default:
 		return (EINVAL);
