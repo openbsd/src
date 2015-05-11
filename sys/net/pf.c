@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.912 2015/04/17 11:04:01 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.913 2015/05/11 12:22:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -611,9 +611,11 @@ pf_state_rm_src_node(struct pf_state *s, struct pf_src_node *sn)
 			else
 				SLIST_REMOVE_HEAD(&s->src_nodes, next);
 			pool_put(&pf_sn_item_pl, sni);
+			sni = NULL;
 			sn->states--;
 		}
-		snip = sni;
+		if (sni != NULL)
+			snip = sni;
 	}
 }
 
