@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.195 2015/05/04 10:24:08 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.196 2015/05/11 08:41:43 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -463,9 +463,6 @@ ether_input(struct mbuf *m, void *hdr)
 	int llcfound = 0;
 	struct llc *l;
 	struct arpcom *ac;
-#if NTRUNK > 0
-	int i = 0;
-#endif
 #if NPPPOE > 0
 	struct ether_header *eh_tmp;
 #endif
@@ -479,21 +476,6 @@ ether_input(struct mbuf *m, void *hdr)
 		eh = mtod(m, struct ether_header *);
 		m_adj(m, ETHER_HDR_LEN);
 	}
-
-#if NTRUNK > 0
-	/* Handle input from a trunk port */
-	while (ifp->if_type == IFT_IEEE8023ADLAG) {
-		if (++i > TRUNK_MAX_STACKING) {
-			m_freem(m);
-			return (1);
-		}
-		if (trunk_input(ifp, eh, m) != 0)
-			return (1);
-
-		/* Has been set to the trunk interface */
-		ifp = m->m_pkthdr.rcvif;
-	}
-#endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -518,17 +500,9 @@ ether_input(struct mbuf *m, void *hdr)
 		else
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
-#if NTRUNK > 0
-		if (ifp != ifp0)
-			ifp0->if_imcasts++;
-#endif
 	}
 
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof(*eh);
-#if NTRUNK > 0
-	if (ifp != ifp0)
-		ifp0->if_ibytes += m->m_pkthdr.len + sizeof(*eh);
-#endif
 
 	etype = ntohs(eh->ether_type);
 

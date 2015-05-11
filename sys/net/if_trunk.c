@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.95 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.96 2015/05/11 08:41:43 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -94,14 +94,14 @@ int	 trunk_rr_detach(struct trunk_softc *);
 void	 trunk_rr_port_destroy(struct trunk_port *);
 int	 trunk_rr_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_rr_input(struct trunk_softc *, struct trunk_port *,
-	    struct ether_header *, struct mbuf *);
+	    struct mbuf *);
 
 /* Active failover */
 int	 trunk_fail_attach(struct trunk_softc *);
 int	 trunk_fail_detach(struct trunk_softc *);
 int	 trunk_fail_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_fail_input(struct trunk_softc *, struct trunk_port *,
-	    struct ether_header *, struct mbuf *);
+	    struct mbuf *);
 
 /* Loadbalancing */
 int	 trunk_lb_attach(struct trunk_softc *);
@@ -110,7 +110,7 @@ int	 trunk_lb_port_create(struct trunk_port *);
 void	 trunk_lb_port_destroy(struct trunk_port *);
 int	 trunk_lb_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_lb_input(struct trunk_softc *, struct trunk_port *,
-	    struct ether_header *, struct mbuf *);
+	    struct mbuf *);
 int	 trunk_lb_porttable(struct trunk_softc *, struct trunk_port *);
 
 /* Broadcast mode */
@@ -118,14 +118,14 @@ int	 trunk_bcast_attach(struct trunk_softc *);
 int	 trunk_bcast_detach(struct trunk_softc *);
 int	 trunk_bcast_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_bcast_input(struct trunk_softc *, struct trunk_port *,
-	    struct ether_header *, struct mbuf *);
+	    struct mbuf *);
 
 /* 802.3ad LACP */
 int	 trunk_lacp_attach(struct trunk_softc *);
 int	 trunk_lacp_detach(struct trunk_softc *);
 int	 trunk_lacp_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_lacp_input(struct trunk_softc *, struct trunk_port *,
-	    struct ether_header *, struct mbuf *);
+	    struct mbuf *);
 
 /* Trunk protocol table */
 static const struct {
@@ -288,6 +288,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 {
 	struct trunk_softc *tr_ptr;
 	struct trunk_port *tp;
+	struct ifih *trunk_ifih;
 	int error = 0;
 
 	/* Limit the maximal number of trunk ports */
@@ -326,12 +327,19 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
+	trunk_ifih = malloc(sizeof(*trunk_ifih), M_DEVBUF, M_NOWAIT);
+	if (trunk_ifih == NULL) {
+		free(tp, M_DEVBUF, 0);
+		return (ENOMEM);
+	}
+
 	/* Check if port is a stacked trunk */
 	SLIST_FOREACH(tr_ptr, &trunk_list, tr_entries) {
 		if (ifp == &tr_ptr->tr_ac.ac_if) {
 			tp->tp_flags |= TRUNK_PORT_STACK;
 			if (trunk_port_checkstacking(tr_ptr) >=
 			    TRUNK_MAX_STACKING) {
+				free(trunk_ifih, M_DEVBUF, sizeof(*trunk_ifih));
 				free(tp, M_DEVBUF, 0);
 				return (E2BIG);
 			}
@@ -341,6 +349,11 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	/* Change the interface type */
 	tp->tp_iftype = ifp->if_type;
 	ifp->if_type = IFT_IEEE8023ADLAG;
+
+	/* Change input handler of the physical interface. */
+	trunk_ifih->ifih_input = trunk_input;
+	SLIST_INSERT_HEAD(&ifp->if_inputs, trunk_ifih, ifih_next);
+
 	ifp->if_tp = (caddr_t)tp;
 	tp->tp_ioctl = ifp->if_ioctl;
 	ifp->if_ioctl = trunk_port_ioctl;
@@ -411,6 +424,7 @@ trunk_port_destroy(struct trunk_port *tp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
 	struct trunk_port *tp_ptr;
+	struct ifih *trunk_ifih;
 	struct ifnet *ifp = tp->tp_if;
 
 	if (tr->tr_port_destroy != NULL)
@@ -425,8 +439,15 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	ifpromisc(ifp, 0);
 
-	/* Restore interface */
+	/* Restore interface type. */
 	ifp->if_type = tp->tp_iftype;
+
+	/* Restore previous input handler. */
+	trunk_ifih = SLIST_FIRST(&ifp->if_inputs);
+	SLIST_REMOVE_HEAD(&ifp->if_inputs, ifih_next);
+	KASSERT(trunk_ifih->ifih_input == trunk_input);
+	free(trunk_ifih, M_DEVBUF, sizeof(*trunk_ifih));
+
 	ifp->if_watchdog = tp->tp_watchdog;
 	ifp->if_ioctl = tp->tp_ioctl;
 	ifp->if_tp = NULL;
@@ -1073,12 +1094,24 @@ trunk_watchdog(struct ifnet *ifp)
 }
 
 int
-trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
+trunk_input(struct mbuf *m, void *hdr)
 {
+	struct ifnet *ifp;
 	struct trunk_softc *tr;
 	struct trunk_port *tp;
 	struct ifnet *trifp = NULL;
-	int error = 0;
+	struct ether_header *eh = hdr;
+	int error;
+
+	ifp = m->m_pkthdr.rcvif;
+
+	if (eh == NULL)
+		eh = mtod(m, struct ether_header *);
+
+	if (ETHER_IS_MULTICAST(eh->ether_dhost))
+		ifp->if_imcasts++;
+
+	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/* Should be checked by the caller */
 	if (ifp->if_type != IFT_IEEE8023ADLAG) {
@@ -1098,19 +1131,24 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 
 #if NBPFILTER > 0
 	if (trifp->if_bpf && tr->tr_proto != TRUNK_PROTO_FAILOVER)
-		bpf_mtap_hdr(trifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m,
-		    BPF_DIRECTION_IN, NULL);
+		bpf_mtap_ether(trifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-	error = (*tr->tr_input)(tr, tp, eh, m);
-	if (error != 0)
-		return (error);
+	if ((*tr->tr_input)(tr, tp, m)) {
+		/*
+		 * We stop here if the packet has been consumed
+		 * by the protocol routine.
+		 */
+		m_freem(m);
+		return (1);
+	}
 
 	trifp->if_ipackets++;
+	m->m_pkthdr.rcvif = trifp;
 	return (0);
 
  bad:
-	if (error > 0 && trifp != NULL)
+	if (trifp != NULL)
 		trifp->if_ierrors++;
 	m_freem(m);
 	return (error);
@@ -1290,14 +1328,9 @@ trunk_rr_start(struct trunk_softc *tr, struct mbuf *m)
 }
 
 int
-trunk_rr_input(struct trunk_softc *tr, struct trunk_port *tp,
-    struct ether_header *eh, struct mbuf *m)
+trunk_rr_input(struct trunk_softc *tr, struct trunk_port *tp, struct mbuf *m)
 {
-	struct ifnet *ifp = &tr->tr_ac.ac_if;
-
 	/* Just pass in the packet to our trunk device */
-	m->m_pkthdr.rcvif = ifp;
-
 	return (0);
 }
 
@@ -1344,8 +1377,7 @@ trunk_fail_start(struct trunk_softc *tr, struct mbuf *m)
 }
 
 int
-trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
-    struct ether_header *eh, struct mbuf *m)
+trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp, struct mbuf *m)
 {
 	struct ifnet *ifp = &tr->tr_ac.ac_if;
 	struct trunk_port *tmp_tp;
@@ -1362,17 +1394,13 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
 		if ((tmp_tp == NULL || tmp_tp == tp))
 			accept = 1;
 	}
-	if (!accept) {
-		m_freem(m);
+	if (!accept)
 		return (-1);
-	}
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap_hdr(ifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m,
-		    BPF_DIRECTION_IN, NULL);
+		bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-	m->m_pkthdr.rcvif = ifp;
 	return (0);
 }
 
@@ -1476,14 +1504,9 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 }
 
 int
-trunk_lb_input(struct trunk_softc *tr, struct trunk_port *tp,
-    struct ether_header *eh, struct mbuf *m)
+trunk_lb_input(struct trunk_softc *tr, struct trunk_port *tp, struct mbuf *m)
 {
-	struct ifnet *ifp = &tr->tr_ac.ac_if;
-
 	/* Just pass in the packet to our trunk device */
-	m->m_pkthdr.rcvif = ifp;
-
 	return (0);
 }
 
@@ -1559,12 +1582,8 @@ trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m0)
 }
 
 int
-trunk_bcast_input(struct trunk_softc *tr, struct trunk_port *tp,
-    struct ether_header *eh, struct mbuf *m)
+trunk_bcast_input(struct trunk_softc *tr, struct trunk_port *tp, struct mbuf *m)
 {
-	struct ifnet *ifp = &tr->tr_ac.ac_if;
-
-	m->m_pkthdr.rcvif = ifp;
 	return (0);
 }
 
@@ -1630,15 +1649,7 @@ trunk_lacp_start(struct trunk_softc *tr, struct mbuf *m)
 }
 
 int
-trunk_lacp_input(struct trunk_softc *tr, struct trunk_port *tp,
-    struct ether_header *eh, struct mbuf *m)
+trunk_lacp_input(struct trunk_softc *tr, struct trunk_port *tp, struct mbuf *m)
 {
-	struct ifnet *ifp = &tr->tr_ac.ac_if;
-
-	m = lacp_input(tp, eh, m);
-	if (m == NULL)
-		return (-1);
-
-	m->m_pkthdr.rcvif = ifp;
-	return (0);
+	return (lacp_input(tp, m));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.8 2014/12/04 00:01:53 tedu Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.9 2015/05/11 08:41:43 mpi Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ struct lacp_collectorinfo {
 } __packed;
 
 struct lacpdu {
+	struct ether_header	ldu_eh;
 	struct slowprothdr	ldu_sph;
 
 	struct tlvhdr		ldu_tlv_actor;
@@ -153,6 +154,7 @@ struct lacp_markerinfo {
 	"\010EXPIRED"
 
 struct markerdu {
+	struct ether_header	mdu_eh;
 	struct slowprothdr	mdu_sph;
 
 	struct tlvhdr		mdu_tlv;
@@ -260,8 +262,7 @@ struct lacp_softc {
 #define LACP_UNLOCK(_lsc)		mtx_unlock(&(_lsc)->lsc_mtx)
 #define LACP_LOCK_ASSERT(_lsc)		mtx_assert(&(_lsc)->lsc_mtx, MA_OWNED)
 
-struct mbuf	*lacp_input(struct trunk_port *,
-		    struct ether_header *, struct mbuf *);
+int		lacp_input(struct trunk_port *, struct mbuf *);
 struct trunk_port *lacp_select_tx_port(struct trunk_softc *, struct mbuf *);
 int		lacp_attach(struct trunk_softc *);
 int		lacp_detach(struct trunk_softc *);
