@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.351 2015/04/11 17:10:17 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.352 2015/05/11 12:24:06 pelikan Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -229,7 +229,7 @@ sr_meta_attach(struct sr_discipline *sd, int chunk_no, int force)
 	struct sr_chunk		*ch_entry, *chunk1, *chunk2;
 	int			rv = 1, i = 0;
 
-	DNPRINTF(SR_D_META, "%s: sr_meta_attach(%d)\n", DEVNAME(sc));
+	DNPRINTF(SR_D_META, "%s: sr_meta_attach(%d)\n", DEVNAME(sc), chunk_no);
 
 	/* in memory copy of metadata */
 	sd->sd_meta = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO | M_NOWAIT);
@@ -408,7 +408,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 	int			rv = 1;
 	char			*dma_buf;
 
-	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %zu, %lld 0x%x)\n",
+	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %zu, %lld 0x%lx)\n",
 	    DEVNAME(sc), dev, buf, size, (long long)offset, flags);
 
 	dma_bufsize = (size > MAXPHYS) ? MAXPHYS : size;
@@ -420,7 +420,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 	}
 
 	while (size > 0) {
-		DNPRINTF(SR_D_MISC, "%s: dma_buf %p, size %d, offset %llu)\n",
+		DNPRINTF(SR_D_MISC, "%s: dma_buf %p, size %zu, offset %llu)\n",
 		    DEVNAME(sc), dma_buf, size, offset);
 
 		bufsize = (size > MAXPHYS) ? MAXPHYS : size;
@@ -478,7 +478,7 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
 {
 	int			rv = 1;
 
-	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, %zu, %lld 0x%x)\n",
+	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, %zu, %lld 0x%lx)\n",
 	    DEVNAME(sd->sd_sc), dev, md, size, (long long)offset, flags);
 
 	if (md == NULL) {
@@ -514,7 +514,7 @@ sr_meta_clear(struct sr_discipline *sd)
 		if (sr_meta_native_write(sd, ch_entry->src_dev_mm, m, NULL)) {
 			/* XXX mark disk offline */
 			DNPRINTF(SR_D_META, "%s: sr_meta_clear failed to "
-			    "clear %s\n", ch_entry->src_devname);
+			    "clear %s\n", DEVNAME(sc), ch_entry->src_devname);
 			rv++;
 			continue;
 		}
@@ -1892,7 +1892,7 @@ sr_error(struct sr_softc *sc, const char *fmt, ...)
 void
 sr_minphys(struct buf *bp, struct scsi_link *sl)
 {
-	DNPRINTF(SR_D_MISC, "sr_minphys: %d\n", bp->b_bcount);
+	DNPRINTF(SR_D_MISC, "sr_minphys: %ld\n", bp->b_bcount);
 
 	/* XXX currently using SR_MAXFER = MAXPHYS */
 	if (bp->b_bcount > SR_MAXFER)
@@ -2042,7 +2042,7 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
 	LIST_INIT(&ccb->ccb_buf.b_dep);
 
 	DNPRINTF(SR_D_DIS, "%s: %s %s ccb "
-	    "b_bcount %d b_blkno %lld b_flags 0x%0x b_data %p\n",
+	    "b_bcount %ld b_blkno %lld b_flags 0x%0lx b_data %p\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
 	    ccb->ccb_buf.b_bcount, (long long)ccb->ccb_buf.b_blkno,
 	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
@@ -2058,8 +2058,8 @@ sr_ccb_done(struct sr_ccb *ccb)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_softc		*sc = sd->sd_sc;
 
-	DNPRINTF(SR_D_INTR, "%s: %s %s ccb done b_bcount %d b_resid %d"
-	    " b_flags 0x%0x block %lld target %d\n",
+	DNPRINTF(SR_D_INTR, "%s: %s %s ccb done b_bcount %ld b_resid %zu"
+	    " b_flags 0x%0lx block %lld target %d\n",
 	    DEVNAME(sc), sd->sd_meta->ssd_devname, sd->sd_name,
 	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
 	    (long long)ccb->ccb_buf.b_blkno, ccb->ccb_target);
@@ -2474,7 +2474,7 @@ sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 	if (sd == NULL)
 		return (ENODEV);
 
-	DNPRINTF(SR_D_IOCTL, "%s: %s sr_scsi_ioctl cmd: %#x\n",
+	DNPRINTF(SR_D_IOCTL, "%s: %s sr_scsi_ioctl cmd: %#lx\n",
 	    DEVNAME(sc), sd->sd_meta->ssd_devname, cmd);
 
 	/* Pass bio ioctls through to the bio handler. */
@@ -2493,10 +2493,10 @@ sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 int
 sr_bio_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
+	struct sr_softc *sc = (struct sr_softc *) dev;
 	DNPRINTF(SR_D_IOCTL, "%s: sr_bio_ioctl\n", DEVNAME(sc));
 
-	return sr_bio_handler((struct sr_softc *)dev, NULL, cmd,
-	    (struct bio *)addr);
+	return sr_bio_handler(sc, NULL, cmd, (struct bio *)addr);
 }
 
 int
@@ -3723,11 +3723,10 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	sbm->sbm_bootldr_size = bls;
 
 	DNPRINTF(SR_D_IOCTL, "sr_ioctl_installboot: root duid is "
-	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
-	    sbm->sbm_root_duid[0], sbm->sbm_root_duid[1],
-	    sbm->sbm_root_duid[2], sbm->sbm_root_duid[3],
-	    sbm->sbm_root_duid[4], sbm->sbm_root_duid[5],
-	    sbm->sbm_root_duid[6], sbm->sbm_root_duid[7]);
+	    "%02x%02x%02x%02x%02x%02x%02x%02x\n", sbm->sbm_root_duid[0],
+	    sbm->sbm_root_duid[1], sbm->sbm_root_duid[2], sbm->sbm_root_duid[3],
+	    sbm->sbm_root_duid[4], sbm->sbm_root_duid[5], sbm->sbm_root_duid[6],
+	    sbm->sbm_root_duid[7]);
 
 	/* Save boot block and boot loader to each chunk. */
 	for (i = 0; i < sd->sd_meta->ssdi.ssd_chunk_no; i++) {
