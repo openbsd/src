@@ -1,6 +1,7 @@
-/*	$OpenBSD: upd.c,v 1.19 2015/04/30 10:09:31 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.20 2015/05/11 08:51:31 mpi Exp $ */
 
 /*
+ * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
  * Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -78,25 +79,28 @@ static struct upd_usage_entry upd_usage_roots[] = {
 };
 #define UPD_MAX_SENSORS	(nitems(upd_usage_batdep) + nitems(upd_usage_roots))
 
+SLIST_HEAD(upd_sensor_head, upd_sensor);
+
 struct upd_report {
-	size_t				size;
-	SLIST_HEAD(, upd_sensor)	sensors;
+	size_t			size;		/* Size of the report */
+	struct upd_sensor_head	sensors;	/* List in dependency order */
+	int			pending;	/* Waiting for an answer */
 };
 
-SLIST_HEAD(upd_sensor_head, upd_sensor);
 struct upd_sensor {
-	struct ksensor			ksensor;
-	struct hid_item			hitem;
-	int				attached;
-	struct upd_sensor_head		children;
-	SLIST_ENTRY(upd_sensor)		dep_next;
-	SLIST_ENTRY(upd_sensor)		rep_next;
+	struct ksensor		ksensor;
+	struct hid_item		hitem;
+	int			attached;	/* Is there a matching report */
+	struct upd_sensor_head	children;	/* list of children sensors */
+	SLIST_ENTRY(upd_sensor)	dep_next;	/* next in the child list */
+	SLIST_ENTRY(upd_sensor)	rep_next;	/* next in the report list */
 };
 
 struct upd_softc {
 	struct uhidev		 sc_hdev;
 	int			 sc_num_sensors;
 	u_int			 sc_max_repid;
+	char			 sc_buf[256];
 
 	/* sensor framework */
 	struct ksensordev	 sc_sensordev;
@@ -112,11 +116,13 @@ void upd_attach_sensor_tree(struct upd_softc *, void *, int, int,
     struct upd_usage_entry *, struct upd_sensor_head *);
 int  upd_detach(struct device *, int);
 
-void upd_refresh(void *);
-void upd_update_sensors(struct upd_softc *, uint8_t *, unsigned int, int);
-void upd_update_sensor_value(struct upd_softc *, struct upd_sensor *,
-    uint8_t *, int);
 void upd_intr(struct uhidev *, void *, uint);
+void upd_refresh(void *);
+void upd_request_children(struct upd_softc *, struct upd_sensor_head *);
+void upd_update_report_cb(void *, int, void *, int);
+
+void upd_sensor_invalidate(struct upd_softc *, struct upd_sensor *);
+void upd_sensor_update(struct upd_softc *, struct upd_sensor *, uint8_t *, int);
 int upd_lookup_usage_entry(void *, int, struct upd_usage_entry *,
     struct hid_item *);
 struct upd_sensor *upd_lookup_sensor(struct upd_softc *, int, int);
@@ -126,10 +132,7 @@ struct cfdriver upd_cd = {
 };
 
 const struct cfattach upd_ca = {
-	sizeof(struct upd_softc),
-	upd_match,
-	upd_attach,
-	upd_detach
+	sizeof(struct upd_softc), upd_match, upd_attach, upd_detach
 };
 
 int
@@ -273,42 +276,50 @@ upd_detach(struct device *self, int flags)
 		sensor = &sc->sc_sensors[i];
 		if (sensor->attached)
 			sensor_detach(&sc->sc_sensordev, &sensor->ksensor);
-		DPRINTF(("upd_detach: %s\n", sensor->ksensor.desc));
 	}
 
 	free(sc->sc_reports, M_USBDEV, 0);
 	free(sc->sc_sensors, M_USBDEV, 0);
-	DPRINTF(("upd_detach: complete\n"));
 	return (0);
 }
 
 void
 upd_refresh(void *arg)
 {
-	struct upd_softc	*sc = (struct upd_softc *)arg;
+	struct upd_softc	*sc = arg;
+	int			 s;
+
+	/* request root sensors, do not let async handlers fire yet */
+	s = splusb();
+	upd_request_children(sc, &sc->sc_root_sensors);
+	splx(s);
+}
+
+void
+upd_request_children(struct upd_softc *sc, struct upd_sensor_head *queue)
+{
+	struct upd_sensor	*sensor;
 	struct upd_report	*report;
-	uint8_t			buf[256];
-	int			repid, actlen;
+	int			 len, repid;
 
-	for (repid = 0; repid < sc->sc_max_repid; repid++) {
+	SLIST_FOREACH(sensor, queue, dep_next) {
+		repid = sensor->hitem.report_ID;
 		report = &sc->sc_reports[repid];
-		if (SLIST_EMPTY(&report->sensors))
-			continue;
 
-		memset(buf, 0x0, sizeof(buf));
-		actlen = uhidev_get_report(sc->sc_hdev.sc_parent,
-		    UHID_FEATURE_REPORT, repid, buf, report->size);
-
-		if (actlen == -1) {
-			DPRINTF(("upd: failed to get report id=%02x\n", repid));
+		/* already requested */
+		if (report->pending)
 			continue;
+		report->pending = 1;
+
+		len = uhidev_get_report_async(sc->sc_hdev.sc_parent,
+		    UHID_FEATURE_REPORT, repid, sc->sc_buf, report->size, sc,
+		    upd_update_report_cb);
+
+		/* request failed, force-invalidate all sensors in report */
+		if (len < 0) {
+			upd_update_report_cb(sc, repid, NULL, -1);
+			report->pending = 0;
 		}
-
-		/* Deal with buggy firmwares. */
-		if (actlen < report->size)
-			report->size = actlen;
-
-		upd_update_sensors(sc, buf, report->size, repid);
 	}
 }
 
@@ -349,42 +360,44 @@ upd_lookup_sensor(struct upd_softc *sc, int page, int usage)
 }
 
 void
-upd_update_sensors(struct upd_softc *sc, uint8_t *buf, unsigned int len,
-    int repid)
+upd_update_report_cb(void *priv, int repid, void *data, int len)
 {
+	struct upd_softc	*sc = priv;
+	struct upd_report	*report = &sc->sc_reports[repid];
 	struct upd_sensor	*sensor;
-	ulong			batpres;
-	int			i;
 
-	sensor = upd_lookup_sensor(sc, HUP_BATTERY, HUB_BATTERY_PRESENT);
-	batpres = sensor ? sensor->ksensor.value : -1;
+	/* handle buggy firmware */
+	if (len > 0 && report->size != len)
+		report->size = len;
 
-	for (i = 0; i < sc->sc_num_sensors; i++) {
-		sensor = &sc->sc_sensors[i];
-		if (!(sensor->hitem.report_ID == repid && sensor->attached))
-			continue;
-
-		/* invalidate battery dependent sensors */
-		if (HID_GET_USAGE_PAGE(sensor->hitem.usage) == HUP_BATTERY &&
-		    batpres <= 0) {
-			/* exception to the battery sensor itself */
-			if (HID_GET_USAGE(sensor->hitem.usage) !=
-			    HUB_BATTERY_PRESENT) {
-				sensor->ksensor.status = SENSOR_S_UNKNOWN;
-				sensor->ksensor.flags |= SENSOR_FINVALID;
-				continue;
-			}
-		}
-
-		upd_update_sensor_value(sc, sensor, buf, len);
+	if (data == NULL || len <= 0) {
+		SLIST_FOREACH(sensor, &report->sensors, rep_next)
+			upd_sensor_invalidate(sc, sensor);
+	} else {
+		SLIST_FOREACH(sensor, &report->sensors, rep_next)
+			upd_sensor_update(sc, sensor, data, len);
 	}
+	report->pending = 0;
 }
 
 void
-upd_update_sensor_value(struct upd_softc *sc, struct upd_sensor *sensor,
+upd_sensor_invalidate(struct upd_softc *sc, struct upd_sensor *sensor)
+{
+	struct upd_sensor	*child;
+
+	sensor->ksensor.status = SENSOR_S_UNKNOWN;
+	sensor->ksensor.flags |= SENSOR_FINVALID;
+
+	SLIST_FOREACH(child, &sensor->children, dep_next)
+		upd_sensor_invalidate(sc, child);
+}
+
+void
+upd_sensor_update(struct upd_softc *sc, struct upd_sensor *sensor,
     uint8_t *buf, int len)
 {
-	int64_t	hdata, adjust;
+	struct upd_sensor	*child;
+	int64_t			 hdata, adjust;
 
 	switch (HID_GET_USAGE(sensor->hitem.usage)) {
 	case HUB_REL_STATEOF_CHARGE:
@@ -402,8 +415,17 @@ upd_update_sensor_value(struct upd_softc *sc, struct upd_sensor *sensor,
 	sensor->ksensor.value = hdata * adjust;
 	sensor->ksensor.status = SENSOR_S_OK;
 	sensor->ksensor.flags &= ~SENSOR_FINVALID;
-	DPRINTF(("%s: %s hidget data: %lld\n", DEVNAME(sc),
-	    sensor->ksensor.desc, hdata));
+
+	/* if battery not present, invalidate children */
+	if (HID_GET_USAGE_PAGE(sensor->hitem.usage) == HUP_BATTERY &&
+	    HID_GET_USAGE(sensor->hitem.usage) == HUB_BATTERY_PRESENT &&
+	    sensor->ksensor.value == 0) {
+		SLIST_FOREACH(child, &sensor->children, dep_next)
+			upd_sensor_invalidate(sc, child);
+		return;
+	}
+
+	upd_request_children(sc, &sensor->children);
 }
 
 void
