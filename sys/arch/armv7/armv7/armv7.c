@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.7 2015/05/08 03:38:26 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.8 2015/05/12 04:40:31 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -167,7 +167,6 @@ struct board_dev utilite_devs[] = {
 	{ "imxgpio",	4 },
 	{ "imxgpio",	5 },
 	{ "imxgpio",	6 },
-	{ "imxiic",	2 },
 	{ "imxesdhc",	2 },
 	{ "ehci",	0 },
 	{ "imxenet",	0 },
