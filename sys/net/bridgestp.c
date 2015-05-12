@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.53 2015/05/04 10:24:08 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.54 2015/05/12 12:35:10 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -31,10 +31,6 @@
  * Implementation of the spanning tree protocol as defined in
  * ISO/IEC 802.1D-2004, June 9, 2004.
  */
-
-#include "bridge.h"
-
-#if NBRIDGE > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2280,4 +2276,3 @@ bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	return (err);
 }
-#endif /* NBRIDGE */
