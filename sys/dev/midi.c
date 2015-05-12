@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.35 2015/05/12 18:05:43 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.36 2015/05/12 18:23:38 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -495,21 +495,9 @@ midiprobe(struct device *parent, void *match, void *aux)
 }
 
 void
-midi_attach(struct midi_softc *sc, struct device *parent)
-{
-	struct midi_info mi;
-
-	sc->isdying = 0;
-	sc->hw_if->getinfo(sc->hw_hdl, &mi);
-	sc->props = mi.props;
-	sc->isopen = 0;
-	timeout_set(&sc->timeo, midi_timeout, sc);
-	printf(": <%s>\n", mi.name);
-}
-
-void
 midiattach(struct device *parent, struct device *self, void *aux)
 {
+	struct midi_info	  mi;
 	struct midi_softc        *sc = (struct midi_softc *)self;
 	struct audio_attach_args *sa = (struct audio_attach_args *)aux;
 	struct midi_hw_if        *hwif = sa->hwif;
@@ -527,7 +515,12 @@ midiattach(struct device *parent, struct device *self, void *aux)
 #endif
 	sc->hw_if = hwif;
 	sc->hw_hdl = hdl;
-	midi_attach(sc, parent);
+	sc->isdying = 0;
+	sc->hw_if->getinfo(sc->hw_hdl, &mi);
+	sc->props = mi.props;
+	sc->isopen = 0;
+	timeout_set(&sc->timeo, midi_timeout, sc);
+	printf(": <%s>\n", mi.name);
 }
 
 int
@@ -565,19 +558,6 @@ midiprint(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-void
-midi_getinfo(dev_t dev, struct midi_info *mi)
-{
-	struct midi_softc *sc = MIDI_DEV2SC(dev);
-
-	if (MIDI_UNIT(dev) >= midi_cd.cd_ndevs || sc == NULL || sc->isdying) {
-		mi->name = "unconfigured";
-		mi->props = 0;
-		return;
-	}
-	sc->hw_if->getinfo(sc->hw_hdl, mi);
-}
-
 struct device *
 midi_attach_mi(struct midi_hw_if *hwif, void *hdl, struct device *dev)
 {
@@ -588,11 +568,3 @@ midi_attach_mi(struct midi_hw_if *hwif, void *hdl, struct device *dev)
 	arg.hdl = hdl;
 	return config_found(dev, &arg, midiprint);
 }
-
-
-int
-midi_unit_count(void)
-{
-	return midi_cd.cd_ndevs;
-}
-
