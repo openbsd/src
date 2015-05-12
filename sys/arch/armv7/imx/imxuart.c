@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: imxuart.c,v 1.3 2015/05/12 02:49:48 jsg Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -196,11 +196,13 @@ imxuart_intr(void *arg)
 				timeout_add(&sc->sc_diag_tmo, 60 * hz);
 		} else {
 			*p++ = c;
-			if (p == sc->sc_ibufhigh && ISSET(tp->t_cflag, CRTSCTS))
+			if (p == sc->sc_ibufhigh &&
+			    ISSET(tp->t_cflag, CRTSCTS)) {
 				/* XXX */
 				CLR(sc->sc_ucr3, IMXUART_CR3_DSR);
 				bus_space_write_2(iot, ioh, IMXUART_UCR3,
 				    sc->sc_ucr3);
+			}
 
 		}
 		/* XXX - msr stuff ? */
