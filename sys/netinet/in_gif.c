@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.43 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.44 2015/05/12 12:27:17 mpi Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 
 #include "gif.h"
 #include "bridge.h"
-#if NBRIDGE > 0
+#if NBRIDGE > 0 || defined(MPLS)
 #include <netinet/ip_ether.h>
 #endif
 
