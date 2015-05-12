@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.46 2015/05/10 19:40:56 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.47 2015/05/12 11:46:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -126,6 +126,7 @@ static const struct usb_devno urtwn_devs[] = {
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188CU_0 },
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188CU_1 },
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188CU_2 },
+	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188CU_3 },
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188CU_COMBO },
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188CUS },
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188RU },
@@ -143,6 +144,9 @@ static const struct usb_devno urtwn_devs[] = {
 	{ USB_VENDOR_TRENDNET,	USB_PRODUCT_TRENDNET_RTL8192CU },
 	{ USB_VENDOR_ZYXEL,	USB_PRODUCT_ZYXEL_RTL8192CU },
 	/* URTWN_RTL8188E */
+	{ USB_VENDOR_DLINK,	USB_PRODUCT_DLINK_DWA123D1 },
+	{ USB_VENDOR_DLINK,	USB_PRODUCT_DLINK_DWA125D1 },
+	{ USB_VENDOR_ELECOM,	USB_PRODUCT_ELECOM_WDC150SU2M },
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188ETV },
 	{ USB_VENDOR_REALTEK,	USB_PRODUCT_REALTEK_RTL8188EU }
 };
@@ -305,7 +309,10 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (uaa->product == USB_PRODUCT_REALTEK_RTL8188EU ||
+	if (uaa->product == USB_PRODUCT_DLINK_DWA123D1 ||
+	    uaa->product == USB_PRODUCT_DLINK_DWA125D1 ||
+	    uaa->product == USB_PRODUCT_ELECOM_WDC150SU2M ||
+	    uaa->product == USB_PRODUCT_REALTEK_RTL8188EU ||
 	    uaa->product == USB_PRODUCT_REALTEK_RTL8188ETV)
 		sc->chip |= URTWN_CHIP_88E;
 
@@ -922,12 +929,16 @@ urtwn_efuse_read(struct urtwn_softc *sc)
 		printf("\n");
 	}
 #endif
+
+	urtwn_write_1(sc, R92C_EFUSE_ACCESS, R92C_EFUSE_ACCESS_OFF);
 }
 
 void
 urtwn_efuse_switch_power(struct urtwn_softc *sc)
 {
 	uint32_t reg;
+
+	urtwn_write_1(sc, R92C_EFUSE_ACCESS, R92C_EFUSE_ACCESS_ON);
 
 	reg = urtwn_read_2(sc, R92C_SYS_ISO_CTRL);
 	if (!(reg & R92C_SYS_ISO_CTRL_PWC_EV12V)) {
@@ -1014,7 +1025,7 @@ urtwn_r88e_read_rom(struct urtwn_softc *sc)
 
 	/* Read full ROM image. */
 	memset(&sc->r88e_rom, 0xff, sizeof(sc->r88e_rom));
-	while (addr < 1024) {
+	while (addr < 512) {
 		reg = urtwn_efuse_read_1(sc, addr);
 		if (reg == 0xff)
 			break;
@@ -1039,6 +1050,8 @@ urtwn_r88e_read_rom(struct urtwn_softc *sc)
 			addr++;
 		}
 	}
+
+	urtwn_write_1(sc, R92C_EFUSE_ACCESS, R92C_EFUSE_ACCESS_OFF);
 
 	addr = 0x10;
 	for (i = 0; i < 6; i++)
@@ -1178,7 +1191,7 @@ urtwn_r88e_ra_init(struct urtwn_softc *sc, u_int8_t mode, u_int32_t rates,
 	reg = RW(reg, R92C_RRSR_RATE_BITMAP, rates);
 	urtwn_write_4(sc, R92C_RRSR, reg);
 
-	/* 
+	/*
 	 * Workaround for performance problems with firmware rate adaptation:
 	 * If the AP only supports 11b rates, disable mixed B/G mode.
 	 */
@@ -2354,14 +2367,12 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 int
 urtwn_r88e_power_on(struct urtwn_softc *sc)
 {
-	uint8_t val;
 	uint32_t reg;
 	int ntries;
 
 	/* Wait for power ready bit. */
 	for (ntries = 0; ntries < 5000; ntries++) {
-		val = urtwn_read_1(sc, 0x6) & 0x2;
-		if (val == 0x2)
+		if (urtwn_read_4(sc, R92C_APS_FSMCO) & R92C_APS_FSMCO_SUS_HOST)
 			break;
 		DELAY(10);
 	}
@@ -2376,17 +2387,24 @@ urtwn_r88e_power_on(struct urtwn_softc *sc)
 	    urtwn_read_1(sc, R92C_SYS_FUNC_EN) & ~(R92C_SYS_FUNC_EN_BBRSTB |
 	    R92C_SYS_FUNC_EN_BB_GLB_RST));
 
-	urtwn_write_1(sc, 0x26, urtwn_read_1(sc, 0x26) | 0x80);
+	urtwn_write_1(sc, R92C_AFE_XTAL_CTRL + 2,
+	    urtwn_read_1(sc, R92C_AFE_XTAL_CTRL + 2) | 0x80);
 
 	/* Disable HWPDN. */
 	urtwn_write_1(sc, 0x5, urtwn_read_1(sc, 0x5) & ~0x80);
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_APDM_HPDN);
 
 	/* Disable WL suspend. */
-	urtwn_write_1(sc, 0x5, urtwn_read_1(sc, 0x5) & ~0x18);
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) &
+	    ~(R92C_APS_FSMCO_AFSM_HSUS | R92C_APS_FSMCO_AFSM_PCIE));
 
-	urtwn_write_1(sc, 0x5, urtwn_read_1(sc, 0x5) | 0x1);
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) | R92C_APS_FSMCO_APFM_ONMAC);
 	for (ntries = 0; ntries < 5000; ntries++) {
-		if (!(urtwn_read_1(sc, 0x5) & 0x1))
+		if (!(urtwn_read_2(sc, R92C_APS_FSMCO) &
+		    R92C_APS_FSMCO_APFM_ONMAC))
 			break;
 		DELAY(10);
 	}
@@ -2394,7 +2412,8 @@ urtwn_r88e_power_on(struct urtwn_softc *sc)
 		return (ETIMEDOUT);
 
 	/* Enable LDO normal mode. */
-	urtwn_write_1(sc, 0x23, urtwn_read_1(sc, 0x23) & ~0x10);
+	urtwn_write_1(sc, R92C_LPLDO_CTRL,
+	    urtwn_read_1(sc, R92C_LPLDO_CTRL) & ~0x10);
 
 	/* Enable MAC DMA/WMAC/SCHEDULE/SEC blocks. */
 	urtwn_write_2(sc, R92C_CR, 0);
