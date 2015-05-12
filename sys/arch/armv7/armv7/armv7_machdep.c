@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.20 2015/05/10 15:56:28 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.21 2015/05/12 04:31:10 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -383,8 +383,7 @@ copy_io_area_map(pd_entry_t *new_pd)
 u_int
 initarm(void *arg0, void *arg1, void *arg2)
 {
-	int loop;
-	int loop1;
+	int loop, loop1, i, physsegs;
 	u_int l1pagetable;
 	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
@@ -722,6 +721,17 @@ initarm(void *arg0, void *arg1, void *arg2)
 	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend), 0);
+
+	physsegs = MIN(bootconfig.dramblocks, VM_PHYSSEG_MAX);
+
+	for (i = 1; i < physsegs; i++) {
+		paddr_t dramstart = bootconfig.dram[i].address;
+		paddr_t dramend =  MIN((uint64_t)dramstart +
+		    bootconfig.dram[i].pages * PAGE_SIZE, (paddr_t)-PAGE_SIZE);
+		physmem += (dramend - dramstart) / PAGE_SIZE;
+		uvm_page_physload(atop(dramstart), atop(dramend),
+		    atop(dramstart), atop(dramend), 0);
+	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
 #ifdef VERBOSE_INIT_ARM
