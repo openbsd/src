@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.63 2015/04/01 18:49:32 gsoares Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.64 2015/05/12 02:33:39 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -93,6 +93,7 @@ typedef enum {
     em_eeprom_microwire,
     em_eeprom_flash,
     em_eeprom_ich8,
+    em_eeprom_invm,
     em_eeprom_none, /* No NVM support */
     em_num_eeprom_types
 } em_eeprom_type;
@@ -409,6 +410,7 @@ int32_t em_validate_eeprom_checksum(struct em_hw *hw);
 int32_t em_update_eeprom_checksum(struct em_hw *hw);
 int32_t em_write_eeprom(struct em_hw *hw, uint16_t reg, uint16_t words, uint16_t *data);
 int32_t em_read_mac_addr(struct em_hw * hw);
+boolean_t em_get_flash_presence_i210(struct em_hw *);
 
 /* Filters (multicast, vlan, receive) */
 void em_mc_addr_list_update(struct em_hw *hw, uint8_t * mc_addr_list, uint32_t mc_addr_count,
@@ -2464,6 +2466,9 @@ struct em_host_command_info {
 #define EEPROM_SIZE_MASK        0x1C00
 
 /* EEPROM Word Offsets */
+#define EEPROM_MAC_ADDR_WORD0         0x0000
+#define EEPROM_MAC_ADDR_WORD1         0x0001
+#define EEPROM_MAC_ADDR_WORD2         0x0002
 #define EEPROM_COMPAT                 0x0003
 #define EEPROM_ID_LED_SETTINGS        0x0004
 #define EEPROM_VERSION                0x0005
@@ -2472,8 +2477,11 @@ struct em_host_command_info {
 #define EEPROM_INIT_CONTROL1_REG      0x000A
 #define EEPROM_INIT_CONTROL2_REG      0x000F
 #define EEPROM_SWDEF_PINS_CTRL_PORT_1 0x0010
+#define EEPROM_INIT_CONTROL4_REG      0x0013
 #define EEPROM_INIT_CONTROL3_PORT_B   0x0014
 #define EEPROM_INIT_3GIO_3            0x001A
+#define EEPROM_LED_1_CFG              0x001C
+#define EEPROM_LED_0_2_CFG            0x001F
 #define EEPROM_SWDEF_PINS_CTRL_PORT_0 0x0020
 #define EEPROM_INIT_CONTROL3_PORT_A   0x0024
 #define EEPROM_CFG                    0x0012
@@ -3743,6 +3751,31 @@ union ich8_hws_flash_regacc {
 #define I82579_LPI_UPDATE_TIMER 0x4805	/* in 40ns units + 40 ns base value */
 #define I82579_MSE_THRESHOLD	0x084F	/* Mean Square Error Threshold */
 #define I82579_MSE_LINK_DOWN	0x2411	/* MSE count before dropping link */
+
+/* INVM Registers for i210 */
+#define E1000_INVM_DATA_REG(reg)		(0x12120 + 4*(reg))
+#define INVM_SIZE				64 /* Number of INVM Data Registers */
+
+/* NVM offset defaults for i211 */
+#define NVM_INIT_CTRL_2_DEFAULT_I211	0x7243
+#define NVM_INIT_CTRL_4_DEFAULT_I211	0x00C1
+#define NVM_LED_1_CFG_DEFAULT_I211	0x0184
+#define NVM_LED_0_2_CFG_DEFAULT_I211	0x200C
+#define NVM_RESERVED_WORD		0xFFFF
+
+#define INVM_DWORD_TO_RECORD_TYPE(dword)	((dword) & 0x7)
+#define INVM_DWORD_TO_WORD_ADDRESS(dword)	(((dword) & 0x0000FE00) >> 9)
+#define INVM_DWORD_TO_WORD_DATA(dword)		(((dword) & 0xFFFF0000) >> 16)
+
+#define INVM_UNINITIALIZED_STRUCTURE		0x0
+#define INVM_WORD_AUTOLOAD_STRUCTURE		0x1
+#define INVM_CSR_AUTOLOAD_STRUCTURE		0x2
+#define INVM_PHY_REGISTER_AUTOLOAD_STRUCTURE	0x3
+#define INVM_RSA_KEY_SHA256_STRUCTURE		0x4
+#define INVM_INVALIDATED_STRUCTURE		0x5
+
+#define INVM_RSA_KEY_SHA256_DATA_SIZE_IN_DWORDS	8
+#define INVM_CSR_AUTOLOAD_DATA_SIZE_IN_DWORDS	1
 
 #define PHY_UPPER_SHIFT                   21
 #define BM_PHY_REG(page, reg) \
