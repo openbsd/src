@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.296 2015/05/12 02:33:39 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.297 2015/05/12 20:20:18 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2599,6 +2599,7 @@ int
 em_setup_receive_structures(struct em_softc *sc)
 {
 	struct ifnet *ifp = &sc->interface_data.ac_if;
+	u_int lwm;
 
 	memset(sc->rx_desc_base, 0,
 	    sizeof(struct em_rx_desc) * sc->num_rx_desc);
@@ -2610,8 +2611,8 @@ em_setup_receive_structures(struct em_softc *sc)
 	sc->next_rx_desc_to_check = 0;
 	sc->last_rx_desc_filled = sc->num_rx_desc - 1;
 
-	if_rxr_init(&sc->rx_ring, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1),
-	    sc->num_rx_desc);
+	lwm = max(4, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1));
+	if_rxr_init(&sc->rx_ring, lwm, sc->num_rx_desc);
 
 	if (em_rxfill(sc) == 0) {
 		printf("%s: unable to fill any rx descriptors\n",
