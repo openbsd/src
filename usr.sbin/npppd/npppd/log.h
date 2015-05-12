@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.1 2012/11/13 17:10:40 yasuoka Exp $ */
+/*	$OpenBSD: log.h,v 1.2 2015/05/12 03:23:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,5 +29,6 @@ void        log_info (const char *, ...);
 void        log_debug (const char *, ...);
 void        fatal (const char *);
 void        fatalx (const char *);
+void        logit(int, const char *, ...);
 
 #endif /* _LOG_H_ */
