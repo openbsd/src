@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.428 2015/05/11 10:10:16 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.429 2015/05/12 15:27:46 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 11 2015 $
+.Dd $Mdocdate: May 12 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2375,16 +2375,18 @@ Set the base index from which an unused index should be searched when a new
 window is created.
 The default is zero.
 .It Xo Ic bell-action
-.Op Ic any | none | current
+.Op Ic any | none | current | other
 .Xc
 Set action on window bell.
 .Ic any
 means a bell in any window linked to a session causes a bell in the current
 window of that session,
 .Ic none
-means all bells are ignored and
+means all bells are ignored,
 .Ic current
-means only bells in windows other than the current window are ignored.
+means only bells in windows other than the current window are ignored and
+.Ic other
+means bells in the current window are ignored but not those in other windows.
 .It Xo Ic bell-on-alert
 .Op Ic on | off
 .Xc

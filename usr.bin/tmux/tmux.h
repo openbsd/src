@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.512 2015/05/11 10:10:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.513 2015/05/12 15:27:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -75,6 +75,7 @@ extern char   **environ;
 #define BELL_NONE 0
 #define BELL_ANY 1
 #define BELL_CURRENT 2
+#define BELL_OTHER 3
 
 /* Special key codes. */
 #define KEYC_NONE 0xfff
