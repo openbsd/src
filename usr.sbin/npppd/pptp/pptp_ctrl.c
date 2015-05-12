@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp_ctrl.c,v 1.9 2015/01/19 01:48:59 deraadt Exp $	*/
+/*	$OpenBSD: pptp_ctrl.c,v 1.10 2015/05/12 05:30:24 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * PPTP(RFC 2637) control connection implementation.
  * currently it only support PAC part
  */
-/* $Id: pptp_ctrl.c,v 1.9 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: pptp_ctrl.c,v 1.10 2015/05/12 05:30:24 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -749,7 +749,7 @@ pptp_ctrl_send_SCCRP(pptp_ctrl *_this, int result, int error)
 	 * 63 character */
 	/* host name */
 
-	if (PPTP_CTRL_CONF(_this)->hostname == NULL)
+	if ((val = PPTP_CTRL_CONF(_this)->hostname) == NULL)
 		val = "";
 	strlcpy(scc->host_name, val, sizeof(scc->host_name));
 
