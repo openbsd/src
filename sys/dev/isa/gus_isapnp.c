@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus_isapnp.c,v 1.7 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: gus_isapnp.c,v 1.8 2015/05/12 16:35:23 ratchov Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -106,8 +106,6 @@
 #include <machine/cpufunc.h>
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
-#include <dev/auconv.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

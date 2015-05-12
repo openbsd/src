@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.14 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.15 2015/05/12 16:35:23 ratchov Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
