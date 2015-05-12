@@ -1,8 +1,8 @@
-.\"	$OpenBSD: pthread_atfork.3,v 1.10 2013/06/05 03:44:50 tedu Exp $
+.\"	$OpenBSD: pthread_atfork.3,v 1.11 2015/05/12 20:13:15 guenther Exp $
 .\"
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: May 12 2015 $
 .Dt PTHREAD_ATFORK 3
 .Os
 .Sh NAME
@@ -16,23 +16,23 @@
 The
 .Fn pthread_atfork
 function declares fork handlers to be called before and after
-.Fn fork ,
+.Xr fork 2 ,
 in the context of the thread that called
-.Fn fork .
+.Xr fork 2 .
 The
 .Fa prepare
 fork handler will be called before
-.Fn fork
+.Xr fork 2
 processing commences.
 The
 .Fa parent
 fork handler will be called after
-.Fn fork
+.Xr fork 2
 processing completes in the parent process.
 The
 .Fa child
 fork handler will be called after
-.Fn fork
+.Xr fork 2
 processing completes in the child process.
 If no handling is desired at
 one or more of these three points,
@@ -53,6 +53,15 @@ by calls to
 The
 .Fa prepare
 fork handlers will be called in the opposite order.
+.Pp
+If a shared object is unloaded from process memory using
+.Xr dlclose 3 ,
+then any functions registered by calling
+.Fn pthread_atfork
+from that shared object will be unregistered without being invoked.
+Note that it is the source of the call to
+.Fn pthread_atfork
+that matters, not the source of the functions that were registered.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn pthread_atfork
@@ -69,8 +78,12 @@ None of the handler lists are modified.
 .El
 .Sh SEE ALSO
 .Xr fork 2 ,
-.Xr atexit 3
+.Xr atexit 3 ,
+.Xr dlclose 3
 .Sh STANDARDS
 .Fn pthread_atfork
 conforms to
 .St -p1003.1-2004 .
+.Pp
+The behavior when a shared object is unloaded is an extension to   
+that standard.
