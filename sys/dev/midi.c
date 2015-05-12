@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.36 2015/05/12 18:23:38 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.37 2015/05/12 18:32:49 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -107,7 +107,7 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct midi_softc  *sc = MIDI_DEV2SC(dev);
 	struct midi_buffer *mb = &sc->inbuf;
-	unsigned int count;
+	size_t count;
 	int error;
 
 	if (!(sc->flags & FREAD))
@@ -142,7 +142,7 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 		if (count > uio->uio_resid)
 			count = uio->uio_resid;
 		mtx_leave(&audio_lock);
-		error = uiomovei(mb->data + mb->start, count, uio);
+		error = uiomove(mb->data + mb->start, count, uio);
 		if (error)
 			return error;
 		mtx_enter(&audio_lock);
@@ -233,7 +233,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct midi_softc  *sc = MIDI_DEV2SC(dev);
 	struct midi_buffer *mb = &sc->outbuf;
-	unsigned int count;
+	size_t count;
 	int error;
 
 	if (!(sc->flags & FWRITE))
@@ -281,7 +281,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 		if (count > uio->uio_resid)
 			count = uio->uio_resid;
 		mtx_leave(&audio_lock);
-		error = uiomovei(mb->data + MIDIBUF_END(mb), count, uio);
+		error = uiomove(mb->data + MIDIBUF_END(mb), count, uio);
 		if (error)
 			return error;
 		mtx_enter(&audio_lock);
