@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.37 2015/05/12 18:32:49 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.38 2015/05/12 18:39:30 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -84,7 +84,7 @@ midi_iintr(void *addr, int data)
 	struct midi_softc  *sc = (struct midi_softc *)addr;
 	struct midi_buffer *mb = &sc->inbuf;
 
-	if (sc->isdying || !sc->isopen || !(sc->flags & FREAD))
+	if (sc->isdying || !(sc->flags & FREAD))
 		return;
 
 	if (MIDIBUF_ISFULL(mb))
@@ -159,7 +159,7 @@ midi_ointr(void *addr)
 	struct midi_buffer *mb;
 
 	MUTEX_ASSERT_LOCKED(&audio_lock);
-	if (sc->isopen && !sc->isdying) {
+	if (!(sc->flags & FWRITE) && !sc->isdying) {
 		mb = &sc->outbuf;
 		if (mb->used > 0) {
 #ifdef MIDI_DEBUG
@@ -433,7 +433,7 @@ midiopen(dev_t dev, int flags, int mode, struct proc *p)
 		return ENXIO;
 	if (sc->isdying)
 		return EIO;
-	if (sc->isopen)
+	if (sc->flags)
 		return EBUSY;
 
 	MIDIBUF_INIT(&sc->inbuf);
@@ -442,11 +442,11 @@ midiopen(dev_t dev, int flags, int mode, struct proc *p)
 	sc->rchan = sc->wchan = 0;
 	sc->async = 0;
 	sc->flags = flags;
-
 	err = sc->hw_if->open(sc->hw_hdl, flags, midi_iintr, midi_ointr, sc);
-	if (err)
+	if (err) {
+		sc->flags = 0;
 		return err;
-	sc->isopen = 1;
+	}
 	return 0;
 }
 
@@ -482,7 +482,7 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	 */
 	tsleep(&sc->wchan, PWAIT, "mid_cl", hz * MIDI_MAXWRITE / MIDI_RATE);
 	sc->hw_if->close(sc->hw_hdl);
-	sc->isopen = 0;
+	sc->flags = 0;
 	return 0;
 }
 
@@ -518,7 +518,7 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	sc->isdying = 0;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
 	sc->props = mi.props;
-	sc->isopen = 0;
+	sc->flags = 0;
 	timeout_set(&sc->timeo, midi_timeout, sc);
 	printf(": <%s>\n", mi.name);
 }
