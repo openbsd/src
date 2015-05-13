@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.13 2015/05/08 03:38:26 jsg Exp $ */
+/* $OpenBSD: imxenet.c,v 1.14 2015/05/13 02:39:28 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -465,7 +465,6 @@ imxenet_chip_init(struct imxenet_softc *sc)
 		break;
 	case BOARD_ID_IMX6_PHYFLEX:
 	case BOARD_ID_IMX6_SABRELITE:	/* Micrel KSZ9021 */
-	case BOARD_ID_IMX6_NOVENA:	/* Micrel KSZ9021 */
 		/* prefer master mode */
 		imxenet_miibus_writereg(dev, phy, 0x9, 0x1f00);
 
@@ -484,6 +483,19 @@ imxenet_chip_init(struct imxenet_softc *sc)
 
 		/* enable all interrupts */
 		imxenet_miibus_writereg(dev, phy, 0x1b, 0xff00);
+		break;
+	case BOARD_ID_IMX6_NOVENA:	/* Micrel KSZ9021 */
+		/* TXEN_SKEW_PS/TXC_SKEW_PS/RXDV_SKEW_PS/RXC_SKEW_PS */
+		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8104);
+		imxenet_miibus_writereg(dev, phy, 0x0c, 0xf0f0);
+
+		/* RXD0_SKEW_PS/RXD1_SKEW_PS/RXD2_SKEW_PS/RXD3_SKEW_PS */
+		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8105);
+		imxenet_miibus_writereg(dev, phy, 0x0c, 0x0000);
+
+		/* TXD0_SKEW_PS/TXD1_SKEW_PS/TXD2_SKEW_PS/TXD3_SKEW_PS */
+		imxenet_miibus_writereg(dev, phy, 0x0b, 0x8106);
+		imxenet_miibus_writereg(dev, phy, 0x0c, 0xffff);
 		break;
 	case BOARD_ID_IMX6_CUBOXI:		/* AR8035 */
 	case BOARD_ID_IMX6_HUMMINGBOARD:	/* AR8035 */
