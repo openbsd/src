@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.93 2015/05/03 18:10:58 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.94 2015/05/13 07:34:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -388,6 +388,13 @@ enqueue(int argc, char *argv[])
 
 		line = buf;
 
+		if (inheaders) {
+			if (strncasecmp("from ", line, 5) == 0)
+				continue;
+			if (strncasecmp("return-path: ", line, 13) == 0)
+				continue;
+		}
+		
 		if (msg.saw_content_transfer_encoding || msg.noheader ||
 		    inheaders || !msg.need_linesplit) {
 			send_line(fout, 0, "%.*s", (int)len, line);
