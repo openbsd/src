@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.27 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.28 2015/05/13 10:42:46 jsg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -462,7 +462,7 @@ cnw_start(ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (m0 == 0)
+		if (m0 == NULL)
 			return;
 
 #if NBPFILTER > 0
@@ -557,7 +557,7 @@ cnw_read(sc)
 	bufptr = 0; /* XXX make gcc happy */
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		return (0);
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = totbytes;
@@ -568,7 +568,7 @@ cnw_read(sc)
 	while (totbytes > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
 				return (0);
 			}
@@ -649,7 +649,7 @@ cnw_recv(sc)
 		CNW_CMD0(sc, CNW_CMD_SRP);
 
 		/* Did we manage to get the packet from the interface? */
-		if (m == 0) {
+		if (m == NULL) {
 			++ifp->if_ierrors;
 			return;
 		}

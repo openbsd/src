@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.26 2014/09/19 11:43:31 otto Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.27 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 	while (k >= len) { \
 		k -= len; \
 		m = m->m_next; \
-		if (m == 0) \
+		if (m == NULL) \
 			return 0; \
 		len = m->m_len; \
 	} \
@@ -102,7 +102,7 @@ bpf_m_xword(struct mbuf *m, u_int32_t k, int *err)
 		return EXTRACT_LONG(cp);
 	}
 	m0 = m->m_next;
-	if (m0 == 0 || m0->m_len + len - k < 4)
+	if (m0 == NULL || m0->m_len + len - k < 4)
 		return 0;
 	*err = 0;
 	np = mtod(m0, u_char *);
@@ -134,7 +134,7 @@ bpf_m_xhalf(struct mbuf *m, u_int32_t k, int *err)
 		return EXTRACT_SHORT(cp);
 	}
 	m0 = m->m_next;
-	if (m0 == 0)
+	if (m0 == NULL)
 		return 0;
 	*err = 0;
 	return (cp[0] << 8) | mtod(m0, u_char *)[0];

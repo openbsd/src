@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.41 2015/05/01 16:37:32 mpi Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.42 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -982,7 +982,7 @@ i82596_get(struct ie_softc *sc, int head, int totlen)
 	resid = totlen;
 
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
-	if (m0 == 0)
+	if (m0 == NULL)
 		return (0);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
@@ -1013,7 +1013,7 @@ i82596_get(struct ie_softc *sc, int head, int totlen)
 		totlen -= len;
 		if (totlen > 0) {
 			MGET(newm, M_DONTWAIT, MT_DATA);
-			if (newm == 0)
+			if (newm == NULL)
 				goto bad;
 			len = MLEN;
 			m = m->m_next = newm;
@@ -1099,7 +1099,7 @@ i82596_readframe(sc, num)
 	m = i82596_get(sc, bstart, pktlen);
 	i82596_release_rbd_list(sc, bstart, bend);
 
-	if (m == 0) {
+	if (m == NULL) {
 		sc->sc_arpcom.ac_if.if_ierrors++;
 		return (0);
 	}
@@ -1231,7 +1231,7 @@ i82596_start(ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (m0 == 0)
+		if (m0 == NULL)
 			break;
 
 		/* We need to use m->m_pkthdr.len, so require the header */

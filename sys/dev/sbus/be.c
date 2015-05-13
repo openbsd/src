@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.29 2015/04/07 14:59:06 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.30 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -580,7 +580,7 @@ bestart(struct ifnet *ifp)
 
 	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		if (m == NULL)
 			break;
 
 #if NBPFILTER > 0

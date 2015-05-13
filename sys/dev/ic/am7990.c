@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.50 2015/05/01 14:56:18 mpi Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.51 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: am7990.c,v 1.74 2012/02/02 19:43:02 tls Exp $	*/
 
 /*-
@@ -485,7 +485,7 @@ am7990_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		if (m == NULL)
 			break;
 
 #if NBPFILTER > 0

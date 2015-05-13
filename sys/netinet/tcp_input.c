@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.289 2015/04/16 19:24:13 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.290 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2850,7 +2850,7 @@ tcp_pulloutofband(struct socket *so, u_int urgent, struct mbuf *m, int off)
 		}
 		cnt -= m->m_len;
 		m = m->m_next;
-		if (m == 0)
+		if (m == NULL)
 			break;
 	}
 	panic("tcp_pulloutofband");

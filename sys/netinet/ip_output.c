@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.279 2015/04/17 11:04:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.280 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -750,7 +750,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	mhlen = sizeof (struct ip);
 	for (off = hlen + len; off < ntohs(ip->ip_len); off += len) {
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-		if (m == 0) {
+		if (m == NULL) {
 			ipstat.ips_odropped++;
 			error = ENOBUFS;
 			goto sendorfree;
@@ -848,7 +848,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		ip->ip_dst = p->ipopt_dst;
 	if (m->m_flags & M_EXT || m->m_data - optlen < m->m_pktdat) {
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
-		if (n == 0)
+		if (n == NULL)
 			return (m);
 		M_MOVE_HDR(n, m);
 		n->m_pkthdr.len += optlen;
@@ -1022,7 +1022,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case IP_PORTRANGE:
-			if (m == 0 || m->m_len != sizeof(int))
+			if (m == NULL || m->m_len != sizeof(int))
 				error = EINVAL;
 			else {
 				optval = *mtod(m, int *);
@@ -1058,7 +1058,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 #ifndef IPSEC
 			error = EOPNOTSUPP;
 #else
-			if (m == 0 || m->m_len != sizeof(int)) {
+			if (m == NULL || m->m_len != sizeof(int)) {
 				error = EINVAL;
 				break;
 			}
@@ -1310,7 +1310,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	if (*pcbopt)
 		(void)m_free(*pcbopt);
 	*pcbopt = 0;
-	if (m == (struct mbuf *)0 || m->m_len == 0) {
+	if (m == (struct mbuf *)NULL || m->m_len == 0) {
 		/*
 		 * Only turning off any previous options.
 		 */

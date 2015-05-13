@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.24 2014/12/22 02:28:51 tedu Exp $       */
+/*    $OpenBSD: if_el.c,v 1.25 2015/05/13 10:42:46 jsg Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -314,7 +314,7 @@ elstart(ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/* If there's nothing to send, return. */
-		if (m0 == 0)
+		if (m0 == NULL)
 			break;
 
 #if NBPFILTER > 0
@@ -502,7 +502,7 @@ elread(sc, len)
 
 	/* Pull packet off interface. */
 	m = elget(sc, len);
-	if (m == 0) {
+	if (m == NULL) {
 		ifp->if_ierrors++;
 		return;
 	}
@@ -537,7 +537,7 @@ elget(sc, totlen)
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		return 0;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
@@ -551,7 +551,7 @@ elget(sc, totlen)
 	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
 				return 0;
 			}

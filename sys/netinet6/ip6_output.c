@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.170 2015/04/17 11:04:02 mikeb Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.171 2015/05/13 10:42:47 jsg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1056,7 +1056,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 	 */
 	if (exthdrs->ip6e_hbh == 0) {
 		MGET(mopt, M_DONTWAIT, MT_DATA);
-		if (mopt == 0)
+		if (mopt == NULL)
 			return (ENOBUFS);
 		mopt->m_len = JUMBOOPTLEN;
 		optbuf = mtod(mopt, u_int8_t *);
@@ -1165,7 +1165,7 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 		struct mbuf *mfrg;
 
 		MGET(mfrg, M_DONTWAIT, MT_DATA);
-		if (mfrg == 0)
+		if (mfrg == NULL)
 			return (ENOBUFS);
 		mfrg->m_len = sizeof(struct ip6_frag);
 		*frghdrp = mtod(mfrg, struct ip6_frag *);
@@ -1602,7 +1602,7 @@ do { \
 #ifndef IPSEC
 				error = EINVAL;
 #else
-				if (m == 0 || m->m_len != sizeof(int)) {
+				if (m == NULL || m->m_len != sizeof(int)) {
 					error = EINVAL;
 					break;
 				}
@@ -3106,7 +3106,7 @@ ip6_splithdr(struct mbuf *m, struct ip6_exthdrs *exthdrs)
 	ip6 = mtod(m, struct ip6_hdr *);
 	if (m->m_len > sizeof(*ip6)) {
 		MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-		if (mh == 0) {
+		if (mh == NULL) {
 			m_freem(m);
 			return ENOBUFS;
 		}

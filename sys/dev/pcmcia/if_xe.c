@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.47 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.48 2015/05/13 10:42:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -771,7 +771,7 @@ xe_get(sc)
 	recvcount += pktlen;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		return (recvcount);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
@@ -782,7 +782,7 @@ xe_get(sc)
 	while (pktlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
 				return (recvcount);
 			}
@@ -1097,7 +1097,7 @@ xe_start(ifp)
 
 	/* Peek at the next packet. */
 	IFQ_POLL(&ifp->if_snd, m0);
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	/* We need to use m->m_pkthdr.len, so require the header. */

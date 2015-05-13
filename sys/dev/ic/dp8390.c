@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.51 2015/04/30 20:55:23 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.52 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ outloop:
 		return;
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	/* We need to use m->m_pkthdr.len, so require the header */

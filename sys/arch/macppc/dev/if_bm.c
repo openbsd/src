@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.31 2015/02/09 03:09:57 dlg Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.32 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -618,7 +618,7 @@ bmac_start(struct ifnet *ifp)
 			return;
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		if (m == NULL)
 			break;
 #if NBPFILTER > 0
 		/*
@@ -685,7 +685,7 @@ bmac_get(struct bmac_softc *sc, caddr_t pkt, int totlen)
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		return (0);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
@@ -695,7 +695,7 @@ bmac_get(struct bmac_softc *sc, caddr_t pkt, int totlen)
 	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
 				return (0);
 			}

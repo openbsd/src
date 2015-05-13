@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.141 2015/05/07 09:19:31 mikeb Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.142 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -303,8 +303,8 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 {
 	int tlen;
 	int win = 0;
-	struct mbuf *m = 0;
-	struct route *ro = 0;
+	struct mbuf *m = NULL;
+	struct route *ro = NULL;
 	struct tcphdr *th;
 	struct ip *ip;
 #ifdef INET6

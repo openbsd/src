@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.40 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.41 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -1258,7 +1258,7 @@ ieget(sc, ehp, to_bpf)
 	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		return 0;
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = totlen;
@@ -1273,7 +1273,7 @@ ieget(sc, ehp, to_bpf)
 	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
 				return 0;
 			}
@@ -1344,7 +1344,7 @@ ie_readframe(sc, num)
 	int num;			/* frame number to read */
 {
 	int status;
-	struct mbuf *m = 0;
+	struct mbuf *m = NULL;
 	struct ether_header eh;
 #if NBPFILTER > 0
 	int bpf_gets_it = 0;
@@ -1367,7 +1367,7 @@ ie_readframe(sc, num)
 #endif
 		ie_drop_packet_buffer(sc);
 	}
-	if (m == 0) {
+	if (m == NULL) {
 		sc->sc_arpcom.ac_if.if_ierrors++;
 		return;
 	}
@@ -1465,7 +1465,7 @@ iestart(ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (m0 == 0)
+		if (m0 == NULL)
 			break;
 
 		/* We need to use m->m_pkthdr.len, so require the header */

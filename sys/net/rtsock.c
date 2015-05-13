@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.158 2015/05/05 09:41:43 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.159 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ rt_senddesync(void *data)
 		desync_mbuf = rt_msg1(RTM_DESYNC, NULL);
 		if ((desync_mbuf != NULL) && 
 		    (sbappendaddr(&rp->rcb_socket->so_rcv, &route_src, 
-		    desync_mbuf, (struct mbuf *)0) != 0)) {
+		    desync_mbuf, (struct mbuf *)NULL) != 0)) {
 			rop->flags &= ~ROUTECB_FLAG_DESYNC;
 			sorwakeup(rp->rcb_socket);
 		} else {
@@ -405,7 +405,7 @@ route_input(struct mbuf *m0, ...)
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
 				    sbappendaddr(&last->so_rcv, sosrc,
-				    n, (struct mbuf *)0) == 0) {
+				    n, (struct mbuf *)NULL) == 0) {
 					/*
 					 * Flag socket as desync'ed and 
 					 * flush required
@@ -426,7 +426,7 @@ route_input(struct mbuf *m0, ...)
 	if (last) {
 		if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
 		    sbappendaddr(&last->so_rcv, sosrc,
-		    m, (struct mbuf *)0) == 0) {
+		    m, (struct mbuf *)NULL) == 0) {
 			/* Flag socket as desync'ed and flush required */
 			sotoroutecb(last)->flags |= 
 			    ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
@@ -468,7 +468,7 @@ route_output(struct mbuf *m, ...)
 	va_end(ap);
 
 	info.rti_info[RTAX_DST] = NULL;	/* for error handling (goto flush) */
-	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
+	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
 	    (m = m_pullup(m, sizeof(int32_t))) == 0))
 		return (ENOBUFS);
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -978,7 +978,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo)
 			m = NULL;
 		}
 	}
-	if (m == 0)
+	if (m == NULL)
 		return (m);
 	m->m_pkthdr.len = m->m_len = hlen = len;
 	m->m_pkthdr.rcvif = NULL;
@@ -1092,7 +1092,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags,
 	if (route_cb.any_count == 0)
 		return;
 	m = rt_msg1(type, rtinfo);
-	if (m == 0)
+	if (m == NULL)
 		return;
 	rtm = mtod(m, struct rt_msghdr *);
 	rtm->rtm_flags = RTF_DONE | flags;
@@ -1121,7 +1121,7 @@ rt_ifmsg(struct ifnet *ifp)
 	if (route_cb.any_count == 0)
 		return;
 	m = rt_msg1(RTM_IFINFO, NULL);
-	if (m == 0)
+	if (m == NULL)
 		return;
 	ifm = mtod(m, struct if_msghdr *);
 	ifm->ifm_index = ifp->if_index;
@@ -1188,7 +1188,7 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
 	if (route_cb.any_count == 0)
 		return;
 	m = rt_msg1(RTM_IFANNOUNCE, NULL);
-	if (m == 0)
+	if (m == NULL)
 		return;
 	ifan = mtod(m, struct if_announcemsghdr *);
 	ifan->ifan_index = ifp->if_index;

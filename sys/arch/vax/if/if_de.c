@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.27 2015/02/01 15:27:11 miod Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.28 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ destart(ifp)
 		return;
 	for (nxmit = ds->ds_nxmit; nxmit < NXMT; nxmit++) {
 		IF_DEQUEUE(&ds->ds_if.if_snd, m);
-		if (m == 0)
+		if (m == NULL)
 			break;
 		rp = &ds->ds_xrent[ds->ds_xfree];
 		if (rp->r_flags & XFLG_OWN)

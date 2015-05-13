@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.19 2014/07/13 15:52:38 tedu Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.20 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -57,8 +57,8 @@ int
 soo_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 
-	return (soreceive((struct socket *)fp->f_data, (struct mbuf **)0,
-		uio, (struct mbuf **)0, (struct mbuf **)0, (int *)0,
+	return (soreceive((struct socket *)fp->f_data, (struct mbuf **)NULL,
+		uio, (struct mbuf **)NULL, (struct mbuf **)NULL, (int *)NULL,
 		(socklen_t)0));
 }
 
@@ -67,8 +67,8 @@ int
 soo_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 
-	return (sosend((struct socket *)fp->f_data, (struct mbuf *)0,
-		uio, (struct mbuf *)0, (struct mbuf *)0, 0));
+	return (sosend((struct socket *)fp->f_data, (struct mbuf *)NULL,
+		uio, (struct mbuf *)NULL, (struct mbuf *)NULL, 0));
 }
 
 int
@@ -125,7 +125,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	if (IOCGROUP(cmd) == 'r')
 		return (rtioctl(cmd, data, p));
 	return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)0, p));
+	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)NULL, p));
 }
 
 int

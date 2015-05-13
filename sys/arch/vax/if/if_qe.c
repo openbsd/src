@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.31 2015/04/07 14:02:51 mpi Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.32 2015/05/13 10:42:46 jsg Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -440,7 +440,7 @@ qestart(struct ifnet *ifp)
 		}
 		idx = sc->sc_nexttx;
 		IFQ_POLL(&ifp->if_snd, m);
-		if (m == 0)
+		if (m == NULL)
 			goto out;
 		/*
 		 * Count number of mbufs in chain.

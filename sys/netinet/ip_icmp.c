@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.132 2015/02/05 03:01:03 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.133 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -687,7 +687,7 @@ int
 icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 {
 	struct ip *ip = mtod(m, struct ip *);
-	struct mbuf *opts = 0;
+	struct mbuf *opts = NULL;
 	struct sockaddr_in sin;
 	struct rtentry *rt;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);

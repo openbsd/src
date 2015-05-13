@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.58 2015/04/14 14:20:01 mikeb Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.59 2015/05/13 10:42:46 jsg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -418,7 +418,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		}
 
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
-		if (m == 0) {
+		if (m == NULL) {
 			DPRINTF(("ipip_output(): M_PREPEND failed\n"));
 			ipipstat.ipips_hdrops++;
 			*mp = NULL;
@@ -514,7 +514,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		}
 
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
-		if (m == 0) {
+		if (m == NULL) {
 			DPRINTF(("ipip_output(): M_PREPEND failed\n"));
 			ipipstat.ipips_hdrops++;
 			*mp = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.36 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.37 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -521,7 +521,7 @@ egstart(struct ifnet *ifp)
 loop:
 	/* Dequeue the next datagram. */
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 	
 	ifp->if_flags |= IFF_OACTIVE;
@@ -682,7 +682,7 @@ egread(struct eg_softc *sc, caddr_t buf, int len)
 
 	/* Pull packet off interface. */
 	m = egget(sc, buf, len);
-	if (m == 0) {
+	if (m == NULL) {
 		ifp->if_ierrors++;
 		return;
 	}
@@ -712,7 +712,7 @@ egget(struct eg_softc *sc, caddr_t buf, int totlen)
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		return (0);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
@@ -723,7 +723,7 @@ egget(struct eg_softc *sc, caddr_t buf, int totlen)
 	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
 				return (0);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.248 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.249 2015/05/13 10:42:46 jsg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ found:
 			ipqe->ipqe_m = m;
 			ipqe->ipqe_ip = ip;
 			m = ip_reass(ipqe, fp);
-			if (m == 0) {
+			if (m == NULL) {
 				return;
 			}
 			ipstat.ips_reassembled++;

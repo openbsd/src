@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.33 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.34 2015/05/13 10:42:47 jsg Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	 * for UDP and IP6 headers.
 	 */
 	M_PREPEND(m, hlen + sizeof(struct udphdr), M_DONTWAIT);
-	if (m == 0) {
+	if (m == NULL) {
 		error = ENOBUFS;
 		goto releaseopt;
 	}
