@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.196 2015/05/11 08:41:43 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.197 2015/05/13 08:16:01 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -87,8 +87,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/syslog.h>
 #include <sys/timeout.h>
 
-#include <crypto/siphash.h>	/* required by if_trunk.h */
-
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
@@ -125,11 +123,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include "pppoe.h"
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
-#endif
-
-#include "trunk.h"
-#if NTRUNK > 0
-#include <net/if_trunk.h>
 #endif
 
 #ifdef INET6
@@ -273,13 +266,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.ph_rtableid),
 		    dst->sa_family);
 	}
-#endif
-
-#if NTRUNK > 0
-	/* restrict transmission on trunk members to bpf only */
-	if (ifp->if_type == IFT_IEEE8023ADLAG &&
-	    (m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL))
-		senderr(EBUSY);
 #endif
 
 	esrc = ac->ac_enaddr;

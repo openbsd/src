@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.96 2015/05/11 08:41:43 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.97 2015/05/13 08:16:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -66,6 +66,8 @@ void	 trunk_port_watchdog(struct ifnet *);
 void	 trunk_port_state(void *);
 void	 trunk_port_ifdetach(void *);
 int	 trunk_port_ioctl(struct ifnet *, u_long, caddr_t);
+int	 trunk_port_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *);
 struct trunk_port *trunk_port_get(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_checkstacking(struct trunk_softc *);
 void	 trunk_port2req(struct trunk_port *, struct trunk_reqport *);
@@ -75,6 +77,7 @@ int	 trunk_ether_delmulti(struct trunk_softc *, struct ifreq *);
 void	 trunk_ether_purgemulti(struct trunk_softc *);
 int	 trunk_ether_cmdmulti(struct trunk_port *, u_long);
 int	 trunk_ioctl_allports(struct trunk_softc *, u_long, caddr_t);
+int	 trunk_input(struct mbuf *, void *);
 void	 trunk_start(struct ifnet *);
 void	 trunk_init(struct ifnet *);
 void	 trunk_stop(struct ifnet *);
@@ -362,6 +365,9 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	tp->tp_watchdog = ifp->if_watchdog;
 	ifp->if_watchdog = trunk_port_watchdog;
 
+	tp->tp_output = ifp->if_output;
+	ifp->if_output = trunk_port_output;
+
 	tp->tp_if = ifp;
 	tp->tp_trunk = tr;
 
@@ -450,6 +456,7 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	ifp->if_watchdog = tp->tp_watchdog;
 	ifp->if_ioctl = tp->tp_ioctl;
+	ifp->if_output = tp->tp_output;
 	ifp->if_tp = NULL;
 
 	hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
@@ -563,6 +570,20 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = (*tp->tp_ioctl)(ifp, cmd, data);
 
 	return (error);
+}
+
+int
+trunk_port_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+	/* restrict transmission on trunk members to bpf only */
+	if (ifp->if_type == IFT_IEEE8023ADLAG &&
+	    (m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL)) {
+		m_freem(m);
+		return (EBUSY);
+	}
+
+	return (ether_output(ifp, m, dst, rt));
 }
 
 void
