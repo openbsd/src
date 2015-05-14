@@ -582,7 +582,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata/pmreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata/satareg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata/wdvar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/biovar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/cardbus

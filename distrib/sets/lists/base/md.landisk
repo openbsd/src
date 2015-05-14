@@ -546,7 +546,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/pmreg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/satareg.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/ata/wdvar.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/biovar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/dev/cardbus

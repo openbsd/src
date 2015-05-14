@@ -100,7 +100,6 @@
 ./usr/include/dev/ata/pmreg.h
 ./usr/include/dev/ata/satareg.h
 ./usr/include/dev/ata/wdvar.h
-./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/biovar.h
 ./usr/include/dev/cardbus

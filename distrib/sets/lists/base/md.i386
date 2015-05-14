@@ -587,7 +587,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ata/pmreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ata/satareg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ata/wdvar.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/biovar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/cardbus
