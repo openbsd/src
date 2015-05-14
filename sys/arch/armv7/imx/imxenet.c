@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.14 2015/05/13 02:39:28 jsg Exp $ */
+/* $OpenBSD: imxenet.c,v 1.15 2015/05/14 02:10:29 djm Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -184,6 +184,8 @@ struct imxenet_softc {
 struct imxenet_softc *imxenet_sc;
 
 void imxenet_attach(struct device *, struct device *, void *);
+int imxenet_enaddr_valid(u_char *);
+void imxenet_enaddr(struct imxenet_softc *);
 void imxenet_chip_init(struct imxenet_softc *);
 int imxenet_ioctl(struct ifnet *, u_long, caddr_t);
 void imxenet_start(struct ifnet *);
@@ -283,6 +285,10 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 		delay(100);
 		break;
 	}
+	printf("\n");
+
+	/* Figure out the hardware address. Must happen before reset. */
+	imxenet_enaddr(sc);
 
 	/* reset the controller */
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
@@ -337,8 +343,6 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	sc->cur_tx = 0;
 	sc->cur_rx = 0;
 
-	printf("\n");
-
 	s = splnet();
 
 	ifp = &sc->sc_ac.ac_if;
@@ -348,9 +352,6 @@ imxenet_attach(struct device *parent, struct device *self, void *args)
 	ifp->if_ioctl = imxenet_ioctl;
 	ifp->if_start = imxenet_start;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-
-	memset(sc->sc_ac.ac_enaddr, 0xff, ETHER_ADDR_LEN);
-	imxocotp_get_ethernet_address(sc->sc_ac.ac_enaddr);
 
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
@@ -392,6 +393,58 @@ txdma:
 	imxenet_dma_free(sc, &sc->txdma);
 bad:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_dev->mem[0].size);
+}
+
+/* Try to determine a valid hardware address */
+void
+imxenet_enaddr(struct imxenet_softc *sc)
+{
+	u_int32_t tmp;
+	u_char enaddr[6];
+
+	/* XXX serial EEPROM */
+	/* XXX FDT */
+
+	/* Try to get an address from COTP */
+	memset(enaddr, 0xff, ETHER_ADDR_LEN);
+	imxocotp_get_ethernet_address(enaddr);
+	if (imxenet_enaddr_valid(enaddr)) {
+		memcpy(sc->sc_ac.ac_enaddr, enaddr, ETHER_ADDR_LEN);
+		return;
+	}
+
+	/* The firmware or bootloader may have already set an address */
+	tmp = HREAD4(sc, ENET_PALR);
+	sc->sc_ac.ac_enaddr[0] = (tmp >> 24) & 0xff;
+	sc->sc_ac.ac_enaddr[1] = (tmp >> 16) & 0xff;
+	sc->sc_ac.ac_enaddr[2] = (tmp >> 8) & 0xff;
+	sc->sc_ac.ac_enaddr[3] = tmp & 0xff;
+	tmp = HREAD4(sc, ENET_PAUR);
+	sc->sc_ac.ac_enaddr[4] = (tmp >> 24) & 0xff;
+	sc->sc_ac.ac_enaddr[5] = (tmp >> 16) & 0xff;
+	if (imxenet_enaddr_valid(sc->sc_ac.ac_enaddr))
+		return;
+
+	/* No usable address found, use a random one */
+	printf("%s: no hardware address found, using random\n",
+	    sc->sc_dev.dv_xname);
+	ether_fakeaddr(&sc->sc_ac.ac_if);
+}
+
+int
+imxenet_enaddr_valid(u_char addr[6])
+{
+	/* Multicast */
+	if (ETHER_IS_MULTICAST(addr))
+		return 0;
+	/* All 0/1 */
+	if (addr[0] == 0 && addr[1] == 0 && addr[2] == 0 &&
+	    addr[3] == 0 && addr[4] == 0 && addr[5] == 0)
+		return 0;
+	if (addr[0] == 0xff && addr[1] == 0xff && addr[2] == 0xff &&
+	    addr[3] == 0xff && addr[4] == 0xff && addr[5] == 0xff)
+		return 0;
+	return 1;
 }
 
 void
