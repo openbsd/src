@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.6 2015/05/08 04:47:27 jsg Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.7 2015/05/14 03:13:20 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -76,7 +76,6 @@ struct imxgpio_softc {
 #define GPIO_PIN_TO_INST(x)	((x) >> 5)
 #define GPIO_PIN_TO_OFFSET(x)	((x) & 0x1f)
 
-int imxgpio_match(struct device *parent, void *v, void *aux);
 void imxgpio_attach(struct device *parent, struct device *self, void *args);
 void imxgpio_recalc_interrupts(struct imxgpio_softc *sc);
 int imxgpio_irq(void *);
@@ -90,32 +89,12 @@ unsigned int imxgpio_v6_get_dir(struct imxgpio_softc *, unsigned int);
 
 
 struct cfattach	imxgpio_ca = {
-	sizeof (struct imxgpio_softc), imxgpio_match, imxgpio_attach
+	sizeof (struct imxgpio_softc), NULL, imxgpio_attach
 };
 
 struct cfdriver imxgpio_cd = {
 	NULL, "imxgpio", DV_DULL
 };
-
-int
-imxgpio_match(struct device *parent, void *v, void *aux)
-{
-	switch (board_id) {
-	case BOARD_ID_IMX6_CUBOXI:
-	case BOARD_ID_IMX6_HUMMINGBOARD:
-	case BOARD_ID_IMX6_NOVENA:
-	case BOARD_ID_IMX6_PHYFLEX:
-	case BOARD_ID_IMX6_SABRELITE:
-	case BOARD_ID_IMX6_SABRESD:
-	case BOARD_ID_IMX6_UDOO:
-	case BOARD_ID_IMX6_UTILITE:
-	case BOARD_ID_IMX6_WANDBOARD:
-		break; /* continue trying */
-	default:
-		return 0; /* unknown */
-	}
-	return (1);
-}
 
 void
 imxgpio_attach(struct device *parent, struct device *self, void *args)
@@ -128,23 +107,10 @@ imxgpio_attach(struct device *parent, struct device *self, void *args)
 	    aa->aa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("imxgpio_attach: bus_space_map failed!");
 
-
-	switch (board_id) {
-		case BOARD_ID_IMX6_CUBOXI:
-		case BOARD_ID_IMX6_HUMMINGBOARD:
-		case BOARD_ID_IMX6_NOVENA:
-		case BOARD_ID_IMX6_PHYFLEX:
-		case BOARD_ID_IMX6_SABRELITE:
-		case BOARD_ID_IMX6_SABRESD:
-		case BOARD_ID_IMX6_UDOO:
-		case BOARD_ID_IMX6_UTILITE:
-		case BOARD_ID_IMX6_WANDBOARD:
-			sc->sc_get_bit  = imxgpio_v6_get_bit;
-			sc->sc_set_bit = imxgpio_v6_set_bit;
-			sc->sc_clear_bit = imxgpio_v6_clear_bit;
-			sc->sc_set_dir = imxgpio_v6_set_dir;
-			break;
-	}
+	sc->sc_get_bit  = imxgpio_v6_get_bit;
+	sc->sc_set_bit = imxgpio_v6_set_bit;
+	sc->sc_clear_bit = imxgpio_v6_clear_bit;
+	sc->sc_set_dir = imxgpio_v6_set_dir;
 
 	printf("\n");
 
