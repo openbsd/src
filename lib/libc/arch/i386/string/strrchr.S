@@ -1,4 +1,4 @@
-/*	$OpenBSD: strrchr.S,v 1.4 2014/11/30 19:43:56 deraadt Exp $ */
+/*	$OpenBSD: strrchr.S,v 1.5 2015/05/14 21:40:37 kettenis Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -6,7 +6,8 @@
 
 #include <machine/asm.h>
 
-ALTENTRY(rindex)
+STRONG_ALIAS(rindex, strrchr)
+
 ENTRY(strrchr)
 	pushl	%ebx
 	movl	8(%esp),%edx
