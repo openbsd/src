@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoinstall.8,v 1.14 2015/05/05 07:20:42 jmc Exp $
+.\"     $OpenBSD: autoinstall.8,v 1.15 2015/05/14 10:58:55 rpe Exp $
 .\"
 .\" Copyright (c) 2013 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 5 2015 $
+.Dd $Mdocdate: May 14 2015 $
 .Dt AUTOINSTALL 8
 .Os
 .Sh NAME
@@ -59,13 +59,15 @@ takes precedence.
 .Pp
 .Nm
 uses HTTP to fetch one of the files
-.Pa install.conf
-or
+.Pa install.conf ,
 .Ar MAC_address Ns - Ns Pa install.conf
-for install answers, or one of
-.Pa upgrade.conf
 or
+.Ar hostname Ns - Ns Pa install.conf
+for install answers, or one of
+.Pa upgrade.conf ,
 .Ar MAC_address Ns - Ns Pa upgrade.conf
+or
+.Ar hostname Ns - Ns Pa upgrade.conf
 for upgrade answers.
 The URL used to fetch the file is constructed from information provided in
 the
@@ -82,6 +84,7 @@ then the URLs tried are, in order:
 .Sm off
 .Bd -unfilled -offset indent
 .No http:// Ar next-server No / Ar MAC_address No -install.conf
+.No http:// Ar next-server No / Ar hostname No -install.conf
 .No http:// Ar next-server No /install.conf
 .Ed
 .Sm on
@@ -90,7 +93,10 @@ where
 .Ar MAC_address
 is a string of six hex octets separated by colons
 representing the MAC
-address of the interface being used to fetch the files.
+address of the interface being used to fetch the files,
+and
+.Ar hostname
+is the hostname assigned to the system by DHCP.
 .Pp
 If
 .Ar filename
@@ -100,6 +106,7 @@ the URLs tried are, in order:
 .Sm off
 .Bd -unfilled -offset indent
 .No http:// Ar next-server No / Ar MAC_address No -upgrade.conf
+.No http:// Ar next-server No / Ar hostname No -upgrade.conf
 .No http:// Ar next-server No /upgrade.conf
 .Ed
 .Sm on
@@ -120,6 +127,13 @@ file to be
 .Cm auto_install
 or
 .Cm auto_upgrade .
+.Pp
+To use a subdirectory as response file location on the HTTP server, the same
+directory structure containig the symbolic links has to exist in the tftproot
+directory.
+The value of
+.Ic filename
+has to be the full path to these symbolic links.
 .Pp
 Note that in these cases, the HTTP server and TFTP server must
 be on the same machine.
