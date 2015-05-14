@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.20 2015/05/11 08:51:31 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.21 2015/05/14 13:50:34 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -225,8 +225,12 @@ upd_attach_sensor_tree(struct upd_softc *sc, void *desc, int size,
 
 	for (i = 0; i < nentries; i++) {
 		entry = entries + i;
-		if (!upd_lookup_usage_entry(desc, size, entry, &item))
+		if (!upd_lookup_usage_entry(desc, size, entry, &item)) {
+			/* dependency missing, add children to parent */
+			upd_attach_sensor_tree(sc, desc, size,
+			    entry->nchildren, entry->children, queue);
 			continue;
+		}
 
 		DPRINTF(("%s: found %s on repid=%d\n", DEVNAME(sc),
 		    entry->usage_name, item.report_ID));
