@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.21 2015/05/13 08:16:01 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.22 2015/05/14 10:55:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -137,6 +137,7 @@ struct trunk_port {
 	u_int32_t			tp_flags;	/* port flags */
 	void				*lh_cookie;	/* if state hook */
 	void				*dh_cookie;	/* if detach hook */
+	struct ifih			tp_ifih;	/* input handler */
 
 	/* Redirected callbacks */
 	void	(*tp_watchdog)(struct ifnet *);

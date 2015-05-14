@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.97 2015/05/13 08:16:01 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.98 2015/05/14 10:55:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -291,7 +291,6 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 {
 	struct trunk_softc *tr_ptr;
 	struct trunk_port *tp;
-	struct ifih *trunk_ifih;
 	int error = 0;
 
 	/* Limit the maximal number of trunk ports */
@@ -330,19 +329,12 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	trunk_ifih = malloc(sizeof(*trunk_ifih), M_DEVBUF, M_NOWAIT);
-	if (trunk_ifih == NULL) {
-		free(tp, M_DEVBUF, 0);
-		return (ENOMEM);
-	}
-
 	/* Check if port is a stacked trunk */
 	SLIST_FOREACH(tr_ptr, &trunk_list, tr_entries) {
 		if (ifp == &tr_ptr->tr_ac.ac_if) {
 			tp->tp_flags |= TRUNK_PORT_STACK;
 			if (trunk_port_checkstacking(tr_ptr) >=
 			    TRUNK_MAX_STACKING) {
-				free(trunk_ifih, M_DEVBUF, sizeof(*trunk_ifih));
 				free(tp, M_DEVBUF, 0);
 				return (E2BIG);
 			}
@@ -354,8 +346,8 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	ifp->if_type = IFT_IEEE8023ADLAG;
 
 	/* Change input handler of the physical interface. */
-	trunk_ifih->ifih_input = trunk_input;
-	SLIST_INSERT_HEAD(&ifp->if_inputs, trunk_ifih, ifih_next);
+	tp->tp_ifih.ifih_input = trunk_input;
+	SLIST_INSERT_HEAD(&ifp->if_inputs, &tp->tp_ifih, ifih_next);
 
 	ifp->if_tp = (caddr_t)tp;
 	tp->tp_ioctl = ifp->if_ioctl;
@@ -430,7 +422,6 @@ trunk_port_destroy(struct trunk_port *tp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
 	struct trunk_port *tp_ptr;
-	struct ifih *trunk_ifih;
 	struct ifnet *ifp = tp->tp_if;
 
 	if (tr->tr_port_destroy != NULL)
@@ -449,10 +440,7 @@ trunk_port_destroy(struct trunk_port *tp)
 	ifp->if_type = tp->tp_iftype;
 
 	/* Restore previous input handler. */
-	trunk_ifih = SLIST_FIRST(&ifp->if_inputs);
-	SLIST_REMOVE_HEAD(&ifp->if_inputs, ifih_next);
-	KASSERT(trunk_ifih->ifih_input == trunk_input);
-	free(trunk_ifih, M_DEVBUF, sizeof(*trunk_ifih));
+	SLIST_REMOVE(&ifp->if_inputs, &tp->tp_ifih, ifih, ifih_next);
 
 	ifp->if_watchdog = tp->tp_watchdog;
 	ifp->if_ioctl = tp->tp_ioctl;
