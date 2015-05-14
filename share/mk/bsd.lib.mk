@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.71 2013/10/15 22:40:00 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.72 2015/05/14 02:56:01 jsg Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -30,6 +30,7 @@ SHLIB_MINOR=${minor}
 
 .if defined(NOPIE)
 CFLAGS+=	${NOPIE_FLAGS}
+CXXFLAGS+=	${NOPIE_FLAGS}
 AFLAGS+=	${NOPIE_FLAGS}
 .endif
 

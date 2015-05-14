@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.common,v 1.3 2010/05/16 13:22:58 espie Exp $
+# $OpenBSD: Makefile.common,v 1.4 2015/05/14 02:56:01 jsg Exp $
 
 GCCDIR= ${.CURDIR}/../../gcc/gcc
 GCCLIB= ${GCCDIR}/gcc
@@ -10,10 +10,11 @@ SUPDIR=	${SRCDIR}/libsupc++
 	${SRCDIR}/include ${SUPDIR} ${.CURDIR}/../libiberty/src \
 	${.CURDIR}/../libstdc++-v3/obj
 
-CFLAGS+=	-DIN_GLIBCPP_V3 -DHAVE_CONFIG_H
-CFLAGS+=	-I${.CURDIR}/../libstdc++-v3/ -I${SUPDIR} -I${GCCDIR} -I${SRCDIR}/include
-CFLAGS+=	-I${GCCLIB}/include -I${SRCDIR}/include -I${.CURDIR}/../libiberty/include -I.
+CPPFLAGS+=	-DIN_GLIBCPP_V3 -DHAVE_CONFIG_H
+CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3/ -I${SUPDIR} -I${GCCDIR} -I${SRCDIR}/include
+CPPFLAGS+=	-I${GCCLIB}/include -I${SRCDIR}/include -I${.CURDIR}/../libiberty/include -I.
 CFLAGS+=	-frandom-seed=RepeatabilityConsideredGood
+CXXFLAGS+=	-frandom-seed=RepeatabilityConsideredGood
 CXXFLAGS+=	-fno-implicit-templates -ffunction-sections -fdata-sections \
 		-Wno-deprecated
 
