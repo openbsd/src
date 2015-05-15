@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.254 2015/04/28 14:51:50 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.255 2015/05/15 10:09:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1665,71 +1665,67 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 	if (ifp == sc->sc_carpdev)
 		return (0);
 
-	if (ifp != NULL) {
-		if ((ifp->if_flags & IFF_MULTICAST) == 0)
-			return (EADDRNOTAVAIL);
+	if ((ifp->if_flags & IFF_MULTICAST) == 0)
+		return (EADDRNOTAVAIL);
 
-		if (ifp->if_type == IFT_CARP)
-			return (EINVAL);
+	if (ifp->if_type == IFT_CARP)
+		return (EINVAL);
 
-		if (ifp->if_carp == NULL) {
-			ncif = malloc(sizeof(*cif), M_IFADDR, M_NOWAIT|M_ZERO);
-			if (ncif == NULL)
-				return (ENOBUFS);
-			if ((error = ifpromisc(ifp, 1))) {
-				free(ncif, M_IFADDR, sizeof(*ncif));
-				return (error);
-			}
-
-			ncif->vhif_ifp = ifp;
-			TAILQ_INIT(&ncif->vhif_vrs);
-		} else {
-			cif = (struct carp_if *)ifp->if_carp;
-			if (carp_check_dup_vhids(sc, cif, NULL))
-				return (EINVAL);
+	if (ifp->if_carp == NULL) {
+		ncif = malloc(sizeof(*cif), M_IFADDR, M_NOWAIT|M_ZERO);
+		if (ncif == NULL)
+			return (ENOBUFS);
+		if ((error = ifpromisc(ifp, 1))) {
+			free(ncif, M_IFADDR, sizeof(*ncif));
+			return (error);
 		}
 
-		/* detach from old interface */
-		if (sc->sc_carpdev != NULL)
-			carpdetach(sc);
-
-		/* attach carp interface to physical interface */
-		if (ncif != NULL)
-			ifp->if_carp = (caddr_t)ncif;
-		sc->sc_carpdev = ifp;
-		sc->sc_if.if_capabilities = ifp->if_capabilities &
-		    IFCAP_CSUM_MASK;
-		cif = (struct carp_if *)ifp->if_carp;
-		TAILQ_FOREACH(vr, &cif->vhif_vrs, sc_list) {
-			if (vr == sc)
-				myself = 1;
-			if (LIST_FIRST(&vr->carp_vhosts)->vhid <
-			    LIST_FIRST(&sc->carp_vhosts)->vhid)
-				after = vr;
-		}
-
-		if (!myself) {
-			/* We're trying to keep things in order */
-			if (after == NULL) {
-				TAILQ_INSERT_TAIL(&cif->vhif_vrs, sc, sc_list);
-			} else {
-				TAILQ_INSERT_AFTER(&cif->vhif_vrs, after,
-				    sc, sc_list);
-			}
-			cif->vhif_nvrs++;
-		}
-		if (sc->sc_naddrs || sc->sc_naddrs6)
-			sc->sc_if.if_flags |= IFF_UP;
-		carp_set_enaddr(sc);
-		s = splnet();
-		sc->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
-		    carp_carpdev_state, ifp);
-		carp_carpdev_state(ifp);
-		splx(s);
+		ncif->vhif_ifp = ifp;
+		TAILQ_INIT(&ncif->vhif_vrs);
 	} else {
-		carpdetach(sc);
-		sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
+		cif = (struct carp_if *)ifp->if_carp;
+		if (carp_check_dup_vhids(sc, cif, NULL))
+			return (EINVAL);
 	}
+
+	/* detach from old interface */
+	if (sc->sc_carpdev != NULL)
+		carpdetach(sc);
+
+	/* attach carp interface to physical interface */
+	if (ncif != NULL)
+		ifp->if_carp = (caddr_t)ncif;
+	sc->sc_carpdev = ifp;
+	sc->sc_if.if_capabilities = ifp->if_capabilities &
+	    IFCAP_CSUM_MASK;
+	cif = (struct carp_if *)ifp->if_carp;
+	TAILQ_FOREACH(vr, &cif->vhif_vrs, sc_list) {
+		if (vr == sc)
+			myself = 1;
+		if (LIST_FIRST(&vr->carp_vhosts)->vhid <
+		    LIST_FIRST(&sc->carp_vhosts)->vhid)
+			after = vr;
+	}
+
+	if (!myself) {
+		/* We're trying to keep things in order */
+		if (after == NULL) {
+			TAILQ_INSERT_TAIL(&cif->vhif_vrs, sc, sc_list);
+		} else {
+			TAILQ_INSERT_AFTER(&cif->vhif_vrs, after,
+			    sc, sc_list);
+		}
+		cif->vhif_nvrs++;
+	}
+	if (sc->sc_naddrs || sc->sc_naddrs6)
+		sc->sc_if.if_flags |= IFF_UP;
+	carp_set_enaddr(sc);
+	s = splnet();
+	sc->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
+	    carp_carpdev_state, ifp);
+	carp_carpdev_state(ifp);
+	splx(s);
+
 	return (0);
 }
 
