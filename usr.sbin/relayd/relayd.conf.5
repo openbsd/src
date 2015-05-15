@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.161 2015/03/09 17:20:38 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.162 2015/05/15 19:26:37 jmc Exp $
 .\"
 .\" Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2015 $
+.Dd $Mdocdate: May 15 2015 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -905,12 +905,12 @@ are true:
 .Pp
 .Bl -bullet -compact -offset indent
 .It
-TLS client mode is enabled by the
+TLS server mode is enabled by the
 .Ic listen
 directive:
 .Ic listen on ... tls .
 .It
-TLS server mode and divert lookups are enabled by the
+TLS client mode and divert lookups are enabled by the
 .Ic forward
 directive:
 .Ic forward with tls to destination .
