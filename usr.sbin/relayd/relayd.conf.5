@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.162 2015/05/15 19:26:37 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.163 2015/05/15 20:40:26 reyk Exp $
 .\"
 .\" Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -658,17 +658,11 @@ it will be used as a backup if the lookup failed.
 Like the previous directive, but for redirections with rdr-to in
 .Xr pf.conf 5 .
 .It Xo
-.Ic listen on Ar address
-.Op Ic port Ar port
+.Ic listen on Ar address Ic port Ar port
 .Op Ic tls
 .Xc
 Specify the address and port for the relay to listen on.
 The relay will accept incoming connections to the specified address.
-If the
-.Ic port
-option is not specified, the port from the
-.Ic listen on
-directive will be used.
 .Pp
 If the
 .Ic tls
