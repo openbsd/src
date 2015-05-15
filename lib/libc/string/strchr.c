@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.c,v 1.1 2014/11/30 19:43:57 deraadt Exp $ */
+/*	$OpenBSD: strchr.c,v 1.2 2015/05/15 22:29:37 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -29,6 +29,8 @@
  */
 
 #include <string.h>
+
+__weak_alias(index, strchr);
 
 char *
 strchr(const char *p, int ch)

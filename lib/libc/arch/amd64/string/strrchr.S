@@ -1,4 +1,4 @@
-/*	$OpenBSD: strrchr.S,v 1.4 2014/12/09 15:10:39 reyk Exp $	*/
+/*	$OpenBSD: strrchr.S,v 1.5 2015/05/15 22:29:37 millert Exp $	*/
 /*	$NetBSD: strrchr.S,v 1.3 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*
@@ -8,7 +8,7 @@
 
 #include <machine/asm.h>
 
-STRONG_ALIAS(rindex, strrchr)
+WEAK_ALIAS(rindex, strrchr)
 
 ENTRY(strrchr)
 	movzbq	%sil,%rcx

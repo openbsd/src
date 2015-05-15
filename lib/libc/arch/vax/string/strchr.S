@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.S,v 1.1 2014/11/30 19:43:56 deraadt Exp $ */
+/*	$OpenBSD: strchr.S,v 1.2 2015/05/15 22:29:37 millert Exp $ */
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 
 /* Alas not quite twice as fast as the generic C version on a uvax2 */
 
-STRONG_ALIAS(index, strchr)
+WEAK_ALIAS(index, strchr)
 ENTRY(strchr, 0)
 	movq	4(%ap),%r0	# r0 = cp; r1 = c
 	tstb	%r1		# special case, looking for '\0'
