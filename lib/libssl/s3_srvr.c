@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.102 2015/04/15 16:25:43 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.103 2015/05/15 11:00:14 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2689,6 +2689,7 @@ ssl3_send_newsession_ticket(SSL *s)
 			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
 			    &hctx, 1) < 0) {
 				free(senc);
+				EVP_CIPHER_CTX_cleanup(&ctx);
 				return (-1);
 			}
 		} else {

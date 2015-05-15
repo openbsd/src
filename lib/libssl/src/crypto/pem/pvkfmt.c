@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.12 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.13 2015/05/15 11:00:14 jsg Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -731,17 +731,16 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 			inlen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
 		if (inlen <= 0) {
 			PEMerr(PEM_F_DO_PVK_BODY, PEM_R_BAD_PASSWORD_READ);
-			return NULL;
+			goto err;
 		}
 		enctmp = malloc(keylen + 8);
 		if (!enctmp) {
 			PEMerr(PEM_F_DO_PVK_BODY, ERR_R_MALLOC_FAILURE);
-			return NULL;
+			goto err;
 		}
 		if (!derive_pvk_key(keybuf, p, saltlen, (unsigned char *)psbuf,
 		    inlen)) {
-			free(enctmp);
-			return NULL;
+			goto err;
 		}
 		p += saltlen;
 		/* Copy BLOBHEADER across, decrypt rest */
@@ -749,8 +748,7 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 		p += 8;
 		if (keylen < 8) {
 			PEMerr(PEM_F_DO_PVK_BODY, PEM_R_PVK_TOO_SHORT);
-			free(enctmp);
-			return NULL;
+			goto err;
 		}
 		inlen = keylen - 8;
 		q = enctmp + 8;

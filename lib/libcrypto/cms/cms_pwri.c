@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.8 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.9 2015/05/15 11:00:14 jsg Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -332,14 +332,14 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
 	if (!pwri->pass) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, CMS_R_NO_PASSWORD);
-		return 0;
+		goto err;
 	}
 	algtmp = pwri->keyEncryptionAlgorithm;
 
 	if (!algtmp || OBJ_obj2nid(algtmp->algorithm) != NID_id_alg_PWRI_KEK) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
 		    CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
-		return 0;
+		goto err;
 	}
 
 	if (algtmp->parameter->type == V_ASN1_SEQUENCE) {
@@ -350,7 +350,7 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 	if (kekalg == NULL) {
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
 		    CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
-		return 0;
+		goto err;
 	}
 
 	kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);

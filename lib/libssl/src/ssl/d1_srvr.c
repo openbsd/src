@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.50 2015/03/27 12:29:54 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.51 2015/05/15 11:00:14 jsg Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1288,6 +1288,7 @@ dtls1_send_newsession_ticket(SSL *s)
 			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
 			    &hctx, 1) < 0) {
 				free(senc);
+				EVP_CIPHER_CTX_cleanup(&ctx);
 				return -1;
 			}
 		} else {
