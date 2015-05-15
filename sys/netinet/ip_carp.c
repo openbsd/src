@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.255 2015/05/15 10:09:23 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.256 2015/05/15 11:53:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -752,6 +752,7 @@ carp_clone_create(ifc, unit)
 	ifp->if_type = IFT_CARP;
 	ifp->if_sadl->sdl_type = IFT_CARP;
 	ifp->if_output = carp_output;
+	ifp->if_priority = IF_CARP_DEFAULT_PRIORITY;
 
 	/* Hook carp_addr_updated to cope with address and route changes. */
 	sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
