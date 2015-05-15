@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.30 2015/05/07 01:55:43 jsg Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.31 2015/05/15 13:32:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -931,6 +931,7 @@ pxaudc_open(struct usbf_pipe *pipe)
 	if (ep_idx != 0 && sc->sc_ep_map[ep_idx] != -1) {
 		printf("endpoint %d already used by %c",
 		    ep_idx, '@'+ sc->sc_ep_map[0]);
+		splx(s);
 		return USBF_BAD_ADDRESS;
 	}
 	sc->sc_ep_map[ep_idx] = sc->sc_npipe;
