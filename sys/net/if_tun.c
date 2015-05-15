@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.140 2015/05/15 10:15:13 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.141 2015/05/15 12:40:05 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -547,7 +547,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	}
 
 	if (tp->tun_flags & TUN_LAYER2)
-		/* call ether_output and that will call tunstart at the end */
 		return (ether_output(ifp, m0, dst, rt));
 
 	M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
@@ -1088,10 +1087,6 @@ filt_tunwrite(struct knote *kn, long hint)
 	return (1);
 }
 
-/*
- * Start packet transmission on the interface.
- * In layer 2 mode this function is called from ether_output.
- */
 void
 tunstart(struct ifnet *ifp)
 {
