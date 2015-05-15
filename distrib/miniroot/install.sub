@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.837 2015/05/14 10:58:55 rpe Exp $
+#	$OpenBSD: install.sub,v 1.838 2015/05/15 07:41:30 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2254,7 +2254,7 @@ HTTP_DIR=
 HTTP_SEC=/tmp/httpsec
 HTTP_LIST=/tmp/httplist
 WLANLIST=/tmp/wlanlist
-FSTABFLAG=-f
+FSTABFLAG=-F
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do
