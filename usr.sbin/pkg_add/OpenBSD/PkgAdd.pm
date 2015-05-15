@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.85 2015/03/26 22:07:58 kili Exp $
+# $OpenBSD: PkgAdd.pm,v 1.86 2015/05/15 21:18:53 jasper Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1173,7 +1173,7 @@ sub finish_display
 		$warn = 1;
 	}
 	if ($warn && $state->{packages_without_sig}) {
-		$state->say("UNSIGNED PACKAGES: ",
+		$state->say("UNSIGNED PACKAGES: #1",
 		    join(', ', keys %{$state->{packages_without_sig}}));
 	}
 	if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
