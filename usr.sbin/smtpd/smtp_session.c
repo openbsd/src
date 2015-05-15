@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.229 2015/04/19 20:29:12 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.230 2015/05/15 07:34:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1947,9 +1947,17 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 			log_info("smtp-in: Bad input on session %016"PRIx64
 			    ": %.*s", s->id, n, buf);
 		}
-		else if (strstr(s->cmd, "AUTH ") == s->cmd) {
+		else if (s->state == STATE_AUTH_INIT) {
 			log_info("smtp-in: Failed command on session %016"PRIx64
-			    ": \"AUTH [...]\" => %.*s", s->id, n, buf);
+			    ": \"AUTH PLAIN (...)\" => %.*s", s->id, n, buf);
+		}
+		else if (s->state == STATE_AUTH_USERNAME) {
+			log_info("smtp-in: Failed command on session %016"PRIx64
+			    ": \"AUTH LOGIN (username)\" => %.*s", s->id, n, buf);
+		}
+		else if (s->state == STATE_AUTH_PASSWORD) {
+			log_info("smtp-in: Failed command on session %016"PRIx64
+			    ": \"AUTH LOGIN (password)\" => %.*s", s->id, n, buf);
 		}
 		else {
 			strnvis(tmp, s->cmd, sizeof tmp, VIS_SAFE | VIS_CSTYLE);
