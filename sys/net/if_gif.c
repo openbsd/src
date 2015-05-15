@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.73 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.74 2015/05/15 10:15:13 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -276,7 +276,6 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
-	int s;
 
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
@@ -316,19 +315,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if ((error = gif_checkloop(ifp, m)))
 		goto end;
 
-	/*
-	 * Queue message on interface, and start output.
-	 */
-	s = splnet();
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		goto end;
-	}
-	ifp->if_obytes += m->m_pkthdr.len;
-	if_start(ifp);
-	splx(s);
+	error = if_output(ifp, m);
 
 end:
 	if (error)

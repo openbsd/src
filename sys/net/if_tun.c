@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.139 2015/04/30 15:19:50 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.140 2015/05/15 10:15:13 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -529,7 +529,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct tun_softc	*tp = ifp->if_softc;
-	int			 s, len, error;
+	int			 s, error;
 	u_int32_t		*af;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
@@ -570,16 +570,13 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	}
 #endif
 
-	len = m0->m_pkthdr.len;
-	IFQ_ENQUEUE(&ifp->if_snd, m0, NULL, error);
+	error = if_output(ifp, m0);
 	if (error) {
-		splx(s);
 		ifp->if_collisions++;
 		return (error);
 	}
+
 	splx(s);
-	ifp->if_opackets++;
-	ifp->if_obytes += len;
 
 	tun_wakeup(tp);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.330 2015/04/23 09:45:24 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.331 2015/05/15 10:15:13 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -439,6 +439,39 @@ if_start(struct ifnet *ifp)
 		TAILQ_INSERT_TAIL(&iftxlist, ifp, if_txlist);
 		schednetisr(NETISR_TX);
 	}
+}
+
+int
+if_output(struct ifnet *ifp, struct mbuf *m)
+{
+	int s, length, error = 0;
+	unsigned short mflags;
+
+	length = m->m_pkthdr.len;
+	mflags = m->m_flags;
+
+	s = splnet();
+
+	/*
+	 * Queue message on interface, and start output if interface
+	 * not yet active.
+	 */
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error) {
+		splx(s);
+		return (error);
+	}
+
+	ifp->if_obytes += length;
+	if (mflags & M_MCAST)
+		ifp->if_omcasts++;
+
+	ifp->if_opackets++;
+	if_start(ifp);
+
+	splx(s);
+
+	return (0);
 }
 
 struct mbuf_queue if_input_queue = MBUF_QUEUE_INITIALIZER(8192, IPL_NET);

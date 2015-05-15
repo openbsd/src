@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.43 2015/04/10 13:58:20 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.44 2015/05/15 10:15:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -203,7 +203,6 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt)
 {
 	struct shim_hdr	shim;
-	int		s;
 	int		error;
 	int		off;
 	u_int8_t	op = 0;
@@ -257,16 +256,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	m_copyback(m, off, sizeof(shim), (caddr_t)&shim, M_NOWAIT);
 
-	s = splnet();
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		goto out;
-	}
-	if_start(ifp);
-	splx(s);
-
+	error = if_output(ifp, m);
 out:
 	if (error)
 		ifp->if_oerrors++;

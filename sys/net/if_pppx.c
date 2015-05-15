@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.37 2015/04/10 13:58:20 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.38 2015/05/15 10:15:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1034,7 +1034,7 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
 	int error = 0;
-	int proto, s;
+	int proto;
 
 	if (!ISSET(ifp->if_flags, IFF_UP)) {
 		m_freem(m);
@@ -1059,15 +1059,7 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 	*mtod(m, int *) = proto;
 
-	s = splnet();
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error) {
-		splx(s);
-		goto out;
-	}
-	if_start(ifp);
-	splx(s);
-
+	error = if_output(ifp, m);
 out:
 	if (error)
 		ifp->if_oerrors++;

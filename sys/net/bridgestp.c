@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.54 2015/05/12 12:35:10 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.55 2015/05/15 10:15:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -353,7 +353,6 @@ bstp_transmit_tcn(struct bstp_state *bs, struct bstp_port *bp)
 	struct ifnet *ifp = bp->bp_ifp;
 	struct ether_header *eh;
 	struct mbuf *m;
-	int s, len, error;
 
 	if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0)
 		return;
@@ -378,16 +377,8 @@ bstp_transmit_tcn(struct bstp_state *bs, struct bstp_port *bp)
 	bpdu.tbu_bpdutype = BSTP_MSGTYPE_TCN;
 	bcopy(&bpdu, mtod(m, caddr_t) + sizeof(*eh), sizeof(bpdu));
 
-	s = splnet();
 	bp->bp_txcount++;
-	len = m->m_pkthdr.len;
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error == 0) {
-		ifp->if_obytes += len;
-		ifp->if_omcasts++;
-		if_start(ifp);
-	}
-	splx(s);
+	if_output(ifp, m);
 }
 
 void
@@ -469,7 +460,7 @@ bstp_send_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 	struct ifnet *ifp = bp->bp_ifp;
 	struct mbuf *m;
 	struct ether_header *eh;
-	int s, len, error;
+	int s;
 
 	s = splnet();
 	if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0)
@@ -517,13 +508,7 @@ bstp_send_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 	m->m_pkthdr.pf.prio = BSTP_IFQ_PRIO;
 
 	bp->bp_txcount++;
-	len = m->m_pkthdr.len;
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error == 0) {
-		ifp->if_obytes += len;
-		ifp->if_omcasts++;
-		if_start(ifp);
-	}
+	if_output(ifp, m);
  done:
 	splx(s);
 }

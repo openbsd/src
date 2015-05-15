@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.98 2015/05/14 10:55:28 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.99 2015/05/15 10:15:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -971,29 +971,6 @@ trunk_start(struct ifnet *ifp)
 	}
 }
 
-int
-trunk_enqueue(struct ifnet *ifp, struct mbuf *m)
-{
-	int len, error = 0;
-	u_short mflags;
-
-	splassert(IPL_NET);
-
-	/* Send mbuf */
-	mflags = m->m_flags;
-	len = m->m_pkthdr.len;
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error)
-		return (error);
-	if_start(ifp);
-
-	ifp->if_obytes += len;
-	if (mflags & M_MCAST)
-		ifp->if_omcasts++;
-
-	return (error);
-}
-
 u_int32_t
 trunk_hashmbuf(struct mbuf *m, SIPHASH_KEY *key)
 {
@@ -1326,7 +1303,7 @@ trunk_rr_start(struct trunk_softc *tr, struct mbuf *m)
 	}
 
 	/* Send mbuf */
-	if ((error = trunk_enqueue(tp->tp_if, m)) != 0)
+	if ((error = if_output(tp->tp_if, m)) != 0)
 		return (error);
 
 	/* Get next active port */
@@ -1382,7 +1359,7 @@ trunk_fail_start(struct trunk_softc *tr, struct mbuf *m)
 	}
 
 	/* Send mbuf */
-	return (trunk_enqueue(tp->tp_if, m));
+	return (if_output(tp->tp_if, m));
 }
 
 int
@@ -1509,7 +1486,7 @@ trunk_lb_start(struct trunk_softc *tr, struct mbuf *m)
 	}
 
 	/* Send mbuf */
-	return (trunk_enqueue(tp->tp_if, m));
+	return (if_output(tp->tp_if, m));
 }
 
 int
@@ -1569,7 +1546,7 @@ trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m0)
 				break;
 			}
 
-			ret = trunk_enqueue(last->tp_if, m);
+			ret = if_output(last->tp_if, m);
 			if (ret != 0)
 				errors++;
 		}
@@ -1580,7 +1557,7 @@ trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m0)
 		return (ENOENT);
 	}
 
-	ret = trunk_enqueue(last->tp_if, m0);
+	ret = if_output(last->tp_if, m0);
 	if (ret != 0)
 		errors++;
 
@@ -1654,7 +1631,7 @@ trunk_lacp_start(struct trunk_softc *tr, struct mbuf *m)
 	}
 
 	/* Send mbuf */
-	return (trunk_enqueue(tp->tp_if, m));
+	return (if_output(tp->tp_if, m));
 }
 
 int

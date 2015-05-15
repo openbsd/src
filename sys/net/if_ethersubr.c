@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.197 2015/05/13 08:16:01 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.198 2015/05/15 10:15:13 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -249,14 +249,13 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt)
 {
 	u_int16_t etype;
-	int s, len, error = 0;
+	int len, error = 0;
 	u_char edst[ETHER_ADDR_LEN];
 	u_char *esrc;
 	struct mbuf *m = m0;
 	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp0;
-	short mflags;
 	struct ifnet *ifp = ifp0;
 
 #ifdef DIAGNOSTIC
@@ -404,30 +403,15 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		}
 	}
 #endif
-	mflags = m->m_flags;
+
 	len = m->m_pkthdr.len;
-	s = splnet();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
+
+	error = if_output(ifp, m);
 #if NCARP > 0
-	if (ifp != ifp0)
+	if (!error && ifp != ifp0)
 		ifp0->if_obytes += len;
 #endif /* NCARP > 0 */
-	if (mflags & M_MCAST)
-		ifp->if_omcasts++;
-	if_start(ifp);
-	splx(s);
 	return (error);
-
 bad:
 	if (m)
 		m_freem(m);
