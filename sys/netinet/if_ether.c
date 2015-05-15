@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.151 2015/04/22 04:12:22 jsg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.152 2015/05/15 12:00:57 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -121,8 +121,6 @@ void	db_print_llinfo(caddr_t);
 int	db_show_radix_node(struct radix_node *, void *, u_int);
 #endif
 
-static const struct sockaddr_dl null_sdl = { sizeof(null_sdl), AF_LINK };
-
 /*
  * Timeout routine.  Age arp_tab entries periodically.
  */
@@ -190,14 +188,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 		if (rt->rt_flags & RTF_CLONING ||
 		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !la)) {
 			/*
-			 * Case 1: This route should come from a route to iface.
-			 */
-			rt_setgate(rt, (struct sockaddr *)&null_sdl,
-			    ifp->if_rdomain);
-			gate = rt->rt_gateway;
-			SDL(gate)->sdl_type = ifp->if_type;
-			SDL(gate)->sdl_index = ifp->if_index;
-			/*
 			 * Give this route an expiration time, even though
 			 * it's a "permanent" route, so that routes cloned
 			 * from it do not need their expiration time set.
@@ -261,10 +251,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 		}
 		if (ifa) {
 			rt->rt_expire = 0;
-			SDL(gate)->sdl_alen = ETHER_ADDR_LEN;
-			memcpy(LLADDR(SDL(gate)),
-			    ((struct arpcom *)ifp)->ac_enaddr, ETHER_ADDR_LEN);
-
 			/*
 			 * XXX Since lo0 is in the default rdomain we
 			 * should not (ab)use it for any route related

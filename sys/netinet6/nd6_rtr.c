@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.102 2015/04/27 14:51:44 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.103 2015/05/15 12:00:57 claudio Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/route.h>
@@ -1651,6 +1652,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	struct ifaddr *ifa;
 	struct ifnet *ifp = pr->ndpr_ifp;
 	struct sockaddr_in6 mask6;
+	struct sockaddr_dl sa_dl = { sizeof(sa_dl), AF_LINK };
 	struct nd_prefix *opr;
 	u_long rtflags;
 	int error = 0;
@@ -1723,6 +1725,10 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	bzero(&mask6, sizeof(mask6));
 	mask6.sin6_len = sizeof(mask6);
 	mask6.sin6_addr = pr->ndpr_mask;
+
+	sa_dl.sdl_type = ifp->if_type;
+	sa_dl.sdl_index = ifp->if_index;
+
 	/* rtrequest1() will probably set RTF_UP, but we're not sure. */
 	rtflags = RTF_UP;
 	if (nd6_need_cache(ifp))
@@ -1733,7 +1739,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	bzero(&info, sizeof(info));
 	info.rti_flags = rtflags;
 	info.rti_info[RTAX_DST] = sin6tosa(&pr->ndpr_prefix);
-	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
 	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask6);
 
 	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt, ifp->if_rdomain);

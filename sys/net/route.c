@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.209 2015/04/20 09:12:57 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.210 2015/05/15 12:00:57 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -554,6 +554,16 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 	return (error);
 }
 
+static inline int
+rtequal(struct rtentry *a, struct rtentry *b)
+{
+	if (memcmp(rt_key(a), rt_key(b), rt_key(a)->sa_len) == 0 &&
+	    memcmp(rt_mask(a), rt_mask(b), rt_mask(a)->sa_len) == 0)
+		return 1;
+	else
+		return 0;
+}
+
 int
 rtflushclone1(struct radix_node *rn, void *arg, u_int id)
 {
@@ -561,7 +571,8 @@ rtflushclone1(struct radix_node *rn, void *arg, u_int id)
 
 	rt = (struct rtentry *)rn;
 	parent = (struct rtentry *)arg;
-	if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent == parent)
+	if ((rt->rt_flags & RTF_CLONED) != 0 && (rt->rt_parent == parent ||
+	    rtequal(rt->rt_parent, parent)))
 		rtdeletemsg(rt, id);
 	return 0;
 }
@@ -1106,16 +1117,20 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 {
 	struct rtentry		*rt, *nrt = NULL;
 	struct sockaddr_rtlabel	 sa_rl;
+	struct sockaddr_dl	 sa_dl = { sizeof(sa_dl), AF_LINK };
 	struct rt_addrinfo	 info;
 	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
-	u_int8_t		 prio = RTP_CONNECTED;
+	u_int8_t		 prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
 	int			 error;
+
+	sa_dl.sdl_type = ifa->ifa_ifp->if_type;
+	sa_dl.sdl_index = ifa->ifa_ifp->if_index;
 
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
-	info.rti_flags = flags;
+	info.rti_flags = flags | RTF_MPATH;
 	info.rti_info[RTAX_DST] = dst;
-	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
 	info.rti_info[RTAX_LABEL] =
 	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
 
@@ -1170,8 +1185,9 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	struct sockaddr		*deldst;
 	struct rt_addrinfo	 info;
 	struct sockaddr_rtlabel	 sa_rl;
+	struct sockaddr_dl	 sa_dl = { sizeof(sa_dl), AF_LINK };
 	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
-	u_int8_t		 prio = RTP_CONNECTED;
+	u_int8_t		 prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
 	int			 error;
 
 #ifdef MPLS
@@ -1202,10 +1218,14 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		}
 	}
 
+	sa_dl.sdl_type = ifa->ifa_ifp->if_type;
+	sa_dl.sdl_index = ifa->ifa_ifp->if_index;
+
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
 	info.rti_flags = flags;
 	info.rti_info[RTAX_DST] = dst;
+	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
 	info.rti_info[RTAX_LABEL] =
 	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
 
@@ -1710,6 +1730,15 @@ rt_if_linkstate_change(struct radix_node *rn, void *arg, u_int id)
 			}
 		} else {
 			if (rt->rt_flags & RTF_UP) {
+				/*
+				 * Remove cloned routes (mainly arp) to
+				 * down interfaces so we have a chance to
+				 * clone a new route from a better source.
+				 */
+				if (rt->rt_flags & RTF_CLONED) {
+					rtdeletemsg(rt, id);
+					return (0);
+				}
 				/* take route down */
 				rt->rt_flags &= ~RTF_UP;
 				rn_mpath_reprio(rn, rt->rt_priority | RTP_DOWN);

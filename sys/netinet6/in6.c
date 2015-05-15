@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.156 2015/04/20 09:07:42 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.157 2015/05/15 12:00:57 claudio Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
 
@@ -827,6 +828,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 		/* join solicited multicast addr for new host id */
 		struct sockaddr_in6 llsol;
+		struct sockaddr_dl sa_dl = { sizeof(sa_dl), AF_LINK };
+
+		sa_dl.sdl_type = ifp->if_type;
+		sa_dl.sdl_index = ifp->if_index;
 
 		bzero(&llsol, sizeof(llsol));
 		llsol.sin6_family = AF_INET6;
@@ -887,7 +892,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 			bzero(&info, sizeof(info));
 			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
-			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia6->ia_addr);
+			info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
 			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
 			info.rti_info[RTAX_IFA] = sin6tosa(&ia6->ia_addr);
 			/* XXX: we need RTF_CLONING to fake nd6_rtrequest */
@@ -956,7 +961,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 			bzero(&info, sizeof(info));
 			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
-			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia6->ia_addr);
+			info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
 			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
 			info.rti_info[RTAX_IFA] = sin6tosa(&ia6->ia_addr);
 			info.rti_flags = RTF_UP | RTF_CLONING;

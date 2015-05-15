@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.135 2015/04/27 14:51:44 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.136 2015/05/15 12:00:57 claudio Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -651,6 +651,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 	}
 	if (!rt) {
 		if (create && ifp) {
+			struct sockaddr_dl sa_dl = { sizeof(sa_dl), AF_LINK };
 			struct rt_addrinfo info;
 			int e;
 
@@ -666,6 +667,9 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			if (ifa == NULL)
 				return (NULL);
 
+			sa_dl.sdl_type = ifp->if_type;
+			sa_dl.sdl_index = ifp->if_index;
+
 			/*
 			 * Create a new route.  RTF_LLINFO is necessary
 			 * to create a Neighbor Cache entry for the
@@ -675,7 +679,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			bzero(&info, sizeof(info));
 			info.rti_flags = RTF_UP | RTF_HOST | RTF_LLINFO;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
-			info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+			info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
 			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
 			    &rt, rtableid)) != 0) {
 #if 0
@@ -940,7 +944,6 @@ nd6_rtrequest(int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
 	struct nd_defrouter *dr;
@@ -999,17 +1002,6 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		 */
 		if ((rt->rt_flags & RTF_CLONING) ||
 		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !ln)) {
-			/*
-			 * Case 1: This route should come from a route to
-			 * interface (RTF_CLONING case) or the route should be
-			 * treated as on-link but is currently not
-			 * (RTF_LLINFO && !ln case).
-			 */
-			rt_setgate(rt, (struct sockaddr *)&null_sdl,
-			    ifp->if_rdomain);
-			gate = rt->rt_gateway;
-			SDL(gate)->sdl_type = ifp->if_type;
-			SDL(gate)->sdl_index = ifp->if_index;
 			if (ln)
 				nd6_llinfo_settimer(ln, 0);
 			if ((rt->rt_flags & RTF_CLONING) != 0)
@@ -1045,7 +1037,7 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		/* FALLTHROUGH */
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
-		    gate->sa_len < sizeof(null_sdl)) {
+		    gate->sa_len < sizeof(struct sockaddr_dl)) {
 			log(LOG_DEBUG, "%s: bad gateway value: %s\n",
 			    __func__, ifp->if_xname);
 			break;
@@ -1127,14 +1119,9 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		ifa = &in6ifa_ifpwithaddr(ifp,
 		    &satosin6(rt_key(rt))->sin6_addr)->ia_ifa;
 		if (ifa) {
-			caddr_t macp = nd6_ifptomac(ifp);
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
-			if (macp) {
-				memcpy(LLADDR(SDL(gate)), macp, ifp->if_addrlen);
-				SDL(gate)->sdl_alen = ifp->if_addrlen;
-			}
 
 			/*
 			 * XXX Since lo0 is in the default rdomain we
