@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.24 2015/03/20 19:42:29 millert Exp $
+.\"	$OpenBSD: renice.8,v 1.25 2015/05/15 19:34:31 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 20 2015 $
+.Dd $Mdocdate: May 15 2015 $
 .Dt RENICE 8
 .Os
 .Sh NAME
@@ -37,33 +37,23 @@
 .Nd alter priority of running processes
 .Sh SYNOPSIS
 .Nm renice
-.Fl n Ar increment
-.Oo
-.Op Fl g
-.Ar pgrp ...
-.Oc
-.Oo
-.Op Fl p
-.Ar pid ...
-.Oc
-.Oo
-.Op Fl u
-.Ar user ...
-.Oc
+.Oo Fl n Oc Ar increment
+.Op Fl gpu
+.Ar id
 .Sh DESCRIPTION
 .Nm
-alters the scheduling priority of one or more running processes by
-.Ar increment .
-Processes may be selected using the parameters
-.Ar pid
-(process ID),
-.Ar pgrp
-(process group ID),
+alters the scheduling priority of one or more running processes with ID
+.Ar id .
+Processes may be selected by
+process ID,
+process group ID,
 and
-.Ar user
-(user name or ID).
-If no flag is specified,
+user name or ID.
+If none of the
+.Fl gpu
+options are specified,
 the default is to select by process ID.
+Multiple processes can be specified in a space separated list.
 .Pp
 Users other than the superuser may only alter the priority of
 processes they own,
@@ -71,8 +61,8 @@ and can only monotonically increase their
 .Dq nice value
 within the range 0 to
 .Dv PRIO_MAX
-(20).
-(This prevents overriding administrative fiats.)
+(20),
+which  prevents overriding administrative fiats.
 The superuser
 may alter the priority of any process
 and set the priority to any value in the range
@@ -91,18 +81,28 @@ anything negative (to make things go very fast).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl g Ar pgrp ...
+.It Fl g
 Alter the scheduling priority of all processes in process group
-.Ar pgrp .
+.Ar id .
 .It Fl n Ar increment
 A positive or negative decimal integer used to modify the
 scheduling priority.
-.It Fl p Ar pid ...
+For compatibility with historic versions of this utility,
+if
+.Fl n
+is omitted and
+.Ar increment
+is the first argument to
+.Nm ,
+then
+.Ar increment
+is taken as an absolute priority rather than an increment.
+.It Fl p
 Alter the scheduling priority of process
-.Ar pid .
-.It Fl u Ar user ...
-Alter the scheduling priority of all processes belonging to
-.Ar user ,
+.Ar id .
+.It Fl u
+Alter the scheduling priority of all processes belonging to user
+.Ar id ,
 which may be a user name or ID.
 .El
 .Sh FILES
@@ -131,8 +131,9 @@ utility is compliant with the
 specification,
 except the way in which processes are specified differs.
 .Pp
-The historical behavior of passing the priority as the first
-argument is supported for backwards compatibility.
+The historical behavior of passing
+.Ar increment
+as an absolute priority is supported for backwards compatibility.
 .Sh HISTORY
 The
 .Nm
