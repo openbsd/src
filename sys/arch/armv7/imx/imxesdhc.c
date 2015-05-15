@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.7 2015/05/08 03:38:26 jsg Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.8 2015/05/15 17:01:18 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -509,11 +509,11 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 		return imxgpio_get_bit(gpio) ? 0 : 1;
 	case BOARD_ID_IMX6_NOVENA:
 		switch (sc->unit) {
-			case 2:
+			case 1:
 				gpio = 0*32 + 4;
 				break;
-			/* no card detect for uSD */
-			case 3:
+			/* no card detect */
+			case 2:
 				return 1;
 			default:
 				return 0;
