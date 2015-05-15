@@ -30,6 +30,7 @@
 #include <armv7/armv7/armv7_machdep.h>
 
 extern void exdog_reset(void);
+extern char *exynos_board_name(void);
 extern int32_t agtimer_frequency;
 extern int comcnspeed;
 extern int comcnmode;
@@ -79,17 +80,10 @@ exynos_platform_powerdown(void)
 
 }
 
-static void
-exynos_platform_print_board_type(void)
+const char *
+platform_board_name(void)
 {
-	switch (board_id) {
-	case BOARD_ID_EXYNOS5_CHROMEBOOK:
-		agtimer_frequency = 24 * 1000 * 1000;
-		printf("board type: Exynos 5 Chromebook\n");
-		break;
-	default:
-		printf("board type %x unknown\n", board_id);
-	}
+	return (exynos_board_name());
 }
 
 static void

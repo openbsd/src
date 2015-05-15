@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxi_machdep.c,v 1.5 2015/01/22 14:33:01 krw Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.6 2015/05/15 15:35:43 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -33,6 +33,7 @@
 
 extern int sxiuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
 extern void sxidog_reset(void);
+extern char *sunxi_board_name(void);
 extern int comcnspeed;
 extern int comcnmode;
 
@@ -77,10 +78,10 @@ platform_powerdown(void)
 
 }
 
-void
-platform_print_board_type(void)
+const char *
+platform_board_name(void)
 {
-
+	return (sunxi_board_name());
 }
 
 void

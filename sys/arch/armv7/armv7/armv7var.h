@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.4 2015/05/08 03:38:26 jsg Exp $ */
+/* $OpenBSD: armv7var.h,v 1.5 2015/05/15 15:35:43 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -23,6 +23,13 @@
 struct board_dev {
 	char	*name;
 	int	unit;
+};
+
+struct armv7_board {
+	uint32_t		board_id;
+	const char		*name;
+	struct board_dev	*devs;
+	void			(*init)(void);
 };
 
 /* Needed by omap, imx, sunxi */
@@ -92,6 +99,10 @@ void omap3_init(void);
 void omap4_init(void);
 void sxia1x_init(void);
 void sxia20_init(void);
+
+struct board_dev *imx_board_attach(void);
+struct board_dev *omap_board_attach(void);
+struct board_dev *sunxi_board_attach(void);
 
 #endif /* __ARMV7VAR_H__ */
 

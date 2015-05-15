@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.21 2015/05/12 04:31:10 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.22 2015/05/15 15:35:43 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -755,7 +755,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-	platform_print_board_type();
+	printf("board type: %u\n", board_id);
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);

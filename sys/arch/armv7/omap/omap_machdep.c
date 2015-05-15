@@ -1,4 +1,4 @@
-/*	$OpenBSD: omap_machdep.c,v 1.3 2015/01/22 14:33:01 krw Exp $	*/
+/*	$OpenBSD: omap_machdep.c,v 1.4 2015/05/15 15:35:43 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -34,6 +34,7 @@
 
 extern void omap4_smc_call(uint32_t, uint32_t);
 extern void omdog_reset(void);
+extern char *omap_board_name(void);
 extern int comcnspeed;
 extern int comcnmode;
 
@@ -88,25 +89,10 @@ platform_powerdown(void)
 
 }
 
-void
-platform_print_board_type(void)
+const char *
+platform_board_name(void)
 {
-	switch (board_id) {
-	case BOARD_ID_OMAP3_BEAGLE:
-		printf("board type: beagle\n");
-		break;
-	case BOARD_ID_AM335X_BEAGLEBONE:
-		printf("board type: beaglebone\n");
-		break;
-	case BOARD_ID_OMAP3_OVERO:
-		printf("board type: overo\n");
-		break;
-	case BOARD_ID_OMAP4_PANDA:
-		printf("board type: panda\n");
-		break;
-	default:
-		printf("board type %x unknown", board_id);
-	}
+	return (omap_board_name());
 }
 
 void

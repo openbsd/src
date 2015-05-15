@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: exynos.c,v 1.2 2015/05/15 15:35:43 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -69,3 +69,42 @@ struct board_dev chromebook_devs[] = {
 //	{ "exesdhc",	3 },
 	{ NULL,		0 }
 };
+
+struct armv7_board exynos_boards[] = {
+	{
+		BOARD_ID_EXYNOS5_CHROMEBOOK,
+		"Exynos 5 Chromebook",
+		chromebook_devs,
+		exynos5_init,
+	},
+	{ 0, NULL, NULL, NULL },
+};
+
+struct board_dev *
+exynos_board_attach(void)
+{
+	int i;
+
+	for (i = 0; exynos_boards[i].name != NULL; i++) {
+		if (exynos_boards[i].board_id == board_id) {
+			exynos_boards[i].init();
+			return (exynos_boards[i].devs);
+			break;
+		}
+	}
+	return (NULL);
+}
+
+const char *
+exynos_board_name(void)
+{
+	int i;
+
+	for (i = 0; exynos_boards[i].name != NULL; i++) {
+		if (exynos_boards[i].board_id == board_id) {
+			return (exynos_boards[i].name);
+			break;
+		}
+	}
+	return (NULL);
+}
