@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi_if.h,v 1.8 2015/05/12 18:23:38 ratchov Exp $	*/
+/*	$OpenBSD: midi_if.h,v 1.9 2015/05/16 10:04:20 ratchov Exp $	*/
 /*	$NetBSD: midi_if.h,v 1.3 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -39,8 +39,6 @@ struct midi_info {
 };
 #define MIDI_PROP_OUT_INTR  1
 #define MIDI_PROP_CAN_INPUT 2
-
-struct midi_softc;
 
 struct midi_hw_if {
 	int	(*open)(void *, int, 	/* open hardware */
