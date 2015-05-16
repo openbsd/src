@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.26 2015/05/16 12:48:50 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.27 2015/05/16 12:51:24 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -178,10 +178,7 @@ prval(u_int format, void *valp)
 		v = *(u_int *)valp;
 		cm = "";
 		if (v & AUMODE_PLAY) {
-			if (v & AUMODE_PLAY_ALL)
-				fprintf(out, "play");
-			else
-				fprintf(out, "playsync");
+			fprintf(out, "play");
 			cm = ",";
 		}
 		if (v & AUMODE_RECORD)
