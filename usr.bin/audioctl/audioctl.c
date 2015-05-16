@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.25 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.26 2015/05/16 12:48:50 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -122,20 +122,12 @@ struct {
 	{ AudioEslinear,	AUDIO_ENCODING_SLINEAR },
 	{ "linear",		AUDIO_ENCODING_SLINEAR },
 	{ AudioEulinear,	AUDIO_ENCODING_ULINEAR },
-	{ AudioEadpcm,		AUDIO_ENCODING_ADPCM },
-	{ "ADPCM",		AUDIO_ENCODING_ADPCM },
 	{ AudioEslinear_le,	AUDIO_ENCODING_SLINEAR_LE },
 	{ "linear_le",		AUDIO_ENCODING_SLINEAR_LE },
 	{ AudioEulinear_le,	AUDIO_ENCODING_ULINEAR_LE },
 	{ AudioEslinear_be,	AUDIO_ENCODING_SLINEAR_BE },
 	{ "linear_be",		AUDIO_ENCODING_SLINEAR_BE },
 	{ AudioEulinear_be,	AUDIO_ENCODING_ULINEAR_BE },
-	{ AudioEmpeg_l1_stream,	AUDIO_ENCODING_MPEG_L1_STREAM },
-	{ AudioEmpeg_l1_packets,AUDIO_ENCODING_MPEG_L1_PACKETS },
-	{ AudioEmpeg_l1_system,	AUDIO_ENCODING_MPEG_L1_SYSTEM },
-	{ AudioEmpeg_l2_stream,	AUDIO_ENCODING_MPEG_L2_STREAM },
-	{ AudioEmpeg_l2_packets,AUDIO_ENCODING_MPEG_L2_PACKETS },
-	{ AudioEmpeg_l2_system,	AUDIO_ENCODING_MPEG_L2_SYSTEM },
 	{ 0 }
 };
 
