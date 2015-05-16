@@ -917,13 +917,13 @@ slot_list_mix(unsigned int round, unsigned int pchan, adata_t *pbuf)
 		if (s->pstate == SLOT_INIT || !(s->mode & SIO_PLAY))
 			continue;
 		if (s->pstate == SLOT_STOP && s->buf.used < s->bpf) {
-			s->pstate = SLOT_INIT;
 #ifdef DEBUG
 			if (log_level >= 3) {
 				slot_log(s);
 				log_puts(": drained, done\n");
 			}
 #endif
+			slot_stop(s);
 			continue;
 		}
 		n = slot_mix_badd(s, dev_pbuf);
