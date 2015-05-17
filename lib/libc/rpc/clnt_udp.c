@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.27 2014/11/11 04:51:49 guenther Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.28 2015/05/17 01:15:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -39,9 +39,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <netdb.h>
 #include <errno.h>
 #include <rpc/pmap_clnt.h>
@@ -160,7 +160,7 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 	}
 	cu->cu_xdrpos = XDR_GETPOS(&(cu->cu_outxdrs));
 	if (*sockp < 0) {
-		int dontblock = 1;
+		int fl;
 
 		*sockp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 		if (*sockp < 0) {
@@ -171,7 +171,23 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 		/* attempt to bind to priv port */
 		(void)bindresvport(*sockp, NULL);
 		/* the sockets rpc controls are non-blocking */
-		(void)ioctl(*sockp, FIONBIO, (char *) &dontblock);
+
+		fl = fcntl(*sockp, F_GETFL);
+		if (fl == -1) {
+			close(*sockp);
+			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+			rpc_createerr.cf_error.re_errno = errno;
+			goto fooy;
+		}
+		if ((fl & O_NONBLOCK) == 0) {
+			fl |= O_NONBLOCK;
+			if (fcntl(*sockp, F_SETFL, fl) == -1) {
+				close(*sockp);
+				rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+				rpc_createerr.cf_error.re_errno = errno;
+				goto fooy;
+			}
+		}
 		cu->cu_closeit = TRUE;
 	} else {
 		cu->cu_closeit = FALSE;
