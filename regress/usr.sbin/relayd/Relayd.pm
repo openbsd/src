@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.13 2014/12/14 20:30:51 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.14 2015/05/17 22:49:03 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -52,6 +52,7 @@ sub new {
 	open(my $fh, '>', $self->{conffile})
 	    or die ref($self), " conf file $self->{conffile} create failed: $!";
 	print $fh "log all\n";
+	print $fh "prefork 1\n";  # only crashes of first child are observed
 	print $fh "table <table-$test> { $self->{connectaddr} }\n"
 	    if defined($self->{table});
 

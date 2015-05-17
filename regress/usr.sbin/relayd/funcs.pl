@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.18 2015/01/05 22:41:37 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.19 2015/05/17 22:49:03 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -92,6 +92,7 @@ sub http_client {
 		my $len = shift // $self->{len} // 251;
 		my $cookie = $self->{cookie};
 		http_request($self, $len, "1.0", $cookie);
+		http_response($self, $len);
 		return;
 	}
 
@@ -101,7 +102,10 @@ sub http_client {
 	my @cookies = @{$self->{redo}{cookies} || $self->{cookies} || []};
 	while (defined (my $len = shift @lengths)) {
 		my $cookie = shift @cookies || $self->{cookie};
-		eval { http_request($self, $len, $vers, $cookie) };
+		eval {
+			http_request($self, $len, $vers, $cookie);
+			http_response($self, $len);
+		};
 		warn $@ if $@;
 		if (@lengths && ($@ || $vers eq "1.0")) {
 			# reconnect and redo the outstanding requests
@@ -136,9 +140,15 @@ sub http_request {
 	}
 	my @request = ("$method /$path HTTP/$vers");
 	push @request, "Host: foo.bar" unless defined $header{Host};
-	push @request, "Content-Length: $len"
-	    if $vers eq "1.1" && $method eq "PUT" &&
-	    !defined $header{'Content-Length'};
+	if ($vers eq "1.1" && $method eq "PUT") {
+		if (ref($len) eq 'ARRAY') {
+			push @request, "Transfer-Encoding: chunked"
+			    if !defined $header{'Transfer-Encoding'};
+		} else {
+			push @request, "Content-Length: $len"
+			    if !defined $header{'Content-Length'};
+		}
+	}
 	foreach my $key (sort keys %header) {
 		my $val = $header{$key};
 		if (ref($val) eq 'ARRAY') {
@@ -152,13 +162,29 @@ sub http_request {
 	push @request, "";
 	print STDERR map { ">>> $_\n" } @request;
 	print map { "$_\r\n" } @request;
-	write_char($self, $len) if $method eq "PUT";
+	if ($method eq "PUT") {
+		if (ref($len) eq 'ARRAY') {
+			if ($vers eq "1.1") {
+				write_chunked($self, @$len);
+			} else {
+				write_char($self, $_) foreach (@$len);
+			}
+		} else {
+			write_char($self, $len);
+		}
+	}
 	IO::Handle::flush(\*STDOUT);
 	# XXX client shutdown seems to be broken in relayd
 	#shutdown(\*STDOUT, SHUT_WR)
 	#    or die ref($self), " shutdown write failed: $!"
 	#    if $vers ne "1.1";
+}
 
+sub http_response {
+	my ($self, $len) = @_;
+	my $method = $self->{method} || "GET";
+
+	my $vers;
 	my $chunked = 0;
 	{
 		local $/ = "\r\n";
@@ -167,9 +193,10 @@ sub http_request {
 		    or die ref($self), " missing http $len response";
 		chomp;
 		print STDERR "<<< $_\n";
-		m{^HTTP/$vers 200 OK$}
+		m{^HTTP/(\d\.\d) 200 OK$}
 		    or die ref($self), " http response not ok"
 		    unless $self->{httpnok};
+		$vers = $1;
 		while (<STDIN>) {
 			chomp;
 			print STDERR "<<< $_\n";
@@ -304,19 +331,22 @@ sub http_server {
 				$cookie ||= $1 if /^Cookie: (.*)/;
 			}
 		}
-		# XXX reading to EOF does not work with relayd
-		#read_char($self, $vers eq "1.1" ? $len : undef)
-		read_char($self, $len)
-		    if $method eq "PUT";
+		if ($method eq "PUT" ) {
+			if (ref($len) eq 'ARRAY') {
+				read_chunked($self);
+			} else {
+				read_char($self, $len);
+			}
+		}
 
 		my @response = ("HTTP/$vers 200 OK");
 		$len = defined($len) ? $len : scalar(split /|/,$url);
-		if (ref($len) eq 'ARRAY') {
-			push @response, "Transfer-Encoding: chunked"
-			    if $vers eq "1.1";
-		} else {
-			push @response, "Content-Length: $len"
-			    if $vers eq "1.1" && $method eq "GET";
+		if ($vers eq "1.1" && $method eq "GET") {
+			if (ref($len) eq 'ARRAY') {
+				push @response, "Transfer-Encoding: chunked";
+			} else {
+				push @response, "Content-Length: $len";
+			}
 		}
 		foreach my $key (sort keys %header) {
 			my $val = $header{$key};
@@ -333,14 +363,16 @@ sub http_server {
 		print STDERR map { ">>> $_\n" } @response;
 		print map { "$_\r\n" } @response;
 
-		if (ref($len) eq 'ARRAY') {
-			if ($vers eq "1.1") {
-				write_chunked($self, @$len);
+		if ($method eq "GET") {
+			if (ref($len) eq 'ARRAY') {
+				if ($vers eq "1.1") {
+					write_chunked($self, @$len);
+				} else {
+					write_char($self, $_) foreach (@$len);
+				}
 			} else {
-				write_char($self, $_) foreach (@$len);
+				write_char($self, $len);
 			}
-		} else {
-			write_char($self, $len) if $method eq "GET";
 		}
 		IO::Handle::flush(\*STDOUT);
 	} while ($vers eq "1.1");
@@ -375,6 +407,8 @@ sub check_logs {
 	check_len($c, $r, $s, %args);
 	check_md5($c, $r, $s, %args);
 	check_loggrep($c, $r, $s, %args);
+	$r->loggrep("lost child")
+	    and die "relayd lost child";
 }
 
 sub check_len {
