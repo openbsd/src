@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.30 2015/05/17 06:34:37 czarkoff Exp $
+ * $OpenBSD: calendar.holiday,v 1.31 2015/05/17 06:37:36 czarkoff Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -181,6 +181,7 @@
 05/20	Mecklenburg Independence Day in North Carolina
 05/20	National Day in Cameroon
 05/Mon-2	Victoria Day in Canada
+05/21	Independence Day in Montenegro
 05/22	National Heroes Day in Sri Lanka
 05/22	Declaration of the Republic of Yemen, 1990
 05/23	Commonwealth Day in Jamaica, Belize
@@ -251,6 +252,7 @@
 07/09	Independence Day in Argentina
 07/10	Independence Day in Bahamas
 07/11	National Holiday in the Mongolian People's Republic
+07/13	Statehood Day in Montenegro
 07/14	Bastille Day
 07/14	National Holiday in Monaco
 07/15	St. Swithin's Day
