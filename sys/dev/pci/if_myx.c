@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.76 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.77 2015/05/17 02:33:09 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1888,9 +1888,7 @@ myx_rxeof(struct myx_softc *sc)
 
 	ifp->if_ipackets += ml_len(&ml);
 
-	KERNEL_LOCK();
 	if_input(ifp, &ml);
-	KERNEL_UNLOCK();
 }
 
 void
