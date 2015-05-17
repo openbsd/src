@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.61 2015/02/12 23:07:52 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.62 2015/05/17 18:31:32 reyk Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,8 +241,7 @@ main		: LISTEN ON address listen_opts	{
 					fatal(NULL);
 				if (p->addr != NULL)
 					p->state = STATE_DNS_DONE;
-				TAILQ_INSERT_TAIL(&conf->constraints,
-				    p, entry);
+				constraint_add(p);
 				h = next;
 			} while (h != NULL);
 
@@ -251,10 +250,11 @@ main		: LISTEN ON address listen_opts	{
 		}
 		| CONSTRAINT FROM url		{
 			struct constraint	*p;
-			struct ntp_addr		*h;
+			struct ntp_addr		*h, *next;
 
 			p = new_constraint();
-			if ((h = $3->a) != NULL) {
+			for (h = $3->a; h != NULL; h = next) {
+				next = h->next;
 				if (h->ss.ss_family != AF_INET &&
 				    h->ss.ss_family != AF_INET6) {
 					yyerror("IPv4 or IPv6 address "
@@ -266,8 +266,8 @@ main		: LISTEN ON address listen_opts	{
 					free($3);
 					YYERROR;
 				}
+				h->next = p->addr;
 				p->addr = h;
-				host_dns_free(h->next);
 			}
 
 			p->addr_head.a = p->addr;
@@ -279,7 +279,7 @@ main		: LISTEN ON address listen_opts	{
 				fatal(NULL);
 			if (p->addr != NULL)
 				p->state = STATE_DNS_DONE;
-			TAILQ_INSERT_TAIL(&conf->constraints, p, entry);
+			constraint_add(p);
 			free($3->name);
 			free($3);
 		}

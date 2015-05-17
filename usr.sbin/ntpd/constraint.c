@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.8 2015/04/21 01:49:19 jsg Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.9 2015/05/17 18:31:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -53,8 +53,6 @@ int	 constraint_close(int);
 void	 constraint_update(void);
 void	 constraint_reset(void);
 int	 constraint_cmp(const void *, const void *);
-void	 constraint_add(struct constraint *);
-void	 constraint_remove(struct constraint *);
 
 struct httpsdate *
 	 httpsdate_init(const char *, const char *, const char *,
@@ -87,6 +85,7 @@ constraint_init(struct constraint *cstr)
 	cstr->fd = -1;
 	cstr->last = getmonotime();
 	cstr->constraint = 0;
+	cstr->senderrors = 0;
 
 	return (constraint_addr_init(cstr));
 }
@@ -338,21 +337,27 @@ constraint_close(int fd)
 	msgbuf_clear(&cstr->ibuf.w);
 	close(cstr->fd);
 	cstr->fd = -1;
-	if (cstr->senderrors)
-		cstr->state = STATE_INVALID;
-	else if (cstr->state >= STATE_QUERY_SENT)
-		cstr->state = STATE_DNS_DONE;
-
 	cstr->last = getmonotime();
 
-	return (1);
+	if (cstr->addr == NULL || (cstr->addr = cstr->addr->next) == NULL) {
+		/* Either a pool or all addresses have been tried */
+		cstr->addr = cstr->addr_head.a;
+		if (cstr->senderrors)
+			cstr->state = STATE_INVALID;
+		else if (cstr->state >= STATE_QUERY_SENT)
+			cstr->state = STATE_DNS_DONE;
+
+		return (1);
+	}
+
+	/* Go on and try the next resolved address for this constraint */
+	return (constraint_init(cstr));
 }
 
 void
 constraint_add(struct constraint *cstr)
 {
 	TAILQ_INSERT_TAIL(&conf->constraints, cstr, entry);
-	constraint_cnt += constraint_init(cstr);
 }
 
 void
@@ -362,7 +367,6 @@ constraint_remove(struct constraint *cstr)
 	free(cstr->addr_head.name);
 	free(cstr->addr_head.path);
 	free(cstr);
-	constraint_cnt--;
 }
 
 int
@@ -425,7 +429,7 @@ constraint_dispatch_msg(struct pollfd *pfd)
 void
 constraint_dns(u_int32_t id, u_int8_t *data, size_t len)
 {
-	struct constraint	*cstr, *ncstr;
+	struct constraint	*cstr, *ncstr = NULL;
 	u_int8_t		*p;
 	struct ntp_addr		*h;
 
@@ -454,18 +458,25 @@ constraint_dns(u_int32_t id, u_int8_t *data, size_t len)
 		p += sizeof(h->ss);
 		len -= sizeof(h->ss);
 
-		ncstr = new_constraint();
-		ncstr->addr = h;
-		ncstr->addr_head.a = h;
-		ncstr->addr_head.name = strdup(cstr->addr_head.name);
-		ncstr->addr_head.path = strdup(cstr->addr_head.path);
-		if (ncstr->addr_head.name == NULL ||
-		    ncstr->addr_head.path == NULL)
-			fatal("calloc name");
-		ncstr->addr_head.pool = cstr->addr_head.pool;
-
-		constraint_add(ncstr);
-	} while (len && cstr->addr_head.pool);
+		if (ncstr == NULL || cstr->addr_head.pool) {
+			ncstr = new_constraint();
+			ncstr->addr = h;
+			ncstr->addr_head.a = h;
+			ncstr->addr_head.name = strdup(cstr->addr_head.name);
+			ncstr->addr_head.path = strdup(cstr->addr_head.path);
+			if (ncstr->addr_head.name == NULL ||
+			    ncstr->addr_head.path == NULL)
+				fatal("calloc name");
+			ncstr->addr_head.pool = cstr->addr_head.pool;
+			ncstr->state = STATE_DNS_DONE;
+			constraint_add(ncstr);
+			constraint_cnt += constraint_init(ncstr);
+		} else {
+			h->next = ncstr->addr;
+			ncstr->addr = h;
+			ncstr->addr_head.a = h;
+		}
+	} while (len);
 
 	constraint_remove(cstr);
 }
