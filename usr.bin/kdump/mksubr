@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.27 2015/04/17 06:14:36 guenther Exp $
+# $OpenBSD: mksubr,v 1.28 2015/05/17 01:22:01 deraadt Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -394,7 +394,7 @@ cat <<_EOF_
 	} else if (arg1 == F_SETFL) {
 		(void)putchar(',');
 		doflagsname(arg, 0);
-	} else if (!fancy || (arg1 != F_GETFD && arg1 != F_GETFL))
+	} else if (!fancy || (arg1 != F_GETFD && arg1 != F_GETFL && arg1 != F_ISATTY))
 		(void)printf(",%#x", arg);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isatty.c,v 1.8 2013/04/17 17:40:35 tedu Exp $ */
+/*	$OpenBSD: isatty.c,v 1.9 2015/05/17 01:22:01 deraadt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,13 +28,10 @@
  * SUCH DAMAGE.
  */
 
-#include <termios.h>
-#include <unistd.h>
+#include <fcntl.h>
 
 int
 isatty(int fd)
 {
-	struct termios t;
-
-	return (tcgetattr(fd, &t) != -1);
+	return (fcntl(fd, F_ISATTY));
 }

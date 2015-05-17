@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.20 2013/06/05 01:26:00 guenther Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.21 2015/05/17 01:22:01 deraadt Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -154,6 +154,9 @@
 #define	F_SETLKW	9		/* F_SETLK; wait if blocked */
 #if __POSIX_VISIBLE >= 200809
 #define	F_DUPFD_CLOEXEC	10		/* duplicate with FD_CLOEXEC set */
+#endif
+#if __BSD_VISIBLE
+#define F_ISATTY	11		/* used by isatty(3) */
 #endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
