@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.75 2015/05/06 07:55:42 mpi Exp $
+.\"	$OpenBSD: route.8,v 1.76 2015/05/17 00:08:35 deraadt Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: May 6 2015 $
+.Dd $Mdocdate: May 17 2015 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -497,9 +497,6 @@ route to the 192.168.5.0/24 network:
 .Bl -diag
 .It "%s: gateway %s flags %x"
 The specified route is being added to or deleted from the tables.
-The values printed are from the routing table entry supplied in the
-.Xr ioctl 2
-call.
 If the gateway address used was not the primary address of the gateway
 (the first one returned by
 .Xr gethostbyname 3 ) ,

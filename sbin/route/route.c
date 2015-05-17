@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.173 2015/03/18 22:31:22 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.174 2015/05/17 00:08:35 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
