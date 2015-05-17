@@ -1,4 +1,4 @@
-/*	$OpenBSD: isatty.c,v 1.9 2015/05/17 01:22:01 deraadt Exp $ */
+/*	$OpenBSD: isatty.c,v 1.10 2015/05/17 01:56:02 deraadt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,5 +33,5 @@
 int
 isatty(int fd)
 {
-	return (fcntl(fd, F_ISATTY));
+	return fcntl(fd, F_ISATTY) != -1;
 }
