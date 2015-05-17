@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.45 2015/05/17 20:19:08 guenther Exp $	*/
+/*	$OpenBSD: nm.c,v 1.46 2015/05/17 21:41:50 guenther Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -875,7 +875,7 @@ usage(void)
 	if (issize)
 		fprintf(stderr, "usage: %s [-tw] [file ...]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-aCegnoprsuw] [file ...]\n",
+		fprintf(stderr, "usage: %s [-aCDegnoprsuw] [file ...]\n",
 		    __progname);
 	exit(1);
 }
