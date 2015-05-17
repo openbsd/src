@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.8 2015/05/15 17:01:18 jsg Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.9 2015/05/17 11:18:05 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -452,6 +452,7 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			default:
 				return 0;
 		}
+		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
 		return imxgpio_get_bit(gpio) ? 0 : 1;
 	case BOARD_ID_IMX6_SABRELITE:
 		switch (sc->unit) {
@@ -464,6 +465,7 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			default:
 				return 0;
 		}
+		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
 		return imxgpio_get_bit(gpio) ? 0 : 1;
 	case BOARD_ID_IMX6_SABRESD:
 		switch (sc->unit) {
@@ -492,7 +494,6 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			case 3:
 				gpio = 3*32 + 9;
 				break;
-				return 1;
 			default:
 				return 0;
 		}
@@ -531,6 +532,7 @@ imxesdhc_card_detect(sdmmc_chipset_handle_t sch)
 			default:
 				return 0;
 		}
+		imxgpio_set_dir(gpio, IMXGPIO_DIR_IN);
 		return imxgpio_get_bit(gpio) ? 0 : 1;
 	default:
 		printf("%s: unhandled board\n", __func__);
