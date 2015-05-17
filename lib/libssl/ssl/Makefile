@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2015/02/07 03:26:06 jsing Exp $
+# $OpenBSD: Makefile,v 1.50 2015/05/17 22:39:39 kettenis Exp $
 
 LIB=	ssl
 
@@ -12,6 +12,8 @@ CFLAGS+= -Werror
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL
 CFLAGS+= -I${SSL_SRC}
+
+LDADD+= -L${.CURDIR}/../../libcrypto/crypto/obj -lcrypto
 
 SRCS=\
 	s3_meth.c s3_srvr.c s3_clnt.c s3_lib.c s3_enc.c s3_pkt.c s3_both.c \
