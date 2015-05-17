@@ -1,12 +1,13 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.29 2015/05/02 07:05:38 jmc Exp $
+ * $OpenBSD: calendar.holiday,v 1.30 2015/05/17 06:34:37 czarkoff Exp $
  */
 
 #ifndef _calendar_holiday_
 #define _calendar_holiday_
 
+01/01	New Year's Day
 01/01	Independence Day in Haiti, Sudan
 01/01	Universal Fraternity Day in Mozambique
 01/02	Ancestry Day in Haiti
