@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.129 2015/02/12 22:39:27 mpi Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.130 2015/05/17 02:44:38 canacar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -575,6 +575,31 @@ axe_ax88178_init(struct axe_softc *sc)
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
 }
 
+/* Read Ethernet Address from EEPROM if it is zero */
+void
+axe_ax88772b_nodeid(struct axe_softc *sc, u_char *eaddr)
+{
+	int i;
+	uint16_t val;
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		if (eaddr[i] != 0)
+			break;
+	}
+
+	/* We already have an ethernet address */
+	if (i != ETHER_ADDR_LEN)
+		return;
+
+	/* read from EEPROM */
+	for (i = 0; i < ETHER_ADDR_LEN/2; i++) {
+		axe_cmd(sc, AXE_CMD_SROM_READ, 0, AXE_EEPROM_772B_NODEID + i, &val);
+		val = ntohs(val);
+		*eaddr++ = (u_char)((val >> 8) & 0xff);
+		*eaddr++ = (u_char)(val & 0xff);
+	}
+}
+
 void
 axe_ax88772_init(struct axe_softc *sc)
 {
@@ -760,6 +785,9 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 		axe_cmd(sc, AXE_178_CMD_READ_NODEID, 0, 0, &eaddr);
 	else
 		axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, &eaddr);
+
+	if (sc->axe_flags & AX772B)
+		axe_ax88772b_nodeid(sc, eaddr);
 
 	/*
 	 * Load IPG values
