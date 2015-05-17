@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.27 2015/04/09 04:46:18 guenther Exp $	*/
+/*	$OpenBSD: elf.c,v 1.28 2015/05/17 20:19:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -550,8 +550,10 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 
 	stab = NULL;
 	*pnames = NULL; *psnames = NULL; *pnrawnames = 0;
-	elf_symloadx(name, fp, foff, eh, shdr, shstr, pnames,
-	    psnames, pstabsize, pnrawnames, ELF_STRTAB, ELF_SYMTAB);
+	if (!dynamic_only) {
+		elf_symloadx(name, fp, foff, eh, shdr, shstr, pnames,
+		    psnames, pstabsize, pnrawnames, ELF_STRTAB, ELF_SYMTAB);
+	}
 	if (stab == NULL) {
 		elf_symloadx(name, fp, foff, eh, shdr, shstr, pnames,
 		    psnames, pstabsize, pnrawnames, ELF_DYNSTR, ELF_DYNSYM);

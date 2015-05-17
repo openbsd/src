@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nm.1,v 1.26 2015/04/09 04:46:18 guenther Exp $
+.\"	$OpenBSD: nm.1,v 1.27 2015/05/17 20:19:08 guenther Exp $
 .\"	$NetBSD: nm.1,v 1.3 1995/08/31 23:41:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)nm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 9 2015 $
+.Dd $Mdocdate: May 17 2015 $
 .Dt NM 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd display name list (symbol table)
 .Sh SYNOPSIS
 .Nm nm
-.Op Fl aCegnoprsuw
+.Op Fl aCDegnoprsuw
 .Op Ar
 .Sh DESCRIPTION
 The symbol table (name list) of each object in
@@ -63,6 +63,8 @@ Display symbol table entries inserted for use by debuggers.
 .It Fl C
 Decode low-level symbol names.
 This involves removing extra underscores and making C++ function names readable.
+.It Fl D
+Display the dynamic symbol table instead of the normal symbol table.
 .It Fl e
 Output extended information, that is `w' for weak symbols, `f' for
 function-like symbols, and `o' for object-like symbols.

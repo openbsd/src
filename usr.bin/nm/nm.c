@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.44 2015/04/09 04:46:18 guenther Exp $	*/
+/*	$OpenBSD: nm.c,v 1.45 2015/05/17 20:19:08 guenther Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ int print_file_each_line;
 int show_extensions;
 int issize;
 int usemmap = 1;
+int dynamic_only;
 
 /* size vars */
 unsigned long total_text, total_data, total_bss, total_total;
@@ -99,11 +100,11 @@ int	show_archive(int, const char *, FILE *);
 int	show_file(int, int, const char *, FILE *fp, off_t, union hdr *);
 void	print_symbol(const char *, struct nlist *);
 
-#define	OPTSTRING_NM	"aABCegnoprsuvw"
+#define	OPTSTRING_NM	"aABCDegnoprsuvw"
 const struct option longopts_nm[] = {
 	{ "debug-syms",		no_argument,		0,	'a' },
 	{ "demangle",		no_argument,		0,	'C' },
-/*	{ "dynamic",		no_argument,		0,	'D' }, */
+	{ "dynamic",		no_argument,		0,	'D' },
 	{ "extern-only",	no_argument,		0,	'g' },
 /*	{ "line-numbers",	no_argument,		0,	'l' }, */
 	{ "no-sort",		no_argument,		0,	'p' },
@@ -149,6 +150,9 @@ main(int argc, char *argv[])
 			break;
 		case 'C':
 			demangle = 1;
+			break;
+		case 'D':
+			dynamic_only = 1;
 			break;
 		case 'e':
 			show_extensions = 1;
