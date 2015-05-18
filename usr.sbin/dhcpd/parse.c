@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.17 2013/12/18 20:37:04 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.18 2015/05/18 17:51:21 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -39,6 +39,8 @@
  * see ``http://www.vix.com/isc''.  To learn more about Vixie
  * Enterprises, see ``http://www.vix.com''.
  */
+
+#include  <stdint.h>
 
 #include "dhcpd.h"
 #include "dhctoken.h"
@@ -148,7 +150,7 @@ parse_host_name(FILE *cfile)
 	do {
 		/* Read a token, which should be an identifier. */
 		token = next_token(&val, cfile);
-		if (!is_identifier(token) && token != TOK_NUMBER) {
+		if (!is_identifier(token)) {
 			parse_warn("expecting an identifier in hostname");
 			skip_to_semi(cfile);
 			return (NULL);
@@ -252,19 +254,19 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 void
 parse_lease_time(FILE *cfile, time_t *timep)
 {
+	const char *errstr;
 	char *val;
 	uint32_t value;
 	int token;
 
 	token = next_token(&val, cfile);
-	if (token != TOK_NUMBER) {
-		parse_warn("Expecting numeric lease time");
+
+	value = strtonum(val, 0, UINT32_MAX, &errstr);
+	if (errstr) {
+		parse_warn("lease time is %s: %s", errstr, val);
 		skip_to_semi(cfile);
 		return;
 	}
-	convert_num((unsigned char *)&value, val, 10, 32);
-	/* Unswap the number - convert_num returns stuff in NBO. */
-	*timep = ntohl(value);	/* XXX */
 
 	parse_semi(cfile);
 }
@@ -314,9 +316,7 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 			parse_warn("unexpected end of file");
 			break;
 		}
-		/* Allow NUMBER_OR_NAME if base is 16. */
-		if (token != TOK_NUMBER &&
-		    (base != 16 || token != TOK_NUMBER_OR_NAME)) {
+		if (token != TOK_NUMBER && token != TOK_NUMBER_OR_NAME) {
 			parse_warn("expecting numeric value.");
 			skip_to_semi(cfile);
 			return (NULL);
@@ -484,6 +484,7 @@ parse_date(FILE *cfile)
 		switch (token) {
 		case TOK_NAME:
 		case TOK_NUMBER:
+		case TOK_NUMBER_OR_NAME:
 		case '/':
 		case ':':
 			token = next_token(&val, cfile);

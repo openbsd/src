@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.23 2014/07/09 13:42:24 yasuoka Exp $ */
+/*	$OpenBSD: confpars.c,v 1.24 2015/05/18 17:51:21 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -825,6 +825,7 @@ void parse_group_declaration(cfile, group)
 int
 parse_cidr(FILE *cfile, unsigned char *addr, unsigned char *prefix)
 {
+	const char *errstr;
 	char *val;
 	int token;
 	int len = 4;
@@ -842,12 +843,12 @@ parse_cidr(FILE *cfile, unsigned char *addr, unsigned char *prefix)
 		goto nocidr;
 	}
 
-	*prefix = 0;
 	token = next_token(&val, cfile);
-	if (token == TOK_NUMBER)
-		convert_num(prefix, val, 10, 8);
+	if (token == TOK_NUMBER_OR_NAME)
+		*prefix = strtonum(val, 0, 32, &errstr);
 
-	if (token != TOK_NUMBER || *prefix > 32) {
+	if (token != TOK_NUMBER_OR_NAME || errstr) {
+		*prefix = 0;
 		parse_warn("Expecting CIDR prefix length, got '%s'", val);
 		goto nocidr;
 	}
@@ -879,23 +880,28 @@ struct tree *parse_ip_addr_or_hostname(cfile, uniform)
 	struct tree *rv;
 	struct hostent *h;
 
+	name = NULL;
+	h = NULL;
+
 	token = peek_token(&val, cfile);
 	if (is_identifier(token)) {
 		name = parse_host_name(cfile);
-		if (!name)
-			return NULL;
-		h = gethostbyname(name);
-		if (h == NULL) {
-			parse_warn("%s (%d): could not resolve hostname",
-			    val, token);
+		if (name)
+			h = gethostbyname(name);
+		if (name && h) {
+			rv = tree_const(h->h_addr_list[0], h->h_length);
+			if (!uniform)
+				rv = tree_limit(rv, 4);
+			return rv;
+		}
+	}
+
+	if (token == TOK_NUMBER_OR_NAME) {
+		if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8)) {
+			parse_warn("%s (%d): expecting IP address or hostname",
+				    val, token);
 			return NULL;
 		}
-		rv = tree_const(h->h_addr_list[0], h->h_length);
-		if (!uniform)
-			rv = tree_limit(rv, 4);
-	} else if (token == TOK_NUMBER) {
-		if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
-			return NULL;
 		rv = tree_const(addr, len);
 	} else {
 		if (token != '{' && token != '}')
@@ -1037,15 +1043,13 @@ void parse_option_param(cfile, group)
 			switch (*fmt) {
 			case 'X':
 				token = peek_token(&val, cfile);
-				if (token == TOK_NUMBER_OR_NAME ||
-				    token == TOK_NUMBER) {
+				if (token == TOK_NUMBER_OR_NAME) {
 					do {
 						token = next_token
 							(&val, cfile);
-						if (token != TOK_NUMBER &&
-						    token != TOK_NUMBER_OR_NAME) {
+						if (token != TOK_NUMBER_OR_NAME) {
 							parse_warn("expecting "
-							    "number.");
+							    "hex number.");
 							if (token != ';')
 								skip_to_semi(
 								    cfile);
@@ -1096,7 +1100,8 @@ void parse_option_param(cfile, group)
 			case 'L': /* Unsigned 32-bit integer... */
 			case 'l':	/* Signed 32-bit integer... */
 				token = next_token(&val, cfile);
-				if (token != TOK_NUMBER) {
+				if (token != TOK_NUMBER && token !=
+				    TOK_NUMBER_OR_NAME) {
 					parse_warn("expecting number.");
 					if (token != ';')
 						skip_to_semi(cfile);
@@ -1108,7 +1113,8 @@ void parse_option_param(cfile, group)
 			case 's':	/* Signed 16-bit integer. */
 			case 'S':	/* Unsigned 16-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != TOK_NUMBER) {
+				if (token != TOK_NUMBER && token !=
+				    TOK_NUMBER_OR_NAME) {
 					parse_warn("expecting number.");
 					if (token != ';')
 						skip_to_semi(cfile);
@@ -1120,7 +1126,8 @@ void parse_option_param(cfile, group)
 			case 'b':	/* Signed 8-bit integer. */
 			case 'B':	/* Unsigned 8-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != TOK_NUMBER) {
+				if (token != TOK_NUMBER && token !=
+				    TOK_NUMBER_OR_NAME) {
 					parse_warn("expecting number.");
 					if (token != ';')
 						skip_to_semi(cfile);
