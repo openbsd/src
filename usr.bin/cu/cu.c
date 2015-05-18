@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.21 2015/02/08 17:33:35 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.22 2015/05/18 09:35:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -41,6 +41,7 @@ FILE			*record_file;
 struct termios		 saved_tio;
 struct bufferevent	*input_ev;
 struct bufferevent	*output_ev;
+int			 is_direct = -1;
 const char		*line_path = NULL;
 int			 line_speed = -1;
 int			 line_fd;
@@ -65,7 +66,7 @@ void		try_remote(const char *, const char *, const char *);
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-l line] [-s speed | -speed]\n",
+	fprintf(stderr, "usage: %s [-d] [-l line] [-s speed | -speed]\n",
 	    __progname);
 	fprintf(stderr, "       %s [host]\n", __progname);
 	exit(1);
@@ -76,7 +77,7 @@ main(int argc, char **argv)
 {
 	const char	*errstr;
 	char		*tmp, *s, *host;
-	int		 opt, i;
+	int		 opt, i, flags;
 
 	if (isatty(STDIN_FILENO) && tcgetattr(STDIN_FILENO, &saved_tio) != 0)
 		err(1, "tcgetattr");
@@ -95,8 +96,11 @@ main(int argc, char **argv)
 			errx(1, "speed asprintf");
 	}
 
-	while ((opt = getopt(argc, argv, "l:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "dl:s:")) != -1) {
 		switch (opt) {
+		case 'd':
+			is_direct = 1;
+			break;
 		case 'l':
 			line_path = optarg;
 			break;
@@ -114,7 +118,7 @@ main(int argc, char **argv)
 	if (argc != 0 && argc != 1)
 		usage();
 
-	if (line_path != NULL || line_speed != -1) {
+	if (line_path != NULL || line_speed != -1 || is_direct != -1) {
 		if (argc != 0)
 			usage();
 	} else {
@@ -139,6 +143,8 @@ main(int argc, char **argv)
 		line_path = "/dev/cua00";
 	if (line_speed == -1)
 		line_speed = 9600;
+	if (is_direct == -1)
+		is_direct = 0;
 
 	if (strchr(line_path, '/') == NULL) {
 		if (asprintf(&tmp, "%s%s", _PATH_DEV, line_path) == -1)
@@ -146,7 +152,10 @@ main(int argc, char **argv)
 		line_path = tmp;
 	}
 
-	line_fd = open(line_path, O_RDWR);
+	flags = O_RDWR;
+	if (is_direct)
+		flags |= O_NONBLOCK;
+	line_fd = open(line_path, flags);
 	if (line_fd < 0)
 		err(1, "open(\"%s\")", line_path);
 	if (ioctl(line_fd, TIOCEXCL) != 0)
@@ -346,6 +355,9 @@ try_remote(const char *host, const char *path, const char *entry)
 			cu_errx(1, "unknown error in remote file");
 		}
 	}
+
+	if (is_direct == -1 && cgetcap(cp, "dc", ':') != NULL)
+		is_direct = 1;
 
 	if (line_path == NULL && cgetstr(cp, "dv", &s) >= 0)
 		line_path = s;
