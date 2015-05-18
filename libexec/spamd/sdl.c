@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.21 2015/01/13 21:42:59 millert Exp $ */
+/*	$OpenBSD: sdl.c,v 1.22 2015/05/18 16:04:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -23,7 +23,7 @@
  * someone is on. Spamd gets the connecting address, and looks it up
  * against all lists to determine what deferral messages to feed back
  * to the connecting machine. - The redirection to spamd will happen
- * from pf in the kernel, first macth will rdr to us. Spamd (along with
+ * from pf in the kernel, first match will divert to us. Spamd (along with
  * setup) must keep track of *all* matches, so as to tell someone all the
  * lists that they are on.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.127 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.128 2015/05/18 16:04:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -47,9 +47,6 @@
 #include "sdl.h"
 #include "grey.h"
 #include "sync.h"
-
-extern int server_lookup(struct sockaddr *, struct sockaddr *,
-    struct sockaddr *);
 
 struct con {
 	struct pollfd *pfd;
@@ -648,23 +645,19 @@ setlog(char *p, size_t len, char *f)
 }
 
 /*
- * Get address client connected to, by doing a DIOCNATLOOK call.
- * Uses server_lookup code from ftp-proxy.
+ * Get address client connected to, by doing a getsockname call.
+ * Must not be used with a NAT'ed connection (use divert-to instead of rdr-to).
  */
 void
 getcaddr(struct con *cp)
 {
-	struct sockaddr_storage spamd_end;
-	struct sockaddr *sep = (struct sockaddr *) &spamd_end;
 	struct sockaddr_storage original_destination;
 	struct sockaddr *odp = (struct sockaddr *) &original_destination;
 	socklen_t len = sizeof(struct sockaddr_storage);
 	int error;
 
 	cp->caddr[0] = '\0';
-	if (getsockname(cp->pfd->fd, sep, &len) == -1)
-		return;
-	if (server_lookup((struct sockaddr *)&cp->ss, sep, odp) != 0)
+	if (getsockname(cp->pfd->fd, odp, &len) == -1)
 		return;
 	error = getnameinfo(odp, odp->sa_len, cp->caddr, sizeof(cp->caddr),
 	    NULL, 0, NI_NUMERICHOST);
@@ -1389,7 +1382,7 @@ main(int argc, char *argv[])
 		if (inet_pton(AF_INET, bind_address, &sin.sin_addr) != 1)
 			err(1, "inet_pton");
 	} else
-		sin.sin_addr.s_addr = htonl(INADDR_ANY);
+		sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
