@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.162 2015/04/10 08:48:24 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.163 2015/05/18 13:32:28 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ struct	if_data {
 	u_char		ifi_link_state;		/* current link state */
 	u_int32_t	ifi_mtu;		/* maximum transmission unit */
 	u_int32_t	ifi_metric;		/* routing metric (external only) */
-	u_int32_t	ifi_pad;
+	u_int32_t	ifi_rdomain;		/* routing instance */
 	u_int64_t	ifi_baudrate;		/* linespeed */
 	/* volatile statistics */
 	u_int64_t	ifi_ipackets;		/* packets received on interface */

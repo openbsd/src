@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.27 2015/05/15 11:53:06 claudio Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.28 2015/05/18 13:32:28 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -152,7 +152,6 @@ struct ifnet {				/* and the entries */
 	int	if_xflags;		/* extra softnet flags */
 	struct	if_data if_data;	/* stats and other data about if */
 	u_int32_t if_hardmtu;		/* maximum MTU device supports */
-	u_int	if_rdomain;		/* routing instance */
 	char	if_description[IFDESCRSIZE]; /* interface description */
 	u_short	if_rtlabelid;		/* next route label */
 	u_int8_t if_priority;
@@ -203,6 +202,7 @@ struct ifnet {				/* and the entries */
 #define	if_noproto	if_data.ifi_noproto
 #define	if_lastchange	if_data.ifi_lastchange
 #define	if_capabilities	if_data.ifi_capabilities
+#define	if_rdomain	if_data.ifi_rdomain
 
 /*
  * The ifaddr structure contains information about one address
