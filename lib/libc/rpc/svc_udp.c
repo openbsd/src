@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_udp.c,v 1.19 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: svc_udp.c,v 1.20 2015/05/18 13:57:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -349,7 +349,7 @@ svcudp_enablecache(SVCXPRT *transp, u_long size)
 	uc->uc_size = size;
 	uc->uc_nextvictim = 0;
 	if (size > SIZE_MAX / (sizeof(cache_ptr) * SPARSENESS) ||
-	    (uc->uc_entries = calloc(sizeof(cache_ptr) * SPARSENESS, size)) == NULL) {
+	    (uc->uc_entries = calloc(size, sizeof(cache_ptr) * SPARSENESS)) == NULL) {
 		CACHE_PERROR("enablecache: could not allocate cache data");
 		free(uc);
 		return(0);
