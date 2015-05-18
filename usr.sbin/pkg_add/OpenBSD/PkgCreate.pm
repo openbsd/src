@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.115 2015/05/18 10:37:12 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.116 2015/05/18 10:41:20 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1257,7 +1257,7 @@ sub make_plist_with_sum
 {
 	my ($self, $state, $plist) = @_;
 	my $p2 = OpenBSD::PackingList->new;
-	$state->progress->visit_with_count($plist, 'makesum_plist', $state, $p2);
+	$state->progress->visit_with_count($plist, 'makesum_plist', $p2);
 	$p2->set_infodir($plist->infodir);
 	return $p2;
 }
@@ -1499,7 +1499,7 @@ sub parse_and_run
 		$self->check_dependencies($plist, $state);
 		$state->set_status("checksumming");
 		if ($regen_package) {
-			$state->progress->visit_with_count($plist, 'verify_checksum', $state);
+			$state->progress->visit_with_count($plist, 'verify_checksum');
 		} else {
 			$plist = $self->make_plist_with_sum($state, $plist);
 		}

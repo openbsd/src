@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.142 2014/11/30 15:53:26 espie Exp $
+# $OpenBSD: Delete.pm,v 1.143 2015/05/18 10:41:19 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -142,7 +142,7 @@ sub delete_plist
 	if (!$state->{size_only}) {
 		$plist->register_manpage($state, 'rmman');
 		manpages_unindex($state);
-		$state->progress->visit_with_size($plist, 'delete', $state);
+		$state->progress->visit_with_size($plist, 'delete');
 	}
 
 	unregister_dependencies($plist, $state);

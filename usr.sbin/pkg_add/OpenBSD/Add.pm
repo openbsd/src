@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.165 2015/03/29 09:42:58 espie Exp $
+# $OpenBSD: Add.pm,v 1.166 2015/05/18 10:41:19 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -101,7 +101,7 @@ sub perform_installation
 	my ($handle, $state) = @_;
 
 	$state->{partial} = $handle->{partial};
-	$state->progress->visit_with_size($handle->{plist}, 'install', $state);
+	$state->progress->visit_with_size($handle->{plist}, 'install');
 	if ($handle->{location}{early_close}) {
 		$handle->{location}->close_now;
 	} else {
