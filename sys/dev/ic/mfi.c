@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.162 2015/03/14 03:38:47 jsg Exp $ */
+/* $OpenBSD: mfi.c,v 1.163 2015/05/18 12:21:04 mikeb Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1360,7 +1360,7 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_do_mgmt %#x\n", DEVNAME(sc), opc);
 
-	dma_buf = dma_alloc(len, PR_WAITOK);
+	dma_buf = dma_alloc(len, cold ? PR_NOWAIT : PR_WAITOK);
 	if (dma_buf == NULL)
 		goto done;
 
@@ -1387,7 +1387,8 @@ mfi_do_mgmt(struct mfi_softc *sc, struct mfi_ccb *ccb, uint32_t opc,
 		ccb->ccb_len = len;
 		ccb->ccb_sgl = &dcmd->mdf_sgl;
 
-		if (mfi_create_sgl(sc, ccb, BUS_DMA_WAITOK)) {
+		if (mfi_create_sgl(sc, ccb, cold ? BUS_DMA_NOWAIT :
+		    BUS_DMA_WAITOK)) {
 			rv = EINVAL;
 			goto done;
 		}
