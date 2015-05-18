@@ -24,6 +24,7 @@
 ./etc/newsyslog.conf
 ./etc/npppd/npppd-users
 ./etc/npppd/npppd.conf
+./etc/ntpd.conf
 ./etc/passwd
 ./etc/pf.conf
 ./etc/ppp/chap-secrets

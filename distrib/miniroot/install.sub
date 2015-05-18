@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.838 2015/05/15 07:41:30 rpe Exp $
+#	$OpenBSD: install.sub,v 1.839 2015/05/18 13:48:37 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1506,13 +1506,6 @@ questions() {
 	ask_yn "Start sshd(8) by default?" yes
 	sshd=$resp
 
-	ask_yn "Start ntpd(8) by default?"
-	ntpd=$resp
-	if [[ $resp == y ]]; then
-		ask "NTP server? (hostname or 'default')" default
-		ntpd_server=$resp
-	fi
-
 	aperture=
 	resp=
 	xdm=
@@ -2042,12 +2035,6 @@ apply() {
 		sed "/^#\(PermitRootLogin\) no/s//\1 $ssh_permitroot/" \
 			</mnt/etc/ssh/sshd_config >/tmp/sshd_config
 		cp /tmp/sshd_config /mnt/etc/ssh/sshd_config
-	fi
-
-	if [[ $ntpd == y ]]; then
-		echo "ntpd_flags=" >>/mnt/etc/rc.conf.local
-		[[ $ntpd_server == default ]] && ntpd_server=pool.ntp.org
-		echo "servers ${ntpd_server%% *}" >>/mnt/etc/ntpd.conf
 	fi
 
 	[[ -n $aperture ]] &&
