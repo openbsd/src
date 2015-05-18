@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.167 2015/05/18 18:17:27 espie Exp $
+# $OpenBSD: Add.pm,v 1.168 2015/05/18 18:25:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -484,6 +484,21 @@ sub prepare_to_extract
 	$file->{destdir} = $destdir;
 }
 
+sub create_temp
+{
+	my ($self, $d, $state, $fullname) = @_;
+	if (!-e _) {
+		File::Path::mkpath($d);
+	}
+	my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
+	if (!defined $tempname) {
+		$state->fatal("create temporary file in #1: #2",
+		    $d, $!);
+	}
+	$self->{tempname} = $tempname;
+	return ($fh, $tempname);
+}
+
 sub tie
 {
 	my ($self, $state) = @_;
@@ -504,15 +519,8 @@ sub tie
 		$state->say("link #1 -> #2", 
 		    $self->name, $d) if $state->verbose >= 3;
 	} else {
-		if (!-e _) {
-			File::Path::mkpath($d);
-		}
-		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
-		if (!defined $tempname) {
-			$state->fatal("create temporary file in #1: #2",
-			    $d, $!);
-		}
-		$self->{tempname} = $tempname;
+		my ($fh, $tempname) = $self->create_temp($d, $state, 
+		    $self->fullname);
 
 		my $src = $self->{tieto}->realname($state);
 		unlink($tempname);
@@ -540,15 +548,8 @@ sub extract
 		    $self->name, $d) if $state->verbose >= 3;
 		$state->{archive}->skip;
 	} else {
-		if (!-e _) {
-			File::Path::mkpath($d);
-		}
-		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
-		if (!defined $tempname) {
-			$state->fatal("create temporary file in #1: #2",
-			    $d, $!);
-		}
-		$self->{tempname} = $tempname;
+		my ($fh, $tempname) = $self->create_temp($d, $state, 
+		    $file->name);
 
 		# XXX don't apply destdir twice
 		$file->{destdir} = '';
