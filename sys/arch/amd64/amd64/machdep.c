@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.210 2015/04/25 21:21:02 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.211 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -576,11 +576,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-
 	tf->tf_rax = (u_int64_t)catcher;
 	tf->tf_rdi = sig;
 	tf->tf_rsi = sip;
@@ -1013,6 +1008,29 @@ dumpsys(void)
 }
 
 /*
+ * Set FS.base for userspace and reset %ds, %es, and %fs segment registers
+ */
+void
+reset_segs(struct pcb *pcb, u_int64_t fsbase)
+{
+	/*
+	 * Segment registers (%ds, %es, %fs, %gs) aren't in the trapframe.
+	 * %gs is reset on return to userspace to avoid having to deal with
+	 * swapgs; others are reset on context switch and here.  This
+	 * operates like the cpu_switchto() sequence: if we haven't reset
+	 * %[def]s already, do so now.
+	 */
+	if (curcpu()->ci_flags & CPUF_USERSEGS) {
+		curcpu()->ci_flags &= ~CPUF_USERSEGS;
+		__asm volatile(
+		    "movw %%ax,%%ds\n\t"
+		    "movw %%ax,%%es\n\t"
+		    "movw %%ax,%%fs" : : "a"(GSEL(GUDATA_SEL, SEL_UPL)));
+	}
+	pcb->pcb_fsbase = fsbase;
+}
+
+/*
  * Clear registers on exec
  */
 void
@@ -1025,13 +1043,10 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
 	p->p_md.md_flags &= ~MDP_USEDFPU;
-	p->p_addr->u_pcb.pcb_fsbase = 0;
+
+	reset_segs(&p->p_addr->u_pcb, 0);
 
 	tf = p->p_md.md_regs;
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -1903,22 +1918,6 @@ check_context(const struct reg *regs, struct trapframe *tf)
 	uint16_t sel;
 
 	if (((regs->r_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
-		return EINVAL;
-
-	sel = regs->r_es & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
-		return EINVAL;
-
-	sel = regs->r_fs & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
-		return EINVAL;
-
-	sel = regs->r_gs & 0xffff;
-	if (sel != 0 && !VALID_USER_DSEL(sel))
-		return EINVAL;
-
-	sel = regs->r_ds & 0xffff;
-	if (!VALID_USER_DSEL(sel))
 		return EINVAL;
 
 	sel = regs->r_ss & 0xffff;

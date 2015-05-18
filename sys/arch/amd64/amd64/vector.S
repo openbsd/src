@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.37 2015/04/19 19:45:21 sf Exp $	*/
+/*	$OpenBSD: vector.S,v 1.38 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -156,11 +156,7 @@ IDTVEC(trap0d)
 	testq	$SEL_UPL,TF_CS(%rsp)
 	jz	2f
 1:	swapgs
-2:	movw	%gs,TF_GS(%rsp)
-	movw	%fs,TF_FS(%rsp)
-	movw	%es,TF_ES(%rsp)
-	movw	%ds,TF_DS(%rsp)
-	movq	%r15,TF_R15(%rsp)
+2:	movq	%r15,TF_R15(%rsp)
 	movq	%r14,TF_R14(%rsp)
 	movq	%r13,TF_R13(%rsp)
 	movq	%r12,TF_R12(%rsp)

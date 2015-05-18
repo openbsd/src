@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.12 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.13 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -114,10 +114,10 @@ process_read_regs(struct proc *p, struct reg *regs)
         regs->r_rflags = tf->tf_rflags;
         regs->r_cs  = tf->tf_cs;
         regs->r_ss  = tf->tf_ss;
-        regs->r_ds  = tf->tf_ds;
-        regs->r_es  = tf->tf_es;
-        regs->r_fs  = tf->tf_fs;
-        regs->r_gs  = tf->tf_gs;
+        regs->r_ds  = GSEL(GUDATA_SEL, SEL_UPL);
+        regs->r_es  = GSEL(GUDATA_SEL, SEL_UPL);
+        regs->r_fs  = GSEL(GUDATA_SEL, SEL_UPL);
+        regs->r_gs  = GSEL(GUDATA_SEL, SEL_UPL);
 
 	return (0);
 }
@@ -177,10 +177,6 @@ process_write_regs(struct proc *p, struct reg *regs)
         tf->tf_rflags = regs->r_rflags;
         tf->tf_cs  = regs->r_cs;
         tf->tf_ss  = regs->r_ss;
-        tf->tf_ds  = regs->r_ds;
-        tf->tf_es  = regs->r_es;
-        tf->tf_fs  = regs->r_fs;
-        tf->tf_gs  = regs->r_gs;
 
 	return (0);
 }

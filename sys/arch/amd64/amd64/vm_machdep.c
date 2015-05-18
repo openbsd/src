@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.31 2015/05/05 02:13:46 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.32 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/fpu.h>
+#include <machine/tcb.h>
 
 void setredzone(struct proc *);
 
@@ -222,4 +223,17 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
+}
+
+void *
+tcb_get(struct proc *p)
+{
+	return ((void *)p->p_addr->u_pcb.pcb_fsbase);
+}
+
+void
+tcb_set(struct proc *p, void *tcb)
+{
+	KASSERT(p == curproc);
+	reset_segs(&p->p_addr->u_pcb, (u_int64_t)tcb);
 }

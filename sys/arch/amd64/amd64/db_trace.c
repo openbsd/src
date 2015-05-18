@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.11 2015/03/31 04:40:47 guenther Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.12 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -53,10 +53,6 @@ static int db_x86_64_regop(struct db_variable *, db_expr_t *, int);
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	{ "ds",		dbreg(ds),     db_x86_64_regop },
-	{ "es",		dbreg(es),     db_x86_64_regop },
-	{ "fs",		dbreg(fs),     db_x86_64_regop },
-	{ "gs",		dbreg(gs),     db_x86_64_regop },
 	{ "rdi",	dbreg(rdi),    db_x86_64_regop },
 	{ "rsi",	dbreg(rsi),    db_x86_64_regop },
 	{ "rbp",	dbreg(rbp),    db_x86_64_regop },

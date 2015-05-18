@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.30 2014/04/01 09:05:03 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.31 2015/05/18 19:59:27 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -114,6 +114,9 @@ member	CPU_INFO_MUTEX_LEVEL	ci_mutex_level
 endif
 member	CPU_INFO_GDT		ci_gdt
 member	CPU_INFO_TSS		ci_tss
+member	CPU_INFO_FLAGS		ci_flags
+
+export	CPUF_USERSEGS_BIT
 
 struct	intrsource
 member	is_recurse

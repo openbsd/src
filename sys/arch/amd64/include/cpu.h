@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.91 2015/04/18 22:16:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.92 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -144,6 +144,8 @@ struct cpu_info {
 #define CPUF_IDENTIFIED	0x0020		/* CPU has been identified */
 
 #define CPUF_CONST_TSC	0x0040		/* CPU has constant TSC */
+#define CPUF_USERSEGS_BIT	7	/* CPU has curproc's segments */
+#define CPUF_USERSEGS	(1<<CPUF_USERSEGS_BIT)		/* and FS.base */
 
 #define CPUF_PRESENT	0x1000		/* CPU is present */
 #define CPUF_RUNNING	0x2000		/* CPU is running */

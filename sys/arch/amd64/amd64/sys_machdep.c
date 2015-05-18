@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.15 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.16 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/sysarch.h>
+#include <machine/tcb.h>
 
 #if defined(PERFCTRS) && 0
 #include <machine/pmc.h>
@@ -96,23 +97,21 @@ amd64_iopl(struct proc *p, void *args, register_t *retval)
 int
 amd64_get_fsbase(struct proc *p, void *args)
 {
-	return copyout(&p->p_addr->u_pcb.pcb_fsbase, args,
-	    sizeof(p->p_addr->u_pcb.pcb_fsbase));
+	void *base = tcb_get(p);
+
+	return (copyout(&base, args, sizeof(base)));
 }
 
 int
 amd64_set_fsbase(struct proc *p, void *args)
 {
 	int error;
-	uint64_t base;
+	void *base;
 
 	if ((error = copyin(args, &base, sizeof(base))) != 0)
 		return (error);
 
-	if (base >= VM_MAXUSER_ADDRESS)
-		return (EINVAL);
-
-	p->p_addr->u_pcb.pcb_fsbase = base;
+	tcb_set(p, base);
 	return 0;
 }
 

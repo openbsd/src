@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.64 2015/04/18 05:14:05 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.65 2015/05/18 19:59:27 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -867,6 +867,17 @@ ENTRY(cpu_switchto)
 	movq	%rbp,PCB_RBP(%r13)
 
 switch_exited:
+	/* did old proc run in userspace?  then reset the segment regs */
+	btrl	$CPUF_USERSEGS_BIT, CPUVAR(FLAGS)
+	jnc	restore_saved
+
+	/* set %ds, %es, and %fs to expected value to prevent info leak */
+	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),%ax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%fs
+
+restore_saved:
 	/*
 	 * Restore saved context.
 	 *
@@ -1017,10 +1028,6 @@ IDTVEC(syscall)
 	movq	CPUVAR(SCRATCH),%r15
 	subq	$32,%rsp
 	INTR_SAVE_GPRS
-	movw	%fs,TF_FS(%rsp)
-	movw	%gs,TF_GS(%rsp)
-	movw	%es,TF_ES(%rsp)
-	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(GSEL(GUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)

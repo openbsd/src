@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.2 2011/10/19 06:48:56 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.3 2015/05/18 19:59:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -21,12 +21,11 @@
 
 #ifdef _KERNEL
 
-#include <machine/pcb.h>
+void	*tcb_get(struct proc *_p);
+void	tcb_set(struct proc *_p, void *_newtcb);
 
-#define TCB_GET(p)		\
-	((void *)((struct pcb *)(p)->p_addr)->pcb_fsbase)
-#define TCB_SET(p, addr)	\
-	(((struct pcb *)(p)->p_addr)->pcb_fsbase = (u_int64_t)(addr))
+#define TCB_GET(p)		tcb_get(p)
+#define TCB_SET(p, addr)	tcb_set(p, addr)
 
 #else /* _KERNEL */
 
