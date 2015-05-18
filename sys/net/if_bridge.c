@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.238 2015/05/15 10:15:13 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.239 2015/05/18 11:43:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1478,12 +1478,9 @@ bridge_dispatch(struct bridge_iflist *ifl, struct ifnet *ifp, struct mbuf *m)
 
 			m->m_pkthdr.rcvif = ifl->ifp;
 			m->m_pkthdr.ph_rtableid = ifl->ifp->if_rdomain;
-			if (ifp->if_type == IFT_GIF) {
-				m->m_flags |= M_PROTO1;
-				ether_input_mbuf(ifl->ifp, m);
-				m = NULL;
-			}
-			return (m);
+			m->m_flags |= M_PROTO1;
+			ether_input_mbuf(ifl->ifp, m);
+			return (NULL);
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
 #if NCARP > 0
