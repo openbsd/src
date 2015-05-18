@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.101 2015/04/16 15:14:31 gsoares Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.102 2015/05/18 14:59:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -342,71 +342,4 @@ get_rdomain(char *name)
 
 	close(s);
 	return rv;
-}
-
-int
-subnet_exists(struct client_lease *l)
-{
-	struct option_data *opt;
-	struct ifaddrs *ifap, *ifa;
-	struct in_addr mymask, myaddr, mynet, hismask, hisaddr, hisnet;
-	int myrdomain, hisrdomain;
-
-	opt = &l->options[DHO_SUBNET_MASK];
-	if (opt->len == sizeof(mymask))
-		mymask.s_addr = ((struct in_addr *)opt->data)->s_addr;
-	else
-		mymask.s_addr = INADDR_ANY;
-	myaddr.s_addr = l->address.s_addr;
-	mynet.s_addr = mymask.s_addr & myaddr.s_addr;
-
-	myrdomain = get_rdomain(ifi->name);
-
-	if (getifaddrs(&ifap) != 0)
-		error("getifaddrs failed");
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(ifi->name, ifa->ifa_name) == 0)
-			continue;
-
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			continue;
-
-		hisrdomain = get_rdomain(ifa->ifa_name);
-		if (hisrdomain != myrdomain)
-			continue;
-
-		memcpy(&hismask,
-		    &((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr,
-		    sizeof(hismask));
-		memcpy(&hisaddr,
-		    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
-		    sizeof(hisaddr));
-		hisnet.s_addr = hisaddr.s_addr & hismask.s_addr;
-
-		if (hisnet.s_addr == INADDR_ANY)
-			continue;
-
-		/* Would his packets go out *my* interface? */
-		if (mynet.s_addr == (hisaddr.s_addr & mymask.s_addr)) {
-			note("interface %s already has the offered subnet!",
-			    ifa->ifa_name);
-			break;
-		}
-
-		/* Would my packets go out *his* interface? */
-		if (hisnet.s_addr == (myaddr.s_addr & hismask.s_addr)) {
-			note("interface %s already has the offered subnet!",
-			    ifa->ifa_name);
-			break;
-		}
-	}
-
-	freeifaddrs(ifap);
-
-	/* If ifa == NULL we scanned the list without finding a problem. */
-	if (ifa == NULL)
-		return (0);
-	else
-		return (1);
 }

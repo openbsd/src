@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.360 2015/04/16 15:14:30 gsoares Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.361 2015/05/18 14:59:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1059,13 +1059,6 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 		note("Unsatisfactory %s", info);
 		return;
 	}
-
-	/*
-	 * Reject offers whose subnet is already configured on another
-	 * interface.
-	 */
-	if (subnet_exists(lease))
-		return;
 
 	/*
 	 * If this lease was acquired through a BOOTREPLY, record that
