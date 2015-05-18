@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.9 2010/12/21 14:56:24 claudio Exp $	*/
+/*	$OpenBSD: isr.c,v 1.10 2015/05/18 04:06:37 miod Exp $	*/
 /*	$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $	*/
 
 /*-
@@ -165,7 +165,15 @@ isrdispatch_autovec(int ipl)
 
 	/* Give all the handlers a chance. */
 	LIST_FOREACH(isr, list, isr_link) {
+#ifdef MULTIPROCESSOR
+		if (isr->isr_ipl < IPL_CLOCK)
+			__mp_lock(&kernel_lock);
+#endif
 		rc = (*isr->isr_func)(isr->isr_arg);
+#ifdef MULTIPROCESSOR
+		if (isr->isr_ipl < IPL_CLOCK)
+			__mp_unlock(&kernel_lock);
+#endif
 		if (rc != 0)
 			isr->isr_count.ec_count++;
 		handled |= rc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: av530_machdep.c,v 1.15 2015/04/25 21:15:08 miod Exp $	*/
+/*	$OpenBSD: av530_machdep.c,v 1.16 2015/05/18 04:06:37 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2010 Miodrag Vallat.
  *
@@ -570,9 +570,6 @@ av530_intr(struct trapframe *eframe)
 #ifdef DIAGNOSTIC
 	static int problems = 0;
 #endif
-#ifdef MULTIPROCESSOR
-	int need_lock;
-#endif
 
 	cur_mask = ISR_GET_CURRENT_MASK(cpu);
 	cur_exmask = EXISR_GET_CURRENT_MASK(cpu);
@@ -705,9 +702,7 @@ av530_intr(struct trapframe *eframe)
 			ret = 0;
 			SLIST_FOREACH(intr, list, ih_link) {
 #ifdef MULTIPROCESSOR
-				need_lock = intr->ih_ipl < IPL_SCHED &&
-				    intr->ih_ipl != IPL_CLOCK;
-				if (need_lock)
+				if (intr->ih_ipl < IPL_CLOCK)
 					__mp_lock(&kernel_lock);
 #endif
 				if (ISSET(intr->ih_flags, INTR_WANTFRAME))
@@ -715,7 +710,7 @@ av530_intr(struct trapframe *eframe)
 				else
 					ret = (*intr->ih_fn)(intr->ih_arg);
 #ifdef MULTIPROCESSOR
-				if (need_lock)
+				if (intr->ih_ipl < IPL_CLOCK)
 					__mp_unlock(&kernel_lock);
 #endif
 				if (ret != 0) {

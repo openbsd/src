@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.27 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.28 2015/05/18 04:06:37 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -646,11 +646,6 @@ av400_intr(struct trapframe *eframe)
 	}
 #endif
 
-#ifdef MULTIPROCESSOR
-	if (old_spl < IPL_SCHED)
-		__mp_lock(&kernel_lock);
-#endif
-
 	/*
 	 * We want to service all interrupts marked in the IST register
 	 * They are all valid because the mask would have prevented them
@@ -724,10 +719,18 @@ av400_intr(struct trapframe *eframe)
 			 */
 			ret = 0;
 			SLIST_FOREACH(intr, list, ih_link) {
+#ifdef MULTIPROCESSOR
+				if (intr->ih_ipl < IPL_CLOCK)
+					__mp_lock(&kernel_lock);
+#endif
 				if (ISSET(intr->ih_flags, INTR_WANTFRAME))
 					ret = (*intr->ih_fn)((void *)eframe);
 				else
 					ret = (*intr->ih_fn)(intr->ih_arg);
+#ifdef MULTIPROCESSOR
+				if (intr->ih_ipl < IPL_CLOCK)
+					__mp_unlock(&kernel_lock);
+#endif
 				if (ret != 0) {
 					intr->ih_count.ec_count++;
 					break;
@@ -762,11 +765,6 @@ av400_intr(struct trapframe *eframe)
 			panic("%s: broken interrupt behaviour", __func__);
 	} else
 		problems = 0;
-#endif
-
-#ifdef MULTIPROCESSOR
-	if (old_spl < IPL_SCHED)
-		__mp_unlock(&kernel_lock);
 #endif
 
 out:
