@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.284 2015/03/28 23:50:55 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.285 2015/05/18 19:10:35 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1211,7 +1211,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 {
 	struct kinfo_file *kf;
 	struct filedesc *fdp;
-	struct file *fp;
+	struct file *fp, *nfp;
 	struct process *pr;
 	size_t buflen, elem_size, elem_count, outsize;
 	char *dp = where;
@@ -1253,13 +1253,25 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 
 	switch (op) {
 	case KERN_FILE_BYFILE:
-		LIST_FOREACH(fp, &filehead, f_list) {
-			if (fp->f_count == 0)
-				continue;
-			if (arg != 0 && fp->f_type != arg)
-				continue;
-			FILLIT(fp, NULL, 0, NULL, NULL);
-		}
+		fp = LIST_FIRST(&filehead);
+                /* don't FREF when f_count == 0 to avoid race in fdrop() */
+		while (fp != NULL && fp->f_count == 0)
+			fp = LIST_NEXT(fp, f_list);
+		if (fp == NULL)
+			break;
+		FREF(fp);
+		do {
+			if (fp->f_count > 1 && /* 0, +1 for our FREF() */
+			    (arg == 0 || fp->f_type == arg))
+				FILLIT(fp, NULL, 0, NULL, NULL);
+			nfp = LIST_NEXT(fp, f_list);
+			while (nfp != NULL && nfp->f_count == 0)
+				nfp = LIST_NEXT(nfp, f_list);
+			if (nfp != NULL)
+				FREF(nfp);
+			FRELE(fp, p);
+			fp = nfp;
+		} while (fp != NULL);
 		break;
 	case KERN_FILE_BYPID:
 		/* A arg of -1 indicates all processes */
