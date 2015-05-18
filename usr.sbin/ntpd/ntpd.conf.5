@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.30 2015/03/26 20:34:54 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.31 2015/05/18 11:10:03 dtucker Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2015 $
+.Dd $Mdocdate: May 18 2015 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -212,7 +212,7 @@ will calculate a median constraint from all of them.
 For example:
 .Bd -literal -offset indent
 servers pool.ntp.org
-constraints from "https://www.google.com/search?q=openntpd"
+constraints from "https://www.google.com/"
 .Ed
 .El
 .Sh FILES
