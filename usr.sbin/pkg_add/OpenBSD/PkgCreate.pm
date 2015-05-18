@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.114 2014/12/22 14:24:56 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.115 2015/05/18 10:37:12 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -168,7 +168,7 @@ sub avert_duplicates_and_other_checks
 
 sub makesum_plist
 {
-	my ($self, $plist, $state) = @_;
+	my ($self, $state, $plist) = @_;
 	$self->add_object($plist);
 }
 
@@ -377,7 +377,7 @@ sub comment_create_package
 
 sub makesum_plist
 {
-	my ($self, $plist, $state) = @_;
+	my ($self, $state, $plist) = @_;
 	$self->makesum_plist_with_base($plist, $state, undef);
 }
 
@@ -499,7 +499,7 @@ sub print_file
 
 sub makesum_plist
 {
-	my ($self, $plist, $state) = @_;
+	my ($self, $state, $plist) = @_;
 	$self->makesum_plist_with_base($plist, $state, $state->{base});
 }
 
@@ -527,8 +527,8 @@ sub discover_directories
 package OpenBSD::PackingElement::InfoFile;
 sub makesum_plist
 {
-	my ($self, $plist, $state) = @_;
-	$self->SUPER::makesum_plist($plist, $state);
+	my ($self, $state, $plist) = @_;
+	$self->SUPER::makesum_plist($state, $plist);
 	my $fname = $self->fullname;
 	for (my $i = 1; ; $i++) {
 		if (-e "$state->{base}/$fname-$i") {
@@ -557,9 +557,9 @@ sub grab_manpages
 
 sub makesum_plist
 {
-	my ($self, $plist, $state) = @_;
+	my ($self, $state, $plist) = @_;
 	if ($state->{subst}->empty("USE_GROFF") || !$self->is_source) {
-		return $self->SUPER::makesum_plist($plist, $state);
+		return $self->SUPER::makesum_plist($state, $plist);
 	}
 	my $dest = $self->source_to_dest;
 	my $fullname = $self->cwd."/".$dest;
@@ -579,7 +579,7 @@ sub makesum_plist
 	if (-z $tempname) {
 		$state->errsay("groff produced empty result for #1", $dest);
 		$state->errsay("\tkeeping source manpage");
-		return $self->SUPER::makesum_plist($plist, $state);
+		return $self->SUPER::makesum_plist($state, $plist);
 	}
 	if (defined $d && !$state->{known_dirs}->{$d}) {
 		$state->{known_dirs}->{$d} = 1;
@@ -1257,7 +1257,7 @@ sub make_plist_with_sum
 {
 	my ($self, $state, $plist) = @_;
 	my $p2 = OpenBSD::PackingList->new;
-	$state->progress->visit_with_count($plist, 'makesum_plist', $p2, $state);
+	$state->progress->visit_with_count($plist, 'makesum_plist', $state, $p2);
 	$p2->set_infodir($plist->infodir);
 	return $p2;
 }
