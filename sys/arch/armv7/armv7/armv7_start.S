@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_start.S,v 1.2 2014/02/01 21:45:17 miod Exp $	*/
+/*	$OpenBSD: armv7_start.S,v 1.3 2015/05/18 23:56:47 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -37,10 +37,6 @@
 #undef	DOMAIN_CLIENT	/* XXX */
 #include "assym.h"
 
-#ifndef SDRAM_START
-#define SDRAM_START	0x80000000
-#endif
-
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
  * NOTE: Clobbers the specified temp reg.
@@ -59,6 +55,18 @@
  * Kernel start routine for OMAP
  * this code is excuted at the very first after the kernel is loaded
  * by U-Boot.
+ *
+ * This code makes a number of assumptions.
+ * 1) it is running in RAM.
+ * 2) it is run at a fairly well known offset from the beginning of
+ *    a ram section.
+ * 3) the memory region around the kernel will be at least about 32MB
+ * 4) memory just below the kernel can be used by the kernel
+ * 5) memory at the start of the ram section may not be useable
+ *    it may contain bootloader/u-boot
+ * 6) the fdt/kernel parameters in arg r0-r2 may point outside the
+ *    32MB of ram (it likely should be copied very early)
+ *
  */
 	.text
 
@@ -69,64 +77,39 @@ _C_LABEL(bootstrap_start):
 	mov	r7, r1
 	mov	r8, r2
 
-	/* Are we running on ROM ? */
-	cmp     pc, #0x06000000
-	bhi     bootstrap_start_ram
-
-	/* move me to RAM
-	 * XXX: we can use memcpy if it is PIC
-	 */
-	ldr r1, Lcopy_size
-	adr r0, _C_LABEL(bootstrap_start)
-	add r1, r1, #3
-	mov r1, r1, LSR #2
-	mov r2, #SDRAM_START
-	add r2, r2, #0x00200000
-	mov r4, r2
-
-5:	ldr r3,[r0],#4
-	str r3,[r2],#4
-	subs r1,r1,#1
-	bhi 5b
-
-	cmp	pc, r5
-	/* Jump to RAM */
-	ldr r0, Lstart_off
-
-	blo 1f
-	/* if we were running out of virtual mapped space, disable mmu */
-	mov	r2, #0
-	mov     r1, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     15, 0, r1, c1, c0, 0
-	mcrne   15, 0, r2, c8, c7, 0    /* nail I+D TLB on ARMv4 and greater */
-	
-1:
-	add pc, r4, r0
-
-Lcopy_size:	.word _edata-_C_LABEL(bootstrap_start)
-Lstart_off:	.word bootstrap_start_ram-_C_LABEL(bootstrap_start)
-
-bootstrap_start_ram:	
 	/*
-	 *  Kernel is loaded in SDRAM (0xa0200000..), and is expected to run
-	 *  in VA 0xc0200000..  
+	 *  Kernel is loaded in SDRAM (0xX0200000..), and is expected to run
+	 *  in VA 0xc0200000..
+	 *
+	 * which base memory address the kernel is located is unknown
+	 * however the kernel should be located at 0x00300000 offset
+	 * from that ram area. copy the PC into a register and strip
+	 * the low bits
 	 */
 
-	mrc	p15, 0, r0, c2, c0, 0	/* get ttb prepared by redboot */
-	adr	r4, mmu_init_table2
-	
-/*
-#define BUILD_STARTUP_PAGETABLE
-*/
-#ifdef BUILD_STARTUP_PAGETABLE
-	mrc	p15, 0, r2, c1, c0, 0
-	mov	r2, #0
-	tst	r2, #CPU_CONTROL_MMU_ENABLE /* we already have a page table? */
-	bne	3f
+	mov r9, pc
+	and r9, r9, #0xf0000000	// Leave the memory base in r9
+
+	/* create the bootstrap MMU table at offset 0x00200000 */
 
 	/* build page table from scratch */
-	ldr	r0, Lstartup_pagetable
+	orr	r0, r9, #0x00200000
 	adr	r4, mmu_init_table
+
+	mov	r2, r9, lsr #18
+	ldr	r3, [r4, #8]
+	bic	r3, r3, #0xf0000000
+	orr	r3, r3, r9
+	str	r2, [r4, #4]
+	str	r3, [r4, #8]
+	str	r3, [r4, #0x14] // ram address for 0xc0000000
+	add	r3, r3, #0x01000000
+	str	r3, [r4, #0x20] // ram address for 0x00000000 (vectors)
+
+	/*
+	 * the first entry has two fields that need to be updated for
+	 * specific ram configuration of this board.
+	 */
 	b	3f
 
 2:
@@ -139,7 +122,6 @@ bootstrap_start_ram:
 	ldmia	r4!, {r1,r2,r3}   /* # of sections, PA|attr, VA */
 	cmp	r1, #0
 	bne	2b	
-#endif
 
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
@@ -170,21 +152,14 @@ Lstart:
 	.word	n_sec					    ; \
 	.word	4*((va)>>L1_S_SHIFT)			    ; \
 	.word	(pa)|(attr)				    ;
-	
-#ifdef BUILD_STARTUP_PAGETABLE
-#ifndef STARTUP_PAGETABLE_ADDR
-#define STARTUP_PAGETABLE_ADDR 0x82000000
-#endif
-Lstartup_pagetable:	.word	STARTUP_PAGETABLE_ADDR
-mmu_init_table:	
-	/* fill all table VA==PA */
-	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_V7_AP(AP_KRW))
+
+mmu_init_table:
 	/* map SDRAM VA==PA, WT cacheable */
-	MMU_INIT(SDRAM_START, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW))
-#endif
+	MMU_INIT(0x00000000, 0x00000000, 64, L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW))
 mmu_init_table2:	
 	/* map VA 0xc0000000..0xc3ffffff to PA 0xa0000000..0xa3ffffff */
-	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW))
+	MMU_INIT(0xc0000000, 0x00000000, 64, L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW))
+	MMU_INIT(0x00000000, 0x00000000, 1, L1_TYPE_S|L1_S_C|L1_S_V7_AP(AP_KRW))
 
 	.word 0	/* end of table */
 
