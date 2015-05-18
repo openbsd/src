@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.193 2015/04/29 08:41:24 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.194 2015/05/18 16:57:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -829,6 +829,12 @@ relay_read(struct bufferevent *bev, void *arg)
 	relay_close(con, strerror(errno));
 }
 
+/*
+ * Splice sockets from cre to cre->dst if applicable.  Returns:
+ * -1 socket splicing has failed
+ * 0 socket splicing is currently not possible
+ * 1 socket splicing was successful
+ */
 int
 relay_splice(struct ctl_relay_event *cre)
 {
@@ -878,7 +884,7 @@ relay_splice(struct ctl_relay_event *cre)
 	DPRINTF("%s: session %d: splice dir %d, maximum %lld, successful",
 	    __func__, con->se_id, cre->dir, cre->toread);
 
-	return (0);
+	return (1);
 }
 
 int
