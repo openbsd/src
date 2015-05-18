@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.166 2015/05/18 10:41:19 espie Exp $
+# $OpenBSD: Add.pm,v 1.167 2015/05/18 18:17:27 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -508,6 +508,10 @@ sub tie
 			File::Path::mkpath($d);
 		}
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
+		if (!defined $tempname) {
+			$state->fatal("create temporary file in #1: #2",
+			    $d, $!);
+		}
 		$self->{tempname} = $tempname;
 
 		my $src = $self->{tieto}->realname($state);
@@ -540,6 +544,10 @@ sub extract
 			File::Path::mkpath($d);
 		}
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
+		if (!defined $tempname) {
+			$state->fatal("create temporary file in #1: #2",
+			    $d, $!);
+		}
 		$self->{tempname} = $tempname;
 
 		# XXX don't apply destdir twice
