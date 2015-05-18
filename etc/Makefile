@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.402 2015/05/18 13:48:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.403 2015/05/18 15:17:29 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -33,7 +33,7 @@ BINGRP= wheel
 MUTABLE=changelist csh.cshrc csh.login csh.logout daily \
 	etc.${MACHINE}/disktab etc.${MACHINE}/login.conf ftpusers \
 	gettytab group ksh.kshrc locate.rc mailer.conf \
-	moduli monthly netstart networks newsyslog.conf \
+	moduli monthly netstart networks newsyslog.conf ntpd.conf \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
@@ -97,7 +97,6 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 640 ntpd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g _nsd -m 640 nsd.conf ${DESTDIR}/var/nsd/etc
 	${INSTALL} -c -o root -g wheel -m 644 unbound.conf ${DESTDIR}/var/unbound/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
