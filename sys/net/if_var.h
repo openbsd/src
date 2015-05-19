@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.28 2015/05/18 13:32:28 reyk Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.29 2015/05/19 11:09:24 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ struct	ifqueue {
 struct ifih {
 	SLIST_ENTRY(ifih) ifih_next;
 	int		(*ifih_input)(struct mbuf *, void *);
+	int		  ifih_refcnt;
 };
 
 /*

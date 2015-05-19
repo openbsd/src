@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.198 2015/05/15 10:15:13 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.199 2015/05/19 11:09:24 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ bad:
 int
 ether_input(struct mbuf *m, void *hdr)
 {
-	struct ifnet *ifp0, *ifp;
+	struct ifnet *ifp;
 	struct ether_header *eh = hdr;
 	struct niqueue *inq;
 	u_int16_t etype;
@@ -439,7 +439,7 @@ ether_input(struct mbuf *m, void *hdr)
 
 
 	/* mark incoming routing table */
-	ifp = ifp0 = m->m_pkthdr.rcvif;
+	ifp = m->m_pkthdr.rcvif;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (eh == NULL) {
@@ -480,12 +480,6 @@ ether_input(struct mbuf *m, void *hdr)
 		add_net_randomness(etype);
 		atomic_setbits_int(&netisr, (1 << NETISR_RND_DONE));
 	}
-
-#if NVLAN > 0
-	if (((m->m_flags & M_VLANTAG) || etype == ETHERTYPE_VLAN ||
-	    etype == ETHERTYPE_QINQ) && (vlan_input(eh, m) == 0))
-		return (1);
-#endif
 
 #if NBRIDGE > 0
 	/*
@@ -535,7 +529,7 @@ ether_input(struct mbuf *m, void *hdr)
 	 * is for us.  Drop otherwise.
 	 */
 	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
-	    ((ifp->if_flags & IFF_PROMISC) || (ifp0->if_flags & IFF_PROMISC))) {
+	    (ifp->if_flags & IFF_PROMISC)) {
 		if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN)) {
 			m_freem(m);
 			return (1);

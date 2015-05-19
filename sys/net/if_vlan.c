@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.119 2015/05/15 10:15:13 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.120 2015/05/19 11:09:24 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -79,6 +79,8 @@ u_long vlan_tagmask, svlan_tagmask;
 #define TAG_HASH(tag)		(tag & vlan_tagmask)
 LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
+
+int	vlan_input(struct mbuf *, void *);
 int	vlan_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 void	vlan_start(struct ifnet *ifp);
@@ -255,32 +257,44 @@ vlan_start(struct ifnet *ifp)
 }
 
 /*
- * vlan_input() returns 0 if it has consumed the packet, 1 otherwise.
+ * vlan_input() returns 1 if it has consumed the packet, 0 otherwise.
  */
 int
-vlan_input(struct ether_header *eh, struct mbuf *m)
+vlan_input(struct mbuf *m, void *hdr)
 {
-	struct ifvlan		*ifv;
-	struct ifnet		*ifp = m->m_pkthdr.rcvif;
-	struct vlan_taghash	*tagh;
-	u_int			 tag;
-	u_int16_t		 etype;
-	struct ether_header	*eh1;
+	struct ifvlan			*ifv;
+	struct ifnet			*ifp;
+	struct ether_vlan_header	*evl;
+	struct ether_header		*eh;
+	struct vlan_taghash		*tagh;
+	u_int				 tag;
+	u_int16_t			 etype;
+
+	ifp = m->m_pkthdr.rcvif;
+	eh = mtod(m, struct ether_header *);
+
+	etype = ntohs(eh->ether_type);
 
 	if (m->m_flags & M_VLANTAG) {
 		etype = ETHERTYPE_VLAN;
 		tagh = vlan_tagh;
-	} else {
+	} else if ((etype == ETHERTYPE_VLAN) || (etype == ETHERTYPE_QINQ)) {
 		if (m->m_len < EVL_ENCAPLEN &&
 		    (m = m_pullup(m, EVL_ENCAPLEN)) == NULL) {
 			ifp->if_ierrors++;
-			return (0);
+			return (1);
 		}
 
-		etype = ntohs(eh->ether_type);
+		evl = mtod(m, struct ether_vlan_header *);
+		m->m_pkthdr.ether_vtag = ntohs(evl->evl_tag);
 		tagh = etype == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
-		m->m_pkthdr.ether_vtag = ntohs(*mtod(m, u_int16_t *));
+	} else {
+		/* Skip non-VLAN packets. */
+		return (0);
 	}
+
+	ifp->if_ibytes += m->m_pkthdr.len;
+
 	/* From now on ether_vtag is fine */
 	tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
 	m->m_pkthdr.pf.prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
@@ -290,7 +304,7 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 		m->m_pkthdr.pf.prio = !m->m_pkthdr.pf.prio;
 
 	LIST_FOREACH(ifv, &tagh[TAG_HASH(tag)], ifv_list) {
-		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag &&
+		if (ifp == ifv->ifv_p && tag == ifv->ifv_tag &&
 		    etype == ifv->ifv_type)
 			break;
 	}
@@ -302,40 +316,35 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 		 * it a chance.
 		 */
 		if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
-			return (1);
+			return (0);
 #endif
 		ifp->if_noproto++;
 		m_freem(m);
-		return (0);
+		return (1);
 	}
 
 	if ((ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
-		return (0);
+		return (1);
 	}
 
 	/*
 	 * Having found a valid vlan interface corresponding to
 	 * the given source interface and vlan tag, remove the
-	 * encapsulation, and run the real packet through
-	 * ether_input() a second time (it had better be
-	 * reentrant!).
+	 * encapsulation.
 	 */
-	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	if (m->m_flags & M_VLANTAG) {
 		m->m_flags &= ~M_VLANTAG;
 	} else {
-		eh->ether_type = mtod(m, u_int16_t *)[1];
-		m->m_len -= EVL_ENCAPLEN;
-		m->m_data += EVL_ENCAPLEN;
-		m->m_pkthdr.len -= EVL_ENCAPLEN;
+		eh->ether_type = evl->evl_proto;
+		memmove((char *)eh + EVL_ENCAPLEN, eh, sizeof(*eh));
+		m_adj(m, EVL_ENCAPLEN);
 	}
 
 #if NBPFILTER > 0
 	if (ifv->ifv_if.if_bpf)
-		bpf_mtap_hdr(ifv->ifv_if.if_bpf, (char *)eh, ETHER_HDR_LEN, m,
-		    BPF_DIRECTION_IN, NULL);
+		bpf_mtap_ether(ifv->ifv_if.if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	/*
@@ -348,25 +357,19 @@ vlan_input(struct ether_header *eh, struct mbuf *m)
 		if (bcmp(&ifv->ifv_ac.ac_enaddr, eh->ether_dhost,
 		    ETHER_ADDR_LEN)) {
 			m_freem(m);
-			return (0);
+			return (1);
 		}
 	}
 
-	M_PREPEND(m, sizeof(*eh1), M_DONTWAIT);
-	if (m == NULL)
-		return (-1);
-	eh1 = mtod(m, struct ether_header *);
-	memmove(eh1, eh, sizeof(*eh1));
-
 	ifv->ifv_if.if_ipackets++;
-	ether_input_mbuf(&ifv->ifv_if, m);
-
+	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	return (0);
 }
 
 int
 vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 {
+	struct ifih		*vlan_ifih;
 	struct sockaddr_dl	*sdl1, *sdl2;
 	struct vlan_taghash	*tagh;
 	u_int			 flags;
@@ -376,6 +379,16 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 		return EPROTONOSUPPORT;
 	if (ifv->ifv_p == p && ifv->ifv_tag == tag) /* noop */
 		return (0);
+
+	/* Share an ifih between multiple vlan(4) instances. */
+	vlan_ifih = SLIST_FIRST(&p->if_inputs);
+	if (vlan_ifih->ifih_input != vlan_input) {
+		vlan_ifih = malloc(sizeof(*vlan_ifih), M_DEVBUF, M_NOWAIT);
+		if (vlan_ifih == NULL)
+			return (ENOMEM);
+		vlan_ifih->ifih_input = vlan_input;
+		vlan_ifih->ifih_refcnt = 0;
+	}
 
 	/* Remember existing interface flags and reset the interface */
 	flags = ifv->ifv_flags;
@@ -428,9 +441,10 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	bcopy(LLADDR(sdl2), ifv->ifv_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	ifv->ifv_tag = tag;
-	s = splnet();
-	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
-	LIST_INSERT_HEAD(&tagh[TAG_HASH(tag)], ifv, ifv_list);
+
+	/* Change input handler of the physical interface. */
+	if (++vlan_ifih->ifih_refcnt == 1)
+		SLIST_INSERT_HEAD(&p->if_inputs, vlan_ifih, ifih_next);
 
 	/* Register callback for physical link state changes */
 	ifv->lh_cookie = hook_establish(p->if_linkstatehooks, 1,
@@ -441,6 +455,10 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	    vlan_ifdetach, ifv);
 
 	vlan_vlandev_state(ifv);
+
+	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
+	s = splnet();
+	LIST_INSERT_HEAD(&tagh[TAG_HASH(tag)], ifv, ifv_list);
 	splx(s);
 
 	return (0);
@@ -449,6 +467,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 int
 vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 {
+	struct ifih		*vlan_ifih;
 	struct sockaddr_dl	*sdl;
 	struct ifvlan		*ifv;
 	struct ifnet		*p;
@@ -474,6 +493,14 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 	if (newp != NULL) {
 		ifp->if_link_state = LINK_STATE_INVALID;
 		if_link_state_change(ifp);
+	}
+
+	/* Restore previous input handler. */
+	vlan_ifih = SLIST_FIRST(&p->if_inputs);
+	KASSERT(vlan_ifih->ifih_input == vlan_input);
+	if (--vlan_ifih->ifih_refcnt == 0) {
+		SLIST_REMOVE_HEAD(&p->if_inputs, ifih_next);
+		free(vlan_ifih, M_DEVBUF, sizeof(*vlan_ifih));
 	}
 
 	/*
