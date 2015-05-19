@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.133 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.134 2015/05/19 14:16:35 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -928,8 +928,10 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 
 	/* Check if the route is actually usable */
 	if (rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE) ||
-	    (rt->rt_flags & RTF_UP) == 0)
+	    (rt->rt_flags & RTF_UP) == 0) {
+	    	rtfree(rt);
 		return (NULL);
+	}
 
 	/* If we didn't get a host route, allocate one */
 
