@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.160 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.161 2015/05/19 11:34:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -531,6 +531,7 @@ wi_rxeof(struct wi_softc *sc)
 {
 	struct ifnet		*ifp;
 	struct ether_header	*eh;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 	struct mbuf		*m;
 	caddr_t			olddata;
 	u_int16_t		ftype;
@@ -556,8 +557,6 @@ wi_rxeof(struct wi_softc *sc)
 			ifp->if_ierrors++;
 			return;
 		}
-
-		m->m_pkthdr.rcvif = ifp;
 
 		if (wi_read_data(sc, id, 0, mtod(m, caddr_t),
 		    sizeof(struct wi_frame))) {
@@ -664,7 +663,6 @@ wi_rxeof(struct wi_softc *sc)
 
 		eh = mtod(m, struct ether_header *);
 		maxlen = MCLBYTES - (m->m_data - olddata);
-		m->m_pkthdr.rcvif = ifp;
 
 		if (ftype == WI_FTYPE_MGMT &&
 		    sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
@@ -818,17 +816,13 @@ wi_rxeof(struct wi_softc *sc)
 		}
 	}
 
-#if NBPFILTER > 0
-	/* Handle BPF listeners. */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
 	/* Receive packet unless in procframe or monitor mode. */
 	if (sc->wi_procframe || sc->wi_debug.wi_monitor)
 		m_freem(m);
-	else
-		ether_input_mbuf(ifp, m);
+	else {
+		ml_enqueue(&ml, m);
+		if_input(ifp, &ml);
+	}
 
 	return;
 }
