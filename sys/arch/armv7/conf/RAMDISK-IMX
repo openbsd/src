@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IMX,v 1.14 2015/01/04 20:55:38 uaa Exp $
+#	$OpenBSD: RAMDISK-IMX,v 1.15 2015/05/19 00:05:59 jsg Exp $
 
 machine		armv7 arm
 maxusers	4
@@ -20,11 +20,8 @@ option		INET
 option		INET6
 option		EXT2FS
 
-makeoptions	KERNEL_BASE_PHYS="0x10800000"
-makeoptions	KERNEL_BASE_VIRT="0xc0800000"
-option		BUILD_STARTUP_PAGETABLE
-option		STARTUP_PAGETABLE_ADDR=0x10200000
-option		SDRAM_START="0x10000000"
+makeoptions	KERNEL_BASE_PHYS="0x10300000"
+makeoptions	KERNEL_BASE_VIRT="0xc0300000"
 option		CPU_ARMv7	# Support the ARMv7
 
 config		bsd root on rd0a swap on rd0b

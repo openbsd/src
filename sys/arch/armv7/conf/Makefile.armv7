@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.7 2015/01/13 01:12:49 deraadt Exp $
+#	$OpenBSD: Makefile.armv7,v 1.8 2015/05/19 00:05:59 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -72,8 +72,9 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD_HEAD+=; \
 		cat ${_archdir}/conf/ldscript.head ${_archdir}/conf/ldscript.tail | \
-		    sed -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
-		    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' > ldscript
+		    sed -e 's/@KERNEL_BASE_PHYS@/0/' \
+		    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
+		    -e 's/(KERNEL_BASE_phys)/(KERNEL_BASE_virt)/' > ldscript
 
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}

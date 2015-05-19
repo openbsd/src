@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.15 2015/04/16 09:09:49 mpi Exp $
+# $OpenBSD: GENERIC-OMAP,v 1.16 2015/05/19 00:05:59 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -23,9 +23,6 @@ include "../../../conf/GENERIC"
 
 makeoptions	KERNEL_BASE_PHYS="0x80300000"
 makeoptions	KERNEL_BASE_VIRT="0xc0300000"
-options	BUILD_STARTUP_PAGETABLE
-options	STARTUP_PAGETABLE_ADDR=0x80200000
-options	SDRAM_START="0x80000000"
 
 option CONF_HAVE_GPIO
 

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC-SUNXI,v 1.13 2015/04/16 09:09:49 mpi Exp $
+# $OpenBSD: GENERIC-SUNXI,v 1.14 2015/05/19 00:05:59 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -21,11 +21,8 @@
 machine	armv7	arm
 include "../../../conf/GENERIC"
 
-makeoptions	KERNEL_BASE_PHYS="0x40800000"
-makeoptions	KERNEL_BASE_VIRT="0xc0800000"
-options	BUILD_STARTUP_PAGETABLE
-options	STARTUP_PAGETABLE_ADDR=0x40200000
-options	SDRAM_START="0x40000000"
+makeoptions	KERNEL_BASE_PHYS="0x40300000"
+makeoptions	KERNEL_BASE_VIRT="0xc0300000"
 
 option CONF_HAVE_GPIO
 

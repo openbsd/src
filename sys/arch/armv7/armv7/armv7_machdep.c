@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.22 2015/05/15 15:35:43 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.23 2015/05/19 00:05:59 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -209,6 +209,7 @@ int	bootstrap_bs_map(void *, bus_addr_t, bus_size_t, int,
 void	process_kernel_args(char *);
 void	parse_uboot_tags(void *);
 void	consinit(void);
+void	bootconfig_dram(BootConfig *, psize_t *, psize_t *);
 
 bs_protos(bs_notimpl);
 
@@ -437,7 +438,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 #endif /* RAMDISK_HOOKS */
 
 	/* normally u-boot will set up bootconfig.dramblocks */
-	platform_bootconfig_dram(&bootconfig, &memstart, &memsize);
+	bootconfig_dram(&bootconfig, &memstart, &memsize);
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -847,5 +848,23 @@ board_startup(void)
 #else
 		printf("kernel does not support -c; continuing..\n");
 #endif
+	}
+}
+
+void
+bootconfig_dram(BootConfig *bootconfig, psize_t *memstart, psize_t *memsize)
+{
+	int loop;
+
+	if (bootconfig->dramblocks == 0) 
+		panic("%s: dramblocks not set up!", __func__);
+
+	*memstart = bootconfig->dram[0].address;
+	*memsize = bootconfig->dram[0].pages * PAGE_SIZE;
+	printf("memory size derived from u-boot\n");
+	for (loop = 0; loop < bootconfig->dramblocks; loop++) {
+		printf("bootconf.mem[%d].address = %08x pages %d/0x%08x\n",
+		    loop, bootconfig->dram[loop].address, bootconfig->dram[loop].pages,
+			bootconfig->dram[loop].pages * PAGE_SIZE);
 	}
 }

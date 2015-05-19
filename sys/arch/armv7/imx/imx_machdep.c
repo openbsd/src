@@ -1,4 +1,4 @@
-/*	$OpenBSD: imx_machdep.c,v 1.13 2015/05/15 15:35:43 jsg Exp $	*/
+/*	$OpenBSD: imx_machdep.c,v 1.14 2015/05/19 00:05:59 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -95,23 +95,6 @@ const char *
 platform_board_name(void)
 {
 	return (imx_board_name());
-}
-
-void
-platform_bootconfig_dram(BootConfig *bootconfig, psize_t *memstart, psize_t *memsize)
-{
-	if (bootconfig->dramblocks == 0) {
-		*memstart = SDRAM_START;
-		*memsize = 0x10000000; /* 256 MB */
-		/* Fake bootconfig structure for the benefit of pmap.c */
-		/* XXX must make the memory description h/w independant */
-		bootconfig->dram[0].address = *memstart;
-		bootconfig->dram[0].pages = *memsize / PAGE_SIZE;
-		bootconfig->dramblocks = 1;
-	} else {
-		*memstart = bootconfig->dram[0].address;
-		*memsize = bootconfig->dram[0].pages * PAGE_SIZE;
-	}
 }
 
 void
