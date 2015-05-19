@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.839 2015/05/18 13:48:37 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.840 2015/05/19 20:12:29 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1345,7 +1345,7 @@ install_mounted_fs() {
 install_cdrom() {
 	local _drive=$1
 
-	mount_mnt2 $_drive || return
+	makedev $_drive && mount_mnt2 $_drive || return
 
 	install_mounted_fs
 }
