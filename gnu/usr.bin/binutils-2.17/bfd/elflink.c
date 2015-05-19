@@ -3585,12 +3585,10 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 	    sec = bfd_abs_section_ptr;
 	  else if (sec->kept_section)
 	    {
-	      /* Symbols from discarded section are undefined, and have
-		 default visibility.  */
+	      /* Symbols from discarded section are undefined.  We keep
+		 its visibility.  */
 	      sec = bfd_und_section_ptr;
 	      isym->st_shndx = SHN_UNDEF;
-	      isym->st_other = (STV_DEFAULT
-				| (isym->st_other & ~ ELF_ST_VISIBILITY (-1)));
 	    }
 	  else if ((abfd->flags & (EXEC_P | DYNAMIC)) != 0)
 	    value -= sec->vma;
