@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.3 2008/06/26 05:42:20 ray Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.4 2015/05/19 20:39:12 miod Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
 #define	MARK_NSYM	2
 #define MARK_SYM	3
 #define	MARK_END	4
-#define	MARK_MAX	5
+#define	MARK_RANDOM	5
+#define	MARK_ERANDOM	6
+#define	MARK_MAX	7
 
 /*
  * Bit flags for sections to load
@@ -49,7 +51,8 @@
 #define	LOAD_BSS	0x0008
 #define	LOAD_SYM	0x0010
 #define	LOAD_HDR	0x0020
-#define LOAD_ALL	0x003f
+#define	LOAD_RANDOM	0x0040
+#define LOAD_ALL	0x007f
 
 #define	COUNT_TEXT	0x0100
 #define	COUNT_TEXTA	0x0200
@@ -57,7 +60,8 @@
 #define	COUNT_BSS	0x0800
 #define	COUNT_SYM	0x1000
 #define	COUNT_HDR	0x2000
-#define COUNT_ALL	0x3f00
+#define	COUNT_RANDOM	0x4000
+#define COUNT_ALL	0x7f00
 
 int loadfile(const char *, u_long *, int);
 
