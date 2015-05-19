@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.57 2015/03/26 19:16:57 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.58 2015/05/19 18:03:32 sobrado Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2015 $
+.Dd $Mdocdate: May 19 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -513,14 +513,6 @@ server "example.com" {
 server "www.example.com" {
 	listen on 10.0.0.1 port 80
 }
-.Ed
-.Pp
-The syntax of the types section is also compatible with the format
-used by nginx, so it is possible to include its
-.Pa mime.types
-file directly:
-.Bd -literal -offset indent
-include "/etc/nginx/mime.types"
 .Ed
 .Sh SEE ALSO
 .Xr htpasswd 1 ,
