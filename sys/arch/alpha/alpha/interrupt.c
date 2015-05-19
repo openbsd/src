@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.34 2014/11/18 20:51:00 krw Exp $ */
+/* $OpenBSD: interrupt.c,v 1.35 2015/05/19 20:28:14 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -141,6 +141,7 @@ scb_set(u_long vec, void (*func)(void *, u_long), void *arg)
 	splx(s);
 }
 
+#ifdef unused
 u_long
 scb_alloc(void (*func)(void *, u_long), void *arg)
 {
@@ -169,6 +170,7 @@ scb_alloc(void (*func)(void *, u_long), void *arg)
 
 	return (SCB_ALLOC_FAILED);
 }
+#endif
 
 void
 scb_free(u_long vec)
@@ -260,22 +262,9 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
-#if defined(MULTIPROCESSOR)
-		/*
-		 * XXX Need to support IPL_MPSAFE eventually. Acquiring the
-		 * XXX kernel lock could be done deeper, as most of the
-		 * XXX scb handlers end up invoking
-		 * XXX alpha_shared_intr_dispatch().
-		 */
-		__mp_lock(&kernel_lock);
-#endif
 		atomic_add_int(&uvmexp.intrs, 1);
-
 		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
 		(*scb->scb_func)(scb->scb_arg, a1);
-#if defined(MULTIPROCESSOR)
-		__mp_unlock(&kernel_lock);
-#endif
 		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
 	    }

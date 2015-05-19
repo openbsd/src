@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.18 2010/09/22 12:36:32 miod Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.19 2015/05/19 20:28:14 miod Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -97,6 +97,7 @@ u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 struct tcintr {
 	int	(*tci_func)(void *);
 	void	*tci_arg;
+	int	tci_level;
 	struct evcount tci_count;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
@@ -123,6 +124,7 @@ tc_3000_500_intr_setup()
         for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
+		tc_3000_500_intr[i].tci_level = IPL_HIGH;
         }
 }
 
@@ -145,6 +147,7 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg, name)
 
 	tc_3000_500_intr[dev].tci_func = func;
 	tc_3000_500_intr[dev].tci_arg = arg;
+	tc_3000_500_intr[dev].tci_level = level;
 	if (name != NULL)
 		evcount_attach(&tc_3000_500_intr[dev].tci_count, name, NULL);
 
@@ -175,6 +178,7 @@ tc_3000_500_intr_disestablish(tcadev, cookie, name)
 
 	tc_3000_500_intr[dev].tci_func = tc_3000_500_intrnull;
 	tc_3000_500_intr[dev].tci_arg = (void *)dev;
+	tc_3000_500_intr[dev].tci_level = IPL_HIGH;
 	if (name != NULL)
 		evcount_detach(&tc_3000_500_intr[dev].tci_count);
 }
@@ -196,17 +200,6 @@ tc_3000_500_iointr(arg, vec)
         u_int32_t ir;
 	int ifound;
 
-#ifdef DIAGNOSTIC
-	int s;
-	if (vec != 0x800)
-		panic("INVALID ASSUMPTION: vec 0x%lx, not 0x800", vec);
-	s = splhigh();
-	if (s != ALPHA_PSL_IPL_IO)
-		panic("INVALID ASSUMPTION: IPL %d, not %d", s,
-		    ALPHA_PSL_IPL_IO);
-	splx(s);
-#endif
-
 	do {
 		tc_syncbus();
 		ir = *(volatile u_int32_t *)TC_3000_500_IR_CLEAR;
@@ -216,13 +209,27 @@ tc_3000_500_iointr(arg, vec)
 
 		ifound = 0;
 
+#ifdef MULTIPROCESSOR
+#define	INTRLOCK(slot)							\
+		if (tc_3000_500_intr[slot].tci_level < IPL_CLOCK)	\
+			__mp_lock(&kernel_lock)
+#define	INTRUNLOCK(slot)						\
+		if (tc_3000_500_intr[slot].tci_level < IPL_CLOCK)	\
+			__mp_unlock(&kernel_lock)
+#else
+#define	INTRLOCK(slot)		do { } while (0)
+#define	INTRUNLOCK(slot)	do { } while (0)
+#endif
 #define	CHECKINTR(slot)							\
 		if (ir & tc_3000_500_intrbits[slot]) {			\
 			ifound = 1;					\
-			tc_3000_500_intr[slot].tci_count.ec_count++;	\
+			INTRLOCK(slot);					\
 			(*tc_3000_500_intr[slot].tci_func)		\
 			    (tc_3000_500_intr[slot].tci_arg);		\
+			tc_3000_500_intr[slot].tci_count.ec_count++;	\
+			INTRUNLOCK(slot);					\
 		}
+
 		/* Do them in order of priority; highest slot # first. */
 		CHECKINTR(TC_3000_500_DEV_CXTURBO);
 		CHECKINTR(TC_3000_500_DEV_IOASIC);
@@ -233,12 +240,16 @@ tc_3000_500_iointr(arg, vec)
 		CHECKINTR(TC_3000_500_DEV_OPT2);
 		CHECKINTR(TC_3000_500_DEV_OPT1);
 		CHECKINTR(TC_3000_500_DEV_OPT0);
+
+#undef INTRUNLOCK
+#undef INTRLOCK
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC
 #define PRINTINTR(msg, bits)						\
 	if (ir & bits)							\
 		printf(msg);
+
 		PRINTINTR("Second error occurred\n", TC_3000_500_IR_ERR2);
 		PRINTINTR("DMA buffer error\n", TC_3000_500_IR_DMABE);
 		PRINTINTR("DMA cross 2K boundary\n", TC_3000_500_IR_DMA2K);
@@ -253,6 +264,7 @@ tc_3000_500_iointr(arg, vec)
 		PRINTINTR("DMA scatter/gather invalid\n", TC_3000_500_IR_DMASG);
 		PRINTINTR("Scatter/gather parity error\n",
 		    TC_3000_500_IR_SGPAR);
+
 #undef PRINTINTR
 #endif
 	} while (ifound);

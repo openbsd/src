@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.20 2014/12/09 06:58:28 doug Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.21 2015/05/19 20:28:14 miod Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -97,6 +97,11 @@ alpha_shared_intr_dispatch(intr, num)
 
 	handled = 0;
 	TAILQ_FOREACH(ih, &intr[num].intr_q, ih_q) {
+#if defined(MULTIPROCESSOR)
+		/* XXX Need to support IPL_MPSAFE eventually. */
+		if (ih->ih_level < IPL_CLOCK)
+			__mp_lock(&kernel_lock);
+#endif
 		/*
 		 * The handler returns one of three values:
 		 *   0:	This interrupt wasn't for me.
@@ -107,6 +112,10 @@ alpha_shared_intr_dispatch(intr, num)
 		rv = (*ih->ih_fn)(ih->ih_arg);
 		if (rv)
 			ih->ih_count.ec_count++;
+#if defined(MULTIPROCESSOR)
+		if (ih->ih_level < IPL_CLOCK)
+			__mp_unlock(&kernel_lock);
+#endif
 		handled = handled || (rv != 0);
 		if (intr_shared_edge == 0 && rv == 1)
 			break;
