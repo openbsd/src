@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2014/07/16 20:02:17 okan Exp $
+#	$OpenBSD: Makefile,v 1.40 2015/05/19 20:50:06 guenther Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -9,6 +9,10 @@ CFLAGS+=-Wsign-compare
 CFLAGS+=-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
 CDIAGFLAGS=
 LDADD = -Wl,-znodelete,-zinitfirst,-znodlopen
+
+.if defined(NOPIC)
+CFLAGS+=-DNO_PIC
+.endif
 
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}
 SRCS=	rthread.c \

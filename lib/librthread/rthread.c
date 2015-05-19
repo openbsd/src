@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.82 2015/05/10 18:33:15 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.83 2015/05/19 20:50:06 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -26,7 +26,7 @@
 #include <sys/socket.h>
 #include <sys/mman.h>
 #include <sys/msg.h>
-#if defined(__ELF__)
+#ifndef NO_PIC
 #include <sys/exec_elf.h>
 #pragma weak _DYNAMIC
 #endif
@@ -205,7 +205,7 @@ _rthread_init(void)
 
 	_rthread_debug(1, "rthread init\n");
 
-#if defined(__ELF__) && !defined(__vax__)
+#ifndef NO_PIC
 	if (_DYNAMIC) {
 		/*
 		 * To avoid recursion problems in ld.so, we need to trigger the
@@ -654,7 +654,7 @@ _thread_dump_info(void)
 	_spinunlock(&_thread_lock);
 }
 
-#if defined(__ELF__)
+#ifndef NO_PIC
 /*
  * _rthread_dl_lock() provides the locking for dlopen(), dlclose(), and
  * the function called via atexit() to invoke all destructors.  The latter
@@ -722,17 +722,12 @@ _rthread_bind_lock(int what)
 }
 #endif
 
-#ifdef __ELF__
-#define CERROR_SYMBOL __cerror
-#else
-#define CERROR_SYMBOL _cerror
-#endif
 
 /*
  * XXX: Bogus type signature, but we only need to be able to emit a
  * reference to it below.
  */
-extern void CERROR_SYMBOL(void);
+extern void __cerror(void);
 
 /*
  * All weak references used within libc that are redefined in libpthread
@@ -740,7 +735,7 @@ extern void CERROR_SYMBOL(void);
  * be used when linking -static.
  */
 static void *__libc_overrides[] __used = {
-	&CERROR_SYMBOL,
+	&__cerror,
 	&__errno,
 	&_thread_arc4_lock,
 	&_thread_arc4_unlock,

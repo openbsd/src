@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.12 2015/05/10 18:33:15 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.13 2015/05/19 20:50:06 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -30,7 +30,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/lib/libc_r/uthread/uthread_atfork.c,v 1.1 2004/12/10 03:36:45 grog Exp $
  */
 
-#if defined(__ELF__)
+#ifndef NO_PIC
 #include <sys/types.h>
 #include <sys/exec_elf.h>
 #pragma weak _DYNAMIC
@@ -56,7 +56,7 @@ _dofork(int is_vfork)
 	pthread_t me;
 	pid_t (*sys_fork)(void);
 	pid_t newid;
-#if defined(__ELF__)
+#ifndef NO_PIC
 	sigset_t nmask, omask;
 #endif
 
@@ -75,7 +75,7 @@ _dofork(int is_vfork)
 	 * binding in the other locking functions can succeed.
 	 */
 
-#if defined(__ELF__)
+#ifndef NO_PIC
 	if (_DYNAMIC)
 		_rthread_dl_lock(0);
 #endif
@@ -84,7 +84,7 @@ _dofork(int is_vfork)
 	_thread_malloc_lock();
 	_thread_arc4_lock();
 
-#if defined(__ELF__)
+#ifndef NO_PIC
 	if (_DYNAMIC) {
 		sigfillset(&nmask);
 		_thread_sys_sigprocmask(SIG_BLOCK, &nmask, &omask);
@@ -94,7 +94,7 @@ _dofork(int is_vfork)
 
 	newid = sys_fork();
 
-#if defined(__ELF__)
+#ifndef NO_PIC
 	if (_DYNAMIC) {
 		_rthread_bind_lock(1);
 		_thread_sys_sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -106,7 +106,7 @@ _dofork(int is_vfork)
 	_thread_atexit_unlock();
 
 	if (newid == 0) {
-#if defined(__ELF__)
+#ifndef NO_PIC
 		/* reinitialize the lock in the child */
 		if (_DYNAMIC)
 			_rthread_dl_lock(2);
@@ -128,7 +128,7 @@ _dofork(int is_vfork)
 		/* single threaded now */
 		__isthreaded = 0;
 	}
-#if defined(__ELF__)
+#ifndef NO_PIC
 	else if (_DYNAMIC)
 		_rthread_dl_lock(1);
 #endif
