@@ -1,4 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.13 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.14 2015/05/19 16:05:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <grp.h>
 #include <limits.h>
+#include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -50,11 +51,14 @@ main(int argc, char **argv)
 {
 	struct group	*grp;
 	struct passwd	*pwd;
+	login_cap_t	*lc;
 	const char	*shell;
 	char		*user, *group, *grouplist;
 	gid_t		gidlist[NGROUPS_MAX];
 	int		ch, ngids;
+	int		flags = LOGIN_SETALL & ~(LOGIN_SETLOGIN|LOGIN_SETUSER);
 
+	lc = NULL;
 	ngids = 0;
 	pwd = NULL;
 	user = grouplist = NULL;
@@ -80,8 +84,12 @@ main(int argc, char **argv)
 	if (argc < 1)
 		usage();
 
-	if (user != NULL && (pwd = getpwnam(user)) == NULL)
-		errx(1, "no such user `%s'", user);
+	if (user != NULL) {
+		if ((pwd = getpwnam(user)) == NULL)
+			errx(1, "no such user `%s'", user);
+		if ((lc = login_getclass(pwd->pw_class)) == NULL)
+			err(1, "unable to get login class for `%s'", user);
+	}
 
 	while ((group = strsep(&grouplist, ",")) != NULL) {
 		if (*group == '\0')
@@ -99,11 +107,11 @@ main(int argc, char **argv)
 			err(1, "setgid");
 		if (setgroups(ngids, gidlist) != 0)
 			err(1, "setgroups");
-	} else if (pwd != NULL) {
-		if (setgid(pwd->pw_gid) != 0)
-			err(1, "setgid");
-		if (initgroups(user, pwd->pw_gid) == -1)
-			err(1, "initgroups");
+		flags &= ~LOGIN_SETGROUP;
+	}
+	if (lc != NULL) {
+		if (setusercontext(lc, pwd, pwd->pw_uid, flags) == -1)
+			err(1, "setusercontext");
 	}
 
 	if (chroot(argv[0]) != 0 || chdir("/") != 0)
@@ -115,7 +123,6 @@ main(int argc, char **argv)
 			setlogin(pwd->pw_name);
 		if (setuid(pwd->pw_uid) != 0)
 			err(1, "setuid");
-		endgrent();
 	}
 
 	if (argv[1]) {

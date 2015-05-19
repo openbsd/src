@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.8,v 1.14 2010/07/08 06:52:30 jmc Exp $
+.\"	$OpenBSD: chroot.8,v 1.15 2015/05/19 16:05:12 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 8 2010 $
+.Dd $Mdocdate: May 19 2015 $
 .Dt CHROOT 8
 .Os
 .Sh NAME
@@ -77,6 +77,11 @@ and
 databases unless overridden by the
 .Fl g
 option.
+Additional settings may be applied as specified in
+.Xr login.conf 5
+depending on
+.Ar user Ns 's
+login class.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width SHELL
@@ -95,6 +100,7 @@ is used.
 .Sh SEE ALSO
 .Xr ldd 1 ,
 .Xr group 5 ,
+.Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr environ 7
 .Sh HISTORY
