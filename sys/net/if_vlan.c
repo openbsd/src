@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.120 2015/05/19 11:09:24 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.121 2015/05/19 11:21:42 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -351,7 +351,7 @@ vlan_input(struct mbuf *m, void *hdr)
 	 * Drop promiscuously received packets if we are not in
 	 * promiscuous mode.
 	 */
-	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+	if (!ETHER_IS_MULTICAST(eh->ether_dhost) &&
 	    (ifp->if_flags & IFF_PROMISC) &&
 	    (ifv->ifv_if.if_flags & IFF_PROMISC) == 0) {
 		if (bcmp(&ifv->ifv_ac.ac_enaddr, eh->ether_dhost,
