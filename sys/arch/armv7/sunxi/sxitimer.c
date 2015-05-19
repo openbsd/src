@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.3 2013/11/06 19:03:07 syl Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.4 2015/05/19 06:04:26 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -115,10 +115,10 @@ uint32_t sxitimer_irq[] = {
 	0
 };
 
-uint32_t stat_tpi, tick_tpi;
-uint32_t statvar, statmin;
-uint32_t tick_nextevt, stat_nextevt;
-uint32_t ticks_err_cnt, ticks_err_sum;
+uint32_t sxitimer_stat_tpi, sxitimer_tick_tpi;
+uint32_t sxitimer_statvar, sxitimer_statmin;
+uint32_t sxitimer_tick_nextevt, sxitimer_stat_nextevt;
+uint32_t sxitimer_ticks_err_cnt, sxitimer_ticks_err_sum;
 
 bus_addr_t cntr64_ctrl = CNT64_CTRL;
 bus_addr_t cntr64_low = CNT64_LOW;
@@ -195,11 +195,11 @@ skip_init:
 
 	switch (unit) { /* XXX more XXXXTIMER magic for less lines? */
 	case TICKTIMER:
-		ival = tick_tpi = freq / hz;
-		tick_nextevt = now - ival;
+		ival = sxitimer_tick_tpi = freq / hz;
+		sxitimer_tick_nextevt = now - ival;
 
-		ticks_err_cnt = freq % hz;
-		ticks_err_sum = 0;
+		sxitimer_ticks_err_cnt = freq % hz;
+		sxitimer_ticks_err_sum = 0;
 
 		printf(": ticktimer %dhz @ %dKHz", hz, freq / 1000);
 		break;
@@ -209,8 +209,8 @@ skip_init:
 		profhz = 1024;
 		sxitimer_setstatclockrate(stathz);
 
-		ival = stat_tpi = freq / stathz;
-		stat_nextevt = now - ival;
+		ival = sxitimer_stat_tpi = freq / stathz;
+		sxitimer_stat_nextevt = now - ival;
 
 		printf(": stattimer %dhz @ %dKHz", stathz, freq / 1000);
 		break;
@@ -307,31 +307,31 @@ sxitimer_tickintr(void *frame)
 
 	now = sxitimer_readcnt32();
 
-	while ((int32_t)(now - tick_nextevt) < 0) {
-		tick_nextevt -= tick_tpi;
-		ticks_err_sum += ticks_err_cnt;
+	while ((int32_t)(now - sxitimer_tick_nextevt) < 0) {
+		sxitimer_tick_nextevt -= sxitimer_tick_tpi;
+		sxitimer_ticks_err_sum += sxitimer_ticks_err_cnt;
 
-		while (ticks_err_sum  > hz) {
-			tick_nextevt += 1;
-			ticks_err_sum -= hz;
+		while (sxitimer_ticks_err_sum  > hz) {
+			sxitimer_tick_nextevt += 1;
+			sxitimer_ticks_err_sum -= hz;
 		}
 
 		rc = 1;
 		hardclock(frame);
 	}
-	nextevent = now - tick_nextevt;
+	nextevent = now - sxitimer_tick_nextevt;
 	if (nextevent < 10 /* XXX */)
 		nextevent = 10;
 
-	if (nextevent > tick_tpi) {
+	if (nextevent > sxitimer_tick_tpi) {
 		/*
 		 * If interrupts are blocked too long, like during
 		 * the root prompt or ddb, the timer can roll over,
 		 * this will allow the system to continue to run
 		 * even if time is lost.
 		 */
-		nextevent = tick_tpi;
-		tick_nextevt = now;
+		nextevent = sxitimer_tick_tpi;
+		sxitimer_tick_nextevt = now;
 	}
 
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
@@ -357,29 +357,29 @@ sxitimer_statintr(void *frame)
 	    TIMER_ISR, TIMER_IRQ(STATTIMER));
 
 	now = sxitimer_readcnt32();
-	while ((int32_t)(now - stat_nextevt) < 0) {
+	while ((int32_t)(now - sxitimer_stat_nextevt) < 0) {
 		do {
-			r = random() & (statvar -1);
+			r = random() & (sxitimer_statvar -1);
 		} while (r == 0); /* random == 0 not allowed */
-		stat_nextevt -= statmin + r;
+		sxitimer_stat_nextevt -= sxitimer_statmin + r;
 		rc = 1;
 		statclock(frame);
 	}
 
-	nextevent = now - stat_nextevt;
+	nextevent = now - sxitimer_stat_nextevt;
 
 	if (nextevent < 10 /* XXX */)
 		nextevent = 10;
 
-	if (nextevent > stat_tpi) {
+	if (nextevent > sxitimer_stat_tpi) {
 		/*
 		 * If interrupts are blocked too long, like during
 		 * the root prompt or ddb, the timer can roll over,
 		 * this will allow the system to continue to run
 		 * even if time is lost.
 		 */
-		nextevent = stat_tpi;
-		stat_nextevt = now;
+		nextevent = sxitimer_stat_tpi;
+		sxitimer_stat_nextevt = now;
 	}
 
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
@@ -442,12 +442,12 @@ sxitimer_setstatclockrate(int newhz)
 
 	statint = sxitimer_freq[STATTIMER] / newhz;
 	/* calculate largest 2^n which is smaller than just over half statint */
-	statvar = 0x40000000; /* really big power of two */
+	sxitimer_statvar = 0x40000000; /* really big power of two */
 	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
+	while (sxitimer_statvar > minint)
+		sxitimer_statvar >>= 1;
 
-	statmin = statint - (statvar >> 1);
+	sxitimer_statmin = statint - (sxitimer_statvar >> 1);
 
 	splx(s);
 
