@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.41 2015/02/10 11:46:39 reyk Exp $ */
+/*	$OpenBSD: server.c,v 1.42 2015/05/19 16:07:38 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,11 +35,11 @@ setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 	struct listen_addr	*la, *nla, *lap;
 	struct ifaddrs		*ifa, *ifap;
 	struct sockaddr		*sa;
-	struct ifreq		 ifr;
+	struct if_data		*ifd;
 	u_int8_t		*a6;
 	size_t			 sa6len = sizeof(struct in6_addr);
 	u_int			 new_cnt = 0;
-	int			 tos = IPTOS_LOWDELAY, rdomain, fd;
+	int			 tos = IPTOS_LOWDELAY, rdomain = 0;
 
 	TAILQ_FOREACH(lap, &lconf->listen_addrs, entry) {
 		switch (lap->sa.ss_family) {
@@ -49,24 +49,15 @@ setup_listeners(struct servent *se, struct ntpd_conf *lconf, u_int *cnt)
 
 			for (ifap = ifa; ifap != NULL; ifap = ifap->ifa_next) {
 				sa = ifap->ifa_addr;
-				if (sa == NULL ||
-				    (sa->sa_family != AF_INET &&
-				    sa->sa_family != AF_INET6))
+				if (sa == NULL || SA_LEN(sa) == 0)
 					continue;
-				if (SA_LEN(sa) == 0)
+				if (sa->sa_family == AF_LINK) {
+					ifd = ifap->ifa_data;
+					rdomain = ifd->ifi_rdomain;
+				}
+				if (sa->sa_family != AF_INET &&
+				    sa->sa_family != AF_INET6)
 					continue;
-
-				strlcpy(ifr.ifr_name, ifap->ifa_name,
-				    sizeof(ifr.ifr_name));
-
-				fd = socket(AF_INET, SOCK_DGRAM, 0);
-				if (ioctl(fd, SIOCGIFRDOMAIN,
-				    (caddr_t)&ifr) == -1)
-					rdomain = 0;
-				else
-					rdomain = ifr.ifr_rdomainid;
-				close(fd);
-
 				if (lap->rtable != -1 && rdomain != lap->rtable)
 					continue;
 
