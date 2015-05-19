@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2015/03/05 20:46:13 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.14 2015/05/19 20:42:11 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -158,6 +158,8 @@ loadk(char *file, u_long *marks)
 	u_long minsize, size;
 	vaddr_t extra;
 
+	marks[MARK_RANDOM] = marks[MARK_ERANDOM] = 0;
+
 	/*
 	 * Regardless of the address where we load the kernel, we need to
 	 * make sure it has enough valid space to use during pmap_bootstrap.
@@ -178,6 +180,8 @@ loadk(char *file, u_long *marks)
 
 	if (files[fd].f_flags & F_RAW) {
 		flags = (COUNT_KERNEL & ~COUNT_SYM) | (LOAD_KERNEL & ~LOAD_SYM);
+		if (rnd_loaded == 0)
+			flags &= ~LOAD_RANDOM;
 		minsize = FOURMB;
 		va = 0xf8000000;		/* KERNBASE */
 #ifdef DEBUG
@@ -187,27 +191,9 @@ loadk(char *file, u_long *marks)
 		/* compensate for extra room below */
 		minsize -= extra;
 	} else {
-		/*
-		 * If we did not load a random.seed file yet, try and load
-		 * one.
-		 */
-		if (rnd_loaded == 0) {
-			/*
-			 * Some PROM do not like having a network device
-			 * open()ed twice; better close and reopen after
-			 * trying to get randomness.
-			 */
-			close(fd);
-
-			rnd_loaded = loadrandom(BOOTRANDOM, rnddata,
-			    sizeof(rnddata));
-
-			if ((fd = open(file, O_RDONLY)) < 0)
-				return (errno ? errno : ENOENT);
-		}
-
 		flags = LOAD_KERNEL;
-		marks[MARK_START] = 0;
+		if (rnd_loaded == 0)
+			flags &= ~LOAD_RANDOM;
 
 		/*
 		 * Even though we just have opened the file, the gzip code
@@ -220,6 +206,7 @@ loadk(char *file, u_long *marks)
 			goto out;
 		}
 
+		marks[MARK_START] = 0;
 		if ((error = fdloadfile(fd, marks, COUNT_KERNEL)) != 0)
 			goto out;
 
@@ -299,6 +286,33 @@ loadk(char *file, u_long *marks)
 
 	marks[MARK_START] = 0;
 	error = fdloadfile(fd, marks, flags);
+
+	/*
+	 * If we did not load a random.seed file yet, and we know we can try,
+	 * load one.
+	 */
+	if (error == 0 && rnd_loaded == 0 && marks[MARK_RANDOM] != 0) {
+		/*
+		 * Some PROM do not like having a network device open()ed
+		 * twice; better close the kernel fd before trying to get
+		 * randomness.
+		 */
+		close(fd);
+
+		rnd_loaded = loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata));
+		if (rnd_loaded != 0) {
+			while (marks[MARK_RANDOM] < marks[MARK_ERANDOM]) {
+				u_long m;
+				m = MIN(marks[MARK_ERANDOM] -
+				    marks[MARK_RANDOM], sizeof(rnddata));
+				memcpy((void *)marks[MARK_RANDOM], rnddata, m);
+				marks[MARK_RANDOM] += m;
+			}
+		}
+
+		return 0;
+	}
+
 out:
 	close(fd);
 	return (error);

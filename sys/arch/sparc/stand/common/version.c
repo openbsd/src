@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.11 2015/03/05 20:46:13 miod Exp $	*/
+/*	$OpenBSD: version.c,v 1.12 2015/05/19 20:42:11 miod Exp $	*/
 /*	$NetBSD: version.c,v 1.4 1995/09/16 23:20:39 pk Exp $ */
 
 /*
@@ -52,6 +52,10 @@
  *	2.9	Cope with DMA transfer size limits of old sun4 PROMs
  *	2.10	Allocate more memory beyond the kernel image on sun4d/sun4m
  *		systems to allow for larger kernel page tables
+ *	2.11	Only attempt to load /etc/random.seed after a successful
+ *		kernel load, and never if booting from tape. This works
+ *		around sun4e PROM 1.6, which apparently gets confused by
+ *		open() - close() sequences without any I/O in between.
  */
 
-char *version = "2.10";
+char *version = "2.11";
