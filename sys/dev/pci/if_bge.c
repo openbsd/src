@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.366 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.367 2015/05/19 12:50:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3361,14 +3361,15 @@ bge_reset(struct bge_softc *sc)
 		 * is complete.  We expect this to fail if no SEEPROM
 		 * is fitted.
 		 */
-		for (i = 0; i < BGE_TIMEOUT; i++) {
+		for (i = 0; i < BGE_TIMEOUT * 10; i++) {
 			val = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM);
 			if (val == ~BGE_MAGIC_NUMBER)
 				break;
 			DELAY(10);
 		}
 
-		if (i >= BGE_TIMEOUT && (!(sc->bge_flags & BGE_NO_EEPROM)))
+		if ((i >= BGE_TIMEOUT * 10) &&
+		    (!(sc->bge_flags & BGE_NO_EEPROM)))
 			printf("%s: firmware handshake timed out\n",
 			   sc->bge_dev.dv_xname);
 		/* BCM57765 A0 needs additional time before accessing. */
