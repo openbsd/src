@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.38 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.39 2015/05/19 11:24:01 mpi Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -913,6 +913,7 @@ smc91cxx_read(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	u_int16_t status, packetno, packetlen;
 	u_int8_t *data;
@@ -958,7 +959,6 @@ smc91cxx_read(sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		goto out;
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = packetlen;
 
 	/*
@@ -991,14 +991,8 @@ smc91cxx_read(sc)
 	}
 
 	ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
 	m->m_pkthdr.len = m->m_len = packetlen;
-	ether_input_mbuf(ifp, m);
+	ml_enqueue(&ml, m);
 
  out:
 	/*
@@ -1012,8 +1006,10 @@ smc91cxx_read(sc)
 	 * Check for another packet.
 	 */
 	packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W);
-	if (packetno & FIFO_REMPTY)
+	if (packetno & FIFO_REMPTY) {
+		if_input(ifp, &ml);
 		return;
+	}
 	goto again;
 }
 

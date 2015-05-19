@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.37 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.38 2015/05/19 11:24:01 mpi Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -670,8 +670,9 @@ void
 egread(struct eg_softc *sc, caddr_t buf, int len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
-	
+
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
@@ -688,17 +689,9 @@ egread(struct eg_softc *sc, caddr_t buf, int len)
 	}
 
 	ifp->if_ipackets++;
+	ml_enqueue(&ml, m);
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	ether_input_mbuf(ifp, m);
+	if_input(ifp, &ml);
 }
 
 /*
@@ -707,14 +700,12 @@ egread(struct eg_softc *sc, caddr_t buf, int len)
 struct mbuf *
 egget(struct eg_softc *sc, caddr_t buf, int totlen)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (0);
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;

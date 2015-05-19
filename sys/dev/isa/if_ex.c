@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.37 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.38 2015/05/19 11:24:01 mpi Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -639,6 +639,7 @@ void
 ex_rx_intr(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	int rx_status, pkt_len, QQQ;
 	struct mbuf *m, *ipkt;
 
@@ -661,7 +662,6 @@ ex_rx_intr(struct ex_softc *sc)
 			if (ipkt == NULL)
 				ifp->if_iqdrops++;
 			else {
-				ipkt->m_pkthdr.rcvif = ifp;
 				ipkt->m_pkthdr.len = pkt_len;
 				ipkt->m_len = MHLEN;
 				while (pkt_len > 0) {
@@ -710,13 +710,8 @@ ex_rx_intr(struct ex_softc *sc)
 				} /* QQQ */
 			}
 #endif
-#if NBPFILTER > 0
-			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, ipkt,
-				    BPF_DIRECTION_IN);
-#endif
-			ether_input_mbuf(ifp, ipkt);
 			ifp->if_ipackets++;
+			ml_enqueue(&ml, ipkt);
       		}
     	} else
       		ifp->if_ierrors++;
@@ -727,6 +722,8 @@ ex_rx_intr(struct ex_softc *sc)
 		CSR_WRITE_2(sc, RCV_STOP_REG, sc->rx_upper_limit);
 	else
 		CSR_WRITE_2(sc, RCV_STOP_REG, sc->rx_head - 2);
+
+	if_input(ifp, &ml);
 
 	DODEBUG(Start_End, printf("ex_rx_intr: finish\n"););
 }	

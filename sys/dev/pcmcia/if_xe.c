@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.48 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.49 2015/05/19 11:24:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -751,6 +751,7 @@ xe_get(sc)
 {
 	u_int8_t rsr;
 	struct mbuf *top, **mp, *m;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int16_t pktlen, len, recvcount = 0;
 	u_int8_t *data;
@@ -773,7 +774,6 @@ xe_get(sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (recvcount);
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
 	len = MHLEN;
 	top = 0;
@@ -823,15 +823,11 @@ xe_get(sc)
 	/* Skip Rx packet. */
 	bus_space_write_2(sc->sc_bst, sc->sc_bsh, sc->sc_offset + DO0,
 	    DO_SKIP_RX_PKT);
-	
+
 	ifp->if_ipackets++;
-	
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top, BPF_DIRECTION_IN);
-#endif
-	
-	ether_input_mbuf(ifp, top);
+	ml_enqueue(&ml, top);
+	if_input(ifp, &ml);
+
 	return (recvcount);
 }
 

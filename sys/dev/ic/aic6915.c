@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.15 2015/04/28 14:07:47 jsg Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.16 2015/05/19 11:24:01 mpi Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -715,11 +715,11 @@ sf_rxintr(struct sf_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct sf_descsoft *ds;
 	struct sf_rcd_full *rcd;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint32_t cqci, word0;
 	int consumer, producer, bufproducer, rxidx, len;
 
- try_again:
 	cqci = sf_funcreg_read(sc, SF_CompletionQueueConsumerIndex);
 
 	consumer = CQCI_RxCompletionQ1ConsumerIndex_get(cqci);
@@ -812,21 +812,13 @@ sf_rxintr(struct sf_softc *sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __STRICT_ALIGNMENT */
 
-		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
-		/*
-		 * Pass this up to any BPF listeners.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NBPFILTER > 0 */
-
-		/* Pass it on. */
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 		ifp->if_ipackets++;
 	}
+
+	if_input(ifp, &ml);
 
 	/* Update the chip's pointers. */
 	sf_funcreg_write(sc, SF_CompletionQueueConsumerIndex,
@@ -834,9 +826,6 @@ sf_rxintr(struct sf_softc *sc)
 	     CQCI_RxCompletionQ1ConsumerIndex(consumer));
 	sf_funcreg_write(sc, SF_RxDescQueue1Ptrs,
 	    RXQ1P_RxDescQ1Producer(bufproducer));
-
-	/* Double-check for any new completions. */
-	goto try_again;
 }
 
 /*

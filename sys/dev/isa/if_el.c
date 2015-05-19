@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.25 2015/05/13 10:42:46 jsg Exp $       */
+/*    $OpenBSD: if_el.c,v 1.26 2015/05/19 11:24:01 mpi Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -490,6 +490,7 @@ elread(sc, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
@@ -508,17 +509,9 @@ elread(sc, len)
 	}
 
 	ifp->if_ipackets++;
+	ml_enqueue(&ml, m);
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-	ether_input_mbuf(ifp, m);
+	if_input(ifp, &ml);
 }
 
 /*
@@ -531,7 +524,6 @@ elget(sc, totlen)
 	struct el_softc *sc;
 	int totlen;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int iobase = sc->sc_iobase;
 	struct mbuf *top, **mp, *m;
 	int len;
@@ -539,7 +531,6 @@ elget(sc, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return 0;
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;

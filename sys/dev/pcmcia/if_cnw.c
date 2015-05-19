@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.28 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.29 2015/05/19 11:24:01 mpi Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -632,15 +632,15 @@ cnw_recv(sc)
 {
 	int rser;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	for (;;) {
 		WAIT_WOC(sc);
 		rser = bus_space_read_1(sc->sc_memt, sc->sc_memh,
 					sc->sc_memoff + CNW_EREG_RSER);
 		if (!(rser & CNW_RSER_RXAVAIL))
-			return;
+			break;
 
 		/* Pull packet off card */
 		m = cnw_read(sc);
@@ -651,30 +651,13 @@ cnw_recv(sc)
 		/* Did we manage to get the packet from the interface? */
 		if (m == NULL) {
 			++ifp->if_ierrors;
-			return;
+			break;
 		}
 		++ifp->if_ipackets;
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
-		/*
-		 * Check that the packet is for us or {multi,broad}cast. Maybe
-		 * there's a fool-poof hardware check for this, but I don't
-		 * really know...
-		 */
-		eh = mtod(m, struct ether_header *);
-		if ((eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(sc->sc_arpcom.ac_enaddr, eh->ether_dhost,
-			sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			continue;
-		}
-
-		ether_input_mbuf(ifp, m);
+		ml_enqueue(&ml, m);
 	}
+
+	if_input(ifp, &ml);
 }
 
 
