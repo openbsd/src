@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.2 2015/05/15 15:35:43 jsg Exp $ */
+/* $OpenBSD: exynos.c,v 1.3 2015/05/19 03:30:54 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -41,6 +41,8 @@ exynos_match(struct device *parent, void *cfdata, void *aux)
 	return (0);
 }
 
+void exynos5_init();
+
 struct cfattach exynos_ca = {
 	sizeof(struct armv7_softc), exynos_match, armv7_attach, NULL,
 	config_activate_children
@@ -81,18 +83,28 @@ struct armv7_board exynos_boards[] = {
 };
 
 struct board_dev *
-exynos_board_attach(void)
+exynos_board_devs(void)
+{
+	int i;
+
+	for (i = 0; exynos_boards[i].name != NULL; i++) {
+		if (exynos_boards[i].board_id == board_id)
+			return (exynos_boards[i].devs);
+	}
+	return (NULL);
+}
+
+void
+exynos_board_init(void)
 {
 	int i;
 
 	for (i = 0; exynos_boards[i].name != NULL; i++) {
 		if (exynos_boards[i].board_id == board_id) {
 			exynos_boards[i].init();
-			return (exynos_boards[i].devs);
 			break;
 		}
 	}
-	return (NULL);
 }
 
 const char *

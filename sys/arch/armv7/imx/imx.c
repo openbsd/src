@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.6 2015/05/17 12:28:03 jsg Exp $ */
+/* $OpenBSD: imx.c,v 1.7 2015/05/19 03:30:54 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -22,6 +22,8 @@
 #include <machine/bus.h>
 
 #include <armv7/armv7/armv7var.h>
+
+void imx6_init();
 
 struct cfattach imx_ca = {
 	sizeof(struct armv7_softc), armv7_match, armv7_attach, NULL,
@@ -259,18 +261,28 @@ struct armv7_board imx_boards[] = {
 };
 
 struct board_dev *
-imx_board_attach(void)
+imx_board_devs(void)
+{
+	int i;
+
+	for (i = 0; imx_boards[i].name != NULL; i++) {
+		if (imx_boards[i].board_id == board_id)
+			return (imx_boards[i].devs);
+	}
+	return (NULL);
+}
+
+void
+imx_board_init(void)
 {
 	int i;
 
 	for (i = 0; imx_boards[i].name != NULL; i++) {
 		if (imx_boards[i].board_id == board_id) {
 			imx_boards[i].init();
-			return (imx_boards[i].devs);
 			break;
 		}
 	}
-	return (NULL);
 }
 
 const char *

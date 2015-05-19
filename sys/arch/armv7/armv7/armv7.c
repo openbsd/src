@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.9 2015/05/15 15:35:43 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.10 2015/05/19 03:30:54 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -22,10 +22,7 @@
 #include <machine/bus.h>
 #include <arm/armv7/armv7var.h>
 #include <armv7/armv7/armv7var.h>
-
-#include "imx.h"
-#include "omap.h"
-#include "sunxi.h"
+#include <armv7/armv7/armv7_machdep.h>
 
 struct arm32_bus_dma_tag armv7_bus_dma_tag = {
 	0,
@@ -98,30 +95,14 @@ armv7_match(struct device *parent, void *cfdata, void *aux)
 
 extern char *hw_prod;
 
-struct board_dev * (*board_attach[])(void) = {
-#if NIMX > 0
-	imx_board_attach,
-#endif
-#if NOMAP > 0
-	omap_board_attach,
-#endif
-#if NSUNXI > 0
-	sunxi_board_attach,
-#endif
-};
-
 void
 armv7_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct armv7_softc *sc = (struct armv7_softc *)self;
 	struct board_dev *bd;
-	int i;
 
-	for (i = 0; i < nitems(board_attach); i++) {
-		sc->sc_board_devs = board_attach[i]();
-		if (sc->sc_board_devs != NULL)
-			break;
-	}
+	platform_board_init();
+	sc->sc_board_devs = platform_board_devs();
 
 	if (hw_prod)
 		printf(": %s\n", hw_prod);

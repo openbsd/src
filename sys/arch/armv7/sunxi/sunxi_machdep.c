@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunxi_machdep.c,v 1.7 2015/05/19 00:05:59 jsg Exp $	*/
+/*	$OpenBSD: sunxi_machdep.c,v 1.8 2015/05/19 03:30:54 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -34,20 +34,20 @@
 extern int sxiuartcnattach(bus_space_tag_t, bus_addr_t, int, long, tcflag_t);
 extern void sxidog_reset(void);
 extern char *sunxi_board_name(void);
+extern struct board_dev *sunxi_board_devs(void);
+extern void sunxi_board_init(void);
 extern int comcnspeed;
 extern int comcnmode;
 
-const char *platform_boot_name = "OpenBSD/sunxi";
-
 void
-platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-    uint32_t op, uint32_t val)
+sunxi_platform_smc_write(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t off, uint32_t op, uint32_t val)
 {
 
 }
 
 void
-platform_init_cons(void)
+sunxi_platform_init_cons(void)
 {
 	paddr_t paddr;
 
@@ -67,26 +67,55 @@ platform_init_cons(void)
 }
 
 void
-platform_watchdog_reset(void)
+sunxi_platform_watchdog_reset(void)
 {
 	sxidog_reset();
 }
 
 void
-platform_powerdown(void)
+sunxi_platform_powerdown(void)
 {
 
 }
 
 const char *
-platform_board_name(void)
+sunxi_platform_board_name(void)
 {
 	return (sunxi_board_name());
 }
 
 void
-platform_disable_l2_if_needed(void)
+sunxi_platform_disable_l2_if_needed(void)
 {
 
 }
 
+void
+sunxi_platform_board_init(void)
+{
+	sunxi_board_init();
+}
+
+struct armv7_platform sunxi_platform = {
+	.boot_name = "OpenBSD/sunxi",
+	.board_name = sunxi_platform_board_name,
+	.board_init = sunxi_platform_board_init,
+	.smc_write = sunxi_platform_smc_write,
+	.init_cons = sunxi_platform_init_cons,
+	.watchdog_reset = sunxi_platform_watchdog_reset,
+	.powerdown = sunxi_platform_powerdown,
+	.disable_l2_if_needed = sunxi_platform_disable_l2_if_needed,
+};
+
+struct armv7_platform *
+sunxi_platform_match(void)
+{
+	struct board_dev *devs;
+
+	devs = sunxi_board_devs();
+	if (devs == NULL)
+		return (NULL);
+
+	sunxi_platform.devs = devs;
+	return (&sunxi_platform);
+}

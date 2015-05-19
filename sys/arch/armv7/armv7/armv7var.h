@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.5 2015/05/15 15:35:43 jsg Exp $ */
+/* $OpenBSD: armv7var.h,v 1.6 2015/05/19 03:30:54 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -91,18 +91,6 @@ int	armv7_submatch(struct device *, void *, void *);
 #define BOARD_ID_IMX6_UDOO 4800
 #define BOARD_ID_IMX6_CUBOXI 4821
 extern uint32_t board_id;
-
-/* different arch init */
-void am335x_init(void);
-void imx6_init(void);
-void omap3_init(void);
-void omap4_init(void);
-void sxia1x_init(void);
-void sxia20_init(void);
-
-struct board_dev *imx_board_attach(void);
-struct board_dev *omap_board_attach(void);
-struct board_dev *sunxi_board_attach(void);
 
 #endif /* __ARMV7VAR_H__ */
 

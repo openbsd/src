@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.23 2015/05/19 00:05:59 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.24 2015/05/19 03:30:54 jsg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -404,8 +404,6 @@ initarm(void *arg0, void *arg1, void *arg2)
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	platform_disable_l2_if_needed();
-
 	/*
 	 * Temporarily replace bus_space_map() functions so that
 	 * console devices can get mapped.
@@ -419,11 +417,14 @@ initarm(void *arg0, void *arg1, void *arg2)
 	armv7_a4x_bs_tag.bs_map = bootstrap_bs_map;
 	tmp_bs_tag.bs_map = bootstrap_bs_map;
 
+	platform_init();
+	platform_disable_l2_if_needed();
+
 	/* setup a serial console for very early boot */
 	consinit();
 
 	/* Talk to the user */
-	printf("\n%s booting ...\n", platform_boot_name);
+	printf("\n%s booting ...\n", platform_boot_name());
 
 	printf("arg0 %p arg1 %p arg2 %p\n", arg0, arg1, arg2);
 	parse_uboot_tags(arg2);

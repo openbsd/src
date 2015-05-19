@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.5 2015/05/15 15:35:43 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.6 2015/05/19 03:30:54 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -21,6 +21,10 @@
 #include <machine/bus.h>
 
 #include <armv7/armv7/armv7var.h>
+
+void omap3_init();
+void omap4_init();
+void am335x_init();
 
 struct cfattach omap_ca = {
 	sizeof(struct armv7_softc), armv7_match, armv7_attach
@@ -131,18 +135,28 @@ struct armv7_board omap_boards[] = {
 };
 
 struct board_dev *
-omap_board_attach(void)
+omap_board_devs(void)
+{
+	int i;
+
+	for (i = 0; omap_boards[i].name != NULL; i++) {
+		if (omap_boards[i].board_id == board_id)
+			return (omap_boards[i].devs);
+	}
+	return (NULL);
+}
+
+void
+omap_board_init(void)
 {
 	int i;
 
 	for (i = 0; omap_boards[i].name != NULL; i++) {
 		if (omap_boards[i].board_id == board_id) {
 			omap_boards[i].init();
-			return (omap_boards[i].devs);
 			break;
 		}
 	}
-	return (NULL);
 }
 
 const char *

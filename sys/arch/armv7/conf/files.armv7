@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.10 2014/07/11 21:54:37 tedu Exp $
+#	$OpenBSD: files.armv7,v 1.11 2015/05/19 03:30:54 jsg Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -24,6 +24,7 @@ file	arch/arm/arm/softintr.c
 file	arch/armv7/armv7/armv7.c
 file	arch/armv7/armv7/armv7_machdep.c
 file	arch/armv7/armv7/autoconf.c
+file	arch/armv7/armv7/platform.c
 file	arch/arm/arm/disksubr.c			disk
 
 include "dev/sdmmc/files.sdmmc"

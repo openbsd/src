@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: exynos_machdep.c,v 1.3 2015/05/19 03:30:54 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -31,7 +31,8 @@
 
 extern void exdog_reset(void);
 extern char *exynos_board_name(void);
-extern int32_t agtimer_frequency;
+extern struct board_dev *exynos_board_devs(void);
+extern void exynos_board_init(void);
 extern int comcnspeed;
 extern int comcnmode;
 
@@ -81,7 +82,7 @@ exynos_platform_powerdown(void)
 }
 
 const char *
-platform_board_name(void)
+exynos_platform_board_name(void)
 {
 	return (exynos_board_name());
 }
@@ -92,12 +93,32 @@ exynos_platform_disable_l2_if_needed(void)
 
 }
 
+void
+exynos_platform_board_init(void)
+{
+	exynos_board_init();
+}
+
 struct armv7_platform exynos_platform = {
 	.boot_name = "OpenBSD/exynos",
+	.board_name = exynos_platform_board_name,
+	.board_init = exynos_platform_board_init,
 	.smc_write = exynos_platform_smc_write,
 	.init_cons = exynos_platform_init_cons,
 	.watchdog_reset = exynos_platform_watchdog_reset,
 	.powerdown = exynos_platform_powerdown,
-	.print_board_type = exynos_platform_print_board_type,
 	.disable_l2_if_needed = exynos_platform_disable_l2_if_needed,
 };
+
+struct armv7_platform *
+exynos_platform_match(void)
+{
+	struct board_dev *devs;
+
+	devs = exynos_board_devs();
+	if (devs == NULL)
+		return (NULL);
+
+	exynos_platform.devs = devs;
+	return (&exynos_platform);
+}
