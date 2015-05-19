@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.h,v 1.2 2014/03/29 18:09:29 guenther Exp $ */
+/*	$OpenBSD: a1xintc.h,v 1.3 2015/05/19 06:09:35 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,19 +27,19 @@
 
 extern volatile int current_spl_level;
 extern volatile int softint_pending;
-void intc_do_pending(void);
+void a1xintc_do_pending(void);
 
 #define SI_TO_IRQBIT(si)  (1U<<(si))
-void intc_setipl(int);
-void intc_splx(int);
-int intc_splraise(int);
-int intc_spllower(int);
-void intc_setsoftintr(int);
+void a1xintc_setipl(int);
+void a1xintc_splx(int);
+int a1xintc_splraise(int);
+int a1xintc_spllower(int);
+void a1xintc_setsoftintr(int);
 
-void intc_irq_handler(void *);
-void *intc_intr_establish(int, int, int (*)(void *), void *, char *);
-void intc_intr_disestablish(void *);
-const char *intc_intr_string(void *);
+void a1xintc_irq_handler(void *);
+void *a1xintc_intr_establish(int, int, int (*)(void *), void *, char *);
+void a1xintc_intr_disestablish(void *);
+const char *a1xintc_intr_string(void *);
 
 #endif /* ! _LOCORE */
 
