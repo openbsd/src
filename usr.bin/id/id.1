@@ -1,4 +1,4 @@
-.\"	$OpenBSD: id.1,v 1.17 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: id.1,v 1.18 2015/05/19 16:03:19 millert Exp $
 .\"	$NetBSD: id.1,v 1.5 1995/09/28 08:05:40 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)id.1	8.2 (Berkeley) 5/5/94
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: May 19 2015 $
 .Dt ID 1
 .Os
 .Sh NAME
@@ -41,6 +41,9 @@
 .Nd return user identity
 .Sh SYNOPSIS
 .Nm id
+.Op Ar user
+.Nm id
+.Fl c
 .Op Ar user
 .Nm id
 .Fl G Op Fl n
@@ -70,6 +73,9 @@ In this case, the real and effective IDs are assumed to be the same.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl c
+Display the login class of the real user ID or the specified
+.Ar user .
 .It Fl G
 Display the different group IDs (effective, real and supplementary)
 as whitespace separated numbers, in no particular order.
@@ -104,6 +110,10 @@ ID is displayed as a name, preceded by the keyword
 The list of groups to which the user belongs is then displayed as names,
 preceded by the keyword
 .Dq groups .
+If there is a login class specified for the user in the
+.Xr passwd 5
+database, it is displayed, preceded by the keyword
+.Dq class .
 Each display is on a separate line.
 .It Fl r
 Display the real ID for the
@@ -117,7 +127,8 @@ Display the effective user ID as a number.
 .Sh EXIT STATUS
 .Ex -std id
 .Sh SEE ALSO
-.Xr who 1
+.Xr who 1 ,
+.Xr login.conf 5
 .Sh STANDARDS
 The
 .Nm
@@ -125,9 +136,9 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Pp
-The flag
-.Op Fl p
-is an extension to that specification.
+The flags
+.Op Fl cp
+are extensions to that specification.
 .Sh HISTORY
 The
 historic

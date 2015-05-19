@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.22 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: id.c,v 1.23 2015/05/19 16:03:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,6 +38,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <login_cap.h>
 
 void	current(void);
 void	pretty(struct passwd *);
@@ -52,12 +53,12 @@ main(int argc, char *argv[])
 {
 	struct group *gr;
 	struct passwd *pw;
-	int Gflag, ch, gflag, nflag, pflag, rflag, uflag;
+	int ch, cflag, Gflag, gflag, nflag, pflag, rflag, uflag;
 	uid_t uid;
 	gid_t gid;
 	const char *opts;
 
-	Gflag = gflag = nflag = pflag = rflag = uflag = 0;
+	cflag = Gflag = gflag = nflag = pflag = rflag = uflag = 0;
 
 	if (strcmp(getprogname(), "groups") == 0) {
 		Gflag = 1;
@@ -72,10 +73,13 @@ main(int argc, char *argv[])
 		if (argc > 1)
 			usage();
 	} else
-		opts = "Ggnpru";
+		opts = "cGgnpru";
 
 	while ((ch = getopt(argc, argv, opts)) != -1)
 		switch(ch) {
+		case 'c':
+			cflag = 1;
+			break;
 		case 'G':
 			Gflag = 1;
 			break;
@@ -101,7 +105,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	switch (Gflag + gflag + pflag + uflag) {
+	switch (cflag + Gflag + gflag + pflag + uflag) {
 	case 1:
 		break;
 	case 0:
@@ -116,6 +120,16 @@ main(int argc, char *argv[])
 		usage();
 
 	pw = *argv ? who(*argv) : NULL;
+
+	if (cflag) {
+		if (pw == NULL)
+			pw = getpwuid(getuid());
+		if (pw != NULL && pw->pw_class != NULL && *pw->pw_class != '\0')
+			(void)printf("%s\n", pw->pw_class);
+		else
+			(void)printf("%s\n", LOGIN_DEFCLASS);
+		exit(0);
+	}
 
 	if (gflag) {
 		gid = pw ? pw->pw_gid : rflag ? getgid() : getegid();
@@ -190,6 +204,8 @@ pretty(struct passwd *pw)
 		(void)printf("groups\t");
 		group(NULL, 1);
 	}
+	if (pw != NULL && pw->pw_class != NULL && *pw->pw_class != '\0')
+		(void)printf("class\t%s\n", pw->pw_class);
 }
 
 void
@@ -325,6 +341,7 @@ usage(void)
 		(void)fprintf(stderr, "usage: whoami\n");
 	} else {
 		(void)fprintf(stderr, "usage: id [user]\n");
+		(void)fprintf(stderr, "       id -c [user]\n");
 		(void)fprintf(stderr, "       id -G [-n] [user]\n");
 		(void)fprintf(stderr, "       id -g [-nr] [user]\n");
 		(void)fprintf(stderr, "       id -p [user]\n");
