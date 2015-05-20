@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.332 2015/05/19 11:09:24 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.333 2015/05/20 08:28:54 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -466,7 +466,6 @@ if_output(struct ifnet *ifp, struct mbuf *m)
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 
-	ifp->if_opackets++;
 	if_start(ifp);
 
 	splx(s);

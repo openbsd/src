@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.142 2015/05/19 15:10:59 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.143 2015/05/20 08:28:54 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -576,6 +576,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		ifp->if_collisions++;
 		return (error);
 	}
+	ifp->if_opackets++;
 
 	tun_wakeup(tp);
 	return (0);
