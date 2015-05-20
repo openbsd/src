@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.8 2015/05/19 00:05:59 jsg Exp $
+#	$OpenBSD: Makefile.armv7,v 1.9 2015/05/20 01:44:20 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -176,12 +176,15 @@ install-kernel-${MACHINE_NAME}:
 
 
 # until we get native booting working, put this in the tree.
+KERNADDR_OMAP=0x80300000
+KERNADDR_IMX=0x10300000
+KERNADDR_SUNXI=0x40300000
 
-bsdrd.umg: bsd.rd
-	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd.rd bsdrd.umg
-
-bsd.umg: bsd
-	mkuboot -a arm -o linux -e ${KERNEL_BASE_PHYS} -l ${KERNEL_BASE_PHYS} bsd bsd.umg
+.for SOC in IMX OMAP SUNXI
+bsd.${SOC}.umg: bsd
+	mkuboot -a arm -o linux -e ${KERNADDR_${SOC}} -l ${KERNADDR_${SOC}} \
+	    bsd bsd.${SOC}.umg
+.endfor
 
 bsd.rd: bsd
 	cp bsd bsd.rd

@@ -1,13 +1,4 @@
-# $OpenBSD: GENERIC-OMAP,v 1.16 2015/05/19 00:05:59 jsg Exp $
-#
-# GENERIC machine description file
-#
-# This machine description file is used to generate the default OpenBSD
-# kernel.  The generic kernel does not include all options, subsystems
-# and device drivers, but should be useful for most applications.
-#
-# The machine description file can be customised for your specific
-# machine to reduce the kernel size and improve its performance.
+#	$OpenBSD: GENERIC,v 1.1 2015/05/20 01:44:20 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -18,30 +9,20 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-machine	armv7	arm
-include "../../../conf/GENERIC"
+machine		armv7 arm
+include		"../../../conf/GENERIC"
 
-makeoptions	KERNEL_BASE_PHYS="0x80300000"
 makeoptions	KERNEL_BASE_VIRT="0xc0300000"
 
-option CONF_HAVE_GPIO
-
-#options		APERTURE
-
-#options BOOT_CONFIG	# boot-time kernel config
-
-# estimated number of users
-
-maxusers	32
-
-# CPU options
-options	CPU_ARMv7	# Support the ARMv7
+maxusers	32			# estimated number of users
+option		CPU_ARMv7		# Support the ARMv7
 
 #option WSDISPLAY_COMPAT_USL		# VT handling
 #option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=1
 #option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
+option		CONF_HAVE_GPIO
 option		USBVERBOSE
 
 config		bsd	swap generic
@@ -50,50 +31,79 @@ config		bsd	swap generic
 mainbus0	at root
 cpu0		at mainbus?
 
+# Cortex-A9
+cortex0		at mainbus?
+ampintc*	at cortex?
+amptimer*	at cortex?
+#agtimer*	at cortex?
+armliicc*	at cortex?
+
+# iMX
+imx0		at mainbus?		# iMX SoC
+imxccm*		at imx?			# clock control module
+imxiomuxc*	at imx?			# iomux controller
+imxdog*		at imx?			# watchdog timer
+imxocotp*	at imx?			# on-chip otp controller
+imxgpio*	at imx?			# user-visible GPIO pins?
+imxenet*	at imx?			# ethernet
+imxuart*	at imx?			# onboard uarts
+imxiic*		at imx?			# i2c
+iic*		at imxiic?
+imxesdhc*	at imx?			# SDHC controller
+sdmmc*		at imxesdhc?		# SD/MMC bus
+ahci*		at imx?			# AHCI/SATA
+ehci*		at imx?			# EHCI (shim)
+usb*		at ehci?
+
 # OMAP3xxx/OMAP4xxx SoC
 omap0		at mainbus?
 omapid*		at omap?
 
-# Cortex-A9 (OMAP4)
-cortex0		at mainbus?
-ampintc*	at cortex?
-amptimer*	at cortex?
-#armliicc*	at cortex?		# L2 cache controller
-
-# OMAP3 only
-intc*		at omap?			# interrupt controller
-edma*		at omap?			# dma controller
-
 # OMAP on-chip devices
-prcm*		at omap?			# power/clock controller
-sitaracm*	at omap?			# sitara control module
-omdog*		at omap?			# watchdog timer
-omgpio*		at omap?			# user-visible GPIO pins?
+intc*		at omap?		# OMAP3 interrupt controller
+edma*		at omap?		# OMAP3 dma controller
+prcm*		at omap?		# power/clock controller
+sitaracm*	at omap?		# sitara control module
+omdog*		at omap?		# watchdog timer
+omgpio*		at omap?		# user-visible GPIO pins?
 gpio*		at omgpio?
 #tiiic*		at omap?
 #iic*		at tiiic?
-gptimer*	at omap?			# general purpose timers
-dmtimer*	at omap?			# am335x dual mode timers
-ommmc*		at omap?			# SD/MMC card controller
+gptimer*	at omap?		# general purpose timers
+dmtimer*	at omap?		# am335x dual mode timers
 omusbtll*	at omap?
 cpsw*		at omap?
+com*		at omap?		# onboard uarts
+ommmc*		at omap?		# SD/MMC card controller
+sdmmc*		at ommmc?		# SD/MMC bus
 
-#omkbd*		at omap?
-#wskbd*		at omkbd? mux 1
-
-ehci*		at omap?			# EHCI (shim)
+ehci*		at omap?		# EHCI (shim)
 usb*		at ehci?
 
-#usbotg0	at omap?
+# Sunxi A1x/A20 SoC
+sunxi0		at mainbus?
+
+# Sunxi on-chip devices
+a1xintc*	at sunxi?		# A1x interrupt controller
+sxipio*		at sunxi?		# GPIO pins for leds & PHYs
+gpio*		at sxipio?
+sxiccmu*	at sunxi?		# Clock Control Module/Unit
+sxitimer*	at sunxi?
+sxidog*		at sunxi?		# watchdog timer
+sxirtc*		at sunxi?		# Real Time Clock
+sxiuart*	at sunxi?		# onboard UARTs
+sxie*		at sunxi?
+ahci*		at sunxi?		# AHCI/SATA (shim)
+ehci*		at sunxi?		# EHCI (shim)
+usb*		at ehci?	#flags 0x1
+#ohci*		at sunxi?
 #usb*		at ohci?
 
-## USB bus support
+# USB bus support
 usb*		at ehci?	flags 0x1
 uhub*		at usb?
 uhub*		at uhub?
 
-uhub*		at usb?			# USB Hubs
-uhub*		at uhub?		# USB Hubs
 ualea*		at uhub?		# Araneus Alea II TRNG
 umodem*		at uhub?		# USB Modems/Serial
 ucom*		at umodem?
@@ -105,11 +115,11 @@ ubsa*		at uhub?		# Belkin serial adapter
 ucom*		at ubsa?
 uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
 ucom*		at uftdi?
-uplcom* 	at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+uplcom*		at uhub?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*		at uplcom?
 umct*		at uhub?		# MCT USB-RS232 serial adapter
 ucom*		at umct?
-uaudio* 	at uhub?		# USB Audio
+uaudio*		at uhub?		# USB Audio
 audio*		at uaudio?
 umidi*		at uhub?		# USB MIDI
 midi*		at umidi?
@@ -131,8 +141,8 @@ cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
-upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
-ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
@@ -141,27 +151,30 @@ radio*		at udsbr?		# USB radio
 ugen*		at uhub?		# USB Generic driver
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 
-ukphy*		at mii?			# "unknown" PHYs
 atphy*		at mii?			# Attansic F1 PHYs
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+rlphy*		at mii?			# Realtek 8139 internal PHYs
+ukphy*		at mii?			# "unknown" PHYs
 
 scsibus*	at scsi?
 sd*		at scsibus?
-st*		at scsibus?
 cd*		at scsibus?
+st*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
 
-# onboard uarts
-com*		at omap?
+# GPIO "pin bus" drivers
+gpioiic*	at gpio?		# I2C bus bit-banging
+iic*		at gpioiic?
+gpioow*		at gpio?		# 1-Wire bus bit-banging
+onewire*	at gpioow?
 
-# LCD
-#omdisplay0	at omap?			# LCD DISPLAY
-#wsdisplay*	at omdisplay? console ?
-
-sdmmc*		at ommmc?		# SD/MMC bus
-
-# APM emulation
-#apm0		at pxaip?
+# 1-Wire devices
+option	ONEWIREVERBOSE
+owid*		at onewire?		# ID
+owsbm*		at onewire?		# Smart Battery Monitor
+owtemp*		at onewire?		# Temperature
+owctr*		at onewire?		# Counter device
 
 # Pseudo-Devices
 pseudo-device hotplug         1       # devices hot plugging

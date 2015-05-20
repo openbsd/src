@@ -1,7 +1,11 @@
-#	$OpenBSD: RAMDISK-IMX,v 1.15 2015/05/19 00:05:59 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.1 2015/05/20 01:44:20 jsg Exp $
 
 machine		armv7 arm
-maxusers	4
+
+makeoptions	KERNEL_BASE_VIRT="0xc0300000"
+
+maxusers	4			# estimated number of users
+option		CPU_ARMv7		# Support the ARMv7
 
 option		TIMEZONE=0
 option		DST=0
@@ -12,48 +16,93 @@ option		BOOT_CONFIG
 option		MINIROOTSIZE=10240
 option		RAMDISK_HOOKS
 
-option		USBVERBOSE
-
 option		FFS
 option		MSDOSFS
 option		INET
 option		INET6
 option		EXT2FS
 
-makeoptions	KERNEL_BASE_PHYS="0x10300000"
-makeoptions	KERNEL_BASE_VIRT="0xc0300000"
-option		CPU_ARMv7	# Support the ARMv7
+option		USBVERBOSE
 
 config		bsd root on rd0a swap on rd0b
 
+# The main bus device
 mainbus0	at root
 cpu0		at mainbus?
 
-cortex0		at mainbus?	# Cortex-A9 (iMX6)
+# Cortex-A9
+cortex0		at mainbus?
 ampintc*	at cortex?
 amptimer*	at cortex?
+#agtimer*	at cortex?
 armliicc*	at cortex?
 
-imx0		at mainbus?	# iMX SoC
-imxccm*		at imx?		# clock control module
-imxiomuxc*	at imx?		# iomux controller
-imxdog*		at imx?		# watchdog timer
-imxocotp*	at imx?		# on-chip otp controller
-imxgpio*	at imx?		# user-visible GPIO pins?
-imxesdhc*	at imx?		# SDHC controller
-imxenet*	at imx?		# ethernet
-imxuart*	at imx?		# onboard uarts
-imxiic*		at imx?		# i2c
-ahci*		at imx?		# AHCI/SATA
-ehci*		at imx?
+# iMX
+imx0		at mainbus?		# iMX SoC
+imxccm*		at imx?			# clock control module
+imxiomuxc*	at imx?			# iomux controller
+imxdog*		at imx?			# watchdog timer
+imxocotp*	at imx?			# on-chip otp controller
+imxgpio*	at imx?			# user-visible GPIO pins?
+imxenet*	at imx?			# ethernet
+imxuart*	at imx?			# onboard uarts
+imxiic*		at imx?			# i2c
+iic*		at imxiic?
+imxesdhc*	at imx?			# SDHC controller
+sdmmc*		at imxesdhc?		# SD/MMC bus
+ahci*		at imx?			# AHCI/SATA
+ehci*		at imx?			# EHCI (shim)
 usb*		at ehci?
 
+# OMAP3xxx/OMAP4xxx SoC
+omap0		at mainbus?
+omapid*		at omap?
+
+# OMAP on-chip devices
+intc*		at omap?		# OMAP3 interrupt controller
+edma*		at omap?		# OMAP3 dma controller
+prcm*		at omap?		# power/clock controller
+sitaracm*	at omap?		# sitara control module
+omdog*		at omap?		# watchdog timer
+omgpio*		at omap?		# user-visible GPIO pins?
+gpio*		at omgpio?
+#tiiic*		at omap?
+#iic*		at tiiic?
+gptimer*	at omap?		# general purpose timers
+dmtimer*	at omap?		# am335x dual mode timers
+omusbtll*	at omap?
+cpsw*		at omap?
+com*		at omap?		# onboard uarts
+ommmc*		at omap?		# SD/MMC card controller
+sdmmc*		at ommmc?		# SD/MMC bus
+
+ehci*		at omap?		# EHCI (shim)
+usb*		at ehci?
+
+# Sunxi A1x/A20 SoC
+sunxi0		at mainbus?
+
+# Sunxi on-chip devices
+a1xintc*	at sunxi?		# A1x interrupt controller
+sxipio*		at sunxi?		# GPIO pins for leds & PHYs
+gpio*		at sxipio?
+sxiccmu*	at sunxi?		# Clock Control Module/Unit
+sxitimer*	at sunxi?
+sxidog*		at sunxi?		# watchdog timer
+sxirtc*		at sunxi?		# Real Time Clock
+sxiuart*	at sunxi?		# onboard UARTs
+sxie*		at sunxi?
+ahci*		at sunxi?		# AHCI/SATA (shim)
+ehci*		at sunxi?		# EHCI (shim)
+usb*		at ehci?	#flags 0x1
+#ohci*		at sunxi?
+#usb*		at ohci?
+
+# USB bus support
 usb*		at ehci?	flags 0x1
 uhub*		at usb?
 uhub*		at uhub?
 
-uhub*		at usb?
-uhub*		at uhub?
 umodem*		at uhub?		# USB Modems/Serial
 ucom*		at umodem?
 uvisor*		at uhub?		# Handspring Visor
@@ -73,7 +122,7 @@ audio*		at uaudio?
 umidi*		at uhub?		# USB MIDI
 midi*		at umidi?
 ulpt*		at uhub?		# USB Printers
-umass*		at uhub?
+umass*		at uhub?		# USB Mass Storage devices
 uhidev*		at uhub?		# Human Interface Devices
 ukbd*		at uhidev?		# USB keyboard
 wskbd*		at ukbd? mux 1
@@ -99,15 +148,13 @@ ugen*		at uhub?		# USB Generic driver
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 
 atphy*		at mii?			# Attansic F1 PHYs
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+rlphy*		at mii?			# Realtek 8139 internal PHYs
 ukphy*		at mii?			# "unknown" PHYs
 
 scsibus*	at scsi?
 sd*		at scsibus?
 cd*		at scsibus?
-
-sdmmc*		at imxesdhc?		# SD/MMC bus
-
-iic*		at imxiic?
 
 pseudo-device	loop 1
 pseudo-device	bpfilter 1

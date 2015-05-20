@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2015/05/19 00:05:59 jsg Exp $
+#	$OpenBSD: Makefile,v 1.9 2015/05/20 01:44:20 jsg Exp $
 
 REV=	${OSrev}
 
@@ -37,26 +37,27 @@ all ${IMAGE}:
 .else
 
 ALLSOC=		IMX OMAP SUNXI
-ALLBSD=
-ALLBSDRD=
+ALLBSD=		bsd
+ALLBSDRD=	${BSD_RD}
 .for SOC in ${ALLSOC}
-ALLBSD+=	bsd.${SOC}
-ALLBSDRD+=	${BSD_RD}.${SOC} ${BSD_RD}.${SOC}.umg
-all:	${ALLBSDRD}
+ALLBSDRD+=	${BSD_RD}.${SOC}.umg
 .endfor
+all:	${ALLBSDRD}
+
+bsd:
+	cd ${TOP}/../../sys/arch/armv7/conf && config RAMDISK
+	cd ${TOP}/../../sys/arch/armv7/compile/RAMDISK && \
+	    ${MAKE} clean && exec ${MAKE}
+	cp ${TOP}/../../sys/arch/armv7/compile/RAMDISK/bsd bsd
+
+${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
+	cp bsd ${BSD_RD}
+	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
 
 .for SOC in ${ALLSOC}
-bsd.${SOC}:
-	cd ${TOP}/../../sys/arch/armv7/conf && config RAMDISK-${SOC}
-	cd ${TOP}/../../sys/arch/armv7/compile/RAMDISK-${SOC} && \
-	    ${MAKE} clean && exec ${MAKE}
-	cp ${TOP}/../../sys/arch/armv7/compile/RAMDISK-${SOC}/bsd bsd.${SOC}
-
-${BSD_RD}.${SOC}: ${CBIN} ${IMAGE} bsd.${SOC} rdsetroot
-	cp bsd.${SOC} ${BSD_RD}.${SOC}
-	${.OBJDIR}/rdsetroot ${BSD_RD}.${SOC} ${IMAGE}
+${BSD_RD}.${SOC}.umg: ${BSD_RD}
 	mkuboot -a arm -o linux -e ${KERNADDR_${SOC}} -l ${KERNADDR_${SOC}} \
-	    ${BSD_RD}.${SOC} ${BSD_RD}.${SOC}.umg
+	    ${BSD_RD} ${BSD_RD}.${SOC}.umg
 .endfor
 
 ${IMAGE}: rd_setup do_files rd_teardown

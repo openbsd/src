@@ -1,6 +1,5 @@
 
 REV=	${OSrev}
-BSD_RD=		bsd.rd.OMAP
 
 IMAGE=	miniroot-${BOARD}-${REV}.fs
 MKUBOOT?=	mkuboot

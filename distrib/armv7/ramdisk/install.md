@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2015/05/04 19:55:26 rpe Exp $
+#	$OpenBSD: install.md,v 1.8 2015/05/20 01:44:20 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,23 +62,12 @@ md_installboot() {
 	local _disk=$1
 	mount /dev/${_disk}i /mnt/mnt
 
-	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBoard\).*/s//\1/p')
-	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: \(BeagleBone\).*/s//\1/p')
-	PANDA=$(scan_dmesg '/^omap0 at mainbus0: \(PandaBoard\)/s//\1/p')
-	IMX=$(scan_dmesg '/^imx0 at mainbus0: \(i.MX6.*\)/s//IMX/p')
-	SUNXI=$(scan_dmesg '/^sunxi0 at mainbus0: \(A.*\)/s//SUNXI/p')
+	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP3 \(BeagleBoard\).*/s//\1/p')
+	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: TI AM335x \(BeagleBone\).*/s//\1/p')
+	PANDA=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP4 \(PandaBoard\)/s//\1/p')
 
-        if [[ -f /mnt/bsd.${MDPLAT} ]]; then
-                mv /mnt/bsd.${MDPLAT} /mnt/bsd
-        fi
         if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
                 mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
-        fi
-        if [[ -f /mnt/bsd.mp.${MDPLAT} ]]; then
-                mv /mnt/bsd.mp.${MDPLAT} /mnt/bsd.mp
-        fi
-        if [[ -f /mnt/bsd.rd.${MDPLAT} ]]; then
-                mv /mnt/bsd.rd.${MDPLAT} /mnt/bsd.rd
         fi
         if [[ -f /mnt/bsd.rd.${MDPLAT}.umg ]]; then
                 mv /mnt/bsd.rd.${MDPLAT}.umg /mnt/mnt/bsdrd.umg
@@ -123,8 +112,7 @@ md_prep_fdisk() {
 	local newfs_args=${NEWFSARGS_msdos}
 
 	# imx needs an ext2fs filesystem
-	IMX=$(scan_dmesg '/^imx0 at mainbus0: \(i.MX6.*\)/s//IMX/p')
-	if [[ -n $IMX ]]; then
+	if [[ ${MDPLAT} == "IMX" ]]; then
 		bootparttype="83"
 		bootfstype="ext2fs"
 		newfs_args=${NEWFSARGS_ext2fs}
