@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.122 2015/05/20 08:28:54 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.123 2015/05/20 08:54:37 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -370,7 +370,6 @@ vlan_input(struct mbuf *m, void *hdr)
 int
 vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 {
-	struct ifih		*vlan_ifih;
 	struct sockaddr_dl	*sdl1, *sdl2;
 	struct vlan_taghash	*tagh;
 	u_int			 flags;
@@ -381,14 +380,15 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	if (ifv->ifv_p == p && ifv->ifv_tag == tag) /* noop */
 		return (0);
 
-	/* Share an ifih between multiple vlan(4) instances. */
-	vlan_ifih = SLIST_FIRST(&p->if_inputs);
-	if (vlan_ifih->ifih_input != vlan_input) {
-		vlan_ifih = malloc(sizeof(*vlan_ifih), M_DEVBUF, M_NOWAIT);
-		if (vlan_ifih == NULL)
+	/* Can we share an ifih between multiple vlan(4) instances? */
+	ifv->ifv_ifih = SLIST_FIRST(&p->if_inputs);
+	if (ifv->ifv_ifih->ifih_input != vlan_input) {
+		ifv->ifv_ifih = malloc(sizeof(*ifv->ifv_ifih), M_DEVBUF,
+		    M_NOWAIT);
+		if (ifv->ifv_ifih == NULL)
 			return (ENOMEM);
-		vlan_ifih->ifih_input = vlan_input;
-		vlan_ifih->ifih_refcnt = 0;
+		ifv->ifv_ifih->ifih_input = vlan_input;
+		ifv->ifv_ifih->ifih_refcnt = 0;
 	}
 
 	/* Remember existing interface flags and reset the interface */
@@ -443,10 +443,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 
 	ifv->ifv_tag = tag;
 
-	/* Change input handler of the physical interface. */
-	if (++vlan_ifih->ifih_refcnt == 1)
-		SLIST_INSERT_HEAD(&p->if_inputs, vlan_ifih, ifih_next);
-
 	/* Register callback for physical link state changes */
 	ifv->lh_cookie = hook_establish(p->if_linkstatehooks, 1,
 	    vlan_vlandev_state, ifv);
@@ -458,7 +454,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	vlan_vlandev_state(ifv);
 
 	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
+
 	s = splnet();
+	/* Change input handler of the physical interface. */
+	if (++ifv->ifv_ifih->ifih_refcnt == 1)
+		SLIST_INSERT_HEAD(&p->if_inputs, ifv->ifv_ifih, ifih_next);
+
 	LIST_INSERT_HEAD(&tagh[TAG_HASH(tag)], ifv, ifv_list);
 	splx(s);
 
@@ -468,7 +469,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 int
 vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 {
-	struct ifih		*vlan_ifih;
 	struct sockaddr_dl	*sdl;
 	struct ifvlan		*ifv;
 	struct ifnet		*p;
@@ -486,6 +486,12 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
+
+	/* Restore previous input handler. */
+	if (--ifv->ifv_ifih->ifih_refcnt == 0) {
+		SLIST_REMOVE(&p->if_inputs, ifv->ifv_ifih, ifih, ifih_next);
+		free(ifv->ifv_ifih, M_DEVBUF, sizeof(*ifv->ifv_ifih));
+	}
 	splx(s);
 
 	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
@@ -494,14 +500,6 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 	if (newp != NULL) {
 		ifp->if_link_state = LINK_STATE_INVALID;
 		if_link_state_change(ifp);
-	}
-
-	/* Restore previous input handler. */
-	vlan_ifih = SLIST_FIRST(&p->if_inputs);
-	KASSERT(vlan_ifih->ifih_input == vlan_input);
-	if (--vlan_ifih->ifih_refcnt == 0) {
-		SLIST_REMOVE_HEAD(&p->if_inputs, ifih_next);
-		free(vlan_ifih, M_DEVBUF, sizeof(*vlan_ifih));
 	}
 
 	/*
