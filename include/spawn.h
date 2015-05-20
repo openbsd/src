@@ -1,4 +1,4 @@
-/*	$OpenBSD: spawn.h,v 1.2 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: spawn.h,v 1.3 2015/05/20 22:50:07 millert Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -87,7 +87,7 @@ int posix_spawnattr_getschedpolicy(const posix_spawnattr_t *__restrict,
 int posix_spawnattr_getsigdefault(const posix_spawnattr_t *__restrict,
     sigset_t *__restrict);
 int posix_spawnattr_getsigmask(const posix_spawnattr_t *__restrict,
-    sigset_t *__restrict sigmask);
+    sigset_t *__restrict);
 
 int posix_spawnattr_setflags(posix_spawnattr_t *, short);
 int posix_spawnattr_setpgroup(posix_spawnattr_t *, pid_t);
