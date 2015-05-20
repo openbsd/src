@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipiovar.h,v 1.2 2013/10/23 18:01:52 jasper Exp $	*/
+/*	$OpenBSD: sxipiovar.h,v 1.3 2015/05/20 03:49:23 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -28,8 +28,6 @@
 
 #define SXIPIO_USB1_PWR		230
 #define SXIPIO_USB2_PWR		227
-#define SXIPIO_LED_GREEN		244
-#define SXIPIO_LED_BLUE		245
 #define SXIPIO_SATA_PWR		40
 #define	SXIPIO_EMAC_NPINS	18	/* PORTA 0-17 */
 

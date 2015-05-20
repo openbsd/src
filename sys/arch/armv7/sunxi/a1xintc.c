@@ -1,4 +1,4 @@
-/*	$OpenBSD: a1xintc.c,v 1.5 2015/05/19 06:09:35 jsg Exp $	*/
+/*	$OpenBSD: a1xintc.c,v 1.6 2015/05/20 03:49:23 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -27,7 +27,6 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
-#include <armv7/sunxi/sxipiovar.h>
 #include <armv7/sunxi/a1xintc.h>
 
 #ifdef DEBUG_INTC
@@ -317,10 +316,6 @@ a1xintc_irq_handler(void *frame)
 	irq = bus_space_read_4(a1xintc_iot, a1xintc_ioh, INTC_VECTOR_REG) >> 2;
 	if (irq == 0)
 		return;
-	if (irq == 1)
-		sxipio_togglepin(SXIPIO_LED_BLUE);
-
-	sxipio_setpin(SXIPIO_LED_GREEN);
 
 	prio = a1xintc_handler[irq].iq_irq;
 	s = a1xintc_splraise(prio);
@@ -355,8 +350,6 @@ a1xintc_irq_handler(void *frame)
 			ih->ih_count.ec_count++;
 	}
 	a1xintc_splx(s);
-
-	sxipio_clrpin(SXIPIO_LED_GREEN);
 }
 
 void *
