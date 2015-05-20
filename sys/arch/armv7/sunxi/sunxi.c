@@ -1,4 +1,4 @@
-/* $OpenBSD: sunxi.c,v 1.5 2015/05/19 03:30:54 jsg Exp $ */
+/* $OpenBSD: sunxi.c,v 1.6 2015/05/20 00:14:56 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -24,11 +24,12 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/sunxi/sunxireg.h>
 
-void sxia1x_init();
-void sxia20_init();
+int	sunxi_match(struct device *, void *, void *);
+void	sxia1x_init();
+void	sxia20_init();
 
 struct cfattach sunxi_ca = {
-	sizeof(struct armv7_softc), armv7_match, armv7_attach
+	sizeof(struct armv7_softc), sunxi_match, armv7_attach
 };
 
 struct cfdriver sunxi_cd = {
@@ -154,4 +155,10 @@ sunxi_board_name(void)
 		}
 	}
 	return (NULL);
+}
+
+int
+sunxi_match(struct device *parent, void *cfdata, void *aux)
+{
+	return (sunxi_board_devs() != NULL);
 }

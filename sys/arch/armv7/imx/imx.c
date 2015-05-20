@@ -1,4 +1,4 @@
-/* $OpenBSD: imx.c,v 1.7 2015/05/19 03:30:54 jsg Exp $ */
+/* $OpenBSD: imx.c,v 1.8 2015/05/20 00:14:55 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -23,10 +23,11 @@
 
 #include <armv7/armv7/armv7var.h>
 
-void imx6_init();
+int	imx_match(struct device *, void *, void *);
+void	imx6_init();
 
 struct cfattach imx_ca = {
-	sizeof(struct armv7_softc), armv7_match, armv7_attach, NULL,
+	sizeof(struct armv7_softc), imx_match, armv7_attach, NULL,
 	config_activate_children
 };
 
@@ -297,4 +298,10 @@ imx_board_name(void)
 		}
 	}
 	return (NULL);
+}
+
+int
+imx_match(struct device *parent, void *cfdata, void *aux)
+{
+	return (imx_board_devs() != NULL);
 }

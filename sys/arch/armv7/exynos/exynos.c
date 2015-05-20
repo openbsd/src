@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.3 2015/05/19 03:30:54 jsg Exp $ */
+/* $OpenBSD: exynos.c,v 1.4 2015/05/20 00:14:55 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -24,24 +24,8 @@
 
 #include <armv7/armv7/armv7var.h>
 
-static int
-exynos_match(struct device *parent, void *cfdata, void *aux)
-{
-	/* If we're running with fdt, do not attach. */
-	/* XXX: Find a better way. */
-	if (fdt_next_node(0))
-		return (0);
-
-	switch (board_id)
-	{
-	case BOARD_ID_EXYNOS5_CHROMEBOOK:
-		return (1);
-	}
-
-	return (0);
-}
-
-void exynos5_init();
+int	exynos_match(struct device *, void *, void *);
+void	exynos5_init();
 
 struct cfattach exynos_ca = {
 	sizeof(struct armv7_softc), exynos_match, armv7_attach, NULL,
@@ -119,4 +103,15 @@ exynos_board_name(void)
 		}
 	}
 	return (NULL);
+}
+
+int
+exynos_match(struct device *parent, void *cfdata, void *aux)
+{
+	/* If we're running with fdt, do not attach. */
+	/* XXX: Find a better way. */
+	if (fdt_next_node(0))
+		return (0);
+
+	return (imx_board_devs() != NULL);
 }

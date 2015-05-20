@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.6 2015/05/19 03:30:54 jsg Exp $ */
+/* $OpenBSD: omap.c,v 1.7 2015/05/20 00:14:56 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -22,12 +22,13 @@
 
 #include <armv7/armv7/armv7var.h>
 
-void omap3_init();
-void omap4_init();
-void am335x_init();
+int	omap_match(struct device *, void *, void *);
+void	omap3_init();
+void	omap4_init();
+void	am335x_init();
 
 struct cfattach omap_ca = {
-	sizeof(struct armv7_softc), armv7_match, armv7_attach
+	sizeof(struct armv7_softc), omap_match, armv7_attach
 };
 
 struct cfdriver omap_cd = {
@@ -171,4 +172,10 @@ omap_board_name(void)
 		}
 	}
 	return (NULL);
+}
+
+int
+omap_match(struct device *parent, void *cfdata, void *aux)
+{
+	return (omap_board_devs() != NULL);
 }
