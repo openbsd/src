@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x540.c,v 1.3 2014/08/25 14:26:25 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_x540.c,v 1.4 2015/05/20 14:34:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -42,9 +42,6 @@ int32_t ixgbe_poll_flash_update_done_X540(struct ixgbe_hw *hw);
 int32_t ixgbe_get_swfw_sync_semaphore(struct ixgbe_hw *hw);
 void ixgbe_release_swfw_sync_semaphore(struct ixgbe_hw *hw);
 
-int32_t ixgbe_get_link_capabilities_X540(struct ixgbe_hw *hw,
-					 ixgbe_link_speed *speed,
-					 bool *autoneg);
 enum ixgbe_media_type ixgbe_get_media_type_X540(struct ixgbe_hw *hw);
 int32_t ixgbe_setup_mac_link_X540(struct ixgbe_hw *hw, ixgbe_link_speed speed,
 				  bool link_up_wait_to_complete);
@@ -140,23 +137,6 @@ int32_t ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	mac->ops.blink_led_stop = ixgbe_blink_led_stop_X540;
 
 	return ret_val;
-}
-
-/**
- *  ixgbe_get_link_capabilities_X540 - Determines link capabilities
- *  @hw: pointer to hardware structure
- *  @speed: pointer to link speed
- *  @autoneg: TRUE when autoneg or autotry is enabled
- *
- *  Determines the link capabilities by reading the AUTOC register.
- **/
-int32_t ixgbe_get_link_capabilities_X540(struct ixgbe_hw *hw,
-					 ixgbe_link_speed *speed,
-					 bool *autoneg)
-{
-	ixgbe_get_copper_link_capabilities_generic(hw, speed, autoneg);
-
-	return IXGBE_SUCCESS;
 }
 
 /**
