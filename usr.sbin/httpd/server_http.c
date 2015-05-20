@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.79 2015/05/03 18:39:58 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.80 2015/05/20 09:28:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1133,7 +1133,7 @@ server_getlocation(struct client *clt, const char *path)
 
 int
 server_response_http(struct client *clt, u_int code,
-    struct media_type *media, size_t size, time_t mtime)
+    struct media_type *media, off_t size, time_t mtime)
 {
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct http_descriptor	*resp = clt->clt_descresp;
@@ -1174,7 +1174,7 @@ server_response_http(struct client *clt, u_int code,
 	/* Set content length, if specified */
 	if ((cl =
 	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
-	    kv_set(cl, "%ld", size) == -1)
+	    kv_set(cl, "%lld", (long long)size) == -1)
 		return (-1);
 
 	/* Set last modification time */
