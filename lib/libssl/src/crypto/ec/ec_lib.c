@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.17 2015/04/29 00:11:12 doug Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.18 2015/05/20 04:33:35 miod Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -216,8 +216,7 @@ EC_GROUP_copy(EC_GROUP * dest, const EC_GROUP * src)
 		dest->seed = malloc(src->seed_len);
 		if (dest->seed == NULL)
 			return 0;
-		if (!memcpy(dest->seed, src->seed, src->seed_len))
-			return 0;
+		memcpy(dest->seed, src->seed, src->seed_len);
 		dest->seed_len = src->seed_len;
 	} else {
 		free(dest->seed);
