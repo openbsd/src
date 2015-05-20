@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.840 2015/05/19 20:12:29 rpe Exp $
+#	$OpenBSD: install.sub,v 1.841 2015/05/20 19:14:35 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -252,14 +252,6 @@ get_ifdevs() {
 		sed -n 's/^\([^[:space:]]*\):.*/\1/p'); do
 		isin ${_if%%+([0-9])} $_iflist || echo $_if
 	done
-}
-
-# Ask for the device that contains the install/upgrade media.
-get_drive() {
-	ask_which "$1" "contains the $MODE media" "$2" "$3"
-	[[ $resp == done ]] && return 1
-	makedev $resp || return 1
-	return 0
 }
 
 # Return the device name of the device $1, which may be a disklabel UID.
@@ -1354,9 +1346,11 @@ install_cdrom() {
 # installation. 
 install_disk() {
 	if ! ask_yn "Is the disk partition already mounted?"; then
-		get_drive "disk" '$(bsort $(get_dkdevs))' \
-			'$(bsort $(rmel $ROOTDISK $(get_dkdevs)))' || return
-		mount_mnt2 $resp || return
+		ask_which "disk" "contains the $MODE media" \
+			'$(bsort $(get_dkdevs))' \
+			'$(bsort $(rmel $ROOTDISK $(get_dkdevs)))'
+		[[ $resp == done ]] && return 1
+		makedev $resp && mount_mnt2 $resp || return
 	fi
 
 	install_mounted_fs
