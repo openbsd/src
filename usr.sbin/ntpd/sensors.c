@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.49 2015/01/09 07:35:37 deraadt Exp $ */
+/*	$OpenBSD: sensors.c,v 1.50 2015/05/20 13:32:39 reyk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/sensors.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
-#include <sys/hotplug.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -33,7 +32,6 @@
 #include "ntpd.h"
 
 #define MAXDEVNAMLEN		16
-#define	_PATH_DEV_HOTPLUG	"/dev/hotplug"
 
 int	sensor_probe(int, char *, struct sensor *);
 void	sensor_add(int, char *);
@@ -249,53 +247,4 @@ sensor_update(struct ntp_sensor *s)
 
 	log_debug("sensor update %s: offset %f", s->device, s->update.offset);
 	priv_adjtime();
-}
-
-int
-sensor_hotplugfd(void)
-{
-#ifdef notyet
-	int	fd, flags;
-
-	if ((fd = open(_PATH_DEV_HOTPLUG, O_RDONLY, 0)) == -1) {
-		log_warn("open %s", _PATH_DEV_HOTPLUG);
-		return (-1);
-	}
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		fatal("fcntl F_GETFL");
-	flags |= O_NONBLOCK;
-	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
-		fatal("fcntl F_SETFL");
-
-	return (fd);
-#else
-	return (-1);
-#endif
-}
-
-void
-sensor_hotplugevent(int fd)
-{
-	struct hotplug_event	he;
-	ssize_t			n;
-
-	do {
-		if ((n = read(fd, &he, sizeof(he))) == -1 &&
-		    errno != EINTR && errno != EAGAIN)
-			fatal("sensor_hotplugevent read");
-
-		if (n == sizeof(he))
-			switch (he.he_type) {
-			case HOTPLUG_DEVAT:
-				if (he.he_devclass == DV_DULL &&
-				    !strcmp(he.he_devname, "sensordev"))
-					sensor_scan();
-				break;
-			default:		/* ignore */
-				break;
-			}
-		else if (n > 0)
-			fatal("sensor_hotplugevent: short read");
-	} while (n > 0 || (n == -1 && errno == EINTR));
 }

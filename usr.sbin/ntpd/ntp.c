@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.130 2015/03/02 10:31:17 bcook Exp $ */
+/*	$OpenBSD: ntp.c,v 1.131 2015/05/20 13:32:39 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,10 +35,9 @@
 #include "ntpd.h"
 
 #define	PFD_PIPE_MAIN	0
-#define	PFD_HOTPLUG	1
-#define	PFD_PIPE_DNS	2
-#define	PFD_SOCK_CTL	3
-#define	PFD_MAX		4
+#define	PFD_PIPE_DNS	1
+#define	PFD_SOCK_CTL	2
+#define	PFD_MAX		3
 
 volatile sig_atomic_t	 ntp_quit = 0;
 volatile sig_atomic_t	 ntp_report = 0;
@@ -81,7 +80,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
     struct passwd *pw)
 {
 	int			 a, b, nfds, i, j, idx_peers, timeout;
-	int			 hotplugfd, nullfd, pipe_dns[2], idx_clients;
+	int			 nullfd, pipe_dns[2], idx_clients;
 	int			 ctls;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
@@ -128,7 +127,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		fatal(NULL);
-	hotplugfd = sensor_hotplugfd();
 
 	close(pipe_prnt[0]);
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_dns) == -1)
@@ -253,8 +251,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		nextaction = getmonotime() + 3600;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
-		pfd[PFD_HOTPLUG].fd = hotplugfd;
-		pfd[PFD_HOTPLUG].events = POLLIN;
 		pfd[PFD_PIPE_DNS].fd = ibuf_dns->fd;
 		pfd[PFD_PIPE_DNS].events = POLLIN;
 		pfd[PFD_SOCK_CTL].fd = fd_ctl;
@@ -404,11 +400,6 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		if (nfds > 0 && pfd[PFD_SOCK_CTL].revents & (POLLIN|POLLERR)) {
 			nfds--;
 			ctl_cnt += control_accept(fd_ctl);
-		}
-
-		if (nfds > 0 && pfd[PFD_HOTPLUG].revents & (POLLIN|POLLERR)) {
-			nfds--;
-			sensor_hotplugevent(hotplugfd);
 		}
 
 		for (j = PFD_MAX; nfds > 0 && j < idx_peers; j++)
