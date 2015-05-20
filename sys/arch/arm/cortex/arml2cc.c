@@ -1,4 +1,4 @@
-/* $OpenBSD: arml2cc.c,v 1.3 2013/06/14 23:58:30 patrick Exp $ */
+/* $OpenBSD: arml2cc.c,v 1.4 2015/05/20 00:39:16 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -126,7 +126,10 @@ struct cfdriver armliicc_cd = {
 int
 arml2cc_match(struct device *parent, void *cfdata, void *aux)
 {
-	return (1);
+	if ((cpufunc_id() & CPU_ID_CORTEX_A9_MASK) == CPU_ID_CORTEX_A9)
+		return (1);
+
+	return (0);
 }
 
 void
