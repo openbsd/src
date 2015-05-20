@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.352 2015/05/11 12:24:06 pelikan Exp $ */
+/* $OpenBSD: softraid.c,v 1.353 2015/05/20 15:21:57 pelikan Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4338,8 +4338,9 @@ void
 sr_set_vol_state(struct sr_discipline *sd)
 {
 	int			states[SR_MAX_STATES];
-	int			new_state, i, s, nd;
+	int			new_state, i, nd;
 	int			old_state = sd->sd_vol_status;
+	u_int32_t		s;
 
 	DNPRINTF(SR_D_STATE, "%s: %s: sr_set_vol_state\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
