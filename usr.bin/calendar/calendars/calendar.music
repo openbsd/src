@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.31 2015/03/13 16:38:46 sthen Exp $
+ * $OpenBSD: calendar.music,v 1.32 2015/05/21 10:42:30 jmc Exp $
  */
 
 #ifndef _calendar_music_
@@ -236,14 +236,14 @@
 06/03	Johann Strauss II dies of pneumonia in Vienna, 1899
 06/05	Carl Maria von Weber dies in London, England, 1826
 06/05	Orlando Gibbons dies, 1625
+06/05	Dee Dee Ramone dies, 2002
 06/06	"Rock Around The Clock" makes Billboard's #1 slot, 1955
-06/06	Dee Dee Ramone dies, 2002
 06/06	Hanns Eisler is born in Leipzig, 1898
 06/07	Blind Faith debuts in concert at London's Hyde Park, 1969
 06/08	Robert Schumann is born in Zwickau, Germany, 1810
 06/08	Hans Leo Hassler dies, 1612
 06/08	Gordon Jacob dies, 1984
-06/09	Les Paul (Lester Polfus) is born in Waukesha, Wisconsin, 1923
+06/09	Les Paul (Lester Polsfuss) is born in Waukesha, Wisconsin, 1915
 06/09	Carl Nielsen is born in Sortelung, Denmark, 1865
 06/10	Howlin' Wolf (Chester Burnett) is born in West Point, Mississippi, 1910
 06/10	Judy Garland is born, 1922
@@ -373,7 +373,7 @@
 09/16	Hildegard von Bingen is born into family of nobles, 1098
 09/17	Hildegard von Bingen dies, 1179
 09/17	Franz Xaver Sussmayr dies, 1803
-09/18	Dee Dee Ramone (Douglas Colvin) born in Fort Lee, Virginia, 1952
+09/18	Dee Dee Ramone (Douglas Colvin) born in Fort Lee, Virginia, 1951
 09/19	Simon & Garfunkel reunite to play New York's Central Park, 1981
 09/20	Jim Croce dies in a plane crash, 1973
 09/20	Jean Sibelius dies in Ainola, Finland, 1957
@@ -409,6 +409,7 @@
 10/12	The Jimi Hendrix Experience is formed in London, 1966
 10/12	Ray Conniff dies after falling down and hitting his head, 2002
 10/12	Ralph Vaughan Williams is born in Down Ampney, Gloucestershire, 1872
+10/13	Paul Simon born, 1941
 10/14	Leonard Bernstein dies in New York City, 1990
 10/16	Bob Weir (Grateful Dead) is born in San Francisco, 1947
 10/17	"Hair" opens at New York's Public Theater, 1967
@@ -453,7 +454,6 @@
 11/12	Neil Young is born in Toronto, 1945
 11/12	Walter Piston dies in Belmont, Massachusetts, 1976
 11/12	Alexander Borodin is born in St. Petersburg, Russia, 1833
-11/13	Paul Simon born, 1942
 11/13	Gioacchino Rossini dies at his summer home in Passy, France, 1868
 11/14	Aaron Copland is born in Brooklyn, New York, 1900
 11/15	Christoph Willibald Gluck dies in Vienna, Austria, 1787
