@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.43 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: isa.c,v 1.44 2015/05/21 19:29:31 miod Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -155,21 +155,38 @@ isaprint(aux, isa)
 	const char *isa;
 {
 	struct isa_attach_args *ia = aux;
+	int irq, nirq;
+	int dma, ndma;
 
 	if (ia->ia_iosize)
 		printf(" port 0x%x", ia->ia_iobase);
 	if (ia->ia_iosize > 1)
 		printf("/%d", ia->ia_iosize);
+
 	if (ia->ia_msize)
 		printf(" iomem 0x%x", ia->ia_maddr);
 	if (ia->ia_msize > 1)
 		printf("/%d", ia->ia_msize);
-	if (ia->ia_irq != IRQUNK)
-		printf(" irq %d", ia->ia_irq);
-	if (ia->ia_drq != DRQUNK)
-		printf(" drq %d", ia->ia_drq);
-	if (ia->ia_drq2 != DRQUNK)
-		printf(" drq2 %d", ia->ia_drq2);
+
+	nirq = ia->ipa_nirq;
+	if (nirq < 0 || nirq > nitems(ia->ipa_irq))
+		nirq = 1;
+	for (irq = 0; irq < nirq; irq++)
+		if (ia->ipa_irq[irq].num != IRQUNK)
+			printf(" irq %d", ia->ipa_irq[irq].num);
+
+	ndma = ia->ipa_ndrq;
+	if (ndma < 0 || ndma > nitems(ia->ipa_drq))
+		ndma = 2;
+	for (dma = 0; dma < ndma; dma++)
+		if (ia->ipa_drq[dma].num != DRQUNK) {
+			if (dma == 0)
+				printf(" drq");
+			else
+				printf(" drq%d", dma + 1);
+			printf(" %d", ia->ipa_drq[dma].num);
+		}
+
 	return (UNCONF);
 }
 
