@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.123 2015/03/24 11:23:02 mpi Exp $	*/
+/*	$OpenBSD: xl.c,v 1.124 2015/05/21 09:25:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -177,9 +177,6 @@ int xl_list_tx_init_90xB(struct xl_softc *);
 void xl_wait(struct xl_softc *);
 void xl_mediacheck(struct xl_softc *);
 void xl_choose_xcvr(struct xl_softc *, int);
-#ifdef notdef
-void xl_testpacket(struct xl_softc *);
-#endif
 
 int xl_miibus_readreg(struct device *, int, int);
 void xl_miibus_writereg(struct device *, int, int, int);
@@ -659,35 +656,6 @@ xl_iff_905b(struct xl_softc *sc)
 
 	XL_SEL_WIN(7);
 }
-
-#ifdef notdef
-void
-xl_testpacket(struct xl_softc *sc)
-{
-	struct mbuf	*m;
-	struct ifnet	*ifp;
-	int		error;
-
-	ifp = &sc->sc_arpcom.ac_if;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-
-	if (m == NULL)
-		return;
-
-	memcpy(mtod(m, struct ether_header *)->ether_dhost,
-	    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
-	memcpy(mtod(m, struct ether_header *)->ether_shost,
-	    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
-	mtod(m, struct ether_header *)->ether_type = htons(3);
-	mtod(m, unsigned char *)[14] = 0;
-	mtod(m, unsigned char *)[15] = 0;
-	mtod(m, unsigned char *)[16] = 0xE3;
-	m->m_len = m->m_pkthdr.len = sizeof(struct ether_header) + 3;
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	xl_start(ifp);
-}
-#endif
 
 void
 xl_setcfg(struct xl_softc *sc)
