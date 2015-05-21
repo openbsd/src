@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.101 2015/05/06 08:52:17 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.102 2015/05/21 13:35:15 nicm Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -759,7 +759,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 			len = 0;
 		else {
 			struct mbuf *m = control;
-			caddr_t p = mp->msg_control;
+			caddr_t cp = mp->msg_control;
 
 			do {
 				i = m->m_len;
@@ -767,15 +767,15 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
 				}
-				error = copyout(mtod(m, caddr_t), p, i);
+				error = copyout(mtod(m, caddr_t), cp, i);
 				if (m->m_next)
 					i = ALIGN(i);
-				p += i;
+				cp += i;
 				len -= i;
 				if (error != 0 || len <= 0)
 					break;
 			} while ((m = m->m_next) != NULL);
-			len = p - (caddr_t)mp->msg_control;
+			len = cp - (caddr_t)mp->msg_control;
 		}
 		mp->msg_controllen = len;
 	}
