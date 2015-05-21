@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.256 2015/05/15 11:53:06 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.257 2015/05/21 09:17:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -708,9 +708,7 @@ carpattach(int n)
 }
 
 int
-carp_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+carp_clone_create(struct if_clone *ifc, int unit)
 {
 	struct carp_softc *sc;
 	struct ifnet *ifp;
@@ -753,11 +751,11 @@ carp_clone_create(ifc, unit)
 	ifp->if_sadl->sdl_type = IFT_CARP;
 	ifp->if_output = carp_output;
 	ifp->if_priority = IF_CARP_DEFAULT_PRIORITY;
+	ifp->if_link_state = LINK_STATE_INVALID;
 
 	/* Hook carp_addr_updated to cope with address and route changes. */
 	sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
 	    carp_addr_updated, sc);
-	carp_set_state_all(sc, INIT);
 
 	return (0);
 }
@@ -774,6 +772,7 @@ carp_new_vhost(struct carp_softc *sc, int vhid, int advskew)
 	vhe->parent_sc = sc;
 	vhe->vhid = vhid;
 	vhe->advskew = advskew;
+	vhe->state = INIT;
 	timeout_set(&vhe->ad_tmo, carp_send_ad, vhe);
 	timeout_set(&vhe->md_tmo, carp_master_down, vhe);
 	timeout_set(&vhe->md6_tmo, carp_master_down, vhe);
@@ -2276,8 +2275,12 @@ carp_set_state_all(struct carp_softc *sc, int state)
 {
 	struct carp_vhost_entry *vhe;
 
-	LIST_FOREACH(vhe, &sc->carp_vhosts, vhost_entries)
+	LIST_FOREACH(vhe, &sc->carp_vhosts, vhost_entries) {
+		if (vhe->state == state)
+			continue;
+
 		carp_set_state(vhe, state);
+	}
 }
 
 void
@@ -2287,8 +2290,8 @@ carp_set_state(struct carp_vhost_entry *vhe, int state)
 	static const char *carp_states[] = { CARP_STATES };
 	int loglevel;
 
-	if (vhe->state == state)
-		return;
+	KASSERT(vhe->state != state);
+
 	if (vhe->state == INIT || state == INIT)
 		loglevel = LOG_WARNING;
 	else
