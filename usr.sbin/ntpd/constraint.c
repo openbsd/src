@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.10 2015/05/18 14:19:23 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.11 2015/05/21 14:24:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -195,9 +195,6 @@ constraint_query(struct constraint *cstr)
 		close(pipes[1]);
 		return (-1);
 	case 0:
-		tzset();
-		log_init(conf->debug);
-
 		setproctitle("constraint from %s", hname);
 
 		/* Child process */
