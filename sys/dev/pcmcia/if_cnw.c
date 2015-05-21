@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.29 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.30 2015/05/21 09:36:20 mpi Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -559,7 +559,6 @@ cnw_read(sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = totbytes;
 	mbytes = MHLEN;
 	top = 0;

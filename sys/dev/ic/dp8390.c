@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.52 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.53 2015/05/21 09:36:20 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -934,7 +934,6 @@ dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == NULL)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
 	m0->m_pkthdr.len = total_len;
 	len = MHLEN;
 	m = m0;
