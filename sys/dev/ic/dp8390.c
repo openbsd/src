@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.53 2015/05/21 09:36:20 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.54 2015/05/21 09:44:32 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -927,7 +927,6 @@ dp8390_getmcaf(struct arpcom *ac, u_int8_t *af)
 struct mbuf *
 dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m, *m0, *newm;
 	u_short len;
 
