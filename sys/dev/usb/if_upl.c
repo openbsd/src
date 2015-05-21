@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.64 2015/04/10 08:41:43 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.65 2015/05/21 09:22:39 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -888,28 +888,5 @@ int
 upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	   struct rtentry *rt0)
 {
-	int s, len, error;
-
-	DPRINTFN(10,("%s: %s: enter\n",
-		     ((struct upl_softc *)ifp->if_softc)->sc_dev.dv_xname,
-		     __func__));
-
-	len = m->m_pkthdr.len;
-	s = splnet();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
-
-	return (0);
+	return (if_output(ifp, m));
 }
