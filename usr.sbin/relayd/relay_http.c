@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.46 2015/05/18 16:57:20 bluhm Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.47 2015/05/22 01:34:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1376,7 +1376,7 @@ relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
     struct kvlist *matches, struct kvlist *actions)
 {
 	struct rsession		*con = cre->con;
-	struct kv		*kv;
+	struct kv		*kv, *tmp;
 
 	/*
 	 * Apply the following options instantly (action per match).
@@ -1395,7 +1395,7 @@ relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
 	 */
 	if (matches == NULL) {
 		/* 'pass' or 'block' rule */
-		TAILQ_FOREACH(kv, &rule->rule_kvlist, kv_rule_entry) {
+		TAILQ_FOREACH_SAFE(kv, &rule->rule_kvlist, kv_rule_entry, tmp) {
 			TAILQ_INSERT_TAIL(actions, kv, kv_action_entry);
 			TAILQ_REMOVE(&rule->rule_kvlist, kv, kv_rule_entry);
 		}
