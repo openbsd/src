@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.914 2015/05/22 14:16:09 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.915 2015/05/22 14:18:55 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4490,17 +4490,12 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 		ret = pf_icmp_state_lookup(pd, &key, state,
 		    virtual_id, virtual_type, icmp_dir, &iidx,
 		    0, 0);
-		if (ret >= 0) {
-			if (ret == PF_DROP && pd->af == AF_INET6 &&
-			    icmp_dir == PF_OUT) {
-				ret = pf_icmp_state_lookup(pd, &key, state,
-				    virtual_id, virtual_type, icmp_dir, &iidx,
-				    1, 0);
-				if (ret >= 0)
-					return (ret);
-			} else
-				return (ret);
-		}
+		/* IPv6? try matching a multicast address */
+		if (ret == PF_DROP && pd->af == AF_INET6 && icmp_dir == PF_OUT)
+			ret = pf_icmp_state_lookup(pd, &key, state, virtual_id,
+			    virtual_type, icmp_dir, &iidx, 1, 0);
+		if (ret >= 0)
+			return (ret);
 
 		(*state)->expire = time_uptime;
 		(*state)->timeout = PFTM_ICMP_ERROR_REPLY;
@@ -5103,17 +5098,14 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			    &icmp_dir, &virtual_id, &virtual_type);
 			ret = pf_icmp_state_lookup(&pd2, &key, state,
 			    virtual_id, virtual_type, icmp_dir, &iidx, 0, 1);
-			if (ret >= 0) {
-				if (ret == PF_DROP && pd2.af == AF_INET6 &&
-				    icmp_dir == PF_OUT) {
-					ret = pf_icmp_state_lookup(&pd2, &key,
-					    state, virtual_id, virtual_type,
-					    icmp_dir, &iidx, 1, 1);
-					if (ret >= 0)
-						return (ret);
-				} else
-					return (ret);
-			}
+			/* IPv6? try matching a multicast address */
+			if (ret == PF_DROP && pd2.af == AF_INET6 &&
+			    icmp_dir == PF_OUT)
+				ret = pf_icmp_state_lookup(&pd2, &key, state,
+				    virtual_id, virtual_type, icmp_dir, &iidx,
+				    1, 1);
+			if (ret >= 0)
+				return (ret);
 
 			/* translate source/destination address, if necessary */
 			if ((*state)->key[PF_SK_WIRE] !=
