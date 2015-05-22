@@ -1,4 +1,4 @@
-# test both client and server ssl connection
+# test both client and server ssl connection with TLS inspection
 
 use strict;
 use warnings;
@@ -6,11 +6,10 @@ use warnings;
 our %args = (
     client => {
 	ssl => 1,
-	loggrep => 'Issuer.*/OU=relay/',
+	loggrep => 'Issuer.*/OU=ca/',
     },
     relayd => {
-	forwardssl => 1,
-	listenssl => 1,
+	inspectssl => 1,
     },
     server => {
 	ssl => 1,

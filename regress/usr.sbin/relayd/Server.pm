@@ -1,6 +1,6 @@
-#	$OpenBSD: Server.pm,v 1.7 2014/12/31 01:25:07 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.8 2015/05/22 19:09:18 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -67,6 +67,12 @@ sub child {
 	    " socket accept failed: $!,$SSL_ERROR";
 	print STDERR "accept sock: ",$as->sockhost()," ",$as->sockport(),"\n";
 	print STDERR "accept peer: ",$as->peerhost()," ",$as->peerport(),"\n";
+	if ($self->{ssl}) {
+		print STDERR "ssl version: ",$as->get_sslversion(),"\n";
+		print STDERR "ssl cipher: ",$as->get_cipher(),"\n";
+		print STDERR "ssl peer certificate:\n",
+		    $as->dump_peer_certificate();
+	}
 
 	*STDIN = *STDOUT = $self->{as} = $as;
 }

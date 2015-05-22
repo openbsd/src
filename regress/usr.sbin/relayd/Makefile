@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/12/31 01:25:07 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2015/05/22 19:09:18 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -67,7 +67,7 @@ run-regress-$a: $a
 # create certificates for TLS
 
 .for ip in ${REMOTE_ADDR} 127.0.0.1
-${ip}.crt:
+${ip}.crt: ca.crt
 	openssl req -batch -new -subj /L=OpenBSD/O=relayd-regress/OU=relay/CN=${ip}/ -nodes -newkey rsa -keyout ${ip}.key -x509 -out $@
 .if empty (REMOTE_SSH)
 	${SUDO} cp 127.0.0.1.crt /etc/ssl/
@@ -75,6 +75,7 @@ ${ip}.crt:
 .else
 	scp ${REMOTE_ADDR}.crt root@${REMOTE_SSH}:/etc/ssl/
 	scp ${REMOTE_ADDR}.key root@${REMOTE_SSH}:/etc/ssl/private/
+	scp ca.crt ca.key ${REMOTE_SSH}:
 .endif
 .endfor
 

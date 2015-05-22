@@ -1,6 +1,6 @@
-#	$OpenBSD: Client.pm,v 1.9 2014/12/31 01:25:07 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.10 2015/05/22 19:09:18 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -60,6 +60,12 @@ sub child {
 	) or die ref($self), " $iosocket socket connect failed: $!,$SSL_ERROR";
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
+	if ($self->{ssl}) {
+		print STDERR "ssl version: ",$cs->get_sslversion(),"\n";
+		print STDERR "ssl cipher: ",$cs->get_cipher(),"\n";
+		print STDERR "ssl peer certificate:\n",
+		    $cs->dump_peer_certificate();
+	}
 
 	*STDIN = *STDOUT = $self->{cs} = $cs;
 }

@@ -1,4 +1,4 @@
-# test https connection over http relay
+# test https connection over http relay with TLS inspection
 
 use strict;
 use warnings;
@@ -7,16 +7,14 @@ our %args = (
     client => {
 	func => \&http_client,
 	ssl => 1,
-	loggrep => 'Issuer.*/OU=relay/',
+	loggrep => 'Issuer.*/OU=ca/',
     },
     relayd => {
 	protocol => [ "http",
 	    "match request header log foo",
 	    "match response header log bar",
 	],
-	forwardssl => 1,
-	listenssl => 1,
-
+	inspectssl => 1,
     },
     server => {
 	func => \&http_server,

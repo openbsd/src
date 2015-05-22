@@ -1,6 +1,6 @@
-#	$OpenBSD: Relayd.pm,v 1.14 2015/05/17 22:49:03 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.15 2015/05/22 19:09:18 bluhm Exp $
 
-# Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -72,6 +72,11 @@ sub new {
 	    die ref($self), " invalid forward $self->{forward}"
 	    unless grep { /splice/ } @protocol;
 	print $fh "${proto}protocol proto-$test {";
+	if ($self->{inspectssl}) {
+		$self->{listenssl} = $self->{forwardssl} = 1;
+		print $fh "\n\ttls ca cert ca.crt";
+		print $fh "\n\ttls ca key ca.key password ''";
+	}
 	# substitute variables in config file
 	foreach (@protocol) {
 		s/(\$[a-z]+)/$1/eeg;
