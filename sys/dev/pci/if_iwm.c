@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.40 2015/05/21 22:13:55 kettenis Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -1113,7 +1113,8 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 		paddr += sizeof(struct iwm_device_cmd);
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    IWM_NUM_OF_TBS, MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
+		    IWM_NUM_OF_TBS - 2, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &data->map);
 		if (error != 0) {
 			printf("%s: could not create TX buf DMA map\n", DEVNAME(sc));
 			goto fail;
