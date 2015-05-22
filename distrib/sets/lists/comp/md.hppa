@@ -625,5 +625,8 @@
 ./usr/libdata/ldscripts/hppaobsd.xr
 ./usr/libdata/ldscripts/hppaobsd.xs
 ./usr/libdata/ldscripts/hppaobsd.xsc
+./usr/libdata/ldscripts/hppaobsd.xsw
 ./usr/libdata/ldscripts/hppaobsd.xu
+./usr/libdata/ldscripts/hppaobsd.xw
 ./usr/libdata/ldscripts/hppaobsd.xz
+./usr/share/info/bfd.info
