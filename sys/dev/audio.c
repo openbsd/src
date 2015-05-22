@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.130 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.131 2015/05/22 12:46:38 jsg Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2472,7 +2472,7 @@ audio_emu_setup(int mode, struct audio_params *p, struct audio_emu *e)
 	}
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-#if BYTE_ORDER == LITTE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 		e->encoding = AUDIO_ENCODING_SLINEAR_LE;
 #else
 		e->encoding = AUDIO_ENCODING_SLINEAR_BE;
