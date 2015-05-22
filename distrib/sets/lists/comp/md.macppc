@@ -667,10 +667,14 @@
 ./usr/libdata/ldscripts/elf32ppc_obsd.xd
 ./usr/libdata/ldscripts/elf32ppc_obsd.xdc
 ./usr/libdata/ldscripts/elf32ppc_obsd.xdcz
+./usr/libdata/ldscripts/elf32ppc_obsd.xdw
 ./usr/libdata/ldscripts/elf32ppc_obsd.xdz
 ./usr/libdata/ldscripts/elf32ppc_obsd.xn
 ./usr/libdata/ldscripts/elf32ppc_obsd.xr
 ./usr/libdata/ldscripts/elf32ppc_obsd.xs
 ./usr/libdata/ldscripts/elf32ppc_obsd.xsc
+./usr/libdata/ldscripts/elf32ppc_obsd.xsw
 ./usr/libdata/ldscripts/elf32ppc_obsd.xu
+./usr/libdata/ldscripts/elf32ppc_obsd.xw
 ./usr/libdata/ldscripts/elf32ppc_obsd.xz
+./usr/share/info/bfd.info
