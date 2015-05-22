@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.913 2015/05/11 12:22:14 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.914 2015/05/22 14:16:09 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -149,7 +149,7 @@ int			 pf_modulate_sack(struct pf_pdesc *,
 void			 pf_change_a6(struct pf_pdesc *, struct pf_addr *a,
 			    struct pf_addr *an);
 int			 pf_icmp_mapping(struct pf_pdesc *, u_int8_t, int *,
-			    int *, u_int16_t *, u_int16_t *);
+			    u_int16_t *, u_int16_t *);
 void			 pf_change_icmp(struct pf_pdesc *, struct pf_addr *,
 			    u_int16_t *, struct pf_addr *, struct pf_addr *,
 			    u_int16_t, sa_family_t);
@@ -243,9 +243,6 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pfr_ktable_pl, PFR_KTABLE_HIWAT, PFR_KTABLE_HIWAT },
 	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT, PFR_KENTRY_HIWAT }
 };
-
-enum { PF_ICMP_MULTI_NONE, PF_ICMP_MULTI_LINK };
-
 
 #define STATE_LOOKUP(i, k, d, s, m)					\
 	do {								\
@@ -819,7 +816,7 @@ pf_state_key_addr_setup(struct pf_pdesc *pd, void *arg, int sidx,
 		}
 		break;
 	default:
-		if (multi == PF_ICMP_MULTI_LINK) {
+		if (multi) {
 			key->addr[sidx].addr32[0] = __IPV6_ADDR_INT32_MLL;
 			key->addr[sidx].addr32[1] = 0;
 			key->addr[sidx].addr32[2] = 0;
@@ -1689,7 +1686,7 @@ pf_change_a6(struct pf_pdesc *pd, struct pf_addr *a, struct pf_addr *an)
 #endif /* INET6 */
 
 int
-pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir, int *multi,
+pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir,
     u_int16_t *virtual_id, u_int16_t *virtual_type)
 {
 	/*
@@ -1698,7 +1695,6 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir, int *multi,
 	 * PF_IN ICMP types need to match a state with that type.
 	 */
 	*icmp_dir = PF_OUT;
-	*multi = PF_ICMP_MULTI_LINK;
 
 	/* Queries (and responses) */
 	switch (pd->af) {
@@ -3081,7 +3077,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	int			 tag = -1;
 	int			 asd = 0;
 	int			 match = 0;
-	int			 state_icmp = 0, icmp_dir, multi;
+	int			 state_icmp = 0, icmp_dir;
 	u_int16_t		 virtual_type, virtual_id;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
@@ -3100,7 +3096,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		icmptype = pd->hdr.icmp->icmp_type;
 		icmpcode = pd->hdr.icmp->icmp_code;
 		state_icmp = pf_icmp_mapping(pd, icmptype,
-		    &icmp_dir, &multi, &virtual_id, &virtual_type);
+		    &icmp_dir, &virtual_id, &virtual_type);
 		if (icmp_dir == PF_IN) {
 			pd->osport = pd->nsport = virtual_id;
 			pd->odport = pd->ndport = virtual_type;
@@ -3114,7 +3110,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		icmptype = pd->hdr.icmp6->icmp6_type;
 		icmpcode = pd->hdr.icmp6->icmp6_code;
 		state_icmp = pf_icmp_mapping(pd, icmptype,
-		    &icmp_dir, &multi, &virtual_id, &virtual_type);
+		    &icmp_dir, &virtual_id, &virtual_type);
 		if (icmp_dir == PF_IN) {
 			pd->osport = pd->nsport = virtual_id;
 			pd->odport = pd->ndport = virtual_type;
@@ -4470,7 +4466,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 	struct pf_addr  *saddr = pd->src, *daddr = pd->dst;
 	u_int16_t	 virtual_id, virtual_type;
 	u_int8_t	 icmptype;
-	int		 icmp_dir, iidx, ret, multi, copyback = 0;
+	int		 icmp_dir, iidx, ret, copyback = 0;
 
 	struct pf_state_key_cmp key;
 
@@ -4485,21 +4481,21 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 #endif /* INET6 */
 	}
 
-	if (pf_icmp_mapping(pd, icmptype, &icmp_dir, &multi,
-	    &virtual_id, &virtual_type) == 0) {
+	if (pf_icmp_mapping(pd, icmptype, &icmp_dir, &virtual_id,
+	    &virtual_type) == 0) {
 		/*
 		 * ICMP query/reply message not related to a TCP/UDP packet.
 		 * Search for an ICMP state.
 		 */
 		ret = pf_icmp_state_lookup(pd, &key, state,
 		    virtual_id, virtual_type, icmp_dir, &iidx,
-		    PF_ICMP_MULTI_NONE, 0);
+		    0, 0);
 		if (ret >= 0) {
 			if (ret == PF_DROP && pd->af == AF_INET6 &&
 			    icmp_dir == PF_OUT) {
 				ret = pf_icmp_state_lookup(pd, &key, state,
 				    virtual_id, virtual_type, icmp_dir, &iidx,
-				    multi, 0);
+				    1, 0);
 				if (ret >= 0)
 					return (ret);
 			} else
@@ -4997,11 +4993,10 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 
 			pd2.hdr.icmp = &iih;
 			pf_icmp_mapping(&pd2, iih.icmp_type,
-			    &icmp_dir, &multi, &virtual_id, &virtual_type);
+			    &icmp_dir, &virtual_id, &virtual_type);
 
 			ret = pf_icmp_state_lookup(&pd2, &key, state,
-			    virtual_id, virtual_type, icmp_dir, &iidx,
-			    PF_ICMP_MULTI_NONE, 1);
+			    virtual_id, virtual_type, icmp_dir, &iidx, 0, 1);
 			if (ret >= 0)
 				return (ret);
 
@@ -5105,16 +5100,15 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 
 			pd2.hdr.icmp6 = &iih;
 			pf_icmp_mapping(&pd2, iih.icmp6_type,
-			    &icmp_dir, &multi, &virtual_id, &virtual_type);
+			    &icmp_dir, &virtual_id, &virtual_type);
 			ret = pf_icmp_state_lookup(&pd2, &key, state,
-			    virtual_id, virtual_type, icmp_dir, &iidx,
-			    PF_ICMP_MULTI_NONE, 1);
+			    virtual_id, virtual_type, icmp_dir, &iidx, 0, 1);
 			if (ret >= 0) {
 				if (ret == PF_DROP && pd2.af == AF_INET6 &&
 				    icmp_dir == PF_OUT) {
 					ret = pf_icmp_state_lookup(&pd2, &key,
 					    state, virtual_id, virtual_type,
-					    icmp_dir, &iidx, multi, 1);
+					    icmp_dir, &iidx, 1, 1);
 					if (ret >= 0)
 						return (ret);
 				} else
