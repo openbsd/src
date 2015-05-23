@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.50 2015/04/17 10:04:37 mikeb Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.51 2015/05/23 12:38:53 markus Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -702,46 +702,64 @@ export_address(void **p, struct sockaddr *sa)
 /*
  * Import an identity payload into the TDB.
  */
-void
-import_identity(struct ipsec_ref **ipr, struct sadb_ident *sadb_ident)
+static void
+import_identity(struct ipsec_id **id, struct sadb_ident *sadb_ident)
 {
 	if (!sadb_ident)
 		return;
 
-	*ipr = malloc(EXTLEN(sadb_ident) - sizeof(struct sadb_ident) +
-	    sizeof(struct ipsec_ref), M_CREDENTIALS, M_WAITOK);
-	(*ipr)->ref_len = EXTLEN(sadb_ident) - sizeof(struct sadb_ident);
+	*id = malloc(EXTLEN(sadb_ident) - sizeof(struct sadb_ident) +
+	    sizeof(struct ipsec_id), M_CREDENTIALS, M_WAITOK);
+	(*id)->len = EXTLEN(sadb_ident) - sizeof(struct sadb_ident);
 
 	switch (sadb_ident->sadb_ident_type) {
 	case SADB_IDENTTYPE_PREFIX:
-		(*ipr)->ref_type = IPSP_IDENTITY_PREFIX;
+		(*id)->type = IPSP_IDENTITY_PREFIX;
 		break;
 	case SADB_IDENTTYPE_FQDN:
-		(*ipr)->ref_type = IPSP_IDENTITY_FQDN;
+		(*id)->type = IPSP_IDENTITY_FQDN;
 		break;
 	case SADB_IDENTTYPE_USERFQDN:
-		(*ipr)->ref_type = IPSP_IDENTITY_USERFQDN;
+		(*id)->type = IPSP_IDENTITY_USERFQDN;
 		break;
 	default:
-		free(*ipr, M_CREDENTIALS, 0);
-		*ipr = NULL;
+		free(*id, M_CREDENTIALS, 0);
+		*id = NULL;
 		return;
 	}
-	(*ipr)->ref_count = 1;
-	(*ipr)->ref_malloctype = M_CREDENTIALS;
-	bcopy((void *) sadb_ident + sizeof(struct sadb_ident), (*ipr) + 1,
-	    (*ipr)->ref_len);
+	bcopy((void *) sadb_ident + sizeof(struct sadb_ident), (*id) + 1,
+	    (*id)->len);
 }
 
 void
-export_identity(void **p, struct ipsec_ref **ipr)
+import_identities(struct ipsec_ids **ids, int swapped,
+    struct sadb_ident *srcid, struct sadb_ident *dstid)
+{
+	struct ipsec_ids *tmp;
+
+	*ids = NULL;
+	tmp = malloc(sizeof(struct ipsec_ids), M_CREDENTIALS, M_WAITOK);
+	import_identity(&tmp->id_local, swapped ? dstid: srcid);
+	import_identity(&tmp->id_remote, swapped ? srcid: dstid);
+	if (tmp->id_local != NULL && tmp->id_remote != NULL) {
+		*ids = ipsp_ids_insert(tmp);
+		if (*ids == tmp)
+			return;
+	}
+	free(tmp->id_local, M_CREDENTIALS, 0);
+	free(tmp->id_remote, M_CREDENTIALS, 0);
+	free(tmp, M_CREDENTIALS, 0);
+}
+
+static void
+export_identity(void **p, struct ipsec_id *id)
 {
 	struct sadb_ident *sadb_ident = (struct sadb_ident *) *p;
 
 	sadb_ident->sadb_ident_len = (sizeof(struct sadb_ident) +
-	    PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+	    PADUP(id->len)) / sizeof(uint64_t);
 
-	switch ((*ipr)->ref_type) {
+	switch (id->type) {
 	case IPSP_IDENTITY_PREFIX:
 		sadb_ident->sadb_ident_type = SADB_IDENTTYPE_PREFIX;
 		break;
@@ -753,8 +771,18 @@ export_identity(void **p, struct ipsec_ref **ipr)
 		break;
 	}
 	*p += sizeof(struct sadb_ident);
-	bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
-	*p += PADUP((*ipr)->ref_len);
+	bcopy(id + 1, *p, id->len);
+	*p += PADUP(id->len);
+}
+
+void
+export_identities(void **p, struct ipsec_ids *ids, int swapped,
+    void **headers)
+{
+	headers[SADB_EXT_IDENTITY_SRC] = *p;
+	export_identity(p, swapped ? ids->id_remote : ids->id_local);
+	headers[SADB_EXT_IDENTITY_DST] = *p;
+	export_identity(p, swapped ? ids->id_local : ids->id_remote);
 }
 
 /* ... */

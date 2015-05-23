@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.198 2015/04/16 19:24:13 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.199 2015/05/23 12:38:53 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -615,8 +615,8 @@ udp_input(struct mbuf *m, ...)
 		goto bad;
 	}
 	/* create ipsec options while we know that tdb cannot be modified */
-	if (tdb)
-		ipsecflowinfo = tdb->tdb_spi;
+	if (tdb && tdb->tdb_ids)
+		ipsecflowinfo = tdb->tdb_ids->id_flow;
 #endif /*IPSEC */
 
 	opts = NULL;

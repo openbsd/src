@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.84 2015/04/30 20:12:33 millert Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.85 2015/05/23 12:38:53 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -84,8 +84,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	union sockaddr_union sdst, ssrc;
 	struct sockaddr_encap *ddst, dst;
 	struct ipsec_policy *ipo;
-	struct ipsec_ref *dstid = NULL, *srcid = NULL;
-	struct tdb *tdbin = NULL;
+	struct ipsec_ids *ids = NULL;
 	int signore = 0, dignore = 0;
 	u_int rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 
@@ -343,17 +342,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			}
 		}
 
-		/*
-		 * Fetch the incoming TDB based on the SPI passed
-		 * in ipsecflow and use it's dstid when looking
-		 * up the outgoing TDB.
-		 */
-		if (ipsecflowinfo &&
-		   (tdbin = gettdb(rdomain, ipsecflowinfo, &ssrc,
-		    ipo->ipo_sproto)) != NULL) {
-			srcid = tdbin->tdb_dstid;
-			dstid = tdbin->tdb_srcid;
-		}
+		if (ipsecflowinfo)
+			ids = ipsp_ids_lookup(ipsecflowinfo);
 
 		/* Check that the cached TDB (if present), is appropriate. */
 		if (ipo->ipo_tdb) {
@@ -365,8 +355,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				goto nomatchout;
 
 			if (!ipsp_aux_match(ipo->ipo_tdb,
-			    srcid ? srcid : ipo->ipo_srcid,
-			    dstid ? dstid : ipo->ipo_dstid,
+			    ids ? ids : ipo->ipo_ids,
 			    &ipo->ipo_addr, &ipo->ipo_mask))
 				goto nomatchout;
 
@@ -402,8 +391,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			    gettdbbydst(rdomain,
 				dignore ? &sdst : &ipo->ipo_dst,
 				ipo->ipo_sproto,
-				srcid ? srcid : ipo->ipo_srcid,
-				dstid ? dstid : ipo->ipo_dstid,
+				ids ? ids: ipo->ipo_ids,
 				&ipo->ipo_addr, &ipo->ipo_mask);
 			if (ipo->ipo_tdb) {
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
@@ -455,21 +443,11 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			    (ipo->ipo_sproto != tdbp->tdb_sproto))
 				goto nomatchin;
 
-			/* Match source ID. */
-			if (ipo->ipo_srcid) {
-				if (tdbp->tdb_dstid == NULL ||
-				    !ipsp_ref_match(ipo->ipo_srcid,
-					tdbp->tdb_dstid))
+			/* Match source/dest IDs. */
+			if (ipo->ipo_ids)
+				if (tdbp->tdb_ids == NULL ||
+				    !ipsp_ids_match(ipo->ipo_ids, tdbp->tdb_ids))
 					goto nomatchin;
-			}
-
-			/* Match destination ID. */
-			if (ipo->ipo_dstid) {
-				if (tdbp->tdb_srcid == NULL ||
-				    !ipsp_ref_match(ipo->ipo_dstid,
-					tdbp->tdb_srcid))
-					goto nomatchin;
-			}
 
 			/* Add it to the cache. */
 			if (ipo->ipo_tdb)
@@ -515,9 +493,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ipo->ipo_tdb =
 			    gettdbbysrc(rdomain,
 				dignore ? &ssrc : &ipo->ipo_dst,
-				ipo->ipo_sproto, ipo->ipo_srcid,
-				ipo->ipo_dstid, &ipo->ipo_addr,
-				&ipo->ipo_mask);
+				ipo->ipo_sproto, ipo->ipo_ids,
+				&ipo->ipo_addr, &ipo->ipo_mask);
 			if (ipo->ipo_tdb)
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
@@ -600,10 +577,8 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 
 	TAILQ_REMOVE(&ipsec_policy_head, ipo, ipo_list);
 
-	if (ipo->ipo_srcid)
-		ipsp_reffree(ipo->ipo_srcid);
-	if (ipo->ipo_dstid)
-		ipsp_reffree(ipo->ipo_dstid);
+	if (ipo->ipo_ids)
+		ipsp_ids_free(ipo->ipo_ids);
 
 	ipsec_in_use--;
 

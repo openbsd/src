@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.213 2015/04/17 11:04:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.214 2015/05/23 12:38:53 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -91,6 +91,19 @@ struct ipsec_policy_head ipsec_policy_head =
     TAILQ_HEAD_INITIALIZER(ipsec_policy_head);
 struct ipsec_acquire_head ipsec_acquire_head =
     TAILQ_HEAD_INITIALIZER(ipsec_acquire_head);
+
+u_int32_t ipsec_ids_next_flow = 1;	/* may not be zero */
+int ipsec_ids_idle = 100;		/* keep free ids for 100s */
+struct ipsec_ids_tree ipsec_ids_tree;
+struct ipsec_ids_flows ipsec_ids_flows;
+
+void ipsp_ids_timeout(void *);
+static int ipsp_ids_cmp(struct ipsec_ids *, struct ipsec_ids *);
+static int ipsp_ids_flow_cmp(struct ipsec_ids *, struct ipsec_ids *);
+RB_PROTOTYPE(ipsec_ids_tree, ipsec_ids, id_node_flow, ipsp_ids_cmp);
+RB_PROTOTYPE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
+RB_GENERATE(ipsec_ids_tree, ipsec_ids, id_node_flow, ipsp_ids_cmp);
+RB_GENERATE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
 
 /*
  * This is the proper place to define the various encapsulation transforms.
@@ -331,19 +344,13 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
  */
 int
 ipsp_aux_match(struct tdb *tdb,
-    struct ipsec_ref *psrcid,
-    struct ipsec_ref *pdstid,
+    struct ipsec_ids *ids,
     struct sockaddr_encap *pfilter,
     struct sockaddr_encap *pfiltermask)
 {
-	if (psrcid != NULL)
-		if (tdb->tdb_srcid == NULL ||
-		    !ipsp_ref_match(tdb->tdb_srcid, psrcid))
-			return 0;
-
-	if (pdstid != NULL)
-		if (tdb->tdb_dstid == NULL ||
-		    !ipsp_ref_match(tdb->tdb_dstid, pdstid))
+	if (ids != NULL)
+		if (tdb->tdb_ids == NULL ||
+		    !ipsp_ids_match(tdb->tdb_ids, ids))
 			return 0;
 
 	/* Check for filter matches. */
@@ -372,7 +379,7 @@ ipsp_aux_match(struct tdb *tdb,
  */
 struct tdb *
 gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
-    struct ipsec_ref *srcid, struct ipsec_ref *dstid,
+    struct ipsec_ids *ids,
     struct sockaddr_encap *filter, struct sockaddr_encap *filtermask)
 {
 	u_int32_t hashval;
@@ -389,8 +396,7 @@ gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (!memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))) {
 			/* Do IDs match ? */
-			if (!ipsp_aux_match(tdbp, srcid, dstid, filter,
-			    filtermask))
+			if (!ipsp_aux_match(tdbp, ids, filter, filtermask))
 				continue;
 			break;
 		}
@@ -404,7 +410,7 @@ gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
  */
 struct tdb *
 gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
-    struct ipsec_ref *srcid, struct ipsec_ref *dstid,
+    struct ipsec_ids *ids,
     struct sockaddr_encap *filter, struct sockaddr_encap *filtermask)
 {
 	u_int32_t hashval;
@@ -421,7 +427,7 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (!memcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))) {
 			/* Check whether IDs match */
-			if (!ipsp_aux_match(tdbp, dstid, srcid, filter,
+			if (!ipsp_aux_match(tdbp, ids, filter,
 			    filtermask))
 				continue;
 			break;
@@ -793,14 +799,9 @@ tdb_free(struct tdb *tdbp)
 	timeout_del(&tdbp->tdb_stimer_tmo);
 	timeout_del(&tdbp->tdb_sfirst_tmo);
 
-	if (tdbp->tdb_srcid) {
-		ipsp_reffree(tdbp->tdb_srcid);
-		tdbp->tdb_srcid = NULL;
-	}
-
-	if (tdbp->tdb_dstid) {
-		ipsp_reffree(tdbp->tdb_dstid);
-		tdbp->tdb_dstid = NULL;
+	if (tdbp->tdb_ids) {
+		ipsp_ids_free(tdbp->tdb_ids);
+		tdbp->tdb_ids = NULL;
 	}
 
 #if NPF > 0
@@ -892,28 +893,118 @@ ipsp_is_unspecified(union sockaddr_union addr)
 	}
 }
 
-/* Free reference-counted structure. */
-void
-ipsp_reffree(struct ipsec_ref *ipr)
+int
+ipsp_ids_match(struct ipsec_ids *a, struct ipsec_ids *b)
 {
-#ifdef DIAGNOSTIC
-	if (ipr->ref_count <= 0)
-		printf("ipsp_reffree: illegal reference count %d for "
-		    "object %p (len = %d, malloctype = %d)\n",
-		    ipr->ref_count, ipr, ipr->ref_len, ipr->ref_malloctype);
-#endif
-	if (--ipr->ref_count <= 0)
-		free(ipr, ipr->ref_malloctype, 0);
+	return a == b;
 }
 
-/* Return true if the two structures match. */
-int
-ipsp_ref_match(struct ipsec_ref *ref1, struct ipsec_ref *ref2)
+struct ipsec_ids *
+ipsp_ids_insert(struct ipsec_ids *ids)
 {
-	if (ref1->ref_type != ref2->ref_type ||
-	    ref1->ref_len != ref2->ref_len ||
-	    memcmp(ref1 + 1, ref2 + 1, ref1->ref_len))
-		return 0;
+	struct ipsec_ids *found;
+	u_int32_t start_flow;
 
-	return 1;
+	found = RB_INSERT(ipsec_ids_tree, &ipsec_ids_tree, ids);
+	if (found) {
+		/* if refcount was zero, then timeout is running */
+		if (found->id_refcount++ == 0)
+			timeout_del(&found->id_timeout);
+		DPRINTF(("%s: ids %p count %d\n", __func__,
+		    found, found->id_refcount));
+		return found;
+	}
+	ids->id_flow = start_flow = ipsec_ids_next_flow;
+	if (++ipsec_ids_next_flow == 0)
+		ipsec_ids_next_flow = 1;
+	while (RB_INSERT(ipsec_ids_flows, &ipsec_ids_flows, ids) != NULL) {
+		ids->id_flow = ipsec_ids_next_flow;
+		if (++ipsec_ids_next_flow == 0)
+			ipsec_ids_next_flow = 1;
+		if (ipsec_ids_next_flow == start_flow) {
+			DPRINTF(("ipsec_ids_next_flow exhausted %u\n",
+			    ipsec_ids_next_flow));
+			return NULL;
+		}
+	}
+	ids->id_refcount = 1;
+	DPRINTF(("%s: new ids %p flow %u\n", __func__, ids, ids->id_flow));
+	timeout_set(&ids->id_timeout, ipsp_ids_timeout, ids);
+	return ids;
+}
+
+struct ipsec_ids *
+ipsp_ids_lookup(u_int32_t ipsecflowinfo)
+{
+	struct ipsec_ids	key;
+
+	key.id_flow = ipsecflowinfo;
+	return RB_FIND(ipsec_ids_flows, &ipsec_ids_flows, &key);
+}
+
+/* free ids only from delayed timeout */
+void
+ipsp_ids_timeout(void *arg)
+{
+	struct ipsec_ids *ids = arg;
+	int s;
+
+	DPRINTF(("%s: ids %p count %d\n", __func__, ids, ids->id_refcount));
+	KASSERT(ids->id_refcount == 0);
+	s = splsoftnet();
+	RB_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
+	RB_REMOVE(ipsec_ids_flows, &ipsec_ids_flows, ids);
+	free(ids->id_local, M_CREDENTIALS, 0);
+	free(ids->id_remote, M_CREDENTIALS, 0);
+	free(ids, M_CREDENTIALS, 0);
+	splx(s);
+}
+
+/* decrements refcount, actual free happens in timeout */
+void
+ipsp_ids_free(struct ipsec_ids *ids)
+{
+	/*
+	 * If the refcount becomes zero, then a timeout is started. This
+	 * timeout must be cancelled if refcount is increased from zero.
+	 */
+	DPRINTF(("%s: ids %p count %d\n", __func__, ids, ids->id_refcount));
+	KASSERT(ids->id_refcount > 0);
+	if (--ids->id_refcount == 0)
+		timeout_add_sec(&ids->id_timeout, ipsec_ids_idle);
+}
+
+static int
+ipsp_id_cmp(struct ipsec_id *a, struct ipsec_id *b)
+{
+	if (a->type > b->type)
+		return 1;
+	if (a->type < b->type)
+		return -1;
+	if (a->len > b->len)
+		return 1;
+	if (a->len < b->len)
+		return -1;
+	return memcmp(a + 1, b + 1, a->len);
+}
+
+static int
+ipsp_ids_cmp(struct ipsec_ids *a, struct ipsec_ids *b)
+{
+	int ret;
+
+	ret = ipsp_id_cmp(a->id_remote, b->id_remote);
+	if (ret != 0)
+		return ret;
+	return ipsp_id_cmp(a->id_local, b->id_local);
+}
+
+static int
+ipsp_ids_flow_cmp(struct ipsec_ids *a, struct ipsec_ids *b)
+{
+	if (a->id_flow > b->id_flow)
+		return 1;
+	if (a->id_flow < b->id_flow)
+		return -1;
+	return 0;
 }

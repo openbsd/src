@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.169 2015/04/17 11:04:01 mikeb Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.170 2015/05/23 12:38:53 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -47,6 +47,7 @@ struct m_tag;
 #include <sys/types.h>
 #ifdef _KERNEL
 #include <sys/timeout.h>
+#include <sys/tree.h>
 #endif
 #include <sys/queue.h>
 #include <netinet/in.h>
@@ -166,12 +167,22 @@ struct sockaddr_encap {
 
 #define	SENT_LEN	sizeof(struct sockaddr_encap)
 
-struct ipsec_ref {
-	u_int16_t	ref_type;	/* Subtype of data */
-	int16_t		ref_len;	/* Length of data following */
-	int		ref_count;	/* Reference count */
-	int		ref_malloctype;	/* malloc(9) type, for freeing */
+struct ipsec_id {
+	u_int16_t	type;		/* Subtype of data */
+	int16_t		len;		/* Length of data following */
 };
+
+struct ipsec_ids {
+	RB_ENTRY(ipsec_ids)	id_node_id;
+	RB_ENTRY(ipsec_ids)	id_node_flow;
+	struct ipsec_id		*id_local;
+	struct ipsec_id		*id_remote;
+	u_int32_t		id_flow;
+	int			id_refcount;
+	struct timeout		id_timeout;
+};
+RB_HEAD(ipsec_ids_flows, ipsec_ids);
+RB_HEAD(ipsec_ids_tree, ipsec_ids);
 
 struct ipsec_acquire {
 	union sockaddr_union		ipa_addr;
@@ -212,8 +223,7 @@ struct ipsec_policy {
 
 	struct tdb		*ipo_tdb;		/* Cached entry */
 
-	struct ipsec_ref	*ipo_srcid;
-	struct ipsec_ref	*ipo_dstid;
+	struct ipsec_ids	*ipo_ids;
 
 	TAILQ_HEAD(ipo_acquires_head, ipsec_acquire) ipo_acquires; /* List of acquires */
 	TAILQ_ENTRY(ipsec_policy)	ipo_tdb_next;	/* List TDB policies */
@@ -328,8 +338,8 @@ struct tdb {				/* tunnel descriptor block */
 
 	u_int8_t	tdb_iv[4];	/* Used for HALF-IV ESP */
 
-	struct ipsec_ref	*tdb_srcid;	/* Source ID for this SA */
-	struct ipsec_ref	*tdb_dstid;	/* Destination ID for this SA */
+	struct ipsec_ids	*tdb_ids;	/* Src/Dst ID for this SA */
+	int		tdb_ids_swapped;	/* XXX */
 
 	u_int32_t	tdb_mtu;	/* MTU at this point in the chain */
 	u_int64_t	tdb_mtutimeout;	/* When to ignore this entry */
@@ -448,10 +458,10 @@ uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,
 		union sockaddr_union *, u_int8_t, int *);
 struct	tdb *gettdb(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
 struct	tdb *gettdbbydst(u_int, union sockaddr_union *, u_int8_t,
-		struct ipsec_ref *, struct ipsec_ref *,
+		struct ipsec_ids *,
 		struct sockaddr_encap *, struct sockaddr_encap *);
 struct	tdb *gettdbbysrc(u_int, union sockaddr_union *, u_int8_t,
-		struct ipsec_ref *, struct ipsec_ref *,
+		struct ipsec_ids *,
 		struct sockaddr_encap *, struct sockaddr_encap *);
 struct	tdb *gettdbbysrcdst(u_int, u_int32_t, union sockaddr_union *,
 		union sockaddr_union *, u_int8_t);
@@ -541,10 +551,12 @@ struct	tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
 struct	tdb *ipsp_spd_inp(struct mbuf *, int, int, int *, int,
 	    struct tdb *, struct inpcb *, struct ipsec_policy *);
 int	ipsp_is_unspecified(union sockaddr_union);
-int	ipsp_ref_match(struct ipsec_ref *, struct ipsec_ref *);
-void	ipsp_reffree(struct ipsec_ref *);
-int	ipsp_aux_match(struct tdb *, struct ipsec_ref *, struct ipsec_ref *,
+int	ipsp_aux_match(struct tdb *, struct ipsec_ids *,
 	    struct sockaddr_encap *, struct sockaddr_encap *);
+int	ipsp_ids_match(struct ipsec_ids *, struct ipsec_ids *);
+struct ipsec_ids *ipsp_ids_insert(struct ipsec_ids *);
+struct ipsec_ids *ipsp_ids_lookup(u_int32_t);
+void	ipsp_ids_free(struct ipsec_ids *);
 
 int	ipsec_common_input(struct mbuf *, int, int, int, int, int);
 int	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.68 2015/04/17 10:04:37 mikeb Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.69 2015/05/23 12:38:53 markus Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -424,7 +424,7 @@ int pfkeyv2_sysctl_policydumper(struct ipsec_policy *, void *);
 int pfdatatopacket(void *, int, struct mbuf **);
 
 void export_address(void **, struct sockaddr *);
-void export_identity(void **, struct ipsec_ref **);
+void export_identities(void **, struct ipsec_ids *, int, void **);
 void export_lifetime(void **, struct tdb *, int);
 void export_sa(void **, struct tdb *);
 void export_flow(void **, u_int8_t, struct sockaddr_encap *,
@@ -435,7 +435,8 @@ void export_tag(void **, struct tdb *);
 void export_tap(void **, struct tdb *);
 
 void import_address(struct sockaddr *, struct sadb_address *);
-void import_identity(struct ipsec_ref **, struct sadb_ident *);
+void import_identities(struct ipsec_ids **, int, struct sadb_ident *,
+    struct sadb_ident *);
 void import_key(struct ipsecinit *, struct sadb_key *, int);
 void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
