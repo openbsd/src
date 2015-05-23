@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.123 2015/05/20 08:54:37 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.124 2015/05/23 08:32:12 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -269,6 +269,7 @@ vlan_input(struct mbuf *m, void *hdr)
 	struct ether_header		*eh;
 	struct vlan_taghash		*tagh;
 	u_int				 tag;
+	struct mbuf_list		 ml = MBUF_LIST_INITIALIZER();
 	u_int16_t			 etype;
 
 	ifp = m->m_pkthdr.rcvif;
@@ -343,11 +344,6 @@ vlan_input(struct mbuf *m, void *hdr)
 		m_adj(m, EVL_ENCAPLEN);
 	}
 
-#if NBPFILTER > 0
-	if (ifv->ifv_if.if_bpf)
-		bpf_mtap_ether(ifv->ifv_if.if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
 	/*
 	 * Drop promiscuously received packets if we are not in
 	 * promiscuous mode.
@@ -362,9 +358,10 @@ vlan_input(struct mbuf *m, void *hdr)
 		}
 	}
 
+	ml_enqueue(&ml, m);
+	if_input(&ifv->ifv_if, &ml);
 	ifv->ifv_if.if_ipackets++;
-	m->m_pkthdr.rcvif = &ifv->ifv_if;
-	return (0);
+	return (1);
 }
 
 int
