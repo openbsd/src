@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_uartbus.c,v 1.5 2014/09/30 06:51:58 jmatthew Exp $ */
+/*	$OpenBSD: octeon_uartbus.c,v 1.6 2015/05/23 12:08:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -331,7 +331,7 @@ uartbus_device_to_pa(bus_addr_t addr)
 bus_size_t
 uartbus_get_read_reg(bus_size_t o)
 {
-	if (lcr && LCR_DLAB)
+	if (lcr & LCR_DLAB)
 		switch(o) {
 			case com_dlbl:
 				return (bus_size_t)0x80;
@@ -355,7 +355,7 @@ uartbus_get_write_reg(bus_size_t o, u_int8_t v)
 			return (bus_size_t)0x50;
 	}
 
-	if (lcr && LCR_DLAB)
+	if (lcr & LCR_DLAB)
 		switch(o) {
 			case com_dlbl:
 				return (bus_size_t)0x80;
