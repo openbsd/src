@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.23 2015/03/14 03:38:51 jsg Exp $ */
+/* $OpenBSD: if_vether.c,v 1.24 2015/05/23 08:31:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -28,6 +28,11 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 void	vetherattach(int);
 int	vetherioctl(struct ifnet *, u_long, caddr_t);
@@ -117,15 +122,17 @@ void
 vetherstart(struct ifnet *ifp)
 {
 	struct mbuf		*m;
-	int			 s;
 
 	for (;;) {
-		s = splnet();
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		splx(s);
-
 		if (m == NULL)
 			return;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif /* NBPFILTER > 0 */
+
 		ifp->if_opackets++;
 		m_freem(m);
 	}
