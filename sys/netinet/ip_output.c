@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.280 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.281 2015/05/23 12:52:59 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -229,23 +229,8 @@ reroute:
 		goto done_spd;
 
 	/* Do we have any pending SAs to apply ? */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-	if (mtag != NULL) {
-#ifdef DIAGNOSTIC
-		if (mtag->m_tag_len != sizeof (struct tdb_ident))
-			panic("ip_output: tag of length %hu (should be %zu",
-			    mtag->m_tag_len, sizeof (struct tdb_ident));
-#endif
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdb = gettdb(tdbi->rdomain,
-		    tdbi->spi, &tdbi->dst, tdbi->proto);
-		if (tdb == NULL)
-			error = -EINVAL;
-		m_tag_delete(m, mtag);
-	}
-	else
-		tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
-		    IPSP_DIRECTION_OUT, NULL, inp, ipsecflowinfo);
+	tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
+	    IPSP_DIRECTION_OUT, NULL, inp, ipsecflowinfo);
 
 	if (tdb == NULL) {
 		if (error == 0) {

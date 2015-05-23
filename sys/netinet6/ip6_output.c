@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.171 2015/05/13 10:42:47 jsg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.172 2015/05/23 12:52:59 markus Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -228,21 +228,8 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	/* Do we have any pending SAs to apply ? */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-	if (mtag != NULL) {
-#ifdef DIAGNOSTIC
-		if (mtag->m_tag_len != sizeof (struct tdb_ident))
-			panic("ip6_output: tag of length %hu (should be %zu",
-			    mtag->m_tag_len, sizeof (struct tdb_ident));
-#endif
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst, tdbi->proto);
-		if (tdb == NULL)
-			error = -EINVAL;
-		m_tag_delete(m, mtag);
-	} else
-		tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-		    &error, IPSP_DIRECTION_OUT, NULL, inp, 0);
+	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
+	    &error, IPSP_DIRECTION_OUT, NULL, inp, 0);
 
 	if (tdb == NULL) {
 		if (error == 0) {

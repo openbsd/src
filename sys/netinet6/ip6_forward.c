@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.73 2015/04/17 11:04:02 mikeb Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.74 2015/05/23 12:52:59 markus Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -164,22 +164,8 @@ reroute:
 	 */
 
 	/* Do we have any pending SAs to apply ? */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-	if (mtag != NULL) {
-#ifdef DIAGNOSTIC
-		if (mtag->m_tag_len != sizeof (struct tdb_ident))
-			panic("ip6_forward: tag of length %hu (should be %zu",
-			    mtag->m_tag_len, sizeof (struct tdb_ident));
-#endif
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst,
-		    tdbi->proto);
-		if (tdb == NULL)
-			error = -EINVAL;
-		m_tag_delete(m, mtag);
-	} else
-		tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-		    &error, IPSP_DIRECTION_OUT, NULL, NULL, 0);
+	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
+	    &error, IPSP_DIRECTION_OUT, NULL, NULL, 0);
 
 	if (tdb == NULL) {
 		if (error == 0) {
