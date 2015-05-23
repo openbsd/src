@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.8 2015/02/09 04:27:25 jsg Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.9 2015/05/23 14:26:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -622,6 +622,7 @@ md_read(const char *path)
 	buf = xmalloc(size);
 	if (fread(buf, size, 1, fp) != 1) {
 		fclose(fp);
+		free(buf);
 		return NULL;
 	}
 
