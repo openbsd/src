@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.23 2015/05/03 01:44:34 guenther Exp $	*/
+/*	$OpenBSD: dump.h,v 1.24 2015/05/23 05:17:20 guenther Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -125,6 +125,7 @@ __dead void dumpabort(int signo);
 void	getfstab(void);
 
 char	*rawname(char *cp);
+char	*getduid(char *path);
 union	dinode *getino(ino_t inum, int *mode);
 
 /* rdump routines */

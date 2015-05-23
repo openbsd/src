@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2015/05/03 01:44:34 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.56 2015/05/23 05:17:20 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 		 *         	density				tape size
 		 * 9-track	1600 bpi (160 bytes/.1")	2300 ft.
 		 * 9-track	6250 bpi (625 bytes/.1")	2300 ft.
-		 * cartridge	8000 bpi (100 bytes/.1")	1700 ft.
+		 * cartridge	8000 bpi (800 bytes/.1")	1700 ft.
 		 *						(450*4 - slop)
 		 */
 		if (density == 0)
@@ -363,7 +363,13 @@ main(int argc, char *argv[])
 		}
 	} else if ((dt = fstabsearch(disk)) != NULL) {
 		/* in fstab? */
-		disk = rawname(dt->fs_spec);
+		if (strchr(dt->fs_spec, '/')) {
+			/* fs_spec is a /dev/something */
+			disk = rawname(dt->fs_spec);
+		} else {
+			/* fs_spec is a DUID */
+			disk = rawname(disk);
+		}
 		mount_point = dt->fs_file;
 		(void)strlcpy(spcl.c_dev, dt->fs_spec, sizeof(spcl.c_dev));
 		if (dirlist != 0) {
@@ -649,13 +655,48 @@ rawname(char *cp)
 {
 	static char rawbuf[PATH_MAX];
 	char *dp = strrchr(cp, '/');
+	char *prefix;
 
 	if (dp == NULL)
 		return (NULL);
+	prefix = dp[1] == 'r' ? "" : "r";
 	*dp = '\0';
-	(void)snprintf(rawbuf, sizeof(rawbuf), "%s/r%s", cp, dp + 1);
+	(void)snprintf(rawbuf, sizeof(rawbuf), "%s/%s%s", cp, prefix, dp + 1);
 	*dp = '/';
 	return (rawbuf);
+}
+
+char *
+getduid(char *path)
+{
+	int fd;
+	struct disklabel lab;
+	u_int64_t zero_uid = 0;
+	char *duid;
+	
+	if ((fd = opendev(path, O_RDONLY | O_NOFOLLOW, 0, NULL)) >= 0) {
+		if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
+			close(fd);
+			warn("ioctl(DIOCGDINFO)");
+			return (NULL);
+		}
+		close(fd);
+	
+		if (memcmp(lab.d_uid, &zero_uid, sizeof(lab.d_uid)) != 0) {
+			if (asprintf(&duid,
+			    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c",
+			    lab.d_uid[0], lab.d_uid[1], lab.d_uid[2],
+			    lab.d_uid[3], lab.d_uid[4], lab.d_uid[5],
+			    lab.d_uid[6], lab.d_uid[7],
+			    path[strlen(path)-1]) == -1) {
+				warn("Cannot malloc duid");
+				return (NULL);
+			}
+			return (duid);
+		}
+	}
+
+	return (NULL);
 }
 
 /*

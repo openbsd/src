@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.36 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: optr.c,v 1.37 2015/05/23 05:17:20 guenther Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -337,7 +337,7 @@ fstabsearch(char *key)
 {
 	struct pfstab *pf;
 	struct fstab *fs;
-	char *rn;
+	char *rn, *uid;
 
 	for (pf = table; pf != NULL; pf = pf->pf_next) {
 		fs = pf->pf_fstab;
@@ -347,6 +347,12 @@ fstabsearch(char *key)
 		rn = rawname(fs->fs_spec);
 		if (rn != NULL && strcmp(rn, key) == 0)
 			return (fs);
+		uid = getduid(rn != NULL ? rn : fs->fs_spec);
+		if (uid != NULL && strcmp(uid, key) == 0) {
+			free(uid);
+			return (fs);
+		}
+		free(uid);
 		if (key[0] != '/') {
 			if (*fs->fs_spec == '/' &&
 			    strcmp(fs->fs_spec + 1, key) == 0)
