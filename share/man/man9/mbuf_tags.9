@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.34 2015/04/17 11:06:39 mikeb Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.35 2015/05/23 12:57:09 markus Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: April 17 2015 $
+.Dd $Mdocdate: May 23 2015 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -95,7 +95,7 @@ Following this structure are
 bytes of space that can be used to store tag-specific information.
 .Pp
 The currently defined tag types are:
-.Bl -tag -width PACKET_TAG_IPSEC_PENDING_TDB
+.Bl -tag -width PACKET_TAG_PF_REASSEMBLED
 .It PACKET_TAG_IPSEC_IN_DONE
 Used by
 .Xr ipsec 4
@@ -113,13 +113,6 @@ The tag contains a
 identifying the security association applied to the packet.
 This tag is primarily used to detect and avoid loops in IPsec
 processing on output.
-.It PACKET_TAG_IPSEC_PENDING_TDB
-Used by the IPsec stack to keep track of IPsec processing that should
-happen to the packet on output.
-The tag contains a
-.Va struct tdb_ident
-identifying the security association that should be applied at the
-next loop of IPsec processing.
 .It PACKET_TAG_BRIDGE
 Used by the
 .Xr bridge 4
