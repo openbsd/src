@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2015/05/20 01:44:20 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.2 2015/05/24 08:01:46 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -18,7 +18,7 @@ maxusers	32			# estimated number of users
 option		CPU_ARMv7		# Support the ARMv7
 
 #option WSDISPLAY_COMPAT_USL		# VT handling
-#option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=1
 #option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
@@ -150,6 +150,10 @@ udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
 ugen*		at uhub?		# USB Generic driver
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
+uvideo*		at uhub?                # USB Video
+video*		at uvideo?
+udl*		at uhub?                # DisplayLink USB displays
+wsdisplay*	at udl?
 
 atphy*		at mii?			# Attansic F1 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
@@ -178,3 +182,6 @@ owctr*		at onewire?		# Counter device
 
 # Pseudo-Devices
 pseudo-device hotplug         1       # devices hot plugging
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device   wsmux           2
