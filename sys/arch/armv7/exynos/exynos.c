@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.4 2015/05/20 00:14:55 jsg Exp $ */
+/* $OpenBSD: exynos.c,v 1.5 2015/05/24 11:01:48 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -113,5 +113,5 @@ exynos_match(struct device *parent, void *cfdata, void *aux)
 	if (fdt_next_node(0))
 		return (0);
 
-	return (imx_board_devs() != NULL);
+	return (exynos_board_devs() != NULL);
 }
