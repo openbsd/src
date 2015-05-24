@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.211 2015/05/18 19:59:27 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.212 2015/05/24 01:01:49 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1077,7 +1077,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
-char *gdtstore;
 extern  struct user *proc0paddr;
 
 void
@@ -1558,25 +1557,25 @@ init_x86_64(paddr_t first_avail)
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	cpu_info_primary.ci_tss = (void *)(idt + NIDT);
-	gdtstore = (void *)(cpu_info_primary.ci_tss + 1);
+	cpu_info_primary.ci_gdt = (void *)(cpu_info_primary.ci_tss + 1);
 
 	/* make gdt gates and memory segments */
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0,
+	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GCODE_SEL), 0,
 	    0xfffff, SDT_MEMERA, SEL_KPL, 1, 0, 1);
 
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GDATA_SEL), 0,
+	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GDATA_SEL), 0,
 	    0xfffff, SDT_MEMRWA, SEL_KPL, 1, 0, 1);
 
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE32_SEL), 0,
+	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GUCODE32_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA_SEL), 0,
+	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GUDATA_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
 
-	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
+	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GUCODE_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
 
-	set_sys_segment(GDT_ADDR_SYS(gdtstore, GPROC0_SEL),
+	set_sys_segment(GDT_ADDR_SYS(cpu_info_primary.ci_gdt, GPROC0_SEL),
 	    cpu_info_primary.ci_tss, sizeof (struct x86_64_tss)-1,
 	    SDT_SYS386TSS, SEL_KPL, 0);
 
@@ -1589,7 +1588,7 @@ init_x86_64(paddr_t first_avail)
 		idt_allocmap[x] = 1;
 	}
 
-	setregion(&region, gdtstore, GDT_SIZE - 1);
+	setregion(&region, cpu_info_primary.ci_gdt, GDT_SIZE - 1);
 	lgdt(&region);
 
 	cpu_init_idt();

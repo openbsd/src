@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.10 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: segments.h,v 1.11 2015/05/24 01:01:49 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -154,7 +154,6 @@ struct region_descriptor {
 extern struct sys_segment_descriptor *ldt;
 #endif
 extern struct gate_descriptor *idt;
-extern char *gdtstore;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void unsetgate(struct gate_descriptor *);

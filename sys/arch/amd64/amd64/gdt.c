@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.23 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.24 2015/05/24 01:01:49 guenther Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 			panic("gdt_init: no pages");
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
 	}
-	memcpy(ci->ci_gdt, gdtstore, GDT_SIZE);
+	memcpy(ci->ci_gdt, cpu_info_primary.ci_gdt, GDT_SIZE);
 	bzero(ci->ci_tss, sizeof(*ci->ci_tss));
 }
 
