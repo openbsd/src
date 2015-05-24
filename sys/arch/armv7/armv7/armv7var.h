@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7var.h,v 1.6 2015/05/19 03:30:54 jsg Exp $ */
+/* $OpenBSD: armv7var.h,v 1.7 2015/05/24 11:06:16 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -81,6 +81,7 @@ int	armv7_submatch(struct device *, void *, void *);
 #define BOARD_ID_IMX6_PHYFLEX 3529
 #define BOARD_ID_AM335X_BEAGLEBONE 3589
 #define BOARD_ID_IMX6_SABRELITE 3769
+#define BOARD_ID_EXYNOS5_CHROMEBOOK 3774
 #define BOARD_ID_IMX6_SABRESD 3980
 #define BOARD_ID_SUN4I_A10 4104
 #define BOARD_ID_IMX6_NOVENA 4269
