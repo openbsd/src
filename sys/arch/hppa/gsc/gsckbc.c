@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.18 2014/10/31 10:29:33 jsg Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.19 2015/05/24 10:57:47 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -98,7 +98,6 @@ void	gsckbc_attach(struct device *, struct device *, void *);
 struct	gsckbc_softc {
 	struct pckbc_softc sc_pckbc;
 
-	int sc_irq;
 	void *sc_ih;
 	int sc_type;
 };
@@ -110,8 +109,6 @@ struct cfattach gsckbc_ca = {
 struct cfdriver gsckbc_cd = {
 	NULL, "gsckbc", DV_DULL
 };
-
-void	gsckbc_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 /* descriptor for one device command */
 struct pckbc_devcmd {
@@ -367,7 +364,6 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 	int ident;
 
 	iot = ga->ga_ca.ca_iot;
-	gsc->sc_irq = ga->ga_ca.ca_irq;
 
 	if (bus_space_map(iot, ga->ga_ca.ca_hpa, KBMAPSIZE, 0, &ioh))
 		panic("gsckbc_attach: couldn't map port");
@@ -385,9 +381,15 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("\n");
+	gsc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent,
+	    ga->ga_ca.ca_irq, IPL_TTY, gsckbcintr, sc, sc->sc_dv.dv_xname);
+	if (gsc->sc_ih == NULL) {
+		printf(": can't establish interrupt\n");
+		bus_space_unmap(iot, ioh, KBMAPSIZE);
+		return;
+	}
 
-	sc->intr_establish = gsckbc_intr_establish;
+	printf("\n");
 
 	t = malloc(sizeof(*t), M_DEVBUF, M_WAITOK | M_ZERO);
 	t->t_iot = iot;
@@ -416,15 +418,6 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		pckbc_attach_slot(sc, gsc->sc_type);
 	}
-}
-
-void
-gsckbc_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
-{
-	struct gsckbc_softc *gsc = (void *)sc;
-
-	gsc->sc_ih = gsc_intr_establish((struct gsc_softc *)sc->sc_dv.dv_parent,
-	    gsc->sc_irq, IPL_TTY, gsckbcintr, sc, sc->sc_dv.dv_xname);
 }
 
 /*
@@ -975,8 +968,6 @@ pckbc_set_inputhandler(self, slot, func, arg, name)
 
 	if (slot >= PCKBC_NSLOTS)
 		panic("pckbc_set_inputhandler: bad slot %d", slot);
-
-	(*sc->intr_establish)(sc, slot);
 
 	sc->inputhandler[slot] = func;
 	sc->inputarg[slot] = arg;

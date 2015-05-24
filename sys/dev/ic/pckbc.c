@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.48 2015/05/05 16:27:20 shadchin Exp $ */
+/* $OpenBSD: pckbc.c,v 1.49 2015/05/24 10:57:47 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -948,8 +948,6 @@ pckbc_set_inputhandler(pckbc_tag_t self, pckbc_slot_t slot, pckbc_inputfcn func,
 
 	if (slot >= PCKBC_NSLOTS)
 		panic("pckbc_set_inputhandler: bad slot %d", slot);
-
-	(*sc->intr_establish)(sc, slot);
 
 	sc->inputhandler[slot] = func;
 	sc->inputarg[slot] = arg;

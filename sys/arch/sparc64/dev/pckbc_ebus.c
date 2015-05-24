@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.12 2010/11/23 04:07:55 shadchin Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.13 2015/05/24 10:57:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -70,7 +70,6 @@ struct cfattach pckbc_ebus_ca = {
 	sizeof(struct pckbc_ebus_softc), pckbc_ebus_match, pckbc_ebus_attach
 };
 
-void pckbc_ebus_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 int pckbc_ebus_is_console(struct pckbc_ebus_softc *);
 
 int
@@ -158,8 +157,6 @@ pckbc_ebus_attach(parent, self, aux)
 		t->t_flags = flags;
 	}
 
-	psc->intr_establish = pckbc_ebus_intr_establish;
-
 	sc->sc_irq[0] = bus_intr_establish(sc->sc_iot, ea->ea_intrs[0],
 	    IPL_TTY, 0, pckbcintr, psc, self->dv_xname);
 	if (sc->sc_irq[0] == NULL) {
@@ -210,12 +207,4 @@ pckbc_ebus_is_console(sc)
 		}
 	}
 	return (0);
-}
-
-void
-pckbc_ebus_intr_establish(psc, slot)
-	struct pckbc_softc *psc;
-	pckbc_slot_t slot;
-{
-	/* Nothing to do, interrupts were mapped in attach. */
 }

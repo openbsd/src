@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_isa.c,v 1.17 2015/05/21 19:32:29 miod Exp $	*/
+/*	$OpenBSD: pckbc_isa.c,v 1.18 2015/05/24 10:57:47 miod Exp $	*/
 /*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
@@ -47,8 +47,6 @@ const struct cfattach pckbc_isa_ca = {
 	sizeof(struct pckbc_softc), pckbc_isa_match, pckbc_isa_attach,
 	NULL, pckbc_isa_activate
 };
-
-void	pckbc_isa_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 int
 pckbc_isa_match(struct device *parent, void *match, void *aux)
@@ -150,8 +148,6 @@ pckbc_isa_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	sc->intr_establish = pckbc_isa_intr_establish;
-
 	if (pckbc_is_console(iot, IO_KBD)) {
 		t = &pckbc_consdata;
 		pckbc_console_attached = 1;
@@ -174,10 +170,4 @@ pckbc_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Finish off the attach. */
 	pckbc_attach(sc, cf->cf_flags);
-}
-
-void
-pckbc_isa_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
-{
-	/* done in attach */
 }

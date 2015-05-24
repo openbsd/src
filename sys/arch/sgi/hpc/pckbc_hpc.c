@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_hpc.c,v 1.3 2015/05/04 09:33:45 mpi Exp $	*/
+/*	$OpenBSD: pckbc_hpc.c,v 1.4 2015/05/24 10:57:47 miod Exp $	*/
 /* $NetBSD: pckbc_hpc.c,v 1.9 2008/03/15 13:23:24 cube Exp $	 */
 
 /*
@@ -48,19 +48,11 @@
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 
-struct pckbc_hpc_softc {
-	struct pckbc_softc sc_pckbc;
-
-	int	sc_irq;
-	int	sc_hasintr;
-};
-
 int      pckbc_hpc_match(struct device *, void *, void *);
 void     pckbc_hpc_attach(struct device *, struct device *, void *);
-void     pckbc_hpc_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 const struct cfattach pckbc_hpc_ca = {
-	sizeof(struct pckbc_hpc_softc), pckbc_hpc_match, pckbc_hpc_attach
+	sizeof(struct pckbc_softc), pckbc_hpc_match, pckbc_hpc_attach
 };
 
 int
@@ -82,15 +74,17 @@ pckbc_hpc_match(struct device *parent, void *vcf, void *aux)
 void
 pckbc_hpc_attach(struct device *parent, struct device * self, void *aux)
 {
-	struct pckbc_hpc_softc *msc = (struct pckbc_hpc_softc *)self;
-	struct pckbc_softc *sc = &msc->sc_pckbc;
+	struct pckbc_softc *sc = (struct pckbc_softc *)self;
 	struct hpc_attach_args *haa = aux;
 	struct pckbc_internal *t = NULL;
 	bus_space_handle_t ioh_d, ioh_c;
 	int console;
 
-	msc->sc_irq = haa->ha_irq;
-	msc->sc_hasintr = 0;
+	if (hpc_intr_establish(haa->ha_irq, IPL_TTY, pckbcintr, sc,
+	    sc->sc_dv.dv_xname) == NULL) {
+		printf(": unable to establish interrupt\n");
+		return;
+	}
 
 	console = pckbc_is_console(haa->ha_st,
 	    XKPHYS_TO_PHYS(haa->ha_sh + haa->ha_devoff + 3));
@@ -114,28 +108,10 @@ pckbc_hpc_attach(struct device *parent, struct device * self, void *aux)
 		t->t_ioh_d = ioh_d;
 	}
 
-	sc->intr_establish = pckbc_hpc_intr_establish;
-
 	t->t_cmdbyte = KC8_CPU;
 	t->t_sc = sc;
 	sc->id = t;
 
 	printf("\n");
 	pckbc_attach(sc, 0);
-}
-
-void
-pckbc_hpc_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
-{
-	struct pckbc_hpc_softc *msc = (struct pckbc_hpc_softc *)sc;
-
-	if (msc->sc_hasintr)
-		return;
-
-	if (hpc_intr_establish(msc->sc_irq, IPL_TTY, pckbcintr, sc,
-	    sc->sc_dv.dv_xname) == NULL) {
-		printf(": unable to establish interrupt");
-	} else {
-		msc->sc_hasintr = 1;
-	}
 }
