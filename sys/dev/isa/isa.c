@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.44 2015/05/21 19:29:31 miod Exp $	*/
+/*	$OpenBSD: isa.c,v 1.45 2015/05/24 15:25:34 miod Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -211,6 +211,7 @@ isascan(parent, match)
 	ia.ia_maddr = cf->cf_maddr;
 	ia.ia_msize = cf->cf_msize;
 	ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
+	ia.ipa_nirq = ia.ia_irq == IRQUNK ? 0 : 1;
 	ia.ia_drq = cf->cf_drq;
 	ia.ia_drq2 = cf->cf_drq2;
 	ia.ia_delaybah = sc->sc_delaybah;
