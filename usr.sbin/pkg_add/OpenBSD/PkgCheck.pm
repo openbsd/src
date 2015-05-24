@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.55 2014/11/29 10:42:51 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.56 2015/05/24 07:53:14 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -41,6 +41,7 @@ sub new
 	my ($class, $mystate) = @_;
 	my $state = Installer::State->new("pkg_check");
 	$state->{v} = $mystate->{v};
+	$state->{subst} = $mystate->{subst};
 	$state->{interactive} = $mystate->{interactive};
 	$state->{destdir} = $mystate->{destdir};
 	bless { state => $state}, $class;
