@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak_subr.c,v 1.6 2015/03/14 03:38:50 jsg Exp $   */
+/*	$OpenBSD: uoak_subr.c,v 1.7 2015/05/25 12:53:12 jsg Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -187,7 +187,7 @@ uoak_set_sample_rate(struct uoak_softc *sc, enum uoak_target target, int rate)
 	sc->sc_rcmd.val[0] = (uint8_t)(rate & 0xff);
 	sc->sc_rcmd.val[1] = (uint8_t)((rate >> 8) & 0xff)
 #else
-	USETW(&sc->sc_rcmd.val, rate);
+	USETW(sc->sc_rcmd.val, rate);
 #endif
 
 	if (uoak_set_cmd(sc) < 0)
