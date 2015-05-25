@@ -7211,6 +7211,7 @@ MAINT=$MAINTAINER_MODE_TRUE
 # Stage specific cflags for build.
 stage1_cflags="-g"
 case $build in
+  vax-*-openbsd*) ;;
   vax-*-*)
     case ${GCC} in
       yes) stage1_cflags="-g -Wa,-J" ;;

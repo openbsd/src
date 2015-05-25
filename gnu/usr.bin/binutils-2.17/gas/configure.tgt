@@ -374,7 +374,7 @@ case ${generic_target} in
   v850e-*-*)				fmt=elf ;;
   v850ea-*-*)				fmt=elf ;;
 
-  vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
+  vax-*-netbsdelf* | vax-*-openbsd*)	fmt=elf em=nbsd ;;
   vax-*-linux-*)			fmt=elf em=linux ;;
 
   xscale-*-coff)			fmt=coff ;;

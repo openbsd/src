@@ -191,6 +191,7 @@ ALL_EMULATIONS = \
 	eelf32ppcwindiss.o \
 	eelf32ppcvxworks.o \
 	eelf32vax.o \
+	eelf32vax_obsd.o \
         eelf32xc16x.o \
         eelf32xc16xl.o \
         eelf32xc16xs.o \
@@ -684,6 +685,9 @@ eelf32am33lin.c: $(srcdir)/emulparams/elf32am33lin.sh \
 eelf32vax.c: $(srcdir)/emulparams/elf32vax.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32vax "$(tdir_elf32vax)"
+eelf32vax_obsd.c: $(srcdir)/emulparams/elf32vax_obsd.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32vax_obsd "$(tdir_elf32vax_obsd)"
 eelf32xtensa.c: $(srcdir)/emulparams/elf32xtensa.sh \
   $(srcdir)/emulparams/xtensa-config.sh $(srcdir)/emultempl/elf32.em \
   $(srcdir)/emultempl/xtensaelf.em $(INCDIR)/xtensa-config.h \
