@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.52 2015/03/30 21:40:20 kspillner Exp $
+#	$OpenBSD: airport,v 1.53 2015/05/25 14:50:10 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -332,8 +332,8 @@ CIX:Cornel Ruiz, Chiclayo, Peru
 CJB:Peelamedu, Coimbatore, India
 CJS:International Abraham Gonzalez, Ciudad Juarez, Chihuahua, Mexico
 CJU:Cheju, Cheju, South Korea
-CKC:Cherkasy International, Cherkasy, Ukraine
 CKB:North Central West Virginia, Bridgeport, West Virginia, USA
+CKC:Cherkasy International, Cherkasy, Ukraine
 CKS:International / Brasilia Brazil, Carajas, Para, Brazil
 CKY:Conakry, Conakry, Guinea
 CLD:Carlsbad/Palomar, California, USA
@@ -909,12 +909,13 @@ KUV:Kunsan, South Korea
 KVA:Kavala, Greece
 KVB:Skovde, Sweden
 KWA:Kwajalein, Marshall Islands
-KWI:Kuwait International
 KWG:Kryvyi Rih International, Dnipropetrovs'k, Ukraine
+KWI:Kuwait International
 KWL:Guilin, China
 KXK:Khurba, Komsomolsk-on-Amur, Russia
 KZI:Kozani, Greece
 KZN:Kazan, Russia
+KZR:Zafer, Turkey
 KZS:Kastelorizo, Greece
 LAD:Fevereiro, Luanda, Angola
 LAF:Purdue University, Lafayette, Indiana, USA
