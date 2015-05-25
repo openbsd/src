@@ -178,6 +178,8 @@ ALL_EMULATIONS = \
 	eelf32lppcnto.o \
 	eelf32lppcsim.o \
 	eelf32m32c.o \
+	eelf32m88k.o \
+	eelf32m88k_obsd.o \
 	eelf32mcore.o \
 	eelf32mipswindiss.o \
 	eelf32mt.o \
@@ -268,6 +270,7 @@ ALL_EMULATIONS = \
 	em68kobsd.o \
 	em68kpsos.o \
 	em88kbcs.o \
+	em88kopenbsd.o \
 	emaxqcoff.o \
 	emcorepe.o \
 	emipsbig.o \
@@ -1193,6 +1196,9 @@ em68kpsos.c:	$(srcdir)/emulparams/m68kpsos.sh \
 em88kbcs.c: $(srcdir)/emulparams/m88kbcs.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/m88kbcs.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} m88kbcs "$(tdir_m88kbcs)"
+em88kopenbsd.c: $(srcdir)/emulparams/m88kopenbsd.sh \
+  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} m88kopenbsd "$(tdir_m88kopenbsd)"
 emaxqcoff.c: $(srcdir)/emulparams/maxqcoff.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/maxqcoff.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} maxqcoff "$(tdir_maxqcoff)"
@@ -1687,6 +1693,13 @@ eelf32m32c.c: $(srcdir)/emulparams/elf32m32c.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/needrelax.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32m32c "$(tdir_m32c)"
+eelf32m88k.c: $(srcdir)/emulparams/elf32m88k.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32m88k "$(tdir_elf32m88k)"
+eelf32m88k_obsd.c: $(srcdir)/emulparams/elf32m88k_obsd.sh \
+  $(srcdir)/emulparams/elf32m88k.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32m88k_obsd "$(tdir_elf32m88k_obsd)"
 eelf32mt.c: $(srcdir)/emulparams/elf32mt.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32mt "$(tdir_mt)"

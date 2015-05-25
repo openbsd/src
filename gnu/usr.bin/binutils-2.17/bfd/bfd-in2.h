@@ -2327,6 +2327,8 @@ displacement is used on the Alpha.  */
   BFD_RELOC_32_PCREL_S2,
   BFD_RELOC_16_PCREL_S2,
   BFD_RELOC_23_PCREL_S2,
+  BFD_RELOC_18_PCREL_S2,
+  BFD_RELOC_28_PCREL_S2,
 
 /* High 22 bits and low 10 bits of 32-bit value, placed into lower bits of
 the target word.  These are used on the SPARC.  */

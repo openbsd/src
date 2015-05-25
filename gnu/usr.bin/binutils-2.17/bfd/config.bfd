@@ -810,10 +810,10 @@ case "${targ}" in
     targ_defvec=m88kmach3_vec
     targ_cflags=-DSTAT_FOR_EXEC
     ;;
-  m88*-*-openbsd*)
-   targ_defvec=m88kopenbsd_vec
-   targ_underscore=yes
-   ;;
+  m88k-*-openbsd*)
+    targ_defvec=bfd_elf32_m88k_vec
+    targ_selvecs="m88kopenbsd_vec m88kbcs_vec"
+    ;;
   m88*-*-*)
     targ_defvec=m88kbcs_vec
     targ_underscore=yes
@@ -1374,7 +1374,7 @@ case "${targ}" in
     ;;
 
   vax-*-openbsd*)
-    targ_defvec=elf32_vax_vec
+    targ_defvec=bfd_elf32_vax_vec
     targ_selvecs=vaxnetbsd_vec
     ;;
 

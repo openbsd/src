@@ -254,6 +254,8 @@ case ${generic_target} in
   m68k-*-openbsd*)			fmt=aout em=obsd bfd_gas=yes ;;
   m68k-*-psos*)				fmt=elf em=psos;;
 
+  m88k-*-openbsd*)			fmt=elf em=obsd ;;
+
   maxq-*-coff)      			fmt=coff bfd_gas=yes ;;
 
   mcore-*-elf)				fmt=elf ;;

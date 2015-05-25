@@ -301,7 +301,9 @@ m68*-*-psos*)		targ_emul=m68kpsos ;;
 m68*-*-rtemscoff*)	targ_emul=m68kcoff ;;
 m68*-*-rtems*)		targ_emul=m68kelf
 			;;
-m8*-*-*)		targ_emul=m88kbcs
+m88*-*-openbsd*)	targ_emul=elf32m88k_obsd
+			targ_extra_emul="m88kopenbsd m88kbcs" ;;
+m88*-*-*)		targ_emul=m88kbcs
 			;;
 maxq-*-coff)            targ_emul=maxqcoff
 			;;

@@ -90,6 +90,7 @@
 #include "elf/m32r.h"
 #include "elf/m68k.h"
 #include "elf/m68hc11.h"
+#include "elf/m88k.h"
 #include "elf/mcore.h"
 #include "elf/mips.h"
 #include "elf/mmix.h"
@@ -613,6 +614,7 @@ guess_is_rela (unsigned long e_machine)
     case EM_BLACKFIN:
     case EM_NIOS32:
     case EM_ALTERA_NIOS2:
+    case EM_88K:
       return TRUE;
 
     case EM_MMA:
@@ -1133,6 +1135,9 @@ dump_relocations (FILE *file,
 	  rtype = elf_bfin_reloc_type (type);
 	  break;
 
+	case EM_88K:
+	  rtype = elf_m88k_reloc_type (type);
+	  break;
 	}
 
       if (rtype == NULL)
@@ -2234,6 +2239,13 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, ", D-Float");
 	  if ((e_flags & EF_VAX_GFLOAT))
 	    strcat (buf, ", G-Float");
+	  break;
+
+	case EM_88K:
+	  if ((e_flags & EF_NABI))
+	    strcat (buf, ", not 88Open ABI compliant");
+	  if ((e_flags & EF_M88110))
+	    strcat (buf, ", m88110");
 	  break;
 	}
     }
