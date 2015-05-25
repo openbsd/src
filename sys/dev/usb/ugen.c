@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.82 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: ugen.c,v 1.83 2015/05/25 11:52:15 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -107,8 +107,9 @@ void ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status);
 void ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status);
 int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
-int ugen_do_ioctl(struct ugen_softc *, int, u_long,
-			 caddr_t, int, struct proc *);
+int ugen_do_ioctl(struct ugen_softc *, int, u_long, caddr_t, int,
+	struct proc *);
+int ugen_do_close(struct ugen_softc *, int, int);
 int ugen_set_config(struct ugen_softc *sc, int configno);
 int ugen_set_interface(struct ugen_softc *, int, int);
 int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
@@ -398,16 +399,29 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 ugenclose(dev_t dev, int flag, int mode, struct proc *p)
 {
+	struct ugen_softc *sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 	int endpt = UGENENDPOINT(dev);
-	struct ugen_softc *sc;
-	struct ugen_endpoint *sce;
-	int dir;
-	int i;
+	int error;
 
-	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
+	if (sc == NULL || usbd_is_dying(sc->sc_udev))
+		return (EIO);
 
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
+
+	sc->sc_refcnt++;
+	error = ugen_do_close(sc, endpt, flag);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(&sc->sc_dev);
+
+	return (error);
+}
+
+int
+ugen_do_close(struct ugen_softc *sc, int endpt, int flag)
+{
+	struct ugen_endpoint *sce;
+	int dir, i;
 
 #ifdef DIAGNOSTIC
 	if (!sc->sc_is_open[endpt]) {
@@ -431,7 +445,6 @@ ugenclose(dev_t dev, int flag, int mode, struct proc *p)
 		DPRINTFN(5, ("ugenclose: endpt=%d dir=%d sce=%p\n",
 			     endpt, dir, sce));
 
-		usbd_abort_pipe(sce->pipeh);
 		usbd_close_pipe(sce->pipeh);
 		sce->pipeh = NULL;
 
@@ -739,9 +752,8 @@ ugen_detach(struct device *self, int flags)
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;
 	struct ugen_endpoint *sce;
-	int i, dir;
-	int s;
-	int maj, mn;
+	int i, dir, endptno;
+	int s, maj, mn;
 
 	DPRINTF(("ugen_detach: sc=%p flags=%d\n", sc, flags));
 
@@ -773,6 +785,10 @@ ugen_detach(struct device *self, int flags)
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 
+	for (endptno = 0; endptno < USB_MAX_ENDPOINTS; endptno++) {
+		if (sc->sc_is_open[endptno])
+			ugen_do_close(sc, endptno, FREAD|FWRITE);
+	}
 	return (0);
 }
 
@@ -939,8 +955,8 @@ ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 }
 
 int
-ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
-	      caddr_t addr, int flag, struct proc *p)
+ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
+    int flag, struct proc *p)
 {
 	struct ugen_endpoint *sce;
 	int err;
