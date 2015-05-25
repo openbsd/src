@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.45 2015/05/24 15:25:34 miod Exp $	*/
+/*	$OpenBSD: isa.c,v 1.46 2015/05/25 15:19:22 miod Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -214,6 +214,7 @@ isascan(parent, match)
 	ia.ipa_nirq = ia.ia_irq == IRQUNK ? 0 : 1;
 	ia.ia_drq = cf->cf_drq;
 	ia.ia_drq2 = cf->cf_drq2;
+	ia.ipa_ndrq = 2;
 	ia.ia_delaybah = sc->sc_delaybah;
 
 	if (cf->cf_fstate == FSTATE_STAR) {
