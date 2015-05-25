@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.131 2015/05/20 13:32:39 reyk Exp $ */
+/*	$OpenBSD: ntp.c,v 1.132 2015/05/25 14:58:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -313,21 +313,23 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 		}
 		idx_clients = i;
 
-		if (last_sensor_scan == 0 ||
-		    last_sensor_scan + SENSOR_SCAN_INTERVAL < getmonotime()) {
-			sensors_cnt = sensor_scan();
-			last_sensor_scan = getmonotime();
-		}
-		if (!TAILQ_EMPTY(&conf->ntp_conf_sensors) && sensors_cnt == 0 &&
-		    nextaction > last_sensor_scan + SENSOR_SCAN_INTERVAL)
-			nextaction = last_sensor_scan + SENSOR_SCAN_INTERVAL;
-		sensors_cnt = 0;
-		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
-			if (conf->settime && s->offsets[0].offset)
-				priv_settime(s->offsets[0].offset);
-			sensors_cnt++;
-			if (s->next > 0 && s->next < nextaction)
-				nextaction = s->next;
+		if (!TAILQ_EMPTY(&conf->ntp_conf_sensors)) {
+			if (last_sensor_scan == 0 ||
+			    last_sensor_scan + SENSOR_SCAN_INTERVAL < getmonotime()) {
+				sensors_cnt = sensor_scan();
+				last_sensor_scan = getmonotime();
+			}
+			if (sensors_cnt == 0 &&
+			    nextaction > last_sensor_scan + SENSOR_SCAN_INTERVAL)
+				nextaction = last_sensor_scan + SENSOR_SCAN_INTERVAL;
+			sensors_cnt = 0;
+			TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
+				if (conf->settime && s->offsets[0].offset)
+					priv_settime(s->offsets[0].offset);
+				sensors_cnt++;
+				if (s->next > 0 && s->next < nextaction)
+					nextaction = s->next;
+			}
 		}
 
 		if (conf->settime &&
