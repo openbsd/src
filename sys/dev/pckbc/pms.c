@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.60 2015/05/04 09:33:46 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.61 2015/05/25 15:04:26 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1840,7 +1840,7 @@ elantech_get_hwinfo_v4(struct pms_softc *sc)
 	if (synaptics_query(sc, ELANTECH_QUE_FW_VER, &fw_version))
 		return (-1);
 
-	if (((fw_version & 0x0f0000) >> 16) != 6)
+	if (((fw_version & 0x0f0000) >> 16) < 6)
 		return (-1);
 
 	elantech->fw_version = fw_version;
