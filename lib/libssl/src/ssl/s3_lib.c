@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.95 2015/02/08 22:06:49 miod Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.96 2015/05/25 21:35:35 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1820,7 +1820,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
 		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(0),
 		.strength_bits = 256,
-		.alg_bits = 0,
+		.alg_bits = 256,
 	},
 
 	/* Cipher CC14 */
@@ -1837,7 +1837,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
 		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(0),
 		.strength_bits = 256,
-		.alg_bits = 0,
+		.alg_bits = 256,
 	},
 
 	/* Cipher CC15 */
@@ -1854,7 +1854,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
 		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(0),
 		.strength_bits = 256,
-		.alg_bits = 0,
+		.alg_bits = 256,
 	},
 #endif
 
