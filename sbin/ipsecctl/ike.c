@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.79 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: ike.c,v 1.80 2015/05/25 19:29:36 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -362,7 +362,7 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 			return (-1);
 		}
 	} else
-		group_desc = "MODP_1024";
+		group_desc = "MODP_3072";
 
 	/* the transform name must not include "," */
 	if (key_length && (p = strchr(key_length, ',')) != NULL)
@@ -531,7 +531,7 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 			return (-1);
 		};
 	} else
-		group_desc = "MODP_1024";
+		group_desc = "MODP_3072";
 
 	switch (r->ikeauth->type) {
 	case IKE_AUTH_PSK:
