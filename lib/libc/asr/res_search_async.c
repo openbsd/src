@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.14 2014/07/23 21:26:25 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.15 2015/05/25 19:30:25 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <asr.h>
 #include <err.h>
 #include <errno.h>
+#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -292,7 +293,11 @@ iter_domain(struct asr_query *as, const char *name, char * buf, size_t len)
 		/* FALLTHROUGH */
 
 	case DOM_DOMAIN:
-		if (as->as_dom_idx < as->as_ctx->ac_domcount) {
+		if (as->as_dom_idx < as->as_ctx->ac_domcount &&
+		    (as->as_ctx->ac_options & RES_DNSRCH || (
+			as->as_ctx->ac_options & RES_DEFNAMES &&
+			as->as_dom_idx == 0 &&
+			strchr(name, '.') == NULL))) {
 			DPRINT("asr: iter_domain(\"%s\") domain \"%s\"\n",
 			    name, as->as_ctx->ac_dom[as->as_dom_idx]);
 			as->as_dom_flags |= ASYNC_DOM_DOMAIN;
