@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.51 2015/05/23 12:38:53 markus Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.52 2015/05/25 18:48:17 benno Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -746,8 +746,10 @@ import_identities(struct ipsec_ids **ids, int swapped,
 		if (*ids == tmp)
 			return;
 	}
-	free(tmp->id_local, M_CREDENTIALS, 0);
-	free(tmp->id_remote, M_CREDENTIALS, 0);
+	if (tmp->id_local != NULL)
+		free(tmp->id_local, M_CREDENTIALS, 0);
+	if (tmp->id_remote != NULL)
+		free(tmp->id_remote, M_CREDENTIALS, 0);
 	free(tmp, M_CREDENTIALS, 0);
 }
 
