@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.168 2015/05/18 18:25:13 espie Exp $
+# $OpenBSD: Add.pm,v 1.169 2015/05/25 07:20:31 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -488,14 +488,17 @@ sub create_temp
 {
 	my ($self, $d, $state, $fullname) = @_;
 	if (!-e _) {
-		File::Path::mkpath($d);
+		$state->make_path($d, $fullname);
 	}
 	my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
-	if (!defined $tempname) {
-		$state->fatal("create temporary file in #1: #2",
-		    $d, $!);
-	}
 	$self->{tempname} = $tempname;
+	if (!defined $tempname) {
+		if ($state->allow_nonroot($fullname)) {
+			$state->errsay("Can't create temp file outside localbase for #1", $fullname);
+			return undef;
+		}
+		$state->fatal("create temporary file in #1: #2", $d, $!);
+	}
 	return ($fh, $tempname);
 }
 
@@ -522,6 +525,7 @@ sub tie
 		my ($fh, $tempname) = $self->create_temp($d, $state, 
 		    $self->fullname);
 
+		return if !defined $tempname;
 		my $src = $self->{tieto}->realname($state);
 		unlink($tempname);
 		$state->say("link #1 -> #2", $src, $tempname)
@@ -550,6 +554,10 @@ sub extract
 	} else {
 		my ($fh, $tempname) = $self->create_temp($d, $state, 
 		    $file->name);
+		if (!defined $tempname) {
+			$state->{archive}->skip;
+			return;
+		}
 
 		# XXX don't apply destdir twice
 		$file->{destdir} = '';
@@ -583,12 +591,16 @@ sub install
 		    $destdir.$fullname) if $state->verbose >= 5;
 		return;
 	}
-	File::Path::mkpath(dirname($destdir.$fullname));
+	$state->make_path(dirname($destdir.$fullname), $fullname);
 	if (defined $self->{link}) {
 		link($destdir.$self->{link}, $destdir.$fullname);
 	} elsif (defined $self->{symlink}) {
 		symlink($self->{symlink}, $destdir.$fullname);
 	} else {
+		if (!defined $self->{tempname}) {
+			return if $state->allow_nonroot($fullname);
+			$state->fatal("No tempname for #1", $fullname);
+		}
 		rename($self->{tempname}, $destdir.$fullname) or
 		    $state->fatal("can't move #1 to #2: #3",
 			$self->{tempname}, $fullname, $!);
@@ -766,7 +778,7 @@ sub extract
 	$state->say("new directory #1", $destdir.$fullname)
 	    if $state->verbose >= 3;
 	return if $state->{not};
-	File::Path::mkpath($destdir.$fullname);
+	$state->make_path($destdir.$fullname, $fullname);
 }
 
 sub install
@@ -779,7 +791,7 @@ sub install
 	$state->say("new directory #1", $destdir.$fullname) 
 	    if $state->verbose >= 5;
 	return if $state->{not};
-	File::Path::mkpath($destdir.$fullname);
+	$state->make_path($destdir.$fullname, $fullname);
 	$self->set_modes($state, $destdir.$fullname);
 }
 

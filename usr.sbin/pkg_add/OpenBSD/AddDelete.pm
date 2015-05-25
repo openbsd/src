@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.71 2015/01/04 14:20:04 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.72 2015/05/25 07:20:31 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -363,6 +363,27 @@ OpenBSD::Auto::cache(ldconfig,
     	my $self = shift;
 	return OpenBSD::LdConfig->new($self);
     });
+
+# if we're not running as root, allow some stuff when not under /usr/local
+sub allow_nonroot
+{
+	my ($state, $path) = @_;
+	return $state->defines('nonroot') &&
+	    $path !~ m,^\Q$state->{localbase}/\E,;
+}
+
+sub make_path
+{
+	my ($state, $path, $fullname) = @_;
+	require File::Path;
+	if ($state->allow_nonroot($fullname)) {
+		eval {
+			File::Path::mkpath($path);
+		};
+	} else {
+		File::Path::mkpath($path);
+	}
+}
 
 # this is responsible for running ldconfig when needed
 package OpenBSD::LdConfig;
