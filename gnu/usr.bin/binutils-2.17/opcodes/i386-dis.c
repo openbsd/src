@@ -316,6 +316,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define VM OP_VMX, q_mode
 #define OPSUF OP_3DNowSuffix, 0
 #define OPSIMD OP_SIMD_Suffix, 0
+#define OP0FAE OP_0fae, v_mode
 #define OP0F3A OP_0f3a, 0
 
 /* Used handle "rep" prefix for string instructions.  */
@@ -1469,14 +1470,14 @@ static const struct dis386 grps[][8] = {
   },
   /* GRP13 */
   {
-    { "fxsave", Ev, XX, XX },
-    { "fxrstor", Ev, XX, XX },
-    { "ldmxcsr", Ev, XX, XX },
-    { "stmxcsr", Ev, XX, XX },
-    { "xsave",	Ev, XX, XX },
-    { "xrstor", OP_0fae, v_mode, XX, XX },
-    { "xsaveopt", OP_0fae, v_mode, XX, XX },
-    { "clflush", OP_0fae, v_mode, XX, XX },
+    { "fxsave",   OP0FAE, XX, XX },
+    { "fxrstor",  OP0FAE, XX, XX },
+    { "ldmxcsr",  OP0FAE, XX, XX },
+    { "stmxcsr",  OP0FAE, XX, XX },
+    { "xsave",	  Ev, XX, XX },
+    { "xrstor",   OP0FAE, XX, XX },
+    { "xsaveopt", OP0FAE, XX, XX },
+    { "clflush",  OP0FAE, XX, XX },
   },
   /* GRP14 */
   {
@@ -4831,18 +4832,23 @@ OP_0fae (int bytemode, int sizeflag)
 	strcpy (obuf + strlen (obuf) - sizeof ("xsaveopt") + 1, "mfence");
       else if (reg == 5)
 	strcpy (obuf + strlen (obuf) - sizeof ("xrstor") + 1, "lfence");
-      bytemode = 0;
 
-      if (reg < 5 || rm != 0)
+      if (reg < 4 && prefixes == PREFIX_REPZ)
+        {
+	  if (reg == 0)
+	    strcpy (obuf, "rdfsbase");
+	  else if (reg == 1)
+	    strcpy (obuf, "rdgsbase");
+	  else if (reg == 2)
+	    strcpy (obuf, "wrfsbase");
+	  else
+	    strcpy (obuf, "wrgsbase");
+        }
+      else if (reg < 5 || rm != 0)
 	{
 	  BadOp ();	/* bad sfence, mfence, or lfence */
 	  return;
 	}
-    }
-  else if (reg < 5)
-    {
-      BadOp ();		/* bad sfence, mfence, or lfence */
-      return;
     }
 
   OP_E (bytemode, sizeflag);

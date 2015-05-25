@@ -992,6 +992,10 @@ static const template i386_optab[] =
 {"clflush",  1, 0x0fae,    7, CpuP4, NoSuf|Modrm|IgnoreSize,	{ ByteMem, 0, 0 } },
 {"lfence",   0, 0x0fae, 0xe8, CpuP4, NoSuf|ImmExt,		{ 0, 0, 0 } },
 {"mfence",   0, 0x0fae, 0xf0, CpuP4, NoSuf|ImmExt,		{ 0, 0, 0 } },
+{"rdfsbase", 1, 0xf30fae,  0, CpuNEW, FP|Modrm,		{ Reg32|Reg64, 0, 0 } },
+{"rdgsbase", 1, 0xf30fae,  1, CpuNEW, FP|Modrm,		{ Reg32|Reg64, 0, 0 } },
+{"wrfsbase", 1, 0xf30fae,  2, CpuNEW, FP|Modrm,		{ Reg32|Reg64, 0, 0 } },
+{"wrgsbase", 1, 0xf30fae,  3, CpuNEW, FP|Modrm,		{ Reg32|Reg64, 0, 0 } },
 {"pause",    0, 0xf390,    X, CpuP4, NoSuf,		{ 0, 0, 0 } },
 
 /* MMX/SSE2 instructions.  */
@@ -1504,7 +1508,7 @@ static const template i386_optab[] =
 {"pclmulhqhqdq", 2, 0x660f3a44, 0x11, CpuPCLMUL, FP|Modrm|IgnoreSize|NoSuf|ImmExt, { RegXMM|LLongMem, RegXMM } },
 
 /* Intel Random Number Generator extensions */
-{"rdrand", 1, 0x0fc7, 0x6, CpuRdRnd, Modrm|NoSuf, { Reg16|Reg32|Reg64 } },
+{"rdrand", 1, 0x0fc7, 0x6, CpuNEW, Modrm|NoSuf, { Reg16|Reg32|Reg64 } },
 
 /* Intel Supervisor Mode Access Prevention extensions */
 {"clac", 0, 0x0f01, 0xca, CpuSMAP, NoSuf|ImmExt, { 0, 0, 0 } },
