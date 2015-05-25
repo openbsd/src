@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.174 2015/05/04 09:38:05 jsg Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.175 2015/05/25 03:07:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -60,7 +60,7 @@
  * source material which is mixed on occasion using a CRC-like function
  * into the "entropy pool".  This is not cryptographically strong, but
  * it is adequate assuming the randomness is not chosen maliciously,
- * and it very fast because the interrupt-time event is only to add
+ * and it is very fast because the interrupt-time event is only to add
  * a small random token to the "rnd states" queue.
  *
  * When random bytes are desired, they are obtained by pulling from
