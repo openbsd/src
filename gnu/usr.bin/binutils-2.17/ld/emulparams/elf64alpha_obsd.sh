@@ -4,3 +4,4 @@ unset PLT
 unset TEXT_PLT
 DATA_PLT=
 . ${srcdir}/emulparams/elf_obsd.sh
+ENTRY=__start
