@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.40 2014/08/10 07:28:32 guenther Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.41 2015/05/26 11:36:26 dlg Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
  * interrupt used for scheduling the network code to calls
  * on the lowest level routine of each protocol.
  */
-#define	NETISR_RND_DONE	1
 #define	NETISR_IP	2		/* same as AF_INET */
 #define	NETISR_TX	3		/* for if_snd processing */
 #define	NETISR_MPLS	4		/* AF_MPLS would overflow */

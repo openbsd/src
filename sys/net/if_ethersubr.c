@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.199 2015/05/19 11:09:24 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.200 2015/05/26 11:36:26 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -98,8 +98,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
-
-#include <dev/rndvar.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -475,11 +473,6 @@ ether_input(struct mbuf *m, void *hdr)
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof(*eh);
 
 	etype = ntohs(eh->ether_type);
-
-	if (!(netisr & (1 << NETISR_RND_DONE))) {
-		add_net_randomness(etype);
-		atomic_setbits_int(&netisr, (1 << NETISR_RND_DONE));
-	}
 
 #if NBRIDGE > 0
 	/*
