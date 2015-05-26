@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec_kbd.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: crosec_kbd.c,v 1.2 2015/05/26 23:47:04 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -238,7 +238,7 @@ cros_ec_keyboard_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc 
 		return 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
-		sc->rawkbd = *(int *)data == WSKBD_RAW;
+		sc->keyboard.rawkbd = *(int *)data == WSKBD_RAW;
 		return (0);
 #endif
 
