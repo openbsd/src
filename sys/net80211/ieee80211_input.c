@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.133 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.134 2015/05/26 15:34:00 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -827,7 +827,6 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	    !(ic->ic_flags & IEEE80211_F_NOBRIDGE) &&
 	    eh->ether_type != htons(ETHERTYPE_PAE)) {
 		struct ieee80211_node *ni1;
-		int error, len;
 
 		if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 			m1 = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
@@ -844,16 +843,8 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 			}
 		}
 		if (m1 != NULL) {
-			len = m1->m_pkthdr.len;
-			IFQ_ENQUEUE(&ifp->if_snd, m1, NULL, error);
-			if (error)
-				ifp->if_oerrors++;
-			else {
-				if (m != NULL)
-					ifp->if_omcasts++;
-				ifp->if_obytes += len;
-				if_start(ifp);
-			}
+			if (if_output(ifp, m1))
+				 ifp->if_oerrors++;
 		}
 	}
 #endif
