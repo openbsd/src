@@ -359,7 +359,7 @@ elf_m88k_link_hash_table_create (abfd)
   struct elf_m88k_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct elf_m88k_link_hash_table);
 
-  ret = (struct elf_m88k_link_hash_table *) bfd_alloc (abfd, amt);
+  ret = (struct elf_m88k_link_hash_table *) bfd_malloc (amt);
   if (ret == (struct elf_m88k_link_hash_table *) NULL)
     return NULL;
 
@@ -879,7 +879,6 @@ elf_m88k_gc_sweep_hook (abfd, info, sec, relocs)
 	{
 	case R_88K_GOT_16L:
 	case R_88K_GOT_16H:
-	  r_symndx = ELF32_R_SYM (rel->r_info);
 	  if (h != NULL)
 	    {
 	      if (h->got.refcount > 0)
@@ -1197,7 +1196,7 @@ elf_m88k_size_dynamic_sections (output_bfd, info)
 	    }
 	}
       else if (strncmp (name, ".got", 4) != 0
-	       && strncmp (name, ".dynbss", 4) != 0)
+	       && strcmp (name, ".dynbss") != 0)
 	{
 	  /* It's not one of our sections, so don't allocate space.  */
 	  continue;
@@ -1400,7 +1399,6 @@ elf_m88k_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-
 	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 	}
       else
