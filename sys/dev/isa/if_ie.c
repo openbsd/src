@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.41 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.42 2015/05/26 11:23:15 mpi Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -279,8 +279,7 @@ static int command_and_wait(struct ie_softc *, int,
 void ierint(struct ie_softc *);
 void ietint(struct ie_softc *);
 void iexmit(struct ie_softc *);
-struct mbuf *ieget(struct ie_softc *,
-    struct ether_header *, int *);
+struct mbuf *ieget(struct ie_softc *, struct ether_header *);
 void iememinit(void *, struct ie_softc *);
 static int mc_setup(struct ie_softc *, void *);
 static void mc_reset(struct ie_softc *);
@@ -303,8 +302,7 @@ static __inline void ie_setup_config(volatile struct ie_config_cmd *,
     int, int);
 static __inline void ie_ack(struct ie_softc *, u_int);
 static __inline int ether_equal(u_char *, u_char *);
-static __inline int check_eh(struct ie_softc *, struct ether_header *,
-    int *);
+static __inline int check_eh(struct ie_softc *, struct ether_header *);
 static __inline int ie_buflen(struct ie_softc *, int);
 static __inline int ie_packet_len(struct ie_softc *);
 
@@ -1009,22 +1007,13 @@ ether_equal(one, two)
 }
 
 /*
- * Check for a valid address.  to_bpf is filled in with one of the following:
- *   0 -> BPF doesn't get this packet
- *   1 -> BPF does get this packet
- *   2 -> BPF does get this packet, but we don't
+ * Check for a valid address.
  * Return value is true if the packet is for us, and false otherwise.
- *
- * This routine is a mess, but it's also critical that it be as fast
- * as possible.  It could be made cleaner if we can assume that the
- * only client which will fiddle with IFF_PROMISC is BPF.  This is
- * probably a good assumption, but we do not make it here.  (Yet.)
  */
 static __inline int
-check_eh(sc, eh, to_bpf)
+check_eh(sc, eh)
 	struct ie_softc *sc;
 	struct ether_header *eh;
-	int *to_bpf;
 {
 	int i;
 
@@ -1034,9 +1023,6 @@ check_eh(sc, eh, to_bpf)
 		 * Receiving all multicasts, but no unicasts except those
 		 * destined for us.
 		 */
-#if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0); /* BPF gets this packet if anybody cares */
-#endif
 		if (eh->ether_dhost[0] & 1)
 			return 1;
 		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
@@ -1044,23 +1030,9 @@ check_eh(sc, eh, to_bpf)
 		return 0;
 
 	case IFF_PROMISC:
-		/*
-		 * Receiving all packets.  These need to be passed on to BPF.
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0) ||
-		    (sc->sc_arpcom.ac_if.if_bridgeport != NULL);
-#else
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bridgeport != NULL);
-#endif
 		/* If for us, accept and hand up to BPF */
 		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
 			return 1;
-
-#if NBPFILTER > 0
-		if (*to_bpf && sc->sc_arpcom.ac_if.if_bridgeport == NULL)
-			*to_bpf = 2; /* we don't need to see it */
-#endif
 
 		/*
 		 * Not a multicast, so BPF wants to see it but we don't.
@@ -1074,26 +1046,12 @@ check_eh(sc, eh, to_bpf)
 		 */
 		for (i = 0; i < sc->mcast_count; i++) {
 			if (ether_equal(eh->ether_dhost, (u_char *)&sc->mcast_addrs[i])) {
-#if NBPFILTER > 0
-				if (*to_bpf)
-					*to_bpf = 1;
-#endif
 				return 1;
 			}
 		}
 		return 1;
 
 	case IFF_ALLMULTI | IFF_PROMISC:
-		/*
-		 * Acting as a multicast router, and BPF running at the same
-		 * time.  Whew!  (Hope this is a fast machine...)
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0) ||
-		    (sc->sc_arpcom.ac_if.if_bridgeport != NULL);
-#else
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bridgeport != NULL);
-#endif
 		/* We want to see multicasts. */
 		if (eh->ether_dhost[0] & 1)
 			return 1;
@@ -1102,25 +1060,9 @@ check_eh(sc, eh, to_bpf)
 		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
 			return 1;
 
-		/* Anything else goes to BPF but nothing else. */
-#if NBPFILTER > 0
-		if (*to_bpf && sc->sc_arpcom.ac_if.if_bridgeport == NULL)
-			*to_bpf = 2;
-#endif
 		return 1;
 
 	case 0:
-		/*
-		 * Only accept unicast packets destined for us, or multicasts
-		 * for groups that we belong to.  For now, we assume that the
-		 * '586 will only return packets that we asked it for.  This
-		 * isn't strictly true (it uses hashing for the multicast
-		 * filter), but it will do in this case, and we want to get out
-		 * of here as quickly as possible.
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
-#endif
 		return 1;
 	}
 
@@ -1224,10 +1166,9 @@ iexmit(sc)
  * that it works, of course.)
  */
 struct mbuf *
-ieget(sc, ehp, to_bpf)
+ieget(sc, ehp)
 	struct ie_softc *sc;
 	struct ether_header *ehp;
-	int *to_bpf;
 {
 	struct mbuf *top, **mp, *m;
 	int len, totlen, resid;
@@ -1252,7 +1193,7 @@ ieget(sc, ehp, to_bpf)
 	 * This is only a consideration when FILTER is defined; i.e., when
 	 * we are either running BPF or doing multicasting.
 	 */
-	if (!check_eh(sc, ehp, to_bpf)) {
+	if (!check_eh(sc, ehp)) {
 		sc->sc_arpcom.ac_if.if_ierrors--; /* just this case, it's not an error */
 		return 0;
 	}
@@ -1260,7 +1201,6 @@ ieget(sc, ehp, to_bpf)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return 0;
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -1345,10 +1285,8 @@ ie_readframe(sc, num)
 {
 	int status;
 	struct mbuf *m = NULL;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ether_header eh;
-#if NBPFILTER > 0
-	int bpf_gets_it = 0;
-#endif
 
 	status = sc->rframes[num]->ie_fd_status;
 
@@ -1360,11 +1298,7 @@ ie_readframe(sc, num)
 	sc->rfhead = (sc->rfhead + 1) % NFRAMES;
 
 	if (status & IE_FD_OK) {
-#if NBPFILTER > 0
-		m = ieget(sc, &eh, &bpf_gets_it);
-#else
-		m = ieget(sc, &eh, 0);
-#endif
+		m = ieget(sc, &eh);
 		ie_drop_packet_buffer(sc);
 	}
 	if (m == NULL) {
@@ -1378,37 +1312,8 @@ ie_readframe(sc, num)
 		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
 
-#if NBPFILTER > 0
-	/* Check for a BPF filter; if so, hand it up. */
-	if (bpf_gets_it) {
-		/* Pass it up. */
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m, BPF_DIRECTION_IN);
-
-		/*
-		 * A signal passed up from the filtering code indicating that
-		 * the packet is intended for BPF but not for the protocol
-		 * machinery.  We can save a few cycles by not handing it off
-		 * to them.
-		 */
-		if (bpf_gets_it == 2) {
-			m_freem(m);
-			return;
-		}
-	}
-#endif /* NBPFILTER > 0 */
-
-	/*
-	 * In here there used to be code to check destination addresses upon
-	 * receipt of a packet.  We have deleted that code, and replaced it
-	 * with code to check the address much earlier in the cycle, before
-	 * copying the data in; this saves us valuable cycles when operating
-	 * as a multicast router or when using BPF.
-	 */
-
-	/*
-	 * Finally pass this packet up to higher layers.
-	 */
-	ether_input_mbuf(&sc->sc_arpcom.ac_if, m);
+	ml_enqueue(&ml, m);
+	if_input(&sc->sc_arpcom.ac_if, &ml);
 	sc->sc_arpcom.ac_if.if_ipackets++;
 }
 
