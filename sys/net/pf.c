@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.915 2015/05/22 14:18:55 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.916 2015/05/26 16:17:51 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3077,7 +3077,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	int			 tag = -1;
 	int			 asd = 0;
 	int			 match = 0;
-	int			 state_icmp = 0, icmp_dir;
+	int			 state_icmp = 0, icmp_dir = 0;
 	u_int16_t		 virtual_type, virtual_id;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
@@ -3202,6 +3202,11 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				TAILQ_NEXT(r, entries));
 			/* icmp only. type always 0 in other cases */
 			PF_TEST_ATTRIB((r->code && r->code != icmpcode + 1),
+				TAILQ_NEXT(r, entries));
+			/* icmp only. don't create states on replies */
+			PF_TEST_ATTRIB((r->keep_state && !state_icmp &&
+			    (r->rule_flag & PFRULE_STATESLOPPY) == 0 &&
+			    icmp_dir != PF_IN),
 				TAILQ_NEXT(r, entries));
 			break;
 
