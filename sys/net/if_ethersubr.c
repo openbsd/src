@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.200 2015/05/26 11:36:26 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.201 2015/05/26 11:39:07 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -422,10 +422,10 @@ bad:
  * the ether header, which is provided separately.
  */
 int
-ether_input(struct mbuf *m, void *hdr)
+ether_input(struct mbuf *m)
 {
 	struct ifnet *ifp;
-	struct ether_header *eh = hdr;
+	struct ether_header *eh;
 	struct niqueue *inq;
 	u_int16_t etype;
 	int llcfound = 0;
@@ -435,20 +435,15 @@ ether_input(struct mbuf *m, void *hdr)
 	struct ether_header *eh_tmp;
 #endif
 
-
-	/* mark incoming routing table */
 	ifp = m->m_pkthdr.rcvif;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-	if (eh == NULL) {
-		eh = mtod(m, struct ether_header *);
-		m_adj(m, ETHER_HDR_LEN);
-	}
-
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return (1);
 	}
+
+	eh = mtod(m, struct ether_header *);
+	m_adj(m, ETHER_HDR_LEN);
+
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 		/*
 		 * If this is not a simplex interface, drop the packet

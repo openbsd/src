@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.334 2015/05/26 11:36:26 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.335 2015/05/26 11:39:07 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -540,7 +540,7 @@ again:
 		 */
 		ifp = m->m_pkthdr.rcvif;
 		SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
-			if ((*ifih->ifih_input)(m, NULL))
+			if ((*ifih->ifih_input)(m))
 				break;
 
 			/* Pseudo-drivers might be stacked. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.125 2015/05/26 03:01:54 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.126 2015/05/26 11:39:07 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -80,7 +80,7 @@ u_long vlan_tagmask, svlan_tagmask;
 LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
 
-int	vlan_input(struct mbuf *, void *);
+int	vlan_input(struct mbuf *);
 int	vlan_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 void	vlan_start(struct ifnet *ifp);
@@ -261,7 +261,7 @@ vlan_start(struct ifnet *ifp)
  * vlan_input() returns 1 if it has consumed the packet, 0 otherwise.
  */
 int
-vlan_input(struct mbuf *m, void *hdr)
+vlan_input(struct mbuf *m)
 {
 	struct ifvlan			*ifv;
 	struct ifnet			*ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.99 2015/05/15 10:15:13 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.100 2015/05/26 11:39:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -77,7 +77,7 @@ int	 trunk_ether_delmulti(struct trunk_softc *, struct ifreq *);
 void	 trunk_ether_purgemulti(struct trunk_softc *);
 int	 trunk_ether_cmdmulti(struct trunk_port *, u_long);
 int	 trunk_ioctl_allports(struct trunk_softc *, u_long, caddr_t);
-int	 trunk_input(struct mbuf *, void *);
+int	 trunk_input(struct mbuf *);
 void	 trunk_start(struct ifnet *);
 void	 trunk_init(struct ifnet *);
 void	 trunk_stop(struct ifnet *);
@@ -1080,19 +1080,17 @@ trunk_watchdog(struct ifnet *ifp)
 }
 
 int
-trunk_input(struct mbuf *m, void *hdr)
+trunk_input(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct trunk_softc *tr;
 	struct trunk_port *tp;
 	struct ifnet *trifp = NULL;
-	struct ether_header *eh = hdr;
+	struct ether_header *eh;
 	int error;
 
 	ifp = m->m_pkthdr.rcvif;
-
-	if (eh == NULL)
-		eh = mtod(m, struct ether_header *);
+	eh = mtod(m, struct ether_header *);
 
 	if (ETHER_IS_MULTICAST(eh->ether_dhost))
 		ifp->if_imcasts++;
