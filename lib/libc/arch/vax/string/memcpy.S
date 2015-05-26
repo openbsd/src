@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.S,v 1.7 2014/11/30 19:43:56 deraadt Exp $ */
+/*	$OpenBSD: memcpy.S,v 1.8 2015/05/26 20:23:39 miod Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ ENTRY(memcpy, R2|R3|R4|R5)
 	movzwl	$65535,%r0	/* r0 = 64K (needed below) */
 	movq	8(%ap),%r1	/* r1 = src, r2 = length */
 	movl	4(%ap),%r3	/* r3 = dst */
-
+1:
 	/* copy forward */
 	cmpl	%r2,%r0
 	bgtru	3f		/* stupid movc3 limitation */
