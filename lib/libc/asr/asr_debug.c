@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.17 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.18 2015/05/26 19:28:57 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -302,7 +302,6 @@ asr_dump_config(FILE *f, struct asr *a)
 	for (i = 0; i < ac->ac_nscount; i++)
 		fprintf(f, "	%s\n", print_sockaddr(ac->ac_ns[i], buf,
 		    sizeof buf));
-	fprintf(f, "HOSTFILE %s\n", ac->ac_hostfile);
 	fprintf(f, "LOOKUP %s", ac->ac_db);
 	fprintf(f, "\n------------------------------------\n");
 }

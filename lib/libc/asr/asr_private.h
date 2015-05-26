@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.27 2015/02/14 20:15:05 jca Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.28 2015/05/26 19:28:57 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -131,8 +131,6 @@ struct asr_ctx {
 	int		 ac_dbcount;
 	char		 ac_db[ASR_MAXDB + 1];
 	int		 ac_family[3];
-
-	char		*ac_hostfile;
 
 	int		 ac_nscount;
 	int		 ac_nstimeout;
