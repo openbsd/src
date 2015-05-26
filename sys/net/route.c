@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.211 2015/05/26 12:02:11 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.212 2015/05/26 12:19:51 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -729,6 +729,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 	struct ifaddr		*ifa;
 	struct sockaddr		*ndst;
 	struct sockaddr_rtlabel	*sa_rl, sa_rl2;
+	struct sockaddr_dl	 sa_dl = { sizeof(sa_dl), AF_LINK };
 	int			 dlen, error;
 #ifdef MPLS
 	struct sockaddr_mpls	*sa_mpls;
@@ -827,9 +828,10 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			info->rti_ifa = NULL;
 			info->rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 		}
+
 		info->rti_flags = rt->rt_flags & ~(RTF_CLONING | RTF_STATIC);
 		info->rti_flags |= RTF_CLONED;
-		info->rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info->rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
 		info->rti_flags |= RTF_HOST;
 		info->rti_info[RTAX_LABEL] =
 		    rtlabel_id2sa(rt->rt_labelid, &sa_rl2);
@@ -1134,7 +1136,10 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	info.rti_ifa = ifa;
 	info.rti_flags = flags | RTF_MPATH;
 	info.rti_info[RTAX_DST] = dst;
-	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+	if (flags & RTF_LLINFO)
+		info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+	else
+		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_LABEL] =
 	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
 
@@ -1229,7 +1234,10 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	info.rti_ifa = ifa;
 	info.rti_flags = flags;
 	info.rti_info[RTAX_DST] = dst;
-	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+	if (flags & RTF_LLINFO)
+		info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+	else
+		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_LABEL] =
 	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.103 2015/05/15 12:00:57 claudio Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.104 2015/05/26 12:19:52 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1739,7 +1739,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	bzero(&info, sizeof(info));
 	info.rti_flags = rtflags;
 	info.rti_info[RTAX_DST] = sin6tosa(&pr->ndpr_prefix);
-	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 	info.rti_info[RTAX_NETMASK] = sin6tosa(&mask6);
 
 	error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt, ifp->if_rdomain);

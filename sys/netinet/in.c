@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.116 2015/05/15 12:00:57 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.117 2015/05/26 12:19:51 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -737,8 +737,8 @@ in_insert_prefix(struct in_ifaddr *ia)
 		return (error);
 
 	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
-		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST |
-		    RTF_LLINFO | RTF_BROADCAST, ifa->ifa_broadaddr);
+		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST | RTF_BROADCAST,
+		    ifa->ifa_broadaddr);
 
 	if (!error)
 		ia->ia_flags |= IFA_ROUTE;
@@ -754,8 +754,7 @@ in_remove_prefix(struct in_ifaddr *ia)
 	rt_ifa_del(ifa, 0, ifa->ifa_addr);
 
 	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
-		rt_ifa_del(ifa, RTF_HOST | RTF_LLINFO | RTF_BROADCAST,
-		    ifa->ifa_broadaddr);
+		rt_ifa_del(ifa, RTF_HOST | RTF_BROADCAST, ifa->ifa_broadaddr);
 
 	ia->ia_flags &= ~IFA_ROUTE;
 }
