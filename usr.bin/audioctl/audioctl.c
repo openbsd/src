@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.27 2015/05/16 12:51:24 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.28 2015/05/26 18:17:12 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -61,6 +61,8 @@ char encbuf[1000];
 
 int properties, fullduplex, perrors, rerrors;
 
+struct audio_offset poffs, roffs;
+
 struct field {
 	const char *name;
 	void *valp;
@@ -92,10 +94,10 @@ struct field {
 	{ "play.bps",		&info.play.bps,		UINT,	0 },
 	{ "play.msb",		&info.play.msb,		UINT,	0 },
 	{ "play.encoding",	&info.play.encoding,	ENC,	0 },
-	{ "play.samples",	&info.play.samples,	UINT,	READONLY },
 	{ "play.pause",		&info.play.pause,	UCHAR,	0 },
 	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
 	{ "play.block_size",	&info.play.block_size,	UINT,	0 },
+	{ "play.bytes",		&poffs.samples,		INT,	READONLY },
 	{ "play.errors",	&perrors,		INT,	READONLY },
 	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
 	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
@@ -104,10 +106,10 @@ struct field {
 	{ "record.bps",		&info.record.bps,	UINT,	0 },
 	{ "record.msb",		&info.record.msb,	UINT,	0 },
 	{ "record.encoding",	&info.record.encoding,	ENC,	0 },
-	{ "record.samples",	&info.record.samples,	UINT,	READONLY },
 	{ "record.pause",	&info.record.pause,	UCHAR,	0 },
 	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
 	{ "record.block_size",	&info.record.block_size,UINT,	0 },
+	{ "record.bytes",	&roffs.samples,		INT,	READONLY },
 	{ "record.errors",	&rerrors,		INT,	READONLY },
 	{ 0 }
 };
@@ -299,6 +301,10 @@ getinfo(int fd)
 		err(1, "AUDIO_PERROR");
 	if (ioctl(fd, AUDIO_RERROR, &rerrors) < 0)
 		err(1, "AUDIO_RERROR");
+	if (ioctl(fd, AUDIO_GETOOFFS, &poffs) < 0)
+		err(1, "AUDIO_GETOOFFS");
+	if (ioctl(fd, AUDIO_GETIOFFS, &roffs) < 0)
+		err(1, "AUDIO_GETOIFFS");
 	if (ioctl(fd, AUDIO_GETINFO, &info) < 0)
 		err(1, "AUDIO_GETINFO");
 }
