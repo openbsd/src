@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2015/05/20 01:44:20 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2015/05/26 02:13:07 jsg Exp $
 
 machine		armv7 arm
 
@@ -100,35 +100,13 @@ usb*		at ehci?	#flags 0x1
 
 # USB bus support
 usb*		at ehci?	flags 0x1
+
 uhub*		at usb?
 uhub*		at uhub?
-
-umodem*		at uhub?		# USB Modems/Serial
-ucom*		at umodem?
-uvisor*		at uhub?		# Handspring Visor
-ucom*		at uvisor?
-uvscom*		at uhub?		# SUNTAC Slipper U VS-10U serial
-ucom*		at uvscom?
-ubsa*		at uhub?		# Belkin serial adapter
-ucom*		at ubsa?
-uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
-ucom*		at uftdi?
-uplcom*		at uhub?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*		at uplcom?
-umct*		at uhub?		# MCT USB-RS232 serial adapter
-ucom*		at umct?
-uaudio*		at uhub?		# USB Audio
-audio*		at uaudio?
-umidi*		at uhub?		# USB MIDI
-midi*		at umidi?
-ulpt*		at uhub?		# USB Printers
-umass*		at uhub?		# USB Mass Storage devices
-uhidev*		at uhub?		# Human Interface Devices
-ukbd*		at uhidev?		# USB keyboard
+uhidev*		at uhub?
+ukbd*		at uhidev?
 wskbd*		at ukbd? mux 1
-uslhcom*	at uhidev?		# Silicon Labs CP2110 USB HID UART
-ucom*		at uslhcom?
-uhid*		at uhidev?		# USB generic HID support
+umass*		at uhub?
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*		at uhub?		# Atmel AT76c50x based 802.11b
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
@@ -137,15 +115,23 @@ cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
-upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
-ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
+mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
-udsbr*		at uhub?		# D-Link DSB-R100 radio
-radio*		at udsbr?		# USB radio
-ugen*		at uhub?		# USB Generic driver
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
+ural*		at uhub?		# Ralink RT2500
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
+run*		at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+zyd*		at uhub?		# Zydas ZD1211/ZD1211B
+upgt*		at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
+urtw*		at uhub?		# Realtek 8187
+urtwn*		at uhub?		# Realtek RTL8188CU/RTL8192CU
+rsu*		at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
+uath*		at uhub?		# Atheros AR5005UG/AR5005UX
+otus*		at uhub?		# Atheros AR9001U
+athn*		at uhub?		# Atheros AR9002U
 
 atphy*		at mii?			# Attansic F1 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
