@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 2015/04/13 21:27:07 deraadt Exp $
+#	$OpenBSD: list,v 1.18 2015/05/26 07:30:18 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -63,6 +63,28 @@ LINK	instbin					usr/bin/signify
 LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
 LINK	instbin					usr/sbin/mkuboot
+
+# firmware we might need
+COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
+COPY	${DESTDIR}/etc/firmware/zd1211		etc/firmware/zd1211
+COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
+COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
+COPY	${DESTDIR}/etc/firmware/run-rt2870	etc/firmware/run-rt2870
+COPY	${DESTDIR}/etc/firmware/run-rt3071	etc/firmware/run-rt3071
+COPY	${DESTDIR}/etc/firmware/atu-at76c503-i3863-ext etc/firmware/atu-at76c503-i3863-ext
+COPY	${DESTDIR}/etc/firmware/atu-at76c503-i3863-int etc/firmware/atu-at76c503-i3863-int
+COPY	${DESTDIR}/etc/firmware/atu-at76c503-rfmd-acc-ext etc/firmware/atu-at76c503-rfmd-acc-ext
+COPY	${DESTDIR}/etc/firmware/atu-at76c503-rfmd-acc-int etc/firmware/atu-at76c503-rfmd-acc-int
+COPY	${DESTDIR}/etc/firmware/atu-at76c505-rfmd-ext etc/firmware/atu-at76c505-rfmd-ext
+COPY	${DESTDIR}/etc/firmware/atu-at76c505-rfmd-int etc/firmware/atu-at76c505-rfmd-int
+COPY	${DESTDIR}/etc/firmware/atu-intersil-ext etc/firmware/atu-intersil-ext
+COPY	${DESTDIR}/etc/firmware/atu-intersil-int etc/firmware/atu-intersil-int
+COPY	${DESTDIR}/etc/firmware/atu-rfmd-ext etc/firmware/atu-rfmd-ext
+COPY	${DESTDIR}/etc/firmware/atu-rfmd-int etc/firmware/atu-rfmd-int
+COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-ext etc/firmware/atu-rfmd2958-ext
+COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-int etc/firmware/atu-rfmd2958-int
+COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
+COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
 # this is the list from distrib/miniroot/makeconf.awk with -lz added.
 LIBS	-lstubs -lutil -lotermcap -lm -lz
