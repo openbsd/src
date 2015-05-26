@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.210 2015/05/15 12:00:57 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.211 2015/05/26 12:02:11 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -841,25 +841,33 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		ifa = info->rti_ifa;
 		if (prio == 0)
 			prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
+
+		dlen = info->rti_info[RTAX_DST]->sa_len;
+		ndst = malloc(dlen, M_RTABLE, M_NOWAIT);
+		if (ndst == NULL)
+			return (ENOBUFS);
+
+		if (info->rti_info[RTAX_NETMASK] != NULL)
+			rt_maskedcopy(info->rti_info[RTAX_DST], ndst,
+			    info->rti_info[RTAX_NETMASK]);
+		else
+			memcpy(ndst, info->rti_info[RTAX_DST], dlen);
+
 #ifndef SMALL_KERNEL
 		if (rn_mpath_capable(rnh)) {
 			/* do not permit exactly the same dst/mask/gw pair */
-			if (rt_mpath_conflict(rnh, info->rti_info[RTAX_DST],
+			if (rt_mpath_conflict(rnh, ndst,
 			    info->rti_info[RTAX_NETMASK],
 			    info->rti_info[RTAX_GATEWAY], prio,
 			    info->rti_flags & RTF_MPATH)) {
+				free(ndst, M_RTABLE, 0);
 				return (EEXIST);
 			}
 		}
 #endif
 		rt = pool_get(&rtentry_pool, PR_NOWAIT | PR_ZERO);
-		if (rt == NULL)
-			return (ENOBUFS);
-
-		dlen = info->rti_info[RTAX_DST]->sa_len;
-		ndst = malloc(dlen, M_RTABLE, M_NOWAIT);
-		if (ndst == NULL) {
-			pool_put(&rtentry_pool, rt);
+		if (rt == NULL) {
+			free(ndst, M_RTABLE, 0);
 			return (ENOBUFS);
 		}
 
@@ -868,17 +876,13 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
 		rt->rt_nodes->rn_key = (caddr_t)ndst;
-		memcpy(ndst, info->rti_info[RTAX_DST], dlen);
 
 		if ((error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY],
 		    tableid))) {
+			free(ndst, M_RTABLE, 0);
 			pool_put(&rtentry_pool, rt);
 			return (error);
 		}
-
-		if (info->rti_info[RTAX_NETMASK] != NULL)
-			rt_maskedcopy(info->rti_info[RTAX_DST], ndst,
-			    info->rti_info[RTAX_NETMASK]);
 
 #ifndef SMALL_KERNEL
 		if (rn_mpath_capable(rnh)) {
