@@ -1,6 +1,7 @@
 # define OPENSSL_NO_EC_NISTP_64_GCC_128
 # define OPENSSL_NO_CMS
 # define OPENSSL_NO_COMP
+# define OPENSSL_NO_EGD
 # define OPENSSL_NO_GMP
 # define OPENSSL_NO_JPAKE
 # define OPENSSL_NO_KRB5
