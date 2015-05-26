@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.124 2015/05/23 08:32:12 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.125 2015/05/26 03:01:54 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -394,10 +394,13 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	ifv->ifv_p = p;
 	ifv->ifv_if.if_baudrate = p->if_baudrate;
 
-	if (p->if_capabilities & IFCAP_VLAN_MTU)
+	if (p->if_capabilities & IFCAP_VLAN_MTU) {
 		ifv->ifv_if.if_mtu = p->if_mtu;
-	else
+		ifv->ifv_if.if_hardmtu = p->if_hardmtu;
+	} else {
 		ifv->ifv_if.if_mtu = p->if_mtu - EVL_ENCAPLEN;
+		ifv->ifv_if.if_hardmtu = p->if_hardmtu - EVL_ENCAPLEN;
+	}
 
 	ifv->ifv_if.if_flags = p->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
@@ -510,6 +513,7 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 	/* Disconnect from parent. */
 	ifv->ifv_p = NULL;
 	ifv->ifv_if.if_mtu = ETHERMTU;
+	ifv->ifv_if.if_hardmtu = ETHERMTU;
 	ifv->ifv_flags = 0;
 
 	/* Clear our MAC address. */
@@ -562,7 +566,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq	*ifr;
 	struct ifvlan	*ifv;
 	struct vlanreq	 vlr;
-	int		 error = 0, p_mtu = 0, s;
+	int		 error = 0, s;
 
 	ifr = (struct ifreq *)data;
 	ifa = (struct ifaddr *)data;
@@ -590,12 +594,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFMTU:
 		if (ifv->ifv_p != NULL) {
-			if (ifv->ifv_p->if_capabilities & IFCAP_VLAN_MTU)
-				p_mtu = ifv->ifv_p->if_hardmtu;
-			else
-				p_mtu = ifv->ifv_p->if_hardmtu - EVL_ENCAPLEN;
-			
-			if (ifr->ifr_mtu > p_mtu || ifr->ifr_mtu < ETHERMIN)
+			if (ifr->ifr_mtu < ETHERMIN ||
+			    ifr->ifr_mtu > ifv->ifv_if.if_hardmtu)
 				error = EINVAL;
 			else
 				ifp->if_mtu = ifr->ifr_mtu;
