@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.126 2015/03/16 04:09:53 jsg Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.127 2015/05/27 22:10:52 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1655,7 +1655,6 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	const struct wpi_rate *rinfo;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
-	struct mbuf *m1;
 	enum ieee80211_edca_ac ac;
 	uint32_t flags;
 	uint16_t qos;
@@ -1833,24 +1832,10 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	if (error != 0) {
 		/* Too many DMA segments, linearize mbuf. */
-		MGETHDR(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == NULL) {
+		if (m_defrag(m, M_DONTWAIT)) {
 			m_freem(m);
 			return ENOBUFS;
 		}
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_DONTWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m1);
-				return ENOBUFS;
-			}
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
-		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
-		m_freem(m);
-		m = m1;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {

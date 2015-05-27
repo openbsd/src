@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.142 2015/04/08 09:29:49 jasper Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.143 2015/05/27 22:10:52 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2750,7 +2750,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	const struct iwn_rate *rinfo;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
-	struct mbuf *m1;
 	enum ieee80211_edca_ac ac;
 	uint32_t flags;
 	uint16_t qos;
@@ -2962,32 +2961,18 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+	if (error != 0 && error != EFBIG) {
+		printf("%s: can't map mbuf (error %d)\n",
+		    sc->sc_dev.dv_xname, error);
+		m_freem(m);
+		return error;
+	}
 	if (error != 0) {
-		if (error != EFBIG) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    sc->sc_dev.dv_xname, error);
-			m_freem(m);
-			return error;
-		}
 		/* Too many DMA segments, linearize mbuf. */
-		MGETHDR(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == NULL) {
+		if (m_defrag(m, M_DONTWAIT)) {
 			m_freem(m);
 			return ENOBUFS;
 		}
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_DONTWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m1);
-				return ENOBUFS;
-			}
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
-		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
-		m_freem(m);
-		m = m1;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
