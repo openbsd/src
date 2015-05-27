@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.5 2015/05/24 11:01:48 jsg Exp $ */
+/* $OpenBSD: exynos.c,v 1.6 2015/05/27 00:06:14 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -16,11 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fdt.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 
 #include <armv7/armv7/armv7var.h>
 
@@ -108,10 +112,12 @@ exynos_board_name(void)
 int
 exynos_match(struct device *parent, void *cfdata, void *aux)
 {
+#if NFDT > 0
 	/* If we're running with fdt, do not attach. */
 	/* XXX: Find a better way. */
 	if (fdt_next_node(0))
 		return (0);
+#endif
 
 	return (exynos_board_devs() != NULL);
 }

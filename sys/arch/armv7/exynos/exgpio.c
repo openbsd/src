@@ -1,4 +1,4 @@
-/* $OpenBSD: exgpio.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: exgpio.c,v 1.2 2015/05/27 00:06:14 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fdt.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
@@ -26,7 +28,9 @@
 #include <arm/cpufunc.h>
 
 #include <machine/bus.h>
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 #include <machine/intr.h>
 
 #include <armv7/armv7/armv7var.h>
@@ -103,10 +107,12 @@ struct cfdriver exgpio_cd = {
 int
 exgpio_match(struct device *parent, void *v, void *aux)
 {
+#if NFDT > 0
 	struct armv7_attach_args *aa = aux;
 
 	if (fdt_node_compatible("samsung,exynos5250-pinctrl", aa->aa_node))
 		return 1;
+#endif
 
 	return 0;
 }
@@ -116,14 +122,20 @@ exgpio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct armv7_attach_args *aa = args;
 	struct exgpio_softc *sc = (struct exgpio_softc *) self;
-	struct fdt_memory mem;
+	struct armv7mem mem;
 
 	sc->sc_iot = aa->aa_iot;
+#if NFDT > 0
 	if (aa->aa_node) {
-		if (fdt_get_memory_address(aa->aa_node, 0, &mem))
+		struct fdt_memory fdtmem;
+		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
-	} else {
+		mem.addr = fdtmem.addr;
+		mem.size = fdtmem.size;
+	} else
+#endif
+	{
 		mem.addr = aa->aa_dev->mem[0].addr;
 		mem.size = aa->aa_dev->mem[0].size;
 	}

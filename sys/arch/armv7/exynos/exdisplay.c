@@ -1,4 +1,4 @@
-/* $OpenBSD: exdisplay.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: exdisplay.c,v 1.2 2015/05/27 00:06:14 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,7 +35,9 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 #include <armv7/armv7/armv7var.h>
 
 /* registers */
@@ -102,10 +106,12 @@ struct wsdisplay_accessops exdisplay_accessops = {
 int
 exdisplay_match(struct device *parent, void *v, void *aux)
 {
+#if NFDT > 0
 	struct armv7_attach_args *aa = aux;
 
 	if (fdt_node_compatible("samsung,exynos5250-fimd", aa->aa_node))
 		return 1;
+#endif
 
 	return 0;
 }
@@ -117,17 +123,23 @@ exdisplay_attach(struct device *parent, struct device *self, void *args)
 	struct exdisplay_softc *sc = (struct exdisplay_softc *) self;
 	struct wsemuldisplaydev_attach_args waa;
 	struct rasops_info *ri = &exdisplay_ri;
-	struct fdt_memory mem;
-
-	if (aa->aa_node == NULL) {
-		printf(": not configured without FDT\n");
-		return;
-	}
+	struct armv7mem mem;
 
 	sc->sc_iot = aa->aa_iot;
-	if (fdt_get_memory_address(aa->aa_node, 0, &mem))
-		panic("%s: could not extract memory data from FDT",
-		    __func__);
+#if NFDT > 0
+	if (aa->aa_node) {
+		struct fdt_memory fdtmem;
+		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
+			panic("%s: could not extract memory data from FDT",
+			    __func__);
+		mem.addr = fdtmem.addr;
+		mem.size = fdtmem.size;
+	} else
+#endif
+	{
+		mem.addr = aa->aa_dev->mem[0].addr;
+		mem.size = aa->aa_dev->mem[0].size;
+	}
 
 	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);

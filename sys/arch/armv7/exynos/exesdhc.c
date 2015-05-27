@@ -1,4 +1,4 @@
-/*	$OpenBSD: exesdhc.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $	*/
+/*	$OpenBSD: exesdhc.c,v 1.2 2015/05/27 00:06:14 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,6 +19,7 @@
 
 /* i.MX SD/MMC support derived from /sys/dev/sdmmc/sdhc.c */
 
+#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -27,7 +28,9 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
@@ -248,10 +251,12 @@ struct cfattach exesdhc_fdt_ca = {
 int
 exesdhc_match(struct device *parent, void *v, void *aux)
 {
+#if NFDT > 0
 	struct armv7_attach_args *aa = aux;
 
 	if (fdt_node_compatible("samsung,exynos5250-dw-mshc", aa->aa_node))
 		return 1;
+#endif
 
 	return 0;
 }
@@ -261,19 +266,21 @@ exesdhc_attach(struct device *parent, struct device *self, void *args)
 {
 	struct exesdhc_softc		*sc = (struct exesdhc_softc *) self;
 	struct armv7_attach_args	*aa = args;
-	struct fdt_memory		 mem;
 	struct sdmmcbus_attach_args	 saa;
+	struct armv7mem			 mem;
 	int				 error = 1, irq;
 	uint32_t			 caps;
 
 	sc->sc_iot = aa->aa_iot;
+#if NFDT > 0
 	if (aa->aa_node) {
+		struct fdt_memory fdtmem;
 		static int unit = 0;
 		uint32_t ints[3];
 
 		sc->unit = unit++;
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &mem))
+		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
 
@@ -283,8 +290,13 @@ exesdhc_attach(struct device *parent, struct device *self, void *args)
 			panic("%s: could not extract interrupt data from FDT",
 			    __func__);
 
+		mem.addr = fdtmem.addr;
+		mem.size = fdtmem.size;
+
 		irq = ints[1];
-	} else {
+	} else
+#endif
+	{
 		irq = aa->aa_dev->irq[0];
 		mem.addr = aa->aa_dev->mem[0].addr;
 		mem.size = aa->aa_dev->mem[0].size;

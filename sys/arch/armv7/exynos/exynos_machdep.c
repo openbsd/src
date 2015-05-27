@@ -1,4 +1,4 @@
-/*	$OpenBSD: exynos_machdep.c,v 1.3 2015/05/19 03:30:54 jsg Exp $	*/
+/*	$OpenBSD: exynos_machdep.c,v 1.4 2015/05/27 00:06:14 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -15,13 +15,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fdt.h"
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
 
 #include <machine/bus.h>
+
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 
 #include <arm/cortex/smc.h>
 #include <arm/armv7/armv7var.h>
@@ -48,10 +53,11 @@ exynos_platform_init_cons(void)
 {
 	paddr_t paddr;
 	size_t size;
-	void *node;
 
 	switch (board_id) {
 	case BOARD_ID_EXYNOS5_CHROMEBOOK:
+#if NFDT > 0
+		void *node;
 		node = fdt_find_node("/framebuffer");
 		if (node != NULL) {
 			uint32_t *mem;
@@ -60,6 +66,10 @@ exynos_platform_init_cons(void)
 				size = betoh32(*mem);
 			}
 		}
+#else
+		paddr = 0xbfc00000;
+		size = 0x202000;
+#endif
 		exdisplay_cnattach(&armv7_bs_tag, paddr, size);
 		break;
 	default:

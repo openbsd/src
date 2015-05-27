@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: exuart.c,v 1.2 2015/05/27 00:06:14 jsg Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "fdt.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -37,7 +39,9 @@
 #endif
 
 #include <machine/bus.h>
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 #include <armv7/exynos/exuartreg.h>
 #include <armv7/exynos/exuartvar.h>
 #include <armv7/armv7/armv7var.h>
@@ -139,10 +143,12 @@ exuartprobe(struct device *parent, void *self, void *aux)
 int
 exuartprobe_fdt(struct device *parent, void *self, void *aux)
 {
+#if NFDT > 0
 	struct armv7_attach_args *aa = aux;
 
 	if (fdt_node_compatible("samsung,exynos4210-uart", aa->aa_node))
 		return 1;
+#endif
 
 	return 0;
 }
@@ -155,14 +161,16 @@ exuartattach(struct device *parent, struct device *self, void *args)
 {
 	struct armv7_attach_args *aa = args;
 	struct exuart_softc *sc = (struct exuart_softc *) self;
-	struct fdt_memory mem;
+	struct armv7mem mem;
 	int irq;
 
 	sc->sc_iot = aa->aa_iot;
+#if NFDT > 0
 	if (aa->aa_node) {
+		struct fdt_memory fdtmem;
 		uint32_t ints[3];
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &mem))
+		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
 
@@ -172,8 +180,13 @@ exuartattach(struct device *parent, struct device *self, void *args)
 			panic("%s: could not extract interrupt data from FDT",
 			    __func__);
 
+		mem.addr = fdtmem.addr;
+		mem.size = fdtmem.size;
+
 		irq = ints[1];
-	} else {
+	} else
+#endif
+	{
 		irq = aa->aa_dev->irq[0];
 		mem.addr = aa->aa_dev->mem[0].addr;
 		mem.size = aa->aa_dev->mem[0].size;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/*	$OpenBSD: exehci.c,v 1.2 2015/05/27 00:06:14 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -15,6 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fdt.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -24,7 +26,9 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -104,10 +108,12 @@ void	exehci_setup(struct exehci_softc *);
 int
 exehci_match(struct device *parent, void *v, void *aux)
 {
+#if NFDT > 0
 	struct armv7_attach_args *aa = aux;
 
 	if (fdt_node_compatible("samsung,exynos4210-ehci", aa->aa_node))
 		return 1;
+#endif
 
 	return 0;
 }
@@ -118,23 +124,25 @@ exehci_attach(struct device *parent, struct device *self, void *aux)
 	struct exehci_softc		*sc = (struct exehci_softc *)self;
 	struct ehci_softc		*esc;
 	struct armv7_attach_args	*aa = aux;
-	struct fdt_memory		 hmem, pmem;
+	struct armv7mem			 hmem, pmem;
 	int				 irq;
 	usbd_status			 r;
 
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_dmat = aa->aa_dmat;
 
+#if NFDT > 0
 	if (aa->aa_node) {
+		struct fdt_memory fhmem, fpmem;
 		uint32_t ints[3];
 
-		if (fdt_get_memory_address(aa->aa_node, 0, &hmem))
+		if (fdt_get_memory_address(aa->aa_node, 0, &fhmem))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
 
 		/* XXX: In a different way, please. */
 		void *node = fdt_find_compatible("samsung,exynos5250-usb2-phy");
-		if (node == NULL || fdt_get_memory_address(node, 0, &pmem))
+		if (node == NULL || fdt_get_memory_address(node, 0, &fpmem))
 			panic("%s: could not extract phy data from FDT",
 			    __func__);
 
@@ -144,8 +152,15 @@ exehci_attach(struct device *parent, struct device *self, void *aux)
 			panic("%s: could not extract interrupt data from FDT",
 			    __func__);
 
+		hmem.addr = fhmem.addr;
+		hmem.size = fhmem.size;
+		pmem.addr = fpmem.addr;
+		pmem.size = fpmem.size;
+
 		irq = ints[1];
-	} else {
+	} else
+#endif
+	{
 		hmem.addr = aa->aa_dev->mem[0].addr;
 		hmem.size = aa->aa_dev->mem[0].size;
 		pmem.addr = aa->aa_dev->mem[1].addr;

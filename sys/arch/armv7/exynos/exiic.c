@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "fdt.h"
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -21,7 +23,9 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
+#if NFDT > 0
 #include <machine/fdt.h>
+#endif
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/exynos/exgpiovar.h>
@@ -115,10 +119,12 @@ struct cfdriver exiic_cd = {
 int
 exiic_match(struct device *parent, void *v, void *aux)
 {
+#if NFDT > 0
 	struct armv7_attach_args *aa = aux;
 
 	if (fdt_node_compatible("samsung,s3c2440-i2c", aa->aa_node))
 		return 1;
+#endif
 
 	return 0;
 }
@@ -128,17 +134,23 @@ exiic_attach(struct device *parent, struct device *self, void *args)
 {
 	struct exiic_softc *sc = (struct exiic_softc *)self;
 	struct armv7_attach_args *aa = args;
-	struct fdt_memory mem;
+	struct armv7mem mem;
 
 	sc->sc_iot = aa->aa_iot;
+#if NFDT > 0
 	if (aa->aa_node) {
+		struct fdt_memory fdtmem;
 		static int unit = 0;
 
 		sc->unit = unit++;
-		if (fdt_get_memory_address(aa->aa_node, 0, &mem))
+		if (fdt_get_memory_address(aa->aa_node, 0, &fdtmem))
 			panic("%s: could not extract memory data from FDT",
 			    __func__);
-	} else {
+		mem.addr = fdtmem.addr;
+		mem.size = fdtmem.size;
+	} else
+#endif
+	{
 		mem.addr = aa->aa_dev->mem[0].addr;
 		mem.size = aa->aa_dev->mem[0].size;
 		sc->unit = aa->aa_dev->unit;

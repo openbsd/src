@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.9 2015/05/20 01:44:20 jsg Exp $
+#	$OpenBSD: Makefile.armv7,v 1.10 2015/05/27 00:06:14 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -179,8 +179,9 @@ install-kernel-${MACHINE_NAME}:
 KERNADDR_OMAP=0x80300000
 KERNADDR_IMX=0x10300000
 KERNADDR_SUNXI=0x40300000
+KERNADDR_EXYNOS=0x40300000
 
-.for SOC in IMX OMAP SUNXI
+.for SOC in IMX OMAP SUNXI EXYNOS
 bsd.${SOC}.umg: bsd
 	mkuboot -a arm -o linux -e ${KERNADDR_${SOC}} -l ${KERNADDR_${SOC}} \
 	    bsd bsd.${SOC}.umg
