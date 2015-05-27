@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.126 2015/05/26 11:39:07 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.127 2015/05/27 12:23:44 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -332,19 +332,6 @@ vlan_input(struct mbuf *m)
 	}
 
 	/*
-	 * Having found a valid vlan interface corresponding to
-	 * the given source interface and vlan tag, remove the
-	 * encapsulation.
-	 */
-	if (m->m_flags & M_VLANTAG) {
-		m->m_flags &= ~M_VLANTAG;
-	} else {
-		eh->ether_type = evl->evl_proto;
-		memmove((char *)eh + EVL_ENCAPLEN, eh, sizeof(*eh));
-		m_adj(m, EVL_ENCAPLEN);
-	}
-
-	/*
 	 * Drop promiscuously received packets if we are not in
 	 * promiscuous mode.
 	 */
@@ -356,6 +343,19 @@ vlan_input(struct mbuf *m)
 			m_freem(m);
 			return (1);
 		}
+	}
+
+	/*
+	 * Having found a valid vlan interface corresponding to
+	 * the given source interface and vlan tag, remove the
+	 * encapsulation.
+	 */
+	if (m->m_flags & M_VLANTAG) {
+		m->m_flags &= ~M_VLANTAG;
+	} else {
+		eh->ether_type = evl->evl_proto;
+		memmove((char *)eh + EVL_ENCAPLEN, eh, sizeof(*eh));
+		m_adj(m, EVL_ENCAPLEN);
 	}
 
 	ml_enqueue(&ml, m);
