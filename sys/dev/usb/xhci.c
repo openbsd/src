@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.59 2015/04/19 11:12:58 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.60 2015/05/27 11:13:34 mikeb Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -560,7 +560,8 @@ xhci_reset(struct xhci_softc *sc)
 	XOWRITE4(sc, XHCI_USBCMD, XHCI_CMD_HCRST);
 	for (i = 0; i < 100; i++) {
 		usb_delay_ms(&sc->sc_bus, 1);
-		hcr = XOREAD4(sc, XHCI_USBCMD) & XHCI_STS_CNR;
+		hcr = (XOREAD4(sc, XHCI_USBCMD) & XHCI_CMD_HCRST) |
+		    (XOREAD4(sc, XHCI_USBSTS) & XHCI_STS_CNR);
 		if (!hcr)
 			break;
 	}
