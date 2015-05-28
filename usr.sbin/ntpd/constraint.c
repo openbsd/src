@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.11 2015/05/21 14:24:43 reyk Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.12 2015/05/28 21:34:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -250,7 +250,7 @@ constraint_check_child(void)
 {
 	struct constraint	*cstr;
 	int			 status;
-	int			 fail;
+	int			 fail, sig;
 	pid_t			 pid;
 
 	do {
@@ -258,9 +258,9 @@ constraint_check_child(void)
 		if (pid <= 0)
 			continue;
 
-		fail = 0;
+		fail = sig = 0;
 		if (WIFSIGNALED(status)) {
-			fail = 1;
+			sig = WTERMSIG(status);
 		} else if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status) != 0)
 				fail = 1;
@@ -268,6 +268,10 @@ constraint_check_child(void)
 			fatalx("unexpected cause of SIGCHLD");
 
 		if ((cstr = constraint_bypid(pid)) != NULL) {
+			if (sig)
+				fatalx("constraint %s, signal %d", 
+				    log_sockaddr((struct sockaddr *)
+				    &cstr->addr->ss), sig);
 			if (fail) {
 				log_debug("no constraint reply from %s"
 				    " received in time, next query %ds",
