@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.164 2015/05/28 18:16:42 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.165 2015/05/28 18:23:13 miod Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -18,7 +18,7 @@ YP?=		yes
 DEBUGLIBS?=	no
 
 GCC3_ARCH=m88k vax
-BINUTILS217_ARCH=alpha amd64 arm hppa hppa64 i386 ia64 mips64 mips64el powerpc sh sparc sparc64
+BINUTILS215_ARCH=m88k vax
 
 # arm needs binutils-2.17, which still lacks W^X support
 # sparc has not been tried
@@ -34,10 +34,10 @@ COMPILER_VERSION?=gcc3
 COMPILER_VERSION?=gcc4
 .endif
 
-.if !empty(BINUTILS217_ARCH:M${_arch})
-BINUTILS_VERSION=binutils-2.17
-.else
+.if !empty(BINUTILS215_ARCH:M${_arch})
 BINUTILS_VERSION=binutils
+.else
+BINUTILS_VERSION=binutils-2.17
 .endif
 
 .if !empty(STATICPIE_ARCH:M${_arch})

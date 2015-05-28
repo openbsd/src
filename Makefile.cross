@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.75 2015/02/08 00:15:22 uebayasi Exp $
+# $OpenBSD: Makefile.cross,v 1.76 2015/05/28 18:23:11 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -86,10 +86,10 @@ COMPILER_VERSION=gcc3
 COMPILER_VERSION=gcc4
 .endif
 
-.if !empty(BINUTILS217_ARCH:M${_arch})
-BINUTILS_VERSION=binutils-2.17
-.else
+.if !empty(BINUTILS215_ARCH:M${_arch})
 BINUTILS_VERSION=binutils
+.else
+BINUTILS_VERSION=binutils-2.17
 .endif
 
 .if !empty(PIE_ARCH:M${_arch})
