@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.27 2015/02/08 23:28:48 tedu Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.28 2015/05/28 17:08:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -240,6 +240,9 @@ void
 snmpd_shutdown(struct snmpd *env)
 {
 	proc_kill(&env->sc_ps);
+
+	if (env->sc_ps.ps_csock.cs_name != NULL)
+		(void)unlink(env->sc_ps.ps_csock.cs_name);
 
 	free(env);
 

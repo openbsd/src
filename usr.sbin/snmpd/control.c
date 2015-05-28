@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.28 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.29 2015/05/28 17:08:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -135,7 +135,6 @@ control_cleanup(struct control_sock *cs)
 		return;
 	event_del(&cs->cs_ev);
 	event_del(&cs->cs_evt);
-	(void)unlink(cs->cs_name);
 }
 
 /* ARGSUSED */

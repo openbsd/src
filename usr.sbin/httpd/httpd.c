@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.35 2015/02/23 18:43:18 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.36 2015/05/28 17:08:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", HTTPD_USER);
 
 	/* Configure the control socket */
-	ps->ps_csock.cs_name = HTTPD_SOCKET;
+	ps->ps_csock.cs_name = NULL;
 
 	log_init(debug);
 	log_verbose(verbose);
@@ -404,6 +404,8 @@ parent_shutdown(struct httpd *env)
 
 	proc_kill(env->sc_ps);
 	control_cleanup(&env->sc_ps->ps_csock);
+	if (env->sc_ps->ps_csock.cs_name != NULL)
+		(void)unlink(env->sc_ps->ps_csock.cs_name);
 
 	free(env->sc_ps);
 	free(env);
