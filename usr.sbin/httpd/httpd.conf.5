@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.60 2015/05/19 18:16:32 sobrado Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.61 2015/05/28 19:29:40 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2015 $
+.Dd $Mdocdate: May 28 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -152,7 +152,7 @@ Use the
 directive to disable authentication in a location.
 .It Ic block drop
 Drop the connection without sending an error page.
-.It Ic block Op Ic return Ar code Op uri
+.It Ic block Op Ic return Ar code Op Ar uri
 Close the connection and send an error page.
 If the optional return code is not specified,
 .Xr httpd 8
@@ -166,7 +166,7 @@ argument can be used with return codes in the 3xx range to send a
 header for redirection to a specified URI.
 .Pp
 The
-.Ar url
+.Ar uri
 may contain predefined macros that will be expanded at runtime:
 .Pp
 .Bl -tag -width $DOCUMENT_URI -offset indent -compact
