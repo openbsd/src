@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.30 2015/05/26 11:39:07 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.31 2015/05/28 11:57:33 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -312,16 +312,6 @@ do {									\
 			(ifq)->ifq_len--;				\
 		}							\
 	} while (!(m) && --if_dequeue_prio >= 0);			\
-} while (/* CONSTCOND */0)
-
-#define	IF_INPUT_ENQUEUE(ifq, m)					\
-do {									\
-	if (IF_QFULL(ifq)) {						\
-		IF_DROP(ifq);						\
-		m_freem(m);						\
-		if_congestion();					\
-	} else								\
-		IF_ENQUEUE(ifq, m);					\
 } while (/* CONSTCOND */0)
 
 #define	IF_PURGE(ifq)							\
