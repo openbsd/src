@@ -672,7 +672,9 @@
 ./usr/libdata/ldscripts/armelf_obsd.xr
 ./usr/libdata/ldscripts/armelf_obsd.xs
 ./usr/libdata/ldscripts/armelf_obsd.xsc
+./usr/libdata/ldscripts/armelf_obsd.xsw
 ./usr/libdata/ldscripts/armelf_obsd.xu
+./usr/libdata/ldscripts/armelf_obsd.xw
 ./usr/libdata/ldscripts/armelf_obsd.xz
 ./usr/libdata/ldscripts/armelfb_obsd.x
 ./usr/libdata/ldscripts/armelfb_obsd.xbn
@@ -681,5 +683,8 @@
 ./usr/libdata/ldscripts/armelfb_obsd.xr
 ./usr/libdata/ldscripts/armelfb_obsd.xs
 ./usr/libdata/ldscripts/armelfb_obsd.xsc
+./usr/libdata/ldscripts/armelfb_obsd.xsw
 ./usr/libdata/ldscripts/armelfb_obsd.xu
+./usr/libdata/ldscripts/armelfb_obsd.xw
 ./usr/libdata/ldscripts/armelfb_obsd.xz
+./usr/share/info/bfd.info

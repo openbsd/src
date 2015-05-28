@@ -672,7 +672,9 @@
 ./usr/libdata/ldscripts/shelf_obsd.xr
 ./usr/libdata/ldscripts/shelf_obsd.xs
 ./usr/libdata/ldscripts/shelf_obsd.xsc
+./usr/libdata/ldscripts/shelf_obsd.xsw
 ./usr/libdata/ldscripts/shelf_obsd.xu
+./usr/libdata/ldscripts/shelf_obsd.xw
 ./usr/libdata/ldscripts/shelf_obsd.xz
 ./usr/libdata/ldscripts/shlelf_obsd.x
 ./usr/libdata/ldscripts/shlelf_obsd.xbn
@@ -681,5 +683,8 @@
 ./usr/libdata/ldscripts/shlelf_obsd.xr
 ./usr/libdata/ldscripts/shlelf_obsd.xs
 ./usr/libdata/ldscripts/shlelf_obsd.xsc
+./usr/libdata/ldscripts/shlelf_obsd.xsw
 ./usr/libdata/ldscripts/shlelf_obsd.xu
+./usr/libdata/ldscripts/shlelf_obsd.xw
 ./usr/libdata/ldscripts/shlelf_obsd.xz
+./usr/share/info/bfd.info
