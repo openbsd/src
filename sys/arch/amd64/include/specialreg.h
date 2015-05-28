@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.35 2015/04/19 19:45:21 sf Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.36 2015/05/28 20:10:58 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -184,6 +184,12 @@
 #define	SEFF0EBX_RDSEED		0x00040000 /* RDSEED instruction */
 #define	SEFF0EBX_ADX		0x00080000 /* ADCX/ADOX instructions */
 #define	SEFF0EBX_SMAP		0x00100000 /* Supervisor mode access prevent */
+
+/*
+ * Thermal and Power Management (CPUID function 0x6) EAX bits
+ */
+#define	TPM_SENSOR	0x00000001	 /* Digital temp sensor */
+#define	TPM_ARAT	0x00000004	 /* APIC Timer Always Running */
 
  /*
   * "Architectural Performance Monitoring" bits (CPUID function 0x0a):
