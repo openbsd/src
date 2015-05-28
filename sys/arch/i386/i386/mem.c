@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.43 2015/02/10 22:44:35 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.44 2015/05/28 20:53:05 jcs Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -87,8 +87,9 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	        if (suser(p, 0) != 0 || !allowaperture)
 			return (EPERM);
 
-		/* authorize only one simultaneous open() */
-		if (ap_open_count > 0)
+		/* authorize only one simultaneous open() unless
+		 * allowaperture=3 */
+		if (ap_open_count > 0 && allowaperture < 3)
 			return(EPERM);
 		ap_open_count++;
 		break;
@@ -227,6 +228,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 			else
 				return -1;
 		case 2:
+		case 3:
 			/* Allow mapping of the whole 1st megabyte
 			   for x86emu */
 			if (off <= BIOS_END ||

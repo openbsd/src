@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.13 2015/02/10 22:44:35 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.14 2015/05/28 20:53:05 jcs Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -116,8 +116,9 @@ mmopen(dev, flag, mode, p)
 	        if (suser(p, 0) != 0 || !allowaperture)
 			return (EPERM);
 
-		/* authorize only one simultaneous open() */
-		if (ap_open_count > 0)
+		/* authorize only one simultaneous open() unless
+		 * allowaperture=3 */
+		if (ap_open_count > 0 && allowaperture < 3)
 			return(EPERM);
 		ap_open_count++;
 		break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.27 2015/02/10 22:44:35 miod Exp $ */
+/* $OpenBSD: mem.c,v 1.28 2015/05/28 20:53:05 jcs Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -64,7 +64,6 @@ caddr_t zeropage;
 /* open counter for aperture */
 #ifdef APERTURE
 static int ap_open_count = 0;
-static pid_t ap_open_pid = -1;
 extern int allowaperture;
 #endif
 
@@ -86,11 +85,11 @@ mmopen(dev, flag, mode, p)
 	        if (suser(p, 0) != 0 || !allowaperture)
 			return (EPERM);
 
-		/* authorize only one simultaneous open() from the same pid */
-		if (ap_open_count > 0 && p->p_pid != ap_open_pid)
+		/* authorize only one simultaneous open() unless
+		 * allowaperture=3 */
+		if (ap_open_count > 0 && allowaperture < 3)
 			return(EPERM);
 		ap_open_count++;
-		ap_open_pid = p->p_pid;
 		return (0);
 #endif
 	case 12:
@@ -109,10 +108,8 @@ mmclose(dev, flag, mode, p)
 {
 
 #ifdef APERTURE
-	if (minor(dev) == 4) {
+	if (minor(dev) == 4)
 		ap_open_count = 0;
-		ap_open_pid = -1;
-	}
 #endif
 	return (0);
 }
