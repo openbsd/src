@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2013/10/14 02:57:59 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.3 2015/05/28 00:00:24 dtucker Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ all:	moduli
 # The larger ones will take many days, so if you're going to regen them run
 # it in a tmux session or something.  The checkpoints should make it safe
 # to stop and restart.
-DHSIZE=1024 1536 2048 3072 4096 6144 7680 8192
+DHSIZE=1536 2048 3072 4096 6144 7680 8192
 
 .for bits in ${DHSIZE}
 MODULI_PARTS+=moduli.${bits}
