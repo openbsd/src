@@ -1,10 +1,11 @@
-/*	$OpenBSD: htonl.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.2 2015/05/29 09:25:28 uebayasi Exp $	*/
 
 /* Written by Artur Grabowski. Public Domain */
 
 #include <machine/asm.h>
 
-ENTRY(_C_LABEL(htonl))
+ENTRY(htonl)
 	movl    %edi,%eax
 	bswapl  %eax
 	ret
+END(htonl)

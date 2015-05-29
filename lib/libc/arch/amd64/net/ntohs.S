@@ -1,11 +1,11 @@
-/*	$OpenBSD: ntohs.S,v 1.2 2004/02/10 00:08:11 drahn Exp $	*/
+/*	$OpenBSD: ntohs.S,v 1.3 2015/05/29 09:25:28 uebayasi Exp $	*/
 
 /* Written by Artur Grabowski. Public Domain */
 
 #include <machine/asm.h>
 
-ENTRY(_C_LABEL(ntohs))
+ENTRY(ntohs)
 	movl    %edi,%eax
 	xchgb   %ah,%al
 	ret
-
+END(ntohs)
