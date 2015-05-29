@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2007/09/03 14:42:44 millert Exp $
+# $OpenBSD: Makefile,v 1.2 2015/05/29 04:17:11 miod Exp $
 
 .include <bsd.obj.mk>
 
@@ -20,8 +20,8 @@ PROG=		test1
 
 SRCS=		test1.C
 
-CFLAGS+=	-DLIBGD1="\"$(GD1_OBJDIR)/libgd1.so\""
-CFLAGS+=	-DLIBGD2="\"$(GD2_OBJDIR)/libgd2.so\""
+CXXFLAGS+=	-DLIBGD1="\"$(GD1_OBJDIR)/libgd1.so\""
+CXXFLAGS+=	-DLIBGD2="\"$(GD2_OBJDIR)/libgd2.so\""
 LDFLAGS+=	-Wl,-E
 
 NOMAN=
