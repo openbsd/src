@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.40 2015/05/29 07:30:28 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.41 2015/05/29 11:03:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -395,7 +395,7 @@ fill_buffer(struct input_file *inf)
 		next = (char *)next + got;
 		left -= got;
 	}
-
+	inf->size -= left;
 	return buffer;
 }
 
