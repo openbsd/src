@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.20 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.21 2015/05/29 15:57:36 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -252,12 +252,13 @@ ereallocarray(void *p, size_t n, size_t s)
 {
 	void *newp;
 
-	if (s == 0)
+	if (n == 0 || s == 0) {
+		free(p);
 		err(1, "realloc failed");
+	}
 	newp = reallocarray(p, n, s);
 	if (newp == NULL) {
-		if (p)
-			free(p);
+		free(p);
 		err(1, "realloc failed");
 	}
 	return newp;
