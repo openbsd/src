@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.39 2015/05/28 19:26:37 jmc Exp $ */
+/* $OpenBSD: file.c,v 1.40 2015/05/29 07:30:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -174,8 +174,6 @@ main(int argc, char **argv)
 		if (home != NULL) {
 			xasprintf(&magicpath, "%s/.magic", home);
 			magicfp = fopen(magicpath, "r");
-			if (magicfp == NULL && errno != ENOENT)
-				err(1, "%s", magicpath);
 			if (magicfp == NULL)
 				free(magicpath);
 		}
