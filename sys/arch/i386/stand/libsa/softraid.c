@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.8 2014/07/12 20:58:31 tedu Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.9 2015/05/29 13:54:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -62,7 +62,7 @@ srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
 	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
 
 #ifdef BIOS_DEBUG
-		printf("Found optional metadata of type %u, length %u\n", 
+		printf("Found optional metadata of type %u, length %u\n",
 		    omh->som_type, omh->som_length);
 #endif
 
@@ -176,7 +176,7 @@ srprobe(void)
 			    SR_META_SIZE, md);
 			if (error)
 				continue;
-		
+
 			/* Is this valid softraid metadata? */
 			if (md->ssdi.ssd_magic != SR_MAGIC)
 				continue;
