@@ -235,7 +235,9 @@
 ./usr/libdata/ldscripts/elf32vax_obsd.xr
 ./usr/libdata/ldscripts/elf32vax_obsd.xs
 ./usr/libdata/ldscripts/elf32vax_obsd.xsc
+./usr/libdata/ldscripts/elf32vax_obsd.xsw
 ./usr/libdata/ldscripts/elf32vax_obsd.xu
+./usr/libdata/ldscripts/elf32vax_obsd.xw
 ./usr/libdata/ldscripts/elf32vax_obsd.xz
 ./usr/libdata/ldscripts/vaxnbsd.x
 ./usr/libdata/ldscripts/vaxnbsd.xbn
@@ -243,3 +245,4 @@
 ./usr/libdata/ldscripts/vaxnbsd.xr
 ./usr/libdata/ldscripts/vaxnbsd.xu
 ./usr/libdata/ldscripts/vaxnbsd.xz
+./usr/share/info/bfd.info
