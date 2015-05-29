@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.5 2015/05/29 15:11:08 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.6 2015/05/29 15:58:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -603,7 +603,7 @@ magic_test_type_date(struct magic_line *ml, struct magic_state *ms)
 			ctime_r(&t, s);
 			break;
 		default:
-			asctime_r(localtime(&t), s);
+			asctime_r(gmtime(&t), s);
 			break;
 		}
 		s[strcspn(s, "\n")] = '\0';
@@ -645,7 +645,7 @@ magic_test_type_qdate(struct magic_line *ml, struct magic_state *ms)
 			ctime_r(&t, s);
 			break;
 		default:
-			asctime_r(localtime(&t), s);
+			asctime_r(gmtime(&t), s);
 			break;
 		}
 		s[strcspn(s, "\n")] = '\0';
