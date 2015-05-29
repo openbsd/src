@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.353 2015/05/20 15:21:57 pelikan Exp $ */
+/* $OpenBSD: softraid.c,v 1.354 2015/05/29 13:48:45 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -736,7 +736,7 @@ int
 sr_meta_read(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
-	struct sr_chunk_head 	*cl = &sd->sd_vol.sv_chunk_list;
+	struct sr_chunk_head	*cl = &sd->sd_vol.sv_chunk_list;
 	struct sr_metadata	*sm;
 	struct sr_chunk		*ch_entry;
 	struct sr_meta_chunk	*cp;
@@ -1605,7 +1605,7 @@ int
 sr_meta_native_attach(struct sr_discipline *sd, int force)
 {
 	struct sr_softc		*sc = sd->sd_sc;
-	struct sr_chunk_head 	*cl = &sd->sd_vol.sv_chunk_list;
+	struct sr_chunk_head	*cl = &sd->sd_vol.sv_chunk_list;
 	struct sr_metadata	*md = NULL;
 	struct sr_chunk		*ch_entry, *ch_next;
 	struct sr_uuid		uuid;
@@ -3463,7 +3463,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 	}
 
 	if (sd->sd_capabilities & SR_CAP_SYSTEM_DISK) {
-		
 		/* Initialise volume state. */
 		sd->sd_set_vol_state(sd);
 		if (sd->sd_vol_status == BIOC_SVOFFLINE) {
@@ -3537,7 +3536,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		    sizeof(sd->sd_meta->ssd_devname));
 
 		sr_info(sc, "%s volume attached as %s",
-		    sd->sd_name, sd->sd_meta->ssd_devname); 
+		    sd->sd_name, sd->sd_meta->ssd_devname);
 
 		/* Update device name on any roaming chunks. */
 		sr_roam_chunks(sd);
@@ -4362,7 +4361,7 @@ sr_set_vol_state(struct sr_discipline *sd)
 
 	if (states[BIOC_SDONLINE] == nd)
 		new_state = BIOC_SVONLINE;
-	else 
+	else
 		new_state = BIOC_SVOFFLINE;
 
 	DNPRINTF(SR_D_STATE, "%s: %s: sr_set_vol_state %d -> %d\n",

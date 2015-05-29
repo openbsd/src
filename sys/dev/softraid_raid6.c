@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.64 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.65 2015/05/29 13:48:45 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -795,14 +795,14 @@ sr_raid6_xorp(void *p, void *d, int len)
 void
 sr_raid6_xorq(void *q, void *d, int len, int gn)
 {
-	uint32_t 	*qbuf = q, *data = d, x;
-	uint8_t	 	*gn_map = gf_map[gn];
+	uint32_t	*qbuf = q, *data = d, x;
+	uint8_t		*gn_map = gf_map[gn];
 
 	len >>= 2;
 	while (len--) {
 		x = *data++;
 		*qbuf++ ^= (((uint32_t)gn_map[x & 0xff]) |
-		  	    ((uint32_t)gn_map[(x >> 8) & 0xff] << 8) |
+			    ((uint32_t)gn_map[(x >> 8) & 0xff] << 8) |
 			    ((uint32_t)gn_map[(x >> 16) & 0xff] << 16) |
 			    ((uint32_t)gn_map[(x >> 24) & 0xff] << 24));
 	}
