@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.1 2013/09/09 14:31:54 patrick Exp $ */
+/* $OpenBSD: agtimer.c,v 1.2 2015/05/29 02:35:43 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -54,9 +54,6 @@ struct agtimer_pcpu_softc {
 
 struct agtimer_softc {
 	struct device		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_space_handle_t	sc_pioh;
 
 	struct agtimer_pcpu_softc sc_pstat[MAX_ARM_CPUS];
 
@@ -166,16 +163,9 @@ void
 agtimer_attach(struct device *parent, struct device *self, void *args)
 {
 	struct agtimer_softc *sc = (struct agtimer_softc *)self;
-	struct cortex_attach_args *ia = args;
-	bus_space_handle_t ioh, pioh;
-
-	sc->sc_iot = ia->ca_iot;
 
 	sc->sc_ticks_per_second = agtimer_frequency;
 	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1000);
-
-	sc->sc_ioh = ioh;
-	sc->sc_pioh = pioh;
 
 	/* XXX: disable user access */
 
