@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.43 2015/05/29 12:33:41 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.44 2015/05/29 15:58:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "file.h"
@@ -122,6 +123,8 @@ main(int argc, char **argv)
 	struct input_msg	 msg;
 	struct input_ack	*ack;
 	pid_t			 pid, parent;
+
+	tzset();
 
 	for (;;) {
 		opt = getopt_long(argc, argv, "bchiLsW", longopts, NULL);

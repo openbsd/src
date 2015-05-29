@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox.c,v 1.6 2015/05/29 12:38:28 nicm Exp $ */
+/* $OpenBSD: sandbox.c,v 1.7 2015/05/29 15:58:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -40,7 +40,6 @@ static const struct
 } allowed_syscalls[] = {
 	{ SYS_open, SYSTR_POLICY_NEVER }, /* for strerror */
 
-	{ SYS_access, SYSTR_POLICY_PERMIT },
 	{ SYS_close, SYSTR_POLICY_PERMIT },
 	{ SYS_exit, SYSTR_POLICY_PERMIT },
 	{ SYS_fcntl, SYSTR_POLICY_PERMIT },
