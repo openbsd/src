@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.52 2014/12/27 13:13:25 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.53 2015/05/29 19:12:26 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -41,6 +41,8 @@
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+
+#define	DT_PROC(n)	((n) - DT_LOPROC + DT_NUM)
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relasz)
@@ -212,17 +214,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	sigset_t savedmask;
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
-
 	addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
-	if (object->plt_size != 0 && !(*addr >=  object->plt_start &&
-	    *addr < (object->plt_start + object->plt_size ))) {
-		/* something is broken, relocation has already occurred */
-#if 0
-		DL_DEB(("*addr doesn't point into plt %p obj %s\n", 
-		    *addr, object->load_name));
-#endif
-		return *addr;
-	}
 
 	sym = object->dyn.symtab;
 	sym += ELF64_R_SYM(rela->r_info);
@@ -239,19 +231,17 @@ _dl_bind(elf_object_t *object, int reloff)
 	if (sobj->traced && _dl_trace_plt(sobj, symn))
 		return ooff + this->st_value + rela->r_addend;
 
-	/* if PLT is protected, allow the write */
-	if (object->plt_size != 0) {
+	/* if GOT is protected, allow the write */
+	if (object->got_size != 0) {
 		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect(addr, sizeof(Elf_Addr),
-		    PROT_READ|PROT_WRITE);
+		_dl_mprotect(addr, sizeof(Elf_Addr), PROT_READ | PROT_WRITE);
 	}
 
 	*addr = ooff + this->st_value + rela->r_addend;
 
-	/* if PLT is (to be protected, change back to RO/X  */
-	if (object->plt_size != 0) {
-		_dl_mprotect(addr, sizeof(Elf_Addr),
-		    PROT_READ);
+	/* if GOT is to be protected, change back to RO */
+	if (object->got_size != 0) {
+		_dl_mprotect(addr, sizeof(Elf_Addr), PROT_READ);
 		_dl_thread_bind_lock(1, &savedmask);
 	}
 
@@ -267,19 +257,27 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	int	fails = 0;
 	Elf_Addr *pltgot;
 	extern void _dl_bind_start(void);	/* XXX */
+	extern void _dl_bind_secureplt(void);	/* XXX */
 	Elf_Addr ooff;
 	Elf_Addr plt_addr;
 	const Elf_Sym *this;
+	u_long pltro;
 
+	pltro = object->Dyn.info[DT_PROC(DT_ALPHA_PLTRO)];
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
 	object->got_addr = 0;
 	object->got_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_addr = ooff + this->st_value;
+	if (pltro != 0 && pltgot != NULL)
+		object->got_addr = (Elf_Addr)pltgot;
+	else {
+		this = NULL;
+		ooff = _dl_find_symbol("__got_start", &this,
+		    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
+		    object, NULL);
+		if (this != NULL)
+			object->got_addr = ooff + this->st_value;
+	}
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_end", &this,
@@ -289,17 +287,29 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	plt_addr = 0;
 	object->plt_size = 0;
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		plt_addr = ooff + this->st_value;
+	/*
+	 * Do not even attempt to locate the .plt section if we will not
+	 * have to write into it.
+	 */
+	if (pltro == 0) {
+		if (pltgot != NULL)
+			plt_addr = (Elf_Addr)pltgot;
+		else {
+			this = NULL;
+			ooff = _dl_find_symbol("__plt_start", &this,
+			    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
+			    object, NULL);
+			if (this != NULL)
+				plt_addr = ooff + this->st_value;
+		}
 
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->plt_size = ooff + this->st_value  - plt_addr;
+		this = NULL;
+		ooff = _dl_find_symbol("__plt_end", &this,
+		    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
+		    object, NULL);
+		if (this != NULL)
+			object->plt_size = ooff + this->st_value  - plt_addr;
+	}
 
 	if (object->got_addr == 0)
 		object->got_start = 0;
@@ -339,8 +349,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		}
 	}
 	if (pltgot != NULL) {
-		pltgot[2] = (Elf_Addr)_dl_bind_start;
-		pltgot[3] = (Elf_Addr)object;
+		if (pltro == 0) {
+			pltgot[2] = (Elf_Addr)_dl_bind_start;
+			pltgot[3] = (Elf_Addr)object;
+		} else {
+			pltgot[0] = (Elf_Addr)_dl_bind_secureplt;
+			pltgot[1] = (Elf_Addr)object;
+		}
 	}
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,

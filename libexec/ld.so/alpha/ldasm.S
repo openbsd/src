@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.28 2014/07/28 04:28:43 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.29 2015/05/29 19:12:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -146,8 +146,8 @@ NESTED_NOPROFILE(_dl_bind_start, 0, 168, ra, 0, 0)
 	 * Load our global pointer.  Note, can't use pv, since it is
 	 * already used by the PLT code.
 	 */
-	br	t0, L100
-L100:	LDGP(t0)
+	br	t0, 1f
+1:	LDGP(t0)
 
 	/* Set up the arguments for _dl_bind. */
 	subq	at_reg, t12, a1
@@ -192,6 +192,82 @@ L100:	LDGP(t0)
 	lda	sp, 168(sp)
 	jmp	zero, (pv)
 END(_dl_bind_start)
+
+/*
+ * Lazy binding entry point, called via secure (read-only) PLT.
+ */
+NESTED_NOPROFILE(_dl_bind_secureplt, 0, 168, ra, 0, 0)
+	.set	noat
+	/* at_reg and t11 already used by PLT code. */
+
+	/*
+	 * Allocate stack frame and preserve all registers that the caller
+	 * would have normally saved themselves.
+	 */
+	lda	sp, -160(sp)
+	stq	ra, 0(sp)
+	stq	v0, 8(sp)
+	stq	t0, 16(sp)
+	stq	t1, 24(sp)
+	stq	t2, 32(sp)
+	stq	t3, 40(sp)
+	stq	t4, 48(sp)
+	stq	t5, 56(sp)
+	stq	t6, 64(sp)
+	stq	t7, 72(sp)
+	stq	a0, 80(sp)
+	stq	a1, 88(sp)
+	stq	a2, 96(sp)
+	stq	a3, 104(sp)
+	stq	a4, 112(sp)
+	stq	a5, 120(sp)
+	stq	t8, 128(sp)
+	stq	t9, 136(sp)
+	stq	t10, 144(sp)
+	stq	gp, 152(sp)
+
+	/*
+	 * Load our global pointer.  Note, can't use pv, since it is
+	 * already used by the PLT code.
+	 */
+	br	t0, 1f
+1:	LDGP(t0)
+
+	/* Set up the arguments for _dl_bind. */
+	mov	at_reg, a0	/* object */
+	mov	t11, a1		/* reloff as computed by the plt resolver */
+	CALL(_dl_bind)
+
+	/* Move the destination address into position. */
+	mov	v0, pv
+
+	/* Restore program registers. */
+	ldq	ra, 0(sp)
+	ldq	v0, 8(sp)
+	ldq	t0, 16(sp)
+	ldq	t1, 24(sp)
+	ldq	t2, 32(sp)
+	ldq	t3, 40(sp)
+	ldq	t4, 48(sp)
+	ldq	t5, 56(sp)
+	ldq	t6, 64(sp)
+	ldq	t7, 72(sp)
+	ldq	a0, 80(sp)
+	ldq	a1, 88(sp)
+	ldq	a2, 96(sp)
+	ldq	a3, 104(sp)
+	ldq	a4, 112(sp)
+	ldq	a5, 120(sp)
+	ldq	t8, 128(sp)
+	ldq	t9, 136(sp)
+	ldq	t10, 144(sp)
+	ldq	gp, 152(sp)
+	/* XXX LDGP? */
+
+	/* Pop the stack frame and turn control to the destination. */
+	lda	sp, 160(sp)
+	jmp	zero, (pv)
+END(_dl_bind_secureplt)
 
 
 /*
