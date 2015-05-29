@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.S,v 1.2 2004/07/13 11:01:06 kettenis Exp $	*/
+/*	$OpenBSD: fpsetsticky.S,v 1.3 2015/05/29 08:50:12 uebayasi Exp $	*/
 /*	$NetBSD: fpsetsticky.S,v 1.5 2004/03/09 17:16:13 drochner Exp $	*/
 
 /*
@@ -44,3 +44,8 @@ ENTRY(fpsetsticky)
 	ldmxcsr	-32(%rsp)
 	fldenv	-28(%rsp)
 	ret
+#ifdef WEAK_ALIAS
+END(_fpsetsticky)
+#else
+END(fpsetsticky)
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetround.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: fpgetround.S,v 1.2 2015/05/29 08:50:12 uebayasi Exp $	*/
 /*	$NetBSD: fpgetround.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
 
 /*
@@ -24,3 +24,8 @@ ENTRY(fpgetround)
 	rorl $10,%eax
 	andl $3,%eax
 	ret
+#ifdef WEAK_ALIAS
+END(_fpgetround)
+#else
+END(fpgetround)
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.3 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.4 2015/05/29 08:50:12 uebayasi Exp $	*/
 /*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ ENTRY(sigsetjmp)
 
 2:	xorl	%eax,%eax
 	ret
+END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	movq	%rdi,%r12
@@ -105,3 +106,4 @@ ENTRY(siglongjmp)
 	incl	%eax
 1:	movq	%r11,0(%rsp)
 	ret
+END(siglongjmp)
