@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.41 2015/05/29 11:03:37 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.42 2015/05/29 11:59:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -371,7 +371,7 @@ child(int fd, pid_t parent, int argc, char **argv)
 }
 
 static void *
-fill_buffer(struct input_file *inf)
+fill_buffer(int fd, size_t size, size_t *used)
 {
 	static void	*buffer;
 	ssize_t		 got;
@@ -382,9 +382,9 @@ fill_buffer(struct input_file *inf)
 		buffer = xmalloc(FILE_READ_SIZE);
 
 	next = buffer;
-	left = inf->size;
+	left = size;
 	while (left != 0) {
-		got = read(inf->fd, next, left);
+		got = read(fd, next, left);
 		if (got == -1) {
 			if (errno == EINTR)
 				continue;
@@ -395,13 +395,15 @@ fill_buffer(struct input_file *inf)
 		next = (char *)next + got;
 		left -= got;
 	}
-	inf->size -= left;
+	*used = size - left;
 	return buffer;
 }
 
 static int
 load_file(struct input_file *inf)
 {
+	size_t	used;
+
 	inf->size = inf->msg->sb.st_size;
 	if (inf->size > FILE_READ_SIZE)
 		inf->size = FILE_READ_SIZE;
@@ -414,12 +416,13 @@ load_file(struct input_file *inf)
 
 	inf->base = mmap(NULL, inf->size, PROT_READ, MAP_PRIVATE, inf->fd, 0);
 	if (inf->base == MAP_FAILED) {
-		inf->base = fill_buffer(inf);
+		inf->base = fill_buffer(inf->fd, inf->size, &used);
 		if (inf->base == NULL) {
 			xasprintf(&inf->result, "cannot read '%s' (%s)",
 			    inf->path, strerror(errno));
 			return (1);
 		}
+		inf->size = used;
 	} else
 		inf->mapped = 1;
 	return (0);
