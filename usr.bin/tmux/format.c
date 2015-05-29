@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.69 2015/05/29 23:12:38 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.70 2015/05/29 23:26:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -174,17 +174,6 @@ format_job_callback(struct job *job)
 
 	fj->job = NULL;
 	free(fj->out);
-
-	if (WIFEXITED(job->status) && WEXITSTATUS(job->status) != 0) {
-		xasprintf(&fj->out, "<'%s' exited with %d>", fj->cmd,
-		    WEXITSTATUS(job->status));
-		return;
-	}
-	if (WIFSIGNALED(job->status)) {
-		xasprintf(&fj->out, "<'%s' got signal %d>", fj->cmd,
-		    WTERMSIG(job->status));
-		return;
-	}
 
 	buf = NULL;
 	if ((line = evbuffer_readline(job->event->input)) == NULL) {
