@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.65 2015/04/27 16:25:57 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.66 2015/05/29 23:02:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -254,7 +254,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (groupwith != NULL) {
 		session_group_add(groupwith, s);
 		session_group_synchronize_to(s);
-		session_select(s, RB_ROOT(&s->windows)->idx);
+		session_select(s, RB_MIN(winlinks, &s->windows)->idx);
 	}
 
 	/*
