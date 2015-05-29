@@ -19,3 +19,4 @@ ENTRY(memchr)
 	ret
 L1:	xorq	%rax,%rax
 	ret
+END(memchr)

@@ -18,3 +18,4 @@ ENTRY(bcmp)
 
 L1:	incl	%eax
 L2:	ret
+END(bcmp)

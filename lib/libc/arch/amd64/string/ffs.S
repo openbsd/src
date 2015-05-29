@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.2 2015/05/29 07:21:09 uebayasi Exp $	*/
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -16,3 +16,4 @@ ENTRY(ffs)
 	_ALIGN_TEXT
 L1:	xorl	%eax,%eax		/* clear result */
 	ret
+END(ffs)

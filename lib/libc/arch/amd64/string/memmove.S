@@ -85,3 +85,6 @@ ENTRY(memmove)
 	movq	%r11,%rax
 	cld
 	ret
+// END(memcpy)
+END(memmove)
+END(bcopy)

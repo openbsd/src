@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.4 2014/12/09 15:10:39 reyk Exp $	*/
+/*	$OpenBSD: strcmp.S,v 1.5 2015/05/29 07:21:09 uebayasi Exp $	*/
 /*	$NetBSD: strcmp.S,v 1.2 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*
@@ -69,3 +69,4 @@ ENTRY(strcmp)
 	movzbq	%dl,%rdx
 	subq	%rdx,%rax
 	ret
+END(strcmp)
