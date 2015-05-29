@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.35 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.36 2015/05/29 15:53:46 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -451,9 +451,6 @@ mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 	char *p, *s;
 	int argc = *argcp, maxargc = *maxargcp;
 	const char **argv = *argvp;
-
-	argc = *argcp;
-	maxargc = *maxargcp;
 
 	for (s = opts; (p = strsep(&s, ",")) != NULL;) {
 		/* always leave space for one more argument and the NULL */
