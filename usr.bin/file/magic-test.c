@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.4 2015/05/29 14:52:10 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.5 2015/05/29 15:11:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1087,7 +1087,7 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 		ms->offset = offset;
 		magic_test_line(child, ms);
 	}
-	return (1);
+	return (ml->result != NULL);
 }
 
 const char *
