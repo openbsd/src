@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.42 2015/05/29 11:59:01 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.43 2015/05/29 12:33:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -405,26 +405,28 @@ load_file(struct input_file *inf)
 	size_t	used;
 
 	inf->size = inf->msg->sb.st_size;
-	if (inf->size > FILE_READ_SIZE)
+	if (inf->size == 0 && S_ISREG(inf->msg->sb.st_mode))
+		return (0); /* empty file */
+	if (inf->size == 0 || inf->size > FILE_READ_SIZE)
 		inf->size = FILE_READ_SIZE;
-	if (inf->size == 0) {
-		if (!S_ISREG(inf->msg->sb.st_mode))
-			inf->size = FILE_READ_SIZE;
-		else
-			return (0);
-	}
+
+	if (!S_ISREG(inf->msg->sb.st_mode))
+		goto try_read;
 
 	inf->base = mmap(NULL, inf->size, PROT_READ, MAP_PRIVATE, inf->fd, 0);
-	if (inf->base == MAP_FAILED) {
-		inf->base = fill_buffer(inf->fd, inf->size, &used);
-		if (inf->base == NULL) {
-			xasprintf(&inf->result, "cannot read '%s' (%s)",
-			    inf->path, strerror(errno));
-			return (1);
-		}
-		inf->size = used;
-	} else
-		inf->mapped = 1;
+	if (inf->base == MAP_FAILED)
+		goto try_read;
+	inf->mapped = 1;
+	return (0);
+
+try_read:
+	inf->base = fill_buffer(inf->fd, inf->size, &used);
+	if (inf->base == NULL) {
+		xasprintf(&inf->result, "cannot read '%s' (%s)", inf->path,
+		    strerror(errno));
+		return (1);
+	}
+	inf->size = used;
 	return (0);
 }
 
