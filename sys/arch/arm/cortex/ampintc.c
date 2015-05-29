@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.5 2014/12/13 21:05:32 doug Exp $ */
+/* $OpenBSD: ampintc.c,v 1.6 2015/05/29 05:48:07 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -221,7 +221,8 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	icdsize = ICD_SIZE;
 
 	if ((cputype & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
-	    (cputype & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15) {
+	    (cputype & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15 ||
+	    (cputype & CPU_ID_CORTEX_A17_MASK) == CPU_ID_CORTEX_A17) {
 		icp = ia->ca_periphbase + ICP_A7_A15_ADDR;
 		icpsize = ICP_A7_A15_SIZE;
 		icd = ia->ca_periphbase + ICD_A7_A15_ADDR;

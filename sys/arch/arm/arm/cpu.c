@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.20 2014/11/16 12:30:56 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.21 2015/05/29 05:48:07 jsg Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -328,7 +328,23 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_CORTEX_A15_R4,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R4",
 	  generic_steppings },
+	{ CPU_ID_CORTEX_A17,	CPU_CLASS_ARMv7,	"ARM Cortex A17",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A17_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A17 R1",
+	  generic_steppings },
 
+	{ CPU_ID_CORTEX_A53,	CPU_CLASS_ARMv7,	"ARM Cortex A53",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A53_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A53 R1",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A57,	CPU_CLASS_ARMv7,	"ARM Cortex A57",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A57_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A57 R1",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A72,	CPU_CLASS_ARMv7,	"ARM Cortex A72",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A72_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A72 R1",
+	  generic_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };

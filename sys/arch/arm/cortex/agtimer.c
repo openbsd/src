@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.2 2015/05/29 02:35:43 jsg Exp $ */
+/* $OpenBSD: agtimer.c,v 1.3 2015/05/29 05:48:07 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -153,7 +153,8 @@ int
 agtimer_match(struct device *parent, void *cfdata, void *aux)
 {
 	if ((cpufunc_id() & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
-	    (cpufunc_id() & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15)
+	    (cpufunc_id() & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15 ||
+	    (cpufunc_id() & CPU_ID_CORTEX_A17_MASK) == CPU_ID_CORTEX_A17)
 		return (1);
 
 	return 0;

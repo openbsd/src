@@ -1,4 +1,4 @@
-/*	$OpenBSD: cortex.c,v 1.2 2013/08/06 14:21:13 patrick Exp $	*/
+/*	$OpenBSD: cortex.c,v 1.3 2015/05/29 05:48:07 jsg Exp $	*/
 /* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
@@ -100,7 +100,8 @@ cortexmatch(struct device *parent, void *cf, void *aux)
 
 	if ((cputype & CPU_ID_CORTEX_A7_MASK) == CPU_ID_CORTEX_A7 ||
 	    (cputype & CPU_ID_CORTEX_A9_MASK) == CPU_ID_CORTEX_A9 ||
-	    (cputype & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15) {
+	    (cputype & CPU_ID_CORTEX_A15_MASK) == CPU_ID_CORTEX_A15 ||
+	    (cputype & CPU_ID_CORTEX_A17_MASK) == CPU_ID_CORTEX_A17) {
 		if (armv7_periphbase())
 			return (1);
 	}
