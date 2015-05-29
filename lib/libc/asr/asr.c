@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.36 2015/05/26 19:28:57 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.37 2015/05/29 08:49:37 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -861,7 +861,7 @@ asr_strdname(const char *_dname, char *buf, size_t max)
  * size "ntoken" and returns the number of token on the line.
  */
 int
-asr_parse_namedb_line(FILE *file, char **tokens, int ntoken)
+asr_parse_namedb_line(FILE *file, char **tokens, int ntoken, char *lbuf, size_t sz)
 {
 	size_t	  len;
 	char	 *buf;
@@ -871,8 +871,15 @@ asr_parse_namedb_line(FILE *file, char **tokens, int ntoken)
 	if ((buf = fgetln(file, &len)) == NULL)
 		return (-1);
 
+	if (len >= sz)
+		goto again;
+
 	if (buf[len - 1] == '\n')
 		len--;
+	else {
+		memcpy(lbuf, buf, len);
+		buf = lbuf;
+	}
 
 	buf[len] = '\0';
 	buf[strcspn(buf, "#")] = '\0';

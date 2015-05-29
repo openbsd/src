@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.39 2015/05/26 19:28:57 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.40 2015/05/29 08:49:37 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -745,7 +745,7 @@ addrinfo_add(struct asr_query *as, const struct sockaddr *sa, const char *cname)
 static int
 addrinfo_from_file(struct asr_query *as, int family, FILE *f)
 {
-	char		*tokens[MAXTOKEN], *c;
+	char		*tokens[MAXTOKEN], *c, buf[BUFSIZ + 1];
 	int		 n, i;
 	union {
 		struct sockaddr		sa;
@@ -754,7 +754,7 @@ addrinfo_from_file(struct asr_query *as, int family, FILE *f)
 	} u;
 
 	for (;;) {
-		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
+		n = asr_parse_namedb_line(f, tokens, MAXTOKEN, buf, sizeof(buf));
 		if (n == -1)
 			break; /* ignore errors reading the file */
 

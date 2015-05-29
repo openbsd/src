@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.19 2014/11/02 13:59:16 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.20 2015/05/29 08:49:37 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -283,12 +283,12 @@ static struct netent_ext *
 netent_file_match(FILE *f, int reqtype, const char *data)
 {
 	struct netent_ext	*e;
-	char			*tokens[MAXTOKEN];
+	char			*tokens[MAXTOKEN], buf[BUFSIZ + 1];
 	int			 n, i;
 	in_addr_t		 net;
 
 	for (;;) {
-		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
+		n = asr_parse_namedb_line(f, tokens, MAXTOKEN, buf, sizeof(buf));
 		if (n == -1) {
 			errno = 0; /* ignore errors reading the file */
 			return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.36 2015/05/26 19:28:57 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.37 2015/05/29 08:49:37 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -429,12 +429,12 @@ static struct hostent_ext *
 hostent_file_match(FILE *f, int reqtype, int family, const char *data,
     int datalen)
 {
-	char	*tokens[MAXTOKEN], addr[16];
+	char	*tokens[MAXTOKEN], addr[16], buf[BUFSIZ + 1];
 	struct	 hostent_ext *h;
 	int	 n, i;
 
 	for (;;) {
-		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
+		n = asr_parse_namedb_line(f, tokens, MAXTOKEN, buf, sizeof(buf));
 		if (n == -1) {
 			errno = 0; /* ignore errors reading the file */
 			return (NULL);

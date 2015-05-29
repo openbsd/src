@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.28 2015/05/26 19:28:57 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.29 2015/05/29 08:49:37 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -318,7 +318,7 @@ void asr_async_free(struct asr_query *);
 size_t asr_make_fqdn(const char *, const char *, char *, size_t);
 char *asr_strdname(const char *, char *, size_t);
 int asr_iter_db(struct asr_query *);
-int asr_parse_namedb_line(FILE *, char **, int);
+int asr_parse_namedb_line(FILE *, char **, int, char *, size_t);
 char *asr_hostalias(struct asr_ctx *, const char *, char *, size_t);
 
 /* *_async.c */
