@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.126 2015/05/11 12:14:22 pelikan Exp $       */
+/* $OpenBSD: bioctl.c,v 1.127 2015/05/29 00:33:37 uebayasi Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -53,8 +53,14 @@ struct locator {
 	int		lun;
 };
 
+struct timing {
+	int		interval;
+	int		start;
+};
+
 void			usage(void);
 const char 		*str2locator(const char *, struct locator *);
+const char 		*str2patrol(const char *, struct timing *);
 void			bio_status(struct bio_status *);
 int			bio_parse_devlist(char *, dev_t *);
 void			bio_kdf_derive(struct sr_crypto_kdfinfo *,
@@ -75,6 +81,7 @@ void			bio_changepass(char *);
 u_int32_t		bio_createflags(char *);
 char			*bio_vis(char *);
 void			bio_diskinq(char *);
+void			bio_patrol(char *);
 
 int			devh = -1;
 int			human;
@@ -106,7 +113,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:O:Pp:qr:R:su:v")) !=
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hik:l:O:Pp:qr:R:st:u:v")) !=
 	    -1) {
 		switch (ch) {
 		case 'a': /* alarm */
@@ -185,6 +192,10 @@ main(int argc, char *argv[])
 		case 's':
 			rpp_flag = RPP_STDIN;
 			break;
+		case 't': /* patrol */
+			func |= BIOC_PATROL;
+			al_arg = optarg;
+			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -237,6 +248,8 @@ main(int argc, char *argv[])
 		bio_alarm(al_arg);
 	} else if (func == BIOC_BLINK) {
 		bio_setblink(devicename, bl_arg, blink);
+	} else if (func == BIOC_PATROL) {
+		bio_patrol(al_arg);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg, ss_func, argv[0]);
 	} else if (func == BIOC_DELETERAID && !biodev) {
@@ -271,7 +284,7 @@ usage(void)
 		"\t[-l special[,special,...]] "
 		"[-O device | channel:target[.lun]]\n"
 		"\t[-p passfile] [-R device | channel:target[.lun]]\n"
-		"\t[-r rounds] "
+		"\t[-r rounds] [-t patrol-function] "
 		"device\n", __progname, __progname);
 
 	exit(1);
@@ -307,6 +320,39 @@ str2locator(const char *string, struct locator *location)
 	return (NULL);
 }
 
+const char *
+str2patrol(const char *string, struct timing *timing)
+{
+	const char		*errstr;
+	char			parse[80], *interval = NULL, *start = NULL;
+
+	timing->interval = 0;
+	timing->start = 0;
+
+	strlcpy(parse, string, sizeof parse);
+
+	interval = strchr(parse, '.');
+	if (interval != NULL) {
+		*interval++ = '\0';
+		start = strchr(interval, '.');
+		if (start != NULL)
+			*start++ = '\0';
+	}
+	if (interval != NULL) {
+		/* -1 == continuously */
+		timing->interval = strtonum(interval, -1, INT_MAX, &errstr);
+		if (errstr)
+			return (errstr);
+	}
+	if (start != NULL) {
+		timing->start = strtonum(start, 0, INT_MAX, &errstr);
+		if (errstr)
+			return (errstr);
+	}
+
+	return (NULL);
+}
+
 void
 bio_status(struct bio_status *bs)
 {
@@ -335,7 +381,7 @@ bio_inq(char *name)
 {
 	char 			*status, *cache;
 	char			size[64], scsiname[16], volname[32];
-	char			percent[10], seconds[20];
+	char			percent[20], seconds[20];
 	int			i, d, volheader, hotspare, unused;
 	char			encname[16], serial[32];
 	struct bioc_inq		bi;
@@ -461,6 +507,8 @@ bio_inq(char *name)
 			bd.bd_bio.bio_cookie = bio_cookie;
 			bd.bd_diskid = d;
 			bd.bd_volid = i;
+			bd.bd_patrol.bdp_percent = -1;
+			bd.bd_patrol.bdp_seconds = 0;
 
 			if (ioctl(devh, BIOCDISK, &bd))
 				err(1, "BIOCDISK");
@@ -519,12 +567,21 @@ bio_inq(char *name)
 			else
 				strlcpy(serial, "unknown serial", sizeof serial);
 
+			percent[0] = '\0';
+			seconds[0] = '\0';
+			if (bd.bd_patrol.bdp_percent != -1)
+				snprintf(percent, sizeof percent,
+				    " patrol %d%% done", bd.bd_patrol.bdp_percent);
+			if (bd.bd_patrol.bdp_seconds)
+				snprintf(seconds, sizeof seconds,
+				    " %u seconds", bd.bd_patrol.bdp_seconds);
+
 			printf("%11s %-10s %14s %-7s %-6s <%s>\n",
 			    volname, status, size, scsiname, encname,
 			    bd.bd_vendor);
 			if (verbose)
-				printf("%11s %-10s %14s %-7s %-6s '%s'\n",
-				    "", "", "", "", "", serial);
+				printf("%11s %-10s %14s %-7s %-6s '%s'%s%s\n",
+				    "", "", "", "", "", serial, percent, seconds);
 		}
 	}
 }
@@ -1101,6 +1158,104 @@ bio_diskinq(char *sd_dev)
 
 	printf("%s: <%s, %s, %s>, serial %s\n", sd_dev, bio_vis(di.vendor),
 	    bio_vis(di.product), bio_vis(di.revision), bio_vis(di.serial));
+}
+
+void
+bio_patrol(char *arg)
+{
+	struct bioc_patrol	bp;
+	struct timing		timing;
+	const char		*errstr;
+
+	memset(&bp, 0, sizeof(bp));
+	bp.bp_bio.bio_cookie = bio_cookie;
+
+	switch (arg[0]) {
+	case 'a':
+		bp.bp_opcode = BIOC_SPAUTO;
+		break;
+
+	case 'm':
+		bp.bp_opcode = BIOC_SPMANUAL;
+		break;
+
+	case 'd':
+		bp.bp_opcode = BIOC_SPDISABLE;
+		break;
+
+	case 'g': /* get patrol state */
+		bp.bp_opcode = BIOC_GPSTATUS;
+		break;
+
+	case 's': /* start/stop patrol */
+		if (strncmp("sta", arg, 3) == 0)
+			bp.bp_opcode = BIOC_SPSTART;
+		else
+			bp.bp_opcode = BIOC_SPSTOP;
+		break;
+
+	default:
+		errx(1, "invalid patrol function: %s", arg);
+	}
+
+	switch (arg[0]) {
+	case 'a':
+		errstr = str2patrol(arg, &timing);
+		if (errstr)
+			errx(1, "Patrol %s: %s", arg, errstr);
+		bp.bp_autoival = timing.interval;
+		bp.bp_autonext = timing.start;
+		break;
+	}
+
+	if (ioctl(devh, BIOCPATROL, &bp))
+		err(1, "BIOCPATROL");
+
+	bio_status(&bp.bp_bio.bio_status);
+
+	if (arg[0] == 'g') {
+		const char *mode, *status;
+		char interval[40];
+
+		interval[0] = '\0';
+
+		switch (bp.bp_mode) {
+		case BIOC_SPMAUTO:
+			mode = "auto";
+			snprintf(interval, sizeof interval,
+			    " interval=%d next=%d", bp.bp_autoival,
+			    bp.bp_autonext - bp.bp_autonow);
+			break;
+		case BIOC_SPMMANUAL:
+			mode = "manual";
+			break;
+		case BIOC_SPMDISABLED:
+			mode = "disabled";
+			break;
+		default:
+			status = "unknown";
+			break;
+		}
+		switch (bp.bp_status) {
+		case BIOC_SPSSTOPPED:
+			status = "stopped";
+			break;
+		case BIOC_SPSREADY:
+			status = "ready";
+			break;
+		case BIOC_SPSACTIVE:
+			status = "active";
+			break;
+		case BIOC_SPSABORTED:
+			status = "aborted";
+			break;
+		default:
+			status = "unknown";
+			break;
+		}
+		printf("patrol mode: %s%s\n", mode, interval);
+		printf("patrol status: %s\n", status);
+	}
 }
 
 void

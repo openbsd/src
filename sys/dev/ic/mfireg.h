@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.42 2015/01/09 11:17:29 yasuoka Exp $ */
+/* $OpenBSD: mfireg.h,v 1.43 2015/05/29 00:33:37 uebayasi Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -99,6 +99,15 @@
 #define MFI_CMD_SMP				0x07
 #define MFI_CMD_STP				0x08
 
+#define MFI_PR_STATE_STOPPED			0
+#define MFI_PR_STATE_READY			1
+#define MFI_PR_STATE_ACTIVE			2
+#define MFI_PR_STATE_ABORTED			0xff
+
+#define MFI_PR_OPMODE_AUTO			0x00
+#define MFI_PR_OPMODE_MANUAL			0x01
+#define MFI_PR_OPMODE_DISABLED			0x02
+
 /* direct commands */
 #define MR_DCMD_CTRL_GET_INFO			0x01010000
 #define MR_DCMD_CTRL_CACHE_FLUSH		0x01101000
@@ -109,6 +118,12 @@
 #define MR_DCMD_CTRL_EVENT_GET_INFO		0x01040100
 #define MR_DCMD_CTRL_EVENT_GET			0x01040300
 #define MR_DCMD_CTRL_EVENT_WAIT			0x01040500
+#define MR_DCMD_PR_GET_STATUS			0x01070100
+#define MR_DCMD_PR_GET_PROPERTIES		0x01070200
+#define MR_DCMD_PR_SET_PROPERTIES		0x01070300
+#define MR_DCMD_PR_START			0x01070400
+#define MR_DCMD_PR_STOP				0x01070500
+#define MR_DCMD_TIME_SECS_GET			0x01080201
 #define MR_DCMD_PD_GET_LIST			0x02010000
 #define MR_DCMD_PD_GET_INFO			0x02020000
 #define MR_DCMD_PD_SET_STATE			0x02030100
@@ -120,7 +135,10 @@
 #define MR_DCMD_LD_GET_INFO			0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES		0x03030000
 #define MR_DCMD_LD_SET_PROPERTIES		0x03040000
+#define MR_DCMD_LD_DELETE			0x03090000
 #define MR_DCMD_CONF_GET			0x04010000
+#define MR_DCMD_CFG_ADD				0x04020000
+#define MR_DCMD_CFG_CLEAR			0x04030000
 #define MR_DCMD_BBU_GET_STATUS			0x05010000
 #define MR_DCMD_BBU_GET_CAPACITY_INFO		0x05020000
 #define MR_DCMD_BBU_GET_DESIGN_INFO		0x05030000
@@ -1128,3 +1146,22 @@ struct mfi_bbu_status {
 	union mfi_bbu_status_detail detail;
 } __packed;
 
+struct mfi_pr_status {
+	uint32_t		num_iteration;
+	uint8_t			state;
+	uint8_t			num_pd_done;
+	uint8_t			reserved[10];
+} __packed;
+
+struct mfi_pr_properties {
+	uint8_t			op_mode;
+	uint8_t			max_pd;
+	uint8_t			reserved;
+	uint8_t			exclude_ld_count;
+	uint16_t		excluded_ld[MFI_MAX_LD];
+	uint8_t			cur_pd_map[MFI_MAX_PD / 8];
+	uint8_t			last_pd_map[MFI_MAX_PD / 8];
+	uint32_t		next_exec;
+	uint32_t		exec_freq;
+	uint32_t		clear_freq;
+} __packed;

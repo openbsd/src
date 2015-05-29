@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.43 2013/10/23 13:05:38 kettenis Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.44 2015/05/29 00:33:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -110,6 +110,11 @@ struct bioc_disk {
 	char		bd_vendor[32];	/* scsi string */
 	char		bd_serial[32];	/* serial number */
 	char		bd_procdev[16];	/* processor device */
+
+	struct {
+		int		bdp_percent;
+		int		bdp_seconds;
+	}		bd_patrol;
 };
 
 #define BIOCVOL _IOWR('B', 34, struct bioc_vol)
@@ -246,6 +251,32 @@ struct bioc_installboot {
 	u_int32_t	bb_bootldr_size;
 };
 
+#define BIOCPATROL _IOWR('B', 42, struct bioc_patrol)
+struct bioc_patrol {
+	struct bio	bp_bio;
+	int		bp_opcode;
+#define BIOC_SPSTOP		0x00	/* stop patrol */
+#define BIOC_SPSTART		0x01	/* start patrol */
+#define BIOC_GPSTATUS		0x02	/* get status */
+#define BIOC_SPDISABLE		0x03	/* disable patrol */
+#define BIOC_SPAUTO		0x04	/* enable patrol as auto */
+#define BIOC_SPMANUAL		0x05	/* enable patrol as manual */
+
+	int		bp_mode;
+#define	BIOC_SPMAUTO		0x00
+#define	BIOC_SPMMANUAL		0x01
+#define BIOC_SPMDISABLED	0x02
+	int		bp_status;	/* only used with get state */
+#define	BIOC_SPSSTOPPED		0x00
+#define	BIOC_SPSREADY		0x01
+#define BIOC_SPSACTIVE		0x02
+#define BIOC_SPSABORTED		0xff
+
+	int		bp_autoival;
+	int		bp_autonext;
+	int		bp_autonow;
+};
+
 /* kernel and userspace defines */
 #define BIOC_INQ		0x0001
 #define BIOC_DISK		0x0002
@@ -257,6 +288,7 @@ struct bioc_installboot {
 #define BIOC_DELETERAID		0x0080
 #define BIOC_DISCIPLINE		0x0100
 #define BIOC_INSTALLBOOT	0x0200
+#define BIOC_PATROL		0x0400
 
 /* user space defines */
 #define BIOC_DEVLIST		0x10000

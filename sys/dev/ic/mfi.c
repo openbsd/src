@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.163 2015/05/18 12:21:04 mikeb Exp $ */
+/* $OpenBSD: mfi.c,v 1.164 2015/05/29 00:33:37 uebayasi Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -117,6 +117,7 @@ int		mfi_ioctl_disk(struct mfi_softc *, struct bioc_disk *);
 int		mfi_ioctl_alarm(struct mfi_softc *, struct bioc_alarm *);
 int		mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *);
 int		mfi_ioctl_setstate(struct mfi_softc *, struct bioc_setstate *);
+int		mfi_ioctl_patrol(struct mfi_softc *sc, struct bioc_patrol *);
 int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
 #ifndef SMALL_KERNEL
 int		mfi_create_sensors(struct mfi_softc *);
@@ -1562,6 +1563,11 @@ mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		error = mfi_ioctl_setstate(sc, (struct bioc_setstate *)addr);
 		break;
 
+	case BIOCPATROL:
+		DNPRINTF(MFI_D_IOCTL, "patrol\n");
+		error = mfi_ioctl_patrol(sc, (struct bioc_patrol *)addr);
+		break;
+
 	default:
 		DNPRINTF(MFI_D_IOCTL, " invalid ioctl\n");
 		error = EINVAL;
@@ -1782,6 +1788,8 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	struct mfi_array	*ar;
 	struct mfi_ld_cfg	*ld;
 	struct mfi_pd_details	*pd;
+	struct mfi_pd_progress	*mfp;
+	struct mfi_progress	*mp;
 	struct scsi_inquiry_data *inqbuf;
 	char			vend[8+16+4+1], *vendp;
 	int			rv = EINVAL;
@@ -1876,6 +1884,13 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	/* XXX find a way to retrieve serial nr from drive */
 	/* XXX find a way to get bd_procdev */
+
+	mfp = &pd->mpd_progress;
+	if (mfp->mfp_in_prog & MFI_PD_PROG_PR) {
+		mp = &mfp->mfp_patrol_read;
+		bd->bd_patrol.bdp_percent = (mp->mp_progress * 100) / 0xffff;
+		bd->bd_patrol.bdp_seconds = mp->mp_elapsed_seconds;
+	}
 
 	rv = 0;
 freeme:
@@ -2061,6 +2076,142 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 done:
 	free(pd, M_DEVBUF, 0);
 	free(info, M_DEVBUF, 0);
+	return (rv);
+}
+
+int
+mfi_ioctl_patrol(struct mfi_softc *sc, struct bioc_patrol *bp)
+{
+	uint32_t		opc, dir = MFI_DATA_NONE;
+	int			rv = 0;
+	struct mfi_pr_properties prop;
+	struct mfi_pr_status	status;
+	uint32_t		time, exec_freq;
+
+	switch (bp->bp_opcode) {
+	case BIOC_SPSTOP:
+	case BIOC_SPSTART:
+		if (bp->bp_opcode == BIOC_SPSTART)
+			opc = MR_DCMD_PR_START;
+		else
+			opc = MR_DCMD_PR_STOP;
+		dir = MFI_DATA_IN;
+		if (mfi_mgmt(sc, opc, dir, 0, NULL, NULL))
+			return (EINVAL);
+		break;
+
+	case BIOC_SPMANUAL:
+	case BIOC_SPDISABLE:
+	case BIOC_SPAUTO:
+		/* Get device's time. */
+		opc = MR_DCMD_TIME_SECS_GET;
+		dir = MFI_DATA_IN;
+		if (mfi_mgmt(sc, opc, dir, sizeof(time), &time, NULL))
+			return (EINVAL);
+
+		opc = MR_DCMD_PR_GET_PROPERTIES;
+		dir = MFI_DATA_IN;
+		if (mfi_mgmt(sc, opc, dir, sizeof(prop), &prop, NULL))
+			return (EINVAL);
+
+		switch (bp->bp_opcode) {
+		case BIOC_SPMANUAL:
+			prop.op_mode = MFI_PR_OPMODE_MANUAL;
+			break;
+		case BIOC_SPDISABLE:
+			prop.op_mode = MFI_PR_OPMODE_DISABLED;
+			break;
+		case BIOC_SPAUTO:
+			if (bp->bp_autoival != 0) {
+				if (bp->bp_autoival == -1)
+					/* continuously */
+					exec_freq = 0xffffffffU;
+				else if (bp->bp_autoival > 0)
+					exec_freq = bp->bp_autoival;
+				else
+					return (EINVAL);
+				prop.exec_freq = exec_freq;
+			}
+			if (bp->bp_autonext != 0) {
+				if (bp->bp_autonext < 0)
+					return (EINVAL);
+				else
+					prop.next_exec = time + bp->bp_autonext;
+			}
+			prop.op_mode = MFI_PR_OPMODE_AUTO;
+			break;
+		}
+
+		opc = MR_DCMD_PR_SET_PROPERTIES;
+		dir = MFI_DATA_OUT;
+		if (mfi_mgmt(sc, opc, dir, sizeof(prop), &prop, NULL))
+			return (EINVAL);
+
+		break;
+
+	case BIOC_GPSTATUS:
+		opc = MR_DCMD_PR_GET_PROPERTIES;
+		dir = MFI_DATA_IN;
+		if (mfi_mgmt(sc, opc, dir, sizeof(prop), &prop, NULL))
+			return (EINVAL);
+
+		opc = MR_DCMD_PR_GET_STATUS;
+		dir = MFI_DATA_IN;
+		if (mfi_mgmt(sc, opc, dir, sizeof(status), &status, NULL))
+			return (EINVAL);
+
+		/* Get device's time. */
+		opc = MR_DCMD_TIME_SECS_GET;
+		dir = MFI_DATA_IN;
+		if (mfi_mgmt(sc, opc, dir, sizeof(time), &time, NULL))
+			return (EINVAL);
+
+		switch (prop.op_mode) {
+		case MFI_PR_OPMODE_AUTO:
+			bp->bp_mode = BIOC_SPMAUTO;
+			bp->bp_autoival = prop.exec_freq;
+			bp->bp_autonext = prop.next_exec;
+			bp->bp_autonow = time;
+			break;
+		case MFI_PR_OPMODE_MANUAL:
+			bp->bp_mode = BIOC_SPMMANUAL;
+			break;
+		case MFI_PR_OPMODE_DISABLED:
+			bp->bp_mode = BIOC_SPMDISABLED;
+			break;
+		default:
+			printf("%s: unknown patrol mode %d\n",
+			    DEVNAME(sc), prop.op_mode);
+			break;
+		}
+
+		switch (status.state) {
+		case MFI_PR_STATE_STOPPED:
+			bp->bp_status = BIOC_SPSSTOPPED;
+			break;
+		case MFI_PR_STATE_READY:
+			bp->bp_status = BIOC_SPSREADY;
+			break;
+		case MFI_PR_STATE_ACTIVE:
+			bp->bp_status = BIOC_SPSACTIVE;
+			break;
+		case MFI_PR_STATE_ABORTED:
+			bp->bp_status = BIOC_SPSABORTED;
+			break;
+		default:
+			printf("%s: unknown patrol state %d\n",
+			    DEVNAME(sc), status.state);
+			break;
+		}
+
+		break;
+
+	default:
+		DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_patrol biocpatrol invalid "
+		    "opcode %x\n", DEVNAME(sc), bp->bp_opcode);
+		return (EINVAL);
+	}
+
 	return (rv);
 }
 

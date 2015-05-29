@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.26 2015/05/26 12:29:42 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.27 2015/05/29 00:33:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -151,6 +151,7 @@ int vmxnet3_alloc_rxring(struct vmxnet3_softc *, int);
 void vmxnet3_txinit(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
 void vmxnet3_rxinit(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
 void vmxnet3_txstop(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
+void vmxnet3_rxdump(struct vmxnet3_softc *);
 void vmxnet3_rxstop(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
 void vmxnet3_link_state(struct vmxnet3_softc *);
 void vmxnet3_enable_all_intrs(struct vmxnet3_softc *);
@@ -514,6 +515,28 @@ vmxnet3_txstop(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 			ring->m[idx] = NULL;
 		}
 	}
+}
+
+void
+vmxnet3_rxdump(struct vmxnet3_softc *sc)
+{
+#if 0
+	int queue, i;
+
+	for (queue = 0; queue < NRXQUEUE; queue++) {
+		struct vmxnet3_rxqueue *rq = &sc->sc_rxq[queue];
+
+		for (i = 0; i < 2; i++) {
+			struct vmxnet3_rxring *ring = &rq->cmd_ring[i];
+
+			struct if_rxring *r = &ring->rxr;
+			printf("ring%d: "
+			    "adjusted=%d alive=%u cwm=%u lwm=%u hwm=%u\n",
+			    i,
+			    r->rxr_adjusted, r->rxr_alive, r->rxr_cwm, r->rxr_lwm, r->rxr_hwm);
+		}
+	}
+#endif
 }
 
 void
@@ -913,6 +936,7 @@ vmxnet3_stop(struct ifnet *ifp)
 		vmxnet3_txstop(sc, &sc->sc_txq[queue]);
 	for (queue = 0; queue < NRXQUEUE; queue++)
 		vmxnet3_rxstop(sc, &sc->sc_rxq[queue]);
+	vmxnet3_rxdump(sc);
 }
 
 void
@@ -941,6 +965,7 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 		vmxnet3_txinit(sc, &sc->sc_txq[queue]);
 	for (queue = 0; queue < NRXQUEUE; queue++)
 		vmxnet3_rxinit(sc, &sc->sc_rxq[queue]);
+	vmxnet3_rxdump(sc);
 
 	WRITE_CMD(sc, VMXNET3_CMD_ENABLE);
 	if (READ_BAR1(sc, VMXNET3_BAR1_CMD)) {
