@@ -1,5 +1,5 @@
 # $FreeBSD: src/lib/libio/Makefile,v 1.2 1999/08/28 00:04:42 peter Exp $
-# $OpenBSD: Makefile,v 1.7 2002/07/12 22:30:25 deraadt Exp $
+# $OpenBSD: Makefile,v 1.8 2015/05/30 19:53:02 miod Exp $
 
 MAN=		inb.2
 MLINKS+=	inb.2 dense_base.2 \
@@ -15,7 +15,7 @@ MANSUBDIR=alpha
 .if ${MACHINE} == "alpha"
 NOPIC=
 SRCS=		io.c bwx.c
-CFLAGS+= 	-Wall -Wno-uninitialized -Wa,-mev56
+CFLAGS+= 	-Wall -Wno-uninitialized -mbwx
 .include <bsd.lib.mk>
 .else
 NOPROG=
