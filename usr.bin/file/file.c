@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.44 2015/05/29 15:58:34 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.45 2015/05/30 06:25:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -209,7 +209,13 @@ main(int argc, char **argv)
 		memset(&msg, 0, sizeof msg);
 		msg.idx = idx;
 
-		if (lstat(argv[idx], &msg.sb) == -1) {
+		if (strcmp(argv[idx], "-") == 0) {
+			if (fstat(STDIN_FILENO, &msg.sb) == -1) {
+				fd = -1;
+				msg.error = errno;
+			} else
+				fd = STDIN_FILENO;
+		} else if (lstat(argv[idx], &msg.sb) == -1) {
 			fd = -1;
 			msg.error = errno;
 		} else {
@@ -441,8 +447,11 @@ try_stat(struct input_file *inf)
 		    strerror(inf->msg->error));
 		return (1);
 	}
-	if (sflag) {
+	if (sflag || strcmp(inf->path, "-") == 0) {
 		switch (inf->msg->sb.st_mode & S_IFMT) {
+		case S_IFIFO:
+			if (strcmp(inf->path, "-") != 0)
+				break;
 		case S_IFBLK:
 		case S_IFCHR:
 		case S_IFREG:
@@ -617,7 +626,10 @@ test_file(struct input_file *inf, size_t width)
 	if (bflag)
 		printf("%s\n", inf->result);
 	else {
-		xasprintf(&label, "%s:", inf->path);
+		if (strcmp(inf->path, "-") == 0)
+			xasprintf(&label, "/dev/stdin:");
+		else
+			xasprintf(&label, "%s:", inf->path);
 		printf("%-*s %s\n", (int)width, label, inf->result);
 		free(label);
 	}
