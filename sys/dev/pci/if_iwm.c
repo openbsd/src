@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.42 2015/05/30 02:49:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6389,7 +6389,7 @@ iwm_preinit(struct iwm_softc *sc)
 
 	/* Print version info and MAC address on first successful fw load. */
 	attached = 1;
-	printf("%s: hw rev: 0x%x, fw ver %d.%d (API ver %d), address %s\n",
+	printf("%s: hw rev 0x%x, fw ver %d.%d (API ver %d), address %s\n",
 	    DEVNAME(sc), sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK,
 	    IWM_UCODE_MAJOR(sc->sc_fwver),
 	    IWM_UCODE_MINOR(sc->sc_fwver),
