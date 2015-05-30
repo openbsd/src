@@ -1,4 +1,4 @@
-/* $OpenBSD: imx6.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: imx6.c,v 1.3 2015/05/30 08:09:19 jsg Exp $ */
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
  * Copyright (c) 2012 Patrick Wildt <patrick@blueri.se>
@@ -317,6 +317,17 @@ struct armv7_dev imx6_devs[] = {
 		  { USBNC_ADDR, USBx_SIZE },
 	  },
 	  .irq = { USBH1_IRQ }
+	},
+
+	{ .name = "ehci",
+	  .unit = 1,
+	  .mem = {
+		  { USBOTG_EHCI_ADDR, USBx_SIZE },
+		  { USBOTG_ADDR, USBx_SIZE },
+		  { USBPHY1_ADDR, USBPHYx_SIZE },
+		  { USBNC_ADDR, USBx_SIZE },
+	  },
+	  .irq = { USBOTG_IRQ }
 	},
 
 	/*

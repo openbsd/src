@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.4 2014/09/19 16:43:19 jsg Exp $ */
+/* $OpenBSD: imxccm.c,v 1.5 2015/05/30 08:09:19 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -75,6 +75,9 @@
 #define CCM_ANALOG_PLL_USB2_SET			0x4024
 #define CCM_ANALOG_PLL_USB2_CLR			0x4028
 #define CCM_ANALOG_PLL_SYS			0x4030
+#define CCM_ANALOG_USB1_CHRG_DETECT		0x41b0
+#define CCM_ANALOG_USB1_CHRG_DETECT_SET		0x41b4
+#define CCM_ANALOG_USB1_CHRG_DETECT_CLR		0x41b8
 #define CCM_ANALOG_USB2_CHRG_DETECT		0x4210
 #define CCM_ANALOG_USB2_CHRG_DETECT_SET		0x4214
 #define CCM_ANALOG_USB2_CHRG_DETECT_CLR		0x4218
@@ -117,6 +120,12 @@
 #define CCM_CSCMR1_PERCLK_CLK_SEL_MASK		0x1f
 #define CCM_ANALOG_PLL_ARM_DIV_SELECT_MASK	0x7f
 #define CCM_ANALOG_PLL_ARM_BYPASS		(1 << 16)
+#define CCM_ANALOG_PLL_USB1_DIV_SELECT_MASK	0x1
+#define CCM_ANALOG_PLL_USB1_EN_USB_CLKS		(1 << 6)
+#define CCM_ANALOG_PLL_USB1_POWER		(1 << 12)
+#define CCM_ANALOG_PLL_USB1_ENABLE		(1 << 13)
+#define CCM_ANALOG_PLL_USB1_BYPASS		(1 << 16)
+#define CCM_ANALOG_PLL_USB1_LOCK		(1 << 31)
 #define CCM_ANALOG_PLL_USB2_DIV_SELECT_MASK	0x1
 #define CCM_ANALOG_PLL_USB2_EN_USB_CLKS		(1 << 6)
 #define CCM_ANALOG_PLL_USB2_POWER		(1 << 12)
@@ -124,6 +133,8 @@
 #define CCM_ANALOG_PLL_USB2_BYPASS		(1 << 16)
 #define CCM_ANALOG_PLL_USB2_LOCK		(1U << 31)
 #define CCM_ANALOG_PLL_SYS_DIV_SELECT_MASK	0x1
+#define CCM_ANALOG_USB1_CHRG_DETECT_CHK_CHRG_B	(1 << 19)
+#define CCM_ANALOG_USB1_CHRG_DETECT_EN_B	(1 << 20)
 #define CCM_ANALOG_USB2_CHRG_DETECT_CHK_CHRG_B	(1 << 19)
 #define CCM_ANALOG_USB2_CHRG_DETECT_EN_B	(1 << 20)
 #define CCM_ANALOG_DIGPROG_MINOR_MASK		0xff
@@ -204,7 +215,9 @@ unsigned int imxccm_get_ipg_perclk(void);
 unsigned int imxccm_get_uartclk(void);
 void imxccm_enable_i2c(int x);
 void imxccm_enable_usboh3(void);
+void imxccm_disable_usb1_chrg_detect(void);
 void imxccm_disable_usb2_chrg_detect(void);
+void imxccm_enable_pll_usb1(void);
 void imxccm_enable_pll_usb2(void);
 void imxccm_enable_pll_enet(void);
 void imxccm_enable_enet(void);
@@ -543,6 +556,16 @@ imxccm_enable_pcie(void)
 	HSET4(sc, CCM_CCGR4, CCM_CCGR4_125M_PCIE);
 }
 
+void 
+imxccm_disable_usb1_chrg_detect(void)
+{
+	struct imxccm_softc *sc = imxccm_sc;
+
+	HWRITE4(sc, CCM_ANALOG_USB1_CHRG_DETECT_SET,
+	      CCM_ANALOG_USB1_CHRG_DETECT_CHK_CHRG_B
+	    | CCM_ANALOG_USB1_CHRG_DETECT_EN_B);
+}
+
 void
 imxccm_disable_usb2_chrg_detect(void)
 {
@@ -551,6 +574,19 @@ imxccm_disable_usb2_chrg_detect(void)
 	HWRITE4(sc, CCM_ANALOG_USB2_CHRG_DETECT_SET,
 	      CCM_ANALOG_USB2_CHRG_DETECT_CHK_CHRG_B
 	    | CCM_ANALOG_USB2_CHRG_DETECT_EN_B);
+}
+
+void
+imxccm_enable_pll_usb1(void)
+{
+	struct imxccm_softc *sc = imxccm_sc;
+
+	HWRITE4(sc, CCM_ANALOG_PLL_USB1_CLR, CCM_ANALOG_PLL_USB1_BYPASS);
+
+	HWRITE4(sc, CCM_ANALOG_PLL_USB1_SET,
+	      CCM_ANALOG_PLL_USB1_ENABLE
+	    | CCM_ANALOG_PLL_USB1_POWER
+	    | CCM_ANALOG_PLL_USB1_EN_USB_CLKS);
 }
 
 void
