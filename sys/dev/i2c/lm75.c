@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.19 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.20 2015/05/30 08:39:05 kettenis Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -216,13 +216,14 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 int
 lmtemp_temp_read(struct lmtemp_softc *sc, uint8_t which, int *valp)
 {
-	u_int8_t cmd;
+	u_int8_t cmd = which;
 	u_int16_t data = 0x0000;
 	int error;
 
-	cmd = which;
+	iic_acquire_bus(sc->sc_tag, 0);
 	error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0);
+	iic_release_bus(sc->sc_tag, 0);
 	if (error)
 		return (error);
 
