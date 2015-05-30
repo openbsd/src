@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.127 2015/05/29 00:33:37 uebayasi Exp $       */
+/* $OpenBSD: bioctl.c,v 1.128 2015/05/30 06:24:59 jmc Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -277,14 +277,15 @@ usage(void)
 		"[-b channel:target[.lun]]\n"
 		"\t[-H channel:target[.lun]] "
 		"[-R device | channel:target[.lun]]\n"
-		"\t[-u channel:target[.lun]] "
+		"\t[-t patrol-function] "
+		"[-u channel:target[.lun]] "
 		"device\n"
 		"       %s [-dhiPqsv] "
 		"[-C flag[,flag,...]] [-c raidlevel] [-k keydisk]\n"
 		"\t[-l special[,special,...]] "
 		"[-O device | channel:target[.lun]]\n"
 		"\t[-p passfile] [-R device | channel:target[.lun]]\n"
-		"\t[-r rounds] [-t patrol-function] "
+		"\t[-r rounds] "
 		"device\n", __progname, __progname);
 
 	exit(1);
