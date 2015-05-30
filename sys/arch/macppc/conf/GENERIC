@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.249 2015/04/16 09:09:49 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.250 2015/05/30 18:14:08 jsg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -350,7 +350,6 @@ wsdisplay*	at vgafb?
 #appleagp*	at pchb?
 #agp*		at appleagp?	# AGP bridges
 
-#option		DRMDEBUG
 radeondrm*	at pci? 	# ATI Radeon DRM driver
 drm*		at radeondrm?
 wsdisplay*	at radeondrm?
