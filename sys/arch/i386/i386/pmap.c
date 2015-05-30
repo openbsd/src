@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.178 2015/04/22 06:26:23 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.179 2015/05/30 08:41:30 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2636,7 +2636,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 	if (wait > 0) {
 		int s = splvm();
 
-		while (i486_atomic_cas_int(&tlb_shoot_wait, 0, wait) != 0) {
+		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
 				SPINLOCK_SPIN_HOOK;
 		}
@@ -2674,7 +2674,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	if (wait > 0) {
 		int s = splvm();
 
-		while (i486_atomic_cas_int(&tlb_shoot_wait, 0, wait) != 0) {
+		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
 				SPINLOCK_SPIN_HOOK;
 		}
@@ -2712,7 +2712,7 @@ pmap_tlb_shoottlb(void)
 	if (wait) {
 		int s = splvm();
 
-		while (i486_atomic_cas_int(&tlb_shoot_wait, 0, wait) != 0) {
+		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
 				SPINLOCK_SPIN_HOOK;
 		}
@@ -2748,7 +2748,7 @@ pmap_tlb_droppmap(struct pmap *pm)
 	if (wait) {
 		int s = splvm();
 
-		while (i486_atomic_cas_int(&tlb_shoot_wait, 0, wait) != 0) {
+		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
 				SPINLOCK_SPIN_HOOK;
 		}

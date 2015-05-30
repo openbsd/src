@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.14 2014/10/08 19:40:28 sf Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.15 2015/05/30 08:41:30 kettenis Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -50,6 +50,232 @@
 #define LOCK
 #endif
 
+static inline unsigned int
+_atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
+{
+	__asm volatile(LOCK " cmpxchgl %2, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "r" (n), "a" (e), "m" (*p));
+
+	return (n);
+}
+#define atomic_cas_uint(_p, _e, _n) _atomic_cas_uint((_p), (_e), (_n))
+
+static inline unsigned long
+_atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
+{
+	__asm volatile(LOCK " cmpxchgl %2, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "r" (n), "a" (e), "m" (*p));
+
+	return (n);
+}
+#define atomic_cas_ulong(_p, _e, _n) _atomic_cas_ulong((_p), (_e), (_n))
+
+static inline void *
+_atomic_cas_ptr(volatile void *p, void *e, void *n)
+{
+	__asm volatile(LOCK " cmpxchgl %2, %1"
+	    : "=a" (n), "=m" (*(unsigned long *)p)
+	    : "r" (n), "a" (e), "m" (*(unsigned long *)p));
+
+	return (n);
+}
+#define atomic_cas_ptr(_p, _e, _n) _atomic_cas_ptr((_p), (_e), (_n))
+
+static inline unsigned int
+_atomic_swap_uint(volatile unsigned int *p, unsigned int n)
+{
+	__asm volatile("xchgl %0, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "0" (n), "m" (*p));
+
+	return (n);
+}
+#define atomic_swap_uint(_p, _n) _atomic_swap_uint((_p), (_n))
+#define atomic_swap_32(_p, _n) _atomic_swap_uint((_p), (_n))
+
+static inline unsigned long
+_atomic_swap_ulong(volatile unsigned long *p, unsigned long n)
+{
+	__asm volatile("xchgl %0, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "0" (n), "m" (*p));
+
+	return (n);
+}
+#define atomic_swap_ulong(_p, _n) _atomic_swap_ulong((_p), (_n))
+
+static inline uint64_t
+_atomic_swap_64(volatile uint64_t *p, uint64_t n)
+{
+	__asm volatile("xchgl %0, %1"
+	    : "=a" (n), "=m" (*p)
+	    : "0" (n), "m" (*p));
+
+	return (n);
+}
+#define atomic_swap_64(_p, _n) _atomic_swap_64((_p), (_n))
+
+static inline void *
+_atomic_swap_ptr(volatile void *p, void *n)
+{
+	__asm volatile("xchgl %0, %1"
+	    : "=a" (n), "=m" (*(unsigned long *)p)
+	    : "0" (n), "m" (*(unsigned long *)p));
+
+	return (n);
+}
+#define atomic_swap_ptr(_p, _n) _atomic_swap_ptr((_p), (_n))
+
+static inline void
+_atomic_inc_int(volatile unsigned int *p)
+{
+	__asm volatile(LOCK " incl %0"
+	    : "+m" (*p));
+}
+#define atomic_inc_int(_p) _atomic_inc_int(_p)
+
+static inline void
+_atomic_inc_long(volatile unsigned long *p)
+{
+	__asm volatile(LOCK " incl %0"
+	    : "+m" (*p));
+}
+#define atomic_inc_long(_p) _atomic_inc_long(_p)
+
+static inline void
+_atomic_dec_int(volatile unsigned int *p)
+{
+	__asm volatile(LOCK " decl %0"
+	    : "+m" (*p));
+}
+#define atomic_dec_int(_p) _atomic_dec_int(_p)
+
+static inline void
+_atomic_dec_long(volatile unsigned long *p)
+{
+	__asm volatile(LOCK " decl %0"
+	    : "+m" (*p));
+}
+#define atomic_dec_long(_p) _atomic_dec_long(_p)
+
+static inline void
+_atomic_add_int(volatile unsigned int *p, unsigned int v)
+{
+	__asm volatile(LOCK " addl %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_add_int(_p, _v) _atomic_add_int(_p, _v)
+
+static inline void
+_atomic_add_long(volatile unsigned long *p, unsigned long v)
+{
+	__asm volatile(LOCK " addl %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_add_long(_p, _v) _atomic_add_long(_p, _v)
+
+static inline void
+_atomic_sub_int(volatile unsigned int *p, unsigned int v)
+{
+	__asm volatile(LOCK " subl %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_sub_int(_p, _v) _atomic_sub_int(_p, _v)
+
+static inline void
+_atomic_sub_long(volatile unsigned long *p, unsigned long v)
+{
+	__asm volatile(LOCK " subl %1,%0"
+	    : "+m" (*p)
+	    : "a" (v));
+}
+#define atomic_sub_long(_p, _v) _atomic_sub_long(_p, _v)
+
+
+static inline unsigned long
+_atomic_add_int_nv(volatile unsigned int *p, unsigned int v)
+{
+	unsigned int rv = v;
+
+	__asm volatile(LOCK " xaddl %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv + v);
+}
+#define atomic_add_int_nv(_p, _v) _atomic_add_int_nv(_p, _v)
+
+static inline unsigned long
+_atomic_add_long_nv(volatile unsigned long *p, unsigned long v)
+{
+	unsigned long rv = v;
+
+	__asm volatile(LOCK " xaddl %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv + v);
+}
+#define atomic_add_long_nv(_p, _v) _atomic_add_long_nv(_p, _v)
+
+static inline unsigned long
+_atomic_sub_int_nv(volatile unsigned int *p, unsigned int v)
+{
+	unsigned int rv = 0 - v;
+
+	__asm volatile(LOCK " xaddl %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv - v);
+}
+#define atomic_sub_int_nv(_p, _v) _atomic_sub_int_nv(_p, _v)
+
+static inline unsigned long
+_atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
+{
+	unsigned long rv = 0 - v;
+
+	__asm volatile(LOCK " xaddl %0,%1"
+	    : "+a" (rv), "+m" (*p));
+
+	return (rv - v);
+}
+#define atomic_sub_long_nv(_p, _v) _atomic_sub_long_nv(_p, _v)
+
+/*
+ * The IA-32 architecture is rather strongly ordered.  When accessing
+ * normal write-back cachable memory, only reads may be reordered with
+ * older writes to different locations.  There are a few instructions
+ * (clfush, non-temporal move instructions) that obey weaker ordering
+ * rules, but those instructions will only be used in (inline)
+ * assembly code where we can add the necessary fence instructions
+ * ourselves.
+ */
+
+#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
+
+#ifdef MULTIPROCESSOR
+#define membar_enter()		__membar("lock; addl $0,0(%%esp)")
+#define membar_exit()		__membar("")
+#define membar_producer()	__membar("")
+#define membar_consumer()	__membar("")
+#define membar_sync()		__membar("lock; addl $0,0(%%esp)")
+#else
+#define membar_enter()		__membar("")
+#define membar_exit()		__membar("")
+#define membar_producer()	__membar("")
+#define membar_consumer()	__membar("")
+#define membar_sync()		__membar("")
+#endif
+
+/* virtio needs MP membars even on SP kernels */
+#define virtio_membar_producer()	__membar("")
+#define virtio_membar_consumer()	__membar("")
+#define virtio_membar_sync()		__membar("lock; addl $0,0(%%esp)")
+
 static __inline u_int64_t
 i386_atomic_testset_uq(volatile u_int64_t *ptr, u_int64_t val)
 {
@@ -84,62 +310,6 @@ i386_atomic_clearbits_l(volatile u_int32_t *ptr, unsigned long bits)
 	bits = ~bits;
 	__asm volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
-
-/*
- * cas = compare and set
- */
-static __inline int
-i486_atomic_cas_int(volatile u_int *ptr, u_int expect, u_int set)
-{
-	int res;
-
-	__asm volatile(LOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*ptr)
-	     : "r" (set), "a" (expect), "m" (*ptr) : "memory");
-
-	return (res);
-}
-
-static __inline int
-i386_atomic_cas_int32(volatile int32_t *ptr, int32_t expect, int32_t set)
-{
-	int res;
-
-	__asm volatile(LOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*ptr)
-	    : "r" (set), "a" (expect), "m" (*ptr) : "memory");
-
-	return (res);
-}
-
-/*
- * The IA-32 architecture is rather strongly ordered.  When accessing
- * normal write-back cachable memory, only reads may be reordered with
- * older writes to different locations.  There are a few instructions
- * (clfush, non-temporal move instructions) that obey weaker ordering
- * rules, but those instructions will only be used in (inline)
- * assembly code where we can add the necessary fence instructions
- * ourselves.
- */
-
-#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
-
-#ifdef MULTIPROCESSOR
-#define membar_enter()		__membar("lock; addl $0,0(%%esp)")
-#define membar_exit()		__membar("")
-#define membar_producer()	__membar("")
-#define membar_consumer()	__membar("")
-#define membar_sync()		__membar("lock; addl $0,0(%%esp)")
-#else
-#define membar_enter()		__membar("")
-#define membar_exit()		__membar("")
-#define membar_producer()	__membar("")
-#define membar_consumer()	__membar("")
-#define membar_sync()		__membar("")
-#endif
-
-/* virtio needs MP membars even on SP kernels */
-#define virtio_membar_producer()	__membar("")
-#define virtio_membar_consumer()	__membar("")
-#define virtio_membar_sync()		__membar("lock; addl $0,0(%%esp)")
 
 int ucas_32(volatile int32_t *, int32_t, int32_t);
 #define futex_atomic_ucas_int32 ucas_32

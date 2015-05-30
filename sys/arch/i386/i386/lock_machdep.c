@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.17 2015/02/11 05:54:48 dlg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.18 2015/05/30 08:41:30 kettenis Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -43,12 +43,6 @@
 #include <machine/cpufunc.h>
 
 #include <ddb/db_output.h>
-
-int
-rw_cas_486(volatile unsigned long *p, unsigned long o, unsigned long n)
-{
-	return (i486_atomic_cas_int((u_int *)p, o, n) != o);
-}
 
 #ifdef MULTIPROCESSOR
  void
