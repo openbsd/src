@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readlink.2,v 1.18 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: readlink.2,v 1.19 2015/05/31 23:54:25 schwarze Exp $
 .\"	$NetBSD: readlink.2,v 1.7 1995/02/27 12:35:54 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)readlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt READLINK 2
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .Nm readlinkat
 .Nd read value of a symbolic link
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft ssize_t
 .Fn readlink "const char *restrict path" "char *restrict buf" "size_t bufsiz"
-.Fd #include <fcntl.h>
-.Fd #include <unistd.h>
+.In fcntl.h
+.In unistd.h
 .Ft ssize_t
 .Fn readlinkat "int fd" "const char *path" "char *buf" "size_t bufsiz"
 .Sh DESCRIPTION
@@ -54,7 +54,7 @@ in the buffer
 .Fa buf ,
 which has size
 .Fa bufsiz .
-.Nm readlink
+.Fn readlink
 does not append a
 .Dv NUL
 character to

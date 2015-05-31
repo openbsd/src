@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.22 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.23 2015/05/31 23:54:25 schwarze Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)nfssvc.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt NFSSVC 2
 .Os
 .Sh NAME
@@ -94,7 +94,7 @@ struct nfsd_args {
 .Ed
 .Sh RETURN VALUES
 Normally
-.Nm nfssvc
+.Fn nfssvc
 does not return unless the server
 is terminated by a signal when a value of 0 is returned.
 Otherwise, \-1 is returned and the global variable
@@ -114,12 +114,12 @@ unsupported bits.
 .Xr sysctl 8
 .Sh HISTORY
 The
-.Nm nfssvc
+.Fn nfssvc
 function first appeared in
 .Bx 4.4 .
 .Sh BUGS
 The
-.Nm nfssvc
+.Fn nfssvc
 system call is designed specifically for the NFS
 support daemons and as such is specific to their requirements.
 Several fields of the argument structures are assumed to be valid and

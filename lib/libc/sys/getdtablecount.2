@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdtablecount.2,v 1.4 2014/01/26 22:27:31 tedu Exp $
+.\"	$OpenBSD: getdtablecount.2,v 1.5 2015/05/31 23:54:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Theo de Raadt
 .\"
@@ -14,18 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2014 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt GETDTABLECOUNT 2
 .Os
 .Sh NAME
 .Nm getdtablecount
 .Nd get descriptor table count
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn getdtablecount void
 .Sh DESCRIPTION
-.Nm
+.Fn getdtablecount
 returns the number of file descriptors the process currently has
 open.
 .Sh SEE ALSO
@@ -33,6 +33,6 @@ open.
 .Xr getdtablesize 3
 .Sh HISTORY
 The
-.Nm
+.Fn getdtablecount
 function appeared in
 .Ox 5.2 .

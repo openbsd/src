@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setsid.2,v 1.13 2013/05/10 05:59:37 guenther Exp $
+.\"	$OpenBSD: setsid.2,v 1.14 2015/05/31 23:54:25 schwarze Exp $
 .\"	$NetBSD: setsid.2,v 1.3 1995/10/12 15:41:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,19 +30,19 @@
 .\"
 .\"	@(#)setsid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 10 2013 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt SETSID 2
 .Os
 .Sh NAME
 .Nm setsid
 .Nd create session and set process group ID
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft pid_t
 .Fn setsid "void"
 .Sh DESCRIPTION
 The
-.Nm setsid
+.Fn setsid
 function creates a new session.
 The calling process is the session leader of the new session, is the
 process group leader of a new process group and has no controlling
@@ -51,12 +51,12 @@ The calling process is the only process in either the session or the
 process group.
 .Pp
 Upon successful completion, the
-.Nm setsid
+.Fn setsid
 function returns the value of the process group ID of the new process
 group, which is the same as the process ID of the calling process.
 .Sh ERRORS
 If an error occurs,
-.Nm setsid
+.Fn setsid
 returns \-1 and the global variable
 .Va errno
 is set to indicate the error, as follows:
@@ -73,7 +73,7 @@ ID of the calling process.
 .Xr tcsetpgrp 3
 .Sh STANDARDS
 The
-.Nm setsid
+.Fn setsid
 function is expected to be compliant with the
 .St -p1003.1-2008
 specification.

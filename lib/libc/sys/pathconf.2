@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pathconf.2,v 1.22 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: pathconf.2,v 1.23 2015/05/31 23:54:25 schwarze Exp $
 .\"	$NetBSD: pathconf.2,v 1.2 1995/02/27 12:35:22 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)pathconf.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt PATHCONF 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm fpathconf
 .Nd get configurable pathname variables
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft long
 .Fn pathconf "const char *path" "int name"
 .Ft long
@@ -53,12 +53,12 @@ value of a configurable system limit or option variable associated
 with a pathname or file descriptor.
 .Pp
 For
-.Nm pathconf ,
+.Fn pathconf ,
 the
 .Fa path
 argument is the name of a file or directory.
 For
-.Nm fpathconf ,
+.Fn fpathconf ,
 the
 .Fa fd
 argument is an open file descriptor.
@@ -134,9 +134,9 @@ The resolution in nanoseconds of file timestamps.
 .El
 .Sh RETURN VALUES
 If the call to
-.Nm pathconf
+.Fn pathconf
 or
-.Nm fpathconf
+.Fn fpathconf
 is not successful, \-1 is returned and
 .Va errno
 is set appropriately.
@@ -147,9 +147,9 @@ is not modified.
 Otherwise, the current variable value is returned.
 .Sh ERRORS
 If any of the following conditions occur, the
-.Nm pathconf
+.Fn pathconf
 and
-.Nm fpathconf
+.Fn fpathconf
 functions shall return \-1 and set
 .Va errno
 to the corresponding value.
@@ -202,15 +202,15 @@ is not a valid open file descriptor.
 .Xr sysctl 3
 .Sh STANDARDS
 The
-.Nm pathconf
+.Fn pathconf
 and
-.Nm fpathconf
+.Fn fpathconf
 functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The
-.Nm pathconf
+.Fn pathconf
 and
-.Nm fpathconf
+.Fn fpathconf
 functions first appeared in
 .Bx 4.4 .

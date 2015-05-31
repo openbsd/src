@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.14 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.15 2015/05/31 23:54:25 schwarze Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
 .Nm nanosleep
 .Nd high resolution sleep
 .Sh SYNOPSIS
-.Fd #include <time.h>
+.In time.h
 .Ft int
 .Fn nanosleep "const struct timespec *timeout" "struct timespec *remainder"
 .Sh DESCRIPTION
@@ -72,7 +72,7 @@ function shall return \-1 and set
 to the corresponding value.
 .Bl -tag -width Er
 .It Bq Er EINTR
-.Nm
+.Fn nanosleep
 was interrupted by the delivery of a signal.
 .It Bq Er EINVAL
 .Fa timeout

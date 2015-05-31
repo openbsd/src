@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.18 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.19 2015/05/31 23:54:25 schwarze Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ the signal stack will be disabled.
 A disabled stack will cause all signals to be
 taken on the regular user stack.
 Trying to disable an active stack will cause
-.Nm
+.Fn sigaltstack
 to return \-1 with
 .Va errno
 set to
@@ -158,12 +158,12 @@ An attempt was made to disable an active stack.
 .Xr setjmp 3
 .Sh STANDARDS
 The
-.Nm
+.Fn sigaltstack
 function conforms to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The predecessor to
-.Nm sigaltstack ,
+.Fn sigaltstack ,
 the
 .Fn sigstack
 system call, appeared in
