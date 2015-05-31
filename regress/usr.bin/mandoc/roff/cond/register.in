@@ -1,0 +1,11 @@
+.TH REGISTER 1 "May 31, 2015" OpenBSD
+.SH NAME
+register \- conditional testing whether a register is defined
+.SH DESCRIPTION
+.ie rmyreg OOPS
+.el not yet defined
+.br
+.nr myreg 0
+.ie rmyreg now defined
+.el OOPS
+.if !rmyreg OOPS

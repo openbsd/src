@@ -1,0 +1,14 @@
+REGISTER(1)                 General Commands Manual                REGISTER(1)
+
+
+
+NNAAMMEE
+       register - conditional testing whether a register is defined
+
+DDEESSCCRRIIPPTTIIOONN
+       not yet defined
+       now defined
+
+
+
+OpenBSD                          May 31, 2015                      REGISTER(1)

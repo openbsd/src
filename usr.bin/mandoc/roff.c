@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.142 2015/05/01 16:01:53 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.143 2015/05/31 23:12:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -395,8 +395,7 @@ static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
 static	enum rofferr	 roff_eqndelim(struct roff *, struct buf *, int);
-static	int		 roff_evalcond(struct roff *r, int,
-				const char *, int *);
+static	int		 roff_evalcond(struct roff *r, int, char *, int *);
 static	int		 roff_evalnum(struct roff *, int,
 				const char *, int *, int *, int);
 static	int		 roff_evalpar(struct roff *, int,
@@ -412,6 +411,8 @@ static	int		 roff_getregn(const struct roff *,
 				const char *, size_t);
 static	int		 roff_getregro(const char *name);
 static	const char	*roff_getstrn(const struct roff *,
+				const char *, size_t);
+static	int		 roff_hasregn(const struct roff *,
 				const char *, size_t);
 static	enum rofferr	 roff_insec(ROFF_ARGS);
 static	enum rofferr	 roff_it(ROFF_ARGS);
@@ -2132,8 +2133,10 @@ out:
  * or string condition.
  */
 static int
-roff_evalcond(struct roff *r, int ln, const char *v, int *pos)
+roff_evalcond(struct roff *r, int ln, char *v, int *pos)
 {
+	char	*cp, *name;
+	size_t	 sz;
 	int	 number, savepos, wanttrue;
 
 	if ('!' == v[*pos]) {
@@ -2156,13 +2159,16 @@ roff_evalcond(struct roff *r, int ln, const char *v, int *pos)
 		/* FALLTHROUGH */
 	case 'e':
 		/* FALLTHROUGH */
-	case 'r':
-		/* FALLTHROUGH */
 	case 't':
 		/* FALLTHROUGH */
 	case 'v':
 		(*pos)++;
 		return(!wanttrue);
+	case 'r':
+		cp = name = v + ++*pos;
+		sz = roff_getname(r, &cp, ln, *pos);
+		*pos = cp - v;
+		return((sz && roff_hasregn(r, name, sz)) == wanttrue);
 	default:
 		break;
 	}
@@ -2621,6 +2627,26 @@ roff_getregn(const struct roff *r, const char *name, size_t len)
 		if (len == reg->key.sz &&
 		    0 == strncmp(name, reg->key.p, len))
 			return(reg->val);
+
+	return(0);
+}
+
+static int
+roff_hasregn(const struct roff *r, const char *name, size_t len)
+{
+	struct roffreg	*reg;
+	int		 val;
+
+	if ('.' == name[0] && 2 == len) {
+		val = roff_getregro(name + 1);
+		if (-1 != val)
+			return(1);
+	}
+
+	for (reg = r->regtab; reg; reg = reg->next)
+		if (len == reg->key.sz &&
+		    0 == strncmp(name, reg->key.p, len))
+			return(1);
 
 	return(0);
 }

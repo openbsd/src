@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.51 2015/04/29 18:32:57 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.52 2015/05/31 23:12:16 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2015 $
+.Dd $Mdocdate: May 31 2015 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1055,14 +1055,17 @@ If the first character of COND is
 .Pq string defined ,
 .Sq e
 .Pq even page ,
-.Sq r
-.Pq register accessed ,
 .Sq t
 .Pq troff mode ,
 or
 .Sq v
 .Pq vroff mode ,
 COND evaluates to false.
+.It
+If the first character of COND is
+.Sq r ,
+it evalutes to true if the rest of COND is the name of an existing
+number register; otherwise, it evaluates to false.
 .It
 If COND starts with a parenthesis or with an optionally signed
 integer number, it is evaluated according to the rules of
