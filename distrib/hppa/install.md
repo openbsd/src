@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.28 2015/05/04 19:55:26 rpe Exp $
+#	$OpenBSD: install.md,v 1.29 2015/05/31 19:40:10 rpe Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -17,31 +17,13 @@ md_installboot() {
 }
 
 md_prep_disklabel() {
-	local _disk=$1 _f _op
+	local _disk=$1 _f=/tmp/fstab.$1
 
 	installboot $_disk
 
-	_f=/tmp/fstab.$_disk
-	if [[ $_disk == $ROOTDISK ]]; then
-		if $AUTO && get_disklabel_template; then
-			disklabel -T /disklabel.auto $FSTABFLAG $_f -w -A $_disk && return
-			echo "Autopartitioning failed"
-			exit 1
-		fi
-		while :; do
-			echo "The auto-allocated layout for $_disk is:"
-			disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
-			ask "Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?" a
-			case $resp in
-			a*|A*)	_op=-w ;;
-			e*|E*)	_op=-E ;;
-			c*|C*)	break ;;
-			*)	continue ;;
-			esac
-			disklabel $FSTABFLAG $_f $_op -A $_disk
-			return
-		done
-	fi
+	disklabel_autolayout $_disk $_f || return
+	[[ -s $_f ]] && return
+
 	cat <<__EOT
 You will now create a OpenBSD disklabel on the disk.  The disklabel defines
 how OpenBSD splits up the disk into OpenBSD partitions in which filesystems
