@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.7 2015/05/31 19:40:10 rpe Exp $
+#       $OpenBSD: install.md,v 1.8 2015/05/31 21:21:10 rpe Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -86,7 +86,7 @@ partitions will NOT be recognized by OpenBSD and will be overwritten.
 
 __EOT
 			ask_yn "Are you *sure* you want to setup $_disk?"
-			[[ $reps == n ]] && return 1
+			[[ $resp == n ]] && return 1
 			_shared=y
 		fi
 
@@ -100,7 +100,7 @@ in the installation notes.
 
 __EOT
 			ask_yn "Are you *sure* you want to setup $_disk?"
-			[[ $reps == n ]] && return 1
+			[[ $resp == n ]] && return 1
 			_shared=y
 		fi
 	else
