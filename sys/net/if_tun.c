@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.144 2015/05/26 11:36:26 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.145 2015/06/01 07:48:04 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -871,7 +871,18 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	top->m_pkthdr.len = tlen;
-	top->m_pkthdr.rcvif = ifp;
+
+	if (tp->tun_flags & TUN_LAYER2) {
+		struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+
+		ml_enqueue(&ml, top);
+		s = splnet();
+		if_input(ifp, &ml);
+		splx(s);
+		ifp->if_ipackets++;
+
+		return (0);
+	}
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
@@ -881,22 +892,13 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	}
 #endif
 
-	if (tp->tun_flags & TUN_LAYER2) {
-		s = splnet();
-		ether_input_mbuf(ifp, top);
-		splx(s);
-
-		ifp->if_ipackets++;
-
-		return (0);
-	}
-
 	th = mtod(top, u_int32_t *);
 	/* strip the tunnel header */
 	top->m_data += sizeof(*th);
 	top->m_len  -= sizeof(*th);
 	top->m_pkthdr.len -= sizeof(*th);
 	top->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	top->m_pkthdr.rcvif = ifp;
 
 	switch (ntohl(*th)) {
 	case AF_INET:
