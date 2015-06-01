@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.74 2015/04/30 19:33:58 jmc Exp $
+/ $OpenBSD: units.lib,v 1.75 2015/06/01 18:56:09 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -300,49 +300,49 @@ lumen			cd sr
 lux			cd sr/m2
 
 / http://www.federalreserve.gov/releases/h10/current/
-/ as of April 24, 2015
+/ as of May 22, 2015
 $			dollar
-australiadollar		.7825 $
-brazilreal		1|2.9631 $
-canadadollar		1|1.2168 $
-chinayuan		1|6.1930 $
-denmarkkrone		1|6.8606 $
-euro			1.0876 $
-hongkongdollar		1|7.7499  $
-indiarupee		1|63.5500 $
-japanyen		1|118.9800 $
+australiadollar		.7828 $
+brazilreal		1|3.0705 $
+canadadollar		1|1.2288 $
+chinayuan		1|6.1972 $
+denmarkkrone		1|6.7574 $
+euro			1.1033 $
+hongkongdollar		1|7.7517  $
+indiarupee		1|63.4300 $
+japanyen		1|121.4500 $
 malaysiaringgit		1|3.5820 $
-mexicopeso		1|15.3825 $
-newzealanddollar	.7601 $
-norwaykrone		1|7.7770 $
-singaporedollar		1|1.3315 $
-southafricarand		1|12.1055 $
-southkoreawon		1|1075.8500 $
-srilankarupee		1|132.9000 $
-swedenkrona		1|8.6310 $
-switzerlandfranc	1|0.9533 $
-taiwandollar		1|30.6800 $
-thailandbaht		1|32.5700 $
-unitedkingdompound	1.5176 $
+mexicopeso		1|15.2915 $
+newzealanddollar	.7307 $
+norwaykrone		1|7.6290 $
+singaporedollar		1|1.3360 $
+southafricarand		1|11.8600 $
+southkoreawon		1|1093.4600 $
+srilankarupee		1|133.6000 $
+swedenkrona		1|8.3740 $
+switzerlandfranc	1|0.9428 $
+taiwandollar		1|30.4300 $
+thailandbaht		1|33.4800 $
+unitedkingdompound	1.5484 $
 venezuelabolivar	1|6.2842 $
 
-/ The Economist, April 29, 2015
-argentinapeso		1|8.90 $
-chilepeso		1|610 $
-colombiapeso		1|2393 $
-czechkoruna		1|24.6 $
+/ The Economist, May 27, 2015
+argentinapeso		1|8.98 $
+chilepeso		1|615 $
+colombiapeso		1|2546 $
+czechkoruna		1|25.2 $
 egyptpound		1|7.63 $
-hungaryforint		1|272 $
+hungaryforint		1|283 $
 icelandkrona		1|135 $
-indonesiarupiah		1|12923 $
-israelshekel		1|3.86 $
+indonesiarupiah		1|13181 $
+israelshekel		1|3.87 $
 pakistanrupee		1|102 $
-perunuevosol		1|3.12 $
-philippinespeso		1|44.3 $
-polandzloty		1|3.60 $
-russiarouble		1|50.9 $
+perunuevosol		1|3.15 $
+philippinespeso		1|44.7 $
+polandzloty		1|3.79 $
+russiarouble		1|51.8 $
 saudiarabiariyal	1|3.75 $
-turkeylira		1|2.66 $
+turkeylira		1|2.64 $
 ukrainehryvnia		1|23.6 $
 vietnamdong		1|21495 $
 
