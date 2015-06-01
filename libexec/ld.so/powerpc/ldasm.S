@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.21 2014/07/14 03:54:51 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.22 2015/06/01 19:55:20 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -126,7 +126,7 @@ ENTRY(_dl_start)
 	bctr			# Go execute the 'real' program.
 
 ENTRY(_dl_bind_start)
-	stwu	1,-64(1)
+	stwu	1,-72(1)
 
 	stw	0,8(1)		# save r0 - cerror ;-)
 	mflr	0
@@ -159,7 +159,7 @@ ENTRY(_dl_bind_start)
 	mtlr	0
 	lwz	0,8(1)
 
-	addi	1,1,64
+	addi	1,1,72
 	bctr
 
 #define	DL_SYSCALL(n)		DL_SYSCALL2(n,n)
