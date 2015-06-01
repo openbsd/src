@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.124 2015/05/31 23:27:06 deraadt Exp $ */
+/* $OpenBSD: server.c,v 1.125 2015/06/01 09:20:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -129,9 +129,9 @@ server_start(int lockfd, char *lockfile)
 		fatal("daemon failed");
 
 	/* event_init() was called in our parent, need to reinit. */
+	clear_signals(0);
 	if (event_reinit(ev_base) != 0)
 		fatal("event_reinit failed");
-	clear_signals(0);
 
 	logfile("server");
 	log_debug("server started, pid %ld", (long) getpid());
