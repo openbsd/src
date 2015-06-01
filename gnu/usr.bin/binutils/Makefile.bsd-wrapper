@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.82 2013/07/05 21:29:51 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.83 2015/06/01 17:36:19 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -10,37 +10,10 @@ PREFIX=/usr
 MANDIR=${PREFIX}/share/man/man
 .endif
 
-.if ${BINUTILS_VERSION} == "binutils-2.17"
-
 SUBDIRS=	opcodes bfd gdb
 CONF_SUBDIRS=	${SUBDIRS}
 INST_SUBDIRS=	gdb
 MAN=		gdb/gdb.1
-
-.else
-
-SUBDIRS=	opcodes bfd
-CONF_SUBDIRS=	opcodes bfd
-
-MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
-		binutils/doc/objdump.1 binutils/doc/readelf.1 \
-		c++filt.1
-
-.if !defined(TARGET_ARCH) && !defined(BOOTSTRAP)
-CONF_SUBDIRS+=	gdb
-SUBDIRS+=	gdb
-INST_SUBDIRS+=	gdb
-MAN+=		gdb/gdb.1
-.endif
-
-SUBDIRS+=	binutils ld gas
-CONF_SUBDIRS+=	binutils ld gas
-INST_SUBDIRS+=	binutils ld gas
-MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
-		binutils/doc/strings.1 binutils/doc/strip.1 \
-		gas/doc/as.1 ld/ld.1
-
-.endif
 
 # Used by the GNU Makefile
 ALL_MODULES=${SUBDIRS:S/^/all-/g}
@@ -92,12 +65,6 @@ do-config: .USE
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
 	    ${MAKE} ${CONFIGURE_MODULES}
-
-gas/doc/as.1: config.status
-	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
-
-ld/ld.1: config.status
-	cd ${.OBJDIR}/ld && ${MAKE} ld.1
 
 config: do-config
 .ifndef GLOBAL_AUTOCONF_CACHE

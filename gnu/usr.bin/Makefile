@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.55 2014/07/16 01:23:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.56 2015/06/01 17:36:19 miod Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -14,15 +14,9 @@ SUBDIR+=	cc
 .endif
 
 SUBDIR+=	cxxfilt cvs
-.if make(obj)
-SUBDIR+=	binutils binutils-2.17
-.else
 # binutils-2.17 needs to build gdb in binutils at the moment
-.if ${BINUTILS_VERSION} == "binutils-2.17"
 SUBDIR+=	binutils
-.endif
-SUBDIR+=	${BINUTILS_VERSION}
-.endif
+SUBDIR+=	binutils-2.17
 
 # Do these last; texinfo builds the info 'dir' file, perl must be after binutils
 SUBDIR+=	perl texinfo
