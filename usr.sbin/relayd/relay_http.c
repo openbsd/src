@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.47 2015/05/22 01:34:13 jsg Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.48 2015/06/01 09:54:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -275,8 +275,10 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			goto lookup;
 		} else if (cre->line == 1 && cre->dir == RELAY_DIR_REQUEST) {
 			if ((desc->http_method = relay_httpmethod_byname(key))
-			    == HTTP_METHOD_NONE)
+			    == HTTP_METHOD_NONE) {
+				free(line);
 				goto fail;
+			}
 			/*
 			 * Decode request path and query
 			 */
