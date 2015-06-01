@@ -4377,7 +4377,7 @@ echo "$as_me: error: bad value ${enableval} for secureplt option" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 else
-  use_secureplt=false
+  use_secureplt=true
 fi; if test $use_secureplt = true; then
 
 cat >>confdefs.h <<\_ACEOF
