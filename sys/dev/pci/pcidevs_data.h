@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1762 2015/05/11 20:20:03 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1763 2015/06/01 15:52:57 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9141,7 +9141,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_2,
-	    "Dual Band Wirelsss AC 3160",
+	    "Dual Band Wireless AC 3160",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1,

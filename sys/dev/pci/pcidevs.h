@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1762 2015/05/11 20:20:03 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1763 2015/06/01 15:52:57 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2903,7 +2903,7 @@
 #define	PCI_PRODUCT_INTEL_WL_7260_1	0x08b1		/* Dual Band Wireless AC 7260 */
 #define	PCI_PRODUCT_INTEL_WL_7260_2	0x08b2		/* Dual Band Wireless AC 7260 */
 #define	PCI_PRODUCT_INTEL_WL_3160_1	0x08b3		/* Dual Band Wireless AC 3160 */
-#define	PCI_PRODUCT_INTEL_WL_3160_2	0x08b4		/* Dual Band Wirelsss AC 3160 */
+#define	PCI_PRODUCT_INTEL_WL_3160_2	0x08b4		/* Dual Band Wireless AC 3160 */
 #define	PCI_PRODUCT_INTEL_WL_7265_1	0x095a		/* Dual Band Wireless AC 7265 */
 #define	PCI_PRODUCT_INTEL_WL_7265_2	0x095b		/* Dual Band Wireless AC 7265 */
 #define	PCI_PRODUCT_INTEL_80960RP	0x0960		/* i960 RP */
