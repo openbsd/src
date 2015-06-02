@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.239 2015/05/18 11:43:57 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.240 2015/06/02 13:21:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1364,6 +1364,7 @@ bridge_dispatch(struct bridge_iflist *ifl, struct ifnet *ifp, struct mbuf *m)
 	struct bridge_iflist *srcifl;
 	struct ether_header *eh;
 	struct arpcom *ac;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *mc;
 	int s;
 
@@ -1411,21 +1412,14 @@ bridge_dispatch(struct bridge_iflist *ifl, struct ifnet *ifp, struct mbuf *m)
 		schednetisr(NETISR_BRIDGE);
 		if (ifp->if_type == IFT_GIF) {
 			TAILQ_FOREACH(ifl, &sc->sc_iflist, next) {
-				if (ifl->ifp->if_type == IFT_ETHER)
-					break;
-			}
-			if (ifl != NULL) {
-				m->m_pkthdr.rcvif = ifl->ifp;
-				m->m_pkthdr.ph_rtableid = ifl->ifp->if_rdomain;
-#if NBPFILTER > 0
-				if (ifl->ifp->if_bpf)
-					bpf_mtap_ether(ifl->ifp->if_bpf, m,
-					    BPF_DIRECTION_IN);
-#endif
+				if (ifl->ifp->if_type != IFT_ETHER)
+					continue;
+
 				m->m_flags |= M_PROTO1;
-				ether_input_mbuf(ifl->ifp, m);
+				ml_enqueue(&ml, m);
+				if_input(ifl->ifp, &ml);
 				ifl->ifp->if_ipackets++;
-				m = NULL;
+				return (NULL);
 			}
 		}
 		return (m);
@@ -1462,24 +1456,14 @@ bridge_dispatch(struct bridge_iflist *ifl, struct ifnet *ifp, struct mbuf *m)
 				return (NULL);
 			}
 
-			/* Make sure the real incoming interface
-			 * is aware */
-#if NBPFILTER > 0
-			if (ifl->ifp->if_bpf)
-				bpf_mtap_ether(ifl->ifp->if_bpf, m,
-				    BPF_DIRECTION_IN);
-#endif
-			/* Count for the interface we are going to */
-			ifl->ifp->if_ipackets++;
-
 			/* Count for the bridge */
 			sc->sc_if.if_ipackets++;
 			sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-			m->m_pkthdr.rcvif = ifl->ifp;
-			m->m_pkthdr.ph_rtableid = ifl->ifp->if_rdomain;
 			m->m_flags |= M_PROTO1;
-			ether_input_mbuf(ifl->ifp, m);
+			ml_enqueue(&ml, m);
+			if_input(ifl->ifp, &ml);
+			ifl->ifp->if_ipackets++;
 			return (NULL);
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
@@ -1615,8 +1599,10 @@ void
 bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
     struct ether_header *eh, struct mbuf *m)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m1;
 	u_int16_t etype;
+	int s;
 
 	/*
 	 * quick optimisation, don't send packets up the stack if no
@@ -1638,18 +1624,11 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		sc->sc_if.if_oerrors++;
 		return;
 	}
-	/* fixup header a bit */
-	m1->m_pkthdr.rcvif = ifp;
-	m1->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	m1->m_flags |= M_PROTO1;
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m1,
-		    BPF_DIRECTION_IN);
-#endif
-
-	ether_input_mbuf(ifp, m1);
+	ml_enqueue(&ml, m1);
+	s = splnet();
+	if_input(ifp, &ml);
+	splx(s);
 	ifp->if_ipackets++;
 }
 
