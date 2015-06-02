@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.195 2015/03/12 12:46:01 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.196 2015/06/02 17:29:28 jung Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -175,7 +175,7 @@ sm_cp_pkg_samples() {
 
 sm_init() {
 	local _auto_upg _c _c1 _c2 _cursum _diff _i _k _j _cfdiff _cffiles
-	local _ignorefile _cvsid1 _cvsid2 _matchsum _mismatch
+	local _ignorefiles _cvsid1 _cvsid2 _matchsum _mismatch
 
 	sm_extract_sets
 	sm_add_user_grp
