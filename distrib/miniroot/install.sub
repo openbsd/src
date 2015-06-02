@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.842 2015/05/31 19:40:10 rpe Exp $
+#	$OpenBSD: install.sub,v 1.843 2015/06/02 19:54:06 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -288,7 +288,7 @@ disklabel_autolayout() {
 		[[ $resp == none ]] && break
 		echo "Fetching $resp"
 		if ftp -Vo $_dl "$resp" && [[ -s $_dl ]]; then
-			disklabel -T $_dl $FSTABFLAG $_f -w -A $_disk && return
+			disklabel -T $_dl -F $_f -w -A $_disk && return
 			echo "Autopartitioning failed"
 			exit 1
 		else
@@ -307,7 +307,7 @@ disklabel_autolayout() {
 		c*|C*)	return 0 ;;
 		*)	continue ;;
 		esac
-		disklabel $FSTABFLAG $_f $_op -A $_disk
+		disklabel -F $_f $_op -A $_disk
 		return
 	done
 }
@@ -2266,7 +2266,6 @@ HTTP_DIR=
 HTTP_SEC=/tmp/httpsec
 HTTP_LIST=/tmp/httplist
 WLANLIST=/tmp/wlanlist
-FSTABFLAG=-F
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do

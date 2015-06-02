@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.40 2015/05/31 19:40:10 rpe Exp $
+#       $OpenBSD: install.md,v 1.41 2015/06/02 19:54:06 rpe Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,7 +56,7 @@ in this program.
 
 __EOT
 
-	disklabel $FSTABFLAG $_f -E $_disk
+	disklabel -F $_f -E $_disk
 }
 
 md_congrats() {

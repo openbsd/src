@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.44 2015/05/31 19:40:11 rpe Exp $
+#	$OpenBSD: install.md,v 1.45 2015/06/02 19:54:07 rpe Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -63,7 +63,7 @@ in this program.
 
 __EOT
 
-	disklabel $FSTABFLAG $_f -E $_disk
+	disklabel -F $_f -E $_disk
 }
 
 md_congrats() {
