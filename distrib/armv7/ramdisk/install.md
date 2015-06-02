@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 2015/05/31 19:40:10 rpe Exp $
+#	$OpenBSD: install.md,v 1.10 2015/06/02 01:48:25 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,10 +50,15 @@ if [[ $? == 0 ]]; then
 	MDPLAT=SUNXI
 	LOADADDR=0x40200000
 fi
+BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP3 \(BeagleBoard\).*/s//\1/p')
+BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: TI AM335x \(BeagleBone\).*/s//\1/p')
+PANDA=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP4 \(PandaBoard\)/s//\1/p')
+CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
+NITROGEN=$(scan_dmesg '/^imx0 at mainbus0: \(Freescale i.MX6 SABRE Lite.*\)/s//NITROGEN/p')
 
-MDSETS="bsd.${MDPLAT} bsd.rd.${MDPLAT} bsd.${MDPLAT}.umg bsd.rd.${MDPLAT}.umg"
-SANESETS="bsd.${MDPLAT}"
-DEFAULTSETS=${MDSETS}
+MDSETS="bsd.${MDPLAT}.umg bsd.rd.${MDPLAT}.umg"
+SANESETS="bsd"
+DEFAULTSETS="bsd bsd.rd ${MDSETS}"
 
 NEWFSARGS_msdos="-F 16 -L boot"
 NEWFSARGS_ext2fs="-v boot"
@@ -61,10 +66,6 @@ NEWFSARGS_ext2fs="-v boot"
 md_installboot() {
 	local _disk=$1
 	mount /dev/${_disk}i /mnt/mnt
-
-	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP3 \(BeagleBoard\).*/s//\1/p')
-	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: TI AM335x \(BeagleBone\).*/s//\1/p')
-	PANDA=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP4 \(PandaBoard\)/s//\1/p')
 
         if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
                 mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
@@ -90,10 +91,18 @@ bootcmd=mmc rescan ; setenv loadaddr ${LOADADDR}; setenv bootargs sd0i:/bsd.umg 
 uenvcmd=boot
 __EOT
 	elif [[ ${MDPLAT} == "IMX" ]]; then
-		cat > /tmp/6x_bootscript.scr<<__EOT
-; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg 
-__EOT
-		mkuboot -t script -a arm -o linux /tmp/6x_bootscript.scr /mnt/mnt/6x_bootscript
+		if [[ -n $CUBOX ]]; then
+			cat > /tmp/boot.cmd<<__EOT
+; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in usb mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg
+			mkuboot -t script -a arm -o linux /tmp/boot.cmd /mnt/mnt/boot.scr
+			dd if=/mnt/usr/mdec/cubox/SPL of=/dev/${_disk}c bs=1024 seek=1
+			dd if=/mnt/usr/mdec/cubox/u-boot.img of=/dev/${_disk}c bs=1024 seek=42
+		elif [[ -n $NITROGEN ]]; then
+			cat > /tmp/6x_bootscript.scr<<__EOT
+	; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg 
+	__EOT
+			mkuboot -t script -a arm -o linux /tmp/6x_bootscript.scr /mnt/mnt/6x_bootscript
+		fi
 	elif [[ ${MDPLAT} == "SUNXI" ]]; then
 		cat > /mnt/mnt/uenv.txt<<__EOT
 bootargs=sd0i:/bsd
@@ -108,6 +117,9 @@ md_prep_fdisk() {
 	local _disk=$1 _q _d
 
 	local bootparttype="C"
+	local bootsectorstart="64"
+	local bootsectorsize="32768"
+	local bootsectorend
 	local bootfstype="msdos"
 	local newfs_args=${NEWFSARGS_msdos}
 
@@ -117,6 +129,10 @@ md_prep_fdisk() {
 		bootfstype="ext2fs"
 		newfs_args=${NEWFSARGS_ext2fs}
 	fi
+	if [[ -n $CUBOX ]]; then
+		bootsectorstart="2048"
+	fi
+	bootsectorend=`expr $bootsectorstart + $bootsectorsize`
 
 	while :; do
 		_d=whole
@@ -134,13 +150,13 @@ reinit
 e 0
 ${bootparttype}
 n
-64
-32768
+${bootsectorstart}
+${bootsectorsize}
 f 0
 e 3
 A6
 n
-32832
+${bootsectorend}
 
 write
 quit

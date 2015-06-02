@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.6 2015/01/26 01:55:55 jsg Exp $
+dnl	$OpenBSD: contents,v 1.7 2015/06/02 01:48:25 jsg Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.fs
@@ -9,17 +9,21 @@ TopPart
 			A miniroot filesystem to be used for
 			installation; BeagleBoard version.
 
-	miniroot-imx-{:--:}OSrev.fs
+	miniroot-cubie-{:--:}OSrev.fs
 			A miniroot filesystem to be used for
-			installation; i.MX6 version.
+			installation; Cubieboard1 version.
+
+	miniroot-cubox--{:--:}OSrev.fs
+			A miniroot filesystem to be used for
+			installation; CuBox-i version.
+
+	miniroot-nitrogen-{:--:}OSrev.fs
+			A miniroot filesystem to be used for
+			installation; Nitrogen6x version.
 
 	miniroot-panda-{:--:}OSrev.fs
 			A miniroot filesystem to be used for
 			installation; PandaBoard (ES) version.
-
-	miniroot-cubie-{:--:}OSrev.fs
-			A miniroot filesystem to be used for
-			installation; Cubieboard1 version.
 
 OpenBSDdistsets
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2015/05/20 01:44:20 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2015/06/02 01:48:25 jsg Exp $
 
 ALLSOC=IMX OMAP SUNXI
 MDEXT=		bsd.rd
@@ -24,5 +24,5 @@ kernels: bootblocks ${ALL_KERNELS}
 .endfor
 
 MDEXT+=	miniroot-am335x-${OSrev}.fs miniroot-beagle-${OSrev}.fs \
-	miniroot-imx-${OSrev}.fs miniroot-panda-${OSrev}.fs \
-	miniroot-cubie-${OSrev}.fs
+	miniroot-cubie-${OSrev}.fs miniroot-cubox-${OSrev}.fs \
+	miniroot-nitrogen-${OSrev}.fs miniroot-panda-${OSrev}.fs
