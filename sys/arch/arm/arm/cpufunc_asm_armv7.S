@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.7 2013/08/30 09:24:41 patrick Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.8 2015/06/02 02:30:16 jsg Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -18,17 +18,13 @@
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
-#define	DSB	.long	0xf57ff04f
-#define	ISB	.long	0xf57ff06f
-#define	WFI	.long	0xe320f003
-
 ENTRY(armv7_cpu_sleep)
-	WFI
+	wfi
 	mov	pc, lr
 
 ENTRY(armv7_drain_writebuf)
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 /*
@@ -44,13 +40,13 @@ ENTRY(armv7_periphbase)
 ENTRY(armv7_setttb)
 	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 
 	mov	pc, lr
 
@@ -61,15 +57,15 @@ ENTRY(armv7_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
 	mcr	p15, 0, r0, c7, c5, 7	/* flush va from BP */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushI_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
 	mcr	p15, 0, r0, c7, c5, 7	/* flush va from BP */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 /*
@@ -78,27 +74,27 @@ ENTRY(armv7_tlb_flushI_SE)
 ENTRY(armv7_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushI)
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushD)
 	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 
@@ -127,8 +123,8 @@ ENTRY(armv7_icache_sync_range)
 	subs	r1, r1, ip
 	bhi	1b
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_icache_sync_all)
@@ -140,7 +136,7 @@ ENTRY(armv7_icache_sync_all)
 	 */
 	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
-	ISB
+	isb	sy
 	mov	pc, lr
 
 .Larmv7_line_size:
@@ -161,8 +157,8 @@ ENTRY(armv7_dcache_wb_range)
 	add	r0, r0, ip
 	subs	r1, r1, ip
 	bhi	1b
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_idcache_wbinv_range)
@@ -183,8 +179,8 @@ ENTRY(armv7_idcache_wbinv_range)
 	subs	r1, r1, ip
 	bhi	1b
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_dcache_wbinv_range)
@@ -204,8 +200,8 @@ ENTRY(armv7_dcache_wbinv_range)
 	add	r0, r0, ip
 	subs	r1, r1, ip
 	bhi	1b
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 ENTRY(armv7_dcache_inv_range)
@@ -225,8 +221,8 @@ ENTRY(armv7_dcache_inv_range)
 	add	r0, r0, ip
 	subs	r1, r1, ip
 	bhi	1b
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 
@@ -246,13 +242,13 @@ ENTRY(armv7_context_switch)
 	 */
 	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 
 	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* and flush the I+D tlbs */
-	DSB
-	ISB
+	dsb	sy
+	isb	sy
 	mov	pc, lr
 
 /* XXX The following macros should probably be moved to asm.h */

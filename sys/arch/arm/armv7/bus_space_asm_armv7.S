@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space_asm_armv7.S,v 1.2 2013/08/30 09:24:42 patrick Exp $	*/
+/*	$OpenBSD: bus_space_asm_armv7.S,v 1.3 2015/06/02 02:30:16 jsg Exp $	*/
 /*	$NetBSD: bus_space_asm_armv7.S,v 1.3 2003/03/27 19:46:14 mycroft Exp $	*/
 
 /*
@@ -38,10 +38,6 @@
 #include <arm/asm.h>
 #include <arm/cpuconf.h>
 
-#define	DSB	.long	0xf57ff04f
-#define	ISB	.long	0xf57ff06f
-#define	WFI	.long	0xe320f003
-
 /*
  * Generic bus_space functions.
  */
@@ -51,19 +47,19 @@
  */
 
 ENTRY(armv7_bs_r_1)
-	DSB
+	dsb	sy
 	ldrb	r0, [r1, r2]
 	mov	pc, lr
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(armv7_bs_r_2)
-	DSB
+	dsb	sy
 	ldrh	r0, [r1, r2]
 	mov	pc, lr
 #endif
 
 ENTRY(armv7_bs_r_4)
-	DSB
+	dsb	sy
 	ldr	r0, [r1, r2]
 	mov	pc, lr
 
@@ -73,17 +69,17 @@ ENTRY(armv7_bs_r_4)
 
 ENTRY(armv7_bs_w_1)
 	strb	r3, [r1, r2]
-	DSB
+	dsb	sy
 	mov	pc, lr
 
 ENTRY(armv7_bs_w_2)
 	strh	r3, [r1, r2]
-	DSB
+	dsb	sy
 	mov	pc, lr
 
 ENTRY(armv7_bs_w_4)
 	str	r3, [r1, r2]
-	DSB
+	dsb	sy
 	mov	pc, lr
 
 /*
@@ -101,7 +97,7 @@ ENTRY(armv7_bs_rm_1)
 	strb	r3, [r1], #1
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -116,7 +112,7 @@ ENTRY(armv7_bs_rm_2)
 	strh	r3, [r1], #2
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -131,7 +127,7 @@ ENTRY(armv7_bs_rm_4)
 	str	r3, [r1], #4
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -150,7 +146,7 @@ ENTRY(armv7_bs_wm_1)
 	strb	r3, [r0]
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -165,7 +161,7 @@ ENTRY(armv7_bs_wm_2)
 	strh	r3, [r0]
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -180,7 +176,7 @@ ENTRY(armv7_bs_wm_4)
 	str	r3, [r0]
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -199,7 +195,7 @@ ENTRY(armv7_bs_rr_1)
 	strb	r3, [r1], #1
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -214,7 +210,7 @@ ENTRY(armv7_bs_rr_2)
 	strh	r3, [r1], #2
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -247,7 +243,7 @@ ENTRY(armv7_bs_wr_1)
 	strb	r3, [r0], #1
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -262,7 +258,7 @@ ENTRY(armv7_bs_wr_2)
 	strh	r3, [r0], #2
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -277,7 +273,7 @@ ENTRY(armv7_bs_wr_4)
 	str	r3, [r0], #4
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -295,7 +291,7 @@ ENTRY(armv7_bs_sr_1)
 1:	strb	r1, [r0], #1
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -309,7 +305,7 @@ ENTRY(armv7_bs_sr_2)
 1:	strh	r1, [r0], #2
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -323,7 +319,7 @@ ENTRY(armv7_bs_sr_4)
 1:	str	r1, [r0], #4
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -346,7 +342,7 @@ ENTRY(armv7_bs_c_2)
 	strh	r3, [r1], #2
 	subs	r2, r2, #1
 	bne	1b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
 
@@ -359,6 +355,6 @@ ENTRY(armv7_bs_c_2)
 	strh	r3, [r1], #-2
 	subs	r2, r2, #1
 	bne	3b
-	DSB
+	dsb	sy
 
 	mov	pc, lr
