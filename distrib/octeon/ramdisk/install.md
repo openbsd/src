@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 2015/05/31 19:40:10 rpe Exp $
+#	$OpenBSD: install.md,v 1.9 2015/06/02 19:39:19 rpe Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,9 +53,9 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
-		if [[ -n $(fdisk $_disk | grep 'Signature: 0xAA55') ]]; then
+		if fdisk $_disk | grep -q 'Signature: 0xAA55'; then
 			fdisk $_disk
-			if [[ -n $(fdisk $_disk | grep '^..: A6 ') ]]; then
+			if fdisk $_disk | grep -q '^..: A6 '; then
 				_q=", use the (O)penBSD area,"
 				_d=OpenBSD
 			fi
@@ -101,7 +101,7 @@ at least 16MB and be the first 'MSDOS' partition on the disk.
 $(fdisk ${_disk})
 __EOT
 			fdisk -e ${_disk}
-			[[ -n $(fdisk $_disk | grep ' A6 ') ]] && return
+			fdisk $_disk | grep -q ' A6 ' && return
 			echo No OpenBSD partition in MBR, try again. ;;
 		o*|O*)	return ;;
 		esac
