@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.171 2015/03/30 20:30:22 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.172 2015/06/02 04:31:53 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -100,6 +100,8 @@
 #include "led.h"
 #endif
 
+vaddr_t vm_pie_max_addr = 0;
+
 struct vm_map *exec_map = NULL;
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 }; 
@@ -187,6 +189,14 @@ cpu_startup()
 	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+
+	/*
+	 * Set up userland PIE limits. PIE is disabled on sun4/4c/4e due
+	 * to the limited address space.
+	 */
+	if (CPU_ISSUN4M) {
+		vm_pie_max_addr = VM_MAXUSER_ADDRESS / 4;
+	}
 
 	dvma_init();
 

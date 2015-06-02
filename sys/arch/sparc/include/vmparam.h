@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.45 2015/03/30 20:30:22 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.46 2015/06/02 04:31:53 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -120,6 +120,9 @@ extern vsize_t vm_kernel_space_size;
 
 #define VM_MIN_ADDRESS		((vaddr_t)0x2000)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfe000000)
+
+extern vaddr_t vm_pie_max_addr;
+#define	VM_PIE_MAX_ADDR vm_pie_max_addr
 
 #define	IOSPACE_BASE		VM_MAX_KERNEL_ADDRESS
 #define	IOSPACE_LEN		0x01000000		/* 16 MB of iospace */
