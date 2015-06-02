@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.340 2015/04/18 12:04:59 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.341 2015/06/02 15:32:53 mpi Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2015 $
+.Dd $Mdocdate: June 2 2015 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -65,6 +65,7 @@
 .Cd "# macppc"
 .Cd "pci* at mpcpcibr?"
 .Cd "pci* at ht?"
+.Cd "pci* at hpb?"
 .Pp
 .Cd "# sgi"
 .Cd "pci* at macepcibr?"
@@ -447,6 +448,8 @@ Intel EP80579 Global Configuration Unit
 CS5536 PCI-ISA Bridge with timecounter, watchdog timer, and GPIO
 .It Xr gscpcib 4
 National Semiconductor Geode SC1100 PCI-ISA bridge with GPIO
+.It Xr hpb 4
+.Tn HyperTransport Ns \- Ns Tn PCI bridge
 .It Xr ichiic 4
 Intel ICH SMBus controller
 .It Xr nviic 4
