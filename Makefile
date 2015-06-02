@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.123 2014/08/26 20:19:25 rpe Exp $
+#	$OpenBSD: Makefile,v 1.124 2015/06/02 06:10:14 deraadt Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -27,7 +27,7 @@
 #
 # 5) If you want to setup a cross-build environment, there is a "cross-gcc"
 # target available which upon completion of: 
-#	make -f Makefile.cross TARGET=<target> cross-gcc"
+#	"make -f Makefile.cross TARGET=<target> cross-gcc"
 # (where <target> is one of the names in the /sys/arch directory) will produce
 # a set of compilation tools along with the includes in the /usr/cross/<target>
 # directory. The "cross-distrib" target will build cross-tools as well as
