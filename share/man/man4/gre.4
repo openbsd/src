@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.41 2015/03/18 06:56:41 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.42 2015/06/02 16:02:45 sobrado Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2015 $
+.Dd $Mdocdate: June 2 2015 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -40,12 +40,12 @@
 The
 .Nm
 network interface allows tunnel construction using the Cisco GRE or
-the Mobile-IP (RFC 2004) encapsulation protocols.
+the Mobile IP (RFC 2004) encapsulation protocols.
 .Pp
 .Tn GRE ,
 .Tn WCCPv1 ,
 and
-.Tn MobileIP
+.Tn Mobile IP
 are enabled with the following
 .Xr sysctl 3
 variables respectively in
@@ -61,7 +61,7 @@ This variable depends on
 .Va gre.allow
 being set.
 .It Va net.inet.mobileip.allow
-Allow MobileIP packets in and out of the system.
+Allow Mobile IP packets in and out of the system.
 .El
 .Pp
 A
@@ -88,7 +88,7 @@ interfaces.
 Datagrams are encapsulated into IP, but with a much smaller
 encapsulation header.
 This protocol only supports IP in IP encapsulation, and is intended
-for use with mobile IP.
+for use with Mobile IP.
 .El
 .Pp
 The network interfaces are named
