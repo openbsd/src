@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.201 2015/05/26 11:39:07 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.202 2015/06/02 09:38:24 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -489,18 +489,6 @@ ether_input(struct mbuf *m)
 		}
 	}
 #endif
-
-#if NCARP > 0
-	if (ifp->if_carp) {
-		if (ifp->if_type != IFT_CARP && (carp_input(ifp, eh, m) == 0))
-			return (1);
-		/* clear mcast if received on a carp IP balanced address */
-		else if (ifp->if_type == IFT_CARP &&
-		    m->m_flags & (M_BCAST|M_MCAST) &&
-		    carp_our_mcastaddr(ifp, (u_int8_t *)&eh->ether_dhost))
-			m->m_flags &= ~(M_BCAST|M_MCAST);
-	}
-#endif /* NCARP > 0 */
 
 	ac = (struct arpcom *)ifp;
 
