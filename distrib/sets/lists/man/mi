@@ -1542,6 +1542,7 @@
 ./usr/share/man/man4/macppc/dfs.4
 ./usr/share/man/man4/macppc/esp.4
 ./usr/share/man/man4/macppc/fcu.4
+./usr/share/man/man4/macppc/hpb.4
 ./usr/share/man/man4/macppc/ht.4
 ./usr/share/man/man4/macppc/intro.4
 ./usr/share/man/man4/macppc/kauaiata.4
