@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.81 2015/05/11 06:46:21 ratchov Exp $
+#	$OpenBSD: files.macppc,v 1.82 2015/06/02 13:53:43 mpi Exp $
 
 #
 # macppc-specific configuration info
@@ -86,7 +86,12 @@ include "dev/wscons/files.wscons"
 
 #file	arch/macppc/pci/bandit.c			pci
 
-#PCI-Host bridge chipsets
+# HT bridge
+device  hpb {} : pcibus
+attach	hpb at pci
+file	arch/macppc/pci/hpb.c				hpb needs-flag
+
+# PCI-Host bridge chipsets
 device  pchb: agpbus
 attach	pchb at pci
 file	arch/macppc/pci/pchb.c				pchb

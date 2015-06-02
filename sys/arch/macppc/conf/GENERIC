@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.250 2015/05/30 18:14:08 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.251 2015/06/02 13:53:43 mpi Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,7 +46,9 @@ smu*		at mainbus0
 pci*		at mpcpcibr?
 pci*		at ht?
 ppb*		at pci?		# PCI-PCI bridges
+hpb*		at pci?
 pci*		at ppb?
+pci*		at hpb?
 
 siop*		at pci?
 fxp*		at pci?
