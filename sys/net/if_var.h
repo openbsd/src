@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.31 2015/05/28 11:57:33 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.32 2015/06/02 13:23:55 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -413,7 +413,6 @@ void	if_start(struct ifnet *);
 int	if_output(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 
-void	ether_input_mbuf(struct ifnet *, struct mbuf *);
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);

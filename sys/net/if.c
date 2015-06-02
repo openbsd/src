@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.335 2015/05/26 11:39:07 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.336 2015/06/02 13:23:55 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -500,13 +500,6 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 #endif
 
 	mq_enlist(&if_input_queue, ml);
-	task_add(softnettq, &if_input_task);
-}
-
-void
-ether_input_mbuf(struct ifnet *ifp, struct mbuf *m)
-{
-	mq_enqueue(&if_input_queue, m);
 	task_add(softnettq, &if_input_task);
 }
 
