@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.47 2014/04/27 14:55:09 stsp Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.48 2015/06/02 15:26:19 mpi Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -534,7 +534,7 @@ typedef u_int8_t pci_revision_t;
 
 #define PCI_HT_CAP_SLAVE	0x00
 #define PCI_HT_CAP_HOST		0x04
-#define PCI_HT_CAP_INTERRUPT	0x10
+#define PCI_HT_CAP_INTR		0x10
 #define PCI_HT_CAP_MSI		0x15
 
 #define PCI_HT_MSI_ENABLED	0x00010000
@@ -544,6 +544,8 @@ typedef u_int8_t pci_revision_t;
 
 #define PCI_HT_MSI_ADDR		0x04
 #define PCI_HT_MSI_ADDR_HI32	0x08
+
+#define PCI_HT_INTR_DATA	0x04
 
 /*
  * PCI Express; access via capability pointer.
