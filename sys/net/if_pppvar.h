@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.16 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.17 2015/06/03 00:50:09 dlg Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -83,6 +83,16 @@
 #define NP_IP	0		/* Internet Protocol */
 #define NUM_NP	1		/* Number of NPs. */
 
+struct ppp_pkt;
+
+struct ppp_pkt_list {
+	struct mutex	 pl_mtx;
+	struct ppp_pkt	*pl_head;
+	struct ppp_pkt	*pl_tail;
+	u_int		 pl_count;
+	u_int		 pl_limit;
+};
+
 /*
  * Structure describing each ppp unit.
  */
@@ -97,7 +107,7 @@ struct ppp_softc {
 	void	(*sc_relinq)(struct ppp_softc *); /* relinquish ifunit */
 	u_int16_t sc_mru;		/* max receive unit */
 	pid_t	sc_xfer;		/* used in transferring unit */
-	struct	ifqueue sc_rawq;	/* received packets */
+	struct	ppp_pkt_list sc_rawq;	/* received packets */
 	struct	mbuf_queue sc_inq;	/* queue of input packets for daemon */
 	struct	ifqueue sc_fastq;	/* interactive output packet q */
 	struct	mbuf *sc_togo;		/* output packet ready to go */
@@ -122,9 +132,9 @@ struct ppp_softc {
 	ext_accm sc_asyncmap;		/* async control character map */
 	u_int32_t sc_rasyncmap;		/* receive async control char map */
 	struct	mbuf *sc_outm;		/* mbuf chain currently being output */
-	struct	mbuf *sc_m;		/* pointer to input mbuf chain */
-	struct	mbuf *sc_mc;		/* pointer to current input mbuf */
-	char	*sc_mp;			/* ptr to next char in input mbuf */
+	struct	ppp_pkt *sc_pkt;	/* pointer to input pkt chain */
+	struct	ppp_pkt *sc_pktc;	/* pointer to current input pkt */
+	uint8_t	*sc_pktp;		/* ptr to next char in input pkt */
 	u_int16_t sc_ilen;		/* length of input packet so far */
 	u_int16_t sc_fcs;		/* FCS so far (input) */
 	u_int16_t sc_outfcs;		/* FCS so far for output packet */
@@ -134,13 +144,33 @@ struct ppp_softc {
 };
 
 #ifdef _KERNEL
+
+struct ppp_pkt_hdr {
+	struct ppp_pkt		*ph_next; /* next in pkt chain */
+	struct ppp_pkt		*ph_pkt;  /* prev in chain or next in list */ 
+	uint16_t		ph_len;
+	uint16_t		ph_errmark;
+};
+
+struct ppp_pkt {
+	struct ppp_pkt_hdr	p_hdr;
+	uint8_t			p_buf[MCLBYTES - sizeof(struct ppp_pkt_hdr)];
+};
+
+void	ppp_pkt_free(struct ppp_pkt *);
+
+#define PKT_NEXT(_p)		((_p)->p_hdr.ph_next)
+#define PKT_PREV(_p)		((_p)->p_hdr.ph_pkt)
+#define PKT_NEXTPKT(_p)		((_p)->p_hdr.ph_pkt)
+#define PKT_LEN(_p)		((_p)->p_hdr.ph_len)
+
 extern	struct ppp_softc ppp_softc[];
 
 struct	ppp_softc *pppalloc(pid_t pid);
 void	pppdealloc(struct ppp_softc *sc);
 int	pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data,
 		      int flag, struct proc *p);
-void	ppppktin(struct ppp_softc *sc, struct mbuf *m, int lost);
+void	ppppktin(struct ppp_softc *sc, struct ppp_pkt *pkt, int lost);
 struct	mbuf *ppp_dequeue(struct ppp_softc *sc);
 void	ppp_restart(struct ppp_softc *sc);
 int	pppoutput(struct ifnet *, struct mbuf *,

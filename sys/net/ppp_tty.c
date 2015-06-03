@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.32 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.33 2015/06/03 00:50:09 dlg Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -110,6 +110,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
+#include <sys/rwlock.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -140,22 +142,14 @@ void	pppasyncstart(struct ppp_softc *);
 void	pppasyncctlp(struct ppp_softc *);
 void	pppasyncrelinq(struct ppp_softc *);
 void	ppp_timeout(void *);
-void	pppgetm(struct ppp_softc *sc);
+void	ppppkt(struct ppp_softc *sc);
 void	pppdumpb(u_char *b, int l);
 void	ppplogchar(struct ppp_softc *, int);
 
-/*
- * Some useful mbuf macros not in mbuf.h.
- */
-#define M_IS_CLUSTER(m)	((m)->m_flags & M_EXT)
+struct rwlock ppp_pkt_init = RWLOCK_INITIALIZER("ppppktini");
+struct pool ppp_pkts;
 
-#define M_DATASTART(m)	\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_buf : \
-	    (m)->m_flags & M_PKTHDR ? (m)->m_pktdat : (m)->m_dat)
-
-#define M_DATASIZE(m)	\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_size : \
-	    (m)->m_flags & M_PKTHDR ? MHLEN: MLEN)
+#define PKT_MAXLEN(_sc) ((_sc)->sc_mru + PPP_HDRLEN + PPP_FCSLEN)
 
 /*
  * Does c need to be escaped?
@@ -188,6 +182,16 @@ pppopen(dev_t dev, struct tty *tp)
     if ((error = suser(p, 0)) != 0)
 	return (error);
 
+    rw_enter_write(&ppp_pkt_init);
+    if (ppp_pkts.pr_size == 0) {
+	extern struct kmem_pa_mode kp_dma_contig;
+
+	pool_init(&ppp_pkts, sizeof(struct ppp_pkt), 0, 0, 0, "ppppkts", NULL);
+	pool_setipl(&ppp_pkts, IPL_TTY); /* IPL_SOFTTTY */
+	pool_set_constraints(&ppp_pkts, &kp_dma_contig);
+    }
+    rw_exit_write(&ppp_pkt_init);
+
     s = spltty();
 
     if (tp->t_line == PPPDISC) {
@@ -208,7 +212,7 @@ pppopen(dev_t dev, struct tty *tp)
 
     timeout_set(&sc->sc_timo, ppp_timeout, sc);
     sc->sc_ilen = 0;
-    sc->sc_m = NULL;
+    sc->sc_pkt = NULL;
     bzero(sc->sc_asyncmap, sizeof(sc->sc_asyncmap));
     sc->sc_asyncmap[0] = 0xffffffff;
     sc->sc_asyncmap[3] = 0x60000000;
@@ -218,7 +222,7 @@ pppopen(dev_t dev, struct tty *tp)
     sc->sc_ctlp = pppasyncctlp;
     sc->sc_relinq = pppasyncrelinq;
     sc->sc_outm = NULL;
-    pppgetm(sc);
+    ppppkt(sc);
     sc->sc_if.if_flags |= IFF_RUNNING;
     sc->sc_if.if_baudrate = tp->t_ospeed;
 
@@ -269,9 +273,9 @@ pppasyncrelinq(struct ppp_softc *sc)
 	m_freem(sc->sc_outm);
 	sc->sc_outm = NULL;
     }
-    if (sc->sc_m) {
-	m_freem(sc->sc_m);
-	sc->sc_m = NULL;
+    if (sc->sc_pkt != NULL) {
+	ppp_pkt_free(sc->sc_pkt);
+	sc->sc_pkt = sc->sc_pktc = NULL;
     }
     if (sc->sc_flags & SC_TIMEOUT) {
 	timeout_del(&sc->sc_timo);
@@ -436,7 +440,7 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
     default:
 	error = pppioctl(sc, cmd, data, flag, p);
 	if (error == 0 && cmd == PPPIOCSMRU)
-	    pppgetm(sc);
+	    ppppkt(sc);
     }
 
     return error;
@@ -743,26 +747,40 @@ ppp_timeout(void *x)
  * Allocate enough mbuf to handle current MRU.
  */
 void
-pppgetm(struct ppp_softc *sc)
+ppppkt(struct ppp_softc *sc)
 {
-    struct mbuf *m, **mp;
+    struct ppp_pkt **pktp, *pkt;
     int len;
     int s;
 
     s = spltty();
-    mp = &sc->sc_m;
-    for (len = sc->sc_mru + PPP_HDRLEN + PPP_FCSLEN; len > 0; ){
-	if ((m = *mp) == NULL) {
-	    MGETHDR(m, M_DONTWAIT, MT_DATA);
-	    if (m == NULL)
+    pktp = &sc->sc_pkt;
+    for (len = PKT_MAXLEN(sc); len > 0; len -= sizeof(pkt->p_buf)) {
+	pkt = *pktp;
+	if (pkt == NULL) {
+	    pkt = pool_get(&ppp_pkts, PR_NOWAIT);
+	    if (pkt == NULL)
 		break;
-	    *mp = m;
-	    MCLGET(m, M_DONTWAIT);
+	    PKT_NEXT(pkt) = NULL;
+	    PKT_PREV(pkt) = *pktp;
+	    PKT_LEN(pkt) = 0;
+	    *pktp = pkt;
 	}
-	len -= M_DATASIZE(m);
-	mp = &m->m_next;
+	pktp = &PKT_NEXT(pkt);
     }
     splx(s);
+}
+
+void
+ppp_pkt_free(struct ppp_pkt *pkt)
+{
+	struct ppp_pkt *next;
+
+	while (pkt != NULL) {
+		next = PKT_NEXT(pkt);
+		pool_put(&ppp_pkts, pkt);
+		pkt = next;
+	}
 }
 
 /*
@@ -777,7 +795,7 @@ int
 pppinput(int c, struct tty *tp)
 {
     struct ppp_softc *sc;
-    struct mbuf *m;
+    struct ppp_pkt *pkt;
     int ilen, s;
 
     sc = (struct ppp_softc *) tp->t_sc;
@@ -870,29 +888,29 @@ pppinput(int c, struct tty *tp)
 	}
 
 	/*
-	 * Remove FCS trailer.  Somewhat painful...
+	 * Remove FCS trailer.
 	 */
 	ilen -= 2;
-	if (--sc->sc_mc->m_len == 0) {
-	    for (m = sc->sc_m; m->m_next != sc->sc_mc; m = m->m_next)
-		;
-	    sc->sc_mc = m;
+	pkt = sc->sc_pktc;
+	if (--PKT_LEN(pkt) == 0) {
+            pkt = PKT_PREV(pkt);
+	    sc->sc_pktc = pkt;
 	}
-	sc->sc_mc->m_len--;
+	PKT_LEN(pkt)--;
 
 	/* excise this mbuf chain */
-	m = sc->sc_m;
-	sc->sc_m = sc->sc_mc->m_next;
-	sc->sc_mc->m_next = NULL;
+	pkt = sc->sc_pkt;
+	sc->sc_pkt = sc->sc_pktc = PKT_NEXT(sc->sc_pktc);
+	PKT_NEXT(pkt) = NULL;
 
-	ppppktin(sc, m, sc->sc_flags & SC_PKTLOST);
+	ppppktin(sc, pkt, sc->sc_flags & SC_PKTLOST);
 	if (sc->sc_flags & SC_PKTLOST) {
 	    s = spltty();
 	    sc->sc_flags &= ~SC_PKTLOST;
 	    splx(s);
 	}
 
-	pppgetm(sc);
+	ppppkt(sc);
 	return 0;
     }
 
@@ -927,19 +945,18 @@ pppinput(int c, struct tty *tp)
      */
     if (sc->sc_ilen == 0) {
 	/* reset the first input mbuf */
-	if (sc->sc_m == NULL) {
-	    pppgetm(sc);
-	    if (sc->sc_m == NULL) {
+	if (sc->sc_pkt == NULL) {
+	    ppppkt(sc);
+	    if (sc->sc_pkt == NULL) {
 		if (sc->sc_flags & SC_DEBUG)
 		    printf("%s: no input mbufs!\n", sc->sc_if.if_xname);
 		goto flush;
 	    }
 	}
-	m = sc->sc_m;
-	m->m_len = 0;
-	m->m_data = M_DATASTART(sc->sc_m);
-	sc->sc_mc = m;
-	sc->sc_mp = mtod(m, char *);
+	pkt = sc->sc_pkt;
+	PKT_LEN(pkt) = 0;
+	sc->sc_pktc = pkt;
+	sc->sc_pktp = pkt->p_buf;
 	sc->sc_fcs = PPP_INITFCS;
 	if (c != PPP_ALLSTATIONS) {
 	    if (sc->sc_flags & SC_REJ_COMP_AC) {
@@ -948,10 +965,10 @@ pppinput(int c, struct tty *tp)
 			sc->sc_if.if_xname, c);
 		goto flush;
 	    }
-	    *sc->sc_mp++ = PPP_ALLSTATIONS;
-	    *sc->sc_mp++ = PPP_UI;
+	    *sc->sc_pktp++ = PPP_ALLSTATIONS;
+	    *sc->sc_pktp++ = PPP_UI;
 	    sc->sc_ilen += 2;
-	    m->m_len += 2;
+	    PKT_LEN(pkt) += 2;
 	}
     }
     if (sc->sc_ilen == 1 && c != PPP_UI) {
@@ -962,43 +979,42 @@ pppinput(int c, struct tty *tp)
     }
     if (sc->sc_ilen == 2 && (c & 1) == 1) {
 	/* a compressed protocol */
-	*sc->sc_mp++ = 0;
+	*sc->sc_pktp++ = 0;
 	sc->sc_ilen++;
-	sc->sc_mc->m_len++;
+	PKT_LEN(sc->sc_pktc)++;
     }
     if (sc->sc_ilen == 3 && (c & 1) == 0) {
 	if (sc->sc_flags & SC_DEBUG)
 	    printf("%s: bad protocol %x\n", sc->sc_if.if_xname,
-		(sc->sc_mp[-1] << 8) + c);
+		(sc->sc_pktp[-1] << 8) + c);
 	goto flush;
     }
 
     /* packet beyond configured mru? */
-    if (++sc->sc_ilen > sc->sc_mru + PPP_HDRLEN + PPP_FCSLEN) {
+    if (++sc->sc_ilen > PKT_MAXLEN(sc)) {
 	if (sc->sc_flags & SC_DEBUG)
 	    printf("%s: packet too big\n", sc->sc_if.if_xname);
 	goto flush;
     }
 
-    /* is this mbuf full? */
-    m = sc->sc_mc;
-    if (M_TRAILINGSPACE(m) <= 0) {
-	if (m->m_next == NULL) {
-	    pppgetm(sc);
-	    if (m->m_next == NULL) {
+    /* is this packet full? */
+    pkt = sc->sc_pktc;
+    if (PKT_LEN(pkt) >= sizeof(pkt->p_buf)) {
+	if (PKT_NEXT(pkt) == NULL) {
+	    ppppkt(sc);
+	    if (PKT_NEXT(pkt) == NULL) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: too few input mbufs!\n", sc->sc_if.if_xname);
+		    printf("%s: too few input packets!\n", sc->sc_if.if_xname);
 		goto flush;
 	    }
 	}
-	sc->sc_mc = m = m->m_next;
-	m->m_len = 0;
-	m->m_data = M_DATASTART(m);
-	sc->sc_mp = mtod(m, char *);
+	sc->sc_pktc = pkt = PKT_NEXT(pkt);
+	PKT_LEN(pkt) = 0;
+	sc->sc_pktp = pkt->p_buf;
     }
 
-    ++m->m_len;
-    *sc->sc_mp++ = c;
+    ++PKT_LEN(pkt);
+    *sc->sc_pktp++ = c;
     sc->sc_fcs = PPP_FCS(sc->sc_fcs, c);
     return 0;
 
