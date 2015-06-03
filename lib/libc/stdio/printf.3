@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.72 2015/02/28 21:51:57 bentley Exp $
+.\"	$OpenBSD: printf.3,v 1.73 2015/06/03 16:26:04 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: June 3 2015 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -838,11 +838,9 @@ and
 .Fn asprintf
 family of interfaces instead.
 Unfortunately, the
-.Fn snprintf
-interface is not available on older
-systems and the
 .Fn asprintf
-interface is not portable.
+interface is not available on all systems as it is not part of
+.St -isoC-99 .
 .Pp
 It is important never to pass a string with user-supplied data as a
 format without using
