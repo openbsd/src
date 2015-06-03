@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.110 2014/12/08 11:40:41 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.111 2015/06/03 08:14:23 mpi Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -41,7 +41,9 @@ smu*		at mainbus0
 pci*		at mpcpcibr?
 pci*		at ht?
 ppb*		at pci?			# PCI-PCI bridges
+hpb*		at pci?
 pci*		at ppb?
+pci*		at hpb?
 
 macobio0	at pci?
 macintr0	at macobio?		# old interrupt controller
