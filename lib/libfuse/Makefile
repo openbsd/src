@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2013/08/08 06:41:05 jmc Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/06/03 19:57:53 reyk Exp $
 
 LIB=	fuse
 MAN=	fuse_main.3
@@ -20,7 +20,7 @@ MLINKS=	fuse_main.3 fuse_version.3 \
 	fuse_main.3 fuse_destroy.3 \
 	fuse_main.3 fuse_teardown.3
 
-CFLAGS+=	-Wall -g -Werror -Wshadow -Wmissing-prototypes
+CFLAGS+=	-Wall -g -Wshadow -Wmissing-prototypes
 CFLAGS+=	-Wstrict-prototypes -Wsign-compare
 
 CDIAGFLAGS+=	-Wno-long-long -Wall -W -Wnested-externs -Wformat=2
