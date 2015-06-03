@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.46 2013/08/07 07:29:19 mpi Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.47 2015/06/03 08:41:43 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -103,6 +103,7 @@ struct config_type config_offsets[] = {
 	{"uni-north",		0x00800000, 0x00c00000, 3 },
 	{"u3-agp",		0x00800000, 0x00c00000, 3 },
 	{"u3-ht",		0x00000cf8, 0x00000cfc, 3 },
+	{"u4-pcie",		0x00800000, 0x00c00000, 7 },
 	{"legacy",		0x00000cf8, 0x00000cfc, 0 },
 	{"IBM,27-82660",	0x00000cf8, 0x00000cfc, 0 },
 	{NULL,			0x00000000, 0x00000000, 0 },
@@ -445,7 +446,10 @@ mpc_gen_config_reg(void *cpv, pcitag_t tag, int offset)
 
 	pci_decompose_tag(cpv, tag, &bus, &dev, &fcn);
 
-	if (cp->config_type & 1) {
+	if (cp->config_type & 4) {
+		reg = val | offset | 1;
+		reg |= (offset >> 8) << 28;
+	} else if (cp->config_type & 1) {
 		/* Config Mechanism #2 */
 		if (bus == 0) {
 			if (dev < 11)
