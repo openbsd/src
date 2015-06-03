@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.42 2015/03/14 03:38:51 jsg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.43 2015/06/03 11:57:37 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -385,14 +385,20 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	case PF_POOL_RANDOM:
 		if (rpool->addr.type == PF_ADDR_TABLE) {
 			cnt = rpool->addr.p.tbl->pfrkt_cnt;
-			rpool->tblidx = (int)arc4random_uniform(cnt);
+			if (cnt == 0)
+				rpool->tblidx = 0;
+			else
+				rpool->tblidx = (int)arc4random_uniform(cnt);
 			memset(&rpool->counter, 0, sizeof(rpool->counter));
 			if (pfr_pool_get(rpool, &raddr, &rmask, af))
 				return (1);
 			PF_ACPY(naddr, &rpool->counter, af);
 		} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
 			cnt = rpool->addr.p.dyn->pfid_kt->pfrkt_cnt;
-			rpool->tblidx = (int)arc4random_uniform(cnt);
+			if (cnt == 0)
+				rpool->tblidx = 0;
+			else
+				rpool->tblidx = (int)arc4random_uniform(cnt);
 			memset(&rpool->counter, 0, sizeof(rpool->counter));
 			if (pfr_pool_get(rpool, &raddr, &rmask, af))
 				return (1);
@@ -438,14 +444,20 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		    pf_hash(saddr, (struct pf_addr *)&hash, &rpool->key, af);
 		if (rpool->addr.type == PF_ADDR_TABLE) {
 			cnt = rpool->addr.p.tbl->pfrkt_cnt;
-			rpool->tblidx = (int)(hashidx % cnt);
+			if (cnt == 0)
+				rpool->tblidx = 0;
+			else
+				rpool->tblidx = (int)(hashidx % cnt);
 			memset(&rpool->counter, 0, sizeof(rpool->counter));
 			if (pfr_pool_get(rpool, &raddr, &rmask, af))
 				return (1);
 			PF_ACPY(naddr, &rpool->counter, af);
 		} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
 			cnt = rpool->addr.p.dyn->pfid_kt->pfrkt_cnt;
-			rpool->tblidx = (int)(hashidx % cnt);
+			if (cnt == 0)
+				rpool->tblidx = 0;
+			else
+				rpool->tblidx = (int)(hashidx % cnt);
 			memset(&rpool->counter, 0, sizeof(rpool->counter));
 			if (pfr_pool_get(rpool, &raddr, &rmask, af))
 				return (1);
