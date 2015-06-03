@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.336 2015/06/02 13:23:55 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.337 2015/06/03 22:01:07 mikeb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -511,7 +511,6 @@ if_input_process(void *xmq)
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct ifih *ifih;
-	int mit = 0;
 	int s;
 
 	mq_delist(mq, &ml);
@@ -523,9 +522,7 @@ if_input_process(void *xmq)
 	KERNEL_LOCK();
 	s = splnet();
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		if ((++mit & 0x1f) == 0)
-			yield();
-
+		sched_pause();
 again:
 		/*
 		 * Pass this mbuf to all input handlers of its
