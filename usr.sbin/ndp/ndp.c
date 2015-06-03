@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.60 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.61 2015/06/03 08:10:53 mpi Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -134,6 +134,7 @@ static char *ether_str(struct sockaddr_dl *);
 int ndp_ether_aton(char *, u_char *);
 void usage(void);
 int rtmsg(int);
+int rtget(struct sockaddr_in6 **, struct sockaddr_dl **);
 void ifinfo(char *, int, char **);
 void rtrlist(void);
 void plist(void);
@@ -343,6 +344,7 @@ getsocket(void)
 struct	sockaddr_in6 so_mask = {sizeof(so_mask), AF_INET6 };
 struct	sockaddr_in6 blank_sin = {sizeof(blank_sin), AF_INET6 }, sin_m;
 struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
+struct	sockaddr_dl ifp_m = { sizeof(&ifp_m), AF_LINK };
 time_t	expire_time;
 int	flags, found_entry;
 struct	{
@@ -400,12 +402,12 @@ set(int argc, char **argv)
 			flags |= RTF_ANNOUNCE;
 		argv++;
 	}
-	if (rtmsg(RTM_GET) < 0) {
+
+	if (rtget(&sin, &sdl)) {
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
 	}
-	sin = (struct sockaddr_in6 *)((char *)rtm + rtm->rtm_hdrlen);
-	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
+
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -499,12 +501,12 @@ delete(char *host)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
-	if (rtmsg(RTM_GET) < 0) {
+
+	if (rtget(&sin, &sdl)) {
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
 	}
-	sin = (struct sockaddr_in6 *)((char *)rtm + rtm->rtm_hdrlen);
-	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
+
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
 			if (rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST))
@@ -832,7 +834,7 @@ rtmsg(int cmd)
 #endif
 		/* FALLTHROUGH */
 	case RTM_GET:
-		rtm->rtm_addrs |= RTA_DST;
+		rtm->rtm_addrs |= (RTA_DST | RTA_IFP);
 	}
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
@@ -844,6 +846,7 @@ rtmsg(int cmd)
 	memset(&so_mask.sin6_addr, 0xff, sizeof(so_mask.sin6_addr));
 	NEXTADDR(RTA_NETMASK, so_mask);
 #endif
+	NEXTADDR(RTA_IFP, ifp_m);
 
 	rtm->rtm_msglen = cp - (char *)&m_rtmsg;
 doit:
@@ -863,6 +866,48 @@ doit:
 	if (l < 0)
 		(void) fprintf(stderr, "ndp: read from routing socket: %s\n",
 		    strerror(errno));
+	return (0);
+}
+
+int
+rtget(struct sockaddr_in6 **sinp, struct sockaddr_dl **sdlp)
+{
+	struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
+	struct sockaddr_in6 *sin = NULL;
+	struct sockaddr_dl *sdl = NULL;
+	struct sockaddr *sa;
+	char *cp;
+	int i;
+
+	if (rtmsg(RTM_GET) < 0)
+		return (1);
+
+	if (rtm->rtm_addrs) {
+		cp = ((char *)rtm + rtm->rtm_hdrlen);
+		for (i = 1; i; i <<= 1) {
+			if (i & rtm->rtm_addrs) {
+				sa = (struct sockaddr *)cp;
+				switch (i) {
+				case RTA_DST:
+					sin = (struct sockaddr_in6 *)sa;
+					break;
+				case RTA_IFP:
+					sdl = (struct sockaddr_dl *)sa;
+					break;
+				default:
+					break;
+				}
+				cp += ROUNDUP(sa->sa_len);
+			}
+		}
+	}
+
+	if (sin == NULL || sdl == NULL)
+		return (1);
+
+	*sinp = sin;
+	*sdlp = sdl;
+
 	return (0);
 }
 

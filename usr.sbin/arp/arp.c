@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.63 2015/01/16 06:40:15 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.64 2015/06/03 08:10:53 mpi Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -75,6 +75,7 @@ int file(char *);
 int get(const char *);
 int getinetaddr(const char *, struct in_addr *);
 void getsocket(void);
+int rtget(struct sockaddr_inarp **, struct sockaddr_dl **);
 int rtmsg(int);
 int set(int, char **);
 void usage(void);
@@ -254,6 +255,7 @@ getsocket(void)
 struct sockaddr_in	so_mask = { 8, 0, 0, { 0xffffffff } };
 struct sockaddr_inarp	blank_sin = { sizeof(blank_sin), AF_INET }, sin_m;
 struct sockaddr_dl	blank_sdl = { sizeof(blank_sdl), AF_LINK }, sdl_m;
+struct sockaddr_dl	ifp_m = { sizeof(&ifp_m), AF_LINK };
 time_t			expire_time;
 int			flags, export_only, doing_proxy, found_entry;
 struct	{
@@ -319,12 +321,11 @@ set(int argc, char *argv[])
 	}
 
 tryagain:
-	if (rtmsg(RTM_GET) < 0) {
+	if (rtget(&sin, &sdl)) {
 		warn("%s", host);
 		return (1);
 	}
-	sin = (struct sockaddr_inarp *)((char *)rtm + rtm->rtm_hdrlen);
-	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
+
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -412,15 +413,13 @@ delete(const char *host, const char *info)
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		return (1);
 tryagain:
-	if (rtmsg(RTM_GET) < 0) {
+	if (rtget(&sin, &sdl) < 0) {
 		warn("%s", host);
 		return (1);
 	}
-	sin = (struct sockaddr_inarp *)((char *)rtm + rtm->rtm_hdrlen);
-	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
-			if (rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST))
+			if (rtm->rtm_flags & RTF_LOCAL)
 				return (0);
 		    	if (!(rtm->rtm_flags & RTF_GATEWAY))
 				switch (sdl->sdl_type) {
@@ -493,8 +492,6 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
-		if (rtm->rtm_flags & RTF_BROADCAST)
-			continue;
 		sin = (struct sockaddr_inarp *)(next + rtm->rtm_hdrlen);
 		sdl = (struct sockaddr_dl *)(sin + 1);
 		if (addr) {
@@ -558,7 +555,7 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	printf("%-*.*s %-*.*s %*.*s", addrwidth, addrwidth, host,
 	    llwidth, llwidth, ether_str(sdl), ifwidth, ifwidth, ifname);
 
-	if (rtm->rtm_flags & (RTF_PERMANENT_ARP|RTF_LOCAL|RTF_BROADCAST))
+	if (rtm->rtm_flags & (RTF_PERMANENT_ARP|RTF_LOCAL))
 		printf(" %-10.10s", "permanent");
 	else if (rtm->rtm_rmx.rmx_expire == 0)
 		printf(" %-10.10s", "static");
@@ -654,7 +651,7 @@ rtmsg(int cmd)
 		}
 		/* FALLTHROUGH */
 	case RTM_GET:
-		rtm->rtm_addrs |= RTA_DST;
+		rtm->rtm_addrs |= (RTA_DST | RTA_IFP);
 	}
 
 #define NEXTADDR(w, s)					\
@@ -666,6 +663,7 @@ rtmsg(int cmd)
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
 	NEXTADDR(RTA_NETMASK, so_mask);
+	NEXTADDR(RTA_IFP, ifp_m);
 
 	rtm->rtm_msglen = cp - (char *)&m_rtmsg;
 doit:
@@ -685,6 +683,48 @@ doit:
 
 	if (l < 0)
 		warn("read from routing socket");
+	return (0);
+}
+
+int
+rtget(struct sockaddr_inarp **sinp, struct sockaddr_dl **sdlp)
+{
+	struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
+	struct sockaddr_inarp *sin = NULL;
+	struct sockaddr_dl *sdl = NULL;
+	struct sockaddr *sa;
+	char *cp;
+	int i;
+
+	if (rtmsg(RTM_GET) < 0)
+		return (1);
+
+	if (rtm->rtm_addrs) {
+		cp = ((char *)rtm + rtm->rtm_hdrlen);
+		for (i = 1; i; i <<= 1) {
+			if (i & rtm->rtm_addrs) {
+				sa = (struct sockaddr *)cp;
+				switch (i) {
+				case RTA_DST:
+					sin = (struct sockaddr_inarp *)sa;
+					break;
+				case RTA_IFP:
+					sdl = (struct sockaddr_dl *)sa;
+					break;
+				default:
+					break;
+				}
+				cp += ROUNDUP(sa->sa_len);
+			}
+		}
+	}
+
+	if (sin == NULL || sdl == NULL)
+		return (1);
+
+	*sinp = sin;
+	*sdlp = sdl;
+
 	return (0);
 }
 
