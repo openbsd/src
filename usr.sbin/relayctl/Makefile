@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2014/01/18 05:54:51 martynas Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/06/03 20:43:21 reyk Exp $
 
 .PATH:		${.CURDIR}/../relayd
 
@@ -9,7 +9,7 @@ MAN=		relayctl.8
 
 LDADD=		-lutil
 DPADD=		${LIBUTIL}
-CFLAGS+=	-Wall -Werror -I${.CURDIR} -I${.CURDIR}/../relayd
+CFLAGS+=	-Wall -I${.CURDIR} -I${.CURDIR}/../relayd
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
