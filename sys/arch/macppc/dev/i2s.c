@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.27 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.28 2015/06/03 08:30:27 mpi Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -115,9 +115,9 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 	cirq = intr[0];
 	oirq = intr[2];
 	iirq = intr[4];
-	cirq_type = intr[1] ? IST_LEVEL : IST_EDGE;
-	oirq_type = intr[3] ? IST_LEVEL : IST_EDGE;
-	iirq_type = intr[5] ? IST_LEVEL : IST_EDGE;
+	cirq_type = (intr[1] & 1) ? IST_LEVEL : IST_EDGE;
+	oirq_type = (intr[3] & 1) ? IST_LEVEL : IST_EDGE;
+	iirq_type = (intr[5] & 1) ? IST_LEVEL : IST_EDGE;
 
 	/* intr_establish(cirq, cirq_type, IPL_AUDIO, i2s_intr, sc); */
 	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO | IPL_MPSAFE,
