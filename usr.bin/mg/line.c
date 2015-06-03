@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.55 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: line.c,v 1.56 2015/06/03 23:40:01 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -128,100 +128,6 @@ lchange(int flag)
 				wp->w_rflag |= WFFULL;
 		}
 	}
-}
-
-/*
- * Insert "n" bytes from "s" at the current location of dot.
- * In the easy case all that happens is the text is stored in the line.
- * In the hard case, the line has to be reallocated.  When the window list
- * is updated, take special care; I screwed it up once.  You always update
- * dot in the current window.  You update mark and a dot in another window
- * if it is greater than the place where you did the insert. Return TRUE
- * if all is well, and FALSE on errors.
- */
-int
-linsert_str(const char *s, int n)
-{
-	struct line	*lp1;
-	struct mgwin	*wp;
-	RSIZE	 i;
-	int	 doto, k;
-
-	if ((k = checkdirty(curbp)) != TRUE)
-		return (k);
-
-	if (curbp->b_flag & BFREADONLY) {
-		dobeep();
-		ewprintf("Buffer is read only");
-		return (FALSE);
-	}
-
-	if (!n)
-		return (TRUE);
-
-	lchange(WFFULL);
-
-	/* current line */
-	lp1 = curwp->w_dotp;
-
-	/* special case for the end */
-	if (lp1 == curbp->b_headp) {
-		struct line *lp2, *lp3;
-
-		/* now should only happen in empty buffer */
-		if (curwp->w_doto != 0)
-			panic("bug: linsert_str");
-		/* allocate a new line */
-		if ((lp2 = lalloc(n)) == NULL)
-			return (FALSE);
-		/* previous line */
-		lp3 = lp1->l_bp;
-		/* link in */
-		lp3->l_fp = lp2;
-		lp2->l_fp = lp1;
-		lp1->l_bp = lp2;
-		lp2->l_bp = lp3;
-		for (i = 0; i < n; ++i)
-			lp2->l_text[i] = s[i];
-		for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
-			if (wp->w_linep == lp1)
-				wp->w_linep = lp2;
-			if (wp->w_dotp == lp1)
-				wp->w_dotp = lp2;
-			if (wp->w_markp == lp1)
-				wp->w_markp = lp2;
-		}
-		undo_add_insert(lp2, 0, n);
-		curwp->w_doto = n;
-		return (TRUE);
-	}
-	/* save for later */
-	doto = curwp->w_doto;
-
-	if ((lp1->l_used + n) > lp1->l_size) {
-		if (lrealloc(lp1, lp1->l_used + n) == FALSE)
-			return (FALSE);
-	}
-	lp1->l_used += n;
-	if (lp1->l_used != n)
-		memmove(&lp1->l_text[doto + n], &lp1->l_text[doto],
-		    lp1->l_used - n - doto);
-
-	/* Add the characters */
-	for (i = 0; i < n; ++i)
-		lp1->l_text[doto + i] = s[i];
-	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
-		if (wp->w_dotp == lp1) {
-			if (wp == curwp || wp->w_doto > doto)
-				wp->w_doto += n;
-		}
-		if (wp->w_markp == lp1) {
-			if (wp->w_marko > doto)
-				wp->w_marko += n;
-		}
-	}
-	undo_add_insert(curwp->w_dotp, doto, n);
-	return (TRUE);
 }
 
 /*

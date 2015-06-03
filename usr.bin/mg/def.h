@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.146 2015/05/08 12:35:08 bcallah Exp $	*/
+/*	$OpenBSD: def.h,v 1.147 2015/06/03 23:40:01 bcallah Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -21,13 +21,13 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define NBUFN	NFILEN		/* Length, buffer name.		 */
 #define NLINE	256		/* Length, line.		 */
 #define PBMODES 4		/* modes per buffer		 */
-#define NKBDM	256		/* Length, keyboard macro.	 */
 #define NPAT	80		/* Length, pattern.		 */
 #define HUGE	1000		/* A rather large number.	 */
 #define NSRCH	128		/* Undoable search commands.	 */
 #define NXNAME	64		/* Length, extended command.	 */
 #define NKNAME	20		/* Length, key names.		 */
 #define NTIME	50		/* Length, timestamp string.	 */
+
 /*
  * Universal.
  */
@@ -59,13 +59,6 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define FIOERR	3		/* Error.			 */
 #define FIOLONG 4		/* long line partially read	 */
 #define FIODIR 5		/* File is a directory		 */
-
-/*
- * Directory I/O.
- */
-#define DIOSUC	0		/* Success.			 */
-#define DIOEOF	1		/* End of file.			 */
-#define DIOERR	2		/* Error.			 */
 
 /*
  * Display colors.
@@ -388,7 +381,6 @@ struct line	*lalloc(int);
 int		 lrealloc(struct line *, int);
 void		 lfree(struct line *);
 void		 lchange(int);
-int		 linsert_str(const char *, int);
 int		 linsert(int, int);
 int		 lnewline_at(struct line *, int);
 int		 lnewline(void);
@@ -408,7 +400,6 @@ int		 yank(int, int);
 
 /* window.c X */
 struct mgwin	*new_window(struct buffer *);
-void		 free_window(struct mgwin *);
 int		 reposition(int, int);
 int		 redraw(int, int);
 int		 do_redraw(int, int, int);
@@ -654,7 +645,6 @@ int		 executemacro(int, int);
 /* modes.c X */
 int		 indentmode(int, int);
 int		 fillmode(int, int);
-int		 blinkparen(int, int);
 #ifdef NOTAB
 int		 notabmode(int, int);
 #endif	/* NOTAB */
