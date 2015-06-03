@@ -1,4 +1,4 @@
-/* $OpenBSD: field.c,v 1.19 2005/11/15 21:49:04 cloder Exp $	 */
+/* $OpenBSD: field.c,v 1.20 2015/06/03 02:24:36 millert Exp $	 */
 /* $EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	 */
 
 /*
@@ -95,13 +95,13 @@ extract_val(u_int8_t *buf, size_t len, u_int32_t *val)
 static char *
 field_debug_num(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-	char           *retval;
+	char           *retval = NULL;
 	u_int32_t       val;
 
 	if (extract_val(buf, len, &val))
 		return 0;
 	/* 3 decimal digits are enough to represent each byte.  */
-	asprintf(&retval, "%u", val);
+	(void)asprintf(&retval, "%u", val);
 	return retval;
 }
 

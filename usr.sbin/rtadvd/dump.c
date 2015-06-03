@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.14 2013/11/12 22:27:13 deraadt Exp $	*/
+/*	$OpenBSD: dump.c,v 1.15 2015/06/03 02:24:36 millert Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -90,12 +90,12 @@ ether_str(sdl)
 char *
 lifetime(int lt)
 {
-	char *str;
+	char *str = NULL;
 
 	if (lt == ND6_INFINITE_LIFETIME)
-		asprintf(&str, "infinity");
+		(void)asprintf(&str, "infinity");
 	else
-		asprintf(&str, "%ld", (long)lt);
+		(void)asprintf(&str, "%ld", (long)lt);
 	return str;
 }
 

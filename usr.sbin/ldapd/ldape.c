@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.19 2015/01/16 16:04:38 deraadt Exp $ */
+/*	$OpenBSD: ldape.c,v 1.20 2015/06/03 02:24:36 millert Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -143,11 +143,11 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 	ber_set_header(ref_root, BER_CLASS_CONTEXT, LDAP_REQ_SEARCH);
 	SLIST_FOREACH(ref, refs, next) {
 		if (search != NULL)
-			asprintf(&url, "%s/%s??%s", ref->url, basedn,
+			rc = asprintf(&url, "%s/%s??%s", ref->url, basedn,
 			    scope_str);
 		else
-			asprintf(&url, "%s/%s", ref->url, basedn);
-		if (url == NULL) {
+			rc = asprintf(&url, "%s/%s", ref->url, basedn);
+		if (rc == -1) {
 			log_warn("asprintf");
 			goto fail;
 		}

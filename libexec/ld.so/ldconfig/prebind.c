@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.28 2015/01/16 16:18:07 deraadt Exp $ */
+/* $OpenBSD: prebind.c,v 1.29 2015/06/03 02:24:36 millert Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -268,14 +268,20 @@ load_dir(char *name)
 			 * NFS will return unknown, since load_file
 			 * does stat the file, this just
 			 */
-			asprintf(&buf, "%s/%s", name, dp->d_name);
+			if (asprintf(&buf, "%s/%s", name, dp->d_name) == -1) {
+				warn("asprintf");
+				goto done;
+			}
 			lstat(buf, &sb);
 			if (sb.st_mode == S_IFREG)
 				load_exe(buf);
 			free(buf);
 			break;
 		case DT_REG:
-			asprintf(&buf, "%s/%s", name, dp->d_name);
+			if (asprintf(&buf, "%s/%s", name, dp->d_name) == -1) {
+				warn("asprintf");
+				goto done;
+			}
 			load_exe(buf);
 			free(buf);
 			break;
@@ -284,6 +290,7 @@ load_dir(char *name)
 			;
 		}
 	}
+done:
 	closedir(dirp);
 }
 

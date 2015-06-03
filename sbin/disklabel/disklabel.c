@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.201 2015/04/29 16:56:31 henning Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.202 2015/06/03 02:24:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -471,11 +471,15 @@ readlabel(int f)
 			err(4, "ioctl DIOCGDINFO");
 	}
 
-	asprintf(&partname, "/dev/%s%c", dkname, 'a');
-	asprintf(&partduid,
+	i = asprintf(&partname, "/dev/%s%c", dkname, 'a');
+	if (i == -1)
+		err(4, NULL);
+	i = asprintf(&partduid,
 	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.a",
             lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
             lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
+	if (i == -1)
+		err(4, NULL);
 	setfsent();
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		partname[strlen(dkname) + 5] = 'a' + i;

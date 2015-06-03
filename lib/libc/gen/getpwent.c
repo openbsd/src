@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.53 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.54 2015/06/03 02:24:36 millert Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -542,11 +542,17 @@ __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
 			__ypproto_set(pw, yppbuf, *flagsp, &yp_pw_flags);
 			if (!map) {
 				if (lookup == LOOKUP_BYNAME) {
+					if ((name = strdup(name)) == NULL) {
+						pw = NULL;
+						goto done;
+					}
 					map = PASSWD_BYNAME;
-					name = strdup(name);
 				} else {
+					if (asprintf(&name, "%u", uid) == -1) {
+						pw = NULL;
+						goto done;
+					}
 					map = PASSWD_BYUID;
-					asprintf(&name, "%u", uid);
 				}
 			}
 

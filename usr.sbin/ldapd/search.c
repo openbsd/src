@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.14 2010/11/10 08:00:54 martinh Exp $ */
+/*	$OpenBSD: search.c,v 1.15 2015/06/03 02:24:36 millert Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -619,13 +619,18 @@ add_index(struct plan *plan, const char *fmt, ...)
 {
 	struct index		*indx;
 	va_list			 ap;
+	int			 rc;
 
 	if ((indx = calloc(1, sizeof(*indx))) == NULL)
 		return -1;
 
 	va_start(ap, fmt);
-	vasprintf(&indx->prefix, fmt, ap);
+	rc = vasprintf(&indx->prefix, fmt, ap);
 	va_end(ap);
+	if (rc == -1) {
+		free(indx);
+		return -1;
+	}
 
 	normalize_dn(indx->prefix);
 

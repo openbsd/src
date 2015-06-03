@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.12 2013/05/04 09:23:33 jsg Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.13 2015/06/03 02:24:36 millert Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -101,14 +101,22 @@ strip_dir(char *dir)
 			 * NFS will return unknown, since load_file
 			 * does stat the file, this just
 			 */
-			asprintf(&buf, "%s/%s", dir, dp->d_name);
+			if (asprintf(&buf, "%s/%s", dir, dp->d_name) == -1) {
+				if (verbose)
+					warn("asprintf");
+				goto done;
+			}
 			lstat(buf, &sb);
 			if (sb.st_mode == S_IFREG)
 				ret = strip_prebind(buf);
 			free(buf);
 			break;
 		case DT_REG:
-			asprintf(&buf, "%s/%s", dir, dp->d_name);
+			if (asprintf(&buf, "%s/%s", dir, dp->d_name) == -1) {
+				if (verbose)
+					warn("asprintf");
+				goto done;
+			}
 			ret = strip_prebind(buf);
 			free(buf);
 			break;
@@ -118,6 +126,7 @@ strip_dir(char *dir)
 			;
 		}
 	}
+done:
 	closedir(dirp);
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.10 2014/06/30 00:26:22 deraadt Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.11 2015/06/03 02:24:36 millert Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -61,8 +61,7 @@ pidfile(const char *basename)
 	}
 
 	/* _PATH_VARRUN includes trailing / */
-	(void) asprintf(&pidfile_path, "%s%s.pid", _PATH_VARRUN, basename);
-	if (pidfile_path == NULL)
+	if (asprintf(&pidfile_path, "%s%s.pid", _PATH_VARRUN, basename) == -1)
 		return (-1);
 
 	if ((f = fopen(pidfile_path, "w")) == NULL) {

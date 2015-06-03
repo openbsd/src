@@ -1,4 +1,4 @@
-/*	$OpenBSD: btree.c,v 1.32 2015/01/16 16:04:38 deraadt Exp $ */
+/*	$OpenBSD: btree.c,v 1.33 2015/06/03 02:24:36 millert Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -3071,7 +3071,10 @@ btree_compact(struct btree *bt)
 	if ((txn = btree_txn_begin(bt, 0)) == NULL)
 		return BT_FAIL;
 
-	asprintf(&compact_path, "%s.compact.XXXXXX", bt->path);
+	if (asprintf(&compact_path, "%s.compact.XXXXXX", bt->path) == -1) {
+		btree_txn_abort(txn);
+		return BT_FAIL;
+	}
 	fd = mkstemp(compact_path);
 	if (fd == -1) {
 		free(compact_path);

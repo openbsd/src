@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.45 2015/01/20 16:54:06 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.46 2015/06/03 02:24:36 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -298,8 +298,7 @@ open_file(char *method, char *file)
 		return (open(file, O_RDONLY));
 	if ((strcmp(method, "http") == 0) ||
 	    strcmp(method, "ftp") == 0) {
-		asprintf(&url, "%s://%s", method, file);
-		if (url == NULL)
+		if (asprintf(&url, "%s://%s", method, file) == -1)
 			return (-1);
 		i = fileget(url);
 		free(url);
@@ -308,7 +307,7 @@ open_file(char *method, char *file)
 		len = strlen(file);
 		argv = calloc(len, sizeof(char *));
 		if (argv == NULL)
-			err(1, NULL);
+			return (-1);
 		for (ap = argv; ap < &argv[len - 1] &&
 		    (*ap = strsep(&file, " \t")) != NULL;) {
 			if (**ap != '\0')

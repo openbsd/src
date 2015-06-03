@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.28 2015/05/28 17:08:09 florian Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.29 2015/06/03 02:24:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -72,6 +72,8 @@ snmpd_sig_handler(int sig, short event, void *arg)
 		/* FALLTHROUGH */
 	case SIGCHLD:
 		do {
+			int len;
+
 			pid = waitpid(WAIT_ANY, &status, WNOHANG);
 			if (pid <= 0)
 				continue;
@@ -79,16 +81,20 @@ snmpd_sig_handler(int sig, short event, void *arg)
 			fail = 0;
 			if (WIFSIGNALED(status)) {
 				fail = 1;
-				asprintf(&cause, "terminated; signal %d",
+				len = asprintf(&cause, "terminated; signal %d",
 				    WTERMSIG(status));
 			} else if (WIFEXITED(status)) {
 				if (WEXITSTATUS(status) != 0) {
 					fail = 1;
-					asprintf(&cause, "exited abnormally");
+					len = asprintf(&cause,
+					    "exited abnormally");
 				} else
-					asprintf(&cause, "exited okay");
+					len = asprintf(&cause, "exited okay");
 			} else
 				fatalx("unexpected cause of SIGCHLD");
+
+			if (len == -1)
+				fatal("asprintf");
 			
 			for (id = 0; id < PROC_MAX; id++) {
 				if (pid == ps->ps_pid[id] &&

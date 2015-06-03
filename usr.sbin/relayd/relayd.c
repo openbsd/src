@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.141 2015/05/30 09:47:25 claudio Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.142 2015/06/03 02:24:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -87,6 +87,8 @@ parent_sig_handler(int sig, short event, void *arg)
 		/* FALLTHROUGH */
 	case SIGCHLD:
 		do {
+			int len;
+
 			pid = waitpid(WAIT_ANY, &status, WNOHANG);
 			if (pid <= 0)
 				continue;
@@ -94,16 +96,20 @@ parent_sig_handler(int sig, short event, void *arg)
 			fail = 0;
 			if (WIFSIGNALED(status)) {
 				fail = 1;
-				asprintf(&cause, "terminated; signal %d",
+				len = asprintf(&cause, "terminated; signal %d",
 				    WTERMSIG(status));
 			} else if (WIFEXITED(status)) {
 				if (WEXITSTATUS(status) != 0) {
 					fail = 1;
-					asprintf(&cause, "exited abnormally");
+					len = asprintf(&cause,
+					    "exited abnormally");
 				} else
-					asprintf(&cause, "exited okay");
+					len = asprintf(&cause, "exited okay");
 			} else
 				fatalx("unexpected cause of SIGCHLD");
+
+			if (len == -1)
+				fatal("asprintf");
 
 			die = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.8 2010/11/26 14:44:01 martinh Exp $ */
+/*	$OpenBSD: index.c,v 1.9 2015/06/03 02:24:36 millert Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -107,6 +107,8 @@ index_attribute(struct namespace *ns, char *attr, struct btval *dn,
 		bzero(&key, sizeof(key));
 		key.size = asprintf(&t, "%s=%s,%.*s", attr, s, dnsz,
 		    (char *)dn->data);
+		if (key.size == (size_t)-1)
+			return -1;
 		key.data = t;
 		normalize_dn(key.data);
 		rc = btree_txn_put(NULL, ns->indx_txn, &key, &val,
@@ -141,7 +143,9 @@ index_rdn_key(struct namespace *ns, struct btval *dn, struct btval *key)
 		++parent_dn;
 	}
 
-	asprintf(&t, "@%.*s,%.*s", pdnsz, parent_dn, rdnsz, (char *)dn->data);
+	if (asprintf(&t, "@%.*s,%.*s", pdnsz, parent_dn, rdnsz,
+	    (char *)dn->data) == -1)
+		return -1;
 
 	normalize_dn(t);
 	key->data = t;

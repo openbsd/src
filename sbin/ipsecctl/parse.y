@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.161 2014/11/20 05:51:20 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.162 2015/06/03 02:24:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1613,11 +1613,12 @@ host_v6(const char *s, int prefixlen)
 
 	if (prefixlen != 128) {
 		ipa->netaddress = 1;
-		asprintf(&ipa->name, "%s/%d", hbuf, prefixlen);
-	} else
-		ipa->name = strdup(hbuf);
-	if (ipa->name == NULL)
-		err(1, "host_v6: strdup");
+		if (asprintf(&ipa->name, "%s/%d", hbuf, prefixlen) == -1)
+			err(1, "host_v6: asprintf");
+	} else {
+		if ((ipa->name = strdup(hbuf)) == NULL)
+			err(1, "host_v6: strdup");
+	}
 
 	freeaddrinfo(res);
 
