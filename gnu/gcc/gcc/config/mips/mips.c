@@ -5727,6 +5727,8 @@ mips_output_external (FILE *file ATTRIBUTE_UNUSED, tree decl, const char *name)
 {
   register struct extern_list *p;
 
+  default_elf_asm_output_external(file, decl, name);
+
   if (!TARGET_EXPLICIT_RELOCS && mips_in_small_data_p (decl))
     {
       p = (struct extern_list *) ggc_alloc (sizeof (struct extern_list));
