@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.18 2015/06/02 15:44:17 millert Exp $	*/
+/*	$OpenBSD: from.c,v 1.19 2015/06/03 02:35:50 millert Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if ((fp = open_mbox(file, *argv)) == NULL)
-		err(1, "%s", file);
+		exit(1);
 	for (newline = 1; (linelen = getline(&line, &linesize, fp)) != -1;) {
 		if (*line == '\n') {
 			newline = 1;
@@ -120,7 +120,8 @@ open_mbox(const char *file, const char *user)
 			file = buf;
 		}
 	}
-	fp = fopen(file, "r");
+	if ((fp = fopen(file, "r")) == NULL)
+		warn("%s", file);
 	free(buf);
 	return(fp);
 }
