@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.19 2015/06/03 02:35:50 millert Exp $	*/
+/*	$OpenBSD: from.c,v 1.20 2015/06/03 18:08:54 millert Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -39,14 +39,15 @@
 #include <paths.h>
 #include <string.h>
 #include <err.h>
+#include <errno.h>
 
 int	match(char *, char *);
-FILE	*open_mbox(const char *file, const char *user);
+char	*mail_spool(char *file, const char *user);
 
 int
 main(int argc, char *argv[])
 {
-	int ch, newline;
+	int ch, newline, fflag = 0;
 	char *file, *line, *sender, *p;
 	size_t linesize = 0;
 	ssize_t linelen;
@@ -56,6 +57,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "f:s:")) != -1) {
 		switch(ch) {
 		case 'f':
+			fflag = 1;
 			file = optarg;
 			break;
 		case 's':
@@ -72,8 +74,12 @@ main(int argc, char *argv[])
 	}
 	argv += optind;
 
-	if ((fp = open_mbox(file, *argv)) == NULL)
-		exit(1);
+	file = mail_spool(file, *argv);
+	if ((fp = fopen(file, "r")) == NULL) {
+		if (!fflag && errno == ENOENT)
+			exit(EXIT_SUCCESS);
+		err(1, "%s", file);
+	}
 	for (newline = 1; (linelen = getline(&line, &linesize, fp)) != -1;) {
 		if (*line == '\n') {
 			newline = 1;
@@ -88,12 +94,10 @@ main(int argc, char *argv[])
 	exit(EXIT_SUCCESS);
 }
 
-FILE *
-open_mbox(const char *file, const char *user)
+char *
+mail_spool(char *file, const char *user)
 {
 	struct passwd *pwd;
-	char *buf = NULL;
-	FILE *fp;
 
 	/*
 	 * We find the mailbox by:
@@ -115,15 +119,11 @@ open_mbox(const char *file, const char *user)
 			}
 		}
 		if (file == NULL) {
-			if (asprintf(&buf, "%s/%s", _PATH_MAILDIR, user) == -1)
+			if (asprintf(&file, "%s/%s", _PATH_MAILDIR, user) == -1)
 				err(1, NULL);
-			file = buf;
 		}
 	}
-	if ((fp = fopen(file, "r")) == NULL)
-		warn("%s", file);
-	free(buf);
-	return(fp);
+	return(file);
 }
 
 int
