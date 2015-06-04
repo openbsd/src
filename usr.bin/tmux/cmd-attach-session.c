@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.34 2015/04/25 18:09:28 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.35 2015/06/04 23:27:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_attach_session_entry = {
 	"attach-session", "attach",
 	"c:drt:", 0, 0,
 	"[-dr] [-c working-directory] " CMD_TARGET_SESSION_USAGE,
-	CMD_CANTNEST|CMD_STARTSERVER,
+	CMD_STARTSERVER,
 	cmd_attach_session_exec
 };
 
@@ -81,6 +81,11 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 
 	if (cmdq->client == NULL)
 		return (CMD_RETURN_NORMAL);
+	if (server_client_check_nested(cmdq->client)) {
+		cmdq_error(cmdq, "sessions should be nested with care, "
+		    "unset $TMUX to force");
+		return (CMD_RETURN_ERROR);
+	}
 
 	if (wl != NULL) {
 		if (wp != NULL)

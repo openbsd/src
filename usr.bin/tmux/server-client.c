@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.139 2015/05/27 13:28:04 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.140 2015/06/04 23:27:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,6 +45,27 @@ int	server_client_msg_dispatch(struct client *);
 void	server_client_msg_command(struct client *, struct imsg *);
 void	server_client_msg_identify(struct client *, struct imsg *);
 void	server_client_msg_shell(struct client *);
+
+/* Check if this client is inside this server. */
+int
+server_client_check_nested(struct client *c)
+{
+	struct environ_entry	*envent;
+	struct window_pane	*wp;
+
+	if (c->tty.path == NULL)
+		return (0);
+
+	envent = environ_find(&c->environ, "TMUX");
+	if (envent == NULL || *envent->value == '\0')
+		return (0);
+
+	RB_FOREACH(wp, window_pane_tree, &all_window_panes) {
+		if (strcmp(wp->tty, c->tty.path) == 0)
+			return (1);
+	}
+	return (0);
+}
 
 /* Set client key table. */
 void
