@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.84 2015/05/12 02:33:39 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.85 2015/06/04 18:33:41 dms Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -59,6 +59,8 @@
 
 #include <dev/pci/if_em_hw.h>
 #include <dev/pci/if_em_soc.h>
+
+#include <dev/mii/rgephyreg.h>
 
 #define STATIC
 
@@ -265,6 +267,9 @@ em_set_phy_type(struct em_hw *hw)
 	case I82580_I_PHY_ID:
 	case I350_I_PHY_ID:
 		hw->phy_type = em_phy_82580;
+		break;
+	case RTL8211_E_PHY_ID:
+		hw->phy_type = em_phy_rtl8211;
 		break;
 	case BME1000_E_PHY_ID:
 		if (hw->phy_revision == 1) {
@@ -609,12 +614,18 @@ em_set_mac_type(struct em_hw *hw)
 		hw->icp_xxxx_port_num = 0;
 		break;
 	case E1000_DEV_ID_EP80579_LAN_2:
+	case E1000_DEV_ID_EP80579_LAN_4:
 		hw->mac_type = em_icp_xxxx;
 		hw->icp_xxxx_port_num = 1;
 		break;
 	case E1000_DEV_ID_EP80579_LAN_3:
+	case E1000_DEV_ID_EP80579_LAN_5:
 		hw->mac_type = em_icp_xxxx;
 		hw->icp_xxxx_port_num = 2;
+		break;
+	case E1000_DEV_ID_EP80579_LAN_6:
+		hw->mac_type = em_icp_xxxx;
+		hw->icp_xxxx_port_num = 3;
 		break;
 	default:
 		/* Should never have loaded on this device */
@@ -707,7 +718,10 @@ em_set_media_type(struct em_hw *hw)
 	case E1000_DEV_ID_EP80579_LAN_1:
 	case E1000_DEV_ID_EP80579_LAN_2:
 	case E1000_DEV_ID_EP80579_LAN_3:
-		hw->media_type = em_media_type_oem;
+	case E1000_DEV_ID_EP80579_LAN_4:
+	case E1000_DEV_ID_EP80579_LAN_5:
+	case E1000_DEV_ID_EP80579_LAN_6:
+		hw->media_type = em_media_type_copper;
 		break;
 	default:
 		switch (hw->mac_type) {
@@ -2477,6 +2491,134 @@ out:
 	return ret_val;
 }
 
+static int32_t
+em_copper_link_rtl8211_setup(struct em_hw *hw)
+{
+	int32_t ret_val;
+	uint16_t phy_data;
+
+	DEBUGFUNC("em_copper_link_rtl8211_setup: begin");
+
+	if (!hw) {
+		return -1;
+	}
+	/* SW Reset the PHY so all changes take effect */
+	em_phy_hw_reset(hw);
+
+	/* Enable CRS on TX. This must be set for half-duplex operation. */
+	phy_data = 0;
+
+	ret_val = em_read_phy_reg_ex(hw, RGEPHY_CR, &phy_data);
+	if (ret_val) {
+		printf("Unable to read RGEPHY_CR register\n");
+		return ret_val;
+	}
+	DEBUGOUT3("RTL8211: Rx phy_id=%X addr=%X SPEC_CTRL=%X\n", hw->phy_id,
+	    hw->phy_addr, phy_data);
+	phy_data |= RGEPHY_CR_ASSERT_CRS;
+
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_CR, phy_data);
+	if (ret_val) {
+		printf("Unable to write RGEPHY_CR register\n");
+		return ret_val;
+	}
+
+	phy_data = 0; /* LED Control Register 0x18 */
+	ret_val = em_read_phy_reg_ex(hw, RGEPHY_LC, &phy_data);
+	if (ret_val) {
+		printf("Unable to read RGEPHY_LC register\n");
+		return ret_val;
+	}
+
+	phy_data &= 0x80FF; /* bit-15=0 disable, clear bit 8-10 */
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_LC, phy_data);
+	if (ret_val) {
+		printf("Unable to write RGEPHY_CR register\n");
+		return ret_val;
+	}
+	/* LED Control and Definition Register 0x11, PHY spec status reg */
+	phy_data = 0;
+	ret_val = em_read_phy_reg_ex(hw, RGEPHY_SR, &phy_data);
+	if (ret_val) {
+		printf("Unable to read RGEPHY_SRregister\n");
+		return ret_val;
+	}
+
+	phy_data |= 0x0010; /* LED active Low */
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_SR, phy_data);
+	if (ret_val) {
+		printf("Unable to write RGEPHY_SR register\n");
+		return ret_val;
+	}
+
+	phy_data = 0;
+	ret_val = em_read_phy_reg_ex(hw, RGEPHY_SR, &phy_data);
+	if (ret_val) {
+		printf("Unable to read RGEPHY_SR register\n");
+		return ret_val;
+	}
+
+	/* Switch to Page2 */
+	phy_data = RGEPHY_PS_PAGE_2;
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_PS, phy_data);
+	if (ret_val) {
+		printf("Unable to write PHY RGEPHY_PS register\n");
+		return ret_val;
+	}
+
+	phy_data = 0x0000;
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_LC_P2, phy_data);
+	if (ret_val) {
+		printf("Unable to write RGEPHY_LC_P2 register\n");
+		return ret_val;
+	}
+	usec_delay(5);
+
+
+	/* LED Configuration Control Reg for setting for 0x1A Register */
+	phy_data = 0;
+	ret_val = em_read_phy_reg_ex(hw, RGEPHY_LC_P2, &phy_data);
+	if (ret_val) {
+		printf("Unable to read RGEPHY_LC_P2 register\n");
+		return ret_val;
+	}
+
+	phy_data &= 0xF000;
+	phy_data |= 0x0F24;
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_LC_P2, phy_data);
+	if (ret_val) {
+		printf("Unable to write RGEPHY_LC_P2 register\n");
+		return ret_val;
+	}
+	phy_data = 0;
+	ret_val= em_read_phy_reg_ex(hw, RGEPHY_LC_P2, &phy_data);
+	if (ret_val) {
+		printf("Unable to read RGEPHY_LC_P2 register\n");
+		return ret_val;
+	}
+	DEBUGOUT1("RTL8211:ReadBack for check, LED_CFG->data=%X\n", phy_data);
+
+
+	/* After setting Page2, go back to Page 0 */
+	phy_data = 0;
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_PS, phy_data);
+	if (ret_val) {
+		printf("Unable to write PHY RGEPHY_PS register\n");
+		return ret_val;
+	}
+
+	/* pulse streching= 42-84ms, blink rate=84mm */
+	phy_data = 0x140 | RGEPHY_LC_PULSE_42MS | RGEPHY_LC_LINK | 
+	    RGEPHY_LC_DUPLEX | RGEPHY_LC_RX;
+
+	ret_val = em_write_phy_reg_ex(hw, RGEPHY_LC, phy_data);
+	if (ret_val) {
+		printf("Unable to write RGEPHY_LC register\n");
+		return ret_val;
+	}
+	return E1000_SUCCESS;
+}
+
 /******************************************************************************
  * Setup auto-negotiation and flow control advertisements,
  * and then perform auto-negotiation.
@@ -2673,6 +2815,10 @@ em_setup_copper_link(struct em_hw *hw)
 			return ret_val;
 	} else if (hw->phy_type == em_phy_82580) {
 		ret_val = em_copper_link_82580_setup(hw);
+		if (ret_val)
+			return ret_val;
+	} else if (hw->phy_type == em_phy_rtl8211) {
+		ret_val = em_copper_link_rtl8211_setup(hw);
 		if (ret_val)
 			return ret_val;
 	}
@@ -3051,6 +3197,28 @@ em_phy_force_speed_duplex(struct em_hw *hw)
 		mii_ctrl_reg |= MII_CR_RESET;
 
 	}
+	else if (hw->phy_type == em_phy_rtl8211) {
+		ret_val = em_read_phy_reg_ex(hw, RGEPHY_CR, &phy_data);
+		if(ret_val) {
+			printf("Unable to read RGEPHY_CR register\n"
+			    );
+			return ret_val;
+		}
+
+		/*
+		 * Clear Auto-Crossover to force MDI manually. RTL8211 requires
+		 * MDI forced whenever speed are duplex are forced.
+		 */
+
+		phy_data |= RGEPHY_CR_MDI_MASK;  // enable MDIX
+		ret_val = em_write_phy_reg_ex(hw, RGEPHY_CR, phy_data);
+		if(ret_val) {
+			printf("Unable to write RGEPHY_CR register\n");
+			return ret_val;
+		}
+		mii_ctrl_reg |= MII_CR_RESET;
+
+	}
 	/* Disable MDI-X support for 10/100 */
 	else if (hw->phy_type == em_phy_ife) {
 		ret_val = em_read_phy_reg(hw, IFE_PHY_MDIX_CONTROL, &phy_data);
@@ -3205,6 +3373,25 @@ em_phy_force_speed_duplex(struct em_hw *hw)
 			ret_val = em_polarity_reversal_workaround(hw);
 			if (ret_val)
 				return ret_val;
+		}
+	} else if (hw->phy_type == em_phy_rtl8211) {
+		/*
+		* In addition, because of the s/w reset above, we need to enable
+		* CRX on TX.  This must be set for both full and half duplex
+		* operation.
+		*/
+
+		ret_val = em_read_phy_reg_ex(hw, RGEPHY_CR, &phy_data);
+		if(ret_val) {
+			printf("Unable to read RGEPHY_CR register\n");
+			return ret_val;
+		}
+
+		phy_data &= ~RGEPHY_CR_ASSERT_CRS;
+		ret_val = em_write_phy_reg_ex(hw, RGEPHY_CR, phy_data);
+		if(ret_val) {
+			printf("Unable to write RGEPHY_CR register\n");
+			return ret_val;
 		}
 	} else if (hw->phy_type == em_phy_gg82563) {
 		/*
@@ -3779,9 +3966,9 @@ em_check_for_link(struct em_hw *hw)
 		 * MAC.  Otherwise, we need to force speed/duplex on the MAC
 		 * to the current PHY speed/duplex settings.
 		 */
-		if (hw->mac_type >= em_82544 && hw->mac_type != em_icp_xxxx)
+		if (hw->mac_type >= em_82544 && hw->mac_type != em_icp_xxxx) {
 			em_config_collision_dist(hw);
-		else {
+		} else {
 			ret_val = em_config_mac_to_phy(hw);
 			if (ret_val) {
 				DEBUGOUT("Error configuring MAC to PHY"
@@ -5265,6 +5452,8 @@ em_match_gig_phy(struct em_hw *hw)
 		break;
 	case em_icp_xxxx:
 		if (hw->phy_id == M88E1141_E_PHY_ID)
+			match = TRUE;
+		if (hw->phy_id == RTL8211_E_PHY_ID)
 			match = TRUE;
 		break;
 	default:
@@ -7657,6 +7846,10 @@ em_get_cable_length(struct em_hw *hw, uint16_t *min_length,
 			return -E1000_ERR_PHY;
 			break;
 		}
+	} else if (hw->phy_type == em_phy_rtl8211) {
+		/* no cable length info on RTL8211, fake */
+		*min_length = 0;
+		*max_length = em_igp_cable_length_50;
 	} else if (hw->phy_type == em_phy_gg82563) {
 		ret_val = em_read_phy_reg(hw, GG82563_PHY_DSP_DISTANCE,
 		    &phy_data);
@@ -8961,6 +9154,8 @@ em_check_phy_reset_block(struct em_hw *hw)
 {
 	uint32_t manc = 0;
 	uint32_t fwsm = 0;
+	DEBUGFUNC("em_check_phy_reset_block\n");
+
 	if (IS_ICH8(hw->mac_type)) {
 		fwsm = E1000_READ_REG(hw, FWSM);
 		return (fwsm & E1000_FWSM_RSPCIPHY) ? E1000_SUCCESS :

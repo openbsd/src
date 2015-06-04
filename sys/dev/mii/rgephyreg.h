@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephyreg.h,v 1.6 2014/11/24 00:13:42 brad Exp $	*/
+/*	$OpenBSD: rgephyreg.h,v 1.7 2015/06/04 18:33:41 dms Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -104,6 +104,7 @@
 #define RGEPHY_ANER_LPNP	0x0008	/* Link partner can next page */
 #define RGEPHY_ANER_NP		0x0004	/* Local PHY can next page */
 #define RGEPHY_ANER_RX		0x0002	/* Next page received */
+
 #define RGEPHY_ANER_LPAN	0x0001 	/* Link partner autoneg capable */
 
 #define RGEPHY_MII_NEXTP	0x07	/* Next page */
@@ -163,5 +164,29 @@
 #define RGEPHY_SR_ALDPS			0x0008	/* RTL8211C(L) only */
 #define RGEPHY_SR_JABBER		0x0001	/* Jabber */
 #define RGEPHY_SR_SPEED(X)		((X) & RGEPHY_SR_SPEED_MASK)
+
+#define RGEPHY_LC		0x18	/* PHY LED Control Register */
+#define RGEPHY_LC_P2		0x1A	/* PHY LED Control Register, Page 2 */
+#define RGEPHY_LC_DISABLE	0x8000	/* disable leds */
+/* Led pusle strething */
+#define RGEPHY_LC_PULSE_1_3S	0x7000
+#define RGEPHY_LC_PULSE_670MS	0x6000	
+#define RGEPHY_LC_PULSE_340MS	0x5000	
+#define RGEPHY_LC_PULSE_170MS	0x4000	
+#define RGEPHY_LC_PULSE_84MS	0x3000	
+#define RGEPHY_LC_PULSE_42MS	0x2000	
+#define RGEPHY_LC_PULSE_21MS	0x1000	
+#define RGEPHY_LC_PULSE_0MS	0x0000	
+#define RGEPHY_LC_LINK		0x0008 /* Link and speed indicated by combination of leds */
+#define RGEPHY_LC_DUPLEX	0x0004
+#define RGEPHY_LC_RX		0x0002
+#define RGEPHY_LC_TX		0x0001
+
+#define RGEPHY_PS		0x1F	/* Page Select Register */
+#define RGEPHY_PS_PAGE_0	0x0000
+#define RGEPHY_PS_PAGE_1	0x0001
+#define RGEPHY_PS_PAGE_2	0x0002
+#define RGEPHY_PS_PAGE_3	0x0003
+#define RGEPHY_PS_PAGE_4	0x0004
 
 #endif /* _DEV_RGEPHY_MIIREG_H_ */

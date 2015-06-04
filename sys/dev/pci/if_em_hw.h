@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.64 2015/05/12 02:33:39 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.65 2015/06/04 18:33:41 dms Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -251,6 +251,7 @@ typedef enum {
     em_phy_82579,
     em_phy_i217,
     em_phy_82580,
+    em_phy_rtl8211,
     em_phy_undefined = 0xFF
 } em_phy_type;
 
@@ -596,6 +597,9 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_EP80579_LAN_1       0x5040
 #define E1000_DEV_ID_EP80579_LAN_2       0x5044
 #define E1000_DEV_ID_EP80579_LAN_3       0x5048
+#define E1000_DEV_ID_EP80579_LAN_4       0x5041
+#define E1000_DEV_ID_EP80579_LAN_5       0x5045
+#define E1000_DEV_ID_EP80579_LAN_6       0x5049
 
 #define NODE_ADDRESS_SIZE 6
 #define ETH_LENGTH_OF_ADDRESS 6

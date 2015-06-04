@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_em_soc.h,v 1.1 2009/11/25 13:28:13 dms Exp $	*/
+/*	$OpenBSD: if_em_soc.h,v 1.2 2015/06/04 18:33:41 dms Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -26,3 +26,6 @@ void gcu_miibus_statchg(struct device *);
 
 #define GCU_MAX_ATTEMPTS	64
 #define GCU_CMD_DELAY		50 /* microseconds */
+
+#define RTL8211_E_PHY_ID  0x001CC912
+

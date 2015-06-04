@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.297 2015/05/12 20:20:18 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.298 2015/06/04 18:33:41 dms Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -187,7 +187,10 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_R_BM_V },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_3 }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_3 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_4 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_5 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_6 }
 };
 
 /*********************************************************************
@@ -298,6 +301,8 @@ em_defer_attach(struct device *self)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	void *gcu;
 
+	INIT_DEBUGOUT("em_defer_attach: begin");
+
 	if ((gcu = em_lookup_gcu(self)) == 0) {
 		printf("%s: No GCU found, defered attachment failed\n",
 		    sc->sc_dv.dv_xname);
@@ -321,9 +326,9 @@ em_defer_attach(struct device *self)
 
 	em_setup_interface(sc);			
 
-	em_update_link_status(sc);		
-
 	em_setup_link(&sc->hw);			
+
+	em_update_link_status(sc);
 }
 
 /*********************************************************************
