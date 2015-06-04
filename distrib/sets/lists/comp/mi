@@ -575,6 +575,7 @@
 ./usr/include/dev/pci/if_nfevar.h
 ./usr/include/dev/pci/if_ngereg.h
 ./usr/include/dev/pci/if_ocereg.h
+./usr/include/dev/pci/if_rtwnreg.h
 ./usr/include/dev/pci/if_sereg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h

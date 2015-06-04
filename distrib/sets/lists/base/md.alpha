@@ -1107,6 +1107,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_nfevar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_ngereg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_ocereg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_rtwnreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_sereg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_sisreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/if_skreg.ph
