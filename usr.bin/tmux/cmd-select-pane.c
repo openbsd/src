@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.23 2015/04/29 16:26:17 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.24 2015/06/04 11:43:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,8 +28,8 @@ enum cmd_retval	 cmd_select_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_select_pane_entry = {
 	"select-pane", "selectp",
-	"DdegLlP:Rt:U", 0, 0,
-	"[-DdegLlRU] [-P style] " CMD_TARGET_PANE_USAGE,
+	"DdegLlMmP:Rt:U", 0, 0,
+	"[-DdegLlMmRU] [-P style] " CMD_TARGET_PANE_USAGE,
 	0,
 	cmd_select_pane_exec
 };
@@ -47,7 +47,8 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
-	struct window_pane	*wp;
+	struct session		*s;
+	struct window_pane	*wp, *lastwp, *markedwp;
 	const char		*style;
 
 	if (self->entry == &cmd_last_pane_entry || args_has(args, 'l')) {
@@ -74,8 +75,30 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), NULL, &wp)) == NULL)
+	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
 		return (CMD_RETURN_ERROR);
+
+	if (args_has(args, 'm') || args_has(args, 'M')) {
+		if (args_has(args, 'm') && !window_pane_visible(wp))
+			return (CMD_RETURN_NORMAL);
+		lastwp = marked_window_pane;
+
+		if (args_has(args, 'M') || server_is_marked(s, wl, wp))
+			server_clear_marked();
+		else
+			server_set_marked(s, wl, wp);
+		markedwp = marked_window_pane;
+
+		if (lastwp != NULL) {
+			server_redraw_window_borders(lastwp->window);
+			server_status_window(lastwp->window);
+		}
+		if (markedwp != NULL) {
+			server_redraw_window_borders(markedwp->window);
+			server_status_window(markedwp->window);
+		}
+		return (CMD_RETURN_NORMAL);
+	}
 
 	if (args_has(self->args, 'P') || args_has(self->args, 'g')) {
 		if (args_has(args, 'P')) {

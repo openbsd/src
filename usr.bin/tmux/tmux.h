@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.515 2015/05/27 13:28:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.516 2015/06/04 11:43:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1688,8 +1688,12 @@ struct session	*cmd_find_current(struct cmd_q *);
 struct session	*cmd_find_session(struct cmd_q *, const char *, int);
 struct winlink	*cmd_find_window(struct cmd_q *, const char *,
 		     struct session **);
+struct winlink	*cmd_find_window_marked(struct cmd_q *, const char *,
+		     struct session **);
 struct winlink	*cmd_find_pane(struct cmd_q *, const char *, struct session **,
 		     struct window_pane **);
+struct winlink	*cmd_find_pane_marked(struct cmd_q *, const char *,
+		     struct session **, struct window_pane **);
 struct client	*cmd_find_client(struct cmd_q *, const char *, int);
 int		 cmd_find_index(struct cmd_q *, const char *,
 		     struct session **);
@@ -1850,6 +1854,15 @@ const char *key_string_lookup_key(int);
 /* server.c */
 extern struct clients clients;
 extern struct clients dead_clients;
+extern struct session *marked_session;
+extern struct winlink *marked_winlink;
+extern struct window_pane *marked_window_pane;
+void	 server_set_marked(struct session *, struct winlink *,
+	     struct window_pane *);
+void	 server_clear_marked(void);
+int	 server_is_marked(struct session *, struct winlink *,
+	     struct window_pane *);
+int	 server_check_marked(void);
 int	 server_start(int, char *);
 void	 server_update_socket(void);
 void	 server_add_accept(int);
