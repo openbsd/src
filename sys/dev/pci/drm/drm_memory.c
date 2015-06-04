@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_memory.c,v 1.26 2014/07/12 18:48:52 tedu Exp $ */
+/* $OpenBSD: drm_memory.c,v 1.27 2015/06/04 06:07:23 jsg Exp $ */
 /*-
  *Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -55,7 +55,7 @@ drm_calloc(size_t nmemb, size_t size)
 	if (nmemb == 0 || SIZE_MAX / nmemb < size)
 		return (NULL);
 	else
-		return malloc(size * nmemb, M_DRM, M_NOWAIT | M_ZERO);
+		return mallocarray(size, nmemb, M_DRM, M_NOWAIT | M_ZERO);
 }
 
 void *
