@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.81 2015/03/31 16:00:38 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.82 2015/06/04 18:01:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/task.h>
 #include <sys/device.h>
 #include <dev/rndvar.h>
 
@@ -155,10 +156,13 @@ ppc64_scale_frequency(u_int freq_scale)
 
 extern int perflevel;
 
+struct task ppc64_setperf_task;
+int ppc64_perflevel;
+
 void
-ppc64_setperf(int speed)
+ppc64_do_setperf(void *arg)
 {
-	if (speed <= 50) {
+	if (ppc64_perflevel <= 50) {
 		if (ppc_curfreq == ppc_maxfreq / 2)
 			return;
 
@@ -173,6 +177,13 @@ ppc64_setperf(int speed)
 			ppc64_slew_voltage(FREQ_FULL);
 		ppc64_scale_frequency(FREQ_FULL);
 	}
+}
+
+void
+ppc64_setperf(int level)
+{
+	ppc64_perflevel = level;
+	task_add(systq, &ppc64_setperf_task);
 }
 
 void
@@ -318,8 +329,10 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		}
 
 		if (OF_getprop(qhandle, "power-mode-data",
-		    &ppc_power_mode_data, sizeof ppc_power_mode_data) >= 8)
+		    &ppc_power_mode_data, sizeof ppc_power_mode_data) >= 8) {
+			task_set(&ppc64_setperf_task, ppc64_do_setperf, NULL);
 			cpu_setperf = ppc64_setperf;
+		}
 	}
 
 	/* power savings mode */

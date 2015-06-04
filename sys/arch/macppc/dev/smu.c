@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.26 2014/10/08 16:07:45 deraadt Exp $	*/
+/*	$OpenBSD: smu.c,v 1.27 2015/06/04 18:01:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -742,6 +742,8 @@ smu_slew_voltage(u_int freq_scale)
 	struct smu_softc *sc = smu_cd.cd_devs[0];
 	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
 
+	rw_enter_write(&sc->sc_lock);
+
 	cmd->cmd = SMU_POWER;
 	cmd->len = 8;
 	memcpy(cmd->data, "VSLEW", 5);
@@ -750,4 +752,6 @@ smu_slew_voltage(u_int freq_scale)
 	cmd->data[7] = freq_scale;
 
 	smu_do_cmd(sc, 250);
+
+	rw_exit_write(&sc->sc_lock);
 }
