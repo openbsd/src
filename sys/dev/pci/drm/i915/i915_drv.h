@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.62 2015/04/18 11:41:28 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.63 2015/06/04 06:11:21 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1748,7 +1748,7 @@ void i915_teardown_sysfs(struct drm_device *dev_priv);
 /* intel_i2c.c */
 extern int intel_setup_gmbus(struct drm_device *dev);
 extern void intel_teardown_gmbus(struct drm_device *dev);
-extern inline bool intel_gmbus_is_port_valid(unsigned port)
+static inline bool intel_gmbus_is_port_valid(unsigned port)
 {
 	return (port >= GMBUS_PORT_SSC && port <= GMBUS_PORT_DPD);
 }
@@ -1757,7 +1757,7 @@ extern struct i2c_controller *intel_gmbus_get_adapter(
 		struct drm_i915_private *dev_priv, unsigned port);
 extern void intel_gmbus_set_speed(struct i2c_controller *adapter, int speed);
 extern void intel_gmbus_force_bit(struct i2c_controller *adapter, bool force_bit);
-extern inline bool intel_gmbus_is_forced_bit(struct i2c_controller *i2c)
+static inline bool intel_gmbus_is_forced_bit(struct i2c_controller *i2c)
 {
 	return container_of(i2c, struct intel_gmbus, controller)->force_bit;
 }
