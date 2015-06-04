@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.125 2015/03/06 17:36:47 millert Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.126 2015/06/04 14:23:00 sobrado Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 6 2015 $
+.Dd $Mdocdate: June 4 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -440,10 +440,10 @@ In addition, credentials for authenticated relaying may be provided
 when using a secure schema.
 For example:
 .Bd -literal -offset indent
-tls+auth://label@mx.example.org		# over TLS
-smtps+auth://label@mx.example.org	# over SMTPS
-secure+auth://label@mx.example.org	# over either \e
-					# SMTPS or TLS
+tls+auth://label@mx.example.org	    # over TLS
+smtps+auth://label@mx.example.org   # over SMTPS
+secure+auth://label@mx.example.org  # over either \e
+				    # SMTPS or TLS
 .Ed
 .Pp
 If a pki entry exists for the outgoing hostname, or one is provided
