@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.798 2015/05/30 18:14:08 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.799 2015/06/04 22:14:51 stsp Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -623,6 +623,7 @@ ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
 rtw*	at pci?				# Realtek 8180
 rtw*	at cardbus?			# Realtek 8180
+rtwn*	at pci?				# Realtek 8188CE/8192CE
 pgt*	at pci?				# Prism54 (only full-mac varients)
 pgt*	at cardbus?			# Prism54 (only full-mac varients)
 malo*	at pci?				# Marvell Libertas
