@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.28 2015/05/29 00:37:10 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.29 2015/06/04 17:10:33 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -590,17 +590,20 @@ int
 vmxnet3_intr(void *arg)
 {
 	struct vmxnet3_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	if (READ_BAR1(sc, VMXNET3_BAR1_INTR) == 0)
 		return 0;
 	if (sc->sc_ds->event)
 		vmxnet3_evintr(sc);
-	vmxnet3_rxintr(sc, &sc->sc_rxq[0]);
-	vmxnet3_txintr(sc, &sc->sc_txq[0]);
 #ifdef VMXNET3_STAT
 	vmxstat.intr++;
 #endif
-	vmxnet3_enable_intr(sc, 0);
+	if (ifp->if_flags & IFF_RUNNING) {
+		vmxnet3_rxintr(sc, &sc->sc_rxq[0]);
+		vmxnet3_txintr(sc, &sc->sc_txq[0]);
+		vmxnet3_enable_intr(sc, 0);
+	}
 	return 1;
 }
 
