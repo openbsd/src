@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1764 2015/06/04 17:42:12 dms Exp $
+$OpenBSD: pcidevs,v 1.1765 2015/06/04 18:46:43 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6222,6 +6222,7 @@ product REALTEK RTL8192CE	0x8178	RTL8192CE
 product REALTEK RTL8190P	0x8190	RTL8190P
 product REALTEK RTL8192E	0x8192	RTL8192E
 product REALTEK RTL8187SE	0x8199	8187SE
+product REALTEK RT8191SE	0xb723	8191SE
 
 /* Red Hat products */
 product REDHAT PPB		0x0001	Qemu PCI-PCI
