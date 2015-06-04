@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.76 2015/06/01 13:59:57 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.77 2015/06/04 09:42:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,7 @@
  *   pretty stupid but not supporting it is more trouble than it is worth.
  *
  * - Special handling for ESC inside a DCS to allow arbitrary byte sequences to
- *   be passed to the underlying teminal(s).
+ *   be passed to the underlying terminals.
  */
 
 /* Input parser cell. */
