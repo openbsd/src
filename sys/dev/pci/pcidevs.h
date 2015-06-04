@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1763 2015/06/01 15:52:57 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1765 2015/06/04 18:46:43 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6227,6 +6227,7 @@
 #define	PCI_PRODUCT_REALTEK_RTL8190P	0x8190		/* RTL8190P */
 #define	PCI_PRODUCT_REALTEK_RTL8192E	0x8192		/* RTL8192E */
 #define	PCI_PRODUCT_REALTEK_RTL8187SE	0x8199		/* 8187SE */
+#define	PCI_PRODUCT_REALTEK_RT8191SE	0xb723		/* 8191SE */
 
 /* Red Hat products */
 #define	PCI_PRODUCT_REDHAT_PPB	0x0001		/* Qemu PCI-PCI */

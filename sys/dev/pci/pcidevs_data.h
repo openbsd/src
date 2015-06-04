@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1763 2015/06/01 15:52:57 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1765 2015/06/04 18:46:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21658,6 +21658,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8187SE,
 	    "8187SE",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8191SE,
+	    "8191SE",
 	},
 	{
 	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_PPB,
