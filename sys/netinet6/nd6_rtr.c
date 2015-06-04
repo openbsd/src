@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.104 2015/05/26 12:19:52 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.105 2015/06/04 09:51:15 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1652,7 +1652,6 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	struct ifaddr *ifa;
 	struct ifnet *ifp = pr->ndpr_ifp;
 	struct sockaddr_in6 mask6;
-	struct sockaddr_dl sa_dl = { sizeof(sa_dl), AF_LINK };
 	struct nd_prefix *opr;
 	u_long rtflags;
 	int error = 0;
@@ -1725,9 +1724,6 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	bzero(&mask6, sizeof(mask6));
 	mask6.sin6_len = sizeof(mask6);
 	mask6.sin6_addr = pr->ndpr_mask;
-
-	sa_dl.sdl_type = ifp->if_type;
-	sa_dl.sdl_index = ifp->if_index;
 
 	/* rtrequest1() will probably set RTF_UP, but we're not sure. */
 	rtflags = RTF_UP;
