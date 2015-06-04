@@ -1,0 +1,140 @@
+.\" $OpenBSD: rtwn.4,v 1.1 2015/06/04 22:29:31 stsp Exp $
+.\"
+.\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
+.\" Copyright (c) 2015 Stefan Sperling <stsp@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 4 2015 $
+.Dt RTWN 4
+.Os
+.Sh NAME
+.Nm rtwn
+.Nd Realtek RTL8188CE PCIe IEEE 802.11b/g/n wireless network device
+.Sh SYNOPSIS
+.Cd "rtwn* at pci? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports PCIe wireless network devices based on the Realtek
+RTL8188CE chipset.
+.Pp
+The RTL8188CE is a highly integrated 802.11n adapter that combines a MAC,
+a 1T1R capable baseband and an RF in a single chip.
+It operates in the 2GHz spectrum only.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+The
+.Nm
+driver can be configured to use
+Wired Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
+WPA is the current encryption standard for wireless networks.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
+.Pp
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5 .
+.Sh FILES
+The driver needs at least version 1.0 of the following firmware files,
+which are loaded when an interface is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It /etc/firmware/rtwn-rtl8192cfwU
+.It /etc/firmware/rtwn-rtl8192cfwU_B
+.El
+.Pp
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 1 .
+.Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig rtwn0 scan
+.Pp
+The following
+.Xr hostname.if 5
+example configures rtwn0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+nwid mynwid
+wpakey mywpakey
+dhcp
+.Ed
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "rtwn0: could not read firmware ..."
+For some reason, the driver was unable to read the microcode file from the
+filesystem.
+The file might be missing or corrupted.
+.It "rtwn0: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
+The driver will reset the hardware.
+This should not happen.
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 5.8 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An -nosplit
+.An Stefan Sperling Aq Mt stsp@openbsd.org .
+It was based on the
+.Xr urtwn 4
+driver written by
+.An Damien Bergamini Aq Mt damien.bergamini@free.fr .
+.Sh CAVEATS
+The
+.Nm
+driver does not support any of the 802.11n capabilities offered by the
+adapters.
+Additional work is required in
+.Xr ieee80211 9
+before those features can be supported.
