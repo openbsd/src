@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1765 2015/06/04 18:46:43 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1766 2015/06/05 05:24:08 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4059,6 +4059,7 @@
 #define	PCI_PRODUCT_INTEL_RCU32	0x3092		/* RCU32 I2O RAID */
 #define	PCI_PRODUCT_INTEL_3124	0x3124		/* 3124 SATA */
 #define	PCI_PRODUCT_INTEL_WL_3165_1	0x3165		/* Dual Band Wireless AC 3165 */
+#define	PCI_PRODUCT_INTEL_WL_3165_2	0x3166		/* Dual Band Wireless AC 3165 */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 SATA */
 #define	PCI_PRODUCT_INTEL_82855PM_HB	0x3340		/* 82855PM Host */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM AGP */
