@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.56 2015/03/31 16:00:38 mpi Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.57 2015/06/05 11:38:19 mpi Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@ struct pmap {
 	u_int32_t pm_exec[16];	/* segments used in this pmap */
 	int pm_refs;		/* ref count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	struct mutex		pm_mtx;		/* protect VP table */
 };
 
 /*
@@ -107,17 +108,12 @@ typedef	struct pmap *pmap_t;
 
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
-boolean_t pteclrbits(struct vm_page *pg, u_int mask, u_int clear);
 
 
-#define pmap_clear_modify(page) \
-	(pteclrbits((page), PG_PMAP_MOD, TRUE))
-#define	pmap_clear_reference(page) \
-	(pteclrbits((page), PG_PMAP_REF, TRUE))
-#define	pmap_is_modified(page) \
-	(pteclrbits((page), PG_PMAP_MOD, FALSE))
-#define	pmap_is_referenced(page) \
-	(pteclrbits((page), PG_PMAP_REF, FALSE))
+#define pmap_clear_modify(pg)		pmap_clear_attrs((pg), PG_PMAP_MOD)
+#define	pmap_clear_reference(pg)	pmap_clear_attrs((pg), PG_PMAP_REF)
+#define	pmap_is_modified(pg)		pmap_test_attrs((pg), PG_PMAP_MOD)
+#define	pmap_is_referenced(pg)		pmap_test_attrs((pg), PG_PMAP_REF)
 
 #define	pmap_unwire(pm, va)
 #define pmap_update(pmap)	/* nothing (yet) */
@@ -135,6 +131,9 @@ boolean_t pteclrbits(struct vm_page *pg, u_int mask, u_int clear);
 
 void pmap_bootstrap(u_int kernelstart, u_int kernelend);
 void pmap_enable_mmu();
+
+int pmap_clear_attrs(struct vm_page *, unsigned int);
+int pmap_test_attrs(struct vm_page *, unsigned int);
 
 void pmap_pinit(struct pmap *);
 void pmap_release(struct pmap *);
