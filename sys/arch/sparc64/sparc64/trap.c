@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.85 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.86 2015/06/05 16:07:24 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -614,7 +614,7 @@ dopanic:
 		/* 
 		 * If we're busy doing copyin/copyout continue
 		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault) {
+		if (p->p_addr->u_pcb.pcb_onfault) {
 			tf->tf_pc = (vaddr_t)p->p_addr->u_pcb.pcb_onfault;
 			tf->tf_npc = tf->tf_pc + 4;
 			break;
@@ -807,7 +807,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsprobe)
+		if (p->p_addr->u_pcb.pcb_onfault == Lfsprobe)
 			goto kfault;
 #endif
 
@@ -860,8 +860,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		 */
 		if (tstate & TSTATE_PRIV) {
 kfault:
-			onfault = p->p_addr ?
-			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
+			onfault = (long)p->p_addr->u_pcb.pcb_onfault;
 			if (!onfault) {
 				extern int trap_trace_dis;
 				trap_trace_dis = 1; /* Disable traptrace for printf */
@@ -939,7 +938,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 
 	sv.sival_ptr = (void *)pc;
 
-	onfault = p->p_addr ? (long)p->p_addr->u_pcb.pcb_onfault : 0;
+	onfault = (long)p->p_addr->u_pcb.pcb_onfault;
 	printf("data error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		type, sfsr, sfva, afsr, afva, tf);
 
