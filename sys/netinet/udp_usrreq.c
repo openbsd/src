@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.199 2015/05/23 12:38:53 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.200 2015/06/05 21:41:43 krw Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -75,6 +75,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
+#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -132,7 +133,6 @@ struct	inpcbtable udbtable;
 struct	udpstat udpstat;
 
 int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
-void	udp_detach(struct inpcb *);
 void	udp_notify(struct inpcb *, int);
 
 #ifndef	UDB_INITIAL_HASH_SIZE
@@ -1063,13 +1063,13 @@ int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
     struct mbuf *control, struct proc *p)
 {
-	struct inpcb *inp = sotoinpcb(so);
+	struct inpcb *inp;
 	int error = 0;
 	int s;
 
 	if (req == PRU_CONTROL) {
 #ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
+		if (sotopf(so) == PF_INET6)
 			return (in6_control(so, (u_long)m, (caddr_t)addr,
 			    (struct ifnet *)control));
 		else
@@ -1077,10 +1077,14 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			return (in_control(so, (u_long)m, (caddr_t)addr,
 			    (struct ifnet *)control));
 	}
+
+	s = splsoftnet();
+	inp = sotoinpcb(so);
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
+
 	/*
 	 * Note: need to block udp_input while changing
 	 * the udp pcb queue and/or pcb addresses.
@@ -1092,13 +1096,9 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			error = EINVAL;
 			break;
 		}
-		s = splsoftnet();
 		if ((error = soreserve(so, udp_sendspace, udp_recvspace)) ||
-		    (error = in_pcballoc(so, &udbtable))) {
-			splx(s);
+		    (error = in_pcballoc(so, &udbtable)))
 			break;
-		}
-		splx(s);
 #ifdef INET6
 		if (sotoinpcb(so)->inp_flags & INP_IPV6)
 			sotoinpcb(so)->inp_ipv6.ip6_hlim = ip6_defhlim;
@@ -1108,18 +1108,16 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_DETACH:
-		udp_detach(inp);
+		in_pcbdetach(inp);
 		break;
 
 	case PRU_BIND:
-		s = splsoftnet();
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
 			error = in6_pcbbind(inp, addr, p);
 		else
 #endif
 			error = in_pcbbind(inp, addr, p);
-		splx(s);
 		break;
 
 	case PRU_LISTEN:
@@ -1133,9 +1131,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 				error = EISCONN;
 				break;
 			}
-			s = splsoftnet();
 			error = in6_pcbconnect(inp, addr);
-			splx(s);
 		} else
 #endif /* INET6 */
 		{
@@ -1143,9 +1139,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 				error = EISCONN;
 				break;
 			}
-			s = splsoftnet();
 			error = in_pcbconnect(inp, addr);
-			splx(s);
 		}
 
 		if (error == 0)
@@ -1176,7 +1170,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			}
 		}
 
-		s = splsoftnet();
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
 			inp->inp_laddr6 = in6addr_any;
@@ -1185,7 +1178,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			inp->inp_laddr.s_addr = INADDR_ANY;
 		in_pcbdisconnect(inp);
 
-		splx(s);
 		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
 		break;
 
@@ -1224,16 +1216,16 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
-			return (udp6_output(inp, m, addr, control));
+			error = udp6_output(inp, m, addr, control);
 		else
-			return (udp_output(inp, m, addr, control));
-#else
-		return (udp_output(inp, m, addr, control));
 #endif
+			error = udp_output(inp, m, addr, control);
+		splx(s);
+		return (error);
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		udp_detach(inp);
+		in_pcbdetach(inp);
 		break;
 
 	case PRU_SOCKADDR:
@@ -1262,6 +1254,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		 * Perhaps Path MTU might be returned for a connected
 		 * UDP socket in this case.
 		 */
+		splx(s);
 		return (0);
 
 	case PRU_SENDOOB:
@@ -1274,6 +1267,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 	case PRU_RCVD:
 	case PRU_RCVOOB:
+		splx(s);
 		return (EOPNOTSUPP);	/* do not free mbuf's */
 
 	default:
@@ -1281,21 +1275,13 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	}
 
 release:
+	splx(s);
 	if (control) {
 		m_freem(control);
 	}
 	if (m)
 		m_freem(m);
 	return (error);
-}
-
-void
-udp_detach(struct inpcb *inp)
-{
-	int s = splsoftnet();
-
-	in_pcbdetach(inp);
-	splx(s);
 }
 
 /*
