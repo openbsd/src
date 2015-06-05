@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.148 2015/06/05 09:18:50 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.149 2015/06/05 09:25:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -132,8 +132,9 @@ static inline void tlbie(vaddr_t ea);
 void tlbia(void);
 
 void pmap_attr_save(paddr_t pa, u_int32_t bits);
-void pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot);
-void pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot);
+void pmap_pted_ro(struct pte_desc *, vm_prot_t);
+void pmap_pted_ro64(struct pte_desc *, vm_prot_t);
+void pmap_pted_ro32(struct pte_desc *, vm_prot_t);
 
 /*
  * Some functions are called in real mode and cannot be profiled.
@@ -1990,16 +1991,22 @@ pmap_syncicache_user_virt(pmap_t pm, vaddr_t va)
 }
 
 void
-pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot)
+pmap_pted_ro(struct pte_desc *pted, vm_prot_t prot)
 {
+	if (ppc_proc_is_64b)
+		pmap_pted_ro64(pted, prot);
+	else
+		pmap_pted_ro32(pted, prot);
+}
+
+void
+pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
+{
+	pmap_t pm = pted->pted_pmap;
+	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 	struct pte_64 *ptp64;
-	struct pte_desc *pted;
 	struct vm_page *pg;
 	int sr, idx;
-
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL || !PTED_VALID(pted))
-		return;
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte64.pte_lo & PTE_RPGN_64);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -2049,16 +2056,13 @@ pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot)
 }
 
 void
-pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot)
+pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 {
+	pmap_t pm = pted->pted_pmap;
+	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 	struct pte_32 *ptp32;
-	struct pte_desc *pted;
 	struct vm_page *pg = NULL;
 	int sr, idx;
-
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL || !PTED_VALID(pted))
-		return;
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte32.pte_lo & PTE_RPGN_32);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -2125,28 +2129,21 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		return;
 	}
 
-	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		if (ppc_proc_is_64b)
-			pmap_page_ro64(pted->pted_pmap, pted->pted_va, prot);
-		else
-			pmap_page_ro32(pted->pted_pmap, pted->pted_va, prot);
-	}
+	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list)
+		pmap_pted_ro(pted, prot);
 }
 
 void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if (prot & (PROT_READ | PROT_EXEC)) {
-		if (ppc_proc_is_64b) {
-			while (sva < eva) {
-				pmap_page_ro64(pm, sva, prot);
-				sva += PAGE_SIZE;
-			}
-		} else {
-			while (sva < eva) {
-				pmap_page_ro32(pm, sva, prot);
-				sva += PAGE_SIZE;
-			}
+		struct pte_desc *pted;
+
+		while (sva < eva) {
+			pted = pmap_vp_lookup(pm, sva);
+			if (pted && PTED_VALID(pted))
+				pmap_pted_ro(pted, prot);
+			sva += PAGE_SIZE;
 		}
 		return;
 	}
