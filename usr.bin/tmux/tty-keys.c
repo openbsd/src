@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.72 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.73 2015/06/05 15:10:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -501,6 +501,7 @@ tty_keys_next(struct tty *tty)
 	case -1:	/* no, or not valid */
 		break;
 	case -2:	/* yes, but we don't care. */
+		key = KEYC_MOUSE;
 		goto discard_key;
 	case 1:		/* partial */
 		goto partial_key;
