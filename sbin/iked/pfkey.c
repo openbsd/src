@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.41 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.42 2015/06/05 13:35:08 vgross Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -128,36 +128,37 @@ pfkey_couple(int sd, struct iked_sas *sas, int couple)
 	struct iked_sa		*sa;
 	struct iked_flow	*flow;
 	struct iked_childsa	*csa;
-	u_int			 old;
 	const char		*mode[] = { "coupled", "decoupled" };
 
 	/* Socket is not ready */
 	if (sd == -1)
 		return (-1);
 
-	old = sadb_decoupled ? 1 : 0;
-	sadb_decoupled = couple ? 0 : 1;
-
-	if (old == sadb_decoupled)
+	if (sadb_decoupled == !couple)
 		return (0);
 
 	log_debug("%s: kernel %s -> %s", __func__,
-	    mode[old], mode[sadb_decoupled]);
+	    mode[sadb_decoupled], mode[!sadb_decoupled]);
+
+	/* Allow writes to the PF_KEY socket */
+	sadb_decoupled = 0;
 
 	RB_FOREACH(sa, iked_sas, sas) {
 		TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
-			if (!csa->csa_loaded && !sadb_decoupled)
+			if (!csa->csa_loaded && couple)
 				(void)pfkey_sa_add(sd, csa, NULL);
-			else if (csa->csa_loaded && sadb_decoupled)
+			else if (csa->csa_loaded && !couple)
 				(void)pfkey_sa_delete(sd, csa);
 		}
 		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-			if (!flow->flow_loaded && !sadb_decoupled)
+			if (!flow->flow_loaded && couple)
 				(void)pfkey_flow_add(sd, flow);
-			else if (flow->flow_loaded && sadb_decoupled)
+			else if (flow->flow_loaded && !couple)
 				(void)pfkey_flow_delete(sd, flow);
 		}
 	}
+
+	sadb_decoupled = !couple;
 
 	return (0);
 }
@@ -1301,9 +1302,19 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 	    print_spi(sa->csa_spi.spi, 4));
 
 	if (pfkey_sa(fd, satype, cmd, sa) == -1) {
-		if (cmd == SADB_ADD)
+		if (cmd == SADB_ADD) {
 			(void)pfkey_sa_delete(fd, sa);
-		return (-1);
+			return (-1);
+		}
+		if (sa->csa_allocated && !sa->csa_loaded && errno == ESRCH) {
+			/* Needed for recoupling local SAs */
+			log_debug("%s: SADB_UPDATE on local SA returned ESRCH,"
+			    " trying SADB_ADD", __func__);
+			if (pfkey_sa(fd, satype, SADB_ADD, sa) == -1)
+				return (-1);
+		} else {
+			return (-1);
+		}
 	}
 
 	if (last && cmd == SADB_ADD) {
