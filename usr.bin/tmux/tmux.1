@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.434 2015/06/04 20:34:22 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.435 2015/06/05 08:14:16 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2015 $
+.Dd $Mdocdate: June 5 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -404,6 +404,14 @@ An
 pattern which is matched against the session name.
 .El
 .Pp
+If the session name is prefixed with a
+.Ql = : ,
+only an exact match is accepted (so
+.Ql =mysess
+will only match exactly
+.Ql mysess ,
+not
+.Ql mysession ) .
 If a single session is found, it is used as the target session; multiple matches
 produce an error.
 If a session is omitted, the current session is used if available; if no
@@ -440,6 +448,9 @@ As an
 pattern matched against the window name.
 .El
 .Pp
+Like sessions, a
+.Ql =
+prefix will do an exact match only.
 An empty window name specifies the next unused index if appropriate (for
 example the
 .Ic new-window

@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.49 2015/06/04 11:43:51 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.50 2015/06/05 08:14:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -161,16 +161,16 @@ key_bindings_init(void)
 		"bind , command-prompt -I'#W' \"rename-window '%%'\"",
 		"bind - delete-buffer",
 		"bind . command-prompt \"move-window -t '%%'\"",
-		"bind 0 select-window -t:0",
-		"bind 1 select-window -t:1",
-		"bind 2 select-window -t:2",
-		"bind 3 select-window -t:3",
-		"bind 4 select-window -t:4",
-		"bind 5 select-window -t:5",
-		"bind 6 select-window -t:6",
-		"bind 7 select-window -t:7",
-		"bind 8 select-window -t:8",
-		"bind 9 select-window -t:9",
+		"bind 0 select-window -t:=0",
+		"bind 1 select-window -t:=1",
+		"bind 2 select-window -t:=2",
+		"bind 3 select-window -t:=3",
+		"bind 4 select-window -t:=4",
+		"bind 5 select-window -t:=5",
+		"bind 6 select-window -t:=6",
+		"bind 7 select-window -t:=7",
+		"bind 8 select-window -t:=8",
+		"bind 9 select-window -t:=9",
 		"bind : command-prompt",
 		"bind \\; last-pane",
 		"bind = choose-buffer",
