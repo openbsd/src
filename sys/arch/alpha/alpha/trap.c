@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.77 2014/12/24 21:15:30 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.78 2015/06/05 16:45:24 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -418,13 +418,11 @@ do_fault:
 			}
 	
 			va = trunc_page((vaddr_t)a0);
-			if (p != NULL) {
-				onfault = p->p_addr->u_pcb.pcb_onfault;
-				p->p_addr->u_pcb.pcb_onfault = 0;
-			}
+			onfault = p->p_addr->u_pcb.pcb_onfault;
+			p->p_addr->u_pcb.pcb_onfault = 0;
 			rv = uvm_fault(map, va, 0, ftype);
-			if (p != NULL)
-				p->p_addr->u_pcb.pcb_onfault = onfault;
+			p->p_addr->u_pcb.pcb_onfault = onfault;
+
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
@@ -447,8 +445,7 @@ do_fault:
 
 			if (!user) {
 				/* Check for copyin/copyout fault */
-				if (p != NULL &&
-				    p->p_addr->u_pcb.pcb_onfault != 0) {
+				if (p->p_addr->u_pcb.pcb_onfault != 0) {
 					framep->tf_regs[FRAME_PC] =
 					    p->p_addr->u_pcb.pcb_onfault;
 					p->p_addr->u_pcb.pcb_onfault = 0;
