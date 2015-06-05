@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.38 2015/05/07 11:42:56 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.39 2015/06/05 18:06:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -108,7 +108,7 @@ cfg_default_done(unused struct cmd_q *cmdq)
 		 */
 		if (!TAILQ_EMPTY(&cfg_client->cmdq->queue))
 			cmdq_continue(cfg_client->cmdq);
-		cfg_client->references--;
+		server_client_unref(cfg_client);
 		cfg_client = NULL;
 	}
 }

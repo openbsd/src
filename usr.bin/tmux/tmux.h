@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.518 2015/06/05 18:01:12 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.519 2015/06/05 18:06:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1871,7 +1871,7 @@ int	 server_client_check_nested(struct client *);
 void	 server_client_handle_key(struct client *, int);
 void	 server_client_create(int);
 int	 server_client_open(struct client *, char **);
-void	 server_client_deref(struct client *);
+void	 server_client_unref(struct client *);
 void	 server_client_lost(struct client *);
 void	 server_client_callback(int, short, void *);
 void	 server_client_status_timer(void);
