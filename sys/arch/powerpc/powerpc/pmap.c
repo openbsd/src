@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.153 2015/06/05 09:38:52 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.154 2015/06/05 09:42:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -986,12 +986,8 @@ pmap_fill_pte32(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	pted->pted_pmap = pm;
 }
 
-/*
- * read/clear bits from pte/attr cache, for reference/change
- * ack, copied code in the pte flush code....
- */
 int
-pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
+pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 {
 	u_int bits;
 	struct pte_desc *pted;
@@ -1000,18 +996,43 @@ pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
 	/* PTE_CHG_32 == PTE_CHG_64 */
 	/* PTE_REF_32 == PTE_REF_64 */
 
-	/*
-	 *  First try the attribute cache
-	 */
 	bits = pg->pg_flags & flagbit;
-	if ((bits == flagbit) && (clear == 0))
+	if ((bits == flagbit))
 		return bits;
 
-	/* cache did not contain all necessary bits,
-	 * need to walk thru pv table to collect all mappings for this
-	 * page, copying bits to the attribute cache 
-	 * then reread the attribute cache.
-	 */
+	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
+		void *pte;
+
+		if ((pte = pmap_ptedinhash(pted)) != NULL) {
+			if (ppc_proc_is_64b) {
+				struct pte_64 *ptp64 = pte;
+				bits |=	pmap_pte2flags(ptp64->pte_lo & ptebit);
+			} else {
+				struct pte_32 *ptp32 = pte;
+				bits |=	pmap_pte2flags(ptp32->pte_lo & ptebit);
+			}
+		}
+
+		if (bits == flagbit)
+			break;
+	}
+
+	atomic_setbits_int(&pg->pg_flags,  bits);
+
+	return bits;
+}
+int
+pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
+{
+	u_int bits;
+	struct pte_desc *pted;
+	u_int ptebit = pmap_flags2pte(flagbit);
+
+	/* PTE_CHG_32 == PTE_CHG_64 */
+	/* PTE_REF_32 == PTE_REF_64 */
+
+	bits = pg->pg_flags & flagbit;
+
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		void *pte;
 
@@ -1020,43 +1041,34 @@ pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
 				struct pte_64 *ptp64 = pte;
 
 				bits |=	pmap_pte2flags(ptp64->pte_lo & ptebit);
-				if (clear) {
-					ptp64->pte_hi &= ~PTE_VALID_64;
-					__asm__ volatile ("sync");
-					tlbie(pted->pted_va & ~PAGE_MASK);
-					tlbsync();
-					ptp64->pte_lo &= ~ptebit;
-					__asm__ volatile ("sync");
-					ptp64->pte_hi |= PTE_VALID_64;
-				} else if (bits == flagbit)
-					break;
+				ptp64->pte_hi &= ~PTE_VALID_64;
+				__asm__ volatile ("sync");
+				tlbie(pted->pted_va & ~PAGE_MASK);
+				tlbsync();
+				ptp64->pte_lo &= ~ptebit;
+				__asm__ volatile ("sync");
+				ptp64->pte_hi |= PTE_VALID_64;
 			} else {
 				struct pte_32 *ptp32 = pte;
 
 				bits |=	pmap_pte2flags(ptp32->pte_lo & ptebit);
-				if (clear) {
-					ptp32->pte_hi &= ~PTE_VALID_32;
-					__asm__ volatile ("sync");
-					tlbie(pted->pted_va & ~PAGE_MASK);
-					tlbsync();
-					ptp32->pte_lo &= ~ptebit;
-					__asm__ volatile ("sync");
-					ptp32->pte_hi |= PTE_VALID_32;
-				} else if (bits == flagbit)
-					break;
+				ptp32->pte_hi &= ~PTE_VALID_32;
+				__asm__ volatile ("sync");
+				tlbie(pted->pted_va & ~PAGE_MASK);
+				tlbsync();
+				ptp32->pte_lo &= ~ptebit;
+				__asm__ volatile ("sync");
+				ptp32->pte_hi |= PTE_VALID_32;
 			}
 		}
 	}
 
-	if (clear) {
-		/*
-		 * this is done a second time, because while walking the list
-		 * a bit could have been promoted via pmap_attr_save()
-		 */
-		bits |= pg->pg_flags & flagbit;
-		atomic_clearbits_int(&pg->pg_flags,  flagbit); 
-	} else
-		atomic_setbits_int(&pg->pg_flags,  bits);
+	/*
+	 * this is done a second time, because while walking the list
+	 * a bit could have been promoted via pmap_attr_save()
+	 */
+	bits |= pg->pg_flags & flagbit;
+	atomic_clearbits_int(&pg->pg_flags,  flagbit);
 
 	return bits;
 }
