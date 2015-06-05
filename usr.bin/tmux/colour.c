@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.10 2015/06/05 22:33:39 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.11 2015/06/05 22:50:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -313,6 +313,7 @@ colour_find_rgb(u_char r, u_char g, u_char b)
 {
 	struct colour_rgb	rgb = { .r = r, .g = g, .b = b }, *found;
 	u_int			distance, lowest, colour, i;
+	int			dr, dg, db;
 
 	found = bsearch(&rgb, colour_to_256, nitems(colour_to_256),
 	    sizeof colour_to_256[0], colour_cmp_rgb);
@@ -322,11 +323,11 @@ colour_find_rgb(u_char r, u_char g, u_char b)
 	colour = 16;
 	lowest = UINT_MAX;
 	for (i = 0; i < 240; i++) {
-		r = colour_from_256[i].r - rgb.r;
-		g = colour_from_256[i].g - rgb.g;
-		b = colour_from_256[i].b - rgb.b;
+		dr = (int)colour_from_256[i].r - r;
+		dg = (int)colour_from_256[i].g - g;
+		db = (int)colour_from_256[i].b - b;
 
-		distance = r * r + g * g + b * b;
+		distance = dr * dr + dg * dg + db * db;
 		if (distance < lowest) {
 			lowest = distance;
 			colour = 16 + i;
