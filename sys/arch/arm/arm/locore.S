@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 2015/01/18 14:55:02 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 2015/06/05 05:39:54 jsg Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -135,8 +135,8 @@ ENTRY_NP(cpu_reset)
 	 * Hurl ourselves into the ROM
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     15, 0, r0, c1, c0, 0
-	mcrne   15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
+	mcr     p15, 0, r0, c1, c0, 0
+	mcrne   p15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
 	mov     pc, r4
 
 	/*
