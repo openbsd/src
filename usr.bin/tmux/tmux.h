@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.520 2015/06/05 18:18:32 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.521 2015/06/05 22:33:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1953,6 +1953,7 @@ char	*xterm_keys_lookup(int);
 int	 xterm_keys_find(const char *, size_t, size_t *, int *);
 
 /* colour.c */
+int	 colour_find_rgb(u_char, u_char, u_char);
 void	 colour_set_fg(struct grid_cell *, int);
 void	 colour_set_bg(struct grid_cell *, int);
 const char *colour_tostring(int);
