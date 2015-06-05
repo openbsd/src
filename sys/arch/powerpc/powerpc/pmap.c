@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.152 2015/06/05 09:32:22 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.153 2015/06/05 09:38:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -889,66 +889,23 @@ pte_zap(void *ptp, struct pte_desc *pted)
 void
 pmap_hash_remove(struct pte_desc *pted)
 {
-	vaddr_t va = pted->pted_va;
-	pmap_t pm = pted->pted_pmap;
-	struct pte_64 *ptp64;
-	struct pte_32 *ptp32;
-	int sr, idx;
+	void *pte;
 #ifdef MULTIPROCESSOR
-	int s;
+	int s, i = PTED_PTEGIDX(pted);
 #endif
 
-	sr = ptesr(pm->pm_sr, va);
-	idx = pteidx(sr, va);
+#ifdef MULTIPROCESSOR
+	s = ppc_intr_disable();
+	pmap_hash_lock(i);
+#endif
 
-	idx =  (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0));
-	/* determine which pteg mapping is present in */
+	if ((pte = pmap_ptedinhash(pted)) != NULL)
+		pte_zap(pte, pted);
 
-	if (ppc_proc_is_64b) {
-		int entry = PTED_PTEGIDX(pted); 
-		ptp64 = pmap_ptable64 + (idx * 8);
-		ptp64 += entry; /* increment by entry into pteg */
 #ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		pmap_hash_lock(entry);
+	pmap_hash_unlock(i);
+	ppc_intr_enable(s);
 #endif
-		/*
-		 * We now have the pointer to where it will be, if it is
-		 * currently mapped. If the mapping was thrown away in
-		 * exchange for another page mapping, then this page is not
-		 * currently in the HASH.
-		 */
-		if ((pted->p.pted_pte64.pte_hi | 
-		    (PTED_HID(pted) ? PTE_HID_64 : 0)) == ptp64->pte_hi) {
-			pte_zap((void*)ptp64, pted);
-		}
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(entry);
-		ppc_intr_enable(s);
-#endif
-	} else {
-		int entry = PTED_PTEGIDX(pted); 
-		ptp32 = pmap_ptable32 + (idx * 8);
-		ptp32 += entry; /* increment by entry into pteg */
-#ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		pmap_hash_lock(entry);
-#endif
-		/*
-		 * We now have the pointer to where it will be, if it is
-		 * currently mapped. If the mapping was thrown away in
-		 * exchange for another page mapping, then this page is not
-		 * currently in the HASH.
-		 */
-		if ((pted->p.pted_pte32.pte_hi |
-		    (PTED_HID(pted) ? PTE_HID_32 : 0)) == ptp32->pte_hi) {
-			pte_zap((void*)ptp32, pted);
-		}
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(entry);
-		ppc_intr_enable(s);
-#endif
-	}
 }
 
 /*
@@ -2319,24 +2276,19 @@ pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 void
 pte_insert64(struct pte_desc *pted)
 {
-	int off;
-	int secondary;
 	struct pte_64 *ptp64;
+	int off, secondary;
 	int sr, idx, i;
+	void *pte;
 #ifdef MULTIPROCESSOR
 	int s;
 #endif
 
-
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
 	idx = pteidx(sr, pted->pted_va);
 
-	ptp64 = pmap_ptable64 +
-	    (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
-	ptp64 += PTED_PTEGIDX(pted); /* increment by index into pteg */
-	if ((pted->p.pted_pte64.pte_hi |
-	    (PTED_HID(pted) ? PTE_HID_64 : 0)) == ptp64->pte_hi)
-		pte_zap(ptp64,pted);
+	if ((pte = pmap_ptedinhash(pted)) != NULL)
+		pte_zap(pte, pted);
 
 	pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
 
@@ -2466,10 +2418,10 @@ busy:
 void
 pte_insert32(struct pte_desc *pted)
 {
-	int off;
-	int secondary;
 	struct pte_32 *ptp32;
+	int off, secondary;
 	int sr, idx, i;
+	void *pte;
 #ifdef MULTIPROCESSOR
 	int s;
 #endif
@@ -2477,13 +2429,8 @@ pte_insert32(struct pte_desc *pted)
 	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
 	idx = pteidx(sr, pted->pted_va);
 
-	/* determine if ptp is already mapped */
-	ptp32 = pmap_ptable32 +
-	    (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
-	ptp32 += PTED_PTEGIDX(pted); /* increment by index into pteg */
-	if ((pted->p.pted_pte32.pte_hi |
-	    (PTED_HID(pted) ? PTE_HID_32 : 0)) == ptp32->pte_hi)
-		pte_zap(ptp32,pted);
+	if ((pte = pmap_ptedinhash(pted)) != NULL)
+		pte_zap(pte, pted);
 
 	pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
 
@@ -2494,7 +2441,6 @@ pte_insert32(struct pte_desc *pted)
 	 * do the same for the secondary.
 	 * this would reduce the frontloading of the pteg.
 	 */
-
 	/* first just try fill of primary hash */
 	ptp32 = pmap_ptable32 + (idx) * 8;
 	for (i = 0; i < 8; i++) {
