@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.157 2015/06/05 10:04:34 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.158 2015/06/05 10:06:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -604,64 +604,22 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	return 0;
 }
 
-/* 
+/*
  * Remove the given range of mapping entries.
  */
 void
-pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
+pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 {
-	int i_sr, s_sr, e_sr;
-	int i_vp1, s_vp1, e_vp1;
-	int i_vp2, s_vp2, e_vp2;
-	struct pmapvp *vp1;
-	struct pmapvp *vp2;
 	struct pte_desc *pted;
+	vaddr_t va;
 
-	/* I suspect that if this loop were unrolled better 
-	 * it would have better performance, testing i_sr and i_vp1
-	 * in the middle loop seems excessive
-	 */
-
-	s_sr = VP_SR(va);
-	e_sr = VP_SR(endva);
-	for (i_sr = s_sr; i_sr <= e_sr; i_sr++) {
-		vp1 = pm->pm_vp[i_sr];
-		if (vp1 == NULL)
-			continue;
-
-		if (i_sr == s_sr)
-			s_vp1 = VP_IDX1(va);
-		else
-			s_vp1 = 0;
-
-		if (i_sr == e_sr)
-			e_vp1 = VP_IDX1(endva);
-		else
-			e_vp1 = VP_IDX1_SIZE-1; 
-
-		for (i_vp1 = s_vp1; i_vp1 <= e_vp1; i_vp1++) {
-			vp2 = vp1->vp[i_vp1];
-			if (vp2 == NULL)
-				continue;
-
-			if ((i_sr == s_sr) && (i_vp1 == s_vp1))
-				s_vp2 = VP_IDX2(va);
-			else
-				s_vp2 = 0;
-
-			if ((i_sr == e_sr) && (i_vp1 == e_vp1))
-				e_vp2 = VP_IDX2(endva);
-			else
-				e_vp2 = VP_IDX2_SIZE;
-
-			for (i_vp2 = s_vp2; i_vp2 < e_vp2; i_vp2++) {
-				pted = vp2->vp[i_vp2];
-				if (pted && PTED_VALID(pted))
-					pmap_remove_pted(pm, pted);
-			}
-		}
+	for (va = sva; va < eva; va += PAGE_SIZE) {
+		pted = pmap_vp_lookup(pm, va);
+		if (pted && PTED_VALID(pted))
+			pmap_remove_pted(pm, pted);
 	}
 }
+
 /*
  * remove a single mapping, notice that this code is O(1)
  */
