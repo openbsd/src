@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.519 2015/06/05 18:06:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.520 2015/06/05 18:18:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2259,7 +2259,6 @@ void	control_notify_session_close(struct session *);
 
 /* session.c */
 extern struct sessions sessions;
-extern struct sessions dead_sessions;
 extern struct session_groups session_groups;
 int	session_cmp(struct session *, struct session *);
 RB_PROTOTYPE(sessions, session, entry, session_cmp);
@@ -2271,6 +2270,7 @@ struct session	*session_create(const char *, int, char **, const char *,
 		     int, struct environ *, struct termios *, int, u_int,
 		     u_int, char **);
 void		 session_destroy(struct session *);
+void		 session_unref(struct session *);
 int		 session_check_name(const char *);
 void		 session_update_activity(struct session *);
 struct session	*session_next_session(struct session *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.7 2015/06/05 18:06:30 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.8 2015/06/05 18:18:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -123,7 +123,7 @@ notify_drain(void)
 		if (ne->client != NULL)
 			server_client_unref(ne->client);
 		if (ne->session != NULL)
-			ne->session->references--;
+			session_unref(ne->session);
 		if (ne->window != NULL)
 			window_remove_ref(ne->window);
 
