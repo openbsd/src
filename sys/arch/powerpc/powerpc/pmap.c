@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.145 2015/04/23 14:42:02 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.146 2015/06/05 09:05:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -345,8 +345,6 @@ pmap_vp_remove(pmap_t pm, vaddr_t va)
  * with reference to the pte descriptor that is used to map the page.
  * This code should track allocations of vp table allocations
  * so they can be freed efficiently.
- * 
- * Should this be called under splvm?
  */
 int
 pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
@@ -539,7 +537,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	boolean_t wt = (pa & PMAP_WT) != 0;
-	int s;
 	int need_sync = 0;
 	int cache;
 	int error;
@@ -547,9 +544,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	KASSERT(!(wt && nocache));
 	pa &= PMAP_PA_MASK;
 
-	/* MP - Acquire lock for this pmap */
-
-	s = splvm();
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted)) {
 		pmap_remove_pg(pm, va);
@@ -562,10 +556,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
-		pted = pool_get(&pmap_pted_pool, PR_NOWAIT | PR_ZERO);	
+		pted = pool_get(&pmap_pted_pool, PR_NOWAIT | PR_ZERO);
 		if (pted == NULL) {
 			if ((flags & PMAP_CANFAIL) == 0) {
-				splx(s);
 				return ENOMEM;
 			}
 			panic("pmap_enter: failed to allocate pted");
@@ -573,7 +566,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		error = pmap_vp_enter(pm, va, pted, flags);
 		if (error) {
 			pool_put(&pmap_pted_pool, pted);
-			splx(s);
 			return error;
 		}
 	}
@@ -632,13 +624,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 	}
 
-	splx(s);
-
 	/* only instruction sync executable pages */
 	if (need_sync)
 		pmap_syncicache_user_virt(pm, va);
 
-	/* MP - free pmap lock */
 	return 0;
 }
 
@@ -709,24 +698,15 @@ void
 pmap_remove_pg(pmap_t pm, vaddr_t va)
 {
 	struct pte_desc *pted;
-	int s;
 
-	/*
-	 * HASH needs to be locked here as well as pmap, and pv list.
-	 * so that we know the mapping information is either valid,
-	 * or that the mapping is not present in the hash table.
-	 */
-	s = splvm();
 	if (pm == pmap_kernel()) {
 		pted = pmap_vp_lookup(pm, va);
 		if (pted == NULL || !PTED_VALID(pted)) {
-			splx(s);
 			return;
-		} 
+		}
 	} else {
 		pted = pmap_vp_remove(pm, va);
 		if (pted == NULL || !PTED_VALID(pted)) {
-			splx(s);
 			return;
 		}
 	}
@@ -753,8 +733,6 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 
 	if (pm != pmap_kernel())
 		pool_put(&pmap_pted_pool, pted);
-
-	splx(s);
 }
 
 /*
@@ -774,15 +752,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	boolean_t wt = (pa & PMAP_WT) != 0;
 	pmap_t pm;
-	int cache, s;
+	int cache;
 
 	KASSERT(!(wt && nocache));
 	pa &= PMAP_PA_MASK;
 
 	pm = pmap_kernel();
-
-	/* MP - lock pmap. */
-	s = splvm();
 
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted))
@@ -835,8 +810,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (pm->pm_sr[sn] & SR_NOEXEC)
 			pm->pm_sr[sn] &= ~SR_NOEXEC;
 	}
-
-	splx(s);
 }
 
 /*
@@ -880,7 +853,6 @@ pte_zap(void *ptp, struct pte_desc *pted)
 /*
  * remove specified entry from hash table.
  * all information is present in pted to look up entry
- * LOCKS... should the caller lock?
  */
 void
 pmap_hash_remove(struct pte_desc *pted)
@@ -1033,7 +1005,6 @@ int
 pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
 {
 	u_int bits;
-	int s;
 	struct pte_desc *pted;
 	u_int ptebit = pmap_flags2pte(flagbit);
 
@@ -1052,9 +1023,6 @@ pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
 	 * page, copying bits to the attribute cache 
 	 * then reread the attribute cache.
 	 */
-	/* need lock for this pv */
-	s = splvm();
-
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		vaddr_t va = pted->pted_va & ~PAGE_MASK;
 		pmap_t pm = pted->pted_pmap;
@@ -1135,7 +1103,6 @@ pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
 	} else
 		atomic_setbits_int(&pg->pg_flags,  bits);
 
-	splx(s);
 	return bits;
 }
 
@@ -2151,11 +2118,7 @@ pmap_page_ro32(pmap_t pm, vaddr_t va, vm_prot_t prot)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	int s;
 	struct pte_desc *pted;
-
-	/* need to lock for this pv */
-	s = splvm();
 
 	if (prot == PROT_NONE) {
 		while (!LIST_EMPTY(&(pg->mdpage.pv_list))) {
@@ -2164,25 +2127,21 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		}
 		/* page is being reclaimed, sync icache next use */
 		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
-		splx(s);
 		return;
 	}
-	
+
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		if (ppc_proc_is_64b)
 			pmap_page_ro64(pted->pted_pmap, pted->pted_va, prot);
 		else
 			pmap_page_ro32(pted->pted_pmap, pted->pted_va, prot);
 	}
-	splx(s);
 }
 
 void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	int s;
 	if (prot & (PROT_READ | PROT_EXEC)) {
-		s = splvm();
 		if (ppc_proc_is_64b) {
 			while (sva < eva) {
 				pmap_page_ro64(pm, sva, prot);
@@ -2194,7 +2153,6 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				sva += PAGE_SIZE;
 			}
 		}
-		splx(s);
 		return;
 	}
 	pmap_remove(pm, sva, eva);
@@ -2232,10 +2190,8 @@ pmap_init()
 	pool_init(&pmap_vp_pool, sizeof(struct pmapvp), 0, 0, 0, "vp",
 	    &pool_allocator_nointr);
 	pool_setlowat(&pmap_vp_pool, 10);
-	pool_setipl(&pmap_vp_pool, IPL_VM);
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, 0, 0, "pted",
 	    NULL);
-	pool_setipl(&pmap_pted_pool, IPL_VM);
 	pool_setlowat(&pmap_pted_pool, 20);
 
 	pmap_initialized = 1;
