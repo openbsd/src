@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.151 2015/06/05 09:31:19 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.152 2015/06/05 09:32:22 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -88,10 +88,6 @@
 #include <powerpc/bat.h>
 #include <machine/pmap.h>
 
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_output.h>
-
 struct bat battable[16];
 
 struct dumpmem dumpmem[VM_PHYSSEG_MAX];
@@ -124,8 +120,6 @@ struct pte_desc {
 	pmap_t pted_pmap;
 	vaddr_t pted_va;
 };
-
-void print_pteg(pmap_t pm, vaddr_t va);
 
 static inline void tlbsync(void);
 static inline void tlbie(vaddr_t ea);
@@ -181,9 +175,6 @@ void pmap_popusr(u_int32_t oldsr);
 
 /* pte invalidation */
 void pte_zap(void *ptp, struct pte_desc *pted);
-
-/* debugging */
-void pmap_print_pted(struct pte_desc *pted, int(*print)(const char *, ...));
 
 /* XXX - panic on pool get failures? */
 struct pool pmap_pmap_pool;
@@ -2608,190 +2599,3 @@ busy:
 	ppc_intr_enable(s);
 #endif
 }
-
-#ifdef DEBUG_PMAP
-void
-print_pteg(pmap_t pm, vaddr_t va)
-{
-	int sr, idx;
-	struct pte_32 *ptp;
-
-	sr = ptesr(pm->pm_sr, va);
-	idx = pteidx(sr,  va);
-
-	ptp = pmap_ptable32 + idx  * 8;
-	db_printf("va %x, sr %x, idx %x\n", va, sr, idx);
-
-	db_printf("%08x %08x %08x %08x  %08x %08x %08x %08x\n",
-	    ptp[0].pte_hi, ptp[1].pte_hi, ptp[2].pte_hi, ptp[3].pte_hi,
-	    ptp[4].pte_hi, ptp[5].pte_hi, ptp[6].pte_hi, ptp[7].pte_hi);
-	db_printf("%08x %08x %08x %08x  %08x %08x %08x %08x\n",
-	    ptp[0].pte_lo, ptp[1].pte_lo, ptp[2].pte_lo, ptp[3].pte_lo,
-	    ptp[4].pte_lo, ptp[5].pte_lo, ptp[6].pte_lo, ptp[7].pte_lo);
-	ptp = pmap_ptable32 + (idx ^ pmap_ptab_mask) * 8;
-	db_printf("%08x %08x %08x %08x  %08x %08x %08x %08x\n",
-	    ptp[0].pte_hi, ptp[1].pte_hi, ptp[2].pte_hi, ptp[3].pte_hi,
-	    ptp[4].pte_hi, ptp[5].pte_hi, ptp[6].pte_hi, ptp[7].pte_hi);
-	db_printf("%08x %08x %08x %08x  %08x %08x %08x %08x\n",
-	    ptp[0].pte_lo, ptp[1].pte_lo, ptp[2].pte_lo, ptp[3].pte_lo,
-	    ptp[4].pte_lo, ptp[5].pte_lo, ptp[6].pte_lo, ptp[7].pte_lo);
-}
-
-
-/* debugger assist function */
-int pmap_prtrans(u_int pid, vaddr_t va);
-
-void
-pmap_print_pted(struct pte_desc *pted, int(*print)(const char *, ...))
-{
-	vaddr_t va;
-	va = pted->pted_va & ~PAGE_MASK;
-	print("\n pted %x", pted);
-	if (PTED_VALID(pted)) {
-		print(" va %x:", pted->pted_va & ~PAGE_MASK);
-		print(" HID %d", PTED_HID(pted) ? 1: 0);
-		print(" PTEGIDX %x", PTED_PTEGIDX(pted));
-		print(" MANAGED %d", PTED_MANAGED(pted) ? 1: 0);
-		print(" WIRED %d\n", PTED_WIRED(pted) ? 1: 0);
-		if (ppc_proc_is_64b) {
-			print("ptehi %x ptelo %x ptp %x Aptp %x\n",
-			    pted->p.pted_pte64.pte_hi,
-			    pted->p.pted_pte64.pte_lo,
-			    pmap_ptable64 +
-				8*pteidx(ptesr(pted->pted_pmap->pm_sr, va), va),
-			    pmap_ptable64 +
-				8*(pteidx(ptesr(pted->pted_pmap->pm_sr, va), va)
-				    ^ pmap_ptab_mask)
-			    );
-		} else {
-			print("ptehi %x ptelo %x ptp %x Aptp %x\n",
-			    pted->p.pted_pte32.pte_hi,
-			    pted->p.pted_pte32.pte_lo,
-			    pmap_ptable32 +
-				8*pteidx(ptesr(pted->pted_pmap->pm_sr, va), va),
-			    pmap_ptable32 +
-				8*(pteidx(ptesr(pted->pted_pmap->pm_sr, va), va)
-				    ^ pmap_ptab_mask)
-			    );
-		}
-	}
-}
-
-int pmap_user_read(int size, vaddr_t va);
-int
-pmap_user_read(int size, vaddr_t va)
-{
-	unsigned char  read1;
-	unsigned short read2;
-	unsigned int   read4;
-	int err;
-
-	if (size == 1) {
-		err = copyin((void *)va, &read1, 1);
-		if (err == 0) {
-			db_printf("byte read %x\n", read1);
-		}
-	} else if (size == 2) {
-		err = copyin((void *)va, &read2, 2);
-		if (err == 0) {
-			db_printf("short read %x\n", read2);
-		}
-	} else if (size == 4) {
-		err = copyin((void *)va, &read4, 4);
-		if (err == 0) {
-			db_printf("int read %x\n", read4);
-		}
-	} else {
-		return 1;
-	}
-
-
-	return 0;
-}
-
-int pmap_dump_pmap(u_int pid);
-int
-pmap_dump_pmap(u_int pid)
-{
-	pmap_t pm;
-	struct proc *p;
-	if (pid == 0) {
-		pm = pmap_kernel();
-	} else {
-		p = pfind(pid);
-
-		if (p == NULL) {
-			db_printf("invalid pid %d", pid);
-			return 1;
-		}
-		pm = p->p_vmspace->vm_map.pmap;
-	}
-	printf("pmap %x:\n", pm);
-	printf("segid %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",
-	    pm->pm_sr[0], pm->pm_sr[1], pm->pm_sr[2], pm->pm_sr[3],
-	    pm->pm_sr[4], pm->pm_sr[5], pm->pm_sr[6], pm->pm_sr[7],
-	    pm->pm_sr[8], pm->pm_sr[9], pm->pm_sr[10], pm->pm_sr[11],
-	    pm->pm_sr[12], pm->pm_sr[13], pm->pm_sr[14], pm->pm_sr[15]);
-
-	return 0;
-}
-
-int
-pmap_prtrans(u_int pid, vaddr_t va)
-{
-	struct proc *p;
-	pmap_t pm;
-	struct pmapvp *vp1;
-	struct pmapvp *vp2;
-	struct pte_desc *pted;
-
-	if (pid == 0) {
-		pm = pmap_kernel();
-	} else {
-		p = pfind(pid);
-
-		if (p == NULL) {
-			db_printf("invalid pid %d", pid);
-			return 1;
-		}
-		pm = p->p_vmspace->vm_map.pmap;
-	}
-
-	db_printf(" pid %d, va 0x%x pmap %x\n", pid, va, pm);
-	vp1 = pm->pm_vp[VP_SR(va)];
-	db_printf("sr %x id %x vp1 %x", VP_SR(va), pm->pm_sr[VP_SR(va)],
-	    vp1);
-
-	if (vp1) {
-		vp2 = vp1->vp[VP_IDX1(va)];
-		db_printf(" vp2 %x", vp2);
-
-		if (vp2) {
-			pted = vp2->vp[VP_IDX2(va)];
-			pmap_print_pted(pted, db_printf);
-
-		}
-	}
-	print_pteg(pm, va);
-
-	return 0;
-}
-int pmap_show_mappings(paddr_t pa);
-
-int
-pmap_show_mappings(paddr_t pa) 
-{
-	struct pte_desc *pted;
-	struct vm_page *pg;
-
-	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg == NULL) {
-		db_printf("pa %x: unmanaged\n");
-	} else {
-		LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-			pmap_print_pted(pted, db_printf);
-		}
-	}
-	return 0;
-}
-#endif
