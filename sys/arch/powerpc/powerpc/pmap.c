@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.158 2015/06/05 10:06:35 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.159 2015/06/05 10:15:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -201,16 +201,36 @@ do {									\
 	ppc_intr_enable(s);						\
 } while (0)
 
+#define	PMAP_VP_LOCK_INIT(pm)		mtx_init(&pm->pm_mtx, IPL_VM)
+
+#define	PMAP_VP_LOCK(pm)						\
+do {									\
+	if (pm != pmap_kernel())					\
+		mtx_enter(&pm->pm_mtx);					\
+} while (0)
+
+#define	PMAP_VP_UNLOCK(pm)						\
+do {									\
+	if (pm != pmap_kernel())					\
+		mtx_leave(&pm->pm_mtx);					\
+} while (0)
+
+#define PMAP_VP_ASSERT_LOCKED(pm)					\
+do {									\
+	if (pm != pmap_kernel())					\
+		MUTEX_ASSERT_LOCKED(&pm->pm_mtx);			\
+} while (0)
+
 #else /* ! MULTIPROCESSOR */
 
-#define	PMAP_HASH_ASSERT_LOCKED()	/* nothing */
-#define	PMAP_HASH_ASSERT_UNLOCKED()	/* nothing */
-
 #define	PMAP_HASH_LOCK_INIT()		/* nothing */
-
 #define	PMAP_HASH_LOCK(s)		(void)s
 #define	PMAP_HASH_UNLOCK(s)		/* nothing */
 
+#define	PMAP_VP_LOCK_INIT(pm)		/* nothing */
+#define	PMAP_VP_LOCK(pm)		/* nothing */
+#define	PMAP_VP_UNLOCK(pm)		/* nothing */
+#define	PMAP_VP_ASSERT_LOCKED(pm)	/* nothing */
 #endif /* MULTIPROCESSOR */
 
 /* virtual to physical helpers */
@@ -259,6 +279,8 @@ pmap_vp_lookup(pmap_t pm, vaddr_t va)
 	struct pmapvp *vp2;
 	struct pte_desc *pted;
 
+	PMAP_VP_ASSERT_LOCKED(pm);
+
 	vp1 = pm->pm_vp[VP_SR(va)];
 	if (vp1 == NULL) {
 		return NULL;
@@ -283,6 +305,8 @@ pmap_vp_remove(pmap_t pm, vaddr_t va)
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
 	struct pte_desc *pted;
+
+	PMAP_VP_ASSERT_LOCKED(pm);
 
 	vp1 = pm->pm_vp[VP_SR(va)];
 	if (vp1 == NULL) {
@@ -311,6 +335,8 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 {
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
+
+	PMAP_VP_ASSERT_LOCKED(pm);
 
 	vp1 = pm->pm_vp[VP_SR(va)];
 	if (vp1 == NULL) {
@@ -511,12 +537,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	boolean_t wt = (pa & PMAP_WT) != 0;
 	int need_sync = 0;
-	int cache;
-	int error;
+	int cache, error = 0;
 
 	KASSERT(!(wt && nocache));
 	pa &= PMAP_PA_MASK;
 
+	PMAP_VP_LOCK(pm);
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted)) {
 		pmap_remove_pted(pm, pted);
@@ -532,14 +558,15 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pted = pool_get(&pmap_pted_pool, PR_NOWAIT | PR_ZERO);
 		if (pted == NULL) {
 			if ((flags & PMAP_CANFAIL) == 0) {
-				return ENOMEM;
+				error = ENOMEM;
+				goto out;
 			}
 			panic("pmap_enter: failed to allocate pted");
 		}
 		error = pmap_vp_enter(pm, va, pted, flags);
 		if (error) {
 			pool_put(&pmap_pted_pool, pted);
-			return error;
+			goto out;
 		}
 	}
 
@@ -601,7 +628,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (need_sync)
 		pmap_syncicache_user_virt(pm, va);
 
-	return 0;
+out:
+	PMAP_VP_UNLOCK(pm);
+	return (error);
 }
 
 /*
@@ -613,11 +642,13 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	struct pte_desc *pted;
 	vaddr_t va;
 
+	PMAP_VP_LOCK(pm);
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pted = pmap_vp_lookup(pm, va);
 		if (pted && PTED_VALID(pted))
 			pmap_remove_pted(pm, pted);
 	}
+	PMAP_VP_UNLOCK(pm);
 }
 
 /*
@@ -630,6 +661,7 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 	int s;
 
 	KASSERT(pm == pted->pted_pmap);
+	PMAP_VP_ASSERT_LOCKED(pm);
 
 	pm->pm_stats.resident_count--;
 
@@ -1065,15 +1097,17 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 int pmap_id_avail = 0;
 
-void
-pmap_pinit(pmap_t pm)
+pmap_t
+pmap_create(void)
 {
 	int i, k, try, tblidx, tbloff;
 	int s, seg;
+	pmap_t pm;
 
-	bzero(pm, sizeof (struct pmap));
+	pm = pool_get(&pmap_pmap_pool, PR_WAITOK|PR_ZERO);
 
 	pmap_reference(pm);
+	PMAP_VP_LOCK_INIT(pm);
 
 	/*
 	 * Allocate segment registers for this pmap.
@@ -1100,23 +1134,10 @@ again:
 			seg = try << 4;
 			for (k = 0; k < 16; k++)
 				pm->pm_sr[k] = (seg + k) | SR_NOEXEC;
-			return;
+			return (pm);
 		}
 	}
 	panic("out of pmap slots");
-}
-
-/* 
- * Create and return a physical map.
- */
-pmap_t 
-pmap_create()
-{
-	pmap_t pmap;
-
-	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	pmap_pinit(pmap);
-	return (pmap);
 }
 
 /*
@@ -1657,9 +1678,12 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 		return TRUE;
 	}
 
+	PMAP_VP_LOCK(pm);
 	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL || !PTED_VALID(pted))
+	if (pted == NULL || !PTED_VALID(pted)) {
+		PMAP_VP_UNLOCK(pm);
 		return FALSE;
+	}
 
 	if (ppc_proc_is_64b)
 		*pa = (pted->p.pted_pte64.pte_lo & PTE_RPGN_64) |
@@ -1667,6 +1691,8 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 	else
 		*pa = (pted->p.pted_pte32.pte_lo & PTE_RPGN_32) |
 		    (va & ~PTE_RPGN_32);
+
+	PMAP_VP_UNLOCK(pm);
 	return TRUE;
 }
 
@@ -1999,11 +2025,14 @@ void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	struct pte_desc *pted;
+	pmap_t pm;
 
 	if (prot == PROT_NONE) {
-		while (!LIST_EMPTY(&(pg->mdpage.pv_list))) {
-			pted = LIST_FIRST(&(pg->mdpage.pv_list));
-			pmap_remove_pted(pted->pted_pmap, pted);
+		while ((pted = LIST_FIRST(&(pg->mdpage.pv_list))) != NULL) {
+			pm = pted->pted_pmap;
+			PMAP_VP_LOCK(pm);
+			pmap_remove_pted(pm, pted);
+			PMAP_VP_UNLOCK(pm);
 		}
 		/* page is being reclaimed, sync icache next use */
 		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
@@ -2020,12 +2049,14 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if (prot & (PROT_READ | PROT_EXEC)) {
 		struct pte_desc *pted;
 
+		PMAP_VP_LOCK(pm);
 		while (sva < eva) {
 			pted = pmap_vp_lookup(pm, sva);
 			if (pted && PTED_VALID(pted))
 				pmap_pted_ro(pted, prot);
 			sva += PAGE_SIZE;
 		}
+		PMAP_VP_UNLOCK(pm);
 		return;
 	}
 	pmap_remove(pm, sva, eva);
@@ -2154,36 +2185,41 @@ int
 pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 {
 	struct pte_desc *pted;
+	int inserted = 0;
 
 	/*
 	 * If the current mapping is RO and the access was a write
 	 * we return 0
 	 */
+	PMAP_VP_LOCK(pm);
 	pted = pmap_vp_lookup(pm, va);
 	if (pted == NULL || !PTED_VALID(pted))
-		return 0;
+		goto out;
 
 	/* Attempted to write a read-only page. */
 	if (dsisr & DSISR_STORE) {
 		if (ppc_proc_is_64b) {
 			if (pted->p.pted_pte64.pte_lo & PTE_RO_64)
-				return 0;
+				goto out;
 		} else {
 			if (pted->p.pted_pte32.pte_lo & PTE_RO_32)
-				return 0;
+				goto out;
 		}
 	}
 
 	/* Attempted to execute non-executable page. */
 	if ((exec_fault != 0) && ((pted->pted_va & PTED_VA_EXEC_M) == 0))
-		return 0;
+		goto out;
 
+	inserted = 1;
 	if (ppc_proc_is_64b)
 		pte_insert64(pted);
 	else
 		pte_insert32(pted);
 
-	return 1;
+out:
+	PMAP_VP_UNLOCK(pm);
+	return (inserted);
 }
 
 
