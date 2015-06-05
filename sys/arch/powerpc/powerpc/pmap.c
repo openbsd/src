@@ -1,10 +1,11 @@
-/*	$OpenBSD: pmap.c,v 1.154 2015/06/05 09:42:10 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.155 2015/06/05 09:48:01 mpi Exp $ */
 
 /*
+ * Copyright (c) 2015 Martin Pieuchot
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
  * All rights reserved.
  *
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -28,7 +29,7 @@
  * Effort sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
- */  
+ */
 
 /*
  * powerpc lazy icache managment.
@@ -121,10 +122,6 @@ struct pte_desc {
 	vaddr_t pted_va;
 };
 
-static inline void tlbsync(void);
-static inline void tlbie(vaddr_t ea);
-void tlbia(void);
-
 void pmap_attr_save(paddr_t pa, u_int32_t bits);
 void pmap_pted_ro(struct pte_desc *, vm_prot_t);
 void pmap_pted_ro64(struct pte_desc *, vm_prot_t);
@@ -174,7 +171,8 @@ u_int32_t pmap_setusr(pmap_t pm, vaddr_t va);
 void pmap_popusr(u_int32_t oldsr);
 
 /* pte invalidation */
-void pte_zap(void *ptp, struct pte_desc *pted);
+void pte_del(void *, vaddr_t);
+void pte_zap(void *, struct pte_desc *);
 
 /* XXX - panic on pool get failures? */
 struct pool pmap_pmap_pool;
@@ -371,28 +369,40 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	return 0;
 }
 
-/* PTE manipulation/calculations */
 static inline void
 tlbie(vaddr_t va)
 {
-	__asm volatile ("tlbie %0" :: "r"(va));
+	asm volatile ("tlbie %0" :: "r"(va & ~PAGE_MASK));
 }
 
 static inline void
 tlbsync(void)
 {
-	__asm volatile ("sync; tlbsync; sync");
+	asm volatile ("tlbsync");
+}
+static inline void
+eieio(void)
+{
+	asm volatile ("eieio");
 }
 
-void
-tlbia()
+static inline void
+sync(void)
+{
+	asm volatile ("sync");
+}
+
+static inline void
+tlbia(void)
 {
 	vaddr_t va;
 
-	__asm volatile ("sync");
+	sync();
 	for (va = 0; va < 0x00040000; va += 0x00001000)
 		tlbie(va);
+	eieio();
 	tlbsync();
+	sync();
 }
 
 static inline int
@@ -854,31 +864,40 @@ pmap_ptedinhash(struct pte_desc *pted)
 	return (NULL);
 }
 
+/*
+ * Delete a Page Table Entry, section 7.6.3.3.
+ *
+ * Note: pte must be locked.
+ */
 void
-pte_zap(void *ptp, struct pte_desc *pted)
+pte_del(void *pte, vaddr_t va)
 {
-
-	struct pte_64 *ptp64 = (void*) ptp;
-	struct pte_32 *ptp32 = (void*) ptp;
-
 	if (ppc_proc_is_64b)
-		ptp64->pte_hi &= ~PTE_VALID_64;
-	else 
-		ptp32->pte_hi &= ~PTE_VALID_32;
+		((struct pte_64 *)pte)->pte_hi &= ~PTE_VALID_64;
+	else
+		((struct pte_32 *)pte)->pte_hi &= ~PTE_VALID_32;
 
-	__asm volatile ("sync");
-	tlbie(pted->pted_va);
-	__asm volatile ("sync");
-	tlbsync();
-	__asm volatile ("sync");
+	sync();		/* Ensure update completed. */
+	tlbie(va);	/* Invalidate old translation. */
+	eieio();	/* Order tlbie before tlbsync. */
+	tlbsync();	/* Ensure tlbie completed on all processors. */
+	sync();		/* Ensure tlbsync and update completed. */
+}
+
+void
+pte_zap(void *pte, struct pte_desc *pted)
+{
+	pte_del(pte, pted->pted_va);
+
+	if (!PTED_MANAGED(pted))
+		return;
+
 	if (ppc_proc_is_64b) {
-		if (PTED_MANAGED(pted))
-			pmap_attr_save(pted->p.pted_pte64.pte_lo & PTE_RPGN_64,
-			    ptp64->pte_lo & (PTE_REF_64|PTE_CHG_64));
+		pmap_attr_save(pted->p.pted_pte64.pte_lo & PTE_RPGN_64,
+		    ((struct pte_64 *)pte)->pte_lo & (PTE_REF_64|PTE_CHG_64));
 	} else {
-		if (PTED_MANAGED(pted))
-			pmap_attr_save(pted->p.pted_pte32.pte_lo & PTE_RPGN_32,
-			    ptp32->pte_lo & (PTE_REF_32|PTE_CHG_32));
+		pmap_attr_save(pted->p.pted_pte32.pte_lo & PTE_RPGN_32,
+		    ((struct pte_32 *)pte)->pte_lo & (PTE_REF_32|PTE_CHG_32));
 	}
 }
 
@@ -948,6 +967,7 @@ pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 
 	pted->pted_pmap = pm;
 }
+
 /*
  * What about execution control? Even at only a segment granularity.
  */
@@ -992,6 +1012,9 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 	u_int bits;
 	struct pte_desc *pted;
 	u_int ptebit = pmap_flags2pte(flagbit);
+#ifdef MULTIPROCESSOR
+	int s;
+#endif
 
 	/* PTE_CHG_32 == PTE_CHG_64 */
 	/* PTE_REF_32 == PTE_REF_64 */
@@ -1003,6 +1026,10 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		void *pte;
 
+#ifdef MULTIPROCESSOR
+		s = ppc_intr_disable();
+		pmap_hash_lock(PTED_PTEGIDX(pted));
+#endif
 		if ((pte = pmap_ptedinhash(pted)) != NULL) {
 			if (ppc_proc_is_64b) {
 				struct pte_64 *ptp64 = pte;
@@ -1012,7 +1039,10 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 				bits |=	pmap_pte2flags(ptp32->pte_lo & ptebit);
 			}
 		}
-
+#ifdef MULTIPROCESSOR
+		pmap_hash_unlock(PTED_PTEGIDX(pted));
+		ppc_intr_enable(s);
+#endif
 		if (bits == flagbit)
 			break;
 	}
@@ -1027,6 +1057,9 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 	u_int bits;
 	struct pte_desc *pted;
 	u_int ptebit = pmap_flags2pte(flagbit);
+#ifdef MULTIPROCESSOR
+	int s;
+#endif
 
 	/* PTE_CHG_32 == PTE_CHG_64 */
 	/* PTE_REF_32 == PTE_REF_64 */
@@ -1036,31 +1069,39 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		void *pte;
 
+#ifdef MULTIPROCESSOR
+		s = ppc_intr_disable();
+		pmap_hash_lock(PTED_PTEGIDX(pted));
+#endif
 		if ((pte = pmap_ptedinhash(pted)) != NULL) {
 			if (ppc_proc_is_64b) {
 				struct pte_64 *ptp64 = pte;
 
 				bits |=	pmap_pte2flags(ptp64->pte_lo & ptebit);
-				ptp64->pte_hi &= ~PTE_VALID_64;
-				__asm__ volatile ("sync");
-				tlbie(pted->pted_va & ~PAGE_MASK);
-				tlbsync();
+
+				pte_del(ptp64, pted->pted_va);
+
 				ptp64->pte_lo &= ~ptebit;
-				__asm__ volatile ("sync");
+				eieio();
 				ptp64->pte_hi |= PTE_VALID_64;
+				sync();
 			} else {
 				struct pte_32 *ptp32 = pte;
 
 				bits |=	pmap_pte2flags(ptp32->pte_lo & ptebit);
-				ptp32->pte_hi &= ~PTE_VALID_32;
-				__asm__ volatile ("sync");
-				tlbie(pted->pted_va & ~PAGE_MASK);
-				tlbsync();
+
+				pte_del(ptp32, pted->pted_va);
+
 				ptp32->pte_lo &= ~ptebit;
-				__asm__ volatile ("sync");
+				eieio();
 				ptp32->pte_hi |= PTE_VALID_32;
+				sync();
 			}
 		}
+#ifdef MULTIPROCESSOR
+		pmap_hash_unlock(PTED_PTEGIDX(pted));
+		ppc_intr_enable(s);
+#endif
 	}
 
 	/*
@@ -1975,6 +2016,9 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 	struct vm_page *pg;
 	void *pte;
+#ifdef MULTIPROCESSOR
+	int s;
+#endif
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte64.pte_lo & PTE_RPGN_64);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -1991,23 +2035,31 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 	if ((prot & PROT_EXEC) == 0)
 		pted->p.pted_pte64.pte_lo |= PTE_N_64;
 
+#ifdef MULTIPROCESSOR
+	s = ppc_intr_disable();
+	pmap_hash_lock(PTED_PTEGIDX(pted));
+#endif
 	if ((pte = pmap_ptedinhash(pted)) != NULL) {
 		struct pte_64 *ptp64 = pte;
 
-		ptp64->pte_hi &= ~PTE_VALID_64;
-		__asm__ volatile ("sync");
-		tlbie(va);
-		tlbsync();
+		pte_del(ptp64, va);
+
 		if (PTED_MANAGED(pted)) { /* XXX */
 			pmap_attr_save(ptp64->pte_lo & PTE_RPGN_64,
 			    ptp64->pte_lo & (PTE_REF_64|PTE_CHG_64));
 		}
-		ptp64->pte_lo &= ~PTE_CHG_64;
-		ptp64->pte_lo &= ~PTE_PP_64;
+
+		/* Add a Page Table Entry, section 7.6.3.1. */
+		ptp64->pte_lo &= ~(PTE_CHG_64|PTE_PP_64);
 		ptp64->pte_lo |= PTE_RO_64;
-		__asm__ volatile ("sync");
+		eieio();	/* Order 1st PTE update before 2nd. */
 		ptp64->pte_hi |= PTE_VALID_64;
+		sync();		/* Ensure updates completed. */
 	}
+#ifdef MULTIPROCESSOR
+	pmap_hash_unlock(PTED_PTEGIDX(pted));
+	ppc_intr_enable(s);
+#endif
 }
 
 void
@@ -2017,6 +2069,9 @@ pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 	struct vm_page *pg;
 	void *pte;
+#ifdef MULTIPROCESSOR
+	int s;
+#endif
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte32.pte_lo & PTE_RPGN_32);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -2030,23 +2085,31 @@ pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 	pted->p.pted_pte32.pte_lo &= ~PTE_PP_32;
 	pted->p.pted_pte32.pte_lo |= PTE_RO_32;
 
+#ifdef MULTIPROCESSOR
+	s = ppc_intr_disable();
+	pmap_hash_lock(PTED_PTEGIDX(pted));
+#endif
 	if ((pte = pmap_ptedinhash(pted)) != NULL) {
 		struct pte_32 *ptp32 = pte;
 
-		ptp32->pte_hi &= ~PTE_VALID_32;
-		__asm__ volatile ("sync");
-		tlbie(va);
-		tlbsync();
+		pte_del(ptp32, va);
+
 		if (PTED_MANAGED(pted)) { /* XXX */
 			pmap_attr_save(ptp32->pte_lo & PTE_RPGN_32,
 			    ptp32->pte_lo & (PTE_REF_32|PTE_CHG_32));
 		}
-		ptp32->pte_lo &= ~PTE_CHG_32;
-		ptp32->pte_lo &= ~PTE_PP_32;
+
+		/* Add a Page Table Entry, section 7.6.3.1. */
+		ptp32->pte_lo &= ~(PTE_CHG_32|PTE_PP_32);
 		ptp32->pte_lo |= PTE_RO_32;
-		__asm__ volatile ("sync");
+		eieio();	/* Order 1st PTE update before 2nd. */
 		ptp32->pte_hi |= PTE_VALID_32;
+		sync();		/* Ensure updates completed. */
 	}
+#ifdef MULTIPROCESSOR
+	pmap_hash_unlock(PTED_PTEGIDX(pted));
+	ppc_intr_enable(s);
+#endif
 }
 
 /*
@@ -2296,13 +2359,17 @@ pte_insert64(struct pte_desc *pted)
 	int s;
 #endif
 
-	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
-	idx = pteidx(sr, pted->pted_va);
-
+	/*
+	 * Note that we do not hold the HASH lock for pted here to
+	 * handle multiple faults.
+	 */
 	if ((pte = pmap_ptedinhash(pted)) != NULL)
-		pte_zap(pte, pted);
+		pmap_hash_remove(pted);
 
 	pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
+
+	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
+	idx = pteidx(sr, pted->pted_va);
 
 	/*
 	 * instead of starting at the beginning of each pteg,
@@ -2323,14 +2390,14 @@ pte_insert64(struct pte_desc *pted)
 			continue;
 		}
 #endif
-		/* not valid, just load */
 		pted->pted_va |= i;
-		ptp64[i].pte_hi =
-		    pted->p.pted_pte64.pte_hi & ~PTE_VALID_64;
+
+		/* Add a Page Table Entry, section 7.6.3.1. */
+		ptp64[i].pte_hi = pted->p.pted_pte64.pte_hi & ~PTE_VALID_64;
 		ptp64[i].pte_lo = pted->p.pted_pte64.pte_lo;
-		__asm__ volatile ("sync");
+		eieio();	/* Order 1st PTE update before 2nd. */
 		ptp64[i].pte_hi |= PTE_VALID_64;
-		__asm volatile ("sync");
+		sync();		/* Ensure updates completed. */
 
 #ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
@@ -2352,12 +2419,13 @@ pte_insert64(struct pte_desc *pted)
 #endif
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
-		ptp64[i].pte_hi =
-		    (pted->p.pted_pte64.pte_hi | PTE_HID_64) & ~PTE_VALID_64;
+
+		/* Add a Page Table Entry, section 7.6.3.1. */
+		ptp64[i].pte_hi = pted->p.pted_pte64.pte_hi & ~PTE_VALID_64;
 		ptp64[i].pte_lo = pted->p.pted_pte64.pte_lo;
-		__asm__ volatile ("sync");
-		ptp64[i].pte_hi |= PTE_VALID_64;
-		__asm volatile ("sync");
+		eieio();	/* Order 1st PTE update before 2nd. */
+		ptp64[i].pte_hi |= (PTE_HID_64|PTE_VALID_64);
+		sync();		/* Ensure updates completed. */
 
 #ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
@@ -2370,7 +2438,7 @@ pte_insert64(struct pte_desc *pted)
 busy:
 #endif
 	/* need decent replacement algorithm */
-	__asm__ volatile ("mftb %0" : "=r"(off));
+	off = ppc_mftb();
 	secondary = off & 8;
 
 #ifdef MULTIPROCESSOR
@@ -2387,11 +2455,10 @@ busy:
 
 	ptp64 = pmap_ptable64 + (idx * 8);
 	ptp64 += PTED_PTEGIDX(pted); /* increment by index into pteg */
+
 	if (ptp64->pte_hi & PTE_VALID_64) {
 		vaddr_t va;
-		ptp64->pte_hi &= ~PTE_VALID_64;
-		__asm volatile ("sync");
-		
+
 		/* Bits 9-19 */
 		idx = (idx ^ ((ptp64->pte_hi & PTE_HID_64) ?
 		    pmap_ptab_mask : 0));
@@ -2402,24 +2469,21 @@ busy:
 		/* Bits 0-3 */
 		va |= (ptp64->pte_hi >> PTE_VSID_SHIFT_64)
 		    << ADDR_SR_SHIFT;
-		tlbie(va);
 
-		tlbsync();
+		pte_del(ptp64, va);
+
 		pmap_attr_save(ptp64->pte_lo & PTE_RPGN_64,
 		    ptp64->pte_lo & (PTE_REF_64|PTE_CHG_64));
 	}
 
+	/* Add a Page Table Entry, section 7.6.3.1. */
+	ptp64->pte_hi = pted->p.pted_pte64.pte_hi & ~PTE_VALID_64;
 	if (secondary)
-		ptp64->pte_hi =
-		    (pted->p.pted_pte64.pte_hi | PTE_HID_64) &
-		    ~PTE_VALID_64;
-	 else 
-		ptp64->pte_hi = pted->p.pted_pte64.pte_hi & 
-		    ~PTE_VALID_64;
-
+		ptp64->pte_hi |= PTE_HID_64;
 	ptp64->pte_lo = pted->p.pted_pte64.pte_lo;
-	__asm__ volatile ("sync");
+	eieio();	/* Order 1st PTE update before 2nd. */
 	ptp64->pte_hi |= PTE_VALID_64;
+	sync();		/* Ensure updates completed. */
 
 #ifdef MULTIPROCESSOR
 	pmap_hash_unlock(off & 7);
@@ -2438,13 +2502,17 @@ pte_insert32(struct pte_desc *pted)
 	int s;
 #endif
 
-	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
-	idx = pteidx(sr, pted->pted_va);
-
+	/*
+	 * Note that we do not hold the HASH lock for pted here to
+	 * handle multiple faults.
+	 */
 	if ((pte = pmap_ptedinhash(pted)) != NULL)
-		pte_zap(pte, pted);
+		pmap_hash_remove(pted);
 
 	pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
+
+	sr = ptesr(pted->pted_pmap->pm_sr, pted->pted_va);
+	idx = pteidx(sr, pted->pted_va);
 
 	/*
 	 * instead of starting at the beginning of each pteg,
@@ -2466,13 +2534,14 @@ pte_insert32(struct pte_desc *pted)
 		}
 #endif
 
-		/* not valid, just load */
 		pted->pted_va |= i;
+
+		/* Add a Page Table Entry, section 7.6.3.1. */
 		ptp32[i].pte_hi = pted->p.pted_pte32.pte_hi & ~PTE_VALID_32;
 		ptp32[i].pte_lo = pted->p.pted_pte32.pte_lo;
-		__asm__ volatile ("sync");
+		eieio();	/* Order 1st PTE update before 2nd. */
 		ptp32[i].pte_hi |= PTE_VALID_32;
-		__asm volatile ("sync");
+		sync();		/* Ensure updates completed. */
 
 #ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
@@ -2494,12 +2563,13 @@ pte_insert32(struct pte_desc *pted)
 #endif
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
-		ptp32[i].pte_hi =
-		    (pted->p.pted_pte32.pte_hi | PTE_HID_32) & ~PTE_VALID_32;
+
+		/* Add a Page Table Entry, section 7.6.3.1. */
+		ptp32[i].pte_hi = pted->p.pted_pte32.pte_hi & ~PTE_VALID_32;
 		ptp32[i].pte_lo = pted->p.pted_pte32.pte_lo;
-		__asm__ volatile ("sync");
-		ptp32[i].pte_hi |= PTE_VALID_32;
-		__asm volatile ("sync");
+		eieio();	/* Order 1st PTE update before 2nd. */
+		ptp32[i].pte_hi |= (PTE_HID_32|PTE_VALID_32);
+		sync();		/* Ensure updates completed. */
 
 #ifdef MULTIPROCESSOR
 		pmap_hash_unlock(i);
@@ -2512,7 +2582,7 @@ pte_insert32(struct pte_desc *pted)
 busy:
 #endif
 	/* need decent replacement algorithm */
-	__asm__ volatile ("mftb %0" : "=r"(off));
+	off = ppc_mftb();
 	secondary = off & 8;
 #ifdef MULTIPROCESSOR
 	s = ppc_intr_disable();
@@ -2528,29 +2598,29 @@ busy:
 
 	ptp32 = pmap_ptable32 + (idx * 8);
 	ptp32 += PTED_PTEGIDX(pted); /* increment by index into pteg */
+
 	if (ptp32->pte_hi & PTE_VALID_32) {
 		vaddr_t va;
-		ptp32->pte_hi &= ~PTE_VALID_32;
-		__asm volatile ("sync");
 
 		va = ((ptp32->pte_hi & PTE_API_32) << ADDR_API_SHIFT_32) |
 		     ((((ptp32->pte_hi >> PTE_VSID_SHIFT_32) & SR_VSID)
 			^(idx ^ ((ptp32->pte_hi & PTE_HID_32) ? 0x3ff : 0)))
 			    & 0x3ff) << PAGE_SHIFT;
-		tlbie(va);
 
-		tlbsync();
+		pte_del(ptp32, va);
+
 		pmap_attr_save(ptp32->pte_lo & PTE_RPGN_32,
 		    ptp32->pte_lo & (PTE_REF_32|PTE_CHG_32));
 	}
+
+	/* Add a Page Table Entry, section 7.6.3.1. */
+	ptp32->pte_hi = pted->p.pted_pte32.pte_hi & ~PTE_VALID_32;
 	if (secondary)
-		ptp32->pte_hi =
-		    (pted->p.pted_pte32.pte_hi | PTE_HID_32) & ~PTE_VALID_32;
-	else
-		ptp32->pte_hi = pted->p.pted_pte32.pte_hi & ~PTE_VALID_32;
+		ptp32->pte_hi |= PTE_HID_32;
 	ptp32->pte_lo = pted->p.pted_pte32.pte_lo;
-	__asm__ volatile ("sync");
+	eieio();	/* Order 1st PTE update before 2nd. */
 	ptp32->pte_hi |= PTE_VALID_32;
+	sync();		/* Ensure updates completed. */
 
 #ifdef MULTIPROCESSOR
 	pmap_hash_unlock(off & 7);
