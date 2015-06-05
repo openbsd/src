@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.39 2015/06/05 18:36:07 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.40 2015/06/05 19:36:28 deraadt Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -1061,7 +1061,8 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 LEAF(copyerr, 0)
 	LDGP(pv)
 	.set noat
-	ldq	at_reg, P_ADDR(at_reg)		/* clear handler.            */
+	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
