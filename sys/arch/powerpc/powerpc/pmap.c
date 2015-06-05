@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.150 2015/06/05 09:30:03 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.151 2015/06/05 09:31:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -1782,13 +1782,11 @@ pmap_setusr(pmap_t pm, vaddr_t va)
 	u_int32_t sr;
 	u_int32_t oldsr;
 
-	sr = pm->pm_sr[(u_int)va >> ADDR_SR_SHIFT];
+	sr = ptesr(pm->pm_sr, va);
 
 	/* user address range lock?? */
-	asm volatile ("mfsr %0,%1"
-	    : "=r" (oldsr): "n"(PPC_USER_SR));
-	asm volatile ("isync; mtsr %0,%1; isync"
-	    :: "n"(PPC_USER_SR), "r"(sr));
+	asm volatile ("mfsr %0,%1" : "=r" (oldsr): "n"(PPC_USER_SR));
+	asm volatile ("isync; mtsr %0,%1; isync" :: "n"(PPC_USER_SR), "r"(sr));
 	return oldsr;
 }
 
