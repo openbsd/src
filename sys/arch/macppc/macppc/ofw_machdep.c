@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.51 2015/04/07 14:36:34 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.52 2015/06/05 10:24:23 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -383,7 +383,7 @@ ofw_find_keyboard()
 	stdin_node = OF_instance_to_package(OF_stdin);
 	len = OF_getprop(stdin_node, "name", iname, 20);
 	iname[len] = 0;
-	printf("console in [%s] ", iname);
+	printf(" console in [%s]", iname);
 
 	/* GRR, apple removed the interface once used for keyboard
 	 * detection walk the OFW tree to find keyboards and what type.
@@ -488,8 +488,8 @@ of_display_console(void)
 		cons_backlight_available = 1;
 
 #if 1
-	printf(": memaddr %x size %x, ", addr[0].phys_lo, addr[0].size_lo);
-	printf(": consaddr %x, ", cons_addr);
+	printf(": memaddr %x, size %x ", addr[0].phys_lo, addr[0].size_lo);
+	printf(": consaddr %x ", cons_addr);
 	printf(": ioaddr %x, size %x", addr[1].phys_lo, addr[1].size_lo);
 	printf(": width %d linebytes %d height %d depth %d\n",
 		cons_width, cons_linebytes, cons_height, cons_depth);
