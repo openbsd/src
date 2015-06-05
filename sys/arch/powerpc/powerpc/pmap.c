@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.149 2015/06/05 09:25:21 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.150 2015/06/05 09:30:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -818,6 +818,51 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	}
 }
 
+static inline void *
+pmap_ptedinhash(struct pte_desc *pted)
+{
+	vaddr_t va = pted->pted_va & ~PAGE_MASK;
+	pmap_t pm = pted->pted_pmap;
+	int sr, idx;
+
+	sr = ptesr(pm->pm_sr, va);
+	idx = pteidx(sr, va);
+
+	if (ppc_proc_is_64b) {
+		struct pte_64 *pte = pmap_ptable64;
+
+		pte += (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
+		pte += PTED_PTEGIDX(pted);
+
+		/*
+		 * We now have the pointer to where it will be, if it is
+		 * currently mapped. If the mapping was thrown away in
+		 * exchange for another page mapping, then this page is
+		 * not currently in the HASH.
+		 */
+		if ((pted->p.pted_pte64.pte_hi |
+		    (PTED_HID(pted) ? PTE_HID_64 : 0)) == pte->pte_hi)
+			return (pte);
+	} else {
+		struct pte_32 *pte = pmap_ptable32;
+
+		pte += (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
+		pte += PTED_PTEGIDX(pted);
+
+		/*
+		 * We now have the pointer to where it will be, if it is
+		 * currently mapped. If the mapping was thrown away in
+		 * exchange for another page mapping, then this page is
+		 * not currently in the HASH.
+		 */
+		if ((pted->p.pted_pte32.pte_hi |
+		    (PTED_HID(pted) ? PTE_HID_32 : 0)) == pte->pte_hi)
+			return (pte);
+	}
+
+	return (NULL);
+}
+
 void
 pte_zap(void *ptp, struct pte_desc *pted)
 {
@@ -1020,65 +1065,31 @@ pteclrbits(struct vm_page *pg, u_int flagbit, u_int clear)
 	 * then reread the attribute cache.
 	 */
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		vaddr_t va = pted->pted_va & ~PAGE_MASK;
-		pmap_t pm = pted->pted_pmap;
-		struct pte_64 *ptp64;
-		struct pte_32 *ptp32;
-		int sr, idx;
+		void *pte;
 
-		sr = ptesr(pm->pm_sr, va);
-		idx = pteidx(sr, va);
+		if ((pte = pmap_ptedinhash(pted)) != NULL) {
+			if (ppc_proc_is_64b) {
+				struct pte_64 *ptp64 = pte;
 
-		/* determine which pteg mapping is present in */
-		if (ppc_proc_is_64b) {
-			ptp64 = pmap_ptable64 +
-				(idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
-			ptp64 += PTED_PTEGIDX(pted); /* increment by index into pteg */
-
-			/*
-			 * We now have the pointer to where it will be, if it is
-			 * currently mapped. If the mapping was thrown away in
-			 * exchange for another page mapping, then this page is
-			 * not currently in the HASH.
-			 *
-			 * if we are not clearing bits, and have found all of the
-			 * bits we want, we can stop
-			 */
-			if ((pted->p.pted_pte64.pte_hi |
-			    (PTED_HID(pted) ? PTE_HID_64 : 0)) == ptp64->pte_hi) {
 				bits |=	pmap_pte2flags(ptp64->pte_lo & ptebit);
 				if (clear) {
 					ptp64->pte_hi &= ~PTE_VALID_64;
 					__asm__ volatile ("sync");
-					tlbie(va);
+					tlbie(pted->pted_va & ~PAGE_MASK);
 					tlbsync();
 					ptp64->pte_lo &= ~ptebit;
 					__asm__ volatile ("sync");
 					ptp64->pte_hi |= PTE_VALID_64;
 				} else if (bits == flagbit)
 					break;
-			}
-		} else {
-			ptp32 = pmap_ptable32 +
-				(idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
-			ptp32 += PTED_PTEGIDX(pted); /* increment by index into pteg */
+			} else {
+				struct pte_32 *ptp32 = pte;
 
-			/*
-			 * We now have the pointer to where it will be, if it is
-			 * currently mapped. If the mapping was thrown away in
-			 * exchange for another page mapping, then this page is
-			 * not currently in the HASH.
-			 *
-			 * if we are not clearing bits, and have found all of the
-			 * bits we want, we can stop
-			 */
-			if ((pted->p.pted_pte32.pte_hi |
-			    (PTED_HID(pted) ? PTE_HID_32 : 0)) == ptp32->pte_hi) {
 				bits |=	pmap_pte2flags(ptp32->pte_lo & ptebit);
 				if (clear) {
 					ptp32->pte_hi &= ~PTE_VALID_32;
 					__asm__ volatile ("sync");
-					tlbie(va);
+					tlbie(pted->pted_va & ~PAGE_MASK);
 					tlbsync();
 					ptp32->pte_lo &= ~ptebit;
 					__asm__ volatile ("sync");
@@ -2004,9 +2015,8 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 {
 	pmap_t pm = pted->pted_pmap;
 	vaddr_t va = pted->pted_va & ~PAGE_MASK;
-	struct pte_64 *ptp64;
 	struct vm_page *pg;
-	int sr, idx;
+	void *pte;
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte64.pte_lo & PTE_RPGN_64);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -2023,22 +2033,9 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 	if ((prot & PROT_EXEC) == 0)
 		pted->p.pted_pte64.pte_lo |= PTE_N_64;
 
-	sr = ptesr(pm->pm_sr, va);
-	idx = pteidx(sr, va);
+	if ((pte = pmap_ptedinhash(pted)) != NULL) {
+		struct pte_64 *ptp64 = pte;
 
-	/* determine which pteg mapping is present in */
-	ptp64 = pmap_ptable64 +
-	    (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
-	ptp64 += PTED_PTEGIDX(pted); /* increment by index into pteg */
-
-	/*
-	 * We now have the pointer to where it will be, if it is
-	 * currently mapped. If the mapping was thrown away in
-	 * exchange for another page mapping, then this page is
-	 * not currently in the HASH.
-	 */
-	if ((pted->p.pted_pte64.pte_hi | (PTED_HID(pted) ? PTE_HID_64 : 0))
-	    == ptp64->pte_hi) {
 		ptp64->pte_hi &= ~PTE_VALID_64;
 		__asm__ volatile ("sync");
 		tlbie(va);
@@ -2060,9 +2057,8 @@ pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 {
 	pmap_t pm = pted->pted_pmap;
 	vaddr_t va = pted->pted_va & ~PAGE_MASK;
-	struct pte_32 *ptp32;
-	struct vm_page *pg = NULL;
-	int sr, idx;
+	struct vm_page *pg;
+	void *pte;
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte32.pte_lo & PTE_RPGN_32);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -2076,22 +2072,9 @@ pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 	pted->p.pted_pte32.pte_lo &= ~PTE_PP_32;
 	pted->p.pted_pte32.pte_lo |= PTE_RO_32;
 
-	sr = ptesr(pm->pm_sr, va);
-	idx = pteidx(sr, va);
+	if ((pte = pmap_ptedinhash(pted)) != NULL) {
+		struct pte_32 *ptp32 = pte;
 
-	/* determine which pteg mapping is present in */
-	ptp32 = pmap_ptable32 +
-	    (idx ^ (PTED_HID(pted) ? pmap_ptab_mask : 0)) * 8;
-	ptp32 += PTED_PTEGIDX(pted); /* increment by index into pteg */
-
-	/*
-	 * We now have the pointer to where it will be, if it is
-	 * currently mapped. If the mapping was thrown away in
-	 * exchange for another page mapping, then this page is
-	 * not currently in the HASH.
-	 */
-	if ((pted->p.pted_pte32.pte_hi | (PTED_HID(pted) ? PTE_HID_32 : 0))
-	    == ptp32->pte_hi) {
 		ptp32->pte_hi &= ~PTE_VALID_32;
 		__asm__ volatile ("sync");
 		tlbie(va);
