@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.147 2015/06/05 09:09:58 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.148 2015/06/05 09:18:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -164,7 +164,7 @@ void pmap_syncicache_user_virt(pmap_t pm, vaddr_t va);
 
 void _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
     int cache);
-void pmap_remove_pg(pmap_t pm, vaddr_t va);
+void pmap_remove_pted(pmap_t, struct pte_desc *);
 
 /* setup/initialization functions */
 void pmap_avail_setup(void);
@@ -547,7 +547,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted)) {
-		pmap_remove_pg(pm, va);
+		pmap_remove_pted(pm, pted);
 		/* we lost our pted if it was user */
 		if (pm != pmap_kernel())
 			pted = pmap_vp_lookup(pm, va);
@@ -643,6 +643,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	int i_vp2, s_vp2, e_vp2;
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
+	struct pte_desc *pted;
 
 	/* I suspect that if this loop were unrolled better 
 	 * it would have better performance, testing i_sr and i_vp1
@@ -679,15 +680,12 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 			if ((i_sr == e_sr) && (i_vp1 == e_vp1))
 				e_vp2 = VP_IDX2(endva);
 			else
-				e_vp2 = VP_IDX2_SIZE; 
+				e_vp2 = VP_IDX2_SIZE;
 
 			for (i_vp2 = s_vp2; i_vp2 < e_vp2; i_vp2++) {
-				if (vp2->vp[i_vp2] != NULL) {
-					pmap_remove_pg(pm,
-					    (i_sr << VP_SR_POS) |
-					    (i_vp1 << VP_IDX1_POS) |
-					    (i_vp2 << VP_IDX2_POS));
-				}
+				pted = vp2->vp[i_vp2];
+				if (pted && PTED_VALID(pted))
+					pmap_remove_pted(pm, pted);
 			}
 		}
 	}
@@ -696,27 +694,16 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
  * remove a single mapping, notice that this code is O(1)
  */
 void
-pmap_remove_pg(pmap_t pm, vaddr_t va)
+pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 {
-	struct pte_desc *pted;
+	KASSERT(pm == pted->pted_pmap);
 
-	if (pm == pmap_kernel()) {
-		pted = pmap_vp_lookup(pm, va);
-		if (pted == NULL || !PTED_VALID(pted)) {
-			return;
-		}
-	} else {
-		pted = pmap_vp_remove(pm, va);
-		if (pted == NULL || !PTED_VALID(pted)) {
-			return;
-		}
-	}
 	pm->pm_stats.resident_count--;
 
 	pmap_hash_remove(pted);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
-		u_int sn = VP_SR(va);
+		u_int sn = VP_SR(pted->pted_va);
 
 		pted->pted_va &= ~PTED_VA_EXEC_M;
 		pm->pm_exec[sn]--;
@@ -732,8 +719,10 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 	if (PTED_MANAGED(pted))
 		pmap_remove_pv(pted);
 
-	if (pm != pmap_kernel())
+	if (pm != pmap_kernel()) {
+		(void)pmap_vp_remove(pm, pted->pted_va);
 		pool_put(&pmap_pted_pool, pted);
+	}
 }
 
 /*
@@ -762,7 +751,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted))
-		pmap_remove_pg(pm, va); /* pted is reused */
+		pmap_remove_pted(pm, pted); /* pted is reused */
 
 	pm->pm_stats.resident_count++;
 
@@ -819,8 +808,13 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
-	for (len >>= PAGE_SHIFT; len >0; len--, va += PAGE_SIZE)
-		pmap_remove_pg(pmap_kernel(), va);
+	struct pte_desc *pted;
+
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pted = pmap_vp_lookup(pmap_kernel(), va);
+		if (pted && PTED_VALID(pted))
+			pmap_remove_pted(pmap_kernel(), pted);
+	}
 }
 
 void
@@ -2124,7 +2118,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	if (prot == PROT_NONE) {
 		while (!LIST_EMPTY(&(pg->mdpage.pv_list))) {
 			pted = LIST_FIRST(&(pg->mdpage.pv_list));
-			pmap_remove_pg(pted->pted_pmap, pted->pted_va);
+			pmap_remove_pted(pted->pted_pmap, pted);
 		}
 		/* page is being reclaimed, sync icache next use */
 		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
