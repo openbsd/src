@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.105 2015/02/08 05:40:48 uebayasi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.106 2015/06/05 16:35:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -352,7 +352,7 @@ itsa(struct trap_frame *trapframe, struct cpu_info *ci, struct proc *p,
 			onfault = pcb->pcb_onfault;
 			pcb->pcb_onfault = 0;
 			KERNEL_LOCK();
-			rv = uvm_fault(kernel_map, trunc_page(va), 0, ftype);
+			rv = uvm_fault(kernel_map, va, 0, ftype);
 			KERNEL_UNLOCK();
 			pcb->pcb_onfault = onfault;
 			if (rv == 0)
