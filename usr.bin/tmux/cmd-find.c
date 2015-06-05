@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.9 2015/06/05 08:14:16 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.10 2015/06/05 09:09:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -476,7 +476,7 @@ cmd_find_get_window_with_session(struct cmd_find_state *fs, const char *window)
 	}
 
 	/* Try as an offset. */
-	if (!exact && window[0] == '+' || window[0] == '-') {
+	if (!exact && (window[0] == '+' || window[0] == '-')) {
 		if (window[1] != '\0')
 			n = strtonum(window + 1, 1, INT_MAX, NULL);
 		else
