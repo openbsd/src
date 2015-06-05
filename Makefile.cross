@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.77 2015/06/01 17:36:17 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.78 2015/06/05 21:48:35 tobiasu Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -289,8 +289,9 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 # XXX MAKEOBJDIR maybe should be obj.${TARGET} here, revisit later
 cross-lib:	${CROSSGCC}
 	MACHINE=${TARGET} \
-	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU}; \
-	export MACHINE MACHINE_ARCH MACHINE_CPU; \
+	    MACHINE_ARCH=${TARGET_ARCH} MACHINE_CPU=${TARGET_CPU} \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj; \
+	export MACHINE MACHINE_ARCH MACHINE_CPU BSDOBJDIR; \
 	(cd ${.CURDIR}/lib; \
 	    for lib in csu libc; do \
 	    (cd $$lib; \
