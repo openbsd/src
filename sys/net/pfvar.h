@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.414 2015/04/11 13:00:12 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.415 2015/06/05 13:22:34 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1316,7 +1316,8 @@ struct pf_pdesc {
 #define PFRES_SRCLIMIT	13		/* Source node/conn limit */
 #define PFRES_SYNPROXY	14		/* SYN proxy */
 #define PFRES_TRANSLATE	15		/* No translation address available */
-#define PFRES_MAX	16		/* total+1 */
+#define PFRES_NOROUTE	16		/* No route found for PBR action */
+#define PFRES_MAX	17		/* total+1 */
 
 #define PFRES_NAMES { \
 	"match", \
@@ -1335,6 +1336,7 @@ struct pf_pdesc {
 	"src-limit", \
 	"synproxy", \
 	"translate", \
+	"no-route", \
 	NULL \
 }
 

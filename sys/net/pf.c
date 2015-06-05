@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.916 2015/05/26 16:17:51 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.917 2015/06/05 13:22:34 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -203,9 +203,9 @@ int			 pf_test_state_icmp(struct pf_pdesc *,
 u_int8_t		 pf_get_wscale(struct pf_pdesc *);
 u_int16_t		 pf_get_mss(struct pf_pdesc *);
 u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t, int,
-				u_int16_t);
-void			 pf_set_rt_ifp(struct pf_state *,
-			    struct pf_addr *);
+			    u_int16_t);
+static __inline int	 pf_set_rt_ifp(struct pf_state *, struct pf_addr *,
+			    sa_family_t);
 struct pf_divert	*pf_get_divert(struct mbuf *);
 int			 pf_walk_option6(struct pf_pdesc *, struct ip6_hdr *,
 			    int, int, u_short *);
@@ -2958,32 +2958,39 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 	return (mss);
 }
 
-void
-pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
+static __inline int
+pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr, sa_family_t af)
 {
 	struct pf_rule *r = s->rule.ptr;
 	struct pf_src_node *sns[PF_SN_MAX];
+	int	rv;
 
 	s->rt_kif = NULL;
 	if (!r->rt)
-		return;
+		return (0);
+
 	bzero(sns, sizeof(sns));
-	switch (s->key[PF_SK_WIRE]->af) {
+	switch (af) {
 	case AF_INET:
-		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, sns,
+		rv = pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, sns,
 		    &r->route, PF_SN_ROUTE);
-		s->rt_kif = r->route.kif;
-		s->natrule.ptr = r;
 		break;
 #ifdef INET6
 	case AF_INET6:
-		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, sns,
+		rv = pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, sns,
 		    &r->route, PF_SN_ROUTE);
-		s->rt_kif = r->route.kif;
-		s->natrule.ptr = r;
 		break;
 #endif /* INET6 */
+	default:
+		rv = 1;
 	}
+
+	if (rv == 0) {
+		s->rt_kif = r->route.kif;
+		s->natrule.ptr = r;
+	}
+
+	return (rv);
 }
 
 u_int32_t
@@ -3557,16 +3564,6 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		goto csfailed;
 	}
 
-	if (pf_state_insert(BOUND_IFACE(r, pd->kif), skw, sks, s)) {
-		pf_state_key_detach(s, PF_SK_STACK);
-		pf_state_key_detach(s, PF_SK_WIRE);
-		*sks = *skw = NULL;
-		REASON_SET(&reason, PFRES_STATEINS);
-		goto csfailed;
-	} else
-		*sm = s;
-
-	/* attach src nodes late, otherwise cleanup on error nontrivial */
 	for (i = 0; i < PF_SN_MAX; i++)
 		if (sns[i] != NULL) {
 			struct pf_sn_item	*sni;
@@ -3574,17 +3571,26 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 			sni = pool_get(&pf_sn_item_pl, PR_NOWAIT);
 			if (sni == NULL) {
 				REASON_SET(&reason, PFRES_MEMORY);
-				pf_src_tree_remove_state(s);
-				STATE_DEC_COUNTERS(s);
-				pool_put(&pf_state_pl, s);
-				return (PF_DROP);
+				goto csfailed;
 			}
 			sni->sn = sns[i];
 			SLIST_INSERT_HEAD(&s->src_nodes, sni, next);
 			sni->sn->states++;
 		}
 
-	pf_set_rt_ifp(s, pd->src);	/* needs s->state_key set */
+	if (pf_set_rt_ifp(s, pd->src, (*skw)->af) != 0) {
+		REASON_SET(&reason, PFRES_NOROUTE);
+		goto csfailed;
+	}
+
+	if (pf_state_insert(BOUND_IFACE(r, pd->kif), skw, sks, s)) {
+		pf_detach_state(s);
+		*sks = *skw = NULL;
+		REASON_SET(&reason, PFRES_STATEINS);
+		goto csfailed;
+	} else
+		*sm = s;
+
 	if (tag > 0) {
 		pf_tag_ref(tag);
 		s->tag = tag;
@@ -3612,12 +3618,16 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	return (PF_PASS);
 
 csfailed:
-	for (i = 0; i < PF_SN_MAX; i++)
-		if (sns[i] != NULL)
-			pf_remove_src_node(sns[i]);
 	if (s) {
 		pf_normalize_tcp_cleanup(s);	/* safe even w/o init */
 		pf_src_tree_remove_state(s);
+	}
+
+	for (i = 0; i < PF_SN_MAX; i++)
+		if (sns[i] != NULL)
+			pf_remove_src_node(sns[i]);
+
+	if (s) {
 		STATE_DEC_COUNTERS(s);
 		pool_put(&pf_state_pl, s);
 	}
