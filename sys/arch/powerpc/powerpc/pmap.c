@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.155 2015/06/05 09:48:01 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.156 2015/06/05 09:53:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -166,6 +166,7 @@ void *pmap_steal_avail(size_t size, int align);
 
 /* asm interface */
 int pte_spill_r(u_int32_t, u_int32_t, u_int32_t, int) __noprof;
+int pte_spill_v(pmap_t, u_int32_t, u_int32_t, int) __noprof;
 
 u_int32_t pmap_setusr(pmap_t pm, vaddr_t va);
 void pmap_popusr(u_int32_t oldsr);
@@ -2260,49 +2261,15 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 			pmap_fill_pte64(pm, aligned_va, aligned_va,
 			    pted, prot, PMAP_CACHE_WB);
 			pte_insert64(pted);
-			return 1;
 		} else {
 			pmap_fill_pte32(pm, aligned_va, aligned_va,
 			    pted, prot, PMAP_CACHE_WB);
 			pte_insert32(pted);
-			return 1;
 		}
-		/* NOTREACHED */
+		return 1;
 	}
 
-	/*
-	 * If the current mapping is RO and the access was a write
-	 * we return 0
-	 */
-	pted = pmap_vp_lookup(pm, va);
-	if (pted == NULL || !PTED_VALID(pted))
-		return 0;
-
-	if (ppc_proc_is_64b) {
-		/* check write fault and we have a readonly mapping */
-		if ((dsisr & (1 << (31-6))) &&
-		    (pted->p.pted_pte64.pte_lo & 0x1))
-			return 0;
-		if ((exec_fault != 0)
-		    && ((pted->pted_va & PTED_VA_EXEC_M) == 0)) {
-			/* attempted to execute non-executable page */
-			return 0;
-		}
-		pte_insert64(pted);
-	} else {
-		/* check write fault and we have a readonly mapping */
-		if ((dsisr & (1 << (31-6))) &&
-		    (pted->p.pted_pte32.pte_lo & 0x1))
-			return 0;
-		if ((exec_fault != 0)
-		    && ((pted->pted_va & PTED_VA_EXEC_M) == 0)) {
-			/* attempted to execute non-executable page */
-			return 0;
-		}
-		pte_insert32(pted);
-	}
-
-	return 1;
+	return pte_spill_v(pm, va, dsisr, exec_fault);
 }
 
 int
@@ -2318,26 +2285,26 @@ pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 	if (pted == NULL || !PTED_VALID(pted))
 		return 0;
 
-	if (ppc_proc_is_64b) {
-		/* check write fault and we have a readonly mapping */
-		if ((dsisr & (1 << (31-6))) &&
-		    (pted->p.pted_pte64.pte_lo & 0x1))
-			return 0;
-	} else {
-		/* check write fault and we have a readonly mapping */
-		if ((dsisr & (1 << (31-6))) &&
-		    (pted->p.pted_pte32.pte_lo & 0x1))
-			return 0;
+	/* Attempted to write a read-only page. */
+	if (dsisr & DSISR_STORE) {
+		if (ppc_proc_is_64b) {
+			if (pted->p.pted_pte64.pte_lo & PTE_RO_64)
+				return 0;
+		} else {
+			if (pted->p.pted_pte32.pte_lo & PTE_RO_32)
+				return 0;
+		}
 	}
-	if ((exec_fault != 0)
-	    && ((pted->pted_va & PTED_VA_EXEC_M) == 0)) {
-		/* attempted to execute non-executable page */
+
+	/* Attempted to execute non-executable page. */
+	if ((exec_fault != 0) && ((pted->pted_va & PTED_VA_EXEC_M) == 0))
 		return 0;
-	}
+
 	if (ppc_proc_is_64b)
 		pte_insert64(pted);
 	else
 		pte_insert32(pted);
+
 	return 1;
 }
 
