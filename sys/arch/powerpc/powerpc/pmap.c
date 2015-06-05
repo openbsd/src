@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.156 2015/06/05 09:53:40 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.157 2015/06/05 10:04:34 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -144,7 +144,7 @@ void pmap_remove_pv(struct pte_desc *pted);
 
 
 /* pte hash table routines */
-void pmap_hash_remove(struct pte_desc *);
+static inline void *pmap_ptedinhash(struct pte_desc *);
 void pte_insert32(struct pte_desc *) __noprof;
 void pte_insert64(struct pte_desc *) __noprof;
 void pmap_fill_pte64(pmap_t, vaddr_t, paddr_t, struct pte_desc *, vm_prot_t,
@@ -185,63 +185,32 @@ int physmem;
 int physmaxaddr;
 
 #ifdef MULTIPROCESSOR
-void pmap_hash_lock_init(void);
-void pmap_hash_lock(int entry);
-void pmap_hash_unlock(int entry)  __noprof;
-int pmap_hash_lock_try(int entry) __noprof;
+struct __mp_lock pmap_hash_lock;
 
-volatile unsigned int pmap_hash_lock_word = 0;
+#define	PMAP_HASH_LOCK_INIT()		__mp_lock_init(&pmap_hash_lock)
 
-void
-pmap_hash_lock_init()
-{
-	pmap_hash_lock_word = 0;
-}
+#define	PMAP_HASH_LOCK(s)						\
+do {									\
+	s = ppc_intr_disable();						\
+	__mp_lock(&pmap_hash_lock);					\
+} while (0)
 
-int
-pmap_hash_lock_try(int entry)
-{
-	int val = 1 << entry;
-	int success, tmp;
-	__asm volatile (
-	    "1: lwarx	%0, 0, %3	\n"
-	    "	and.	%1, %2, %0	\n"
-	    "	li	%1, 0		\n"
-	    "	bne 2f			\n"
-	    "	or	%0, %2, %0	\n"
-	    "	stwcx.  %0, 0, %3	\n"
-	    "	li	%1, 1		\n"
-	    "	bne-	1b		\n"
-	    "2:				\n"
-	    : "=&r" (tmp), "=&r" (success)
-	    : "r" (val), "r" (&pmap_hash_lock_word)
-	    : "memory");
-	return success;
-}
+#define	PMAP_HASH_UNLOCK(s)						\
+do {									\
+	__mp_unlock(&pmap_hash_lock);					\
+	ppc_intr_enable(s);						\
+} while (0)
 
+#else /* ! MULTIPROCESSOR */
 
-void
-pmap_hash_lock(int entry)
-{
-	int attempt = 0;
-	int locked = 0;
-	do {
-		if (pmap_hash_lock_word & (1 << entry)) {
-			attempt++;
-			if(attempt >0x20000000)
-				panic("unable to obtain lock on entry %d",
-				    entry);
-			continue;
-		}
-		locked = pmap_hash_lock_try(entry);
-	} while (locked == 0);
-}
+#define	PMAP_HASH_ASSERT_LOCKED()	/* nothing */
+#define	PMAP_HASH_ASSERT_UNLOCKED()	/* nothing */
 
-void
-pmap_hash_unlock(int entry)
-{
-	atomic_clearbits_int(&pmap_hash_lock_word,  1 << entry);
-}
+#define	PMAP_HASH_LOCK_INIT()		/* nothing */
+
+#define	PMAP_HASH_LOCK(s)		(void)s
+#define	PMAP_HASH_UNLOCK(s)		/* nothing */
+
 #endif /* MULTIPROCESSOR */
 
 /* virtual to physical helpers */
@@ -699,11 +668,17 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 void
 pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 {
+	void *pte;
+	int s;
+
 	KASSERT(pm == pted->pted_pmap);
 
 	pm->pm_stats.resident_count--;
 
-	pmap_hash_remove(pted);
+	PMAP_HASH_LOCK(s);
+	if ((pte = pmap_ptedinhash(pted)) != NULL)
+		pte_zap(pte, pted);
+	PMAP_HASH_UNLOCK(s);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
 		u_int sn = VP_SR(pted->pted_va);
@@ -903,32 +878,6 @@ pte_zap(void *pte, struct pte_desc *pted)
 }
 
 /*
- * remove specified entry from hash table.
- * all information is present in pted to look up entry
- */
-void
-pmap_hash_remove(struct pte_desc *pted)
-{
-	void *pte;
-#ifdef MULTIPROCESSOR
-	int s, i = PTED_PTEGIDX(pted);
-#endif
-
-#ifdef MULTIPROCESSOR
-	s = ppc_intr_disable();
-	pmap_hash_lock(i);
-#endif
-
-	if ((pte = pmap_ptedinhash(pted)) != NULL)
-		pte_zap(pte, pted);
-
-#ifdef MULTIPROCESSOR
-	pmap_hash_unlock(i);
-	ppc_intr_enable(s);
-#endif
-}
-
-/*
  * What about execution control? Even at only a segment granularity.
  */
 void
@@ -1013,9 +962,7 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 	u_int bits;
 	struct pte_desc *pted;
 	u_int ptebit = pmap_flags2pte(flagbit);
-#ifdef MULTIPROCESSOR
 	int s;
-#endif
 
 	/* PTE_CHG_32 == PTE_CHG_64 */
 	/* PTE_REF_32 == PTE_REF_64 */
@@ -1027,10 +974,7 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		void *pte;
 
-#ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		pmap_hash_lock(PTED_PTEGIDX(pted));
-#endif
+		PMAP_HASH_LOCK(s);
 		if ((pte = pmap_ptedinhash(pted)) != NULL) {
 			if (ppc_proc_is_64b) {
 				struct pte_64 *ptp64 = pte;
@@ -1040,10 +984,8 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 				bits |=	pmap_pte2flags(ptp32->pte_lo & ptebit);
 			}
 		}
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(PTED_PTEGIDX(pted));
-		ppc_intr_enable(s);
-#endif
+		PMAP_HASH_UNLOCK(s);
+
 		if (bits == flagbit)
 			break;
 	}
@@ -1058,9 +1000,7 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 	u_int bits;
 	struct pte_desc *pted;
 	u_int ptebit = pmap_flags2pte(flagbit);
-#ifdef MULTIPROCESSOR
 	int s;
-#endif
 
 	/* PTE_CHG_32 == PTE_CHG_64 */
 	/* PTE_REF_32 == PTE_REF_64 */
@@ -1070,10 +1010,7 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		void *pte;
 
-#ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		pmap_hash_lock(PTED_PTEGIDX(pted));
-#endif
+		PMAP_HASH_LOCK(s);
 		if ((pte = pmap_ptedinhash(pted)) != NULL) {
 			if (ppc_proc_is_64b) {
 				struct pte_64 *ptp64 = pte;
@@ -1099,10 +1036,7 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 				sync();
 			}
 		}
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(PTED_PTEGIDX(pted));
-		ppc_intr_enable(s);
-#endif
+		PMAP_HASH_UNLOCK(s);
 	}
 
 	/*
@@ -2017,9 +1951,7 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 	struct vm_page *pg;
 	void *pte;
-#ifdef MULTIPROCESSOR
 	int s;
-#endif
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte64.pte_lo & PTE_RPGN_64);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -2036,10 +1968,7 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 	if ((prot & PROT_EXEC) == 0)
 		pted->p.pted_pte64.pte_lo |= PTE_N_64;
 
-#ifdef MULTIPROCESSOR
-	s = ppc_intr_disable();
-	pmap_hash_lock(PTED_PTEGIDX(pted));
-#endif
+	PMAP_HASH_LOCK(s);
 	if ((pte = pmap_ptedinhash(pted)) != NULL) {
 		struct pte_64 *ptp64 = pte;
 
@@ -2057,10 +1986,7 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 		ptp64->pte_hi |= PTE_VALID_64;
 		sync();		/* Ensure updates completed. */
 	}
-#ifdef MULTIPROCESSOR
-	pmap_hash_unlock(PTED_PTEGIDX(pted));
-	ppc_intr_enable(s);
-#endif
+	PMAP_HASH_UNLOCK(s);
 }
 
 void
@@ -2070,9 +1996,7 @@ pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 	struct vm_page *pg;
 	void *pte;
-#ifdef MULTIPROCESSOR
 	int s;
-#endif
 
 	pg = PHYS_TO_VM_PAGE(pted->p.pted_pte32.pte_lo & PTE_RPGN_32);
 	if (pg->pg_flags & PG_PMAP_EXE) {
@@ -2086,10 +2010,7 @@ pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 	pted->p.pted_pte32.pte_lo &= ~PTE_PP_32;
 	pted->p.pted_pte32.pte_lo |= PTE_RO_32;
 
-#ifdef MULTIPROCESSOR
-	s = ppc_intr_disable();
-	pmap_hash_lock(PTED_PTEGIDX(pted));
-#endif
+	PMAP_HASH_LOCK(s);
 	if ((pte = pmap_ptedinhash(pted)) != NULL) {
 		struct pte_32 *ptp32 = pte;
 
@@ -2107,10 +2028,7 @@ pmap_pted_ro32(struct pte_desc *pted, vm_prot_t prot)
 		ptp32->pte_hi |= PTE_VALID_32;
 		sync();		/* Ensure updates completed. */
 	}
-#ifdef MULTIPROCESSOR
-	pmap_hash_unlock(PTED_PTEGIDX(pted));
-	ppc_intr_enable(s);
-#endif
+	PMAP_HASH_UNLOCK(s);
 }
 
 /*
@@ -2190,6 +2108,8 @@ pmap_init()
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, 0, 0, "pted",
 	    NULL);
 	pool_setlowat(&pmap_pted_pool, 20);
+
+	PMAP_HASH_LOCK_INIT();
 
 	pmap_initialized = 1;
 }
@@ -2322,16 +2242,11 @@ pte_insert64(struct pte_desc *pted)
 	int off, secondary;
 	int sr, idx, i;
 	void *pte;
-#ifdef MULTIPROCESSOR
 	int s;
-#endif
 
-	/*
-	 * Note that we do not hold the HASH lock for pted here to
-	 * handle multiple faults.
-	 */
+	PMAP_HASH_LOCK(s);
 	if ((pte = pmap_ptedinhash(pted)) != NULL)
-		pmap_hash_remove(pted);
+		pte_zap(pte, pted);
 
 	pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
 
@@ -2345,18 +2260,13 @@ pte_insert64(struct pte_desc *pted)
 	 * do the same for the secondary.
 	 * this would reduce the frontloading of the pteg.
 	 */
+
 	/* first just try fill of primary hash */
 	ptp64 = pmap_ptable64 + (idx) * 8;
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
 			continue;
-#ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		if (pmap_hash_lock_try(i) == 0) {
-			ppc_intr_enable(s);
-			continue;
-		}
-#endif
+
 		pted->pted_va |= i;
 
 		/* Add a Page Table Entry, section 7.6.3.1. */
@@ -2366,24 +2276,14 @@ pte_insert64(struct pte_desc *pted)
 		ptp64[i].pte_hi |= PTE_VALID_64;
 		sync();		/* Ensure updates completed. */
 
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(i);
-		ppc_intr_enable(s);
-#endif
-		return;
+		goto out;
 	}
+
 	/* try fill of secondary hash */
 	ptp64 = pmap_ptable64 + (idx ^ pmap_ptab_mask) * 8;
 	for (i = 0; i < 8; i++) {
 		if (ptp64[i].pte_hi & PTE_VALID_64)
 			continue;
-#ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		if (pmap_hash_lock_try(i) == 0) {
-			ppc_intr_enable(s);
-			continue;
-		}
-#endif
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
 
@@ -2394,27 +2294,13 @@ pte_insert64(struct pte_desc *pted)
 		ptp64[i].pte_hi |= (PTE_HID_64|PTE_VALID_64);
 		sync();		/* Ensure updates completed. */
 
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(i);
-		ppc_intr_enable(s);
-#endif
-		return;
+		goto out;
 	}
 
-#ifdef MULTIPROCESSOR
-busy:
-#endif
 	/* need decent replacement algorithm */
 	off = ppc_mftb();
 	secondary = off & 8;
 
-#ifdef MULTIPROCESSOR
-	s = ppc_intr_disable();
-	if (pmap_hash_lock_try(off & 7) == 0) {
-		ppc_intr_enable(s);
-		goto busy;
-	}
-#endif
 
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
@@ -2452,10 +2338,8 @@ busy:
 	ptp64->pte_hi |= PTE_VALID_64;
 	sync();		/* Ensure updates completed. */
 
-#ifdef MULTIPROCESSOR
-	pmap_hash_unlock(off & 7);
-	ppc_intr_enable(s);
-#endif
+out:
+	PMAP_HASH_UNLOCK(s);
 }
 
 void
@@ -2465,16 +2349,11 @@ pte_insert32(struct pte_desc *pted)
 	int off, secondary;
 	int sr, idx, i;
 	void *pte;
-#ifdef MULTIPROCESSOR
 	int s;
-#endif
 
-	/*
-	 * Note that we do not hold the HASH lock for pted here to
-	 * handle multiple faults.
-	 */
+	PMAP_HASH_LOCK(s);
 	if ((pte = pmap_ptedinhash(pted)) != NULL)
-		pmap_hash_remove(pted);
+		pte_zap(pte, pted);
 
 	pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
 
@@ -2488,18 +2367,12 @@ pte_insert32(struct pte_desc *pted)
 	 * do the same for the secondary.
 	 * this would reduce the frontloading of the pteg.
 	 */
+
 	/* first just try fill of primary hash */
 	ptp32 = pmap_ptable32 + (idx) * 8;
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
 			continue;
-#ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		if (pmap_hash_lock_try(i) == 0) {
-			ppc_intr_enable(s);
-			continue;
-		}
-#endif
 
 		pted->pted_va |= i;
 
@@ -2510,24 +2383,14 @@ pte_insert32(struct pte_desc *pted)
 		ptp32[i].pte_hi |= PTE_VALID_32;
 		sync();		/* Ensure updates completed. */
 
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(i);
-		ppc_intr_enable(s);
-#endif
-		return;
+		goto out;
 	}
+
 	/* try fill of secondary hash */
 	ptp32 = pmap_ptable32 + (idx ^ pmap_ptab_mask) * 8;
 	for (i = 0; i < 8; i++) {
 		if (ptp32[i].pte_hi & PTE_VALID_32)
 			continue;
-#ifdef MULTIPROCESSOR
-		s = ppc_intr_disable();
-		if (pmap_hash_lock_try(i) == 0) {
-			ppc_intr_enable(s);
-			continue;
-		}
-#endif
 
 		pted->pted_va |= (i | PTED_VA_HID_M);
 
@@ -2538,26 +2401,12 @@ pte_insert32(struct pte_desc *pted)
 		ptp32[i].pte_hi |= (PTE_HID_32|PTE_VALID_32);
 		sync();		/* Ensure updates completed. */
 
-#ifdef MULTIPROCESSOR
-		pmap_hash_unlock(i);
-		ppc_intr_enable(s);
-#endif
-		return;
+		goto out;
 	}
 
-#ifdef MULTIPROCESSOR
-busy:
-#endif
 	/* need decent replacement algorithm */
 	off = ppc_mftb();
 	secondary = off & 8;
-#ifdef MULTIPROCESSOR
-	s = ppc_intr_disable();
-	if (pmap_hash_lock_try(off & 7) == 0) {
-		ppc_intr_enable(s);
-		goto busy;
-	}
-#endif
 
 	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
@@ -2589,8 +2438,6 @@ busy:
 	ptp32->pte_hi |= PTE_VALID_32;
 	sync();		/* Ensure updates completed. */
 
-#ifdef MULTIPROCESSOR
-	pmap_hash_unlock(off & 7);
-	ppc_intr_enable(s);
-#endif
+out:
+	PMAP_HASH_UNLOCK(s);
 }
