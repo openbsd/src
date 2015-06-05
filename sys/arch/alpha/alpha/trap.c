@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.78 2015/06/05 16:45:24 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.79 2015/06/05 16:59:10 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -448,7 +448,6 @@ do_fault:
 				if (p->p_addr->u_pcb.pcb_onfault != 0) {
 					framep->tf_regs[FRAME_PC] =
 					    p->p_addr->u_pcb.pcb_onfault;
-					p->p_addr->u_pcb.pcb_onfault = 0;
 					KERNEL_UNLOCK();
 					goto out;
 				}
