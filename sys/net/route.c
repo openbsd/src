@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.212 2015/05/26 12:19:51 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.213 2015/06/06 09:31:53 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1121,27 +1121,23 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 int
 rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 {
+	struct ifnet		*ifp = ifa->ifa_ifp;
 	struct rtentry		*rt, *nrt = NULL;
 	struct sockaddr_rtlabel	 sa_rl;
-	struct sockaddr_dl	 sa_dl = { sizeof(sa_dl), AF_LINK };
 	struct rt_addrinfo	 info;
-	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
-	u_int8_t		 prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
+	u_short			 rtableid = ifp->if_rdomain;
+	u_int8_t		 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
-
-	sa_dl.sdl_type = ifa->ifa_ifp->if_type;
-	sa_dl.sdl_index = ifa->ifa_ifp->if_index;
 
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
 	info.rti_flags = flags | RTF_MPATH;
 	info.rti_info[RTAX_DST] = dst;
 	if (flags & RTF_LLINFO)
-		info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+		info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)ifp->if_sadl;
 	else
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-	info.rti_info[RTAX_LABEL] =
-	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
 
 #ifdef MPLS
 	if ((flags & RTF_MPLS) == RTF_MPLS) {
@@ -1189,14 +1185,14 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 int
 rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 {
+	struct ifnet		*ifp = ifa->ifa_ifp;
 	struct rtentry		*rt, *nrt = NULL;
 	struct mbuf		*m = NULL;
 	struct sockaddr		*deldst;
 	struct rt_addrinfo	 info;
 	struct sockaddr_rtlabel	 sa_rl;
-	struct sockaddr_dl	 sa_dl = { sizeof(sa_dl), AF_LINK };
-	u_short			 rtableid = ifa->ifa_ifp->if_rdomain;
-	u_int8_t		 prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
+	u_short			 rtableid = ifp->if_rdomain;
+	u_int8_t		 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
 
 #ifdef MPLS
@@ -1227,19 +1223,13 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		}
 	}
 
-	sa_dl.sdl_type = ifa->ifa_ifp->if_type;
-	sa_dl.sdl_index = ifa->ifa_ifp->if_index;
-
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
 	info.rti_flags = flags;
 	info.rti_info[RTAX_DST] = dst;
-	if (flags & RTF_LLINFO)
-		info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
-	else
+	if ((flags & RTF_LLINFO) == 0)
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-	info.rti_info[RTAX_LABEL] =
-	    rtlabel_id2sa(ifa->ifa_ifp->if_rtlabelid, &sa_rl);
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
 
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;

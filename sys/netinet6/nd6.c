@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.136 2015/05/15 12:00:57 claudio Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.137 2015/06/06 09:31:53 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -651,7 +651,6 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 	}
 	if (!rt) {
 		if (create && ifp) {
-			struct sockaddr_dl sa_dl = { sizeof(sa_dl), AF_LINK };
 			struct rt_addrinfo info;
 			int e;
 
@@ -667,9 +666,6 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			if (ifa == NULL)
 				return (NULL);
 
-			sa_dl.sdl_type = ifp->if_type;
-			sa_dl.sdl_index = ifp->if_index;
-
 			/*
 			 * Create a new route.  RTF_LLINFO is necessary
 			 * to create a Neighbor Cache entry for the
@@ -679,7 +675,8 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			bzero(&info, sizeof(info));
 			info.rti_flags = RTF_UP | RTF_HOST | RTF_LLINFO;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
-			info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)&sa_dl;
+			info.rti_info[RTAX_GATEWAY] =
+			    (struct sockaddr *)ifp->if_sadl;
 			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
 			    &rt, rtableid)) != 0) {
 #if 0
