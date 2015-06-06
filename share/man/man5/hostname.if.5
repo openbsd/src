@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.63 2015/03/31 12:47:25 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.64 2015/06/06 13:13:07 florian Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 31 2015 $
+.Dd $Mdocdate: June 6 2015 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -259,15 +259,6 @@ The literal string
 .Dq rtsol
 if the interface is to be configured using
 IPv6 stateless address autoconfiguration.
-This should be used on single interface hosts only,
-since the IPv6 specifications are silent about the
-behavior on multi-interface hosts.
-Also note that the kernel must be configured as a host (i.e. non-router).
-Add the following line into
-.Xr sysctl.conf 5 :
-.Bd -literal -offset indent
-net.inet6.ip6.forwarding=0
-.Ed
 .It Va options
 Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
