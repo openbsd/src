@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.51 2015/05/28 20:10:58 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.52 2015/06/07 08:11:50 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@
 #define	CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 #define	CR4_VMXE	0x00002000	/* enable virtual machine operation */
 #define	CR4_SMXE	0x00004000	/* enable safe mode operation */
+#define	CR4_FSGSBASE	0x00010000	/* enable {RD,WR}{FS,GS}BASE ops */
 #define	CR4_PCIDE	0x00020000	/* enable process-context IDs */
 #define	CR4_OSXSAVE	0x00040000	/* enable XSAVE and extended states */
 #define	CR4_SMEP	0x00100000	/* supervisor mode exec protection */
