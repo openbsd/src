@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.123 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.124 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -161,7 +161,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * a (struct inpcb) pointed at by the socket, and this
 	 * structure will point at a subsidiary (struct tcpcb).
 	 */
-	if (inp == 0 && req != PRU_ATTACH) {
+	if (inp == NULL && req != PRU_ATTACH) {
 		error = so->so_error;
 		if (error == 0)
 			error = EINVAL;
@@ -297,7 +297,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		}
 
 		so->so_state |= SS_CONNECTOUT;
-		
+
 		/* Compute window scaling to request.  */
 		tcp_rscale(tp, sb_max);
 
@@ -805,7 +805,7 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 		break;
 #endif
 	case AF_INET:
-	  	fin = (struct sockaddr_in *)&tir.faddr;
+		fin = (struct sockaddr_in *)&tir.faddr;
 		lin = (struct sockaddr_in *)&tir.laddr;
 		break;
 	default:
@@ -846,7 +846,7 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 			break;
 #endif
 		case AF_INET:
-			inp = in_pcblookup_listen(&tcbtable, 
+			inp = in_pcblookup_listen(&tcbtable,
 			    lin->sin_addr, lin->sin_port, 0, NULL, tir.rdomain);
 			break;
 		}

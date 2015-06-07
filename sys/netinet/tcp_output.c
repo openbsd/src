@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.109 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.110 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -109,7 +109,7 @@ void
 tcp_print_holes(struct tcpcb *tp)
 {
 	struct sackhole *p = tp->snd_holes;
-	if (p == 0)
+	if (p == NULL)
 		return;
 	printf("Hole report: start--end dups rxmit\n");
 	while (p) {
@@ -155,7 +155,7 @@ tcp_sack_output(struct tcpcb *tp)
 #endif
 			return (p);
 		}
-        	p = p->next;
+		p = p->next;
 	}
 	return (NULL);
 }
@@ -300,7 +300,7 @@ again:
 			if (SEQ_LT(tp->snd_una, tp->snd_last))
 				tp->snd_cwnd -= tp->t_maxseg;
 #endif
-    		}
+		}
 	}
 #endif /* TCP_SACK */
 
@@ -518,7 +518,7 @@ send:
 	 * always fit in a single mbuf, leaving room for a maximum
 	 * link header, i.e.
 	 *	max_linkhdr + sizeof(network header) + sizeof(struct tcphdr +
-	 * 		optlen <= MHLEN
+	 *		optlen <= MHLEN
 	 */
 	optlen = 0;
 
@@ -1103,10 +1103,10 @@ send:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			/* 
+			/*
 			 * If the interface queue is full, or IP cannot
 			 * get an mbuf, trigger TCP slow start.
-			 */ 
+			 */
 			tp->snd_cwnd = tp->t_maxseg;
 			return (0);
 		}
@@ -1134,10 +1134,10 @@ out:
 
 		return (error);
 	}
-	
+
 	if (packetlen > tp->t_pmtud_mtu_sent)
 		tp->t_pmtud_mtu_sent = packetlen;
-	
+
 	tcpstat.tcps_sndtotal++;
 	if (tp->t_flags & TF_DELACK)
 		tcpstat.tcps_delack++;

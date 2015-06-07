@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.281 2015/05/23 12:52:59 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.282 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		}
 		donerouting = 1;
 
-		if (ro == 0) {
+		if (ro == NULL) {
 			ro = &iproute;
 			memset(ro, 0, sizeof(*ro));
 		}
@@ -182,7 +182,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			ro->ro_rt = NULL;
 		}
 
-		if (ro->ro_rt == 0) {
+		if (ro->ro_rt == NULL) {
 			dst->sin_family = AF_INET;
 			dst->sin_len = sizeof(*dst);
 			dst->sin_addr = ip->ip_dst;
@@ -195,11 +195,11 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			mtu = ifp->if_mtu;
 			IFP_TO_IA(ifp, ia);
 		} else {
-			if (ro->ro_rt == 0)
+			if (ro->ro_rt == NULL)
 				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
 				    NULL, ro->ro_tableid);
 
-			if (ro->ro_rt == 0) {
+			if (ro->ro_rt == NULL) {
 				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;
@@ -297,7 +297,7 @@ reroute:
 		mtu = ifp->if_mtu;
 		ro->ro_rt = NULL;
 	} else if (donerouting == 0) {
-		if (ro == 0) {
+		if (ro == NULL) {
 			ro = &iproute;
 			memset(ro, 0, sizeof(*ro));
 		}
@@ -315,7 +315,7 @@ reroute:
 			ro->ro_rt = NULL;
 		}
 
-		if (ro->ro_rt == 0) {
+		if (ro->ro_rt == NULL) {
 			dst->sin_family = AF_INET;
 			dst->sin_len = sizeof(*dst);
 			dst->sin_addr = ip->ip_dst;
@@ -328,11 +328,11 @@ reroute:
 			mtu = ifp->if_mtu;
 			IFP_TO_IA(ifp, ia);
 		} else {
-			if (ro->ro_rt == 0)
+			if (ro->ro_rt == NULL)
 				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
 				    &ip->ip_src.s_addr, ro->ro_tableid);
 
-			if (ro->ro_rt == 0) {
+			if (ro->ro_rt == NULL) {
 				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;
@@ -1295,7 +1295,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	if (*pcbopt)
 		(void)m_free(*pcbopt);
 	*pcbopt = 0;
-	if (m == (struct mbuf *)NULL || m->m_len == 0) {
+	if (m == NULL || m->m_len == 0) {
 		/*
 		 * Only turning off any previous options.
 		 */
@@ -1365,7 +1365,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			 */
 			memmove((caddr_t)&cp[IPOPT_OFFSET+1],
 			    (caddr_t)(&cp[IPOPT_OFFSET+1] +
-			    sizeof(struct in_addr)),			    
+			    sizeof(struct in_addr)),
 			    (unsigned)cnt - (IPOPT_OFFSET+1));
 			break;
 		}

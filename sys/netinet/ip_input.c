@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.249 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.250 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ ip_init(void)
 	pool_init(&ipq_pool, sizeof(struct ipq), 0, 0, 0, "ipq", NULL);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
-	if (pr == 0)
+	if (pr == NULL)
 		panic("ip_init");
 	for (i = 0; i < IPPROTO_MAX; i++)
 		ip_protox[i] = pr - inetsw;
@@ -576,7 +576,7 @@ found:
          */
         if ((ip->ip_p == IPPROTO_ESP) || (ip->ip_p == IPPROTO_AH) ||
 	    (ip->ip_p == IPPROTO_IPCOMP))
-        	goto skipipsec;
+		goto skipipsec;
 
 	/*
 	 * If the protected packet was tunneled, then we need to
@@ -1050,7 +1050,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			ipaddr.sin_addr = ip->ip_dst;
 			ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr),
 			    m->m_pkthdr.ph_rtableid));
-			if (ia == 0) {
+			if (ia == NULL) {
 				if (opt == IPOPT_SSRR) {
 					type = ICMP_UNREACH;
 					code = ICMP_UNREACH_SRCFAIL;
@@ -1088,7 +1088,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				/* keep packet in the virtual instance */
 				ia = ip_rtaddr(ipaddr.sin_addr,
 				    m->m_pkthdr.ph_rtableid);
-			if (ia == 0) {
+			if (ia == NULL) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
 				goto bad;
@@ -1129,9 +1129,9 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 			 * Again keep the packet inside the virtual instance.
 			 */
 			if ((ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr),
-			    m->m_pkthdr.ph_rtableid))) == 0 &&
+			    m->m_pkthdr.ph_rtableid))) == NULL &&
 			    (ia = ip_rtaddr(ipaddr.sin_addr,
-			    m->m_pkthdr.ph_rtableid)) == 0) {
+			    m->m_pkthdr.ph_rtableid)) == NULL) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_HOST;
 				goto bad;
@@ -1169,7 +1169,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				ipaddr.sin_addr = dst;
 				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
 				    ifp));
-				if (ia == 0)
+				if (ia == NULL)
 					continue;
 				memcpy(&sin, &ia->ia_addr.sin_addr,
 				    sizeof(struct in_addr));
@@ -1185,7 +1185,7 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 				ipaddr.sin_len = sizeof(ipaddr);
 				ipaddr.sin_addr = sin;
 				if (ifa_ifwithaddr(sintosa(&ipaddr),
-				    m->m_pkthdr.ph_rtableid) == 0)
+				    m->m_pkthdr.ph_rtableid) == NULL)
 					continue;
 				ipt.ipt_ptr += sizeof(struct in_addr);
 				break;

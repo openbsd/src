@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.134 2015/05/19 14:16:35 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.135 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -551,7 +551,7 @@ icmp_input(struct mbuf *m, ...)
 		if (ifp == NULL)
 			break;
 		ia = ifatoia(ifaof_ifpforaddr(sintosa(&sin), ifp));
-		if (ia == 0)
+		if (ia == NULL)
 			break;
 		icp->icmp_type = ICMP_MASKREPLY;
 		icp->icmp_mask = ia->ia_sockmask.sin_addr.s_addr;
@@ -929,7 +929,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	/* Check if the route is actually usable */
 	if (rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE) ||
 	    (rt->rt_flags & RTF_UP) == 0) {
-	    	rtfree(rt);
+		rtfree(rt);
 		return (NULL);
 	}
 
@@ -976,7 +976,7 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 
 	rt = icmp_mtudisc_clone(icp->icmp_ip.ip_dst, rtableid);
-	if (rt == 0)
+	if (rt == NULL)
 		return;
 
 	if (mtu == 0) {
@@ -1105,7 +1105,7 @@ icmp_do_exthdr(struct mbuf *m, u_int16_t class, u_int8_t ctype, void *buf,
 	    icp->icmp_type != ICMP_PARAMPROB)
 		/* exthdr not supported */
 		return (0);
-	
+
 	if (icp->icmp_length != 0)
 		/* exthdr already present, giving up */
 		return (0);

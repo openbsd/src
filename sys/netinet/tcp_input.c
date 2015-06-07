@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.290 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.291 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -632,7 +632,7 @@ findpcb:
 		 * If the TCB exists but is in CLOSED state, it is embryonic,
 		 * but should either do a listen or a connect soon.
 		 */
-		if (inp == 0) {
+		if (inp == NULL) {
 			++tcpstat.tcps_noport;
 			goto dropwithreset_ratelim;
 		}
@@ -645,7 +645,7 @@ findpcb:
 		goto drop;
 
 	tp = intotcpcb(inp);
-	if (tp == 0)
+	if (tp == NULL)
 		goto dropwithreset_ratelim;
 	if (tp->t_state == TCPS_CLOSED)
 		goto drop;
@@ -799,7 +799,7 @@ findpcb:
 				 *   (2a) "SHOULD NOT be used if alternate
 				 *        address with sufficient scope is
 				 *        available"
-				 *   (2b) nothing mentioned otherwise. 
+				 *   (2b) nothing mentioned otherwise.
 				 * Here we fall into (2b) case as we have no
 				 * choice in our source address selection - we
 				 * must obey the peer.
@@ -1000,16 +1000,16 @@ findpcb:
 
 				/*
 				 * If we had a pending ICMP message that
-				 * referres to data that have just been 
-				 * acknowledged, disregard the recorded ICMP 
+				 * refers to data that have just been
+				 * acknowledged, disregard the recorded ICMP
 				 * message.
 				 */
-				if ((tp->t_flags & TF_PMTUD_PEND) && 
+				if ((tp->t_flags & TF_PMTUD_PEND) &&
 				    SEQ_GT(th->th_ack, tp->t_pmtud_th_seq))
 					tp->t_flags &= ~TF_PMTUD_PEND;
 
 				/*
-				 * Keep track of the largest chunk of data 
+				 * Keep track of the largest chunk of data
 				 * acknowledged since last PMTU update
 				 */
 				if (tp->t_pmtud_mss_acked < acked)
@@ -1650,7 +1650,7 @@ trimthenstep6:
 
 #if defined(TCP_SACK) || defined(TCP_ECN)
 					if (SEQ_LT(th->th_ack, tp->snd_last)){
-					    	/*
+						/*
 						 * False fast retx after
 						 * timeout.  Do not cut window.
 						 */
@@ -1663,7 +1663,7 @@ trimthenstep6:
 					tp->snd_ssthresh = win * tp->t_maxseg;
 #ifdef TCP_SACK
 					tp->snd_last = tp->snd_max;
-                    			if (tp->sack_enable) {
+					if (tp->sack_enable) {
 						TCP_TIMER_DISARM(tp, TCPT_REXMT);
 						tp->t_rtttime = 0;
 #ifdef TCP_ECN
@@ -1772,7 +1772,7 @@ trimthenstep6:
 				/* Out of fast recovery */
 				tp->snd_cwnd = tp->snd_ssthresh;
 				if (tcp_seq_subtract(tp->snd_max, th->th_ack) <
-			  	    tp->snd_ssthresh)
+				    tp->snd_ssthresh)
 					tp->snd_cwnd =
 					    tcp_seq_subtract(tp->snd_max,
 					    th->th_ack);
@@ -1861,7 +1861,7 @@ trimthenstep6:
 		 * that have just been acknowledged, disregard the recorded
 		 * ICMP message.
 		 */
-		if ((tp->t_flags & TF_PMTUD_PEND) && 
+		if ((tp->t_flags & TF_PMTUD_PEND) &&
 		    SEQ_GT(th->th_ack, tp->t_pmtud_th_seq))
 			tp->t_flags &= ~TF_PMTUD_PEND;
 
@@ -2625,7 +2625,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 #if defined(TCP_SACK) && defined(TCP_FACK)
 				if (SEQ_GT(sack.end, cur->rxmit))
 					tp->retran_data -=
-				    	    tcp_seq_subtract(cur->rxmit,
+					    tcp_seq_subtract(cur->rxmit,
 					    cur->start);
 				else
 					tp->retran_data -=
@@ -3062,7 +3062,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 	 * If we compute a larger value, return it for use in sending
 	 * a max seg size option, but don't store it for use
 	 * unless we received an offer at least that large from peer.
-	 * 
+	 *
 	 * However, do not accept offers lower than the minimum of
 	 * the interface MTU and 216.
 	 */
@@ -3257,12 +3257,12 @@ tcp_mss_adv(struct ifnet *ifp, int af)
 		iphlen = sizeof(struct ip);
 		break;
 #ifdef INET6
-	case AF_INET6: 
+	case AF_INET6:
 		if (ifp != NULL)
 			mss = IN6_LINKMTU(ifp);
 		iphlen = sizeof(struct ip6_hdr);
 		break;
-#endif  
+#endif
 	}
 	mss = mss - iphlen - sizeof(struct tcphdr);
 	return (max(mss, tcp_mssdflt));
@@ -3729,7 +3729,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #ifdef INET6
 	else
 		inp->inp_route6 = sc->sc_route6;
-#endif  
+#endif
 	sc->sc_route4.ro_rt = NULL;
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */

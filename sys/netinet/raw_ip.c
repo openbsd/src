@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.79 2015/01/24 00:29:06 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.80 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -313,7 +313,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	case IP_HDRINCL:
 		error = 0;
 		if (op == PRCO_SETOPT) {
-			if (*m == 0 || (*m)->m_len < sizeof (int))
+			if (*m == NULL || (*m)->m_len < sizeof (int))
 				error = EINVAL;
 			else if (*mtod(*m, int *))
 				inp->inp_flags |= INP_HDRINCL;
@@ -331,7 +331,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	case IP_DIVERTFL:
 		switch (op) {
 		case PRCO_SETOPT:
-			if (*m == 0 || (*m)->m_len < sizeof (int)) {
+			if (*m == NULL || (*m)->m_len < sizeof (int)) {
 				error = EINVAL;
 				break;
 			}
@@ -448,7 +448,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		soisdisconnected(so);
 		/* FALLTHROUGH */
 	case PRU_DETACH:
-		if (inp == 0)
+		if (inp == NULL)
 			panic("rip_detach");
 #ifdef MROUTING
 		if (so == ip_mrouter)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.153 2015/05/26 11:55:34 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.154 2015/06/07 01:25:27 krw Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ arp_rtrequest(int req, struct rtentry *rt)
 		break;
 
 	case RTM_DELETE:
-		if (la == 0)
+		if (la == NULL)
 			break;
 		arp_inuse--;
 		LIST_REMOVE(la, la_list);
@@ -377,7 +377,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 			    inet_ntop(AF_INET, &satosin(dst)->sin_addr,
 				addr, sizeof(addr)));
 	}
-	if (la == 0 || rt == 0) {
+	if (la == NULL || rt == NULL) {
 		m_freem(m);
 		return (EINVAL);
 	}
@@ -685,7 +685,7 @@ in_arpinput(struct mbuf *m)
 			    ac->ac_if.if_xname);
 			goto out;
 		}
- 		sdl->sdl_alen = sizeof(ea->arp_sha);
+		sdl->sdl_alen = sizeof(ea->arp_sha);
 		memcpy(LLADDR(sdl), ea->arp_sha, sizeof(ea->arp_sha));
 		if (rt->rt_expire)
 			rt->rt_expire = time_second + arpt_keep;
@@ -723,7 +723,7 @@ out:
 	} else {
 		la = arplookup(itaddr.s_addr, 0, SIN_PROXY,
 		    rtable_l2(m->m_pkthdr.ph_rtableid));
-		if (la == 0)
+		if (la == NULL)
 			goto out;
 		rt = la->la_rt;
 		if (rt->rt_ifp->if_type == IFT_CARP && ifp->if_type != IFT_CARP)
@@ -796,7 +796,7 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 	flags = (create) ? (RT_REPORT|RT_RESOLVE) : 0;
 
 	rt = rtalloc((struct sockaddr *)&sin, flags, tableid);
-	if (rt == 0)
+	if (rt == NULL)
 		return (0);
 	rt->rt_refcnt--;
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
@@ -804,7 +804,7 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
 		if (create) {
 			if (rt->rt_refcnt <= 0 &&
 			    (rt->rt_flags & RTF_CLONED) != 0) {
-			    	rtdeletemsg(rt, tableid);
+				rtdeletemsg(rt, tableid);
 			}
 		}
 		return (0);
@@ -833,8 +833,8 @@ arpproxy(struct in_addr in, u_int rdomain)
 		if (!memcmp(LLADDR((struct sockaddr_dl *)la->la_rt->rt_gateway),
 		    LLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN)) {
-		    	found = 1;
-		    	break;
+			found = 1;
+			break;
 		}
 	}
 
@@ -1029,7 +1029,7 @@ db_print_sa(struct sockaddr *sa)
 	int len;
 	u_char *p;
 
-	if (sa == 0) {
+	if (sa == NULL) {
 		db_printf("[NULL]");
 		return;
 	}
@@ -1050,7 +1050,7 @@ db_print_sa(struct sockaddr *sa)
 void
 db_print_ifa(struct ifaddr *ifa)
 {
-	if (ifa == 0)
+	if (ifa == NULL)
 		return;
 	db_printf("  ifa_addr=");
 	db_print_sa(ifa->ifa_addr);
