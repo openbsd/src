@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.212 2015/05/24 01:01:49 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.213 2015/06/07 06:24:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -698,7 +698,7 @@ signotify(struct proc *p)
 void
 cpu_unidle(struct cpu_info *ci)
 {
-	if (cpu_mwait_size > 0) {
+	if (cpu_mwait_size > 0 && (ci->ci_mwait & MWAIT_ONLY)) {
 		/*
 		 * Just clear the "keep idling" bit; if it wasn't
 		 * idling then we didn't need to do anything anyway.

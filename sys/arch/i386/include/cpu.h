@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.140 2015/05/28 20:10:58 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.141 2015/06/07 06:24:59 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -130,6 +130,7 @@ struct cpu_info {
 	volatile u_int	ci_mwait;
 #define	MWAIT_IN_IDLE		0x1	/* don't need IPI to wake */
 #define	MWAIT_KEEP_IDLING	0x2	/* cleared by other cpus to wake me */
+#define	MWAIT_ONLY		0x4	/* set if all idle states use mwait */
 #define	MWAIT_IDLING		(MWAIT_IN_IDLE | MWAIT_KEEP_IDLING)
 
 	int		ci_want_resched;
@@ -213,8 +214,6 @@ extern struct cpu_info	*cpu_info[MAXCPUS];
 
 extern void cpu_boot_secondary_processors(void);
 extern void cpu_init_idle_pcbs(void);
-
-extern u_int cpu_mwait_size;
 
 void cpu_kick(struct cpu_info *);
 void cpu_unidle(struct cpu_info *);
@@ -335,6 +334,10 @@ extern int cpu_perf_eax;
 extern int cpu_perf_ebx;
 extern int cpu_perf_edx;
 extern int cpu_apmi_edx;
+
+/* cpu.c */
+extern u_int cpu_mwait_size;
+extern u_int cpu_mwait_states;
 
 /* machdep.c */
 extern int cpu_apmhalt;

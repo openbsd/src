@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.63 2015/04/19 06:27:17 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.64 2015/06/07 06:24:59 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -113,7 +113,8 @@ int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
 void	cpu_idle_mwait_cycle(void);
 void	cpu_init_mwait(struct device *);
-void	cpu_enable_mwait(void);
+
+u_int cpu_mwait_size, cpu_mwait_states;
 
 #ifdef MULTIPROCESSOR
 int mp_cpu_start(struct cpu_info *);
@@ -289,6 +290,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		mem_range_attach();
 #endif
 		cpu_init(ci);
+		cpu_init_mwait(&ci->ci_dev);
 		break;
 
 	case CPU_ROLE_BP:
@@ -310,9 +312,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
 #endif
-#if defined(MULTIPROCESSOR)
 		cpu_init_mwait(&ci->ci_dev);
-#endif
 		break;
 
 	case CPU_ROLE_AP:
@@ -480,8 +480,6 @@ cpu_boot_secondary_processors()
 {
 	struct cpu_info *ci;
 	u_long i;
-
-	cpu_enable_mwait();
 
 	for (i = 0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
@@ -740,6 +738,8 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
 
+#endif /* MULTIPROCESSOR */
+
 void
 cpu_idle_mwait_cycle(void)
 {
@@ -762,7 +762,7 @@ cpu_idle_mwait_cycle(void)
 	 * something to the queue and called cpu_unidle() between
 	 * the check in sched_idle() and here.
 	 */
-	atomic_setbits_int(&ci->ci_mwait, MWAIT_IDLING);
+	atomic_setbits_int(&ci->ci_mwait, MWAIT_IDLING | MWAIT_ONLY);
 	if (ci->ci_schedstate.spc_whichqs == 0) {
 		monitor(&ci->ci_mwait, 0, 0);
 		if ((ci->ci_mwait & MWAIT_IDLING) == MWAIT_IDLING)
@@ -773,8 +773,6 @@ cpu_idle_mwait_cycle(void)
 	atomic_clearbits_int(&ci->ci_mwait, MWAIT_IDLING);
 }
 
-u_int cpu_mwait_size;
-
 void
 cpu_init_mwait(struct device *dv)
 {
@@ -784,20 +782,23 @@ cpu_init_mwait(struct device *dv)
 		return;
 
 	/* get the monitor granularity */
-	CPUID(0x5, smallest, largest, extensions, c_substates);
+	CPUID(0x5, smallest, largest, extensions, cpu_mwait_states);
 	smallest &= 0xffff;
 	largest  &= 0xffff;
 
 	printf("%s: mwait min=%u, max=%u", dv->dv_xname, smallest, largest);
 	if (extensions & 0x1) {
-		printf(", C-substates=%u.%u.%u.%u.%u",
-		    0xf & (c_substates),
-		    0xf & (c_substates >> 4),
-		    0xf & (c_substates >> 8),
-		    0xf & (c_substates >> 12),
-		    0xf & (c_substates >> 16));
+		if (cpu_mwait_states > 0) {
+			c_substates = cpu_mwait_states;
+			printf(", C-substates=%u", 0xf & c_substates);
+			while ((c_substates >>= 4) > 0)
+				printf(".%u", 0xf & c_substates);
+		}
 		if (extensions & 0x2)
 			printf(", IBE");
+	} else {
+		/* substates not supported, forge the default: just C1 */
+		cpu_mwait_states = 1 << 4;
 	}
 
 	/* paranoia: check the values */
@@ -807,13 +808,9 @@ cpu_init_mwait(struct device *dv)
 	else
 		cpu_mwait_size = largest;
 	printf("\n");
-}
 
-void
-cpu_enable_mwait(void)
-{
+	/* enable use of mwait; may be overriden by acpicpu later */
 	if (cpu_mwait_size > 0)
 		cpu_idle_cycle_fcn = &cpu_idle_mwait_cycle;
 }
-#endif /* MULTIPROCESSOR */
 
