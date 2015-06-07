@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos.c,v 1.6 2015/05/27 00:06:14 jsg Exp $ */
+/* $OpenBSD: exynos.c,v 1.7 2015/06/07 16:54:16 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -29,6 +29,7 @@
 #include <armv7/armv7/armv7var.h>
 
 int	exynos_match(struct device *, void *, void *);
+void	exynos4_init();
 void	exynos5_init();
 
 struct cfattach exynos_ca = {
@@ -60,12 +61,73 @@ struct board_dev chromebook_devs[] = {
 	{ NULL,		0 }
 };
 
+/* Samsung Mobile NURI board */
+struct board_dev nuri_devs[] = {
+	{ "exmct",	0 },
+	{ "exdog",	0 },
+//	{ "exclock",	0 },
+	{ "expower",	0 },
+	{ "exsysreg",	0 },
+//	{ "exuart",	0 },
+	{ "exuart",	1 },
+	{ "exuart",	2 },
+	{ "exuart",	3 },
+	{ "exgpio",	0 },
+	{ "exgpio",	1 },
+	{ "exgpio",	2 },
+	{ "exgpio",	3 },
+	{ "exgpio",	4 },
+	{ "exgpio",	5 },
+//	{ "exehci",	0 },
+	{ "exiic",	0 },
+//	{ "exesdhc",	2 },
+	{ NULL,		0 }
+};
+
+/*
+ * S5PC210/Exynos4210 reference board
+ * has a LAN9215 (emulated in qemu as LAN9118)
+ */
+struct board_dev smdkc210_devs[] = {
+	{ "exmct",	0 },
+	{ "exdog",	0 },
+//	{ "exclock",	0 },
+	{ "expower",	0 },
+	{ "exsysreg",	0 },
+//	{ "exuart",	0 },
+	{ "exuart",	1 },
+	{ "exuart",	2 },
+	{ "exuart",	3 },
+	{ "exgpio",	0 },
+	{ "exgpio",	1 },
+	{ "exgpio",	2 },
+	{ "exgpio",	3 },
+	{ "exgpio",	4 },
+	{ "exgpio",	5 },
+//	{ "exehci",	0 },
+	{ "exiic",	0 },
+//	{ "exesdhc",	2 },
+	{ NULL,		0 }
+};
+
 struct armv7_board exynos_boards[] = {
 	{
 		BOARD_ID_EXYNOS5_CHROMEBOOK,
 		"Exynos 5 Chromebook",
 		chromebook_devs,
 		exynos5_init,
+	},
+	{
+		BOARD_ID_EXYNOS4_NURI,
+		"Samsung NURI",
+		nuri_devs,
+		exynos4_init,
+	},
+	{
+		BOARD_ID_EXYNOS4_SMDKC210,
+		"Samsung SMDKC210",
+		smdkc210_devs,
+		exynos4_init,
 	},
 	{ 0, NULL, NULL, NULL },
 };

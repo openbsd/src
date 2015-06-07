@@ -1,4 +1,4 @@
-/*	$OpenBSD: exynos_machdep.c,v 1.4 2015/05/27 00:06:14 jsg Exp $	*/
+/*	$OpenBSD: exynos_machdep.c,v 1.5 2015/06/07 16:54:16 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,6 +32,7 @@
 #include <arm/armv7/armv7var.h>
 #include <armv7/armv7/armv7var.h>
 #include <armv7/exynos/exdisplayvar.h>
+#include <armv7/exynos/exuartvar.h>
 #include <armv7/armv7/armv7_machdep.h>
 
 extern void exdog_reset(void);
@@ -71,6 +72,11 @@ exynos_platform_init_cons(void)
 		size = 0x202000;
 #endif
 		exdisplay_cnattach(&armv7_bs_tag, paddr, size);
+		break;
+	case BOARD_ID_EXYNOS4_SMDKC210:
+	case BOARD_ID_EXYNOS4_NURI:
+		paddr = 0x13800000;
+		exuartcnattach(&armv7_bs_tag, paddr, comcnspeed, comcnmode);
 		break;
 	default:
 		printf("board type %x unknown", board_id);

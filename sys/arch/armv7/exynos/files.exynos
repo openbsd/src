@@ -1,10 +1,11 @@
-#	$OpenBSD: files.exynos,v 1.1 2015/01/26 02:48:24 bmercer Exp $
+#	$OpenBSD: files.exynos,v 1.2 2015/06/07 16:54:16 jsg Exp $
 
 define exynos {}
 device exynos: exynos
 attach exynos at mainbus
 file	arch/armv7/exynos/exynos_machdep.c	exynos	needs-flag
 file	arch/armv7/exynos/exynos.c		exynos
+file	arch/armv7/exynos/exynos4.c		exynos
 file	arch/armv7/exynos/exynos5.c		exynos
 
 # serial ports
