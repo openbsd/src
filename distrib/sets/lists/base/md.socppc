@@ -1940,7 +1940,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/atomic.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/autoconf.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/bat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/bus.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/cdefs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/conf.ph

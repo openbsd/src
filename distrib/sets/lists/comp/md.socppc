@@ -596,7 +596,6 @@
 ./usr/include/socppc/asm.h
 ./usr/include/socppc/atomic.h
 ./usr/include/socppc/autoconf.h
-./usr/include/socppc/bat.h
 ./usr/include/socppc/bus.h
 ./usr/include/socppc/cdefs.h
 ./usr/include/socppc/conf.h
