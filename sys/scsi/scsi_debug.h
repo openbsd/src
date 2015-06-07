@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.10 2011/06/21 22:36:42 matthew Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.11 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -13,7 +13,7 @@
  * the following DEBUG bits are defined to exist in the flags word of
  * the scsi_link structure.
  */
-#define	SDEV_DB1		0x0010	/* scsi commands, errors, data	*/ 
+#define	SDEV_DB1		0x0010	/* scsi commands, errors, data	*/
 #define	SDEV_DB2		0x0020	/* routine flow tracking */
 #define	SDEV_DB3		0x0040	/* internal to routine flows	*/
 #define	SDEV_DB4		0x0080	/* level 4 debugging for this dev */
@@ -43,11 +43,11 @@ extern int scsidebug_level;
 #define	SC_DEBUG(sc_link,Level,Printstuff) \
 	if ((sc_link)->flags & (Level)) {	\
 		sc_print_addr(sc_link);		\
- 		printf Printstuff;		\
+		printf Printstuff;		\
 	}
 #define	SC_DEBUGN(sc_link,Level,Printstuff) \
 	if ((sc_link)->flags & (Level)) {	\
- 		printf Printstuff;		\
+		printf Printstuff;		\
 	}
 #else
 #define SC_DEBUG(A,B,C)

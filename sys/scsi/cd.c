@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.216 2014/12/15 02:11:57 tedu Exp $	*/
+/*	$OpenBSD: cd.c,v 1.217 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ cdactivate(struct device *self, int act)
 			scsi_prevent(sc->sc_link, PR_PREVENT,
 			    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
 			    SCSI_SILENT | SCSI_AUTOCONF);
-		break;			
+		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_flags |= CDF_DYING;
 		scsi_xsh_del(&sc->sc_xsh);
@@ -472,7 +472,7 @@ cdstrategy(struct buf *bp)
 		goto done;
 
 	/* Place it in the queue of disk activities for this disk. */
-	bufq_queue(&sc->sc_bufq, bp);	
+	bufq_queue(&sc->sc_bufq, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -543,8 +543,8 @@ cdstart(struct scsi_xfer *xs)
 	bp = bufq_dequeue(&sc->sc_bufq);
 	if (bp == NULL) {
 		scsi_xs_put(xs);
- 		return;
- 	}
+		return;
+	}
 
 	/*
 	 * We have a buf, now we should make a command
@@ -564,7 +564,7 @@ cdstart(struct scsi_xfer *xs)
 	 *  fit in a "small" cdb, use it.
 	 */
 	if (!(sc_link->flags & SDEV_ATAPI) &&
-	    !(sc_link->quirks & SDEV_ONLYBIG) && 
+	    !(sc_link->quirks & SDEV_ONLYBIG) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs)) {
 		/*
@@ -2232,7 +2232,7 @@ cd_eject(void)
 {
 	struct cd_softc *sc;
 	int error = 0;
-	
+
 	if (cd_cd.cd_ndevs == 0 || (sc = cd_cd.cd_devs[0]) == NULL)
 		return (ENXIO);
 

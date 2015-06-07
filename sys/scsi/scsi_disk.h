@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.34 2013/11/26 20:33:20 deraadt Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.35 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -13,7 +13,7 @@
  * Copyright 1990 by Open Software Foundation,
  * Grenoble, FRANCE
  *
- * 		All Rights Reserved
+ *		All Rights Reserved
  *
  *   Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,

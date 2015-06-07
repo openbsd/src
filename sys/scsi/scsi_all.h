@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.54 2013/06/06 14:00:44 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.55 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -11,7 +11,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -95,12 +95,12 @@ struct scsi_mode_sense {
 	u_int8_t byte2;
 #define	SMS_DBD				0x08	/* Disable Block Descriptors */
 	u_int8_t page;
-#define	SMS_PAGE_CODE 			0x3F
-#define	SMS_PAGE_CTRL 			0xC0
-#define	SMS_PAGE_CTRL_CURRENT 		0x00
-#define	SMS_PAGE_CTRL_CHANGEABLE 	0x40
-#define	SMS_PAGE_CTRL_DEFAULT 		0x80
-#define	SMS_PAGE_CTRL_SAVED 		0xC0
+#define	SMS_PAGE_CODE			0x3F
+#define	SMS_PAGE_CTRL			0xC0
+#define	SMS_PAGE_CTRL_CURRENT		0x00
+#define	SMS_PAGE_CTRL_CHANGEABLE	0x40
+#define	SMS_PAGE_CTRL_DEFAULT		0x80
+#define	SMS_PAGE_CTRL_SAVED		0xC0
 	u_int8_t unused;
 	u_int8_t length;
 	u_int8_t control;
@@ -209,9 +209,9 @@ struct scsi_report_luns {
 #define T_PROCESSOR	3
 #define T_WORM		4
 #define T_CDROM		5
-#define T_SCANNER 	6
-#define T_OPTICAL 	7
-#define T_RDIRECT 	14
+#define T_SCANNER	6
+#define T_OPTICAL	7
+#define T_RDIRECT	14
 #define T_NODEVICE	0x1F
 
 #define T_CHANGER	8

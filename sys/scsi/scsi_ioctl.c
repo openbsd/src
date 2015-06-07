@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.50 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.51 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ scsi_do_ioctl(struct scsi_link *sc_link, u_long cmd, caddr_t addr, int flag)
 		if ((sc_link->flags & (SDEV_ATAPI | SDEV_UMASS)) == 0)
 			/* A 'real' SCSI target. */
 			sca->type = TYPE_SCSI;
-		else	
+		else
 			/* An 'emulated' SCSI target. */
 			sca->type = TYPE_ATAPI;
 		sca->scbus = sc_link->bus->sc_dev.dv_unit;

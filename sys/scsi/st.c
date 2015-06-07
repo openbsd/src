@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.128 2014/12/16 18:30:04 tedu Exp $	*/
+/*	$OpenBSD: st.c,v 1.129 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	scsi_xsh_set(&st->sc_xsh, sc_link, ststart);
 	timeout_set(&st->sc_timeout, (void (*)(void *))scsi_xsh_set,
 	    &st->sc_xsh);
-	
+
 	/* Set up the buf queue for this device. */
 	bufq_init(&st->sc_bufq, BUFQ_FIFO);
 
@@ -1185,8 +1185,8 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
 		g->mt_blksiz = st->blksize;
 		g->mt_density = st->density;
- 		g->mt_mblksiz = st->modes.blksize;
- 		g->mt_mdensity = st->modes.density;
+		g->mt_mblksiz = st->modes.blksize;
+		g->mt_mdensity = st->modes.density;
 		if (st->sc_link->flags & SDEV_READONLY)
 			g->mt_dsreg |= MT_DS_RDONLY;
 		if (st->flags & ST_MOUNTED)
@@ -2032,7 +2032,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	 */
 	if (sense->error_code & SSD_ERRCODE_VALID) {
 		if (st->flags & ST_FIXEDBLOCKS)
-			resid = info * st->blksize; /* XXXX overflow? */ 
+			resid = info * st->blksize; /* XXXX overflow? */
 		else
 			resid = info;
 	} else {

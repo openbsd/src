@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.162 2014/09/09 20:30:08 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.163 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ struct scsi_iopool {
 	void	*iocookie;
 	void	*(*io_get)(void *);
 	void	 (*io_put)(void *, void *);
-	
+
 	/* the runqueue */
 	struct scsi_runq queue;
 	/* runqueue semaphore */
@@ -303,10 +303,10 @@ struct scsi_link {
 	u_int16_t adapter_target;	/* what are we on the scsi bus */
 	u_int16_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
 	u_int16_t flags;		/* flags that all devices have */
-#define	SDEV_REMOVABLE	 	0x0001	/* media is removable */
-#define	SDEV_MEDIA_LOADED 	0x0002	/* device figures are still valid */
+#define	SDEV_REMOVABLE		0x0001	/* media is removable */
+#define	SDEV_MEDIA_LOADED	0x0002	/* device figures are still valid */
 #define	SDEV_READONLY		0x0004	/* device is read-only */
-#define	SDEV_OPEN	 	0x0008	/* at least 1 open session */
+#define	SDEV_OPEN		0x0008	/* at least 1 open session */
 #define	SDEV_DBX		0x00f0	/* debugging flags (scsi_debug.h) */
 #define	SDEV_EJECTING		0x0100	/* eject on device close */
 #define	SDEV_ATAPI		0x0200	/* device is ATAPI */

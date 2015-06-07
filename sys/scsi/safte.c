@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.51 2014/09/14 14:17:26 jsg Exp $ */
+/*	$OpenBSD: safte.c,v 1.52 2015/06/07 19:13:27 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -123,7 +123,7 @@ safte_match(struct device *parent, void *match, void *aux)
 	    SCSISPC(inq->version) == 3)
 		return (2);
 
- 	if ((inq->device & SID_TYPE) != T_PROCESSOR ||
+	if ((inq->device & SID_TYPE) != T_PROCESSOR ||
 	    SCSISPC(inq->version) != 2 ||
 	    (inq->response_format & SID_ANSII) != 2)
 		return (0);
@@ -203,7 +203,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 			free(sc->sc_sensors, M_DEVBUF, 0);
 		} else {
 			for (i = 0; i < sc->sc_nsensors; i++)
-				sensor_attach(&sc->sc_sensordev, 
+				sensor_attach(&sc->sc_sensordev,
 				    &sc->sc_sensors[i].se_sensor);
 			sensordev_install(&sc->sc_sensordev);
 		}
@@ -244,7 +244,7 @@ safte_detach(struct device *self, int flags)
 		sensor_task_unregister(sc->sc_sensortask);
 
 		for (i = 0; i < sc->sc_nsensors; i++)
-			sensor_detach(&sc->sc_sensordev, 
+			sensor_detach(&sc->sc_sensordev,
 			    &sc->sc_sensors[i].se_sensor);
 		free(sc->sc_sensors, M_DEVBUF, 0);
 	}
@@ -317,7 +317,7 @@ safte_read_config(struct safte_softc *sc)
 		goto done;
 	}
 
-	sc->sc_nsensors = config->nfans + config->npwrsup + config->ntemps + 
+	sc->sc_nsensors = config->nfans + config->npwrsup + config->ntemps +
 		(config->doorlock ? 1 : 0) + (config->alarm ? 1 : 0);
 
 	sc->sc_sensors = mallocarray(sc->sc_nsensors, sizeof(struct safte_sensor),
@@ -541,7 +541,7 @@ safte_read_encstat(void *arg)
 
 	oot = _2btol(sc->sc_temperrs);
 	for (i = 0; i < sc->sc_ntemps; i++)
-		sc->sc_temps[i].se_sensor.status = 
+		sc->sc_temps[i].se_sensor.status =
 		    (oot & (1 << i)) ? SENSOR_S_CRIT : SENSOR_S_OK;
 
 	rw_exit_write(&sc->sc_lock);
@@ -612,7 +612,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)op;
 	xs->datalen = sizeof(*op);
-	xs->retries = 2; 
+	xs->retries = 2;
 	xs->timeout = 30000;
 
 	cmd = (struct safte_writebuf_cmd *)xs->cmd;

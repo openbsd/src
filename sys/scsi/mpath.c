@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.39 2015/03/14 03:38:52 jsg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.40 2015/06/07 19:13:27 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -18,7 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>  
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>

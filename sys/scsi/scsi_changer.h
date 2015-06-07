@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_changer.h,v 1.5 2006/12/21 02:05:46 krw Exp $	*/
+/*	$OpenBSD: scsi_changer.h,v 1.6 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: scsi_changer.h,v 1.7 1996/04/03 00:25:48 thorpej Exp $	*/
 
 /*
@@ -241,10 +241,10 @@ struct read_element_status_descriptor {
 	 * bytes 48-83:	Alternate volume tag information.
 	 *		(field omitted if AVOLTAG = 0)
 	 */
-	
+
 	struct volume_tag pvoltag;      /* omitted if PVOLTAG == 0 */
-  	struct volume_tag avoltag;      /* omitted if AVOLTAG == 0 */
-	
+	struct volume_tag avoltag;      /* omitted if AVOLTAG == 0 */
+
 	/*
 	 * bytes 84-87:	Reserved (moved up if either of the above fields
 	 *		are omitted)

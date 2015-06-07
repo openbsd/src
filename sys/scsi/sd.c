@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.260 2015/04/02 14:24:02 jasper Exp $	*/
+/*	$OpenBSD: sd.c,v 1.261 2015/06/07 19:13:27 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -286,7 +286,7 @@ sdactivate(struct device *self, int act)
 		 * Stop the disk.  Stopping the disk should flush the
 		 * cache, but we are paranoid so we flush the cache
 		 * first.  We're cold at this point, so we poll for
-	 	 * completion.
+		 * completion.
 		 */
 		if ((sc->flags & SDF_DIRTY) != 0)
 			sd_flush(sc, SCSI_AUTOCONF);
@@ -1611,7 +1611,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data to find
-	 * READONLY info. The only thing USB devices will ask for. 
+	 * READONLY info. The only thing USB devices will ask for.
 	 */
 	err = scsi_do_mode_sense(sc->sc_link, 0, buf, (void **)&page0,
 	    NULL, NULL, NULL, 1, flags | SCSI_SILENT, &big);
@@ -1653,7 +1653,7 @@ sd_get_parms(struct sd_softc *sc, struct disk_parms *dp, int flags)
 
 	default:
 		/*
-		 * NOTE: Some devices leave off the last four bytes of 
+		 * NOTE: Some devices leave off the last four bytes of
 		 * PAGE_RIGID_GEOMETRY and PAGE_FLEX_GEOMETRY mode sense pages.
 		 * The only information in those four bytes is RPM information
 		 * so accept the page. The extra bytes will be zero and RPM will
