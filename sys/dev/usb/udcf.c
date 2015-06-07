@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.59 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: udcf.c,v 1.60 2015/06/07 20:11:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -55,12 +55,7 @@ int udcfdebug = 0;
 /* max. skew of received time diff vs. measured time diff in percent. */
 #define MAX_SKEW	5
 
-#define CLOCK_DCF77	0
-#define CLOCK_HBG	1
-
-static const char	*clockname[2] = {
-	"DCF77",
-	"HBG" };
+#define CLOCK_DCF77	"DCF77"
 
 struct udcf_softc {
 	struct device		sc_dev;		/* base device */
@@ -75,16 +70,12 @@ struct udcf_softc {
 	struct timeout		sc_mg_to;	/* minute-gap detect */
 	struct timeout		sc_sl_to;	/* signal-loss detect */
 	struct timeout		sc_it_to;	/* invalidate time */
-	struct timeout		sc_ct_to;	/* detect clock type */
 	struct usb_task		sc_bv_task;
 	struct usb_task		sc_mg_task;
 	struct usb_task		sc_sl_task;
-	struct usb_task		sc_ct_task;
 
 	usb_device_request_t	sc_req;
 
-	int			sc_detect_ct;	/* != 0: autodetect type */
-	int			sc_clocktype;	/* DCF77 or HBG */
 	int			sc_sync;	/* 1 during sync */
 	u_int64_t		sc_mask;	/* 64 bit mask */
 	u_int64_t		sc_tbits;	/* Time bits */
@@ -108,7 +99,6 @@ struct udcf_softc {
 /*
  * timeouts being used in hz:
  * t_bv		bit value detection (150ms)
- * t_ct		detect clocktype (250ms)
  * t_sync	sync (950ms)
  * t_mg		minute gap detection (1500ms)
  * t_mgsync	resync after a minute gap (450ms)
@@ -117,7 +107,7 @@ struct udcf_softc {
  * t_warn	degrade sensor status to warning (5min)
  * t_crit	degrade sensor status to critical (15min)
  */
-static int t_bv, t_ct, t_sync, t_mg, t_sl, t_mgsync, t_wait, t_warn, t_crit;
+static int t_bv, t_sync, t_mg, t_sl, t_mgsync, t_wait, t_warn, t_crit;
 
 void	udcf_intr(void *);
 void	udcf_probe(void *);
@@ -126,11 +116,9 @@ void	udcf_bv_intr(void *);
 void	udcf_mg_intr(void *);
 void	udcf_sl_intr(void *);
 void	udcf_it_intr(void *);
-void	udcf_ct_intr(void *);
 void	udcf_bv_probe(void *);
 void	udcf_mg_probe(void *);
 void	udcf_sl_probe(void *);
-void	udcf_ct_probe(void *);
 
 int udcf_match(struct device *, void *, void *);
 void udcf_attach(struct device *, struct device *, void *);
@@ -151,8 +139,7 @@ const struct cfattach udcf_ca = {
 
 static const struct usb_devno udcf_devs[] = {
 	{ USB_VENDOR_GUDE, USB_PRODUCT_GUDE_DCF },
-	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_DCF },
-	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_HBG }
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_DCF }
 };
 
 int
@@ -179,19 +166,13 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (uaa->product) {
 	case USB_PRODUCT_GUDE_DCF:
-		sc->sc_detect_ct = 1;
 		sc->sc_signal = udcf_nc_signal;
-		strlcpy(sc->sc_sensor.desc, "Unknown",
+		strlcpy(sc->sc_sensor.desc, "DCF77",
 		    sizeof(sc->sc_sensor.desc));
 		break;
 	case USB_PRODUCT_FTDI_DCF:
 		sc->sc_signal = udcf_ft232r_signal;
-		strlcpy(sc->sc_sensor.desc, clockname[CLOCK_DCF77],
-		    sizeof(sc->sc_sensor.desc));
-		break;
-	case USB_PRODUCT_FTDI_HBG:
-		sc->sc_signal = udcf_ft232r_signal;
-		strlcpy(sc->sc_sensor.desc, clockname[CLOCK_HBG],
+		strlcpy(sc->sc_sensor.desc, "DCF77",
 		    sizeof(sc->sc_sensor.desc));
 		break;
 	}
@@ -207,11 +188,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_sl_to, udcf_sl_intr, sc);
 	timeout_set(&sc->sc_it_to, udcf_it_intr, sc);
 
-	if (sc->sc_detect_ct) {
-		usb_init_task(&sc->sc_ct_task, udcf_ct_probe, sc,
-		    USB_TASK_TYPE_GENERIC);
-		timeout_set(&sc->sc_ct_to, udcf_ct_intr, sc);
-	}
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
@@ -243,7 +219,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iface = iface;
 
-	sc->sc_clocktype = -1;
 	sc->sc_level = 0;
 	sc->sc_minute = 0;
 	sc->sc_last_mg = 0L;
@@ -261,8 +236,7 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 		if (udcf_nc_init_hw(sc))
 			goto fishy;
 		break;
-	case USB_PRODUCT_FTDI_DCF:	/* FALLTHROUGH */
-	case USB_PRODUCT_FTDI_HBG:
+	case USB_PRODUCT_FTDI_DCF:
 		if (udcf_ft232r_init_hw(sc))
 			goto fishy;
 		break;
@@ -296,12 +270,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	t.tv_sec = DPERIOD2;
 	t_crit = tvtohz(&t);
 
-	if (sc->sc_detect_ct) {
-		t.tv_sec = 0L;
-		t.tv_usec = 250000L;
-		t_ct = tvtohz(&t);
-	}
-
 	/* Give the receiver some slack to stabilize */
 	timeout_add(&sc->sc_to, t_wait);
 
@@ -331,10 +299,6 @@ udcf_detach(struct device *self, int flags)
 		timeout_del(&sc->sc_sl_to);
 	if (timeout_initialized(&sc->sc_it_to))
 		timeout_del(&sc->sc_it_to);
-	if (sc->sc_detect_ct) {
-		if (timeout_initialized(&sc->sc_ct_to))
-			timeout_del(&sc->sc_ct_to);
-	}
 
 	/* Unregister the clock with the kernel */
 	sensordev_deinstall(&sc->sc_sensordev);
@@ -342,8 +306,6 @@ udcf_detach(struct device *self, int flags)
 	usb_rem_task(sc->sc_udev, &sc->sc_bv_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_mg_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_sl_task);
-	if (sc->sc_detect_ct)
-		usb_rem_task(sc->sc_udev, &sc->sc_ct_task);
 
 	return 0;
 }
@@ -378,14 +340,6 @@ udcf_sl_intr(void *xsc)
 {
 	struct udcf_softc *sc = xsc;
 	usb_add_task(sc->sc_udev, &sc->sc_sl_task);
-}
-
-/* detect the clock type (DCF77 or HBG) */
-void
-udcf_ct_intr(void *xsc)
-{
-	struct udcf_softc *sc = xsc;
-	usb_add_task(sc->sc_udev, &sc->sc_ct_task);
 }
 
 /*
@@ -526,9 +480,6 @@ udcf_probe(void *xsc)
 		if (sc->sc_sync) {
 			DPRINTF(("start collecting bits\n"));
 			sc->sc_sync = 0;
-			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN &&
-			    sc->sc_detect_ct)
-				sc->sc_clocktype = -1;
 		} else {
 			/* provide the timedelta */
 			microtime(&sc->sc_sensor.tv);
@@ -537,14 +488,6 @@ udcf_probe(void *xsc)
 			sc->sc_sensor.value = (int64_t)(now.tv_sec -
 			    sc->sc_current) * 1000000000LL + now.tv_nsec;
 
-			/* set the clocktype and make sensor valid */
-			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN &&
-			    sc->sc_detect_ct) {
-				strlcpy(sc->sc_sensor.desc, sc->sc_clocktype ?
-				    clockname[CLOCK_HBG] :
-				    clockname[CLOCK_DCF77],
-				    sizeof(sc->sc_sensor.desc));
-			}
 			sc->sc_sensor.status = SENSOR_S_OK;
 
 			/*
@@ -563,10 +506,6 @@ udcf_probe(void *xsc)
 	if (!sc->sc_sync) {
 		/* detect bit value */
 		timeout_add(&sc->sc_bv_to, t_bv);
-
-		/* detect clocktype */
-		if (sc->sc_detect_ct && sc->sc_clocktype == -1)
-			timeout_add(&sc->sc_ct_to, t_ct);
 	}
 	timeout_add(&sc->sc_mg_to, t_mg);	/* detect minute gap */
 	timeout_add(&sc->sc_sl_to, t_sl);	/* detect signal loss */
@@ -766,25 +705,3 @@ udcf_it_intr(void *xsc)
 		sc->sc_nrecv = 0;
 	}
 }
-
-/* detect clock type.  used for older devices only. */
-void
-udcf_ct_probe(void *xsc)
-{
-	struct udcf_softc	*sc = xsc;
-	int			 data;
-
-	if (usbd_is_dying(sc->sc_udev))
-		return;
-
-	data = sc->sc_signal(sc);
-	if (data == -1) {
-		DPRINTF(("clocktype detection failed\n"));
-		return;
-	}
-
-	sc->sc_clocktype = data ? 0 : 1;
-	DPRINTF(("\nclocktype is %s\n", sc->sc_clocktype ?
-		clockname[CLOCK_HBG] : clockname[CLOCK_DCF77]));
-}
-

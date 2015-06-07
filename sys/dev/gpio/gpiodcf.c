@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiodcf.c,v 1.4 2011/07/03 15:47:16 matthew Exp $ */
+/*	$OpenBSD: gpiodcf.c,v 1.5 2015/06/07 20:11:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -46,15 +46,8 @@ int gpiodcfdebug = 0;
 /* max. skew of received time diff vs. measured time diff in percent. */
 #define MAX_SKEW	5
 
-#define CLOCK_DCF77	0
-#define CLOCK_HBG	1
-
 #define GPIODCF_NPINS		1
 #define	GPIODCF_PIN_DATA	0
-
-static const char	*clockname[2] = {
-	"DCF77",
-	"HBG" };
 
 struct gpiodcf_softc {
 	struct device		sc_dev;		/* base device */
@@ -71,10 +64,7 @@ struct gpiodcf_softc {
 	struct timeout		sc_mg_to;	/* minute-gap detect */
 	struct timeout		sc_sl_to;	/* signal-loss detect */
 	struct timeout		sc_it_to;	/* invalidate time */
-	struct timeout		sc_ct_to;	/* detect clock type */
 
-	int			sc_detect_ct;	/* != 0: autodetect type */
-	int			sc_clocktype;	/* DCF77 or HBG */
 	int			sc_sync;	/* 1 during sync */
 	u_int64_t		sc_mask;	/* 64 bit mask */
 	u_int64_t		sc_tbits;	/* Time bits */
@@ -96,7 +86,6 @@ struct gpiodcf_softc {
 /*
  * timeouts being used in hz:
  * t_bv		bit value detection (150ms)
- * t_ct		detect clocktype (250ms)
  * t_sync	sync (950ms)
  * t_mg		minute gap detection (1500ms)
  * t_mgsync	resync after a minute gap (450ms)
@@ -105,14 +94,13 @@ struct gpiodcf_softc {
  * t_warn	degrade sensor status to warning (5min)
  * t_crit	degrade sensor status to critical (15min)
  */
-static int t_bv, t_ct, t_sync, t_mg, t_sl, t_mgsync, t_wait, t_warn, t_crit;
+static int t_bv, t_sync, t_mg, t_sl, t_mgsync, t_wait, t_warn, t_crit;
 
 void	gpiodcf_intr(void *);
 void	gpiodcf_probe(void *);
 void	gpiodcf_bv_probe(void *);
 void	gpiodcf_mg_probe(void *);
 void	gpiodcf_sl_probe(void *);
-void	gpiodcf_ct_probe(void *);
 void	gpiodcf_invalidate(void *);
 
 int gpiodcf_match(struct device *, void *, void *); 
@@ -176,16 +164,13 @@ gpiodcf_attach(struct device *parent, struct device *self, void *aux)
 	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIODCF_PIN_DATA, sc->sc_data);
 	printf("\n");
 
-	sc->sc_detect_ct = 1;
-	strlcpy(sc->sc_sensor.desc, "Unknown",
-	    sizeof(sc->sc_sensor.desc));
+	strlcpy(sc->sc_sensor.desc, "DCF77", sizeof(sc->sc_sensor.desc));
 
 	timeout_set(&sc->sc_to, gpiodcf_probe, sc);
 	timeout_set(&sc->sc_bv_to, gpiodcf_bv_probe, sc);
 	timeout_set(&sc->sc_mg_to, gpiodcf_mg_probe, sc);
 	timeout_set(&sc->sc_sl_to, gpiodcf_sl_probe, sc);
 	timeout_set(&sc->sc_it_to, gpiodcf_invalidate, sc);
-	timeout_set(&sc->sc_ct_to, gpiodcf_ct_probe, sc);
 
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
@@ -203,7 +188,6 @@ gpiodcf_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	sensordev_install(&sc->sc_sensordev);
 
-	sc->sc_clocktype = -1;
 	sc->sc_level = 0;
 	sc->sc_minute = 0;
 	sc->sc_last_mg = 0L;
@@ -244,12 +228,6 @@ gpiodcf_attach(struct device *parent, struct device *self, void *aux)
 	t.tv_sec = DPERIOD2;
 	t_crit = tvtohz(&t);
 
-	if (sc->sc_detect_ct) {
-		t.tv_sec = 0L;
-		t.tv_usec = 250000L;
-		t_ct = tvtohz(&t);
-	}
-
 	/* Give the receiver some slack to stabilize */
 	timeout_add(&sc->sc_to, t_wait);
 
@@ -277,7 +255,6 @@ gpiodcf_detach(struct device *self, int flags)
 	timeout_del(&sc->sc_mg_to);
 	timeout_del(&sc->sc_sl_to);
 	timeout_del(&sc->sc_it_to);
-	timeout_del(&sc->sc_ct_to);
 
 	/* Unregister the clock with the kernel */
 	sensordev_deinstall(&sc->sc_sensordev);
@@ -330,9 +307,6 @@ gpiodcf_probe(void *xsc)
 		if (sc->sc_sync) {
 			DPRINTF(("start collecting bits\n"));
 			sc->sc_sync = 0;
-			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN &&
-			    sc->sc_detect_ct)
-				sc->sc_clocktype = -1;
 		} else {
 			/* provide the timedelta */
 			microtime(&sc->sc_sensor.tv);
@@ -341,14 +315,6 @@ gpiodcf_probe(void *xsc)
 			sc->sc_sensor.value = (int64_t)(now.tv_sec -
 			    sc->sc_current) * 1000000000LL + now.tv_nsec;
 
-			/* set the clocktype and make sensor valid */
-			if (sc->sc_sensor.status == SENSOR_S_UNKNOWN &&
-			    sc->sc_detect_ct) {
-				strlcpy(sc->sc_sensor.desc, sc->sc_clocktype ?
-				    clockname[CLOCK_HBG] :
-				    clockname[CLOCK_DCF77],
-				    sizeof(sc->sc_sensor.desc));
-			}
 			sc->sc_sensor.status = SENSOR_S_OK;
 
 			/*
@@ -367,10 +333,6 @@ gpiodcf_probe(void *xsc)
 	if (!sc->sc_sync) {
 		/* detect bit value */
 		timeout_add(&sc->sc_bv_to, t_bv);
-
-		/* detect clocktype */
-		if (sc->sc_detect_ct && sc->sc_clocktype == -1)
-			timeout_add(&sc->sc_ct_to, t_ct);
 	}
 	timeout_add(&sc->sc_mg_to, t_mg);	/* detect minute gap */
 	timeout_add(&sc->sc_sl_to, t_sl);	/* detect signal loss */
@@ -569,27 +531,6 @@ gpiodcf_invalidate(void *xsc)
 		sc->sc_sensor.status = SENSOR_S_CRIT;
 		sc->sc_nrecv = 0;
 	}
-}
-
-/* detect clock type.  used for older devices only. */
-void
-gpiodcf_ct_probe(void *xsc)
-{
-	struct gpiodcf_softc	*sc = xsc;
-	int			 data;
-
-	if (sc->sc_dying)
-		return;
-
-	data = gpiodcf_signal(sc);
-	if (data == -1) {
-		DPRINTF(("clocktype detection failed\n"));
-		return;
-	}
-
-	sc->sc_clocktype = data ? 0 : 1;
-	DPRINTF(("\nclocktype is %s\n", sc->sc_clocktype ?
-		clockname[CLOCK_HBG] : clockname[CLOCK_DCF77]));
 }
 
 int

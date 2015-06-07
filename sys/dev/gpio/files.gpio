@@ -1,4 +1,4 @@
-# $OpenBSD: files.gpio,v 1.9 2011/10/03 20:24:51 matthieu Exp $
+# $OpenBSD: files.gpio,v 1.10 2015/06/07 20:11:52 claudio Exp $
 
 define	gpio {[offset = -1], [mask = 0], [flag = 0]}
 
@@ -21,7 +21,7 @@ device	gpioow: onewirebus, onewire_bitbang
 attach	gpioow at gpio
 file	dev/gpio/gpioow.c			gpioow
 
-# DCF77/HBG time signal station receivers
+# DCF77 time signal station receivers
 device	gpiodcf
 attach	gpiodcf at gpio
 file	dev/gpio/gpiodcf.c			gpiodcf
