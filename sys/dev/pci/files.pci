@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.316 2015/06/04 21:13:12 stsp Exp $
+#	$OpenBSD: files.pci,v 1.317 2015/06/07 10:47:53 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -494,19 +494,19 @@ file	dev/pci/mbg.c			mbg
 
 # UHCI USB controller
 attach	uhci at pci with uhci_pci
-file	dev/pci/uhci_pci.c		uhci
+file	dev/pci/uhci_pci.c		uhci_pci
 
 # OHCI USB controller
 attach	ohci at pci with ohci_pci
-file	dev/pci/ohci_pci.c		ohci
+file	dev/pci/ohci_pci.c		ohci_pci
 
 # EHCI USB controller
 attach	ehci at pci with ehci_pci
-file	dev/pci/ehci_pci.c		ehci
+file	dev/pci/ehci_pci.c		ehci_pci
 
 # XHCI USB controller
 attach	xhci at pci with xhci_pci
-file	dev/pci/xhci_pci.c		xhci
+file	dev/pci/xhci_pci.c		xhci_pci
 
 # YENTA PCI-CardBus bridge
 #device	cbb: cbbus, pcmciabus
