@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.291 2015/06/07 01:25:27 krw Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.292 2015/06/07 12:02:28 jsg Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3262,7 +3262,9 @@ tcp_mss_adv(struct ifnet *ifp, int af)
 			mss = IN6_LINKMTU(ifp);
 		iphlen = sizeof(struct ip6_hdr);
 		break;
-#endif
+#endif  
+	default:
+		unhandled_af(af);
 	}
 	mss = mss - iphlen - sizeof(struct tcphdr);
 	return (max(mss, tcp_mssdflt));
@@ -4203,7 +4205,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		break;
 #endif
 	default:
-		th = NULL;
+		unhandled_af(sc->sc_src.sa.sa_family);
 	}
 
 	th->th_seq = htonl(sc->sc_iss);

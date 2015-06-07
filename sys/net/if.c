@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.337 2015/06/03 22:01:07 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.338 2015/06/07 12:02:28 jsg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2475,4 +2475,10 @@ niq_enlist(struct niqueue *niq, struct mbuf_list *ml)
 		if_congestion();
 
 	return (rv);
+}
+
+__dead void
+unhandled_af(int af)
+{
+	panic("unhandled af %d", af);
 }

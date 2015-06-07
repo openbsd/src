@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.917 2015/06/05 13:22:34 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.918 2015/06/07 12:02:28 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2332,6 +2332,8 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		len = sizeof(struct ip6_hdr) + tlen;
 		break;
 #endif /* INET6 */
+	default:
+		unhandled_af(af);
 	}
 
 	/* create outgoing mbuf */
@@ -4494,6 +4496,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 		icmptype = pd->hdr.icmp6->icmp6_type;
 		break;
 #endif /* INET6 */
+	default:
+		panic("unhandled proto %d", pd->proto);
 	}
 
 	if (pf_icmp_mapping(pd, icmptype, &icmp_dir, &virtual_id,
@@ -4684,6 +4688,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			pd2.dst = (struct pf_addr *)&h2_6.ip6_dst;
 			break;
 #endif /* INET6 */
+		default:
+			unhandled_af(pd->af);
 		}
 
 		switch (pd2.proto) {
@@ -5789,6 +5795,8 @@ pf_check_proto_cksum(struct pf_pdesc *pd, int off, int len, u_int8_t p,
 		sum = in6_cksum(pd->m, p, off, len);
 		break;
 #endif /* INET6 */
+	default:
+		unhandled_af(af);
 	}
 	if (sum) {
 		switch (p) {

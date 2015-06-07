@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.108 2015/04/09 12:04:14 mikeb Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.109 2015/06/07 12:02:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -792,12 +792,17 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 	int			 s;
 
 	bzero(&sa, sizeof(sa));
-	if (ad->pfra_af == AF_INET) {
+	switch (ad->pfra_af) {
+	case AF_INET:
 		FILLIN_SIN(sa.sin, ad->pfra_ip4addr);
 		head = kt->pfrkt_ip4;
-	} else if ( ad->pfra_af == AF_INET6 ) {
+		break;
+	case AF_INET6:
 		FILLIN_SIN6(sa.sin6, ad->pfra_ip6addr);
 		head = kt->pfrkt_ip6;
+		break;
+	default:
+		unhandled_af(ad->pfra_af);
 	}
 	if (ADDR_NETWORK(ad)) {
 		pfr_prepare_network(&mask, ad->pfra_af, ad->pfra_net);
@@ -1042,10 +1047,16 @@ pfr_route_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 	int			 s;
 
 	bzero(ke->pfrke_node, sizeof(ke->pfrke_node));
-	if (ke->pfrke_af == AF_INET)
+	switch (ke->pfrke_af) {
+	case AF_INET:
 		head = kt->pfrkt_ip4;
-	else if (ke->pfrke_af == AF_INET6)
+		break;
+	case AF_INET6:
 		head = kt->pfrkt_ip6;
+		break;
+	default:
+		unhandled_af(ke->pfrke_af);
+	}
 
 	s = splsoftnet();
 	if (KENTRY_NETWORK(ke)) {
@@ -1066,10 +1077,16 @@ pfr_unroute_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 	struct radix_node_head	*head;
 	int			 s;
 
-	if (ke->pfrke_af == AF_INET)
+	switch (ke->pfrke_af) {
+	case AF_INET:
 		head = kt->pfrkt_ip4;
-	else if (ke->pfrke_af == AF_INET6)
+		break;
+	case AF_INET6:
 		head = kt->pfrkt_ip6;
+		break;
+	default:
+		unhandled_af(ke->pfrke_af);
+	}
 
 	s = splsoftnet();
 	if (KENTRY_NETWORK(ke)) {
