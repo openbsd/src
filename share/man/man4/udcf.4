@@ -1,4 +1,4 @@
-.\" $OpenBSD: udcf.4,v 1.26 2013/07/16 16:05:49 schwarze Exp $
+.\" $OpenBSD: udcf.4,v 1.27 2015/06/07 20:13:13 claudio Exp $
 .\"
 .\" Copyright (c) 2006 - 2008 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: June 7 2015 $
 .Dt UDCF 4
 .Os
 .Sh NAME
@@ -26,8 +26,7 @@
 The
 .Nm
 driver provides support for the Gude ADS Expert mouseCLOCK USB and
-the Expert mouseCLOCK USB II, receivers for the German DCF77 and the
-Swiss HBG time signal stations.
+the Expert mouseCLOCK USB II, receivers for the German DCF77.
 While receivers for the British MSF time signal station are also
 being made,
 .Nm
@@ -43,11 +42,6 @@ The clock type is indicated in the sensor description:
 .It DCF77
 German DCF77 time signal station
 (77.5 kHz longwave transmitter located in Mainflingen near Frankfurt).
-.It HBG
-Swiss HBG time signal station
-(75 kHz longwave transmitter located in Prangins near Geneva).
-.It Unknown
-The clock type has not been determined.
 .El
 .Pp
 The quality of the timedelta is reported as the sensor status:
