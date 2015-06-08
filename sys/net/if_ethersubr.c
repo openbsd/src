@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.202 2015/06/02 09:38:24 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.203 2015/06/08 13:40:48 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -112,11 +112,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
 #endif /* NVLAN > 0 */
-
-#include "carp.h"
-#if NCARP > 0
-#include <netinet/ip_carp.h>
-#endif
 
 #include "pppoe.h"
 #if NPPPOE > 0
@@ -243,18 +238,17 @@ ether_addheader(struct mbuf **m, struct ifnet *ifp, u_int16_t etype,
  * Assumes that ifp is actually pointer to arpcom structure.
  */
 int
-ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
+ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt)
 {
 	u_int16_t etype;
-	int len, error = 0;
 	u_char edst[ETHER_ADDR_LEN];
 	u_char *esrc;
 	struct mbuf *m = m0;
 	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
-	struct arpcom *ac = (struct arpcom *)ifp0;
-	struct ifnet *ifp = ifp0;
+	struct arpcom *ac = (struct arpcom *)ifp;
+	int error = 0;
 
 #ifdef DIAGNOSTIC
 	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
@@ -266,20 +260,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 #endif
 
 	esrc = ac->ac_enaddr;
-
-#if NCARP > 0
-	if (ifp->if_type == IFT_CARP) {
-		ifp = ifp->if_carpdev;
-		ac = (struct arpcom *)ifp;
-
-		if ((ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING))
-			senderr(ENETDOWN);
-	}
-
-	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
-		esrc = carp_get_srclladdr(ifp0, esrc);
-#endif /* NCARP > 0 */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -402,14 +382,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	}
 #endif
 
-	len = m->m_pkthdr.len;
-
-	error = if_output(ifp, m);
-#if NCARP > 0
-	if (!error && ifp != ifp0)
-		ifp0->if_obytes += len;
-#endif /* NCARP > 0 */
-	return (error);
+	return (if_output(ifp, m));
 bad:
 	if (m)
 		m_freem(m);

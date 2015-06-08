@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.258 2015/06/02 09:38:24 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.259 2015/06/08 13:40:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -745,7 +745,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = carp_ioctl;
 	ifp->if_start = carp_start;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -1397,21 +1397,6 @@ carp_ourether(void *v, u_int8_t *ena)
 		}
 	}
 	return (NULL);
-}
-
-u_char *
-carp_get_srclladdr(struct ifnet *ifp, u_char *esrc)
-{
-	struct carp_softc *sc = ifp->if_softc;
-
-	if (sc->sc_balancing != CARP_BAL_IPSTEALTH &&
-	    sc->sc_balancing != CARP_BAL_IP && sc->cur_vhe) {
-		if (sc->cur_vhe->vhe_leader)
-			return (sc->sc_ac.ac_enaddr);
-		else
-			return (sc->cur_vhe->vhe_enaddr);
-	}
-	return (esrc);
 }
 
 int
@@ -2257,15 +2242,52 @@ carp_ifgattr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		carp_vhe_send_ad_all(sc);
 }
 
-/*
- * Start output on carp interface. This function should never be called.
- */
 void
 carp_start(struct ifnet *ifp)
 {
-#ifdef DEBUG
-	printf("%s: start called\n", ifp->if_xname);
-#endif
+	struct carp_softc *sc = ifp->if_softc;
+	struct mbuf *m;
+
+	for (;;) {
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif /* NBPFILTER > 0 */
+
+		if ((ifp->if_carpdev->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING)) {
+			IF_DROP(&ifp->if_carpdev->if_snd);
+			ifp->if_oerrors++;
+			m_freem(m);
+			continue;
+		}
+
+		/*
+		 * Do not leak the multicast address when sending
+		 * advertisements in 'ip' and 'ip-stealth' balacing
+		 * modes.
+		 */
+		if (sc->sc_balancing != CARP_BAL_IPSTEALTH &&
+		    sc->sc_balancing != CARP_BAL_IP &&
+		    (sc->cur_vhe && !sc->cur_vhe->vhe_leader)) {
+			struct ether_header *eh;
+			uint8_t *esrc;
+
+			eh = mtod(m, struct ether_header *);
+			esrc = sc->cur_vhe->vhe_enaddr;
+			memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
+		}
+
+		if (if_output(ifp->if_carpdev, m)) {
+			ifp->if_oerrors++;
+			continue;
+		}
+		ifp->if_opackets++;
+	}
 }
 
 int
@@ -2283,7 +2305,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		return (ENETUNREACH);
 	}
 
-	return (sc->sc_carpdev->if_output(ifp, m, sa, rt));
+	return (ether_output(ifp, m, sa, rt));
 }
 
 void
