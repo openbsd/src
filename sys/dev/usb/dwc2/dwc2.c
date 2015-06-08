@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.26 2015/06/08 00:46:33 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.27 2015/06/08 00:58:23 jmatthew Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1221,13 +1221,14 @@ dwc2_device_isoc_start(struct usbd_xfer *xfer)
 	struct dwc2_softc *sc = DWC2_DPIPE2SC(dpipe);
 	usbd_status err;
 
+	/* Why would you do that anyway? */
+	if (sc->sc_bus.use_polling)
+		return (USBD_INVAL);
+
 	mtx_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
 	mtx_leave(&sc->sc_lock);
-
-	if (sc->sc_bus.use_polling)
-		dwc2_waitintr(sc, xfer);
 
 	return err;
 }
