@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.4 2014/12/22 02:26:53 tedu Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.5 2015/06/08 14:22:05 jsg Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -42,6 +42,8 @@
 
 #include <machine/asm.h>
 #include "assym.h"
+
+.syntax unified
 
 /*
  * int in_cksum(struct mbuf *m, int len)
@@ -231,9 +233,9 @@ ASENTRY_NP(L_cksumdata)
 	blt	.Lcksumdata_endgame
 	cmp	r7, #0x02
 	ldrb	r4, [r0], #0x01		/* Fetch 1st byte */
-	ldrgeb	r5, [r0], #0x01		/* Fetch 2nd byte */
+	ldrbge	r5, [r0], #0x01		/* Fetch 2nd byte */
 	movlt	r5, #0x00
-	ldrgtb	r6, [r0], #0x01		/* Fetch 3rd byte */
+	ldrbgt	r6, [r0], #0x01		/* Fetch 3rd byte */
 	movle	r6, #0x00
 	/* Combine the three bytes depending on endianness and alignment */
 	orreq	r2, r4, r5, lsl #8
@@ -415,9 +417,9 @@ ASENTRY_NP(L_cksumdata)
 .Lcksumdata_endgame:
 	ldrb	r3, [r0]		/* Fetch first byte */
 	cmp	r1, #0x02
-	ldrgeb	r4, [r0, #0x01]		/* Fetch 2nd and 3rd as necessary */
+	ldrbge	r4, [r0, #0x01]		/* Fetch 2nd and 3rd as necessary */
 	movlt	r4, #0x00
-	ldrgtb	r5, [r0, #0x02]
+	ldrbgt	r5, [r0, #0x02]
 	movle	r5, #0x00
 	/* Combine the three bytes depending on endianness and alignment */
 	tst	r0, #0x01

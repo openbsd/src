@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: memset.S,v 1.3 2015/06/08 14:22:05 jsg Exp $	*/
 /*	$NetBSD: memset.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
  *   r0 - dest address
  */
 
+.syntax unified
+
 ENTRY(memset)
 	stmfd	sp!, {r0}		/* Remember address for return value */
 	and	r1, r1, #0x000000ff	/* We write bytes */
@@ -63,8 +65,8 @@ ENTRY(memset)
 	sub	r2, r2, r3
 	cmp	r3, #0x00000002
 	strb	r1, [r0], #0x0001	/* Set 1 byte */
-	strgeb	r1, [r0], #0x0001	/* Set another byte */
-	strgtb	r1, [r0], #0x0001	/* and a third */
+	strbge	r1, [r0], #0x0001	/* Set another byte */
+	strbgt	r1, [r0], #0x0001	/* and a third */
 
 	cmp	r2, #0x00000004
 	blt	.Lmemset_lessthanfour
@@ -115,13 +117,13 @@ ENTRY(memset)
 
 .Lmemset_lessthanfour:
 	cmp	r2, #0x00000000
-	ldmeqfd	sp!, {r0}
+	ldmfdeq	sp!, {r0}
 	moveq	pc, lr			/* Zero length so exit */
 
 	cmp	r2, #0x00000002
 	strb	r1, [r0], #0x0001	/* Set 1 byte */
-	strgeb	r1, [r0], #0x0001	/* Set another byte */
-	strgtb	r1, [r0], #0x0001	/* and a third */
+	strbge	r1, [r0], #0x0001	/* Set another byte */
+	strbgt	r1, [r0], #0x0001	/* and a third */
 
 	ldmfd	sp!, {r0}
 	mov	pc, lr			/* Exit */
