@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.25 2015/03/19 10:39:17 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.26 2015/06/08 00:46:33 jmatthew Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1017,13 +1017,10 @@ dwc2_device_ctrl_start(struct usbd_xfer *xfer)
 	err = dwc2_device_start(xfer);
 	mtx_leave(&sc->sc_lock);
 
-	if (err)
-		return err;
-
 	if (sc->sc_bus.use_polling)
 		dwc2_waitintr(sc, xfer);
 
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 STATIC void
@@ -1085,6 +1082,9 @@ dwc2_device_bulk_start(struct usbd_xfer *xfer)
 	xfer->status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
 	mtx_leave(&sc->sc_lock);
+
+	if (sc->sc_bus.use_polling)
+		dwc2_waitintr(sc, xfer);
 
 	return err;
 }
@@ -1150,13 +1150,10 @@ dwc2_device_intr_start(struct usbd_xfer *xfer)
 	err = dwc2_device_start(xfer);
 	mtx_leave(&sc->sc_lock);
 
-	if (err)
-		return err;
-
 	if (sc->sc_bus.use_polling)
 		dwc2_waitintr(sc, xfer);
 
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 /* Abort a device interrupt request. */
