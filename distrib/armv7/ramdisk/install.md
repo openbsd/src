@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 2015/06/08 17:35:43 jsg Exp $
+#	$OpenBSD: install.md,v 1.15 2015/06/08 18:31:17 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ md_prep_fdisk() {
 	if [[ -n $CUBOX ]]; then
 		bootsectorstart="2048"
 	fi
-	bootsectorend=`expr $bootsectorstart + $bootsectorsize`
+	bootsectorend=$(($bootsectorstart + $bootsectorsize))
 
 	while :; do
 		_d=whole
