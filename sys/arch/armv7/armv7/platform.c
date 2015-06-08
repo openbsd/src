@@ -1,4 +1,4 @@
-/*	$OpenBSD: platform.c,v 1.2 2015/05/27 08:03:43 jsg Exp $	*/
+/*	$OpenBSD: platform.c,v 1.3 2015/06/08 06:33:16 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -29,6 +29,7 @@
 #include "omap.h"
 #include "sunxi.h"
 #include "exynos.h"
+#include "vexpress.h"
 
 static struct armv7_platform *platform;
 
@@ -36,6 +37,7 @@ struct armv7_platform *imx_platform_match(void);
 struct armv7_platform *omap_platform_match(void);
 struct armv7_platform *sunxi_platform_match(void);
 struct armv7_platform *exynos_platform_match(void);
+struct armv7_platform *vexpress_platform_match(void);
 
 struct armv7_platform * (*plat_match[])(void) = {
 #if NIMX > 0
@@ -49,6 +51,9 @@ struct armv7_platform * (*plat_match[])(void) = {
 #endif
 #if NEXYNOS > 0
 	exynos_platform_match,
+#endif
+#if NVEXPRESS > 0
+	vexpress_platform_match,
 #endif
 };
 

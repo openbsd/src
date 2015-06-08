@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.11 2015/06/02 02:30:16 jsg Exp $
+#	$OpenBSD: Makefile.armv7,v 1.12 2015/06/08 06:33:16 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -180,8 +180,10 @@ KERNADDR_OMAP=0x80300000
 KERNADDR_IMX=0x10300000
 KERNADDR_SUNXI=0x40300000
 KERNADDR_EXYNOS=0x40300000
+KERNADDR_VEXPRESSA15=0x80300000
+KERNADDR_VEXPRESSA9=0x60300000
 
-.for SOC in IMX OMAP SUNXI EXYNOS
+.for SOC in IMX OMAP SUNXI EXYNOS VEXPRESSA9 VEXPRESSA15
 bsd.${SOC}.umg: bsd
 	mkuboot -a arm -o linux -e ${KERNADDR_${SOC}} -l ${KERNADDR_${SOC}} \
 	    bsd bsd.${SOC}.umg

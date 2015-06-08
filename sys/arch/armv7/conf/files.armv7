@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.12 2015/05/27 00:06:14 jsg Exp $
+#	$OpenBSD: files.armv7,v 1.13 2015/06/08 06:33:16 jsg Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -53,6 +53,9 @@ include "dev/wsfont/files.wsfont"
 # Include USB stuff
 include "dev/usb/files.usb"
 
+# PCI and virtio
+include "dev/pci/files.pci"
+
 # Machine-independent GPIO drivers
 include "dev/gpio/files.gpio"
 
@@ -64,3 +67,4 @@ include "arch/armv7/imx/files.imx"
 include "arch/armv7/omap/files.omap"
 include "arch/armv7/sunxi/files.sunxi"
 include "arch/armv7/exynos/files.exynos"
+include "arch/armv7/vexpress/files.vexpress"

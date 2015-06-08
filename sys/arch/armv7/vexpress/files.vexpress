@@ -1,0 +1,20 @@
+#	$OpenBSD: files.vexpress,v 1.1 2015/06/08 06:33:16 jsg Exp $
+
+define vexpress {}
+device vexpress: vexpress
+attach vexpress at mainbus
+file	arch/armv7/vexpress/vexpress_machdep.c	vexpress needs-flag
+file	arch/armv7/vexpress/vexpress.c		vexpress
+file	arch/armv7/vexpress/vexpress_a9.c	vexpress
+file	arch/armv7/vexpress/vexpress_a15.c	vexpress
+
+device pluart
+attach pluart at vexpress
+file	arch/armv7/vexpress/pl011.c	pluart
+
+attach	virtio at vexpress with virtio_mmio
+file	arch/armv7/vexpress/virtio_mmio.c	virtio_mmio
+
+device sysreg
+attach sysreg at vexpress
+file	arch/armv7/vexpress/sysreg.c	sysreg
