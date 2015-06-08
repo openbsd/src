@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.240 2015/06/02 13:21:21 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.241 2015/06/08 13:44:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2660,11 +2660,6 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 		m_freem(m);
 }
 
-#if NVLAN > 0
-extern int vlan_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-    struct rtentry *);
-#endif
-
 int
 bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 {
@@ -2678,45 +2673,6 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 		/* Count packets input into the gif from outside */
 		ifp->if_ipackets++;
 		ifp->if_ibytes += m->m_pkthdr.len;
-	}
-#endif
-#if NVLAN > 0
-	/*
-	 * If the underlying interface cannot do VLAN tag insertion itself,
-	 * create an encapsulation header.
-	 */
-	if (ifp->if_output == vlan_output) {
-		struct ifvlan	*ifv = ifp->if_softc;
-		struct ifnet	*p = ifv->ifv_p;
-		u_int8_t        prio = m->m_pkthdr.pf.prio;
-
-		/* IEEE 802.1p has prio 0 and 1 swapped */
-		if (prio <= 1)
-			prio = !prio;
-
-		/* should we use the tx tagging hw offload at all? */
-		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
-		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
-			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
-			    (prio << EVL_PRIO_BITS);
-			m->m_flags |= M_VLANTAG;
-		} else {
-			struct ether_vlan_header evh;
-
-			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
-			evh.evl_proto = evh.evl_encap_proto;
-			evh.evl_encap_proto = htons(ifv->ifv_type);
-			evh.evl_tag = htons(ifv->ifv_tag +
-			    (prio << EVL_PRIO_BITS));
-			m_adj(m, ETHER_HDR_LEN);
-			M_PREPEND(m, sizeof(evh), M_DONTWAIT);
-			if (m == NULL) {
-				sc->sc_if.if_oerrors++;
-				return (ENOBUFS);
-			}
-			m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
-			m->m_flags &= ~M_VLANTAG;
-		}
 	}
 #endif
 	len = m->m_pkthdr.len;

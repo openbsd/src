@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.127 2015/05/27 12:23:44 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.128 2015/06/08 13:44:08 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -47,9 +47,6 @@
  * will not modify the ethernet header.
  */
 
-#include "bridge.h"
-#include "vlan.h"
-
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -58,11 +55,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-
-#include "bpfilter.h"
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -73,6 +65,16 @@
 
 #include <net/if_vlan_var.h>
 
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
+
+#include "bridge.h"
+#if NBRIDGE > 0
+#include <net/if_bridge.h>
+#endif
+
 u_long vlan_tagmask, svlan_tagmask;
 
 #define TAG_HASH_SIZE		32
@@ -81,8 +83,6 @@ LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
 
 int	vlan_input(struct mbuf *);
-int	vlan_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *);
 void	vlan_start(struct ifnet *ifp);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
 int	vlan_unconfig(struct ifnet *ifp, struct ifnet *newp);
@@ -152,7 +152,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	ifp->if_hdrlen = EVL_ENCAPLEN;
-	ifp->if_output = vlan_output;
 
 	return (0);
 }
@@ -176,24 +175,13 @@ vlan_ifdetach(void *ptr)
 	vlan_clone_destroy(&ifv->ifv_if);
 }
 
-int
-vlan_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rt)
-{
-	/*
-	 * we have to use a custom output function because ether_output
-	 * can't figure out ifp is a vlan in a reasonable way
-	 */
-	m->m_flags |= M_VLANTAG;
-	return (ether_output(ifp, m, dst, rt));
-}
-
 void
 vlan_start(struct ifnet *ifp)
 {
-	struct ifvlan	*ifv;
+	struct ifvlan   *ifv;
 	struct ifnet	*p;
 	struct mbuf	*m;
+	uint8_t		 prio;
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
@@ -203,6 +191,11 @@ vlan_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif /* NBPFILTER > 0 */
+
 		if ((p->if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING)) {
 			IF_DROP(&p->if_snd);
@@ -211,43 +204,37 @@ vlan_start(struct ifnet *ifp)
 			continue;
 		}
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf) {
-			if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
-			    (ifv->ifv_type == ETHERTYPE_VLAN))
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-			else {
-				struct mbuf *m0;
-				u_int off;
-				struct m_hdr mh;
-				struct {
-					uint8_t dst[ETHER_ADDR_LEN];
-					uint8_t src[ETHER_ADDR_LEN];
-				} hdr;
+		/* IEEE 802.1p has prio 0 and 1 swapped */
+		prio = m->m_pkthdr.pf.prio;
+		if (prio <= 1)
+			prio = !prio;
 
-				/* copy the ether addresses off the front */
-				m_copydata(m, 0, sizeof(hdr), (caddr_t)&hdr);
+		/*
+		 * If the underlying interface cannot do VLAN tag insertion
+		 * itself, create an encapsulation header.
+		 */
+		if ((p->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
+			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
+			    (prio << EVL_PRIO_BITS);
+			m->m_flags |= M_VLANTAG;
+		} else {
+			struct ether_vlan_header evh;
 
-				/* find the ethertype after the vlan subhdr*/
-				m0 = m_getptr(m,
-				    offsetof(struct ether_vlan_header,
-				    evl_proto), &off);
-				KASSERT(m0 != NULL);
-
-				/* pretend the vlan subhdr isnt there */
-				mh.mh_flags = 0;
-				mh.mh_data = mtod(m0, caddr_t) + off;
-				mh.mh_len = m0->m_len - off;
-				mh.mh_next = m0->m_next;
-
-				/* dst+src + ethertype == ethernet header */
-				bpf_mtap_hdr(ifp->if_bpf,
-				    (caddr_t)&hdr, sizeof(hdr),
-				    (struct mbuf *)&mh, BPF_DIRECTION_OUT,
-				    NULL);
+			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
+			evh.evl_proto = evh.evl_encap_proto;
+			evh.evl_encap_proto = htons(ifv->ifv_type);
+			evh.evl_tag = htons(ifv->ifv_tag +
+			    (prio << EVL_PRIO_BITS));
+			m_adj(m, ETHER_HDR_LEN);
+			M_PREPEND(m, sizeof(evh), M_DONTWAIT);
+			if (m == NULL) {
+				ifp->if_oerrors++;
+				continue;
 			}
+			m_copyback(m, 0, sizeof(evh), &evh, M_NOWAIT);
+			m->m_flags &= ~M_VLANTAG;
 		}
-#endif /* NBPFILTER > 0 */
 
 		if (if_output(p, m)) {
 			ifp->if_oerrors++;
