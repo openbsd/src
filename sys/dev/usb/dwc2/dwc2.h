@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.11 2015/02/12 07:51:51 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.12 2015/06/08 08:47:38 jmatthew Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -213,18 +213,21 @@ struct delayed_work {
 
 	struct taskq *dw_wq;
 	void (*dw_fn)(void *);
+	void *dw_arg;
 };
 
 STATIC_INLINE void
-INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct task *))
+INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(void *), void *arg)
 {
-	dw->dw_fn = (void (*)(void *))fn;
+	dw->dw_fn = fn;
+	dw->dw_arg = arg;
 	timeout_set(&dw->dw_timer, dw_timeout, dw);
 }
 
 STATIC_INLINE void
 queue_delayed_work(struct taskq *wq, struct delayed_work *dw, int j)
 {
+	dw->dw_wq = wq;
 	timeout_add(&dw->dw_timer, j);
 }
 

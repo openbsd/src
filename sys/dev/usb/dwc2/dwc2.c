@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.27 2015/06/08 00:58:23 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.28 2015/06/08 08:47:38 jmatthew Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1696,7 +1696,7 @@ dw_timeout(void *arg)
 {
 	struct delayed_work *dw = arg;
 
-	task_set(&dw->work, dw->dw_fn, arg);
+	task_set(&dw->work, dw->dw_fn, dw->dw_arg);
 	task_add(dw->dw_wq, &dw->work);
 }
 

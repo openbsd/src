@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.14 2015/02/12 11:42:58 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.15 2015/06/08 08:47:38 jmatthew Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -1312,10 +1312,9 @@ void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 }
 
 void
-dwc2_conn_id_status_change(struct task *work)
+dwc2_conn_id_status_change(void *data)
 {
-	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
-						wf_otg);
+	struct dwc2_hsotg *hsotg = data;
 	u32 count = 0;
 	u32 gotgctl;
 
@@ -2034,10 +2033,9 @@ void dwc2_host_disconnect(struct dwc2_hsotg *hsotg)
  * Work queue function for starting the HCD when A-Cable is connected
  */
 void
-dwc2_hcd_start_func(struct task *work)
+dwc2_hcd_start_func(void *data)
 {
-	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
-						start_work.work);
+	struct dwc2_hsotg *hsotg = data;
 
 	dev_dbg(hsotg->dev, "%s() %p\n", __func__, hsotg);
 	dwc2_host_start(hsotg);
@@ -2047,10 +2045,9 @@ dwc2_hcd_start_func(struct task *work)
  * Reset work queue function
  */
 void
-dwc2_hcd_reset_func(struct task *work)
+dwc2_hcd_reset_func(void *data)
 {
-	struct dwc2_hsotg *hsotg = container_of(work, struct dwc2_hsotg,
-						reset_work.work);
+	struct dwc2_hsotg *hsotg = data;
 	u32 hprt0;
 
 	dev_dbg(hsotg->dev, "USB RESET function called\n");
@@ -2265,10 +2262,10 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 		dwc2_hcd_init_usecs(hsotg);
 
 	/* Initialize hsotg start work */
-	INIT_DELAYED_WORK(&hsotg->start_work, dwc2_hcd_start_func);
+	INIT_DELAYED_WORK(&hsotg->start_work, dwc2_hcd_start_func, hsotg);
 
 	/* Initialize port reset work */
-	INIT_DELAYED_WORK(&hsotg->reset_work, dwc2_hcd_reset_func);
+	INIT_DELAYED_WORK(&hsotg->reset_work, dwc2_hcd_reset_func, hsotg);
 
 	/*
 	 * Allocate space for storing data on status transactions. Normally no
