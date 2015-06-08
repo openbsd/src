@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 2015/06/03 01:30:29 jsg Exp $
+#	$OpenBSD: install.md,v 1.14 2015/06/08 17:35:43 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,11 +50,6 @@ if [[ $? == 0 ]]; then
 	MDPLAT=SUNXI
 	LOADADDR=0x40200000
 fi
-BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP3 \(BeagleBoard\).*/s//\1/p')
-BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: TI AM335x \(BeagleBone\).*/s//\1/p')
-PANDA=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP4 \(PandaBoard\)/s//\1/p')
-CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
-NITROGEN=$(scan_dmesg '/^imx0 at mainbus0: \(Freescale i.MX6 SABRE Lite.*\)/s//NITROGEN/p')
 
 MDSETS="bsd.${MDPLAT}.umg bsd.rd.${MDPLAT}.umg"
 SANESETS="bsd"
@@ -66,6 +61,12 @@ NEWFSARGS_ext2fs="-v boot"
 md_installboot() {
 	local _disk=$1
 	mount /dev/${_disk}i /mnt/mnt
+
+	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP3 \(BeagleBoard\).*/s//\1/p')
+	BEAGLEBONE=$(scan_dmesg '/^omap0 at mainbus0: TI AM335x \(BeagleBone\).*/s//\1/p')
+	PANDA=$(scan_dmesg '/^omap0 at mainbus0: TI OMAP4 \(PandaBoard\)/s//\1/p')
+	CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
+	NITROGEN=$(scan_dmesg '/^imx0 at mainbus0: \(Freescale i.MX6 SABRE Lite.*\)/s//NITROGEN/p')
 
         if [[ -f /mnt/bsd.${MDPLAT}.umg ]]; then
                 mv /mnt/bsd.${MDPLAT}.umg /mnt/mnt/bsd.umg
@@ -123,6 +124,8 @@ md_prep_fdisk() {
 	local bootsectorend
 	local bootfstype="msdos"
 	local newfs_args=${NEWFSARGS_msdos}
+
+	CUBOX=$(scan_dmesg '/^imx0 at mainbus0: \(SolidRun.*\)/s//CUBOX/p')
 
 	# imx needs an ext2fs filesystem
 	if [[ ${MDPLAT} == "IMX" ]]; then
