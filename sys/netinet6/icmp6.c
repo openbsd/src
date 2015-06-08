@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.157 2015/03/04 11:10:55 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.158 2015/06/08 22:19:27 krw Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1345,7 +1345,7 @@ icmp6_fasttimo(void)
 }
 
 const char *
-icmp6_redirect_diag(struct in6_addr *src6, struct in6_addr *dst6, 
+icmp6_redirect_diag(struct in6_addr *src6, struct in6_addr *dst6,
     struct in6_addr *tgt6)
 {
 	static char buf[1024]; /* XXX */
@@ -1839,7 +1839,7 @@ fail:
  * ICMPv6 socket option processing.
  */
 int
-icmp6_ctloutput(int op, struct socket *so, int level, int optname, 
+icmp6_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **mp)
 {
 	int error = 0;
@@ -1940,7 +1940,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst, u_int rdomain)
 	int    error;
 
 	rt = rtalloc(dst, RT_REPORT|RT_RESOLVE, rdomain);
-	if (rt == 0)
+	if (rt == NULL)
 		return NULL;
 
 	/* If we didn't get a host route, allocate one */
@@ -2012,7 +2012,7 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 int *icmpv6ctl_vars[ICMPV6CTL_MAXID] = ICMPV6CTL_VARS;
 
 int
-icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, 
+icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
 	/* All sysctl names at this level are terminal. */

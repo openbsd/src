@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.172 2015/05/23 12:52:59 markus Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.173 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ struct idgen32_ctx ip6_id_ctx;
  */
 int
 ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
-    int flags, struct ip6_moptions *im6o, struct ifnet **ifpp, 
+    int flags, struct ip6_moptions *im6o, struct ifnet **ifpp,
     struct inpcb *inp)
 {
 	struct ip6_hdr *ip6;
@@ -197,7 +197,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
     do {								\
 	if (hp) {							\
 		struct ip6_ext *eh = (struct ip6_ext *)(hp);		\
-		error = ip6_copyexthdr((mp), (caddr_t)(hp), 		\
+		error = ip6_copyexthdr((mp), (caddr_t)(hp),		\
 		    ((eh)->ip6e_len + 1) << 3);				\
 		if (error)						\
 			goto freehdrs;					\
@@ -437,7 +437,7 @@ reroute:
 #endif
 
 	/* initialize cached route */
-	if (ro == 0) {
+	if (ro == NULL) {
 		ro = &ip6route;
 		bzero((caddr_t)ro, sizeof(*ro));
 	}
@@ -1122,7 +1122,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
  * Insert fragment header and copy unfragmentable header portions.
  */
 int
-ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen, 
+ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
     struct ip6_frag **frghdrp)
 {
 	struct mbuf *n, *mlast;
@@ -1130,7 +1130,7 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 	if (hlen > sizeof(struct ip6_hdr)) {
 		n = m_copym(m0, sizeof(struct ip6_hdr),
 		    hlen - sizeof(struct ip6_hdr), M_DONTWAIT);
-		if (n == 0)
+		if (n == NULL)
 			return (ENOBUFS);
 		m->m_next = n;
 	} else
@@ -1163,7 +1163,7 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 }
 
 int
-ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro, 
+ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
     struct ifnet *ifp, struct in6_addr *dst, u_long *mtup, int *alwaysfragp)
 {
 	u_int32_t mtu = 0;
@@ -1180,7 +1180,7 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 			rtfree(ro_pmtu->ro_rt);
 			ro_pmtu->ro_rt = NULL;
 		}
-		if (ro_pmtu->ro_rt == 0) {
+		if (ro_pmtu->ro_rt == NULL) {
 			bzero(ro_pmtu, sizeof(*ro_pmtu));
 			ro_pmtu->ro_tableid = ifp->if_rdomain;
 			sa6_dst->sin6_family = AF_INET6;
@@ -1239,7 +1239,7 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
  * IP6 socket option processing.
  */
 int
-ip6_ctloutput(int op, struct socket *so, int level, int optname, 
+ip6_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **mp)
 {
 	int privileged, optdatalen, uproto;
@@ -1919,7 +1919,7 @@ do { \
 }
 
 int
-ip6_raw_ctloutput(int op, struct socket *so, int level, int optname, 
+ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **mp)
 {
 	int error = 0, optval;
@@ -2608,7 +2608,7 @@ ip6_freemoptions(struct ip6_moptions *im6o)
  * Set IPv6 outgoing packet options based on advanced API.
  */
 int
-ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt, 
+ip6_setpktopts(struct mbuf *control, struct ip6_pktopts *opt,
     struct ip6_pktopts *stickyopt, int priv, int uproto)
 {
 	u_int clen;
@@ -3168,7 +3168,7 @@ in6_delayed_cksum(struct mbuf *m, u_int8_t nxt)
 	int nxtp, offset;
 	u_int16_t csum;
 
-	offset = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxtp); 
+	offset = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxtp);
 	if (offset <= 0 || nxtp != nxt)
 		/* If the desired next protocol isn't found, punt. */
 		return;

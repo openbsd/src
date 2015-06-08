@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_cksum.c,v 1.16 2014/01/22 14:27:20 naddy Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.17 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.10 2000/12/03 00:53:59 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 	int sum = 0;
 	int mlen = 0;
 	int byte_swapped = 0;
-	struct ip6_hdr *ip6;	
+	struct ip6_hdr *ip6;
 	union {
 		u_int16_t phs[4];
 		struct {
@@ -213,7 +213,7 @@ skip_phdr:
 	/*
 	 * Lastly calculate a summary of the rest of mbufs.
 	 */
-	
+
 	for (;m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;

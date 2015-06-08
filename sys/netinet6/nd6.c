@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.137 2015/06/06 09:31:53 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.138 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1316,7 +1316,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
  * code - type dependent information
  */
 struct rtentry *
-nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr, 
+nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
     int lladdrlen, int type, int code)
 {
 	struct rtentry *rt = NULL;
@@ -1489,7 +1489,7 @@ fail:
 	 *	0	n	y	--	(3)	c   s     s
 	 *	0	y	y	n	(4)	c   s     s
 	 *	0	y	y	y	(5)	c   s     s
-	 *	1	--	n	--	(6) c	c 	c s
+	 *	1	--	n	--	(6) c	c	c s
 	 *	1	--	y	--	(7) c	c   s	c s
 	 *
 	 *					(c=clear s=set)

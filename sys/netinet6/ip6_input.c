@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.141 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.142 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ ip6_init(void)
 	int i;
 
 	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
-	if (pr == 0)
+	if (pr == NULL)
 		panic("ip6_init");
 	for (i = 0; i < IPPROTO_MAX; i++)
 		ip6_protox[i] = pr - inet6sw;
@@ -387,7 +387,7 @@ ip6_input(struct mbuf *m)
 	 * Multicast check
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-	  	struct	in6_multi *in6m = 0;
+		struct	in6_multi *in6m = NULL;
 
 		/*
 		 * Make sure M_MCAST is set.  It should theoretically
@@ -428,7 +428,7 @@ ip6_input(struct mbuf *m)
 	 *  Unicast check
 	 */
 	if (ip6_forward_rt.ro_rt != NULL &&
-	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 && 
+	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 &&
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 			       &ip6_forward_rt.ro_dst.sin6_addr) &&
 	    rtableid == ip6_forward_rt.ro_tableid)
@@ -532,7 +532,7 @@ ip6_input(struct mbuf *m)
 			/*
 			 * Note that if a valid jumbo payload option is
 			 * contained, ip6_hoptops_input() must set a valid
-			 * (non-zero) payload length to the variable plen. 
+			 * (non-zero) payload length to the variable plen.
 			 */
 			ip6stat.ip6s_badoptions++;
 			in6_ifstat_inc(ifp, ifs6_in_discard);
@@ -605,7 +605,7 @@ ip6_input(struct mbuf *m)
 	} else if (!ours) {
 		ip6_forward(m, srcrt);
 		return;
-	}	
+	}
 
 	/* pf might have changed things */
 	in6_proto_cksum_out(m, NULL);
@@ -713,7 +713,7 @@ ip6_check_rh0hdr(struct mbuf *m, int *offp)
 			if (off + sizeof(opt6) > lim) {
 				/*
 				 * Packet to short to make sense, we could
-				 * reject the packet but as a router we 
+				 * reject the packet but as a router we
 				 * should not do that so forward it.
 				 */
 				return (0);
@@ -789,7 +789,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
  * opthead + hbhlen is located in continuous memory region.
  */
 int
-ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen, 
+ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
     u_int32_t *rtalertp, u_int32_t *plenp)
 {
 	struct ip6_hdr *ip6;
@@ -1162,8 +1162,8 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 			m_freem(ext);
 			ext = NULL;
 		}
-	  loopend:
-	  	;
+loopend:
+		;
 	}
 }
 
@@ -1387,7 +1387,7 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 int *ipv6ctl_vars[IPV6CTL_MAXID] = IPV6CTL_VARS;
 
 int
-ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, 
+ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
 #ifdef MROUTING

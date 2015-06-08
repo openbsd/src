@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.82 2015/04/14 14:18:37 mikeb Exp $	*/
+/*	$OpenBSD: in6.h,v 1.83 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ struct route_in6 {
 	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_LINKLOCAL))
 #define IN6_IS_ADDR_MC_SITELOCAL(a)	\
-	(IN6_IS_ADDR_MULTICAST(a) && 	\
+	(IN6_IS_ADDR_MULTICAST(a) &&	\
 	 (__IPV6_ADDR_MC_SCOPE(a) == __IPV6_ADDR_SCOPE_SITELOCAL))
 #define IN6_IS_ADDR_MC_ORGLOCAL(a)	\
 	(IN6_IS_ADDR_MULTICAST(a) &&	\

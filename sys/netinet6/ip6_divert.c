@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.33 2015/04/10 13:58:20 dlg Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.34 2015/06/08 22:19:28 krw Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -189,7 +189,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 
 	inp = NULL;
 	div6stat.divs_ipackets++;
-	
+
 	if (m->m_len < sizeof(struct ip6_hdr) &&
 	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 		div6stat.divs_errors++;

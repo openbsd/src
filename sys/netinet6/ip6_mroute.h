@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.15 2015/02/09 12:23:22 claudio Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.16 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -83,11 +83,11 @@ typedef	struct if_set {
  * Argument structure for MRT6_ADD_IF.
  */
 struct mif6ctl {
-	mifi_t	    mif6c_mifi;	    	/* the index of the mif to be added  */
-	u_char	    mif6c_flags;     	/* MIFF_ flags defined below         */
+	mifi_t	    mif6c_mifi;		/* the index of the mif to be added  */
+	u_char	    mif6c_flags;	/* MIFF_ flags defined below         */
 	u_short	    mif6c_pifi;		/* the index of the physical IF */
 #ifdef notyet
-	u_int	    mif6c_rate_limit;    /* max rate           		     */
+	u_int	    mif6c_rate_limit;    /* max rate			     */
 #endif
 };
 
@@ -107,27 +107,27 @@ struct mf6cctl {
 
 /* structure used to get all the mif entries via sysctl */
 struct mif6info {
-	struct in6_addr	m6_lcl_addr;   	/* local interface address           */
-	u_int16_t 	m6_ifindex;    	/* interface index                   */
+	struct in6_addr	m6_lcl_addr;	/* local interface address           */
+	u_int16_t	m6_ifindex;	/* interface index                   */
 	u_int64_t	m6_pkt_in;	/* # pkts in on interface            */
 	u_int64_t	m6_pkt_out;	/* # pkts out on interface           */
 	u_int64_t	m6_bytes_in;	/* # bytes in on interface	     */
 	u_int64_t	m6_bytes_out;	/* # bytes out on interface	     */
-	u_int      	m6_rate_limit; 	/* max rate			     */
+	u_int		m6_rate_limit;	/* max rate			     */
 	mifi_t		m6_mifi;
-        u_char   	m6_flags;     	/* MIFF_ flags defined above         */
+        u_char		m6_flags;	/* MIFF_ flags defined above         */
 };
 
 /* structure used to get all the mf6c entries via sysctl */
 struct mf6cinfo {
 	struct sockaddr_in6  mf6c_origin;	/* IPv6 origin of mcasts     */
 	struct sockaddr_in6  mf6c_mcastgrp;	/* multicast group associated*/
-	mifi_t	    	 mf6c_parent; 		/* incoming IF               */
+	mifi_t		 mf6c_parent;		/* incoming IF               */
 	struct if_set	 mf6c_ifset;		/* set of outgoing IFs */
 
-	u_int64_t    	mf6c_pkt_cnt;		/* pkt count for src-grp     */
-	u_int64_t    	mf6c_byte_cnt;		/* byte count for src-grp    */
-	u_int64_t    	mf6c_stall_cnt;		/* pkt-cnt waiting for route */
+	u_int64_t	mf6c_pkt_cnt;		/* pkt count for src-grp     */
+	u_int64_t	mf6c_byte_cnt;		/* byte count for src-grp    */
+	u_int64_t	mf6c_stall_cnt;		/* pkt-cnt waiting for route */
 };
 
 /*
@@ -142,10 +142,10 @@ struct mrt6stat {
 	u_int64_t mrt6s_cant_tunnel;	/* no room for tunnel options      */
 	u_int64_t mrt6s_wrong_if;	/* arrived on wrong interface	   */
 	u_int64_t mrt6s_upq_ovflw;	/* upcall Q overflow		   */
-	u_int64_t mrt6s_cache_cleanups;	/* # entries with no upcalls 	   */
-	u_int64_t mrt6s_drop_sel;     	/* pkts dropped selectively        */
-	u_int64_t mrt6s_q_overflow;    	/* pkts dropped - Q overflow       */
-	u_int64_t mrt6s_pkt2large;     	/* pkts dropped - size > BKT SIZE  */
+	u_int64_t mrt6s_cache_cleanups;	/* # entries with no upcalls	   */
+	u_int64_t mrt6s_drop_sel;	/* pkts dropped selectively        */
+	u_int64_t mrt6s_q_overflow;	/* pkts dropped - Q overflow       */
+	u_int64_t mrt6s_pkt2large;	/* pkts dropped - size > BKT SIZE  */
 	u_int64_t mrt6s_upq_sockfull;	/* upcalls dropped - socket full   */
 };
 
@@ -196,13 +196,13 @@ struct sioc_mif_req6 {
  * The kernel's multicast-interface structure.
  */
 struct mif6 {
-        u_char   	m6_flags;     	/* MIFF_ flags defined above         */
-	u_int      	m6_rate_limit; 	/* max rate			     */
+        u_char		m6_flags;	/* MIFF_ flags defined above         */
+	u_int		m6_rate_limit;	/* max rate			     */
 #ifdef notyet
-	struct tbf      *m6_tbf;      	/* token bucket structure at intf.   */
+	struct tbf      *m6_tbf;	/* token bucket structure at intf.   */
 #endif
-	struct in6_addr	m6_lcl_addr;   	/* local interface address           */
-	struct ifnet    *m6_ifp;     	/* pointer to interface              */
+	struct in6_addr	m6_lcl_addr;	/* local interface address           */
+	struct ifnet    *m6_ifp;	/* pointer to interface              */
 	u_int64_t	m6_pkt_in;	/* # pkts in on interface            */
 	u_int64_t	m6_pkt_out;	/* # pkts out on interface           */
 	u_int64_t	m6_bytes_in;	/* # bytes in on interface	     */
@@ -215,13 +215,13 @@ struct mif6 {
 struct mf6c {
 	struct sockaddr_in6  mf6c_origin;	/* IPv6 origin of mcasts     */
 	struct sockaddr_in6  mf6c_mcastgrp;	/* multicast group associated*/
-	mifi_t	    	 mf6c_parent; 		/* incoming IF               */
+	mifi_t		 mf6c_parent;		/* incoming IF               */
 	struct if_set	 mf6c_ifset;		/* set of outgoing IFs */
 
-	u_int64_t    	mf6c_pkt_cnt;		/* pkt count for src-grp     */
-	u_int64_t    	mf6c_byte_cnt;		/* byte count for src-grp    */
-	u_int64_t    	mf6c_wrong_if;		/* wrong if for src-grp	     */
-	int	    	mf6c_expire;		/* time to clean entry up    */
+	u_int64_t	mf6c_pkt_cnt;		/* pkt count for src-grp     */
+	u_int64_t	mf6c_byte_cnt;		/* byte count for src-grp    */
+	u_int64_t	mf6c_wrong_if;		/* wrong if for src-grp	     */
+	int		mf6c_expire;		/* time to clean entry up    */
 	struct timeval  mf6c_last_assert;	/* last time I sent an assert*/
 	struct rtdetq  *mf6c_stall;		/* pkts waiting for route */
 	struct mf6c    *mf6c_next;		/* hash table linkage */
@@ -232,8 +232,8 @@ struct mf6c {
  */
 #ifndef _NETINET_IP_MROUTE_H_
 struct rtdetq {		/* XXX: rtdetq is also defined in ip_mroute.h */
-	struct mbuf	*m;		/* A copy of the packet	    	    */
-	struct ifnet	*ifp;		/* Interface pkt came in on 	    */
+	struct mbuf	*m;		/* A copy of the packet		    */
+	struct ifnet	*ifp;		/* Interface pkt came in on	    */
 	struct rtdetq	*next;
 };
 #endif /* _NETINET_IP_MROUTE_H_ */

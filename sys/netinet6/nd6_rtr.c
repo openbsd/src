@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.105 2015/06/04 09:51:15 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.106 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	/* ip6->ip6_plen will be set later */
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	ip6->ip6_hlim = 255;
-	
+
 	ip6->ip6_dst = in6addr_linklocal_allrouters;
 
 	ip6->ip6_src = ia6->ia_addr.sin6_addr;
@@ -998,7 +998,7 @@ purge_detached(struct ifnet *ifp)
 }
 
 int
-nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr, 
+nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
     struct nd_prefix **newp)
 {
 	struct nd_prefix *new = NULL;
@@ -1395,7 +1395,7 @@ nd6_addr_add(void *prptr)
 	autoconf = 1;
 	privacy = (pr->ndpr_ifp->if_xflags & IFXF_INET6_NOPRIVACY) == 0;
 
-	/* 
+	/*
 	 * Check again if a non-deprecated address has already
 	 * been autoconfigured for this prefix.
 	 */
@@ -1561,7 +1561,7 @@ pfxlist_onlink_check(void)
 	 * interfaces.  Such cases will be handled in nd6_prefix_onlink,
 	 * so we don't have to care about them.
 	 */
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {	
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		int e;
 
 		if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))

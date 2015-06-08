@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.158 2015/05/26 12:19:52 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.159 2015/06/08 22:19:27 krw Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -477,7 +477,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		 * and link it to the list. try to enable inet6 if there
 		 * is no link-local yet.
 		 */
- 		s = splsoftnet();
+		s = splsoftnet();
 		in6_ifattach(ifp);
 		error = in6_update_ifa(ifp, ifra, ia6);
 		splx(s);
@@ -485,7 +485,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 		if ((ia6 = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr))
 		    == NULL) {
-		    	/*
+			/*
 			 * this can happen when the user specify the 0 valid
 			 * lifetime.
 			 */
@@ -754,7 +754,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 */
 	if ((ifp->if_flags & IFF_POINTOPOINT) && dst6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia6->ia_dstaddr.sin6_addr)) {
-	    	struct ifaddr *ifa = &ia6->ia_ifa;
+		struct ifaddr *ifa = &ia6->ia_ifa;
 
 		if ((ia6->ia_flags & IFA_ROUTE) != 0 &&
 		    rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr) != 0) {
@@ -1176,7 +1176,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 				return EADDRNOTAVAIL;
 			hostid = IFA_IN6(ifa);
 
-		 	/* prefixlen must be <= 64. */
+			/* prefixlen must be <= 64. */
 			if (64 < iflr->prefixlen)
 				return EINVAL;
 			prefixlen = iflr->prefixlen;
@@ -1464,7 +1464,7 @@ void
 in6_delmulti(struct in6_multi *in6m)
 {
 	struct	in6_ifreq ifr;
-	struct 	ifnet *ifp;
+	struct	ifnet *ifp;
 	int	s;
 
 	if (--in6m->in6m_refcnt == 0) {

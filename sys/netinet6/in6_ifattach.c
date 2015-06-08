@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.87 2015/04/27 14:51:44 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.88 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ in6_ifattach_loopback(struct ifnet *ifp)
  * when ifp == NULL, the caller is responsible for filling scopeid.
  */
 int
-in6_nigroup(struct ifnet *ifp, const char *name, int namelen, 
+in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
     struct sockaddr_in6 *sa6)
 {
 	const char *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.74 2015/05/23 12:52:59 markus Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.75 2015/06/08 22:19:28 krw Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ reroute:
 		/*
 		 * ip6_forward_rt.ro_dst.sin6_addr is equal to ip6->ip6_dst
 		 */
-		if (ip6_forward_rt.ro_rt == 0 ||
+		if (ip6_forward_rt.ro_rt == NULL ||
 		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
 		    ip6_forward_rt.ro_tableid != rtableid) {
 			if (ip6_forward_rt.ro_rt) {
@@ -239,7 +239,7 @@ reroute:
 			    ip6_forward_rt.ro_tableid);
 		}
 
-		if (ip6_forward_rt.ro_rt == 0) {
+		if (ip6_forward_rt.ro_rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 			if (mcopy) {
@@ -249,7 +249,7 @@ reroute:
 			m_freem(m);
 			return;
 		}
-	} else if (ip6_forward_rt.ro_rt == 0 ||
+	} else if (ip6_forward_rt.ro_rt == NULL ||
 	   (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
 	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
 	   ip6_forward_rt.ro_tableid != rtableid) {
@@ -267,7 +267,7 @@ reroute:
 		    &ip6->ip6_src.s6_addr32[0],
 		    ip6_forward_rt.ro_tableid);
 
-		if (ip6_forward_rt.ro_rt == 0) {
+		if (ip6_forward_rt.ro_rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 			if (mcopy) {
@@ -410,7 +410,7 @@ reroute:
 	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
-#if NPF > 0 
+#if NPF > 0
 	if (pf_test(AF_INET6, PF_FWD, rt->rt_ifp, &m, NULL) != PF_PASS) {
 		m_freem(m);
 		goto senderr;
@@ -428,7 +428,7 @@ reroute:
 		srcrt = 1;
 		goto reroute;
 	}
-#endif 
+#endif
 	in6_proto_cksum_out(m, rt->rt_ifp);
 
 	/* Check the size after pf_test to give pf a chance to refragment. */
