@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.194 2015/05/18 16:57:20 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.195 2015/06/08 15:47:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1408,8 +1408,10 @@ relay_connect_retry(int fd, short sig, void *arg)
 	struct relay	*rlay = con->se_relay;
 	int		 bnds = -1;
 
-	if (relay_inflight < 1)
-		fatalx("relay_connect_retry: no connection in flight");
+	if (relay_inflight < 1) {
+		log_warnx("relay_connect_retry: no connection in flight");
+		relay_inflight = 1;
+	}
 
 	DPRINTF("%s: retry %d of %d, inflight: %d",__func__,
 	    con->se_retrycount, con->se_retry, relay_inflight);
@@ -1466,6 +1468,10 @@ relay_connect_retry(int fd, short sig, void *arg)
 		return;
 	}
 
+	if (rlay->rl_conf.flags & F_TLSINSPECT)
+		con->se_out.state = PRECONNECT;
+	else
+		con->se_out.state = CONNECTED;
 	relay_inflight--;
 	DPRINTF("%s: inflight decremented, now %d",__func__, relay_inflight);
 
@@ -1484,9 +1490,14 @@ relay_connect_retry(int fd, short sig, void *arg)
 int
 relay_preconnect(struct rsession *con)
 {
+	int rv;
+
 	log_debug("%s: session %d: process %d", __func__,
 	    con->se_id, privsep_process);
-	return (relay_connect(con));
+	rv = relay_connect(con);
+	if (con->se_out.state == CONNECTED)
+		con->se_out.state = PRECONNECT;
+	return (rv);
 }
 
 int
@@ -1496,18 +1507,28 @@ relay_connect(struct rsession *con)
 	struct timeval	 evtpause = { 1, 0 };
 	int		 bnds = -1, ret;
 
+	/* relay_connect should only be called once per relay */
+	if (con->se_out.state == CONNECTED) {
+		log_debug("%s: connect already called once", __func__);
+		return (0);
+	}
+
 	/* Connection is already established but session not active */
-	if ((rlay->rl_conf.flags & F_TLSINSPECT) && con->se_out.s != -1) {
+	if ((rlay->rl_conf.flags & F_TLSINSPECT) &&
+	    con->se_out.state == PRECONNECT) {
 		if (con->se_out.ssl == NULL) {
 			log_debug("%s: tls connect failed", __func__);
 			return (-1);
 		}
 		relay_connected(con->se_out.s, EV_WRITE, con);
+		con->se_out.state = CONNECTED;
 		return (0);
 	}
 
-	if (relay_inflight < 1)
-		fatalx("relay_connect: no connection in flight");
+	if (relay_inflight < 1) {
+		log_warnx("relay_connect: no connection in flight");
+		relay_inflight = 1;
+	}
 
 	getmonotime(&con->se_tv_start);
 
@@ -1555,6 +1576,8 @@ relay_connect(struct rsession *con)
 			event_del(&rlay->rl_ev);
 			evtimer_add(&con->se_inflightevt, &evtpause);
 			evtimer_add(&rlay->rl_evt, &evtpause);
+			/* this connect is pending */
+			con->se_out.state = PENDING;
 			return (0);
 		} else {
 			if (con->se_retry) {
@@ -1572,6 +1595,7 @@ relay_connect(struct rsession *con)
 		}
 	}
 
+	con->se_out.state = CONNECTED;
 	relay_inflight--;
 	DPRINTF("%s: inflight decremented, now %d",__func__,
 	    relay_inflight);
@@ -1673,6 +1697,7 @@ relay_close(struct rsession *con, const char *msg)
 			event_add(&rlay->rl_ev, NULL);
 		}
 	}
+	con->se_out.state = INIT;
 
 	if (con->se_out.buf != NULL)
 		free(con->se_out.buf);

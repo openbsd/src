@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.48 2015/06/01 09:54:16 claudio Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.49 2015/06/08 15:47:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -421,7 +421,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		relay_reset_http(cre);
  done:
 		if (cre->dir == RELAY_DIR_REQUEST && cre->toread <= 0 &&
-		    cre->dst->bev == NULL) {
+		    cre->dst->state != CONNECTED) {
 			if (rlay->rl_conf.fwdmode == FWD_TRANS) {
 				relay_bindanyreq(con, 0, IPPROTO_TCP);
 				return;

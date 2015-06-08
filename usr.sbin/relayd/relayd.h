@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.209 2015/05/02 13:15:24 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.210 2015/06/08 15:47:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -200,6 +200,7 @@ struct ctl_relay_event {
 	int			 line;
 	int			 done;
 	int			 timedout;
+	enum { INIT, PENDING, PRECONNECT, CONNECTED } state;
 	enum direction		 dir;
 
 	u_int8_t		*buf;
