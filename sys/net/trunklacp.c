@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.21 2015/05/15 10:15:13 mpi Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.22 2015/06/09 14:50:14 mpi Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -229,6 +229,11 @@ lacp_input(struct trunk_port *tp, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 
 	if (ntohs(eh->ether_type) == ETHERTYPE_SLOW) {
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
+
 		if (m->m_pkthdr.len < (sizeof(*eh) + sizeof(subtype)))
 			return (-1);
 
