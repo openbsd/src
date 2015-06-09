@@ -1,9 +1,13 @@
-# $OpenBSD: disktab,v 1.1 2013/03/26 17:58:11 jasper Exp $
+# $OpenBSD: disktab,v 1.2 2015/06/09 19:20:36 jasper Exp $
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:nc#20:nt#4:ns#128:\
 	:ta=4.2BSD:oa#0:pa#10240:fa#512:ba#4096:\
 	:ob#0:pb#0:oc#0:pc#10240:
+
+miniroot|Installation root FS image:\
+	:ty=simulated:se#512:nc#9:nt#16:ns#128:\
+	:oc#0:pc#24576:
 
 minicdroot|minicdramdiskroot|Boot CD-ROM image:\
 	:ty=simulated:se#512:nc#48:nt#4:ns#128:\
