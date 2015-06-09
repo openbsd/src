@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.36 2015/06/07 21:39:39 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.37 2015/06/09 07:07:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -100,7 +100,7 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 			 * the same session as currently attached to.
 			 */
 			TAILQ_FOREACH(c_loop, &clients, entry) {
-				if (c_loop->session != s || c == c)
+				if (c_loop->session != s || c == c_loop)
 					continue;
 				server_write_client(c, MSG_DETACH,
 				    c_loop->session->name,
