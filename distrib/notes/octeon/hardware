@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.6 2014/02/27 18:48:15 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.7 2015/06/09 19:29:57 jasper Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Portwell CAM-0100
@@ -6,7 +6,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 	  it's possible to install OpenBSD/MACHINE on this machine with
 	  some effort.
 
-	Ubiquiti Networks EdgeRouter Lite
+	Ubiquiti Networks EdgeRouter Lite / PoE
 	  onboard serial port and Ethernet are supported; it's possible
 	  to boot OpenBSD/MACHINE on this machine over NFS. There is no
 	  USB support yet, which means that there is no local storage
