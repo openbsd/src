@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.5 2014/11/10 07:15:41 jsg Exp $
+dnl	$OpenBSD: contents,v 1.6 2015/06/09 19:36:43 jasper Exp $
 TopPart
 
 OpenBSDdistsets
@@ -6,10 +6,11 @@ OpenBSDdistsets
 OpenBSDbsd
 
 OpenBSDrd
+
+OpenBSDminiroot
+
 dnl not yet...
 dnl OpenBSDcd
-dnl
-dnl OpenBSDminiroot
 dnl
 dnl	boot		The OpenBSD/MACHINE bootloader.
 
