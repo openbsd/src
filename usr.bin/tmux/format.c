@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.70 2015/05/29 23:26:52 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.71 2015/06/10 12:56:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -872,8 +872,7 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_synchronized", "%d",
 	    !!options_get_number(&wp->window->options, "synchronize-panes"));
 
-	if (wp->tty != NULL)
-		format_add(ft, "pane_tty", "%s", wp->tty);
+	format_add(ft, "pane_tty", "%s", wp->tty);
 	format_add(ft, "pane_pid", "%ld", (long) wp->pid);
 	if ((cmd = cmd_stringify_argv(wp->argc, wp->argv)) != NULL) {
 		format_add(ft, "pane_start_command", "%s", cmd);
