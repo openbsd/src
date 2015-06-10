@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.43 2015/06/10 20:50:05 miod Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.44 2015/06/10 21:16:41 sthen Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -547,7 +547,7 @@ _dl_cache_grpsym_list(elf_object_t *object)
 	/*
 	 * grpsym_list is an ordered list of all child libs of the
 	 * _dl_loading_object with no dups. The order is equivalent
-	 * to a breath-first traversal of the child list without dups.
+	 * to a breadth-first traversal of the child list without dups.
 	 */
 
 	TAILQ_FOREACH(n, &object->child_list, next_sib)
