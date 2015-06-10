@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.1 2015/06/04 21:08:40 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.2 2015/06/10 15:34:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1544,7 +1544,6 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc *rx_desc,
 	/* Finalize mbuf. */
 	m = rx_data->m;
 	rx_data->m = m1;
-	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = pktlen + infosz + shift;
 
 	/* Update RX descriptor. */
