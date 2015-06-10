@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.35 2014/11/19 10:24:40 blambert Exp $	*/
+/*	$OpenBSD: mib.h,v 1.36 2015/06/10 10:03:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -490,6 +490,7 @@
 #define MIB_pfCntSrcLimit		MIB_pfCounters, 14
 #define MIB_pfCntSynproxy		MIB_pfCounters, 15
 #define MIB_pfCntTranslate		MIB_pfCounters, 16
+#define MIB_pfCntNoRoute		MIB_pfCounters, 17
 #define MIB_pfStateTable		MIB_pfMIBObjects, 3
 #define MIB_pfStateCount		MIB_pfStateTable, 1
 #define MIB_pfStateSearches		MIB_pfStateTable, 2
@@ -1057,6 +1058,7 @@
 	{ MIBDECL(pfCntSrcLimit) },			\
 	{ MIBDECL(pfCntSynproxy) },			\
 	{ MIBDECL(pfCntTranslate) },			\
+	{ MIBDECL(pfCntNoRoute) },			\
 	{ MIBDECL(pfStateTable) },			\
 	{ MIBDECL(pfStateCount) },			\
 	{ MIBDECL(pfStateSearches) },			\

@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.4 2013/09/07 04:39:30 joel Exp $
+-- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.5 2015/06/10 10:03:59 mikeb Exp $
 --
 -- Copyright (c) 2004-2013 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -33,7 +33,7 @@ IMPORTS
 		FROM SNMPv2-CONF;
 
 pfMIBObjects MODULE-IDENTITY
-    LAST-UPDATED "201308310446Z"
+    LAST-UPDATED "201506091728Z"
     ORGANIZATION "OpenBSD"
     CONTACT-INFO "
                   Author:     Joel Knight
@@ -43,6 +43,8 @@ pfMIBObjects MODULE-IDENTITY
     DESCRIPTION "The MIB module for gathering information from
 		OpenBSD's packet filter.
                 "
+    REVISION "201506091728Z"
+    DESCRIPTION "Add separate counter for failed 'route-to' applications"
     REVISION "201308310446Z"
     DESCRIPTION "Add pf(4) table byte/packet counters for 'match' rules"
     REVISION "201302242033Z"
@@ -251,6 +253,14 @@ pfCntTranslate OBJECT-TYPE
         translation was requested and no unused port was available."
     ::= { pfCounters 16 }
 
+pfCntNoRoute OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"The number of packets that were dropped because policy based routing
+        was requested but no target addresses were available."
+    ::= { pfCounters 17 }
 
 -- pfStateTable
 
