@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.33 2014/08/06 02:34:23 doug Exp $
+dnl	$OpenBSD: xfer,v 1.34 2015/06/10 06:38:39 jasper Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -6,7 +6,6 @@ Installation is supported from several media types, including:
 	DOS (FAT) partitions
 	EXT2 partitions (NOT supported if booting from floppy)
 dnl	Remote NFS partition
-	FTP
 	HTTP
 
 If you can't (or don't want to) boot off a CD-ROM, you can use a floppy

@@ -5,7 +5,6 @@ Installation is supported from several media types, including:
 	DOS (FAT) partitions
 	EXT2 partitions
 	Remote NFS partition
-	FTP
 	HTTP
 
 OpenBSDXferPrelude

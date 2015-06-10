@@ -1,9 +1,8 @@
-dnl	$OpenBSD: xfer,v 1.47 2014/03/19 01:59:49 tedu Exp $
+dnl	$OpenBSD: xfer,v 1.48 2015/06/10 06:38:40 jasper Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
 	FFS partitions
-	FTP
 	HTTP
 
 Not all methods are supported on all SPARC Systems and some of them

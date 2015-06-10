@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.3 2014/02/27 20:30:59 tedu Exp $
+dnl	$OpenBSD: xfer,v 1.4 2015/06/10 06:38:39 jasper Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -6,7 +6,6 @@ Installation is supported from several media types, including:
 	DOS (FAT) partitions
 	EXT2 partitions
 	Remote NFS partition
-	FTP
 	HTTP
 
 OpenBSDXferPrelude
