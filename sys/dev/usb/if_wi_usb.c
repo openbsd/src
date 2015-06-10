@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.64 2014/11/18 02:37:30 tedu Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.65 2015/06/10 20:50:05 miod Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1741,7 +1741,7 @@ wi_watchdog_usb(struct ifnet *ifp)
 /*
  * ioctl will always be called from a user context, 
  * therefore it is possible to sleep in the calling context
- * acquire the lock and call the real ioctl fucntion directly 
+ * acquire the lock and call the real ioctl function directly 
  */
 int
 wi_ioctl_usb(struct ifnet *ifp, u_long command, caddr_t data)

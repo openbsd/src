@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.32 2015/04/04 15:15:44 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.33 2015/06/10 20:50:05 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -54,7 +54,7 @@ extern struct ldpd_conf		*ldeconf;
 
 struct fec_tree	rt = RB_INITIALIZER(&rt);
 
-/* FEC tree fucntions */
+/* FEC tree functions */
 void
 fec_init(struct fec_tree *fh)
 {

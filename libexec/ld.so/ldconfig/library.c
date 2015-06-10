@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.8 2015/01/19 02:44:53 deraadt Exp $ */
+/* $OpenBSD: library.c,v 1.9 2015/06/10 20:50:05 miod Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -265,7 +265,7 @@ elf_tryload_shlib(const char *libname)
 /*
  * elf_match_file()
  *
- * This fucntion determines if a given name matches what is specified
+ * This function determines if a given name matches what is specified
  * in a struct sod. The major must match exactly, and the minor must
  * be same or larger.
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.42 2015/01/16 16:18:07 deraadt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.43 2015/06/10 20:50:05 miod Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -49,7 +49,7 @@ struct dlochld _dlopened_child_list;
 /*
  * _dl_match_file()
  *
- * This fucntion determines if a given name matches what is specified
+ * This function determines if a given name matches what is specified
  * in a struct sod. The major must match exactly, and the minor must
  * be same or larger.
  *
@@ -94,7 +94,7 @@ _dl_match_file(struct sod *sodp, const char *name, int namelen)
 /*
  * _dl_cmp_sod()
  *
- * This fucntion compares sod structs. The major must match exactly,
+ * This function compares sod structs. The major must match exactly,
  * and the minor must be same or larger.
  *
  * sodp is updated with the minor if this matches.
@@ -288,12 +288,12 @@ _dl_find_loaded_shlib(const char *req_name, struct sod req_sod, int flags)
  *	     this will find largest minor version in path provided
  *	try the LD_LIBRARY_PATH specification (if present)
  *	   search hints for match in LD_LIBRARY_PATH dirs
- *           this will only match specific libary version.
+ *           this will only match specific library version.
  *	   search LD_LIBRARY_PATH dirs for match.
  *           this will find largest minor version in first dir found.
  *	check DT_RPATH paths, (if present)
  *	   search hints for match in DT_RPATH dirs
- *           this will only match specific libary version.
+ *           this will only match specific library version.
  *	   search DT_RPATH dirs for match.
  *           this will find largest minor version in first dir found.
  *	last look in default search directory, either as specified
@@ -546,7 +546,7 @@ _dl_cache_grpsym_list(elf_object_t *object)
 
 	/*
 	 * grpsym_list is an ordered list of all child libs of the
-	 * _dl_loading_object with no dups. The order is equalivant
+	 * _dl_loading_object with no dups. The order is equivalent
 	 * to a breath-first traversal of the child list without dups.
 	 */
 

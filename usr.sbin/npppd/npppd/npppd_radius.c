@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.6 2014/03/22 04:21:04 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.7 2015/06/10 20:50:05 miod Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -64,7 +64,7 @@ static int radius_acct_request(npppd *, npppd_ppp *, int );
 static void npppd_ppp_radius_acct_reqcb(void *, RADIUS_PACKET *, int, RADIUS_REQUEST_CTX);
 
 /***********************************************************************
- * RADIUS common fucntions
+ * RADIUS common functions
  ***********************************************************************/
 /**
  * Retribute Framed-IP-Address and Framed-IP-Netmask attribute of from 
