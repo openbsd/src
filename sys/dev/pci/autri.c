@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.37 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: autri.c,v 1.38 2015/06/10 20:02:42 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -697,8 +697,8 @@ autri_init(void *sc_)
 	if (sc->sc_devid == AUTRI_DEVICE_ID_ALI_M5451) {
 		sc->sc_play.ch      = 0;
 		sc->sc_play.ch_intr = 1;
-		sc->sc_rec.ch       = 31;
-		sc->sc_rec.ch_intr  = 2;
+		sc->sc_rec.ch       = 2;
+		sc->sc_rec.ch_intr  = 3;
 	} else {
 		sc->sc_play.ch      = 0x20;
 		sc->sc_play.ch_intr = 0x21;
