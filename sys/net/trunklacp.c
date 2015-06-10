@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.22 2015/06/09 14:50:14 mpi Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.23 2015/06/10 09:20:21 mpi Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -53,6 +53,11 @@
 
 #include "if_trunk.h"
 #include "trunklacp.h"
+
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 /*
  * actor system priority and port priority.
@@ -230,8 +235,8 @@ lacp_input(struct trunk_port *tp, struct mbuf *m)
 
 	if (ntohs(eh->ether_type) == ETHERTYPE_SLOW) {
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
+		if (tp->tp_if->if_bpf)
+			bpf_mtap_ether(tp->tp_if->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		if (m->m_pkthdr.len < (sizeof(*eh) + sizeof(subtype)))
