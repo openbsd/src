@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.131 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.132 2015/06/11 15:59:17 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -119,7 +119,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 			    sproto == IPPROTO_AH ? (y)++ : (z)++)
 
 	union sockaddr_union dst_address;
-	struct timeval tv;
 	struct tdb *tdbp;
 	struct ifnet *encif;
 	u_int32_t spi;
@@ -297,16 +296,12 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	/* Register first use, setup expiration timer. */
 	if (tdbp->tdb_first_use == 0) {
 		tdbp->tdb_first_use = time_second;
-
-		tv.tv_usec = 0;
-
-		tv.tv_sec = tdbp->tdb_exp_first_use + tdbp->tdb_first_use;
 		if (tdbp->tdb_flags & TDBF_FIRSTUSE)
-			timeout_add(&tdbp->tdb_first_tmo, hzto(&tv));
-
-		tv.tv_sec = tdbp->tdb_first_use + tdbp->tdb_soft_first_use;
+			timeout_add_sec(&tdbp->tdb_first_tmo,
+			    tdbp->tdb_exp_first_use);
 		if (tdbp->tdb_flags & TDBF_SOFT_FIRSTUSE)
-			timeout_add(&tdbp->tdb_sfirst_tmo, hzto(&tv));
+			timeout_add_sec(&tdbp->tdb_sfirst_tmo,
+			    tdbp->tdb_soft_first_use);
 	}
 
 	/*

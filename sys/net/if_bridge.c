@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.241 2015/06/08 13:44:08 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.242 2015/06/11 15:59:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2162,7 +2162,6 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
     int dir, int af, int hlen, struct mbuf *m)
 {
 	union sockaddr_union dst;
-	struct timeval tv;
 	struct tdb *tdb;
 	u_int32_t spi;
 	u_int16_t cpi;
@@ -2258,33 +2257,12 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 		    tdb->tdb_xform != NULL) {
 			if (tdb->tdb_first_use == 0) {
 				tdb->tdb_first_use = time_second;
-
-				tv.tv_usec = 0;
-
-				/* Check for wrap-around. */
-				if (tdb->tdb_exp_first_use + tdb->tdb_first_use
-				    < tdb->tdb_first_use)
-					tv.tv_sec = ((unsigned long)-1) / 2;
-				else
-					tv.tv_sec = tdb->tdb_exp_first_use +
-					    tdb->tdb_first_use;
-
 				if (tdb->tdb_flags & TDBF_FIRSTUSE)
-					timeout_add(&tdb->tdb_first_tmo,
-					    hzto(&tv));
-
-				/* Check for wrap-around. */
-				if (tdb->tdb_first_use +
-				    tdb->tdb_soft_first_use
-				    < tdb->tdb_first_use)
-					tv.tv_sec = ((unsigned long)-1) / 2;
-				else
-					tv.tv_sec = tdb->tdb_first_use +
-					    tdb->tdb_soft_first_use;
-
+					timeout_add_sec(&tdb->tdb_first_tmo,
+					    tdb->tdb_exp_first_use);
 				if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
-					timeout_add(&tdb->tdb_sfirst_tmo,
-					    hzto(&tv));
+					timeout_add_sec(&tdb->tdb_sfirst_tmo,
+					    tdb->tdb_soft_first_use);
 			}
 
 			(*(tdb->tdb_xform->xf_input))(m, tdb, hlen, off);

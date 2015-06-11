@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.58 2015/04/17 11:04:02 mikeb Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.59 2015/06/11 15:59:17 mikeb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -65,7 +65,6 @@ int	udpencap_port = 4500;	/* triggers decapsulation */
 int
 ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 {
-	struct timeval tv;
 	int i, off, error;
 	struct mbuf *mp;
 #ifdef INET6
@@ -135,18 +134,12 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	 */
 	if (tdb->tdb_first_use == 0) {
 		tdb->tdb_first_use = time_second;
-
-		tv.tv_usec = 0;
-
-		tv.tv_sec = tdb->tdb_first_use + tdb->tdb_exp_first_use;
 		if (tdb->tdb_flags & TDBF_FIRSTUSE)
-			timeout_add(&tdb->tdb_first_tmo,
-			    hzto(&tv));
-
-		tv.tv_sec = tdb->tdb_first_use + tdb->tdb_soft_first_use;
+			timeout_add_sec(&tdb->tdb_first_tmo,
+			    tdb->tdb_exp_first_use);
 		if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
-			timeout_add(&tdb->tdb_sfirst_tmo,
-			    hzto(&tv));
+			timeout_add_sec(&tdb->tdb_sfirst_tmo,
+			    tdb->tdb_soft_first_use);
 	}
 
 	/*

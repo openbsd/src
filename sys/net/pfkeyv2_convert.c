@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.53 2015/05/25 22:18:38 benno Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.54 2015/06/11 15:59:17 mikeb Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -279,12 +279,8 @@ export_sa(void **p, struct tdb *tdb)
 void
 import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 {
-	struct timeval tv;
-
 	if (!sadb_lifetime)
 		return;
-
-	getmicrotime(&tv);
 
 	switch (type) {
 	case PFKEYV2_LIFETIME_HARD:
@@ -303,11 +299,8 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_exp_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_TIMER;
-			if (tv.tv_sec + tdb->tdb_exp_timeout < tv.tv_sec)
-				tv.tv_sec = ((unsigned long) -1) / 2; /* XXX */
-			else
-				tv.tv_sec += tdb->tdb_exp_timeout;
-			timeout_add(&tdb->tdb_timer_tmo, hzto(&tv));
+			timeout_add_sec(&tdb->tdb_timer_tmo,
+			    tdb->tdb_exp_timeout);
 		} else
 			tdb->tdb_flags &= ~TDBF_TIMER;
 
@@ -334,11 +327,8 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_soft_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_SOFT_TIMER;
-			if (tv.tv_sec + tdb->tdb_soft_timeout < tv.tv_sec)
-				tv.tv_sec = ((unsigned long) -1) / 2; /* XXX */
-			else
-				tv.tv_sec += tdb->tdb_soft_timeout;
-			timeout_add(&tdb->tdb_stimer_tmo, hzto(&tv));
+			timeout_add_sec(&tdb->tdb_stimer_tmo,
+			    tdb->tdb_soft_timeout);
 		} else
 			tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 
