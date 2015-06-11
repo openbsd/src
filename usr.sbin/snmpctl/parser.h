@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.9 2014/04/14 12:56:21 blambert Exp $	*/
+/*	$OpenBSD: parser.h,v 1.10 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -15,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef SNMPCTL_PARSER_H
+#define SNMPCTL_PARSER_H
 
 enum actions {
 	NONE,
@@ -60,3 +63,5 @@ struct parse_result {
 
 struct parse_result	*parse(int, char *[]);
 void			 snmpclient(struct parse_result *);
+
+#endif /* SNMPCTL_PARSER_H */

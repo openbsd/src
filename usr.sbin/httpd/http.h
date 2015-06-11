@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.12 2015/02/11 12:52:01 florian Exp $	*/
+/*	$OpenBSD: http.h,v 1.13 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _HTTP_H
-#define _HTTP_H
+#ifndef HTTP_H
+#define HTTP_H
 
 #define HTTP_PORT	80
 #define HTTPS_PORT	443
@@ -250,4 +250,4 @@ struct http_descriptor {
 	struct kvtree		 http_headers;
 };
 
-#endif /* _HTTP_H */
+#endif /* HTTP_H */

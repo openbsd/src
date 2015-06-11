@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.h,v 1.3 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: eap.h,v 1.4 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _IKEV2_EAP_H
-#define _IKEV2_EAP_H
+#ifndef IKED_EAP_H
+#define IKED_EAP_H
 
 struct eap_header {
 	u_int8_t	eap_code;
@@ -168,4 +168,4 @@ struct eap_mschap_failure {
 
 extern struct iked_constmap eap_mserror_map[];
 
-#endif /* _IKEV2_EAP_H */
+#endif /* IKED_EAP_H */

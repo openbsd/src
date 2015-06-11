@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.18 2015/03/26 19:52:35 markus Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.19 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _IKEV2_H
-#define _IKEV2_H
+#ifndef IKED_IKEV2_H
+#define IKED_IKEV2_H
 
 #define IKEV2_VERSION		0x20	/* IKE version 2.0 */
 #define IKEV1_VERSION		0x10	/* IKE version 1.0 */
@@ -515,4 +515,4 @@ struct ikev2_cfg {
 
 extern struct iked_constmap ikev2_cfg_map[];
 
-#endif /* _IKEV2_H */
+#endif /* IKED_IKEV2_H */

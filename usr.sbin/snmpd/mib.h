@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.36 2015/06/10 10:03:59 mikeb Exp $	*/
+/*	$OpenBSD: mib.h,v 1.37 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SNMPD_MIB_H
-#define _SNMPD_MIB_H
+#ifndef SNMPD_MIB_H
+#define SNMPD_MIB_H
 
 /*
  * Adding new MIBs:
@@ -1330,4 +1330,4 @@
 
  void	 mib_init(void);
 
-#endif /* _SNMPD_MIB_H */
+#endif /* SNMPD_MIB_H */

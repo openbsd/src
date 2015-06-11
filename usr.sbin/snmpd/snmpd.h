@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.59 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.60 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -17,8 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SNMPD_H
-#define _SNMPD_H
+#ifndef SNMPD_H
+#define SNMPD_H
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -755,4 +755,4 @@ struct trapcmd *
 int	 varbind_convert(struct agentx_pdu *, struct agentx_varbind_hdr *,
 	    struct ber_element **, struct ber_element **);
 
-#endif /* _SNMPD_H */
+#endif /* SNMPD_H */

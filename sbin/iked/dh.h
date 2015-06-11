@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.h,v 1.6 2014/08/27 10:28:57 reyk Exp $	*/
+/*	$OpenBSD: dh.h,v 1.7 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _DH_H_
-#define _DH_H_
+#ifndef DH_GROUP_H
+#define DH_GROUP_H
 
 enum group_type {
 	GROUP_MODP		= 0,
@@ -59,4 +59,4 @@ int		 dh_getlen(struct group *);
 int		 dh_create_exchange(struct group *, u_int8_t *);
 int		 dh_create_shared(struct group *, u_int8_t *, u_int8_t *);
 
-#endif /* _DH_H_ */
+#endif /* DH_GROUP_H */

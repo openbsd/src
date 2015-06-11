@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.18 2014/02/17 15:07:23 markus Exp $	*/
+/*	$OpenBSD: types.h,v 1.19 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _IKED_TYPES_H
-#define _IKED_TYPES_H
+#ifndef IKED_TYPES_H
+#define IKED_TYPES_H
 
 #ifndef IKED_USER
 #define IKED_USER	"_iked"
@@ -138,4 +138,4 @@ enum flushmode {
 #define nitems(_a)   (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#endif /* _IKED_TYPES_H */
+#endif /* IKED_TYPES_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.h,v 1.4 2014/11/20 03:48:12 tedu Exp $	*/
+/*	$OpenBSD: chap_ms.h,v 1.5 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _CHAP_MS_H
-#define _CHAP_MS_H
+#ifndef CHAP_MS_H
+#define CHAP_MS_H
 
 #define MSCHAP_CHALLENGE_SZ	8
 #define MSCHAPV2_CHALLENGE_SZ	16
@@ -44,4 +44,4 @@ void	 mschap_radiuskey(u_int8_t *, const u_int8_t *, const u_int8_t *,
 	    const u_int8_t *);
 void	 mschap_msk(u_int8_t *, int, u_int8_t *, u_int8_t *);
 
-#endif /* _CHAP_MS_H */
+#endif /* CHAP_MS_H */

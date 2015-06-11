@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.15 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: parser.h,v 1.16 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -17,6 +17,9 @@
  */
 
 #include "relayd.h"
+
+#ifndef RELAYCTL_PARSER_H
+#define RELAYCTL_PARSER_H
 
 enum actions {
 	NONE,
@@ -48,3 +51,5 @@ struct parse_result {
 };
 
 struct parse_result	*parse(int, char *[]);
+
+#endif /* RELAYCTL_PARSER_H */

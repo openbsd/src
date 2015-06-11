@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.84 2015/03/26 19:52:35 markus Exp $	*/
+/*	$OpenBSD: iked.h,v 1.85 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -25,8 +25,8 @@
 #include "types.h"
 #include "dh.h"
 
-#ifndef _IKED_H
-#define _IKED_H
+#ifndef IKED_H
+#define IKED_H
 
 /*
  * Common IKEv1/IKEv2 header
@@ -966,4 +966,4 @@ size_t	 keylength_xf(u_int, u_int, u_int);
 size_t	 noncelength_xf(u_int, u_int);
 int	 cmdline_symset(char *);
 
-#endif /* _IKED_H */
+#endif /* IKED_H */

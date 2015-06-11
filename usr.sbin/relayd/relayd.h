@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.210 2015/06/08 15:47:51 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.211 2015/06/11 18:49:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -18,8 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _RELAYD_H
-#define _RELAYD_H
+#ifndef RELAYD_H
+#define RELAYD_H
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -1381,4 +1381,4 @@ int	 config_setrelay(struct relayd *, struct relay *);
 int	 config_getrelay(struct relayd *, struct imsg *);
 int	 config_getrelaytable(struct relayd *, struct imsg *);
 
-#endif /* _RELAYD_H */
+#endif /* RELAYD_H */
