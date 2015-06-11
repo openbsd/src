@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.103 2015/05/28 17:09:18 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.104 2015/06/11 19:27:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -73,9 +73,11 @@ extern const char *backend_stat;
 
 static uint32_t			connid = 0;
 static struct tree		ctl_conns;
+static struct tree		ctl_count;
 static struct stat_digest	digest;
 
-#define	CONTROL_FD_RESERVE	5
+#define	CONTROL_FD_RESERVE		5
+#define	CONTROL_MAXCONN_PER_CLIENT	32
 
 static void
 control_imsg(struct mproc *p, struct imsg *imsg)
@@ -279,6 +281,7 @@ control(void)
 	signal(SIGHUP, SIG_IGN);
 
 	tree_init(&ctl_conns);
+	tree_init(&ctl_count);
 
 	memset(&digest, 0, sizeof digest);
 	digest.startup = time(NULL);
@@ -326,6 +329,9 @@ control_accept(int listenfd, short event, void *arg)
 	socklen_t		 len;
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
+	size_t			*count;
+	uid_t			 euid;
+	gid_t			 egid;
 
 	if (getdtablesize() - getdtablecount() < CONTROL_FD_RESERVE)
 		goto pause;
@@ -342,9 +348,26 @@ control_accept(int listenfd, short event, void *arg)
 
 	session_socket_blockmode(connfd, BM_NONBLOCK);
 
-	c = xcalloc(1, sizeof(*c), "control_accept");
-	if (getpeereid(connfd, &c->euid, &c->egid) == -1)
+	if (getpeereid(connfd, &euid, &egid) == -1)
 		fatal("getpeereid");
+
+	count = tree_get(&ctl_count, euid);
+	if (count == NULL) {
+		count = xcalloc(1, sizeof *count, "control_accept");
+		tree_xset(&ctl_count, euid, count);
+	}
+
+	if (*count == CONTROL_MAXCONN_PER_CLIENT) {
+		close(connfd);
+		log_warnx("warn: too many connections to control socket "
+		    "from user with uid %lu", (unsigned long int)euid);
+		return;
+	}
+	(*count)++;
+
+	c = xcalloc(1, sizeof(*c), "control_accept");
+	c->euid = euid;
+	c->egid = egid;
 	c->id = ++connid;
 	c->mproc.proc = PROC_CLIENT;
 	c->mproc.handler = control_dispatch_ext;
@@ -364,6 +387,14 @@ pause:
 static void
 control_close(struct ctl_conn *c)
 {
+	size_t	*count;
+
+	count = tree_xget(&ctl_count, c->euid);
+	(*count)--;
+	if (*count == 0) {
+		tree_xpop(&ctl_count, c->euid);
+		free(count);
+	}
 	tree_xpop(&ctl_conns, c->id);
 	mproc_clear(&c->mproc);
 	free(c);
