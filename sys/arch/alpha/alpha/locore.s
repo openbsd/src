@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.40 2015/06/05 19:36:28 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.41 2015/06/11 17:26:17 deraadt Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -890,12 +890,12 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
-	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
 	mov	v0, s0
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
+	cmpult	a0, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, 0(s0)
@@ -919,12 +919,12 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
-	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
 	mov	v0, s0
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
+	cmpult	a1, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, 0(s0)
@@ -1003,12 +1003,12 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
-	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
 	mov	v0, s0
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
+	cmpult	a0, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, 0(s0)
@@ -1033,12 +1033,12 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
-	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
-	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
 	mov	v0, s0
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
+	cmpult	a1, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, 0(s0)
