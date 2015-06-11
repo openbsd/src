@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.108 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.109 2015/06/11 16:00:36 mikeb Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1005,9 +1005,9 @@ tryagain:
 			    error == NFSERR_TRYLATER) {
 				m_freem(info.nmi_mrep);
 				error = 0;
-				tv.tv_sec = time_second + trylater_delay;
+				tv.tv_sec = trylater_delay;
 				tv.tv_usec = 0;
-				tsleep(&tv, PSOCK, "nfsretry", hzto(&tv));
+				tsleep(&tv, PSOCK, "nfsretry", tvtohz(&tv));
 				trylater_delay *= NFS_TIMEOUTMUL;
 				if (trylater_delay > NFS_MAXTIMEO)
 					trylater_delay = NFS_MAXTIMEO;
