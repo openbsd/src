@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.103 2015/05/06 02:19:40 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.104 2015/06/11 08:39:51 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -879,7 +879,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	info.nmi_dpos = nfsd->nd_dpos;
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 
-	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
@@ -979,7 +978,10 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			if (va.va_type != VFIFO &&
 			    (error = suser_ucred(cred))) {
 				vrele(nd.ni_startdir);
-				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+				if (nd.ni_cnd.cn_flags & HASBUF) {
+					pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+					nd.ni_cnd.cn_flags &= ~HASBUF;
+				}
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -991,7 +993,10 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			    &va);
 			if (error) {
 				vrele(nd.ni_startdir);
-				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+				if (nd.ni_cnd.cn_flags & HASBUF) {
+					pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+					nd.ni_cnd.cn_flags &= ~HASBUF;
+				}
 				nfsm_reply(0);
 				error = 0;
 				goto nfsmout;
@@ -1001,12 +1006,15 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			nd.ni_cnd.cn_proc = procp;
 			nd.ni_cnd.cn_cred = cred;
 			if ((error = vfs_lookup(&nd)) != 0) {
-				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+				if (nd.ni_cnd.cn_flags & HASBUF) {
+					pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+					nd.ni_cnd.cn_flags &= ~HASBUF;
+				}
 				nfsm_reply(0);
 				error = 0;
 				goto nfsmout;
 			}
-			
+
 			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
@@ -1020,6 +1028,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		} else {
 			vrele(nd.ni_startdir);
 			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+			nd.ni_cnd.cn_flags &= ~HASBUF;
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			error = ENXIO;
@@ -1028,6 +1037,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	} else {
 		vrele(nd.ni_startdir);
 		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+		nd.ni_cnd.cn_flags &= ~HASBUF;
 		vp = nd.ni_vp;
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -1081,9 +1091,12 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 nfsmout:
 	if (dirp)
 		vrele(dirp);
-	if (nd.ni_cnd.cn_nameiop) {
+	if (nd.ni_cnd.cn_nameiop != LOOKUP) {
 		vrele(nd.ni_startdir);
-		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+		if (nd.ni_cnd.cn_flags & HASBUF) {
+			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+			nd.ni_cnd.cn_flags &= ~HASBUF;
+		}
 	}
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	if (nd.ni_dvp == nd.ni_vp)
