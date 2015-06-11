@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmacvar.h,v 1.5 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: if_cnmacvar.h,v 1.6 2015/06/11 12:30:42 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -81,8 +81,7 @@ struct octeon_eth_softc {
 	int64_t			sc_hard_done_cnt;
 	int			sc_flush;
 	int			sc_prefetch;
-	SIMPLEQ_HEAD(, _send_queue_entry)
-				sc_sendq;
+	struct mbuf_list	sc_sendq;
 	uint64_t		sc_ext_callback_cnt;
 
 	uint32_t		sc_port;

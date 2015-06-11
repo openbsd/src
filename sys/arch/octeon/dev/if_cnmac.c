@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.22 2015/04/30 21:52:49 mpi Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.23 2015/06/11 12:30:42 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -292,7 +292,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 
 	octeon_eth_gsc[sc->sc_port] = sc;
 
-	SIMPLEQ_INIT(&sc->sc_sendq);
+	ml_init(&sc->sc_sendq);
 	sc->sc_soft_req_thresh = 15/* XXX */;
 	sc->sc_ext_callback_cnt = 0;
 
@@ -642,37 +642,14 @@ octeon_eth_send_queue_is_full(struct octeon_eth_softc *sc)
 	return 0;
 }
 
-/*
- * (Ab)use m_nextpkt and m_paddr to maintain mbuf chain and pointer to gather
- * buffer.  Other mbuf members may be used by m_freem(), so don't touch them!
- */
-
-struct _send_queue_entry {
-	union {
-		struct mbuf _sqe_s_mbuf;
-		struct {
-			char _sqe_s_entry_pad[offsetof(struct mbuf, m_nextpkt)];
-			SIMPLEQ_ENTRY(_send_queue_entry) _sqe_s_entry_entry;
-		} _sqe_s_entry;
-		struct {
-			char _sqe_s_gbuf_pad[offsetof(struct mbuf, M_dat.MH.MH_pkthdr.rcvif)];
-			uint64_t *_sqe_s_gbuf_gbuf;
-		} _sqe_s_gbuf;
-	} _sqe_u;
-#define	_sqe_entry	_sqe_u._sqe_s_entry._sqe_s_entry_entry
-#define	_sqe_gbuf	_sqe_u._sqe_s_gbuf._sqe_s_gbuf_gbuf
-};
-
 void
 octeon_eth_send_queue_add(struct octeon_eth_softc *sc, struct mbuf *m,
     uint64_t *gbuf)
 {
-	struct _send_queue_entry *sqe = (struct _send_queue_entry *)m;
-
 	OCTEON_ETH_KASSERT(m->m_flags & M_PKTHDR);
 
-	sqe->_sqe_gbuf = gbuf;
-	SIMPLEQ_INSERT_TAIL(&sc->sc_sendq, sqe, _sqe_entry);
+	m->m_pkthdr.ph_cookie = gbuf;
+	ml_enqueue(&sc->sc_sendq, m);
 
 	if (m->m_ext.ext_free != NULL)
 		sc->sc_ext_callback_cnt++;
@@ -682,16 +659,14 @@ void
 octeon_eth_send_queue_del(struct octeon_eth_softc *sc, struct mbuf **rm,
     uint64_t **rgbuf)
 {
-	struct _send_queue_entry *sqe;
+	struct mbuf *m;
+	m = ml_dequeue(&sc->sc_sendq);
+	OCTEON_ETH_KASSERT(m != NULL);
 
-	sqe = SIMPLEQ_FIRST(&sc->sc_sendq);
-	OCTEON_ETH_KASSERT(sqe != NULL);
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_sendq, _sqe_entry);
+	*rm = m;
+	*rgbuf = m->m_pkthdr.ph_cookie;
 
-	*rm = (void *)sqe;
-	*rgbuf = sqe->_sqe_gbuf;
-
-	if ((*rm)->m_ext.ext_free != NULL) {
+	if (m->m_ext.ext_free != NULL) {
 		sc->sc_ext_callback_cnt--;
 		OCTEON_ETH_KASSERT(sc->sc_ext_callback_cnt >= 0);
 	}
