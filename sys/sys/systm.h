@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.107 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: systm.h,v 1.108 2015/06/11 16:03:04 mikeb Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -222,7 +222,6 @@ u_int32_t arc4random_uniform(u_int32_t);
 
 struct timeval;
 struct timespec;
-int	hzto(const struct timeval *);
 int	tvtohz(const struct timeval *);
 int	tstohz(const struct timespec *);
 void	realitexpire(void *);

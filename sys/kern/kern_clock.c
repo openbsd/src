@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.87 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.88 2015/06/11 16:03:04 mikeb Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -199,59 +199,6 @@ hardclock(struct clockframe *frame)
 	 */
 	if (timeout_hardclock_update())
 		softintr_schedule(softclock_si);
-}
-
-/*
- * Compute number of hz until specified time.  Used to
- * compute the second argument to timeout_add() from an absolute time.
- */
-int
-hzto(const struct timeval *tv)
-{
-	struct timeval now;
-	unsigned long nticks;
-	long sec, usec;
-
-	/*
-	 * If the number of usecs in the whole seconds part of the time
-	 * difference fits in a long, then the total number of usecs will
-	 * fit in an unsigned long.  Compute the total and convert it to
-	 * ticks, rounding up and adding 1 to allow for the current tick
-	 * to expire.  Rounding also depends on unsigned long arithmetic
-	 * to avoid overflow.
-	 *
-	 * Otherwise, if the number of ticks in the whole seconds part of
-	 * the time difference fits in a long, then convert the parts to
-	 * ticks separately and add, using similar rounding methods and
-	 * overflow avoidance.  This method would work in the previous
-	 * case but it is slightly slower and assumes that hz is integral.
-	 *
-	 * Otherwise, round the time difference down to the maximum
-	 * representable value.
-	 *
-	 * If ints have 32 bits, then the maximum value for any timeout in
-	 * 10ms ticks is 248 days.
-	 */
-	getmicrotime(&now);
-	sec = tv->tv_sec - now.tv_sec;
-	usec = tv->tv_usec - now.tv_usec;
-	if (usec < 0) {
-		sec--;
-		usec += 1000000;
-	}
-	if (sec < 0 || (sec == 0 && usec <= 0)) {
-		nticks = 0;
-	} else if (sec <= LONG_MAX / 1000000)
-		nticks = (sec * 1000000 + (unsigned long)usec + (tick - 1))
-		    / tick + 1;
-	else if (sec <= LONG_MAX / hz)
-		nticks = sec * hz
-		    + ((unsigned long)usec + (tick - 1)) / tick + 1;
-	else
-		nticks = LONG_MAX;
-	if (nticks > INT_MAX)
-		nticks = INT_MAX;
-	return ((int)nticks);
 }
 
 /*
