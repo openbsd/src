@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.16 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.17 2015/06/11 12:48:32 schwarze Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: June 11 2015 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -175,32 +175,32 @@ Example 1
 .Ar global parameters...
 
 shared-network ISC-BIGGIE {
-.Ar \ \&\ \&shared-network-specific parameters...
+.Pf "  " Ar shared-network-specific parameters ...
   subnet 204.254.239.0 netmask 255.255.255.224 {
-.Ar \ \&\ \&\ \&\ \&subnet-specific parameters...
+.Pf "    " Ar subnet-specific parameters ...
     range 204.254.239.10 204.254.239.30;
   }
   subnet 204.254.239.32 netmask 255.255.255.224 {
-.Ar \ \&\ \&\ \&\ \&subnet-specific parameters...
+.Pf "    " Ar subnet-specific parameters ...
     range 204.254.239.42 204.254.239.62;
   }
 }
 
 subnet 204.254.239.64 netmask 255.255.255.224 {
-.Ar \ \&\ \&subnet-specific parameters...
+.Pf "  " Ar subnet-specific parameters ...
   range 204.254.239.74 204.254.239.94;
 }
 
 group {
-.Ar \ \&\ \&group-specific parameters...
+.Pf "  " Ar group-specific parameters ...
   host zappo.test.isc.org {
-.Ar \ \&\ \&\ \&\ \&host-specific parameters...
+.Pf "    " Ar host-specific parameters ...
   }
   host beppo.test.isc.org {
-.Ar \ \&\ \&\ \&\ \&host-specific parameters...
+.Pf "    " Ar host-specific parameters ...
   }
   host harpo.test.isc.org {
-.Ar \ \&\ \&\ \&\ \&host-specific parameters...
+.Pf "    " Ar host-specific parameters ...
   }
 }
 .Ed
@@ -332,8 +332,8 @@ The
 statement
 .Bd -unfilled -offset indent
 .Ic shared-network Ar name No {
-.Pf \ \&\ \& Op Ar parameters
-.Pf \ \&\ \& Op Ar declarations
+.Pf "  " Op Ar parameters
+.Pf "  " Op Ar declarations
 }
 .Ed
 .Pp
@@ -367,8 +367,8 @@ The
 statement
 .Bd -unfilled -offset indent
 .Ic subnet Ar subnet-number Ic netmask Ar netmask No {
-.Pf \ \&\ \& Op Ar parameters
-.Pf \ \&\ \& Op Ar declarations
+.Pf "  " Op Ar parameters
+.Pf "  " Op Ar declarations
 }
 .Ed
 .Pp
@@ -428,8 +428,8 @@ The
 statement
 .Bd -unfilled -offset indent
 .Ic host Ar hostname No {
-.Pf \ \&\ \& Op Ar parameters
-.Pf \ \&\ \& Op Ar declarations
+.Pf "  " Op Ar parameters
+.Pf "  " Op Ar declarations
 }
 .Ed
 .Pp
@@ -491,8 +491,8 @@ The
 statement
 .Bd -unfilled -offset indent
 .Ic group No {
-.Pf \ \&\ \& Op Ar parameters
-.Pf \ \&\ \& Op Ar declarations
+.Pf "  " Op Ar parameters
+.Pf "  " Op Ar declarations
 }
 .Ed
 .Pp
