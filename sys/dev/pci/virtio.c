@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.15 2015/04/10 20:00:26 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.16 2015/06/11 04:38:23 jsg Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -33,9 +33,7 @@
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
+#include <sys/malloc.h>
 
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
