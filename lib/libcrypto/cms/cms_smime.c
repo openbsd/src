@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.12 2014/07/11 12:12:39 miod Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.13 2015/06/11 16:02:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -132,7 +132,7 @@ do_free_upto(BIO *f, BIO *upto)
 			tbio = BIO_pop(f);
 			BIO_free(f);
 			f = tbio;
-		} while (f != upto);
+		} while (f != NULL && f != upto);
 	} else
 		BIO_free_all(f);
 }
