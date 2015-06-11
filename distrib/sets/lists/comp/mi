@@ -6266,7 +6266,6 @@
 ./usr/share/man/man9/htolem32.9
 ./usr/share/man/man9/htolem64.9
 ./usr/share/man/man9/hz.9
-./usr/share/man/man9/hzto.9
 ./usr/share/man/man9/idgen32.9
 ./usr/share/man/man9/idgen32_init.9
 ./usr/share/man/man9/ieee80211.9
