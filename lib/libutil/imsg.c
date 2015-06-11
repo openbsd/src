@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.6 2014/06/30 00:26:22 deraadt Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.7 2015/06/11 19:25:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -286,7 +286,7 @@ int
 imsg_flush(struct imsgbuf *ibuf)
 {
 	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) < 0)
+		if (msgbuf_write(&ibuf->w) <= 0)
 			return (-1);
 	return (0);
 }

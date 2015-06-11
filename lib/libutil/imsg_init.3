@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.11 2013/12/26 17:32:33 eric Exp $
+.\" $OpenBSD: imsg_init.3,v 1.12 2015/06/11 19:25:53 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 26 2013 $
+.Dd $Mdocdate: June 11 2015 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -393,8 +393,8 @@ routine transmits as many pending buffers as possible from
 .Fn msgbuf
 using
 .Xr writev 2 .
-It returns 1 if it succeeds, \-1 on error and 0 when an EOF condition on the
-socket is detected.
+It returns 1 if it succeeds, \-1 on error and 0 when no buffers were
+pending or an EOF condition on the socket is detected.
 Temporary resource shortages are returned with errno
 .Er EAGAIN
 and require the application to retry again in the future.
@@ -424,8 +424,8 @@ routine calls
 .Xr sendmsg 2
 to transmit buffers queued in
 .Fa msgbuf .
-It returns 1 if it succeeds, \-1 on error, and 0 when an EOF condition on the
-socket is detected.
+It returns 1 if it succeeds, \-1 on error, and 0 when the queue was empty
+or an EOF condition on the socket is detected.
 Temporary resource shortages are returned with errno
 .Er EAGAIN
 and require the application to retry again in the future.
@@ -498,7 +498,7 @@ library is used to monitor the socket file descriptor.
 When the socket is ready for writing, queued messages are transmitted with
 .Fn msgbuf_write :
 .Bd -literal -offset indent
-	if (msgbuf_write(&ibuf-\*(Gtw) \*(Lt 0 && errno != EAGAIN) {
+	if (msgbuf_write(&ibuf-\*(Gtw) \*(Lt= 0 && errno != EAGAIN) {
 		/* handle write failure */
 	}
 .Ed
