@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.329 2015/01/16 06:40:00 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.330 2015/06/12 16:10:43 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -84,7 +84,7 @@ void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int, int,
 	    long);
 int	 pfctl_show_src_nodes(int, int);
-int	 pfctl_show_states(int, const char *, int);
+int	 pfctl_show_states(int, const char *, int, long);
 int	 pfctl_show_status(int, int);
 int	 pfctl_show_timeouts(int, int);
 int	 pfctl_show_limits(int, int);
@@ -945,7 +945,7 @@ done:
 }
 
 int
-pfctl_show_states(int dev, const char *iface, int opts)
+pfctl_show_states(int dev, const char *iface, int opts, long shownr)
 {
 	struct pfioc_states ps;
 	struct pfsync_state *p;
@@ -985,7 +985,8 @@ pfctl_show_states(int dev, const char *iface, int opts)
 			pfctl_print_title("STATES:");
 			dotitle = 0;
 		}
-		print_state(p, opts);
+		if (shownr < 0 || ntohl(p->rule) == shownr)
+			print_state(p, opts);
 	}
 done:
 	free(inbuf);
@@ -2309,7 +2310,7 @@ main(int argc, char *argv[])
 			    opts & PF_OPT_VERBOSE2);
 			break;
 		case 's':
-			pfctl_show_states(dev, ifaceopt, opts);
+			pfctl_show_states(dev, ifaceopt, opts, shownr);
 			break;
 		case 'S':
 			pfctl_show_src_nodes(dev, opts);
@@ -2329,7 +2330,7 @@ main(int argc, char *argv[])
 
 			pfctl_show_rules(dev, path, opts, 0, anchorname,
 			    0, 0, -1);
-			pfctl_show_states(dev, ifaceopt, opts);
+			pfctl_show_states(dev, ifaceopt, opts, -1);
 			pfctl_show_src_nodes(dev, opts);
 			pfctl_show_status(dev, opts);
 			pfctl_show_rules(dev, path, opts, 1, anchorname,
