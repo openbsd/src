@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.211 2015/06/11 18:49:09 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.212 2015/06/12 14:40:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -180,6 +180,13 @@ enum tlsreneg_state {
 	TLSRENEG_ABORT		= 3	/* the connection should be aborted */
 };
 
+enum relay_state {
+	STATE_INIT,
+	STATE_PENDING,
+	STATE_PRECONNECT,
+	STATE_CONNECTED
+};
+
 struct ctl_relay_event {
 	int			 s;
 	in_port_t		 port;
@@ -200,7 +207,7 @@ struct ctl_relay_event {
 	int			 line;
 	int			 done;
 	int			 timedout;
-	enum { INIT, PENDING, PRECONNECT, CONNECTED } state;
+	enum relay_state	 state;
 	enum direction		 dir;
 
 	u_int8_t		*buf;
