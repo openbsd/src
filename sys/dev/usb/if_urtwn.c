@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.47 2015/05/12 11:46:15 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.48 2015/06/12 15:47:31 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -273,11 +273,11 @@ urtwn_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
 
 	return ((usb_lookup(urtwn_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	    UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE);
 }
 
 void
@@ -290,24 +290,11 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	int i, error;
 
 	sc->sc_udev = uaa->device;
+	sc->sc_iface = uaa->iface;
 
 	usb_init_task(&sc->sc_task, urtwn_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->scan_to, urtwn_next_scan, sc);
 	timeout_set(&sc->calib_to, urtwn_calib_to, sc);
-
-	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* Get the first interface handle. */
-	error = usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface);
-	if (error != 0) {
-		printf("%s: could not get interface handle\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	if (uaa->product == USB_PRODUCT_DLINK_DWA123D1 ||
 	    uaa->product == USB_PRODUCT_DLINK_DWA125D1 ||

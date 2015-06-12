@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.110 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.111 2015/06/12 15:47:31 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -229,11 +229,11 @@ rum_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return UMATCH_NONE;
 
 	return (usb_lookup(rum_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	    UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE;
 }
 
 void
@@ -268,26 +268,11 @@ rum_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &ic->ic_if;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	usbd_status error;
 	int i, ntries;
 	uint32_t tmp;
 
 	sc->sc_udev = uaa->device;
-
-	if (usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* get the first interface handle */
-	error = usbd_device2interface_handle(sc->sc_udev, RT2573_IFACE_INDEX,
-	    &sc->sc_iface);
-	if (error != 0) {
-		printf("%s: could not get interface handle\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
+	sc->sc_iface = uaa->iface;
 
 	/*
 	 * Find endpoints.

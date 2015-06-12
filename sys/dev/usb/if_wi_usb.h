@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.h,v 1.2 2005/10/31 05:37:13 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.h,v 1.3 2015/06/12 15:47:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -28,14 +28,10 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  */
 
-#define WI_USB_CONFIG_NO	1
-
 #define WI_USB_ENDPT_TX		1
 #define WI_USB_ENDPT_RX		2
 #define WI_USB_ENDPT_INTR	3
 #define WI_USB_ENDPT_MAX	4
-
-#define WI_USB_IFACE_IDX	0
 
 
 /* XXX */

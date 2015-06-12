@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.25 2015/05/17 02:44:38 canacar Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.26 2015/06/12 15:47:31 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -183,9 +183,6 @@
 
 #define AXE_CTL_READ		0x01
 #define AXE_CTL_WRITE		0x02
-
-#define AXE_CONFIG_NO		1
-#define AXE_IFACE_IDX		0
 
 /* EEPROM Map */
 #define	AXE_EEPROM_772B_NODEID		0x04

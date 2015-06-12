@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.52 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.53 2015/06/12 15:47:31 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -585,11 +585,11 @@ urtw_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
 
 	return ((urtw_lookup(uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	    UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE);
 }
 
 void
@@ -605,20 +605,8 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 
 	sc->sc_udev = uaa->device;
+	sc->sc_iface = uaa->iface;
 	sc->sc_hwrev = urtw_lookup(uaa->vendor, uaa->product)->rev;
-
-	if (usbd_set_config_no(sc->sc_udev, 1, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* Get the first interface handle. */
-	if (usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface) != 0) {
-		printf("%s: could not get interface handle\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 

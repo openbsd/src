@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.33 2015/03/02 15:23:28 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.34 2015/06/12 15:47:31 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -220,11 +220,11 @@ athn_usb_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
 
 	return ((athn_usb_lookup(uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	    UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE);
 }
 
 void
@@ -233,9 +233,9 @@ athn_usb_attach(struct device *parent, struct device *self, void *aux)
 	struct athn_usb_softc *usc = (struct athn_usb_softc *)self;
 	struct athn_softc *sc = &usc->sc_sc;
 	struct usb_attach_arg *uaa = aux;
-	int error;
 
 	usc->sc_udev = uaa->device;
+	usc->sc_iface = uaa->iface;
 
 	usc->flags = athn_usb_lookup(uaa->vendor, uaa->product)->flags;
 	sc->flags |= ATHN_FLAG_USB;
@@ -250,20 +250,6 @@ athn_usb_attach(struct device *parent, struct device *self, void *aux)
 	sc->ops.write_barrier = athn_usb_write_barrier;
 
 	usb_init_task(&usc->sc_task, athn_usb_task, sc, USB_TASK_TYPE_GENERIC);
-
-	if (usbd_set_config_no(usc->sc_udev, 1, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* Get the first interface handle. */
-	error = usbd_device2interface_handle(usc->sc_udev, 0, &usc->sc_iface);
-	if (error != 0) {
-		printf("%s: could not get interface handle\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	if (athn_usb_open_pipes(usc) != 0)
 		return;
