@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.161 2015/03/30 09:21:42 tobias Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.162 2015/06/12 00:54:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -564,7 +564,7 @@ main(int argc, char *argv[])
 
 		switch(fork()) {
 		case -1:
-			exit(1);
+			err(1, "fork");
 		case 0:
 			setsid();
 			close(lockpipe[0]);
