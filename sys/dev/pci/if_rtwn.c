@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.2 2015/06/10 15:34:17 mpi Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.3 2015/06/12 09:30:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1091,10 +1091,12 @@ rtwn_set_led(struct rtwn_softc *sc, int led, int on)
 	uint8_t reg;
 
 	if (led == RTWN_LED_LINK) {
-		reg = rtwn_read_1(sc, R92C_LEDCFG0) & 0x70;
+		reg = rtwn_read_1(sc, R92C_LEDCFG2) & 0xf0;
 		if (!on)
-			reg |= R92C_LEDCFG0_DIS;
-		rtwn_write_1(sc, R92C_LEDCFG0, reg);
+			reg |= R92C_LEDCFG2_DIS;
+		else
+			reg |= R92C_LEDCFG2_EN;
+		rtwn_write_1(sc, R92C_LEDCFG2, reg);
 		sc->ledlink = on;	/* Save LED state. */
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwnreg.h,v 1.1 2015/06/04 21:08:40 stsp Exp $	*/
+/*	$OpenBSD: if_rtwnreg.h,v 1.2 2015/06/12 09:30:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -336,6 +336,10 @@
 
 /* Bits for R92C_LEDCFG0. */
 #define R92C_LEDCFG0_DIS	0x08
+
+/* Bits for R92C_LEDCFG2. */
+#define R92C_LEDCFG2_EN		0x60
+#define R92C_LEDCFG2_DIS	0x68
 
 /* Bits for R92C_MCUFWDL. */
 #define R92C_MCUFWDL_EN			0x00000001
