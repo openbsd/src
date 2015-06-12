@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.42 2015/05/30 02:49:23 deraadt Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.43 2015/06/12 13:11:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5720,8 +5720,7 @@ iwm_watchdog(struct ifnet *ifp)
 #ifdef IWM_DEBUG
 			iwm_nic_error(sc);
 #endif
-			ifp->if_flags &= ~IFF_UP;
-			iwm_stop(ifp, 1);
+			task_add(systq, &sc->init_task);
 			ifp->if_oerrors++;
 			return;
 		}
