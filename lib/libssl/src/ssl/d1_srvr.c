@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.51 2015/05/15 11:00:14 jsg Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.52 2015/06/13 08:38:10 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -525,7 +525,7 @@ dtls1_accept(SSL *s)
 			ret = ssl3_get_cert_verify(s);
 			if (ret <= 0)
 				goto end;
-				s->state = SSL3_ST_SR_FINISHED_A;
+			s->state = SSL3_ST_SR_FINISHED_A;
 			s->init_num = 0;
 			break;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509type.c,v 1.11 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509type.c,v 1.12 2015/06/13 08:38:10 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,9 +121,9 @@ X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 		}
 	}
 
-	if (EVP_PKEY_size(pk) <= 1024/8)/* /8 because it's 1024 bits we look
-					   for, not bytes */
-	ret |= EVP_PKT_EXP;
+	/* /8 because it's 1024 bits we look for, not bytes */
+	if (EVP_PKEY_size(pk) <= 1024 / 8)
+		ret |= EVP_PKT_EXP;
 	if (pkey == NULL)
 		EVP_PKEY_free(pk);
 	return (ret);
