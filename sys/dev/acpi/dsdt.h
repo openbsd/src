@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.63 2015/03/16 20:31:46 deraadt Exp $ */
+/* $OpenBSD: dsdt.h,v 1.64 2015/06/13 21:41:42 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -92,6 +92,8 @@ const char		*aml_nodename(struct aml_node *);
 #define SR_IOPORT		0x08
 #define SR_FIXEDPORT		0x09
 #define SR_ENDTAG		0x0F
+/* byte zero of small resources combines the tag above a length [1..7] */
+#define	SR_TAG(tag,len)		((tag << 3) + (len))
 
 #define LR_24BIT		0x81
 #define LR_GENREGISTER		0x82

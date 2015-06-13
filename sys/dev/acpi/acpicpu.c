@@ -1,6 +1,7 @@
-/* $OpenBSD: acpicpu.c,v 1.63 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.64 2015/06/13 21:41:42 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
+ * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,15 +17,18 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>		/* for tick */
 #include <sys/signalvar.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/atomic.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/specialreg.h>
 
 #include <dev/acpi/acpireg.h>
@@ -50,7 +54,7 @@ void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 #define ACPI_PDC_SMP		0xa
 #define ACPI_PDC_MSR		0x1
 
-/* _PDC Intel capabilities flags from linux */
+/* _PDC/_OSC Intel capabilities flags */
 #define ACPI_PDC_P_FFH		0x0001
 #define ACPI_PDC_C_C1_HALT	0x0002
 #define ACPI_PDC_T_FFH		0x0004
@@ -61,9 +65,22 @@ void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 #define ACPI_PDC_SMP_T_SWCOORD	0x0080
 #define ACPI_PDC_C_C1_FFH	0x0100
 #define ACPI_PDC_C_C2C3_FFH	0x0200
+/* reserved			0x0400 */
+#define ACPI_PDC_P_HWCOORD	0x0800
+#define ACPI_PDC_PPC_NOTIFY	0x1000
 
-#define FLAGS_NO_C2		0x01
-#define FLAGS_NO_C3		0x02
+#define CST_METH_HALT		0
+#define CST_METH_IO_HALT	1
+#define CST_METH_MWAIT		2
+#define CST_METH_GAS_IO		3
+
+/* flags on Intel's FFH mwait method */
+#define CST_FLAG_MWAIT_HW_COORD		0x1
+#define CST_FLAG_MWAIT_BM_AVOIDANCE	0x2
+#define CST_FLAG_UP_ONLY		0x4000	/* ignore if MP */
+#define CST_FLAG_SKIP			0x8000	/* state is worse choice */
+
+#define FLAGS_MWAIT_ONLY	0x02
 #define FLAGS_BMCHECK		0x04
 #define FLAGS_NOTHROTTLE	0x08
 #define FLAGS_NOPSS		0x10
@@ -82,13 +99,17 @@ void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 
 struct acpi_cstate
 {
-	int	 type;
-	int	 latency;
-	int	 power;
-	int	 address;
-
 	SLIST_ENTRY(acpi_cstate) link;
+
+	u_short		state;
+	short		method;		/* CST_METH_* */
+	u_short		flags;		/* CST_FLAG_* */
+	u_short		latency;
+	int		power;
+	u_int64_t	address;	/* or mwait hint */
 };
+
+unsigned long cst_stats[4] = { 0 };
 
 struct acpicpu_softc {
 	struct device		sc_dev;
@@ -96,10 +117,13 @@ struct acpicpu_softc {
 
 	int			sc_duty_wid;
 	int			sc_duty_off;
-	int			sc_pblk_addr;
+	u_int32_t		sc_pblk_addr;
 	int			sc_pblk_len;
 	int			sc_flags;
+	unsigned long		sc_prev_sleep;
+	unsigned long		sc_last_itime;
 
+	struct cpu_info		*sc_ci;
 	SLIST_HEAD(,acpi_cstate) sc_cstates;
 
 	bus_space_tag_t		sc_iot;
@@ -130,13 +154,19 @@ struct acpicpu_softc {
 	void			(*sc_notify)(struct acpicpu_pss *, int);
 };
 
-void    acpicpu_add_cstatepkg(struct aml_value *, void *);
+void	acpicpu_add_cstatepkg(struct aml_value *, void *);
+void	acpicpu_add_cdeppkg(struct aml_value *, void *);
 int	acpicpu_getppc(struct acpicpu_softc *);
 int	acpicpu_getpct(struct acpicpu_softc *);
 int	acpicpu_getpss(struct acpicpu_softc *);
-struct acpi_cstate *acpicpu_add_cstate(struct acpicpu_softc *, int, int, int,
-    int);
+int	acpicpu_getcst(struct acpicpu_softc *);
+void	acpicpu_getcst_from_fadt(struct acpicpu_softc *);
+void	acpicpu_print_one_cst(struct acpi_cstate *_cx);
+void	acpicpu_print_cst(struct acpicpu_softc *_sc);
+void	acpicpu_add_cstate(struct acpicpu_softc *_sc, int _state, int _method,
+	    int _flags, int _latency, int _power, u_int64_t _address);
 void	acpicpu_set_pdc(struct acpicpu_softc *);
+void	acpicpu_idle(void);
 
 #if 0
 void    acpicpu_set_throttle(struct acpicpu_softc *, int);
@@ -176,12 +206,12 @@ acpicpu_set_throttle(struct acpicpu_softc *sc, int level)
 }
 
 struct acpi_cstate *
-acpicpu_find_cstate(struct acpicpu_softc *sc, int type)
+acpicpu_find_cstate(struct acpicpu_softc *sc, int state)
 {
 	struct acpi_cstate	*cx;
 
 	SLIST_FOREACH(cx, &sc->sc_cstates, link)
-		if (cx->type == type)
+		if (cx->state == state)
 			return cx;
 	return (NULL);
 }
@@ -271,42 +301,54 @@ acpicpu_set_pdc(struct acpicpu_softc *sc)
 	}
 }
 
+/*
+ * sanity check mwait hints against what cpuid told us
+ */
+static int
+check_mwait_hints(int state, int hints)
+{
+	int cstate;
+	int substate;
+	int num_substates;
 
-struct acpi_cstate *
-acpicpu_add_cstate(struct acpicpu_softc *sc, int type, int latency, int power,
-    int address)
+	if (cpu_mwait_size == 0)
+		return (0);
+	cstate = ((hints >> 4) & 0xf) + 1;
+	if (cstate == 16)
+		cstate = 0;
+	else if (cstate > 7) {
+		/* out of range of test against CPUID; just trust'em */
+		return (1);
+	}
+	substate = hints & 0xf;
+	num_substates = (cpu_mwait_states >> (4 * cstate)) & 0xf;
+	if (substate >= num_substates) {
+		printf("\nC%d: state %d: substate %d >= num %d",
+		    state, cstate, substate, num_substates);
+		return (0);
+	}
+	return (1);
+}
+
+void
+acpicpu_add_cstate(struct acpicpu_softc *sc, int state, int method,
+    int flags, int latency, int power, u_int64_t address)
 {
 	struct acpi_cstate	*cx;
 
-	dnprintf(10," C%d: latency:.%4x power:%.4x addr:%.8x\n",
-	    type, latency, power, address);
+	dnprintf(10," C%d: latency:.%4x power:%.4x addr:%.16llx\n",
+	    state, latency, power, address);
 
-	switch (type) {
-	case ACPI_STATE_C2:
-		if (latency > ACPI_MAX_C2_LATENCY || !address ||
-		    (sc->sc_flags & FLAGS_NO_C2))
-			goto bad;
-		break;
-	case ACPI_STATE_C3:
-		if (latency > ACPI_MAX_C3_LATENCY || !address ||
-		    (sc->sc_flags & FLAGS_NO_C3))
-			goto bad;
-		break;
-	}
+	cx = malloc(sizeof(*cx), M_DEVBUF, M_WAITOK);
 
-	cx = malloc(sizeof(*cx), M_DEVBUF, M_WAITOK | M_ZERO);
-
-	cx->type = type;
-	cx->power = power;
+	cx->state = state;
+	cx->method = method;
+	cx->flags = flags;
 	cx->latency = latency;
+	cx->power = power;
 	cx->address = address;
 
 	SLIST_INSERT_HEAD(&sc->sc_cstates, cx, link);
-
-	return (cx);
- bad:
-	dprintf("acpicpu%d: C%d not supported", sc->sc_cpu, type);
-	return (NULL);
 }
 
 /* Found a _CST object, add new cstate for each entry */
@@ -314,6 +356,9 @@ void
 acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 {
 	struct acpicpu_softc	*sc = arg;
+	u_int64_t addr;
+	struct acpi_grd *grd;
+	int state, method, flags;
 
 #if defined(ACPI_DEBUG) && !defined(SMALL_KERNEL)
 	aml_showvalue(val, 0);
@@ -321,9 +366,244 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 	if (val->type != AML_OBJTYPE_PACKAGE || val->length != 4)
 		return;
 
-	acpicpu_add_cstate(sc, val->v_package[1]->v_integer,
+	/* range and sanity checks */
+	state = val->v_package[1]->v_integer;
+	if (state < 0 || state > 4)
+		return;
+	if (val->v_package[0]->type != AML_OBJTYPE_BUFFER) {
+		printf("\nC%d: unexpected ACPI object type %d",
+		    state, val->v_package[0]->type);
+		return;
+	}
+	grd = (struct acpi_grd *)val->v_package[0]->v_buffer;
+	if (val->v_package[0]->length != sizeof(*grd) + 2 ||
+	    grd->grd_descriptor != LR_GENREGISTER ||
+	    grd->grd_length != sizeof(grd->grd_gas) ||
+	    val->v_package[0]->v_buffer[sizeof(*grd)] != SR_TAG(SR_ENDTAG,1)) {
+		printf("\nC%d: bogo buffer", state);
+		return;
+	}
+
+	flags = 0;
+	switch (grd->grd_gas.address_space_id) {
+	case GAS_FUNCTIONAL_FIXED:
+		if (grd->grd_gas.register_bit_width == 0) {
+			method = CST_METH_HALT;
+			addr = 0;
+		} else if (grd->grd_gas.register_bit_width == 1) {
+			/* vendor == Intel */
+			switch (grd->grd_gas.register_bit_offset) {
+			case 0x1:
+				method = CST_METH_IO_HALT;
+				addr = grd->grd_gas.address;
+
+				/* i386 and amd64 I/O space is 16bits */
+				if (addr > 0xffff) {
+					printf("\nC%d: bogo I/O addr %llx",
+					    state, addr);
+					return;
+				}
+				break;
+			case 0x2:
+				addr = grd->grd_gas.address;
+				if (!check_mwait_hints(state, addr))
+					return;
+				method = CST_METH_MWAIT;
+				flags = grd->grd_gas.access_size;
+				break;
+			default:
+				printf("\nC%d: unknown FFH class %d",
+				    state, grd->grd_gas.register_bit_offset);
+				return;
+			}
+		} else {
+			printf("\nC%d: unknown FFH vendor %d",
+			    state, grd->grd_gas.register_bit_width);
+			return;
+		}
+		break;
+
+	case GAS_SYSTEM_IOSPACE:
+		addr = grd->grd_gas.address;
+		if (grd->grd_gas.register_bit_width != 8 ||
+		    grd->grd_gas.register_bit_offset != 0) {
+			printf("\nC%d: unhandled %s spec: %d/%d", state,
+			    "I/O", grd->grd_gas.register_bit_width,
+			    grd->grd_gas.register_bit_offset);
+			return;
+		}
+		method = CST_METH_GAS_IO;
+		break;
+
+	default:
+		/* dump the GAS for analysis */
+		{
+			int i;
+			printf("\nC%d: unhandled GAS:", state);
+			for (i = 0; i < sizeof(grd->grd_gas); i++)
+				printf(" %#x", ((u_char *)&grd->grd_gas)[i]);
+
+		}
+		return;
+	}
+
+	acpicpu_add_cstate(sc, state, method, flags,
+	    val->v_package[2]->v_integer, val->v_package[3]->v_integer, addr);
+}
+
+
+/* Found a _CSD object, print the dependency  */
+void
+acpicpu_add_cdeppkg(struct aml_value *val, void *arg)
+{
+#if 1 || defined(ACPI_DEBUG) && !defined(SMALL_KERNEL)
+	aml_showvalue(val, 0);
+#endif
+	if (val->type != AML_OBJTYPE_PACKAGE || val->length < 6 ||
+	    val->length != val->v_package[0]->v_integer) {
+		printf("bogus CSD\n");
+		return;
+	}
+
+	printf("\nCSD r=%lld d=%lld c=%llx n=%lld i=%lli\n",
+	    val->v_package[1]->v_integer,
 	    val->v_package[2]->v_integer,
-	    val->v_package[3]->v_integer, -1);
+	    val->v_package[3]->v_integer,
+	    val->v_package[4]->v_integer,
+	    val->v_package[5]->v_integer);
+}
+
+int
+acpicpu_getcst(struct acpicpu_softc *sc)
+{
+	struct aml_value	res;
+	struct acpi_cstate	*cx, *next_cx;
+	int			use_nonmwait;
+
+	/* delete the existing list */
+	while ((cx = SLIST_FIRST(&sc->sc_cstates)) != NULL) {
+		SLIST_REMOVE_HEAD(&sc->sc_cstates, link);
+		free(cx, M_DEVBUF, sizeof(*cx));
+	}
+
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res))
+		return (1);
+
+	aml_foreachpkg(&res, 1, acpicpu_add_cstatepkg, sc);
+	aml_freevalue(&res);
+
+	/*
+	 * Scan the list for states that are neither lower power nor
+	 * lower latency than the next state; mark them to be skipped.
+	 * Also skip states >=C2 if the CPU's LAPIC timer stop in deep
+	 * states (i.e., it doesn't have the 'ARAT' bit set).
+	 * Also keep track if all the states we'll use use mwait.
+	 */
+	use_nonmwait = 0;
+	if ((cx = SLIST_FIRST(&sc->sc_cstates)) == NULL)
+		use_nonmwait = 1;
+	else {
+		while ((next_cx = SLIST_NEXT(cx, link)) != NULL) {
+			if ((cx->power >= next_cx->power &&
+			    cx->latency >= next_cx->latency) ||
+			    (cx->state > 1 &&
+			    (sc->sc_ci->ci_feature_tpmflags & TPM_ARAT) == 0))
+				cx->flags |= CST_FLAG_SKIP;
+			else if (cx->method != CST_METH_MWAIT)
+				use_nonmwait = 1;
+			cx = next_cx;
+		}
+	}
+	if (use_nonmwait)
+		sc->sc_flags &= ~FLAGS_MWAIT_ONLY;
+	else
+		sc->sc_flags |= FLAGS_MWAIT_ONLY;
+
+	if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CSD", 0, NULL, &res)) {
+		aml_foreachpkg(&res, 1, acpicpu_add_cdeppkg, sc);
+		aml_freevalue(&res);
+	}
+
+	return (0);
+}
+
+/*
+ * old-style fixed C-state info in the FADT.
+ * Note that this has extra restrictions on values and flags.
+ */
+void
+acpicpu_getcst_from_fadt(struct acpicpu_softc *sc)
+{
+	struct acpi_fadt	*fadt = sc->sc_acpi->sc_fadt;
+
+	/* FADT has to set flag to do C2 and higher on MP */
+	if ((fadt->flags & FADT_P_LVL2_UP) == 0 && ncpus > 1)
+		return;
+
+	/* Some systems don't export a full PBLK; reduce functionality */
+	if (sc->sc_pblk_len >= 5 && fadt->p_lvl2_lat <= ACPI_MAX_C2_LATENCY) {
+		acpicpu_add_cstate(sc, ACPI_STATE_C2, CST_METH_GAS_IO, 0,
+		    fadt->p_lvl2_lat, -1, sc->sc_pblk_addr + 4);
+	}
+	if (sc->sc_pblk_len >= 6 && fadt->p_lvl3_lat <= ACPI_MAX_C3_LATENCY)
+		acpicpu_add_cstate(sc, ACPI_STATE_C3, CST_METH_GAS_IO, 0,
+		    fadt->p_lvl3_lat, -1, sc->sc_pblk_addr + 5);
+}
+
+
+void
+acpicpu_print_one_cst(struct acpi_cstate *cx)
+{
+	const char *meth = "";
+	int show_addr = 0;
+
+	switch (cx->method) {
+	case CST_METH_IO_HALT:
+		show_addr = 1;
+		/* fallthrough */
+	case CST_METH_HALT:
+		meth = " halt";
+		break;
+
+	case CST_METH_MWAIT:
+		meth = " mwait";
+		show_addr = cx->address != 0;
+		break;
+
+	case CST_METH_GAS_IO:
+		meth = " io";
+		show_addr = 1;
+		break;
+
+	}
+
+	printf(" %sC%d(", (cx->flags & CST_FLAG_SKIP ? "!" : ""), cx->state);
+	if (cx->power != -1)
+		printf("%d", cx->power);
+	printf("@%d%s", cx->latency, meth);
+	if (cx->flags & ~CST_FLAG_SKIP)
+		printf(".%x", (cx->flags & ~CST_FLAG_SKIP));
+	if (show_addr)
+		printf("@0x%llx", cx->address);
+	printf(")");
+}
+
+void
+acpicpu_print_cst(struct acpicpu_softc *sc)
+{
+	struct acpi_cstate	*cx;
+	int i;
+
+	if (!SLIST_EMPTY(&sc->sc_cstates)) {
+		printf(":");
+
+		i = 0;
+		SLIST_FOREACH(cx, &sc->sc_cstates, link) {
+			if (i++)
+				printf(",");
+			acpicpu_print_one_cst(cx);
+		}
+	}
 }
 
 
@@ -349,8 +629,9 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct aml_value	res;
 	int			i;
-	struct acpi_cstate	*cx;
 	u_int32_t		status = 0;
+	CPU_INFO_ITERATOR	cii;
+	struct cpu_info		*ci;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
@@ -371,6 +652,17 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_duty_off = sc->sc_acpi->sc_fadt->duty_offset;
 	sc->sc_duty_wid = sc->sc_acpi->sc_fadt->duty_width;
 
+	/* link in the matching cpu_info */
+	CPU_INFO_FOREACH(cii, ci)
+		if (ci->ci_cpuid == sc->sc_dev.dv_unit) {
+			ci->ci_acpicpudev = self;
+			sc->sc_ci = ci;
+			break;
+		}
+	if (ci == NULL)
+		printf("unable to find cpu %d\n", sc->sc_dev.dv_unit);
+	sc->sc_prev_sleep = 1000000;
+
 	acpicpu_set_pdc(sc);
 
 	if (!valid_throttle(sc->sc_duty_off, sc->sc_duty_wid, sc->sc_pblk_addr))
@@ -385,23 +677,33 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Get C-States from _CST or FADT */
-	if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res)) {
-		aml_foreachpkg(&res, 1, acpicpu_add_cstatepkg, sc);
-		aml_freevalue(&res);
-	}
+	if (acpicpu_getcst(sc) || SLIST_EMPTY(&sc->sc_cstates))
+		acpicpu_getcst_from_fadt(sc);
 	else {
-		/* Some systems don't export a full PBLK reduce functionality */
-		if (sc->sc_pblk_len < 5)
-			sc->sc_flags |= FLAGS_NO_C2;
-		if (sc->sc_pblk_len < 6)
-			sc->sc_flags |= FLAGS_NO_C3;
-		acpicpu_add_cstate(sc, ACPI_STATE_C2,
-		    sc->sc_acpi->sc_fadt->p_lvl2_lat, -1,
-		    sc->sc_pblk_addr + 4);
-		acpicpu_add_cstate(sc, ACPI_STATE_C3,
-		    sc->sc_acpi->sc_fadt->p_lvl3_lat, -1,
-		    sc->sc_pblk_addr + 5);
+		/* Notify BIOS we use _CST objects */
+		if (sc->sc_acpi->sc_fadt->cst_cnt) {
+			acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0,
+			    sc->sc_acpi->sc_fadt->cst_cnt);
+		}
 	}
+	if (!SLIST_EMPTY(&sc->sc_cstates)) {
+		cpu_idle_cycle_fcn = &acpicpu_idle;
+
+		/*
+		 * C3 (and maybe C2?) needs BM_RLD to be set to
+		 * wake the system
+		 * XXX need to save and restore this in suspend/resume?
+		 */
+		if (SLIST_FIRST(&sc->sc_cstates)->state > 1) {
+			uint16_t en = acpi_read_pmreg(sc->sc_acpi,
+			    ACPIREG_PM1_CNT, 0);
+			if ((en & ACPI_PM1_BM_RLD) == 0) {
+				acpi_write_pmreg(sc->sc_acpi, ACPIREG_PM1_CNT,
+				    0, en | ACPI_PM1_BM_RLD);
+			}
+		}
+	}
+
 	if (acpicpu_getpss(sc)) {
 		sc->sc_flags |= FLAGS_NOPSS;
 	} else {
@@ -427,10 +729,11 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		if (acpicpu_getpct(sc))
 			sc->sc_flags |= FLAGS_NOPCT;
 		else if (sc->sc_pss_len > 0) {
-			/* Notify BIOS we are handing p-states */
-			if (sc->sc_acpi->sc_fadt->pstate_cnt)
-				acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0,
-				sc->sc_acpi->sc_fadt->pstate_cnt);
+			/* Notify BIOS we are handling p-states */
+			if (sc->sc_acpi->sc_fadt->pstate_cnt) {
+				acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD,
+				    0, sc->sc_acpi->sc_fadt->pstate_cnt);
+			}
 
 			aml_register_notify(sc->sc_devnode, NULL,
 			    acpicpu_notify, sc, ACPIDEV_NOPOLL);
@@ -456,30 +759,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	 * Nicely enumerate what power management capabilities
 	 * ACPI CPU provides.
 	 */
-	if (!SLIST_EMPTY(&sc->sc_cstates)) {
-		printf(":");
-
-		i = 0;
-		SLIST_FOREACH(cx, &sc->sc_cstates, link) {
-			if (i++)
-				printf(",");
-			switch (cx->type) {
-			case ACPI_STATE_C0:
-				printf(" C0");
-				break;
-			case ACPI_STATE_C1:
-				printf(" C1");
-				break;
-			case ACPI_STATE_C2:
-				printf(" C2");
-				break;
-			case ACPI_STATE_C3:
-				printf(" C3");
-				break;
-			}
-		}
-	}
-
+	acpicpu_print_cst(sc);
 	if (!(sc->sc_flags & (FLAGS_NOPSS | FLAGS_NOPCT)) ||
 	    !(sc->sc_flags & FLAGS_NOPSS)) {
 		printf("%c ", SLIST_EMPTY(&sc->sc_cstates) ? ':' : ',');
@@ -681,8 +961,15 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 		acpicpu_getpss(sc);
 		if (sc->sc_notify)
 			sc->sc_notify(sc->sc_pss, sc->sc_pss_len);
-
 		break;
+
+	case 0x81:	/* _CST changed, retrieve new values */
+		acpicpu_getcst(sc);
+		printf("%s: notify", DEVNAME(sc));
+		acpicpu_print_cst(sc);
+		printf("\n");
+		break;
+
 	default:
 		printf("%s: unhandled cpu event %x\n", DEVNAME(sc),
 		    notify_type);
@@ -800,4 +1087,141 @@ acpicpu_setperf(int level)
 	} else
 		printf("%s: acpicpu setperf failed to alter frequency\n",
 		    sc->sc_devnode->name);
+}
+
+void
+acpicpu_idle(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc = (struct acpicpu_softc *)ci->ci_acpicpudev;
+	struct acpi_cstate *best, *cx;
+	unsigned long itime;
+
+	if (sc == NULL) {
+		__asm volatile("sti");
+		panic("null acpicpu");
+	}
+
+	/* possibly update the MWAIT_ONLY flag in cpu_info */
+	if (sc->sc_flags & FLAGS_MWAIT_ONLY) {
+		if ((ci->ci_mwait & MWAIT_ONLY) == 0)
+			atomic_setbits_int(&ci->ci_mwait, MWAIT_ONLY);
+	} else if (ci->ci_mwait & MWAIT_ONLY)
+		atomic_clearbits_int(&ci->ci_mwait, MWAIT_ONLY);
+
+	/*
+	 * Find the first state with a latency we'll accept, ignoring
+	 * states marked skippable
+	 */
+	best = cx = SLIST_FIRST(&sc->sc_cstates);
+	if (cx == NULL) {
+halt:
+		__asm volatile("sti; hlt");
+		return;
+	}
+
+	while ((cx->flags & CST_FLAG_SKIP) ||
+	    cx->latency * 3 > sc->sc_prev_sleep) {
+		if ((cx = SLIST_NEXT(cx, link)) == NULL)
+			break;
+		best = cx;
+	}
+
+	if (best->state >= 3 &&
+	    (best->flags & CST_FLAG_MWAIT_BM_AVOIDANCE) &&
+	    acpi_read_pmreg(acpi_softc, ACPIREG_PM1_STS, 0) & ACPI_PM1_BM_STS) {
+		/* clear it and back off */
+		acpi_write_pmreg(acpi_softc, ACPIREG_PM1_STS, 0,
+		    ACPI_PM1_BM_STS);
+		while ((cx = SLIST_NEXT(cx, link)) != NULL) {
+			if (cx->flags & CST_FLAG_SKIP)
+				continue;
+			if (cx->state < 3 ||
+			    (cx->flags & CST_FLAG_MWAIT_BM_AVOIDANCE) == 0)
+				break;
+		}
+		if (cx == NULL)
+			goto halt;
+		best = cx;
+	}
+
+
+	atomic_inc_long(&cst_stats[best->state]);
+
+	itime = tick / 2;
+	switch (best->method) {
+	default:
+	case CST_METH_HALT:
+		__asm volatile("sti; hlt");
+		break;
+
+	case CST_METH_IO_HALT:
+		inb((u_short)best->address);
+		__asm volatile("sti; hlt");
+		break;
+
+	case CST_METH_MWAIT:
+		{
+		struct timeval start, stop;
+		unsigned int hints;
+
+#ifdef __LP64__
+		if ((read_rflags() & PSL_I) == 0)
+			panic("idle with interrupts blocked!");
+#else
+		if ((read_eflags() & PSL_I) == 0)
+			panic("idle with interrupts blocked!");
+#endif
+
+		/* something already queued? */
+		if (ci->ci_schedstate.spc_whichqs != 0)
+			return;
+
+		/*
+		 * About to idle; setting the MWAIT_IN_IDLE bit tells
+		 * cpu_unidle() that it can't be a no-op and tells cpu_kick()
+		 * that it doesn't need to use an IPI.  We also set the
+		 * MWAIT_KEEP_IDLING bit: those routines clear it to stop
+		 * the mwait.  Once they're set, we do a final check of the
+		 * queue, in case another cpu called setrunqueue() and added
+		 * something to the queue and called cpu_unidle() between
+		 * the check in sched_idle() and here.
+		 */
+		hints = (unsigned)best->address;
+		microuptime(&start);
+		atomic_setbits_int(&ci->ci_mwait, MWAIT_IDLING);
+		if (ci->ci_schedstate.spc_whichqs == 0) {
+			/* intel errata AAI65: cflush before monitor */
+			if (ci->ci_cflushsz != 0) {
+				membar_sync();
+				clflush((unsigned long)&ci->ci_mwait);
+				membar_sync();
+			}
+
+			monitor(&ci->ci_mwait, 0, 0);
+			if ((ci->ci_mwait & MWAIT_IDLING) == MWAIT_IDLING)
+				mwait(0, hints);
+		}
+
+		microuptime(&stop);
+		timersub(&stop, &start, &stop);
+		itime = stop.tv_sec * 1000000 + stop.tv_usec;
+
+		/* done idling; let cpu_kick() know that an IPI is required */
+		atomic_clearbits_int(&ci->ci_mwait, MWAIT_IDLING);
+		break;
+		}
+
+	case CST_METH_GAS_IO:
+		inb((u_short)best->address);
+		/* something harmless to give system time to change state */
+		acpi_read_pmreg(acpi_softc, ACPIREG_PM1_STS, 0);
+		break;
+
+	}
+
+	sc->sc_last_itime = itime;
+	itime >>= 1;
+	sc->sc_prev_sleep = (sc->sc_prev_sleep + (sc->sc_prev_sleep >> 1)
+	    + itime) >> 1;
 }

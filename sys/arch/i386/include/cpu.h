@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.141 2015/06/07 06:24:59 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.142 2015/06/13 21:41:42 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -127,6 +127,7 @@ struct cpu_info {
 	struct cpu_functions *ci_func;	/* start/stop functions */
 	void (*cpu_setup)(struct cpu_info *);	/* proc-dependant init */
 
+	struct device	*ci_acpicpudev;
 	volatile u_int	ci_mwait;
 #define	MWAIT_IN_IDLE		0x1	/* don't need IPI to wake */
 #define	MWAIT_KEEP_IDLING	0x2	/* cleared by other cpus to wake me */
