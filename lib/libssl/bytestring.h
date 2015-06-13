@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.5 2015/04/29 02:11:09 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.6 2015/06/13 09:02:45 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -152,17 +152,48 @@ int CBS_get_u24_length_prefixed(CBS *cbs, CBS *out);
 
 /* Parsing ASN.1 */
 
-#define CBS_ASN1_BOOLEAN 0x1
-#define CBS_ASN1_INTEGER 0x2
-#define CBS_ASN1_BITSTRING 0x3
-#define CBS_ASN1_OCTETSTRING 0x4
-#define CBS_ASN1_OBJECT 0x6
-#define CBS_ASN1_ENUMERATED 0xa
-#define CBS_ASN1_SEQUENCE (0x10 | CBS_ASN1_CONSTRUCTED)
-#define CBS_ASN1_SET (0x11 | CBS_ASN1_CONSTRUCTED)
+/*
+ * While an identifier can be multiple octets, this library only handles the
+ * single octet variety currently.  This limits support up to tag number 30
+ * since tag number 31 is a reserved value to indicate multiple octets.
+ */
 
-#define CBS_ASN1_CONSTRUCTED 0x20
-#define CBS_ASN1_CONTEXT_SPECIFIC 0x80
+/* Bits 8 and 7: class tag type: See X.690 section 8.1.2.2. */
+#define CBS_ASN1_UNIVERSAL		0x00
+#define CBS_ASN1_APPLICATION		0x40
+#define CBS_ASN1_CONTEXT_SPECIFIC	0x80
+#define CBS_ASN1_PRIVATE		0xc0
+
+/* Bit 6: Primitive or constructed: See X.690 section 8.1.2.3. */
+#define CBS_ASN1_PRIMITIVE	0x00
+#define CBS_ASN1_CONSTRUCTED	0x20
+
+/*
+ * Bits 5 to 1 are the tag number.  See X.680 section 8.6 for tag numbers of
+ * the universal class.
+ */
+
+/*
+ * Common universal identifier octets.
+ * See X.690 section 8.1 and X.680 section 8.6 for universal tag numbers.
+ *
+ * Note: These definitions are the cause of some of the strange behavior in
+ * CBS's bs_ber.c.
+ *
+ * In BER, it is the sender's option to use primitive or constructed for
+ * bitstring (X.690 section 8.6.1) and octetstring (X.690 section 8.7.1).
+ *
+ * In DER, bitstring and octetstring are required to be primitive
+ * (X.690 section 10.2).
+ */
+#define CBS_ASN1_BOOLEAN     (CBS_ASN1_UNIVERSAL | CBS_ASN1_PRIMITIVE | 0x1)
+#define CBS_ASN1_INTEGER     (CBS_ASN1_UNIVERSAL | CBS_ASN1_PRIMITIVE | 0x2)
+#define CBS_ASN1_BITSTRING   (CBS_ASN1_UNIVERSAL | CBS_ASN1_PRIMITIVE | 0x3)
+#define CBS_ASN1_OCTETSTRING (CBS_ASN1_UNIVERSAL | CBS_ASN1_PRIMITIVE | 0x4)
+#define CBS_ASN1_OBJECT      (CBS_ASN1_UNIVERSAL | CBS_ASN1_PRIMITIVE | 0x6)
+#define CBS_ASN1_ENUMERATED  (CBS_ASN1_UNIVERSAL | CBS_ASN1_PRIMITIVE | 0xa)
+#define CBS_ASN1_SEQUENCE    (CBS_ASN1_UNIVERSAL | CBS_ASN1_CONSTRUCTED | 0x10)
+#define CBS_ASN1_SET         (CBS_ASN1_UNIVERSAL | CBS_ASN1_CONSTRUCTED | 0x11)
 
 /*
  * CBS_get_asn1 sets |*out| to the contents of DER-encoded, ASN.1 element (not
