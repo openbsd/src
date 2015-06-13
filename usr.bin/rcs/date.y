@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.12 2013/12/03 00:21:49 deraadt Exp $	*/
+/*	$OpenBSD: date.y,v 1.13 2015/06/13 20:15:21 nicm Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -494,7 +494,7 @@ yyerror(const char *s)
 		    s, yyInput);
 
 	warnx("%s", str);
-	xfree(str);
+	free(str);
 	return (0);
 }
 

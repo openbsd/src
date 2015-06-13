@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.219 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: ci.c,v 1.220 2015/06/13 20:15:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -211,7 +211,7 @@ checkin_main(int argc, char **argv)
 			exit(0);
 		case 'w':
 			if (pb.author != NULL)
-				xfree(pb.author);
+				free(pb.author);
 			pb.author = xstrdup(rcs_optarg);
 			break;
 		case 'x':
@@ -376,10 +376,8 @@ out:
 		buf_free(b2);
 	if (b3 != NULL)
 		buf_free(b3);
-	if (path1 != NULL)
-		xfree(path1);
-	if (path2 != NULL)
-		xfree(path2);
+	free(path1);
+	free(path2);
 
 	return (NULL);
 }
@@ -511,7 +509,7 @@ checkin_update(struct checkin_params *pb)
 			fprintf(stderr,
 			    "reuse log message of previous file? [yn](y): ");
 			if (rcs_yesno('y') != 'y') {
-				xfree(pb->rcs_msg);
+				free(pb->rcs_msg);
 				pb->rcs_msg = NULL;
 			}
 		}
@@ -584,7 +582,7 @@ checkin_update(struct checkin_params *pb)
 		    pb->username, pb->author, NULL, NULL);
 
 	if ((pb->flags & INTERACTIVE) && (pb->rcs_msg[0] == '\0')) {
-		xfree(pb->rcs_msg);	/* free empty log message */
+		free(pb->rcs_msg);	/* free empty log message */
 		pb->rcs_msg = NULL;
 	}
 
@@ -988,25 +986,22 @@ checkin_parsekeyword(char *keystring, RCSNUM **rev, time_t *date,
 		(void)xasprintf(&datestring, "%s %s", tokens[3], tokens[4]);
 		if ((*date = date_parse(datestring)) == -1)
 			errx(1, "could not parse date");
-		xfree(datestring);
+		free(datestring);
 
 		if (i < 6)
 			break;
-		if (*author != NULL)
-			xfree(*author);
+		free(*author);
 		*author = xstrdup(tokens[5]);
 
 		if (i < 7)
 			break;
-		if (*state != NULL)
-			xfree(*state);
+		free(*state);
 		*state = xstrdup(tokens[6]);
 		break;
 	case KW_TYPE_AUTHOR:
 		if (i < 2)
 			break;
-		if (*author != NULL)
-			xfree(*author);
+		free(*author);
 		*author = xstrdup(tokens[1]);
 		break;
 	case KW_TYPE_DATE:
@@ -1015,13 +1010,12 @@ checkin_parsekeyword(char *keystring, RCSNUM **rev, time_t *date,
 		(void)xasprintf(&datestring, "%s %s", tokens[1], tokens[2]);
 		if ((*date = date_parse(datestring)) == -1)
 			errx(1, "could not parse date");
-		xfree(datestring);
+		free(datestring);
 		break;
 	case KW_TYPE_STATE:
 		if (i < 2)
 			break;
-		if (*state != NULL)
-			xfree(*state);
+		free(*state);
 		*state = xstrdup(tokens[1]);
 		break;
 	case KW_TYPE_REVISION:

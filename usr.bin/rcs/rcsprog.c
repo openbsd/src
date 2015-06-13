@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.155 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.156 2015/06/13 20:15:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -242,8 +242,7 @@ rcs_main(int argc, char **argv)
 			rcsflags |= RCSPROG_LFLAG;
 			break;
 		case 'm':
-			if (logstr != NULL)
-				xfree(logstr);
+			free(logstr);
 			logstr = xstrdup(rcs_optarg);
 			break;
 		case 'M':
@@ -418,8 +417,8 @@ rcs_main(int argc, char **argv)
 			while (!TAILQ_EMPTY(&(file->rf_access))) {
 				rap = TAILQ_FIRST(&(file->rf_access));
 				TAILQ_REMOVE(&(file->rf_access), rap, ra_list);
-				xfree(rap->ra_name);
-				xfree(rap);
+				free(rap->ra_name);
+				free(rap);
 			}
 			/* not synced anymore */
 			file->rf_flags &= ~RCS_SYNCED;

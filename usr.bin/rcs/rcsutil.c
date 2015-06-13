@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.43 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.44 2015/06/13 20:15:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -34,6 +34,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -228,7 +229,7 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 				if (strlcpy(out, rcspath, len) >= len)
 					errx(1, "rcs_choosefile; truncation");
 
-				xfree(suffixes);
+				free(suffixes);
 				return (fd);
 			}
 
@@ -253,7 +254,7 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 		if (strlcpy(out, fpath, len) >= len)
 			errx(1, "rcs_choosefile: truncation");
 
-		xfree(suffixes);
+		free(suffixes);
 		return (fd);
 	}
 
@@ -264,7 +265,7 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 	if (strlcat(rcspath, suffixes, sizeof(rcspath)) >= sizeof(rcspath))
 		errx(1, "rcs_choosefile: truncation");
 
-	xfree(suffixes);
+	free(suffixes);
 
 	if (strlcpy(out, rcspath, len) >= len)
 		errx(1, "rcs_choosefile: truncation");
@@ -423,10 +424,8 @@ rcs_rev_select(RCSFILE *file, const char *range)
 	}
 	rcs_argv_destroy(revargv);
 
-	if (lnum.rn_id != NULL)
-		xfree(lnum.rn_id);
-	if (rnum.rn_id != NULL)
-		xfree(rnum.rn_id);
+	free(lnum.rn_id);
+	free(rnum.rn_id);
 
 	return (nrev);
 }
@@ -462,7 +461,7 @@ rcs_set_description(RCSFILE *file, const char *in)
 		content = rcs_prompt(prompt);
 
 	rcs_desc_set(file, content);
-	xfree(content);
+	free(content);
 	return (0);
 }
 
@@ -508,10 +507,10 @@ rcs_freelines(struct rcs_lines *lines)
 
 	while ((lp = TAILQ_FIRST(&(lines->l_lines))) != NULL) {
 		TAILQ_REMOVE(&(lines->l_lines), lp, l_list);
-		xfree(lp);
+		free(lp);
 	}
 
-	xfree(lines);
+	free(lines);
 }
 
 BUF *
@@ -608,9 +607,9 @@ rcs_strsplit(const char *str, const char *sep)
 void
 rcs_argv_destroy(struct rcs_argvector *av)
 {
-	xfree(av->str);
-	xfree(av->argv);
-	xfree(av);
+	free(av->str);
+	free(av->argv);
+	free(av);
 }
 
 /*
@@ -629,6 +628,6 @@ rcs_strip_suffix(char *filename)
 				break;
 			}
 		}
-		xfree(suffixes);
+		free(suffixes);
 	}
 }

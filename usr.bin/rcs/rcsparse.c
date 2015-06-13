@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.14 2014/12/01 21:58:46 deraadt Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.15 2015/06/13 20:15:21 nicm Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -340,11 +340,10 @@ rcsparse_free(RCSFILE *rfp)
 
 	pdp = rfp->rf_pdata;
 
-	if (pdp->rp_buf != NULL)
-		xfree(pdp->rp_buf);
+	free(pdp->rp_buf);
 	if (pdp->rp_token == RCS_TYPE_REVISION)
 		rcsnum_free(pdp->rp_value.rev);
-	xfree(pdp);
+	free(pdp);
 }
 
 /*
@@ -609,7 +608,7 @@ rcsparse_text(RCSFILE *rfp, struct rcs_pdata *pdp)
 		memcpy(pdp->rp_delta->rd_text, pdp->rp_buf,
 		    pdp->rp_delta->rd_tlen);
 	}
-	xfree(pdp->rp_value.str);
+	free(pdp->rp_value.str);
 
 	return (0);
 }
@@ -707,7 +706,7 @@ rcsparse_symbols(RCSFILE *rfp, struct rcs_pdata *pdp)
 		name = pdp->rp_value.str;
 		if (rcsparse_token(rfp, RCS_TOK_COLON) != RCS_TOK_COLON ||
 		    rcsparse_token(rfp, RCS_TYPE_NUMBER) != RCS_TYPE_NUMBER) {
-			xfree(name);
+			free(name);
 			return (1);
 		}
 		symp = xmalloc(sizeof(*symp));
@@ -741,7 +740,7 @@ rcsparse_locks(RCSFILE *rfp, struct rcs_pdata *pdp)
 		if (rcsparse_token(rfp, RCS_TOK_COLON) != RCS_TOK_COLON ||
 		    rcsparse_token(rfp, RCS_TYPE_REVISION) !=
 		    RCS_TYPE_REVISION) {
-			xfree(name);
+			free(name);
 			return (1);
 		}
 		lkp = xmalloc(sizeof(*lkp));

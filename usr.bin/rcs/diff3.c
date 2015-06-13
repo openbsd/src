@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.35 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.36 2015/06/13 20:15:21 nicm Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -249,20 +249,13 @@ out:
 	(void)unlink(dp13);
 	(void)unlink(dp23);
 
-	if (path1 != NULL)
-		xfree(path1);
-	if (path2 != NULL)
-		xfree(path2);
-	if (path3 != NULL)
-		xfree(path3);
-	if (dp13 != NULL)
-		xfree(dp13);
-	if (dp23 != NULL)
-		xfree(dp23);
-	if (data != NULL)
-		xfree(data);
-	if (patch != NULL)
-		xfree(patch);
+	free(path1);
+	free(path2);
+	free(path3);
+	free(dp13);
+	free(dp23);
+	free(data);
+	free(patch);
 
 	return (diffb);
 }
@@ -376,20 +369,13 @@ out:
 	(void)unlink(dp13);
 	(void)unlink(dp23);
 
-	if (path1 != NULL)
-		xfree(path1);
-	if (path2 != NULL)
-		xfree(path2);
-	if (path3 != NULL)
-		xfree(path3);
-	if (dp13 != NULL)
-		xfree(dp13);
-	if (dp23 != NULL)
-		xfree(dp23);
-	if (data != NULL)
-		xfree(data);
-	if (patch != NULL)
-		xfree(patch);
+	free(path1);
+	free(path2);
+	free(path3);
+	free(dp13);
+	free(dp23);
+	free(data);
+	free(patch);
 
 	return (diffb);
 }

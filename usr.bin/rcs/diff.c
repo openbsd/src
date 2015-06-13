@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.37 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.38 2015/06/13 20:15:21 nicm Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -72,6 +72,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
@@ -374,13 +375,13 @@ diffreg(const char *file1, const char *file2, BUF *out, int flags)
 	clistlen = 100;
 	clist = xcalloc(clistlen, sizeof(*clist));
 	i = stone(class, slen[0], member, klist, flags);
-	xfree(member);
-	xfree(class);
+	free(member);
+	free(class);
 
 	J = xreallocarray(J, len[0] + 2, sizeof(*J));
 	unravel(klist[i]);
-	xfree(clist);
-	xfree(klist);
+	free(clist);
+	free(klist);
 
 	ixold = xreallocarray(ixold, len[0] + 2, sizeof(*ixold));
 	ixnew = xreallocarray(ixnew, len[1] + 2, sizeof(*ixnew));
@@ -769,7 +770,7 @@ unsort(struct line *f, int l, int *b)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)
 		b[i] = a[i];
-	xfree(a);
+	free(a);
 }
 
 static int
@@ -860,7 +861,7 @@ ignoreline(char *line)
 	int ret;
 
 	ret = regexec(diff_ignore_re, line, 0, NULL, 0);
-	xfree(line);
+	free(line);
 	return (ret == 0);	/* if it matched, it should be ignored. */
 }
 
@@ -1383,5 +1384,5 @@ diff_output(const char *fmt, ...)
 		buf_append(diffbuf, str, strlen(str));
 	else
 		printf("%s", str);
-	xfree(str);
+	free(str);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.8 2015/03/26 15:17:30 okan Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.9 2015/06/13 20:15:21 nicm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -63,14 +63,6 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 		errx(1, "xreallocarray: out of memory (new_size %zu bytes)",
 		    nmemb * size);
 	return new_ptr;
-}
-
-void
-xfree(void *ptr)
-{
-	if (ptr == NULL)
-		errx(1, "xfree: NULL pointer given as argument");
-	free(ptr);
 }
 
 char *

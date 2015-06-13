@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.82 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.83 2015/06/13 20:15:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -358,10 +358,8 @@ out:
 		buf_free(b1);
 	if (b2 != NULL)
 		buf_free(b2);
-	if (path1 != NULL)
-		xfree(path1);
-	if (path2 != NULL)
-		xfree(path2);
+	free(path1);
+	free(path2);
 
 	return (ret);
 }
@@ -437,10 +435,8 @@ out:
 		buf_free(b1);
 	if (b2 != NULL)
 		buf_free(b2);
-	if (path1 != NULL)
-		xfree(path1);
-	if (path2 != NULL)
-		xfree(path2);
+	free(path1);
+	free(path2);
 
 	return (ret);
 }

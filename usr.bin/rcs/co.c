@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.120 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: co.c,v 1.121 2015/06/13 20:15:21 nicm Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -554,7 +554,7 @@ checkout_file_has_diffs(RCSFILE *rfp, RCSNUM *frev, const char *dst)
 
 	buf_free(bp);
 	unlink(tempfile);
-	xfree(tempfile);
+	free(tempfile);
 
 	return (ret);
 }
