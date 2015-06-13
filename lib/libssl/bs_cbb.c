@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.8 2015/04/29 02:02:46 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.9 2015/06/13 09:11:57 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -36,7 +36,7 @@ cbb_init(CBB *cbb, uint8_t *buf, size_t cap)
 	base->cap = cap;
 	base->can_resize = 1;
 
-	memset(cbb, 0, sizeof(CBB));
+	memset(cbb, 0, sizeof(*cbb));
 	cbb->base = base;
 	cbb->is_top_level = 1;
 	return 1;
@@ -45,11 +45,12 @@ cbb_init(CBB *cbb, uint8_t *buf, size_t cap)
 int
 CBB_init(CBB *cbb, size_t initial_capacity)
 {
-	uint8_t *buf;
+	uint8_t *buf = NULL;
 
-	buf = malloc(initial_capacity);
-	if (initial_capacity > 0 && buf == NULL)
-		return 0;
+	if (initial_capacity > 0) {
+		if ((buf = malloc(initial_capacity)) == NULL)
+			return 0;
+	}
 
 	if (!cbb_init(cbb, buf, initial_capacity)) {
 		free(buf);
@@ -72,7 +73,7 @@ void
 CBB_cleanup(CBB *cbb)
 {
 	if (cbb->base) {
-		if (cbb->base->buf && cbb->base->can_resize)
+		if (cbb->base->can_resize)
 			free(cbb->base->buf);
 
 		free(cbb->base);
