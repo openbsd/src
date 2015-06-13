@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.9 2015/06/13 09:11:57 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.10 2015/06/13 09:16:42 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -370,7 +370,23 @@ CBB_add_asn1_uint64(CBB *cbb, uint64_t value)
 		return 0;
 
 	for (i = 0; i < 8; i++) {
-		uint8_t byte = (value >> 8*(7-i)) & 0xff;
+		uint8_t byte = (value >> 8 * (7 - i)) & 0xff;
+
+		/*
+		 * ASN.1 restriction: first 9 bits cannot be all zeroes or
+		 * all ones.  Since this function only encodes unsigned
+		 * integers, the only concerns are not encoding leading
+		 * zeros and adding a padding byte if necessary.
+		 *
+		 * In practice, this means:
+		 * 1) Skip leading octets of all zero bits in the value
+		 * 2) After skipping the leading zero octets, if the next 9
+		 *    bits are all ones, add an all zero prefix octet (and
+		 *    set the high bit of the prefix octet if negative).
+		 *
+		 * Additionally, for an unsigned value, add an all zero
+		 * prefix if the high bit of the first octet would be one.
+		 */
 		if (!started) {
 			if (byte == 0)
 				/* Don't encode leading zeros. */
