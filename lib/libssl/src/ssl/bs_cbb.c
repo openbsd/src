@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.10 2015/06/13 09:16:42 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.11 2015/06/13 09:24:12 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -194,40 +194,46 @@ CBB_flush(CBB *cbb)
 
 	if (cbb->pending_is_asn1) {
 		/*
-		 * For ASN.1 we assume that we'll only need a single byte for
-		 * the length.  If that turned out to be incorrect, we have to
-		 * move the contents along in order to make space.
+		 * For ASN.1, we assumed that we were using short form which
+		 * only requires a single byte for the length octet.
+		 *
+		 * If it turns out that we need long form, we have to move
+		 * the contents along in order to make space for more length
+		 * octets.
 		 */
-		size_t len_len;
+		size_t len_len = 1;  /* total number of length octets */
 		uint8_t initial_length_byte;
 
+		/* We already wrote 1 byte for the length. */
 		assert (cbb->pending_len_len == 1);
 
-		if (len > 0xfffffffe) {
-			/* Too large. */
-			return 0;
-		} else if (len > 0xffffff) {
+		/* Check for long form */
+		if (len > 0xfffffffe)
+			return 0;	/* 0xffffffff is reserved */
+		else if (len > 0xffffff)
 			len_len = 5;
-			initial_length_byte = 0x80 | 4;
-		} else if (len > 0xffff) {
+		else if (len > 0xffff)
 			len_len = 4;
-			initial_length_byte = 0x80 | 3;
-		} else if (len > 0xff) {
+		else if (len > 0xff)
 			len_len = 3;
-			initial_length_byte = 0x80 | 2;
-		} else if (len > 0x7f) {
+		else if (len > 0x7f)
 			len_len = 2;
-			initial_length_byte = 0x80 | 1;
-		} else {
-			len_len = 1;
+
+		if (len_len == 1) {
+			/* For short form, the initial byte is the length. */
 			initial_length_byte = len;
 			len = 0;
-		}
 
-		if (len_len != 1) {
+		} else {
+			/*
+			 * For long form, the initial byte is the number of
+			 * subsequent length octets (plus bit 8 set).
+			 */
+			initial_length_byte = 0x80 | (len_len - 1);
+
 			/*
 			 * We need to move the contents along in order to make
-			 * space.
+			 * space for the long form length octets.
 			 */
 			size_t extra_bytes = len_len - 1;
 			if (!cbb_buffer_add(cbb->base, NULL, extra_bytes))
@@ -304,9 +310,14 @@ CBB_add_asn1(CBB *cbb, CBB *out_contents, uint8_t tag)
 	if ((tag & 0x1f) == 0x1f)
 		return 0;
 
+	/* Short-form identifier octet only needs a single byte */
 	if (!CBB_flush(cbb) || !CBB_add_u8(cbb, tag))
 		return 0;
 
+	/*
+	 * Add 1 byte to cover the short-form length octet case.  If it turns
+	 * out we need long-form, it will be extended later.
+	 */
 	cbb->offset = cbb->base->len;
 	if (!CBB_add_u8(cbb, 0))
 		return 0;
