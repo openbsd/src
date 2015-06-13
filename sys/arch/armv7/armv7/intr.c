@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.2 2013/09/10 12:36:57 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.3 2015/06/13 07:16:37 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -419,7 +419,7 @@ resettodr(void)
 {
 	struct timeval rtctime;
 
-	if (rtctime.tv_sec == 0)
+	if (time_second == 1)
 		return;
 
 	microtime(&rtctime);

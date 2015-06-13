@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.39 2014/11/11 21:02:06 mpi Exp $	*/
+/*	$OpenBSD: clock.c,v 1.40 2015/06/13 07:16:36 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ resettodr(void)
 {
 	struct timeval tv;
 
-	if (time_second == 0)
+	if (time_second == 1)
 		return;
 
 	microtime(&tv);

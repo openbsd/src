@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.11 2015/02/10 22:42:35 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.12 2015/06/13 07:16:36 jsg Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -316,7 +316,7 @@ resettodr()
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	struct chiptime c;
 
-	if (time_second == 0 || sc == NULL)
+	if (time_second == 1 || sc == NULL)
 		return;
 	timetochip(&c);
 
