@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.3 2015/06/12 09:30:05 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.4 2015/06/13 21:15:23 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -761,6 +761,10 @@ rtwn_fw_cmd(struct rtwn_softc *sc, uint8_t id, const void *buf, int len)
 	rtwn_write_4(sc, R92C_HMEBOX(sc->fwcur), *((uint8_t *)&cmd + 0));
 
 	sc->fwcur = (sc->fwcur + 1) % R92C_H2C_NBOX;
+
+	/* Give firmware some time for processing. */
+	DELAY(2000);
+
 	return (0);
 }
 
