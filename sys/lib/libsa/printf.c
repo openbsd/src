@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.26 2015/03/10 21:07:24 miod Exp $	*/
+/*	$OpenBSD: printf.c,v 1.27 2015/06/14 10:55:50 miod Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -96,10 +96,8 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
-			if (ch == '\0') {
-				va_end(ap);
+			if (ch == '\0')
 				return;
-			}
 			put(ch);
 		}
 		lflag = 0;
