@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2014/07/13 21:18:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/06/14 19:37:11 miod Exp $
 
 SIZE?=	size
 
@@ -19,6 +19,8 @@ CLEANFILES+=boot boot.ELF
 SRCS=	crt.c boot.c conf.c devopen.c version.c
 SRCS+=	oaic.c oosiop.c scsi.c sd.c
 SRCS+=	dev_net.c if_le.c
+.PATH:	${S}/lib/libkern
+SRCS+=	moddi3.c muldi3.c negdi2.c qdivrem.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS=	${LIBSA} ${LIBPROM} ${LIBZ}
 LDFLAGS+= -N -Ttext ${STAGE2_RELOC} -e start
@@ -30,7 +32,7 @@ boot: boot.ELF
 	${MDEC_DIR}/a2coff boot.ELF boot
 
 boot.ELF: ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -o $@ ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
+	${LD} ${LDFLAGS} -o $@ ${OBJS} ${LIBS}
 	@${SIZE} $@
 
 install: boot
