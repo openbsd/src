@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2013/11/03 21:36:43 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2015/06/14 18:33:53 miod Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 PROG=	boot
@@ -14,6 +14,7 @@ SRCS+=	boot.c loadfile_sparc.c
 
 .PATH:	${S}/lib/libkern/arch/sparc ${S}/lib/libkern
 SRCS+=	bzero.S strlen.c mul.S umul.S strcmp.c sdiv.S urem.S udiv.S rem.S
+SRCS+=	moddi3.c muldi3.c qdivrem.c
 
 CFLAGS=	-fno-pie -O2 -I${.CURDIR}/../common -I${.CURDIR}/../../../../arch \
 	-I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa ${DEFS}
@@ -27,8 +28,7 @@ elfclean: clean-elf.c
 
 ${PROG}: ${OBJS} ${LIBS} elfclean
 	${LD} -nopie -N -Ttext ${RELOC2} --format a.out-sparc-netbsd \
-	    -e start ${OBJS} \
-	    ${LIBSA} ${LIBZ} `cc -print-libgcc-file-name` -o ${.TARGET}.elf
+	    -e start ${OBJS} ${LIBSA} ${LIBZ} -o ${.TARGET}.elf
 	./elfclean ${.TARGET}.elf
 	objcopy -j .text -j .data -j .bss -O a.out-sparc-netbsd \
 	    ${.TARGET}.elf ${.TARGET}.aout
