@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vexpress,v 1.1 2015/06/08 06:33:16 jsg Exp $
+#	$OpenBSD: files.vexpress,v 1.2 2015/06/14 05:01:31 jsg Exp $
 
 define vexpress {}
 device vexpress: vexpress
@@ -11,6 +11,10 @@ file	arch/armv7/vexpress/vexpress_a15.c	vexpress
 device pluart
 attach pluart at vexpress
 file	arch/armv7/vexpress/pl011.c	pluart
+
+device plrtc
+attach plrtc at vexpress
+file	arch/armv7/vexpress/pl031.c	plrtc
 
 attach	virtio at vexpress with virtio_mmio
 file	arch/armv7/vexpress/virtio_mmio.c	virtio_mmio

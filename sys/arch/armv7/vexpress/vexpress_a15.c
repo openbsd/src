@@ -1,4 +1,4 @@
-/*	$OpenBSD: vexpress_a15.c,v 1.1 2015/06/08 06:33:16 jsg Exp $	*/
+/*	$OpenBSD: vexpress_a15.c,v 1.2 2015/06/14 05:01:31 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -49,6 +49,10 @@
 #define VIRTIO2_IRQ	42
 #define VIRTIO3_IRQ	43
 
+#define RTC_ADDR	0x1c170000
+#define RTC_SIZE	0x1000
+#define RTC_IRQ		4
+
 struct armv7_dev vexpress_a15_devs[] = {
 	{ .name = "sysreg",
 	  .unit = 0,
@@ -73,6 +77,11 @@ struct armv7_dev vexpress_a15_devs[] = {
 	  .unit = 3,
 	  .mem = { { UART1_ADDR, UARTx_SIZE } },
 	  .irq = { UART3_IRQ }
+	},
+	{ .name = "plrtc",
+	  .unit = 0,
+	  .mem = { { RTC_ADDR, RTC_SIZE } },
+	  .irq = { RTC_IRQ }
 	},
 	{ .name = "virtio",
 	  .unit = 0,
