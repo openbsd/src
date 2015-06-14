@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.522 2015/06/07 21:39:39 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.523 2015/06/14 10:07:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -425,6 +425,7 @@ enum msgtype {
 	MSG_IDENTIFY_STDIN,
 	MSG_IDENTIFY_ENVIRON,
 	MSG_IDENTIFY_DONE,
+	MSG_IDENTIFY_CLIENTPID,
 
 	MSG_COMMAND = 200,
 	MSG_DETACH,
@@ -1206,6 +1207,7 @@ RB_HEAD(status_out_tree, status_out);
 struct client {
 	struct imsgbuf	 ibuf;
 
+	pid_t		 pid;
 	int		 fd;
 	struct event	 event;
 	int		 retval;

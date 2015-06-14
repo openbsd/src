@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.89 2015/06/04 23:27:51 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.90 2015/06/14 10:07:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -348,9 +348,10 @@ client_main(int argc, char **argv, int flags)
 void
 client_send_identify(int flags)
 {
-	const char	*s;
+	const char	 *s;
 	char		**ss;
-	int		 fd;
+	int		  fd;
+	pid_t		  pid;
 
 	client_write_one(MSG_IDENTIFY_FLAGS, -1, &flags, sizeof flags);
 
@@ -369,6 +370,9 @@ client_send_identify(int flags)
 	if ((fd = dup(STDIN_FILENO)) == -1)
 		fatal("dup failed");
 	client_write_one(MSG_IDENTIFY_STDIN, fd, NULL, 0);
+
+	pid = getpid();
+	client_write_one(MSG_IDENTIFY_CLIENTPID, -1, &pid, sizeof pid);
 
 	for (ss = environ; *ss != NULL; ss++)
 		client_write_one(MSG_IDENTIFY_ENVIRON, -1, *ss, strlen(*ss) + 1);
