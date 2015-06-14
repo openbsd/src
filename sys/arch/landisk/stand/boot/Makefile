@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2014/07/13 09:26:08 jasper Exp $
+#	$OpenBSD: Makefile,v 1.11 2015/06/14 19:08:59 miod Exp $
 
 MAN=	boot.8
 MLINKS=	boot.8 boot.conf.5
@@ -24,6 +24,7 @@ SRCS+=	boot.c cmd.c vars.c bootarg.c
 
 .PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
 SRCS+=	getchar.c putchar.c strlen.c strlcpy.c
+SRCS+=	ashrdi3.c moddi3.c sdivsi3.S udivsi3.S
 
 SAREL=
 SA_ZLIB=
@@ -38,9 +39,6 @@ Z_AS?=	library
 .include "${S}/lib/libz/Makefile.inc"
 DPADD+= $(ZLIB)
 LDADD+= $(ZLIB)
-
-LIBGCC!=${CC} -print-libgcc-file-name
-LDADD+= $(LIBGCC)
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -o ${PROG}.sym ${LDFLAGS} \

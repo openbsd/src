@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2014/07/13 21:18:44 jasper Exp $
+#	$OpenBSD: Makefile,v 1.8 2015/06/14 19:08:59 miod Exp $
 
 MAN=	xxboot.8
 
@@ -18,6 +18,7 @@ CPPFLAGS+=-D_STANDALONE
 CPPFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../../..
 CPPFLAGS+=-DLOADADDRESS=0x8ff00000 -DXXBOOT_SECTORS=${XXBOOT_SECTORS}
 CFLAGS+=-m4-nofpu -fno-pie
+AFLAGS+= -fno-pie
 
 OBJCOPY?=objcopy
 
@@ -29,9 +30,7 @@ LDADD+= $(SALIB)
 
 .PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
 SRCS+=	strlen.c
-
-LIBGCC!=${CC} -print-libgcc-file-name
-LDADD+= $(LIBGCC)
+SRCS+=	ashrdi3.c sdivsi3.S udivsi3.S
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -o ${PROG}.sym ${LDFLAGS} \
