@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos5.c,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: exynos5.c,v 1.2 2015/06/14 07:34:57 jsg Exp $ */
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
  * Copyright (c) 2012 Patrick Wildt <patrick@blueri.se>
@@ -48,10 +48,10 @@
 #define UART3_ADDR	0x12c20000
 #define UART4_ADDR	0x12c30000
 
-#define UART1_IRQ	83
-#define UART2_IRQ	84
-#define UART3_IRQ	85
-#define UART4_IRQ	86
+#define UART1_IRQ	51
+#define UART2_IRQ	52
+#define UART3_IRQ	53
+#define UART4_IRQ	54
 
 #define USB_EHCI_ADDR	0x12110000
 #define USB_PHY_ADDR	0x12130000
