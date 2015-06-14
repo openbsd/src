@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwnreg.h,v 1.2 2015/06/12 09:30:05 stsp Exp $	*/
+/*	$OpenBSD: if_rtwnreg.h,v 1.3 2015/06/14 08:02:47 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -654,9 +654,14 @@
 #define R92C_CCK0_AFESETTING		0xa04
 #define R92C_OFDM0_TRXPATHENA		0xc04
 #define R92C_OFDM0_TRMUXPAR		0xc08
+#define R92C_OFDM0_RXIQIMBALANCE(chain)	(0xc14 + (chain) * 8)
+#define R92C_OFDM0_ECCATHRESHOLD	0xc4c
 #define R92C_OFDM0_AGCCORE1(chain)	(0xc50 + (chain) * 8)
 #define R92C_OFDM0_AGCPARAM1		0xc70
 #define R92C_OFDM0_AGCRSSITABLE		0xc78
+#define R92C_OFDM0_TXIQIMBALANCE(chain)	(0xc80 + (chain) * 8)
+#define R92C_OFDM0_TXAFE(chain)		(0xc94 + (chain) * 8)
+#define R92C_OFDM0_RXIQEXTANTA		0xca0
 #define R92C_OFDM1_LSTF			0xd00
 
 /* Bits for R92C_FPGA[01]_RFMOD. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.4 2015/06/13 21:15:23 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -154,8 +154,14 @@ void		rtwn_set_txpower(struct rtwn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
 void		rtwn_set_chan(struct rtwn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
-int		rtwn_iq_calib_chain(struct rtwn_softc *, int, uint16_t[],
-		    uint16_t[]);
+int		rtwn_iq_calib_chain(struct rtwn_softc *, int, uint16_t[2],
+		    uint16_t[2]);
+void		rtwn_iq_calib_run(struct rtwn_softc *, int, uint16_t[2][2],
+		    uint16_t[2][2]);
+int		rtwn_iq_calib_compare_results(uint16_t[2][2], uint16_t[2][2],
+		    uint16_t[2][2], uint16_t[2][2], int);
+void		rtwn_iq_calib_write_results(struct rtwn_softc *, uint16_t[2],
+		    uint16_t[2], int);
 void		rtwn_iq_calib(struct rtwn_softc *);
 void		rtwn_lc_calib(struct rtwn_softc *);
 void		rtwn_temp_calib(struct rtwn_softc *);
@@ -2899,7 +2905,7 @@ rtwn_iq_calib_chain(struct rtwn_softc *sc, int chain, uint16_t tx[2],
 	}
 
 	/* Give LO and IQ calibrations the time to complete. */
-	DELAY(1);
+	DELAY(1000);
 
 	/* Read IQ calibration status. */
 	status = rtwn_bb_read(sc, 0xeac);
@@ -2924,10 +2930,278 @@ rtwn_iq_calib_chain(struct rtwn_softc *sc, int chain, uint16_t tx[2],
 }
 
 void
+rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
+    uint16_t rx[2][2])
+{
+	/* Registers to save and restore during IQ calibration. */
+	struct iq_cal_regs {
+		uint32_t	adda[16];
+		uint8_t		txpause;
+		uint8_t		bcn_ctrl;
+		uint8_t		ustime_tsf;
+		uint32_t	gpio_muxcfg;
+		uint32_t	ofdm0_trxpathena;
+		uint32_t	ofdm0_trmuxpar;
+		uint32_t	fpga0_rfifacesw1;
+	} iq_cal_regs;
+	static const uint16_t reg_adda[16] = {
+		0x85c, 0xe6c, 0xe70, 0xe74,
+		0xe78, 0xe7c, 0xe80, 0xe84,
+		0xe88, 0xe8c, 0xed0, 0xed4,
+		0xed8, 0xedc, 0xee0, 0xeec
+	};
+	int i, chain;
+	uint32_t hssi_param1;
+
+	if (n == 0) {
+		for (i = 0; i < nitems(reg_adda); i++)
+			iq_cal_regs.adda[i] = rtwn_bb_read(sc, reg_adda[i]);
+
+		iq_cal_regs.txpause = rtwn_read_1(sc, R92C_TXPAUSE);
+		iq_cal_regs.bcn_ctrl = rtwn_read_1(sc, R92C_BCN_CTRL);
+		iq_cal_regs.ustime_tsf = rtwn_read_1(sc, R92C_USTIME_TSF);
+		iq_cal_regs.gpio_muxcfg = rtwn_read_4(sc, R92C_GPIO_MUXCFG);
+	}
+
+	if (sc->ntxchains == 1) {
+		rtwn_bb_write(sc, reg_adda[0], 0x0b1b25a0);
+		for (i = 1; i < nitems(reg_adda); i++)
+			rtwn_bb_write(sc, reg_adda[i], 0x0bdb25a0);
+	} else {
+		for (i = 0; i < nitems(reg_adda); i++)
+			rtwn_bb_write(sc, reg_adda[i], 0x04db25a4);
+	}
+
+	hssi_param1 = rtwn_bb_read(sc, R92C_HSSI_PARAM1(0));
+	if (!(hssi_param1 & R92C_HSSI_PARAM1_PI)) {
+		rtwn_bb_write(sc, R92C_HSSI_PARAM1(0),
+		    hssi_param1 | R92C_HSSI_PARAM1_PI);
+		rtwn_bb_write(sc, R92C_HSSI_PARAM1(1),
+		    hssi_param1 | R92C_HSSI_PARAM1_PI);
+	}
+
+	if (n == 0) {
+		iq_cal_regs.ofdm0_trxpathena =
+		    rtwn_bb_read(sc, R92C_OFDM0_TRXPATHENA);
+		iq_cal_regs.ofdm0_trmuxpar =
+		    rtwn_bb_read(sc, R92C_OFDM0_TRMUXPAR);
+		iq_cal_regs.fpga0_rfifacesw1 =
+		    rtwn_bb_read(sc, R92C_FPGA0_RFIFACESW(1));
+	}
+
+	rtwn_bb_write(sc, R92C_OFDM0_TRXPATHENA, 0x03a05600);
+	rtwn_bb_write(sc, R92C_OFDM0_TRMUXPAR, 0x000800e4);
+	rtwn_bb_write(sc, R92C_FPGA0_RFIFACESW(1), 0x22204000);
+	if (sc->ntxchains > 1) {
+		rtwn_bb_write(sc, R92C_LSSI_PARAM(0), 0x00010000);
+		rtwn_bb_write(sc, R92C_LSSI_PARAM(1), 0x00010000);
+	}
+
+	rtwn_write_1(sc, R92C_TXPAUSE, 0x3f);
+	rtwn_write_1(sc, R92C_BCN_CTRL, iq_cal_regs.bcn_ctrl & ~(0x08));
+	rtwn_write_1(sc, R92C_USTIME_TSF, iq_cal_regs.ustime_tsf & ~(0x08));
+	rtwn_write_1(sc, R92C_GPIO_MUXCFG,
+	    iq_cal_regs.gpio_muxcfg & ~(0x20));
+
+	rtwn_bb_write(sc, 0x0b68, 0x00080000);
+	if (sc->ntxchains > 1)
+		rtwn_bb_write(sc, 0x0b6c, 0x00080000);
+
+	rtwn_bb_write(sc, 0x0e28, 0x80800000);
+	rtwn_bb_write(sc, 0x0e40, 0x01007c00);
+	rtwn_bb_write(sc, 0x0e44, 0x01004800);
+
+	rtwn_bb_write(sc, 0x0b68, 0x00080000);
+
+	for (chain = 0; chain < sc->ntxchains; chain++) {
+		if (chain > 0) {
+			/* Put chain 0 on standby. */
+			rtwn_bb_write(sc, 0x0e28, 0x00);
+			rtwn_bb_write(sc, R92C_LSSI_PARAM(0), 0x00010000);
+			rtwn_bb_write(sc, 0x0e28, 0x80800000);
+
+			/* Enable chain 1. */
+			for (i = 0; i < nitems(reg_adda); i++)
+				rtwn_bb_write(sc, reg_adda[i], 0x0b1b25a4);
+		}
+
+		/* Run IQ calibration twice. */
+		for (i = 0; i < 2; i++) {
+			int ret;
+
+			ret = rtwn_iq_calib_chain(sc, chain,
+			    tx[chain], rx[chain]);
+			if (ret == 0) {
+				DPRINTF(("%s: chain %d: Tx failed.\n",
+				    __func__, chain));
+				tx[chain][0] = 0xff;
+				tx[chain][1] = 0xff;
+				rx[chain][0] = 0xff;
+				rx[chain][1] = 0xff;
+			} else if (ret == 1) {
+				DPRINTF(("%s: chain %d: Rx failed.\n",
+				    __func__, chain));
+				rx[chain][0] = 0xff;
+				rx[chain][1] = 0xff;
+			} else if (ret == 3) {
+				DPRINTF(("%s: chain %d: Both Tx and Rx "
+				    "succeeded.\n", __func__, chain));
+			}
+		}
+
+		DPRINTF(("%s: results for run %d chain %d: tx[0]=0x%x, "
+		    "tx[1]=0x%x rx[0]=0x%x rx[1]=0x%x\n", __func__, n, chain,
+		    tx[chain][0], tx[chain][1], rx[chain][0], rx[chain][1]));
+	}
+
+	rtwn_bb_write(sc, R92C_OFDM0_TRXPATHENA,
+	    iq_cal_regs.ofdm0_trxpathena); 
+	rtwn_bb_write(sc, R92C_FPGA0_RFIFACESW(1),
+	    iq_cal_regs.fpga0_rfifacesw1);
+	rtwn_bb_write(sc, R92C_OFDM0_TRMUXPAR, iq_cal_regs.ofdm0_trmuxpar);
+
+	rtwn_bb_write(sc, 0x0e28, 0x00);
+	rtwn_bb_write(sc, R92C_LSSI_PARAM(0), 0x00032ed3);
+	if (sc->ntxchains > 1)
+		rtwn_bb_write(sc, R92C_LSSI_PARAM(1), 0x00032ed3);
+
+	if (n != 0) {
+		if (!(hssi_param1 & R92C_HSSI_PARAM1_PI)) {
+			rtwn_bb_write(sc, R92C_HSSI_PARAM1(0), hssi_param1);
+			rtwn_bb_write(sc, R92C_HSSI_PARAM1(1), hssi_param1);
+		}
+
+		for (i = 0; i < nitems(reg_adda); i++)
+			rtwn_bb_write(sc, reg_adda[i], iq_cal_regs.adda[i]);
+
+		rtwn_write_1(sc, R92C_TXPAUSE, iq_cal_regs.txpause);
+		rtwn_write_1(sc, R92C_BCN_CTRL, iq_cal_regs.bcn_ctrl);
+		rtwn_write_1(sc, R92C_USTIME_TSF, iq_cal_regs.ustime_tsf);
+		rtwn_write_4(sc, R92C_GPIO_MUXCFG, iq_cal_regs.gpio_muxcfg);
+	}
+}
+
+#define RTWN_IQ_CAL_MAX_TOLERANCE 5
+int
+rtwn_iq_calib_compare_results(uint16_t tx1[2][2], uint16_t rx1[2][2],
+    uint16_t tx2[2][2], uint16_t rx2[2][2], int ntxchains)
+{
+	int chain, i, tx_ok[2], rx_ok[2];
+
+	tx_ok[0] = tx_ok[1] = rx_ok[0] = rx_ok[1] = 0;
+	for (chain = 0; chain < ntxchains; chain++) {
+		for (i = 0; i < 2; i++)	{
+			if (tx1[chain][i] == 0xff || tx2[chain][i] == 0xff ||
+			    rx1[chain][i] == 0xff || rx2[chain][i] == 0xff)
+				continue;
+
+			tx_ok[chain] = (abs(tx1[chain][i] - tx2[chain][i]) <=
+			    RTWN_IQ_CAL_MAX_TOLERANCE);
+
+			rx_ok[chain] = (abs(rx1[chain][i] - rx2[chain][i]) <=
+			    RTWN_IQ_CAL_MAX_TOLERANCE);
+		}
+	}
+
+	if (ntxchains > 1)
+		return (tx_ok[0] && tx_ok[1] && rx_ok[0] && rx_ok[1]);
+	else
+		return (tx_ok[0] && rx_ok[0]);
+}
+#undef RTWN_IQ_CAL_MAX_TOLERANCE
+
+void
+rtwn_iq_calib_write_results(struct rtwn_softc *sc, uint16_t tx[2],
+    uint16_t rx[2], int chain)
+{
+	uint32_t reg, val, x;
+	long y, tx_c;
+
+	if (tx[0] == 0xff || tx[1] == 0xff)
+		return;
+
+	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain)); 
+	val = ((reg >> 22) & 0x3ff);
+	x = tx[0];
+	if (x & 0x0200)
+		x |= 0xfc00;
+	reg = (((x * val) >> 8) & 0x3ff);
+	rtwn_bb_write(sc, R92C_OFDM0_TXIQIMBALANCE(chain), reg);
+
+	reg = rtwn_bb_read(sc, R92C_OFDM0_ECCATHRESHOLD);
+	if (((x * val) >> 7) & 0x01)
+		reg |= 0x80000000;
+	else
+		reg &= ~0x80000000;
+	rtwn_bb_write(sc, R92C_OFDM0_ECCATHRESHOLD, reg);
+
+	y = tx[1];
+	if (y & 0x00000200)
+		y |= 0xfffffc00;
+	tx_c = (y * val) >> 8;
+	reg = rtwn_bb_read(sc, R92C_OFDM0_TXAFE(chain));
+	reg |= ((((tx_c & 0x3c0) >> 6) << 24) & 0xf0000000);
+	rtwn_bb_write(sc, R92C_OFDM0_TXAFE(chain), reg);
+
+	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain)); 
+	reg |= (((tx_c & 0x3f) << 16) & 0x003F0000);
+	rtwn_bb_write(sc, R92C_OFDM0_TXIQIMBALANCE(chain), reg);
+
+	reg = rtwn_bb_read(sc, R92C_OFDM0_ECCATHRESHOLD);
+	if (((y * val) >> 7) & 0x01)
+		reg |= 0x20000000;
+	else
+		reg &= ~0x20000000;
+	rtwn_bb_write(sc, R92C_OFDM0_ECCATHRESHOLD, reg);
+
+	if (rx[0] == 0xff || rx[1] == 0xff)
+		return;
+
+	reg = rtwn_bb_read(sc, R92C_OFDM0_RXIQIMBALANCE(chain));
+	reg |= (rx[0] & 0x3ff);
+	rtwn_bb_write(sc, R92C_OFDM0_RXIQIMBALANCE(chain), reg);
+	reg |= (((rx[1] & 0x03f) << 8) & 0xFC00);
+	rtwn_bb_write(sc, R92C_OFDM0_RXIQIMBALANCE(chain), reg);
+
+	if (chain == 0) {
+		reg = rtwn_bb_read(sc, R92C_OFDM0_RXIQEXTANTA);
+		reg |= (((rx[1] & 0xf) >> 6) & 0x000f);
+		rtwn_bb_write(sc, R92C_OFDM0_RXIQEXTANTA, reg);
+	} else {
+		reg = rtwn_bb_read(sc, R92C_OFDM0_AGCRSSITABLE);
+		reg |= ((((rx[1] & 0xf) >> 6) << 12) & 0xf000);
+		rtwn_bb_write(sc, R92C_OFDM0_AGCRSSITABLE, reg);
+	}
+}
+
+#define RTWN_IQ_CAL_NRUN	3
+void
 rtwn_iq_calib(struct rtwn_softc *sc)
 {
-	/* TODO */
+	uint16_t tx[RTWN_IQ_CAL_NRUN][2][2], rx[RTWN_IQ_CAL_NRUN][2][2];
+	int n, valid;
+
+	valid = 0;
+	for (n = 0; n < RTWN_IQ_CAL_NRUN; n++) {
+		rtwn_iq_calib_run(sc, n, tx[n], rx[n]);
+
+		if (n == 0)
+			continue;
+
+		/* Valid results remain stable after consecutive runs. */
+		valid = rtwn_iq_calib_compare_results(tx[n - 1], rx[n - 1],
+		    tx[n], rx[n], sc->ntxchains);
+		if (valid)
+			break;
+	}
+
+	if (valid) {
+		rtwn_iq_calib_write_results(sc, tx[n][0], rx[n][0], 0);
+		if (sc->ntxchains > 1)
+			rtwn_iq_calib_write_results(sc, tx[n][1], rx[n][1], 1);
+	}
 }
+#undef RTWN_IQ_CAL_NRUN
 
 void
 rtwn_lc_calib(struct rtwn_softc *sc)
@@ -2992,17 +3266,18 @@ rtwn_temp_calib(struct rtwn_softc *sc)
 	DPRINTFN(2, ("temperature=%d\n", temp));
 
 	/*
-	 * Redo LC calibration if temperature changed significantly since
-	 * last calibration.
+	 * Redo IQ and LC calibration if temperature changed significantly
+	 * since last calibration.
 	 */
 	if (sc->thcal_lctemp == 0) {
-		/* First LC calibration is performed in rtwn_init(). */
+		/* First calibration is performed in rtwn_init(). */
 		sc->thcal_lctemp = temp;
 	} else if (abs(temp - sc->thcal_lctemp) > 1) {
-		DPRINTF(("LC calib triggered by temp: %d -> %d\n",
+		DPRINTF(("IQ/LC calib triggered by temp: %d -> %d\n",
 		    sc->thcal_lctemp, temp));
+		rtwn_iq_calib(sc);
 		rtwn_lc_calib(sc);
-		/* Record temperature of last LC calibration. */
+		/* Record temperature of last calibration. */
 		sc->thcal_lctemp = temp;
 	}
 }
