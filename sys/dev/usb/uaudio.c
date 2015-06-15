@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.111 2015/05/11 06:46:22 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.112 2015/06/15 15:45:28 mpi Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2938,10 +2938,8 @@ uaudio_chan_ptransfer(struct chan *ch)
 #endif
 
 	DPRINTFN(5,("uaudio_chan_ptransfer: transfer xfer=%p\n", cb->xfer));
-	/* Fill the request */
-	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes,
-			     ch->nframes, USBD_NO_COPY,
-			     uaudio_chan_pintr);
+	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes, ch->nframes,
+	    USBD_NO_COPY | USBD_SHORT_XFER_OK, uaudio_chan_pintr);
 
 	(void)usbd_transfer(cb->xfer);
 }
@@ -2996,9 +2994,9 @@ uaudio_chan_psync_transfer(struct chan *ch)
 	sb->size = total;
 
 	DPRINTFN(5,("%s: transfer xfer=%p\n", __func__, sb->xfer));
-	/* Fill the request */
 	usbd_setup_isoc_xfer(sb->xfer, ch->sync_pipe, sb, sb->sizes,
-	    ch->nsync_frames, USBD_NO_COPY, uaudio_chan_psync_intr);
+	    ch->nsync_frames, USBD_NO_COPY | USBD_SHORT_XFER_OK,
+	    uaudio_chan_psync_intr);
 
 	(void)usbd_transfer(sb->xfer);
 }
@@ -3095,10 +3093,8 @@ uaudio_chan_rtransfer(struct chan *ch)
 #endif
 
 	DPRINTFN(5,("uaudio_chan_rtransfer: transfer xfer=%p\n", cb->xfer));
-	/* Fill the request */
-	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes,
-			     ch->nframes, USBD_NO_COPY,
-			     uaudio_chan_rintr);
+	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes, ch->nframes,
+	    USBD_NO_COPY | USBD_SHORT_XFER_OK, uaudio_chan_rintr);
 
 	(void)usbd_transfer(cb->xfer);
 }

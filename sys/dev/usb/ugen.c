@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.83 2015/05/25 11:52:15 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.84 2015/06/15 15:45:28 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -374,11 +374,10 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 				sce->isoreqs[i].dmabuf = buf;
 				for(j = 0; j < UGEN_NISORFRMS; ++j)
 					sce->isoreqs[i].sizes[j] = isize;
-				usbd_setup_isoc_xfer
-					(xfer, sce->pipeh, &sce->isoreqs[i],
-					 sce->isoreqs[i].sizes,
-					 UGEN_NISORFRMS, USBD_NO_COPY,
-					 ugen_isoc_rintr);
+				usbd_setup_isoc_xfer(xfer, sce->pipeh,
+				    &sce->isoreqs[i], sce->isoreqs[i].sizes,
+				    UGEN_NISORFRMS, USBD_NO_COPY |
+				    USBD_SHORT_XFER_OK, ugen_isoc_rintr);
 				(void)usbd_transfer(xfer);
 			}
 			DPRINTFN(5, ("ugenopen: isoc open done\n"));
@@ -874,7 +873,7 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	}
 
 	usbd_setup_isoc_xfer(xfer, sce->pipeh, req, req->sizes, UGEN_NISORFRMS,
-			     USBD_NO_COPY, ugen_isoc_rintr);
+	    USBD_NO_COPY | USBD_SHORT_XFER_OK, ugen_isoc_rintr);
 	(void)usbd_transfer(xfer);
 
 	if (sce->state & UGEN_ASLP) {

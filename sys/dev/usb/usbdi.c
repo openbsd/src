@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.81 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.82 2015/06/15 15:45:28 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -280,7 +280,6 @@ usbd_transfer(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->pipe;
 	usbd_status err;
-	u_int size;
 	int flags, s;
 
 	if (usbd_is_dying(pipe->device))
@@ -297,25 +296,23 @@ usbd_transfer(struct usbd_xfer *xfer)
 	if (pipe->aborting)
 		return (USBD_CANCELLED);
 
-	size = xfer->length;
 	/* If there is no buffer, allocate one. */
-	if (!(xfer->rqflags & URQ_DEV_DMABUF) && size != 0) {
+	if ((xfer->rqflags & URQ_DEV_DMABUF) == 0) {
 		struct usbd_bus *bus = pipe->device->bus;
 
 #ifdef DIAGNOSTIC
 		if (xfer->rqflags & URQ_AUTO_DMABUF)
 			printf("usbd_transfer: has old buffer!\n");
 #endif
-		err = usb_allocmem(bus, size, 0, &xfer->dmabuf);
+		err = usb_allocmem(bus, xfer->length, 0, &xfer->dmabuf);
 		if (err)
 			return (err);
 		xfer->rqflags |= URQ_AUTO_DMABUF;
 	}
 
 	/* Copy data if going out. */
-	if (!(xfer->flags & USBD_NO_COPY) && size != 0 &&
-	    !usbd_xfer_isread(xfer))
-		memcpy(KERNADDR(&xfer->dmabuf, 0), xfer->buffer, size);
+	if (((xfer->flags & USBD_NO_COPY) == 0) && !usbd_xfer_isread(xfer))
+		memcpy(KERNADDR(&xfer->dmabuf, 0), xfer->buffer, xfer->length);
 
 	err = pipe->methods->transfer(xfer);
 
@@ -458,10 +455,14 @@ usbd_setup_isoc_xfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
     void *priv, u_int16_t *frlengths, u_int32_t nframes,
     u_int16_t flags, usbd_callback callback)
 {
+	int i;
+
 	xfer->pipe = pipe;
 	xfer->priv = priv;
 	xfer->buffer = 0;
 	xfer->length = 0;
+	for (i = 0; i < nframes; i++)
+		xfer->length += frlengths[i];
 	xfer->actlen = 0;
 	xfer->flags = flags;
 	xfer->timeout = USBD_NO_TIMEOUT;
@@ -736,7 +737,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		pipe->running = 0;
 
 #ifdef DIAGNOSTIC
-	if (xfer->actlen > xfer->length && xfer->length != 0) {
+	if (xfer->actlen > xfer->length) {
 		printf("%s: actlen > len %u > %u\n", __func__, xfer->actlen,
 		    xfer->length);
 		xfer->actlen = xfer->length;
