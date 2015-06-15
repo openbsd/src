@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.163 2015/06/12 19:20:43 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.164 2015/06/15 21:42:15 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -205,6 +205,7 @@ struct	filed consfile;
 int	nunix = 1;		/* Number of Unix domain sockets requested */
 char	*path_unix[MAXUNIX] = { _PATH_LOG }; /* Paths to Unix domain sockets */
 int	Debug;			/* debug flag */
+int	Foreground;		/* run in foreground, instead of daemonizing */
 int	Startup = 1;		/* startup flag */
 char	LocalHostName[HOST_NAME_MAX+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
@@ -328,7 +329,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46C:dhnuf:m:p:a:s:V")) != -1)
+	while ((ch = getopt(argc, argv, "46C:dhnuf:Fm:p:a:s:V")) != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			IPv4Only = 1;
@@ -346,6 +347,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':		/* configuration file */
 			ConfFile = optarg;
+			break;
+		case 'F':		/* foreground */
+			Foreground = 1;
 			break;
 		case 'h':		/* RFC 3164 hostnames */
 			IncludeHostname = 1;
@@ -557,7 +561,7 @@ main(int argc, char *argv[])
 
 	tzset();
 
-	if (!Debug) {
+	if (!Debug && !Foreground) {
 		char c;
 
 		pipe(lockpipe);
@@ -969,7 +973,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-46dhnuV] [-a path] [-C CAfile] [-f config_file]\n"
+	    "usage: syslogd [-46dFhnuV] [-a path] [-C CAfile] [-f config_file]\n"
 	    "               [-m mark_interval] [-p log_socket] [-s reporting_socket]\n");
 	exit(1);
 }
