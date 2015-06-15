@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.43 2015/06/12 13:11:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.44 2015/06/15 07:50:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -347,6 +347,12 @@ void	iwm_update_sched(struct iwm_softc *, int, int, uint8_t, uint16_t);
 const struct iwm_rate *iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
 			struct ieee80211_frame *, struct iwm_tx_cmd *);
 int	iwm_tx(struct iwm_softc *, struct mbuf *, struct ieee80211_node *, int);
+void	iwm_mvm_led_enable(struct iwm_softc *);
+void	iwm_mvm_led_disable(struct iwm_softc *);
+int	iwm_mvm_led_is_enabled(struct iwm_softc *);
+void	iwm_led_blink_timeout(void *);
+void	iwm_led_blink_start(struct iwm_softc *);
+void	iwm_led_blink_stop(struct iwm_softc *);
 int	iwm_mvm_beacon_filter_send_cmd(struct iwm_softc *,
 					struct iwm_beacon_filter_cmd *);
 void	iwm_mvm_beacon_filter_set_cqm_params(struct iwm_softc *,
@@ -3975,6 +3981,59 @@ iwm_mvm_flush_tx_path(struct iwm_softc *sc, int tfd_msk, int sync)
 }
 #endif
 
+/*
+ * BEGIN mvm/led.c
+ */
+
+/* Set led register on */
+void
+iwm_mvm_led_enable(struct iwm_softc *sc)
+{
+	IWM_WRITE(sc, IWM_CSR_LED_REG, IWM_CSR_LED_REG_TURN_ON);
+}
+
+/* Set led register off */
+void
+iwm_mvm_led_disable(struct iwm_softc *sc)
+{
+	IWM_WRITE(sc, IWM_CSR_LED_REG, IWM_CSR_LED_REG_TURN_OFF);
+}
+
+/*
+ * END mvm/led.c
+ */
+
+int
+iwm_mvm_led_is_enabled(struct iwm_softc *sc)
+{
+	return (IWM_READ(sc, IWM_CSR_LED_REG) == IWM_CSR_LED_REG_TURN_ON);
+}
+
+void
+iwm_led_blink_timeout(void *arg)
+{
+	struct iwm_softc *sc = arg;
+
+	if (iwm_mvm_led_is_enabled(sc))
+		iwm_mvm_led_disable(sc);
+	else
+		iwm_mvm_led_enable(sc);
+
+	timeout_add_msec(&sc->sc_led_blink_to, 200);
+}
+
+void
+iwm_led_blink_start(struct iwm_softc *sc)
+{
+	timeout_add(&sc->sc_led_blink_to, 0);
+}
+
+void
+iwm_led_blink_stop(struct iwm_softc *sc)
+{
+	timeout_del(&sc->sc_led_blink_to);
+	iwm_mvm_led_disable(sc);
+}
 
 /*
  * BEGIN mvm/power.c
@@ -5328,6 +5387,9 @@ iwm_newstate_cb(void *wk)
 
 	DPRINTF(("switching state %d->%d\n", ic->ic_state, nstate));
 
+	if (ic->ic_state == IEEE80211_S_SCAN && nstate != ic->ic_state)
+		iwm_led_blink_stop(sc);
+
 	/* disable beacon filtering if we're hopping out of RUN */
 	if (ic->ic_state == IEEE80211_S_RUN && nstate != ic->ic_state) {
 		iwm_mvm_disable_beacon_filter(sc, (void *)ic->ic_bss);
@@ -5373,6 +5435,7 @@ iwm_newstate_cb(void *wk)
 			return;
 		}
 		ic->ic_state = nstate;
+		iwm_led_blink_start(sc);
 		return;
 
 	case IEEE80211_S_AUTH:
@@ -5411,7 +5474,7 @@ iwm_newstate_cb(void *wk)
 		}
 
 		timeout_add_msec(&sc->sc_calib_to, 500);
-
+		iwm_mvm_led_enable(sc);
 		break; }
 
 	default:
@@ -5704,6 +5767,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	timeout_del(&sc->sc_calib_to);
+	iwm_led_blink_stop(sc);
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	iwm_stop_device(sc);
 }
@@ -6627,6 +6691,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	iwm_radiotap_attach(sc);
 #endif
 	timeout_set(&sc->sc_calib_to, iwm_calib_timeout, sc);
+	timeout_set(&sc->sc_led_blink_to, iwm_led_blink_timeout, sc);
 	task_set(&sc->init_task, iwm_init_task, sc);
 
 	/*
