@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: SSL_CTX_set_options.3,v 1.4 2015/06/15 03:32:59 doug Exp $
+.\"	$OpenBSD: SSL_CTX_set_options.3,v 1.5 2015/06/15 05:16:56 doug Exp $
 .\"
 .Dd $Mdocdate: June 15 2015 $
 .Dt SSL_CTX_SET_OPTIONS 3
@@ -197,7 +197,9 @@ non-self-signed CA which does not have its CA in netscape, and the browser has
 a cert, it will crash/hang.
 Works for 3.x and 4.xbeta
 .It Dv SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
-\&...
+As of
+.Ox 5.8 ,
+this option has no effect.
 .It Dv SSL_OP_NO_SSLv2
 As of
 .Ox 5.6 ,

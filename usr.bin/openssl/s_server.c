@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.10 2015/04/14 12:56:36 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.11 2015/06/15 05:16:56 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,7 +226,6 @@ static int s_quiet = 0;
 static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 
-static int hack = 0;
 #ifndef OPENSSL_NO_ENGINE
 static char *engine_id = NULL;
 #endif
@@ -263,7 +262,6 @@ s_server_init(void)
 	s_debug = 0;
 	s_msg = 0;
 	s_quiet = 0;
-	hack = 0;
 #ifndef OPENSSL_NO_ENGINE
 	engine_id = NULL;
 #endif
@@ -776,8 +774,6 @@ s_server_main(int argc, char *argv[])
 		}
 		else if (strcmp(*argv, "-msg") == 0) {
 			s_msg = 1;
-		} else if (strcmp(*argv, "-hack") == 0) {
-			hack = 1;
 		} else if (strcmp(*argv, "-state") == 0) {
 			state = 1;
 		} else if (strcmp(*argv, "-crlf") == 0) {
@@ -1029,8 +1025,6 @@ bad:
 	SSL_CTX_set_quiet_shutdown(ctx, 1);
 	if (bugs)
 		SSL_CTX_set_options(ctx, SSL_OP_ALL);
-	if (hack)
-		SSL_CTX_set_options(ctx, SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 	SSL_CTX_set_options(ctx, off);
 	/*
 	 * DTLS: partial reads end up discarding unread UDP bytes :-( Setting
@@ -1088,8 +1082,6 @@ bad:
 		SSL_CTX_set_quiet_shutdown(ctx2, 1);
 		if (bugs)
 			SSL_CTX_set_options(ctx2, SSL_OP_ALL);
-		if (hack)
-			SSL_CTX_set_options(ctx2, SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 		SSL_CTX_set_options(ctx2, off);
 		/*
 		 * DTLS: partial reads end up discarding unread UDP bytes :-(
@@ -1811,26 +1803,6 @@ www_body(char *hostname, int s, unsigned char *context)
 		SSL_set_msg_callback_arg(con, bio_s_out);
 	}
 	for (;;) {
-		if (hack) {
-			i = SSL_accept(con);
-			switch (SSL_get_error(con, i)) {
-			case SSL_ERROR_NONE:
-				break;
-			case SSL_ERROR_WANT_WRITE:
-			case SSL_ERROR_WANT_READ:
-			case SSL_ERROR_WANT_X509_LOOKUP:
-				continue;
-			case SSL_ERROR_SYSCALL:
-			case SSL_ERROR_SSL:
-			case SSL_ERROR_ZERO_RETURN:
-				ret = 1;
-				goto err;
-				/* break; */
-			}
-
-			SSL_renegotiate(con);
-			SSL_write(con, NULL, 0);
-		}
 		i = BIO_gets(io, buf, bufsize - 1);
 		if (i < 0) {	/* error */
 			if (!BIO_should_retry(io)) {
