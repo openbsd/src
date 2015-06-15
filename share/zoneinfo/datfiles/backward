@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.29 2015/03/03 16:26:10 millert Exp $
+# $OpenBSD: backward,v 1.30 2015/06/15 15:38:04 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -21,6 +21,7 @@ Link	America/Argentina/Jujuy	America/Jujuy
 Link	America/Indiana/Knox	America/Knox_IN
 Link	America/Kentucky/Louisville	America/Louisville
 Link	America/Argentina/Mendoza	America/Mendoza
+Link	America/Toronto		America/Montreal
 Link	America/Rio_Branco	America/Porto_Acre
 Link	America/Argentina/Cordoba	America/Rosario
 Link	America/Denver		America/Shiprock

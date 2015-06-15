@@ -1,4 +1,4 @@
-# $OpenBSD: europe,v 1.56 2015/03/21 14:46:21 millert Exp $
+# $OpenBSD: europe,v 1.57 2015/06/15 15:38:04 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -77,7 +77,7 @@
 #        1:00:14    SET           Swedish (1879-1899)*
 #        2:00       EET EEST      Eastern Europe
 #        3:00       FET           Further-eastern Europe (2011-2014)*
-#        3:00       MSK MSD  MSM* Moscow
+#        3:00       MSK MSD  MSM* Minsk, Moscow
 
 # From Peter Ilieve (1994-12-04),
 # The original six [EU members]: Belgium, France, (West) Germany, Italy,
