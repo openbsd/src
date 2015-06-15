@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.55 2015/06/02 23:05:05 millert Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.56 2015/06/15 14:29:52 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -721,11 +721,9 @@ parse_config_sdlim(struct sdlim_t *sdlim, char *cf)
 		if (cgetstr(buf, "low", &ebuf) < 0)
 			ebuf = NULL;
 		p->lower = get_val(ebuf, 0, p->type);
-		free(ebuf);
 		if (cgetstr(buf, "high", &ebuf) < 0)
 			ebuf = NULL;
 		p->upper = get_val(ebuf, 1, p->type);
-		free(ebuf);
 		if (cgetstr(buf, "command", &ebuf) < 0)
 			ebuf = NULL;
 		if (ebuf != NULL) {
