@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.18 2015/02/12 23:16:02 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.19 2015/06/15 21:44:57 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -248,8 +248,8 @@ sub check_logs {
 
 	check_log($c, $r, $s, @$m);
 	check_out($r, %args);
-	check_stat($r, %args);
-	check_kdump($c, $r, $s);
+	check_fstat($c, $r, $s);
+	check_ktrace($c, $r, $s);
 	if (my $file = $s->{"outfile"}) {
 		my $pattern = $s->{filegrep} || $testlog;
 		check_pattern(ref $s, $file, $pattern, \&filegrep);
@@ -323,14 +323,11 @@ sub check_out {
 	}
 }
 
-sub check_stat {
-	my ($r, %args) = @_;
-
-	foreach my $name (qw(fstat)) {
-		next unless $r && $r->{$name};
-		my $file = $r->{"${name}file"} or die;
-		my $pattern = $args{$name}{loggrep} or die;
-		check_pattern($name, $file, $pattern, \&filegrep);
+sub check_fstat {
+	foreach my $proc (@_) {
+		my $pattern = $proc && $proc->{fstat} or next;
+		my $file = $proc->{fstatfile} or die;
+		check_pattern("fstat", $file, $pattern, \&filegrep);
 	}
 }
 
@@ -343,12 +340,11 @@ sub filegrep {
 	    grep { /$pattern/ } <$fh> : first { /$pattern/ } <$fh>;
 }
 
-sub check_kdump {
+sub check_ktrace {
 	foreach my $proc (@_) {
-		next unless $proc && $proc->{ktrace};
+		my $pattern = $proc && $proc->{ktrace} or next;
 		my $file = $proc->{ktracefile} or die;
-		my $pattern = $proc->{kdump} or die;
-		check_pattern(ref $proc, $file, $pattern, \&kdumpgrep);
+		check_pattern("ktrace", $file, $pattern, \&kdumpgrep);
 	}
 }
 

@@ -21,7 +21,7 @@ our %args = (
     syslogd => {
 	loggrep => {
 	    get_charlog() => 5,
-	}
+	},
     },
     file => {
 	# Feb  2 00:43:36 hostname 0123456789ABC...567

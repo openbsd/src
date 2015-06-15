@@ -15,8 +15,7 @@ $ENV{EVENT_NOSELECT} = 0;
 our %args = (
     syslogd => {
 	loggrep => qr/libevent using: select/,
-	ktrace => 1,
-	kdump => qr/CALL  select/,
+	ktrace => qr/CALL  select/,
     },
 );
 

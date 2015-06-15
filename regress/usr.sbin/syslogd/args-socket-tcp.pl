@@ -11,17 +11,14 @@ use Socket;
 
 our %args = (
     syslogd => {
-	fstat => 1,
+	fstat => {
+	    qr/ internet stream tcp / => 1,
+	},
 	loghost => '@tcp://127.0.0.1:$connectport',
 	options => ["-n"],
     },
     server => {
 	listen => { domain => AF_INET, addr => "127.0.0.1", proto => "tcp" },
-    },
-    fstat => {
-	loggrep => {
-	    qr/ internet stream tcp / => 1,
-	},
     },
 );
 

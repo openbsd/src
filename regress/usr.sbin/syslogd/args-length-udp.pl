@@ -23,7 +23,7 @@ our %args = (
 	options => ["-u"],
 	loggrep => {
 	    get_charlog() => 5,
-	}
+	},
     },
     server => {
 	# >>> <13>Jan 31 00:10:11 0123456789ABC...lmn

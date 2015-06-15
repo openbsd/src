@@ -11,8 +11,7 @@ use warnings;
 
 our %args = (
     client => {
-	ktrace => 1,
-	kdump => {
+	ktrace => {
 	    qr/CALL  sendsyslog/ => 2,
 	    qr/GIO   fd -1 wrote \d+ bytes/ => 2,
 	    qr/RET   sendsyslog 0/ => 2,

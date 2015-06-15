@@ -23,7 +23,7 @@ our %args = (
 	options => ["-u"],
 	loggrep => {
 	    get_charlog() => 5,
-	}
+	},
     },
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tls", addr => "localhost" },

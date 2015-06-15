@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2015/01/28 19:23:22 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2015/06/15 21:44:57 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -41,6 +41,7 @@ CLEANFILES +=		*.pem *.req *.crt *.key *.srl empty toobig
 .BEGIN:
 	@echo
 	[ -z "${SUDO}" ] || ${SUDO} true
+	${SUDO} /etc/rc.d/syslogd stop
 .END:
 	@echo
 	${SUDO} /etc/rc.d/syslogd restart

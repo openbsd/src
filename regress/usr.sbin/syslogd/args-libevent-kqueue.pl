@@ -15,8 +15,7 @@ $ENV{EVENT_NOSELECT} = 1;
 our %args = (
     syslogd => {
 	loggrep => qr/libevent using: kqueue/,
-	ktrace => 1,
-	kdump => qr/CALL  kqueue/,
+	ktrace => qr/CALL  kqueue/,
     },
 );
 

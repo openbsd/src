@@ -15,14 +15,11 @@ our %args = (
 	connect => { domain => AF_INET, addr => "127.0.0.1", port => 514 },
     },
     syslogd => {
-	fstat => 1,
-	options => ["-nu"],
-    },
-    fstat => {
-	loggrep => {
+	fstat => {
 	    qr/ internet dgram udp \*:514$/ => 1,
 	    qr/ internet6 dgram udp \*:514$/ => 1,
 	},
+	options => ["-nu"],
     },
 );
 
