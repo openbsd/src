@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.101 2015/06/09 14:50:14 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.102 2015/06/15 15:55:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -857,17 +857,19 @@ trunk_ether_delmulti(struct trunk_softc *tr, struct ifreq *ifr)
 	if ((error = ether_delmulti(ifr, &tr->tr_ac)) != ENETRESET)
 		return (error);
 
-	if ((error = trunk_ioctl_allports(tr, SIOCDELMULTI,
-	    (caddr_t)ifr)) != 0) {
+	/* We no longer use this multicast address.  Tell parent so. */
+	error = trunk_ioctl_allports(tr, SIOCDELMULTI, (caddr_t)ifr);
+	if (error == 0) {
+		SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
+		free(mc, M_DEVBUF, sizeof(*mc));
+	} else {
 		/* XXX At least one port failed to remove the address */
 		if (tr->tr_ifflags & IFF_DEBUG) {
 			printf("%s: failed to remove multicast address "
-			    "on all ports\n", tr->tr_ifname);
+			    "on all ports (%d)\n", tr->tr_ifname, error);
 		}
+		(void)ether_addmulti(ifr, &tr->tr_ac);
 	}
-
-	SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
-	free(mc, M_DEVBUF, 0);
 
 	return (0);
 }
@@ -886,7 +888,7 @@ trunk_ether_purgemulti(struct trunk_softc *tr)
 		trunk_ioctl_allports(tr, SIOCDELMULTI, (caddr_t)ifr);
 
 		SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
-		free(mc, M_DEVBUF, 0);
+		free(mc, M_DEVBUF, sizeof(*mc));
 	}
 }
 
