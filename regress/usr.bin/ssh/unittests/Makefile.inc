@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2015/03/31 22:57:56 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2015/06/15 06:38:50 djm Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
@@ -6,7 +6,7 @@
 REGRESS_FAIL_EARLY= yes
 
 # XXX detect from ssh binary?
-SSH1?=		no
+SSH1?=		yes
 OPENSSL?=	yes
 
 .if (${OPENSSL:L} == "yes")
