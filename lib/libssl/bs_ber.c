@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_ber.c,v 1.4 2015/04/29 02:11:09 doug Exp $	*/
+/*	$OpenBSD: bs_ber.c,v 1.5 2015/06/15 07:35:49 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -27,6 +27,15 @@
  */
 static const unsigned kMaxDepth = 2048;
 
+/* Non-strict version that allows a relaxed DER with indefinite form. */
+static int
+cbs_nonstrict_get_any_asn1_element(CBS *cbs, CBS *out, unsigned *out_tag,
+    size_t *out_header_len)
+{
+	return cbs_get_any_asn1_element_internal(cbs, out,
+	    out_tag, out_header_len, 0);
+}
+
 /*
  * cbs_find_ber walks an ASN.1 structure in |orig_in| and sets |*ber_found|
  * depending on whether an indefinite length element was found. The value of
@@ -49,10 +58,11 @@ cbs_find_ber(CBS *orig_in, char *ber_found, unsigned depth)
 		unsigned tag;
 		size_t header_len;
 
-		if (!CBS_get_any_asn1_element(&in, &contents, &tag,
+		if (!cbs_nonstrict_get_any_asn1_element(&in, &contents, &tag,
 		    &header_len))
 			return 0;
 
+		/* Indefinite form not allowed by DER. */
 		if (CBS_len(&contents) == header_len && header_len > 0 &&
 		    CBS_data(&contents)[header_len - 1] == 0x80) {
 			*ber_found = 1;
@@ -84,7 +94,8 @@ is_primitive_type(unsigned tag)
 
 /*
  * is_eoc returns true if |header_len| and |contents|, as returned by
- * |CBS_get_any_asn1_element|, indicate an "end of contents" (EOC) value.
+ * |cbs_nonstrict_get_any_asn1_element|, indicate an "end of contents" (EOC)
+ * value.
  */
 static char
 is_eoc(size_t header_len, CBS *contents)
@@ -113,7 +124,8 @@ cbs_convert_ber(CBS *in, CBB *out, char squash_header, char looking_for_eoc,
 		size_t header_len;
 		CBB *out_contents, out_contents_storage;
 
-		if (!CBS_get_any_asn1_element(in, &contents, &tag, &header_len))
+		if (!cbs_nonstrict_get_any_asn1_element(in, &contents, &tag,
+		    &header_len))
 			return 0;
 
 		out_contents = out;
@@ -156,9 +168,9 @@ cbs_convert_ber(CBS *in, CBB *out, char squash_header, char looking_for_eoc,
 
 					CBS_init(&in_copy, CBS_data(in),
 					    CBS_len(in));
-					if (!CBS_get_any_asn1_element(&in_copy,
-					    &inner_contents, &inner_tag,
-					    &inner_header_len))
+					if (!cbs_nonstrict_get_any_asn1_element(
+					    &in_copy, &inner_contents,
+					    &inner_tag, &inner_header_len))
 						return 0;
 
 					if (CBS_len(&inner_contents) >

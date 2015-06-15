@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.8 2015/06/13 08:46:00 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.9 2015/06/15 07:35:49 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -205,24 +205,45 @@ int
 CBS_get_any_asn1_element(CBS *cbs, CBS *out, unsigned *out_tag,
     size_t *out_header_len)
 {
+	return cbs_get_any_asn1_element_internal(cbs, out, out_tag,
+	    out_header_len, 1);
+}
+
+/*
+ * Review X.690 for details on ASN.1 DER encoding.
+ *
+ * If non-strict mode is enabled, then DER rules are relaxed
+ * for indefinite constructs (violates DER but a little closer to BER).
+ * Non-strict mode should only be used by bs_ber.c
+ *
+ * Sections 8, 10 and 11 for DER encoding
+ */
+int
+cbs_get_any_asn1_element_internal(CBS *cbs, CBS *out, unsigned *out_tag,
+    size_t *out_header_len, int strict)
+{
 	uint8_t tag, length_byte;
 	CBS header = *cbs;
 	CBS throwaway;
+	size_t len;
 
 	if (out == NULL)
 		out = &throwaway;
 
+	/*
+	 * Get identifier octet and length octet.  Only 1 octet for each
+	 * is a CBS limitation.
+	 */
 	if (!CBS_get_u8(&header, &tag) || !CBS_get_u8(&header, &length_byte))
 		return 0;
 
+	/* CBS limitation: long form tags are not supported. */
 	if ((tag & 0x1f) == 0x1f)
-		/* Long form tags are not supported. */
 		return 0;
 
 	if (out_tag != NULL)
 		*out_tag = tag;
 
-	size_t len;
 	if ((length_byte & 0x80) == 0) {
 		/* Short form length. */
 		len = ((size_t) length_byte) + 2;
@@ -234,21 +255,40 @@ CBS_get_any_asn1_element(CBS *cbs, CBS *out, unsigned *out_tag,
 		const size_t num_bytes = length_byte & 0x7f;
 		uint32_t len32;
 
-		if ((tag & CBS_ASN1_CONSTRUCTED) != 0 && num_bytes == 0) {
-			/* indefinite length */
-			if (out_header_len != NULL)
-				*out_header_len = 2;
-			return CBS_get_bytes(cbs, out, 2);
+		/* ASN.1 reserved value for future extensions */
+		if (num_bytes == 0x7f)
+			return 0;
+
+		/* Handle indefinite form length */
+		if (num_bytes == 0) {
+			/* DER encoding doesn't allow for indefinite form. */
+			if (strict) {
+				return 0;
+
+			} else {
+				if ((tag & CBS_ASN1_CONSTRUCTED) != 0 &&
+				    num_bytes == 0) {
+					/* indefinite length */
+					if (out_header_len != NULL)
+						*out_header_len = 2;
+					return CBS_get_bytes(cbs, out, 2);
+				} else {
+					/* Primitive cannot use indefinite. */
+					return 0;
+				}
+			}
 		}
 
-		if (num_bytes == 0 || num_bytes > 4)
+		/* CBS limitation. */
+		if (num_bytes > 4)
 			return 0;
 
 		if (!cbs_get_u(&header, &len32, num_bytes))
 			return 0;
 
+		/* DER has a minimum length octet requirements. */
 		if (len32 < 128)
-			/* Length should have used short-form encoding. */
+			/* Should have used short form instead */
 			return 0;
 
 		if ((len32 >> ((num_bytes - 1) * 8)) == 0)
@@ -279,13 +319,7 @@ cbs_get_asn1(CBS *cbs, CBS *out, unsigned tag_value, int skip_header)
 		out = &throwaway;
 
 	if (!CBS_get_any_asn1_element(cbs, out, &tag, &header_len) ||
-	    tag != tag_value || (header_len > 0 &&
-	    /*
-	     * This ensures that the tag is either zero length or
-	     * indefinite-length.
-	     */
-	    CBS_len(out) == header_len &&
-	    CBS_data(out)[header_len - 1] == 0x80))
+	    tag != tag_value)
 		return 0;
 
 	if (skip_header && !CBS_skip(out, header_len)) {

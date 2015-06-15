@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.6 2015/06/13 09:02:45 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.7 2015/06/15 07:35:49 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -223,9 +223,8 @@ int CBS_peek_asn1_tag(const CBS *cbs, unsigned tag_value);
 /*
  * CBS_get_any_asn1_element sets |*out| to contain the next ASN.1 element from
  * |*cbs| (including header bytes) and advances |*cbs|. It sets |*out_tag| to
- * the tag number and |*out_header_len| to the length of the ASN.1 header. If
- * the element has indefinite length then |*out| will only contain the
- * header. Each of |out|, |out_tag|, and |out_header_len| may be NULL to ignore
+ * the tag number and |*out_header_len| to the length of the ASN.1 header.
+ * Each of |out|, |out_tag|, and |out_header_len| may be NULL to ignore
  * the value.
  *
  * Tag numbers greater than 30 are not supported (i.e. short form only).
@@ -451,6 +450,19 @@ int CBB_add_u24(CBB *cbb, uint32_t value);
 int CBB_add_asn1_uint64(CBB *cbb, uint64_t value);
 
 #ifdef LIBRESSL_INTERNAL
+/*
+ * CBS_get_any_asn1_element sets |*out| to contain the next ASN.1 element from
+ * |*cbs| (including header bytes) and advances |*cbs|. It sets |*out_tag| to
+ * the tag number and |*out_header_len| to the length of the ASN.1 header. If
+ * strict mode is disabled and the element has indefinite length then |*out|
+ * will only contain the header. Each of |out|, |out_tag|, and
+ * |out_header_len| may be NULL to ignore the value.
+ *
+ * Tag numbers greater than 30 are not supported (i.e. short form only).
+ */
+int cbs_get_any_asn1_element_internal(CBS *cbs, CBS *out, unsigned *out_tag,
+    size_t *out_header_len, int strict);
+
 /*
  * CBS_asn1_ber_to_der reads an ASN.1 structure from |in|. If it finds
  * indefinite-length elements then it attempts to convert the BER data to DER
