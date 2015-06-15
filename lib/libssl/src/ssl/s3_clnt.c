@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.111 2015/03/31 13:17:48 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.112 2015/06/15 05:32:58 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1645,8 +1645,6 @@ ssl3_get_certificate_request(SSL *s)
 		}
 		n2s(p, l);
 		if ((l + nc + 2) > llen) {
-			if ((s->options & SSL_OP_NETSCAPE_CA_DN_BUG))
-				goto cont; /* netscape bugs */
 			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
 			    SSL_R_CA_DN_TOO_LONG);
@@ -1656,16 +1654,11 @@ ssl3_get_certificate_request(SSL *s)
 		q = p;
 
 		if ((xn = d2i_X509_NAME(NULL, &q, l)) == NULL) {
-			/* If netscape tolerance is on, ignore errors */
-			if (s->options & SSL_OP_NETSCAPE_CA_DN_BUG)
-				goto cont;
-			else {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_DECODE_ERROR);
-				SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
-				    ERR_R_ASN1_LIB);
-				goto err;
-			}
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			    SSL_AD_DECODE_ERROR);
+			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
+			    ERR_R_ASN1_LIB);
+			goto err;
 		}
 
 		if (q != (p + l)) {
@@ -1682,11 +1675,6 @@ ssl3_get_certificate_request(SSL *s)
 
 		p += l;
 		nc += l + 2;
-	}
-
-	if (0) {
-cont:
-		ERR_clear_error();
 	}
 
 	/* we should setup a certificate to return.... */
