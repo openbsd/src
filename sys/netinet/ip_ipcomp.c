@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.42 2015/04/17 11:04:01 mikeb Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.43 2015/06/15 13:26:48 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -56,8 +56,8 @@
 
 #include "bpfilter.h"
 
-int ipcomp_output_cb(void *);
-int ipcomp_input_cb(void *);
+int ipcomp_output_cb(struct cryptop *);
+int ipcomp_input_cb(struct cryptop *);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)      if (encdebug) printf x
@@ -178,10 +178,10 @@ ipcomp_input(m, tdb, skip, protoff)
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
-	crp->crp_callback = (int (*) (struct cryptop *)) ipcomp_input_cb;
+	crp->crp_buf = (caddr_t)m;
+	crp->crp_callback = ipcomp_input_cb;
 	crp->crp_sid = tdb->tdb_cryptoid;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = (caddr_t)tc;
 
 	/* These are passed as-is to the callback */
 	tc->tc_skip = skip;
@@ -198,22 +198,18 @@ ipcomp_input(m, tdb, skip, protoff)
  * IPComp input callback, called directly by the crypto driver
  */
 int
-ipcomp_input_cb(op)
-	void *op;
+ipcomp_input_cb(struct cryptop *crp)
 {
 	int error, s, skip, protoff, roff, hlen = IPCOMP_HLENGTH, clen;
 	u_int8_t nproto;
 	struct mbuf *m, *m1, *mo;
 	struct tdb_crypto *tc;
-	struct cryptop *crp;
 	struct tdb *tdb;
 	struct ipcomp  *ipcomp;
 	caddr_t addr;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
-
-	crp = (struct cryptop *) op;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -535,9 +531,9 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
-	crp->crp_callback = (int (*) (struct cryptop *)) ipcomp_output_cb;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_buf = (caddr_t)m;
+	crp->crp_callback = ipcomp_output_cb;
+	crp->crp_opaque = (caddr_t)tc;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
 	return crypto_dispatch(crp);
@@ -547,10 +543,8 @@ ipcomp_output(m, tdb, mp, skip, protoff)
  * IPComp output callback, called directly from the crypto driver
  */
 int
-ipcomp_output_cb(cp)
-	void *cp;
+ipcomp_output_cb(struct cryptop *crp)
 {
-	struct cryptop *crp = (struct cryptop *) cp;
 	struct tdb_crypto *tc;
 	struct tdb *tdb;
 	struct mbuf *m, *mo;
