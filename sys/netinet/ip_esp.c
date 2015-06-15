@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.132 2015/06/15 12:37:37 mikeb Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.133 2015/06/15 12:59:37 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1117,12 +1117,10 @@ esp_output_cb(struct cryptop *crp)
  * return 3 for packet within current window but already received
  */
 int
-checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
-    int commit)
+checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqh, int commit)
 {
 	u_int32_t	tl, th, wl;
-	u_int32_t	seqh, packet;
-	u_int32_t	window = TDB_REPLAYMAX - TDB_REPLAYWASTE;
+	u_int32_t	packet, window = TDB_REPLAYMAX - TDB_REPLAYWASTE;
 	int		idx, esn = tdb->tdb_flags & TDBF_ESN;
 
 	tl = (u_int32_t)tdb->tdb_rpl;
@@ -1149,7 +1147,7 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 	 */
 	if ((tl >= window - 1 && seq >= wl) ||
 	    (tl <  window - 1 && seq <  wl)) {
-		seqh = *seqhigh = th;
+		*seqh = th;
 		if (seq > tl) {
 			if (commit) {
 				if (seq - tl > window)
@@ -1164,7 +1162,7 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 					}
 				}
 				tdb->tdb_seen[idx] |= packet;
-				tdb->tdb_rpl = ((u_int64_t)seqh << 32) | seq;
+				tdb->tdb_rpl = ((u_int64_t)*seqh << 32) | seq;
 			}
 		} else {
 			if (tl - seq >= window)
@@ -1190,7 +1188,7 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 	if (tl < window - 1 && seq >= wl) {
 		if (tdb->tdb_seen[idx] & packet)
 			return (3);
-		seqh = *seqhigh = th - 1;
+		*seqh = th - 1;
 		if (commit)
 			tdb->tdb_seen[idx] |= packet;
 		return (0);
@@ -1200,8 +1198,8 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 	 * SN has wrapped and the last authenticated SN is in the old
 	 * subspace.
 	 */
-	seqh = *seqhigh = th + 1;
-	if (seqh == 0)		/* Don't let high bit to wrap */
+	*seqh = th + 1;
+	if (*seqh == 0)		/* Don't let high bit to wrap */
 		return (1);
 	if (commit) {
 		if (seq - tl > window)
@@ -1215,7 +1213,7 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 			}
 		}
 		tdb->tdb_seen[idx] |= packet;
-		tdb->tdb_rpl = ((u_int64_t)seqh << 32) | seq;
+		tdb->tdb_rpl = ((u_int64_t)*seqh << 32) | seq;
 	}
 
 	return (0);
