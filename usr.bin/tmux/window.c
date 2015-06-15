@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.132 2015/06/04 11:43:51 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.133 2015/06/15 10:58:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -294,6 +294,9 @@ window_create1(u_int sx, u_int sy)
 
 	w->sx = sx;
 	w->sy = sy;
+
+	if (gettimeofday(&w->activity_time, NULL) != 0)
+		fatal("gettimeofday failed");
 
 	options_init(&w->options, &global_w_options);
 	if (options_get_number(&w->options, "automatic-rename"))

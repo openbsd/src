@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.78 2015/06/05 22:33:39 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.79 2015/06/15 10:58:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "tmux.h"
 
@@ -848,6 +849,9 @@ input_parse(struct window_pane *wp)
 
 	wp->window->flags |= WINDOW_ACTIVITY;
 	wp->window->flags &= ~WINDOW_SILENCE;
+
+	if (gettimeofday(&wp->window->activity_time, NULL) != 0)
+		fatal("gettimeofday failed");
 
 	/*
 	 * Open the screen. Use NULL wp if there is a mode set as don't want to

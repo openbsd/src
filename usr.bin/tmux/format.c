@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.72 2015/06/14 10:07:44 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.73 2015/06/15 10:58:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -749,6 +749,7 @@ void
 format_defaults_window(struct format_tree *ft, struct window *w)
 {
 	char	*layout;
+	time_t	 t;
 
 	ft->w = w;
 
@@ -756,6 +757,10 @@ format_defaults_window(struct format_tree *ft, struct window *w)
 		layout = layout_dump(w->saved_layout_root);
 	else
 		layout = layout_dump(w->layout_root);
+
+	t = w->activity_time.tv_sec;
+	format_add(ft, "window_activity", "%lld", (long long) t);
+	format_add(ft, "window_activity_string", "%s", format_time_string(t));
 
 	format_add(ft, "window_id", "@%u", w->id);
 	format_add(ft, "window_name", "%s", w->name);
