@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.3 2015/02/23 10:25:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.4 2015/06/15 08:06:11 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -62,10 +62,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *****************************************************************************/
-
-/*
- * BEGIN iwl-csr.h
- */
 
 /*
  * CSR (control and status registers)
@@ -524,14 +520,6 @@ enum iwm_dtd_diode_reg {
 	IWM_DTS_DIODE_REG_FLAGS_PASS_ONCE	= 0x00000080, /* bits [7:7] */
 };
 
-/*
- * END iwl-csr.h
- */
-
-/*
- * BEGIN iwl-fw.h
- */
-
 /**
  * enum iwl_ucode_tlv_flag - ucode API flags
  * @IWM_UCODE_TLV_FLAGS_PAN: This is PAN capable microcode; this previously
@@ -684,14 +672,6 @@ struct iwm_fw_cscheme_list {
 	struct iwm_fw_cipher_scheme cs[];
 } __packed;
 
-/*
- * END iwl-fw.h
- */
-
-/*
- * BEGIN iwl-fw-file.h
- */
-
 /* v1/v2 uCode file layout */
 struct iwm_ucode_header {
 	uint32_t ver;	/* major/minor/API/serial */
@@ -791,14 +771,6 @@ struct iwm_tlv_ucode_header {
 	 */
 	uint8_t data[0];
 };
-
-/*
- * END iwl-fw-file.h
- */
-
-/*
- * BEGIN iwl-prph.h
- */
 
 /*
  * Registers in this file are internal, not PCI bus memory mapped.
@@ -1014,14 +986,6 @@ static inline unsigned int IWM_SCD_QUEUE_STATUS_BITS(unsigned int chnl)
 /* Oscillator clock */
 #define IWM_OSC_CLK				(0xa04068)
 #define IWM_OSC_CLK_FORCE_CONTROL		(0x8)
-
-/*
- * END iwl-prph.h
- */
-
-/*
- * BEGIN iwl-fh.h
- */
 
 /****************************/
 /* Flow Handler Definitions */
@@ -1495,14 +1459,6 @@ struct iwm_tfd {
 struct iwm_agn_scd_bc_tbl {
 	uint16_t tfd_offset[IWM_TFD_QUEUE_BC_SIZE];
 } __packed;
-
-/*
- * END iwl-fh.h
- */
-
-/*
- * BEGIN mvm/fw-api.h
- */
 
 /* maximal number of Tx queues in any platform */
 #define IWM_MVM_MAX_QUEUES	20
@@ -2862,14 +2818,6 @@ struct iwm_sf_cfg_cmd {
 } __packed; /* IWM_SF_CFG_API_S_VER_2 */
 
 /*
- * END mvm/fw-api.h
- */
-
-/*
- * BEGIN mvm/fw-api-mac.h
- */
-
-/*
  * The first MAC indices (starting from 0)
  * are available to the driver, AUX follows
  */
@@ -3189,14 +3137,6 @@ struct iwm_nonqos_seq_query_cmd {
 	uint16_t reserved;
 } __packed; /* IWM_NON_QOS_TX_COUNTER_GET_SET_API_S_VER_1 */
 
-/*
- * END mvm/fw-api-mac.h
- */
-
-/*
- * BEGIN mvm/fw-api-power.h
- */
-
 /* Power Management Commands, Responses, Notifications */
 
 /* Radio LP RX Energy Threshold measured in dBm */
@@ -3485,14 +3425,6 @@ struct iwm_beacon_filter_cmd {
 	.ba_escape_timer = htole32(IWM_BA_ESCAPE_TIMER_DEFAULT)
 
 /*
- * END mvm/fw-api-power.h
- */
-
-/*
- * BEGIN mvm/fw-api-rs.h
- */
-
-/*
  * These serve as indexes into
  * struct iwm_rate_info fw_rate_idx_to_plcp[IWM_RATE_COUNT];
  * TODO: avoid overlap between legacy and HT rates
@@ -3776,14 +3708,6 @@ struct iwm_lq_cmd {
 	uint32_t rs_table[IWM_LQ_MAX_RETRY_NUM];
 	uint32_t bf_params;
 }; /* LINK_QUALITY_CMD_API_S_VER_1 */
-
-/*
- * END mvm/fw-api-rs.h
- */
-
-/*
- * BEGIN mvm/fw-api-tx.h
- */
 
 /**
  * enum iwm_tx_flags - bitmasks for tx_flags in TX command
@@ -4306,14 +4230,6 @@ static inline uint32_t iwm_mvm_get_scd_ssn(struct iwm_mvm_tx_resp *tx_resp)
 			    tx_resp->frame_count) & 0xfff;
 }
 
-/*
- * END mvm/fw-api-tx.h
- */
-
-/*
- * BEGIN mvm/fw-api-scan.h
- */
-
 /* Scan Commands, Responses, Notifications */
 
 /* Masks for iwm_scan_channel.type flags */
@@ -4835,14 +4751,6 @@ struct iwm_sched_scan_results {
 	uint8_t reserved;
 };
 
-/*
- * END mvm/fw-api-scan.h
- */
-
-/*
- * BEGIN mvm/fw-api-sta.h
- */
-
 /**
  * enum iwm_sta_flags - flags for the ADD_STA host command
  * @IWM_STA_FLG_REDUCED_TX_PWR_CTRL:
@@ -5212,10 +5120,6 @@ struct iwm_mvm_wep_key_cmd {
 	struct iwm_mvm_wep_key wep_key[0];
 } __packed; /* SEC_CURR_WEP_KEY_CMD_API_S_VER_2 */
 
-
-/*
- * END mvm/fw-api-sta.h
- */
 
 /*
  * Some cherry-picked definitions

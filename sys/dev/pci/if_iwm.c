@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.44 2015/06/15 07:50:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.45 2015/06/15 08:06:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -482,7 +482,6 @@ iwm_firmware_store_section(struct iwm_softc *sc,
 	return 0;
 }
 
-/* iwlwifi: iwl-drv.c */
 struct iwm_tlv_calib_data {
 	uint32_t ucode_type;
 	struct iwm_tlv_calib_ctrl calib;
@@ -740,7 +739,6 @@ iwm_write_prph(struct iwm_softc *sc, uint32_t addr, uint32_t val)
 	IWM_WRITE(sc, IWM_HBUS_TARG_PRPH_WDAT, val);
 }
 
-/* iwlwifi: pcie/trans.c */
 int
 iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 {
@@ -758,7 +756,6 @@ iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 	return ret;
 }
 
-/* iwlwifi: pcie/trans.c */
 int
 iwm_write_mem(struct iwm_softc *sc, uint32_t addr, const void *buf, int dwords)
 {
@@ -1436,7 +1433,6 @@ iwm_apm_init(struct iwm_softc *sc)
 	return error;
 }
 
-/* iwlwifi/pcie/trans.c */
 void
 iwm_apm_stop(struct iwm_softc *sc)
 {
@@ -1450,7 +1446,6 @@ iwm_apm_stop(struct iwm_softc *sc)
         DPRINTF(("iwm apm stop\n"));
 }
 
-/* iwlwifi pcie/trans.c */
 int
 iwm_start_hw(struct iwm_softc *sc)
 {
@@ -1474,7 +1469,6 @@ iwm_start_hw(struct iwm_softc *sc)
 	return 0;
 }
 
-/* iwlwifi pcie/trans.c */
 
 void
 iwm_stop_device(struct iwm_softc *sc)
@@ -1545,7 +1539,6 @@ iwm_stop_device(struct iwm_softc *sc)
 	iwm_check_rfkill(sc);
 }
 
-/* iwlwifi pcie/trans.c (always main power) */
 void
 iwm_set_pwr(struct iwm_softc *sc)
 {
@@ -1553,7 +1546,6 @@ iwm_set_pwr(struct iwm_softc *sc)
 	    IWM_APMG_PS_CTRL_VAL_PWR_SRC_VMAIN, ~IWM_APMG_PS_CTRL_MSK_PWR_SRC);
 }
 
-/* iwlwifi: mvm/ops.c */
 void
 iwm_mvm_nic_config(struct iwm_softc *sc)
 {
@@ -1822,11 +1814,6 @@ iwm_post_alive(struct iwm_softc *sc)
 
 /*
  * PHY db
- * iwlwifi/iwl-phy-db.c
- */
-
-/*
- * BEGIN iwl-phy-db.c
  */
 
 enum iwm_phy_db_section_type {
@@ -2141,14 +2128,6 @@ iwm_send_phy_db_data(struct iwm_softc *sc)
 }
 
 /*
- * END iwl-phy-db.c
- */
-
-/*
- * BEGIN iwlwifi/mvm/time-event.c
- */
-
-/*
  * For the high priority TE use a time event type that has similar priority to
  * the FW's action scan priority.
  */
@@ -2263,13 +2242,8 @@ iwm_mvm_protect_session(struct iwm_softc *sc, struct iwm_node *in,
 }
 
 /*
- * END iwlwifi/mvm/time-event.c
- */
-
-/*
  * NVM read access and content parsing.  We do not support
  * external NVM or writing NVM.
- * iwlwifi/mvm/nvm.c
  */
 
 /* list of NVM sections we are allowed/need to read */
@@ -2393,8 +2367,6 @@ iwm_nvm_read_section(struct iwm_softc *sc,
 /*
  * BEGIN IWM_NVM_PARSE
  */
-
-/* iwlwifi/iwl-nvm-parse.c */
 
 /* NVM offsets (in words) definitions */
 enum wkp_nvm_offsets {
@@ -2714,7 +2686,6 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	return error;
 }
 
-/* iwlwifi: pcie/trans.c */
 int
 iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 {
@@ -2762,7 +2733,6 @@ iwm_send_tx_ant_cfg(struct iwm_softc *sc, uint8_t valid_tx_ant)
 	    IWM_CMD_SYNC, sizeof(tx_ant_cmd), &tx_ant_cmd);
 }
 
-/* iwlwifi: mvm/fw.c */
 int
 iwm_send_phy_cfg_cmd(struct iwm_softc *sc)
 {
@@ -2805,9 +2775,6 @@ iwm_mvm_load_ucode_wait_alive(struct iwm_softc *sc,
  * mvm misc bits
  */
 
-/*
- * follows iwlwifi/fw.c
- */
 int
 iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 {
@@ -2921,7 +2888,6 @@ iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
 	return 0;
 }
 
-/* iwlwifi: mvm/rx.c */
 #define IWM_RSSI_OFFSET 50
 int
 iwm_mvm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
@@ -2952,7 +2918,6 @@ iwm_mvm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
 	return max_rssi_dbm;
 }
 
-/* iwlwifi: mvm/rx.c */
 /*
  * iwm_mvm_get_signal_strength - use new rx PHY INFO API
  * values are reported by the fw as positive values - need to negate
@@ -3218,10 +3183,6 @@ iwm_mvm_rx_tx_cmd(struct iwm_softc *sc,
 	}
 }
 
-/*
- * BEGIN iwlwifi/mvm/binding.c
- */
-
 int
 iwm_mvm_binding_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action)
 {
@@ -3270,14 +3231,6 @@ iwm_mvm_binding_add_vif(struct iwm_softc *sc, struct iwm_node *in)
 {
 	return iwm_mvm_binding_update(sc, in, IWM_FW_CTXT_ACTION_ADD);
 }
-
-/*
- * END iwlwifi/mvm/binding.c
- */
-
-/*
- * BEGIN iwlwifi/mvm/phy-ctxt.c
- */
 
 /*
  * Construct the generic fields of the PHY context command
@@ -3382,10 +3335,6 @@ iwm_mvm_phy_ctxt_changed(struct iwm_softc *sc,
 	return iwm_mvm_phy_ctxt_apply(sc, ctxt,
 	    chains_static, chains_dynamic, IWM_FW_CTXT_ACTION_MODIFY, 0);
 }
-
-/*
- * END iwlwifi/mvm/phy-ctxt.c
- */
 
 /*
  * transmit side
@@ -3551,7 +3500,6 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	return error;
 }
 
-/* iwlwifi: mvm/utils.c */
 int
 iwm_mvm_send_cmd_pdu(struct iwm_softc *sc, uint8_t id,
 	uint32_t flags, uint16_t len, const void *data)
@@ -3566,7 +3514,6 @@ iwm_mvm_send_cmd_pdu(struct iwm_softc *sc, uint8_t id,
 	return iwm_send_cmd(sc, &cmd);
 }
 
-/* iwlwifi: mvm/utils.c */
 int
 iwm_mvm_send_cmd_status(struct iwm_softc *sc,
 	struct iwm_host_cmd *cmd, uint32_t *status)
@@ -3608,7 +3555,6 @@ iwm_mvm_send_cmd_status(struct iwm_softc *sc,
 	return error;
 }
 
-/* iwlwifi/mvm/utils.c */
 int
 iwm_mvm_send_cmd_pdu_status(struct iwm_softc *sc, uint8_t id,
 	uint16_t len, const void *data, uint32_t *status)
@@ -3981,10 +3927,6 @@ iwm_mvm_flush_tx_path(struct iwm_softc *sc, int tfd_msk, int sync)
 }
 #endif
 
-/*
- * BEGIN mvm/led.c
- */
-
 /* Set led register on */
 void
 iwm_mvm_led_enable(struct iwm_softc *sc)
@@ -3998,10 +3940,6 @@ iwm_mvm_led_disable(struct iwm_softc *sc)
 {
 	IWM_WRITE(sc, IWM_CSR_LED_REG, IWM_CSR_LED_REG_TURN_OFF);
 }
-
-/*
- * END mvm/led.c
- */
 
 int
 iwm_mvm_led_is_enabled(struct iwm_softc *sc)
@@ -4034,10 +3972,6 @@ iwm_led_blink_stop(struct iwm_softc *sc)
 	timeout_del(&sc->sc_led_blink_to);
 	iwm_mvm_led_disable(sc);
 }
-
-/*
- * BEGIN mvm/power.c
- */
 
 #define IWM_POWER_KEEP_ALIVE_PERIOD_SEC    25
 
@@ -4250,14 +4184,6 @@ iwm_mvm_update_beacon_filter(struct iwm_softc *sc, struct iwm_node *in)
 }
 #endif
 
-/*
- * END mvm/power.c
- */
-
-/*
- * BEGIN mvm/sta.c
- */
-
 void
 iwm_mvm_add_sta_cmd_v6_to_v5(struct iwm_mvm_add_sta_cmd_v6 *cmd_v6,
 	struct iwm_mvm_add_sta_cmd_v5 *cmd_v5)
@@ -4404,14 +4330,6 @@ iwm_mvm_add_aux_sta(struct iwm_softc *sc)
 		memset(&sc->sc_aux_sta, 0, sizeof(sc->sc_aux_sta));
 	return ret;
 }
-
-/*
- * END mvm/sta.c
- */
-
-/*
- * BEGIN mvm/scan.c
- */
 
 #define IWM_PLCP_QUIET_THRESH 1
 #define IWM_ACTIVE_QUIET_TIME 10
@@ -4699,14 +4617,6 @@ iwm_mvm_scan_request(struct iwm_softc *sc, int flags,
 	return ret;
 }
 
-/*
- * END mvm/scan.c
- */
-
-/*
- * BEGIN mvm/mac-ctxt.c
- */
-
 void
 iwm_mvm_ack_rates(struct iwm_softc *sc, struct iwm_node *in,
 	int *cck_rates, int *ofdm_rates)
@@ -4993,14 +4903,6 @@ iwm_mvm_mac_ctxt_remove(struct iwm_softc *sc, struct iwm_node *in)
 }
 #endif
 
-/*
- * END mvm/mac-ctxt.c
- */
-
-/*
- * BEGIN mvm/quota.c
- */
-
 int
 iwm_mvm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
 {
@@ -5066,10 +4968,6 @@ iwm_mvm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
 		DPRINTF(("%s: Failed to send quota: %d\n", DEVNAME(sc), ret));
 	return ret;
 }
-
-/*
- * END mvm/quota.c
- */
 
 /*
  * aieee80211 routines
@@ -5870,10 +5768,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, iwm_caddr_t data)
  */
 
 /*
- * error dumping routines are from iwlwifi/mvm/utils.c
- */
-
-/*
  * Note: This structure is read from the device with IO accesses,
  * and the reading already does the endian conversion. As it is
  * read with uint32_t-sized accesses, any members with a different size
@@ -6176,7 +6070,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 			break;
 
 		/* ignore */
-		case 0x6c: /* IWM_PHY_DB_CMD, no idea why it's not in fw-api.h */
+		case 0x6c: /* IWM_PHY_DB_CMD */
 			break;
 
 		case IWM_INIT_COMPLETE_NOTIF:

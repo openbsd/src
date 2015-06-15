@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.8 2015/06/15 07:50:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.9 2015/06/15 08:06:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -308,11 +308,6 @@ struct iwm_ucode_status {
 #define IWM_MVM_TE_SESSION_PROTECTION_MAX_TIME_MS 500
 #define IWM_MVM_TE_SESSION_PROTECTION_MIN_TIME_MS 400
 
-/*
- * Command headers are in iwl-trans.h, which is full of all
- * kinds of other junk, so we just replicate the structures here.
- * First the software bits:
- */
 enum IWM_CMD_MODE {
 	IWM_CMD_SYNC		= 0,
 	IWM_CMD_ASYNC		= (1 << 0),
@@ -323,10 +318,6 @@ enum iwm_hcmd_dataflag {
 	IWM_HCMD_DFL_NOCOPY     = (1 << 0),
 	IWM_HCMD_DFL_DUP        = (1 << 1),
 };
-
-/*
- * iwlwifi/iwl-phy-db
- */
 
 #define IWM_NUM_PAPD_CH_GROUPS	4
 #define IWM_NUM_TXP_CH_GROUPS	9
