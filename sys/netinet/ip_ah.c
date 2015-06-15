@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.116 2015/04/17 11:04:01 mikeb Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.117 2015/06/15 12:37:37 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -76,8 +76,8 @@
 #define DPRINTF(x)
 #endif
 
-int	ah_output_cb(void *);
-int	ah_input_cb(void *);
+int	ah_output_cb(struct cryptop *);
+int	ah_input_cb(struct cryptop *);
 int	ah_massage_headers(struct mbuf **, int, int, int, int);
 
 struct ahstat ahstat;
@@ -678,10 +678,10 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
-	crp->crp_callback = (int (*) (struct cryptop *)) ah_input_cb;
+	crp->crp_buf = (caddr_t)m;
+	crp->crp_callback = ah_input_cb;
 	crp->crp_sid = tdb->tdb_cryptoid;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = (caddr_t)tc;
 
 	/* These are passed as-is to the callback. */
 	tc->tc_skip = skip;
@@ -698,22 +698,19 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
  * AH input callback, called directly by the crypto driver.
  */
 int
-ah_input_cb(void *op)
+ah_input_cb(struct cryptop *crp)
 {
 	int s, roff, rplen, error, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m1, *m0, *m;
 	struct auth_hash *ahx;
 	struct tdb_crypto *tc;
-	struct cryptop *crp;
 	struct tdb *tdb;
 	u_int32_t btsx, esn;
 	caddr_t ptr;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
-
-	crp = (struct cryptop *) op;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -1189,10 +1186,10 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
-	crp->crp_callback = (int (*) (struct cryptop *)) ah_output_cb;
+	crp->crp_buf = (caddr_t)m;
+	crp->crp_callback = ah_output_cb;
 	crp->crp_sid = tdb->tdb_cryptoid;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = (caddr_t)tc;
 
 	/* These are passed as-is to the callback. */
 	tc->tc_skip = skip;
@@ -1209,17 +1206,15 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
  * AH output callback, called directly from the crypto handler.
  */
 int
-ah_output_cb(void *op)
+ah_output_cb(struct cryptop *crp)
 {
 	int skip, error;
 	struct tdb_crypto *tc;
-	struct cryptop *crp;
 	struct tdb *tdb;
 	struct mbuf *m;
 	caddr_t ptr;
 	int err, s;
 
-	crp = (struct cryptop *) op;
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
 	ptr = (caddr_t) (tc + 1);

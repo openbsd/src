@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.131 2015/04/17 11:04:01 mikeb Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.132 2015/06/15 12:37:37 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -69,8 +69,8 @@
 
 #include "bpfilter.h"
 
-int esp_output_cb(void *);
-int esp_input_cb(void *);
+int esp_output_cb(struct cryptop *);
+int esp_input_cb(struct cryptop *);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -483,10 +483,10 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
-	crp->crp_callback = (int (*) (struct cryptop *)) esp_input_cb;
+	crp->crp_buf = (caddr_t)m;
+	crp->crp_callback = esp_input_cb;
 	crp->crp_sid = tdb->tdb_cryptoid;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = (caddr_t)tc;
 
 	/* These are passed as-is to the callback */
 	tc->tc_skip = skip;
@@ -518,22 +518,19 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
  * ESP input callback, called directly by the crypto driver.
  */
 int
-esp_input_cb(void *op)
+esp_input_cb(struct cryptop *crp)
 {
 	u_int8_t lastthree[3], aalg[AH_HMAC_MAX_HASHLEN];
 	int s, hlen, roff, skip, protoff, error;
 	struct mbuf *m1, *mo, *m;
 	struct auth_hash *esph;
 	struct tdb_crypto *tc;
-	struct cryptop *crp;
 	struct tdb *tdb;
 	u_int32_t btsx, esn;
 	caddr_t ptr;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
-
-	crp = (struct cryptop *) op;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -1006,9 +1003,9 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
-	crp->crp_callback = (int (*) (struct cryptop *)) esp_output_cb;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_buf = (caddr_t)m;
+	crp->crp_callback = esp_output_cb;
+	crp->crp_opaque = (caddr_t)tc;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
 	if (esph) {
@@ -1042,9 +1039,8 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
  * ESP output callback, called directly by the crypto driver.
  */
 int
-esp_output_cb(void *op)
+esp_output_cb(struct cryptop *crp)
 {
-	struct cryptop *crp = (struct cryptop *) op;
 	struct tdb_crypto *tc;
 	struct tdb *tdb;
 	struct mbuf *m;
