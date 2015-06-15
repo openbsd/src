@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.34 2015/06/15 21:42:15 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.35 2015/06/15 22:39:14 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,13 +81,13 @@ the default is
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
+.It Fl F
+Run in the foreground instead of disassociating from the controlling
+terminal and running as a background daemon.
 .It Fl f Ar config_file
 Specify the pathname of an alternate configuration file;
 the default is
 .Pa /etc/syslog.conf .
-.It Fl F
-Run in the foreground instead of disassociating from the controlling
-terminal and running as a background daemon.
 .It Fl h
 Include the hostname when forwarding messages to a remote host.
 .It Fl m Ar mark_interval
