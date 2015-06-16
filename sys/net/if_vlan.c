@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.128 2015/06/08 13:44:08 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.129 2015/06/16 11:09:39 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -259,9 +259,14 @@ vlan_input(struct mbuf *m)
 	struct mbuf_list		 ml = MBUF_LIST_INITIALIZER();
 	u_int16_t			 etype;
 
-	ifp = m->m_pkthdr.rcvif;
-	eh = mtod(m, struct ether_header *);
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	KASSERT(ifp != NULL);
+	if ((ifp->if_flags & IFF_UP) == 0) {
+		m_freem(m);
+		return (1);
+	}
 
+	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
 
 	if (m->m_flags & M_VLANTAG) {

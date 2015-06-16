@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.106 2015/06/08 22:19:28 krw Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.107 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ extern int nd6_recalc_reachtm_interval;
 void
 nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_solicit *nd_rs;
 	struct in6_addr saddr6 = ip6->ip6_src;
@@ -105,6 +105,10 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 #endif
 	union nd_opts ndopts;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto freeit;
 
 	/* If I'm not a router, ignore it. XXX - too restrictive? */
 	if (!ip6_forwarding)
@@ -197,7 +201,7 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	if (m == NULL)
 		return;
 
-	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.ph_ifidx = 0;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	m->m_flags |= M_MCAST;
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
@@ -278,8 +282,8 @@ nd6_rs_dev_state(void *arg)
 void
 nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
+	struct ifnet *ifp;
+	struct nd_ifinfo *ndi;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_advert *nd_ra;
 	struct in6_addr saddr6 = ip6->ip6_src;
@@ -293,9 +297,15 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	struct nd_defrouter *dr;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto freeit;
+
 	/* We accept RAs only if inet6 autoconf is enabled  */
 	if (!(ifp->if_xflags & IFXF_AUTOCONF6))
 		goto freeit;
+
+	ndi = ND_IFINFO(ifp);
 	if (!(ndi->flags & ND6_IFF_ACCEPT_RTADV))
 		goto freeit;
 
@@ -420,7 +430,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 			pr.ndpr_prefix.sin6_family = AF_INET6;
 			pr.ndpr_prefix.sin6_len = sizeof(pr.ndpr_prefix);
 			pr.ndpr_prefix.sin6_addr = pi->nd_opt_pi_prefix;
-			pr.ndpr_ifp = (struct ifnet *)m->m_pkthdr.rcvif;
+			pr.ndpr_ifp = ifp;
 
 			pr.ndpr_raf_onlink = (pi->nd_opt_pi_flags_reserved &
 			     ND_OPT_PI_FLAG_ONLINK) ? 1 : 0;

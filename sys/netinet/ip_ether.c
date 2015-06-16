@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.71 2015/04/10 13:58:20 dlg Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.72 2015/06/16 11:09:40 mpi Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -258,7 +258,7 @@ etherip_decap(struct mbuf *m, int iphlen)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	m->m_pkthdr.rcvif = &sc->gif_if;
+	m->m_pkthdr.ph_ifidx = sc->gif_if.if_index;
 	m->m_pkthdr.ph_rtableid = sc->gif_if.if_rdomain;
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		sc->gif_if.if_imcasts++;
@@ -322,7 +322,7 @@ mplsip_decap(struct mbuf *m, int iphlen)
 		bpf_mtap_af(sc->gif_if.if_bpf, AF_MPLS, m, BPF_DIRECTION_IN);
 #endif
 
-	m->m_pkthdr.rcvif = &sc->gif_if;
+	m->m_pkthdr.ph_ifidx = sc->gif_if.if_index;
 	m->m_pkthdr.ph_rtableid = sc->gif_if.if_rdomain;
 #if NPF > 0
 	pf_pkt_addr_changed(m);

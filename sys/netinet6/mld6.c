@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.41 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.42 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -164,10 +164,16 @@ mld6_input(struct mbuf *m, int off)
 {
 	struct ip6_hdr *ip6;
 	struct mld_hdr *mldh;
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct in6_multi *in6m;
 	struct ifmaddr *ifma;
 	int timer;		/* timer value in the MLD query header */
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
 
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
@@ -405,7 +411,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	}
 	mh->m_next = md;
 
-	mh->m_pkthdr.rcvif = NULL;
+	mh->m_pkthdr.ph_ifidx = 0;
 	mh->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	mh->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld_hdr);
 	mh->m_len = sizeof(struct ip6_hdr);

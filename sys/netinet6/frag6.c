@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.59 2014/12/08 10:51:00 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.60 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 #else
 	/* we are violating the spec, this is not the destination interface */
 	if ((m->m_flags & M_PKTHDR) != 0)
-		dstifp = m->m_pkthdr.rcvif;
+		dstifp = if_get(m->m_pkthdr.ph_ifidx);
 #endif
 
 	/* jumbo payload can't contain a fragment header */

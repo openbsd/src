@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.127 2015/04/17 04:43:21 guenther Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.128 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -626,7 +626,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
 	}
 
 	mb->m_pkthdr.len += authsiz + 10 * NFSX_UNSIGNED;
-	mb->m_pkthdr.rcvif = NULL;
+	mb->m_pkthdr.ph_ifidx = 0;
 }
 
 /*

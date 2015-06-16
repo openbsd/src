@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.84 2015/06/03 00:50:09 dlg Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.85 2015/06/16 11:09:39 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1372,7 +1372,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 #endif /* VJC */
 
     m->m_pkthdr.len = ilen;
-    m->m_pkthdr.rcvif = ifp;
+    m->m_pkthdr.ph_ifidx = ifp->if_index;
 
     /* mark incoming routing table */
     m->m_pkthdr.ph_rtableid = ifp->if_rdomain;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.145 2015/06/01 07:48:04 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.146 2015/06/16 11:09:39 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -898,7 +898,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	top->m_len  -= sizeof(*th);
 	top->m_pkthdr.len -= sizeof(*th);
 	top->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-	top->m_pkthdr.rcvif = ifp;
+	top->m_pkthdr.ph_ifidx = ifp->if_index;
 
 	switch (ntohl(*th)) {
 	case AF_INET:

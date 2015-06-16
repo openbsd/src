@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.43 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.44 2015/06/16 11:09:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -77,7 +77,7 @@ mplsintr(void)
 void
 mpls_input(struct mbuf *m)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct sockaddr_mpls *smpls;
 	struct sockaddr_mpls sa_mpls;
 	struct shim_hdr	*shim;
@@ -86,7 +86,8 @@ mpls_input(struct mbuf *m)
 	u_int8_t ttl;
 	int i, hasbos;
 
-	if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL || !ISSET(ifp->if_xflags, IFXF_MPLS)) {
 		m_freem(m);
 		return;
 	}

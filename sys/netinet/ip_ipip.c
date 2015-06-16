@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.59 2015/05/13 10:42:46 jsg Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.60 2015/06/16 11:09:40 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -136,8 +136,9 @@ ip4_input(struct mbuf *m, ...)
 /*
  * ipip_input gets called when we receive an IP{46} encapsulated packet,
  * either because we got it at a real interface, or because AH or ESP
- * were being used in tunnel mode (in which case the rcvif element will
- * contain the address of the encX interface associated with the tunnel.
+ * were being used in tunnel mode (in which case the ph_ifidx element
+ * will contain the index of the encX interface associated with the
+ * tunnel.
  */
 
 void
@@ -294,9 +295,8 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 	}
 
 	/* Check for local address spoofing. */
-	if ((m->m_pkthdr.rcvif == NULL ||
-	    !(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK)) &&
-	    ipip_allow != 2) {
+	if (((ifp = if_get(m->m_pkthdr.ph_ifidx)) == NULL ||
+	    !(ifp->if_flags & IFF_LOOPBACK)) && ipip_allow != 2) {
 		rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if (ifp->if_rdomain != rdomain)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.918 2015/06/07 12:02:28 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.919 2015/06/16 11:09:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2350,7 +2350,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		m->m_pkthdr.pf.qid = r->qid;
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
-	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.ph_ifidx = 0;
 	m->m_pkthdr.csum_flags |= M_TCP_CSUM_OUT;
 	bzero(m->m_data, len);
 	switch (af) {
@@ -2605,9 +2605,10 @@ pf_match_tag(struct mbuf *m, struct pf_rule *r, int *tag)
 int
 pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct pfi_kif *kif;
 
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
 		return (0);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.282 2015/06/07 01:25:27 krw Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.283 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -769,7 +769,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
-		m->m_pkthdr.rcvif = (struct ifnet *)0;
+		m->m_pkthdr.ph_ifidx = 0;
 		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
 		mhip->ip_sum = 0;
 		if ((ifp != NULL) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.33 2015/06/03 00:50:09 dlg Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.34 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -362,7 +362,7 @@ pppwrite(struct tty *tp, struct uio *uio, int flag)
 	if (mp == &m0) {
 	    MGETHDR(m, M_WAIT, MT_DATA);
 	    m->m_pkthdr.len = uio->uio_resid - PPP_HDRLEN;
-	    m->m_pkthdr.rcvif = NULL;
+	    m->m_pkthdr.ph_ifidx = 0;
 	} else
 	    MGET(m, M_WAIT, MT_DATA);
 	*mp = m;

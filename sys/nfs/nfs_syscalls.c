@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.100 2015/05/06 08:52:17 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.101 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -401,7 +401,7 @@ loop:
 
 		m = mreq;
 		m->m_pkthdr.len = siz;
-		m->m_pkthdr.rcvif = NULL;
+		m->m_pkthdr.ph_ifidx = 0;
 
 		/* For stream protocols, prepend a Sun RPC Record Mark. */
 		if (sotype == SOCK_STREAM) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.26 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.27 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 		m = m->m_next;
 	}
 	mhead->m_pkthdr.len = len;
-	mhead->m_pkthdr.rcvif = NULL;
+	mhead->m_pkthdr.ph_ifidx = 0;
 
 	/*
 	 * Send it, repeatedly, until a reply is received,

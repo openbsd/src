@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.48 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.49 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ void
 igmp_input(struct mbuf *m, ...)
 {
 	int iphlen;
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct igmp *igmp;
 	int igmplen;
@@ -228,6 +228,12 @@ igmp_input(struct mbuf *m, ...)
 	++igmpstat.igps_rcv_total;
 
 	igmplen = ntohs(ip->ip_len) - iphlen;
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
 
 	/*
 	 * Validate lengths

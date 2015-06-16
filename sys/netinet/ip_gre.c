@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.54 2015/04/10 13:58:20 dlg Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.55 2015/06/16 11:09:40 mpi Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -110,7 +110,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	}
 	gip = mtod(m, struct greip *);
 
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m->m_pkthdr.ph_ifidx = sc->sc_if.if_index;
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
 	sc->sc_if.if_ipackets++;
@@ -295,7 +295,7 @@ gre_mobile_input(struct mbuf *m, ...)
 	ip = mtod(m, struct ip *);
 	mip = mtod(m, struct mobip_h *);
 
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m->m_pkthdr.ph_ifidx = sc->sc_if.if_index;
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;

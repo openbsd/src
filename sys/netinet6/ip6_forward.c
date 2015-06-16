@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.75 2015/06/08 22:19:28 krw Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.76 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -122,10 +122,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
 			    "cannot forward "
-			    "from %s to %s nxt %d received on %s\n",
+			    "from %s to %s nxt %d received on inteface %u\n",
 			    src6, dst6,
 			    ip6->ip6_nxt,
-			    m->m_pkthdr.rcvif->if_xname);
+			    m->m_pkthdr.ph_ifidx);
 		}
 		m_freem(m);
 		return;
@@ -287,7 +287,7 @@ reroute:
 	 * unreachable error with Code 2 (beyond scope of source address).
 	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
 	 */
-	if (in6_addr2scopeid(m->m_pkthdr.rcvif, &ip6->ip6_src) !=
+	if (in6_addr2scopeid(if_get(m->m_pkthdr.ph_ifidx), &ip6->ip6_src) !=
 	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
@@ -299,10 +299,10 @@ reroute:
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
 			    "cannot forward "
-			    "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
+			    "src %s, dst %s, nxt %d, rcvif %u, outif %u\n",
 			    src6, dst6,
 			    ip6->ip6_nxt,
-			    m->m_pkthdr.rcvif->if_xname, rt->rt_ifp->if_xname);
+			    m->m_pkthdr.ph_ifidx, rt->rt_ifp->if_index);
 		}
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
@@ -369,7 +369,8 @@ reroute:
 	 * Also, don't send redirect if forwarding using a route
 	 * modified by a redirect.
 	 */
-	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt && ip6_sendredirects &&
+	if (rt->rt_ifp->if_index == m->m_pkthdr.ph_ifidx && !srcrt &&
+	    ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor(&ip6_forward_rt.ro_dst, rt->rt_ifp)) {

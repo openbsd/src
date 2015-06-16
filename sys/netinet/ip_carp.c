@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.259 2015/06/08 13:40:48 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.260 2015/06/16 11:09:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -399,7 +399,7 @@ void
 carp_proto_input(struct mbuf *m, ...)
 {
 	struct ip *ip = mtod(m, struct ip *);
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct carp_softc *sc = NULL;
 	struct carp_header *ch;
 	int iplen, len, hlen, ismulti;
@@ -408,6 +408,12 @@ carp_proto_input(struct mbuf *m, ...)
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
 	va_end(ap);
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
 
 	carpstats.carps_ipackets++;
 
@@ -478,11 +484,17 @@ int
 carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct carp_softc *sc = NULL;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct carp_header *ch;
 	u_int len;
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return (IPPROTO_DONE);
+	}
 
 	carpstats.carps_ipackets6++;
 
@@ -538,11 +550,14 @@ void
 carp_proto_input_c(struct mbuf *m, struct carp_header *ch, int ismulti,
     sa_family_t af)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct carp_softc *sc;
 	struct carp_vhost_entry *vhe;
 	struct timeval sc_tv, ch_tv;
 	struct carp_if *cif;
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	KASSERT(ifp != NULL);
 
 	if (ifp->if_type == IFT_CARP)
 		cif = (struct carp_if *)ifp->if_carpdev->if_carp;
@@ -1012,7 +1027,7 @@ carp_send_ad(void *v)
 		}
 		len = sizeof(*ip) + sizeof(ch);
 		m->m_pkthdr.len = len;
-		m->m_pkthdr.rcvif = NULL;
+		m->m_pkthdr.ph_ifidx = 0;
 		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
 		m->m_len = len;
@@ -1102,7 +1117,7 @@ carp_send_ad(void *v)
 		}
 		len = sizeof(*ip6) + sizeof(ch);
 		m->m_pkthdr.len = len;
-		m->m_pkthdr.rcvif = NULL;
+		m->m_pkthdr.ph_ifidx = 0;
 		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
 		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 		m->m_len = len;
@@ -1408,7 +1423,13 @@ carp_input(struct mbuf *m)
 	struct carp_if *cif;
 	struct ifnet *ifp0, *ifp;
 
-	ifp0 = m->m_pkthdr.rcvif;
+	ifp0 = if_get(m->m_pkthdr.ph_ifidx);
+	KASSERT(ifp0 != NULL);
+	if ((ifp0->if_flags & IFF_UP) == 0) {
+		m_freem(m);
+		return (1);
+	}
+
 	eh = mtod(m, struct ether_header *);
 	cif = (struct carp_if *)ifp0->if_carp;
 
@@ -1462,10 +1483,15 @@ carp_input(struct mbuf *m)
 int
 carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst)
 {
-	struct carp_softc *sc = m->m_pkthdr.rcvif->if_softc;
+	struct ifnet *ifp;
+	struct carp_softc *sc;
 	int match;
 	u_int32_t fold;
 
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	KASSERT(ifp != NULL);
+
+	sc = ifp->if_softc;
 	if (sc->sc_balancing < CARP_BAL_IP)
 		return (0);
 	/*

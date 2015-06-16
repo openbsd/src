@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.142 2015/06/08 22:19:28 krw Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.143 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -191,7 +191,9 @@ ip6_input(struct mbuf *m)
 	int srcrt = 0, isanycast = 0;
 	u_int rtableid = 0;
 
-	ifp = m->m_pkthdr.rcvif;
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto bad;
 
 	if (m->m_flags & M_EXT) {
 		if (m->m_next)
@@ -987,8 +989,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		if (IN6_IS_SCOPE_EMBED(&pi6.ipi6_addr))
 			pi6.ipi6_addr.s6_addr16[1] = 0;
-		pi6.ipi6_ifindex =
-		    (m && m->m_pkthdr.rcvif) ? m->m_pkthdr.rcvif->if_index : 0;
+		pi6.ipi6_ifindex = m ? m->m_pkthdr.ph_ifidx : 0;
 		*mp = sbcreatecontrol((caddr_t) &pi6,
 		    sizeof(struct in6_pktinfo),
 		    IS2292(IPV6_2292PKTINFO, IPV6_PKTINFO), IPPROTO_IPV6);

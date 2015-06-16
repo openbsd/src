@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.69 2015/04/23 09:45:24 dlg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.70 2015/06/16 11:09:40 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1095,8 +1095,8 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 	int is_idle;
 
 	/* change recvif */
-	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
-	ifp = m0->m_pkthdr.rcvif;
+	ifp = session->pipex_iface->ifnet_this;
+	m0->m_pkthdr.ph_ifidx = ifp->if_index;
 
 	PIPEX_PULLUP(m0, sizeof(struct ip));
 	if (m0 == NULL)
@@ -1180,8 +1180,8 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 	int len;
 
 	/* change recvif */
-	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
-	ifp = m0->m_pkthdr.rcvif;
+	ifp = session->pipex_iface->ifnet_this;
+	m0->m_pkthdr.ph_ifidx = ifp->if_index;
 
 #if 0 /* XXX: alignment */
 	PIPEX_PULLUP(m0, sizeof(struct ip6_hdr));
@@ -1431,7 +1431,7 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 	pppoe->session_id = htons(session->session_id);
 	pppoe->length = htons(len);
 
-	m0->m_pkthdr.rcvif = ifp; 
+	m0->m_pkthdr.ph_ifidx = ifp->if_index;
 	m0->m_flags &= ~(M_BCAST|M_MCAST);
 
 	session->stat.opackets++;
@@ -1516,7 +1516,7 @@ pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
 	}
 	gre->flags = htons(gre->flags);
 
-	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
+	m0->m_pkthdr.ph_ifidx = session->pipex_iface->ifnet_this->if_index;
 	if (ip_output(m0, NULL, NULL, 0, NULL, NULL, 0) != 0) {
 		PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
 		goto drop;
@@ -1948,7 +1948,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 	udp->uh_sum = 0;
 
 	m0->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
-	m0->m_pkthdr.rcvif = session->pipex_iface->ifnet_this;
+	m0->m_pkthdr.ph_ifidx = session->pipex_iface->ifnet_this->if_index;
 #if NPF > 0
 	pf_pkt_addr_changed(m0);
 #endif

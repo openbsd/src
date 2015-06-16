@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.159 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.160 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -981,7 +981,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo)
 	if (m == NULL)
 		return (m);
 	m->m_pkthdr.len = m->m_len = hlen = len;
-	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.ph_ifidx = 0;
 	rtm = mtod(m, struct rt_msghdr *);
 	bzero(rtm, len);
 	for (i = 0; i < RTAX_MAX; i++) {

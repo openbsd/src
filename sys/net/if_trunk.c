@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.102 2015/06/15 15:55:08 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.103 2015/06/16 11:09:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1090,9 +1090,14 @@ trunk_input(struct mbuf *m)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	int error;
 
-	ifp = m->m_pkthdr.rcvif;
-	eh = mtod(m, struct ether_header *);
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	KASSERT(ifp != NULL);
+	if ((ifp->if_flags & IFF_UP) == 0) {
+		m_freem(m);
+		return (1);
+	}
 
+	eh = mtod(m, struct ether_header *);
 	if (ETHER_IS_MULTICAST(eh->ether_dhost))
 		ifp->if_imcasts++;
 

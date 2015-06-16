@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.110 2015/06/07 01:25:27 krw Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.111 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -765,7 +765,7 @@ send:
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
 	}
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m->m_pkthdr.ph_ifidx = 0;
 	m->m_pkthdr.len = hdrlen + len;
 
 	if (!tp->t_template)

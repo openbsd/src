@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.173 2015/06/08 22:19:28 krw Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.174 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -713,7 +713,7 @@ reroute:
 		 *       continuous unless the flag is set.
 		 */
 		m->m_flags |= M_LOOP;
-		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.ph_ifidx = ifp->if_index;
 		if (ip6_process_hopopts(m, (u_int8_t *)(hbh + 1),
 		    ((hbh->ip6h_len + 1) << 3) - sizeof(struct ip6_hbh),
 		    &dummy1, &dummy2) < 0) {
@@ -722,7 +722,7 @@ reroute:
 			goto done;
 		}
 		m->m_flags &= ~M_LOOP; /* XXX */
-		m->m_pkthdr.rcvif = NULL;
+		m->m_pkthdr.ph_ifidx = 0;
 	}
 
 #if NPF > 0

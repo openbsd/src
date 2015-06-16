@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.250 2015/06/07 01:25:27 krw Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.251 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -225,7 +225,9 @@ ipv4_input(struct mbuf *m)
 	struct m_tag *mtag;
 #endif /* IPSEC */
 
-	ifp = m->m_pkthdr.rcvif;
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto bad;
 
 	ipstat.ips_total++;
 	if (m->m_len < sizeof (struct ip) &&
@@ -1687,7 +1689,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		struct sockaddr_dl sdl;
 		struct ifnet *ifp;
 
-		ifp = m->m_pkthdr.rcvif;
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
 		if (ifp == NULL || ifp->if_sadl == NULL) {
 			memset(&sdl, 0, sizeof(sdl));
 			sdl.sdl_len = offsetof(struct sockaddr_dl, sdl_data[0]);

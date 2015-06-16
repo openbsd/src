@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.154 2015/06/07 01:25:27 krw Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.155 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -522,8 +522,8 @@ void
 in_arpinput(struct mbuf *m)
 {
 	struct ether_arp *ea;
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct arpcom *ac = (struct arpcom *)ifp;
+	struct ifnet *ifp;
+	struct arpcom *ac;
 	struct ether_header *eh;
 	struct llinfo_arp *la = 0;
 	struct rtentry *rt;
@@ -539,6 +539,11 @@ in_arpinput(struct mbuf *m)
 	char addr[INET_ADDRSTRLEN];
 	int op, changed = 0;
 	unsigned int len;
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto out;
+	ac = (struct arpcom *)ifp;
 
 	ea = mtod(m, struct ether_arp *);
 	op = ntohs(ea->arp_op);
@@ -921,7 +926,7 @@ in_revarpinput(struct mbuf *m)
 #ifdef NFSCLIENT
 	if (!revarp_in_progress)
 		goto out;
-	ifp = m->m_pkthdr.rcvif;
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp != revarp_ifp) /* !same interface */
 		goto out;
 	if (revarp_finished)

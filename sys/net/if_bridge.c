@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.243 2015/06/12 15:40:06 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.244 2015/06/16 11:09:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1143,7 +1143,11 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 		return;
 	}
 
-	src_if = m->m_pkthdr.rcvif;
+	src_if = if_get(m->m_pkthdr.ph_ifidx);
+	if (src_if == NULL) {
+		m_freem(m);
+		return;
+	}
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -2464,8 +2468,11 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		ip6 = mtod(m, struct ip6_hdr *);
 
 		if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
+			struct ifnet *ifp;
 			ip6stat.ip6s_badvers++;
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
+			ifp = if_get(m->m_pkthdr.ph_ifidx);
+			if (ifp != NULL)
+				in6_ifstat_inc(ifp, ifs6_in_hdrerr);
 			goto dropit;
 		}
 

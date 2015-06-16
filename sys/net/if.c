@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.339 2015/06/09 14:57:30 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.340 2015/06/16 11:09:39 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -486,7 +486,7 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 	splassert(IPL_NET);
 
 	MBUF_LIST_FOREACH(ml, m) {
-		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.ph_ifidx = ifp->if_index;
 		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	}
 
@@ -524,11 +524,16 @@ if_input_process(void *xmq)
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		sched_pause();
 
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
+		if (ifp == NULL) {
+			m_freem(m);
+			continue;
+		}
+
 		/*
 		 * Pass this mbuf to all input handlers of its
 		 * interface until it is consumed.
 		 */
-		ifp = m->m_pkthdr.rcvif;
 		SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
 			if ((*ifih->ifih_input)(m))
 				break;
@@ -699,7 +704,7 @@ if_detach_filter(void *ctx, const struct mbuf *m)
 		return (0);
 #endif
 
-	return (m->m_pkthdr.rcvif == ifp);
+	return (m->m_pkthdr.ph_ifidx == ifp->if_index);
 }
 
 void

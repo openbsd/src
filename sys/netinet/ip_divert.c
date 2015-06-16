@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.33 2015/04/10 13:58:20 dlg Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.34 2015/06/16 11:09:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -89,7 +89,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	struct ip *ip;
 	u_int16_t off;
 
-	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.ph_ifidx = 0;
 	m->m_nextpkt = NULL;
 	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
@@ -146,7 +146,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 			error = EADDRNOTAVAIL;
 			goto fail;
 		}
-		m->m_pkthdr.rcvif = ifa->ifa_ifp;
+		m->m_pkthdr.ph_ifidx = ifa->ifa_ifp->if_index;
 
 		/*
 		 * Recalculate IP and protocol checksums for the inbound packet
@@ -210,7 +210,11 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 		struct ifaddr *ifa;
 		struct ifnet *ifp;
 
-		ifp = m->m_pkthdr.rcvif;
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
+		if (ifp == NULL) {
+			m_freem(m);
+			return (0);
+		}
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;

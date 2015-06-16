@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.132 2015/06/11 15:59:17 mikeb Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.133 2015/06/16 11:09:40 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -290,7 +290,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 		}
 
 		/* XXX This conflicts with the scoped nature of IPv6 */
-		m->m_pkthdr.rcvif = encif;
+		m->m_pkthdr.ph_ifidx = encif->if_index;
 	}
 
 	/* Register first use, setup expiration timer. */
@@ -1019,8 +1019,12 @@ ah6_input_cb(struct mbuf *m, int off, int protoff)
 		 * more sanity checks in header chain processing.
 		 */
 		if (m->m_pkthdr.len < off) {
+			struct ifnet *ifp;
+
 			ip6stat.ip6s_tooshort++;
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
+			ifp = if_get(m->m_pkthdr.ph_ifidx);
+			if (ifp != NULL)
+				in6_ifstat_inc(ifp, ifs6_in_truncated);
 			goto bad;
 		}
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);

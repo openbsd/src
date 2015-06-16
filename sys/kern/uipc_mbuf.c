@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.204 2015/05/31 20:10:44 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.205 2015/06/16 11:09:39 mpi Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1206,8 +1206,8 @@ m_print(void *v,
 	(*pr)("m_data: %p\tm_len: %u\n", m->m_data, m->m_len);
 	(*pr)("m_dat: %p\tm_pktdat: %p\n", m->m_dat, m->m_pktdat);
 	if (m->m_flags & M_PKTHDR) {
-		(*pr)("m_ptkhdr.rcvif: %p\tm_pkthdr.len: %i\n",
-		    m->m_pkthdr.rcvif, m->m_pkthdr.len);
+		(*pr)("m_ptkhdr.ph_ifidx: %u\tm_pkthdr.len: %i\n",
+		    m->m_pkthdr.ph_ifidx, m->m_pkthdr.len);
 		(*pr)("m_ptkhdr.tags: %p\tm_pkthdr.tagsset: %b\n",
 		    SLIST_FIRST(&m->m_pkthdr.tags),
 		    m->m_pkthdr.tagsset, MTAG_BITS);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.204 2015/06/08 13:44:08 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.205 2015/06/16 11:09:39 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -344,7 +344,8 @@ ether_input(struct mbuf *m)
 	struct ether_header *eh_tmp;
 #endif
 
-	ifp = m->m_pkthdr.rcvif;
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	KASSERT(ifp != NULL);
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return (1);
@@ -393,7 +394,8 @@ ether_input(struct mbuf *m)
 			if (m == NULL)
 				return (1);
 			/* The bridge has determined it's for us. */
-			ifp = m->m_pkthdr.rcvif;
+			ifp = if_get(m->m_pkthdr.ph_ifidx);
+			KASSERT(ifp != NULL);
 			m_adj(m, ETHER_HDR_LEN);
 		}
 	}

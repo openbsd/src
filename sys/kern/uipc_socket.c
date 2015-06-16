@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.138 2015/05/06 08:52:17 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.139 2015/06/16 11:09:39 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -486,7 +486,7 @@ restart:
 					MGETHDR(m, M_WAIT, MT_DATA);
 					mlen = MHLEN;
 					m->m_pkthdr.len = 0;
-					m->m_pkthdr.rcvif = (struct ifnet *)0;
+					m->m_pkthdr.ph_ifidx = 0;
 				} else {
 					MGET(m, M_WAIT, MT_DATA);
 					mlen = MLEN;

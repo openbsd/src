@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.44 2015/05/12 12:27:17 mpi Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.45 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ in_gif_input(struct mbuf *m, ...)
 	}
 
 	if (gifp) {
-		m->m_pkthdr.rcvif = gifp;
+		m->m_pkthdr.ph_ifidx = gifp->if_index;
 		m->m_pkthdr.ph_rtableid = gifp->if_rdomain;
 		gifp->if_ipackets++;
 		gifp->if_ibytes += m->m_pkthdr.len;

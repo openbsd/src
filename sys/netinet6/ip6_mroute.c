@@ -1078,10 +1078,10 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 			ip6_log_time = time_second;
 			log(LOG_DEBUG,
 			    "cannot forward "
-			    "from %s to %s nxt %d received on %s\n",
+			    "from %s to %s nxt %d received on interface %u\n",
 			    src, dst,
 			    ip6->ip6_nxt,
-			    m->m_pkthdr.rcvif->if_xname);
+			    m->m_pkthdr.ph_ifidx);
 		}
 		return 0;
 	}
@@ -1445,8 +1445,8 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 	}			/* if wrong iif */
 
 	/* If I sourced this packet, it counts as output, else it was input. */
-	if (m->m_pkthdr.rcvif == NULL) {
-		/* XXX: is rcvif really NULL when output?? */
+	if (m->m_pkthdr.ph_ifidx == 0) {
+		/* XXX: is ph_ifidx really 0 when output?? */
 		mif6table[mifi].m6_pkt_out++;
 		mif6table[mifi].m6_bytes_out += plen;
 	} else {
@@ -1526,7 +1526,7 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * Otherwise, we can simply send the packet to the interface
 	 * sending queue.
 	 */
-	if (m->m_pkthdr.rcvif == NULL) {
+	if (m->m_pkthdr.ph_ifidx == 0) {
 		struct ip6_moptions im6o;
 
 		im6o.im6o_ifidx = ifp->if_index;

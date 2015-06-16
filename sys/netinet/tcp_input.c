@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.292 2015/06/07 12:02:28 jsg Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.293 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -177,8 +177,8 @@ do { \
 do { \
 	if ((tp)->t_flags & TF_DELACK || \
 	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
-	    (m && (m->m_flags & M_PKTHDR) && m->m_pkthdr.rcvif && \
-	    (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK))) \
+	    (m && (m->m_flags & M_PKTHDR) && if_get(m->m_pkthdr.ph_ifidx) && \
+	    (if_get(m->m_pkthdr.ph_ifidx)->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
@@ -813,7 +813,8 @@ findpcb:
 				if (ip6 && !ip6_use_deprecated) {
 					struct in6_ifaddr *ia6;
 
-					if ((ia6 = in6ifa_ifpwithaddr(m->m_pkthdr.rcvif,
+					if ((ia6 = in6ifa_ifpwithaddr(
+					    if_get(m->m_pkthdr.ph_ifidx),
 					    &ip6->ip6_dst)) &&
 					    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
 						tp = NULL;
@@ -4039,7 +4040,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	sc->sc_iss = issp ? *issp : arc4random();
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_adv(m->m_flags & M_PKTHDR ?
-	    m->m_pkthdr.rcvif : NULL, sc->sc_src.sa.sa_family);
+	    if_get(m->m_pkthdr.ph_ifidx) : NULL, sc->sc_src.sa.sa_family);
 	sc->sc_win = win;
 	sc->sc_timestamp = tb.ts_recent;
 	if ((tb.t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP)) ==
@@ -4178,7 +4179,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
 	m->m_len = m->m_pkthdr.len = tlen;
-	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.ph_ifidx = 0;
 	m->m_pkthdr.ph_rtableid = sc->sc_rtableid;
 	memset(mtod(m, u_char *), 0, tlen);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.135 2015/06/07 01:25:27 krw Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.136 2015/06/16 11:09:40 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ icmp_do_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 	m->m_pkthdr.len = m->m_len;
-	m->m_pkthdr.rcvif = n->m_pkthdr.rcvif;
+	m->m_pkthdr.ph_ifidx = n->m_pkthdr.ph_ifidx;
 	nip = mtod(m, struct ip *);
 	/* ip_v set in ip_output */
 	nip->ip_hl = sizeof(struct ip) >> 2;
@@ -319,7 +319,9 @@ icmp_input(struct mbuf *m, ...)
 	hlen = va_arg(ap, int);
 	va_end(ap);
 
-	ifp = m->m_pkthdr.rcvif;
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto freeit;
 
 	/*
 	 * Locate icmp structure in mbuf, and check
