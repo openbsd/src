@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.8 2015/06/16 06:11:39 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.9 2015/06/16 06:37:58 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -464,22 +464,23 @@ int cbs_get_any_asn1_element_internal(CBS *cbs, CBS *out, unsigned *out_tag,
     size_t *out_header_len, int strict);
 
 /*
- * CBS_asn1_ber_to_der reads an ASN.1 structure from |in|. If it finds
- * indefinite-length elements then it attempts to convert the BER data to DER
- * and sets |*out| and |*out_length| to describe a malloced buffer containing
- * the DER data. Additionally, |*in| will be advanced over the ASN.1 data.
+ * CBS_asn1_indefinite_to_definite reads an ASN.1 structure from |in|. If it
+ * finds indefinite-length elements that otherwise appear to be valid DER, it
+ * attempts to convert the DER-like data to DER and sets |*out| and
+ * |*out_length| to describe a malloced buffer containing the DER data.
+ * Additionally, |*in| will be advanced over the ASN.1 data.
  *
  * If it doesn't find any indefinite-length elements then it sets |*out| to
  * NULL and |*in| is unmodified.
  *
- * A sufficiently complex ASN.1 structure will break this function because it's
- * not possible to generically convert BER to DER without knowledge of the
- * structure itself. However, this sufficies to handle the PKCS#7 and #12 output
+ * This is NOT a conversion from BER to DER.  There are many restrictions when
+ * dealing with DER data.  This is only concerned with one: indefinite vs.
+ * definite form. However, this suffices to handle the PKCS#7 and PKCS#12 output
  * from NSS.
  *
  * It returns one on success and zero otherwise.
  */
-int CBS_asn1_ber_to_der(CBS *in, uint8_t **out, size_t *out_len);
+int CBS_asn1_indefinite_to_definite(CBS *in, uint8_t **out, size_t *out_len);
 #endif /* LIBRESSL_INTERNAL */
 
 #if defined(__cplusplus)

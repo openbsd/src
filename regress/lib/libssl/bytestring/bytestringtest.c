@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.4 2015/04/25 15:28:47 doug Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.5 2015/06/16 06:37:58 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -484,23 +484,25 @@ err:
 }
 
 static int
-do_ber_convert(const char *name, const uint8_t *der_expected, size_t der_len,
-    const uint8_t *ber, size_t ber_len)
+do_indefinite_convert(const char *name, const uint8_t *definite_expected,
+    size_t definite_len, const uint8_t *indefinite, size_t indefinite_len)
 {
 	CBS in;
 	uint8_t *out = NULL;
 	size_t out_len;
 	int ret = 0;
 
-	CBS_init(&in, ber, ber_len);
-	if (!CBS_asn1_ber_to_der(&in, &out, &out_len)) {
-		fprintf(stderr, "%s: CBS_asn1_ber_to_der failed.\n", name);
+	CBS_init(&in, indefinite, indefinite_len);
+	if (!CBS_asn1_indefinite_to_definite(&in, &out, &out_len)) {
+		fprintf(stderr, "%s: CBS_asn1_indefinite_to_definite failed.\n",
+		    name);
 		goto end;
 	}
 
 	if (out == NULL) {
-		if (ber_len != der_len ||
-		    memcmp(der_expected, ber, ber_len) != 0) {
+		if (indefinite_len != definite_len ||
+		    memcmp(definite_expected, indefinite, indefinite_len)
+		    != 0) {
 			fprintf(stderr, "%s: incorrect unconverted result.\n",
 			    name);
 			return 0;
@@ -509,7 +511,8 @@ do_ber_convert(const char *name, const uint8_t *der_expected, size_t der_len,
 		return 1;
 	}
 
-	if (out_len != der_len || memcmp(out, der_expected, der_len) != 0) {
+	if (out_len != definite_len || memcmp(out, definite_expected,
+	    definite_len) != 0) {
 		fprintf(stderr, "%s: incorrect converted result.\n", name);
 		goto end;
 	}
@@ -522,7 +525,7 @@ end:
 }
 
 static int
-test_ber_convert(void)
+test_indefinite_convert(void)
 {
 	static const uint8_t kSimpleBER[] = {0x01, 0x01, 0x00};
 
@@ -566,14 +569,14 @@ test_ber_convert(void)
 	    0x6e, 0x10, 0x9b, 0xb8, 0x02, 0x02, 0x07, 0xd0,
 	};
 
-	return do_ber_convert("kSimpleBER", kSimpleBER, sizeof(kSimpleBER),
+	return do_indefinite_convert("kSimpleBER", kSimpleBER, sizeof(kSimpleBER),
 	    kSimpleBER, sizeof(kSimpleBER)) &&
-	    do_ber_convert("kIndefBER", kIndefDER, sizeof(kIndefDER), kIndefBER,
+	    do_indefinite_convert("kIndefBER", kIndefDER, sizeof(kIndefDER), kIndefBER,
 	    sizeof(kIndefBER)) &&
-	    do_ber_convert("kOctetStringBER", kOctetStringDER,
+	    do_indefinite_convert("kOctetStringBER", kOctetStringDER,
 	    sizeof(kOctetStringDER), kOctetStringBER,
 	    sizeof(kOctetStringBER)) &&
-	    do_ber_convert("kNSSBER", kNSSDER, sizeof(kNSSDER), kNSSBER,
+	    do_indefinite_convert("kNSSBER", kNSSDER, sizeof(kNSSDER), kNSSBER,
 	    sizeof(kNSSBER));
 }
 
@@ -682,7 +685,7 @@ main(void)
 	    !test_cbb_misuse() ||
 	    !test_cbb_prefixed() ||
 	    !test_cbb_asn1() ||
-	    !test_ber_convert() ||
+	    !test_indefinite_convert() ||
 	    !test_asn1_uint64() ||
 	    !test_get_optional_asn1_bool())
 		return 1;
