@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.94 2015/03/23 20:50:21 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.95 2015/06/16 18:24:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -1755,6 +1755,7 @@ xbridge_device_to_pa(bus_addr_t addr)
 const char *
 xbridge_setup(struct xbpci_softc *xb)
 {
+	bus_addr_t ba;
 	paddr_t pa;
 	uint64_t status, ctrl, int_addr, dirmap;
 	int mode, speed, dev;
@@ -1883,6 +1884,22 @@ xbridge_setup(struct xbpci_softc *xb)
 
 			break;
 		}
+	}
+
+	/*
+	 * Clear the write request memory in PIC, to avoid risking
+	 * spurious parity errors if it is not clean.
+	 */
+	if (ISSET(xb->xb_flags, XF_PIC)) {
+		for (ba = PIC_WR_REQ_LOWER(0);
+		    ba != PIC_WR_REQ_LOWER(PIC_WR_REQ_ENTRIES); ba += 8)
+			xbridge_write_reg(xb, ba, 0ULL);
+		for (ba = PIC_WR_REQ_UPPER(0);
+		    ba != PIC_WR_REQ_UPPER(PIC_WR_REQ_ENTRIES); ba += 8)
+			xbridge_write_reg(xb, ba, 0ULL);
+		for (ba = PIC_WR_REQ_PARITY(0);
+		    ba != PIC_WR_REQ_PARITY(PIC_WR_REQ_ENTRIES); ba += 8)
+			xbridge_write_reg(xb, ba, 0ULL);
 	}
 
 	/*
