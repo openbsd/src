@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.7 2015/06/15 07:35:49 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.8 2015/06/16 06:11:39 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -451,7 +451,7 @@ int CBB_add_asn1_uint64(CBB *cbb, uint64_t value);
 
 #ifdef LIBRESSL_INTERNAL
 /*
- * CBS_get_any_asn1_element sets |*out| to contain the next ASN.1 element from
+ * cbs_get_any_asn1_element sets |*out| to contain the next ASN.1 element from
  * |*cbs| (including header bytes) and advances |*cbs|. It sets |*out_tag| to
  * the tag number and |*out_header_len| to the length of the ASN.1 header. If
  * strict mode is disabled and the element has indefinite length then |*out|

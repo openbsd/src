@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.9 2015/06/15 07:35:49 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.10 2015/06/16 06:11:39 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -262,21 +262,17 @@ cbs_get_any_asn1_element_internal(CBS *cbs, CBS *out, unsigned *out_tag,
 		/* Handle indefinite form length */
 		if (num_bytes == 0) {
 			/* DER encoding doesn't allow for indefinite form. */
-			if (strict) {
+			if (strict)
 				return 0;
 
-			} else {
-				if ((tag & CBS_ASN1_CONSTRUCTED) != 0 &&
-				    num_bytes == 0) {
-					/* indefinite length */
-					if (out_header_len != NULL)
-						*out_header_len = 2;
-					return CBS_get_bytes(cbs, out, 2);
-				} else {
-					/* Primitive cannot use indefinite. */
-					return 0;
-				}
-			}
+			/* Primitive cannot use indefinite in BER or DER. */
+			if ((tag & CBS_ASN1_CONSTRUCTED) == 0)
+				return 0;
+
+			/* Constructed, indefinite length allowed in BER. */
+			if (out_header_len != NULL)
+				*out_header_len = 2;
+			return CBS_get_bytes(cbs, out, 2);
 		}
 
 		/* CBS limitation. */
@@ -286,7 +282,7 @@ cbs_get_any_asn1_element_internal(CBS *cbs, CBS *out, unsigned *out_tag,
 		if (!cbs_get_u(&header, &len32, num_bytes))
 			return 0;
 
-		/* DER has a minimum length octet requirements. */
+		/* DER has a minimum length octet requirement. */
 		if (len32 < 128)
 			/* Should have used short form instead */
 			return 0;
