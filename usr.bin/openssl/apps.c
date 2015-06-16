@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.25 2015/02/07 04:09:43 bcook Exp $ */
+/* $OpenBSD: apps.c,v 1.26 2015/06/16 02:27:24 doug Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2342,6 +2342,9 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 				return (1);
 			}
 			*opt->opt.value = (int)val;
+			break;
+
+		case OPTION_DISCARD:
 			break;
 
 		case OPTION_FUNC:
