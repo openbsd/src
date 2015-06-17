@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.17 2014/03/16 10:53:09 mpi Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.18 2015/06/17 08:31:55 mpi Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -213,7 +213,7 @@ struct usb_hid_descriptor {
 #define HUB_CONDITIONING_FLAG	0x0048
 #define HUB_ATRATE_OK		0x0049
 #define HUB_SMB_ERROR_CODE	0x004a
-#define HUB_SMB_NEED_REPLACE	0x004b
+#define HUB_NEED_REPLACEMENT	0x004b
 #define HUB_ATRATE_TIMETOFULL	0x0060
 #define HUB_ATRATE_TIMETOEMPTY	0x0061
 #define HUB_AVERAGE_CURRENT	0x0062

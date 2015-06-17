@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.21 2015/05/14 13:50:34 mpi Exp $ */
+/*	$OpenBSD: upd.c,v 1.22 2015/06/17 08:31:55 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -66,7 +66,13 @@ static struct upd_usage_entry upd_usage_batdep[] = {
 	{ HUP_BATTERY,	HUB_DISCHARGING,
 	    SENSOR_INDICATOR,	 "Discharging" },
 	{ HUP_BATTERY,	HUB_ATRATE_TIMETOFULL,
-	    SENSOR_TIMEDELTA,	 "AtRateTimeToFull" }
+	    SENSOR_TIMEDELTA,	 "AtRateTimeToFull" },
+	{ HUP_BATTERY,	HUB_ATRATE_TIMETOEMPTY,
+	    SENSOR_TIMEDELTA,	 "AtRateTimeToEmpty" },
+	{ HUP_BATTERY,	HUB_RUNTIMETO_EMPTY,
+	    SENSOR_TIMEDELTA,	 "RunTimeToEmpty" },
+	{ HUP_BATTERY,	HUB_NEED_REPLACEMENT,
+	    SENSOR_INDICATOR,	 "NeedReplacement" },
 };
 static struct upd_usage_entry upd_usage_roots[] = {
 	{ HUP_BATTERY,	HUB_BATTERY_PRESENT,
@@ -75,7 +81,9 @@ static struct upd_usage_entry upd_usage_roots[] = {
 	{ HUP_POWER,	HUP_SHUTDOWN_IMMINENT,
 	    SENSOR_INDICATOR,	 "ShutdownImminent" },
 	{ HUP_BATTERY,	HUB_AC_PRESENT,
-	    SENSOR_INDICATOR,	 "ACPresent" }
+	    SENSOR_INDICATOR,	 "ACPresent" },
+	{ HUP_POWER,	HUP_OVERLOAD,
+	    SENSOR_INDICATOR,	 "Overload" },
 };
 #define UPD_MAX_SENSORS	(nitems(upd_usage_batdep) + nitems(upd_usage_roots))
 
@@ -409,6 +417,12 @@ upd_sensor_update(struct upd_softc *sc, struct upd_sensor *sensor,
 	case HUB_REM_CAPACITY:
 	case HUB_FULLCHARGE_CAPACITY:
 		adjust = 1000; /* scale adjust */
+		break;
+	case HUB_ATRATE_TIMETOFULL:
+	case HUB_ATRATE_TIMETOEMPTY:
+	case HUB_RUNTIMETO_EMPTY:
+		/* spec says minutes, not seconds */
+		adjust = 1000000000LL;
 		break;
 	default:
 		adjust = 1; /* no scale adjust */
