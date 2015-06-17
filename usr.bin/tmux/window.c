@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.133 2015/06/15 10:58:01 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.134 2015/06/17 16:50:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1377,4 +1377,29 @@ winlink_clear_flags(struct winlink *wl)
 			server_status_session(s);
 		}
 	}
+}
+
+int
+winlink_shuffle_up(struct session *s, struct winlink *wl)
+{
+	int	 idx, last;
+
+	idx = wl->idx + 1;
+
+	/* Find the next free index. */
+	for (last = idx; last < INT_MAX; last++) {
+		if (winlink_find_by_index(&s->windows, last) == NULL)
+			break;
+	}
+	if (last == INT_MAX)
+		return (-1);
+
+	/* Move everything from last - 1 to idx up a bit. */
+	for (; last > idx; last--) {
+		wl = winlink_find_by_index(&s->windows, last - 1);
+		server_link_window(s, wl, s, last, 0, 0, NULL);
+		server_unlink_window(s, wl);
+	}
+
+	return (idx);
 }
