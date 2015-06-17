@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.220 2015/06/13 20:15:21 nicm Exp $	*/
+/*	$OpenBSD: ci.c,v 1.221 2015/06/17 08:13:31 nicm Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -210,8 +210,7 @@ checkin_main(int argc, char **argv)
 			printf("%s\n", rcs_version);
 			exit(0);
 		case 'w':
-			if (pb.author != NULL)
-				free(pb.author);
+			free(pb.author);
 			pb.author = xstrdup(rcs_optarg);
 			break;
 		case 'x':
