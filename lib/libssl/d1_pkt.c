@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.41 2015/06/13 08:38:10 doug Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.42 2015/06/17 07:29:33 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -575,20 +575,21 @@ again:
 		/* get another record */
 	}
 
-		/* Check whether this is a repeat, or aged record.
-		 * Don't check if we're listening and this message is
-		 * a ClientHello. They can look as if they're replayed,
-		 * since they arrive from different connections and
-		 * would be dropped unnecessarily.
-		 */
-		if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
-		    p != NULL && *p == SSL3_MT_CLIENT_HELLO) &&
-		    !dtls1_record_replay_check(s, bitmap)) {
-			rr->length = 0;
-			s->packet_length=0; /* dump this record */
-			goto again;
-			/* get another record */
-		}
+	/*
+	 * Check whether this is a repeat, or aged record.
+	 * Don't check if we're listening and this message is
+	 * a ClientHello. They can look as if they're replayed,
+	 * since they arrive from different connections and
+	 * would be dropped unnecessarily.
+	 */
+	if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
+	    p != NULL && *p == SSL3_MT_CLIENT_HELLO) &&
+	    !dtls1_record_replay_check(s, bitmap)) {
+		rr->length = 0;
+		s->packet_length=0; /* dump this record */
+		goto again;
+		/* get another record */
+	}
 
 	/* just read a 0 length packet */
 	if (rr->length == 0)

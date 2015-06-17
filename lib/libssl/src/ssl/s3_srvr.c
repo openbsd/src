@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.106 2015/06/15 05:32:58 doug Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.107 2015/06/17 07:29:33 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1407,7 +1407,8 @@ ssl3_send_server_key_exchange(SSL *s)
 			if (((group = EC_KEY_get0_group(ecdh)) == NULL) ||
 			    (EC_KEY_get0_public_key(ecdh)  == NULL) ||
 			    (EC_KEY_get0_private_key(ecdh) == NULL)) {
-				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,					    ERR_R_ECDH_LIB);
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+				    ERR_R_ECDH_LIB);
 				goto err;
 			}
 
