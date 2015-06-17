@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.233 2015/06/11 16:04:55 mikeb Exp $
+#	$OpenBSD: Makefile,v 1.234 2015/06/17 06:24:46 mpi Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -22,7 +22,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	kern.9 km_alloc.9 knote.9 kthread.9 ktrace.9 \
 	loadfirmware.9 lock.9 log.9 \
 	malloc.9 membar_sync.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 \
-	microtime.9 mountroothook_establish.9 mutex.9 namei.9 \
+	microtime.9 ml_init.9 mountroothook_establish.9 mq_init.9 mutex.9 \
+	namei.9 \
 	panic.9 pci_conf_read.9 pci_intr_map.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
@@ -253,16 +254,7 @@ MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
 	mbuf.9 MEXTADD.9 mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 \
 	mbuf.9 M_READONLY.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 mtod.9 \
-	mbuf.9 m_dup_pkthdr.9 \
-	mbuf.9 ml_init.9 mbuf.9 ml_enqueue.9 mbuf.9 ml_dequeue.9 \
-	mbuf.9 ml_dechain.9 mbuf.9 ml_filter.9 mbuf.9 ml_len.9 \
-	mbuf.9 ml_empty.9 \
-	mbuf.9 MBUF_LIST_INITIALIZER.9 mbuf.9 MBUF_LIST_FOREACH.9 \
-	mbuf.9 mq_init.9 mbuf.9 mq_enqueue.9 mbuf.9 mq_dequeue.9 \
-	mbuf.9 mq_enlist.9 mbuf.9 mq_delist.9 mbuf.9 mq_dechain.9 \
-	mbuf.9 mq_filter.9 mbuf.9 mq_len.9 mbuf.9 mq_empty.9 \
-	mbuf.9 mq_drops.9 mbuf.9 mq_set_maxlen.9 \
-	mbuf.9 MBUF_QUEUE_INITIALIZER.9
+	mbuf.9 m_dup_pkthdr.9
 MLINKS+=mbuf_tags.9 m_tag_get.9 mbuf_tags.9 m_tag_find.9 \
 	mbuf_tags.9 m_tag_prepend.9 mbuf_tags.9 m_tag_delete.9 \
 	mbuf_tags.9 m_tag_copy.9 mbuf_tags.9 m_tag_delete_chain.9 \
@@ -274,11 +266,18 @@ MLINKS+=microtime.9 getmicrotime.9 microtime.9 microuptime.9 \
 	microtime.9 getnanotime.9 microtime.9 nanouptime.9 \
 	microtime.9 getnanouptime.9 microtime.9 bintime.9 \
 	microtime.9 binuptime.9
+MLINKS+=ml_init.9 ml_enqueue.9 ml_init.9 ml_dequeue.9 ml_init.9 ml_dechain.9 \
+	ml_init.9 ml_filter.9 ml_init.9 ml_len.9 ml_init.9 ml_empty.9 \
+	ml_init.9 MBUF_LIST_INITIALIZER.9 ml_init.9 MBUF_LIST_FOREACH.9
 MLINKS+=mountroothook_establish.9 mountroothook_disestablish.9
 MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9 \
 	mutex.9 MUTEX_ASSERT_LOCKED.9 mutex.9 MUTEX_ASSERT_UNLOCKED.9 \
 	mutex.9 MUTEX_INITIALIZER.9
 MLINKS+=mutex.9 mtx_enter_try.9
+MLINKS+=mq_init.9 mq_enqueue.9 mq_init.9 mq_dequeue.9 mq_init.9 mq_enlist.9 \
+	mq_init.9 mq_delist.9 mq_init.9 mq_dechain.9 mq_init.9 mq_filter.9 \
+	mq_init.9 mq_len.9 mq_init.9 mq_empty.9 mq_init.9 mq_drops.9 \
+	mq_init.9 mq_set_maxlen.9 mq_init.9 MBUF_QUEUE_INITIALIZER.9
 MLINKS+=namei.9 vfs_lookup.9 namei.9 vfs_relookup.9 namei.9 NDINIT.9
 MLINKS+=namei.9 NDINITAT.9
 MLINKS+=pci_conf_read.9 pci_conf_write.9 pci_conf_read.9 pci_make_tag.9 \
