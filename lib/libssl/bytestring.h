@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.9 2015/06/16 06:37:58 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.10 2015/06/17 07:00:22 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -40,6 +40,7 @@ extern "C" {
 /* CRYPTO ByteString */
 typedef struct cbs_st {
 	const uint8_t *data;
+	size_t initial_len;
 	size_t len;
 } CBS;
 
@@ -64,6 +65,11 @@ const uint8_t *CBS_data(const CBS *cbs);
  * CBS_len returns the number of bytes remaining in |cbs|.
  */
 size_t CBS_len(const CBS *cbs);
+
+/*
+ * CBS_offset returns the current offset into the original data of |cbs|.
+ */
+size_t CBS_offset(const CBS *cbs);
 
 /*
  * CBS_stow copies the current contents of |cbs| into |*out_ptr| and

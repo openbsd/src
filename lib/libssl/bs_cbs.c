@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.10 2015/06/16 06:11:39 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.11 2015/06/17 07:00:22 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -28,6 +28,7 @@ void
 CBS_init(CBS *cbs, const uint8_t *data, size_t len)
 {
 	cbs->data = data;
+	cbs->initial_len = len;
 	cbs->len = len;
 }
 
@@ -41,6 +42,12 @@ cbs_get(CBS *cbs, const uint8_t **p, size_t n)
 	cbs->data += n;
 	cbs->len -= n;
 	return 1;
+}
+
+size_t
+CBS_offset(const CBS *cbs)
+{
+	return cbs->initial_len - cbs->len;
 }
 
 int
