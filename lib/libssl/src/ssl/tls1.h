@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.25 2015/02/22 15:54:27 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.26 2015/06/17 14:30:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -177,26 +177,34 @@ extern "C" {
 #define TLS1_get_client_version(s) \
 		((s->client_version >> 8) == TLS1_VERSION_MAJOR ? s->client_version : 0)
 
-#define TLS1_AD_DECRYPTION_FAILED	21
-#define TLS1_AD_RECORD_OVERFLOW		22
-#define TLS1_AD_UNKNOWN_CA		48	/* fatal */
-#define TLS1_AD_ACCESS_DENIED		49	/* fatal */
-#define TLS1_AD_DECODE_ERROR		50	/* fatal */
-#define TLS1_AD_DECRYPT_ERROR		51
-#define TLS1_AD_EXPORT_RESTRICTION	60	/* fatal */
-#define TLS1_AD_PROTOCOL_VERSION	70	/* fatal */
-#define TLS1_AD_INSUFFICIENT_SECURITY	71	/* fatal */
-#define TLS1_AD_INTERNAL_ERROR		80	/* fatal */
-#define TLS1_AD_INAPPROPRIATE_FALLBACK	86	/* fatal */
-#define TLS1_AD_USER_CANCELLED		90
-#define TLS1_AD_NO_RENEGOTIATION	100
-/* Codes 110-114 are from RFC 3546. */
-#define TLS1_AD_UNSUPPORTED_EXTENSION	110
-#define TLS1_AD_CERTIFICATE_UNOBTAINABLE 111
-#define TLS1_AD_UNRECOGNIZED_NAME 	112
-#define TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE 113
-#define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
-#define TLS1_AD_UNKNOWN_PSK_IDENTITY	115	/* fatal */
+/*
+ * TLS Alert codes.
+ *
+ * http://www.iana.org/assignments/tls-parameters/#tls-parameters-6
+ */
+
+#define TLS1_AD_DECRYPTION_FAILED		21
+#define TLS1_AD_RECORD_OVERFLOW			22
+#define TLS1_AD_UNKNOWN_CA			48	/* fatal */
+#define TLS1_AD_ACCESS_DENIED			49	/* fatal */
+#define TLS1_AD_DECODE_ERROR			50	/* fatal */
+#define TLS1_AD_DECRYPT_ERROR			51
+#define TLS1_AD_EXPORT_RESTRICTION		60	/* fatal */
+#define TLS1_AD_PROTOCOL_VERSION		70	/* fatal */
+#define TLS1_AD_INSUFFICIENT_SECURITY		71	/* fatal */
+#define TLS1_AD_INTERNAL_ERROR			80	/* fatal */
+/* Code 86 from RFC 7507. */
+#define TLS1_AD_INAPPROPRIATE_FALLBACK		86	/* fatal */
+#define TLS1_AD_USER_CANCELLED			90
+#define TLS1_AD_NO_RENEGOTIATION		100
+/* Codes 110-114 from RFC 3546. */
+#define TLS1_AD_UNSUPPORTED_EXTENSION		110
+#define TLS1_AD_CERTIFICATE_UNOBTAINABLE	111
+#define TLS1_AD_UNRECOGNIZED_NAME	 	112
+#define TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE	113
+#define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE	114
+/* Code 115 from RFC 4279. */
+#define TLS1_AD_UNKNOWN_PSK_IDENTITY		115	/* fatal */
 
 /*
  * TLS ExtensionType values.
