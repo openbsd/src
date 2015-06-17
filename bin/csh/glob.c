@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.17 2015/02/08 06:01:25 tedu Exp $	*/
+/*	$OpenBSD: glob.c,v 1.18 2015/06/17 03:48:21 deraadt Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -875,7 +875,6 @@ Gcat(Char *s1, Char *s2)
 	continue;
 }
 
-#ifdef FILEC
 int
 sortscmp(const void *a, const void *b)
 {
@@ -900,4 +899,3 @@ sortscmp(const void *a, const void *b)
     return ((int) Strcmp(*(Char **)a, *(Char **)b));
 #endif
 }
-#endif /* FILEC */

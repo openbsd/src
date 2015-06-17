@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.16 2015/02/08 06:09:50 tedu Exp $	*/
+/*	$OpenBSD: lex.c,v 1.17 2015/06/17 03:48:21 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -1395,10 +1395,8 @@ bgetc(void)
 {
     int buf, off, c;
 
-#ifdef FILEC
     int numleft = 0, roomleft;
     Char    ttyline[BUFSIZ];
-#endif
     char    tbuf[BUFSIZ + 1];
 
     if (cantell) {
@@ -1445,7 +1443,6 @@ again:
 	off = (int) feobp % BUFSIZ;
 	roomleft = BUFSIZ - off;
 
-#ifdef FILEC
 	roomleft = BUFSIZ - off;
 	for (;;) {
 	    if (filec && intty) {
@@ -1461,7 +1458,6 @@ again:
 		numleft = 0;
 	    }
 	    else {
-#endif
 		c = read(SHIN, tbuf, roomleft);
 		if (c > 0) {
 		    int     i;
@@ -1470,9 +1466,7 @@ again:
 		    for (i = 0; i < c; i++)
 			ptr[i] = (unsigned char) tbuf[i];
 		}
-#ifdef FILEC
 	    }
-#endif
 	    if (c >= 0)
 		break;
 	    if (errno == EWOULDBLOCK) {
@@ -1486,12 +1480,8 @@ again:
 	if (c <= 0)
 	    return (-1);
 	feobp += c;
-#ifndef FILEC
-	goto again;
-#else
 	if (filec && !intty)
 	    goto again;
-#endif
     }
     c = fbuf[buf][(int) fseekp % BUFSIZ];
     fseekp++;

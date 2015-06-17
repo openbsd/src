@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.14 2015/02/08 05:47:28 tedu Exp $	*/
+/*	$OpenBSD: set.c,v 1.15 2015/06/17 03:48:21 deraadt Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -162,10 +162,8 @@ doset(Char **v, struct command *t)
 	    dtilde();
 	    xfree(cp);
 	}
-#ifdef FILEC
 	else if (eq(vp, STRfilec))
 	    filec = 1;
-#endif
     } while ((p = *v++) != NULL);
 }
 
@@ -496,10 +494,8 @@ void
 unset(Char **v, struct command *t)
 {
     unset1(v, &shvhed);
-#ifdef FILEC
     if (adrof(STRfilec) == 0)
 	filec = 0;
-#endif
     if (adrof(STRhistchars) == 0) {
 	HIST = '!';
 	HISTSUB = '^';

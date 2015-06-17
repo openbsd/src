@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.21 2015/02/08 06:01:25 tedu Exp $	*/
+/*	$OpenBSD: csh.h,v 1.22 2015/06/17 03:48:21 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -118,9 +118,7 @@ bool    setintr;		/* Set interrupts on/off -> Wait intr... */
 bool    timflg;			/* Time the next waited for command */
 bool    havhash;		/* path hashing is available */
 
-#ifdef FILEC
 bool    filec;			/* doing filename expansion */
-#endif
 
 /*
  * Global i/o info

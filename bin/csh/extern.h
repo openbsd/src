@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.20 2015/02/08 06:01:25 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.21 2015/06/17 03:48:21 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -103,9 +103,7 @@ int	exp0(Char ***, bool);
 /*
  * file.c
  */
-#ifdef FILEC
 int	tenex(Char *, int);
-#endif
 
 /*
  * func.c
@@ -159,9 +157,7 @@ Char	**globall(Char **);
 void	  rscan(Char **, void (*)(int));
 void	  tglob(Char **);
 void	  trim(Char **);
-#ifdef FILEC
 int	  sortscmp(const void *, const void *);
-#endif /* FILEC */
 
 /*
  * hist.c
