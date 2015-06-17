@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.18 2015/06/17 03:49:29 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.19 2015/06/17 03:59:12 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
