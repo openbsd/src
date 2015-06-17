@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.76 2015/05/07 01:55:43 jsg Exp $ */
+/*	$OpenBSD: pmap.c,v 1.77 2015/06/17 17:15:07 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
@@ -284,15 +284,10 @@ pmap_bootstrap()
 	 * and faster, but takes ~0.75% more memory.
 	 */
 	pmap_map(KERNBASE, 0, avail_end, PROT_READ | PROT_WRITE);
-	/*
-	 * Kernel code is always readable for user, it must be because
-	 * of the emulation code that is somewhere in there.
-	 * And it doesn't hurt, the kernel file is also public readable.
-	 * There are also a couple of other things that must be in
-	 * physical memory and that isn't managed by the vm system.
-	 */
+
+	/* make sure kernel text is read-only */
 	for (i = 0; i < ((unsigned)&etext & ~KERNBASE) >> VAX_PGSHIFT; i++)
-		Sysmap[i] = (Sysmap[i] & ~PG_PROT) | PG_URKW;
+		Sysmap[i] = (Sysmap[i] & ~PG_PROT) | PG_KR;
 
 	/* Map System Page Table and zero it,  Sysmap already set. */
 	mtpr((vaddr_t)Sysmap - KERNBASE, PR_SBR);
@@ -482,12 +477,21 @@ rmpage(struct pmap *pm, pt_entry_t *br)
 	if (pg == NULL)
 		return;
 
-	if (pm == pmap_kernel())
+	if (pm == pmap_kernel()) {
+#ifdef DIAGNOSTIC
+		if (br - Sysmap >= sysptsize)
+			panic("%s: bogus Sysmap pte pointer %p", __func__, br);
+#endif
 		vaddr = (br - Sysmap) * VAX_NBPG + 0x80000000;
-	else if (br >= pm->pm_p0br && br < pm->pm_p0br + pm->pm_p0lr)
+	} else if (br >= pm->pm_p0br && br < pm->pm_p0br + pm->pm_p0lr)
 		vaddr = (br - pm->pm_p0br) * VAX_NBPG;
-	else
+	else {
 		vaddr = (br - pm->pm_p1br) * VAX_NBPG + 0x40000000;
+#ifdef DIAGNOSTIC
+		if (vaddr < 0x40000000 || vaddr >= 0x80000000)
+			panic("%s: bogus pmap %p P1 pte pointer %p", __func__, pm, br);
+#endif
+	}
 
 	s = splvm();
 	for (pl = NULL, pv = pg->mdpage.pv_head; pv != NULL; pl = pv, pv = pf) {
@@ -560,6 +564,7 @@ rmspace(struct pmap *pm)
 {
 	u_long lr, i, j;
 	pt_entry_t *ptpp, *br;
+	int s;
 
 	if (pm->pm_p0lr == 0 && pm->pm_p1lr == NPTEPERREG)
 		return; /* Already free */
@@ -593,6 +598,8 @@ rmspace(struct pmap *pm)
 		*ptpp = PG_NV;
 	}
 
+	s = splsched();
+
 	if (pm->pm_p0lr != 0)
 		extent_free(ptemap, (u_long)pm->pm_p0br,
 		    pm->pm_p0lr * PPTESZ, EX_WAITOK);
@@ -604,6 +611,8 @@ rmspace(struct pmap *pm)
 	pm->pm_p1lr = NPTEPERREG;
 	pm->pm_p1ap = NULL;
 	update_pcbs(pm);
+
+	splx(s);
 }
 
 /*
@@ -736,6 +745,7 @@ grow_p0(struct pmap *pm, u_long reqlen, int canfail)
 	size_t srclen, dstlen;
 	u_long p0br, p0lr, len;
 	int inuse;
+	int s;
 
 	PMDEBUG(("grow_p0: pmap %p reqlen %x\n", pm, reqlen));
 
@@ -748,6 +758,8 @@ grow_p0(struct pmap *pm, u_long reqlen, int canfail)
 	if (nptespc == 0)
 		return FALSE;
 	RECURSESTART;
+
+	s = splsched();
 
 	/*
 	 * Copy the old ptes to the new space.
@@ -770,6 +782,8 @@ grow_p0(struct pmap *pm, u_long reqlen, int canfail)
 	pm->pm_p0lr = len / PPTESZ;
 	update_pcbs(pm);
 
+	splx(s);
+
 	if (inuse)
 		extent_free(ptemap, p0br, p0lr * PPTESZ, EX_WAITOK);
 
@@ -782,6 +796,7 @@ grow_p1(struct pmap *pm, u_long len, int canfail)
 	vaddr_t nptespc, optespc;
 	pt_entry_t *from, *to;
 	size_t nlen, olen;
+	int s;
 
 	PMDEBUG(("grow_p1: pm %p len %x\n", pm, len));
 
@@ -792,6 +807,9 @@ grow_p1(struct pmap *pm, u_long len, int canfail)
 	if (nptespc == 0)
 		return FALSE;
 	RECURSESTART;
+
+	s = splsched();
+
 	olen = (NPTEPERREG - pm->pm_p1lr) * PPTESZ;
 	optespc = (vaddr_t)pm->pm_p1ap;
 
@@ -814,6 +832,8 @@ grow_p1(struct pmap *pm, u_long len, int canfail)
 	pm->pm_p1br = (pt_entry_t *)(nptespc + nlen - (NPTEPERREG * PPTESZ));
 	pm->pm_p1lr = NPTEPERREG - nlen / PPTESZ;
 	update_pcbs(pm);
+
+	splx(s);
 
 	if (optespc)
 		extent_free(ptemap, optespc, olen, EX_WAITOK);
@@ -1346,7 +1366,6 @@ pmap_protect(struct pmap *pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 
 /*
  * Called from interrupt vector routines if we get a page invalid fault.
- * Note: the save mask must be or'ed with 0x3f for this function.
  * Returns 0 if normal call, 1 if CVAX bug detected.
  */
 int pmap_simulref(int, vaddr_t);
