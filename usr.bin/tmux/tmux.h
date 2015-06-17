@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.524 2015/06/15 10:58:01 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.525 2015/06/17 16:44:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -714,6 +714,12 @@ struct options {
 
 /* Scheduled job. */
 struct job {
+	enum {
+		JOB_RUNNING,
+		JOB_DEAD,
+		JOB_CLOSED
+	} state;
+
 	char		*cmd;
 	pid_t		 pid;
 	int		 status;
