@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.6 2015/04/29 04:00:25 deraadt Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.7 2015/06/17 20:50:10 nicm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -73,12 +73,10 @@ xfree(void *ptr)
 char *
 xstrdup(const char *str)
 {
-	size_t len;
 	char *cp;
 
-	len = strlen(str) + 1;
-	cp = xmalloc(len);
-	strlcpy(cp, str, len);
+	if ((cp = strdup(str)) == NULL)
+		err(1, "xstrdup");
 	return cp;
 }
 
