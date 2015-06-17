@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.75 2015/03/02 13:43:09 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.76 2015/06/17 07:36:30 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,7 @@
 #include <openssl/ocsp.h>
 
 #include "ssl_locl.h"
+#include "bytestring.h"
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
     const unsigned char *sess_id, int sesslen,
@@ -403,15 +404,20 @@ tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
 int
 tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 {
+	CBS cbs;
 	const uint16_t *curves;
 	size_t curveslen, i;
+	uint8_t type;
 	uint16_t cid;
 
-	/* Only named curves are supported. */
-	if (len != 3 || p[0] != NAMED_CURVE_TYPE)
-		return (0);
+	CBS_init(&cbs, p, len);
 
-	cid = (p[1] << 8) | p[2];
+	/* Only named curves are supported. */
+	if (CBS_len(&cbs) != 3 ||
+	    !CBS_get_u8(&cbs, &type) ||
+	    type != NAMED_CURVE_TYPE ||
+	    !CBS_get_u16(&cbs, &cid))
+		return (0);
 
 	tls1_get_curvelist(s, 0, &curves, &curveslen);
 
