@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.95 2015/05/02 09:36:27 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.96 2015/06/17 07:50:38 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -270,11 +270,10 @@ eval _rcflags=\${${_name}_flags}
 eval _rcuser=\${${_name}_user}
 eval _rctimeout=\${${_name}_timeout}
 
+# set default values
 getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
-	daemon_class=${_name}
-
-# set default values; duplicated in rcctl(8)
-[ -z "${daemon_class}" ] && daemon_class=daemon
+	daemon_class=${_name} || daemon_class=daemon
+# duplicated in rcctl(8)
 [ -z "${daemon_user}" ] && daemon_user=root
 [ -z "${daemon_timeout}" ] && daemon_timeout=30
 
