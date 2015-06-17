@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.7 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.8 2015/06/17 20:38:15 jcs Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -553,7 +553,7 @@ ubcmtp_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
 	int wsmode;
 
-	DPRINTF("%s: in %s with cmd 0x%x\n", sc->sc_dev.dv_xname, __func__,
+	DPRINTF("%s: in %s with cmd 0x%lx\n", sc->sc_dev.dv_xname, __func__,
 	    cmd);
 
 	switch (cmd) {
