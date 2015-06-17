@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.11 2015/06/12 09:26:05 uebayasi Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.12 2015/06/17 03:04:50 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,11 +42,14 @@
 #define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
 
 #define SYSENTRY(x)							\
-	SYSENTRY_HIDDEN(x);					\
+	SYSENTRY_HIDDEN(x);						\
 	.weak _C_LABEL(x);						\
 	_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
 #define SYSENTRY_HIDDEN(x)						\
 	ENTRY(_thread_sys_ ## x)					\
+
+#define	SYSEXIT_HIDDEN(x)	END(_thread_sys_ ## x)
+#define	SYSEXIT(x)		SYSEXIT_HIDDEN(x); END(x)    
 
 #define CERROR		_C_LABEL(__cerror)
 #define _CERROR		_C_LABEL(___cerror)
@@ -55,9 +58,13 @@
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\
 	SYSTRAP(y)
+#define _SYSCALL_NOERROR_END(x,y)					\
+	SYSEXIT(x)
 #define _SYSCALL_HIDDEN_NOERROR(x,y)					\
 	SYSENTRY_HIDDEN(x);						\
 	SYSTRAP(y)
+#define _SYSCALL_HIDDEN_NOERROR_END(x,y)				\
+	SYSEXIT_HIDDEN(x)
 
 #ifdef __PIC__
 #define _SYSCALL(x,y)							\
@@ -85,22 +92,32 @@
 	jc 2b
 #endif
 
+#define _SYSCALL_END(x,y)						\
+	_SYSCALL_NOERROR_END(x,y)
+#define _SYSCALL_HIDDEN_END(x,y)					\
+	_SYSCALL_HIDDEN_NOERROR_END(x,y)
+
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
 
 #define SYSCALL(x)							\
 	_SYSCALL(x,x)
+#define SYSCALL_END(x)							\
+	_SYSCALL_END(x,x)
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
-	ret
+	ret;								\
+	_SYSCALL_NOERROR_END(x,y)
 
 #define PSEUDO(x,y)							\
 	_SYSCALL(x,y);							\
-	ret
+	ret;								\
+	_SYSCALL_END(x,y)
 #define PSEUDO_HIDDEN(x,y)						\
 	_SYSCALL_HIDDEN(x,y);						\
-	ret
+	ret;								\
+	_SYSCALL_HIDDEN_END(x,y)
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.4 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.5 2015/06/17 03:04:50 uebayasi Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -60,3 +60,4 @@ err:
 #else
 	jmp	CERROR
 #endif
+SYSEXIT(sigprocmask)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.2 2005/12/13 00:10:48 jsg Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.3 2015/06/17 03:04:50 uebayasi Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -43,3 +43,4 @@ SYSCALL(sigpending)
 	movl	%eax,(%rdi)		# store old mask
 	xorl	%eax,%eax
 	ret
+SYSCALL_END(sigpending)

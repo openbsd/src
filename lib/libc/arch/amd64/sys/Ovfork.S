@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.4 2015/03/31 04:32:01 guenther Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.5 2015/06/17 03:04:50 uebayasi Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -52,3 +52,4 @@ err:
 #else
 	jmp	CERROR
 #endif
+SYSEXIT(vfork)

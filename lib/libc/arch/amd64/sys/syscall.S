@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.4 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.5 2015/06/17 03:04:50 uebayasi Exp $	*/
 /*	$NetBSD: syscall.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -52,3 +52,4 @@ err:
 #else
 	jmp	CERROR
 #endif
+SYSEXIT(syscall)
