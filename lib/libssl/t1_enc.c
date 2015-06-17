@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.77 2015/02/22 15:54:27 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.78 2015/06/17 14:27:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1224,6 +1224,8 @@ tls1_alert_code(int code)
 		return (TLS1_AD_INSUFFICIENT_SECURITY);
 	case SSL_AD_INTERNAL_ERROR:
 		return (TLS1_AD_INTERNAL_ERROR);
+	case SSL_AD_INAPPROPRIATE_FALLBACK:
+		return(TLS1_AD_INAPPROPRIATE_FALLBACK);
 	case SSL_AD_USER_CANCELLED:
 		return (TLS1_AD_USER_CANCELLED);
 	case SSL_AD_NO_RENEGOTIATION:
@@ -1240,8 +1242,6 @@ tls1_alert_code(int code)
 		return (TLS1_AD_BAD_CERTIFICATE_HASH_VALUE);
 	case SSL_AD_UNKNOWN_PSK_IDENTITY:
 		return (TLS1_AD_UNKNOWN_PSK_IDENTITY);
-	case SSL_AD_INAPPROPRIATE_FALLBACK:
-		return(TLS1_AD_INAPPROPRIATE_FALLBACK);
 	default:
 		return (-1);
 	}
