@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_ber.c,v 1.6 2015/06/16 06:37:58 doug Exp $	*/
+/*	$OpenBSD: bs_ber.c,v 1.7 2015/06/17 07:20:39 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -25,7 +25,7 @@
  * of the input being processes always decreases. None the less, a very large
  * input could otherwise cause the stack to overflow.
  */
-static const unsigned kMaxDepth = 2048;
+static const unsigned int kMaxDepth = 2048;
 
 /* Non-strict version that allows a relaxed DER with indefinite form. */
 static int
@@ -56,7 +56,7 @@ cbs_find_indefinite(const CBS *orig_in, char *indefinite_found,
 
 	while (CBS_len(&in) > 0) {
 		CBS contents;
-		unsigned tag;
+		unsigned int tag;
 		size_t header_len;
 
 		if (!cbs_nonstrict_get_any_asn1_element(&in, &contents, &tag,
@@ -88,7 +88,7 @@ cbs_find_indefinite(const CBS *orig_in, char *indefinite_found,
  * length.
  */
 static char
-is_primitive_type(unsigned tag)
+is_primitive_type(unsigned int tag)
 {
 	return (tag & 0xc0) == 0 &&
 	    (tag & 0x1f) != (CBS_ASN1_SEQUENCE & 0x1f) &&
@@ -117,14 +117,14 @@ is_eoc(size_t header_len, CBS *contents)
  */
 static int
 cbs_convert_indefinite(CBS *in, CBB *out, char squash_header,
-    char looking_for_eoc, unsigned depth)
+    char looking_for_eoc, unsigned int depth)
 {
 	if (depth > kMaxDepth)
 		return 0;
 
 	while (CBS_len(in) > 0) {
 		CBS contents;
-		unsigned tag;
+		unsigned int tag;
 		size_t header_len;
 		CBB *out_contents, out_contents_storage;
 
@@ -167,7 +167,7 @@ cbs_convert_indefinite(CBS *in, CBB *out, char squash_header,
 				if (context_specific &&
 				    (tag & CBS_ASN1_CONSTRUCTED)) {
 					CBS in_copy, inner_contents;
-					unsigned inner_tag;
+					unsigned int inner_tag;
 					size_t inner_header_len;
 
 					CBS_init(&in_copy, CBS_data(in),
@@ -184,7 +184,7 @@ cbs_convert_indefinite(CBS *in, CBB *out, char squash_header,
 				}
 
 				if (!squash_header) {
-					unsigned out_tag = tag;
+					unsigned int out_tag = tag;
 
 					if (squash_child_headers)
 						out_tag &=
