@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.84 2015/06/17 06:49:27 doug Exp $ */
+/* $OpenBSD: ssl.h,v 1.85 2015/06/17 14:14:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -382,7 +382,6 @@ struct ssl_cipher_st {
 	const char *name;		/* text name */
 	unsigned long id;		/* id, 4 bytes, first is version */
 
-	/* changed in 0.9.9: these four used to be portions of a single value 'algorithms' */
 	unsigned long algorithm_mkey;	/* key exchange algorithm */
 	unsigned long algorithm_auth;	/* server authentication */
 	unsigned long algorithm_enc;	/* symmetric encryption */
@@ -532,7 +531,7 @@ struct ssl_session_st {
  * at all, which is why it was previously included in SSL_OP_ALL.
  * Now it's not.
  */
-#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS		0x00000800L /* added in 0.9.6e */
+#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS		0x00000800L
 
 /* DTLS options */
 #define SSL_OP_NO_QUERY_MTU				0x00001000L
@@ -572,8 +571,7 @@ struct ssl_session_st {
  */
 #define SSL_OP_CRYPTOPRO_TLSEXT_BUG			0x80000000L
 
-/* SSL_OP_ALL: various bug workarounds that should be rather harmless.
- *             This used to be 0x000FFFFFL before 0.9.7. */
+/* SSL_OP_ALL: various bug workarounds that should be rather harmless. */
 #define SSL_OP_ALL					0x80000374L
 
 /* Obsolete flags kept for compatibility. No sane code should use them. */
@@ -749,8 +747,6 @@ struct ssl_ctx_st {
 	/* if defined, these override the X509_verify_cert() calls */
 	int (*app_verify_callback)(X509_STORE_CTX *, void *);
 	void *app_verify_arg;
-	/* before OpenSSL 0.9.7, 'app_verify_arg' was ignored
-	 * ('app_verify_callback' was called with just one argument) */
 
 	/* Default password callback. */
 	pem_password_cb *default_passwd_callback;
