@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.8 2015/06/17 20:38:15 jcs Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.9 2015/06/17 20:39:47 jcs Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -819,7 +819,8 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			DPRINTF("absolute input %d, %d (finger %d, button %d)\n",
 			    sc->pos[0].x, sc->pos[0].y, finger, sc->btn);
 			wsmouse_input(sc->sc_wsmousedev, sc->btn, sc->pos[0].x,
-			    sc->pos[0].y, 50 /* fake z for now */,
+			    sc->pos[0].y,
+			    (finger == 0 ? 0 : 50), /* fake z for now */
 			    finger,
 			    WSMOUSE_INPUT_ABSOLUTE_X |
 			    WSMOUSE_INPUT_ABSOLUTE_Y |
