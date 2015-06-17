@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.5 2015/06/16 06:37:58 doug Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.6 2015/06/17 07:15:52 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -671,6 +671,72 @@ test_asn1_uint64(void)
 	return 1;
 }
 
+static int
+test_offset(void)
+{
+	uint8_t v;
+	static const uint8_t input[] = {1, 2, 3, 4, 5};
+	CBS data;
+
+	CBS_init(&data, input, sizeof(input));
+	if (sizeof(input) != 5)
+		return 0;
+
+	if (!(CBS_len(&data) == 5 && CBS_offset(&data) == 0 &&
+	    CBS_get_u8(&data, &v) && v == 1 &&
+	    CBS_len(&data) == 4 && CBS_offset(&data) == 1 &&
+	    CBS_skip(&data, 2) &&
+	    CBS_len(&data) == 2 && CBS_offset(&data) == 3 &&
+	    CBS_get_u8(&data, &v) && v == 4 &&
+	    CBS_get_u8(&data, &v) && v == 5 &&
+	    CBS_len(&data) == 0 && CBS_offset(&data) == 5 &&
+	    !CBS_skip(&data, 1)))
+		return 0;
+
+	CBS_init(&data, input, sizeof(input));
+	if (!(CBS_skip(&data, 2) &&
+	    CBS_len(&data) == 3 && CBS_offset(&data) == 2 &&
+	    CBS_skip(&data, 3) &&
+	    CBS_len(&data) == 0 && CBS_offset(&data) == 5 &&
+	    !CBS_get_u8(&data, &v)))
+		return 0;
+
+	return 1;
+}
+
+static int
+test_write_bytes(void)
+{
+	int ret = 0;
+	uint8_t v;
+	size_t len;
+	static const uint8_t input[] = {'f', 'o', 'o', 'b', 'a', 'r'};
+	CBS data;
+	char *tmp = NULL;
+
+	if ((tmp = malloc(sizeof(input))) == NULL) {
+		fprintf(stderr, "failed to malloc\n");
+		goto err;
+	}
+	memset(tmp, 100, sizeof(input));
+
+	CBS_init(&data, input, sizeof(input));
+	if (!(CBS_len(&data) == 6 && CBS_offset(&data) == 0 &&
+	    CBS_get_u8(&data, &v) && v == 102 /* f */ &&
+	    CBS_skip(&data, 1) &&
+	    !CBS_skip(&data, 15) &&
+	    CBS_write_bytes(&data, tmp, sizeof(input), &len) &&
+	    len == 4 && memcmp(input + 2, tmp, len) == 0 &&
+	    tmp[4] == 100 && tmp[5] == 100))
+		goto err;
+
+	ret = 1;
+
+err:
+	free(tmp);
+	return ret;
+}
+
 int
 main(void)
 {
@@ -687,7 +753,9 @@ main(void)
 	    !test_cbb_asn1() ||
 	    !test_indefinite_convert() ||
 	    !test_asn1_uint64() ||
-	    !test_get_optional_asn1_bool())
+	    !test_get_optional_asn1_bool() ||
+	    !test_offset() ||
+	    !test_write_bytes())
 		return 1;
 
 	printf("PASS\n");
