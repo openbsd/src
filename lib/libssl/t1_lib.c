@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.76 2015/06/17 07:36:30 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.77 2015/06/17 07:52:22 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1672,22 +1672,23 @@ ri_check:
 	return 1;
 }
 
-/* ssl_next_proto_validate validates a Next Protocol Negotiation block. No
+/*
+ * ssl_next_proto_validate validates a Next Protocol Negotiation block. No
  * elements of zero length are allowed and the set of elements must exactly fill
- * the length of the block. */
+ * the length of the block.
+ */
 static char
-ssl_next_proto_validate(unsigned char *d, unsigned len)
+ssl_next_proto_validate(const unsigned char *d, unsigned int len)
 {
-	unsigned int off = 0;
+	CBS npn, value;
 
-	while (off < len) {
-		if (d[off] == 0)
+	CBS_init(&npn, d, len);
+	while (CBS_len(&npn) > 0) {
+		if (!CBS_get_u8_length_prefixed(&npn, &value) ||
+		    CBS_len(&value) == 0)
 			return 0;
-		off += d[off];
-		off++;
 	}
-
-	return off == len;
+	return 1;
 }
 
 int
