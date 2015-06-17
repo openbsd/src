@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.10 2015/06/17 07:00:22 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.11 2015/06/17 07:06:22 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -90,6 +90,14 @@ int CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len);
  * |CBS_contains_zero_byte(cbs)| to check for NUL bytes.
  */
 int CBS_strdup(const CBS *cbs, char **out_ptr);
+
+/*
+ * CBS_write_bytes writes all of the remaining data from |cbs| into |dst|
+ * if it is at most |dst_len| bytes.  If |copied| is not NULL, it will be set
+ * to the amount copied. It returns one on success and zero otherwise.
+ */
+int CBS_write_bytes(const CBS *cbs, uint8_t *dst, size_t dst_len,
+    size_t *copied);
 
 /*
  * CBS_contains_zero_byte returns one if the current contents of |cbs| contains

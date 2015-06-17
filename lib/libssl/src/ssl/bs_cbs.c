@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.11 2015/06/17 07:00:22 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.12 2015/06/17 07:06:22 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -93,6 +93,20 @@ CBS_strdup(const CBS *cbs, char **out_ptr)
 	free(*out_ptr);
 	*out_ptr = strndup((const char *)cbs->data, cbs->len);
 	return (*out_ptr != NULL);
+}
+
+int
+CBS_write_bytes(const CBS *cbs, uint8_t *dst, size_t dst_len, size_t *copied)
+{
+	if (dst_len < cbs->len)
+		return 0;
+
+	memmove(dst, cbs->data, cbs->len);
+
+	if (copied != NULL)
+		*copied = cbs->len;
+
+	return 1;
 }
 
 int
