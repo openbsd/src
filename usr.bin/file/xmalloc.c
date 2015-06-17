@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.1 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.2 2015/06/17 18:51:11 nicm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -65,24 +65,13 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 	return new_ptr;
 }
 
-void
-xfree(void *ptr)
-{
-	if (ptr == NULL)
-		errx(1, "xfree: NULL pointer given as argument");
-	free(ptr);
-}
-
 char *
 xstrdup(const char *str)
 {
-	size_t len;
 	char *cp;
 
-	len = strlen(str) + 1;
-	cp = xmalloc(len);
-	if (strlcpy(cp, str, len) >= len)
-		errx(1, "xstrdup: string truncated");
+	if ((cp = strdup(str)) == NULL)
+		err(1, "xstrdup");
 	return cp;
 }
 
