@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.17 2015/06/17 03:48:21 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.18 2015/06/17 03:49:29 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -1355,7 +1355,6 @@ reread:
 	    /* was isatty but raw with ignoreeof yields problems */
 	    if (tcgetattr(SHIN, &tty) == 0 && (tty.c_lflag & ICANON))
 	    {
-		/* was 'short' for FILEC */
 		pid_t     ctpgrp;
 
 		if (++sincereal > 25)
