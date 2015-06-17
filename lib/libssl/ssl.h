@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.83 2015/02/22 15:54:27 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.84 2015/06/17 06:49:27 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -517,23 +517,13 @@ struct ssl_session_st {
 
 #endif
 
-#define SSL_OP_MICROSOFT_SESS_ID_BUG			0x00000001L
-#define SSL_OP_NETSCAPE_CHALLENGE_BUG			0x00000002L
 /* Allow initial connection to servers that don't support RI */
 #define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L
-#define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG		0x00000008L
 #define SSL_OP_TLSEXT_PADDING				0x00000010L
 #define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x00000020L
 #define SSL_OP_SAFARI_ECDHE_ECDSA_BUG			0x00000040L
-#define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x00000080L
 #define SSL_OP_TLS_D5_BUG				0x00000100L
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
-
-/* Hasn't done anything since OpenSSL 0.9.7h, retained for compatibility */
-#define SSL_OP_MSIE_SSLV2_RSA_PADDING			0x0
-
-/* Refers to ancient SSLREF and SSLv2, retained for compatibility */
-#define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
 
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
@@ -542,34 +532,25 @@ struct ssl_session_st {
  * at all, which is why it was previously included in SSL_OP_ALL.
  * Now it's not.
  */
-#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS              0x00000800L /* added in 0.9.6e */
-
-/* SSL_OP_ALL: various bug workarounds that should be rather harmless.
- *             This used to be 0x000FFFFFL before 0.9.7. */
-#define SSL_OP_ALL					0x800003FFL
+#define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS		0x00000800L /* added in 0.9.6e */
 
 /* DTLS options */
-#define SSL_OP_NO_QUERY_MTU                 0x00001000L
+#define SSL_OP_NO_QUERY_MTU				0x00001000L
 /* Turn on Cookie Exchange (on relevant for servers) */
-#define SSL_OP_COOKIE_EXCHANGE              0x00002000L
+#define SSL_OP_COOKIE_EXCHANGE				0x00002000L
 /* Don't use RFC4507 ticket extension */
-#define SSL_OP_NO_TICKET	            0x00004000L
+#define SSL_OP_NO_TICKET				0x00004000L
 /* Use Cisco's "speshul" version of DTLS_BAD_VER (as client)  */
-#define SSL_OP_CISCO_ANYCONNECT		    0x00008000L
+#define SSL_OP_CISCO_ANYCONNECT				0x00008000L
 
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
 /* Don't use compression even if supported */
 #define SSL_OP_NO_COMPRESSION				0x00020000L
-/* Permit unsafe legacy renegotiation */
-#define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x00040000L
 /* If set, always create a new key when using tmp_ecdh parameters */
 #define SSL_OP_SINGLE_ECDH_USE				0x00080000L
 /* If set, always create a new key when using tmp_dh parameters */
 #define SSL_OP_SINGLE_DH_USE				0x00100000L
-/* Set to always use the tmp_rsa key when doing RSA operations,
- * even when this violates protocol specs */
-#define SSL_OP_EPHEMERAL_RSA				0x00200000L
 /* Set on servers to choose the cipher according to the server's
  * preferences */
 #define SSL_OP_CIPHER_SERVER_PREFERENCE			0x00400000L
@@ -585,17 +566,29 @@ struct ssl_session_st {
 #define SSL_OP_NO_TLSv1_2				0x08000000L
 #define SSL_OP_NO_TLSv1_1				0x10000000L
 
-/* Obsolete flags kept for compatibility. No sane code should use them. */
-#define SSL_OP_PKCS1_CHECK_1				0x0
-#define SSL_OP_PKCS1_CHECK_2				0x0
-
-#define SSL_OP_NETSCAPE_CA_DN_BUG			0x20000000L
-#define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x40000000L
 /* Make server add server-hello extension from early version of
  * cryptopro draft, when GOST ciphersuite is negotiated.
  * Required for interoperability with CryptoPro CSP 3.x
  */
 #define SSL_OP_CRYPTOPRO_TLSEXT_BUG			0x80000000L
+
+/* SSL_OP_ALL: various bug workarounds that should be rather harmless.
+ *             This used to be 0x000FFFFFL before 0.9.7. */
+#define SSL_OP_ALL					0x80000374L
+
+/* Obsolete flags kept for compatibility. No sane code should use them. */
+#define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0
+#define SSL_OP_EPHEMERAL_RSA				0x0
+#define SSL_OP_MICROSOFT_SESS_ID_BUG			0x0
+#define SSL_OP_MSIE_SSLV2_RSA_PADDING			0x0
+#define SSL_OP_NETSCAPE_CA_DN_BUG			0x0
+#define SSL_OP_NETSCAPE_CHALLENGE_BUG			0x0
+#define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x0
+#define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG		0x0
+#define SSL_OP_PKCS1_CHECK_1				0x0
+#define SSL_OP_PKCS1_CHECK_2				0x0
+#define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x0
+#define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */
