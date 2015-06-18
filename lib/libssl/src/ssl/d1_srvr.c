@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.53 2015/06/15 05:32:58 doug Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.54 2015/06/18 22:30:47 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -476,11 +476,11 @@ dtls1_accept(SSL *s)
 				dtls1_stop_timer(s);
 				s->state = SSL3_ST_SR_CLNT_HELLO_C;
 			} else {
-				/* could be sent for a DH cert, even if we
-				 * have not asked for it :-) */
-				ret = ssl3_get_client_certificate(s);
-				if (ret <= 0)
-					goto end;
+				if (s->s3->tmp.cert_request) {
+					ret = ssl3_get_client_certificate(s);
+					if (ret <= 0)
+						goto end;
+				}
 				s->init_num = 0;
 				s->state = SSL3_ST_SR_KEY_EXCH_A;
 			}
