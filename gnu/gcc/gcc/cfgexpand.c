@@ -438,7 +438,7 @@ partition_stack_vars (void)
       for (si = n - 1; si > 0; si--)
 	{
 	  size_t tmp;
-	  sj = arc4random_uniform(si);
+	  sj = arc4random_uniform(si + 1);
 
 	  tmp = stack_vars_sorted[si];
 	  stack_vars_sorted[si] = stack_vars_sorted[sj];
