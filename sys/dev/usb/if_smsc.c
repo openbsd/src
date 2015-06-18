@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.18 2015/03/23 22:48:51 jsg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.19 2015/06/18 09:28:54 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -911,11 +911,11 @@ smsc_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return UMATCH_NONE;
 
 	return (usb_lookup(smsc_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	    UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE;
 }
 
 void
@@ -923,17 +923,15 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smsc_softc *sc = (struct smsc_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct mii_data *mii;
 	struct ifnet *ifp;
-	int err, s, i;
 	uint32_t mac_h, mac_l;
+	int s, i;
 
-	sc->sc_udev = dev;
-
-	err = usbd_set_config_no(dev, SMSC_CONFIG_INDEX, 1);
+	sc->sc_udev = uaa->device;
+	sc->sc_iface = uaa->iface;
 
 	/* Setup the endpoints for the SMSC LAN95xx device(s) */
 	usb_init_task(&sc->sc_tick_task, smsc_tick_task, sc,
@@ -941,13 +939,6 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 	rw_init(&sc->sc_mii_lock, "smscmii");
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *))smsc_stop, sc,
 	    USB_TASK_TYPE_GENERIC);
-
-	err = usbd_device2interface_handle(dev, SMSC_IFACE_IDX, &sc->sc_iface);
-	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
