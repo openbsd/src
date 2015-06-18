@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.73 2015/03/14 03:38:49 jsg Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.74 2015/06/18 09:47:16 mpi Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -64,10 +64,6 @@ int uftdidebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define UFTDI_CONFIG_INDEX	0
-#define UFTDI_IFACE_INDEX	0
-
 
 /*
  * These are the maximum number of bytes transferred per frame.
@@ -742,24 +738,12 @@ int
 uftdi_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
-	int err;
-	u_int8_t nifaces;
+
+	if (uaa->iface == NULL || uaa->configno != 1)
+		return (UMATCH_NONE);
 
 	if (usb_lookup(uftdi_devs, uaa->vendor, uaa->product) == NULL)
 		return (UMATCH_NONE);
-
-	/* Get the number of interfaces. */
-	if (uaa->iface != NULL) {
-		nifaces = uaa->nifaces;
-	} else {
-		err = usbd_set_config_index(uaa->device, UFTDI_CONFIG_INDEX, 1);
-		if (err)
-			return (UMATCH_NONE);
-		err = usbd_interface_count(uaa->device, &nifaces);
-		if (err)
-			return (UMATCH_NONE);
-		usbd_set_config_index(uaa->device, USB_UNCONFIG_INDEX, 1);
-	}
 
 	/* JTAG on USB interface 0 */
 	if (uaa->vendor == USB_VENDOR_FTDI &&
@@ -767,14 +751,7 @@ uftdi_match(struct device *parent, void *match, void *aux)
 	    uaa->ifaceno == 0)
 		return (UMATCH_NONE);
 
-	if (nifaces <= 1)
-		return (UMATCH_VENDOR_PRODUCT);
-
-	/* Dual UART chip */
-	if (uaa->iface != NULL)
-		return (UMATCH_VENDOR_IFACESUBCLASS);
-	else
-		return (UMATCH_NONE);
+	return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 }
 
 void
@@ -782,40 +759,14 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
-	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devname = sc->sc_dev.dv_xname;
-	int i;
-	usbd_status err;
 	struct ucom_attach_args uca;
+	int i;
 
-	DPRINTFN(10,("\nuftdi_attach: sc=%p\n", sc));
-
-	sc->sc_udev = dev;
-
-	if (uaa->iface == NULL) {
-		/* Move the device into the configured state. */
-		err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
-		if (err) {
-			printf("%s: failed to set configuration, err=%s\n",
-			    sc->sc_dev.dv_xname, usbd_errstr(err));
-			goto bad;
-		}
-
-		err = usbd_device2interface_handle(dev, UFTDI_IFACE_INDEX, &iface);
-		if (err) {
-			printf("%s: failed to get interface, err=%s\n",
-			    sc->sc_dev.dv_xname, usbd_errstr(err));
-			goto bad;
-		}
-	} else
-		iface = uaa->iface;
-
-	id = usbd_get_interface_descriptor(iface);
-
-	sc->sc_iface = iface;
+	sc->sc_udev = uaa->device;
+	sc->sc_iface = uaa->iface;
 
 	if (uaa->release < 0x0200) {
 		sc->sc_type = UFTDI_TYPE_SIO;
@@ -829,9 +780,10 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	uca.bulkin = uca.bulkout = -1;
+	id = usbd_get_interface_descriptor(sc->sc_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		int addr, dir, attr;
-		ed = usbd_interface2endpoint_descriptor(iface, i);
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor\n",
 			    devname);
@@ -873,8 +825,8 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	/* bulkin, bulkout set above */
 	uca.ibufsizepad = uca.ibufsize;
 	uca.opkthdrlen = sc->sc_hdrlen;
-	uca.device = dev;
-	uca.iface = iface;
+	uca.device = sc->sc_udev;
+	uca.iface = sc->sc_iface;
 	uca.methods = &uftdi_methods;
 	uca.arg = sc;
 	uca.info = NULL;
