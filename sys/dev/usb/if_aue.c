@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.98 2015/03/24 10:02:18 mpi Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.99 2015/06/18 10:02:49 mpi Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -684,11 +684,11 @@ aue_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg	*uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
 
 	return (aue_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+		UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE);
 }
 
 /*
@@ -705,8 +705,7 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet		*ifp;
 	struct mii_data		*mii;
 	struct usbd_device	*dev = uaa->device;
-	struct usbd_interface	*iface;
-	usbd_status		err;
+	struct usbd_interface	*iface = uaa->iface;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
@@ -715,25 +714,11 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->aue_udev = dev;
 
-	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n",
-		    sc->aue_dev.dv_xname);
-		return;
-	}
-
 	usb_init_task(&sc->aue_tick_task, aue_tick_task, sc,
 	    USB_TASK_TYPE_GENERIC);
 	usb_init_task(&sc->aue_stop_task, (void (*)(void *))aue_stop, sc,
 	    USB_TASK_TYPE_GENERIC);
 	rw_init(&sc->aue_mii_lock, "auemii");
-
-	err = usbd_device2interface_handle(dev, AUE_IFACE_IDX, &iface);
-	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    sc->aue_dev.dv_xname);
-		return;
-	}
 
 	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
 
