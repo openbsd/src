@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.11 2015/06/13 09:24:12 doug Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.12 2015/06/18 23:25:07 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -304,8 +304,11 @@ CBB_add_u24_length_prefixed(CBB *cbb, CBB *out_contents)
 }
 
 int
-CBB_add_asn1(CBB *cbb, CBB *out_contents, uint8_t tag)
+CBB_add_asn1(CBB *cbb, CBB *out_contents, unsigned int tag)
 {
+	if (tag > UINT8_MAX)
+		return 0;
+
 	/* Long form identifier octets are not supported. */
 	if ((tag & 0x1f) == 0x1f)
 		return 0;
@@ -353,21 +356,30 @@ CBB_add_space(CBB *cbb, uint8_t **out_data, size_t len)
 }
 
 int
-CBB_add_u8(CBB *cbb, uint8_t value)
+CBB_add_u8(CBB *cbb, size_t value)
 {
-	return cbb_add_u(cbb, value, 1);
+	if (value > UINT8_MAX)
+		return 0;
+
+	return cbb_add_u(cbb, (uint32_t)value, 1);
 }
 
 int
-CBB_add_u16(CBB *cbb, uint16_t value)
+CBB_add_u16(CBB *cbb, size_t value)
 {
-	return cbb_add_u(cbb, value, 2);
+	if (value > UINT16_MAX)
+		return 0;
+
+	return cbb_add_u(cbb, (uint32_t)value, 2);
 }
 
 int
-CBB_add_u24(CBB *cbb, uint32_t value)
+CBB_add_u24(CBB *cbb, size_t value)
 {
-	return cbb_add_u(cbb, value, 3);
+	if (value > 0xffffffUL)
+		return 0;
+
+	return cbb_add_u(cbb, (uint32_t)value, 3);
 }
 
 int

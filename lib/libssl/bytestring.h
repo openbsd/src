@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.12 2015/06/17 07:25:56 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.13 2015/06/18 23:25:07 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -423,7 +423,7 @@ int CBB_add_u24_length_prefixed(CBB *cbb, CBB *out_contents);
  * single octet identifiers are supported. It returns one on success or zero
  * on error.
  */
-int CBB_add_asn1(CBB *cbb, CBB *out_contents, uint8_t tag);
+int CBB_add_asn1(CBB *cbb, CBB *out_contents, unsigned int tag);
 
 /*
  * CBB_add_bytes appends |len| bytes from |data| to |cbb|. It returns one on
@@ -443,19 +443,19 @@ int CBB_add_space(CBB *cbb, uint8_t **out_data, size_t len);
  * CBB_add_u8 appends an 8-bit number from |value| to |cbb|. It returns one on
  * success and zero otherwise.
  */
-int CBB_add_u8(CBB *cbb, uint8_t value);
+int CBB_add_u8(CBB *cbb, size_t value);
 
 /*
  * CBB_add_u8 appends a 16-bit, big-endian number from |value| to |cbb|. It
  * returns one on success and zero otherwise.
  */
-int CBB_add_u16(CBB *cbb, uint16_t value);
+int CBB_add_u16(CBB *cbb, size_t value);
 
 /*
  * CBB_add_u24 appends a 24-bit, big-endian number from |value| to |cbb|. It
  * returns one on success and zero otherwise.
  */
-int CBB_add_u24(CBB *cbb, uint32_t value);
+int CBB_add_u24(CBB *cbb, size_t value);
 
 /*
  * CBB_add_asn1_uint64 writes an ASN.1 INTEGER into |cbb| using |CBB_add_asn1|
