@@ -1,7 +1,7 @@
 .\"
-.\"	$OpenBSD: SSL_do_handshake.3,v 1.2 2014/12/02 14:11:01 jmc Exp $
+.\"	$OpenBSD: SSL_do_handshake.3,v 1.3 2015/06/18 22:51:05 doug Exp $
 .\"
-.Dd $Mdocdate: December 2 2014 $
+.Dd $Mdocdate: June 18 2015 $
 .Dt SSL_DO_HANDSHAKE 3
 .Os
 .Sh NAME
@@ -30,19 +30,7 @@ If the underlying
 is
 .Em blocking ,
 .Fn SSL_do_handshake
-will only return once the handshake has been finished or an error occurred,
-except for SGC (Server Gated Cryptography).
-For SGC,
-.Fn SSL_do_handshake
-may return with \(mi1, but
-.Xr SSL_get_error 3
-will yield
-.Dv SSL_ERROR_WANT_READ
-or
-.Dv SSL_ERROR_WANT_WRITE
-and
-.Fn SSL_do_handshake
-should be called again.
+will only return once the handshake has been finished or an error occurred.
 .Pp
 If the underlying
 .Vt BIO

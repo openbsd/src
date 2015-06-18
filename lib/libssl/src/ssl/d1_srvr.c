@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.54 2015/06/18 22:30:47 doug Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.55 2015/06/18 22:51:05 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -468,22 +468,13 @@ dtls1_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
-			/* Check for second client hello (MS SGC) */
-			ret = ssl3_check_client_hello(s);
-			if (ret <= 0)
-				goto end;
-			if (ret == 2) {
-				dtls1_stop_timer(s);
-				s->state = SSL3_ST_SR_CLNT_HELLO_C;
-			} else {
-				if (s->s3->tmp.cert_request) {
-					ret = ssl3_get_client_certificate(s);
-					if (ret <= 0)
-						goto end;
-				}
-				s->init_num = 0;
-				s->state = SSL3_ST_SR_KEY_EXCH_A;
+			if (s->s3->tmp.cert_request) {
+				ret = ssl3_get_client_certificate(s);
+				if (ret <= 0)
+					goto end;
 			}
+			s->init_num = 0;
+			s->state = SSL3_ST_SR_KEY_EXCH_A;
 			break;
 
 		case SSL3_ST_SR_KEY_EXCH_A:

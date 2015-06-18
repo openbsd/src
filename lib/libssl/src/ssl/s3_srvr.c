@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.107 2015/06/17 07:29:33 doug Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.108 2015/06/18 22:51:05 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -273,7 +273,6 @@ ssl3_accept(SSL *s)
 			}
 
 			s->init_num = 0;
-			s->s3->flags &= ~SSL3_FLAGS_SGC_RESTART_DONE;
 
 			if (s->state != SSL_ST_RENEGOTIATE) {
 				/*
@@ -487,21 +486,13 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SR_CERT_A:
 		case SSL3_ST_SR_CERT_B:
-			/* Check for second client hello (MS SGC) */
-			ret = ssl3_check_client_hello(s);
-			if (ret <= 0)
-				goto end;
-			if (ret == 2)
-				s->state = SSL3_ST_SR_CLNT_HELLO_C;
-			else {
-				if (s->s3->tmp.cert_request) {
-					ret = ssl3_get_client_certificate(s);
-					if (ret <= 0)
-						goto end;
-				}
-				s->init_num = 0;
-				s->state = SSL3_ST_SR_KEY_EXCH_A;
+			if (s->s3->tmp.cert_request) {
+				ret = ssl3_get_client_certificate(s);
+				if (ret <= 0)
+					goto end;
 			}
+			s->init_num = 0;
+			s->state = SSL3_ST_SR_KEY_EXCH_A;
 			break;
 
 		case SSL3_ST_SR_KEY_EXCH_A:
@@ -762,46 +753,6 @@ ssl3_send_hello_request(SSL *s)
 
 	/* SSL3_ST_SW_HELLO_REQ_B */
 	return (ssl3_handshake_write(s));
-}
-
-int
-ssl3_check_client_hello(SSL *s)
-{
-	int ok;
-	long n;
-
-	/*
-	 * This function is called when we really expect a Certificate message,
-	 * so permit appropriate message length
-	 */
-	n = s->method->ssl_get_message(s, SSL3_ST_SR_CERT_A,
-	    SSL3_ST_SR_CERT_B, -1, s->max_cert_list, &ok);
-	if (!ok)
-		return ((int)n);
-	s->s3->tmp.reuse_message = 1;
-	if (s->s3->tmp.message_type == SSL3_MT_CLIENT_HELLO) {
-		/*
-		 * We only allow the client to restart the handshake once per
-		 * negotiation.
-		 */
-		if (s->s3->flags & SSL3_FLAGS_SGC_RESTART_DONE) {
-			SSLerr(SSL_F_SSL3_CHECK_CLIENT_HELLO,
-			    SSL_R_MULTIPLE_SGC_RESTARTS);
-			return (-1);
-		}
-		/*
-		 * Throw away what we have done so far in the current handshake,
-		 * which will now be aborted. (A full SSL_clear would be too
-		 * much.)
-		 */
-		DH_free(s->s3->tmp.dh);
-		s->s3->tmp.dh = NULL;
-		EC_KEY_free(s->s3->tmp.ecdh);
-		s->s3->tmp.ecdh = NULL;
-		s->s3->flags |= SSL3_FLAGS_SGC_RESTART_DONE;
-		return (2);
-	}
-	return (1);
 }
 
 int
