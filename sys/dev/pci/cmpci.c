@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.39 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.40 2015/06/18 20:02:57 naddy Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -736,8 +736,6 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 			    CMPCI_REG_CHB3D8C);
 
 		/* format */
-		if (p->precision > 16)
-			p->precision = 16;
 		switch (p->channels) {
 		case 1:
 			md_format = CMPCI_REG_FORMAT_MONO;
@@ -809,20 +807,14 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 		default:
 			return (EINVAL);
 		}
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				return (EINVAL);
+		if (p->precision >= 16) {
+			p->precision = 16;
+			p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			md_format |= CMPCI_REG_FORMAT_16BIT;
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision != 8)
-				return (EINVAL);
+		} else {
+			p->precision = 8;
+			p->encoding = AUDIO_ENCODING_ULINEAR_LE;
 			md_format |= CMPCI_REG_FORMAT_8BIT;
-			break;
-		default:
-			return (EINVAL);
 		}
 		p->bps = AUDIO_BPS(p->precision);
 		p->msb = 1;
