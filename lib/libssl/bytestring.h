@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.13 2015/06/18 23:25:07 doug Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.14 2015/06/19 00:23:36 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -465,6 +465,12 @@ int CBB_add_u24(CBB *cbb, size_t value);
 int CBB_add_asn1_uint64(CBB *cbb, uint64_t value);
 
 #ifdef LIBRESSL_INTERNAL
+/*
+ * CBS_dup sets |out| to point to cbs's |data| and |len|.  It results in two
+ * CBS that point to the same buffer.
+ */
+void CBS_dup(const CBS *cbs, CBS *out);
+
 /*
  * cbs_get_any_asn1_element sets |*out| to contain the next ASN.1 element from
  * |*cbs| (including header bytes) and advances |*cbs|. It sets |*out_tag| to
