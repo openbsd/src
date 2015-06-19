@@ -309,11 +309,11 @@ consideration is whether any/all available ENGINE implementations should be
 made visible to OpenSSL - this is controlled by calling the various "load"
 functions, eg.
 
- /* Make the "dynamic" ENGINE available */
- void ENGINE_load_dynamic(void);
- ...
  /* Make ALL ENGINE implementations bundled with OpenSSL available */
- void ENGINE_load_builtin_engines(void);
+ ENGINE_load_builtin_engines();
+
+Note that ENGINE_load_dynamic(void) is a placeholder and does not enable
+dynamic engine loading support.
 
 Having called any of these functions, ENGINE objects would have been
 dynamically allocated and populated with these implementations and linked

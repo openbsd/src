@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_list.c,v 1.18 2015/04/11 16:03:21 deraadt Exp $ */
+/* $OpenBSD: eng_list.c,v 1.19 2015/06/19 06:05:11 bcook Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -351,7 +351,6 @@ ENGINE *
 ENGINE_by_id(const char *id)
 {
 	ENGINE *iterator;
-	char *load_dir = NULL;
 
 	if (id == NULL) {
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID,
@@ -381,30 +380,9 @@ ENGINE_by_id(const char *id)
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 
-	/* EEK! Experimental code starts */
-	if (iterator)
-		return iterator;
-	/* Prevent infinite recusrion if we're looking for the dynamic engine. */
-	if (strcmp(id, "dynamic")) {
-		load_dir = ENGINESDIR;
-
-		iterator = ENGINE_by_id("dynamic");
-		if (!iterator ||
-		    !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||
-		    !ENGINE_ctrl_cmd_string(iterator, "DIR_LOAD", "2", 0) ||
-		    !ENGINE_ctrl_cmd_string(iterator, "DIR_ADD", load_dir, 0) ||
-		    !ENGINE_ctrl_cmd_string(iterator, "LIST_ADD", "1", 0) ||
-		    !ENGINE_ctrl_cmd_string(iterator, "LOAD", NULL, 0))
-			goto notfound;
-		return iterator;
-	}
-
-notfound:
-	ENGINE_free(iterator);
-	ENGINEerr(ENGINE_F_ENGINE_BY_ID, ENGINE_R_NO_SUCH_ENGINE);
-	ERR_asprintf_error_data("id=%s", id);
-	return NULL;
-	/* EEK! Experimental code ends */
+	if (iterator == NULL)
+		ENGINEerr(ENGINE_F_ENGINE_BY_ID, ENGINE_R_NO_SUCH_ENGINE);
+	return iterator;
 }
 
 int

@@ -5,7 +5,6 @@
 #undef I386_ONLY
 
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
-#define ENGINESDIR "/usr/lib/engines"
 #define OPENSSLDIR "/etc/ssl"
 #endif
 
