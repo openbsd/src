@@ -674,13 +674,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/if_wivar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/intersil7170.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/isp_library.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/isp_openbsd.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/isp_stds.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/isp_target.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ispmbox.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ispreg.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ispvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/lancereg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/lancevar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/lemacreg.ph

@@ -258,13 +258,6 @@
 ./usr/include/dev/ic/if_wivar.h
 ./usr/include/dev/ic/iha.h
 ./usr/include/dev/ic/intersil7170.h
-./usr/include/dev/ic/isp_library.h
-./usr/include/dev/ic/isp_openbsd.h
-./usr/include/dev/ic/isp_stds.h
-./usr/include/dev/ic/isp_target.h
-./usr/include/dev/ic/ispmbox.h
-./usr/include/dev/ic/ispreg.h
-./usr/include/dev/ic/ispvar.h
 ./usr/include/dev/ic/lancereg.h
 ./usr/include/dev/ic/lancevar.h
 ./usr/include/dev/ic/lemacreg.h
