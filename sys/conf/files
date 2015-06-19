@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.592 2015/05/11 06:46:21 ratchov Exp $
+#	$OpenBSD: files,v 1.593 2015/06/19 11:12:24 jmatthew Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -184,12 +184,6 @@ file	dev/ic/ami.c			ami
 device	mfi: scsi
 file	dev/ic/mfi.c			mfi
 
-# QLogic ISP 10x0 SCSI Controllers
-device	isp: scsi
-file	dev/ic/isp.c			isp
-file	dev/ic/isp_openbsd.c		isp
-file	dev/ic/isp_library.c		isp
-
 # QLogic ISP SCSI Controllers
 device	qlw: scsi
 file	dev/ic/qlw.c			qlw
@@ -197,11 +191,6 @@ file	dev/ic/qlw.c			qlw
 # QLogic ISP23xx FC Controllers
 device  qla: scsi
 file    dev/ic/qla.c                    qla
-
-# QLogic firmware shared between qla and isp
-file	dev/microcode/isp/isp_fw2100.c	qla | isp_pci
-file	dev/microcode/isp/isp_fw2200.c	qla | isp
-file	dev/microcode/isp/isp_fw2300.c	qla | isp_pci
 
 # Advanced Host Controller Interface for Serial ATA
 device	ahci: scsi, atascsi

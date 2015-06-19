@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.100 2015/05/11 06:46:21 ratchov Exp $
+#	$OpenBSD: files.sparc,v 1.101 2015/06/19 11:12:24 jmatthew Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -268,11 +268,6 @@ attach	si at vmes
 device	sw: scsi, ncr5380sbc
 attach	sw at obio
 file	arch/sparc/dev/si.c		si | sw
-
-# Qlogic ISP 10x0 (SBus) family
-# device declaration in sys/conf/files
-attach	isp at sbus with isp_sbus
-file	arch/sparc/dev/isp_sbus.c	isp_sbus
 
 attach	qlw at sbus with qlw_sbus
 file	arch/sparc/dev/qlw_sbus.c	qlw_sbus
