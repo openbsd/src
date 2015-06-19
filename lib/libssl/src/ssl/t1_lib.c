@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.77 2015/06/17 07:52:22 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.78 2015/06/19 01:38:54 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1153,10 +1153,9 @@ static int
 tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
     unsigned int data_len, int *al)
 {
+	CBS cbs, proto_name_list, alpn;
 	const unsigned char *selected;
 	unsigned char selected_len;
-	unsigned int proto_len;
-	unsigned int i;
 	int r;
 
 	if (s->ctx->alpn_select_cb == NULL)
@@ -1165,34 +1164,29 @@ tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
 	if (data_len < 2)
 		goto parse_error;
 
+	CBS_init(&cbs, data, data_len);
+
 	/*
 	 * data should contain a uint16 length followed by a series of 8-bit,
 	 * length-prefixed strings.
 	 */
-	i = ((unsigned int)data[0]) << 8 | ((unsigned int)data[1]);
-	data_len -= 2;
-	data += 2;
-	if (data_len != i)
+	if (!CBS_get_u16_length_prefixed(&cbs, &alpn) ||
+	    CBS_len(&alpn) < 2 ||
+	    CBS_len(&cbs) != 0)
 		goto parse_error;
 
-	if (data_len < 2)
-		goto parse_error;
+	/* Validate data before sending to callback. */
+	CBS_dup(&alpn, &proto_name_list);
+	while (CBS_len(&proto_name_list) > 0) {
+		CBS proto_name;
 
-	for (i = 0; i < data_len; ) {
-		proto_len = data[i];
-		i++;
-
-		if (proto_len == 0)
+		if (!CBS_get_u8_length_prefixed(&proto_name_list, &proto_name) ||
+		    CBS_len(&proto_name) == 0)
 			goto parse_error;
-
-		if (i + proto_len < i || i + proto_len > data_len)
-			goto parse_error;
-
-		i += proto_len;
 	}
 
 	r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
-	    data, data_len, s->ctx->alpn_select_cb_arg);
+	    CBS_data(&alpn), CBS_len(&alpn), s->ctx->alpn_select_cb_arg);
 	if (r == SSL_TLSEXT_ERR_OK) {
 		free(s->s3->alpn_selected);
 		if ((s->s3->alpn_selected = malloc(selected_len)) == NULL) {
