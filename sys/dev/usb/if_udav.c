@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.70 2015/03/23 08:41:52 mpi Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.71 2015/06/19 20:39:34 uaa Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -167,11 +167,11 @@ udav_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
 
 	return (udav_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+		UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE);
 }
 
 /* Attach */
@@ -181,7 +181,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	struct udav_softc *sc = (struct udav_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->device;
-	struct usbd_interface *iface;
+	struct usbd_interface *iface = uaa->iface;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -195,25 +195,11 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = dev;
 
-	/* Move the device into the configured state. */
-	err = usbd_set_config_no(dev, UDAV_CONFIG_NO, 1);
-	if (err) {
-		printf("setting config no failed\n");
-		goto bad;
-	}
-
 	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc,
 	    USB_TASK_TYPE_GENERIC);
 	rw_init(&sc->sc_mii_lock, "udavmii");
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) udav_stop_task, sc,
 	    USB_TASK_TYPE_GENERIC);
-
-	/* get control interface */
-	err = usbd_device2interface_handle(dev, UDAV_IFACE_INDEX, &iface);
-	if (err) {
-		printf("failed to get interface, err=%s\n", usbd_errstr(err));
-		goto bad;
-	}
 
 	sc->sc_ctl_iface = iface;
 	sc->sc_flags = udav_lookup(uaa->vendor, uaa->product)->udav_flags;

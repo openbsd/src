@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.14 2014/01/22 04:13:22 sasano Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.15 2015/06/19 20:39:34 uaa Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -30,9 +30,6 @@
  * SUCH DAMAGE.
  *
  */
-
-#define	UDAV_IFACE_INDEX	0
-#define	UDAV_CONFIG_NO		1
 
 #define	UDAV_TX_LIST_CNT	1
 #define	UDAV_RX_LIST_CNT	1
