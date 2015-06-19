@@ -1,4 +1,4 @@
-/* $OpenBSD: progs.h,v 1.2 2015/02/10 15:29:34 jsing Exp $ */
+/* $OpenBSD: progs.h,v 1.3 2015/06/19 15:06:51 jsing Exp $ */
 /* Public domain */
 
 extern int asn1parse_main(int argc, char *argv[]);
@@ -132,20 +132,44 @@ FUNCTION functions[] = {
 #endif
 
 	/* Message Digests. */
+#ifndef OPENSSL_NO_GOST
+	{ FUNC_TYPE_MD, "gost-mac", dgst_main },
+	{ FUNC_TYPE_MD, "md_gost94", dgst_main },
+	{ FUNC_TYPE_MD, "streebog256", dgst_main },
+	{ FUNC_TYPE_MD, "streebog512", dgst_main },
+#endif
 #ifndef OPENSSL_NO_MD4
 	{ FUNC_TYPE_MD, "md4", dgst_main },
 #endif
 #ifndef OPENSSL_NO_MD5
 	{ FUNC_TYPE_MD, "md5", dgst_main },
 #endif
-#ifndef OPENSSL_NO_RMD160
-	{ FUNC_TYPE_MD, "rmd160", dgst_main },
+#ifndef OPENSSL_NO_MDC2
+	{ FUNC_TYPE_MD, "mdc2", dgst_main },
+#endif
+#ifndef OPENSSL_NO_RIPEMD160
+	{ FUNC_TYPE_MD, "ripemd160", dgst_main },
 #endif
 #ifndef OPENSSL_NO_SHA
 	{ FUNC_TYPE_MD, "sha", dgst_main },
 #endif
 #ifndef OPENSSL_NO_SHA1
 	{ FUNC_TYPE_MD, "sha1", dgst_main },
+#endif
+#ifndef OPENSSL_NO_SHA224
+	{ FUNC_TYPE_MD, "sha224", dgst_main },
+#endif
+#ifndef OPENSSL_NO_SHA256
+	{ FUNC_TYPE_MD, "sha256", dgst_main },
+#endif
+#ifndef OPENSSL_NO_SHA384
+	{ FUNC_TYPE_MD, "sha384", dgst_main },
+#endif
+#ifndef OPENSSL_NO_SHA512
+	{ FUNC_TYPE_MD, "sha512", dgst_main },
+#endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+	{ FUNC_TYPE_MD, "whirlpool", dgst_main },
 #endif
 
 	/* Ciphers. */
