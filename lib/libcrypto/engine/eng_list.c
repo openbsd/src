@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_list.c,v 1.19 2015/06/19 06:05:11 bcook Exp $ */
+/* $OpenBSD: eng_list.c,v 1.20 2015/06/19 06:32:43 bcook Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -380,8 +380,10 @@ ENGINE_by_id(const char *id)
 	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 
-	if (iterator == NULL)
+	if (iterator == NULL) {
 		ENGINEerr(ENGINE_F_ENGINE_BY_ID, ENGINE_R_NO_SUCH_ENGINE);
+		ERR_asprintf_error_data("id=%s", id);
+	}
 	return iterator;
 }
 
