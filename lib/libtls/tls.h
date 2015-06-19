@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.12 2015/03/31 14:03:38 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.13 2015/06/19 06:20:11 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -17,6 +17,13 @@
 
 #ifndef HEADER_TLS_H
 #define HEADER_TLS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stddef.h>
+#include <stdint.h>
 
 #define TLS_API	20141031
 
@@ -87,5 +94,9 @@ int tls_write(struct tls *_ctx, const void *_buf, size_t _buflen,
 int tls_close(struct tls *_ctx);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* HEADER_TLS_H */
