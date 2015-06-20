@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.86 2015/06/17 14:27:56 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.87 2015/06/20 12:29:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -572,7 +572,14 @@ struct ssl_session_st {
 #define SSL_OP_CRYPTOPRO_TLSEXT_BUG			0x80000000L
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless. */
-#define SSL_OP_ALL					0x80000374L
+#define SSL_OP_ALL \
+    (SSL_OP_LEGACY_SERVER_CONNECT | \
+     SSL_OP_TLSEXT_PADDING | \
+     SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER | \
+     SSL_OP_SAFARI_ECDHE_ECDSA_BUG | \
+     SSL_OP_TLS_D5_BUG | \
+     SSL_OP_TLS_BLOCK_PADDING_BUG | \
+     SSL_OP_CRYPTOPRO_TLSEXT_BUG)
 
 /* Obsolete flags kept for compatibility. No sane code should use them. */
 #define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0
