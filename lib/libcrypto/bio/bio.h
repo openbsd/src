@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.28 2015/02/09 10:55:33 jsing Exp $ */
+/* $OpenBSD: bio.h,v 1.29 2015/06/20 01:17:27 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -625,11 +625,11 @@ BIO_METHOD *BIO_s_datagram(void);
 /* BIO_METHOD *BIO_f_ber(void); */
 
 int BIO_sock_should_retry(int i);
-int BIO_sock_non_fatal_error(int error);
-int BIO_dgram_non_fatal_error(int error);
+int BIO_sock_non_fatal_error(int _error);
+int BIO_dgram_non_fatal_error(int _error);
 
 int BIO_fd_should_retry(int i);
-int BIO_fd_non_fatal_error(int error);
+int BIO_fd_non_fatal_error(int _error);
 int
 BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
 void *u, const char *s, int len);
