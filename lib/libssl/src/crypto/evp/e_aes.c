@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.27 2015/02/10 09:50:12 miod Exp $ */
+/* $OpenBSD: e_aes.c,v 1.28 2015/06/20 12:01:14 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1499,7 +1499,7 @@ aead_aes_gcm_open(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 	}
 
 	CRYPTO_gcm128_tag(&gcm, tag, gcm_ctx->tag_len);
-	if (CRYPTO_memcmp(tag, in + plaintext_len, gcm_ctx->tag_len) != 0) {
+	if (timingsafe_memcmp(tag, in + plaintext_len, gcm_ctx->tag_len) != 0) {
 		EVPerr(EVP_F_AEAD_AES_GCM_OPEN, EVP_R_BAD_DECRYPT);
 		return 0;
 	}

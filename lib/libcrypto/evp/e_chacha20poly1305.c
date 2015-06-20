@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.8 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.9 2015/06/20 12:01:14 jsing Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -200,7 +200,7 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	poly1305_update_with_length(&poly1305, in, plaintext_len);
 	CRYPTO_poly1305_finish(&poly1305, mac);
 
-	if (CRYPTO_memcmp(mac, in + plaintext_len, c20_ctx->tag_len) != 0) {
+	if (timingsafe_memcmp(mac, in + plaintext_len, c20_ctx->tag_len) != 0) {
 		EVPerr(EVP_F_AEAD_CHACHA20_POLY1305_OPEN, EVP_R_BAD_DECRYPT);
 		return 0;
 	}

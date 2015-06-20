@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.24 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.25 2015/06/20 12:01:14 jsing Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -154,7 +154,7 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	if (!EVP_Digest((void *)param, plen, phash, NULL, EVP_sha1(), NULL))
 		return -1;
 
-	if (CRYPTO_memcmp(db, phash, SHA_DIGEST_LENGTH) != 0 || bad)
+	if (timingsafe_memcmp(db, phash, SHA_DIGEST_LENGTH) != 0 || bad)
 		goto decoding_err;
 	else {
 		for (i = SHA_DIGEST_LENGTH; i < dblen; i++)
