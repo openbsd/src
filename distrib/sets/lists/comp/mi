@@ -1146,7 +1146,6 @@
 ./usr/include/openssl/lhash.h
 ./usr/include/openssl/md4.h
 ./usr/include/openssl/md5.h
-./usr/include/openssl/mdc2.h
 ./usr/include/openssl/modes.h
 ./usr/include/openssl/obj_mac.h
 ./usr/include/openssl/objects.h
@@ -2589,7 +2588,6 @@
 ./usr/share/man/man3/EVP_md2.3
 ./usr/share/man/man3/EVP_md5.3
 ./usr/share/man/man3/EVP_md_null.3
-./usr/share/man/man3/EVP_mdc2.3
 ./usr/share/man/man3/EVP_rc2_40_cbc.3
 ./usr/share/man/man3/EVP_rc2_64_cbc.3
 ./usr/share/man/man3/EVP_rc2_cbc.3

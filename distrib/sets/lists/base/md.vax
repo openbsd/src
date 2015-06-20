@@ -1200,7 +1200,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/lhash.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/md4.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/md5.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/openssl/mdc2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/modes.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/obj_mac.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/openssl/objects.ph
