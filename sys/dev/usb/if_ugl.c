@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.11 2015/03/27 19:32:53 mpi Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.12 2015/06/20 11:35:27 mpi Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -81,9 +81,6 @@
 
 #define UGL_INTR_PKTLEN		8
 #define UGL_BULK_PKTLEN		64
-
-#define UGL_CONFIG_NO		1
-#define UGL_IFACE_IDX		0
 
 /***/
 
@@ -200,11 +197,11 @@ ugl_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg		*uaa = aux;
 
-	if (uaa->iface != NULL)
+	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
 
 	return (usb_lookup(ugl_devs, uaa->vendor, uaa->product) != NULL ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	    UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE);
 }
 
 void
@@ -214,8 +211,7 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg	*uaa = aux;
 	int			s;
 	struct usbd_device	*dev = uaa->device;
-	struct usbd_interface	*iface;
-	usbd_status		err;
+	struct usbd_interface	*iface = uaa->iface;
 	struct ifnet		*ifp;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -224,22 +220,8 @@ ugl_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(5,(" : ugl_attach: sc=%p, dev=%p", sc, dev));
 
-	err = usbd_set_config_no(dev, UGL_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	sc->sc_udev = dev;
-
-	err = usbd_device2interface_handle(dev, UGL_IFACE_IDX, &iface);
-	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 
