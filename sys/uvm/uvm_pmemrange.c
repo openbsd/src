@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.44 2014/11/13 00:47:44 tedu Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.45 2015/06/20 20:20:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1708,11 +1708,35 @@ uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
 				found = TAILQ_NEXT(found, pageq);
 
 			if (found == NULL) {
-				found = RB_ROOT(&pmr->size[memtype]);
-				/* Size tree gives pg[1] instead of pg[0] */
+				/*
+				 * Check if the size tree contains a range
+				 * that intersects with the boundaries. As the
+				 * allocation is for any page, try the smallest
+				 * range so that large ranges are preserved for
+				 * more constrained cases. Only one entry is
+				 * checked here, to avoid a brute-force search.
+				 *
+				 * Note that a size tree gives pg[1] instead of
+				 * pg[0].
+				 */
+				found = RB_MIN(uvm_pmr_size,
+				    &pmr->size[memtype]);
 				if (found != NULL) {
 					found--;
-
+					if (!PMR_INTERSECTS_WITH(
+					    atop(VM_PAGE_TO_PHYS(found)),
+					    atop(VM_PAGE_TO_PHYS(found)) +
+					    found->fpgsz, start, end))
+						found = NULL;
+				}
+			}
+			if (found == NULL) {
+				/*
+				 * Try address-guided search to meet the page
+				 * number constraints.
+				 */
+				found = RB_ROOT(&pmr->addr);
+				if (found != NULL) {
 					found = uvm_pmr_rootupdate(pmr, found,
 					    start, end, memtype);
 				}
