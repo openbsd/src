@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.10 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.11 2015/06/20 14:17:07 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -161,6 +161,7 @@ ECPKParameters_print(BIO * bp, const EC_GROUP * x, int off)
 	*cofactor = NULL;
 	const unsigned char *seed;
 	size_t seed_len = 0;
+	const char *nname;
 
 	static const char *gen_compressed = "Generator (compressed):";
 	static const char *gen_uncompressed = "Generator (uncompressed):";
@@ -190,6 +191,14 @@ ECPKParameters_print(BIO * bp, const EC_GROUP * x, int off)
 			goto err;
 		if (BIO_printf(bp, "\n") <= 0)
 			goto err;
+
+		nname = EC_curve_nid2nist(nid);
+		if (nname) {
+			if (!BIO_indent(bp, off, 128))
+				goto err;
+			if (BIO_printf(bp, "NIST CURVE: %s\n", nname) <= 0)
+				goto err;
+		}
 	} else {
 		/* explicit parameters */
 		int is_char_two = 0;
