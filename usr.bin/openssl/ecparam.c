@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.8 2014/12/28 15:48:52 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.9 2015/06/20 14:24:49 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -360,6 +360,9 @@ ecparam_main(int argc, char **argv)
 			nid = NID_X9_62_prime256v1;
 		} else
 			nid = OBJ_sn2nid(ecparam_config.curve_name);
+
+		if (nid == 0)
+			nid = EC_curve_nist2nid(ecparam_config.curve_name);
 
 		if (nid == 0) {
 			BIO_printf(bio_err, "unknown curve name (%s)\n",
