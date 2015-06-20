@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: x509.c,v 1.3 2015/06/20 01:07:25 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,7 +135,7 @@ static const char *x509_usage[] = {
 	" -set_serial     - serial number to use\n",
 	" -text           - print the certificate in text form\n",
 	" -C              - print out C code forms\n",
-	" -md2/-md5/-sha1/-mdc2 - digest to use\n",
+	" -md2/-md5/-sha1 - digest to use\n",
 	" -extfile        - configuration file with X509V3 extensions to add\n",
 	" -extensions     - section from config file with X509V3 extensions to add\n",
 	" -clrext         - delete extensions before signing and input certificate\n",

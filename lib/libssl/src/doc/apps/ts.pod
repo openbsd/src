@@ -12,7 +12,7 @@ B<-query>
 [B<-config> configfile]
 [B<-data> file_to_hash]
 [B<-digest> digest_bytes]
-[B<-md2>|B<-md4>|B<-md5>|B<-sha>|B<-sha1>|B<-mdc2>|B<-ripemd160>|B<...>]
+[B<-md2>|B<-md4>|B<-md5>|B<-sha>|B<-sha1>|B<-ripemd160>|B<...>]
 [B<-policy> object_id]
 [B<-no_nonce>]
 [B<-cert>]
@@ -124,7 +124,7 @@ per byte, the bytes optionally separated by colons (e.g. 1A:F6:01:... or
 1AF601...). The number of bytes must match the message digest algorithm
 in use. (Optional)
 
-=item B<-md2>|B<-md4>|B<-md5>|B<-sha>|B<-sha1>|B<-mdc2>|B<-ripemd160>|B<...>
+=item B<-md2>|B<-md4>|B<-md5>|B<-sha>|B<-sha1>|B<-ripemd160>|B<...>
 
 The message digest to apply to the data file, it supports all the message
 digest algorithms that are supported by the openssl B<dgst> command.

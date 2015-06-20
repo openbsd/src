@@ -159,7 +159,7 @@ the number of days to certify the certificate for.
 
 =item B<-md alg>
 
-the message digest to use. Possible values include md5, sha1 and mdc2.
+the message digest to use. Possible values include md5 and sha1.
 This option also applies to CRLs.
 
 =item B<-policy arg>

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.3 2014/10/22 13:54:03 jsing Exp $ */
+/* $OpenBSD: ts.c,v 1.4 2015/06/20 01:07:25 doug Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -306,7 +306,7 @@ usage:
 	BIO_printf(bio_err, "usage:\n"
 	    "ts -query [-config configfile] "
 	    "[-data file_to_hash] [-digest digest_bytes]"
-	    "[-md2|-md4|-md5|-sha|-sha1|-mdc2|-ripemd160] "
+	    "[-md2|-md4|-md5|-sha|-sha1|-ripemd160] "
 	    "[-policy object_id] [-no_nonce] [-cert] "
 	    "[-in request.tsq] [-out request.tsq] [-text]\n");
 	BIO_printf(bio_err, "or\n"

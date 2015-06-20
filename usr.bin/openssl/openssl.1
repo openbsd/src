@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.14 2015/06/18 11:38:41 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.15 2015/06/20 01:07:25 doug Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: June 18 2015 $
+.Dd $Mdocdate: June 20 2015 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -389,8 +389,6 @@ GOST R 34.11-94 digest.
 MD4 digest.
 .It Cm md5
 MD5 digest.
-.It Cm mdc2
-MDC-2 digest.
 .It Cm ripemd160
 RIPEMD-160 digest.
 .It Cm sha
@@ -1814,7 +1812,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Bk -words
 .Oo
 .Fl gost-mac | streebog256 | streebog512 | md_gost94 |
-.Fl md4 | md5 | mdc2 | ripemd160 | sha | sha1 |
+.Fl md4 | md5 | ripemd160 | sha | sha1 |
 .Fl sha224 | sha256 | sha384 | sha512 | whirlpool
 .Oc
 .Op Fl binary
@@ -1838,7 +1836,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Pp
 .Nm openssl
 .Cm gost-mac | streebog256 | streebog512 | md_gost94 |
-.Cm md4 | md5 | mdc2 | ripemd160 | sha | sha1 |
+.Cm md4 | md5 | ripemd160 | sha | sha1 |
 .Cm sha224 | sha256 | sha384 | sha512 | whirlpool
 .Op Fl c
 .Op Fl d

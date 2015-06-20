@@ -271,10 +271,6 @@ MD2 Digest
 
 MD5 Digest
 
-=item B<mdc2>
-
-MDC2 Digest
-
 =item B<rmd160>
 
 RMD-160 Digest

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.57 2015/04/11 16:16:15 deraadt Exp $
+# $OpenBSD: Makefile,v 1.58 2015/06/20 01:07:24 doug Exp $
 
 LIB=	crypto
 
@@ -146,7 +146,7 @@ SRCS+= e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c
 SRCS+= e_rc4.c e_aes.c names.c
 SRCS+= e_xcbc_d.c e_rc2.c e_cast.c
 SRCS+= m_null.c m_md4.c m_md5.c m_sha.c m_sha1.c m_wp.c
-SRCS+= m_dss.c m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c
+SRCS+= m_dss.c m_dss1.c m_ripemd.c m_ecdsa.c
 SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
 SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
 SRCS+= c_all.c evp_lib.c
@@ -179,9 +179,6 @@ SRCS+= md4_dgst.c md4_one.c
 
 # md5/
 SRCS+= md5_dgst.c md5_one.c
-
-# mdc2/
-SRCS+= mdc2dgst.c mdc2_one.c
 
 # modes/
 SRCS+= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c ccm128.c xts128.c
@@ -292,7 +289,6 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/lhash \
 	${LCRYPTO_SRC}/md4 \
 	${LCRYPTO_SRC}/md5 \
-	${LCRYPTO_SRC}/mdc2 \
 	${LCRYPTO_SRC}/modes \
 	${LCRYPTO_SRC}/objects \
 	${LCRYPTO_SRC}/ocsp \
@@ -352,7 +348,6 @@ HDRS=\
 	crypto/lhash/lhash.h \
 	crypto/md4/md4.h \
 	crypto/md5/md5.h \
-	crypto/mdc2/mdc2.h \
 	crypto/modes/modes.h \
 	crypto/objects/objects.h \
 	crypto/ocsp/ocsp.h \

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.44 2015/02/10 11:45:09 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.45 2015/06/20 01:07:24 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -668,9 +668,6 @@ const EVP_MD *EVP_sha256(void);
 #ifndef OPENSSL_NO_SHA512
 const EVP_MD *EVP_sha384(void);
 const EVP_MD *EVP_sha512(void);
-#endif
-#ifndef OPENSSL_NO_MDC2
-const EVP_MD *EVP_mdc2(void);
 #endif
 #ifndef OPENSSL_NO_RIPEMD
 const EVP_MD *EVP_ripemd160(void);

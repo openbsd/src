@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.16 2015/02/10 11:45:09 jsing Exp $ */
+/* $OpenBSD: c_all.c,v 1.17 2015/06/20 01:07:24 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -264,9 +264,6 @@ OpenSSL_add_all_digests(void)
 	EVP_add_digest(EVP_gost2814789imit());
 	EVP_add_digest(EVP_streebog256());
 	EVP_add_digest(EVP_streebog512());
-#endif
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DES)
-	EVP_add_digest(EVP_mdc2());
 #endif
 #ifndef OPENSSL_NO_RIPEMD
 	EVP_add_digest(EVP_ripemd160());
