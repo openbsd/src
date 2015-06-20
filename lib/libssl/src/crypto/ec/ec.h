@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.9 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ec.h,v 1.10 2015/06/20 13:26:08 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -395,6 +395,8 @@ typedef struct {
  * are filled with the data of the first nitems internal groups */
 size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
 
+const char *EC_curve_nid2nist(int nid);
+int EC_curve_nist2nid(const char *name);
 
 /********************************************************************/
 /*                    EC_POINT functions                            */
