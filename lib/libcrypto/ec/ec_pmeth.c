@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.8 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.9 2015/06/20 14:19:39 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -248,7 +248,9 @@ pkey_ec_ctrl_str(EVP_PKEY_CTX * ctx,
 {
 	if (!strcmp(type, "ec_paramgen_curve")) {
 		int nid;
-		nid = OBJ_sn2nid(value);
+		nid = EC_curve_nist2nid(value);
+		if (nid == NID_undef)
+			nid = OBJ_sn2nid(value);
 		if (nid == NID_undef)
 			nid = OBJ_ln2nid(value);
 		if (nid == NID_undef) {
