@@ -1,4 +1,4 @@
-/* $OpenBSD: progs.h,v 1.3 2015/06/19 15:06:51 jsing Exp $ */
+/* $OpenBSD: progs.h,v 1.4 2015/06/20 13:51:52 jsing Exp $ */
 /* Public domain */
 
 extern int asn1parse_main(int argc, char *argv[]);
@@ -143,9 +143,6 @@ FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_MD5
 	{ FUNC_TYPE_MD, "md5", dgst_main },
-#endif
-#ifndef OPENSSL_NO_MDC2
-	{ FUNC_TYPE_MD, "mdc2", dgst_main },
 #endif
 #ifndef OPENSSL_NO_RIPEMD160
 	{ FUNC_TYPE_MD, "ripemd160", dgst_main },
