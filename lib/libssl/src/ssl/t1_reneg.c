@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_reneg.c,v 1.9 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: t1_reneg.c,v 1.10 2015/06/20 04:04:36 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,6 +114,7 @@
 #include <openssl/objects.h>
 
 #include "ssl_locl.h"
+#include "bytestring.h"
 
 /* Add the client's renegotiation binding */
 int
@@ -144,23 +145,22 @@ ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 /* Parse the client's renegotiation binding and abort if it's not
    right */
 int
-ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
+ssl_parse_clienthello_renegotiate_ext(SSL *s, const unsigned char *d, int len,
     int *al)
 {
-	int ilen;
+	CBS cbs, reneg;
 
-	/* Parse the length byte */
-	if (len < 1) {
+	if (len < 0) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_ENCODING_ERR);
 		*al = SSL_AD_ILLEGAL_PARAMETER;
 		return 0;
 	}
-	ilen = *d;
-	d++;
 
-	/* Consistency check */
-	if ((ilen + 1) != len) {
+	CBS_init(&cbs, d, len);
+	if (!CBS_get_u8_length_prefixed(&cbs, &reneg) ||
+	    /* Consistency check */
+	    CBS_len(&cbs) != 0) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_ENCODING_ERR);
 		*al = SSL_AD_ILLEGAL_PARAMETER;
@@ -168,21 +168,20 @@ ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 	}
 
 	/* Check that the extension matches */
-	if (ilen != s->s3->previous_client_finished_len) {
+	if (CBS_len(&reneg) != s->s3->previous_client_finished_len) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		return 0;
 	}
 
-	if (timingsafe_memcmp(d, s->s3->previous_client_finished,
-	    s->s3->previous_client_finished_len) != 0) {
+	if (!CBS_mem_equal(&reneg, s->s3->previous_client_finished,
+	    s->s3->previous_client_finished_len)) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		return 0;
 	}
-
 
 	s->s3->send_connection_binding = 1;
 

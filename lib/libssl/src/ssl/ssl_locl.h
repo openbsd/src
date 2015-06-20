@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.91 2015/06/18 22:51:05 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.92 2015/06/20 04:04:35 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -839,7 +839,7 @@ int ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d,
     int len, int *al);
 int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p,
     int *len, int maxlen);
-int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d,
+int ssl_parse_clienthello_renegotiate_ext(SSL *s, const unsigned char *d,
     int len, int *al);
 long ssl_get_algorithm2(SSL *s);
 int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
