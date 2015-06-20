@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_reneg.c,v 1.10 2015/06/20 04:04:36 doug Exp $ */
+/* $OpenBSD: t1_reneg.c,v 1.11 2015/06/20 16:42:48 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,29 +224,28 @@ ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 /* Parse the server's renegotiation binding and abort if it's not
    right */
 int
-ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
-    int *al)
+ssl_parse_serverhello_renegotiate_ext(SSL *s, const unsigned char *d, int len, int *al)
 {
+	CBS cbs, reneg, previous_client, previous_server;
 	int expected_len = s->s3->previous_client_finished_len +
 	    s->s3->previous_server_finished_len;
-	int ilen;
 
 	/* Check for logic errors */
 	OPENSSL_assert(!expected_len || s->s3->previous_client_finished_len);
 	OPENSSL_assert(!expected_len || s->s3->previous_server_finished_len);
 
-	/* Parse the length byte */
-	if (len < 1) {
+	if (len < 0) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_ENCODING_ERR);
 		*al = SSL_AD_ILLEGAL_PARAMETER;
 		return 0;
 	}
-	ilen = *d;
-	d++;
 
-	/* Consistency check */
-	if (ilen + 1 != len) {
+	CBS_init(&cbs, d, len);
+
+	if (!CBS_get_u8_length_prefixed(&cbs, &reneg) ||
+	    /* Consistency check */
+	    CBS_len(&cbs) != 0) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_ENCODING_ERR);
 		*al = SSL_AD_ILLEGAL_PARAMETER;
@@ -254,24 +253,27 @@ ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 	}
 
 	/* Check that the extension matches */
-	if (ilen != expected_len) {
+	if (CBS_len(&reneg) != expected_len ||
+	    !CBS_get_bytes(&reneg, &previous_client,
+	    s->s3->previous_client_finished_len) ||
+	    !CBS_get_bytes(&reneg, &previous_server,
+	    s->s3->previous_server_finished_len) ||
+	    CBS_len(&reneg) != 0) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		return 0;
 	}
 
-	if (timingsafe_memcmp(d, s->s3->previous_client_finished,
-	    s->s3->previous_client_finished_len) != 0) {
+	if (!CBS_mem_equal(&previous_client, s->s3->previous_client_finished,
+	    CBS_len(&previous_client))) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
 		*al = SSL_AD_HANDSHAKE_FAILURE;
 		return 0;
 	}
-	d += s->s3->previous_client_finished_len;
-
-	if (timingsafe_memcmp(d, s->s3->previous_server_finished,
-	    s->s3->previous_server_finished_len)) {
+	if (!CBS_mem_equal(&previous_server, s->s3->previous_server_finished,
+	    CBS_len(&previous_server))) {
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
 		    SSL_R_RENEGOTIATION_MISMATCH);
 		*al = SSL_AD_ILLEGAL_PARAMETER;
