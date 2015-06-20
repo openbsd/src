@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.112 2015/06/15 05:32:58 doug Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.113 2015/06/20 18:19:56 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -148,6 +148,8 @@
  * OTHERWISE.
  */
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include "ssl_locl.h"
@@ -165,6 +167,8 @@
 #ifndef OPENSSL_NO_GOST
 #include <openssl/gost.h>
 #endif
+
+#include "bytestring.h"
 
 static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);
@@ -1706,10 +1710,10 @@ ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b)
 int
 ssl3_get_new_session_ticket(SSL *s)
 {
-	int			 ok, al, ret = 0, ticklen;
+	int			 ok, al, ret = 0;
+	uint32_t		 lifetime_hint;
 	long			 n;
-	const unsigned char	*p;
-	unsigned char		*d;
+	CBS			 cbs, session_ticket;
 
 	n = s->method->ssl_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
 	    SSL3_ST_CR_SESSION_TICKET_B, -1, 16384, &ok);
@@ -1726,34 +1730,29 @@ ssl3_get_new_session_ticket(SSL *s)
 		    SSL_R_BAD_MESSAGE_TYPE);
 		goto f_err;
 	}
-	if (n < 6) {
-		/* need at least ticket_lifetime_hint + ticket length */
-		al = SSL_AD_DECODE_ERROR;
-		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,
-		    SSL_R_LENGTH_MISMATCH);
-		goto f_err;
-	}
 
-	p = d = (unsigned char *)s->init_msg;
-	n2l(p, s->session->tlsext_tick_lifetime_hint);
-	n2s(p, ticklen);
-	/* ticket_lifetime_hint + ticket_length + ticket */
-	if (ticklen + 6 != n) {
+	CBS_init(&cbs, s->init_msg, n);
+
+	if (n < 0 || !CBS_get_u32(&cbs, &lifetime_hint) ||
+#if UINT32_MAX > LONG_MAX
+	    lifetime_hint > LONG_MAX ||
+#endif
+	    !CBS_get_u16_length_prefixed(&cbs, &session_ticket) ||
+	    CBS_len(&cbs) != 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,
 		    SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 	}
-	free(s->session->tlsext_tick);
-	s->session->tlsext_ticklen = 0;
-	s->session->tlsext_tick = malloc(ticklen);
-	if (!s->session->tlsext_tick) {
+	s->session->tlsext_tick_lifetime_hint = (long)lifetime_hint;
+
+	if (!CBS_stow(&session_ticket, &s->session->tlsext_tick,
+	    &s->session->tlsext_ticklen)) {
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,
 		    ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	memcpy(s->session->tlsext_tick, p, ticklen);
-	s->session->tlsext_ticklen = ticklen;
+
 	/*
 	 * There are two ways to detect a resumed ticket sesion.
 	 * One is to set an appropriate session ID and then the server
@@ -1770,8 +1769,9 @@ ssl3_get_new_session_ticket(SSL *s)
 	 * to the SHA256 (or SHA1 is SHA256 is disabled) hash of the
 	 * ticket.
 	 */
-	EVP_Digest(p, ticklen, s->session->session_id,
-	    &s->session->session_id_length, EVP_sha256(), NULL);
+	EVP_Digest(CBS_data(&session_ticket), CBS_len(&session_ticket),
+	    s->session->session_id, &s->session->session_id_length,
+	    EVP_sha256(), NULL);
 	ret = 1;
 	return (ret);
 f_err:
