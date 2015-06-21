@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_ber.c,v 1.7 2015/06/17 07:20:39 doug Exp $	*/
+/*	$OpenBSD: bs_ber.c,v 1.8 2015/06/21 16:10:45 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -257,7 +257,8 @@ CBS_asn1_indefinite_to_definite(CBS *in, uint8_t **out, size_t *out_len)
 		return 1;
 	}
 
-	CBB_init(&cbb, CBS_len(in));
+	if (!CBB_init(&cbb, CBS_len(in)))
+		return 0;
 	if (!cbs_convert_indefinite(in, &cbb, 0, 0, 0)) {
 		CBB_cleanup(&cbb);
 		return 0;
