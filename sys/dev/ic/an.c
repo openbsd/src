@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.64 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: an.c,v 1.65 2015/06/21 21:22:27 krw Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1027,8 +1027,8 @@ an_init(struct ifnet *ifp)
 		memcpy(sc->sc_buf.sc_ssidlist.an_entry[0].an_ssid,
 		    ic->ic_des_essid, ic->ic_des_esslen);
 	an_swap16((u_int16_t *)&sc->sc_buf.sc_ssidlist.an_entry[0].an_ssid, 16); 
-	if (an_write_rid(sc, AN_RID_SSIDLIST, &sc->sc_buf,
-	    sizeof(sc->sc_buf.sc_ssidlist)) != 0) {
+	if ((error = an_write_rid(sc, AN_RID_SSIDLIST, &sc->sc_buf,
+	    sizeof(sc->sc_buf.sc_ssidlist)))) {
 		printf("%s: failed to write ssid list\n", ifp->if_xname);
 		an_stop(ifp, 1);
 		return error;
@@ -1054,8 +1054,8 @@ an_init(struct ifnet *ifp)
 		    sc->sc_tx_key);
 
 	/* Set the configuration */
-	if (an_write_rid(sc, AN_RID_GENCONFIG, &sc->sc_config,
-	    sizeof(sc->sc_config)) != 0) {
+	if ((error = an_write_rid(sc, AN_RID_GENCONFIG, &sc->sc_config,
+	    sizeof(sc->sc_config)))) {
 		printf("%s: failed to write config\n", ifp->if_xname);
 		an_stop(ifp, 1);
 		return error;
