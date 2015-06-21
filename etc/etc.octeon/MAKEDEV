@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.5 2014/10/09 04:37:43 tedu Exp 
-#	OpenBSD: MAKEDEV.common,v 1.77 2014/10/09 04:33:50 tedu Exp 
+#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.6 2015/05/04 23:48:14 jmatthew Exp 
+#	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -211,7 +211,7 @@ std)
 	;;
 
 vscsi*)
-	M vscsi$U c 68 $U 600
+	M vscsi$U c 69 $U 600
 	;;
 
 video*)
@@ -241,7 +241,7 @@ systrace)
 	;;
 
 pppx*)
-	M pppx$U c 70 $U 600
+	M pppx$U c 71 $U 600
 	;;
 
 pf*)
@@ -268,7 +268,7 @@ fd)
 	;;
 
 diskmap)
-	M diskmap c 69 0 640 operator
+	M diskmap c 70 0 640 operator
 	;;
 
 bpf*)
