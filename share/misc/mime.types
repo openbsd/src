@@ -1,4 +1,4 @@
-#	$OpenBSD: mime.types,v 1.2 2014/08/29 08:06:30 reyk Exp $
+#	$OpenBSD: mime.types,v 1.3 2015/06/21 12:15:09 reyk Exp $
 
 application/atom+xml					atom
 application/font-woff					woff
@@ -94,6 +94,7 @@ video/quicktime						mov
 video/webm						webm
 video/x-flv						flv
 video/x-m4v						m4v
+video/x-matroska					mkv
 video/x-mng						mng
 video/x-ms-asf						asx asf
 video/x-ms-wmv						wmv
