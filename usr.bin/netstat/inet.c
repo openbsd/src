@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.142 2015/04/16 19:24:13 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.143 2015/06/21 12:11:13 claudio Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 #define _KERNEL
-#include <sys/ucred.h>
 #include <sys/file.h>
 #undef _KERNEL
 
