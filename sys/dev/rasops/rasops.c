@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.39 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.40 2015/06/21 20:49:18 jca Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1163,12 +1163,10 @@ rasops_rotate_font(int *cookie)
 	 * We did not find a rotated version of this font. Ask the wsfont
 	 * code to compute one for us.
 	 */
-
-	f = malloc(sizeof(struct rotatedfont), M_DEVBUF, M_WAITOK);
-
 	if ((ncookie = wsfont_rotate(*cookie)) == -1)
 		return;
 
+	f = malloc(sizeof(struct rotatedfont), M_DEVBUF, M_WAITOK);
 	f->rf_cookie = *cookie;
 	f->rf_rotated = ncookie;
 	SLIST_INSERT_HEAD(&rotatedfonts, f, rf_next);
