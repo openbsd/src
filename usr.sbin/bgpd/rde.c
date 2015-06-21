@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.331 2015/06/19 14:54:12 phessler Exp $ */
+/*	$OpenBSD: rde.c,v 1.332 2015/06/21 12:16:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3190,8 +3190,19 @@ peer_up(u_int32_t id, struct session_up *sup)
 	}
 
 	if (peer->state != PEER_DOWN && peer->state != PEER_NONE &&
-	    peer->state != PEER_UP)
-		fatalx("peer_up: bad state");
+	    peer->state != PEER_UP) {
+		/*
+		 * There is a race condition when doing PEER_ERR -> PEER_DOWN.
+		 * So just do a full reset of the peer here.
+		 */
+		for (i = 0; i < AID_MAX; i++) {
+			peer->staletime[i] = 0;
+			peer_flush(peer, i);
+		}
+		up_down(peer);
+		peer->prefix_cnt = 0;
+		peer->state = PEER_DOWN;
+	}
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
 	peer->short_as = sup->short_as;
 	memcpy(&peer->remote_addr, &sup->remote_addr,
