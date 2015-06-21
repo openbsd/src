@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.75 2015/01/07 07:49:18 yasuoka Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.76 2015/06/21 00:15:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1050,8 +1050,10 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	}
 	/* Receive message from interface, copy out result data */
 	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf) ||
-	    rawlen < IPMI_MSG_DATARCV)
+	    rawlen < IPMI_MSG_DATARCV) {
+		free(buf, M_DEVBUF, 0);
 		return (-1);
+	}
 
 	*rxlen = rawlen - IPMI_MSG_DATARCV;
 	if (*rxlen > 0 && data)
