@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.81 2015/06/21 13:08:36 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.82 2015/06/22 11:46:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -925,12 +925,15 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 		}
 		if (strstr(val, "$REMOTE_USER") != NULL) {
 			if ((srv_conf->flags & SRVFLAG_AUTH) &&
-			    clt->clt_remote_user != NULL)
-				str = clt->clt_remote_user;
-			else
-				str = "";
-			if (expand_string(buf, len,
-			    "$REMOTE_USER", str) != 0)
+			    clt->clt_remote_user != NULL) {
+				if ((str = url_encode(clt->clt_remote_user))
+				    == NULL)
+					return (NULL);
+			} else
+				str = strdup("");
+			ret = expand_string(buf, len, "$REMOTE_USER", str);
+			free(str);
+			if (ret != 0)
 				return (NULL);
 		}
 	}
@@ -973,8 +976,12 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 				return (NULL);
 		}
 		if (strstr(val, "$SERVER_NAME") != NULL) {
-			if (expand_string(buf, len,
-			    "$SERVER_NAME", srv_conf->name) != 0)
+			if ((str = url_encode(srv_conf->name)) 
+			     == NULL)
+				return (NULL);
+			ret = expand_string(buf, len, "$SERVER_NAME", str);
+			free(str);
+			if (ret != 0)
 				return (NULL);
 		}
 	}
