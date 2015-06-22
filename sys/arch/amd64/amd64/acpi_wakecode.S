@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.35 2014/12/08 07:12:37 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.36 2015/06/22 20:06:11 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -627,12 +627,14 @@ _ACPI_TRMP_DATA_LABEL(acpi_saved_sfmask)
 	.align 4
 _ACPI_TRMP_DATA_LABEL(acpi_pdirpa)
 	.long 0
+#ifdef HIBERNATE
 _ACPI_TRMP_DATA_LABEL(hibernate_indirect_16)
 	.long	hibernate_resume_vector_3
 	.word	0x18
 _ACPI_TRMP_DATA_LABEL(hibernate_indirect_16b)
 	.long	hibernate_resume_vector_3b
 	.word	0x18
+#endif /* HIBERNATE */
 
 _C_LABEL(acpi_tramp_data_end):
 
