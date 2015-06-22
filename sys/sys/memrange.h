@@ -1,4 +1,4 @@
-/* $OpenBSD: memrange.h,v 1.8 2013/12/19 21:30:02 deraadt Exp $ */
+/* $OpenBSD: memrange.h,v 1.9 2015/06/22 18:57:26 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -62,6 +62,9 @@ struct mem_range_op {
 
 #define MEMRANGE_GET	_IOWR('m', 50, struct mem_range_op)
 #define MEMRANGE_SET	_IOW('m', 51, struct mem_range_op)
+
+/* Offset indicating a write combining mapping is requested.  */
+#define MEMRANGE_WC_RANGE	0x4000000000000000ULL
 
 #ifdef _KERNEL
 

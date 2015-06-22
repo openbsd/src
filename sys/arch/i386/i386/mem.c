@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.44 2015/05/28 20:53:05 jcs Exp $ */
+/*	$OpenBSD: mem.c,v 1.45 2015/06/22 18:57:26 kettenis Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -219,6 +219,10 @@ mmmmap(dev_t dev, off_t off, int prot)
 #ifdef APERTURE
 /* minor device 4 is aperture driver */
 	case 4:
+		/* Check if a write combining mapping is requested. */
+		if (off >= MEMRANGE_WC_RANGE)
+			off = (off - MEMRANGE_WC_RANGE) | PMAP_WC;
+
 		switch (allowaperture) {
 		case 1:
 			/* Allow mapping of the VGA framebuffer & BIOS only */
