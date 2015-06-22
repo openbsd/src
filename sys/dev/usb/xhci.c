@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.60 2015/05/27 11:13:34 mikeb Exp $ */
+/* $OpenBSD: xhci.c,v 1.61 2015/06/22 10:29:18 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2245,32 +2245,40 @@ xhci_root_ctrl_start(struct usbd_xfer *xfer)
 		}
 		v = XOREAD4(sc, XHCI_PORTSC(index));
 		DPRINTFN(8,("xhci_root_ctrl_start: port status=0x%04x\n", v));
+		i = UPS_PORT_LS_SET(XHCI_PS_GET_PLS(v));
 		switch (XHCI_PS_SPEED(v)) {
 		case XHCI_SPEED_FULL:
-			i = UPS_FULL_SPEED;
+			i |= UPS_FULL_SPEED;
 			break;
 		case XHCI_SPEED_LOW:
-			i = UPS_LOW_SPEED;
+			i |= UPS_LOW_SPEED;
 			break;
 		case XHCI_SPEED_HIGH:
-			i = UPS_HIGH_SPEED;
+			i |= UPS_HIGH_SPEED;
 			break;
 		case XHCI_SPEED_SUPER:
 		default:
-			i = UPS_SUPER_SPEED;
 			break;
 		}
 		if (v & XHCI_PS_CCS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & XHCI_PS_PED)	i |= UPS_PORT_ENABLED;
 		if (v & XHCI_PS_OCA)	i |= UPS_OVERCURRENT_INDICATOR;
 		if (v & XHCI_PS_PR)	i |= UPS_RESET;
-		if (v & XHCI_PS_PP)	i |= UPS_PORT_POWER;
+		if (v & XHCI_PS_PP)	{
+			if (XHCI_PS_SPEED(v) >= XHCI_SPEED_FULL &&
+			    XHCI_PS_SPEED(v) <= XHCI_SPEED_HIGH)
+				i |= UPS_PORT_POWER;
+			else
+				i |= UPS_PORT_POWER_SS;
+		}
 		USETW(ps.wPortStatus, i);
 		i = 0;
 		if (v & XHCI_PS_CSC)    i |= UPS_C_CONNECT_STATUS;
 		if (v & XHCI_PS_PEC)    i |= UPS_C_PORT_ENABLED;
 		if (v & XHCI_PS_OCC)    i |= UPS_C_OVERCURRENT_INDICATOR;
 		if (v & XHCI_PS_PRC)	i |= UPS_C_PORT_RESET;
+		if (v & XHCI_PS_PLC)	i |= UPS_C_PORT_LINK_STATE;
+		if (v & XHCI_PS_CEC)	i |= UPS_C_PORT_CONFIG_ERROR;
 		USETW(ps.wPortChange, i);
 		l = min(len, sizeof ps);
 		memcpy(buf, &ps, l);

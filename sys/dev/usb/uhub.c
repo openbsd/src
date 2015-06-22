@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.84 2015/06/15 16:46:21 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.85 2015/06/22 10:29:18 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -460,14 +460,14 @@ uhub_explore(struct usbd_device *dev)
 			continue;
 		}
 		/* Get port status again, it might have changed during reset */
-		err = usbd_get_port_status(dev, port, &up->status);
-		if (err) {
-			DPRINTF("%s: get port %d status failed, error=%s\n",
-			    sc->sc_dev.dv_xname, port, usbd_errstr(err));
+		if (usbd_get_port_status(dev, port, &up->status))
 			continue;
-		}
+
 		status = UGETW(up->status.wPortStatus);
 		change = UGETW(up->status.wPortChange);
+		DPRINTF("%s: port %d status=0x%04x change=0x%04x\n",
+		    sc->sc_dev.dv_xname, port, status, change);
+
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
 			/* Nothing connected, just ignore it. */
 			DPRINTF("%s: port %d, device disappeared after reset\n",
@@ -482,9 +482,7 @@ uhub_explore(struct usbd_device *dev)
 		if ((status & UPS_PORT_POWER) == 0)
 			status &= ~UPS_PORT_POWER_SS;
 
-		if (status & UPS_SUPER_SPEED)
-			speed = USB_SPEED_SUPER;
-		else if (status & UPS_HIGH_SPEED)
+		if (status & UPS_HIGH_SPEED)
 			speed = USB_SPEED_HIGH;
 		else if (status & UPS_LOW_SPEED)
 			speed = USB_SPEED_LOW;
