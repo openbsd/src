@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.143 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.144 2015/06/22 12:56:55 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1218,7 +1218,7 @@ ohci_softintr(void *v)
 	struct usbd_xfer *xfer;
 	struct ohci_pipe *opipe;
 	int len, cc, s;
-	int i, j, actlen, iframes, uedir;
+	int i, j, actlen, iframes;
 
 	DPRINTFN(10,("ohci_softintr: enter\n"));
 
@@ -1351,8 +1351,6 @@ ohci_softintr(void *v)
 
 			opipe = (struct ohci_pipe *)xfer->pipe;
 			opipe->u.iso.inuse -= xfer->nframes;
-			uedir = UE_GET_DIR(xfer->pipe->endpoint->edesc->
-			    bEndpointAddress);
 			xfer->status = USBD_NORMAL_COMPLETION;
 			actlen = 0;
 			for (i = 0, sitd = xfer->hcpriv; ;
@@ -1361,10 +1359,7 @@ ohci_softintr(void *v)
 				if (OHCI_ITD_GET_CC(letoh32(sitd->
 				    itd.itd_flags)) != OHCI_CC_NO_ERROR)
 					xfer->status = USBD_IOERROR;
-				/* For input, update frlengths with actual */
-				/* XXX anything necessary for output? */
-				if (uedir == UE_DIR_IN &&
-				    xfer->status == USBD_NORMAL_COMPLETION) {
+				if (xfer->status == USBD_NORMAL_COMPLETION) {
 					iframes = OHCI_ITD_GET_FC(letoh32(
 					    sitd->itd.itd_flags));
 					for (j = 0; j < iframes; i++, j++) {
@@ -1376,7 +1371,6 @@ ohci_softintr(void *v)
 							len = 0;
 						else
 							len = OHCI_ITD_PSW_LENGTH(len);
-						xfer->frlengths[i] = len;
 						actlen += len;
 					}
 				}
@@ -1385,8 +1379,7 @@ ohci_softintr(void *v)
 				ohci_free_sitd(sc, sitd);
 			}
 			ohci_free_sitd(sc, sitd);
-			if (uedir == UE_DIR_IN &&
-			    xfer->status == USBD_NORMAL_COMPLETION)
+			if (xfer->status == USBD_NORMAL_COMPLETION)
 				xfer->actlen = actlen;
 			xfer->hcpriv = NULL;
 

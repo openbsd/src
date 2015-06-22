@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.136 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.137 2015/06/22 12:56:55 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1234,7 +1234,6 @@ uhci_idone(struct usbd_xfer *xfer)
 				n = 0;
 			status = letoh32(std->td.td_status);
 			len = UHCI_TD_GET_ACTLEN(status);
-			xfer->frlengths[i] = len;
 			actlen += len;
 		}
 		upipe->u.iso.inuse -= nframes;
