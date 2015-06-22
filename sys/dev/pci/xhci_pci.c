@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.5 2014/10/30 18:25:08 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.6 2015/06/22 08:43:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -61,17 +61,19 @@ struct xhci_pci_softc {
 	struct xhci_softc	sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
+	pcireg_t		sc_id;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
 int	xhci_pci_match(struct device *, void *, void *);
 void	xhci_pci_attach(struct device *, struct device *, void *);
 int	xhci_pci_detach(struct device *, int);
+int	xhci_pci_activate(struct device *, int);
 void	xhci_pci_takecontroller(struct xhci_pci_softc *, int);
 
 struct cfattach xhci_pci_ca = {
 	sizeof(struct xhci_pci_softc), xhci_pci_match, xhci_pci_attach,
-	xhci_pci_detach, xhci_activate
+	xhci_pci_detach, xhci_pci_activate
 };
 
 int
@@ -92,10 +94,10 @@ xhci_pci_port_route(struct xhci_pci_softc *psc)
 {
 	pcireg_t val;
 
-	/* 
+	/*
 	 * Check USB3 Port Routing Mask register that indicates the ports
 	 * can be changed from OS, and turn on by USB3 Port SS Enable register.
-	 */ 
+	 */
 	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_USB3PRM);
 	DPRINTF(("%s: USB3PRM / USB3.0 configurable ports: 0x%08x\n",
 	    psc->sc.sc_bus.bdev.dv_xname, val));
@@ -106,7 +108,7 @@ xhci_pci_port_route(struct xhci_pci_softc *psc)
 	    psc->sc.sc_bus.bdev.dv_xname, val));
 
 	/*
-	 * Check USB2 Port Routing Mask register that indicates the USB2.0 
+	 * Check USB2 Port Routing Mask register that indicates the USB2.0
 	 * ports to be controlled by xHCI HC, and switch them to xHCI HC.
 	 */
 	val = pci_conf_read(psc->sc_pc, psc->sc_tag, PCI_XHCI_INTEL_XUSB2PRM);
@@ -142,6 +144,7 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_tag = pa->pa_tag;
+	psc->sc_id = pa->pa_id;
 	psc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Handle quirks */
@@ -189,16 +192,8 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto disestablish_ret;
 	}
 
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_8SERIES_XHCI:
-		case PCI_PRODUCT_INTEL_8SERIES_LP_XHCI:
-		case PCI_PRODUCT_INTEL_7SERIES_XHCI:
-			xhci_pci_port_route(psc);
-			break;
-		}
-	}
+	if (PCI_VENDOR(psc->sc_id) == PCI_VENDOR_INTEL)
+		xhci_pci_port_route(psc);
 
 	/* Attach usb device. */
 	config_found(self, &psc->sc.sc_bus, usbctlprint);
@@ -233,6 +228,24 @@ xhci_pci_detach(struct device *self, int flags)
 	}
 	return (0);
 }
+
+int
+xhci_pci_activate(struct device *self, int act)
+{
+	struct xhci_pci_softc *psc = (struct xhci_pci_softc *)self;
+
+	switch (act) {
+	case DVACT_RESUME:
+		if (PCI_VENDOR(psc->sc_id) == PCI_VENDOR_INTEL)
+			xhci_pci_port_route(psc);
+		break;
+	default:
+		break;
+	}
+
+	return (xhci_activate(self, act));
+}
+
 
 void
 xhci_pci_takecontroller(struct xhci_pci_softc *psc, int silent)
