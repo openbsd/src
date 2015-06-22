@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.919 2015/06/16 11:09:39 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.920 2015/06/22 15:58:23 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -273,16 +273,6 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 		}						\
 		SLIST_FOREACH(mrm, &s->match_rules, entry)	\
 			mrm->r->states_cur++;			\
-	} while (0)
-
-#define STATE_DEC_COUNTERS(s)					\
-	do {							\
-		struct pf_rule_item *mrm;			\
-		if (s->anchor.ptr != NULL)			\
-			s->anchor.ptr->states_cur--;		\
-		s->rule.ptr->states_cur--;			\
-		SLIST_FOREACH(mrm, &s->match_rules, entry)	\
-			mrm->r->states_cur--;			\
 	} while (0)
 
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
@@ -3467,7 +3457,6 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	s->anchor.ptr = a;
 	s->natrule.ptr = nr;
 	memcpy(&s->match_rules, rules, sizeof(s->match_rules));
-	STATE_INC_COUNTERS(s);
 	if (r->allow_opts)
 		s->state_flags |= PFSTATE_ALLOWOPTS;
 	if (r->rule_flag & PFRULE_STATESLOPPY)
@@ -3594,6 +3583,8 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	} else
 		*sm = s;
 
+	STATE_INC_COUNTERS(s);
+
 	if (tag > 0) {
 		pf_tag_ref(tag);
 		s->tag = tag;
@@ -3624,16 +3615,12 @@ csfailed:
 	if (s) {
 		pf_normalize_tcp_cleanup(s);	/* safe even w/o init */
 		pf_src_tree_remove_state(s);
+		pool_put(&pf_state_pl, s);
 	}
 
 	for (i = 0; i < PF_SN_MAX; i++)
 		if (sns[i] != NULL)
 			pf_remove_src_node(sns[i]);
-
-	if (s) {
-		STATE_DEC_COUNTERS(s);
-		pool_put(&pf_state_pl, s);
-	}
 
 	return (PF_DROP);
 }
