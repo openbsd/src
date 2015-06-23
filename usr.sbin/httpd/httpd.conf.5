@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.61 2015/05/28 19:29:40 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.62 2015/06/23 15:23:14 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2015 $
+.Dd $Mdocdate: June 23 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -131,14 +131,38 @@ The configured web servers.
 .Pp
 Each
 .Ic server
-must have a
-.Ar name
-and include one or more lines of the following syntax:
+section starts with a declaration of the server
+.Ar name :
+.Bl -tag -width Ds
+.It Ic server Ar name Brq ...
+Match the server name using shell globbing rules.
+This can be an explicit name,
+.Ar www.example.com ,
+or a name including wildcards,
+.Ar *.example.com .
+.It Ic server match Ar name Brq ...
+Match the server name using pattern matching,
+see
+.Xr patterns 7 .
+.El
+.Pp
+Followed by a block of options that is enclosed in curly brackets:
 .Bl -tag -width Ds
 .It Ic alias Ar name
 Specify an additional alias
 .Ar name
 for this server.
+.It Ic alias match Ar name
+Like the
+.Ic alias
+option,
+but
+.Ic match
+the
+.Ar name
+using pattern matching instead of shell globbing rules,
+see
+.Xr patterns 7 .
 .It Oo Ic no Oc Ic authenticate Oo Ar realm Oc Ic with Pa htpasswd
 Authenticate a remote user for
 .Ar realm
@@ -188,6 +212,12 @@ The configured IP address of the server.
 The configured TCP server port of the server.
 .It Ic $SERVER_NAME
 The name of the server.
+.It Ic Pf % Ar n
+The capture index
+.Ar n
+of a string that was captured by the enclosing
+.Ic location match
+option.
 .El
 .It Ic connection Ar option
 Set the specified options and limits for HTTP connections.
@@ -247,6 +277,22 @@ except
 .Ic location
 and
 .Ic tcp .
+.It Ic location match Ar path Brq ...
+Like the
+.Ic location
+option,
+but
+.Ic match
+the
+.Ar path
+using pattern matching instead of shell globbing rules,
+see
+.Xr patterns 7 .
+The pattern may contain captures that can be used in the
+.Ar uri
+of an enclosed
+.Ic block return
+option.
 .It Oo Ic no Oc Ic log Op Ar option
 Set the specified logging options.
 Logging is enabled by default using the standard
@@ -516,6 +562,7 @@ server "www.example.com" {
 .Ed
 .Sh SEE ALSO
 .Xr htpasswd 1 ,
+.Xr patterns 7 ,
 .Xr httpd 8 ,
 .Xr slowcgi 8
 .Sh AUTHORS

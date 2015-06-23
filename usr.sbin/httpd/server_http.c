@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.82 2015/06/22 11:46:06 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.83 2015/06/23 15:23:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -29,14 +29,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <fnmatch.h>
 #include <stdio.h>
 #include <time.h>
 #include <resolv.h>
 #include <event.h>
-#include <fnmatch.h>
+#include <ctype.h>
 
 #include "httpd.h"
 #include "http.h"
+#include "patterns.h"
 
 static int	 server_httpmethod_cmp(const void *, const void *);
 static int	 server_httperror_cmp(const void *, const void *);
@@ -633,6 +635,7 @@ server_reset_http(struct client *clt)
 	clt->clt_remote_user = NULL;
 	clt->clt_bev->readcb = server_read_http;
 	clt->clt_srv_conf = &srv->srv_conf;
+	str_match_free(&clt->clt_srv_match);
 }
 
 ssize_t
@@ -873,6 +876,8 @@ server_close_http(struct client *clt)
 	clt->clt_descresp = NULL;
 	free(clt->clt_remote_user);
 	clt->clt_remote_user = NULL;
+
+	str_match_free(&clt->clt_srv_match);
 }
 
 char *
@@ -882,11 +887,34 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	char			 ibuf[128], *str, *path, *query;
-	int			 ret;
+	const char		*errstr = NULL, *p;
+	size_t			 size;
+	int			 n, ret;
 
 	if (strlcpy(buf, val, len) >= len)
 		return (NULL);
 
+	/* Find previously matched substrings by index */
+	for (p = val; clt->clt_srv_match.sm_nmatch &&
+	    (p = strstr(p, "%")) != NULL; p++) {
+		if (!isdigit(*(p + 1)))
+			continue;
+
+		/* Copy number, leading '%' char and add trailing \0 */
+		size = strspn(p + 1, "0123456789") + 2;
+		if (size  >= sizeof(ibuf))
+			return (NULL);
+		(void)strlcpy(ibuf, p, size);
+		n = strtonum(ibuf + 1, 0,
+		    clt->clt_srv_match.sm_nmatch - 1, &errstr);
+		if (errstr != NULL)
+			return (NULL);
+
+		/* Expand variable with matched value */
+		if (expand_string(buf, len, ibuf,
+		    clt->clt_srv_match.sm_match[n]) != 0)
+			return (NULL);
+	}
 	if (strstr(val, "$DOCUMENT_URI") != NULL) {
 		if ((path = url_encode(desc->http_path)) == NULL)
 			return (NULL);
@@ -999,8 +1027,10 @@ server_response(struct httpd *httpd, struct client *clt)
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = &srv->srv_conf;
 	struct kv		*kv, key, *host;
-	int			 portval = -1;
+	struct str_find		 sm;
+	int			 portval = -1, ret;
 	char			*hostval;
+	const char		*errstr = NULL;
 
 	/* Canonicalize the request path */
 	if (desc->http_path == NULL ||
@@ -1060,9 +1090,17 @@ server_response(struct httpd *httpd, struct client *clt)
 				    hostname);
 			}
 #endif
-			if ((srv_conf->flags & SRVFLAG_LOCATION) == 0 &&
-			    fnmatch(srv_conf->name, hostname,
-			    FNM_CASEFOLD) == 0 &&
+			if (srv_conf->flags & SRVFLAG_LOCATION)
+				continue;
+			else if (srv_conf->flags & SRVFLAG_SERVER_MATCH) {
+				str_find(hostname, srv_conf->name,
+				    &sm, 1, &errstr);
+				ret = errstr == NULL ? 0 : -1;
+			} else {
+				ret = fnmatch(srv_conf->name,
+				    hostname, FNM_CASEFOLD);
+			}
+			if (ret == 0 &&
 			    (portval == -1 ||
 			    (portval != -1 && portval == srv_conf->port))) {
 				/* Replace host configuration */
@@ -1132,6 +1170,8 @@ server_getlocation(struct client *clt, const char *path)
 {
 	struct server		*srv = clt->clt_srv;
 	struct server_config	*srv_conf = clt->clt_srv_conf, *location;
+	const char		*errstr = NULL;
+	int			 ret;
 
 	/* Now search for the location */
 	TAILQ_FOREACH(location, &srv->srv_hosts, entry) {
@@ -1142,11 +1182,20 @@ server_getlocation(struct client *clt, const char *path)
 		}
 #endif
 		if ((location->flags & SRVFLAG_LOCATION) &&
-		    location->parent_id == srv_conf->parent_id &&
-		    fnmatch(location->location, path, FNM_CASEFOLD) == 0) {
-			/* Replace host configuration */
-			clt->clt_srv_conf = srv_conf = location;
-			break;
+		    location->parent_id == srv_conf->parent_id) {
+			errstr = NULL;
+			if (location->flags & SRVFLAG_LOCATION_MATCH) {
+				ret = str_match(path, location->location,
+				    &clt->clt_srv_match, &errstr);
+			} else {
+				ret = fnmatch(location->location,
+				    path, FNM_CASEFOLD);
+			}
+			if (ret == 0 && errstr == NULL) {
+				/* Replace host configuration */
+				clt->clt_srv_conf = srv_conf = location;
+				break;
+			}
 		}
 	}
 

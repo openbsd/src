@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.83 2015/05/20 09:28:47 kettenis Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.84 2015/06/23 15:23:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,8 @@
 #include <event.h>
 #include <imsg.h>
 #include <tls.h>
+
+#include "patterns.h"
 
 #define CONF_FILE		"/etc/httpd.conf"
 #define HTTPD_SOCKET		"/var/run/httpd.sock"
@@ -278,6 +280,7 @@ struct client {
 	void			*clt_srv_conf;
 	u_int32_t		 clt_srv_id;
 	struct sockaddr_storage	 clt_srv_ss;
+	struct str_match	 clt_srv_match;
 
 	int			 clt_s;
 	in_port_t		 clt_port;
@@ -341,12 +344,15 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_NO_AUTH		0x00020000
 #define SRVFLAG_BLOCK		0x00040000
 #define SRVFLAG_NO_BLOCK	0x00080000
+#define SRVFLAG_LOCATION_MATCH	0x00100000
+#define SRVFLAG_SERVER_MATCH	0x00200000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
 	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
-	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK"
+	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
+	"\26SERVER_MATCH"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
