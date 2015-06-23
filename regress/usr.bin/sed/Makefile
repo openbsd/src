@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2011/06/23 11:53:57 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.4 2015/06/23 22:53:14 millert Exp $
 #	$NetBSD: Makefile,v 1.1 2005/04/04 16:48:45 peter Exp $
 
 SED=	/usr/bin/sed
 
-REGRESS_TARGETS= sedtest substitute hanoi math sierpinski
+REGRESS_TARGETS= sedtest substitute hanoi math sierpinski negation
 
 sedtest:
 	sh ${.CURDIR}/$@.sh ${SED} $@.out
@@ -22,6 +22,10 @@ math:
 
 sierpinski:
 	${SED} -nf ${.CURDIR}/$@.sed ${.CURDIR}/$@.in > $@.out
+	diff ${.CURDIR}/$@.expected $@.out
+
+negation:
+	echo foo | ${SED} "1!!s/foo/bar/" > $@.out
 	diff ${.CURDIR}/$@.expected $@.out
 
 CLEANFILES+=*.out lines* script*
