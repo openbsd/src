@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.83 2015/06/23 15:23:14 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.84 2015/06/23 17:25:01 semarie Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -911,8 +911,11 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 			return (NULL);
 
 		/* Expand variable with matched value */
-		if (expand_string(buf, len, ibuf,
-		    clt->clt_srv_match.sm_match[n]) != 0)
+		if ((str = url_encode(clt->clt_srv_match.sm_match[n])) == NULL)
+			return (NULL);
+		ret = expand_string(buf, len, ibuf, str);
+		free(str);
+		if (ret != 0)
 			return (NULL);
 	}
 	if (strstr(val, "$DOCUMENT_URI") != NULL) {
