@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.26 2015/06/23 06:59:54 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.27 2015/06/23 07:07:33 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.26 2015/06/23 06:59:54 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.27 2015/06/23 07:07:33 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.26 2015/06/23 06:59:54 yasuoka Exp $
+ * $Id: pptpd.c,v 1.27 2015/06/23 07:07:33 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -741,7 +741,7 @@ pptpd_gre_input(pptpd_listener *listener, struct sockaddr *peer, u_char *pkt,
 	hlen = iphdr->ip_hl * 4;
 
 	if (iphdr->ip_len > lpkt ||
-	    iphdr->ip_len < sizeof(struct pptp_gre_header)) {
+	    iphdr->ip_len < hlen + sizeof(struct pptp_gre_header)) {
 		pptpd_log(_this, LOG_ERR,
 		    "Received a broken packet: ip_hl=%d iplen=%d lpkt=%d", hlen,
 			iphdr->ip_len, lpkt);
