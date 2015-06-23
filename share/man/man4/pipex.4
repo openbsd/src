@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.7 2015/06/12 20:33:06 schwarze Exp $
+.\"	$OpenBSD: pipex.4,v 1.8 2015/06/23 06:21:53 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2015 $
+.Dd $Mdocdate: June 23 2015 $
 .Dt PIPEX 4
 .Os
 .Sh NAME
@@ -32,8 +32,7 @@
 is used with
 .Xr tun 4
 and
-.\" .Xr pppx 4 ,
-pppx,
+.Xr pppx 4 ,
 and handles PPP frames and forwards IP packets in-kernel.
 It accelerates the performance of packet forwarding, because it reduces
 copying of packets between kernel and userland.
@@ -52,8 +51,7 @@ adds some extensions to the
 requests to
 .Xr tun 4
 or
-.\" .Xr pppx 4
-pppx
+.Xr pppx 4
 devices.
 The added requests are as follows:
 .Bl -tag -width Ds
@@ -262,8 +260,7 @@ struct pipex_session_list_req {
 .Ed
 .It Dv PIPEXSIFDESCR Fa "struct pipex_session_descr_req *"
 Set the
-.\" .Xr pppx 4
-pppx
+.Xr pppx 4
 interface's description of the session.
 This command doesn't work on
 .Xr tun 4
