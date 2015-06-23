@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.30 2015/06/23 15:02:58 semarie Exp $	*/
+/*	$OpenBSD: elf.c,v 1.31 2015/06/23 15:13:29 semarie Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -159,7 +159,12 @@ elf_load_shdrs(const char *name, FILE *fp, off_t foff, Elf_Ehdr *head)
 		return (NULL);
 	}
 
-	if ((shdr = calloc(head->e_shentsize, head->e_shnum)) == NULL) {
+	if (head->e_shentsize < sizeof(Elf_Shdr)) {
+		warnx("%s: inconsistent section header size", name);
+		return (NULL);
+	}
+
+	if ((shdr = calloc(head->e_shnum, head->e_shentsize)) == NULL) {
 		warn("%s: malloc shdr", name);
 		return (NULL);
 	}
