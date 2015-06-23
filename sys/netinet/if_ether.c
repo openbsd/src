@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.155 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.156 2015/06/23 13:20:17 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -326,9 +326,10 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
  * Any other return value indicates an error.
  */
 int
-arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
+arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
     struct sockaddr *dst, u_char *desten)
 {
+	struct arpcom *ac = (struct arpcom *)ifp;
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt = NULL;
@@ -346,7 +347,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 	}
 
 	if (rt0 != NULL) {
-		error = rt_checkgate(&ac->ac_if, rt0, dst,
+		error = rt_checkgate(ifp, rt0, dst,
 		    m->m_pkthdr.ph_rtableid, &rt);
 		if (error) {
 			m_freem(m);
@@ -369,7 +370,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 				&satosin(dst)->sin_addr, addr, sizeof(addr)));
 	} else {
 		if ((la = arplookup(satosin(dst)->sin_addr.s_addr, 1, 0,
-		    ac->ac_if.if_rdomain)) != NULL)
+		    ifp->if_rdomain)) != NULL)
 			rt = la->la_rt;
 		else
 			log(LOG_DEBUG,
@@ -398,7 +399,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 		memcpy(desten, LLADDR(sdl), sdl->sdl_alen);
 		return (0);
 	}
-	if (((struct ifnet *)ac)->if_flags & IFF_NOARP) {
+	if (ifp->if_flags & IFF_NOARP) {
 		m_freem(m);
 		return (EINVAL);
 	}
@@ -440,7 +441,7 @@ arpresolve(struct arpcom *ac, struct rtentry *rt0, struct mbuf *m,
 		if (la->la_asked == 0 || rt->rt_expire != time_second) {
 			rt->rt_expire = time_second;
 			if (la->la_asked++ < arp_maxtries)
-				arprequest(&ac->ac_if,
+				arprequest(ifp,
 				    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
 				    &satosin(dst)->sin_addr.s_addr,
 #if NCARP > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.56 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.57 2015/06/23 13:20:17 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ extern struct niqueue arpintrq;
 
 void	arpwhohas(struct arpcom *, struct in_addr *);
 void	arpintr(void);
-int	arpresolve(struct arpcom *,
+int	arpresolve(struct ifnet *,
 	    struct rtentry *, struct mbuf *, struct sockaddr *, u_char *);
 void	arp_ifinit(struct arpcom *, struct ifaddr *);
 void	arp_rtrequest(int, struct rtentry *);

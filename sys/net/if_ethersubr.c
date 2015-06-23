@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.206 2015/06/23 09:42:23 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.207 2015/06/23 13:20:17 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	switch (dst->sa_family) {
 	case AF_INET:
-		error = arpresolve(ac, rt, m, dst, edst);
+		error = arpresolve(ifp, rt, m, dst, edst);
 		if (error)
 			return (error == EAGAIN ? 0 : error);
 		/* If broadcasting on a simplex interface, loopback a copy */
@@ -233,7 +233,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				    sizeof(edst));
 				break;
 			case AF_INET:
-				error = arpresolve(ac, rt, m, dst, edst);
+				error = arpresolve(ifp, rt, m, dst, edst);
 				if (error)
 					return (error == EAGAIN ? 0 : error);
 				break;
