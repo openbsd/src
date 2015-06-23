@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.72 2015/06/16 11:09:40 mpi Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.73 2015/06/23 09:42:23 mpi Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -162,7 +162,6 @@ etherip_input6(struct mbuf **m, int *offp, int proto)
 void
 etherip_decap(struct mbuf *m, int iphlen)
 {
-	struct ether_header eh;
 	struct etherip_header eip;
 	struct gif_softc *sc;
 	int s;
@@ -229,26 +228,13 @@ etherip_decap(struct mbuf *m, int iphlen)
 	/* Statistics */
 	etheripstat.etherip_ibytes += m->m_pkthdr.len;
 
-	/* Copy ethernet header */
-	m_copydata(m, 0, sizeof(eh), (void *) &eh);
-
 	/* Reset the flags based on the inner packet */
-	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF);
-	if (eh.ether_dhost[0] & 1) {
-		if (memcmp(etherbroadcastaddr, eh.ether_dhost,
-		    sizeof(etherbroadcastaddr)) == 0)
-			m->m_flags |= M_BCAST;
-		else
-			m->m_flags |= M_MCAST;
-	}
+	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF|M_PROTO1);
 
 #if NBPFILTER > 0
 	if (sc->gif_if.if_bpf)
 		bpf_mtap_af(sc->gif_if.if_bpf, AF_LINK, m, BPF_DIRECTION_IN);
 #endif
-
-	/* Trim the beginning of the mbuf, to remove the ethernet header. */
-	m_adj(m, sizeof(struct ether_header));
 
 	/*
 	 * Tap the packet off here for a bridge. bridge_input() returns
@@ -264,7 +250,7 @@ etherip_decap(struct mbuf *m, int iphlen)
 		sc->gif_if.if_imcasts++;
 
 	s = splnet();
-	m = bridge_input(&sc->gif_if, &eh, m);
+	m = bridge_input(m);
 	splx(s);
 	if (m == NULL)
 		return;

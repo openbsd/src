@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.244 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.245 2015/06/23 09:42:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -116,8 +116,6 @@ void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
 void	bridge_localbroadcast(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
 void	bridge_span(struct bridge_softc *, struct mbuf *);
-struct mbuf *bridge_dispatch(struct bridge_iflist *, struct ifnet *,
-	     struct mbuf *);
 void	bridge_stop(struct bridge_softc *);
 void	bridge_init(struct bridge_softc *);
 int	bridge_bifconf(struct bridge_softc *, struct ifbifconf *);
@@ -1198,7 +1196,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 	 * If packet is unicast, destined for someone on "this"
 	 * side of the bridge, drop it.
 	 */
-	if ((m->m_flags & (M_BCAST | M_MCAST)) == 0) {
+	if (!ETHER_IS_MULTICAST(eh.ether_dhost)) {
 		if ((dst_p = bridge_rtlookup(sc, dst)) != NULL)
 			dst_if = dst_p->brt_if;
 		else
@@ -1207,8 +1205,14 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 			m_freem(m);
 			return;
 		}
-	} else
+	} else {
+		if (memcmp(etherbroadcastaddr, eh.ether_dhost,
+		    sizeof(etherbroadcastaddr)) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
 		dst_if = NULL;
+	}
 
 	/*
 	 * Multicast packets get handled a little differently:
@@ -1302,36 +1306,30 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
  * not for us, and schedule an interrupt.
  */
 struct mbuf *
-bridge_input(struct ifnet *ifp, struct ether_header *eh0, struct mbuf *m)
+bridge_input(struct mbuf *m)
 {
+	struct ifnet *ifp;
 	struct bridge_softc *sc;
 	struct bridge_iflist *ifl;
+	struct bridge_iflist *srcifl;
 	struct ether_header *eh;
-#if NVLAN > 0
-	uint16_t etype = ntohs(eh0->ether_type);
-#endif /* NVLAN > 0 */
+	struct arpcom *ac;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *mc;
+	int s;
 
-	/*
-	 * Make sure this interface is a bridge member.
-	 */
-	if (ifp == NULL || ifp->if_bridgeport == NULL || m == NULL)
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	KASSERT(ifp != NULL);
+	if (((ifp->if_flags & IFF_UP) == 0) || (ifp->if_bridgeport == NULL))
 		return (m);
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("bridge_input(): no HDR");
 
-	m->m_flags &= ~M_PROTO1;	/* Loop prevention */
-
 	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
 	sc = ifl->bridge_sc;
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (m);
-
-	M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-	if (m == NULL)
-		return (NULL);
-	eh = mtod(m, struct ether_header *);
-	memmove(eh, eh0, sizeof(*eh));
 
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf)
@@ -1340,35 +1338,8 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh0, struct mbuf *m)
 
 	bridge_span(sc, m);
 
-	m = bridge_dispatch(ifl, ifp, m);
-
-#if NVLAN > 0
-	if ((m != NULL) && ((m->m_flags & M_VLANTAG) ||
-	    etype == ETHERTYPE_VLAN || etype == ETHERTYPE_QINQ)) {
-		/* The bridge did not want the vlan frame either, drop it. */
-		ifp->if_noproto++;
-		m_freem(m);
-		m = NULL;
-	}
-#endif /* NVLAN > 0 */
-
-	return (m);
-}
-
-struct mbuf *
-bridge_dispatch(struct bridge_iflist *ifl, struct ifnet *ifp, struct mbuf *m)
-{
-	struct bridge_softc *sc = ifl->bridge_sc;
-	struct bridge_iflist *srcifl;
-	struct ether_header *eh;
-	struct arpcom *ac;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	struct mbuf *mc;
-	int s;
-
 	eh = mtod(m, struct ether_header *);
-
-	if (m->m_flags & (M_BCAST | M_MCAST)) {
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 		/*
 	 	 * Reserved destination MAC addresses (01:80:C2:00:00:0x)
 		 * should not be forwarded to bridge members according to

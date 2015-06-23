@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.129 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.130 2015/06/23 09:42:23 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -68,11 +68,6 @@
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#include "bridge.h"
-#if NBRIDGE > 0
-#include <net/if_bridge.h>
 #endif
 
 u_long vlan_tagmask, svlan_tagmask;
@@ -304,14 +299,6 @@ vlan_input(struct mbuf *m)
 	}
 
 	if (ifv == NULL) {
-#if NBRIDGE > 0
-		/*
-		 * If the packet hasn't been through its bridge(4) give
-		 * it a chance.
-		 */
-		if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
-			return (0);
-#endif
 		ifp->if_noproto++;
 		m_freem(m);
 		return (1);

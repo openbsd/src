@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.205 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.206 2015/06/23 09:42:23 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -378,28 +378,6 @@ ether_input(struct mbuf *m)
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof(*eh);
 
 	etype = ntohs(eh->ether_type);
-
-#if NBRIDGE > 0
-	/*
-	 * Tap the packet off here for a bridge, if configured and
-	 * active for this interface.  bridge_input returns
-	 * NULL if it has consumed the packet, otherwise, it
-	 * gets processed as normal.
-	 */
-	if (ifp->if_bridgeport) {
-		if (m->m_flags & M_PROTO1)
-			m->m_flags &= ~M_PROTO1;
-		else {
-			m = bridge_input(ifp, eh, m);
-			if (m == NULL)
-				return (1);
-			/* The bridge has determined it's for us. */
-			ifp = if_get(m->m_pkthdr.ph_ifidx);
-			KASSERT(ifp != NULL);
-			m_adj(m, ETHER_HDR_LEN);
-		}
-	}
-#endif
 
 	ac = (struct arpcom *)ifp;
 
