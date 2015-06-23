@@ -41,9 +41,9 @@ nearest FTP mirror site.
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for amd64, execute:
  # mount /dev/cd0a /cdrom
- # pkg_add -v /cdrom/5.8/packages/amd64/emacs-24.4p0-no_x11.tgz
+ # pkg_add -v /cdrom/5.8/packages/amd64/emacs-24.5p0-no_x11.tgz
 or alternatively install them via FTP this way:
- # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/5.8/packages/amd64/emacs-24.4p0-no_x11.tgz
+ # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/5.8/packages/amd64/emacs-24.5p0-no_x11.tgz
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
