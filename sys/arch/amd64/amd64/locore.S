@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.65 2015/05/18 19:59:27 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.66 2015/06/23 14:19:21 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -264,6 +264,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	8(%esp),%eax
 	movl	%eax, RELOC(bootdev)
 
+	/*
+	 * Syms are placed after last load and bss of the kernel.
+	 * XXX Boot ignores 2MB roundup of _end, so esyms can be < _end.
+	 */
 	movl	16(%esp), %eax
 	testl   %eax,%eax
 	jz      1f
@@ -423,6 +427,9 @@ cont:
 	testl	%eax,%eax
 	jz	1f
 	subl	$KERNBASE_LO,%eax	/* XXX */
+	/* Page tables must be after symbols and after kernel image. */
+	cmpl	%eax,%edi
+	jg	1f
 	movl	%eax,%edi
 1:
 #endif
