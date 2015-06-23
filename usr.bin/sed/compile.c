@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.37 2014/12/12 03:32:55 jsg Exp $	*/
+/*	$OpenBSD: compile.c,v 1.38 2015/06/23 22:52:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -208,7 +208,7 @@ nonsel:		/* Now parse the command */
 		case NONSEL:			/* ! */
 			p++;
 			EATSPACE();
-			cmd->nonsel = ! cmd->nonsel;
+			cmd->nonsel = 1;
 			goto nonsel;
 		case GROUP:			/* { */
 			p++;
