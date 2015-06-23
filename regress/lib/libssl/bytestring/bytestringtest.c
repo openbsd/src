@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.6 2015/06/17 07:15:52 doug Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.7 2015/06/23 01:20:24 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -25,6 +25,22 @@
 /* This is from <openssl/base.h> in boringssl */
 #define OPENSSL_U64(x) x##ULL
 
+#define CHECK(a) do {							\
+	if (!(a)) {							\
+		printf("Error in %s [%s:%d]\n", __func__, __FILE__,	\
+		    __LINE__);						\
+		return 0;						\
+	}								\
+} while (0)
+
+#define CHECK_GOTO(a) do {						\
+	if (!(a)) {							\
+		printf("Error in %s [%s:%d]\n", __func__, __FILE__,	\
+		    __LINE__);						\
+		goto err;						\
+	}								\
+} while (0)
+
 static int
 test_skip(void)
 {
@@ -32,12 +48,15 @@ test_skip(void)
 	CBS data;
 
 	CBS_init(&data, kData, sizeof(kData));
-	return CBS_len(&data) == 3 &&
-	    CBS_skip(&data, 1) &&
-	    CBS_len(&data) == 2 &&
-	    CBS_skip(&data, 2) &&
-	    CBS_len(&data) == 0 &&
-	    !CBS_skip(&data, 1);
+
+	CHECK(CBS_len(&data) == 3);
+	CHECK(CBS_skip(&data, 1));
+	CHECK(CBS_len(&data) == 2);
+	CHECK(CBS_skip(&data, 2));
+	CHECK(CBS_len(&data) == 0);
+	CHECK(!CBS_skip(&data, 1));
+
+	return 1;
 }
 
 static int
@@ -50,15 +69,18 @@ test_get_u(void)
 	CBS data;
 
 	CBS_init(&data, kData, sizeof(kData));
-	return CBS_get_u8(&data, &u8) &&
-	    u8 == 1 &&
-	    CBS_get_u16(&data, &u16) &&
-	    u16 == 0x203 &&
-	    CBS_get_u24(&data, &u32) &&
-	    u32 == 0x40506 &&
-	    CBS_get_u32(&data, &u32) &&
-	    u32 == 0x708090a &&
-	    !CBS_get_u8(&data, &u8);
+
+	CHECK(CBS_get_u8(&data, &u8));
+	CHECK(u8 == 1);
+	CHECK(CBS_get_u16(&data, &u16));
+	CHECK(u16 == 0x203);
+	CHECK(CBS_get_u24(&data, &u32));
+	CHECK(u32 == 0x40506);
+	CHECK(CBS_get_u32(&data, &u32));
+	CHECK(u32 == 0x708090a);
+	CHECK(!CBS_get_u8(&data, &u8));
+
+	return 1;
 }
 
 static int
@@ -71,18 +93,21 @@ test_get_prefixed(void)
 	CBS data, prefixed;
 
 	CBS_init(&data, kData, sizeof(kData));
-	return CBS_get_u8_length_prefixed(&data, &prefixed) &&
-	    CBS_len(&prefixed) == 1 &&
-	    CBS_get_u8(&prefixed, &u8) &&
-	    u8 == 2 &&
-	    CBS_get_u16_length_prefixed(&data, &prefixed) &&
-	    CBS_len(&prefixed) == 2 &&
-	    CBS_get_u16(&prefixed, &u16) &&
-	    u16 == 0x304 &&
-	    CBS_get_u24_length_prefixed(&data, &prefixed) &&
-	    CBS_len(&prefixed) == 3 &&
-	    CBS_get_u24(&prefixed, &u32) &&
-	    u32 == 0x30201;
+
+	CHECK(CBS_get_u8_length_prefixed(&data, &prefixed));
+	CHECK(CBS_len(&prefixed) == 1);
+	CHECK(CBS_get_u8(&prefixed, &u8));
+	CHECK(u8 == 2);
+	CHECK(CBS_get_u16_length_prefixed(&data, &prefixed));
+	CHECK(CBS_len(&prefixed) == 2);
+	CHECK(CBS_get_u16(&prefixed, &u16));
+	CHECK(u16 == 0x304);
+	CHECK(CBS_get_u24_length_prefixed(&data, &prefixed));
+	CHECK(CBS_len(&prefixed) == 3);
+	CHECK(CBS_get_u24(&prefixed, &u32));
+	CHECK(u32 == 0x30201);
+
+	return 1;
 }
 
 static int
@@ -94,16 +119,13 @@ test_get_prefixed_bad(void)
 	CBS data, prefixed;
 
 	CBS_init(&data, kData1, sizeof(kData1));
-	if (CBS_get_u8_length_prefixed(&data, &prefixed))
-		return 0;
+	CHECK(!CBS_get_u8_length_prefixed(&data, &prefixed));
 
 	CBS_init(&data, kData2, sizeof(kData2));
-	if (CBS_get_u16_length_prefixed(&data, &prefixed))
-		return 0;
+	CHECK(!CBS_get_u16_length_prefixed(&data, &prefixed));
 
 	CBS_init(&data, kData3, sizeof(kData3));
-	if (CBS_get_u24_length_prefixed(&data, &prefixed))
-		return 0;
+	CHECK(!CBS_get_u24_length_prefixed(&data, &prefixed));
 
 	return 1;
 }
@@ -126,99 +148,87 @@ test_get_asn1(void)
 	uint64_t value;
 
 	CBS_init(&data, kData1, sizeof(kData1));
-	if (CBS_peek_asn1_tag(&data, 0x1) || !CBS_peek_asn1_tag(&data, 0x30))
-		return 0;
 
-	if (!CBS_get_asn1(&data, &contents, 0x30) ||
-	    CBS_len(&contents) != 2 ||
-	    memcmp(CBS_data(&contents), "\x01\x02", 2) != 0)
-		return 0;
+	CHECK(!CBS_peek_asn1_tag(&data, 0x1));
+	CHECK(CBS_peek_asn1_tag(&data, 0x30));
+
+	CHECK(CBS_get_asn1(&data, &contents, 0x30));
+	CHECK(CBS_len(&contents) == 2);
+	CHECK(memcmp(CBS_data(&contents), "\x01\x02", 2) == 0);
 
 	CBS_init(&data, kData2, sizeof(kData2));
 	/* data is truncated */
-	if (CBS_get_asn1(&data, &contents, 0x30))
-		return 0;
+	CHECK(!CBS_get_asn1(&data, &contents, 0x30));
 
 	CBS_init(&data, kData3, sizeof(kData3));
 	/* zero byte length of length */
-	if (CBS_get_asn1(&data, &contents, 0x30))
-		return 0;
+	CHECK(!CBS_get_asn1(&data, &contents, 0x30));
 
 	CBS_init(&data, kData4, sizeof(kData4));
 	/* long form mistakenly used. */
-	if (CBS_get_asn1(&data, &contents, 0x30))
-		return 0;
+	CHECK(!CBS_get_asn1(&data, &contents, 0x30));
 
 	CBS_init(&data, kData5, sizeof(kData5));
 	/* length takes too many bytes. */
-	if (CBS_get_asn1(&data, &contents, 0x30))
-		return 0;
+	CHECK(!CBS_get_asn1(&data, &contents, 0x30));
 
 	CBS_init(&data, kData1, sizeof(kData1));
 	/* wrong tag. */
-	if (CBS_get_asn1(&data, &contents, 0x31))
-		return 0;
+	CHECK(!CBS_get_asn1(&data, &contents, 0x31));
 
 	CBS_init(&data, NULL, 0);
 	/* peek at empty data. */
-	if (CBS_peek_asn1_tag(&data, 0x30))
-		return 0;
+	CHECK(!CBS_peek_asn1_tag(&data, 0x30));
 
 	CBS_init(&data, NULL, 0);
 	/* optional elements at empty data. */
-	if (!CBS_get_optional_asn1(&data, &contents, &present, 0xa0) ||
-	    present ||
-	    !CBS_get_optional_asn1_octet_string(&data, &contents, &present,
-	    0xa0) ||
-	    present ||
-	    CBS_len(&contents) != 0 ||
-	    !CBS_get_optional_asn1_octet_string(&data, &contents, NULL, 0xa0) ||
-	    CBS_len(&contents) != 0 ||
-	    !CBS_get_optional_asn1_uint64(&data, &value, 0xa0, 42) ||
-	    value != 42)
-		return 0;
+	CHECK(CBS_get_optional_asn1(&data, &contents, &present, 0xa0));
+	CHECK(!present);
+	CHECK(CBS_get_optional_asn1_octet_string(&data, &contents, &present,
+	    0xa0));
+	CHECK(!present);
+	CHECK(CBS_len(&contents) == 0);
+	CHECK(CBS_get_optional_asn1_octet_string(&data, &contents, NULL, 0xa0));
+	CHECK(CBS_len(&contents) == 0);
+	CHECK(CBS_get_optional_asn1_uint64(&data, &value, 0xa0, 42));
+	CHECK(value == 42);
 
 	CBS_init(&data, kData6, sizeof(kData6));
 	/* optional element. */
-	if (!CBS_get_optional_asn1(&data, &contents, &present, 0xa0) ||
-	    present ||
-	    !CBS_get_optional_asn1(&data, &contents, &present, 0xa1) ||
-	    !present ||
-	    CBS_len(&contents) != 3 ||
-	    memcmp(CBS_data(&contents), "\x04\x01\x01", 3) != 0)
-		return 0;
+	CHECK(CBS_get_optional_asn1(&data, &contents, &present, 0xa0));
+	CHECK(!present);
+	CHECK(CBS_get_optional_asn1(&data, &contents, &present, 0xa1));
+	CHECK(present);
+	CHECK(CBS_len(&contents) == 3);
+	CHECK(memcmp(CBS_data(&contents), "\x04\x01\x01", 3) == 0);
 
 	CBS_init(&data, kData6, sizeof(kData6));
 	/* optional octet string. */
-	if (!CBS_get_optional_asn1_octet_string(&data, &contents, &present,
-	    0xa0) ||
-	    present ||
-	    CBS_len(&contents) != 0 ||
-	    !CBS_get_optional_asn1_octet_string(&data, &contents, &present,
-	    0xa1) ||
-	    !present ||
-	    CBS_len(&contents) != 1 ||
-	    CBS_data(&contents)[0] != 1)
-		return 0;
+	CHECK(CBS_get_optional_asn1_octet_string(&data, &contents, &present,
+	    0xa0));
+	CHECK(!present);
+	CHECK(CBS_len(&contents) == 0);
+	CHECK(CBS_get_optional_asn1_octet_string(&data, &contents, &present,
+	    0xa1));
+	CHECK(present);
+	CHECK(CBS_len(&contents) == 1);
+	CHECK(CBS_data(&contents)[0] == 1);
 
 	CBS_init(&data, kData7, sizeof(kData7));
 	/* invalid optional octet string. */
-	if (CBS_get_optional_asn1_octet_string(&data, &contents, &present,
-	    0xa1))
-		return 0;
+	CHECK(!CBS_get_optional_asn1_octet_string(&data, &contents, &present,
+	    0xa1));
 
 	CBS_init(&data, kData8, sizeof(kData8));
 	/* optional octet string. */
-	if (!CBS_get_optional_asn1_uint64(&data, &value, 0xa0, 42) ||
-	    value != 42 ||
-	    !CBS_get_optional_asn1_uint64(&data, &value, 0xa1, 42) ||
-	    value != 1)
-		return 0;
+	CHECK(CBS_get_optional_asn1_uint64(&data, &value, 0xa0, 42));
+	CHECK(value == 42);
+	CHECK(CBS_get_optional_asn1_uint64(&data, &value, 0xa1, 42));
+	CHECK(value == 1);
 
 	CBS_init(&data, kData9, sizeof(kData9));
 	/* invalid optional integer. */
-	if (CBS_get_optional_asn1_uint64(&data, &value, 0xa1, 42))
-		return 0;
+	CHECK(!CBS_get_optional_asn1_uint64(&data, &value, 0xa1, 42));
 
 	return 1;
 }
@@ -235,22 +245,21 @@ test_get_optional_asn1_bool(void)
 
 	CBS_init(&data, NULL, 0);
 	val = 2;
-	if (!CBS_get_optional_asn1_bool(&data, &val, 0x0a, 0) || val != 0)
-		return 0;
+	CHECK(CBS_get_optional_asn1_bool(&data, &val, 0x0a, 0));
+	CHECK(val == 0);
 
 	CBS_init(&data, kTrue, sizeof(kTrue));
 	val = 2;
-	if (!CBS_get_optional_asn1_bool(&data, &val, 0x0a, 0) || val != 1)
-		return 0;
+	CHECK(CBS_get_optional_asn1_bool(&data, &val, 0x0a, 0));
+	CHECK(val == 1);
 
 	CBS_init(&data, kFalse, sizeof(kFalse));
 	val = 2;
-	if (!CBS_get_optional_asn1_bool(&data, &val, 0x0a, 1) || val != 0)
-		return 0;
+	CHECK(CBS_get_optional_asn1_bool(&data, &val, 0x0a, 1));
+	CHECK(val == 0);
 
 	CBS_init(&data, kInvalid, sizeof(kInvalid));
-	if (CBS_get_optional_asn1_bool(&data, &val, 0x0a, 1))
-		return 0;
+	CHECK(!CBS_get_optional_asn1_bool(&data, &val, 0x0a, 1));
 
 	return 1;
 }
@@ -259,28 +268,31 @@ static int
 test_cbb_basic(void)
 {
 	static const uint8_t kExpected[] = {1, 2, 3, 4, 5, 6, 7, 8};
-	uint8_t *buf;
+	uint8_t *buf = NULL;
 	size_t buf_len;
-	int ok;
+	int ret = 0;
 	CBB cbb;
 
-	if (!CBB_init(&cbb, 100))
-		return 0;
+	CHECK(CBB_init(&cbb, 100));
 
 	CBB_cleanup(&cbb);
 
-	if (!CBB_init(&cbb, 0) ||
-	    !CBB_add_u8(&cbb, 1) ||
-	    !CBB_add_u16(&cbb, 0x203) ||
-	    !CBB_add_u24(&cbb, 0x40506) ||
-	    !CBB_add_bytes(&cbb, (const uint8_t*) "\x07\x08", 2) ||
-	    !CBB_finish(&cbb, &buf, &buf_len))
-		return 0;
+	CHECK(CBB_init(&cbb, 0));
+	CHECK_GOTO(CBB_add_u8(&cbb, 1));
+	CHECK_GOTO(CBB_add_u16(&cbb, 0x203));
+	CHECK_GOTO(CBB_add_u24(&cbb, 0x40506));
+	CHECK_GOTO(CBB_add_bytes(&cbb, (const uint8_t*) "\x07\x08", 2));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
 
-	ok = buf_len == sizeof(kExpected) && memcmp(buf, kExpected, buf_len)
-	    == 0;
+	ret = (buf_len == sizeof(kExpected)
+	    && memcmp(buf, kExpected, buf_len) == 0);
+
+	if (0) {
+err:
+		CBB_cleanup(&cbb);
+	}
 	free(buf);
-	return ok;
+	return ret;
 }
 
 static int
@@ -288,26 +300,28 @@ test_cbb_fixed(void)
 {
 	CBB cbb;
 	uint8_t buf[1];
-	uint8_t *out_buf;
+	uint8_t *out_buf = NULL;
 	size_t out_size;
+	int ret = 0;
 
-	if (!CBB_init_fixed(&cbb, NULL, 0) ||
-	    CBB_add_u8(&cbb, 1) ||
-	    !CBB_finish(&cbb, &out_buf, &out_size) ||
-	    out_buf != NULL ||
-	    out_size != 0)
-		return 0;
+	CHECK(CBB_init_fixed(&cbb, NULL, 0));
+	CHECK_GOTO(!CBB_add_u8(&cbb, 1));
+	CHECK_GOTO(CBB_finish(&cbb, &out_buf, &out_size));
+	CHECK(out_buf == NULL && out_size == 0);
 
-	if (!CBB_init_fixed(&cbb, buf, 1) ||
-	    !CBB_add_u8(&cbb, 1) ||
-	    CBB_add_u8(&cbb, 2) ||
-	    !CBB_finish(&cbb, &out_buf, &out_size) ||
-	    out_buf != buf ||
-	    out_size != 1 ||
-	    buf[0] != 1)
-		return 0;
+	CHECK(CBB_init_fixed(&cbb, buf, 1));
+	CHECK_GOTO(CBB_add_u8(&cbb, 1));
+	CHECK_GOTO(!CBB_add_u8(&cbb, 2));
+	CHECK_GOTO(CBB_finish(&cbb, &out_buf, &out_size));
 
-	return 1;
+	ret = (out_buf == buf && out_size == 1 && buf[0] == 1);
+
+	if (0) {
+err:
+		CBB_cleanup(&cbb);
+	}
+
+	return ret;
 }
 
 static int
@@ -318,15 +332,12 @@ test_cbb_finish_child(void)
 	size_t out_size;
 	int ret = 0;
 
-	if (!CBB_init(&cbb, 16) ||
-	    !CBB_add_u8_length_prefixed(&cbb, &child) ||
-	    CBB_finish(&child, &out_buf, &out_size) ||
-	    !CBB_finish(&cbb, &out_buf, &out_size) ||
-	    out_size != 1 ||
-	    out_buf[0] != 0)
-		goto err;
+	CHECK(CBB_init(&cbb, 16));
+	CHECK_GOTO(CBB_add_u8_length_prefixed(&cbb, &child));
+	CHECK_GOTO(!CBB_finish(&child, &out_buf, &out_size));
+	CHECK_GOTO(CBB_finish(&cbb, &out_buf, &out_size));
 
-	ret = 1;
+	ret = (out_size == 1 && out_buf[0] == 0);
 
 err:
 	free(out_buf);
@@ -341,31 +352,33 @@ test_cbb_prefixed(void)
 	uint8_t *buf = NULL;
 	size_t buf_len;
 	CBB cbb, contents, inner_contents, inner_inner_contents;
-	int ok = 0;
+	int ret = 0;
 
-	if (!CBB_init(&cbb, 0) ||
-	    !CBB_add_u8_length_prefixed(&cbb, &contents) ||
-	    !CBB_add_u8_length_prefixed(&cbb, &contents) ||
-	    !CBB_add_u8(&contents, 1) ||
-	    !CBB_add_u16_length_prefixed(&cbb, &contents) ||
-	    !CBB_add_u16(&contents, 0x203) ||
-	    !CBB_add_u24_length_prefixed(&cbb, &contents) ||
-	    !CBB_add_u24(&contents, 0x40506) ||
-	    !CBB_add_u8_length_prefixed(&cbb, &contents) ||
-	    !CBB_add_u8_length_prefixed(&contents, &inner_contents) ||
-	    !CBB_add_u8(&inner_contents, 1) ||
-	    !CBB_add_u16_length_prefixed(&inner_contents,
-	    &inner_inner_contents) ||
-	    !CBB_add_u8(&inner_inner_contents, 2) ||
-	    !CBB_finish(&cbb, &buf, &buf_len))
-		goto err;
+	CHECK(CBB_init(&cbb, 0));
+	CHECK_GOTO(CBB_add_u8_length_prefixed(&cbb, &contents));
+	CHECK_GOTO(CBB_add_u8_length_prefixed(&cbb, &contents));
+	CHECK_GOTO(CBB_add_u8(&contents, 1));
+	CHECK_GOTO(CBB_add_u16_length_prefixed(&cbb, &contents));
+	CHECK_GOTO(CBB_add_u16(&contents, 0x203));
+	CHECK_GOTO(CBB_add_u24_length_prefixed(&cbb, &contents));
+	CHECK_GOTO(CBB_add_u24(&contents, 0x40506));
+	CHECK_GOTO(CBB_add_u8_length_prefixed(&cbb, &contents));
+	CHECK_GOTO(CBB_add_u8_length_prefixed(&contents, &inner_contents));
+	CHECK_GOTO(CBB_add_u8(&inner_contents, 1));
+	CHECK_GOTO(CBB_add_u16_length_prefixed(&inner_contents,
+	    &inner_inner_contents));
+	CHECK_GOTO(CBB_add_u8(&inner_inner_contents, 2));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
 
-	ok = buf_len == sizeof(kExpected) && memcmp(buf, kExpected, buf_len)
-	    == 0;
+	ret = (buf_len == sizeof(kExpected)
+	    && memcmp(buf, kExpected, buf_len) == 0);
 
+	if (0) {
 err:
+		CBB_cleanup(&cbb);
+	}
 	free(buf);
-	return ok;
+	return ret;
 }
 
 static int
@@ -376,34 +389,30 @@ test_cbb_misuse(void)
 	size_t buf_len;
 	int ret = 0;
 
-	if (!CBB_init(&cbb, 0) ||
-	    !CBB_add_u8_length_prefixed(&cbb, &child) ||
-	    !CBB_add_u8(&child, 1) ||
-	    !CBB_add_u8(&cbb, 2))
-		return 0;
+	CHECK(CBB_init(&cbb, 0));
+	CHECK_GOTO(CBB_add_u8_length_prefixed(&cbb, &child));
+	CHECK_GOTO(CBB_add_u8(&child, 1));
+	CHECK_GOTO(CBB_add_u8(&cbb, 2));
 
 	/*
 	 * Since we wrote to |cbb|, |child| is now invalid and attempts to write
 	 * to it should fail.
 	 */
-	if (CBB_add_u8(&child, 1) ||
-	    CBB_add_u16(&child, 1) ||
-	    CBB_add_u24(&child, 1) ||
-	    CBB_add_u8_length_prefixed(&child, &contents) ||
-	    CBB_add_u16_length_prefixed(&child, &contents) ||
-	    CBB_add_asn1(&child, &contents, 1) ||
-	    CBB_add_bytes(&child, (const uint8_t*) "a", 1)) {
-		fprintf(stderr, "CBB operation on invalid CBB did not fail.\n");
-		return 0;
-	}
+	CHECK_GOTO(!CBB_add_u8(&child, 1));
+	CHECK_GOTO(!CBB_add_u16(&child, 1));
+	CHECK_GOTO(!CBB_add_u24(&child, 1));
+	CHECK_GOTO(!CBB_add_u8_length_prefixed(&child, &contents));
+	CHECK_GOTO(!CBB_add_u16_length_prefixed(&child, &contents));
+	CHECK_GOTO(!CBB_add_asn1(&child, &contents, 1));
+	CHECK_GOTO(!CBB_add_bytes(&child, (const uint8_t*) "a", 1));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
 
-	if (!CBB_finish(&cbb, &buf, &buf_len) || buf_len != 3 ||
-	    memcmp(buf, "\x01\x01\x02", 3) != 0)
-		goto err;
+	ret = (buf_len == 3 && memcmp(buf, "\x01\x01\x02", 3) == 0);
 
-	ret = 1;
-
+	if (0) {
 err:
+		CBB_cleanup(&cbb);
+	}
 	free(buf);
 	return ret;
 }
@@ -416,70 +425,75 @@ test_cbb_asn1(void)
 	size_t buf_len;
 	CBB cbb, contents, inner_contents;
 	int ret = 0;
+	int alloc = 0;
 
-	if (!CBB_init(&cbb, 0) ||
-	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
-	    !CBB_add_bytes(&contents, (const uint8_t*) "\x01\x02\x03", 3) ||
-	    !CBB_finish(&cbb, &buf, &buf_len))
-		goto err;
+	CHECK_GOTO(CBB_init(&cbb, 0));
+	alloc = 1;
+	CHECK_GOTO(CBB_add_asn1(&cbb, &contents, 0x30));
+	CHECK_GOTO(CBB_add_bytes(&contents, (const uint8_t*) "\x01\x02\x03",
+	    3));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
+	alloc = 0;
 
-	if (buf_len != sizeof(kExpected) || memcmp(buf, kExpected, buf_len)
-	    != 0)
-		goto err;
+	CHECK_GOTO(buf_len == sizeof(kExpected));
+	CHECK_GOTO(memcmp(buf, kExpected, buf_len) == 0);
 
 	free(buf);
 	buf = NULL;
 
-	if ((test_data = malloc(100000)) == NULL)
-		goto err;
+	CHECK_GOTO(((test_data = malloc(100000)) != NULL));
 	memset(test_data, 0x42, 100000);
 
-	if (!CBB_init(&cbb, 0) ||
-	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
-	    !CBB_add_bytes(&contents, test_data, 130) ||
-	    !CBB_finish(&cbb, &buf, &buf_len))
-		goto err;
+	CHECK_GOTO(CBB_init(&cbb, 0));
+	alloc = 1;
+	CHECK_GOTO(CBB_add_asn1(&cbb, &contents, 0x30));
+	CHECK_GOTO(CBB_add_bytes(&contents, test_data, 130));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
+	alloc = 0;
 
-	if (buf_len != 3 + 130 ||
-	    memcmp(buf, "\x30\x81\x82", 3) != 0 ||
-	    memcmp(buf + 3, test_data, 130) != 0) {
-		goto err;
-	}
+	CHECK_GOTO(buf_len == 3 + 130);
+	CHECK_GOTO(memcmp(buf, "\x30\x81\x82", 3) == 0);
+	CHECK_GOTO(memcmp(buf + 3, test_data, 130) == 0);
+
 	free(buf);
 	buf = NULL;
 
-	if (!CBB_init(&cbb, 0) ||
-	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
-	    !CBB_add_bytes(&contents, test_data, 1000) ||
-	    !CBB_finish(&cbb, &buf, &buf_len))
-		goto err;
+	CHECK_GOTO(CBB_init(&cbb, 0));
+	alloc = 1;
+	CHECK_GOTO(CBB_add_asn1(&cbb, &contents, 0x30));
+	CHECK_GOTO(CBB_add_bytes(&contents, test_data, 1000));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
+	alloc = 0;
 
-	if (buf_len != 4 + 1000 ||
-	    memcmp(buf, "\x30\x82\x03\xe8", 4) != 0 ||
-	    memcmp(buf + 4, test_data, 1000)) {
-		goto err;
-	}
+	CHECK_GOTO(buf_len == 4 + 1000);
+	CHECK_GOTO(memcmp(buf, "\x30\x82\x03\xe8", 4) == 0);
+	CHECK_GOTO(!memcmp(buf + 4, test_data, 1000));
+
 	free(buf);
 	buf = NULL;
 
-	if (!CBB_init(&cbb, 0) ||
-	    !CBB_add_asn1(&cbb, &contents, 0x30) ||
-	    !CBB_add_asn1(&contents, &inner_contents, 0x30) ||
-	    !CBB_add_bytes(&inner_contents, test_data, 100000) ||
-	    !CBB_finish(&cbb, &buf, &buf_len))
-		goto err;
+	CHECK_GOTO(CBB_init(&cbb, 0));
+	alloc = 1;
+	CHECK_GOTO(CBB_add_asn1(&cbb, &contents, 0x30));
+	CHECK_GOTO(CBB_add_asn1(&contents, &inner_contents, 0x30));
+	CHECK_GOTO(CBB_add_bytes(&inner_contents, test_data, 100000));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
+	alloc = 0;
 
-	if (buf_len != 5 + 5 + 100000 ||
-	    memcmp(buf, "\x30\x83\x01\x86\xa5\x30\x83\x01\x86\xa0", 10) != 0 ||
-	    memcmp(buf + 10, test_data, 100000))
-		goto err;
+	CHECK_GOTO(buf_len == 5 + 5 + 100000);
+	CHECK_GOTO(memcmp(buf, "\x30\x83\x01\x86\xa5\x30\x83\x01\x86\xa0", 10)
+	    == 0);
+	CHECK_GOTO(!memcmp(buf + 10, test_data, 100000));
 
 	ret = 1;
 
+	if (0) {
 err:
+		if (alloc)
+			CBB_cleanup(&cbb);
+	}
 	free(buf);
 	free(test_data);
-
 	return ret;
 }
 
@@ -493,33 +507,23 @@ do_indefinite_convert(const char *name, const uint8_t *definite_expected,
 	int ret = 0;
 
 	CBS_init(&in, indefinite, indefinite_len);
-	if (!CBS_asn1_indefinite_to_definite(&in, &out, &out_len)) {
-		fprintf(stderr, "%s: CBS_asn1_indefinite_to_definite failed.\n",
-		    name);
-		goto end;
-	}
+
+	CHECK_GOTO(CBS_asn1_indefinite_to_definite(&in, &out, &out_len));
 
 	if (out == NULL) {
-		if (indefinite_len != definite_len ||
-		    memcmp(definite_expected, indefinite, indefinite_len)
-		    != 0) {
-			fprintf(stderr, "%s: incorrect unconverted result.\n",
-			    name);
-			return 0;
-		}
+		CHECK_GOTO(indefinite_len == definite_len);
+		CHECK_GOTO(memcmp(definite_expected, indefinite, indefinite_len)
+		    == 0);
 
 		return 1;
 	}
 
-	if (out_len != definite_len || memcmp(out, definite_expected,
-	    definite_len) != 0) {
-		fprintf(stderr, "%s: incorrect converted result.\n", name);
-		goto end;
-	}
+	CHECK_GOTO(out_len == definite_len);
+	CHECK_GOTO(memcmp(out, definite_expected, definite_len) == 0);
 
 	ret = 1;
 
-end:
+err:
 	free(out);
 	return ret;
 }
@@ -569,15 +573,17 @@ test_indefinite_convert(void)
 	    0x6e, 0x10, 0x9b, 0xb8, 0x02, 0x02, 0x07, 0xd0,
 	};
 
-	return do_indefinite_convert("kSimpleBER", kSimpleBER, sizeof(kSimpleBER),
-	    kSimpleBER, sizeof(kSimpleBER)) &&
-	    do_indefinite_convert("kIndefBER", kIndefDER, sizeof(kIndefDER), kIndefBER,
-	    sizeof(kIndefBER)) &&
-	    do_indefinite_convert("kOctetStringBER", kOctetStringDER,
+	CHECK(do_indefinite_convert("kSimpleBER", kSimpleBER, sizeof(kSimpleBER),
+	    kSimpleBER, sizeof(kSimpleBER)));
+	CHECK(do_indefinite_convert("kIndefBER", kIndefDER, sizeof(kIndefDER),
+	    kIndefBER, sizeof(kIndefBER)));
+	CHECK(do_indefinite_convert("kOctetStringBER", kOctetStringDER,
 	    sizeof(kOctetStringDER), kOctetStringBER,
-	    sizeof(kOctetStringBER)) &&
-	    do_indefinite_convert("kNSSBER", kNSSDER, sizeof(kNSSDER), kNSSBER,
-	    sizeof(kNSSBER));
+	    sizeof(kOctetStringBER)));
+	CHECK(do_indefinite_convert("kNSSBER", kNSSDER, sizeof(kNSSDER), kNSSBER,
+	    sizeof(kNSSBER)));
+
+	return 1;
 }
 
 typedef struct {
@@ -619,40 +625,36 @@ static const ASN1_INVALID_UINT64_TEST kAsn1InvalidUint64Tests[] = {
 static int
 test_asn1_uint64(void)
 {
+	CBB cbb;
+	uint8_t *out = NULL;
 	size_t i;
+	int ret = 0;
+	int alloc = 0;
 
 	for (i = 0; i < sizeof(kAsn1Uint64Tests) / sizeof(kAsn1Uint64Tests[0]);
 	     i++) {
 		const ASN1_UINT64_TEST *test = &kAsn1Uint64Tests[i];
 		CBS cbs;
 		uint64_t value;
-		CBB cbb;
-		uint8_t *out;
 		size_t len;
 
 		CBS_init(&cbs, (const uint8_t *)test->encoding,
 		    test->encoding_len);
 
-		if (!CBS_get_asn1_uint64(&cbs, &value) ||
-		    CBS_len(&cbs) != 0 ||
-		    value != test->value)
-			return 0;
+		CHECK(CBS_get_asn1_uint64(&cbs, &value));
+		CHECK(CBS_len(&cbs) == 0);
+		CHECK(value == test->value);
 
-		if (!CBB_init(&cbb, 0))
-			return 0;
+		CHECK(CBB_init(&cbb, 0));
+		alloc = 1;
+		CHECK_GOTO(CBB_add_asn1_uint64(&cbb, test->value));
+		CHECK_GOTO(CBB_finish(&cbb, &out, &len));
+		alloc = 0;
 
-		if (!CBB_add_asn1_uint64(&cbb, test->value) ||
-		    !CBB_finish(&cbb, &out, &len)) {
-			CBB_cleanup(&cbb);
-			return 0;
-		}
-
-		if (len != test->encoding_len || memcmp(out, test->encoding,
-		    len) != 0) {
-			free(out);
-			return 0;
-		}
+		CHECK_GOTO(len == test->encoding_len);
+		CHECK_GOTO(memcmp(out, test->encoding, len) == 0);
 		free(out);
+		out = NULL;
 	}
 
 	for (i = 0; i < sizeof(kAsn1InvalidUint64Tests)
@@ -664,11 +666,19 @@ test_asn1_uint64(void)
 
 		CBS_init(&cbs, (const uint8_t *)test->encoding,
 		    test->encoding_len);
-		if (CBS_get_asn1_uint64(&cbs, &value))
-			return 0;
+		CHECK(!CBS_get_asn1_uint64(&cbs, &value));
 	}
 
-	return 1;
+	ret = 1;
+
+	if (0) {
+err:
+		if (alloc)
+			CBB_cleanup(&cbb);
+	}
+	free(out);
+
+	return ret;
 }
 
 static int
@@ -679,27 +689,32 @@ test_offset(void)
 	CBS data;
 
 	CBS_init(&data, input, sizeof(input));
-	if (sizeof(input) != 5)
-		return 0;
-
-	if (!(CBS_len(&data) == 5 && CBS_offset(&data) == 0 &&
-	    CBS_get_u8(&data, &v) && v == 1 &&
-	    CBS_len(&data) == 4 && CBS_offset(&data) == 1 &&
-	    CBS_skip(&data, 2) &&
-	    CBS_len(&data) == 2 && CBS_offset(&data) == 3 &&
-	    CBS_get_u8(&data, &v) && v == 4 &&
-	    CBS_get_u8(&data, &v) && v == 5 &&
-	    CBS_len(&data) == 0 && CBS_offset(&data) == 5 &&
-	    !CBS_skip(&data, 1)))
-		return 0;
+	CHECK(sizeof(input) == 5);
+	CHECK(CBS_len(&data) == 5);
+	CHECK(CBS_offset(&data) == 0);
+	CHECK(CBS_get_u8(&data, &v));
+	CHECK(v == 1);
+	CHECK(CBS_len(&data) == 4);
+	CHECK(CBS_offset(&data) == 1);
+	CHECK(CBS_skip(&data, 2));
+	CHECK(CBS_len(&data) == 2);
+	CHECK(CBS_offset(&data) == 3);
+	CHECK(CBS_get_u8(&data, &v));
+	CHECK(v == 4);
+	CHECK(CBS_get_u8(&data, &v));
+	CHECK(v == 5);
+	CHECK(CBS_len(&data) == 0);
+	CHECK(CBS_offset(&data) == 5);
+	CHECK(!CBS_skip(&data, 1));
 
 	CBS_init(&data, input, sizeof(input));
-	if (!(CBS_skip(&data, 2) &&
-	    CBS_len(&data) == 3 && CBS_offset(&data) == 2 &&
-	    CBS_skip(&data, 3) &&
-	    CBS_len(&data) == 0 && CBS_offset(&data) == 5 &&
-	    !CBS_get_u8(&data, &v)))
-		return 0;
+	CHECK(CBS_skip(&data, 2));
+	CHECK(CBS_len(&data) == 3);
+	CHECK(CBS_offset(&data) == 2);
+	CHECK(CBS_skip(&data, 3));
+	CHECK(CBS_len(&data) == 0);
+	CHECK(CBS_offset(&data) == 5);
+	CHECK(!CBS_get_u8(&data, &v));
 
 	return 1;
 }
@@ -714,21 +729,20 @@ test_write_bytes(void)
 	CBS data;
 	char *tmp = NULL;
 
-	if ((tmp = malloc(sizeof(input))) == NULL) {
-		fprintf(stderr, "failed to malloc\n");
-		goto err;
-	}
+	CHECK_GOTO((tmp = malloc(sizeof(input))) != NULL);
 	memset(tmp, 100, sizeof(input));
 
 	CBS_init(&data, input, sizeof(input));
-	if (!(CBS_len(&data) == 6 && CBS_offset(&data) == 0 &&
-	    CBS_get_u8(&data, &v) && v == 102 /* f */ &&
-	    CBS_skip(&data, 1) &&
-	    !CBS_skip(&data, 15) &&
-	    CBS_write_bytes(&data, tmp, sizeof(input), &len) &&
-	    len == 4 && memcmp(input + 2, tmp, len) == 0 &&
-	    tmp[4] == 100 && tmp[5] == 100))
-		goto err;
+	CHECK_GOTO(CBS_len(&data) == 6);
+	CHECK_GOTO(CBS_offset(&data) == 0);
+	CHECK_GOTO(CBS_get_u8(&data, &v));
+	CHECK_GOTO(v == 102 /* f */);
+	CHECK_GOTO(CBS_skip(&data, 1));
+	CHECK_GOTO(!CBS_skip(&data, 15));
+	CHECK_GOTO(CBS_write_bytes(&data, tmp, sizeof(input), &len));
+	CHECK_GOTO(len == 4);
+	CHECK_GOTO(memcmp(input + 2, tmp, len) == 0);
+	CHECK_GOTO(tmp[4] == 100 && tmp[5] == 100);
 
 	ret = 1;
 
@@ -740,24 +754,26 @@ err:
 int
 main(void)
 {
-	if (!test_skip() ||
-	    !test_get_u() ||
-	    !test_get_prefixed() ||
-	    !test_get_prefixed_bad() ||
-	    !test_get_asn1() ||
-	    !test_cbb_basic() ||
-	    !test_cbb_fixed() ||
-	    !test_cbb_finish_child() ||
-	    !test_cbb_misuse() ||
-	    !test_cbb_prefixed() ||
-	    !test_cbb_asn1() ||
-	    !test_indefinite_convert() ||
-	    !test_asn1_uint64() ||
-	    !test_get_optional_asn1_bool() ||
-	    !test_offset() ||
-	    !test_write_bytes())
-		return 1;
+	int failed = 0;
 
-	printf("PASS\n");
-	return 0;
+	failed |= !test_skip();
+	failed |= !test_get_u();
+	failed |= !test_get_prefixed();
+	failed |= !test_get_prefixed_bad();
+	failed |= !test_get_asn1();
+	failed |= !test_cbb_basic();
+	failed |= !test_cbb_fixed();
+	failed |= !test_cbb_finish_child();
+	failed |= !test_cbb_misuse();
+	failed |= !test_cbb_prefixed();
+	failed |= !test_cbb_asn1();
+	failed |= !test_indefinite_convert();
+	failed |= !test_asn1_uint64();
+	failed |= !test_get_optional_asn1_bool();
+	failed |= !test_offset();
+	failed |= !test_write_bytes();
+
+	if (!failed)
+		printf("PASS\n");
+	return failed;
 }
