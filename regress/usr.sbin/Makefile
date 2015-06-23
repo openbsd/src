@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.9 2014/08/26 17:50:07 jsing Exp $
+#	$OpenBSD: Makefile,v 1.10 2015/06/23 18:04:29 semarie Exp $
 
+SUBDIR += httpd
 SUBDIR += mtree
 SUBDIR += ospfd
 SUBDIR += relayd
