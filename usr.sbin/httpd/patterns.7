@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patterns.7,v 1.1 2015/06/23 15:23:14 reyk Exp $
+.\"	$OpenBSD: patterns.7,v 1.2 2015/06/23 17:29:19 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (C) 1994-2015 Lua.org, PUC-Rio.
@@ -23,19 +23,19 @@
 .\" SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .\"
 .\" Derived from section 6.4.1 in manual.html of Lua 5.3.1:
-.\" $Id: patterns.7,v 1.1 2015/06/23 15:23:14 reyk Exp $
+.\" $Id: patterns.7,v 1.2 2015/06/23 17:29:19 jmc Exp $
 .\"
 .Dd $Mdocdate: June 23 2015 $
 .Dt PATTERNS 7
 .Os
 .Sh NAME
 .Nm patterns
-.Nd Lua's pattern matching rules.
+.Nd Lua's pattern matching rules
 .Sh DESCRIPTION
 Pattern matching in
 .Xr httpd 8
 is based on the implementation of the Lua scripting language and
-provides a simple and fast alternative to Regular expressions (REs) that
+provides a simple and fast alternative to the regular expressions (REs) that
 are described in
 .Xr re_format 7 .
 Patterns are described by regular strings, which are interpreted as
@@ -47,7 +47,6 @@ functions.
 This document describes the syntax and the meaning (that is, what they
 match) of these strings.
 .Sh CHARACTER CLASS
-.Pp
 A character class is used to represent a set of characters.
 The following combinations are allowed in describing a character
 class:
@@ -90,7 +89,7 @@ is any non-alphanumeric character) represents the character
 This is the standard way to escape the magic characters.
 Any non-alphanumeric character (including all punctuation characters,
 even the non-magical) can be preceded by a
-.Eq %
+.Sq %
 when used to represent itself in a pattern.
 .It Bq Ar set
 represents the class which is the union of all
@@ -172,7 +171,7 @@ Unlike
 these repetition items will always match the shortest possible sequence;
 .It
 a single character class followed by
-.Sq \? ,
+.Sq \&? ,
 which matches zero or one occurrence of a character in the class.
 It always matches one occurrence if possible;
 .It
@@ -189,7 +188,7 @@ and
 .Ar y
 are two distinct characters;
 such item matches strings that start with
-.Ar x,
+.Ar x ,
 end with
 .Ar y ,
 and where the
@@ -198,7 +197,7 @@ and
 .Ar y
 are
 .Em balanced .
-This means that, if one reads the string from left to right, counting
+This means that if one reads the string from left to right, counting
 .Em +1
 for an
 .Ar x
@@ -237,12 +236,12 @@ A caret
 at the beginning of a pattern anchors the match at the beginning of
 the subject string.
 A
-.Sq \$
+.Sq $
 at the end of a pattern anchors the match at the end of the subject string.
 At other positions,
 .Sq ^
 and
-.Sq \$
+.Sq $
 have no special meaning and represent themselves.
 .Sh CAPTURES
 A pattern can contain sub-patterns enclosed in parentheses; they
@@ -272,8 +271,8 @@ on the string
 there will be two captures: 3 and 5.
 .Sh SEE ALSO
 .Xr fnmatch 3 ,
-.Xr re_format 3 ,
-.Xr httpd 8 .
+.Xr re_format 7 ,
+.Xr httpd 8
 .Rs
 .%A Roberto Ierusalimschy
 .%A Luiz Henrique de Figueiredo
@@ -292,7 +291,7 @@ an implementation based on Lua 5.3.1 appeared in
 .Ox 5.8 .
 .Sh AUTHORS
 The pattern matching is derived from the original implementation of
-the Lua scripting language, that is written by
+the Lua scripting language written by
 .An -nosplit
 .An Roberto Ierusalimschy ,
 .An Waldemar Celes ,
