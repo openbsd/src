@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.7 2015/06/23 01:20:24 doug Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.8 2015/06/23 05:58:28 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -751,6 +751,41 @@ err:
 	return ret;
 }
 
+static int
+test_cbs_dup(void)
+{
+	CBS data, check;
+	static const uint8_t input[] = {'f', 'o', 'o', 'b', 'a', 'r'};
+
+	CBS_init(&data, input, sizeof(input));
+	CHECK(CBS_len(&data) == 6);
+	CBS_dup(&data, &check);
+	CHECK(CBS_len(&check) == 6);
+	CHECK(CBS_data(&data) == CBS_data(&check));
+	CHECK(CBS_skip(&data, 1));
+	CHECK(CBS_len(&data) == 5);
+	CHECK(CBS_len(&check) == 6);
+	CHECK(CBS_data(&data) == CBS_data(&check) + 1);
+	CHECK(CBS_skip(&check, 1));
+	CHECK(CBS_len(&data) == 5);
+	CHECK(CBS_len(&check) == 5);
+	CHECK(CBS_data(&data) == CBS_data(&check));
+	CHECK(CBS_offset(&data) == 1);
+	CHECK(CBS_offset(&check) == 1);
+
+	CBS_init(&data, input, sizeof(input));
+	CHECK(CBS_skip(&data, 5));
+	CBS_dup(&data, &check);
+	CHECK(CBS_len(&data) == 1);
+	CHECK(CBS_len(&check) == 1);
+	CHECK(CBS_data(&data) == input + 5);
+	CHECK(CBS_data(&data) == CBS_data(&check));
+	CHECK(CBS_offset(&data) == 5);
+	CHECK(CBS_offset(&check) == 5);
+
+	return 1;
+}
+
 int
 main(void)
 {
@@ -772,6 +807,7 @@ main(void)
 	failed |= !test_get_optional_asn1_bool();
 	failed |= !test_offset();
 	failed |= !test_write_bytes();
+	failed |= !test_cbs_dup();
 
 	if (!failed)
 		printf("PASS\n");

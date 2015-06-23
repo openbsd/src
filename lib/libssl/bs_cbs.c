@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.15 2015/06/20 01:21:51 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.16 2015/06/23 05:58:28 doug Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -36,6 +36,7 @@ void
 CBS_dup(const CBS *cbs, CBS *out)
 {
 	CBS_init(out, CBS_data(cbs), CBS_len(cbs));
+	out->initial_len = cbs->initial_len;
 }
 
 static int
