@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.25 2015/01/19 01:48:59 deraadt Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.26 2015/06/23 06:59:54 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.25 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: pptpd.c,v 1.26 2015/06/23 06:59:54 yasuoka Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.25 2015/01/19 01:48:59 deraadt Exp $
+ * $Id: pptpd.c,v 1.26 2015/06/23 06:59:54 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -674,9 +674,8 @@ pptpd_gre_io_event(int fd, short evmask, void *ctx)
 			/* read till bloked */
 			peerlen = sizeof(peer);
 			if ((sz = recvfrom(listener->sock_gre, pkt, sizeof(pkt),
-			    0, (struct sockaddr *)&peer, &peerlen)) <= 0) {
-				if (sz < 0 &&
-				    (errno == EAGAIN || errno == EINTR))
+			    0, (struct sockaddr *)&peer, &peerlen)) == -1) {
+				if (errno == EAGAIN || errno == EINTR)
 					break;
 				pptpd_log(_this, LOG_INFO,
 				    "read(GRE) failed: %m");
