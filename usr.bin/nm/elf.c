@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.29 2015/06/23 13:43:08 semarie Exp $	*/
+/*	$OpenBSD: elf.c,v 1.30 2015/06/23 15:02:58 semarie Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -451,7 +451,7 @@ elf_size(Elf_Ehdr *head, Elf_Shdr *shdr,
 
 int
 elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
-    Elf_Shdr *shdr, char *shstr, struct nlist **pnames,
+    Elf_Shdr *shdr, char *shstr, long shstrsize, struct nlist **pnames,
     struct nlist ***psnames, size_t *pstabsize, int *pnrawnames,
     const char *strtab, const char *symtab)
 {
@@ -461,6 +461,10 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 	int i;
 
 	for (i = 0; i < eh->e_shnum; i++) {
+		if (shdr[i].sh_name >= shstrsize) {
+			warnx("%s: corrupt file", name);
+			return (1);
+		}
 		if (!strcmp(shstr + shdr[i].sh_name, strtab)) {
 			*pstabsize = shdr[i].sh_size;
 			if (*pstabsize > SIZE_MAX) {
@@ -561,11 +565,11 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 	stab = NULL;
 	*pnames = NULL; *psnames = NULL; *pnrawnames = 0;
 	if (!dynamic_only) {
-		elf_symloadx(name, fp, foff, eh, shdr, shstr, pnames,
+		elf_symloadx(name, fp, foff, eh, shdr, shstr, shstrsize, pnames,
 		    psnames, pstabsize, pnrawnames, ELF_STRTAB, ELF_SYMTAB);
 	}
 	if (stab == NULL) {
-		elf_symloadx(name, fp, foff, eh, shdr, shstr, pnames,
+		elf_symloadx(name, fp, foff, eh, shdr, shstr, shstrsize, pnames,
 		    psnames, pstabsize, pnrawnames, ELF_DYNSTR, ELF_DYNSYM);
 	}
 
