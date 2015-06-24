@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.96 2015/06/24 08:32:39 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.97 2015/06/24 17:59:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -78,8 +78,6 @@ static long i915_gem_purge(struct drm_i915_private *dev_priv, long target);
 static void i915_gem_shrink_all(struct drm_i915_private *dev_priv);
 #endif
 static void i915_gem_object_truncate(struct drm_i915_gem_object *obj);
-
-extern int ticks;
 
 static inline void i915_gem_object_fence_lost(struct drm_i915_gem_object *obj)
 {
@@ -2185,7 +2183,7 @@ i915_add_request(struct intel_ring_buffer *ring,
 	request->seqno = intel_ring_get_seqno(ring);
 	request->ring = ring;
 	request->tail = request_ring_position;
-	request->emitted_ticks = ticks;
+	request->emitted_jiffies = jiffies;
 	was_empty = list_empty(&ring->request_list);
 	list_add_tail(&request->list, &ring->request_list);
 	request->file_priv = NULL;
@@ -3594,7 +3592,7 @@ i915_gem_ring_throttle(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_file_private *file_priv = file->driver_priv;
-	unsigned long recent_enough = ticks - msecs_to_jiffies(20);
+	unsigned long recent_enough = jiffies - msecs_to_jiffies(20);
 	struct drm_i915_gem_request *request;
 	struct intel_ring_buffer *ring = NULL;
 	u32 seqno = 0;
@@ -3605,7 +3603,7 @@ i915_gem_ring_throttle(struct drm_device *dev, struct drm_file *file)
 
 	spin_lock(&file_priv->mm.lock);
 	list_for_each_entry(request, &file_priv->mm.request_list, client_list) {
-		if (time_after_eq(request->emitted_ticks, recent_enough))
+		if (time_after_eq(request->emitted_jiffies, recent_enough))
 			break;
 
 		ring = request->ring;

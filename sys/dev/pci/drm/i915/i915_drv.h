@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.64 2015/06/24 08:32:39 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.65 2015/06/24 17:59:42 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1217,7 +1217,7 @@ struct drm_i915_gem_request {
 	u32 tail;
 
 	/** Time at which this request was emitted, in jiffies. */
-	unsigned long emitted_ticks;
+	unsigned long emitted_jiffies;
 
 	/** global list entry for this request */
 	struct list_head list;

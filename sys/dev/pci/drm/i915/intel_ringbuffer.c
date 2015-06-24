@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.28 2015/04/12 17:10:07 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.29 2015/06/24 17:59:42 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -43,8 +43,6 @@ struct pipe_control {
 	volatile u32 *cpu_page;
 	u32 gtt_offset;
 };
-
-extern int ticks;
 
 static inline int ring_space(struct intel_ring_buffer *ring)
 {
@@ -1369,7 +1367,7 @@ static int ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 	 * to running on almost untested codepaths). But on resume
 	 * timers don't work yet, so prevent a complete hang in that
 	 * case by choosing an insanely large timeout. */
-	end = ticks + 60 * hz;
+	end = jiffies + 60 * HZ;
 
 	do {
 		ring->head = I915_READ_HEAD(ring);
@@ -1392,7 +1390,7 @@ static int ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 		ret = i915_gem_check_wedge(dev_priv, dev_priv->mm.interruptible);
 		if (ret)
 			return ret;
-	} while (!time_after(ticks, end));
+	} while (!time_after(jiffies, end));
 	trace_i915_ring_wait_end(ring);
 	return -EBUSY;
 }

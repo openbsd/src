@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.51 2015/06/24 08:32:39 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.52 2015/06/24 17:59:42 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -1022,7 +1022,7 @@ void intel_wait_for_pipe_off(struct drm_device *dev, int pipe)
 	} else {
 		u32 last_line, line_mask;
 		int reg = PIPEDSL(pipe);
-		unsigned long timeout = ticks + msecs_to_jiffies(100);
+		unsigned long timeout = jiffies + msecs_to_jiffies(100);
 
 		if (IS_GEN2(dev))
 			line_mask = DSL_LINEMASK_GEN2;
@@ -1034,8 +1034,8 @@ void intel_wait_for_pipe_off(struct drm_device *dev, int pipe)
 			last_line = I915_READ(reg) & line_mask;
 			mdelay(5);
 		} while (((I915_READ(reg) & line_mask) != last_line) &&
-			 time_after(timeout, ticks));
-		if (time_after(ticks, timeout))
+			 time_after(timeout, jiffies));
+		if (time_after(jiffies, timeout))
 			WARN(1, "pipe_off wait timed out\n");
 	}
 }

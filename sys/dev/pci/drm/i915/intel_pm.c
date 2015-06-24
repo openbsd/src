@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.35 2015/06/24 08:32:39 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.36 2015/06/24 17:59:42 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -47,8 +47,6 @@ bool i915_gpu_raise(void);
 bool i915_gpu_lower(void);
 bool i915_gpu_turbo_disable(void);
 bool i915_gpu_busy(void);
-
-extern int ticks;
 
 static bool intel_crtc_active(struct drm_crtc *crtc)
 {
@@ -2392,7 +2390,7 @@ static void ironlake_enable_drps(struct drm_device *dev)
 
 	dev_priv->ips.last_count1 = I915_READ(0x112e4) + I915_READ(0x112e8) +
 		I915_READ(0x112e0);
-	dev_priv->ips.last_time1 = jiffies_to_msecs(ticks);
+	dev_priv->ips.last_time1 = jiffies_to_msecs(jiffies);
 	dev_priv->ips.last_count2 = I915_READ(0x112f4);
 	getrawmonotonic(&dev_priv->ips.last_time2);
 
@@ -2874,7 +2872,7 @@ static unsigned long __i915_chipset_val(struct drm_i915_private *dev_priv)
 {
 	u64 total_count, diff, ret;
 	u32 count1, count2, count3, m = 0, c = 0;
-	unsigned long now = jiffies_to_msecs(ticks), diff1;
+	unsigned long now = jiffies_to_msecs(jiffies), diff1;
 	int i;
 
 	assert_spin_locked(&mchdev_lock);
