@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.30 2015/05/02 10:44:29 jsg Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.31 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -962,7 +962,6 @@ mos_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done;
 	}
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = pktlen;
 
 	memcpy(mtod(m, char *), buf, pktlen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.36 2015/04/10 08:41:43 mpi Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.37 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -415,7 +415,6 @@ cdcef_rxeof(struct usbf_xfer *xfer, void *priv,
 		m->m_pkthdr.len = m->m_len = total_len;
 		bcopy(sc->sc_buffer_out, mtod(m, char *), total_len);
 
-		ifp->if_ipackets++;
 		ml_enqueue(&ml, m);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.126 2015/04/13 08:45:48 mpi Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.127 2015/06/24 09:40:54 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1434,7 +1434,6 @@ sis_rxeof(struct sis_softc *sc)
 #else
 		m->m_pkthdr.len = m->m_len = total_len;
 #endif
-		ifp->if_ipackets++;
 
 		ml_enqueue(&ml, m);
 	}

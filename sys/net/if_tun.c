@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.146 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.147 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -879,7 +879,6 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		s = splnet();
 		if_input(ifp, &ml);
 		splx(s);
-		ifp->if_ipackets++;
 
 		return (0);
 	}

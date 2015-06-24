@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.26 2015/04/13 08:45:48 mpi Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.27 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -79,7 +79,7 @@ static void mtd_start(struct ifnet *);
 static void mtd_stop(struct ifnet *);
 static void mtd_watchdog(struct ifnet *);
 
-static void mtd_rxeof(struct mtd_softc *);
+static int mtd_rxeof(struct mtd_softc *);
 static int mtd_rx_resync(struct mtd_softc *);
 static void mtd_txeof(struct mtd_softc *);
 
@@ -834,10 +834,7 @@ mtd_intr(void *xsc)
 
 		/* RX interrupt. */
 		if (status & ISR_RI) {
-			int curpkts = ifp->if_ipackets;
-
-			mtd_rxeof(sc);
-			if (curpkts == ifp->if_ipackets)
+			if (mtd_rxeof(sc) == 0)
 				while(mtd_rx_resync(sc))
 					mtd_rxeof(sc);
 		}
@@ -871,14 +868,14 @@ mtd_intr(void *xsc)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-static void
+static int
 mtd_rxeof(struct mtd_softc *sc)
 {
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct mtd_rx_desc *cur_rx;
-	int i, total_len = 0;
+	int i, total_len = 0, consumed = 0;
 	u_int32_t rxstat;
 
 	ifp = &sc->sc_arpcom.ac_if;
@@ -933,14 +930,15 @@ mtd_rxeof(struct mtd_softc *sc)
 		}
 		m = m0;
 
-		ifp->if_ipackets++;
-
+		consumed++;
 		ml_enqueue(&ml, m);
 	}
 
 	if_input(ifp, &ml);
 
 	sc->mtd_cdata.mtd_rx_prod = i;
+
+	return (consumed);
 }
 
 

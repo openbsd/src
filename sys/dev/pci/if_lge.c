@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.66 2015/04/13 08:45:48 mpi Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.67 2015/06/24 09:40:54 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -729,8 +729,6 @@ lge_rxeof(struct lge_softc *sc, int cnt)
 		} else {
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
-
-		ifp->if_ipackets++;
 
 		/* Do IP checksum checking. */
 		if (rxsts & LGE_RXSTS_ISIP) {

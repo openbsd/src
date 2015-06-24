@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.84 2015/04/13 08:45:48 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.85 2015/06/24 09:40:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -975,7 +975,6 @@ cmalo_rx(struct malo_softc *sc)
 
 	/* push the frame up to the network stack if not in monitor mode */
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		ifp->if_ipackets++;
 		ml_enqueue(&ml, m);
 		if_input(ifp, &ml);
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.19 2015/04/06 09:13:55 miod Exp $ */
+/* $OpenBSD: lemac.c,v 1.20 2015/06/24 09:40:54 mpi Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -312,7 +312,6 @@ lemac_rne_intr(struct lemac_softc *sc)
 		unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
 		u_int32_t rxlen;
 
-		ifp->if_ipackets++;
 		if (LEMAC_USE_PIO_MODE(sc)) {
 			LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
 			LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);

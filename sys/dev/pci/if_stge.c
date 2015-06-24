@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.60 2015/04/30 07:51:07 mpi Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.61 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1034,9 +1034,6 @@ stge_stats_update(struct stge_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	(void) CSR_READ_4(sc, STGE_OctetRcvOk);
-
-	ifp->if_ipackets +=
-	    CSR_READ_4(sc, STGE_FramesRcvdOk);
 
 	ifp->if_ierrors +=
 	    (u_int) CSR_READ_2(sc, STGE_FramesLostRxErrors);

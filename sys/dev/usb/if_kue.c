@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.79 2015/04/10 08:41:43 mpi Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.80 2015/06/24 09:40:54 mpi Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -727,7 +727,6 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done;
 	}
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
 	ml_enqueue(&ml, m);
 

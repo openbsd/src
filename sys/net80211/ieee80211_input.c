@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.134 2015/05/26 15:34:00 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.135 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -815,7 +815,6 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 		m_freem(m);
 		return;
 	}
-	ifp->if_ipackets++;
 
 	/*
 	 * Perform as a bridge within the AP.  Notice that we do not
@@ -851,6 +850,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	if (m != NULL) {
 		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 		    eh->ether_type == htons(ETHERTYPE_PAE)) {
+			ifp->if_ipackets++;
 #if NBPFILTER > 0
 			/*
 			 * If we forward frame into transmitter of the AP,

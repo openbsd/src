@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.62 2015/04/13 08:45:48 mpi Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.63 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1119,8 +1119,6 @@ vge_rxeof(struct vge_softc *sc)
 		bcopy(m->m_data, m->m_data + ETHER_ALIGN, total_len);
 		m->m_data += ETHER_ALIGN;
 #endif
-		ifp->if_ipackets++;
-
 		/* Do RX checksumming */
 
 		/* Check IP header checksum */

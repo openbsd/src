@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.54 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.55 2015/06/24 09:40:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -867,8 +867,6 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		    ((char*)&msg->rm_dataoffset + letoh32(msg->rm_dataoffset)),
 		    letoh32(msg->rm_datalen));
 		m->m_pkthdr.len = m->m_len = letoh32(msg->rm_datalen);
-
-		ifp->if_ipackets++;
 
 		if (urndis_newbuf(sc, c) == ENOBUFS) {
 			ifp->if_ierrors++;

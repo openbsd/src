@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.72 2015/03/30 09:47:05 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.73 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -842,8 +842,6 @@ hme_rint(struct hme_softc *sc)
 
 		len = HME_XD_DECODE_RSIZE(flags);
 		m->m_pkthdr.len = m->m_len = len;
-
-		ifp->if_ipackets++;
 
 		ml_enqueue(&ml, m);
 	}

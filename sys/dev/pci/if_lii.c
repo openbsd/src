@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.36 2015/04/11 14:40:42 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.37 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -933,7 +933,6 @@ lii_rxintr(struct lii_softc *sc)
 		/* Copy the packet withhout the FCS */
 		m->m_pkthdr.len = m->m_len = size;
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
-		++ifp->if_ipackets;
 
 		ml_enqueue(&ml, m);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.49 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.50 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -824,7 +824,6 @@ xe_get(sc)
 	bus_space_write_2(sc->sc_bst, sc->sc_bsh, sc->sc_offset + DO0,
 	    DO_SKIP_RX_PKT);
 
-	ifp->if_ipackets++;
 	ml_enqueue(&ml, top);
 	if_input(ifp, &ml);
 

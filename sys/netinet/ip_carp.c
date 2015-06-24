@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.260 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.261 2015/06/24 09:40:55 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1456,7 +1456,6 @@ carp_input(struct mbuf *m)
 			ml_enqueue(&ml, m0);
 
 			if_input(&vh->sc_if, &ml);
-			vh->sc_if.if_ipackets++;
 		}
 
 		return (0);
@@ -1476,7 +1475,6 @@ carp_input(struct mbuf *m)
 	ml_enqueue(&ml, m);
 
 	if_input(ifp, &ml);
-	ifp->if_ipackets++;
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.63 2015/04/30 07:51:07 mpi Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.64 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1330,7 +1330,6 @@ tl_stats_update(void *xsc)
 	ifp->if_opackets += tl_tx_goodframes(tl_stats);
 	ifp->if_collisions += tl_stats.tl_tx_single_collision +
 				tl_stats.tl_tx_multi_collision;
-	ifp->if_ipackets += tl_rx_goodframes(tl_stats);
 	ifp->if_ierrors += tl_stats.tl_crc_errors + tl_stats.tl_code_errors +
 			    tl_rx_overrun(tl_stats);
 	ifp->if_oerrors += tl_tx_underrun(tl_stats);

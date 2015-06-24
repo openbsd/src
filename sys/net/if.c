@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.341 2015/06/23 09:42:23 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.342 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -484,6 +484,8 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 	struct mbuf *m;
 
 	splassert(IPL_NET);
+
+	ifp->if_ipackets += ml_len(ml);
 
 	MBUF_LIST_FOREACH(ml, m) {
 		m->m_pkthdr.ph_ifidx = ifp->if_index;

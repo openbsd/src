@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.27 2015/04/30 07:51:07 mpi Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.28 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1957,8 +1957,6 @@ age_stats_update(struct age_softc *sc)
 	ifp->if_oerrors += smb->tx_excess_colls +
 	    smb->tx_late_colls + smb->tx_underrun +
 	    smb->tx_pkts_truncated;
-
-	ifp->if_ipackets += smb->rx_frames;
 
 	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +

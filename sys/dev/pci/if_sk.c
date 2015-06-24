@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.175 2015/04/30 09:25:13 mpi Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.176 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1639,7 +1639,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		m->m_pkthdr.len = m->m_len = total_len;
 
 		ml_enqueue(&ml, m);
-		ifp->if_ipackets++;
 	}
 	sc_if->sk_cdata.sk_rx_cons = cur;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.16 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.17 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -815,7 +815,6 @@ sf_rxintr(struct sf_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 
 		ml_enqueue(&ml, m);
-		ifp->if_ipackets++;
 	}
 
 	if_input(ifp, &ml);
@@ -875,8 +874,6 @@ sf_stats_update(struct sf_softc *sc)
 	ifp->if_oerrors += stats.TransmitAbortDueToExcessiveCollisions +
 	    stats.TransmitAbortDueToExcessingDeferral +
 	    stats.FramesLostDueToInternalTransmitErrors;
-
-	ifp->if_ipackets += stats.ReceiveOKFrames;
 
 	ifp->if_ierrors += stats.ReceiveCRCErrors + stats.AlignmentErrors +
 	    stats.ReceiveFramesTooLong + stats.ReceiveFramesTooShort +

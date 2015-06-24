@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.24 2015/04/13 08:40:32 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.25 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -529,9 +529,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	pf_pkt_addr_changed(m);
 #endif
 
-	ifp->if_ipackets++;
 	ml_enqueue(&ml, m);
-
 	if_input(ifp, &ml);
 
 	/* success */

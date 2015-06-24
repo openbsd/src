@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.14 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: ti.c,v 1.15 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1602,7 +1602,6 @@ ti_rxeof(struct ti_softc *sc)
 			panic("%s: couldn't get mbuf", sc->sc_dv.dv_xname);
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
-		ifp->if_ipackets++;
 
 #if NVLAN > 0
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.52 2015/05/25 12:40:04 miod Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.53 2015/06/24 09:40:53 mpi Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -783,7 +783,6 @@ ierint(sc)
 		status = sc->rframes[i]->ie_fd_status;
 
 		if ((status & IE_FD_COMPLETE) && (status & IE_FD_OK)) {
-			sc->sc_arpcom.ac_if.if_ipackets++;
 			if (!--timesthru) {
 				sc->sc_arpcom.ac_if.if_ierrors +=
 				    SWAP(scb->ie_err_crc) +
@@ -1260,7 +1259,6 @@ ie_readframe(sc, num)
 
 	ml_enqueue(&ml, m);
 	if_input(&sc->sc_arpcom.ac_if, &ml);
-	sc->sc_arpcom.ac_if.if_ipackets++;
 }
 
 void

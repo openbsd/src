@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.54 2015/05/21 09:44:32 mpi Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.55 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -578,7 +578,6 @@ loop:
 				ifp->if_ierrors++;
 				goto exit;
 			}
-			ifp->if_ipackets++;
 			ml_enqueue(&ml, m);
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */

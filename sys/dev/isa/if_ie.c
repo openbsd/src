@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.42 2015/05/26 11:23:15 mpi Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.43 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -1314,7 +1314,6 @@ ie_readframe(sc, num)
 
 	ml_enqueue(&ml, m);
 	if_input(&sc->sc_arpcom.ac_if, &ml);
-	sc->sc_arpcom.ac_if.if_ipackets++;
 }
 
 void

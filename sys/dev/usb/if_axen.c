@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.13 2015/06/12 15:47:31 mpi Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.14 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -1036,7 +1036,6 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		}
 
 		/* skip pseudo header (2byte) */
-		ifp->if_ipackets++;
 		m->m_pkthdr.len = m->m_len = pkt_len - 2;
 
 #ifdef AXEN_TOE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.36 2015/04/08 10:49:25 mpi Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.37 2015/06/24 09:40:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -881,8 +881,6 @@ tsec_rx_proc(struct tsec_softc *sc)
 		m = rxb->tb_m;
 		rxb->tb_m = NULL;
 		m->m_pkthdr.len = m->m_len = len;
-
-		ifp->if_ipackets++;
 
 		ml_enqueue(&ml, m);
 

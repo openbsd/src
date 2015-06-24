@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.28 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.29 2015/06/24 09:40:54 mpi Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -484,7 +484,6 @@ sgec_rxintr(struct ze_softc *sc)
 				ifp->if_collisions++;
 			m = NULL;
 		} else {
-			ifp->if_ipackets++;
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 		}

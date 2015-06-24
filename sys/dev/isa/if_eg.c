@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.38 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.39 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -688,9 +688,7 @@ egread(struct eg_softc *sc, caddr_t buf, int len)
 		return;
 	}
 
-	ifp->if_ipackets++;
 	ml_enqueue(&ml, m);
-
 	if_input(ifp, &ml);
 }
 

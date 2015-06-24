@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.115 2015/04/30 07:51:07 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.116 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1267,7 +1267,6 @@ txp_tick(void *vsc)
 	ifp->if_collisions += ext[0].ext_2 + ext[0].ext_3 + ext[1].ext_2 +
 	    ext[1].ext_3;
 	ifp->if_opackets += rsp->rsp_par2;
-	ifp->if_ipackets += ext[2].ext_3;
 
 out:
 	if (rsp != NULL)

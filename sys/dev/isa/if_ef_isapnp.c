@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.28 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.29 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -719,9 +719,7 @@ efread(sc)
 		return;
 	}
 
-	ifp->if_ipackets++;
 	ml_enqueue(&ml, m);
-
 	if_input(ifp, &ml);
 }
 

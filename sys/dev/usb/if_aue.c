@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.99 2015/06/18 10:02:49 mpi Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.100 2015/06/24 09:40:54 mpi Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1052,7 +1052,6 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m = c->aue_mbuf;
 	total_len -= ETHER_CRC_LEN + 4;
 	m->m_pkthdr.len = m->m_len = total_len;
-	ifp->if_ipackets++;
 	ml_enqueue(&ml, m);
 
 	if (aue_newbuf(sc, c, NULL) == ENOBUFS) {

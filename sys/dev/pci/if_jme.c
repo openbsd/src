@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.40 2015/04/30 07:52:00 mpi Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.41 2015/06/24 09:40:54 mpi Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1725,8 +1725,6 @@ jme_rxpkt(struct jme_softc *sc)
 				m->m_flags |= M_VLANTAG;
 			}
 #endif
-
-			ifp->if_ipackets++;
 
 			ml_enqueue(&ml, m);
 

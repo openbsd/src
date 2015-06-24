@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.120 2015/05/21 07:39:52 gerhard Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.121 2015/06/24 09:40:54 mpi Exp $	*/
 
 /******************************************************************************
 
@@ -2919,7 +2919,6 @@ ixgbe_rxeof(struct ix_queue *que)
 			sendmp = NULL;
 			mp->m_next = nxbuf->buf;
 		} else { /* Sending this frame? */
-			ifp->if_ipackets++;
 			rxr->rx_packets++;
 			/* capture data for AIM */
 			rxr->bytes += sendmp->m_pkthdr.len;

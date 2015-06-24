@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.71 2015/06/19 20:39:34 uaa Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.72 2015/06/24 09:40:54 mpi Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1104,7 +1104,6 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m = c->udav_mbuf;
 	memcpy(mtod(m, char *), c->udav_buf + UDAV_RX_HDRLEN, total_len);
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
 	ml_enqueue(&ml, m);
 

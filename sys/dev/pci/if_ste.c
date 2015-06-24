@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.58 2015/05/15 11:36:31 mpi Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.59 2015/06/24 09:40:54 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -689,7 +689,6 @@ ste_rxeof(struct ste_softc *sc)
 		m->m_pkthdr.len = m->m_len = total_len;
 
 		ml_enqueue(&ml, m);
-		ifp->if_ipackets++;
 
 		cur_rx->ste_ptr->ste_status = 0;
 		count++;

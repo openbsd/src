@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.28 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.29 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -440,7 +440,6 @@ deintr(unit)
 				ds->ds_if.if_collisions += 2;	/* guess */
 			} else if (rp->r_flags & XFLG_MTCH) {
 				/* received our own packet */
-				ds->ds_if.if_ipackets++;
 				deread(ds, &ifxp->ifrw,
 				    rp->r_slen - sizeof (struct ether_header));
 			}
@@ -483,7 +482,6 @@ derecv(unit)
 
 	rp = &ds->ds_rrent[ds->ds_rindex];
 	while ((rp->r_flags & RFLG_OWN) == 0) {
-		ds->ds_if.if_ipackets++;
 		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP) {
 			struct uba_softc *uh = (void *)ds->ds_dev.dv_parent;
 

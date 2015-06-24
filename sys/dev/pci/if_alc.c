@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.32 2015/03/20 16:48:13 mpi Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.33 2015/06/24 09:40:54 mpi Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1654,8 +1654,6 @@ alc_stats_update(struct alc_softc *sc)
 
 	ifp->if_oerrors += smb->tx_late_colls + smb->tx_excess_colls +
 	    smb->tx_underrun + smb->tx_pkts_truncated;
-
-	ifp->if_ipackets += smb->rx_frames;
 
 	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +

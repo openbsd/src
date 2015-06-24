@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.83 2015/04/30 07:51:07 mpi Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.84 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1627,8 +1627,6 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 			}
 		}
 #endif
-
-		ifp->if_ipackets++;
 
 #ifdef OCE_LRO
 		/* Try to queue to LRO */

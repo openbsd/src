@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.120 2015/05/15 11:36:30 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.121 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3327,7 +3327,6 @@ tulip_rx_intr(tulip_softc_t * const sc)
 #if defined(TULIP_DEBUG)
 	cnt++;
 #endif
-	ifp->if_ipackets++;
 	if (++eop == ri->ri_last)
 	    eop = ri->ri_first;
 	ri->ri_nextin = eop;

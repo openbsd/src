@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.245 2015/06/23 09:42:23 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.246 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1387,7 +1387,6 @@ bridge_input(struct mbuf *m)
 				m->m_flags |= M_PROTO1;
 				ml_enqueue(&ml, m);
 				if_input(ifl->ifp, &ml);
-				ifl->ifp->if_ipackets++;
 				return (NULL);
 			}
 		}
@@ -1432,7 +1431,6 @@ bridge_input(struct mbuf *m)
 			m->m_flags |= M_PROTO1;
 			ml_enqueue(&ml, m);
 			if_input(ifl->ifp, &ml);
-			ifl->ifp->if_ipackets++;
 			return (NULL);
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
@@ -1596,7 +1594,6 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	s = splnet();
 	if_input(ifp, &ml);
 	splx(s);
-	ifp->if_ipackets++;
 }
 
 void

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.298 2015/06/04 18:33:41 dms Exp $ */
+/* $OpenBSD: if_em.c,v 1.299 2015/06/24 09:40:54 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2969,8 +2969,6 @@ em_rxeof(struct em_softc *sc)
 			}
 
 			if (eop) {
-				ifp->if_ipackets++;
-
 				m = sc->fmp;
 
 				em_receive_checksum(sc, desc, m);

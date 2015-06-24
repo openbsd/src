@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.90 2015/05/29 00:37:10 uebayasi Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.91 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -861,8 +861,6 @@ vic_rx_proc(struct vic_softc *sc, int q)
 		}
 
 		m->m_pkthdr.len = m->m_len = len;
-
-		ifp->if_ipackets++;
 
 		ml_enqueue(&ml, m);
 

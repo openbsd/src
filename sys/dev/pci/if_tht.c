@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.131 2015/04/30 07:51:07 mpi Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.132 2015/06/24 09:40:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1371,9 +1371,6 @@ tht_rxd(struct tht_softc *sc)
 			tht_fifo_read(sc, &sc->sc_rxd, &pad, sizeof(pad));
 			bc -= sizeof(pad);
 		}
-
-		ifp->if_ipackets++;
-
 	} while (sc->sc_rxd.tf_ready >= sizeof(rxd));
 
 	tht_fifo_post(sc, &sc->sc_rxd);

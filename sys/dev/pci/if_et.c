@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.27 2015/04/30 07:51:07 mpi Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.28 2015/06/24 09:40:54 mpi Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1746,7 +1746,6 @@ et_rxeof(struct et_softc *sc)
 				m->m_pkthdr.len = m->m_len = buflen -
 				    ETHER_CRC_LEN;
 				ml_enqueue(&ml, m);
-				ifp->if_ipackets++;
 			}
 		} else {
 			ifp->if_ierrors++;

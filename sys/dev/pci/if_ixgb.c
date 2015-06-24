@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.64 2015/04/30 07:51:07 mpi Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.65 2015/06/24 09:40:54 mpi Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1770,7 +1770,6 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 
 			if (eop) {
 				eop_desc = i;
-				ifp->if_ipackets++;
 				ixgb_receive_checksum(sc, current_desc, sc->fmp);
 
 #if NVLAN > 0

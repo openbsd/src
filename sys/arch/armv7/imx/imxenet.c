@@ -1,4 +1,4 @@
-/* $OpenBSD: imxenet.c,v 1.15 2015/05/14 02:10:29 djm Exp $ */
+/* $OpenBSD: imxenet.c,v 1.16 2015/06/24 09:40:53 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -970,7 +970,6 @@ imxenet_recv(struct imxenet_softc *sc)
 			goto done;
 		}
 
-		ifp->if_ipackets++;
 		m->m_pkthdr.len = m->m_len = sc->rx_desc_base[sc->cur_rx].data_length;
 		m_adj(m, ETHER_ALIGN);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.124 2015/05/21 09:25:18 mpi Exp $	*/
+/*	$OpenBSD: xl.c,v 1.125 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1194,7 +1194,6 @@ again:
 			continue;
 		}
 
-		ifp->if_ipackets++;
 		m->m_pkthdr.len = m->m_len = total_len;
 
 		if (sc->xl_type == XL_TYPE_905B) {

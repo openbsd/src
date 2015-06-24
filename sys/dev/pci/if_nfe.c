@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.110 2015/03/20 18:42:25 mpi Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.111 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -763,7 +763,6 @@ nfe_rxeof(struct nfe_softc *sc)
 		}
 #endif
 
-		ifp->if_ipackets++;
 		ml_enqueue(&ml, m);
 
 		/* update mapping address in h/w descriptor */

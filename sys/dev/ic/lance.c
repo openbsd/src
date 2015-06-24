@@ -1,4 +1,4 @@
-/*	$OpenBSD: lance.c,v 1.6 2015/05/01 14:56:18 mpi Exp $	*/
+/*	$OpenBSD: lance.c,v 1.7 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: lance.c,v 1.46 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -426,8 +426,6 @@ lance_read(struct lance_softc *sc, int boff, int len)
 		ifp->if_ierrors++;
 		return (NULL);
 	}
-
-	ifp->if_ipackets++;
 
 	eh = mtod(m, struct ether_header *);
 

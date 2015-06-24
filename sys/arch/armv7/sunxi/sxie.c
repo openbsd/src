@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.8 2015/04/03 06:48:58 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.9 2015/06/24 09:40:53 mpi Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -600,7 +600,6 @@ trynext:
 	if (pktlen > SXIE_MAX_PKT_SIZE)
 		pktlen = SXIE_MAX_PKT_SIZE; /* XXX is truncating ok? */
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = pktlen;
 	/* XXX m->m_pkthdr.csum_flags ? */
 	m_adj(m, ETHER_ALIGN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.103 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.104 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1130,7 +1130,6 @@ trunk_input(struct mbuf *m)
 
 	ml_enqueue(&ml, m);
 	if_input(trifp, &ml);
-	trifp->if_ipackets++;
 	return (1);
 
  bad:

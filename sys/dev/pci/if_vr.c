@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.140 2015/04/13 08:45:48 mpi Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.141 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -909,8 +909,6 @@ vr_rxeof(struct vr_softc *sc)
 #else
 		m->m_pkthdr.len = m->m_len = total_len;
 #endif
-
-		ifp->if_ipackets++;
 
 		if (sc->vr_quirks & VR_Q_CSUM &&
 		    (rxstat & VR_RXSTAT_FRAG) == 0 &&

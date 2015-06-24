@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.178 2015/04/13 20:45:49 sthen Exp $	*/
+/*	$OpenBSD: re.c,v 1.179 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1397,8 +1397,6 @@ re_rxeof(struct rl_softc *sc)
 		} else
 			m->m_pkthdr.len = m->m_len =
 			    (total_len - ETHER_CRC_LEN);
-
-		ifp->if_ipackets++;
 
 		/* Do RX checksumming */
 

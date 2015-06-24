@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.45 2015/06/21 20:04:30 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.46 2015/06/24 09:40:53 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -741,8 +741,6 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			goto skip;
 		}
 
-		ifp->if_ipackets++;
-
 		/* Pass it on. */
 		ml_enqueue(&ml, m);
 		if_input(ifp, &ml);
@@ -826,7 +824,6 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			m = MCLGETI(NULL, M_DONTWAIT, NULL, desc.nbytes);
 			if (!m)
 				break;
-			ifp->if_ipackets++;
 			m->m_len = m->m_pkthdr.len = desc.nbytes;
 			nbytes = roundup(desc.nbytes + VNET_ETHER_ALIGN, 8);
 

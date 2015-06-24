@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.36 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.37 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1415,7 +1415,6 @@ pcn_rxintr(struct pcn_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 
 		ml_enqueue(&ml, m);
-		ifp->if_ipackets++;
 	}
 
 	/* Update the receive pointer. */

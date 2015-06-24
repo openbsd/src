@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.77 2015/05/17 02:33:09 chris Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.78 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1885,8 +1885,6 @@ myx_rxeof(struct myx_softc *sc)
 		    myx_bufs_empty(&sc->sc_rx_buf_list[ring]))
 			timeout_add(&sc->sc_refill, 0);
 	}
-
-	ifp->if_ipackets += ml_len(&ml);
 
 	if_input(ifp, &ml);
 }

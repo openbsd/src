@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.18 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.19 2015/06/24 09:40:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1113,8 +1113,6 @@ cn30xxgmx_stats(struct cn30xxgmx_port_softc *sc)
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
 	uint64_t tmp;
 
-	ifp->if_ipackets +=
-	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS);
 	ifp->if_ierrors +=
 	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_BAD);
 	ifp->if_iqdrops +=

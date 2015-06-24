@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.32 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.33 2015/06/24 09:40:53 mpi Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -549,7 +549,6 @@ bmac_rint(void *v)
 		}
 
 		ml_enqueue(&ml, m);
-		ifp->if_ipackets++;
 
 next:
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_IN_LAST, 0, DBDMA_INT_ALWAYS,

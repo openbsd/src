@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.29 2015/03/11 16:08:54 mpi Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.30 2015/06/24 09:40:53 mpi Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1307,8 +1307,6 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 		bus_space_write_8(st, sh, MEC_MCL_RX_FIFO, MEC_CDRXADDR(sc, i));
 
 		m->m_pkthdr.len = m->m_len = len - ETHER_CRC_LEN;
-
-		ifp->if_ipackets++;
 
 		ml_enqueue(&ml, m);
 	}

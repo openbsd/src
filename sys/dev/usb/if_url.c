@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.74 2015/03/27 19:20:56 uaa Exp $ */
+/*	$OpenBSD: if_url.c,v 1.75 2015/06/24 09:40:54 mpi Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -965,7 +965,6 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done;
 	}
 
-	ifp->if_ipackets++;
 	total_len -= ETHER_CRC_LEN;
 
 	m = c->url_mbuf;

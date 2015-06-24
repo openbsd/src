@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.19 2015/06/18 09:28:54 mpi Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.20 2015/06/24 09:40:54 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -1211,7 +1211,6 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		ifp->if_ipackets++;
 		m->m_pkthdr.len = m->m_len = pktlen;
 		m_adj(m, ETHER_ALIGN);
 

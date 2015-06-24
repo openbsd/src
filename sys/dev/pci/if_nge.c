@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.83 2015/04/13 08:45:48 mpi Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.84 2015/06/24 09:40:54 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1079,8 +1079,6 @@ nge_rxeof(struct nge_softc *sc)
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
 #endif
-
-		ifp->if_ipackets++;
 
 #if NVLAN > 0
 		if (extsts & NGE_RXEXTSTS_VLANPKT) {

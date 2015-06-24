@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.131 2015/06/12 15:47:31 mpi Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.132 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1059,7 +1059,6 @@ axe_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		ifp->if_ipackets++;
 		m->m_pkthdr.len = m->m_len = pktlen;
 
 		memcpy(mtod(m, char *), buf, pktlen);

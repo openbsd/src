@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.111 2015/02/10 23:25:46 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.112 2015/06/24 09:40:54 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1698,8 +1698,6 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
-
-	ifp->if_ipackets++;
 
 	s = splnet();
 

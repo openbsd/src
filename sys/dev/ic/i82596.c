@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.42 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.43 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1115,8 +1115,6 @@ i82596_readframe(sc, num)
 #endif
 
 	ml_enqueue(&ml, m);
-	ifp->if_ipackets++;
-
 	if_input(ifp, &ml);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.65 2015/05/21 09:22:39 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.66 2015/06/24 09:40:54 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -455,7 +455,6 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m = c->upl_mbuf;
 	memcpy(mtod(c->upl_mbuf, char *), c->upl_buf, total_len);
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
 	ml_enqueue(&ml, m);
 

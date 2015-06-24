@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.20 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.21 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -706,7 +706,6 @@ epic_intr(void *arg)
 			m->m_pkthdr.len = m->m_len = len;
 
 			ml_enqueue(&ml, m);
-			ifp->if_ipackets++;
 		}
 
 		/* Update the receive pointer. */

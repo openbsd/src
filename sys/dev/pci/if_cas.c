@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.40 2015/04/13 08:45:48 mpi Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.41 2015/06/24 09:40:54 mpi Exp $	*/
 
 /*
  *
@@ -1202,7 +1202,6 @@ cas_rint(struct cas_softc *sc)
 				cas_add_rxbuf(sc, idx);
 
 			if (m != NULL) {
-				ifp->if_ipackets++;
 				ml_enqueue(&ml, m);
 			} else
 				ifp->if_ierrors++;
@@ -1228,7 +1227,6 @@ cas_rint(struct cas_softc *sc)
 				cas_add_rxbuf(sc, idx);
 
 			if (m != NULL) {
-				ifp->if_ipackets++;
 				ml_enqueue(&ml, m);
 			} else
 				ifp->if_ierrors++;

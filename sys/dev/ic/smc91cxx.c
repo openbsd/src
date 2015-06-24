@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.39 2015/05/19 11:24:01 mpi Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.40 2015/06/24 09:40:54 mpi Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -990,7 +990,6 @@ smc91cxx_read(sc)
 		*data = bus_space_read_1(bst, bsh, DATA_REG_B);
 	}
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = packetlen;
 	ml_enqueue(&ml, m);
 
