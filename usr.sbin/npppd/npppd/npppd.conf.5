@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.14 2015/06/24 04:34:31 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.15 2015/06/24 10:09:32 jmc Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -353,12 +353,12 @@ uses
 .Xr pipex 4 .
 The default is
 .Dq yes .
-Note that
+The
 .Xr sysctl 8
 variable
 .Va net.pipex.enable
-also should be enabled to use
-pipex 4 .
+should also be enabled to use
+.Xr pipex 4 .
 .It Ic debug-dump-pktin Ar protocol ...
 If this option is specified,
 .Xr npppd 8
