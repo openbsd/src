@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.179 2014/11/30 22:26:14 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.180 2015/06/24 18:41:58 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6894,7 +6894,7 @@ Lkcopy_start:
 	bge	0b
 	 inc	%o1
 1:
-	membar	#Sync		! Make sure all fauls are processed
+	membar	#Sync		! Make sure all faults are processed
 	stx	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	membar	#StoreStore|#StoreLoad
 	retl
