@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.17 2015/01/04 13:01:42 mpi Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.18 2015/06/24 11:58:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -266,7 +266,7 @@ intr_establish(int ivec, int type, int level,
 	struct ipic_softc *sc = ipic_sc;
 	struct intrhand *ih;
 	struct intrq *iq;
-	int s;
+	int s, flags;
 
 	if (ipic_preinit_done == 0)
 		ipic_preinit();
@@ -286,9 +286,15 @@ intr_establish(int ivec, int type, int level,
 		ipic_calc_masks();
 	}
 
+	flags = level & IPL_MPSAFE;
+	level &= ~IPL_MPSAFE;
+
+	KASSERT(level <= IPL_TTY || level >= IPL_CLOCK || flags & IPL_MPSAFE);
+
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_level = level;
+	ih->ih_flags = flags;
 	ih->ih_irq = ivec;
 
 	evcount_attach(&ih->ih_count, name, &ih->ih_irq);

@@ -1,4 +1,4 @@
-/* $OpenBSD: xlights.c,v 1.6 2013/11/18 20:21:51 deraadt Exp $ */
+/* $OpenBSD: xlights.c,v 1.7 2015/06/24 11:58:06 mpi Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -185,7 +185,7 @@ xlights_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	mac_intr_establish(parent, sc->sc_intr, intr[3] ? IST_LEVEL :
-	    type, IPL_AUDIO, xlights_intr, sc, sc->sc_dev.dv_xname);
+	    type, IPL_TTY, xlights_intr, sc, sc->sc_dev.dv_xname);
 
 	out32rb(sc->sc_reg + I2S_FORMAT, CLKSRC_VS);
 	macobio_enable(I2SClockOffset, I2S0CLKEN);

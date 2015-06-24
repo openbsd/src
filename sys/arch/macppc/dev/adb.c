@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.39 2013/08/10 08:13:32 mpi Exp $	*/
+/*	$OpenBSD: adb.c,v 1.40 2015/06/24 11:58:06 mpi Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1626,7 +1626,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("\n");
 
-	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_HIGH,
+	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_TTY,
 	    adb_intr, sc, sc->sc_dev.dv_xname);
 
 	/* init powerpc globals which control RTC functionality */

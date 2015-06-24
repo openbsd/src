@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.50 2015/01/04 13:01:42 mpi Exp $ */
+/*	$OpenBSD: intr.h,v 1.51 2015/06/24 11:58:06 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -41,16 +41,16 @@
 #define	IPL_SOFTNET	3
 #define	IPL_SOFTTTY	4
 #define	IPL_BIO		5
-#define	IPL_AUDIO	IPL_BIO /* XXX - was defined this val in audio_if.h */
 #define	IPL_NET		6
 #define	IPL_TTY		7
 #define	IPL_VM		8
-#define	IPL_CLOCK	9
-#define	IPL_SCHED	10
-#define	IPL_HIGH	11
-#define	IPL_NUM		12
+#define	IPL_AUDIO	9
+#define	IPL_CLOCK	10
+#define	IPL_SCHED	11
+#define	IPL_HIGH	12
+#define	IPL_NUM		13
 
-#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
+#define	IPL_MPSAFE	0x100
 
 #define	IST_NONE	0
 #define	IST_PULSE	1
@@ -156,8 +156,6 @@ void	softintr_init(void);
 void	softintr_schedule(void *);
 void	dosoftint(int);
 
-#define	set_sint(p)	atomic_setbits_int(&curcpu()->ci_ipending, p)
-
 #define	setsoftclock()	set_sint(SI_TO_IRQBIT(SI_SOFTCLOCK))
 #define	setsoftnet()	set_sint(SI_TO_IRQBIT(SI_SOFTNET))
 #define	setsofttty()	set_sint(SI_TO_IRQBIT(SI_SOFTTTY))
@@ -176,6 +174,7 @@ struct intrhand {
 	struct evcount	ih_count;
 	int		ih_type;
 	int		ih_level;
+	int		ih_flags;
 	int		ih_irq;
 	const char	*ih_what;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.80 2015/06/02 13:53:43 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.81 2015/06/24 11:58:06 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -99,6 +99,7 @@ void	*openpic_intr_establish(void *, int, int, int, int (*)(void *), void *,
 void	openpic_intr_disestablish(void *, void *);
 void	openpic_collect_preconf_intr(void);
 void	openpic_ext_intr(void);
+int	openpic_ext_intr_handler(struct intrhand *, int, int *);
 
 /* Generic IRQ management routines. */
 void	openpic_gen_acknowledge_irq(int, int);
@@ -420,7 +421,7 @@ openpic_intr_establish(void *lcv, int irq, int type, int level,
 {
 	struct intrhand *ih;
 	struct intrq *iq;
-	int s;
+	int s, flags;
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
 		printf("%s: bogus irq %d or type %d", __func__, irq, type);
@@ -431,8 +432,8 @@ openpic_intr_establish(void *lcv, int irq, int type, int level,
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
 		panic("%s: can't malloc handler info", __func__);
-	iq = &openpic_handler[irq];
 
+	iq = &openpic_handler[irq];
 	switch (iq->iq_ist) {
 	case IST_NONE:
 		iq->iq_ist = type;
@@ -451,9 +452,15 @@ openpic_intr_establish(void *lcv, int irq, int type, int level,
 		break;
 	}
 
+	flags = level & IPL_MPSAFE;
+	level &= ~IPL_MPSAFE;
+
+	KASSERT(level <= IPL_TTY || level >= IPL_CLOCK || flags & IPL_MPSAFE);
+
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_level = level;
+	ih->ih_flags = flags;
 	ih->ih_irq = irq;
 
 	evcount_attach(&ih->ih_count, name, &ih->ih_irq);
@@ -647,10 +654,13 @@ openpic_ext_intr(void)
 #endif
 		iq = &openpic_handler[irq];
 
-		if (iq->iq_ipl <= ci->ci_cpl)
+#ifdef OPENPIC_DEBUG
+		if (iq->iq_ipl <= pcpl)
 			printf("invalid interrupt %d lvl %d at %d hw %d\n",
-			    irq, iq->iq_ipl, ci->ci_cpl,
+			    irq, iq->iq_ipl, pcpl,
 			    openpic_read(OPENPIC_CPU_PRIORITY(ci->ci_cpuid)));
+#endif
+
 		if (iq->iq_ipl > maxipl)
 			maxipl = iq->iq_ipl;
 		openpic_splraise(iq->iq_ipl);
@@ -659,14 +669,7 @@ openpic_ext_intr(void)
 		spurious = 1;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			ppc_intr_enable(1);
-			KERNEL_LOCK();
-			ret = (*ih->ih_fun)(ih->ih_arg);
-			if (ret) {
-				ih->ih_count.ec_count++;
-				spurious = 0;
- 			}
-			KERNEL_UNLOCK();
-
+			ret = openpic_ext_intr_handler(ih, pcpl, &spurious);
 			(void)ppc_intr_disable();
 			if (intr_shared_edge == 00 && ret == 1)
 				break;
@@ -684,6 +687,36 @@ openpic_ext_intr(void)
 
 	openpic_splx(pcpl);	/* Process pendings. */
 	openpic_irqnest[ci->ci_cpuid]--;
+}
+
+int
+openpic_ext_intr_handler(struct intrhand *ih, int pcpl, int *spurious)
+{
+	int ret;
+#ifdef MULTIPROCESSOR
+	int need_lock;
+
+	if (ih->ih_flags & IPL_MPSAFE)
+		need_lock = 0;
+	else
+		need_lock = pcpl < IPL_SCHED;
+
+	if (need_lock)
+		KERNEL_LOCK();
+#endif
+
+	ret = (*ih->ih_fun)(ih->ih_arg);
+	if (ret) {
+		ih->ih_count.ec_count++;
+		*spurious = 0;
+	}
+
+#ifdef MULTIPROCESSOR
+	if (need_lock)
+		KERNEL_UNLOCK();
+#endif
+
+	return (ret);
 }
 
 void
