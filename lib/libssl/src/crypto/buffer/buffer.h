@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.h,v 1.14 2014/10/16 03:19:02 beck Exp $ */
+/* $OpenBSD: buffer.h,v 1.15 2015/06/24 10:05:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,14 +84,13 @@ BUF_MEM *BUF_MEM_new(void);
 void	BUF_MEM_free(BUF_MEM *a);
 int	BUF_MEM_grow(BUF_MEM *str, size_t len);
 int	BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
+
 #ifndef LIBRESSL_INTERNAL
 char *	BUF_strdup(const char *str);
 char *	BUF_strndup(const char *str, size_t siz);
-#endif
 void *	BUF_memdup(const void *data, size_t siz);
 void	BUF_reverse(unsigned char *out, const unsigned char *in, size_t siz);
 
-#ifndef LIBRESSL_INTERNAL
 /* safe string functions */
 size_t BUF_strlcpy(char *dst, const char *src, size_t siz)
 	__attribute__ ((__bounded__(__string__,1,3)));
