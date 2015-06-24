@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.342 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.343 2015/06/24 09:56:51 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -128,8 +128,6 @@ void	if_attachsetup(struct ifnet *);
 void	if_attachdomain1(struct ifnet *);
 void	if_attach_common(struct ifnet *);
 
-int	if_detach_filter(void *, const struct mbuf *);
-void	if_detach_queues(struct ifnet *, struct niqueue *);
 void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 
@@ -646,23 +644,6 @@ if_detach(struct ifnet *ifp)
 	pfi_detach_ifnet(ifp);
 #endif
 
-	/*
-	 * remove packets came from ifp, from software interrupt queues.
-	 * net/netisr_dispatch.h is not usable, as some of them use
-	 * strange queue names.
-	 */
-#define IF_DETACH_QUEUES(x) \
-do { \
-	extern struct niqueue x; \
-	if_detach_queues(ifp, & x); \
-} while (0)
-	IF_DETACH_QUEUES(arpintrq);
-	IF_DETACH_QUEUES(ipintrq);
-#ifdef INET6
-	IF_DETACH_QUEUES(ip6intrq);
-#endif
-#undef IF_DETACH_QUEUES
-
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 	if (ISSET(ifp->if_xflags, IFXF_TXREADY))
@@ -703,34 +684,6 @@ do { \
 
 	ifindex2ifnet[ifp->if_index] = NULL;
 	splx(s);
-}
-
-int
-if_detach_filter(void *ctx, const struct mbuf *m)
-{
-	struct ifnet *ifp = ctx;
-
-#ifdef DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		return (0);
-#endif
-
-	return (m->m_pkthdr.ph_ifidx == ifp->if_index);
-}
-
-void
-if_detach_queues(struct ifnet *ifp, struct niqueue *niq)
-{
-	struct mbuf *m0, *m;
-
-	m0 = niq_filter(niq, if_detach_filter, ifp);
-	while (m0 != NULL) {
-		m = m0;
-		m0 = m->m_nextpkt;
-
-		m->m_nextpkt = NULL;
-		m_freem(m);
-	}
 }
 
 /*
