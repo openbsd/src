@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.13 2014/03/22 04:32:39 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.14 2015/06/24 04:34:31 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2014 $
+.Dd $Mdocdate: June 24 2015 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -353,6 +353,12 @@ uses
 .Xr pipex 4 .
 The default is
 .Dq yes .
+Note that
+.Xr sysctl 8
+variable
+.Va net.pipex.enable
+also should be enabled to use
+pipex 4 .
 .It Ic debug-dump-pktin Ar protocol ...
 If this option is specified,
 .Xr npppd 8
@@ -676,7 +682,8 @@ bind tunnel from L2TP authenticated by LOCAL to tun1
 .Xr pppx 4 ,
 .Xr tun 4 ,
 .Xr npppctl 8 ,
-.Xr npppd 8
+.Xr npppd 8 ,
+.Xr sysctl 8
 .Sh BUGS
 The current version of
 .Xr npppd 8
