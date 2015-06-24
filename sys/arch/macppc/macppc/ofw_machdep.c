@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.52 2015/06/05 10:24:23 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.53 2015/06/24 14:09:32 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ save_ofw_mapping(void)
 {
 	int chosen, memory, root, mmui, mmu = -1;
 	int acells, scells;
-	char model[32];
 	int i, len;
 
 	if ((chosen = OF_finddevice("/chosen")) == -1)
@@ -258,17 +257,6 @@ save_ofw_mapping(void)
 		OF_getprop(mmu, "translations", ofw_maps, sizeof(ofw_maps));
 		break;
 	}
-
-	/*
-	 * Tell the firmware to stop pending DMAs, and on the machines
-	 * listed below it is necessary to shut down the fan management
-	 * thread.
-	 */
-	len = OF_getprop(root, "model", model, sizeof(model));
-	model[len] = 0;
-	if (strcmp(model, "PowerMac11,2") == 0 ||
-	    strcmp(model, "PowerMac12,1") == 0)
-		OF_quiesce();
 
 	/*
 	 * Next time we'll call the firmware make sure we save and
