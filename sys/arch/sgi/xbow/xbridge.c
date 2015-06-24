@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.95 2015/06/16 18:24:38 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.96 2015/06/24 16:52:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -24,6 +24,236 @@
  * IMPORTANT AUTHOR'S NOTE: I did not write any of this code under the
  * influence of drugs.  Looking back at that particular piece of hardware,
  * I wonder if this hasn't been a terrible mistake.
+ */
+
+/*
+
+  xbridge 101
+  ===========
+
+  There are three ASIC using this model:
+
+  - Bridge, used on Octane and maybe early Origin 200 and 2000 systems.
+  - XBridge, used on later Origin 200/2000 and Origin 300/3000 systems.
+  - PIC, used on Origin 350/3500 systems.
+
+  (for the record, Fuel is Origin 300 like and Tezro is Origin 350 like).
+
+  Bridge and XBridge each appear as a single widget, supporting 8 PCI devices,
+  while PIC appears as two contiguous widgets, each supporting 2 PCI-X devices.
+
+- - address space
+
+  Each widget has a 36-bit address space.  xbridge widgets only use 33 bits
+  though.
+
+  On Octane systems, the whole 36 bit address space is fully available.  On
+  all other systems, the low 16MB (24 bit) address space is always available,
+  and access to arbitrary areas of the address space can be achieved by
+  programming the Crossbow's IOTTE (I/O Translation Table Entries).
+
+  IMPORTANT! there is a limited number of IOTTE per Crossbow: 7, of which the
+  seventh is used to workaround a hardware bug, leaving only 6 entries
+  available accross all widgets.
+
+  Each IOTTE opens a contiguous window of 28 or 29 bits, depending on the
+  particular system model and configuration.  On Origin 300/3000 and 350/3500,
+  this will always be 29 bit (512MB), while on Origin 200/2000 systems, this
+  depends on the ``M mode vs N mode'' configuration.  Most systems run in M
+  mode (which is the default) which also allows for 29 bit; systems in N mode
+  (allowing more than 64 nodes to be connected) can only provide 28 bit IOTTE
+  windows (256MB).
+
+  The widget address space is as follows:
+
+   offset         size           description
+  0##0000##0000  0##0003##0000  registers
+  0##4000##0000  0##4000##0000  PCI memory space
+  1##0000##0000  1##0000##0000  PCI I/O space
+
+  Note the PCI memory space is limited to 30 bit; this is supposedly hardware
+  enforced, i.e. one may set the top two bits of 32-bit memory BAR and they
+  would be ignored.  The xbridge driver doesn't try this though (-:
+
+  IMPORTANT! On Bridge (not XBridge) revision up to 3, the I/O space is not
+  available (apparently this would be because of a hardware issue in the
+  byteswap logic, causing it to return unpredictable values when accessing
+  this address range).
+  
+- - PCI resource mapping
+
+  Each BAR value is an offset within the memory or I/O space (with the memory
+  space being limited to 30 bits, or 1GB), *EXCEPT* when the value fits in one
+  of the ``devio'' slots.
+
+  So now is a good time to introduce the devio.
+
+  There are 8 devio registers, one per device; theses registers contain various
+  device-global flags (such as byte swapping and coherency), as well as the
+  location of a ``devio window'' in one of the address spaces, selected on a
+  per-devio basis.
+
+  The devio register only programs the upper 12 bits of the 32 window base
+  address, the low 20 bits being zero; the window size are fixed and depend on
+  the given device: devices 0 and 1 have ``large'' windows of 2MB (0020##0000),
+  while devices 2 to 7 have ``small'' windows of 1MB (0010##0000).
+
+  Apparently there are some hidden rules about the upper 12 bits, though, and
+  the rules differ on Octane vs Origin systems.
+
+  This is why the address space, from the pci driver point of view, is split
+  in three parts: there is the ``devio black hole'' where we must make sure
+  that no BAR allocation crosses a devio boundary, and the rest of the address
+  space (under the devio zone and above it).
+
+  I am slowly moving away from the devio mappings the PROM leaves us in, and
+  eventually I expect to be able to have more flexibility in their position.
+  However there is the console uart mapping I don't want to change now, and -
+  of course - we inherit it from the prom as a devio register for the IOC3 or
+  IOC4 device.
+
+  So currently, the extents I provide the MI code with span the 0->ffff##ffff
+  address space, with only the following areas available:
+  - each devio range, if configured for the given address space
+  - on Octane, the whole memory or I/O space minus the 16MB area in which all
+    devio mappings take place
+  - on Origin, if we have an IOTTE mapping a part of the memory or I/O address
+    space, the whole window minus the 16MB area in which all devio mappings
+    take place.
+
+  Now I need to make sure that the MI code will never allocate mappings
+  crossing devio ranges.  So during the Bridge setup, I am initializing
+  ALL BAR on a device-by-device basis, working with smaller extents:
+  - if the device can have all its resources of a given type (I/O or mem)
+    fitting in a devio area, I configure a devio, and make it allocate from
+    an extent spanning only the devio range.
+  - if there are not enough devio (because the device might need two devio
+    ranges, one for I/O resources and one for memory resources, and there are
+    only 8 devio, and if the bus is populated there might not be enough unused
+    devio slots to hijack), then allocation is done on the larger address space
+    (granted on Octane, or provided with an IOTTE window on Origin), using an
+    extent covering this area minus the 16MB area in which all devio mappings
+    take place.
+  So in either case, I am now sure that there are no resources crossing the
+  devio boundaries, which are invisible to the MI code.
+
+  This also explains why I am making sure that the devio ranges are close to
+  each other - it makes the creation of the temporary resource extents simpler
+  (bear in mind that a device might need resources from the IOTTE window before
+  all devio ranges are set up).
+
+  And of course to make things even less simple, the IOTTE allocation may fail
+  (e.g. on a P-Brick with 6 XBridge chips on the same Crossbow), and if we are
+  using an old revision Bridge, all I/O resources need to be allocated with
+  devio (so we can't decide to get rid of them anyway).
+
+  So, when it's time to configure further devices (for ppb and pccbb), I need
+  the same trick to prevent resource allocation to cross devio boundaries.
+
+  Actually, as far as pccbb is concerned, I give up entirely on resources if
+  all I have is a devio to map within - at least for now, because the devio do
+  not cover the 0000..ffff range in I/O space needed for pcmcia.  So for the
+  I/O resources, I give rbus the low 16 bits of the I/O extent (if available);
+  as for the memory resources, I need to exclude the devio area, and since rbus
+  currently only supports a single contiguous area, I give it the area starting
+  after the devio range (which is, by far, the largest part of the
+  at-least-256MB region).
+
+  Do you need aspirin yet?
+
+- - DMA
+
+  Device DMA addresses can be constructed in three ways:
+  - direct 64 bit address
+  - 32 bit address within a programmable 31 bit ``direct DMA'' window
+  - 32 bit translated address using ATE (Address Translation Entries)
+
+  direct 64 bit address:
+    These are easy to construct (pick your memory address, set bit 56, and
+    you're done), but these can only work with pci devices aware of 64 bit
+    addresses.
+
+  direct DMA window:
+    There is a Bridge global register to define the base address of the window,
+    and then we have 2GB available.  This is what I am currently using, and
+    convenient for PCI devices unable to use 64 bit DMA addresses.
+
+  translated DMA:
+    There is another 2GB window in which accesses are indirected through ATE,
+    which can point anywhere in memory.
+
+    ATE are IOMMU translation entries.  PCI addresses in the translated window
+    transparently map to the address their ATE point to.
+
+    Bridge chip have 128 so-called `internal' entries, and can use their
+    optional `external' SSRAM to provide more (up to 65536 entries with 512KB
+    SSRAM).  However, due to chip bugs, those `external' entries can not be
+    updated while there is DMA in progress using external entries, even if the
+    updated entries are not related to those used by the DMA transfer.
+
+    XBridge chip extend the internal entries to 1024, but do not provide
+    support for external entries.
+
+    All ATE share the same page size, which is configurable as 4KB or 16KB.
+
+    Due to the small number of ATE entries, and since you can not use part of
+    the system's RAM to add entries as you need them (unlike hppa or sparc64),
+    the driver no longer uses them, as there is nothing we can do when we run
+    out of ATE.
+
+- - interrupts
+
+  This is easy, for a change.  There are 8 interrupt sources, one per device;
+  pins A and C map of devices 0-7 map to interrupt sources 0-7, and pins B and
+  D of devices 0-7 map to interrupt sources 4-7 then 0-3 (i.e. device# ^ 4).
+
+  All interrupts occuring on the Bridge cause an XIO interrupt packet to be
+  sent to the XIO interrupt address programmed at Bridge initialization time;
+  packets can be configured as self-clearing or not on an interrupt source
+  basis.
+
+  Due to silicon bugs, interrupts can be lost if two interrupt sources
+  interrupt within a too short interval; there is a documented workaround for
+  this which consists of recognizing this situation and self-inflicting
+  ourselves the lost interrupt (see details in xbridge_intr_handler() ).
+
+- - endianness
+
+  Endianness control is quite finegrained and quite complex at first glance:
+  - memory and I/O accesses not occuring within devio ranges have their
+    endianness controlled by the endianness flags in the (global) Bridge
+    configuration register...
+  - ... to which adds the per-device endianness flag in the device devio
+    register...
+  - and accesses occuring through devio register only use the
+    per-device devio register mentioned above, even if the devio
+    range is defined in a different register!
+
+  i.e.
+
+  devio 0 = endianness control C0, devio range R0
+  devio 1 = endianness control C1, devio range R1
+  global Bridge = endianness control C2
+
+  1. access from device 0 to R0 uses C2^C0
+  2. access from device 0 to R1 uses C2^C0
+  3. access from device 0 outside R0 and R1 uses C2
+  4. access from device 1 to R0 uses C2^C1
+  5. access from device 1 to R1 uses C2^C1
+  6. access from device 1 outside R0 and R1 uses C1
+
+  (note that, the way I set up devio registers, cases 2 and 4 can never
+   occur if both device 0 and device 1 are present)
+
+  Now for DMA:
+  - i don't remember what 64 bit DMA uses
+  - direct DMA (within the 2GB window) uses a per-device bit in devio
+  - translated DMA (using ATE) uses a per-device bit in devio if the
+    chip is a Bridge, while XBridge and PIC use different DMA addresses
+    (i.e. with a given ATE, there is one address pointing to it in
+     non-swapped mode, and another address pointing to it in swapped
+     mode).
+
  */
 
 #include <sys/param.h>
