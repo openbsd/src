@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.25 2015/01/16 00:19:12 deraadt Exp $	*/
+/*	$OpenBSD: register.c,v 1.26 2015/06/24 03:38:51 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -257,6 +257,11 @@ systrace_initcb(void)
 	    &ic_translate_filenameatflag);
 	alias = systrace_new_alias("native", "fstatat", "native", "fsread");
 	systrace_alias_add_trans(alias, tl);
+
+	X(intercept_register_sccb("native", "chflagsat", trans_cb, NULL));
+	intercept_register_translation("native", "chflagsat", 1,
+	    &ic_translate_filenameatflag);
+	intercept_register_translation("native", "chflagsat", 2, &ic_fileflags);
 
 	X(intercept_register_sccb("native", "linkat", trans_cb, NULL));
 	intercept_register_translation("native", "linkat", 1,
