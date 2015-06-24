@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.16 2015/06/23 05:58:28 doug Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.17 2015/06/24 09:44:18 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -86,9 +86,10 @@ CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len)
 	if (cbs->len == 0)
 		return 1;
 
-	*out_ptr = BUF_memdup(cbs->data, cbs->len);
-	if (*out_ptr == NULL)
+	if ((*out_ptr = malloc(cbs->len)) == NULL)
 		return 0;
+
+	memcpy(*out_ptr, cbs->data, cbs->len);
 
 	*out_len = cbs->len;
 	return 1;
