@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.40 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd.c,v 1.41 2015/06/24 04:57:55 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.40 2015/01/19 01:48:59 deraadt Exp $
+ * $Id: npppd.c,v 1.41 2015/06/24 04:57:55 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -386,12 +386,14 @@ npppd_start(npppd *_this)
 	int rval = 0;
 
 	npppd_reset_timer(_this);
-	while ((event_loop(EVLOOP_ONCE)) == 0) {
+	while ((rval = event_loop(EVLOOP_ONCE)) == 0) {
 		if (_this->finalized != 0)
 			break;
 	}
-	if (rval != 0)
+	if (rval != 0) {
 		log_printf(LOG_CRIT, "event_loop() failed: %m");
+		abort();
+	}
 }
 
 /** stop the npppd */
