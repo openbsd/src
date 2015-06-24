@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.10 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: lcp.c,v 1.11 2015/06/24 04:45:20 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.10 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: lcp.c,v 1.11 2015/06/24 04:45:20 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -1111,8 +1111,8 @@ lcp_dialin_proxy(lcp *_this, dialin_proxy_info *dpi, int renegotiation,
 	if (_this->dialin_proxy_lcp_renegotiation == 0) {
 		_this->fsm.ppp->peer_auth = dpi->auth_type;
 		/*
-		 * It changes status which all options are rejected, and
-		 * accepts agreed options in lcp_proxy_send_ci.
+		 * Set the rejected flag to all options here for the moment,
+		 * the agreeed options will be handled in lcp_proxy_sent_ci().
 		 */
 		psm_opt_set_rejected(_this, mru, 1);
 		psm_opt_set_rejected(_this, pfc, 1);
