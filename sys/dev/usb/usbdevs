@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.651 2015/06/16 05:07:25 jsg Exp $
+$OpenBSD: usbdevs,v 1.652 2015/06/24 11:31:04 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -534,6 +534,7 @@ vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x148f	Ralink Technology
 vendor STARTECH		0x14b0	StarTech.com
 vendor CONCEPTRONIC2	0x14b2	Conceptronic
+vendor SUPERTOP		0x14cd	SuperTop
 vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor UBLOX		0x1546	U-blox
@@ -4058,6 +4059,9 @@ product SUNTAC VS10U		0x0009	Slipper U
 product SUNTAC IS96U		0x000a	Ir-Trinity
 product SUNTAC AS64LX		0x000b	U-Cable type A3
 product SUNTAC AS144L4		0x0011	U-Cable type A4
+
+/* SuperTop products */
+product SUPERTOP IDEBRIDGE	0x6600	SuperTop IDE Bridge
 
 /* System TALKS, Inc. */
 product	SYSTEMTALKS SGCX2UL	0x1920	SGC-X2UL
