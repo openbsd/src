@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.10 2014/03/22 04:32:39 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.11 2015/06/24 05:20:16 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.10 2014/03/22 04:32:39 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.11 2015/06/24 05:20:16 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -444,6 +444,7 @@ l2tp_call        *l2tp_call_create (void);
 int              l2tp_call_init (l2tp_call *, l2tp_ctrl *);
 void             l2tp_call_destroy (l2tp_call *, int);
 void             l2tp_call_admin_disconnect(l2tp_call *);
+void             l2tp_call_drop (l2tp_call *);
 int              l2tp_call_recv_packet (l2tp_ctrl *, l2tp_call *, int, u_char *, int);
 void             l2tp_call_ppp_input (l2tp_call *, u_char *, int, int);
 

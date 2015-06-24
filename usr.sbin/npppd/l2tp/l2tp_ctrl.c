@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.19 2015/01/19 01:48:59 deraadt Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.20 2015/06/24 05:20:16 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.19 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.20 2015/06/24 05:20:16 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -76,7 +76,7 @@ static void               l2tp_ctrl_purge_ipsec_sa (l2tp_ctrl *);
 static void               l2tp_ctrl_timeout (int, short, void *);
 static int                l2tp_ctrl_resend_una_packets (l2tp_ctrl *);
 static void               l2tp_ctrl_destroy_all_calls (l2tp_ctrl *);
-static int                l2tp_ctrl_disconnect_all_calls (l2tp_ctrl *);
+static int                l2tp_ctrl_disconnect_all_calls (l2tp_ctrl *, int);
 static void               l2tp_ctrl_reset_timeout (l2tp_ctrl *);
 static inline int         l2tp_ctrl_txwin_size (l2tp_ctrl *);
 static inline int         l2tp_ctrl_txwin_is_full (l2tp_ctrl *);
@@ -258,14 +258,14 @@ l2tp_ctrl_send_disconnect_notify(l2tp_ctrl *_this)
 	/* Send CDN all Calls */
 	ncalls = 0;
 	if (slist_length(&_this->call_list) != 0) {
-		ncalls = l2tp_ctrl_disconnect_all_calls(_this);
+		ncalls = l2tp_ctrl_disconnect_all_calls(_this, 0);
 		if (ncalls > 0) {
 			/*
 			 * Call the function again to check whether the
 			 * sending window is fulled.  In case ncalls == 0,
 			 * it means we've sent CDN for all calls.
 			 */
-			ncalls = l2tp_ctrl_disconnect_all_calls(_this);
+			ncalls = l2tp_ctrl_disconnect_all_calls(_this, 0);
 		}
 	}
 	if (ncalls > 0)
@@ -320,7 +320,7 @@ l2tp_ctrl_stop(l2tp_ctrl *_this, int result)
 	case L2TP_CTRL_STATE_CLEANUP_WAIT:
 cleanup:
 		if (slist_length(&_this->call_list) != 0) {
-			if (l2tp_ctrl_disconnect_all_calls(_this) > 0)
+			if (l2tp_ctrl_disconnect_all_calls(_this, 1) > 0)
 				break;
 		}
 #if 0
@@ -650,7 +650,7 @@ l2tp_ctrl_destroy_all_calls(l2tp_ctrl *_this)
  * @return return # of calls that is not waiting cleanup.
  */
 static int
-l2tp_ctrl_disconnect_all_calls(l2tp_ctrl *_this)
+l2tp_ctrl_disconnect_all_calls(l2tp_ctrl *_this, int drop)
 {
 	int i, len, ncalls;
 	l2tp_call *call;
@@ -663,12 +663,12 @@ l2tp_ctrl_disconnect_all_calls(l2tp_ctrl *_this)
 		call = slist_get(&_this->call_list, i);
 		if (call->state != L2TP_CALL_STATE_CLEANUP_WAIT) {
 			ncalls++;
-
 			if (l2tp_ctrl_txwin_is_full(_this)) {
 				L2TP_CTRL_DBG((_this, LOG_INFO,
 				    "Too many calls.  Sending window is not "
 				    "enough to send CDN to all clients."));
-				/* nothing to do */
+				if (drop)
+					l2tp_call_drop(call);
 			} else
 				l2tp_call_admin_disconnect(call);
 		}
