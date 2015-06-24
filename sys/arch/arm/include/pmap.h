@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.32 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.33 2015/06/24 21:26:04 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -365,10 +365,6 @@ do {									\
 #define pmap_pde_section(pde)	l1pte_section_p(*(pde))
 #define pmap_pde_page(pde)	l1pte_page_p(*(pde))
 #define pmap_pde_fpage(pde)	l1pte_fpage_p(*(pde))
-
-/* Size of the kernel part of the L1 page table */
-#define KERNEL_PD_SIZE	\
-	(L1_TABLE_SIZE - (KERNEL_BASE >> L1_S_SHIFT) * sizeof(pd_entry_t))
 
 /************************* ARM MMU configuration *****************************/
 
