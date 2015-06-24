@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.63 2015/06/04 06:11:21 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.64 2015/06/24 08:32:39 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -604,7 +604,7 @@ struct i915_suspend_saved_registers {
 };
 
 struct intel_gen6_power_mgmt {
-	struct task task;
+	struct work_struct work;
 	u32 pm_iir;
 	/* lock - irqsave spinlock that protectects the work_struct and
 	 * pm_iir. */
@@ -616,8 +616,7 @@ struct intel_gen6_power_mgmt {
 	u8 min_delay;
 	u8 max_delay;
 
-	struct task delayed_resume_task;
-	struct timeout delayed_resume_to;
+	struct delayed_work delayed_resume_work;
 
 	/*
 	 * Protects RPS/RC6 register access and PCU communication.
@@ -663,7 +662,7 @@ struct i915_dri1_state {
 
 struct intel_l3_parity {
 	u32 *remap_info;
-	struct task error_task;
+	struct work_struct error_work;
 };
 
 struct inteldrm_softc {
@@ -750,7 +749,7 @@ struct inteldrm_softc {
 	u32 pch_irq_mask;
 
 	u32 hotplug_supported_mask;
-	struct task hotplug_task;
+	struct work_struct hotplug_work;
 
 	int num_pch_pll;
 
@@ -816,9 +815,10 @@ struct inteldrm_softc {
 	spinlock_t error_lock;
 	/* Protected by dev->error_lock. */
 	struct drm_i915_error_state *first_error;
-	struct task error_task;
+	struct work_struct error_work;
 	int error_completion;
 	struct mutex error_completion_lock;
+	struct workqueue_struct *wq;
 
 	/* number of ioctls + faults in flight */
 	int entries;
@@ -903,9 +903,7 @@ struct inteldrm_softc {
 		 * fire periodically while the ring is running. When it
 		 * fires, go retire requests.
 		 */
-		struct timeout retire_timer;
-		struct taskq *retire_taskq;
-		struct task retire_task;
+		struct delayed_work retire_work;
 
 		/**
 		 * Are we in a non-interruptible section of code like

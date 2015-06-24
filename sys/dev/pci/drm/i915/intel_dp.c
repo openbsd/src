@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.24 2015/04/12 11:26:54 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.25 2015/06/24 08:32:39 kettenis Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -1104,22 +1104,15 @@ static void ironlake_panel_vdd_off_sync(struct intel_dp *intel_dp)
 	}
 }
 
-static void ironlake_panel_vdd_work(void *arg1)
+static void ironlake_panel_vdd_work(struct work_struct *__work)
 {
-	struct intel_dp *intel_dp = arg1;
+	struct intel_dp *intel_dp = container_of(to_delayed_work(__work),
+						 struct intel_dp, panel_vdd_work);
 	struct drm_device *dev = intel_dp_to_dev(intel_dp);
 
 	mutex_lock(&dev->mode_config.mutex);
 	ironlake_panel_vdd_off_sync(intel_dp);
 	mutex_unlock(&dev->mode_config.mutex);
-}
-
-static void
-ironlake_panel_vdd_tick(void *arg)
-{
-	struct intel_dp *intel_dp = arg;
-
-	task_add(systq, &intel_dp->panel_vdd_task);
 }
 
 void ironlake_edp_panel_vdd_off(struct intel_dp *intel_dp, bool sync)
@@ -1140,7 +1133,8 @@ void ironlake_edp_panel_vdd_off(struct intel_dp *intel_dp, bool sync)
 		 * time from now (relative to the power down delay)
 		 * to keep the panel power up across a sequence of operations
 		 */
-		timeout_add_msec(&intel_dp->panel_vdd_to, intel_dp->panel_power_cycle_delay * 5);
+		schedule_delayed_work(&intel_dp->panel_vdd_work,
+				      msecs_to_jiffies(intel_dp->panel_power_cycle_delay * 5));
 	}
 }
 
@@ -2540,8 +2534,7 @@ void intel_dp_encoder_destroy(struct drm_encoder *encoder)
 #endif
 	drm_encoder_cleanup(encoder);
 	if (is_edp(intel_dp)) {
-		timeout_del(&intel_dp->panel_vdd_to);
-		task_del(systq, &intel_dp->panel_vdd_task);
+		cancel_delayed_work_sync(&intel_dp->panel_vdd_work);
 		ironlake_panel_vdd_off_sync(intel_dp);
 	}
 	kfree(intel_dig_port);
@@ -2808,8 +2801,8 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	connector->interlace_allowed = true;
 	connector->doublescan_allowed = 0;
 
-	task_set(&intel_dp->panel_vdd_task, ironlake_panel_vdd_work, intel_dp);
-	timeout_set(&intel_dp->panel_vdd_to, ironlake_panel_vdd_tick, intel_dp);
+	INIT_DELAYED_WORK(&intel_dp->panel_vdd_work,
+			  ironlake_panel_vdd_work);
 
 	intel_connector_attach_encoder(intel_connector, intel_encoder);
 	drm_sysfs_connector_add(connector);

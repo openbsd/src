@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.83 2015/04/18 14:47:34 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.84 2015/06/24 08:32:39 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -173,7 +173,6 @@ int	inteldrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	inteldrm_doioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 int	inteldrm_gmch_match(struct pci_attach_args *);
-void	inteldrm_timeout(void *);
 
 void	i915_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 void	i965_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
@@ -548,8 +547,7 @@ static int i915_drm_freeze(struct drm_device *dev)
 			return error;
 		}
 
-		timeout_del(&dev_priv->rps.delayed_resume_to);
-		task_del(systq, &dev_priv->rps.delayed_resume_task);
+		cancel_delayed_work_sync(&dev_priv->rps.delayed_resume_work);
 
 		intel_modeset_disable(dev);
 
@@ -979,8 +977,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	dev_priv->mm.retire_taskq = taskq_create("intelrel", 1, IPL_TTY, 0);
-	if (dev_priv->mm.retire_taskq == NULL) {
+	dev_priv->wq = (struct workqueue_struct *)
+	    taskq_create("intelrel", 1, IPL_TTY, 0);
+	if (dev_priv->wq == NULL) {
 		printf("couldn't create taskq\n");
 		return;
 	}
@@ -1292,14 +1291,6 @@ intel_gtt_chipset_flush(struct drm_device *dev)
 		}
 
 	}
-}
-
-void
-inteldrm_timeout(void *arg)
-{
-	struct inteldrm_softc *dev_priv = arg;
-
-	task_add(dev_priv->mm.retire_taskq, &dev_priv->mm.retire_task);
 }
 
 static int i8xx_do_reset(struct drm_device *dev)

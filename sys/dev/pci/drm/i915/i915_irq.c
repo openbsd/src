@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.25 2015/04/12 17:10:07 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.26 2015/06/24 08:32:39 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -277,9 +277,10 @@ static int i915_get_vblank_timestamp(struct drm_device *dev, int pipe,
 /*
  * Handle hotplug events outside the interrupt handler proper.
  */
-static void i915_hotplug_work_func(void *arg1)
+static void i915_hotplug_work_func(struct work_struct *work)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *)arg1;
+	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
+						    hotplug_work);
 	struct drm_device *dev = dev_priv->dev;
 	struct drm_mode_config *mode_config = &dev->mode_config;
 	struct intel_encoder *encoder;
@@ -358,9 +359,10 @@ static void notify_ring(struct drm_device *dev,
 	}
 }
 
-static void gen6_pm_rps_work(void *arg1)
+static void gen6_pm_rps_work(struct work_struct *work)
 {
-	drm_i915_private_t *dev_priv = arg1;
+	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
+						    rps.work);
 	u32 pm_iir, pm_imr;
 	u8 new_delay;
 
@@ -402,9 +404,10 @@ static void gen6_pm_rps_work(void *arg1)
  * this event, userspace should try to remap the bad rows since statistically
  * it is likely the same row is more likely to go bad again.
  */
-static void ivybridge_parity_work(void *arg1)
+static void ivybridge_parity_work(struct work_struct *work)
 {
-	drm_i915_private_t *dev_priv = arg1;
+	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
+						    l3_parity.error_work);
 	u32 error_status, row, bank, subbank;
 //	char *parity_event[5];
 	uint32_t misccpctl;
@@ -472,7 +475,7 @@ static void ivybridge_handle_parity_error(struct drm_device *dev)
 	I915_WRITE(GTIMR, dev_priv->gt_irq_mask);
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
 
-	task_add(systq, &dev_priv->l3_parity.error_task);
+	queue_work(dev_priv->wq, &dev_priv->l3_parity.error_work);
 }
 
 static void snb_gt_irq_handler(struct drm_device *dev,
@@ -520,7 +523,7 @@ static void gen6_queue_rps_work(struct drm_i915_private *dev_priv,
 	POSTING_READ(GEN6_PMIMR);
 	spin_unlock_irqrestore(&dev_priv->rps.lock, flags);
 
-	task_add(systq, &dev_priv->rps.task);
+	queue_work(dev_priv->wq, &dev_priv->rps.work);
 }
 
 static irqreturn_t valleyview_irq_handler(void *arg)
@@ -582,7 +585,8 @@ static irqreturn_t valleyview_irq_handler(void *arg)
 			DRM_DEBUG_DRIVER("hotplug event received, stat 0x%08x\n",
 					 hotplug_status);
 			if (hotplug_status & dev_priv->hotplug_supported_mask)
-				task_add(systq, &dev_priv->hotplug_task);
+				queue_work(dev_priv->wq,
+					   &dev_priv->hotplug_work);
 
 			I915_WRITE(PORT_HOTPLUG_STAT, hotplug_status);
 			I915_READ(PORT_HOTPLUG_STAT);
@@ -609,7 +613,7 @@ static void ibx_irq_handler(struct drm_device *dev, u32 pch_iir)
 	int pipe;
 
 	if (pch_iir & SDE_HOTPLUG_MASK)
-		task_add(systq, &dev_priv->hotplug_task);
+		queue_work(dev_priv->wq, &dev_priv->hotplug_work);
 
 	if (pch_iir & SDE_AUDIO_POWER_MASK)
 		DRM_DEBUG_DRIVER("PCH audio power change on port %d\n",
@@ -652,7 +656,7 @@ static void cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
 	int pipe;
 
 	if (pch_iir & SDE_HOTPLUG_MASK_CPT)
-		task_add(systq, &dev_priv->hotplug_task);
+		queue_work(dev_priv->wq, &dev_priv->hotplug_work);
 
 	if (pch_iir & SDE_AUDIO_POWER_MASK_CPT)
 		DRM_DEBUG_DRIVER("PCH audio power change on port %d\n",
@@ -834,9 +838,10 @@ done:
  * Fire an error uevent so userspace can see that a hang or error
  * was detected.
  */
-static void i915_error_work_func(void *arg1)
+static void i915_error_work_func(struct work_struct *work)
 {
-	drm_i915_private_t *dev_priv = arg1;
+	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
+						    error_work);
 	struct drm_device *dev = dev_priv->dev;
 #if 0
 	char *error_event[] = { "ERROR=1", NULL };
@@ -1471,7 +1476,7 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 			wake_up_all(ring);
 	}
 
-	task_add(systq, &dev_priv->error_task);
+	queue_work(dev_priv->wq, &dev_priv->error_work);
 }
 
 static void i915_pageflip_stall_check(struct drm_device *dev, int pipe)
@@ -2385,7 +2390,8 @@ static irqreturn_t i915_irq_handler(void *arg)
 			DRM_DEBUG_DRIVER("hotplug event received, stat 0x%08x\n",
 				  hotplug_status);
 			if (hotplug_status & dev_priv->hotplug_supported_mask)
-				task_add(systq, &dev_priv->hotplug_task);
+				queue_work(dev_priv->wq,
+					   &dev_priv->hotplug_work);
 
 			I915_WRITE(PORT_HOTPLUG_STAT, hotplug_status);
 			POSTING_READ(PORT_HOTPLUG_STAT);
@@ -2622,7 +2628,8 @@ static irqreturn_t i965_irq_handler(void *arg)
 			DRM_DEBUG_DRIVER("hotplug event received, stat 0x%08x\n",
 				  hotplug_status);
 			if (hotplug_status & dev_priv->hotplug_supported_mask)
-				task_add(systq, &dev_priv->hotplug_task);
+				queue_work(dev_priv->wq,
+					   &dev_priv->hotplug_work);
 
 			I915_WRITE(PORT_HOTPLUG_STAT, hotplug_status);
 			I915_READ(PORT_HOTPLUG_STAT);
@@ -2707,11 +2714,10 @@ void intel_irq_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
-	task_set(&dev_priv->hotplug_task, i915_hotplug_work_func, dev_priv);
-	task_set(&dev_priv->error_task, i915_error_work_func, dev_priv);
-	task_set(&dev_priv->rps.task, gen6_pm_rps_work, dev_priv);
-	task_set(&dev_priv->l3_parity.error_task, ivybridge_parity_work,
-	    dev_priv);
+	INIT_WORK(&dev_priv->hotplug_work, i915_hotplug_work_func);
+	INIT_WORK(&dev_priv->error_work, i915_error_work_func);
+	INIT_WORK(&dev_priv->rps.work, gen6_pm_rps_work);
+	INIT_WORK(&dev_priv->l3_parity.error_work, ivybridge_parity_work);
 
 	dev->driver->get_vblank_counter = i915_get_vblank_counter;
 	dev->max_vblank_count = 0xffffff; /* only 24 bits of frame count */

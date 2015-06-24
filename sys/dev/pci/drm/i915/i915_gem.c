@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.95 2015/06/22 15:20:43 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.96 2015/06/24 08:32:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2209,7 +2209,9 @@ i915_add_request(struct intel_ring_buffer *ring,
 			    DRM_I915_HANGCHECK_PERIOD);
 		}
 		if (was_empty) {
-			timeout_add_sec(&dev_priv->mm.retire_timer, 1);
+			queue_delayed_work(dev_priv->wq,
+					   &dev_priv->mm.retire_work,
+					   round_jiffies_up_relative(HZ));
 			intel_mark_busy(dev_priv->dev);
 		}
 	}
@@ -2380,20 +2382,23 @@ i915_gem_retire_requests(struct drm_device *dev)
 		i915_gem_retire_requests_ring(ring);
 }
 
-void
-i915_gem_retire_work_handler(void *arg1)
+static void
+i915_gem_retire_work_handler(struct work_struct *work)
 {
-	drm_i915_private_t *dev_priv = arg1;
+	drm_i915_private_t *dev_priv;
 	struct drm_device *dev;
 	struct intel_ring_buffer *ring;
 	bool idle;
 	int i;
 
+	dev_priv = container_of(work, drm_i915_private_t,
+				mm.retire_work.work);
 	dev = dev_priv->dev;
 
 	/* Come back later if the device is busy... */
 	if (rw_enter(&dev->struct_mutex, RW_NOSLEEP | RW_WRITE)) {
-		timeout_add_sec(&dev_priv->mm.retire_timer, 1);
+		queue_delayed_work(dev_priv->wq, &dev_priv->mm.retire_work,
+				   round_jiffies_up_relative(HZ));
 		return;
 	}
 
@@ -2411,7 +2416,8 @@ i915_gem_retire_work_handler(void *arg1)
 	}
 
 	if (!dev_priv->mm.suspended && !idle)
-		timeout_add_sec(&dev_priv->mm.retire_timer, 1);
+		queue_delayed_work(dev_priv->wq, &dev_priv->mm.retire_work,
+				   round_jiffies_up_relative(HZ));
 	if (idle)
 		intel_mark_idle(dev);
 
@@ -3612,7 +3618,7 @@ i915_gem_ring_throttle(struct drm_device *dev, struct drm_file *file)
 
 	ret = __wait_seqno(ring, seqno, true, NULL);
 	if (ret == 0)
-		timeout_add_sec(&dev_priv->mm.retire_timer, 0);
+		queue_delayed_work(dev_priv->wq, &dev_priv->mm.retire_work, 0);
 
 	return ret;
 }
@@ -3995,8 +4001,7 @@ i915_gem_idle(struct drm_device *dev)
 	mutex_unlock(&dev->struct_mutex);
 
 	/* Cancel the retire work handler, which should be idle now. */
-	timeout_del(&dev_priv->mm.retire_timer);
-	task_del(dev_priv->mm.retire_taskq, &dev_priv->mm.retire_task);
+	cancel_delayed_work_sync(&dev_priv->mm.retire_work);
 
 	return 0;
 }
@@ -4304,9 +4309,8 @@ i915_gem_load(struct drm_device *dev)
 		init_ring_lists(&dev_priv->ring[i]);
 	for (i = 0; i < I915_MAX_NUM_FENCES; i++)
 		INIT_LIST_HEAD(&dev_priv->fence_regs[i].lru_list);
-	task_set(&dev_priv->mm.retire_task, i915_gem_retire_work_handler,
-	    dev_priv);
-	timeout_set(&dev_priv->mm.retire_timer, inteldrm_timeout, dev_priv);
+	INIT_DELAYED_WORK(&dev_priv->mm.retire_work,
+			  i915_gem_retire_work_handler);
 #if 0
 	init_completion(&dev_priv->error_completion);
 #else

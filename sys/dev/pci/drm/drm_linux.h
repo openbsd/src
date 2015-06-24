@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.27 2015/04/18 14:47:34 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.28 2015/06/24 08:32:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/task.h>
 
 typedef int irqreturn_t;
 #define IRQ_NONE	0
@@ -279,6 +281,91 @@ init_waitqueue_head(wait_queue_head_t *wq)
 #define wake_up_all(x)			wakeup(x)
 #define wake_up_all_locked(x)		wakeup(x)
 
+struct workqueue_struct;
+
+struct work_struct {
+	struct task task;
+	struct taskq *tq;
+};
+
+typedef void (*work_func_t)(struct work_struct *);
+
+static inline void
+INIT_WORK(struct work_struct *work, work_func_t func)
+{
+	task_set(&work->task, (void (*)(void *))func, work);
+}
+
+static inline bool
+queue_work(struct workqueue_struct *wq, struct work_struct *work)
+{
+	work->tq = (struct taskq *)wq;
+	return task_add(work->tq, &work->task);
+}
+
+static inline void
+cancel_work_sync(struct work_struct *work)
+{
+	task_del(work->tq, &work->task);
+}
+
+struct delayed_work {
+	struct work_struct work;
+	struct timeout to;
+	struct taskq *tq;
+};
+
+static inline struct delayed_work *
+to_delayed_work(struct work_struct *work)
+{
+	return container_of(work, struct delayed_work, work);
+}
+
+static void
+__delayed_work_tick(void *arg)
+{
+	struct delayed_work *dwork = arg;
+
+	task_add(dwork->tq, &dwork->work.task);
+}
+
+static inline void
+INIT_DELAYED_WORK(struct delayed_work *dwork, work_func_t func)
+{
+	INIT_WORK(&dwork->work, func);
+	timeout_set(&dwork->to, __delayed_work_tick, &dwork->work);
+}
+
+static inline bool
+schedule_delayed_work(struct delayed_work *dwork, int jiffies)
+{
+	dwork->tq = systq;
+	return timeout_add(&dwork->to, jiffies);
+}
+
+static inline bool
+queue_delayed_work(struct workqueue_struct *wq,
+    struct delayed_work *dwork, int jiffies)
+{
+	dwork->tq = (struct taskq *)wq;
+	return timeout_add(&dwork->to, jiffies);
+}
+
+static inline bool
+cancel_delayed_work(struct delayed_work *dwork)
+{
+	if (timeout_del(&dwork->to))
+		return true;
+	return task_del(dwork->tq, &dwork->work.task);
+}
+
+static inline void
+cancel_delayed_work_sync(struct delayed_work *dwork)
+{
+	timeout_del(&dwork->to);
+	task_del(dwork->tq, &dwork->work.task);
+}
+
 #define NSEC_PER_USEC	1000L
 #define NSEC_PER_SEC	1000000000L
 #define KHZ2PICOS(a)	(1000000000UL/(a))
@@ -286,6 +373,14 @@ init_waitqueue_head(wait_queue_head_t *wq)
 extern struct timespec ns_to_timespec(const int64_t);
 extern int64_t timeval_to_ns(const struct timeval *);
 extern struct timeval ns_to_timeval(const int64_t);
+
+#define HZ	hz
+
+static inline unsigned long
+round_jiffies_up_relative(unsigned long j)
+{
+	return roundup(j, hz);
+}
 
 #define jiffies_to_msecs(x)	(((int64_t)(x)) * 1000 / hz)
 #define msecs_to_jiffies(x)	(((int64_t)(x)) * hz / 1000)

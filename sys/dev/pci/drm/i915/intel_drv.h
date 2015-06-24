@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_drv.h,v 1.6 2015/04/12 11:26:54 jsg Exp $	*/
+/*	$OpenBSD: intel_drv.h,v 1.7 2015/06/24 08:32:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007-2008 Intel Corporation
@@ -370,8 +370,7 @@ struct intel_dp {
 	int panel_power_cycle_delay;
 	int backlight_on_delay;
 	int backlight_off_delay;
-	struct task panel_vdd_task;
-	struct timeout panel_vdd_to;
+	struct delayed_work panel_vdd_work;
 	bool want_panel_vdd;
 	struct intel_connector *attached_connector;
 };
@@ -399,7 +398,7 @@ intel_get_crtc_for_plane(struct drm_device *dev, int plane)
 }
 
 struct intel_unpin_work {
-	struct task task;
+	struct work_struct work;
 	struct drm_crtc *crtc;
 	struct drm_i915_gem_object *old_fb_obj;
 	struct drm_i915_gem_object *pending_flip_obj;
@@ -412,8 +411,7 @@ struct intel_unpin_work {
 };
 
 struct intel_fbc_work {
-	struct task task;
-	struct timeout to;
+	struct delayed_work work;
 	struct drm_crtc *crtc;
 	struct drm_framebuffer *fb;
 	int interval;
