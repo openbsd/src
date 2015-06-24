@@ -2286,6 +2286,7 @@
 ./usr/share/man/man7/mirroring-ports.7
 ./usr/share/man/man7/operator.7
 ./usr/share/man/man7/packages-specs.7
+./usr/share/man/man7/patterns.7
 ./usr/share/man/man7/pkgpath.7
 ./usr/share/man/man7/ports.7
 ./usr/share/man/man7/re_format.7
