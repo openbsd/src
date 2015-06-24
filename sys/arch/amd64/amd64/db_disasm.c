@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.14 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.15 2015/06/24 20:50:39 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -1432,6 +1432,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 			db_printf("$3");
 			break;
 		case OS: //XXX
+			len = db_lengths[size];
 			get_value_inc(imm, loc, len, FALSE);	/* offset */
 			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
 			db_printf("$0x%#x", imm2);
