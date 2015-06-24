@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.29 2015/06/24 17:59:42 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.30 2015/06/24 19:01:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -376,6 +376,7 @@ extern struct timeval ns_to_timeval(const int64_t);
 
 extern int ticks;
 #define jiffies ticks
+#undef HZ
 #define HZ	hz
 
 static inline unsigned long
