@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.179 2015/01/06 17:27:58 armani Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.180 2015/06/24 20:17:28 miod Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -122,7 +122,7 @@ usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
 usbd_status	uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
 		    uint8_t *, int);
-void		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
+int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 usbd_status	uvideo_usb_control(struct uvideo_softc *sc, uint8_t rt, uint8_t r,
 		    uint16_t value, uint8_t *data, size_t length);
@@ -2076,7 +2076,8 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 #endif
 			if (sc->sc_mmap_flag) {
 				/* mmap */
-				uvideo_mmap_queue(sc, fb->buf, fb->offset);
+				if (uvideo_mmap_queue(sc, fb->buf, fb->offset))
+					return (USBD_NOMEM);
 			} else {
 				/* read */
 				uvideo_read(sc, fb->buf, fb->offset);
@@ -2129,7 +2130,8 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 	if (header) {
 		if (sc->sc_mmap_flag) {
 			/* mmap */
-			uvideo_mmap_queue(sc, fb->buf, fb->offset);
+			if (uvideo_mmap_queue(sc, fb->buf, fb->offset))
+				return (USBD_NOMEM);
 		} else {
 			/* read */
 			uvideo_read(sc, fb->buf, fb->offset);
@@ -2147,7 +2149,7 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-void
+int
 uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 {
 	if (sc->sc_mmap_cur < 0 || sc->sc_mmap_count == 0 ||
@@ -2162,8 +2164,11 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 		/* not ready for queueing, try next */
 		sc->sc_mmap_cur++;
 	}
-	if (sc->sc_mmap_cur == sc->sc_mmap_count)
-		panic("uvideo_mmap_queue: mmap queue is full!");
+	if (sc->sc_mmap_cur == sc->sc_mmap_count) {
+		DPRINTF(1, "%s: %s: mmap queue is full!",
+		    DEVNAME(sc), __func__);
+		return ENOMEM;
+	}
 
 	/* copy frame to mmap buffer and report length */
 	bcopy(buf, sc->sc_mmap[sc->sc_mmap_cur].buf, len);
@@ -2191,6 +2196,8 @@ uvideo_mmap_queue(struct uvideo_softc *sc, uint8_t *buf, int len)
 	 * ready to dequeue.
 	 */
 	sc->sc_uplayer_intr(sc->sc_uplayer_arg);
+
+	return 0;
 }
 
 void
@@ -3096,7 +3103,8 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 		return (EINVAL);
 
 	if (sc->sc_mmap_count > 0 || sc->sc_mmap_buffer != NULL) {
-		printf("%s: mmap buffers already allocated\n", __func__);
+		DPRINTF(1, "%s: %s: mmap buffers already allocated\n",
+		    DEVNAME(sc), __func__);
 		return (EINVAL);
 	}
 
