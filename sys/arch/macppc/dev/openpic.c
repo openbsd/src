@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.81 2015/06/24 11:58:06 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.82 2015/06/25 08:56:33 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -130,11 +130,9 @@ void	openpic_ipi_ddb(void);
 #define IPI_VECTOR_NOP	64
 #define IPI_VECTOR_DDB	65
 
-static struct evcount ipi_ddb[PPC_MAXPROCS];
-static struct evcount ipi_nop[PPC_MAXPROCS];
+static struct evcount ipi_count;
 
-static int ipi_nopirq = IPI_VECTOR_NOP;
-static int ipi_ddbirq = IPI_VECTOR_DDB;
+static int ipi_irq = IPI_VECTOR_NOP;
 
 intr_send_ipi_t openpic_send_ipi;
 #endif /* MULTIPROCESSOR */
@@ -288,11 +286,7 @@ openpic_attach(struct device *parent, struct device *self, void *aux)
 	x |= 15 << OPENPIC_PRIORITY_SHIFT;
 	openpic_write(OPENPIC_IPI_VECTOR(1), x);
 
-	/* XXX - ncpus */
-	evcount_attach(&ipi_nop[0], "ipi_nop0", &ipi_nopirq);
-	evcount_attach(&ipi_nop[1], "ipi_nop1", &ipi_nopirq);
-	evcount_attach(&ipi_ddb[0], "ipi_ddb0", &ipi_ddbirq);
-	evcount_attach(&ipi_ddb[1], "ipi_ddb1", &ipi_ddbirq);
+	evcount_attach(&ipi_count, "ipi", &ipi_irq);
 #endif
 
 	/* clear all pending interrunts */
@@ -638,16 +632,11 @@ openpic_ext_intr(void)
 			return;
 		}
 #ifdef MULTIPROCESSOR
-		if (irq == IPI_VECTOR_NOP) {
-			ipi_nop[ci->ci_cpuid].ec_count++;
+		if (irq == IPI_VECTOR_NOP || irq == IPI_VECTOR_DDB) {
+			ipi_count.ec_count++;
 			openpic_eoi(ci->ci_cpuid);
-			irq = openpic_read_irq(ci->ci_cpuid);
-			continue;
-		}
-		if (irq == IPI_VECTOR_DDB) {
-			ipi_ddb[ci->ci_cpuid].ec_count++;
-			openpic_eoi(ci->ci_cpuid);
-			openpic_ipi_ddb();
+			if (irq == IPI_VECTOR_DDB)
+				openpic_ipi_ddb();
 			irq = openpic_read_irq(ci->ci_cpuid);
 			continue;
 		}
@@ -758,7 +747,6 @@ openpic_send_ipi(struct cpu_info *ci, int id)
 void
 openpic_ipi_ddb(void)
 {
-	DPRINTF("ipi_ddb() called\n");
 #ifdef DDB
 	Debugger();
 #endif
