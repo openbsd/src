@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.35 2015/05/23 12:57:09 markus Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.36 2015/06/25 09:25:09 mpi Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: May 23 2015 $
+.Dd $Mdocdate: June 25 2015 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -113,12 +113,6 @@ The tag contains a
 identifying the security association applied to the packet.
 This tag is primarily used to detect and avoid loops in IPsec
 processing on output.
-.It PACKET_TAG_BRIDGE
-Used by the
-.Xr bridge 4
-code to detect loops in bridge processing.
-The tag contains a pointer to the bridge interface that already
-forwarded the frame.
 .It PACKET_TAG_GIF
 Used by the
 .Xr gif 4
