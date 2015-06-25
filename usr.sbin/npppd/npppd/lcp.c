@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.12 2015/06/25 02:25:33 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.13 2015/06/25 02:32:48 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.12 2015/06/25 02:25:33 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.13 2015/06/25 02:32:48 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -83,7 +83,6 @@ static void  lcp_reset_timeout(void *);
 static int   lcp_proxy_recv_ci(fsm *, u_char *, int);
 static int   lcp_proxy_sent_ci(fsm *, u_char *, int);
 static void  lcp_load_authconfig(fsm *f);
-static void  lcp_dialin_proxy_open(void *ctx);
 
 static struct fsm_callbacks lcp_callbacks = {
 	lcp_resetci,	/* Reset our Configuration Information */
@@ -157,6 +156,12 @@ lcp_lowerup(lcp *_this)
 {
 	fsm_lowerup(&_this->fsm);
 	fsm_open(&_this->fsm);
+
+	if (_this->dialin_proxy != 0 &&
+	    _this->dialin_proxy_lcp_renegotiation == 0) {
+		_this->fsm.state = OPENED;
+		lcp_open(&_this->fsm);
+	}
 }
 
 /**
@@ -1157,10 +1162,9 @@ lcp_dialin_proxy(lcp *_this, dialin_proxy_info *dpi, int renegotiation,
 	    (_this->dialin_proxy_lcp_renegotiation != 0)? "yes" : "no");
 
 
-	if (_this->dialin_proxy_lcp_renegotiation == 0) {
-		/* call lcp_open by another event handler */
-		TIMEOUT(lcp_dialin_proxy_open, _this, 0);
-	} else
+	if (_this->dialin_proxy_lcp_renegotiation == 0)
+		_this->fsm.flags |= OPT_SILENT;	/* It's ready to be "Opened" */
+	else
 		_this->fsm.flags &= ~OPT_SILENT;
 
 	return 0;
@@ -1239,16 +1243,6 @@ lcp_proxy_recv_ci(fsm *f, u_char *inp, int inlen)
 	return 0;
 fail:
 	return 1;
-}
-
-static void
-lcp_dialin_proxy_open(void *ctx)
-{
-	lcp *_this;
-
-	_this = ctx;
-	_this->fsm.state = OPENED;
-	lcp_open(&_this->fsm);
 }
 
 /*
