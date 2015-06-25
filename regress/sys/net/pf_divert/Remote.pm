@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.4 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.5 2015/06/25 19:29:57 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -74,8 +74,7 @@ sub child {
 	    "-I", $dir, "$dir/".basename($0), $self->{af},
 	    $self->{bindaddr}, $self->{connectaddr}, $self->{connectport},
 	    ($self->{bindport} ? $self->{bindport} : ()),
-	    ($self->{testfile} ? "$dir/".basename($self->{testfile}) :
-	    ()));
+	    ($self->{testfile} ? "$dir/".basename($self->{testfile}) : ()));
 	print STDERR "execute: @cmd\n";
 	$< = $>;
 	exec @cmd;

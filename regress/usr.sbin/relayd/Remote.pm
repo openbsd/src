@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.5 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.6 2015/06/25 19:29:57 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -83,17 +83,18 @@ sub up {
 
 sub child {
 	my $self = shift;
+
 	my @opts = split(' ', $ENV{SSH_OPTIONS}) if $ENV{SSH_OPTIONS};
 	my @sudo = $ENV{SUDO} ? "SUDO=$ENV{SUDO}" : ();
 	my @ktrace = $ENV{KTRACE} ? "KTRACE=$ENV{KTRACE}" : ();
 	my @relayd = $ENV{RELAYD} ? "RELAYD=$ENV{RELAYD}" : ();
-	my $curdir = dirname($0) || ".";
-	$curdir = getcwd() if $curdir eq ".";
+	my $dir = dirname($0);
+	$dir = getcwd() if ! $dir || $dir eq ".";
 	my @cmd = ("ssh", @opts, $self->{remotessh},
 	    @sudo, @ktrace, @relayd, "perl",
-	    "-I", $curdir, "$curdir/".basename($0), $self->{forward},
+	    "-I", $dir, "$dir/".basename($0), $self->{forward},
 	    $self->{listenaddr}, $self->{connectaddr}, $self->{connectport},
-	    ($self->{testfile} ? "$curdir/".basename($self->{testfile}) : ()));
+	    ($self->{testfile} ? "$dir/".basename($self->{testfile}) : ()));
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
 	die ref($self), " exec '@cmd' failed: $!";
