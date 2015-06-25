@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.32 2015/04/16 14:08:19 espie Exp $
+# $OpenBSD: Installed.pm,v 1.33 2015/06/25 13:33:25 sthen Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -33,7 +33,7 @@ sub expand_locations
 	my ($class, $string, $state) = @_;
 	require OpenBSD::Paths;
 	if ($string eq '%a') {
-		return OpenBSD::Paths->architecture;
+		return OpenBSD::Paths->machine_architecture;
 	} elsif ($string eq '%v') {
 		return OpenBSD::Paths->os_version;
 	} elsif ($string eq '%c') {
@@ -43,7 +43,7 @@ sub expand_locations
 		    'pub/OpenBSD', 
 		    OpenBSD::Paths->os_directory,
 		    'packages', 
-		    OpenBSD::Paths->architecture);
+		    OpenBSD::Paths->machine_architecture);
 	}
 }
 
