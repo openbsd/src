@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.11 2015/06/24 04:45:20 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.12 2015/06/25 02:25:33 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.11 2015/06/24 04:45:20 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.12 2015/06/25 02:25:33 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -272,7 +272,12 @@ static void
 lcp_resetci(fsm *f)
 {
 	LCP_ASSERT(f != NULL);
-	if (f->ppp->lcp.dialin_proxy == 0) {
+
+	/* Unless doing dialin-proxy without re-negotiation */
+	if (!(f->ppp->lcp.dialin_proxy != 0 &&
+	    f->ppp->lcp.dialin_proxy_lcp_renegotiation == 0)) {
+
+		/* Reset the LCP options' state */
 		memset(&f->ppp->lcp.opt, 0, sizeof(f->ppp->lcp.opt));
 		f->ppp->lcp.auth_order[0] = -1;
 	}
