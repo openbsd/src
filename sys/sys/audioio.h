@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.21 2010/07/15 03:43:12 jakemsr Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.22 2015/06/25 06:43:46 ratchov Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -48,21 +48,14 @@ struct audio_prinfo {
 	u_int	bps;		/* number of bytes/sample */
 	u_int	msb;		/* data alignment */
 	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
-	u_int	gain;		/* volume level */
-	u_int	port;		/* selected I/O port */
-	u_int	seek;		/* BSD extension */
-	u_int	avail_ports;	/* available I/O ports */
+	u_int	ispare2[4];
 	u_int	buffer_size;	/* total size audio buffer */
 	u_int	block_size;	/* size a block */
 	/* Current state of device: */
 	u_int	samples;	/* number of samples */
-	u_int	eof;		/* End Of File (zero-size writes) counter */
+	u_int	ispare[1];
 	u_char	pause;		/* non-zero if paused, zero to resume */
-	u_char	error;		/* non-zero if underflow/overflow occurred */
-	u_char	waiting;	/* non-zero if another process hangs in open */
-	u_char	balance;	/* stereo channel balance */
-	u_char	cspare[2];
-	u_char	open;		/* non-zero if currently open */
+	u_char	cspare2[6];
 	u_char	active;		/* non-zero if I/O is currently active */
 };
 typedef struct audio_prinfo audio_prinfo_t;
@@ -70,31 +63,18 @@ typedef struct audio_prinfo audio_prinfo_t;
 struct audio_info {
 	struct	audio_prinfo play;	/* Info for play (output) side */
 	struct	audio_prinfo record;	/* Info for record (input) side */
-
-	u_int	monitor_gain;	/* input to output mix */
-	/* BSD extensions */
-	u_int	blocksize;	/* H/W read/write block size */
+	u_int	ispare[2];	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
-	u_char	output_muted;	/* toggle play mute */
-	u_char	cspare[3];
+	u_char	cspare[4];
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
-#define AUMODE_PLAY_ALL	0x04	/* don't do real-time correction */
 };
 typedef struct audio_info audio_info_t;
 
 #define AUDIO_INITINFO(p) \
 	(void)memset((void *)(p), 0xff, sizeof(struct audio_info))
-
-struct audio_bufinfo {
-	u_int	blksize;	/* block size */
-	u_int	hiwat;		/* high water mark */
-	u_int	lowat;		/* low water mark */
-	u_int	seek;		/* current position */
-};
-typedef struct audio_bufinfo audio_bufinfo_t;
 
 /*
  * Parameter for the AUDIO_GETDEV ioctl to determine current
@@ -109,8 +89,7 @@ typedef struct audio_device {
 
 typedef struct audio_offset {
 	u_int	samples;	/* Total number of bytes transferred */
-	u_int	deltablks;	/* Blocks transferred since last checked */
-	u_int	offset;		/* Physical transfer offset in buffer */
+	u_int	unused[2];
 } audio_offset_t;
 
 /*
@@ -120,10 +99,6 @@ typedef struct audio_offset {
 #define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
 #define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
 #define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
-#define	AUDIO_ENCODING_PCM16		3 /* signed linear PCM, obsolete */
-#define AUDIO_ENCODING_LINEAR		AUDIO_ENCODING_PCM16 /* SunOS compat */
-#define	AUDIO_ENCODING_PCM8		4 /* unsigned linear PCM, obsolete */
-#define AUDIO_ENCODING_LINEAR8		AUDIO_ENCODING_PCM8 /* SunOS compat */
 #define	AUDIO_ENCODING_ADPCM		5 /* adaptive differential PCM */
 #define AUDIO_ENCODING_SLINEAR_LE	6
 #define AUDIO_ENCODING_SLINEAR_BE	7
@@ -131,15 +106,6 @@ typedef struct audio_offset {
 #define AUDIO_ENCODING_ULINEAR_BE	9
 #define AUDIO_ENCODING_SLINEAR		10
 #define AUDIO_ENCODING_ULINEAR		11
-#define AUDIO_ENCODING_MPEG_L1_STREAM	12
-#define AUDIO_ENCODING_MPEG_L1_PACKETS	13
-#define AUDIO_ENCODING_MPEG_L1_SYSTEM	14
-#define AUDIO_ENCODING_MPEG_L2_STREAM	15
-#define AUDIO_ENCODING_MPEG_L2_PACKETS	16
-#define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
-#define AUDIO_ENCODING_MPEG_L3_STREAM	18
-#define AUDIO_ENCODING_MPEG_L3_PACKETS	19
-#define AUDIO_ENCODING_MPEG_L3_SYSTEM	20
 
 typedef struct audio_encoding {
 	int	index;
@@ -161,28 +127,11 @@ typedef struct audio_encoding {
 #define	AUDIO_BALANCE_SHIFT	3
 
 /*
- * Output ports
- */
-#define	AUDIO_SPEAKER		0x01	/* built-in speaker */
-#define	AUDIO_HEADPHONE		0x02	/* headphone jack */
-#define	AUDIO_LINE_OUT		0x04	/* line out	 */
-
-/*
- * Input ports
- */
-#define	AUDIO_MICROPHONE	0x01	/* microphone */
-#define	AUDIO_LINE_IN		0x02	/* line in	 */
-#define	AUDIO_CD		0x04	/* on-board CD inputs */
-#define	AUDIO_INTERNAL_CD_IN	AUDIO_CD	/* internal CDROM */
-
-/*
  * Audio device operations
  */
 #define AUDIO_GETINFO	_IOR('A', 21, struct audio_info)
 #define AUDIO_SETINFO	_IOWR('A', 22, struct audio_info)
 #define AUDIO_DRAIN	_IO('A', 23)
-#define AUDIO_FLUSH	_IO('A', 24)
-#define AUDIO_WSEEK	_IOR('A', 25, u_long)
 #define AUDIO_RERROR	_IOR('A', 26, int)
 #define AUDIO_GETDEV	_IOR('A', 27, struct audio_device)
 #define AUDIO_GETENC	_IOWR('A', 28, struct audio_encoding)
@@ -195,8 +144,6 @@ typedef struct audio_encoding {
 #define  AUDIO_PROP_FULLDUPLEX	0x01
 #define  AUDIO_PROP_MMAP	0x02
 #define  AUDIO_PROP_INDEPENDENT	0x04
-#define AUDIO_GETPRINFO	_IOR('A', 35, struct audio_bufinfo)
-#define AUDIO_GETRRINFO	_IOR('A', 36, struct audio_bufinfo)
 
 /*
  * Mixer device

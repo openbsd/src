@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.35 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.36 2015/06/25 06:43:46 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -169,6 +169,9 @@ static struct sbmode sbrmodes[] = {
  { SB_16,   2, 16,  5000, 45000, SB_DSP16_RDMA_16 },
  { -1 }
 };
+
+static struct audio_params sbdsp_audio_default =
+	{44100, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 2};
 
 void	sbversion(struct sbdsp_softc *);
 void	sbdsp_jazz16_probe(struct sbdsp_softc *);
@@ -348,8 +351,8 @@ sbdsp_attach(sc)
 		}
 	}
 
-	pparams = audio_default;
-	rparams = audio_default;
+	pparams = sbdsp_audio_default;
+	rparams = sbdsp_audio_default;
         sbdsp_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
 	sbdsp_set_in_ports(sc, 1 << SB_MIC_VOL);

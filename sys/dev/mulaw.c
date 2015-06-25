@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.c,v 1.17 2015/06/04 06:03:11 jsg Exp $ */
+/*	$OpenBSD: mulaw.c,v 1.18 2015/06/25 06:43:46 ratchov Exp $ */
 /*	$NetBSD: mulaw.c,v 1.15 2001/01/18 20:28:20 jdolecek Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ static const u_char lintomulaw[256] = {
 };
 
 void
-mulaw_to_slinear8(void *v, u_char *p, int cc)
+mulaw_to_slinear8(u_char *p, int cc)
 {
 	/* Use the 16 bit table for 8 bits too. */
 	while (--cc >= 0) {
@@ -156,7 +156,7 @@ mulaw_to_slinear8(void *v, u_char *p, int cc)
 }
 
 void
-slinear8_to_mulaw(void *v, u_char *p, int cc)
+slinear8_to_mulaw(u_char *p, int cc)
 {
 	while (--cc >= 0) {
 		*p = lintomulaw[*p ^ 0x80];
@@ -165,7 +165,7 @@ slinear8_to_mulaw(void *v, u_char *p, int cc)
 }
 
 void
-mulaw24_to_slinear24(void *v, u_char *p, int cc)
+mulaw24_to_slinear24(u_char *p, int cc)
 {
 	int s, *q = (int *)p;
 
@@ -178,7 +178,7 @@ mulaw24_to_slinear24(void *v, u_char *p, int cc)
 }
 
 void
-slinear24_to_mulaw24(void *v, u_char *p, int cc)
+slinear24_to_mulaw24(u_char *p, int cc)
 {
 	u_int *q = (u_int *)p;
 

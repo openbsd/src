@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.21 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: ess.c,v 1.22 2015/06/25 06:43:46 ratchov Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -109,6 +109,9 @@ unsigned uuu;
 struct cfdriver ess_cd = {
 	NULL, "ess", DV_DULL
 };
+
+struct audio_params ess_audio_default =
+	{44100, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 2};
 
 int	ess_setup_sc(struct ess_softc *, int);
 
@@ -929,8 +932,8 @@ essattach(struct ess_softc *sc)
 	 * Set record and play parameters to default values defined in
 	 * generic audio driver.
 	 */
-	pparams = audio_default;
-	rparams = audio_default;
+	pparams = ess_audio_default;
+	rparams = ess_audio_default;
 	ess_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
 	/* Do a hardware reset on the mixer. */

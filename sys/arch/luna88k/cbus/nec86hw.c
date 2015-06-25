@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hw.c,v 1.2 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: nec86hw.c,v 1.3 2015/06/25 06:43:45 ratchov Exp $	*/
 /*	$NecBSD: nec86hw.c,v 1.13 1998/03/14 07:04:54 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -94,6 +94,9 @@ static int nec86hw_rate_table[NEC86HW_NRATE_TYPE][NEC86_NRATE] = {
 	{ 44100, 33075, 22050, 16000, 11025, 8000, 5513, 4000 },
 };
 
+static struct audio_params nec86hw_audio_default =
+	{44100, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 2};
+
 int nec86hw_set_output_block(struct nec86hw_softc *, int);
 int nec86hw_set_input_block(struct nec86hw_softc *, int);
 
@@ -130,9 +133,9 @@ nec86hw_attach(struct nec86hw_softc *sc)
 	sc->func_fifo_output = nec86fifo_output_mono_8_direct;
 	sc->func_fifo_input = nec86fifo_input_mono_8_direct;
 	(void) nec86hw_set_params(sc, AUMODE_RECORD, 0,
-	    &audio_default, &audio_default);
+	    &nec86hw_audio_default, &nec86hw_audio_default);
 	(void) nec86hw_set_params(sc, AUMODE_PLAY,   0,
-	    &audio_default, &audio_default);
+	    &nec86hw_audio_default, &nec86hw_audio_default);
 
 	/* Set default ports. */
 	(void) nec86hw_set_in_port(sc, NEC86HW_INPUT_MIXER);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.59 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: envy.c,v 1.60 2015/06/25 06:43:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1881,27 +1881,7 @@ envy_set_params(void *self, int setmode, int usemode,
 int
 envy_round_blocksize(void *self, int blksz)
 {
-	struct envy_softc *sc = (struct envy_softc *)self;
-	int mul, pmult, rmult;
-
-	/*
-	 * XXX: audio(4) layer doesn't round to the sample size
-	 * until it's fixed, roll our own rounding
-	 */
-
-	pmult = (sc->isht ? sc->card->noch : ENVY_PCHANS);
-	if (pmult == 0)
-		pmult = 1;
-	rmult = (sc->isht ? sc->card->nich : ENVY_RCHANS);
-	if (rmult == 0)
-		rmult = 1;
-	mul = pmult * rmult;
-	while ((mul & 0x1f) != 0)
-		mul <<= 1;
-	blksz -= blksz % mul;
-	if (blksz == 0)
-		blksz = mul;
-	return blksz;
+	return (blksz + 0x1f) & ~0x1f;
 }
 
 size_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.43 2015/05/11 06:52:35 ratchov Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.44 2015/06/25 06:43:46 ratchov Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -139,6 +139,9 @@ static int ad1848_init_values[] = {
 	0,				/* upper record count */
 	0				/* lower record count */
 };
+
+static struct audio_params ad1848_audio_default =
+	{48000, AUDIO_ENCODING_SLINEAR_LE, 16, 2, 1, 2};
 
 void	ad1848_reset(struct ad1848_softc *);
 int	ad1848_set_speed(struct ad1848_softc *, u_long *);
@@ -542,8 +545,8 @@ ad1848_attach(struct ad1848_softc *sc)
 	}
 	ad1848_reset(sc);
 
-	pparams = audio_default;
-	rparams = audio_default;
+	pparams = ad1848_audio_default;
+	rparams = ad1848_audio_default;
 	(void) ad1848_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0,
 	    &pparams, &rparams);
 

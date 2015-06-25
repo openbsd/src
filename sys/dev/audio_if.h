@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.29 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.30 2015/06/25 06:43:46 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
  * Generic interface to hardware driver.
  */
 
-struct audio_softc;
 struct audio_device;
 struct audio_encoding;
 struct mixer_devinfo;
@@ -60,9 +59,6 @@ struct audio_params {
 	u_int	msb;				/* data alignment */
 	u_int	channels;			/* mono(1), stereo(2) */
 };
-
-/* The default audio mode: 8 kHz mono mu-law */
-extern struct audio_params audio_default;
 
 struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
@@ -148,27 +144,6 @@ struct audio_attach_args {
 struct device *audio_attach_mi(struct audio_hw_if *, void *, struct device *);
 int	       audioprint(void *, const char *);
 
-/* Device identity flags */
-#define SOUND_DEVICE		0
-#define AUDIO_DEVICE		0x80
-#define AUDIOCTL_DEVICE		0xc0
-#define MIXER_DEVICE		0x10
-
-#define AUDIOUNIT(x)		(minor(x)&0x0f)
-#define AUDIODEV(x)		(minor(x)&0xf0)
-
-#define ISDEVSOUND(x)		(AUDIODEV((x)) == SOUND_DEVICE)
-#define ISDEVAUDIO(x)		(AUDIODEV((x)) == AUDIO_DEVICE)
-#define ISDEVAUDIOCTL(x)	(AUDIODEV((x)) == AUDIOCTL_DEVICE)
-#define ISDEVMIXER(x)		(AUDIODEV((x)) == MIXER_DEVICE)
-
-/*
- * USB Audio specification defines 12 channels:
- *	L R C LFE Ls Rs Lc Rc S Sl Sr T
- */
-#define AUDIO_MAX_CHANNELS	12
-
 extern struct mutex audio_lock;
 
 #endif /* _SYS_DEV_AUDIO_IF_H_ */
-

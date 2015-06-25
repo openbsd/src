@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.h,v 1.15 2015/05/11 06:46:21 ratchov Exp $ */
+/*	$OpenBSD: mulaw.h,v 1.16 2015/06/25 06:43:46 ratchov Exp $ */
 /*	$NetBSD: mulaw.h,v 1.11 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*-
@@ -30,11 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* *_mts versions convert mono to stereo, in addition */
-
 /* Convert 8-bit mu-law to/from 8 bit signed linear. */
-extern void mulaw_to_slinear8(void *, u_char *, int);
-extern void slinear8_to_mulaw(void *, u_char *, int);
+void mulaw_to_slinear8(u_char *, int);
+void slinear8_to_mulaw(u_char *, int);
 /* Convert 24-bit mu-law to/from 24 bit signed linear. */
-void mulaw24_to_slinear24(void *, u_char *, int);
-void slinear24_to_mulaw24(void *, u_char *, int);
+void mulaw24_to_slinear24(u_char *, int);
+void slinear24_to_mulaw24(u_char *, int);
