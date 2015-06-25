@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.40 2015/04/18 18:28:36 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.41 2015/06/25 02:04:07 uebayasi Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -403,6 +403,8 @@ traverse(int argc, char *argv[], int options)
 		}
 	if (errno)
 		err(1, "fts_read");
+
+	fts_close(ftsp);
 }
 
 /*

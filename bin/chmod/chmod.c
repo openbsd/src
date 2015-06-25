@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.33 2014/12/13 20:59:24 guenther Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.34 2015/06/25 02:04:08 uebayasi Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -278,6 +278,7 @@ done:
 	}
 	if (errno)
 		err(1, "fts_read");
+	fts_close(ftsp);
 	exit(rval);
 }
 

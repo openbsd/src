@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.84 2015/05/03 19:44:59 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.85 2015/06/25 02:04:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -463,7 +463,7 @@ main(int argc, char *argv[])
 	}
 	if (list)
 		list_stats(NULL, NULL, NULL);
-
+	fts_close(ftsp);
 	exit(rc);
 }
 
