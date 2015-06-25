@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.344 2015/06/25 09:10:15 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.345 2015/06/25 09:20:20 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -453,6 +453,12 @@ if_output(struct ifnet *ifp, struct mbuf *m)
 		    "if %d vs. mbuf %d\n", ifp->if_xname, ifp->if_rdomain,
 		    rtable_l2(m->m_pkthdr.ph_rtableid));
 	}
+#endif
+
+#if NBRIDGE > 0
+	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
+		return (bridge_output(ifp, m, NULL, NULL));
+	m->m_flags &= ~M_PROTO1;	/* Loop prevention */
 #endif
 
 	length = m->m_pkthdr.len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.208 2015/06/25 09:10:15 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.209 2015/06/25 09:20:20 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -267,47 +267,6 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	eh->ether_type = etype;
 	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
 	memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
-
-#if NBRIDGE > 0
-	/*
-	 * Interfaces that are bridgeports need special handling for output.
-	 */
-	if (ifp->if_bridgeport) {
-		struct m_tag *mtag;
-
-		/*
-		 * Check if this packet has already been sent out through
-		 * this bridgeport, in which case we simply send it out
-		 * without further bridge processing.
-		 */
-		for (mtag = m_tag_find(m, PACKET_TAG_BRIDGE, NULL); mtag;
-		    mtag = m_tag_find(m, PACKET_TAG_BRIDGE, mtag)) {
-#ifdef DEBUG
-			/* Check that the information is there */
-			if (mtag->m_tag_len != sizeof(caddr_t)) {
-				error = EINVAL;
-				goto bad;
-			}
-#endif
-			if (!memcmp(&ifp->if_bridgeport, mtag + 1,
-			    sizeof(caddr_t)))
-				break;
-		}
-		if (mtag == NULL) {
-			/* Attach a tag so we can detect loops */
-			mtag = m_tag_get(PACKET_TAG_BRIDGE, sizeof(caddr_t),
-			    M_NOWAIT);
-			if (mtag == NULL) {
-				error = ENOBUFS;
-				goto bad;
-			}
-			memcpy(mtag + 1, &ifp->if_bridgeport, sizeof(caddr_t));
-			m_tag_prepend(m, mtag);
-			error = bridge_output(ifp, m, NULL, NULL);
-			return (error);
-		}
-	}
-#endif
 
 	return (if_output(ifp, m));
 bad:

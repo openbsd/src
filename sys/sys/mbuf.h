@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.192 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.193 2015/06/25 09:20:20 mpi Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -454,7 +454,6 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 /* Packet tag types */
 #define PACKET_TAG_IPSEC_IN_DONE	0x0001  /* IPsec applied, in */
 #define PACKET_TAG_IPSEC_OUT_DONE	0x0002  /* IPsec applied, out */
-#define PACKET_TAG_BRIDGE		0x0020  /* Bridge processing done */
 #define PACKET_TAG_GIF			0x0040  /* GIF processing done */
 #define PACKET_TAG_GRE			0x0080  /* GRE processing done */
 #define PACKET_TAG_DLT			0x0100 /* data link layer type */
