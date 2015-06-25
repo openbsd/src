@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.247 2015/06/25 09:20:20 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.248 2015/06/25 09:38:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1469,12 +1469,9 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	int len, used = 0;
 
 	TAILQ_FOREACH(p, &sc->sc_iflist, next) {
-		/*
-		 * Don't retransmit out of the same interface where
-		 * the packet was received from.
-		 */
 		dst_if = p->ifp;
-		if (dst_if->if_index == ifp->if_index)
+
+		if ((dst_if->if_flags & IFF_RUNNING) == 0)
 			continue;
 
 		if ((p->bif_flags & IFBIF_STP) &&
@@ -1485,15 +1482,6 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
 			continue;
 
-		if ((dst_if->if_flags & IFF_RUNNING) == 0)
-			continue;
-
-		if (IF_QFULL(&dst_if->if_snd)) {
-			IF_DROP(&dst_if->if_snd);
-			sc->sc_if.if_oerrors++;
-			continue;
-		}
-
 		/* Drop non-IP frames if the appropriate flag is set. */
 		if (p->bif_flags & IFBIF_BLOCKNONIP &&
 		    bridge_blocknonip(eh, m))
@@ -1503,6 +1491,19 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			continue;
 
 		bridge_localbroadcast(sc, dst_if, eh, m);
+
+		/*
+		 * Don't retransmit out of the same interface where
+		 * the packet was received from.
+		 */
+		if (dst_if->if_index == ifp->if_index)
+			continue;
+
+		if (IF_QFULL(&dst_if->if_snd)) {
+			IF_DROP(&dst_if->if_snd);
+			sc->sc_if.if_oerrors++;
+			continue;
+		}
 
 		/* If last one, reuse the passed-in mbuf */
 		if (TAILQ_NEXT(p, next) == NULL) {
