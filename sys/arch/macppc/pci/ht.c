@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.16 2013/08/07 07:29:19 mpi Exp $	*/
+/*	$OpenBSD: ht.c,v 1.17 2015/06/25 18:08:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -84,7 +84,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	len = OF_getprop(ca->ca_node, "reg", regs, sizeof(regs));
-	if (len < sizeof(regs)) {
+	if (len < 0 || len < sizeof(regs)) {
 		printf(": regs lookup failed, node %x\n", ca->ca_node);
 		return;
 	}
