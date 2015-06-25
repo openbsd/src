@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.209 2015/06/25 09:20:20 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.210 2015/06/25 09:22:36 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -101,11 +101,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#include "bridge.h"
-#if NBRIDGE > 0
-#include <net/if_bridge.h>
 #endif
 
 #include "pppoe.h"
