@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.207 2015/06/23 13:20:17 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.208 2015/06/25 09:10:15 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -180,15 +180,6 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp;
 	int error = 0;
-
-#ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
-		printf("%s: trying to send packet on wrong domain. "
-		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
-		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.ph_rtableid),
-		    dst->sa_family);
-	}
-#endif
 
 	esrc = ac->ac_enaddr;
 

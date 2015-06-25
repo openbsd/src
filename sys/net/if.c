@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.343 2015/06/24 09:56:51 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.344 2015/06/25 09:10:15 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -446,6 +446,14 @@ if_output(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, length, error = 0;
 	unsigned short mflags;
+
+#ifdef DIAGNOSTIC
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
+		printf("%s: trying to send packet on wrong domain. "
+		    "if %d vs. mbuf %d\n", ifp->if_xname, ifp->if_rdomain,
+		    rtable_l2(m->m_pkthdr.ph_rtableid));
+	}
+#endif
 
 	length = m->m_pkthdr.len;
 	mflags = m->m_flags;
