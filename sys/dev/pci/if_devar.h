@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.33 2015/02/10 03:51:58 mpi Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.34 2015/06/25 18:35:48 deraadt Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -600,8 +600,10 @@ struct _tulip_softc_t {
      * one is the one being sent while the other is the one being
      * filled.
      */
-    u_int32_t tulip_setupbuf[192/sizeof(u_int32_t)];
-    u_int32_t tulip_setupdata[192/sizeof(u_int32_t)];
+#define TULIP_SETUP	192
+    u_int32_t *tulip_setupdma;
+    u_int32_t tulip_setupdata[TULIP_SETUP / sizeof(u_int32_t)];
+
     char tulip_boardid[16];		/* buffer for board ID */
     u_int8_t tulip_rombuf[128];
     struct device *tulip_pci_busno;	/* needed for multiport boards */
