@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.1 2015/06/26 11:15:32 dlg Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.2 2015/06/26 11:22:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -24,8 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_MPLOCK_H_
-#define _MACHINE_MPLOCK_H_
+#ifndef _POWERPC_MPLOCK_H_
+#define _POWERPC_MPLOCK_H_
 
 /*
  * Really simple spinlock implementation with recursive capabilities.
@@ -49,4 +49,4 @@ int __mp_lock_held(struct __mp_lock *);
 
 #endif
 
-#endif /* !_MACHINE_MPLOCK_H */
+#endif /* !_POWERPC_MPLOCK_H */
