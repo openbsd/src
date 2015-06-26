@@ -279,10 +279,14 @@
 ./usr/libdata/ldscripts/elf32m88k_obsd.xd
 ./usr/libdata/ldscripts/elf32m88k_obsd.xdc
 ./usr/libdata/ldscripts/elf32m88k_obsd.xdcz
+./usr/libdata/ldscripts/elf32m88k_obsd.xdw
 ./usr/libdata/ldscripts/elf32m88k_obsd.xdz
 ./usr/libdata/ldscripts/elf32m88k_obsd.xn
 ./usr/libdata/ldscripts/elf32m88k_obsd.xr
 ./usr/libdata/ldscripts/elf32m88k_obsd.xs
 ./usr/libdata/ldscripts/elf32m88k_obsd.xsc
+./usr/libdata/ldscripts/elf32m88k_obsd.xsw
 ./usr/libdata/ldscripts/elf32m88k_obsd.xu
+./usr/libdata/ldscripts/elf32m88k_obsd.xw
 ./usr/libdata/ldscripts/elf32m88k_obsd.xz
+./usr/share/info/bfd.info
