@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.12 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.13 2015/06/26 04:25:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -653,12 +653,11 @@ arcofi_mi_to_gain(int lvl)
 }
 
 /*
- * The following routines rely upon this...
+ * Input and output ports definition (used to be in <audioio.h>
  */
-#if (AUDIO_SPEAKER == AUDIO_LINE_IN) || (AUDIO_LINE_OUT == AUDIO_LINE_IN) || \
-    (AUDIO_SPEAKER == AUDIO_LINE_OUT)
-#error Please rework the cr3 handling logic.
-#endif
+#define	AUDIO_SPEAKER		0x01	/* built-in speaker */
+#define	AUDIO_LINE_IN		0x02	/* line in	 */
+#define	AUDIO_LINE_OUT		0x04	/* line out	 */
 
 /*
  * The mapping between the available inputs and outputs, and CR3, is as
