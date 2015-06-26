@@ -1,4 +1,4 @@
-# $OpenBSD: test-patterns.out,v 1.1 2015/06/23 18:03:09 semarie Exp $
+# $OpenBSD: test-patterns.out,v 1.2 2015/06/26 10:09:42 semarie Exp $
 string='/page/51'
 pattern='^/(%a+)/(%d+)$'
 ret=0 num=3
@@ -67,7 +67,7 @@ pattern=')+'
 patterns-tester: str_match: unfinished capture
 string='/page/51'
 pattern='/page/51('
-patterns-tester: str_match: malformed pattern (ends with '%%')
+patterns-tester: str_match: malformed pattern (ends with '%')
 string='/page/51'
 pattern='/page/51%'
 patterns-tester: str_match: malformed pattern (missing ']')
