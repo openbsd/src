@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.6 2015/04/07 09:52:27 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.1 2015/06/26 11:15:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>

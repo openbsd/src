@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.82 2015/06/02 13:53:43 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.83 2015/06/26 11:15:32 dlg Exp $
 
 #
 # macppc-specific configuration info
@@ -11,7 +11,6 @@ file	arch/macppc/macppc/autoconf.c
 file	arch/macppc/macppc/clock.c
 file	arch/macppc/macppc/conf.c
 file	arch/macppc/macppc/disksubr.c			disk
-file	arch/macppc/macppc/lock_machdep.c		multiprocessor
 file	arch/macppc/macppc/machdep.c
 file	arch/macppc/macppc/wscons_machdep.c
 file	arch/macppc/macppc/mem.c
