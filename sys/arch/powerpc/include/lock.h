@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.5 2015/02/11 00:14:11 dlg Exp $	*/
+/*	$OpenBSD: lock.h,v 1.6 2015/06/26 12:46:13 dlg Exp $	*/
 /*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
@@ -37,24 +37,4 @@
 #ifndef _POWERPC_LOCK_H_
 #define _POWERPC_LOCK_H_
 
-static __inline int
-__cpu_cas(volatile unsigned long *addr, unsigned long old, unsigned long new)
-{
-        int success, scratch;
-        __asm volatile(
-            "1: lwarx   %0, 0,  %4      \n"
-            "   cmpw    0, %0, %2       \n"
-            "   li      %1, 1           \n"
-            "   bne     0,2f            \n"
-            "   stwcx.  %3, 0, %4       \n" 
-            "   li      %1, 0           \n" 
-            "   bne-    1b              \n"
-	    "2:				\n"
-            : "=&r" (scratch), "=&r" (success)
-            : "r" (old), "r" (new), "r" (addr)
-            : "memory");
-
-        return success;
-}
-	
 #endif /* _POWERPC_LOCK_H_ */

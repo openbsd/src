@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.1 2015/06/26 11:15:32 dlg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.2 2015/06/26 12:46:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -82,7 +82,7 @@ __mp_lock(struct __mp_lock *mpl)
 		int s;
 
 		s = ppc_intr_disable();
-		if (__cpu_cas(&mpl->mpl_count, 0, 1) == 0) {
+		if (atomic_cas_ulong(&mpl->mpl_count, 0, 1) == 0) {
 			membar_enter();
 			mpl->mpl_cpu = curcpu();
 		}
