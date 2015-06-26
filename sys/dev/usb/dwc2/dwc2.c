@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.29 2015/06/22 12:56:55 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.30 2015/06/26 11:17:34 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1771,14 +1771,14 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	}
 
 	if (xfertype == UE_ISOCHRONOUS) {
-		uint32_t len;
 		int i;
 
 		xfer->actlen = 0;
 		for (i = 0; i < xfer->nframes; ++i) {
-			len = dwc2_hcd_urb_get_iso_desc_actual_length(qtd->urb,
-			    i);
-			xfer->actlen += len;
+			xfer->frlengths[i] =
+				dwc2_hcd_urb_get_iso_desc_actual_length(
+						qtd->urb, i);
+			xfer->actlen += xfer->frlengths[i];
 		}
 	}
 

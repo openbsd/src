@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.186 2015/06/22 12:56:55 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.187 2015/06/26 11:17:34 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -825,6 +825,7 @@ ehci_isoc_idone(struct usbd_xfer *xfer)
 				if (EHCI_ITD_GET_STATUS(status) != 0)
 					len = 0; /*No valid data on error*/
 
+				xfer->frlengths[nframes++] = len;
 				actlen += len;
 			}
 		}
@@ -842,6 +843,7 @@ ehci_isoc_idone(struct usbd_xfer *xfer)
 			else
 				len = 0;
 
+			xfer->frlengths[nframes++] = len;
 			actlen += len;
 	    	}
 	}
