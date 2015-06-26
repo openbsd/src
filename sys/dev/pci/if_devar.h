@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.34 2015/06/25 18:35:48 deraadt Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.35 2015/06/26 11:50:39 kettenis Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -601,7 +601,7 @@ struct _tulip_softc_t {
      * filled.
      */
 #define TULIP_SETUP	192
-    u_int32_t *tulip_setupdma;
+    tulip_desc_t *tulip_setupbuf;
     u_int32_t tulip_setupdata[TULIP_SETUP / sizeof(u_int32_t)];
 
     char tulip_boardid[16];		/* buffer for board ID */
