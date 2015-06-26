@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.h,v 1.1 2015/06/23 15:23:14 reyk Exp $	*/
+/*	$OpenBSD: patterns.h,v 1.2 2015/06/26 17:26:29 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -16,11 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/cdefs.h>
-
 #ifndef PATTERNS_H
 #define PATTERNS_H
+
+#include <sys/types.h>
+#include <sys/cdefs.h>
 
 #define MAXCAPTURES	32	/* Max no. of allowed captures in pattern */
 #define MAXCCALLS	200	/* Max recusion depth in pattern matching */
