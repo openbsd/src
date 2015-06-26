@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.53 2015/06/24 14:09:32 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.54 2015/06/26 10:17:21 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -64,8 +64,6 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #endif
-
-extern char *hw_prod;
 
 struct mem_region64 {
 	uint64_t start;
@@ -379,21 +377,19 @@ ofw_find_keyboard()
 
 	ofw_recurse_keyboard(OF_peer(0));
 
+	len = OF_getprop(OF_peer(0), "model", iname, sizeof(iname));
+	iname[len] = 0;
 
 	if (ofw_have_kbd == (OFW_HAVE_USBKBD | OFW_HAVE_ADBKBD)) {
 		/*
-		 * On some machines, such as PowerBook6,8,
-		 * the built-in USB Bluetooth device
-		 * appears as an USB device.  Prefer
-		 * ADB (builtin) keyboard for console
-		 * for PowerBook systems.
+		 * If a PowerBook reports having ABD and USB keyboards,
+		 * use the builtin ADB one for console, the USB one is
+		 * certainly a HID device.
 		 */
-		if (strncmp(hw_prod, "PowerBook", 9) ||
-		    strncmp(hw_prod, "iBook", 5)) {
+		 if (strncmp(iname, "PowerBook", 9) == 0)
 			ofw_have_kbd = OFW_HAVE_ADBKBD;
-		} else {
+		else
 			ofw_have_kbd = OFW_HAVE_USBKBD;
-		}
 		printf("USB and ADB found");
 	}
 	if (ofw_have_kbd == OFW_HAVE_USBKBD) {
