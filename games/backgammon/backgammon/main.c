@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2013/08/29 20:22:09 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2015/06/26 19:18:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -265,7 +265,7 @@ main (argc,argv)
 				hflag = 1;
 			}
 			/* if allowed, give him a chance to double */
-			if (dlast != cturn && gvalue < 64) {
+			if (dflag && dlast != cturn && gvalue < 64) {
 				move(cturn == -1 ? 18: 19, 0);
 				addstr(*Colorptr);
 				c = readc();
@@ -287,8 +287,7 @@ main (argc,argv)
 					break;
 
 				case 'D':		/* double */
-					if (dflag != 0)
-						dble();
+					dble();
 					break;
 
 				case ' ':		/* roll */

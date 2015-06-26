@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.11 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: save.c,v 1.12 2015/06/26 19:18:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -112,6 +112,7 @@ save(n)
 	write(fdesc, in, sizeof(in));
 	write(fdesc, dice, sizeof(dice));
 	write(fdesc, &cturn, sizeof(cturn));
+	write(fdesc, &dflag, sizeof(dflag));
 	write(fdesc, &dlast, sizeof(dlast));
 	write(fdesc, &pnum, sizeof(pnum));
 	write(fdesc, &rscore, sizeof(rscore));
@@ -138,6 +139,7 @@ recover(s)
 	read(fdesc, in, sizeof(in));
 	read(fdesc, dice, sizeof(dice));
 	read(fdesc, &cturn, sizeof(cturn));
+	read(fdesc, &dflag, sizeof(dflag));
 	read(fdesc, &dlast, sizeof(dlast));
 	read(fdesc, &pnum, sizeof(pnum));
 	read(fdesc, &rscore, sizeof(rscore));
