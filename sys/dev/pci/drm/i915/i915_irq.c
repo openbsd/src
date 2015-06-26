@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.26 2015/06/24 08:32:39 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.27 2015/06/26 15:22:23 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -858,10 +858,7 @@ static void i915_error_work_func(struct work_struct *work)
 			atomic_set(&dev_priv->mm.wedged, 0);
 //			kobject_uevent_env(&dev->primary->kdev.kobj, KOBJ_CHANGE, reset_done_event);
 		}
-		mtx_enter(&dev_priv->error_completion_lock);
-		dev_priv->error_completion++;
-		wakeup(&dev_priv->error_completion);
-		mtx_leave(&dev_priv->error_completion_lock);
+		complete_all(&dev_priv->error_completion);
 	}
 }
 
@@ -1466,7 +1463,7 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 	i915_report_and_clear_eir(dev);
 
 	if (wedged) {
-//		INIT_COMPLETION(dev_priv->error_completion);
+		INIT_COMPLETION(dev_priv->error_completion);
 		atomic_set(&dev_priv->mm.wedged, 1);
 
 		/*

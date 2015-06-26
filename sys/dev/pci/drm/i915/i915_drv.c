@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.84 2015/06/24 08:32:39 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.85 2015/06/26 15:22:23 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -929,7 +929,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&dev_priv->dpio_lock, IPL_TTY);
 	mtx_init(&dev_priv->gt_lock, IPL_TTY);
 	mtx_init(&mchdev_lock, IPL_TTY);
-	mtx_init(&dev_priv->error_completion_lock, IPL_NONE);
 	rw_init(&dev_priv->rps.hw_lock, "rpshw");
 
 	task_set(&dev_priv->switchtask, inteldrm_doswitch, dev_priv);
@@ -988,7 +987,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&dev_priv->hangcheck_timer, i915_hangcheck_elapsed, dev_priv);
 	dev_priv->next_seqno = 1;
 	dev_priv->mm.suspended = 1;
-	dev_priv->error_completion = 0;
 
 	if (pci_find_device(&bpa, inteldrm_gmch_match) == 0) {
 		printf(": can't find GMCH\n");

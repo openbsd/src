@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.65 2015/06/24 17:59:42 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.66 2015/06/26 15:22:23 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -816,8 +816,7 @@ struct inteldrm_softc {
 	/* Protected by dev->error_lock. */
 	struct drm_i915_error_state *first_error;
 	struct work_struct error_work;
-	int error_completion;
-	struct mutex error_completion_lock;
+	struct completion error_completion;
 	struct workqueue_struct *wq;
 
 	/* number of ioctls + faults in flight */

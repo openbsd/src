@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.30 2015/06/24 19:01:51 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.31 2015/06/26 15:22:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -280,6 +280,46 @@ init_waitqueue_head(wait_queue_head_t *wq)
 #define wake_up(x)			wakeup(x)
 #define wake_up_all(x)			wakeup(x)
 #define wake_up_all_locked(x)		wakeup(x)
+
+struct completion {
+	u_int done;
+	wait_queue_head_t wait;
+};
+
+#define INIT_COMPLETION(x) ((x).done = 0)
+
+static inline void
+init_completion(struct completion *x)
+{
+	x->done = 0;
+	mtx_init(&x->wait.lock, IPL_NONE);
+}
+
+static inline u_long
+wait_for_completion_interruptible_timeout(struct completion *x, u_long timo)
+{
+	int ret;
+
+	mtx_enter(&x->wait.lock);
+	while (x->done == 0) {
+		ret = msleep(x, &x->wait.lock, PCATCH, "wfcit", timo);
+		if (ret) {
+			mtx_leave(&x->wait.lock);
+			return (ret == EWOULDBLOCK) ? 0 : -ret;
+		}
+	}
+
+	return 1;
+}
+
+static inline void
+complete_all(struct completion *x)
+{
+	mtx_enter(&x->wait.lock);
+	x->done = 1;
+	mtx_leave(&x->wait.lock);
+	wakeup(x);
+}
 
 struct workqueue_struct;
 

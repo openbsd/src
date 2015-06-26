@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.97 2015/06/24 17:59:42 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.98 2015/06/26 15:22:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -110,6 +110,8 @@ static int
 i915_gem_wait_for_error(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct completion *x = &dev_priv->error_completion;
+	unsigned long flags;
 	int ret;
 
 	if (!atomic_read(&dev_priv->mm.wedged))
@@ -120,16 +122,13 @@ i915_gem_wait_for_error(struct drm_device *dev)
 	 * userspace. If it takes that long something really bad is going on and
 	 * we should simply try to bail out and fail as gracefully as possible.
 	 */
-	mtx_enter(&dev_priv->error_completion_lock);
-	while (dev_priv->error_completion == 0) {
-		ret = -msleep(&dev_priv->error_completion,
-		    &dev_priv->error_completion_lock, PCATCH, "915wco", 10*hz);
-		if (ret) {
-			mtx_leave(&dev_priv->error_completion_lock);
-			return ret;
-		}
+	ret = wait_for_completion_interruptible_timeout(x, 10*HZ);
+	if (ret == 0) {
+		DRM_ERROR("Timed out waiting for the gpu reset to complete\n");
+		return -EIO;
+	} else if (ret < 0) {
+		return ret;
 	}
-	mtx_leave(&dev_priv->error_completion_lock);
 
 	if (atomic_read(&dev_priv->mm.wedged)) {
 		/* GPU is hung, bump the completion count to account for
@@ -137,9 +136,9 @@ i915_gem_wait_for_error(struct drm_device *dev)
 		 * end up waiting upon a subsequent completion event that
 		 * will never happen.
 		 */
-		mtx_enter(&dev_priv->error_completion_lock);
-		dev_priv->error_completion++;
-		mtx_leave(&dev_priv->error_completion_lock);
+		spin_lock_irqsave(&x->wait.lock, flags);
+		x->done++;
+		spin_unlock_irqrestore(&x->wait.lock, flags);
 	}
 	return 0;
 }
@@ -978,13 +977,15 @@ i915_gem_check_wedge(struct drm_i915_private *dev_priv,
 		     bool interruptible)
 {
 	if (atomic_read(&dev_priv->mm.wedged)) {
+		struct completion *x = &dev_priv->error_completion;
 		bool recovery_complete;
+		unsigned long flags;
 
 		/* Give the error handler a chance to run. */
-		mtx_enter(&dev_priv->error_completion_lock);
-		recovery_complete = dev_priv->error_completion > 0;
-		mtx_leave(&dev_priv->error_completion_lock);
-		
+		spin_lock_irqsave(&x->wait.lock, flags);
+		recovery_complete = x->done > 0;
+		spin_unlock_irqrestore(&x->wait.lock, flags);
+
 		/* Non-interruptible callers can't handle -EAGAIN, hence return
 		 * -EIO unconditionally for these. */
 		if (!interruptible)
@@ -4309,11 +4310,7 @@ i915_gem_load(struct drm_device *dev)
 		INIT_LIST_HEAD(&dev_priv->fence_regs[i].lru_list);
 	INIT_DELAYED_WORK(&dev_priv->mm.retire_work,
 			  i915_gem_retire_work_handler);
-#if 0
 	init_completion(&dev_priv->error_completion);
-#else
-	dev_priv->error_completion = 0;
-#endif
 
 	/* On GEN3 we really need to make sure the ARB C3 LP bit is set */
 	if (IS_GEN3(dev)) {
