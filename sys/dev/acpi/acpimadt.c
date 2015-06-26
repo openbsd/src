@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.31 2015/02/09 08:15:19 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.32 2015/06/26 18:12:23 guenther Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -239,13 +239,13 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			    entry->madt_lapic.apic_id,
 			    entry->madt_lapic.flags);
 
+			if ((entry->madt_lapic.flags & ACPI_PROC_ENABLE) == 0)
+				break;
+
 			lapic_map[entry->madt_lapic.acpi_proc_id] =
 			    entry->madt_lapic.apic_id;
 			acpi_lapic_flags[entry->madt_lapic.acpi_proc_id] =
 			    entry->madt_lapic.flags;
-
-			if ((entry->madt_lapic.flags & ACPI_PROC_ENABLE) == 0)
-				break;
 
 			memset(&caa, 0, sizeof(struct cpu_attach_args));
 			if (lapic_cpu_number() == entry->madt_lapic.apic_id)
