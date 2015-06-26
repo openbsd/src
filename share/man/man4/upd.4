@@ -1,4 +1,4 @@
-.\"	$OpenBSD: upd.4,v 1.3 2014/03/19 09:22:25 mpi Exp $
+.\"	$OpenBSD: upd.4,v 1.4 2015/06/26 09:00:37 sthen Exp $
 .\"
 .\" Copyright (c) 2014 Andre de Oliveira <andre@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2014 $
+.Dd $Mdocdate: June 26 2015 $
 .Dt UPD 4
 .Os
 .Sh NAME
@@ -25,16 +25,23 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver exposes data from USB Power Devices (such as an UPS),
-as hardware sensors via
-.Xr sysctl 3 .
+driver provides support for monitoring various sensors provided by
+USB Power Devices (such as a UPS).
+Supported sensor values are made available via the
+.Xr sysctl 8
+interface.
 .Pp
-The following sensors are provided by the
-.Nm
-driver, which can be monitored using
-.Xr sensorsd 8 :
+The following sensors are supported by the driver:
 .Pp
 .Bl -item -offset indent -compact
+.It
+BatteryPresent
+.It
+ShutdownImminent
+.It
+ACPresent
+.It
+Overload
 .It
 RelativeStateOfCharge
 .It
@@ -48,19 +55,23 @@ Charging
 .It
 Discharging
 .It
-BatteryPresent
-.It
-ShutdownImminent
-.It
-ACPresent
-.It
 AtRateTimeToFull
+.It
+AtRateTimeToEmpty
+.It
+RunTimeToEmpty
+.It
+NeedReplacement
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhidev 4 ,
+.Xr sensorsd.conf 5 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
+.Pp
+The USB Power Devices specification can be found at
+.Lk http://www.usb.org/developers/hidpage/
 .Sh HISTORY
 The
 .Nm
@@ -71,3 +82,18 @@ The
 .Nm
 driver was written by
 .An Andre de Oliveira .
+.Sh BUGS
+The
+.Nm
+driver does not indicate device health via aggregate or
+individual sensor status.
+Users who wish to monitor
+.Nm
+status using
+.Xr sensorsd 8
+must manually establish
+.Dq high
+and
+.Dq low
+limits for sensor values of interest via
+.Xr sensorsd.conf 5 .
