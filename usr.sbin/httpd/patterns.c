@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.2 2015/06/23 15:35:20 semarie Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.3 2015/06/26 10:07:48 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -26,16 +26,16 @@
 
 /*
  * Derived from Lua 5.3.1:
- * $Id: patterns.c,v 1.2 2015/06/23 15:35:20 semarie Exp $
+ * $Id: patterns.c,v 1.3 2015/06/26 10:07:48 semarie Exp $
  * Standard library for string operations and pattern-matching
  */
 
+#include <sys/types.h>
+#include <ctype.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <assert.h>
 
 #include "patterns.h"
 
@@ -98,7 +98,7 @@ classend(struct match_state *ms, const char *p)
 	case L_ESC:
 		if (p == ms->p_end)
 			match_error(ms,
-			    "malformed pattern (ends with '%%')");
+			    "malformed pattern (ends with '%')");
 		return p + 1;
 	case '[':
 		if (*p == '^')
