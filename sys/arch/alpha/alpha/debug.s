@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.s,v 1.8 2014/02/01 21:18:19 miod Exp $ */
+/* $OpenBSD: debug.s,v 1.9 2015/06/27 10:51:46 dlg Exp $ */
 /* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-
@@ -120,7 +120,7 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 	RET
 	END(alpha_debug)
 
-#ifdef MP_LOCKDEBUG
+#if defined(MULTIPROCESSOR) && defined(MP_LOCKDEBUG)
 NESTED(alpha_ipi_process_with_frame, 2, 8 * FRAME_SIZE, ra, IM_RA, 0)
 	.set noat
 	lda	sp, -(8 * FRAME_SIZE)(sp)		/* set up stack frame */
