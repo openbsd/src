@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.28 2014/07/28 16:45:35 tobias Exp $	*/
+/*	$OpenBSD: options.c,v 1.29 2015/06/27 14:29:39 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -227,6 +227,14 @@ create_priority_list(unsigned char *priority_list, unsigned char *prl,
 	if (!prl)
 		prl_len = 0;
 	for(i = 0; i < prl_len; i++) {
+		/* CLASSLESS routes always have priority, sayeth RFC 3442. */
+		if (prl[i] == DHO_CLASSLESS_STATIC_ROUTES ||
+		    prl[i] == DHO_CLASSLESS_MS_STATIC_ROUTES) {
+			priority_list[priority_len++] = prl[i];
+			stored_list[prl[i]] = 1;
+		}
+	}
+	for(i = 0; i < prl_len; i++) {
 		if (stored_list[prl[i]])
 			continue;
 		priority_list[priority_len++] = prl[i];	
@@ -379,6 +387,7 @@ store_options(unsigned char *buffer, int main_buffer_size,
 	int buflen, code, cutoff, i, incr, ix, length, optstart, overflow;
 	int second_cutoff;
 	int bufix = 0;
+	int stored_classless = 0;
 
 	overload &= 3; /* Only consider valid bits. */
 
@@ -404,6 +413,20 @@ store_options(unsigned char *buffer, int main_buffer_size,
 			continue;
 
 		if (!options[code] || !tree_evaluate(options[code]))
+			continue;
+
+		/*
+		 * RFC 3442 says:
+		 *
+		 * When a DHCP client requests the Classless Static
+		 * Routes option and also requests either or both of the
+		 * Router option and the Static Routes option, and the
+		 * DHCP server is sending Classless Static Routes options
+		 * to that client, the server SHOULD NOT include the
+		 * Router or Static Routes options.
+		 */
+		if ((code == DHO_ROUTERS || code == DHO_STATIC_ROUTES) &&
+		    stored_classless)
 			continue;
 
 		/* We should now have a constant length for the option. */
@@ -449,6 +472,9 @@ zapfrags:
 			else
 				goto zapfrags;
 		}
+		if (code == DHO_CLASSLESS_STATIC_ROUTES ||
+		    code == DHO_CLASSLESS_MS_STATIC_ROUTES)
+			stored_classless = 1;
 	}
 
 	if (bufix == (4 + (overload ? 3 : 0)))
