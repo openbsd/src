@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.34 2015/01/22 03:56:27 bcook Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.35 2015/06/27 22:42:02 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,7 +114,9 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
+#include <limits.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -431,9 +433,9 @@ CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
 {
 	memset(id, 0, sizeof(*id));
 	id->ptr = ptr;
-#if LONG_MAX >= INTPTR_MAX
+#if ULONG_MAX >= UINTPTR_MAX
 	/*s u 'ptr' can be embedded in 'val' without loss of uniqueness */
-	id->val = (unsigned long)id->ptr;
+	id->val = (uintptr_t)id->ptr;
 #else
 	{
 		SHA256_CTX ctx;

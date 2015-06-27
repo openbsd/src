@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.52 2015/06/05 21:42:37 tobiasu Exp $
+# $OpenBSD: Makefile,v 1.53 2015/06/27 22:42:02 doug Exp $
 
 LIB=	ssl
 
@@ -6,7 +6,7 @@ SSL_SRC=	${.CURDIR}/../../libssl/src
 LSSL_SRC=	${SSL_SRC}/ssl
 
 .include <bsd.own.mk>
-CFLAGS+= -Wall
+CFLAGS+= -Wall -Wundef
 .if ${COMPILER_VERSION:L} != "gcc3"
 CFLAGS+= -Werror
 .endif
