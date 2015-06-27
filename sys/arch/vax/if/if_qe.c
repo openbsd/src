@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.32 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.33 2015/06/27 15:39:03 miod Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -160,8 +160,10 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	 */
 	ui.ui_size = PROBESIZE;
 	ui.ui_vaddr = (caddr_t)&ring[0];
-	if ((error = uballoc((void *)parent, &ui, UBA_CANTWAIT)))
+	if ((error = uballoc((void *)parent, &ui, UBA_CANTWAIT))) {
+		free(ring, M_TEMP, PROBESIZE);
 		return 0;
+	}
 
 	/*
 	 * Init a simple "fake" receive and transmit descriptor that
