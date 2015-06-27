@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.143 2015/05/31 23:12:16 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.144 2015/06/27 13:25:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -2263,6 +2263,8 @@ roff_cond(ROFF_ARGS)
 	if (buf->buf[pos] == '\\' && buf->buf[pos + 1] == '{') {
 		r->last->endspan = -1;
 		pos += 2;
+		while (buf->buf[pos] == ' ')
+			pos++;
 		goto out;
 	}
 

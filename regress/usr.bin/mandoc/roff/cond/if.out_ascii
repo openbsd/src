@@ -13,6 +13,7 @@ DDEESSCCRRIIPPTTIIOONN
        True condition with whitespace:
 
        One-line true condition with block.
+       One-line true condition with block with leading blanks.
        Two-line true condition without continuation and macros.
        Two-line true condition wwiitthhoouutt ccoonnttiinnuuaattiioonn bbuutt wwiitthh mmaaccrrooss..
        Two-line true condition with continuation and macros.
@@ -30,4 +31,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                          May 30, 2012                            IF(1)
+OpenBSD                          June 27, 2015                           IF(1)
