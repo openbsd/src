@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.45 2015/06/20 20:20:08 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.46 2015/06/27 21:25:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -107,7 +107,7 @@ void	uvm_pmr_assertvalid(struct uvm_pmemrange *pmr);
 #define uvm_pmr_assertvalid(pmr)	do {} while (0)
 #endif
 
-int			 uvm_pmr_get1page(psize_t, int, struct pglist *,
+psize_t			 uvm_pmr_get1page(psize_t, int, struct pglist *,
 			    paddr_t, paddr_t, int);
 
 struct uvm_pmemrange	*uvm_pmr_allocpmr(void);
@@ -1668,7 +1668,7 @@ uvm_pmr_rootupdate(struct uvm_pmemrange *pmr, struct vm_page *init_root,
 /*
  * Allocate any page, the fastest way. Page number constraints only.
  */
-int
+psize_t
 uvm_pmr_get1page(psize_t count, int memtype_init, struct pglist *result,
     paddr_t start, paddr_t end, int memtype_only)
 {
