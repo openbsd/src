@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.33 2015/06/27 15:39:03 miod Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.34 2015/06/27 15:40:53 miod Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -117,10 +117,10 @@ struct cfdriver qe_cd = {
 	NULL, "qe", DV_IFNET
 };
 
-#define	QE_WCSR(csr, val) \
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)
-#define	QE_RCSR(csr) \
-	bus_space_read_2(sc->sc_iot, sc->sc_ioh, csr)
+#define	QE_WCSR(iot, ioh, csr, val) \
+	bus_space_write_2(iot, ioh, csr, val)
+#define	QE_RCSR(iot, ioh, csr) \
+	bus_space_read_2(iot, ioh, csr)
 
 #define	LOWORD(x)	((int)(x) & 0xffff)
 #define	HIWORD(x)	(((int)(x) >> 16) & 0x3f)
@@ -132,26 +132,19 @@ struct cfdriver qe_cd = {
 int
 qematch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct	qe_softc ssc;
-	struct	qe_softc *sc = &ssc;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
 	struct ubinfo ui;
-
 #define	PROBESIZE	4096
 	struct qe_ring *ring;
 	struct	qe_ring *rp;
 	int error;
 
 	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK | M_ZERO);
-	bzero(sc, sizeof(struct qe_softc));
-	sc->sc_iot = ua->ua_iot;
-	sc->sc_ioh = ua->ua_ioh;
-	sc->sc_dmat = ua->ua_dmat;
 
 	ubasc->uh_lastiv -= 4;
-	QE_WCSR(QE_CSR_CSR, QE_RESET);
-	QE_WCSR(QE_CSR_VECTOR, ubasc->uh_lastiv);
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_CSR, QE_RESET);
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_VECTOR, ubasc->uh_lastiv);
 
 	/*
 	 * Map the ring area. Actually this is done only to be able to 
@@ -180,17 +173,19 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	ring[2].qe_addr_hi = HIWORD(&rp[4]) | QE_VALID;
 	ring[2].qe_buf_len = -(1500/2);
 
-	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_CSR,
+	    QE_RCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_CSR) & ~QE_RESET);
 	DELAY(1000);
 
 	/*
 	 * Start the interface and wait for the packet.
 	 */
-	QE_WCSR(QE_CSR_CSR, QE_INT_ENABLE|QE_XMIT_INT|QE_RCV_INT);
-	QE_WCSR(QE_CSR_RCLL, LOWORD(&rp[2]));
-	QE_WCSR(QE_CSR_RCLH, HIWORD(&rp[2]));
-	QE_WCSR(QE_CSR_XMTL, LOWORD(rp));
-	QE_WCSR(QE_CSR_XMTH, HIWORD(rp));
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_CSR,
+	    QE_INT_ENABLE|QE_XMIT_INT|QE_RCV_INT);
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_RCLL, LOWORD(&rp[2]));
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_RCLH, HIWORD(&rp[2]));
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_XMTL, LOWORD(rp));
+	QE_WCSR(ua->ua_iot, ua->ua_ioh, QE_CSR_XMTH, HIWORD(rp));
 	DELAY(10000);
 
 	/*
@@ -296,22 +291,25 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	 * Get the vector that were set at match time, and remember it.
 	 */
 	sc->sc_intvec = ubasc->uh_lastiv;
-	QE_WCSR(QE_CSR_CSR, QE_RESET);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR, QE_RESET);
 	DELAY(1000);
-	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR,
+	    QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR) & ~QE_RESET);
 
 	/*
 	 * Read out ethernet address and tell which type this card is.
 	 */
 	for (i = 0; i < 6; i++)
-		sc->sc_ac.ac_enaddr[i] = QE_RCSR(i * 2) & 0xff;
+		sc->sc_ac.ac_enaddr[i] =
+		    QE_RCSR(sc->sc_iot, sc->sc_ioh, i * 2) & 0xff;
 
-	QE_WCSR(QE_CSR_VECTOR, sc->sc_intvec | 1);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_VECTOR, sc->sc_intvec | 1);
 	printf(": %s, address %s\n",
-		QE_RCSR(QE_CSR_VECTOR) & 1 ? "delqa" : "deqna",
-		ether_sprintf(sc->sc_ac.ac_enaddr));
+	    QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_VECTOR) & 1 ?
+	      "delqa" : "deqna", ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	QE_WCSR(QE_CSR_VECTOR, QE_RCSR(QE_CSR_VECTOR) & ~1); /* ??? */
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_VECTOR,
+	    QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_VECTOR) & ~1); /* ??? */
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr,
 		sc, &sc->sc_intrcnt);
@@ -371,10 +369,11 @@ qeinit(struct qe_softc *sc)
 	/*
 	 * Reset the interface.
 	 */
-	QE_WCSR(QE_CSR_CSR, QE_RESET);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR, QE_RESET);
 	DELAY(1000);
-	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
-	QE_WCSR(QE_CSR_VECTOR, sc->sc_intvec);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR,
+	    QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR) & ~QE_RESET);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_VECTOR, sc->sc_intvec);
 
 	sc->sc_nexttx = sc->sc_inq = sc->sc_lastack = 0;
 	/*
@@ -402,9 +401,12 @@ qeinit(struct qe_softc *sc)
 	 * Write the descriptor addresses to the device.
 	 * Receiving packets will be enabled in the interrupt routine.
 	 */
-	QE_WCSR(QE_CSR_CSR, QE_INT_ENABLE|QE_XMIT_INT|QE_RCV_INT);
-	QE_WCSR(QE_CSR_RCLL, LOWORD(sc->sc_pqedata->qc_recv));
-	QE_WCSR(QE_CSR_RCLH, HIWORD(sc->sc_pqedata->qc_recv));
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR,
+	    QE_INT_ENABLE|QE_XMIT_INT|QE_RCV_INT);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_RCLL,
+	    LOWORD(sc->sc_pqedata->qc_recv));
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_RCLH,
+	    HIWORD(sc->sc_pqedata->qc_recv));
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -430,7 +432,7 @@ qestart(struct ifnet *ifp)
 	int idx, len, s, i, totlen, error;
 	short orword, csr;
 
-	if ((QE_RCSR(QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
+	if ((QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
 		return;
 
 	s = splnet();
@@ -512,11 +514,11 @@ qestart(struct ifnet *ifp)
 		/*
 		 * Kick off the transmit logic, if it is stopped.
 		 */
-		csr = QE_RCSR(QE_CSR_CSR);
+		csr = QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR);
 		if (csr & QE_XL_INVALID) {
-			QE_WCSR(QE_CSR_XMTL,
+			QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_XMTL,
 			    LOWORD(&sc->sc_pqedata->qc_xmit[sc->sc_nexttx]));
-			QE_WCSR(QE_CSR_XMTH,
+			QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_XMTH,
 			    HIWORD(&sc->sc_pqedata->qc_xmit[sc->sc_nexttx]));
 		}
 		sc->sc_nexttx = idx;
@@ -540,10 +542,10 @@ qeintr(void *arg)
 	struct mbuf *m;
 	int csr, status1, status2, len;
 
-	csr = QE_RCSR(QE_CSR_CSR);
+	csr = QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR);
 
-	QE_WCSR(QE_CSR_CSR, QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT |
-	    QE_RCV_INT | QE_ILOOP);
+	QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR,
+	    QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT | QE_RCV_INT | QE_ILOOP);
 
 	if (csr & QE_RCV_INT) {
 		while (qc->qc_recv[sc->sc_nextrx].qe_status1 != QE_NOTYET) {
@@ -607,10 +609,10 @@ qeintr(void *arg)
 	 * Verified that it happens anyway.
 	 */
 	if ((qc->qc_recv[sc->sc_nextrx].qe_status1 == QE_NOTYET) &&
-	    (QE_RCSR(QE_CSR_CSR) & QE_RL_INVALID)) {
-		QE_WCSR(QE_CSR_RCLL,
+	    (QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR) & QE_RL_INVALID)) {
+		QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_RCLL,
 		    LOWORD(&sc->sc_pqedata->qc_recv[sc->sc_nextrx]));
-		QE_WCSR(QE_CSR_RCLH,
+		QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_RCLH,
 		    HIWORD(&sc->sc_pqedata->qc_recv[sc->sc_nextrx]));
 	}
 }
@@ -645,8 +647,9 @@ qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * If interface is marked down and it is running,
 			 * stop it. (by disabling receive mechanism).
 			 */
-			QE_WCSR(QE_CSR_CSR,
-			    QE_RCSR(QE_CSR_CSR) & ~QE_RCV_ENABLE);
+			QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR,
+			    QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR) &
+			      ~QE_RCV_ENABLE);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -804,10 +807,10 @@ setit:
 	qc->qc_xmit[idx].qe_status1 = qc->qc_xmit[idx].qe_flag = QE_NOTYET;
 	qc->qc_xmit[idx].qe_addr_hi |= QE_VALID;
 
-	if (QE_RCSR(QE_CSR_CSR) & QE_XL_INVALID) {
-		QE_WCSR(QE_CSR_XMTL,
+	if (QE_RCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_CSR) & QE_XL_INVALID) {
+		QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_XMTL,
 		    LOWORD(&sc->sc_pqedata->qc_xmit[idx]));
-		QE_WCSR(QE_CSR_XMTH,
+		QE_WCSR(sc->sc_iot, sc->sc_ioh, QE_CSR_XMTH,
 		    HIWORD(&sc->sc_pqedata->qc_xmit[idx]));
 	}
 
