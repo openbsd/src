@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.1 2015/06/27 23:35:52 doug Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.2 2015/06/28 00:08:27 doug Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -146,11 +146,26 @@ err:
 static int
 ssl_bytes_to_list_invalid(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
+	uint8_t empty_cipher_bytes[] = { };
+
 	sk_SSL_CIPHER_free(*ciphers);
 
 	/* Invalid length: CipherSuite is 2 bytes so it must be even */
 	*ciphers = ssl_bytes_to_cipher_list(s, cipher_bytes,
 	    sizeof(cipher_bytes) - 1);
+	CHECK(*ciphers == NULL);
+
+	/* Invalid length: cipher_suites must be at least 2 */
+	*ciphers = ssl_bytes_to_cipher_list(s, empty_cipher_bytes,
+	    sizeof(empty_cipher_bytes));
+	CHECK(*ciphers == NULL);
+
+	/* Invalid length: cipher_suites must be at most 2^16-2 */
+	*ciphers = ssl_bytes_to_cipher_list(s, cipher_bytes, 0x10000);
+	CHECK(*ciphers == NULL);
+
+	/* Invalid len: prototype is signed, but it shouldn't accept len < 0 */
+	*ciphers = ssl_bytes_to_cipher_list(s, cipher_bytes, -2);
 	CHECK(*ciphers == NULL);
 
 	return 1;

@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.21 2015/02/06 09:36:16 doug Exp $
+#	$OpenBSD: Makefile,v 1.22 2015/06/28 00:08:27 doug Exp $
 
 SUBDIR= \
 	asn1 \
 	bytestring \
 	ciphers \
-	ssl
+	ssl \
+	unit
 
 install:
 

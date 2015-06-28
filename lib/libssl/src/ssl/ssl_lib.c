@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.103 2015/04/15 16:25:43 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.104 2015/06/28 00:08:27 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,6 +154,8 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
+#include "bytestring.h"
 
 const char *SSL_version_str = OPENSSL_VERSION_TEXT;
 
@@ -1410,19 +1412,21 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p)
 }
 
 STACK_OF(SSL_CIPHER) *
-ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num)
+ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 {
+	CBS			 cbs;
 	const SSL_CIPHER	*c;
 	STACK_OF(SSL_CIPHER)	*sk = NULL;
-	int			 i;
 	unsigned long		 cipher_id;
-	uint16_t		 cipher_value;
-	uint16_t		 max_version;
+	uint16_t		 cipher_value, max_version;
 
 	if (s->s3)
 		s->s3->send_connection_binding = 0;
 
-	if ((num % SSL3_CIPHER_VALUE_SIZE) != 0) {
+	/*
+	 * RFC 5246 section 7.4.1.2 defines the interval as [2,2^16-2].
+	 */
+	if (num < 2 || num > 0x10000 - 2) {
 		SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
 		    SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 		return (NULL);
@@ -1433,8 +1437,14 @@ ssl_bytes_to_cipher_list(SSL *s, unsigned char *p, int num)
 		goto err;
 	}
 
-	for (i = 0; i < num; i += SSL3_CIPHER_VALUE_SIZE) {
-		n2s(p, cipher_value);
+	CBS_init(&cbs, p, num);
+	while (CBS_len(&cbs) > 0) {
+		if (!CBS_get_u16(&cbs, &cipher_value)) {
+			SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
+			    SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+			goto err;
+		}
+
 		cipher_id = SSL3_CK_ID | cipher_value;
 
 		if (s->s3 != NULL && cipher_id == SSL3_CK_SCSV) {
