@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.5 2005/10/26 20:32:59 marco Exp $	*/
+/*	$OpenBSD: trap.h,v 1.6 2015/06/28 01:11:27 guenther Exp $	*/
 /*	$NetBSD: trap.h,v 1.4 1994/10/27 04:16:30 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #define	T_PRIVINFLT	 0	/* privileged instruction */
 #define	T_BPTFLT	 1	/* breakpoint trap */
 #define	T_ARITHTRAP	 2	/* arithmetic trap */
-#define	T_ASTFLT	 3	/* asynchronous system trap */
+#define	T_RESERVED	 3	/* reserved fault base */
 #define	T_PROTFLT	 4	/* protection fault */
 #define	T_TRCTRAP	 5	/* trace trap */
 #define	T_PAGEFLT	 6	/* page fault */
@@ -60,7 +60,6 @@
 #define	T_STKFLT	17	/* stack fault */
 #define	T_MACHK		18	/* machine check ([P]Pro) */
 #define	T_XFTRAP	19	/* SIMD FP exception */
-#define	T_RESERVED	20	/* reserved fault base */
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100

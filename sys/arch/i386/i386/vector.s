@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.19 2015/04/25 21:31:24 guenther Exp $	*/
+/*	$OpenBSD: vector.s,v 1.20 2015/06/28 01:11:27 guenther Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -80,8 +80,7 @@ IDTVEC(recurse_##name##num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
-	pushl	$0			/* dummy error code */		;\
-	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	subl	$8,%esp			/* space for tf_{err,trapno} */ ;\
 	movl	%ebx,%esi						;\
 	INTRENTRY							;\
 	MAKE_FRAME							;\
@@ -89,8 +88,7 @@ IDTVEC(recurse_##name##num)						;\
 	cli								;\
 	jmp	1f							;\
 _C_LABEL(Xintr_##name##num):						;\
-	pushl	$0			/* dummy error code */		;\
-	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	subl	$8,%esp			/* space for tf_{err,trapno} */ ;\
 	INTRENTRY							;\
 	MAKE_FRAME							;\
 	mask(num)			/* mask it in hardware */	;\

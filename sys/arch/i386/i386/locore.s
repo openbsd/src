@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.157 2015/04/26 09:48:29 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.158 2015/06/28 01:11:27 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1408,8 +1408,7 @@ IDTVEC(fpu)
 	 * error.  It would be better to handle npx interrupts as traps but
 	 * this is difficult for nested interrupts.
 	 */
-	pushl	$0			# dummy error code
-	pushl	$T_ASTFLT
+	subl	$8,%esp			/* space for tf_{err,trapno} */
 	INTRENTRY
 	pushl	CPL			# if_ppl in intrframe
 	pushl	%esp			# push address of intrframe
@@ -1471,9 +1470,8 @@ calltrap:
 	jz	1f
 5:	CLEAR_ASTPENDING(%ecx)
 	sti
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	pushl	%esp
-	call	_C_LABEL(trap)
+	call	_C_LABEL(ast)
 	addl	$4,%esp
 	jmp	2b
 #ifndef DIAGNOSTIC
@@ -1498,8 +1496,7 @@ calltrap:
  * Trap gate entry for syscall
  */
 IDTVEC(syscall)
-	pushl	$2		# ignored
-	pushl	$T_ASTFLT	# trap # for doing ASTs
+	subl	$8,%esp			/* space for tf_{err,trapno} */
 	INTRENTRY
 	pushl	%esp
 	call	_C_LABEL(syscall)
@@ -1511,9 +1508,8 @@ IDTVEC(syscall)
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%ecx)
 	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	pushl	%esp
-	call	_C_LABEL(trap)
+	call	_C_LABEL(ast)
 	addl	$4,%esp
 	jmp	2b
 1:	INTRFASTEXIT

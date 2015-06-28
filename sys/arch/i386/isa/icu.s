@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.31 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: icu.s,v 1.32 2015/06/28 01:11:27 guenther Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -103,10 +103,8 @@ IDTVEC(doreti)
 	jz	3f
 4:	CLEAR_ASTPENDING(%ecx)
 	sti
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later. */
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	pushl	%esp
-	call	_C_LABEL(trap)
+	call	_C_LABEL(ast)
 	addl	$4,%esp
 	cli
 	jmp	2b

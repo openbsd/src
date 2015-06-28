@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.14 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.15 2015/06/28 01:11:27 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ struct i386_frame {
 #define	TRAP		1
 #define	SYSCALL		2
 #define	INTERRUPT	3
+#define	AST		4
 
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
@@ -160,6 +161,9 @@ db_nextframe(struct i386_frame **fp, db_addr_t	*ip, int *argp, int is_trap,
 		switch (is_trap) {
 		case TRAP:
 			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
+			break;
+		case AST:
+			(*pr)("--- ast ---\n");
 			break;
 		case SYSCALL:
 			(*pr)("--- syscall (number %d) ---\n", tf->tf_eax);
@@ -256,6 +260,8 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		if (INKERNEL((int)frame) && name) {
 			if (!strcmp(name, "trap")) {
 				is_trap = TRAP;
+			} else if (!strcmp(name, "ast")) {
+				is_trap = AST;
 			} else if (!strcmp(name, "syscall")) {
 				is_trap = SYSCALL;
 			} else if (!strncmp(name, "Xintr", 5) ||

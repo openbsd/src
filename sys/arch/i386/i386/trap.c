@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.122 2015/04/24 12:52:38 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.123 2015/06/28 01:11:27 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -80,13 +80,14 @@ extern struct emul emul_linux_elf;
 #include "npx.h"
 
 void trap(struct trapframe *);
+void ast(struct trapframe *);
 void syscall(struct trapframe *);
 
 char	*trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
-	"asynchronous system trap",		/*  3 T_ASTFLT */
+	"reserved trap",			/*  3 T_RESERVED */
 	"protection fault",			/*  4 T_PROTFLT */
 	"trace trap",				/*  5 T_TRCTRAP */
 	"page fault",				/*  6 T_PAGEFLT */
@@ -103,7 +104,6 @@ char	*trap_type[] = {
 	"stack fault",				/* 17 T_STKFLT */
 	"machine check",			/* 18 T_MACHK ([P]Pro) */
 	"SIMD FP fault",			/* 19 T_XFTRAP */
-	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
@@ -118,7 +118,6 @@ int	trapdebug = 0;
  * routines that prepare a suitable stack frame, and restore this
  * frame after the exception has been processed.
  */
-/*ARGSUSED*/
 void
 trap(struct trapframe *frame)
 {
@@ -335,11 +334,6 @@ trap(struct trapframe *frame)
 		KERNEL_UNLOCK();
 		goto out;
 
-	case T_ASTFLT|T_USER:		/* Allow process switch */
-		uvmexp.softs++;
-		mi_ast(p, want_resched);
-		goto out;
-
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
@@ -521,6 +515,27 @@ trap(struct trapframe *frame)
 out:
 	userret(p);
 }
+
+
+/*
+ * ast(frame):
+ *	AST handler.  This is called from assembly language stubs when
+ *	returning to userspace after a syscall, trap, or interrupt.
+ */
+void
+ast(struct trapframe *frame)
+{
+	struct proc *p = curproc;
+
+	uvmexp.traps++;
+	KASSERT(!KERNELMODE(frame->tf_cs, frame->tf_eflags));
+	p->p_md.md_regs = frame;
+	refreshcreds(p);
+	uvmexp.softs++;
+	mi_ast(p, want_resched);
+	userret(p);
+}
+
 
 /*
  * syscall(frame):

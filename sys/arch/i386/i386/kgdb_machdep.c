@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.12 2015/04/12 18:37:53 mlarkin Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.13 2015/06/28 01:11:27 guenther Exp $	*/
 /*	$NetBSD: kgdb_machdep.c,v 1.6 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*-
@@ -115,7 +115,6 @@ kgdb_signal(int type)
 	case T_TRCTRAP:
 		return (SIGTRAP);
 
-	case T_ASTFLT:
 	case T_DOUBLEFLT:
 		return (SIGEMT);
 
