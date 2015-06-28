@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.52 2015/06/24 17:59:42 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.53 2015/06/28 15:00:41 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -3981,7 +3981,7 @@ static int i915gm_get_display_clock_speed(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u16 gcfgc = 0;
 
-	gcfgc = pci_conf_read(dev_priv->pc, dev_priv->tag, GCFGC) >> 16;
+	gcfgc = pci_conf_read(dev_priv->pc, dev_priv->tag, GCFGC);
 
 	if (gcfgc & GC_LOW_FREQUENCY_ENABLE)
 		return 133000;
