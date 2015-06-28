@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.6 2015/05/04 23:48:14 jmatthew Exp 
+#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.7 2015/06/28 11:53:56 jmatthew Exp 
 #	OpenBSD: MAKEDEV.common,v 1.78 2014/12/11 19:46:15 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -54,6 +54,8 @@
 #	wsmouse*	wscons mice
 # USB devices:
 #	ttyU*	USB serial ports
+#	uall	All USB devices
+#	usb*	Bus control devices used by usbd for attach/detach
 # Special purpose devices:
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
@@ -290,6 +292,16 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+usb*)
+	[ "$i" = "usb" ] && u= || u=$U
+	M usb$u c 61 $U 660
+	;;
+
+uall)
+	R ttyU0 ttyU1 ttyU2 ttyU3 usb0 usb1 usb2 usb3 usb4 usb5 usb6
+	R usb7
+	;;
+
 ttyU[0-9a-zA-Z])
 	U=${i#ttyU*}
 	o=$(alph2d $U)
@@ -408,9 +420,9 @@ all)
 	R sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2
 	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 diskmap
 	R vscsi0 ch0 audio0 audio1 audio2 fuse pppx hotplug ptm local
-	R wscons pci0 pci1 pci2 pci3 video0 video1 uk0 random tty00
-	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
-	R tty0b pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0 random
+	R tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09
+	R tty0a tty0b pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 octcf*|wd*|sd*)
