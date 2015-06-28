@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.19 2015/06/15 21:44:57 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.20 2015/06/28 18:52:11 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -254,6 +254,7 @@ sub check_logs {
 		my $pattern = $s->{filegrep} || $testlog;
 		check_pattern(ref $s, $file, $pattern, \&filegrep);
 	}
+	check_multifile(@{$args{multifile} || []});
 }
 
 sub compare($$) {
@@ -360,6 +361,22 @@ sub kdumpgrep {
 	    "Close pipe from '@cmd' failed: $!" :
 	    "Command '@cmd' failed: $?";
 	return wantarray ? @matches : $matches[0];
+}
+
+sub create_multifile {
+	for (my $i = 0; $i < @_; $i++) {
+		my $file = "file-$i.log";
+		open(my $fh, '>', $file)
+		    or die "Create $file failed: $!";
+	}
+}
+
+sub check_multifile {
+	for (my $i = 0; $i < @_; $i++) {
+		my $file = "file-$i.log";
+		my $pattern = $_[$i]{loggrep} or die;
+		check_pattern("multifile $i", $file, $pattern, \&filegrep);
+	}
 }
 
 1;
