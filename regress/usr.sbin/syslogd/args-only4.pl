@@ -15,6 +15,8 @@ our %args = (
     },
     syslogd => {
 	fstat => {
+	    qr/^root .* internet/ => 0,
+	    qr/^_syslogd .* internet/ => 1,
 	    qr/ internet6 / => 0,
 	},
 	loghost => '@127.0.0.1:$connectport',

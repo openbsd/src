@@ -15,6 +15,10 @@ our %args = (
     },
     syslogd => {
 	options => ["-u"],
+	fstat => {
+	    qr/^root .* internet/ => 0,
+	    qr/^_syslogd .* internet/ => 2,
+	},
     },
     file => {
 	loggrep => qr/ localhost /. get_testlog(),
