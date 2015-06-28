@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.c,v 1.5 2015/02/12 11:38:42 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_core.c,v 1.6 2015/06/28 11:48:18 jmatthew Exp $	*/
 /*	$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
@@ -63,9 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-
-#include <dev/usb/dwc2/linux/kernel.h>
-#include <dev/usb/dwc2/linux/list.h>
 
 #include <dev/usb/dwc2/dwc2.h>
 #include <dev/usb/dwc2/dwc2var.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.15 2015/06/08 08:47:38 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.16 2015/06/28 11:48:18 jmatthew Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/signal.h>
@@ -61,9 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-
-#include <dev/usb/dwc2/linux/kernel.h>
-#include <dev/usb/dwc2/linux/list.h>
 
 #include <dev/usb/dwc2/dwc2.h>
 #include <dev/usb/dwc2/dwc2var.h>
@@ -120,12 +118,10 @@ STATIC void dwc2_dump_channel_info(struct dwc2_hsotg *hsotg,
 	dev_dbg(hsotg->dev, "    xfer_len: %d\n", chan->xfer_len);
 	dev_dbg(hsotg->dev, "    qh: %p\n", chan->qh);
 	dev_dbg(hsotg->dev, "  NP inactive sched:\n");
-	list_for_each_entry(qh, &hsotg->non_periodic_sched_inactive,
-			    qh_list_entry)
+	TAILQ_FOREACH(qh, &hsotg->non_periodic_sched_inactive, qh_list_entry)
 		dev_dbg(hsotg->dev, "    %p\n", qh);
 	dev_dbg(hsotg->dev, "  NP active sched:\n");
-	list_for_each_entry(qh, &hsotg->non_periodic_sched_active,
-			    qh_list_entry)
+	TAILQ_FOREACH(qh, &hsotg->non_periodic_sched_active, qh_list_entry)
 		dev_dbg(hsotg->dev, "    %p\n", qh);
 	dev_dbg(hsotg->dev, "  Channels:\n");
 	for (i = 0; i < num_channels; i++) {
@@ -143,14 +139,13 @@ STATIC void dwc2_dump_channel_info(struct dwc2_hsotg *hsotg,
  * Must be called with interrupt disabled and spinlock held
  */
 STATIC void dwc2_kill_urbs_in_qh_list(struct dwc2_hsotg *hsotg,
-				      struct list_head *qh_list)
+				      struct dwc2_qh_list *qh_list)
 {
 	struct dwc2_qh *qh, *qh_tmp;
 	struct dwc2_qtd *qtd, *qtd_tmp;
 
-	list_for_each_entry_safe(qh, qh_tmp, qh_list, qh_list_entry) {
-		list_for_each_entry_safe(qtd, qtd_tmp, &qh->qtd_list,
-					 qtd_list_entry) {
+	TAILQ_FOREACH_SAFE(qh, qh_list, qh_list_entry, qh_tmp) {
+		TAILQ_FOREACH_SAFE(qtd, &qh->qtd_list, qtd_list_entry, qtd_tmp) {
 			dwc2_host_complete(hsotg, qtd, -ETIMEDOUT);
 			dwc2_hcd_qtd_unlink_and_free(hsotg, qtd, qh);
 		}
@@ -158,28 +153,29 @@ STATIC void dwc2_kill_urbs_in_qh_list(struct dwc2_hsotg *hsotg,
 }
 
 STATIC void dwc2_qh_list_free(struct dwc2_hsotg *hsotg,
-			      struct list_head *qh_list)
+			      struct dwc2_qh_list *qh_list)
 {
 	struct dwc2_qtd *qtd, *qtd_tmp;
 	struct dwc2_qh *qh, *qh_tmp;
 	unsigned long flags;
 
-	if (!qh_list->next)
+	if (TAILQ_EMPTY(qh_list)) {
 		/* The list hasn't been initialized yet */
 		return;
+	}
 
 	spin_lock_irqsave(&hsotg->lock, flags);
 
 	/* Ensure there are no QTDs or URBs left */
 	dwc2_kill_urbs_in_qh_list(hsotg, qh_list);
 
-	list_for_each_entry_safe(qh, qh_tmp, qh_list, qh_list_entry) {
+	TAILQ_FOREACH_SAFE(qh, qh_list, qh_list_entry, qh_tmp) {
 		dwc2_hcd_qh_unlink(hsotg, qh);
 
 		/* Free each QTD in the QH's QTD list */
-		list_for_each_entry_safe(qtd, qtd_tmp, &qh->qtd_list,
-					 qtd_list_entry)
+		TAILQ_FOREACH_SAFE(qtd, &qh->qtd_list, qtd_list_entry, qtd_tmp) {
 			dwc2_hcd_qtd_unlink_and_free(hsotg, qtd, qh);
+		}
 
 		spin_unlock_irqrestore(&hsotg->lock, flags);
 		dwc2_hcd_qh_free(hsotg, qh);
@@ -243,7 +239,7 @@ STATIC void dwc2_hcd_cleanup_channels(struct dwc2_hsotg *hsotg)
 		/* Flush out any channel requests in slave mode */
 		for (i = 0; i < num_channels; i++) {
 			channel = hsotg->hc_ptr_array[i];
-			if (!list_empty(&channel->hc_list_entry))
+			if (channel->in_freelist == 0)
 				continue;
 			hcchar = DWC2_READ_4(hsotg, HCCHAR(i));
 			if (hcchar & HCCHAR_CHENA) {
@@ -256,7 +252,7 @@ STATIC void dwc2_hcd_cleanup_channels(struct dwc2_hsotg *hsotg)
 
 	for (i = 0; i < num_channels; i++) {
 		channel = hsotg->hc_ptr_array[i];
-		if (!list_empty(&channel->hc_list_entry))
+		if (channel->in_freelist != 0)
 			continue;
 		hcchar = DWC2_READ_4(hsotg, HCCHAR(i));
 		if (hcchar & HCCHAR_CHENA) {
@@ -266,7 +262,8 @@ STATIC void dwc2_hcd_cleanup_channels(struct dwc2_hsotg *hsotg)
 		}
 
 		dwc2_hc_cleanup(hsotg, channel);
-		list_add_tail(&channel->hc_list_entry, &hsotg->free_hc_list);
+		LIST_INSERT_HEAD(&hsotg->free_hc_list, channel, hc_list_entry);
+		channel->in_freelist = 1;
 		/*
 		 * Added for Descriptor DMA to prevent channel double cleanup in
 		 * release_channel_ddma(), which is called from ep_disable when
@@ -485,7 +482,7 @@ dwc2_hcd_urb_dequeue(struct dwc2_hsotg *hsotg,
 		if (in_process) {
 			dwc2_hcd_qh_deactivate(hsotg, qh, 0);
 			qh->channel = NULL;
-		} else if (list_empty(&qh->qtd_list)) {
+		} else if (TAILQ_EMPTY(&qh->qtd_list)) {
 			dwc2_hcd_qh_unlink(hsotg, qh);
 		}
 	} else {
@@ -509,7 +506,7 @@ dwc2_hcd_reinit(struct dwc2_hsotg *hsotg)
 	int i;
 
 	hsotg->flags.d32 = 0;
-	hsotg->non_periodic_qh_ptr = &hsotg->non_periodic_sched_active;
+	hsotg->non_periodic_qh_ptr = NULL;
 
 	if (hsotg->core_params->uframe_sched > 0) {
 		hsotg->available_host_channels =
@@ -523,14 +520,16 @@ dwc2_hcd_reinit(struct dwc2_hsotg *hsotg)
 	 * Put all channels in the free channel list and clean up channel
 	 * states
 	 */
-	list_for_each_entry_safe(chan, chan_tmp, &hsotg->free_hc_list,
-				 hc_list_entry)
-		list_del_init(&chan->hc_list_entry);
+	LIST_FOREACH_SAFE(chan, &hsotg->free_hc_list, hc_list_entry, chan_tmp) {
+		LIST_REMOVE(chan, hc_list_entry);
+		chan->in_freelist = 0;
+	}
 
 	num_channels = hsotg->core_params->host_channels;
 	for (i = 0; i < num_channels; i++) {
 		chan = hsotg->hc_ptr_array[i];
-		list_add_tail(&chan->hc_list_entry, &hsotg->free_hc_list);
+		LIST_INSERT_HEAD(&hsotg->free_hc_list, chan, hc_list_entry);
+		chan->in_freelist = 1;
 		dwc2_hc_cleanup(hsotg, chan);
 	}
 
@@ -729,23 +728,23 @@ STATIC int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	if (dbg_qh(qh))
 		dev_vdbg(hsotg->dev, "%s(%p,%p)\n", __func__, hsotg, qh);
 
-	if (list_empty(&qh->qtd_list)) {
+	if (TAILQ_EMPTY(&qh->qtd_list)) {
 		dev_dbg(hsotg->dev, "No QTDs in QH list\n");
 		return -ENOMEM;
 	}
 
-	if (list_empty(&hsotg->free_hc_list)) {
+	if (LIST_EMPTY(&hsotg->free_hc_list)) {
 		dev_dbg(hsotg->dev, "No free channel to assign\n");
 		return -ENOMEM;
 	}
 
-	chan = list_first_entry(&hsotg->free_hc_list, struct dwc2_host_chan,
-				hc_list_entry);
+	chan = LIST_FIRST(&hsotg->free_hc_list);
 
 	/* Remove host channel from free list */
-	list_del_init(&chan->hc_list_entry);
+	LIST_REMOVE(chan, hc_list_entry);
+	chan->in_freelist = 0;
 
-	qtd = list_first_entry(&qh->qtd_list, struct dwc2_qtd, qtd_list_entry);
+	qtd = TAILQ_FIRST(&qh->qtd_list);
 	urb = qtd->urb;
 	qh->channel = chan;
 	qtd->in_process = 1;
@@ -808,8 +807,8 @@ STATIC int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 			/* Add channel back to free list */
 			chan->align_buf = 0;
 			chan->multi_count = 0;
-			list_add_tail(&chan->hc_list_entry,
-				      &hsotg->free_hc_list);
+			LIST_INSERT_HEAD(&hsotg->free_hc_list, chan, hc_list_entry);
+			chan->in_freelist = 1;
 			qtd->in_process = 0;
 			qh->channel = NULL;
 			return -ENOMEM;
@@ -848,8 +847,7 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		struct dwc2_hsotg *hsotg)
 {
 	enum dwc2_transaction_type ret_val = DWC2_TRANSACTION_NONE;
-	struct list_head *qh_ptr;
-	struct dwc2_qh *qh;
+	struct dwc2_qh *qh, *qhn;
 	int num_channels;
 
 #ifdef DWC2_DEBUG
@@ -857,16 +855,16 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 #endif
 
 	/* Process entries in the periodic ready list */
-	qh_ptr = hsotg->periodic_sched_ready.next;
-	while (qh_ptr != &hsotg->periodic_sched_ready) {
-		if (list_empty(&hsotg->free_hc_list))
+	/* TAILQ_FOREACH_SAFE? */
+	qh = TAILQ_FIRST(&hsotg->periodic_sched_ready);
+	while (qh != NULL) {
+		if (LIST_EMPTY(&hsotg->free_hc_list))
 			break;
 		if (hsotg->core_params->uframe_sched > 0) {
 			if (hsotg->available_host_channels <= 1)
 				break;
 			hsotg->available_host_channels--;
 		}
-		qh = list_entry(qh_ptr, struct dwc2_qh, qh_list_entry);
 		if (dwc2_assign_and_init_hc(hsotg, qh))
 			break;
 
@@ -874,9 +872,11 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		 * Move the QH from the periodic ready schedule to the
 		 * periodic assigned schedule
 		 */
-		qh_ptr = qh_ptr->next;
-		list_move(&qh->qh_list_entry, &hsotg->periodic_sched_assigned);
+		qhn = TAILQ_NEXT(qh, qh_list_entry);
+		TAILQ_REMOVE(&hsotg->periodic_sched_ready, qh, qh_list_entry);
+		TAILQ_INSERT_TAIL(&hsotg->periodic_sched_assigned, qh, qh_list_entry);
 		ret_val = DWC2_TRANSACTION_PERIODIC;
+		qh = qhn;
 	}
 
 	/*
@@ -885,15 +885,14 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 	 * reserved for periodic transfers.
 	 */
 	num_channels = hsotg->core_params->host_channels;
-	qh_ptr = hsotg->non_periodic_sched_inactive.next;
-	while (qh_ptr != &hsotg->non_periodic_sched_inactive) {
+	qh = TAILQ_FIRST(&hsotg->non_periodic_sched_inactive);
+	while (qh != NULL) {
 		if (hsotg->core_params->uframe_sched <= 0 &&
 		    hsotg->non_periodic_channels >= num_channels -
 						hsotg->periodic_channels)
 			break;
-		if (list_empty(&hsotg->free_hc_list))
+		if (LIST_EMPTY(&hsotg->free_hc_list))
 			break;
-		qh = list_entry(qh_ptr, struct dwc2_qh, qh_list_entry);
 
 		/*
 		 * Check to see if this is a NAK'd retransmit, in which case
@@ -904,7 +903,7 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		if (qh->nak_frame != 0xffff &&
 		    dwc2_full_frame_num(qh->nak_frame) ==
 		    dwc2_full_frame_num(dwc2_hcd_get_frame_number(hsotg))) {
-			qh_ptr = qh_ptr->next;
+			qh = TAILQ_NEXT(qh, qh_list_entry);
 			continue;
 		} else {
 			qh->nak_frame = 0xffff;
@@ -923,9 +922,10 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		 * Move the QH from the non-periodic inactive schedule to the
 		 * non-periodic active schedule
 		 */
-		qh_ptr = qh_ptr->next;
-		list_move(&qh->qh_list_entry,
-			  &hsotg->non_periodic_sched_active);
+		qhn = TAILQ_NEXT(qh, qh_list_entry);
+		TAILQ_REMOVE(&hsotg->non_periodic_sched_inactive, qh, qh_list_entry);
+		TAILQ_INSERT_TAIL(&hsotg->non_periodic_sched_active, qh, qh_list_entry);
+		qh = qhn;
 
 		if (ret_val == DWC2_TRANSACTION_NONE)
 			ret_val = DWC2_TRANSACTION_NON_PERIODIC;
@@ -1019,8 +1019,7 @@ STATIC int dwc2_queue_transaction(struct dwc2_hsotg *hsotg,
  */
 STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 {
-	struct list_head *qh_ptr;
-	struct dwc2_qh *qh;
+	struct dwc2_qh *qh, *qhn;
 	u32 tx_status;
 	u32 fspcavail;
 	u32 gintmsk;
@@ -1045,8 +1044,8 @@ STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 			 fspcavail);
 	}
 
-	qh_ptr = hsotg->periodic_sched_assigned.next;
-	while (qh_ptr != &hsotg->periodic_sched_assigned) {
+	qh = TAILQ_FIRST(&hsotg->periodic_sched_assigned);
+	while (qh != NULL) {
 		tx_status = DWC2_READ_4(hsotg, HPTXSTS);
 		qspcavail = (tx_status & TXSTS_QSPCAVAIL_MASK) >>
 			    TXSTS_QSPCAVAIL_SHIFT;
@@ -1055,15 +1054,14 @@ STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 			break;
 		}
 
-		qh = list_entry(qh_ptr, struct dwc2_qh, qh_list_entry);
 		if (!qh->channel) {
-			qh_ptr = qh_ptr->next;
+			qh = TAILQ_NEXT(qh, qh_list_entry);
 			continue;
 		}
 
 		/* Make sure EP's TT buffer is clean before queueing qtds */
 		if (qh->tt_buffer_dirty) {
-			qh_ptr = qh_ptr->next;
+			qh = TAILQ_NEXT(qh, qh_list_entry);
 			continue;
 		}
 
@@ -1093,16 +1091,18 @@ STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 		 */
 		if (hsotg->core_params->dma_enable > 0 || status == 0 ||
 		    qh->channel->requests == qh->channel->multi_count) {
-			qh_ptr = qh_ptr->next;
+			qhn = TAILQ_NEXT(qh, qh_list_entry);
 			/*
 			 * Move the QH from the periodic assigned schedule to
 			 * the periodic queued schedule
 			 */
-			list_move(&qh->qh_list_entry,
-				  &hsotg->periodic_sched_queued);
+			TAILQ_REMOVE(&hsotg->periodic_sched_assigned, qh, qh_list_entry);
+			TAILQ_INSERT_TAIL(&hsotg->periodic_sched_queued, qh, qh_list_entry);
 
 			/* done queuing high bandwidth */
 			hsotg->queuing_high_bandwidth = 0;
+
+			qh = qhn;
 		}
 	}
 
@@ -1121,7 +1121,7 @@ STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 				 fspcavail);
 		}
 
-		if (!list_empty(&hsotg->periodic_sched_assigned) ||
+		if (!TAILQ_EMPTY(&hsotg->periodic_sched_assigned) ||
 		    no_queue_space || no_fifo_space) {
 			/*
 			 * May need to queue more transactions as the request
@@ -1159,7 +1159,6 @@ STATIC void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
  */
 STATIC void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 {
-	struct list_head *orig_qh_ptr;
 	struct dwc2_qh *qh;
 	u32 tx_status;
 	u32 qspcavail;
@@ -1186,9 +1185,10 @@ STATIC void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 	 * Keep track of the starting point. Skip over the start-of-list
 	 * entry.
 	 */
-	if (hsotg->non_periodic_qh_ptr == &hsotg->non_periodic_sched_active)
-		hsotg->non_periodic_qh_ptr = hsotg->non_periodic_qh_ptr->next;
-	orig_qh_ptr = hsotg->non_periodic_qh_ptr;
+	if (hsotg->non_periodic_qh_ptr == NULL) {
+		hsotg->non_periodic_qh_ptr = TAILQ_FIRST(&hsotg->non_periodic_sched_active);
+	}
+	qh = hsotg->non_periodic_qh_ptr;
 
 	/*
 	 * Process once through the active list or until no more space is
@@ -1203,8 +1203,6 @@ STATIC void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 			break;
 		}
 
-		qh = list_entry(hsotg->non_periodic_qh_ptr, struct dwc2_qh,
-				qh_list_entry);
 		if (!qh->channel)
 			goto next;
 
@@ -1223,13 +1221,12 @@ STATIC void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 			break;
 		}
 next:
-		/* Advance to next QH, skipping start-of-list entry */
-		hsotg->non_periodic_qh_ptr = hsotg->non_periodic_qh_ptr->next;
-		if (hsotg->non_periodic_qh_ptr ==
-				&hsotg->non_periodic_sched_active)
-			hsotg->non_periodic_qh_ptr =
-					hsotg->non_periodic_qh_ptr->next;
-	} while (hsotg->non_periodic_qh_ptr != orig_qh_ptr);
+		/* Advance to next QH, wrapping to the start if we hit the end */
+		qh = TAILQ_NEXT(qh, qh_list_entry);
+		if (qh == NULL)
+			qh = TAILQ_FIRST(&hsotg->non_periodic_sched_active);
+	} while ((qh != hsotg->non_periodic_qh_ptr) && (hsotg->non_periodic_qh_ptr != NULL));
+	hsotg->non_periodic_qh_ptr = qh;
 
 	if (hsotg->core_params->dma_enable <= 0) {
 		tx_status = DWC2_READ_4(hsotg, GNPTXSTS);
@@ -1290,13 +1287,13 @@ void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 	/* Process host channels associated with periodic transfers */
 	if ((tr_type == DWC2_TRANSACTION_PERIODIC ||
 	     tr_type == DWC2_TRANSACTION_ALL) &&
-	    !list_empty(&hsotg->periodic_sched_assigned))
+	    !TAILQ_EMPTY(&hsotg->periodic_sched_assigned))
 		dwc2_process_periodic_channels(hsotg);
 
 	/* Process host channels associated with non-periodic transfers */
 	if (tr_type == DWC2_TRANSACTION_NON_PERIODIC ||
 	    tr_type == DWC2_TRANSACTION_ALL) {
-		if (!list_empty(&hsotg->non_periodic_sched_active)) {
+		if (!TAILQ_EMPTY(&hsotg->non_periodic_sched_active)) {
 			dwc2_process_non_periodic_channels(hsotg);
 		} else {
 			/*
@@ -1310,6 +1307,7 @@ void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 		}
 	}
 }
+
 
 void
 dwc2_conn_id_status_change(void *data)
@@ -1882,7 +1880,7 @@ void dwc2_hcd_dump_state(struct dwc2_hsotg *hsotg)
 		if (!(chan->xfer_started && chan->qh))
 			continue;
 
-		list_for_each_entry(qtd, &chan->qh->qtd_list, qtd_list_entry) {
+		TAILQ_FOREACH(qtd, &chan->qh->qtd_list, qtd_list_entry) {
 			if (!qtd->in_process)
 				break;
 			urb = qtd->urb;
@@ -2233,20 +2231,20 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 	timeout_set(&hsotg->wkp_timer, dwc2_wakeup_detected, hsotg);
 
 	/* Initialize the non-periodic schedule */
-	INIT_LIST_HEAD(&hsotg->non_periodic_sched_inactive);
-	INIT_LIST_HEAD(&hsotg->non_periodic_sched_active);
+	TAILQ_INIT(&hsotg->non_periodic_sched_inactive);
+	TAILQ_INIT(&hsotg->non_periodic_sched_active);
 
 	/* Initialize the periodic schedule */
-	INIT_LIST_HEAD(&hsotg->periodic_sched_inactive);
-	INIT_LIST_HEAD(&hsotg->periodic_sched_ready);
-	INIT_LIST_HEAD(&hsotg->periodic_sched_assigned);
-	INIT_LIST_HEAD(&hsotg->periodic_sched_queued);
+	TAILQ_INIT(&hsotg->periodic_sched_inactive);
+	TAILQ_INIT(&hsotg->periodic_sched_ready);
+	TAILQ_INIT(&hsotg->periodic_sched_assigned);
+	TAILQ_INIT(&hsotg->periodic_sched_queued);
 
 	/*
 	 * Create a host channel descriptor for each host channel implemented
 	 * in the controller. Initialize the channel descriptor array.
 	 */
-	INIT_LIST_HEAD(&hsotg->free_hc_list);
+	LIST_INIT(&hsotg->free_hc_list);
 	num_channels = hsotg->core_params->host_channels;
 	memset(&hsotg->hc_ptr_array[0], 0, sizeof(hsotg->hc_ptr_array));
 

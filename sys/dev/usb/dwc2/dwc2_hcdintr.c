@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdintr.c,v 1.5 2015/02/12 06:46:23 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcdintr.c,v 1.6 2015/06/28 11:48:18 jmatthew Exp $	*/
 /*	$NetBSD: dwc2_hcdintr.c,v 1.11 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.11 2014/11/24 10:14:14 skrll Exp 
 #endif
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/pool.h>
 
@@ -55,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.11 2014/11/24 10:14:14 skrll Exp 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-
-#include <dev/usb/dwc2/linux/kernel.h>
 
 #include <dev/usb/dwc2/dwc2.h>
 #include <dev/usb/dwc2/dwc2var.h>
@@ -125,8 +124,7 @@ STATIC void dwc2_hc_handle_tt_clear(struct dwc2_hsotg *hsotg,
  */
 STATIC void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 {
-	struct list_head *qh_entry;
-	struct dwc2_qh *qh;
+	struct dwc2_qh *qh, *qhn;
 	enum dwc2_transaction_type tr_type;
 
 #ifdef DEBUG_SOF
@@ -138,17 +136,18 @@ STATIC void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 	dwc2_track_missed_sofs(hsotg);
 
 	/* Determine whether any periodic QHs should be executed */
-	qh_entry = hsotg->periodic_sched_inactive.next;
-	while (qh_entry != &hsotg->periodic_sched_inactive) {
-		qh = list_entry(qh_entry, struct dwc2_qh, qh_list_entry);
-		qh_entry = qh_entry->next;
-		if (dwc2_frame_num_le(qh->sched_frame, hsotg->frame_number))
+	qh = TAILQ_FIRST(&hsotg->periodic_sched_inactive);
+	while (qh != NULL) {
+		qhn = TAILQ_NEXT(qh, qh_list_entry);
+		if (dwc2_frame_num_le(qh->sched_frame, hsotg->frame_number)) {
 			/*
 			 * Move QH to the ready list to be executed next
 			 * (micro)frame
 			 */
-			list_move(&qh->qh_list_entry,
-				  &hsotg->periodic_sched_ready);
+			TAILQ_REMOVE(&hsotg->periodic_sched_inactive, qh, qh_list_entry);
+			TAILQ_INSERT_TAIL(&hsotg->periodic_sched_ready, qh, qh_list_entry);
+		}
+		qh = qhn;
 	}
 	tr_type = dwc2_hcd_select_transactions(hsotg);
 	if (tr_type != DWC2_TRANSACTION_NONE)
@@ -660,12 +659,12 @@ STATIC void dwc2_deactivate_qh(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 		dev_vdbg(hsotg->dev, "  %s(%p,%p,%d)\n", __func__,
 			 hsotg, qh, free_qtd);
 
-	if (list_empty(&qh->qtd_list)) {
+	if (TAILQ_EMPTY(&qh->qtd_list)) {
 		dev_dbg(hsotg->dev, "## QTD list empty ##\n");
 		goto no_qtd;
 	}
 
-	qtd = list_first_entry(&qh->qtd_list, struct dwc2_qtd, qtd_list_entry);
+	qtd = TAILQ_FIRST(&qh->qtd_list);
 
 	if (qtd->complete_split)
 		continue_split = 1;
@@ -681,8 +680,8 @@ STATIC void dwc2_deactivate_qh(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 no_qtd:
 	if (qh->channel)
 		qh->channel->align_buf = 0;
-	qh->channel = NULL;
 	dwc2_hcd_qh_deactivate(hsotg, qh, continue_split);
+	qh->channel = NULL;
 }
 
 /**
@@ -753,10 +752,11 @@ cleanup:
 	 * function clears the channel interrupt enables and conditions, so
 	 * there's no need to clear the Channel Halted interrupt separately.
 	 */
-	if (!list_empty(&chan->hc_list_entry))
-		list_del(&chan->hc_list_entry);
+	if (chan->in_freelist != 0)
+		LIST_REMOVE(chan, hc_list_entry);
 	dwc2_hc_cleanup(hsotg, chan);
-	list_add_tail(&chan->hc_list_entry, &hsotg->free_hc_list);
+	LIST_INSERT_HEAD(&hsotg->free_hc_list, chan, hc_list_entry);
+	chan->in_freelist = 1;
 
 	if (hsotg->core_params->uframe_sched > 0) {
 		hsotg->available_host_channels++;
@@ -837,8 +837,8 @@ STATIC void dwc2_halt_channel(struct dwc2_hsotg *hsotg,
 			 * halt to be queued when the periodic schedule is
 			 * processed.
 			 */
-			list_move(&chan->qh->qh_list_entry,
-				  &hsotg->periodic_sched_assigned);
+			TAILQ_REMOVE(&hsotg->periodic_sched_queued, chan->qh, qh_list_entry);
+			TAILQ_INSERT_TAIL(&hsotg->periodic_sched_assigned, chan->qh, qh_list_entry);
 
 			/*
 			 * Make sure the Periodic Tx FIFO Empty interrupt is
@@ -2000,7 +2000,7 @@ STATIC void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
 		return;
 	}
 
-	if (list_empty(&chan->qh->qtd_list)) {
+	if (TAILQ_EMPTY(&chan->qh->qtd_list)) {
 		/*
 		 * TODO: Will this ever happen with the
 		 * DWC2_HC_XFER_URB_DEQUEUE handling above?
@@ -2016,8 +2016,7 @@ STATIC void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
 		return;
 	}
 
-	qtd = list_first_entry(&chan->qh->qtd_list, struct dwc2_qtd,
-			       qtd_list_entry);
+	qtd = TAILQ_FIRST(&chan->qh->qtd_list);
 
 	if (hsotg->core_params->dma_enable <= 0) {
 		if ((hcint & HCINTMSK_CHHLTD) && hcint != HCINTMSK_CHHLTD)

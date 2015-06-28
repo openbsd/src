@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.h,v 1.12 2015/06/08 08:47:38 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2_hcd.h,v 1.13 2015/06/28 11:48:18 jmatthew Exp $	*/
 /*	$NetBSD: dwc2_hcd.h,v 1.9 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -161,8 +161,9 @@ struct dwc2_host_chan {
 	enum dwc2_halt_status halt_status;
 	u32 hcint;
 	struct dwc2_qh *qh;
-	struct list_head hc_list_entry;
+	LIST_ENTRY(dwc2_host_chan) hc_list_entry;
 	dma_addr_t desc_list_addr;
+	int in_freelist;
 };
 
 struct dwc2_hcd_pipe_info {
@@ -286,14 +287,15 @@ struct dwc2_qh {
 	struct usb_dma dw_align_buf_usbdma;
 	u8 *dw_align_buf;
 	dma_addr_t dw_align_buf_dma;
-	struct list_head qtd_list;
+	TAILQ_HEAD(, dwc2_qtd) qtd_list;
 	struct dwc2_host_chan *channel;
-	struct list_head qh_list_entry;
+	TAILQ_ENTRY(dwc2_qh) qh_list_entry;
 	struct usb_dma desc_list_usbdma;
 	struct dwc2_hcd_dma_desc *desc_list;
 	dma_addr_t desc_list_dma;
 	u32 *n_bytes;
 	unsigned tt_buffer_dirty:1;
+	unsigned linked:1;
 };
 
 /**
@@ -354,7 +356,7 @@ struct dwc2_qtd {
 	u16 isoc_frame_index_last;
 	struct dwc2_hcd_urb *urb;
 	struct dwc2_qh *qh;
-	struct list_head qtd_list_entry;
+	TAILQ_ENTRY(dwc2_qtd) qtd_list_entry;
 };
 
 #ifdef DEBUG
@@ -628,7 +630,7 @@ STATIC_INLINE int dwc2_hcd_is_bandwidth_allocated(struct dwc2_hsotg *hsotg,
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
 	struct dwc2_qh *qh = dpipe->priv;
 
-	if (qh && !list_empty(&qh->qh_list_entry))
+	if (qh && qh->linked)
 		return 1;
 
 	return 0;

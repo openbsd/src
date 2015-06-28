@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.h,v 1.8 2015/02/12 11:38:42 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_core.h,v 1.9 2015/06/28 11:48:18 jmatthew Exp $	*/
 /*	$NetBSD: dwc2_core.h,v 1.5 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -48,8 +48,6 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
-
-#include <dev/usb/dwc2/linux/list.h>
 
 #include <dev/usb/dwc2/dwc2_hw.h>
 
@@ -313,6 +311,8 @@ struct dwc2_core_dma_config {
 	void *set_dma_addr_data;
 };
 
+TAILQ_HEAD(dwc2_qh_list, dwc2_qh);
+
 /**
  * struct dwc2_hsotg - Holds the state of the driver, including the non-periodic
  * and periodic schedules
@@ -441,13 +441,13 @@ struct dwc2_hsotg {
 		} b;
 	} flags;
 
-	struct list_head non_periodic_sched_inactive;
-	struct list_head non_periodic_sched_active;
-	struct list_head *non_periodic_qh_ptr;
-	struct list_head periodic_sched_inactive;
-	struct list_head periodic_sched_ready;
-	struct list_head periodic_sched_assigned;
-	struct list_head periodic_sched_queued;
+	struct dwc2_qh_list non_periodic_sched_inactive;
+	struct dwc2_qh_list non_periodic_sched_active;
+	struct dwc2_qh *non_periodic_qh_ptr;
+	struct dwc2_qh_list periodic_sched_inactive;
+	struct dwc2_qh_list periodic_sched_ready;
+	struct dwc2_qh_list periodic_sched_assigned;
+	struct dwc2_qh_list periodic_sched_queued;
 	u16 periodic_usecs;
 	u16 frame_usecs[8];
 	u16 frame_number;
@@ -462,7 +462,7 @@ struct dwc2_hsotg {
 	int dumped_frame_num_array;
 #endif
 
-	struct list_head free_hc_list;
+	LIST_HEAD(, dwc2_host_chan) free_hc_list;
 	int periodic_channels;
 	int non_periodic_channels;
 	int available_host_channels;

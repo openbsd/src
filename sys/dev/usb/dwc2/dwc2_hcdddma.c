@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdddma.c,v 1.9 2015/02/12 06:46:23 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2_hcdddma.c,v 1.10 2015/06/28 11:48:18 jmatthew Exp $	*/
 /*	$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $
 #endif
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -59,9 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-
-#include <dev/usb/dwc2/linux/kernel.h>
-#include <dev/usb/dwc2/linux/list.h>
 
 #include <dev/usb/dwc2/dwc2.h>
 #include <dev/usb/dwc2/dwc2var.h>
@@ -313,11 +311,12 @@ STATIC void dwc2_release_channel_ddma(struct dwc2_hsotg *hsotg,
 	 * device disconnect. See channel cleanup in dwc2_hcd_disconnect().
 	 */
 	if (chan->qh) {
-		if (!list_empty(&chan->hc_list_entry))
-			list_del(&chan->hc_list_entry);
+		if (chan->in_freelist != 0)
+			LIST_REMOVE(chan, hc_list_entry);
 		dwc2_hc_cleanup(hsotg, chan);
-		list_add_tail(&chan->hc_list_entry, &hsotg->free_hc_list);
+		LIST_INSERT_HEAD(&hsotg->free_hc_list, chan, hc_list_entry);
 		chan->qh = NULL;
+		chan->in_freelist = 1;
 	}
 
 	qh->channel = NULL;
@@ -583,7 +582,7 @@ STATIC void dwc2_init_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 	max_xfer_size = qh->dev_speed == USB_SPEED_HIGH ?
 			MAX_ISOC_XFER_SIZE_HS : MAX_ISOC_XFER_SIZE_FS;
 
-	list_for_each_entry(qtd, &qh->qtd_list, qtd_list_entry) {
+	TAILQ_FOREACH(qtd, &qh->qtd_list, qtd_list_entry) {
 		while (qh->ntd < ntd_max && qtd->isoc_frame_index_last <
 						qtd->urb->packet_count) {
 			if (n_desc > 1)
@@ -704,7 +703,7 @@ STATIC void dwc2_init_non_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 	 * there is always one QTD active.
 	 */
 
-	list_for_each_entry(qtd, &qh->qtd_list, qtd_list_entry) {
+	TAILQ_FOREACH(qtd, &qh->qtd_list, qtd_list_entry) {
 		dev_vdbg(hsotg->dev, "qtd=%p\n", qtd);
 
 		if (n_desc) {
@@ -899,7 +898,7 @@ STATIC void dwc2_complete_isoc_xfer_ddma(struct dwc2_hsotg *hsotg,
 	idx = qh->td_first;
 
 	if (chan->halt_status == DWC2_HC_XFER_URB_DEQUEUE) {
-		list_for_each_entry(qtd, &qh->qtd_list, qtd_list_entry)
+		TAILQ_FOREACH(qtd, &qh->qtd_list, qtd_list_entry)
 			qtd->in_process = 0;
 		return;
 	}
@@ -918,8 +917,7 @@ STATIC void dwc2_complete_isoc_xfer_ddma(struct dwc2_hsotg *hsotg,
 		int err = halt_status == DWC2_HC_XFER_AHB_ERR ?
 			  -EIO : -EOVERFLOW;
 
-		list_for_each_entry_safe(qtd, qtd_tmp, &qh->qtd_list,
-					 qtd_list_entry) {
+		TAILQ_FOREACH_SAFE(qtd, &qh->qtd_list, qtd_list_entry, qtd_tmp) {
 			if (qtd->urb) {
 				for (idx = 0; idx < qtd->urb->packet_count;
 				     idx++) {
@@ -936,7 +934,7 @@ STATIC void dwc2_complete_isoc_xfer_ddma(struct dwc2_hsotg *hsotg,
 		return;
 	}
 
-	list_for_each_entry_safe(qtd, qtd_tmp, &qh->qtd_list, qtd_list_entry) {
+	TAILQ_FOREACH_SAFE(qtd, &qh->qtd_list, qtd_list_entry, qtd_tmp) {
 		if (!qtd->in_process)
 			break;
 		do {
@@ -1110,22 +1108,20 @@ STATIC void dwc2_complete_non_isoc_xfer_ddma(struct dwc2_hsotg *hsotg,
 					     int chnum,
 					     enum dwc2_halt_status halt_status)
 {
-	struct list_head *qtd_item, *qtd_tmp;
 	struct dwc2_qh *qh = chan->qh;
-	struct dwc2_qtd *qtd = NULL;
+	struct dwc2_qtd *qtd = NULL, *qtd_tmp;
 	int xfer_done;
 	int desc_num = 0;
 
 	if (chan->halt_status == DWC2_HC_XFER_URB_DEQUEUE) {
-		list_for_each_entry(qtd, &qh->qtd_list, qtd_list_entry)
+		TAILQ_FOREACH(qtd, &qh->qtd_list, qtd_list_entry)
 			qtd->in_process = 0;
 		return;
 	}
 
-	list_for_each_safe(qtd_item, qtd_tmp, &qh->qtd_list) {
+	TAILQ_FOREACH_SAFE(qtd, &qh->qtd_list, qtd_list_entry, qtd_tmp) {
 		int i;
 
-		qtd = list_entry(qtd_item, struct dwc2_qtd, qtd_list_entry);
 		xfer_done = 0;
 
 		for (i = 0; i < qtd->n_desc; i++) {
@@ -1192,7 +1188,7 @@ void dwc2_hcd_complete_xfer_ddma(struct dwc2_hsotg *hsotg,
 
 		/* Release the channel if halted or session completed */
 		if (halt_status != DWC2_HC_XFER_COMPLETE ||
-		    list_empty(&qh->qtd_list)) {
+		    TAILQ_EMPTY(&qh->qtd_list)) {
 			/* Halt the channel if session completed */
 			if (halt_status == DWC2_HC_XFER_COMPLETE)
 				dwc2_hc_halt(hsotg, chan, halt_status);
@@ -1200,8 +1196,8 @@ void dwc2_hcd_complete_xfer_ddma(struct dwc2_hsotg *hsotg,
 			dwc2_hcd_qh_unlink(hsotg, qh);
 		} else {
 			/* Keep in assigned schedule to continue transfer */
-			list_move(&qh->qh_list_entry,
-				  &hsotg->periodic_sched_assigned);
+			TAILQ_REMOVE(&hsotg->periodic_sched_queued, qh, qh_list_entry);
+			TAILQ_INSERT_TAIL(&hsotg->periodic_sched_assigned, qh, qh_list_entry);
 			continue_isoc_xfer = 1;
 		}
 		/*
@@ -1218,7 +1214,7 @@ void dwc2_hcd_complete_xfer_ddma(struct dwc2_hsotg *hsotg,
 		dwc2_release_channel_ddma(hsotg, qh);
 		dwc2_hcd_qh_unlink(hsotg, qh);
 
-		if (!list_empty(&qh->qtd_list)) {
+		if (!TAILQ_EMPTY(&qh->qtd_list)) {
 			/*
 			 * Add back to inactive non-periodic schedule on normal
 			 * completion
