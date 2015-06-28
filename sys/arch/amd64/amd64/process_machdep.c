@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.13 2015/05/18 19:59:27 guenther Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.14 2015/06/28 18:54:54 guenther Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -177,6 +177,9 @@ process_write_regs(struct proc *p, struct reg *regs)
         tf->tf_rflags = regs->r_rflags;
         tf->tf_cs  = regs->r_cs;
         tf->tf_ss  = regs->r_ss;
+
+	/* force target to return via iretq so all registers are updated */
+	p->p_md.md_flags |= MDP_IRET;
 
 	return (0);
 }

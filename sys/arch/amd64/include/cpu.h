@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.95 2015/06/13 21:41:42 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.96 2015/06/28 18:54:54 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -316,7 +316,6 @@ struct pcb;
 void	savectx(struct pcb *);
 void	switch_exit(struct proc *, void (*)(struct proc *));
 void	proc_trampoline(void);
-void	child_trampoline(void);
 
 /* clock.c */
 extern void (*initclock_func)(void);
