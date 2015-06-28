@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 2015/01/12 23:39:57 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.17 2015/06/28 11:52:57 jmatthew Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -51,9 +51,13 @@ cnmac*		at cn30xxgmx?
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 
-#octhci*	at iobus0
-#usb*		at octhci?
-#uhub*		at usb?
+dwctwo0		at iobus0
+usb*		at dwctwo?
+uhub*		at usb?
+umass*		at uhub?
+
+scsibus*	at scsi?
+sd*		at scsibus?
 
 rgephy*		at mii?
 ukphy*		at mii?
