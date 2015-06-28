@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.66 2015/06/23 14:19:21 bluhm Exp $	*/
+/*	$OpenBSD: locore.S,v 1.67 2015/06/28 01:16:28 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1039,33 +1039,33 @@ IDTVEC(syscall)
 	movq	$(GSEL(GUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)
 	movq	$2,TF_ERR(%rsp)		/* ignored */
-	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 
 	movq	CPUVAR(CURPROC),%r14
 	movq	%rsp,P_MD_REGS(%r14)	# save pointer to frame
 	andl	$~MDP_IRET,P_MD_FLAGS(%r14)
 	movq	%rsp,%rdi
 	call	_C_LABEL(syscall)
-1:	/* Check for ASTs on exit to user mode. */
+
+.Lsyscall_check_asts:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%r11)
 	je	2f
-	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r11)
 	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	1b
+	call	_C_LABEL(ast)
+	jmp	.Lsyscall_check_asts
+
 2:
-	sti
-	testl	$MDP_IRET, P_MD_FLAGS(%r14)
-	jne	iret_return;
-syscall_return:
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
-	jne	3f
+	jne	.Lsyscall_spl_not_lowered
 #endif /* DIAGNOSTIC */
+
+	/* Could registers have been changed that require an iretq? */
+	testl	$MDP_IRET, P_MD_FLAGS(%r14)
+	jne	intr_fast_exit
 
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
@@ -1090,7 +1090,8 @@ syscall_return:
 	sysretq
 
 #ifdef DIAGNOSTIC
-3:	movabsq	$4f, %rdi
+.Lsyscall_spl_not_lowered:
+	movabsq	$4f, %rdi
 	movl	TF_RAX(%rsp),%esi
 	movl	TF_RDI(%rsp),%edx
 	movl	%ebx,%ecx
@@ -1101,7 +1102,7 @@ syscall_return:
 	int	$3
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	1b
+	jmp	.Lsyscall_check_asts
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
 
@@ -1123,20 +1124,14 @@ NENTRY(child_trampoline)
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	movq	%r13,%rdi
 	call	*%r12
-	jmp	syscall_return
+	movq	CPUVAR(CURPROC),%r14
+	jmp	.Lsyscall_check_asts
 
 
 /*
  * Return via iretq, for real interrupts and signal returns
  */
-iret_return:
-1:
-#ifdef DIAGNOSTIC
-	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
-	jne	3f
-#endif /* DIAGNOSTIC */
-	.globl	intr_fast_exit
-intr_fast_exit:
+NENTRY(intr_fast_exit)
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_R8(%rsp),%r8
@@ -1163,19 +1158,6 @@ intr_fast_exit:
 	.globl	_C_LABEL(doreti_iret)
 _C_LABEL(doreti_iret):
 	iretq
-
-#ifdef DIAGNOSTIC
-3:	sti
-	movabsq	$4f, %rdi
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
-	jmp	2b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-#endif /* DIAGNOSTIC */
 
 
 ENTRY(pagezero)

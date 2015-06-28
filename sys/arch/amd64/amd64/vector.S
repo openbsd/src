@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.38 2015/05/18 19:59:27 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.39 2015/06/28 01:16:29 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -260,9 +260,8 @@ calltrap:
 	jz	1f
 5:	CLEAR_ASTPENDING(%r11)
 	sti
-	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp, %rdi
-	call	_C_LABEL(trap)
+	call	_C_LABEL(ast)
 	jmp	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
@@ -326,12 +325,12 @@ _C_LABEL(x2apic_eoi):
 IDTVEC(recurse_lapic_ipi)
 	INTR_RECURSE_HWFRAME
 	pushq	$0		
-	pushq	$T_ASTFLT
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY		
 	jmp	1f
 IDTVEC(intr_lapic_ipi)
 	pushq	$0		
-	pushq	$T_ASTFLT
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY		
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -410,12 +409,12 @@ IDTVEC(ipi_invlrange)
 IDTVEC(recurse_lapic_ltimer)
 	INTR_RECURSE_HWFRAME
 	pushq	$0		
-	pushq	$T_ASTFLT
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY		
 	jmp	1f
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
-	pushq	$T_ASTFLT
+	subq	$8,%rsp			/* unused __if_trapno */
 	INTRENTRY		
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -452,8 +451,7 @@ IDTVEC(resume_lapic_ltimer)
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 IDTVEC(recurse_##name##num)						;\
 	INTR_RECURSE_HWFRAME						;\
-	subq	$8,%rsp							;\
-	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	subq	$16,%rsp		/* space for __if_{trapno,err} */;\
 	INTRENTRY							;\
 IDTVEC(resume_##name##num)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
@@ -463,18 +461,18 @@ IDTVEC(resume_##name##num)						\
 	jmp	1f							;\
 IDTVEC(intr_##name##num)						;\
 	pushq	$0			/* dummy error code */		;\
-	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	subq	$8,%rsp			/* unused __if_trapno */	;\
 	INTRENTRY							;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
+	incl	_C_LABEL(uvmexp)+V_INTR	/* statistical info */		;\
 	testq	%r14,%r14						;\
 	jz	9f			/* stray */			;\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
 	movl	CPUVAR(ILEVEL),%r13d					;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	_C_LABEL(uvmexp)+V_INTR	/* statistical info */		;\
 1:									\
 	pushq	%r13							;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\

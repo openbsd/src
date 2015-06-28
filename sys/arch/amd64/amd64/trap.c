@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2015/04/18 05:14:05 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2015/06/28 01:16:28 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -98,13 +98,14 @@
 #endif
 
 void trap(struct trapframe *);
+void ast(struct trapframe *);
 void syscall(struct trapframe *);
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
-	"asynchronous system trap",		/*  3 T_ASTFLT */
+	"reserved trap",			/*  3 T_RESERVED */
 	"protection fault",			/*  4 T_PROTFLT */
 	"trace trap",				/*  5 T_TRCTRAP */
 	"page fault",				/*  6 T_PAGEFLT */
@@ -121,7 +122,6 @@ const char *trap_type[] = {
 	"stack fault",				/* 17 T_STKFLT */
 	"machine check",			/* 18 T_MCA */
 	"SSE FP exception",			/* 19 T_XMM */
-	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = nitems(trap_type);
 
@@ -142,7 +142,6 @@ static void frame_dump(struct trapframe *);
  * routines that prepare a suitable stack frame, and restore this
  * frame after the exception has been processed.
  */
-/*ARGSUSED*/
 void
 trap(struct trapframe *frame)
 {
@@ -278,12 +277,6 @@ copyfault:
 		trapsignal(p, SIGILL, type & ~T_USER, ILL_COPROC, sv);
 		KERNEL_UNLOCK();
 		goto out;
-
-	case T_ASTFLT|T_USER:		/* Allow process switch */
-		uvmexp.softs++;
-		mi_ast(p, curcpu()->ci_want_resched);
-		goto out;
-
 	case T_BOUND|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;
 		KERNEL_LOCK();
@@ -479,6 +472,27 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
 }
 #endif
+
+
+/*
+ * ast(frame):
+ *	AST handler.  This is called from assembly language stubs when
+ *	returning to userspace after a syscall or interrupt.
+ */
+void
+ast(struct trapframe *frame)
+{
+	struct proc *p = curproc;
+
+	uvmexp.traps++;
+	KASSERT(!KERNELMODE(frame->tf_cs, frame->tf_rflags));
+	p->p_md.md_regs = frame;
+	refreshcreds(p);
+	uvmexp.softs++;
+	mi_ast(p, curcpu()->ci_want_resched);
+	userret(p);
+}
+
 
 /*
  * syscall(frame):
