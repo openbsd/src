@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.10 2014/11/14 09:56:06 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.11 2015/06/29 04:16:32 jsg Exp $	*/
 
 /* Public Domain */
 
@@ -192,6 +192,20 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 	*uip &= ~v;
 	restore_interrupts(cpsr);
 }
+
+#if defined(CPU_ARMv7)
+#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
+
+#define membar_enter()		__membar("dmb sy")
+#define membar_exit()		__membar("dmb sy")
+#define membar_producer()	__membar("dmb st")
+#define membar_consumer()	__membar("dmb sy")
+#define membar_sync()		__membar("dmb sy")
+
+#define virtio_membar_producer()	__membar("dmb st")
+#define virtio_membar_consumer()	__membar("dmb sy")
+#define virtio_membar_sync()		__membar("dmb sy")
+#endif /* CPU_ARMv7 */
 
 #endif /* defined(_KERNEL) */
 #endif /* _ARM_ATOMIC_H_ */
