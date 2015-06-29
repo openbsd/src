@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.50 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.51 2015/06/29 10:24:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -685,7 +685,6 @@ xe_intr(arg)
 		}
 		tempint = xe_get(sc);
 		recvcount += tempint;
-		ifp->if_ibytes += tempint;
 		esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 		    sc->sc_offset + ESR);
 		rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
