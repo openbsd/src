@@ -1884,6 +1884,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/lock.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/mplock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/mutex.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pcb.ph

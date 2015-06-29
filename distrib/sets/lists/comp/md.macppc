@@ -621,6 +621,7 @@
 ./usr/include/powerpc/kcore.h
 ./usr/include/powerpc/limits.h
 ./usr/include/powerpc/lock.h
+./usr/include/powerpc/mplock.h
 ./usr/include/powerpc/mutex.h
 ./usr/include/powerpc/param.h
 ./usr/include/powerpc/pcb.h
