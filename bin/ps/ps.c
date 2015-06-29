@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.64 2015/04/09 19:48:25 okan Exp $	*/
+/*	$OpenBSD: ps.c,v 1.65 2015/06/29 15:03:33 bluhm Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -60,7 +60,6 @@ extern char *__progname;
 struct varent *vhead;
 
 int	eval;			/* exit value */
-int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
@@ -136,8 +135,7 @@ main(int argc, char *argv[])
 			all = 1;
 			break;
 		case 'C':
-			rawcpu = 1;
-			break;
+			break;			/* no-op */
 		case 'c':
 			commandonly = 1;
 			break;
@@ -477,8 +475,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-AaCceHhjkLlmrSTuvwx] [-M core] [-N system] [-O fmt] [-o fmt] [-p pid]\n",
-	    __progname);	
+	    "usage: %s [-AaceHhjkLlmrSTuvwx] [-M core] [-N system] [-O fmt] [-o fmt] [-p pid]\n",
+	    __progname);
 	(void)fprintf(stderr,
 	    "%-*s[-t tty] [-U username] [-W swap]\n", (int)strlen(__progname) + 8, "");
 	exit(1);

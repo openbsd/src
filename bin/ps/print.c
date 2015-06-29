@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.60 2015/03/15 00:41:27 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.61 2015/06/29 15:03:33 bluhm Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -523,28 +523,12 @@ cputime(const struct kinfo_proc *kp, VARENT *ve)
 double
 getpcpu(const struct kinfo_proc *kp)
 {
-	double d;
-
 	if (fscale == 0)
 		return (0.0);
 
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
-	/* XXX - I don't like this */
-	if (kp->p_swtime == 0)
-		return (0.0);
-	if (rawcpu)
-		return (100.0 * fxtofl(kp->p_pctcpu));
-
-	d = kp->p_swtime * log(fxtofl(ccpu));
-	if (d < -700.0)
-		d = 0.0;		/* avoid IEEE underflow */
-	else
-		d = exp(d);
-	if (d == 1.0)
-		return (0.0);
-	return (100.0 * fxtofl(kp->p_pctcpu) /
-		(1.0 - d));
+	return (100.0 * fxtofl(kp->p_pctcpu));
 }
 
 void
