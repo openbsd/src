@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.261 2015/06/24 09:40:55 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.262 2015/06/29 10:32:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1460,8 +1460,6 @@ carp_input(struct mbuf *m)
 
 		return (0);
 	}
-
-	ifp0->if_ibytes += m->m_pkthdr.len;
 
 	/*
 	 * Clear mcast if received on a carp IP balanced address.

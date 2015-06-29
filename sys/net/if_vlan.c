@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.131 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.132 2015/06/29 10:32:29 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -281,8 +281,6 @@ vlan_input(struct mbuf *m)
 		/* Skip non-VLAN packets. */
 		return (0);
 	}
-
-	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/* From now on ether_vtag is fine */
 	tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);

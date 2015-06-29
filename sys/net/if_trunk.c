@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.104 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.105 2015/06/29 10:32:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1100,8 +1100,6 @@ trunk_input(struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 	if (ETHER_IS_MULTICAST(eh->ether_dhost))
 		ifp->if_imcasts++;
-
-	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/* Should be checked by the caller */
 	if (ifp->if_type != IFT_IEEE8023ADLAG) {

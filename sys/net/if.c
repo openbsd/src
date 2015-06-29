@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.345 2015/06/25 09:20:20 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.346 2015/06/29 10:32:29 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -494,15 +494,18 @@ void
 if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
 	struct mbuf *m;
+	size_t ibytes = 0;
 
 	splassert(IPL_NET);
-
-	ifp->if_ipackets += ml_len(ml);
 
 	MBUF_LIST_FOREACH(ml, m) {
 		m->m_pkthdr.ph_ifidx = ifp->if_index;
 		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+		ibytes += m->m_pkthdr.len;
 	}
+
+	ifp->if_ipackets += ml_len(ml);
+	ifp->if_ibytes += ibytes;
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {

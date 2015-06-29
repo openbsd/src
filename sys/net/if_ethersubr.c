@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.210 2015/06/25 09:22:36 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.211 2015/06/29 10:32:29 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -319,8 +319,6 @@ ether_input(struct mbuf *m)
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	}
-
-	ifp->if_ibytes += m->m_pkthdr.len + sizeof(*eh);
 
 	etype = ntohs(eh->ether_type);
 
