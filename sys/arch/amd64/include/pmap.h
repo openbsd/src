@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.56 2015/06/24 07:18:13 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.57 2015/06/29 02:54:51 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -279,9 +279,6 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 struct pmap {
 	struct mutex pm_mtx;
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
-#define pm_obj_l1 pm_obj[0]
-#define pm_obj_l2 pm_obj[1]
-#define pm_obj_l3 pm_obj[2]
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
