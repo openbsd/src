@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.61 2015/06/22 10:29:18 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.62 2015/06/29 18:33:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2186,6 +2186,7 @@ xhci_root_ctrl_start(struct usbd_xfer *xfer)
 			XOWRITE4(sc, port, v | XHCI_PS_PEC);
 			break;
 		case UHF_C_PORT_SUSPEND:
+		case UHF_C_PORT_LINK_STATE:
 			XOWRITE4(sc, port, v | XHCI_PS_PLC);
 			break;
 		case UHF_C_PORT_OVER_CURRENT:
