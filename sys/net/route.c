@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.214 2015/06/22 09:07:11 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.215 2015/06/29 11:04:16 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1087,6 +1087,16 @@ rt_checkgate(struct ifnet *ifp, struct rtentry *rt, struct sockaddr *dst,
 			    RT_REPORT|RT_RESOLVE, rtableid);
 			if (rt->rt_gwroute == NULL)
 				return (EHOSTUNREACH);
+		}
+		/*
+		 * Next hop must be reachable, this also prevents rtentry
+		 * loops, for example when rt->rt_gwroute points to rt.
+		 */
+		if (((rt->rt_gwroute->rt_flags & (RTF_UP|RTF_GATEWAY)) !=
+		    RTF_UP) || (rt->rt_gwroute->rt_ifp != ifp)) {
+			rtfree(rt->rt_gwroute);
+			rt->rt_gwroute = NULL;
+			return (EHOSTUNREACH);
 		}
 		rt = rt->rt_gwroute;
 	}
