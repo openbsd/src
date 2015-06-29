@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2015/06/08 18:31:17 jsg Exp $
+#	$OpenBSD: install.md,v 1.16 2015/06/29 04:52:34 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,6 +49,17 @@ dmesg | grep "^sunxi0 at mainbus0:" >/dev/null
 if [[ $? == 0 ]]; then
 	MDPLAT=SUNXI
 	LOADADDR=0x40200000
+fi
+dmesg | grep "^vexpress0 at mainbus0:" >/dev/null
+if [[ $? == 0 ]]; then
+	dmesg | grep "^cpu0 at mainbus0: ARM Cortex A9 " >/dev/null
+	if [[ $? == 0 ]]; then
+		MDPLAT=VEXPRESSA9
+		LOADADDR=0x60300000
+	else
+		MDPLAT=VEXPRESSA15
+		LOADADDR=0x80300000
+	fi
 fi
 
 MDSETS="bsd.${MDPLAT}.umg bsd.rd.${MDPLAT}.umg"

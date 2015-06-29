@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.3 2015/06/08 14:59:34 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.4 2015/06/29 04:52:34 jsg Exp $
 
 machine		armv7 arm
 
@@ -97,6 +97,20 @@ ehci*		at sunxi?		# EHCI (shim)
 usb*		at ehci?	#flags 0x1
 #ohci*		at sunxi?
 #usb*		at ohci?
+
+# ARM Versatile Express
+vexpress0	at mainbus?
+sysreg*		at vexpress?
+pluart*		at vexpress?
+plrtc*		at vexpress?
+virtio*		at vexpress?
+
+# virtio devices
+vioblk*		at virtio?
+vio*		at virtio?
+viomb*		at virtio?
+viornd*		at virtio?
+vioscsi*	at virtio?
 
 # USB bus support
 usb*		at ehci?	flags 0x1
