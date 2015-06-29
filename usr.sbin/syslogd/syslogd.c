@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.164 2015/06/15 21:42:15 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.165 2015/06/29 11:04:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -135,6 +135,7 @@ struct filed {
 	time_t	f_time;			/* time this was last written */
 	u_char	f_pmask[LOG_NFACILITIES+1];	/* priority mask */
 	char	*f_program;		/* program this applies to */
+	char	*f_hostname;		/* host this applies to */
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
@@ -298,7 +299,7 @@ void	 ctlconn_writecb(int, short, void *);
 void	 ctlconn_logto(char *);
 void	 ctlconn_cleanup(void);
 
-struct filed *cfline(char *, char *);
+struct filed *cfline(char *, char *, char *);
 void	cvthname(struct sockaddr *, char *, size_t);
 int	decode(const char *, const CODE *);
 void	die(int);
@@ -1127,10 +1128,11 @@ logmsg(int pri, char *msg, char *from, int flags)
 		    f->f_pmask[fac] == INTERNAL_NOPRI)
 			continue;
 
-		/* skip messages with the incorrect program name */
-		if (f->f_program)
-			if (strcmp(prog, f->f_program) != 0)
-				continue;
+		/* skip messages with the incorrect program or hostname */
+		if (f->f_program && strcmp(prog, f->f_program) != 0)
+			continue;
+		if (f->f_hostname && strcmp(from, f->f_hostname) != 0)
+			continue;
 
 		if (f->f_type == F_CONSOLE && (flags & IGN_CONS))
 			continue;
@@ -1595,7 +1597,7 @@ die(int signo)
 void
 init(void)
 {
-	char prog[NAME_MAX+1], *cline, *p;
+	char progblock[NAME_MAX+1], hostblock[NAME_MAX+1], *cline, *p;
 	struct filed_list mb;
 	struct filed *f, *m;
 	FILE *cf;
@@ -1642,8 +1644,8 @@ init(void)
 			(void)close(f->f_file);
 			break;
 		}
-		if (f->f_program)
-			free(f->f_program);
+		free(f->f_program);
+		free(f->f_hostname);
 		if (f->f_type == F_MEMBUF) {
 			f->f_program = NULL;
 			dprintf("add %p to mb\n", f);
@@ -1656,9 +1658,10 @@ init(void)
 	/* open the configuration file */
 	if ((cf = priv_open_config()) == NULL) {
 		dprintf("cannot open %s\n", ConfFile);
-		SIMPLEQ_INSERT_TAIL(&Files, cfline("*.ERR\t/dev/console", "*"),
-		    f_next);
-		SIMPLEQ_INSERT_TAIL(&Files, cfline("*.PANIC\t*", "*"), f_next);
+		SIMPLEQ_INSERT_TAIL(&Files,
+		    cfline("*.ERR\t/dev/console", "*", "*"), f_next);
+		SIMPLEQ_INSERT_TAIL(&Files,
+		    cfline("*.PANIC\t*", "*", "*"), f_next);
 		Initialized = 1;
 		return;
 	}
@@ -1668,12 +1671,14 @@ init(void)
 	 */
 	cline = NULL;
 	s = 0;
-	strlcpy(prog, "*", sizeof(prog));
+	strlcpy(progblock, "*", sizeof(progblock));
+	strlcpy(hostblock, "*", sizeof(hostblock));
 	while (getline(&cline, &s, cf) != -1) {
 		/*
 		 * check for end-of-section, comments, strip off trailing
-		 * spaces and newline character. !prog is treated
-		 * specially: the following lines apply only to that program.
+		 * spaces and newline character. !progblock and +hostblock
+		 * are treated specially: the following lines apply only to
+		 * that program.
 		 */
 		for (p = cline; isspace((unsigned char)*p); ++p)
 			continue;
@@ -1685,18 +1690,37 @@ init(void)
 				p++;
 			if (!*p || (*p == '*' && (!p[1] ||
 			    isspace((unsigned char)p[1])))) {
-				strlcpy(prog, "*", sizeof(prog));
+				strlcpy(progblock, "*", sizeof(progblock));
 				continue;
 			}
 			for (i = 0; i < NAME_MAX; i++) {
 				if (!isalnum((unsigned char)p[i]) &&
 				    p[i] != '-' && p[i] != '!')
 					break;
-				prog[i] = p[i];
+				progblock[i] = p[i];
 			}
-			prog[i] = 0;
+			progblock[i] = 0;
 			continue;
 		}
+		if (*p == '+') {
+			p++;
+			while (isspace((unsigned char)*p))
+				p++;
+			if (!*p || (*p == '*' && (!p[1] ||
+			    isspace((unsigned char)p[1])))) {
+				strlcpy(hostblock, "*", sizeof(hostblock));
+				continue;
+			}
+			for (i = 0; i < NAME_MAX; i++) {
+				if (!isalnum((unsigned char)p[i]) &&
+				    p[i] != '-' && p[i] != '+')
+					break;
+				hostblock[i] = p[i];
+			}
+			hostblock[i] = 0;
+			continue;
+		}
+
 		p = cline + strlen(cline);
 		while (p > cline)
 			if (!isspace((unsigned char)*--p)) {
@@ -1704,7 +1728,7 @@ init(void)
 				break;
 			}
 		*p = '\0';
-		f = cfline(cline, prog);
+		f = cfline(cline, progblock, hostblock);
 		if (f != NULL)
 			SIMPLEQ_INSERT_TAIL(&Files, f, f_next);
 	}
@@ -1791,8 +1815,10 @@ init(void)
 				break;
 
 			}
-			if (f->f_program)
-				printf(" (%s)", f->f_program);
+			if (f->f_program || f->f_hostname)
+				printf(" (%s, %s)",
+				    f->f_program ? f->f_program : "*",
+				    f->f_hostname ? f->f_hostname : "*");
 			printf("\n");
 		}
 	}
@@ -1818,14 +1844,21 @@ find_dup(struct filed *f)
 		case F_CONSOLE:
 		case F_PIPE:
 			if (strcmp(list->f_un.f_fname, f->f_un.f_fname) == 0 &&
-			    progmatches(list->f_program, f->f_program))
+			    progmatches(list->f_program, f->f_program) &&
+			    progmatches(list->f_hostname, f->f_hostname)) {
+				dprintf("duplicate %s\n", f->f_un.f_fname);
 				return (list);
+			}
 			break;
 		case F_MEMBUF:
 			if (strcmp(list->f_un.f_mb.f_mname,
 			    f->f_un.f_mb.f_mname) == 0 &&
-			    progmatches(list->f_program, f->f_program))
+			    progmatches(list->f_program, f->f_program) &&
+			    progmatches(list->f_hostname, f->f_hostname)) {
+				dprintf("duplicate membuf %s\n",
+				    f->f_un.f_mb.f_mname);
 				return (list);
+			}
 			break;
 		}
 	}
@@ -1836,7 +1869,7 @@ find_dup(struct filed *f)
  * Crack a configuration file line
  */
 struct filed *
-cfline(char *line, char *prog)
+cfline(char *line, char *progblock, char *hostblock)
 {
 	int i, pri;
 	size_t rb_len;
@@ -1845,7 +1878,8 @@ cfline(char *line, char *prog)
 	struct filed *xf, *f, *d;
 	struct timeval to;
 
-	dprintf("cfline(\"%s\", f, \"%s\")\n", line, prog);
+	dprintf("cfline(\"%s\", f, \"%s\", \"%s\")\n",
+	    line, progblock, hostblock);
 
 	errno = 0;	/* keep strerror() stuff out of logerror messages */
 
@@ -1857,15 +1891,19 @@ cfline(char *line, char *prog)
 		f->f_pmask[i] = INTERNAL_NOPRI;
 
 	/* save program name if any */
-	if (*prog == '!') {
+	f->f_quick = 0;
+	if (*progblock == '!') {
+		progblock++;
 		f->f_quick = 1;
-		prog++;
-	} else
-		f->f_quick = 0;
-	if (!strcmp(prog, "*"))
-		prog = NULL;
-	else
-		f->f_program = strdup(prog);
+	}
+	if (*hostblock == '+') {
+		hostblock++;
+		f->f_quick = 1;
+	}
+	if (strcmp(progblock, "*") != 0)
+		f->f_program = strdup(progblock);
+	if (strcmp(hostblock, "*") != 0)
+		f->f_hostname = strdup(hostblock);
 
 	/* scan through the list of selectors */
 	for (p = line; *p && *p != '\t';) {

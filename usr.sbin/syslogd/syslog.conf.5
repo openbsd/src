@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.31 2015/02/10 18:42:08 bluhm Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.32 2015/06/29 11:04:28 bluhm Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: February 10 2015 $
+.Dd $Mdocdate: June 29 2015 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -120,6 +120,17 @@ can be used to ensure that any ensuing blocks are further evaluated
 .Em !prog
 or
 .Em !!prog ) .
+.Pp
+Blocks starting with
+.Em +host
+or
+.Em ++host
+or
+.Em +*
+work the same way as their
+.Em prog
+counterparts, but they match on the hostname instead of the program
+name.
 .Pp
 See
 .Xr syslog 3
