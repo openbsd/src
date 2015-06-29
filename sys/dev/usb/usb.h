@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.51 2015/06/22 10:29:18 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.52 2015/06/29 10:52:40 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -220,6 +220,18 @@ typedef struct {
 	uByte		iInterface;
 } __packed usb_interface_descriptor_t;
 #define USB_INTERFACE_DESCRIPTOR_SIZE 9
+
+struct usb_interface_assoc_descriptor {
+    uByte       bLength;
+    uByte       bDescriptorType;
+    uByte       bFirstInterface;
+    uByte       bInterfaceCount;
+    uByte       bFunctionClass;
+    uByte       bFunctionSubClass;
+    uByte       bFunctionProtocol;
+    uByte       iFunction;
+} __packed;
+typedef struct usb_interface_assoc_descriptor usb_interface_assoc_descriptor_t;
 
 typedef struct {
 	uByte		bLength;
