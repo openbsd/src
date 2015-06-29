@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.84 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.85 2015/06/29 18:58:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1773,7 +1773,9 @@ oce_get_buf(struct oce_rq *rq)
 	}
 
 	pkt->mbuf->m_len = pkt->mbuf->m_pkthdr.len = MCLBYTES;
+#ifdef __STRICT_ALIGNMENT
 	m_adj(pkt->mbuf, ETHER_ALIGN);
+#endif
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, pkt->map, pkt->mbuf,
 	    BUS_DMA_NOWAIT)) {
