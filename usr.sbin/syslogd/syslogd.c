@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.165 2015/06/29 11:04:28 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.166 2015/06/30 12:03:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -219,6 +219,8 @@ int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
 int	IPv4Only = 0;		/* when true, disable IPv6 */
 int	IPv6Only = 0;		/* when true, disable IPv4 */
 int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
+char	*bind_host = NULL;
+char	*bind_port = NULL;
 
 char	*path_ctlsock = NULL;	/* Path to control socket */
 
@@ -275,9 +277,9 @@ char	*linebuf;
 int	 linesize;
 
 int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys,
-		 fd_udp, fd_udp6, fd_unix[MAXUNIX];
+		 fd_udp, fd_udp6, fd_bind, fd_unix[MAXUNIX];
 struct event	 ev_ctlaccept, ev_ctlread, ev_ctlwrite, ev_klog, ev_sendsys,
-		 ev_udp, ev_udp6, ev_unix[MAXUNIX],
+		 ev_udp, ev_udp6, ev_bind, ev_unix[MAXUNIX],
 		 ev_hup, ev_int, ev_quit, ev_term, ev_mark;
 
 void	 klog_readcb(int, short, void *);
@@ -314,7 +316,7 @@ void	printsys(char *);
 char   *ttymsg(struct iovec *, int, char *, int);
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
-int	loghost(char *, char **, char **, char **);
+int	loghost_parse(char *, char **, char **, char **);
 int	getmsgbufsize(void);
 int	unix_socket(char *, int, mode_t);
 void	double_rbuf(int);
@@ -330,7 +332,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46C:dhnuf:Fm:p:a:s:V")) != -1)
+	while ((ch = getopt(argc, argv, "46C:dhnuf:Fm:p:a:s:U:V")) != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			IPv4Only = 1;
@@ -366,6 +368,11 @@ main(int argc, char *argv[])
 			break;
 		case 'p':		/* path */
 			path_unix[0] = optarg;
+			break;
+		case 'U':		/* allow udp only from address */
+			if (loghost_parse(optarg, NULL, &bind_host, &bind_port)
+			    == -1)
+				errx(1, "bad bind address: %s", optarg);
 			break;
 		case 'u':		/* allow udp input port */
 			SecureMode = 0;
@@ -425,8 +432,7 @@ main(int argc, char *argv[])
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_flags = AI_PASSIVE;
 
-	i = getaddrinfo(NULL, "syslog", &hints, &res0);
-	if (i) {
+	if (getaddrinfo(NULL, "syslog", &hints, &res0)) {
 		errno = 0;
 		logerror("syslog/udp: unknown service");
 		die(0);
@@ -475,6 +481,64 @@ main(int argc, char *argv[])
 	}
 
 	freeaddrinfo(res0);
+
+	fd_bind = -1;
+	if (bind_host) {
+		if (bind_port == NULL)
+			bind_port = "syslog";
+		if (getaddrinfo(bind_host, bind_port, &hints, &res0)) {
+			errno = 0;
+			logerror("syslog/udp: unknown bind address");
+			die(0);
+		}
+
+		for (res = res0; res; res = res->ai_next) {
+			switch (res->ai_family) {
+			case AF_INET:
+				if (IPv6Only)
+					continue;
+				break;
+			case AF_INET6:
+				if (IPv4Only)
+					continue;
+				break;
+			default:
+				continue;
+			}
+
+			fd_bind = socket(res->ai_family, res->ai_socktype,
+			    res->ai_protocol);
+			if (fd_bind == -1)
+				continue;
+
+			i = 1;
+			if (setsockopt(fd_bind, SOL_SOCKET, SO_REUSEADDR,
+			    &i, sizeof(i)) == -1) {
+				logerror("setsockopt udp");
+				close(fd_bind);
+				fd_bind = -1;
+				if (!Debug)
+					die(0);
+				continue;
+			}
+			if (bind(fd_bind, res->ai_addr, res->ai_addrlen) < 0) {
+				logerror("bind udp");
+				close(fd_bind);
+				fd_bind = -1;
+				if (!Debug)
+					die(0);
+				continue;
+			}
+			double_rbuf(fd_bind);
+			break;
+		}
+		if (fd_bind == -1) {
+			logerror("socket udp");
+			die(0);
+		}
+
+		freeaddrinfo(res0);
+	}
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
@@ -610,6 +674,7 @@ main(int argc, char *argv[])
 	    &ev_sendsys);
 	event_set(&ev_udp, fd_udp, EV_READ|EV_PERSIST, udp_readcb, &ev_udp);
 	event_set(&ev_udp6, fd_udp6, EV_READ|EV_PERSIST, udp_readcb, &ev_udp6);
+	event_set(&ev_bind, fd_bind, EV_READ|EV_PERSIST, udp_readcb, &ev_bind);
 	for (i = 0; i < nunix; i++)
 		event_set(&ev_unix[i], fd_unix[i], EV_READ|EV_PERSIST,
 		    unix_readcb, &ev_unix[i]);
@@ -660,6 +725,8 @@ main(int argc, char *argv[])
 		if (fd_udp6 != -1)
 			event_add(&ev_udp6, NULL);
 	}
+	if (fd_bind != -1)
+		event_add(&ev_bind, NULL);
 	for (i = 0; i < nunix; i++)
 		if (fd_unix[i] != -1)
 			event_add(&ev_unix[i], NULL);
@@ -975,7 +1042,8 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage: syslogd [-46dFhnuV] [-a path] [-C CAfile] [-f config_file]\n"
-	    "               [-m mark_interval] [-p log_socket] [-s reporting_socket]\n");
+	    "               [-m mark_interval] [-p log_socket] [-s reporting_socket]\n"
+	    "               [-U bind_address]\n");
 	exit(1);
 }
 
@@ -1981,7 +2049,7 @@ cfline(char *line, char *progblock, char *hostblock)
 			logerror(ebuf);
 			break;
 		}
-		if (loghost(++p, &proto, &host, &port) == -1) {
+		if (loghost_parse(++p, &proto, &host, &port) == -1) {
 			snprintf(ebuf, sizeof(ebuf), "bad loghost \"%s\"",
 			    f->f_un.f_forw.f_loghost);
 			logerror(ebuf);
@@ -2195,15 +2263,21 @@ cfline(char *line, char *progblock, char *hostblock)
  * Parse the host and port parts from a loghost string.
  */
 int
-loghost(char *str, char **proto, char **host, char **port)
+loghost_parse(char *str, char **proto, char **host, char **port)
 {
-	*proto = NULL;
+	char *prefix = NULL;
+
 	if ((*host = strchr(str, ':')) &&
 	    (*host)[1] == '/' && (*host)[2] == '/') {
-		*proto = str;
+		prefix = str;
 		**host = '\0';
 		str = *host + 3;
 	}
+	if (proto)
+		*proto = prefix;
+	else if (prefix)
+		return (-1);
+
 	*host = str;
 	if (**host == '[') {
 		(*host)++;
