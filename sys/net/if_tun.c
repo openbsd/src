@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.147 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.148 2015/06/30 13:54:42 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -569,7 +569,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	}
 #endif
 
-	error = if_output(ifp, m0);
+	error = if_enqueue(ifp, m0);
 	splx(s);
 
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.56 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.57 2015/06/30 13:54:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -378,7 +378,7 @@ bstp_transmit_tcn(struct bstp_state *bs, struct bstp_port *bp)
 	bcopy(&bpdu, mtod(m, caddr_t) + sizeof(*eh), sizeof(bpdu));
 
 	bp->bp_txcount++;
-	if_output(ifp, m);
+	if_enqueue(ifp, m);
 }
 
 void
@@ -508,7 +508,7 @@ bstp_send_bpdu(struct bstp_state *bs, struct bstp_port *bp,
 	m->m_pkthdr.pf.prio = BSTP_IFQ_PRIO;
 
 	bp->bp_txcount++;
-	if_output(ifp, m);
+	if_enqueue(ifp, m);
  done:
 	splx(s);
 }

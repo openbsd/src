@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.66 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.67 2015/06/30 13:54:42 mpi Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -887,5 +887,5 @@ int
 upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	   struct rtentry *rt0)
 {
-	return (if_output(ifp, m));
+	return (if_enqueue(ifp, m));
 }

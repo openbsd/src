@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.346 2015/06/29 10:32:29 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.347 2015/06/30 13:54:42 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -442,7 +442,7 @@ if_start(struct ifnet *ifp)
 }
 
 int
-if_output(struct ifnet *ifp, struct mbuf *m)
+if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, length, error = 0;
 	unsigned short mflags;

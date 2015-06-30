@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.32 2015/06/02 13:23:55 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.33 2015/06/30 13:54:42 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -410,7 +410,7 @@ extern struct ifnet_head ifnet;
 extern struct ifnet *lo0ifp;
 
 void	if_start(struct ifnet *);
-int	if_output(struct ifnet *, struct mbuf *);
+int	if_enqueue(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 
 void	ether_ifattach(struct ifnet *);

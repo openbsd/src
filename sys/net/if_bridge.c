@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.249 2015/06/30 09:13:53 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.250 2015/06/30 13:54:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2566,7 +2566,7 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 #endif
 	len = m->m_pkthdr.len;
 
-	error = if_output(ifp, m);
+	error = if_enqueue(ifp, m);
 	if (error) {
 		sc->sc_if.if_oerrors++;
 		return (error);

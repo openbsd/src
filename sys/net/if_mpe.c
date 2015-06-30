@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.45 2015/06/16 11:09:39 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.46 2015/06/30 13:54:42 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -256,7 +256,7 @@ mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	m_copyback(m, off, sizeof(shim), (caddr_t)&shim, M_NOWAIT);
 
-	error = if_output(ifp, m);
+	error = if_enqueue(ifp, m);
 out:
 	if (error)
 		ifp->if_oerrors++;

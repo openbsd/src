@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.23 2015/06/10 09:20:21 mpi Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.24 2015/06/30 13:54:42 mpi Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -393,7 +393,7 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	 * XXX should use higher priority queue.
 	 * otherwise network congestion can break aggregation.
 	 */
-	error = if_output(lp->lp_ifp, m);
+	error = if_enqueue(lp->lp_ifp, m);
 	return (error);
 }
 
@@ -433,7 +433,7 @@ lacp_xmit_marker(struct lacp_port *lp)
 	    ntohl(mdu->mdu_info.mi_rq_xid)));
 
 	m->m_flags |= M_MCAST;
-	error = if_output(lp->lp_ifp, m);
+	error = if_enqueue(lp->lp_ifp, m);
 	return (error);
 }
 
@@ -1659,7 +1659,7 @@ lacp_marker_input(struct lacp_port *lp, struct mbuf *m)
 		    &ethermulticastaddr_slowprotocols, ETHER_ADDR_LEN);
 		memcpy(&mdu->mdu_eh.ether_shost,
 		    tp->tp_lladdr, ETHER_ADDR_LEN);
-		error = if_output(lp->lp_ifp, m);
+		error = if_enqueue(lp->lp_ifp, m);
 		break;
 
 	case MARKER_TYPE_RESPONSE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.135 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.136 2015/06/30 13:54:42 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -842,7 +842,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 			}
 		}
 		if (m1 != NULL) {
-			if (if_output(ifp, m1))
+			if (if_enqueue(ifp, m1))
 				 ifp->if_oerrors++;
 		}
 	}
