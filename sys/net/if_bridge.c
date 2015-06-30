@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.248 2015/06/25 09:38:00 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.249 2015/06/30 09:13:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -153,6 +153,7 @@ int     bridge_clone_create(struct if_clone *, int);
 int	bridge_clone_destroy(struct ifnet *ifp);
 int	bridge_delete(struct bridge_softc *, struct bridge_iflist *);
 void	bridge_copyaddr(struct sockaddr *, struct sockaddr *);
+struct	mbuf *bridge_m_dup(struct mbuf *);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -965,7 +966,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct bridge_rtnode *dst_p = NULL;
 	struct ether_addr *dst;
 	struct bridge_softc *sc;
-	int error, len;
+	int error;
 
 	/* ifp must be a member interface of the bridge. */ 
 	if (ifp->if_bridgeport == NULL) {
@@ -1041,33 +1042,11 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				used = 1;
 				mc = m;
 			} else {
-				struct mbuf *m1, *m2, *mx;
-
-				m1 = m_copym2(m, 0, ETHER_HDR_LEN,
-				    M_DONTWAIT);
-				if (m1 == NULL) {
+				mc = bridge_m_dup(m);
+				if (mc == NULL) {
 					sc->sc_if.if_oerrors++;
 					continue;
 				}
-				m2 = m_copym2(m, ETHER_HDR_LEN,
-				    M_COPYALL, M_DONTWAIT);
-				if (m2 == NULL) {
-					m_freem(m1);
-					sc->sc_if.if_oerrors++;
-					continue;
-				}
-
-				for (mx = m1; mx->m_next != NULL; mx = mx->m_next)
-					/*EMPTY*/;
-				mx->m_next = m2;
-
-				if (m1->m_flags & M_PKTHDR) {
-					len = 0;
-					for (mx = m1; mx != NULL; mx = mx->m_next)
-						len += mx->m_len;
-					m1->m_pkthdr.len = len;
-				}
-				mc = m1;
 			}
 
 			error = bridge_ifenqueue(sc, dst_if, mc);
@@ -1367,7 +1346,7 @@ bridge_input(struct mbuf *m)
 		    (ifl->bif_state == BSTP_IFSTATE_DISCARDING))
 			return (m);
 
-		mc = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+		mc = bridge_m_dup(m);
 		if (mc == NULL)
 			return (m);
 		s = splnet();
@@ -1510,34 +1489,11 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			mc = m;
 			used = 1;
 		} else {
-			struct mbuf *m1, *m2, *mx;
-
-			m1 = m_copym2(m, 0, ETHER_HDR_LEN,
-			    M_DONTWAIT);
-			if (m1 == NULL) {
+			mc = bridge_m_dup(m);
+			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
 				continue;
 			}
-			m2 = m_copym2(m, ETHER_HDR_LEN,
-			    M_COPYALL, M_DONTWAIT);
-			if (m2 == NULL) {
-				m_freem(m1);
-				sc->sc_if.if_oerrors++;
-				continue;
-			}
-
-			for (mx = m1; mx->m_next != NULL; mx = mx->m_next)
-				/*EMPTY*/;
-			mx->m_next = m2;
-
-			if (m1->m_flags & M_PKTHDR) {
-				int len = 0;
-
-				for (mx = m1; mx != NULL; mx = mx->m_next)
-					len += mx->m_len;
-				m1->m_pkthdr.len = len;
-			}
-			mc = m1;
 		}
 
 		mc = bridge_ip(sc, BRIDGE_OUT, dst_if, eh, mc);
@@ -1598,19 +1554,12 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 }
 
 void
-bridge_span(struct bridge_softc *sc, struct mbuf *morig)
+bridge_span(struct bridge_softc *sc, struct mbuf *m)
 {
 	struct bridge_iflist *p;
 	struct ifnet *ifp;
-	struct mbuf *mc, *m;
+	struct mbuf *mc;
 	int error;
-
-	if (TAILQ_EMPTY(&sc->sc_spanlist))
-		return;
-
-	m = m_copym2(morig, 0, M_COPYALL, M_NOWAIT);
-	if (m == NULL)
-		return;
 
 	TAILQ_FOREACH(p, &sc->sc_spanlist, next) {
 		ifp = p->ifp;
@@ -1634,7 +1583,6 @@ bridge_span(struct bridge_softc *sc, struct mbuf *morig)
 		if (error)
 			continue;
 	}
-	m_freem(m);
 }
 
 struct ifnet *
@@ -2764,3 +2712,37 @@ bridge_copyaddr(struct sockaddr *src, struct sockaddr *dst)
 	else
 		dst->sa_family = AF_UNSPEC;
 }
+
+/*
+ * Specialized deep copy to ensure that the payload after the Ethernet
+ * header is nicely aligned.
+ */
+struct mbuf *
+bridge_m_dup(struct mbuf *m)
+{
+	struct mbuf *m1, *m2, *mx;
+
+	m1 = m_copym2(m, 0, ETHER_HDR_LEN, M_DONTWAIT);
+	if (m1 == NULL) {
+		return (NULL);
+	}
+	m2 = m_copym2(m, ETHER_HDR_LEN, M_COPYALL, M_DONTWAIT);
+	if (m2 == NULL) {
+		m_freem(m1);
+		return (NULL);
+	}
+
+	for (mx = m1; mx->m_next != NULL; mx = mx->m_next)
+		/*EMPTY*/;
+	mx->m_next = m2;
+
+	if (m1->m_flags & M_PKTHDR) {
+		int len = 0;
+		for (mx = m1; mx != NULL; mx = mx->m_next)
+			len += mx->m_len;
+		m1->m_pkthdr.len = len;
+	}
+
+	return (m1);
+}
+
