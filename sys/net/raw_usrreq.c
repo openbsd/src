@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.19 2015/05/13 10:42:46 jsg Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.20 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ raw_input(struct mbuf *m0, ...)
 			continue;
 		if (last) {
 			struct mbuf *n;
-			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
+			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
 				if (sbappendaddr(&last->so_rcv, src,
 				    n, (struct mbuf *)NULL) == 0)
 					/* should notify about lost packet */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.111 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.112 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -724,7 +724,8 @@ send:
 			    mtod(m, caddr_t) + hdrlen);
 			m->m_len += len;
 		} else {
-			m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
+			m->m_next = m_copym(so->so_snd.sb_mb, off, (int) len,
+			    M_NOWAIT);
 			if (m->m_next == 0) {
 				(void) m_free(m);
 				error = ENOBUFS;

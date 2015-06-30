@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.201 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.202 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -454,7 +454,8 @@ udp_input(struct mbuf *m, ...)
 			if (last != NULL) {
 				struct mbuf *n;
 
-				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
+				n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+				if (n != NULL) {
 #ifdef INET6
 					if (ip6 && (last->inp_flags &
 					    IN6P_CONTROLOPTS ||

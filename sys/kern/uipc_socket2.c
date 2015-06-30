@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.60 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.61 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ sbrelease(struct sockbuf *sb)
  *
  * Reliable protocols may use the socket send buffer to hold data
  * awaiting acknowledgement.  Data is normally copied from a socket
- * send buffer in a protocol with m_copy for output to a peer,
+ * send buffer in a protocol with m_copym for output to a peer,
  * and then removing the data from the socket buffer with sbdrop()
  * or sbdroprecord() when the data is acknowledged by the peer.
  */

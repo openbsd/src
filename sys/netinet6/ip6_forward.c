@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.76 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.77 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -148,7 +148,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * It is important to save it before IPsec processing as IPsec
 	 * processing may modify the mbuf.
 	 */
-	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
+	mcopy = m_copym(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN),
+	    M_NOWAIT);
 
 #if NPF > 0
 reroute:

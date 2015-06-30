@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.139 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.140 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -751,7 +751,7 @@ dontblock:
 		orig_resid = 0;
 		if (flags & MSG_PEEK) {
 			if (paddr)
-				*paddr = m_copy(m, 0, m->m_len);
+				*paddr = m_copym(m, 0, m->m_len, M_NOWAIT);
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
@@ -770,7 +770,7 @@ dontblock:
 	while (m && m->m_type == MT_CONTROL && error == 0) {
 		if (flags & MSG_PEEK) {
 			if (controlp)
-				*controlp = m_copy(m, 0, m->m_len);
+				*controlp = m_copym(m, 0, m->m_len, M_NOWAIT);
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);

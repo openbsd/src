@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.283 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.284 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -762,7 +762,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		else
 			mhip->ip_off |= IP_MF;
 		mhip->ip_len = htons((u_int16_t)(len + mhlen));
-		m->m_next = m_copy(m0, off, len);
+		m->m_next = m_copym(m0, off, len, M_NOWAIT);
 		if (m->m_next == 0) {
 			ipstat.ips_odropped++;
 			error = ENOBUFS;

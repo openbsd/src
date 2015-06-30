@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.160 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.161 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ route_input(struct mbuf *m0, ...)
 
 		if (last) {
 			struct mbuf *n;
-			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
+			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
 				if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
 				    sbappendaddr(&last->so_rcv, sosrc,
 				    n, (struct mbuf *)NULL) == 0) {

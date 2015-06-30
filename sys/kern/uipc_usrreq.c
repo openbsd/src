@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.80 2015/03/28 23:50:55 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.81 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 		unp3 = sotounpcb(so3);
 		if (unp2->unp_addr)
 			unp3->unp_addr =
-			    m_copy(unp2->unp_addr, 0, (int)M_COPYALL);
+			    m_copym(unp2->unp_addr, 0, M_COPYALL, M_NOWAIT);
 		unp3->unp_connid.uid = p->p_ucred->cr_uid;
 		unp3->unp_connid.gid = p->p_ucred->cr_gid;
 		unp3->unp_connid.pid = p->p_p->ps_pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.193 2015/06/25 09:20:20 mpi Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.194 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -378,9 +378,6 @@ struct mbuf {
 
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000
-
-/* compatibility with 4.3 */
-#define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)
 
 /*
  * Mbuf statistics.

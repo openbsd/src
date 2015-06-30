@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.174 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.175 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -3049,7 +3049,7 @@ ip6_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in6 *dst)
 	/*
 	 * Duplicate the packet.
 	 */
-	copym = m_copy(m, 0, M_COPYALL);
+	copym = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 	if (copym == NULL)
 		return;
 

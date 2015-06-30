@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.40 2014/12/11 19:21:57 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.41 2015/06/30 15:30:17 mpi Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -175,7 +175,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 
 	/*
-	 * now, we need to do the hard way.  don't m_copy as there's no room
+	 * now, we need to do the hard way.  don't m_copym as there's no room
 	 * on both ends.
 	 */
 	if (len > MAXMCLBYTES) {
