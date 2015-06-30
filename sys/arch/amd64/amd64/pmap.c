@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.92 2015/04/30 15:49:02 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.93 2015/06/30 08:40:55 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -811,14 +811,11 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	struct vm_page *pg;
 
 	if (pa != (paddr_t)-1 && pmap->pm_ptphint[lidx] &&
-	    pa == VM_PAGE_TO_PHYS(pmap->pm_ptphint[lidx])) {
+	    pa == VM_PAGE_TO_PHYS(pmap->pm_ptphint[lidx]))
 		return (pmap->pm_ptphint[lidx]);
-	}
-	if (lidx == 0)
-		pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
-	else {
-		pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
-	}
+
+	pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
+
 	return pg;
 }
 
