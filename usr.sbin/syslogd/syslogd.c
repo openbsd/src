@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.166 2015/06/30 12:03:32 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.167 2015/06/30 18:41:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -332,7 +332,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46C:dhnuf:Fm:p:a:s:U:V")) != -1)
+	while ((ch = getopt(argc, argv, "46a:C:dFf:hm:np:s:U:uV")) != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			IPv4Only = 1;
@@ -342,17 +342,22 @@ main(int argc, char *argv[])
 			IPv6Only = 1;
 			IPv4Only = 0;
 			break;
+		case 'a':
+			if (nunix >= MAXUNIX)
+				errx(1, "out of descriptors: %s", optarg);
+			path_unix[nunix++] = optarg;
+			break;
 		case 'C':		/* file containing CA certificates */
 			CAfile = optarg;
 			break;
 		case 'd':		/* debug */
 			Debug++;
 			break;
-		case 'f':		/* configuration file */
-			ConfFile = optarg;
-			break;
 		case 'F':		/* foreground */
 			Foreground = 1;
+			break;
+		case 'f':		/* configuration file */
+			ConfFile = optarg;
 			break;
 		case 'h':		/* RFC 3164 hostnames */
 			IncludeHostname = 1;
@@ -369,6 +374,9 @@ main(int argc, char *argv[])
 		case 'p':		/* path */
 			path_unix[0] = optarg;
 			break;
+		case 's':
+			path_ctlsock = optarg;
+			break;
 		case 'U':		/* allow udp only from address */
 			if (loghost_parse(optarg, NULL, &bind_host, &bind_port)
 			    == -1)
@@ -376,14 +384,6 @@ main(int argc, char *argv[])
 			break;
 		case 'u':		/* allow udp input port */
 			SecureMode = 0;
-			break;
-		case 'a':
-			if (nunix >= MAXUNIX)
-				errx(1, "out of descriptors: %s", optarg);
-			path_unix[nunix++] = optarg;
-			break;
-		case 's':
-			path_ctlsock = optarg;
 			break;
 		case 'V':		/* do not verify certificates */
 			NoVerify = 1;
