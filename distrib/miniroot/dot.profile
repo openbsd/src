@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.27 2015/03/28 00:03:05 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.28 2015/07/01 21:12:49 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -47,7 +47,7 @@ set -o emacs
 set -- $(dmesg | sed -n '/^root on /h;${g;p;}')
 rootdisk=$3
 
-if [ "X${DONEPROFILE}" = "X" ]; then
+if [[ -z $DONEPROFILE ]]; then
 	DONEPROFILE=YES
 
 	mount -u /dev/${rootdisk:-rd0a} /
@@ -69,9 +69,9 @@ __EOT
 	# after a timeout, but only the very first time around.
 	timeout=false
 	timer_pid=
-	if [ ! -f /tmp/noai ] && { ifconfig netboot >/dev/null 2>&1 ||
-		[ -f /auto_install.conf ] ||
-		[ -f /auto_upgrade.conf ]; }; then
+	if [[ ! -f /tmp/noai ]] && { ifconfig netboot >/dev/null 2>&1 ||
+		[[ -f /auto_install.conf ]] ||
+		[[ -f /auto_upgrade.conf ]]; }; then
 		echo "Starting non-interactive mode in 5 seconds..."
 		>/tmp/noai
 
@@ -102,7 +102,7 @@ __EOT
 			REPLY=a
 		else
 			# User has made a choice; stop the read timeout.
-			[ -n "$timer_pid" ] && kill $timer_pid 2>/dev/null
+			[[ -n $timer_pid ]] && kill $timer_pid 2>/dev/null
 			timer_pid=
 		fi
 
