@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.49 2015/05/29 06:47:43 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.50 2015/07/01 23:10:47 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -39,7 +39,7 @@ CDIAGFLAGS+=	-Wno-unused-parameter # Not clean for this yet
 
 WARNINGS=yes
 
-SSH1?=		yes
+SSH1?=		no
 OPENSSL?=	yes
 
 .if (${OPENSSL:L} == "yes")
