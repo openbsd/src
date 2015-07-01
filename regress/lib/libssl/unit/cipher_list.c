@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.2 2015/06/28 00:08:27 doug Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.3 2015/07/01 07:21:10 bcook Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -146,7 +146,7 @@ err:
 static int
 ssl_bytes_to_list_invalid(SSL *s, STACK_OF(SSL_CIPHER) **ciphers)
 {
-	uint8_t empty_cipher_bytes[] = { };
+	uint8_t empty_cipher_bytes[] = {0};
 
 	sk_SSL_CIPHER_free(*ciphers);
 
