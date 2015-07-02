@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.215 2015/07/02 15:16:57 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.216 2015/07/02 23:15:03 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -392,10 +392,13 @@ decapsulate:
 		if (pipex_enable) {
 			struct pipex_session *session;
 
+			KERNEL_LOCK();
 			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
 				pipex_pppoe_input(m, session);
+				KERNEL_UNLOCK();
 				return (1);
 			}
+			KERNEL_UNLOCK();
 		}
 #endif
 		if (etype == ETHERTYPE_PPPOEDISC)
