@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.251 2015/07/02 09:40:02 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.252 2015/07/02 10:02:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1304,7 +1304,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 		return (m);
 
 	sc = ifl->bridge_sc;
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
+	if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		return (m);
 
 #if NBPFILTER > 0
