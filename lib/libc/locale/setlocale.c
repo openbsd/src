@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.21 2015/06/09 20:04:04 stsp Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.22 2015/07/02 16:07:43 semarie Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -68,17 +68,12 @@ static char current_categories[_LC_LAST][32] = {
     "C"
 };
 
-/*
- * The locales we are going to try and load
- */
-static char new_categories[_LC_LAST][32];
-
 static char current_locale_string[_LC_LAST * 33];
 
 static char	*currentlocale(void);
 static void revert_to_default(int);
 static int load_locale_sub(int, const char *);
-static char	*loadlocale(int);
+static char	*loadlocale(int, const char *);
 static const char *__get_locale_env(int);
 
 char *
@@ -87,6 +82,7 @@ setlocale(int category, const char *locale)
 	int i, loadlocale_success;
 	size_t len;
 	const char *env, *r;
+	char new_categories[_LC_LAST][32];
 
 	if (category < 0 || category >= _LC_LAST)
 		return (NULL);
@@ -153,11 +149,11 @@ setlocale(int category, const char *locale)
 	}
 
 	if (category)
-		return (loadlocale(category));
+		return (loadlocale(category, new_categories[category]));
 
 	loadlocale_success = 0;
 	for (i = 1; i < _LC_LAST; ++i) {
-		if (loadlocale(i) != NULL)
+		if (loadlocale(i, new_categories[i]) != NULL)
 			loadlocale_success = 1;
 	}
 
@@ -241,8 +237,7 @@ static int
 load_locale_sub(int category, const char *locname)
 {
 	/* check for the default locales */
-	if (!strcmp(new_categories[category], "C") ||
-	    !strcmp(new_categories[category], "POSIX")) {
+	if (!strcmp(locname, "C") || !strcmp(locname, "POSIX")) {
 		revert_to_default(category);
 		return 0;
 	}
@@ -272,15 +267,14 @@ load_locale_sub(int category, const char *locname)
 }
 
 static char *
-loadlocale(int category)
+loadlocale(int category, const char *locname)
 {
-	if (strcmp(new_categories[category],
-	    current_categories[category]) == 0)
+	if (strcmp(locname, current_categories[category]) == 0)
 		return (current_categories[category]);
 
-	if (!load_locale_sub(category, new_categories[category])) {
+	if (!load_locale_sub(category, locname)) {
 		(void)strlcpy(current_categories[category],
-		    new_categories[category], sizeof(current_categories[category]));
+		    locname, sizeof(current_categories[category]));
 		return current_categories[category];
 	} else {
 		return NULL;
