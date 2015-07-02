@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.7 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.8 2015/07/02 23:01:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -58,14 +58,12 @@ void __mtx_init(struct mutex *, int);
 #define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock != 1 ||					\
-	    (mtx)->mtx_owner != curcpu())				\
+	if ((mtx)->mtx_owner != curcpu())				\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if ((mtx)->mtx_lock == 1 &&					\
-	    (mtx)->mtx_owner == curcpu())				\
+	if ((mtx)->mtx_owner == curcpu())				\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 
