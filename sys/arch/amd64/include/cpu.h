@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.96 2015/06/28 18:54:54 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.97 2015/07/02 01:33:59 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -130,6 +130,10 @@ struct cpu_info {
 #define CI_DDB_STOPPED		2
 #define CI_DDB_ENTERDDB		3
 #define CI_DDB_INDDB		4
+
+#ifdef MULTIPROCESSOR
+	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+#endif
 
 	struct ksensordev	ci_sensordev;
 	struct ksensor		ci_sensor;

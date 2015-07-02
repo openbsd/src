@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.142 2015/06/13 21:41:42 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.143 2015/07/02 01:33:59 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -84,6 +84,10 @@ struct cpu_info {
 	cpuid_t ci_cpuid; 		/* our CPU ID */
 	u_int ci_apicid;		/* our APIC ID */
 	u_int32_t ci_randseed;
+
+#if defined(MULTIPROCESSOR)
+	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#endif
 
 	/*
 	 * Private members.

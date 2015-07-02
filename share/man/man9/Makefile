@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.234 2015/06/17 06:24:46 mpi Exp $
+#	$OpenBSD: Makefile,v 1.235 2015/07/02 01:33:59 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -29,7 +29,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	route.9 rt_ifa_add.9 rt_timer_add.9 rtalloc.9 rtable_add.9 \
 	rtlabel_id2name.9 rtrequest1.9 rwlock.9 SipHash24.9 sensor_attach.9 \
-	tsleep.9 spl.9 startuphook_establish.9 \
+	tsleep.9 spl.9 srp_enter.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
 	task_add.9 tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
 	usbd_close_pipe.9 usbd_open_pipe.9 usbd_transfer.9 \
@@ -362,6 +362,11 @@ MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splsoftnet.9 spl.9 splsofttty.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9
 MLINKS+=startuphook_establish.9 startuphook_disestablish.9
+MLINKS+=srp_enter.9 srp_init.9 srp_enter.9 srp_gc_init.9 \
+	srp_enter.9 srp_update.9 srp_enter.9 srp_update_locked.9 \
+	srp_enter.9 srp_leave.9 srp_enter.9 srp_get_locked.9 \
+	srp_enter.9 srp_finalize.9 \
+	srp_enter.9 SRP_INITIALIZER.9 srp_enter.9 SRP_GC_INITIALIZER.9
 MLINKS+=sysctl_int.9 sysctl_int_arr.9 sysctl_int.9 sysctl_quad.9 \
 	sysctl_int.9 sysctl_string.9 sysctl_int.9 sysctl_tstring.9 \
 	sysctl_int.9 sysctl_rdint.9 sysctl_int.9 sysctl_rdquad.9 \

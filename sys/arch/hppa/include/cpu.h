@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.87 2014/07/11 10:53:07 uebayasi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.88 2015/07/02 01:33:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -88,6 +88,10 @@ struct cpu_info {
 	struct proc	*ci_curproc;
 	paddr_t		ci_fpu_state;		/* Process FPU state. */
 	paddr_t		ci_stack;
+
+#if defined(MULTIPROCESSOR)
+	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#endif
 
 	register_t	ci_psw;			/* Processor Status Word. */
 	volatile int	ci_cpl;

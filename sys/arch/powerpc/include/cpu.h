@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.61 2015/03/31 16:00:38 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.62 2015/07/02 01:33:59 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -57,6 +57,10 @@ struct cpu_info {
 
 	volatile int	ci_flags;
 #define	CI_FLAGS_SLEEPING		2
+
+#if defined(MULTIPROCESSOR)
+	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#endif
 
 	int ci_intrdepth;
 	char *ci_intstk;

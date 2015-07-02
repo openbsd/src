@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.104 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.105 2015/07/02 01:33:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -153,6 +153,10 @@ struct cpu_info {
 	uint32_t	 ci_delayconst;
 	struct cpu_hwinfo
 			ci_hw;
+
+#if defined(MULTIPROCESSOR)
+	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#endif
 
 	/* cache information and pending flush state */
 	uint		ci_cacheconfiguration;
