@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.213 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.214 2015/07/02 09:40:02 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -276,9 +276,8 @@ bad:
  * the ether header, which is provided separately.
  */
 int
-ether_input(struct mbuf *m)
+ether_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifnet *ifp;
 	struct ether_header *eh;
 	struct niqueue *inq;
 	u_int16_t etype;
@@ -288,13 +287,6 @@ ether_input(struct mbuf *m)
 #if NPPPOE > 0
 	struct ether_header *eh_tmp;
 #endif
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	KASSERT(ifp != NULL);
-	if ((ifp->if_flags & IFF_UP) == 0) {
-		m_freem(m);
-		return (1);
-	}
 
 	eh = mtod(m, struct ether_header *);
 	m_adj(m, ETHER_HDR_LEN);

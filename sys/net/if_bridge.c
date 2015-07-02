@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.250 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.251 2015/07/02 09:40:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1285,9 +1285,8 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
  * not for us, and schedule an interrupt.
  */
 struct mbuf *
-bridge_input(struct mbuf *m)
+bridge_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifnet *ifp;
 	struct bridge_softc *sc;
 	struct bridge_iflist *ifl;
 	struct bridge_iflist *srcifl;
@@ -1297,15 +1296,13 @@ bridge_input(struct mbuf *m)
 	struct mbuf *mc;
 	int s;
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	KASSERT(ifp != NULL);
-	if (((ifp->if_flags & IFF_UP) == 0) || (ifp->if_bridgeport == NULL))
-		return (m);
-
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("bridge_input(): no HDR");
 
 	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
+	if (ifl == NULL)
+		return (m);
+
 	sc = ifl->bridge_sc;
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.73 2015/06/23 09:42:23 mpi Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.74 2015/07/02 09:40:03 mpi Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -250,7 +250,7 @@ etherip_decap(struct mbuf *m, int iphlen)
 		sc->gif_if.if_imcasts++;
 
 	s = splnet();
-	m = bridge_input(m);
+	m = bridge_input(&sc->gif_if, m);
 	splx(s);
 	if (m == NULL)
 		return;

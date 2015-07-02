@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.263 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.264 2015/07/02 09:40:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -194,7 +194,7 @@ void	carp_hmac_generate(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *, u_int8_t);
 int	carp_hmac_verify(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *);
-int	carp_input(struct mbuf *);
+int	carp_input(struct ifnet *ifp, struct mbuf *);
 void	carp_proto_input_c(struct mbuf *, struct carp_header *, int,
 	    sa_family_t);
 void	carpattach(int);
@@ -1415,20 +1415,13 @@ carp_ourether(void *v, u_int8_t *ena)
 }
 
 int
-carp_input(struct mbuf *m)
+carp_input(struct ifnet *ifp0, struct mbuf *m)
 {
 	struct carp_softc *sc;
 	struct ether_header *eh;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct carp_if *cif;
-	struct ifnet *ifp0, *ifp;
-
-	ifp0 = if_get(m->m_pkthdr.ph_ifidx);
-	KASSERT(ifp0 != NULL);
-	if ((ifp0->if_flags & IFF_UP) == 0) {
-		m_freem(m);
-		return (1);
-	}
+	struct ifnet *ifp;
 
 	eh = mtod(m, struct ether_header *);
 	cif = (struct carp_if *)ifp0->if_carp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.133 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.134 2015/07/02 09:40:02 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -77,7 +77,7 @@ u_long vlan_tagmask, svlan_tagmask;
 LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
 
-int	vlan_input(struct mbuf *);
+int	vlan_input(struct ifnet *, struct mbuf *);
 void	vlan_start(struct ifnet *ifp);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
 int	vlan_unconfig(struct ifnet *ifp, struct ifnet *newp);
@@ -243,23 +243,15 @@ vlan_start(struct ifnet *ifp)
  * vlan_input() returns 1 if it has consumed the packet, 0 otherwise.
  */
 int
-vlan_input(struct mbuf *m)
+vlan_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifvlan			*ifv;
-	struct ifnet			*ifp;
 	struct ether_vlan_header	*evl;
 	struct ether_header		*eh;
 	struct vlan_taghash		*tagh;
 	u_int				 tag;
 	struct mbuf_list		 ml = MBUF_LIST_INITIALIZER();
 	u_int16_t			 etype;
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	KASSERT(ifp != NULL);
-	if ((ifp->if_flags & IFF_UP) == 0) {
-		m_freem(m);
-		return (1);
-	}
 
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);

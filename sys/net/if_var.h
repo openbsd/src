@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.33 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.34 2015/07/02 09:40:02 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ struct	ifqueue {
  */
 struct ifih {
 	SLIST_ENTRY(ifih) ifih_next;
-	int		(*ifih_input)(struct mbuf *);
+	int		(*ifih_input)(struct ifnet *, struct mbuf *);
 	int		  ifih_refcnt;
 };
 
@@ -416,7 +416,7 @@ void	if_input(struct ifnet *, struct mbuf_list *);
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
-int	ether_input(struct mbuf *);
+int	ether_input(struct ifnet *, struct mbuf *);
 int	ether_output(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
 char	*ether_sprintf(u_char *);
