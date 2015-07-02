@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.75 2015/04/21 00:07:51 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.76 2015/07/02 16:14:43 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -38,8 +38,9 @@
 #include <machine/cpufunc.h>
 #include <machine/segments.h>
 #endif
-#include <machine/pte.h>
+#include <sys/mutex.h>
 #include <uvm/uvm_object.h>
+#include <machine/pte.h>
 
 /*
  * The following defines give the virtual addresses of various MMU
@@ -98,11 +99,14 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 
 struct pmap {
 	uint64_t pm_pdidx[4];		/* PDIEs for PAE mode */
+
+	struct mutex pm_mtx;
+	struct mutex pm_apte_mtx;
+
 	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
 	vaddr_t pm_pdir;		/* VA of PD (lck by object lock) */
 	int	pm_pdirsize;		/* PD size (4k vs 16k on PAE) */
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
-#define	pm_lock	pm_obj.vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -477,10 +481,12 @@ void	pmap_ldt_cleanup(struct proc *);
 
 struct pv_entry;
 struct vm_page_md {
+	struct mutex pv_mtx;
 	struct pv_entry *pv_list;
 };
 
 #define VM_MDPAGE_INIT(pg) do {			\
+	mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM); \
 	(pg)->mdpage.pv_list = NULL;	\
 } while (0)
 

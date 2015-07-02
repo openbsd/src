@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.179 2015/05/30 08:41:30 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.180 2015/07/02 16:14:43 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -64,7 +65,6 @@
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/lock.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
@@ -510,10 +510,14 @@ pmap_map_ptes_86(struct pmap *pmap)
 		return(PTE_BASE);
 	}
 
+	mtx_enter(&pmap->pm_mtx);
+
 	/* if curpmap then we are always mapped */
 	if (pmap_is_curpmap(pmap)) {
 		return(PTE_BASE);
 	}
+
+	mtx_enter(&curcpu()->ci_curpmap->pm_apte_mtx);
 
 	/* need to load a new alternate pt space into curpmap? */
 	opde = *APDP_PDE;
@@ -545,7 +549,10 @@ pmap_unmap_ptes_86(struct pmap *pmap)
 		*APDP_PDE = 0;
 		pmap_apte_flush();
 #endif
+		mtx_leave(&curcpu()->ci_curpmap->pm_apte_mtx);
 	}
+
+	mtx_leave(&pmap->pm_mtx);
 }
 
 void
@@ -1023,6 +1030,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	    &pool_allocator_nointr);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator);
+	pool_setipl(&pmap_pv_pool, IPL_VM);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1093,7 +1101,6 @@ pmap_init(void)
  *   the main pv_entry allocation functions are:
  *     pmap_alloc_pv: allocate a pv_entry structure
  *     pmap_free_pv: free one pv_entry
- *     pmap_free_pvs: free a list of pv_entrys
  *
  * the rest are helper functions
  */
@@ -1123,21 +1130,6 @@ void
 pmap_free_pv(struct pmap *pmap, struct pv_entry *pv)
 {
 	pool_put(&pmap_pv_pool, pv);
-}
-
-/*
- * pmap_free_pvs: free a list of pv_entrys
- */
-
-void
-pmap_free_pvs(struct pmap *pmap, struct pv_entry *pvs)
-{
-	struct pv_entry *nextpv;
-
-	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
-		nextpv = pvs->pv_next;
-		pool_put(&pmap_pv_pool, pvs);
-	}
 }
 
 void *
@@ -1182,8 +1174,10 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, struct pmap *pmap,
 	pve->pv_pmap = pmap;
 	pve->pv_va = va;
 	pve->pv_ptp = ptp;			/* NULL for kernel pmap */
+	mtx_enter(&pg->mdpage.pv_mtx);
 	pve->pv_next = pg->mdpage.pv_list;	/* add to ... */
 	pg->mdpage.pv_list = pve;		/* ... locked list */
+	mtx_leave(&pg->mdpage.pv_mtx);
 }
 
 /*
@@ -1200,6 +1194,7 @@ pmap_remove_pv(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
 {
 	struct pv_entry *pve, **prevptr;
 
+	mtx_enter(&pg->mdpage.pv_mtx);
 	prevptr = &pg->mdpage.pv_list;		/* previous pv_entry pointer */
 	while ((pve = *prevptr) != NULL) {
 		if (pve->pv_pmap == pmap && pve->pv_va == va) {	/* match? */
@@ -1208,6 +1203,7 @@ pmap_remove_pv(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
 		}
 		prevptr = &pve->pv_next;		/* previous pointer */
 	}
+	mtx_leave(&pg->mdpage.pv_mtx);
 	return(pve);				/* return removed pve */
 }
 
@@ -1316,6 +1312,9 @@ pmap_create(void)
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
+	mtx_init(&pmap->pm_mtx, IPL_VM);
+	mtx_init(&pmap->pm_apte_mtx, IPL_VM);
+
 	/* init uvm_object */
 	uvm_objinit(&pmap->pm_obj, NULL, 1);
 	pmap->pm_stats.wired_count = 0;
@@ -1380,7 +1379,7 @@ pmap_destroy(struct pmap *pmap)
 	struct vm_page *pg;
 	int refs;
 
-	refs = --pmap->pm_obj.uo_refs;
+	refs = atomic_dec_int_nv(&pmap->pm_obj.uo_refs);
 	if (refs > 0)
 		return;
 
@@ -1424,7 +1423,7 @@ pmap_destroy(struct pmap *pmap)
 void
 pmap_reference(struct pmap *pmap)
 {
-	pmap->pm_obj.uo_refs++;
+	atomic_inc_int(&pmap->pm_obj.uo_refs);
 }
 
 #if defined(PMAP_FORK)
@@ -1747,7 +1746,6 @@ void
 pmap_remove_ptes_86(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
     vaddr_t startva, vaddr_t endva, int flags)
 {
-	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
 	struct vm_page *pg;
@@ -1807,15 +1805,11 @@ pmap_remove_ptes_86(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		/* sync R/M bits */
 		pmap_sync_flags_pte_86(pg, opte);
 		pve = pmap_remove_pv(pg, pmap, startva);
-		if (pve) {
-			pve->pv_next = pv_tofree;
-			pv_tofree = pve;
-		}
+		if (pve)
+			pmap_free_pv(NULL, pve);
 
 		/* end of "for" loop: time for next pte */
 	}
-	if (pv_tofree)
-		pmap_free_pvs(pmap, pv_tofree);
 }
 
 /*
@@ -1919,8 +1913,9 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	if (shootall)
 		pmap_tlb_shoottlb();
 
-	pmap_tlb_shootwait();
 	pmap_unmap_ptes_86(pmap);
+	pmap_tlb_shootwait();
+
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 		uvm_pagefree(ptp);
@@ -1946,8 +1941,14 @@ pmap_page_remove_86(struct vm_page *pg)
 
 	TAILQ_INIT(&empty_ptps);
 
-	for (pve = pg->mdpage.pv_list ; pve != NULL ; pve = pve->pv_next) {
+	mtx_enter(&pg->mdpage.pv_mtx);
+	while ((pve = pg->mdpage.pv_list) != NULL) {
+		pg->mdpage.pv_list = pve->pv_next;
+		pmap_reference(pve->pv_pmap);
+		mtx_leave(&pg->mdpage.pv_mtx);
+
 		ptes = pmap_map_ptes_86(pve->pv_pmap);	/* locks pmap */
+
 #ifdef DIAGNOSTIC
 		if (pve->pv_ptp && (PDE(pve->pv_pmap, pdei(pve->pv_va)) &
 				    PG_FRAME)
@@ -1982,9 +1983,12 @@ pmap_page_remove_86(struct vm_page *pg)
 		pmap_tlb_shootpage(pve->pv_pmap, pve->pv_va);
 
 		pmap_unmap_ptes_86(pve->pv_pmap);	/* unlocks pmap */
+		pmap_destroy(pve->pv_pmap);
+		pmap_free_pv(NULL, pve);
+		mtx_enter(&pg->mdpage.pv_mtx);
 	}
-	pmap_free_pvs(NULL, pg->mdpage.pv_list);
-	pg->mdpage.pv_list = NULL;
+	mtx_leave(&pg->mdpage.pv_mtx);
+
 	pmap_tlb_shootwait();
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
@@ -2010,6 +2014,7 @@ pmap_test_attrs_86(struct vm_page *pg, int testbits)
 	struct pv_entry *pve;
 	pt_entry_t *ptes, pte;
 	u_long mybits, testflags;
+	paddr_t ptppa;
 
 	testflags = pmap_pte2flags(testbits);
 
@@ -2017,13 +2022,16 @@ pmap_test_attrs_86(struct vm_page *pg, int testbits)
 		return (TRUE);
 
 	mybits = 0;
+	mtx_enter(&pg->mdpage.pv_mtx);
 	for (pve = pg->mdpage.pv_list; pve != NULL && mybits == 0;
 	    pve = pve->pv_next) {
-		ptes = pmap_map_ptes_86(pve->pv_pmap);
-		pte = ptes[atop(pve->pv_va)];
-		pmap_unmap_ptes_86(pve->pv_pmap);
+		ptppa = PDE(pve->pv_pmap, pdei(pve->pv_va)) & PG_FRAME;
+		ptes = (pt_entry_t *)pmap_tmpmap_pa(ptppa);
+		pte = ptes[ptei(pve->pv_va)];
+		pmap_tmpunmap_pa();
 		mybits |= (pte & testbits);
 	}
+	mtx_leave(&pg->mdpage.pv_mtx);
 
 	if (mybits == 0)
 		return (FALSE);
@@ -2045,6 +2053,7 @@ pmap_clear_attrs_86(struct vm_page *pg, int clearbits)
 	struct pv_entry *pve;
 	pt_entry_t *ptes, opte;
 	u_long clearflags;
+	paddr_t ptppa;
 	int result;
 
 	clearflags = pmap_pte2flags(clearbits);
@@ -2053,23 +2062,26 @@ pmap_clear_attrs_86(struct vm_page *pg, int clearbits)
 	if (result)
 		atomic_clearbits_int(&pg->pg_flags, clearflags);
 
+	mtx_enter(&pg->mdpage.pv_mtx);
 	for (pve = pg->mdpage.pv_list; pve != NULL; pve = pve->pv_next) {
-		ptes = pmap_map_ptes_86(pve->pv_pmap);	/* locks pmap */
+		ptppa = PDE(pve->pv_pmap, pdei(pve->pv_va)) & PG_FRAME;
+		ptes = (pt_entry_t *)pmap_tmpmap_pa(ptppa);
 #ifdef DIAGNOSTIC
 		if (!pmap_valid_entry(PDE(pve->pv_pmap, pdei(pve->pv_va))))
 			panic("pmap_clear_attrs_86: mapping without PTP "
 			      "detected");
 #endif
 
-		opte = ptes[atop(pve->pv_va)];
+		opte = ptes[ptei(pve->pv_va)];
 		if (opte & clearbits) {
 			result = TRUE;
-			i386_atomic_clearbits_l(&ptes[atop(pve->pv_va)],
+			i386_atomic_clearbits_l(&ptes[ptei(pve->pv_va)],
 			    (opte & clearbits));
 			pmap_tlb_shootpage(pve->pv_pmap, pve->pv_va);
 		}
-		pmap_unmap_ptes_86(pve->pv_pmap);	/* unlocks pmap */
+		pmap_tmpunmap_pa();
 	}
+	mtx_leave(&pg->mdpage.pv_mtx);
 
 	pmap_tlb_shootwait();
 
@@ -2173,8 +2185,8 @@ pmap_write_protect_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 	else
 		pmap_tlb_shootrange(pmap, sva, eva);
 
-	pmap_tlb_shootwait();
 	pmap_unmap_ptes_86(pmap);		/* unlocks pmap */
+	pmap_tlb_shootwait();
 }
 
 /*
@@ -2262,7 +2274,7 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
-	struct pv_entry *pve = NULL, *freepve;
+	struct pv_entry *pve, *opve = NULL;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	boolean_t wc = (pa & PMAP_WC) != 0;
@@ -2286,9 +2298,9 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 		panic("pmap_enter: missing kernel PTP!");
 #endif
 	if (pmap_initialized)
-		freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+		pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 	else
-		freepve = NULL;
+		pve = NULL;
 	wired_count = resident_count = ptp_count = 0;
 
 	/*
@@ -2302,6 +2314,7 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 		ptp = pmap_get_ptp_86(pmap, pdei(va));
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
+				pmap_unmap_ptes_86(pmap);
 				error = ENOMEM;
 				goto out;
 			}
@@ -2371,7 +2384,7 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
 #endif
 			pmap_sync_flags_pte_86(pg, opte);
-			pve = pmap_remove_pv(pg, pmap, va);
+			opve = pmap_remove_pv(pg, pmap, va);
 			pg = NULL; /* This is not the page we are looking for */
 		}
 	} else {	/* opte not valid */
@@ -2394,22 +2407,20 @@ pmap_enter_86(struct pmap *pmap, vaddr_t va, paddr_t pa,
 
 	if (pg != NULL) {
 		if (pve == NULL) {
-			pve = freepve;
-			if (pve == NULL) {
-				if (flags & PMAP_CANFAIL) {
-					error = ENOMEM;
-					goto out;
-				}
-				panic("pmap_enter_86: no pv entries available");
+			pve = opve;
+			opve = NULL;
+		}
+		if (pve == NULL) {
+			if (flags & PMAP_CANFAIL) {
+				pmap_unmap_ptes_86(pmap);
+				error = ENOMEM;
+				goto out;
 			}
-			freepve = NULL;
+			panic("pmap_enter_86: no pv entries available");
 		}
 		/* lock pg when adding */
 		pmap_enter_pv(pg, pve, pmap, va, ptp);
-	} else {
-		/* new mapping is not PG_PVLIST.   free pve if we've got one */
-		if (pve)
-			pmap_free_pv(pmap, pve);
+		pve = NULL;
 	}
 
 enter_now:
@@ -2454,15 +2465,18 @@ enter_now:
 		if (nocache && (opte & PG_N) == 0)
 			wbinvd(); /* XXX clflush before we enter? */
 		pmap_tlb_shootpage(pmap, va);
-		pmap_tlb_shootwait();
 	}
+
+	pmap_unmap_ptes_86(pmap);
+	pmap_tlb_shootwait();
 
 	error = 0;
 
 out:
-	pmap_unmap_ptes_86(pmap);
-	if (freepve)
-		pmap_free_pv(pmap, freepve);
+	if (pve)
+		pmap_free_pv(pmap, pve);
+	if (opve)
+		pmap_free_pv(pmap, opve);
 
 	return error;
 }

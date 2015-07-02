@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.36 2015/04/26 09:48:29 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.37 2015/07/02 16:14:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -88,7 +89,6 @@
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -498,10 +498,14 @@ pmap_map_ptes_pae(struct pmap *pmap)
 		return(PTE_BASE);
 	}
 
+	mtx_enter(&pmap->pm_mtx);
+
 	/* if curpmap then we are always mapped */
 	if (pmap_is_curpmap(pmap)) {
 		return(PTE_BASE);
 	}
+
+	mtx_enter(&curcpu()->ci_curpmap->pm_apte_mtx);
 
 	/* need to load a new alternate pt space into curpmap? */
 	opde = *APDP_PDE;
@@ -538,7 +542,10 @@ pmap_unmap_ptes_pae(struct pmap *pmap)
 		APDP_PDE[3] = 0;
 		pmap_apte_flush();
 #endif
+		mtx_leave(&curcpu()->ci_curpmap->pm_apte_mtx);
 	}
+
+	mtx_leave(&pmap->pm_mtx);
 }
 
 u_int32_t
@@ -958,7 +965,6 @@ void
 pmap_remove_ptes_pae(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 vaddr_t startva, vaddr_t endva, int flags)
 {
-	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
 	struct vm_page *pg;
@@ -1018,15 +1024,11 @@ vaddr_t startva, vaddr_t endva, int flags)
 		/* sync R/M bits */
 		pmap_sync_flags_pte_pae(pg, opte);
 		pve = pmap_remove_pv(pg, pmap, startva);
-		if (pve) {
-			pve->pv_next = pv_tofree;
-			pv_tofree = pve;
-		}
+		if (pve)
+			pmap_free_pv(NULL, pve);
 
 		/* end of "for" loop: time for next pte */
 	}
-	if (pv_tofree)
-		pmap_free_pvs(pmap, pv_tofree);
 }
 
 /*
@@ -1125,8 +1127,9 @@ pmap_do_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	if (shootall)
 		pmap_tlb_shoottlb();
 
-	pmap_tlb_shootwait();
 	pmap_unmap_ptes_pae(pmap);
+	pmap_tlb_shootwait();
+
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 		uvm_pagefree(ptp);
@@ -1152,8 +1155,14 @@ pmap_page_remove_pae(struct vm_page *pg)
 
 	TAILQ_INIT(&empty_ptps);
 
-	for (pve = pg->mdpage.pv_list ; pve != NULL ; pve = pve->pv_next) {
+	mtx_enter(&pg->mdpage.pv_mtx);
+	while ((pve = pg->mdpage.pv_list) != NULL) {
+		pg->mdpage.pv_list = pve->pv_next;
+		pmap_reference(pve->pv_pmap);
+		mtx_leave(&pg->mdpage.pv_mtx);
+
 		ptes = pmap_map_ptes_pae(pve->pv_pmap);	/* locks pmap */
+
 #ifdef DIAGNOSTIC
 		if (pve->pv_ptp && (PDE(pve->pv_pmap, pdei(pve->pv_va)) &
 				    PG_FRAME)
@@ -1186,10 +1195,14 @@ pmap_page_remove_pae(struct vm_page *pg)
 		}
 
 		pmap_tlb_shootpage(pve->pv_pmap, pve->pv_va);
+
 		pmap_unmap_ptes_pae(pve->pv_pmap);	/* unlocks pmap */
+		pmap_destroy(pve->pv_pmap);
+		pmap_free_pv(NULL, pve);
+		mtx_enter(&pg->mdpage.pv_mtx);
 	}
-	pmap_free_pvs(NULL, pg->mdpage.pv_list);
-	pg->mdpage.pv_list = NULL;
+	mtx_leave(&pg->mdpage.pv_mtx);
+
 	pmap_tlb_shootwait();
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
@@ -1217,6 +1230,7 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 	struct pv_entry *pve;
 	pt_entry_t *ptes, pte;
 	u_long mybits, testflags;
+	paddr_t ptppa;
 
 	testflags = pmap_pte2flags(testbits);
 
@@ -1224,13 +1238,16 @@ pmap_test_attrs_pae(struct vm_page *pg, int testbits)
 		return (TRUE);
 
 	mybits = 0;
+	mtx_enter(&pg->mdpage.pv_mtx);
 	for (pve = pg->mdpage.pv_list; pve != NULL && mybits == 0;
 	    pve = pve->pv_next) {
-		ptes = pmap_map_ptes_pae(pve->pv_pmap);
-		pte = ptes[atop(pve->pv_va)];
-		pmap_unmap_ptes_pae(pve->pv_pmap);
+		ptppa = PDE(pve->pv_pmap, pdei(pve->pv_va)) & PG_FRAME;
+		ptes = (pt_entry_t *)pmap_tmpmap_pa(ptppa);
+		pte = ptes[ptei(pve->pv_va)];
+		pmap_tmpunmap_pa();
 		mybits |= (pte & testbits);
 	}
+	mtx_leave(&pg->mdpage.pv_mtx);
 
 	if (mybits == 0)
 		return (FALSE);
@@ -1251,6 +1268,7 @@ pmap_clear_attrs_pae(struct vm_page *pg, int clearbits)
 	struct pv_entry *pve;
 	pt_entry_t *ptes, npte, opte;
 	u_long clearflags;
+	paddr_t ptppa;
 	int result;
 
 	clearflags = pmap_pte2flags(clearbits);
@@ -1259,24 +1277,27 @@ pmap_clear_attrs_pae(struct vm_page *pg, int clearbits)
 	if (result)
 		atomic_clearbits_int(&pg->pg_flags, clearflags);
 
+	mtx_enter(&pg->mdpage.pv_mtx);
 	for (pve = pg->mdpage.pv_list; pve != NULL; pve = pve->pv_next) {
-		ptes = pmap_map_ptes_pae(pve->pv_pmap);	/* locks pmap */
+		ptppa = PDE(pve->pv_pmap, pdei(pve->pv_va)) & PG_FRAME;
+		ptes = (pt_entry_t *)pmap_tmpmap_pa(ptppa);
 #ifdef DIAGNOSTIC
 		if (!pmap_valid_entry(PDE(pve->pv_pmap, pdei(pve->pv_va))))
 			panic("pmap_clear_attrs_pae: mapping without PTP "
 				"detected");
 #endif
 
-		opte = ptes[atop(pve->pv_va)];
+		opte = ptes[ptei(pve->pv_va)];
 		if (opte & clearbits) {
 			result = TRUE;
 			npte = opte & ~clearbits;
 			opte = i386_atomic_testset_uq(
-			   &ptes[atop(pve->pv_va)], npte);
+			   &ptes[ptei(pve->pv_va)], npte);
 			pmap_tlb_shootpage(pve->pv_pmap, pve->pv_va);
 		}
-		pmap_unmap_ptes_pae(pve->pv_pmap);	/* unlocks pmap */
+		pmap_tmpunmap_pa();
 	}
+	mtx_leave(&pg->mdpage.pv_mtx);
 
 	pmap_tlb_shootwait();
 
@@ -1381,8 +1402,8 @@ pmap_write_protect_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 	else
 		pmap_tlb_shootrange(pmap, sva, eva);
 
-	pmap_tlb_shootwait();
 	pmap_unmap_ptes_pae(pmap);		/* unlocks pmap */
+	pmap_tlb_shootwait();
 }
 
 /*
@@ -1451,7 +1472,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
-	struct pv_entry *pve = NULL, *freepve;
+	struct pv_entry *pve, *opve = NULL;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	boolean_t wc = (pa & PMAP_WC) != 0;
@@ -1476,9 +1497,9 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif
 
 	if (pmap_initialized)
-		freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+		pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 	else
-		freepve = NULL;
+		pve = NULL;
 	wired_count = resident_count = ptp_count = 0;
 
 	/*
@@ -1493,6 +1514,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
+				pmap_unmap_ptes_pae(pmap);
 				goto out;
 			}
 			panic("pmap_enter_pae: get ptp failed");
@@ -1561,7 +1583,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
 #endif
 			pmap_sync_flags_pte_pae(pg, opte);
-			pve = pmap_remove_pv(pg, pmap, va);
+			opve = pmap_remove_pv(pg, pmap, va);
 			pg = NULL; /* This is not the page we are looking for */
 		}
 	} else {	/* opte not valid */
@@ -1584,22 +1606,20 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	if (pg != NULL) {
 		if (pve == NULL) {
-			pve = freepve;
-			if (pve == NULL) {
-				if (flags & PMAP_CANFAIL) {
-					error = ENOMEM;
-					goto out;
-				}
-				panic("pmap_enter_pae: no pv entries available");
+			pve = opve;
+			opve = NULL;
+		}
+		if (pve == NULL) {
+			if (flags & PMAP_CANFAIL) {
+				pmap_unmap_ptes_pae(pmap);
+				error = ENOMEM;
+				goto out;
 			}
-			freepve = NULL;
+			panic("pmap_enter_pae: no pv entries available");
 		}
 		/* lock pg when adding */
 		pmap_enter_pv(pg, pve, pmap, va, ptp);
-	} else {
-		/* new mapping is not PG_PVLIST.   free pve if we've got one */
-		if (pve)
-			pmap_free_pv(pmap, pve);
+		pve = NULL;
 	}
 
 enter_now:
@@ -1646,15 +1666,18 @@ enter_now:
 		if (nocache && (opte & PG_N) == 0)
 			wbinvd(); /* XXX clflush before we enter? */
 		pmap_tlb_shootpage(pmap, va);
-		pmap_tlb_shootwait();
 	}
+
+	pmap_unmap_ptes_pae(pmap);
+	pmap_tlb_shootwait();
 
 	error = 0;
 
 out:
-	pmap_unmap_ptes_pae(pmap);
-	if (freepve)
-		pmap_free_pv(pmap, freepve);
+	if (pve)
+		pmap_free_pv(pmap, pve);
+	if (opve)
+		pmap_free_pv(pmap, opve);
 
 	return error;
 }
