@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.235 2015/07/02 01:33:59 dlg Exp $
+#	$OpenBSD: Makefile,v 1.236 2015/07/02 01:35:45 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -29,10 +29,10 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	route.9 rt_ifa_add.9 rt_timer_add.9 rtalloc.9 rtable_add.9 \
 	rtlabel_id2name.9 rtrequest1.9 rwlock.9 SipHash24.9 sensor_attach.9 \
-	tsleep.9 spl.9 srp_enter.9 startuphook_establish.9 \
+	spl.9 srp_enter.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
-	task_add.9 tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
-	usbd_close_pipe.9 usbd_open_pipe.9 usbd_transfer.9 \
+	task_add.9 tc_init.9 time.9 timeout.9 tsleep.9 tvtohz.9 \
+	uiomove.9 uvm.9 usbd_close_pipe.9 usbd_open_pipe.9 usbd_transfer.9 \
 	vfs.9 vfs_busy.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
