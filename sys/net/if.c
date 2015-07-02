@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.348 2015/07/02 09:40:02 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.349 2015/07/02 15:16:57 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -446,14 +446,6 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, length, error = 0;
 	unsigned short mflags;
-
-#ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
-		printf("%s: trying to send packet on wrong domain. "
-		    "if %d vs. mbuf %d\n", ifp->if_xname, ifp->if_rdomain,
-		    rtable_l2(m->m_pkthdr.ph_rtableid));
-	}
-#endif
 
 #if NBRIDGE > 0
 	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
