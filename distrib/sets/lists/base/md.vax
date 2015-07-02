@@ -1427,6 +1427,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/specdev.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/srp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stdarg.ph

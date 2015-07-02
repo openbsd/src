@@ -2094,6 +2094,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/specdev.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/srp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/stdarg.ph

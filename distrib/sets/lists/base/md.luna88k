@@ -1960,6 +1960,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/specdev.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/srp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/stdarg.ph

@@ -1978,6 +1978,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/specdev.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/srp.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/stdarg.ph

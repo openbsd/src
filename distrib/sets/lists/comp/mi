@@ -1388,6 +1388,7 @@
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h
 ./usr/include/sys/specdev.h
+./usr/include/sys/srp.h
 ./usr/include/sys/stat.h
 ./usr/include/sys/statvfs.h
 ./usr/include/sys/stdarg.h
@@ -5964,6 +5965,8 @@
 ./usr/share/man/man9/NDINIT.9
 ./usr/share/man/man9/NDINITAT.9
 ./usr/share/man/man9/RWLOCK_INITIALIZER.9
+./usr/share/man/man9/SRP_GC_INITIALIZER.9
+./usr/share/man/man9/SRP_INITIALIZER.9
 ./usr/share/man/man9/SipHash24.9
 ./usr/share/man/man9/SipHash24_End.9
 ./usr/share/man/man9/SipHash24_Final.9
@@ -6590,6 +6593,14 @@
 ./usr/share/man/man9/spltty.9
 ./usr/share/man/man9/splvm.9
 ./usr/share/man/man9/splx.9
+./usr/share/man/man9/srp_enter.9
+./usr/share/man/man9/srp_finalize.9
+./usr/share/man/man9/srp_gc_init.9
+./usr/share/man/man9/srp_get_locked.9
+./usr/share/man/man9/srp_init.9
+./usr/share/man/man9/srp_leave.9
+./usr/share/man/man9/srp_update.9
+./usr/share/man/man9/srp_update_locked.9
 ./usr/share/man/man9/startuphook_disestablish.9
 ./usr/share/man/man9/startuphook_establish.9
 ./usr/share/man/man9/stathz.9

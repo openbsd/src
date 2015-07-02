@@ -2047,6 +2047,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/specdev.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/srp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/stdarg.ph

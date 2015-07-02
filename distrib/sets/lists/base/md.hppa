@@ -2049,6 +2049,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/specdev.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/srp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/statvfs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/stdarg.ph
