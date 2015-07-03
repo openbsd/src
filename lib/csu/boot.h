@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.10 2015/01/16 06:47:03 deraadt Exp $ */
+/*	$OpenBSD: boot.h,v 1.11 2015/07/03 11:17:25 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -282,7 +282,8 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	else
 		pagesize = 4096;
 
-#if defined(__alpha__) || defined(__powerpc__) || defined(__sparc64__)
+#if defined(__alpha__) || defined(__powerpc__) || defined(__sparc__) || \
+    defined(__sparc64__)
 	start = ELF_TRUNC((Elf_Addr)__plt_start, pagesize);
 	size = ELF_ROUND((Elf_Addr)__plt_end - start, pagesize);
 	mprotect((void *)start, size, PROT_READ);

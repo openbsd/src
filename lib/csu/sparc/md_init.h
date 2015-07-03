@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.3 2015/07/03 11:17:25 miod Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -47,7 +47,6 @@
 	#entry_pt":				\n" \
 	"	save	%sp, -96, %sp		\n" \
 	"	.align 4			\n" \
-	"	/* fall thru */			\n" \
 	"	.previous")
 
 
@@ -77,4 +76,63 @@
 	"	sub	%sp, 24, %sp	! expand to standard frame size\n" \
 	"	call	___start		\n" \
 	"	 mov	%g1, %o3		\n" \
+	"	.previous")
+
+
+#define	MD_RCRT0_START							\
+	__asm(								\
+	".text								\n" \
+	"	.align	4						\n" \
+	"	.global	__start						\n" \
+	"	.global	_start						\n" \
+	"__start:							\n" \
+	"_start:							\n" \
+	"	mov	0, %fp						\n" \
+									\
+	"	sub	%sp, 96, %sp					\n" \
+	"	add	%sp, 96, %l3					\n" \
+	"	add	%l3, 64, %o0					\n" \
+	"	mov	%o0, %l0					\n" \
+	"	call	0f						\n" \
+	"	 nop							\n" \
+	"	call	_DYNAMIC + 8					\n" \
+	"0:	ld	[%o7 + 8], %o2					\n" \
+	"	sll	%o2, 2, %o2					\n" \
+	"	sra	%o2, 0, %o2					\n" \
+	"	add	%o2, %o7, %o2					\n" \
+	"	call	_dl_boot_bind					\n" \
+	"	 mov	%l3, %o1					\n" \
+	"	add	%sp, 96, %sp					\n" \
+									\
+	"	ld	[%sp + 64], %o0	! get argc			\n" \
+	"	add	%sp, 68, %o1	! get argv			\n" \
+	"	sll	%o0, 2,	%o2					\n" \
+	"	add	%o2, 4,	%o2	! envp = argv + (argc << 2) + 4	\n" \
+	"	add	%o1, %o2, %o2					\n" \
+	"	andn	%sp, 7,	%sp	! align				\n" \
+	"	sub	%sp, 24, %sp	! expand to standard frame size	\n" \
+	"	call	___start					\n" \
+	"	 clr	%o3						\n" \
+									\
+	"	.global	_dl_mul_fixup					\n" \
+	"	.type	_dl_mul_fixup,@function				\n" \
+	"_dl_mul_fixup:							\n" \
+	"	retl							\n" \
+	"	 nop							\n" \
+									\
+	"	.global	_dl_printf					\n" \
+	"	.type	_dl_printf,@function				\n" \
+	"_dl_printf:							\n" \
+	"	retl							\n" \
+	"	 nop							\n" \
+									\
+	"	.global _dl_exit					\n" \
+	"	.type	_dl_exit,@function				\n" \
+	"_dl_exit:							\n" \
+	"	mov	0x401, %g1					\n" \
+	"	add	%o7, 8, %g2					\n" \
+	"	ta	0						\n" \
+	"	retl							\n" \
+	"	 neg	%o0						\n" \
+									\
 	"	.previous")
