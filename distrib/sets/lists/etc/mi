@@ -44,7 +44,6 @@
 ./etc/ssh/sshd_config
 ./etc/ssl/openssl.cnf
 ./etc/ssl/x509v3.cnf
-./etc/sudoers
 ./etc/syslog.conf
 ./etc/systrace/usr_sbin_lpd
 ./etc/ttys

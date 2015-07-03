@@ -2189,7 +2189,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/zlib.ph
 ./usr/libexec/ld.so
-./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/powerpc-openbsd
 ./usr/mdec/boot
 ./usr/mdec/boot.elf

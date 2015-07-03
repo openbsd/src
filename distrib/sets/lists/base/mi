@@ -538,8 +538,6 @@
 ./usr/bin/stat
 ./usr/bin/strings
 ./usr/bin/su
-./usr/bin/sudo
-./usr/bin/sudoedit
 ./usr/bin/systat
 ./usr/bin/tail
 ./usr/bin/talk
@@ -2415,7 +2413,6 @@
 ./usr/sbin/userinfo
 ./usr/sbin/usermod
 ./usr/sbin/vipw
-./usr/sbin/visudo
 ./usr/sbin/watchdogd
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit

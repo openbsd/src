@@ -2105,7 +2105,6 @@
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/threads.pm
 ./usr/libdata/perl5/sparc-openbsd/5.20.2/threads/shared.pm
 ./usr/libexec/ld.so
-./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/sparc-openbsd
 ./usr/mdec/binstall
 ./usr/mdec/boot

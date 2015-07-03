@@ -2086,7 +2086,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/zlib.ph
 ./usr/libexec/ld.so
-./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/hppa64-openbsd
 ./usr/mdec/boot
 ./usr/mdec/boot.lif

@@ -2246,7 +2246,6 @@
 ./usr/share/man/man5/spamd.conf.5
 ./usr/share/man/man5/ssh_config.5
 ./usr/share/man/man5/sshd_config.5
-./usr/share/man/man5/sudoers.5
 ./usr/share/man/man5/sysctl.conf.5
 ./usr/share/man/man5/syslog.conf.5
 ./usr/share/man/man5/table.5
@@ -2658,8 +2657,6 @@
 ./usr/share/man/man8/stdethers.8
 ./usr/share/man/man8/stdhosts.8
 ./usr/share/man/man8/sticky.8
-./usr/share/man/man8/sudo.8
-./usr/share/man/man8/sudoedit.8
 ./usr/share/man/man8/swapctl.8
 ./usr/share/man/man8/swapon.8
 ./usr/share/man/man8/sync.8
@@ -2690,7 +2687,6 @@
 ./usr/share/man/man8/vax/MAKEDEV.8
 ./usr/share/man/man8/vax/boot_vax.8
 ./usr/share/man/man8/vipw.8
-./usr/share/man/man8/visudo.8
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8
 ./usr/share/man/man8/watchdogd.8
