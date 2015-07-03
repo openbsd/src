@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.169 2015/06/02 04:33:39 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.170 2015/07/03 11:18:23 miod Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -22,7 +22,7 @@ GCC3_ARCH=m88k vax
 # arm needs binutils-2.17, which still lacks W^X support
 # gcc3 lacks PIE support
 PIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc sparc64
-STATICPIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc64
+STATICPIE_ARCH=alpha amd64 hppa i386 mips64 mips64el powerpc sh sparc sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC3_ARCH:M${_arch})
