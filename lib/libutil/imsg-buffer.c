@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.5 2014/12/25 22:20:52 benno Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.6 2015/07/03 14:50:14 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -235,6 +235,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 
 	bzero(&iov, sizeof(iov));
 	bzero(&msg, sizeof(msg));
+	bzero(&cmsgbuf, sizeof(cmsgbuf));
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
 		if (i >= IOV_MAX)
 			break;
