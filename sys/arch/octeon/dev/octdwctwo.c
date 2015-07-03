@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.6 2015/04/26 12:24:03 jmatthew Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.7 2015/07/03 16:33:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -207,14 +207,15 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	rc = dwc2_dma_config(&sc->sc_dwc2, &octdwctwo_dma_config);
 	if (rc != 0)
 		return;
+
+	printf("\n");
+
 	sc->sc_dwc2.sc_child = config_found(&sc->sc_dwc2.sc_bus.bdev,
 	    &sc->sc_dwc2.sc_bus, usbctlprint);
 
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, dwc2_intr,
 	    (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	KASSERT(sc->sc_ih != NULL);
-
-	printf("\n");
 }
 
 int
