@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.6 2015/06/20 01:07:25 doug Exp $ */
+/* $OpenBSD: speed.c,v 1.7 2015/07/03 21:45:10 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,13 +176,13 @@ static int do_multi(int multi);
 #define MAX_ECDH_SIZE 256
 
 static const char *names[ALGOR_NUM] = {
-	"md2", "md4", "md5", "hmac(md5)", "sha1", "rmd160", "rc4",
-	"des cbc", "des ede3", "idea cbc", "seed cbc",
+	"md2", NULL /* was mdc2 */, "md4", "md5", "hmac(md5)", "sha1", "rmd160",
+	"rc4", "des cbc", "des ede3", "idea cbc", "seed cbc",
 	"rc2 cbc", "rc5-32/12 cbc", "blowfish cbc", "cast cbc",
 	"aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
 	"camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
 	"evp", "sha256", "sha512", "whirlpool",
-"aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash"};
+	"aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash" };
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM] = {16, 64, 256, 1024, 8 * 1024};
 static double rsa_results[RSA_NUM][2];
