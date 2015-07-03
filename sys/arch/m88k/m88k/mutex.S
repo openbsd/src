@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.13 2014/02/02 20:31:10 kettenis Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.14 2015/07/03 15:12:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -40,7 +40,7 @@ ENTRY(__mtx_init)
 	st	%r0, %r2, MTX_OLDIPL	/* mtx->mtx_oldipl = IPL_NONE */
 	st	%r3, %r2, MTX_WANTIPL	/* mtx->mtx_wantipl = ipl */
 	jmp.n	%r1
-	 st	%r0, %r2, MTX_CPU	/* mtx->mtx_cpu = NULL */
+	 st	%r0, %r2, MTX_OWNER	/* mtx->mtx_owner = NULL */
 
 /*
  * void mtx_enter(struct mutex *mtx)
@@ -64,7 +64,7 @@ enter_again:
 
 	ldcr	%r3,  CPU
 	st	%r2,  %r4,  MTX_OLDIPL	/* save into mtx_oldipl */
-	st	%r3,  %r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+	st	%r3,  %r4,  MTX_OWNER	/* mtx->mtx_owner = curcpu() */
 #ifdef DIAGNOSTIC
 	ld	%r2,  %r3,  CI_MUTEX_LEVEL
 	addu	%r2,  %r2,  1		/* curcpu()->ci_mutex_level++ */
@@ -88,7 +88,7 @@ enter_failed:	/* the lock is not ours... */
 enter_spin:
 #ifdef DIAGNOSTIC
 	ldcr	%r3,  CPU
-	ld	%r4,  %r2,  MTX_CPU
+	ld	%r4,  %r2,  MTX_OWNER
 	cmp	%r5,  %r3,  %r4
 	bcnd	eq0,  %r5,  enter_panic
 #endif
@@ -122,7 +122,7 @@ enter_panic:
 
 #ifdef DIAGNOSTIC
 	/* necessary for MUTEX_ASSERT_LOCKED */
-	st	%r3,  %r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+	st	%r3,  %r4,  MTX_OWNER	/* mtx->mtx_owner = curcpu() */
 
 	ld	%r2,  %r3,  CI_MUTEX_LEVEL
 	addu	%r2,  %r2,  1		/* curcpu()->ci_mutex_level++ */
@@ -157,7 +157,7 @@ enter_try_again:
 
 	ldcr	%r3,  CPU
 	st	%r2,  %r4,  MTX_OLDIPL	/* save into mtx_oldipl */
-	st	%r3,  %r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+	st	%r3,  %r4,  MTX_OWNER	/* mtx->mtx_owner = curcpu() */
 #ifdef DIAGNOSTIC
 	ld	%r2,  %r3,  CI_MUTEX_LEVEL
 	addu	%r2,  %r2,  1		/* curcpu()->ci_mutex_level++ */
@@ -181,7 +181,7 @@ enter_try_failed:	/* the lock is not ours... */
 #ifdef DIAGNOSTIC
 	ld	%r2,  %r31, 0		/* restore mtx */
 	ldcr	%r3,  CPU
-	ld	%r4,  %r2,  MTX_CPU
+	ld	%r4,  %r2,  MTX_OWNER
 	cmp	%r5,  %r3,  %r4
 	bcnd	eq0,  %r5,  enter_try_panic
 #endif
@@ -215,7 +215,7 @@ enter_try_panic:
 
 #ifdef DIAGNOSTIC
 	/* necessary for MUTEX_ASSERT_LOCKED */
-	st	%r3,  %r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+	st	%r3,  %r4,  MTX_OWNER	/* mtx->mtx_owner = curcpu() */
 
 	ld	%r2,  %r3,  CI_MUTEX_LEVEL
 	addu	%r2,  %r2,  1		/* curcpu()->ci_mutex_level++ */
@@ -236,12 +236,12 @@ ENTRY(mtx_leave)
 	ld	%r3,  %r2,  MTX_OLDIPL
 	ld	%r4,  %r2,  MTX_WANTIPL
 #ifdef DIAGNOSTIC
-	ld	%r5,  %r2,  MTX_CPU
+	ld	%r5,  %r2,  MTX_OWNER
 	ld	%r6,  %r5,  CI_MUTEX_LEVEL
 	subu	%r6,  %r6,  1		/* curcpu()->ci_mutex_level++ */
 	st	%r6,  %r5,  CI_MUTEX_LEVEL
 #endif
-	st	%r0,  %r2,  MTX_CPU		/* mtx->mtx_cpu = NULL */
+	st	%r0,  %r2,  MTX_OWNER		/* mtx->mtx_owner = NULL */
 	bcnd.n	eq0,  %r4,  2f
 	 st	%r0,  %r2,  MTX_LOCK		/* mtx->mtx_lock = 0 */
 
