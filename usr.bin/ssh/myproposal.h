@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.44 2015/05/27 23:51:10 dtucker Exp $ */
+/* $OpenBSD: myproposal.h,v 1.45 2015/07/03 03:43:18 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -48,8 +48,6 @@
 	"ssh-ed25519-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v01@openssh.com," \
 	"ssh-dss-cert-v01@openssh.com," \
-	"ssh-rsa-cert-v00@openssh.com," \
-	"ssh-dss-cert-v00@openssh.com," \
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
