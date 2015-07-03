@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.19 2013/08/28 16:53:34 stsp Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 2015/07/03 11:15:19 semarie Exp $
 
 # locale sources
-.PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/locale ${LIBCSRCDIR}/locale
+.PATH: ${LIBCSRCDIR}/locale
 
 # for LOCALECHARSETS
 .include "${.CURDIR}/../../share/locale/ctype/Makefile.inc"
