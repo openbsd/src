@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.843 2015/06/02 19:54:06 rpe Exp $
+#	$OpenBSD: install.sub,v 1.844 2015/07/03 18:29:08 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -302,9 +302,9 @@ disklabel_autolayout() {
 		disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
 		ask "Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?" a
 		case $resp in
-		a*|A*)	_op=-w ;;
-		e*|E*)	_op=-E ;;
-		c*|C*)	return 0 ;;
+		[aA]*)	_op=-w ;;
+		[eE]*)	_op=-E ;;
+		[cC]*)	return 0 ;;
 		*)	continue ;;
 		esac
 		disklabel -F $_f $_op -A $_disk
@@ -1471,7 +1471,7 @@ set_term() {
 		while :; do
 			ask "Choose your keyboard layout ('?' or 'L' for list)" "default"
 			case $resp in
-			"?"|L|l) echo "Available layouts: $_layouts";;
+			[lL\?]) echo "Available layouts: $_layouts";;
 			default) return;;
 			*)	kbd $resp && { echo $resp >/tmp/kbdtype; return; };;
 			esac
@@ -2032,14 +2032,14 @@ install_sets() {
 		ask "Location of sets? (${_cddevs:+$_cddevs }$_locs or 'done')" "$_d"
 		case $resp in
 		done)	sane_install && return;;
-		c*|C*)	if [[ -n $_cddevs ]]; then
+		[cC]*)	if [[ -n $_cddevs ]]; then
 				set -- $_cddevs
 				[[ $resp == @(c|C|cd|CD|Cd|cD) ]] && resp=$1
 				install_cdrom $resp && METHOD=$resp
 			fi;;
-		d*|D*)	install_disk && METHOD=disk;;
-		h*|H*)	isin http $_locs && install_http && METHOD=http;;
-		n*|N*)	isin nfs $_locs && install_nfs && METHOD=nfs;;
+		[dD]*)	install_disk && METHOD=disk;;
+		[hH]*)	isin http $_locs && install_http && METHOD=http;;
+		[nN]*)	isin nfs $_locs && install_nfs && METHOD=nfs;;
 		*)	$AUTO && echo "'$resp' is not a valid choice." && exit 1;;
 		esac
 
