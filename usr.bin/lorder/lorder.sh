@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: lorder.sh,v 1.14 2003/07/02 00:21:16 avsm Exp $
+#	$OpenBSD: lorder.sh,v 1.15 2015/07/03 11:43:55 jca Exp $
 #	$NetBSD: lorder.sh.gnm,v 1.3 1995/12/20 04:45:11 cgd Exp $
 #
 # Copyright (c) 1990, 1993
@@ -55,7 +55,7 @@ trap "rm -f $R $S; exit 1" 1 2 3 13 15
 
 # make sure files depend on themselves
 for file in "$@"; do echo "$file $file" ; done
-# if the line has " T ", " D ", " G ", " R ",  it's a globally defined 
+# if the line has " T ", " D ", " G ", " R ",  it's a globally defined
 # symbol, put it into the symbol file.
 #
 # if the line has " U " it's a globally undefined symbol, put it into
@@ -75,7 +75,7 @@ ${NM:-nm} -go "$@" | sed "
 
 # sort symbols and references on the first field (the symbol)
 # join on that field, and print out the file names (dependencies).
-sort +1 $R -o $R
-sort +1 $S -o $S
-join -j 2 -o 1.1 2.1 $R $S
+sort -k 2 -o $R $R
+sort -k 2 -o $S $S
+join -j 2 -o 1.1,2.1 $R $S
 rm -f $R $S
