@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.29 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.30 2015/07/04 17:32:20 miod Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ int	dedebug = 0;
  * efficiently.
  */
 struct	de_softc {
-	struct	device ds_dev;	/* Configuration common part */
+	struct	device ds_dev;		/* Configuration common part */
 	struct	arpcom ds_ac;		/* Ethernet common part */
 	struct	dedevice *ds_vaddr;	/* Virtual address of this interface */
 #define 	ds_if	ds_ac.ac_if	/* network-visible interface */
@@ -423,7 +423,7 @@ deintr(unit)
 		ifxp = &ds->ds_ifw[ds->ds_xindex];
 		/* check for unusual conditions */
 		if (rp->r_flags & (XFLG_ERRS|XFLG_MTCH|XFLG_ONE|XFLG_MORE)) {
-		if (rp->r_flags & XFLG_ERRS) {
+			if (rp->r_flags & XFLG_ERRS) {
 				/* output error */
 				ds->ds_if.if_oerrors++;
 				if (dedebug) {
