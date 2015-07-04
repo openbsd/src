@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_subr.c,v 1.13 2015/07/04 10:27:05 dlg Exp $	*/
+/*	$OpenBSD: mscp_subr.c,v 1.14 2015/07/04 12:49:55 dlg Exp $	*/
 /*	$NetBSD: mscp_subr.c,v 1.18 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -530,9 +530,6 @@ mscp_kickaway(mi)
 		bp->b_resid = next;
 		(*mi->mi_me->me_fillin)(bp, mp);
 		(*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent, &mi->mi_xi[next]);
-#if 0
-		mi->mi_w = bp->b_actf;
-#endif
 	}
 }
 
