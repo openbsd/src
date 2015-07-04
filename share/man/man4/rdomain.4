@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.7 2015/02/06 03:10:43 phessler Exp $
+.\"	$OpenBSD: rdomain.4,v 1.8 2015/07/04 07:51:03 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2015 $
+.Dd $Mdocdate: July 4 2015 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -29,16 +29,19 @@ The
 feature allows multiple lookup tables for routes.
 The
 .Nm rdomain
-feature makes it possible to assign the same IP address to more than one
-interface.
+feature provides a way to logically segment a router
+between network paths.
 .Ss Routing tables
 Each
 .Nm rtable
 contains routes for outbound network packets.
 A routing domain can contain more than one
 .Nm rtable .
-Within a domain, IP addresses used for different interfaces cannot overlap.
 Multiple routing tables are commonly used for Policy Based Routing.
+.Pp
+The highest ID that can be used for an
+.Nm rtable
+is 255.
 .Ss Routing domains
 Each
 .Nm rdomain
@@ -69,6 +72,17 @@ is used to move traffic from one
 .Nm rdomain
 to a different
 .Nm rdomain .
+.Pp
+When an interface is assigned to a non-existent
+.Nm rdomain
+it gets created automatically.
+At the same time an
+.Nm rtable
+with the same ID gets created and assigned to the new domain.
+.Pp
+The highest ID that can be used for an
+.Nm rdomain
+is 255.
 .Sh EXAMPLES
 Set up em0 and lo4 onto rdomain 4:
 .Bd -literal -offset indent
@@ -88,6 +102,10 @@ Start an sshd in rdomain 4:
 .Pp
 .Dl # route -T4 exec /usr/sbin/sshd
 .Pp
+Display to which rdomain processes are assigned:
+.Pp
+.Dl # ps aux -o rtable
+.Pp
 pf.conf snippet to block incoming port 80, and nat-to and move to rtable 0
 on interface em1:
 .Bd -literal -offset indent
@@ -95,6 +113,7 @@ block in on rdomain 4 proto tcp to any port 80
 match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
 .Ed
 .Sh SEE ALSO
+.Xr ps 1 ,
 .Xr route 4 ,
 .Xr pf.conf 5 ,
 .Xr ifconfig 8 ,
@@ -109,3 +128,10 @@ first appeared in
 .Ox 4.9
 and IPv6 support first appeared in
 .Ox 5.5 .
+.Sh CAVEATS
+When an rtable already exists a new domain with the same ID cannot be created.
+Since there is no command to destroy an rtable
+a reboot is necessary.
+.Pp
+No tool is available to assign more than one rtable to an rdomain
+other than to the default one (0).
