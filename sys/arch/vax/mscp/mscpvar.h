@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscpvar.h,v 1.7 2011/11/01 20:50:11 miod Exp $	*/
+/*	$OpenBSD: mscpvar.h,v 1.8 2015/07/04 10:27:05 dlg Exp $	*/
 /*	$NetBSD: mscpvar.h,v 1.7 1999/06/06 19:16:18 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -188,7 +188,7 @@ struct mscp_softc {
 	bus_space_handle_t mi_iph;	/* initialisation and polling */
 	bus_space_handle_t mi_sah;	/* status & address (read part) */
 	bus_space_handle_t mi_swh;	/* status & address (write part) */
-	SIMPLEQ_HEAD(, buf) mi_resq;	/* While waiting for packets */
+	struct bufq mi_bufq;		/* While waiting for packets */
 };
 
 /* mi_flags */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.39 2015/02/01 15:27:12 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.40 2015/07/04 10:27:05 dlg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
