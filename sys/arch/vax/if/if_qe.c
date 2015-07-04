@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.34 2015/06/27 15:40:53 miod Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.35 2015/07/04 10:12:52 dlg Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -468,6 +468,8 @@ qestart(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
+		ifp->if_opackets++;
+
 		/*
 		 * m now points to a mbuf chain that can be loaded.
 		 * Loop around and set it.
