@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.168 2015/07/02 16:24:48 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.169 2015/07/05 22:05:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -703,8 +703,8 @@ socket_bind(const char *proto, const char *host, const char *port,
 		if (*fdp >= 0)
 			continue;
 
-		if ((*fdp = socket(res->ai_family, res->ai_socktype,
-		    res->ai_protocol)) == -1)
+		if ((*fdp = socket(res->ai_family,
+		    res->ai_socktype | SOCK_NONBLOCK, res->ai_protocol)) == -1)
 			continue;
 
 		if (getnameinfo(res->ai_addr, res->ai_addrlen, hostname,
@@ -784,7 +784,7 @@ udp_readcb(int fd, short event, void *arg)
 		cvthname((struct sockaddr *)&sa, resolve, sizeof(resolve));
 		dprintf("cvthname res: %s\n", resolve);
 		printline(resolve, linebuf);
-	} else if (n < 0 && errno != EINTR)
+	} else if (n < 0 && errno != EINTR && errno != EWOULDBLOCK)
 		logerror("recvfrom udp");
 }
 
@@ -800,30 +800,21 @@ unix_readcb(int fd, short event, void *arg)
 	if (n > 0) {
 		linebuf[n] = '\0';
 		printline(LocalHostName, linebuf);
-	} else if (n < 0 && errno != EINTR)
+	} else if (n < 0 && errno != EINTR && errno != EWOULDBLOCK)
 		logerror("recvfrom unix");
 }
 
 int
 tcp_socket(struct filed *f)
 {
-	int	 s, flags;
+	int	 s;
 	char	 ebuf[ERRBUFSIZE];
 
-	if ((s = socket(f->f_un.f_forw.f_addr.ss_family, SOCK_STREAM,
-	    IPPROTO_TCP)) == -1) {
+	if ((s = socket(f->f_un.f_forw.f_addr.ss_family,
+	    SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP)) == -1) {
 		snprintf(ebuf, sizeof(ebuf), "socket \"%s\"",
 		    f->f_un.f_forw.f_loghost);
 		logerror(ebuf);
-		return (-1);
-	}
-	/* Connect must not block the process. */
-	if ((flags = fcntl(s, F_GETFL)) == -1 ||
-	    fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1) {
-		snprintf(ebuf, sizeof(ebuf), "fcntl \"%s\" O_NONBLOCK",
-		    f->f_un.f_forw.f_loghost);
-		logerror(ebuf);
-		close(s);
 		return (-1);
 	}
 	if (connect(s, (struct sockaddr *)&f->f_un.f_forw.f_addr,
@@ -1330,6 +1321,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 			case ENETDOWN:
 			case ENETUNREACH:
 			case ENOBUFS:
+			case EWOULDBLOCK:
 				/* silently dropped */
 				break;
 			default:
@@ -2453,10 +2445,9 @@ void
 ctlsock_acceptcb(int fd, short event, void *arg)
 {
 	struct event		*ev = arg;
-	int			 flags;
 
 	dprintf("Accepting control connection\n");
-	fd = accept(fd, NULL, NULL);
+	fd = accept4(fd, NULL, NULL, SOCK_NONBLOCK);
 	if (fd == -1) {
 		if (errno != EINTR && errno != EWOULDBLOCK &&
 		    errno != ECONNABORTED)
@@ -2469,13 +2460,6 @@ ctlsock_acceptcb(int fd, short event, void *arg)
 
 	/* Only one connection at a time */
 	event_del(ev);
-
-	if ((flags = fcntl(fd, F_GETFL)) == -1 ||
-	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-		logerror("fcntl ctlconn O_NONBLOCK");
-		close(fd);
-		return;
-	}
 
 	fd_ctlconn = fd;
 	/* file descriptor has changed, reset event */
@@ -2523,6 +2507,8 @@ ctlconn_readcb(int fd, short event, void *arg)
 	case -1:
 		if (errno == EINTR)
 			goto retry;
+		if (errno == EWOULDBLOCK)
+			return;
 		logerror("ctlconn read");
 		/* FALLTHROUGH */
 	case 0:
@@ -2652,6 +2638,8 @@ ctlconn_writecb(int fd, short event, void *arg)
 	case -1:
 		if (errno == EINTR)
 			goto retry;
+		if (errno == EWOULDBLOCK)
+			return;
 		if (errno != EPIPE)
 			logerror("ctlconn write");
 		/* FALLTHROUGH */
