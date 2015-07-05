@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.844 2015/07/03 18:29:08 rpe Exp $
+#	$OpenBSD: install.sub,v 1.845 2015/07/05 09:17:39 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -848,7 +848,8 @@ ieee80211_config() {
 				sed -n 's/^\([^ ]*\) chan .* bssid \([^ ]*\) .*$/	\1 (\2)/p' |
 				cat -n | more -c
 			;;
-		*)	_nwid=$resp;;
+		*)	_nwid=$resp
+			;;
 		esac
 	done
 
@@ -1254,8 +1255,10 @@ install_files() {
 				ftp -D Extracting -Vmo - \
 				file:///mnt/usr/share/sysmerge/${_f%%base*}etc.tgz |
 				tar -zxphf - -C /mnt
-			fi;;
-		*)	ftp -D Installing -Vmo "/mnt/$_f" "$_fsrc";;
+			fi
+			;;
+		*)	ftp -D Installing -Vmo "/mnt/$_f" "$_fsrc"
+			;;
 		esac
 		if (($?)); then
 			if ! ask_yn "Installation of $_f failed. Continue anyway?"; then
@@ -1295,7 +1298,8 @@ install_http() {
 	while :; do
 		ask_until "$_prompt" "$HTTP_SERVER"
 		case $resp in
-		done)	return;;
+		done)	return
+			;;
 		"?")	[[ -s $HTTP_LIST ]] || continue
 			cat -n < $HTTP_LIST | more -c
 			;;
@@ -1580,13 +1584,18 @@ user_setup() {
 	while :; do
 		ask "$_q" no
 		case $resp in
-		n|no)	return;;
+		n|no)	return
+			;;
 		y|yes)	_q="No really, what is the lower-case loginname, or 'no'?"
-			continue;;
-		root|daemon|operator|bin|smmsp|popa3d) ;;
-		sshd|uucp|www|named|proxy|nobody|ftp) ;;
+			continue
+			;;
+		root|daemon|operator|bin|smmsp|popa3d)
+			;;
+		sshd|uucp|www|named|proxy|nobody|ftp)
+			;;
 		[a-z]*([a-z0-9_]))
-			((${#resp} <= 31)) && break;;
+			((${#resp} <= 31)) && break
+			;;
 		esac
 		echo "$resp is not a useable loginname."
 	done
@@ -1595,10 +1604,12 @@ user_setup() {
 		ask "Full name for user $user?" $user
 		case $resp in
 		*[:\&,]*)
-			echo "':', '&' or ',' are not allowed.";;
+			echo "':', '&' or ',' are not allowed."
+			;;
 		*)
 			((${#resp} <= 100)) && break
-			echo "Too long.";;
+			echo "Too long."
+			;;
 		esac
 	done
 	username=$resp
@@ -1658,9 +1669,11 @@ set_timezone() {
 		ask "What timezone are you in? ('?' for list)" "$TZ"
 		_zonepath=${resp%%*(/)}
 		case $_zonepath in
-		"")	continue;;
+		"")	continue
+			;;
 		"?")	grep -v /. $_zonefile | showcols
-			continue;;
+			continue
+			;;
 		esac
 
 		while isin "$_zonepath/" $(<$_zonefile); do
@@ -1691,10 +1704,12 @@ get_rootinfo() {
 		_ask "Which disk is the root disk? ('?' for details)" \
 			$(get_dkdevs | sed 's/ .*//') || continue
 		case $resp in
-		"?")	diskinfo $(get_dkdevs);;
+		"?")	diskinfo $(get_dkdevs)
+			;;
 		'')	;;
 		*)	isin "$resp" $(get_dkdevs) && break
-			echo "no such disk";;
+			echo "no such disk"
+			;;
 		esac
 	done
 	makedev $resp || exit
@@ -2031,16 +2046,22 @@ install_sets() {
 
 		ask "Location of sets? (${_cddevs:+$_cddevs }$_locs or 'done')" "$_d"
 		case $resp in
-		done)	sane_install && return;;
+		done)	sane_install && return
+			;;
 		[cC]*)	if [[ -n $_cddevs ]]; then
 				set -- $_cddevs
 				[[ $resp == @(c|C|cd|CD|Cd|cD) ]] && resp=$1
 				install_cdrom $resp && METHOD=$resp
-			fi;;
-		[dD]*)	install_disk && METHOD=disk;;
-		[hH]*)	isin http $_locs && install_http && METHOD=http;;
-		[nN]*)	isin nfs $_locs && install_nfs && METHOD=nfs;;
-		*)	$AUTO && echo "'$resp' is not a valid choice." && exit 1;;
+			fi
+			;;
+		[dD]*)	install_disk && METHOD=disk
+			;;
+		[hH]*)	isin http $_locs && install_http && METHOD=http
+			;;
+		[nN]*)	isin nfs $_locs && install_nfs && METHOD=nfs
+			;;
+		*)	$AUTO && echo "'$resp' is not a valid choice." && exit 1
+			;;
 		esac
 
 		[[ -n $METHOD ]] && _d=$METHOD
