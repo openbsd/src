@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.652 2015/06/24 11:31:04 mpi Exp $
+$OpenBSD: usbdevs,v 1.653 2015/07/05 08:19:18 jung Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2965,6 +2965,7 @@ product MSI BLUETOOTH_3		0xa97a	Bluetooth
 product MICRODIA YUREX		0x1010	YUREX
 product MICRODIA CAM_1		0x62c0	CAM_1
 product MICRODIA TEMPER		0x7401	TEMPer sensor
+product MICRODIA TEMPERHUM	0x7402	TEMPerHUM sensor
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
