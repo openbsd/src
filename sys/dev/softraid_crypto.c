@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.117 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.118 2015/07/05 20:51:33 mlarkin Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1127,7 +1127,7 @@ sr_crypto_write(struct cryptop *crp)
 	struct sr_workunit	*wu = &crwu->cr_wu;
 	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_crypto_write: wu %x xs: %x\n",
+	DNPRINTF(SR_D_INTR, "%s: sr_crypto_write: wu %p xs: %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu, wu->swu_xs);
 
 	if (crp->crp_etype) {
@@ -1206,7 +1206,7 @@ sr_crypto_read(struct cryptop *crp)
 	struct sr_workunit	*wu = &crwu->cr_wu;
 	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_crypto_read: wu %x xs: %x\n",
+	DNPRINTF(SR_D_INTR, "%s: sr_crypto_read: wu %p xs: %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu, wu->swu_xs);
 
 	if (crp->crp_etype)
