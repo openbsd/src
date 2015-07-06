@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.37 2015/06/09 07:07:06 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.38 2015/07/06 14:24:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -124,6 +124,12 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 			}
 			close(s->cwd);
 			s->cwd = fd;
+		}
+
+		if (!Eflag) {
+			update = options_get_string(&s->options,
+			    "update-environment");
+			environ_update(update, &c->environ, &s->environ);
 		}
 
 		c->session = s;
