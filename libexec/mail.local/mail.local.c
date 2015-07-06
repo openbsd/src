@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.33 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.34 2015/07/06 15:02:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -249,7 +249,7 @@ retry:
 	}
 
 	curoff = lseek(mbfd, 0, SEEK_END);
-	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%qd\n", name, curoff);
+	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%lld\n", name, curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		merr(NOTFATAL, "temporary file: %s", strerror(errno));
 		goto bad;
@@ -289,32 +289,43 @@ bad:
 void
 notifybiff(char *msg)
 {
-	static struct sockaddr_in addr;
+	static struct addrinfo *res0;
+	struct addrinfo hints, *res;
 	static int f = -1;
-	struct hostent *hp;
-	struct servent *sp;
 	size_t len;
+	int error;
 
-	if (!addr.sin_family) {
-		/* Be silent if biff service not available. */
-		if (!(sp = getservbyname("biff", "udp")))
-			return;
-		if (!(hp = gethostbyname("localhost"))) {
-			merr(NOTFATAL, "localhost: %s", strerror(errno));
+	if (res0 == NULL) {
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_DGRAM;
+
+		error = getaddrinfo("localhost", "biff", &hints, &res0);
+		if (error) {
+			/* Be silent if biff service not available. */
+			if (error != EAI_SERVICE) {
+				merr(NOTFATAL, "localhost: %s",
+				    gai_strerror(error));
+			}
 			return;
 		}
-		addr.sin_len = sizeof(struct sockaddr_in);
-		addr.sin_family = hp->h_addrtype;
-		addr.sin_port = sp->s_port;
-		bcopy(hp->h_addr, &addr.sin_addr, (size_t)hp->h_length);
 	}
-	if (f < 0 && (f = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+
+	if (f == -1) {
+		for (res = res0; res != NULL; res = res->ai_next) {
+			f = socket(res->ai_family, res->ai_socktype,
+			    res->ai_protocol);
+			if (f != -1)
+				break;
+		}
+	}
+	if (f == -1) {
 		merr(NOTFATAL, "socket: %s", strerror(errno));
 		return;
 	}
-	len = strlen(msg) + 1;
-	if (sendto(f, msg, len, 0, (struct sockaddr *)&addr, sizeof(addr))
-	    != len)
+
+	len = strlen(msg) + 1;	/* XXX */
+	if (sendto(f, msg, len, 0, res->ai_addr, res->ai_addrlen) != len)
 		merr(NOTFATAL, "sendto biff: %s", strerror(errno));
 }
 
