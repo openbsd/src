@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.39 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.40 2015/07/06 15:42:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -191,6 +191,7 @@ doreadutmp(void)
 		}
 		(void)lseek(uf, 0, SEEK_SET);
 		nutmp = read(uf, utmp, statbf.st_size)/sizeof(struct utmp);
+		dsyslog(LOG_DEBUG, "read %d utmp entries", nutmp);
 	}
 	(void)alarm(15);
 }
@@ -204,15 +205,20 @@ mailfor(char *name)
 	char *cp;
 	off_t offset;
 
+	dsyslog(LOG_DEBUG, "mail for '%s'", name);
 	if (!(cp = strchr(name, '@')))
 		return;
-	*cp = '\0';
-	offset = strtonum(cp + 1, 0, LLONG_MAX, &errstr);
-	if (errstr)
+	*cp++ = '\0';
+	cp[strcspn(cp, " \t\n")] = '\0';
+	offset = strtonum(cp, 0, LLONG_MAX, &errstr);
+	if (errstr) {
+		syslog(LOG_ERR, "'%s' is %s", cp + 1, errstr);
 		return;
+	}
 	while (--utp >= utmp) {
 		memcpy(utname, utp->ut_name, UT_NAMESIZE);
 		utname[UT_NAMESIZE] = '\0';
+		dsyslog(LOG_DEBUG, "check %s against %s", name, utname);
 		if (!strncmp(utname, name, UT_NAMESIZE))
 			notify(utp, offset);
 	}
