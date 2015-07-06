@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.97 2015/01/09 05:04:22 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.98 2015/07/06 10:23:00 dlg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -106,12 +106,6 @@ void		 bufq_done(struct bufq *, struct buf *);
 void		 bufq_quiesce(void);
 void		 bufq_restart(void);
 
-/* disksort */
-struct bufq_disksort {
-	struct buf	 *bqd_actf;
-	struct buf	**bqd_actb;
-};
-
 /* fifo */
 SIMPLEQ_HEAD(bufq_fifo_head, buf);
 struct bufq_fifo {
@@ -126,7 +120,6 @@ struct bufq_nscan {
 
 /* bufq link in struct buf */
 union bufq_data {
-	struct bufq_disksort	bufq_data_disksort;
 	struct bufq_fifo	bufq_data_fifo;
 	struct bufq_nscan	bufq_data_nscan;
 };
@@ -144,10 +137,6 @@ extern struct bio_ops {
 	void	(*io_movedeps)(struct buf *, struct buf *);
 	int	(*io_countdeps)(struct buf *, int, int);
 } bioops;
-
-/* XXX: disksort(); */
-#define b_actf	b_bufq.bufq_data_disksort.bqd_actf
-#define b_actb	b_bufq.bufq_data_disksort.bqd_actb
 
 /* The buffer header describes an I/O operation in the kernel. */
 struct buf {
