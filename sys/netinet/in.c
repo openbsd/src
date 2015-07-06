@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.117 2015/05/26 12:19:51 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.118 2015/07/06 08:53:38 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -714,13 +714,13 @@ in_purgeaddr(struct ifaddr *ifa)
 int
 in_addhost(struct in_ifaddr *ia, struct sockaddr_in *dst)
 {
-	return rt_ifa_add(&ia->ia_ifa, RTF_UP|RTF_HOST|RTF_MPATH, sintosa(dst));
+	return rt_ifa_add(&ia->ia_ifa, RTF_UP|RTF_HOST, sintosa(dst));
 }
 
 int
 in_scrubhost(struct in_ifaddr *ia, struct sockaddr_in *dst)
 {
-	return rt_ifa_del(&ia->ia_ifa, RTF_HOST|RTF_MPATH, sintosa(dst));
+	return rt_ifa_del(&ia->ia_ifa, RTF_HOST, sintosa(dst));
 }
 
 /*
