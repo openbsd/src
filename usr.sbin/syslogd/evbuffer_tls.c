@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.3 2015/02/20 00:56:32 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.4 2015/07/06 16:12:16 millert Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -37,7 +37,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <tls.h>
 
 #include "evbuffer_tls.h"

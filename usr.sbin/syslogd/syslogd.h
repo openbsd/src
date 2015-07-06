@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.17 2015/06/30 12:03:32 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.18 2015/07/06 16:12:16 millert Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -18,7 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
+#include <sys/uio.h>
 
 /* Privilege separation */
 int   priv_init(char *, int, int, int, char **);

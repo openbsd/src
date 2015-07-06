@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_fdpass.c,v 1.9 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: privsep_fdpass.c,v 1.10 2015/07/06 16:12:16 millert Exp $	*/
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -32,18 +32,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/uio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "syslogd.h"
 
 void

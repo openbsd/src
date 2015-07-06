@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.6 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.7 2015/07/06 16:12:16 millert Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -32,8 +32,6 @@
 
 #include <sys/param.h>	/* nitems */
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/uio.h>
 
 #include <signal.h>
 #include <fcntl.h>

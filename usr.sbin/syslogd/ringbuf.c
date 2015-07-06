@@ -1,4 +1,4 @@
-/* $OpenBSD: ringbuf.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $ */
+/* $OpenBSD: ringbuf.c,v 1.9 2015/07/06 16:12:16 millert Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -20,7 +20,6 @@
  * Simple ringbuffer for lines of text.
  */
 
-#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
