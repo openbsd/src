@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.105 2015/02/10 23:25:46 mpi Exp $ */
+/*	$OpenBSD: malo.c,v 1.106 2015/07/06 07:20:03 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1366,8 +1366,8 @@ malo_tx_intr(struct malo_softc *sc)
 		desc->status = 0;
 		desc->len = 0;
 
-		DPRINTF(2, "%s: tx done idx=%u\n",
-		    sc->sc_txring.stat, sc->sc_dev.dv_xname);
+		DPRINTF(2, "%s: tx done idx=%d\n",
+		    sc->sc_dev.dv_xname, sc->sc_txring.stat);
 
 		sc->sc_txring.queued--;
 next:
