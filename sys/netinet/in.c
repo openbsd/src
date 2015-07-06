@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.118 2015/07/06 08:53:38 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.119 2015/07/06 09:01:58 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -588,8 +588,7 @@ in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
 	if (ISSET(ifp->if_flags, IFF_POINTOPOINT))
 		in_scrubhost(ia, &ia->ia_dstaddr);
 	else if (!ISSET(ifp->if_flags, IFF_LOOPBACK))
-		if (ia->ia_flags & IFA_ROUTE)
-			in_remove_prefix(ia);
+		in_remove_prefix(ia);
 }
 
 /*
@@ -740,9 +739,6 @@ in_insert_prefix(struct in_ifaddr *ia)
 		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST | RTF_BROADCAST,
 		    ifa->ifa_broadaddr);
 
-	if (!error)
-		ia->ia_flags |= IFA_ROUTE;
-
 	return (error);
 }
 
@@ -755,8 +751,6 @@ in_remove_prefix(struct in_ifaddr *ia)
 
 	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
 		rt_ifa_del(ifa, RTF_HOST | RTF_BROADCAST, ifa->ifa_broadaddr);
-
-	ia->ia_flags &= ~IFA_ROUTE;
 }
 
 /*
