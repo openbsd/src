@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_dwarf.c,v 1.1 2014/07/11 03:17:20 matthew Exp $	 */
+/*	$OpenBSD: db_dwarf.c,v 1.2 2015/07/07 19:31:02 matthew Exp $	 */
 /*
  * Copyright (c) 2014 Matthew Dempsky <matthew@dempsky.org>
  *
@@ -378,7 +378,7 @@ next:
 				/* Return the last entry. */
 				*outline = last_line;
 				return (read_filename(&names, outdirname,
-				    outbasename, opcode_base, file));
+				    outbasename, opcode_base, last_file));
 			}
 
 			last_file = file;
