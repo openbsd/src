@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.170 2015/07/06 16:12:16 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.171 2015/07/07 17:53:04 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -60,6 +60,7 @@
 #define MAX_MEMBUF_NAME	64		/* Max length of membuf log name */
 #define MAX_TCPBUF	(256 * 1024)	/* Maximum tcp event buffer size */
 #define	MAXSVLINE	120		/* maximum saved line length */
+#define MAXTCP		20		/* maximum incomming connections */
 #define DEFUPRI		(LOG_USER|LOG_NOTICE)
 #define DEFSPRI		(LOG_KERN|LOG_CRIT)
 #define TIMERINTVL	30		/* interval for checking flush, mark */
@@ -216,7 +217,8 @@ int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
 int	Family = PF_UNSPEC;	/* protocol family, may disable IPv4 or IPv6 */
 char	*bind_host = NULL;	/* bind UDP receive socket */
 char	*bind_port = NULL;
-
+char	*listen_host = NULL;	/* listen on TCP receive socket */
+char	*listen_port = NULL;
 char	*path_ctlsock = NULL;	/* Path to control socket */
 
 struct	tls_config *tlsconfig = NULL;
@@ -272,16 +274,30 @@ char	*linebuf;
 int	 linesize;
 
 int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys,
-		 fd_udp, fd_udp6, fd_bind, fd_unix[MAXUNIX];
+		 fd_udp, fd_udp6, fd_bind, fd_listen, fd_unix[MAXUNIX];
 struct event	 ev_ctlaccept, ev_ctlread, ev_ctlwrite, ev_klog, ev_sendsys,
-		 ev_udp, ev_udp6, ev_bind, ev_unix[MAXUNIX],
+		 ev_udp, ev_udp6, ev_bind, ev_listen, ev_unix[MAXUNIX],
 		 ev_hup, ev_int, ev_quit, ev_term, ev_mark;
+
+LIST_HEAD(peer_list, peer) peers;
+struct peer {
+	LIST_ENTRY(peer)	 p_entry;
+	struct bufferevent	*p_bufev;
+	char			*p_peername;
+	char			*p_hostname;
+	int			 p_fd;
+};
+int peernum = 0;
+char hostname_unknown[] = "???";
 
 void	 klog_readcb(int, short, void *);
 void	 udp_readcb(int, short, void *);
 void	 unix_readcb(int, short, void *);
-int	 tcp_socket(struct filed *);
+void	 tcp_acceptcb(int, short, void *);
 void	 tcp_readcb(struct bufferevent *, void *);
+void	 tcp_closecb(struct bufferevent *, short, void *);
+int	 tcp_socket(struct filed *);
+void	 tcp_dropcb(struct bufferevent *, void *);
 void	 tcp_writecb(struct bufferevent *, void *);
 void	 tcp_errorcb(struct bufferevent *, short, void *);
 void	 tcp_connectcb(int, short, void *);
@@ -328,7 +344,7 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 
-	while ((ch = getopt(argc, argv, "46a:C:dFf:hm:np:s:U:uV")) != -1)
+	while ((ch = getopt(argc, argv, "46a:C:dFf:hm:np:s:T:U:uV")) != -1)
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			Family = PF_INET;
@@ -370,6 +386,11 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			path_ctlsock = optarg;
+			break;
+		case 'T':		/* allow tcp and listen on address */
+			if (loghost_parse(optarg, NULL, &listen_host,
+			    &listen_port) == -1)
+				errx(1, "bad listen address: %s", optarg);
 			break;
 		case 'U':		/* allow udp only from address */
 			if (loghost_parse(optarg, NULL, &bind_host, &bind_port)
@@ -432,6 +453,14 @@ main(int argc, char *argv[])
 	    &fd_bind, &fd_bind) == -1) {
 		errno = 0;
 		logerror("socket bind udp");
+		if (!Debug)
+			die(0);
+	}
+	fd_listen = -1;
+	if (listen_host && socket_bind("tcp", listen_host, listen_port, 1, 0,
+	    &fd_listen, &fd_listen) == -1) {
+		errno = 0;
+		logerror("socket listen tcp");
 		if (!Debug)
 			die(0);
 	}
@@ -571,6 +600,8 @@ main(int argc, char *argv[])
 	event_set(&ev_udp, fd_udp, EV_READ|EV_PERSIST, udp_readcb, &ev_udp);
 	event_set(&ev_udp6, fd_udp6, EV_READ|EV_PERSIST, udp_readcb, &ev_udp6);
 	event_set(&ev_bind, fd_bind, EV_READ|EV_PERSIST, udp_readcb, &ev_bind);
+	event_set(&ev_listen, fd_listen, EV_READ|EV_PERSIST, tcp_acceptcb,
+	    &ev_listen);
 	for (i = 0; i < nunix; i++)
 		event_set(&ev_unix[i], fd_unix[i], EV_READ|EV_PERSIST,
 		    unix_readcb, &ev_unix[i]);
@@ -623,6 +654,8 @@ main(int argc, char *argv[])
 	}
 	if (fd_bind != -1)
 		event_add(&ev_bind, NULL);
+	if (fd_listen != -1)
+		event_add(&ev_listen, NULL);
 	for (i = 0; i < nunix; i++)
 		if (fd_unix[i] != -1)
 			event_add(&ev_unix[i], NULL);
@@ -707,6 +740,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 		    sizeof(hostname), servname, sizeof(servname),
 		    NI_NUMERICHOST | NI_NUMERICSERV |
 		    (res->ai_socktype == SOCK_DGRAM ? NI_DGRAM : 0)) != 0) {
+			dprintf("Malformed bind address\n");
 			hostname[0] = servname[0] = '\0';
 		}
 		if (shutread && shutdown(*fdp, SHUT_RD) == -1) {
@@ -730,6 +764,16 @@ socket_bind(const char *proto, const char *host, const char *port,
 		}
 		if (bind(*fdp, res->ai_addr, res->ai_addrlen) == -1) {
 			snprintf(ebuf, sizeof(ebuf), "bind "
+			    "protocol %d, address %s, portnum %s",
+			    res->ai_protocol, hostname, servname);
+			logerror(ebuf);
+			close(*fdp);
+			*fdp = -1;
+			continue;
+		}
+		if (!shutread && res->ai_protocol == IPPROTO_TCP &&
+		    listen(*fdp, MAXTCP) == -1) {
+			snprintf(ebuf, sizeof(ebuf), "listen "
 			    "protocol %d, address %s, portnum %s",
 			    res->ai_protocol, hostname, servname);
 			logerror(ebuf);
@@ -800,6 +844,130 @@ unix_readcb(int fd, short event, void *arg)
 		logerror("recvfrom unix");
 }
 
+void
+tcp_acceptcb(int fd, short event, void *arg)
+{
+	struct peer		*p;
+	struct sockaddr_storage	 ss;
+	socklen_t		 sslen;
+	char			 hostname[NI_MAXHOST], servname[NI_MAXSERV];
+	char			*peername, ebuf[ERRBUFSIZE];
+
+	dprintf("Accepting tcp connection\n");
+	sslen = sizeof(ss);
+	fd = accept4(fd, (struct sockaddr *)&ss, &sslen, SOCK_NONBLOCK);
+	if (fd == -1) {
+		if (errno != EINTR && errno != EWOULDBLOCK &&
+		    errno != ECONNABORTED)
+			logerror("accept tcp socket");
+		return;
+	}
+
+	if (getnameinfo((struct sockaddr *)&ss, sslen, hostname,
+	    sizeof(hostname), servname, sizeof(servname),
+	    NI_NUMERICHOST | NI_NUMERICSERV) != 0 ||
+	    asprintf(&peername, ss.ss_family == AF_INET6 ?
+	    "[%s]:%s" : "%s:%s", hostname, servname) == -1) {
+		dprintf("Malformed accept address\n");
+		peername = hostname_unknown;
+	}
+	dprintf("Peer addresss and port %s\n", peername);
+	if (peernum >= MAXTCP) {
+		snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" "
+		    "denied: maximum %d reached", peername, MAXTCP);
+		logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
+		close(fd);
+		return;
+	}
+	if ((p = malloc(sizeof(*p))) == NULL) {
+		snprintf(ebuf, sizeof(ebuf), "malloc \"%s\"", peername);
+		logerror(ebuf);
+		close(fd);
+		return;
+	}
+	p->p_fd = fd;
+	if ((p->p_bufev = bufferevent_new(fd, tcp_readcb, NULL, tcp_closecb,
+	    p)) == NULL) {
+		snprintf(ebuf, sizeof(ebuf), "bufferevent \"%s\"", peername);
+		logerror(ebuf);
+		free(p);
+		close(fd);
+		return;
+	}
+	if (!NoDNS && peername != hostname_unknown &&
+	    priv_getnameinfo((struct sockaddr *)&ss, ss.ss_len, hostname,
+	    sizeof(hostname)) != 0) {
+		dprintf("Host name for accept address (%s) unknown\n",
+		    hostname);
+	}
+	if (peername == hostname_unknown ||
+	    (p->p_hostname = strdup(hostname)) == NULL)
+		p->p_hostname = hostname_unknown;
+	dprintf("Peer hostname %s\n", hostname);
+	p->p_peername = peername;
+	LIST_INSERT_HEAD(&peers, p, p_entry);
+	peernum++;
+	bufferevent_enable(p->p_bufev, EV_READ);
+
+	snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" accepted",
+	    peername);
+	logmsg(LOG_SYSLOG|LOG_INFO, ebuf, LocalHostName, ADDDATE);
+}
+
+void
+tcp_readcb(struct bufferevent *bufev, void *arg)
+{
+	struct peer		*p = arg;
+	char			*line;
+
+	/*
+	 * Syslog over TCP  RFC 6587  3.4.2.  Non-Transparent-Framing
+	 * XXX Incompatible to ourself, should do:  3.4.1.  Octet Counting
+	 */
+	while ((line = evbuffer_readline(bufev->input))) {
+		dprintf("tcp logger \"%s\" complete line\n", p->p_peername);
+		printline(p->p_hostname, line);
+		free(line);
+	}
+	if (EVBUFFER_LENGTH(bufev->input) >= MAXLINE) {
+		dprintf("tcp logger \"%s\" incomplete line, use %zu bytes\n",
+		    p->p_peername, EVBUFFER_LENGTH(bufev->input));
+		printline(p->p_hostname, EVBUFFER_DATA(bufev->input));
+		evbuffer_drain(bufev->input, -1);
+	}
+	if (EVBUFFER_LENGTH(bufev->input) > 0) {
+		dprintf("tcp logger \"%s\" buffer %zu bytes\n",
+		    p->p_peername, EVBUFFER_LENGTH(bufev->input));
+	}
+}
+
+void
+tcp_closecb(struct bufferevent *bufev, short event, void *arg)
+{
+	struct peer		*p = arg;
+	char			 ebuf[ERRBUFSIZE];
+
+	if (event & EVBUFFER_EOF) {
+		snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" "
+		    "connection close", p->p_peername);
+		logmsg(LOG_SYSLOG|LOG_INFO, ebuf, LocalHostName, ADDDATE);
+	} else {
+		snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" "
+		    "connection error: %s", p->p_peername, strerror(errno));
+		logmsg(LOG_SYSLOG|LOG_NOTICE, ebuf, LocalHostName, ADDDATE);
+	}
+
+	peernum--;
+	LIST_REMOVE(p, p_entry);
+	if (p->p_peername != hostname_unknown)
+		free(p->p_peername);
+	if (p->p_hostname != hostname_unknown)
+		free(p->p_hostname);
+	bufferevent_free(p->p_bufev);
+	close(p->p_fd);
+	free(p);
+}
+
 int
 tcp_socket(struct filed *f)
 {
@@ -825,7 +993,7 @@ tcp_socket(struct filed *f)
 }
 
 void
-tcp_readcb(struct bufferevent *bufev, void *arg)
+tcp_dropcb(struct bufferevent *bufev, void *arg)
 {
 	struct filed	*f = arg;
 
@@ -943,7 +1111,7 @@ tcp_connectcb(int fd, short event, void *arg)
 	f->f_file = s;
 
 	bufferevent_setfd(bufev, s);
-	bufferevent_setcb(bufev, tcp_readcb, tcp_writecb, tcp_errorcb, f);
+	bufferevent_setcb(bufev, tcp_dropcb, tcp_writecb, tcp_errorcb, f);
 	/*
 	 * Although syslog is a write only protocol, enable reading from
 	 * the socket to detect connection close and errors.
@@ -1027,7 +1195,7 @@ usage(void)
 	(void)fprintf(stderr,
 	    "usage: syslogd [-46dFhnuV] [-a path] [-C CAfile] [-f config_file]\n"
 	    "               [-m mark_interval] [-p log_socket] [-s reporting_socket]\n"
-	    "               [-U bind_address]\n");
+	    "               [-T listen_address] [-U bind_address]\n");
 	exit(1);
 }
 
@@ -1541,7 +1709,7 @@ cvthname(struct sockaddr *f, char *result, size_t res_len)
 	if (getnameinfo(f, f->sa_len, result, res_len, NULL, 0,
 	    NI_NUMERICHOST|NI_NUMERICSERV|NI_DGRAM) != 0) {
 		dprintf("Malformed from address\n");
-		strlcpy(result, "???", res_len);
+		strlcpy(result, hostname_unknown, res_len);
 		return;
 	}
 	dprintf("cvthname(%s)\n", result);
@@ -1549,7 +1717,7 @@ cvthname(struct sockaddr *f, char *result, size_t res_len)
 		return;
 
 	if (priv_getnameinfo(f, f->sa_len, result, res_len) != 0)
-		dprintf("Host name for your address (%s) unknown\n", result);
+		dprintf("Host name for from address (%s) unknown\n", result);
 }
 
 void
@@ -2114,7 +2282,7 @@ cfline(char *line, char *progblock, char *hostblock)
 			f->f_type = F_FORWUDP;
 		} else if (strncmp(ipproto, "tcp", 3) == 0) {
 			if ((f->f_un.f_forw.f_bufev = bufferevent_new(-1,
-			    tcp_readcb, tcp_writecb, tcp_errorcb, f)) == NULL) {
+			    tcp_dropcb, tcp_writecb, tcp_errorcb, f)) == NULL) {
 				snprintf(ebuf, sizeof(ebuf),
 				    "bufferevent \"%s\"",
 				    f->f_un.f_forw.f_loghost);
