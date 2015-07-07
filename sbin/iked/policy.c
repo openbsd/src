@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.36 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.37 2015/07/07 19:13:31 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -214,6 +214,16 @@ policy_unref(struct iked *env, struct iked_policy *pol)
 		return;
 	if (--(pol->pol_refcnt) <= 0)
 		config_free_policy(env, pol);
+	else {
+		struct iked_sa		*tmp;
+		int			 count = 0;
+
+		TAILQ_FOREACH(tmp, &pol->pol_sapeers, sa_peer_entry)
+			count++;
+		if (count != pol->pol_refcnt)
+			log_warnx("%s: ERROR pol %p pol_refcnt %d != count %d",
+			    __func__, pol, pol->pol_refcnt, count);
+	}
 }
 
 void
@@ -332,9 +342,10 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	if (initiator && sa->sa_hdr.sh_rspi == 0 && rspi)
 		sa->sa_hdr.sh_rspi = rspi;
 
-	if (sa->sa_policy == NULL)
+	if (sa->sa_policy == NULL) {
 		sa->sa_policy = pol;
-	else
+		TAILQ_INSERT_TAIL(&pol->pol_sapeers, sa, sa_peer_entry);
+	} else
 		pol = sa->sa_policy;
 
 	sa->sa_statevalid = IKED_REQ_AUTH|IKED_REQ_AUTHVALID|IKED_REQ_SA;
@@ -401,15 +412,8 @@ sa_free_flows(struct iked *env, struct iked_saflows *head)
 
 int
 sa_address(struct iked_sa *sa, struct iked_addr *addr,
-    struct sockaddr_storage *peer, int initiator)
+    struct sockaddr_storage *peer)
 {
-	struct iked_policy	*pol = sa->sa_policy;
-
-	if (sa->sa_state != IKEV2_STATE_CLOSING && pol == NULL) {
-		log_debug("%s: missing policy", __func__);
-		return (-1);
-	}
-
 	bzero(addr, sizeof(*addr));
 	addr->addr_af = peer->ss_family;
 	addr->addr_port = htons(socket_getport((struct sockaddr *)peer));
@@ -418,15 +422,6 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 		log_debug("%s: invalid address", __func__);
 		return (-1);
 	}
-
-	if (addr == &sa->sa_peer && pol) {
-		/* XXX Re-insert node into the tree */
-		RB_REMOVE(iked_sapeers, &pol->pol_sapeers, sa);
-		memcpy(&sa->sa_polpeer, initiator ? &pol->pol_peer :
-		    &sa->sa_peer, sizeof(sa->sa_polpeer));
-		RB_INSERT(iked_sapeers, &pol->pol_sapeers, sa);
-	}
-
 	return (0);
 }
 
@@ -519,22 +514,6 @@ sa_cmp(struct iked_sa *a, struct iked_sa *b)
 	return (0);
 }
 
-struct iked_sa *
-sa_peer_lookup(struct iked_policy *pol, struct sockaddr_storage *peer)
-{
-	struct iked_sa	 key;
-
-	memcpy(&key.sa_polpeer.addr, peer, sizeof(*peer));
-	return (RB_FIND(iked_sapeers, &pol->pol_sapeers, &key));
-}
-
-static __inline int
-sa_peer_cmp(struct iked_sa *a, struct iked_sa *b)
-{
-	return (sockaddr_cmp((struct sockaddr *)&a->sa_polpeer.addr,
-	    (struct sockaddr *)&b->sa_polpeer.addr, -1));
-}
-
 static __inline int
 sa_addrpool_cmp(struct iked_sa *a, struct iked_sa *b)
 {
@@ -603,7 +582,6 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 }
 
 RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);
-RB_GENERATE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
 RB_GENERATE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
 RB_GENERATE(iked_users, iked_user, usr_entry, user_cmp);
 RB_GENERATE(iked_activesas, iked_childsa, csa_node, childsa_cmp);

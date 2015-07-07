@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.35 2015/02/06 10:39:01 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.36 2015/07/07 19:13:31 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -106,7 +106,7 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	}
 
 	if (sa->sa_policy) {
-		(void)RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
+		TAILQ_REMOVE(&sa->sa_policy->pol_sapeers, sa, sa_peer_entry);
 		policy_unref(env, sa->sa_policy);
 	}
 
@@ -157,8 +157,10 @@ config_new_policy(struct iked *env)
 	if ((pol = calloc(1, sizeof(*pol))) == NULL)
 		return (NULL);
 
+	/* XXX caller does this again */
 	TAILQ_INIT(&pol->pol_proposals);
-	RB_INIT(&pol->pol_sapeers);
+	TAILQ_INIT(&pol->pol_sapeers);
+	RB_INIT(&pol->pol_flows);
 
 	return (pol);
 }
@@ -173,10 +175,13 @@ config_free_policy(struct iked *env, struct iked_policy *pol)
 
 	TAILQ_REMOVE(&env->sc_policies, pol, pol_entry);
 
-	RB_FOREACH(sa, iked_sapeers, &pol->pol_sapeers) {
-		/* Remove from the policy tree, but keep for existing SAs */
+	TAILQ_FOREACH(sa, &pol->pol_sapeers, sa_peer_entry) {
+		/* Remove from the policy list, but keep for existing SAs */
 		if (sa->sa_policy == pol)
 			policy_ref(env, pol);
+		else
+			log_warnx("%s: ERROR: sa_policy %p != pol %p",
+			    __func__, sa->sa_policy, pol);
 	}
 
 	if (pol->pol_refcnt)
@@ -687,6 +692,7 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 	offset += sizeof(*pol);
 
 	TAILQ_INIT(&pol->pol_proposals);
+	TAILQ_INIT(&pol->pol_sapeers);
 	RB_INIT(&pol->pol_flows);
 
 	for (i = 0; i < pol->pol_nproposals; i++) {

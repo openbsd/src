@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.120 2015/03/26 19:52:35 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.121 2015/07/07 19:13:31 markus Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -473,10 +473,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		ikev2_msg_prevail(env, &sa->sa_responses, msg);
 	}
 
-	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer,
-	    sa->sa_hdr.sh_initiator) == -1 ||
-	    sa_address(sa, &sa->sa_local, &msg->msg_local,
-	    sa->sa_hdr.sh_initiator) == -1)
+	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer) == -1 ||
+	    sa_address(sa, &sa->sa_local, &msg->msg_local) == -1)
 		return;
 
 	sa->sa_fd = msg->msg_fd;
@@ -532,19 +530,10 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		sa->sa_policy = NULL;
 		if (policy_lookup(env, msg) == 0 && msg->msg_policy &&
 		    msg->msg_policy != old) {
-			log_debug("%s: policy switch %p/%s to %p/%s",
-			    __func__, old, old->pol_name,
-			    msg->msg_policy, msg->msg_policy->pol_name);
-			RB_REMOVE(iked_sapeers, &old->pol_sapeers, sa);
-			if (RB_INSERT(iked_sapeers,
-			    &msg->msg_policy->pol_sapeers, sa)) {
-				/* failed, restore */
-				log_debug("%s: conflicting sa", __func__);
-				RB_INSERT(iked_sapeers, &old->pol_sapeers, sa);
-				msg->msg_policy = old;
-			} else
-				policy_unref(env, old);
+			/* move sa to new policy */
 			policy = sa->sa_policy = msg->msg_policy;
+			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
+			TAILQ_INSERT_TAIL(&policy->pol_sapeers, sa, sa_peer_entry);
 		} else {
 			/* restore */
 			msg->msg_policy = sa->sa_policy = old;
@@ -773,7 +762,7 @@ ikev2_init_ike_sa(struct iked *env, void *arg)
 	TAILQ_FOREACH(pol, &env->sc_policies, pol_entry) {
 		if ((pol->pol_flags & IKED_POLICY_ACTIVE) == 0)
 			continue;
-		if (sa_peer_lookup(pol, &pol->pol_peer.addr) != NULL) {
+		if (!TAILQ_EMPTY(&pol->pol_sapeers)) {
 			log_debug("%s: \"%s\" is already active",
 			    __func__, pol->pol_name);
 			continue;
@@ -939,12 +928,6 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	ibuf_release(sa->sa_1stmsg);
 	if ((sa->sa_1stmsg = ibuf_dup(buf)) == NULL) {
 		log_debug("%s: failed to copy 1st message", __func__);
-		goto done;
-	}
-
-	memcpy(&sa->sa_polpeer, &pol->pol_peer, sizeof(sa->sa_polpeer));
-	if (RB_INSERT(iked_sapeers, &pol->pol_sapeers, sa)) {
-		log_debug("%s: conflicting sa", __func__);
 		goto done;
 	}
 
@@ -2880,7 +2863,6 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	struct iked_childsa		*csa, *nextcsa;
 	struct iked_flow		*flow, *nextflow;
 	struct iked_proposal		*prop, *nextprop;
-	int				 initiator;
 
 	log_debug("%s: IKE SA %p ispi %s rspi %s replaced"
 	    " by SA %p ispi %s rspi %s ",
@@ -2890,29 +2872,6 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	    nsa,
 	    print_spi(nsa->sa_hdr.sh_ispi, 8),
 	    print_spi(nsa->sa_hdr.sh_rspi, 8));
-
-	/*
-	 * Transfer policy and address:
-	 * - Remember if we initiated the original IKE-SA because of our policy.
-	 * - Note that sa_address() will insert the new SA when we set sa_peer.
-	 */
-	initiator = !memcmp(&sa->sa_polpeer, &sa->sa_policy->pol_peer,
-	    sizeof(sa->sa_polpeer));
-	nsa->sa_policy = sa->sa_policy;
-	RB_REMOVE(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
-	sa->sa_policy = NULL;
-	if (sa_address(nsa, &nsa->sa_peer, &sa->sa_peer.addr,
-	    initiator) == -1 ||
-	    sa_address(nsa, &nsa->sa_local, &sa->sa_local.addr,
-	    initiator) == -1) {
-		/* reinsert old SA :/ */
-		sa->sa_policy = nsa->sa_policy;
-		if (RB_FIND(iked_sapeers, &nsa->sa_policy->pol_sapeers, nsa))
-			RB_REMOVE(iked_sapeers, &nsa->sa_policy->pol_sapeers, nsa);
-		RB_INSERT(iked_sapeers, &sa->sa_policy->pol_sapeers, sa);
-		nsa->sa_policy = NULL;
-		return (-1);
-	}
 
 	/* Transfer socket and NAT information */
 	nsa->sa_fd = sa->sa_fd;
