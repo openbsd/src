@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.37 2015/07/07 17:53:04 bluhm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.38 2015/07/07 21:43:35 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,13 +120,6 @@ There is no well-known port for syslog over TCP, so a port number
 must be specified using the
 .Ar host:port
 syntax.
-IPv6 addresses can be used by surrounding the address portion with
-square brackets
-.Po
-.Ql [\&
-and
-.Ql ]\&
-.Pc .
 .It Fl U Ar bind_address
 Create a UDP socket for receiving messages and bind it to the
 specified address.
@@ -135,13 +128,6 @@ packets when syslogd is bound to localhost.
 A port number may be specified using the
 .Ar host:port
 syntax.
-IPv6 addresses can be used by surrounding the address portion with
-square brackets
-.Po
-.Ql [\&
-and
-.Ql ]\&
-.Pc .
 .It Fl u
 Select the historical
 .Dq insecure
