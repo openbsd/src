@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.105 2015/07/07 13:19:06 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.106 2015/07/07 14:13:01 ajacoutot Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -145,7 +145,7 @@
 /var/cron/cron.deny
 /var/cron/tabs/root
 +/var/nsd/etc/nsd.conf
-+/var/unbound/db/root.key
+/var/unbound/db/root.key
 /var/unbound/etc/unbound.conf
 /var/yp/Makefile.main
 /var/yp/Makefile.yp
