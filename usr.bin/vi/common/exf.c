@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.36 2015/04/24 21:48:31 brynet Exp $	*/
+/*	$OpenBSD: exf.c,v 1.37 2015/07/07 18:34:12 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -185,7 +185,8 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 		(void)snprintf(tname, sizeof(tname),
 		    "%s/vi.XXXXXXXXXX", O_STR(sp, O_TMP_DIRECTORY));
 		fd = mkstemp(tname);
-		if (fd == -1 || fchmod(fd, S_IRUSR | S_IWUSR) == -1) {
+		if (fd == -1 || fstat(fd, &sb) == -1 ||
+		    fchmod(fd, S_IRUSR | S_IWUSR) == -1) {
 			msgq(sp, M_SYSERR,
 			    "237|Unable to create temporary file");
 			if (fd != -1) {
@@ -210,8 +211,6 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 		psize = 1024;
 		if (!LF_ISSET(FS_OPENERR))
 			F_SET(frp, FR_NEWFILE);
-
-		(void)clock_gettime(CLOCK_REALTIME, &ep->mtim);
 	} else {
 		/*
 		 * XXX
@@ -226,16 +225,17 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 			psize = 1;
 		psize *= 1024;
 
-		F_SET(ep, F_DEVSET);
-		ep->mdev = sb.st_dev;
-		ep->minode = sb.st_ino;
-
-		ep->mtim = sb.st_mtim;
-
 		if (!S_ISREG(sb.st_mode))
 			msgq_str(sp, M_ERR, oname,
 			    "238|Warning: %s is not a regular file");
 	}
+
+	/* Save device, inode and modification time. */
+	F_SET(ep, F_DEVSET);
+	ep->mdev = sb.st_dev;
+	ep->minode = sb.st_ino;
+
+	ep->mtim = sb.st_mtim;
 
 	/* Set up recovery. */
 	memset(&oinfo, 0, sizeof(RECNOINFO));
