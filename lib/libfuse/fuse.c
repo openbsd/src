@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.25 2015/02/10 07:49:22 ajacoutot Exp $ */
+/* $OpenBSD: fuse.c,v 1.26 2015/07/07 13:56:45 ajacoutot Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -359,10 +359,10 @@ ifuse_process_opt(void *data, const char *arg, int key,
 		case KEY_HELP:
 		case KEY_HELP_WITHOUT_HEADER:
 			dump_help();
-			return (0);
+			return (-1);
 		case KEY_VERSION:
 			dump_version();
-			return (1);
+			return (-1);
 		case KEY_MAXREAD:
 			res = strtonum(arg, 0, FUSEBUFMAXSIZE, &err);
 			if (err) {
