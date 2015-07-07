@@ -1,4 +1,4 @@
-#	$OpenBSD: RSyslogd.pm,v 1.2 2015/01/16 11:51:59 bluhm Exp $
+#	$OpenBSD: RSyslogd.pm,v 1.3 2015/07/07 18:03:11 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -36,27 +36,40 @@ sub new {
 
 	_make_abspath(\$self->{$_}) foreach (qw(conffile pidfile outfile));
 
-	# substitute variables in config file
-	my $listendomain = $self->{listendomain}
-	    or croak "$class listen domain not given";
-	my $listenaddr = $self->{listenaddr}
-	    or croak "$class listen address not given";
-	my $listenproto = $self->{listenproto}
-	    or croak "$class listen protocol not given";
-	my $listenport = $self->{listenport}
-	    or croak "$class listen port not given";
+	my ($listendomain, $listenproto, $listenaddr, $listenport);
+	if (defined($self->{listendomain})) {
+		$listendomain = $self->{listendomain}
+		    or croak "$class listen domain not given";
+		$listenproto = $self->{listenproto}
+		    or croak "$class listen protocol not given";
+		$listenaddr = $self->{listenaddr}
+		    or croak "$class listen address not given";
+		$listenport = $self->{listenport}
+		    or croak "$class listen port not given";
+	}
+	my ($connectdomain, $connectproto, $connectaddr, $connectport);
+	if (defined($self->{connectdomain})) {
+		$connectdomain = $self->{connectdomain}
+		    or croak "$class connect domain not given";
+		$connectproto = $self->{connectproto}
+		    or croak "$class connect protocol not given";
+		$connectaddr = $self->{connectaddr}
+		    or croak "$class connect address not given";
+		$connectport = $self->{connectport}
+		    or croak "$class connect port not given";
+	}
 
 	open(my $fh, '>', $self->{conffile})
 	    or die ref($self), " create conf file $self->{conffile} failed: $!";
-	if ($listenproto eq "udp") {
+	if ($listendomain && $listenproto eq "udp") {
 		print $fh "\$ModLoad imudp\n";
 		print $fh "\$UDPServerRun $listenport\n";
 	}
-	if ($listenproto eq "tcp") {
+	if ($listendomain && $listenproto eq "tcp") {
 		print $fh "\$ModLoad imtcp\n";
 		print $fh "\$InputTCPServerRun $listenport\n";
 	}
-	if ($listenproto eq "tls") {
+	if ($listendomain && $listenproto eq "tls") {
 		print $fh "\$DefaultNetstreamDriver gtls\n";
 		my %cert = (
 		    CA   => "ca.crt",
@@ -71,6 +84,12 @@ sub new {
 		print $fh "\$InputTCPServerStreamDriverMode 1\n";
 		print $fh "\$InputTCPServerStreamDriverAuthMode anon\n";
 		print $fh "\$InputTCPServerRun $listenport\n";
+	}
+	if ($connectdomain && $connectproto eq "udp") {
+		print $fh "*.* \@$connectaddr:$connectport\n";
+	}
+	if ($connectdomain && $connectproto eq "tcp") {
+		print $fh "*.* \@\@$connectaddr:$connectport\n";
 	}
 	print $fh "*.*	$self->{outfile}\n";
 	print $fh $self->{conf} if $self->{conf};

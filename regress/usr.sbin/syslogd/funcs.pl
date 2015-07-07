@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.20 2015/06/28 18:52:11 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.21 2015/07/07 18:03:11 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -63,6 +63,8 @@ sub write_log {
 	my $self = shift;
 
 	write_message($self, $testlog);
+	IO::Handle::flush(\*STDOUT);
+	${$self->{syslogd}}->loggrep($testlog, 2);
 	write_shutdown($self);
 }
 
@@ -73,6 +75,8 @@ sub write_between2logs {
 	write_message($self, $firstlog);
 	$func->($self, @_);
 	write_message($self, $testlog);
+	IO::Handle::flush(\*STDOUT);
+	${$self->{syslogd}}->loggrep($testlog, 2);
 	write_shutdown($self);
 }
 
@@ -80,18 +84,18 @@ sub write_message {
 	my $self = shift;
 
 	if (defined($self->{connectdomain})) {
+		my $msg = join("", @_);
 		if ($self->{connectproto} eq "udp") {
-			# writing udp packets works only with syswrite()
-			my $msg = join("", @_);
+			# writing UDP packets works only with syswrite()
 			defined(my $n = syswrite(STDOUT, $msg))
 			    or die ref($self), " write log line failed: $!";
 			$n == length($msg)
 			    or die ref($self), " short UDP write";
-			print STDERR $msg, "\n";
 		} else {
-			print @_;
-			print STDERR @_, "\n";
+			print $msg;
+			print "\n" if $self->{connectproto} eq "tcp";
 		}
+		print STDERR "<<< $msg\n";
 	} else {
 		syslog(LOG_INFO, @_);
 	}
@@ -121,6 +125,23 @@ sub write_lengths {
 	write_chars($self, $lenghts, $tail);
 }
 
+sub generate_chars {
+	my ($len) = @_;
+
+	my $msg = "";
+	my $char = '0';
+	for (my $i = 0; $i < $len; $i++) {
+		$msg .= $char;
+		given ($char) {
+			when(/9/)       { $char = 'A' }
+			when(/Z/)       { $char = 'a' }
+			when(/z/)       { $char = '0' }
+			default         { $char++ }
+		}
+	}
+	return $msg;
+}
+
 sub write_chars {
 	my $self = shift;
 	my ($length, $tail) = @_;
@@ -129,17 +150,7 @@ sub write_chars {
 		my $t = $tail // "";
 		substr($t, 0, length($t) - $len, "")
 		    if length($t) && length($t) > $len;
-		my $msg = "";
-		my $char = '0';
-		for (my $i = 0; $i < $len - length($t); $i++) {
-			$msg .= $char;
-			given ($char) {
-				when(/9/)       { $char = 'A' }
-				when(/Z/)       { $char = 'a' }
-				when(/z/)       { $char = '0' }
-				default         { $char++ }
-			}
-		}
+		my $msg = generate_chars($len - length($t));
 		$msg .= $t if length($t);
 		write_message($self, $msg);
 		# if client is sending too fast, syslogd will not see everything
@@ -157,7 +168,7 @@ sub write_unix {
 	) or die ref($self), " connect to $path unix socket failed: $!";
 	my $msg = get_testlog(). " $path unix socket";
 	print $u $msg;
-	print STDERR $msg, "\n";
+	print STDERR "<<< $msg\n";
 }
 
 ########################################################################
@@ -191,7 +202,7 @@ sub read_message {
 	local $_;
 	for (;;) {
 		if ($self->{listenproto} eq "udp") {
-			# reading udp packets works only with sysread()
+			# reading UDP packets works only with sysread()
 			defined(my $n = sysread(STDIN, $_, 8194))
 			    or die ref($self), " read log line failed: $!";
 			last if $n == 0;

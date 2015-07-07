@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: syslogd.pl,v 1.6 2015/06/28 18:52:11 bluhm Exp $
+#	$OpenBSD: syslogd.pl,v 1.7 2015/07/07 18:03:11 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -41,16 +41,14 @@ if (@ARGV and -f $ARGV[-1]) {
 @ARGV == 0 or usage();
 
 create_multifile(@{$args{multifile} || []});
-if ($args{rsyslogd}) {
-	$args{rsyslogd}{listen}{domain} ||= AF_INET;
-	$args{rsyslogd}{listen}{addr}   ||= "127.0.0.1";
-	$args{rsyslogd}{listen}{proto}  ||= "udp";
-}
 foreach my $name (qw(client syslogd server rsyslogd)) {
 	$args{$name} or next;
 	foreach my $action (qw(connect listen)) {
 		my $h = $args{$name}{$action} or next;
-		foreach my $k (qw(domain addr proto port)) {
+		defined $h->{domain}
+		    or die "No domain specified in $name $action";
+		foreach my $k (qw(domain proto addr port)) {
+			next unless defined $h->{$k};
 			$args{$name}{"$action$k"} = $h->{$k};
 		}
 	}
@@ -60,7 +58,7 @@ $s = RSyslogd->new(
     %{$args{rsyslogd}},
     listenport          => scalar find_ports(%{$args{rsyslogd}{listen}}),
     testfile            => $testfile,
-) if $args{rsyslogd};
+) if $args{rsyslogd}{listen} && !$args{rsyslogd}{connect};
 $s ||= Server->new(
     func                => \&read_log,
     listendomain        => AF_INET,
@@ -87,13 +85,20 @@ $r = Syslogd->new(
     client              => \$c,
     server              => \$s,
 );
+my $rc = RSyslogd->new(
+    %{$args{rsyslogd}},
+    listenport          => scalar find_ports(%{$args{rsyslogd}{listen}}),
+    testfile            => $testfile,
+) if $args{rsyslogd}{connect};
 $c = Client->new(
     func                => \&write_log,
+    connectport         => $rc && $rc->{listenport},
     %{$args{client}},
     testfile            => $testfile,
     syslogd             => \$r,
     server              => \$s,
 ) unless $args{client}{noclient};
+($rc, $c) = ($c, $rc) if $rc;  # chain client -> rsyslogd -> syslogd
 
 $r->run unless $r->{late};
 $s->run->up unless $args{server}{noserver};
@@ -113,6 +118,7 @@ foreach (@m) {
 	}
 }
 $c->run->up unless $args{client}{noclient};
+$rc->run->up if $args{rsyslogd}{connect};
 
 $c->down unless $args{client}{noclient};
 $s->down unless $args{server}{noserver};

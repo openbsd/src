@@ -19,6 +19,8 @@ our %args = (
 	    foreach (1..(MAXUNIX-1)) {
 		write_unix($self, "unix-$_.sock");
 	    }
+	    ${$self->{syslogd}}->loggrep(get_testlog(), 5, MAXUNIX)
+		or die ref($self), " syslogd did not receive complete line";
 	    write_shutdown($self);
 	},
     },

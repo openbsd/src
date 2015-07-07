@@ -1,5 +1,5 @@
-# Syslog binds UDP socket to localhost with -4.
-# The client writes a message to a localhost IPv4 UDP socket.
+# The syslogd binds UDP socket on localhost with -4.
+# The client writes a message into a localhost IPv4 UDP socket.
 # The syslogd writes it into a file and through a pipe.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
