@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.156 2015/06/23 13:20:17 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.157 2015/07/07 14:22:25 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -642,11 +642,11 @@ in_arpinput(struct mbuf *m)
 				   "arp: attempt to overwrite permanent "
 				   "entry for %s by %s on %s\n", addr,
 				   ether_sprintf(ea->arp_sha),
-				   ac->ac_if.if_xname);
+				   ifp->if_xname);
 				goto out;
-			} else if (rt->rt_ifp != &ac->ac_if) {
+			} else if (rt->rt_ifp != ifp) {
 #if NCARP > 0
-				if (ac->ac_if.if_type != IFT_CARP)
+				if (ifp->if_type != IFT_CARP)
 #endif
 				{
 					inet_ntop(AF_INET, &isaddr,
@@ -656,7 +656,7 @@ in_arpinput(struct mbuf *m)
 					   " %s on %s by %s on %s\n", addr,
 					   rt->rt_ifp->if_xname,
 					   ether_sprintf(ea->arp_sha),
-					   ac->ac_if.if_xname);
+					   ifp->if_xname);
 				}
 				goto out;
 			} else {
@@ -665,21 +665,21 @@ in_arpinput(struct mbuf *m)
 				   "arp info overwritten for %s by %s on %s\n",
 				   addr,
 				   ether_sprintf(ea->arp_sha),
-				   ac->ac_if.if_xname);
+				   ifp->if_xname);
 				rt->rt_expire = 1; /* no longer static */
 			}
 			changed = 1;
 		    }
-		} else if (rt->rt_ifp != &ac->ac_if &&
+		} else if (rt->rt_ifp != ifp &&
 #if NBRIDGE > 0
-		    !SAME_BRIDGE(ac->ac_if.if_bridgeport,
+		    !SAME_BRIDGE(ifp->if_bridgeport,
 		    rt->rt_ifp->if_bridgeport) &&
 #endif
 #if NCARP > 0
 		    !(rt->rt_ifp->if_type == IFT_CARP &&
-		    rt->rt_ifp->if_carpdev == &ac->ac_if) &&
-		    !(ac->ac_if.if_type == IFT_CARP &&
-		    ac->ac_if.if_carpdev == rt->rt_ifp) &&
+		    rt->rt_ifp->if_carpdev == ifp) &&
+		    !(ifp->if_type == IFT_CARP &&
+		    ifp->if_carpdev == rt->rt_ifp) &&
 #endif
 		    1) {
 			inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
@@ -688,7 +688,7 @@ in_arpinput(struct mbuf *m)
 			    "on %s by %s on %s\n", addr,
 			    rt->rt_ifp->if_xname,
 			    ether_sprintf(ea->arp_sha),
-			    ac->ac_if.if_xname);
+			    ifp->if_xname);
 			goto out;
 		}
 		sdl->sdl_alen = sizeof(ea->arp_sha);
@@ -704,7 +704,7 @@ in_arpinput(struct mbuf *m)
 			mh = ml_dequeue(&la->la_ml);
 			la_hold_total--;
 
-			(*ac->ac_if.if_output)(&ac->ac_if, mh, rt_key(rt), rt);
+			(*ifp->if_output)(ifp, mh, rt_key(rt), rt);
 
 			if (ml_len(&la->la_ml) == len) {
 				/* mbuf is back in queue. Discard. */
@@ -754,7 +754,7 @@ out:
 	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
-	(*ac->ac_if.if_output)(&ac->ac_if, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
 	return;
 }
 
