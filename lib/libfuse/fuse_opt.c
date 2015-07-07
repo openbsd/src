@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.12 2015/02/06 23:21:58 millert Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.13 2015/07/07 13:03:58 ajacoutot Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -247,6 +247,13 @@ parse_opt(const struct fuse_opt *o, const char *val, void *data,
 					ret = f(data, &val[idx], o->val, arg);
 				else
 					ret = f(data, val, o->val, arg);
+			}
+
+			if (o->off != ULONG_MAX && data && o->val >= 0) {
+				ret = f(data, val, o->val, arg);
+				int *addr = (int *)(data + o->off);
+				*addr = o->val;
+				ret = 0;
 			}
 
 			if (ret == -1)
