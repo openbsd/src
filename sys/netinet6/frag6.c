@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.60 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.61 2015/07/08 07:31:14 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -52,13 +52,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet/ip.h>		/* for ECN definitions */
-
-/*
- * Define it to get a correct behavior on per-interface statistics.
- * You will need to perform an extra routing table lookup, per fragment,
- * to do it.  This may, or may not be, a performance hit.
- */
-#define IN6_IFSTAT_STRICT
 
 void frag6_freef(struct ip6q *);
 
@@ -172,10 +165,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	int first_frag = 0;
 	int fragoff, frgpartlen;	/* must be larger than u_int16_t */
 	struct ifnet *dstifp;
-#ifdef IN6_IFSTAT_STRICT
 	struct sockaddr_in6 dst;
 	struct rtentry *rt;
-#endif
 	u_int8_t ecn, ecn0;
 
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -184,7 +175,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 
 	dstifp = NULL;
-#ifdef IN6_IFSTAT_STRICT
 	/* find the destination interface of the packet. */
 	memset(&dst, 0, sizeof(dst));
 	dst.sin6_family = AF_INET6;
@@ -200,11 +190,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		rtfree(rt);
 		rt = NULL;
 	}
-#else
-	/* we are violating the spec, this is not the destination interface */
-	if ((m->m_flags & M_PKTHDR) != 0)
-		dstifp = if_get(m->m_pkthdr.ph_ifidx);
-#endif
 
 	/* jumbo payload can't contain a fragment header */
 	if (ip6->ip6_plen == 0) {
