@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2013/05/17 19:38:52 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.6 2015/07/08 13:37:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,6 +58,8 @@
 #define	IPL_SCHED	7	/* everything */
 #define	IPL_HIGH	7	/* everything */
 #define	NIPLS		8	/* Number of levels */
+
+#define IPL_MPFLOOR	IPL_TTY
 
 /* Interrupt priority 'flags'. */
 #define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */

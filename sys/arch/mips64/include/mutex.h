@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.4 2011/04/21 04:34:12 miod Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.1 2015/07/08 13:37:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -25,64 +25,49 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#include <sys/param.h>
-#include <sys/mutex.h>
-#include <sys/systm.h>
+#ifndef _MACHINE_MUTEX_H_
+#define _MACHINE_MUTEX_H_
 
-#include <machine/intr.h>
-
-#ifdef MULTIPROCESSOR
-#error This code needs more work
-#endif
+struct mutex {
+	void *mtx_owner;
+	int mtx_wantipl;
+	int mtx_oldipl;
+};
 
 /*
- * Single processor systems don't need any mutexes, but they need the spl
- * raising semantics of the mutexes.
+ * To prevent lock ordering problems with the kernel lock, we need to
+ * make sure we block all interrupts that can grab the kernel lock.
+ * The simplest way to achieve this is to make sure mutexes always
+ * raise the interrupt priority level to the highest level that has
+ * interrupts that grab the kernel lock.
  */
-void
-mtx_init(struct mutex *mtx, int wantipl)
-{
-	mtx->mtx_lock = 0;
-	mtx->mtx_wantipl = wantipl;
-	mtx->mtx_oldipl = IPL_NONE;
-}
-
-void
-mtx_enter(struct mutex *mtx)
-{
-	if (mtx->mtx_wantipl != IPL_NONE)
-		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
-
-	MUTEX_ASSERT_UNLOCKED(mtx);
-	mtx->mtx_lock = 1;
-#ifdef DIAGNOSTIC
-	curcpu()->ci_mutex_level++;
-#endif
-}
-
-int
-mtx_enter_try(struct mutex *mtx)
-{
-	if (mtx->mtx_wantipl != IPL_NONE)
-		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
-
-	MUTEX_ASSERT_UNLOCKED(mtx);
-	mtx->mtx_lock = 1;
-#ifdef DIAGNOSTIC
-	curcpu()->ci_mutex_level++;
+#ifdef MULTIPROCESSOR
+#define __MUTEX_IPL(ipl) \
+    (((ipl) > IPL_NONE && (ipl) < IPL_MPFLOOR) ? IPL_MPFLOOR : (ipl))
+#else
+#define __MUTEX_IPL(ipl) (ipl)
 #endif
 
-	return 1;
-}
+#define MUTEX_INITIALIZER(ipl) { NULL, __MUTEX_IPL((ipl)), IPL_NONE }
 
-void
-mtx_leave(struct mutex *mtx)
-{
-	MUTEX_ASSERT_LOCKED(mtx);
+void __mtx_init(struct mutex *, int);
+#define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
+
 #ifdef DIAGNOSTIC
-	curcpu()->ci_mutex_level--;
+#define MUTEX_ASSERT_LOCKED(mtx) do {					\
+	if ((mtx)->mtx_owner != curcpu())				\
+		panic("mutex %p not held in %s", (mtx), __func__);	\
+} while (0)
+
+#define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
+	if ((mtx)->mtx_owner == curcpu())				\
+		panic("mutex %p held in %s", (mtx), __func__);		\
+} while (0)
+#else
+#define MUTEX_ASSERT_LOCKED(mtx) do { } while (0)
+#define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
 #endif
-	mtx->mtx_lock = 0;
-	if (mtx->mtx_wantipl != IPL_NONE)
-		splx(mtx->mtx_oldipl);
-}
+
+#define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
+
+#endif

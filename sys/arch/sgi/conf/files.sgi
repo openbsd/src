@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.52 2013/11/04 14:07:16 deraadt Exp $
+#	$OpenBSD: files.sgi,v 1.53 2015/07/08 13:37:31 dlg Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -23,7 +23,6 @@ file	arch/sgi/sgi/ip32_machdep.c		tgt_o2
 file	arch/sgi/sgi/l1.c			tgt_origin
 file	arch/sgi/sgi/machdep.c
 file	arch/sgi/sgi/mainbus.c
-file	arch/sgi/sgi/mutex.c
 file	arch/sgi/sgi/sginode.c			tgt_origin
 file	arch/sgi/sgi/wscons_machdep.c		wsdisplay
 
