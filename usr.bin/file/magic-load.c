@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.5 2015/05/29 14:15:41 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.6 2015/07/08 17:47:15 tobias Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -549,7 +549,7 @@ magic_parse_offset(struct magic_line *ml, char **line)
 
 	if (*s == '.') {
 		s++;
-		if (strchr("bslBSL", *s) == NULL) {
+		if (*s == '\0' || strchr("bslBSL", *s) == NULL) {
 			magic_warn(ml, "unknown offset type");
 			goto fail;
 		}
@@ -559,7 +559,7 @@ magic_parse_offset(struct magic_line *ml, char **line)
 			goto done;
 	}
 
-	if (strchr("+-*", *s) == NULL) {
+	if (*s == '\0' || strchr("+-*", *s) == NULL) {
 		magic_warn(ml, "unknown offset operator");
 		goto fail;
 	}
