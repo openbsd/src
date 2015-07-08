@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.119 2015/07/06 09:01:58 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.120 2015/07/08 07:56:51 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -731,7 +731,8 @@ in_insert_prefix(struct in_ifaddr *ia)
 	struct ifaddr *ifa = &ia->ia_ifa;
 	int error;
 
-	error = rt_ifa_add(ifa, RTF_UP | RTF_CLONING, ifa->ifa_addr);
+	error = rt_ifa_add(ifa, RTF_UP | RTF_CLONING | RTF_CONNECTED,
+	    ifa->ifa_addr);
 	if (error)
 		return (error);
 
@@ -747,7 +748,7 @@ in_remove_prefix(struct in_ifaddr *ia)
 {
 	struct ifaddr *ifa = &ia->ia_ifa;
 
-	rt_ifa_del(ifa, 0, ifa->ifa_addr);
+	rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED, ifa->ifa_addr);
 
 	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
 		rt_ifa_del(ifa, RTF_HOST | RTF_BROADCAST, ifa->ifa_broadaddr);

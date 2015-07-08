@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.107 2015/07/08 07:29:24 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.108 2015/07/08 07:56:51 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ struct rtentry {
 #define RTF_MPLS	0x100000	/* MPLS additional infos */
 #define RTF_LOCAL	0x200000	/* route to a local address */
 #define RTF_BROADCAST	0x400000	/* route associated to a bcast addr. */
+#define RTF_CONNECTED	0x800000	/* interface route */
 
 /* mask of RTF flags that are allowed to be modified by RTM_CHANGE */
 #define RTF_FMASK	\
