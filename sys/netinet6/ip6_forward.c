@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.77 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.78 2015/07/08 08:48:35 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -288,8 +288,8 @@ reroute:
 	 * unreachable error with Code 2 (beyond scope of source address).
 	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
 	 */
-	if (in6_addr2scopeid(if_get(m->m_pkthdr.ph_ifidx), &ip6->ip6_src) !=
-	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)) {
+	if (in6_addr2scopeid(m->m_pkthdr.ph_ifidx, &ip6->ip6_src) !=
+	    in6_addr2scopeid(rt->rt_ifp->if_index, &ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);

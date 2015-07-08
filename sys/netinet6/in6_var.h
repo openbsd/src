@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.51 2014/11/20 09:55:57 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.52 2015/07/08 08:48:34 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -519,7 +519,7 @@ void	in6_domifdetach(struct ifnet *, void *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(struct ifnet *, int);
 struct in6_ifaddr *in6ifa_ifpwithaddr(struct ifnet *, struct in6_addr *);
 int	in6_ifpprefix(const struct ifnet *, const struct in6_addr *);
-int	in6_addr2scopeid(struct ifnet *, struct in6_addr *);
+int	in6_addr2scopeid(unsigned int, struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
 void	in6_prefixlen2mask(struct in6_addr *, int);

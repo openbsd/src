@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.202 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.203 2015/07/08 08:48:34 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -757,8 +757,8 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		sa6.sin6_len = sizeof(sa6);
 		sa6.sin6_addr = *ip6cp->ip6c_finaldst;
 		/* XXX: assuming M is valid in this case */
-		sa6.sin6_scope_id = in6_addr2scopeid(
-		    if_get(m->m_pkthdr.ph_ifidx), ip6cp->ip6c_finaldst);
+		sa6.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
+		    ip6cp->ip6c_finaldst);
 		if (in6_embedscope(ip6cp->ip6c_finaldst, &sa6, NULL, NULL)) {
 			/* should be impossible */
 			return;
@@ -790,8 +790,8 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		sa6_src.sin6_family = AF_INET6;
 		sa6_src.sin6_len = sizeof(sa6_src);
 		sa6_src.sin6_addr = ip6->ip6_src;
-		sa6_src.sin6_scope_id = in6_addr2scopeid(
-		    if_get(m->m_pkthdr.ph_ifidx), &ip6->ip6_src);
+		sa6_src.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
+		    &ip6->ip6_src);
 		if (in6_embedscope(&sa6_src.sin6_addr, &sa6_src, NULL, NULL)) {
 			/* should be impossible */
 			return;

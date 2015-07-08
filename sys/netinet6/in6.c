@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.159 2015/06/08 22:19:27 krw Exp $	*/
+/*	$OpenBSD: in6.c,v 1.160 2015/07/08 08:48:34 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1665,13 +1665,8 @@ in6_addrscope(struct in6_addr *addr)
 	return __IPV6_ADDR_SCOPE_GLOBAL;
 }
 
-/*
- * ifp - must not be NULL
- * addr - must not be NULL
- */
-
 int
-in6_addr2scopeid(struct ifnet *ifp, struct in6_addr *addr)
+in6_addr2scopeid(unsigned int ifidx, struct in6_addr *addr)
 {
 	int scope = in6_addrscope(addr);
 
@@ -1679,7 +1674,7 @@ in6_addr2scopeid(struct ifnet *ifp, struct in6_addr *addr)
 	case __IPV6_ADDR_SCOPE_INTFACELOCAL:
 	case __IPV6_ADDR_SCOPE_LINKLOCAL:
 		/* XXX: we do not distinguish between a link and an I/F. */
-		return (ifp->if_index);
+		return (ifidx);
 
 	case __IPV6_ADDR_SCOPE_SITELOCAL:
 		return (0);	/* XXX: invalid. */
@@ -1803,7 +1798,8 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 		 * We can never take an address that breaks the scope zone
 		 * of the destination.
 		 */
-		if (in6_addr2scopeid(ifp, dst) != in6_addr2scopeid(oifp, dst))
+		if (in6_addr2scopeid(ifp->if_index, dst) !=
+		    in6_addr2scopeid(oifp->if_index, dst))
 			continue;
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
