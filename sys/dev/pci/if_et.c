@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.28 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.29 2015/07/08 14:41:30 mpi Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1806,7 +1806,6 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 	}
 	if (error) {	/* error == EFBIG */
 		if (m_defrag(m, M_DONTWAIT)) {
-			m_freem(m);
 			printf("%s: can't defrag TX mbuf\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOBUFS;
