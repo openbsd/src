@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.35 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: qle.c,v 1.36 2015/07/08 10:48:19 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -72,7 +72,7 @@ int qledebug = QLE_D_PORT;
 #define QLE_MAX_TARGETS			2048
 
 /* maximum number of segments allowed for in a single io */
-#define QLE_MAX_SEGS			16
+#define QLE_MAX_SEGS			32
 
 enum qle_isp_gen {
 	QLE_GEN_ISP24XX = 1,
@@ -1076,7 +1076,7 @@ qle_handle_resp(struct qle_softc *sc, u_int32_t id)
 				    QLE_DMA_MAP(sc->sc_segments),
 				    ccb->ccb_seg_offset,
 				    sizeof(*ccb->ccb_segs) *
-				    ccb->ccb_dmamap->dm_nsegs,
+				    ccb->ccb_dmamap->dm_nsegs + 1,
 				    BUS_DMASYNC_POSTWRITE);
 			}
 
@@ -1087,18 +1087,14 @@ qle_handle_resp(struct qle_softc *sc, u_int32_t id)
 			bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 		}
 
-		xs->status = lemtoh16(&status->scsi_status) & 0x0f;
+		xs->status = lemtoh16(&status->scsi_status) & 0xff;
+		xs->resid = 0;
 		completion = lemtoh16(&status->completion);
 		switch (completion) {
-		case QLE_IOCB_STATUS_DATA_OVERRUN:
 		case QLE_IOCB_STATUS_DATA_UNDERRUN:
+			xs->resid = lemtoh32(&status->resid);
+		case QLE_IOCB_STATUS_DATA_OVERRUN:
 		case QLE_IOCB_STATUS_COMPLETE:
-			if (completion == QLE_IOCB_STATUS_COMPLETE) {
-				xs->resid = 0;
-			} else {
-				xs->resid = lemtoh32(&status->resid);
-			}
-
 			if (lemtoh16(&status->scsi_status) &
 			    QLE_SCSI_STATUS_SENSE_VALID) {
 				u_int32_t *pp;
@@ -2572,23 +2568,21 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 			    dmap->dm_segs[0].ds_len);
 		} else {
 			flags |= QLE_IOCB_CTRL_FLAG_EXT_SEG;
-			qle_sge(&req->req_data_seg,
-			    QLE_DMA_DVA(sc->sc_segments) +
-			     ccb->ccb_seg_offset,
-			    (ccb->ccb_dmamap->dm_nsegs + 1) *
-			     sizeof(struct qle_iocb_seg));
-
 			for (seg = 0; seg < dmap->dm_nsegs; seg++) {
 				qle_sge(&ccb->ccb_segs[seg],
 				    dmap->dm_segs[seg].ds_addr,
 				    dmap->dm_segs[seg].ds_len);
 			}
-			qle_sge(&ccb->ccb_segs[seg], 0, 0);
+			qle_sge(&ccb->ccb_segs[seg++], 0, 0);
 
 			bus_dmamap_sync(sc->sc_dmat,
 			    QLE_DMA_MAP(sc->sc_segments), ccb->ccb_seg_offset,
-			    sizeof(*ccb->ccb_segs) * ccb->ccb_dmamap->dm_nsegs,
+			    seg * sizeof(*ccb->ccb_segs),
 			    BUS_DMASYNC_PREWRITE);
+
+			qle_sge(&req->req_data_seg,
+			    QLE_DMA_DVA(sc->sc_segments) + ccb->ccb_seg_offset,
+			    seg * sizeof(struct qle_iocb_seg));
 		}
 
 		htolem16(&req->req_data_seg_count, dmap->dm_nsegs);
@@ -2887,7 +2881,7 @@ qle_alloc_ccbs(struct qle_softc *sc)
 		ccb = &sc->sc_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS,
-		    QLE_MAX_SEGS, MAXPHYS, 0,
+		    QLE_MAX_SEGS-1, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dma map\n", DEVNAME(sc));
