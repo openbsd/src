@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.202 2015/02/11 05:48:53 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.203 2015/07/08 08:03:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2821,7 +2821,8 @@ fetchtable(struct ktable *kt, u_int8_t fib_prio)
 		if ((sa = rti_info[RTAX_DST]) == NULL)
 			continue;
 
-		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+		/* Skip ARP/ND cache and local routes. */
+		if (rtm->rtm_flags & (RTF_LLINFO|RTF_LOCAL|RTF_BROADCAST))
 			continue;
 
 		switch (sa->sa_family) {
@@ -2900,17 +2901,33 @@ fetchtable(struct ktable *kt, u_int8_t fib_prio)
 			case AF_INET:
 				if (kr == NULL)
 					fatalx("v4 gateway for !v4 dst?!");
+
+				if (rtm->rtm_flags & RTF_CONNECTED) {
+					kr->r.flags |= F_CONNECTED;
+					break;
+				}
+
 				kr->r.nexthop.s_addr =
 				    ((struct sockaddr_in *)gw)->sin_addr.s_addr;
 				break;
 			case AF_INET6:
 				if (kr6 == NULL)
 					fatalx("v6 gateway for !v6 dst?!");
+
+				if (rtm->rtm_flags & RTF_CONNECTED) {
+					kr6->r.flags |= F_CONNECTED;
+					break;
+				}
+
 				memcpy(&kr6->r.nexthop,
 				    &((struct sockaddr_in6 *)gw)->sin6_addr,
 				    sizeof(kr6->r.nexthop));
 				break;
 			case AF_LINK:
+				/*
+				 * Traditional BSD connected routes have
+				 * a gateway of type AF_LINK.
+				 */
 				if (sa->sa_family == AF_INET)
 					kr->r.flags |= F_CONNECTED;
 				else if (sa->sa_family == AF_INET6)
