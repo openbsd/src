@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.45 2015/05/30 06:25:35 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.46 2015/07/08 17:49:45 tobias Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -413,11 +413,12 @@ load_file(struct input_file *inf)
 {
 	size_t	used;
 
-	inf->size = inf->msg->sb.st_size;
-	if (inf->size == 0 && S_ISREG(inf->msg->sb.st_mode))
+	if (inf->msg->sb.st_size == 0 && S_ISREG(inf->msg->sb.st_mode))
 		return (0); /* empty file */
-	if (inf->size == 0 || inf->size > FILE_READ_SIZE)
+	if (inf->msg->sb.st_size == 0 || inf->msg->sb.st_size > FILE_READ_SIZE)
 		inf->size = FILE_READ_SIZE;
+	else
+		inf->size = inf->msg->sb.st_size;
 
 	if (!S_ISREG(inf->msg->sb.st_mode))
 		goto try_read;
