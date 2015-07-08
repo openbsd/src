@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.29 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: qe.c,v 1.30 2015/07/08 07:21:50 mpi Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -379,13 +379,13 @@ qe_put(sc, idx, m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		bcopy(mtod(m, caddr_t), bp+boff, len);
 		boff += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	return (tlen);
 }

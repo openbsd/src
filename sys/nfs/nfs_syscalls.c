@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.101 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.102 2015/07/08 07:21:50 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -485,7 +485,7 @@ nfsrv_zapsock(struct nfssvc_sock *slp)
 		soshutdown(so, SHUT_RDWR);
 		closef(fp, NULL);
 		if (slp->ns_nam)
-			MFREE(slp->ns_nam, m);
+	    		m = m_free(slp->ns_nam);
 		m_freem(slp->ns_raw);
 		m = slp->ns_rec;
 		while (m) {

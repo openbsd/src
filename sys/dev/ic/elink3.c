@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.85 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.86 2015/07/08 07:21:50 mpi Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1025,7 +1025,7 @@ startagain:
 			} else
 				bus_space_write_multi_1(iot, ioh, txreg,
 				    data, m->m_len);
-			MFREE(m, m0);
+			m0 = m_free(m);
 			m = m0;
 		}
 	} else {
@@ -1040,7 +1040,7 @@ startagain:
 			} else
 				bus_space_write_multi_1(iot, ioh, txreg,
 				    data, m->m_len);
-			MFREE(m, m0);
+			m0 = m_free(m);
 			m = m0;
 		}
 	}

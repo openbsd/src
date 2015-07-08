@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.51 2015/06/29 10:24:14 dlg Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.52 2015/07/08 07:21:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -1135,7 +1135,7 @@ xe_start(ifp)
 		if (m->m_len & 1)
 			bus_space_write_1(bst, bsh, offset + EDP,
 			    *(mtod(m, u_int8_t *) + m->m_len - 1));
-		MFREE(m, m0);
+		m0 = m_free(m);
 		m = m0;
 	}
 	if (sc->sc_flags & XEF_MOHAWK)

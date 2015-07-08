@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.85 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.86 2015/07/08 07:21:50 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1345,7 +1345,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (m->m_len <= M_TRAILINGSPACE(mp)) {
 	    bcopy(mtod(m, u_char *), mtod(mp, u_char *) + mp->m_len, m->m_len);
 	    mp->m_len += m->m_len;
-	    MFREE(m, mp->m_next);
+	    mp->m_next = m_free(m);
 	} else
 	    mp->m_next = m;
 	m = mp;

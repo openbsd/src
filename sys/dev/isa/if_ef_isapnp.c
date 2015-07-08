@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.29 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.30 2015/07/08 07:21:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -310,7 +310,7 @@ startagain:
 			filler >>= 8;
 			filler |= m->m_data[(m->m_len & ~3) + i] << 24;
 		}
-		MFREE(m, m0);
+		m0 = m_free(m);
 		m = m0;
 	}
 

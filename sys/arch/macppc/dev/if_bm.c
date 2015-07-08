@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.33 2015/06/24 09:40:53 mpi Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.34 2015/07/08 07:21:49 mpi Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -662,13 +662,13 @@ bmac_put(struct bmac_softc *sc, caddr_t buff, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		bcopy(mtod(m, caddr_t), buff, len);
 		buff += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	if (tlen > NBPG)
 		panic("%s: putpacket packet overflow", sc->sc_dev.dv_xname);

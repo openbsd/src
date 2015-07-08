@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.31 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.32 2015/07/08 07:21:50 mpi Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -526,7 +526,7 @@ cnw_transmit(sc, m0)
 			mptr += n;
 			mbytes -= n;
 		}
-		MFREE(m, m0);
+		m0 = m_free(m);
 		m = m0;
 	}
 

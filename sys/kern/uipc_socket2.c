@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.61 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.62 2015/07/08 07:21:50 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -867,12 +867,12 @@ sbdrop(struct sockbuf *sb, int len)
 		}
 		len -= m->m_len;
 		sbfree(sb, m);
-		MFREE(m, mn);
+		mn = m_free(m);
 		m = mn;
 	}
 	while (m && m->m_len == 0) {
 		sbfree(sb, m);
-		MFREE(m, mn);
+		mn = m_free(m);
 		m = mn;
 	}
 	if (m) {
@@ -907,7 +907,7 @@ sbdroprecord(struct sockbuf *sb)
 		sb->sb_mb = m->m_nextpkt;
 		do {
 			sbfree(sb, m);
-			MFREE(m, mn);
+			mn = m_free(m);
 		} while ((m = mn) != NULL);
 	}
 	SB_EMPTY_FIXUP(sb);

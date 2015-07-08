@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.21 2015/06/24 09:40:53 mpi Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.22 2015/07/08 07:21:49 mpi Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -850,7 +850,7 @@ maceput(struct mc_softc *sc, struct mbuf *m)
 		totlen += len;
 		bcopy(data, buff, len);
 		buff += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 
 	if (totlen > PAGE_SIZE)

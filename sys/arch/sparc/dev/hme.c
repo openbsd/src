@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.70 2015/06/24 09:40:53 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.71 2015/07/08 07:21:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -797,13 +797,13 @@ hme_put(sc, idx, m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		bcopy(mtod(m, caddr_t), buf, len);
 		buf += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	return (tlen);
 }
