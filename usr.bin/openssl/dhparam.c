@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: dhparam.c,v 1.3 2015/07/08 16:37:25 sthen Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,7 +129,7 @@
 
 #include <openssl/dsa.h>
 
-#define DEFBITS	512
+#define DEFBITS	2048
 
 /* -inform arg	- input format - default PEM (DER or PEM)
  * -outform arg - output format - default PEM
@@ -227,7 +227,7 @@ bad:
 		BIO_printf(bio_err, " -C            Output C code\n");
 		BIO_printf(bio_err, " -2            generate parameters using  2 as the generator value\n");
 		BIO_printf(bio_err, " -5            generate parameters using  5 as the generator value\n");
-		BIO_printf(bio_err, " numbits       number of bits in to generate (default 512)\n");
+		BIO_printf(bio_err, " numbits       number of bits in to generate (default 2048)\n");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, " -engine e     use engine e, possibly a hardware device.\n");
 #endif
