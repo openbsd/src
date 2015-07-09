@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.73 2015/07/08 23:44:56 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.74 2015/07/09 19:48:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -68,7 +68,7 @@ int
 main(int argc, char *argv[])
 {
 	ssize_t len;
-	int ch, fd, error;
+	int ch, fd;
 	int i_flag = 0, e_flag = 0, u_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	u_int32_t l_arg = 0;
