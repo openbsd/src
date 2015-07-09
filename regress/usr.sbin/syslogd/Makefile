@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.9 2015/06/15 21:44:57 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2015/07/09 21:12:44 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
 # p5-IO-Socket-SSL	perl interface to SSL sockets
+# p5-BSD-Resource	BSD process resource limit and priority functions
 #
 # This package enables additional interoperability tests
 # rsyslog		syslog daemon supporting databases, TCP, SSL, RELP
@@ -15,6 +16,7 @@ PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
     eval { require IO::Socket::INET6 } or print $@; \
     eval { require Socket6 } or print $@; \
     eval { require IO::Socket::SSL } or print $@; \
+    eval { require BSD::Resource } or print $@; \
 '
 .if ! empty (PERL_REQUIRE)
 regress:
