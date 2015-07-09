@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.139 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.140 2015/07/09 05:45:25 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -891,20 +891,12 @@ nd6_free(struct rtentry *rt, int gc)
  * XXX cost-effective methods?
  */
 void
-nd6_nud_hint(struct rtentry *rt, struct in6_addr *dst6, int force,
-    u_int rtableid)
+nd6_nud_hint(struct rtentry *rt, u_int rtableid)
 {
 	struct llinfo_nd6 *ln;
 
-	/*
-	 * If the caller specified "rt", use that.  Otherwise, resolve the
-	 * routing table by supplied "dst6".
-	 */
-	if (!rt) {
-		if (!dst6)
-			return;
-		if (!(rt = nd6_lookup(dst6, 0, NULL, rtableid)))
-			return;
+	if (rt == NULL) {
+		return;
 	}
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
@@ -923,11 +915,9 @@ nd6_nud_hint(struct rtentry *rt, struct in6_addr *dst6, int force,
 	 * if we get upper-layer reachability confirmation many times,
 	 * it is possible we have false information.
 	 */
-	if (!force) {
-		ln->ln_byhint++;
-		if (ln->ln_byhint > nd6_maxnudhint)
-			return;
-	}
+	ln->ln_byhint++;
+	if (ln->ln_byhint > nd6_maxnudhint)
+		return;
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;
 	if (!ND6_LLINFO_PERMANENT(ln)) {
