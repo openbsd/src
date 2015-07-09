@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.50 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.51 2015/07/09 12:23:17 mpi Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -216,7 +216,6 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	usb_config_descriptor_t *cdesc;
 	usbd_status err;
 	usb_endpoint_descriptor_t *ed;
-	u_int8_t epcount;
 	int i, altno;
 
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
@@ -268,12 +267,12 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	epcount = 0;
-	(void)usbd_endpoint_count(iface, &epcount);
 
 	sc->sc_in = -1;
 	sc->sc_out = -1;
-	for (i = 0; i < epcount; i++) {
+
+	id = usbd_get_interface_descriptor(iface);
+	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
