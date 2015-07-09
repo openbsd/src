@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.34 2015/06/12 15:47:31 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.35 2015/07/09 13:48:54 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -302,7 +302,8 @@ athn_usb_attachhook(void *xsc)
 	/* Load firmware. */
 	error = athn_usb_load_firmware(usc);
 	if (error != 0) {
-		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
+		printf("%s: could not load firmware (error %d)\n",
+		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 
@@ -679,9 +680,9 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	s = splusb();
 	usc->wait_msg_id = AR_HTC_MSG_READY;
 	error = usbd_do_request(usc->sc_udev, &req, NULL);
-	/* Wait at most 1 second for firmware to boot. */
+	/* Wait at most 2 seconds for firmware to boot. */
 	if (error == 0 && usc->wait_msg_id != 0)
-		error = tsleep(&usc->wait_msg_id, 0, "athnfw", hz);
+		error = tsleep(&usc->wait_msg_id, 0, "athnfw", 2 * hz);
 	usc->wait_msg_id = 0;
 	splx(s);
 	return (error);
