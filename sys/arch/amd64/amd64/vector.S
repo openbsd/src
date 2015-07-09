@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.40 2015/06/29 03:02:38 mlarkin Exp $	*/
+/*	$OpenBSD: vector.S,v 1.41 2015/07/09 13:23:51 mikeb Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -350,7 +350,6 @@ IDTVEC(resume_lapic_ipi)
 2:
 	movq	$(1 << LIR_IPI),%rax
 	orq	%rax,CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 
 IDTVEC(ipi_invltlb)
@@ -435,7 +434,6 @@ IDTVEC(resume_lapic_ltimer)
 2:
 	movq	$(1 << LIR_TIMER),%rax
 	orq	%rax,CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
@@ -518,12 +516,10 @@ IDTVEC(intr_##name##num)						;\
 	orq	%rax,CPUVAR(IPENDING)					;\
 	level_mask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT							;\
 9:									\
 	unmask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT
 
 #define ICUADDR IO_ICU1
