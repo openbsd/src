@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.29 2015/02/03 10:26:29 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.30 2015/07/09 12:57:55 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -87,17 +87,6 @@ sub match_locations
 		}
 	}
 	return [];
-}
-
-sub print_without_src
-{
-	my $self = shift;
-	my @l = ();
-	for my $repo (@$self) {
-		next if $repo->isa("OpenBSD::PackageRepository::Source");
-		push(@l, $repo->url);
-	}
-	return join(':', @l);
 }
 
 1;
