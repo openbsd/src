@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.56 2013/11/07 11:14:26 pirofti Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.57 2015/07/09 14:58:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -72,7 +72,7 @@
 
 /* Table A-11: Selector Unit Control Selectors */
 #define	SU_CONTROL_UNDEFINED				0x00
-#define	SU_INPUT_SELECT_CONTROL 			0x01
+#define	SU_INPUT_SELECT_CONTROL				0x01
 
 /* Table A-12: Camera Terminal Control Selectors */
 #define	CT_CONTROL_UNDEFINED				0x00
@@ -99,8 +99,8 @@
 #define	PU_BACKLIGHT_COMPENSATION_CONTROL		0x01
 #define	PU_BRIGHTNESS_CONTROL				0x02
 #define	PU_CONTRAST_CONTROL				0x03
-#define	PU_GAIN_CONTROL 				0x04
-#define	PU_POWER_LINE_FREQUENCY_CONTROL 		0x05
+#define	PU_GAIN_CONTROL					0x04
+#define	PU_POWER_LINE_FREQUENCY_CONTROL			0x05
 #define	PU_HUE_CONTROL					0x06
 #define	PU_SATURATION_CONTROL				0x07
 #define	PU_SHARPNESS_CONTROL				0x08
@@ -108,7 +108,7 @@
 #define	PU_WHITE_BALANCE_TEMPERATURE_CONTROL		0x0a
 #define	PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL	0x0b
 #define	PU_WHITE_BALANCE_COMPONENT_CONTROL		0x0c
-#define	PU_WHITE_BALANCE_COMPONENT_AUTO_CONTROL 	0x0d
+#define	PU_WHITE_BALANCE_COMPONENT_AUTO_CONTROL		0x0d
 #define	PU_DIGITAL_MULTIPLIER_CONTROL			0x0e
 #define	PU_DIGITAL_MULTIPLIER_LIMIT_CONTROL		0x0f
 #define	PU_HUE_AUTO_CONTROL				0x10
@@ -120,7 +120,7 @@
 #define	VS_PROBE_CONTROL				0x01
 #define	VS_COMMIT_CONTROL				0x02
 #define	VS_STILL_PROBE_CONTROL				0x03
-#define	VS_STILL_COMMIT_CONTROL 			0x04
+#define	VS_STILL_COMMIT_CONTROL				0x04
 #define	VS_STILL_IMAGE_TRIGGER_CONTROL			0x05
 #define	VS_STREAM_ERROR_CODE_CONTROL			0x06
 #define	VS_GENERATE_KEY_FRAME_CONTROL			0x07
@@ -270,7 +270,7 @@ struct usb_video_color_matching_descr {
 	uByte	bColorPrimaries;
 	uByte	bTransferCharacteristics;
 	uByte	bMatrixCoefficients;
-} __packed; 
+} __packed;
 
 /* Table 4-47: Video Probe and Commit Controls */
 struct usb_video_probe_commit {
@@ -657,60 +657,4 @@ struct uvideo_controls {
         },
 #endif
 	{ 0, 0, "", 0, 0, 0, 0 }
-};
-
-struct uvideo_softc {
-	struct device				 sc_dev;
-	struct usbd_device			*sc_udev;
-	int					 sc_nifaces;
-	struct usbd_interface			**sc_ifaces;
-
-	struct device				*sc_videodev;
-
-	int					 sc_enabled;
-	int					 sc_max_fbuf_size;
-	int					 sc_negotiated_flag;
-	int					 sc_frame_rate;
-
-	struct uvideo_frame_buffer		 sc_frame_buffer;
-
-	struct uvideo_mmap			 sc_mmap[UVIDEO_MAX_BUFFERS];
-	uint8_t					*sc_mmap_buffer;
-	q_mmap					 sc_mmap_q;
-	int					 sc_mmap_count;
-	int					 sc_mmap_cur;
-	int					 sc_mmap_flag;
-
-	struct vnode				*sc_vp;
-	struct usb_task				 sc_task_write;
-
-	int					 sc_nframes;
-	struct usb_video_probe_commit		 sc_desc_probe;
-	struct usb_video_header_desc_all	 sc_desc_vc_header;
-	struct usb_video_input_header_desc_all	 sc_desc_vs_input_header;
-
-#define UVIDEO_MAX_PU				 8
-	int					 sc_desc_vc_pu_num;
-	struct usb_video_vc_processing_desc	*sc_desc_vc_pu_cur;
-	struct usb_video_vc_processing_desc	*sc_desc_vc_pu[UVIDEO_MAX_PU];
-
-#define UVIDEO_MAX_FORMAT			 8
-	int					 sc_fmtgrp_idx;
-	int					 sc_fmtgrp_num;
-	struct uvideo_format_group		*sc_fmtgrp_cur;
-	struct uvideo_format_group		 sc_fmtgrp[UVIDEO_MAX_FORMAT];
-
-#define	UVIDEO_MAX_VS_NUM			 8
-	struct uvideo_vs_iface			*sc_vs_cur;
-	struct uvideo_vs_iface			 sc_vs_coll[UVIDEO_MAX_VS_NUM];
-
-	void					*sc_uplayer_arg;
-	int					*sc_uplayer_fsize;
-	uint8_t					*sc_uplayer_fbuffer;
-	void					 (*sc_uplayer_intr)(void *);
-
-	struct uvideo_devs			*sc_quirk;
-	usbd_status				(*sc_decode_stream_header)
-						    (struct uvideo_softc *,
-						    uint8_t *, int);
 };

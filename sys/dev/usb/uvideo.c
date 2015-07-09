@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.180 2015/06/24 20:17:28 miod Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.181 2015/07/09 14:58:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -56,6 +56,62 @@ int uvideo_debug = 1;
 
 #define byteof(x) ((x) >> 3)
 #define bitof(x)  (1L << ((x) & 0x7))
+
+struct uvideo_softc {
+	struct device				 sc_dev;
+	struct usbd_device			*sc_udev;
+	int					 sc_nifaces;
+	struct usbd_interface			**sc_ifaces;
+
+	struct device				*sc_videodev;
+
+	int					 sc_enabled;
+	int					 sc_max_fbuf_size;
+	int					 sc_negotiated_flag;
+	int					 sc_frame_rate;
+
+	struct uvideo_frame_buffer		 sc_frame_buffer;
+
+	struct uvideo_mmap			 sc_mmap[UVIDEO_MAX_BUFFERS];
+	uint8_t					*sc_mmap_buffer;
+	q_mmap					 sc_mmap_q;
+	int					 sc_mmap_count;
+	int					 sc_mmap_cur;
+	int					 sc_mmap_flag;
+
+	struct vnode				*sc_vp;
+	struct usb_task				 sc_task_write;
+
+	int					 sc_nframes;
+	struct usb_video_probe_commit		 sc_desc_probe;
+	struct usb_video_header_desc_all	 sc_desc_vc_header;
+	struct usb_video_input_header_desc_all	 sc_desc_vs_input_header;
+
+#define UVIDEO_MAX_PU				 8
+	int					 sc_desc_vc_pu_num;
+	struct usb_video_vc_processing_desc	*sc_desc_vc_pu_cur;
+	struct usb_video_vc_processing_desc	*sc_desc_vc_pu[UVIDEO_MAX_PU];
+
+#define UVIDEO_MAX_FORMAT			 8
+	int					 sc_fmtgrp_idx;
+	int					 sc_fmtgrp_num;
+	struct uvideo_format_group		*sc_fmtgrp_cur;
+	struct uvideo_format_group		 sc_fmtgrp[UVIDEO_MAX_FORMAT];
+
+#define	UVIDEO_MAX_VS_NUM			 8
+	struct uvideo_vs_iface			*sc_vs_cur;
+	struct uvideo_vs_iface			 sc_vs_coll[UVIDEO_MAX_VS_NUM];
+
+	void					*sc_uplayer_arg;
+	int					*sc_uplayer_fsize;
+	uint8_t					*sc_uplayer_fbuffer;
+	void					 (*sc_uplayer_intr)(void *);
+
+	struct uvideo_devs			*sc_quirk;
+	usbd_status				(*sc_decode_stream_header)
+						    (struct uvideo_softc *,
+						    uint8_t *, int);
+};
 
 int		uvideo_enable(void *);
 void		uvideo_disable(void *);
