@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.52 2015/06/29 10:52:40 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.53 2015/07/09 05:40:44 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -82,13 +82,14 @@ typedef u_int8_t uDWord[4];
 #define USETDW(w,v) (*(u_int32_t *)(w) = (v))
 #endif
 
-typedef struct {
+struct usb_device_request {
 	uByte		bmRequestType;
 	uByte		bRequest;
 	uWord		wValue;
 	uWord		wIndex;
 	uWord		wLength;
-} __packed usb_device_request_t;
+} __packed;
+typedef struct usb_device_request usb_device_request_t;
 
 #define UT_WRITE		0x00
 #define UT_READ			0x80
@@ -167,13 +168,14 @@ typedef struct {
 #define USB_2_MAX_CTRL_PACKET  64
 #define USB_2_MAX_BULK_PACKET  512
 
-typedef struct {
+struct usb_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
-} __packed usb_descriptor_t;
+} __packed;
+typedef struct usb_descriptor usb_descriptor_t;
 
-typedef struct {
+struct usb_device_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		bcdUSB;
@@ -189,10 +191,11 @@ typedef struct {
 	uByte		iProduct;
 	uByte		iSerialNumber;
 	uByte		bNumConfigurations;
-} __packed usb_device_descriptor_t;
+} __packed;
+typedef struct usb_device_descriptor usb_device_descriptor_t;
 #define USB_DEVICE_DESCRIPTOR_SIZE 18
 
-typedef struct {
+struct usb_config_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		wTotalLength;
@@ -205,10 +208,11 @@ typedef struct {
 #define UC_REMOTE_WAKEUP	0x20
 	uByte		bMaxPower; /* max current in 2 mA units */
 #define UC_POWER_FACTOR 2
-} __packed usb_config_descriptor_t;
+} __packed;
+typedef struct usb_config_descriptor usb_config_descriptor_t;
 #define USB_CONFIG_DESCRIPTOR_SIZE 9
 
-typedef struct {
+struct usb_interface_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bInterfaceNumber;
@@ -218,22 +222,24 @@ typedef struct {
 	uByte		bInterfaceSubClass;
 	uByte		bInterfaceProtocol;
 	uByte		iInterface;
-} __packed usb_interface_descriptor_t;
+} __packed;
+typedef struct usb_interface_descriptor usb_interface_descriptor_t;
 #define USB_INTERFACE_DESCRIPTOR_SIZE 9
 
 struct usb_interface_assoc_descriptor {
-    uByte       bLength;
-    uByte       bDescriptorType;
-    uByte       bFirstInterface;
-    uByte       bInterfaceCount;
-    uByte       bFunctionClass;
-    uByte       bFunctionSubClass;
-    uByte       bFunctionProtocol;
-    uByte       iFunction;
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bFirstInterface;
+	uByte		bInterfaceCount;
+	uByte		bFunctionClass;
+	uByte		bFunctionSubClass;
+	uByte		bFunctionProtocol;
+	uByte		iFunction;
 } __packed;
 typedef struct usb_interface_assoc_descriptor usb_interface_assoc_descriptor_t;
+#define USB_INTERFACE_ASSOC_DESCRIPTOR_SIZE 8
 
-typedef struct {
+struct usb_endpoint_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bEndpointAddress;
@@ -259,16 +265,19 @@ typedef struct {
 #define UE_GET_TRANS(a)	(((a) >> 11) & 0x3)
 #define UE_GET_SIZE(a)	((a) & 0x7ff)
 	uByte		bInterval;
-} __packed usb_endpoint_descriptor_t;
+} __packed;
+typedef struct usb_endpoint_descriptor usb_endpoint_descriptor_t;
 #define USB_ENDPOINT_DESCRIPTOR_SIZE 7
 
-typedef struct {
+struct usb_endpoint_ss_comp_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bMaxBurst;
 	uByte		bmAttributes;
 	uWord		wBytesPerInterval;
-} __packed usb_endpoint_ss_comp_descriptor_t;
+} __packed;
+typedef struct usb_endpoint_ss_comp_descriptor
+		usb_endpoint_ss_comp_descriptor_t;
 #define USB_ENDPOINT_SS_COMP_DESCRIPTOR_SIZE 6
 
 /*
@@ -280,11 +289,12 @@ typedef struct {
  * characters can be used.  USB_MAX_STRING_LEN is defined as 127, leaving
  * space for the terminal '\0' character in C strings.
  */
-typedef struct {
+struct usb_string_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		bString[126];
-} __packed usb_string_descriptor_t;
+} __packed;
+typedef struct usb_string_descriptor usb_string_descriptor_t;
 #define USB_MAX_STRING_LEN 127
 #define USB_LANGUAGE_TABLE 0	/* # of the string language id table */
 
@@ -329,7 +339,7 @@ typedef struct {
 #define UHF_FORCE_LINKPM_ACCEPT		30
 
 
-typedef struct {
+struct usb_hub_descriptor {
 	uByte		bDescLength;
 	uByte		bDescriptorType;
 	uByte		bNbrPorts;
@@ -355,10 +365,11 @@ typedef struct {
 	uByte		DeviceRemovable[32]; /* max 255 ports */
 #define UHD_NOT_REMOV(desc, i) \
     (((desc)->DeviceRemovable[(i)/8] >> ((i) % 8)) & 1)
-} __packed usb_hub_descriptor_t;
+} __packed;
+typedef struct usb_hub_descriptor usb_hub_descriptor_t;
 #define USB_HUB_DESCRIPTOR_SIZE 8
 
-typedef struct {
+struct usb_hub_ss_descriptor {
 	uByte		bDescLength;
 	uByte		bDescriptorType;
 	uByte		bNbrPorts;
@@ -368,10 +379,11 @@ typedef struct {
 	uByte		bHubHdrDecLat;
 	uWord		wHubDelay;
 	uByte		DeviceRemovable[32]; /* max 255 ports */
-} __packed usb_hub_ss_descriptor_t;
+} __packed;
+typedef struct usb_hub_ss_descriptor usb_hub_ss_descriptor_t;
 #define USB_HUB_SS_DESCRIPTOR_SIZE 11
 
-typedef struct {
+struct usb_device_qualifier {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		bcdUSB;
@@ -381,39 +393,43 @@ typedef struct {
 	uByte		bMaxPacketSize0;
 	uByte		bNumConfigurations;
 	uByte		bReserved;
-} __packed usb_device_qualifier_t;
+} __packed;
+typedef struct usb_device_qualifier usb_device_qualifier_t;
 #define USB_DEVICE_QUALIFIER_SIZE 10
 
-typedef struct {
+struct usb_otg_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bmAttributes;
 #define UOTG_SRP	0x01
 #define UOTG_HNP	0x02
-} __packed usb_otg_descriptor_t;
+} __packed;
+typedef struct usb_otg_descriptor usb_otg_descriptor_t;
 
 /* OTG feature selectors */
 #define UOTG_B_HNP_ENABLE	3
 #define UOTG_A_HNP_SUPPORT	4
 #define UOTG_A_ALT_HNP_SUPPORT	5
 
-typedef struct {
+struct usb_status {
 	uWord		wStatus;
 /* Device status flags */
 #define UDS_SELF_POWERED		0x0001
 #define UDS_REMOTE_WAKEUP		0x0002
 /* Endpoint status flags */
 #define UES_HALT			0x0001
-} __packed usb_status_t;
+} __packed;
+typedef struct usb_status usb_status_t;
 
-typedef struct {
+struct usb_hub_status {
 	uWord		wHubStatus;
 #define UHS_LOCAL_POWER			0x0001
 #define UHS_OVER_CURRENT		0x0002
 	uWord		wHubChange;
-} __packed usb_hub_status_t;
+} __packed;
+typedef struct usb_hub_status usb_hub_status_t;
 
-typedef struct {
+struct usb_port_status {
 	uWord		wPortStatus;
 #define UPS_CURRENT_CONNECT_STATUS	0x0001
 #define UPS_PORT_ENABLED		0x0002
@@ -456,7 +472,8 @@ typedef struct {
 #define UPS_C_BH_PORT_RESET		0x0020	/* USB 3.0 only */
 #define UPS_C_PORT_LINK_STATE		0x0040
 #define UPS_C_PORT_CONFIG_ERROR		0x0080
-} __packed usb_port_status_t;
+} __packed;
+typedef struct usb_port_status usb_port_status_t;
 
 /* Device class codes */
 #define UDCLASS_IN_INTERFACE	0x00
@@ -636,21 +653,21 @@ struct usb_alt_interface {
 
 struct usb_config_desc {
 	int	ucd_config_index;
-	usb_config_descriptor_t ucd_desc;
+	struct usb_config_descriptor ucd_desc;
 };
 
 struct usb_device_cdesc {
 	u_int8_t		udc_bus;
 	u_int8_t		udc_addr;	/* device address */
 	int			udc_config_index;
-	usb_config_descriptor_t udc_desc;
+	struct usb_config_descriptor udc_desc;
 };
 
 struct usb_interface_desc {
 	int	uid_config_index;
 	int	uid_interface_index;
 	int	uid_alt_index;
-	usb_interface_descriptor_t uid_desc;
+	struct usb_interface_descriptor uid_desc;
 };
 
 struct usb_endpoint_desc {
@@ -658,7 +675,7 @@ struct usb_endpoint_desc {
 	int	ued_interface_index;
 	int	ued_alt_index;
 	int	ued_endpoint_index;
-	usb_endpoint_descriptor_t ued_desc;
+	struct usb_endpoint_descriptor ued_desc;
 };
 
 struct usb_full_desc {
@@ -678,13 +695,13 @@ struct usb_device_fdesc {
 struct usb_device_ddesc {
 	u_int8_t	udd_bus;
 	u_int8_t	udd_addr;	/* device address */
-	usb_device_descriptor_t udd_desc;
+	struct usb_device_descriptor udd_desc;
 };
 
 struct usb_string_desc {
 	int	usd_string_index;
 	int	usd_language_id;
-	usb_string_descriptor_t usd_desc;
+	struct usb_string_descriptor usd_desc;
 };
 
 struct usb_ctl_report_desc {
