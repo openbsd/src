@@ -5950,7 +5950,6 @@
 ./usr/share/man/man9/MD5Init.9
 ./usr/share/man/man9/MD5Transform.9
 ./usr/share/man/man9/MEXTADD.9
-./usr/share/man/man9/MFREE.9
 ./usr/share/man/man9/MGET.9
 ./usr/share/man/man9/MGETHDR.9
 ./usr/share/man/man9/MH_ALIGN.9
