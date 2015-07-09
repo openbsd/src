@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtwn.4,v 1.1 2015/06/04 22:29:31 stsp Exp $
+.\" $OpenBSD: rtwn.4,v 1.2 2015/07/09 11:28:53 stsp Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\" Copyright (c) 2015 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2015 $
+.Dd $Mdocdate: July 9 2015 $
 .Dt RTWN 4
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
 The driver needs at least version 1.0 of the following firmware files,
-which are loaded when an interface is attached:
+which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It /etc/firmware/rtwn-rtl8192cfwU
