@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.37 2015/07/02 16:14:43 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.38 2015/07/09 08:33:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -454,7 +454,6 @@ extern struct pmap_head pmaps;
 /*
  * local prototypes
  */
-void		 pmap_free_pv_doit(struct pv_entry *);
 struct vm_page	*pmap_alloc_ptp_pae(struct pmap *, int, pt_entry_t);
 struct vm_page	*pmap_get_ptp_pae(struct pmap *, int);
 void		 pmap_drop_ptp_pae(struct pmap *, vaddr_t, struct vm_page *,
