@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2015/06/30 08:40:55 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.94 2015/07/10 10:08:49 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -293,9 +293,9 @@ void pmap_map_ptes(struct pmap *, pt_entry_t **, pd_entry_t ***, paddr_t *);
 struct pv_entry *pmap_remove_pv(struct vm_page *, struct pmap *, vaddr_t);
 void pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 boolean_t pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
-    vaddr_t, int);
+    vaddr_t, int, struct pv_entry **);
 void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
-    vaddr_t, vaddr_t, int);
+    vaddr_t, vaddr_t, int, struct pv_entry **);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
@@ -1263,7 +1263,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 void
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-    vaddr_t startva, vaddr_t endva, int flags)
+    vaddr_t startva, vaddr_t endva, int flags, struct pv_entry **free_pvs)
 {
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
@@ -1322,9 +1322,9 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		/* sync R/M bits */
 		pmap_sync_flags_pte(pg, opte);
 		pve = pmap_remove_pv(pg, pmap, startva);
-
 		if (pve) {
-			pool_put(&pmap_pv_pool, pve);
+			pve->pv_next = *free_pvs;
+			*free_pvs = pve;
 		}
 
 		/* end of "for" loop: time for next pte */
@@ -1343,7 +1343,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 boolean_t
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
-    vaddr_t va, int flags)
+    vaddr_t va, int flags, struct pv_entry **free_pvs)
 {
 	struct pv_entry *pve;
 	struct vm_page *pg;
@@ -1388,8 +1388,11 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	/* sync R/M bits */
 	pmap_sync_flags_pte(pg, opte);
 	pve = pmap_remove_pv(pg, pmap, va);
-	if (pve)
-		pool_put(&pmap_pv_pool, pve);
+	if (pve) {
+		pve->pv_next = *free_pvs;
+		*free_pvs = pve;
+	}
+
 	return(TRUE);
 }
 
@@ -1420,6 +1423,8 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	paddr_t ptppa;
 	vaddr_t blkendva;
 	struct vm_page *ptp;
+	struct pv_entry *pve;
+	struct pv_entry *free_pvs = NULL;
 	vaddr_t va;
 	int shootall = 0, shootself;
 	struct pg_to_free empty_ptps;
@@ -1456,7 +1461,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[pl1_i(sva)], sva, flags);
+			    &ptes[pl1_i(sva)], sva, flags, &free_pvs);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -1473,12 +1478,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			pmap_unmap_ptes(pmap, scr3);
 		}
 
-		while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
-			TAILQ_REMOVE(&empty_ptps, ptp, pageq);
-			uvm_pagefree(ptp);
-                }
-
-		return;
+		goto cleanup;
 	}
 
 	if ((eva - sva > 32 * PAGE_SIZE) && pmap != pmap_kernel())
@@ -1525,8 +1525,8 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 				panic("%s: unmanaged PTP detected", __func__);
 #endif
 		}
-		pmap_remove_ptes(pmap, ptp,
-		    (vaddr_t)&ptes[pl1_i(va)], va, blkendva, flags);
+		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[pl1_i(va)],
+		    va, blkendva, flags, &free_pvs);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
@@ -1541,6 +1541,12 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	pmap_unmap_ptes(pmap, scr3);
 	pmap_tlb_shootwait();
+
+cleanup:
+	while ((pve = free_pvs) != NULL) {
+		free_pvs = pve->pv_next;
+		pool_put(&pmap_pv_pool, pve);
+	}
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
