@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.84 2015/06/15 15:45:28 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.85 2015/07/10 15:45:57 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -182,13 +182,12 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 {
 	struct usbd_device *dev = sc->sc_udev;
 	usb_config_descriptor_t *cdesc;
+	usb_interface_descriptor_t *id;
 	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	struct ugen_endpoint *sce;
-	u_int8_t niface, nendpt;
 	int ifaceno, endptno, endpt;
-	int err;
-	int dir;
+	int err, dir;
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    sc->sc_dev.dv_xname, configno, sc));
@@ -207,7 +206,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 
 	/* Avoid setting the current value. */
 	cdesc = usbd_get_config_descriptor(dev);
-	if (!cdesc || cdesc->bConfigurationValue != configno) {
+	if (cdesc == NULL || cdesc->bConfigurationValue != configno) {
 		if (sc->sc_secondary) {
 			printf("%s: secondary, not changing config to %d\n",
 			    __func__, configno);
@@ -219,11 +218,8 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 		}
 	}
 
-	err = usbd_interface_count(dev, &niface);
-	if (err)
-		return (err);
 	memset(sc->sc_endpoints, 0, sizeof sc->sc_endpoints);
-	for (ifaceno = 0; ifaceno < niface; ifaceno++) {
+	for (ifaceno = 0; ifaceno < cdesc->bNumInterface; ifaceno++) {
 		DPRINTFN(1,("ugen_set_config: ifaceno %d\n", ifaceno));
 		if (usbd_iface_claimed(sc->sc_udev, ifaceno)) {
 			DPRINTF(("%s: iface %d not available\n", __func__,
@@ -233,10 +229,8 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 		err = usbd_device2interface_handle(dev, ifaceno, &iface);
 		if (err)
 			return (err);
-		err = usbd_endpoint_count(iface, &nendpt);
-		if (err)
-			return (err);
-		for (endptno = 0; endptno < nendpt; endptno++) {
+		id = usbd_get_interface_descriptor(iface);
+		for (endptno = 0; endptno < id->bNumEndpoints; endptno++) {
 			ed = usbd_interface2endpoint_descriptor(iface,endptno);
 			endpt = ed->bEndpointAddress;
 			dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
@@ -888,28 +882,25 @@ int
 ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 {
 	struct usbd_interface *iface;
+	usb_config_descriptor_t *cdesc;
+	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	int err;
 	struct ugen_endpoint *sce;
-	u_int8_t niface, nendpt, endptno, endpt;
-	int dir;
+	uint8_t  endptno, endpt;
+	int dir, err;
 
 	DPRINTFN(15, ("ugen_set_interface %d %d\n", ifaceidx, altno));
 
-	err = usbd_interface_count(sc->sc_udev, &niface);
-	if (err)
-		return (err);
-	if (ifaceidx < 0 || ifaceidx >= niface ||
+	cdesc = usbd_get_config_descriptor(sc->sc_udev);
+	if (ifaceidx < 0 || ifaceidx >= cdesc->bNumInterface ||
 	    usbd_iface_claimed(sc->sc_udev, ifaceidx))
 		return (USBD_INVAL);
 
 	err = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
 	if (err)
 		return (err);
-	err = usbd_endpoint_count(iface, &nendpt);
-	if (err)
-		return (err);
-	for (endptno = 0; endptno < nendpt; endptno++) {
+	id = usbd_get_interface_descriptor(iface);
+	for (endptno = 0; endptno < id->bNumEndpoints; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
 		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
@@ -922,14 +913,10 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	/* change setting */
 	err = usbd_set_interface(iface, altno);
 	if (err)
-		goto out;
+		return (err);
 
-	err = usbd_endpoint_count(iface, &nendpt);
-	if (err)
-		goto out;
-
-out:
-	for (endptno = 0; endptno < nendpt; endptno++) {
+	id = usbd_get_interface_descriptor(iface);
+	for (endptno = 0; endptno < id->bNumEndpoints; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
 		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
