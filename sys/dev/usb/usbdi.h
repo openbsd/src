@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.65 2015/01/22 10:27:47 mpi Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.66 2015/07/10 15:47:48 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -109,8 +109,6 @@ void usbd_abort_pipe(struct usbd_pipe *pipe);
 usbd_status usbd_clear_endpoint_stall(struct usbd_pipe *pipe);
 usbd_status usbd_clear_endpoint_stall_async(struct usbd_pipe *pipe);
 void usbd_clear_endpoint_toggle(struct usbd_pipe *pipe);
-int usbd_endpoint_count(struct usbd_interface *dev, u_int8_t *count);
-int usbd_interface_count(struct usbd_device *dev, u_int8_t *count);
 usbd_status usbd_device2interface_handle(struct usbd_device *dev,
     u_int8_t ifaceno, struct usbd_interface **iface);
 
