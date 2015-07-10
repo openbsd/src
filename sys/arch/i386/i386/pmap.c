@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.180 2015/07/02 16:14:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.181 2015/07/10 10:07:31 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -454,7 +454,7 @@ pt_entry_t	*pmap_map_ptes_86(struct pmap *);
 void		 pmap_unmap_ptes_86(struct pmap *);
 void		 pmap_do_remove_86(struct pmap *, vaddr_t, vaddr_t, int);
 void		 pmap_remove_ptes_86(struct pmap *, struct vm_page *, vaddr_t,
-		    vaddr_t, vaddr_t, int);
+		    vaddr_t, vaddr_t, int, struct pv_entry **);
 void		*pmap_pv_page_alloc(struct pool *, int, int *);
 void		pmap_pv_page_free(struct pool *, void *);
 
@@ -1744,7 +1744,7 @@ pmap_copy_page_86(struct vm_page *srcpg, struct vm_page *dstpg)
 
 void
 pmap_remove_ptes_86(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-    vaddr_t startva, vaddr_t endva, int flags)
+    vaddr_t startva, vaddr_t endva, int flags, struct pv_entry **free_pvs)
 {
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
@@ -1805,8 +1805,10 @@ pmap_remove_ptes_86(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		/* sync R/M bits */
 		pmap_sync_flags_pte_86(pg, opte);
 		pve = pmap_remove_pv(pg, pmap, startva);
-		if (pve)
-			pmap_free_pv(NULL, pve);
+		if (pve) {
+			pve->pv_next = *free_pvs;
+			*free_pvs = pve;
+		}
 
 		/* end of "for" loop: time for next pte */
 	}
@@ -1831,6 +1833,8 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	paddr_t ptppa;
 	vaddr_t blkendva;
 	struct vm_page *ptp;
+	struct pv_entry *pve;
+	struct pv_entry *free_pvs = NULL;
 	TAILQ_HEAD(, vm_page) empty_ptps;
 	int shootall;
 	vaddr_t va;
@@ -1898,7 +1902,7 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			}
 		}
 		pmap_remove_ptes_86(pmap, ptp, (vaddr_t)&ptes[atop(va)],
-		    va, blkendva, flags);
+		    va, blkendva, flags, &free_pvs);
 
 		/* If PTP is no longer being used, free it. */
 		if (ptp && ptp->wire_count <= 1) {
@@ -1915,6 +1919,11 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 	pmap_unmap_ptes_86(pmap);
 	pmap_tlb_shootwait();
+
+	while ((pve = free_pvs) != NULL) {
+		free_pvs = pve->pv_next;
+		pmap_free_pv(pmap, pve);
+	}
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
 		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
