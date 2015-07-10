@@ -1,4 +1,4 @@
-/* $OpenBSD: myproposal.h,v 1.46 2015/07/03 03:47:00 djm Exp $ */
+/* $OpenBSD: myproposal.h,v 1.47 2015/07/10 06:21:53 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -46,13 +46,11 @@
 	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
 	"ssh-ed25519-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v01@openssh.com," \
-	"ssh-dss-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
 	"ssh-ed25519," \
-	"ssh-rsa," \
-	"ssh-dss"
+	"ssh-rsa"
 
 #define	KEX_SERVER_ENCRYPT \
 	"chacha20-poly1305@openssh.com," \
