@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.91 2015/04/10 18:08:31 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.92 2015/07/10 12:11:41 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -124,8 +124,8 @@ pv_entry_t	pv_table;	/* array of entries, one per page */
 static struct pool pv_pool;
 static struct pool pmap_pool;
 
-void	pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
-void	pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
+pv_entry_t pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
+pv_entry_t pmap_enter_pv(struct pmap *pm, pv_entry_t, vaddr_t va, paddr_t pa);
 void	pmap_page_cache(struct pmap *pm, paddr_t pa, int mode);
 
 void	pmap_bootstrap_cpu(paddr_t);
@@ -1784,7 +1784,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pte_t tte;
 	paddr_t pg;
 	int aliased = 0;
-	pv_entry_t pv = NULL;
+	pv_entry_t pv, npv;
 	int size = 0; /* PMAP_SZ_TO_TTE(pa); */
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
@@ -1793,6 +1793,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	KDASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
 	KDASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
+
+	npv = pool_get(&pv_pool, PR_NOWAIT);
 
 	/*
 	 * XXXX If a mapping at this address already exists, remove it.
@@ -1864,12 +1866,14 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_enter: no memory");
 			mtx_leave(&pm->pm_mtx);
+			if (npv != NULL)
+				pool_put(&pv_pool, npv);
 			return (ENOMEM);
 		}
 	}
 
-	if (pv)
-		pmap_enter_pv(pm, va, pa);
+	if (pv != NULL)
+		npv = pmap_enter_pv(pm, npv, va, pa);
 	pm->pm_stats.resident_count++;
 	mtx_leave(&pm->pm_mtx);
 	if (pm->pm_ctx || pm == pmap_kernel()) {
@@ -1881,6 +1885,9 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/* this is correct */
 	dcache_flush_page(pa);
 
+	if (npv != NULL)
+		pool_put(&pv_pool, npv);
+
 	/* We will let the fast mmu miss interrupt load the new translation */
 	return 0;
 }
@@ -1891,6 +1898,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 void
 pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 {
+	pv_entry_t pv, freepvs = NULL;
 	int flush = 0;
 	int64_t data;
 	vaddr_t flushva = va;
@@ -1918,14 +1926,18 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 		/* We don't really need to do this if the valid bit is not set... */
 		if ((data = pseg_get(pm, va)) && (data & TLB_V) != 0) {
 			paddr_t entry;
-			pv_entry_t pv;
 			
 			flush |= 1;
 			/* First remove it from the pv_table */
 			entry = (data & TLB_PA_MASK);
 			pv = pa_to_pvh(entry);
-			if (pv != NULL)
-				pmap_remove_pv(pm, va, entry);
+			if (pv != NULL) {
+				pv = pmap_remove_pv(pm, va, entry);
+				if (pv != NULL) {
+					pv->pv_next = freepvs;
+					freepvs = pv;
+				}
+			}
 			/* We need to flip the valid bit and clear the access statistics. */
 			if (pseg_set(pm, va, 0, 0)) {
 				printf("pmap_remove: gotten pseg empty!\n");
@@ -1941,10 +1953,16 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 		}
 		va += NBPG;
 	}
+
 	mtx_leave(&pm->pm_mtx);
-	if (flush) {
-		cache_flush_virt(flushva, endva - flushva);
+
+	while ((pv = freepvs) != NULL) {
+		freepvs = pv->pv_next;
+		pool_put(&pv_pool, pv);
 	}
+
+	if (flush)
+		cache_flush_virt(flushva, endva - flushva);
 }
 
 /*
@@ -2649,16 +2667,14 @@ ctx_free(struct pmap *pm)
  * Enter the pmap and virtual address into the
  * physical to virtual map table.
  */
-void
-pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa)
+pv_entry_t
+pmap_enter_pv(struct pmap *pmap, pv_entry_t npv, vaddr_t va, paddr_t pa)
 {
-	pv_entry_t pv, npv = NULL;
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+	pv_entry_t pv = &pg->mdpage.pvent;
 
-	pv = pa_to_pvh(pa);
 	mtx_enter(&pg->mdpage.pvmtx);
 
-retry:
 	if (pv->pv_pmap == NULL) {
 		/*
 		 * No entries yet, use header as the first entry
@@ -2666,20 +2682,13 @@ retry:
 		PV_SETVA(pv, va);
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
+
 		mtx_leave(&pg->mdpage.pvmtx);
-		if (npv)
-			pool_put(&pv_pool, npv);
-		return;
+		return (npv);
 	}
 
-	if (npv == NULL) {
-		mtx_leave(&pg->mdpage.pvmtx);
-		npv = pool_get(&pv_pool, PR_NOWAIT);
-		if (npv == NULL)
-			panic("%s: no pv entries available", __func__);
-		mtx_enter(&pg->mdpage.pvmtx);
-		goto retry;
-	}
+	if (npv == NULL)
+		panic("%s: no pv entries available", __func__);
 
 	if (!(pv->pv_va & PV_ALIAS)) {
 		/*
@@ -2708,19 +2717,20 @@ retry:
 	pv->pv_next = npv;
 
 	mtx_leave(&pg->mdpage.pvmtx);
+	return (NULL);
 }
 
 /*
  * Remove a physical to virtual address translation.
  */
-void
+pv_entry_t
 pmap_remove_pv(struct pmap *pmap, vaddr_t va, paddr_t pa)
 {
 	pv_entry_t pv, opv, npv = NULL;
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	int64_t data = 0LL;
 
-	opv = pv = pa_to_pvh(pa);
+	opv = pv = &pg->mdpage.pvent;
 	mtx_enter(&pg->mdpage.pvmtx);
 
 	/*
@@ -2754,7 +2764,7 @@ pmap_remove_pv(struct pmap *pmap, vaddr_t va, paddr_t pa)
 		 * of pmap_kremove() 
 		 */
 		mtx_leave(&pg->mdpage.pvmtx);
-		return; 
+		return (NULL);
 found:
 		pv->pv_next = npv->pv_next;
 
@@ -2786,9 +2796,7 @@ found:
 	}
 
 	mtx_leave(&pg->mdpage.pvmtx);
-
-	if (npv)
-		pool_put(&pv_pool, npv);
+	return (npv);
 }
 
 /*
