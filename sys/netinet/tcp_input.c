@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.294 2015/07/09 05:45:25 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.295 2015/07/10 22:07:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -638,7 +638,7 @@ findpcb:
 		}
 	}
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
-	KASSERT(intotcpcb(inp)->t_inpcb == inp);
+	KASSERT(intotcpcb(inp) == NULL || intotcpcb(inp)->t_inpcb == inp);
 
 	/* Check the minimum TTL for socket. */
 	if (inp->inp_ip_minttl && inp->inp_ip_minttl > ip->ip_ttl)
