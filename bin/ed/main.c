@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2015/07/11 16:33:48 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -1382,7 +1382,7 @@ handle_hup(int signo)
 	char hup[PATH_MAX];
 
 	if (!sigactive)
-		quit(1);
+		quit(1);		/* XXX signal race */
 	sigflags &= ~(1 << (signo - 1));
 	/* XXX signal race */
 	if (addr_last && write_file("ed.hup", "w", 1, addr_last) < 0 &&
