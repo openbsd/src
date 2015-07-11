@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_ring.c,v 1.7 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: radeon_ring.c,v 1.8 2015/07/11 04:00:46 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -525,7 +525,7 @@ void radeon_ring_force_activity(struct radeon_device *rdev, struct radeon_ring *
 void radeon_ring_lockup_update(struct radeon_ring *ring)
 {
 	ring->last_rptr = ring->rptr;
-	ring->last_activity = ticks;
+	ring->last_activity = jiffies;
 }
 
 /**
@@ -553,7 +553,7 @@ bool radeon_ring_test_lockup(struct radeon_device *rdev, struct radeon_ring *rin
 	unsigned long cjiffies, elapsed;
 	uint32_t rptr;
 
-	cjiffies = ticks;
+	cjiffies = jiffies;
 	if (!time_after(cjiffies, ring->last_activity)) {
 		/* likely a wrap around */
 		radeon_ring_lockup_update(ring);

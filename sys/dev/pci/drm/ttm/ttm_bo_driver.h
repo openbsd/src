@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_driver.h,v 1.5 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_driver.h,v 1.6 2015/07/11 04:00:46 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 Vmware, Inc., Palo Alto, CA., USA
@@ -564,8 +564,7 @@ struct ttm_bo_device {
 	 * Internal protection.
 	 */
 
-	struct task task;
-	struct timeout to;
+	struct delayed_work wq;
 
 	bool need_dma32;
 };

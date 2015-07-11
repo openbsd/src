@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.15 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.16 2015/07/11 04:00:46 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1098,9 +1098,7 @@ struct radeon_pm {
 	/* selected pm method */
 	enum radeon_pm_method     pm_method;
 	/* dynpm power management */
-	struct task		dynpm_idle_task;
-	struct timeout		dynpm_idle_to;
-
+	struct delayed_work	dynpm_idle_work;
 	enum radeon_dynpm_state	dynpm_state;
 	enum radeon_dynpm_action	dynpm_planned_action;
 	unsigned long		dynpm_action_timeout;

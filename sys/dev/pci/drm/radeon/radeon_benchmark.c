@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_benchmark.c,v 1.4 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: radeon_benchmark.c,v 1.5 2015/07/11 04:00:46 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  *
@@ -42,7 +42,7 @@ static int radeon_benchmark_do_move(struct radeon_device *rdev, unsigned size,
 	struct radeon_fence *fence = NULL;
 	int i, r;
 
-	start_jiffies = ticks;
+	start_jiffies = jiffies;
 	for (i = 0; i < n; i++) {
 		switch (flag) {
 		case RADEON_BENCHMARK_COPY_DMA:
@@ -66,7 +66,7 @@ static int radeon_benchmark_do_move(struct radeon_device *rdev, unsigned size,
 			goto exit_do_move;
 		radeon_fence_unref(&fence);
 	}
-	end_jiffies = ticks;
+	end_jiffies = jiffies;
 	r = jiffies_to_msecs(end_jiffies - start_jiffies);
 
 exit_do_move:

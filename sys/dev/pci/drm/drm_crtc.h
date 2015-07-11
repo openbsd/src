@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.h,v 1.3 2015/02/10 03:39:41 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc.h,v 1.4 2015/07/11 04:00:46 jsg Exp $	*/
 /*
  * Copyright © 2006 Keith Packard
  * Copyright © 2007-2008 Dave Airlie
@@ -795,8 +795,7 @@ struct drm_mode_config {
 	/* output poll support */
 	bool poll_enabled;
 	bool poll_running;
-	struct timeout output_poll_to;
-	struct task poll_task;
+	struct delayed_work output_poll_work;
 
 	/* pointers to standard properties */
 	struct list_head property_blob_list;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.31 2015/06/26 15:22:23 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.32 2015/07/11 04:00:46 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -399,11 +399,12 @@ cancel_delayed_work(struct delayed_work *dwork)
 	return task_del(dwork->tq, &dwork->work.task);
 }
 
-static inline void
+static inline bool
 cancel_delayed_work_sync(struct delayed_work *dwork)
 {
-	timeout_del(&dwork->to);
-	task_del(dwork->tq, &dwork->work.task);
+	if (timeout_del(&dwork->to))
+		return true;
+	return task_del(dwork->tq, &dwork->work.task);
 }
 
 #define NSEC_PER_USEC	1000L
