@@ -1,4 +1,4 @@
-/* $OpenBSD: crl2p7.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: crl2p7.c,v 1.3 2015/07/12 16:32:21 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,105 +76,130 @@
 
 static int add_certs_from_file(STACK_OF(X509) * stack, char *certfile);
 
-/* -inform arg	- input format - default PEM (DER or PEM)
- * -outform arg - output format - default PEM
- * -in arg	- input file - default stdin
- * -out arg	- output file - default stdout
- */
+static struct {
+	STACK_OF(OPENSSL_STRING) *certflst;
+	char *infile;
+	int informat;
+	int nocrl;
+	char *outfile;
+	int outformat;
+} crl2p7_config;
+
+static int
+crl2p7_opt_certfile(char *arg)
+{
+	if (crl2p7_config.certflst == NULL)
+		crl2p7_config.certflst = sk_OPENSSL_STRING_new_null();
+	if (crl2p7_config.certflst == NULL) {
+		fprintf(stderr, "out of memory\n");
+		return (1);
+	}
+	if (!sk_OPENSSL_STRING_push(crl2p7_config.certflst, arg)) {
+		fprintf(stderr, "out of memory\n");
+		return (1);
+	}
+
+	return (0);
+}
+
+static struct option crl2p7_options[] = {
+	{
+		.name = "certfile",
+		.argname = "file",
+		.desc = "Chain of PEM certificates to a trusted CA",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = crl2p7_opt_certfile,
+	},
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input file (default stdin)",
+		.type = OPTION_ARG,
+		.opt.arg = &crl2p7_config.infile,
+	},
+	{
+		.name = "inform",
+		.argname = "format",
+		.desc = "Input format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &crl2p7_config.informat,
+	},
+	{
+		.name = "nocrl",
+		.desc = "Do not read CRL from input or include CRL in output",
+		.type = OPTION_FLAG,
+		.opt.flag = &crl2p7_config.nocrl,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file (default stdout)",
+		.type = OPTION_ARG,
+		.opt.arg = &crl2p7_config.outfile,
+	},
+	{
+		.name = "outform",
+		.argname = "format",
+		.desc = "Output format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &crl2p7_config.outformat,
+	},
+	{ NULL },
+};
+
+static void
+crl2p7_usage(void)
+{
+	fprintf(stderr,
+	    "usage: crl2p7 [-certfile file] [-in file] [-inform DER | PEM]\n"
+	    "    [-nocrl] [-out file] [-outform DER | PEM]\n\n");
+	options_usage(crl2p7_options);
+}
 
 int crl2pkcs7_main(int, char **);
 
 int
 crl2pkcs7_main(int argc, char **argv)
 {
-	int i, badops = 0;
+	int i;
 	BIO *in = NULL, *out = NULL;
-	int informat, outformat;
-	char *infile, *outfile, *prog, *certfile;
+	char *certfile;
 	PKCS7 *p7 = NULL;
 	PKCS7_SIGNED *p7s = NULL;
 	X509_CRL *crl = NULL;
-	STACK_OF(OPENSSL_STRING) * certflst = NULL;
-	STACK_OF(X509_CRL) * crl_stack = NULL;
-	STACK_OF(X509) * cert_stack = NULL;
-	int ret = 1, nocrl = 0;
+	STACK_OF(X509_CRL) *crl_stack = NULL;
+	STACK_OF(X509) *cert_stack = NULL;
+	int ret = 1;
 
-	infile = NULL;
-	outfile = NULL;
-	informat = FORMAT_PEM;
-	outformat = FORMAT_PEM;
+	memset(&crl2p7_config, 0, sizeof(crl2p7_config));
 
-	prog = argv[0];
-	argc--;
-	argv++;
-	while (argc >= 1) {
-		if (strcmp(*argv, "-inform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			informat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-outform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outformat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-in") == 0) {
-			if (--argc < 1)
-				goto bad;
-			infile = *(++argv);
-		} else if (strcmp(*argv, "-nocrl") == 0) {
-			nocrl = 1;
-		} else if (strcmp(*argv, "-out") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outfile = *(++argv);
-		} else if (strcmp(*argv, "-certfile") == 0) {
-			if (--argc < 1)
-				goto bad;
-			if (!certflst)
-				certflst = sk_OPENSSL_STRING_new_null();
-			sk_OPENSSL_STRING_push(certflst, *(++argv));
-		} else {
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
-			badops = 1;
-			break;
-		}
-		argc--;
-		argv++;
-	}
+	crl2p7_config.informat = FORMAT_PEM;
+	crl2p7_config.outformat = FORMAT_PEM;
 
-	if (badops) {
-bad:
-		BIO_printf(bio_err, "%s [options] <infile >outfile\n", prog);
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, " -inform arg    input format - DER or PEM\n");
-		BIO_printf(bio_err, " -outform arg   output format - DER or PEM\n");
-		BIO_printf(bio_err, " -in arg        input file\n");
-		BIO_printf(bio_err, " -out arg       output file\n");
-		BIO_printf(bio_err, " -certfile arg  certificates file of chain to a trusted CA\n");
-		BIO_printf(bio_err, "                (can be used more than once)\n");
-		BIO_printf(bio_err, " -nocrl         no crl to load, just certs from '-certfile'\n");
-		ret = 1;
+	if (options_parse(argc, argv, crl2p7_options, NULL, NULL) != 0) {
+		crl2p7_usage();
 		goto end;
 	}
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
-	if ((in == NULL) || (out == NULL)) {
+	if (in == NULL || out == NULL) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (!nocrl) {
-		if (infile == NULL)
+	if (!crl2p7_config.nocrl) {
+		if (crl2p7_config.infile == NULL)
 			BIO_set_fp(in, stdin, BIO_NOCLOSE);
 		else {
-			if (BIO_read_filename(in, infile) <= 0) {
-				perror(infile);
+			if (BIO_read_filename(in, crl2p7_config.infile) <= 0) {
+				perror(crl2p7_config.infile);
 				goto end;
 			}
 		}
 
-		if (informat == FORMAT_ASN1)
+		if (crl2p7_config.informat == FORMAT_ASN1)
 			crl = d2i_X509_CRL_bio(in, NULL);
-		else if (informat == FORMAT_PEM)
+		else if (crl2p7_config.informat == FORMAT_PEM)
 			crl = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
 		else {
 			BIO_printf(bio_err,
@@ -208,9 +233,9 @@ bad:
 		goto end;
 	p7s->cert = cert_stack;
 
-	if (certflst)
-		for (i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
-			certfile = sk_OPENSSL_STRING_value(certflst, i);
+	if (crl2p7_config.certflst) {
+		for (i = 0; i < sk_OPENSSL_STRING_num(crl2p7_config.certflst); i++) {
+			certfile = sk_OPENSSL_STRING_value(crl2p7_config.certflst, i);
 			if (add_certs_from_file(cert_stack, certfile) < 0) {
 				BIO_printf(bio_err,
 				    "error loading certificates\n");
@@ -218,21 +243,22 @@ bad:
 				goto end;
 			}
 		}
+	}
 
-	sk_OPENSSL_STRING_free(certflst);
+	sk_OPENSSL_STRING_free(crl2p7_config.certflst);
 
-	if (outfile == NULL) {
+	if (crl2p7_config.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, outfile) <= 0) {
-			perror(outfile);
+		if (BIO_write_filename(out, crl2p7_config.outfile) <= 0) {
+			perror(crl2p7_config.outfile);
 			goto end;
 		}
 	}
 
-	if (outformat == FORMAT_ASN1)
+	if (crl2p7_config.outformat == FORMAT_ASN1)
 		i = i2d_PKCS7_bio(out, p7);
-	else if (outformat == FORMAT_PEM)
+	else if (crl2p7_config.outformat == FORMAT_PEM)
 		i = PEM_write_bio_PKCS7(out, p7);
 	else {
 		BIO_printf(bio_err,
@@ -256,31 +282,20 @@ end:
 	if (crl != NULL)
 		X509_CRL_free(crl);
 
-
 	return (ret);
 }
 
-/*
- *----------------------------------------------------------------------
- * int add_certs_from_file
- *
- *	Read a list of certificates to be checked from a file.
- *
- * Results:
- *	number of certs added if successful, -1 if not.
- *----------------------------------------------------------------------
- */
 static int
-add_certs_from_file(STACK_OF(X509) * stack, char *certfile)
+add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 {
 	BIO *in = NULL;
 	int count = 0;
 	int ret = -1;
-	STACK_OF(X509_INFO) * sk = NULL;
+	STACK_OF(X509_INFO) *sk = NULL;
 	X509_INFO *xi;
 
 	in = BIO_new(BIO_s_file());
-	if ((in == NULL) || (BIO_read_filename(in, certfile) <= 0)) {
+	if (in == NULL || BIO_read_filename(in, certfile) <= 0) {
 		BIO_printf(bio_err, "error opening the file, %s\n", certfile);
 		goto end;
 	}
