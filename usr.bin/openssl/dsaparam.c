@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.3 2015/07/12 16:37:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,7 @@
 #undef OPENSSL_NO_DEPRECATED
 #endif
 
-
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,31 +79,94 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-/* -inform arg	- input format - default PEM (DER or PEM)
- * -outform arg - output format - default PEM
- * -in arg	- input file - default stdin
- * -out arg	- output file - default stdout
- * -noout
- * -text
- * -C
- * -noout
- * -genkey
- *  #ifdef GENCB_TEST
- * -timebomb n  - interrupt keygen after <n> seconds
- *  #endif
- */
+static struct {
+	int C;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine;
+#endif
+	int genkey;
+	char *infile;
+	int informat;
+	int noout;
+	char *outfile;
+	int outformat;
+	int text;
+} dsaparam_config;
 
-#ifdef GENCB_TEST
-
-static int stop_keygen_flag = 0;
+static struct option dsaparam_options[] = {
+	{
+		.name = "C",
+		.desc = "Convert DSA parameters into C code",
+		.type = OPTION_FLAG,
+		.opt.flag = &dsaparam_config.C,
+	},
+#ifndef OPENSSL_NO_ENGINE
+	{
+		.name = "engine",
+		.argname = "id",
+		.desc = "Use the engine specified by the given identifier",
+		.type = OPTION_ARG,
+		.opt.arg = &dsaparam_config.engine,
+	},
+#endif
+	{
+		.name = "genkey",
+		.desc = "Generate a DSA key",
+		.type = OPTION_FLAG,
+		.opt.flag = &dsaparam_config.genkey,
+	},
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input file (default stdin)",
+		.type = OPTION_ARG,
+		.opt.arg = &dsaparam_config.infile,
+	},
+	{
+		.name = "inform",
+		.argname = "format",
+		.desc = "Input format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &dsaparam_config.informat,
+	},
+	{
+		.name = "noout",
+		.desc = "No output",
+		.type = OPTION_FLAG,
+		.opt.flag = &dsaparam_config.noout,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file (default stdout)",
+		.type = OPTION_ARG,
+		.opt.arg = &dsaparam_config.outfile,
+	},
+	{
+		.name = "outform",
+		.argname = "format",
+		.desc = "Output format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &dsaparam_config.outformat,
+	},
+	{
+		.name = "text",
+		.desc = "Print as text",
+		.type = OPTION_FLAG,
+		.opt.flag = &dsaparam_config.text,
+	},
+	{ NULL },
+};
 
 static void
-timebomb_sigalarm(int foo)
+dsaparam_usage(void)
 {
-	stop_keygen_flag = 1;
+	fprintf(stderr,
+	    "usage: dsaparam [-C] [-engine id] [-genkey] [-in file]\n"
+	    "    [-inform format] [-noout] [-out file] [-outform format]\n"
+	    "    [-text] [numbits]\n\n");
+	options_usage(dsaparam_options);
 }
-
-#endif
 
 static int dsa_cb(int p, int n, BN_GENCB * cb);
 
@@ -113,128 +176,56 @@ int
 dsaparam_main(int argc, char **argv)
 {
 	DSA *dsa = NULL;
-	int i, badops = 0, text = 0;
+	int i;
 	BIO *in = NULL, *out = NULL;
-	int informat, outformat, noout = 0, C = 0, ret = 1;
-	char *infile, *outfile, *prog;
-	int numbits = -1, num, genkey = 0;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
-#ifdef GENCB_TEST
-	const char *errstr = NULL;
-	int timebomb = 0;
-#endif
+	int ret = 1;
+	int numbits = -1;
+	char *strbits = NULL;
 
-	infile = NULL;
-	outfile = NULL;
-	informat = FORMAT_PEM;
-	outformat = FORMAT_PEM;
+	memset(&dsaparam_config, 0, sizeof(dsaparam_config));
 
-	prog = argv[0];
-	argc--;
-	argv++;
-	while (argc >= 1) {
-		if (strcmp(*argv, "-inform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			informat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-outform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outformat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-in") == 0) {
-			if (--argc < 1)
-				goto bad;
-			infile = *(++argv);
-		} else if (strcmp(*argv, "-out") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outfile = *(++argv);
-		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine = *(++argv);
-		}
-#endif
-#ifdef GENCB_TEST
-		else if (strcmp(*argv, "-timebomb") == 0) {
-			if (--argc < 1)
-				goto bad;
-			timebomb = strtonum(*(++argv), 0, INT_MAX, &errstr);
-			if (errstr)
-				goto bad;
-		}
-#endif
-		else if (strcmp(*argv, "-text") == 0)
-			text = 1;
-		else if (strcmp(*argv, "-C") == 0)
-			C = 1;
-		else if (strcmp(*argv, "-genkey") == 0) {
-			genkey = 1;
-		} else if (strcmp(*argv, "-noout") == 0)
-			noout = 1;
-		else if (sscanf(*argv, "%d", &num) == 1) {
-			/* generate a key */
-			numbits = num;
-		} else {
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
-			badops = 1;
-			break;
-		}
-		argc--;
-		argv++;
+	dsaparam_config.informat = FORMAT_PEM;
+	dsaparam_config.outformat = FORMAT_PEM;
+
+	if (options_parse(argc, argv, dsaparam_options, &strbits, NULL) != 0) {
+		dsaparam_usage();
+		goto end;
 	}
 
-	if (badops) {
-bad:
-		BIO_printf(bio_err, "%s [options] [bits] <infile >outfile\n", prog);
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, " -inform arg   input format - DER or PEM\n");
-		BIO_printf(bio_err, " -outform arg  output format - DER or PEM\n");
-		BIO_printf(bio_err, " -in arg       input file\n");
-		BIO_printf(bio_err, " -out arg      output file\n");
-		BIO_printf(bio_err, " -text         print as text\n");
-		BIO_printf(bio_err, " -C            Output C code\n");
-		BIO_printf(bio_err, " -noout        no output\n");
-		BIO_printf(bio_err, " -genkey       generate a DSA key\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, " -engine e     use engine e, possibly a hardware device.\n");
-#endif
-#ifdef GENCB_TEST
-		BIO_printf(bio_err, " -timebomb n   interrupt keygen after <n> seconds\n");
-#endif
-		BIO_printf(bio_err, " number        number of bits to use for generating private key\n");
-		goto end;
+	if (strbits != NULL) {
+		const char *errstr;
+		numbits = strtonum(strbits, 0, INT_MAX, &errstr);
+		if (errstr) {
+			fprintf(stderr, "Invalid number of bits: %s", errstr);
+			goto end;
+		}
 	}
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
-	if ((in == NULL) || (out == NULL)) {
+	if (in == NULL || out == NULL) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (infile == NULL)
+	if (dsaparam_config.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, infile) <= 0) {
-			perror(infile);
+		if (BIO_read_filename(in, dsaparam_config.infile) <= 0) {
+			perror(dsaparam_config.infile);
 			goto end;
 		}
 	}
-	if (outfile == NULL) {
+	if (dsaparam_config.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, outfile) <= 0) {
-			perror(outfile);
+		if (BIO_write_filename(out, dsaparam_config.outfile) <= 0) {
+			perror(dsaparam_config.outfile);
 			goto end;
 		}
 	}
 
 #ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, engine, 0);
+	setup_engine(bio_err, dsaparam_config.engine, 0);
 #endif
 
 	if (numbits > 0) {
@@ -245,38 +236,16 @@ bad:
 			BIO_printf(bio_err, "Error allocating DSA object\n");
 			goto end;
 		}
-		BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n", num);
+		BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n", numbits);
 		BIO_printf(bio_err, "This could take some time\n");
-#ifdef GENCB_TEST
-		if (timebomb > 0) {
-			struct sigaction act;
-			act.sa_handler = timebomb_sigalarm;
-			act.sa_flags = 0;
-			BIO_printf(bio_err, "(though I'll stop it if not done within %d secs)\n",
-			    timebomb);
-			if (sigaction(SIGALRM, &act, NULL) != 0) {
-				BIO_printf(bio_err, "Error, couldn't set SIGALRM handler\n");
-				goto end;
-			}
-			alarm(timebomb);
-		}
-#endif
-		if (!DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL, &cb)) {
-#ifdef GENCB_TEST
-			if (stop_keygen_flag) {
-				BIO_printf(bio_err, "DSA key generation time-stopped\n");
-				/* This is an asked-for behaviour! */
-				ret = 0;
-				goto end;
-			}
-#endif
+		if (!DSA_generate_parameters_ex(dsa, numbits, NULL, 0, NULL, NULL, &cb)) {
 			ERR_print_errors(bio_err);
 			BIO_printf(bio_err, "Error, DSA key generation failed\n");
 			goto end;
 		}
-	} else if (informat == FORMAT_ASN1)
+	} else if (dsaparam_config.informat == FORMAT_ASN1)
 		dsa = d2i_DSAparams_bio(in, NULL);
-	else if (informat == FORMAT_PEM)
+	else if (dsaparam_config.informat == FORMAT_PEM)
 		dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL);
 	else {
 		BIO_printf(bio_err, "bad input format specified\n");
@@ -287,10 +256,10 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (text) {
+	if (dsaparam_config.text) {
 		DSAparams_print(out, dsa);
 	}
-	if (C) {
+	if (dsaparam_config.C) {
 		unsigned char *data;
 		int l, len, bits_p;
 
@@ -342,10 +311,10 @@ bad:
 		printf("\t\t{ DSA_free(dsa); return(NULL); }\n");
 		printf("\treturn(dsa);\n\t}\n");
 	}
-	if (!noout) {
-		if (outformat == FORMAT_ASN1)
+	if (!dsaparam_config.noout) {
+		if (dsaparam_config.outformat == FORMAT_ASN1)
 			i = i2d_DSAparams_bio(out, dsa);
-		else if (outformat == FORMAT_PEM)
+		else if (dsaparam_config.outformat == FORMAT_PEM)
 			i = PEM_write_bio_DSAparams(out, dsa);
 		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");
@@ -357,7 +326,7 @@ bad:
 			goto end;
 		}
 	}
-	if (genkey) {
+	if (dsaparam_config.genkey) {
 		DSA *dsakey;
 
 		if ((dsakey = DSAparams_dup(dsa)) == NULL)
@@ -367,9 +336,9 @@ bad:
 			DSA_free(dsakey);
 			goto end;
 		}
-		if (outformat == FORMAT_ASN1)
+		if (dsaparam_config.outformat == FORMAT_ASN1)
 			i = i2d_DSAPrivateKey_bio(out, dsakey);
-		else if (outformat == FORMAT_PEM)
+		else if (dsaparam_config.outformat == FORMAT_PEM)
 			i = PEM_write_bio_DSAPrivateKey(out, dsakey, NULL, NULL, 0, NULL, NULL);
 		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");
