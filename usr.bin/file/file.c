@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.46 2015/07/08 17:49:45 tobias Exp $ */
+/* $OpenBSD: file.c,v 1.47 2015/07/12 09:51:25 tobias Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -286,7 +286,7 @@ read_link(struct input_msg *msg, const char *path)
 	int		 used;
 	ssize_t		 size;
 
-	size = readlink(path, lpath, sizeof lpath);
+	size = readlink(path, lpath, sizeof lpath - 1);
 	if (size == -1) {
 		msg->link_error = errno;
 		return;
