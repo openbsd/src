@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.113 2015/03/04 13:55:32 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.114 2015/07/12 14:52:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -525,7 +525,14 @@ sub open_pipe
 		$self->{state}->fatal("#1 not writable",
 		    $OpenBSD::Temp::tempbase);
 	}
-	$object->{cache_dir} = $ENV{'PKG_CACHE'};
+	my $d = $ENV{'PKG_CACHE'};
+	if (defined $d) {
+		$object->{cache_dir} = $d;
+		if (! -d -w $d) {
+			$self->{state}->fatal("bad PKG_CACHE directory #1", $d);
+		}
+		$object->{cache_dir} = $d;
+	}
 	$object->{parent} = $$;
 
 	my $pid2 = open(my $rdfh, "-|");
@@ -534,7 +541,7 @@ sub open_pipe
 		$object->{pid2} = $pid2;
 	} else {
 		open STDERR, '>', $object->{errors};
-		if (defined $object->{cache_dir}) {
+		if (defined $d) {
 			my $pid3 = open(my $in, "-|");
 			$self->did_it_fork($pid3);
 			if ($pid3) {
