@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.6 2015/07/03 14:50:14 brynet Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.7 2015/07/12 18:40:49 nicm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,7 +149,7 @@ ibuf_write(struct msgbuf *msgbuf)
 	unsigned int	 i = 0;
 	ssize_t	n;
 
-	bzero(&iov, sizeof(iov));
+	memset(&iov, 0, sizeof(iov));
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
 		if (i >= IOV_MAX)
 			break;
@@ -233,9 +233,9 @@ msgbuf_write(struct msgbuf *msgbuf)
 		char		buf[CMSG_SPACE(sizeof(int))];
 	} cmsgbuf;
 
-	bzero(&iov, sizeof(iov));
-	bzero(&msg, sizeof(msg));
-	bzero(&cmsgbuf, sizeof(cmsgbuf));
+	memset(&iov, 0, sizeof(iov));
+	memset(&msg, 0, sizeof(msg));
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
 		if (i >= IOV_MAX)
 			break;
