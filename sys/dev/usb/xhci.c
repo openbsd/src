@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.62 2015/06/29 18:33:23 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.63 2015/07/12 12:54:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -745,6 +745,9 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		printf("%s: NULL xfer pointer\n", DEVNAME(sc));
 		return;
 	}
+
+	if (remain > xfer->length)
+		remain = xfer->length;
 
 	switch (code) {
 	case XHCI_CODE_SUCCESS:
