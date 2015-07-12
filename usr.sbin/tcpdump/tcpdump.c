@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.70 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.71 2015/07/12 19:58:00 naddy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -603,8 +603,10 @@ default_print_ascii(const u_char *cp, unsigned int length)
 	printf("\n");
 	for (i = 0; i < length; i++) {
 		c = cp[i];
-		c = isprint(c) || isspace(c) ? c : '.';
-		putchar(c);
+		if (isprint(c) || c == '\t' || c == '\n' || c == '\r')
+			putchar(c);
+		else
+			putchar('.');
 	}
 }
 
