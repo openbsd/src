@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.3 2015/02/08 10:22:45 doug Exp $ */
+/* $OpenBSD: dh.c,v 1.4 2015/07/12 22:57:00 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,15 +74,93 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-/* -inform arg	- input format - default PEM (DER or PEM)
- * -outform arg - output format - default PEM
- * -in arg	- input file - default stdin
- * -out arg	- output file - default stdout
- * -check	- check the parameters are ok
- * -noout
- * -text
- * -C
- */
+static struct {
+	int C;
+	int check;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine;
+#endif
+	char *infile;
+	int informat;
+	int noout;
+	char *outfile;
+	int outformat;
+	int text;
+} dh_config;
+
+static struct option dh_options[] = {
+	{
+		.name = "C",
+		.desc = "Convert DH parameters into C code",
+		.type = OPTION_FLAG,
+		.opt.flag = &dh_config.C,
+	},
+	{
+		.name = "check",
+		.desc = "Check the DH parameters",
+		.type = OPTION_FLAG,
+		.opt.flag = &dh_config.check,
+	},
+#ifndef OPENSSL_NO_ENGINE
+	{
+		.name = "engine",
+		.argname = "id",
+		.desc = "Use the engine specified by the given identifier",
+		.type = OPTION_ARG,
+		.opt.arg = &dh_config.engine,
+	},
+#endif
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input file (default stdin)",
+		.type = OPTION_ARG,
+		.opt.arg = &dh_config.infile,
+	},
+	{
+		.name = "inform",
+		.argname = "format",
+		.desc = "Input format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &dh_config.informat,
+	},
+	{
+		.name = "noout",
+		.desc = "No output",
+		.type = OPTION_FLAG,
+		.opt.flag = &dh_config.noout,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file (default stdout)",
+		.type = OPTION_ARG,
+		.opt.arg = &dh_config.outfile,
+	},
+	{
+		.name = "outform",
+		.argname = "format",
+		.desc = "Output format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &dh_config.outformat,
+	},
+	{
+		.name = "text",
+		.desc = "Print a text form of the DH parameters",
+		.type = OPTION_FLAG,
+		.opt.flag = &dh_config.text,
+	},
+	{ NULL },
+};
+
+static void
+dh_usage(void)
+{
+	fprintf(stderr,
+	    "usage: dh [-C] [-check] [-engine id] [-in file] [-inform format]\n"
+	    "    [-noout] [-out file] [-outform format] [-text]\n\n");
+	options_usage(dh_options);
+}
 
 int dh_main(int, char **);
 
@@ -90,115 +168,50 @@ int
 dh_main(int argc, char **argv)
 {
 	DH *dh = NULL;
-	int i, badops = 0, text = 0;
+	int i;
 	BIO *in = NULL, *out = NULL;
-	int informat, outformat, check = 0, noout = 0, C = 0, ret = 1;
-	char *infile, *outfile, *prog;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
+	int ret = 1;
 
-#ifndef OPENSSL_NO_ENGINE
-	engine = NULL;
-#endif
-	infile = NULL;
-	outfile = NULL;
-	informat = FORMAT_PEM;
-	outformat = FORMAT_PEM;
+	memset(&dh_config, 0, sizeof(dh_config));
 
-	prog = argv[0];
-	argc--;
-	argv++;
-	while (argc >= 1) {
-		if (strcmp(*argv, "-inform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			informat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-outform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outformat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-in") == 0) {
-			if (--argc < 1)
-				goto bad;
-			infile = *(++argv);
-		} else if (strcmp(*argv, "-out") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outfile = *(++argv);
-		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine = *(++argv);
-		}
-#endif
-		else if (strcmp(*argv, "-check") == 0)
-			check = 1;
-		else if (strcmp(*argv, "-text") == 0)
-			text = 1;
-		else if (strcmp(*argv, "-C") == 0)
-			C = 1;
-		else if (strcmp(*argv, "-noout") == 0)
-			noout = 1;
-		else {
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
-			badops = 1;
-			break;
-		}
-		argc--;
-		argv++;
-	}
+	dh_config.informat = FORMAT_PEM;
+	dh_config.outformat = FORMAT_PEM;
 
-	if (badops) {
-bad:
-		BIO_printf(bio_err, "%s [options] <infile >outfile\n", prog);
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, " -inform arg   input format - one of DER PEM\n");
-		BIO_printf(bio_err, " -outform arg  output format - one of DER PEM\n");
-		BIO_printf(bio_err, " -in arg       input file\n");
-		BIO_printf(bio_err, " -out arg      output file\n");
-		BIO_printf(bio_err, " -check        check the DH parameters\n");
-		BIO_printf(bio_err, " -text         print a text form of the DH parameters\n");
-		BIO_printf(bio_err, " -C            Output C code\n");
-		BIO_printf(bio_err, " -noout        no output\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, " -engine e     use engine e, possibly a hardware device.\n");
-#endif
+	if (options_parse(argc, argv, dh_options, NULL, NULL) != 0) {
+		dh_usage();
 		goto end;
 	}
 
 #ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, engine, 0);
+	setup_engine(bio_err, dh_config.engine, 0);
 #endif
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
-	if ((in == NULL) || (out == NULL)) {
+	if (in == NULL || out == NULL) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (infile == NULL)
+	if (dh_config.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, infile) <= 0) {
-			perror(infile);
+		if (BIO_read_filename(in, dh_config.infile) <= 0) {
+			perror(dh_config.infile);
 			goto end;
 		}
 	}
-	if (outfile == NULL) {
+	if (dh_config.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, outfile) <= 0) {
-			perror(outfile);
+		if (BIO_write_filename(out, dh_config.outfile) <= 0) {
+			perror(dh_config.outfile);
 			goto end;
 		}
 	}
 
-	if (informat == FORMAT_ASN1)
+	if (dh_config.informat == FORMAT_ASN1)
 		dh = d2i_DHparams_bio(in, NULL);
-	else if (informat == FORMAT_PEM)
+	else if (dh_config.informat == FORMAT_PEM)
 		dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
 	else {
 		BIO_printf(bio_err, "bad input format specified\n");
@@ -209,10 +222,10 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (text) {
+	if (dh_config.text) {
 		DHparams_print(out, dh);
 	}
-	if (check) {
+	if (dh_config.check) {
 		if (!DH_check(dh, &i)) {
 			ERR_print_errors(bio_err);
 			goto end;
@@ -228,7 +241,7 @@ bad:
 		if (i == 0)
 			printf("DH parameters appear to be ok.\n");
 	}
-	if (C) {
+	if (dh_config.C) {
 		unsigned char *data;
 		int len, l, bits;
 
@@ -269,10 +282,10 @@ bad:
 		printf("\treturn(dh);\n\t}\n");
 		free(data);
 	}
-	if (!noout) {
-		if (outformat == FORMAT_ASN1)
+	if (!dh_config.noout) {
+		if (dh_config.outformat == FORMAT_ASN1)
 			i = i2d_DHparams_bio(out, dh);
-		else if (outformat == FORMAT_PEM)
+		else if (dh_config.outformat == FORMAT_PEM)
 			i = PEM_write_bio_DHparams(out, dh);
 		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");
