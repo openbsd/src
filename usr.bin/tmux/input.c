@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.79 2015/06/15 10:58:01 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.80 2015/07/13 18:45:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -801,10 +801,7 @@ input_reset(struct window_pane *wp)
 {
 	struct input_ctx	*ictx = wp->ictx;
 
-	memcpy(&ictx->cell, &grid_default_cell, sizeof ictx->cell);
-	memcpy(&ictx->old_cell, &ictx->cell, sizeof ictx->old_cell);
-	ictx->old_cx = 0;
-	ictx->old_cy = 0;
+	input_reset_cell(ictx);
 
 	if (wp->mode == NULL)
 		screen_write_start(&ictx->ctx, wp, &wp->base);
