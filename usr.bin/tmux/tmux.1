@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.441 2015/06/18 23:53:56 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.442 2015/07/13 13:36:29 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2015 $
+.Dd $Mdocdate: July 13 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3542,7 +3542,7 @@ flag unsets a variable.
 indicates the variable is to be removed from the environment before starting a
 new process.
 .It Xo Ic show-environment
-.Op Fl g
+.Op Fl gs
 .Op Fl t Ar target-session
 .Op Ar variable
 .Xc
@@ -3556,6 +3556,9 @@ If
 is omitted, all variables are shown.
 Variables removed from the environment are prefixed with
 .Ql - .
+If
+.Fl s
+is used, the output is formatted as a set of Bourne shell commands.
 .El
 .Sh STATUS LINE
 .Nm
