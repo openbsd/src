@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.143 2015/06/14 10:07:44 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.144 2015/07/13 15:49:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -95,6 +95,8 @@ server_client_create(int fd)
 	memcpy(&c->activity_time, &c->creation_time, sizeof c->activity_time);
 
 	environ_init(&c->environ);
+
+	c->cwd = -1;
 
 	c->cmdq = cmdq_new(c);
 	c->cmdq->client_exit = 1;
@@ -1253,12 +1255,11 @@ server_client_msg_identify(struct client *c, struct imsg *imsg)
 
 	if (c->fd == -1)
 		return;
-	if (!isatty(c->fd)) {
+	if (tty_init(&c->tty, c, c->fd, c->term) != 0) {
 		close(c->fd);
 		c->fd = -1;
 		return;
 	}
-	tty_init(&c->tty, c, c->fd, c->term);
 	if (c->flags & CLIENT_UTF8)
 		c->tty.flags |= TTY_UTF8;
 	if (c->flags & CLIENT_256COLOURS)
