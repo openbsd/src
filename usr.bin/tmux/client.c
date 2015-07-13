@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.90 2015/06/14 10:07:44 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.91 2015/07/13 18:10:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -350,6 +350,7 @@ client_send_identify(int flags)
 {
 	const char	 *s;
 	char		**ss;
+	size_t		  sslen;
 	int		  fd;
 	pid_t		  pid;
 
@@ -374,8 +375,11 @@ client_send_identify(int flags)
 	pid = getpid();
 	client_write_one(MSG_IDENTIFY_CLIENTPID, -1, &pid, sizeof pid);
 
-	for (ss = environ; *ss != NULL; ss++)
-		client_write_one(MSG_IDENTIFY_ENVIRON, -1, *ss, strlen(*ss) + 1);
+	for (ss = environ; *ss != NULL; ss++) {
+		sslen = strlen(*ss) + 1;
+		if (sslen <= MAX_IMSGSIZE - IMSG_HEADER_SIZE)
+			client_write_one(MSG_IDENTIFY_ENVIRON, -1, *ss, sslen);
+	}
 
 	client_write_one(MSG_IDENTIFY_DONE, -1, NULL, 0);
 
