@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.74 2015/06/18 23:55:24 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.75 2015/07/13 15:37:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -711,6 +711,8 @@ format_defaults_client(struct format_tree *ft, struct client *c)
 		format_add(ft, "client_tty", "%s", c->tty.path);
 	if (c->tty.termname != NULL)
 		format_add(ft, "client_termname", "%s", c->tty.termname);
+	format_add(ft, "client_control_mode", "%d",
+		!!(c->flags & CLIENT_CONTROL));
 
 	t = c->creation_time.tv_sec;
 	format_add(ft, "client_created", "%lld", (long long) t);
