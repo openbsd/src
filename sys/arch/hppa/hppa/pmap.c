@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.165 2015/02/11 01:58:57 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.166 2015/07/13 08:20:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -666,9 +666,6 @@ pmap_create(void)
 void
 pmap_destroy(struct pmap *pmap)
 {
-#ifdef DIAGNOSTIC
-	struct vm_page *pg;
-#endif
 	paddr_t pa;
 	int refs;
 
@@ -678,44 +675,7 @@ pmap_destroy(struct pmap *pmap)
 	if (refs > 0)
 		return;
 
-#ifdef DIAGNOSTIC
-	while ((pg = RB_ROOT(&pmap->pm_obj.memt))) {
-		pt_entry_t *pde, *epde;
-		struct vm_page *spg;
-		struct pv_entry *pv, *npv;
-
-		KASSERT(pg != pmap->pm_pdir_pg);
-		pa = VM_PAGE_TO_PHYS(pg);
-#ifdef PMAPDEBUG
-		printf("pmap_destroy(%p): stray ptp 0x%lx w/ %u ents:",
-		    pmap, pa, pg->wire_count - 1);
-#endif
-
-		pde = (pt_entry_t *)pa;
-		epde = (pt_entry_t *)(pa + PAGE_SIZE);
-		for (; pde < epde; pde++) {
-			if (*pde == 0)
-				continue;
-
-			spg = PHYS_TO_VM_PAGE(PTE_PAGE(*pde));
-			if (spg == NULL)
-				continue;
-			for (pv = spg->mdpage.pvh_list; pv != NULL; pv = npv) {
-				npv = pv->pv_next;
-				if (pv->pv_pmap == pmap) {
-#ifdef PMAPDEBUG
-					printf(" 0x%lx", pv->pv_va);
-#endif
-					pmap_remove(pmap, pv->pv_va,
-					    pv->pv_va + PAGE_SIZE);
-				}
-			}
-		}
-#ifdef PMAPDEBUG
-		printf("\n");
-#endif
-	}
-#endif
+	KASSERT(RB_EMPTY(&pmap->pm_obj.memt));
 
 	pmap_sdir_set(pmap->pm_space, 0);
 
