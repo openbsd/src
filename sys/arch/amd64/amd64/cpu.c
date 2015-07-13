@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.83 2015/06/07 06:24:59 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.84 2015/07/13 17:45:55 mikeb Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -179,7 +179,6 @@ struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
 void    	cpu_hatch(void *);
 void    	cpu_boot_secondary(struct cpu_info *ci);
 void    	cpu_start_secondary(struct cpu_info *ci);
-void		cpu_copy_trampoline(void);
 #endif
 
 int
@@ -720,42 +719,6 @@ cpu_debug_dump(void)
 	}
 }
 #endif
-
-void
-cpu_copy_trampoline(void)
-{
-	/*
-	 * Copy boot code.
-	 */
-	extern u_char cpu_spinup_trampoline[];
-	extern u_char cpu_spinup_trampoline_end[];
-	extern u_char mp_tramp_data_start[];
-	extern u_char mp_tramp_data_end[];
-
-	extern u_int32_t mp_pdirpa;
-	extern paddr_t tramp_pdirpa;
-
-	memcpy((caddr_t)MP_TRAMPOLINE,
-	    cpu_spinup_trampoline,
-	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
-
-	pmap_kenter_pa(MP_TRAMP_DATA, MP_TRAMP_DATA,
-		PROT_READ | PROT_WRITE);
-	memcpy((caddr_t)MP_TRAMP_DATA,
-		mp_tramp_data_start,
-		mp_tramp_data_end - mp_tramp_data_start);
-
-	/*
-	 * We need to patch this after we copy the tramp data,
-	 * the symbol points into the copied tramp data page.
-	 */
-	mp_pdirpa = tramp_pdirpa;
-
-	/* Unmap, will be remapped in cpu_start_secondary */
-	pmap_kremove(MP_TRAMPOLINE, PAGE_SIZE);
-	pmap_kremove(MP_TRAMP_DATA, PAGE_SIZE);
-}
-
 
 int
 mp_cpu_start(struct cpu_info *ci)
