@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.35 2015/04/29 04:29:23 jsg Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.36 2015/07/13 17:45:01 mikeb Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -585,10 +585,6 @@ ioapic_enable(void)
 		outb(IMCR_DATA, IMCR_APIC);
 	}
 
-#if 0 /* XXX Will be removed when we have intrsource. */
-	isa_nodefaultirq();
-#endif
-			
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
 		if (mp_verbose)
 			printf("%s: enabling\n", sc->sc_pic.pic_name);

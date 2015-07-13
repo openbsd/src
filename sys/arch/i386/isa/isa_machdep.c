@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.79 2015/01/24 15:13:55 kettenis Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.80 2015/07/13 17:45:01 mikeb Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -197,16 +197,6 @@ isa_defaultirq(void)
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
 	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
-}
-
-void
-isa_nodefaultirq(void)
-{
-	int i;
-
-	/* icu vectors */
-	for (i = 0; i < ICU_LEN; i++)
-		unsetgate(&idt[ICU_OFFSET + i]);
 }
 
 /*
