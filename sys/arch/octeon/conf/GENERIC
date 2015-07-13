@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2015/06/28 11:52:57 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.20 2015/07/13 19:05:23 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -61,11 +61,9 @@ pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 
 # USB Controllers
-#octhci*		at iobus0
 dwctwo0 	at iobus?
 
 # USB bus support
-#usb*		at octhci?
 usb*		at dwctwo?
 
 # USB devices

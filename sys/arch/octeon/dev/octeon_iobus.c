@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.10 2015/04/26 12:24:03 jmatthew Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.11 2015/07/13 19:05:23 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -47,7 +47,7 @@
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/cn30xxgmxreg.h>
-#include <octeon/dev/octhcireg.h>
+#include <octeon/dev/octhcireg.h>	/* USBN_BASE */
 
 int	 iobusmatch(struct device *, void *, void *);
 void	 iobusattach(struct device *, struct device *, void *);
@@ -149,7 +149,6 @@ const struct iobus_unit iobus_units[] = {
 	{ 0, 0 },				/* pcibus */
 	{ GMX0_BASE_PORT0, CIU_INT_GMX_DRP0 },	/* cn30xxgmx */
 	{ OCTEON_RNG_BASE, 0 },			/* octrng */
-	{ 0, CIU_INT_USB },			/* octhci */
 	{ USBN_BASE, CIU_INT_USB },		/* octdwctwo */
 };
 struct iobus_attach_args iobus_children[] = {
@@ -157,8 +156,7 @@ struct iobus_attach_args iobus_children[] = {
 	IOBUSDEV("pcibus", 0, &iobus_units[1]),
 	IOBUSDEV("cn30xxgmx", 0, &iobus_units[2]),
 	IOBUSDEV("octrng", 0, &iobus_units[3]),
-	IOBUSDEV("octhci", 0, &iobus_units[4]),
-	IOBUSDEV("dwctwo", 0, &iobus_units[5]),
+	IOBUSDEV("dwctwo", 0, &iobus_units[4]),
 };
 #undef	IOBUSDEV
 
