@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.39 2015/06/18 22:51:05 doug Exp $ */
+/* $OpenBSD: s3_both.c,v 1.40 2015/07/14 03:47:38 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,6 +125,8 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+#include "bytestring.h"
+
 /* send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or SSL3_RT_CHANGE_CIPHER_SPEC) */
 int
 ssl3_do_write(SSL *s, int type)
@@ -222,8 +224,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 {
 	int al, ok, md_len;
 	long n;
-	unsigned char *p;
-
+	CBS cbs;
 
 	n = s->method->ssl_get_message(s, a, b, SSL3_MT_FINISHED,
 	    64, /* should actually be 36+4 :-) */ &ok);
@@ -240,15 +241,17 @@ ssl3_get_finished(SSL *s, int a, int b)
 	s->s3->change_cipher_spec = 0;
 
 	md_len = s->method->ssl3_enc->finish_mac_length;
-	p = (unsigned char *)s->init_msg;
 
-	if (s->s3->tmp.peer_finish_md_len != md_len || n != md_len) {
+	CBS_init(&cbs, s->init_msg, n);
+
+	if (n < 0 || s->s3->tmp.peer_finish_md_len != md_len ||
+	    CBS_len(&cbs) != md_len) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
 		goto f_err;
 	}
 
-	if (timingsafe_memcmp(p, s->s3->tmp.peer_finish_md, md_len) != 0) {
+	if (!CBS_mem_equal(&cbs, s->s3->tmp.peer_finish_md, CBS_len(&cbs))) {
 		al = SSL_AD_DECRYPT_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_DIGEST_CHECK_FAILED);
 		goto f_err;
