@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.40 2015/07/14 03:47:38 doug Exp $ */
+/* $OpenBSD: s3_both.c,v 1.41 2015/07/14 05:41:07 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -391,9 +391,11 @@ long
 ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 {
 	unsigned char *p;
-	unsigned long l;
+	uint32_t l;
 	long n;
 	int i, al;
+	CBS cbs;
+	uint8_t u8;
 
 	if (s->s3->tmp.reuse_message) {
 		s->s3->tmp.reuse_message = 0;
@@ -443,8 +445,8 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 						s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, p, 4, s, s->msg_callback_arg);
 				}
 			}
-		}
-		while (skip_message);
+
+		} while (skip_message);
 
 		/* s->init_num == 4 */
 
@@ -453,9 +455,16 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 		}
-		s->s3->tmp.message_type= *(p++);
 
-		n2l3(p, l);
+		/* XXX remove call to n2l3 */
+		CBS_init(&cbs, p, 4);
+		if (!CBS_get_u8(&cbs, &u8) ||
+		    !CBS_get_u24(&cbs, &l)) {
+			SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
+			goto err;
+		}
+		s->s3->tmp.message_type = u8;
+
 		if (l > (unsigned long)max) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
 			SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
