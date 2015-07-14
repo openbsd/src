@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.38 2015/02/28 21:51:57 bentley Exp $
+.\" $OpenBSD: iked.conf.5,v 1.39 2015/07/14 13:06:37 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: July 14 2015 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -831,7 +831,7 @@ or the non-standard Curve25519.
 Please note that the EC2N groups are considered as insecure and only
 provided for backwards compatibility.
 .Sh EXAMPLES
-The first example is intended for clients connecting to
+The first example is intended for a server with clients connecting to
 .Xr iked 8
 as an IPsec gateway, or IKEv2 responder, using mutual public key
 authentication and additional challenge-based EAP-MSCHAPv2 password
