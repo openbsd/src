@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.14 2015/07/14 16:58:22 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.15 2015/07/14 17:18:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,6 +39,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,12 +61,14 @@ brace_subst(char *orig, char **store, char *path, int len)
 	for (p = *store; (ch = *orig); ++orig)
 		if (ch == '{' && orig[1] == '}') {
 			while ((p - *store) + plen > len) {
+				ptrdiff_t p_off;
 				char *newstore;
 
+				p_off = (p - *store);
 				newstore = reallocarray(*store, len, 2);
 				if (newstore == NULL)
 					err(1, NULL);
-				p = (p - *store) + newstore;
+				p = newstore + p_off;
 				*store = newstore;
 				len *= 2;
 			}
