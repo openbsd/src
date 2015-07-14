@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.94 2015/06/28 00:08:27 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.95 2015/07/14 03:38:26 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -850,7 +850,7 @@ int tls1_check_ec_tmp_key(SSL *s);
 
 int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p,
     int *len, int maxlen);
-int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d,
+int ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d,
     int len, int *al);
 int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p,
     int *len, int maxlen);
