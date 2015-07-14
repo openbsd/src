@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.30 2015/01/20 20:50:36 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.31 2015/07/14 23:30:02 florian Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 20 2015 $
+.Dd $Mdocdate: July 14 2015 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -148,12 +148,12 @@ Verify a release directory containing
 .Pa SHA256.sig
 and a full set of release files:
 .Bd -literal -offset indent -compact
-$ signify -C -p /etc/signify/openbsd-57-base.pub -x SHA256.sig
+$ signify -C -p /etc/signify/openbsd-58-base.pub -x SHA256.sig
 .Ed
 .Pp
 Verify a bsd.rd before an upgrade:
 .Bd -literal -offset indent -compact
-$ signify -C -p /etc/signify/openbsd-57-base.pub -x SHA256.sig bsd.rd
+$ signify -C -p /etc/signify/openbsd-58-base.pub -x SHA256.sig bsd.rd
 .Ed
 .Sh SEE ALSO
 .Xr fw_update 1 ,
