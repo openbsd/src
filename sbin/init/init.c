@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.52 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.53 2015/07/14 19:14:05 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -93,29 +93,50 @@ void emergency(char *, ...);
 void disaster(int);
 void badsys(int);
 
-/*
- * We really need a recursive typedef...
- * The following at least guarantees that the return type of (*state_t)()
- * is sufficiently wide to hold a function pointer.
- */
-typedef long (*state_func_t)(void);
-typedef state_func_t (*state_t)(void);
+typedef enum {
+	invalid_state,
+	single_user,
+	runcom,
+	read_ttys,
+	multi_user,
+	clean_ttys,
+	catatonia,
+	death,
+	do_reboot,
+	hard_death,
+	nice_death
+} state_t;
+typedef state_t (*state_func_t)(void);
 
-state_func_t single_user(void);
-state_func_t runcom(void);
-state_func_t read_ttys(void);
-state_func_t multi_user(void);
-state_func_t clean_ttys(void);
-state_func_t catatonia(void);
-state_func_t death(void);
-state_func_t do_reboot(void);
-state_func_t hard_death(void);
-state_func_t nice_death(void);
+state_t f_single_user(void);
+state_t f_runcom(void);
+state_t f_read_ttys(void);
+state_t f_multi_user(void);
+state_t f_clean_ttys(void);
+state_t f_catatonia(void);
+state_t f_death(void);
+state_t f_do_reboot(void);
+state_t f_hard_death(void);
+state_t f_nice_death(void);
+
+state_func_t state_funcs[] = {
+	NULL,
+	f_single_user,
+	f_runcom,
+	f_read_ttys,
+	f_multi_user,
+	f_clean_ttys,
+	f_catatonia,
+	f_death,
+	f_do_reboot,
+	f_hard_death,
+	f_nice_death
+};
 
 enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
 
 void transition(state_t);
-state_t requested_transition = DEFAULT_STATE;
+volatile sig_atomic_t requested_transition = DEFAULT_STATE;
 
 void setctty(char *);
 
@@ -442,7 +463,7 @@ void
 transition(state_t s)
 {
 	for (;;)
-		s = (state_t) (*s)();
+		s = (*state_funcs[s])();
 }
 
 /*
@@ -482,8 +503,8 @@ setctty(char *name)
 /*
  * Bring the system up single user.
  */
-state_func_t
-single_user(void)
+state_t
+f_single_user(void)
 {
 	pid_t pid, wpid;
 	int status;
@@ -607,7 +628,7 @@ single_user(void)
 		emergency("can't fork single-user shell, trying again");
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			continue;
-		return (state_func_t) single_user;
+		return single_user;
 	}
 
 	requested_transition = 0;
@@ -618,7 +639,7 @@ single_user(void)
 			if (errno == EINTR)
 				continue;
 			warning("wait for single-user shell failed: %m; restarting");
-			return (state_func_t) single_user;
+			return single_user;
 		}
 		if (wpid == pid && WIFSTOPPED(status)) {
 			warning("init: shell stopped, restarting\n");
@@ -628,7 +649,7 @@ single_user(void)
 	} while (wpid != pid && !requested_transition);
 
 	if (requested_transition)
-		return (state_func_t) requested_transition;
+		return requested_transition;
 
 	if (!WIFEXITED(status)) {
 		if (WTERMSIG(status) == SIGKILL) {
@@ -640,19 +661,19 @@ single_user(void)
 			_exit(0);
 		} else {
 			warning("single user shell terminated, restarting");
-			return (state_func_t) single_user;
+			return single_user;
 		}
 	}
 
 	runcom_mode = FASTBOOT;
-	return (state_func_t) runcom;
+	return runcom;
 }
 
 /*
  * Run the system startup script.
  */
-state_func_t
-runcom(void)
+state_t
+f_runcom(void)
 {
 	pid_t pid, wpid;
 	int status;
@@ -689,7 +710,7 @@ runcom(void)
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			continue;
 		sleep(STALL_TIMEOUT);
-		return (state_func_t) single_user;
+		return single_user;
 	}
 
 	/*
@@ -703,7 +724,7 @@ runcom(void)
 				continue;
 			warning("wait for %s on %s failed: %m; going to single user mode",
 			    _PATH_BSHELL, _PATH_RUNCOM);
-			return (state_func_t) single_user;
+			return single_user;
 		}
 		if (wpid == pid && WIFSTOPPED(status)) {
 			warning("init: %s on %s stopped, restarting\n",
@@ -726,16 +747,16 @@ runcom(void)
 	if (!WIFEXITED(status)) {
 		warning("%s on %s terminated abnormally, going to single user mode",
 		    _PATH_BSHELL, _PATH_RUNCOM);
-		return (state_func_t) single_user;
+		return single_user;
 	}
 
 	if (WEXITSTATUS(status))
-		return (state_func_t) single_user;
+		return single_user;
 
 	runcom_mode = AUTOBOOT;		/* the default */
 	/* NB: should send a message to the session logger to avoid blocking. */
 	logwtmp("~", "reboot", "");
-	return (state_func_t) read_ttys;
+	return read_ttys;
 }
 
 /*
@@ -929,8 +950,8 @@ setupargv(session_t *sp, struct ttyent *typ)
 /*
  * Walk the list of ttys and create sessions for each active line.
  */
-state_func_t
-read_ttys(void)
+state_t
+f_read_ttys(void)
 {
 	int session_index = 0;
 	session_t *sp, *snext;
@@ -948,7 +969,7 @@ read_ttys(void)
 	}
 	sessions = 0;
 	if (start_session_db())
-		return (state_func_t) single_user;
+		return single_user;
 
 	/*
 	 * Allocate a session entry for each active port.
@@ -960,7 +981,7 @@ read_ttys(void)
 
 	endttyent();
 
-	return (state_func_t) multi_user;
+	return multi_user;
 }
 
 /*
@@ -1160,8 +1181,8 @@ transition_handler(int sig)
 /*
  * Take the system multiuser.
  */
-state_func_t
-multi_user(void)
+state_t
+f_multi_user(void)
 {
 	pid_t pid;
 	session_t *sp;
@@ -1196,14 +1217,14 @@ multi_user(void)
 		if ((pid = waitpid(-1, NULL, 0)) != -1)
 			collect_child(pid);
 
-	return (state_func_t) requested_transition;
+	return requested_transition;
 }
 
 /*
  * This is an n-squared algorithm.  We hope it isn't run often...
  */
-state_func_t
-clean_ttys(void)
+state_t
+f_clean_ttys(void)
 {
 	session_t *sp, *sprev;
 	struct ttyent *typ;
@@ -1256,21 +1277,21 @@ clean_ttys(void)
 			kill(sp->se_process, SIGHUP);
 		}
 
-	return (state_func_t) multi_user;
+	return multi_user;
 }
 
 /*
  * Block further logins.
  */
-state_func_t
-catatonia(void)
+state_t
+f_catatonia(void)
 {
 	session_t *sp;
 
 	for (sp = sessions; sp; sp = sp->se_next)
 		sp->se_flags |= SE_SHUTDOWN;
 
-	return (state_func_t) multi_user;
+	return multi_user;
 }
 
 /*
@@ -1287,29 +1308,29 @@ int death_howto = RB_HALT;
 /*
  * Reboot the system.
  */
-state_func_t
-do_reboot(void)
+state_t
+f_do_reboot(void)
 {
 	death_howto = RB_AUTOBOOT;
-	return nice_death();
+	return nice_death;
 }
 
 /*
  * Bring the system down nicely, then we must powerdown because something
  * is very wrong.
  */
-state_func_t
-hard_death(void)
+state_t
+f_hard_death(void)
 {
 	death_howto |= RB_POWERDOWN;	
-	return nice_death();
+	return nice_death;
 }
 
 /*
  * Bring the system down to single user nicely, after run the shutdown script.
  */
-state_func_t
-nice_death(void)
+state_t
+f_nice_death(void)
 {
 	session_t *sp;
 	int i;
@@ -1391,14 +1412,14 @@ die:
 	reboot(death_howto);
 
 	/* ... and if that fails.. oh well */
-	return (state_func_t) single_user;
+	return single_user;
 }
 
 /*
  * Bring the system down to single user.
  */
-state_func_t
-death(void)
+state_t
+f_death(void)
 {
 	session_t *sp;
 	int i;
@@ -1416,7 +1437,7 @@ death(void)
 
 	for (i = 0; i < 3; ++i) {
 		if (kill(-1, death_sigs[i]) == -1 && errno == ESRCH)
-			return (state_func_t) single_user;
+			return single_user;
 
 		clang = 0;
 		alarm(DEATH_WATCH);
@@ -1426,12 +1447,12 @@ death(void)
 		} while (clang == 0 && errno != ECHILD);
 
 		if (errno == ECHILD)
-			return (state_func_t) single_user;
+			return single_user;
 	}
 
 	warning("some processes would not die; ps axl advised");
 
-	return (state_func_t) single_user;
+	return single_user;
 }
 
 #ifdef LOGIN_CAP
