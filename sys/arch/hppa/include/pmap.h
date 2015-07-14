@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.49 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.50 2015/07/14 06:50:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -32,11 +32,12 @@
 #include <uvm/uvm_object.h>
 
 #ifdef	_KERNEL
+#include <sys/mutex.h>
 #include <machine/pte.h>
 
 struct pmap {
-	struct uvm_object pm_obj;	/* object (lck by object lock) */
-#define	pm_lock	pm_obj.vmobjlock
+	struct mutex pm_mtx;
+	struct uvm_object pm_obj;
 	struct vm_page	*pm_ptphint;
 	struct vm_page	*pm_pdir_pg;	/* vm_page for pdir */
 	volatile u_int32_t *pm_pdir;	/* page dir (read-only after create) */
@@ -160,11 +161,13 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #if !defined(_LOCORE)
 struct pv_entry;
 struct vm_page_md {
-	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
+	struct mutex pvh_mtx;
+	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_mtx) */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
 };
 
 #define	VM_MDPAGE_INIT(pg) do {				\
+	mtx_init(&(pg)->mdpage.pvh_mtx, IPL_VM);	\
 	(pg)->mdpage.pvh_list = NULL;			\
 	(pg)->mdpage.pvh_attrs = 0;			\
 } while (0)
