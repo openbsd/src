@@ -1,4 +1,4 @@
-/*	$OpenBSD: devname.c,v 1.9 2015/07/14 19:05:11 millert Exp $ */
+/*	$OpenBSD: devname.c,v 1.10 2015/07/14 19:05:52 millert Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,44 +28,82 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
 #include <sys/types.h>
 
 #include <db.h>
-#include <err.h>
-#include <errno.h>
+#include <dirent.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <paths.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
+static char *
+devname_nodb(dev_t dev, mode_t type)
+{
+	static char buf[sizeof(_PATH_DEV) + NAME_MAX];
+	char *name = NULL;
+	struct dirent *dp;
+	struct stat sb;
+	DIR *dirp;
+
+	if ((dirp = opendir(_PATH_DEV)) == NULL)
+		return (NULL);
+	if (strlcpy(buf, _PATH_DEV, sizeof(buf)) >= sizeof(buf))
+		return (NULL);
+	while ((dp = readdir(dirp)) != NULL) {
+		if (dp->d_type != DT_UNKNOWN && DTTOIF(dp->d_type) != type)
+			continue;
+		buf[sizeof(_PATH_DEV) - 1] = '\0';
+		if (strlcat(buf, dp->d_name, sizeof(buf)) >= sizeof(buf))
+			continue;
+		if (lstat(buf, &sb) == -1)
+			continue;
+		if (sb.st_rdev != dev || (sb.st_mode & S_IFMT) != type)
+			continue;
+		name = buf + sizeof(_PATH_DEV) - 1;
+		break;
+	}
+	closedir(dirp);
+	return (name);
+}
+
+/*
+ * Keys in dev.db are a mode_t followed by a dev_t.  The former is the
+ * type of the file (mode & S_IFMT), the latter is the st_rdev field.
+ * Note that the structure may contain padding.
+ */
+struct {
+	mode_t type;
+	dev_t dev;
+} bkey;
+
 char *
 devname(dev_t dev, mode_t type)
 {
-	struct {
-		mode_t type;
-		dev_t dev;
-	} bkey;
 	static DB *db;
-	static int failure;
+	static bool failure;
 	DBT data, key;
+	char *name = NULL;
 
-	if (!db && !failure &&
-	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
-		failure = 1;
+	if (!db && !failure) {
+		if (!(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)))
+			failure = true;
 	}
-	if (failure)
-		return ("??");
-
-	/*
-	 * Keys are a mode_t followed by a dev_t.  The former is the type of
-	 * the file (mode & S_IFMT), the latter is the st_rdev field.  Be
-	 * sure to clear any padding that may be found in bkey.
-	 */
-	memset(&bkey, 0, sizeof(bkey));
-	bkey.dev = dev;
-	bkey.type = type;
-	key.data = &bkey;
-	key.size = sizeof(bkey);
-	return ((db->get)(db, &key, &data, 0) ? "??" : (char *)data.data);
+	if (!failure) {
+		/* Be sure to clear any padding that may be found in bkey.  */
+		memset(&bkey, 0, sizeof(bkey));
+		bkey.dev = dev;
+		bkey.type = type;
+		key.data = &bkey;
+		key.size = sizeof(bkey);
+		if ((db->get)(db, &key, &data, 0) == 0)
+			name = data.data;
+	} else {
+		name = devname_nodb(dev, type);
+	}
+	return (name ? name : "??");
 }
