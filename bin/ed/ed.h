@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.15 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: ed.h,v 1.16 2015/07/14 19:16:33 deraadt Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -96,12 +96,16 @@ typedef struct undo {
 /* SPL1: disable some interrupts (requires reliable signals) */
 #define SPL1() mutex++
 
-/* SPL0: enable all interrupts; check sigflags (requires reliable signals) */
-#define SPL0() \
-if (--mutex == 0) { \
-	if (sigflags & (1 << (SIGHUP - 1))) handle_hup(SIGHUP); \
-	if (sigflags & (1 << (SIGINT - 1))) handle_int(SIGINT); \
-}
+/* SPL0: enable all interrupts; check signal flags (requires reliable signals) */
+#define SPL0()						\
+	do {						\
+		if (--mutex == 0) {			\
+			if (sighup)			\
+				handle_hup(SIGHUP);	\
+			if (sigint)			\
+				handle_int(SIGINT);	\
+		}					\
+	} while (0)
 
 /* STRTOI: convert a string to int */
 #define STRTOI(i, p) { \
@@ -120,7 +124,7 @@ if ((i) > (n)) { \
 	int ti = (n); \
 	char *ts; \
 	SPL1(); \
-	if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
+	if ((ts = realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
 		perror(NULL); \
 		seterrmsg("out of memory"); \
 		SPL0(); \
@@ -223,8 +227,10 @@ extern int ibufsz;
 extern int isbinary;
 extern int isglobal;
 extern int modified;
-extern int mutex;
-extern int sigflags;
+
+extern volatile sig_atomic_t mutex;
+extern volatile sig_atomic_t sighup;
+extern volatile sig_atomic_t sigint;
 
 /* global vars */
 extern int addr_last;

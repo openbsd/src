@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2015/07/11 16:33:48 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2015/07/14 19:16:33 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -72,10 +72,12 @@ int garrulous = 0;		/* if set, print all error messages */
 int isbinary;			/* if set, buffer contains ASCII NULs */
 int isglobal;			/* if set, doing a global command */
 int modified;			/* if set, buffer modified since last write */
-int mutex = 0;			/* if set, signals set "sigflags" */
 int scripted = 0;		/* if set, suppress diagnostics */
-int sigflags = 0;		/* if set, signals received while mutex set */
 int interactive = 0;		/* if set, we are in interactive mode */
+
+volatile sig_atomic_t mutex = 0;  /* if set, signals set flags */
+volatile sig_atomic_t sighup = 0; /* if set, sighup received while mutex set */
+volatile sig_atomic_t sigint = 0; /* if set, sigint received while mutex set */
 
 /* if set, signal handlers are enabled */
 volatile sig_atomic_t sigactive = 0;
@@ -224,6 +226,7 @@ top:
 		switch (status) {
 		case EOF:
 			quit(0);
+			break;
 		case EMOD:
 			modified = 0;
 			fputs("?\n", stderr);		/* give warning */
@@ -244,6 +247,7 @@ top:
 				fprintf(stderr, garrulous ? "%s\n" : "",
 				    errmsg);
 			quit(3);
+			break;
 		default:
 			fputs("?\n", stderr);
 			if (!interactive) {
@@ -1356,7 +1360,7 @@ signal_hup(int signo)
 	int save_errno = errno;
 
 	if (mutex)
-		sigflags |= (1 << (signo - 1));
+		sighup = 1;
 	else
 		handle_hup(signo);
 	errno = save_errno;
@@ -1369,7 +1373,7 @@ signal_int(int signo)
 	int save_errno = errno;
 
 	if (mutex)
-		sigflags |= (1 << (signo - 1));
+		sigint = 1;
 	else
 		handle_int(signo);
 	errno = save_errno;
@@ -1383,7 +1387,7 @@ handle_hup(int signo)
 
 	if (!sigactive)
 		quit(1);		/* XXX signal race */
-	sigflags &= ~(1 << (signo - 1));
+	sighup = 0;
 	/* XXX signal race */
 	if (addr_last && write_file("ed.hup", "w", 1, addr_last) < 0 &&
 	    home != NULL && home[0] == '/') {
@@ -1400,7 +1404,7 @@ handle_int(int signo)
 {
 	if (!sigactive)
 		_exit(1);
-	sigflags &= ~(1 << (signo - 1));
+	sigint = 0;
 #ifdef _POSIX_SOURCE
 	siglongjmp(env, -1);
 #else
@@ -1415,7 +1419,6 @@ handle_winch(int signo)
 	int save_errno = errno;
 	struct winsize ws;		/* window size structure */
 
-	sigflags &= ~(1 << (signo - 1));
 	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) >= 0) {
 		if (ws.ws_row > 2)
 			rows = ws.ws_row - 2;
