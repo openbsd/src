@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.114 2015/06/24 09:44:18 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.115 2015/07/14 03:27:20 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -970,10 +970,10 @@ int
 ssl3_get_server_certificate(SSL *s)
 {
 	int			 al, i, ok, ret = -1;
-	unsigned long		 n, nc, llen, l;
+	long			 n;
+	CBS			 cbs, cert_list;
 	X509			*x = NULL;
-	const unsigned char	*q, *p;
-	unsigned char		*d;
+	const unsigned char	*q;
 	STACK_OF(X509)		*sk = NULL;
 	SESS_CERT		*sc;
 	EVP_PKEY		*pkey = NULL;
@@ -995,7 +995,8 @@ ssl3_get_server_certificate(SSL *s)
 		    SSL_R_BAD_MESSAGE_TYPE);
 		goto f_err;
 	}
-	p = d = (unsigned char *)s->init_msg;
+
+	CBS_init(&cbs, s->init_msg, n);
 
 	if ((sk = sk_X509_new_null()) == NULL) {
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1003,35 +1004,37 @@ ssl3_get_server_certificate(SSL *s)
 		goto err;
 	}
 
-	if (p + 3 - d > n)
+	if (n < 0 || CBS_len(&cbs) < 3)
 		goto truncated;
-	n2l3(p, llen);
-	if (llen + 3 != n) {
+	if (!CBS_get_u24_length_prefixed(&cbs, &cert_list) ||
+	    CBS_len(&cbs) != 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
 		    SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 	}
-	for (nc = 0; nc < llen; ) {
-		if (p + 3 - d > n)
+
+	while (CBS_len(&cert_list) > 0) {
+		CBS cert;
+
+		if (CBS_len(&cert_list) < 3)
 			goto truncated;
-		n2l3(p, l);
-		if ((l + nc + 3) > llen) {
+		if (!CBS_get_u24_length_prefixed(&cert_list, &cert)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
 			    SSL_R_CERT_LENGTH_MISMATCH);
 			goto f_err;
 		}
 
-		q = p;
-		x = d2i_X509(NULL, &q, l);
+		q = CBS_data(&cert);
+		x = d2i_X509(NULL, &q, CBS_len(&cert));
 		if (x == NULL) {
 			al = SSL_AD_BAD_CERTIFICATE;
 			SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
 			    ERR_R_ASN1_LIB);
 			goto f_err;
 		}
-		if (q != (p + l)) {
+		if (q != CBS_data(&cert) + CBS_len(&cert)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
 			    SSL_R_CERT_LENGTH_MISMATCH);
@@ -1043,8 +1046,6 @@ ssl3_get_server_certificate(SSL *s)
 			goto err;
 		}
 		x = NULL;
-		nc += l + 3;
-		p = q;
 	}
 
 	i = ssl_verify_cert_chain(s, sk);
