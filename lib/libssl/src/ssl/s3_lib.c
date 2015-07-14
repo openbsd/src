@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.96 2015/05/25 21:35:35 guenther Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.97 2015/07/14 05:20:46 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,6 +155,7 @@
 #include <openssl/objects.h>
 
 #include "ssl_locl.h"
+#include "bytestring.h"
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers) / sizeof(SSL_CIPHER))
 
@@ -2532,9 +2533,14 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 const SSL_CIPHER *
 ssl3_get_cipher_by_char(const unsigned char *p)
 {
+	CBS cipher;
 	uint16_t cipher_value;
 
-	n2s(p, cipher_value);
+	/* We have to assume it is at least 2 bytes due to existing API. */
+	CBS_init(&cipher, p, 2);
+	if (!CBS_get_u16(&cipher, &cipher_value))
+		return NULL;
+
 	return ssl3_get_cipher_by_value(cipher_value);
 }
 
