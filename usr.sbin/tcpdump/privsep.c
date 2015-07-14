@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.33 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.34 2015/07/14 20:23:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 
 #include <netinet/in.h>
 #include <net/if.h>
@@ -59,7 +60,8 @@ enum priv_state {
 	STATE_INIT,		/* initial state */
 	STATE_BPF,		/* input file/device opened */
 	STATE_FILTER,		/* filter applied */
-	STATE_RUN		/* running and accepting network traffic */
+	STATE_RUN,		/* running and accepting network traffic */
+	STATE_EXIT		/* in the process of dying */
 };
 
 #define ALLOW(action)	(1 << (action))
@@ -76,7 +78,8 @@ static const int allowed_max[] = {
 			ALLOW(PRIV_ETHER_NTOHOST) | ALLOW(PRIV_INIT_DONE),
 	/* RUN */	ALLOW(PRIV_GETHOSTBYADDR) | ALLOW(PRIV_ETHER_NTOHOST) |
 			ALLOW(PRIV_GETRPCBYNUMBER) | ALLOW(PRIV_GETLINES) |
-			ALLOW(PRIV_LOCALTIME)
+			ALLOW(PRIV_LOCALTIME) | ALLOW(PRIV_PCAP_STATS),
+	/* EXIT */	0
 };
 
 /*
@@ -87,7 +90,9 @@ static int allowed_ext[] = {
 	/* INIT */	ALLOW(PRIV_SETFILTER),
 	/* BPF */	ALLOW(PRIV_SETFILTER),
 	/* FILTER */	ALLOW(PRIV_GETSERVENTRIES),
-	/* RUN */	ALLOW(PRIV_GETLINES) | ALLOW(PRIV_LOCALTIME)
+	/* RUN */	ALLOW(PRIV_GETLINES) | ALLOW(PRIV_LOCALTIME) |
+			ALLOW(PRIV_PCAP_STATS),
+	/* EXIT */	0
 };
 
 struct ftab {
@@ -120,6 +125,7 @@ static void	impl_getserventries(int);
 static void	impl_getprotoentries(int);
 static void	impl_localtime(int fd);
 static void	impl_getlines(int);
+static void	impl_pcap_stats(int, int *);
 
 static void	test_state(int, int);
 static void	logmsg(int, const char *, ...);
@@ -186,6 +192,7 @@ priv_init(int argc, char **argv)
 	}
 
 	sigprocmask(SIG_SETMASK, &oset, NULL);
+	signal(SIGINT, SIG_IGN);
 
 	/* Child - drop suid privileges */
 	gid = getgid();
@@ -303,6 +310,10 @@ priv_init(int argc, char **argv)
 			test_state(cmd, STATE_RUN);
 			impl_getlines(socks[0]);
 			break;
+		case PRIV_PCAP_STATS:
+			test_state(cmd, STATE_RUN);
+			impl_pcap_stats(socks[0], &bpfd);
+			break;
 		default:
 			logmsg(LOG_ERR, "[priv]: unknown command %d", cmd);
 			_exit(1);
@@ -390,8 +401,6 @@ impl_setfilter(int fd, char *cmdbuf, int *bpfd)
 
 	if (setfilter(*bpfd, fd, cmdbuf))
 		logmsg(LOG_DEBUG, "[priv]: setfilter() failed");
-	close(*bpfd);	/* done with bpf descriptor */
-	*bpfd = -1;
 }
 
 static void
@@ -401,8 +410,6 @@ impl_init_done(int fd, int *bpfd)
 
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_INIT_DONE received");
 
-	close(*bpfd);	/* done with bpf descriptor */
-	*bpfd = -1;
 	ret = 0;
 	must_write(fd, &ret, sizeof(ret));
 }
@@ -581,6 +588,19 @@ impl_getlines(int fd)
 	fclose(fp);
 }
 
+static void
+impl_pcap_stats(int fd, int *bpfd)
+{
+	struct pcap_stat stats;
+
+	logmsg(LOG_DEBUG, "[priv]: msg PRIV_PCAP_STATS received");
+
+	if (ioctl(*bpfd, BIOCGSTATS, &stats) == -1)
+		write_zero(fd);
+	else
+		must_write(fd, &stats, sizeof(stats));
+}
+
 void
 priv_init_done(void)
 {
@@ -738,6 +758,17 @@ priv_getlines(size_t sz)
 
 	write_command(priv_fd, PRIV_GETLINES);
 	must_write(priv_fd, &sz, sizeof(size_t));
+}
+
+int
+priv_pcap_stats(struct pcap_stat *ps)
+{
+	if (priv_fd < 0)
+		errx(1, "%s: called from privileged portion", __func__);
+
+	write_command(priv_fd, PRIV_PCAP_STATS);
+	must_read(priv_fd, ps, sizeof(*ps));
+	return (0);
 }
 
 /* retrieve a line from a file, should be called repeatedly after calling

@@ -37,7 +37,8 @@ enum cmd_types {
 	PRIV_GETPROTOENTRIES,	/* get the ip protocol entries table */
 	PRIV_LOCALTIME,		/* return localtime */
 	PRIV_GETLINES,		/* get lines from a file */
-	PRIV_INIT_DONE          /* signal that the initialization is done */
+	PRIV_INIT_DONE,		/* signal that the initialization is done */
+	PRIV_PCAP_STATS		/* get pcap_stats() results */
 };
 
 struct ether_addr;
@@ -80,6 +81,9 @@ void	priv_getlines(size_t);
 /* Retrieve a single line from a file, should be called repeatedly after
    calling priv_getlines() until it returns zero */
 size_t	priv_getline(char *, size_t);
+
+/* Return the pcap statistics upon completion */
+int	priv_pcap_stats(struct pcap_stat *);
 
 pcap_dumper_t *priv_pcap_dump_open(pcap_t *, char *);
 
