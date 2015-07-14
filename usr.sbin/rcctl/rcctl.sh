@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.68 2015/03/28 08:08:52 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.69 2015/07/14 23:16:56 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,8 +17,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-_special_services="accounting check_quotas ipsec multicast_host
-                   multicast_router pf spamd_black"
+_special_services="accounting check_quotas ipsec multicast_host multicast_router
+                   pf spamd_black"
 readonly _special_services
 
 # get local functions from rc.subr(8)
@@ -28,8 +28,8 @@ _rc_parse_conf
 
 usage()
 {
-	_rc_err "usage: ${0##*/} [-df] enable|disable|get|set|getdef|getall|order|action
-             [service | daemon [variable [arguments]] | daemons]"
+	_rc_err "usage: ${0##*/} [-df] action|get|getdef|ls|order|set
+		[service | daemon [variable [arguments]] | daemons | lsarg]"
 }
 
 needs_root()
@@ -144,7 +144,8 @@ svc_is_base()
 	local _svc=$1
 	[ -n "${_svc}" ] || return
 
-	grep -E 'start_daemon[[:space:]]+[[:alnum:]]' /etc/rc | cut -d ' ' -f2- | grep -qw -- ${_svc}
+	grep -E 'start_daemon[[:space:]]+[[:alnum:]]' /etc/rc | \
+		cut -d ' ' -f2- | grep -qw -- ${_svc}
 }
 
 svc_is_special()
@@ -153,6 +154,51 @@ svc_is_special()
 	[ -n "${_svc}" ] || return
 
 	echo ${_special_services} | grep -qw -- ${_svc}
+}
+
+svc_ls()
+{
+	local _lsarg=$1
+	[ -n "${_lsarg}" ] || return
+
+	# we do not want to return the "status" nor the rc.d(8) script retcode
+	local _ret=0 _on _svc _started
+
+	case ${_lsarg} in
+		all)
+			ls_rcscripts
+			for _svc in ${_special_services}; do echo ${_svc}; done
+			;;
+		faulty)
+			for _svc in $(svc_ls on); do
+				svc_is_base ${_svc} && \
+					! /etc/rc.d/${_svc} check >/dev/null && \
+					echo ${_svc} && _ret=1
+			done
+			;;
+		off|on)
+			for _svc in $(svc_ls all); do
+				svc_get ${_svc} status && _on=1
+					[ "${_lsarg}" = "on" -a -n "${_on}" ] || \
+						[ "${_lsarg}" = "off" -a -z "${_on}" ] && \
+					echo ${_svc}
+				unset _on
+			done
+			;;
+		started|stopped)
+			for _svc in $(ls_rcscripts); do
+				/etc/rc.d/${_svc} check >/dev/null && _started=1
+				[ "${_lsarg}" = "started" -a -n "${_started}" ] || \
+					[ "${_lsarg}" = "stopped" -a -z "${_started}" ] && \
+					echo ${_svc}
+				unset _started
+			done
+			;;
+		*)
+			_ret=1
+	esac
+
+	return ${_ret}
 }
 
 svc_get()
@@ -173,18 +219,25 @@ svc_get()
 			fi
 		fi
 
-		[ -z "${daemon_flags}" ] && \
-			daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
-		[ -z "${daemon_flags}" ] && \
-			daemon_flags="$(svc_getdef ${_svc} flags)"
-		[ -z "${daemon_timeout}" ] && \
-			daemon_timeout="$(eval echo \"\${${_svc}_timeout}\")"
-		[ -z "${daemon_timeout}" ] && \
-			daemon_timeout="$(svc_getdef ${_svc} timeout)"
-		[ -z "${daemon_user}" ] && \
-			daemon_user="$(eval echo \"\${${_svc}_user}\")"
-		[ -z "${daemon_user}" ] && \
-			daemon_user="$(svc_getdef ${_svc} user)"
+		# these are expensive, make sure they are explicitely requested
+		if [[ -z ${_var} || ${_var} == @(flags|status) ]]; then
+			[ -z "${daemon_flags}" ] && \
+				daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
+			[ -z "${daemon_flags}" ] && \
+				daemon_flags="$(svc_getdef ${_svc} flags)"
+		fi
+		if [ -z "${_var}" -o "${_var}" = "timeout" ]; then
+			[ -z "${daemon_timeout}" ] && \
+				daemon_timeout="$(eval echo \"\${${_svc}_timeout}\")"
+			[ -z "${daemon_timeout}" ] && \
+				daemon_timeout="$(svc_getdef ${_svc} timeout)"
+		fi
+		if [ -z "${_var}" -o "${_var}" = "user" ]; then
+			[ -z "${daemon_user}" ] && \
+				daemon_user="$(eval echo \"\${${_svc}_user}\")"
+			[ -z "${daemon_user}" ] && \
+				daemon_user="$(svc_getdef ${_svc} user)"
+		fi
 	fi
 
 	[ "${daemon_flags}" = "NO" ] && _status=1
@@ -359,7 +412,9 @@ shift $((OPTIND-1))
 [ $# -gt 0 ] || usage
 
 action=$1
-if [ "${action}" = "order" ]; then
+if [ "${action}" = "ls" ]; then
+	lsarg=$2
+elif [ "${action}" = "order" ]; then
 	shift 1
 	svcs="$*"
 else
@@ -369,22 +424,25 @@ else
 	args="$*"
 fi
 
+[ -n "${lsarg}" ] && [[ ${lsarg} != @(all|faulty|off|on|started|stopped) ]] && \
+	usage
+
 if [ -n "${svc}" ]; then
-	[[ ${action} = getall ]] && usage
+	[[ ${action} == @(disable|enable|get|getdef|set|start|stop|restart|reload|check) ]] || \
+		usage
 	svc_is_avail ${svc} || \
 		rcctl_err "service ${svc} does not exist" 2
-elif [[ ${action} != @(getall|order) ]] ; then
+elif [[ ${action} != @(getall|ls|order) ]] ; then
 	usage
 fi
 
 if [ -n "${var}" ]; then
 	[[ ${var} != @(flags|status|timeout|user) ]] && usage
-	[[ ${action} != @(get|getdef|set) ]] && usage
 	[[ ${action} == set && ${var} = flags && ${args} = NO ]] && \
 		rcctl_err "\"flags NO\" contradicts \"${action}\""
 	if svc_is_special ${svc}; then
 		if [[ ${action} == set && ${var} != status ]] || \
-			[[ ${action} == @(get|getdef) && ${var} == @(timeout|user) ]] ; then
+			[[ ${action} == @(get|getdef) && ${var} == @(timeout|user) ]]; then
 			rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
 		fi
 	fi
@@ -393,25 +451,27 @@ elif [ ${action} = "set" ]; then
 fi
 
 case ${action} in
-	disable)
+	disable) # undocumented, deprecated
 		needs_root ${action}
 		svc_set ${svc} status off
 		;;
-	enable)
+	enable) # undocumented, deprecated
 		needs_root ${action}
 		svc_set ${svc} status on
 		;;
 	get)
 		svc_get ${svc} "${var}"
 		;;
-	getall)
-		for i in $(ls_rcscripts) ${_special_services}; do
-			svc_get ${i}
-		done
-		return 0 # we do not want the "status"
+	getall) # undocumented, deprecated
+		for i in $(svc_ls all); do svc_get ${i}; done
 		;;
 	getdef)
 		( svc_getdef ${svc} "${var}" )
+		;;
+	ls)
+		# some rc.d(8) scripts need root for rc_check()
+		[[ ${lsarg} == @(started|stopped|faulty) ]] && needs_root
+		svc_ls ${lsarg}
 		;;
 	order)
 		if [ -n "${svcs}" ]; then

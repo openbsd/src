@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.17 2015/04/22 16:25:31 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.18 2015/07/14 23:16:56 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2015 $
+.Dd $Mdocdate: July 14 2015 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm rcctl
 .Op Fl df
 .Sm off
-.Cm enable | disable | get | set | getdef | getall | order | Ar action
+.Ar action | Cm get | getdef | ls | order | set
 .Sm on
-.Op Ar service | daemon Oo Ar variable Oo Ar arguments Oc Oc | Ar daemons
+.Op Ar service | daemon Oo Ar variable Oo Ar arguments Oc Oc | Ar daemons | Ar lsarg
 .Sh DESCRIPTION
 The
 .Nm
@@ -57,12 +57,13 @@ or
 .Cm user
 .Pc :
 .Bl -tag -width Ds
-.It Cm enable Ar service | daemon
-Alias for
-.Dq Cm set Ar service | daemon Cm status on .
-.It Cm disable Ar service | daemon
-Alias for
-.Dq Cm set Ar service | daemon Cm status off .
+.It Oo Fl df Oc Ar action daemon
+Run the
+.Xr rc.d 8
+.Ar daemon
+script with the
+.Ar action
+argument, passing through the specified options, if any.
 .It Cm get Ar service | daemon Op Ar variable
 Display the value of
 .Ar service
@@ -77,6 +78,46 @@ or
 variables and values in a format
 compatible with
 .Xr rc.conf 8 .
+.It Cm getdef Ar service | daemon Op Ar variable
+Like
+.Cm get
+but returns the default values.
+.It Cm ls Ar lsarg
+Display a list of services and daemons matching
+.Ar lsarg .
+.Ar lsargs
+can be one of:
+.Bl -tag -width started -offset indent -compact
+.Pp
+.It Ar all
+all services and daemons
+.It Ar faulty
+enabled but stopped daemons
+.It Ar off
+disabled services and daemons
+.It Ar on
+enabled services and daemons
+.It Ar started
+running daemons
+.It Ar stopped
+stopped daemons
+.El
+.It Cm order Op Ar daemons
+Move the specified package
+.Ar daemons
+to the beginning of
+.Va pkg_scripts .
+They need to be already enabled.
+If
+.Ar daemons
+is empty, display the current order.
+.Pp
+The
+.Cm order
+command is only needed after enabling a new daemon
+that needs to run before one or more already enabled daemons.
+Specify the new daemon preceded by all that need to run before it,
+but not the ones depending on it.
 .It Cm set Ar service | daemon variable Op Ar arguments
 For a daemon, set the variable
 .Ar daemon Ns _ Ns Ar variable
@@ -108,37 +149,6 @@ When a disabled package daemon is enabled, it is appended to the end of
 .Va pkg_scripts .
 When a package daemon is disabled, it is removed from
 .Va pkg_scripts .
-.It Cm getdef Ar service | daemon Op Ar variable
-Like
-.Cm get
-but returns the default values.
-.It Cm getall
-Display all services and daemon variables with their values in a format
-compatible with
-.Xr rc.conf 8 .
-.It Cm order Op Ar daemons
-Move the specified package
-.Ar daemons
-to the beginning of
-.Va pkg_scripts .
-They need to be already enabled.
-If
-.Ar daemons
-is empty, display the current order.
-.Pp
-The
-.Cm order
-command is only needed after enabling a new daemon
-that needs to run before one or more already enabled daemons.
-Specify the new daemon preceded by all that need to run before it,
-but not the ones depending on it.
-.It Oo Fl df Oc Ar action daemon
-Run the
-.Xr rc.d 8
-.Ar daemon
-script with the
-.Ar action
-argument, passing through the specified options, if any.
 .El
 .Sh EXIT STATUS
 .Nm Ar action
@@ -151,6 +161,8 @@ exits with 0 if the daemon or service is enabled and 1 if it is not.
 .Nm Cm getdef Ar daemon | service Op Cm status
 exits with 0 if the daemon or service is enabled by default
 and 1 if it is not.
+.Nm Cm ls Ar faulty
+exits with 1 if an enabled daemon is not running.
 Otherwise, the
 .Nm
 utility exits with 0 on success, and >0 if an error occurs
