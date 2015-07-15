@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.85 2015/07/15 16:02:38 semarie Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.86 2015/07/15 17:52:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1426,7 +1426,7 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	struct tm		*tm;
 	struct server_config	*srv_conf;
 	struct http_descriptor	*desc;
-	int			 ret = 0;
+	int			 ret = -1;
 	char			*user = NULL;
 	char			*path = NULL;
 	char			*query = NULL;
@@ -1462,28 +1462,20 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_COMMON:
 		if (clt->clt_remote_user &&
-		    (user = url_encode(clt->clt_remote_user)) == NULL) {
-			ret = -1;
+		    (user = url_encode(clt->clt_remote_user)) == NULL)
 			goto done;
-		}
 
 		if (desc->http_path &&
-		    (path = url_encode(desc->http_path)) == NULL) {
-			ret = -1;
+		    (path = url_encode(desc->http_path)) == NULL)
 			goto done;
-		}
 
 		if (desc->http_query &&
-		    (query = url_encode(desc->http_query)) == NULL) {
-			ret = -1;
+		    (query = url_encode(desc->http_query)) == NULL)
 			goto done;
-		}
 
 		if (desc->http_version &&
-		    (version = url_encode(desc->http_version)) == NULL) {
-			ret = -1;
+		    (version = url_encode(desc->http_version)) == NULL)
 			goto done;
-		}
 
 		ret = evbuffer_add_printf(clt->clt_log,
 		    "%s %s - %s [%s] \"%s %s%s%s%s%s\" %03d %zu\n",
@@ -1511,40 +1503,28 @@ server_log_http(struct client *clt, u_int code, size_t len)
 			agent = NULL;
 
 		if (clt->clt_remote_user &&
-		    (user = url_encode(clt->clt_remote_user)) == NULL) {
-			ret = -1;
+		    (user = url_encode(clt->clt_remote_user)) == NULL)
 			goto done;
-		}
 
 		if (desc->http_path &&
-		    (path = url_encode(desc->http_path)) == NULL) {
-			ret = -1;
+		    (path = url_encode(desc->http_path)) == NULL)
 			goto done;
-		}
 
 		if (desc->http_query &&
-		    (query = url_encode(desc->http_query)) == NULL) {
-			ret = -1;
+		    (query = url_encode(desc->http_query)) == NULL)
 			goto done;
-		}
 
 		if (desc->http_version &&
-		    (version = url_encode(desc->http_version)) == NULL) {
-			ret = -1;
+		    (version = url_encode(desc->http_version)) == NULL)
 			goto done;
-		}
 
-		if (referrer && referrer->kv_value &&
-		    (referrer_v = url_encode(referrer->kv_value)) == NULL) {
-			ret = -1;
+		if (referrer &&
+		    (referrer_v = url_encode(referrer->kv_value)) == NULL)
 			goto done;
-		}
 
-		if (agent && agent->kv_value &&
-		    (agent_v = url_encode(agent->kv_value)) == NULL) {
-			ret = -1;
+		if (agent &&
+		    (agent_v = url_encode(agent->kv_value)) == NULL)
 			goto done;
-		}
 
 		ret = evbuffer_add_printf(clt->clt_log,
 		    "%s %s - %s [%s] \"%s %s%s%s%s%s\""
@@ -1565,10 +1545,8 @@ server_log_http(struct client *clt, u_int code, size_t len)
 
 	case LOG_FORMAT_CONNECTION:
 		if (desc->http_path &&
-		    (path = url_encode(desc->http_path)) == NULL) {
-			ret = -1;
+		    (path = url_encode(desc->http_path)) == NULL)
 			goto done;
-		}
 
 		ret = evbuffer_add_printf(clt->clt_log, " [%s]",
 		    	desc->http_path == NULL ? "" : path);
