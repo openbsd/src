@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_data.c,v 1.8 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: pcy_data.c,v 1.9 2015/07/15 16:53:42 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -85,45 +85,45 @@ policy_data_free(X509_POLICY_DATA *data)
 X509_POLICY_DATA *
 policy_data_new(POLICYINFO *policy, const ASN1_OBJECT *cid, int crit)
 {
-	X509_POLICY_DATA *ret;
-	ASN1_OBJECT *id;
+	X509_POLICY_DATA *ret = NULL;
+	ASN1_OBJECT *id = NULL;
 
-	if (!policy && !cid)
+	if (policy == NULL && cid == NULL)
 		return NULL;
-	if (cid) {
+	if (cid != NULL) {
 		id = OBJ_dup(cid);
-		if (!id)
+		if (id == NULL)
 			return NULL;
-	} else
-		id = NULL;
-	ret = malloc(sizeof(X509_POLICY_DATA));
-	if (!ret)
-		return NULL;
-	ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
-	if (!ret->expected_policy_set) {
-		free(ret);
-		if (id)
-			ASN1_OBJECT_free(id);
-		return NULL;
 	}
+	ret = malloc(sizeof(X509_POLICY_DATA));
+	if (ret == NULL)
+		goto err;
+	ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
+	if (ret->expected_policy_set == NULL)
+		goto err;
 
 	if (crit)
 		ret->flags = POLICY_DATA_FLAG_CRITICAL;
 	else
 		ret->flags = 0;
 
-	if (id)
+	if (id != NULL)
 		ret->valid_policy = id;
 	else {
 		ret->valid_policy = policy->policyid;
 		policy->policyid = NULL;
 	}
 
-	if (policy) {
+	if (policy != NULL) {
 		ret->qualifier_set = policy->qualifiers;
 		policy->qualifiers = NULL;
 	} else
 		ret->qualifier_set = NULL;
 
 	return ret;
+
+err:
+	free(ret);
+	ASN1_OBJECT_free(id);
+	return NULL;
 }
