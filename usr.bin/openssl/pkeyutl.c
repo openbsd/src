@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyutl.c,v 1.4 2014/10/08 04:00:55 deraadt Exp $ */
+/* $OpenBSD: pkeyutl.c,v 1.5 2015/07/15 06:16:42 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -278,10 +278,11 @@ pkeyutl_main(int argc, char **argv)
 	if (pkey_op == EVP_PKEY_OP_VERIFY) {
 		rv = EVP_PKEY_verify(ctx, sig, (size_t) siglen,
 		    buf_in, (size_t) buf_inlen);
-		if (rv == 0)
-			BIO_puts(out, "Signature Verification Failure\n");
-		else if (rv == 1)
+		if (rv == 1) {
 			BIO_puts(out, "Signature Verified Successfully\n");
+			ret = 0;
+		} else
+			BIO_puts(out, "Signature Verification Failure\n");
 		if (rv >= 0)
 			goto end;
 	} else {
