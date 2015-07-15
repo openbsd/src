@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.6 2015/05/29 05:48:07 jsg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.7 2015/07/15 21:09:40 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -200,6 +200,8 @@ ampintc_match(struct device *parent, void *cfdata, void *aux)
 	return (1);
 }
 
+paddr_t gic_dist_base, gic_cpu_base, gic_dist_size, gic_cpu_size;
+
 void
 ampintc_attach(struct device *parent, struct device *self, void *args)
 {
@@ -228,6 +230,16 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 		icd = ia->ca_periphbase + ICD_A7_A15_ADDR;
 		icdsize = ICD_A7_A15_SIZE;
 	}
+
+	/* exynos gic isn't at the expected offsets from periphbase */
+	if (gic_cpu_base)
+		icp = gic_cpu_base;
+	if (gic_cpu_size)
+		icpsize = gic_cpu_size;
+	if (gic_dist_base)
+		icd = gic_dist_base;
+	if (gic_dist_size)
+		icdsize = gic_dist_size;
 
 	if (bus_space_map(iot, icp, icpsize, 0, &p_ioh))
 		panic("ampintc_attach: ICP bus_space_map failed!");

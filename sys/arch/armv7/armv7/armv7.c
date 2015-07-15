@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.10 2015/05/19 03:30:54 jsg Exp $ */
+/* $OpenBSD: armv7.c,v 1.11 2015/07/15 21:09:40 jsg Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -101,7 +101,6 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 	struct armv7_softc *sc = (struct armv7_softc *)self;
 	struct board_dev *bd;
 
-	platform_board_init();
 	sc->sc_board_devs = platform_board_devs();
 
 	if (hw_prod)

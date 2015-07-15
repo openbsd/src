@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.h,v 1.4 2015/05/19 03:30:54 jsg Exp $	*/
+/*	$OpenBSD: armv7_machdep.h,v 1.5 2015/07/15 21:09:40 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -19,12 +19,10 @@
 #define __PLATFORMVAR_H__
 
 void platform_init(void);
-void platform_board_init();
 void platform_powerdown(void);
 void platform_watchdog_reset(void);
 void platform_init_cons(void);
 void platform_disable_l2_if_needed(void);
-void platform_board_init(void);
 const char *platform_boot_name(void);
 const char *platform_board_name(void);
 struct board_dev *platform_board_devs();

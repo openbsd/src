@@ -1,4 +1,4 @@
-/* $OpenBSD: exynos5.c,v 1.2 2015/06/14 07:34:57 jsg Exp $ */
+/* $OpenBSD: exynos5.c,v 1.3 2015/07/15 21:09:40 jsg Exp $ */
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
  * Copyright (c) 2012 Patrick Wildt <patrick@blueri.se>
@@ -41,6 +41,11 @@
 
 #define SYSREG_ADDR	0x10050000
 #define SYSREG_SIZE	0x1000
+
+#define GIC_DIST_ADDR	0x10481000
+#define GIC_DIST_SIZE	0x1000
+#define GIC_CPU_ADDR	0x10482000
+#define GIC_CPU_SIZE	0x1000
 
 #define UARTx_SIZE	0x100
 #define UART1_ADDR	0x12c00000
@@ -317,8 +322,15 @@ struct armv7_dev exynos5_devs[] = {
 	}
 };
 
+extern paddr_t gic_dist_base, gic_cpu_base, gic_dist_size, gic_cpu_size;
+
 void
 exynos5_init(void)
 {
 	armv7_set_devs(exynos5_devs);
+
+	gic_dist_base = GIC_DIST_ADDR;
+	gic_dist_size = GIC_DIST_SIZE;
+	gic_cpu_base = GIC_CPU_ADDR;
+	gic_cpu_size = GIC_CPU_SIZE;
 }
