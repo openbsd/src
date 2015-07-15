@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.66 2015/07/15 16:00:39 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.67 2015/07/15 17:11:14 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -935,7 +935,7 @@ server_accept(int fd, short event, void *arg)
 		close(s);
 		free(clt);
 		/*
-		 * the client struct was not completly set up, but still
+		 * the client struct was not completely set up, but still
 		 * counted as an inflight client. account for this.
 		 */
 		server_inflight_dec(NULL, __func__);
