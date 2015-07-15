@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.205 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.206 2015/07/15 22:29:32 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -318,6 +318,9 @@ struct mbuf *
 m_free(struct mbuf *m)
 {
 	struct mbuf *n;
+
+	if (m == NULL)
+		return (NULL);
 
 	mtx_enter(&mbstatmtx);
 	mbstat.m_mtypes[m->m_type]--;
