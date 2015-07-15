@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.60 2015/06/16 11:09:40 mpi Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.61 2015/07/15 17:33:48 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -91,17 +91,17 @@ struct ipipstat ipipstat;
  * Really only a wrapper for ipip_input(), for use with IPv6.
  */
 int
-ip4_input6(struct mbuf **m, int *offp, int proto)
+ip4_input6(struct mbuf **mp, int *offp, int proto)
 {
 	/* If we do not accept IP-in-IP explicitly, drop.  */
-	if (!ipip_allow && ((*m)->m_flags & (M_AUTH|M_CONF)) == 0) {
+	if (!ipip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
 		DPRINTF(("ip4_input6(): dropped due to policy\n"));
 		ipipstat.ipips_pdrops++;
-		m_freem(*m);
+		m_freem(*mp);
 		return IPPROTO_DONE;
 	}
 
-	ipip_input(*m, *offp, NULL, proto);
+	ipip_input(*mp, *offp, NULL, proto);
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */

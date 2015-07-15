@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.74 2015/07/02 09:40:03 mpi Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.75 2015/07/15 17:33:48 deraadt Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -129,30 +129,30 @@ etherip_input(struct mbuf *m, ...)
 
 #ifdef INET6
 int
-etherip_input6(struct mbuf **m, int *offp, int proto)
+etherip_input6(struct mbuf **mp, int *offp, int proto)
 {
 	switch (proto) {
 #if NBRIDGE > 0
 	case IPPROTO_ETHERIP:
 		/* If we do not accept EtherIP explicitly, drop. */
-		if (!etherip_allow && ((*m)->m_flags & (M_AUTH|M_CONF)) == 0) {
+		if (!etherip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
 			DPRINTF(("etherip_input6(): dropped due to policy\n"));
 			etheripstat.etherip_pdrops++;
-			m_freem(*m);
+			m_freem(*mp);
 			return IPPROTO_DONE;
 		}
-		etherip_decap(*m, *offp);
+		etherip_decap(*mp, *offp);
 		return IPPROTO_DONE;
 #endif
 #ifdef MPLS
 	case IPPROTO_MPLS:
-		mplsip_decap(*m, *offp);
+		mplsip_decap(*mp, *offp);
 		return IPPROTO_DONE;
 #endif
 	default:
 		DPRINTF(("etherip_input6(): dropped, unhandled protocol\n"));
 		etheripstat.etherip_pdrops++;
-		m_freem(*m);
+		m_freem(*mp);
 		return IPPROTO_DONE;
 	}
 }
