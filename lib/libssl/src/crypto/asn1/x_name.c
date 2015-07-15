@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.29 2015/02/14 15:29:29 miod Exp $ */
+/* $OpenBSD: x_name.c,v 1.30 2015/07/15 17:41:56 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -377,7 +377,8 @@ x509_name_encode(X509_NAME *a)
 				goto memerr;
 			set = entry->set;
 		}
-		if (!sk_X509_NAME_ENTRY_push(entries, entry))
+		if (entries == NULL /* if entry->set is bogusly -1 */ ||
+		    !sk_X509_NAME_ENTRY_push(entries, entry))
 			goto memerr;
 	}
 	len = ASN1_item_ex_i2d(&intname.a, NULL,
@@ -449,8 +450,11 @@ x509_name_canon(X509_NAME *a)
 			entries = sk_X509_NAME_ENTRY_new_null();
 			if (!entries)
 				goto err;
-			if (!sk_STACK_OF_X509_NAME_ENTRY_push(intname, entries))
+			if (sk_STACK_OF_X509_NAME_ENTRY_push(intname,
+			    entries) == 0) {
+				sk_X509_NAME_ENTRY_free(entries);
 				goto err;
+			}
 			set = entry->set;
 		}
 		tmpentry = X509_NAME_ENTRY_new();
@@ -461,7 +465,8 @@ x509_name_canon(X509_NAME *a)
 			goto err;
 		if (!asn1_string_canon(tmpentry->value, entry->value))
 			goto err;
-		if (!sk_X509_NAME_ENTRY_push(entries, tmpentry))
+		if (entries == NULL /* if entry->set is bogusly -1 */ ||
+		    !sk_X509_NAME_ENTRY_push(entries, tmpentry))
 			goto err;
 		tmpentry = NULL;
 	}
