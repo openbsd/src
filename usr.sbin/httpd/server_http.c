@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.86 2015/07/15 17:52:23 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.87 2015/07/15 22:23:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,7 @@
 #include <resolv.h>
 #include <event.h>
 #include <ctype.h>
+#include <vis.h>
 
 #include "httpd.h"
 #include "http.h"
@@ -1421,6 +1422,7 @@ server_log_http(struct client *clt, u_int code, size_t len)
 {
 	static char		 tstamp[64];
 	static char		 ip[INET6_ADDRSTRLEN];
+	static const int	 vis_http = VIS_NL|VIS_TAB|VIS_CSTYLE;
 	time_t			 t;
 	struct kv		 key, *agent, *referrer;
 	struct tm		*tm;
@@ -1461,20 +1463,20 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	 */
 	switch (srv_conf->logformat) {
 	case LOG_FORMAT_COMMON:
+		/* Use vis to encode input values from the header */
 		if (clt->clt_remote_user &&
-		    (user = url_encode(clt->clt_remote_user)) == NULL)
+		    stravis(&user, clt->clt_remote_user, vis_http) == -1)
+			goto done;
+		if (desc->http_version &&
+		    stravis(&version, desc->http_version, vis_http) == -1)
 			goto done;
 
+		/* The following should be URL-encoded */
 		if (desc->http_path &&
 		    (path = url_encode(desc->http_path)) == NULL)
 			goto done;
-
 		if (desc->http_query &&
 		    (query = url_encode(desc->http_query)) == NULL)
-			goto done;
-
-		if (desc->http_version &&
-		    (version = url_encode(desc->http_version)) == NULL)
 			goto done;
 
 		ret = evbuffer_add_printf(clt->clt_log,
@@ -1502,28 +1504,26 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		    agent->kv_value == NULL)
 			agent = NULL;
 
+		/* Use vis to encode input values from the header */
 		if (clt->clt_remote_user &&
-		    (user = url_encode(clt->clt_remote_user)) == NULL)
+		    stravis(&user, clt->clt_remote_user, vis_http) == -1)
+			goto done;
+		if (desc->http_version &&
+		    stravis(&version, desc->http_version, vis_http) == -1)
+			goto done;
+		if (agent &&
+		    stravis(&agent_v, agent->kv_value, vis_http) == -1)
 			goto done;
 
+		/* The following should be URL-encoded */
 		if (desc->http_path &&
 		    (path = url_encode(desc->http_path)) == NULL)
 			goto done;
-
 		if (desc->http_query &&
 		    (query = url_encode(desc->http_query)) == NULL)
 			goto done;
-
-		if (desc->http_version &&
-		    (version = url_encode(desc->http_version)) == NULL)
-			goto done;
-
 		if (referrer &&
 		    (referrer_v = url_encode(referrer->kv_value)) == NULL)
-			goto done;
-
-		if (agent &&
-		    (agent_v = url_encode(agent->kv_value)) == NULL)
 			goto done;
 
 		ret = evbuffer_add_printf(clt->clt_log,
@@ -1544,6 +1544,7 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		break;
 
 	case LOG_FORMAT_CONNECTION:
+		/* URL-encode the path */
 		if (desc->http_path &&
 		    (path = url_encode(desc->http_path)) == NULL)
 			goto done;
