@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.41 2014/11/02 05:25:09 tedu Exp $
+.\"	$OpenBSD: passwd.1,v 1.42 2015/07/15 16:09:25 millert Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: November 2 2014 $
+.Dd $Mdocdate: July 15 2015 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -42,6 +42,10 @@
 .Sh DESCRIPTION
 .Nm
 changes the user's local or YP password.
+If no
+.Ar user
+is specified, the user's login name is used (see
+.Xr logname 1 ) .
 First, the user is prompted for their current password.
 If the current password is correctly typed, a new password is requested.
 The new password must be entered twice to avoid typing errors.
@@ -129,7 +133,7 @@ file to clear the error.
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr encrypt 1 ,
-.Xr login 1 ,
+.Xr logname 1 ,
 .Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr pwd_mkdb 8 ,
