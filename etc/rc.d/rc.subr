@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.97 2015/07/15 03:21:38 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.98 2015/07/15 12:26:25 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -276,7 +276,10 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
 [ -z "${daemon_user}" ] && daemon_user=root
 [ -z "${daemon_timeout}" ] && daemon_timeout=30
 
-[ -n "${_RC_FORCE}" ] && [ X"${_rcflags}" = X"NO" ] && unset _rcflags
+# use flags from the rc.d script if daemon is not enabled
+[ -n "${_RC_FORCE}" -o "$1" != "start" ] && [ X"${_rcflags}" = X"NO" ] && \
+	unset _rcflags
+
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcuser}" ] && daemon_user=${_rcuser}
 [ -n "${_rctimeout}" ] && daemon_timeout=${_rctimeout}
