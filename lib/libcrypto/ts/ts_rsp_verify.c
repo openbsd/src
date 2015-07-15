@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.12 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.13 2015/07/15 16:45:24 miod Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -697,6 +697,9 @@ TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
 	STACK_OF(GENERAL_NAME) *gen_names = NULL;
 	int idx = -1;
 	int found = 0;
+
+	if (signer == NULL)
+		return 0;
 
 	/* Check the subject name first. */
 	if (tsa_name->type == GEN_DIRNAME &&
