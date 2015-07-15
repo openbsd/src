@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.653 2015/07/05 08:19:18 jung Exp $
+$OpenBSD: usbdevs,v 1.654 2015/07/15 13:25:49 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3143,6 +3143,7 @@ product NETGEAR2 MA101B		0x4102	MA101 Rev B
 /* Netgear(3) products */
 product NETGEAR3 WG111T		0x4250	WG111T
 product NETGEAR3 WG111T_NF	0x4251	WG111T
+product NETGEAR3 WG111T_1	0x4252	WG111T
 product NETGEAR3 WPN111		0x5f00	WPN111
 product NETGEAR3 WPN111_NF	0x5f01	WPN111
 
