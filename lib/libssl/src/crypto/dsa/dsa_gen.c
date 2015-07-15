@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.20 2015/02/15 22:29:02 doug Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.21 2015/07/15 16:32:29 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,6 +138,8 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 		seed_len = qsize;
 	if (seed_in != NULL)
 		memcpy(seed, seed_in, seed_len);
+	else if (seed_len == 0)
+		goto err;
 
 	if ((mont=BN_MONT_CTX_new()) == NULL)
 		goto err;
