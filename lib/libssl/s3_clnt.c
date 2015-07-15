@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.118 2015/07/15 21:52:02 beck Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.119 2015/07/15 22:22:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1736,9 +1736,15 @@ ssl3_get_new_session_ticket(SSL *s)
 		goto f_err;
 	}
 
-	CBS_init(&cbs, s->init_msg, n);
+	if (n < 0) {
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,
+		    SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+	}
 
-	if (n < 0 || !CBS_get_u32(&cbs, &lifetime_hint) ||
+	CBS_init(&cbs, s->init_msg, n);
+	if (!CBS_get_u32(&cbs, &lifetime_hint) ||
 #if UINT32_MAX > LONG_MAX
 	    lifetime_hint > LONG_MAX ||
 #endif
