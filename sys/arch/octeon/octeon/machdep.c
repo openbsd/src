@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2015/06/25 10:56:00 jmatthew Exp $ */
+/*	$OpenBSD: machdep.c,v 1.65 2015/07/15 23:07:23 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -208,14 +208,6 @@ octeon_memory_init(struct boot_info *boot_info)
 			physmem += btoc(phys_avail[5] - phys_avail[4]);
 			mem_layout[1].mem_first_page = atop(phys_avail[4]);
 			mem_layout[1].mem_last_page = atop(phys_avail[5] - 1);
-			realmem_bytes = 0;
-		} else {
-			/* Now map the rest of the memory */
-			phys_avail[2] = 0x410000000ULL;
-			phys_avail[3] = (0x410000000ULL + realmem_bytes);
-			physmem += btoc(phys_avail[3] - phys_avail[2]);
-			mem_layout[1].mem_first_page = atop(phys_avail[2]);
-			mem_layout[1].mem_last_page = atop(phys_avail[3] - 1);
 			realmem_bytes = 0;
 		}
  	}
