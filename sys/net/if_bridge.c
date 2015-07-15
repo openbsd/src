@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.252 2015/07/02 10:02:40 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.253 2015/07/15 22:16:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2433,8 +2433,7 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 	return (m);
 
 dropit:
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	return (NULL);
 }
 
@@ -2540,8 +2539,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 
 	return;
  dropit:
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 }
 
 int

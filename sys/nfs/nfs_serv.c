@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.104 2015/06/11 08:39:51 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.105 2015/07/15 22:16:42 deraadt Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -477,7 +477,7 @@ nfsrv_readlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 out:
 	getret = VOP_GETATTR(vp, &attr, cred, procp);
 	vput(vp);
-	if (error && mp)
+	if (error)
 		m_freem(mp);
 	nfsm_reply(NFSX_POSTOPATTR(info.nmi_v3) + NFSX_UNSIGNED);
 	if (info.nmi_v3) {

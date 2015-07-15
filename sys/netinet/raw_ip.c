@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.81 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.82 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -169,8 +169,7 @@ rip_input(struct mbuf *m, ...)
 				    sintosa(&ripsrc), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
-					if (opts)
-						m_freem(opts);
+					m_freem(opts);
 				} else
 					sorwakeup(last->inp_socket);
 				opts = NULL;
@@ -185,8 +184,7 @@ rip_input(struct mbuf *m, ...)
 		if (sbappendaddr(&last->inp_socket->so_rcv, sintosa(&ripsrc), m,
 		    opts) == 0) {
 			m_freem(m);
-			if (opts)
-				m_freem(opts);
+			m_freem(opts);
 		} else
 			sorwakeup(last->inp_socket);
 	} else {
@@ -303,7 +301,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	int dir;
 
 	if (level != IPPROTO_IP) {
-		if (op == PRCO_SETOPT && *m)
+		if (op == PRCO_SETOPT)
 			(void) m_free(*m);
 		return (EINVAL);
 	}
@@ -357,7 +355,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 		}
 
-		if (op == PRCO_SETOPT && *m)
+		if (op == PRCO_SETOPT)
 			(void)m_free(*m);
 		return (error);
 
@@ -385,7 +383,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 		}
 		return (error);
 #else
-		if (op == PRCO_SETOPT && *m)
+		if (op == PRCO_SETOPT)
 			m_free(*m);
 		return (EOPNOTSUPP);
 #endif
@@ -565,7 +563,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		panic("rip_usrreq");
 	}
 release:
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	return (error);
 }

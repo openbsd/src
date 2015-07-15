@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.141 2015/07/15 21:37:06 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.142 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1186,8 +1186,7 @@ nd6_rtrequest(int req, struct rtentry *rt)
 		nd6_llinfo_settimer(ln, -1);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
-		if (ln->ln_hold)
-			m_freem(ln->ln_hold);
+		m_freem(ln->ln_hold);
 		free(ln, M_RTABLE, 0);
 	}
 }
@@ -1719,8 +1718,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	 */
 	if (ln->ln_state == ND6_LLINFO_NOSTATE)
 		ln->ln_state = ND6_LLINFO_INCOMPLETE;
-	if (ln->ln_hold)
-		m_freem(ln->ln_hold);
+	m_freem(ln->ln_hold);
 	ln->ln_hold = m;
 	/*
 	 * If there has been no NS for the neighbor after entering the
@@ -1738,8 +1736,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	return ((*ifp->if_output)(ifp, m, sin6tosa(dst), rt));
 
   bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return (error);
 }
 #undef senderr

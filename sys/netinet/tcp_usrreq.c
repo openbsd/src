@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.125 2015/06/07 12:02:28 jsg Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.126 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -149,8 +149,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 	}
 	if (control && control->m_len) {
 		m_freem(control);
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return (EINVAL);
 	}
 
@@ -170,7 +169,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		 * The following corrects an mbuf leak under rare
 		 * circumstances
 		 */
-		if (m && (req == PRU_SEND || req == PRU_SENDOOB))
+		if (req == PRU_SEND || req == PRU_SENDOOB)
 			m_freem(m);
 		return (error);
 	}
@@ -485,7 +484,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 	inp = sotoinpcb(so);
 	if (inp == NULL) {
 		splx(s);
-		if (op == PRCO_SETOPT && *mp)
+		if (op == PRCO_SETOPT)
 			(void) m_free(*mp);
 		return (ECONNRESET);
 	}

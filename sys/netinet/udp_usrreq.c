@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.203 2015/07/08 08:48:34 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.204 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -475,8 +475,7 @@ udp_input(struct mbuf *m, ...)
 					    &last->inp_socket->so_rcv,
 					    &srcsa.sa, n, opts) == 0) {
 						m_freem(n);
-						if (opts)
-							m_freem(opts);
+						m_freem(opts);
 						udpstat.udps_fullsock++;
 					} else
 						sorwakeup(last->inp_socket);
@@ -664,8 +663,7 @@ udp_input(struct mbuf *m, ...)
 		if ((session = pipex_l2tp_lookup_session(m, off)) != NULL) {
 			if ((m = pipex_l2tp_input(m, off, session,
 			    ipsecflowinfo)) == NULL) {
-				if (opts)
-					m_freem(opts);
+				m_freem(opts);
 				return; /* the packet is handled by PIPEX */
 			}
 		}
@@ -682,8 +680,7 @@ udp_input(struct mbuf *m, ...)
 	return;
 bad:
 	m_freem(m);
-	if (opts)
-		m_freem(opts);
+	m_freem(opts);
 }
 
 /*
@@ -1050,8 +1047,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 		error = EHOSTUNREACH;
 
 bail:
-	if (control)
-		m_freem(control);
+	m_freem(control);
 	return (error);
 
 release:
@@ -1277,11 +1273,8 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 
 release:
 	splx(s);
-	if (control) {
-		m_freem(control);
-	}
-	if (m)
-		m_freem(m);
+	m_freem(control);
+	m_freem(m);
 	return (error);
 }
 

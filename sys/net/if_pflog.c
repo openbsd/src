@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.69 2015/02/13 13:35:03 millert Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.70 2015/07/15 22:16:41 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -209,8 +209,7 @@ pflogstart(struct ifnet *ifp)
 
 		if (m == NULL)
 			return;
-		else
-			m_freem(m);
+		m_freem(m);
 	}
 }
 

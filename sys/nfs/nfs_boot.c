@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.36 2014/12/05 15:50:04 mpi Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.37 2015/07/15 22:16:42 deraadt Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -414,10 +414,8 @@ bad:
 	error = EBADRPC;
 
 out:
-	if (from)
-		m_freem(from);
-	if (m)
-		m_freem(m);
+	m_freem(from);
+	m_freem(m);
 	return(error);
 }
 

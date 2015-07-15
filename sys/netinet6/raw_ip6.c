@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.76 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.77 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -192,8 +192,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 				    sin6tosa(&rip6src), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
-					if (opts)
-						m_freem(opts);
+					m_freem(opts);
 					rip6stat.rip6s_fullsock++;
 				} else
 					sorwakeup(last->inp_socket);
@@ -210,8 +209,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		if (sbappendaddr(&last->inp_socket->so_rcv,
 		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
-			if (opts)
-				m_freem(opts);
+			m_freem(opts);
 			rip6stat.rip6s_fullsock++;
 		} else
 			sorwakeup(last->inp_socket);
@@ -493,8 +491,7 @@ rip6_output(struct mbuf *m, ...)
 	goto freectl;
 
  bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 
  freectl:
 	if (control) {
@@ -547,7 +544,7 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			}
 
-			if (op == PRCO_SETOPT && *mp)
+			if (op == PRCO_SETOPT)
 				(void)m_free(*mp);
 			return (error);
 
@@ -583,7 +580,7 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 		return (icmp6_ctloutput(op, so, level, optname, mp));
 
 	default:
-		if (op == PRCO_SETOPT && *mp)
+		if (op == PRCO_SETOPT)
 			m_free(*mp);
 		return EINVAL;
 	}
@@ -821,8 +818,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	default:
 		panic("rip6_usrreq");
 	}
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	return (error);
 }
 

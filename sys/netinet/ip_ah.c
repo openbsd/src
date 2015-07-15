@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.117 2015/06/15 12:37:37 mikeb Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.118 2015/07/15 22:16:42 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -911,8 +911,7 @@ ah_input_cb(struct cryptop *crp)
  baddone:
 	splx(s);
 
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 
 	if (crp != NULL)
 		crypto_freereq(crp);
@@ -1275,8 +1274,7 @@ ah_output_cb(struct cryptop *crp)
  baddone:
 	splx(s);
 
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 
 	crypto_freereq(crp);
 

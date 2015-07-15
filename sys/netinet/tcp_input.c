@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.295 2015/07/10 22:07:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.296 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4139,8 +4139,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		break;
 #endif
 	default:
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		return (EAFNOSUPPORT);
 	}
 
@@ -4159,8 +4158,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	/*
 	 * Create the IP+TCP header from scratch.
 	 */
-	if (m)
-		m_freem(m);
+	m_freem(m);
 #ifdef DIAGNOSTIC
 	if (max_linkhdr + tlen > MCLBYTES)
 		return (ENOBUFS);
@@ -4282,8 +4280,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		tdb = gettdbbysrcdst(rtable_l2(sc->sc_rtableid),
 		    0, &src, &dst, IPPROTO_TCP);
 		if (tdb == NULL) {
-			if (m)
-				m_freem(m);
+			m_freem(m);
 			return (EPERM);
 		}
 
@@ -4293,8 +4290,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 
 		if (tcp_signature(tdb, sc->sc_src.sa.sa_family, m, th,
 		    hlen, 0, optp) < 0) {
-			if (m)
-				m_freem(m);
+			m_freem(m);
 			return (EINVAL);
 		}
 		optp += 16;

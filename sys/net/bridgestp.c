@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.57 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.58 2015/07/15 22:16:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -625,8 +625,7 @@ bstp_input(struct bstp_state *bs, struct bstp_port *bp,
 		break;
 	}
  out:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return (NULL);
 }
 

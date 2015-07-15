@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.96 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.97 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -149,8 +149,7 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return (ether_output(ifp, m, dst, rt));
 
  bad:
-	if (m)
-		m_freem(m);
+	m_freem(m);
 	return (error);
 }
 
@@ -628,8 +627,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	*pni = ni;
 	return m;
 bad:
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 	if (ni != NULL)
 		ieee80211_release_node(ic, ni);
 	*pni = NULL;

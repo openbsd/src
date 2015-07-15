@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.136 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.137 2015/07/15 22:16:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -618,8 +618,7 @@ ieee80211_defrag(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 		if (++ic->ic_defrag_cur == IEEE80211_DEFRAG_SIZE)
 			ic->ic_defrag_cur = 0;
 		df = &ic->ic_defrag[ic->ic_defrag_cur];
-		if (df->df_m != NULL)
-			m_freem(df->df_m);	/* discard old entry */
+		m_freem(df->df_m);	/* discard old entry */
 		df->df_seq = seq;
 		df->df_frag = 0;
 		df->df_m = m;
@@ -2561,8 +2560,7 @@ ieee80211_recv_delba(struct ieee80211com *ic, struct mbuf *m,
 		if (ba->ba_buf != NULL) {
 			/* free all MSDUs stored in reordering buffer */
 			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
-				if (ba->ba_buf[i].m != NULL)
-					m_freem(ba->ba_buf[i].m);
+				m_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
 			free(ba->ba_buf, M_DEVBUF, 0);
 			ba->ba_buf = NULL;

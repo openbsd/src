@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.102 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.103 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -379,8 +379,7 @@ loop:
 		if (error) {
 			nfsstats.srv_errs++;
 			nfsrv_updatecache(nd, 0, mreq);
-			if (nd->nd_nam2)
-				m_freem(nd->nd_nam2);
+			m_freem(nd->nd_nam2);
 			break;
 		}
 		nfsstats.srvrpccnt[nd->nd_procnum]++;
@@ -418,10 +417,8 @@ loop:
 		    error = EPIPE;
 		    m_freem(m);
 		}
-		if (nd->nd_nam2)
-			m_freem(nd->nd_nam2);
-		if (nd->nd_mrep)
-			m_freem(nd->nd_mrep);
+		m_freem(nd->nd_nam2);
+		m_freem(nd->nd_mrep);
 		if (error == EPIPE)
 			nfsrv_zapsock(slp);
 		if (solockp)

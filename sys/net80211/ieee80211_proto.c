@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.51 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.52 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -646,8 +646,7 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (ba->ba_buf != NULL) {
 			/* free all MSDUs stored in reordering buffer */
 			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
-				if (ba->ba_buf[i].m != NULL)
-					m_freem(ba->ba_buf[i].m);
+				m_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
 			free(ba->ba_buf, M_DEVBUF, 0);
 			ba->ba_buf = NULL;

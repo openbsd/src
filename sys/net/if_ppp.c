@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.86 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.87 2015/07/15 22:16:41 deraadt Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -330,10 +330,9 @@ pppdealloc(struct ppp_softc *sc)
 	sc->sc_npqueue = m->m_nextpkt;
 	m_freem(m);
     }
-    if (sc->sc_togo != NULL) {
-	m_freem(sc->sc_togo);
-	sc->sc_togo = NULL;
-    }
+    m_freem(sc->sc_togo);
+    sc->sc_togo = NULL;
+
 #ifdef PPP_COMPRESS
     ppp_ccp_closed(sc);
     sc->sc_xc_state = NULL;

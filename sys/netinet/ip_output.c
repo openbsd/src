@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.284 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.285 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -918,7 +918,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 	if (level != IPPROTO_IP) {
 		error = EINVAL;
-		if (op == PRCO_SETOPT && *mp)
+		if (op == PRCO_SETOPT)
 			(void) m_free(*mp);
 	} else switch (op) {
 	case PRCO_SETOPT:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.59 2015/06/11 15:59:17 mikeb Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.60 2015/07/15 22:16:42 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -235,10 +235,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			if ((mp == NULL) && (!error))
 				error = EFAULT;
 			if (error) {
-				if (mp)	{
-					m_freem(mp);
-					mp = NULL;
-				}
+				m_freem(mp);
 				return error;
 			}
 

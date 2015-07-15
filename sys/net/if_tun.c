@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.149 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.150 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -864,8 +864,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		}
 	}
 	if (error) {
-		if (top != NULL)
-			m_freem(top);
+		m_freem(top);
 		ifp->if_ierrors++;
 		return (error);
 	}

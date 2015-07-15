@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.40 2015/07/08 07:21:50 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.41 2015/07/15 22:16:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -305,8 +305,7 @@ pppxread(dev_t dev, struct uio *uio, int ioflag)
 		m0 = m;
 	}
 
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 
 	return (error);
 }
@@ -367,8 +366,7 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	if (error) {
-		if (top != NULL)
-			m_freem(top);
+		m_freem(top);
 		return (error);
 	}
 

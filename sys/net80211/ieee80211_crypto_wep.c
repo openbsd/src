@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.12 2014/12/23 03:24:08 tedu Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.13 2015/07/15 22:16:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -190,8 +190,7 @@ ieee80211_wep_encrypt(struct ieee80211com *ic, struct mbuf *m0,
  nospace:
 	ic->ic_stats.is_tx_nombuf++;
 	m_freem(m0);
-	if (n0 != NULL)
-		m_freem(n0);
+	m_freem(n0);
 	return NULL;
 }
 
@@ -298,7 +297,6 @@ ieee80211_wep_decrypt(struct ieee80211com *ic, struct mbuf *m0,
  nospace:
 	ic->ic_stats.is_rx_nombuf++;
 	m_freem(m0);
-	if (n0 != NULL)
-		m_freem(n0);
+	m_freem(n0);
 	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.133 2015/06/15 12:59:37 mikeb Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.134 2015/07/15 22:16:42 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -749,8 +749,7 @@ esp_input_cb(struct cryptop *crp)
  baddone:
 	splx(s);
 
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 
 	crypto_freereq(crp);
 
@@ -1100,8 +1099,7 @@ esp_output_cb(struct cryptop *crp)
  baddone:
 	splx(s);
 
-	if (m != NULL)
-		m_freem(m);
+	m_freem(m);
 
 	crypto_freereq(crp);
 

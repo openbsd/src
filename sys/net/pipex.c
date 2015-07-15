@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.70 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.71 2015/07/15 22:16:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -900,8 +900,7 @@ pipex_output(struct mbuf *m0, int af, int off,
 	return (m0);
 
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 	if (session != NULL)
 		session->stat.oerrors++;
 	return(NULL);
@@ -950,8 +949,7 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 
 	return;
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 dropped:
 	session->stat.oerrors++;
 }
@@ -1004,8 +1002,7 @@ pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 
 	return;
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 	session->stat.oerrors++;
 }
 
@@ -1081,8 +1078,7 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 
 	return;
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 	session->stat.ierrors++;
 }
 
@@ -1165,8 +1161,7 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 
 	return;
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 dropped:
 	session->stat.ierrors++;
 }
@@ -1732,8 +1727,7 @@ out_seq:
 
 	/* FALLTHROUGH */
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 	session->stat.ierrors++;
 
 	return (NULL);
@@ -2165,8 +2159,7 @@ out_seq:
 
 	/* FALLTHROUGH */
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 	session->stat.ierrors++;
 
 	return (NULL);
@@ -2543,8 +2536,7 @@ pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 
 	return;
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 	session->stat.ierrors++;
 }
 
@@ -2674,8 +2666,7 @@ pipex_ccp_input(struct mbuf *m0, struct pipex_session *session)
 
 	return;
 drop:
-	if (m0 != NULL)
-		m_freem(m0);
+	m_freem(m0);
 	session->stat.ierrors++;
 }
 
@@ -2842,8 +2833,7 @@ handled:
 	return (m0);
 
 drop:
-	if (m0)
-		m_freem(m0);
+	m_freem(m0);
 	return (NULL);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd-comp.c,v 1.10 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: bsd-comp.c,v 1.11 2015/07/15 22:16:41 deraadt Exp $	*/
 /*	$NetBSD: bsd-comp.c,v 1.6 1996/10/13 02:10:58 christos Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -662,10 +662,9 @@ bsd_compress(state, mret, mp, slen, maxolen)
     ++db->uncomp_count;
     if (olen + PPP_HDRLEN + BSD_OVHD > maxolen) {
 	/* throw away the compressed stuff if it is longer than uncompressed */
-	if (*mret != NULL) {
-	    m_freem(*mret);
-	    *mret = NULL;
-	}
+	m_freem(*mret);
+	*mret = NULL;
+
 	++db->incomp_count;
 	db->incomp_bytes += ilen;
     } else {

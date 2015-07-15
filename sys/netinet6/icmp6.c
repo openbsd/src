@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.161 2015/07/08 08:48:34 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.162 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1123,8 +1123,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 				    sin6tosa(&rip6src), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
-					if (opts)
-						m_freem(opts);
+					m_freem(opts);
 				} else
 					sorwakeup(last->inp_socket);
 				opts = NULL;
@@ -1140,8 +1139,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		if (sbappendaddr(&last->inp_socket->so_rcv,
 		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
-			if (opts)
-				m_freem(opts);
+			m_freem(opts);
 		} else
 			sorwakeup(last->inp_socket);
 	} else {
@@ -1794,10 +1792,8 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		m0 = NULL;
 	}
 noredhdropt:
-	if (m0) {
-		m_freem(m0);
-		m0 = NULL;
-	}
+	m_freem(m0);
+	m0 = NULL;
 
 	sip6 = mtod(m, struct ip6_hdr *);
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_src))
@@ -1831,10 +1827,8 @@ noredhdropt:
 	return;
 
 fail:
-	if (m)
-		m_freem(m);
-	if (m0)
-		m_freem(m0);
+	m_freem(m);
+	m_freem(m0);
 }
 
 /*
@@ -1849,7 +1843,7 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 	struct mbuf *m = *mp;
 
 	if (level != IPPROTO_ICMPV6) {
-		if (op == PRCO_SETOPT && m)
+		if (op == PRCO_SETOPT)
 			(void)m_free(m);
 		return EINVAL;
 	}
@@ -1880,8 +1874,7 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			m_freem(m);
+		m_freem(m);
 		break;
 
 	case PRCO_GETOPT:

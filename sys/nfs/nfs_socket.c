@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.109 2015/06/11 16:00:36 mikeb Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.110 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -650,8 +650,7 @@ tryagain:
 			    rcvflg = 0;
 			    error =  soreceive(so, NULL, &auio, mp, &control,
 			        &rcvflg, 0);
-			    if (control)
-				m_freem(control);
+			    m_freem(control);
 			    if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
@@ -761,8 +760,7 @@ nfs_reply(struct nfsreq *myrep)
 			}
 			return (error);
 		}
-		if (nam)
-			m_freem(nam);
+		m_freem(nam);
 	
 		/*
 		 * Get the xid and check that it is an rpc reply

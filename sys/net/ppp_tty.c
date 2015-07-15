@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.35 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.36 2015/07/15 22:16:42 deraadt Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -269,10 +269,9 @@ pppasyncrelinq(struct ppp_softc *sc)
     int s;
 
     s = spltty();
-    if (sc->sc_outm) {
-	m_freem(sc->sc_outm);
-	sc->sc_outm = NULL;
-    }
+    m_freem(sc->sc_outm);
+    sc->sc_outm = NULL;
+
     if (sc->sc_pkt != NULL) {
 	ppp_pkt_free(sc->sc_pkt);
 	sc->sc_pkt = sc->sc_pktc = NULL;
