@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2015/07/15 14:39:13 jsing Exp $	*/
+/*	$OpenBSD: config.c,v 1.39 2015/07/15 16:00:39 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -193,14 +193,6 @@ config_setserver(struct httpd *env, struct server *srv)
 			iov[c].iov_base = srv->srv_conf.return_uri;
 			iov[c++].iov_len = srv->srv_conf.return_uri_len;
 		}
-		if (srv->srv_conf.tls_cert_len != 0) {
-			iov[c].iov_base = srv->srv_conf.tls_cert;
-			iov[c++].iov_len = srv->srv_conf.tls_cert_len;
-		}
-		if (srv->srv_conf.tls_key_len != 0) {
-			iov[c].iov_base = srv->srv_conf.tls_key;
-			iov[c++].iov_len = srv->srv_conf.tls_key_len;
-		}
 
 		if (id == PROC_SERVER &&
 		    (srv->srv_conf.flags & SRVFLAG_LOCATION) == 0) {
@@ -220,6 +212,9 @@ config_setserver(struct httpd *env, struct server *srv)
 					return (-1);
 				}
 			}
+
+			/* Configure TLS if necessary. */
+			config_settls(env, srv);
 		} else {
 			if (proc_composev_imsg(ps, id, -1, IMSG_CFG_SERVER, -1,
 			    iov, c) != 0) {
@@ -228,6 +223,72 @@ config_setserver(struct httpd *env, struct server *srv)
 				    __func__, srv->srv_conf.name);
 				return (-1);
 			}
+		}
+	}
+
+	return (0);
+}
+
+int
+config_settls(struct httpd *env, struct server *srv)
+{
+	struct privsep		*ps = env->sc_ps;
+	struct tls_config	 tls;
+	struct iovec		 iov[2];
+	size_t			 c;
+
+	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
+		return (0);
+
+	log_debug("%s: configuring TLS for %s", __func__, srv->srv_conf.name);
+
+	if (srv->srv_conf.tls_cert_len != 0) {
+		DPRINTF("%s: sending TLS cert \"%s[%u]\" to %s fd %d", __func__,
+		    srv->srv_conf.name, srv->srv_conf.id,
+		    ps->ps_title[PROC_SERVER], srv->srv_s);
+
+		memset(&tls, 0, sizeof(tls));
+		tls.id = srv->srv_conf.id;
+		tls.port = srv->srv_conf.port;
+		memcpy(&tls.ss, &srv->srv_conf.ss, sizeof(tls.ss));
+		tls.tls_cert_len = srv->srv_conf.tls_cert_len;
+
+		c = 0;
+		iov[c].iov_base = &tls;
+		iov[c++].iov_len = sizeof(tls);
+		iov[c].iov_base = srv->srv_conf.tls_cert;
+		iov[c++].iov_len = srv->srv_conf.tls_cert_len;
+
+		if (proc_composev_imsg(ps, PROC_SERVER, -1, IMSG_CFG_TLS, -1,
+		    iov, c) != 0) {
+			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
+			    "`%s'", __func__, srv->srv_conf.name);
+			return (-1);
+		}
+	}
+
+	if (srv->srv_conf.tls_key_len != 0) {
+		DPRINTF("%s: sending TLS key \"%s[%u]\" to %s fd %d", __func__,
+		    srv->srv_conf.name, srv->srv_conf.id,
+		    ps->ps_title[PROC_SERVER], srv->srv_s);
+
+		memset(&tls, 0, sizeof(tls));
+		tls.id = srv->srv_conf.id;
+		tls.port = srv->srv_conf.port;
+		memcpy(&tls.ss, &srv->srv_conf.ss, sizeof(tls.ss));
+		tls.tls_key_len = srv->srv_conf.tls_key_len;
+
+		c = 0;
+		iov[c].iov_base = &tls;
+		iov[c++].iov_len = sizeof(tls);
+		iov[c].iov_base = srv->srv_conf.tls_key;
+		iov[c++].iov_len = srv->srv_conf.tls_key_len;
+
+		if (proc_composev_imsg(ps, PROC_SERVER, -1, IMSG_CFG_TLS, -1,
+		    iov, c) != 0) {
+			log_warn("%s: failed to compose IMSG_CFG_TLS imsg for "
+			    "`%s'", __func__, srv->srv_conf.name);
+			return (-1);
 		}
 	}
 
@@ -422,9 +483,7 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	/* Reset these variables to avoid free'ing invalid pointers */
 	serverconfig_reset(&srv_conf);
 
-	if ((IMSG_DATA_SIZE(imsg) - s) <
-	    (srv_conf.tls_cert_len + srv_conf.tls_key_len +
-	    srv_conf.return_uri_len)) {
+	if ((IMSG_DATA_SIZE(imsg) - s) < (size_t)srv_conf.return_uri_len) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
@@ -475,18 +534,6 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 			goto fail;
 		s += srv->srv_conf.return_uri_len;
 	}
-	if (srv->srv_conf.tls_cert_len != 0) {
-		if ((srv->srv_conf.tls_cert = get_data(p + s,
-		    srv->srv_conf.tls_cert_len)) == NULL)
-			goto fail;
-		s += srv->srv_conf.tls_cert_len;
-	}
-	if (srv->srv_conf.tls_key_len != 0) {
-		if ((srv->srv_conf.tls_key = get_data(p + s,
-		    srv->srv_conf.tls_key_len)) == NULL)
-			goto fail;
-		s += srv->srv_conf.tls_key_len;
-	}
 
 	return (0);
 
@@ -497,6 +544,59 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 		serverconfig_free(&srv->srv_conf);
 	free(srv);
 
+	return (-1);
+}
+
+int
+config_gettls(struct httpd *env, struct imsg *imsg)
+{
+#ifdef DEBUG
+	struct privsep		*ps = env->sc_ps;
+#endif
+	struct server		*srv = NULL;
+	struct tls_config	 tls_conf;
+	u_int8_t		*p = imsg->data;
+	size_t			 s;
+
+	IMSG_SIZE_CHECK(imsg, &tls_conf);
+	memcpy(&tls_conf, p, sizeof(tls_conf));
+	s = sizeof(tls_conf);
+
+	if ((IMSG_DATA_SIZE(imsg) - s) <
+	    (tls_conf.tls_cert_len + tls_conf.tls_key_len)) {
+		log_debug("%s: invalid message length", __func__);
+		goto fail;
+	}
+
+	/* Find server with matching listening socket. */
+	if ((srv = server_byaddr((struct sockaddr *)
+	    &tls_conf.ss, tls_conf.port)) == NULL) {
+		log_debug("%s: server not found", __func__);
+		goto fail;
+	}
+
+	DPRINTF("%s: %s %d TLS configuration \"%s[%u]\"", __func__,
+	    ps->ps_title[privsep_process], ps->ps_instance,
+	    srv->srv_conf.name, srv->srv_conf.id);
+
+	if (tls_conf.tls_cert_len != 0) {
+		srv->srv_conf.tls_cert_len = tls_conf.tls_cert_len;
+		if ((srv->srv_conf.tls_cert = get_data(p + s,
+		    tls_conf.tls_cert_len)) == NULL)
+			goto fail;
+		s += tls_conf.tls_cert_len;
+	}
+	if (tls_conf.tls_key_len != 0) {
+		srv->srv_conf.tls_key_len = tls_conf.tls_key_len;
+		if ((srv->srv_conf.tls_key = get_data(p + s,
+		    tls_conf.tls_key_len)) == NULL)
+			goto fail;
+		s += tls_conf.tls_key_len;
+	}
+
+	return (0);
+
+ fail:
 	return (-1);
 }
 
