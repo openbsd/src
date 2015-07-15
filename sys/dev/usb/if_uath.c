@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.68 2015/07/15 04:01:26 stsp Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.69 2015/07/15 13:27:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -116,7 +116,10 @@ static const struct uath_type {
 	UATH_DEV_UG(UMEDIA,		TEW444UBEU),
 	UATH_DEV_UG(WISTRONNEWEB,	AR5523_1),
 	UATH_DEV_UX(WISTRONNEWEB,	AR5523_2),
-	UATH_DEV_UG(ZCOM,		AR5523)
+	UATH_DEV_UG(ZCOM,		AR5523),
+
+	/* Devices that share one of the IDs above. */
+	{ { USB_VENDOR_NETGEAR3, USB_PRODUCT_NETGEAR3_WG111T_1 }, 0 }		\
 };
 #define uath_lookup(v, p)	\
 	((const struct uath_type *)usb_lookup(uath_devs, v, p))
