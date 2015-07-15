@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.67 2015/07/15 17:11:14 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.68 2015/07/15 17:29:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -970,6 +970,7 @@ server_accept_tls(int fd, short event, void *arg)
 	} else if (ret != 0) {
 		log_warnx("%s: TLS accept failed - %s", __func__,
 		    tls_error(srv->srv_tls_ctx));
+		server_close(clt, "TLS accept failed");
 		return;
 	}
 
