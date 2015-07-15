@@ -283,16 +283,16 @@ ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
  * Handle MRT getsockopt commands
  */
 int
-ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **m)
+ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **mp)
 {
 	if (so != ip6_mrouter)
 		return (EPERM);
 
-	*m = m_get(M_WAIT, MT_SOOPTS);
+	*mp = m_get(M_WAIT, MT_SOOPTS);
 
 	switch (cmd) {
 	case MRT6_PIM:
-		return get_pim6(*m);
+		return get_pim6(*mp);
 	default:
 		return EOPNOTSUPP;
 	}
