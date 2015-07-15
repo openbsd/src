@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.70 2015/07/15 03:00:46 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.71 2015/07/15 04:19:41 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -209,7 +209,7 @@ svc_get()
 	[ -n "${_svc}" ] || return
 
 	local _status=0 _val _var=$2
-	local daemon_flags daemon_timeout daemon_user
+	local daemon_class daemon_flags daemon_timeout daemon_user
 
 	if svc_is_special ${_svc}; then
 		daemon_flags="$(eval echo \${${_svc}})"
@@ -222,6 +222,12 @@ svc_get()
 		fi
 
 		# these are expensive, make sure they are explicitely requested
+		if [ -z "${_var}" -o "${_var}" = "class" ]; then
+			getcap -f /etc/login.conf ${_svc} 1>/dev/null 2>&1 && \
+				daemon_class=${_svc}
+			[ -z "${daemon_class}" ] && \
+				daemon_class="$(svc_getdef ${_svc} class)"
+		fi
 		if [[ -z ${_var} || ${_var} == @(flags|status) ]]; then
 			[ -z "${daemon_flags}" ] && \
 				daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
@@ -252,6 +258,7 @@ svc_get()
 		if svc_is_special ${_svc}; then
 			echo "${_svc}=${daemon_flags}"
 		else
+			echo "${_svc}_class=${daemon_class}"
 			echo "${_svc}_flags=${daemon_flags}"
 			echo "${_svc}_timeout=${daemon_timeout}"
 			echo "${_svc}_user=${daemon_user}"
@@ -267,7 +274,7 @@ svc_getdef()
 	[ -n "${_svc}" ] || return
 
 	local _status=0 _val _var=$2
-	local daemon_flags daemon_timeout daemon_user
+	local daemon_class daemon_flags daemon_timeout daemon_user
 
 	if svc_is_special ${_svc}; then
 		# unconditionally parse: we always output flags and/or status
@@ -290,6 +297,7 @@ svc_getdef()
 		rc_cmd() { }
 		. /etc/rc.d/${_svc} >/dev/null 2>&1
 
+		daemon_class=daemon
 		[ -z "${daemon_timeout}" ] && daemon_timeout=30
 		[ -z "${daemon_user}" ] && daemon_user=root
 	fi
@@ -302,6 +310,7 @@ svc_getdef()
 		if svc_is_special ${_svc}; then
 			echo "${_svc}=${daemon_flags}"
 		else
+			echo "${_svc}_class=${daemon_class}"
 			echo "${_svc}_flags=${daemon_flags}"
 			echo "${_svc}_timeout=${daemon_timeout}"
 			echo "${_svc}_user=${daemon_user}"
@@ -439,9 +448,11 @@ elif [[ ${action} != @(getall|ls|order) ]] ; then
 fi
 
 if [ -n "${var}" ]; then
-	[[ ${var} != @(flags|status|timeout|user) ]] && usage
+	[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
 	[[ ${action} == set && ${var} = flags && ${args} = NO ]] && \
 		rcctl_err "\"flags NO\" contradicts \"${action}\""
+	[[ ${action} == set && ${var} == class ]] && \
+		rcctl_err "\"${svc}_class\" is a read-only variable set in login.conf(5)"
 	if svc_is_special ${svc}; then
 		if [[ ${action} == set && ${var} != status ]] || \
 			[[ ${action} == @(get|getdef) && ${var} == @(timeout|user) ]]; then
