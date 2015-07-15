@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.17 2015/04/08 21:44:16 sthen Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.18 2015/07/15 03:05:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -345,13 +345,13 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 				printf(" %uM",
 				    (data[0] & IEEE80211_RATE_VAL) / 2);
 			break;
-		case IEEE80211_ELEMID_TPC:
-			printf(", tpc");
+		case IEEE80211_ELEMID_TPC_REPORT:
+			printf(", tpcreport");
 			if (vflag)
 				ieee80211_print_element(data, len);
 			break;
-		case IEEE80211_ELEMID_CCKM:
-			printf(", cckm");
+		case IEEE80211_ELEMID_TPC_REQUEST:
+			printf(", tpcrequest");
 			if (vflag)
 				ieee80211_print_element(data, len);
 			break;
