@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.63 2015/06/23 17:29:19 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.64 2015/07/15 17:10:47 jsing Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2015 $
+.Dd $Mdocdate: July 15 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -412,6 +412,8 @@ Specify the certificate to use for this server.
 The
 .Ar file
 should contain a PEM encoded certificate.
+The default is
+.Pa /etc/ssl/server.crt .
 .It Ic ciphers Ar string
 Specify the TLS cipher string.
 If not specified, the default value
@@ -438,6 +440,8 @@ should contain a PEM encoded private key and reside outside of the
 .Xr chroot 2
 root directory of
 .Nm httpd .
+The default is
+.Pa /etc/ssl/private/server.key .
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
 If not specified, the value
