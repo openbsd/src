@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.67 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.68 2015/07/15 04:01:26 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -289,12 +289,12 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	if (uath_alloc_tx_cmd_list(sc) != 0) {
 		printf("%s: could not allocate Tx command list\n",
 		    sc->sc_dev.dv_xname);
-		goto fail1;
+		goto fail;
 	}
 	if (uath_alloc_rx_cmd_list(sc) != 0) {
 		printf("%s: could not allocate Rx command list\n",
 		    sc->sc_dev.dv_xname);
-		goto fail2;
+		goto fail;
 	}
 
 	/*
@@ -310,7 +310,7 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 		if (error != USBD_IN_PROGRESS && error != 0) {
 			printf("%s: could not queue Rx command xfer\n",
 			    sc->sc_dev.dv_xname);
-			goto fail3;
+			goto fail;
 		}
 	}
 
@@ -320,11 +320,11 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	if (uath_reset(sc) != 0) {
 		printf("%s: could not initialize adapter\n",
 		    sc->sc_dev.dv_xname);
-		goto fail3;
+		goto fail;
 	}
 	if (uath_query_eeprom(sc) != 0) {
 		printf("%s: could not read EEPROM\n", sc->sc_dev.dv_xname);
-		goto fail3;
+		goto fail;
 	}
 
 	printf("%s: MAC/BBP AR5523, RF AR%c112, address %s\n",
@@ -337,12 +337,12 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	if (uath_alloc_tx_data_list(sc) != 0) {
 		printf("%s: could not allocate Tx data list\n",
 		    sc->sc_dev.dv_xname);
-		goto fail3;
+		goto fail;
 	}
 	if (uath_alloc_rx_data_list(sc) != 0) {
 		printf("%s: could not allocate Rx data list\n",
 		    sc->sc_dev.dv_xname);
-		goto fail4;
+		goto fail;
 	}
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
@@ -401,10 +401,10 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-fail4:	uath_free_tx_data_list(sc);
-fail3:	uath_free_rx_cmd_list(sc);
-fail2:	uath_free_tx_cmd_list(sc);
-fail1:	uath_close_pipes(sc);
+fail:	uath_close_pipes(sc);
+	uath_free_tx_data_list(sc);
+	uath_free_rx_cmd_list(sc);
+	uath_free_tx_cmd_list(sc);
 	usbd_deactivate(sc->sc_udev);
 }
 
@@ -431,14 +431,14 @@ uath_detach(struct device *self, int flags)
 	if (timeout_initialized(&sc->stat_to))
 		timeout_del(&sc->stat_to);
 
-	/* abort and free xfers */
+	/* close Tx/Rx pipes */
+	uath_close_pipes(sc);
+
+	/* free xfers */
 	uath_free_tx_data_list(sc);
 	uath_free_rx_data_list(sc);
 	uath_free_tx_cmd_list(sc);
 	uath_free_rx_cmd_list(sc);
-
-	/* close Tx/Rx pipes */
-	uath_close_pipes(sc);
 
 	if (ifp->if_softc != NULL) {
 		ieee80211_ifdetach(ifp);	/* free all nodes */
@@ -501,19 +501,25 @@ fail:	uath_close_pipes(sc);
 void
 uath_close_pipes(struct uath_softc *sc)
 {
-	/* assumes no transfers are pending on the pipes */
-
-	if (sc->data_tx_pipe != NULL)
+	if (sc->data_tx_pipe != NULL) {
 		usbd_close_pipe(sc->data_tx_pipe);
+		sc->data_tx_pipe = NULL;
+	}
 
-	if (sc->data_rx_pipe != NULL)
+	if (sc->data_rx_pipe != NULL) {
 		usbd_close_pipe(sc->data_rx_pipe);
+		sc->data_rx_pipe = NULL;
+	}
 
-	if (sc->cmd_tx_pipe != NULL)
+	if (sc->cmd_tx_pipe != NULL) {
 		usbd_close_pipe(sc->cmd_tx_pipe);
+		sc->cmd_tx_pipe = NULL;
+	}
 
-	if (sc->cmd_rx_pipe != NULL)
+	if (sc->cmd_rx_pipe != NULL) {
 		usbd_close_pipe(sc->cmd_rx_pipe);
+		sc->cmd_rx_pipe = NULL;
+	}
 }
 
 int
@@ -552,12 +558,11 @@ uath_free_tx_data_list(struct uath_softc *sc)
 {
 	int i;
 
-	/* make sure no transfers are pending */
-	usbd_abort_pipe(sc->data_tx_pipe);
-
 	for (i = 0; i < UATH_TX_DATA_LIST_COUNT; i++)
-		if (sc->tx_data[i].xfer != NULL)
+		if (sc->tx_data[i].xfer != NULL) {
 			usbd_free_xfer(sc->tx_data[i].xfer);
+			sc->tx_data[i].xfer = NULL;
+		}
 }
 
 int
@@ -612,17 +617,18 @@ uath_free_rx_data_list(struct uath_softc *sc)
 {
 	int i;
 
-	/* make sure no transfers are pending */
-	usbd_abort_pipe(sc->data_rx_pipe);
-
 	for (i = 0; i < UATH_RX_DATA_LIST_COUNT; i++) {
 		struct uath_rx_data *data = &sc->rx_data[i];
 
-		if (data->xfer != NULL)
+		if (data->xfer != NULL) {
 			usbd_free_xfer(data->xfer);
+			data->xfer = NULL;
+		}
 
-		if (data->m != NULL)
+		if (data->m != NULL) {
 			m_freem(data->m);
+			data->m = NULL;
+		}
 	}
 }
 
@@ -662,12 +668,11 @@ uath_free_tx_cmd_list(struct uath_softc *sc)
 {
 	int i;
 
-	/* make sure no transfers are pending */
-	usbd_abort_pipe(sc->cmd_tx_pipe);
-
 	for (i = 0; i < UATH_TX_CMD_LIST_COUNT; i++)
-		if (sc->tx_cmd[i].xfer != NULL)
+		if (sc->tx_cmd[i].xfer != NULL) {
 			usbd_free_xfer(sc->tx_cmd[i].xfer);
+			sc->tx_cmd[i].xfer = NULL;
+		}
 }
 
 int
@@ -706,12 +711,11 @@ uath_free_rx_cmd_list(struct uath_softc *sc)
 {
 	int i;
 
-	/* make sure no transfers are pending */
-	usbd_abort_pipe(sc->cmd_rx_pipe);
-
 	for (i = 0; i < UATH_RX_CMD_LIST_COUNT; i++)
-		if (sc->rx_cmd[i].xfer != NULL)
+		if (sc->rx_cmd[i].xfer != NULL) {
 			usbd_free_xfer(sc->rx_cmd[i].xfer);
+			sc->rx_cmd[i].xfer = NULL;
+		}
 }
 
 int
