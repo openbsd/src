@@ -1,4 +1,4 @@
-/* $OpenBSD: nouveau_drm.h,v 1.1 2014/06/28 05:02:44 jsg Exp $ */
+/* $OpenBSD: nouveau_drm.h,v 1.2 2015/07/15 22:39:20 jsg Exp $ */
 /*
  * Copyright 2005 Stephane Marchesin.
  * All Rights Reserved.
@@ -97,6 +97,7 @@ struct drm_nouveau_setparam {
 #define NOUVEAU_GEM_DOMAIN_VRAM      (1 << 1)
 #define NOUVEAU_GEM_DOMAIN_GART      (1 << 2)
 #define NOUVEAU_GEM_DOMAIN_MAPPABLE  (1 << 3)
+#define NOUVEAU_GEM_DOMAIN_COHERENT  (1 << 4)
 
 #define NOUVEAU_GEM_TILE_LAYOUT_MASK 0x0000ff00
 #define NOUVEAU_GEM_TILE_16BPP       0x00000001

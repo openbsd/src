@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_mode.h,v 1.6 2015/02/06 23:42:33 jsg Exp $	*/
+/*	$OpenBSD: drm_mode.h,v 1.7 2015/07/15 22:39:20 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007 Jakob Bornecrantz <wallbraker@gmail.com>
@@ -501,5 +501,42 @@ struct drm_mode_map_dumb {
 struct drm_mode_destroy_dumb {
 	uint32_t handle;
 };
+
+/* page-flip flags are valid, plus: */
+#define DRM_MODE_ATOMIC_TEST_ONLY	0x0100
+#define DRM_MODE_ATOMIC_NONBLOCK	0x0200
+#define DRM_MODE_ATOMIC_ALLOW_MODESET	0x0400
+
+struct drm_mode_atomic {
+	uint32_t flags;
+	uint32_t count_objs;
+	uint64_t objs_ptr;
+	uint64_t count_props_ptr;
+	uint64_t props_ptr;
+	uint64_t prop_values_ptr;
+	uint64_t reserved;
+	uint64_t user_data;
+};
+
+/**
+ * Create a new 'blob' data property, copying length bytes from data pointer,
+ * and returning new blob ID.
+ */
+struct drm_mode_create_blob {
+	/** Pointer to data to copy. */
+	uint64_t data;
+	/** Length of data to copy. */
+	uint32_t length;
+	/** Return: new property ID. */
+	uint32_t blob_id;
+};
+
+/**
+ * Destroy a user-created blob property.
+ */
+struct drm_mode_destroy_blob {
+	uint32_t blob_id;
+};
+
 
 #endif

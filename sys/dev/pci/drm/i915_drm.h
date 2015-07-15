@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.22 2015/03/26 04:38:58 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.23 2015/07/15 22:39:20 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -217,6 +217,8 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_REG_READ		0x31
 #define DRM_I915_GET_RESET_STATS	0x32
 #define DRM_I915_GEM_USERPTR		0x33
+#define DRM_I915_GEM_CONTEXT_GETPARAM	0x34
+#define DRM_I915_GEM_CONTEXT_SETPARAM	0x35
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
@@ -267,7 +269,9 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_GEM_CONTEXT_DESTROY	DRM_IOW (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_DESTROY, struct drm_i915_gem_context_destroy)
 #define DRM_IOCTL_I915_REG_READ			DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_REG_READ, struct drm_i915_reg_read)
 #define DRM_IOCTL_I915_GET_RESET_STATS		DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GET_RESET_STATS, struct drm_i915_reset_stats)
-#define DRM_IOCTL_I915_GEM_USERPTR		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_USERPTR,  struct drm_i915_gem_userptr)
+#define DRM_IOCTL_I915_GEM_USERPTR			DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_USERPTR, struct drm_i915_gem_userptr)
+#define DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_GETPARAM, struct drm_i915_gem_context_param)
+#define DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_SETPARAM, struct drm_i915_gem_context_param)
 
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
@@ -486,6 +490,14 @@ struct drm_i915_gem_mmap {
 	 * This is a fixed-size type for 32/64 compatibility.
 	 */
 	uint64_t addr_ptr;
+
+	/*
+	 * Flags for extended behaviour.
+	 *
+	 * Added in version 2.
+	 */
+	uint64_t flags;
+#define I915_MMAP_WC 0x1
 };
 
 struct drm_i915_gem_mmap_gtt {
@@ -683,7 +695,13 @@ struct drm_i915_gem_execbuffer2 {
  */
 #define I915_EXEC_HANDLE_LUT		(1<<12)
 
-#define __I915_EXEC_UNKNOWN_FLAGS -(I915_EXEC_HANDLE_LUT<<1)
+/** Used for switching BSD rings on the platforms with two BSD rings */
+#define I915_EXEC_BSD_MASK		(3<<13)
+#define I915_EXEC_BSD_DEFAULT		(0<<13) /* default ping-pong mode */
+#define I915_EXEC_BSD_RING1		(1<<13)
+#define I915_EXEC_BSD_RING2		(2<<13)
+
+#define __I915_EXEC_UNKNOWN_FLAGS -(1<<15)
 
 #define I915_EXEC_CONTEXT_ID_MASK	(0xffffffff)
 #define i915_execbuffer2_set_context_id(eb2, context) \
@@ -820,6 +838,12 @@ struct drm_i915_gem_get_tiling {
 	 * mmap mapping.
 	 */
 	uint32_t swizzle_mode;
+
+	/**
+	 * Returned address bit 6 swizzling required for CPU access through
+	 * mmap mapping whilst bound.
+	 */
+	uint32_t phys_swizzle_mode;
 };
 
 struct drm_i915_gem_get_aperture {
@@ -1007,6 +1031,14 @@ struct drm_i915_gem_userptr {
 	* Object handles are nonzero.
 	*/
 	uint32_t handle;
+};
+
+struct drm_i915_gem_context_param {
+	uint32_t ctx_id;
+	uint32_t size;
+	uint64_t param;
+#define I915_CONTEXT_PARAM_BAN_PERIOD 0x1
+	uint64_t value;
 };
 
 #endif				/* _I915_DRM_H_ */
