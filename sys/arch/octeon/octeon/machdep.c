@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2015/07/15 23:07:23 pirofti Exp $ */
+/*	$OpenBSD: machdep.c,v 1.66 2015/07/15 23:22:40 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -154,63 +154,52 @@ octeon_memory_init(struct boot_info *boot_info)
 
 	physmem = endpfn - startpfn;
 
-	/* Simulator we limit to 96 meg */
-	if (boot_info->board_type == BOARD_TYPE_SIM) {
-		realmem_bytes = (96 << 20);
-	} else {
-		realmem_bytes = ((boot_info->dram_size << 20) - PAGE_SIZE);
-		realmem_bytes &= ~(PAGE_SIZE - 1);
-	}
+	realmem_bytes = ((boot_info->dram_size << 20) - PAGE_SIZE);
+	realmem_bytes &= ~(PAGE_SIZE - 1);
+
 	/* phys_avail regions are in bytes */
 	phys_avail[0] =
 	    (CKSEG0_TO_PHYS((uint64_t)&end) + PAGE_SIZE) & ~(PAGE_SIZE - 1);
 
-	/* Simulator gets 96Meg period. */
-	if (boot_info->board_type == BOARD_TYPE_SIM) {
-		phys_avail[1] = (96 << 20);
-	} else {
-		if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
-			phys_avail[1] = OCTEON_DRAM_FIRST_256_END;
-			realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
-			realmem_bytes &= ~(PAGE_SIZE - 1);
-		} else
-			phys_avail[1] = realmem_bytes;
+	if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
+		phys_avail[1] = OCTEON_DRAM_FIRST_256_END;
+		realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
+		realmem_bytes &= ~(PAGE_SIZE - 1);
+	} else
+		phys_avail[1] = realmem_bytes;
 
-		mem_layout[0].mem_last_page = atop(phys_avail[1]);
-	}
+	mem_layout[0].mem_last_page = atop(phys_avail[1]);
 
 	/*-
 	 * Octeon Memory looks as follows:
          *   PA
 	 * First 256 MB DR0
 	 * 0000 0000 0000 0000     to  0000 0000 0FFF FFFF
-	 * Second 256 MB DR1 
+	 * Second 256 MB DR1
 	 * 0000 0004 1000 0000     to  0000 0004 1FFF FFFF
 	 * Over 512MB Memory DR2  15.5GB
 	 * 0000 0000 2000 0000     to  0000 0003 FFFF FFFF
 	 */
 	physmem = atop(phys_avail[1] - phys_avail[0]);
 
-	if (boot_info->board_type != BOARD_TYPE_SIM) {
-		if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
-			/* take out the upper non-cached 1/2 */
-			phys_avail[2] = 0x410000000ULL;
-			phys_avail[3] =
-			    (0x410000000ULL + OCTEON_DRAM_FIRST_256_END);
-			physmem += btoc(phys_avail[3] - phys_avail[2]);
-			mem_layout[2].mem_first_page = atop(phys_avail[2]);
-			mem_layout[2].mem_last_page = atop(phys_avail[3] - 1);
-			realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
+	if (realmem_bytes > OCTEON_DRAM_FIRST_256_END) {
+		/* take out the upper non-cached 1/2 */
+		phys_avail[2] = 0x410000000ULL;
+		phys_avail[3] =
+		    (0x410000000ULL + OCTEON_DRAM_FIRST_256_END);
+		physmem += btoc(phys_avail[3] - phys_avail[2]);
+		mem_layout[2].mem_first_page = atop(phys_avail[2]);
+		mem_layout[2].mem_last_page = atop(phys_avail[3] - 1);
+		realmem_bytes -= OCTEON_DRAM_FIRST_256_END;
 
-			/* Now map the rest of the memory */
-			phys_avail[4] = 0x20000000ULL;
-			phys_avail[5] = (0x20000000ULL + realmem_bytes);
-			physmem += btoc(phys_avail[5] - phys_avail[4]);
-			mem_layout[1].mem_first_page = atop(phys_avail[4]);
-			mem_layout[1].mem_last_page = atop(phys_avail[5] - 1);
-			realmem_bytes = 0;
-		}
- 	}
+		/* Now map the rest of the memory */
+		phys_avail[4] = 0x20000000ULL;
+		phys_avail[5] = (0x20000000ULL + realmem_bytes);
+		physmem += btoc(phys_avail[5] - phys_avail[4]);
+		mem_layout[1].mem_first_page = atop(phys_avail[4]);
+		mem_layout[1].mem_last_page = atop(phys_avail[5] - 1);
+		realmem_bytes = 0;
+	}
 
  	realmem = physmem;
 
