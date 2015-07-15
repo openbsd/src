@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.13 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.14 2015/07/15 17:02:03 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -669,7 +669,7 @@ X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
     STACK_OF(X509) *certs, STACK_OF(ASN1_OBJECT) *policy_oids,
     unsigned int flags)
 {
-	int ret;
+	int ret, ret2;
 	X509_POLICY_TREE *tree = NULL;
 	STACK_OF(X509_POLICY_NODE) *nodes, *auth_nodes = NULL;
 
@@ -739,15 +739,17 @@ X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 	/* Tree is not empty: continue */
 
 	ret = tree_calculate_authority_set(tree, &auth_nodes);
-
-	if (!ret)
+	if (ret == 0)
 		goto error;
 
-	if (!tree_calculate_user_set(tree, policy_oids, auth_nodes))
-		goto error;
+	ret2 = tree_calculate_user_set(tree, policy_oids, auth_nodes);
 
+	/* Return value 2 means auth_nodes needs to be freed */
 	if (ret == 2)
 		sk_X509_POLICY_NODE_free(auth_nodes);
+
+	if (ret2 == 0)
+		goto error;
 
 	if (tree)
 		*ptree = tree;
