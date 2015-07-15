@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.63 2015/04/23 16:59:28 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.64 2015/07/15 14:39:13 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -312,20 +312,31 @@ server_purge(struct server *srv)
 void
 serverconfig_free(struct server_config *srv_conf)
 {
+	free(srv_conf->auth);
 	free(srv_conf->return_uri);
 	free(srv_conf->tls_cert_file);
-	free(srv_conf->tls_cert);
 	free(srv_conf->tls_key_file);
-	free(srv_conf->tls_key);
+
+	if (srv_conf->tls_cert != NULL) {
+		explicit_bzero(srv_conf->tls_cert, srv_conf->tls_cert_len);
+		free(srv_conf->tls_cert);
+	}
+
+	if (srv_conf->tls_key != NULL) {
+		explicit_bzero(srv_conf->tls_key, srv_conf->tls_key_len);
+		free(srv_conf->tls_key);
+	}
 }
 
 void
 serverconfig_reset(struct server_config *srv_conf)
 {
-	srv_conf->tls_cert_file = srv_conf->tls_key_file = NULL;
-	srv_conf->tls_cert = srv_conf->tls_key = NULL;
-	srv_conf->return_uri = NULL;
 	srv_conf->auth = NULL;
+	srv_conf->return_uri = NULL;
+	srv_conf->tls_cert = NULL;
+	srv_conf->tls_cert_file = NULL;
+	srv_conf->tls_key = NULL;
+	srv_conf->tls_key_file = NULL;
 }
 
 struct server *

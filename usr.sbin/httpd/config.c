@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.37 2015/04/11 14:52:49 jsing Exp $	*/
+/*	$OpenBSD: config.c,v 1.38 2015/07/15 14:39:13 jsing Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -493,10 +493,8 @@ config_getserver(struct httpd *env, struct imsg *imsg)
  fail:
 	if (imsg->fd != -1)
 		close(imsg->fd);
-	if (srv != NULL) {
-		free(srv->srv_conf.tls_cert);
-		free(srv->srv_conf.tls_key);
-	}
+	if (srv != NULL)
+		serverconfig_free(&srv->srv_conf);
 	free(srv);
 
 	return (-1);
