@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.140 2015/07/09 05:45:25 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.141 2015/07/15 21:37:06 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1775,6 +1775,7 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if (m->m_flags & M_MCAST) {
 		switch (ifp->if_type) {
 		case IFT_ETHER:
+		case IFT_CARP:
 			ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr,
 						 desten);
 			return (0);
