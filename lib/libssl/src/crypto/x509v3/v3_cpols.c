@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_cpols.c,v 1.19 2015/02/14 15:17:52 miod Exp $ */
+/* $OpenBSD: v3_cpols.c,v 1.20 2015/07/15 17:00:35 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -334,35 +334,45 @@ policy_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 	int i;
 	CONF_VALUE *cnf;
 	POLICYINFO *pol;
-	POLICYQUALINFO *qual;
+	POLICYQUALINFO *nqual = NULL;
 
-	if (!(pol = POLICYINFO_new()))
+	if ((pol = POLICYINFO_new()) == NULL)
 		goto merr;
 	for (i = 0; i < sk_CONF_VALUE_num(polstrs); i++) {
 		cnf = sk_CONF_VALUE_value(polstrs, i);
-		if (!strcmp(cnf->name, "policyIdentifier")) {
+		if (strcmp(cnf->name, "policyIdentifier") == 0) {
 			ASN1_OBJECT *pobj;
-			if (!(pobj = OBJ_txt2obj(cnf->value, 0))) {
+
+			if ((pobj = OBJ_txt2obj(cnf->value, 0)) == NULL) {
 				X509V3err(X509V3_F_POLICY_SECTION,
 				    X509V3_R_INVALID_OBJECT_IDENTIFIER);
 				X509V3_conf_err(cnf);
 				goto err;
 			}
 			pol->policyid = pobj;
-		} else if (!name_cmp(cnf->name, "CPS")) {
-			if (!pol->qualifiers)
+		} else if (name_cmp(cnf->name, "CPS") == 0) {
+			if ((nqual = POLICYQUALINFO_new()) == NULL)
+				goto merr;
+			nqual->pqualid = OBJ_nid2obj(NID_id_qt_cps);
+			nqual->d.cpsuri = M_ASN1_IA5STRING_new();
+			if (nqual->d.cpsuri == NULL)
+				goto merr;
+			if (ASN1_STRING_set(nqual->d.cpsuri, cnf->value,
+			    strlen(cnf->value)) == 0)
+				goto merr;
+
+			if (pol->qualifiers == NULL) {
 				pol->qualifiers = sk_POLICYQUALINFO_new_null();
-			if (!(qual = POLICYQUALINFO_new()))
+				if (pol->qualifiers == NULL)
+					goto merr;
+			}
+			if (sk_POLICYQUALINFO_push(pol->qualifiers, nqual) == 0)
 				goto merr;
-			if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
-				goto merr;
-			qual->pqualid = OBJ_nid2obj(NID_id_qt_cps);
-			qual->d.cpsuri = M_ASN1_IA5STRING_new();
-			if (!ASN1_STRING_set(qual->d.cpsuri, cnf->value,
-			    strlen(cnf->value)))
-				goto merr;
-		} else if (!name_cmp(cnf->name, "userNotice")) {
+			nqual = NULL;
+		} else if (name_cmp(cnf->name, "userNotice") == 0) {
 			STACK_OF(CONF_VALUE) *unot;
+			POLICYQUALINFO *qual;
+
 			if (*cnf->value != '@') {
 				X509V3err(X509V3_F_POLICY_SECTION,
 				    X509V3_R_EXPECTED_A_SECTION_NAME);
@@ -370,7 +380,7 @@ policy_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 				goto err;
 			}
 			unot = X509V3_get_section(ctx, cnf->value + 1);
-			if (!unot) {
+			if (unot == NULL) {
 				X509V3err(X509V3_F_POLICY_SECTION,
 				    X509V3_R_INVALID_SECTION);
 				X509V3_conf_err(cnf);
@@ -378,11 +388,15 @@ policy_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 			}
 			qual = notice_section(ctx, unot, ia5org);
 			X509V3_section_free(ctx, unot);
-			if (!qual)
+			if (qual == NULL)
 				goto err;
-			if (!pol->qualifiers) pol->qualifiers =
-			    sk_POLICYQUALINFO_new_null();
-			if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
+
+			if (pol->qualifiers == NULL) {
+				pol->qualifiers = sk_POLICYQUALINFO_new_null();
+				if (pol->qualifiers == NULL)
+					goto merr;
+			}
+			if (sk_POLICYQUALINFO_push(pol->qualifiers, qual) == 0)
 				goto merr;
 		} else {
 			X509V3err(X509V3_F_POLICY_SECTION,
@@ -391,7 +405,7 @@ policy_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 			goto err;
 		}
 	}
-	if (!pol->policyid) {
+	if (pol->policyid == NULL) {
 		X509V3err(X509V3_F_POLICY_SECTION,
 		    X509V3_R_NO_POLICY_IDENTIFIER);
 		goto err;
@@ -403,6 +417,7 @@ merr:
 	X509V3err(X509V3_F_POLICY_SECTION, ERR_R_MALLOC_FAILURE);
 
 err:
+	POLICYQUALINFO_free(nqual);
 	POLICYINFO_free(pol);
 	return NULL;
 }
