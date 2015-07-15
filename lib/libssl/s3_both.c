@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.41 2015/07/14 05:41:07 doug Exp $ */
+/* $OpenBSD: s3_both.c,v 1.42 2015/07/15 21:52:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,9 +242,15 @@ ssl3_get_finished(SSL *s, int a, int b)
 
 	md_len = s->method->ssl3_enc->finish_mac_length;
 
+	if (n < 0) {
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
+		goto f_err;
+	}
+
 	CBS_init(&cbs, s->init_msg, n);
 
-	if (n < 0 || s->s3->tmp.peer_finish_md_len != md_len ||
+	if (s->s3->tmp.peer_finish_md_len != md_len ||
 	    CBS_len(&cbs) != md_len) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_BAD_DIGEST_LENGTH);

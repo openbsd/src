@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.117 2015/07/15 18:35:34 beck Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.118 2015/07/15 21:52:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -996,7 +996,6 @@ ssl3_get_server_certificate(SSL *s)
 		goto f_err;
 	}
 
-	CBS_init(&cbs, s->init_msg, n);
 
 	if ((sk = sk_X509_new_null()) == NULL) {
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
@@ -1004,8 +1003,13 @@ ssl3_get_server_certificate(SSL *s)
 		goto err;
 	}
 
-	if (n < 0 || CBS_len(&cbs) < 3)
+	if (n < 0)
 		goto truncated;
+
+	CBS_init(&cbs, s->init_msg, n);
+	if (CBS_len(&cbs) < 3)
+		goto truncated;
+
 	if (!CBS_get_u24_length_prefixed(&cbs, &cert_list) ||
 	    CBS_len(&cbs) != 0) {
 		al = SSL_AD_DECODE_ERROR;
@@ -1797,9 +1801,16 @@ ssl3_get_cert_status(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	CBS_init(&cert_status, s->init_msg, n);
+	if (n < 0) {
+		/* need at least status type + length */
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CERT_STATUS,
+		    SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+	}
 
-	if (n < 0 || !CBS_get_u8(&cert_status, &status_type) ||
+	CBS_init(&cert_status, s->init_msg, n);
+	if (!CBS_get_u8(&cert_status, &status_type) ||
 	    CBS_len(&cert_status) < 3) {
 		/* need at least status type + length */
 		al = SSL_AD_DECODE_ERROR;

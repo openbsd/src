@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.12 2015/07/14 03:38:26 doug Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.13 2015/07/15 21:52:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -303,11 +303,16 @@ ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d, int len,
 	uint16_t id;
 	CBS cbs, ciphers, mki;
 
-	CBS_init(&cbs, d, len);
+	if (len < 0) {
+		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
+		    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
+		*al = SSL_AD_DECODE_ERROR;
+		goto done;
+	}
 
+	CBS_init(&cbs, d, len);
 	/* Pull off the cipher suite list */
-	if (len < 0 ||
-	    !CBS_get_u16_length_prefixed(&cbs, &ciphers) ||
+	if (!CBS_get_u16_length_prefixed(&cbs, &ciphers) ||
 	    CBS_len(&ciphers) % 2 ||
 	    CBS_len(&cbs) != 0) {
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
