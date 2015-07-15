@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2015/06/23 15:23:14 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.69 2015/07/15 17:14:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -408,7 +408,8 @@ serveroptsl	: LISTEN ON STRING opttls port {
 
 			if (alias != NULL) {
 				/* IP-based; use name match flags from parent */
-				alias->flags = srv->srv_conf.flags;
+				alias->flags &= ~SRVFLAG_SERVER_MATCH;
+				alias->flags |= srv->srv_conf.flags & SRVFLAG_SERVER_MATCH;
 				TAILQ_INSERT_TAIL(&srv->srv_hosts,
 				    alias, entry);
 			}
