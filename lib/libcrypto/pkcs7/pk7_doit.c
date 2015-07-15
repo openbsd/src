@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.32 2015/03/19 14:00:22 tedu Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.33 2015/07/15 17:44:20 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -631,7 +631,6 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			goto err;
 	}
 	BIO_push(out, bio);
-	bio = NULL;
 
 	if (0) {
 err:
@@ -649,8 +648,6 @@ err:
 			BIO_free_all(btmp);
 		if (etmp != NULL)
 			BIO_free_all(etmp);
-		if (bio != NULL)
-			BIO_free_all(bio);
 		out = NULL;
 	}
 	return (out);
