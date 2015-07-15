@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.64 2015/07/15 14:39:13 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.65 2015/07/15 14:49:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -579,6 +579,11 @@ server_tls_readcb(int fd, short event, void *arg)
 		goto retry;
 	} else if (ret != 0) {
 		what |= EVBUFFER_ERROR;
+		goto err;
+	}
+
+	if (len == 0) {
+		what |= EVBUFFER_EOF;
 		goto err;
 	}
 
