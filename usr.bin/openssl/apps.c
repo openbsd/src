@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.27 2015/06/19 07:18:58 bcook Exp $ */
+/* $OpenBSD: apps.c,v 1.28 2015/07/15 13:54:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2284,7 +2284,8 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 		if (opt->type == OPTION_ARG ||
 		    opt->type == OPTION_ARG_FORMAT ||
 		    opt->type == OPTION_ARG_FUNC ||
-		    opt->type == OPTION_ARG_INT) {
+		    opt->type == OPTION_ARG_INT ||
+		    opt->type == OPTION_ARG_LONG) {
 			if (++i >= argc) {
 				fprintf(stderr, "missing %s argument for -%s\n",
 				    opt->argname, opt->name);
@@ -2326,6 +2327,16 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 				return (1);
 			}
 			*opt->opt.value = (int)val;
+			break;
+
+		case OPTION_ARG_LONG:
+			val = strtonum(argv[i], 0, LONG_MAX, &errstr);
+			if (errstr != NULL) {
+				fprintf(stderr, "%s %s argument for -%s\n",
+				    errstr, opt->argname, opt->name);
+				return (1);
+			}
+			*opt->opt.lvalue = (long)val;
 			break;
 
 		case OPTION_DISCARD:
