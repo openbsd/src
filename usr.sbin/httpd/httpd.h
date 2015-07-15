@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.85 2015/07/15 16:00:39 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.86 2015/07/15 23:16:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <event.h>
 #include <imsg.h>
 #include <tls.h>
+#include <vis.h>
 
 #include "patterns.h"
 
@@ -47,6 +48,7 @@
 #define HTTPD_LOGROOT		"/logs"
 #define HTTPD_ACCESS_LOG	"access.log"
 #define HTTPD_ERROR_LOG		"error.log"
+#define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_QUOTE|VIS_CSTYLE
 #define HTTPD_TLS_CERT		"/etc/ssl/server.crt"
 #define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
 #define HTTPD_TLS_CIPHERS	"HIGH:!aNULL"

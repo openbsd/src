@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.68 2015/07/15 17:29:11 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.69 2015/07/15 23:16:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -41,6 +41,7 @@
 #include <event.h>
 #include <imsg.h>
 #include <tls.h>
+#include <vis.h>
 
 #include "httpd.h"
 
@@ -1037,7 +1038,7 @@ server_log(struct client *clt, const char *msg)
 {
 	char			 ibuf[HOST_NAME_MAX+1], obuf[HOST_NAME_MAX+1];
 	struct server_config	*srv_conf = clt->clt_srv_conf;
-	char			*ptr = NULL;
+	char			*ptr = NULL, *vmsg = NULL;
 	int			 debug_cmd = -1;
 	extern int		 verbose;
 
@@ -1067,13 +1068,14 @@ server_log(struct client *clt, const char *msg)
 		if (EVBUFFER_LENGTH(clt->clt_log) &&
 		    evbuffer_add_printf(clt->clt_log, "\n") != -1)
 			ptr = evbuffer_readline(clt->clt_log);
+		(void)stravis(&vmsg, msg, HTTPD_LOGVIS);
 		server_sendlog(srv_conf, debug_cmd, "server %s, "
 		    "client %d (%d active), %s:%u -> %s, "
 		    "%s%s%s", srv_conf->name, clt->clt_id, server_clients,
-		    ibuf, ntohs(clt->clt_port), obuf, msg,
+		    ibuf, ntohs(clt->clt_port), obuf, vmsg == NULL ? "" : vmsg,
 		    ptr == NULL ? "" : ",", ptr == NULL ? "" : ptr);
-		if (ptr != NULL)
-			free(ptr);
+		free(vmsg);
+		free(ptr);
 	}
 }
 

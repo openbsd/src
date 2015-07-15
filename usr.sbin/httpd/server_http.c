@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.87 2015/07/15 22:23:00 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.88 2015/07/15 23:16:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1422,7 +1422,6 @@ server_log_http(struct client *clt, u_int code, size_t len)
 {
 	static char		 tstamp[64];
 	static char		 ip[INET6_ADDRSTRLEN];
-	static const int	 vis_http = VIS_NL|VIS_TAB|VIS_CSTYLE;
 	time_t			 t;
 	struct kv		 key, *agent, *referrer;
 	struct tm		*tm;
@@ -1465,10 +1464,10 @@ server_log_http(struct client *clt, u_int code, size_t len)
 	case LOG_FORMAT_COMMON:
 		/* Use vis to encode input values from the header */
 		if (clt->clt_remote_user &&
-		    stravis(&user, clt->clt_remote_user, vis_http) == -1)
+		    stravis(&user, clt->clt_remote_user, HTTPD_LOGVIS) == -1)
 			goto done;
 		if (desc->http_version &&
-		    stravis(&version, desc->http_version, vis_http) == -1)
+		    stravis(&version, desc->http_version, HTTPD_LOGVIS) == -1)
 			goto done;
 
 		/* The following should be URL-encoded */
@@ -1506,13 +1505,13 @@ server_log_http(struct client *clt, u_int code, size_t len)
 
 		/* Use vis to encode input values from the header */
 		if (clt->clt_remote_user &&
-		    stravis(&user, clt->clt_remote_user, vis_http) == -1)
+		    stravis(&user, clt->clt_remote_user, HTTPD_LOGVIS) == -1)
 			goto done;
 		if (desc->http_version &&
-		    stravis(&version, desc->http_version, vis_http) == -1)
+		    stravis(&version, desc->http_version, HTTPD_LOGVIS) == -1)
 			goto done;
 		if (agent &&
-		    stravis(&agent_v, agent->kv_value, vis_http) == -1)
+		    stravis(&agent_v, agent->kv_value, HTTPD_LOGVIS) == -1)
 			goto done;
 
 		/* The following should be URL-encoded */
