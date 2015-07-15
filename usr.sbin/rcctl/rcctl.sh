@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.69 2015/07/14 23:16:56 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.70 2015/07/15 03:00:46 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -166,8 +166,10 @@ svc_ls()
 
 	case ${_lsarg} in
 		all)
-			ls_rcscripts
-			for _svc in ${_special_services}; do echo ${_svc}; done
+			(
+				ls_rcscripts
+				echo ${_special_services} | tr "[:blank:]" "\n"
+			) | sort
 			;;
 		faulty)
 			for _svc in $(svc_ls on); do
