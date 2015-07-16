@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.3 2015/07/16 18:18:07 reyk Exp $
+#	$OpenBSD: funcs.pl,v 1.4 2015/07/16 18:50:09 reyk Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -222,7 +222,8 @@ sub http_response {
 	if ($chunked) {
 		read_chunked($self);
 	} else {
-		read_char($self, $vers eq "1.1" ? $len : undef)
+		#$len = $vers eq "1.1" ? $len : undef;
+		read_char($self, $len)
 		    if $method eq "GET";
 	}
 }
@@ -289,10 +290,12 @@ sub read_char {
 		print STDERR "Max\n";
 	} else {
 		while ((my $r = sysread(STDIN, my $buf, POSIX::BUFSIZ))) {
+			my $pct;
 			$_ = $buf;
 			$len += $r;
 			$ctx->add($_);
-			print STDERR ".";
+			$pct = ($len / $max) * 100.0;
+			printf(STDERR "%.2f%%\n", $pct);
 			if (defined($max) && $len >= $max) {
 				print STDERR "\nMax";
 				last;
