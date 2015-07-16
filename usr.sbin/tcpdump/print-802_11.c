@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.19 2015/07/16 20:57:13 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.20 2015/07/16 23:34:54 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -401,6 +401,7 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 				ieee80211_print_element(data, len);
 			break;
 		case IEEE80211_ELEMID_CSA:
+			ELEM_CHECK(3);
 			printf(", csa (chan %u count %u%s)", data[1], data[2],
 			    (data[0] == 1) ? " noTX" : "");
 			break;
