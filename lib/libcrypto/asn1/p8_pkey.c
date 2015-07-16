@@ -1,4 +1,4 @@
-/* $OpenBSD: p8_pkey.c,v 1.15 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: p8_pkey.c,v 1.16 2015/07/16 18:21:57 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,7 +68,9 @@ pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	/* Since the structure must still be valid use ASN1_OP_FREE_PRE */
 	if (operation == ASN1_OP_FREE_PRE) {
 		PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
-		if (key->pkey->value.octet_string)
+		if (key->pkey != NULL &&
+		    key->pkey->type == V_ASN1_OCTET_STRING &&
+		    key->pkey->value.octet_string != NULL)
 			OPENSSL_cleanse(key->pkey->value.octet_string->data,
 			    key->pkey->value.octet_string->length);
 	}
