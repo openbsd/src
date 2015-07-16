@@ -2783,15 +2783,13 @@ PP(pp_srand)
                              "Integer overflow in srand");
             anum = UV_MAX;
         }
+        (void)srand48_deterministic((Rand_seed_t)anum);
     }
     else {
-        anum = 0;
+        anum = seed();
+        (void)seedDrand01((Rand_seed_t)anum);
     }
 
-    if (anum)
-        (void)srand48_deterministic((Rand_seed_t)anum);
-    else
-    (void)seedDrand01((Rand_seed_t)anum);
     PL_srand_called = TRUE;
     if (anum)
 	XPUSHu(anum);
