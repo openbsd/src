@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.3 2015/07/16 22:33:01 zhuk Exp $ */
+/* $OpenBSD: parse.y,v 1.4 2015/07/16 23:02:56 nicm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -43,6 +43,10 @@ FILE *yyfp;
 
 struct rule **rules;
 int nrules, maxrules;
+
+void yyerror(const char *, ...);
+int yylex(void);
+int yyparse(void);
 
 %}
 
@@ -143,11 +147,7 @@ yyerror(const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	fprintf(stderr, "doas: ");
-	vfprintf(stderr, fmt, va);
-	fprintf(stderr, "\n");
-	va_end(va);
-	exit(1);
+	verrx(1, fmt, va);
 }
 
 struct keyword {
