@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.5 2015/07/16 22:11:01 nicm Exp $ */
+/* $OpenBSD: doas.c,v 1.6 2015/07/16 23:22:08 nicm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -14,7 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <limits.h>
 #include <login_cap.h>
@@ -139,12 +141,21 @@ parseconfig(const char *filename)
 {
 	extern FILE *yyfp;
 	extern int yyparse(void);
+	struct stat sb;
 
 	yyfp = fopen(filename, "r");
 	if (!yyfp) {
 		fprintf(stderr, "doas is not enabled.\n");
 		exit(1);
 	}
+
+	if (fstat(fileno(yyfp), &sb) != 0)
+		err(1, "fstat(\"%s\")", filename);
+	if ((sb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
+		errx(1, "%s is writable by group or other", filename);
+	if (sb.st_uid != 0)
+		errx(1, "%s is not owned by root", filename);
+
 	yyparse();
 	fclose(yyfp);
 }
