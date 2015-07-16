@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.285 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.286 2015/07/16 21:14:21 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -158,10 +158,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	 * though (e.g., traceroute) have a source address of zeroes.
 	 */
 	if (ip->ip_src.s_addr == INADDR_ANY) {
-		if (flags & IP_ROUTETOETHER) {
-			error = EINVAL;
-			goto bad;
-		}
 		donerouting = 1;
 
 		if (ro == NULL) {
@@ -291,12 +287,7 @@ reroute:
  done_spd:
 #endif /* IPSEC */
 
-	if (flags & IP_ROUTETOETHER) {
-		dst = satosin(&ro->ro_dst);
-		ifp = ro->ro_rt->rt_ifp;
-		mtu = ifp->if_mtu;
-		ro->ro_rt = NULL;
-	} else if (donerouting == 0) {
+	if (donerouting == 0) {
 		if (ro == NULL) {
 			ro = &iproute;
 			memset(ro, 0, sizeof(*ro));
@@ -515,7 +506,7 @@ sendit:
 #if NPF > 0
 		if ((encif = enc_getif(tdb->tdb_rdomain,
 		    tdb->tdb_tap)) == NULL ||
-		    pf_test(AF_INET, PF_OUT, encif, &m, NULL) != PF_PASS) {
+		    pf_test(AF_INET, PF_OUT, encif, &m) != PF_PASS) {
 			error = EACCES;
 			m_freem(m);
 			goto done;
@@ -592,7 +583,7 @@ sendit:
 	 * Packet filter
 	 */
 #if NPF > 0
-	if (pf_test(AF_INET, PF_OUT, ifp, &m, NULL) != PF_PASS) {
+	if (pf_test(AF_INET, PF_OUT, ifp, &m) != PF_PASS) {
 		error = EHOSTUNREACH;
 		m_freem(m);
 		goto done;

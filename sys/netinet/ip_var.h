@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.59 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.60 2015/07/16 21:14:21 mpi Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ struct ipq {
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0800		/* pmtu discovery, set DF */
-#define IP_ROUTETOETHER		0x1000		/* ether addresses given */
 
 extern struct ipstat ipstat;
 extern LIST_HEAD(ipqhead, ipq)	ipq;	/* ip reass. queue */

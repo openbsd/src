@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.176 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.177 2015/07/16 21:14:21 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ reroute:
 #if NPF > 0
 		if ((encif = enc_getif(tdb->tdb_rdomain,
 		    tdb->tdb_tap)) == NULL ||
-		    pf_test(AF_INET6, PF_OUT, encif, &m, NULL) != PF_PASS) {
+		    pf_test(AF_INET6, PF_OUT, encif, &m) != PF_PASS) {
 			error = EHOSTUNREACH;
 			m_freem(m);
 			goto done;
@@ -726,7 +726,7 @@ reroute:
 	}
 
 #if NPF > 0
-	if (pf_test(AF_INET6, PF_OUT, ifp, &m, NULL) != PF_PASS) {
+	if (pf_test(AF_INET6, PF_OUT, ifp, &m) != PF_PASS) {
 		error = EHOSTUNREACH;
 		m_freem(m);
 		goto done;

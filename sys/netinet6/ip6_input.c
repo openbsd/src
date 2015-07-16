@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.143 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.144 2015/07/16 21:14:21 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -333,7 +333,7 @@ ip6_input(struct mbuf *m)
          * Packet filter
          */
 	odst = ip6->ip6_dst;
-	if (pf_test(AF_INET6, PF_IN, ifp, &m, NULL) != PF_PASS)
+	if (pf_test(AF_INET6, PF_IN, ifp, &m) != PF_PASS)
 		goto bad;
 	if (m == NULL)
 		return;

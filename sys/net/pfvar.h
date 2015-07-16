@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.415 2015/06/05 13:22:34 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.416 2015/07/16 21:14:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1255,8 +1255,6 @@ struct pf_pdesc {
 
 	struct pfi_kif	*kif;		/* incoming interface */
 	struct mbuf	*m;		/* mbuf containing the packet */
-	struct ether_header
-			*eh;
 	struct pf_addr	*src;		/* src address */
 	struct pf_addr	*dst;		/* dst address */
 	u_int16_t	*pcksum;	/* proto cksum */
@@ -1804,8 +1802,7 @@ int				 pf_setup_pdesc(struct pf_pdesc *, void *,
 				    sa_family_t, int, struct pfi_kif *,
 				    struct mbuf *, u_short *);
 
-int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **,
-	    struct ether_header *);
+int	pf_test(sa_family_t, int, struct ifnet *, struct mbuf **);
 
 void	pf_poolmask(struct pf_addr *, struct pf_addr*,
 	    struct pf_addr *, struct pf_addr *, sa_family_t);
