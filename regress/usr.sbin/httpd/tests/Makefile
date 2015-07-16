@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2015/07/16 16:35:57 reyk Exp $
+#	$OpenBSD: Makefile,v 1.2 2015/07/16 17:00:41 reyk Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -68,7 +68,7 @@ run-regress-$a: $a ${HTDOCS_MD5}
 ${.OBJDIR}/$d:
 	@echo '\n======== file: $d ========'
 .if (${HTDOCS_SPARSE} != "yes")
-	@dd if=/dev/arandom of=$@ count=$$(($d / 512)) bs=512 status=none
+	@dd if=/dev/arandom of=$@ count=$$(($d / 512)) bs=512
 .else
 	@dd of=$@ seek=$$(($d / 512)) bs=512 count=0 status=none
 .endif
