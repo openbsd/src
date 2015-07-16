@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_prn.c,v 1.7 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: ocsp_prn.c,v 1.8 2015/07/16 02:16:19 miod Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -174,11 +174,15 @@ OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* o, unsigned long flags)
 	    inf->requestExtensions, flags, 4))
 		goto err;
 	if (sig) {
-		X509_signature_print(bp, sig->signatureAlgorithm,
-		    sig->signature);
+		if (X509_signature_print(bp, sig->signatureAlgorithm,
+		    sig->signature) == 0)
+			goto err;
 		for (i = 0; i < sk_X509_num(sig->certs); i++) {
-			X509_print(bp, sk_X509_value(sig->certs, i));
-			PEM_write_bio_X509(bp, sk_X509_value(sig->certs, i));
+			if (X509_print(bp, sk_X509_value(sig->certs, i)) == 0)
+				goto err;
+			if (PEM_write_bio_X509(bp,
+			    sk_X509_value(sig->certs, i)) == 0)
+				goto err;
 		}
 	}
 	return 1;
