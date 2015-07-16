@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.68 2015/06/28 18:54:54 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.69 2015/07/16 21:12:12 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -287,8 +287,9 @@ start:	movw	$0x1234,0x472			# warm boot
 	/*
 	 * Copy the boot arguments to bootinfo[] in machdep.c.
 	 *
-	 * We are passed the size of bootinfo[] in bootinfo_size, and
-	 * we report how much data /boot passed us back in the same variable.
+	 * We are passed the size of the data /boot passed to us in
+	 * 28(%esp). We copy up to bootinfo_size bytes of data into
+	 * bootinfo and report back how much we copied in bootinfo_size.
 	 *
 	 * machdep.c can then take action if bootinfo_size >= bootinfo[]
 	 * (which would meant that we may have been passed too much data).
@@ -296,7 +297,7 @@ start:	movw	$0x1234,0x472			# warm boot
  	movl	28(%esp), %eax
 	movl	%eax, %ecx
 	cmpl	RELOC(bootinfo_size), %ecx	/* Too much? */
-	jnc	bi_size_ok
+	jb	bi_size_ok
 	movl	RELOC(bootinfo_size), %ecx	/* Only copy this much */
 bi_size_ok:
 	movl	%eax, RELOC(bootinfo_size)	/* Report full amount */
