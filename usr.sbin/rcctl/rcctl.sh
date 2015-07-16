@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.72 2015/07/16 21:52:16 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.73 2015/07/16 22:03:02 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -455,7 +455,7 @@ if [ -n "${var}" ]; then
 		rcctl_err "\"${svc}_class\" is a read-only variable set in login.conf(5)"
 	if svc_is_special ${svc}; then
 		if [[ ${action} == set && ${var} != status ]] || \
-			[[ ${action} == @(get|getdef) && ${var} == @(timeout|user) ]]; then
+			[[ ${action} == @(get|getdef) && ${var} == @(class|timeout|user) ]]; then
 			rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
 		fi
 	fi
