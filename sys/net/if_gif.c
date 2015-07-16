@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.75 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.76 2015/07/16 21:21:49 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -62,10 +62,18 @@
 #include "bpfilter.h"
 #include "bridge.h"
 
+#define GIF_MTU		(1280)	/* Default MTU */
+#define GIF_MTU_MIN	(1280)	/* Minimum MTU */
+#define GIF_MTU_MAX	(8192)	/* Maximum MTU */
+
 void	gifattach(int);
 int	gif_clone_create(struct if_clone *, int);
 int	gif_clone_destroy(struct ifnet *);
 int	gif_checkloop(struct ifnet *, struct mbuf *);
+void	gif_start(struct ifnet *);
+int	gif_ioctl(struct ifnet *, u_long, caddr_t);
+int	gif_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *);
 
 /*
  * gif global variable definitions

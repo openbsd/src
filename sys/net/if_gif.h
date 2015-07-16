@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.h,v 1.11 2014/07/09 15:35:53 mpi Exp $	*/
+/*	$OpenBSD: if_gif.h,v 1.12 2015/07/16 21:21:49 mpi Exp $	*/
 /*	$KAME: if_gif.h,v 1.17 2000/09/11 11:36:41 sumikawa Exp $	*/
 
 /*
@@ -45,15 +45,6 @@ struct gif_softc {
 	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
 };
 
-#define GIF_MTU		(1280)	/* Default MTU */
-#define	GIF_MTU_MIN	(1280)	/* Minimum MTU */
-#define	GIF_MTU_MAX	(8192)	/* Maximum MTU */
-
 extern LIST_HEAD(gif_softc_head, gif_softc) gif_softc_list;
 
-/* Prototypes */
-int gif_output(struct ifnet *, struct mbuf *,
-		    struct sockaddr *, struct rtentry *);
-int gif_ioctl(struct ifnet *, u_long, caddr_t);
-void gif_start(struct ifnet *);
 #endif /* _NET_IF_GIF_H_ */
