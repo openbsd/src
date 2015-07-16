@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.3 2015/02/08 10:22:45 doug Exp $ */
+/* $OpenBSD: engine.c,v 1.4 2015/07/16 15:24:41 beck Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
@@ -457,7 +457,14 @@ skip_arg_loop:
 				if (ENGINE_init(e)) {
 					BIO_printf(bio_out, "[ available ]\n");
 					util_do_cmds(e, post_cmds, bio_out, indent);
-					ENGINE_finish(e);
+					/*
+					 * XXX hell lacks a place for people who write functions with
+					 * XXX unusable return semantics.
+					 */
+					if (ENGINE_finish(e) != 0 ||
+					    ERR_GET_REASON(ERR_peek_last_error()) ==
+					    ENGINE_R_FINISH_FAILED)
+						e = NULL;
 				} else {
 					BIO_printf(bio_out, "[ unavailable ]\n");
 					if (test_avail_noise)
@@ -465,7 +472,8 @@ skip_arg_loop:
 					ERR_clear_error();
 				}
 			}
-			if ((verbose > 0) && !util_verbose(e, verbose, bio_out, indent))
+			if ((verbose > 0) && e != NULL &&
+			    !util_verbose(e, verbose, bio_out, indent))
 				goto end;
 			ENGINE_free(e);
 		} else
