@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.90 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.91 2015/07/16 15:28:38 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
 void nd6_dad_ns_input(struct ifaddr *);
 void nd6_dad_duplicated(struct dadq *);
 
-static int dad_ignore_ns = 0;	/* ignore NS in DAD - specwise incorrect*/
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
 
 /*
@@ -1418,18 +1417,6 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 	taddr6 = &ia6->ia_addr.sin6_addr;
 	duplicate = 0;
 	dp = nd6_dad_find(ifa);
-
-	/* Quickhack - completely ignore DAD NS packets */
-	if (dad_ignore_ns) {
-		char addr[INET6_ADDRSTRLEN];
-
-		nd6log((LOG_INFO,
-		    "nd6_dad_ns_input: ignoring DAD NS packet for "
-		    "address %s(%s)\n",
-		    inet_ntop(AF_INET6, taddr6, addr, sizeof(addr)),
-		    ifa->ifa_ifp->if_xname));
-		return;
-	}
 
 	/*
 	 * if I'm yet to start DAD, someone else started using this address
