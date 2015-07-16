@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.94 2015/04/25 15:28:18 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.95 2015/07/16 18:26:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,8 @@ const char	*print_enc_alg(u_int8_t);
 void		 print_announce(struct peer_config *, const char *);
 void		 print_rule(struct peer *, struct filter_rule *);
 const char *	 mrt_type(enum mrt_type);
-void		 print_mrt(u_int32_t, u_int32_t, const char *, const char *);
+void		 print_mrt(struct bgpd_config *, u_int32_t, u_int32_t,
+		    const char *, const char *);
 void		 print_groups(struct bgpd_config *, struct peer *);
 int		 peer_compare(const void *, const void *);
 
@@ -461,7 +462,7 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tsoftreconfig out no\n", c);
 
 
-	print_mrt(p->id, p->groupid, c, "\t");
+	print_mrt(conf, p->id, p->groupid, c, "\t");
 
 	printf("%s}\n", c);
 }
@@ -628,17 +629,16 @@ mrt_type(enum mrt_type t)
 	return "unfluffy MRT";
 }
 
-struct mrt_head	*xmrt_l = NULL;
-
 void
-print_mrt(u_int32_t pid, u_int32_t gid, const char *prep, const char *prep2)
+print_mrt(struct bgpd_config *conf, u_int32_t pid, u_int32_t gid,
+    const char *prep, const char *prep2)
 {
 	struct mrt	*m;
 
-	if (xmrt_l == NULL)
+	if (conf->mrt == NULL)
 		return;
 
-	LIST_FOREACH(m, xmrt_l, entry)
+	LIST_FOREACH(m, conf->mrt, entry)
 		if ((gid != 0 && m->group_id == gid) ||
 		    (m->peer_id == pid && m->group_id == gid)) {
 			printf("%s%sdump ", prep, prep2);
@@ -722,7 +722,6 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	struct rde_rib		*rr;
 	struct rdomain		*rd;
 
-	xmrt_l = mrt_l;
 	print_mainconf(conf);
 	printf("\n");
 	TAILQ_FOREACH(n, net_l, entry)
@@ -742,7 +741,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 			    "no" : "yes");
 	}
 	printf("\n");
-	print_mrt(0, 0, "", "");
+	print_mrt(conf, 0, 0, "", "");
 	printf("\n");
 	print_groups(conf, peer_l);
 	printf("\n");

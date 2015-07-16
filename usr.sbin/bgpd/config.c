@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.60 2015/03/14 02:43:02 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.61 2015/07/16 18:26:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -38,11 +38,93 @@ u_int32_t	get_bgpid(void);
 int		host_v4(const char *, struct bgpd_addr *, u_int8_t *);
 int		host_v6(const char *, struct bgpd_addr *);
 
+struct bgpd_config *
+new_config(void)
+{
+	struct bgpd_config *conf;
+
+	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
+		fatal(NULL);
+
+	conf->min_holdtime = MIN_HOLDTIME;
+	conf->bgpid = get_bgpid();
+	conf->fib_priority = RTP_BGP;
+
+	if ((conf->csock = strdup(SOCKET_NAME)) == NULL)
+		fatal(NULL);
+
+	if ((conf->filters = calloc(1, sizeof(struct filter_head))) == NULL)
+		fatal(NULL);
+	if ((conf->listen_addrs = calloc(1, sizeof(struct listen_addrs))) ==
+	    NULL)
+		fatal(NULL);
+	if ((conf->mrt = calloc(1, sizeof(struct mrt_head))) == NULL)
+		fatal(NULL);
+
+	/* init the various list for later */
+	TAILQ_INIT(&conf->networks);
+	SIMPLEQ_INIT(&conf->rdomains);
+
+	TAILQ_INIT(conf->filters);
+	TAILQ_INIT(conf->listen_addrs);
+	LIST_INIT(conf->mrt);
+
+	return (conf);
+}
+
+void
+free_config(struct bgpd_config *conf)
+{
+	struct rdomain		*rd;
+	struct network		*n;
+	struct listen_addr	*la;
+	struct mrt		*m;
+
+	while ((rd = SIMPLEQ_FIRST(&conf->rdomains)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&conf->rdomains, entry);
+		filterset_free(&rd->export);
+		filterset_free(&rd->import);
+
+		while ((n = TAILQ_FIRST(&rd->net_l)) != NULL) {
+			TAILQ_REMOVE(&rd->net_l, n, entry);
+			filterset_free(&n->net.attrset);
+			free(n);
+		}
+		free(rd);
+	}
+
+	while ((n = TAILQ_FIRST(&conf->networks)) != NULL) {
+		TAILQ_REMOVE(&conf->networks, n, entry);
+		filterset_free(&n->net.attrset);
+		free(n);
+	}
+
+	filterlist_free(conf->filters);
+
+	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
+		TAILQ_REMOVE(conf->listen_addrs, la, entry);
+		free(la);
+	}
+	free(conf->listen_addrs);
+
+	while ((m = LIST_FIRST(conf->mrt)) != NULL) {
+		LIST_REMOVE(m, entry);
+		free(m);
+	}
+	free(conf->mrt);
+
+	free(conf->csock);
+	free(conf->rcsock);
+
+	free(conf);
+}
+
 int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
-    struct peer *peer_l, struct listen_addrs *listen_addrs)
+    struct peer *peer_l)
 {
 	struct listen_addr	*nla, *ola, *next;
+	struct network		*n;
 
 	/*
 	 * merge the freshly parsed conf into the running xconf
@@ -53,91 +135,100 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		return (1);
 	}
 
-	if (!conf->min_holdtime)
-		conf->min_holdtime = MIN_HOLDTIME;
-
-	if (!conf->bgpid)
-		conf->bgpid = get_bgpid();
 
 	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
 		conf->clusterid = conf->bgpid;
 
-	if (!conf->fib_priority)
-		conf->fib_priority = RTP_BGP;
 
-	free(xconf->csock);
-	free(xconf->rcsock);
-
-	conf->listen_addrs = xconf->listen_addrs;
 
 	/* adjust FIB priority if changed */
 	/* if xconf is uninitalized we get RTP_NONE */
-	if (xconf->fib_priority != RTP_NONE && xconf->fib_priority !=
-	    conf->fib_priority) {
+	if (xconf->fib_priority != conf->fib_priority) {
 		kr_fib_decouple_all(xconf->fib_priority);
 		kr_fib_update_prio_all(conf->fib_priority);
 		kr_fib_couple_all(conf->fib_priority);
 	}
 
-	memcpy(xconf, conf, sizeof(struct bgpd_config));
+	/* take over the easy config changes */
+	xconf->flags = conf->flags;
+	xconf->log = conf->log;
+	xconf->bgpid = conf->bgpid;
+	xconf->clusterid = conf->clusterid;
+	xconf->as = conf->as;
+	xconf->short_as = conf->short_as;
+	xconf->holdtime = conf->holdtime;
+	xconf->min_holdtime = conf->min_holdtime;
+	xconf->connectretry = conf->connectretry;
+	xconf->fib_priority = conf->fib_priority;
 
-	if (conf->listen_addrs == NULL) {
-		/* there is no old conf, just copy new one over */
-		xconf->listen_addrs = listen_addrs;
-		TAILQ_FOREACH(nla, xconf->listen_addrs, entry)
-			nla->reconf = RECONF_REINIT;
+	/* clear old control sockets and use new */
+	free(xconf->csock);
+	free(xconf->rcsock);
+	xconf->csock = conf->csock;
+	xconf->rcsock = conf->rcsock;
+	/* set old one to NULL so we don't double free */
+	conf->csock = NULL;
+	conf->rcsock = NULL;
 
-	} else {
-		/*
-		 * merge new listeners:
-		 * -flag all existing ones as to be deleted
-		 * -those that are in both new and old: flag to keep
-		 * -new ones get inserted and flagged as to reinit
-		 * -remove all that are still flagged for deletion
-		 */
+	/* clear all current filters and take over the new ones */
+	filterlist_free(xconf->filters);
+	xconf->filters = conf->filters;	
+	conf->filters = NULL;
 
-		TAILQ_FOREACH(nla, xconf->listen_addrs, entry)
-			nla->reconf = RECONF_DELETE;
-
-		/* no new listeners? preserve default ones */
-		if (TAILQ_EMPTY(listen_addrs))
-			TAILQ_FOREACH(ola, xconf->listen_addrs, entry)
-				if (ola->flags & DEFAULT_LISTENER)
-					ola->reconf = RECONF_KEEP;
-
-		for (nla = TAILQ_FIRST(listen_addrs); nla != NULL; nla = next) {
-			next = TAILQ_NEXT(nla, entry);
-
-			TAILQ_FOREACH(ola, xconf->listen_addrs, entry)
-				if (!memcmp(&nla->sa, &ola->sa,
-				    sizeof(nla->sa)))
-					break;
-
-			if (ola == NULL) {
-				/* new listener, copy over */
-				TAILQ_REMOVE(listen_addrs, nla, entry);
-				TAILQ_INSERT_TAIL(xconf->listen_addrs,
-				    nla, entry);
-				nla->reconf = RECONF_REINIT;
-			} else		/* exists, just flag */
-				ola->reconf = RECONF_KEEP;
-		}
-
-		for (nla = TAILQ_FIRST(xconf->listen_addrs); nla != NULL;
-		    nla = next) {
-			next = TAILQ_NEXT(nla, entry);
-			if (nla->reconf == RECONF_DELETE) {
-				TAILQ_REMOVE(xconf->listen_addrs, nla, entry);
-				free(nla);
-			}
-		}
-
-		while ((ola = TAILQ_FIRST(listen_addrs)) != NULL) {
-			TAILQ_REMOVE(listen_addrs, ola, entry);
-			free(ola);
-		}
-		free(listen_addrs);
+	/* switch the network statements, but first remove the old ones */
+	while ((n = TAILQ_FIRST(&xconf->networks)) != NULL) {
+		TAILQ_REMOVE(&xconf->networks, n, entry);
+		filterset_free(&n->net.attrset);
+		free(n);
 	}
+	while ((n = TAILQ_FIRST(&conf->networks)) != NULL) {
+		TAILQ_REMOVE(&conf->networks, n, entry);
+		TAILQ_INSERT_TAIL(&xconf->networks, n, entry);
+	}
+
+	/*
+	 * merge new listeners:
+	 * -flag all existing ones as to be deleted
+	 * -those that are in both new and old: flag to keep
+	 * -new ones get inserted and flagged as to reinit
+	 * -remove all that are still flagged for deletion
+	 */
+
+	TAILQ_FOREACH(nla, xconf->listen_addrs, entry)
+		nla->reconf = RECONF_DELETE;
+
+	/* no new listeners? preserve default ones */
+	if (TAILQ_EMPTY(conf->listen_addrs))
+		TAILQ_FOREACH(ola, xconf->listen_addrs, entry)
+			if (ola->flags & DEFAULT_LISTENER)
+				ola->reconf = RECONF_KEEP;
+	/* else loop over listeners and merge configs */
+	for (nla = TAILQ_FIRST(conf->listen_addrs); nla != NULL; nla = next) {
+		next = TAILQ_NEXT(nla, entry);
+
+		TAILQ_FOREACH(ola, xconf->listen_addrs, entry)
+			if (!memcmp(&nla->sa, &ola->sa, sizeof(nla->sa)))
+				break;
+
+		if (ola == NULL) {
+			/* new listener, copy over */
+			TAILQ_REMOVE(conf->listen_addrs, nla, entry);
+			TAILQ_INSERT_TAIL(xconf->listen_addrs, nla, entry);
+			nla->reconf = RECONF_REINIT;
+		} else		/* exists, just flag */
+			ola->reconf = RECONF_KEEP;
+	}
+	/* finally clean up the original list and remove all stale entires */
+	for (nla = TAILQ_FIRST(xconf->listen_addrs); nla != NULL; nla = next) {
+		next = TAILQ_NEXT(nla, entry);
+		if (nla->reconf == RECONF_DELETE) {
+			TAILQ_REMOVE(xconf->listen_addrs, nla, entry);
+			free(nla);
+		}
+	}
+
+	/* conf is merged so free it */
+	free_config(conf);
 
 	return (0);
 }

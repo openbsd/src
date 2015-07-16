@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.176 2015/03/14 02:43:02 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.177 2015/07/16 18:26:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,8 +41,7 @@ __dead void	usage(void);
 int		main(int, char *[]);
 int		check_child(pid_t, const char *);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
-int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
-		    struct peer **);
+int		reconfigure(char *, struct bgpd_config *, struct peer **);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
 
@@ -102,11 +101,8 @@ int	cmd_opts;
 int
 main(int argc, char *argv[])
 {
-	struct bgpd_config	 conf;
-	struct mrt_head		 mrt_l;
+	struct bgpd_config	*conf;
 	struct peer		*peer_l, *p;
-	struct mrt		*m;
-	struct listen_addr	*la;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
@@ -123,8 +119,7 @@ main(int argc, char *argv[])
 	log_init(1);		/* log to stderr until daemonized */
 	log_verbose(1);
 
-	bzero(&conf, sizeof(conf));
-	LIST_INIT(&mrt_l);
+	conf = new_config();
 	peer_l = NULL;
 
 	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
@@ -164,17 +159,12 @@ main(int argc, char *argv[])
 		usage();
 
 	if (cmd_opts & BGPD_OPT_NOACTION) {
-		struct network_head	net_l;
-		struct rdomain_head	rdom_l;
-		struct filter_head	rules_l;
-
-		if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l,
-		    &rules_l, &rdom_l))
+		if (parse_config(conffile, conf, &peer_l))
 			exit(1);
 
 		if (cmd_opts & BGPD_OPT_VERBOSE)
-			print_config(&conf, &ribnames, &net_l, peer_l, &rules_l,
-			    &mrt_l, &rdom_l);
+			print_config(conf, &ribnames, &conf->networks, peer_l,
+			    conf->filters, conf->mrt, &conf->rdomains);
 		else
 			fprintf(stderr, "configuration OK\n");
 		exit(0);
@@ -234,7 +224,7 @@ main(int argc, char *argv[])
 	mrt_init(ibuf_rde, ibuf_se);
 	if ((rfd = kr_init()) == -1)
 		quit = 1;
-	quit = reconfigure(conffile, &conf, &mrt_l, &peer_l);
+	quit = reconfigure(conffile, conf, &peer_l);
 	if (pftable_clear_all() != 0)
 		quit = 1;
 
@@ -251,7 +241,7 @@ main(int argc, char *argv[])
 		pfd[PFD_SOCK_ROUTE].fd = rfd;
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 
-		timeout = mrt_timeout(&mrt_l);
+		timeout = mrt_timeout(conf->mrt);
 		if (timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
 
@@ -275,13 +265,13 @@ main(int argc, char *argv[])
 			}
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
-			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION, &conf) ==
+			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION, conf) ==
 			    -1)
 				quit = 1;
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
-			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE, &conf) ==
+			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE, conf) ==
 			    -1)
 				quit = 1;
 		}
@@ -295,7 +285,7 @@ main(int argc, char *argv[])
 			u_int	error;
 
 			reconfig = 0;
-			switch (reconfigure(conffile, &conf, &mrt_l, &peer_l)) {
+			switch (reconfigure(conffile, conf, &peer_l)) {
 			case -1:	/* fatal error */
 				quit = 1;
 				break;
@@ -330,7 +320,7 @@ main(int argc, char *argv[])
 
 		if (mrtdump) {
 			mrtdump = 0;
-			mrt_handler(&mrt_l);
+			mrt_handler(conf->mrt);
 		}
 	}
 
@@ -346,23 +336,14 @@ main(int argc, char *argv[])
 		peer_l = p->next;
 		free(p);
 	}
-	while ((m = LIST_FIRST(&mrt_l)) != NULL) {
-		LIST_REMOVE(m, entry);
-		free(m);
-	}
-	if (conf.listen_addrs)
-		while ((la = TAILQ_FIRST(conf.listen_addrs)) != NULL) {
-			TAILQ_REMOVE(conf.listen_addrs, la, entry);
-			close(la->fd);
-			free(la);
-		}
 
-	control_cleanup(conf.csock);
-	control_cleanup(conf.rcsock);
+	control_cleanup(conf->csock);
+	control_cleanup(conf->rcsock);
 	carp_demote_shutdown();
-	kr_shutdown(conf.fib_priority);
+	kr_shutdown(conf->fib_priority);
 	pftable_clear_all();
-	free(conf.listen_addrs);
+
+	free_config(conf);
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&
@@ -414,12 +395,8 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 }
 
 int
-reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
-    struct peer **peer_l)
+reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 {
-	struct network_head	 net_l;
-	struct rdomain_head	 rdom_l;
-	struct filter_head	 rules_l;
 	struct peer		*p;
 	struct filter_rule	*r;
 	struct listen_addr	*la;
@@ -433,8 +410,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	reconfpending = 2;	/* one per child */
 
 	log_info("rereading config");
-	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, &rules_l,
-	    &rdom_l)) {
+	if (parse_config(conffile, conf, peer_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
 		reconfpending = 0;
@@ -488,12 +464,12 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	}
 
 	/* networks go via kroute to the RDE */
-	if (kr_net_reload(0, &net_l))
+	if (kr_net_reload(0, &conf->networks))
 		return (-1);
 
 	/* filters for the RDE */
-	while ((r = TAILQ_FIRST(&rules_l)) != NULL) {
-		TAILQ_REMOVE(&rules_l, r, entry);
+	while ((r = TAILQ_FIRST(conf->filters)) != NULL) {
+		TAILQ_REMOVE(conf->filters, r, entry);
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);
@@ -503,8 +479,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		free(r);
 	}
 
-	while ((rd = SIMPLEQ_FIRST(&rdom_l)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&rdom_l, entry);
+	while ((rd = SIMPLEQ_FIRST(&conf->rdomains)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&conf->rdomains, entry);
 		if (ktable_update(rd->rtableid, rd->descr, rd->ifmpe,
 		    rd->flags, conf->fib_priority) == -1) {
 			log_warnx("failed to load rdomain %d",
@@ -547,7 +523,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		return (-1);
 
 	/* mrt changes can be sent out of bound */
-	mrt_reconfigure(mrt_l);
+	mrt_reconfigure(conf->mrt);
 	return (0);
 }
 

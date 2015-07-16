@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.73 2015/04/25 15:28:18 phessler Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.74 2015/07/16 18:26:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -470,6 +470,9 @@ filterset_free(struct filter_set_head *sh)
 {
 	struct filter_set	*s;
 	struct nexthop		*nh;
+
+	if (sh == NULL)
+		return;
 
 	while ((s = TAILQ_FIRST(sh)) != NULL) {
 		TAILQ_REMOVE(sh, s, entry);

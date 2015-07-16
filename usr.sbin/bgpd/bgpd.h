@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.285 2015/04/25 15:28:18 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.286 2015/07/16 18:26:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -195,8 +195,21 @@ struct listen_addr {
 TAILQ_HEAD(listen_addrs, listen_addr);
 TAILQ_HEAD(filter_set_head, filter_set);
 
+struct rdomain;
+SIMPLEQ_HEAD(rdomain_head, rdomain);
+
+struct network;
+TAILQ_HEAD(network_head, network);
+
+struct filter_rule;
+TAILQ_HEAD(filter_head, filter_rule);
+
 struct bgpd_config {
+	struct rdomain_head			 rdomains;
+	struct network_head			 networks;
+	struct filter_head			*filters;
 	struct listen_addrs			*listen_addrs;
+	struct mrt_head				*mrt;
 	char					*csock;
 	char					*rcsock;
 	int					 flags;
@@ -330,8 +343,6 @@ struct network_config {
 	u_int8_t		 prefixlen;
 	u_int8_t		 old;	/* used for reloading */
 };
-
-TAILQ_HEAD(network_head, network);
 
 struct network {
 	struct network_config		net;
@@ -773,8 +784,6 @@ struct filter_match {
 	struct filter_extcommunity	ext_community;
 };
 
-TAILQ_HEAD(filter_head, filter_rule);
-
 struct filter_rule {
 	TAILQ_ENTRY(filter_rule)	entry;
 	char				rib[PEER_DESCR_LEN];
@@ -840,7 +849,6 @@ struct rdomain {
 	u_int				label;
 	int				flags;
 };
-SIMPLEQ_HEAD(rdomain_head, rdomain);
 
 struct rde_rib {
 	SIMPLEQ_ENTRY(rde_rib)	entry;
@@ -931,6 +939,8 @@ void	control_cleanup(const char *);
 int	control_imsg_relay(struct imsg *);
 
 /* config.c */
+struct bgpd_config	*new_config(void);
+void			free_config(struct bgpd_config *);
 void	filterlist_free(struct filter_head *);
 int	host(const char *, struct bgpd_addr *, u_int8_t *);
 
