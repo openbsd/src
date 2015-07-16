@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.39 2015/02/11 04:05:14 beck Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.40 2015/07/16 02:14:48 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,10 +94,11 @@ PEM_def_callback(char *buf, int num, int w, void *key)
 	int i;
 	const char *prompt;
 
+	if (num < 0)
+		return -1;
+
 	if (key) {
 		l = strlen(key);
-		if (num < 0)
-			return -1;
 		if (l > (size_t)num)
 			l = (size_t)num;
 		memcpy(buf, key, l);
