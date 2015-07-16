@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cacosh.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_cacosh.c,v 1.7 2015/07/16 13:29:11 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -51,7 +51,7 @@ cacosh(double complex z)
 {
 	double complex w;
 
-	w = I * cacos (z);
+	w = clog(z + csqrt(z + 1) * csqrt(z - 1));
 	return (w);
 }
 
