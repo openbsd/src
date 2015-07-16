@@ -1,7 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.1 2015/07/16 16:35:57 reyk Exp $
+#	$OpenBSD: funcs.pl,v 1.2 2015/07/16 16:38:40 reyk Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
-# Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
