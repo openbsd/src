@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.1 2015/07/16 20:44:21 tedu Exp $ */
+/* $OpenBSD: parse.y,v 1.2 2015/07/16 22:11:01 nicm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -60,6 +60,8 @@ grammar:	/* empty */
 rule:		action ident target cmd {
 			struct rule *r;
 			r = calloc(1, sizeof(*r));
+			if (!r)
+				errx(1, "can't allocate rule");
 			r->action = $1.action;
 			r->options = $1.options;
 			r->envlist = $1.envlist;

@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.4 2015/07/16 21:57:54 deraadt Exp $ */
+/* $OpenBSD: doas.c,v 1.5 2015/07/16 22:11:01 nicm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -188,6 +188,8 @@ copyenv(const char **oldenvp, struct rule *rule)
 	if ((rule->options & KEEPENV) && !rule->envlist) {
 		j = arraylen(oldenvp);
 		envp = reallocarray(NULL, j + 1, sizeof(char *));
+		if (!envp)
+			err(1, "reallocarray");
 		for (i = 0; i < j; i++) {
 			if (!(envp[i] = strdup(oldenvp[i])))
 				err(1, "strdup");
