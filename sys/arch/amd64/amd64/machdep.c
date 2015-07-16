@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.214 2015/06/28 18:54:54 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.215 2015/07/16 23:03:40 sf Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ int setperf_prio = 0;
 #ifdef CPURESET_DELAY
 int	cpureset_delay = CPURESET_DELAY;
 #else
-int     cpureset_delay = 2000; /* default to 2s */
+int     cpureset_delay = 0;
 #endif
 
 int	physmem;
@@ -739,8 +739,6 @@ boot(int howto)
 		}
 	}
 	if_downall();
-
-	delay(4*1000000);	/* XXX */
 
 	uvm_shutdown();
 	splhigh();
