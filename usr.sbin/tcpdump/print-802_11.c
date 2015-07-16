@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.18 2015/07/15 03:05:00 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.19 2015/07/16 20:57:13 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -78,6 +78,7 @@ int	 ieee80211_hdr(struct ieee80211_frame *);
 int	 ieee80211_data(struct ieee80211_frame *, u_int);
 void	 ieee80211_print_element(u_int8_t *, u_int);
 void	 ieee80211_print_essid(u_int8_t *, u_int);
+void	 ieee80211_print_htcaps(u_int8_t *, u_int);
 int	 ieee80211_elements(struct ieee80211_frame *, u_int);
 int	 ieee80211_frame(struct ieee80211_frame *, u_int);
 int	 ieee80211_print(struct ieee80211_frame *, u_int);
@@ -230,6 +231,82 @@ ieee80211_print_essid(u_int8_t *essid, u_int len)
 		ieee80211_print_element(essid, len);
 }
 
+/* Caller checks len */
+void
+ieee80211_print_htcaps(u_int8_t *data, u_int len)
+{
+	u_int16_t htcaps;
+	int smps, rxstbc;
+
+	if (len < 2) {
+		ieee80211_print_element(data, len);
+		return;
+	}
+
+	htcaps = (data[0]) | (data[1] << 8);
+	printf("=<");
+
+	/* channel width */
+	if (htcaps & IEEE80211_HTCAP_CBW20_40)
+		printf("20/40MHz");
+	else
+		printf("20MHz");
+
+	/* LDPC coding */
+	if (htcaps & IEEE80211_HTCAP_LDPC)
+		printf(",LDPC");
+
+	/* spatial multiplexing power save mode */
+	smps = (htcaps & IEEE80211_HTCAP_SMPS_MASK)
+	    >> IEEE80211_HTCAP_SMPS_SHIFT;
+	if (smps == 0)
+		printf(",SMPS static");
+	else if (smps == 1)
+		printf(",SMPS dynamic");
+
+	/* 11n greenfield mode */
+	if (htcaps & IEEE80211_HTCAP_GF)
+		printf(",greenfield");
+
+	/* short guard interval */
+	if (htcaps & IEEE80211_HTCAP_SGI20)
+		printf(",SGI@20MHz");
+	if (htcaps & IEEE80211_HTCAP_SGI40)
+		printf(",SGI@40MHz");
+
+	/* space-time block coding */
+	if (htcaps & IEEE80211_HTCAP_TXSTBC)
+		printf(",TXSTBC");
+	rxstbc = (htcaps & IEEE80211_HTCAP_RXSTBC_MASK)
+	    >> IEEE80211_HTCAP_RXSTBC_SHIFT;
+	if (rxstbc > 0 && rxstbc < 4)
+		printf(",RXSTBC %d stream", rxstbc);
+
+	/* delayed block-ack */
+	if (htcaps & IEEE80211_HTCAP_DELAYEDBA)
+		printf(",delayed BA");
+
+	/* max A-MSDU length */
+	if (htcaps & IEEE80211_HTCAP_AMSDU7935)
+		printf(",A-MSDU 7935");
+	else
+		printf(",A-MSDU 3839");
+
+	/* DSSS/CCK in 40MHz mode */
+	if (htcaps & IEEE80211_HTCAP_DSSSCCK40)
+		printf(",DSSS/CCK@40MHz");
+
+	/* 40MHz intolerant */
+	if (htcaps & IEEE80211_HTCAP_40INTOLERANT)
+		printf(",40MHz intolerant");
+
+	/* L-SIG TXOP protection */
+	if (htcaps & IEEE80211_HTCAP_LSIGTXOPPROT)
+		printf(",L-SIG TXOP prot");
+
+	printf(">");
+}
+
 int
 ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 {
@@ -354,6 +431,11 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 			printf(", tpcrequest");
 			if (vflag)
 				ieee80211_print_element(data, len);
+			break;
+		case IEEE80211_ELEMID_HTCAPS:
+			printf(", htcaps");
+			if (vflag)
+				ieee80211_print_htcaps(data, len);
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			printf(", vendor");
