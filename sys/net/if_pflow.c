@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.51 2015/06/16 11:09:39 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.52 2015/07/16 18:36:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -124,9 +124,12 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	pflowif->sc_imo.imo_membership = malloc(
+	if ((pflowif->sc_imo.imo_membership = malloc(
 	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
-	    M_WAITOK|M_ZERO);
+	    M_WAITOK|M_ZERO)) == NULL) {
+		free(pflowif, M_DEVBUF, 0);
+		return (ENOMEM);
+	}
 	pflowif->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	pflowif->sc_receiver_ip.s_addr = INADDR_ANY;
 	pflowif->sc_receiver_port = 0;
