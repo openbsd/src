@@ -15,7 +15,7 @@ our %args = (
 	    port => 514 },
 	loggrep => {
 	    qr/connect sock: ::1 \d+/ => 1,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     syslogd => {
@@ -27,7 +27,7 @@ our %args = (
 	},
     },
     file => {
-	loggrep => qr/ localhost /. get_testlog(),
+	loggrep => qr/ localhost /. get_testgrep(),
     },
 );
 

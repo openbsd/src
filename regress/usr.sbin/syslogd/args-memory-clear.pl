@@ -15,7 +15,7 @@ our %args = (
 	loggrep => {
 	    qr/Accepting control connection/ => 2,
 	    qr/ctlcmd 3/ => 1,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     syslogc => [ {
@@ -23,7 +23,7 @@ our %args = (
 	loggrep => qr/Log cleared/,
     }, {
 	options => ["memory"],
-	loggrep => { get_testlog() => 0 },
+	loggrep => { get_testgrep() => 0 },
     } ],
 );
 

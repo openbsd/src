@@ -9,14 +9,24 @@ use strict;
 use warnings;
 use Sys::Hostname;
 
-(my $host = hostname()) =~ s/\..*//;  # short name
+(my $host = hostname()) =~ s/\..*//;
 
 our %args = (
     client => {
 	logsock => { type => "unix" },
     },
+    syslogd => {
+	loggrep => get_testlog(),
+    },
+    server => {
+	loggrep => get_testlog(),
+    },
+    pipe => {
+	loggrep => get_testlog(),
+    },
     file => {
-	loggrep => qr/ $host syslogd-regress\[\d+\]: /. get_testlog(),
+	# Sys::Syslog unix is broken, it appends a \n\0.
+	loggrep => qr/ $host syslogd-regress\[\d+\]: /.get_testlog().qr/ $/,
     },
 );
 

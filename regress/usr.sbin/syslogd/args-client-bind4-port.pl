@@ -26,7 +26,7 @@ our %args = (
 	},
     },
     file => {
-	loggrep => qr/ localhost /. get_testlog(),
+	loggrep => qr/ localhost /. get_testgrep(),
     },
 );
 

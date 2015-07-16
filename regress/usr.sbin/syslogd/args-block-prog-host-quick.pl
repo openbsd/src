@@ -12,7 +12,7 @@ use Cwd;
 use Sys::Hostname;
 
 my $objdir = getcwd();
-(my $hostname = hostname()) =~ s/\..*//;
+(my $host = hostname()) =~ s/\..*//;
 
 our %args = (
     syslogd => {
@@ -22,7 +22,7 @@ our %args = (
 *.*	$objdir/file-0.log
 !!syslogd-regress
 *.*	$objdir/file-1.log
-+$hostname
++$host
 *.*	$objdir/file-2.log
 *.*	$objdir/file-3.log
 !*
@@ -31,11 +31,11 @@ our %args = (
 EOF
     },
     multifile => [
-	{ loggrep => { get_testlog() => 0 } },
-	{ loggrep => { get_testlog() => 0 } },
-	{ loggrep => { get_testlog() => 1 } },
-	{ loggrep => { get_testlog() => 0 } },
-	{ loggrep => { get_testlog() => 0 } },
+	{ loggrep => { get_testgrep() => 0 } },
+	{ loggrep => { get_testgrep() => 0 } },
+	{ loggrep => { get_testgrep() => 1 } },
+	{ loggrep => { get_testgrep() => 0 } },
+	{ loggrep => { get_testgrep() => 0 } },
     ],
 );
 

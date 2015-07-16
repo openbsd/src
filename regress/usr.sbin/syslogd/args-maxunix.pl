@@ -8,18 +8,21 @@
 
 use strict;
 use warnings;
+use Sys::Hostname;
 use IO::Socket::UNIX;
 use constant MAXUNIX => 21;
+
+(my $host = hostname()) =~ s/\..*//;
 
 our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    write_unix($self);
+	    write_unix($self, "/dev/log");
 	    foreach (1..(MAXUNIX-1)) {
-		write_unix($self, "unix-$_.sock");
+		write_unix($self, "unix-$_.sock", $_);
 	    }
-	    ${$self->{syslogd}}->loggrep(get_testlog(), 5, MAXUNIX)
+	    ${$self->{syslogd}}->loggrep(get_testgrep(), 5, MAXUNIX)
 		or die ref($self), " syslogd did not receive complete line";
 	    write_shutdown($self);
 	},
@@ -32,10 +35,10 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    get_testlog()." /dev/log unix socket" => 1,
-	    (map { (get_testlog()." unix-$_.sock unix socket" => 1) }
-		(1..(MAXUNIX-1))),
-	    get_testlog()." unix-".MAXUNIX.".sock unix socket" => 0,
+	    qr/ $host .* unix socket: /.get_testgrep() => MAXUNIX,
+	    "/dev/log unix socket" => 1,
+	    (map { " $_ unix socket: ".get_testgrep() => 1 } 1..MAXUNIX-1),
+	    MAXUNIX." unix socket: ".get_testgrep() => 0,
 	},
     },
 );

@@ -35,9 +35,9 @@ our %args = (
 EOF
     },
     check => sub {
-	check_file("foo",    { get_testlog() => 0, qr/syslogd: start/ => 1 });
-	check_file("bar",    { get_testlog() => 1, qr/syslogd: start/ => 0 });
-	check_file("foobar", { get_testlog() => 0, qr/syslogd: start/ => 1 });
+	check_file("foo",    { get_testgrep() => 0, qr/syslogd: start/ => 1 });
+	check_file("bar",    { get_testgrep() => 1, qr/syslogd: start/ => 0 });
+	check_file("foobar", { get_testgrep() => 0, qr/syslogd: start/ => 1 });
     },
 );
 

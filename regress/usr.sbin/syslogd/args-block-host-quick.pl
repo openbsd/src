@@ -12,14 +12,14 @@ use Cwd;
 use Sys::Hostname;
 
 my $objdir = getcwd();
-(my $hostname = hostname()) =~ s/\..*//;
+(my $host = hostname()) =~ s/\..*//;
 
 our %args = (
     syslogd => {
 	conf => <<"EOF",
 +nonexist
 *.*	$objdir/file-0.log
-++$hostname
+++$host
 *.*	$objdir/file-1.log
 *.*	$objdir/file-2.log
 +*
@@ -27,10 +27,10 @@ our %args = (
 EOF
     },
     multifile => [
-	{ loggrep => { get_testlog() => 0 } },
-	{ loggrep => { get_testlog() => 1 } },
-	{ loggrep => { get_testlog() => 0 } },
-	{ loggrep => { get_testlog() => 0 } },
+	{ loggrep => { get_testgrep() => 0 } },
+	{ loggrep => { get_testgrep() => 1 } },
+	{ loggrep => { get_testgrep() => 0 } },
+	{ loggrep => { get_testgrep() => 0 } },
     ],
 );
 

@@ -17,7 +17,7 @@ our %args = (
 	options => ["-un"],
     },
     file => {
-	loggrep => qr/ ::1 /. get_testlog(),
+	loggrep => qr/ ::1 /. get_testgrep(),
     },
 );
 

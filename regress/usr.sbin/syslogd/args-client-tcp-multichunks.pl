@@ -37,7 +37,7 @@ our %args = (
 	    qr/tcp logger .* buffer \d+ bytes/ =>
 		int((length(get_testlog())+4)/5),
 	    qr/tcp logger .* complete line/ => 1,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
 );

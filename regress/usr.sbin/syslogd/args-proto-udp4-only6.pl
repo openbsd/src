@@ -12,7 +12,7 @@ our %args = (
 	loghost => '@udp4://127.0.0.1',
 	loggrep => {
 	    qr/syslogd: no udp4 "\@udp4:\/\/127.0.0.1/ => 2,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
 	options => ["-6"],
     },

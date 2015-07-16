@@ -52,7 +52,7 @@ our %args = (
 	},
     },
     multifile => [
-	(map { { loggrep => get_testlog() } } 0..16),
+	(map { { loggrep => get_testgrep() } } 0..16),
 	(map { { loggrep => { qr/./s => 0 } } } 17..19),
     ],
 );

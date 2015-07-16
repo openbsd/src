@@ -12,7 +12,7 @@ our %args = (
 	loghost => '@invalid://127.0.0.1',
 	loggrep => {
 	    qr/syslogd: bad protocol "\@invalid:\/\/127.0.0.1"/ => 2,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     server => {

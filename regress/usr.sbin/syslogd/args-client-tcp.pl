@@ -22,7 +22,7 @@ our %args = (
 	},
     },
     file => {
-	loggrep => qr/ localhost syslogd-regress\[\d+\]: /. get_testlog(),
+	loggrep => qr/ localhost syslogd-regress\[\d+\]: /. get_testgrep(),
     },
 );
 

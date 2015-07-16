@@ -12,7 +12,7 @@ our %args = (
 	loghost => '@udp6://127.0.0.1',
 	loggrep => {
 	    qr/syslogd: bad hostname "\@udp6:\/\/127.0.0.1"/ => 2,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     server => {

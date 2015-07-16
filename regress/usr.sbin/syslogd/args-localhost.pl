@@ -13,21 +13,21 @@ our %args = (
 	connect => { domain => AF_UNSPEC, addr => "localhost", port => 514 },
 	loggrep => {
 	    qr/connect sock: (127.0.0.1|::1) \d+/ => 1,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     syslogd => {
 	loghost => '@localhost:$connectport',
 	options => ["-u"],
 	loggrep => {
-	    qr/ from localhost, msg /.get_testlog() => 1,
+	    qr/ from localhost, msg /.get_testgrep() => 1,
 	},
     },
     server => {
 	listen => { domain => AF_UNSPEC, addr => "localhost" },
 	loggrep => {
 	    qr/listen sock: (127.0.0.1|::1) \d+/ => 1,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
 );

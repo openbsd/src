@@ -27,7 +27,7 @@ our %args = (
 	},
     },
     multifile => [
-	(map { { loggrep => get_testlog() } } 0..15),
+	(map { { loggrep => get_testgrep() } } 0..15),
 	(map { { loggrep => { qr/./s => 0 } } } 16..19),
     ],
 );

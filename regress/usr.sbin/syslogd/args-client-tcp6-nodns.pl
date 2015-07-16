@@ -19,7 +19,7 @@ our %args = (
 	options => ["-n", "-T", "[::1]:514"],
     },
     file => {
-	loggrep => qr/ ::1 /. get_testlog(),
+	loggrep => qr/ ::1 /. get_testgrep(),
     },
 );
 

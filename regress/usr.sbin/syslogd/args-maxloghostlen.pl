@@ -12,7 +12,7 @@ our %args = (
 	loghost => '@'.('X'x300),
 	loggrep => {
 	    qr/syslogd: loghost too long "\@X+/ => 2,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     server => {

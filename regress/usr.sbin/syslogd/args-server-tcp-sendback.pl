@@ -25,7 +25,7 @@ our %args = (
 	loghost => '@tcp://127.0.0.1:$connectport',
 	loggrep => {
 	    qr/Logging to FORWTCP \@tcp:\/\/127.0.0.1:\d+/ => '>=4',
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	    qr/did send /.length($sendback).qr/ bytes back/ => 1,
 	},
     },

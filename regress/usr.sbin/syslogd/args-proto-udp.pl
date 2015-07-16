@@ -14,7 +14,7 @@ our %args = (
 	loghost => '@udp://127.0.0.1:$connectport',
 	loggrep => {
 	    qr/Logging to FORWUDP \@udp:\/\/127.0.0.1:\d+/ => '>=4',
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     server => {

@@ -14,14 +14,14 @@ our %args = (
 	loghost => '@[::1]:$connectport',
 	loggrep => {
 	    qr/Logging to FORWUDP \@\[::1\]:\d+/ => '>=4',
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     server => {
 	listen => { domain => AF_INET6, addr => "::1" },
 	loggrep => {
 	    qr/listen sock: ::1 \d+/ => 1,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
 );

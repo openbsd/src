@@ -14,14 +14,14 @@ our %args = (
 	loghost => '@tls://[::1]:$connectport',
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/\[::1\]:\d+/ => '>=4',
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
     server => {
 	listen => { domain => AF_INET6, proto => "tls", addr => "::1" },
 	loggrep => {
 	    qr/listen sock: ::1 \d+/ => 1,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
     },
 );

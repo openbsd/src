@@ -17,7 +17,7 @@ our %args = (
     rsyslogd => {
 	listen => { domain => AF_INET, proto => "tcp", addr => "127.0.0.1" },
 	loggrep => {
-	    get_testlog() => 1,
+	    get_testlog().qr/'$/ => 1,
 	    qr/Error/ => 0,
 	},
     },

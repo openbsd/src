@@ -17,7 +17,7 @@ our %args = (
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd: loghost .* connection error: /.
 		qr/ssl verify setup failure/ => 2,
-	    get_testlog() => 1,
+	    get_testgrep() => 1,
 	},
 	cacrt => "noexist",
     },
@@ -29,7 +29,7 @@ our %args = (
 	loggrep => {
 	    qr/listen sock: (127.0.0.1|::1) \d+/ => 1,
 	    qr/SSL accept attempt failed because of handshake problems/ => 1,
-	    get_testlog() => 0,
+	    get_testgrep() => 0,
 	},
     },
 );
