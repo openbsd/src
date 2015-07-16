@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.3 2015/07/16 21:55:03 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.4 2015/07/16 21:57:54 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -150,7 +150,8 @@ parseconfig(const char *filename)
 }
 
 static int
-copyenvhelper(const char **oldenvp, const char **safeset, int nsafe, char **envp, int ei)
+copyenvhelper(const char **oldenvp, const char **safeset, int nsafe,
+    char **envp, int ei)
 {
 	int i;
 	for (i = 0; i < nsafe; i++) {
@@ -239,7 +240,8 @@ main(int argc, char **argv, char **envp)
 	struct rule *rule;
 	const char *cmd;
 	int i, ch;
-	const char *safepath = "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin";
+	const char *safepath = "/bin:/sbin:/usr/bin:/usr/sbin:"
+	    "/usr/local/bin:/usr/local/sbin";
 
 	parseconfig("/etc/doas.conf");
 
@@ -278,13 +280,15 @@ main(int argc, char **argv, char **envp)
 	groups[ngroups++] = getgid();
 
 	if (!permit(uid, groups, ngroups, &rule, target, cmd)) {
-		syslog(LOG_AUTHPRIV | LOG_NOTICE, "failed command for %s: %s", myname, cmdline);
+		syslog(LOG_AUTHPRIV | LOG_NOTICE,
+		    "failed command for %s: %s", myname, cmdline);
 		fail();
 	}
 
 	if (!(rule->options & NOPASS)) {
 		if (!auth_userokay(myname, NULL, NULL, NULL)) {
-			syslog(LOG_AUTHPRIV | LOG_NOTICE, "failed password for %s", myname);
+			syslog(LOG_AUTHPRIV | LOG_NOTICE,
+			    "failed password for %s", myname);
 			fail();
 		}
 	}
@@ -298,7 +302,8 @@ main(int argc, char **argv, char **envp)
 	    LOGIN_SETUSER) != 0)
 		errx(1, "failed to set user context for target");
 
-	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command as %s: %s", myname, pw->pw_name, cmdline);
+	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command as %s: %s",
+	    myname, pw->pw_name, cmdline);
 	setenv("PATH", safepath, 1);
 	execvpe(cmd, argv, envp);
 	err(1, "%s", cmd);
