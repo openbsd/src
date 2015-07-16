@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.2 2015/07/16 22:11:01 nicm Exp $ */
+/* $OpenBSD: parse.y,v 1.3 2015/07/16 22:33:01 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -185,19 +185,24 @@ yylex(void)
 			return c;
 		case EOF:
 			return 0;
-		case ':':
-			*p++ = c;
-			c = getc(yyfp);
-			break;
-		default:
-			break;
 	}
-	while (isalnum(c)) {
+	while (1) {
+		switch (c) {
+		case '\n':
+		case '{':
+		case '}':
+		case '#':
+		case ' ':
+		case '\t':
+		case EOF:
+			goto eow;
+		}
 		*p++ = c;
 		if (p == ebuf)
 			yyerror("too much stuff");
 		c = getc(yyfp);
 	}
+eow:
 	*p = 0;
 	if (c != EOF)
 		ungetc(c, yyfp);
