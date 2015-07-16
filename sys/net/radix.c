@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.45 2015/07/07 09:39:28 mpi Exp $	*/
+/*	$OpenBSD: radix.c,v 1.46 2015/07/16 18:17:27 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -261,8 +261,10 @@ rn_match(void *v_arg, struct radix_node_head *head)
 	 * This extra grot is in case we are explicitly asked
 	 * to look up the default.  Ugh!
 	 */
-	if ((t->rn_flags & RNF_ROOT) && t->rn_dupedkey)
+	if (t->rn_flags & RNF_ROOT)
 		t = t->rn_dupedkey;
+
+	KASSERT(t == NULL || (t->rn_flags & RNF_ROOT) == 0);
 	return t;
 on1:
 	test = (*cp ^ *cp2) & 0xff; /* find first bit that differs */
@@ -284,10 +286,14 @@ on1:
 		 * a route to a net.
 		 */
 		if (t->rn_flags & RNF_NORMAL) {
-			if (rn_b <= t->rn_b)
+			if (rn_b <= t->rn_b) {
+				KASSERT((t->rn_flags & RNF_ROOT) == 0);
 				return t;
-		} else if (rn_satisfies_leaf(v, t, matched_off))
-				return t;
+			}
+		} else if (rn_satisfies_leaf(v, t, matched_off)) {
+			KASSERT((t->rn_flags & RNF_ROOT) == 0);
+			return t;
+		}
 	t = saved_t;
 	/* start searching up the tree */
 	do {
@@ -302,16 +308,21 @@ on1:
 			 * calculation of "off" back before the "do".
 			 */
 			if (m->rm_flags & RNF_NORMAL) {
-				if (rn_b <= m->rm_b)
+				if (rn_b <= m->rm_b) {
+					KASSERT((m->rm_leaf->rn_flags &
+					    RNF_ROOT) == 0);
 					return (m->rm_leaf);
+				}
 			} else {
 				struct radix_node *x;
 				off = min(t->rn_off, matched_off);
 				x = rn_search_m(v, t, m->rm_mask);
 				while (x && x->rn_mask != m->rm_mask)
 					x = x->rn_dupedkey;
-				if (x && rn_satisfies_leaf(v, x, off))
+				if (x && rn_satisfies_leaf(v, x, off)) {
+					KASSERT((x->rn_flags & RNF_ROOT) == 0);
 					return x;
+				}
 			}
 			m = m->rm_mklist;
 		}
@@ -961,7 +972,7 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 	tt = rn_search(v, top);
 	/* make sure the key is a perfect match */
 	if (memcmp(v + off, tt->rn_key + off, vlen - off))
-		return (0);
+		return (NULL);
 
 	/*
 	 * Here, tt is the deletion target, and
@@ -978,11 +989,11 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 		struct radix_node *tm;
 
 		if ((tm = rn_addmask(netmask, 1, off)) == NULL)
-			return (0);
+			return (NULL);
 		netmask = tm->rn_key;
 		while (tt->rn_mask != netmask)
 			if ((tt = tt->rn_dupedkey) == NULL)
-				return (0);
+				return (NULL);
 	}
 
 	/* save start of multi path chain for later use */
@@ -998,7 +1009,7 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 
 	/* remove possible radix_mask */
 	if (rn_del_radix_mask(tt))
-		return (0);
+		return (NULL);
 
 	/*
 	 * Finally eliminate us from tree

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.215 2015/06/29 11:04:16 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.216 2015/07/16 18:17:27 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -307,8 +307,7 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 	info.rti_info[RTAX_DST] = dst;
 
 	rnh = rtable_get(tableid, dst->sa_family);
-	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
-	    ((rn->rn_flags & RNF_ROOT) == 0)) {
+	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh))) {
 		newrt = rt = (struct rtentry *)rn;
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
 			err = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,

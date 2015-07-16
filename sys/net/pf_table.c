@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.109 2015/06/07 12:02:28 jsg Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.110 2015/07/16 18:17:27 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -94,8 +94,6 @@
 #define	AF_BITS(af)		(((af)==AF_INET)?32:128)
 #define	ADDR_NETWORK(ad)	((ad)->pfra_net < AF_BITS((ad)->pfra_af))
 #define	KENTRY_NETWORK(ke)	((ke)->pfrke_net < AF_BITS((ke)->pfrke_af))
-#define KENTRY_RNF_ROOT(ke) \
-		((((struct radix_node *)(ke))->rn_flags & RNF_ROOT) != 0)
 
 #define NO_ADDRESSES		(-1)
 #define ENQUEUE_UNMARKED_ONLY	(1)
@@ -809,12 +807,8 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 		s = splsoftnet(); /* rn_lookup makes use of globals */
 		ke = (struct pfr_kentry *)rn_lookup(&sa, &mask, head);
 		splx(s);
-		if (ke && KENTRY_RNF_ROOT(ke))
-			ke = NULL;
 	} else {
 		ke = (struct pfr_kentry *)rn_match(&sa, head);
-		if (ke && KENTRY_RNF_ROOT(ke))
-			ke = NULL;
 		if (exact && ke && KENTRY_NETWORK(ke))
 			ke = NULL;
 	}
@@ -2076,15 +2070,11 @@ pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 	case AF_INET:
 		pfr_sin.sin_addr.s_addr = a->addr32[0];
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin, kt->pfrkt_ip4);
-		if (ke && KENTRY_RNF_ROOT(ke))
-			ke = NULL;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		bcopy(a, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin6, kt->pfrkt_ip6);
-		if (ke && KENTRY_RNF_ROOT(ke))
-			ke = NULL;
 		break;
 #endif /* INET6 */
 	}
@@ -2115,15 +2105,11 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, struct pf_pdesc *pd,
 	case AF_INET:
 		pfr_sin.sin_addr.s_addr = a->addr32[0];
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin, kt->pfrkt_ip4);
-		if (ke && KENTRY_RNF_ROOT(ke))
-			ke = NULL;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		bcopy(a, &pfr_sin6.sin6_addr, sizeof(pfr_sin6.sin6_addr));
 		ke = (struct pfr_kentry *)rn_match(&pfr_sin6, kt->pfrkt_ip6);
-		if (ke && KENTRY_RNF_ROOT(ke))
-			ke = NULL;
 		break;
 #endif /* INET6 */
 	default:
@@ -2326,7 +2312,6 @@ pfr_pool_get(struct pf_pool *rpool, struct pf_addr **raddr,
 		else if (af == AF_INET6)
 			ke2 = (struct pfr_kentry *)rn_match(&pfr_sin6,
 			    kt->pfrkt_ip6);
-		/* no need to check KENTRY_RNF_ROOT() here */
 		if (ke2 == ke) {
 			/* lookup return the same block - perfect */
 			if (rpool->addr.type == PF_ADDR_DYNIFTL &&

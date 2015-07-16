@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.29 2015/03/04 15:53:29 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.30 2015/07/16 18:17:27 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ rt_mpath_conflict(struct radix_node_head *rnh, struct sockaddr *dst,
 	int same, l, skip;
 
 	rn1 = rnh->rnh_lookup(dst, netmask, rnh);
-	if (!rn1 || rn1->rn_flags & RNF_ROOT)
+	if (!rn1)
 		return 0;
 
 	/*
