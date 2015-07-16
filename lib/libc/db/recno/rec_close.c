@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_close.c,v 1.11 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: rec_close.c,v 1.12 2015/07/16 04:27:33 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -69,8 +69,6 @@ __rec_close(DB *dbp)
 
 	/* Committed to closing. */
 	status = RET_SUCCESS;
-	if (F_ISSET(t, R_MEMMAPPED) && munmap(t->bt_smap, t->bt_msize))
-		status = RET_ERROR;
 
 	if (!F_ISSET(t, R_INMEM)) {
 		if (F_ISSET(t, R_CLOSEFP)) {
