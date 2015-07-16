@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.54 2015/05/05 11:10:13 florian Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.55 2015/07/16 19:05:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -43,20 +43,20 @@ struct range {
 	off_t	end;
 };
 
-int	 	 server_file_access(struct httpd *, struct client *,
+int		 server_file_access(struct httpd *, struct client *,
 		    char *, size_t);
-int	 	 server_file_request(struct httpd *, struct client *,
+int		 server_file_request(struct httpd *, struct client *,
 		    char *, struct stat *);
-int	 	 server_partial_file_request(struct httpd *, struct client *,
+int		 server_partial_file_request(struct httpd *, struct client *,
 		    char *, struct stat *, char *);
-int	 	 server_file_index(struct httpd *, struct client *,
+int		 server_file_index(struct httpd *, struct client *,
 		    struct stat *);
 int		 server_file_modified_since(struct http_descriptor *,
 		    struct stat *);
-int	 	 server_file_method(struct client *);
-int	 	 parse_range_spec(char *, size_t, struct range *);
-struct range 	*parse_range(char *, size_t, int *);
-int	 	 buffer_add_range(int, struct evbuffer *, struct range *);
+int		 server_file_method(struct client *);
+int		 parse_range_spec(char *, size_t, struct range *);
+struct range	*parse_range(char *, size_t, int *);
+int		 buffer_add_range(int, struct evbuffer *, struct range *);
 
 int
 server_file_access(struct httpd *env, struct client *clt,
@@ -296,9 +296,9 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 	struct range		*range;
 	struct evbuffer		*evb = NULL;
 	size_t			 content_length;
-	int		 	 code = 500, fd = -1, i, nranges, ret;
+	int			 code = 500, fd = -1, i, nranges, ret;
 	uint32_t		 boundary;
-	char		 	 content_range[64];
+	char			 content_range[64];
 	const char		*errstr = NULL;
 
 	/* Ignore range request for methods other than GET */
@@ -325,7 +325,7 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 
 	if (nranges == 1) {
 		(void)snprintf(content_range, sizeof(content_range),
-	    	    "bytes %lld-%lld/%lld", range->start, range->end,
+		    "bytes %lld-%lld/%lld", range->start, range->end,
 		    st->st_size);
 		if (kv_add(&resp->http_headers, "Content-Range",
 		    content_range) == NULL)
@@ -347,8 +347,8 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 			content_length += i;
 			if ((i = evbuffer_add_printf(evb,
 			    "Content-Type: %s/%s\r\n",
-	    		    media == NULL ? "application" : media->media_type,
-	    		    media == NULL ?
+			    media == NULL ? "application" : media->media_type,
+			    media == NULL ?
 			    "octet-stream" : media->media_subtype)) == -1)
 				goto abort;
 
@@ -374,10 +374,10 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 
 		/* prepare multipart/byteranges media type */
 		(void)strlcpy(multipart_media.media_type, "multipart",
-	    	    sizeof(multipart_media.media_type));
+		    sizeof(multipart_media.media_type));
 		(void)snprintf(multipart_media.media_subtype,
-	    	    sizeof(multipart_media.media_subtype),
-	    	    "byteranges; boundary=%ud", boundary);
+		    sizeof(multipart_media.media_subtype),
+		    "byteranges; boundary=%ud", boundary);
 		media = &multipart_media;
 	}
 
@@ -656,7 +656,7 @@ struct range *
 parse_range(char *str, size_t file_sz, int *nranges)
 {
 	static struct range	 ranges[MAX_RANGES];
-	int	 	 	 i = 0;
+	int			 i = 0;
 	char			*p, *q;
 
 	/* Extract range unit */
@@ -692,7 +692,7 @@ parse_range(char *str, size_t file_sz, int *nranges)
 int
 parse_range_spec(char *str, size_t size, struct range *r)
 {
-	size_t	 	 start_str_len, end_str_len;
+	size_t		 start_str_len, end_str_len;
 	char		*p, *start_str, *end_str;
 	const char	*errstr;
 

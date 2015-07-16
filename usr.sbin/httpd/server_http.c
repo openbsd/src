@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.88 2015/07/15 23:16:38 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.89 2015/07/16 19:05:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1008,7 +1008,7 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 				return (NULL);
 		}
 		if (strstr(val, "$SERVER_NAME") != NULL) {
-			if ((str = url_encode(srv_conf->name)) 
+			if ((str = url_encode(srv_conf->name))
 			     == NULL)
 				return (NULL);
 			ret = expand_string(buf, len, "$SERVER_NAME", str);
@@ -1539,7 +1539,7 @@ server_log_http(struct client *clt, u_int code, size_t len)
 		    code, len,
 		    referrer == NULL ? "" : referrer_v,
 		    agent == NULL ? "" : agent_v);
-	       
+
 		break;
 
 	case LOG_FORMAT_CONNECTION:
@@ -1549,8 +1549,8 @@ server_log_http(struct client *clt, u_int code, size_t len)
 			goto done;
 
 		ret = evbuffer_add_printf(clt->clt_log, " [%s]",
-		    	desc->http_path == NULL ? "" : path);
-	       
+		    desc->http_path == NULL ? "" : path);
+
 		break;
 	}
 
