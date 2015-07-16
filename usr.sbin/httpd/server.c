@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.69 2015/07/15 23:16:38 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.70 2015/07/16 16:29:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -721,7 +721,7 @@ server_input(struct client *clt)
 
 	/* Adjust write watermark to the socket buffer output size */
 	bufferevent_setwatermark(clt->clt_bev, EV_WRITE,
-	    clt->clt_sndbufsiz, 0);
+	    SERVER_MIN_PREFETCHED * clt->clt_sndbufsiz, 0);
 	/* Read at most amount of data that fits in one fcgi record. */
 	bufferevent_setwatermark(clt->clt_bev, EV_READ, 0, FCGI_CONTENT_SIZE);
 
@@ -746,6 +746,10 @@ server_write(struct bufferevent *bev, void *arg)
 		goto done;
 
 	bufferevent_enable(bev, EV_READ);
+
+	if (clt->clt_srvbev && !(clt->clt_srvbev->enabled & EV_READ))
+		bufferevent_enable(clt->clt_srvbev, EV_READ);
+
 	return;
  done:
 	(*bev->errorcb)(bev, EVBUFFER_WRITE|EVBUFFER_EOF, bev->cbarg);
@@ -786,6 +790,11 @@ server_read(struct bufferevent *bev, void *arg)
 		goto fail;
 	if (clt->clt_done)
 		goto done;
+
+	if (EVBUFFER_LENGTH(EVBUFFER_OUTPUT(clt->clt_bev)) > (size_t)
+	    SERVER_MAX_PREFETCH * clt->clt_sndbufsiz)
+		bufferevent_disable(bev, EV_READ);
+
 	return;
  done:
 	(*bev->errorcb)(bev, EVBUFFER_READ|EVBUFFER_EOF, bev->cbarg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.87 2015/07/16 04:46:07 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.88 2015/07/16 16:29:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -66,6 +66,8 @@
 #define SERVER_MAXREQUESTBODY	1048576	/* 1M */
 #define SERVER_BACKLOG		10
 #define SERVER_OUTOF_FD_RETRIES	5
+#define SERVER_MAX_PREFETCH	256
+#define SERVER_MIN_PREFETCHED	32
 
 #define MEDIATYPE_NAMEMAX	128	/* file name extension */
 #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
