@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.172 2015/07/09 16:01:48 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.173 2015/07/16 23:29:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1321,8 +1321,10 @@ logmsg(int pri, char *msg, char *from, int flags)
 	prilev = LOG_PRI(pri);
 
 	/* extract program name */
-	while (isspace((unsigned char)*msg))
+	while (isspace((unsigned char)*msg)) {
 		msg++;
+		msglen--;
+	}
 	for (i = 0; i < NAME_MAX; i++) {
 		if (!isalnum((unsigned char)msg[i]) && msg[i] != '-')
 			break;
