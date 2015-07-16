@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.108 2015/07/08 07:56:51 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.109 2015/07/16 15:31:35 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -76,7 +76,26 @@ int rt6_deleteroute(struct radix_node *, void *, u_int);
 
 void nd6_addr_add(void *);
 
+void nd6_rs_output_timo(void *);
+void nd6_rs_output_set_timo(int);
+void nd6_rs_output(struct ifnet *, struct in6_ifaddr *);
+void nd6_rs_dev_state(void *);
+
 extern int nd6_recalc_reachtm_interval;
+
+#define ND6_RS_OUTPUT_INTERVAL		60
+#define ND6_RS_OUTPUT_QUICK_INTERVAL	1
+
+struct timeout	nd6_rs_output_timer;
+int		nd6_rs_output_timeout = ND6_RS_OUTPUT_INTERVAL;
+int		nd6_rs_timeout_count = 0;
+
+void
+nd6_rs_init(void)
+{
+	timeout_set(&nd6_rs_output_timer, nd6_rs_output_timo, NULL);
+}
+
 
 /*
  * Receive Router Solicitation Message - just for routers.
@@ -257,6 +276,63 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_routersolicit);
 	icmp6stat.icp6s_outhist[ND_ROUTER_SOLICIT]++;
+}
+
+void
+nd6_rs_output_set_timo(int timeout)
+{
+	nd6_rs_output_timeout = timeout;
+	timeout_add_sec(&nd6_rs_output_timer, nd6_rs_output_timeout);
+}
+
+void
+nd6_rs_output_timo(void *ignored_arg)
+{
+	struct ifnet *ifp;
+	struct in6_ifaddr *ia6;
+
+	if (nd6_rs_timeout_count == 0)
+		return;
+
+	if (nd6_rs_output_timeout < ND6_RS_OUTPUT_INTERVAL)
+		/* exponential backoff if running quick timeouts */
+		nd6_rs_output_timeout *= 2;
+	if (nd6_rs_output_timeout > ND6_RS_OUTPUT_INTERVAL)
+		nd6_rs_output_timeout = ND6_RS_OUTPUT_INTERVAL;
+
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (ISSET(ifp->if_flags, IFF_RUNNING) &&
+		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
+			ia6 = in6ifa_ifpforlinklocal(ifp, IN6_IFF_TENTATIVE);
+			if (ia6 != NULL)
+				nd6_rs_output(ifp, ia6);
+		}
+	}
+	timeout_add_sec(&nd6_rs_output_timer, nd6_rs_output_timeout);
+}
+
+void
+nd6_rs_attach(struct ifnet *ifp)
+{
+	if (!ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
+		nd6_rs_timeout_count++;
+		RS_LHCOOKIE(ifp) = hook_establish(ifp->if_linkstatehooks, 1,
+		    nd6_rs_dev_state, ifp);
+	}
+
+	nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
+}
+
+void
+nd6_rs_detach(struct ifnet *ifp)
+{
+	if (ISSET(ifp->if_xflags, IFXF_AUTOCONF6)) {
+		nd6_rs_timeout_count--;
+		hook_disestablish(ifp->if_linkstatehooks, RS_LHCOOKIE(ifp));
+	}
+
+	if (nd6_rs_timeout_count == 0)
+		timeout_del(&nd6_rs_output_timer);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.42 2015/07/09 05:45:25 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.43 2015/07/16 15:31:35 mpi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -233,12 +233,6 @@ extern int nd6_debug;
 
 extern struct timeout nd6_timer_ch;
 
-#define ND6_RS_OUTPUT_INTERVAL 60
-#define ND6_RS_OUTPUT_QUICK_INTERVAL 1
-extern struct timeout nd6_rs_output_timer;
-extern int nd6_rs_output_timeout;
-extern int nd6_rs_timeout_count;
-
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[9];
 	struct {
@@ -299,12 +293,13 @@ void nd6_ns_output(struct ifnet *, struct in6_addr *,
 caddr_t nd6_ifptomac(struct ifnet *);
 void nd6_dad_start(struct ifaddr *, int *);
 void nd6_dad_stop(struct ifaddr *);
-
-void nd6_rs_input(struct mbuf *, int, int);
 void nd6_ra_input(struct mbuf *, int, int);
-void nd6_rs_output_set_timo(int);
-void nd6_rs_output(struct ifnet *, struct in6_ifaddr *);
-void nd6_rs_dev_state(void *);
+
+void nd6_rs_init(void);
+void nd6_rs_attach(struct ifnet *);
+void nd6_rs_detach(struct ifnet *);
+void nd6_rs_input(struct mbuf *, int, int);
+
 void prelist_del(struct nd_prefix *);
 void defrouter_addreq(struct nd_defrouter *);
 void defrouter_reset(void);

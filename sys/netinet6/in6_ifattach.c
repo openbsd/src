@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.88 2015/06/08 22:19:28 krw Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.89 2015/07/16 15:31:35 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -580,7 +580,7 @@ in6_ifattach(struct ifnet *ifp)
 	}
 
 	if (ifp->if_xflags & IFXF_AUTOCONF6)
-		nd6_rs_output_set_timo(ND6_RS_OUTPUT_QUICK_INTERVAL);
+		nd6_rs_attach(ifp);
 
 	return (0);
 }
@@ -639,12 +639,7 @@ in6_ifdetach(struct ifnet *ifp)
 	}
 
 	if (ifp->if_xflags & IFXF_AUTOCONF6) {
-		nd6_rs_timeout_count--;
-		if (nd6_rs_timeout_count == 0)
-			timeout_del(&nd6_rs_output_timer);
-		if (RS_LHCOOKIE(ifp) != NULL)
-			hook_disestablish(ifp->if_linkstatehooks,
-			    RS_LHCOOKIE(ifp));
+		nd6_rs_detach(ifp);
 		ifp->if_xflags &= ~IFXF_AUTOCONF6;
 	}
 }
