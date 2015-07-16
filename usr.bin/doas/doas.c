@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.2 2015/07/16 21:00:59 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.3 2015/07/16 21:55:03 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -223,22 +223,7 @@ copyenv(const char **oldenvp, struct rule *rule)
 static void __dead
 fail(void)
 {
-	const char *msgs[] = {
-		"No lollygagging!",
-		"Better luck next time.",
-		"PEBKAC detected.",
-		"That's what happens when you're lazy.",
-		"It is clear that this has not been thought through.",
-		"That's the most ridiculous thing I've heard in the last two or three minutes!",
-		"No sane people allowed here.  Go home.",
-		"I would explain, but I am too drunk.",
-		"You're not allowed to have an opinion.",
-		"Complaint forms are handled in another department.",
-	};
-	const char *m;
-
-	m = msgs[arc4random_uniform(sizeof(msgs) / sizeof(msgs[0]))];
-	fprintf(stderr, "%s\n", m);
+	fprintf(stderr, "Permission denied\n");
 	exit(1);
 }
 
