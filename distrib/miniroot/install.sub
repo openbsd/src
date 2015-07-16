@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.845 2015/07/05 09:17:39 rpe Exp $
+#	$OpenBSD: install.sub,v 1.846 2015/07/16 21:05:08 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -294,7 +294,7 @@ disklabel_autolayout() {
 		else
 			echo "No autopartitioning template found."
 			exit 1
-		fi	
+		fi
 	done
 
 	while :; do
