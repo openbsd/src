@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2015/06/23 18:03:09 semarie Exp $
+#	$OpenBSD: Makefile,v 1.2 2015/07/16 16:35:57 reyk Exp $
 
-SUBDIR += patterns
+SUBDIR += patterns tests
 
 .include <bsd.subdir.mk>
