@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.15 2015/07/16 00:24:26 yuo Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.16 2015/07/16 00:35:06 yuo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -677,11 +677,22 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->axen_iface);
 
-	/* XXX fix when USB3.0 HC is supported */
 	/* decide on what our bufsize will be */
-	sc->axen_bufsz = (sc->axen_udev->speed == USB_SPEED_HIGH) ?
-	    AXEN_BUFSZ_HS * 1024 : AXEN_BUFSZ_LS * 1024;
-
+	switch (sc->axen_udev->speed) {
+	case USB_SPEED_FULL:
+	    	sc->axen_bufsz = AXEN_BUFSZ_LS * 1024; 
+		break;
+	case USB_SPEED_HIGH:
+	    	sc->axen_bufsz = AXEN_BUFSZ_HS * 1024; 
+		break;
+	case USB_SPEED_SUPER:
+	    	sc->axen_bufsz = AXEN_BUFSZ_SS * 1024; 
+		break;
+	default:
+		printf("%s: not supported usb bus type", sc->axen_dev.dv_xname);
+		return;
+	}
+		
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->axen_iface, i);
@@ -982,9 +993,9 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		printf("rxeof: too large transfer\n");
 		goto done;
 	}
-		
+
 	/* sanity check */
-	if ((int)hdr_offset > total_len) {
+	if (hdr_offset > total_len) {
 		ifp->if_ierrors++;
 		usbd_delay_ms(sc->axen_udev, 100);
 		goto done;
@@ -1016,6 +1027,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		pkt_hdr = letoh32(*hdr_p);
 		pkt_len = (pkt_hdr >> 16) & 0x1fff;
+
 		DPRINTFN(10,("rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
 		   pkt_count, pkt_hdr, pkt_len));
 
@@ -1198,7 +1210,20 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 
 	c = &sc->axen_cdata.axen_tx_chain[idx];
 
-	boundary = (sc->axen_udev->speed == USB_SPEED_HIGH) ? 512 : 64;
+	switch (sc->axen_udev->speed) {
+	case USB_SPEED_FULL:
+	    	boundary = 64;
+		break;
+	case USB_SPEED_HIGH:
+	    	boundary = 512;
+		break;
+	case USB_SPEED_SUPER:
+	    	boundary = 4096; /* XXX */
+		break;
+	default:
+		printf("%s: not supported usb bus type", sc->axen_dev.dv_xname);
+		return EIO;
+	}
 
 	hdr.plen = htole32(m->m_pkthdr.len);
 	hdr.gso = 0; /* disable segmentation offloading */
