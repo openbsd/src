@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.53 2015/06/28 15:00:41 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.54 2015/07/16 18:48:51 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -2246,10 +2246,9 @@ intel_finish_fb(struct drm_framebuffer *old_fb)
 	bool was_interruptible = dev_priv->mm.interruptible;
 	int ret;
 
-	while(!atomic_read(&dev_priv->mm.wedged) &&
-	    atomic_read(&obj->pending_flip) != 0) {
-		tsleep(&dev_priv->pending_flip_queue, 0, "915flp", 0);
-	}
+	wait_event(dev_priv->pending_flip_queue,
+		   atomic_read(&dev_priv->mm.wedged) ||
+		   atomic_read(&obj->pending_flip) == 0);
 
 	/* Big Hammer, we also need to ensure that any pending
 	 * MI_WAIT_FOR_EVENT inside a user batch buffer on the
@@ -2957,8 +2956,8 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 	if (crtc->fb == NULL)
 		return;
 
-	while (intel_crtc_has_pending_flip(crtc))
-		tsleep(&dev_priv->pending_flip_queue, 0, "915wfl", 0);
+	wait_event(dev_priv->pending_flip_queue,
+		   !intel_crtc_has_pending_flip(crtc));
 
 	mutex_lock(&dev->struct_mutex);
 	intel_finish_fb(crtc->fb);

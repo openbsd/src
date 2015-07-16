@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.98 2015/06/26 15:22:23 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.99 2015/07/16 18:48:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1062,39 +1062,13 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	(i915_seqno_passed(ring->get_seqno(ring, false), seqno) || \
 	atomic_read(&dev_priv->mm.wedged))
 	do {
-		end = timeout_jiffies;
-		mtx_enter(&dev_priv->irq_lock);
-		do {
-			if (EXIT_COND) {
-				ret = 0;
-				break;
-			}
-			ret = msleep(ring, &dev_priv->irq_lock,
-			    PZERO | (interruptible ? PCATCH : 0),
-			    "gemwt", end);
-			nanouptime(&now);
-			timespecsub(&now, &before, &sleep_time);
-			if (timespeccmp(&sleep_time, &wait_time, >=)) {
-				end = 0;
-				break;
-			}
-			end = timeout_jiffies -
-			    timespec_to_jiffies(&sleep_time);
-		} while (ret == 0);
-		mtx_leave(&dev_priv->irq_lock);
-		switch (ret) {
-		case 0:
-			break;
-		case ERESTART:
-			end = -ERESTARTSYS;
-			break;
-		case EWOULDBLOCK:
-			end = 0;
-			break;
-		default:
-			end = -ret;
-			break;
-		}
+		if (interruptible)
+			end = wait_event_interruptible_timeout(ring->irq_queue,
+							       EXIT_COND,
+							       timeout_jiffies);
+		else
+			end = wait_event_timeout(ring->irq_queue, EXIT_COND,
+						 timeout_jiffies);
 
 		ret = i915_gem_check_wedge(dev_priv, interruptible);
 		if (ret)

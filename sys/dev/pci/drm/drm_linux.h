@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.32 2015/07/11 04:00:46 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.33 2015/07/16 18:48:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014 Mark Kettenis
  *
@@ -276,6 +276,76 @@ init_waitqueue_head(wait_queue_head_t *wq)
 {
 	mtx_init(&wq->lock, IPL_NONE);
 }
+
+#define wait_event(wq, condition) \
+do {						\
+	struct sleep_state sls;			\
+						\
+	if (condition)				\
+		break;				\
+	sleep_setup(&sls, &wq, 0, "drmwe");	\
+	sleep_finish(&sls, !(condition));	\
+} while (!(condition))
+
+#define __wait_event_timeout(wq, condition, ret) \
+do {						\
+	struct sleep_state sls;			\
+	int deadline, error;			\
+						\
+	sleep_setup(&sls, &wq, 0, "drmwet");	\
+	sleep_setup_timeout(&sls, ret);		\
+	deadline = ticks + ret;			\
+	sleep_finish(&sls, !(condition));	\
+	ret = deadline - ticks;			\
+	error = sleep_finish_timeout(&sls);	\
+	if (ret < 0 || error == EWOULDBLOCK)	\
+		ret = 0;			\
+	if (ret == 0 && (condition)) {		\
+		ret = 1;			\
+		break;				\
+	}					\
+} while (ret > 0 && !(condition))
+
+#define wait_event_timeout(wq, condition, timo)	\
+({						\
+	long __ret = timo;			\
+	if (!(condition))			\
+		__wait_event_timeout(wq, condition, __ret); \
+	__ret;					\
+})
+
+#define __wait_event_interruptible_timeout(wq, condition, ret) \
+do {						\
+	struct sleep_state sls;			\
+	int deadline, error, error1;		\
+						\
+	sleep_setup(&sls, &wq, PCATCH, "drmweti"); \
+	sleep_setup_timeout(&sls, ret);		\
+	sleep_setup_signal(&sls, PCATCH);	\
+	deadline = ticks + ret;			\
+	sleep_finish(&sls, !(condition));	\
+	ret = deadline - ticks;			\
+	error1 = sleep_finish_timeout(&sls);	\
+	error = sleep_finish_signal(&sls);	\
+	if (ret < 0 || error1 == EWOULDBLOCK)	\
+		ret = 0;			\
+	if (error == ERESTART)			\
+		ret = -ERESTARTSYS;		\
+	else if (error)				\
+		ret = -error;			\
+	if (ret == 0 && (condition)) {		\
+		ret = 1;			\
+		break;				\
+	}					\
+} while (ret > 0 && !(condition))
+
+#define wait_event_interruptible_timeout(wq, condition, timo) \
+({						\
+	long __ret = timo;			\
+	if (!(condition))			\
+		__wait_event_interruptible_timeout(wq, condition, __ret); \
+	__ret;					\
+})
 
 #define wake_up(x)			wakeup(x)
 #define wake_up_all(x)			wakeup(x)

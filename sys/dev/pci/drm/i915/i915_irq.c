@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.27 2015/06/26 15:22:23 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.28 2015/07/16 18:48:51 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -351,7 +351,7 @@ static void notify_ring(struct drm_device *dev,
 
 	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
 
-	wake_up_all(ring);
+	wake_up_all(&ring->irq_queue);
 	if (i915_enable_hangcheck) {
 		dev_priv->hangcheck_count = 0;
 		timeout_add_msec(&dev_priv->hangcheck_timer,
@@ -1470,7 +1470,7 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 		 * Wakeup waiting processes so they don't hang
 		 */
 		for_each_ring(ring, dev_priv, i)
-			wake_up_all(ring);
+			wake_up_all(&ring->irq_queue);
 	}
 
 	queue_work(dev_priv->wq, &dev_priv->error_work);
@@ -1676,13 +1676,13 @@ static bool i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
 			      ring_last_seqno(ring))) {
 		/* Issue a wake-up to catch stuck h/w. */
 #ifdef notyet
-		if (wakeup(ring) > 0) {
+		if (wakeup(&ring->irq_queue) > 0) {
 			DRM_ERROR("Hangcheck timer elapsed... %s idle\n",
 				  ring->name);
 			*err = true;
 		}
 #else
-		wake_up_all(ring);
+		wake_up_all(&ring->irq_queue);
 #endif
 		return true;
 	}
