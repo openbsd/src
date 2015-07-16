@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_openssl.c,v 1.23 2014/07/13 00:10:47 deraadt Exp $ */
+/* $OpenBSD: ui_openssl.c,v 1.24 2015/07/16 02:46:49 guenther Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) and others
  * for the OpenSSL project 2001.
  */
@@ -134,7 +134,7 @@
 /* Define globals.  They are protected by a lock */
 static struct sigaction savsig[NX509_SIG];
 
-static struct termios tty_orig, tty_new;
+static struct termios tty_orig;
 static FILE *tty_in, *tty_out;
 static int is_a_tty;
 
@@ -325,7 +325,8 @@ open_console(UI *ui)
 static int
 noecho_console(UI *ui)
 {
-	memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
+	struct termios tty_new = tty_orig;
+
 	tty_new.c_lflag &= ~ECHO;
 	if (is_a_tty && (tcsetattr(fileno(tty_in), TCSANOW, &tty_new) == -1))
 		return 0;
@@ -335,9 +336,7 @@ noecho_console(UI *ui)
 static int
 echo_console(UI *ui)
 {
-	memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
-	tty_new.c_lflag |= ECHO;
-	if (is_a_tty && (tcsetattr(fileno(tty_in), TCSANOW, &tty_new) == -1))
+	if (is_a_tty && (tcsetattr(fileno(tty_in), TCSANOW, &tty_orig) == -1))
 		return 0;
 	return 1;
 }
