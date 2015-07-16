@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2015/04/14 02:24:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2015/07/16 04:31:25 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -72,6 +72,7 @@ struct termios tmode, omode;
 int crmod, digit, lower, upper;
 
 char	hostname[HOST_NAME_MAX+1];
+char	globalhostname[HOST_NAME_MAX+1];
 struct	utsname kerninfo;
 char	name[LOGIN_NAME_MAX];
 char	dev[] = _PATH_DEV;
@@ -268,7 +269,7 @@ main(int argc, char *argv[])
 		}
 		if (CL && *CL)
 			putpad(CL);
-		edithost(HE);
+		strlcpy(globalhostname, HN, sizeof(globalhostname));
 		if (IM && *IM)
 			putf(IM);
 		if (TO) {
@@ -532,7 +533,6 @@ prompt(void)
 static void
 putf(char *cp)
 {
-	extern char editedhost[];
 	char *slash, db[100];
 	time_t t;
 
@@ -552,7 +552,7 @@ putf(char *cp)
 			break;
 
 		case 'h':
-			xputs(editedhost);
+			xputs(globalhostname);
 			break;
 
 		case 'd': {

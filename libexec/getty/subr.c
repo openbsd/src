@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.22 2014/04/12 17:01:23 jsg Exp $	*/
+/*	$OpenBSD: subr.c,v 1.23 2015/07/16 04:31:25 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -390,46 +390,6 @@ adelay(int ms, struct delayval *dp)
 	return (dp->bits);
 }
 #endif
-
-char	editedhost[48];
-
-void
-edithost(char *pat)
-{
-	char *host = HN;
-	char *res = editedhost;
-
-	if (!pat)
-		pat = "";
-	while (*pat) {
-		switch (*pat) {
-
-		case '#':
-			if (*host)
-				host++;
-			break;
-
-		case '@':
-			if (*host)
-				*res++ = *host++;
-			break;
-
-		default:
-			*res++ = *pat;
-			break;
-
-		}
-		if (res == &editedhost[sizeof editedhost - 1]) {
-			*res = '\0';
-			return;
-		}
-		pat++;
-	}
-	if (*host)
-		strlcpy(res, host, sizeof editedhost - (res - editedhost));
-	else
-		*res = '\0';
-}
 
 void
 makeenv(char *env[])
