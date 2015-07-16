@@ -625,6 +625,7 @@
 ./usr/include/mips64/memconf.h
 ./usr/include/mips64/mips_cpu.h
 ./usr/include/mips64/mips_opcode.h
+./usr/include/mips64/mutex.h
 ./usr/include/mips64/param.h
 ./usr/include/mips64/pcb.h
 ./usr/include/mips64/pmap.h
