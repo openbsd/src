@@ -354,6 +354,7 @@
 ./usr/bin/diff
 ./usr/bin/diff3
 ./usr/bin/dirname
+./usr/bin/doas
 ./usr/bin/du
 ./usr/bin/egrep
 ./usr/bin/enc2xs

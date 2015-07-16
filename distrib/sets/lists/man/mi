@@ -90,6 +90,7 @@
 ./usr/share/man/man1/diff3.1
 ./usr/share/man/man1/dig.1
 ./usr/share/man/man1/dirname.1
+./usr/share/man/man1/doas.1
 ./usr/share/man/man1/domainname.1
 ./usr/share/man/man1/du.1
 ./usr/share/man/man1/echo.1
@@ -2151,6 +2152,7 @@
 ./usr/share/man/man5/dirent.5
 ./usr/share/man/man5/disklabel.5
 ./usr/share/man/man5/disktab.5
+./usr/share/man/man5/doas.conf.5
 ./usr/share/man/man5/dvmrpd.conf.5
 ./usr/share/man/man5/editrc.5
 ./usr/share/man/man5/elf.5
