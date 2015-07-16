@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.28 2015/07/15 13:54:34 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.29 2015/07/16 15:03:35 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2027,8 +2027,10 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 		*badarg = 1;
 		goto end;
 	}
-	if (otmp)
+	if (otmp) {
 		X509_VERIFY_PARAM_add0_policy(*pm, otmp);
+		otmp = NULL;
+	}
 	if (flags)
 		X509_VERIFY_PARAM_set_flags(*pm, flags);
 
@@ -2047,6 +2049,7 @@ end:
 	if (pargc)
 		*pargc -= *pargs - oldargs;
 
+	ASN1_OBJECT_free(otmp);
 	return 1;
 }
 
