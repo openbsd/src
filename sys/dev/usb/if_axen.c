@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.14 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.15 2015/07/16 00:24:26 yuo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -1035,8 +1035,8 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto nextpkt;
 		}
 
-		/* skip pseudo header (2byte) */
-		m->m_pkthdr.len = m->m_len = pkt_len - 2;
+		/* skip pseudo header (2byte) and trailer padding (4Byte) */
+		m->m_pkthdr.len = m->m_len = pkt_len - 6;
 
 #ifdef AXEN_TOE
 		/* cheksum err */
@@ -1058,7 +1058,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			    M_UDP_CSUM_IN_OK;
 #endif
 
-		memcpy(mtod(m, char *), buf + 2, pkt_len - 2);
+		memcpy(mtod(m, char *), buf + 2, pkt_len - 6);
 
 		ml_enqueue(&ml, m);
 
