@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.1 2015/07/16 20:44:21 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.2 2015/07/16 21:00:59 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -238,8 +238,7 @@ fail(void)
 	const char *m;
 
 	m = msgs[arc4random_uniform(sizeof(msgs) / sizeof(msgs[0]))];
-	fprintf(stderr, m);
-	fprintf(stderr, "\n");
+	fprintf(stderr, "%s\n", m);
 	exit(1);
 }
 
