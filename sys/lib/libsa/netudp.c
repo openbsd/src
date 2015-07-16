@@ -1,4 +1,4 @@
-/*	$OpenBSD: netudp.c,v 1.2 2014/11/20 14:51:42 krw Exp $	*/
+/*	$OpenBSD: netudp.c,v 1.3 2015/07/16 16:12:15 mpi Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 #endif
 		return -1;
 	}
-	NTOHS(ip->ip_len);
+	ip->ip_len = ntohs(ip->ip_len);
 	if (n < ip->ip_len) {
 #ifdef NET_DEBUG
 		if (debug)
@@ -238,9 +238,9 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 		}
 		*ip = tip;
 	}
-	NTOHS(uh->uh_dport);
-	NTOHS(uh->uh_sport);
-	NTOHS(uh->uh_ulen);
+	uh->uh_dport = ntohs(uh->uh_dport);
+	uh->uh_sport = ntohs(uh->uh_sport);
+	uh->uh_ulen = ntohs(uh->uh_ulen);
 	if (uh->uh_ulen < sizeof(*uh)) {
 #ifdef NET_DEBUG
 		if (debug)

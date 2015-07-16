@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.922 2015/07/08 13:03:26 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.923 2015/07/16 16:12:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1747,9 +1747,8 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir,
 		case ICMP_PARAMPROB:
 			/* These will not be used, but set them anyway */
 			*icmp_dir = PF_IN;
-			*virtual_type = type;
+			*virtual_type = htons(type);
 			*virtual_id = 0;
-			HTONS(*virtual_type);
 			return (1);  /* These types match to another state */
 
 		/*
@@ -1834,9 +1833,8 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir,
 		case ICMP6_PARAM_PROB:
 			/* These will not be used, but set them anyway */
 			*icmp_dir = PF_IN;
-			*virtual_type = type;
+			*virtual_type = htons(type);
 			*virtual_id = 0;
-			HTONS(*virtual_type);
 			return (1);  /* These types match to another state */
 		/*
 		 * All remaining ICMP6 types get their own states,
@@ -1851,7 +1849,7 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir,
 		break;
 #endif /* INET6 */
 	}
-	HTONS(*virtual_type);
+	*virtual_type = htons(*virtual_type);
 	return (0);  /* These types match to their own state */
 }
 
@@ -2388,7 +2386,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		opt = (char *)(th + 1);
 		opt[0] = TCPOPT_MAXSEG;
 		opt[1] = 4;
-		HTONS(mss);
+		mss = htons(mss);
 		memcpy((opt + 2), &mss, 2);
 	}
 
@@ -2560,10 +2558,7 @@ pf_match(u_int8_t op, u_int32_t a1, u_int32_t a2, u_int32_t p)
 int
 pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 {
-	NTOHS(a1);
-	NTOHS(a2);
-	NTOHS(p);
-	return (pf_match(op, a1, a2, p));
+	return (pf_match(op, ntohs(a1), ntohs(a2), ntohs(p)));
 }
 
 int
@@ -2892,7 +2887,7 @@ pf_get_mss(struct pf_pdesc *pd)
 			break;
 		case TCPOPT_MAXSEG:
 			memcpy(&mss, (opt + 2), 2);
-			NTOHS(mss);
+			mss = ntohs(mss);
 			/* FALLTHROUGH */
 		default:
 			optlen = opt[1];

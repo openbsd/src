@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.109 2015/07/16 15:31:35 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.110 2015/07/16 16:12:15 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -433,7 +433,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	dr0.ifp = ifp;
 	/* unspecified or not? (RFC 2461 6.3.4) */
 	if (advreachable) {
-		NTOHL(advreachable);
+		advreachable = ntohl(advreachable);
 		if (advreachable <= MAX_REACHABLE_TIME &&
 		    ndi->basereachable != advreachable) {
 			ndi->basereachable = advreachable;

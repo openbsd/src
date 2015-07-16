@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.43 2015/06/03 11:57:37 yasuoka Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.44 2015/07/16 16:12:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -726,35 +726,35 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
 
 	if (pd->proto == IPPROTO_ICMPV6 && pd->naf == AF_INET) {
 		if (pd->dir == PF_IN) {
-			NTOHS(pd->ndport);
+			pd->ndport = ntohs(pd->ndport);
 			if (pd->ndport == ICMP6_ECHO_REQUEST)
 				pd->ndport = ICMP_ECHO;
 			else if (pd->ndport == ICMP6_ECHO_REPLY)
 				pd->ndport = ICMP_ECHOREPLY;
-			HTONS(pd->ndport);
+			pd->ndport = htons(pd->ndport);
 		} else {
-			NTOHS(pd->nsport);
+			pd->nsport = ntohs(pd->nsport);
 			if (pd->nsport == ICMP6_ECHO_REQUEST)
 				pd->nsport = ICMP_ECHO;
 			else if (pd->nsport == ICMP6_ECHO_REPLY)
 				pd->nsport = ICMP_ECHOREPLY;
-			HTONS(pd->nsport);
+			pd->nsport = htons(pd->nsport);
 		}
 	} else if (pd->proto == IPPROTO_ICMP && pd->naf == AF_INET6) {
 		if (pd->dir == PF_IN) {
-			NTOHS(pd->ndport);
+			pd->ndport = ntohs(pd->ndport);
 			if (pd->ndport == ICMP_ECHO)
 				pd->ndport = ICMP6_ECHO_REQUEST;
 			else if (pd->ndport == ICMP_ECHOREPLY)
 				pd->ndport = ICMP6_ECHO_REPLY;
-			HTONS(pd->ndport);
+			pd->ndport = htons(pd->ndport);
 		} else {
-			NTOHS(pd->nsport);
+			pd->nsport = ntohs(pd->nsport);
 			if (pd->nsport == ICMP_ECHO)
 				pd->nsport = ICMP6_ECHO_REQUEST;
 			else if (pd->nsport == ICMP_ECHOREPLY)
 				pd->nsport = ICMP6_ECHO_REPLY;
-			HTONS(pd->nsport);
+			pd->nsport = htons(pd->nsport);
 		}
 	}
 

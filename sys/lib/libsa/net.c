@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.17 2014/11/19 20:28:56 miod Exp $	*/
+/*	$OpenBSD: net.c,v 1.18 2015/07/16 16:12:15 mpi Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ intoa(u_int32_t addr)
 	int n;
 	static char buf[sizeof(".255.255.255.255")];
 
-	NTOHL(addr);
+	addr = ntohl(addr);
 	cp = &buf[sizeof buf];
 	*--cp = '\0';
 

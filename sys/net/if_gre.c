@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.74 2015/03/14 03:38:51 jsg Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.75 2015/07/16 16:12:15 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -294,7 +294,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				msiz = MOB_H_SIZ_L;
 			}
 
-			HTONS(mob_h.proto);
+			mob_h.proto = htons(mob_h.proto);
 			mob_h.hcrc = gre_in_cksum((u_int16_t *) &mob_h, msiz);
 
 			/* Squeeze in the mobility header */

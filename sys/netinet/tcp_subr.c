@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.143 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.144 2015/07/16 16:12:15 mpi Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -410,7 +410,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip6->ip6_nxt  = IPPROTO_TCP;
 		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
 		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
-		HTONS(ip6->ip6_plen);
+		ip6->ip6_plen = htons(ip6->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
 		    (struct route_in6 *)ro, 0, NULL, NULL,
 		    tp ? tp->t_inpcb : NULL);
@@ -1106,10 +1106,10 @@ tcp_signature(struct tdb *tdb, int af, struct mbuf *m, struct tcphdr *th,
 	th0.th_sum = 0;
 
 	if (doswap) {
-		HTONL(th0.th_seq);
-		HTONL(th0.th_ack);
-		HTONS(th0.th_win);
-		HTONS(th0.th_urp);
+		th0.th_seq = htonl(th0.th_seq);
+		th0.th_ack = htonl(th0.th_ack);
+		th0.th_win = htons(th0.th_win);
+		th0.th_urp = htons(th0.th_urp);
 	}
 	MD5Update(&ctx, (char *)&th0, sizeof(th0));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.296 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.297 2015/07/16 16:12:15 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -569,10 +569,10 @@ tcp_input(struct mbuf *m, ...)
 	/*
 	 * Convert TCP protocol specific fields to host format.
 	 */
-	NTOHL(th->th_seq);
-	NTOHL(th->th_ack);
-	NTOHS(th->th_win);
-	NTOHS(th->th_urp);
+	th->th_seq = ntohl(th->th_seq);
+	th->th_ack = ntohl(th->th_ack);
+	th->th_win = ntohs(th->th_win);
+	th->th_urp = ntohs(th->th_urp);
 
 	/*
 	 * Locate pcb for segment.
@@ -2285,7 +2285,7 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
 			bcopy((char *) cp + 2, (char *) &mss, sizeof(mss));
-			NTOHS(mss);
+			mss = ntohs(mss);
 			oi->maxseg = mss;
 			break;
 
@@ -2305,9 +2305,9 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 				continue;
 			oi->ts_present = 1;
 			bcopy(cp + 2, &oi->ts_val, sizeof(oi->ts_val));
-			NTOHL(oi->ts_val);
+			oi->ts_val = ntohl(oi->ts_val);
 			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
-			NTOHL(oi->ts_ecr);
+			oi->ts_ecr = ntohl(oi->ts_ecr);
 
 			if (!(th->th_flags & TH_SYN))
 				continue;
@@ -2560,10 +2560,10 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		struct sackblk sack;
 
 		bcopy(tmp_cp, (char *) &(sack.start), sizeof(tcp_seq));
-		NTOHL(sack.start);
+		sack.start = ntohl(sack.start);
 		bcopy(tmp_cp + sizeof(tcp_seq),
 		    (char *) &(sack.end), sizeof(tcp_seq));
-		NTOHL(sack.end);
+		sack.end = ntohl(sack.end);
 		tmp_olen -= TCPOLEN_SACK;
 		tmp_cp += TCPOLEN_SACK;
 		if (SEQ_LEQ(sack.end, sack.start))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.62 2015/07/15 22:16:42 deraadt Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.63 2015/07/16 16:12:15 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -457,9 +457,9 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip, ip_off),
 			    sizeof(u_int16_t), (caddr_t) &ipo->ip_off);
-			NTOHS(ipo->ip_off);
+			ipo->ip_off = ntohs(ipo->ip_off);
 			ipo->ip_off &= ~(IP_DF | IP_MF | IP_OFFMASK);
-			HTONS(ipo->ip_off);
+			ipo->ip_off = htons(ipo->ip_off);
 		}
 #ifdef INET6
 		else if (tp == (IPV6_VERSION >> 4)) {

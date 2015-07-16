@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.39 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: safe.c,v 1.40 2015/07/16 16:12:15 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -56,7 +56,7 @@
 #include <dev/pci/safevar.h>
 
 #ifndef bswap32
-#define	bswap32	NTOHL
+#define	bswap32(x) (x) = ntohl((u_int32_t)(x))
 #endif
 
 #define	KASSERT_X(x,y)

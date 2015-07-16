@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.71 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.72 2015/07/16 16:12:15 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1356,7 +1356,7 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 
 	m_copydata(m0, sizeof(struct ether_header),
 	    sizeof(struct pipex_pppoe_header), (caddr_t)&pppoe);
-	NTOHS(pppoe.session_id);
+	pppoe.session_id = ntohs(pppoe.session_id);
 	session = pipex_lookup_by_session_id(PIPEX_PROTO_PPPOE,
 	    pppoe.session_id);
 #ifdef PIPEX_DEBUG
@@ -1932,7 +1932,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		session->proto.l2tp.nr_acked = session->proto.l2tp.nr_nxt - 1;
 		seq->nr = htons(session->proto.l2tp.nr_acked);
 	}
-	HTONS(l2tp->flagsver);
+	l2tp->flagsver = htons(l2tp->flagsver);
 
 	plen += sizeof(struct udphdr);
 	udp = (struct udphdr *)(mtod(m0, caddr_t) + hlen);
@@ -2608,8 +2608,8 @@ pipex_mppe_output(struct mbuf *m0, struct pipex_session *session,
 	if (encrypt)
 		hdr->coher_cnt |= 0x1000;
 
-	HTONS(hdr->protocol);
-	HTONS(hdr->coher_cnt);
+	hdr->protocol = htons(hdr->protocol);
+	hdr->coher_cnt = htons(hdr->coher_cnt);
 
 	/* encrypt chain */
 	for (m = m0; m; m = m->m_next) {
