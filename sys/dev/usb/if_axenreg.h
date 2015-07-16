@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axenreg.h,v 1.4 2015/06/12 15:47:31 mpi Exp $	*/
+/*	$OpenBSD: if_axenreg.h,v 1.5 2015/07/16 00:17:40 yuo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>. All right reserved.
@@ -19,7 +19,6 @@
 #define AXEN_REV_UA1		0
 #define AXEN_REV_UA2		1
 
-
 /* receive header */
 /* 
  *                     +-multicast/broadcast
@@ -27,8 +26,9 @@
  *                     |    |     ++-----L3_type (1:ipv4, 0/2:ipv6)
  *        pkt_len(13)  |    |     ||+ ++-L4_type(0: icmp, 1: UDP, 4: TCP)
  * |765|43210 76543210|7654 3210 7654 3210|
- *  |+-Drop_err               |+-L4_err |+-L4_CSUM_ERR
- *  +--crc_err                +--L3_err +--L3_CSUM_ERR
+ *  ||+-crc_err              |+-L4_err |+-L4_CSUM_ERR
+ *  |+-mii_err               +--L3_err +--L3_CSUM_ERR
+ *  +-drop_err
  *
  * ex) pkt_hdr 0x00680820
  *      drop_err, crc_err: none
@@ -52,8 +52,9 @@
  *  0x0850: ipv6 tcp (ssh)		0000 1000 0101 0000
  */
 
-#define	AXEN_RXHDR_CRC_ERR	(1U << 31)
-#define	AXEN_RXHDR_DROP_ERR	(1U << 30)
+#define	AXEN_RXHDR_DROP_ERR	(1U << 31)
+#define AXEN_RXHDR_MII_ERR	(1U << 30)
+#define	AXEN_RXHDR_CRC_ERR	(1U << 29)
 #define AXEN_RXHDR_MCAST	(1U << 15)
 #define AXEN_RXHDR_RX_OK	(1U << 11)
 #define	AXEN_RXHDR_L3_ERR	(1U << 9)
