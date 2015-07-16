@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettytab.5,v 1.23 2014/05/24 12:13:56 millert Exp $
+.\"	$OpenBSD: gettytab.5,v 1.24 2015/07/16 04:33:19 tedu Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 24 2014 $
+.Dd $Mdocdate: July 16 2015 $
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
@@ -97,7 +97,6 @@ character.
 .It hc Ta bool Ta false Ta "\&Do"
 .Em not
 hangup line on last close.
-.It he Ta str Ta Dv NULL Ta "Hostname editing string."
 .It hn Ta str Ta hostname Ta "Hostname."
 .It ht Ta bool Ta false Ta "Terminal has real tabs."
 .It i0 Ta num Ta unused Ta "TTY input flags to write messages."
@@ -249,32 +248,6 @@ system using
 but may also be overridden by the
 .Em \&hn
 table entry.
-In either case it may be edited with the
-.Em \&he
-string.
-A
-.Ql @
-in the
-.Em \&he
-string causes one character from the real hostname to
-be copied to the final hostname.
-A
-.Ql #
-in the
-.Em \&he
-string causes the next character of the real hostname
-to be skipped.
-Each character that
-is neither
-.Ql @
-nor
-.Ql #
-is copied into the final hostname.
-Surplus
-.Ql @
-and
-.Ql #
-characters are ignored.
 .It \&%t
 The TTY name.
 .It "\&%m, \&%r, \&%s, \&%v"
