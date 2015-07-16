@@ -1,4 +1,4 @@
-.TH "unbound" "8" "Dec  8, 2014" "NLnet Labs" "unbound 1.5.1"
+.TH "unbound" "8" "Jul  9, 2015" "NLnet Labs" "unbound 1.5.4"
 .\"
 .\" unbound.8 -- unbound manual
 .\"
@@ -9,7 +9,7 @@
 .\"
 .SH "NAME"
 .B unbound
-\- Unbound DNS validating resolver 1.5.1.
+\- Unbound DNS validating resolver 1.5.4.
 .SH "SYNOPSIS"
 .B unbound
 .RB [ \-h ]
@@ -45,20 +45,10 @@ nameserver 127.0.0.1
 into
 .IR resolv.conf (5).
 .P
-.B Unbound
-can serve local zones authoritatively to resolver clients.
-This can be used for split horizon setups.
-See
-.B local\-zone
-or
-.B stub\-zone
-in
-.IR unbound.conf (5).
-.B Unbound
-must not be used to serve authoritative data to the internet at large.
-Consider running 
-.IR nsd (8)
-on a different machine or on a different IP address.
+If authoritative DNS is needed as well using
+.IR nsd (8),
+careful setup is required because authoritative nameservers and
+resolvers are using the same port number (53).
 .P
 The available options are:
 .TP
