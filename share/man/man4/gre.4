@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.42 2015/06/02 16:02:45 sobrado Exp $
+.\" $OpenBSD: gre.4,v 1.43 2015/07/16 15:46:41 sobrado Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 2 2015 $
+.Dd $Mdocdate: July 16 2015 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ variables respectively in
 Allow GRE packets in and out of the system.
 .It Va net.inet.gre.wccp
 Set to 1 to allow WCCPv1-style GRE packets into the system;
-set to 2 to handle the the packets as WCCPv2-style GRE, truncating
+set to 2 to handle the packets as WCCPv2-style GRE, truncating
 the redirect header.
 This variable depends on
 .Va gre.allow
