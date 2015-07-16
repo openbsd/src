@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.332 2015/06/21 12:16:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.333 2015/07/16 17:26:57 blambert Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -803,7 +803,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		case IMSG_FILTER_SET:
 			if (imsg.hdr.len > IMSG_HEADER_SIZE +
 			    sizeof(struct filter_set))
-				fatalx("IMSG_RECONF_CONF bad len");
+				fatalx("IMSG_FILTER_SET bad len");
 			if (parent_set == NULL) {
 				log_warnx("rde_dispatch_imsg_parent: "
 				    "IMSG_FILTER_SET unexpected");
