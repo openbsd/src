@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.30 2015/06/28 01:11:27 guenther Exp $ */
+/* $OpenBSD: apicvec.s,v 1.31 2015/07/16 05:10:14 guenther Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -182,15 +182,9 @@ XINTR(softclock):
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
-#endif
 	pushl	$I386_SOFTINTR_SOFTCLOCK
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintunlock)
-#endif
 	decl	CPUVAR(IDEPTH)
 	jmp	_C_LABEL(Xdoreti)
 
@@ -204,15 +198,9 @@ XINTR(softnet):
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
-#endif
 	pushl	$I386_SOFTINTR_SOFTNET
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintunlock)
-#endif
 	decl	CPUVAR(IDEPTH)
 	jmp	_C_LABEL(Xdoreti)
 #undef DONETISR
@@ -227,15 +215,9 @@ XINTR(softtty):
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
-#endif
 	pushl	$I386_SOFTINTR_SOFTTTY
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintunlock)
-#endif
 	decl	CPUVAR(IDEPTH)
 	jmp	_C_LABEL(Xdoreti)
 

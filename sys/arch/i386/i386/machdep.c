@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.571 2015/06/07 06:24:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.572 2015/07/16 05:10:14 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3884,20 +3884,6 @@ splassert_check(int wantipl, const char *func)
 		splassert_fail(wantipl, lapic_tpr, func);
 	if (wantipl == IPL_NONE && curcpu()->ci_idepth != 0)
 		splassert_fail(-1, curcpu()->ci_idepth, func);
-}
-#endif
-
-#ifdef MULTIPROCESSOR
-void
-i386_softintlock(void)
-{
-	__mp_lock(&kernel_lock);
-}
-
-void
-i386_softintunlock(void)
-{
-	__mp_unlock(&kernel_lock);
 }
 #endif
 

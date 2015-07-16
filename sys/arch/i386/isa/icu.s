@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.32 2015/06/28 01:11:27 guenther Exp $	*/
+/*	$OpenBSD: icu.s,v 1.33 2015/07/16 05:10:14 guenther Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -119,30 +119,18 @@ IDTVEC(softtty)
 	movl	$IPL_SOFTTTY,%eax
 	movl	%eax,CPL
 	sti
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
-#endif
 	pushl	$I386_SOFTINTR_SOFTTTY
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintunlock)
-#endif
 	jmp	*%esi
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET,%eax
 	movl	%eax,CPL
 	sti
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
-#endif
 	pushl	$I386_SOFTINTR_SOFTNET
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintunlock)
-#endif
 	jmp	*%esi
 #undef DONETISR
 
@@ -150,14 +138,8 @@ IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK,%eax
 	movl	%eax,CPL
 	sti
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(i386_softintlock)
-#endif
 	pushl	$I386_SOFTINTR_SOFTCLOCK
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(i386_softintunlock)
-#endif
 	jmp	*%esi
 

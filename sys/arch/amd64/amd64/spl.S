@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.9 2015/06/28 01:16:28 guenther Exp $	*/
+/*	$OpenBSD: spl.S,v 1.10 2015/07/16 05:10:14 guenther Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ IDTVEC(spllower)
 	_PROF_PROLOGUE
 	pushq	%rbx
 	pushq	%r13
-	pushq	%r12
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
@@ -133,7 +132,6 @@ IDTVEC(spllower)
 2:
 	movl	%ebx,CPUVAR(ILEVEL)
 	sti
-	popq	%r12
 	popq	%r13
 	popq	%rbx
 	ret

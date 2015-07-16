@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.7 2015/01/06 12:50:48 dlg Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.8 2015/07/16 05:10:14 guenther Exp $	*/
 /*	$NetBSD: softintr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
 
 /*-
@@ -84,6 +84,7 @@ softintr_dispatch(int which)
 	floor = ci->ci_handled_intr_level;
 	ci->ci_handled_intr_level = ci->ci_ilevel;
 
+	KERNEL_LOCK();
 	for (;;) {
 		mtx_enter(&si->softintr_lock);
 		sih = TAILQ_FIRST(&si->softintr_q);
@@ -100,6 +101,7 @@ softintr_dispatch(int which)
 
 		(*sih->sih_fn)(sih->sih_arg);
 	}
+	KERNEL_UNLOCK();
 
 	ci->ci_handled_intr_level = floor;
 }

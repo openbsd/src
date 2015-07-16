@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.5 2014/07/12 18:44:41 tedu Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.6 2015/07/16 05:10:14 guenther Exp $	*/
 /*	$NetBSD: softintr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
 
 /*-
@@ -79,6 +79,7 @@ softintr_dispatch(int which)
 	struct i386_soft_intr *si = &i386_soft_intrs[which];
 	struct i386_soft_intrhand *sih;
 
+	KERNEL_LOCK();
 	for (;;) {
 		mtx_enter(&si->softintr_lock);
 		sih = TAILQ_FIRST(&si->softintr_q);
@@ -95,6 +96,7 @@ softintr_dispatch(int which)
 
 		(*sih->sih_fn)(sih->sih_arg);
 	}
+	KERNEL_UNLOCK();
 }
 
 /*
