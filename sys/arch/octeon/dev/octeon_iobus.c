@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.11 2015/07/13 19:05:23 miod Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.12 2015/07/16 02:19:47 jasper Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -207,7 +207,7 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	uint i;
 
 	/*
-	 * Map and setup CRIME control registers.
+	 * Map and setup CIU control registers.
 	 */
 	if (bus_space_map(&iobus_tag, OCTEON_CIU_BASE, OCTEON_CIU_SIZE, 0,
 		&iobus_h)) {
