@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.4 2015/03/22 10:36:22 bcook Exp $ */
+/* $OpenBSD: s_socket.c,v 1.5 2015/07/17 20:22:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,8 +111,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 			    (char *) &i, sizeof(i));
 			if (i < 0) {
 				perror("keepalive");
-				close(s);
-				return (0);
+				goto out;
 			}
 		}
 		if ((i = connect(s, ai->ai_addr, ai->ai_addrlen)) == 0) {
@@ -124,6 +123,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 	}
 
 	perror("connect");
+out:
 	close(s);
 	freeaddrinfo(ai_top);
 	return (0);
