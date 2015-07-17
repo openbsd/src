@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.42 2015/06/05 13:35:08 vgross Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.43 2015/07/17 14:48:17 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -187,19 +187,16 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	struct sockaddr_storage	 ssrc, sdst, slocal, speer, smask, dmask;
 	struct iovec		 iov[IOV_CNT];
 	int			 iov_cnt, ret = -1;
-	in_port_t		 sport, dport;
 
-	sport = dport = 0;
 	sa_srcid = sa_dstid = NULL;
 
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&smask, sizeof(smask));
 	memcpy(&ssrc, &flow->flow_src.addr, sizeof(ssrc));
 	memcpy(&smask, &flow->flow_src.addr, sizeof(smask));
-	if ((sport = flow->flow_src.addr_port) != 0)
-		dport = 0xffff;
-	socket_af((struct sockaddr *)&ssrc, sport);
-	socket_af((struct sockaddr *)&smask, dport);
+	socket_af((struct sockaddr *)&ssrc, flow->flow_src.addr_port);
+	socket_af((struct sockaddr *)&smask, flow->flow_src.addr_port ?
+	    0xfffff : 0);
 
 	switch (flow->flow_src.addr_af) {
 	case AF_INET:
@@ -224,10 +221,9 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	bzero(&dmask, sizeof(dmask));
 	memcpy(&sdst, &flow->flow_dst.addr, sizeof(sdst));
 	memcpy(&dmask, &flow->flow_dst.addr, sizeof(dmask));
-	if ((sport = flow->flow_dst.addr_port) != 0)
-		dport = 0xffff;
-	socket_af((struct sockaddr *)&sdst, sport);
-	socket_af((struct sockaddr *)&dmask, dport);
+	socket_af((struct sockaddr *)&sdst, flow->flow_dst.addr_port);
+	socket_af((struct sockaddr *)&dmask, flow->flow_dst.addr_port ?
+	    0xffff : 0);
 
 	switch (flow->flow_dst.addr_af) {
 	case AF_INET:
