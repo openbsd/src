@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_prom.c,v 1.6 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: if_prom.c,v 1.7 2015/07/17 16:13:26 miod Exp $	*/
 /*	$NetBSD: if_prom.c,v 1.9 1997/04/06 08:41:26 cgd Exp $	*/
 
 /*
@@ -46,12 +46,12 @@
 
 #include "stand/bbinfo.h"
 
-int prom_probe();
-int prom_match();
-void prom_init();
-int prom_get();
-int prom_put();
-void prom_end();
+int	prom_match(struct netif *, void *);
+int	prom_probe(struct netif *, void *);
+void	prom_init(struct iodesc *, void *);
+int	prom_get(struct iodesc *, void *, size_t, time_t);
+int	prom_put(struct iodesc *, void *, size_t);
+void	prom_end(struct netif *);
 
 extern struct netif_stats	prom_stats[];
 
@@ -87,28 +87,21 @@ struct netif_driver prom_netif_driver = {
 int netfd, broken_firmware;
 
 int
-prom_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+prom_match(struct netif *nif, void *machdep_hint)
 {
 
 	return (1);
 }
 
 int
-prom_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
+prom_probe(struct netif *nif, void *machdep_hint)
 {
 
 	return 0;
 }
 
 int
-prom_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	int len;
+prom_put(struct iodesc *desc, void *pkt, size_t len)
 {
 
 	prom_write(netfd, len, pkt, 0);
@@ -118,15 +111,11 @@ prom_put(desc, pkt, len)
 
 
 int
-prom_get(desc, pkt, len, timeout)
-	struct iodesc *desc;
-	void *pkt;
-	int len;
-	time_t timeout;
+prom_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 {
 	prom_return_t ret;
 	time_t t;
-	int cc;
+	ssize_t cc;
 	char hate[2000];
 
 	t = getsecs();
@@ -140,7 +129,7 @@ prom_get(desc, pkt, len, timeout)
 			cc = ret.u.retval;
 	}
 	if (broken_firmware)
-		cc = min(cc, len);
+		cc = lmin(cc, len);
 	else
 		cc = len;
 	bcopy(hate, pkt, cc);
@@ -151,9 +140,7 @@ prom_get(desc, pkt, len, timeout)
 extern char *strchr();
 
 void
-prom_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
+prom_init(struct iodesc *desc, void *machdep_hint)
 {
 	prom_return_t ret;
 	char devname[64];
@@ -250,8 +237,7 @@ reallypunt:
 }
 
 void
-prom_end(nif)
-	struct netif *nif;
+prom_end(struct netif *nif)
 {
 
 	prom_close(netfd);

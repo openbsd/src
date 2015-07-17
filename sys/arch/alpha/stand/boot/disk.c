@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.15 2014/07/12 21:03:38 tedu Exp $	*/
+/*	$OpenBSD: disk.c,v 1.16 2015/07/17 16:13:26 miod Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -54,13 +54,8 @@ struct	disk_softc {
 };
 
 int
-diskstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
-	void *devdata;
-	int rw;
-	daddr32_t bn;
-	size_t reqcnt;
-	void *addrvoid;
-	size_t *cnt;	/* out: number of bytes transferred */
+diskstrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addrvoid,
+    size_t *cnt)
 {
 	char *addr = addrvoid;
 	struct disk_softc *sc;
@@ -91,9 +86,7 @@ diskstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 }
 
 int
-diskopen(f, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+diskopen(struct open_file *f, int ctlr, int unit, int part)
 {
 	struct disklabel *lp;
 	prom_return_t ret;
@@ -162,8 +155,8 @@ bad:		free(sc, sizeof(struct disk_softc));
 	return (0);
 }
 
-diskclose(f)
-	struct open_file *f;
+int
+diskclose(struct open_file *f)
 {
 	struct disk_softc *sc;
 
