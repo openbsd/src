@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.29 2015/02/11 05:58:08 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.30 2015/07/17 20:38:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -849,7 +849,8 @@ fetchtable(void)
 		if ((sa = rti_info[RTAX_DST]) == NULL)
 			continue;
 
-		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+		/* Skip ARP/ND cache and broadcast routes. */
+		if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST))
 			continue;
 
 #ifdef RTF_MPATH
@@ -907,10 +908,19 @@ fetchtable(void)
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
 			case AF_INET:
+				if (rtm->rtm_flags & RTF_CONNECTED) {
+					kr->r.flags |= F_CONNECTED;
+					break;
+				}
+
 				kr->r.nexthop.s_addr =
 				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 				break;
 			case AF_LINK:
+				/*
+				 * Traditional BSD connected routes have
+				 * a gateway of type AF_LINK.
+				 */
 				kr->r.flags |= F_CONNECTED;
 				break;
 			}
@@ -1065,7 +1075,8 @@ dispatch_rtmsg(void)
 			if (rtm->rtm_errno)			/* failed attempts... */
 				continue;
 
-			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+			/* Skip ARP/ND cache and broadcast routes. */
+			if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST))
 				continue;
 
 			prio = rtm->rtm_priority;
