@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2015/07/17 21:21:02 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2015/07/17 21:54:26 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -100,6 +100,7 @@ u_long linenum;
 
 static void add_compunit(enum e_cut, char *);
 static void add_file(char *);
+static int next_files_have_lines(void);
 
 int
 main(int argc, char *argv[])
