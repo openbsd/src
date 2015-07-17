@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.58 2015/04/29 18:32:57 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.59 2015/07/17 22:35:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -53,6 +53,7 @@ struct	termp {
 	struct rofftbl	  tbl;		/* table configuration */
 	int		  synopsisonly; /* print the synopsis only */
 	int		  mdocstyle;	/* imitate mdoc(7) output */
+	size_t		  line;		/* Current output line number. */
 	size_t		  defindent;	/* Default indent for text. */
 	size_t		  defrmargin;	/* Right margin of the device. */
 	size_t		  lastrmargin;	/* Right margin before the last ll. */

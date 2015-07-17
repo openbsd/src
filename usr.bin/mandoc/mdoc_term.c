@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.218 2015/04/18 17:50:02 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.219 2015/07/17 22:35:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -32,6 +32,7 @@
 #include "mdoc.h"
 #include "out.h"
 #include "term.h"
+#include "tag.h"
 #include "main.h"
 
 struct	termpair {
@@ -115,6 +116,7 @@ static	int	  termp_skip_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
 static	int	  termp_sp_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
+static	int	  termp_tag_pre(DECL_ARGS);
 static	int	  termp_under_pre(DECL_ARGS);
 static	int	  termp_ud_pre(DECL_ARGS);
 static	int	  termp_vt_pre(DECL_ARGS);
@@ -143,7 +145,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_bold_pre, NULL }, /* Cm */
 	{ NULL, NULL }, /* Dv */
 	{ NULL, NULL }, /* Er */
-	{ NULL, NULL }, /* Ev */
+	{ termp_tag_pre, NULL }, /* Ev */
 	{ termp_ex_pre, NULL }, /* Ex */
 	{ termp_fa_pre, NULL }, /* Fa */
 	{ termp_fd_pre, termp_fd_post }, /* Fd */
@@ -1047,6 +1049,7 @@ static int
 termp_fl_pre(DECL_ARGS)
 {
 
+	termp_tag_pre(p, pair, meta, n);
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, "\\-");
 
@@ -1328,6 +1331,7 @@ static int
 termp_bold_pre(DECL_ARGS)
 {
 
+	termp_tag_pre(p, pair, meta, n);
 	term_fontpush(p, TERMFONT_BOLD);
 	return(1);
 }
@@ -2248,5 +2252,21 @@ termp_under_pre(DECL_ARGS)
 {
 
 	term_fontpush(p, TERMFONT_UNDER);
+	return(1);
+}
+
+static int
+termp_tag_pre(DECL_ARGS)
+{
+
+	if (n->child != NULL &&
+	    n->child->type == ROFFT_TEXT &&
+	    n->prev == NULL &&
+	    (n->parent->tok == MDOC_It ||
+	     (n->parent->tok == MDOC_Xo &&
+	      n->parent->parent->prev == NULL &&
+	      n->parent->parent->parent->tok == MDOC_It)) &&
+	    ! tag_get(n->child->string, 0))
+		tag_put(n->child->string, 0, p->line);
 	return(1);
 }
