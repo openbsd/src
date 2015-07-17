@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: SSL_CTX_set_options.3,v 1.7 2015/07/17 07:04:40 doug Exp $
+.\"	$OpenBSD: SSL_CTX_set_options.3,v 1.8 2015/07/17 15:50:37 doug Exp $
 .\"
 .Dd $Mdocdate: July 17 2015 $
 .Dt SSL_CTX_SET_OPTIONS 3
@@ -116,8 +116,9 @@ this option has no effect.
 .It Dv SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
 \&...
 .It Dv SSL_OP_SAFARI_ECDHE_ECDSA_BUG
-Don't prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
-OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
+As of
+.Ox 5.8 ,
+this option has no effect.
 .It Dv SSL_OP_SSLEAY_080_CLIENT_DH_BUG
 As of
 .Ox 5.8 ,

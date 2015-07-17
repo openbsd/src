@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.38 2015/07/17 07:04:41 doug Exp $ */
+/* $OpenBSD: ssl3.h,v 1.39 2015/07/17 15:50:37 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -490,9 +490,10 @@ typedef struct ssl3_state_st {
 	unsigned char *alpn_selected;
 	unsigned int alpn_selected_len;
 
-	/* This is set to true if we believe that this is a version of Safari
-	 * running on OS X 10.6 or newer. We wish to know this because Safari
-	 * on 10.8 .. 10.8.3 has broken ECDHE-ECDSA support. */
+	/*
+	 * XXX delete on next major bump.  This was for old OS X releases
+	 * with broken ECDHE-ECDSA support.
+	 */
 	char is_probably_safari;
 } SSL3_STATE;
 
