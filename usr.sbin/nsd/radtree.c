@@ -189,7 +189,7 @@ radnode_array_grow(struct region* region, struct radnode* n, unsigned want)
 	if(ns > 256) ns = 256;
 	/* we do not use realloc, because we want to keep the old array
 	 * in case alloc fails, so that the tree is still usable */
-	a = (struct radsel*)region_alloc(region, ns*sizeof(struct radsel));
+	a = (struct radsel*)region_alloc_array(region, ns, sizeof(struct radsel));
 	if(!a) return 0;
 	assert(n->len <= n->capacity);
 	assert(n->capacity < ns);
@@ -670,8 +670,8 @@ static void
 radnode_array_reduce_if_needed(struct region* region, struct radnode* n)
 {
 	if(n->len <= n->capacity/2 && n->len != n->capacity) {
-		struct radsel* a = (struct radsel*)region_alloc(region,
-			sizeof(*a)*n->len);
+		struct radsel* a = (struct radsel*)region_alloc_array(region,
+			sizeof(*a), n->len);
 		if(!a) return;
 		memcpy(a, n->array, sizeof(*a)*n->len);
 		region_recycle(region, n->array, n->capacity*sizeof(*a));
@@ -953,6 +953,7 @@ struct radnode* radix_last(struct radtree* rt)
 
 struct radnode* radix_next(struct radnode* n)
 {
+	if(!n) return NULL;
 	if(n->len) {
 		/* go down */
 		struct radnode* s = radnode_first_in_subtree(n);
@@ -982,6 +983,7 @@ struct radnode* radix_next(struct radnode* n)
 
 struct radnode* radix_prev(struct radnode* n)
 {
+	if(!n) return NULL;
 	/* must go up, since all array nodes are after this node */
 	while(n->parent) {
 		uint8_t idx = n->pidx;

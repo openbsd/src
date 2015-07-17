@@ -196,4 +196,8 @@ int packet_read_query_section(buffer_type *packet,
 			uint16_t* qtype,
 			uint16_t* qclass);
 
+/* read notify SOA serial from packet. buffer position is unmodified on return.
+ * returns false on no-serial found or parse failure. */
+int packet_find_notify_serial(buffer_type *packet, uint32_t* serial);
+
 #endif /* _PACKET_H_ */

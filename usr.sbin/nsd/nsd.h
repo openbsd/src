@@ -248,6 +248,10 @@ struct	nsd
 	/* current zonestat array to use */
 	struct nsdst* zonestatnow;
 #endif /* BIND8_STATS */
+	/* ratelimit for errors, time value */
+	time_t err_limit_time;
+	/* ratelimit for errors, packet count */
+	unsigned int err_limit_count;
 
 	struct nsd_options* options;
 };
@@ -272,6 +276,8 @@ struct event_base* nsd_child_event_base(void);
 /* extra domain numbers for temporary domains */
 #define EXTRA_DOMAIN_NUMBERS 1024
 #define SLOW_ACCEPT_TIMEOUT 2 /* in seconds */
+/* ratelimit for error responses */
+#define ERROR_RATELIMIT 100 /* qps */
 /* allocate zonestat structures */
 void server_zonestat_alloc(struct nsd* nsd);
 /* remap the mmaps for zonestat isx, to bytesize sz.  Caller has to set

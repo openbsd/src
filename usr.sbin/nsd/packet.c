@@ -342,3 +342,57 @@ int packet_read_query_section(buffer_type *packet,
 	*qclass = buffer_read_u16(packet);
 	return 1;
 }
+
+int packet_find_notify_serial(buffer_type *packet, uint32_t* serial)
+{
+	size_t saved_position = buffer_position(packet);
+	/* count of further RRs after question section */
+	size_t rrcount = ANCOUNT(packet) + NSCOUNT(packet) + ARCOUNT(packet);
+	size_t i;
+	buffer_set_position(packet, QHEADERSZ);
+
+	/* skip all question RRs */
+	for (i = 0; i < QDCOUNT(packet); ++i) {
+		if (!packet_skip_rr(packet, 1)) {
+			buffer_set_position(packet, saved_position);
+			return 0;
+		}
+	}
+
+	/* Find the SOA RR */
+	for(i = 0; i < rrcount; i++) {
+		uint16_t rdata_size;
+		if (!packet_skip_dname(packet))
+			break;
+		/* check length available for type,class,ttl,rdatalen */
+		if (!buffer_available(packet, 10))
+			break;
+		/* check type, class */
+		if(buffer_read_u16(packet) == TYPE_SOA) {
+			if(buffer_read_u16(packet) != CLASS_IN)
+				break;
+			buffer_skip(packet, 4); /* skip ttl */
+			rdata_size = buffer_read_u16(packet);
+			if (!buffer_available(packet, rdata_size))
+				break;
+			/* skip two dnames, then serial */
+			if (!packet_skip_dname(packet) ||
+				!packet_skip_dname(packet))
+				break;
+			if (!buffer_available(packet, 4))
+				break;
+			*serial = buffer_read_u32(packet);
+			buffer_set_position(packet, saved_position);
+			return 1;
+		}
+		/* continue to next RR */
+		buffer_skip(packet, 6);
+		rdata_size = buffer_read_u16(packet);
+		if (!buffer_available(packet, rdata_size))
+			break;
+		buffer_skip(packet, rdata_size);
+	}
+	/* failed to find SOA */
+	buffer_set_position(packet, saved_position);
+	return 0;
+}

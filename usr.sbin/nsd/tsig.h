@@ -22,10 +22,6 @@
 #define TSIG_ERROR_BADKEY   17
 #define TSIG_ERROR_BADTIME  18
 
-#define TSIG_HMAC_MD5       157
-#define TSIG_HMAC_SHA1      158
-#define TSIG_HMAC_SHA256    159
-
 typedef struct tsig_algorithm tsig_algorithm_type;
 typedef struct tsig_key tsig_key_type;
 typedef struct tsig_record tsig_record_type;

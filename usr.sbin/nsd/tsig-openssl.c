@@ -61,14 +61,19 @@ tsig_openssl_init(region_type *region)
 	int count = 0;
 	OpenSSL_add_all_digests();
 
-	count += tsig_openssl_init_algorithm(region, "md5", "hmac-md5","hmac-md5.sig-alg.reg.int.");
-#ifdef HAVE_EVP_SHA1
-	count += tsig_openssl_init_algorithm(region, "sha1", "hmac-sha1", "hmac-sha1.");
-#endif /* HAVE_EVP_SHA1 */
+	count += tsig_openssl_init_algorithm(region,
+	    "md5", "hmac-md5","hmac-md5.sig-alg.reg.int.");
+	count += tsig_openssl_init_algorithm(region,
+	    "sha1", "hmac-sha1", "hmac-sha1.");
+	count += tsig_openssl_init_algorithm(region,
+	    "sha224", "hmac-sha224", "hmac-sha224.");
+	count += tsig_openssl_init_algorithm(region,
+	    "sha256", "hmac-sha256", "hmac-sha256.");
+	count += tsig_openssl_init_algorithm(region,
+	    "sha384", "hmac-sha384", "hmac-sha384.");
+	count += tsig_openssl_init_algorithm(region,
+	    "sha512", "hmac-sha512", "hmac-sha512.");
 
-#ifdef HAVE_EVP_SHA256
-	count += tsig_openssl_init_algorithm(region, "sha256", "hmac-sha256", "hmac-sha256.");
-#endif /* HAVE_EVP_SHA256 */
 	return count;
 }
 

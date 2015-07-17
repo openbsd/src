@@ -104,7 +104,9 @@
 #define yy_accept c__accept
 #define yy_c_buf_p c__c_buf_p
 #define yy_chk c__chk
-#define yy_current_buffer c__current_buffer
+#ifndef LEX_DEFINES_YY_CURRENT_BUFFER
+#  define yy_current_buffer c__current_buffer
+#endif
 #define yy_def c__def
 #define yy_did_buffer_switch_on_eof c__did_buffer_switch_on_eof
 #define yy_ec c__ec
