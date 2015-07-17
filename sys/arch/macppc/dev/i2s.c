@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.28 2015/06/03 08:30:27 mpi Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.29 2015/07/17 22:30:58 mpi Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -978,7 +978,11 @@ i2s_gpio_init(struct i2s_softc *sc, int node, struct device *parent)
 		bzero(audio_gpio, sizeof audio_gpio);
 		OF_getprop(gpio, "name", name, sizeof name);
 		OF_getprop(gpio, "audio-gpio", audio_gpio, sizeof audio_gpio);
-		OF_getprop(gpio, "reg", &reg, sizeof(reg));
+		if (OF_getprop(gpio, "reg", &reg, sizeof(reg)) == -1)
+			OF_getprop(gpio, "AAPL,address", &reg, sizeof(reg));
+
+		if (reg > sc->sc_baseaddr)
+			reg = (reg - sc->sc_baseaddr);
 
 		/* gpio5 */
 		if (sc->sc_hp == 0 && strcmp(audio_gpio, "headphone-mute") == 0)
