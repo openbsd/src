@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.203 2015/07/08 08:03:46 mpi Exp $ */
+/*	$OpenBSD: kroute.c,v 1.204 2015/07/17 20:03:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2821,8 +2821,8 @@ fetchtable(struct ktable *kt, u_int8_t fib_prio)
 		if ((sa = rti_info[RTAX_DST]) == NULL)
 			continue;
 
-		/* Skip ARP/ND cache and local routes. */
-		if (rtm->rtm_flags & (RTF_LLINFO|RTF_LOCAL|RTF_BROADCAST))
+		/* Skip ARP/ND cache and broadcast routes. */
+		if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST))
 			continue;
 
 		switch (sa->sa_family) {
