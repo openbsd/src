@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.29 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpiac.c,v 1.30 2015/07/17 20:15:52 jcs Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -124,7 +124,7 @@ acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 	struct acpiac_softc *sc = arg;
 
 	dnprintf(10, "acpiac_notify: %.2x %s\n", notify_type,
-	    sc->sc_devnode->name);
+	    DEVNAME(sc));
 
 	switch (notify_type) {
 	case 0x00:
