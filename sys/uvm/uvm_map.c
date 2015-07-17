@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.191 2015/04/23 00:49:37 dlg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.192 2015/07/17 21:56:14 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1842,8 +1842,10 @@ uvm_unmap_kill_entry(struct vm_map *map, struct vm_map_entry *entry)
 {
 	/* Unwire removed map entry. */
 	if (VM_MAPENT_ISWIRED(entry)) {
+		KERNEL_LOCK();
 		entry->wired_count = 0;
 		uvm_fault_unwire_locked(map, entry->start, entry->end);
+		KERNEL_UNLOCK();
 	}
 
 	/* Entry-type specific code. */
@@ -2422,18 +2424,20 @@ void
 uvm_map_teardown(struct vm_map *map)
 {
 	struct uvm_map_deadq	 dead_entries;
-	int			 i, waitok = 0;
 	struct vm_map_entry	*entry, *tmp;
 #ifdef VMMAP_DEBUG
 	size_t			 numq, numt;
 #endif
+	int			 i;
 
-	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		waitok = 1;
-	if (waitok) {
-		if (rw_enter(&map->lock, RW_NOSLEEP | RW_WRITE) != 0)
-			panic("uvm_map_teardown: rw_enter failed on free map");
-	}
+	KERNEL_ASSERT_LOCKED();
+	KERNEL_UNLOCK();
+	KERNEL_ASSERT_UNLOCKED();
+
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
+
+	if (rw_enter(&map->lock, RW_NOSLEEP | RW_WRITE) != 0)
+		panic("uvm_map_teardown: rw_enter failed on free map");
 
 	/* Remove address selectors. */
 	uvm_addr_destroy(map->uaddr_exe);
@@ -2466,8 +2470,7 @@ uvm_map_teardown(struct vm_map *map)
 	if ((entry = RB_ROOT(&map->addr)) != NULL)
 		DEAD_ENTRY_PUSH(&dead_entries, entry);
 	while (entry != NULL) {
-		if (waitok)
-			uvm_pause();
+		sched_pause();
 		uvm_unmap_kill_entry(map, entry);
 		if ((tmp = RB_LEFT(entry, daddrs.addr_entry)) != NULL)
 			DEAD_ENTRY_PUSH(&dead_entries, tmp);
@@ -2477,8 +2480,7 @@ uvm_map_teardown(struct vm_map *map)
 		entry = TAILQ_NEXT(entry, dfree.deadq);
 	}
 
-	if (waitok)
-		rw_exit(&map->lock);
+	rw_exit(&map->lock);
 
 #ifdef VMMAP_DEBUG
 	numt = numq = 0;
@@ -2488,7 +2490,10 @@ uvm_map_teardown(struct vm_map *map)
 		numq++;
 	KASSERT(numt == numq);
 #endif
-	uvm_unmap_detach(&dead_entries, waitok ? UVM_PLA_WAITOK : 0);
+	uvm_unmap_detach(&dead_entries, UVM_PLA_WAITOK);
+
+	KERNEL_LOCK();
+
 	pmap_destroy(map->pmap);
 	map->pmap = NULL;
 }
@@ -3185,6 +3190,8 @@ void
 uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max,
     boolean_t pageable, boolean_t remove_holes)
 {
+	KASSERT(pmap == NULL || pmap == pmap_kernel());
+
 	if (pmap)
 		pmap_reference(pmap);
 	else

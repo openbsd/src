@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.13 2015/03/30 21:08:40 miod Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.14 2015/07/17 21:56:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -287,14 +287,19 @@ uvm_addr_init(void)
 {
 	pool_init(&uaddr_pool, sizeof(struct uvm_addr_state),
 	    0, 0, PR_WAITOK, "uaddr", NULL);
+	pool_setipl(&uaddr_pool, IPL_VM);
 	pool_init(&uaddr_hint_pool, sizeof(struct uaddr_hint_state),
 	    0, 0, PR_WAITOK, "uaddrhint", NULL);
+	pool_setipl(&uaddr_hint_pool, IPL_VM);
 	pool_init(&uaddr_bestfit_pool, sizeof(struct uaddr_bestfit_state),
 	    0, 0, PR_WAITOK, "uaddrbest", NULL);
+	pool_setipl(&uaddr_bestfit_pool, IPL_VM);
 	pool_init(&uaddr_pivot_pool, sizeof(struct uaddr_pivot_state),
 	    0, 0, PR_WAITOK, "uaddrpivot", NULL);
+	pool_setipl(&uaddr_pivot_pool, IPL_VM);
 	pool_init(&uaddr_rnd_pool, sizeof(struct uaddr_rnd_state),
 	    0, 0, PR_WAITOK, "uaddrrnd", NULL);
+	pool_setipl(&uaddr_rnd_pool, IPL_VM);
 
 	uaddr_kbootstrap.uaddr_minaddr = PAGE_SIZE;
 	uaddr_kbootstrap.uaddr_maxaddr = -(vaddr_t)PAGE_SIZE;
