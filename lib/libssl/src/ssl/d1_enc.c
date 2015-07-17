@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_enc.c,v 1.9 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: d1_enc.c,v 1.10 2015/07/17 07:04:40 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -187,10 +187,6 @@ dtls1_enc(SSL *s, int send)
 
 			/* we need to add 'i' padding bytes of value j */
 			j = i - 1;
-			if (s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) {
-				if (s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG)
-					j++;
-			}
 			for (k = (int)l; k < (int)(l + i); k++)
 				rec->input[k] = j;
 			l += i;

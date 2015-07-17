@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.9 2014/12/15 00:46:53 doug Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.10 2015/07/17 07:04:40 doug Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -164,24 +164,6 @@ tls1_cbc_remove_padding(const SSL* s, SSL3_RECORD *rec, unsigned block_size,
 		return 0;
 
 	padding_length = rec->data[rec->length - 1];
-
-	/* NB: if compression is in operation the first packet may not be of
-	 * even length so the padding bug check cannot be performed. This bug
-	 * workaround has been around since SSLeay so hopefully it is either
-	 * fixed now or no buggy implementation supports compression [steve]
-	 * (We don't support compression either, so it's not in operation.)
-	 */
-	if ((s->options & SSL_OP_TLS_BLOCK_PADDING_BUG)) {
-		/* First packet is even in size, so check */
-		if ((memcmp(s->s3->read_sequence, "\0\0\0\0\0\0\0\0",
-		    SSL3_SEQUENCE_SIZE) == 0) && !(padding_length & 1)) {
-			s->s3->flags|=TLS1_FLAGS_TLS_PADDING_BUG;
-		}
-		if ((s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG) &&
-		    padding_length > 0) {
-			padding_length--;
-		}
-	}
 
 	if (EVP_CIPHER_flags(s->enc_read_ctx->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
 		/* padding is already verified */

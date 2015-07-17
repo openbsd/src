@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.11 2015/06/15 05:16:56 doug Exp $ */
+/* $OpenBSD: s_server.c,v 1.12 2015/07/17 07:04:41 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1692,10 +1692,6 @@ init_ssl_connection(SSL * con)
 #endif
 	if (SSL_cache_hit(con))
 		BIO_printf(bio_s_out, "Reused session-id\n");
-	if (SSL_ctrl(con, SSL_CTRL_GET_FLAGS, 0, NULL) &
-	    TLS1_FLAGS_TLS_PADDING_BUG)
-		BIO_printf(bio_s_out,
-		    "Peer has incorrect TLSv1 block padding\n");
 	BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
 	    SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
 	if (keymatexportlabel != NULL) {

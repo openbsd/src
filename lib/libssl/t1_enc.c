@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.78 2015/06/17 14:27:56 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.79 2015/07/17 07:04:41 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -875,10 +875,6 @@ tls1_enc(SSL *s, int send)
 
 			/* we need to add 'i' padding bytes of value j */
 			j = i - 1;
-			if (s->options & SSL_OP_TLS_BLOCK_PADDING_BUG) {
-				if (s->s3->flags & TLS1_FLAGS_TLS_PADDING_BUG)
-					j++;
-			}
 			for (k = (int)l; k < (int)(l + i); k++)
 				rec->input[k] = j;
 			l += i;
