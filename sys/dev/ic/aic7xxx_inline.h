@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.15 2012/05/12 21:56:30 miod Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.16 2015/07/17 21:42:49 krw Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ ahc_get_scb(struct ahc_softc *ahc)
  */
 IO_INLINE void
 ahc_free_scb(struct ahc_softc *ahc, struct scb *scb)
-{       
+{
 	struct hardware_scb *hscb;
 
 	hscb = scb->hscb;

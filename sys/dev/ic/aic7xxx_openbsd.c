@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.53 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.54 2015/07/17 21:42:49 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ ahc_attach(struct ahc_softc *ahc)
 		ahc->sc_channel_b.adapter_target = ahc->our_id_b;
 	}
 
-#ifndef DEBUG		
+#ifndef DEBUG
 	if (bootverbose) {
 		char ahc_info[256];
 		ahc_controller_info(ahc, ahc_info, sizeof ahc_info);
@@ -254,10 +254,10 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		xs->error = XS_SENSE;
 	}
 
-        s = splbio();       
+        s = splbio();
 	ahc_free_scb(ahc, scb);
 	scsi_done(xs);
-        splx(s);       
+        splx(s);
 }
 
 void
@@ -349,7 +349,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		struct	  ahc_dma_seg *sg;
 		bus_dma_segment_t *end_seg;
 		int op;
-		
+
 		end_seg = dm_segs + nsegments;
 
 		/* Copy the segments into our SG list */
@@ -367,7 +367,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 		/*
 		 * Note where to find the SG entries in bus space.
-		 * We also set the full residual flag which the 
+		 * We also set the full residual flag which the
 		 * sequencer will clear as soon as a data transfer
 		 * occurs.
 		 */
@@ -414,7 +414,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		scb->hscb->control |= ULTRAENB;
 
 	if ((tstate->discenable & mask) != 0)
-	    	scb->hscb->control |= DISCENB;
+		scb->hscb->control |= DISCENB;
 
 	if ((tstate->auto_negotiate & mask) != 0) {
 		scb->flags |= SCB_AUTO_NEGOTIATE;
@@ -455,7 +455,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		if (TAILQ_FIRST(untagged_q) != scb) {
 			if (xs->flags & SCSI_POLL)
 				goto poll;
-			else {		
+			else {
 				splx(s);
 				return;
 			}
@@ -553,7 +553,7 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 	} else {
 		memcpy(hscb->shared_data.cdb, xs->cmd, hscb->cdb_len);
 	}
-		
+
 	/* Only use S/G if there is a transfer */
 	if (xs->datalen) {
 		int error;
@@ -726,7 +726,7 @@ ahc_adapter_req_set_xfer_mode(struct ahc_softc *ahc, struct scb *scb)
 		offset = tinfo->user.offset;
 	}
 
-	/* XXX Look at saved INQUIRY flags for PPR capabilities XXX */ 
+	/* XXX Look at saved INQUIRY flags for PPR capabilities XXX */
 	ppr_options = tinfo->user.ppr_options;
 	/* XXX Other reasons to avoid ppr? XXX */
 	if (width < MSG_EXT_WDTR_BUS_16_BIT)

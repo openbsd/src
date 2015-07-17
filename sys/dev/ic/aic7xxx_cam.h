@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.6 2005/12/10 02:45:20 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.7 2015/07/17 21:42:49 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ typedef enum {
 } cam_status;
 
 typedef enum {
-  	CAM_DIR_IN		= SCSI_DATA_IN,
+	CAM_DIR_IN		= SCSI_DATA_IN,
 	CAM_DIR_OUT		= SCSI_DATA_OUT
 } ccb_flags;
 

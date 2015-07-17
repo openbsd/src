@@ -1,9 +1,9 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.24 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.25 2015/07/17 21:42:49 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
  * OpenBSD platform specific driver option settings, data structures,
- * function declarations and includes. 
+ * function declarations and includes.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
  * Copyright (c) 2001-2002 Steve Murphree, Jr.
@@ -71,9 +71,9 @@
 #define AHC_NEW_TRAN_SETTINGS
 #endif /* CAM_NEW_TRAN_CODE */
 
-#if NPCI > 0 
+#if NPCI > 0
 #define AHC_PCI_CONFIG 1
-#endif 
+#endif
 
 #if 0
 #define AHC_DEBUG	AHC_SHOW_SENSE | AHC_SHOW_MISC | AHC_SHOW_CMDS
@@ -81,9 +81,9 @@
 
 #ifdef DEBUG
 #define bootverbose	1
-#else 
+#else
 #define bootverbose	0
-#endif 
+#endif
 /****************************** Platform Macros *******************************/
 
 #define	SCSI_IS_SCSIBUS_B(ahc, sc_link)	\
@@ -119,7 +119,7 @@ typedef struct pci_attach_args * ahc_dev_softc_t;
  * to handle any unaligned residual.  The sequencer fetches SG elements
  * in cacheline sized chucks, so make the number per-transaction an even
  * multiple of 16 which should align us on even the largest of cacheline
- * boundaries. 
+ * boundaries.
  */
 #define AHC_NSEG (roundup(atop(MAXPHYS) + 1, 16))
 
@@ -141,7 +141,7 @@ struct scb_platform_data {
  */
 #ifndef ISABUS_DMA_32BIT
 #define ISABUS_DMA_32BIT	BUS_DMA_BUS1
-#endif 
+#endif
 
 /************************** Timer DataStructures ******************************/
 typedef struct timeout ahc_timer_t;
@@ -168,7 +168,7 @@ ahc_timer_reset(ahc_timer_t *timer, u_int usec, ahc_callback_t *func, void *arg)
 static __inline void
 ahc_scb_timer_reset(struct scb *scb, u_int usec)
 {
-  	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
+	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
 		callout_reset(&scb->xs->xs_callout,
 			      (usec * hz)/1000000, ahc_timeout, scb);
 	}
@@ -399,7 +399,7 @@ static __inline void
 ahc_platform_dump_card_state(struct ahc_softc *ahc)
 {
 	/* Nothing to do here for OpenBSD */
-	printf("FEATURES = 0x%x, FLAGS = 0x%x, CHIP = 0x%x BUGS =0x%x\n", 
+	printf("FEATURES = 0x%x, FLAGS = 0x%x, CHIP = 0x%x BUGS =0x%x\n",
 	       ahc->features, ahc->flags, ahc->chip, ahc->bugs);
 }
 /**************************** Transfer Settings *******************************/

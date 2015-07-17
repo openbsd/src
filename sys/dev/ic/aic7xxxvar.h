@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.26 2014/07/09 12:56:28 mpi Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.27 2015/07/17 21:42:49 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.26 2014/07/09 12:56:28 mpi Exp $
+ * $Id: aic7xxxvar.h,v 1.27 2015/07/17 21:42:49 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -158,12 +158,12 @@ struct seeprom_descriptor;
  * the space for SCBs on the host adapter varies by model, the driver will
  * page the SCBs between host and controller memory as needed.  We are limited
  * to 253 because:
- * 	1) The 8bit nature of the RISC engine holds us to an 8bit value.
- * 	2) We reserve one value, 255, to represent the invalid element.
+ *	1) The 8bit nature of the RISC engine holds us to an 8bit value.
+ *	2) We reserve one value, 255, to represent the invalid element.
  *	3) Our input queue scheme requires one SCB to always be reserved
  *	   in advance of queuing any SCBs.  This takes us down to 254.
  *	4) To handle our output queue correctly on machines that only
- * 	   support 32bit stores, we must clear the array 4 bytes at a
+ *	   support 32bit stores, we must clear the array 4 bytes at a
  *	   time.  To avoid colliding with a DMA write from the sequencer,
  *	   we must be sure that 4 slots are empty when we write to clear
  *	   the queue.  This reduces us to 253 SCBs: 1 that just completed
@@ -223,7 +223,7 @@ typedef enum {
 	AHC_FENONE	= 0x00000,
 	AHC_ULTRA	= 0x00001,	/* Supports 20MHz Transfers */
 	AHC_ULTRA2	= 0x00002,	/* Supports 40MHz Transfers */
-	AHC_WIDE  	= 0x00004,	/* Wide Channel */
+	AHC_WIDE	= 0x00004,	/* Wide Channel */
 	AHC_TWIN	= 0x00008,	/* Twin Channel */
 	AHC_MORE_SRAM	= 0x00010,	/* 80 bytes instead of 64 */
 	AHC_CMD_CHAN	= 0x00020,	/* Has a Command DMA Channel */
@@ -312,7 +312,7 @@ typedef enum {
 	AHC_PCI_MWI_BUG		= 0x20,
 	/*
 	 * An SCB upload using the SCB channel's
-	 * auto array entry copy feature may 
+	 * auto array entry copy feature may
 	 * corrupt data.  This appears to only
 	 * occur on 66MHz systems.
 	 */
@@ -469,7 +469,7 @@ struct hardware_scb {
  *	o residual_sgptr and sgptr refer to the "next" sg entry
  *	  and so may point beyond the last valid sg entry for the
  *	  transfer.
- */ 
+ */
 /*12*/	uint32_t dataptr;
 /*16*/	uint32_t datacnt;		/*
 					 * Byte 3 (numbered from 0) of
@@ -602,7 +602,7 @@ struct scb {
 #endif
 	struct scb_platform_data *platform_data;
 	struct sg_map_node	 *sg_map;
-	struct ahc_dma_seg 	 *sg_list;
+	struct ahc_dma_seg	 *sg_list;
 	bus_addr_t		  sg_list_phys;
 	u_int			  sg_count;/* How full ahc_dma_seg is */
 };
@@ -657,7 +657,7 @@ struct scb_data {
 struct target_cmd {
 	uint8_t scsiid;		/* Our ID and the initiator's ID */
 	uint8_t identify;	/* Identify message */
-	uint8_t bytes[22];	/* 
+	uint8_t bytes[22];	/*
 				 * Bytes contains any additional message
 				 * bytes terminated by 0xFF.  The remainder
 				 * is the cdb to execute.
@@ -695,7 +695,7 @@ struct ahc_tmode_event {
  * structure here so we can store arrays of them, etc. in OS neutral
  * data structures.
  */
-#ifdef AHC_TARGET_MODE 
+#ifdef AHC_TARGET_MODE
 struct ahc_tmode_lstate {
 #if 0
 	struct cam_path *path;
@@ -792,7 +792,7 @@ struct ahc_syncrate {
 /***************************** Lookup Tables **********************************/
 /*
  * Phase -> name and message out response
- * to parity errors in each phase table. 
+ * to parity errors in each phase table.
  */
 struct ahc_phase_table_entry {
         uint8_t phase;
@@ -831,8 +831,8 @@ struct seeprom_config {
 #define		CFSM2DRV	0x0010	/* support more than two drives */
 #define		CFSTPWLEVEL	0x0010	/* Termination level control */
 #define		CF284XEXTEND	0x0020	/* extended translation (284x cards) */	
-#define		CFCTRL_A	0x0020	/* BIOS displays Ctrl-A message */	
-#define		CFTERM_MENU	0x0040	/* BIOS displays termination menu */	
+#define		CFCTRL_A	0x0020	/* BIOS displays Ctrl-A message */
+#define		CFTERM_MENU	0x0040	/* BIOS displays termination menu */
 #define		CFEXTEND	0x0080	/* extended translation enabled */
 #define		CFSCAMEN	0x0100	/* SCAM enable */
 #define		CFMSG_LEVEL	0x0600	/* BIOS Message Level */
@@ -845,7 +845,7 @@ struct seeprom_config {
 /*
  * Host Adapter Control Bits
  */
-	uint16_t adapter_control;	/* word 17 */	
+	uint16_t adapter_control;	/* word 17 */
 #define		CFAUTOTERM	0x0001	/* Perform Auto termination */
 #define		CFULTRAEN	0x0002	/* Ultra SCSI speed enable */
 #define		CF284XSELTO     0x0003	/* Selection timeout (284x cards) */
@@ -853,7 +853,7 @@ struct seeprom_config {
 #define		CFSTERM		0x0004	/* SCSI low byte termination */
 #define		CFWSTERM	0x0008	/* SCSI high byte termination */
 #define		CFSPARITY	0x0010	/* SCSI parity */
-#define		CF284XSTERM     0x0020	/* SCSI low byte term (284x cards) */	
+#define		CF284XSTERM     0x0020	/* SCSI low byte term (284x cards) */
 #define		CFMULTILUN	0x0020
 #define		CFRESETB	0x0040	/* reset SCSI bus at boot */
 #define		CFCLUSTERENB	0x0080	/* Cluster Enable */
@@ -875,7 +875,7 @@ struct seeprom_config {
 /*
  * Maximum targets
  */
-	uint16_t max_targets;		/* word 19 */	
+	uint16_t max_targets;		/* word 19 */
 #define		CFMAXTARG	0x00ff	/* maximum targets */
 #define		CFBOOTLUN	0x0f00	/* Lun to boot from */
 #define		CFBOOTID	0xf000	/* Target to boot from */
@@ -938,10 +938,10 @@ typedef int (*ahc_bus_chip_init_t)(struct ahc_softc *);
 typedef void ahc_callback_t (void *);
 
 struct ahc_softc {
-	struct device 		  sc_dev; 
+	struct device		  sc_dev;
 
 	struct scsipi_channel	  sc_channel;
-	struct scsipi_channel 	  sc_channel_b;
+	struct scsipi_channel	  sc_channel_b;
 	struct device *		  sc_child;
 	struct device *		  sc_child_b;
 	struct scsipi_adapter	  sc_adapter;
@@ -1088,7 +1088,7 @@ struct ahc_softc {
 	u_int			  msgin_index;	/* Current index in msgin */
 
 	/* Interrupt routine */
-	void 			 *ih;
+	void			 *ih;
 
 	/*
 	 * Mapping information for data structures shared
@@ -1138,10 +1138,10 @@ struct ahc_softc {
 	int			  seltime;
 	int			  seltime_b;
 
-	uint16_t	 	  user_discenable;/* Disconnection allowed  */
+	uint16_t		  user_discenable;/* Disconnection allowed  */
 	uint16_t		  user_tagenable;/* Tagged Queuing allowed */
 
-	struct ahc_pci_busdata 	  *bd;
+	struct ahc_pci_busdata	  *bd;
 };
 
 TAILQ_HEAD(ahc_softc_tailq, ahc_softc);

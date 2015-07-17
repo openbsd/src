@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.18 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.19 2015/07/17 21:42:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -92,7 +92,7 @@
 
 #ifdef DEBUG
 #define bootverbose     1
-#else 
+#else
 #define bootverbose     0
 #endif
 /****************************** Platform Macros *******************************/
@@ -129,7 +129,7 @@ typedef struct pci_attach_args * ahd_dev_softc_t;
  * to handle any unaligned residual.  The sequencer fetches SG elements
  * in cacheline sized chucks, so make the number per-transaction an even
  * multiple of 16 which should align us on even the largest of cacheline
- * boundaries. 
+ * boundaries.
  */
 #define AHD_NSEG (roundup(atop(MAXPHYS) + 1, 16))
 
@@ -226,7 +226,7 @@ void ahd_flush_device_writes(struct ahd_softc *);
 	((scb)->xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
 #define aic_get_residual(scb) ((scb)->xs->resid)
 #define aic_get_sense_bufsize(ahd, scb) (sizeof(struct scsi_sense_data))
-	
+
 #define aic_perform_autosense(scb) (1)
 
 #define aic_freeze_simq(ahd)

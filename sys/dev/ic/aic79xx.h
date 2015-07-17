@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.23 2014/07/09 12:56:28 mpi Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.24 2015/07/17 21:42:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -256,7 +256,7 @@ typedef enum {
  */
 typedef enum {
 	AHD_FENONE		= 0x00000,
-	AHD_WIDE  		= 0x00001,/* Wide Channel */
+	AHD_WIDE		= 0x00001,/* Wide Channel */
 	AHD_MULTI_FUNC		= 0x00100,/* Multi-Function/Channel Device */
 	AHD_TARGETMODE		= 0x01000,/* Has tested target mode support */
 	AHD_MULTIROLE		= 0x02000,/* Space for two roles at a time */
@@ -479,7 +479,7 @@ union initiator_data {
  * Target mode version of the shared data SCB segment.
  */
 struct target_data {
-	uint32_t spare[2];	
+	uint32_t spare[2];
 	uint8_t  scsi_status;		/* SCSI status to give to initiator */
 	uint8_t  target_phases;		/* Bitmap of phases to execute */
 	uint8_t  data_phase;		/* Data-In or Data-Out */
@@ -531,7 +531,7 @@ struct hardware_scb {
  *	o residual_sgptr and sgptr refer to the "next" sg entry
  *	  and so may point beyond the last valid sg entry for the
  *	  transfer.
- */ 
+ */
 #define SG_PTR_MASK	0xFFFFFFF8
 /*16*/	uint16_t tag;		/* Reused by Sequencer. */
 /*18*/	uint8_t  control;	/* See SCB_CONTROL in aic79xx.reg for details */
@@ -660,9 +660,9 @@ struct scb {
 	bus_dmamap_t		  dmamap;
 #endif
 	struct scb_platform_data *platform_data;
-	struct map_node	 	 *hscb_map;
-	struct map_node	 	 *sg_map;
-	struct map_node	 	 *sense_map;
+	struct map_node		 *hscb_map;
+	struct map_node		 *sg_map;
+	struct map_node		 *sense_map;
 	void			 *sg_list;
 	uint8_t			 *sense_data;
 	bus_addr_t		  sg_list_busaddr;
@@ -722,7 +722,7 @@ struct scb_data {
 struct target_cmd {
 	uint8_t scsiid;		/* Our ID and the initiator's ID */
 	uint8_t identify;	/* Identify message */
-	uint8_t bytes[22];	/* 
+	uint8_t bytes[22];	/*
 				 * Bytes contains any additional message
 				 * bytes terminated by 0xFF.  The remainder
 				 * is the cdb to execute.
@@ -760,7 +760,7 @@ struct ahd_tmode_event {
  * structure here so we can store arrays of them, etc. in OS neutral
  * data structures.
  */
-#ifdef AHD_TARGET_MODE 
+#ifdef AHD_TARGET_MODE
 struct ahd_tmode_lstate {
 	struct ahd_tmode_event event_buffer[AHD_TMODE_EVENT_BUFFER_SIZE];
 	uint8_t event_r_idx;
@@ -852,7 +852,7 @@ struct ahd_tmode_tstate {
 /***************************** Lookup Tables **********************************/
 /*
  * Phase -> name and message out response
- * to parity errors in each phase table. 
+ * to parity errors in each phase table.
  */
 struct ahd_phase_table_entry {
         uint8_t phase;
@@ -889,7 +889,7 @@ struct seeprom_config {
 #define		    CFBS_ENABLED	0x04
 #define		    CFBS_DISABLED_SCAN	0x08
 #define		CFENABLEDV	0x0010	/* Perform Domain Validation */
-#define		CFCTRL_A	0x0020	/* BIOS displays Ctrl-A message */	
+#define		CFCTRL_A	0x0020	/* BIOS displays Ctrl-A message */
 #define		CFSPARITY	0x0040	/* SCSI parity */
 #define		CFEXTEND	0x0080	/* extended translation enabled */
 #define		CFBOOTCD	0x0100  /* Support Bootable CD-ROM */
@@ -903,7 +903,7 @@ struct seeprom_config {
 /*
  * Host Adapter Control Bits
  */
-	uint16_t adapter_control;	/* word 17 */	
+	uint16_t adapter_control;	/* word 17 */
 #define		CFAUTOTERM	0x0001	/* Perform Auto termination */
 #define		CFSTERM		0x0002	/* SCSI low byte termination */
 #define		CFWSTERM	0x0004	/* SCSI high byte termination */
@@ -912,7 +912,7 @@ struct seeprom_config {
 #define		CFSEHIGHTERM	0x0020	/* Ultra2 secondary high term */
 #define		CFSTPWLEVEL	0x0040	/* Termination level control */
 #define		CFBIOSAUTOTERM	0x0080	/* Perform Auto termination */
-#define		CFTERM_MENU	0x0100	/* BIOS displays termination menu */	
+#define		CFTERM_MENU	0x0100	/* BIOS displays termination menu */
 #define		CFCLUSTERENB	0x8000	/* Cluster Enable */
 
 /*
@@ -926,7 +926,7 @@ struct seeprom_config {
 /*
  * Maximum targets
  */
-	uint16_t max_targets;		/* word 19 */	
+	uint16_t max_targets;		/* word 19 */
 #define		CFMAXTARG	0x00ff	/* maximum targets */
 #define		CFBOOTLUN	0x0f00	/* Lun to boot from */
 #define		CFBOOTID	0xf000	/* Target to boot from */
@@ -1301,7 +1301,7 @@ struct ahd_softc {
 	u_int			  int_coalescing_threshold;
 	u_int			  int_coalescing_stop_threshold;
 
-	uint16_t	 	  user_discenable;/* Disconnection allowed  */
+	uint16_t		  user_discenable;/* Disconnection allowed  */
 	uint16_t		  user_tagenable;/* Tagged Queuing allowed */
 
 	/* Adapter interrupt routine */
@@ -1401,7 +1401,7 @@ int		ahd_match_scb(struct ahd_softc *ahd, struct scb *scb,
 struct ahd_softc	*ahd_alloc(void *platform_arg, char *name);
 int			 ahd_softc_init(struct ahd_softc *);
 void			 ahd_controller_info(struct ahd_softc *ahd, char *buf,
-			 		     size_t bufsz);
+					     size_t bufsz);
 int			 ahd_init(struct ahd_softc *ahd);
 int			 ahd_default_config(struct ahd_softc *ahd);
 int			 ahd_parse_vpddata(struct ahd_softc *ahd,
@@ -1416,7 +1416,7 @@ void			 ahd_update_coalescing_values(struct ahd_softc *ahd,
 void			 ahd_enable_coalescing(struct ahd_softc *ahd,
 					       int enable);
 void			 ahd_pause_and_flushwork(struct ahd_softc *ahd);
-int			 ahd_suspend(struct ahd_softc *ahd); 
+int			 ahd_suspend(struct ahd_softc *ahd);
 int			 ahd_resume(struct ahd_softc *ahd);
 void			 ahd_softc_insert(struct ahd_softc *);
 struct ahd_softc	*ahd_find_softc(struct ahd_softc *ahd);

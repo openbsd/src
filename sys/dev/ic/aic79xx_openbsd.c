@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.42 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.43 2015/07/17 21:42:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -72,7 +72,7 @@
 void	ahd_action(struct scsi_xfer *);
 void	ahd_execute_scb(void *, bus_dma_segment_t *, int);
 int	ahd_poll(struct ahd_softc *, int);
-void	ahd_setup_data(struct ahd_softc *, struct scsi_xfer *, 
+void	ahd_setup_data(struct ahd_softc *, struct scsi_xfer *,
 		    struct scb *);
 
 void	ahd_adapter_req_set_xfer_mode(struct ahd_softc *, struct scb *);
@@ -145,7 +145,7 @@ ahd_platform_intr(void *arg)
 
 	/* XXX in ahc there is some bus_dmamap_sync(PREREAD|PREWRITE); */
 
-	ahd = (struct ahd_softc *)arg; 
+	ahd = (struct ahd_softc *)arg;
 	return ahd_intr(ahd);
 }
 
@@ -241,7 +241,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		struct scsi_status_iu_header *siu;
 		u_int32_t len;
 
- 		siu = (struct scsi_status_iu_header *)scb->sense_data;
+		siu = (struct scsi_status_iu_header *)scb->sense_data;
 		len = SIU_SENSE_LENGTH(siu);
 		memset(&xs->sense, 0, sizeof(xs->sense));
 		memcpy(&xs->sense, SIU_SENSE_DATA(siu),
@@ -290,7 +290,7 @@ ahd_action(struct scsi_xfer *xs)
 
 	target_id = xs->sc_link->target;
 	our_id = SCSI_SCSI_ID(ahd, xs->sc_link);
-	
+
 	ahd_lock(ahd, &s);
 	if ((ahd->flags & AHD_INITIATORROLE) == 0) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -305,7 +305,7 @@ ahd_action(struct scsi_xfer *xs)
 
 	quirks = xs->sc_link->quirks;
 
-	if ((quirks & SDEV_NOTAGS) != 0 || 
+	if ((quirks & SDEV_NOTAGS) != 0 ||
 	    (tinfo->curr.ppr_options & MSG_EXT_PPR_PROT_IUS) != 0)
 		col_idx = AHD_NEVER_COL_IDX;
 	else
@@ -319,9 +319,9 @@ ahd_action(struct scsi_xfer *xs)
 		return;
 	}
 	ahd_unlock(ahd, &s);
-		
+
 	hscb = scb->hscb;
-		
+
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
 
 	scb->xs = xs;
@@ -377,7 +377,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 					  /*last*/i == 1);
 			dm_segs++;
 		}
-		
+
 		if ((xs->flags & SCSI_DATA_IN) != 0)
 			op = BUS_DMASYNC_PREREAD;
 		else
@@ -512,7 +512,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	hscb = scb->hscb;
 	xs->resid = xs->status = 0;
 	xs->error = CAM_REQ_INPROG;
-	
+
 	hscb->cdb_len = xs->cmdlen;
 	if (hscb->cdb_len > MAX_CDB_LEN) {
 		ahd_lock(ahd, &s);
@@ -524,7 +524,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	}
 
 	memcpy(hscb->shared_data.idata.cdb, xs->cmd, hscb->cdb_len);
-		
+
 	/* Only use S/G if there is a transfer */
 	if (xs->datalen) {
 		int error;
@@ -565,7 +565,7 @@ ahd_platform_set_tags(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 	ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
 	    devinfo->target, &tstate);
 
-	if (alg != AHD_QUEUE_NONE) 
+	if (alg != AHD_QUEUE_NONE)
 		tstate->tagenable |= devinfo->target_mask;
 	else
 		tstate->tagenable &= ~devinfo->target_mask;
@@ -579,7 +579,7 @@ ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
 		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ahd->platform_data == NULL)
 			return (ENOMEM);
-	}	
+	}
 
 	return (0);
 }
