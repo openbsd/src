@@ -443,19 +443,6 @@ domain_table_insert(domain_table_type* table,
 	return result;
 }
 
-int
-domain_table_iterate(domain_table_type* table,
-		    domain_table_iterator_type iterator,
-		    void* user_data)
-{
-	int error = 0;
-	struct radnode* n;
-	for(n = radix_first(table->nametree); n; n = radix_next(n)) {
-		error += iterator((domain_type*)n->elem, user_data);
-	}
-	return error;
-}
-
 domain_type *domain_previous_existing_child(domain_type* domain)
 {
 	domain_type* parent = domain->parent;

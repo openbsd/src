@@ -97,21 +97,29 @@ line:	NL
     |	PREV NL		{}    /* Lines containing only whitespace.  */
     |	ttl_directive
 	{
+	    region_free_all(parser->rr_region);
+	    parser->current_rr.type = 0;
+	    parser->current_rr.rdata_count = 0;
+	    parser->current_rr.rdatas = parser->temporary_rdatas;
 	    parser->error_occurred = 0;
     }
     |	origin_directive
 	{
+	    region_free_all(parser->rr_region);
+	    parser->current_rr.type = 0;
+	    parser->current_rr.rdata_count = 0;
+	    parser->current_rr.rdatas = parser->temporary_rdatas;
 	    parser->error_occurred = 0;
     }
     |	rr
     {	/* rr should be fully parsed */
 	    if (!parser->error_occurred) {
 			    parser->current_rr.rdatas
-				    = (rdata_atom_type *) region_alloc_init(
+				    =(rdata_atom_type *)region_alloc_array_init(
 					    parser->region,
 					    parser->current_rr.rdatas,
-					    (parser->current_rr.rdata_count
-					     * sizeof(rdata_atom_type)));
+					    parser->current_rr.rdata_count,
+					    sizeof(rdata_atom_type));
 
 			    process_rr();
 	    }
@@ -148,7 +156,12 @@ ttl_directive:	DOLLAR_TTL sp STR trail
 origin_directive:	DOLLAR_ORIGIN sp abs_dname trail
     {
 	    /* if previous origin is unused, remove it, do not leak it */
-	    domain_table_deldomain(parser->db, parser->origin);
+	    if(parser->origin != error_domain && parser->origin != $3) {
+		/* protect $3 from deletion, because deldomain walks up */
+		$3->usage ++;
+	    	domain_table_deldomain(parser->db, parser->origin);
+		$3->usage --;
+	    }
 	    parser->origin = $3;
     }
     |	DOLLAR_ORIGIN sp rel_dname trail
@@ -206,6 +219,9 @@ dname:	abs_dname
     |	rel_dname
     {
 	    if ($1 == error_dname) {
+		    $$ = error_domain;
+	    } else if(parser->origin == error_domain) {
+		    zc_error("cannot concatenate origin to domain name, because origin failed to parse");
 		    $$ = error_domain;
 	    } else if ($1->name_size + domain_dname(parser->origin)->name_size - 1 > MAXDOMAINLEN) {
 		    zc_error("domain name exceeds %d character limit", MAXDOMAINLEN);
@@ -949,9 +965,14 @@ rdata_ipsec_base: STR sp STR sp STR sp dotted_str
 				zc_error_prev_line("IPSECKEY must specify gateway name");
 			if(!(name = dname_parse(parser->region, $7.str)))
 				zc_error_prev_line("IPSECKEY bad gateway dname %s", $7.str);
-			if($7.str[strlen($7.str)-1] != '.')
+			if($7.str[strlen($7.str)-1] != '.') {
+				if(parser->origin == error_domain) {
+		    			zc_error("cannot concatenate origin to domain name, because origin failed to parse");
+					break;
+				}
 				name = dname_concatenate(parser->rr_region, name, 
 					domain_dname(parser->origin));
+			}
 			zadd_rdata_wireformat(alloc_rdata_init(parser->region,
 				dname_name(name), name->name_size));
 			break;
@@ -1060,8 +1081,8 @@ zparser_create(region_type *region, region_type *rr_region, namedb_type *db)
 	result->prev_dname = NULL;
 	result->default_apex = NULL;
 
-	result->temporary_rdatas = (rdata_atom_type *) region_alloc(
-		result->region, MAXRDATALEN * sizeof(rdata_atom_type));
+	result->temporary_rdatas = (rdata_atom_type *) region_alloc_array(
+		result->region, MAXRDATALEN, sizeof(rdata_atom_type));
 
 	return result;
 }

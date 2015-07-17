@@ -14,11 +14,15 @@
 #include <string.h>
 
 #include "region-allocator.h"
+#include "util.h"
+
+/** This value is enough so that x*y does not overflow if both < than this */
+#define REGION_NO_OVERFLOW ((size_t)1 << (sizeof(size_t) * 4))
 
 #ifdef ALIGNMENT
 #undef ALIGNMENT
 #endif
-#define ALIGN_UP(x, s)     (((x) + s - 1) & (~(s - 1)))
+#define REGION_ALIGN_UP(x, s)     (((x) + s - 1) & (~(s - 1)))
 #if SIZEOF_OFF_T > SIZEOF_VOIDP
 #define ALIGNMENT	(sizeof(off_t))
 #else
@@ -247,7 +251,7 @@ region_alloc(region_type *region, size_t size)
 	if (size == 0) {
 		size = 1;
 	}
-	aligned_size = ALIGN_UP(size, ALIGNMENT);
+	aligned_size = REGION_ALIGN_UP(size, ALIGNMENT);
 
 	if (aligned_size >= region->large_object_size) {
 		result = region->allocator(size + sizeof(struct large_elem));
@@ -329,6 +333,40 @@ region_alloc_zero(region_type *region, size_t size)
 	return result;
 }
 
+void *
+region_alloc_array_init(region_type *region, const void *init, size_t num,
+	size_t size)
+{
+	if((num >= REGION_NO_OVERFLOW || size >= REGION_NO_OVERFLOW) &&
+		num > 0 && SIZE_MAX / num < size) {
+		log_msg(LOG_ERR, "region_alloc_array_init failed because of integer overflow");
+		exit(1);
+	}
+	return region_alloc_init(region, init, num*size);
+}
+
+void *
+region_alloc_array_zero(region_type *region, size_t num, size_t size)
+{
+	if((num >= REGION_NO_OVERFLOW || size >= REGION_NO_OVERFLOW) &&
+		num > 0 && SIZE_MAX / num < size) {
+		log_msg(LOG_ERR, "region_alloc_array_zero failed because of integer overflow");
+		exit(1);
+	}
+	return region_alloc_zero(region, num*size);
+}
+
+void *
+region_alloc_array(region_type *region, size_t num, size_t size)
+{
+	if((num >= REGION_NO_OVERFLOW || size >= REGION_NO_OVERFLOW) &&
+		num > 0 && SIZE_MAX / num < size) {
+		log_msg(LOG_ERR, "region_alloc_array failed because of integer overflow");
+		exit(1);
+	}
+	return region_alloc(region, num*size);
+}
+
 void
 region_free_all(region_type *region)
 {
@@ -389,7 +427,7 @@ region_recycle(region_type *region, void *block, size_t size)
 	if (size == 0) {
 		size = 1;
 	}
-	aligned_size = ALIGN_UP(size, ALIGNMENT);
+	aligned_size = REGION_ALIGN_UP(size, ALIGNMENT);
 
 	if(aligned_size < region->large_object_size) {
 		struct recycle_elem* elem = (struct recycle_elem*)block;
@@ -472,9 +510,7 @@ size_t region_get_mem_unused(region_type* region)
 	return region->unused_space;
 }
 
-/* debug routine, includes here to keep base region-allocator independent */
-#undef ALIGN_UP
-#include "util.h"
+/* debug routine */
 void
 region_log_stats(region_type *region)
 {

@@ -85,12 +85,6 @@
 /* Define to 1 if you have the <event.h> header file. */
 #undef HAVE_EVENT_H
 
-/* Define to 1 if you have the `EVP_sha1' function. */
-#undef HAVE_EVP_SHA1
-
-/* Define to 1 if you have the `EVP_sha256' function. */
-#undef HAVE_EVP_SHA256
-
 /* Define to 1 if you have the `ev_default_loop' function. */
 #undef HAVE_EV_DEFAULT_LOOP
 
@@ -202,6 +196,9 @@
 
 /* Define to 1 if you have the `pwrite' function. */
 #undef HAVE_PWRITE
+
+/* Define to 1 if you have the `reallocarray' function. */
+#undef HAVE_REALLOCARRAY
 
 /* Define if recvmmsg is implemented */
 #undef HAVE_RECVMMSG
@@ -355,6 +352,9 @@
 
 /* Define this to enable IPv6 support. */
 #undef INET6
+
+/* If flex defines yy_current_buffer as a macro */
+#undef LEX_DEFINES_YY_CURRENT_BUFFER
 
 /* Define to the maximum message length to pass to syslog. */
 #undef MAXSYSLOGMSGLEN
@@ -741,6 +741,9 @@ size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
+#ifndef HAVE_REALLOCARRAY
+void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #endif
 #ifndef HAVE_GETADDRINFO
 #include "compat/fake-rfc2553.h"

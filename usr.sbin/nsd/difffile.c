@@ -702,8 +702,8 @@ delete_RR(namedb_type* db, const dname_type* dname,
 				rrset->rrs[rrnum] = rrset->rrs[rrset->rr_count-1];
 			memset(&rrset->rrs[rrset->rr_count-1], 0, sizeof(rr_type));
 			/* realloc the rrs array one smaller */
-			rrset->rrs = region_alloc_init(db->region, rrs_orig,
-				sizeof(rr_type) * (rrset->rr_count-1));
+			rrset->rrs = region_alloc_array_init(db->region, rrs_orig,
+				(rrset->rr_count-1), sizeof(rr_type));
 			if(!rrset->rrs) {
 				log_msg(LOG_ERR, "out of memory, %s:%d", __FILE__, __LINE__);
 				exit(1);
@@ -791,11 +791,16 @@ add_RR(namedb_type* db, const dname_type* dname,
 		*softfail = 1;
 		return 1;
 	}
+	if(rrset->rr_count == 65535) {
+		log_msg(LOG_ERR, "diff: too many RRs at %s",
+			dname_to_string(dname,0));
+		return 0;
+	}
 
 	/* re-alloc the rrs and add the new */
 	rrs_old = rrset->rrs;
-	rrset->rrs = region_alloc(db->region,
-		(rrset->rr_count+1) * sizeof(rr_type));
+	rrset->rrs = region_alloc_array(db->region,
+		(rrset->rr_count+1), sizeof(rr_type));
 	if(!rrset->rrs) {
 		log_msg(LOG_ERR, "out of memory, %s:%d", __FILE__, __LINE__);
 		exit(1);
@@ -1403,7 +1408,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 			double elapsed = (double)(time_end_0 - time_start_0)+
 				(double)((double)time_end_1
 				-(double)time_start_1) / 1000000.0;
-			VERBOSITY(2, (LOG_INFO, "zone %s %s of %d bytes in %g seconds",
+			VERBOSITY(1, (LOG_INFO, "zone %s %s of %d bytes in %g seconds",
 				zone_buf, log_buf, num_bytes, elapsed));
 		}
 	}

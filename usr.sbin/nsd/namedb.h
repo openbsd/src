@@ -223,16 +223,6 @@ void prehash_del(domain_table_type* table, domain_type* domain);
 int domain_is_prehash(domain_table_type* table, domain_type* domain);
 
 /*
- * Iterate over all the domain names in the domain tree.
- */
-typedef int (*domain_table_iterator_type)(domain_type *node,
-					   void *user_data);
-
-int domain_table_iterate(domain_table_type* table,
-			  domain_table_iterator_type iterator,
-			  void* user_data);
-
-/*
  * Add an RRset to the specified domain.  Updates the is_existing flag
  * as required.
  */

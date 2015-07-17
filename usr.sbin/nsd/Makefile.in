@@ -228,6 +228,9 @@ malloc.o:	$(srcdir)/compat/malloc.c
 pselect.o:	$(srcdir)/compat/pselect.c
 	$(COMPILE) -c $(srcdir)/compat/pselect.c
 
+reallocarray.o:	$(srcdir)/compat/reallocarray.c
+	$(COMPILE) -c $(srcdir)/compat/reallocarray.c
+
 fake-rfc2553.o:	$(srcdir)/compat/fake-rfc2553.c
 	$(COMPILE) -c $(srcdir)/compat/fake-rfc2553.c
 
@@ -373,7 +376,7 @@ namedb.o: $(srcdir)/namedb.c config.h $(srcdir)/namedb.h $(srcdir)/dname.h $(src
  $(srcdir)/util.h $(srcdir)/dns.h $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/nsec3.h
 netio.o: $(srcdir)/netio.c config.h $(srcdir)/netio.h $(srcdir)/region-allocator.h $(srcdir)/util.h
 nsd.o: $(srcdir)/nsd.c config.h $(srcdir)/nsd.h $(srcdir)/dns.h $(srcdir)/edns.h $(srcdir)/buffer.h $(srcdir)/region-allocator.h \
- $(srcdir)/util.h $(srcdir)/options.h $(srcdir)/rbtree.h $(srcdir)/tsig.h $(srcdir)/dname.h $(srcdir)/remote.h
+ $(srcdir)/util.h $(srcdir)/options.h $(srcdir)/rbtree.h $(srcdir)/tsig.h $(srcdir)/dname.h $(srcdir)/remote.h $(srcdir)/xfrd-disk.h
 nsd-checkconf.o: $(srcdir)/nsd-checkconf.c config.h $(srcdir)/tsig.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/dname.h $(srcdir)/options.h $(srcdir)/rbtree.h $(srcdir)/rrl.h $(srcdir)/query.h \
  $(srcdir)/namedb.h $(srcdir)/dns.h $(srcdir)/radtree.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/packet.h
@@ -456,6 +459,7 @@ malloc.o: $(srcdir)/compat/malloc.c
 memcmp.o: $(srcdir)/compat/memcmp.c config.h
 memmove.o: $(srcdir)/compat/memmove.c config.h
 pselect.o: $(srcdir)/compat/pselect.c config.h
+reallocarray.o: $(srcdir)/compat/reallocarray.c config.h
 snprintf.o: $(srcdir)/compat/snprintf.c config.h
 strlcat.o: $(srcdir)/compat/strlcat.c config.h
 strlcpy.o: $(srcdir)/compat/strlcpy.c config.h

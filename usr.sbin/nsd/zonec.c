@@ -1150,6 +1150,10 @@ void
 zadd_rdata_txt_wireformat(uint16_t *data, int first)
 {
 	rdata_atom_type *rd;
+	if (parser->current_rr.rdata_count >= MAXRDATALEN) {
+		zc_error_prev_line("too many rdata txt elements");
+		return;
+	}
 	
 	/* First STR in str_seq, allocate 65K in first unused rdata
 	 * else find last used rdata */
@@ -1183,8 +1187,10 @@ zadd_rdata_txt_clean_wireformat()
 {
 	uint16_t *tmp_data;
 	rdata_atom_type *rd = &parser->current_rr.rdatas[parser->current_rr.rdata_count-1];
+	if(!rd || !rd->data)
+		return; /* previous syntax failure */
 	if ((tmp_data = (uint16_t *) region_alloc(parser->region, 
-		rd->data[0] + 2)) != NULL) {
+		((size_t)rd->data[0]) + ((size_t)2))) != NULL) {
 		memcpy(tmp_data, rd->data, rd->data[0] + 2);
 		/* rd->data of u16+65535 freed when rr_region is freed */
 		rd->data = tmp_data;
@@ -1442,11 +1448,15 @@ process_rr(void)
 		if (i < rrset->rr_count) {
 			return 0;
 		}
+		if(rrset->rr_count == 65535) {
+			zc_error_prev_line("too may RRs for domain RRset");
+			return 0;
+		}
 
 		/* Add it... */
 		o = rrset->rrs;
-		rrset->rrs = (rr_type *) region_alloc(parser->region,
-			(rrset->rr_count + 1) * sizeof(rr_type));
+		rrset->rrs = (rr_type *) region_alloc_array(parser->region,
+			(rrset->rr_count + 1), sizeof(rr_type));
 		memcpy(rrset->rrs, o, (rrset->rr_count) * sizeof(rr_type));
 		region_recycle(parser->region, o,
 			(rrset->rr_count) * sizeof(rr_type));
@@ -1585,7 +1595,8 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 	yyparse();
 
 	/* remove origin if it was unused */
-	domain_table_deldomain(parser->db, parser->origin);
+	if(parser->origin != error_domain)
+		domain_table_deldomain(parser->db, parser->origin);
 	/* rr_region has been emptied by now */
 	dname = dname_parse(parser->rr_region, name);
 
@@ -1691,7 +1702,8 @@ zonec_parse_string(region_type* region, domain_table_type* domains,
 		*parsed = NULL;
 	else	*parsed = parser->prev_dname;
 	/* remove origin if it was not used during the parse */
-	domain_table_deldomain(parser->db, parser->origin);
+	if(parser->origin != error_domain)
+		domain_table_deldomain(parser->db, parser->origin);
 	zonec_desetup_string_parser();
 	return errors;
 }

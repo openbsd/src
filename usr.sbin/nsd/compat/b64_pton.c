@@ -168,7 +168,7 @@ b64_initialize_rmap ()
 }
 
 static int
-b64_pton_do(char const *src, uint8_t *target, size_t targsize)
+b64_pton_do(unsigned char const *src, uint8_t *target, size_t targsize)
 {
 	int tarindex, state, ch;
 	uint8_t ofs;
@@ -285,7 +285,7 @@ b64_pton_do(char const *src, uint8_t *target, size_t targsize)
 
 
 static int
-b64_pton_len(char const *src)
+b64_pton_len(unsigned char const *src)
 {
 	int tarindex, state, ch;
 	uint8_t ofs;
@@ -384,7 +384,7 @@ b64_pton(char const *src, uint8_t *target, size_t targsize)
 		b64_initialize_rmap ();
 
 	if (target)
-		return b64_pton_do (src, target, targsize);
+		return b64_pton_do ((unsigned char*)src, target, targsize);
 	else
-		return b64_pton_len (src);
+		return b64_pton_len ((unsigned char*)src);
 }

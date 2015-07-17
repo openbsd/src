@@ -29,7 +29,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <netdb.h>
 #ifndef SHUT_WR
 #define SHUT_WR 1
@@ -366,11 +365,11 @@ server_zonestat_alloc(struct nsd* nsd)
 	/* file names */
 	nsd->zonestatfname[0] = 0;
 	nsd->zonestatfname[1] = 0;
-	snprintf(tmpfile, sizeof(tmpfile), "%snsd.%u.zstat.0",
-		nsd->options->xfrdir, (unsigned)getpid());
+	snprintf(tmpfile, sizeof(tmpfile), "%snsd-xfr-%d/nsd.%u.zstat.0",
+		nsd->options->xfrdir, (int)getpid(), (unsigned)getpid());
 	nsd->zonestatfname[0] = region_strdup(nsd->region, tmpfile);
-	snprintf(tmpfile, sizeof(tmpfile), "%snsd.%u.zstat.1",
-		nsd->options->xfrdir, (unsigned)getpid());
+	snprintf(tmpfile, sizeof(tmpfile), "%snsd-xfr-%d/nsd.%u.zstat.1",
+		nsd->options->xfrdir, (int)getpid(), (unsigned)getpid());
 	nsd->zonestatfname[1] = region_strdup(nsd->region, tmpfile);
 
 	/* file descriptors */
@@ -536,8 +535,8 @@ initialize_dname_compression_tables(struct nsd *nsd)
 				compressed_dname_offsets);
 			free(compressed_dname_offsets);
 		}
-		compressed_dname_offsets = (uint16_t *) xalloc(
-			needed * sizeof(uint16_t));
+		compressed_dname_offsets = (uint16_t *) xmallocarray(
+			needed, sizeof(uint16_t));
 		region_add_cleanup(nsd->db->region, cleanup_dname_compression_tables,
 			compressed_dname_offsets);
 		compression_table_capacity = needed;
@@ -957,16 +956,27 @@ server_prepare_xfrd(struct nsd* nsd)
 	char tmpfile[256];
 	/* create task mmaps */
 	nsd->mytask = 0;
-	snprintf(tmpfile, sizeof(tmpfile), "%snsd.%u.task.0",
-		nsd->options->xfrdir, (unsigned)getpid());
+	snprintf(tmpfile, sizeof(tmpfile), "%snsd-xfr-%d/nsd.%u.task.0",
+		nsd->options->xfrdir, (int)getpid(), (unsigned)getpid());
 	nsd->task[0] = task_file_create(tmpfile);
-	if(!nsd->task[0])
+	if(!nsd->task[0]) {
+#ifdef USE_ZONE_STATS
+		unlink(nsd->zonestatfname[0]);
+		unlink(nsd->zonestatfname[1]);
+#endif
+		xfrd_del_tempdir(nsd);
 		exit(1);
-	snprintf(tmpfile, sizeof(tmpfile), "%snsd.%u.task.1",
-		nsd->options->xfrdir, (unsigned)getpid());
+	}
+	snprintf(tmpfile, sizeof(tmpfile), "%snsd-xfr-%d/nsd.%u.task.1",
+		nsd->options->xfrdir, (int)getpid(), (unsigned)getpid());
 	nsd->task[1] = task_file_create(tmpfile);
 	if(!nsd->task[1]) {
 		unlink(nsd->task[0]->fname);
+#ifdef USE_ZONE_STATS
+		unlink(nsd->zonestatfname[0]);
+		unlink(nsd->zonestatfname[1]);
+#endif
+		xfrd_del_tempdir(nsd);
 		exit(1);
 	}
 	assert(udb_base_get_userdata(nsd->task[0])->data == 0);
@@ -1930,8 +1940,9 @@ server_child(struct nsd *nsd)
 	 * connections.
 	 */
 	tcp_accept_handler_count = nsd->ifs;
-	tcp_accept_handlers = (struct tcp_accept_handler_data*) region_alloc(
-		server_region, nsd->ifs * sizeof(*tcp_accept_handlers));
+	tcp_accept_handlers = (struct tcp_accept_handler_data*)
+		region_alloc_array(server_region,
+		nsd->ifs, sizeof(*tcp_accept_handlers));
 	if (nsd->server_kind & NSD_SERVER_TCP) {
 		for (i = 0; i < nsd->ifs; ++i) {
 			struct event *handler = &tcp_accept_handlers[i].event;

@@ -80,7 +80,7 @@ void rrl_mmap_init(int numch, size_t numbuck, size_t lm, size_t wlm, size_t sm,
 	/* allocate the ratelimit hashtable in a memory map so it is
 	 * preserved across reforks (every child its own table) */
 	rrl_maps_num = (size_t)numch;
-	rrl_maps = (void**)xalloc(sizeof(void*)*rrl_maps_num);
+	rrl_maps = (void**)xmallocarray(rrl_maps_num, sizeof(void*));
 	for(i=0; i<rrl_maps_num; i++) {
 		rrl_maps[i] = mmap(NULL,
 			sizeof(struct rrl_bucket)*rrl_array_size,
@@ -110,7 +110,8 @@ void rrl_set_limit(size_t lm, size_t wlm, size_t sm)
 void rrl_init(size_t ch)
 {
 	if(!rrl_maps || ch >= rrl_maps_num)
-	    rrl_array = xalloc_zero(sizeof(struct rrl_bucket)*rrl_array_size);
+	    rrl_array = xalloc_array_zero(sizeof(struct rrl_bucket),
+	    	rrl_array_size);
 #ifdef HAVE_MMAP
 	else rrl_array = (struct rrl_bucket*)rrl_maps[ch];
 #endif

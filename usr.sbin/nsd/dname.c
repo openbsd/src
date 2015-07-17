@@ -63,7 +63,7 @@ dname_make(region_type *region, const uint8_t *name, int normalize)
 	result = (dname_type *) region_alloc(
 		region,
 		(sizeof(dname_type)
-		 + (label_count + name_size) * sizeof(uint8_t)));
+		 + (((size_t)label_count) + ((size_t)name_size)) * sizeof(uint8_t)));
 	result->name_size = name_size;
 	result->label_count = label_count;
 	memcpy((uint8_t *) dname_label_offsets(result),
@@ -244,6 +244,9 @@ int dname_parse_wire(uint8_t* dname, const char* name)
 	}
 
 	/* Add root label.  */
+	if (h - dname >= MAXDOMAINLEN) {
+		return 0;
+	}
 	*h = 0;
 
 	return p-dname;
@@ -482,7 +485,7 @@ dname_replace(region_type* region,
 		return NULL;
 
 	res = (dname_type*)region_alloc(region, sizeof(dname_type) +
-		(x_labels+dest->label_count + x_len+dest->name_size)
+		(x_labels+((int)dest->label_count) + x_len+((int)dest->name_size))
 		*sizeof(uint8_t));
 	res->name_size = x_len+dest->name_size;
 	res->label_count = x_labels+dest->label_count;

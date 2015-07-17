@@ -91,7 +91,8 @@ udb_base_create_fd(const char* fname, int fd, udb_walk_relptr_func walkfunc,
 	udb->fd = fd;
 	udb->ram_size = 1024;
 	udb->ram_mask = (int)udb->ram_size - 1;
-	udb->ram_hash = (udb_ptr**)xalloc_zero(sizeof(udb_ptr*)*udb->ram_size);
+	udb->ram_hash = (udb_ptr**)xalloc_array_zero(sizeof(udb_ptr*),
+		udb->ram_size);
 	if(!udb->ram_hash) {
 		free(udb->fname);
 		free(udb);
@@ -432,10 +433,10 @@ void udb_base_link_ptr(udb_base* udb, udb_ptr* ptr)
 	assert(udb_valid_dataptr(udb, ptr->data)); /* must be to whole chunk*/
 #endif
 	udb->ram_num++;
-	if(udb->ram_num == udb->ram_size && udb->ram_size<(size_t)0xefffffff) {
+	if(udb->ram_num == udb->ram_size && udb->ram_size<(size_t)0x7fffffff) {
 		/* grow the array, if allocation succeeds */
-		udb_ptr** newram = (udb_ptr**)xalloc_zero(sizeof(udb_ptr*)*
-			udb->ram_size*2);
+		udb_ptr** newram = (udb_ptr**)xalloc_array_zero(
+			sizeof(udb_ptr*), udb->ram_size*2);
 		if(newram) {
 			grow_ram_hash(udb, newram);
 		}

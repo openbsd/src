@@ -809,7 +809,7 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 			}
 			if(is_wirestore) {
 				temp_rdatas[i].data = (uint16_t *) region_alloc(
-                                	region, sizeof(uint16_t) + dname->name_size);
+                                	region, sizeof(uint16_t) + ((size_t)dname->name_size));
 				temp_rdatas[i].data[0] = dname->name_size;
 				memcpy(temp_rdatas[i].data+1, dname_name(dname),
 					dname->name_size);
@@ -845,8 +845,8 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 		return -1;
 	}
 
-	*rdatas = (rdata_atom_type *) region_alloc_init(
-		region, temp_rdatas, i * sizeof(rdata_atom_type));
+	*rdatas = (rdata_atom_type *) region_alloc_array_init(
+		region, temp_rdatas, i, sizeof(rdata_atom_type));
 	region_destroy(temp_region);
 	return (ssize_t)i;
 }

@@ -520,7 +520,7 @@ static void
 append_trailing_slash(const char** dirname, region_type* region)
 {
 	int l = strlen(*dirname);
-	if (l>0 && (*dirname)[l-1] != '/') {
+	if (l>0 && (*dirname)[l-1] != '/' && l < 0xffffff) {
 		char *dirname_slash = region_alloc(region, l+2);
 		memcpy(dirname_slash, *dirname, l+1);
 		strlcat(dirname_slash, "/", l+2);

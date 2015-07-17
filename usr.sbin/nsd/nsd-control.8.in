@@ -1,4 +1,4 @@
-.TH "nsd\-control" "8" "Feb  3, 2015" "NLnet Labs" "nsd 4.1.1"
+.TH "nsd\-control" "8" "Jun 23, 2015" "NLnet Labs" "nsd 4.1.3"
 .\" Copyright (c) 2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -87,6 +87,14 @@ had a zonefile, this remains (but may be outdated).  Zones configured
 inside nsd.conf itself cannot be removed this way because the daemon
 does not write to the nsd.conf file, you need to add such zones to the
 zonelist file to be able to delete them with the delzone command.
+.TP
+.B addzones
+Add zones read from stdin of nsd\-control.  Input is read per line,
+with name space patternname on a line.  For bulk additions.
+.TP
+.B delzones
+Remove zones read from stdin of nsd\-control.  Input is one name per line.
+For bulk removals.
 .TP
 .B write [<zone>]
 Write zonefiles to disk, or the given zonefile to disk.  Zones that have

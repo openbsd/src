@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.1,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.3,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -168,6 +168,23 @@ AC_PROG_INSTALL
 AC_PROG_LEX
 AC_PROG_YACC
 
+if test "$LEX" != ":" -a "$LEX" != ""; then
+  # Check if lex defines yy_current_buffer, because 2.4.6 and older use it,
+  # but later could define it as a macro and then we should not redefine it.
+  AC_MSG_CHECKING(if lex defines yy_current_buffer)
+  cat <<EOF >conftest.lex
+%%
+EOF
+  $LEX -i -t conftest.lex >> conftest.c
+  if grep "^#define yy_current_buffer" conftest.c >/dev/null; then
+	  AC_DEFINE_UNQUOTED(LEX_DEFINES_YY_CURRENT_BUFFER, 1, [If flex defines yy_current_buffer as a macro])
+	AC_MSG_RESULT(yes)
+  else
+	AC_MSG_RESULT(no)
+  fi
+  rm -f conftest.lex conftest.c
+fi
+
 AC_DEFUN([AC_CHECK_FORMAT_ATTRIBUTE],
 [AC_REQUIRE([AC_PROG_CC])
 AC_MSG_CHECKING(whether the C compiler (${CC-cc}) accepts the "format" attribute)
@@ -320,7 +337,6 @@ AC_DEFUN([CHECK_SSL], [
             AC_CHECK_LIB(crypto, HMAC_CTX_init,, [
                     AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
                 ])
-		AC_CHECK_FUNCS([EVP_sha1 EVP_sha256])
         fi
         AC_SUBST(HAVE_SSL)
     fi
@@ -642,6 +658,7 @@ AC_REPLACE_FUNCS(b64_pton)
 AC_REPLACE_FUNCS(b64_ntop)
 AC_REPLACE_FUNCS(pselect)
 AC_REPLACE_FUNCS(memmove)
+AC_REPLACE_FUNCS(reallocarray)
 
 AC_MSG_CHECKING(for pselect prototype in sys/select.h)
 AC_EGREP_HEADER([[^a-zA-Z_]*pselect[^a-zA-Z_]], sys/select.h, AC_DEFINE(HAVE_PSELECT_PROTO, 1, 
@@ -688,7 +705,7 @@ AC_DEFINE_UNQUOTED([FACILITY], $facility, [Define to the default facility for sy
 dnl
 dnl Determine the maximum number of ip-addresses that are allowed
 dnl
-max_ips=16
+max_ips=32
 AC_ARG_WITH([max_ips],
 	AC_HELP_STRING([--with-max-ips=number], [Limit on the number of ip-addresses that may be specified]),
 	[max_ips=$withval])
@@ -957,6 +974,9 @@ size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
+#ifndef HAVE_REALLOCARRAY
+void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #endif
 #ifndef HAVE_GETADDRINFO
 #include "compat/fake-rfc2553.h"

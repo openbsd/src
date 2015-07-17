@@ -259,9 +259,32 @@ xalloc(size_t size)
 }
 
 void *
+xmallocarray(size_t num, size_t size)
+{  
+        void *result = reallocarray(NULL, num, size);
+   
+        if (!result) {
+                log_msg(LOG_ERR, "reallocarray failed: %s", strerror(errno));
+                exit(1);
+        }
+        return result;
+}
+
+void *
 xalloc_zero(size_t size)
 {
 	void *result = calloc(1, size);
+	if (!result) {
+		log_msg(LOG_ERR, "calloc failed: %s", strerror(errno));
+		exit(1);
+	}
+	return result;
+}
+
+void *
+xalloc_array_zero(size_t num, size_t size)
+{
+	void *result = calloc(num, size);
 	if (!result) {
 		log_msg(LOG_ERR, "calloc failed: %s", strerror(errno));
 		exit(1);

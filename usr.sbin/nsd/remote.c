@@ -77,7 +77,6 @@
 #include "nsd.h"
 #include "options.h"
 #include "difffile.h"
-#include "xfrd.h"
 #include "ipc.h"
 
 #ifdef HAVE_SYS_TYPES_H
@@ -1106,15 +1105,15 @@ zonestat_inc_ifneeded(xfrd_state_t* xfrd)
 #endif /* USE_ZONE_STATS */
 }
 
-/** do the addzone command */
-static void
-do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
+/** perform the addzone command for one zone */
+static int
+perform_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 {
 	const dname_type* dname;
 	zone_options_t* zopt;
 	char* arg2 = NULL;
 	if(!find_arg2(ssl, arg, &arg2))
-		return;
+		return 0;
 
 	/* if we add it to the xfrd now, then xfrd could download AXFR and
 	 * store it and the NSD-reload would see it in the difffile before
@@ -1128,13 +1127,13 @@ do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 	if(!rbtree_search(xfrd->nsd->options->patterns, arg2)) {
 		(void)ssl_printf(ssl, "error pattern %s does not exist\n",
 			arg2);
-		return;
+		return 0;
 	}
 
 	dname = dname_parse(xfrd->region, arg);
 	if(!dname) {
 		(void)ssl_printf(ssl, "error cannot parse zone name\n");
-		return;
+		return 0;
 	}
 
 	/* see if zone is a duplicate */
@@ -1142,8 +1141,7 @@ do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 		region_recycle(xfrd->region, (void*)dname,
 			dname_total_size(dname));
 		(void)ssl_printf(ssl, "zone %s already exists\n", arg);
-		send_ok(ssl); /* a nop operation */
-		return;
+		return 1;
 	}
 	region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
 	dname = NULL;
@@ -1153,7 +1151,7 @@ do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 	if(!zopt) {
 		/* also dname parse error here */
 		(void)ssl_printf(ssl, "error could not add zonelist entry\n");
-		return;
+		return 0;
 	}
 	/* make addzone task and schedule reload */
 	task_new_add_zone(xfrd->nsd->task[xfrd->nsd->mytask],
@@ -1167,13 +1165,12 @@ do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 	if(zone_is_slave(zopt)) {
 		xfrd_init_slave_zone(xfrd, zopt);
 	}
-
-	send_ok(ssl);
+	return 1;
 }
 
-/** do the delzone command */
-static void
-do_delzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
+/** perform the delzone command for one zone */
+static int
+perform_delzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 {
 	const dname_type* dname;
 	zone_options_t* zopt;
@@ -1181,7 +1178,7 @@ do_delzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 	dname = dname_parse(xfrd->region, arg);
 	if(!dname) {
 		(void)ssl_printf(ssl, "error cannot parse zone name\n");
-		return;
+		return 0;
 	}
 
 	/* see if we have the zone in question */
@@ -1191,9 +1188,8 @@ do_delzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 			dname_total_size(dname));
 		/* nothing to do */
 		if(!ssl_printf(ssl, "warning zone %s not present\n", arg))
-			return;
-		send_ok(ssl);
-		return;
+			return 0;
+		return 1;
 	}
 
 	/* see if it can be deleted */
@@ -1203,7 +1199,7 @@ do_delzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 		(void)ssl_printf(ssl, "error zone defined in nsd.conf, "
 			"cannot delete it in this manner: remove it from "
 			"nsd.conf yourself and repattern\n");
-		return;
+		return 0;
 	}
 
 	/* create deletion task */
@@ -1219,8 +1215,71 @@ do_delzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
 	zone_list_del(xfrd->nsd->options, zopt);
 
 	region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
+	return 1;
+}
+
+/** do the addzone command */
+static void
+do_addzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
+{
+	if(!perform_addzone(ssl, xfrd, arg))
+		return;
 	send_ok(ssl);
 }
+
+/** do the delzone command */
+static void
+do_delzone(SSL* ssl, xfrd_state_t* xfrd, char* arg)
+{
+	if(!perform_delzone(ssl, xfrd, arg))
+		return;
+	send_ok(ssl);
+}
+
+/** do the addzones command */
+static void
+do_addzones(SSL* ssl, xfrd_state_t* xfrd)
+{
+	char buf[2048];
+	int num = 0;
+	while(ssl_read_line(ssl, buf, sizeof(buf))) {
+		if(buf[0] == 0x04 && buf[1] == 0)
+			break; /* end of transmission */
+		if(!perform_addzone(ssl, xfrd, buf)) {
+			if(!ssl_printf(ssl, "error for input line '%s'\n", 
+				buf))
+				return;
+		} else {
+			if(!ssl_printf(ssl, "added: %s\n", buf))
+				return;
+			num++;
+		}
+	}
+	(void)ssl_printf(ssl, "added %d zones\n", num);
+}
+
+/** do the delzones command */
+static void
+do_delzones(SSL* ssl, xfrd_state_t* xfrd)
+{
+	char buf[2048];
+	int num = 0;
+	while(ssl_read_line(ssl, buf, sizeof(buf))) {
+		if(buf[0] == 0x04 && buf[1] == 0)
+			break; /* end of transmission */
+		if(!perform_delzone(ssl, xfrd, buf)) {
+			if(!ssl_printf(ssl, "error for input line '%s'\n", 
+				buf))
+				return;
+		} else {
+			if(!ssl_printf(ssl, "removed: %s\n", buf))
+				return;
+			num++;
+		}
+	}
+	(void)ssl_printf(ssl, "deleted %d zones\n", num);
+}
+
 
 /** remove TSIG key from config and add task so that reload does too */
 static void remove_key(xfrd_state_t* xfrd, const char* kname)
@@ -1662,6 +1721,10 @@ execute_cmd(struct daemon_remote* rc, SSL* ssl, char* cmd, struct rc_state* rs)
 		do_addzone(ssl, rc->xfrd, skipwhite(p+7));
 	} else if(cmdcmp(p, "delzone", 7)) {
 		do_delzone(ssl, rc->xfrd, skipwhite(p+7));
+	} else if(cmdcmp(p, "addzones", 8)) {
+		do_addzones(ssl, rc->xfrd);
+	} else if(cmdcmp(p, "delzones", 8)) {
+		do_delzones(ssl, rc->xfrd);
 	} else if(cmdcmp(p, "notify", 6)) {
 		do_notify(ssl, rc->xfrd, skipwhite(p+6));
 	} else if(cmdcmp(p, "transfer", 8)) {
@@ -1938,7 +2001,7 @@ print_stat_block(SSL* ssl, char* n, char* d, struct nsdst* st)
 static void
 resize_zonestat(xfrd_state_t* xfrd, size_t num)
 {
-	struct nsdst** a = xalloc_zero(num * sizeof(struct nsdst*));
+	struct nsdst** a = xalloc_array_zero(num, sizeof(struct nsdst*));
 	if(xfrd->zonestat_clear_num != 0)
 		memcpy(a, xfrd->zonestat_clear, xfrd->zonestat_clear_num
 			* sizeof(struct nsdst*));

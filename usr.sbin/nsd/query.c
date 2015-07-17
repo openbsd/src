@@ -146,10 +146,28 @@ query_error (struct query *q, nsd_rc_type rcode)
 	return QUERY_PROCESSED;
 }
 
+static int
+query_ratelimit_err(nsd_type* nsd)
+{
+	time_t now = time(NULL);
+	if(nsd->err_limit_time == now) {
+		/* see if limit is exceeded for this second */
+		if(nsd->err_limit_count++ > ERROR_RATELIMIT)
+			return 1;
+	} else {
+		/* new second, new limits */
+		nsd->err_limit_time = now;
+		nsd->err_limit_count = 1;
+	}
+	return 0;
+}
+
 static query_state_type
-query_formerr (struct query *query)
+query_formerr (struct query *query, nsd_type* nsd)
 {
 	int opcode = OPCODE(query->packet);
+	if(query_ratelimit_err(nsd))
+		return QUERY_DISCARDED;
 	FLAGS_SET(query->packet, FLAGS(query->packet) & 0x0100U);
 			/* Preserve the RD flag. Clear the rest. */
 	OPCODE_SET(query->packet, opcode);
@@ -454,6 +472,18 @@ answer_notify(struct nsd* nsd, struct query *query)
 				strerror(errno));
 			return query_error(query, NSD_RC_SERVFAIL);
 		}
+		if(verbosity >= 1) {
+			uint32_t serial = 0;
+			char address[128];
+			addr2str(&query->addr, address, sizeof(address));
+			if(packet_find_notify_serial(query->packet, &serial))
+			  VERBOSITY(1, (LOG_INFO, "notify for %s from %s serial %u",
+				dname_to_string(query->qname, NULL), address,
+				(unsigned)serial));
+			else
+			  VERBOSITY(1, (LOG_INFO, "notify for %s from %s",
+				dname_to_string(query->qname, NULL), address));
+		}
 
 		/* create notify reply - keep same query contents */
 		QR_SET(query->packet);         /* This is an answer.  */
@@ -466,20 +496,14 @@ answer_notify(struct nsd* nsd, struct query *query)
 		pos = buffer_position(query->packet);
 		buffer_clear(query->packet);
 		buffer_set_position(query->packet, pos);
-		if(verbosity >= 1) {
-			char address[128];
-			addr2str(&query->addr, address, sizeof(address));
-			VERBOSITY(2, (LOG_INFO, "notify for %s from %s",
-				dname_to_string(query->qname, NULL), address));
-		}
 		/* tsig is added in add_additional later (if needed) */
 		return QUERY_PROCESSED;
 	}
 
-	if (verbosity >= 1) {
+	if (verbosity >= 2) {
 		char address[128];
 		addr2str(&query->addr, address, sizeof(address));
-		VERBOSITY(1, (LOG_INFO, "notify for zone %s from client %s refused, %s%s",
+		VERBOSITY(2, (LOG_INFO, "notify for %s from %s refused, %s%s",
 			dname_to_string(query->qname, NULL),
 			address,
 			why?why->key_name:"no acl matches",
@@ -1291,7 +1315,7 @@ query_process(query_type *q, nsd_type *nsd)
 	}
 
 	if (RCODE(q->packet) != RCODE_OK || !process_query_section(q)) {
-		return query_formerr(q);
+		return query_formerr(q, nsd);
 	}
 
 	/* Update statistics.  */
@@ -1303,6 +1327,8 @@ query_process(query_type *q, nsd_type *nsd)
 		if (q->opcode == OPCODE_NOTIFY) {
 			return answer_notify(nsd, q);
 		} else {
+			if(query_ratelimit_err(nsd))
+				return QUERY_DISCARDED;
 			return query_error(q, NSD_RC_IMPL);
 		}
 	}
@@ -1310,7 +1336,7 @@ query_process(query_type *q, nsd_type *nsd)
 	/* Dont bother to answer more than one question at once... */
 	if (QDCOUNT(q->packet) != 1) {
 		FLAGS_SET(q->packet, 0);
-		return query_formerr(q);
+		return query_formerr(q, nsd);
 	}
 	/* Ignore settings of flags */
 
@@ -1318,13 +1344,13 @@ query_process(query_type *q, nsd_type *nsd)
 	   except for IXFR queries. */
 	if (ANCOUNT(q->packet) != 0 ||
 		(q->qtype!=TYPE_IXFR && NSCOUNT(q->packet) != 0)) {
-		return query_formerr(q);
+		return query_formerr(q, nsd);
 	}
 	if(q->qtype==TYPE_IXFR && NSCOUNT(q->packet) > 0) {
 		int i; /* skip ixfr soa information data here */
 		for(i=0; i< NSCOUNT(q->packet); i++)
 			if(!packet_skip_rr(q->packet, 0))
-				return query_formerr(q);
+				return query_formerr(q, nsd);
 	}
 
 	arcount = ARCOUNT(q->packet);
@@ -1340,7 +1366,7 @@ query_process(query_type *q, nsd_type *nsd)
 
 		/* see if tsig is before edns record */
 		if (!tsig_parse_rr(&q->tsig, q->packet))
-			return query_formerr(q);
+			return query_formerr(q, nsd);
 		if(q->tsig.status != TSIG_NOT_PRESENT)
 			--arcount;
 	}
@@ -1353,20 +1379,20 @@ query_process(query_type *q, nsd_type *nsd)
 	if (arcount > 0 && q->tsig.status == TSIG_NOT_PRESENT) {
 		/* see if tsig is after the edns record */
 		if (!tsig_parse_rr(&q->tsig, q->packet))
-			return query_formerr(q);
+			return query_formerr(q, nsd);
 		if(q->tsig.status != TSIG_NOT_PRESENT)
 			--arcount;
 	}
 	/* If more RRs left in Add. Section, FORMERR. */
 	if (arcount > 0) {
-		return query_formerr(q);
+		return query_formerr(q, nsd);
 	}
 
 	/* Do we have any trailing garbage? */
 #ifdef	STRICT_MESSAGE_PARSE
 	if (buffer_remaining(q->packet) > 0) {
 		/* If we're strict.... */
-		return query_formerr(q);
+		return query_formerr(q, nsd);
 	}
 #endif
 	/* Remove trailing garbage.  */
