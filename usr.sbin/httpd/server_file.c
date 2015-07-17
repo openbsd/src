@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.55 2015/07/16 19:05:28 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.56 2015/07/17 21:53:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -232,7 +232,7 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 	}
 
 	if ((ret = server_file_modified_since(clt->clt_descreq, st)) != -1)
-		return ret;
+		return (ret);
 
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)
@@ -633,20 +633,24 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 }
 
 int
-server_file_modified_since(struct http_descriptor * desc, struct stat * st)
+server_file_modified_since(struct http_descriptor *desc, struct stat *st)
 {
-	struct kv		 key, *since;
-	struct tm		 tm;
-
-	memset(&tm, 0, sizeof(struct tm));
+	struct kv	 key, *since;
+	struct tm	 tm;
 
 	key.kv_key = "If-Modified-Since";
 	if ((since = kv_find(&desc->http_headers, &key)) != NULL &&
-	    since->kv_value != NULL) {
-		if (strptime(since->kv_value, "%a, %d %h %Y %T %Z", &tm) !=
-		    NULL && timegm(&tm) >= st->st_mtim.tv_sec) {
+	    since->kv_value == NULL) {
+		memset(&tm, 0, sizeof(struct tm));
+
+		/*
+		 * Return "Not modified" if the file hasn't changed since
+		 * the requested time.
+		 */
+		if (strptime(since->kv_value,
+		    "%a, %d %h %Y %T %Z", &tm) != NULL &&
+		    timegm(&tm) >= st->st_mtim.tv_sec)
 			return (304);
-		}
 	}
 
 	return (-1);
