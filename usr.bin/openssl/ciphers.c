@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.4 2015/03/02 07:51:25 bcook Exp $ */
+/* $OpenBSD: ciphers.c,v 1.5 2015/07/17 16:04:09 doug Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -24,7 +24,6 @@
 #include "apps.h"
 
 struct {
-	int ssl_version;
 	int usage;
 	int verbose;
 } ciphers_config;
@@ -41,18 +40,9 @@ struct option ciphers_options[] = {
 		.opt.flag = &ciphers_config.usage,
 	},
 	{
-		.name = "ssl3",
-		.desc = "Only include SSLv3 ciphers",
-		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.ssl_version,
-		.value = SSL3_VERSION,
-	},
-	{
 		.name = "tls1",
-		.desc = "Only include TLSv1 ciphers",
-		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.ssl_version,
-		.value = TLS1_VERSION,
+		.desc = "This option is deprecated since it is the default",
+		.type = OPTION_DISCARD,
 	},
 	{
 		.name = "v",
@@ -74,7 +64,7 @@ struct option ciphers_options[] = {
 static void
 ciphers_usage(void)
 {
-	fprintf(stderr, "usage: ciphers [-hVv] [-ssl3 | -tls1] [cipherlist]\n");
+	fprintf(stderr, "usage: ciphers [-hVv] [-tls1] [cipherlist]\n");
 	options_usage(ciphers_options);
 }
 
@@ -83,7 +73,6 @@ ciphers_main(int argc, char **argv)
 {
 	char *cipherlist = NULL;
 	STACK_OF(SSL_CIPHER) *ciphers;
-	const SSL_METHOD *ssl_method;
 	const SSL_CIPHER *cipher;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
@@ -104,18 +93,7 @@ ciphers_main(int argc, char **argv)
 		return (1);
 	}
 
-	switch (ciphers_config.ssl_version) {
-	case SSL3_VERSION:
-		ssl_method = SSLv3_client_method();
-		break;
-	case TLS1_VERSION:
-		ssl_method = TLSv1_client_method();
-		break;
-	default:
-		ssl_method = SSLv3_server_method();
-	}
-
-	if ((ssl_ctx = SSL_CTX_new(ssl_method)) == NULL)
+	if ((ssl_ctx = SSL_CTX_new(TLSv1_client_method())) == NULL)
 		goto err;
 
 	if (cipherlist != NULL) {
