@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.41 2015/04/04 16:21:48 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.42 2015/07/17 21:26:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1215,7 +1215,8 @@ rtmsg_process(char *buf, size_t len)
 			if ((sa = rti_info[RTAX_DST]) == NULL)
 				continue;
 
-			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+			/* Skip ARP/ND cache and broadcast routes. */
+			if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST))
 				continue;
 
 			/* LDP should follow the IGP and ignore BGP routes */
@@ -1258,10 +1259,18 @@ rtmsg_process(char *buf, size_t len)
 			if ((sa = rti_info[RTAX_GATEWAY]) != NULL) {
 				switch (sa->sa_family) {
 				case AF_INET:
+					if (rtm->rtm_flags & RTF_CONNECTED) {
+						flags |= F_CONNECTED;
+						break;
+					}
 					nexthop.s_addr = ((struct
 					    sockaddr_in *)sa)->sin_addr.s_addr;
 					break;
 				case AF_LINK:
+					/*
+					 * Traditional BSD connected routes have
+					 * a gateway of type AF_LINK.
+					 */
 					flags |= F_CONNECTED;
 					break;
 				}
