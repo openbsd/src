@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2015/07/17 20:38:57 jasper Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2015/07/17 21:21:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -432,29 +432,27 @@ add_file(char *s)
 static int
 next_files_have_lines()
 {
-       struct s_flist *file;
-       FILE *file_fd;
-       int ch;
+	struct s_flist *file;
+	FILE *file_fd;
+	int ch;
 
-       file = files;
-       while ((file = file->next) != NULL) {
-	       if ((file_fd = fopen(file->fname, "r")) == NULL)
-		       continue;
+	file = files;
+	while ((file = file->next) != NULL) {
+		if ((file_fd = fopen(file->fname, "r")) == NULL)
+			continue;
 
-	       if ((ch = getc(file_fd)) != EOF) {
-		       /*
-			* This next file has content, therefore current
-			* file doesn't contains the last line.
-			*/
-		       ungetc(ch, file_fd);
-		       fclose(file_fd);
-		       return (1);
-	       }
-
-	       fclose(file_fd);
-       }
-
-       return (0);
+		if ((ch = getc(file_fd)) != EOF) {
+			/*
+			 * This next file has content, therefore current
+			 * file doesn't contains the last line.
+			 */
+			ungetc(ch, file_fd);
+			fclose(file_fd);
+			return (1);
+		}
+		fclose(file_fd);
+	}
+	return (0);
 }
 
 int
