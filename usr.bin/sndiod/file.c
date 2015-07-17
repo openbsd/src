@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.10 2015/07/17 09:51:18 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.11 2015/07/17 10:15:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -272,7 +272,7 @@ file_del(struct file *f)
 int
 file_poll(void)
 {
-	struct pollfd pfds[MAXFDS];
+	struct pollfd pfds[MAXFDS], *pfd;
 	struct file *f, **pf;
 	struct timespec ts;
 #ifdef DEBUG
@@ -282,7 +282,7 @@ file_poll(void)
 	int i;
 #endif
 	long long delta_nsec;
-	int n, nfds, revents, res, immed;
+	int nfds, revents, res, immed;
 
 	/*
 	 * cleanup zombies
@@ -308,30 +308,30 @@ file_poll(void)
 	nfds = 0;
 	immed = 0;
 	for (f = file_list; f != NULL; f = f->next) {
-		n = f->ops->pollfd(f->arg, pfds + nfds);
-		if (n == 0) {
-			f->pfd = NULL;
+		f->nfds = f->ops->pollfd(f->arg, pfds + nfds);
+		if (f->nfds == 0)
+			continue;
+		if (f->nfds < 0) {
+			immed = 1;
 			continue;
 		}
-		if (n < 0) {
-			immed = 1;
-			n = 0;
-		}
-		f->pfd = pfds + nfds;
-		nfds += n;
+		nfds += f->nfds;
 	}
 #ifdef DEBUG
 	if (log_level >= 4) {
 		log_puts("poll:");
-		for (i = 0; i < nfds; i++) {
+		pfd = pfds;
+		for (f = file_list; f != NULL; f = f->next) {
+			if (f->nfds <= 0)
+				continue;
 			log_puts(" ");
-			for (f = file_list; f != NULL; f = f->next) {
-				if (f->pfd == &pfds[i]) {
-					log_puts(f->ops->name);
-					log_puts(": ");
-				}
+			log_puts(f->ops->name);
+			log_puts(":");
+			for (i = 0; i < f->nfds; i++) {
+				log_puts(" ");
+				log_putx(pfd->events);
+				pfd++;
 			}
-			log_putx(pfds[i].events);
 		}
 		log_puts("\n");
 	}
@@ -365,16 +365,16 @@ file_poll(void)
 	}
 	if (!immed && res <= 0)
 		return 1;
-
+	pfd = pfds;
 	for (f = file_list; f != NULL; f = f->next) {
-		if (f->pfd == NULL)
+		if (f->nfds <= 0)
 			continue;
 #ifdef DEBUG
 		if (log_level >= 3)
 			clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
 		revents = (f->state != FILE_ZOMB) ? 
-		    f->ops->revents(f->arg, f->pfd) : 0;
+		    f->ops->revents(f->arg, pfd) : 0;
 		if ((revents & POLLHUP) && (f->state != FILE_ZOMB))
 			f->ops->hup(f->arg);
 		if ((revents & POLLIN) && (f->state != FILE_ZOMB))
@@ -394,6 +394,7 @@ file_poll(void)
 			}
 		}
 #endif
+		pfd += f->nfds;
 	}
 	return 1;
 }

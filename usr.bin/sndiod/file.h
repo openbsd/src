@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.2 2015/07/17 09:51:18 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.3 2015/07/17 10:15:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,13 +47,13 @@ struct fileops {
 
 struct file {
 	struct file *next;		/* next in file_list */
-	struct pollfd *pfd;		/* arg to poll(2) syscall */
 	struct fileops *ops;		/* event handlers */
 	void *arg;			/* argument to event handlers */
 #define FILE_INIT	0		/* ready */
 #define FILE_ZOMB	1		/* closed, but not free()d yet */
 	unsigned int state;		/* one of above */
 	unsigned int max_nfds;		/* max number of descriptors */	
+	int nfds;			/* number of descriptors polled */
 	char *name;			/* for debug purposes */
 };
 
