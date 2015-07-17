@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.20 2015/01/27 01:42:26 mlarkin Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.21 2015/07/17 21:53:56 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -76,40 +76,8 @@ struct bios_romheader {
 	u_int16_t	pnpheader;	/* offset to PnP expansion header */
 } __packed *bios_romheader_t;
 
-/*
- * BIOS32
- */
-typedef
-struct bios32_header {
-	u_int32_t	signature;	/* 00: signature "_32_" */
-	u_int32_t	entry;		/* 04: entry point */
-	u_int8_t	rev;		/* 08: revision */
-	u_int8_t	length;		/* 09: header length */
-	u_int8_t	cksum;		/* 0a: modulo 256 checksum */
-	u_int8_t	reserved[5];
-} __packed *bios32_header_t;
-
-typedef
-struct bios32_entry_info {
-	paddr_t	bei_base;
-	psize_t	bei_size;
-	paddr_t	bei_entry;
-} __packed *bios32_entry_info_t;
-
-typedef
-struct bios32_entry {
-	u_int32_t offset;
-	u_int16_t segment;
-} __packed *bios32_entry_t;
-
-#define	BIOS32_START	0xe0000
-#define	BIOS32_SIZE	0x20000
-#define	BIOS32_END	(BIOS32_START + BIOS32_SIZE - 0x10)
-
 #define	BIOS32_MAKESIG(a, b, c, d) \
 	((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
-#define	BIOS32_SIGNATURE	BIOS32_MAKESIG('_', '3', '2', '_')
-#define	PCIBIOS_SIGNATURE	BIOS32_MAKESIG('$', 'P', 'C', 'I')
 #define	SMBIOS_SIGNATURE	BIOS32_MAKESIG('_', 'S', 'M', '_')
 
 /*
@@ -266,9 +234,6 @@ int bios_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 void bios_getopt(void);
 bios_diskinfo_t *bios_getdiskinfo(dev_t);
-
-/* bios32.c */
-int  bios32_service(u_int32_t, bios32_entry_t, bios32_entry_info_t);
 
 extern u_int bootapiver;
 extern bios_memmap_t *bios_memmap;
