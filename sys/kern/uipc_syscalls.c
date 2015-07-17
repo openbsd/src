@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.102 2015/05/21 13:35:15 nicm Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.103 2015/07/17 15:23:59 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	}
 	if ((error = soconnect2(so1, so2)) != 0)
 		goto free4;
-	if (SCARG(uap, type) == SOCK_DGRAM) {
+	if ((SCARG(uap, type) & SOCK_TYPE_MASK) == SOCK_DGRAM) {
 		/*
 		 * Datagram socket connection is asymmetric.
 		 */

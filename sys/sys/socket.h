@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.87 2015/01/21 02:23:14 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.88 2015/07/17 15:23:59 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -68,6 +68,9 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 #define	SOCK_RAW	3		/* raw-protocol interface */
 #define	SOCK_RDM	4		/* reliably-delivered message */
 #define	SOCK_SEQPACKET	5		/* sequenced packet stream */
+#ifdef _KERNEL
+#define	SOCK_TYPE_MASK	0x000F		/* mask that covers the above */
+#endif
 
 /*
  * Socket creation flags
