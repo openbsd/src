@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.42 2015/07/16 05:10:14 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.43 2015/07/17 15:37:58 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ IDTVEC(trap0d)
 	leaq	_C_LABEL(doreti_iret)(%rip),%rdi
 	cmpq	%rdi,TF_RIP(%rsp)
 	je	1f
-	testq	$SEL_UPL,TF_CS(%rsp)
+	testq	$SEL_RPL,TF_CS(%rsp)
 	jz	2f
 1:	swapgs
 2:	movq	%r15,TF_R15(%rsp)

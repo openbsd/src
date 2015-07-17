@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.8 2015/05/18 19:59:27 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.9 2015/07/17 15:37:58 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -32,7 +32,7 @@
 
 #define	INTRENTRY \
 	subq	$32,%rsp		; \
-	testq	$SEL_UPL,56(%rsp)	; \
+	testq	$SEL_RPL,56(%rsp)	; \
 	je	98f			; \
 	swapgs				; \
 98: 	INTR_SAVE_GPRS
