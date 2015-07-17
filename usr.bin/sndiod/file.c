@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.6 2015/02/16 06:26:24 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.7 2015/07/17 08:14:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -44,7 +44,6 @@
  *
  */
 
-#include <sys/time.h>
 #include <sys/types.h>
 
 #include <err.h>
@@ -60,12 +59,11 @@
 #include "utils.h"
 
 #define MAXFDS 100
-#define TIMER_USEC 10000
+#define TIMER_MSEC 5
 
 void timo_update(unsigned int);
 void timo_init(void);
 void timo_done(void);
-void file_sigalrm(int);
 
 struct timespec file_ts;
 struct file *file_list;
@@ -353,7 +351,7 @@ file_poll(void)
 	file_utime += sleepts.tv_nsec - file_ts.tv_nsec;
 #endif
 	if (!immed) {
-		res = poll(pfds, nfds, -1);
+		res = poll(pfds, nfds, TIMER_MSEC);
 		if (res < 0 && errno != EINTR)
 			err(1, "poll");
 #ifdef DEBUG
@@ -418,21 +416,9 @@ file_poll(void)
 	return 1;
 }
 
-/*
- * handler for SIGALRM, invoked periodically
- */
-void
-file_sigalrm(int i)
-{
-	/* nothing to do, we only want poll() to return EINTR */
-}
-
-
 void
 filelist_init(void)
 {
-	static struct sigaction sa;
-	struct itimerval it;
 	sigset_t set;
 
 	sigemptyset(&set);
@@ -444,21 +430,6 @@ filelist_init(void)
 		perror("clock_gettime");
 		exit(1);
 	}
-        sa.sa_flags = SA_RESTART;
-        sa.sa_handler = file_sigalrm;
-        sigfillset(&sa.sa_mask);
-        if (sigaction(SIGALRM, &sa, NULL) < 0) {
-		perror("sigaction");
-		exit(1);
-	}
-	it.it_interval.tv_sec = 0;
-	it.it_interval.tv_usec = TIMER_USEC;
-	it.it_value.tv_sec = 0;
-	it.it_value.tv_usec = TIMER_USEC;
-	if (setitimer(ITIMER_REAL, &it, NULL) < 0) {
-		perror("setitimer");
-		exit(1);
-	}
 	log_sync = 0;
 	timo_init();
 }
@@ -466,7 +437,6 @@ filelist_init(void)
 void
 filelist_done(void)
 {
-	struct itimerval it;
 #ifdef DEBUG
 	struct file *f;
 
@@ -480,11 +450,5 @@ filelist_done(void)
 	log_sync = 1;
 	log_flush();
 #endif
-	timerclear(&it.it_value);
-	timerclear(&it.it_interval);
-	if (setitimer(ITIMER_REAL, &it, NULL) < 0) {
-		perror("setitimer");
-		exit(1);
-	}
 	timo_done();
 }
