@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.157 2015/07/07 14:22:25 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.158 2015/07/17 18:35:25 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -196,8 +196,11 @@ arp_rtrequest(int req, struct rtentry *rt)
 			if ((rt->rt_flags & RTF_CLONING) != 0)
 				break;
 		}
-		/* Announce a new entry if requested. */
-		if (rt->rt_flags & RTF_ANNOUNCE)
+		/*
+		 * Announce a new entry if requested or warn the user
+		 * if another station has this IP address.
+		 */
+		if (rt->rt_flags & (RTF_ANNOUNCE|RTF_LOCAL))
 			arprequest(ifp,
 			    &satosin(rt_key(rt))->sin_addr.s_addr,
 			    &satosin(rt_key(rt))->sin_addr.s_addr,
@@ -850,12 +853,6 @@ arpproxy(struct in_addr in, u_int rdomain)
 void
 arp_ifinit(struct arpcom *ac, struct ifaddr *ifa)
 {
-
-	/* Warn the user if another station has this IP address. */
-	arprequest(&ac->ac_if,
-	    &satosin(ifa->ifa_addr)->sin_addr.s_addr,
-	    &satosin(ifa->ifa_addr)->sin_addr.s_addr,
-	    ac->ac_enaddr);
 	ifa->ifa_rtrequest = arp_rtrequest;
 }
 
