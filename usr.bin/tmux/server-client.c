@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.145 2015/07/13 15:51:31 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.146 2015/07/17 06:53:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -96,6 +96,7 @@ server_client_create(int fd)
 
 	environ_init(&c->environ);
 
+	c->fd = -1;
 	c->cwd = -1;
 
 	c->cmdq = cmdq_new(c);
