@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.170 2015/05/23 12:38:53 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.171 2015/07/17 18:31:08 blambert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -51,6 +51,7 @@ struct m_tag;
 #endif
 #include <sys/queue.h>
 #include <netinet/in.h>
+#include <net/radix.h>
 
 union sockaddr_union {
 	struct sockaddr		sa;
@@ -197,6 +198,7 @@ struct ipsec_acquire {
 };
 
 struct ipsec_policy {
+	struct radix_node	ipo_nodes[2];	/* radix tree glue */
 	struct sockaddr_encap	ipo_addr;
 	struct sockaddr_encap	ipo_mask;
 
@@ -452,6 +454,10 @@ extern TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head;
 #ifdef ENCDEBUG
 const char *ipsp_address(union sockaddr_union *, char *, socklen_t);
 #endif /* ENCDEBUG */
+
+/* SPD tables */
+struct radix_node_head *spd_table_add(unsigned int);
+struct radix_node_head *spd_table_get(unsigned int);
 
 /* TDB management routines */
 uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.40 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.41 2015/07/17 18:31:08 blambert Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -51,10 +51,6 @@ void		pffasttimo(void *);
 void		pfslowtimo(void *);
 struct domain *	pffinddomain(int);
 
-#if defined (KEY) || defined (IPSEC) || defined (TCP_SIGNATURE)
-int pfkey_init(void);
-#endif /* KEY || IPSEC || TCP_SIGNATURE */
-
 #define	ADDDOMAIN(x)	{ \
 	extern struct domain __CONCAT(x,domain); \
 	__CONCAT(x,domain.dom_next) = domains; \
@@ -80,15 +76,10 @@ domaininit(void)
 	ADDDOMAIN(inet6);
 #endif /* INET6 */
 #if defined (KEY) || defined (IPSEC) || defined (TCP_SIGNATURE)
-	pfkey_init();
-#endif /* KEY || IPSEC */
+	ADDDOMAIN(pfkey);
+#endif
 #ifdef MPLS
-       ADDDOMAIN(mpls);
-#endif
-#ifdef IPSEC
-#ifdef __KAME__
-	ADDDOMAIN(key);
-#endif
+	ADDDOMAIN(mpls);
 #endif
 	ADDDOMAIN(route);
 

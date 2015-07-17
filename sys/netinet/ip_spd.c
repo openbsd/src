@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.85 2015/05/23 12:38:53 markus Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.86 2015/07/17 18:31:08 blambert Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/kernel.h>
 #include <sys/socketvar.h>
+#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/timeout.h>
@@ -61,6 +62,55 @@ struct pool ipsec_acquire_pool;
 int ipsec_policy_pool_initialized = 0;
 int ipsec_acquire_pool_initialized = 0;
 
+struct radix_node_head **spd_tables;
+unsigned int spd_table_max;
+
+struct radix_node_head *
+spd_table_get(unsigned int rtableid)
+{
+	unsigned int rdomain;
+
+	if (spd_tables == NULL)
+		return (NULL);
+
+	rdomain = rtable_l2(rtableid);
+	if (rdomain > spd_table_max)
+		return (NULL);
+
+	return (spd_tables[rdomain]);
+}
+
+struct radix_node_head *
+spd_table_add(unsigned int rtableid)
+{
+	extern struct domain pfkeydomain;
+	struct radix_node_head *rnh = NULL;
+	unsigned int rdomain;
+	void *p;
+
+	rdomain = rtable_l2(rtableid);
+	if (spd_tables == NULL || rdomain > spd_table_max) {
+		if ((p = mallocarray(rdomain + 1, sizeof(*rnh),
+		    M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
+			return (NULL);
+
+		if (spd_tables != NULL) {
+			bcopy(spd_tables, p, sizeof(*rnh) * (spd_table_max+1));
+			free(spd_tables, M_RTABLE, 0);
+		}
+		spd_tables = p;
+		spd_table_max = rdomain;
+	}
+
+	if (spd_tables[rdomain] == NULL) {
+		if (rn_inithead((void **)&rnh, pfkeydomain.dom_rtoffset) == 0)
+			rnh = NULL;
+		spd_tables[rdomain] = rnh;
+	}
+
+	return (spd_tables[rdomain]);
+}
+
 /*
  * Lookup at the SPD based on the headers contained on the mbuf. The second
  * argument indicates what protocol family the header at the beginning of
@@ -80,7 +130,8 @@ struct tdb *
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
     struct tdb *tdbp, struct inpcb *inp, u_int32_t ipsecflowinfo)
 {
-	struct rtentry *rt;
+	struct radix_node_head *rnh;
+	struct radix_node *rn;
 	union sockaddr_union sdst, ssrc;
 	struct sockaddr_encap *ddst, dst;
 	struct ipsec_policy *ipo;
@@ -231,8 +282,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	}
 
 	/* Actual SPD lookup. */
-	rt = rtalloc((struct sockaddr *)&dst, RT_REPORT|RT_RESOLVE, rdomain);
-	if (rt == NULL) {
+	if ((rnh = spd_table_get(rdomain)) == NULL ||
+	    (rn = rn_match((caddr_t)&dst, rnh)) == NULL) {
 		/*
 		 * Return whatever the socket requirements are, there are no
 		 * system-wide policies.
@@ -241,24 +292,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		return ipsp_spd_inp(m, af, hlen, error, direction,
 		    tdbp, inp, NULL);
 	}
-
-	/* Sanity check. */
-	if ((rt->rt_gateway == NULL) ||
-	    (((struct sockaddr_encap *)rt->rt_gateway)->sen_type !=
-		SENT_IPSP)) {
-		rtfree(rt);
-		*error = EHOSTUNREACH;
-		DPRINTF(("ip_spd_lookup: no gateway in SPD entry!"));
-		return NULL;
-	}
-
-	ipo = ((struct sockaddr_encap *)(rt->rt_gateway))->sen_ipsp;
-	rtfree(rt);
-	if (ipo == NULL) {
-		*error = EHOSTUNREACH;
-		DPRINTF(("ip_spd_lookup: no policy attached to SPD entry!"));
-		return NULL;
-	}
+	ipo = (struct ipsec_policy *)rn;
 
 	switch (ipo->ipo_type) {
 	case IPSP_PERMIT:
@@ -552,21 +586,18 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 int
 ipsec_delete_policy(struct ipsec_policy *ipo)
 {
-	struct rt_addrinfo info;
 	struct ipsec_acquire *ipa;
+	struct radix_node_head *rnh;
+	struct radix_node *rn = (struct radix_node *)ipo;
 	int err = 0;
 
 	if (--ipo->ipo_ref_count > 0)
 		return 0;
 
 	/* Delete from SPD. */
-	memset(&info, 0, sizeof(info));
-	info.rti_info[RTAX_DST] = (struct sockaddr *)&ipo->ipo_addr;
-	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&ipo->ipo_mask;
-
-	/* XXX other tables? */
-	err = rtrequest1(RTM_DELETE, &info, RTP_DEFAULT, NULL,
-	    ipo->ipo_rdomain);
+	if ((rnh = spd_table_get(ipo->ipo_rdomain)) == NULL ||
+	    rn_delete(&ipo->ipo_addr, &ipo->ipo_mask, rnh, rn) == NULL)
+		return (ESRCH);
 
 	if (ipo->ipo_tdb != NULL)
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,

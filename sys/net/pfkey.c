@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.24 2014/12/09 07:05:06 doug Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.25 2015/07/17 18:31:08 blambert Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -90,7 +90,7 @@ static struct pfkey_version *pfkey_versions[PFKEY_PROTOCOL_MAX+1] =
 
 struct sockaddr pfkey_addr = { 2, PF_KEY, };
 
-/* static struct domain pfkey_domain; */
+/* static struct domain pfkeydomain; */
 static int pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
     struct mbuf *nam, struct mbuf *control, struct proc *);
 static int pfkey_output(struct mbuf *mbuf, struct socket *socket);
@@ -261,23 +261,23 @@ pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
 	return (rval);
 }
 
-static struct domain pfkey_domain = {
+struct domain pfkeydomain = {
 	PF_KEY,
 	"PF_KEY",
-	NULL, /* init */
+	pfkey_init, /* init */
 	NULL, /* externalize */
 	NULL, /* dispose */
 	NULL, /* protosw */
 	NULL, /* protoswNPROTOSW */
 	NULL, /* dom_next */
-	rn_inithead, /* dom_rtattach */
+	NULL, /* dom_rtattach */
 	16, /* rtoffset */
 	sizeof(struct sockaddr_encap)  /* maxrtkey */
 };
 
 static struct protosw pfkey_protosw_template = {
 	SOCK_RAW,
-	&pfkey_domain,
+	&pfkeydomain,
 	-1, /* protocol */
 	PR_ATOMIC | PR_ADDR,
 	(void *) raw_input,
@@ -316,11 +316,11 @@ pfkey_buildprotosw(void)
 				p++;
 			}
 
-		if (pfkey_domain.dom_protosw)
-			free(pfkey_domain.dom_protosw, M_PFKEY, 0);
+		if (pfkeydomain.dom_protosw)
+			free(pfkeydomain.dom_protosw, M_PFKEY, 0);
 
-		pfkey_domain.dom_protosw = protosw;
-		pfkey_domain.dom_protoswNPROTOSW = p;
+		pfkeydomain.dom_protosw = protosw;
+		pfkeydomain.dom_protoswNPROTOSW = p;
 	} else {
 		if (!(protosw = malloc(sizeof(struct protosw), M_PFKEY,
 		    M_DONTWAIT)))
@@ -329,11 +329,11 @@ pfkey_buildprotosw(void)
 		bcopy(&pfkey_protosw_template, protosw,
 		    sizeof(struct protosw));
 
-		if (pfkey_domain.dom_protosw)
-			free(pfkey_domain.dom_protosw, M_PFKEY, 0);
+		if (pfkeydomain.dom_protosw)
+			free(pfkeydomain.dom_protosw, M_PFKEY, 0);
 
-		pfkey_domain.dom_protosw = protosw;
-		pfkey_domain.dom_protoswNPROTOSW = protosw;
+		pfkeydomain.dom_protosw = protosw;
+		pfkeydomain.dom_protoswNPROTOSW = protosw;
 	}
 
 	return (0);
@@ -345,7 +345,5 @@ pfkey_init(void)
 	if (pfkey_buildprotosw() != 0)
 		return;
 
-	pfkey_domain.dom_next = domains;
-	domains = &pfkey_domain;
 	pfkeyv2_init();
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.144 2015/05/23 12:38:53 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.145 2015/07/17 18:31:08 blambert Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -81,6 +81,7 @@
 #include <net/route.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
+#include <net/radix.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipcomp.h>
@@ -92,7 +93,6 @@
 #endif
 
 #define PFKEYV2_PROTOCOL 2
-#define GETSPI_TRIES 10
 
 /* Static globals */
 static struct pfkeyv2_socket *pfkeyv2_sockets = NULL;
@@ -129,6 +129,8 @@ extern uint64_t sadb_exts_allowed_out[SADB_MAX+1];
 extern uint64_t sadb_exts_required_out[SADB_MAX+1];
 
 extern struct pool ipsec_policy_pool;
+
+extern struct radix_node_head **spd_tables;
 
 /*
  * Wrapper around m_devget(); copy data from contiguous buffer to mbuf
@@ -783,9 +785,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 {
 	int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
 	int delflag = 0, s;
-	struct sockaddr_encap encapdst, encapnetmask, encapgw;
+	struct sockaddr_encap encapdst, encapnetmask;
 	struct ipsec_policy *ipo, *tmpipo;
 	struct ipsec_acquire *ipa;
+	struct radix_node_head *rnh;
+	struct radix_node *rn = NULL;
 
 	struct pfkeyv2_socket *pfkeyv2_socket, *so = NULL;
 
@@ -1430,8 +1434,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	{
 		struct sadb_protocol *sab;
 		union sockaddr_union *ssrc;
-		struct rtentry *rt;
 		int exists = 0;
+
+		if ((rnh = spd_table_add(rdomain)) == NULL) {
+			rval = ENOMEM;
+			goto ret;
+		}
 
 		sab = (struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE];
 
@@ -1465,14 +1473,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    headers[SADB_X_EXT_PROTOCOL], headers[SADB_X_EXT_FLOW_TYPE]);
 
 		/* Determine whether the exact same SPD entry already exists. */
-		bzero(&encapgw, sizeof(struct sockaddr_encap));
-
 		s = splsoftnet();
-		rt = rtalloc((struct sockaddr *)&encapdst, RT_REPORT|RT_RESOLVE,
-		    rdomain);
-		if (rt != NULL) {
-			ipo = ((struct sockaddr_encap *)rt->rt_gateway)->sen_ipsp;
-			rtfree(rt);
+		if ((rn = rn_match(&encapdst, rnh)) != NULL) {
+			ipo = (struct ipsec_policy *)rn;
 
 			/* Verify that the entry is identical */
 			if (bcmp(&ipo->ipo_addr, &encapdst,
@@ -1520,33 +1523,15 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			}
 
 			/* Allocate policy entry */
-			ipo = pool_get(&ipsec_policy_pool, PR_NOWAIT);
+			ipo = pool_get(&ipsec_policy_pool, PR_NOWAIT|PR_ZERO);
 			if (ipo == NULL) {
 				splx(s);
 				rval = ENOMEM;
 				goto ret;
 			}
-
-			bzero(ipo, sizeof(struct ipsec_policy));
-			ipo->ipo_ref_count = 1;
-			TAILQ_INIT(&ipo->ipo_acquires);
-
-			/* Finish initialization of SPD entry */
-			encapgw.sen_len = SENT_LEN;
-			encapgw.sen_family = PF_KEY;
-			encapgw.sen_type = SENT_IPSP;
-			encapgw.sen_ipsp = ipo;
-
-			/* Initialize policy entry */
-			bcopy(&encapdst, &ipo->ipo_addr,
-			    sizeof(struct sockaddr_encap));
-			bcopy(&encapnetmask, &ipo->ipo_mask,
-			    sizeof(struct sockaddr_encap));
-
-			ipo->ipo_rdomain = rdomain;
 		}
 
-		switch (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_proto) {
+		switch (sab->sadb_protocol_proto) {
 		case SADB_X_FLOW_TYPE_USE:
 			ipo->ipo_type = IPSP_IPSEC_USE;
 			break;
@@ -1620,18 +1605,21 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		/* Flow type */
 		if (!exists) {
-			/* Add SPD entry */
-			struct rt_addrinfo info;
+			/* Initialize policy entry */
+			bcopy(&encapdst, &ipo->ipo_addr,
+			    sizeof(struct sockaddr_encap));
+			bcopy(&encapnetmask, &ipo->ipo_mask,
+			    sizeof(struct sockaddr_encap));
 
-			bzero(&info, sizeof(info));
-			info.rti_info[RTAX_DST] = (struct sockaddr *)&encapdst;
-			info.rti_info[RTAX_GATEWAY] =
-			    (struct sockaddr *)&encapgw;
-			info.rti_info[RTAX_NETMASK] =
-			    (struct sockaddr *)&encapnetmask;
-			info.rti_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
-			if ((rval = rtrequest1(RTM_ADD, &info, RTP_DEFAULT,
-			    NULL, rdomain)) != 0) {
+			TAILQ_INIT(&ipo->ipo_acquires);
+			ipo->ipo_rdomain = rdomain;
+			ipo->ipo_ref_count = 1;
+
+			/* Add SPD entry */
+			if ((rnh = spd_table_get(rdomain)) == NULL ||
+			    (rn = rn_addroute((caddr_t)&ipo->ipo_addr,
+				(caddr_t)&ipo->ipo_mask, rnh,
+				ipo->ipo_nodes, 0)) == NULL) {
 				/* Remove from linked list of policies on TDB */
 				if (ipo->ipo_tdb)
 					TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head,
@@ -1644,7 +1632,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				splx(s);
 				goto ret;
 			}
-
 			TAILQ_INSERT_HEAD(&ipsec_policy_head, ipo, ipo_list);
 			ipsec_in_use++;
 		} else {
