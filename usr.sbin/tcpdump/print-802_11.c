@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.20 2015/07/16 23:34:54 sthen Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.21 2015/07/17 17:41:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -437,6 +437,14 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 			printf(", htcaps");
 			if (vflag)
 				ieee80211_print_htcaps(data, len);
+			break;
+		case IEEE80211_ELEMID_QBSS_LOAD:
+			ELEM_CHECK(5);
+			printf(", %u stations, %d%% utilization, "
+			    "admission capacity %uus/s",
+			    (data[0] | data[1] << 8),
+			    (data[2] * 100) / 255,
+			    (data[3] | data[4] << 8) / 32);
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			printf(", vendor");
