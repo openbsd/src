@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2015/07/17 09:43:28 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2015/07/17 09:51:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -233,7 +233,7 @@ file_new(struct fileops *ops, void *arg, char *name, unsigned int nfds)
 		return NULL;
 	}
 	f = xmalloc(sizeof(struct file));
-	f->nfds = nfds;
+	f->max_nfds = nfds;
 	f->ops = ops;
 	f->arg = arg;
 	f->name = name;
@@ -246,7 +246,7 @@ file_new(struct fileops *ops, void *arg, char *name, unsigned int nfds)
 		log_puts(": created\n");
 	}
 #endif
-	file_nfds += f->nfds;
+	file_nfds += f->max_nfds;
 	return f;
 }
 
@@ -259,7 +259,7 @@ file_del(struct file *f)
 		panic();
 	}
 #endif	
-	file_nfds -= f->nfds;
+	file_nfds -= f->max_nfds;
 	f->state = FILE_ZOMB;
 #ifdef DEBUG
 	if (log_level >= 3) {
