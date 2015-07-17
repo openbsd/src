@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2015/06/29 04:52:34 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2015/07/17 17:02:52 jsg Exp $
 
 machine		armv7 arm
 
@@ -104,6 +104,28 @@ sysreg*		at vexpress?
 pluart*		at vexpress?
 plrtc*		at vexpress?
 virtio*		at vexpress?
+
+# Exynos
+exynos0		at mainbus?
+exdisplay*	at exynos?
+wsdisplay*	at exdisplay? console ?
+exclock*	at exynos?
+expower*	at exynos?
+exsysreg*	at exynos?
+exmct*		at exynos?
+exdog*		at exynos?
+exgpio*		at exynos?
+exiic*		at exynos?
+iic*		at exiic?
+exehci*		at exynos?
+ehci*		at exehci?
+exesdhc*	at exynos?
+sdmmc*		at exesdhc?
+exuart*		at exynos?
+
+crosec*		at iic?
+wskbd*		at crosec? mux 1
+tpspmic*	at iic?
 
 # virtio devices
 vioblk*		at virtio?
