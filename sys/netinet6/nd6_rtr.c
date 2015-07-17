@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.110 2015/07/16 16:12:15 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.111 2015/07/17 17:18:05 florian Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -352,8 +352,6 @@ nd6_rs_dev_state(void *arg)
  * Receive Router Advertisement Message.
  *
  * Based on RFC 2461
- * TODO: on-link bit on prefix information
- * TODO: ND_RA_FLAG_{OTHER,MANAGED} processing
  */
 void
 nd6_ra_input(struct mbuf *m, int off, int icmp6len)
@@ -363,12 +361,6 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_advert *nd_ra;
 	struct in6_addr saddr6 = ip6->ip6_src;
-#if 0
-	struct in6_addr daddr6 = ip6->ip6_dst;
-	int flags; /* = nd_ra->nd_ra_flags_reserved; */
-	int is_managed = ((flags & ND_RA_FLAG_MANAGED) != 0);
-	int is_other = ((flags & ND_RA_FLAG_OTHER) != 0);
-#endif
 	union nd_opts ndopts;
 	struct nd_defrouter *dr;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
