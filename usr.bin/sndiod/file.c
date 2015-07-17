@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.8 2015/07/17 09:37:07 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 2015/07/17 09:43:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -279,10 +279,10 @@ file_poll(void)
 	struct timespec sleepts;
 	struct timespec ts0, ts1;
 	long us;
-	int i, n, nfds;
+	int i;
 #endif
 	long long delta_nsec;
-	int revents, res, immed;
+	int n, nfds, revents, res, immed;
 
 	/*
 	 * cleanup zombies
