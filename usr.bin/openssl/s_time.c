@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.7 2015/04/15 16:33:49 jsing Exp $ */
+/* $OpenBSD: s_time.c,v 1.8 2015/07/17 16:10:49 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,7 +115,6 @@ struct {
 	int maxtime;
 	int nbio;
 	int perform;
-	int ssl3;
 	int verify;
 	int verify_depth;
 	char *www_path;
@@ -192,12 +191,6 @@ struct option s_time_options[] = {
 		.value = 2,
 	},
 	{
-		.name = "ssl3",
-		.desc = "Only use SSLv3",
-		.type = OPTION_FLAG,
-		.opt.flag = &s_time_config.ssl3,
-	},
-	{
 		.name = "time",
 		.argname = "seconds",
 		.desc = "Duration to perform timing tests for (default 30)",
@@ -228,7 +221,7 @@ s_time_usage(void)
 	    "usage: s_time "
 	    "[-bugs] [-CAfile file] [-CApath directory] [-cert file]\n"
 	    "    [-cipher cipherlist] [-connect host:port] [-key keyfile]\n"
-	    "    [-nbio] [-new] [-reuse] [-ssl3] [-time seconds]\n"
+	    "    [-nbio] [-new] [-reuse] [-time seconds]\n"
 	    "    [-verify depth] [-www page]\n\n");
 	options_usage(s_time_options);
 }
@@ -261,7 +254,7 @@ s_time_main(int argc, char **argv)
 	int ret = 1, i;
 	char buf[1024 * 8];
 	int ver;
-	
+
 	s_time_meth = SSLv23_client_method();
 
 	verify_depth = 0;
@@ -279,9 +272,6 @@ s_time_main(int argc, char **argv)
 		s_time_usage();
 		goto end;
 	}
-
-	if (s_time_config.ssl3)
-		s_time_meth = SSLv3_client_method();
 
 	if (s_time_config.verify_depth >= 0) {
 		s_time_config.verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
