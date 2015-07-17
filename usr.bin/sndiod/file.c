@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.7 2015/07/17 08:14:48 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 2015/07/17 09:37:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -305,19 +305,9 @@ file_poll(void)
 	}
 
 	log_flush();
-#ifdef DEBUG
-	if (log_level >= 4) 
-		log_puts("poll:");
-#endif
 	nfds = 0;
 	immed = 0;
 	for (f = file_list; f != NULL; f = f->next) {
-#ifdef DEBUG
-		if (log_level >= 4) {
-			log_puts(" ");
-			file_log(f);
-		}
-#endif
 		n = f->ops->pollfd(f->arg, pfds + nfds);
 		if (n == 0) {
 			f->pfd = NULL;
@@ -329,23 +319,22 @@ file_poll(void)
 		}
 		f->pfd = pfds + nfds;
 		nfds += n;
-#ifdef DEBUG
-		if (log_level >= 4) {
-			log_puts("=");
-			for (i = 0; i < n; i++) {
-				if (i > 0)
-					log_puts(",");
-				log_putx(f->pfd[i].events);
-			}
-		}
-#endif
 	}
 #ifdef DEBUG
-	if (log_level >= 4)
+	if (log_level >= 4) {
+		log_puts("poll:");
+		for (i = 0; i < nfds; i++) {
+			log_puts(" ");
+			for (f = file_list; f != NULL; f = f->next) {
+				if (f->pfd == &pfds[i]) {
+					log_puts(f->ops->name);
+					log_puts(": ");
+				}
+			}
+			log_putx(pfds[i].events);
+		}
 		log_puts("\n");
-#endif
-
-#ifdef DEBUG
+	}
 	clock_gettime(CLOCK_MONOTONIC, &sleepts);
 	file_utime += 1000000000LL * (sleepts.tv_sec - file_ts.tv_sec);
 	file_utime += sleepts.tv_nsec - file_ts.tv_nsec;
@@ -354,16 +343,6 @@ file_poll(void)
 		res = poll(pfds, nfds, TIMER_MSEC);
 		if (res < 0 && errno != EINTR)
 			err(1, "poll");
-#ifdef DEBUG
-		if (log_level >= 4 && res >= 0) {
-			log_puts("poll: return:");
-			for (i = 0; i < nfds; i++) {
-				log_puts(" ");
-				log_putx(pfds[i].revents);
-			}
-			log_puts("\n");
-		}
-#endif
 	} else
 		res = 0;
 	clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -391,7 +370,8 @@ file_poll(void)
 		if (f->pfd == NULL)
 			continue;
 #ifdef DEBUG
-		clock_gettime(CLOCK_MONOTONIC, &ts0);
+		if (log_level >= 3)
+			clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
 		revents = (f->state != FILE_ZOMB) ? 
 		    f->ops->revents(f->arg, f->pfd) : 0;
@@ -402,14 +382,16 @@ file_poll(void)
 		if ((revents & POLLOUT) && (f->state != FILE_ZOMB))
 			f->ops->out(f->arg);
 #ifdef DEBUG
-		clock_gettime(CLOCK_MONOTONIC, &ts1);
-		us = 1000000L * (ts1.tv_sec - ts0.tv_sec);
-		us += (ts1.tv_nsec - ts0.tv_nsec) / 1000;
-		if (log_level >= 4 || (log_level >= 3 && us >= 5000)) {
-			file_log(f);
-			log_puts(": processed in ");
-			log_putu(us);
-			log_puts("us\n");
+		if (log_level >= 3) {
+			clock_gettime(CLOCK_MONOTONIC, &ts1);
+			us = 1000000L * (ts1.tv_sec - ts0.tv_sec);
+			us += (ts1.tv_nsec - ts0.tv_nsec) / 1000;
+			if (log_level >= 4 || us >= 5000) {
+				file_log(f);
+				log_puts(": processed in ");
+				log_putu(us);
+				log_puts("us\n");
+			}
 		}
 #endif
 	}
