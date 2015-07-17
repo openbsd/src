@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.2 2015/07/16 21:24:07 nicm Exp $
+.\" $OpenBSD: doas.conf.5,v 1.3 2015/07/17 20:50:31 schwarze Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 16 2015 $
+.Dd $Mdocdate: July 17 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -28,33 +28,37 @@ in the
 configuration file.
 .Pp
 The rules have the following format:
-.Bd -literal -offset indent
-permit|deny [options] [identity] [as target] [cmd command]
+.Bd -ragged -offset indent
+.Ic permit Ns | Ns Ic deny
+.Op Ar options
+.Op Ar identity
+.Op Ic as Ar target
+.Op Ic cmd Ar command
 .Ed
 .Pp
 Rules consist of the following parts:
-.Bl -tag -width tenletters
-.It permit|deny
+.Bl -tag -width 11n
+.It Ic permit Ns | Ns Ic deny
 The action to be taken if this rule matches.
-.It options
+.It Ar options
 Options are:
-.Bl -tag -width tenletters
-.It nopass
+.Bl -tag -width keepenv
+.It Ic nopass
 The user is not required to enter a password.
-.It keepenv
+.It Ic keepenv
 The user's environment is maintained.
 The default is to reset the environment.
-.It keepenv { [variable names] }
+.It Ic keepenv { Oo variable names Oc Ic }
 Reset the environment, but keep the specified variables.
 .El
-.It identity
+.It Ar identity
 The username to match.
 Groups may be specified by prepending a colon (:).
 Numeric IDs are also accepted.
-.It as target
+.It Ic as Ar target
 The target user the running user is allowed to run the command as.
 The default is root.
-.It cmd command
+.It Ic cmd Ar command
 The command the user is allowed or denied to run.
 The default is all commands.
 Be advised that it's best to specify absolute paths.
@@ -68,3 +72,12 @@ and additionally permits tedu to run procmap as root without a password.
 permit :wheel
 permit nopass tedu cmd /usr/sbin/procmap
 .Ed
+.Sh SEE ALSO
+.Xr doas 1
+.Sh HISTORY
+The
+.Nm
+configuration file first appeared in
+.Ox 5.8 .
+.Sh AUTHORS
+.An Ted Unangst Aq Mt tedu@openbsd.org
