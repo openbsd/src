@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.108 2015/07/02 10:02:40 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.109 2015/07/17 23:32:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1115,6 +1115,21 @@ trunk_input(struct ifnet *ifp, struct mbuf *m)
 
 	if ((trifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		goto bad;
+
+	/*
+	 * Drop promiscuously received packets if we are not in
+	 * promiscuous mode.
+	 */
+	if (!ETHER_IS_MULTICAST(eh->ether_dhost) &&
+	    (ifp->if_flags & IFF_PROMISC) &&
+	    (trifp->if_flags & IFF_PROMISC) == 0) {
+		if (bcmp(&tr->tr_ac.ac_enaddr, eh->ether_dhost,
+		    ETHER_ADDR_LEN)) {
+			m_freem(m);
+			return (1);
+		}
+	}
+
 
 	ml_enqueue(&ml, m);
 	if_input(trifp, &ml);
