@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.74 2015/07/16 23:05:12 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.75 2015/07/17 18:00:43 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -478,6 +478,7 @@ case ${action} in
 		;;
 	getall) # undocumented, deprecated
 		for i in $(svc_ls all); do svc_get ${i}; done
+		return 0
 		;;
 	getdef)
 		( svc_getdef ${svc} "${var}" )
