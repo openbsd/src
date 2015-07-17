@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.109 2015/01/21 18:39:54 tedu Exp $	*/
+/*	$OpenBSD: bios.c,v 1.110 2015/07/17 21:36:56 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -84,6 +84,7 @@
 
 struct bios_softc {
 	struct	device sc_dev;
+	vaddr_t bios32_service_va;
 };
 
 int biosprobe(struct device *, void *, void *);
@@ -110,6 +111,7 @@ bios_pciinfo_t *bios_pciinfo;
 #endif
 bios_diskinfo_t *bios_diskinfo;
 bios_memmap_t  *bios_memmap;
+struct bios_softc *bios_softc;
 u_int32_t	bios_cksumlen;
 struct bios32_entry bios32_entry;
 struct smbios_entry smbios_entry;
@@ -173,6 +175,7 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	int usingacpi = 0;
 #endif
 
+	bios_softc = sc;
 	/* remember flags */
 	flags = sc->sc_dev.dv_cfdata->cf_flags;
 
@@ -648,12 +651,14 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 	if (ent <= BIOS32_START || ent >= BIOS32_END)
 		return 0;
 
-
 	endpa = round_page(BIOS32_END);
 
 	sva = va = uvm_km_valloc(kernel_map, endpa);
 	if (va == 0)
 		return (0);
+
+	/* Store bios32 service kva for cleanup later */
+	bios_softc->bios32_service_va = sva;
 
 	slot = gdt_get_slot();
 	setgdt(slot, (caddr_t)va, BIOS32_END, SDT_MEMERA, SEL_KPL, 1, 0);
@@ -662,14 +667,14 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 	    va += trunc_page(BIOS32_START);
 	    pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    PROT_READ | PROT_WRITE,
-		    PROT_READ | PROT_WRITE | PMAP_WIRED);
+		    PROT_READ | PROT_WRITE | PROT_EXEC,
+		    PROT_READ | PROT_WRITE | PROT_EXEC | PMAP_WIRED);
 
 		/* for all you, broken hearted */
 		if (pa >= trunc_page(base)) {
 			pmap_enter(pmap_kernel(), sva, pa,
-			    PROT_READ | PROT_WRITE,
-			    PROT_READ | PROT_WRITE | PMAP_WIRED);
+			    PROT_READ | PROT_WRITE | PROT_EXEC,
+			    PROT_READ | PROT_WRITE | PROT_EXEC | PMAP_WIRED);
 			sva += NBPG;
 		}
 	}
@@ -682,6 +687,24 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 	ei->bei_entry = ent;
 
 	return 1;
+}
+
+void
+bios32_cleanup(void)
+{
+	u_long pa, size;
+	vaddr_t va;
+
+	size = round_page(BIOS32_END);
+
+	for (va = bios_softc->bios32_service_va;
+	    va < bios_softc->bios32_service_va + size;
+	    va += NBPG) {
+		if (pmap_extract(pmap_kernel(), va, &pa))
+			pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+
+	uvm_km_free(kernel_map, bios_softc->bios32_service_va, size);
 }
 
 int

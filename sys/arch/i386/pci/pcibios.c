@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.45 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.46 2015/07/17 21:36:56 mlarkin Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -228,6 +228,8 @@ pcibiosattach(struct device *parent, struct device *self, void *aux)
 
 	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP))
 		pci_addr_fixup(sc, NULL, sc->max_bus);
+
+	bios32_cleanup();
 }
 
 struct pcibios_intr_routing *
