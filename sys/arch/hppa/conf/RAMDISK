@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.106 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.107 2015/07/17 22:52:28 tedu Exp $
 
 machine		hppa
 maxusers	4
@@ -20,7 +20,6 @@ option		FFS2
 option		NFSCLIENT
 option		CD9660
 option		MSDOSFS
-option		INET
 option		INET6
 
 # Support for various CPU types

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 2015/07/17 17:02:52 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.6 2015/07/17 22:52:28 tedu Exp $
 
 machine		armv7 arm
 
@@ -18,7 +18,6 @@ option		RAMDISK_HOOKS
 
 option		FFS
 option		MSDOSFS
-option		INET
 option		INET6
 option		EXT2FS
 

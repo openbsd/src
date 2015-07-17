@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.27 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.28 2015/07/17 22:52:29 tedu Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -23,7 +23,6 @@ option		CD9660
 option		FFS
 option		FFS2
 option		NFSCLIENT
-option		INET
 option		INET6
 
 option		TGT_O2			# O2, O2+

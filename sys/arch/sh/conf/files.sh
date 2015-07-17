@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sh,v 1.4 2008/04/25 14:51:35 jmc Exp $
+#	$OpenBSD: files.sh,v 1.5 2015/07/17 22:52:29 tedu Exp $
 #	$NetBSD: files.sh3,v 1.32 2005/12/11 12:18:58 christos Exp $
 
 file	arch/sh/sh/cache.c
@@ -26,8 +26,8 @@ file	arch/sh/sh/trap.c
 file	arch/sh/sh/vectors.S
 file	arch/sh/sh/vm_machdep.c
 
-file	arch/sh/sh/in_cksum.S		inet
-file	netinet/in4_cksum.c		inet
+file	arch/sh/sh/in_cksum.S
+file	netinet/in4_cksum.c
 
 file	dev/cninit.c
 

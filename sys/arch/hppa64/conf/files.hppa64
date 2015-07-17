@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa64,v 1.18 2014/07/11 21:54:37 tedu Exp $
+#	$OpenBSD: files.hppa64,v 1.19 2015/07/17 22:52:28 tedu Exp $
 #
 # hppa64-specific configuration info
 
@@ -130,8 +130,8 @@ file	arch/hppa64/hppa64/process_machdep.c
 file	arch/hppa64/hppa64/sys_machdep.c
 file	arch/hppa64/hppa64/trap.c
 file	arch/hppa64/hppa64/vm_machdep.c
-file	arch/hppa64/hppa64/in_cksum.c		inet
-file	netinet/in4_cksum.c			inet
+file	arch/hppa64/hppa64/in_cksum.c
+file	netinet/in4_cksum.c
 file	arch/hppa64/dev/clock.c
 
 

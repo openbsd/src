@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.101 2014/12/24 18:46:14 miod Exp $
+#	$OpenBSD: files.alpha,v 1.102 2015/07/17 22:52:28 tedu Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -313,7 +313,7 @@ file	arch/alpha/alpha/mutex.c
 # Network protocol checksum routines
 #
 
-file	arch/alpha/alpha/in_cksum.c		inet
+file	arch/alpha/alpha/in_cksum.c
 
 # XXX
 file	arch/alpha/alpha/promcons.c

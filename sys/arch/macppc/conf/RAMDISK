@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.111 2015/06/03 08:14:23 mpi Exp $
+#	$OpenBSD: RAMDISK,v 1.112 2015/07/17 22:52:28 tedu Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -20,7 +20,6 @@ option		NFSCLIENT
 option		CD9660
 option		UDF
 option		MSDOSFS
-option		INET
 option		INET6
 option		CRYPTO
 

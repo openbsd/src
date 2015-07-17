@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.924 2015/07/16 21:14:21 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.925 2015/07/17 22:52:29 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1872,7 +1872,7 @@ pf_change_icmp(struct pf_pdesc *pd, struct pf_addr *ia, u_int16_t *ip,
 		PF_ACPY(oa, na, af);
 }
 
-#if INET && INET6
+#if INET6
 int
 pf_translate_af(struct pf_pdesc *pd)
 {
@@ -2228,7 +2228,7 @@ pf_translate_icmp_af(int af, void *arg)
 
 	return (0);
 }
-#endif /* INET && INET6 */
+#endif /* INET6 */
 
 /*
  * Need to modulate the sequence numbers in the TCP SACK option

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.190 2015/03/16 20:31:47 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.191 2015/07/17 22:52:28 tedu Exp $
 
 machine		i386
 maxusers	4
@@ -17,7 +17,6 @@ option		SCSITERSE
 
 option		FFS
 option		MSDOSFS
-option		INET
 
 config		bsd root on rd0a swap on rd0b and wd0b and sd0b
 

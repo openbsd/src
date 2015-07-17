@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.594 2015/07/02 01:33:59 dlg Exp $
+#	$OpenBSD: files,v 1.595 2015/07/17 22:52:29 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -758,7 +758,7 @@ file tmpfs/tmpfs_fifoops.c		tmpfs & fifo
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
-file net/if_ethersubr.c			ether | inet		needs-flag
+file net/if_ethersubr.c			ether			needs-flag
 file net/if_spppsubr.c			sppp
 file net/if_loop.c			loop
 file net/if_media.c			ifmedia
@@ -803,58 +803,58 @@ file net80211/ieee80211_pae_output.c	wlan
 file net80211/ieee80211_proto.c		wlan
 file net80211/ieee80211_rssadapt.c	wlan
 file net80211/ieee80211_regdomain.c	wlan
-file netinet/if_ether.c			ether | inet
-file netinet/igmp.c			inet
-file netinet/in.c			inet
-file netinet/in_pcb.c			inet
-file netinet/in_proto.c			inet
-file netinet/inet_nat64.c		inet & pf
-file netinet/inet_ntop.c		inet | inet6
-file netinet/ip_divert.c		inet & pf
-file netinet/ip_icmp.c			inet
-file netinet/ip_id.c			inet
-file netinet/ip_input.c			inet
-file netinet/ip_mroute.c		inet & mrouting
-file netinet/ip_output.c		inet
-file netinet/raw_ip.c			inet
-file netinet/tcp_debug.c		inet
-file netinet/tcp_input.c		inet
-file netinet/tcp_output.c		inet
-file netinet/tcp_subr.c			inet
-file netinet/tcp_timer.c		inet
-file netinet/tcp_usrreq.c		inet
-file netinet/udp_usrreq.c		inet
-file netinet/ip_gre.c			inet
-file netinet/ip_ipsp.c			(inet | inet6) & (ipsec | tcp_signature)
-file netinet/ip_spd.c			(inet | inet6) & (ipsec | tcp_signature)
-file netinet/ip_ipip.c			inet | inet6
-file netinet/ip_ether.c			(inet | inet6) & gif
-file netinet/ipsec_input.c		(inet | inet6) & ipsec
-file netinet/ipsec_output.c		(inet | inet6) & ipsec
-file netinet/ip_esp.c			inet & ipsec
-file netinet/ip_ah.c			inet & ipsec
+file netinet/if_ether.c			ether
+file netinet/igmp.c
+file netinet/in.c
+file netinet/in_pcb.c
+file netinet/in_proto.c	
+file netinet/inet_nat64.c		pf
+file netinet/inet_ntop.c
+file netinet/ip_divert.c		pf
+file netinet/ip_icmp.c
+file netinet/ip_id.c
+file netinet/ip_input.c
+file netinet/ip_mroute.c		mrouting
+file netinet/ip_output.c
+file netinet/raw_ip.c
+file netinet/tcp_debug.c
+file netinet/tcp_input.c
+file netinet/tcp_output.c
+file netinet/tcp_subr.c	
+file netinet/tcp_timer.c
+file netinet/tcp_usrreq.c
+file netinet/udp_usrreq.c
+file netinet/ip_gre.c
+file netinet/ip_ipsp.c			ipsec | tcp_signature
+file netinet/ip_spd.c			ipsec | tcp_signature
+file netinet/ip_ipip.c
+file netinet/ip_ether.c			gif
+file netinet/ipsec_input.c		ipsec
+file netinet/ipsec_output.c		ipsec
+file netinet/ip_esp.c			ipsec
+file netinet/ip_ah.c			ipsec
 file netinet/ip_carp.c			carp			needs-count
-file netinet/ip_ipcomp.c		inet & ipsec
-file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt | wlan
+file netinet/ip_ipcomp.c		ipsec
+file crypto/rijndael.c			ipsec | crypto | uvm_swap_encrypt | wlan
 file crypto/md5.c			
-file crypto/rmd160.c			(inet & ipsec) | crypto
-file crypto/sha1.c			(inet & ipsec) | crypto | carp | wlan
+file crypto/rmd160.c			ipsec | crypto
+file crypto/sha1.c			ipsec | crypto | carp | wlan
 file crypto/sha2.c
-file crypto/blf.c			(inet & ipsec) | crypto | vnd
-file crypto/cast.c			(inet & ipsec) | crypto
-file crypto/ecb_enc.c			(inet & ipsec) | crypto
-file crypto/set_key.c			(inet & ipsec) | crypto
-file crypto/ecb3_enc.c			(inet & ipsec) | crypto
-file crypto/crypto.c			(inet & ipsec) | crypto
-file crypto/criov.c			(inet & ipsec) | crypto
-file crypto/cryptosoft.c		(inet & ipsec) | crypto
-file crypto/xform.c			(inet & ipsec) | crypto
-file crypto/xform_ipcomp.c		(inet & ipsec) | crypto
+file crypto/blf.c			ipsec | crypto | vnd
+file crypto/cast.c			ipsec | crypto
+file crypto/ecb_enc.c			ipsec | crypto
+file crypto/set_key.c			ipsec | crypto
+file crypto/ecb3_enc.c			ipsec | crypto
+file crypto/crypto.c			ipsec | crypto
+file crypto/criov.c			ipsec | crypto
+file crypto/cryptosoft.c		ipsec | crypto
+file crypto/xform.c			ipsec | crypto
+file crypto/xform_ipcomp.c		ipsec | crypto
 file crypto/arc4.c			
 file crypto/michael.c			wlan
 file crypto/cmac.c			wlan
 file crypto/hmac.c			wlan | (softraid & crypto)
-file crypto/gmac.c			(inet & ipsec) | crypto
+file crypto/gmac.c			ipsec | crypto
 file crypto/key_wrap.c			wlan
 file crypto/idgen.c			inet6 | nfsclient | nfsserver
 file crypto/siphash.c
@@ -935,8 +935,8 @@ file uvm/uvm_vnode.c
 
 # IPv6
 file net/if_gif.c			gif			needs-count
-file netinet/ip_ecn.c			inet | inet6
-file netinet/in_gif.c			gif & inet
+file netinet/ip_ecn.c
+file netinet/in_gif.c			gif
 file netinet6/in6_gif.c			gif & inet6
 file netinet6/in6_pcb.c			inet6
 file netinet6/in6.c			inet6

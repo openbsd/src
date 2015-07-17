@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP28,v 1.4 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK-IP28,v 1.5 2015/07/17 22:52:29 tedu Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R10000 (IP28) SYSTEMS ONLY.
 
@@ -20,7 +20,6 @@ option		EISAVERBOSE
 option		FFS
 option		CD9660
 option		NFSCLIENT
-option		INET
 option		INET6
 
 makeoption	LINK_ADDRESS="0xa800000020020000"

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.146 2015/05/11 06:46:21 ratchov Exp $
+#	$OpenBSD: files.sparc64,v 1.147 2015/07/17 22:52:29 tedu Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -319,8 +319,8 @@ file	arch/sparc64/sparc64/conf.c
 file	arch/sparc64/sparc64/disksubr.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/hvcall.S		sun4v
-file	arch/sparc64/sparc64/in_cksum.S		inet
-file	arch/sparc64/sparc64/in4_cksum.c	inet
+file	arch/sparc64/sparc64/in_cksum.S
+file	arch/sparc64/sparc64/in4_cksum.c
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb

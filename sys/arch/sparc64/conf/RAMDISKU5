@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU5,v 1.19 2014/10/10 05:43:36 deraadt Exp $
+#	$OpenBSD: RAMDISKU5,v 1.20 2015/07/17 22:52:29 tedu Exp $
 
 machine		sparc64
 maxusers	4
@@ -14,7 +14,6 @@ option		RAMDISK_HOOKS
 option		MINIROOTSIZE=6144
 
 option		FFS
-option		INET
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.23 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2015/07/17 22:52:28 tedu Exp $
 
 machine		landisk	sh
 maxusers	4
@@ -19,7 +19,6 @@ option		FFS
 option		CD9660
 option		MSDOSFS
 option		EXT2FS
-option		INET
 option		INET6
 
 config		bsd root on rd0a swap on rd0b

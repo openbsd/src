@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.22 2014/10/12 20:39:46 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.23 2015/07/17 22:52:28 tedu Exp $
 
 machine		hppa64
 maxusers	4
@@ -17,7 +17,6 @@ option		PCIVERBOSE
 option		FFS
 option		NFSCLIENT
 option		CD9660
-option		INET
 option		INET6
 
 config		bsd root on rd0a swap on rd0b # and sd0b

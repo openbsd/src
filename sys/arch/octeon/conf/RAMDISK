@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2015/06/28 11:52:57 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2015/07/17 22:52:29 tedu Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -22,7 +22,6 @@ option		UDF
 option		EXT2FS
 option		MSDOSFS
 option		NFSCLIENT
-option		INET
 option		INET6
 
 option		CPU_OCTEON

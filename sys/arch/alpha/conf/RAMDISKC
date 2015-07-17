@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.7 2014/10/10 05:43:33 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.8 2015/07/17 22:52:28 tedu Exp $
 
 machine		alpha
 maxusers	4
@@ -15,7 +15,6 @@ option		MINIROOTSIZE=5744
 option		SCSITERSE
 
 option		FFS
-option		INET
 
 option		WSKBD_NO_INTL_LAYOUTS	# no international keyboard layouts
 

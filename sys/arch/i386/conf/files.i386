@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.223 2015/04/19 08:37:32 ratchov Exp $
+#	$OpenBSD: files.i386,v 1.224 2015/07/17 22:52:28 tedu Exp $
 #
 # new style config file for i386 architecture
 #
@@ -19,7 +19,7 @@ file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/est.c		!small_kernel
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/in_cksum.s	inet
+file	arch/i386/i386/in_cksum.s
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/hibernate_machdep.c hibernate
 file	arch/i386/i386/via.c

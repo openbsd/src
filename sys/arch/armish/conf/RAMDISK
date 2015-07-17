@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.33 2015/01/04 20:55:38 uaa Exp $
+#	$OpenBSD: RAMDISK,v 1.34 2015/07/17 22:52:28 tedu Exp $
 
 machine		armish arm
 maxusers	4
@@ -19,7 +19,6 @@ option		FFS2
 option		CD9660
 option		MSDOSFS
 option		EXT2FS
-option		INET
 option		INET6
 option		CRYPTO
 

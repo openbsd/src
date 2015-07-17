@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.59 2015/05/11 06:46:21 ratchov Exp $
+#	$OpenBSD: files.vax,v 1.60 2015/07/17 22:52:29 tedu Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -174,8 +174,8 @@ file	arch/vax/vax/emulate.s			insn_emulate
 file	arch/vax/vax/findcpu.c
 file	arch/vax/vax/gencons.c			vax630 | vax650 | vax660 |
 						vax670 | vax680
-file	arch/vax/vax/in_cksum.c			inet
-file	arch/vax/vax/in4_cksum.c		inet
+file	arch/vax/vax/in_cksum.c
+file	arch/vax/vax/in4_cksum.c
 file	arch/vax/vax/ka410.c			vax410
 file	arch/vax/vax/ka43.c			vax43
 file	arch/vax/vax/ka46.c			vax46

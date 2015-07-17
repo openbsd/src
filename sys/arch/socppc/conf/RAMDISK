@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2015/07/17 22:52:29 tedu Exp $
 
 machine		socppc powerpc
 maxusers	4
@@ -21,7 +21,6 @@ option		NFSCLIENT
 option		CD9660
 option		UDF
 option		MSDOSFS
-option		INET
 option		INET6
 
 config		bsd root on rd0a swap on rd0b

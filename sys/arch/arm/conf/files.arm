@@ -1,8 +1,8 @@
-#	$OpenBSD: files.arm,v 1.27 2014/12/30 11:45:31 jsg Exp $
+#	$OpenBSD: files.arm,v 1.28 2015/07/17 22:52:28 tedu Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
-file	arch/arm/arm/in_cksum_arm.S		inet
+file	arch/arm/arm/in_cksum_arm.S
 
 # DDB
 file	arch/arm/arm/db_disasm.c		ddb

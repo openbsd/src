@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.79 2015/01/21 20:05:29 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.80 2015/07/17 22:52:29 tedu Exp $
 
 machine		sparc
 maxusers	4
@@ -14,7 +14,6 @@ option		MINIROOTSIZE=4000
 
 option		FFS
 option		CD9660
-option		INET
 option		INET6
 option		NFSCLIENT
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.52 2014/11/24 02:03:37 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.53 2015/07/17 22:52:29 tedu Exp $
 
 machine		zaurus arm
 maxusers	4
@@ -15,7 +15,6 @@ option		RAMDISK_HOOKS
 option		FFS
 option		CD9660
 option		MSDOSFS
-option		INET
 option		INET6
 option		EXT2FS
 option		CRYPTO

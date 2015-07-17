@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.12 2014/10/10 05:43:35 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.13 2015/07/17 22:52:28 tedu Exp $
 
 machine		luna88k m88k
 maxusers	4
@@ -15,7 +15,6 @@ option		RAMDISK_HOOKS
 option		SCSITERSE
 
 option		FFS
-option		INET
 option		INET6
 
 config		bsd root rd0a swap on rd0b

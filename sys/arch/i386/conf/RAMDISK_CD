@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.225 2015/06/06 12:30:53 stsp Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.226 2015/07/17 22:52:28 tedu Exp $
 
 machine		i386
 maxusers	4
@@ -22,7 +22,6 @@ option		NFSCLIENT
 option		CD9660
 option		UDF
 option		MSDOSFS
-option		INET
 option		INET6
 option		CRYPTO
 
