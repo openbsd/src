@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.110 2015/07/17 21:36:56 mlarkin Exp $	*/
+/*	$OpenBSD: bios.c,v 1.111 2015/07/17 22:31:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -149,7 +149,7 @@ biosprobe(struct device *parent, void *match, void *aux)
 	    bia->ba_name, bios_cd.cd_ndevs,
 	    bootapiver, BOOTARG_APIVER, bootargp, bootargc);
 #endif
-	/* there could be only one */
+	/* only one */
 	if (bios_cd.cd_ndevs || strcmp(bia->ba_name, bios_cd.cd_name))
 		return 0;
 
@@ -465,11 +465,6 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 			for (cksum = 0, i = len; i--; cksum += va[i])
 				;
-#ifdef __stinkpad_sucks__
-			if (cksum != 0)
-				continue;
-#endif
-
 			off = 0xc0000 + (va - (u_int8_t *)
 			    ISA_HOLE_VADDR(0xc0000));
 
@@ -670,7 +665,6 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 		    PROT_READ | PROT_WRITE | PROT_EXEC,
 		    PROT_READ | PROT_WRITE | PROT_EXEC | PMAP_WIRED);
 
-		/* for all you, broken hearted */
 		if (pa >= trunc_page(base)) {
 			pmap_enter(pmap_kernel(), sva, pa,
 			    PROT_READ | PROT_WRITE | PROT_EXEC,
