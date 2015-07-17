@@ -1,0 +1,6 @@
+#	$OpenBSD: inplace2.in,v 1.1 2015/07/17 20:42:03 jasper Exp $
+
+PROG=	sed
+SRCS=	compile.c main.c misc.c process.c
+
+.include <bsd.prog.mk>
