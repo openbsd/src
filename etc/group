@@ -22,6 +22,9 @@ _sshagnt:*:34:
 _x11:*:35:
 utmp:*:45:
 _unbound:*:53:
+_dpb:*:54:
+_pbuild:*:55:
+_pfetch:*:56:
 _spamd:*:62:
 _radius:*:63:
 _token:*:64:

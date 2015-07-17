@@ -10,6 +10,9 @@ _rusersd:*:32:32::0:0:rpc.rusersd:/var/empty:/sbin/nologin
 _fingerd:*:33:33::0:0:fingerd:/var/empty:/sbin/nologin
 _x11:*:35:35::0:0:X Server:/var/empty:/sbin/nologin
 _unbound:*:53:53:unbound:0:0:Unbound Daemon:/var/unbound:/sbin/nologin
+_dpb:*:54:54::0:0:dpb privsep:/var/empty:/sbin/nologin
+_pbuild:*:55:55:pbuild:0:0:dpb build user:/nonexistent:/sbin/nologin
+_pfetch:*:56:56::0:0:dpb fetch user:/nonexistent:/sbin/nologin
 _spamd:*:62:62::0:0:Spam Daemon:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/sbin/nologin
 www:*:67:67::0:0:HTTP Server:/var/www:/sbin/nologin
