@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.21 2015/07/17 17:41:41 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.22 2015/07/17 19:43:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,7 @@
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_radiotap.h>
 
+#include <ctype.h>
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
@@ -78,6 +79,7 @@ int	 ieee80211_hdr(struct ieee80211_frame *);
 int	 ieee80211_data(struct ieee80211_frame *, u_int);
 void	 ieee80211_print_element(u_int8_t *, u_int);
 void	 ieee80211_print_essid(u_int8_t *, u_int);
+void	 ieee80211_print_country(u_int8_t *, u_int);
 void	 ieee80211_print_htcaps(u_int8_t *, u_int);
 int	 ieee80211_elements(struct ieee80211_frame *, u_int);
 int	 ieee80211_frame(struct ieee80211_frame *, u_int);
@@ -229,6 +231,47 @@ ieee80211_print_essid(u_int8_t *essid, u_int len)
 		putchar(')');
 	} else
 		ieee80211_print_element(essid, len);
+}
+
+/* Caller checks len */
+void
+ieee80211_print_country(u_int8_t *data, u_int len)
+{
+	u_int8_t first_chan, nchan, maxpower;
+
+	if (len < 6)
+		return;
+
+	/* country string */
+	printf((isprint(data[0]) ? " '%c" : " '\\%03o"), data[0]);
+	printf((isprint(data[1]) ? "%c" : "\\%03o"), data[1]);
+	printf((isprint(data[2]) ? "%c'" : "\\%03o'"), data[2]);
+
+	len -= 3;
+	data += 3;
+
+	/* channels and corresponding TX power limits */
+	while (len > 3)	{
+		/* no pretty-printing for nonsensical zero values,
+		 * nor for operating extension IDs (values >= 201) */
+		if (data[0] == 0 || data[1] == 0 ||
+		    data[0] >= 201 || data[1] >= 201) {
+			printf(", %d %d %d", data[0], data[1], data[2]);
+			continue;
+		}
+
+		first_chan = data[0];
+		nchan = data[1];
+		maxpower = data[2];
+
+		printf(", channel%s %d", nchan == 1 ? "" : "s", first_chan);
+		if (nchan > 1)
+			printf("-%d", first_chan + nchan - 1);
+		printf(" limit %ddB", maxpower);
+
+		len -= 3;
+		data += 3;
+	}
 }
 
 /* Caller checks len */
@@ -392,8 +435,7 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 			break;
 		case IEEE80211_ELEMID_COUNTRY:
 			printf(", country");
-			for (i = len; i > 0; i--, data++)
-				printf(" %u", data[0]);
+			ieee80211_print_country(data, len);
 			break;
 		case IEEE80211_ELEMID_CHALLENGE:
 			printf(", challenge");
@@ -437,6 +479,10 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 			printf(", htcaps");
 			if (vflag)
 				ieee80211_print_htcaps(data, len);
+			break;
+		case IEEE80211_ELEMID_POWER_CONSTRAINT:
+			ELEM_CHECK(1);
+			printf(", power constraint %udB", data[0]);
 			break;
 		case IEEE80211_ELEMID_QBSS_LOAD:
 			ELEM_CHECK(5);
