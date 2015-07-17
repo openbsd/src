@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.22 2013/11/06 10:40:36 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.23 2015/07/17 22:42:09 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -115,3 +115,8 @@ void		pci_set_powerstate_md(pci_chipset_tag_t, pcitag_t, int, int);
  */
 #define PCI_IO_START	0x400
 #define PCI_IO_END	0xffff
+
+/*
+ * Avoid the DOS Compatibility Memory area.
+ */
+#define PCI_MEM_START	0x100000
