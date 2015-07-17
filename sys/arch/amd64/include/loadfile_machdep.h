@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: loadfile_machdep.h,v 1.4 2013/10/17 11:53:58 miod Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.5 2015/07/17 20:44:38 miod Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -38,8 +38,8 @@
 /* Keep a default ELFSIZE */
 #define ELFSIZE 64
 
-#define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
-#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
+#define LOAD_KERNEL		LOAD_ALL
+#define COUNT_KERNEL		COUNT_ALL
 
 #define LOADADDR(a)		((((u_long)(a)) + offset)&0xfffffff)
 #define ALIGNENTRY(a)		((u_long)(a))

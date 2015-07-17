@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.4 2009/11/30 05:19:18 miod Exp $ */
+/*	$OpenBSD: loadfile_machdep.h,v 1.5 2015/07/17 20:44:39 miod Exp $ */
 /*	$NetBSD: loadfile_machdep.h,v 1.2 2001/10/31 17:20:49 thorpej Exp $	 */
 
 /*-
@@ -33,8 +33,8 @@
 #define BOOT_ELF
 #define ELFSIZE	64
 
-#define LOAD_KERNEL		(LOAD_ALL & ~LOAD_TEXTA)
-#define COUNT_KERNEL		(COUNT_ALL & ~COUNT_TEXTA)
+#define LOAD_KERNEL		LOAD_ALL
+#define COUNT_KERNEL		COUNT_ALL
 
 #define LOADADDR(a)		(((u_long)(a)) + offset)
 #define ALIGNENTRY(a)		((u_long)(a))
