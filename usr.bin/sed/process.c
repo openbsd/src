@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.23 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.24 2015/07/17 20:38:57 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -55,6 +55,7 @@ static SPACE HS, PS, SS;
 #define	pd		PS.deleted
 #define	ps		PS.space
 #define	psl		PS.len
+#define	psanl		PS.append_newline
 #define	hs		HS.space
 #define	hsl		HS.len
 
@@ -76,7 +77,10 @@ static regex_t *defpreg;
 size_t maxnsub;
 regmatch_t *match;
 
-#define OUT(s) do { fwrite(s, sizeof(u_char), psl, stdout); } while (0)
+#define OUT() do {\
+	fwrite(ps, 1, psl, outfile);\
+	if (psanl) fputc('\n', outfile);\
+} while (0)
 
 void
 process(void)
@@ -85,6 +89,7 @@ process(void)
 	SPACE tspace;
 	size_t len, oldpsl;
 	char *p;
+	int oldpsanl;
 
 	for (linenum = 0; mf_fgets(&PS, REPLACE);) {
 		pd = 0;
@@ -118,8 +123,8 @@ redirect:
 			case 'c':
 				pd = 1;
 				psl = 0;
-				if (cp->a2 == NULL || lastaddr)
-					(void)printf("%s", cp->t);
+				if (cp->a2 == NULL || lastaddr || lastline())
+					(void)fprintf(outfile, "%s", cp->t);
 				break;
 			case 'd':
 				pd = 1;
@@ -128,7 +133,7 @@ redirect:
 				if (pd)
 					goto new;
 				if (psl == 0 ||
-				    (p = memchr(ps, '\n', psl - 1)) == NULL) {
+				    (p = memchr(ps, '\n', psl)) == NULL) {
 					pd = 1;
 					goto new;
 				} else {
@@ -140,25 +145,25 @@ redirect:
 				cspace(&PS, hs, hsl, REPLACE);
 				break;
 			case 'G':
-				if (hs == NULL)
-					cspace(&HS, "\n", 1, REPLACE);
+				cspace(&PS, "\n", 1, 0);
 				cspace(&PS, hs, hsl, 0);
 				break;
 			case 'h':
 				cspace(&HS, ps, psl, REPLACE);
 				break;
 			case 'H':
+				cspace(&HS, "\n", 1, 0);
 				cspace(&HS, ps, psl, 0);
 				break;
 			case 'i':
-				(void)printf("%s", cp->t);
+				(void)fprintf(outfile, "%s", cp->t);
 				break;
 			case 'l':
 				lputs(ps);
 				break;
 			case 'n':
 				if (!nflag && !pd)
-					OUT(ps);
+					OUT();
 				flush_appends();
 				if (!mf_fgets(&PS, REPLACE))
 					exit(0);
@@ -166,33 +171,32 @@ redirect:
 				break;
 			case 'N':
 				flush_appends();
-				if (!mf_fgets(&PS, 0)) {
-					if (!nflag && !pd)
-						OUT(ps);
+				cspace(&PS, "\n", 1, 0);
+				if (!mf_fgets(&PS, 0))
 					exit(0);
-				}
 				break;
 			case 'p':
 				if (pd)
 					break;
-				OUT(ps);
+				OUT();
 				break;
 			case 'P':
 				if (pd)
 					break;
-				if (psl != 0 &&
-				    (p = memchr(ps, '\n', psl - 1)) != NULL) {
+				if ((p = memchr(ps, '\n', psl)) != NULL) {
 					oldpsl = psl;
-					psl = (p + 1) - ps;
-					OUT(ps);
+					oldpsanl = psanl;
+					psl = p - ps;
+					psanl = 1;
+					OUT();
 					psl = oldpsl;
 				} else {
-					OUT(ps);
+					OUT();
 				}
 				break;
 			case 'q':
 				if (!nflag && !pd)
-					OUT(ps);
+					OUT();
 				flush_appends();
 				exit(0);
 			case 'r':
@@ -225,34 +229,36 @@ redirect:
 				    DEFFILEMODE)) == -1)
 					err(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
-				if (write(cp->u.fd, ps, psl) != psl)
+				if (write(cp->u.fd, ps, psl) != psl ||
+				    write(cp->u.fd, "\n", 1) != 1)
 					err(FATAL, "%s: %s",
 					    cp->t, strerror(errno));
 				break;
 			case 'x':
 				if (hs == NULL)
-					cspace(&HS, "\n", 1, REPLACE);
+					cspace(&HS, "", 0, REPLACE);
 				tspace = PS;
 				PS = HS;
+				psanl = tspace.append_newline;
 				HS = tspace;
 				break;
 			case 'y':
 				if (pd || psl == 0)
 					break;
-				for (p = ps, len = psl; --len; ++p)
+				for (p = ps, len = psl; len--; ++p)
 					*p = cp->u.y[(unsigned char)*p];
 				break;
 			case ':':
 			case '}':
 				break;
 			case '=':
-				(void)printf("%lu\n", linenum);
+				(void)fprintf(outfile, "%lu\n", linenum);
 			}
 			cp = cp->next;
 		} /* for all cp */
 
 new:		if (!nflag && !pd)
-			OUT(ps);
+			OUT();
 		flush_appends();
 	} /* for all lines */
 }
@@ -263,7 +269,7 @@ new:		if (!nflag && !pd)
  */
 #define	MATCH(a)						\
 	(a)->type == AT_RE ? regexec_e((a)->u.r, ps, 0, 1, psl) :	\
-	    (a)->type == AT_LINE ? linenum == (a)->u.l : lastline
+	    (a)->type == AT_LINE ? linenum == (a)->u.l : lastline()
 
 /*
  * Return TRUE if the command applies to the current line.  Sets the inrange
@@ -302,6 +308,19 @@ applies(struct s_command *cp)
 	else
 		r = MATCH(cp->a1);
 	return (cp->nonsel ? !r : r);
+}
+
+/*
+ * Reset all inrange markers.
+ */
+void
+resetranges(void)
+{
+	struct s_command *cp;
+
+	for (cp = prog; cp; cp = cp->code == '{' ? cp->u.c : cp->next)
+		if (cp->a2)
+			cp->inrange = 0;
 }
 
 /*
@@ -392,19 +411,21 @@ substitute(struct s_command *cp)
 	 */
 	tspace = PS;
 	PS = SS;
+	psanl = tspace.append_newline;
 	SS = tspace;
 	SS.space = SS.back;
 
 	/* Handle the 'p' flag. */
 	if (cp->u.s->p)
-		OUT(ps);
+		OUT();
 
 	/* Handle the 'w' flag. */
 	if (cp->u.s->wfile && !pd) {
 		if (cp->u.s->wfd == -1 && (cp->u.s->wfd = open(cp->u.s->wfile,
 		    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC, DEFFILEMODE)) == -1)
 			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
-		if (write(cp->u.s->wfd, ps, psl) != psl)
+		if (write(cp->u.s->wfd, ps, psl) != psl ||
+		    write(cp->u.s->wfd, "\n", 1) != 1)
 			err(FATAL, "%s: %s", cp->u.s->wfile, strerror(errno));
 	}
 	return (1);
@@ -425,7 +446,7 @@ flush_appends(void)
 		switch (appends[i].type) {
 		case AP_STRING:
 			fwrite(appends[i].s, sizeof(char), appends[i].len, 
-			    stdout);
+			    outfile);
 			break;
 		case AP_FILE:
 			/*
@@ -439,12 +460,12 @@ flush_appends(void)
 			if ((f = fopen(appends[i].s, "r")) == NULL)
 				break;
 			while ((count = fread(buf, sizeof(char), sizeof(buf), f)))
-				(void)fwrite(buf, sizeof(char), count, stdout);
+				(void)fwrite(buf, sizeof(char), count, outfile);
 			(void)fclose(f);
 			break;
 		}
-	if (ferror(stdout))
-		err(FATAL, "stdout: %s", strerror(errno ? errno : EIO));
+	if (ferror(outfile))
+		err(FATAL, "%s: %s", outfname, strerror(errno ? errno : EIO));
 	appendx = sdone = 0;
 }
 
@@ -452,9 +473,13 @@ static void
 lputs(char *s)
 {
 	int count;
-	char *escapes, *p;
+	const char *escapes;
+	char *p;
 	struct winsize win;
 	static int termwidth = -1;
+
+	if (outfile != stdout)
+		termwidth = 60;
 
 	if (termwidth == -1) {
 		termwidth = 0;
@@ -470,29 +495,33 @@ lputs(char *s)
 
 	for (count = 0; *s; ++s) { 
 		if (count >= termwidth) {
-			(void)printf("\\\n");
+			(void)fprintf(outfile, "\\\n");
 			count = 0;
 		}
 		if (isascii((unsigned char)*s) && isprint((unsigned char)*s)
 		    && *s != '\\') {
-			(void)putchar(*s);
+			(void)fputc(*s, outfile);
 			count++;
-		} else if (*s != '\n') {
+		} else if (*s == '\n') {
+			(void)fputc('$', outfile);
+			(void)fputc('\n', outfile);
+			count = 0;
+		} else {
 			escapes = "\\\a\b\f\r\t\v";
-			(void)putchar('\\');
+			(void)fputc('\\', outfile);
 			if ((p = strchr(escapes, *s))) {
-				(void)putchar("\\abfrtv"[p - escapes]);
+				(void)fputc("\\abfrtv"[p - escapes], outfile);
 				count += 2;
 			} else {
-				(void)printf("%03o", *(u_char *)s);
+				(void)fprintf(outfile, "%03o", *(u_char *)s);
 				count += 4;
 			}
 		}
 	}
-	(void)putchar('$');
-	(void)putchar('\n');
-	if (ferror(stdout))
-		err(FATAL, "stdout: %s", strerror(errno ? errno : EIO));
+	(void)fputc('$', outfile);
+	(void)fputc('\n', outfile);
+	if (ferror(outfile))
+		err(FATAL, "%s: %s", outfname, strerror(errno ? errno : EIO));
 }
 
 static inline int
@@ -507,9 +536,7 @@ regexec_e(regex_t *preg, const char *string, int eflags,
 	} else
 		defpreg = preg;
 
-	/* Set anchors, discounting trailing newline (if any). */
-	if (slen > 0 && string[slen - 1] == '\n')
-		slen--;
+	/* Set anchors */
 	match[0].rm_so = 0;
 	match[0].rm_eo = slen;
 	
@@ -575,7 +602,7 @@ regsub(SPACE *sp, char *string, char *src)
  *	space as necessary.
  */
 void
-cspace(SPACE *sp, char *p, size_t len, enum e_spflag spflag)
+cspace(SPACE *sp, const char *p, size_t len, enum e_spflag spflag)
 {
 	size_t tlen;
 
