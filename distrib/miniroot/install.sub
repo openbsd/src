@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.846 2015/07/16 21:05:08 halex Exp $
+#	$OpenBSD: install.sub,v 1.847 2015/07/17 15:11:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -302,10 +302,10 @@ disklabel_autolayout() {
 		disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
 		ask "Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?" a
 		case $resp in
-		[aA]*)	_op=-w ;;
-		[eE]*)	_op=-E ;;
-		[cC]*)	return 0 ;;
-		*)	continue ;;
+		[aA]*)	_op=-w;;
+		[eE]*)	_op=-E;;
+		[cC]*)	return 0;;
+		*)	continue;;
 		esac
 		disklabel -F $_f $_op -A $_disk
 		return
@@ -1840,9 +1840,9 @@ enable_network() {
 		if isin ${if%%+([0-9])} $(ifconfig -C); then
 			# Dynamic interfaces must be done later.
 			case ${if%%+([0-9])} in
-			trunk)	_trunks="$_trunks $hn"	;;
-			svlan)	_svlans="$_svlans $hn"	;;
-			vlan)	_vlans="$_vlans $hn"	;;
+			trunk)	_trunks="$_trunks $hn";;
+			svlan)	_svlans="$_svlans $hn";;
+			vlan)	_vlans="$_vlans $hn";;
 			esac
 		else
 			# 'Real' interfaces (if available) are done now.
