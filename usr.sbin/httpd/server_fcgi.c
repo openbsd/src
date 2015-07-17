@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.54 2015/06/09 08:50:52 jung Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.55 2015/07/17 20:44:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -212,6 +212,12 @@ server_fcgi(struct httpd *env, struct client *clt)
 			goto fail;
 		}
 		script[scriptlen] = '\0';
+	} else {
+		/* RFC 3875 mandates that PATH_INFO is empty if not set */
+		if (fcgi_add_param(&param, "PATH_INFO", "", clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
 	}
 
 	/*
