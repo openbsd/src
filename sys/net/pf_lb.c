@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.44 2015/07/16 16:12:15 mpi Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.45 2015/07/17 18:39:55 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -667,21 +667,21 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 			PF_POOLMASK(&naddr, &naddr,  &r->rdr.addr.v.a.mask,
 			    &pd->ndaddr, pd->af);
 
-			if (r->rdr.proxy_port[1]) {
-				u_int32_t	tmp_nport;
+		if (r->rdr.proxy_port[1]) {
+			u_int32_t	tmp_nport;
 
-				tmp_nport = ((ntohs(pd->ndport) -
-				    ntohs(r->dst.port[0])) %
-				    (r->rdr.proxy_port[1] -
-				    r->rdr.proxy_port[0] + 1)) +
-				    r->rdr.proxy_port[0];
+			tmp_nport = ((ntohs(pd->ndport) -
+			    ntohs(r->dst.port[0])) %
+			    (r->rdr.proxy_port[1] -
+			    r->rdr.proxy_port[0] + 1)) +
+			    r->rdr.proxy_port[0];
 
-				/* wrap around if necessary */
-				if (tmp_nport > 65535)
-					tmp_nport -= 65535;
-				nport = htons((u_int16_t)tmp_nport);
-			} else if (r->rdr.proxy_port[0])
-				nport = htons(r->rdr.proxy_port[0]);
+			/* wrap around if necessary */
+			if (tmp_nport > 65535)
+				tmp_nport -= 65535;
+			nport = htons((u_int16_t)tmp_nport);
+		} else if (r->rdr.proxy_port[0])
+			nport = htons(r->rdr.proxy_port[0]);
 		*nr = r;
 		PF_ACPY(&pd->ndaddr, &naddr, pd->af);
 		if (nport)
