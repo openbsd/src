@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.47 2015/02/11 05:58:57 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.48 2015/07/17 20:12:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1092,7 +1092,8 @@ fetchtable(void)
 		if ((sa = rti_info[RTAX_DST]) == NULL)
 			continue;
 
-		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+		/* Skip ARP/ND cache and broadcast routes. */
+		if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST))
 			continue;
 
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
@@ -1137,6 +1138,11 @@ fetchtable(void)
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
 			case AF_INET6:
+				if (rtm->rtm_flags & RTF_CONNECTED) {
+					kr->r.flags |= F_CONNECTED;
+					break;
+				}
+
 				sa_in6 = (struct sockaddr_in6 *)sa;
 				/*
 				 * XXX The kernel provides the scope via the
@@ -1147,6 +1153,10 @@ fetchtable(void)
 				kr->r.scope = sa_in6->sin6_scope_id;
 				break;
 			case AF_LINK:
+				/*
+				 * Traditional BSD connected routes have
+				 * a gateway of type AF_LINK.
+				 */
 				kr->r.flags |= F_CONNECTED;
 				break;
 			}
@@ -1298,7 +1308,8 @@ dispatch_rtmsg(void)
 			if (rtm->rtm_errno)		/* failed attempts... */
 				continue;
 
-			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+			/* Skip ARP/ND cache and broadcast routes. */
+			if (rtm->rtm_flags & (RTF_LLINFO|RTF_BROADCAST))
 				continue;
 
 #ifdef RTF_MPATH
