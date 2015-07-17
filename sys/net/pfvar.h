@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.416 2015/07/16 21:14:21 mpi Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.417 2015/07/17 19:46:05 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1791,7 +1791,7 @@ extern void			 pf_print_flags(u_int8_t);
 extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
-				    u_int8_t);
+				    sa_family_t);
 void				 pf_rm_rule(struct pf_rulequeue *,
 				    struct pf_rule *);
 void				 pf_purge_rule(struct pf_ruleset *,
@@ -1984,7 +1984,7 @@ struct pf_os_fingerprint *
 	pf_osfp_validate(void);
 
 #ifdef _KERNEL
-void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
+void			 pf_print_host(struct pf_addr *, u_int16_t, sa_family_t);
 
 int			 pf_get_transaddr(struct pf_rule *, struct pf_pdesc *,
 			    struct pf_src_node **, struct pf_rule **);
