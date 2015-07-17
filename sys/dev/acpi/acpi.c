@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.287 2015/03/26 01:30:22 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.288 2015/07/17 22:34:00 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1015,12 +1015,12 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach docks */
 	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
 
-	/* attach video only if this is not a stinkpad or toshiba */
+	/* attach video only if this is not a thinkpad or toshiba */
 	if (!acpi_thinkpad_enabled && !acpi_toshiba_enabled &&
 	    !acpi_asus_enabled)
 		aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
 
-	/* create list of devices we want to query when APM come in */
+	/* create list of devices we want to query when APM comes in */
 	SLIST_INIT(&sc->sc_ac);
 	SLIST_INIT(&sc->sc_bat);
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
