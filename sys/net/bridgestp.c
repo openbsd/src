@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.58 2015/07/15 22:16:41 deraadt Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.59 2015/07/17 18:15:41 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -254,7 +254,7 @@ void	bstp_set_timer_tc(struct bstp_port *);
 void	bstp_set_timer_msgage(struct bstp_port *);
 int	bstp_rerooted(struct bstp_state *, struct bstp_port *);
 u_int32_t	bstp_calc_path_cost(struct bstp_port *);
-void	bstp_notify_rtage(void *, int);
+void	bstp_notify_rtage(struct bstp_port *, int);
 void	bstp_ifupdstatus(struct bstp_state *, struct bstp_port *);
 void	bstp_enable_port(struct bstp_state *, struct bstp_port *);
 void	bstp_disable_port(struct bstp_state *, struct bstp_port *);
@@ -1447,7 +1447,7 @@ bstp_set_port_tc(struct bstp_port *bp, int state)
 		bstp_timer_stop(&bp->bp_tc_timer);
 		/* flush routes on the parent bridge */
 		bp->bp_fdbflush = 1;
-		bstp_notify_rtage(bp->bp_ifp, 0);
+		bstp_notify_rtage(bp, 0);
 		bp->bp_tc_ack = 0;
 		DPRINTF("%s -> TC_INACTIVE\n", bp->bp_ifp->if_xname);
 		break;
@@ -1489,7 +1489,7 @@ bstp_set_port_tc(struct bstp_port *bp, int state)
 	case BSTP_TCSTATE_PROPAG:
 		/* flush routes on the parent bridge */
 		bp->bp_fdbflush = 1;
-		bstp_notify_rtage(bp->bp_ifp, 0);
+		bstp_notify_rtage(bp, 0);
 		bp->bp_tc_prop = 0;
 		bstp_set_timer_tc(bp);
 		DPRINTF("%s -> TC_PROPAG\n", bp->bp_ifp->if_xname);
@@ -1585,9 +1585,8 @@ bstp_calc_path_cost(struct bstp_port *bp)
 }
 
 void
-bstp_notify_rtage(void *arg, int pending)
+bstp_notify_rtage(struct bstp_port *bp, int pending)
 {
-	struct bstp_port *bp = (struct bstp_port *)arg;
 	int age = 0;
 
 	splassert(IPL_NET);
