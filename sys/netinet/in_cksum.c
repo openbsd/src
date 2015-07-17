@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.7 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.8 2015/07/17 23:49:03 tedu Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.11 1996/04/08 19:55:37 jonathan Exp $	*/
 
 /*
@@ -47,9 +47,7 @@
 #define REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
 
 int
-in_cksum(m, len)
-	struct mbuf *m;
-	int len;
+in_cksum(struct mbuf *m, int len)
 {
 	u_int16_t *w;
 	int sum = 0;
