@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.76 2015/07/16 21:21:49 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.77 2015/07/17 18:05:59 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -169,39 +169,6 @@ gif_start(struct ifnet *ifp)
 			continue;
 		}
 
-		/*
-		 * Check if the packet is coming via bridge and needs
-		 * etherip encapsulation or not. bridge(4) directly calls
-		 * the start function and bypasses the if_output function
-		 * so we need to do the encap here.
-		 */
-		if (ifp->if_bridgeport && (m->m_flags & M_PROTO1)) {
-			int error = 0;
-			/*
-			 * Remove multicast and broadcast flags or encapsulated
-			 * packet ends up as multicast or broadcast packet.
-			 */
-			m->m_flags &= ~(M_BCAST|M_MCAST);
-			switch (sc->gif_psrc->sa_family) {
-			case AF_INET:
-				error = in_gif_output(ifp, AF_LINK, &m);
-				break;
-#ifdef INET6
-			case AF_INET6:
-				error = in6_gif_output(ifp, AF_LINK, &m);
-				break;
-#endif
-			default:
-				error = EAFNOSUPPORT;
-				m_freem(m);
-				break;
-			}
-			if (error)
-				continue;
-			if (gif_checkloop(ifp, m))
-				continue;
-		}
-
 #if NBPFILTER > 0
 		if (ifp->if_bpf) {
 			int offset;
@@ -279,6 +246,42 @@ gif_start(struct ifnet *ifp)
 }
 
 int
+gif_encap(struct ifnet *ifp, struct mbuf **mp, sa_family_t af)
+{
+	struct gif_softc *sc = (struct gif_softc*)ifp;
+	int error = 0;
+	/*
+	 * Remove multicast and broadcast flags or encapsulated packet
+	 * ends up as multicast or broadcast packet.
+	 */
+	(*mp)->m_flags &= ~(M_BCAST|M_MCAST);
+
+	/*
+	 * Encapsulate packet. Add IP or IP6 header depending on tunnel AF.
+	 */
+	switch (sc->gif_psrc->sa_family) {
+	case AF_INET:
+		error = in_gif_output(ifp, af, mp);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		error = in6_gif_output(ifp, af, mp);
+		break;
+#endif
+	default:
+		m_freem(*mp);
+		error = EAFNOSUPPORT;
+		break;
+	}
+
+	if (error)
+		return (error);
+
+	error = gif_checkloop(ifp, *mp);
+	return (error);
+}
+
+int
 gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
@@ -293,34 +296,8 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		goto end;
 	}
 
-	/*
-	 * Remove multicast and broadcast flags or encapsulated packet
-	 * ends up as multicast or broadcast packet.
-	 */
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-
-	/*
-	 * Encapsulate packet. Add IP or IP6 header depending on tunnel AF.
-	 */
-	switch (sc->gif_psrc->sa_family) {
-	case AF_INET:
-		error = in_gif_output(ifp, dst->sa_family, &m);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		error = in6_gif_output(ifp, dst->sa_family, &m);
-		break;
-#endif
-	default:
-		m_freem(m);
-		error = EAFNOSUPPORT;
-		break;
-	}
-
+	error = gif_encap(ifp, &m, dst->sa_family);
 	if (error)
-		goto end;
-
-	if ((error = gif_checkloop(ifp, m)))
 		goto end;
 
 	error = if_enqueue(ifp, m);
