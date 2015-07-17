@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.85 2015/06/04 18:33:41 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.86 2015/07/17 16:56:34 yuo Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -2533,14 +2533,14 @@ em_copper_link_rtl8211_setup(struct em_hw *hw)
 	phy_data &= 0x80FF; /* bit-15=0 disable, clear bit 8-10 */
 	ret_val = em_write_phy_reg_ex(hw, RGEPHY_LC, phy_data);
 	if (ret_val) {
-		printf("Unable to write RGEPHY_CR register\n");
+		printf("Unable to write RGEPHY_LC register\n");
 		return ret_val;
 	}
 	/* LED Control and Definition Register 0x11, PHY spec status reg */
 	phy_data = 0;
 	ret_val = em_read_phy_reg_ex(hw, RGEPHY_SR, &phy_data);
 	if (ret_val) {
-		printf("Unable to read RGEPHY_SRregister\n");
+		printf("Unable to read RGEPHY_SR register\n");
 		return ret_val;
 	}
 
