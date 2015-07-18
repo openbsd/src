@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.132 2015/05/25 14:58:34 deraadt Exp $ */
+/*	$OpenBSD: ntp.c,v 1.133 2015/07/18 00:53:44 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -188,7 +188,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		client_peer_init(p);
 
-	bzero(&conf->status, sizeof(conf->status));
+	memset(&conf->status, 0, sizeof(conf->status));
 
 	conf->freq.num = 0;
 	conf->freq.samples = 0;
@@ -246,8 +246,8 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 			pfd_elms = new_cnt;
 		}
 
-		bzero(pfd, sizeof(*pfd) * pfd_elms);
-		bzero(idx2peer, sizeof(*idx2peer) * idx2peer_elms);
+		memset(pfd, 0, sizeof(*pfd) * pfd_elms);
+		memset(idx2peer, 0, sizeof(*idx2peer) * idx2peer_elms);
 		nextaction = getmonotime() + 3600;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;

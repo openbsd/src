@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: control.c,v 1.6 2015/07/18 00:53:44 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,7 +45,7 @@ control_init(char *path)
 		return (-1);
 	}
 
-	bzero(&sa, sizeof(sa));
+	memset(&sa, 0, sizeof(sa));
 	sa.sun_family = AF_UNIX;
 	if (strlcpy(sa.sun_path, path, sizeof(sa.sun_path)) >=
 	    sizeof(sa.sun_path))

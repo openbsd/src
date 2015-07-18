@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.93 2015/03/11 19:38:48 jmc Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.94 2015/07/18 00:53:44 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 
 	conffile = CONFFILE;
 
-	bzero(&lconf, sizeof(lconf));
+	memset(&lconf, 0, sizeof(lconf));
 
 	log_init(1);		/* log to stderr until daemonized */
 
@@ -557,7 +557,7 @@ ctl_main(int argc, char *argv[])
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "ntpctl: socket");
 
-	bzero(&sa, sizeof(sa));
+	memset(&sa, 0, sizeof(sa));
 	sa.sun_family = AF_UNIX;
 	if (strlcpy(sa.sun_path, sockname, sizeof(sa.sun_path)) >=
 	    sizeof(sa.sun_path))

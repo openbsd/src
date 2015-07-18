@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.26 2015/02/10 06:40:08 reyk Exp $ */
+/*	$OpenBSD: config.c,v 1.27 2015/07/18 00:53:44 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,7 @@ host_v4(const char *s)
 	struct sockaddr_in	*sa_in;
 	struct ntp_addr		*h;
 
-	bzero(&ina, sizeof(struct in_addr));
+	memset(&ina, 0, sizeof(struct in_addr));
 	if (inet_pton(AF_INET, s, &ina) != 1)
 		return (NULL);
 
@@ -86,7 +86,7 @@ host_v6(const char *s)
 	struct sockaddr_in6	*sa_in6;
 	struct ntp_addr		*h = NULL;
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
@@ -128,7 +128,7 @@ host_dns(const char *s, struct ntp_addr **hn)
 	struct sockaddr_in6	*sa_in6;
 	struct ntp_addr		*h, *hh = NULL;
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
 	/* ntpd MUST NOT use AI_ADDRCONFIG here */

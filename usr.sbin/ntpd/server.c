@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.42 2015/05/19 16:07:38 reyk Exp $ */
+/*	$OpenBSD: server.c,v 1.43 2015/07/18 00:53:44 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -175,7 +175,7 @@ server_dispatch(int fd, struct ntpd_conf *lconf)
 	if (ntp_getmsg((struct sockaddr *)&fsa, buf, size, &query) == -1)
 		return (0);
 
-	bzero(&reply, sizeof(reply));
+	memset(&reply, 0, sizeof(reply));
 	if (lconf->status.synced)
 		reply.status = lconf->status.leap;
 	else

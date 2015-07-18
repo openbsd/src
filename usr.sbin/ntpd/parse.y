@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.62 2015/05/17 18:31:32 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.63 2015/07/18 00:53:44 bcook Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -426,7 +426,7 @@ rtable		: RTABLE NUMBER {
 void
 opts_default(void)
 {
-	bzero(&opts, sizeof opts);
+	memset(&opts, 0, sizeof opts);
 	opts.weight = 1;
 	opts.rtable = -1;
 	opts.stratum = 1;
