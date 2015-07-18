@@ -1,4 +1,4 @@
-/* $OpenBSD: o_names.c,v 1.20 2015/02/10 11:22:21 jsing Exp $ */
+/* $OpenBSD: o_names.c,v 1.21 2015/07/18 21:21:28 beck Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -299,14 +299,16 @@ OBJ_NAME_do_all_sorted(int type, void (*fn)(const OBJ_NAME *, void *arg),
 	d.names = reallocarray(NULL, lh_OBJ_NAME_num_items(names_lh),
 	    sizeof *d.names);
 	d.n = 0;
-	OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
+	if (d.names != NULL) {
+		OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
 
-	qsort((void *)d.names, d.n, sizeof *d.names, do_all_sorted_cmp);
+		qsort((void *)d.names, d.n, sizeof *d.names, do_all_sorted_cmp);
 
-	for (n = 0; n < d.n; ++n)
-		fn(d.names[n], arg);
+		for (n = 0; n < d.n; ++n)
+			fn(d.names[n], arg);
 
-	free((void *)d.names);
+		free(d.names);
+	}
 }
 
 static int free_type;
