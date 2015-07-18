@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.42 2015/07/15 21:52:02 beck Exp $ */
+/* $OpenBSD: s3_both.c,v 1.43 2015/07/18 19:41:54 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -647,10 +647,6 @@ ssl3_setup_read_buffer(SSL *s)
 	if (s->s3->rbuf.buf == NULL) {
 		len = SSL3_RT_MAX_PLAIN_LENGTH +
 		    SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER) {
-			s->s3->init_extra = 1;
-			len += SSL3_RT_MAX_EXTRA;
-		}
 		if ((p = malloc(len)) == NULL)
 			goto err;
 		s->s3->rbuf.buf = p;

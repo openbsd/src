@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.54 2014/12/14 21:49:29 bcook Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.55 2015/07/18 19:41:54 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -284,22 +284,9 @@ ssl3_get_record(SSL *s)
 	unsigned char md[EVP_MAX_MD_SIZE];
 	short version;
 	unsigned mac_size, orig_len;
-	size_t extra;
 
 	rr = &(s->s3->rrec);
 	sess = s->session;
-
-	if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
-		extra = SSL3_RT_MAX_EXTRA;
-	else
-		extra = 0;
-
-	if (extra && !s->s3->init_extra) {
-		/* An application error: SLS_OP_MICROSOFT_BIG_SSLV3_BUFFER
-		 * set after ssl3_setup_buffers() was done */
-		SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-		return -1;
-	}
 
 again:
 	/* check if we have the header */
@@ -379,7 +366,7 @@ again:
 	 * rr->length bytes of encrypted compressed stuff. */
 
 	/* check is not needed I believe */
-	if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH + extra) {
+	if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
 		al = SSL_AD_RECORD_OVERFLOW;
 		SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
 		goto f_err;
@@ -449,7 +436,7 @@ again:
 		    timingsafe_memcmp(md, mac, (size_t)mac_size) != 0)
 			enc_err = -1;
 		if (rr->length >
-		    SSL3_RT_MAX_COMPRESSED_LENGTH + extra + mac_size)
+		    SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
 			enc_err = -1;
 	}
 
@@ -468,7 +455,7 @@ again:
 		goto f_err;
 	}
 
-	if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH + extra) {
+	if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
 		al = SSL_AD_RECORD_OVERFLOW;
 		SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
 		goto f_err;

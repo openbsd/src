@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.39 2015/07/17 15:50:37 doug Exp $ */
+/* $OpenBSD: ssl3.h,v 1.40 2015/07/18 19:41:54 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,7 +376,7 @@ typedef struct ssl3_state_st {
 	int need_empty_fragments;
 	int empty_fragment_done;
 
-	/* The value of 'extra' when the buffers were initialized */
+	/* XXX delete on next major bump. */
 	int init_extra;
 
 	SSL3_BUFFER rbuf;	/* read IO goes into here */
