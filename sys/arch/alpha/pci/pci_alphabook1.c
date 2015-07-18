@@ -143,10 +143,9 @@ dec_alphabook1_intr_map(struct pci_attach_args *pa,
 	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
 	/*
-	 * There is only one interrupting PCI device on the AlphaBook: an
-	 * NCR SCSI at device 6.  Devices 7 and 8 are the SIO and a
-	 * Cirrus PD6729 PCMCIA controller.  There are no option slots
-	 * available.
+	 * There are only two interrupting PCI devices on the AlphaBook:
+	 * the SCSI and PCMCIA controllers. The other PCI device is the
+	 * SIO, and there are no option slots available.
 	 *
 	 * NOTE!  Apparently, there was a later AlphaBook which uses
 	 * a different interrupt scheme, and has a built-in Tulip Ethernet
@@ -157,10 +156,10 @@ dec_alphabook1_intr_map(struct pci_attach_args *pa,
 	case 6:					/* NCR SCSI */
 		irq = 14;
 		break;
-
+	case 8:					/* Cirrus CL-PD6729 */
+		irq = 15;
+		break;
 	default:
-	        printf("dec_alphabook1_intr_map: weird device number %d\n",
-		    device);
 	        return 1;
 	}
 
@@ -184,7 +183,11 @@ void *
 dec_alphabook1_intr_establish(void *lcv, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg, const char *name)
 {
-	return sio_intr_establish(NULL /*XXX*/, ih, IST_LEVEL, level, func,
+	/*
+	 * PCI interrupts on that platform are ISA interrupts in disguise,
+	 * and are edge- rather than level-triggered.
+	 */
+	return sio_intr_establish(NULL /*XXX*/, ih, IST_EDGE, level, func,
 	    arg, name);
 }
 
