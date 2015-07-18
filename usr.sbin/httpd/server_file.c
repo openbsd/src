@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.57 2015/07/18 06:00:43 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.58 2015/07/18 14:36:24 kili Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -639,7 +639,7 @@ server_file_modified_since(struct http_descriptor *desc, struct stat *st)
 
 	key.kv_key = "If-Modified-Since";
 	if ((since = kv_find(&desc->http_headers, &key)) != NULL &&
-	    since->kv_value == NULL) {
+	    since->kv_value != NULL) {
 		memset(&tm, 0, sizeof(struct tm));
 
 		/*
