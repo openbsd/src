@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.33 2015/07/15 17:44:20 miod Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.34 2015/07/18 14:40:59 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -850,12 +850,15 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	} else if (i == NID_pkcs7_digest) {
 		unsigned char md_data[EVP_MAX_MD_SIZE];
 		unsigned int md_len;
+
 		if (!PKCS7_find_digest(&mdc, bio,
 		    OBJ_obj2nid(p7->d.digest->md->algorithm)))
 			goto err;
 		if (!EVP_DigestFinal_ex(mdc, md_data, &md_len))
 			goto err;
-		M_ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
+		if (M_ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data,
+		    md_len) == 0)
+			goto err;
 	}
 
 	if (!PKCS7_is_detached(p7)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.13 2015/02/12 06:04:24 jsg Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.14 2015/07/18 14:40:59 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -740,9 +740,14 @@ asn1_str2type(const char *str, int format, int utype)
 			atmp->value.asn1_string->length = rdlen;
 			atmp->value.asn1_string->type = utype;
 
-		} else if (format == ASN1_GEN_FORMAT_ASCII)
-			ASN1_STRING_set(atmp->value.asn1_string, str, -1);
-		else if ((format == ASN1_GEN_FORMAT_BITLIST) &&
+		} else if (format == ASN1_GEN_FORMAT_ASCII) {
+			if (ASN1_STRING_set(atmp->value.asn1_string, str,
+			    -1) == 0) {
+				ASN1err(ASN1_F_ASN1_STR2TYPE,
+				    ERR_R_MALLOC_FAILURE);
+				goto bad_str;
+			}
+		} else if ((format == ASN1_GEN_FORMAT_BITLIST) &&
 		    (utype == V_ASN1_BIT_STRING)) {
 			if (!CONF_parse_list(str, ',', 1, bitstr_cb,
 			    atmp->value.bit_string)) {
