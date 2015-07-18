@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_proto.c,v 1.9 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: mpls_proto.c,v 1.10 2015/07/18 15:51:17 mpi Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -38,8 +38,7 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/radix.h>
-#include <net/radix_mpath.h>
+#include <net/rtable.h>
 
 #include <netmpls/mpls.h>
 
@@ -69,7 +68,7 @@ struct domain mplsdomain = {
 	AF_MPLS, "mpls", mpls_init, 0, 0,
 	mplssw,
 	&mplssw[nitems(mplssw)], 0,
-	rn_mpath_inithead,
+	rtable_attach,
 	offsetof(struct sockaddr_mpls, smpls_label) << 3,
 	sizeof(struct sockaddr_mpls)
 };

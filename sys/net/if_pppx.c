@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.41 2015/07/15 22:16:42 deraadt Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.42 2015/07/18 15:51:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/radix.h>
 #include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -89,6 +88,7 @@
 #include <crypto/arc4.h>
 
 #ifdef PIPEX
+#include <net/radix.h>
 #include <net/pipex.h>
 #include <net/pipex_local.h>
 #else

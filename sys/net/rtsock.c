@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.164 2015/07/18 00:02:30 phessler Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.165 2015/07/18 15:51:16 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -445,7 +445,6 @@ route_output(struct mbuf *m, ...)
 	struct rt_msghdr	*rtm = NULL;
 	struct rtentry		*rt = NULL;
 	struct rtentry		*saved_nrt = NULL;
-	struct radix_node_head	*rnh;
 	struct rt_addrinfo	 info;
 	int			 len, newgate, error = 0;
 	struct ifnet		*ifp = NULL;
@@ -617,52 +616,51 @@ route_output(struct mbuf *m, ...)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
-		rnh = rtable_get(tableid, info.rti_info[RTAX_DST]->sa_family);
-		if (rnh == NULL) {
+		if (!rtable_exists(tableid)) {
 			error = EAFNOSUPPORT;
 			goto flush;
 		}
-		rt = rt_lookup(info.rti_info[RTAX_DST],
-		    info.rti_info[RTAX_NETMASK], tableid);
+		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
+		    info.rti_info[RTAX_NETMASK]);
 		if (rt == NULL) {
 			error = ESRCH;
 			goto flush;
 		}
 #ifndef SMALL_KERNEL
-		if (rn_mpath_capable(rnh)) {
-			/* first find the right priority */
-			rt = rt_mpath_matchgate(rt, NULL, prio);
-			if (!rt) {
+		/* First find the right priority. */
+		rt = rtable_mpath_match(tableid, rt, NULL, prio);
+		if (rt == NULL) {
+			error = ESRCH;
+			goto flush;
+		}
+
+
+		/*
+		 * For RTM_CHANGE/LOCK, if we got multipath routes,
+		 * a matching RTAX_GATEWAY is required.
+		 * OR
+		 * If a gateway is specified then RTM_GET and
+		 * RTM_LOCK must match the gateway no matter
+		 * what even in the non multipath case.
+		 */
+		if ((rt->rt_flags & RTF_MPATH) ||
+		    (info.rti_info[RTAX_GATEWAY] && rtm->rtm_type !=
+		     RTM_CHANGE)) {
+			rt = rtable_mpath_match(tableid, rt,
+			    info.rti_info[RTAX_GATEWAY], prio);
+			if (rt == NULL) {
 				error = ESRCH;
 				goto flush;
 			}
 			/*
-			 * For RTM_CHANGE/LOCK, if we got multipath routes,
-			 * a matching RTAX_GATEWAY is required.
-			 * OR
-			 * If a gateway is specified then RTM_GET and
-			 * RTM_LOCK must match the gateway no matter
-			 * what even in the non multipath case.
+			 * Only RTM_GET may use an empty gateway
+			 * on multipath routes
 			 */
-			if ((rt->rt_flags & RTF_MPATH) ||
-			    (info.rti_info[RTAX_GATEWAY] && rtm->rtm_type !=
-			    RTM_CHANGE)) {
-				rt = rt_mpath_matchgate(rt,
-				    info.rti_info[RTAX_GATEWAY], prio);
-				if (!rt) {
-					error = ESRCH;
-					goto flush;
-				}
-				/*
-				 * only RTM_GET may use an empty gateway
-				 * on multipath routes
-				 */
-				if (!info.rti_info[RTAX_GATEWAY] &&
-				    rtm->rtm_type != RTM_GET) {
-					rt = NULL;
-					error = ESRCH;
-					goto flush;
-				}
+			if (info.rti_info[RTAX_GATEWAY] == NULL &&
+			    rtm->rtm_type != RTM_GET) {
+				rt = NULL;
+				error = ESRCH;
+				goto flush;
 			}
 		}
 #endif
@@ -776,8 +774,7 @@ report:
 					rt->rt_ifp = ifa->ifa_ifp;
 #ifndef SMALL_KERNEL
 					/* recheck link state after ifp change*/
-					rt_if_linkstate_change(
-					    (struct radix_node *)rt, rt->rt_ifp,
+					rt_if_linkstate_change(rt, rt->rt_ifp,
 					    tableid);
 #endif
 				}
@@ -1197,10 +1194,9 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
  * This is used in dumping the kernel table via sysctl().
  */
 int
-sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
+sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 {
 	struct walkarg		*w = v;
-	struct rtentry		*rt = (struct rtentry *)rn;
 	int			 error = 0, size;
 	struct rt_addrinfo	 info;
 #ifdef MPLS
@@ -1332,7 +1328,6 @@ int
 sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
     size_t newlen)
 {
-	struct radix_node_head	*rnh;
 	int			 i, s, error = EINVAL;
 	u_char  		 af;
 	struct walkarg		 w;
@@ -1363,12 +1358,14 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
-		for (i = 1; i <= AF_MAX; i++)
-			if ((rnh = rtable_get(tableid, i)) != NULL &&
-			    (af == 0 || af == i) &&
-			    (error = (*rnh->rnh_walktree)(rnh,
-			    sysctl_dumpentry, &w)))
+		for (i = 1; i <= AF_MAX; i++) {
+			if (af != 0 && af != i)
+				continue;
+
+			error = rtable_walk(tableid, i, sysctl_dumpentry, &w);
+			if (error)
 				break;
+		}
 		break;
 
 	case NET_RT_IFLIST:

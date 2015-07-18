@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.158 2015/07/17 18:35:25 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.159 2015/07/18 15:51:16 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ struct ifnet *revarp_ifp;
 void	db_print_sa(struct sockaddr *);
 void	db_print_ifa(struct ifaddr *);
 void	db_print_llinfo(caddr_t);
-int	db_show_radix_node(struct radix_node *, void *, u_int);
+int	db_show_rtentry(struct rtentry *, void *, unsigned int);
 #endif
 
 /*
@@ -1077,14 +1077,12 @@ db_print_llinfo(caddr_t li)
 }
 
 /*
- * Function to pass to rn_walktree().
+ * Function to pass to rtalble_walk().
  * Return non-zero error to abort walk.
  */
 int
-db_show_radix_node(struct radix_node *rn, void *w, u_int id)
+db_show_rtentry(struct rtentry *rt, void *w, unsigned int id)
 {
-	struct rtentry *rt = (struct rtentry *)rn;
-
 	db_printf("rtentry=%p", rt);
 
 	db_printf(" flags=0x%x refcnt=%d use=%llu expire=%lld rtableid=%u\n",
@@ -1115,14 +1113,8 @@ db_show_radix_node(struct radix_node *rn, void *w, u_int id)
 int
 db_show_arptab(void)
 {
-	struct radix_node_head *rnh;
-	rnh = rtable_get(0, AF_INET);
 	db_printf("Route tree for AF_INET\n");
-	if (rnh == NULL) {
-		db_printf(" (not initialized)\n");
-		return (0);
-	}
-	rn_walktree(rnh, db_show_radix_node, NULL);
+	rtable_walk(0, AF_INET, db_show_rtentry, NULL);
 	return (0);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.30 2015/07/16 18:17:27 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.31 2015/07/18 15:51:16 mpi Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -381,35 +381,16 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 	}
 }
 
-/*
- * allocate a route, potentially using multipath to select the peer.
- */
+/* Gateway selection by Hash-Threshold (RFC 2992) */
 struct rtentry *
-rtalloc_mpath(struct sockaddr *dst, u_int32_t *srcaddrp, u_int rtableid)
+rn_mpath_select(struct rtentry *rt, uint32_t *srcaddrp)
 {
-	struct rtentry *rt;
 	struct radix_node *rn;
 	int hash, npaths, threshold;
 
-	rt = rtalloc(dst, RT_REPORT|RT_RESOLVE, rtableid);
-
-	/* if the route does not exist or it is not multipath, don't care */
-	if (rt == NULL || !ISSET(rt->rt_flags, RTF_MPATH))
-		return (rt);
-
-	/* check if multipath routing is enabled for the specified protocol */
-	if (!(0
-	    || (ipmultipath && dst->sa_family == AF_INET)
-#ifdef INET6
-	    || (ip6_multipath && dst->sa_family == AF_INET6)
-#endif
-	    ))
-		return (rt);
-
-	/* gw selection by Hash-Threshold (RFC 2992) */
 	rn = (struct radix_node *)rt;
 	npaths = rn_mpath_active_count(rn);
-	hash = rn_mpath_hash(dst, srcaddrp) & 0xffff;
+	hash = rn_mpath_hash(rt_key(rt), srcaddrp) & 0xffff;
 	threshold = 1 + (0xffff / npaths);
 	while (hash > threshold && rn) {
 		/* stay within the multipath routes */

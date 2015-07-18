@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.595 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: files,v 1.596 2015/07/18 15:51:16 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -776,6 +776,7 @@ file net/radix.c
 file net/radix_mpath.c			!small_kernel
 file net/raw_cb.c
 file net/raw_usrreq.c
+file net/rtable.c
 file net/route.c
 file net/rtsock.c
 file net/slcompress.c			ppp

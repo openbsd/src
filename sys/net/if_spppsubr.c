@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.135 2015/06/30 13:54:42 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.136 2015/07/18 15:51:16 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -356,7 +356,7 @@ void sppp_phase_network(struct sppp *sp);
 void sppp_print_bytes(const u_char *p, u_short len);
 void sppp_print_string(const char *p, u_short len);
 void sppp_qflush(struct ifqueue *ifq);
-int sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int);
+int sppp_update_gw_walker(struct rtentry *rt, void *arg, unsigned int id);
 void sppp_update_gw(struct ifnet *ifp);
 void sppp_set_ip_addrs(void *);
 void sppp_clear_ip_addrs(void *);
@@ -4502,10 +4502,9 @@ sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
 }
 
 int
-sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int id)
+sppp_update_gw_walker(struct rtentry *rt, void *arg, unsigned int id)
 {
 	struct ifnet *ifp = arg;
-	struct rtentry *rt = (struct rtentry *)rn;
 
 	if (rt->rt_ifp == ifp) {
 		if (rt->rt_ifa->ifa_dstaddr->sa_family !=
@@ -4521,16 +4520,13 @@ sppp_update_gw_walker(struct radix_node *rn, void *arg, u_int id)
 void
 sppp_update_gw(struct ifnet *ifp)
 {
-        struct radix_node_head *rnh;
 	u_int tid;
 
 	/* update routing table */
 	for (tid = 0; tid <= RT_TABLEID_MAX; tid++) {
-		if ((rnh = rtable_get(tid, AF_INET)) != NULL) {
-			while ((*rnh->rnh_walktree)(rnh,
-			    sppp_update_gw_walker, ifp) == EAGAIN)
-				;	/* nothing */
-		}
+		while (rtable_walk(tid, AF_INET, sppp_update_gw_walker,
+		    ifp) == EAGAIN)
+			;	/* nothing */
 	}
 }
 

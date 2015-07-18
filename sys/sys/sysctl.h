@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.155 2015/02/11 05:09:33 claudio Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.156 2015/07/18 15:51:17 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -942,9 +942,9 @@ int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
 int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
 int sysctl_file(int *, u_int, char *, size_t *, struct proc *);
 int sysctl_doproc(int *, u_int, char *, size_t *);
-struct radix_node;
+struct rtentry;
 struct walkarg;
-int sysctl_dumpentry(struct radix_node *, void *, u_int);
+int sysctl_dumpentry(struct rtentry *, void *, unsigned int);
 int sysctl_iflist(int, struct walkarg *);
 int sysctl_rtable(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_clockrate(char *, size_t *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.108 2015/07/08 07:56:51 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.109 2015/07/18 15:51:16 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -80,9 +80,8 @@ struct rt_metrics {
 #define	RTM_RTTUNIT	1000000	/* units for rtt, rttvar, as units per sec */
 #define	RTTTOPRHZ(r)	((r) / (RTM_RTTUNIT / PR_SLOWHZ))
 
-#ifdef _KERNEL
-
 #include <sys/queue.h>
+#include <net/rtable.h>
 
 /*
  * We distinguish between routes to hosts and routes to networks,
@@ -92,13 +91,9 @@ struct rt_metrics {
  * gateways are marked so that the output routines know to address the
  * gateway rather than the ultimate destination.
  */
-#include <net/radix.h>
-#include <net/radix_mpath.h>
 
 struct rtentry {
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
-#define	rt_key(r)	((struct sockaddr *)((r)->rt_nodes->rn_key))
-#define	rt_mask(r)	((struct sockaddr *)((r)->rt_nodes->rn_mask))
 	struct sockaddr	*rt_gateway;	/* value */
 	struct ifnet	*rt_ifp;	/* the answer: interface to use */
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
@@ -116,8 +111,6 @@ struct rtentry {
 };
 #define	rt_use		rt_rmx.rmx_pksent
 #define	rt_expire	rt_rmx.rmx_expire
-
-#endif /* _KERNEL */
 
 #define	RTF_UP		0x1		/* route usable */
 #define	RTF_GATEWAY	0x2		/* destination is a gateway */
@@ -342,10 +335,10 @@ void		 rtlabel_unref(u_int16_t);
 extern struct rtstat rtstat;
 extern const struct sockaddr_rtin rt_defmask4;
 
+struct	mbuf;
 struct	socket;
 void	 route_init(void);
 int	 rtable_add(u_int);
-struct radix_node_head *rtable_get(u_int, sa_family_t);
 u_int	 rtable_l2(u_int);
 void	 rtable_l2set(u_int, u_int);
 int	 rtable_exists(u_int);
@@ -379,6 +372,8 @@ void			 rt_timer_timer(void *);
 
 #ifdef SMALL_KERNEL
 #define	 rtalloc_mpath(dst, s, rid) rtalloc((dst), RT_REPORT|RT_RESOLVE, (rid))
+#else
+struct	 rtentry *rtalloc_mpath(struct sockaddr *, uint32_t *, u_int);
 #endif
 struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
 void	 rtfree(struct rtentry *);
@@ -397,11 +392,9 @@ int	 rtrequest1(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
 void	 rt_if_remove(struct ifnet *);
 #ifndef SMALL_KERNEL
 void	 rt_if_track(struct ifnet *);
-int	 rt_if_linkstate_change(struct radix_node *, void *, u_int);
+int	 rt_if_linkstate_change(struct rtentry *, void *, u_int);
 #endif
 int	 rtdeletemsg(struct rtentry *, u_int);
-
-struct rtentry		*rt_lookup(struct sockaddr *, struct sockaddr *, u_int);
 
 struct rtentry *rt_mpath_next(struct rtentry *);
 #endif /* _KERNEL */

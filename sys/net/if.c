@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.350 2015/07/16 15:31:35 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.351 2015/07/18 15:51:16 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2093,7 +2093,8 @@ if_group_egress_build(void)
 	bzero(&sa_in, sizeof(sa_in));
 	sa_in.sin_len = sizeof(sa_in);
 	sa_in.sin_family = AF_INET;
-	if ((rt = rt_lookup(sintosa(&sa_in), sintosa(&sa_in), 0)) != NULL) {
+	rt = rtable_lookup(0, sintosa(&sa_in), sintosa(&sa_in));
+	if (rt != NULL) {
 		do {
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EGRESS);
@@ -2107,7 +2108,8 @@ if_group_egress_build(void)
 
 #ifdef INET6
 	bcopy(&sa6_any, &sa_in6, sizeof(sa_in6));
-	if ((rt = rt_lookup(sin6tosa(&sa_in6), sin6tosa(&sa_in6), 0)) != NULL) {
+	rt = rtable_lookup(0, sin6tosa(&sa_in6), sin6tosa(&sa_in6));
+	if (rt != NULL) {
 		do {
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EGRESS);
@@ -2237,7 +2239,7 @@ ifa_print_all(void)
 		}
 	}
 }
-#endif /* SMALL_KERNEL */
+#endif /* DDB */
 
 void
 ifnewlladdr(struct ifnet *ifp)
