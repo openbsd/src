@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.196 2015/06/02 17:29:28 jung Exp $
+# $OpenBSD: sysmerge.sh,v 1.197 2015/07/18 20:27:37 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -335,10 +335,18 @@ sm_install() {
 
 sm_add_user_grp() {
 	local _g _p _gid _l _u _rest _newgrp _newusr
-	local _pw=./etc/master.passwd
 	local _gr=./etc/group
+	local _pw=./etc/master.passwd
 
 	${PKGMODE} && return
+
+	while IFS=: read -r -- _g _p _gid _rest; do
+		if ! grep -Eq "^${_g}:" /etc/group; then
+			echo "===> Adding the ${_g} group"
+			groupadd -g ${_gid} ${_g} && \
+				set -A _newgrp -- ${_newgrp[@]} ${_g}
+		fi
+	done <${_gr}
 
 	while read _l; do
 		_u=${_l%%:*}
@@ -350,14 +358,6 @@ sm_add_user_grp() {
 			fi
 		fi
 	done <${_pw}
-
-	while IFS=: read -r -- _g _p _gid _rest; do
-		if ! grep -Eq "^${_g}:" /etc/group; then
-			echo "===> Adding the ${_g} group"
-			groupadd -g ${_gid} ${_g} && \
-				set -A _newgrp -- ${_newgrp[@]} ${_g}
-		fi
-	done <${_gr}
 }
 
 sm_merge_loop() {
