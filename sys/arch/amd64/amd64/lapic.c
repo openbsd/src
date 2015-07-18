@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.40 2015/07/18 19:19:14 sf Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.41 2015/07/18 19:21:02 sf Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -95,17 +95,17 @@ int x2apic_enabled = 0;
 u_int32_t x2apic_readreg(int reg);
 u_int32_t x2apic_cpu_number();
 void x2apic_writereg(int reg, u_int32_t val);
-int x2apic_ipi(int vec, int target, int dl);
+void x2apic_ipi(int vec, int target, int dl);
 
 u_int32_t i82489_readreg(int reg);
 u_int32_t i82489_cpu_number();
 void i82489_writereg(int reg, u_int32_t val);
-int i82489_ipi(int vec, int target, int dl);
+void i82489_ipi(int vec, int target, int dl);
 
 u_int32_t (*lapic_readreg)(int)			= i82489_readreg;
 void (*lapic_writereg)(int, u_int32_t)		= i82489_writereg;
 #ifdef MULTIPROCESSOR
-int (*x86_ipi)(int vec, int target, int dl)	= i82489_ipi;
+void (*x86_ipi)(int vec, int target, int dl)	= i82489_ipi;
 #endif
 
 u_int32_t
@@ -608,7 +608,7 @@ i82489_ipi_init(int target)
 	i82489_icr_wait();
 }
 
-int
+void
 i82489_ipi(int vec, int target, int dl)
 {
 	int s;
@@ -626,8 +626,6 @@ i82489_ipi(int vec, int target, int dl)
 	i82489_icr_wait();
 
 	splx(s);
-
-	return 0;
 }
 
 void
@@ -647,7 +645,7 @@ x2apic_ipi_init(int target)
 	    LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
 }
 
-int
+void
 x2apic_ipi(int vec, int target, int dl)
 {
 	u_int64_t hi = 0, lo;
@@ -658,8 +656,6 @@ x2apic_ipi(int vec, int target, int dl)
 	lo = (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT;
 
 	x2apic_writeicr(hi, lo);
-
-	return 0;
 }
 
 void

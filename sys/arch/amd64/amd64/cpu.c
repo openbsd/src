@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.87 2015/07/18 19:19:14 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.88 2015/07/18 19:21:02 sf Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -730,9 +730,6 @@ cpu_debug_dump(void)
 int
 mp_cpu_start(struct cpu_info *ci)
 {
-#if NLAPIC > 0
-	int error;
-#endif
 	unsigned short dwordptr[2];
 
 	/*
@@ -765,16 +762,12 @@ mp_cpu_start(struct cpu_info *ci)
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
-					     ci->ci_apicid,
-					     LAPIC_DLMODE_STARTUP)) != 0)
-				return error;
+			x86_ipi(MP_TRAMPOLINE/PAGE_SIZE, ci->ci_apicid,
+			    LAPIC_DLMODE_STARTUP);
 			delay(200);
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
-					     ci->ci_apicid,
-					     LAPIC_DLMODE_STARTUP)) != 0)
-				return error;
+			x86_ipi(MP_TRAMPOLINE/PAGE_SIZE, ci->ci_apicid,
+			    LAPIC_DLMODE_STARTUP);
 			delay(200);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.39 2015/07/18 19:19:14 sf Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.40 2015/07/18 19:21:03 sf Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -459,7 +459,7 @@ i386_ipi_init(int target)
 	i82489_icr_wait();
 }
 
-int
+void
 i386_ipi(int vec, int target, int dl)
 {
 	int s;
@@ -477,7 +477,5 @@ i386_ipi(int vec, int target, int dl)
 	i82489_icr_wait();
 
 	splx(s);
-
-	return 0;
 }
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.14 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.15 2015/07/18 19:21:02 sf Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -53,13 +53,7 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return ENOENT;
 
-	ret = x86_ipi(LAPIC_IPI_VECTOR, ci->ci_apicid, LAPIC_DLMODE_FIXED);
-	if (ret != 0) {
-		printf("ipi of %x from %s to %s failed\n",
-		    ipimask,
-		    curcpu()->ci_dev->dv_xname,
-		    ci->ci_dev->dv_xname);
-	}
+	x86_ipi(LAPIC_IPI_VECTOR, ci->ci_apicid, LAPIC_DLMODE_FIXED);
 
 	return ret;
 }
@@ -70,7 +64,9 @@ x86_fast_ipi(struct cpu_info *ci, int ipi)
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return (ENOENT);
 
-	return (x86_ipi(ipi, ci->ci_apicid, LAPIC_DLMODE_FIXED));
+	x86_ipi(ipi, ci->ci_apicid, LAPIC_DLMODE_FIXED);
+
+	return 0;
 }
 
 void
