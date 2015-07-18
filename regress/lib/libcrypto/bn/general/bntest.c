@@ -329,7 +329,7 @@ main(int argc, char *argv[])
 	BN_CTX_free(ctx);
 	BIO_free(out);
 
-/**/
+
 	exit(0);
 err:
 	BIO_puts(out,"1\n"); /* make sure the Perl script fed by bc notices
@@ -792,8 +792,8 @@ test_mont(BIO *bp, BN_CTX *ctx)
 	BN_init(&B);
 	BN_init(&n);
 
-	BN_bntest_rand(&a,100,0,0); /**/
-	BN_bntest_rand(&b,100,0,0); /**/
+	BN_bntest_rand(&a,100,0,0);
+	BN_bntest_rand(&b,100,0,0);
 	for (i = 0; i < num2; i++) {
 		int bits = (200*(i + 1))/num2;
 
@@ -808,8 +808,8 @@ test_mont(BIO *bp, BN_CTX *ctx)
 		BN_to_montgomery(&A, &a, mont, ctx);
 		BN_to_montgomery(&B, &b, mont, ctx);
 
-		BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);/**/
-		BN_from_montgomery(&A,&c,mont,ctx);/**/
+		BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);
+		BN_from_montgomery(&A,&c,mont,ctx);
 		if (bp != NULL) {
 			if (!results) {
 				BN_print(bp, &a);
@@ -854,12 +854,12 @@ test_mod(BIO *bp, BN_CTX *ctx)
 	d = BN_new();
 	e = BN_new();
 
-	BN_bntest_rand(a,1024,0,0); /**/
+	BN_bntest_rand(a,1024,0,0);
 	for (i = 0; i < num0; i++) {
-		BN_bntest_rand(b,450+i*10,0,0); /**/
+		BN_bntest_rand(b,450+i*10,0,0);
 		a->neg = rand_neg();
 		b->neg = rand_neg();
-		BN_mod(c,a,b,ctx);/**/
+		BN_mod(c,a,b,ctx);
 		if (bp != NULL) {
 			if (!results) {
 				BN_print(bp, a);
@@ -900,10 +900,10 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 	e = BN_new();
 
 	for (j = 0; j < 3; j++) {
-		BN_bntest_rand(c,1024,0,0); /**/
+		BN_bntest_rand(c,1024,0,0);
 		for (i = 0; i < num0; i++) {
-			BN_bntest_rand(a,475+i*10,0,0); /**/
-			BN_bntest_rand(b,425+i*11,0,0); /**/
+			BN_bntest_rand(a,475+i*10,0,0);
+			BN_bntest_rand(b,425+i*11,0,0);
 			a->neg = rand_neg();
 			b->neg = rand_neg();
 			if (!BN_mod_mul(e, a,b, c, ctx)) {
@@ -970,8 +970,8 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 
 	BN_bntest_rand(c,30,0,1); /* must be odd for montgomery */
 	for (i = 0; i < num2; i++) {
-		BN_bntest_rand(a,20+i*5,0,0); /**/
-		BN_bntest_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0);
+		BN_bntest_rand(b,2+i,0,0);
 
 		if (!BN_mod_exp(d, a,b, c, ctx)) {
 			rc = 0;
@@ -1022,8 +1022,8 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 
 	BN_bntest_rand(c,30,0,1); /* must be odd for montgomery */
 	for (i = 0; i < num2; i++) {
-		BN_bntest_rand(a,20+i*5,0,0); /**/
-		BN_bntest_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0);
+		BN_bntest_rand(b,2+i,0,0);
 
 		if (!BN_mod_exp_mont_consttime(d, a,b, c,ctx, NULL)) {
 			rc = 0;
@@ -1074,8 +1074,8 @@ test_exp(BIO *bp, BN_CTX *ctx)
 	BN_one(one);
 
 	for (i = 0; i < num2; i++) {
-		BN_bntest_rand(a,20+i*5,0,0); /**/
-		BN_bntest_rand(b,2+i,0,0); /**/
+		BN_bntest_rand(a,20+i*5,0,0);
+		BN_bntest_rand(b,2+i,0,0);
 
 		if (BN_exp(d, a,b, ctx) <= 0) {
 			rc = 0;
@@ -1864,7 +1864,7 @@ test_lshift(BIO *bp, BN_CTX *ctx, BIGNUM *a_)
 		a = a_;
 	else {
 		a = BN_new();
-		BN_bntest_rand(a,200,0,0); /**/
+		BN_bntest_rand(a,200,0,0);
 		a->neg = rand_neg();
 	}
 	for (i = 0; i < num0; i++) {
@@ -1915,7 +1915,7 @@ test_lshift1(BIO *bp)
 	b = BN_new();
 	c = BN_new();
 
-	BN_bntest_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0);
 	a->neg = rand_neg();
 	for (i = 0; i < num0; i++) {
 		(void)BN_lshift1(b, a);
@@ -1958,7 +1958,7 @@ test_rshift(BIO *bp, BN_CTX *ctx)
 	e = BN_new();
 	BN_one(c);
 
-	BN_bntest_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0);
 	a->neg = rand_neg();
 	for (i = 0; i < num0; i++) {
 		(void)BN_rshift(b, a, i + 1);
@@ -2000,7 +2000,7 @@ test_rshift1(BIO *bp)
 	b = BN_new();
 	c = BN_new();
 
-	BN_bntest_rand(a,200,0,0); /**/
+	BN_bntest_rand(a,200,0,0);
 	a->neg = rand_neg();
 	for (i = 0; i < num0; i++) {
 		(void)BN_rshift1(b, a);
