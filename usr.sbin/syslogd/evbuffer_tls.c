@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.4 2015/07/06 16:12:16 millert Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.5 2015/07/18 22:33:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -185,7 +185,6 @@ buffertls_writecb(int fd, short event, void *arg)
 		if (res <= 0)
 			goto error;
 	}
-	buftls->bt_flags &= ~BT_WRITE_AGAIN;
 
 	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_writecb, buftls);
 	if (EVBUFFER_LENGTH(bufev->output) != 0)
@@ -202,7 +201,6 @@ buffertls_writecb(int fd, short event, void *arg)
 	return;
 
  reschedule:
-	buftls->bt_flags |= BT_WRITE_AGAIN;
 	if (EVBUFFER_LENGTH(bufev->output) != 0)
 		bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 	return;
@@ -277,7 +275,6 @@ buffertls_set(struct buffertls *buftls, struct bufferevent *bufev,
 	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_writecb, buftls);
 	buftls->bt_bufev = bufev;
 	buftls->bt_ctx = ctx;
-	buftls->bt_flags = 0;
 }
 
 void
