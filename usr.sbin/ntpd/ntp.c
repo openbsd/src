@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.133 2015/07/18 00:53:44 bcook Exp $ */
+/*	$OpenBSD: ntp.c,v 1.134 2015/07/18 00:59:00 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,7 +125,7 @@ ntp_main(int pipe_prnt[2], int fd_ctl, struct ntpd_conf *nconf,
 	if ((se = getservbyname("ntp", "udp")) == NULL)
 		fatal("getservbyname");
 
-	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
+	if ((nullfd = open("/dev/null", O_RDWR, 0)) == -1)
 		fatal(NULL);
 
 	close(pipe_prnt[0]);
