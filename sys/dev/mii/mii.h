@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.h,v 1.13 2015/07/18 18:03:47 yuo Exp $	*/
+/*	$OpenBSD: mii.h,v 1.14 2015/07/18 20:38:44 yuo Exp $	*/
 /*	$NetBSD: mii.h,v 1.8 2001/05/31 03:06:46 thorpej Exp $	*/
 
 /*
@@ -197,7 +197,7 @@
 #define	PSECR_PSEDIS	0x0000	/* PSE Disabled */
 
 #define	MII_PSESR	0x0c	/* PSE status register */
-#define	PSESR_PWRDENIED	0x1000	/* Power Defined */
+#define	PSESR_PWRDENIED	0x1000	/* Power Denied */
 #define	PSESR_VALSIG	0x0800	/* Valid PD signature detected */
 #define	PSESR_INVALSIG	0x0400	/* Invalid PD signature detected */
 #define	PSESR_SHORTCIRC	0x0200	/* Short circuit condition detected */
