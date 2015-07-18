@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.10 2015/07/18 00:37:16 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.11 2015/07/18 16:35:33 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -217,8 +217,15 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_2;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, vsc->sc_ipl, virtio_pci_intr,
-	    sc, vsc->sc_dev.dv_xname);
+	/*
+	 * We always set the IPL_MPSAFE flag in order to do the relatively
+	 * expensive ISR read without lock, and then grab the kernel lock in
+	 * the interrupt handler.
+	 * For now, we don't support IPL_MPSAFE vq_done functions.
+	 */
+	KASSERT((vsc->sc_ipl & IPL_MPSAFE) == 0);
+	sc->sc_ih = pci_intr_establish(pc, ih, vsc->sc_ipl | IPL_MPSAFE,
+	    virtio_pci_intr, sc, vsc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", vsc->sc_dev.dv_xname);
 		if (intrstr != NULL)
@@ -395,11 +402,13 @@ virtio_pci_intr(void *arg)
 	    VIRTIO_CONFIG_ISR_STATUS);
 	if (isr == 0)
 		return 0;
+	KERNEL_LOCK();
 	if ((isr & VIRTIO_CONFIG_ISR_CONFIG_CHANGE) &&
 	    (vsc->sc_config_change != NULL))
 		r = (vsc->sc_config_change)(vsc);
 	if (vsc->sc_intrhand != NULL)
 		r |= (vsc->sc_intrhand)(vsc);
+	KERNEL_UNLOCK();
 
 	return r;
 }
