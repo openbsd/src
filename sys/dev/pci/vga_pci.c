@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.84 2015/03/29 18:45:22 miod Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.85 2015/07/18 00:48:05 miod Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -84,11 +84,11 @@
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
 #include <dev/pci/vga_pcivar.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/ic/vgavar.h>
 
 #ifdef X86EMU
 #include <machine/vga_post.h>

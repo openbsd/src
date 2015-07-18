@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_subr.c,v 1.4 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: vga_subr.c,v 1.5 2015/07/18 00:48:05 miod Exp $ */
 /* $NetBSD: vga_subr.c,v 1.6 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -36,9 +36,9 @@
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/ic/vgavar.h>
 
 static void fontram(struct vga_handle *);
 static void textram(struct vga_handle *);

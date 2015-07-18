@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.65 2015/03/29 18:45:22 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.66 2015/07/18 00:48:05 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -70,12 +70,12 @@
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/unicode.h>
 
+#include <dev/ic/vgavar.h>
 #include <dev/ic/pcdisplay.h>
 
 static struct vgafont {

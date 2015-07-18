@@ -33,6 +33,8 @@
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
+
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/ic/vgavar.h>
 #include <dev/pci/vga_pcivar.h>
 
