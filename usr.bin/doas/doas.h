@@ -1,3 +1,4 @@
+/* $OpenBSD: doas.h,v 1.2 2015/07/18 07:49:16 bcallah Exp $ */
 
 struct rule {
 	int action;
