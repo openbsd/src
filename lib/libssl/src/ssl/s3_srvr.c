@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.110 2015/07/14 05:16:47 doug Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.111 2015/07/18 01:42:26 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1708,13 +1708,9 @@ ssl3_get_client_key_exchange(SSL *s)
 				goto truncated;
 			n2s(p, i);
 			if (n != i + 2) {
-				if (!(s->options & SSL_OP_TLS_D5_BUG)) {
-					SSLerr(
-					    SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-					    SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
-					goto err;
-				} else
-					p -= 2;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				    SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
+				goto err;
 			} else
 				n = i;
 		}

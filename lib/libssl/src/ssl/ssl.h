@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.89 2015/07/17 15:50:37 doug Exp $ */
+/* $OpenBSD: ssl.h,v 1.90 2015/07/18 01:42:26 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -520,7 +520,6 @@ struct ssl_session_st {
 #define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L
 #define SSL_OP_TLSEXT_PADDING				0x00000010L
 #define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x00000020L
-#define SSL_OP_TLS_D5_BUG				0x00000100L
 
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
@@ -574,7 +573,6 @@ struct ssl_session_st {
     (SSL_OP_LEGACY_SERVER_CONNECT | \
      SSL_OP_TLSEXT_PADDING | \
      SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER | \
-     SSL_OP_TLS_D5_BUG | \
      SSL_OP_CRYPTOPRO_TLSEXT_BUG)
 
 /* Obsolete flags kept for compatibility. No sane code should use them. */
@@ -592,6 +590,7 @@ struct ssl_session_st {
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x0
 #define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x0
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x0
+#define SSL_OP_TLS_D5_BUG				0x0
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */
