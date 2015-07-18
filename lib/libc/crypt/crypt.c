@@ -1,5 +1,6 @@
-/*	$OpenBSD: crypt.c,v 1.29 2015/07/18 00:58:19 tedu Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.30 2015/07/18 01:18:50 jeremy Exp $	*/
 
+#include <errno.h>
 #include <pwd.h>
 
 char *
