@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.26 2015/01/16 06:40:22 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.27 2015/07/18 05:32:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -91,6 +91,8 @@
 
 #define RETRIES		5
 
+#define SEEDPATH	"/etc/random.seed"
+
 struct formats;
 
 enum opt_enum {
@@ -146,6 +148,7 @@ struct tftp_client {
 	int newline;
 
 	int sock;
+	int seed;
 };
 
 __dead void	usage(void);
@@ -937,6 +940,13 @@ validate_access(struct tftp_client *client, const char *filename)
 	int		 fd, wmode;
 	const char	*errstr;
 
+	if (strcmp(filename, SEEDPATH) == 0) {
+		if (mode != RRQ)	
+			return (EACCESS);
+		client->seed = 1;
+		return (0);
+	}
+
 	/*
 	 * We use a different permissions scheme if `cancreate' is
 	 * set.
@@ -1076,17 +1086,26 @@ file_read(struct tftp_client *client)
 	dp->th_block = htons(client->block);
 	buf = (u_int8_t *)dp->th_data;
 
-	for (i = 0; i < client->segment_size; i++) {
-		c = client->fgetc(client);
-		if (c == EOF) {
-			if (ferror(client->file)) {
-				nak(client, 100 + EIO);
-				return;
-			}
-
-			break;
+	if (client->seed) {
+		if (client->block * client->segment_size > SEGSIZE) {
+			i = SEGSIZE % client->segment_size;
+		} else {
+			i = client->segment_size;
 		}
-		buf[i] = c;
+		arc4random_buf(buf, i);
+	} else {
+		for (i = 0; i < client->segment_size; i++) {
+			c = client->fgetc(client);
+			if (c == EOF) {
+				if (ferror(client->file)) {
+					nak(client, 100 + EIO);
+					return;
+				}
+	
+				break;
+			}
+			buf[i] = c;
+		}
 	}
 
 	client->buflen = i + 4;
@@ -1300,7 +1319,8 @@ tftp_wrq(int fd, short events, void *arg)
 
 	if (n < client->packet_size) {
 		tftp_wrq_ack_packet(client);
-		fclose(client->file);
+		if (client->file != NULL)
+			fclose(client->file);
 		client->file = NULL;
 		event_set(&client->sev, client->sock, EV_READ,
 		    tftp_wrq_end, client);
