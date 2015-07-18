@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.165 2015/07/18 15:51:16 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.166 2015/07/18 21:58:06 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1363,6 +1363,8 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 				continue;
 
 			error = rtable_walk(tableid, i, sysctl_dumpentry, &w);
+			if (error == EAFNOSUPPORT)
+				error = 0;
 			if (error)
 				break;
 		}
