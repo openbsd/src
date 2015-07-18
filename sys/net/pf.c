@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.926 2015/07/18 15:19:44 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.927 2015/07/18 15:47:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -59,7 +59,6 @@
 #include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/route.h>
-#include <net/radix_mpath.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -5358,7 +5357,11 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 
 			if (kif->pfik_ifp == ifp)
 				ret = 1;
+#ifndef SMALL_KERNEL
 			rt = rt_mpath_next(rt);
+#else
+			rt = NULL;
+#endif
 		} while (check_mpath == 1 && rt != NULL && ret == 0);
 	} else
 		ret = 0;
