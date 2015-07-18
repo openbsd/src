@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.4 2015/01/27 20:50:46 sf Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.5 2015/07/18 19:19:14 sf Exp $	*/
 /* $NetBSD: cpuvar.h,v 1.1.2.3 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -90,7 +90,7 @@ struct cpu_attach_args {
 #ifdef _KERNEL
 
 int i386_ipi(int,int,int);
-int i386_ipi_init(int);
+void i386_ipi_init(int);
 
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);

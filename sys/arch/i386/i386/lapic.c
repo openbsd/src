@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.38 2015/04/12 18:37:53 mlarkin Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.39 2015/07/18 19:19:14 sf Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -440,10 +440,9 @@ i82489_icr_wait(void)
 }
 
 #ifdef MULTIPROCESSOR
-int
+void
 i386_ipi_init(int target)
 {
-
 	if ((target & LAPIC_DEST_MASK) == 0)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
 
@@ -458,8 +457,6 @@ i386_ipi_init(int target)
 	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
 
 	i82489_icr_wait();
-
-	return 0;
 }
 
 int

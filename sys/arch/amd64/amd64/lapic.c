@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.39 2015/04/19 19:45:21 sf Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.40 2015/07/18 19:19:14 sf Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -588,7 +588,7 @@ i82489_icr_wait(void)
 }
 
 #ifdef MULTIPROCESSOR
-int
+void
 i82489_ipi_init(int target)
 {
 
@@ -606,8 +606,6 @@ i82489_ipi_init(int target)
 	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
 
 	i82489_icr_wait();
-
-	return 0;
 }
 
 int
@@ -632,7 +630,7 @@ i82489_ipi(int vec, int target, int dl)
 	return 0;
 }
 
-int
+void
 x2apic_ipi_init(int target)
 {
 	u_int64_t hi = 0;
@@ -647,8 +645,6 @@ x2apic_ipi_init(int target)
 
 	x2apic_writeicr(0, (target & LAPIC_DEST_MASK) | LAPIC_DLMODE_INIT |
 	    LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
-
-	return 0;
 }
 
 int
@@ -666,13 +662,13 @@ x2apic_ipi(int vec, int target, int dl)
 	return 0;
 }
 
-int
+void
 x86_ipi_init(int target)
 {
 	if (x2apic_enabled)
-		return x2apic_ipi_init(target);
+		x2apic_ipi_init(target);
 	else
-		return i82489_ipi_init(target);
+		i82489_ipi_init(target);
 }
 #endif /* MULTIPROCESSOR */
 

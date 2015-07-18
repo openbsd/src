@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.65 2015/07/18 00:53:37 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.66 2015/07/18 19:19:14 sf Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -710,8 +710,7 @@ mp_cpu_start(struct cpu_info *ci)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = i386_ipi_init(ci->ci_apicid)) != 0)
-			return (error);
+		i386_ipi_init(ci->ci_apicid);
 
 		delay(10000);
 
