@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.52 2015/01/28 23:33:52 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.53 2015/07/18 00:56:37 tedu Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -385,12 +385,9 @@ char *
 bcrypt(const char *pass, const char *salt)
 {
 	static char    gencrypted[BCRYPT_HASHSPACE];
-	static char    gerror[2];
 
-	/* How do I handle errors ? Return ':' */
-	strlcpy(gerror, ":", sizeof(gerror));
 	if (bcrypt_hashpass(pass, salt, gencrypted, sizeof(gencrypted)) != 0)
-		return gerror;
+		return NULL;
 
 	return gencrypted;
 }
