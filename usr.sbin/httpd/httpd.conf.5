@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.65 2015/07/18 05:41:18 florian Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.66 2015/07/18 06:00:43 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -112,6 +112,15 @@ directory.
 If not specified, it defaults to
 .Pa /var/www ,
 the home directory of the www user.
+.It Ic default type Ar type/subtype
+Set the default media type that is used if the media type for a
+specified extension is not found in the configured types or for files
+without a file extension;
+see the
+.Sx TYPES
+section below.
+If not specified, the default type is set to
+.Ar application/octet-stream .
 .It Ic logdir Ar directory
 Specifies the full path of the directory in which log files will be written.
 If not specified, it defaults to
@@ -236,6 +245,9 @@ Specify the inactivity timeout in seconds for accepted sessions.
 The default timeout is 600 seconds (10 minutes).
 The maximum is 2147483647 seconds (68 years).
 .El
+.It Ic default type Ar type/subtype
+Set the default media type for the specified location,
+overwriting the global setting.
 .It Ic directory Ar option
 Set the specified options when serving or accessing directories.
 Valid options are:

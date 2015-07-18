@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.89 2015/07/18 05:41:18 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.90 2015/07/18 06:00:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,7 @@
 #define HTTPD_LOGROOT		"/logs"
 #define HTTPD_ACCESS_LOG	"access.log"
 #define HTTPD_ERROR_LOG		"error.log"
+#define HTTPD_DEFAULT_TYPE	{ "bin", "application", "octet-stream", NULL }
 #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
 #define HTTPD_TLS_CERT		"/etc/ssl/server.crt"
 #define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
@@ -353,13 +354,14 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_LOCATION_MATCH	0x00100000
 #define SRVFLAG_SERVER_MATCH	0x00200000
 #define SRVFLAG_SERVER_HSTS	0x00400000
+#define SRVFLAG_DEFAULT_TYPE	0x00800000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
 	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
 	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
-	"\26SERVER_MATCH\27SERVER_HSTS"
+	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -389,6 +391,15 @@ struct log_file {
 };
 TAILQ_HEAD(log_files, log_file) log_files;
 
+struct media_type {
+	char			 media_name[MEDIATYPE_NAMEMAX];
+	char			 media_type[MEDIATYPE_TYPEMAX];
+	char			 media_subtype[MEDIATYPE_TYPEMAX];
+	char			*media_encoding;
+	RB_ENTRY(media_type)	 media_entry;
+};
+RB_HEAD(mediatypes, media_type);
+
 struct auth {
 	char			 auth_htpasswd[PATH_MAX];
 	u_int32_t		 auth_id;
@@ -406,6 +417,7 @@ struct server_config {
 	char			 socket[PATH_MAX];
 	char			 accesslog[NAME_MAX];
 	char			 errorlog[NAME_MAX];
+	struct media_type	 default_type;
 
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
@@ -478,15 +490,6 @@ struct server {
 };
 TAILQ_HEAD(serverlist, server);
 
-struct media_type {
-	char			 media_name[MEDIATYPE_NAMEMAX];
-	char			 media_type[MEDIATYPE_TYPEMAX];
-	char			 media_subtype[MEDIATYPE_TYPEMAX];
-	char			*media_encoding;
-	RB_ENTRY(media_type)	 media_entry;
-};
-RB_HEAD(mediatypes, media_type);
-
 struct httpd {
 	u_int8_t		 sc_opts;
 	u_int32_t		 sc_flags;
@@ -500,6 +503,7 @@ struct httpd {
 
 	struct serverlist	*sc_servers;
 	struct mediatypes	*sc_mediatypes;
+	struct media_type	 sc_default_type;
 	struct serverauth	*sc_auth;
 
 	struct privsep		*sc_ps;
@@ -644,7 +648,10 @@ struct media_type
 void		 media_delete(struct mediatypes *, struct media_type *);
 void		 media_purge(struct mediatypes *);
 struct media_type *
-		 media_find(struct mediatypes *, char *);
+		 media_find(struct mediatypes *, const char *);
+struct media_type *
+		 media_find_config(struct httpd *, struct server_config *,
+		    const char *);
 int		 media_cmp(struct media_type *, struct media_type *);
 RB_PROTOTYPE(kvtree, kv, kv_node, kv_cmp);
 RB_PROTOTYPE(mediatypes, media_type, media_entry, media_cmp);

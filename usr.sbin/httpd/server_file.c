@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.56 2015/07/17 21:53:57 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.57 2015/07/18 06:00:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -238,7 +238,7 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 	if ((fd = open(path, O_RDONLY)) == -1)
 		goto abort;
 
-	media = media_find(env->sc_mediatypes, path);
+	media = media_find_config(env, srv_conf, path);
 	ret = server_response_http(clt, 200, media, st->st_size,
 	    MINIMUM(time(NULL), st->st_mtim.tv_sec));
 	switch (ret) {
@@ -290,6 +290,7 @@ int
 server_partial_file_request(struct httpd *env, struct client *clt, char *path,
     struct stat *st, char *range_str)
 {
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor	*resp = clt->clt_descresp;
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct media_type	*media, multipart_media;
@@ -317,7 +318,7 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 	if ((fd = open(path, O_RDONLY)) == -1)
 		goto abort;
 
-	media = media_find(env->sc_mediatypes, path);
+	media = media_find_config(env, srv_conf, path);
 	if ((evb = evbuffer_new()) == NULL) {
 		errstr = "failed to allocate file buffer";
 		goto abort;
@@ -347,9 +348,7 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 			content_length += i;
 			if ((i = evbuffer_add_printf(evb,
 			    "Content-Type: %s/%s\r\n",
-			    media == NULL ? "application" : media->media_type,
-			    media == NULL ?
-			    "octet-stream" : media->media_subtype)) == -1)
+			    media->media_type, media->media_subtype)) == -1)
 				goto abort;
 
 			content_length += i;
@@ -542,7 +541,7 @@ server_file_index(struct httpd *env, struct client *clt, struct stat *st)
 	close(fd);
 	fd = -1;
 
-	media = media_find(env->sc_mediatypes, "index.html");
+	media = media_find_config(env, srv_conf, "index.html");
 	ret = server_response_http(clt, 200, media, EVBUFFER_LENGTH(evb),
 	    dir_mtime);
 	switch (ret) {

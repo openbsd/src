@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.37 2015/06/03 02:24:36 millert Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.38 2015/07/18 06:00:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1217,7 +1217,7 @@ media_purge(struct mediatypes *types)
 }
 
 struct media_type *
-media_find(struct mediatypes *types, char *file)
+media_find(struct mediatypes *types, const char *file)
 {
 	struct media_type	*match, media;
 	char			*p;
@@ -1239,6 +1239,21 @@ media_find(struct mediatypes *types, char *file)
 	match = RB_FIND(mediatypes, types, &media);
 
 	return (match);
+}
+
+struct media_type *
+media_find_config(struct httpd *env, struct server_config *srv_conf,
+    const char *file)
+{
+	struct media_type	*match;
+
+	if ((match = media_find(env->sc_mediatypes, file)) != NULL)
+		return (match);
+	else if (srv_conf->flags & SRVFLAG_DEFAULT_TYPE)
+		return (&srv_conf->default_type);
+
+	/* fallback to the global default type */
+	return (&env->sc_default_type);
 }
 
 int

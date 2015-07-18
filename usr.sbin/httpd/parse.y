@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2015/07/18 05:41:18 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.72 2015/07/18 06:00:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -133,7 +133,7 @@ typedef struct {
 %token	COMBINED CONNECTION DHE DIRECTORY ECDHE ERR FCGI INDEX IP KEY LISTEN
 %token	LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY ON PORT PREFORK PROTOCOLS
 %token	REQUEST REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT
-%token	TLS TYPES HSTS MAXAGE SUBDOMAINS
+%token	TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -197,6 +197,10 @@ main		: PREFORK NUMBER	{
 		}
 		| LOGDIR STRING		{
 			conf->sc_logdir = $2;
+		}
+		| DEFAULT TYPE mediastring	{
+			memcpy(&conf->sc_default_type, &media,
+			    sizeof(struct media_type));
 		}
 		;
 
@@ -556,6 +560,11 @@ serveroptsl	: LISTEN ON STRING opttls port {
 			srv = parentsrv;
 			srv_conf = &parentsrv->srv_conf;
 			parentsrv = NULL;
+		}
+		| DEFAULT TYPE mediastring	{
+			srv_conf->flags |= SRVFLAG_DEFAULT_TYPE;
+			memcpy(&srv_conf->default_type, &media,
+			    sizeof(struct media_type));
 		}
 		| include
 		| hsts				{
@@ -991,7 +1000,11 @@ mediaopts_l	: mediaopts_l mediaoptsl nl
 		| mediaoptsl nl
 		;
 
-mediaoptsl	: STRING '/' STRING	{
+mediaoptsl	: mediastring medianames_l optsemicolon
+		| include
+		;
+
+mediastring	: STRING '/' STRING 	{
 			if (strlcpy(media.media_type, $1,
 			    sizeof(media.media_type)) >=
 			    sizeof(media.media_type) ||
@@ -1005,8 +1018,7 @@ mediaoptsl	: STRING '/' STRING	{
 			}
 			free($1);
 			free($3);
-		} medianames_l optsemicolon
-		| include
+		}
 		;
 
 medianames_l	: medianames_l medianamesl
@@ -1139,6 +1151,7 @@ lookup(char *s)
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
+		{ "default",		DEFAULT },
 		{ "dhe",		DHE },
 		{ "directory",		DIRECTORY },
 		{ "drop",		DROP },
@@ -1178,6 +1191,7 @@ lookup(char *s)
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },
 		{ "tls",		TLS },
+		{ "type",		TYPE },
 		{ "types",		TYPES },
 		{ "with",		WITH }
 	};
@@ -1505,13 +1519,17 @@ popfile(void)
 int
 parse_config(const char *filename, struct httpd *x_conf)
 {
-	struct sym	*sym, *next;
+	struct sym		*sym, *next;
+	struct media_type	 dflt = HTTPD_DEFAULT_TYPE;
 
 	conf = x_conf;
 	if (config_init(conf) == -1) {
 		log_warn("%s: cannot initialize configuration", __func__);
 		return (-1);
 	}
+
+	/* Set default media type */
+	memcpy(&conf->sc_default_type, &dflt, sizeof(struct media_type));
 
 	errors = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.90 2015/07/18 05:41:19 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.91 2015/07/18 06:00:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1227,7 +1227,8 @@ server_response_http(struct client *clt, u_int code,
 	struct kv		*ct, *cl;
 	char			 tmbuf[32];
 
-	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
+	if (desc == NULL || media == NULL ||
+	    (error = server_httperror_byid(code)) == NULL)
 		return (-1);
 
 	if (server_log_http(clt, code, size) == -1)
@@ -1252,9 +1253,7 @@ server_response_http(struct client *clt, u_int code,
 
 	/* Set media type */
 	if ((ct = kv_add(&resp->http_headers, "Content-Type", NULL)) == NULL ||
-	    kv_set(ct, "%s/%s",
-	    media == NULL ? "application" : media->media_type,
-	    media == NULL ? "octet-stream" : media->media_subtype) == -1)
+	    kv_set(ct, "%s/%s", media->media_type, media->media_subtype) == -1)
 		return (-1);
 
 	/* Set content length, if specified */
