@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.351 2015/07/18 15:51:16 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.352 2015/07/18 16:10:03 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -373,24 +373,8 @@ if_attachhead(struct ifnet *ifp)
 void
 if_attach(struct ifnet *ifp)
 {
-#if NCARP > 0
-	struct ifnet *before = NULL;
-#endif
-
 	if_attach_common(ifp);
-
-#if NCARP > 0
-	if (ifp->if_type != IFT_CARP)
-		TAILQ_FOREACH(before, &ifnet, if_list)
-			if (before->if_type == IFT_CARP)
-				break;
-	if (before == NULL)
-		TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
-	else
-		TAILQ_INSERT_BEFORE(before, ifp, if_list);
-#else
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
-#endif
 	if_attachsetup(ifp);
 }
 
