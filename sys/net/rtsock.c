@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.163 2015/07/16 18:17:27 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.164 2015/07/18 00:02:30 phessler Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1210,6 +1210,19 @@ sysctl_dumpentry(struct radix_node *rn, void *v, u_int id)
 
 	if (w->w_op == NET_RT_FLAGS && !(rt->rt_flags & w->w_arg))
 		return 0;
+	if (w->w_op == NET_RT_DUMP && w->w_arg) {
+		u_int8_t prio = w->w_arg & RTP_MASK;
+		if (w->w_arg < 0) {
+			prio = (-w->w_arg) & RTP_MASK;
+			/* Show all routes that are not this priority */
+			if (prio == (rt->rt_priority & RTP_MASK))
+				return 0;
+		} else {
+			if (prio != (rt->rt_priority & RTP_MASK) &&
+			    prio != RTP_ANY)
+				return 0;
+		}
+	}
 	bzero(&info, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
