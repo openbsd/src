@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.925 2015/07/17 22:52:29 tedu Exp $ */
+/*	$OpenBSD: pf.c,v 1.926 2015/07/18 15:19:44 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -814,7 +814,7 @@ pf_state_key_addr_setup(struct pf_pdesc *pd, void *arg, int sidx,
 		}
 	}
  copy:
-#endif
+#endif	/* INET6 */
 	if (saddr)
 		PF_ACPY(&key->addr[sidx], saddr, af);
 	if (daddr)
@@ -3394,10 +3394,10 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	if (r->rule_flag & PFRULE_ONCE)
 		pf_purge_rule(ruleset, r, aruleset, a);
 
-#if INET && INET6
+#ifdef INET6
 	if (rewrite && skw->af != sks->af)
 		return (PF_AFRT);
-#endif /* INET && INET6 */
+#endif /* INET6 */
 
 	return (PF_PASS);
 
@@ -3496,7 +3496,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	case IPPROTO_ICMP:
 #ifdef INET6
 	case IPPROTO_ICMPV6:
-#endif
+#endif	/* INET6 */
 		s->timeout = PFTM_ICMP_FIRST_PACKET;
 		break;
 	default:
@@ -4366,14 +4366,14 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 			pf_change_ap(pd, pd->dst, pd->dport,
 			    &nk->addr[didx], nk->port[didx], nk->af);
 
-#if INET && INET6
+#ifdef INET6
 		if (afto) {
 			PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
 			PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
 			pd->naf = nk->af;
 			action = PF_AFRT;
 		}
-#endif /* INET && INET6 */
+#endif /* INET6 */
 
 		pd->m->m_pkthdr.ph_rtableid = nk->rdomain;
 		copyback = 1;
@@ -4569,14 +4569,14 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 				break;
 #endif /* INET6 */
 			}
-#if INET && INET6
+#ifdef	INET6
 			if (afto) {
 				PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
 				PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
 				pd->naf = nk->af;
 				return (PF_AFRT);
 			}
-#endif /* INET && INET6 */
+#endif /* INET6 */
 		}
 	} else {
 		/*
@@ -4757,7 +4757,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 				sidx = afto ? pd2.didx : pd2.sidx;
 				didx = afto ? pd2.sidx : pd2.didx;
 
-#if INET && INET6
+#ifdef INET6
 				if (afto) {
 					if (pf_translate_icmp_af(nk->af,
 					    pd->hdr.icmp))
@@ -4791,7 +4791,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->naf = nk->af;
 					return (PF_AFRT);
 				}
-#endif
+#endif	/* INET6 */
 				if (PF_ANEQ(pd2.src,
 				    &nk->addr[pd2.sidx], pd2.af) ||
 				    nk->port[pd2.sidx] != th.th_sport)
@@ -4872,7 +4872,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 				sidx = afto ? pd2.didx : pd2.sidx;
 				didx = afto ? pd2.sidx : pd2.didx;
 
-#if INET && INET6
+#ifdef INET6
 				if (afto) {
 					if (pf_translate_icmp_af(nk->af,
 					    pd->hdr.icmp))
@@ -4906,7 +4906,7 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->naf = nk->af;
 					return (PF_AFRT);
 				}
-#endif /* INET && INET6 */
+#endif /* INET6 */
 
 				if (PF_ANEQ(pd2.src,
 				    &nk->addr[pd2.sidx], pd2.af) ||
@@ -5299,7 +5299,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	int			 check_mpath;
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
-#endif
+#endif	/* INET6 */
 	struct rtentry		*rt, *rt0 = NULL;
 	struct ifnet		*ifp;
 
@@ -5376,7 +5376,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 	struct sockaddr_in	*dst;
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
-#endif
+#endif	/* INET6 */
 	struct rtentry		*rt;
 	int			 ret = 0;
 
@@ -6310,7 +6310,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	case AF_INET6:
 		action = pf_normalize_ip6(&pd, &reason);
 		break;
-#endif
+#endif	/* INET6 */
 	}
 	*m0 = pd.m;
 	/* if packet sits in reassembly queue, return without error */
@@ -6536,7 +6536,7 @@ done:
 		}
 		action = PF_PASS;
 		break;
-#if INET && INET6
+#ifdef INET6
 	case PF_AFRT:
 		if (pf_translate_af(&pd)) {
 			if (!pd.m)
@@ -6551,7 +6551,7 @@ done:
 		*m0 = NULL;
 		action = PF_PASS;
 		break;
-#endif /* INET && INET6 */
+#endif /* INET6 */
 	default:
 		/* pf_route can free the mbuf causing *m0 to become NULL */
 		if (r->rt) {
@@ -6577,7 +6577,7 @@ done:
 		if ((mtag = m_tag_find(*m0, PACKET_TAG_PF_REASSEMBLED, NULL)))
 			action = pf_refragment6(m0, mtag, fwdir);
 	}
-#endif
+#endif	/* INET6 */
 	if (s && action != PF_DROP) {
 		if (!s->if_index_in && dir == PF_IN)
 			s->if_index_in = ifp->if_index;
