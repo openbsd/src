@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.7 2015/07/18 00:19:38 doug Exp $ */
+/* $OpenBSD: doas.c,v 1.8 2015/07/18 06:33:23 nicm Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -35,7 +35,7 @@
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: doas [-u user] command [args]\n");
+	fprintf(stderr, "usage: doas [-s] [-u user] command [args]\n");
 	exit(1);
 }
 
@@ -255,14 +255,20 @@ main(int argc, char **argv, char **envp)
 	int i, ch;
 	const char *safepath = "/bin:/sbin:/usr/bin:/usr/sbin:"
 	    "/usr/local/bin:/usr/local/sbin";
+	int sflag = 0;
+	char *shargv[] = { NULL, NULL };
+	char *sh;
 
 	parseconfig("/etc/doas.conf");
 
-	while ((ch = getopt(argc, argv, "u:")) != -1) {
+	while ((ch = getopt(argc, argv, "su:")) != -1) {
 		switch (ch) {
 		case 'u':
 			if (parseuid(optarg, &target) != 0)
 				errx(1, "unknown user");
+			break;
+		case 's':
+			sflag = 1;
 			break;
 		default:
 			usage();
@@ -272,18 +278,8 @@ main(int argc, char **argv, char **envp)
 	argv += optind;
 	argc -= optind;
 
-	if (!argc)
+	if ((!sflag && !argc) || (sflag && argc))
 		usage();
-
-	cmd = argv[0];
-	if (strlcpy(cmdline, argv[0], sizeof(cmdline)) >= sizeof(cmdline))
-		errx(1, "command line too long");
-	for (i = 1; i < argc; i++) {
-		if (strlcat(cmdline, " ", sizeof(cmdline)) >= sizeof(cmdline))
-			errx(1, "command line too long");
-		if (strlcat(cmdline, argv[i], sizeof(cmdline)) >= sizeof(cmdline))
-			errx(1, "command line too long");
-	}
 
 	uid = getuid();
 	pw = getpwuid(uid);
@@ -295,6 +291,26 @@ main(int argc, char **argv, char **envp)
 	if (ngroups == -1)
 		err(1, "can't get groups");
 	groups[ngroups++] = getgid();
+
+	if (sflag) {
+		sh = getenv("SHELL");
+		if (sh == NULL || *sh == '\0')
+			shargv[0] = pw->pw_shell;
+		else
+			shargv[0] = sh;
+		argv = shargv;
+		argc = 1;
+	}
+
+	cmd = argv[0];
+	if (strlcpy(cmdline, argv[0], sizeof(cmdline)) >= sizeof(cmdline))
+		errx(1, "command line too long");
+	for (i = 1; i < argc; i++) {
+		if (strlcat(cmdline, " ", sizeof(cmdline)) >= sizeof(cmdline))
+			errx(1, "command line too long");
+		if (strlcat(cmdline, argv[i], sizeof(cmdline)) >= sizeof(cmdline))
+			errx(1, "command line too long");
+	}
 
 	if (!permit(uid, groups, ngroups, &rule, target, cmd)) {
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
