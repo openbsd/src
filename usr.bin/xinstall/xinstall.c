@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.59 2015/04/18 03:15:46 guenther Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.60 2015/07/18 14:32:36 jasper Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <limits.h>
 #include <sysexits.h>
 #include <utime.h>
+#include <libgen.h>
 
 #include "pathnames.h"
 
@@ -61,7 +62,7 @@
 
 struct passwd *pp;
 struct group *gp;
-int dobackup, docompare, dodir, dopreserve, dostrip, safecopy;
+int dobackup, docompare, dodest, dodir, dopreserve, dostrip, safecopy;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[PATH_MAX], tempfile[PATH_MAX];
 char *suffix = BACKUP_SUFFIX;
@@ -90,7 +91,7 @@ main(int argc, char *argv[])
 	char *flags, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "B:bCcdf:g:m:o:pSs")) != -1)
+	while ((ch = getopt(argc, argv, "B:bCcDdf:g:m:o:pSs")) != -1)
 		switch(ch) {
 		case 'C':
 			docompare = 1;
@@ -131,6 +132,9 @@ main(int argc, char *argv[])
 		case 's':
 			dostrip = 1;
 			break;
+		case 'D':
+			dodest = 1;
+			break;
 		case 'd':
 			dodir = 1;
 			break;
@@ -166,6 +170,13 @@ main(int argc, char *argv[])
 			install_dir(*argv);
 		exit(EX_OK);
 		/* NOTREACHED */
+	}
+
+	if (dodest) {
+		char *dest = dirname(argv[argc - 1]);
+		if (dest == NULL)
+			errx(EX_OSERR, "cannot determine dirname");
+		install_dir(dest);
 	}
 
 	no_target = stat(to_name = argv[argc - 1], &to_sb);
@@ -603,7 +614,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "\
-usage: install [-bCcdpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner]\n	       source ... target ...\n");
+usage: install [-bCcDdpSs] [-B suffix] [-f flags] [-g group] [-m mode] [-o owner]\n	       source ... target ...\n");
 	exit(EX_USAGE);
 	/* NOTREACHED */
 }

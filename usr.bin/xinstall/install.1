@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.25 2010/09/29 07:44:57 jmc Exp $
+.\"	$OpenBSD: install.1,v 1.26 2015/07/18 14:32:36 jasper Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 29 2010 $
+.Dd $Mdocdate: July 18 2015 $
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd install binaries
 .Sh SYNOPSIS
 .Nm install
-.Op Fl bCcdpSs
+.Op Fl bCcDdpSs
 .Op Fl B Ar suffix
 .Op Fl f Ar flags
 .Op Fl g Ar group
@@ -94,6 +94,8 @@ This is actually the default.
 The
 .Fl c
 option is only included for backwards compatibility.
+.It Fl D
+Create all leading components of the target before installing into it.
 .It Fl d
 Create directories.
 Missing parent directories are created as required.
@@ -209,6 +211,7 @@ utility appeared in
 .Sh CAVEATS
 The
 .Fl C ,
+.Fl D ,
 .Fl p ,
 and
 .Fl S
