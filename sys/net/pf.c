@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.928 2015/07/18 19:19:00 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.929 2015/07/18 23:11:35 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2379,6 +2379,8 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		th = (struct tcphdr *)((caddr_t)h6 + sizeof(struct ip6_hdr));
 		break;
 #endif /* INET6 */
+	default:
+		unhandled_af(af);
 	}
 
 	/* TCP header */
