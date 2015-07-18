@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.85 2015/07/18 00:53:37 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.86 2015/07/18 17:26:09 sf Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -563,8 +563,8 @@ cpu_start_secondary(struct cpu_info *ci)
 
 	ci->ci_flags |= CPUF_AP;
 
-        pmap_kenter_pa(MP_TRAMPOLINE, MP_TRAMPOLINE, PROT_READ | PROT_EXEC);
-        pmap_kenter_pa(MP_TRAMP_DATA, MP_TRAMP_DATA, PROT_READ | PROT_WRITE);
+	pmap_kenter_pa(MP_TRAMPOLINE, MP_TRAMPOLINE, PROT_READ | PROT_EXEC);
+	pmap_kenter_pa(MP_TRAMP_DATA, MP_TRAMP_DATA, PROT_READ | PROT_WRITE);
 
 	CPU_STARTUP(ci);
 
