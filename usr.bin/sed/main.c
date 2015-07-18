@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2015/07/17 21:54:26 jasper Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2015/07/18 09:33:00 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -138,8 +138,8 @@ main(int argc, char *argv[])
 		default:
 		case '?':
 			(void)fprintf(stderr,
-			    "usage: sed [-aEnru] [-i [extension]] command [file ...]\n"
-			    "       sed [-aEnru] [-i [extension]] [-e command] [-f command_file] [file ...]\n");
+			    "usage: sed [-aEnru] [-i[extension]] command [file ...]\n"
+			    "       sed [-aEnru] [-e command] [-f command_file] [-i[extension]] [file ...]\n");
 			exit(1);
 		}
 	argc -= optind;

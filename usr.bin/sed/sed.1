@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.45 2015/07/17 20:38:57 jasper Exp $
+.\"	$OpenBSD: sed.1,v 1.46 2015/07/18 09:33:00 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 17 2015 $
+.Dd $Mdocdate: July 18 2015 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Nm sed
 .Op Fl aEnru
+.Op Fl i Ns Op Ar extension
 .Ar command
 .Op Ar
 .Nm sed
@@ -95,15 +96,15 @@ Append the editing commands found in the file
 .Ar command_file
 to the list of commands.
 The editing commands should each be listed on a separate line.
-.It Fl i Ar extension
-Edit files in-place, saving backups with the specified
+.It Fl i Ns Op Ar extension
+Edit files in place, saving backups with the specified
 .Ar extension .
-If a zero-length
+If a zero length
 .Ar extension
 is given, no backup will be saved.
-It is not recommended to give a zero-length
+It is not recommended to give a zero length
 .Ar extension
-when in-place editing files, as you risk corruption or partial content
+when in place editing files, as it risks corruption or partial content
 in situations where disk space is exhausted, etc.
 .It Fl r
 An alias for
@@ -521,12 +522,6 @@ command,
 squeezing excess empty lines from standard input:
 .Bd -literal -offset indent
 $ sed -n '
-.Pp
-The
-.Fl i
-option is a non-standard
-.Fx
-extension and may not be available on other operating systems.
 # Write non-empty lines.
 /./ {
     p
