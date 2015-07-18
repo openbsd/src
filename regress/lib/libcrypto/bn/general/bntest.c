@@ -800,7 +800,7 @@ test_mont(BIO *bp, BN_CTX *ctx)
 		if (bits == 0)
 			continue;
 		BN_bntest_rand(&n, bits, 0, 1);
-		BN_MONT_CTX_set(mont, &n, ctx);
+		(void)BN_MONT_CTX_set(mont, &n, ctx);
 
 		BN_nnmod(&a, &a, &n, ctx);
 		BN_nnmod(&b, &b, &n, ctx);
@@ -1864,11 +1864,11 @@ test_lshift(BIO *bp, BN_CTX *ctx, BIGNUM *a_)
 		a = a_;
 	else {
 		a = BN_new();
-	    BN_bntest_rand(a,200,0,0); /**/
+		BN_bntest_rand(a,200,0,0); /**/
 		a->neg = rand_neg();
 	}
 	for (i = 0; i < num0; i++) {
-		BN_lshift(b, a, i + 1);
+		(void)BN_lshift(b, a, i + 1);
 		BN_add(c, c, c);
 		if (bp != NULL) {
 			if (!results) {
@@ -1918,7 +1918,7 @@ test_lshift1(BIO *bp)
 	BN_bntest_rand(a,200,0,0); /**/
 	a->neg = rand_neg();
 	for (i = 0; i < num0; i++) {
-		BN_lshift1(b, a);
+		(void)BN_lshift1(b, a);
 		if (bp != NULL) {
 			if (!results) {
 				BN_print(bp, a);
@@ -1961,7 +1961,7 @@ test_rshift(BIO *bp, BN_CTX *ctx)
 	BN_bntest_rand(a,200,0,0); /**/
 	a->neg = rand_neg();
 	for (i = 0; i < num0; i++) {
-		BN_rshift(b, a, i + 1);
+		(void)BN_rshift(b, a, i + 1);
 		BN_add(c, c, c);
 		if (bp != NULL) {
 			if (!results) {
@@ -2003,7 +2003,7 @@ test_rshift1(BIO *bp)
 	BN_bntest_rand(a,200,0,0); /**/
 	a->neg = rand_neg();
 	for (i = 0; i < num0; i++) {
-		BN_rshift1(b, a);
+		(void)BN_rshift1(b, a);
 		if (bp != NULL) {
 			if (!results) {
 				BN_print(bp, a);
