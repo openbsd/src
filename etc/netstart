@@ -1,9 +1,9 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.145 2015/06/06 13:13:07 florian Exp $
+#	$OpenBSD: netstart,v 1.146 2015/07/18 00:03:34 rpe Exp $
 
-# Strip comments (and leading/trailing whitespace if IFS is set)
-# from a file and spew to stdout
+# Strip comments (and leading/trailing whitespace if IFS is set) from a file
+# and spew to stdout.
 stripcom() {
 	local _l
 	[[ -f $1 ]] || return
@@ -12,7 +12,7 @@ stripcom() {
 	done<$1
 }
 
-# Start the $1 interface
+# Start the $1 interface.
 ifstart() {
 	if=$1
 	# Interface names must be alphanumeric only.  We check to avoid
@@ -24,7 +24,7 @@ ifstart() {
 		echo "netstart: $file: No such file or directory"
 		return
 	fi
-	# Not using stat(1), we can't rely on having /usr yet
+	# Not using stat(1), we can't rely on having /usr yet.
 	set -A stat -- `ls -nL $file`
 	if [ "${stat[0]#???????} ${stat[2]} ${stat[3]}" != "--- 0 0" ]; then
 		echo "WARNING: $file is insecure, fixing permissions"
@@ -34,7 +34,7 @@ ifstart() {
 	# Check for ifconfig'able interface.
 	(ifconfig $if || ifconfig $if create) >/dev/null 2>&1 || return
 
-	# Now parse the hostname.* file
+	# Now parse the hostname.* file.
 	while :; do
 		if [ "$cmd2" ]; then
 			# We are carrying over from the 'read dt dtaddr'
@@ -42,7 +42,7 @@ ifstart() {
 			set -- $cmd2
 			af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" cmd2=
 			# Make sure and get any remaining args in ext2,
-			# like the read below
+			# like the read below.
 			i=1
 			while [ $i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
 			ext2="$@"
@@ -50,13 +50,13 @@ ifstart() {
 			# Read the next line or exit the while loop.
 			read af name mask bcaddr ext1 ext2 || break
 		fi
-		# $af can be "dhcp", "up", "rtsol", an address family,
-		# commands, or a comment.
+		# $af can be "dhcp", "up", "rtsol", an address family, commands,
+		# or a comment.
 		case "$af" in
-		"#"*|"") # skip comments and empty lines
+		"#"*|"") # Skip comments and empty lines.
 			continue
 			;;
-		"!"*) # parse commands
+		"!"*) # Parse commands.
 			cmd="${af#*!} ${name} ${mask} ${bcaddr} ${ext1} ${ext2}"
 			;;
 		"dhcp")
@@ -74,7 +74,7 @@ ifstart() {
 		*)
 			read dt dtaddr
 			if [ "$name"  = "alias" ]; then
-				# perform a 'shift' of sorts
+				# Perform a 'shift' of sorts.
 				alias=$name
 				name=$mask
 				mask=$bcaddr
@@ -124,23 +124,24 @@ ifstart() {
 }
 
 # Start multiple:
-#   start "$1" interfaces in order or all interfaces if empty
-#   don't start "$2" interfaces
+# Usage: ifmstart "if1 if2" "if3 if4"
+#   Start "$1" interfaces in order or all interfaces if empty.
+#   Don't start "$2" interfaces.
 ifmstart() {
 	for sif in ${1:-ALL}; do
 		for hn in /etc/hostname.*; do
-			# Strip off /etc/hostname. prefix
+			# Strip off /etc/hostname. prefix.
 			if=${hn#/etc/hostname.}
 			test "$if" = "*" && continue
 
-			# Skip unwanted ifs
+			# Skip unwanted ifs.
 			s=""
 			for xf in $2; do
 				test "$xf" = "${if%%[0-9]*}" && s="1" && break
 			done
 			test "$s" = "1" && continue
 
-			# Start wanted ifs
+			# Start wanted ifs.
 			test "$sif" = "ALL" -o \
 			     "$sif" = "${if%%[0-9]*}" \
 				&& ifstart $if
@@ -148,7 +149,7 @@ ifmstart() {
 	done
 }
 
-# re-read rc.subr if we are not inside /etc/rc
+# Re-read rc.subr if we are not inside /etc/rc.
 [ -n ${INRC} ] && FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
@@ -167,7 +168,7 @@ fi
 
 # Otherwise, process with the complete network initialization.
 
-# /etc/myname contains my symbolic name
+# /etc/myname contains my symbolic name.
 if [ -f /etc/myname ]; then
 	hostname=`stripcom /etc/myname`
 	hostname $hostname
@@ -212,6 +213,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject > /dev/null
 
 	# Completely disallow packets to IPv4 compatible prefix.
+	#
 	# This may conflict with RFC1933 under following circumstances:
 	# (1) An IPv6-only KAME node tries to originate packets to IPv4
 	#     compatible destination.  The KAME node has no IPv4 compatible
@@ -222,6 +224,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# (2) An IPv6-only node originates a packet to an IPv4 compatible
 	#     destination.  A KAME node is acting as an IPv6 router, and
 	#     asked to forward it.
+	#
 	# Due to rare use of IPv4 compatible addresses, and security issues
 	# with it, we disable it by default.
 	route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
@@ -303,11 +306,11 @@ esac
 # either of them.
 ifmstart "pppoe tun gif gre bridge"
 
-# reject 127/8 other than 127.0.0.1
+# Reject 127/8 other than 127.0.0.1.
 route -qn add -net 127 127.0.0.1 -reject > /dev/null
 
 if [ "$ip6kernel" = "YES" ]; then
-	# this is to make sure DAD is completed before going further.
+	# This is to make sure DAD is completed before going further.
 	count=0
 	while [ $((count++)) -lt 10 -a "x"`sysctl -n net.inet6.ip6.dad_pending` != "x0" ]; do
 		sleep 1

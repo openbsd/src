@@ -1,14 +1,14 @@
-#	$OpenBSD: rc,v 1.449 2015/05/02 09:35:44 ajacoutot Exp $
+#	$OpenBSD: rc,v 1.450 2015/07/18 00:03:34 rpe Exp $
 
-# System startup script run by init on autoboot
-# or after single-user.
-# Output and error are redirected to console by init,
-# and the console is the controlling terminal.
+# System startup script run by init on autoboot or after single-user.
+# Output and error are redirected to console by init, and the console is the
+# controlling terminal.
 
 # Subroutines (have to come first).
 
-# Strip comments (and leading/trailing whitespace if IFS is set)
-# from a file and spew to stdout
+
+# Strip comments (and leading/trailing whitespace if IFS is set) from a file
+# and spew to stdout.
 stripcom() {
 	local _file="$1"
 	local _line
@@ -22,7 +22,7 @@ stripcom() {
 	} < $_file
 }
 
-# Update resource limits when sysctl changes
+# Update resource limits when sysctl changes.
 # Usage: update_limit -X loginconf_name
 update_limit() {
 	local _fl="$1"	# ulimit flag
@@ -51,6 +51,7 @@ update_limit() {
 	done
 }
 
+# Apply sysctl(8) settings. 
 sysctl_conf() {
 	test -s /etc/sysctl.conf || return
 
@@ -71,6 +72,7 @@ sysctl_conf() {
 	done
 }
 
+# Apply mixerctl(1) settings.
 mixerctl_conf()
 {
 	test -s /etc/mixerctl.conf || return
@@ -83,6 +85,7 @@ mixerctl_conf()
 	done
 }
 
+# Apply wscons system driver settings using wsconsctl(8).
 wsconsctl_conf()
 {
 	local save_IFS="$IFS"
@@ -111,6 +114,9 @@ random_seed()
 	chmod 600 /etc/random.seed
 }
 
+# Populate net.inet.(tcp|udp).baddynamic with the contents of /etc/services so
+# as to avoid randomly allocating source ports that correspond to well-known
+# services. 
 fill_baddynamic()
 {
 	local _service=$1
@@ -131,6 +137,8 @@ fill_baddynamic()
 	}
 }
 
+# Start daemon using the rc.d daemon control scripts.
+# Usage: start_daemon daemon1 daemon2 daemon3 
 start_daemon()
 {
 	local _n
@@ -142,6 +150,7 @@ start_daemon()
 	done
 }
 
+# Generate keys for isakmpd, iked and sshd if the don't exist yet.
 make_keys()
 {
 	if [ ! -f /etc/isakmpd/private/local.key ]; then
@@ -168,8 +177,8 @@ make_keys()
 	ssh-keygen -A
 }
 
-# create Unix sockets directories for X if needed and make sure they have
-# correct permissions
+# Create Unix sockets directories for X if needed and make sure they have
+# correct permissions.
 setup_X_sockets()
 {
 	if [ -d /usr/X11R6/lib ]; then
@@ -192,6 +201,7 @@ setup_X_sockets()
 	fi
 }
 
+# Check filesystems, optionally by using a flag for fsck(8) passed as $1.
 do_fsck()
 {
 	local _flags=$1
@@ -218,7 +228,7 @@ do_fsck()
 		exit 1
 		;;
 	130)
-		# interrupt before catcher installed
+		# Interrupt before catcher installed.
 		exit 1
 		;;
 	*)
@@ -228,29 +238,29 @@ do_fsck()
 	esac
 }
 
-# End subroutines
+# End subroutines.
 
 stty status '^T'
 
-# Set shell to ignore SIGINT (2), but not children;
-# shell catches SIGQUIT (3) and returns to single user after fsck.
+# Set shell to ignore SIGINT (2), but not children; shell catches SIGQUIT (3)
+# and returns to single user after fsck.
 trap : 2
-trap : 3	# shouldn't be needed
+trap : 3	# Shouldn't be needed.
 
 HOME=/; export HOME
 INRC=1; export INRC
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 
-# must set the domainname before rc.conf, so YP startup choices can be made
+# Must set the domainname before rc.conf, so YP startup choices can be made.
 if [ -f /etc/defaultdomain ]; then
 	domainname `stripcom /etc/defaultdomain`
 fi
 
-# need to get local functions from rc.subr
+# Need to get local functions from rc.subr.
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 
-# load rc.conf into scope
+# Load rc.conf into scope.
 _rc_parse_conf
 
 if [ X"$1" = X"shutdown" ]; then
@@ -279,7 +289,7 @@ if [ X"$1" = X"shutdown" ]; then
 		echo single user: not running shutdown scripts
 	fi
 
-	# bring carp interfaces down gracefully
+	# Bring carp interfaces down gracefully.
 	ifconfig | while read a b; do
 		case $a in
 		carp+([0-9]):) ifconfig ${a%:} down ;;
@@ -302,10 +312,10 @@ trap "echo 'Boot interrupted.'; exit 1" 3
 
 umount -a >/dev/null 2>&1
 mount -a -t nonfs,vnd
-mount -uw /		# root on nfs requires this, others aren't hurt
+mount -uw /		# root on nfs requires this, others aren't hurt.
 rm -f /fastboot		# XXX (root now writeable)
 
-# set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
+# Set flags on ttys.  (Do early, in case they use tty for SLIP in netstart.)
 echo 'setting tty flags'
 ttyflags -a
 
@@ -335,7 +345,7 @@ if [ X"${pf}" != X"NO" ]; then
 	RULES="$RULES\npass out proto carp !received-on any keep state (no-sync)"
 	case `sysctl vfs.mounts.nfs 2>/dev/null` in
 	*[1-9]*)
-		# don't kill NFS
+		# Don't kill NFS.
 		RULES="set reassemble yes no-df\n$RULES"
 		RULES="$RULES\npass in proto { tcp, udp } from any port { sunrpc, nfsd } to any"
 		RULES="$RULES\npass out proto { tcp, udp } from any to any port { sunrpc, nfsd } !received-on any"
@@ -345,13 +355,13 @@ if [ X"${pf}" != X"NO" ]; then
 	pfctl -e
 fi
 
-# Fill net.inet.(tcp|udp).baddynamic lists from /etc/services
+# Fill net.inet.(tcp|udp).baddynamic lists from /etc/services.
 fill_baddynamic udp
 fill_baddynamic tcp
 
 sysctl_conf
 
-# set hostname, turn on network
+# Set hostname, turn on network.
 echo 'starting network'
 ifconfig -g carp carpdemote 128
 if [ -f /etc/resolv.conf.save ]; then
@@ -359,13 +369,14 @@ if [ -f /etc/resolv.conf.save ]; then
 	touch /etc/resolv.conf
 fi
 sh /etc/netstart
-dmesg > /dev/random	# any write triggers a rekey
+dmesg > /dev/random	# Any write triggers a rekey.
 
+# Load pf rules and bring up pfsync interface.
 if [ X"${pf}" != X"NO" ]; then
 	if [ -f /etc/pf.conf ]; then
 		pfctl -f /etc/pf.conf
 	fi
-	# bring up pfsync after the working ruleset has been loaded
+	# Bring up pfsync after the working ruleset has been loaded.
 	if [ -f /etc/hostname.pfsync0 ]; then
 		sh /etc/netstart pfsync0
 	fi
@@ -376,12 +387,12 @@ mount -s /var >/dev/null 2>&1
 
 random_seed
 
-# clean up left-over files
+# Clean up left-over files.
 rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 (cd /var/authpf && rm -rf -- *)
 
-# save a copy of the boot messages
+# Save a copy of the boot messages.
 dmesg >/var/run/dmesg.boot
 
 make_keys
@@ -391,6 +402,7 @@ start_daemon syslogd ldattach pflogd nsd unbound ntpd
 start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
+# Load IPsec rules.
 if [ X"${ipsec}" != X"NO" ]; then
 	if [ -f /etc/ipsec.conf ]; then
 		ipsecctl -f /etc/ipsec.conf
@@ -408,12 +420,12 @@ echo '.'
 mount -a
 swapctl -A -t noblk
 
-# check and mount networked filesystems
+# Check and mount networked filesystems.
 do_fsck -N
 mount -a -N
 
-# /var/crash should be a directory or a symbolic link
-# to the crash directory if core dumps are to be saved.
+# /var/crash should be a directory or a symbolic link to the crash directory
+# if core dumps are to be saved.
 if [ -d /var/crash ]; then
 	savecore ${savecore_flags} /var/crash
 fi
@@ -430,7 +442,7 @@ dev_mkdb
 chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
 chown root:wheel /dev/tty[pqrstuvwxyzPQRST]*
 
-# check the password temp/lock file
+# Check the password temp/lock file.
 if [ -f /etc/ptmp ]; then
 	logger -s -p auth.err \
 	    'password file may be incorrect -- /etc/ptmp exists'
@@ -438,8 +450,8 @@ fi
 
 echo clearing /tmp
 
-# prune quickly with one rm, then use find to clean up /tmp/[lqv]*
-# (not needed with mfs /tmp, but doesn't hurt there...)
+# Prune quickly with one rm, then use find to clean up /tmp/[lqv]*
+# (not needed with mfs /tmp, but doesn't hurt there...).
 (cd /tmp && rm -rf [a-km-pr-uw-zA-Z]*)
 (cd /tmp &&
     find . -maxdepth 1 ! -name . ! -name lost+found ! -name quota.user \
@@ -448,12 +460,12 @@ echo clearing /tmp
 setup_X_sockets
 
 [ -f /etc/rc.securelevel ] && sh /etc/rc.securelevel
-# rc.securelevel did not specifically set -1 or 2, so select the default: 1
+# rc.securelevel did not specifically set -1 or 2, so select the default: 1.
 if [ `sysctl -n kern.securelevel` -eq 0 ]; then
 	sysctl kern.securelevel=1
 fi
 
-# patch /etc/motd
+# Patch /etc/motd.
 if [ ! -f /etc/motd ]; then
 	install -c -o root -g wheel -m 664 /dev/null /etc/motd
 fi
@@ -501,7 +513,7 @@ start_daemon ftpproxy tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd spamd spamlogd sndiod
 echo '.'
 
-# If rc.firsttime exists, run it just once, and make sure it is deleted
+# If rc.firsttime exists, run it just once, and make sure it is deleted.
 if [ -f /etc/rc.firsttime ]; then
 	mv /etc/rc.firsttime /etc/rc.firsttime.run
 	. /etc/rc.firsttime.run 2>&1 | tee /dev/tty |
@@ -509,7 +521,7 @@ if [ -f /etc/rc.firsttime ]; then
 fi
 rm -f /etc/rc.firsttime.run
 
-# Run rc.d(8) scripts from packages
+# Run rc.d(8) scripts from packages.
 if [ -n "${pkg_scripts}" ]; then
 	echo -n 'starting package daemons:'
 	for _r in $pkg_scripts; do
