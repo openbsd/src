@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.251 2015/07/18 00:02:30 phessler Exp $
+.\"	$OpenBSD: sysctl.3,v 1.252 2015/07/18 09:22:31 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1126,7 +1126,6 @@ The fifth and sixth level names are as follows:
 .It Dv NET_RT_IFLIST Ta "None"
 .It Dv NET_RT_STATS Ta "None"
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Li NET_RT_DUMP
 If set to 0, show all routes.
@@ -1134,7 +1133,7 @@ If set to any number, show all routes with that number priority.
 If set to a negative number, show routes that do not have the positive
 priority value.
 .El
-.\ XXX - document NET_RT_FLAGS
+.\" XXX - document NET_RT_FLAGS
 .Pp
 An optional seventh level name can be provided to select the routing table
 on which to run the operation.
