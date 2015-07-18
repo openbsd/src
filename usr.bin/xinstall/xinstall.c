@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.60 2015/07/18 14:32:36 jasper Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.61 2015/07/18 15:42:37 jasper Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 	    fchown(to_fd, uid, gid)) {
 		serrno = errno;
 		(void)unlink(safecopy ? tempfile : to_name);
-		errx(EX_OSERR, "%s: chown/chgrp: %s", 
+		errx(EX_OSERR, "%s: chown/chgrp: %s",
 		    safecopy ? tempfile : to_name, strerror(serrno));
 	}
 	if (fchmod(to_fd, mode)) {
@@ -369,7 +369,7 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 	if (fchflags(to_fd,
 	    flags & SETFLAGS ? fset : from_sb.st_flags & ~UF_NODUMP)) {
 		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
-			warnx("%s: chflags: %s", 
+			warnx("%s: chflags: %s",
 			    safecopy ? tempfile :to_name, strerror(errno));
 	}
 
