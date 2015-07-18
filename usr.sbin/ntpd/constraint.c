@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.13 2015/07/18 20:32:38 bcook Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.14 2015/07/18 21:50:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -641,8 +641,9 @@ httpsdate_free(void *arg)
 int
 httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 {
-	size_t	 outlen = 0, maxlength = CONSTRAINT_MAXHEADERLENGTH;
-	char	*line, *p;
+	size_t	 outlen = 0, maxlength = CONSTRAINT_MAXHEADERLENGTH, len;
+	char	*line, *p, *buf;
+	int	 ret;
 
 	if ((httpsdate->tls_ctx = tls_client()) == NULL)
 		goto fail;
@@ -657,10 +658,17 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 		goto fail;
 	}
 
-	if (tls_write(httpsdate->tls_ctx,
-	    httpsdate->tls_request, strlen(httpsdate->tls_request),
-	    &outlen) == -1)
-		goto fail;
+	buf = httpsdate->tls_request;
+	len = strlen(httpsdate->tls_request);
+	while (len > 0) {
+		ret = tls_write(httpsdate->tls_ctx, buf, len, &outlen);
+		if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN)
+			continue;
+		if (ret < 0)
+			goto fail;
+		buf += outlen;
+		len -= outlen;
+	}
 
 	while ((line = tls_readline(httpsdate->tls_ctx, &outlen,
 	    &maxlength, when)) != NULL) {
