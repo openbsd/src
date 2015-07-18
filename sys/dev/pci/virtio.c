@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.16 2015/06/11 04:38:23 jsg Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.17 2015/07/18 00:37:16 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ virtio_device_string(int id)
 
 void
 virtio_log_features(uint32_t host, uint32_t neg,
-		    const struct virtio_feature_name *guest_feature_names)
+    const struct virtio_feature_name *guest_feature_names)
 {
 	const struct virtio_feature_name *namep;
 	int i;
@@ -154,7 +154,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 			continue;
 		if (n != vq->vq_num) {
 			panic("%s: virtqueue size changed, vq index %d\n",
-			      sc->sc_dev.dv_xname, vq->vq_index);
+			    sc->sc_dev.dv_xname, vq->vq_index);
 		}
 		virtio_init_vq(sc, vq, 1);
 		virtio_setup_queue(sc, vq->vq_index,
@@ -176,39 +176,34 @@ vq_sync_descs(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
 	/* availoffset == sizeof(vring_desc)*vq_num */
 	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, 0, vq->vq_availoffset,
-			ops);
+	    ops);
 }
 
 static inline void
 vq_sync_aring(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
-	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
-			vq->vq_availoffset,
-			offsetof(struct vring_avail, ring)
-			 + vq->vq_num * sizeof(uint16_t),
-			ops);
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, vq->vq_availoffset,
+	    offsetof(struct vring_avail, ring) + vq->vq_num * sizeof(uint16_t),
+	    ops);
 }
 
 static inline void
 vq_sync_uring(struct virtio_softc *sc, struct virtqueue *vq, int ops)
 {
-	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
-			vq->vq_usedoffset,
-			offsetof(struct vring_used, ring)
-			 + vq->vq_num * sizeof(struct vring_used_elem),
-			ops);
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, vq->vq_usedoffset,
+	    offsetof(struct vring_used, ring) + vq->vq_num *
+	    sizeof(struct vring_used_elem), ops);
 }
 
 static inline void
 vq_sync_indirect(struct virtio_softc *sc, struct virtqueue *vq, int slot,
-		     int ops)
+    int ops)
 {
-	int offset = vq->vq_indirectoffset
-		      + sizeof(struct vring_desc) * vq->vq_maxnsegs * slot;
+	int offset = vq->vq_indirectoffset +
+	    sizeof(struct vring_desc) * vq->vq_maxnsegs * slot;
 
-	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap,
-			offset, sizeof(struct vring_desc) * vq->vq_maxnsegs,
-			ops);
+	bus_dmamap_sync(sc->sc_dmat, vq->vq_dmamap, offset,
+	    sizeof(struct vring_desc) * vq->vq_maxnsegs, ops);
 }
 
 /*
@@ -284,9 +279,8 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int reinit)
  * Allocate/free a vq.
  */
 int
-virtio_alloc_vq(struct virtio_softc *sc,
-		struct virtqueue *vq, int index, int maxsegsize, int maxnsegs,
-		const char *name)
+virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
+    int maxsegsize, int maxnsegs, const char *name)
 {
 	int vq_size, allocsize1, allocsize2, allocsize3, allocsize = 0;
 	int rsegs, r, hdrlen;
@@ -307,10 +301,10 @@ virtio_alloc_vq(struct virtio_softc *sc,
 
 	/* allocsize1: descriptor table + avail ring + pad */
 	allocsize1 = VIRTQUEUE_ALIGN(sizeof(struct vring_desc) * vq_size
-				     + sizeof(uint16_t) * (hdrlen + vq_size));
+	    + sizeof(uint16_t) * (hdrlen + vq_size));
 	/* allocsize2: used ring + pad */
 	allocsize2 = VIRTQUEUE_ALIGN(sizeof(uint16_t) * hdrlen
-				     + sizeof(struct vring_used_elem)*vq_size);
+	    + sizeof(struct vring_used_elem) * vq_size);
 	/* allocsize3: indirect table */
 	/* XXX: This is rather inefficient. In practice only a fraction of this
 	 * XXX: memory will be used.
@@ -323,31 +317,31 @@ virtio_alloc_vq(struct virtio_softc *sc,
 
 	/* alloc and map the memory */
 	r = bus_dmamem_alloc(sc->sc_dmat, allocsize, VIRTIO_PAGE_SIZE, 0,
-			     &vq->vq_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
+	    &vq->vq_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("virtqueue %d for %s allocation failed, error %d\n",
 		       index, name, r);
 		goto err;
 	}
 	r = bus_dmamem_map(sc->sc_dmat, &vq->vq_segs[0], 1, allocsize,
-			   (caddr_t*)&vq->vq_vaddr, BUS_DMA_NOWAIT);
+	    (caddr_t*)&vq->vq_vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
-		printf("virtqueue %d for %s map failed, error %d\n",
-		       index, name, r);
+		printf("virtqueue %d for %s map failed, error %d\n", index,
+		    name, r);
 		goto err;
 	}
 	r = bus_dmamap_create(sc->sc_dmat, allocsize, 1, allocsize, 0,
-			      BUS_DMA_NOWAIT, &vq->vq_dmamap);
+	    BUS_DMA_NOWAIT, &vq->vq_dmamap);
 	if (r != 0) {
-		printf("virtqueue %d for %s dmamap creation failed, error %d\n",
-		       index, name, r);
+		printf("virtqueue %d for %s dmamap creation failed, "
+		    "error %d\n", index, name, r);
 		goto err;
 	}
-	r = bus_dmamap_load(sc->sc_dmat, vq->vq_dmamap,
-			    vq->vq_vaddr, allocsize, NULL, BUS_DMA_NOWAIT);
+	r = bus_dmamap_load(sc->sc_dmat, vq->vq_dmamap, vq->vq_vaddr,
+	    allocsize, NULL, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("virtqueue %d for %s dmamap load failed, error %d\n",
-		       index, name, r);
+		    index, name, r);
 		goto err;
 	}
 
@@ -362,14 +356,14 @@ virtio_alloc_vq(struct virtio_softc *sc,
 	vq->vq_desc = vq->vq_vaddr;
 	vq->vq_availoffset = sizeof(struct vring_desc)*vq_size;
 	vq->vq_avail = (struct vring_avail*)(((char*)vq->vq_desc) +
-						vq->vq_availoffset);
+	    vq->vq_availoffset);
 	vq->vq_usedoffset = allocsize1;
 	vq->vq_used = (struct vring_used*)(((char*)vq->vq_desc) +
-						vq->vq_usedoffset);
+	    vq->vq_usedoffset);
 	if (allocsize3 > 0) {
 		vq->vq_indirectoffset = allocsize1 + allocsize2;
 		vq->vq_indirect = (void*)(((char*)vq->vq_desc)
-					  + vq->vq_indirectoffset);
+		    + vq->vq_indirectoffset);
 	}
 	vq->vq_bytesize = allocsize;
 	vq->vq_maxsegsize = maxsegsize;
@@ -387,10 +381,10 @@ virtio_alloc_vq(struct virtio_softc *sc,
 
 #if VIRTIO_DEBUG
 	printf("\nallocated %u byte for virtqueue %d for %s, size %d\n",
-	       allocsize, index, name, vq_size);
+	    allocsize, index, name, vq_size);
 	if (allocsize3 > 0)
 		printf("using %d byte (%d entries) indirect descriptors\n",
-		       allocsize3, maxnsegs * vq_size);
+		    allocsize3, maxnsegs * vq_size);
 #endif
 	return 0;
 
@@ -420,7 +414,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	}
 	if (i != vq->vq_num) {
 		printf("%s: freeing non-empty vq, index %d\n",
-		       sc->sc_dev.dv_xname, vq->vq_index);
+		    sc->sc_dev.dv_xname, vq->vq_index);
 		return EBUSY;
 	}
 
@@ -525,8 +519,7 @@ virtio_enqueue_reserve(struct virtqueue *vq, int slot, int nsegs)
 	VIRTIO_ASSERT(qe1->qe_next == -1);
 	VIRTIO_ASSERT(1 <= nsegs && nsegs <= vq->vq_num);
 
-	if ((vq->vq_indirect != NULL) &&
-	    (nsegs >= MINSEG_INDIRECT) &&
+	if ((vq->vq_indirect != NULL) && (nsegs >= MINSEG_INDIRECT) &&
 	    (nsegs <= vq->vq_maxnsegs))
 		indirect = 1;
 	else
@@ -538,10 +531,10 @@ virtio_enqueue_reserve(struct virtqueue *vq, int slot, int nsegs)
 		int i;
 
 		vd = &vq->vq_desc[qe1->qe_index];
-		vd->addr = vq->vq_dmamap->dm_segs[0].ds_addr
-			+ vq->vq_indirectoffset;
-		vd->addr += sizeof(struct vring_desc)
-			* vq->vq_maxnsegs * qe1->qe_index;
+		vd->addr = vq->vq_dmamap->dm_segs[0].ds_addr +
+		    vq->vq_indirectoffset;
+		vd->addr += sizeof(struct vring_desc) * vq->vq_maxnsegs *
+		    qe1->qe_index;
 		vd->len = sizeof(struct vring_desc) * nsegs;
 		vd->flags = VRING_DESC_F_INDIRECT;
 
@@ -549,9 +542,8 @@ virtio_enqueue_reserve(struct virtqueue *vq, int slot, int nsegs)
 		vd += vq->vq_maxnsegs * qe1->qe_index;
 		qe1->qe_desc_base = vd;
 
-		for (i = 0; i < nsegs-1; i++) {
+		for (i = 0; i < nsegs-1; i++)
 			vd[i].flags = VRING_DESC_F_NEXT;
-		}
 		vd[i].flags = 0;
 		qe1->qe_next = 0;
 
@@ -621,7 +613,7 @@ virtio_enqueue(struct virtqueue *vq, int slot, bus_dmamap_t dmamap, int write)
 
 int
 virtio_enqueue_p(struct virtqueue *vq, int slot, bus_dmamap_t dmamap,
-		 bus_addr_t start, bus_size_t len, int write)
+    bus_addr_t start, bus_size_t len, int write)
 {
 	struct vq_entry *qe1 = &vq->vq_entries[slot];
 	struct vring_desc *vd = qe1->qe_desc_base;
@@ -657,8 +649,8 @@ publish_avail_idx(struct virtio_softc *sc, struct virtqueue *vq)
  * enqueue_commit: add it to the aring.
  */
 int
-virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq,
-		      int slot, int notifynow)
+virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot,
+    int notifynow)
 {
 	struct vq_entry *qe1;
 
@@ -729,7 +721,7 @@ virtio_enqueue_abort(struct virtqueue *vq, int slot)
  */
 int
 virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
-	       int *slotp, int *lenp)
+    int *slotp, int *lenp)
 {
 	uint16_t slot, usedidx;
 	struct vq_entry *qe;
