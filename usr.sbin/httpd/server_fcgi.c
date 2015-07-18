@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.56 2015/07/18 16:42:39 blambert Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.57 2015/07/18 22:42:24 blambert Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -484,8 +484,10 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 
 	do {
 		len = bufferevent_read(bev, buf, clt->clt_fcgi_toread);
-		/* XXX error handling */
-		evbuffer_add(clt->clt_srvevb, buf, len);
+		if (evbuffer_add(clt->clt_srvevb, buf, len) == -1) {
+			server_abort_http(clt, 500, "short write");
+			return;
+		}
 		clt->clt_fcgi_toread -= len;
 		DPRINTF("%s: len: %lu toread: %d state: %d type: %d",
 		    __func__, len, clt->clt_fcgi_toread,
