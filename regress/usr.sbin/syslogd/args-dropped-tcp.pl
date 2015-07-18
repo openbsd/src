@@ -47,7 +47,7 @@ our %args = (
 	    get_secondlog() => 1,
 	    get_thirdlog() => 0,
 	    get_charlog() => '~287',
-	    qr/syslogd: dropped 1[0-9] messages to loghost "\@tcp:.*"/ => 1,
+	    qr/syslogd: dropped 1[0-9] messages to loghost/ => 1,
 	},
     },
     file => {
@@ -56,7 +56,7 @@ our %args = (
 	    get_secondlog() => 1,
 	    get_thirdlog() => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 1[0-9] messages to loghost "\@tcp:.*"/ => 1,
+	    qr/syslogd: dropped 1[0-9] messages to loghost/ => 1,
 	},
     },
 );
