@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.32 2015/02/09 10:53:28 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.33 2015/07/18 23:00:23 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -125,6 +125,7 @@
 #include <openssl/x509.h>
 
 #include "pqueue.h"
+#include "bytestring.h"
 
 #define RSMBLY_BITMASK_SIZE(msg_len) (((msg_len) + 7) / 8)
 
@@ -798,15 +799,14 @@ again:
 		return i;
 	}
 	/* Handshake fails if message header is incomplete */
-	if (i != DTLS1_HM_HEADER_LENGTH) {
+	if (i != DTLS1_HM_HEADER_LENGTH ||
+	    /* parse the message fragment header */
+	    dtls1_get_message_header(wire, &msg_hdr) == 0) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,
 		    SSL_R_UNEXPECTED_MESSAGE);
 		goto f_err;
 	}
-
-	/* parse the message fragment header */
-	dtls1_get_message_header(wire, &msg_hdr);
 
 	/*
 	 * if this is a future (or stale) message it gets buffered
@@ -1372,16 +1372,36 @@ dtls1_guess_mtu(unsigned int curr_mtu)
 	return curr_mtu;
 }
 
-void
+int
 dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 {
-	memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
-	msg_hdr->type = *(data++);
-	n2l3(data, msg_hdr->msg_len);
+	CBS header;
+	uint32_t msg_len, frag_off, frag_len;
+	uint16_t seq;
+	uint8_t type;
 
-	n2s(data, msg_hdr->seq);
-	n2l3(data, msg_hdr->frag_off);
-	n2l3(data, msg_hdr->frag_len);
+	CBS_init(&header, data, sizeof(*msg_hdr));
+
+	memset(msg_hdr, 0, sizeof(*msg_hdr));
+
+	if (!CBS_get_u8(&header, &type))
+		return 0;
+	if (!CBS_get_u24(&header, &msg_len))
+		return 0;
+	if (!CBS_get_u16(&header, &seq))
+		return 0;
+	if (!CBS_get_u24(&header, &frag_off))
+		return 0;
+	if (!CBS_get_u24(&header, &frag_len))
+		return 0;
+
+	msg_hdr->type = type;
+	msg_hdr->msg_len = msg_len;
+	msg_hdr->seq = seq;
+	msg_hdr->frag_off = frag_off;
+	msg_hdr->frag_len = frag_len;
+
+	return 1;
 }
 
 void

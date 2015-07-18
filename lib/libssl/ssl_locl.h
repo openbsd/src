@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.96 2015/07/17 17:36:24 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.97 2015/07/18 23:00:23 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -694,7 +694,7 @@ int dtls1_retransmit_message(SSL *s, unsigned short seq,
 int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL *s);
 void dtls1_clear_record_buffer(SSL *s);
-void dtls1_get_message_header(unsigned char *data,
+int dtls1_get_message_header(unsigned char *data,
     struct hm_header_st *msg_hdr);
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
