@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.32 2014/04/25 14:54:45 jmc Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.33 2015/07/18 16:30:57 reyk Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2014 $
+.Dd $Mdocdate: July 18 2015 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -307,8 +307,8 @@ algorithm.
 .Bd -literal -offset indent
 seclevel enc
 
-user "xaver" authkey "password123" enc aes enckey "321drowssap"
-user "traudl" authkey "password456" enckey "654drowssap"
+user "hans" authkey "password123" enc aes enckey "321drowssap"
+user "sophie" authkey "password456" enckey "654drowssap"
 .Ed
 .Sh SEE ALSO
 .Xr snmpctl 8 ,
