@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.146 2015/07/18 00:03:34 rpe Exp $
+#	$OpenBSD: netstart,v 1.147 2015/07/18 00:37:23 rpe Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set) from a file
 # and spew to stdout.
@@ -120,7 +120,7 @@ ifstart() {
 			;;
 		esac
 		eval "$cmd"
-	done < /etc/hostname.$if
+	done </etc/hostname.$if
 }
 
 # Start multiple:
@@ -185,32 +185,32 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	ip6kernel=YES
 
 	# Disallow link-local unicast dest without outgoing scope identifiers.
-	route -qn add -inet6 fe80:: -prefixlen 10 ::1 -reject > /dev/null
+	route -qn add -inet6 fe80:: -prefixlen 10 ::1 -reject >/dev/null
 
 	# Disallow site-local unicast dest without outgoing scope identifiers.
 	# If you configure site-locals without scope id (it is permissible
 	# config for routers that are not on scope boundary), you may want
 	# to comment the line out.
-	route -qn add -inet6 fec0:: -prefixlen 10 ::1 -reject > /dev/null
+	route -qn add -inet6 fec0:: -prefixlen 10 ::1 -reject >/dev/null
 
 	# Disallow "internal" addresses to appear on the wire.
-	route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
+	route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject >/dev/null
 
 	# Disallow packets to malicious IPv4 compatible prefix.
-	route -qn add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject > /dev/null
-	route -qn add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
-	route -qn add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
-	route -qn add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
+	route -qn add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject >/dev/null
+	route -qn add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
+	route -qn add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
+	route -qn add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
 
 	# Disallow packets to malicious 6to4 prefix.
-	route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject > /dev/null
-	route -qn add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject > /dev/null
-	route -qn add -inet6 2002:0000:: -prefixlen 24 ::1 -reject > /dev/null
-	route -qn add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject > /dev/null
+	route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject >/dev/null
+	route -qn add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject >/dev/null
+	route -qn add -inet6 2002:0000:: -prefixlen 24 ::1 -reject >/dev/null
+	route -qn add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject >/dev/null
 
 	# Disallow packets without scope identifier.
-	route -qn add -inet6 ff01:: -prefixlen 16 ::1 -reject > /dev/null
-	route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject > /dev/null
+	route -qn add -inet6 ff01:: -prefixlen 16 ::1 -reject >/dev/null
+	route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject >/dev/null
 
 	# Completely disallow packets to IPv4 compatible prefix.
 	#
@@ -227,7 +227,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	#
 	# Due to rare use of IPv4 compatible addresses, and security issues
 	# with it, we disable it by default.
-	route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
+	route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject >/dev/null
 
 	rtsolif=""
 else
@@ -252,12 +252,12 @@ fi
 # Look for default routes in /etc/mygate.
 [[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
 		[[ $gw == @(*:*) ]] && continue
-		route -qn delete default > /dev/null 2>&1
+		route -qn delete default >/dev/null 2>&1
 		route -qn add -host default $gw && break
 done
 [[ -z $rtsolif ]] && stripcom /etc/mygate | while read gw; do
 		[[ $gw == !(*:*) ]] && continue
-		route -qn delete -inet6 default > /dev/null 2>&1
+		route -qn delete -inet6 default >/dev/null 2>&1
 		route -qn add -host -inet6 default $gw && break
 done
 
@@ -269,10 +269,10 @@ done
 # NO			YES			none installed	daemon will run
 # YES/interface		NO			-interface	YES=def. iface
 #	   Any other combination		-reject		config error
-route -qn delete 224.0.0.0/4 > /dev/null 2>&1
+route -qn delete 224.0.0.0/4 >/dev/null 2>&1
 case "$multicast_host:$multicast_router" in
 NO:NO)
-	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
+	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
 	;;
 NO:YES)
 	;;
@@ -285,18 +285,18 @@ EOF
 		ed -s "!ifconfig $multicast_host" <<EOF
 /^	inet /p
 EOF
-	fi 2> /dev/null`
+	fi 2>/dev/null`
 	if [ "X${maddr}" != "X" ]; then
 		set $maddr
-		route -qn add -net 224.0.0.0/4 -interface $2 > /dev/null
+		route -qn add -net 224.0.0.0/4 -interface $2 >/dev/null
 	else
 		route -qn add -net 224.0.0.0/4 -interface \
-			127.0.0.1 -reject > /dev/null
+			127.0.0.1 -reject >/dev/null
 	fi
 	;;
 *:*)
 	echo 'config error, multicasting disabled until rc.conf is fixed'
-	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
+	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
 	;;
 esac
 
@@ -307,7 +307,7 @@ esac
 ifmstart "pppoe tun gif gre bridge"
 
 # Reject 127/8 other than 127.0.0.1.
-route -qn add -net 127 127.0.0.1 -reject > /dev/null
+route -qn add -net 127 127.0.0.1 -reject >/dev/null
 
 if [ "$ip6kernel" = "YES" ]; then
 	# This is to make sure DAD is completed before going further.

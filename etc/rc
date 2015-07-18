@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.450 2015/07/18 00:03:34 rpe Exp $
+#	$OpenBSD: rc,v 1.451 2015/07/18 00:37:23 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -19,7 +19,7 @@ stripcom() {
 			test -z "$_line" && continue
 			echo $_line
 		done
-	} < $_file
+	} <$_file
 }
 
 # Update resource limits when sysctl changes.
@@ -51,7 +51,7 @@ update_limit() {
 	done
 }
 
-# Apply sysctl(8) settings. 
+# Apply sysctl(8) settings.
 sysctl_conf() {
 	test -s /etc/sysctl.conf || return
 
@@ -80,7 +80,7 @@ mixerctl_conf()
 	# delete comments and blank lines
 	set -- `stripcom /etc/mixerctl.conf`
 	while [ $# -ge 1 ] ; do
-		mixerctl -q $1 > /dev/null 2>&1
+		mixerctl -q $1 >/dev/null 2>&1
 		shift
 	done
 }
@@ -116,7 +116,7 @@ random_seed()
 
 # Populate net.inet.(tcp|udp).baddynamic with the contents of /etc/services so
 # as to avoid randomly allocating source ports that correspond to well-known
-# services. 
+# services.
 fill_baddynamic()
 {
 	local _service=$1
@@ -138,7 +138,7 @@ fill_baddynamic()
 }
 
 # Start daemon using the rc.d daemon control scripts.
-# Usage: start_daemon daemon1 daemon2 daemon3 
+# Usage: start_daemon daemon1 daemon2 daemon3
 start_daemon()
 {
 	local _n
@@ -369,7 +369,7 @@ if [ -f /etc/resolv.conf.save ]; then
 	touch /etc/resolv.conf
 fi
 sh /etc/netstart
-dmesg > /dev/random	# Any write triggers a rekey.
+dmesg >/dev/random	# Any write triggers a rekey.
 
 # Load pf rules and bring up pfsync interface.
 if [ X"${pf}" != X"NO" ]; then
@@ -470,9 +470,9 @@ if [ ! -f /etc/motd ]; then
 	install -c -o root -g wheel -m 664 /dev/null /etc/motd
 fi
 if T=`mktemp /tmp/_motd.XXXXXXXXXX`; then
-	sysctl -n kern.version | sed 1q > $T
-	echo "" >> $T
-	sed '1,/^$/d' < /etc/motd >> $T
+	sysctl -n kern.version | sed 1q >$T
+	echo "" >>$T
+	sed '1,/^$/d' </etc/motd >>$T
 	cmp -s $T /etc/motd || cp $T /etc/motd
 	rm -f $T
 fi
@@ -481,7 +481,7 @@ if [ X"${accounting}" = X"YES" ]; then
 	if [ ! -f /var/account/acct ]; then
 		touch /var/account/acct
 	fi
-	echo 'turning on accounting';	accton /var/account/acct
+	echo 'turning on accounting'; accton /var/account/acct
 fi
 
 if [ -f /sbin/ldconfig ]; then
@@ -495,7 +495,7 @@ if [ -f /sbin/ldconfig ]; then
 	ldconfig $shlib_dirs
 fi
 
-echo 'preserving editor files.';	/usr/libexec/vi.recover
+echo 'preserving editor files.'; /usr/libexec/vi.recover
 
 echo -n 'starting network daemons:'
 start_daemon ldomd sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
