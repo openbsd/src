@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.h,v 1.12 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: mii.h,v 1.13 2015/07/18 18:03:47 yuo Exp $	*/
 /*	$NetBSD: mii.h,v 1.8 2001/05/31 03:06:46 thorpej Exp $	*/
 
 /*
@@ -186,6 +186,41 @@
 #define	GTSR_LP_1000THDX 0x0400	/* link partner 1000baseT HDX capable */
 #define	GTSR_LP_ASM_DIR	0x0200	/* link partner asym. pause dir. capable */
 #define	GTSR_IDLE_ERR	0x00ff	/* IDLE error count */
+
+#define	MII_PSECR	0x0b	/* PSE control register */
+#define	PSECR_PACTLMASK	0x000c	/* pair control mask */
+#define	PSECR_PSEENMASK	0x0003	/* PSE enable mask */
+#define	PSECR_PINOUTB	0x0008	/* PSE pinout Alternative B */
+#define	PSECR_PINOUTA	0x0004	/* PSE pinout Alternative A */
+#define	PSECR_FOPOWTST	0x0002	/* Force Power Test Mode */
+#define	PSECR_PSEEN	0x0001	/* PSE Enabled */
+#define	PSECR_PSEDIS	0x0000	/* PSE Disabled */
+
+#define	MII_PSESR	0x0c	/* PSE status register */
+#define	PSESR_PWRDENIED	0x1000	/* Power Defined */
+#define	PSESR_VALSIG	0x0800	/* Valid PD signature detected */
+#define	PSESR_INVALSIG	0x0400	/* Invalid PD signature detected */
+#define	PSESR_SHORTCIRC	0x0200	/* Short circuit condition detected */
+#define	PSESR_OVERLOAD	0x0100	/* Overload condition detected */
+#define	PSESR_MPSABSENT	0x0080	/* MPS absent condition detected */
+#define	PSESR_PDCLMASK	0x0070	/* PD Class mask */
+#define	PSESR_STATMASK	0x000e	/* PSE Status mask */
+#define	PSESR_PAIRCTABL	0x0001	/* PAIR Control Ability */
+#define	PSESR_PDCL_4		(4 << 4)	/* Class 4 */
+#define	PSESR_PDCL_3		(3 << 4)	/* Class 3 */
+#define	PSESR_PDCL_2		(2 << 4)	/* Class 2 */
+#define	PSESR_PDCL_1		(1 << 4)	/* Class 1 */
+#define	PSESR_PDCL_0		(0 << 4)	/* Class 0 */
+
+#define	MII_MMDACR	0x0d	/* MMD access control register */
+#define	MMDACR_FUNCMASK		0xc000	/* function */
+#define	MMDACR_DADDRMASK 	0x001f	/* device address */
+#define	MMDACR_FN_ADDRESS	(0 << 14) /* address */
+#define	MMDACR_FN_DATANPI	(1 << 14) /* data, no post increment */
+#define	MMDACR_FN_DATAPIRW	(2 << 14) /* data, post increment on r/w */
+#define	MMDACR_FN_DATAPIW	(3 << 14) /* data, post increment on wr only */
+
+#define	MII_MMDAADR	0x0e	/* MMD access address data register */
 
 #define	MII_EXTSR	0x0f	/* Extended status register */
 #define	EXTSR_1000XFDX	0x8000	/* 1000X full-duplex capable */
