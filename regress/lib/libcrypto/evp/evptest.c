@@ -81,10 +81,14 @@ convert(unsigned char *s)
 		unsigned int n;
 
 		if (!s[1]) {
-			fprintf(stderr, "Odd number of hex digits!");
+			fprintf(stderr, "Odd number of hex digits!\n");
 			exit(4);
 		}
-		sscanf((char *)s, "%2x",&n);
+		if (sscanf((char *)s, "%2x", &n) != 1) {
+			fprintf(stderr, "Invalid hex value at %s\n", s);
+			exit(4);
+		}
+
 		*d = (unsigned char)n;
 	}
 	return s - d;
