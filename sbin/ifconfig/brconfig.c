@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.8 2013/10/13 12:18:18 reyk Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.9 2015/07/18 06:50:24 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -322,7 +322,7 @@ bridge_list(char *delim)
 			    stpstates[reqp->ifbr_state],
 			    stproles[reqp->ifbr_role]);
 		printf("\n");
-		bridge_rules(buf, 0);
+		bridge_rules(buf, 1);
 	}
 	free(bifc.ifbic_buf);
 }
@@ -742,7 +742,7 @@ bridge_flushrule(const char *ifname, int d)
 }
 
 void
-bridge_rules(const char *ifname, int d)
+bridge_rules(const char *ifname, int usetab)
 {
 	char *inbuf = NULL, *inb;
 	struct ifbrlconf ifc;
@@ -766,6 +766,10 @@ bridge_rules(const char *ifname, int d)
 	ifrp = ifc.ifbrl_req;
 	for (i = 0; i < ifc.ifbrl_len; i += sizeof(*ifrp)) {
 		ifrp = (struct ifbrlreq *)((caddr_t)ifc.ifbrl_req + i);
+
+		if (usetab)
+			printf("\t");
+
 		bridge_showrule(ifrp);
 	}
 }
