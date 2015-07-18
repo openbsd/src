@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.32 2014/10/09 04:04:27 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.33 2015/07/18 00:15:10 mpi Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <compat/linux/linux_exec.h>
 #endif
 
-extern struct emul emul_native, emul_elf32, emul_elf64, emul_linux_elf;
+extern struct emul emul_native, emul_linux_elf;
 
 struct execsw execsw[] = {
 	{ EXEC_SCRIPT_HDRSZ, exec_script_makecmds, &emul_native, },	/* shell scripts */

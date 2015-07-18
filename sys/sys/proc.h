@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.199 2015/02/10 05:28:18 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.200 2015/07/18 00:15:10 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -116,9 +116,6 @@ struct	emul {
 /* Flags for e_flags */
 #define	EMUL_ENABLED	0x0001		/* Allow exec to continue */
 #define	EMUL_NATIVE	0x0002		/* Always enabled */
-
-extern struct emul *emulsw[];		/* All emuls in system */
-extern int nemuls;			/* Number of emuls */
 
 /*
  * time usage: accumulated times in ticks
