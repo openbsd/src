@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.20 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: mps.c,v 1.21 2015/07/18 16:54:43 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -132,7 +132,7 @@ mps_getreq(struct snmp_message *msg, struct ber_element *root,
 		goto fail;
 
 	if (OID_NOTSET(value))
-		return (-1);
+		goto fail;
 
 	if (value->o_flags & OID_REGISTERED) {
 		struct agentx_pdu	*pdu;
@@ -160,7 +160,7 @@ mps_getreq(struct snmp_message *msg, struct ber_element *root,
 	if ((value->o_flags & OID_TABLE) == 0)
 		elm = ber_add_oid(elm, o);
 	if (value->o_get(value, o, &elm) != 0)
-		return (-1);
+		goto fail;
 
 	return (0);
 
@@ -204,6 +204,7 @@ mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
 	struct oid		 key, *value;
 	int			 ret;
 	struct ber_oid		 no;
+	unsigned long		 error_type = 0; 	/* noSuchObject */
 
 	if (o->bo_n > BER_MAX_OID_LEN)
 		return (-1);
@@ -212,7 +213,7 @@ mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
 	smi_oidlen(&key.o_id);	/* Strip off any trailing .0. */
 	value = smi_find(&key);
 	if (value == NULL)
-		return (-1);
+		goto fail;
 
 	if (value->o_flags & OID_REGISTERED) {
 		struct agentx_pdu	*pdu;
@@ -239,7 +240,7 @@ mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
 		case 0:
 			return (0);
 		case -1:
-			return (-1);
+			goto fail;
 		case 1:	/* end-of-rows */
 			break;
 		}
@@ -257,7 +258,7 @@ mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
 			break;
 	}
 	if (next == NULL || next->o_get == NULL)
-		return (-1);
+		goto fail;
 
 	if (next->o_flags & OID_TABLE) {
 		/* Get the next table row for this column */
@@ -271,19 +272,29 @@ mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
 				value = next;
 				goto getnext;
 			}
-			return (-1);
+			goto fail;
 		}
 	} else {
 		bcopy(&next->o_id, o, sizeof(*o));
  appendzero:
 		/* No instance identifier specified. Append .0. */
 		if (o->bo_n + 1 > BER_MAX_OID_LEN)
-			return (-1);
+			goto fail;
 		ber = ber_add_noid(ber, o, ++o->bo_n);
 		if ((ret = next->o_get(next, o, &ber)) != 0)
-			return (-1);
+			goto fail;
 	}
 
+	return (0);
+
+fail:
+	if (msg->sm_version == 0)
+		return (-1);
+
+	/* Set SNMPv2 extended error response. */
+	ber = ber_add_oid(ber, o);
+	ber = ber_add_null(ber);
+	ber_set_header(ber, BER_CLASS_CONTEXT, error_type);
 	return (0);
 }
 
