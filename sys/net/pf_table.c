@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.111 2015/07/18 15:19:44 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.112 2015/07/18 19:06:37 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -863,8 +863,7 @@ pfr_create_kentry(struct pfr_addr *ad)
 		break;
 #endif	/* INET6 */
 	default:
-		pool_put(&pfr_kentry_pl[ad->pfra_type], ke);
-		return (NULL);
+		unhandled_af(ad->pfra_af);
 	}
 	ke->pfrke_af = ad->pfra_af;
 	ke->pfrke_net = ad->pfra_net;
@@ -1025,7 +1024,9 @@ pfr_reset_feedback(struct pfr_addr *addr, int size, int flags)
 void
 pfr_prepare_network(union sockaddr_union *sa, int af, int net)
 {
+#ifdef	INET6
 	int	i;
+#endif	/* INET6 */
 
 	bzero(sa, sizeof(*sa));
 	switch (af) {
@@ -2238,7 +2239,6 @@ pfr_detach_table(struct pfr_ktable *kt)
 		pfr_setflags_ktable(kt, kt->pfrkt_flags&~PFR_TFLAG_REFERENCED);
 }
 
-/* ARGSUSED */
 int
 pfr_islinklocal(sa_family_t af, struct pf_addr *addr)
 {
@@ -2531,17 +2531,18 @@ pfr_dynaddr_update(struct pfr_ktable *kt, struct pfi_dynaddr *dyn)
 	dyn->pfid_acnt4 = 0;
 	dyn->pfid_acnt6 = 0;
 	switch (dyn->pfid_af) {
-	case 0:	/* look up all both addresses IPv4 + IPv6 */
+	case AF_UNSPEC:	/* look up all both addresses IPv4 + IPv6 */
 		rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
-		/* FALLTHROUGH */
+		rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);
+		break;
+	case AF_INET:
+		rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
+		break;
 #ifdef	INET6
 	case AF_INET6:
 		rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);
 		break;
 #endif	/* INET6 */
-	case AF_INET:
-		rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
-		break;
 	default:
 		unhandled_af(dyn->pfid_af);
 	}
