@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.89 2015/07/16 19:05:28 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.90 2015/07/18 05:41:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -735,13 +735,12 @@ server_http_parsehost(char *host, char *buf, size_t len, int *portval)
 void
 server_abort_http(struct client *clt, u_int code, const char *msg)
 {
-	struct server		*srv = clt->clt_srv;
-	struct server_config	*srv_conf = &srv->srv_conf;
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct bufferevent	*bev = clt->clt_bev;
 	struct http_descriptor	*desc = clt->clt_descreq;
 	const char		*httperr = NULL, *style;
 	char			*httpmsg, *body = NULL, *extraheader = NULL;
-	char			 tmbuf[32], hbuf[128];
+	char			 tmbuf[32], hbuf[128], *hstsheader = NULL;
 	char			 buf[IBUF_READ_SIZE];
 	int			 bodylen;
 
@@ -828,6 +827,14 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    code, httperr, style, code, httperr, HTTPD_SERVERNAME)) == -1)
 		goto done;
 
+	if (srv_conf->flags & SRVFLAG_SERVER_HSTS) {
+		if (asprintf(&hstsheader, "Strict-Transport-Security: "
+		    "max-age=%d%s\r\n", srv_conf->hsts_max_age,
+		    srv_conf->hsts_subdomains == 0 ? "" : 
+		    " ; includeSubDomains") == -1)
+			goto done;
+	}
+
 	/* Add basic HTTP headers */
 	if (asprintf(&httpmsg,
 	    "HTTP/1.0 %03d %s\r\n"
@@ -837,10 +844,12 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	    "Content-Type: text/html\r\n"
 	    "Content-Length: %d\r\n"
 	    "%s"
+	    "%s"
 	    "\r\n"
 	    "%s",
 	    code, httperr, tmbuf, HTTPD_SERVERNAME, bodylen,
 	    extraheader == NULL ? "" : extraheader,
+	    hstsheader == NULL ? "" : hstsheader,
 	    desc->http_method == HTTP_METHOD_HEAD ? "" : body) == -1)
 		goto done;
 
@@ -851,6 +860,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
  done:
 	free(body);
 	free(extraheader);
+	free(hstsheader);
 	if (msg == NULL)
 		msg = "\"\"";
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1) {
@@ -1210,6 +1220,7 @@ int
 server_response_http(struct client *clt, u_int code,
     struct media_type *media, off_t size, time_t mtime)
 {
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct http_descriptor	*resp = clt->clt_descresp;
 	const char		*error;
@@ -1256,6 +1267,17 @@ server_response_http(struct client *clt, u_int code,
 	if (server_http_time(mtime, tmbuf, sizeof(tmbuf)) <= 0 ||
 	    kv_add(&resp->http_headers, "Last-Modified", tmbuf) == NULL)
 		return (-1);
+
+	/* HSTS header */
+	if (srv_conf->flags & SRVFLAG_SERVER_HSTS) {
+		if ((cl =
+		    kv_add(&resp->http_headers, "Strict-Transport-Security",
+		    NULL)) == NULL ||
+		    kv_set(cl, "max-age=%d%s", srv_conf->hsts_max_age,
+		    srv_conf->hsts_subdomains == 0 ? "" :
+		    " ; includeSubDomains") == -1)
+			return (-1);
+	}
 
 	/* Date header is mandatory and should be added as late as possible */
 	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.64 2015/07/15 17:10:47 jsing Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.65 2015/07/18 05:41:18 florian Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2015 $
+.Dd $Mdocdate: July 18 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -262,6 +262,18 @@ root directory of
 .Xr httpd 8
 and defaults to
 .Pa /run/slowcgi.sock .
+.It Ic hsts Oo Ar option Oc
+Enable HTTP Strict Transport Security.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic max-age Ar seconds
+Set the maximum time in seconds a receiving user agent should regard
+this host as a HSTS host.
+The default is one year.
+.It Ic subdomains
+Signal to the receiving user agent that this host and all sub domains
+of the host's domain should be considered HSTS hosts.
+.El
 .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
 Set the listen address and port.
 This statement can be specified multiple times.

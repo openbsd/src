@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.70 2015/07/16 19:05:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.71 2015/07/18 05:41:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -133,7 +133,7 @@ typedef struct {
 %token	COMBINED CONNECTION DHE DIRECTORY ECDHE ERR FCGI INDEX IP KEY LISTEN
 %token	LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY ON PORT PREFORK PROTOCOLS
 %token	REQUEST REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT
-%token	TLS TYPES
+%token	TLS TYPES HSTS MAXAGE SUBDOMAINS
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -255,6 +255,8 @@ server		: SERVER optmatch STRING	{
 			strlcpy(s->srv_conf.tls_ecdhe_curve,
 			    HTTPD_TLS_ECDHE_CURVE,
 			    sizeof(s->srv_conf.tls_ecdhe_curve));
+
+			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers defined");
@@ -556,6 +558,34 @@ serveroptsl	: LISTEN ON STRING opttls port {
 			parentsrv = NULL;
 		}
 		| include
+		| hsts				{
+			if (parentsrv != NULL) {
+				yyerror("hsts inside location");
+				YYERROR;
+			}
+			srv->srv_conf.flags |= SRVFLAG_SERVER_HSTS;
+		}
+		;
+
+hsts		: HSTS '{' optnl hstsflags_l '}'
+		| HSTS hstsflags
+		| HSTS
+		;
+
+hstsflags_l	: hstsflags optcommanl hstsflags_l
+		| hstsflags optnl
+		;
+
+hstsflags	: MAXAGE NUMBER		{
+			if ($2 < 0 || $2 > INT_MAX) {
+				yyerror("invalid number of seconds: %lld", $2);
+				YYERROR;
+			}
+			srv_conf->hsts_max_age = $2;
+		}
+		| SUBDOMAINS		{
+			srv->srv_conf.hsts_subdomains = 1;
+		}
 		;
 
 fastcgi		: NO FCGI		{
@@ -1115,6 +1145,7 @@ lookup(char *s)
 		{ "ecdhe",		ECDHE },
 		{ "error",		ERR },
 		{ "fastcgi",		FCGI },
+		{ "hsts",		HSTS },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
 		{ "ip",			IP },
@@ -1125,6 +1156,7 @@ lookup(char *s)
 		{ "logdir",		LOGDIR },
 		{ "match",		MATCH },
 		{ "max",		MAXIMUM },
+		{ "max-age",		MAXAGE },
 		{ "no",			NO },
 		{ "nodelay",		NODELAY },
 		{ "on",			ON },
@@ -1141,6 +1173,7 @@ lookup(char *s)
 		{ "socket",		SOCKET },
 		{ "strip",		STRIP },
 		{ "style",		STYLE },
+		{ "subdomains",		SUBDOMAINS },
 		{ "syslog",		SYSLOG },
 		{ "tcp",		TCP },
 		{ "timeout",		TIMEOUT },

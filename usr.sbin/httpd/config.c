@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.39 2015/07/15 16:00:39 jsing Exp $	*/
+/*	$OpenBSD: config.c,v 1.40 2015/07/18 05:41:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -435,6 +435,11 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			    strdup(parent->return_uri)) == NULL)
 				goto fail;
 		}
+
+		f = SRVFLAG_SERVER_HSTS;
+		srv_conf->flags |= parent->flags & f;
+		srv_conf->hsts_max_age = parent->hsts_max_age;
+		srv_conf->hsts_subdomains = parent->hsts_subdomains;
 
 		memcpy(&srv_conf->timeout, &parent->timeout,
 		    sizeof(srv_conf->timeout));
