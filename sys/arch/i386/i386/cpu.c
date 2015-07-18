@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.64 2015/06/07 06:24:59 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.65 2015/07/18 00:53:37 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -354,6 +354,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
+	u_int cr4;
+
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
@@ -370,33 +372,35 @@ cpu_init(struct cpu_info *ci)
 	 */
 	lcr0(rcr0() | CR0_WP);
 
+	cr4 = rcr4();
 	if (cpu_feature & CPUID_PGE)
-		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
+		cr4 |= CR4_PGE;	/* enable global TLB caching */
 
 	if (ci->ci_feature_sefflags & SEFF0EBX_SMEP)
-		lcr4(rcr4() | CR4_SMEP);
+		cr4 |= CR4_SMEP;
 #ifndef SMALL_KERNEL
 	if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
-		lcr4(rcr4() | CR4_SMAP);
-#endif
-
-#ifdef MULTIPROCESSOR
-	ci->ci_flags |= CPUF_RUNNING;
-	tlbflushg();
+		cr4 |= CR4_SMAP;
 #endif
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
 	if (cpu_feature & CPUID_FXSR) {
-		lcr4(rcr4() | CR4_OSFXSR);
+		cr4 |= CR4_OSFXSR;
 
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions.
 		 */
 		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
-			lcr4(rcr4() | CR4_OSXMMEXCPT);
+			cr4 |= CR4_OSXMMEXCPT;
 	}
+	lcr4(cr4);
+
+#ifdef MULTIPROCESSOR
+	ci->ci_flags |= CPUF_RUNNING;
+	tlbflushg();
+#endif
 }
 
 void
