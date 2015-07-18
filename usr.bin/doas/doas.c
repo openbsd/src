@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.6 2015/07/16 23:22:08 nicm Exp $ */
+/* $OpenBSD: doas.c,v 1.7 2015/07/18 00:19:38 doug Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -244,8 +244,8 @@ fail(void)
 int
 main(int argc, char **argv, char **envp)
 {
-	char cmdline[1024];
-	char myname[32];
+	char cmdline[LINE_MAX];
+	char myname[_PW_NAME_LEN + 1];
 	uid_t uid, target = 0;
 	gid_t groups[NGROUPS_MAX + 1];
 	int ngroups;
@@ -276,17 +276,21 @@ main(int argc, char **argv, char **envp)
 		usage();
 
 	cmd = argv[0];
-	strlcpy(cmdline, argv[0], sizeof(cmdline));
+	if (strlcpy(cmdline, argv[0], sizeof(cmdline)) >= sizeof(cmdline))
+		errx(1, "command line too long");
 	for (i = 1; i < argc; i++) {
-		strlcat(cmdline, " ", sizeof(cmdline));
-		strlcat(cmdline, argv[i], sizeof(cmdline));
+		if (strlcat(cmdline, " ", sizeof(cmdline)) >= sizeof(cmdline))
+			errx(1, "command line too long");
+		if (strlcat(cmdline, argv[i], sizeof(cmdline)) >= sizeof(cmdline))
+			errx(1, "command line too long");
 	}
 
 	uid = getuid();
 	pw = getpwuid(uid);
 	if (!pw)
 		err(1, "getpwuid failed");
-	strlcpy(myname, pw->pw_name, sizeof(myname));
+	if (strlcpy(myname, pw->pw_name, sizeof(myname)) >= sizeof(myname))
+		errx(1, "pw_name too long");
 	ngroups = getgroups(NGROUPS_MAX, groups);
 	if (ngroups == -1)
 		err(1, "can't get groups");
@@ -317,7 +321,8 @@ main(int argc, char **argv, char **envp)
 
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command as %s: %s",
 	    myname, pw->pw_name, cmdline);
-	setenv("PATH", safepath, 1);
+	if (setenv("PATH", safepath, 1) == -1)
+		err(1, "failed to set PATH '%s'", safepath);
 	execvpe(cmd, argv, envp);
 	err(1, "%s", cmd);
 }
