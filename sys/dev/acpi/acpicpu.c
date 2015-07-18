@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.64 2015/06/13 21:41:42 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.65 2015/07/18 15:20:13 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -77,7 +77,7 @@ void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 /* flags on Intel's FFH mwait method */
 #define CST_FLAG_MWAIT_HW_COORD		0x1
 #define CST_FLAG_MWAIT_BM_AVOIDANCE	0x2
-#define CST_FLAG_UP_ONLY		0x4000	/* ignore if MP */
+#define CST_FLAG_FALLBACK		0x4000	/* fallback for broken _CST */
 #define CST_FLAG_SKIP			0x8000	/* state is worse choice */
 
 #define FLAGS_MWAIT_ONLY	0x02
@@ -339,7 +339,13 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int state, int method,
 	dnprintf(10," C%d: latency:.%4x power:%.4x addr:%.16llx\n",
 	    state, latency, power, address);
 
-	cx = malloc(sizeof(*cx), M_DEVBUF, M_WAITOK);
+	/* add a new state, or overwrite the fallback C1 state? */
+	if (state != ACPI_STATE_C1 ||
+	    (cx = SLIST_FIRST(&sc->sc_cstates)) == NULL ||
+	    (cx->flags & CST_FLAG_FALLBACK) == 0) {
+		cx = malloc(sizeof(*cx), M_DEVBUF, M_WAITOK);
+		SLIST_INSERT_HEAD(&sc->sc_cstates, cx, link);
+	}
 
 	cx->state = state;
 	cx->method = method;
@@ -347,8 +353,6 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int state, int method,
 	cx->latency = latency;
 	cx->power = power;
 	cx->address = address;
-
-	SLIST_INSERT_HEAD(&sc->sc_cstates, cx, link);
 }
 
 /* Found a _CST object, add new cstate for each entry */
@@ -489,30 +493,36 @@ acpicpu_getcst(struct acpicpu_softc *sc)
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res))
 		return (1);
 
+	/* provide a fallback C1-via-halt in case _CST's C1 is bogus */
+	acpicpu_add_cstate(sc, ACPI_STATE_C1, CST_METH_HALT,
+	    CST_FLAG_FALLBACK, 1, -1, 0);
+
 	aml_foreachpkg(&res, 1, acpicpu_add_cstatepkg, sc);
 	aml_freevalue(&res);
+
+	/* only have fallback state?  then no _CST objects were understood */
+	cx = SLIST_FIRST(&sc->sc_cstates);
+	if (cx->flags & CST_FLAG_FALLBACK)
+		return (1);
 
 	/*
 	 * Scan the list for states that are neither lower power nor
 	 * lower latency than the next state; mark them to be skipped.
-	 * Also skip states >=C2 if the CPU's LAPIC timer stop in deep
+	 * Also skip states >=C2 if the CPU's LAPIC timer stops in deep
 	 * states (i.e., it doesn't have the 'ARAT' bit set).
 	 * Also keep track if all the states we'll use use mwait.
 	 */
 	use_nonmwait = 0;
-	if ((cx = SLIST_FIRST(&sc->sc_cstates)) == NULL)
-		use_nonmwait = 1;
-	else {
-		while ((next_cx = SLIST_NEXT(cx, link)) != NULL) {
-			if ((cx->power >= next_cx->power &&
-			    cx->latency >= next_cx->latency) ||
-			    (cx->state > 1 &&
-			    (sc->sc_ci->ci_feature_tpmflags & TPM_ARAT) == 0))
-				cx->flags |= CST_FLAG_SKIP;
-			else if (cx->method != CST_METH_MWAIT)
-				use_nonmwait = 1;
-			cx = next_cx;
-		}
+	while ((next_cx = SLIST_NEXT(cx, link)) != NULL) {
+		if ((next_cx->power != -1 &&
+		    cx->power >= next_cx->power &&
+		    cx->latency >= next_cx->latency) ||
+		    (cx->state > 1 &&
+		    (sc->sc_ci->ci_feature_tpmflags & TPM_ARAT) == 0))
+			cx->flags |= CST_FLAG_SKIP;
+		else if (cx->method != CST_METH_MWAIT)
+			use_nonmwait = 1;
+		cx = next_cx;
 	}
 	if (use_nonmwait)
 		sc->sc_flags &= ~FLAGS_MWAIT_ONLY;
@@ -581,8 +591,12 @@ acpicpu_print_one_cst(struct acpi_cstate *cx)
 	if (cx->power != -1)
 		printf("%d", cx->power);
 	printf("@%d%s", cx->latency, meth);
-	if (cx->flags & ~CST_FLAG_SKIP)
-		printf(".%x", (cx->flags & ~CST_FLAG_SKIP));
+	if (cx->flags & ~CST_FLAG_SKIP) {
+		if (cx->flags & CST_FLAG_FALLBACK)
+			printf("!");
+		else
+			printf(".%x", (cx->flags & ~CST_FLAG_SKIP));
+	}
 	if (show_addr)
 		printf("@0x%llx", cx->address);
 	printf(")");
@@ -1114,12 +1128,6 @@ acpicpu_idle(void)
 	 * states marked skippable
 	 */
 	best = cx = SLIST_FIRST(&sc->sc_cstates);
-	if (cx == NULL) {
-halt:
-		__asm volatile("sti; hlt");
-		return;
-	}
-
 	while ((cx->flags & CST_FLAG_SKIP) ||
 	    cx->latency * 3 > sc->sc_prev_sleep) {
 		if ((cx = SLIST_NEXT(cx, link)) == NULL)
@@ -1140,8 +1148,6 @@ halt:
 			    (cx->flags & CST_FLAG_MWAIT_BM_AVOIDANCE) == 0)
 				break;
 		}
-		if (cx == NULL)
-			goto halt;
 		best = cx;
 	}
 
