@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.8 2015/06/23 05:58:28 doug Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.9 2015/07/18 21:57:00 bcook Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -25,18 +25,19 @@
 /* This is from <openssl/base.h> in boringssl */
 #define OPENSSL_U64(x) x##ULL
 
+#define PRINT_ERROR printf("Error in %s [%s:%d]\n", __func__, __FILE__, \
+		__LINE__)
+
 #define CHECK(a) do {							\
 	if (!(a)) {							\
-		printf("Error in %s [%s:%d]\n", __func__, __FILE__,	\
-		    __LINE__);						\
+		PRINT_ERROR;						\
 		return 0;						\
 	}								\
 } while (0)
 
 #define CHECK_GOTO(a) do {						\
 	if (!(a)) {							\
-		printf("Error in %s [%s:%d]\n", __func__, __FILE__,	\
-		    __LINE__);						\
+		PRINT_ERROR;						\
 		goto err;						\
 	}								\
 } while (0)
@@ -511,18 +512,23 @@ do_indefinite_convert(const char *name, const uint8_t *definite_expected,
 	CHECK_GOTO(CBS_asn1_indefinite_to_definite(&in, &out, &out_len));
 
 	if (out == NULL) {
-		CHECK_GOTO(indefinite_len == definite_len);
-		CHECK_GOTO(memcmp(definite_expected, indefinite, indefinite_len)
-		    == 0);
+
+		if (indefinite_len != definite_len ||
+		    memcmp(definite_expected, indefinite, indefinite_len) != 0) {
+			PRINT_ERROR;
+			goto err;
+		}
 
 		return 1;
 	}
 
-	CHECK_GOTO(out_len == definite_len);
-	CHECK_GOTO(memcmp(out, definite_expected, definite_len) == 0);
+	if (out_len != definite_len ||
+	    memcmp(out, definite_expected, definite_len) != 0) {
+		PRINT_ERROR;
+		goto err;
+	}
 
 	ret = 1;
-
 err:
 	free(out);
 	return ret;
