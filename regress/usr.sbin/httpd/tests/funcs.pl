@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.4 2015/07/16 18:50:09 reyk Exp $
+#	$OpenBSD: funcs.pl,v 1.5 2015/07/18 19:17:13 benno Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -299,7 +299,7 @@ sub read_char {
 			if (defined($max) && $len >= $max) {
 				print STDERR "\nMax";
 				last;
-			}			
+			}
 		}
 		print STDERR "\n";
 	}
