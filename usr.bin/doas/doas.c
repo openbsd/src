@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.8 2015/07/18 06:33:23 nicm Exp $ */
+/* $OpenBSD: doas.c,v 1.9 2015/07/18 18:44:26 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -43,6 +43,7 @@ size_t
 arraylen(const char **arr)
 {
 	size_t cnt = 0;
+
 	while (*arr) {
 		cnt++;
 		arr++;
@@ -165,6 +166,7 @@ copyenvhelper(const char **oldenvp, const char **safeset, int nsafe,
     char **envp, int ei)
 {
 	int i;
+
 	for (i = 0; i < nsafe; i++) {
 		const char **oe = oldenvp;
 		while (*oe) {
@@ -189,12 +191,12 @@ copyenv(const char **oldenvp, struct rule *rule)
 		"PATH", "TERM", "USER", "USERNAME",
 		NULL,
 	};
-	int nsafe;
-	int nextras = 0;
 	char **envp;
 	const char **extra;
 	int ei;
 	int i, j;
+	int nsafe;
+	int nextras = 0;
 	
 	if ((rule->options & KEEPENV) && !rule->envlist) {
 		j = arraylen(oldenvp);
@@ -244,20 +246,21 @@ fail(void)
 int
 main(int argc, char **argv, char **envp)
 {
-	char cmdline[LINE_MAX];
-	char myname[_PW_NAME_LEN + 1];
-	uid_t uid, target = 0;
-	gid_t groups[NGROUPS_MAX + 1];
-	int ngroups;
-	struct passwd *pw;
-	struct rule *rule;
-	const char *cmd;
-	int i, ch;
 	const char *safepath = "/bin:/sbin:/usr/bin:/usr/sbin:"
 	    "/usr/local/bin:/usr/local/sbin";
-	int sflag = 0;
 	char *shargv[] = { NULL, NULL };
 	char *sh;
+	const char *cmd;
+	char cmdline[LINE_MAX];
+	char myname[_PW_NAME_LEN + 1];
+	struct passwd *pw;
+	struct rule *rule;
+	uid_t uid;
+	uid_t target = 0;
+	gid_t groups[NGROUPS_MAX + 1];
+	int ngroups;
+	int i, ch;
+	int sflag = 0;
 
 	parseconfig("/etc/doas.conf");
 
