@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.7 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.8 2015/07/18 15:00:01 guenther Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
-#include <sys/un.h> 
+#include <sys/unpcb.h> 
 #include <sys/socketvar.h>
                         
 #include <net/raw_cb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.9 2015/03/28 23:50:55 bluhm Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.10 2015/07/18 15:00:01 guenther Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  *
  * A socket may be associated with an vnode in the
  * file system.  If so, the unp_vnode pointer holds
- * a reference count to this vnode, which should be irele'd
+ * a reference count to this vnode, which should be vrele'd
  * when the socket goes away.
  *
  * A socket may be connected to another socket, in which
@@ -80,3 +80,21 @@ struct	unpcb {
 #define UNP_FEIDSBIND	2		/* unp_connid was set by a bind */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
+
+#ifdef _KERNEL
+int	unp_attach(struct socket *);
+int	unp_bind(struct unpcb *, struct mbuf *, struct proc *);
+int	unp_connect(struct socket *, struct mbuf *, struct proc *);
+int	unp_connect2(struct socket *, struct socket *);
+void	unp_detach(struct unpcb *);
+void	unp_discard(struct file **, int);
+void	unp_disconnect(struct unpcb *);
+void	unp_drop(struct unpcb *, int);
+void	unp_gc(void);
+void	unp_mark(struct file **, int);
+void	unp_scan(struct mbuf *, void (*)(struct file **, int));
+void	unp_shutdown(struct unpcb *);
+int 	unp_externalize(struct mbuf *, socklen_t, int);
+int	unp_internalize(struct mbuf *, struct proc *);
+void 	unp_dispose(struct mbuf *);
+#endif /* _KERNEL */

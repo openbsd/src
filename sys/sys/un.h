@@ -1,4 +1,4 @@
-/*	$OpenBSD: un.h,v 1.13 2014/08/31 01:42:36 guenther Exp $	*/
+/*	$OpenBSD: un.h,v 1.14 2015/07/18 15:00:01 guenther Exp $	*/
 /*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
 
 /*
@@ -52,27 +52,7 @@ struct	sockaddr_un {
 	char	sun_path[104];		/* path name (gag) */
 };
 
-#ifdef _KERNEL
-struct unpcb;
-struct socket;
-
-int	unp_attach(struct socket *);
-int	unp_bind(struct unpcb *, struct mbuf *, struct proc *);
-int	unp_connect(struct socket *, struct mbuf *, struct proc *);
-int	unp_connect2(struct socket *, struct socket *);
-void	unp_detach(struct unpcb *);
-void	unp_discard(struct file *);
-void	unp_disconnect(struct unpcb *);
-void	unp_drop(struct unpcb *, int);
-void	unp_gc(void);
-void	unp_mark(struct file *);
-void	unp_scan(struct mbuf *, void (*)(struct file *), int);
-void	unp_shutdown(struct unpcb *);
-int 	unp_externalize(struct mbuf *, socklen_t, int);
-int	unp_internalize(struct mbuf *, struct proc *);
-void 	unp_dispose(struct mbuf *);
-#else /* !_KERNEL */
-
+#ifndef _KERNEL
 #if __BSD_VISIBLE
 
 /* actual length of an initialized sockaddr_un */

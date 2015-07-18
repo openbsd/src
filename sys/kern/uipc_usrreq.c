@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.81 2015/06/30 15:30:17 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.82 2015/07/18 15:00:01 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -685,15 +685,7 @@ restart:
 	fdplock(p->p_fd);
 	if (error != 0) {
 		rp = ((struct file **)CMSG_DATA(cm));
-		for (i = 0; i < nfds; i++) {
-			fp = *rp;
-			/*
-			 * zero the pointer before calling unp_discard,
-			 * since it may end up in unp_gc()..
-			 */
-			*rp++ = NULL;
-			unp_discard(fp);
-		}
+		unp_discard(rp, nfds);
 		goto out;
 	}
 
@@ -909,7 +901,7 @@ unp_gc(void)
 				goto restart;
 			}
 #endif
-			unp_scan(so->so_rcv.sb_mb, unp_mark, 0);
+			unp_scan(so->so_rcv.sb_mb, unp_mark);
 		}
 	} while (unp_defer);
 	/*
@@ -979,16 +971,15 @@ unp_dispose(struct mbuf *m)
 {
 
 	if (m)
-		unp_scan(m, unp_discard, 1);
+		unp_scan(m, unp_discard);
 }
 
 void
-unp_scan(struct mbuf *m0, void (*op)(struct file *), int discard)
+unp_scan(struct mbuf *m0, void (*op)(struct file **, int))
 {
 	struct mbuf *m;
-	struct file **rp, *fp;
+	struct file **rp;
 	struct cmsghdr *cm;
-	int i;
 	int qfds;
 
 	while (m0) {
@@ -1001,13 +992,9 @@ unp_scan(struct mbuf *m0, void (*op)(struct file *), int discard)
 					continue;
 				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof *cm))
 				    / sizeof(struct file *);
-				rp = (struct file **)CMSG_DATA(cm);
-				for (i = 0; i < qfds; i++) {
-					fp = *rp;
-					if (discard)
-						*rp = 0;
-					(*op)(fp);
-					rp++;
+				if (qfds > 0) {
+					rp = (struct file **)CMSG_DATA(cm);
+					op(rp, qfds);
 				}
 				break;		/* XXX, but saves time */
 			}
@@ -1017,30 +1004,39 @@ unp_scan(struct mbuf *m0, void (*op)(struct file *), int discard)
 }
 
 void
-unp_mark(struct file *fp)
+unp_mark(struct file **rp, int nfds)
 {
-	if (fp == NULL)
-		return;
+	int i;
 
-	if (fp->f_iflags & (FIF_MARK|FIF_DEFER))
-		return;
+	for (i = 0; i < nfds; i++) {
+		if (rp[i] == NULL)
+			continue;
 
-	if (fp->f_type == DTYPE_SOCKET) {
-		unp_defer++;
-		fp->f_iflags |= FIF_DEFER;
-	} else {
-		fp->f_iflags |= FIF_MARK;
+		if (rp[i]->f_iflags & (FIF_MARK|FIF_DEFER))
+			continue;
+
+		if (rp[i]->f_type == DTYPE_SOCKET) {
+			unp_defer++;
+			rp[i]->f_iflags |= FIF_DEFER;
+		} else {
+			rp[i]->f_iflags |= FIF_MARK;
+		}
 	}
 }
 
 void
-unp_discard(struct file *fp)
+unp_discard(struct file **rp, int nfds)
 {
+	struct file *fp;
+	int i;
 
-	if (fp == NULL)
-		return;
-	FREF(fp);
-	fp->f_msgcount--;
-	unp_rights--;
-	(void) closef(fp, NULL);
+	for (i = 0; i < nfds; i++) {
+		if ((fp = rp[i]) == NULL)
+			continue;
+		rp[i] = NULL;
+		FREF(fp);
+		fp->f_msgcount--;
+		unp_rights--;
+		(void) closef(fp, NULL);
+	}
 }
