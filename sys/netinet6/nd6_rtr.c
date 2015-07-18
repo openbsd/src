@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.111 2015/07/17 17:18:05 florian Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.112 2015/07/18 15:05:32 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1073,6 +1073,52 @@ purge_detached(struct ifnet *ifp)
 			}
 		}
 	}
+}
+
+struct nd_prefix *
+nd6_prefix_add(struct ifnet *ifp, struct sockaddr_in6 *addr,
+    struct sockaddr_in6 *mask, struct in6_addrlifetime *lt, int autoconf)
+{
+	struct nd_prefix pr0, *pr;
+	int i;
+
+	/*
+	 * convert mask to prefix length (prefixmask has already
+	 * been validated in in6_update_ifa().
+	 */
+	memset(&pr0, 0, sizeof(pr0));
+	pr0.ndpr_ifp = ifp;
+	pr0.ndpr_plen = in6_mask2len(&mask->sin6_addr, NULL);
+	pr0.ndpr_prefix = *addr;
+	pr0.ndpr_mask = mask->sin6_addr;
+	/* apply the mask for safety. */
+	for (i = 0; i < 4; i++) {
+		pr0.ndpr_prefix.sin6_addr.s6_addr32[i] &=
+		    mask->sin6_addr.s6_addr32[i];
+	}
+	/*
+	 * XXX: since we don't have an API to set prefix (not address)
+	 * lifetimes, we just use the same lifetimes as addresses.
+	 * The (temporarily) installed lifetimes can be overridden by
+	 * later advertised RAs (when accept_rtadv is non 0), which is
+	 * an intended behavior.
+	 */
+	pr0.ndpr_raf_onlink = 1; /* should be configurable? */
+	pr0.ndpr_raf_auto = autoconf;
+	pr0.ndpr_vltime = lt->ia6t_vltime;
+	pr0.ndpr_pltime = lt->ia6t_pltime;
+
+	/* add the prefix if not yet. */
+	if ((pr = nd6_prefix_lookup(&pr0)) == NULL) {
+		/*
+		 * nd6_prelist_add will install the corresponding
+		 * interface route.
+		 */
+		if (nd6_prelist_add(&pr0, NULL, &pr) != 0)
+			return (NULL);
+	}
+
+	return (pr);
 }
 
 int

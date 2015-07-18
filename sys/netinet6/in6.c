@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.160 2015/07/08 08:48:34 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.161 2015/07/18 15:05:32 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -462,8 +462,8 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 
 	case SIOCAIFADDR_IN6:
 	{
-		int i, error = 0;
-		struct nd_prefix pr0, *pr;
+		struct nd_prefix *pr;
+		int plen, error = 0;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -492,58 +492,24 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			break;
 		}
 
+		plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr, NULL);
+		if (plen == 128) {
+			dohooks(ifp->if_addrhooks, 0);
+			break;	/* we don't need to install a host route. */
+		}
+
 		/*
 		 * then, make the prefix on-link on the interface.
 		 * XXX: we'd rather create the prefix before the address, but
 		 * we need at least one address to install the corresponding
 		 * interface route, so we configure the address first.
 		 */
-
-		/*
-		 * convert mask to prefix length (prefixmask has already
-		 * been validated in in6_update_ifa().
-		 */
-		bzero(&pr0, sizeof(pr0));
-		pr0.ndpr_ifp = ifp;
-		pr0.ndpr_plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr,
-		    NULL);
-		if (pr0.ndpr_plen == 128) {
-			dohooks(ifp->if_addrhooks, 0);
-			break;	/* we don't need to install a host route. */
-		}
-		pr0.ndpr_prefix = ifra->ifra_addr;
-		pr0.ndpr_mask = ifra->ifra_prefixmask.sin6_addr;
-		/* apply the mask for safety. */
-		for (i = 0; i < 4; i++) {
-			pr0.ndpr_prefix.sin6_addr.s6_addr32[i] &=
-			    ifra->ifra_prefixmask.sin6_addr.s6_addr32[i];
-		}
-		/*
-		 * XXX: since we don't have an API to set prefix (not address)
-		 * lifetimes, we just use the same lifetimes as addresses.
-		 * The (temporarily) installed lifetimes can be overridden by
-		 * later advertised RAs (when accept_rtadv is non 0), which is
-		 * an intended behavior.
-		 */
-		pr0.ndpr_raf_onlink = 1; /* should be configurable? */
-		pr0.ndpr_raf_auto =
-		    ((ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0);
-		pr0.ndpr_vltime = ifra->ifra_lifetime.ia6t_vltime;
-		pr0.ndpr_pltime = ifra->ifra_lifetime.ia6t_pltime;
-
-		/* add the prefix if not yet. */
-		if ((pr = nd6_prefix_lookup(&pr0)) == NULL) {
-			/*
-			 * nd6_prelist_add will install the corresponding
-			 * interface route.
-			 */
-			if ((error = nd6_prelist_add(&pr0, NULL, &pr)) != 0)
-				return (error);
-			if (pr == NULL) {
-				log(LOG_ERR, "nd6_prelist_add succeeded but "
-				    "no prefix\n");
-				return (EINVAL); /* XXX panic here? */
-			}
+		pr = nd6_prefix_add(ifp, &ifra->ifra_addr,
+		    &ifra->ifra_prefixmask, &ifra->ifra_lifetime,
+		    ((ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0));
+		if (pr == NULL) {
+			log(LOG_ERR, "cannot add prefix\n");
+			return (EINVAL); /* XXX panic here? */
 		}
 
 		/* relate the address to the prefix */
