@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.70 2015/07/16 16:29:25 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.71 2015/07/18 22:19:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -632,17 +632,9 @@ server_tls_writecb(int fd, short event, void *arg)
 	}
 
 	if (EVBUFFER_LENGTH(bufev->output)) {
-		if (clt->clt_buf == NULL) {
-			clt->clt_buflen = EVBUFFER_LENGTH(bufev->output);
-			if ((clt->clt_buf = malloc(clt->clt_buflen)) == NULL) {
-				what |= EVBUFFER_ERROR;
-				goto err;
-			}
-			bcopy(EVBUFFER_DATA(bufev->output),
-			    clt->clt_buf, clt->clt_buflen);
-		}
-		ret = tls_write(clt->clt_tls_ctx, clt->clt_buf,
-		    clt->clt_buflen, &len);
+		ret = tls_write(clt->clt_tls_ctx,
+		    EVBUFFER_DATA(bufev->output),
+		    EVBUFFER_LENGTH(bufev->output), &len);
 		if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
 			goto retry;
 		} else if (ret != 0) {
@@ -650,11 +642,6 @@ server_tls_writecb(int fd, short event, void *arg)
 			goto err;
 		}
 		evbuffer_drain(bufev->output, len);
-	}
-	if (clt->clt_buf != NULL) {
-		free(clt->clt_buf);
-		clt->clt_buf = NULL;
-		clt->clt_buflen = 0;
 	}
 
 	if (EVBUFFER_LENGTH(bufev->output) != 0)
@@ -666,16 +653,10 @@ server_tls_writecb(int fd, short event, void *arg)
 	return;
 
  retry:
-	if (clt->clt_buflen != 0)
-		server_bufferevent_add(&bufev->ev_write, bufev->timeout_write);
+	server_bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 	return;
 
  err:
-	if (clt->clt_buf != NULL) {
-		free(clt->clt_buf);
-		clt->clt_buf = NULL;
-		clt->clt_buflen = 0;
-	}
 	(*bufev->errorcb)(bufev, what, bufev->cbarg);
 }
 
