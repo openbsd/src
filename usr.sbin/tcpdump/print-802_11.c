@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.22 2015/07/17 19:43:43 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.23 2015/07/18 23:35:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -81,6 +81,7 @@ void	 ieee80211_print_element(u_int8_t *, u_int);
 void	 ieee80211_print_essid(u_int8_t *, u_int);
 void	 ieee80211_print_country(u_int8_t *, u_int);
 void	 ieee80211_print_htcaps(u_int8_t *, u_int);
+void	 ieee80211_print_htop(u_int8_t *, u_int);
 int	 ieee80211_elements(struct ieee80211_frame *, u_int);
 int	 ieee80211_frame(struct ieee80211_frame *, u_int);
 int	 ieee80211_print(struct ieee80211_frame *, u_int);
@@ -350,6 +351,104 @@ ieee80211_print_htcaps(u_int8_t *data, u_int len)
 	printf(">");
 }
 
+/* Caller checks len */
+void
+ieee80211_print_htop(u_int8_t *data, u_int len)
+{
+	u_int8_t primary_chan;
+	u_int8_t htopinfo[5];
+	u_int8_t basic_mcs[16];
+	int sco, prot, i;
+
+	if (len < sizeof(primary_chan) + sizeof(htopinfo) + sizeof(basic_mcs)) {
+		ieee80211_print_element(data, len);
+		return;
+	}
+
+	htopinfo[0] = data[1];
+
+	printf("=<");
+
+	/* primary channel and secondary channel offset */
+	primary_chan = data[0];
+	sco = ((htopinfo[0] & IEEE80211_HTOP0_SCO_MASK)
+	    >> IEEE80211_HTOP0_SCO_SHIFT);
+	if (sco == 0)
+		printf("20MHz chan %d", primary_chan);
+	else if (sco == 1)
+		printf("40MHz primary chan %d secondary above", primary_chan);
+	else if (sco == 3)
+		printf("40MHz primary chan %d secondary below", primary_chan);
+	else
+		printf("chan %d [invalid secondary channel offset %d]",
+		    primary_chan, sco);
+
+	/* STA channel width */
+	if ((htopinfo[0] & IEEE80211_HTOP0_CHW) == 0)
+		printf(",STA chanw 20MHz");
+
+	/* reduced interframe space (RIFS) permitted */
+	if (htopinfo[0] & IEEE80211_HTOP0_RIFS)
+		printf(",RIFS");
+
+	htopinfo[1] = data[2];
+
+	/* protection requirements for HT transmissions */
+	prot = ((htopinfo[1] & IEEE80211_HTOP1_PROT_MASK)
+	    >> IEEE80211_HTOP1_PROT_SHIFT);
+	if (prot == 1)
+		printf(",protect non-member");
+	else if (prot == 2)
+		printf(",protect 20MHz");
+	else if (prot == 3)
+		printf(",protect non-HT");
+
+	/* non-greenfield STA present */
+	if (htopinfo[1] & IEEE80211_HTOP1_NONGF_STA)
+		printf(",non-greenfield STA");
+
+	/* non-HT STA present */
+	if (htopinfo[1] & IEEE80211_HTOP1_OBSS_NONHT_STA)
+		printf(",non-HT STA");
+
+	htopinfo[3] = data[4];
+
+	/* dual-beacon */
+	if (htopinfo[3] & IEEE80211_HTOP2_DUALBEACON)
+		printf(",dualbeacon");
+
+	/* dual CTS protection */
+	if (htopinfo[3] & IEEE80211_HTOP2_DUALCTSPROT)
+		printf(",dualctsprot");
+
+	htopinfo[4] = data[5];
+
+	/* space-time block coding (STBC) beacon */
+	if ((htopinfo[4] << 8) & IEEE80211_HTOP2_DUALCTSPROT)
+		printf(",STBC beacon");
+
+	/* L-SIG (non-HT signal field) TX opportunity (TXOP) protection */
+	if ((htopinfo[4] << 8) & IEEE80211_HTOP2_LSIGTXOP)
+		printf(",lsigtxprot");
+
+	/* phased-coexistence operation (PCO) active */
+	if ((htopinfo[4] << 8) & IEEE80211_HTOP2_PCOACTIVE) {
+		/* PCO phase */
+		if ((htopinfo[4] << 8) & IEEE80211_HTOP2_PCOPHASE40)
+			printf(",pco40MHz");
+		else
+			printf(",pco20MHz");
+	}
+
+	/* basic MCS set */
+	memcpy(basic_mcs, &data[6], sizeof(basic_mcs));
+	printf(",basic MCS set 0x");
+	for (i = 0; i < sizeof(basic_mcs) / sizeof(basic_mcs[0]); i++)
+			printf("%x", basic_mcs[i]);
+
+	printf(">");
+}
+
 int
 ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 {
@@ -479,6 +578,11 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 			printf(", htcaps");
 			if (vflag)
 				ieee80211_print_htcaps(data, len);
+			break;
+		case IEEE80211_ELEMID_HTOP:
+			printf(", htop");
+			if (vflag)
+				ieee80211_print_htop(data, len);
 			break;
 		case IEEE80211_ELEMID_POWER_CONSTRAINT:
 			ELEM_CHECK(1);
