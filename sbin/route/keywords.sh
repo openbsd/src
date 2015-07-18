@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.27 2015/02/06 03:22:00 reyk Exp $
+# $OpenBSD: keywords.sh,v 1.28 2015/07/18 00:05:02 phessler Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -12,8 +12,10 @@ awk=${AWK:-awk}
 cat << _EOF_ | sort > _keywords.t1
 add
 blackhole
+bgp
 change
 cloning
+connected
 delete
 dst
 exec
@@ -34,6 +36,7 @@ jumbo
 label
 link
 llinfo
+local
 lock
 lockrest
 monitor
@@ -45,6 +48,7 @@ net
 netmask
 nojumbo
 nostatic
+ospf
 out
 pop
 prefixlen
@@ -54,6 +58,7 @@ proto2
 push
 recvpipe
 reject
+rip
 rtt
 rttvar
 sa

@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.h,v 1.10 2014/04/17 15:35:35 claudio Exp $ */
+/*	$OpenBSD: show.h,v 1.11 2015/07/18 00:05:02 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,7 +28,7 @@ union sockunion {
 	struct sockaddr_mpls	smpls;
 };
 
-void	 p_rttables(int, u_int, int);
+void	 p_rttables(int, u_int, int, char);
 char	*routename(struct sockaddr *);
 char	*netname(struct sockaddr *, struct sockaddr *);
 char	*mpls_op(u_int32_t);

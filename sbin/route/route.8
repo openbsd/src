@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.76 2015/05/17 00:08:35 deraadt Exp $
+.\"	$OpenBSD: route.8,v 1.77 2015/07/18 00:05:02 phessler Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: May 17 2015 $
+.Dd $Mdocdate: July 18 2015 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -165,6 +165,7 @@ are shown.
 .Op Ar family
 .Op Fl gateway
 .Op Fl label Ar label
+.Op Fl priority Ar priority
 .Xc
 Print out the route table similar to "netstat -r" (see
 .Xr netstat 1 ) .
@@ -177,6 +178,13 @@ same address family as the destination are shown.
 If
 .Fl label
 is specified, only routes with the specified label are shown.
+.Pp
+If
+.Fl priority
+is specified, only routes with the specified (numeric) priority are shown.
+Some well known priorities can be given by name.
+If the priority is negative, then routes that do not match the numeric
+priority are shown.
 .El
 .Pp
 The other commands relating to adding, changing, or deleting routes

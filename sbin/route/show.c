@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.99 2015/04/27 09:51:58 benno Exp $	*/
+/*	$OpenBSD: show.c,v 1.100 2015/07/18 00:05:02 phessler Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
  * Print routing tables.
  */
 void
-p_rttables(int af, u_int tableid, int hastable)
+p_rttables(int af, u_int tableid, int hastable, char prio)
 {
 	struct rt_msghdr *rtm;
 	char *buf = NULL, *next, *lim = NULL;
@@ -123,7 +123,7 @@ p_rttables(int af, u_int tableid, int hastable)
 	mib[2] = 0;
 	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
-	mib[5] = 0;
+	mib[5] = prio;
 	if (hastable) {
 		mib[6] = tableid;
 		mcnt = 7;

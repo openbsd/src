@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.174 2015/05/17 00:08:35 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.175 2015/07/18 00:05:02 phessler Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -661,7 +661,10 @@ newroute(int argc, char **argv)
 void
 show(int argc, char *argv[])
 {
-	int	af = 0;
+	int		 af = 0;
+	char		 prio = 0;
+	char		*priostr;
+	const char	*errstr;
 
 	while (--argc > 0) {
 		if (**(++argv)== '-')
@@ -686,6 +689,37 @@ show(int argc, char *argv[])
 					usage(1+*argv);
 				getlabel(*++argv);
 				break;
+			case K_PRIORITY:
+				if (!--argc)
+					usage(1+*argv);
+				priostr = *++argv;
+				switch (keyword(priostr)) {
+					case K_LOCAL:
+					    prio = RTP_LOCAL;
+					    break;
+					case K_CONNECTED:
+					    prio = RTP_CONNECTED;
+					    break;
+					case K_STATIC:
+					    prio = RTP_STATIC;
+					    break;
+					case K_OSPF:
+					    prio = RTP_OSPF;
+					    break;
+					case K_RIP:
+					    prio = RTP_RIP;
+					    break;
+					case K_BGP:
+					    prio = RTP_BGP;
+					    break;
+					default:
+					    prio = strtonum(priostr, -RTP_MAX, RTP_MAX,
+						&errstr);
+					    if (errstr)
+						errx(1, "priority is %s: %s",
+						    errstr, *argv);
+				}
+				break;
 			default:
 				usage(*argv);
 				/* NOTREACHED */
@@ -694,7 +728,7 @@ show(int argc, char *argv[])
 			usage(*argv);
 	}
 
-	p_rttables(af, tableid, Tflag);
+	p_rttables(af, tableid, Tflag, prio);
 }
 
 void
