@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.10 2015/05/22 19:09:18 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.11 2015/07/18 22:11:34 benno Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -58,6 +58,27 @@ sub child {
 	    PeerPort		=> $self->{connectport},
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,
 	) or die ref($self), " $iosocket socket connect failed: $!,$SSL_ERROR";
+	if ($self->{sndbuf}) {
+		setsockopt($cs, SOL_SOCKET, SO_SNDBUF,
+		    pack('i', $self->{sndbuf}))
+		    or die ref($self), " set sndbuf listen failed: $!";
+	}
+	if ($self->{rcvbuf}) {
+		setsockopt($cs, SOL_SOCKET, SO_RCVBUF,
+		    pack('i', $self->{rcvbuf}))
+		    or die ref($self), " set rcvbuf listen failed: $!";
+	}
+	if ($self->{sndtimeo}) {
+		setsockopt($cs, SOL_SOCKET, SO_SNDTIMEO,
+		    pack('l!l!', $self->{sndtimeo}, 0))
+		    or die ref($self), " set SO_SNDTIMEO failed failed: $!";
+	}
+	if ($self->{rcvtimeo}) {
+		setsockopt($cs, SOL_SOCKET, SO_RCVTIMEO,
+		    pack('l!l!', $self->{rcvtimeo}, 0))
+		    or die ref($self), " set SO_RCVTIMEO failed failed: $!";
+	}
+
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
 	if ($self->{ssl}) {

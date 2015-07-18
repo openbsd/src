@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.19 2015/05/17 22:49:03 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.20 2015/07/18 22:11:34 benno Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -48,10 +48,66 @@ sub find_ports {
 # Client funcs
 ########################################################################
 
+sub write_syswrite {
+	my $self = shift;
+	my $buf = shift;
+	my $len = 0;
+	my $size = length($buf);
+	my $r = 0;
+
+	while ($len < $size) {
+		while (($r = syswrite(STDOUT, $buf, $size, $len))) {
+		    $len += $r;
+			if ($r != $size) {
+			    print STDERR "short write (only $r bytes)\n";
+			}
+		}
+		if ($len != $size) {
+		    print STDERR "short write ($!)\n";
+		}
+	}
+	return $len;
+}
+
+sub write_blocks {
+	my $self = shift;
+	my $len = shift;
+
+	my $data;
+	my $outb = 0;
+	my $blocks = int($len / 1000);
+	my $rest = $len % 1000;
+
+	for (my $i = 1; $i <= 100 ; $i++) {
+		$data .= '012345678'."\n";
+	}
+
+	for (my $i = 1; $i <= $blocks; $i++) {
+		$outb += write_syswrite($self,$data);
+		print STDERR ".";
+	}
+
+	if ($rest>0) {
+		for (my $i = 1; $i < $rest-1 ; $i++) {
+		    $outb += write_syswrite($self,'r');
+		    print STDERR ".";
+		}
+	}
+	print STDERR "\n";
+	$outb += write_syswrite($self,"\n\n");	
+	IO::Handle::flush(\*STDOUT);
+	print STDERR "LEN: ", $outb, "\n";
+}
+
 sub write_char {
 	my $self = shift;
 	my $len = shift // $self->{len} // 251;
 	my $sleep = $self->{sleep};
+
+	if ($self->{fast}) {
+		write_blocks($self,$len);
+		return;
+	}
 
 	my $ctx = Digest::MD5->new();
 	my $char = '0';
@@ -274,9 +330,42 @@ sub errignore {
 # Server funcs
 ########################################################################
 
+sub read_char_fast {
+	my $self = shift;
+	my $max = shift // $self->{max};
+
+	my $ctx = Digest::MD5->new();
+	my $len = 0;
+	if (defined($max) && $max == 0) {
+		print STDERR "Max\n";
+	} else {
+		while ((my $r = sysread(STDIN, my $buf, POSIX::BUFSIZ))) {
+			my $pct;
+			$_ = $buf;
+			$len += $r;
+			$ctx->add($_);
+			$pct = ($len / $max) * 100.0;
+			printf(STDERR "%.2f%%\n", $pct);
+			if (defined($max) && $len >= $max) {
+				print STDERR "\nMax";
+				last;
+			}
+		}
+		print STDERR "\n";
+	}
+
+	print STDERR "LEN: ", $len, "\n";
+	print STDERR "MD5: ", $ctx->hexdigest, "\n";
+}
+
 sub read_char {
 	my $self = shift;
 	my $max = shift // $self->{max};
+
+	if ($self->{fast}) {
+		read_char_fast($self,$max);
+		return;
+	}
 
 	my $ctx = Digest::MD5->new();
 	my $len = 0;
