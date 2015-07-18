@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.285 2015/04/11 13:00:12 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.286 2015/07/18 19:19:00 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1344,7 +1344,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 #if NPFSYNC > 0
 				/* don't send out individual delete messages */
 				SET(s->state_flags, PFSTATE_NOSYNC);
-#endif
+#endif	/* NPFSYNC > 0 */
 				pf_unlink_state(s);
 				killed++;
 			}
@@ -1352,7 +1352,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		psk->psk_killed = killed;
 #if NPFSYNC > 0
 		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
-#endif
+#endif	/* NPFSYNC > 0 */
 		break;
 	}
 
@@ -1434,7 +1434,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		error = pfsync_state_import(sp, PFSYNC_SI_IOCTL);
 		break;
 	}
-#endif
+#endif	/* NPFSYNC > 0 */
 
 	case DIOCGETSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
@@ -2428,7 +2428,7 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 #if NPFLOG > 0
 	if (!to->log)
 		to->logif = 0;
-#endif
+#endif	/* NPFLOG > 0 */
 	to->quick = from->quick;
 	to->ifnot = from->ifnot;
 	to->rcvifnot = from->rcvifnot;

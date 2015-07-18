@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.9 2014/07/22 11:06:10 mpi Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.10 2015/07/18 19:19:00 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -59,7 +59,7 @@
 #define rs_malloc(x)		malloc(x, M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO)
 #define rs_free(x)		free(x, M_TEMP, 0)
 
-#else
+#else	/* !_KERNEL */
 /* Userland equivalents so we can lend code to pfctl et al. */
 
 # include <arpa/inet.h>
@@ -72,7 +72,7 @@
 
 # ifdef PFDEBUG
 #  include <sys/stdarg.h>	/* for DPFPRINTF() */
-# endif
+# endif	/* PFDEBUG */
 #endif /* _KERNEL */
 
 

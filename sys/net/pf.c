@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.927 2015/07/18 15:47:01 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.928 2015/07/18 19:19:00 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,8 +76,14 @@
 #include <netinet/ip_divert.h>
 
 #include <net/pfvar.h>
+
+#if NPFLOG > 0
 #include <net/if_pflog.h>
+#endif	/* NPFLOG > 0 */
+
+#if NPFLOW > 0
 #include <net/if_pflow.h>
+#endif	/* NPFLOW > 0 */
 
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
@@ -227,9 +233,11 @@ int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
 void			 pf_counters_inc(int, struct pf_pdesc *,
 			    struct pf_state *, struct pf_rule *,
 			    struct pf_rule *);
+#if NPFLOG > 0
 void			 pf_log_matches(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_rule *, struct pf_ruleset *,
 			    struct pf_rule_slist *);
+#endif	/* NPFLOG > 0 */
 
 extern struct pool pfr_ktable_pl;
 extern struct pool pfr_kentry_pl;
@@ -937,7 +945,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
 	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
 #if NPFSYNC > 0
 	pfsync_insert_state(s);
-#endif
+#endif	/* NPFSYNC > 0 */
 	return (0);
 }
 
@@ -1100,7 +1108,9 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 		sp->expire = htonl(expire - time_uptime);
 
 	sp->direction = st->direction;
+#if NPFLOG > 0
 	sp->log = st->log;
+#endif	/* NPFLOG > 0 */
 	sp->timeout = st->timeout;
 	sp->state_flags = htons(st->state_flags);
 	if (!SLIST_EMPTY(&st->src_nodes))
@@ -1266,10 +1276,10 @@ pf_unlink_state(struct pf_state *cur)
 #if NPFLOW > 0
 	if (cur->state_flags & PFSTATE_PFLOW)
 		export_pflow(cur);
-#endif
+#endif	/* NPFLOW > 0 */
 #if NPFSYNC > 0
 	pfsync_delete_state(cur);
-#endif
+#endif	/* NPFSYNC > 0 */
 	cur->timeout = PFTM_UNLINKED;
 	pf_src_tree_remove_state(cur);
 	pf_detach_state(cur);
@@ -1287,7 +1297,7 @@ pf_free_state(struct pf_state *cur)
 #if NPFSYNC > 0
 	if (pfsync_state_in_use(cur))
 		return;
-#endif
+#endif	/* NPFSYNC > 0 */
 	KASSERT(cur->timeout == PFTM_UNLINKED);
 	if (--cur->rule.ptr->states_cur == 0 &&
 	    cur->rule.ptr->src_nodes == 0)
@@ -3007,7 +3017,9 @@ pf_rule_to_actions(struct pf_rule *r, struct pf_rule_actions *a)
 		a->pqid = r->pqid;
 	if (r->rtableid >= 0)
 		a->rtableid = r->rtableid;
+#if NPFLOG > 0
 	a->log |= r->log;
+#endif	/* NPFLOG > 0 */
 	if (r->scrub_flags & PFSTATE_SETTOS)
 		a->set_tos = r->set_tos;
 	if (r->min_ttl)
@@ -3225,11 +3237,13 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 					REASON_SET(&reason, PFRES_TRANSLATE);
 					goto cleanup;
 				}
+#if NPFLOG > 0 
 				if (r->log) {
 					REASON_SET(&reason, PFRES_MATCH);
 					PFLOG_PACKET(pd, reason, r, a, ruleset,
 					    NULL);
 				}
+#endif	/* NPFLOG > 0 */
 			} else {
 				match = asd;
 				*rm = r;
@@ -3238,8 +3252,10 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				arsm = aruleset;
 			}
 
+#if NPFLOG > 0
 			if (act.log & PF_LOG_MATCHES)
 				pf_log_matches(pd, r, a, ruleset, &rules);
+#endif	/* NPFLOG > 0 */
 
 			if (r->quick)
 				break;
@@ -3269,10 +3285,12 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	}
 	REASON_SET(&reason, PFRES_MATCH);
 
+#if NPFLOG > 0
 	if (r->log)
 		PFLOG_PACKET(pd, reason, r, a, ruleset, NULL);
 	if (act.log & PF_LOG_MATCHES)
 		pf_log_matches(pd, r, a, ruleset, &rules);
+#endif	/* NPFLOG > 0 */
 
 	if (pd->virtual_proto != PF_VPROTO_FRAGMENT &&
 	    (r->action == PF_DROP) &&
@@ -3321,7 +3339,9 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 	if (r->action == PF_PASS && pd->badopts && ! r->allow_opts) {
 		REASON_SET(&reason, PFRES_IPOPTIONS);
+#if NPFLOG > 0
 		pd->pflog |= PF_LOG_FORCE;
+#endif	/* NPFLOG > 0 */
 		DPFPRINTF(LOG_NOTICE, "dropping packet with "
 		    "ip/ipv6 options in pf_test_rule()");
 		goto cleanup;
@@ -3388,7 +3408,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		if (pfsync_defer(*sm, pd->m))
 			return (PF_DEFER);
 	}
-#endif
+#endif	/* NPFSYNC > 0 */
 
 	if (r->rule_flag & PFRULE_ONCE)
 		pf_purge_rule(ruleset, r, aruleset, a);
@@ -3436,7 +3456,9 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		s->state_flags |= PFSTATE_SLOPPY;
 	if (r->rule_flag & PFRULE_PFLOW)
 		s->state_flags |= PFSTATE_PFLOW;
+#if NPFLOG > 0
 	s->log = act->log & PF_LOG_ALL;
+#endif	/* NPFLOG > 0 */
 	s->qid = act->qid;
 	s->pqid = act->pqid;
 	s->rtableid[pd->didx] = act->rtableid;
@@ -3447,7 +3469,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	s->state_flags |= act->flags;
 #if NPFSYNC > 0
 	s->sync_state = PFSYNC_S_NONE;
-#endif
+#endif	/* NPFSYNC > 0 */
 	s->set_prio[0] = act->set_prio[0];
 	s->set_prio[1] = act->set_prio[1];
 	SLIST_INIT(&s->src_nodes);
@@ -6080,7 +6102,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 			REASON_SET(reason, PFRES_NORM);
 			return (PF_DROP);
 		}
-#endif
+#endif	/* 1 */
 
 		pd->src = (struct pf_addr *)&h->ip6_src;
 		pd->dst = (struct pf_addr *)&h->ip6_dst;
@@ -6300,7 +6322,9 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 
 	action = pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, *m0, &reason);
 	if (action != PF_PASS) {
+#if NPFLOG > 0
 		pd.pflog |= PF_LOG_FORCE;
+#endif	/* NPFLOG > 0 */
 		goto done;
 	}
 
@@ -6320,7 +6344,9 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	if (pd.m == NULL)
 		return PF_PASS;
 	if (action != PF_PASS) {
+#if NPFLOG > 0
 		pd.pflog |= PF_LOG_FORCE;
+#endif	/* NPFLOG > 0 */
 		goto done;
 	}
 
@@ -6329,7 +6355,9 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_setup_pdesc(&pd, &pdhdrs, af, dir, kif, *m0,
 		    &reason);
 		if (action != PF_PASS) {
+#if NPFLOG > 0
 			pd.pflog |= PF_LOG_FORCE;
+#endif	/* NPFLOG > 0 */
 			goto done;
 		}
 	}
@@ -6360,10 +6388,12 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
 			pfsync_update_state(s);
-#endif /* NPFSYNC */
+#endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
+#if NPFLOG > 0
 			pd.pflog |= s->log;
+#endif	/* NPFLOG > 0 */
 		} else if (s == NULL)
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
 		break;
@@ -6382,10 +6412,12 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
 			pfsync_update_state(s);
-#endif /* NPFSYNC */
+#endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
+#if NPFLOG > 0
 			pd.pflog |= s->log;
+#endif	/* NPFLOG > 0 */
 		} else if (s == NULL)
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
 		break;
@@ -6404,10 +6436,12 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
 			pfsync_update_state(s);
-#endif /* NPFSYNC */
+#endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
+#if NPFLOG > 0
 			pd.pflog |= s->log;
+#endif	/* NPFLOG > 0 */
 		} else if (s == NULL)
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
 
@@ -6430,7 +6464,9 @@ done:
 			    !(s->state_flags & PFSTATE_ALLOWOPTS)) {
 				action = PF_DROP;
 				REASON_SET(&reason, PFRES_IPOPTIONS);
+#if NPFLOG > 0
 				pd.pflog |= PF_LOG_FORCE;
+#endif	/* NPFLOG > 0 */
 				DPFPRINTF(LOG_NOTICE, "dropping packet with "
 				    "ip/ipv6 options in pf_test()");
 			}
@@ -6501,6 +6537,7 @@ done:
 	if (action == PF_PASS && r->divert_packet.port)
 		action = PF_DIVERT;
 
+#if NPFLOG > 0
 	if (pd.pflog) {
 		struct pf_rule_item	*ri;
 
@@ -6513,6 +6550,7 @@ done:
 					    ruleset, NULL);
 		}
 	}
+#endif	/* NPFLOG > 0 */
 
 	pf_counters_inc(action, &pd, s, r, a);
 
@@ -6633,6 +6671,7 @@ pf_pkt_addr_changed(struct mbuf *m)
 	m->m_pkthdr.pf.inp = NULL;
 }
 
+#if NPFLOG > 0
 void
 pf_log_matches(struct pf_pdesc *pd, struct pf_rule *rm, struct pf_rule *am,
     struct pf_ruleset *ruleset, struct pf_rule_slist *matchrules)
@@ -6647,3 +6686,4 @@ pf_log_matches(struct pf_pdesc *pd, struct pf_rule *rm, struct pf_rule *am,
 		if (ri->r->log & PF_LOG_MATCHES)
 			PFLOG_PACKET(pd, PFRES_MATCH, rm, am, ruleset, ri->r);
 }
+#endif	/* NPFLOG > 0 */

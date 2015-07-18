@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.46 2015/07/18 15:19:44 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.47 2015/07/18 19:19:00 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -74,8 +74,14 @@
 #include <netinet/in_pcb.h>
 
 #include <net/pfvar.h>
+
+#if NPFLOG > 0
 #include <net/if_pflog.h>
+#endif	/* NPFLOG > 0 */
+
+#if NPFLOW > 0
 #include <net/if_pflow.h>
+#endif	/* NPFLOW > 0 */
 
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>

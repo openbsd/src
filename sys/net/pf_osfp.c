@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.30 2015/07/16 16:12:15 mpi Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.31 2015/07/18 19:19:00 sashan Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -39,7 +39,7 @@
 #ifdef _KERNEL
 typedef struct pool pool_t;
 
-#else
+#else	/* !_KERNEL */
 /* Userland equivalents so we can lend code to tcpdump et al. */
 
 # include <arpa/inet.h>
@@ -113,9 +113,9 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 	const u_int8_t *optp;
 #ifdef _KERNEL
 	char srcname[128];
-#else
+#else	/* !_KERNEL */
 	char srcname[NI_MAXHOST];
-#endif
+#endif	/* _KERNEL */
 
 	if ((tcp->th_flags & (TH_SYN|TH_ACK)) != TH_SYN)
 		return (NULL);
@@ -129,7 +129,7 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 	if (ip) {
 #ifndef _KERNEL
 		struct sockaddr_in sin;
-#endif
+#endif	/* _KERNEL */
 
 		fp.fp_psize = ntohs(ip->ip_len);
 		fp.fp_ttl = ip->ip_ttl;
@@ -137,7 +137,7 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 			fp.fp_flags |= PF_OSFP_DF;
 #ifdef _KERNEL
 		inet_ntop(AF_INET, &ip->ip_src, srcname, sizeof(srcname));
-#else
+#else	/* !_KERNEL */
 		memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
@@ -145,13 +145,13 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 		(void)getnameinfo((struct sockaddr *)&sin,
 		    sizeof(struct sockaddr_in), srcname, sizeof(srcname),
 		    NULL, 0, NI_NUMERICHOST);
-#endif
+#endif	/* _KERNEL */
 	}
 #ifdef INET6
 	else if (ip6) {
 #ifndef _KERNEL
 		struct sockaddr_in6 sin6;
-#endif
+#endif	/* !_KERNEL */
 
 		/* jumbo payload? */
 		fp.fp_psize = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen);
@@ -160,7 +160,7 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 		fp.fp_flags |= PF_OSFP_INET6;
 #ifdef _KERNEL
 		inet_ntop(AF_INET6, &ip6->ip6_src, srcname, sizeof(srcname));
-#else
+#else	/* !_KERNEL */
 		memset(&sin6, 0, sizeof(sin6));
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
@@ -168,9 +168,9 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 		(void)getnameinfo((struct sockaddr *)&sin6,
 		    sizeof(struct sockaddr_in6), srcname, sizeof(srcname),
 		    NULL, 0, NI_NUMERICHOST);
-#endif
+#endif	/* !_KERNEL */
 	}
-#endif
+#endif	/* INET6 */
 	else
 		return (NULL);
 	fp.fp_wsize = ntohs(tcp->th_win);
