@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.c,v 1.1 2015/07/17 22:35:36 schwarze Exp $    */
+/*      $OpenBSD: tag.c,v 1.2 2015/07/18 03:40:51 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 #include <sys/types.h>
 
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,7 @@ struct tag_entry {
 	char	 s[];
 };
 
+static	void	 tag_signal(int);
 static	void	*tag_alloc(size_t, void *);
 static	void	 tag_free(void *, void *);
 static	void	*tag_calloc(size_t, size_t, void *);
@@ -52,6 +54,9 @@ tag_init(void)
 	struct ohash_info	 tag_info;
 
 	tag_fn = mandoc_strdup("/tmp/man.XXXXXXXXXX");
+	signal(SIGHUP, tag_signal);
+	signal(SIGINT, tag_signal);
+	signal(SIGTERM, tag_signal);
 	if ((tag_fd = mkstemp(tag_fn)) == -1) {
 		free(tag_fn);
 		tag_fn = NULL;
@@ -152,6 +157,17 @@ tag_unlink(void)
 
 	if (tag_fn != NULL)
 		unlink(tag_fn);
+}
+
+static void
+tag_signal(int signum)
+{
+
+	tag_unlink();
+	signal(signum, SIG_DFL);
+	kill(getpid(), signum);
+	/* NOTREACHED */
+	_exit(1);
 }
 
 /*
