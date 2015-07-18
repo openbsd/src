@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.50 2015/06/12 14:40:55 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.51 2015/07/18 16:01:28 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -461,6 +461,8 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = arg;
 	struct rsession		*con = cre->con;
+	struct protocol		*proto = con->se_relay->rl_proto;
+
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	size_t			 size;
 
@@ -498,6 +500,11 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	if (con->se_done)
 		goto done;
 	bufferevent_enable(bev, EV_READ);
+
+	if (cre->dst->bev && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(cre->dst->bev)) >
+	    (size_t)RELAY_MAX_PREFETCH * proto->tcpbufsiz)
+		bufferevent_disable(cre->bev, EV_READ);
+
 	if (bev->readcb != relay_read_httpcontent)
 		bev->readcb(bev, arg);
 	/* The callback readcb() might have freed the session. */
@@ -514,6 +521,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = arg;
 	struct rsession		*con = cre->con;
+	struct protocol		*proto = con->se_relay->rl_proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line;
 	long long		 llval;
@@ -616,6 +624,11 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	if (con->se_done)
 		goto done;
 	bufferevent_enable(bev, EV_READ);
+
+	if (cre->dst->bev && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(cre->dst->bev)) >
+	    (size_t)RELAY_MAX_PREFETCH * proto->tcpbufsiz)
+		bufferevent_disable(cre->bev, EV_READ);
+
 	if (EVBUFFER_LENGTH(src))
 		bev->readcb(bev, arg);
 	/* The callback readcb() might have freed the session. */

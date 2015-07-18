@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.196 2015/06/12 14:40:55 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.197 2015/07/18 16:01:28 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -647,6 +647,7 @@ relay_connected(int fd, short sig, void *arg)
 {
 	struct rsession		*con = arg;
 	struct relay		*rlay = con->se_relay;
+	struct protocol		*proto = rlay->rl_proto;
 	evbuffercb		 outrd = relay_read;
 	evbuffercb		 outwr = relay_write;
 	struct bufferevent	*bev;
@@ -713,7 +714,11 @@ relay_connected(int fd, short sig, void *arg)
 
 	bufferevent_settimeout(bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
+	bufferevent_setwatermark(bev, EV_WRITE,
+		RELAY_MIN_PREFETCHED * proto->tcpbufsiz, 0);
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
+	if (con->se_in.bev)
+		bufferevent_enable(con->se_in.bev, EV_READ);
 
 	if (relay_splice(&con->se_out) == -1)
 		relay_close(con, strerror(errno));
@@ -723,6 +728,7 @@ void
 relay_input(struct rsession *con)
 {
 	struct relay	*rlay = con->se_relay;
+	struct protocol	*proto = rlay->rl_proto;
 	evbuffercb	 inrd = relay_read;
 	evbuffercb	 inwr = relay_write;
 
@@ -759,6 +765,8 @@ relay_input(struct rsession *con)
 
 	bufferevent_settimeout(con->se_in.bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
+	bufferevent_setwatermark(con->se_in.bev, EV_WRITE,
+		RELAY_MIN_PREFETCHED * proto->tcpbufsiz, 0);
 	bufferevent_enable(con->se_in.bev, EV_READ|EV_WRITE);
 
 	if (relay_splice(&con->se_in) == -1)
@@ -777,6 +785,9 @@ relay_write(struct bufferevent *bev, void *arg)
 		goto done;
 	if (relay_splice(cre->dst) == -1)
 		goto fail;
+	if (cre->dst->bev)
+		bufferevent_enable(cre->dst->bev, EV_READ);
+
 	return;
  done:
 	relay_close(con, "last write (done)");
@@ -808,6 +819,7 @@ relay_read(struct bufferevent *bev, void *arg)
 {
 	struct ctl_relay_event	*cre = arg;
 	struct rsession		*con = cre->con;
+	struct protocol		*proto = con->se_relay->rl_proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 
 	getmonotime(&con->se_tv_last);
@@ -821,6 +833,10 @@ relay_read(struct bufferevent *bev, void *arg)
 		goto done;
 	if (cre->dst->bev)
 		bufferevent_enable(cre->dst->bev, EV_READ);
+	if (cre->dst->bev && EVBUFFER_LENGTH(EVBUFFER_OUTPUT(cre->dst->bev)) >
+	    (size_t)RELAY_MAX_PREFETCH * proto->tcpbufsiz)
+		bufferevent_disable(bev, EV_READ);
+
 	return;
  done:
 	relay_close(con, "last read (done)");

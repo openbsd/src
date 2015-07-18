@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.212 2015/06/12 14:40:55 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.213 2015/07/18 16:01:28 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -60,6 +60,8 @@
 #define MAX_NAME_SIZE		64
 #define SRV_MAX_VIRTS		16
 #define TLS_NAME_SIZE		512
+#define RELAY_MAX_PREFETCH	256
+#define RELAY_MIN_PREFETCHED	32
 
 #define FD_RESERVE		5
 
