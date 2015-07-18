@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.12 2015/05/28 21:34:36 deraadt Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.13 2015/07/18 20:32:38 bcook Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -269,7 +269,7 @@ constraint_check_child(void)
 
 		if ((cstr = constraint_bypid(pid)) != NULL) {
 			if (sig)
-				fatalx("constraint %s, signal %d", 
+				fatalx("constraint %s, signal %d",
 				    log_sockaddr((struct sockaddr *)
 				    &cstr->addr->ss), sig);
 			if (fail) {
@@ -279,7 +279,7 @@ constraint_check_child(void)
 				    &cstr->addr->ss), CONSTRAINT_SCAN_INTERVAL);
 			}
 
-			if (fail || cstr->state < STATE_REPLY_RECEIVED) {
+			if (fail || cstr->state < STATE_QUERY_SENT) {
 				cstr->senderrors++;
 				constraint_close(cstr->fd);
 			}
