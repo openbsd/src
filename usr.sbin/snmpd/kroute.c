@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.30 2015/01/16 00:05:13 deraadt Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.31 2015/07/18 00:27:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1458,7 +1458,19 @@ dispatch_rtmsg_addr(struct ktable *kt, struct rt_msghdr *rtm,
 
 	if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 		switch (sa->sa_family) {
+		case AF_INET:
+		case AF_INET6:
+			if (rtm->rtm_flags & RTF_CONNECTED) {
+				flags |= F_CONNECTED;
+				ifindex = rtm->rtm_index;
+			}
+			mpath = 0;	/* link local stuff can't be mpath */
+			break;
 		case AF_LINK:
+			/*
+			 * Traditional BSD connected routes have
+			 * a gateway of type AF_LINK.
+			 */
 			flags |= F_CONNECTED;
 			ifindex = rtm->rtm_index;
 			mpath = 0;	/* link local stuff can't be mpath */
