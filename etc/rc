@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.451 2015/07/18 00:37:23 rpe Exp $
+#	$OpenBSD: rc,v 1.452 2015/07/18 21:12:40 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -73,8 +73,7 @@ sysctl_conf() {
 }
 
 # Apply mixerctl(1) settings.
-mixerctl_conf()
-{
+mixerctl_conf() {
 	test -s /etc/mixerctl.conf || return
 
 	# delete comments and blank lines
@@ -86,8 +85,7 @@ mixerctl_conf()
 }
 
 # Apply wscons system driver settings using wsconsctl(8).
-wsconsctl_conf()
-{
+wsconsctl_conf() {
 	local save_IFS="$IFS"
 
 	test -x /sbin/wsconsctl -a -s /etc/wsconsctl.conf || return
@@ -102,8 +100,7 @@ wsconsctl_conf()
 	done
 }
 
-random_seed()
-{
+random_seed() {
 	# push the old seed into the kernel
 	dd if=/var/db/host.random of=/dev/random bs=65536 count=1 status=none
 	chmod 600 /var/db/host.random
@@ -117,8 +114,7 @@ random_seed()
 # Populate net.inet.(tcp|udp).baddynamic with the contents of /etc/services so
 # as to avoid randomly allocating source ports that correspond to well-known
 # services.
-fill_baddynamic()
-{
+fill_baddynamic() {
 	local _service=$1
 	local _sysctl="net.inet.${_service}.baddynamic"
 	stripcom /etc/services |
@@ -139,8 +135,7 @@ fill_baddynamic()
 
 # Start daemon using the rc.d daemon control scripts.
 # Usage: start_daemon daemon1 daemon2 daemon3
-start_daemon()
-{
+start_daemon() {
 	local _n
 	for _n; do
 		eval _do=\${${_n}_flags}
@@ -151,8 +146,7 @@ start_daemon()
 }
 
 # Generate keys for isakmpd, iked and sshd if the don't exist yet.
-make_keys()
-{
+make_keys() {
 	if [ ! -f /etc/isakmpd/private/local.key ]; then
 		echo -n "openssl: generating isakmpd/iked RSA key... "
 		if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
@@ -179,8 +173,7 @@ make_keys()
 
 # Create Unix sockets directories for X if needed and make sure they have
 # correct permissions.
-setup_X_sockets()
-{
+setup_X_sockets() {
 	if [ -d /usr/X11R6/lib ]; then
 		for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
 			if [ -d $d ]; then
@@ -202,8 +195,7 @@ setup_X_sockets()
 }
 
 # Check filesystems, optionally by using a flag for fsck(8) passed as $1.
-do_fsck()
-{
+do_fsck() {
 	local _flags=$1
 
 	fsck -p $_flags
