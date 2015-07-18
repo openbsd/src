@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.333 2015/07/16 17:26:57 blambert Exp $ */
+/*	$OpenBSD: rde.c,v 1.334 2015/07/18 22:52:39 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1966,11 +1966,11 @@ rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
 
 	if ((wbuf = imsg_create(ibuf_se, IMSG_UPDATE_ERR, peer->conf.id, 0,
 	    size + sizeof(error) + sizeof(suberr))) == NULL)
-		fatal("imsg_create error");
+		fatal("%s %d imsg_create error", __func__, __LINE__);
 	if (imsg_add(wbuf, &error, sizeof(error)) == -1 ||
 	    imsg_add(wbuf, &suberr, sizeof(suberr)) == -1 ||
 	    imsg_add(wbuf, data, size) == -1)
-		fatal("imsg_add error");
+		fatal("%s %d imsg_add error", __func__, __LINE__);
 	imsg_close(ibuf_se, wbuf);
 	peer->state = PEER_ERR;
 }
@@ -2493,13 +2493,14 @@ rde_send_kroute(struct prefix *new, struct prefix *old, u_int16_t ribid)
 				    sizeof(kr.nexthop));
 			if (imsg_compose(ibuf_main, type, rd->rtableid, 0, -1,
 			    &kr, sizeof(kr)) == -1)
-				fatal("imsg_compose error");
+				fatal("%s %d imsg_compose error", __func__,
+				    __LINE__);
 		}
 		break;
 	default:
 		if (imsg_compose(ibuf_main, type, ribs[ribid].rtableid, 0, -1,
 		    &kr, sizeof(kr)) == -1)
-			fatal("imsg_compose error");
+			fatal("%s %d imsg_compose error", __func__, __LINE__);
 		break;
 	}
 }
@@ -2528,7 +2529,7 @@ rde_send_pftable(u_int16_t id, struct bgpd_addr *addr,
 	if (imsg_compose(ibuf_main,
 	    del ? IMSG_PFTABLE_REMOVE : IMSG_PFTABLE_ADD,
 	    0, 0, -1, &pfm, sizeof(pfm)) == -1)
-		fatal("imsg_compose error");
+		fatal("%s %d imsg_compose error", __func__, __LINE__);
 }
 
 void
@@ -2540,7 +2541,7 @@ rde_send_pftable_commit(void)
 
 	if (imsg_compose(ibuf_main, IMSG_PFTABLE_COMMIT, 0, 0, -1, NULL, 0) ==
 	    -1)
-		fatal("imsg_compose error");
+		fatal("%s %d imsg_compose error", __func__, __LINE__);
 }
 
 /*
@@ -2558,7 +2559,7 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
 
 	if (imsg_compose(ibuf_main, type, 0, 0, -1, next,
 	    sizeof(struct bgpd_addr)) == -1)
-		fatal("imsg_compose error");
+		fatal("%s %d imsg_compose error", __func__, __LINE__);
 }
 
 /*
@@ -2925,7 +2926,8 @@ rde_update_queue_runner(void)
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 			    0, -1, queue_buf, wpos) == -1)
-				fatal("imsg_compose error");
+				fatal("%s %d imsg_compose error", __func__,
+				    __LINE__);
 			sent++;
 			if (eor) {
 				eor = 0;
@@ -2960,7 +2962,8 @@ rde_update6_queue_runner(u_int8_t aid)
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 			    0, -1, b, len) == -1)
-				fatal("imsg_compose error");
+				fatal("%s %d imsg_compose error", __func__,
+				    __LINE__);
 			sent++;
 		}
 		max -= sent;
@@ -2991,7 +2994,8 @@ rde_update6_queue_runner(u_int8_t aid)
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 			    0, -1, b, len) == -1)
-				fatal("imsg_compose error");
+				fatal("%s %d imsg_compose error", __func__,
+				    __LINE__);
 			sent++;
 		}
 		max -= sent;
@@ -3345,7 +3349,7 @@ peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
 	 */
 	if (imsg_compose(ibuf_se, IMSG_SESSION_RESTARTED, peer->conf.id,
 	    0, -1, &aid, sizeof(aid)) == -1)
-		fatal("imsg_compose error");
+		fatal("%s %d imsg_compose error", __func__, __LINE__);
 }
 
 void
@@ -3362,7 +3366,8 @@ peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 		bzero(&null, 4);
 		if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 		    0, -1, &null, 4) == -1)
-			fatal("imsg_compose error in peer_send_eor");
+			fatal("%s %d imsg_compose error in peer_send_eor",
+			    __func__, __LINE__);
 	} else {
 		u_int16_t	i;
 		u_char		buf[10];
@@ -3383,7 +3388,8 @@ peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 
 		if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 		    0, -1, &buf, 10) == -1)
-			fatal("imsg_compose error in peer_send_eor");
+			fatal("%s %d imsg_compose error in peer_send_eor",
+			    __func__, __LINE__);
 	}
 }
 

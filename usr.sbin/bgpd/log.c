@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.58 2014/11/03 16:55:59 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.59 2015/07/18 22:52:39 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -207,18 +207,25 @@ log_debug(const char *emsg, ...)
 }
 
 void
-fatal(const char *emsg)
+fatal(const char *emsg, ...)
 {
+	char	 s[1024];
+	va_list  ap;
+
+	va_start(ap, emsg);
+	vsnprintf(s, sizeof(s), emsg, ap);
+	va_end(ap);
+
 	if (emsg == NULL)
 		logit(LOG_CRIT, "fatal in %s: %s", procnames[bgpd_process],
 		    strerror(errno));
 	else
 		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    procnames[bgpd_process], emsg, strerror(errno));
+			    procnames[bgpd_process], s, strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
-			    procnames[bgpd_process], emsg);
+			    procnames[bgpd_process], s);
 
 	if (bgpd_process == PROC_MAIN)
 		exit(1);
