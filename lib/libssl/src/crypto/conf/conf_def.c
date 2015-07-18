@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.30 2015/04/30 15:28:03 deraadt Exp $ */
+/* $OpenBSD: conf_def.c,v 1.31 2015/07/18 22:42:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -573,8 +573,12 @@ str_copy(CONF *conf, char *section, char **pto, char *from)
 				    CONF_R_VARIABLE_HAS_NO_VALUE);
 				goto err;
 			}
-			BUF_MEM_grow_clean(buf,
-			    (strlen(p) + buf->length - (e - from)));
+			if (!BUF_MEM_grow_clean(buf,
+				(strlen(p) + buf->length - (e - from)))) {
+				CONFerr(CONF_F_STR_COPY,
+				    CONF_R_MODULE_INITIALIZATION_ERROR);
+				goto err;
+			}
 			while (*p)
 				buf->data[to++] = *(p++);
 
