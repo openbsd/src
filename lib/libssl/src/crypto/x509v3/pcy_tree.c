@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.14 2015/07/15 17:02:03 miod Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.15 2015/07/18 00:01:05 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -233,7 +233,7 @@ tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs, unsigned int flags)
 
 	data = policy_data_new(NULL, OBJ_nid2obj(NID_any_policy), 0);
 
-	if (!data || !level_add_node(level, data, NULL, tree))
+	if (!data || !level_add_node(level, data, NULL, tree, NULL))
 		goto bad_tree;
 
 	for (i = n - 2; i >= 0; i--) {
@@ -297,13 +297,13 @@ tree_link_matching_nodes(X509_POLICY_LEVEL *curr, const X509_POLICY_DATA *data)
 	for (i = 0; i < sk_X509_POLICY_NODE_num(last->nodes); i++) {
 		node = sk_X509_POLICY_NODE_value(last->nodes, i);
 		if (policy_node_match(last, node, data->valid_policy)) {
-			if (!level_add_node(curr, data, node, NULL))
+			if (!level_add_node(curr, data, node, NULL, NULL))
 				return 0;
 			matched = 1;
 		}
 	}
 	if (!matched && last->anyPolicy) {
-		if (!level_add_node(curr, data, last->anyPolicy, NULL))
+		if (!level_add_node(curr, data, last->anyPolicy, NULL, NULL))
 			return 0;
 	}
 	return 1;
@@ -352,7 +352,7 @@ tree_add_unmatched(X509_POLICY_LEVEL *curr, const X509_POLICY_CACHE *cache,
 	/* Curr may not have anyPolicy */
 	data->qualifier_set = cache->anyPolicy->qualifier_set;
 	data->flags |= POLICY_DATA_FLAG_SHARED_QUALIFIERS;
-	if (!level_add_node(curr, data, node, tree)) {
+	if (!level_add_node(curr, data, node, tree, NULL)) {
 		policy_data_free(data);
 		return 0;
 	}
@@ -410,7 +410,7 @@ tree_link_any(X509_POLICY_LEVEL *curr, const X509_POLICY_CACHE *cache,
 	/* Finally add link to anyPolicy */
 	if (last->anyPolicy) {
 		if (!level_add_node(curr, cache->anyPolicy,
-		    last->anyPolicy, NULL))
+		    last->anyPolicy, NULL, NULL))
 			return 0;
 	}
 	return 1;
@@ -581,8 +581,8 @@ tree_calculate_user_set(X509_POLICY_TREE *tree,
 			extra->qualifier_set = anyPolicy->data->qualifier_set;
 			extra->flags = POLICY_DATA_FLAG_SHARED_QUALIFIERS |
 			    POLICY_DATA_FLAG_EXTRA_NODE;
-			node = level_add_node(NULL, extra, anyPolicy->parent,
-			    tree);
+			(void) level_add_node(NULL, extra, anyPolicy->parent,
+			    tree, &node);
 		}
 		if (!tree->user_policies) {
 			tree->user_policies = sk_X509_POLICY_NODE_new_null();

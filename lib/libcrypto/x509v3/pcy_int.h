@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_int.h,v 1.3 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: pcy_int.h,v 1.4 2015/07/18 00:01:05 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -196,9 +196,9 @@ X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
 X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_NODE) *sk,
     const ASN1_OBJECT *id);
 
-X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
+int level_add_node(X509_POLICY_LEVEL *level,
     const X509_POLICY_DATA *data, X509_POLICY_NODE *parent,
-    X509_POLICY_TREE *tree);
+    X509_POLICY_TREE *tree, X509_POLICY_NODE **nodep);
 void policy_node_free(X509_POLICY_NODE *node);
 int policy_node_match(const X509_POLICY_LEVEL *lvl,
     const X509_POLICY_NODE *node, const ASN1_OBJECT *oid);

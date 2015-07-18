@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_node.c,v 1.5 2014/07/23 20:49:52 miod Exp $ */
+/* $OpenBSD: pcy_node.c,v 1.6 2015/07/18 00:01:05 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -107,23 +107,26 @@ level_find_node(const X509_POLICY_LEVEL *level, const X509_POLICY_NODE *parent,
 	return NULL;
 }
 
-X509_POLICY_NODE *
-level_add_node(X509_POLICY_LEVEL *level, const X509_POLICY_DATA *data,
-    X509_POLICY_NODE *parent, X509_POLICY_TREE *tree)
-{
-	X509_POLICY_NODE *node;
 
-	node = malloc(sizeof(X509_POLICY_NODE));
-	if (!node)
-		return NULL;
-	node->data = data;
-	node->parent = parent;
-	node->nchild = 0;
+int
+level_add_node(X509_POLICY_LEVEL *level, const X509_POLICY_DATA *data,
+    X509_POLICY_NODE *parent, X509_POLICY_TREE *tree, X509_POLICY_NODE **nodep)
+{
+	X509_POLICY_NODE *node = NULL;
+
 	if (level) {
+		node = malloc(sizeof(X509_POLICY_NODE));
+		if (!node)
+			goto node_error;
+		node->data = data;
+		node->parent = parent;
+		node->nchild = 0;
 		if (OBJ_obj2nid(data->valid_policy) == NID_any_policy) {
 			if (level->anyPolicy)
 				goto node_error;
 			level->anyPolicy = node;
+			if (parent)
+				parent->nchild++;
 		} else {
 
 			if (!level->nodes)
@@ -132,6 +135,8 @@ level_add_node(X509_POLICY_LEVEL *level, const X509_POLICY_DATA *data,
 				goto node_error;
 			if (!sk_X509_POLICY_NODE_push(level->nodes, node))
 				goto node_error;
+			if (parent)
+				parent->nchild++;
 		}
 	}
 
@@ -144,17 +149,20 @@ level_add_node(X509_POLICY_LEVEL *level, const X509_POLICY_DATA *data,
 			goto node_error_cond;
 	}
 
-	if (parent)
-		parent->nchild++;
+	if (nodep)
+		*nodep = node;
 
-	return node;
+	return 1;
 
 node_error_cond:
 	if (level)
 		node = NULL;
 node_error:
 	policy_node_free(node);
-	return NULL;
+	node = NULL;
+	if (nodep)
+		*nodep = node;
+	return 0;
 }
 
 void
