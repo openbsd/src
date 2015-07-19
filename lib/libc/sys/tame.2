@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.5 2015/07/19 10:14:43 jmc Exp $
+.\" $OpenBSD: tame.2,v 1.6 2015/07/19 13:41:07 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -347,7 +347,7 @@ Allows the following process relationship operations:
 .Xr vfork 2 ,
 .Xr kill 2 ,
 .Xr setresgid 2 ,
-.Xr SYS_setresuid 2 ,
+.Xr setresuid 2 ,
 .It Ar TAME_ABORT
 Deliver an unblockable SIGABRT upon violation instead of SIGKILL.
 .El
