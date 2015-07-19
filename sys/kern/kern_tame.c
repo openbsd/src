@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.1 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.2 2015/07/19 21:25:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -271,7 +271,7 @@ tame_namei(struct proc *p, char *path)
 	if ((p->p_p->ps_tame & _TM_TMPPATH) &&
 	    (p->p_tame_syscall == SYS_open) &&
 	    (p->p_tamenote & (TMN_CREAT | TMN_IMODIFY)) == TMN_CREAT &&
-	    strncmp(path, "/tmp/", 5) == 0) {
+	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
 
@@ -280,7 +280,7 @@ tame_namei(struct proc *p, char *path)
 	 */
 	if ((p->p_p->ps_tame & _TM_TMPPATH) &&
 	    (p->p_tame_syscall == SYS_unlink) &&
-	    strncmp(path, "/tmp/", 5) == 0) {
+	    strncmp(path, "/tmp/", sizeof("/tmp") - 1) == 0) {
 		return (0);
 	}
 
@@ -342,17 +342,20 @@ tame_namei(struct proc *p, char *path)
 				p->p_tameafter = 1;
 				return (0);
 			}
-			if (strncmp(path, "/var/yp/binding/", 14) == 0)
+			if (strncmp(path, "/var/yp/binding/",
+			    sizeof("/var/yp/binding/") - 1) == 0)
 				return (0);
 		}
 		/* tzset() needs these. */
-		if (strncmp(path, "/usr/share/zoneinfo/", 20) == 0)
+		if (strncmp(path, "/usr/share/zoneinfo/",
+		    sizeof("/usr/share/zoneinfo/") - 1) == 0)
 			return (0);
 		if (strcmp(path, "/etc/localtime") == 0)
 			return (0);
 
 		/* /usr/share/nls/../libc.cat returns EPERM, for strerror(3). */
-		if (strncmp(path, "/usr/share/nls/", 15) == 0 &&
+		if (strncmp(path, "/usr/share/nls/",
+		    sizeof("/usr/share/nls/") - 1) == 0 &&
 		    strcmp(path + strlen(path) - 9, "/libc.cat") == 0)
 			return (EPERM);
 		break;
