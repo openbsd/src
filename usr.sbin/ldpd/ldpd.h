@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.45 2015/04/04 15:15:44 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.46 2015/07/19 18:27:59 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -347,9 +347,8 @@ void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
 void		 kr_reload(void);
-
-u_int8_t	mask2prefixlen(in_addr_t);
-in_addr_t	prefixlen2mask(u_int8_t);
+u_int8_t	 mask2prefixlen(in_addr_t);
+in_addr_t	 prefixlen2mask(u_int8_t);
 
 /* log.h */
 const char	*nbr_state_name(int);
