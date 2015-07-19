@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2015/07/19 21:01:56 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.26 2015/07/19 21:04:38 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -762,6 +762,11 @@ parse_config(char *filename, int opts)
 		return (NULL);
 	}
 	topfile = file;
+
+	LIST_INIT(&conf->iface_list);
+	LIST_INIT(&conf->addr_list);
+	LIST_INIT(&conf->tnbr_list);
+	LIST_INIT(&conf->nbrp_list);
 
 	yyparse();
 	errors = file->errors;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.22 2015/03/21 18:32:01 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.23 2015/07/19 21:04:38 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,6 +54,9 @@ if_new(struct kif *kif)
 		err(1, "if_new: calloc");
 
 	iface->state = IF_STA_DOWN;
+
+	LIST_INIT(&iface->addr_list);
+	LIST_INIT(&iface->adj_list);
 
 	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
 

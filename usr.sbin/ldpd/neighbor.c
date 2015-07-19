@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.47 2015/07/19 21:01:56 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.48 2015/07/19 21:04:38 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -218,6 +218,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("nbr_new");
 
+	LIST_INIT(&nbr->adj_list);
 	nbr->state = NBR_STA_PRESENT;
 	nbr->id.s_addr = id.s_addr;
 	nbr->addr.s_addr = addr.s_addr;
