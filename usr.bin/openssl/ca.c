@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.6 2015/07/19 01:10:25 doug Exp $ */
+/* $OpenBSD: ca.c,v 1.7 2015/07/19 05:50:47 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1516,6 +1516,7 @@ do_body(X509 ** xret, EVP_PKEY * pkey, X509 * x509, const EVP_MD * dgst,
 	ASN1_UTCTIME *tm, *tmptm;
 	ASN1_STRING *str, *str2;
 	ASN1_OBJECT *obj;
+	ASN1_INTEGER *check_int;
 	X509 *ret = NULL;
 	X509_CINF *ci;
 	X509_NAME_ENTRY *ne;
@@ -1805,8 +1806,11 @@ again2:
 		goto err;
 #endif
 
-	if (BN_to_ASN1_INTEGER(serial, ci->serialNumber) == NULL)
+	if ((check_int = BN_to_ASN1_INTEGER(serial, ci->serialNumber)) == NULL)
 		goto err;
+	M_ASN1_INTEGER_free(check_int);
+	check_int = NULL;
+
 	if (selfsign) {
 		if (!X509_set_issuer_name(ret, subject))
 			goto err;
