@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.19 2015/05/29 13:48:45 krw Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.20 2015/07/19 17:04:31 krw Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -414,8 +414,7 @@ sr_raid5_rw(struct sr_workunit *wu)
 		strip_no = lbaoffs >> strip_bits;
 		strip_offs = lbaoffs & (strip_size - 1);
 		chunk_offs = (strip_no / no_chunk) << strip_bits;
-		phys_offs = chunk_offs + strip_offs +
-		    (sd->sd_meta->ssd_data_offset << DEV_BSHIFT);
+		phys_offs = chunk_offs + strip_offs;
 
 		/* get size remaining in this stripe */
 		length = MIN(strip_size - strip_offs, datalen);
@@ -814,8 +813,7 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 	}
 
 	for (strip_no = restart; strip_no < chunk_strips; strip_no++) {
-		chunk_lba = (strip_size >> DEV_BSHIFT) * strip_no +
-		    sd->sd_meta->ssd_data_offset;
+		chunk_lba = (strip_size >> DEV_BSHIFT) * strip_no;
 
 		DNPRINTF(SR_D_REBUILD, "%s: %s rebuild strip %lld, "
 		    "chunk lba = %lld\n", DEVNAME(sd->sd_sc),
@@ -867,8 +865,7 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 		sr_scsi_wu_put(sd, wu_r);
 		sr_scsi_wu_put(sd, wu_w);
 
-		sd->sd_meta->ssd_rebuild =
-		    (chunk_lba - sd->sd_meta->ssd_data_offset) * chunk_count;
+		sd->sd_meta->ssd_rebuild = chunk_lba * chunk_count;
 
 		psz = sd->sd_meta->ssdi.ssd_size;
 		rb = sd->sd_meta->ssd_rebuild;

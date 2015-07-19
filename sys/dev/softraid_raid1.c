@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.60 2015/01/27 10:12:45 dlg Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.61 2015/07/19 17:04:31 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -335,9 +335,6 @@ sr_raid1_rw(struct sr_workunit *wu)
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_raid1_rw"))
 		goto bad;
-
-	/* calculate physical block */
-	blk += sd->sd_meta->ssd_data_offset;
 
 	if (xs->flags & SCSI_DATA_IN)
 		ios = 1;

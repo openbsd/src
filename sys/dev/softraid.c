@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.355 2015/07/19 16:12:10 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.356 2015/07/19 17:04:31 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2025,7 +2025,7 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
 	else
 		ccb->ccb_buf.b_flags |= B_WRITE;
 
-	ccb->ccb_buf.b_blkno = blkno;
+	ccb->ccb_buf.b_blkno = blkno + sd->sd_meta->ssd_data_offset;
 	ccb->ccb_buf.b_bcount = len;
 	ccb->ccb_buf.b_bufsize = len;
 	ccb->ccb_buf.b_resid = len;
