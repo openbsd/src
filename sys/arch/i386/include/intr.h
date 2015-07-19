@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.45 2015/07/16 05:10:14 guenther Exp $	*/
+/*	$OpenBSD: intr.h,v 1.46 2015/07/19 18:53:49 sf Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ void splassert_check(int, const char *);
 struct cpu_info;
 
 #ifdef MULTIPROCESSOR
-int i386_send_ipi(struct cpu_info *, int);
+void i386_send_ipi(struct cpu_info *, int);
 int i386_fast_ipi(struct cpu_info *, int);
 void i386_broadcast_ipi(int);
 void i386_ipi_handler(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.26 2015/07/18 19:21:03 sf Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.27 2015/07/19 18:53:49 sf Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -144,18 +144,18 @@ i386_spurious(void)
 	printf("spurious intr\n");
 }
 
-int
+void
 i386_send_ipi(struct cpu_info *ci, int ipimask)
 {
 	i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
 
 	/* Don't send IPI to cpu which isn't (yet) running. */
 	if (!(ci->ci_flags & CPUF_RUNNING))
-		return ENOENT;
+		return;
 
 	i386_ipi(LAPIC_IPI_VECTOR, ci->ci_apicid, LAPIC_DLMODE_FIXED);
 
-	return 0;
+	return;
 }
 
 int
