@@ -1,4 +1,4 @@
-/* $OpenBSD: cts128.c,v 1.4 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: cts128.c,v 1.5 2015/07/19 18:27:26 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project. All rights reserved.
  *
@@ -97,16 +97,10 @@ size_t CRYPTO_cts128_encrypt(const unsigned char *in, unsigned char *out,
 	in  += len;
 	out += len;
 
-#if defined(CBC_HANDLES_TRUNCATED_IO)
-	memcpy(tmp.c,out-16,16);
-	(*cbc)(in,out-16,residue,key,ivec,1);
-	memcpy(out,tmp.c,residue);
-#else
 	memset(tmp.c,0,sizeof(tmp));
 	memcpy(tmp.c,in,residue);
 	memcpy(out,out-16,residue);
 	(*cbc)(tmp.c,out-16,16,key,ivec,1);
-#endif
 	return len+residue;
 }
 
@@ -129,13 +123,9 @@ size_t CRYPTO_nistcts128_encrypt(const unsigned char *in, unsigned char *out,
 	in  += len;
 	out += len;
 
-#if defined(CBC_HANDLES_TRUNCATED_IO)
-	(*cbc)(in,out-16+residue,residue,key,ivec,1);
-#else
 	memset(tmp.c,0,sizeof(tmp));
 	memcpy(tmp.c,in,residue);
 	(*cbc)(tmp.c,out-16+residue,16,key,ivec,1);
-#endif
 	return len+residue;
 }
 
@@ -238,12 +228,8 @@ size_t CRYPTO_cts128_decrypt(const unsigned char *in, unsigned char *out,
 	(*cbc)(in,tmp.c,16,key,tmp.c+16,0);
 
 	memcpy(tmp.c,in+16,residue);
-#if defined(CBC_HANDLES_TRUNCATED_IO)
-	(*cbc)(tmp.c,out,16+residue,key,ivec,0);
-#else
 	(*cbc)(tmp.c,tmp.c,32,key,ivec,0);
 	memcpy(out,tmp.c,16+residue);
-#endif
 	return 16+len+residue;
 }
 
@@ -275,11 +261,7 @@ size_t CRYPTO_nistcts128_decrypt(const unsigned char *in, unsigned char *out,
 	(*cbc)(in+residue,tmp.c,16,key,tmp.c+16,0);
 
 	memcpy(tmp.c,in,residue);
-#if defined(CBC_HANDLES_TRUNCATED_IO)
-	(*cbc)(tmp.c,out,16+residue,key,ivec,0);
-#else
 	(*cbc)(tmp.c,tmp.c,32,key,ivec,0);
 	memcpy(out,tmp.c,16+residue);
-#endif
 	return 16+len+residue;
 }
