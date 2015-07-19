@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.47 2015/07/19 20:50:03 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.48 2015/07/19 20:54:17 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -99,6 +99,8 @@ enum imsg_type {
 	IMSG_MAPPING_ADD_END,
 	IMSG_RELEASE_ADD,
 	IMSG_RELEASE_ADD_END,
+	IMSG_WITHDRAW_ADD,
+	IMSG_WITHDRAW_ADD_END,
 	IMSG_ADDRESS_ADD,
 	IMSG_ADDRESS_DEL,
 	IMSG_NOTIFICATION_SEND,
@@ -160,15 +162,14 @@ TAILQ_HEAD(mapping_head, mapping_entry);
 
 struct map {
 	struct in_addr	prefix;
+	u_int8_t	prefixlen;
 	u_int32_t	label;
 	u_int32_t	messageid;
 	u_int32_t	requestid;
-	u_int8_t	prefixlen;
 	u_int8_t	flags;
 };
 #define F_MAP_WILDCARD	0x01	/* wildcard FEC */
-#define F_MAP_OPTLABEL	0x02	/* optional label present */
-#define F_MAP_REQ_ID	0x04	/* optional request message id present */
+#define F_MAP_REQ_ID	0x02	/* optional request message id present */
 
 struct notify_msg {
 	u_int32_t	messageid;

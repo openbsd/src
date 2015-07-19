@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.17 2015/03/21 18:34:01 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.18 2015/07/19 20:54:17 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -195,7 +195,8 @@ struct address_list_tlv {
 #define	ADDR_IPV4		0x1
 #define	ADDR_IPV6		0x2
 
-#define FEC_ELM_MIN_LEN		4
+#define FEC_ELM_WCARD_LEN	1
+#define FEC_ELM_PREFIX_MIN_LEN	4
 #define	FEC_WILDCARD		0x01
 #define	FEC_PREFIX		0x02
 #define	FEC_IPV4		0x0001

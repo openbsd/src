@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.13 2014/11/03 18:44:36 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.14 2015/07/19 20:54:17 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -287,6 +287,9 @@ log_fec(struct map *map)
 {
 	static char	buf[32];
 	char		pstr[32];
+
+	if (map->flags & F_MAP_WILDCARD)
+		return ("wildcard");
 
 	if (snprintf(buf, sizeof(buf), "%s/%u",
 	    inet_ntop(AF_INET, &map->prefix, pstr, sizeof(pstr)),

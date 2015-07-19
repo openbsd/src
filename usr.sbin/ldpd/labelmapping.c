@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.31 2015/02/09 11:53:25 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.32 2015/07/19 20:54:16 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -41,6 +41,7 @@
 void		gen_label_tlv(struct ibuf *, u_int32_t);
 void		gen_reqid_tlv(struct ibuf *, u_int32_t);
 void		gen_fec_tlv(struct ibuf *, struct in_addr, u_int8_t);
+void		gen_wcard_fec_tlv(struct ibuf *);
 
 int	tlv_decode_label(struct nbr *, struct ldp_msg *, char *, u_int16_t,
     u_int32_t *);
@@ -80,10 +81,13 @@ send_labelmessage(struct nbr *nbr, u_int16_t type, struct mapping_head *mh)
 		}
 
 		/* calculate size */
-		tlv_size = LDP_MSG_LEN + TLV_HDR_LEN + FEC_ELM_MIN_LEN +
-		    PREFIX_SIZE(me->map.prefixlen);
-		if (type == MSG_TYPE_LABELMAPPING ||
-		    me->map.flags & F_MAP_OPTLABEL)
+		tlv_size = LDP_MSG_LEN + TLV_HDR_LEN;
+		if (me->map.flags & F_MAP_WILDCARD)
+			tlv_size += FEC_ELM_WCARD_LEN;
+		else
+			tlv_size += FEC_ELM_PREFIX_MIN_LEN +
+			    PREFIX_SIZE(me->map.prefixlen);
+		if (me->map.label != NO_LABEL)
 			tlv_size += LABEL_TLV_LEN;
 		if (me->map.flags & F_MAP_REQ_ID)
 			tlv_size += REQID_TLV_LEN;
@@ -99,9 +103,11 @@ send_labelmessage(struct nbr *nbr, u_int16_t type, struct mapping_head *mh)
 
 		/* append message and tlvs */
 		gen_msg_tlv(buf, type, tlv_size);
-		gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
-		if (type == MSG_TYPE_LABELMAPPING ||
-		    me->map.flags & F_MAP_OPTLABEL)
+		if (me->map.flags & F_MAP_WILDCARD)
+			gen_wcard_fec_tlv(buf);
+		else
+			gen_fec_tlv(buf, me->map.prefix, me->map.prefixlen);
+		if (me->map.label != NO_LABEL)
 			gen_label_tlv(buf, me->map.label);
 		if (me->map.flags & F_MAP_REQ_ID)
 			gen_reqid_tlv(buf, me->map.requestid);
@@ -121,7 +127,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 {
 	struct ldp_msg		 	 lm;
 	struct tlv			 ft;
-	u_int32_t			 label, reqid = 0;
+	u_int32_t			 label = NO_LABEL, reqid = 0;
 	u_int8_t			 flags = 0;
 
 	int				 feclen, lbllen, tlen;
@@ -228,7 +234,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 		case TLV_TYPE_LABELREQUEST:
 			switch (type) {
 			case MSG_TYPE_LABELMAPPING:
-			case MSG_TYPE_LABELABORTREQ:
+			case MSG_TYPE_LABELREQUEST:
 				if (ntohs(tlv.length) != 4) {
 					session_shutdown(nbr, S_BAD_TLV_LEN,
 					    lm.msgid, lm.type);
@@ -260,7 +266,6 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 
 				memcpy(&labelbuf, buf, sizeof(labelbuf));
 				label = ntohl(labelbuf);
-				flags |= F_MAP_OPTLABEL;
 				break;
 			default:
 				/* ignore */
@@ -299,26 +304,35 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 		int imsg_type = IMSG_NONE;
 
 		me->map.flags |= flags;
-		if (type == MSG_TYPE_LABELMAPPING ||
-		    me->map.flags & F_MAP_OPTLABEL)
-			me->map.label = label;
+		me->map.label = label;
 		if (me->map.flags & F_MAP_REQ_ID)
 			me->map.requestid = reqid;
 
 		switch (type) {
 		case MSG_TYPE_LABELMAPPING:
+			log_debug("label mapping from nbr %s, FEC %s, "
+			    "label %u", inet_ntoa(nbr->id),
+			    log_fec(&me->map), me->map.label);
 			imsg_type = IMSG_LABEL_MAPPING;
 			break;
 		case MSG_TYPE_LABELREQUEST:
+			log_debug("label request from nbr %s, FEC %s",
+			    inet_ntoa(nbr->id), log_fec(&me->map));
 			imsg_type = IMSG_LABEL_REQUEST;
 			break;
 		case MSG_TYPE_LABELWITHDRAW:
+			log_debug("label withdraw from nbr %s, FEC %s",
+			    inet_ntoa(nbr->id), log_fec(&me->map));
 			imsg_type = IMSG_LABEL_WITHDRAW;
 			break;
 		case MSG_TYPE_LABELRELEASE:
+			log_debug("label release from nbr %s, FEC %s",
+			    inet_ntoa(nbr->id), log_fec(&me->map));
 			imsg_type = IMSG_LABEL_RELEASE;
 			break;
 		case MSG_TYPE_LABELABORTREQ:
+			log_debug("label abort from nbr %s, FEC %s",
+			    inet_ntoa(nbr->id), log_fec(&me->map));
 			imsg_type = IMSG_LABEL_ABORT;
 			break;
 		default:
@@ -436,6 +450,20 @@ gen_fec_tlv(struct ibuf *buf, struct in_addr prefix, u_int8_t prefixlen)
 		ibuf_add(buf, &prefix, len);
 }
 
+void
+gen_wcard_fec_tlv(struct ibuf *buf)
+{
+	struct tlv	ft;
+	u_int8_t	type;
+
+	ft.type = htons(TLV_TYPE_FEC);
+	ft.length = htons(sizeof(type));
+	ibuf_add(buf, &ft, sizeof(ft));
+
+	type = FEC_WILDCARD;
+	ibuf_add(buf, &type, sizeof(type));
+}
+
 int
 tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
     u_int16_t len, u_int8_t *type, u_int32_t *prefix, u_int8_t *prefixlen)
@@ -446,7 +474,7 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 	off += sizeof(u_int8_t);
 
 	if (*type == FEC_WILDCARD) {
-		if (len == 0)
+		if (len == FEC_ELM_WCARD_LEN)
 			return (off);
 		else {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid,
@@ -460,7 +488,7 @@ tlv_decode_fec_elm(struct nbr *nbr, struct ldp_msg *lm, char *buf,
 		return (-1);
 	}
 
-	if (len < FEC_ELM_MIN_LEN) {
+	if (len < FEC_ELM_PREFIX_MIN_LEN) {
 		session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid, lm->type);
 		return (-1);
 	}

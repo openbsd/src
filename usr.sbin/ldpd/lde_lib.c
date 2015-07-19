@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.36 2015/07/19 20:50:03 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.37 2015/07/19 20:54:16 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -48,6 +48,9 @@ void		 rt_lsp_del(struct rt_lsp *);
 int		 lde_nbr_is_nexthop(struct rt_node *, struct lde_nbr *);
 
 RB_GENERATE(fec_tree, fec, entry, fec_compare)
+
+extern struct nbr_tree	lde_nbrs;
+RB_PROTOTYPE(nbr_tree, lde_nbr, entry, lde_nbr_compare)
 
 extern struct ldpd_conf		*ldeconf;
 
@@ -145,6 +148,10 @@ rt_dump(pid_t pid)
 
 	RB_FOREACH(f, fec_tree, &rt) {
 		rr = (struct rt_node *)f;
+		if (rr->local_label == NO_LABEL &&
+		    LIST_EMPTY(&rr->downstream))
+			continue;
+
 		rtctl.prefix = rr->fec.prefix;
 		rtctl.prefixlen = rr->fec.prefixlen;
 		rtctl.flags = rr->flags;
@@ -173,23 +180,20 @@ void
 rt_snap(struct lde_nbr *ln)
 {
 	struct fec	*f;
-	struct rt_node	*r;
-	struct lde_map	*me;
-	struct map	 map;
+	struct rt_node	*rn;
+	int		 count = 0;
 
-	bzero(&map, sizeof(map));
 	RB_FOREACH(f, fec_tree, &rt) {
-		r = (struct rt_node *)f;
-		map.prefix = r->fec.prefix;
-		map.prefixlen = r->fec.prefixlen;
-		map.label = r->local_label;
+		rn = (struct rt_node *)f;
+		if (rn->local_label == NO_LABEL)
+			continue;
 
-		me = lde_map_add(ln, r, 1);
-		me->label = r->local_label;
-
-		lde_imsg_compose_ldpe(IMSG_MAPPING_ADD, ln->peerid, 0, &map,
-		    sizeof(map));
+		lde_send_labelmapping(ln, rn);
+		count++;
 	}
+	if (count > 0)
+		lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END,
+		    ln->peerid, 0, NULL, 0);
 }
 
 void
@@ -198,11 +202,8 @@ rt_free(void *arg)
 	struct rt_node	*rr = arg;
 	struct rt_lsp	*rl;
 
-	while ((rl = LIST_FIRST(&rr->lsp))) {
-		LIST_REMOVE(rl, entry);
-		free(rl);
-	}
-
+	while ((rl = LIST_FIRST(&rr->lsp)))
+		rt_lsp_del(rl);
 	if (!LIST_EMPTY(&rr->downstream))
 		log_warnx("rt_free: fec %s/%u downstream list not empty",
 		    inet_ntoa(rr->fec.prefix), rr->fec.prefixlen);
@@ -210,7 +211,7 @@ rt_free(void *arg)
 		log_warnx("rt_free: fec %s/%u upstream list not empty",
 		    inet_ntoa(rr->fec.prefix), rr->fec.prefixlen);
 
-	free(rl);
+	free(rr);
 }
 
 void
@@ -281,47 +282,74 @@ lde_kernel_insert(struct kroute *kr)
 {
 	struct rt_node		*rn;
 	struct rt_lsp		*rl;
-	struct lde_nbr_address	*addr;
-	struct lde_map		*map;
+	struct lde_map		*me;
+	struct lde_nbr		*ln;
+	char			 buf[16];
 
-	log_debug("kernel add route %s/%u", inet_ntoa(kr->prefix),
-	    kr->prefixlen);
+	log_debug("kernel add route %s/%u nexthop %s",
+	    inet_ntoa(kr->prefix), kr->prefixlen,
+	    inet_ntop(AF_INET, &kr->nexthop, buf, sizeof(buf)));
 
 	rn = (struct rt_node *)fec_find_prefix(&rt, kr->prefix.s_addr,
 	    kr->prefixlen);
 	if (rn == NULL)
 		rn = rt_add(kr->prefix, kr->prefixlen);
 
-	rl = rt_lsp_find(rn, kr->nexthop);
-	if (rl == NULL)
-		rl = rt_lsp_add(rn, kr->nexthop);
-
-	/* There is static assigned label for this route, record it in lib */
-	if (kr->local_label != NO_LABEL) {
-		rn->local_label = kr->local_label;
+	if (rt_lsp_find(rn, kr->nexthop) != NULL)
 		return;
-	}
 
-	if (rn->local_label == NO_LABEL) {
-		if (kr->flags & F_CONNECTED)
-			/* Directly connected route */
-			rn->local_label = MPLS_LABEL_IMPLNULL;
-		else
-			rn->local_label = lde_assign_label();
-	}
+	if (LIST_EMPTY(&rn->lsp)) {
+		if (rn->local_label == NO_LABEL) {
+			if (kr->flags & F_CONNECTED)
+				rn->local_label = MPLS_LABEL_IMPLNULL;
+			else
+				rn->local_label = lde_assign_label();
+		} else {
+			/* Handle local label changes */
+			if ((kr->flags & F_CONNECTED) &&
+			    rn->local_label != MPLS_LABEL_IMPLNULL) {
+				/* explicit withdraw of the previous label */
+				RB_FOREACH(ln, nbr_tree, &lde_nbrs)
+					lde_send_labelwithdraw(ln, rn);
+				rn->local_label = MPLS_LABEL_IMPLNULL;
+			}
 
-	LIST_FOREACH(map, &rn->downstream, entry) {
-		addr = lde_address_find(map->nexthop, &rl->nexthop);
-		if (addr != NULL) {
-			rl->remote_label = map->label;
-			break;
+			if (!(kr->flags & F_CONNECTED) &&
+			    rn->local_label == MPLS_LABEL_IMPLNULL) {
+				/* explicit withdraw of the previous label */
+				RB_FOREACH(ln, nbr_tree, &lde_nbrs)
+					lde_send_labelwithdraw(ln, rn);
+				rn->local_label = lde_assign_label();
+			}
+		}
+
+		/* FEC.1: perform lsr label distribution procedure */
+		RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
+			lde_send_labelmapping(ln, rn);
+			lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END,
+			    ln->peerid, 0, NULL, 0);
 		}
 	}
 
+	rl = rt_lsp_add(rn, kr->nexthop);
 	lde_send_change_klabel(rn, rl);
 
-	/* Redistribute the current mapping to every nbr */
-	lde_nbr_do_mappings(rn);
+	ln = lde_find_address(rl->nexthop);
+	if (ln) {
+		/* FEC.2  */
+		me = (struct lde_map *)fec_find(&ln->recv_map, &rn->fec);
+		if (me) {
+			struct map	map;
+
+			bzero(&map, sizeof(map));
+			map.prefix.s_addr = me->fec.prefix.s_addr;
+			map.prefixlen = me->fec.prefixlen;
+			map.label = me->label;
+
+			/* FEC.5 */
+			lde_check_mapping(&map, ln);
+		}
+	}
 }
 
 void
@@ -329,9 +357,12 @@ lde_kernel_remove(struct kroute *kr)
 {
 	struct rt_node		*rn;
 	struct rt_lsp		*rl;
+	struct lde_nbr		*ln;
+	char			 buf[16];
 
-	log_debug("kernel remove route %s/%u", inet_ntoa(kr->prefix),
-	    kr->prefixlen);
+	log_debug("kernel remove route %s/%u nexthop %s",
+	    inet_ntoa(kr->prefix), kr->prefixlen,
+	    inet_ntop(AF_INET, &kr->nexthop, buf, sizeof(buf)));
 
 	rn = (struct rt_node *)fec_find_prefix(&rt, kr->prefix.s_addr,
 	    kr->prefixlen);
@@ -340,13 +371,14 @@ lde_kernel_remove(struct kroute *kr)
 		return;
 
 	rl = rt_lsp_find(rn, kr->nexthop);
-	if (rl != NULL)
-		rt_lsp_del(rl);
+	if (rl == NULL)
+		/* route lost */
+		return;
 
-	/* XXX handling of total loss of route, withdraw mappings, etc */
-
-	/* Redistribute the current mapping to every nbr */
-	lde_nbr_do_mappings(rn);
+	rt_lsp_del(rl);
+	if (LIST_EMPTY(&rn->lsp))
+		RB_FOREACH(ln, nbr_tree, &lde_nbrs)
+			lde_send_labelwithdraw(ln, rn);
 }
 
 void
@@ -355,76 +387,76 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	struct rt_node		*rn;
 	struct rt_lsp		*rl;
 	struct lde_req		*lre;
-	struct lde_nbr_address	*addr = NULL;
+	struct lde_nbr_address	*addr;
 	struct lde_map		*me;
-
-	log_debug("label mapping from nbr %s, FEC %s, label %u",
-	    inet_ntoa(ln->id), log_fec(map), map->label);
+	int			 msgsource = 0;
 
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
-	if (rn == NULL) {
+	if (rn == NULL)
 		rn = rt_add(map->prefix, map->prefixlen);
-		rn->local_label = lde_assign_label();
-	}
 
-	/* first check if we have a pending request running */
+	/* LMp.1: first check if we have a pending request running */
 	lre = (struct lde_req *)fec_find(&ln->sent_req, &rn->fec);
 	if (lre)
+		/* LMp.2: delete record of outstanding label request */
 		lde_req_del(ln, lre, 1);
 
-	/* TODO Loop detection LMp.3 - LMp.8 */
+	/*
+	 * LMp.3 - LMp.8: Loop detection LMp.3 - unecessary for frame-mode
+	 * mpls networks
+	 */
 
-	LIST_FOREACH(me, &rn->downstream, entry) {
-		if (ln != me->nexthop)				/* LMp.9 */
-			continue;
-		if (lre)
-			/* LMp.10 Note 6: req. mappings are always new */
-			break;
-		if (me->label != map->label) {			/* LMp.10 */
-			/*
-			 * This is, according to the RFC, a try to install a
-			 * multipath LSP which is not supported by the RFC.
-			 * So instead release the old label and install the
-			 * new one.
-			 */
-			log_debug("possible multipath FEC %s, "
-			    "label %u, old label %u",
-			    log_fec(map), map->label, me->label);
+	/* LMp.9 */
+	me = (struct lde_map *)fec_find(&ln->recv_map, &rn->fec);
+	if (me) {
+		/* LMp.10 */
+		if (me->label != map->label && lre == NULL) {
+			/* LMp.10a */
 			lde_send_labelrelease(ln, rn, me->label);
+
+			LIST_FOREACH(rl, &rn->lsp, entry)
+				TAILQ_FOREACH(addr, &ln->addr_list, entry)
+					if (rl->nexthop.s_addr ==
+					    addr->addr.s_addr) {
+						lde_send_delete_klabel(rn, rl);
+						rl->remote_label = NO_LABEL;
+					}
 		}
-		/* there can only be one mapping */
-		break;
 	}
 
-	/* LMp.11: get nexthop */
+	/*
+	 * LMp.11 - 12: consider multiple nexthops in order to
+	 * support multipath
+	 */
 	LIST_FOREACH(rl, &rn->lsp, entry) {
-		addr = lde_address_find(ln, &rl->nexthop);
-		if (addr)
-			break;
+		if (lde_address_find(ln, &rl->nexthop)) {
+			msgsource = 1;
+
+			/* LMp.15: install FEC in FIB */
+			rl->remote_label = map->label;
+			lde_send_change_klabel(rn, rl);
+		}
 	}
-	if (addr == NULL) {
-		/* in liberal mode just note the mapping */
+	if (msgsource == 0) {
+		/* LMp.13: perform lsr label release procedure */
 		if (me == NULL)
 			me = lde_map_add(ln, rn, 0);
 		me->label = map->label;
-
 		return;
 	}
 
-	/* LMp.14 do we actually need this FEC for now this is always true */
-	rl->remote_label = map->label;
-
-	/* LMp.15 install FEC in FIB */
-	lde_send_change_klabel(rn, rl);
-
-	/* Record the mapping from this peer LMp.16 */
+	/* LMp.16: Record the mapping from this peer */
 	if (me == NULL)
 		me = lde_map_add(ln, rn, 0);
 	me->label = map->label;
 
-	/* Redistribute the current mapping to every nbr LMp.17-31 */
-	lde_nbr_do_mappings(rn);
+
+	/*
+	 * LMp.17 - LMp.27 are unnecessary since we don't need to implement
+	 * loop detection. LMp.28 - LMp.30 are unnecessary because we are
+	 * merging capable.
+	 */
 }
 
 void
@@ -433,91 +465,112 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 	struct lde_req	*lre;
 	struct rt_node	*rn;
 	struct rt_lsp	*rl;
-	struct lde_nbr	*lnn;
 
-	log_debug("label request from nbr %s, FEC %s",
-	    inet_ntoa(ln->id), log_fec(map));
+	/* TODO LRq.1: loop detection */
 
+	/* LRq.2: is there a next hop for fec? */
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
-	if (rn == NULL) {
+	if (rn == NULL || LIST_EMPTY(&rn->lsp)) {
 		lde_send_notification(ln->peerid, S_NO_ROUTE, map->messageid,
 		    MSG_TYPE_LABELREQUEST);
 		return;
 	}
 
+	/* LRq.3: is MsgSource the next hop? */
 	LIST_FOREACH(rl, &rn->lsp, entry) {
 		if (lde_address_find(ln, &rl->nexthop)) {
 			lde_send_notification(ln->peerid, S_LOOP_DETECTED,
 			    map->messageid, MSG_TYPE_LABELREQUEST);
 			return;
 		}
-
-		if (rl->remote_label != NO_LABEL)
-			break;
 	}
 
-	/* first check if we have a pending request running */
+	/* LRq.6: first check if we have a pending request running */
 	lre = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
 	if (lre != NULL)
+		/* LRq.7: duplicate request */
 		return;
-	/* else record label request */
+
+	/* LRq.8: record label request */
 	lre = lde_req_add(ln, &rn->fec, 0);
 	if (lre != NULL)
 		lre->msgid = map->messageid;
 
-	/* there is a valid mapping available */
-	if (rl != NULL) {
-		/* TODO loop protection handling (LRq.9) */
-		lde_send_labelmapping(ln, rn);
-		return;
-	}
+	/* LRq.9: perform LSR label distribution */
+	lde_send_labelmapping(ln, rn);
+	lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END, ln->peerid, 0, NULL, 0);
 
-	/* no mapping available, try to request */
-	/* XXX depending on the request behaviour we could return here */
-	LIST_FOREACH(rl, &rn->lsp, entry) {
-		lnn = lde_find_address(rl->nexthop);
-		if (lnn == NULL)
-			continue;
-		lde_send_labelrequest(lnn, rn);
-	}
+	/*
+	 * LRq.10: do nothing (Request Never) since we use liberal
+	 * label retention.
+	 * LRq.11 - 12 are unnecessary since we are merging capable.
+	 */
 }
 
 void
 lde_check_release(struct map *map, struct lde_nbr *ln)
 {
-	struct rt_node	*rn;
-	struct lde_req	*lre;
-	struct lde_map	*me;
-
-	log_debug("label release from nbr %s, FEC %s",
-	    inet_ntoa(ln->id), log_fec(map));
+	struct rt_node		*rn;
+	struct lde_wdraw	*lw;
+	struct lde_map		*me;
 
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
+	/* LRl.1: does FEC match a known FEC? */
 	if (rn == NULL)
 		return;
 
-	/* first check if we have a pending withdraw running */
-	lre = (struct lde_req *)fec_find(&ln->sent_wdraw, &rn->fec);
-	if (lre) {
-		fec_remove(&ln->sent_wdraw, &lre->fec);
-		free(lre);
+	/* LRl.3: first check if we have a pending withdraw running */
+	lw = (struct lde_wdraw *)fec_find(&ln->sent_wdraw, &rn->fec);
+	if (lw && (map->label == NO_LABEL ||
+	    (lw->label != NO_LABEL && map->label == lw->label))) {
+		/* LRl.4: delete record of outstanding label withdraw */
+		lde_wdraw_del(ln, lw);
 	}
 
-	/* check sent map list and remove it if available */
+	/* LRl.6: check sent map list and remove it if available */
 	me = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
-	if (me)
+	if (me && (map->label == NO_LABEL || map->label == me->label))
 		lde_map_del(ln, me, 1);
 
-	/* remove FEC if not in use anymore */
-	/* XXX what about outstanding label requests? */
-	if (!LIST_EMPTY(&rn->upstream))
-		return;
+	/*
+	 * LRl.11 - 13 are unnecessary since we remove the label from
+	 * forwarding/switching as soon as the FEC is unreachable.
+	 */
+}
 
-	/* XXX if originated here free all resources */
-	/* else decide if a label release should be forwarded. */
-	/* Since we do liberal retention we can keep the path mapped. */
+void
+lde_check_release_wcard(struct map *map, struct lde_nbr *ln)
+{
+	struct fec		*f;
+	struct rt_node		*rn;
+	struct lde_wdraw	*lw;
+	struct lde_map		*me;
+
+	RB_FOREACH(f, fec_tree, &rt) {
+		rn = (struct rt_node *)f;
+
+		/* LRl.3: first check if we have a pending withdraw running */
+		lw = (struct lde_wdraw *)fec_find(&ln->sent_wdraw, &rn->fec);
+		if (lw && (map->label == NO_LABEL ||
+		    (lw->label != NO_LABEL && map->label == lw->label))) {
+			/* LRl.4: delete record of outstanding lbl withdraw */
+			lde_wdraw_del(ln, lw);
+		}
+
+		/* LRl.6: check sent map list and remove it if available */
+		me = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
+		if (me &&
+		    (map->label == NO_LABEL || map->label == me->label)) {
+			lde_map_del(ln, me, 1);
+		}
+
+		/*
+		 * LRl.11 - 13 are unnecessary since we remove the label from
+		 * forwarding/switching as soon as the FEC is unreachable.
+		 */
+	}
 }
 
 void
@@ -527,37 +580,58 @@ lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 	struct rt_lsp	*rl;
 	struct lde_map	*me;
 
-	log_debug("label withdraw from nbr %s, FEC %s",
-	    inet_ntoa(ln->id), log_fec(map));
-
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
+	if (rn == NULL)
+		rn = rt_add(map->prefix, map->prefixlen);
 
+	/* LWd.1: remove label from forwarding/switching use */
+	LIST_FOREACH(rl, &rn->lsp, entry) {
+		if (lde_address_find(ln, &rl->nexthop)) {
+			lde_send_delete_klabel(rn, rl);
+			rl->remote_label = NO_LABEL;
+		}
+	}
+
+	/* LWd.2: send label release */
 	lde_send_labelrelease(ln, rn, map->label);
 
-	if (rn == NULL)
-		/* LSP not available, nothing to do */
-		return;
-
-	/* remove LSP from kernel */
-	LIST_FOREACH(rl, &rn->lsp, entry) {
-		if (lde_address_find(ln, &rl->nexthop))
-			break;
-	}
-	if (rl) {
-		rl->remote_label = NO_LABEL;
-		lde_send_delete_klabel(rn, rl);
-	}
-
-	/* check recv map list and remove it if available */
+	/* LWd.3: check previously received label mapping */
 	me = (struct lde_map *)fec_find(&ln->recv_map, &rn->fec);
-	if (me)
+	if (me && (map->label == NO_LABEL || map->label == me->label))
+		/* LWd.4: remove record of previously received lbl mapping */
 		lde_map_del(ln, me, 0);
+}
 
-	/* if ordered distribution */
-	/* walk over upstream list and send withdraws for LSP that depend on
-	 * the removed LSP */
+void
+lde_check_withdraw_wcard(struct map *map, struct lde_nbr *ln)
+{
+	struct fec	*f;
+	struct rt_node	*rn;
+	struct rt_lsp	*rl;
+	struct lde_map	*me;
 
-	/* if independent distribution and adv on demand */
-	/* Generate Event: Recognize New FEC for FEC. */
+	/* LWd.2: send label release */
+	lde_send_labelrelease(ln, NULL, map->label);
+
+	RB_FOREACH(f, fec_tree, &rt) {
+		rn = (struct rt_node *)f;
+
+		/* LWd.1: remove label from forwarding/switching use */
+		LIST_FOREACH(rl, &rn->lsp, entry) {
+			if (lde_address_find(ln, &rl->nexthop)) {
+				lde_send_delete_klabel(rn, rl);
+				rl->remote_label = NO_LABEL;
+			}
+		}
+
+		/* LWd.3: check previously received label mapping */
+		me = (struct lde_map *)fec_find(&ln->recv_map, &rn->fec);
+		if (me && (map->label == NO_LABEL || map->label == me->label))
+			/*
+			 * LWd.4: remove record of previously received
+			 * label mapping
+			 */
+			lde_map_del(ln, me, 0);
+	}
 }

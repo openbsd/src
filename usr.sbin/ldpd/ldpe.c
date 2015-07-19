@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.30 2015/03/21 18:32:01 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.31 2015/07/19 20:54:17 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -476,6 +476,7 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 		case IMSG_MAPPING_ADD:
 		case IMSG_RELEASE_ADD:
 		case IMSG_REQUEST_ADD:
+		case IMSG_WITHDRAW_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))
 				fatalx("invalid size of map request");
 			memcpy(&map, imsg.data, sizeof(map));
@@ -499,11 +500,15 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 			case IMSG_REQUEST_ADD:
 				nbr_mapping_add(nbr, &nbr->request_list, &map);
 				break;
+			case IMSG_WITHDRAW_ADD:
+				nbr_mapping_add(nbr, &nbr->withdraw_list, &map);
+				break;
 			}
 			break;
 		case IMSG_MAPPING_ADD_END:
 		case IMSG_RELEASE_ADD_END:
 		case IMSG_REQUEST_ADD_END:
+		case IMSG_WITHDRAW_ADD_END:
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL) {
 				log_debug("ldpe_dispatch_lde: cannot find "
@@ -525,6 +530,10 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 			case IMSG_REQUEST_ADD_END:
 				send_labelmessage(nbr, MSG_TYPE_LABELREQUEST,
 				    &nbr->request_list);
+				break;
+			case IMSG_WITHDRAW_ADD_END:
+				send_labelmessage(nbr, MSG_TYPE_LABELWITHDRAW,
+				    &nbr->withdraw_list);
 				break;
 			}
 			break;
