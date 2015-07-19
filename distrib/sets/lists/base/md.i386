@@ -69,7 +69,7 @@
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
 ./usr/bin/pctr
-./usr/lib/libc.so.80.0
+./usr/lib/libc.so.80.1
 ./usr/lib/libcrypto.so.34.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
