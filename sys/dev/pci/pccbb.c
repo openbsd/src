@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.93 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.94 2015/07/19 05:37:38 bcook Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -993,8 +993,8 @@ pccbbintr_function(struct pccbb_softc *sc)
 			splx(s);
 		}
 
-		retval = retval == 1 ? 1 :
-		    retval == 0 ? val : val != 0 ? val : retval;
+		if (retval == 0 || val != 0)
+			retval = val;
 	}
 
 	return retval;
