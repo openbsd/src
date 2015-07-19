@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.8 2015/07/19 16:33:12 deraadt Exp $
+.\" $OpenBSD: tame.2,v 1.9 2015/07/19 17:08:35 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -100,13 +100,6 @@ permit the following system calls:
 Calls allowed with restrictions include:
 .Pp
 .Bl -tag -width TAME_TMPPATH -offset indent -compact
-.It Xr sysctl 3
-A small set of read-only operations are allowed, sufficient to
-support:
-.Xr getifaddrs 3 ,
-.Xr getdomainname 3 ,
-.Xr gethostname 3 ,
-system sensor readings.
 .It Xr access 2
 May check for existence of
 .Pa /etc/localtime .
@@ -125,6 +118,13 @@ in below the directory
 .It Xr readlink 2
 May operate on
 .Pa /etc/malloc.conf .
+.It Xr sysctl 3
+A small set of read-only operations are allowed, sufficient to
+support:
+.Xr getifaddrs 3 ,
+.Xr getdomainname 3 ,
+.Xr gethostname 3 ,
+system sensor readings.
 .It Xr tame 2
 Can only reduce permissions.
 .El
@@ -133,6 +133,90 @@ The
 .Ar flags
 are specified as a bitwise OR of the following values:
 .Bl -tag -width TAME_TMPPATH -offset indent
+.It Ar TAME_ABORT
+Deliver an unblockable SIGABRT upon violation instead of SIGKILL.
+.It Ar TAME_CMSG
+Allows passing of file descriptors using the
+.Xr sendmsg 2
+and
+.Xr recvmsg 2
+functions.
+.It Ar TAME_CPATH
+A number of system calls and sub-modes are allowed, which may
+create new files or directories in the filesystem:
+.Pp
+.Xr rename 2 ,
+.Xr rmdir 2 ,
+.Xr renameat 2 ,
+.Xr link 2 ,
+.Xr linkat 2 ,
+.Xr symlink 2 ,
+.Xr unlink 2 ,
+.Xr unlinkat 2 ,
+.Xr mkdir 2 ,
+.Xr mkdirat 2 .
+.It Ar TAME_DNS
+Subsequent to a successful
+.Xr open 2
+of
+.Pa /etc/resolv.conf ,
+a few system calls become able to allow DNS network transactions:
+.Pp
+.Xr sendto 2 ,
+.Xr recvfrom 2 ,
+.Xr socket 2 ,
+.Xr connect 2 .
+.It Ar TAME_GETPW
+This allows read-only opening of files in
+.Pa /etc
+for the
+.Xr getpwnam 3 ,
+.Xr getgrnam 3 ,
+.Xr getgrouplist 3 ,
+and
+.Xr initgroups 3
+family of functions.
+They may also need to operate in a
+.Xr yp 8
+environment, so a successful
+.Xr open 2
+of
+.Pa /var/run/ypbind.lock
+enables the
+.Ar TAME_INET
+flag.
+.It Ar TAME_INET
+The following system calls are allowed to operate in the
+.Ar AF_INET
+and
+.Ar AF_INET6
+domains:
+.Pp
+.Xr socket 2 ,
+.Xr listen 2 ,
+.Xr bind 2 ,
+.Xr connect 2 ,
+.Xr accept4 2 ,
+.Xr accept 2 ,
+.Xr getpeername 2 ,
+.Xr getsockname 2 ,
+.Xr setsockopt 2 ,
+.Xr getsockopt 2 .
+.Pp
+.Xr setsockopt 2
+has been reduced in functionality substantially.
+.It Ar TAME_IOCTL
+Allows a subset of
+.Xr ioctl 2
+operations:
+.Pp
+.Va FIOCLEX ,
+.Va FIONCLEX ,
+.Va FIONREAD ,
+.Va FIONBIO ,
+.Va FIOGETOWN ,
+.Va TIOCSWINSZ ,
+.Va TIOCSTI .
 .It Ar TAME_MALLOC
 To allow use of the
 .Xr malloc 3
@@ -145,6 +229,34 @@ family of functions, the following system calls are permitted:
 .Xr mprotect 2 ,
 .Xr mquery 2 ,
 .Xr munmap 2 .
+.It Ar TAME_PROC
+Allows the following process relationship operations:
+.Pp
+.Xr fork 2 ,
+.Xr vfork 2 ,
+.Xr kill 2 ,
+.Xr setresgid 2 ,
+.Xr setresuid 2 ,
+.It Ar TAME_RPATH
+A number of system calls are allowed if they only cause
+read-only effects on the filesystem:
+.Pp
+.Xr chdir 2 ,
+.Xr getcwd 3 ,
+.Xr openat 2 ,
+.Xr fstatat 2 ,
+.Xr faccessat 2 ,
+.Xr readlinkat 2 ,
+.Xr lstat 2 ,
+.Xr chmod 2 ,
+.Xr fchmod 2 ,
+.Xr fchmodat 2 ,
+.Xr chflags 2 ,
+.Xr chflagsat 2 ,
+.Xr chown 2 ,
+.Xr fchown 2 ,
+.Xr fchownat 2 ,
+.Xr fstat 2 .
 .It Ar TAME_RW
 The following system calls are permitted to allow most types of IO
 operations on previously allocated file descriptors, including
@@ -192,26 +304,32 @@ and
 .Ar TAME_RW .
 As a result, all functionalities of libc
 stdio works.
-.It Ar TAME_RPATH
-A number of system calls are allowed if they only cause
-read-only effects on the filesystem:
+.It Ar TAME_TMPPATH
+A number of system calls are allowed to do operations in the
+.Pa /tmp
+directory, including create, read, or write:
 .Pp
-.Xr chdir 2 ,
-.Xr getcwd 3 ,
-.Xr openat 2 ,
-.Xr fstatat 2 ,
-.Xr faccessat 2 ,
-.Xr readlinkat 2 ,
 .Xr lstat 2 ,
 .Xr chmod 2 ,
-.Xr fchmod 2 ,
-.Xr fchmodat 2 ,
 .Xr chflags 2 ,
-.Xr chflagsat 2 ,
 .Xr chown 2 ,
-.Xr fchown 2 ,
-.Xr fchownat 2 ,
+.Xr unlink 2 ,
 .Xr fstat 2 .
+.It Ar TAME_UNIX
+The following system calls are allowed to operate in the
+.Ar AF_UNIX
+domain:
+.Pp
+.Xr socket 2 ,
+.Xr listen 2 ,
+.Xr bind 2 ,
+.Xr connect 2 ,
+.Xr accept4 2 ,
+.Xr accept 2 ,
+.Xr getpeername 2 ,
+.Xr getsockname 2 ,
+.Xr setsockopt 2 ,
+.Xr getsockopt 2 .
 .It Ar TAME_WPATH
 A number of system calls are allowed and may cause
 write-effects on the filesystem:
@@ -232,124 +350,6 @@ write-effects on the filesystem:
 .Xr fchownat 2 ,
 .Xr fstat 2 ,
 .Xr fstat 2 .
-.It Ar TAME_TMPPATH
-A number of system calls are allowed to do operations in the
-.Pa /tmp
-directory, including create, read, or write:
-.Pp
-.Xr lstat 2 ,
-.Xr chmod 2 ,
-.Xr chflags 2 ,
-.Xr chown 2 ,
-.Xr unlink 2 ,
-.Xr fstat 2 .
-.It Ar TAME_CPATH
-A number of system calls and sub-modes are allowed, which may
-create new files or directories in the filesystem:
-.Pp
-.Xr rename 2 ,
-.Xr rmdir 2 ,
-.Xr renameat 2 ,
-.Xr link 2 ,
-.Xr linkat 2 ,
-.Xr symlink 2 ,
-.Xr unlink 2 ,
-.Xr unlinkat 2 ,
-.Xr mkdir 2 ,
-.Xr mkdirat 2 .
-.It Ar TAME_INET
-The following system calls are allowed to operate in the
-.Ar AF_INET
-and
-.Ar AF_INET6
-domains:
-.Pp
-.Xr socket 2 ,
-.Xr listen 2 ,
-.Xr bind 2 ,
-.Xr connect 2 ,
-.Xr accept4 2 ,
-.Xr accept 2 ,
-.Xr getpeername 2 ,
-.Xr getsockname 2 ,
-.Xr setsockopt 2 ,
-.Xr getsockopt 2 .
-.Pp
-.Xr setsockopt 2
-has been reduced in functionality substantially.
-.It Ar TAME_UNIX
-The following system calls are allowed to operate in the
-.Ar AF_UNIX
-domain:
-.Pp
-.Xr socket 2 ,
-.Xr listen 2 ,
-.Xr bind 2 ,
-.Xr connect 2 ,
-.Xr accept4 2 ,
-.Xr accept 2 ,
-.Xr getpeername 2 ,
-.Xr getsockname 2 ,
-.Xr setsockopt 2 ,
-.Xr getsockopt 2 .
-.It Ar TAME_DNS
-Subsequent to a successful
-.Xr open 2
-of
-.Pa /etc/resolv.conf ,
-a few system calls become able to allow DNS network transactions:
-.Pp
-.Xr sendto 2 ,
-.Xr recvfrom 2 ,
-.Xr socket 2 ,
-.Xr connect 2 .
-.It Ar TAME_GETPW
-This allows read-only opening of files in
-.Pa /etc
-for the
-.Xr getpwnam 3 ,
-.Xr getgrnam 3 ,
-.Xr getgrouplist 3 ,
-and
-.Xr initgroups 3
-family of functions.
-They may also need to operate in a
-.Xr yp 8
-environment, so a successful
-.Xr open 2
-of
-.Pa /var/run/ypbind.lock
-enables the
-.Ar TAME_INET
-flag.
-.It Ar TAME_CMSG
-Allows passing of file descriptors using the
-.Xr sendmsg 2
-and
-.Xr recvmsg 2
-functions.
-.It Ar TAME_IOCTL
-Allows a subset of
-.Xr ioctl 2
-operations:
-.Pp
-.Va FIOCLEX ,
-.Va FIONCLEX ,
-.Va FIONREAD ,
-.Va FIONBIO ,
-.Va FIOGETOWN ,
-.Va TIOCSWINSZ ,
-.Va TIOCSTI .
-.It Ar TAME_PROC
-Allows the following process relationship operations:
-.Pp
-.Xr fork 2 ,
-.Xr vfork 2 ,
-.Xr kill 2 ,
-.Xr setresgid 2 ,
-.Xr setresuid 2 ,
-.It Ar TAME_ABORT
-Deliver an unblockable SIGABRT upon violation instead of SIGKILL.
 .El
 .Sh RETURN VALUES
 .Rv -std
