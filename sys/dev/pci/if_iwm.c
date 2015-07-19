@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.45 2015/06/15 08:06:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.46 2015/07/19 21:40:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -6114,9 +6114,10 @@ iwm_notif_intr(struct iwm_softc *sc)
 			break;
 
 		default:
-			printf("%s: frame %d/%d %x UNHANDLED (this should "
-			    "not happen)\n", DEVNAME(sc), qid, idx,
-			    pkt->len_n_flags);
+			printf("%s: unhandled firmware response 0x%x/0x%x "
+			    "rx ring %d[%d]\n",
+			    DEVNAME(sc), pkt->hdr.code, pkt->len_n_flags, qid,
+			    idx);
 			break;
 		}
 
