@@ -2081,6 +2081,7 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syslimits.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/syslog.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/systm.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/tame.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sys/time.ph

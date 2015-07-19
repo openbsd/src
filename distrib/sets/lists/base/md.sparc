@@ -1612,6 +1612,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/syslimits.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/syslog.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/systm.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/tame.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/task.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/time.ph
