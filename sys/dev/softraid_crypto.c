@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.119 2015/07/19 16:12:10 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.120 2015/07/19 17:20:15 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1151,7 +1151,6 @@ sr_crypto_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 	daddr_t			blk;
 
 	blk = wu->swu_blk_start;
-	blk += sd->sd_meta->ssd_data_offset;
 
 	ccb = sr_ccb_rw(sd, 0, blk, xs->datalen, xs->data, xs->flags, 0);
 	if (!ccb) {
