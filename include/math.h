@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.33 2014/05/03 16:13:03 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.34 2015/07/19 17:41:49 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -66,6 +66,22 @@ extern char __nan[];
 
 #define FP_ILOGB0	(-INT_MAX)
 #define FP_ILOGBNAN	INT_MAX
+
+#ifdef	__FP_FAST_FMA
+#define	FP_FAST_FMA	1
+#endif	/* __FP_FAST_FMA */
+
+#ifdef	__FP_FAST_FMAF
+#define	FP_FAST_FMAF	1
+#endif	/* __FP_FAST_FMAF */
+
+#ifdef	__FP_FAST_FMAL
+#define	FP_FAST_FMAL	1
+#endif	/* __FP_FAST_FMAL */
+
+#define	MATH_ERRNO	1
+#define	MATH_ERREXCEPT	2
+#define	math_errhandling	MATH_ERREXCEPT
 
 #define fpclassify(x) \
 	((sizeof (x) == sizeof (float)) ? \
