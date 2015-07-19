@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.13 2015/05/01 01:30:58 millert Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.14 2015/07/19 16:21:11 beck Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/unistd.h>
+#include <sys/systm.h>
 
 #ifdef VFSLCKDEBUG
 #include <sys/systm.h>		/* for panic() */
@@ -631,6 +632,9 @@ VOP_STRATEGY(struct buf *bp)
 {
 	struct vop_strategy_args a;
 	a.a_bp = bp;
+
+	if ((ISSET(bp->b_flags, B_BC)) && (!ISSET(bp->b_flags, B_DMA)))
+		panic("Non dma reachable buffer passed to VOP_STRATEGY");
 
 	if (bp->b_vp->v_op->vop_strategy == NULL)
 		return (EOPNOTSUPP);

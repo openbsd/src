@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.169 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.170 2015/07/19 16:21:11 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -90,6 +90,11 @@ vsize_t bufkvm;
 
 struct proc *cleanerproc;
 int bd_req;			/* Sleep point for cleaner daemon. */
+
+#define NUM_CACHES 2
+#define DMA_CACHE 0
+struct bufcache cleancache[NUM_CACHES];
+struct bufqueue dirtyqueue;
 
 void
 buf_put(struct buf *bp)
@@ -239,7 +244,7 @@ bufadjust(int newbufpages)
 	 * adjusted bufcachepercent - or the pagedaemon has told us
 	 * to give back memory *now* - so we give it all back.
 	 */
-	while ((bp = bufcache_getcleanbuf()) &&
+	while ((bp = bufcache_getanycleanbuf()) &&
 	    (bcstats.numbufpages > targetpages)) {
 		bufcache_take(bp);
 		if (bp->b_vp) {
@@ -296,6 +301,33 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 		return (-1); /* we did not free what we were asked */
 	else
 		return(0);
+}
+
+void
+buf_flip_high(struct buf *bp)
+{
+	KASSERT(ISSET(bp->b_flags, B_BC));
+	KASSERT(ISSET(bp->b_flags, B_DMA));
+	KASSERT(bp->cache == DMA_CACHE);
+	CLR(bp->b_flags, B_DMA);
+	/* XXX does nothing to buffer for now */
+}
+
+void
+buf_flip_dma(struct buf *bp)
+{
+	KASSERT(ISSET(bp->b_flags, B_BC));
+	KASSERT(ISSET(bp->b_flags, B_BUSY));
+	if (!ISSET(bp->b_flags, B_DMA)) {
+		KASSERT(bp->cache > DMA_CACHE);
+		KASSERT(bp->cache < NUM_CACHES);
+		/* XXX does not flip buffer for now */
+		/* make buffer hot, in DMA_CACHE, once it gets released. */
+		CLR(bp->b_flags, B_COLD);
+		CLR(bp->b_flags, B_WARM);
+		SET(bp->b_flags, B_DMA);
+		bp->cache = DMA_CACHE;
+	}
 }
 
 struct buf *
@@ -476,7 +508,12 @@ bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 	for (i = 1; i < howmany; i++) {
 		bcstats.pendingreads++;
 		bcstats.numreads++;
-		SET(xbpp[i]->b_flags, B_READ | B_ASYNC);
+                /*
+                * We set B_DMA here because bp above will be B_DMA,
+                * and we are playing buffer slice-n-dice games from
+                * the memory allocated in bp.
+                */
+		SET(xbpp[i]->b_flags, B_DMA | B_READ | B_ASYNC);
 		xbpp[i]->b_blkno = sblkno + (i * inc);
 		xbpp[i]->b_bufsize = xbpp[i]->b_bcount = size;
 		xbpp[i]->b_data = NULL;
@@ -565,6 +602,7 @@ bwrite(struct buf *bp)
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	bp->b_vp->v_numoutput++;
 	splx(s);
+	buf_flip_dma(bp);
 	SET(bp->b_flags, B_WRITEINPROG);
 	VOP_STRATEGY(bp);
 
@@ -619,6 +657,7 @@ bdwrite(struct buf *bp)
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
 		s = splbio();
+		buf_flip_dma(bp);
 		reassignbuf(bp);
 		splx(s);
 		curproc->p_ru.ru_oublock++;		/* XXX */
@@ -663,6 +702,7 @@ buf_dirty(struct buf *bp)
 
 	if (ISSET(bp->b_flags, B_DELWRI) == 0) {
 		SET(bp->b_flags, B_DELWRI);
+		buf_flip_dma(bp);
 		reassignbuf(bp);
 	}
 }
@@ -899,12 +939,12 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 			bufadjust(bufhighpages);
 
 		/*
-		 * If would go over the page target with our
+		 * If we would go over the page target with our
 		 * new allocation, free enough buffers first
 		 * to stay at the target with our new allocation.
 		 */
 		while ((bcstats.numbufpages + npages > targetpages) &&
-		    (bp = bufcache_getcleanbuf())) {
+		    (bp = bufcache_getanycleanbuf())) {
 			bufcache_take(bp);
 			if (bp->b_vp) {
 				RB_REMOVE(buf_rb_bufs,
@@ -981,9 +1021,11 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 
 	if (size) {
 		buf_alloc_pages(bp, round_page(size));
+		SET(bp->b_flags, B_DMA);
 		buf_map(bp);
 	}
 
+	SET(bp->b_flags, B_BC);
 	splx(s);
 
 	return (bp);
@@ -1124,9 +1166,9 @@ biodone(struct buf *bp)
 	}
 	if (bcstats.numbufs &&
 	    (!(ISSET(bp->b_flags, B_RAW) || ISSET(bp->b_flags, B_PHYS)))) {
-		if (!ISSET(bp->b_flags, B_READ))
+		if (!ISSET(bp->b_flags, B_READ)) {
 			bcstats.pendingwrites--;
-		else
+		} else
 			bcstats.pendingreads--;
 	}
 	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
@@ -1211,7 +1253,7 @@ bcstats_print(
  * coldqueue, with the B_COLD flag set. When a cold buf is released, we set
  * the B_WARM flag and put it onto the warmqueue. Warm bufs are also
  * directly returned to the end of the warmqueue. As with the hotqueue, when
- * the warmqueue grows too large, bufs are moved onto the coldqueue.
+ * the warmqueue grows too large, B_WARM bufs are moved onto the coldqueue.
  *
  * Note that this design does still support large working sets, greater
  * than the cap of hotqueue or warmqueue would imply. The coldqueue is still
@@ -1221,58 +1263,115 @@ bcstats_print(
  *
  * In the 2Q paper, hotqueue and coldqueue are A1in and A1out. The warmqueue
  * is Am. We always cache pages, as opposed to pointers to pages for A1.
- * 
+ *
+ * This implementation adds support for multiple 2q caches.
+ *
+ * If we have more than one 2q cache, as bufs fall off the cold queue
+ * for recyclying, bufs that have been warm before (which retain the
+ * B_WARM flag in addition to B_COLD) can be put into the hot queue of
+ * a second level 2Q cache. buffers which are only B_COLD are
+ * recycled. Bufs falling off the last cache's cold queue are always
+ * recycled.
+ *
  */
-
-/*
- * 
- */
-TAILQ_HEAD(bufqueue, buf);
-struct bufqueue hotqueue;
-int64_t hotbufpages;
-struct bufqueue coldqueue;
-struct bufqueue warmqueue;
-int64_t warmbufpages;
-struct bufqueue dirtyqueue;
 
 /*
  * this function is called when a hot or warm queue may have exceeded its
  * size limit. it will move a buf to the coldqueue.
  */
-int chillbufs(struct bufqueue *queue, int64_t *queuepages);
+int chillbufs(struct
+    bufcache *cache, struct bufqueue *queue, int64_t *queuepages);
 
 void
 bufcache_init(void)
 {
-
-	TAILQ_INIT(&hotqueue);
-	TAILQ_INIT(&coldqueue);
-	TAILQ_INIT(&warmqueue);
+	int i;
+	for (i=0; i < NUM_CACHES; i++) {
+		TAILQ_INIT(&cleancache[i].hotqueue);
+		TAILQ_INIT(&cleancache[i].coldqueue);
+		TAILQ_INIT(&cleancache[i].warmqueue);
+	}
 	TAILQ_INIT(&dirtyqueue);
 }
 
 /*
- * if the buffer cache shrunk, we may need to rebalance our queues.
+ * if the buffer caches have shrunk, we may need to rebalance our queues.
  */
 void
 bufcache_adjust(void)
 {
-	while (chillbufs(&warmqueue, &warmbufpages) ||
-	    chillbufs(&hotqueue, &hotbufpages))
-		;
+	int i;
+	for (i=0; i < NUM_CACHES; i++) {
+		while (chillbufs(&cleancache[i], &cleancache[i].warmqueue,
+		    &cleancache[i].warmbufpages) ||
+		    chillbufs(&cleancache[i], &cleancache[i].hotqueue,
+		    &cleancache[i].hotbufpages))
+			;
+	}
 }
 
 struct buf *
-bufcache_getcleanbuf(void)
+bufcache_getcleanbuf(int cachenum)
 {
-	struct buf *bp;
+	struct buf *bp = NULL;
+	struct bufcache *cache = &cleancache[cachenum];
 
-	if ((bp = TAILQ_FIRST(&coldqueue)))
+	splassert(IPL_BIO);
+
+	/* try  cold queue */
+	while ((bp = TAILQ_FIRST(&cache->coldqueue))) {
+		if (cachenum < NUM_CACHES - 1 && ISSET(bp->b_flags, B_WARM)) {
+			/*
+			 * If this buffer was warm before, move it to
+			 *  the hot queue in the next cache
+			 */
+			TAILQ_REMOVE(&cache->coldqueue, bp, b_freelist);
+			CLR(bp->b_flags, B_WARM);
+			CLR(bp->b_flags, B_COLD);
+			int64_t pages = atop(bp->b_bufsize);
+			KASSERT(bp->cache == cachenum);
+			if (bp->cache == 0)
+				buf_flip_high(bp);
+			bp->cache++;
+			struct bufcache *newcache = &cleancache[bp->cache];
+			newcache->cachepages += pages;
+			newcache->hotbufpages += pages;
+			chillbufs(newcache, &newcache->hotqueue,
+			    &newcache->hotbufpages);
+			TAILQ_INSERT_TAIL(&newcache->hotqueue, bp, b_freelist);
+		}
+		else
+			/* buffer is cold - give it up */
+			return bp;
+	}
+	if ((bp = TAILQ_FIRST(&cache->warmqueue)))
 		return bp;
-	if ((bp = TAILQ_FIRST(&warmqueue)))
-		return bp;
-	return TAILQ_FIRST(&hotqueue);
+	if ((bp = TAILQ_FIRST(&cache->hotqueue)))
+ 		return bp;
+	return bp;
 }
+
+
+struct buf *
+bufcache_getanycleanbuf(void)
+{
+	int i, j = 0, q = NUM_CACHES - 1;
+	struct buf *bp = NULL;
+
+	/*
+	 * XXX in theory we could promote warm buffers into a previous queue
+	 * so in the pathological case of where we go through all the caches
+	 * without getting a buffer we have to start at the beginning again.
+	 */
+	while (j <= q)	{
+		for (i = q; i >= j; i--)
+			if ((bp = bufcache_getcleanbuf(i)))
+				return(bp);
+		j++;
+	}
+	return bp;
+}
+
 
 struct buf *
 bufcache_getdirtybuf(void)
@@ -1288,18 +1387,23 @@ bufcache_take(struct buf *bp)
 
 	splassert(IPL_BIO);
 
+	KASSERT(ISSET(bp->b_flags, B_BC));
+	KASSERT(bp->cache >= DMA_CACHE);
+	KASSERT((bp->cache < NUM_CACHES));
 	pages = atop(bp->b_bufsize);
+	struct bufcache *cache = &cleancache[bp->cache];
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
-		if (ISSET(bp->b_flags, B_WARM)) {
-			queue = &warmqueue;
-			warmbufpages -= pages;
-		} else if (ISSET(bp->b_flags, B_COLD)) {
-			queue = &coldqueue;
+                if (ISSET(bp->b_flags, B_COLD)) {
+			queue = &cache->coldqueue;
+		} else if (ISSET(bp->b_flags, B_WARM)) {
+			queue = &cache->warmqueue;
+			cache->warmbufpages -= pages;
 		} else {
-			queue = &hotqueue;
-			hotbufpages -= pages;
+			queue = &cache->hotqueue;
+			cache->hotbufpages -= pages;
 		}
 		bcstats.numcleanpages -= pages;
+		cache->cachepages -= pages;
 	} else {
 		queue = &dirtyqueue;
 		bcstats.numdirtypages -= pages;
@@ -1308,8 +1412,9 @@ bufcache_take(struct buf *bp)
 	TAILQ_REMOVE(queue, bp, b_freelist);
 }
 
+/* move buffers from a hot or warm queue to a cold queue in a cache */
 int
-chillbufs(struct bufqueue *queue, int64_t *queuepages)
+chillbufs(struct bufcache *cache, struct bufqueue *queue, int64_t *queuepages)
 {
 	struct buf *bp;
 	int64_t limit, pages;
@@ -1318,7 +1423,7 @@ chillbufs(struct bufqueue *queue, int64_t *queuepages)
 	 * The warm and hot queues are allowed to be up to one third each.
 	 * We impose a minimum size of 96 to prevent too much "wobbling".
 	 */
-	limit = bcstats.numcleanpages / 3;
+	limit = cache->cachepages / 3;
 	if (*queuepages > 96 && *queuepages > limit) {
 		bp = TAILQ_FIRST(queue);
 		if (!bp)
@@ -1326,9 +1431,9 @@ chillbufs(struct bufqueue *queue, int64_t *queuepages)
 		pages = atop(bp->b_bufsize);
 		*queuepages -= pages;
 		TAILQ_REMOVE(queue, bp, b_freelist);
-		CLR(bp->b_flags, B_WARM);
+		/* we do not clear B_WARM */
 		SET(bp->b_flags, B_COLD);
-		TAILQ_INSERT_TAIL(&coldqueue, bp, b_freelist);
+		TAILQ_INSERT_TAIL(&cache->coldqueue, bp, b_freelist);
 		return 1;
 	}
 	return 0;
@@ -1339,21 +1444,26 @@ bufcache_release(struct buf *bp)
 {
 	struct bufqueue *queue;
 	int64_t pages;
-	
+	struct bufcache *cache = &cleancache[bp->cache];
 	pages = atop(bp->b_bufsize);
+	KASSERT(ISSET(bp->b_flags, B_BC));
+	KASSERT((ISSET(bp->b_flags, B_DMA) && bp->cache == 0)
+	    || ((!ISSET(bp->b_flags, B_DMA)) && bp->cache > 0));
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		int64_t *queuepages;
 		if (ISSET(bp->b_flags, B_WARM | B_COLD)) {
 			SET(bp->b_flags, B_WARM);
-			queue = &warmqueue;
-			queuepages = &warmbufpages;
+			CLR(bp->b_flags, B_COLD);
+			queue = &cache->warmqueue;
+			queuepages = &cache->warmbufpages;
 		} else {
-			queue = &hotqueue;
-			queuepages = &hotbufpages;
+			queue = &cache->hotqueue;
+			queuepages = &cache->hotbufpages;
 		}
 		*queuepages += pages;
 		bcstats.numcleanpages += pages;
-		chillbufs(queue, queuepages);
+		cache->cachepages += pages;
+		chillbufs(cache, queue, queuepages);
 	} else {
 		queue = &dirtyqueue;
 		bcstats.numdirtypages += pages;
