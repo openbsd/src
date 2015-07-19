@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.145 2015/07/18 05:46:52 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.146 2015/07/19 00:06:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -398,6 +398,9 @@ main(int argc, char *argv[])
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return((int)MANDOCLEVEL_BADARG);
 
+	if (pager_pid == 1 && isatty(STDOUT_FILENO) == 0)
+		pager_pid = 0;
+
 	curp.mchars = mchars_alloc();
 	curp.mp = mparse_alloc(options, curp.wlevel, mmsg,
 	    curp.mchars, defos);
@@ -409,7 +412,7 @@ main(int argc, char *argv[])
 		mparse_keep(curp.mp);
 
 	if (argc < 1) {
-		if (pager_pid == 1 && isatty(STDOUT_FILENO))
+		if (pager_pid == 1)
 			pager_pid = spawn_pager();
 		parse(&curp, STDIN_FILENO, "<stdin>");
 	}
@@ -421,7 +424,7 @@ main(int argc, char *argv[])
 			rc = rctmp;
 
 		if (fd != -1) {
-			if (pager_pid == 1 && isatty(STDOUT_FILENO))
+			if (pager_pid == 1)
 				pager_pid = spawn_pager();
 
 			if (resp == NULL)
