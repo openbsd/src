@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.101 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.102 2015/07/19 02:52:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -164,6 +164,8 @@ static void clockname(int);
 static void sockoptlevelname(int);
 static void ktraceopname(int);
 
+static int screenwidth;
+
 int
 main(int argc, char *argv[])
 {
@@ -174,6 +176,16 @@ main(int argc, char *argv[])
 	void *m;
 
 	def_emul = current = &emulations[0];	/* native */
+
+	if (screenwidth == 0) {
+		struct winsize ws;
+
+		if (fancy && ioctl(fileno(stderr), TIOCGWINSZ, &ws) != -1 &&
+		    ws.ws_col > 8)
+			screenwidth = ws.ws_col;
+		else
+			screenwidth = 80;
+	}
 
 	while ((ch = getopt(argc, argv, "e:f:dHlm:nRp:Tt:xX")) != -1)
 		switch (ch) {
@@ -1177,19 +1189,9 @@ static void
 showbuf(unsigned char *dp, size_t datalen)
 {
 	int i, j;
-	static int screenwidth;
 	int col = 0, width, bpl;
 	unsigned char visbuf[5], *cp, c;
 
-	if (screenwidth == 0) {
-		struct winsize ws;
-
-		if (fancy && ioctl(fileno(stderr), TIOCGWINSZ, &ws) != -1 &&
-		    ws.ws_col > 8)
-			screenwidth = ws.ws_col;
-		else
-			screenwidth = 80;
-	}
 	if (iohex == 1) {
 		putchar('\t');
 		col = 8;
