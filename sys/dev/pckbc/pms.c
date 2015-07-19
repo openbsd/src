@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.62 2015/06/08 06:39:22 stsp Exp $ */
+/* $OpenBSD: pms.c,v 1.63 2015/07/19 15:43:44 krw Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1162,6 +1162,26 @@ pms_proc_synaptics(struct pms_softc *sc)
 
 	w = ((sc->packet[0] & 0x30) >> 2) | ((sc->packet[0] & 0x04) >> 1) |
 	    ((sc->packet[3] & 0x04) >> 2);
+
+	/*
+	 * Conform to the encoding understood by
+	 * /usr/xenocara/driver/xf86-input-synaptics/src/wsconscomm.c
+	 */
+	switch (w) {
+	case 0:
+		/* fingerwidth 5, numfingers 2 */
+		break;
+	case 1:
+		/* fingerwidth 5, numfingers 3 */
+		break;
+	case 5:
+		/* fingerwidth 5, numfingers 1 */
+		break;
+	default:
+		/* fingerwidth 4, numfingers 1 */
+		w = 4;
+		break;
+	}
 
 	if ((syn->capabilities & SYNAPTICS_CAP_PASSTHROUGH) && w == 3) {
 		synaptics_sec_proc(sc);
