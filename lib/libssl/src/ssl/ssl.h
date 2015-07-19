@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.91 2015/07/18 19:41:54 doug Exp $ */
+/* $OpenBSD: ssl.h,v 1.92 2015/07/19 06:31:32 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1696,6 +1696,9 @@ const SSL_METHOD *TLSv1_2_method(void);		/* TLSv1.2 */
 const SSL_METHOD *TLSv1_2_server_method(void);	/* TLSv1.2 */
 const SSL_METHOD *TLSv1_2_client_method(void);	/* TLSv1.2 */
 
+const SSL_METHOD *TLS_method(void);		/* TLS v1.0 or later */
+const SSL_METHOD *TLS_server_method(void);	/* TLS v1.0 or later */
+const SSL_METHOD *TLS_client_method(void);	/* TLS v1.0 or later */
 
 const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */

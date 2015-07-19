@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.97 2015/07/18 23:00:23 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.98 2015/07/19 06:31:32 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -757,6 +757,8 @@ int ssl23_accept(SSL *s);
 int ssl23_connect(SSL *s);
 int ssl23_read_bytes(SSL *s, int n);
 int ssl23_write_bytes(SSL *s);
+int tls_accept(SSL *s);
+int tls_connect(SSL *s);
 
 int tls1_new(SSL *s);
 void tls1_free(SSL *s);
