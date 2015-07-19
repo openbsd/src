@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.151 2015/07/19 19:52:36 rpe Exp $
+#	$OpenBSD: netstart,v 1.152 2015/07/19 23:42:58 florian Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set) from a file
 # and spew to stdout.
@@ -236,7 +236,7 @@ fi
 
 # Configure all the non-loopback interfaces which we know about, but
 # do not start interfaces which must be delayed. Refer to hostname.if(5)
-ifmstart "" "trunk svlan vlan carp gif gre pfsync pppoe tun bridge"
+ifmstart "" "trunk svlan vlan carp gif gre pfsync pppoe tun bridge pflow"
 
 # The trunk interfaces need to come up first in this list.
 # The (s)vlan interfaces need to come up after trunk.
@@ -300,10 +300,11 @@ EOF
 esac
 
 
-# Configure PPPoE, GIF, GRE and TUN interfaces, delayed because they require
-# routes to be set.  TUN might depend on PPPoE, and GIF or GRE may depend on
-# either of them.
-ifmstart "pppoe tun gif gre bridge"
+# Configure PPPoE, GIF, GRE, TUN and PFLOW interfaces, delayed because they
+# require routes to be set. TUN might depend on PPPoE, and GIF or GRE may
+# depend on either of them. PFLOW might bind to ip addresses configured
+# on either of them.
+ifmstart "pppoe tun gif gre bridge pflow"
 
 # Reject 127/8 other than 127.0.0.1.
 route -qn add -net 127 127.0.0.1 -reject >/dev/null
