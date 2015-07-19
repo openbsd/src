@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.7 2015/07/03 16:33:07 miod Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.8 2015/07/19 00:33:36 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -199,6 +199,8 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	octdwctwo_reg_set(sc, USBN_CLK_CTL_OFFSET, USBN_CLK_CTL_ENABLE);
 	delay(1);
+
+	strlcpy(sc->sc_dwc2.sc_vendor, "Octeon", sizeof(sc->sc_dwc2.sc_vendor));
 
 	rc = dwc2_init(&sc->sc_dwc2);
 	if (rc != 0)
