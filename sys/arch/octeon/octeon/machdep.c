@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.66 2015/07/15 23:22:40 pirofti Exp $ */
+/*	$OpenBSD: machdep.c,v 1.67 2015/07/19 16:48:38 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -127,6 +127,10 @@ void		octeon_memory_init(struct boot_info *);
 int		octeon_cpuspeed(int *);
 static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
+
+#ifdef MULTIPROCESSOR
+uint32_t	ipi_intr(uint32_t, struct trap_frame *);
+#endif
 
 extern void 	parse_uboot_root(void);
 
@@ -468,6 +472,10 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 		Debugger();
 #endif
 
+#ifdef MULTIPROCESSOR
+	set_intr(INTPRI_IPI, CR_INT_1, ipi_intr);
+#endif
+
 	/*
 	 * Return the new kernel stack pointer.
 	 */
@@ -752,8 +760,6 @@ uint32_t cpu_spinup_mask = 0;
 uint64_t cpu_spinup_a0, cpu_spinup_sp;
 static int (*ipi_handler)(void *);
 
-uint32_t ipi_intr(uint32_t, struct trap_frame *);
-
 extern bus_space_t iobus_tag;
 extern bus_space_handle_t iobus_h;
 
@@ -833,6 +839,9 @@ ipi_intr(uint32_t hwpend, struct trap_frame *frame)
 	 */
 	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid), 0);
 
+	if (ipi_handler == NULL)
+		return hwpend;
+
 	ipi_handler((void *)cpuid);
 
 	/*
@@ -853,7 +862,6 @@ hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
 		0xffffffff);
 	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid),
 		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
-	set_intr(INTPRI_IPI, CR_INT_1, ipi_intr);
 
 	return 0;
 };
