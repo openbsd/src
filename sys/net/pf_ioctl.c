@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.287 2015/07/19 05:48:12 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.288 2015/07/19 05:54:54 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1068,7 +1068,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		if ((error = pf_rule_copyin(&pr->rule, rule, ruleset))) {
-			pool_put(&pf_rule_pl, rule);
+			pf_rm_rule(NULL, rule);
+			rule = NULL;
 			break;
 		}
 		rule->cuid = p->p_ucred->cr_ruid;
@@ -1084,7 +1085,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 #endif /* INET6 */
 		default:
-			pool_put(&pf_rule_pl, rule);
+			pf_rm_rule(NULL, rule);
+			rule = NULL;
 			error = EAFNOSUPPORT;
 			goto fail;
 		}
