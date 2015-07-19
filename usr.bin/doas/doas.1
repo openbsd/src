@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.1,v 1.5 2015/07/18 06:33:23 nicm Exp $
+.\" $OpenBSD: doas.1,v 1.6 2015/07/19 16:42:31 espie Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 18 2015 $
+.Dd $Mdocdate: July 19 2015 $
 .Dt DOAS 1
 .Os
 .Sh NAME
@@ -48,7 +48,9 @@ It may fail for one of the following reasons:
 .Pp
 .Bl -bullet -compact
 .It
-The config file could not be parsed.
+The config file 
+.Pa /etc/doas.conf
+could not be parsed.
 .It
 The user attempted to run a command which is not permitted.
 .It
