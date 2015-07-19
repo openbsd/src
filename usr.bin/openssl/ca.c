@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.5 2015/02/08 10:22:45 doug Exp $ */
+/* $OpenBSD: ca.c,v 1.6 2015/07/19 01:10:25 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2039,7 +2039,6 @@ certify_spkac(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
 	char *type, *buf;
 	EVP_PKEY *pktmp = NULL;
 	X509_NAME *n = NULL;
-	X509_NAME_ENTRY *ne = NULL;
 	int ok = -1, i, j;
 	long errline;
 	int nid;
@@ -2154,8 +2153,6 @@ err:
 		CONF_free(parms);
 	if (spki != NULL)
 		NETSCAPE_SPKI_free(spki);
-	if (ne != NULL)
-		X509_NAME_ENTRY_free(ne);
 
 	return (ok);
 }
