@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.23 2015/07/18 23:35:01 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.24 2015/07/19 02:49:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -373,13 +373,27 @@ ieee80211_print_htop(u_int8_t *data, u_int len)
 	primary_chan = data[0];
 	sco = ((htopinfo[0] & IEEE80211_HTOP0_SCO_MASK)
 	    >> IEEE80211_HTOP0_SCO_SHIFT);
-	if (sco == 0)
+	if (sco == 0) /* no secondary channel */
 		printf("20MHz chan %d", primary_chan);
-	else if (sco == 1)
-		printf("40MHz primary chan %d secondary above", primary_chan);
-	else if (sco == 3)
-		printf("40MHz primary chan %d secondary below", primary_chan);
-	else
+	else if (sco == 1) { /* secondary channel above */
+		if (primary_chan >= 1 && primary_chan <= 13) /* 2GHz */
+			printf("40MHz chan %d:%d", primary_chan,
+			    primary_chan + 1);
+		else if (primary_chan >= 34) /* 5GHz */
+			printf("40MHz chan %d:%d", primary_chan,
+			    primary_chan + 4);
+		else
+			printf("[invalid 40MHz chan %d+]", primary_chan);
+	} else if (sco == 3) { /* secondary channel below */
+		if (primary_chan >= 2 && primary_chan <= 14) /* 2GHz */
+			printf("40MHz chan %d:%d", primary_chan,
+			    primary_chan - 1);
+		else if (primary_chan >= 40) /* 5GHz */
+			printf("40MHz chan %d:%d", primary_chan,
+			    primary_chan - 4);
+		else
+			printf("[invalid 40MHz chan %d-]", primary_chan);
+	} else
 		printf("chan %d [invalid secondary channel offset %d]",
 		    primary_chan, sco);
 
