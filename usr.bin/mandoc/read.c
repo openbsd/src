@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.114 2015/04/19 14:25:05 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.115 2015/07/19 05:59:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,18 +19,17 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <zlib.h>
 
 #include "mandoc_aux.h"
 #include "mandoc.h"
@@ -55,10 +54,10 @@ struct	mparse {
 	enum mandoclevel  file_status; /* status of current parse */
 	enum mandoclevel  wlevel; /* ignore messages below this */
 	int		  options; /* parser options */
+	int		  gzip; /* current input file is gzipped */
 	int		  filenc; /* encoding of the current file */
 	int		  reparse_count; /* finite interp. stack */
 	int		  line; /* line number in the file */
-	pid_t		  child; /* the gunzip(1) process */
 };
 
 static	void	  choose_parser(struct mparse *);
@@ -322,7 +321,6 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 	int		 of;
 	int		 lnn; /* line number in the real file */
 	int		 fd;
-	pid_t		 save_child;
 	unsigned char	 c;
 
 	memset(&ln, 0, sizeof(ln));
@@ -534,7 +532,6 @@ rerun:
 			if (curp->secondary)
 				curp->secondary->sz -= pos + 1;
 			save_file = curp->file;
-			save_child = curp->child;
 			if (mparse_open(curp, &fd, ln.buf + of) ==
 			    MANDOCLEVEL_OK) {
 				mparse_readfd(curp, fd, ln.buf + of);
@@ -552,7 +549,6 @@ rerun:
 				of = 0;
 				mparse_buf_r(curp, ln, of, 0);
 			}
-			curp->child = save_child;
 			pos = 0;
 			continue;
 		default:
@@ -607,6 +603,7 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 		struct buf *fb, int *with_mmap)
 {
 	struct stat	 st;
+	gzFile		 gz;
 	size_t		 off;
 	ssize_t		 ssz;
 
@@ -622,7 +619,7 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 	 * concerned that this is going to tank any machines.
 	 */
 
-	if (S_ISREG(st.st_mode)) {
+	if (curp->gzip == 0 && S_ISREG(st.st_mode)) {
 		if (st.st_size > 0x7fffffff) {
 			mandoc_msg(MANDOCERR_TOOLARGE, curp, 0, 0, NULL);
 			return(0);
@@ -633,6 +630,14 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 		if (fb->buf != MAP_FAILED)
 			return(1);
 	}
+
+	if (curp->gzip) {
+		if ((gz = gzdopen(fd, "rb")) == NULL) {
+			perror(file);
+			exit((int)MANDOCLEVEL_SYSERR);
+		}
+	} else
+		gz = NULL;
 
 	/*
 	 * If this isn't a regular file (like, say, stdin), then we must
@@ -652,7 +657,9 @@ read_whole_file(struct mparse *curp, const char *file, int fd,
 			}
 			resize_buf(fb, 65536);
 		}
-		ssz = read(fd, fb->buf + (int)off, fb->sz - off);
+		ssz = curp->gzip ?
+		    gzread(gz, fb->buf + (int)off, fb->sz - off) :
+		    read(fd, fb->buf + (int)off, fb->sz - off);
 		if (ssz == 0) {
 			fb->sz = off;
 			return(1);
@@ -751,99 +758,42 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 	if (fd != STDIN_FILENO && close(fd) == -1)
 		perror(file);
 
-	mparse_wait(curp);
 	return(curp->file_status);
 }
 
 enum mandoclevel
 mparse_open(struct mparse *curp, int *fd, const char *file)
 {
-	int		  pfd[2];
-	int		  save_errno;
 	char		 *cp;
 
 	curp->file = file;
+	cp = strrchr(file, '.');
+	curp->gzip = (cp != NULL && ! strcmp(cp + 1, "gz"));
 
-	/* Unless zipped, try to just open the file. */
+	/* First try to use the filename as it is. */
 
-	if ((cp = strrchr(file, '.')) == NULL ||
-	    strcmp(cp + 1, "gz")) {
-		curp->child = 0;
-		if ((*fd = open(file, O_RDONLY)) != -1)
-			return(MANDOCLEVEL_OK);
+	if ((*fd = open(file, O_RDONLY)) != -1)
+		return(MANDOCLEVEL_OK);
 
-		/* Open failed; try to append ".gz". */
+	/*
+	 * If that doesn't work and the filename doesn't
+	 * already  end in .gz, try appending .gz.
+	 */
 
+	if ( ! curp->gzip) {
 		mandoc_asprintf(&cp, "%s.gz", file);
-		file = cp;
-	} else
-		cp = NULL;
-
-	/* Before forking, make sure the file can be read. */
-
-	save_errno = errno;
-	if (access(file, R_OK) == -1) {
-		if (cp != NULL)
-			errno = save_errno;
+		*fd = open(file, O_RDONLY);
 		free(cp);
-		*fd = -1;
-		curp->child = 0;
-		mandoc_msg(MANDOCERR_FILE, curp, 0, 0, strerror(errno));
-		return(MANDOCLEVEL_ERROR);
-	}
-
-	/* Run gunzip(1). */
-
-	if (pipe(pfd) == -1) {
-		perror("pipe");
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
-
-	switch (curp->child = fork()) {
-	case -1:
-		perror("fork");
-		exit((int)MANDOCLEVEL_SYSERR);
-	case 0:
-		close(pfd[0]);
-		if (dup2(pfd[1], STDOUT_FILENO) == -1) {
-			perror("dup");
-			exit((int)MANDOCLEVEL_SYSERR);
+		if (*fd != -1) {
+			curp->gzip = 1;
+			return(MANDOCLEVEL_OK);
 		}
-		signal(SIGPIPE, SIG_DFL);
-		execlp("gunzip", "gunzip", "-c", file, NULL);
-		perror("exec");
-		exit((int)MANDOCLEVEL_SYSERR);
-	default:
-		close(pfd[1]);
-		*fd = pfd[0];
-		return(MANDOCLEVEL_OK);
 	}
-}
 
-enum mandoclevel
-mparse_wait(struct mparse *curp)
-{
-	int	  status;
+	/* Neither worked, give up. */
 
-	if (curp->child == 0)
-		return(MANDOCLEVEL_OK);
-
-	if (waitpid(curp->child, &status, 0) == -1) {
-		perror("wait");
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
-	curp->child = 0;
-	if (WIFSIGNALED(status)) {
-		mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
-		    "gunzip died from signal %d", WTERMSIG(status));
-		return(MANDOCLEVEL_ERROR);
-	}
-	if (WEXITSTATUS(status)) {
-		mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
-		    "gunzip failed with code %d", WEXITSTATUS(status));
-		return(MANDOCLEVEL_ERROR);
-	}
-	return(MANDOCLEVEL_OK);
+	mandoc_msg(MANDOCERR_FILE, curp, 0, 0, strerror(errno));
+	return(MANDOCLEVEL_ERROR);
 }
 
 struct mparse *
