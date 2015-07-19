@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.40 2015/07/19 06:31:32 doug Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.41 2015/07/19 07:30:06 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,7 +119,7 @@
 
 static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
-static const SSL_METHOD *tls_get_server_method(int ver);
+static const SSL_METHOD *tls_any_get_server_method(int ver);
 
 const SSL_METHOD SSLv23_server_method_data = {
 	.version = TLS1_2_VERSION,
@@ -158,7 +158,7 @@ const SSL_METHOD TLS_server_method_data = {
 	.ssl_new = tls1_new,
 	.ssl_clear = tls1_clear,
 	.ssl_free = tls1_free,
-	.ssl_accept = tls_accept,
+	.ssl_accept = tls_any_accept,
 	.ssl_connect = ssl_undefined_function,
 	.ssl_read = ssl23_read,
 	.ssl_peek = ssl23_peek,
@@ -177,7 +177,7 @@ const SSL_METHOD TLS_server_method_data = {
 	.ssl_pending = ssl_undefined_const_function,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = ssl3_get_cipher,
-	.get_ssl_method = tls_get_server_method,
+	.get_ssl_method = tls_any_get_server_method,
 	.get_timeout = ssl23_default_timeout,
 	.ssl3_enc = &ssl3_undef_enc_method,
 	.ssl_version = ssl_undefined_void_function,
@@ -611,7 +611,7 @@ TLS_server_method(void)
 }
 
 static const SSL_METHOD *
-tls_get_server_method(int ver)
+tls_any_get_server_method(int ver)
 {
 	if (ver == SSL3_VERSION)
 		return (NULL);
@@ -620,7 +620,7 @@ tls_get_server_method(int ver)
 }
 
 int
-tls_accept(SSL *s)
+tls_any_accept(SSL *s)
 {
 	int ret;
 	unsigned long old_options;
