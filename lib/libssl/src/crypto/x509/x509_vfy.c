@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.42 2015/06/11 15:58:53 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.43 2015/07/19 01:44:16 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2001,78 +2001,48 @@ int
 X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     STACK_OF(X509) *chain)
 {
-	int ret = 1;
+	int param_ret = 1;
 
+	/*
+	 * Make sure everything is initialized properly even in case of an
+	 * early return due to an error.
+	 *
+	 * While this 'ctx' can be reused, X509_STORE_CTX_cleanup() will have
+	 * freed everything and memset ex_data anyway.  This also allows us
+	 * to safely use X509_STORE_CTX variables from the stack which will
+	 * have uninitialized data.
+	 */
+	memset(ctx, 0, sizeof(*ctx));
+
+	/*
+	 * Set values other than 0.  Keep this in the same order as
+	 * X509_STORE_CTX except for values that may fail.  All fields that
+	 * may fail should go last to make sure 'ctx' is as consistent as
+	 * possible even on early exits.
+	 */
 	ctx->ctx = store;
-	ctx->current_method = 0;
 	ctx->cert = x509;
 	ctx->untrusted = chain;
-	ctx->crls = NULL;
-	ctx->last_untrusted = 0;
-	ctx->other_ctx = NULL;
-	ctx->valid = 0;
-	ctx->chain = NULL;
-	ctx->error = 0;
-	ctx->explicit_policy = 0;
-	ctx->error_depth = 0;
-	ctx->current_cert = NULL;
-	ctx->current_issuer = NULL;
-	ctx->current_crl = NULL;
-	ctx->current_crl_score = 0;
-	ctx->current_reasons = 0;
-	ctx->tree = NULL;
-	ctx->parent = NULL;
 
-	ctx->param = X509_VERIFY_PARAM_new();
-
-	if (!ctx->param) {
-		X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-
-	/* Inherit callbacks and flags from X509_STORE if not set
-	 * use defaults.
-	 */
-
-	if (store)
-		ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
+	if (store && store->verify)
+		ctx->verify = store->verify;
 	else
-		ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT|X509_VP_FLAG_ONCE;
-
-	if (store) {
-		ctx->verify_cb = store->verify_cb;
-		ctx->cleanup = store->cleanup;
-	} else
-		ctx->cleanup = 0;
-
-	if (ret)
-		ret = X509_VERIFY_PARAM_inherit(ctx->param,
-		    X509_VERIFY_PARAM_lookup("default"));
-
-	if (ret == 0) {
-		X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-
-	if (store && store->check_issued)
-		ctx->check_issued = store->check_issued;
-	else
-		ctx->check_issued = check_issued;
-
-	if (store && store->get_issuer)
-		ctx->get_issuer = store->get_issuer;
-	else
-		ctx->get_issuer = X509_STORE_CTX_get1_issuer;
+		ctx->verify = internal_verify;
 
 	if (store && store->verify_cb)
 		ctx->verify_cb = store->verify_cb;
 	else
 		ctx->verify_cb = null_callback;
 
-	if (store && store->verify)
-		ctx->verify = store->verify;
+	if (store && store->get_issuer)
+		ctx->get_issuer = store->get_issuer;
 	else
-		ctx->verify = internal_verify;
+		ctx->get_issuer = X509_STORE_CTX_get1_issuer;
+
+	if (store && store->check_issued)
+		ctx->check_issued = store->check_issued;
+	else
+		ctx->check_issued = check_issued;
 
 	if (store && store->check_revocation)
 		ctx->check_revocation = store->check_revocation;
@@ -2094,6 +2064,8 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	else
 		ctx->cert_crl = cert_crl;
 
+	ctx->check_policy = check_policy;
+
 	if (store && store->lookup_certs)
 		ctx->lookup_certs = store->lookup_certs;
 	else
@@ -2104,8 +2076,33 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	else
 		ctx->lookup_crls = X509_STORE_get1_crls;
 
-	ctx->check_policy = check_policy;
+	if (store && store->cleanup)
+		ctx->cleanup = store->cleanup;
+	else
+		ctx->cleanup = NULL;
 
+	ctx->param = X509_VERIFY_PARAM_new();
+	if (!ctx->param) {
+		X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+
+	/* Inherit callbacks and flags from X509_STORE if not set
+	 * use defaults.
+	 */
+	if (store)
+		param_ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
+	else
+		ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT|X509_VP_FLAG_ONCE;
+
+	if (param_ret)
+		param_ret = X509_VERIFY_PARAM_inherit(ctx->param,
+		    X509_VERIFY_PARAM_lookup("default"));
+
+	if (param_ret == 0) {
+		X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
 
 	if (CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
 	    &(ctx->ex_data)) == 0) {
