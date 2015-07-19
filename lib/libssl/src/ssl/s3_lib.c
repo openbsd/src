@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.98 2015/07/17 15:50:37 doug Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.99 2015/07/19 06:23:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2076,7 +2076,6 @@ ssl3_clear(SSL *s)
 {
 	unsigned char	*rp, *wp;
 	size_t		 rlen, wlen;
-	int		 init_extra;
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
@@ -2091,7 +2090,6 @@ ssl3_clear(SSL *s)
 	wp = s->s3->wbuf.buf;
 	rlen = s->s3->rbuf.len;
 	wlen = s->s3->wbuf.len;
-	init_extra = s->s3->init_extra;
 
 	BIO_free(s->s3->handshake_buffer);
 	s->s3->handshake_buffer = NULL;
@@ -2106,7 +2104,6 @@ ssl3_clear(SSL *s)
 	s->s3->wbuf.buf = wp;
 	s->s3->rbuf.len = rlen;
 	s->s3->wbuf.len = wlen;
-	s->s3->init_extra = init_extra;
 
 	ssl_free_wbio_buffer(s);
 

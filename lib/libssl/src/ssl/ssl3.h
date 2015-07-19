@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.40 2015/07/18 19:41:54 doug Exp $ */
+/* $OpenBSD: ssl3.h,v 1.41 2015/07/19 06:23:51 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,9 +376,6 @@ typedef struct ssl3_state_st {
 	int need_empty_fragments;
 	int empty_fragment_done;
 
-	/* XXX delete on next major bump. */
-	int init_extra;
-
 	SSL3_BUFFER rbuf;	/* read IO goes into here */
 	SSL3_BUFFER wbuf;	/* write IO goes into here */
 
@@ -489,12 +486,6 @@ typedef struct ssl3_state_st {
 	 */
 	unsigned char *alpn_selected;
 	unsigned int alpn_selected_len;
-
-	/*
-	 * XXX delete on next major bump.  This was for old OS X releases
-	 * with broken ECDHE-ECDSA support.
-	 */
-	char is_probably_safari;
 } SSL3_STATE;
 
 #endif
