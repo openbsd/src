@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.79 2015/07/17 15:50:37 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.80 2015/07/19 20:32:18 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,6 +198,9 @@ tls1_new(SSL *s)
 void
 tls1_free(SSL *s)
 {
+	if (s == NULL)
+		return;
+
 	free(s->tlsext_session_ticket);
 	ssl3_free(s);
 }

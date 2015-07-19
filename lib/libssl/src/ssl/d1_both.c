@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.33 2015/07/18 23:00:23 doug Exp $ */
+/* $OpenBSD: d1_both.c,v 1.34 2015/07/19 20:32:18 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -209,6 +209,8 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 static void
 dtls1_hm_fragment_free(hm_fragment *frag)
 {
+	if (frag == NULL)
+		return;
 
 	if (frag->msg_header.is_ccs) {
 		EVP_CIPHER_CTX_free(

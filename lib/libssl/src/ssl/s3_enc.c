@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.60 2015/06/17 14:27:56 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.61 2015/07/19 20:32:18 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -490,6 +490,9 @@ void
 ssl3_free_digest_list(SSL *s)
 {
 	int i;
+
+	if (s == NULL)
+		return;
 
 	if (s->s3->handshake_dgst == NULL)
 		return;

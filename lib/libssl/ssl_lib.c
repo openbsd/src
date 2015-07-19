@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.104 2015/06/28 00:08:27 doug Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.105 2015/07/19 20:32:18 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2825,6 +2825,9 @@ ssl_init_wbio_buffer(SSL *s, int push)
 void
 ssl_free_wbio_buffer(SSL *s)
 {
+	if (s == NULL)
+		return;
+
 	if (s->bbio == NULL)
 		return;
 
