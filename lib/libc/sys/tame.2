@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.3 2015/07/19 07:16:22 nicm Exp $
+.\" $OpenBSD: tame.2,v 1.4 2015/07/19 10:11:16 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -28,7 +28,8 @@
 The current process is forced into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
 management, read-write operations on file descriptors, opening of files,
-networking.  In general, these modes were selected by studying the operation
+networking.
+In general, these modes were selected by studying the operation
 of many programs using libc and other such interfaces.
 .Pp
 Use of
@@ -62,7 +63,6 @@ All
 options below (with the exception of
 .Ar TAME_ABORT )
 permit the following system calls:
-.Pp
 .Bd -ragged -offset indent
 .Xr clock_getres 2 ,
 .Xr clock_gettime 2 ,
@@ -108,7 +108,7 @@ support:
 .Xr gethostname 3 ,
 system sensor readings.
 .It Xr access 2
-May check for existance of
+May check for existence of
 .Pa /etc/localtime .
 .It Xr adjtime 2
 Read-only, for
@@ -302,7 +302,7 @@ domain:
 .Xr getsockopt 2 .
 .Pp
 .It Ar TAME_DNSPATH
-Subsequent to a succesful
+Subsequent to a successful
 .Xr open 2
 of
 .Pa /etc/resolv.conf ,
@@ -318,14 +318,14 @@ This allows read-only opening of files in
 .Pa /etc
 for the
 .Xr getpwnam 3 ,
-.Xr getgrnam 3,
+.Xr getgrnam 3 ,
 .Xr getgrouplist 3 ,
 and
 .Xr initgroups 3
 family of functions.
 They may also need to operate in a
 .Xr yp 8
-environment, so a succesful
+environment, so a successful
 .Xr open 2
 of
 .Pa /var/run/ypbind.lock
