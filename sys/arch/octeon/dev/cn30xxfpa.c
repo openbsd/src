@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.4 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.5 2015/07/19 00:12:54 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -370,7 +370,7 @@ cn30xxfpa_dump_regs(void)
 	uint64_t tmp;
 	int i;
 
-	for (i = 0; i < (int)nitems(cn30xxfpa_dump_regs_); i++) {
+	for (i = 0; i < nitems(cn30xxfpa_dump_regs_); i++) {
 		reg = &cn30xxfpa_dump_regs_[i];
 		tmp = bus_space_read_8(sc->sc_regt, sc->sc_regh, reg->offset);
 		printf("\t%-24s: %16llx\n", reg->name, tmp);
