@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.174 2015/07/18 22:33:46 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.175 2015/07/19 20:10:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -294,6 +294,8 @@ void	 klog_readcb(int, short, void *);
 void	 udp_readcb(int, short, void *);
 void	 unix_readcb(int, short, void *);
 void	 tcp_acceptcb(int, short, void *);
+int	 octet_counting(struct evbuffer *, char **, int);
+int	 non_transparent_framing(struct evbuffer *, char **);
 void	 tcp_readcb(struct bufferevent *, void *);
 void	 tcp_closecb(struct bufferevent *, short, void *);
 int	 tcp_socket(struct filed *);
@@ -914,31 +916,120 @@ tcp_acceptcb(int fd, short event, void *arg)
 	logmsg(LOG_SYSLOG|LOG_INFO, ebuf, LocalHostName, ADDDATE);
 }
 
+/*
+ * Syslog over TCP  RFC 6587  3.4.1. Octet Counting
+ */
+int
+octet_counting(struct evbuffer *evbuf, char **msg, int drain)
+{
+	char	*p, *buf, *end;
+	int	 len;
+
+	buf = EVBUFFER_DATA(evbuf);
+	end = buf + EVBUFFER_LENGTH(evbuf);
+	/*
+	 * It can be assumed that octet-counting framing is used if a syslog
+	 * frame starts with a digit.
+	 */
+	if (buf >= end || !isdigit(*buf))
+		return (-1);
+	/*
+	 * SYSLOG-FRAME = MSG-LEN SP SYSLOG-MSG
+	 * MSG-LEN is the octet count of the SYSLOG-MSG in the SYSLOG-FRAME.
+	 * We support up to 5 digits in MSG-LEN, so the maximum is 99999.
+	 */
+	for (p = buf; p < end && p < buf + 5; p++) {
+		if (!isdigit(*p))
+			break;
+	}
+	if (buf >= p || p >= end || *p != ' ')
+		return (-1);
+	p++;
+	/* Using atoi() is safe as buf starts with 1 to 5 digits and a space. */
+	len = atoi(buf);
+	if (drain)
+		dprintf(" octet counting %d", len);
+	if (p + len > end)
+		return (0);
+	if (drain)
+		evbuffer_drain(evbuf, p - buf);
+	if (msg)
+		*msg = p;
+	return (len);
+}
+
+/*
+ * Syslog over TCP  RFC 6587  3.4.2. Non-Transparent-Framing
+ */
+int
+non_transparent_framing(struct evbuffer *evbuf, char **msg)
+{
+	char	*p, *buf, *end;
+
+	buf = EVBUFFER_DATA(evbuf);
+	end = buf + EVBUFFER_LENGTH(evbuf);
+	/*
+	 * The TRAILER has usually been a single character and most often
+	 * is ASCII LF (%d10).  However, other characters have also been
+	 * seen, with ASCII NUL (%d00) being a prominent example.
+	 */
+	for (p = buf; p < end; p++) {
+		if (*p == '\0' || *p == '\n')
+			break;
+	}
+	if (p + 1 - buf >= INT_MAX)
+		return (-1);
+	dprintf(" non transparent framing");
+	if (p >= end)
+		return (0);
+	/*
+	 * Some devices have also been seen to emit a two-character
+	 * TRAILER, which is usually CR and LF.
+	 */
+	if (buf < p && p[0] == '\n' && p[-1] == '\r')
+		p[-1] = '\0';
+	if (msg)
+		*msg = buf;
+	return (p + 1 - buf);
+}
+
 void
 tcp_readcb(struct bufferevent *bufev, void *arg)
 {
 	struct peer		*p = arg;
-	char			*line;
+	char			*msg, line[MAXLINE + 1];
+	int			 len;
 
-	/*
-	 * Syslog over TCP  RFC 6587  3.4.2.  Non-Transparent-Framing
-	 * XXX Incompatible to ourself, should do:  3.4.1.  Octet Counting
-	 */
-	while ((line = evbuffer_readline(bufev->input))) {
-		dprintf("tcp logger \"%s\" complete line\n", p->p_peername);
-		printline(p->p_hostname, line);
-		free(line);
+	while (EVBUFFER_LENGTH(bufev->input) > 0) {
+		dprintf("tcp logger \"%s\"", p->p_peername);
+		msg = NULL;
+		len = octet_counting(bufev->input, &msg, 1);
+		if (len < 0)
+			len = non_transparent_framing(bufev->input, &msg);
+		if (len < 0)
+			dprintf("unknown method");
+		if (msg == NULL) {
+			dprintf(", incomplete frame");
+			break;
+		}
+		dprintf(", use %d bytes\n", len);
+		if (len > 0 && msg[len-1] == '\n')
+			msg[len-1] = '\0';
+		if (len == 0 || msg[len-1] != '\0') {
+			strlcpy(line, msg,
+			    MINIMUM((size_t)len+1, sizeof(line)));
+			msg = line;
+		}
+		printline(p->p_hostname, msg);
+		evbuffer_drain(bufev->input, len);
 	}
-	if (EVBUFFER_LENGTH(bufev->input) >= MAXLINE) {
-		dprintf("tcp logger \"%s\" incomplete line, use %zu bytes\n",
-		    p->p_peername, EVBUFFER_LENGTH(bufev->input));
+	/* Maximum frame has 5 digits, 1 space, MAXLINE chars, 1 new line. */
+	if (EVBUFFER_LENGTH(bufev->input) >= 5 + 1 + MAXLINE + 1) {
+		dprintf(", use %zu bytes\n", EVBUFFER_LENGTH(bufev->input));
 		printline(p->p_hostname, EVBUFFER_DATA(bufev->input));
 		evbuffer_drain(bufev->input, -1);
-	}
-	if (EVBUFFER_LENGTH(bufev->input) > 0) {
-		dprintf("tcp logger \"%s\" buffer %zu bytes\n",
-		    p->p_peername, EVBUFFER_LENGTH(bufev->input));
-	}
+	} else if (EVBUFFER_LENGTH(bufev->input) > 0)
+		dprintf(", buffer %zu bytes\n", EVBUFFER_LENGTH(bufev->input));
 }
 
 void
@@ -1062,13 +1153,8 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 	 */
 	buf = EVBUFFER_DATA(bufev->output);
 	end = buf + EVBUFFER_LENGTH(bufev->output);
-	for (p = buf; p < end && p < buf + 4; p++) {
-		if (!isdigit(*p))
-			break;
-	}
-	/* Using atoi() is safe as buf starts with 1 to 4 digits and a space. */
-	if (buf < end && !(buf + 1 <= p && p < end && *p == ' ' &&
-	    (l = atoi(buf)) > 0 && buf + l < end && buf[l] == '\n')) {
+	if (buf < end && !((l = octet_counting(bufev->output, &p, 0)) > 0 &&
+	    p[l-1] == '\n')) {
 		for (p = buf; p < end; p++) {
 			if (*p == '\n') {
 				evbuffer_drain(bufev->output, p - buf + 1);
@@ -1077,7 +1163,7 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 		}
 		/* Without '\n' discard everything. */
 		if (p == end)
-			evbuffer_drain(bufev->output, p - buf);
+			evbuffer_drain(bufev->output, -1);
 		dprintf("loghost \"%s\" dropped partial message\n",
 		    f->f_un.f_forw.f_loghost);
 		f->f_un.f_forw.f_dropped++;
