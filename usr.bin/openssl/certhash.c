@@ -267,7 +267,7 @@ hashinfo_from_linkname(const char *linkname, const char *target)
 	val = strtoll(l, &ep, 16);
 	if (l[0] == '\0' || *ep != '\0')
 		goto err;
-	if (errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+	if (errno == ERANGE && (val == LLONG_MAX || val == LLONG_MIN))
 		goto err;
 	if (val < 0 || val > ULONG_MAX)
 		goto err;
