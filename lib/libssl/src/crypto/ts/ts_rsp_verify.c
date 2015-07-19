@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.15 2015/07/19 05:42:55 miod Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.16 2015/07/19 18:25:59 miod Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -311,6 +311,8 @@ ESS_get_signing_cert(PKCS7_SIGNER_INFO *si)
 	attr = PKCS7_get_signed_attribute(si,
 	    NID_id_smime_aa_signingCertificate);
 	if (!attr)
+		return NULL;
+	if (attr->type != V_ASN1_SEQUENCE)
 		return NULL;
 	p = attr->value.sequence->data;
 	return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);

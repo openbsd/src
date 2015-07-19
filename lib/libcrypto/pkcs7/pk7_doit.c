@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.34 2015/07/18 14:40:59 miod Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.35 2015/07/19 18:25:59 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1186,6 +1186,8 @@ PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
 	ASN1_TYPE *astype;
 
 	if (!(astype = get_attribute(sk, NID_pkcs9_messageDigest)))
+		return NULL;
+	if (astype->type != V_ASN1_OCTET_STRING)
 		return NULL;
 	return astype->value.octet_string;
 }
