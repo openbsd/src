@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.931 2015/07/19 05:48:11 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.932 2015/07/19 23:13:58 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3068,6 +3068,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	int			 state_icmp = 0, icmp_dir = 0;
 	u_int16_t		 virtual_type, virtual_id;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
+	int			 action = PF_DROP;
 
 	bzero(&act, sizeof(act));
 	bzero(sns, sizeof(sns));
@@ -3351,7 +3352,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 	if (pd->virtual_proto != PF_VPROTO_FRAGMENT
 	    && !state_icmp && r->keep_state) {
-		int action;
 
 		if (r->rule_flag & PFRULE_SRCTRACK &&
 		    pf_insert_src_node(&sns[PF_SN_NONE], r, PF_SN_NONE, pd->af,
@@ -3370,7 +3370,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		    sm, tag, &rules, &act, sns);
 
 		if (action != PF_PASS)
-			return (action);
+			goto cleanup;
 		if (sks != skw) {
 			struct pf_state_key	*sk;
 
@@ -3428,7 +3428,7 @@ cleanup:
 		pool_put(&pf_rule_item_pl, ri);
 	}
 
-	return (PF_DROP);
+	return (action);
 }
 
 static __inline int
@@ -3451,7 +3451,6 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	s->rule.ptr = r;
 	s->anchor.ptr = a;
 	s->natrule.ptr = nr;
-	memcpy(&s->match_rules, rules, sizeof(s->match_rules));
 	if (r->allow_opts)
 		s->state_flags |= PFSTATE_ALLOWOPTS;
 	if (r->rule_flag & PFRULE_STATESLOPPY)
@@ -3580,6 +3579,11 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	} else
 		*sm = s;
 
+	/*
+	 * Make state responsible for rules it binds here.
+	 */
+	memcpy(&s->match_rules, rules, sizeof(s->match_rules));
+	bzero(rules, sizeof(*rules));
 	STATE_INC_COUNTERS(s);
 
 	if (tag > 0) {
