@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2002/02/23 01:25:10 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2015/07/19 19:23:36 deraadt Exp $
 
-SUBDIR+= MAKEDEV
+#SUBDIR+= MAKEDEV
 
 install:
 
