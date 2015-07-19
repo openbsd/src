@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.126 2014/11/24 00:14:02 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.127 2015/07/19 06:31:16 yuo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.123 2014/11/24 00:13:42 brad Exp 
+ *	OpenBSD: miidevs,v 1.124 2015/07/19 06:30:02 yuo Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -418,7 +418,7 @@
 #define	MII_MODEL_xxREALTEK_RTL8201E	0x0008
 #define	MII_STR_xxREALTEK_RTL8201E	"RTL8201E 10/100 PHY"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
-#define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S PHY"
+#define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S/8211 PHY"
 #define	MII_MODEL_REALTEK_RTL8201L	0x0020
 #define	MII_STR_REALTEK_RTL8201L	"RTL8201L 10/100 PHY"
 
