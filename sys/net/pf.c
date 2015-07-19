@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.930 2015/07/19 01:58:19 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.931 2015/07/19 05:48:11 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1217,7 +1217,7 @@ pf_purge_expired_src_nodes(int waslocked)
 	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
 	next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 
-		if (cur->states <= 0 && cur->expire <= time_uptime) {
+		if (cur->states == 0 && cur->expire <= time_uptime) {
 			if (! locked) {
 				rw_enter_write(&pf_consistency_lock);
 				next = RB_NEXT(pf_src_tree,
@@ -1242,7 +1242,7 @@ pf_src_tree_remove_state(struct pf_state *s)
 		SLIST_REMOVE_HEAD(&s->src_nodes, next);
 		if (s->src.tcp_est)
 			--sni->sn->conn;
-		if (--sni->sn->states <= 0) {
+		if (--sni->sn->states == 0) {
 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
 			if (!timeout)
 				timeout =

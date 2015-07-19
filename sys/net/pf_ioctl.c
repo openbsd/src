@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.286 2015/07/18 19:19:00 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.287 2015/07/19 05:48:12 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -249,7 +249,7 @@ void
 pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 {
 	if (rulequeue != NULL) {
-		if (rule->states_cur <= 0 && rule->src_nodes <= 0) {
+		if (rule->states_cur == 0 && rule->src_nodes == 0) {
 			/*
 			 * XXX - we need to remove the table *before* detaching
 			 * the rule to make sure the table code does not delete
