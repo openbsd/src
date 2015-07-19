@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.20 2015/07/19 17:04:31 krw Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.21 2015/07/19 18:24:16 krw Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -58,12 +58,12 @@ int	sr_raid5_wu_done(struct sr_workunit *);
 void	sr_raid5_set_chunk_state(struct sr_discipline *, int, int);
 void	sr_raid5_set_vol_state(struct sr_discipline *);
 
-int	sr_raid5_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
+int	sr_raid5_addio(struct sr_workunit *wu, int, daddr_t, long,
 	    void *, int, int, void *);
-int	sr_raid5_regenerate(struct sr_workunit *, int, daddr_t, daddr_t,
+int	sr_raid5_regenerate(struct sr_workunit *, int, daddr_t, long,
 	    void *);
 int	sr_raid5_write(struct sr_workunit *, struct sr_workunit *, int, int,
-	    daddr_t, daddr_t, void *, int, int);
+	    daddr_t, long, void *, int, int);
 void	sr_raid5_xor(void *, void *, int);
 
 void	sr_raid5_rebuild(struct sr_discipline *);
@@ -377,7 +377,8 @@ sr_raid5_rw(struct sr_workunit *wu)
 	int64_t			chunk_offs, lbaoffs, phys_offs, strip_offs;
 	int64_t			strip_bits, strip_no, strip_size;
 	int64_t			chunk, no_chunk;
-	int64_t			length, parity, datalen, row_size;
+	int64_t			parity, row_size;
+	long			length, datalen;
 	void			*data;
 	int			s;
 
@@ -504,7 +505,7 @@ bad:
 
 int
 sr_raid5_regenerate(struct sr_workunit *wu, int chunk, daddr_t blkno,
-    daddr_t len, void *data)
+    long len, void *data)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	int			i;
@@ -537,7 +538,7 @@ bad:
 
 int
 sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
-    int parity, daddr_t blkno, daddr_t len, void *data, int xsflags,
+    int parity, daddr_t blkno, long len, void *data, int xsflags,
     int ccbflags)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
@@ -723,14 +724,14 @@ sr_raid5_wu_done(struct sr_workunit *wu)
 
 int
 sr_raid5_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
-    daddr_t len, void *data, int xsflags, int ccbflags, void *xorbuf)
+    long len, void *data, int xsflags, int ccbflags, void *xorbuf)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_ccb		*ccb;
 
 	DNPRINTF(SR_D_DIS, "sr_raid5_addio: %s chunk %d block %lld "
-	    "length %lld %s\n", (xsflags & SCSI_DATA_IN) ? "read" : "write",
-	    chunk, (long long)blkno, (long long)len, xorbuf ? "X0R" : "-");
+	    "length %ld %s\n", (xsflags & SCSI_DATA_IN) ? "read" : "write",
+	    chunk, (long long)blkno, len, xorbuf ? "X0R" : "-");
 
 	/* Allocate temporary buffer. */
 	if (data == NULL) {

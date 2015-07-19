@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.159 2015/01/27 03:17:36 dlg Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.160 2015/07/19 18:24:16 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -644,7 +644,7 @@ void			sr_ccb_free(struct sr_discipline *);
 struct sr_ccb		*sr_ccb_get(struct sr_discipline *);
 void			sr_ccb_put(struct sr_ccb *);
 struct sr_ccb		*sr_ccb_rw(struct sr_discipline *, int, daddr_t,
-			    daddr_t, u_int8_t *, int, int);
+			    long, u_int8_t *, int, int);
 void			sr_ccb_done(struct sr_ccb *);
 int			sr_wu_alloc(struct sr_discipline *, int);
 void			sr_wu_free(struct sr_discipline *);
@@ -673,7 +673,7 @@ void			sr_meta_getdevname(struct sr_softc *, dev_t, char *,
 			    int);
 void			sr_meta_opt_load(struct sr_softc *,
 			    struct sr_metadata *, struct sr_meta_opt_head *);
-void			*sr_block_get(struct sr_discipline *, int);
+void			*sr_block_get(struct sr_discipline *, long);
 void			sr_block_put(struct sr_discipline *, void *, int);
 void			sr_checksum(struct sr_softc *, void *, void *,
 			    u_int32_t);

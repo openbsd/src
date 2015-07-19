@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.66 2015/07/19 17:04:31 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.67 2015/07/19 18:24:16 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -62,7 +62,7 @@ void	sr_raid6_set_vol_state(struct sr_discipline *);
 
 void	sr_raid6_xorp(void *, void *, int);
 void	sr_raid6_xorq(void *, void *, int, int);
-int	sr_raid6_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
+int	sr_raid6_addio(struct sr_workunit *wu, int, daddr_t, long,
 	    void *, int, int, void *, void *, int);
 void	sr_raid6_scrub(struct sr_discipline *);
 int	sr_failio(struct sr_workunit *);
@@ -379,9 +379,9 @@ sr_raid6_rw(struct sr_workunit *wu)
 	int			s, fail, i, gxinv, pxinv;
 	daddr_t			blk, lba;
 	int64_t			chunk_offs, lbaoffs, phys_offs, strip_offs;
-	int64_t			strip_no, strip_size, strip_bits;
+	int64_t			strip_no, strip_size, strip_bits, row_size;
 	int64_t			fchunk, no_chunk, chunk, qchunk, pchunk;
-	int64_t			length, datalen, row_size;
+	long			length, datalen;
 	void			*pbuf, *data, *qbuf;
 
 	/* blk and scsi error will be handled by sr_validate_io */
@@ -731,7 +731,7 @@ sr_raid6_wu_done(struct sr_workunit *wu)
 
 int
 sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
-    daddr_t len, void *data, int xsflags, int ccbflags, void *pbuf,
+    long len, void *data, int xsflags, int ccbflags, void *pbuf,
     void *qbuf, int gn)
 {
 	struct sr_discipline	*sd = wu->swu_dis;

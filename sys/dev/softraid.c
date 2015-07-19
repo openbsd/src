@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.357 2015/07/19 18:03:03 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.358 2015/07/19 18:24:16 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2013,7 +2013,7 @@ sr_ccb_put(struct sr_ccb *ccb)
 
 struct sr_ccb *
 sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
-    daddr_t len, u_int8_t *data, int xsflags, int ccbflags)
+    long len, u_int8_t *data, int xsflags, int ccbflags)
 {
 	struct sr_chunk		*sc = sd->sd_vol.sv_chunks[chunk];
 	struct sr_ccb		*ccb = NULL;
@@ -4422,7 +4422,7 @@ die:
 }
 
 void *
-sr_block_get(struct sr_discipline *sd, int length)
+sr_block_get(struct sr_discipline *sd, long length)
 {
 	return dma_alloc(length, PR_NOWAIT | PR_ZERO);
 }
