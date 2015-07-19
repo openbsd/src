@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.13 2015/07/15 16:45:24 miod Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.14 2015/07/19 02:43:24 miod Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -710,7 +710,7 @@ TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
 	gen_names = X509_get_ext_d2i(signer, NID_subject_alt_name,
 	    NULL, &idx);
 	while (gen_names != NULL &&
-	    !(found = TS_find_name(gen_names, tsa_name) >= 0)) {
+	    !(found = (TS_find_name(gen_names, tsa_name) >= 0))) {
 		/* Get the next subject alternative name,
 		   although there should be no more than one. */
 		GENERAL_NAMES_free(gen_names);
