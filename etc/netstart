@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.149 2015/07/19 04:44:36 rpe Exp $
+#	$OpenBSD: netstart,v 1.150 2015/07/19 14:17:21 ajacoutot Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set) from a file
 # and spew to stdout.
@@ -148,11 +148,9 @@ ifmstart() {
 	done
 }
 
-# Source rc.subr and parse rc.conf only if we are not inside /etc/rc.
-if [ -z "${INRC}" ]; then
-	FUNCS_ONLY=1 . /etc/rc.d/rc.subr
-	_rc_parse_conf
-fi
+# Re-read rc.subr if we are not inside /etc/rc.
+[ -n ${INRC} ] && FUNCS_ONLY=1 . /etc/rc.d/rc.subr
+_rc_parse_conf
 
 # If we were invoked with a list of interface names, just reconfigure these
 # interfaces (or bridges) and return.
