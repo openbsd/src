@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec_kbd.c,v 1.2 2015/05/26 23:47:04 jsg Exp $ */
+/* $OpenBSD: crosec_kbd.c,v 1.3 2015/07/19 01:13:27 bmercer Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,6 +28,8 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
+void cros_ec_add_task(void *);
+void cros_ec_poll_keystate(void *);
 int cros_ec_get_keystate(struct cros_ec_softc *);
 
 int cros_ec_keyboard_enable(void *, int);
@@ -134,14 +136,12 @@ cros_ec_init_keyboard(struct cros_ec_softc *sc)
 	if (sc->keyboard.state == NULL)
 		panic("%s: no memory available for keyboard states", __func__);
 
-	/* XXX: ghosting */
+	/* FIXME: interrupt driven, please. */
+	sc->keyboard.taskq = taskq_create("crosec-keyb", 1, IPL_TTY, 0);
+	task_set(&sc->keyboard.task, cros_ec_poll_keystate, sc);
+	timeout_set(&sc->keyboard.timeout, cros_ec_add_task, sc);
 
-#if 0
-	while (sc->keyboard.state != NULL) {
-		cros_ec_get_keystate(sc);
-		delay(100000);
-	}
-#endif
+	/* XXX: ghosting */
 
 	wskbd_cnattach(&cros_ec_keyboard_consops, sc, &cros_ec_keyboard_keymapdata);
 	a.console = 1;
@@ -152,13 +152,30 @@ cros_ec_init_keyboard(struct cros_ec_softc *sc)
 
 	sc->keyboard.wskbddev = config_found((void *)sc, &a, wskbddevprint);
 
+	timeout_add_sec(&sc->keyboard.timeout, 10);
+
 	return 0;
+}
+
+void
+cros_ec_add_task(void *arg)
+{
+	struct cros_ec_softc *sc = (struct cros_ec_softc *)arg;
+	task_add(sc->keyboard.taskq, &sc->keyboard.task);
+	timeout_add_msec(&sc->keyboard.timeout, 100);
+}
+
+void
+cros_ec_poll_keystate(void *arg)
+{
+	struct cros_ec_softc *sc = (struct cros_ec_softc *)arg;
+	cros_ec_get_keystate(sc);
 }
 
 int
 cros_ec_get_keystate(struct cros_ec_softc *sc)
 {
-	int col, row;
+	int col, row, s;
 	uint8_t state[sc->keyboard.cols];
 	cros_ec_scan_keyboard(sc, state, sc->keyboard.cols);
 	for (col = 0; col < sc->keyboard.cols; col++) {
@@ -170,17 +187,19 @@ cros_ec_get_keystate(struct cros_ec_softc *sc)
 				sc->keyboard.state[off+col] = 1;
 				if (sc->keyboard.polling)
 					return off+col;
+				s = spltty();
 				wskbd_input(sc->keyboard.wskbddev, WSCONS_EVENT_KEY_DOWN, off+col);
+				splx(s);
 			} else if (!pressed && sc->keyboard.state[off+col]) {
 				//printf("row %d col %d id %d released\n", row, col, off+col);
 				sc->keyboard.state[off+col] = 0;
 				if (sc->keyboard.polling)
 					return off+col;
+				s = spltty();
 				wskbd_input(sc->keyboard.wskbddev, WSCONS_EVENT_KEY_UP, off+col);
+				splx(s);
 			} else if (sc->keyboard.state[off+col]) {
 				//printf("row %d col %d id %d repeated\n", row, col, off+col);
-				if (sc->keyboard.polling)
-					return off+col;
 			}
 		}
 	}

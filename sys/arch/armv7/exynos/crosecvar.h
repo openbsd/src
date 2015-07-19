@@ -1,4 +1,4 @@
-/* $OpenBSD: crosecvar.h,v 1.1 2015/01/26 02:48:24 bmercer Exp $ */
+/* $OpenBSD: crosecvar.h,v 1.2 2015/07/19 01:13:27 bmercer Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,6 +18,8 @@
 #ifndef CROSECVAR_H
 #define CROSECVAR_H
 
+#include <sys/timeout.h>
+#include <sys/task.h>
 #include <dev/i2c/i2cvar.h>
 #include <armv7/exynos/ec_commands.h>
 
@@ -47,6 +49,11 @@ struct cros_ec_softc {
 		struct device *wskbddev;
 		int rawkbd;
 		int polling;
+
+		/* polling */
+		struct timeout timeout;
+		struct taskq *taskq;
+		struct task task;
 	} keyboard;
 	uint8_t in[MSG_BYTES_ALIGNED];
 	uint8_t out[MSG_BYTES_ALIGNED];
