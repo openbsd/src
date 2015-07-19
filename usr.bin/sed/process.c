@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.24 2015/07/17 20:38:57 jasper Exp $	*/
+/*	$OpenBSD: process.c,v 1.25 2015/07/19 17:21:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <sys/uio.h>
 
 #include <ctype.h>
@@ -473,25 +472,9 @@ static void
 lputs(char *s)
 {
 	int count;
+	extern int termwidth;
 	const char *escapes;
 	char *p;
-	struct winsize win;
-	static int termwidth = -1;
-
-	if (outfile != stdout)
-		termwidth = 60;
-
-	if (termwidth == -1) {
-		termwidth = 0;
-		if ((p = getenv("COLUMNS")))
-			termwidth = strtonum(p, 0, INT_MAX, NULL);
-		if (termwidth == 0 &&
-		    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
-		    win.ws_col > 0)
-			termwidth = win.ws_col;
-		if (termwidth == 0)
-			termwidth = 60;
-	}
 
 	for (count = 0; *s; ++s) { 
 		if (count >= termwidth) {

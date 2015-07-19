@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2015/07/19 06:14:23 sthen Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2015/07/19 17:21:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -34,6 +34,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -102,10 +103,14 @@ static void add_compunit(enum e_cut, char *);
 static void add_file(char *);
 static int next_files_have_lines(void);
 
+int termwidth;
+
 int
 main(int argc, char *argv[])
 {
+	struct winsize win;
 	int c, fflag;
+	char *p;
 
 	fflag = 0;
 	inplace = NULL;
@@ -144,6 +149,15 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if ((p = getenv("COLUMNS")))
+		termwidth = strtonum(p, 0, INT_MAX, NULL);
+	if (termwidth == 0 &&
+	    ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+	    win.ws_col > 0)
+		termwidth = win.ws_col;
+	if (termwidth == 0)
+		termwidth = 60;
 
 	/* First usage case; script is the first arg */
 	if (!eflag && !fflag && *argv) {
