@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.67 2015/07/19 18:24:16 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.68 2015/07/19 21:06:04 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/fcntl.h>
-#include <sys/disklabel.h>
 #include <sys/mount.h>
 #include <sys/sensors.h>
 #include <sys/stat.h>
