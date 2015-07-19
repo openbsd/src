@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2015/07/19 20:50:03 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2015/07/19 21:01:56 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -85,8 +85,9 @@ int		 host(const char *, struct in_addr *, struct in_addr *);
 static struct ldpd_conf	*conf;
 static int			 errors = 0;
 
-struct iface	*iface = NULL;
-struct tnbr	*tnbr = NULL;
+struct iface		*iface = NULL;
+struct tnbr		*tnbr = NULL;
+struct nbr_params	*nbrp = NULL;
 
 struct config_defaults {
 	u_int16_t	lhello_holdtime;
@@ -100,8 +101,9 @@ struct config_defaults	 ifacedefs;
 struct config_defaults	 tnbrdefs;
 struct config_defaults	*defs;
 
-struct iface	*conf_get_if(struct kif *);
-struct tnbr	*conf_get_tnbr(struct in_addr);
+struct iface		*conf_get_if(struct kif *);
+struct tnbr		*conf_get_tnbr(struct in_addr);
+struct nbr_params	*conf_get_nbrp(struct in_addr);
 
 typedef struct {
 	union {
@@ -118,6 +120,7 @@ typedef struct {
 %token	THELLOHOLDTIME THELLOINTERVAL
 %token	THELLOACCEPT
 %token	KEEPALIVE
+%token	NEIGHBOR PASSWORD
 %token	EXTTAG
 %token	YES NO
 %token	ERROR
@@ -134,6 +137,7 @@ grammar		: /* empty */
 		| grammar varset '\n'
 		| grammar interface '\n'
 		| grammar tneighbor '\n'
+		| grammar neighbor '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -238,6 +242,21 @@ tnbr_defaults	: THELLOHOLDTIME NUMBER {
 		}
 		;
 
+nbr_opts	: PASSWORD STRING {
+			if (strlcpy(nbrp->auth.md5key, $2,
+			    sizeof(nbrp->auth.md5key)) >=
+			    sizeof(nbrp->auth.md5key)) {
+				yyerror("tcp md5sig password too long: max %zu",
+				    sizeof(nbrp->auth.md5key) - 1);
+				free($2);
+				YYERROR;
+			}
+			nbrp->auth.md5key_len = strlen($2);
+			nbrp->auth.method = AUTH_MD5SIG;
+			free($2);
+		}
+		;
+
 optnl		: '\n' optnl
 		|
 		;
@@ -321,6 +340,35 @@ tneighboropts_l	: tneighboropts_l tnbr_defaults nl
 		| tnbr_defaults optnl
 		;
 
+neighbor	: NEIGHBOR STRING	{
+			struct in_addr	 addr;
+
+			if (inet_aton($2, &addr) == 0) {
+				yyerror(
+				    "error parsing neighbor address");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			nbrp = conf_get_nbrp(addr);
+			if (nbrp == NULL)
+				YYERROR;
+			LIST_INSERT_HEAD(&conf->nbrp_list, nbrp, entry);
+		} neighbor_block {
+			nbrp = NULL;
+		}
+		;
+
+neighbor_block	: '{' optnl neighboropts_l '}'
+		| '{' optnl '}'
+		| /* nothing */
+		;
+
+neighboropts_l	: neighboropts_l nbr_opts nl
+		| nbr_opts optnl
+		;
+
 %%
 
 struct keywords {
@@ -361,7 +409,9 @@ lookup(char *s)
 		{"keepalive",			KEEPALIVE},
 		{"link-hello-holdtime",		LHELLOHOLDTIME},
 		{"link-hello-interval",		LHELLOINTERVAL},
+		{"neighbor",			NEIGHBOR},
 		{"no",				NO},
+		{"password",			PASSWORD},
 		{"router-id",			ROUTERID},
 		{"targeted-hello-accept",	THELLOACCEPT},
 		{"targeted-hello-holdtime",	THELLOHOLDTIME},
@@ -851,6 +901,24 @@ conf_get_tnbr(struct in_addr addr)
 	t = tnbr_new(conf, addr, 1);
 
 	return (t);
+}
+
+struct nbr_params *
+conf_get_nbrp(struct in_addr addr)
+{
+	struct nbr_params	*n;
+
+	LIST_FOREACH(n, &conf->nbrp_list, entry) {
+		if (n->addr.s_addr == addr.s_addr) {
+			yyerror("neighbor %s already configured",
+			    inet_ntoa(addr));
+			return (NULL);
+		}
+	}
+
+	n = nbr_params_new(addr);
+
+	return (n);
 }
 
 void

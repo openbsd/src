@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.15 2015/07/19 20:50:03 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.16 2015/07/19 21:01:56 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -31,7 +31,7 @@ daemon implements the Label Distribution Protocol as described in RFC 5036.
 .Sh SECTIONS
 The
 .Nm
-config file is divided into four main sections.
+config file is divided into five main sections.
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -43,6 +43,8 @@ Global settings for
 Interface-specific parameters.
 .It Sy Targeted Neighbors Configuration
 Targeted neighbor specific parameters.
+.It Sy Neighbors Configuration
+Neighbor-specific parameters.
 .El
 .Sh MACROS
 Much like
@@ -138,6 +140,24 @@ The default value is 45.
 .It Ic targeted-hello-interval Ar seconds
 Set the hello interval in seconds.
 The default value is 5; valid range is 1\-65535.
+.El
+.Sh NEIGHBORS
+The
+.Ic neighbor
+section allows for the configuration of neighbor-specific parameters. Note,
+however, that
+.Xr ldpd 8
+uses the hello discovery mechanism to discover its neighbors. Without an
+underlying adjacency these commands have no effect.
+.Bd -literal -offset indent
+neighbor A.B.C.D {
+}
+.Ed
+.Pp
+Neighbor-specific parameters are listed below.
+.Bl -tag -width Ds
+.It Ic password Ar secret
+Enable TCP MD5 signatures per RFC 5036.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ldpd.conf" -compact

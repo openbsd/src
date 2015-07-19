@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.35 2015/04/04 15:09:47 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.36 2015/07/19 21:01:56 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <net/pfkeyv2.h>
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
@@ -82,11 +83,25 @@ struct nbr {
 	int			 state;
 	int			 idtimer_cnt;
 	u_int16_t		 keepalive;
+
+	struct {
+		u_int8_t		established;
+		struct in_addr		local_addr;
+		u_int32_t		spi_in;
+		u_int32_t		spi_out;
+		enum auth_method	method;
+		char			md5key[TCP_MD5_KEY_LEN];
+	} auth;
 };
 
 struct mapping_entry {
 	TAILQ_ENTRY(mapping_entry)	entry;
 	struct map			map;
+};
+
+struct ldpd_sysdep {
+	u_int8_t		no_pfkey;
+	u_int8_t		no_md5sig;
 };
 
 /* accept.c */
@@ -128,6 +143,7 @@ int	 recv_labelmessage(struct nbr *, char *, u_int16_t, u_int16_t);
 pid_t		 ldpe(struct ldpd_conf *, int[2], int[2], int[2]);
 void		 ldpe_dispatch_main(int, short, void *);
 void		 ldpe_dispatch_lde(int, short, void *);
+void		 ldpe_dispatch_pfkey(int, short, void *);
 int		 ldpe_imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		 ldpe_imsg_compose_lde(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
@@ -199,6 +215,10 @@ void			 nbr_mapping_add(struct nbr *, struct mapping_head *,
 			    struct map *);
 void			 mapping_list_clr(struct mapping_head *);
 
+
+struct nbr_params	*nbr_params_new(struct in_addr);
+struct nbr_params	*nbr_params_find(struct in_addr);
+
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
 void		 ldpe_nbr_ctl(struct ctl_conn *);
 
@@ -218,5 +238,11 @@ void	 session_close(struct nbr *);
 void	 session_shutdown(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
 
 char	*pkt_ptr;	/* packet buffer */
+
+/* pfkey.c */
+int	pfkey_read(int, struct sadb_msg *);
+int	pfkey_establish(struct nbr *, struct nbr_params *);
+int	pfkey_remove(struct nbr *);
+int	pfkey_init(struct ldpd_sysdep *);
 
 #endif	/* _LDPE_H_ */

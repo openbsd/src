@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.46 2015/07/19 20:50:03 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.47 2015/07/19 21:01:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 
@@ -72,7 +73,8 @@ struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
 
 u_int32_t	peercnt = NBR_CNTSTART;
 
-extern struct ldpd_conf	*leconf;
+extern struct ldpd_conf		*leconf;
+extern struct ldpd_sysdep	 sysdep;
 
 struct {
 	int		state;
@@ -208,7 +210,8 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 struct nbr *
 nbr_new(struct in_addr id, struct in_addr addr)
 {
-	struct nbr	*nbr;
+	struct nbr		*nbr;
+	struct nbr_params	*nbrp;
 
 	log_debug("nbr_new: LSR ID %s", inet_ntoa(id));
 
@@ -240,6 +243,12 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	evtimer_set(&nbr->keepalive_timer, nbr_ktimer, nbr);
 	evtimer_set(&nbr->initdelay_timer, nbr_idtimer, nbr);
 
+	/* init pfkey - remove old if any, load new ones */
+	pfkey_remove(nbr);
+	nbrp = nbr_params_find(nbr->addr);
+	if (nbrp && pfkey_establish(nbr, nbrp) == -1)
+		fatalx("pfkey setup failed");
+
 	return (nbr);
 }
 
@@ -249,6 +258,7 @@ nbr_del(struct nbr *nbr)
 	log_debug("nbr_del: LSR ID %s", inet_ntoa(nbr->id));
 
 	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+	pfkey_remove(nbr);
 
 	if (event_pending(&nbr->ev_connect, EV_WRITE, NULL))
 		event_del(&nbr->ev_connect);
@@ -465,15 +475,30 @@ nbr_connect_cb(int fd, short event, void *arg)
 int
 nbr_establish_connection(struct nbr *nbr)
 {
-	struct sockaddr_in	local_sa;
-	struct sockaddr_in	remote_sa;
+	struct sockaddr_in	 local_sa;
+	struct sockaddr_in	 remote_sa;
 	struct adj		*adj;
+	struct nbr_params	*nbrp;
+	int			 opt = 1;
 
 	nbr->fd = socket(AF_INET, SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC, 0);
 	if (nbr->fd == -1) {
 		log_warn("nbr_establish_connection: error while "
 		    "creating socket");
 		return (-1);
+	}
+
+	nbrp = nbr_params_find(nbr->addr);
+	if (nbrp && nbrp->auth.method == AUTH_MD5SIG) {
+		if (sysdep.no_pfkey || sysdep.no_md5sig) {
+			log_warnx("md5sig configured but not available");
+			return (-1);
+		}
+		if (setsockopt(nbr->fd, IPPROTO_TCP, TCP_MD5SIG,
+		    &opt, sizeof(opt)) == -1) {
+			log_warn("setsockopt md5sig");
+			return (-1);
+		}
 	}
 
 	bzero(&local_sa, sizeof(local_sa));
@@ -560,6 +585,32 @@ mapping_list_clr(struct mapping_head *mh)
 		TAILQ_REMOVE(mh, me, entry);
 		free(me);
 	}
+}
+
+struct nbr_params *
+nbr_params_new(struct in_addr addr)
+{
+	struct nbr_params	*nbrp;
+
+	if ((nbrp = calloc(1, sizeof(*nbrp))) == NULL)
+		fatal("nbr_params_new");
+
+	nbrp->addr.s_addr = addr.s_addr;
+	nbrp->auth.method = AUTH_NONE;
+
+	return (nbrp);
+}
+
+struct nbr_params *
+nbr_params_find(struct in_addr addr)
+{
+	struct nbr_params *nbrp;
+
+	LIST_FOREACH(nbrp, &leconf->nbrp_list, entry)
+		if (nbrp->addr.s_addr == addr.s_addr)
+			return (nbrp);
+
+	return (NULL);
 }
 
 struct ctl_nbr *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.48 2015/07/19 20:54:17 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.49 2015/07/19 21:01:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,6 +36,8 @@
 #define CONF_FILE		"/etc/ldpd.conf"
 #define	LDPD_SOCKET		"/var/run/ldpd.sock"
 #define LDPD_USER		"_ldpd"
+
+#define TCP_MD5_KEY_LEN		80
 
 #define NBR_IDSELF		1
 #define NBR_CNTSTART		(NBR_IDSELF + 1)
@@ -219,6 +221,22 @@ struct tnbr {
 };
 #define F_TNBR_CONFIGURED	 0x01
 
+enum auth_method {
+	AUTH_NONE,
+	AUTH_MD5SIG,
+};
+
+/* neighbor specific parameters */
+struct nbr_params {
+	LIST_ENTRY(nbr_params)	 entry;
+	struct in_addr		 addr;
+	struct {
+		enum auth_method	 method;
+		char			 md5key[TCP_MD5_KEY_LEN];
+		u_int8_t		 md5key_len;
+	} auth;
+};
+
 /* ldp_conf */
 enum {
 	PROC_MAIN,
@@ -238,6 +256,7 @@ struct ldpd_conf {
 	LIST_HEAD(, iface)	iface_list;
 	LIST_HEAD(, if_addr)	addr_list;
 	LIST_HEAD(, tnbr)	tnbr_list;
+	LIST_HEAD(, nbr_params)	nbrp_list;
 
 	u_int32_t		opts;
 #define LDPD_OPT_VERBOSE	0x00000001

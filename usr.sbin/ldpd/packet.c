@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.38 2015/04/04 15:04:49 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.39 2015/07/19 21:01:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>
 #include <fcntl.h>
@@ -39,6 +40,7 @@
 #include "ldpe.h"
 
 extern struct ldpd_conf        *leconf;
+extern struct ldpd_sysdep	sysdep;
 
 struct iface	*disc_find_iface(unsigned int, struct in_addr);
 ssize_t		 session_get_pdu(struct ibuf_read *, char **);
@@ -266,6 +268,8 @@ session_accept(int fd, short event, void *bula)
 	struct sockaddr_in	 src;
 	int			 newfd;
 	socklen_t		 len = sizeof(src);
+	struct nbr_params	*nbrp;
+	int			 opt;
 
 	if (!(event & EV_READ))
 		return;
@@ -284,6 +288,26 @@ session_accept(int fd, short event, void *bula)
 			log_debug("sess_recv_packet: accept error: %s",
 			    strerror(errno));
 		return;
+	}
+
+	nbrp = nbr_params_find(src.sin_addr);
+	if (nbrp && nbrp->auth.method == AUTH_MD5SIG) {
+		if (sysdep.no_pfkey || sysdep.no_md5sig) {
+			log_warnx("md5sig configured but not available");
+			close(newfd);
+			return;
+		}
+
+		len = sizeof(opt);
+		if (getsockopt(newfd, IPPROTO_TCP, TCP_MD5SIG,
+		    &opt, &len) == -1)
+			fatal("getsockopt TCP_MD5SIG");
+		if (!opt) {	/* non-md5'd connection! */
+			log_warnx(
+			    "connection attempt without md5 signature");
+			close(newfd);
+			return;
+		}
 	}
 
 	tcp_new(newfd, NULL);
