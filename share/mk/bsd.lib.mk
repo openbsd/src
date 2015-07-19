@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.72 2015/05/14 02:56:01 jsg Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.73 2015/07/19 20:45:30 guenther Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -170,7 +170,13 @@ _LIBS+=lib${LIB}_p.a
 
 .if !defined(NOPIC)
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
-_LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+FULLSHLIBNAME=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+_LIBS+=${FULLSHLIBNAME}
+.endif
+
+.if defined(VERSION_SCRIPT)
+${FULLSHLIBNAME}:	${VERSION_SCRIPT}
+LDADD+=	-Wl,--version-script=${VERSION_SCRIPT}
 .endif
 .endif
 
@@ -199,11 +205,10 @@ lib${LIB}_p.a: ${POBJS}
 	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOBJS} ${DPADD}
+${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
-	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	${CC} -shared ${PICFLAG} \
-	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	@rm -f ${.TARGET}
+	${CC} -shared ${PICFLAG} -o ${.TARGET} \
 	    `${LORDER} ${SOBJS}|tsort -q` ${LDADD}
 
 # all .do files...
@@ -284,7 +289,7 @@ realinstall:
 .endif
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
+	    ${FULLSHLIBNAME} ${DESTDIR}${LIBDIR}
 .endif
 .if defined(LINKS) && !empty(LINKS)
 .  for lnk file in ${LINKS}
