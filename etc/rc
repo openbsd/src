@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.452 2015/07/18 21:12:40 rpe Exp $
+#	$OpenBSD: rc,v 1.453 2015/07/19 04:44:36 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -16,7 +16,7 @@ stripcom() {
 	{
 		while read _line ; do
 			_line=${_line%%#*}		# strip comments
-			test -z "$_line" && continue
+			[ -z "$_line" ] && continue
 			echo $_line
 		done
 	} <$_file
@@ -53,7 +53,7 @@ update_limit() {
 
 # Apply sysctl(8) settings.
 sysctl_conf() {
-	test -s /etc/sysctl.conf || return
+	[ -s /etc/sysctl.conf ] || return
 
 	# delete comments and blank lines
 	set -- `stripcom /etc/sysctl.conf`
@@ -74,7 +74,7 @@ sysctl_conf() {
 
 # Apply mixerctl(1) settings.
 mixerctl_conf() {
-	test -s /etc/mixerctl.conf || return
+	[ -s /etc/mixerctl.conf ] || return
 
 	# delete comments and blank lines
 	set -- `stripcom /etc/mixerctl.conf`
@@ -88,7 +88,7 @@ mixerctl_conf() {
 wsconsctl_conf() {
 	local save_IFS="$IFS"
 
-	test -x /sbin/wsconsctl -a -s /etc/wsconsctl.conf || return
+	[ -x /sbin/wsconsctl -a -s /etc/wsconsctl.conf ] || return
 	# delete comments and blank lines
 	IFS="
 "

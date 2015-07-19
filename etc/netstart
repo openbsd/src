@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.148 2015/07/19 01:37:45 rpe Exp $
+#	$OpenBSD: netstart,v 1.149 2015/07/19 04:44:36 rpe Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set) from a file
 # and spew to stdout.
@@ -132,19 +132,18 @@ ifmstart() {
 		for hn in /etc/hostname.*; do
 			# Strip off /etc/hostname. prefix.
 			if=${hn#/etc/hostname.}
-			test "$if" = "*" && continue
+			[ "$if" = "*" ] && continue
 
 			# Skip unwanted ifs.
 			s=""
 			for xf in $2; do
-				test "$xf" = "${if%%[0-9]*}" && s="1" && break
+				[ "$xf" = "${if%%[0-9]*}" ] && s="1" && break
 			done
-			test "$s" = "1" && continue
+			[ "$s" = "1" ] && continue
 
 			# Start wanted ifs.
-			test "$sif" = "ALL" -o \
-			     "$sif" = "${if%%[0-9]*}" \
-				&& ifstart $if
+			[ "$sif" = "ALL" -o "$sif" = "${if%%[0-9]*}" ] &&
+				ifstart $if
 		done
 	done
 }
