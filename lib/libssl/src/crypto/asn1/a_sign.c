@@ -1,4 +1,4 @@
-/* $OpenBSD: a_sign.c,v 1.19 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_sign.c,v 1.20 2015/07/19 18:29:31 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,7 +203,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 
 	inl = ASN1_item_i2d(asn, &buf_in, it);
 	outll = outl = EVP_PKEY_size(pkey);
-	buf_out = malloc((unsigned int)outl);
+	buf_out = malloc(outl);
 	if ((buf_in == NULL) || (buf_out == NULL)) {
 		outl = 0;
 		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_MALLOC_FAILURE);
@@ -229,7 +229,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 err:
 	EVP_MD_CTX_cleanup(ctx);
 	if (buf_in != NULL) {
-		OPENSSL_cleanse((char *)buf_in, (unsigned int)inl);
+		OPENSSL_cleanse((char *)buf_in, inl);
 		free(buf_in);
 	}
 	if (buf_out != NULL) {

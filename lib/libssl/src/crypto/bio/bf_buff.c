@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_buff.c,v 1.22 2015/07/19 01:18:17 beck Exp $ */
+/* $OpenBSD: bf_buff.c,v 1.23 2015/07/19 18:29:31 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,7 +339,7 @@ buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 	case BIO_C_SET_BUFF_READ_DATA:
 		if (num > ctx->ibuf_size) {
-			p1 = malloc((int)num);
+			p1 = malloc(num);
 			if (p1 == NULL)
 				goto malloc_error;
 			free(ctx->ibuf);
@@ -369,12 +369,12 @@ buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 		p1 = ctx->ibuf;
 		p2 = ctx->obuf;
 		if ((ibs > DEFAULT_BUFFER_SIZE) && (ibs != ctx->ibuf_size)) {
-			p1 = malloc((int)num);
+			p1 = malloc(num);
 			if (p1 == NULL)
 				goto malloc_error;
 		}
 		if ((obs > DEFAULT_BUFFER_SIZE) && (obs != ctx->obuf_size)) {
-			p2 = malloc((int)num);
+			p2 = malloc(num);
 			if (p2 == NULL) {
 				if (p1 != ctx->ibuf)
 					free(p1);

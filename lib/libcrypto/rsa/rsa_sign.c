@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.23 2015/06/20 01:07:25 doug Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.24 2015/07/19 18:29:31 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,7 +121,7 @@ RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 		return 0;
 	}
 	if (type != NID_md5_sha1) {
-		tmps = malloc((unsigned int)j + 1);
+		tmps = malloc(j + 1);
 		if (tmps == NULL) {
 			RSAerr(RSA_F_RSA_SIGN, ERR_R_MALLOC_FAILURE);
 			return 0;
@@ -166,7 +166,7 @@ int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		return 1;
 	}
 
-	s = malloc((unsigned int)siglen);
+	s = malloc(siglen);
 	if (s == NULL) {
 		RSAerr(RSA_F_INT_RSA_VERIFY, ERR_R_MALLOC_FAILURE);
 		goto err;
