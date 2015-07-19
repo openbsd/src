@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.30 2015/03/21 18:34:01 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.31 2015/07/19 18:34:32 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -616,8 +616,24 @@ lde_nbr_new(u_int32_t peerid, struct in_addr *id)
 void
 lde_nbr_del(struct lde_nbr *nbr)
 {
+	struct fec	*f;
+	struct rt_node	*rn;
+	struct rt_lsp	*rl;
+
 	if (nbr == NULL)
 		return;
+
+	/* uninstall received mappings */
+	RB_FOREACH(f, fec_tree, &rt) {
+		rn = (struct rt_node *)f;
+
+		LIST_FOREACH(rl, &rn->lsp, entry) {
+			if (lde_address_find(nbr, &rl->nexthop)) {
+				lde_send_delete_klabel(rn, rl);
+				rl->remote_label = NO_LABEL;
+			}
+		}
+	}
 
 	lde_address_list_free(nbr);
 

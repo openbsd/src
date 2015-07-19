@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.34 2015/07/19 18:27:59 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.35 2015/07/19 18:34:32 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -47,7 +47,6 @@ struct rt_lsp	*rt_lsp_add(struct rt_node *, struct in_addr);
 void		 rt_lsp_del(struct rt_lsp *);
 int		 lde_nbr_is_nexthop(struct rt_node *, struct lde_nbr *);
 
-RB_PROTOTYPE(fec_tree, fec, entry, fec_compare)
 RB_GENERATE(fec_tree, fec, entry, fec_compare)
 
 extern struct ldpd_conf		*ldeconf;
