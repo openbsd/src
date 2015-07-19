@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.9 2015/05/29 13:54:26 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.10 2015/07/19 16:12:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -150,7 +150,7 @@ srprobe(void)
 	SLIST_INIT(&sr_volumes);
 	SLIST_INIT(&sr_keydisks);
 
-	md = alloc(SR_META_SIZE * 512);
+	md = alloc(SR_META_SIZE * DEV_BSIZE);
 
 	TAILQ_FOREACH(dip, &disklist, list) {
 
@@ -170,8 +170,9 @@ srprobe(void)
 				continue;
 
 			/* Read softraid metadata. */
-			bzero(md, SR_META_SIZE * 512);
-			off = DL_GETPOFFSET(pp) + SR_META_OFFSET;
+			bzero(md, SR_META_SIZE * DEV_BSIZE);
+			off = DL_SECTOBLK(&dip->disklabel, DL_GETPOFFSET(pp));
+			off += SR_META_OFFSET;
 			error = biosd_io(F_READ, &dip->bios_info, off,
 			    SR_META_SIZE, md);
 			if (error)
@@ -314,7 +315,7 @@ srprobe(void)
 			    bv->sbv_flags & BIOC_SCBOOTABLE ? "*" : "");
 	}
 
-	explicit_bzero(md, SR_META_SIZE * 512);
+	explicit_bzero(md, SR_META_SIZE * DEV_BSIZE);
 	free(md, 0);
 }
 

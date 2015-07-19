@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.1 2014/11/26 19:50:03 stsp Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.2 2015/07/19 16:12:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -151,7 +151,7 @@ srprobe(void)
 	SLIST_INIT(&sr_volumes);
 	SLIST_INIT(&sr_keydisks);
 
-	md = alloc(SR_META_SIZE * 512);
+	md = alloc(SR_META_SIZE * DEV_BSIZE);
 	diskno = 0;
 	ihandle = -1;
 	TAILQ_FOREACH(dip, &disklist, list) {
@@ -168,13 +168,14 @@ srprobe(void)
 				continue;
 
 			/* Read softraid metadata. */
-			bzero(md, SR_META_SIZE * 512);
-			ofdev.partoff = DL_GETPOFFSET(pp);
+			bzero(md, SR_META_SIZE * DEV_BSIZE);
+			ofdev.partoff = DL_SECTOBLK(&dip->disklabel,
+			    DL_GETPOFFSET(pp));
 			error = strategy(&ofdev, F_READ, SR_META_OFFSET,
-			    SR_META_SIZE * 512, md, &read);
-			if (error || read != SR_META_SIZE * 512)
+			    SR_META_SIZE * DEV_BSIZE, md, &read);
+			if (error || read != SR_META_SIZE * DEV_BSIZE)
 				continue;
-		
+
 			/* Is this valid softraid metadata? */
 			if (md->ssdi.ssd_magic != SR_MAGIC)
 				continue;
@@ -315,8 +316,8 @@ srprobe(void)
 			    bv->sbv_flags & BIOC_SCBOOTABLE ? "*" : "");
 	}
 
-	explicit_bzero(md, SR_META_SIZE * 512);
-	free(md, SR_META_SIZE * 512);
+	explicit_bzero(md, SR_META_SIZE * DEV_BSIZE);
+	free(md, SR_META_SIZE * DEV_BSIZE);
 }
 
 int
@@ -334,7 +335,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 	u_char *bp;
 	int err;
 	int ihandle;
-	
+
 	/* We only support read-only softraid. */
 	if (rw != F_READ)
 		return ENOTSUP;
