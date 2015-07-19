@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.134 2015/04/25 15:28:18 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.135 2015/07/19 04:54:53 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2015 $
+.Dd $Mdocdate: July 19 2015 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1161,7 +1161,13 @@ deny from { 128.251.16.1, 251.128.16.2, group hojo }
 .Ed
 .Pp
 .It Pq Ic inet Ns | Ns Ic inet6
-This rule applies only to routes matching the stated address family.
+Match only routes in the IPv4 or IPv6 address families, respectively.
+.Ic inet
+is an alias for
+.Qq prefix 0.0.0.0/0 prefixlen >= 0 ;
+.Ic inet6
+is an alias for
+.Qq prefix ::/0 prefixlen >= 0 .
 .Pp
 .It Ic max-as-len Ar len
 This rule applies only to
