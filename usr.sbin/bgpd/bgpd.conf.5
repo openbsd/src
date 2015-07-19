@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.135 2015/07/19 04:54:53 benno Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.136 2015/07/19 14:35:41 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -449,8 +449,8 @@ Add a description.
 The description is used when logging but has no further meaning to
 .Xr bgpd 8 .
 .Pp
-.It Ic export-target Ar subtype Ar as-number Ns Li : Ns Ar local
-.It Ic export-target Ar subtype Ar IP Ns Li : Ns Ar local
+.It Ic export-target Ar subtype Ar as-number : Ns Ar local
+.It Ic export-target Ar subtype Ar IP : Ns Ar local
 Specify an extended community which will be attached to announced networks.
 More than one
 .Ic export-target
@@ -475,8 +475,8 @@ routing table.
 The default is
 .Ic yes .
 .Pp
-.It Ic import-target Ar subtype Ar as-number Ns Li : Ns Ar local
-.It Ic import-target Ar subtype Ar IP Ns Li : Ns Ar local
+.It Ic import-target Ar subtype Ar as-number : Ns Ar local
+.It Ic import-target Ar subtype Ar IP : Ns Ar local
 Only prefixes matching one of the specified
 .Ic import-targets
 will be imported into the rdomain.
@@ -500,8 +500,8 @@ section in
 .Sx GLOBAL CONFIGURATION
 for further information about the arguments.
 .Pp
-.It Ic rd Ar as-number Ns Li : Ns Ar local
-.It Ic rd Ar IP Ns Li : Ns Ar local
+.It Ic rd Ar as-number : Ns Ar local
+.It Ic rd Ar IP : Ns Ar local
 The sole purpose of the Route Distinguisher
 .Ic rd
 is to ensure that possible common prefixes are distinct between VPNs.
@@ -1075,7 +1075,7 @@ where the
 .Ic community
 path attribute is present and matches.
 Communities are specified as
-.Ar as-number Ns Li : Ns Ar local ,
+.Ar as-number : Ns Ar local ,
 where
 .Ar as-number
 is an AS number and
@@ -1106,11 +1106,11 @@ which is expanded to the current neighbor remote AS number.
 .Pp
 .It Xo
 .Ic ext-community
-.Ar subtype Ar as-number Ns Li : Ns Ar local
+.Ar subtype Ar as-number : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community
-.Ar subtype Ar IP Ns Li : Ns Ar local
+.Ar subtype Ar IP : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community
@@ -1303,7 +1303,7 @@ The following attributes can be modified:
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic community Op Ar delete
-.Ar as-number Ns Li : Ns Ar local
+.Ar as-number : Ns Ar local
 .Xc
 .It Xo
 .Ic community Op Ar delete
@@ -1313,7 +1313,7 @@ Set or delete the
 .Em COMMUNITIES
 AS path attribute.
 Communities are specified as
-.Ar as-number Ns Li : Ns Ar local ,
+.Ar as-number : Ns Ar local ,
 where
 .Ar as-number
 is an AS number and
@@ -1338,11 +1338,11 @@ to do wildcard matching.
 .Pp
 .It Xo
 .Ic ext-community Op Ar delete
-.Ar subtype Ar as-number Ns Li : Ns Ar local
+.Ar subtype Ar as-number : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community Op Ar delete
-.Ar subtype Ar IP Ns Li : Ns Ar local
+.Ar subtype Ar IP : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community Op Ar delete
@@ -1358,12 +1358,12 @@ local part.
 The type is selected depending on the encoding of the global part.
 Two-octet AS Specific Extended Communities and Four-octet AS Specific Extended
 Communities are encoded as
-.Ar as-number Ns Li : Ns Ar local .
+.Ar as-number : Ns Ar local .
 Four-octet encoding is used if the
 .Ar as-number
 is bigger then 65535 or if the AS_DOT encoding is used.
 IPv4 Address Specific Extended Communities are encoded as
-.Ar IP Ns Li : Ns Ar local .
+.Ar IP : Ns Ar local .
 Opaque Extended Communities are encoded with a single numeric value.
 Currently the following subtypes are supported:
 .Bd -literal -offset indent
