@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.4 2015/07/16 23:02:56 nicm Exp $ */
+/* $OpenBSD: parse.y,v 1.5 2015/07/19 22:09:08 benno Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -166,13 +166,22 @@ int
 yylex(void)
 {
 	char buf[1024], *ebuf, *p, *str;
-	int i, c;
+	int i, c, next;
 
 	p = buf;
 	ebuf = buf + sizeof(buf);
-	while ((c = getc(yyfp)) == ' ' || c == '\t')
-		; /* skip spaces */
+repeat:
+	c = getc(yyfp);
 	switch (c) {
+		case ' ':
+		case '\t':
+			goto repeat; /* skip spaces */
+		case '\\':
+			next = getc(yyfp);
+			if (next == '\n')
+				goto repeat;
+			else 
+				c = next;
 		case '\n':
 		case '{':
 		case '}':

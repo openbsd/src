@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.4 2015/07/18 07:03:48 bentley Exp $
+.\" $OpenBSD: doas.conf.5,v 1.5 2015/07/19 22:09:08 benno Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 18 2015 $
+.Dd $Mdocdate: July 19 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -47,9 +47,19 @@ Options are:
 The user is not required to enter a password.
 .It Ic keepenv
 The user's environment is maintained.
-The default is to reset the environment.
+The default is to reset the environment, except for the variables
+.Ev DISPLAY ,
+.Ev HOME ,
+.Ev LOGNAME ,
+.Ev MAIL ,
+.Ev SHELL ,
+.Ev PATH ,
+.Ev TERM ,
+.Ev USER
+and
+.Ev USERNAME .
 .It Ic keepenv { Oo variable names Oc Ic }
-Reset the environment, but keep the specified variables.
+Reset the environment, but keep the space-separated specified variables.
 .El
 .It Ar identity
 The username to match.
@@ -65,11 +75,31 @@ Be advised that it's best to specify absolute paths.
 .El
 .Pp
 The last matching rule determines the action taken.
+.Pp
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
 .Sh EXAMPLES
-The following example permits users in group wheel to execute commands as root,
+The following example permits users in group wsrc to build ports,
+wheel to execute commands as root while keeping the environment
+variables
+.Ev ENV ,
+.Ev PS1 ,
+and
+.Ev SSH_AUTH_SOCK ,
 and additionally permits tedu to run procmap as root without a password.
 .Bd -literal -offset indent
-permit :wheel
+# Non-exhaustive list of variables needed to 
+# build release(8) and ports(7)
+permit nopass keepenv { \e
+        FTPMODE PKG_CACHE PKG_PATH SM_PATH SSH_AUTH_SOCK \e
+        DESTDIR DISTDIR FETCH_CMD FLAVOR GROUP MAKE MAKECONF \e
+        MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_DBDIR \e
+        PKG_DESTDIR PKG_TMPDIR PORTSDIR RELEASEDIR SHARED_ONLY \e
+        SUBPACKAGE WRKOBJDIR SUDO_PORT_V1 } :wsrc
+permit nopass keepenv { ENV PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu cmd /usr/sbin/procmap
 .Ed
 .Sh SEE ALSO
