@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.6 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.7 2015/07/19 04:45:25 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -120,7 +120,7 @@ mi_syscall_return(struct proc *p, register_t code, int error,
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_LOCK();
-		ktrsysret(p, code, error, retval[0]);
+		ktrsysret(p, code, error, retval);
 		KERNEL_UNLOCK();
 	}
 #endif
@@ -135,11 +135,10 @@ mi_child_return(struct proc *p)
 #if defined(SYSCALL_DEBUG) || defined(KTRACE)
 	int code = (p->p_flag & P_THREAD) ? SYS___tfork :
 	    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork;
+	const register_t child_retval[2] = { 0, 1 };
 #endif
 
 #ifdef SYSCALL_DEBUG
-	const register_t child_retval[2] = { 0, 1 };
-
 	KERNEL_LOCK();
 	scdebug_ret(p, code, 0, child_retval);
 	KERNEL_UNLOCK();
@@ -150,7 +149,7 @@ mi_child_return(struct proc *p)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_LOCK();
-		ktrsysret(p, code, 0, 0);
+		ktrsysret(p, code, 0, child_retval);
 		KERNEL_UNLOCK();
 	}
 #endif
