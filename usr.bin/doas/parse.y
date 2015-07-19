@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.5 2015/07/19 22:09:08 benno Exp $ */
+/* $OpenBSD: parse.y,v 1.6 2015/07/19 22:11:41 benno Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -77,7 +77,8 @@ rule:		action ident target cmd {
 					maxrules = 63;
 				else
 					maxrules *= 2;
-				if (!(rules = reallocarray(rules, maxrules, sizeof(*rules))))
+				if (!(rules = reallocarray(rules, maxrules,
+				    sizeof(*rules))))
 					errx(1, "can't allocate rules");
 			}
 			rules[nrules++] = r;
@@ -116,7 +117,8 @@ envlist:	/* empty */ {
 				errx(1, "can't allocate envlist");
 		} | envlist TSTRING {
 			int nenv = arraylen($1.envlist);
-			if (!($$.envlist = reallocarray($1.envlist, nenv + 2, sizeof(char *))))
+			if (!($$.envlist = reallocarray($1.envlist, nenv + 2,
+			    sizeof(char *))))
 				errx(1, "can't allocate envlist");
 			$$.envlist[nenv] = $2.str;
 			$$.envlist[nenv + 1] = NULL;
@@ -180,7 +182,7 @@ repeat:
 			next = getc(yyfp);
 			if (next == '\n')
 				goto repeat;
-			else 
+			else
 				c = next;
 		case '\n':
 		case '{':
