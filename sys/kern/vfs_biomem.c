@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.33 2014/12/17 06:58:11 guenther Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.34 2015/07/19 21:21:14 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -278,7 +278,7 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 
 	KASSERT(buf_page_offset > 0);
 
-	uvm_pagealloc_multi(buf_object, offs, size, UVM_PLA_WAITOK);
+	(void) uvm_pagealloc_multi(buf_object, offs, size, UVM_PLA_WAITOK);
 	bcstats.numbufpages += atop(size);
 	bp->b_pobj = buf_object;
 	bp->b_poffs = offs;
