@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.45 2015/07/18 23:00:23 doug Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.46 2015/07/19 01:07:40 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -492,7 +492,7 @@ again:
 
 	/* check if we have the header */
 	if ((s->rstate != SSL_ST_READ_BODY) ||
-		(s->packet_length < DTLS1_RT_HEADER_LENGTH)) {
+	    (s->packet_length < DTLS1_RT_HEADER_LENGTH)) {
 		CBS header, seq_no;
 		uint16_t epoch, len, ssl_version;
 		uint8_t type;
@@ -544,6 +544,7 @@ again:
 			goto again;
 
 		/* now s->rstate == SSL_ST_READ_BODY */
+		p = (unsigned char *)CBS_data(&header);
 	}
 
 	/* s->rstate == SSL_ST_READ_BODY, get and decode the data */
