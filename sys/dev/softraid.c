@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.356 2015/07/19 17:04:31 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.357 2015/07/19 18:03:03 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -42,6 +42,7 @@
 #include <sys/task.h>
 #include <sys/kthread.h>
 #include <sys/dkio.h>
+#include <sys/stdint.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -1549,7 +1550,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	struct disklabel	label;
 	char			*devname;
 	int			error, part;
-	daddr_t			size;
+	u_int64_t		size;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_native_probe(%s)\n",
 	   DEVNAME(sc), ch_entry->src_devname);
@@ -1583,10 +1584,15 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 		goto unwind;
 	}
 
-	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part])) -
-	    SR_DATA_OFFSET;
-	if (size <= 0) {
+	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
+	if (size <= SR_DATA_OFFSET) {
 		DNPRINTF(SR_D_META, "%s: %s partition too small\n", DEVNAME(sc),
+		    devname);
+		goto unwind;
+	}
+	size -= SR_DATA_OFFSET;
+	if (size > INT64_MAX) {
+		DNPRINTF(SR_D_META, "%s: %s partition too large\n", DEVNAME(sc),
 		    devname);
 		goto unwind;
 	}
@@ -2603,7 +2609,8 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 	int			vol = -1, rv = EINVAL;
 	struct sr_discipline	*sd;
 	struct sr_chunk		*hotspare;
-	daddr_t			rb, sz;
+	daddr_t			rb;
+	int64_t			sz;
 
 	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
 		vol++;
@@ -2885,8 +2892,18 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	}
 
 	/* Calculate partition size. */
-	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part])) -
-	    SR_DATA_OFFSET;
+	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
+	if (size <= SR_DATA_OFFSET) {
+		DNPRINTF(SR_D_META, "%s: %s partition too small\n", DEVNAME(sc),
+		    devname);
+		goto fail;
+	}
+	size -= SR_DATA_OFFSET;
+	if (size > INT64_MAX) {
+		DNPRINTF(SR_D_META, "%s: %s partition too large\n", DEVNAME(sc),
+		    devname);
+		goto fail;
+	}
 
 	/*
 	 * Create and populate chunk metadata.
@@ -3107,7 +3124,8 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	struct sr_meta_chunk	*meta;
 	struct disklabel	label;
 	struct vnode		*vn;
-	daddr_t			size, csize;
+	u_int64_t		size;
+	int64_t			csize;
 	char			devname[32];
 	int			rv = EINVAL, open = 0;
 	int			cid, i, part, status;
@@ -3188,8 +3206,18 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	}
 
 	/* Is the partition large enough? */
-	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part])) -
-	    sd->sd_meta->ssd_data_offset;
+	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
+	if (size <= sd->sd_meta->ssd_data_offset) {
+		sr_error(sc, "%s: %s partition too small\n", DEVNAME(sc),
+		    devname);
+		goto done;
+	}
+	size -= sd->sd_meta->ssd_data_offset;
+	if (size > INT64_MAX) {
+		sr_error(sc, "%s: %s partition too large\n", DEVNAME(sc),
+		    devname);
+		goto done;
+	}
 	if (size < csize) {
 		sr_error(sc, "%s partition too small, at least %lld bytes "
 		    "required", devname, (long long)(csize << DEV_BSHIFT));
@@ -4622,8 +4650,8 @@ void
 sr_rebuild(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
-	daddr_t			whole_blk, partial_blk, blk, sz, lba;
-	daddr_t			psz, rb, restart;
+	u_int64_t		sz, psz, whole_blk, partial_blk, blk, restart;
+	daddr_t			lba, rb;
 	struct sr_workunit	*wu_r, *wu_w;
 	struct scsi_xfer	xs_r, xs_w;
 	struct scsi_rw_16	*cr, *cw;
