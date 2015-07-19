@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.847 2015/07/17 15:11:52 rpe Exp $
+#	$OpenBSD: install.sub,v 1.848 2015/07/19 19:33:51 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1356,7 +1356,7 @@ install_http() {
 	if [[ -n $_mirror ]]; then
 		PACKAGE_PATH=$(print -r -- "$_url_base" |
 			sed -E "/\/(snapshots|[0-9]\.[0-9])\/($ARCH)\/*$/!d
-				s!!/\1/packages/$(arch -s)/!;q")
+				s!!/%c/packages/%a/!;q")
 	fi
 }
 
