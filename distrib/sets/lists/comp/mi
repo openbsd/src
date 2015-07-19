@@ -1001,6 +1001,7 @@
 ./usr/include/net/radix_mpath.h
 ./usr/include/net/raw_cb.h
 ./usr/include/net/route.h
+./usr/include/net/rtable.h
 ./usr/include/net/slcompress.h
 ./usr/include/net/slip.h
 ./usr/include/net/trunklacp.h

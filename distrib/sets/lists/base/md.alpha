@@ -1673,6 +1673,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/radix_mpath.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/raw_cb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/route.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/net/rtable.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/slip.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/trunklacp.ph

@@ -1669,6 +1669,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/radix_mpath.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/raw_cb.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/route.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/net/rtable.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/slcompress.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/slip.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/trunklacp.ph
