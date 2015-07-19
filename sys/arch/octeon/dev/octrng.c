@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrng.c,v 1.5 2014/05/07 14:44:54 pirofti Exp $	*/
+/*	$OpenBSD: octrng.c,v 1.6 2015/07/19 21:11:47 jasper Exp $	*/
 /*
  * Copyright (c) 2013 Paul Irofti <pirofti@openbsd.org>
  *
@@ -76,10 +76,8 @@ octrng_match(struct device *parent, void *match, void *aux)
 
 	/* XXX: check for board type */
 
-	if (aa->aa_name == NULL ||
-	    strcmp(aa->aa_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(aa->aa_name, cf->cf_driver->cd_name) != 0)
 		return (0);
-
 
 	return (1);
 }
