@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.106 2015/06/05 16:35:24 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.107 2015/07/19 17:00:39 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1520,8 +1520,10 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 #endif
 		return rc;
 	}
+	KERNEL_LOCK();
 	rc = uvm_fault_wire(map, p->p_md.md_fppgva,
 	    p->p_md.md_fppgva + PAGE_SIZE, PROT_MASK);
+	KERNEL_UNLOCK();
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_fault_wire on %p failed: %d\n",
