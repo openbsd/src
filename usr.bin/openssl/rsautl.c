@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.4 2015/01/03 03:03:39 lteo Exp $ */
+/* $OpenBSD: rsautl.c,v 1.5 2015/07/19 03:14:09 doug Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -215,9 +215,9 @@ rsautl_main(int argc, char **argv)
 		break;
 	}
 
-	if (!pkey) {
-		return 1;
-	}
+	if (!pkey)
+		goto end;
+
 	rsa = EVP_PKEY_get1_RSA(pkey);
 	EVP_PKEY_free(pkey);
 
