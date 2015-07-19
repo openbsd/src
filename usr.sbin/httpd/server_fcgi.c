@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.57 2015/07/18 22:42:24 blambert Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.58 2015/07/19 16:34:35 blambert Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -180,9 +180,12 @@ server_fcgi(struct httpd *env, struct client *clt)
 	    fcgi_record_header)];
 	begin->role = htons(FCGI_RESPONDER);
 
-	bufferevent_write(clt->clt_srvbev, &param.buf,
+	if (bufferevent_write(clt->clt_srvbev, &param.buf,
 	    sizeof(struct fcgi_record_header) +
-	    sizeof(struct fcgi_begin_request_body));
+	    sizeof(struct fcgi_begin_request_body)) == -1) {
+		errstr = "failed to write to evbuffer";
+		goto fail;
+	}
 
 	h->type = FCGI_PARAMS;
 	h->content_len = param.total_len = 0;
@@ -352,15 +355,21 @@ server_fcgi(struct httpd *env, struct client *clt)
 	}
 
 	if (param.total_len != 0) {	/* send last params record */
-		bufferevent_write(clt->clt_srvbev, &param.buf,
+		if (bufferevent_write(clt->clt_srvbev, &param.buf,
 		    sizeof(struct fcgi_record_header) +
-		    ntohs(h->content_len));
+		    ntohs(h->content_len)) == -1) {
+			errstr = "failed to write to client evbuffer";
+			goto fail;
+		}
 	}
 
 	/* send "no more params" message */
 	h->content_len = 0;
-	bufferevent_write(clt->clt_srvbev, &param.buf,
-	    sizeof(struct fcgi_record_header));
+	if (bufferevent_write(clt->clt_srvbev, &param.buf,
+	    sizeof(struct fcgi_record_header)) == -1) {
+		errstr = "failed to write to client evbuffer";
+		goto fail;
+	}
 
 	bufferevent_settimeout(clt->clt_srvbev,
 	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
@@ -439,8 +448,9 @@ fcgi_add_param(struct server_fcgi_param *p, const char *key,
 		return (-1);
 
 	if (p->total_len + len > FCGI_CONTENT_SIZE) {
-		bufferevent_write(clt->clt_srvbev, p->buf,
-		    sizeof(struct fcgi_record_header) + p->total_len);
+		if (bufferevent_write(clt->clt_srvbev, p->buf,
+		    sizeof(struct fcgi_record_header) + p->total_len) == -1)
+			return (-1);
 		p->total_len = 0;
 	}
 
