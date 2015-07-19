@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.16 2015/07/19 21:01:56 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.17 2015/07/19 22:36:30 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -144,11 +144,11 @@ The default value is 5; valid range is 1\-65535.
 .Sh NEIGHBORS
 The
 .Ic neighbor
-section allows for the configuration of neighbor-specific parameters. Note,
-however, that
+section allows for the configuration of neighbor-specific parameters.
+Note, however, that
 .Xr ldpd 8
-uses the hello discovery mechanism to discover its neighbors. Without an
-underlying adjacency these commands have no effect.
+uses the hello discovery mechanism to discover its neighbors.
+Without an underlying adjacency these commands have no effect.
 .Bd -literal -offset indent
 neighbor A.B.C.D {
 }
