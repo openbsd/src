@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.9 2015/07/18 18:44:26 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.10 2015/07/19 01:19:22 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <syslog.h>
+#include <errno.h>
 
 #include "doas.h"
 
@@ -343,5 +344,7 @@ main(int argc, char **argv, char **envp)
 	if (setenv("PATH", safepath, 1) == -1)
 		err(1, "failed to set PATH '%s'", safepath);
 	execvpe(cmd, argv, envp);
+	if (errno == ENOENT)
+		errx(1, "%s: command not found", cmd);
 	err(1, "%s", cmd);
 }
