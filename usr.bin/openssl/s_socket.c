@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.5 2015/07/17 20:22:02 beck Exp $ */
+/* $OpenBSD: s_socket.c,v 1.6 2015/07/19 03:28:26 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,7 +83,7 @@ int
 init_client(int *sock, char *host, char *port, int type, int af)
 {
 	struct addrinfo hints, *ai_top, *ai;
-	int i, s;
+	int i, s = -1;
 
 	memset(&hints, '\0', sizeof(hints));
 	hints.ai_family = af;
@@ -120,11 +120,13 @@ init_client(int *sock, char *host, char *port, int type, int af)
 			return (1);
 		}
 		close(s);
+		s = -1;
 	}
 
 	perror("connect");
 out:
-	close(s);
+	if (s != -1)
+		close(s);
 	freeaddrinfo(ai_top);
 	return (0);
 }
