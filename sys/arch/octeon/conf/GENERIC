@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 2015/07/13 19:05:23 miod Exp $
+#	$OpenBSD: GENERIC,v 1.21 2015/07/19 23:46:50 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -46,7 +46,7 @@ pci*		at pcibus?
 ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
-cn30xxgmx*	at iobus?
+cn30xxgmx*	at iobus? irq 48
 cnmac*		at cn30xxgmx?
 
 rgephy*		at mii?
@@ -61,7 +61,7 @@ pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 
 # USB Controllers
-dwctwo0 	at iobus?
+dwctwo0 	at iobus? irq 56
 
 # USB bus support
 usb*		at dwctwo?

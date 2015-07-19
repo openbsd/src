@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.25 2014/08/11 19:00:50 miod Exp $ */
+/*	$OpenBSD: octcf.c,v 1.26 2015/07/19 23:46:50 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -180,7 +180,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 
 	wd->sc_iot = aa->aa_bust;
 
-	if (bus_space_map(wd->sc_iot, aa->aa_unit->addr,
+	if (bus_space_map(wd->sc_iot, aa->aa_addr,
 	    OCTCF_REG_SIZE, BUS_SPACE_MAP_KSEG0, &wd->sc_ioh)) {
 		printf(": couldn't map registers\n");
 		return;

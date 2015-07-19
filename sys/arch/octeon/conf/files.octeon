@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.22 2015/07/13 19:05:23 miod Exp $
+#	$OpenBSD: files.octeon,v 1.23 2015/07/19 23:46:50 jasper Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -52,7 +52,7 @@ device	octrtc
 attach	octrtc at mainbus
 file	arch/octeon/dev/octrtc.c			octrtc
 
-define	iobus {[base = -1]}
+define	iobus {[base = -1], [irq = 0]}
 device	iobus
 attach	iobus at mainbus
 file	arch/octeon/dev/octeon_iobus.c			iobus

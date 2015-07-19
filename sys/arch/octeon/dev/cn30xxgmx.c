@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.19 2015/06/24 09:40:53 mpi Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.20 2015/07/19 23:46:50 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -206,8 +206,8 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc_regt = aa->aa_bust; /* XXX why there are iot? */
-	
-	status = bus_space_map(sc->sc_regt, aa->aa_unit->addr,
+
+	status = bus_space_map(sc->sc_regt, aa->aa_addr,
 	    GMX0_BASE_IF_SIZE, 0, &sc->sc_regh);
 	if (status != 0)
 		panic(": can't map register");
@@ -224,7 +224,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		port_sc->sc_port_type = sc->sc_port_types[i];
 		port_sc->sc_port_ops = cn30xxgmx_port_ops[port_sc->sc_port_type];
 		status = bus_space_map(sc->sc_regt,
-		    aa->aa_unit->addr + GMX0_BASE_PORT_SIZE * i,
+		    aa->aa_addr + GMX0_BASE_PORT_SIZE * i,
 		    GMX0_BASE_PORT_SIZE, 0, &port_sc->sc_port_regh);
 		if (status != 0)
 			panic(": can't map port register");
@@ -232,7 +232,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		(void)memset(&gmx_aa, 0, sizeof(gmx_aa));
 		gmx_aa.ga_regt = aa->aa_bust;
 		gmx_aa.ga_dmat = aa->aa_dmat;
-		gmx_aa.ga_addr = aa->aa_unit->addr;
+		gmx_aa.ga_addr = aa->aa_addr;
 		gmx_aa.ga_name = "cnmac";
 		gmx_aa.ga_portno = i;
 		gmx_aa.ga_port_type = sc->sc_port_types[i];
