@@ -2462,7 +2462,7 @@ $code.=<<___;
 .type	${PREFIX}_set_decrypt_key,\@abi-omnipotent
 .align	16
 ${PREFIX}_set_decrypt_key:
-	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
+	sub	\$8,%rsp
 	call	__aesni_set_encrypt_key
 	shl	\$4,$bits		# rounds-1 after _aesni_set_encrypt_key
 	test	%eax,%eax
@@ -2513,7 +2513,7 @@ $code.=<<___;
 .align	16
 ${PREFIX}_set_encrypt_key:
 __aesni_set_encrypt_key:
-	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
+	sub	\$8,%rsp
 	mov	\$-1,%rax
 	test	$inp,$inp
 	jz	.Lenc_key_ret
