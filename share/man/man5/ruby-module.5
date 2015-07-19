@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.15 2015/07/18 04:59:41 jeremy Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.16 2015/07/19 02:24:09 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 18 2015 $
+.Dd $Mdocdate: July 19 2015 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -48,8 +48,6 @@ Sets
 .Ev MODRUBY_RUN_DEPENDS ,
 .Ev MODRUBY_LIB_DEPENDS ,
 .Ev MODRUBY_BUILD_DEPENDS ,
-.Ev MODRUBY_ICONV_DEPENDS ,
-.Ev MODRUBY_RAKE_DEPENDS ,
 .Ev MODRUBY_RSPEC_DEPENDS ,
 .Ev MODRUBY_RSPEC3_DEPENDS ,
 .Ev MODRUBY_RUBY_ADJ ,
@@ -100,12 +98,6 @@ unless
 .Ev MODRUBY_RUNDEP
 is set to No.
 .Pp
-.Ev MODRUBY_ICONV_DEPENDS
-is set to the dependency line for the iconv port for the version of ruby in
-use.
-.Ev MODRUBY_RAKE_DEPENDS
-is set to the dependency line for the rake port for the version of ruby in
-use.
 .Ev MODRUBY_RSPEC_DEPENDS
 is set to the dependency line for the rspec 1 port for the version of ruby in
 use.
