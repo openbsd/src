@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.16 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.17 2015/07/19 04:59:39 yuo Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -204,7 +204,7 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		PHY_WRITE(sc, IPGPHY_MII_BMCR, speed);
 
 		if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
-			gig |= IPGPHY_1000CR_MASTER | IPGPHY_1000CR_MANUAL;
+			gig |= IPGPHY_1000CR_MMASTER | IPGPHY_1000CR_MANUAL;
 
 		PHY_WRITE(sc, IPGPHY_MII_1000CR, gig);
 
@@ -342,7 +342,7 @@ ipgphy_status(struct mii_softc *sc)
 
 		if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
 			if (PHY_READ(sc, IPGPHY_MII_1000SR) &
-			    IPGPHY_1000SR_MASTER)
+			    IPGPHY_1000SR_MMASTER)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 		}
 	} else
