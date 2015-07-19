@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.24 2015/07/19 05:49:27 doug Exp $
+.\" $OpenBSD: tls_init.3,v 1.25 2015/07/19 17:10:23 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -424,9 +424,9 @@ A read operation is necessary to continue.
 A write operation is necessary to continue.
 .El
 .Pp
-These are underlying TLS engine read or write operations which may
-not correspond with the name of the function you call.
-For example, you may receive a
+There are underlying TLS engine read or write operations which may
+not correspond with the name of the function called.
+For example, it is possible to receive a
 .Dv TLS_READ_AGAIN
 even when calling
 .Fn tls_write .
