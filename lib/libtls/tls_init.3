@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.23 2015/04/03 22:33:43 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.24 2015/07/19 05:49:27 doug Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2015 $
+.Dd $Mdocdate: July 19 2015 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -424,6 +424,15 @@ A read operation is necessary to continue.
 A write operation is necessary to continue.
 .El
 .Pp
+These are underlying TLS engine read or write operations which may
+not correspond with the name of the function you call.
+For example, you may receive a
+.Dv TLS_READ_AGAIN
+even when calling
+.Fn tls_write .
+.Pp
+While there are cases where these functions will return one or the
+other or both, the best practice is to always check for both.
 The caller should call the appropriate function or, in the case of the
 .Fn tls_close
 and the
@@ -431,6 +440,24 @@ and the
 and
 .Fn tls_connect
 function families, repeat the call.
+.Sh EXAMPLES
+Example showing how to handle partial TLS writes.
+.Bd -literal -offset indent
+\&...
+while (len > 0) {
+	ret = tls_write(ctx, buf, len, &num_written);
+
+	if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
+		/* retry.  May use select to wait for nonblocking */
+	} else if (ret < 0) {
+		return -1;
+	} else {
+		buf += num_written;
+		len -= num_written;
+	}
+}
+\&...
+.Ed
 .Sh ERRORS
 The
 .Fn tls_error
