@@ -93,11 +93,11 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.0
 ./usr/lib/libsqlite3.so.30.1
-./usr/lib/libssl.so.33.0
+./usr/lib/libssl.so.34.0
 ./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
-./usr/lib/libtls.so.4.0
+./usr/lib/libtls.so.5.0
 ./usr/lib/libusbhid.so.7.0
 ./usr/lib/libutil.so.12.1
 ./usr/lib/libz.so.5.0
