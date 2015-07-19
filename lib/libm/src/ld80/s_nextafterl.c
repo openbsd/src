@@ -25,7 +25,8 @@ long double
 nextafterl(long double x, long double y)
 {
 	int32_t hx,hy,ix,iy;
-	u_int32_t lx,ly,esx,esy;
+	u_int32_t lx,ly;
+	int32_t esx,esy;
 
 	GET_LDOUBLE_WORDS(esx,hx,lx,x);
 	GET_LDOUBLE_WORDS(esy,hy,ly,y);
@@ -43,8 +44,8 @@ nextafterl(long double x, long double y)
 	    u = u * u;				/* raise underflow flag */
 	    return x;
 	}
-	if(esx<0x8000) {			/* x > 0 */
-	    if(ix>iy||((ix==iy) && (hx>hy||((hx==hy)&&(lx>ly))))) {
+	if(esx>=0) {			/* x > 0 */
+	    if(esx>esy||((esx==esy) && (hx>hy||((hx==hy)&&(lx>ly))))) {
 	      /* x > y, x -= ulp */
 		if(lx==0) {
 		    if ((hx&0x7fffffff)==0) esx -= 1;
@@ -59,7 +60,7 @@ nextafterl(long double x, long double y)
 		}
 	    }
 	} else {				/* x < 0 */
-	    if(esy>=0||(ix>iy||((ix==iy)&&(hx>hy||((hx==hy)&&(lx>ly)))))){
+	    if(esy>=0||(esx>esy||((esx==esy)&&(hx>hy||((hx==hy)&&(lx>ly)))))){
 	      /* x < y, x -= ulp */
 		if(lx==0) {
 		    if ((hx&0x7fffffff)==0) esx -= 1;
