@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.417 2015/07/17 19:46:05 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.418 2015/07/19 01:58:19 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1825,14 +1825,13 @@ int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
 int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
-int	pf_refragment6(struct mbuf **, struct m_tag *mtag, int);
+int	pf_refragment6(struct mbuf **, struct m_tag *mtag);
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct pf_pdesc *, u_short *);
 int	pf_normalize_ip6(struct pf_pdesc *, u_short *);
 int	pf_normalize_tcp(struct pf_pdesc *);
 void	pf_normalize_tcp_cleanup(struct pf_state *);
-int	pf_normalize_tcp_init(struct pf_pdesc *, struct pf_state_peer *,
-	    struct pf_state_peer *);
+int	pf_normalize_tcp_init(struct pf_pdesc *, struct pf_state_peer *);
 int	pf_normalize_tcp_stateful(struct pf_pdesc *, u_short *,
 	    struct pf_state *, struct pf_state_peer *, struct pf_state_peer *,
 	    int *);

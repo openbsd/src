@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.179 2015/07/18 15:19:44 sashan Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.180 2015/07/19 01:58:19 sashan Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -680,7 +680,7 @@ fail:
 }
 
 int
-pf_refragment6(struct mbuf **m0, struct m_tag *mtag, int dir)
+pf_refragment6(struct mbuf **m0, struct m_tag *mtag)
 {
 	struct mbuf		*m = *m0, *t;
 	struct pf_fragment_tag	*ftag = (struct pf_fragment_tag *)(mtag + 1);
@@ -883,8 +883,7 @@ tcp_drop:
 }
 
 int
-pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src,
-    struct pf_state_peer *dst)
+pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 {
 	struct tcphdr	*th = pd->hdr.tcp;
 	u_int32_t	 tsval, tsecr;
