@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.26 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: script.c,v 1.27 2015/07/19 06:12:06 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -139,9 +139,6 @@ main(int argc, char *argv[])
 
 	bzero(&sa, sizeof sa);
 	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = finish;
-	(void)sigaction(SIGCHLD, &sa, NULL);
-
 	sa.sa_handler = handlesigwinch;
 	sa.sa_flags = SA_RESTART;
 	(void)sigaction(SIGWINCH, &sa, NULL);
@@ -162,6 +159,11 @@ main(int argc, char *argv[])
 		else
 			doshell();
 	}
+
+	bzero(&sa, sizeof sa);
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = finish;
+	(void)sigaction(SIGCHLD, &sa, NULL);
 
 	(void)fclose(fscript);
 	while (1) {
@@ -240,6 +242,11 @@ dooutput(void)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = scriptflush;
 	(void)sigaction(SIGALRM, &sa, NULL);
+
+	bzero(&sa, sizeof sa);
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = SIG_IGN;
+	(void)sigaction(SIGCHLD, &sa, NULL);
 
 	value.it_interval.tv_sec = 30;
 	value.it_interval.tv_usec = 0;
