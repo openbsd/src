@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.37 2015/01/20 03:58:04 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.38 2015/07/19 06:35:18 yuo Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -175,46 +175,45 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		PHY_RESET(sc);	/* XXX hardware bug work-around */
 
-		anar = PHY_READ(sc, RGEPHY_MII_ANAR);
-		anar &= ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
-		    RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10);
+		anar = PHY_READ(sc, MII_ANAR);
+		anar &= ~(ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10);
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 			(void) rgephy_mii_phy_auto(sc);
 			break;
 		case IFM_1000_T:
-			speed = RGEPHY_S1000;
+			speed = BMCR_S1000;
 			goto setit;
 		case IFM_100_TX:
-			speed = RGEPHY_S100;
-			anar |= RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX;
+			speed = BMCR_S100;
+			anar |= ANAR_TX_FD | ANAR_TX;
 			goto setit;
 		case IFM_10_T:
-			speed = RGEPHY_S10;
-			anar |= RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10;
+			speed = BMCR_S10;
+			anar |= ANAR_10_FD | ANAR_10;
 setit:
 			rgephy_loop(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
-				speed |= RGEPHY_BMCR_FDX;
+				speed |= BMCR_FDX;
 				if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T)
-					gig = RGEPHY_1000CTL_AFD;
-				anar &= ~(RGEPHY_ANAR_TX | RGEPHY_ANAR_10);
+					gig = GTCR_ADV_1000TFDX;
+				anar &= ~(ANAR_TX | ANAR_10);
 			} else {
 				if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T)
-					gig = RGEPHY_1000CTL_AHD;
+					gig = GTCR_ADV_1000THDX;
 				anar &=
-				    ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_10_FD);
+				    ~(ANAR_TX_FD | ANAR_10_FD);
 			}
 
 			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T &&
 			    mii->mii_media.ifm_media & IFM_ETH_MASTER)
-				gig |= RGEPHY_1000CTL_MSE|RGEPHY_1000CTL_MSC;
+				gig |= GTCR_MAN_MS|GTCR_ADV_MS;
 
-			PHY_WRITE(sc, RGEPHY_MII_1000CTL, gig);
-			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed |
-			    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
-			PHY_WRITE(sc, RGEPHY_MII_ANAR, anar);
+			PHY_WRITE(sc, MII_100T2CR, gig);
+			PHY_WRITE(sc, MII_BMCR, speed | BMCR_AUTOEN |
+			  BMCR_STARTNEG);
+			PHY_WRITE(sc, MII_ANAR, anar);
 			break;
 #if 0
 		case IFM_NONE:
@@ -316,15 +315,15 @@ rgephy_status(struct mii_softc *sc)
 			mii->mii_media_status |= IFM_ACTIVE;
 	}	
 
-	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
+	bmsr = PHY_READ(sc, MII_BMSR);
 
-	bmcr = PHY_READ(sc, RGEPHY_MII_BMCR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 
-	if (bmcr & RGEPHY_BMCR_LOOP)
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if (bmcr & RGEPHY_BMCR_AUTOEN) {
-		if ((bmsr & RGEPHY_BMSR_ACOMP) == 0) {
+	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -361,9 +360,9 @@ rgephy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_HDX;
 	}
 
-	gtsr = PHY_READ(sc, RGEPHY_MII_1000STS);
+	gtsr = PHY_READ(sc, MII_100T2SR);
 	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
-	    gtsr & RGEPHY_1000STS_MSR)
+	    gtsr & GTSR_MS_RES)
 		mii->mii_media_active |= IFM_ETH_MASTER;
 }
 
@@ -378,15 +377,13 @@ rgephy_mii_phy_auto(struct mii_softc *sc)
 
 	anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
 	if (sc->mii_flags & MIIF_DOPAUSE)
-		anar |= RGEPHY_ANAR_PC | RGEPHY_ANAR_ASP;
+		anar |= ANAR_FC | ANAR_X_PAUSE_ASYM;
 
-	PHY_WRITE(sc, RGEPHY_MII_ANAR, anar);
+	PHY_WRITE(sc, MII_ANAR, anar);
 	DELAY(1000);
-	PHY_WRITE(sc, RGEPHY_MII_1000CTL,
-	    RGEPHY_1000CTL_AHD | RGEPHY_1000CTL_AFD);
+	PHY_WRITE(sc, MII_100T2CR, GTCR_ADV_1000THDX | GTCR_ADV_1000TFDX);
 	DELAY(1000);
-	PHY_WRITE(sc, RGEPHY_MII_BMCR,
-	    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	DELAY(100);
 
 	return (EJUSTRETURN);
@@ -400,13 +397,13 @@ rgephy_loop(struct mii_softc *sc)
 
 	if (sc->mii_model != MII_MODEL_xxREALTEK_RTL8251 &&
 	    sc->mii_rev < 2) {
-		PHY_WRITE(sc, RGEPHY_MII_BMCR, RGEPHY_BMCR_PDOWN);
+		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		DELAY(1000);
 	}
 
 	for (i = 0; i < 15000; i++) {
-		bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
-		if (!(bmsr & RGEPHY_BMSR_LINK))
+		bmsr = PHY_READ(sc, MII_BMSR);
+		if (!(bmsr & BMSR_LINK))
 			break;
 		DELAY(10);
 	}
