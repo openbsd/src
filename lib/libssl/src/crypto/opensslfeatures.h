@@ -10,6 +10,7 @@
 # define OPENSSL_NO_PSK
 # define OPENSSL_NO_RC5
 # define OPENSSL_NO_RFC3779
+# define OPENSSL_NO_RSAX
 # define OPENSSL_NO_SCTP
 # define OPENSSL_NO_SEED
 # define OPENSSL_NO_SRP

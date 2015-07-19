@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.30 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: engine.h,v 1.31 2015/07/19 22:34:27 doug Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -322,7 +322,6 @@ void ENGINE_load_dynamic(void);
 #ifndef OPENSSL_NO_STATIC_ENGINE
 void ENGINE_load_padlock(void);
 #endif
-void ENGINE_load_rsax(void);
 void ENGINE_load_builtin_engines(void);
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
