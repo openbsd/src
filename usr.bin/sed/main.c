@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2015/07/18 09:33:00 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2015/07/19 06:14:23 sthen Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -333,7 +333,8 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 		fname = files->fname;
 		if (inplace != NULL) {
 			if (lstat(fname, &sb) != 0)
-				err(1, "%s", fname);
+				err(1, "%s: %s", fname,
+				    strerror(errno ? errno : EIO));
 			if (!S_ISREG(sb.st_mode))
 				err(FATAL, "%s: %s %s", fname,
 				    "in-place editing only",
