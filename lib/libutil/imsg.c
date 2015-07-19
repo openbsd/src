@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.9 2015/07/12 18:40:49 nicm Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.10 2015/07/19 07:18:59 nicm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -143,7 +143,9 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 		return (0);
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ibuf->r.rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
-	if ((imsg->data = malloc(datalen)) == NULL)
+	if (datalen == 0)
+		imsg->data = NULL;
+	else if ((imsg->data = malloc(datalen)) == NULL)
 		return (-1);
 
 	if (imsg->hdr.flags & IMSGF_HASFD)
