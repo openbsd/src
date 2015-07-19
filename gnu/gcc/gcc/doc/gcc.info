@@ -422,8 +422,8 @@ _Warning Options_
      *Note Options to Request or Suppress Warnings: Warning Options.
           -fsyntax-only  -pedantic  -pedantic-errors
           -w  -Wextra  -Wall  -Waddress  -Waggregate-return -Wno-attributes
-          -Wc++-compat -Wcast-align  -Wcast-qual  -Wchar-subscripts  -Wcomment
-          -Wconversion  -Wno-deprecated-declarations
+          -Wbounded  -Wc++-compat -Wcast-align  -Wcast-qual  -Wchar-subscripts
+          -Wcomment-Wconversion  -Wno-deprecated-declarations
           -Wdisabled-optimization  -Wno-div-by-zero  -Wno-endif-labels
           -Werror  -Werror=* -Werror-implicit-function-declaration
           -Wfatal-errors  -Wfloat-equal  -Wformat  -Wformat=2
@@ -2386,6 +2386,10 @@ Options::.
      This option causes the compiler to abort compilation on the first
      error occurred rather than trying to keep going and printing
      further error messages.
+
+`-Wbounded'
+     Check calls to functions with the `bounded' attribute (*note Function
+     Attributes::).
 
 `-Wformat'
      Check calls to `printf' and `scanf', etc., to make sure that the
@@ -15353,7 +15357,7 @@ when making a declaration.  This keyword is followed by an attribute
 specification inside double parentheses.  The following attributes are
 currently defined for functions on all targets: `noreturn',
 `returns_twice', `noinline', `always_inline', `flatten', `pure',
-`const', `nothrow', `sentinel', `format', `format_arg',
+`const', `nothrow', `sentinel', `format', `format_arg', `bounded',
 `no_instrument_function', `section', `constructor', `destructor',
 `used', `unused', `deprecated', `weak', `malloc', `alias',
 `warn_unused_result', `nonnull', `gnu_inline' and `externally_visible'.
@@ -15436,6 +15440,63 @@ attributes.
      considered for inlining depends on its size and the current
      inlining parameters.  The `flatten' attribute only works reliably
      in unit-at-a-time mode.
+
+`bounded'
+     This attribute is used to type-check functions whose parameters
+     pass fixed-length buffer and their sizes.  The syntax for normal
+     buffers is:
+
+         __attribute__ ((__bounded__ ( __buffer__, buffer, length )))
+
+     where buffer contains the parameter number (starting from 1) of the
+     pointer to the buffer, and length contains the parameter number of the
+     buffer length argument.
+
+     gcc will emit a warning if the length argument is a constant larger than
+     the actual size of the buffer.  If the buffer is not a statically
+     declared array of fixed length, no warnings will be generated.  Refer to
+     memcpy(3) for an example of a function with this check.
+
+     For checking strings, just use __string__ instead of __buffer__:
+
+     __attribute__ ((__bounded__ ( __string__, buffer, length )))
+
+     In addition to the checks described above, this also tests if the length
+     argument was wrongly derived from a sizeof(void *) operation.  strlcpy(3)
+     is a good example of a string function with this check.
+
+     If a function needs string checking like __string__ but operates on
+     element counts rather than buffer sizes, use __wcstring__:
+
+     __attribute__ ((__bounded__ ( __wcstring__, buffer, count )))
+
+     An example of a string function with this check is wcslcpy(3).
+
+     Some functions specify the length as two arguments: the number of
+     elements and the size of each element.  In this case, use the __size__
+     attribute:
+
+     __attribute__ ((__bounded__ ( __size__, buffer, nmemb, size )))
+
+     where buffer contains the parameter number of the pointer to the buffer,
+     nmemb contains the parameter number of the number of members, and size
+     has the parameter number of the size of each element.  The type checks
+     performed by __size__ are the same as the __buffer__ attribute.  See
+     fread(3) for an example of this type of function.
+
+     If a function accepts a buffer parameter and specifies that it has to be
+     of a minimum length, the __minbytes__ attribute can be used:
+
+     __attribute__ ((__bounded__ ( __minbytes__, buffer, minsize )))
+
+     where buffer contains the parameter number of the pointer to the buffer,
+     and minsize specifies the minimum number of bytes that the buffer should
+     be.  ctime_r(3) is an example of this type of function.
+
+     If -Wbounded is specified with -Wformat, additional checks are performed
+     on sscanf(3) format strings.  The `%s' fields are checked for incorrect
+     bound lengths by checking the size of the buffer associated with the
+     format argument.
 
 `cdecl'
      On the Intel 386, the `cdecl' attribute causes the compiler to
