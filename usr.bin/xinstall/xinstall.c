@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.61 2015/07/18 15:42:37 jasper Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.62 2015/07/19 18:27:26 jasper Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ gid_t gid;
 void	copy(int, char *, int, char *, off_t, int);
 int	compare(int, const char *, off_t, int, const char *, off_t);
 void	install(char *, char *, u_long, u_int);
-void	install_dir(char *);
+void	install_dir(char *, int);
 void	strip(char *);
 void	usage(void);
 int	create_newfile(char *, struct stat *);
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 
 	if (dodir) {
 		for (; *argv != NULL; ++argv)
-			install_dir(*argv);
+			install_dir(*argv, mode);
 		exit(EX_OK);
 		/* NOTREACHED */
 	}
@@ -176,7 +176,12 @@ main(int argc, char *argv[])
 		char *dest = dirname(argv[argc - 1]);
 		if (dest == NULL)
 			errx(EX_OSERR, "cannot determine dirname");
-		install_dir(dest);
+		/*
+		 * When -D is passed, do not chmod the directory with the mode set for
+		 * the target file. If more restrictive permissions are required then
+		 * '-d -m' ought to be used instead.
+		 */
+		install_dir(dest, 0755);
 	}
 
 	no_target = stat(to_name = argv[argc - 1], &to_sb);
@@ -572,7 +577,7 @@ strip(char *to_name)
  *	build directory hierarchy
  */
 void
-install_dir(char *path)
+install_dir(char *path, int mode)
 {
 	char *p;
 	struct stat sb;
