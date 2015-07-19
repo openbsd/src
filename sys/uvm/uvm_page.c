@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.139 2015/07/19 21:21:14 beck Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.140 2015/07/19 22:52:30 beck Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -814,7 +814,7 @@ uvm_pagealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 	r = uvm_pglistalloc(size, dma_constraint.ucr_low,
 	    dma_constraint.ucr_high, 0, 0, &plist, atop(round_page(size)),
 	    flags);
-	if (r != 0) {
+	if (r == 0) {
 		i = 0;
 		while ((pg = TAILQ_FIRST(&plist)) != NULL) {
 			pg->wire_count = 1;
@@ -847,7 +847,7 @@ uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 		panic("size 0 uvm_pagerealloc");
 	r = uvm_pglistalloc(size, where->ucr_low, where->ucr_high, 0,
 	    0, &plist, atop(round_page(size)), flags);
-	if (r != 0) {
+	if (r == 0) {
 		i = 0;
 		while((pg = TAILQ_FIRST(&plist)) != NULL) {
 			offset = off + ptoa(i++);
