@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pci.c,v 1.8 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_pci.c,v 1.9 2015/07/19 01:20:32 doug Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */
@@ -316,10 +316,6 @@ err:
 	if (policy) {
 		ASN1_OCTET_STRING_free(policy);
 		policy = NULL;
-	}
-	if (pci) {
-		PROXY_CERT_INFO_EXTENSION_free(pci);
-		pci = NULL;
 	}
 end:
 	sk_CONF_VALUE_pop_free(vals, X509V3_conf_free);
