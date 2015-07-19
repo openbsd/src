@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.68 2015/06/08 22:19:28 krw Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.69 2015/07/19 02:35:35 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -108,6 +108,8 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/tame.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -388,6 +390,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	struct in6_addr *in6a = NULL;
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
 	struct ifnet *ifp = NULL;	/* outgoing interface */
+	struct proc *p = curproc;
 	int error = 0;
 	struct sockaddr_in6 tmp;
 
@@ -399,6 +402,9 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 		return (EAFNOSUPPORT);
 	if (sin6->sin6_port == 0)
 		return (EADDRNOTAVAIL);
+
+	if (tame_dns_check(p, sin6->sin6_port))
+		return (tame_fail(p, EPERM, TAME_DNS));
 
 	/* reject IPv4 mapped address, we have no support for it */
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))

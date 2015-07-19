@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.220 2015/05/07 08:53:33 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.221 2015/07/19 02:35:35 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -812,6 +812,16 @@ sys_open(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) flags;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
+	int flags = SCARG(uap, flags);
+
+	switch (flags & O_ACCMODE) {
+	case O_WRONLY:
+	case O_RDWR:
+		p->p_tamenote |= TMN_WRITE;
+		break;
+	}
+	if (flags & O_CREAT)
+		p->p_tamenote |= TMN_CREAT;
 
 	return (doopenat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, flags),
 	    SCARG(uap, mode), retval));
@@ -1186,6 +1196,7 @@ sys_mknod(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) dev;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_IMODIFY;
 	return (domknodat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode),
 	    SCARG(uap, dev)));
 }
@@ -1280,6 +1291,7 @@ sys_mkfifo(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_CREAT;
 	return (domknodat(p, AT_FDCWD, SCARG(uap, path),
 	    (SCARG(uap, mode) & ALLPERMS) | S_IFIFO, 0));
 }
@@ -1309,6 +1321,7 @@ sys_link(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) link;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_CREAT;
 	return (dolinkat(p, AT_FDCWD, SCARG(uap, path), AT_FDCWD,
 	    SCARG(uap, link), AT_SYMLINK_FOLLOW));
 }
@@ -1382,6 +1395,7 @@ sys_symlink(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) link;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_CREAT;
 	return (dosymlinkat(p, SCARG(uap, path), AT_FDCWD, SCARG(uap, link)));
 }
 
@@ -1442,6 +1456,7 @@ sys_unlink(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_CREAT;
 	return (dounlinkat(p, AT_FDCWD, SCARG(uap, path), 0));
 }
 
@@ -1835,6 +1850,7 @@ sys_chflags(struct proc *p, void *v, register_t *retval)
 		syscallarg(u_int) flags;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_IMODIFY;
 	return (dochflagsat(p, AT_FDCWD, SCARG(uap, path),
 	    SCARG(uap, flags), 0));
 }
@@ -1933,6 +1949,7 @@ sys_chmod(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_IMODIFY;
 	return (dofchmodat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode), 0));
 }
 
@@ -2028,6 +2045,7 @@ sys_chown(struct proc *p, void *v, register_t *retval)
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_IMODIFY;
 	return (dofchownat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, uid),
 	    SCARG(uap, gid), 0));
 }
@@ -2111,6 +2129,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 	uid_t uid = SCARG(uap, uid);
 	gid_t gid = SCARG(uap, gid);
 
+	p->p_tamenote |= TMN_IMODIFY;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2207,6 +2226,7 @@ sys_utimes(struct proc *p, void *v, register_t *retval)
 	const struct timeval *tvp;
 	int error;
 
+	p->p_tamenote |= TMN_IMODIFY;
 	tvp = SCARG(uap, tptr);
 	if (tvp != NULL) {
 		error = copyin(tvp, tv, sizeof(tv));
@@ -2402,6 +2422,7 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
+	p->p_tamenote |= TMN_IMODIFY;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2501,6 +2522,7 @@ sys_rename(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) to;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_IMODIFY;
 	return (dorenameat(p, AT_FDCWD, SCARG(uap, from), AT_FDCWD,
 	    SCARG(uap, to)));
 }
@@ -2609,6 +2631,7 @@ sys_mkdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_CREAT;
 	return (domkdirat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode)));
 }
 
@@ -2667,6 +2690,7 @@ sys_rmdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 
+	p->p_tamenote |= TMN_CREAT;
 	return (dounlinkat(p, AT_FDCWD, SCARG(uap, path), AT_REMOVEDIR));
 }
 
@@ -2761,6 +2785,7 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
+	p->p_tamenote |= TMN_CREAT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.98 2015/05/10 22:35:38 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.99 2015/07/19 02:35:35 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
+#include <sys/tame.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -384,7 +385,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct filedesc *fdp;
-	u_long com;
+	u_long com = SCARG(uap, com);
 	int error;
 	u_int size;
 	caddr_t data, memp;
@@ -393,10 +394,15 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	long long stkbuf[STK_PARAMS / sizeof(long long)];
 
 	fdp = p->p_fd;
-	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
+	fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE);
+
+	if (tame_ioctl_check(p, com, fp))
+		return (tame_fail(p, EPERM, _TM_IOCTL));
+
+	if (fp == NULL)
 		return (EBADF);
 
-	switch (com = SCARG(uap, com)) {
+	switch (com) {
 	case FIONCLEX:
 	case FIOCLEX:
 		fdplock(fdp);

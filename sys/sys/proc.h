@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.200 2015/07/18 00:15:10 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.201 2015/07/19 02:35:35 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -211,6 +211,8 @@ struct process {
 
 	u_short	ps_acflag;		/* Accounting flags. */
 
+	u_int	ps_tame;
+
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt
 	int	ps_refcnt;		/* Number of references. */
@@ -248,13 +250,14 @@ struct process {
 #define	PS_EMBRYO	0x00020000	/* New process, not yet fledged */
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
 #define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
+#define PS_TAMED	0x00100000	/* Has called tame(2) */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
      "\06SUGIDEXEC" "\07PPWAIT" "\010ISPWAIT" "\011PROFIL" "\012TRACED" \
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
-     "\024NOBROADCASTKILL")
+     "\024NOBROADCASTKILL" "\025TAMED")
 
 
 struct proc {
@@ -318,6 +321,15 @@ struct proc {
 	u_char	p_usrpri;	/* User-priority based on p_cpu and ps_nice. */
 	char	p_comm[MAXCOMLEN+1];
 
+	int	p_tame_syscall;	/* Cache of current syscall */
+	int	p_tamenote;	/* Observance during syscall */
+#define TMN_CREAT	0x00000001
+#define TMN_WRITE	0x00000002
+#define TMN_IMODIFY	0x00000004
+#define TMN_YPLOCK	0x00000008
+#define TMN_DNSRESOLV	0x00000010
+	int	p_tameafter;
+
 #ifndef	__HAVE_MD_TCB
 	void	*p_tcb;		/* user-space thread-control-block address */
 # define TCB_SET(p, addr)	((p)->p_tcb = (addr))
@@ -358,22 +370,22 @@ struct proc {
 /*
  * These flags are per-thread and kept in p_flag
  */
-#define	P_INKTR		0x000001	/* In a ktrace op, don't recurse */
-#define	P_PROFPEND	0x000002	/* SIGPROF needs to be posted */
-#define	P_ALRMPEND	0x000004	/* SIGVTALRM needs to be posted */
-#define	P_SIGSUSPEND	0x000008	/* Need to restore before-suspend mask*/
-#define	P_CANTSLEEP	0x000010	/* insomniac thread */
-#define	P_SELECT	0x000040	/* Selecting; wakeup/waiting danger. */
-#define	P_SINTR		0x000080	/* Sleep is interruptible. */
-#define	P_SYSTEM	0x000200	/* No sigs, stats or swapping. */
-#define	P_TIMEOUT	0x000400	/* Timing out during sleep. */
-#define	P_WEXIT		0x002000	/* Working on exiting. */
-#define	P_OWEUPC	0x008000	/* Owe proc an addupc() at next ast. */
-#define	P_SUSPSINGLE	0x080000	/* Need to stop for single threading. */
-#define P_SYSTRACE	0x400000	/* Process system call tracing active*/
-#define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
-#define	P_THREAD	0x4000000	/* Only a thread, not a real process */
-#define	P_SUSPSIG	0x8000000	/* Stopped from signal. */
+#define	P_INKTR		0x00000001	/* In a ktrace op, don't recurse */
+#define	P_PROFPEND	0x00000002	/* SIGPROF needs to be posted */
+#define	P_ALRMPEND	0x00000004	/* SIGVTALRM needs to be posted */
+#define	P_SIGSUSPEND	0x00000008	/* Need to restore before-suspend mask*/
+#define	P_CANTSLEEP	0x00000010	/* insomniac thread */
+#define	P_SELECT	0x00000040	/* Selecting; wakeup/waiting danger. */
+#define	P_SINTR		0x00000080	/* Sleep is interruptible. */
+#define	P_SYSTEM	0x00000200	/* No sigs, stats or swapping. */
+#define	P_TIMEOUT	0x00000400	/* Timing out during sleep. */
+#define	P_WEXIT		0x00002000	/* Working on exiting. */
+#define	P_OWEUPC	0x00008000	/* Owe proc an addupc() at next ast. */
+#define	P_SUSPSINGLE	0x00080000	/* Need to stop for single threading. */
+#define P_SYSTRACE	0x00400000	/* Process system call tracing active*/
+#define P_CONTINUED	0x00800000	/* Proc has continued from a stopped state. */
+#define	P_THREAD	0x04000000	/* Only a thread, not a real process */
+#define	P_SUSPSIG	0x08000000	/* Stopped from signal. */
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
 

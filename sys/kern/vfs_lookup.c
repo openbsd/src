@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.53 2015/04/23 02:55:15 jsg Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.54 2015/07/19 02:35:35 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
+#include <sys/tame.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -126,6 +127,7 @@ namei(struct nameidata *ndp)
 		error = ENOENT;
 
 	if (error) {
+fail:
 		pool_put(&namei_pool, cnp->cn_pnbuf);
 		ndp->ni_vp = NULL;
 		return (error);
@@ -164,6 +166,12 @@ namei(struct nameidata *ndp)
 	 */
 	if ((ndp->ni_rootdir = fdp->fd_rdir) == NULL)
 		ndp->ni_rootdir = rootvnode;
+	if ((p->p_p->ps_flags & PS_TAMED)) {
+		error = tame_namei(p, cnp->cn_pnbuf);
+		if (error)
+			goto fail;
+	}
+
 	/*
 	 * Check if starting from root directory or current directory.
 	 */
