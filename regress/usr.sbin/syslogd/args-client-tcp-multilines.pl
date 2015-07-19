@@ -33,7 +33,7 @@ our %args = (
 	options => ["-T", "127.0.0.1:514"],
 	loggrep => {
 	    %threegrep,
-	    qr/tcp logger .* complete line/ => 3,
+	    qr/tcp logger .* non transparent framing, use \d+ bytes/ => 3,
 	},
     },
     server => { loggrep => \%threegrep },

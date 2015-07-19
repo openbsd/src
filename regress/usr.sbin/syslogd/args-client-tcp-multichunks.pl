@@ -9,6 +9,9 @@
 use strict;
 use warnings;
 
+my $msglen = length(get_testlog());
+my $framelen = $msglen + 1;
+
 our %args = (
     client => {
 	connect => { domain => AF_INET, proto => "tcp", addr => "127.0.0.1",
@@ -22,11 +25,12 @@ our %args = (
 		print;
 		print STDERR "<<< $_\n";
 		${$self->{syslogd}}->loggrep("tcp logger .* buffer $n bytes", 5)
-		    or die ref($self), " syslogd did not receive $n bytes";
+		    or die ref($self), " syslogd did not buffer $n bytes";
 	    }
+	    $n++;
 	    print "\n";
-	    ${$self->{syslogd}}->loggrep("tcp logger .* complete line", 5)
-		or die ref($self), " syslogd did not receive complete line";
+	    ${$self->{syslogd}}->loggrep("tcp logger .* use $n bytes", 5)
+		or die ref($self), " syslogd did not use $n bytes";
 	    write_shutdown($self);
 	},
 	loggrep => {},
@@ -34,9 +38,8 @@ our %args = (
     syslogd => {
 	options => ["-T", "127.0.0.1:514"],
 	loggrep => {
-	    qr/tcp logger .* buffer \d+ bytes/ =>
-		int((length(get_testlog())+4)/5),
-	    qr/tcp logger .* complete line/ => 1,
+	    qr/tcp logger .* buffer \d+ bytes/ => int(($msglen+4)/5),
+	    qr/tcp logger .* non transparent framing, use $framelen bytes/ => 1,
 	    get_testgrep() => 1,
 	},
     },

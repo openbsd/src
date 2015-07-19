@@ -1,5 +1,5 @@
 # The syslogd listens on 127.0.0.1 TCP socket.
-# The client writes long line into a 127.0.0.1 TCP socket.
+# The client writes octet counting message that is too long.
 # The syslogd writes it into a file and through a pipe.
 # The syslogd passes it via UDP to the loghost.
 # The server receives the message on its UDP socket.
@@ -18,15 +18,15 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    local $| = 1;
-	    my $msg = generate_chars(5+1+MAXLINE+1);
-	    print $msg;
+	    my $msg = generate_chars(MAXLINE+1);
+	    printf "%05d %s", MAXLINE+1, $msg;
 	    print STDERR "<<< $msg\n";
-	    ${$self->{syslogd}}->loggrep("tcp logger .* incomplete", 5, 1)
-		or die ref($self), " syslogd did not receive 1 incomplete";
-	    $msg = generate_chars(5+1+MAXLINE);
-	    print $msg;
+	    ${$self->{syslogd}}->loggrep(qr/tcp logger .* use \d+ bytes/, 5)
+		or die ref($self), " syslogd did not use bytes";
+	    $msg = generate_chars(MAXLINE);
+	    printf "%05d %s", MAXLINE+1, $msg;
 	    print STDERR "<<< $msg\n";
-	    ${$self->{syslogd}}->loggrep("tcp logger .* incomplete", 5, 2)
+	    ${$self->{syslogd}}->loggrep("tcp logger .* incomplete", 5)
 		or die ref($self), " syslogd did not receive 2 incomplete";
 	    print "\n";
 	    print STDERR "<<< \n";
@@ -39,15 +39,17 @@ our %args = (
     syslogd => {
 	options => ["-T", "127.0.0.1:514"],
 	loggrep => {
-	    qr/incomplete frame, use /.(MAXLINE+7).qr/ bytes/ => 1,
-	    qr/non transparent framing, use /.(MAXLINE+7).qr/ bytes/ => 1,
-	}
+	    qr/octet counting /.(MAXLINE+1).qr/, incomplete frame, /.
+		qr/buffer \d+ bytes/ => 2,
+	    qr/octet counting /.(MAXLINE+1).
+		qr/, use /.(MAXLINE+1).qr/ bytes/ => 2,
+	},
     },
     server => {
 	# >>> <13>Jul  6 22:33:32 0123456789ABC...fgh
 	loggrep => {
 	    qr/>>> .{19} /.generate_chars(MAX_UDPMSG-20).qr/$/ => 2,
-	},
+	}
     },
     file => {
 	loggrep => {

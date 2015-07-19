@@ -46,7 +46,13 @@ our %args = (
 		$self->{redo}--;
 		return;
 	    }
-	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 40)
+	    # read slowly to get output buffer out of sync
+	    foreach (1..10) {
+		print STDERR ">>> ". scalar <STDIN>;
+		sleep 1;
+		last if ${$self->{syslogd}}->loggrep(get_thirdlog());
+	    }
+	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 30)
 		or die ref($self), " syslogd did not receive third log";
 	    shutdown(\*STDOUT, 1)
 		or die "shutdown write failed: $!";
@@ -55,9 +61,7 @@ our %args = (
 	loggrep => {
 	    qr/Accepted/ => 2,
 	    get_between2loggrep(),
-	    get_secondlog() => 0,
 	    get_thirdlog() => 0,
-	    qr/>>> [0-9A-Za-z]{10}/ => 0,
 	},
     },
     file => {

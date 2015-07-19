@@ -50,9 +50,8 @@ our %args = (
 		my $fh = $s[$i];
 		write_tcp($self, $fh, $i);
 	    }
-	    ${$self->{syslogd}}->loggrep("tcp logger .* complete line", 5,
-		MAXTCP) or die ref($self),
-		" syslogd did not receive all complete lines";
+	    ${$self->{syslogd}}->loggrep(qr/tcp logger .* use \d+ bytes/, 5,
+		MAXTCP) or die ref($self), " syslogd did not use all messages";
 	    write_shutdown($self);
 	},
     },
