@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.104 2014/02/01 01:51:27 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.105 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -265,7 +265,7 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 	/* Add the supported media types */
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX, sc->mii_inst),
-		    BRGPHY_S1000 | BRGPHY_BMCR_FDX);
+		    BMCR_S1000 | BMCR_FDX);
 
 		/*
 		 * 2.5Gb support is a software enabled feature on the
@@ -278,19 +278,19 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
-		    BRGPHY_S10);
+		    BMCR_S10);
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
-		    BRGPHY_S10 | BRGPHY_BMCR_FDX);
+		    BMCR_S10 | BMCR_FDX);
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
-		    BRGPHY_S100);
+		    BMCR_S100);
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
-		    BRGPHY_S100 | BRGPHY_BMCR_FDX);
+		    BMCR_S100 | BMCR_FDX);
 
 		if (fast_ether == 0) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0,
-			    sc->mii_inst), BRGPHY_S1000);
+			    sc->mii_inst), BMCR_S1000);
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,
-			    sc->mii_inst), BRGPHY_S1000 | BRGPHY_BMCR_FDX);
+			    sc->mii_inst), BMCR_S1000 | BMCR_FDX);
 		}
 	}
 
@@ -344,42 +344,42 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			speed = BRGPHY_5708S_BMCR_2500;
 			goto setit;
 		case IFM_1000_T:
-			speed = BRGPHY_S1000;
+			speed = BMCR_S1000;
 			goto setit;
 		case IFM_100_TX:
-			speed = BRGPHY_S100;
+			speed = BMCR_S100;
 			goto setit;
 		case IFM_10_T:
-			speed = BRGPHY_S10;
+			speed = BMCR_S10;
 setit:
 			brgphy_loop(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
-				speed |= BRGPHY_BMCR_FDX;
-				gig = BRGPHY_1000CTL_AFD;
+				speed |= BMCR_FDX;
+				gig = GTCR_ADV_1000TFDX;
 			} else {
-				gig = BRGPHY_1000CTL_AHD;
+				gig = GTCR_ADV_1000THDX;
 			}
 
-			PHY_WRITE(sc, BRGPHY_MII_1000CTL, 0);
-			PHY_WRITE(sc, BRGPHY_MII_ANAR, BRGPHY_SEL_TYPE);
-			PHY_WRITE(sc, BRGPHY_MII_BMCR, speed);
+			PHY_WRITE(sc, MII_100T2CR, 0);
+			PHY_WRITE(sc, MII_ANAR, ANAR_CSMA);
+			PHY_WRITE(sc, MII_BMCR, speed);
 
 			if ((IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) &&
 			    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_SX) &&
 			    (IFM_SUBTYPE(ife->ifm_media) != IFM_2500_SX))
 				break;
 
-			PHY_WRITE(sc, BRGPHY_MII_1000CTL, gig);
-			PHY_WRITE(sc, BRGPHY_MII_BMCR,
-			    speed|BRGPHY_BMCR_AUTOEN|BRGPHY_BMCR_STARTNEG);
+			PHY_WRITE(sc, MII_100T2CR, gig);
+			PHY_WRITE(sc, MII_BMCR,
+			    speed|BMCR_AUTOEN|BMCR_STARTNEG);
 
 			if (sc->mii_oui != MII_OUI_xxBROADCOM ||
 			    sc->mii_model != MII_MODEL_xxBROADCOM_BCM5701)
  				break;
 
 			if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
-				gig |= BRGPHY_1000CTL_MSE|BRGPHY_1000CTL_MSC;
-			PHY_WRITE(sc, BRGPHY_MII_1000CTL, gig);
+				gig |= GTCR_MAN_MS|GTCR_ADV_MS;
+			PHY_WRITE(sc, MII_100T2CR, gig);
 			break;
 		default:
 			return (EINVAL);
@@ -475,18 +475,18 @@ brgphy_copper_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
-	if (bmsr & BRGPHY_BMSR_LINK)
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
-	if (bmcr & BRGPHY_BMCR_LOOP)
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if (bmcr & BRGPHY_BMCR_AUTOEN) {
+	if (bmcr & BMCR_AUTOEN) {
 		int auxsts;
 
-		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -533,8 +533,7 @@ brgphy_copper_status(struct mii_softc *sc)
 			mii->mii_media_active |= mii_phy_flowstatus(sc);
 
 		if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
-			if (PHY_READ(sc, BRGPHY_MII_1000STS) &
-			    BRGPHY_1000STS_MSR)
+			if (PHY_READ(sc, MII_100T2SR) & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 		}
 	} else
@@ -551,18 +550,18 @@ brgphy_fiber_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
-	if (bmsr & BRGPHY_BMSR_LINK)
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
-	if (bmcr & BRGPHY_BMCR_LOOP)
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if (bmcr & BRGPHY_BMCR_AUTOEN) {
+	if (bmcr & BMCR_AUTOEN) {
 		int val;
 
-		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -570,10 +569,9 @@ brgphy_fiber_status(struct mii_softc *sc)
 
 		mii->mii_media_active |= IFM_1000_SX;
 
-		val = PHY_READ(sc, BRGPHY_SERDES_ANAR) &
-		      PHY_READ(sc, BRGPHY_SERDES_ANLPAR);
+		val = PHY_READ(sc, MII_ANAR) & PHY_READ(sc, MII_ANLPAR);
 
-		if (val & BRGPHY_SERDES_ANAR_FDX)
+		if (val & ANAR_X_FD)
 			mii->mii_media_active |= IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
@@ -594,18 +592,18 @@ brgphy_5708s_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
-	if (bmsr & BRGPHY_BMSR_LINK)
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
-	if (bmcr & BRGPHY_BMCR_LOOP)
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if (bmcr & BRGPHY_BMCR_AUTOEN) {
+	if (bmcr & BMCR_AUTOEN) {
 		int xstat;
 
-		if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -656,18 +654,18 @@ brgphy_5709s_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-        bmsr = PHY_READ(sc, BRGPHY_MII_BMSR) | PHY_READ(sc, BRGPHY_MII_BMSR);
-        if (bmsr & BRGPHY_BMSR_LINK)
+        bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+        if (bmsr & BMSR_LINK)
                 mii->mii_media_status |= IFM_ACTIVE;
 
-        bmcr = PHY_READ(sc, BRGPHY_MII_BMCR);
-        if (bmcr & BRGPHY_BMCR_LOOP)
+        bmcr = PHY_READ(sc, MII_BMCR);
+        if (bmcr & BMCR_LOOP)
                 mii->mii_media_active |= IFM_LOOP;
 
-        if (bmcr & BRGPHY_BMCR_AUTOEN) {
+        if (bmcr & BMCR_AUTOEN) {
                 int xstat;
 
-                if ((bmsr & BRGPHY_BMSR_ACOMP) == 0) {
+                if ((bmsr & BMSR_ACOMP) == 0) {
                         /* Erg, still trying, I guess... */
                         mii->mii_media_active |= IFM_NONE;
                         return;
@@ -715,28 +713,27 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 	PHY_RESET(sc);
 
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
-		anar = BRGPHY_SERDES_ANAR_FDX | BRGPHY_SERDES_ANAR_HDX;
+		anar = ANAR_X_FD | ANAR_X_HD;
 		if (sc->mii_flags & MIIF_DOPAUSE)
-			anar |= BRGPHY_SERDES_ANAR_BOTH_PAUSE;
-		PHY_WRITE(sc, BRGPHY_SERDES_ANAR, anar);
+			anar |= ANAR_X_PAUSE_TOWARDS;
+		PHY_WRITE(sc, MII_ANAR, anar);
 	} else {
 		anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
 		if (sc->mii_flags & MIIF_DOPAUSE)
-			anar |= BRGPHY_ANAR_ASP | BRGPHY_ANAR_PC;
-		PHY_WRITE(sc, BRGPHY_MII_ANAR, anar);
+			anar |= ANAR_PAUSE_ASYM | ANAR_FC;
+		PHY_WRITE(sc, MII_ANAR, anar);
 	}
 
 	/* Enable speed in the 1000baseT control register */
-	ktcr = BRGPHY_1000CTL_AFD | BRGPHY_1000CTL_AHD;
+	ktcr = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 	if (sc->mii_oui == MII_OUI_xxBROADCOM &&
 	    sc->mii_model == MII_MODEL_xxBROADCOM_BCM5701)
-		ktcr |= BRGPHY_1000CTL_MSE | BRGPHY_1000CTL_MSC;
-	PHY_WRITE(sc, BRGPHY_MII_1000CTL, ktcr);
-	ktcr = PHY_READ(sc, BRGPHY_MII_1000CTL);
+		ktcr |= GTCR_MAN_MS | GTCR_ADV_MS;
+	PHY_WRITE(sc, MII_100T2CR, ktcr);
+	ktcr = PHY_READ(sc, MII_100T2CR);
 
 	/* Start autonegotiation */
-	PHY_WRITE(sc, BRGPHY_MII_BMCR,
-	    BRGPHY_BMCR_AUTOEN | BRGPHY_BMCR_STARTNEG);
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	PHY_WRITE(sc, BRGPHY_MII_IMR, 0xFF00);
 
 	return (EJUSTRETURN);
@@ -749,10 +746,10 @@ brgphy_loop(struct mii_softc *sc)
 	u_int32_t bmsr;
 	int i;
 
-	PHY_WRITE(sc, BRGPHY_MII_BMCR, BRGPHY_BMCR_LOOP);
+	PHY_WRITE(sc, MII_BMCR, BMCR_LOOP);
 	for (i = 0; i < 15000; i++) {
-		bmsr = PHY_READ(sc, BRGPHY_MII_BMSR);
-		if (!(bmsr & BRGPHY_BMSR_LINK))
+		bmsr = PHY_READ(sc, MII_BMSR);
+		if (!(bmsr & BMSR_LINK))
 			break;
 		DELAY(10);
 	}

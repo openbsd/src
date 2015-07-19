@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.26 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.27 2015/07/19 06:28:12 yuo Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -177,35 +177,35 @@ ciphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 				return (0);
 			break;
 		case IFM_1000_T:
-			speed = CIPHY_S1000;
+			speed = BMCR_S1000;
 			goto setit;
 		case IFM_100_TX:
-			speed = CIPHY_S100;
+			speed = BMCR_S100;
 			goto setit;
 		case IFM_10_T:
-			speed = CIPHY_S10;
+			speed = BMCR_S10;
 setit:
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
-				speed |= CIPHY_BMCR_FDX;
-				gig = CIPHY_1000CTL_AFD;
+				speed |= BMCR_FDX;
+				gig = GTCR_ADV_1000TFDX;
 			} else {
-				gig = CIPHY_1000CTL_AHD;
+				gig = GTCR_ADV_1000THDX;
 			}
 
-			PHY_WRITE(sc, CIPHY_MII_1000CTL, 0);
-			PHY_WRITE(sc, CIPHY_MII_BMCR, speed);
-			PHY_WRITE(sc, CIPHY_MII_ANAR, CIPHY_SEL_TYPE);
+			PHY_WRITE(sc, MII_100T2CR, 0);
+			PHY_WRITE(sc, MII_BMCR, speed);
+			PHY_WRITE(sc, MII_ANAR, ANAR_CSMA);
 
 			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) 
 				break;
 
-			PHY_WRITE(sc, CIPHY_MII_1000CTL, gig);
-			PHY_WRITE(sc, CIPHY_MII_BMCR,
-			    speed|CIPHY_BMCR_AUTOEN|CIPHY_BMCR_STARTNEG);
+			PHY_WRITE(sc, MII_100T2CR, gig);
+			PHY_WRITE(sc, MII_BMCR,
+			    speed|BMCR_AUTOEN|BMCR_STARTNEG);
 
 			if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
-				gig |= CIPHY_1000CTL_MSE|CIPHY_1000CTL_MSC;
-			PHY_WRITE(sc, CIPHY_MII_1000CTL, gig);
+				gig |= GTCR_MAN_MS | GTCR_ADV_MS;
+			PHY_WRITE(sc, MII_100T2CR, gig);
 			break;
 		case IFM_NONE:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO|BMCR_PDOWN);
@@ -257,13 +257,13 @@ ciphy_status(struct mii_softc *sc)
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, CIPHY_MII_BMCR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 
-	if (bmcr & CIPHY_BMCR_LOOP)
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if (bmcr & CIPHY_BMCR_AUTOEN) {
-		if ((bmsr & CIPHY_BMSR_ACOMP) == 0) {
+	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -292,9 +292,9 @@ ciphy_status(struct mii_softc *sc)
 	else
 		mii->mii_media_active |= IFM_HDX;
 
-	gsr = PHY_READ(sc, CIPHY_MII_1000STS);
+	gsr = PHY_READ(sc, MII_100T2SR);
 	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
-	    gsr & CIPHY_1000STS_MSR)
+	    gsr & GTSR_MS_RES)
 		mii->mii_media_active |= IFM_ETH_MASTER;
 }
 
@@ -316,7 +316,7 @@ ciphy_fixup(struct mii_softc *sc)
 	uint16_t		model;
 	uint16_t		status, speed;
 
-	model = MII_MODEL(PHY_READ(sc, CIPHY_MII_PHYIDR2));
+	model = MII_MODEL(PHY_READ(sc, MII_PHYIDR2));
 	status = PHY_READ(sc, CIPHY_MII_AUXCSR);
 	speed = status & CIPHY_AUXCSR_SPEED;
 

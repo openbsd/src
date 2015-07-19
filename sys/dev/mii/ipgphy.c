@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.18 2015/07/19 06:14:37 yuo Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.19 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -148,9 +148,8 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * isolate ourselves.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
-			reg = PHY_READ(sc, IPGPHY_MII_BMCR);
-			PHY_WRITE(sc, IPGPHY_MII_BMCR,
-			    reg | IPGPHY_BMCR_ISO);
+			reg = PHY_READ(sc, MII_BMCR);
+			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
 
@@ -173,15 +172,15 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			 * XXX
 			 * Manual 1000baseT setting doesn't seem to work.
 			 */
-			speed = IPGPHY_BMCR_1000;
+			speed = BMCR_S1000;
 			break;
 
 		case IFM_100_TX:
-			speed = IPGPHY_BMCR_100;
+			speed = BMCR_S100;
 			break;
 
 		case IFM_10_T:
-			speed = IPGPHY_BMCR_10;
+			speed = BMCR_S10;
 			break;
 
 		default:
@@ -189,24 +188,24 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		}
 
 		if (((ife->ifm_media & IFM_GMASK) & IFM_FDX) != 0) {
-			speed |= IPGPHY_BMCR_FDX;
-			gig = IPGPHY_1000CR_1000T_FDX;
+			speed |= BMCR_FDX;
+			gig = GTCR_ADV_1000TFDX;
 		} else
-			gig = IPGPHY_1000CR_1000T;
+			gig = GTCR_ADV_1000THDX;
 
-		PHY_WRITE(sc, IPGPHY_MII_1000CR, 0);
-		PHY_WRITE(sc, IPGPHY_MII_BMCR, speed);
+		PHY_WRITE(sc, MII_100T2CR, 0);
+		PHY_WRITE(sc, MII_BMCR, speed);
 
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
 			break;
 
-		PHY_WRITE(sc, IPGPHY_MII_1000CR, gig);
-		PHY_WRITE(sc, IPGPHY_MII_BMCR, speed);
+		PHY_WRITE(sc, MII_100T2CR, gig);
+		PHY_WRITE(sc, MII_BMCR, speed);
 
 		if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
-			gig |= IPGPHY_1000CR_MMASTER | IPGPHY_1000CR_MANUAL;
+			gig |= GTCR_MAN_MS | GTCR_ADV_MS;
 
-		PHY_WRITE(sc, IPGPHY_MII_1000CR, gig);
+		PHY_WRITE(sc, MII_100T2CR, gig);
 
 done:
 		break;
@@ -274,17 +273,16 @@ ipgphy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, IPGPHY_MII_BMSR) |
-	    PHY_READ(sc, IPGPHY_MII_BMSR);
-	if (bmsr & IPGPHY_BMSR_LINK) 
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK) 
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(sc, IPGPHY_MII_BMCR);
-	if (bmcr & IPGPHY_BMCR_LOOP)
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if (bmcr & IPGPHY_BMCR_AUTOEN) {
-		if ((bmsr & IPGPHY_BMSR_ANEGCOMP) == 0) {
+	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -341,8 +339,7 @@ ipgphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= mii_phy_flowstatus(sc);
 
 		if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
-			if (PHY_READ(sc, IPGPHY_MII_1000SR) &
-			    IPGPHY_1000SR_MASTER)
+			if (PHY_READ(sc, MII_100T2SR) & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 		}
 	} else
@@ -355,26 +352,24 @@ ipgphy_mii_phy_auto(struct mii_softc *sc)
 	uint32_t reg = 0;
 
 	if (sc->mii_model == MII_MODEL_ICPLUS_IP1001) {
-		reg = PHY_READ(sc, IPGPHY_MII_ANAR);
-		reg &= ~(IPGPHY_ANAR_PAUSE | IPGPHY_ANAR_APAUSE);
-		reg |= IPGPHY_ANAR_NP;
+		reg = PHY_READ(sc, MII_ANAR);
+		reg &= ~(ANAR_PAUSE_SYM | ANAR_PAUSE_ASYM);
+		reg |= ANAR_NP;
 	}
 
-	reg |= IPGPHY_ANAR_10T | IPGPHY_ANAR_10T_FDX |
-	      IPGPHY_ANAR_100TX | IPGPHY_ANAR_100TX_FDX;
+	reg |= ANAR_10 | ANAR_10_FD | ANAR_TX | ANAR_TX_FD;
 
 	if (sc->mii_flags & MIIF_DOPAUSE)
-		reg |= IPGPHY_ANAR_PAUSE | IPGPHY_ANAR_APAUSE;
+		reg |= ANAR_PAUSE_SYM | ANAR_PAUSE_ASYM;
 
-	PHY_WRITE(sc, IPGPHY_MII_ANAR, reg | IPGPHY_ANAR_CSMA);
+	PHY_WRITE(sc, MII_ANAR, reg | ANAR_CSMA);
 
-	reg = IPGPHY_1000CR_1000T | IPGPHY_1000CR_1000T_FDX;
+	reg = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 	if (sc->mii_model != MII_MODEL_ICPLUS_IP1001)
-		reg |= IPGPHY_1000CR_MASTER;
-	PHY_WRITE(sc, IPGPHY_MII_1000CR, reg);
+		reg |= GTCR_ADV_MS;
+	PHY_WRITE(sc, MII_100T2CR, reg);
 
-	PHY_WRITE(sc, IPGPHY_MII_BMCR, (IPGPHY_BMCR_FDX |
-	    IPGPHY_BMCR_AUTOEN | IPGPHY_BMCR_STARTNEG));
+	PHY_WRITE(sc, MII_BMCR, (BMCR_FDX | BMCR_AUTOEN | BMCR_STARTNEG));
 
 	return (EJUSTRETURN);
 }
@@ -403,8 +398,8 @@ ipgphy_reset(struct mii_softc *sc)
 	mii_phy_reset(sc);
 
 	/* clear autoneg/full-duplex as we don't want it after reset */
-	reg = PHY_READ(sc, IPGPHY_MII_BMCR);
-	reg &= ~(IPGPHY_BMCR_AUTOEN | IPGPHY_BMCR_FDX);
+	reg = PHY_READ(sc, MII_BMCR);
+	reg &= ~(BMCR_AUTOEN | BMCR_FDX);
 	PHY_WRITE(sc, MII_BMCR, reg);
 
 	if (sc->mii_model == MII_MODEL_ICPLUS_IP1000A &&

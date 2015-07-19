@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.176 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.177 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -113,6 +113,7 @@
 #include <net/bpf.h>
 #endif
 
+#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/brgphyreg.h>
 
@@ -1985,7 +1986,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		SK_XM_SETBIT_2(sc_if, XM_HWCFG, XM_HWCFG_GMIIMODE);
 
 		sk_xmac_miibus_writereg((struct device *)sc_if,
-		    SK_PHYADDR_BCOM, BRGPHY_MII_BMCR, BRGPHY_BMCR_RESET);
+		    SK_PHYADDR_BCOM, MII_BMCR, BMCR_RESET);
 		DELAY(10000);
 		sk_xmac_miibus_writereg((struct device *)sc_if,
 		    SK_PHYADDR_BCOM, BRGPHY_MII_IMR, 0xFFF0);

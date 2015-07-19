@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.368 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.369 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -110,6 +110,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 #include <dev/mii/brgphyreg.h>
@@ -1009,7 +1010,7 @@ bge_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	int i;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 &&
-	    (reg == BRGPHY_MII_1000CTL || reg == BRGPHY_MII_AUXCTL))
+	    (reg == MII_100T2CR || reg == BRGPHY_MII_AUXCTL))
 		return;
 
 	if (bge_ape_lock(sc, sc->bge_phy_ape_lock) != 0)

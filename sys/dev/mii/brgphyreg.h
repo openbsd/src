@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.16 2013/01/13 05:40:05 brad Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.17 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -40,82 +40,6 @@
 /*
  * Broadcom BCM5400 registers
  */
-
-#define BRGPHY_MII_BMCR		0x00
-#define BRGPHY_BMCR_RESET	0x8000
-#define BRGPHY_BMCR_LOOP	0x4000
-#define BRGPHY_BMCR_SPD0	0x2000	/* speed select, lower bit */
-#define BRGPHY_BMCR_AUTOEN	0x1000	/* Autoneg enabled */
-#define BRGPHY_BMCR_PDOWN	0x0800	/* Power down */
-#define BRGPHY_BMCR_ISO		0x0400	/* Isolate */
-#define BRGPHY_BMCR_STARTNEG	0x0200	/* Restart autoneg */
-#define BRGPHY_BMCR_FDX		0x0100	/* Duplex mode */
-#define BRGPHY_BMCR_CTEST	0x0080	/* Collision test enable */
-#define BRGPHY_BMCR_SPD1	0x0040	/* Speed select, upper bit */
-
-#define BRGPHY_S1000		BRGPHY_BMCR_SPD1	/* 1000mbps */
-#define BRGPHY_S100		BRGPHY_BMCR_SPD0	/* 100mpbs */
-#define BRGPHY_S10		0			/* 10mbps */
-
-#define BRGPHY_MII_BMSR		0x01
-#define BRGPHY_BMSR_EXTSTS	0x0100	/* Extended status present */
-#define BRGPHY_BMSR_PRESUB	0x0040	/* Preamble suppression */
-#define BRGPHY_BMSR_ACOMP	0x0020	/* Autoneg complete */
-#define BRGPHY_BMSR_RFAULT	0x0010	/* Remote fault condition occurred */
-#define BRGPHY_BMSR_ANEG	0x0008	/* Autoneg capable */
-#define BRGPHY_BMSR_LINK	0x0004	/* Link status */
-#define BRGPHY_BMSR_JABBER	0x0002	/* Jabber detected */
-#define BRGPHY_BMSR_EXT		0x0001	/* Extended capability */
-
-#define BRGPHY_MII_ANAR		0x04
-#define BRGPHY_ANAR_NP		0x8000	/* Next page */
-#define BRGPHY_ANAR_RF		0x2000	/* Remote fault */
-#define BRGPHY_ANAR_ASP		0x0800	/* Asymmetric Pause */
-#define BRGPHY_ANAR_PC		0x0400	/* Pause capable */
-#define BRGPHY_ANAR_SEL		0x001F	/* selector field, 00001=Ethernet */
-
-#define BRGPHY_MII_ANLPAR	0x05
-#define BRGPHY_ANLPAR_NP	0x8000	/* Next page */
-#define BRGPHY_ANLPAR_RF	0x2000	/* Remote fault */
-#define BRGPHY_ANLPAR_ASP	0x0800	/* Asymmetric Pause */
-#define BRGPHY_ANLPAR_PC	0x0400	/* Pause capable */
-#define BRGPHY_ANLPAR_SEL	0x001F	/* selector field, 00001=Ethernet */
-
-#define BRGPHY_SEL_TYPE		0x0001	/* ethernet */
-
-#define BRGPHY_MII_ANER		0x06
-#define BRGPHY_ANER_PDF		0x0010	/* Parallel detection fault */
-#define BRGPHY_ANER_LPNP	0x0008	/* Link partner can next page */
-#define BRGPHY_ANER_NP		0x0004	/* Local PHY can next page */
-#define BRGPHY_ANER_RX		0x0002	/* Next page received */
-#define BRGPHY_ANER_LPAN	0x0001 	/* Link partner autoneg capable */
-
-#define BRGPHY_MII_NEXTP	0x07	/* Next page */
-
-#define BRGPHY_MII_NEXTP_LP	0x08	/* Next page of link partner */
-
-#define BRGPHY_MII_1000CTL	0x09	/* 1000baseT control */
-#define BRGPHY_1000CTL_TST	0xE000	/* test modes */
-#define BRGPHY_1000CTL_MSE	0x1000	/* Master/Slave enable */
-#define BRGPHY_1000CTL_MSC	0x0800	/* Master/Slave configuration */
-#define BRGPHY_1000CTL_RD	0x0400	/* Repeater/DTE */
-#define BRGPHY_1000CTL_AFD	0x0200	/* Advertise full duplex */
-#define BRGPHY_1000CTL_AHD	0x0100	/* Advertise half duplex */
-
-#define BRGPHY_MII_1000STS	0x0A	/* 1000baseT status */
-#define BRGPHY_1000STS_MSF	0x8000	/* Master/slave fault */
-#define BRGPHY_1000STS_MSR	0x4000	/* Master/slave result */
-#define BRGPHY_1000STS_LRS	0x2000	/* Local receiver status */
-#define BRGPHY_1000STS_RRS	0x1000	/* Remote receiver status */
-#define BRGPHY_1000STS_LPFD	0x0800	/* Link partner can FD */
-#define BRGPHY_1000STS_LPHD	0x0400	/* Link partner can HD */
-#define BRGPHY_1000STS_IEC	0x00FF	/* Idle error count */
-
-#define BRGPHY_MII_EXTSTS	0x0F	/* Extended status */
-#define BRGPHY_EXTSTS_X_FD_CAP	0x8000	/* 1000base-X FD capable */
-#define BRGPHY_EXTSTS_X_HD_CAP	0x4000	/* 1000base-X HD capable */
-#define BRGPHY_EXTSTS_T_FD_CAP	0x2000	/* 1000base-T FD capable */
-#define BRGPHY_EXTSTS_T_HD_CAP	0x1000	/* 1000base-T HD capable */
 
 #define BRGPHY_MII_PHY_EXTCTL	0x10	/* PHY extended control */
 #define BRGPHY_PHY_EXTCTL_MAC_PHY	0x8000	/* 10BIT/GMI-interface */
@@ -266,31 +190,6 @@
 #define BRGPHY_IMR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_IMR_LNK_CHG	0x0002	/* Link status change */
 #define BRGPHY_IMR_CRCERR	0x0001	/* CEC error */
-
-/*******************************************************/
-/* Begin: Shared SerDes PHY register definitions       */
-/*******************************************************/
-
-/* SerDes autoneg is different from copper */
-#define BRGPHY_SERDES_ANAR		0x04
-#define BRGPHY_SERDES_ANAR_FDX		0x0020
-#define BRGPHY_SERDES_ANAR_HDX		0x0040
-#define BRGPHY_SERDES_ANAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANAR_BOTH_PAUSE	(0x3 << 7)
-
-#define BRGPHY_SERDES_ANLPAR		0x05
-#define BRGPHY_SERDES_ANLPAR_FDX	0x0020
-#define BRGPHY_SERDES_ANLPAR_HDX	0x0040
-#define BRGPHY_SERDES_ANLPAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANLPAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANLPAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANLPAR_BOTH_PAUSE	(0x3 << 7)
-
-/*******************************************************/
-/* End: Shared SerDes PHY register definitions         */
-/*******************************************************/
 
 /*******************************************************/
 /* Begin: PHY register values for the 5706 PHY         */

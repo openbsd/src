@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.22 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.23 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -125,7 +125,7 @@ xmphy_attach(struct device *parent, struct device *self, void *aux)
 	PHY_RESET(sc);
 
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0, sc->mii_inst),
-	    XMPHY_BMCR_FDX);
+	    BMCR_FDX);
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX, sc->mii_inst), 0);
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), 0);
 
@@ -174,11 +174,11 @@ xmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_1000_SX:
 			PHY_RESET(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
-				PHY_WRITE(sc, XMPHY_MII_ANAR, XMPHY_ANAR_FDX);
-				PHY_WRITE(sc, XMPHY_MII_BMCR, XMPHY_BMCR_FDX);
+				PHY_WRITE(sc, MII_ANAR, ANAR_10_FD);
+				PHY_WRITE(sc, MII_BMCR, BMCR_FDX);
 			} else {
-				PHY_WRITE(sc, XMPHY_MII_ANAR, XMPHY_ANAR_HDX);
-				PHY_WRITE(sc, XMPHY_MII_BMCR, 0);
+				PHY_WRITE(sc, MII_ANAR, ANAR_10);
+				PHY_WRITE(sc, MII_BMCR, 0);
 			}
 			break;
 		default:
@@ -246,23 +246,22 @@ xmphy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, XMPHY_MII_BMSR) |
-	    PHY_READ(sc, XMPHY_MII_BMSR);
-	if (bmsr & XMPHY_BMSR_LINK)
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	/* Do dummy read of extended status register. */
-	bmcr = PHY_READ(sc, XMPHY_MII_EXTSTS);
+	bmcr = PHY_READ(sc, MII_EXTSR);
 
-	bmcr = PHY_READ(sc, XMPHY_MII_BMCR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 
-	if (bmcr & XMPHY_BMCR_LOOP)
+	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
 
-	if (bmcr & XMPHY_BMCR_AUTOEN) {
-		if ((bmsr & XMPHY_BMSR_ACOMP) == 0) {
-			if (bmsr & XMPHY_BMSR_LINK) {
+	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			if (bmsr & BMSR_LINK) {
 				mii->mii_media_active |= IFM_1000_SX|IFM_HDX;
 				return;
 			}
@@ -272,9 +271,8 @@ xmphy_status(struct mii_softc *sc)
 		}
 
 		mii->mii_media_active |= IFM_1000_SX;
-		anlpar = PHY_READ(sc, XMPHY_MII_ANAR) &
-		    PHY_READ(sc, XMPHY_MII_ANLPAR);
-		if (anlpar & XMPHY_ANLPAR_FDX)
+		anlpar = PHY_READ(sc, MII_ANAR) & PHY_READ(sc, MII_ANLPAR);
+		if (anlpar & ANLPAR_10_FD)
 			mii->mii_media_active |= IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
@@ -282,7 +280,7 @@ xmphy_status(struct mii_softc *sc)
 	}
 
 	mii->mii_media_active |= IFM_1000_SX;
-	if (bmcr & XMPHY_BMCR_FDX)
+	if (bmcr & BMCR_FDX)
 		mii->mii_media_active |= IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
@@ -296,12 +294,11 @@ xmphy_mii_phy_auto(struct mii_softc *sc)
 {
 	int anar = 0;
 
-	anar = PHY_READ(sc, XMPHY_MII_ANAR);
-	anar |= XMPHY_ANAR_FDX|XMPHY_ANAR_HDX;
-	PHY_WRITE(sc, XMPHY_MII_ANAR, anar);
+	anar = PHY_READ(sc, MII_ANAR);
+	anar |= ANAR_10_FD|ANAR_10;
+	PHY_WRITE(sc, MII_ANAR, anar);
 	DELAY(1000);
-	PHY_WRITE(sc, XMPHY_MII_BMCR,
-	    XMPHY_BMCR_AUTOEN | XMPHY_BMCR_STARTNEG);
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 
 	return (EJUSTRETURN);
 }
