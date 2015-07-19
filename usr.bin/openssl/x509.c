@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.3 2015/06/20 01:07:25 doug Exp $ */
+/* $OpenBSD: x509.c,v 1.4 2015/07/19 03:18:10 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -304,6 +304,7 @@ x509_main(int argc, char **argv)
 		} else if (strcmp(*argv, "-set_serial") == 0) {
 			if (--argc < 1)
 				goto bad;
+			M_ASN1_INTEGER_free(sno);
 			if (!(sno = s2i_ASN1_INTEGER(NULL, *(++argv))))
 				goto bad;
 		} else if (strcmp(*argv, "-addtrust") == 0) {
