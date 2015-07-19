@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.91 2015/07/18 22:19:50 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.92 2015/07/19 05:17:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -375,6 +375,10 @@ SPLAY_HEAD(client_tree, client);
 	"\10\01NODELAY\02NO_NODELAY\03SACK\04NO_SACK"		\
 	"\05SOCKET_BUFFER_SIZE\06IP_TTL\07IP_MINTTL\10NO_SPLICE"
 
+#define HSTSFLAG_SUBDOMAINS	0x01
+#define HSTSFLAG_PRELOAD	0x02
+#define HSTSFLAG_BITS		"\10\01SUBDOMAINS\02PRELOAD"
+
 enum log_format {
 	LOG_FORMAT_COMMON,
 	LOG_FORMAT_COMBINED,
@@ -456,7 +460,7 @@ struct server_config {
 	off_t			 return_uri_len;
 
 	int			 hsts_max_age;
-	int			 hsts_subdomains;
+	u_int8_t		 hsts_flags;
 
 	TAILQ_ENTRY(server_config) entry;
 };

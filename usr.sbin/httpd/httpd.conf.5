@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.67 2015/07/18 09:29:47 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.68 2015/07/19 05:17:27 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2015 $
+.Dd $Mdocdate: July 19 2015 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -282,6 +282,9 @@ Valid options are:
 Set the maximum time in seconds a receiving user agent should regard
 this host as an HSTS host.
 The default is one year.
+.It Ic preload
+Confirm and authenticate that the site is permitted to be included in
+a browser's preload list.
 .It Ic subdomains
 Signal to the receiving user agent that this host and all sub domains
 of the host's domain should be considered HSTS hosts.

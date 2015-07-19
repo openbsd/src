@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2015/07/18 06:00:43 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.73 2015/07/19 05:17:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -133,7 +133,7 @@ typedef struct {
 %token	COMBINED CONNECTION DHE DIRECTORY ECDHE ERR FCGI INDEX IP KEY LISTEN
 %token	LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY ON PORT PREFORK PROTOCOLS
 %token	REQUEST REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT
-%token	TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT
+%token	TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -593,7 +593,10 @@ hstsflags	: MAXAGE NUMBER		{
 			srv_conf->hsts_max_age = $2;
 		}
 		| SUBDOMAINS		{
-			srv->srv_conf.hsts_subdomains = 1;
+			srv->srv_conf.hsts_flags |= HSTSFLAG_SUBDOMAINS;
+		}
+		| PRELOAD		{
+			srv->srv_conf.hsts_flags |= HSTSFLAG_PRELOAD;
 		}
 		;
 
@@ -1176,6 +1179,7 @@ lookup(char *s)
 		{ "pass",		PASS },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
+		{ "preload",		PRELOAD },
 		{ "protocols",		PROTOCOLS },
 		{ "request",		REQUEST },
 		{ "requests",		REQUESTS },

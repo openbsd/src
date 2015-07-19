@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.91 2015/07/18 06:00:43 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.92 2015/07/19 05:17:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -829,9 +829,11 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 
 	if (srv_conf->flags & SRVFLAG_SERVER_HSTS) {
 		if (asprintf(&hstsheader, "Strict-Transport-Security: "
-		    "max-age=%d%s\r\n", srv_conf->hsts_max_age,
-		    srv_conf->hsts_subdomains == 0 ? "" : 
-		    " ; includeSubDomains") == -1)
+		    "max-age=%d%s%s\r\n", srv_conf->hsts_max_age,
+		    srv_conf->hsts_flags & HSTSFLAG_SUBDOMAINS ?
+		    "; includeSubDomains" : "",
+		    srv_conf->hsts_flags & HSTSFLAG_PRELOAD ?
+		    "; preload" : "") == -1)
 			goto done;
 	}
 
@@ -1272,9 +1274,11 @@ server_response_http(struct client *clt, u_int code,
 		if ((cl =
 		    kv_add(&resp->http_headers, "Strict-Transport-Security",
 		    NULL)) == NULL ||
-		    kv_set(cl, "max-age=%d%s", srv_conf->hsts_max_age,
-		    srv_conf->hsts_subdomains == 0 ? "" :
-		    " ; includeSubDomains") == -1)
+		    kv_set(cl, "max-age=%d%s%s%s", srv_conf->hsts_max_age,
+		    srv_conf->hsts_flags & HSTSFLAG_SUBDOMAINS ?
+		    "; includeSubDomains" : "",
+		    srv_conf->hsts_flags & HSTSFLAG_PRELOAD ?
+		    "; preload" : "") == -1)
 			return (-1);
 	}
 
