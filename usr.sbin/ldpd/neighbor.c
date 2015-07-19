@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.45 2015/03/21 18:34:01 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.46 2015/07/19 20:50:03 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -534,10 +534,8 @@ nbr_act_session_operational(struct nbr *nbr)
 void
 nbr_send_labelmappings(struct nbr *nbr)
 {
-	if (leconf->mode & MODE_ADV_UNSOLICITED) {
-		ldpe_imsg_compose_lde(IMSG_LABEL_MAPPING_FULL, nbr->peerid, 0,
-		    NULL, 0);
-	}
+	ldpe_imsg_compose_lde(IMSG_LABEL_MAPPING_FULL, nbr->peerid, 0,
+	    NULL, 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.35 2015/07/19 18:34:32 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.36 2015/07/19 20:50:03 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -364,11 +364,6 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	rn = (struct rt_node *)fec_find_prefix(&rt, map->prefix.s_addr,
 	    map->prefixlen);
 	if (rn == NULL) {
-		/* The route is not yet in fib. If we are in liberal mode
-		 *  create a route and record the label */
-		if (ldeconf->mode & MODE_RET_CONSERVATIVE)
-			return;
-
 		rn = rt_add(map->prefix, map->prefixlen);
 		rn->local_label = lde_assign_label();
 	}
@@ -409,13 +404,6 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 			break;
 	}
 	if (addr == NULL) {
-		/* route not yet available LMp.13 */
-		if (ldeconf->mode & MODE_RET_CONSERVATIVE) {
-			log_debug("FEC %s: conservative ret but no route",
-			    log_fec(map));
-			lde_send_labelrelease(ln, rn, map->label);
-			return;
-		}
 		/* in liberal mode just note the mapping */
 		if (me == NULL)
 			me = lde_map_add(ln, rn, 0);

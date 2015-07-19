@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.31 2015/07/19 18:34:32 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.32 2015/07/19 20:50:03 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -676,12 +676,6 @@ lde_nbr_do_mappings(struct rt_node *rn)
 
 		/* LMp.28 Is this from a pending request? */
 		lre = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
-
-		/* Check for the only case where no mapping should be sent.
-		 * This is the On Demand case of LMp.29  */
-		if (ldeconf->mode & MODE_ADV_ONDEMAND && lre == NULL)
-			/* adv. on demand but no req pending, skip */
-			continue;
 
 		lde_send_labelmapping(ln, rn);
 		/* LMp.30 & 31 are not needed because labels are always added */

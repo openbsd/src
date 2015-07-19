@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.14 2013/06/04 06:41:35 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.15 2015/07/19 20:50:03 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: July 19 2015 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -85,39 +85,6 @@ Set the router ID; in combination with labelspace it forms the LSR-ID.
 .It Ic keepalive Ar seconds
 Set the keepalive timeout in seconds.
 The default value is 180; valid range is 1\-65535.
-.Pp
-.It Xo
-.Ic distribution
-.Pq Ic independent Ns | Ns Ic ordered
-.Xc
-Select the distribution mode.
-.Ic independent
-distributes labels at any time;
-.Ic ordered
-forces
-.Xr ldpd 8
-to wait a mapping from nexthop before distributing it to peers.
-.Pp
-.It Xo
-.Ic retention
-.Pq Ic liberal Ns | Ns Ic conservative
-.Xc
-Select the retention mode.
-.Ic conservative
-retains just the labels advertised from nexthop;
-.Ic liberal
-mode retains every label received, even those not advertised
-from nexthops.
-.Pp
-.It Xo
-.Ic advertisement
-.Pq Ic unsolicited Ns | Ns Ic ondemand
-.Xc
-Select the advertisement mode.
-.Ic unsolicited
-advertises labels according to the distribution mode;
-.Ic ondemand
-advertises labels solely upon explicit request from peers.
 .Pp
 .It Xo
 .Ic targeted-hello-accept

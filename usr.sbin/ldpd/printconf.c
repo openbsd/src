@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.7 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.8 2015/07/19 20:50:03 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -41,21 +41,6 @@ print_mainconf(struct ldpd_conf *conf)
 		printf("fib-update no\n");
 	else
 		printf("fib-update yes\n");
-
-	if (conf->mode & MODE_DIST_INDEPENDENT)
-		printf("distribution independent\n");
-	else
-		printf("distribution ordered\n");
-
-	if (conf->mode & MODE_RET_LIBERAL)
-		printf("retention liberal\n");
-	else
-		printf("retention conservative\n");
-
-	if (conf->mode & MODE_ADV_ONDEMAND)
-		printf("advertisement ondemand\n");
-	else
-		printf("advertisement unsolicited\n");
 
 	if (conf->flags & LDPD_FLAG_TH_ACCEPT)
 		printf("targeted-hello-accept yes\n");

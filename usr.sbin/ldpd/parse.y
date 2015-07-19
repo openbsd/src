@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2014/11/20 05:51:20 jsg Exp $ */
+/*	$OpenBSD: parse.y,v 1.24 2015/07/19 20:50:03 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -118,7 +118,6 @@ typedef struct {
 %token	THELLOHOLDTIME THELLOINTERVAL
 %token	THELLOACCEPT
 %token	KEEPALIVE
-%token	DISTRIBUTION RETENTION ADVERTISEMENT
 %token	EXTTAG
 %token	YES NO
 %token	ERROR
@@ -178,48 +177,6 @@ conf_main	: ROUTERID STRING {
 				conf->flags |= LDPD_FLAG_NO_FIB_UPDATE;
 			else
 				conf->flags &= ~LDPD_FLAG_NO_FIB_UPDATE;
-		}
-		| DISTRIBUTION STRING {
-			conf->mode &= ~(MODE_DIST_INDEPENDENT |
-			    MODE_DIST_ORDERED);
-
-			if (!strcmp($2, "independent"))
-				conf->mode |= MODE_DIST_INDEPENDENT;
-			else if (!strcmp($2, "ordered"))
-				conf->mode |= MODE_DIST_ORDERED;
-			else {
-				yyerror("unknown distribution type");
-				free($2);
-				YYERROR;
-			}
-		}
-		| RETENTION STRING {
-			conf->mode &= ~(MODE_RET_CONSERVATIVE |
-			    MODE_RET_LIBERAL);
-
-			if (!strcmp($2, "conservative"))
-				conf->mode |= MODE_RET_CONSERVATIVE;
-			else if (!strcmp($2, "liberal"))
-				conf->mode |= MODE_RET_LIBERAL;
-			else {
-				yyerror("unknown retention type");
-				free($2);
-				YYERROR;
-			}
-		}
-		| ADVERTISEMENT STRING {
-			conf->mode &= ~(MODE_ADV_ONDEMAND |
-			    MODE_ADV_UNSOLICITED);
-
-			if (!strcmp($2, "ondemand"))
-				conf->mode |= MODE_ADV_ONDEMAND;
-			else if (!strcmp($2, "unsolicited"))
-				conf->mode |= MODE_ADV_UNSOLICITED;
-			else {
-				yyerror("unknown retention type");
-				free($2);
-				YYERROR;
-			}
 		}
 		| THELLOACCEPT yesno {
 			if ($2 == 0)
@@ -398,8 +355,6 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{"advertisement",		ADVERTISEMENT},
-		{"distribution",		DISTRIBUTION},
 		{"external-tag",		EXTTAG},
 		{"fib-update",			FIBUPDATE},
 		{"interface",			INTERFACE},
@@ -407,7 +362,6 @@ lookup(char *s)
 		{"link-hello-holdtime",		LHELLOHOLDTIME},
 		{"link-hello-interval",		LHELLOINTERVAL},
 		{"no",				NO},
-		{"retention",			RETENTION},
 		{"router-id",			ROUTERID},
 		{"targeted-hello-accept",	THELLOACCEPT},
 		{"targeted-hello-holdtime",	THELLOHOLDTIME},
@@ -752,9 +706,6 @@ parse_config(char *filename, int opts)
 	defs->thello_interval = DEFAULT_HELLO_INTERVAL;
 	conf->thello_holdtime = TARGETED_DFLT_HOLDTIME;
 	conf->thello_interval = DEFAULT_HELLO_INTERVAL;
-
-	conf->mode = (MODE_DIST_INDEPENDENT | MODE_RET_LIBERAL |
-	    MODE_ADV_UNSOLICITED);
 
 	if ((file = pushfile(filename, !(conf->opts & LDPD_OPT_NOACTION))) == NULL) {
 		free(conf);
