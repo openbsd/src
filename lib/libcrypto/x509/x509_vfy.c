@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.43 2015/07/19 01:44:16 doug Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.44 2015/07/19 05:42:55 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1091,8 +1091,10 @@ check_crl_path(X509_STORE_CTX *ctx, X509 *x)
 	/* Don't allow recursive CRL path validation */
 	if (ctx->parent)
 		return 0;
-	if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted))
-		return -1;
+	if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted)) {
+		ret = -1;
+		goto err;
+	}
 
 	crl_ctx.crls = ctx->crls;
 	/* Copy verify params across */
