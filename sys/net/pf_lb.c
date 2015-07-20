@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.47 2015/07/18 19:19:00 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.48 2015/07/20 18:42:08 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -872,6 +872,8 @@ pf_postprocess_addr(struct pf_state *cur)
 		rpool = nr->nat;
 	else if (nr->route.addr.type != PF_ADDR_NONE)
 		rpool = nr->route;
+	else
+		panic("no appropriate pool");
 
 	if (((rpool.opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES))
 		return (0);
