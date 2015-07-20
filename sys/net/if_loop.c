@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.67 2015/07/20 21:16:39 rzalamena Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.68 2015/07/20 22:54:29 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -205,7 +205,6 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 {
 	struct niqueue *ifq = NULL;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	int s;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
@@ -246,10 +245,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		}
 
 		ml_enqueue(&ml, m);
-
-		s = splnet();
 		if_input(ifp, &ml);
-		splx(s);
 		return (0);
 #endif /* MPLS */
 	default:

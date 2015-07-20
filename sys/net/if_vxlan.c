@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.26 2015/07/18 22:15:14 goda Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.27 2015/07/20 22:54:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -478,7 +478,6 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 #if NBRIDGE > 0
 	struct sockaddr		*sa;
 #endif
-	int			 s;
 
 	/* XXX Should verify the UDP port first before copying the packet */
 	skip = iphlen + sizeof(*uh);
@@ -531,9 +530,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 #endif
 
 	ml_enqueue(&ml, m);
-	s = splnet();
 	if_input(ifp, &ml);
-	splx(s);
 
 	/* success */
 	return (1);

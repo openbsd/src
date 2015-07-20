@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.256 2015/07/20 22:16:41 rzalamena Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.257 2015/07/20 22:54:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1549,7 +1549,6 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m1;
 	u_int16_t etype;
-	int s;
 
 	/*
 	 * quick optimisation, don't send packets up the stack if no
@@ -1573,9 +1572,7 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	}
 	m1->m_flags |= M_PROTO1;
 	ml_enqueue(&ml, m1);
-	s = splnet();
 	if_input(ifp, &ml);
-	splx(s);
 }
 
 void

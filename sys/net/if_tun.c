@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.150 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.151 2015/07/20 22:54:29 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -875,10 +875,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
 		ml_enqueue(&ml, top);
-		s = splnet();
 		if_input(ifp, &ml);
-		splx(s);
-
 		return (0);
 	}
 
