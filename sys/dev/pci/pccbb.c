@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.94 2015/07/19 05:37:38 bcook Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.95 2015/07/20 15:44:43 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -372,6 +372,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	u_long busnum;
 	int flags;
 
 	pccbb_attach_hook(parent, self, pa);
@@ -447,8 +448,19 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	/*
-	 * When bus number isn't set correctly, give up using 32-bit CardBus
-	 * mode.
+	 * When the bus number isn't configured, try to allocate one
+	 * ourselves.
+	 */
+	if ((sc->sc_busnum & 0x00ffff00) == 0 && pa->pa_busex &&
+	    extent_alloc(pa->pa_busex, 1, 1, 0, 0, EX_NOWAIT, &busnum) == 0) {
+		sc->sc_busnum |= (busnum << 8);
+		sc->sc_busnum |= (busnum << 16);
+		pci_conf_write(pc, pa->pa_tag, PCI_BUSNUM, sc->sc_busnum);
+	}
+
+	/*
+	 * When the bus number still isn't set correctly, give up
+	 * using 32-bit CardBus mode.
 	 */
 	if (((sc->sc_busnum >> 8) & 0xff) == 0) {
 		printf(", CardBus support disabled");
