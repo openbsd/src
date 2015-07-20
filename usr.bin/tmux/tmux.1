@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.443 2015/07/13 15:37:26 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.444 2015/07/20 10:34:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2015 $
+.Dd $Mdocdate: July 20 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2709,12 +2709,10 @@ and
 .Xr terminfo 5
 entries if they exist.
 .Nm
-automatically sets these to the \ee]2;...\e007 sequence if
-the terminal appears to be an xterm.
+automatically sets these to the \ee]0;...\e007 sequence if
+the terminal appears to be
+.Xr xterm 1 .
 This option is off by default.
-Note that elinks
-will only attempt to set the window title if the STY environment
-variable is set.
 .It Ic set-titles-string Ar string
 String used to set the window title if
 .Ic set-titles
