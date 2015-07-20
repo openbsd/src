@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.2 2015/07/19 21:25:32 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.3 2015/07/20 02:43:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -706,6 +706,12 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 	 */
 
 	switch (com) {
+	case BIOCGSTATS:        /* bpf: tcpdump privsep on ^C */
+		if (fp->f_type == DTYPE_VNODE &&
+		    fp->f_ops->fo_ioctl == vn_ioctl)
+			return (0);
+		break;
+
 	case TIOCSETAF:		/* tcsetattr TCSAFLUSH, script */
 		if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
 			return (0);
