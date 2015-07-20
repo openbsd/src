@@ -1,8 +1,11 @@
-#	$OpenBSD: rc,v 1.453 2015/07/19 04:44:36 rpe Exp $
+#	$OpenBSD: rc,v 1.454 2015/07/20 06:59:39 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
 # controlling terminal.
+
+# Turn off Strict Bourne shell.
+set +o sh
 
 # Subroutines (have to come first).
 

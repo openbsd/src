@@ -1,6 +1,9 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.152 2015/07/19 23:42:58 florian Exp $
+#	$OpenBSD: netstart,v 1.153 2015/07/20 06:59:39 rpe Exp $
+
+# Turn off Strict Bourne shell mode.
+set +o sh
 
 # Strip comments (and leading/trailing whitespace if IFS is set) from a file
 # and spew to stdout.
