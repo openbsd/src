@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.27 2015/07/18 05:32:56 mcbride Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.28 2015/07/20 04:28:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -148,7 +148,6 @@ struct tftp_client {
 	int newline;
 
 	int sock;
-	int seed;
 };
 
 __dead void	usage(void);
@@ -941,9 +940,16 @@ validate_access(struct tftp_client *client, const char *filename)
 	const char	*errstr;
 
 	if (strcmp(filename, SEEDPATH) == 0) {
-		if (mode != RRQ)	
+		char *buf;
+		if (mode != RRQ)
 			return (EACCESS);
-		client->seed = 1;
+
+		buf = client->buf + sizeof(client->buf) - 512;
+		arc4random_buf(buf, 512);
+		client->file = fmemopen(buf, 512, "r");
+		if (client->file == NULL)
+			return (errno + 100);
+
 		return (0);
 	}
 
@@ -1086,26 +1092,17 @@ file_read(struct tftp_client *client)
 	dp->th_block = htons(client->block);
 	buf = (u_int8_t *)dp->th_data;
 
-	if (client->seed) {
-		if (client->block * client->segment_size > SEGSIZE) {
-			i = SEGSIZE % client->segment_size;
-		} else {
-			i = client->segment_size;
-		}
-		arc4random_buf(buf, i);
-	} else {
-		for (i = 0; i < client->segment_size; i++) {
-			c = client->fgetc(client);
-			if (c == EOF) {
-				if (ferror(client->file)) {
-					nak(client, 100 + EIO);
-					return;
-				}
-	
-				break;
+	for (i = 0; i < client->segment_size; i++) {
+		c = client->fgetc(client);
+		if (c == EOF) {
+			if (ferror(client->file)) {
+				nak(client, 100 + EIO);
+				return;
 			}
-			buf[i] = c;
+
+			break;
 		}
+		buf[i] = c;
 	}
 
 	client->buflen = i + 4;
@@ -1319,8 +1316,7 @@ tftp_wrq(int fd, short events, void *arg)
 
 	if (n < client->packet_size) {
 		tftp_wrq_ack_packet(client);
-		if (client->file != NULL)
-			fclose(client->file);
+		fclose(client->file);
 		client->file = NULL;
 		event_set(&client->sev, client->sock, EV_READ,
 		    tftp_wrq_end, client);
