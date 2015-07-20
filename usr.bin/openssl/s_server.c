@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.13 2015/07/17 16:09:46 doug Exp $ */
+/* $OpenBSD: s_server.c,v 1.14 2015/07/20 18:31:01 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1132,7 +1132,10 @@ bad:
 
 		if (ctx2) {
 			if (!dhfile) {
-				DH *dh2 = load_dh_param(s_cert_file2);
+				DH *dh2 = NULL;
+
+				if (s_cert_file2 != NULL)
+					dh2 = load_dh_param(s_cert_file2);
 				if (dh2 != NULL) {
 					BIO_printf(bio_s_out, "Setting temp DH parameters\n");
 					(void) BIO_flush(bio_s_out);
