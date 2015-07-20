@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.358 2015/07/19 18:24:16 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.359 2015/07/20 18:27:36 mlarkin Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -5036,7 +5036,7 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		struct sr_discipline *srd;
 		hibio_fn subfn;		/* underlying device i/o fn */
 		dev_t subdev;		/* underlying device dev_t */
-		daddr_t sr_swapoff; /* ofs of swap part in sr volume */
+		daddr_t sr_swapoff;	/* ofs of swap part in sr volume */
 		char buf[DEV_BSIZE];	/* encryption performed into this buf */
 	} *my = page;
 	extern struct cfdriver sd_cd;
