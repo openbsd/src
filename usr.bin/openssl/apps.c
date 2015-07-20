@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.30 2015/07/20 02:41:10 doug Exp $ */
+/* $OpenBSD: apps.c,v 1.31 2015/07/20 03:28:04 doug Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1269,10 +1269,21 @@ setup_engine(BIO *err, const char *engine, int debug)
 			return NULL;
 		}
 		if (debug) {
-			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
-			    0, err, 0);
+			if (ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
+			    0, err, 0) <= 0) {
+				BIO_printf(err, "Cannot set logstream for "
+				    "engine \"%s\"\n", engine);
+				ERR_print_errors(err);
+				ENGINE_free(e);
+				return NULL;
+			}
 		}
-		ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, ui_method, 0, 1);
+		if (!ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, ui_method, 0, 1)) {
+			BIO_printf(err, "can't set user interface\n");
+			ERR_print_errors(err);
+			ENGINE_free(e);
+			return NULL;
+		}
 		if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
 			BIO_printf(err, "can't use that engine\n");
 			ERR_print_errors(err);
