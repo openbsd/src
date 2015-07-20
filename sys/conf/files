@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.597 2015/07/19 02:35:35 deraadt Exp $
+#	$OpenBSD: files,v 1.598 2015/07/20 22:16:41 rzalamena Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -543,6 +543,7 @@ pseudo-device gre: ifnet
 pseudo-device crypto: ifnet
 pseudo-device trunk: ifnet, ether, ifmedia
 pseudo-device mpe: ifnet, ether
+pseudo-device mpw: ifnet, ether
 pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
 pseudo-device vxlan: ifnet, ether, ifmedia
@@ -786,6 +787,7 @@ file net/if_gre.c			gre			needs-count
 file net/if_trunk.c			trunk			needs-count
 file net/trunklacp.c			trunk
 file net/if_mpe.c			mpe			needs-count
+file net/if_mpw.c			mpw & bridge		needs-count
 file net/if_vether.c			vether			needs-count
 file net/if_pppx.c			pppx			needs-count
 file net/if_vxlan.c			vxlan			needs-count

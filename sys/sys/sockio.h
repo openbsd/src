@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.57 2015/01/21 02:23:14 guenther Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.58 2015/07/20 22:16:41 rzalamena Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -185,6 +185,9 @@
 
 #define SIOCSLIFPHYTTL	_IOW('i', 168, struct ifreq)	/* set tunnel ttl */
 #define SIOCGLIFPHYTTL	_IOWR('i', 169, struct ifreq)	/* get tunnel ttl */
+
+#define SIOCSETMPWCFG	_IOW('i', 170, struct ifreq) /* set mpw config */
+#define SIOCGETMPWCFG	_IOWR('i', 171, struct ifreq) /* get mpw config */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */

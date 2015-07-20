@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.134 2015/07/02 09:40:02 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.135 2015/07/20 22:16:41 rzalamena Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -46,6 +46,8 @@
  * capability is set on the parent.  In this case, vlan_start()
  * will not modify the ethernet header.
  */
+
+#include "mpw.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -204,6 +206,16 @@ vlan_start(struct ifnet *ifp)
 		if (prio <= 1)
 			prio = !prio;
 
+#if NMPW > 0
+		struct ifnet *ifpn = if_get(m->m_pkthdr.ph_ifidx);
+		/*
+		 * If this packet came from a pseudowire it means it already
+		 * has all tags it needs, so just output it.
+		 */
+		if (ifpn && ifpn->if_type == IFT_MPLSTUNNEL) {
+			/* NOTHING */
+		} else
+#endif /* NMPW */
 		/*
 		 * If the underlying interface cannot do VLAN tag insertion
 		 * itself, create an encapsulation header.

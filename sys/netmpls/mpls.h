@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.32 2015/07/20 21:16:39 rzalamena Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.33 2015/07/20 22:16:41 rzalamena Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -63,6 +63,9 @@ struct shim_hdr {
 #define MPLS_BOS_MASK		__MADDR(0x00000100U)
 #define MPLS_BOS_OFFSET		8
 #define MPLS_TTL_MASK		__MADDR(0x000000ffU)
+
+#define CW_ZERO_MASK		__MADDR(0xf0000000U)
+#define CW_FRAG_MASK		__MADDR(0x00300000U)
 
 #define MPLS_BOS_ISSET(l)	(((l) & MPLS_BOS_MASK) == MPLS_BOS_MASK)
 
@@ -131,6 +134,20 @@ struct rt_mpls {
 	&mpls_mapttl_ip, \
 	&mpls_mapttl_ip6 \
 }
+
+#define IMR_TYPE_NONE			0
+#define IMR_TYPE_ETHERNET		1
+#define IMR_TYPE_ETHERNET_TAGGED	2
+
+#define IMR_FLAG_CONTROLWORD		0x1
+
+struct ifmpwreq {
+	uint32_t	imr_flags;
+	uint32_t	imr_type; /* pseudowire type */
+	struct		shim_hdr imr_lshim; /* local label */
+	struct		shim_hdr imr_rshim; /* remote label */
+	struct		sockaddr_storage imr_nexthop;
+};
 
 #endif
 

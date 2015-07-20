@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.255 2015/07/17 18:05:59 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.256 2015/07/20 22:16:41 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -36,6 +36,7 @@
 #include "pf.h"
 #include "carp.h"
 #include "vlan.h"
+#include "mpw.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,6 +387,11 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			/* Nothing needed */
 		}
 #endif /* NGIF */
+#if NMPW > 0
+		else if (ifs->if_type == IFT_MPLSTUNNEL) {
+			/* Nothing needed */
+		}
+#endif /* NMPW */
 		else {
 			error = EINVAL;
 			break;
@@ -1032,7 +1038,15 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			    (p->bif_flags & IFBIF_STP) &&
 			    (p->bif_state == BSTP_IFSTATE_DISCARDING))
 				continue;
-
+#if NMPW > 0
+			/*
+			 * Split horizon: avoid broadcasting messages from
+			 * wire to another wire.
+			 */
+			if (ifp->if_type == IFT_MPLSTUNNEL &&
+			    dst_if->if_type == IFT_MPLSTUNNEL)
+				continue;
+#endif /* NMPW */
 			if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&
 			    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
 				continue;
@@ -1480,7 +1494,15 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		 */
 		if (dst_if->if_index == ifp->if_index)
 			continue;
-
+#if NMPW > 0
+		/*
+		 * Split horizon: avoid broadcasting messages from wire to
+		 * another wire.
+		 */
+		if (ifp->if_type == IFT_MPLSTUNNEL &&
+		    dst_if->if_type == IFT_MPLSTUNNEL)
+			continue;
+#endif /* NMPW */
 		if (IF_QFULL(&dst_if->if_snd)) {
 			IF_DROP(&dst_if->if_snd);
 			sc->sc_if.if_oerrors++;
