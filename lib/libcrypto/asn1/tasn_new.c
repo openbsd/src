@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.14 2015/02/14 15:23:57 miod Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.15 2015/07/20 15:43:23 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -313,7 +313,7 @@ ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	}
 
 	if (!it || (it->itype == ASN1_ITYPE_MSTRING))
-		utype = -1;
+		utype = V_ASN1_UNDEF;
 	else
 		utype = it->utype;
 	switch (utype) {
@@ -331,10 +331,10 @@ ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 	case V_ASN1_ANY:
 		typ = malloc(sizeof(ASN1_TYPE));
-		if (!typ)
-			return 0;
-		typ->value.ptr = NULL;
-		typ->type = -1;
+		if (typ != NULL) {
+			typ->value.ptr = NULL;
+			typ->type = V_ASN1_UNDEF;
+		}
 		*pval = (ASN1_VALUE *)typ;
 		break;
 
@@ -364,7 +364,7 @@ asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		return;
 	}
 	if (!it || (it->itype == ASN1_ITYPE_MSTRING))
-		utype = -1;
+		utype = V_ASN1_UNDEF;
 	else
 		utype = it->utype;
 	if (utype == V_ASN1_BOOLEAN)
