@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.16 2014/01/30 21:01:59 kettenis Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.17 2015/07/20 23:47:20 uebayasi Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@ extern int tick;		/* usec per tick (1000000 / hz) */
 extern int tickfix;		/* periodic tick adj. tick not integral */
 extern int tickfixinterval;	/* interval at which to apply adjustment */
 extern int tickadj;		/* "standard" clock skew, us./tick */
+extern int ticks;		/* # of hardclock ticks */
 extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
