@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.418 2015/07/19 01:58:19 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.419 2015/07/20 01:18:33 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -225,27 +225,6 @@ struct pfi_dynaddr {
  * Address manipulation macros
  */
 
-#ifdef _KERNEL
-#ifndef INET6
-#define PF_INET_ONLY
-#endif /* ! INET6 */
-
-#ifdef INET6
-#endif /* INET6 */
-
-#ifdef INET6
-#define PF_INET_INET6
-#endif /* INET6 */
-
-#else
-
-#define PF_INET_INET6
-
-#endif /* _KERNEL */
-
-/* Both IPv4 and IPv6 */
-#ifdef PF_INET_INET6
-
 #define PF_AEQ(a, b, c) \
 	((c == AF_INET && (a)->addr32[0] == (b)->addr32[0]) || \
 	(c == AF_INET6 && \
@@ -280,76 +259,6 @@ struct pfi_dynaddr {
 #define PF_POOLMASK(a, b, c, d, f) \
 	pf_poolmask(a, b, c, d, f)
 
-#else
-
-/* Just IPv6 */
-
-#ifdef PF_INET6_ONLY
-
-#define PF_AEQ(a, b, c) \
-	((a)->addr32[3] == (b)->addr32[3] && \
-	(a)->addr32[2] == (b)->addr32[2] && \
-	(a)->addr32[1] == (b)->addr32[1] && \
-	(a)->addr32[0] == (b)->addr32[0]) \
-
-#define PF_ANEQ(a, b, c) \
-	((a)->addr32[3] != (b)->addr32[3] || \
-	(a)->addr32[2] != (b)->addr32[2] || \
-	(a)->addr32[1] != (b)->addr32[1] || \
-	(a)->addr32[0] != (b)->addr32[0]) \
-
-#define PF_AZERO(a, c) \
-	(!(a)->addr32[0] && \
-	!(a)->addr32[1] && \
-	!(a)->addr32[2] && \
-	!(a)->addr32[3] ) \
-
-#define PF_MATCHA(n, a, m, b, f) \
-	pf_match_addr(n, a, m, b, f)
-
-#define PF_ACPY(a, b, f) \
-	pf_addrcpy(a, b, f)
-
-#define PF_AINC(a, f) \
-	pf_addr_inc(a, f)
-
-#define PF_POOLMASK(a, b, c, d, f) \
-	pf_poolmask(a, b, c, d, f)
-
-#else
-
-/* Just IPv4 */
-#ifdef PF_INET_ONLY
-
-#define PF_AEQ(a, b, c) \
-	((a)->addr32[0] == (b)->addr32[0])
-
-#define PF_ANEQ(a, b, c) \
-	((a)->addr32[0] != (b)->addr32[0])
-
-#define PF_AZERO(a, c) \
-	(!(a)->addr32[0])
-
-#define PF_MATCHA(n, a, m, b, f) \
-	pf_match_addr(n, a, m, b, f)
-
-#define PF_ACPY(a, b, f) \
-	(a)->v4.s_addr = (b)->v4.s_addr
-
-#define PF_AINC(a, f) \
-	do { \
-		(a)->addr32[0] = htonl(ntohl((a)->addr32[0]) + 1); \
-	} while (0)
-
-#define PF_POOLMASK(a, b, c, d, f) \
-	do { \
-		(a)->addr32[0] = ((b)->addr32[0] & (c)->addr32[0]) | \
-		(((c)->addr32[0] ^ 0xffffffff ) & (d)->addr32[0]); \
-	} while (0)
-
-#endif /* PF_INET_ONLY */
-#endif /* PF_INET6_ONLY */
-#endif /* PF_INET_INET6 */
 
 #define	PF_MISMATCHAW(aw, x, af, neg, ifp, rtid)			\
 	(								\

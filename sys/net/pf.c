@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.932 2015/07/19 23:13:58 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.933 2015/07/20 01:18:33 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -349,7 +349,6 @@ pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
 	return (0);
 }
 
-#ifdef INET6
 void
 pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 {
@@ -357,15 +356,18 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 	case AF_INET:
 		dst->addr32[0] = src->addr32[0];
 		break;
+#ifdef INET6
 	case AF_INET6:
 		dst->addr32[0] = src->addr32[0];
 		dst->addr32[1] = src->addr32[1];
 		dst->addr32[2] = src->addr32[2];
 		dst->addr32[3] = src->addr32[3];
 		break;
+#endif /* INET6 */
+	default:
+		unhandled_af(af);
 	}
 }
-#endif /* INET6 */
 
 void
 pf_init_threshold(struct pf_threshold *threshold,
@@ -2682,7 +2684,6 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs,
 	return (quick);
 }
 
-#ifdef INET6
 void
 pf_poolmask(struct pf_addr *naddr, struct pf_addr *raddr,
     struct pf_addr *rmask, struct pf_addr *saddr, sa_family_t af)
@@ -2692,6 +2693,7 @@ pf_poolmask(struct pf_addr *naddr, struct pf_addr *raddr,
 		naddr->addr32[0] = (raddr->addr32[0] & rmask->addr32[0]) |
 		((rmask->addr32[0] ^ 0xffffffff ) & saddr->addr32[0]);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		naddr->addr32[0] = (raddr->addr32[0] & rmask->addr32[0]) |
 		((rmask->addr32[0] ^ 0xffffffff ) & saddr->addr32[0]);
@@ -2702,6 +2704,9 @@ pf_poolmask(struct pf_addr *naddr, struct pf_addr *raddr,
 		naddr->addr32[3] = (raddr->addr32[3] & rmask->addr32[3]) |
 		((rmask->addr32[3] ^ 0xffffffff ) & saddr->addr32[3]);
 		break;
+#endif /* INET6 */
+	default:
+		unhandled_af(af);
 	}
 }
 
@@ -2712,6 +2717,7 @@ pf_addr_inc(struct pf_addr *addr, sa_family_t af)
 	case AF_INET:
 		addr->addr32[0] = htonl(ntohl(addr->addr32[0]) + 1);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		if (addr->addr32[3] == 0xffffffff) {
 			addr->addr32[3] = 0;
@@ -2731,9 +2737,11 @@ pf_addr_inc(struct pf_addr *addr, sa_family_t af)
 			addr->addr32[3] =
 			    htonl(ntohl(addr->addr32[3]) + 1);
 		break;
+#endif /* INET6 */
+	default:
+		unhandled_af(af);
 	}
 }
-#endif /* INET6 */
 
 int
 pf_socket_lookup(struct pf_pdesc *pd)
