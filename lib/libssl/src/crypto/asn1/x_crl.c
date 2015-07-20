@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.24 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.25 2015/07/20 15:29:13 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -270,6 +270,7 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	STACK_OF(X509_EXTENSION) *exts;
 	X509_EXTENSION *ext;
 	int idx;
+	int rc = 1;
 
 	switch (operation) {
 	case ASN1_OP_NEW_POST:
@@ -345,7 +346,7 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	case ASN1_OP_FREE_POST:
 		if (crl->meth->crl_free) {
 			if (!crl->meth->crl_free(crl))
-				return 0;
+				rc = 0;
 		}
 		if (crl->akid)
 			AUTHORITY_KEYID_free(crl->akid);
@@ -356,7 +357,7 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
 		break;
 	}
-	return 1;
+	return rc;
 }
 
 /* Convert IDP into a more convenient form */
