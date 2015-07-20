@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.221 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.222 2015/07/20 21:31:57 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -812,16 +812,6 @@ sys_open(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) flags;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
-	int flags = SCARG(uap, flags);
-
-	switch (flags & O_ACCMODE) {
-	case O_WRONLY:
-	case O_RDWR:
-		p->p_tamenote |= TMN_WRITE;
-		break;
-	}
-	if (flags & O_CREAT)
-		p->p_tamenote |= TMN_CREAT;
 
 	return (doopenat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, flags),
 	    SCARG(uap, mode), retval));
@@ -853,6 +843,15 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
+
+	switch (oflags & O_ACCMODE) {
+	case O_WRONLY:
+	case O_RDWR:
+		p->p_tamenote |= TMN_WRITE;
+		break;
+	}
+	if (oflags & O_CREAT)
+		p->p_tamenote |= TMN_CREAT;
 
 	fdplock(fdp);
 
