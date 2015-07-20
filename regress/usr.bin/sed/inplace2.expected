@@ -1,5 +1,3 @@
-#	$OpenBSD: inplace2.expected,v 1.1 2015/07/17 20:42:03 jasper Exp $
-
 GROP=	sed
 SRCS=	compile.c main.c misc.c process.c
 
