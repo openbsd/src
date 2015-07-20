@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.11 2015/07/20 00:54:01 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.12 2015/07/20 00:57:53 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -199,24 +199,25 @@ copyenv(const char **oldenvp, struct rule *rule)
 	char **envp;
 	const char **extra;
 	int ei;
-	int i, ii, j, jj;
 	int nsafe, nbad;
 	int nextras = 0;
 	
 	nbad = arraylen(badset);
 	if ((rule->options & KEEPENV) && !rule->envlist) {
-		j = arraylen(oldenvp);
-		envp = reallocarray(NULL, j + 1, sizeof(char *));
+		size_t i, ii;
+		size_t oldlen = arraylen(oldenvp);
+		envp = reallocarray(NULL, oldlen + 1, sizeof(char *));
 		if (!envp)
 			err(1, "reallocarray");
-		for (ii = i = 0; i < j; i++) {
-			for (jj = 0; jj < nbad; jj++) {
-				size_t len = strlen(badset[jj]);
-				if (strncmp(oldenvp[i], badset[jj], len) == 0) {
+		for (ii = i = 0; i < oldlen; i++) {
+			size_t j;
+			for (j = 0; j < nbad; j++) {
+				size_t len = strlen(badset[j]);
+				if (strncmp(oldenvp[i], badset[j], len) == 0) {
 					break;
 				}
 			}
-			if (jj == nbad) {
+			if (j == nbad) {
 				if (!(envp[ii] = strdup(oldenvp[i])))
 					err(1, "strdup");
 				ii++;
@@ -228,8 +229,10 @@ copyenv(const char **oldenvp, struct rule *rule)
 
 	nsafe = arraylen(safeset);
 	if ((extra = rule->envlist)) {
+		size_t i;
 		nextras = arraylen(extra);
 		for (i = 0; i < nsafe; i++) {
+			size_t j;
 			for (j = 0; j < nextras; j++) {
 				if (strcmp(extra[j], safeset[i]) == 0) {
 					extra[j--] = extra[nextras--];
