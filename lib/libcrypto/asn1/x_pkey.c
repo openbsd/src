@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pkey.c,v 1.16 2015/04/12 15:15:51 doug Exp $ */
+/* $OpenBSD: x_pkey.c,v 1.17 2015/07/20 15:27:00 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,17 +73,18 @@ X509_PKEY_new(void)
 	if ((ret = malloc(sizeof(X509_PKEY))) == NULL) {
 		ASN1_MAC_H_err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE,
 		    __LINE__);
-		return NULL;
+		goto err;
 	}
 	ret->version = 0;
 	if ((ret->enc_algor = X509_ALGOR_new()) == NULL) {
-		free(ret);
-		return NULL;
+		ASN1_MAC_H_err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE,
+		    __LINE__);
+		goto err;
 	}
 	if ((ret->enc_pkey = M_ASN1_OCTET_STRING_new()) == NULL) {
-		X509_ALGOR_free(ret->enc_algor);
-		free(ret);
-		return NULL;
+		ASN1_MAC_H_err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE,
+		    __LINE__);
+		goto err;
 	}
 	ret->dec_pkey = NULL;
 	ret->key_length = 0;
@@ -93,6 +94,13 @@ X509_PKEY_new(void)
 	memset(ret->cipher.iv, 0, EVP_MAX_IV_LENGTH);
 	ret->references = 1;
 	return (ret);
+
+err:
+	if (ret) {
+		X509_ALGOR_free(ret->enc_algor);
+		free(ret);
+	}
+	return NULL;
 }
 
 void
