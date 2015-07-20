@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.9 2015/07/20 18:04:05 schwarze Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.10 2015/07/20 18:58:53 jeremy Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -76,6 +76,12 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_chdir] = _TM_RPATH,
 
 	[SYS_fchdir] = _TM_SELF,	/* careful of directory fd inside jails */
+
+	/* needed by threaded programs */
+	[SYS_sched_yield] = _TM_SELF,
+	[SYS___thrsleep] = _TM_SELF,
+	[SYS___thrwakeup] = _TM_SELF,
+	[SYS___threxit] = _TM_SELF,
 
 	[SYS_sendsyslog] = _TM_SELF,
 	[SYS_nanosleep] = _TM_SELF,
