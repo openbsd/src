@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2015/01/22 14:33:01 krw Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2015/07/20 22:51:11 blambert Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -124,8 +124,20 @@ varbind_convert(struct agentx_pdu *pdu, struct agentx_varbind_hdr *vbhdr,
 		ber_set_header(a, BER_CLASS_CONTEXT, 1);
 		break;
 
+	case AGENTX_COUNTER32:
+		ber_set_header(a, BER_CLASS_APPLICATION, SNMP_COUNTER32);
+		break;
+
+	case AGENTX_GAUGE32:
+		ber_set_header(a, BER_CLASS_APPLICATION, SNMP_GAUGE32);
+		break;
+
 	case AGENTX_COUNTER64:
 		ber_set_header(a, BER_CLASS_APPLICATION, SNMP_COUNTER64);
+		break;
+
+	case AGENTX_IP_ADDRESS:
+		/* application 0 implicit 4-byte octet string per SNMPv2-SMI */
 		break;
 
 	default:
