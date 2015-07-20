@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.10 2015/07/20 18:58:53 jeremy Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.11 2015/07/20 21:36:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -45,6 +45,8 @@
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
+
+int canonpath(const char *input, char *buf, size_t bufsize);
 
 const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_exit] = 0xffffffff,
@@ -273,8 +275,13 @@ tame_fail(struct proc *p, int error, int code)
  * without the right flags set
  */
 int
-tame_namei(struct proc *p, char *path)
+tame_namei(struct proc *p, char *origpath)
 {
+	char path[PATH_MAX];
+
+	if (canonpath(origpath, path, sizeof(path)) != 0)
+		return (tame_fail(p, EPERM, TAME_RPATH));
+
 	/* Detect what looks like a mkstemp(3) family operation */
 	if ((p->p_p->ps_tame & _TM_TMPPATH) &&
 	    (p->p_tame_syscall == SYS_open) &&
@@ -829,4 +836,67 @@ tame_dns_check(struct proc *p, in_port_t port)
 	if ((p->p_p->ps_tame & _TM_DNS_ACTIVE) && port == htons(53))
 		return (0);	/* Allow a DNS connect outbound */
 	return (EPERM);
+}
+
+int
+canonpath(const char *input, char *buf, size_t bufsize)
+{
+	char *p, *q, *s, *end;
+
+	/* can't canon relative paths, don't bother */
+	if (input[0] != '/') {
+		if (strlcpy(buf, input, bufsize) >= bufsize)
+			return (EINVAL);
+		return (0);
+	}
+
+	/* easiest to work with strings always ending in '/' */
+	if (snprintf(buf, bufsize, "%s/", input) >= bufsize)
+		return (EINVAL);
+
+	/* after this we will only be shortening the string. */
+	p = buf;
+	q = p;
+	while (*p) {
+		if (p[0] == '/' && p[1] == '/') {
+			p += 1;
+		} else if (p[0] == '/' && p[1] == '.' &&
+		    p[2] == '/') {
+			p += 2;
+		} else {
+			*q++ = *p++;
+		}
+	}
+	*q = 0;
+
+	end = buf + strlen(buf);
+	s = buf;
+	p = s;
+	while (1) {
+		/* find "/../" (where's strstr when you need it?) */
+		while (p < end) {
+		    	if (p[0] == '/' && strncmp(p + 1, "../", 3) == 0)
+				break;
+			p++;
+		}
+		if (p == end)
+			break;
+		if (p == s) {
+			memmove(s, p + 3, end - p - 3 + 1);
+			end -= 3;
+		} else {
+			/* s starts with '/', so we know there's one
+			 * somewhere before p. */
+			q = p - 1;
+			while (*q != '/')
+				q--;
+			memmove(q, p + 3, end - p - 3 + 1);
+			end -= p + 3 - q;
+			p = q;
+		}
+	}
+	if (end > s + 1)
+		*(end - 1) = 0; /* remove trailing '/' */
+
+	return 0;
 }
