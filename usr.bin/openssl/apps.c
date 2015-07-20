@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.29 2015/07/16 15:03:35 beck Exp $ */
+/* $OpenBSD: apps.c,v 1.30 2015/07/20 02:41:10 doug Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1510,7 +1510,11 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    buf[0], serialfile);
 		perror("reason");
-		rename(buf[1], serialfile);
+		if (rename(buf[1], serialfile) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    buf[1], serialfile);
+			perror("reason");
+		}
 		goto err;
 	}
 	return 1;
@@ -1714,7 +1718,11 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    buf[0], dbfile);
 		perror("reason");
-		rename(buf[1], dbfile);
+		if (rename(buf[1], dbfile) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    buf[1], dbfile);
+			perror("reason");
+		}
 		goto err;
 	}
 
@@ -1723,8 +1731,16 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    buf[4], buf[3]);
 		perror("reason");
-		rename(dbfile, buf[0]);
-		rename(buf[1], dbfile);
+		if (rename(dbfile, buf[0]) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    dbfile, buf[0]);
+			perror("reason");
+		}
+		if (rename(buf[1], dbfile) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    buf[1], dbfile);
+			perror("reason");
+		}
 		goto err;
 	}
 
@@ -1733,9 +1749,21 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    buf[2], buf[4]);
 		perror("reason");
-		rename(buf[3], buf[4]);
-		rename(dbfile, buf[0]);
-		rename(buf[1], dbfile);
+		if (rename(buf[3], buf[4]) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    buf[3], buf[4]);
+			perror("reason");
+		}
+		if (rename(dbfile, buf[0]) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    dbfile, buf[0]);
+			perror("reason");
+		}
+		if (rename(buf[1], dbfile) < 0) {
+			BIO_printf(bio_err, "unable to rename %s to %s\n",
+			    buf[1], dbfile);
+			perror("reason");
+		}
 		goto err;
 	}
 	return 1;
