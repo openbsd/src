@@ -11,29 +11,29 @@ our %args = (
 	fast => 1,
 	max => 100,
 	func => sub {
-            http_request(@_, $size, "1.0", "");
-            http_response(@_, $size);
-            print STDERR "going to sleep\n";
-            sleep 8;
-            read_char(@_, $size);
-            return;
-        },
-        rcvbuf => 2**8,
-        nocheck => 1,
+	    http_request(@_, $size, "1.0", "");
+	    http_response(@_, $size);
+	    print STDERR "going to sleep\n";
+	    sleep 8;
+	    read_char(@_, $size);
+	    return;
+	},
+	rcvbuf => 2**8,
+	nocheck => 1,
     },
     relayd => {
-        protocol => [ "http",
-            "tcp socket buffer 64",
-            "match request header log",
-            "match request path log",
-        ],
+	protocol => [ "http",
+	    "tcp socket buffer 64",
+	    "match request header log",
+	    "match request path log",
+	],
     },
     server => {
-        fast => 1,
-        func => \&http_server,
-        sndbuf => 2**8,
-        sndtimeo => 2,
-        loggrep => 'short write',
+	fast => 1,
+	func => \&http_server,
+	sndbuf => 2**8,
+	sndtimeo => 2,
+	loggrep => 'short write',
 
     },
     lengths => [$size],
