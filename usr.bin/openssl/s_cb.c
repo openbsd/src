@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.3 2015/02/08 10:22:45 doug Exp $ */
+/* $OpenBSD: s_cb.c,v 1.4 2015/07/20 21:52:07 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,20 +166,29 @@ verify_callback(int ok, X509_STORE_CTX * ctx)
 	switch (err) {
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
 		BIO_puts(bio_err, "issuer= ");
-		X509_NAME_print_ex(bio_err, X509_get_issuer_name(err_cert),
-		    0, XN_FLAG_ONELINE);
+		if (err_cert == NULL)
+			BIO_puts(bio_err, "<error getting cert>");
+		else
+			X509_NAME_print_ex(bio_err,
+			    X509_get_issuer_name(err_cert), 0, XN_FLAG_ONELINE);
 		BIO_puts(bio_err, "\n");
 		break;
 	case X509_V_ERR_CERT_NOT_YET_VALID:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
 		BIO_printf(bio_err, "notBefore=");
-		ASN1_TIME_print(bio_err, X509_get_notBefore(err_cert));
+		if (err_cert == NULL)
+			BIO_printf(bio_err, " <error getting cert>");
+		else
+			ASN1_TIME_print(bio_err, X509_get_notBefore(err_cert));
 		BIO_printf(bio_err, "\n");
 		break;
 	case X509_V_ERR_CERT_HAS_EXPIRED:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
 		BIO_printf(bio_err, "notAfter=");
-		ASN1_TIME_print(bio_err, X509_get_notAfter(err_cert));
+		if (err_cert == NULL)
+			BIO_printf(bio_err, " <error getting cert>");
+		else
+			ASN1_TIME_print(bio_err, X509_get_notAfter(err_cert));
 		BIO_printf(bio_err, "\n");
 		break;
 	case X509_V_ERR_NO_EXPLICIT_POLICY:
