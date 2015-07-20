@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.111 2015/07/20 05:49:30 jsg Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.112 2015/07/20 22:41:41 miod Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1133,6 +1133,8 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 #if defined(__vax__) || defined(__hppa64__)
 	/* only exists to support ld.so */
 	sigexit(p, SIGSYS);
+	/* NOTREACHED */
+	return EINVAL;
 #else
 	struct sys_kbind_args /* {
 		syscallarg(const struct __kbind *) param;
