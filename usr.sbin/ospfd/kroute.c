@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.101 2015/07/19 01:59:32 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.102 2015/07/20 23:45:39 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1019,6 +1019,9 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 		return;
 	}
 
+	/* notify ospfe about interface link state */
+	main_imsg_compose_ospfe(IMSG_IFINFO, 0, kif, sizeof(struct kif));
+
 	reachable = (kif->flags & IFF_UP) &&
 	    LINK_STATE_IS_UP(kif->link_state);
 
@@ -1026,9 +1029,6 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 		return;		/* nothing changed wrt nexthop validity */
 
 	kif->nh_reachable = reachable;
-
-	/* notify ospfe about interface link state */
-	main_imsg_compose_ospfe(IMSG_IFINFO, 0, kif, sizeof(struct kif));
 
 	/* update redistribute list */
 	RB_FOREACH(kr, kroute_tree, &krt) {
