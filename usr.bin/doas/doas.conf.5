@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.5 2015/07/19 22:09:08 benno Exp $
+.\" $OpenBSD: doas.conf.5,v 1.6 2015/07/20 07:43:27 jmc Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 19 2015 $
+.Dd $Mdocdate: July 20 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ and
 .Ev SSH_AUTH_SOCK ,
 and additionally permits tedu to run procmap as root without a password.
 .Bd -literal -offset indent
-# Non-exhaustive list of variables needed to 
+# Non-exhaustive list of variables needed to
 # build release(8) and ports(7)
 permit nopass keepenv { \e
         FTPMODE PKG_CACHE PKG_PATH SM_PATH SSH_AUTH_SOCK \e
