@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.10 2015/07/19 01:19:22 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.11 2015/07/20 00:54:01 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -190,25 +190,39 @@ copyenv(const char **oldenvp, struct rule *rule)
 	const char *safeset[] = {
 		"DISPLAY", "HOME", "LOGNAME", "MAIL", "SHELL",
 		"PATH", "TERM", "USER", "USERNAME",
-		NULL,
+		NULL
+	};
+	const char *badset[] = {
+		"ENV",
+		NULL
 	};
 	char **envp;
 	const char **extra;
 	int ei;
-	int i, j;
-	int nsafe;
+	int i, ii, j, jj;
+	int nsafe, nbad;
 	int nextras = 0;
 	
+	nbad = arraylen(badset);
 	if ((rule->options & KEEPENV) && !rule->envlist) {
 		j = arraylen(oldenvp);
 		envp = reallocarray(NULL, j + 1, sizeof(char *));
 		if (!envp)
 			err(1, "reallocarray");
-		for (i = 0; i < j; i++) {
-			if (!(envp[i] = strdup(oldenvp[i])))
-				err(1, "strdup");
+		for (ii = i = 0; i < j; i++) {
+			for (jj = 0; jj < nbad; jj++) {
+				size_t len = strlen(badset[jj]);
+				if (strncmp(oldenvp[i], badset[jj], len) == 0) {
+					break;
+				}
+			}
+			if (jj == nbad) {
+				if (!(envp[ii] = strdup(oldenvp[i])))
+					err(1, "strdup");
+				ii++;
+			}
 		}
-		envp[i] = NULL;
+		envp[ii] = NULL;
 		return envp;
 	}
 
