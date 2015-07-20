@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.7 2015/07/03 21:45:10 miod Exp $ */
+/* $OpenBSD: speed.c,v 1.8 2015/07/20 21:55:13 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1707,25 +1707,31 @@ speed_main(int argc, char **argv)
 				}
 
 				if (ecdh_checks == 0) {
-					BIO_printf(bio_err, "ECDH computations don't match.\n");
+					BIO_printf(bio_err,
+					    "ECDH computations don't match.\n");
 					ERR_print_errors(bio_err);
 					rsa_count = 1;
+				} else {
+					pkey_print_message("", "ecdh",
+					    ecdh_c[j][0],
+					    test_curves_bits[j],
+					    ECDH_SECONDS);
+					Time_F(START);
+					for (count = 0, run = 1;
+					     COND(ecdh_c[j][0]); count++) {
+						ECDH_compute_key(secret_a,
+						    outlen,
+						    EC_KEY_get0_public_key(ecdh_b[j]),
+						    ecdh_a[j], kdf);
+					}
+					d = Time_F(STOP);
+					BIO_printf(bio_err, mr
+					    ? "+R7:%ld:%d:%.2f\n"
+					    : "%ld %d-bit ECDH ops in %.2fs\n",
+					    count, test_curves_bits[j], d);
+					ecdh_results[j][0] = d / (double) count;
+					rsa_count = count;
 				}
-				pkey_print_message("", "ecdh",
-				    ecdh_c[j][0],
-				    test_curves_bits[j],
-				    ECDH_SECONDS);
-				Time_F(START);
-				for (count = 0, run = 1; COND(ecdh_c[j][0]); count++) {
-					ECDH_compute_key(secret_a, outlen,
-					    EC_KEY_get0_public_key(ecdh_b[j]),
-					    ecdh_a[j], kdf);
-				}
-				d = Time_F(STOP);
-				BIO_printf(bio_err, mr ? "+R7:%ld:%d:%.2f\n" : "%ld %d-bit ECDH ops in %.2fs\n",
-				    count, test_curves_bits[j], d);
-				ecdh_results[j][0] = d / (double) count;
-				rsa_count = count;
 			}
 		}
 
