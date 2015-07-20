@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.52 2015/07/16 18:36:59 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.53 2015/07/20 23:15:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -28,6 +28,8 @@
 #include <sys/timeout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -68,10 +70,7 @@ int	pflow_clone_destroy(struct ifnet *);
 void	pflow_init_timeouts(struct pflow_softc *);
 int	pflow_calc_mtu(struct pflow_softc *, int, int);
 void	pflow_setmtu(struct pflow_softc *, int);
-int	pflowoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *);
 int	pflowioctl(struct ifnet *, u_long, caddr_t);
-void	pflowstart(struct ifnet *);
 
 struct mbuf	*pflow_get_mbuf(struct pflow_softc *, u_int16_t);
 void	pflow_flush(struct pflow_softc *);
@@ -94,7 +93,6 @@ int	pflow_pack_flow(struct pf_state *, struct pf_state_key *,
 	struct pflow_softc *);
 int	pflow_pack_flow_ipfix(struct pf_state *, struct pf_state_key *,
 	struct pflow_softc *);
-int	pflow_get_dynport(void);
 int	export_pflow_if(struct pf_state*, struct pf_state_key *,
 	struct pflow_softc *);
 int	copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc);
@@ -106,6 +104,8 @@ int	copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow,
 struct if_clone	pflow_cloner =
     IF_CLONE_INITIALIZER("pflow", pflow_clone_create,
     pflow_clone_destroy);
+
+extern struct proc proc0;
 
 void
 pflowattach(int npflow)
@@ -119,22 +119,48 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet		*ifp;
 	struct pflow_softc	*pflowif;
+	struct socket		*so;
+	struct sockaddr_in	*sin;
+	struct mbuf		*m;
+	int			 error;
+
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	if (error)
+		return (error);
+
+	MGET(m, M_WAIT, MT_SONAME);
+	sin = mtod(m, struct sockaddr_in *);
+	memset(sin, 0 , sizeof(*sin));
+	sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = INADDR_ANY;
+	sin->sin_port = htons(0);
+	error = sobind(so, m, &proc0);
+	m_freem(m);
+	if (error) {
+		soclose(so);
+		return (error);
+	}
 
 	if ((pflowif = malloc(sizeof(*pflowif),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
-
-	if ((pflowif->sc_imo.imo_membership = malloc(
-	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
-	    M_WAITOK|M_ZERO)) == NULL) {
-		free(pflowif, M_DEVBUF, 0);
+	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
+		soclose(so);
 		return (ENOMEM);
 	}
-	pflowif->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
+
+	pflowif->so = so;
+
+	MGET(pflowif->send_nam, M_WAIT, MT_SONAME);
+	sin = mtod(pflowif->send_nam, struct sockaddr_in *);
+	memset(sin, 0 , sizeof(*sin));
+	sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = INADDR_ANY;
+	sin->sin_port = 0;
+
 	pflowif->sc_receiver_ip.s_addr = INADDR_ANY;
 	pflowif->sc_receiver_port = 0;
 	pflowif->sc_sender_ip.s_addr = INADDR_ANY;
-	pflowif->sc_sender_port = pflow_get_dynport();
 	pflowif->sc_version = PFLOW_PROTO_DEFAULT;
 
 	/* ipfix template init */
@@ -232,8 +258,8 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "pflow%d", unit);
 	ifp->if_softc = pflowif;
 	ifp->if_ioctl = pflowioctl;
-	ifp->if_output = pflowoutput;
-	ifp->if_start = pflowstart;
+	ifp->if_output = NULL;
+	ifp->if_start = NULL;
 	ifp->if_type = IFT_PFLOW;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_hdrlen = PFLOW_HDRLEN;
@@ -244,10 +270,6 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(&pflowif->sc_if.if_bpf, ifp, DLT_RAW, 0);
-#endif
-
 	/* Insert into list of pflows */
 	SLIST_INSERT_HEAD(&pflowif_list, pflowif, sc_next);
 	return (0);
@@ -257,9 +279,12 @@ int
 pflow_clone_destroy(struct ifnet *ifp)
 {
 	struct pflow_softc	*sc = ifp->if_softc;
-	int			 s;
+	int			 s, error;
+
+	error = 0;
 
 	s = splnet();
+	m_freem(sc->send_nam);
 	if (timeout_initialized(&sc->sc_tmo))
 		timeout_del(&sc->sc_tmo);
 	if (timeout_initialized(&sc->sc_tmo6))
@@ -267,41 +292,15 @@ pflow_clone_destroy(struct ifnet *ifp)
 	if (timeout_initialized(&sc->sc_tmo_tmpl))
 		timeout_del(&sc->sc_tmo_tmpl);
 	pflow_flush(sc);
+	if (sc->so != NULL) {
+		error = soclose(sc->so);
+		sc->so = NULL;
+	}
 	if_detach(ifp);
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
-	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
 	free(sc, M_DEVBUF, 0);
 	splx(s);
-	return (0);
-}
-
-/*
- * Start output on the pflow interface.
- */
-void
-pflowstart(struct ifnet *ifp)
-{
-	struct mbuf	*m;
-	int		 s;
-
-	for (;;) {
-		s = splnet();
-		IF_DROP(&ifp->if_snd);
-		IF_DEQUEUE(&ifp->if_snd, m);
-		splx(s);
-
-		if (m == NULL)
-			return;
-		m_freem(m);
-	}
-}
-
-int
-pflowoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	struct rtentry *rt)
-{
-	m_freem(m);
-	return (0);
+	return (error);
 }
 
 /* ARGSUSED */
@@ -312,6 +311,9 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct pflow_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct pflowreq		 pflowr;
+	struct socket		*so;
+	struct sockaddr_in	*sin;
+	struct mbuf		*m;
 	int			 s, error;
 
 	switch (cmd) {
@@ -321,8 +323,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) &&
 		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
-		    sc->sc_receiver_port != 0 &&
-		    sc->sc_sender_port != 0) {
+		    sc->sc_receiver_port != 0 && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			/* send templates on startup */
@@ -374,16 +375,48 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				return(EINVAL);
 			}
 		}
-		s = splnet();
 
+		s = splnet();
 		pflow_flush(sc);
 
-		if (pflowr.addrmask & PFLOW_MASK_DSTIP)
+		if (pflowr.addrmask & PFLOW_MASK_DSTIP) {
 			sc->sc_receiver_ip.s_addr = pflowr.receiver_ip.s_addr;
-		if (pflowr.addrmask & PFLOW_MASK_DSTPRT)
+			sin = mtod(sc->send_nam, struct sockaddr_in *);
+			sin->sin_addr.s_addr = sc->sc_receiver_ip.s_addr;
+		}
+		if (pflowr.addrmask & PFLOW_MASK_DSTPRT) {
 			sc->sc_receiver_port = pflowr.receiver_port;
-		if (pflowr.addrmask & PFLOW_MASK_SRCIP)
+			sin = mtod(sc->send_nam, struct sockaddr_in *);
+			sin->sin_port = pflowr.receiver_port;
+		}
+		if (pflowr.addrmask & PFLOW_MASK_SRCIP) {
+			error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			
+			MGET(m, M_WAIT, MT_SONAME);
+			sin = mtod(m, struct sockaddr_in *);
+			memset(sin, 0 , sizeof(*sin));
+			sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
+			sin->sin_family = AF_INET;
+			sin->sin_addr.s_addr = pflowr.sender_ip.s_addr;
+			sin->sin_port = 0;
+
+			error = sobind(so, m, &proc0);
+			m_freem(m);
+			if (error) {
+				soclose(so);
+				splx(s);
+				return (error);
+			}
+
 			sc->sc_sender_ip.s_addr = pflowr.sender_ip.s_addr;
+			soclose(sc->so);
+			sc->so = so;
+		}
+
 		/* error check is above */
 		if (pflowr.addrmask & PFLOW_MASK_VERSION)
 			sc->sc_version = pflowr.version;
@@ -395,8 +428,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if ((ifp->if_flags & IFF_UP) &&
 		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
-		    sc->sc_receiver_port != 0 &&
-		    sc->sc_sender_port != 0) {
+		    sc->sc_receiver_port != 0 && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			if (sc->sc_version == PFLOW_PROTO_10) {
@@ -1083,78 +1115,14 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 int
 pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 {
-	struct udpiphdr	*ui;
-	u_int16_t	 len = m->m_pkthdr.len;
-#if NBPFILTER > 0
-	struct ifnet	*ifp = &sc->sc_if;
-#endif
-	struct ip	*ip;
-	int		 err;
-
-	/* UDP Header*/
-	M_PREPEND(m, sizeof(struct udpiphdr), M_DONTWAIT);
-	if (m == NULL) {
-		pflowstats.pflow_onomem++;
-		return (ENOBUFS);
-	}
-
-	ui = mtod(m, struct udpiphdr *);
-	ui->ui_pr = IPPROTO_UDP;
-	ui->ui_src = sc->sc_sender_ip;
-	ui->ui_sport = sc->sc_sender_port;
-	ui->ui_dst = sc->sc_receiver_ip;
-	ui->ui_dport = sc->sc_receiver_port;
-	ui->ui_ulen = htons(sizeof(struct udphdr) + len);
-	ui->ui_sum = 0;
-	m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
-	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
-
-	ip = (struct ip *)ui;
-	ip->ip_v = IPVERSION;
-	ip->ip_hl = sizeof(struct ip) >> 2;
-	ip->ip_id = htons(ip_randomid());
-	ip->ip_off = htons(IP_DF);
-	ip->ip_tos = IPTOS_LOWDELAY;
-	ip->ip_ttl = IPDEFTTL;
-	ip->ip_len = htons(sizeof(struct udpiphdr) + len);
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
-
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += m->m_pkthdr.len;
 
-	if ((err = ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL,
-	    0))) {
-		pflowstats.pflow_oerrors++;
-		sc->sc_if.if_oerrors++;
+	if (sc->so == NULL) {
+		m_freem(m);
+		return (EINVAL);
 	}
-	return (err);
-}
-
-int
-pflow_get_dynport(void)
-{
-	u_int16_t	tmp, low, high, cut;
-
-	low = ipport_hifirstauto;     /* sysctl */
-	high = ipport_hilastauto;
-
-	cut = arc4random_uniform(1 + high - low) + low;
-
-	for (tmp = cut; tmp <= high; ++(tmp)) {
-		if (!in_baddynamic(tmp, IPPROTO_UDP))
-			return (htons(tmp));
-	}
-
-	for (tmp = cut - 1; tmp >= low; --(tmp)) {
-		if (!in_baddynamic(tmp, IPPROTO_UDP))
-			return (htons(tmp));
-	}
-
-	return (htons(ipport_hilastauto)); /* XXX */
+	return (sosend(sc->so, sc->send_nam, NULL, m, NULL, 0));
 }
 
 int
