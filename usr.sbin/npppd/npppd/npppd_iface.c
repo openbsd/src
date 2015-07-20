@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.10 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.11 2015/07/20 18:58:30 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.10 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: npppd_iface.c,v 1.11 2015/07/20 18:58:30 yasuoka Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -192,6 +192,12 @@ npppd_iface_setup_ip(npppd_iface *_this)
 			    "Cannot assign tun device ip address: %m");
 			goto fail;
 		}
+		/* erase old route */
+		if (assigned.s_addr != 0) {
+			gw.s_addr = htonl(INADDR_LOOPBACK);
+			in_host_route_delete(&assigned, &gw);
+		}
+
 		assigned.s_addr = _this->ip4addr.s_addr;
 
 	}
