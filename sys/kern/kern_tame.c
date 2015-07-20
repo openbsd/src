@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.4 2015/07/20 15:26:28 nicm Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.5 2015/07/20 15:52:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -560,11 +560,15 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 	    name[0] == CTL_HW && name[1] == HW_SENSORS)
 		return (0);
 
+	/* gethostname(), getdomainname(), getpagesize() */
+	if (namelen == 2 &&
+	    name[0] == CTL_KERN && name[1] == KERN_HOSTNAME)
+		return (0);
 	if (namelen == 2 &&
 	    name[0] == CTL_KERN && name[1] == KERN_DOMAINNAME)
 		return (0);
 	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_HOSTNAME)
+	    name[0] == CTL_HW && name[1] == HW_PAGESIZE)
 		return (0);
 
 	printf("tame: pid %d %s sysctl %d: %d %d %d %d %d %d\n",
