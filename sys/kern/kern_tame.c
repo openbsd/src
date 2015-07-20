@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.6 2015/07/20 16:15:40 nicm Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.7 2015/07/20 16:48:07 nicm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -679,10 +679,13 @@ int
 tame_ioctl_check(struct proc *p, long com, void *v)
 {
 	struct file *fp = v;
-	struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = NULL;
 
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
+
+	if (fp != NULL)
+		vp = (struct vnode *)fp->f_data;
 
 	switch (com) {
 
