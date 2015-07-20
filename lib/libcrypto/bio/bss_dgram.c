@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_dgram.c,v 1.40 2015/02/09 10:55:33 jsing Exp $ */
+/* $OpenBSD: bss_dgram.c,v 1.41 2015/07/20 23:15:28 doug Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -423,10 +423,10 @@ dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret = -1;
 			break;
 		}
-		ret = -1;
 #else
-		break;
+		ret = -1;
 #endif
+		break;
 	case BIO_CTRL_DGRAM_QUERY_MTU:
 #if defined(IP_MTU)
 		addr_len = (socklen_t)sizeof(addr);
