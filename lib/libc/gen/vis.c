@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.23 2014/11/17 19:48:27 millert Exp $ */
+/*	$OpenBSD: vis.c,v 1.24 2015/07/20 01:52:28 millert Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,9 +56,10 @@ char *
 vis(char *dst, int c, int flag, int nextc)
 {
 	if (isvisible(c, flag)) {
-		*dst++ = c;
-		if (c == '\\' && (flag & VIS_NOSLASH) == 0)
+		if ((c == '"' && (flag & VIS_DQ) != 0) ||
+		    (c == '\\' && (flag & VIS_NOSLASH) == 0))
 			*dst++ = '\\';
+		*dst++ = c;
 		*dst = '\0';
 		return (dst);
 	}
@@ -171,18 +172,17 @@ strnvis(char *dst, const char *src, size_t siz, int flag)
 	i = 0;
 	for (start = dst, end = start + siz - 1; (c = *src) && dst < end; ) {
 		if (isvisible(c, flag)) {
-			i = 1;
-			*dst++ = c;
-			if (c == '\\' && (flag & VIS_NOSLASH) == 0) {
+			if ((c == '"' && (flag & VIS_DQ) != 0) ||
+			    (c == '\\' && (flag & VIS_NOSLASH) == 0)) {
 				/* need space for the extra '\\' */
-				if (dst < end)
-					*dst++ = '\\';
-				else {
-					dst--;
+				if (dst + 1 >= end) {
 					i = 2;
 					break;
 				}
+				*dst++ = '\\';
 			}
+			i = 1;
+			*dst++ = c;
 			src++;
 		} else {
 			i = vis(tbuf, c, flag, *++src) - tbuf;
