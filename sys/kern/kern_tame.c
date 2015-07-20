@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.5 2015/07/20 15:52:18 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.6 2015/07/20 16:15:40 nicm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
@@ -406,7 +407,8 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 	struct mbuf *control = v;
 	struct msghdr tmp;
 	struct cmsghdr *cmsg;
-	struct file **rp, *fp;
+	int *fdp, fd;
+	struct file *fp;
 	int nfds, i;
 
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
@@ -433,13 +435,16 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 		return tame_fail(p, EPERM, TAME_CMSG);
 
 	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */ 
-	rp = (struct file **)CMSG_DATA(cmsg);
+	fdp = (int *)CMSG_DATA(cmsg);
 	nfds = (cmsg->cmsg_len - CMSG_ALIGN(sizeof(*cmsg))) /
 	    sizeof(struct file *);
 	for (i = 0; i < nfds; i++) {
 		struct vnode *vp;
 
-		fp = *rp++;
+		fd = *fdp++;
+		fp = fd_getfile(p->p_fd, fd);
+		if (fp == NULL)
+			return tame_fail(p, EBADF, TAME_CMSG);
 
 		/* Only allow passing of sockets, pipes, and pure files */
 		printf("f_type %d\n", fp->f_type);
@@ -472,7 +477,8 @@ tame_cmsg_send(struct proc *p, void *v, int controllen)
 	struct mbuf *control = v;
 	struct msghdr tmp;
 	struct cmsghdr *cmsg;
-	struct file **rp, *fp;
+	int *fdp, fd;
+	struct file *fp;
 	int nfds, i;
 
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
@@ -499,13 +505,16 @@ tame_cmsg_send(struct proc *p, void *v, int controllen)
 		return (0);
 
 	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */ 
-	rp = (struct file **)CMSG_DATA(cmsg);
+	fdp = (int *)CMSG_DATA(cmsg);
 	nfds = (cmsg->cmsg_len - CMSG_ALIGN(sizeof(*cmsg))) /
 	    sizeof(struct file *);
 	for (i = 0; i < nfds; i++) {
 		struct vnode *vp;
 
-		fp = *rp++;
+		fd = *fdp++;
+		fp = fd_getfile(p->p_fd, fd);
+		if (fp == NULL)
+			return tame_fail(p, EBADF, TAME_CMSG);
 
 		/* Only allow passing of sockets, pipes, and pure files */
 		printf("f_type %d\n", fp->f_type);
