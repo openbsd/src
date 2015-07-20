@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.60 2015/05/12 15:29:29 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.61 2015/07/20 15:50:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -81,6 +81,11 @@ const struct options_table_entry server_options_table[] = {
 	{ .name = "focus-events",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .default_num = 0
+	},
+
+	{ .name = "history-file",
+	  .type = OPTIONS_TABLE_STRING,
+	  .default_str = NULL
 	},
 
 	{ .name = "message-limit",
