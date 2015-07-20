@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.3 2015/07/20 02:43:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.4 2015/07/20 15:26:28 nicm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -132,6 +132,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_vfork] = _TM_PROC,
 	[SYS_kill] = _TM_PROC,
 
+	[SYS_setgroups] = _TM_PROC,
 	[SYS_setresgid] = _TM_PROC,
 	[SYS_setresuid] = _TM_PROC,
 
