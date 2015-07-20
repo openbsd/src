@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2015/07/19 23:46:50 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.22 2015/07/20 19:44:32 pirofti Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,6 +35,7 @@ uartbus0	at mainbus0
 octrtc0		at mainbus0
 
 octcf0		at iobus0
+amdcf0		at iobus0
 octrng0		at iobus0
 
 com0		at uartbus0

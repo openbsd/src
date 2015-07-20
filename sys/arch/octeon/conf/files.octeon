@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.23 2015/07/19 23:46:50 jasper Exp $
+#	$OpenBSD: files.octeon,v 1.24 2015/07/20 19:44:32 pirofti Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -10,6 +10,7 @@ major	{ cd = 3 }
 major	{ wd = 4 }
 major	{ rd = 8 }
 major	{ octcf = 15 }
+major	{ amdcf = 19 }
 
 file	dev/cninit.c
 file	arch/octeon/octeon/autoconf.c
@@ -74,6 +75,11 @@ file	arch/octeon/dev/octdwctwo.c			octdwctwo	needs-flag
 device	octcf: disk
 attach	octcf at iobus
 file	arch/octeon/dev/octcf.c				octcf
+
+device	amdcf: disk
+attach	amdcf at iobus
+file	arch/octeon/dev/amdcf.c				amdcf
+
 
 # On-board RNG
 device	octrng

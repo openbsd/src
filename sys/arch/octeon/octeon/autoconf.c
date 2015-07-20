@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 2015/06/30 06:10:21 yasuoka Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 2015/07/20 19:44:32 pirofti Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -93,7 +93,8 @@ device_register(struct device *dev, void *aux)
 	case DV_DISK:
 		if ((strcmp(drvrname, "wd") == 0 ||
 		    strcmp(drvrname, "sd") == 0 ||
-		    strcmp(drvrname, "octcf") == 0) &&
+		    strcmp(drvrname, "octcf") == 0 ||
+		    strcmp(drvrname, "amdcf") == 0) &&
 		    strcmp(name, bootdev) == 0)
 			bootdv = dev;
 		break;
@@ -116,5 +117,6 @@ struct nam2blk nam2blk[] = {
 	{ "rd",		8 },
 	{ "vnd",	2 },
 	{ "octcf",	15 },
+	{ "amdcf",	19 },
 	{ NULL,		-1 }
 };

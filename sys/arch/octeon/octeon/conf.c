@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2015/05/04 21:45:23 jmatthew Exp $ */
+/*	$OpenBSD: conf.c,v 1.15 2015/07/20 19:44:32 pirofti Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,9 @@ bdev_decl(wd);
 #define NOCTCF 1
 bdev_decl(octcf);
 
+#define NAMDCF 1
+bdev_decl(amdcf);
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NSD,sd),		/* 0: SCSI disk */
@@ -80,6 +83,10 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 13:  */
 	bdev_notdef(),			/* 14:  */
 	bdev_disk_init(NOCTCF,octcf),	/* 15: CF disk */
+	bdev_notdef(),			/* 16:  */
+	bdev_notdef(),			/* 17:  */
+	bdev_notdef(),			/* 18:  */
+	bdev_disk_init(NAMDCF,amdcf),	/* 19: CF disk */
 };
 
 int	nblkdev = nitems(bdevsw);
@@ -111,6 +118,7 @@ cdev_decl(wd);
 #include "audio.h"
 #include "video.h"
 cdev_decl(octcf);
+cdev_decl(amdcf);
 
 #include "ksyms.h"
 
@@ -159,7 +167,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
-	cdev_notdef(),			/* 19: */
+	cdev_disk_init(NAMDCF,amdcf),	/* 19: CF disk */
 	cdev_notdef(),			/* 20: */
 	cdev_notdef(),			/* 21: */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
@@ -285,7 +293,7 @@ int chrtoblktbl[] =  {
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
 	/* 18 */	4,		/* wd */
-	/* 19 */	NODEV,
+	/* 19 */	19,		/* amdcf */
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	8		/* rd */

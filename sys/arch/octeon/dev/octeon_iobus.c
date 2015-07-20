@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.13 2015/07/19 23:46:50 jasper Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.14 2015/07/20 19:44:32 pirofti Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -149,6 +149,7 @@ static const struct octeon_iobus_addrs iobus_addrs[] = {
 	{ "cn30xxgmx",	GMX0_BASE_PORT0 },
 	{ "octrng",	OCTEON_RNG_BASE },
 	{ "dwctwo",	USBN_BASE       },
+	{ "amdcf",	OCTEON_AMDCF_BASE},
 };
 
 /* There can only be one. */
