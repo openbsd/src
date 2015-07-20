@@ -124,11 +124,13 @@ debug_get_debugfp()
 int
 vlog_printf(uint32_t prio, const char *format, va_list ap)
 {
-	int status = 0, i, fmtoff = 0, state = 0, saved_errno, level;
+	int status = 0, i, fmtoff = 0, state = 0, fmtlen, saved_errno, level;
 	char fmt[8192];
 	struct tm *lt;
 	time_t now;
 
+	ASSERT(format != NULL);
+	ASSERT(format[0] != '\0');
 	if (DL(prio) > 0 && debuglevel < (int)DL(prio))
 		return -1;
 	if (no_debuglog &&  LOG_PRI(prio) >= LOG_DEBUG)
@@ -152,7 +154,11 @@ vlog_printf(uint32_t prio, const char *format, va_list ap)
 	time(&now);
 	lt = localtime(&now);
 
-	for (i = 0; i < (int)strlen(format); i++) {
+	fmtlen = strlen(format);
+	for (i = 0; i < fmtlen; i++) {
+		/* 2 chars in this block and 2 chars after this block */
+		if (sizeof(fmt) - fmtoff < 4)
+			break;
 		switch(state) {
 		case 0:
 			switch(format[i]) {
@@ -175,7 +181,8 @@ vlog_printf(uint32_t prio, const char *format, va_list ap)
 			case 'm':
 				fmt[fmtoff] = '\0';
 				saved_errno = errno;
-				strlcat(fmt, strerror(errno), sizeof(fmt));
+				/* -1 is to reserve for '\n' */
+				strlcat(fmt, strerror(errno), sizeof(fmt) - 1);
 				errno = saved_errno;
 				fmtoff = strlen(fmt);
 				state = 0;
@@ -186,9 +193,11 @@ vlog_printf(uint32_t prio, const char *format, va_list ap)
 copy_loop:
 		continue;
 	}
-	if (fmt[fmtoff-1] == '\t')
+	/* remove trailing TAB */
+	if (fmtoff > 0 && fmt[fmtoff - 1] == '\t')
 		fmtoff--;
-	if (fmt[fmtoff-1] != '\n')
+	/* append new line char */
+	if (fmtoff == 0 || fmt[fmtoff-1] != '\n')
 		fmt[fmtoff++] = '\n';
 
 	fmt[fmtoff] = '\0';
