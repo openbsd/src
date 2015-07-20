@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.3 2015/07/20 16:48:11 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,11 +173,10 @@ bad:
 	if (infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, infile) <= 0)
-			if (in == NULL) {
-				perror(infile);
-				goto end;
-			}
+		if (BIO_read_filename(in, infile) <= 0) {
+			perror(infile);
+			goto end;
+		}
 	}
 
 	if (informat == FORMAT_ASN1)
