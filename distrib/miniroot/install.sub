@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.848 2015/07/19 19:33:51 rpe Exp $
+#	$OpenBSD: install.sub,v 1.849 2015/07/20 01:12:49 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -64,7 +64,7 @@ usage() {
 	exit 1
 }
 
-# Wait for the http process to finish, or be killed after the timeout.
+# Wait for the ftp process to finish, or be killed after the timeout.
 waitcgiinfo() {
 	wait "$CGIPID" 2>/dev/null
 	[[ -s $CGI_INFO ]] || return
@@ -130,8 +130,8 @@ addel() {
 	isin "$_a" $* || echo -n " $_a"
 }
 
-# Remove all occurrences of first argument from list formed by
-# the remaining arguments.
+# Remove all occurrences of first argument from list formed by the remaining
+# arguments.
 rmel() {
 	local	_a=$1 _b
 
@@ -275,8 +275,8 @@ getdevname() {
 #
 # Parameters:
 #
-#    $1 = disk
-#    $2 = /path/to/fstab
+# $1 = disk
+# $2 = /path/to/fstab
 #
 disklabel_autolayout() {
 	local _disk=$1 _f=$2 _dl=/disklabel.auto _op
@@ -334,7 +334,7 @@ retrap() {
 
 
 #-------------------------------------------------------------------------------
-# Functions to ask (or auto-answer) queststions
+# Functions to ask (or auto-answer) questions
 #-------------------------------------------------------------------------------
 
 # Fetch response file for autoinstall.
@@ -413,12 +413,14 @@ get_responsefile() {
 
 # Search question in $RESPFILE, return answer in $resp.
 #
-# - split question and answer at leftmost =
-# - strip leading/trailing blanks
-# - compare questions case insensitive
-# - ignore empty and comment lines and lines without =
-# - return default answer if provided and none is found in file
-# - treat empty/missing/multiple answers as error and exit
+# 1) split question and answer at leftmost =
+# 2) strip leading/trailing blanks
+# 3) compare questions case insensitive
+# 4) ignore empty and comment lines and lines without =
+# 5) return default answer if provided and none is found in file
+# 6) treat empty/missing/multiple answers as error and exit
+#
+# Parameters:
 #
 # $1 = the question to search for
 # $2 = the default answer
@@ -448,8 +450,9 @@ _autorespond() {
 # will then reprint any prompt and call the function again.
 #
 # Optional parameters:
-#    $1    = the question to ask the user
-#    $2    = the default answer
+#
+# $1 = the question to ask the user
+# $2 = the default answer
 #
 _ask() {
 	local _q=$1 _def=$2 _int _redo=0 _pid
@@ -489,12 +492,14 @@ ask() {
 }
 
 # Ask the user for a y or n, and insist on 'y', 'yes', 'n' or 'no'.
-#
-#    $1    = the question to ask the user
-#    $2    = the default answer (assumed to be 'n' if empty).
-#
 # Return 'y' or 'n' in $resp.
 # Exit code: yes => 0, no => 1
+#
+# Parameters:
+#
+# $1 = the question to ask the user
+# $2 = the default answer (assumed to be 'n' if empty).
+#
 ask_yn() {
 	local _q=$1 _a=${2:-no}
 	typeset -l _resp
@@ -512,6 +517,9 @@ ask_yn() {
 }
 
 # Ask for the user to select one value from a list, or 'done'.
+# At exit $resp holds selected item, or 'done'.
+#
+# Parameters:
 #
 # $1 = name of the list items (disk, cd, etc.)
 # $2 = question to ask
@@ -520,8 +528,6 @@ ask_yn() {
 #
 # N.B.! $3 and $4 will be "expanded" using eval, so be sure to escape them
 #       if they contain spooky stuff
-#
-# At exit $resp holds selected item, or 'done'.
 ask_which() {
 	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef _key _q
 
@@ -555,11 +561,13 @@ ask_which() {
 }
 
 # Ask for user input until a non-empty reply is entered.
-#
-#    $1    = the question to ask the user
-#    $2    = the default answer
-#
 # Save the user input (or the default) in $resp.
+#
+# Parameters:
+#
+# $1 = the question to ask the user
+# $2 = the default answer
+#
 function ask_until {
 	resp=
 	while true; do
@@ -571,11 +579,13 @@ function ask_until {
 }
 
 # Ask for a password, saving the input in $resp.
-#    Display $1 as the prompt.
-#    *Don't* allow the '!' options that ask does.
-#    *Don't* echo input.
-#    *Don't* interpret "\" as escape character.
-#    Preserve whitespace in input
+#
+# 1) Display $1 as the prompt.
+# 2) *Don't* allow the '!' options that ask does.
+# 3) *Don't* echo input.
+# 4) *Don't* interpret "\" as escape character.
+# 5) Preserve whitespace in input
+#
 askpass() {
 	stty -echo
 	IFS= read -r resp?"$1 "
@@ -644,9 +654,8 @@ __EOT
 	mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
 }
 
-# $1 == interface
 # Obtain and output the inet information related to interface $1.
-# Should output '<UP/DOWN> <addr> <netmask> <rest of inet line> '.
+# Should output '<UP/DOWN> <addr> <netmask> <rest of inet line>'.
 v4_info() {
 	ifconfig $1 inet | sed -n '
 		1s/.*<UP,.*/UP/p
@@ -670,8 +679,8 @@ hextodec() {
 #
 # Parameters:
 #
-#    $1 = IP address (v6 if it contains ':', else v4)
-#    $2 = symbolic name
+# $1 = IP address (v6 if it contains ':', else v4)
+# $2 = symbolic name
 #
 addhostent() {
 	local _addr=$1 _name=$2 _delim="."
@@ -691,9 +700,9 @@ addhostent() {
 #
 # Parameters:
 #
-#    $1 = name of the network device
-#    $2 = hostname to use for dhcp request
-#    $3 = /path/to/hostname.if
+# $1 = name of the network device
+# $2 = hostname to use for dhcp request
+# $3 = /path/to/hostname.if
 #
 v4_config() {
 	local _ifs=$1 _name=$2 _hn=$3 _prompt _addr _mask
@@ -777,9 +786,9 @@ v6_defroute() {
 #
 # Parameters:
 #
-#    $1 = name of the network device
-#    $2 = hostname to use for dhcp request
-#    $3 = /path/to/hostname.if
+# $1 = name of the network device
+# $2 = hostname to use for dhcp request
+# $3 = /path/to/hostname.if
 #
 v6_config() {
 	local _ifs=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
@@ -812,9 +821,8 @@ v6_config() {
 	v6_defroute $_ifs
 }
 
-# Perform an 802.11 interface network scan.
+# Perform an 802.11 network scan on interface $1.
 # The result is cached in $WLANLIST.
-# $1 == interface
 ieee80211_scan() {
 	# N.B. Skipping quoted nwid's for now.
 	[[ -f $WLANLIST ]] ||
@@ -823,10 +831,7 @@ ieee80211_scan() {
 	cat $WLANLIST
 }
 
-# Configures an 802.11 interface.
-#
-# $1 == interface
-# $2 == hostname
+# Configure 802.11 interface $1 and append ifconfig options to hostname.if $2.
 ieee80211_config() {
 	local _ifs=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
 
@@ -1057,11 +1062,13 @@ sane_install() {
 }
 
 # Show list of available sets and let the user select which sets to install.
+# Set $resp to list of selected sets.
+#
+# Parameters:
 #
 # $1 = available sets
 # $2 = already selected sets
 #
-# Set $resp to list of selected sets.
 select_sets() {
 	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
 	# account for 4 spaces added to the sets list
@@ -1904,18 +1911,18 @@ startcgiinfo() {
 # Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
 # comment lines and dropping all filesystems which
 #
-#	1) can't be mounted (no mount_* command is found),
-#	2) have 'xx' in the option field (usually /altroot),
-#	3) have 'noauto' in the option field,
-#	4) are nfs (since name resolution may not be present),
-#	5) are on a vnd device.
+# 1) can't be mounted (no mount_* command is found),
+# 2) have 'xx' in the option field (usually /altroot),
+# 3) have 'noauto' in the option field,
+# 4) are nfs (since name resolution may not be present),
+# 5) are on a vnd device.
 #
 # In addition,
 #
-#	1) delete 'softdep' options (no soft updates in ramdisk kernels),
-#	2) mount non-ffs filesystems read only,
-#	3) prepend '/mnt' to all mount points,
-#	4) delete any trailing '/' from the mount point (e.g. root),
+# 1) delete 'softdep' options (no soft updates in ramdisk kernels),
+# 2) mount non-ffs filesystems read only,
+# 3) prepend '/mnt' to all mount points,
+# 4) delete any trailing '/' from the mount point (e.g. root),
 #
 # If no /etc/fstab is created, do not proceed with install/upgrade.
 munge_fstab() {
@@ -2129,7 +2136,7 @@ store_random() {
 	chmod 600 /mnt/var/db/host.random /mnt/etc/random.seed
 }
 
-# Final steps common for installations and upgrades.
+# Final steps common for installs and upgrades.
 finish_up() {
 	local _dev _mp _fstype _rest
 
@@ -2204,7 +2211,7 @@ __EOT
 }
 
 
-# #######################################################################
+#-------------------------------------------------------------------------------
 #
 # Initial actions common to both installs and upgrades.
 #
@@ -2212,7 +2219,7 @@ __EOT
 # call functions defined above, so it's safest to put this
 # code here rather than at the top of the file.
 #
-# #######################################################################
+#-------------------------------------------------------------------------------
 
 # Parse parameters.
 AUTO=false
@@ -2248,7 +2255,7 @@ shift $((OPTIND-1))
 # Make sure lock is initially released.
 rm -df /tmp/lock
 
-# The dmesg listener will check for the existance of this file and send a
+# The dmesg listener will check for the existence of this file and sends a
 # signal to the child process if the dmesg output differs from the contents
 # of that file.
 rm -f /tmp/update
