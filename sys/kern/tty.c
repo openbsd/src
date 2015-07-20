@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.121 2015/02/10 21:56:10 miod Exp $	*/
+/*	$OpenBSD: tty.c,v 1.122 2015/07/20 22:28:57 sf Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1688,7 +1688,7 @@ ttycheckoutq(struct tty *tp, int wait)
 	hiwat = tp->t_hiwat;
 	s = spltty();
 	oldsig = wait ? curproc->p_siglist : 0;
-	if (tp->t_outq.c_cc > hiwat + 200)
+	if (tp->t_outq.c_cc > hiwat + TTHIWATMINSPACE)
 		while (tp->t_outq.c_cc > hiwat) {
 			ttstart(tp);
 			if (wait == 0 || curproc->p_siglist != oldsig) {
@@ -1823,7 +1823,7 @@ loop:
 					tp->t_rocount = 0;
 					if (ttyoutput(*cp, tp) >= 0) {
 						/* out of space */
-						goto overfull;
+						goto ovhiwat;
 					}
 					cp++;
 					cc--;
@@ -1849,7 +1849,7 @@ loop:
 			tp->t_outcc += ce;
 			if (i > 0) {
 				/* out of space */
-				goto overfull;
+				goto ovhiwat;
 			}
 			if (ISSET(tp->t_lflag, FLUSHO) ||
 			    tp->t_outq.c_cc > hiwat)
@@ -1868,15 +1868,6 @@ done:
 	if (obufcc)
 		explicit_bzero(obuf, obufcc);
 	return (error);
-
-overfull:
-	/*
-	 * Since we are using ring buffers, if we can't insert any more into
-	 * the output queue, we can assume the ring is full and that someone
-	 * forgot to set the high water mark correctly.  We set it and then
-	 * proceed as normal.
-	 */
-	hiwat = tp->t_outq.c_cc - 1;
 
 ovhiwat:
 	ttstart(tp);
@@ -2114,7 +2105,7 @@ ttsetwater(struct tty *tp)
 	cps = tp->t_ospeed / 10;
 	tp->t_lowat = x = CLAMP(cps / 2, TTMAXLOWAT, TTMINLOWAT);
 	x += cps;
-	tp->t_hiwat = CLAMP(x, tp->t_outq.c_cn, 100);
+	tp->t_hiwat = CLAMP(x, tp->t_outq.c_cn - TTHIWATMINSPACE, TTMINHIWAT);
 #undef	CLAMP
 }
 

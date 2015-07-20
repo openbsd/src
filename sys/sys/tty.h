@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.34 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: tty.h,v 1.35 2015/07/20 22:28:57 sf Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -171,6 +171,8 @@ struct itty {
 #ifdef _KERNEL
 #define	TTMAXLOWAT	256
 #define	TTMINLOWAT	32
+#define	TTMINHIWAT	100
+#define	TTHIWATMINSPACE	200		/* Min space above hiwat */
 #endif
 
 /* These flags are kept in t_state. */
