@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.77 2015/06/23 19:50:48 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.78 2015/07/20 00:16:16 kettenis Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1190,7 +1190,9 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
 #endif
 
+	KERNEL_LOCK();
 	pmap_do_remove(pmap, sva, eva, TRUE);
+	KERNEL_UNLOCK();
 }
 
 /*

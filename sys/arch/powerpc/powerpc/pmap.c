@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.159 2015/06/05 10:15:54 mpi Exp $ */
+/*	$OpenBSD: pmap.c,v 1.160 2015/07/20 00:16:16 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -642,6 +642,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	struct pte_desc *pted;
 	vaddr_t va;
 
+	KERNEL_LOCK();
 	PMAP_VP_LOCK(pm);
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pted = pmap_vp_lookup(pm, va);
@@ -649,6 +650,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			pmap_remove_pted(pm, pted);
 	}
 	PMAP_VP_UNLOCK(pm);
+	KERNEL_UNLOCK();
 }
 
 /*
