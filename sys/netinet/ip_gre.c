@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.55 2015/06/16 11:09:40 mpi Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.56 2015/07/20 21:16:39 rzalamena Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -97,6 +97,8 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	struct gre_softc *sc;
 	u_short flags;
 	u_int af;
+	int s;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
@@ -178,9 +180,17 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 #ifdef MPLS
 		case ETHERTYPE_MPLS:
 		case ETHERTYPE_MPLS_MCAST:
-			ifq = &mplsintrq;
-			af = AF_MPLS;
-			break;
+			if ((sc->sc_if.if_xflags & IFXF_MPLS) == 0) {
+				m_freem(m);
+				return (0);
+			}
+
+			ml_enqueue(&ml, m);
+
+			s = splnet();
+			if_input(&sc->sc_if, &ml);
+			splx(s);
+			return (0);
 #endif
 		default:	   /* others not yet supported */
 			return (0);

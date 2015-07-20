@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.31 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.32 2015/07/20 21:16:39 rzalamena Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -107,7 +107,6 @@ struct rt_mpls {
  */
 #define MPLSCTL_ENABLE			1
 #define	MPLSCTL_DEFTTL			2
-#define MPLSCTL_IFQUEUE			3
 #define	MPLSCTL_MAXINKLOOP		4
 #define MPLSCTL_MAPTTL_IP		5
 #define MPLSCTL_MAPTTL_IP6		6
@@ -160,7 +159,6 @@ void	mpe_input6(struct mbuf *, struct ifnet *, struct sockaddr_mpls *,
 extern int mpls_raw_usrreq(struct socket *, int, struct mbuf *,
 			struct mbuf *, struct mbuf *, struct proc *);
 
-extern struct niqueue	mplsintrq;	/* MPLS input queue */
 extern int		mpls_defttl;
 extern int		mpls_mapttl_ip;
 extern int		mpls_mapttl_ip6;
@@ -168,15 +166,15 @@ extern int		mpls_inkloop;
 
 
 void	mpls_init(void);
-void	mplsintr(void);
 
 struct mbuf	*mpls_shim_pop(struct mbuf *);
 struct mbuf	*mpls_shim_swap(struct mbuf *, struct rt_mpls *);
 struct mbuf	*mpls_shim_push(struct mbuf *, struct rt_mpls *);
 
 int		 mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-void		 mpls_input(struct mbuf *);
 int		 mpls_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
+int		 mpls_install_handler(struct ifnet *);
+void		 mpls_uninstall_handler(struct ifnet *);
 
 #endif /* _KERNEL */

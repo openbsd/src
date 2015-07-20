@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.11 2015/04/10 13:58:20 dlg Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.12 2015/07/20 21:16:39 rzalamena Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -130,13 +130,10 @@ mpls_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EOPNOTSUPP);
 
 	/* Almost all sysctl names at this level are terminal. */
-	if (namelen != 1 && name[0] != MPLSCTL_IFQUEUE)
+	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case MPLSCTL_IFQUEUE:
-		return (sysctl_niq(name + 1, namelen - 1,
-		    oldp, oldlenp, newp, newlen, &mplsintrq));
 	default:
 		return sysctl_int_arr(mplsctl_vars, name, namelen,
 		    oldp, oldlenp, newp, newlen);

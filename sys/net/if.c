@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.352 2015/07/18 16:10:03 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.353 2015/07/20 21:16:39 rzalamena Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -632,7 +632,9 @@ if_detach(struct ifnet *ifp)
 #ifdef INET6
 	in6_ifdetach(ifp);
 #endif
-
+#ifdef MPLS
+	mpls_uninstall_handler(ifp);
+#endif /* MPLS */
 #if NPF > 0
 	pfi_detach_ifnet(ifp);
 #endif
@@ -1400,6 +1402,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if (ISSET(ifr->ifr_flags, IFXF_MPLS) &&
 		    !ISSET(ifp->if_xflags, IFXF_MPLS)) {
 			s = splnet();
+			if (mpls_install_handler(ifp) != 0) {
+				splx(s);
+				return (ENOMEM);
+			}
+
 			ifp->if_xflags |= IFXF_MPLS;
 			ifp->if_ll_output = ifp->if_output; 
 			ifp->if_output = mpls_output;
@@ -1411,6 +1418,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			ifp->if_xflags &= ~IFXF_MPLS;
 			ifp->if_output = ifp->if_ll_output; 
 			ifp->if_ll_output = NULL;
+			mpls_uninstall_handler(ifp);
 			splx(s);
 		}
 #endif	/* MPLS */

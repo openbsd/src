@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.44 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.45 2015/07/20 21:16:39 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -40,8 +40,6 @@
 
 #include <netmpls/mpls.h>
 
-struct niqueue	mplsintrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_MPLS);
-
 #ifdef MPLS_DEBUG
 #define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)
 #define MPLS_TTL_GET(l)		(ntohl((l) & MPLS_TTL_MASK))
@@ -53,31 +51,56 @@ int	mpls_ip6_adjttl(struct mbuf *, u_int8_t);
 #endif
 
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
+int		 mpls_input(struct ifnet *, struct mbuf *);
 
 void
 mpls_init(void)
 {
 }
 
-void
-mplsintr(void)
+int
+mpls_install_handler(struct ifnet *ifp)
 {
-	struct mbuf *m;
+	struct ifih *ifih, *ifihn;
 
-	/* Get next datagram of input queue */
-	while ((m = niq_dequeue(&mplsintrq)) != NULL) {
-#ifdef DIAGNOSTIC
-		if ((m->m_flags & M_PKTHDR) == 0)
-			panic("mplsintr no HDR");
-#endif
-		mpls_input(m);
-	}
+	ifih = malloc(sizeof(*ifih), M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (ifih == NULL)
+		return (-1);
+
+	ifih->ifih_input = mpls_input;
+
+	/* We must install mpls_input() after ether_input(). */
+	SLIST_FOREACH(ifihn, &ifp->if_inputs, ifih_next)
+		if (SLIST_NEXT(ifihn, ifih_next) == NULL)
+			break;
+
+	if (ifihn == NULL)
+		SLIST_INSERT_HEAD(&ifp->if_inputs, ifih, ifih_next);
+	else
+		SLIST_INSERT_AFTER(ifihn, ifih, ifih_next);
+
+	return (0);
 }
 
 void
-mpls_input(struct mbuf *m)
+mpls_uninstall_handler(struct ifnet *ifp)
 {
-	struct ifnet *ifp;
+	struct ifih *ifih;
+
+	SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
+		if (ifih->ifih_input != mpls_input)
+			continue;
+
+		SLIST_REMOVE(&ifp->if_inputs, ifih, ifih, ifih_next);
+		break;
+	}
+
+	free(ifih, M_DEVBUF, sizeof(*ifih));
+}
+
+int
+mpls_input(struct ifnet *ifp, struct mbuf *m)
+{
 	struct sockaddr_mpls *smpls;
 	struct sockaddr_mpls sa_mpls;
 	struct shim_hdr	*shim;
@@ -86,21 +109,20 @@ mpls_input(struct mbuf *m)
 	u_int8_t ttl;
 	int i, hasbos;
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL || !ISSET(ifp->if_xflags, IFXF_MPLS)) {
+	if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
 		m_freem(m);
-		return;
+		return (1);
 	}
 
 	/* drop all broadcast and multicast packets */
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
 		m_freem(m);
-		return;
+		return (1);
 	}
 
 	if (m->m_len < sizeof(*shim))
 		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
-			return;
+			return (1);
 
 	shim = mtod(m, struct shim_hdr *);
 
@@ -117,7 +139,7 @@ mpls_input(struct mbuf *m)
 		/* TTL exceeded */
 		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
 		if (m == NULL)
-			return;
+			return (1);
 		shim = mtod(m, struct shim_hdr *);
 		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
 	}
@@ -334,6 +356,8 @@ do_v6:
 done:
 	if (rt)
 		rtfree(rt);
+
+	return (1);
 }
 
 int

@@ -49,10 +49,6 @@ netintr(void *unused) /* ARGSUSED */
 		if (n & (1 << NETISR_IPV6))
 			ip6intr();
 #endif
-#ifdef MPLS
-		if (n & (1 << NETISR_MPLS))
-			mplsintr();
-#endif
 #if NPPP > 0
 		if (n & (1 << NETISR_PPP))
 			pppintr();
