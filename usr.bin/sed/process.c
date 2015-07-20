@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.25 2015/07/19 17:21:21 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.26 2015/07/20 18:24:15 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -441,10 +441,10 @@ flush_appends(void)
 	int count, i;
 	char buf[8 * 1024];
 
-	for (i = 0; i < appendx; i++) 
+	for (i = 0; i < appendx; i++)
 		switch (appends[i].type) {
 		case AP_STRING:
-			fwrite(appends[i].s, sizeof(char), appends[i].len, 
+			fwrite(appends[i].s, sizeof(char), appends[i].len,
 			    outfile);
 			break;
 		case AP_FILE:
@@ -476,7 +476,7 @@ lputs(char *s)
 	const char *escapes;
 	char *p;
 
-	for (count = 0; *s; ++s) { 
+	for (count = 0; *s; ++s) {
 		if (count >= termwidth) {
 			(void)fprintf(outfile, "\\\n");
 			count = 0;
@@ -512,7 +512,7 @@ regexec_e(regex_t *preg, const char *string, int eflags,
     int nomatch, size_t slen)
 {
 	int eval;
-	
+
 	if (preg == NULL) {
 		if (defpreg == NULL)
 			err(FATAL, "first RE may not be empty");
@@ -522,7 +522,7 @@ regexec_e(regex_t *preg, const char *string, int eflags,
 	/* Set anchors */
 	match[0].rm_so = 0;
 	match[0].rm_eo = slen;
-	
+
 	eval = regexec(defpreg, string,
 	    nomatch ? 0 : maxnsub + 1, match, eflags | REG_STARTEND);
 	switch (eval) {
