@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.175 2015/07/19 20:10:46 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.176 2015/07/20 17:47:38 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -60,7 +60,7 @@
 #define MAX_MEMBUF_NAME	64		/* Max length of membuf log name */
 #define MAX_TCPBUF	(256 * 1024)	/* Maximum tcp event buffer size */
 #define	MAXSVLINE	120		/* maximum saved line length */
-#define MAXTCP		20		/* maximum incomming connections */
+#define FD_RESERVE	5		/* file descriptors not accepted */
 #define DEFUPRI		(LOG_USER|LOG_NOTICE)
 #define DEFSPRI		(LOG_KERN|LOG_CRIT)
 #define TIMERINTVL	30		/* interval for checking flush, mark */
@@ -293,6 +293,8 @@ char hostname_unknown[] = "???";
 void	 klog_readcb(int, short, void *);
 void	 udp_readcb(int, short, void *);
 void	 unix_readcb(int, short, void *);
+int	 reserve_accept4(int, int, struct event *,
+    void (*)(int, short, void *), struct sockaddr *, socklen_t *, int);
 void	 tcp_acceptcb(int, short, void *);
 int	 octet_counting(struct evbuffer *, char **, int);
 int	 non_transparent_framing(struct evbuffer *, char **);
@@ -493,7 +495,7 @@ main(int argc, char *argv[])
 			if (!Debug)
 				die(0);
 		} else {
-			if (listen(fd_ctlsock, 16) == -1) {
+			if (listen(fd_ctlsock, 5) == -1) {
 				logerror("ctlsock listen");
 				die(0);
 			}
@@ -774,7 +776,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 			continue;
 		}
 		if (!shutread && res->ai_protocol == IPPROTO_TCP &&
-		    listen(*fdp, MAXTCP) == -1) {
+		    listen(*fdp, 10) == -1) {
 			snprintf(ebuf, sizeof(ebuf), "listen "
 			    "protocol %d, address %s, portnum %s",
 			    res->ai_protocol, hostname, servname);
@@ -846,24 +848,67 @@ unix_readcb(int fd, short event, void *arg)
 		logerror("recvfrom unix");
 }
 
+int
+reserve_accept4(int lfd, int event, struct event *ev,
+    void (*cb)(int, short, void *),
+    struct sockaddr *sa, socklen_t *salen, int flags)
+{
+	struct timeval	 to = { 1, 0 };
+	char		 ebuf[ERRBUFSIZE];
+	int		 afd;
+
+	if (event & EV_TIMEOUT) {
+		dprintf("Listen again\n");
+		/* Enable the listen event, there is no timeout anymore. */
+		event_set(ev, lfd, EV_READ|EV_PERSIST, cb, ev);
+		event_add(ev, NULL);
+		errno = EWOULDBLOCK;
+		return (-1);
+	}
+
+	if (getdtablecount() + FD_RESERVE >= getdtablesize()) {
+		afd = -1;
+		errno = EMFILE;
+	} else
+		afd = accept4(lfd, sa, salen, flags);
+
+	if (afd == -1 && (errno == ENFILE || errno == EMFILE)) {
+		snprintf(ebuf, sizeof(ebuf), "syslogd: accept deferred: %s",
+		    strerror(errno));
+		logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
+		/*
+		 * Disable the listen event and convert it to a timeout.
+		 * Pass the listen file descriptor to the callback.
+		 */
+		event_del(ev);
+		event_set(ev, lfd, 0, cb, ev);
+		event_add(ev, &to);
+		return (-1);
+	}
+
+	return (afd);
+}
+
 void
 tcp_acceptcb(int fd, short event, void *arg)
 {
+	struct event		*ev = arg;
 	struct peer		*p;
 	struct sockaddr_storage	 ss;
 	socklen_t		 sslen;
 	char			 hostname[NI_MAXHOST], servname[NI_MAXSERV];
 	char			*peername, ebuf[ERRBUFSIZE];
 
-	dprintf("Accepting tcp connection\n");
 	sslen = sizeof(ss);
-	fd = accept4(fd, (struct sockaddr *)&ss, &sslen, SOCK_NONBLOCK);
-	if (fd == -1) {
-		if (errno != EINTR && errno != EWOULDBLOCK &&
+	if ((fd = reserve_accept4(fd, event, ev, tcp_acceptcb,
+	    (struct sockaddr *)&ss, &sslen, SOCK_NONBLOCK)) == -1) {
+		if (errno != ENFILE && errno != EMFILE &&
+		    errno != EINTR && errno != EWOULDBLOCK &&
 		    errno != ECONNABORTED)
 			logerror("accept tcp socket");
 		return;
 	}
+	dprintf("Accepting tcp connection\n");
 
 	if (getnameinfo((struct sockaddr *)&ss, sslen, hostname,
 	    sizeof(hostname), servname, sizeof(servname),
@@ -874,13 +919,6 @@ tcp_acceptcb(int fd, short event, void *arg)
 		peername = hostname_unknown;
 	}
 	dprintf("Peer addresss and port %s\n", peername);
-	if (peernum >= MAXTCP) {
-		snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" "
-		    "denied: maximum %d reached", peername, MAXTCP);
-		logmsg(LOG_SYSLOG|LOG_WARNING, ebuf, LocalHostName, ADDDATE);
-		close(fd);
-		return;
-	}
 	if ((p = malloc(sizeof(*p))) == NULL) {
 		snprintf(ebuf, sizeof(ebuf), "malloc \"%s\"", peername);
 		logerror(ebuf);
@@ -2685,14 +2723,15 @@ ctlsock_acceptcb(int fd, short event, void *arg)
 {
 	struct event		*ev = arg;
 
-	dprintf("Accepting control connection\n");
-	fd = accept4(fd, NULL, NULL, SOCK_NONBLOCK);
-	if (fd == -1) {
-		if (errno != EINTR && errno != EWOULDBLOCK &&
+	if ((fd = reserve_accept4(fd, event, ev, ctlsock_acceptcb,
+	    NULL, NULL, SOCK_NONBLOCK)) == -1) {
+		if (errno != ENFILE && errno != EMFILE &&
+		    errno != EINTR && errno != EWOULDBLOCK &&
 		    errno != ECONNABORTED)
 			logerror("accept ctlsock");
 		return;
 	}
+	dprintf("Accepting control connection\n");
 
 	if (fd_ctlconn != -1)
 		ctlconn_cleanup();
