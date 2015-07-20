@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.6 2015/07/19 03:28:26 doug Exp $ */
+/* $OpenBSD: s_socket.c,v 1.7 2015/07/20 03:22:25 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -196,8 +196,11 @@ init_server_long(int *sock, int port, char *ip, int type)
 #if defined SOL_SOCKET && defined SO_REUSEADDR
 	{
 		int j = 1;
-		setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-		    (void *) &j, sizeof j);
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+		    (void *) &j, sizeof j) == -1) {
+			perror("setsockopt");
+			goto err;
+		}
 	}
 #endif
 	if (bind(s, (struct sockaddr *) & server, sizeof(server)) == -1) {
