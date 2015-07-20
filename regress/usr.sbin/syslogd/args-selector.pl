@@ -8,10 +8,7 @@
 
 use strict;
 use warnings;
-use Cwd;
 use Sys::Syslog;
-
-my $objdir = getcwd();
 
 my (@messages, @priorities);
 foreach my $fac (qw(local5 local6 local7)) {
@@ -55,7 +52,7 @@ sub selector2config {
     my $conf = "";
     my $i = 0;
     foreach my $sel (sort keys %s2m) {
-	$conf .= "$sel\t$objdir/file-$i.log\n";
+	$conf .= "$sel\t\$objdir/file-$i.log\n";
 	$i++;
     }
     return $conf;

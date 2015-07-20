@@ -8,15 +8,10 @@
 
 use strict;
 use warnings;
-use Cwd;
-use Sys::Hostname;
-
-my $objdir = getcwd();
-(my $host = hostname()) =~ s/\..*//;
 
 our %args = (
     syslogd => {
-	conf => <<"EOF",
+	conf => <<'EOF',
 +nonexist
 *.*	$objdir/file-0.log
 ++$host

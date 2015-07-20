@@ -8,13 +8,10 @@
 
 use strict;
 use warnings;
-use Cwd;
-
-my $objdir = getcwd();
 
 our %args = (
     syslogd => {
-	conf => <<"EOF",
+	conf => <<'EOF',
 !nonexist
 *.*	$objdir/file-0.log
 !syslogd-regress

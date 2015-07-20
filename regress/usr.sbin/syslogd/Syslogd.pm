@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.13 2015/07/16 16:34:34 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.14 2015/07/20 05:34:16 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -23,6 +23,7 @@ use parent 'Proc';
 use Carp;
 use Cwd;
 use File::Basename;
+use Sys::Hostname;
 use Time::HiRes qw(time alarm sleep);
 
 sub new {
@@ -53,6 +54,10 @@ sub new {
 	_make_abspath(\$self->{$_}) foreach (qw(conffile outfile outpipe));
 
 	# substitute variables in config file
+	my $curdir = dirname($0) || ".";
+	my $objdir = getcwd();
+	my $hostname = hostname();
+	(my $host = $hostname) =~ s/\..*//;
 	my $connectdomain = $self->{connectdomain};
 	my $connectaddr = $self->{connectaddr};
 	my $connectproto = $self->{connectproto};
@@ -65,14 +70,14 @@ sub new {
 	my $memory = $self->{memory};
 	print $fh "*.*\t:$memory->{size}:$memory->{name}\n" if $memory;
 	my $loghost = $self->{loghost};
-	if ($loghost) {
-		$loghost =~ s/(\$[a-z]+)/$1/eeg;
-	} else {
-		$loghost = "\@$connectaddr";
-		$loghost .= ":$connectport" if $connectport;
+	unless ($loghost) {
+		$loghost = '@$connectaddr';
+		$loghost .= ':$connectport' if $connectport;
 	}
-	print $fh "*.*\t$loghost\n";
-	print $fh $self->{conf} if $self->{conf};
+	my $config = "*.*\t$loghost\n";
+	$config .= $self->{conf} if $self->{conf};
+	$config =~ s/(\$[a-z]+)/$1/eeg;
+	print $fh $config;
 	close $fh;
 
 	return $self->create_out();

@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.15 2015/05/22 19:09:18 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.16 2015/07/20 05:34:16 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -20,6 +20,8 @@ use warnings;
 package Relayd;
 use parent 'Proc';
 use Carp;
+use Cwd;
+use Sys::Hostname;
 use File::Basename;
 
 sub new {
@@ -58,6 +60,9 @@ sub new {
 
 	# substitute variables in config file
 	my $curdir = dirname($0) || ".";
+	my $objdir = getcwd();
+	my $hostname = hostname();
+	(my $host = $hostname) =~ s/\..*//;
 	my $connectport = $self->{connectport};
 	my $connectaddr = $self->{connectaddr};
 	my $listenaddr = $self->{listenaddr};
