@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.181 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.182 2015/07/20 00:19:14 beck Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/ptrace.h>
 #include <sys/sched.h>
 #include <sys/user.h>
+#include <sys/syslog.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1586,11 +1587,12 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 		    io->io_offset + coffset, segflg,
 		    IO_UNIT, io->io_cred, NULL, io->io_proc);
 		if (error) {
-			printf("pid %d (%s): %s write of %lu@%p"
-			    " at %lld failed: %d\n",
-			    io->io_proc->p_pid, io->io_proc->p_comm,
-			    segflg == UIO_USERSPACE ? "user" : "system",
-			    len, data, (long long)io->io_offset, error);
+			if (error == ENOSPC)
+				log(LOG_ERR, "coredump of %s(%d) failed, filesystem full",
+				    io->io_proc->p_comm, io->io_proc->p_pid);
+			else
+				log(LOG_ERR, "coredump of %s(%d), write failed: errno %d",
+				    io->io_proc->p_comm, io->io_proc->p_pid, error);
 			return (error);
 		}
 
