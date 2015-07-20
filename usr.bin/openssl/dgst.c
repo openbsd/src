@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.2 2015/07/20 17:10:45 doug Exp $ */
+/* $OpenBSD: dgst.c,v 1.3 2015/07/20 18:23:52 rpointel Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -393,9 +393,14 @@ mac_end:
 
 	if (sigfile && sigkey) {
 		BIO *sigbio;
-		sigbio = BIO_new_file(sigfile, "rb");
 		siglen = EVP_PKEY_size(sigkey);
 		sigbuf = malloc(siglen);
+		if (sigbuf == NULL) {
+			BIO_printf(bio_err, "out of memory\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+		sigbio = BIO_new_file(sigfile, "rb");
 		if (!sigbio) {
 			BIO_printf(bio_err, "Error opening signature file %s\n",
 			    sigfile);
