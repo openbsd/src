@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: dgst.c,v 1.2 2015/07/20 17:10:45 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,8 +254,14 @@ dgst_main(int argc, char **argv)
 		EVP_MD_do_all_sorted(list_md_fn, bio_err);
 		goto end;
 	}
+
 	in = BIO_new(BIO_s_file());
 	bmd = BIO_new(BIO_f_md());
+	if (in == NULL || bmd == NULL) {
+		ERR_print_errors(bio_err);
+		goto end;
+	}
+
 	if (debug) {
 		BIO_set_callback(in, BIO_debug_callback);
 		/* needed for windows 3.1 */
@@ -263,10 +269,6 @@ dgst_main(int argc, char **argv)
 	}
 	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
-		goto end;
-	}
-	if ((in == NULL) || (bmd == NULL)) {
-		ERR_print_errors(bio_err);
 		goto end;
 	}
 	if (out_bin == -1) {
