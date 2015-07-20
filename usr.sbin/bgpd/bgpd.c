@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.177 2015/07/16 18:26:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.178 2015/07/20 16:10:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,11 +39,13 @@
 void		sighdlr(int);
 __dead void	usage(void);
 int		main(int, char *[]);
+pid_t		start_child(enum bgpd_process, char *, int, int, int);
 int		check_child(pid_t, const char *);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *, struct peer **);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
+int		imsg_send_sockets(struct imsgbuf *, struct imsgbuf *);
 
 int			 rfd = -1;
 int			 cflags;
@@ -96,7 +98,7 @@ usage(void)
 #define POLL_MAX		3
 #define MAX_TIMEOUT		3600
 
-int	cmd_opts;
+int	 cmd_opts;
 
 int
 main(int argc, char *argv[])
@@ -106,12 +108,12 @@ main(int argc, char *argv[])
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
+	char			*saved_argv0;
 	int			 debug = 0;
-	int			 ch, timeout, nfds;
+	int			 rflag = 0, sflag = 0;
+	int			 ch, timeout;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
-	int			 pipe_s2r[2];
-	int			 pipe_s2r_c[2];
 
 	conffile = CONFFILE;
 	bgpd_process = PROC_MAIN;
@@ -119,10 +121,14 @@ main(int argc, char *argv[])
 	log_init(1);		/* log to stderr until daemonized */
 	log_verbose(1);
 
+	saved_argv0 = argv[0];
+	if (saved_argv0 == NULL)
+		saved_argv0 = "bgpd";
+
 	conf = new_config();
 	peer_l = NULL;
 
-	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:nRSv")) != -1) {
 		switch (ch) {
 		case 'c':
 			cmd_opts |= BGPD_OPT_FORCE_DEMOTE;
@@ -147,6 +153,12 @@ main(int argc, char *argv[])
 			cmd_opts |= BGPD_OPT_VERBOSE;
 			log_verbose(1);
 			break;
+		case 'R':
+			rflag = 1;
+			break;
+		case 'S':
+			sflag = 1;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -155,7 +167,7 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
-	if (argc > 0)
+	if (argc > 0 || (sflag && rflag))
 		usage();
 
 	if (cmd_opts & BGPD_OPT_NOACTION) {
@@ -169,6 +181,11 @@ main(int argc, char *argv[])
 			fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
+
+	if (rflag)
+		rde_main(debug, cmd_opts & BGPD_OPT_VERBOSE);
+	else if (sflag)
+		session_main(debug, cmd_opts & BGPD_OPT_VERBOSE);
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -190,16 +207,12 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_UNSPEC, pipe_m2r) == -1)
 		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	     PF_UNSPEC, pipe_s2r) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	     PF_UNSPEC, pipe_s2r_c) == -1)
-		fatal("socketpair");
 
 	/* fork children */
-	rde_pid = rde_main(pipe_m2r, pipe_s2r, pipe_m2s, pipe_s2r_c, debug);
-	io_pid = session_main(pipe_m2s, pipe_s2r, pipe_m2r, pipe_s2r_c);
+	rde_pid = start_child(PROC_RDE, saved_argv0, pipe_m2r[1], debug,
+	    cmd_opts & BGPD_OPT_VERBOSE);
+	io_pid = start_child(PROC_SE, saved_argv0, pipe_m2s[1], debug,
+	    cmd_opts & BGPD_OPT_VERBOSE);
 
 	setproctitle("parent");
 
@@ -211,11 +224,6 @@ main(int argc, char *argv[])
 	signal(SIGUSR1, sighdlr);
 	signal(SIGPIPE, SIG_IGN);
 
-	close(pipe_m2s[1]);
-	close(pipe_m2r[1]);
-	close(pipe_s2r[0]);
-	close(pipe_s2r[1]);
-
 	if ((ibuf_se = malloc(sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
@@ -224,20 +232,18 @@ main(int argc, char *argv[])
 	mrt_init(ibuf_rde, ibuf_se);
 	if ((rfd = kr_init()) == -1)
 		quit = 1;
+	if (imsg_send_sockets(ibuf_se, ibuf_rde))
+		fatal("could not establish imsg links");
 	quit = reconfigure(conffile, conf, &peer_l);
 	if (pftable_clear_all() != 0)
 		quit = 1;
 
 	while (quit == 0) {
 		bzero(pfd, sizeof(pfd));
-		pfd[PFD_PIPE_SESSION].fd = ibuf_se->fd;
-		pfd[PFD_PIPE_SESSION].events = POLLIN;
-		if (ibuf_se->w.queued)
-			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
-		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde->fd;
-		pfd[PFD_PIPE_ROUTE].events = POLLIN;
-		if (ibuf_rde->w.queued)
-			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
+
+		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
+		set_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde);
+
 		pfd[PFD_SOCK_ROUTE].fd = rfd;
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 
@@ -245,38 +251,37 @@ main(int argc, char *argv[])
 		if (timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
 
-		if ((nfds = poll(pfd, POLL_MAX, timeout * 1000)) == -1)
+		if (poll(pfd, POLL_MAX, timeout * 1000) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
 			}
 
-		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_se->w) <= 0 && errno != EAGAIN) {
-				log_warn("pipe write error (to SE)");
-				quit = 1;
-			}
-
-		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_rde->w) <= 0 &&
-			    errno != EAGAIN) {
-				log_warn("pipe write error (to RDE)");
-				quit = 1;
-			}
-
-		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
+		if (handle_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se) == -1) {
+			log_warnx("Lost connection to SE");
+			msgbuf_clear(&ibuf_se->w);
+			free(ibuf_se);
+			ibuf_se = NULL;
+			quit = 1;
+		} else {
 			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION, conf) ==
 			    -1)
 				quit = 1;
 		}
 
-		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
+		if (handle_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde) == -1) {
+			log_warnx("Lost connection to RDE");
+			msgbuf_clear(&ibuf_rde->w);
+			free(ibuf_rde);
+			ibuf_rde = NULL;
+			quit = 1;
+		} else {
 			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE, conf) ==
 			    -1)
 				quit = 1;
 		}
 
-		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
+		if (pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
 			if (kr_dispatch_msg() == -1)
 				quit = 1;
 		}
@@ -360,6 +365,47 @@ main(int argc, char *argv[])
 
 	log_info("Terminating");
 	return (0);
+}
+
+pid_t
+start_child(enum bgpd_process p, char *argv0, int fd, int debug, int verbose)
+{
+	char *argv[5];
+	int argc = 0;
+	pid_t pid;
+
+	switch (pid = fork()) {
+	case -1:
+		fatal("cannot fork");
+	case 0:
+		break;
+	default:
+		close(fd);
+		return (pid);
+	}
+
+	if (dup2(fd, 3) == -1)
+		fatal("cannot setup imsg fd");
+
+	argv[argc++] = argv0;
+	switch (p) {
+	case PROC_MAIN:
+		fatalx("Can not start main process");
+	case PROC_RDE:
+		argv[argc++] = "-R";
+		break;
+	case PROC_SE:
+		argv[argc++] = "-S";
+		break;
+	}
+	if (debug)
+		argv[argc++] = "-d";
+	if (verbose)
+		argv[argc++] = "-v";
+	argv[argc++] = NULL;
+
+	execvp(argv0, argv);
+	fatal("execvp");
 }
 
 int
@@ -534,16 +580,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 	ssize_t			 n;
 	int			 rv, verbose;
 
-	if ((n = imsg_read(ibuf)) == -1)
-		return (-1);
-
-	if (n == 0) {	/* connection closed */
-		log_warnx("dispatch_imsg in main: pipe closed");
-		return (-1);
-	}
-
 	rv = 0;
-	for (;;) {
+	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
 			return (-1);
 
@@ -814,5 +852,81 @@ control_setup(struct bgpd_config *conf)
 		    &restricted, sizeof(restricted)) == -1)
 			return (-1);
 	}
+	return (0);
+}
+
+void
+set_pollfd(struct pollfd *pfd, struct imsgbuf *i)
+{
+	if (i == NULL || i->fd == -1) {
+		pfd->fd = -1;
+		return;
+	}
+	pfd->fd = i->fd;
+	pfd->events = POLLIN;
+	if (i->w.queued > 0)
+		pfd->events |= POLLOUT;
+}
+
+int
+handle_pollfd(struct pollfd *pfd, struct imsgbuf *i)  
+{
+	ssize_t n;
+
+	if (i == NULL)
+		return (0);
+
+	if (pfd->revents & POLLOUT)
+		if (msgbuf_write(&i->w) <= 0 && errno != EAGAIN) {
+			log_warn("handle_pollfd: msgbuf_write error");
+			close(i->fd);
+			i->fd = -1;
+			return (-1);
+		}
+
+	if (pfd->revents & POLLIN) {
+		if ((n = imsg_read(i)) == -1) {
+			log_warn("handle_pollfd: imsg_read error");
+			close(i->fd);
+			i->fd = -1;
+			return (-1);
+		}
+		if (n == 0) { /* connection closed */
+			log_warn("handle_pollfd: poll fd");
+			close(i->fd);
+			i->fd = -1;
+			return (-1);
+		}
+	}
+	return (0);
+}
+
+int
+imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde)
+{
+	int pipe_s2r[2];
+	int pipe_s2r_ctl[2];
+
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	     PF_UNSPEC, pipe_s2r) == -1)
+		return (-1);
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	     PF_UNSPEC, pipe_s2r_ctl) == -1)
+		return (-1);
+
+	if (imsg_compose(se, IMSG_SOCKET_CONN, 0, 0, pipe_s2r[0],
+	    NULL, 0) == -1)
+		return (-1);
+	if (imsg_compose(rde, IMSG_SOCKET_CONN, 0, 0, pipe_s2r[1],
+	    NULL, 0) == -1)
+		return (-1);
+
+	if (imsg_compose(se, IMSG_SOCKET_CONN_CTL, 0, 0, pipe_s2r_ctl[0],
+	    NULL, 0) == -1)
+		return (-1);
+	if (imsg_compose(rde, IMSG_SOCKET_CONN_CTL, 0, 0, pipe_s2r_ctl[1],
+	    NULL, 0) == -1)
+		return (-1);
+
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.287 2015/07/18 22:52:39 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.288 2015/07/20 16:10:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,7 @@
 #define RDE_RUNNER_ROUNDS	100
 #define SESSION_CTL_QUEUE_MAX	10000
 
-enum {
+enum bgpd_process {
 	PROC_MAIN,
 	PROC_SE,
 	PROC_RDE
@@ -384,6 +384,8 @@ enum imsg_type {
 	IMSG_NETWORK_FLUSH,
 	IMSG_NETWORK_DONE,
 	IMSG_FILTER_SET,
+	IMSG_SOCKET_CONN,
+	IMSG_SOCKET_CONN_CTL,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_RIB,
 	IMSG_RECONF_PEER,
@@ -933,6 +935,8 @@ void		 send_imsg_session(int, pid_t, void *, u_int16_t);
 int		 send_network(int, struct network_config *,
 		     struct filter_set_head *);
 int		 bgpd_filternexthop(struct kroute *, struct kroute6 *);
+void		 set_pollfd(struct pollfd *, struct imsgbuf *);
+int		 handle_pollfd(struct pollfd *, struct imsgbuf *);
 
 /* control.c */
 void	control_cleanup(const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.338 2015/02/09 11:37:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.339 2015/07/20 16:10:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -184,13 +184,11 @@ setup_listeners(u_int *la_cnt)
 	return (0);
 }
 
-pid_t
-session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
-    int pipe_s2rctl[2])
+void
+session_main(int debug, int verbose)
 {
-	int			 nfds, timeout, pfkeysock;
+	int			 timeout, pfkeysock;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
-	pid_t			 pid;
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
 	u_int			 listener_cnt, ctl_cnt, mrt_cnt;
 	u_int			 new_cnt;
@@ -203,15 +201,6 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 	struct listen_addr	*la;
 	void			*newp;
 	short			 events;
-
-	switch (pid = fork()) {
-	case -1:
-		fatal("cannot fork");
-	case 0:
-		break;
-	default:
-		return (pid);
-	}
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal(NULL);
@@ -237,18 +226,9 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 	signal(SIGALRM, SIG_IGN);
 	signal(SIGUSR1, SIG_IGN);
 
-	close(pipe_m2s[0]);
-	close(pipe_s2r[1]);
-	close(pipe_s2rctl[1]);
-	close(pipe_m2r[0]);
-	close(pipe_m2r[1]);
-	if ((ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_rde_ctl = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_rde, pipe_s2r[0]);
-	imsg_init(ibuf_rde_ctl, pipe_s2rctl[0]);
-	imsg_init(ibuf_main, pipe_m2s[1]);
+	imsg_init(ibuf_main, 3);
 
 	TAILQ_INIT(&ctl_conns);
 	LIST_INIT(&mrthead);
@@ -362,26 +342,21 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		}
 
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
-		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
-		pfd[PFD_PIPE_MAIN].events = POLLIN;
-		if (ibuf_main->w.queued > 0)
-			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
-		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde->fd;
-		pfd[PFD_PIPE_ROUTE].events = POLLIN;
-		if (ibuf_rde->w.queued > 0)
-			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
+
+		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
+		set_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde);
 
 		ctl_queued = 0;
 		TAILQ_FOREACH(ctl_conn, &ctl_conns, entry)
 			ctl_queued += ctl_conn->ibuf.w.queued;
 
-		pfd[PFD_PIPE_ROUTE_CTL].fd = ibuf_rde_ctl->fd;
+		/*
+		 * Do not act as unlimited buffer. Don't read in more
+		 * messages if the ctl sockets are getting full.
+		 */
 		if (ctl_queued < SESSION_CTL_QUEUE_MAX)
-			/*
-			 * Do not act as unlimited buffer. Don't read in more
-			 * messages if the ctl sockets are getting full.
-			 */
-			pfd[PFD_PIPE_ROUTE_CTL].events = POLLIN;
+			set_pollfd(&pfd[PFD_PIPE_ROUTE_CTL], ibuf_rde_ctl);
+
 		if (pauseaccept == 0) {
 			pfd[PFD_SOCK_CTL].fd = csock;
 			pfd[PFD_SOCK_CTL].events = POLLIN;
@@ -498,7 +473,7 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 			timeout = 1;
 		if (timeout < 0)
 			timeout = 0;
-		if ((nfds = poll(pfd, i, timeout * 1000)) == -1)
+		if (poll(pfd, i, timeout * 1000) == -1)
 			if (errno != EINTR)
 				fatal("poll error");
 
@@ -509,73 +484,62 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 		if (pauseaccept && getmonotime() > pauseaccept + 1)
 			pauseaccept = 0;
 
-		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_main->w) <= 0 && errno != EAGAIN)
-				fatal("pipe write error");
-
-		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
-			nfds--;
+		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1)
+			fatalx("Lost connection to parent");
+		else
 			session_dispatch_imsg(ibuf_main, PFD_PIPE_MAIN,
 			    &listener_cnt);
-		}
 
-		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_rde->w) <= 0 && errno != EAGAIN)
-				fatal("pipe write error");
-
-		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
-			nfds--;
+		if (handle_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde) == -1) {
+			log_warnx("Lost connection to RDE");
+			msgbuf_clear(&ibuf_rde->w);
+			free(ibuf_rde);
+			ibuf_rde = NULL;
+		} else
 			session_dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE,
 			    &listener_cnt);
-		}
 
-		if (nfds > 0 && pfd[PFD_PIPE_ROUTE_CTL].revents & POLLIN) {
-			nfds--;
+		if (handle_pollfd(&pfd[PFD_PIPE_ROUTE_CTL], ibuf_rde_ctl) ==
+		    -1) {
+			log_warnx("Lost connection to RDE");
+			msgbuf_clear(&ibuf_rde_ctl->w);
+			free(ibuf_rde_ctl);
+			ibuf_rde_ctl = NULL;
+		} else
 			session_dispatch_imsg(ibuf_rde_ctl, PFD_PIPE_ROUTE_CTL,
 			    &listener_cnt);
-		}
 
-		if (nfds > 0 && pfd[PFD_SOCK_CTL].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_SOCK_CTL].revents & POLLIN)
 			ctl_cnt += control_accept(csock, 0);
-		}
 
-		if (nfds > 0 && pfd[PFD_SOCK_RCTL].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_SOCK_RCTL].revents & POLLIN)
 			ctl_cnt += control_accept(rcsock, 1);
-		}
 
-		if (nfds > 0 && pfd[PFD_SOCK_PFKEY].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_SOCK_PFKEY].revents & POLLIN) {
 			if (pfkey_read(pfkeysock, NULL) == -1) {
 				log_warnx("pfkey_read failed, exiting...");
 				session_quit = 1;
 			}
 		}
 
-		for (j = PFD_LISTENERS_START; nfds > 0 && j < idx_listeners;
-		    j++)
-			if (pfd[j].revents & POLLIN) {
-				nfds--;
+		for (j = PFD_LISTENERS_START; j < idx_listeners; j++)
+			if (pfd[j].revents & POLLIN)
 				session_accept(pfd[j].fd);
-			}
 
-		for (; nfds > 0 && j < idx_peers; j++)
-			nfds -= session_dispatch_msg(&pfd[j],
+		for (; j < idx_peers; j++)
+			session_dispatch_msg(&pfd[j],
 			    peer_l[j - idx_listeners]);
 
 		for (p = peers; p != NULL; p = p->next)
 			if (p->rbuf && p->rbuf->wpos)
 				session_process_msg(p);
 
-		for (; nfds > 0 && j < idx_mrts; j++)
-			if (pfd[j].revents & POLLOUT) {
-				nfds--;
+		for (; j < idx_mrts; j++)
+			if (pfd[j].revents & POLLOUT)
 				mrt_write(mrt_l[j - idx_peers]);
-			}
 
-		for (; nfds > 0 && j < i; j++)
-			nfds -= control_dispatch_msg(&pfd[j], &ctl_cnt);
+		for (; j < i; j++)
+			control_dispatch_msg(&pfd[j], &ctl_cnt);
 	}
 
 	while ((p = peers) != NULL) {
@@ -2531,22 +2495,17 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
 	struct mrt		*mrt;
+	struct imsgbuf		*i;
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
 	struct listen_addr	*la, *nla;
 	struct kif		*kif;
 	u_char			*data;
 	enum reconf_action	 reconf;
-	int			 n, depend_ok, restricted;
+	int			 n, fd, depend_ok, restricted;
 	u_int8_t		 aid, errcode, subcode;
 
-	if ((n = imsg_read(ibuf)) == -1)
-		fatal("session_dispatch_imsg: imsg_read error");
-
-	if (n == 0)	/* connection closed */
-		fatalx("session_dispatch_imsg: pipe closed");
-
-	for (;;) {
+	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
 			fatal("session_dispatch_imsg: imsg_get error");
 
@@ -2554,6 +2513,36 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_SOCKET_CONN:
+		case IMSG_SOCKET_CONN_CTL:
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("reconf request not from parent");
+			if ((fd = imsg.fd) == -1) {
+				log_warnx("expected to receive imsg fd to "
+				    "RDE but didn't receive any");
+				break;
+			}
+			if ((i = malloc(sizeof(struct imsgbuf))) == NULL)
+				fatal(NULL);
+			imsg_init(i, fd);
+			if (imsg.hdr.type == IMSG_SOCKET_CONN) {
+				if (ibuf_rde) {
+					log_warnx("Unexpected imsg connection "
+					    "to RDE received");
+					msgbuf_clear(&ibuf_rde->w);
+					free(ibuf_rde);
+				}
+				ibuf_rde = i;
+			} else {
+				if (ibuf_rde_ctl) {
+					log_warnx("Unexpected imsg ctl "
+					    "connection to RDE received");
+					msgbuf_clear(&ibuf_rde_ctl->w);
+					free(ibuf_rde_ctl);
+				}
+				ibuf_rde_ctl = i;
+			}
+			break;
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
