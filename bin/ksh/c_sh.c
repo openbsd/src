@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.45 2014/08/27 08:26:04 jmc Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.46 2015/07/20 20:46:24 guenther Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -668,7 +668,7 @@ p_time(struct shf *shf, int posix, struct timeval *tv, int width, char *prefix,
 		shf_fprintf(shf, "%s%*lld.%02ld%s", prefix ? prefix : "",
 		    width, (long long)tv->tv_sec, tv->tv_usec / 10000, suffix);
 	else
-		shf_fprintf(shf, "%s%*lldm%lld.%02lds%s", prefix ? prefix : "",
+		shf_fprintf(shf, "%s%*lldm%02lld.%02lds%s", prefix ? prefix : "",
 		    width, (long long)tv->tv_sec / 60,
 		    (long long)tv->tv_sec % 60,
 		    tv->tv_usec / 10000, suffix);
