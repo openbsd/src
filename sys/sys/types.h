@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.42 2014/08/22 23:05:15 krw Exp $	*/
+/*	$OpenBSD: types.h,v 1.43 2015/07/20 23:55:27 uebayasi Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -143,7 +143,7 @@ typedef	__ino_t		ino_t;		/* inode number */
 typedef	__key_t		key_t;		/* IPC key (for Sys V IPC) */
 typedef	__mode_t	mode_t;		/* permissions */
 typedef	__nlink_t	nlink_t;	/* link count */
-typedef __rlim_t	rlim_t;		/* resource limit */
+typedef	__rlim_t	rlim_t;		/* resource limit */
 typedef	__segsz_t	segsz_t;	/* segment size */
 typedef	__swblk_t	swblk_t;	/* swap offset */
 typedef	__uid_t		uid_t;		/* user id */
