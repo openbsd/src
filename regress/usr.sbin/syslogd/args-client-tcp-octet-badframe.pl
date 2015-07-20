@@ -26,7 +26,7 @@ our %args = (
     syslogd => {
 	options => ["-T", "127.0.0.1:514"],
 	loggrep => {
-	    qr/non transparent framing/ => 3,
+	    qr/non transparent framing, use \d+ bytes/ => 3,
 	    qr/octet counting/ => 0,
 	},
     },
