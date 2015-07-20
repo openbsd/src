@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.13 2015/07/20 01:00:48 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.14 2015/07/20 01:04:37 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -188,7 +188,7 @@ static char **
 copyenv(const char **oldenvp, struct rule *rule)
 {
 	const char *safeset[] = {
-		"DISPLAY", "HOME", "LOGNAME", "MAIL", "SHELL",
+		"DISPLAY", "HOME", "LOGNAME", "MAIL",
 		"PATH", "TERM", "USER", "USERNAME",
 		NULL
 	};
