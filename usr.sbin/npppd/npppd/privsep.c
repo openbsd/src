@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.16 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: privsep.c,v 1.17 2015/07/20 18:55:35 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -335,6 +335,7 @@ priv_unlink(const char *path)
 {
 	struct PRIVSEP_UNLINK_ARG a;
 
+	strlcpy(a.path, path, sizeof(a.path));
 	(void)imsg_compose(&privsep_ibuf, PRIVSEP_UNLINK, 0, 0, -1,
 	    &a, sizeof(a));
 	imsg_flush(&privsep_ibuf);
@@ -474,6 +475,7 @@ priv_get_if_flags(const char *ifname, int *pflags)
 	int					 retval = -1;
 
 	strlcpy(a.ifname, ifname, sizeof(a.ifname));
+	a.flags = 0;
 
 	(void)imsg_compose(&privsep_ibuf, PRIVSEP_GET_IF_FLAGS, 0, 0, -1,
 	    &a, sizeof(a));
@@ -781,6 +783,8 @@ on_broken_entry:
 			struct PRIVSEP_GET_IF_ADDR_ARG  *a = imsg.data;
 			struct PRIVSEP_GET_IF_ADDR_RESP  r;
 
+			memset(&r, 0, sizeof(r));
+			r.retval = -1;
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a))
 				r.rerrno = EINVAL;
 			else if (privsep_npppd_check_get_if_addr(a))
@@ -793,9 +797,11 @@ on_broken_entry:
 				    ioctl(s, SIOCGIFADDR, &ifr) != 0) {
 					r.retval = -1;
 					r.rerrno = errno;
-				} else
+				} else {
+					r.retval = 0;
 					r.addr = ((struct sockaddr_in *)
 					    &ifr.ifr_addr)->sin_addr;
+				}
 				if (s >= 0)
 					close(s);
 			}
