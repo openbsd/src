@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.161 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.162 2015/07/20 00:56:10 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -499,6 +499,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset caught signals */
 	TCB_SET(p, NULL);	/* reset the TCB address */
+	pr->ps_kbind_addr = 0;	/* reset the kbind bits */
+	pr->ps_kbind_cookie = 0;
 
 	/* set command name & other accounting info */
 	memset(p->p_comm, 0, sizeof(p->p_comm));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.30 2014/12/13 20:42:41 tedu Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.31 2015/07/20 00:56:10 guenther Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -68,6 +68,14 @@ struct __tfork {
 	pid_t	*tf_tid;
 	void	*tf_stack;
 };
+
+/* the parameters argument for the kbind() syscall */
+struct __kbind {
+	void	*kb_addr;
+	size_t	kb_size;
+};
+#define	KBIND_BLOCK_MAX	2	/* powerpc, sparc, and sparc64 need 2 blocks */
+#define	KBIND_DATA_MAX	24	/* sparc64 needs 6, four-byte words */
 #endif
 
 /* the pathconf(2) variable values are part of the ABI */

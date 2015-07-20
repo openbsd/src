@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.201 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.202 2015/07/20 00:56:10 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -212,6 +212,9 @@ struct process {
 	u_short	ps_acflag;		/* Accounting flags. */
 
 	u_int	ps_tame;
+
+	int64_t ps_kbind_cookie;
+	u_long  ps_kbind_addr;
 
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt

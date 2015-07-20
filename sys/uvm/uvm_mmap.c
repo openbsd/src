@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.109 2015/05/07 08:53:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.110 2015/07/20 00:56:10 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -61,9 +61,11 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/conf.h>
+#include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/specdev.h>
 #include <sys/stdint.h>
+#include <sys/unistd.h>		/* for KBIND* */
 
 #include <machine/exec.h>	/* for __LDPGSZ */
 
@@ -1120,4 +1122,129 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		uobj->pgops->pgo_detach(uobj);
 
 	return (error);
+}
+
+/* an address that can't be in userspace */
+#define	BOGO_PC	(KERNBASE + 1)
+int
+sys_kbind(struct proc *p, void *v, register_t *retval)
+{
+#if defined(__vax__) || defined(__hppa64__)
+	/* only exists to support ld.so */
+	sigexit(p, SIGSYS);
+#else
+	struct sys_kbind_args /* {
+		syscallarg(const struct __kbind *) param;
+		syscallarg(size_t) psize;
+		syscallarg(uint64_t) proc_cookie;
+	} */ *uap = v;
+	const struct __kbind *paramp;
+	union {
+		struct __kbind uk[KBIND_BLOCK_MAX];
+		char upad[KBIND_BLOCK_MAX * sizeof(*paramp) + KBIND_DATA_MAX];
+	} param;
+	struct uvm_map_deadq dead_entries;
+	struct process *pr = p->p_p;
+	const char *data;
+	vaddr_t baseva, last_baseva, endva, pageoffset, kva;
+	size_t psize, s;
+	u_long pc;
+	int count, i;
+	int error;
+
+	/*
+	 * extract syscall args from uap
+	 */
+	paramp = SCARG(uap, param);
+	psize = SCARG(uap, psize);
+
+	/* a NULL paramp disables the syscall for the process */
+	if (paramp == NULL) {
+		pr->ps_kbind_addr = BOGO_PC;
+		return (0);
+	}
+
+	/* security checks */
+	pc = PROC_PC(p);
+	if (pr->ps_kbind_addr == 0) {
+		pr->ps_kbind_addr = pc;
+		pr->ps_kbind_cookie = SCARG(uap, proc_cookie);
+	} else if (pc != pr->ps_kbind_addr || pc == BOGO_PC)
+		sigexit(p, SIGILL);
+	else if (pr->ps_kbind_cookie != SCARG(uap, proc_cookie))
+		sigexit(p, SIGILL);
+	if (psize < sizeof(struct __kbind) || psize > sizeof(param))
+		return (EINVAL);
+	if ((error = copyin(paramp, &param, psize)))
+		return (error);
+
+	/*
+	 * The param argument points to an array of __kbind structures
+	 * followed by the corresponding new and old data areas for them
+	 * in alternation.  Verify that the sizes in the __kbind structures
+	 * add up to the total size and find the start of the old+new area.
+	 */
+	paramp = &param.uk[0];
+	s = psize;
+	for (count = 0; s > 0 && count < KBIND_BLOCK_MAX; count++) {
+		if (s < sizeof(*paramp))
+			return (EINVAL);
+		s -= sizeof(*paramp);
+
+		baseva = (vaddr_t)paramp[count].kb_addr;
+		endva = baseva + paramp[count].kb_size - 1;
+		if (paramp[count].kb_addr == NULL ||
+		    paramp[count].kb_size == 0 ||
+		    paramp[count].kb_size > KBIND_DATA_MAX ||
+		    baseva >= VM_MAXUSER_ADDRESS ||
+		    endva >= VM_MAXUSER_ADDRESS ||
+		    trunc_page(baseva) != trunc_page(endva) ||
+		    s < paramp[count].kb_size)
+			return (EINVAL);
+
+		s -= paramp[count].kb_size;
+	}
+	if (s > 0)
+		return (EINVAL);
+	data = (const char *)&paramp[count];
+
+	/* all looks good, so do the bindings */
+	last_baseva = VM_MAXUSER_ADDRESS;
+	kva = 0;
+	TAILQ_INIT(&dead_entries);
+	for (i = 0; i < count; i++) {
+		baseva = (vaddr_t)paramp[i].kb_addr;
+		pageoffset = baseva & PAGE_MASK;
+		baseva = trunc_page(baseva);
+
+		/* make sure sure the desired page is mapped into kernel_map */
+		if (baseva != last_baseva) {
+			if (kva != 0) {
+				vm_map_lock(kernel_map);
+				uvm_unmap_remove(kernel_map, kva,
+				    kva+PAGE_SIZE, &dead_entries, FALSE, TRUE);
+				vm_map_unlock(kernel_map);
+				kva = 0;
+			}
+			if ((error = uvm_map_extract(&p->p_vmspace->vm_map,
+			    baseva, PAGE_SIZE, &kva, UVM_EXTRACT_FIXPROT)))
+				break;
+			last_baseva = baseva;
+		}
+
+		/* do the update */
+		memcpy((char *)kva + pageoffset, data, paramp[i].kb_size);
+		data += paramp[i].kb_size;
+	}
+
+	if (kva != 0) {
+		vm_map_lock(kernel_map);
+		uvm_unmap_remove(kernel_map, kva, kva+PAGE_SIZE,
+		    &dead_entries, FALSE, TRUE);
+		vm_map_unlock(kernel_map);
+	}
+	uvm_unmap_detach(&dead_entries, AMAP_REFALL);
+
+	return (error);
+#endif	/* !vax && !hppa64 */
 }
