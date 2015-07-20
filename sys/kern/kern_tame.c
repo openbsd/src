@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.8 2015/07/20 17:01:26 nicm Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.9 2015/07/20 18:04:05 schwarze Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -569,12 +569,27 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 	    name[0] == CTL_HW && name[1] == HW_SENSORS)
 		return (0);
 
-	/* gethostname(), getdomainname(), getpagesize() */
+	/* getdomainname(), gethostname(), getpagesize(), uname() */
+	if (namelen == 2 &&
+	    name[0] == CTL_KERN && name[1] == KERN_DOMAINNAME)
+		return (0);
 	if (namelen == 2 &&
 	    name[0] == CTL_KERN && name[1] == KERN_HOSTNAME)
 		return (0);
 	if (namelen == 2 &&
-	    name[0] == CTL_KERN && name[1] == KERN_DOMAINNAME)
+	    name[0] == CTL_KERN && name[1] == KERN_OSTYPE)
+		return (0);
+	if (namelen == 2 &&
+	    name[0] == CTL_KERN && name[1] == KERN_OSRELEASE)
+		return (0);
+	if (namelen == 2 &&
+	    name[0] == CTL_KERN && name[1] == KERN_OSVERSION)
+		return (0);
+	if (namelen == 2 &&
+	    name[0] == CTL_KERN && name[1] == KERN_VERSION)
+		return (0);
+	if (namelen == 2 &&
+	    name[0] == CTL_HW && name[1] == HW_MACHINE)
 		return (0);
 	if (namelen == 2 &&
 	    name[0] == CTL_HW && name[1] == HW_PAGESIZE)
