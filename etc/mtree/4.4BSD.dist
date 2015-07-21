@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.271 2015/04/30 19:02:15 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.272 2015/07/21 04:06:04 yasuoka Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -182,6 +182,8 @@ usr
         auth			type=dir uname=root gname=auth mode=0750
         ..
         lpr
+        ..
+        radiusd			type=dir uname=root gname=wheel mode=0755
         ..
         smtpd			type=dir uname=root gname=wheel mode=0755
         ..

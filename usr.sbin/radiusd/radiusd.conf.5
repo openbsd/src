@@ -1,0 +1,74 @@
+.\" Copyright (c) 2014 Esdenera Networks GmbH
+.\" Copyright (c) 2014 Internet Initiative Japan Inc.
+.\"
+.\" All rights reserved.
+.\"
+.Dd October 14, 2014
+.Dt RADIUSD.CONF 5
+.Os
+.Sh NAME
+.Nm radiusd.conf
+.Nd RADIUS daemon configuration file
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the RADIUS daemon,
+.Xr radiusd 8 .
+.Sh SECTIONS
+.Nm
+is divided into several main sections
+.Sh GLOBAL CONFIGURATION
+.Bl -tag -width Ds
+.It Ic authenticate Ar username
+.It Ic client Ar address/mask
+.It Xo
+.Ic listen on Ar address
+.Ic port Ar port
+.Xc
+Specify an
+.Ar address
+and a
+.Ar port
+to listen on.
+.It Ic module Ic load Ar name Ar path
+Load module
+.Ar name
+from
+.Ar path .
+.El
+.Sh AUTHENTICATE
+.Bl -tag -width Ds
+.It Ic authenticate-by Ar module
+.It Ic decorate-by Ar label
+.It Ic secret Qq Ar passphrase
+.El
+.Sh CLIENT
+.Bl -tag -width Ds
+.It Ic secret Qq Ar passphrase
+The passphrase for the client.
+.It Ic msgauth-required Ar yes Ns | Ns Ar no
+Require message authentication if
+.Ar yes
+is specified.
+.El
+.Sh EXAMPLES
+.Bd -literal -offset indent
+include "/etc/radius-section-1.conf"
+
+listen on 127.0.0.1 port 1812
+listen on ::1 port 1812
+
+client 127.0.0.1/32    { secret "hogehoge" }
+client 0.0.0.0/0 {
+	secret "fugafuga"
+	msgauth-required yes
+}
+
+authenticate * {
+	authenticate-by radius
+	set radius server 10.0.0.1
+	secret "hogefuga"
+	msgauth-required yes
+}
+.Ed
+.Sh SEE ALSO
+.Xr radiusd 8
