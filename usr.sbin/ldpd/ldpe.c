@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.38 2015/07/21 05:02:57 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.39 2015/07/21 05:04:12 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -282,6 +282,8 @@ void
 ldpe_shutdown(void)
 {
 	struct if_addr		*if_addr;
+
+	control_cleanup();
 
 	event_del(&disc_ev);
 	event_del(&edisc_ev);
