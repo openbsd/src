@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.11 2015/07/20 21:36:27 tedu Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.12 2015/07/21 16:17:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -50,6 +50,7 @@ int canonpath(const char *input, char *buf, size_t bufsize);
 
 const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_exit] = 0xffffffff,
+	[SYS_kbind] = 0xffffffff,
 
 	[SYS_getuid] = _TM_SELF,
 	[SYS_geteuid] = _TM_SELF,
@@ -84,6 +85,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS___thrsleep] = _TM_SELF,
 	[SYS___thrwakeup] = _TM_SELF,
 	[SYS___threxit] = _TM_SELF,
+	[SYS___thrsigdivert] = _TM_SELF,
 
 	[SYS_sendsyslog] = _TM_SELF,
 	[SYS_nanosleep] = _TM_SELF,
@@ -236,7 +238,7 @@ tame_check(struct proc *p, int code)
 		return (0);
 
 	if (p->p_p->ps_tame == 0)
-		return (code == SYS_exit);
+		return (code == SYS_exit || code == SYS_kbind);
 	return (p->p_p->ps_tame & tame_syscalls[code]);
 }
 
