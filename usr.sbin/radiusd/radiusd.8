@@ -20,7 +20,7 @@
 .Nd Remote Authentication Dial In User Service (RADIUS) daemon
 .Sh SYNOPSIS
 .Nm radiusd
-.Op Fl dn
+.Op Fl dhn
 .Op Fl f Ar file
 .Sh DESCRIPTION
 The
@@ -29,6 +29,12 @@ daemon implements the RADIUS protocol.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl d
+Do not daemonize, log to
+.Dv stderr
+instead of
+.Xr syslog 3 ,
+and produce some additional debugging output.
 .It Fl f Ar file
 Specify an alternative configuration file.
 .It Fl h
