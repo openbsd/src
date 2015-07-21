@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.1 2015/07/21 09:13:11 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.2 2015/07/21 17:59:58 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -40,6 +40,7 @@
 #include <net/if_var.h>
 #include <netinet/in.h>
 
+#include <dev/pv/pvvar.h>
 #include <dev/rndvar.h>
 
 /* "The" magic number, always occupies the EAX register. */
@@ -317,12 +318,14 @@ vmt_probe(void)
 int
 vmt_match(struct device *parent, void *match, void *aux)
 {
-	const char **busname = (const char **)aux;
+	struct pv_attach_args *pva = aux;
 
+	if ((pva->pva_types & PVBUS_VMWARE) == 0)
+		return (0);
 	if (!vmt_probe())
 		return (0);
 
-	return (strcmp(*busname, vmt_cd.cd_name) == 0);
+	return (1);
 }
 
 void

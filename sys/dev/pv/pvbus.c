@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.1 2015/07/21 03:38:22 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.2 2015/07/21 17:59:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,7 @@ int	 pvbus_activate(struct device *, int);
 int	 pvbus_match(struct device *, void *, void *);
 void	 pvbus_attach(struct device *, struct device *, void *);
 int	 pvbus_print(void *, const char *);
+int	 pvbus_search(struct device *, void *, void *);
 
 struct cfattach pvbus_ca = {
 	sizeof(struct pvbus_softc),
@@ -74,13 +75,6 @@ struct pvbus_type {
 	{ NULL }
 };
 
-struct pv_attach_args pvbus_devices[] = {
-#if NVMT > 0
-	{ "vmt",	PVBUS_VMWARE	},
-#endif
-	{ NULL }
-};
-
 int
 pvbus_probe(void)
 {
@@ -101,7 +95,6 @@ void
 pvbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pvbus_softc *sc = (struct pvbus_softc *)self;
-	struct pv_attach_args *pva;
 	uint32_t reg0, base;
 	union {
 		uint32_t	regs[3];
@@ -150,14 +143,7 @@ pvbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	/* Attach drivers */
-	for (i = 0; pvbus_devices[i].pva_busname != NULL; i++) {
-		pva = &pvbus_devices[i];
-		pva->pva_types = sc->pvbus_types;
-		if (sc->pvbus_types & pva->pva_type)
-			config_found(self, &pva->pva_busname,
-			    pvbus_print);
-	}
+	config_search(pvbus_search, self, sc);
 }
 
 int
@@ -181,6 +167,22 @@ pvbus_activate(struct device *self, int act)
 	}
 
 	return (rv);
+}
+
+int
+pvbus_search(struct device *parent, void *arg, void *aux)
+{
+	struct pvbus_softc *sc = (struct pvbus_softc *)aux;
+	struct cfdata		*cf = arg;
+	struct pv_attach_args	 pva;
+
+	pva.pva_busname = cf->cf_driver->cd_name;
+	pva.pva_types = sc->pvbus_types;
+
+	if (cf->cf_attach->ca_match(parent, cf, &pva) > 0)
+		config_attach(parent, cf, &pva, pvbus_print);
+
+	return (0);
 }
 
 int
