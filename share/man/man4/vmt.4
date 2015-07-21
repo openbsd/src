@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmt.4,v 1.7 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: vmt.4,v 1.8 2015/07/21 03:40:01 reyk Exp $
 .\"
 .\" Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -14,14 +14,14 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: July 21 2015 $
 .Dt VMT 4
 .Os
 .Sh NAME
 .Nm vmt
 .Nd VMware Tools driver
 .Sh SYNOPSIS
-.Cd "vmt0 at mainbus0"
+.Cd "vmt0 at pvbus0"
 .Sh DESCRIPTION
 The
 .Nm
@@ -41,6 +41,7 @@ It also provides access to the host machine's clock as a timedelta sensor.
 .Nm
 reports the guest's hostname and first non-loopback IP address to the host.
 .Sh SEE ALSO
+.Xr pvbus 4 ,
 .Xr init 8 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
