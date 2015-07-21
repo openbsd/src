@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.6 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.7 2015/07/21 16:17:15 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -57,7 +57,7 @@ __mp_lock_spin(struct __mp_lock *mpl)
 		SPINLOCK_SPIN_HOOK;
 
 	if (ticks == 0) {
-		db_printf("__mp_lock(0x%x): lock spun out", mpl);
+		db_printf("__mp_lock(%p): lock spun out", mpl);
 		Debugger();
 	}
 #endif
