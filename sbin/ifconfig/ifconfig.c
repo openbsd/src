@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.296 2015/02/05 10:30:25 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.297 2015/07/21 17:50:23 rzalamena Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -126,6 +126,10 @@ struct	sockaddr_in	netmask;
 
 #ifndef SMALL
 struct	ifaliasreq	addreq;
+
+int	wconfig = 0;
+int	wcwconfig = 0;
+struct	ifmpwreq	imrsave;
 #endif /* SMALL */
 
 char	name[IFNAMSIZ];
@@ -196,10 +200,16 @@ void	setmediainst(const char *, int);
 void	settimeslot(const char *, int);
 void	timeslot_status(void);
 void	setmpelabel(const char *, int);
+void	process_mpw_commands(void);
+void	setmpwencap(const char *, int);
+void	setmpwlabel(const char *, const char *);
+void	setmpwneighbor(const char *, int);
+void	setmpwcontrolword(const char *, int);
 void	setvlantag(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
 void	mpe_status(void);
+void	mpw_status(void);
 void	vlan_status(void);
 void	setinstance(const char *, int);
 int	main(int, char *[]);
@@ -370,6 +380,11 @@ const struct	cmd {
 	{ "mpls",	IFXF_MPLS,	0,		setifxflags },
 	{ "-mpls",	-IFXF_MPLS,	0,		setifxflags },
 	{ "mplslabel",	NEXTARG,	0,		setmpelabel },
+	{ "mpwlabel",	NEXTARG2,	0,		NULL, setmpwlabel },
+	{ "neighbor",	NEXTARG,	0,		setmpwneighbor },
+	{ "controlword", 1,		0,		setmpwcontrolword },
+	{ "-controlword", 0,		0,		setmpwcontrolword },
+	{ "encap",	NEXTARG,	0,		setmpwencap },
 	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
 	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
 	{ "carppeer",	NEXTARG,	0,		setcarppeer },
@@ -754,6 +769,9 @@ nextarg:
 
 	/* Process any media commands that may have been issued. */
 	process_media_commands();
+
+	/* Process mpw commands */
+	process_mpw_commands();
 
 	if (af == AF_INET6 && explicit_prefix == 0) {
 		/*
@@ -2942,6 +2960,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	timeslot_status();
 	sppp_status();
 	mpe_status();
+	mpw_status();
 	pflow_status();
 #endif
 	trunk_status();
@@ -3381,6 +3400,56 @@ mpe_status(void)
 	printf("\tmpls label: %d\n", shim.shim_label);
 }
 
+void
+mpw_status(void)
+{
+	struct sockaddr_in *sin;
+	struct ifmpwreq imr;
+
+	bzero(&imr, sizeof(imr));
+	ifr.ifr_data = (caddr_t) &imr;
+	if (ioctl(s, SIOCGETMPWCFG, (caddr_t) &ifr) == -1)
+		return;
+
+	printf("\tencapsulation-type ");
+	switch (imr.imr_type) {
+	case IMR_TYPE_NONE:
+		printf("none");
+		break;
+	case IMR_TYPE_ETHERNET:
+		printf("ethernet");
+		break;
+	case IMR_TYPE_ETHERNET_TAGGED:
+		printf("ethernet-tagged");
+		break;
+	default:
+		printf("unknown");
+		break;
+	}
+
+	if (imr.imr_flags & IMR_FLAG_CONTROLWORD)
+		printf(", control-word");
+
+	printf("\n");
+
+	printf("\tmpls label: ");
+	if (imr.imr_lshim.shim_label == 0)
+		printf("local none ");
+	else
+		printf("local %u ", imr.imr_lshim.shim_label);
+
+	if (imr.imr_rshim.shim_label == 0)
+		printf("remote none\n");
+	else
+		printf("remote %u\n", imr.imr_rshim.shim_label);
+
+	sin = (struct sockaddr_in *) &imr.imr_nexthop;
+	if (sin->sin_addr.s_addr == 0)
+		printf("\tneighbor: none\n");
+	else
+		printf("\tneighbor: %s\n", inet_ntoa(sin->sin_addr));
+}
+
 /* ARGSUSED */
 void
 setmpelabel(const char *val, int d)
@@ -3396,6 +3465,112 @@ setmpelabel(const char *val, int d)
 		errx(1, "mpls label %s is %s", val, estr);
 	if (ioctl(s, SIOCSETLABEL, (caddr_t)&ifr) == -1)
 		warn("SIOCSETLABEL");
+}
+
+void
+process_mpw_commands(void)
+{
+	struct	sockaddr_in *sin, *sinn;
+	struct	ifmpwreq imr;
+
+	if (wconfig == 0)
+		return;
+
+	bzero(&imr, sizeof(imr));
+	ifr.ifr_data = (caddr_t) &imr;
+	if (ioctl(s, SIOCGETMPWCFG, (caddr_t) &ifr) == -1)
+		err(1, "SIOCGETMPWCFG");
+
+	if (imrsave.imr_type == 0) {
+		if (imr.imr_type == 0)
+			imrsave.imr_type = IMR_TYPE_ETHERNET;
+
+		imrsave.imr_type = imr.imr_type;
+	}
+	if (wcwconfig == 0)
+		imrsave.imr_flags |= imr.imr_flags;
+
+	if (imrsave.imr_lshim.shim_label == 0 ||
+	    imrsave.imr_rshim.shim_label == 0) {
+		if (imr.imr_lshim.shim_label == 0 ||
+		    imr.imr_rshim.shim_label == 0)
+			errx(1, "mpw local / remote label not specified");
+
+		imrsave.imr_lshim.shim_label = imr.imr_lshim.shim_label;
+		imrsave.imr_rshim.shim_label = imr.imr_rshim.shim_label;
+	}
+
+	sin = (struct sockaddr_in *) &imrsave.imr_nexthop;
+	sinn = (struct sockaddr_in *) &imr.imr_nexthop;
+	if (sin->sin_addr.s_addr == 0) {
+		if (sinn->sin_addr.s_addr == 0)
+			errx(1, "mpw neighbor address not specified");
+
+		sin->sin_family = sinn->sin_family;
+		sin->sin_addr.s_addr = sinn->sin_addr.s_addr;
+	}
+
+	ifr.ifr_data = (caddr_t) &imrsave;
+	if (ioctl(s, SIOCSETMPWCFG, (caddr_t) &ifr) == -1)
+		err(1, "SIOCSETMPWCFG");
+}
+
+void
+setmpwencap(const char *value, int d)
+{
+	wconfig = 1;
+
+	if (strcmp(value, "ethernet") == 0)
+		imrsave.imr_type = IMR_TYPE_ETHERNET;
+	else if (strcmp(value, "ethernet-tagged") == 0)
+		imrsave.imr_type = IMR_TYPE_ETHERNET_TAGGED;
+	else
+		errx(1, "invalid mpw encapsulation type");
+}
+
+void
+setmpwlabel(const char *local, const char *remote)
+{
+	struct	shim_hdr shim;
+	const	char *errstr;
+
+	wconfig = 1;
+
+	imrsave.imr_lshim.shim_label = strtonum(local,
+	    (MPLS_LABEL_RESERVED_MAX + 1), MPLS_LABEL_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "invalid local label: %s", errstr);
+
+	imrsave.imr_rshim.shim_label = strtonum(remote,
+	    (MPLS_LABEL_RESERVED_MAX + 1), MPLS_LABEL_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "invalid remote label: %s", errstr);
+}
+
+void
+setmpwneighbor(const char *value, int d)
+{
+	struct sockaddr_in *sin;
+
+	wconfig = 1;
+
+	sin = (struct sockaddr_in *) &imrsave.imr_nexthop;
+	if (inet_aton(value, &sin->sin_addr) == 0)
+		errx(1, "invalid neighbor addresses");
+
+	sin->sin_family = AF_INET;
+}
+
+void
+setmpwcontrolword(const char *value, int d)
+{
+	wconfig = 1;
+	wcwconfig = 1;
+
+	if (d == 1)
+		imrsave.imr_flags |= IMR_FLAG_CONTROLWORD;
+	else
+		imrsave.imr_flags &= ~IMR_FLAG_CONTROLWORD;
 }
 #endif /* SMALL */
 
