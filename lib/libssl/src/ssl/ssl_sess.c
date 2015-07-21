@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.44 2014/12/14 15:30:50 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.45 2015/07/21 03:34:38 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -452,8 +452,6 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		SSL_SESSION data;
 		data.ssl_version = s->version;
 		data.session_id_length = len;
-		if (len == 0)
-			return 0;
 		memcpy(data.session_id, session_id, len);
 
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
