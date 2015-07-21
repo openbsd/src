@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amdcf.4,v 1.1 2015/07/21 00:16:45 pirofti Exp $
+.\"	$OpenBSD: amdcf.4,v 1.2 2015/07/21 15:30:00 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Paul Irofti <pirofti@openbsd.org>
 .\"
@@ -26,10 +26,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides access to AMD/Fujitsu flash memory devices found on  
+driver provides access to AMD/Fujitsu flash memory devices found on
 D-Link Octeon machines.
 .Pp
-The driver implementation follows the CFI specification and 
+The driver implementation follows the CFI specification and
 currently has write support disabled.
 .Sh SEE ALSO
 .Xr intro 4 ,
@@ -50,4 +50,6 @@ The
 .Nm
 driver was written by
 .An Paul Irofti Aq Mt pirofti@openbsd.org
-with parts taken for the FreeBSD cfi driver.
+with parts taken from the
+.Fx
+cfi driver.
