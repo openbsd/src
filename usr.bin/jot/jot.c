@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.23 2013/11/26 13:21:18 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.24 2015/07/21 04:04:06 jasper Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 		case 'p':
 			prec = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL)
-				errx(1, "bad precision value, %s: %s", errstr, 
+				errx(1, "bad precision value, %s: %s", errstr,
 					optarg);
 			break;
 		default:
