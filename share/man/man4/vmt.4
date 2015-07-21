@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmt.4,v 1.8 2015/07/21 03:40:01 reyk Exp $
+.\"	$OpenBSD: vmt.4,v 1.9 2015/07/21 07:01:04 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -32,7 +32,11 @@ running inside virtual machines.
 .Nm
 handles shutdown and reboot requests from the host by signalling
 .Xr init 8
-with SIGUSR2 and SIGINT respectively.
+with
+.Dv SIGUSR2
+and
+.Dv SIGINT
+respectively.
 .Nm
 will log notifications that the guest has been suspended or resumed by the
 host.
@@ -47,7 +51,7 @@ reports the guest's hostname and first non-loopback IP address to the host.
 .Xr sysctl 8
 .Pp
 A
-.Nm vmwh
+.Sy vmwh
 helper program is available via
 .Xr packages 7 .
 .Sh HISTORY
