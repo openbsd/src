@@ -1,9 +1,19 @@
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014 Internet Initiative Japan Inc.
 .\"
-.\" All rights reserved.
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.Dd October 14, 2014
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 21 2015 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -34,12 +44,15 @@ Load module
 .Ar name
 from
 .Ar path .
+.It Ic module Ic set Ar key Ar value
+Configure the module specific configuration by
+.Ar key and
+.Ar value .
 .El
 .Sh AUTHENTICATE
 .Bl -tag -width Ds
 .It Ic authenticate-by Ar module
 .It Ic decorate-by Ar label
-.It Ic secret Qq Ar passphrase
 .El
 .Sh CLIENT
 .Bl -tag -width Ds
@@ -63,11 +76,16 @@ client 0.0.0.0/0 {
 	msgauth-required yes
 }
 
+module load bsdauth "/usr/libexec/radiusd/radiusd_bsdauth"
+module load radius  "/usr/libexec/radiusd/radiusd_radius"
+module set radius "secret" "testing123"
+module set radius "server" "127.0.0.1"
+
 authenticate * {
 	authenticate-by radius
-	set radius server 10.0.0.1
-	secret "hogefuga"
-	msgauth-required yes
+}
+authenticate *@local {
+	authenticate-by bsdauth
 }
 .Ed
 .Sh SEE ALSO
