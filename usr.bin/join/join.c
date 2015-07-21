@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.24 2015/01/16 06:40:08 deraadt Exp $	*/
+/* $OpenBSD: join.c,v 1.25 2015/07/21 04:42:59 jasper Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 				joinlines(F1, NULL);
 				slurp(F1);
 			}
-			else if (cval < 0)	
+			else if (cval < 0)
 				/* File 1 takes the lead... */
 				slurp(F1);
 			if (F2->unpair
@@ -275,7 +275,7 @@ void slurp(INPUT *F)
 
 	if (F->set == NULL) {
 		fpos = 0;
-		cfieldc = 0;	
+		cfieldc = 0;
 	}
 	else {
 		fpos = F->set->fpos;
@@ -286,7 +286,7 @@ void slurp(INPUT *F)
 		return;
 	else if (fpos != F->set->fpos)
 		F->set->cfieldc = cfieldc+1;
-}	
+}
 
 void
 slurpit(INPUT *F)
@@ -565,7 +565,7 @@ obsolete(char **argv)
 			continue;
 		switch (ap[1]) {
 		case 'a':
-			/* 
+			/*
 			 * The original join allowed "-a", which meant the
 			 * same as -a1 plus -a2.  POSIX 1003.2, Draft 11.2
 			 * only specifies this as "-a 1" and "a -2", so we
