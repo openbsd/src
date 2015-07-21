@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.13 2015/01/16 06:40:13 deraadt Exp $	*/
+/*	$OpenBSD: uname.c,v 1.14 2015/07/21 16:22:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Winning Strategies, Inc.
- * 4. The name of Winning Strategies, Inc. may not be used to endorse or 
+ * 4. The name of Winning Strategies, Inc. may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -70,10 +70,10 @@ main(int argc, char *argv[])
 		case 'n':
 			print_mask |= PRINT_NODENAME;
 			break;
-		case 'r': 
+		case 'r':
 			print_mask |= PRINT_RELEASE;
 			break;
-		case 's': 
+		case 's':
 			print_mask |= PRINT_SYSNAME;
 			break;
 		case 'v':
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-	
+
 	if (optind != argc) {
 		usage();
 		/* NOTREACHED */
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	if (print_mask & PRINT_MACHINE_ARCH) {
 		if (space++) putchar(' ');
 		fputs(MACHINE_ARCH, stdout);
-	}		
+	}
 	putchar('\n');
 
 	exit(0);
