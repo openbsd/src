@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.43 2015/07/19 18:27:59 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.44 2015/07/21 04:39:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -149,9 +149,6 @@ kif_redistribute(void)
 	struct kif_addr		*ka;
 
 	RB_FOREACH(kif, kif_tree, &kit) {
-		main_imsg_compose_ldpe(IMSG_IFSTATUS, 0, &kif->k,
-		    sizeof(struct kif));
-
 		TAILQ_FOREACH(ka, &kif->addrs, entry)
 			main_imsg_compose_ldpe(IMSG_NEWADDR, 0, &ka->addr,
 			    sizeof(struct kaddr));

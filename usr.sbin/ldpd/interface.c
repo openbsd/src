@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.23 2015/07/19 21:04:38 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.24 2015/07/21 04:39:28 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -86,8 +86,10 @@ if_del(struct iface *iface)
 
 	log_debug("if_del: interface %s", iface->name);
 
-	while ((if_addr = LIST_FIRST(&iface->addr_list)) != NULL)
-		LIST_REMOVE(if_addr, iface_entry);
+	while ((if_addr = LIST_FIRST(&iface->addr_list)) != NULL) {
+		LIST_REMOVE(if_addr, entry);
+		free(if_addr);
+	}
 
 	free(iface);
 }
@@ -109,6 +111,35 @@ if_lookup(u_short ifindex)
 	LIST_FOREACH(iface, &leconf->iface_list, entry)
 		if (iface->ifindex == ifindex)
 			return (iface);
+
+	return (NULL);
+}
+
+struct if_addr *
+if_addr_new(struct kaddr *kaddr)
+{
+	struct if_addr	*if_addr;
+
+	if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
+		fatal("if_addr_new");
+
+	if_addr->addr.s_addr = kaddr->addr.s_addr;
+	if_addr->mask.s_addr = kaddr->mask.s_addr;
+	if_addr->dstbrd.s_addr = kaddr->dstbrd.s_addr;
+
+	return (if_addr);
+}
+
+struct if_addr *
+if_addr_lookup(struct if_addr_head *addr_list, struct kaddr *kaddr)
+{
+	struct if_addr *if_addr;
+
+	LIST_FOREACH(if_addr, addr_list, entry)
+		if (if_addr->addr.s_addr == kaddr->addr.s_addr &&
+		    if_addr->mask.s_addr == kaddr->mask.s_addr &&
+		    if_addr->dstbrd.s_addr == kaddr->dstbrd.s_addr)
+			return (if_addr);
 
 	return (NULL);
 }

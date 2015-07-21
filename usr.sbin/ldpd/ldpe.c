@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.32 2015/07/19 21:01:56 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.33 2015/07/21 04:39:28 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -279,8 +279,15 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 void
 ldpe_shutdown(void)
 {
+	struct if_addr	*if_addr;
 	struct iface	*iface;
 	struct tnbr	*tnbr;
+
+	/* remove addresses from global list */
+	while ((if_addr = LIST_FIRST(&leconf->addr_list)) != NULL) {
+		LIST_REMOVE(if_addr, entry);
+		free(if_addr);
+	}
 
 	/* stop all interfaces */
 	while ((iface = LIST_FIRST(&leconf->iface_list)) != NULL) {
@@ -335,9 +342,9 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf = &iev->ibuf;
 	struct iface	*iface = NULL;
-	struct if_addr	*if_addr = NULL, *a;
+	struct if_addr	*if_addr = NULL;
 	struct kif	*kif;
-	struct kaddr	*kaddr;
+	struct kaddr	*ka;
 	int		 n, shut = 0;
 	struct nbr	*nbr;
 
@@ -364,7 +371,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 		case IMSG_IFSTATUS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct kif))
-				fatalx("IFINFO imsg with wrong len");
+				fatalx("IFSTATUS imsg with wrong len");
 
 			kif = imsg.data;
 			iface = if_lookup(kif->ifindex);
@@ -379,27 +386,26 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct kaddr))
 				fatalx("NEWADDR imsg with wrong len");
-			kaddr = imsg.data;
+			ka = imsg.data;
 
-			if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
-				fatal("ldpe_dispatch_main");
+			if (if_addr_lookup(&leconf->addr_list, ka) == NULL) {
+				if_addr = if_addr_new(ka);
 
-			if_addr->addr.s_addr = kaddr->addr.s_addr;
-			if_addr->mask.s_addr = kaddr->mask.s_addr;
-			if_addr->dstbrd.s_addr = kaddr->dstbrd.s_addr;
-
-			LIST_INSERT_HEAD(&leconf->addr_list, if_addr,
-			    global_entry);
-			RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
-				if (nbr->state != NBR_STA_OPER)
-					continue;
-				send_address(nbr, if_addr);
+				LIST_INSERT_HEAD(&leconf->addr_list, if_addr,
+				    entry);
+				RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+					if (nbr->state != NBR_STA_OPER)
+						continue;
+					send_address(nbr, if_addr);
+				}
 			}
 
-			iface = if_lookup(kaddr->ifindex);
-			if (iface) {
+			iface = if_lookup(ka->ifindex);
+			if (iface &&
+			    if_addr_lookup(&iface->addr_list, ka) == NULL) {
+				if_addr = if_addr_new(ka);
 				LIST_INSERT_HEAD(&iface->addr_list, if_addr,
-				    iface_entry);
+				    entry);
 				if_update(iface);
 			}
 			break;
@@ -407,31 +413,28 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct kaddr))
 				fatalx("DELADDR imsg with wrong len");
-			kaddr = imsg.data;
+			ka = imsg.data;
 
-			LIST_FOREACH(a, &leconf->addr_list, global_entry)
-				if (a->addr.s_addr == kaddr->addr.s_addr &&
-				    a->mask.s_addr == kaddr->mask.s_addr &&
-				    a->dstbrd.s_addr == kaddr->dstbrd.s_addr)
-					break;
-			if_addr = a;
-			if (!if_addr)
-				break;
-
-			LIST_REMOVE(if_addr, global_entry);
-			iface = if_lookup(kaddr->ifindex);
+			iface = if_lookup(ka->ifindex);
 			if (iface) {
-				LIST_REMOVE(if_addr, iface_entry);
-				if_update(iface);
+				if_addr = if_addr_lookup(&iface->addr_list, ka);
+				if (if_addr) {
+					LIST_REMOVE(if_addr, entry);
+					free(if_addr);
+					if_update(iface);
+				}
 			}
 
-			RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
-				if (nbr->state != NBR_STA_OPER)
-					continue;
-				send_address_withdraw(nbr, if_addr);
+			if_addr = if_addr_lookup(&leconf->addr_list, ka);
+			if (if_addr) {
+				RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+					if (nbr->state != NBR_STA_OPER)
+						continue;
+					send_address_withdraw(nbr, if_addr);
+				}
+				LIST_REMOVE(if_addr, entry);
+				free(if_addr);
 			}
-
-			free(if_addr);
 			break;
 		case IMSG_RECONF_CONF:
 			break;

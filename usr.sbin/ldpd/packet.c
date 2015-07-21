@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.39 2015/07/19 21:01:56 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.40 2015/07/21 04:39:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -212,7 +212,7 @@ disc_find_iface(unsigned int ifindex, struct in_addr src)
 	struct if_addr	*if_addr;
 
 	LIST_FOREACH(iface, &leconf->iface_list, entry)
-		LIST_FOREACH(if_addr, &iface->addr_list, iface_entry)
+		LIST_FOREACH(if_addr, &iface->addr_list, entry)
 			switch (iface->type) {
 			case IF_TYPE_POINTOPOINT:
 				if (ifindex == iface->ifindex &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.36 2015/07/19 21:01:56 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.37 2015/07/21 04:39:28 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -160,6 +160,8 @@ struct iface	*if_new(struct kif *);
 void		 if_del(struct iface *);
 void		 if_init(struct ldpd_conf *, struct iface *);
 struct iface	*if_lookup(u_short);
+struct if_addr	*if_addr_new(struct kaddr *);
+struct if_addr	*if_addr_lookup(struct if_addr_head *, struct kaddr *);
 
 struct ctl_iface	*if_to_ctl(struct iface *);
 

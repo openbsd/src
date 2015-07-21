@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.49 2015/07/19 21:01:56 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.50 2015/07/21 04:39:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -180,19 +180,19 @@ struct notify_msg {
 };
 
 struct if_addr {
-	LIST_ENTRY(if_addr)	 global_entry;
-	LIST_ENTRY(if_addr)	 iface_entry;
+	LIST_ENTRY(if_addr)	 entry;
 	struct in_addr		 addr;
 	struct in_addr		 mask;
 	struct in_addr		 dstbrd;
 };
+LIST_HEAD(if_addr_head, if_addr);
 
 struct iface {
 	LIST_ENTRY(iface)	 entry;
 	struct event		 hello_timer;
 
 	char			 name[IF_NAMESIZE];
-	LIST_HEAD(, if_addr)	 addr_list;
+	struct if_addr_head	 addr_list;
 	LIST_HEAD(, adj)	 adj_list;
 
 	time_t			 uptime;
@@ -254,7 +254,7 @@ struct ldpd_conf {
 	struct event		edisc_ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, iface)	iface_list;
-	LIST_HEAD(, if_addr)	addr_list;
+	struct if_addr_head	addr_list;
 	LIST_HEAD(, tnbr)	tnbr_list;
 	LIST_HEAD(, nbr_params)	nbrp_list;
 
