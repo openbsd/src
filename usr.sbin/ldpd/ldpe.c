@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.33 2015/07/21 04:39:28 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.34 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -338,15 +338,18 @@ ldpe_imsg_compose_lde(int type, u_int32_t peerid, pid_t pid,
 void
 ldpe_dispatch_main(int fd, short event, void *bula)
 {
-	struct imsg	 imsg;
-	struct imsgev	*iev = bula;
-	struct imsgbuf  *ibuf = &iev->ibuf;
-	struct iface	*iface = NULL;
-	struct if_addr	*if_addr = NULL;
-	struct kif	*kif;
-	struct kaddr	*ka;
-	int		 n, shut = 0;
-	struct nbr	*nbr;
+	struct iface		*niface;
+	struct tnbr		*ntnbr;
+	struct nbr_params	*nnbrp;
+	struct imsg		 imsg;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	struct iface		*iface = NULL;
+	struct if_addr		*if_addr = NULL;
+	struct kif		*kif;
+	struct kaddr		*ka;
+	int			 n, shut = 0;
+	struct nbr		*nbr;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -374,7 +377,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 				fatalx("IFSTATUS imsg with wrong len");
 
 			kif = imsg.data;
-			iface = if_lookup(kif->ifindex);
+			iface = if_lookup(leconf, kif->ifindex);
 			if (!iface)
 				break;
 
@@ -400,7 +403,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 				}
 			}
 
-			iface = if_lookup(ka->ifindex);
+			iface = if_lookup(leconf, ka->ifindex);
 			if (iface &&
 			    if_addr_lookup(&iface->addr_list, ka) == NULL) {
 				if_addr = if_addr_new(ka);
@@ -415,7 +418,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 				fatalx("DELADDR imsg with wrong len");
 			ka = imsg.data;
 
-			iface = if_lookup(ka->ifindex);
+			iface = if_lookup(leconf, ka->ifindex);
 			if (iface) {
 				if_addr = if_addr_lookup(&iface->addr_list, ka);
 				if (if_addr) {
@@ -437,10 +440,43 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_RECONF_CONF:
+			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==
+			    NULL)
+				fatal(NULL);
+			memcpy(nconf, imsg.data, sizeof(struct ldpd_conf));
+
+			LIST_INIT(&nconf->iface_list);
+			LIST_INIT(&nconf->addr_list);
+			LIST_INIT(&nconf->tnbr_list);
+			LIST_INIT(&nconf->nbrp_list);
 			break;
 		case IMSG_RECONF_IFACE:
+			if ((niface = malloc(sizeof(struct iface))) == NULL)
+				fatal(NULL);
+			memcpy(niface, imsg.data, sizeof(struct iface));
+
+			LIST_INIT(&niface->addr_list);
+			LIST_INIT(&niface->adj_list);
+
+			LIST_INSERT_HEAD(&nconf->iface_list, niface, entry);
+			break;
+		case IMSG_RECONF_TNBR:
+			if ((ntnbr = malloc(sizeof(struct tnbr))) == NULL)
+				fatal(NULL);
+			memcpy(ntnbr, imsg.data, sizeof(struct tnbr));
+
+			LIST_INSERT_HEAD(&nconf->tnbr_list, ntnbr, entry);
+			break;
+		case IMSG_RECONF_NBRP:
+			if ((nnbrp = malloc(sizeof(struct nbr_params))) == NULL)
+				fatal(NULL);
+			memcpy(nnbrp, imsg.data, sizeof(struct nbr_params));
+
+			LIST_INSERT_HEAD(&nconf->nbrp_list, nnbrp, entry);
 			break;
 		case IMSG_RECONF_END:
+			merge_config(leconf, nconf);
+			nconf = NULL;
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.51 2015/07/21 04:40:56 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.52 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -112,11 +112,12 @@ enum imsg_type {
 	IMSG_NETWORK_DEL,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_IFACE,
+	IMSG_RECONF_TNBR,
+	IMSG_RECONF_NBRP,
 	IMSG_RECONF_END
 };
 
 /* interface states */
-#define	IF_STA_NEW		0x00	/* dummy state for reload */
 #define	IF_STA_DOWN		0x01
 #define	IF_STA_ACTIVE		0x02
 
@@ -359,7 +360,6 @@ void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
-void		 kr_reload(void);
 u_int8_t	 mask2prefixlen(in_addr_t);
 in_addr_t	 prefixlen2mask(u_int8_t);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.38 2015/07/21 04:40:56 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.39 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -159,7 +159,7 @@ int		 if_update(struct iface *);
 struct iface	*if_new(struct kif *);
 void		 if_del(struct iface *);
 void		 if_init(struct ldpd_conf *, struct iface *);
-struct iface	*if_lookup(u_short);
+struct iface	*if_lookup(struct ldpd_conf *, u_short);
 struct if_addr	*if_addr_new(struct kaddr *);
 struct if_addr	*if_addr_lookup(struct if_addr_head *, struct kaddr *);
 
@@ -185,7 +185,7 @@ struct tnbr	*tnbr_new(struct ldpd_conf *, struct in_addr);
 void		 tnbr_del(struct tnbr *);
 struct tnbr	*tnbr_check(struct tnbr *);
 void		 tnbr_init(struct ldpd_conf *, struct tnbr *);
-struct tnbr	*tnbr_find(struct in_addr);
+struct tnbr	*tnbr_find(struct ldpd_conf *, struct in_addr);
 
 struct ctl_adj	*adj_to_ctl(struct adj *);
 void		 ldpe_adj_ctl(struct ctl_conn *);
@@ -220,7 +220,7 @@ void			 mapping_list_clr(struct mapping_head *);
 
 
 struct nbr_params	*nbr_params_new(struct in_addr);
-struct nbr_params	*nbr_params_find(struct in_addr);
+struct nbr_params	*nbr_params_find(struct ldpd_conf *, struct in_addr);
 
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
 void		 ldpe_nbr_ctl(struct ctl_conn *);

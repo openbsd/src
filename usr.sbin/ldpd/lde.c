@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.33 2015/07/19 20:54:16 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.34 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -354,6 +354,9 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 void
 lde_dispatch_parent(int fd, short event, void *bula)
 {
+	struct iface		*niface;
+	struct tnbr		*ntnbr;
+	struct nbr_params	*nnbrp;
 	struct imsg		 imsg;
 	struct kroute		 kr;
 	struct imsgev		*iev = bula;
@@ -407,10 +410,38 @@ lde_dispatch_parent(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct ldpd_conf));
 
+			LIST_INIT(&nconf->iface_list);
+			LIST_INIT(&nconf->addr_list);
+			LIST_INIT(&nconf->tnbr_list);
+			LIST_INIT(&nconf->nbrp_list);
 			break;
 		case IMSG_RECONF_IFACE:
+			if ((niface = malloc(sizeof(struct iface))) == NULL)
+				fatal(NULL);
+			memcpy(niface, imsg.data, sizeof(struct iface));
+
+			LIST_INIT(&niface->addr_list);
+			LIST_INIT(&niface->adj_list);
+
+			LIST_INSERT_HEAD(&nconf->iface_list, niface, entry);
+			break;
+		case IMSG_RECONF_TNBR:
+			if ((ntnbr = malloc(sizeof(struct tnbr))) == NULL)
+				fatal(NULL);
+			memcpy(ntnbr, imsg.data, sizeof(struct tnbr));
+
+			LIST_INSERT_HEAD(&nconf->tnbr_list, ntnbr, entry);
+			break;
+		case IMSG_RECONF_NBRP:
+			if ((nnbrp = malloc(sizeof(struct nbr_params))) == NULL)
+				fatal(NULL);
+			memcpy(nnbrp, imsg.data, sizeof(struct nbr_params));
+
+			LIST_INSERT_HEAD(&nconf->nbrp_list, nnbrp, entry);
 			break;
 		case IMSG_RECONF_END:
+			merge_config(ldeconf, nconf);
+			nconf = NULL;
 			break;
 		default:
 			log_debug("lde_dispatch_parent: unexpected imsg %d",

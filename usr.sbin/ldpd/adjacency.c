@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.5 2015/07/21 04:40:56 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.6 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -230,11 +230,11 @@ tnbr_init(struct ldpd_conf *xconf, struct tnbr *tnbr)
 }
 
 struct tnbr *
-tnbr_find(struct in_addr addr)
+tnbr_find(struct ldpd_conf *xconf, struct in_addr addr)
 {
 	struct tnbr *tnbr;
 
-	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
+	LIST_FOREACH(tnbr, &xconf->tnbr_list, entry)
 		if (addr.s_addr == tnbr->addr.s_addr)
 			return (tnbr);
 

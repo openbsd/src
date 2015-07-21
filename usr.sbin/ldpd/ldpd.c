@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.22 2015/02/09 11:54:24 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.23 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,10 +54,8 @@ int		check_child(pid_t, const char *);
 void	main_dispatch_ldpe(int, short, void *);
 void	main_dispatch_lde(int, short, void *);
 
-/*int	ldp_reload(void); */
+int	ldp_reload(void);
 int	ldp_sendboth(enum imsg_type, void *, u_int16_t);
-/*int	merge_interfaces(struct lspace *, struct lspace *); */
-/*struct iface *iface_lookup(struct lspace *, struct iface *); */
 
 int	pipe_parent2ldpe[2];
 int	pipe_parent2lde[2];
@@ -99,12 +97,10 @@ main_sig_handler(int sig, short event, void *arg)
 			ldpd_shutdown();
 		break;
 	case SIGHUP:
-/*
 		if (ldp_reload() == -1)
 			log_warnx("configuration reload failed");
 		else
 			log_debug("configuration reloaded");
-*/
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -349,13 +345,11 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_RELOAD:
-/*
 			if (ldp_reload() == -1)
 				log_warnx("configuration reload failed");
 			else
 				log_debug("configuration reloaded");
 			break;
-*/
 		case IMSG_CTL_FIB_COUPLE:
 			kr_fib_couple();
 			break;
@@ -527,12 +521,12 @@ evbuf_clear(struct evbuf *eb)
 	eb->wbuf.fd = -1;
 }
 
-/*
 int
 ldp_reload(void)
 {
-	struct lspace		*lspace;
 	struct iface		*iface;
+	struct tnbr		*tnbr;
+	struct nbr_params	*nbrp;
 	struct ldpd_conf	*xconf;
 
 	if ((xconf = parse_config(conffile, ldpd_conf->opts)) == NULL)
@@ -541,15 +535,22 @@ ldp_reload(void)
 	if (ldp_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
 		return (-1);
 
-	LIST_FOREACH(lspace, &xconf->lspace_list, entry) {
-		if (ldp_sendboth(IMSG_RECONF_AREA, lspace, sizeof(*lspace)) == -1)
+	LIST_FOREACH(iface, &xconf->iface_list, entry) {
+		if (ldp_sendboth(IMSG_RECONF_IFACE, iface,
+		    sizeof(*iface)) == -1)
 			return (-1);
+	}
 
-		LIST_FOREACH(iface, &lspace->iface_list, entry) {
-			if (ldp_sendboth(IMSG_RECONF_IFACE, iface,
-			    sizeof(*iface)) == -1)
-				return (-1);
-		}
+	LIST_FOREACH(tnbr, &xconf->tnbr_list, entry) {
+		if (ldp_sendboth(IMSG_RECONF_TNBR, tnbr,
+		    sizeof(*tnbr)) == -1)
+			return (-1);
+	}
+
+	LIST_FOREACH(nbrp, &xconf->nbrp_list, entry) {
+		if (ldp_sendboth(IMSG_RECONF_NBRP, nbrp,
+		    sizeof(*nbrp)) == -1)
+			return (-1);
 	}
 
 	if (ldp_sendboth(IMSG_RECONF_END, NULL, 0) == -1)
@@ -557,7 +558,6 @@ ldp_reload(void)
 
 	merge_config(ldpd_conf, xconf);
 
-	kr_reload();
 	return (0);
 }
 
@@ -574,167 +574,136 @@ ldp_sendboth(enum imsg_type type, void *buf, u_int16_t len)
 void
 merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
-	struct lspace		*a, *xa, *na;
-	struct iface		*iface;
-	struct redistribute	*r;
-	int			 rchange = 0;
+	struct iface		*iface, *itmp, *xi;
+	struct tnbr		*tnbr, *ttmp, *xt;
+	struct nbr_params	*nbrp, *ntmp, *xn;
+	struct nbr		*nbr;
 
+	/* change of rtr_id needs a restart */
 	conf->flags = xconf->flags;
-	conf->spf_delay = xconf->spf_delay;
-	conf->spf_hold_time = xconf->spf_hold_time;
-	if ((conf->redistribute & REDISTRIBUTE_ON) !=
-	    (xconf->redistribute & REDISTRIBUTE_ON))
-		rchange = 1;
-	conf->redistribute = xconf->redistribute;
-	conf->rfc1583compat = xconf->rfc1583compat;
+	conf->keepalive = xconf->keepalive;
+	conf->thello_holdtime = xconf->thello_holdtime;
+	conf->thello_interval = xconf->thello_interval;
 
-	if (ldpd_process == PROC_MAIN) {
-		while ((r = SIMPLEQ_FIRST(&conf->redist_list)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&conf->redist_list, entry);
-			free(r);
+	/* merge interfaces */
+	LIST_FOREACH_SAFE(iface, &conf->iface_list, entry, itmp) {
+		/* find deleted interfaces */
+		if ((xi = if_lookup(xconf, iface->ifindex)) == NULL) {
+			LIST_REMOVE(iface, entry);
+			if (ldpd_process == PROC_LDP_ENGINE)
+				if_del(iface);
+			else
+				free(iface);
 		}
-		while ((r = SIMPLEQ_FIRST(&xconf->redist_list)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&xconf->redist_list, entry);
-			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
-		}
-		goto done;
 	}
+	LIST_FOREACH_SAFE(xi, &xconf->iface_list, entry, itmp) {
+		/* find new interfaces */
+		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
+			LIST_REMOVE(xi, entry);
+			LIST_INSERT_HEAD(&conf->iface_list, xi, entry);
+			if (ldpd_process == PROC_LDP_ENGINE)
+				if_init(conf, xi);
+			continue;
+		}
 
-	for (a = LIST_FIRST(&conf->lspace_list); a != NULL; a = na) {
-		na = LIST_NEXT(a, entry);
-		if ((xa = lspace_find(xconf, a->id)) == NULL) {
+		/* update existing interfaces */
+		iface->hello_holdtime = xi->hello_holdtime;
+		iface->hello_interval = xi->hello_interval;
+	}
+	/* resend addresses to activate new interfaces */
+	if (ldpd_process == PROC_MAIN)
+		kif_redistribute();
+
+	/* merge tnbrs */
+	LIST_FOREACH_SAFE(tnbr, &conf->tnbr_list, entry, ttmp) {
+		if (!(tnbr->flags & F_TNBR_CONFIGURED))
+			continue;
+
+		/* find deleted tnbrs */
+		if ((xt = tnbr_find(xconf, tnbr->addr)) == NULL) {
 			if (ldpd_process == PROC_LDP_ENGINE) {
-				LIST_FOREACH(iface, &a->iface_list, entry)
-					if_fsm(iface, IF_EVT_DOWN);
+				tnbr->flags &= ~F_TNBR_CONFIGURED;
+				tnbr_check(tnbr);
+			} else {
+				LIST_REMOVE(tnbr, entry);
+				free(tnbr);
 			}
-			LIST_REMOVE(a, entry);
-			lspace_del(a);
 		}
 	}
+	LIST_FOREACH_SAFE(xt, &xconf->tnbr_list, entry, ttmp) {
+		/* find new tnbrs */
+		if ((tnbr = tnbr_find(conf, xt->addr)) == NULL) {
+			LIST_REMOVE(xt, entry);
+			LIST_INSERT_HEAD(&conf->tnbr_list, xt, entry);
+			if (ldpd_process == PROC_LDP_ENGINE)
+				tnbr_init(conf, xt);
+			continue;
+		}
 
-	for (xa = LIST_FIRST(&xconf->lspace_list); xa != NULL; xa = na) {
-		na = LIST_NEXT(xa, entry);
-		if ((a = lspace_find(conf, xa->id)) == NULL) {
-			LIST_REMOVE(xa, entry);
-			LIST_INSERT_HEAD(&conf->lspace_list, xa, entry);
+		/* update existing tnbrs */
+		if (!(tnbr->flags & F_TNBR_CONFIGURED))
+			tnbr->flags |= F_TNBR_CONFIGURED;
+		tnbr->hello_holdtime = xt->hello_holdtime;
+		tnbr->hello_interval = xt->hello_interval;
+	}
+
+	/* merge neighbor parameters */
+	LIST_FOREACH_SAFE(nbrp, &conf->nbrp_list, entry, ntmp) {
+		/* find deleted nbrps */
+		if ((xn = nbr_params_find(xconf, nbrp->addr)) == NULL) {
 			if (ldpd_process == PROC_LDP_ENGINE) {
-				LIST_FOREACH(iface, &xa->iface_list, entry) {
-					if_init(conf, iface);
-					if (if_fsm(iface, IF_EVT_UP)) {
-						log_debug("error starting "
-						    "interface %s",
-						    iface->name);
-					}
+				nbr = nbr_find_ldpid(nbrp->addr.s_addr);
+				if (nbr) {
+					if (nbr->state == NBR_STA_OPER)
+						session_shutdown(nbr,
+						    S_SHUTDOWN, 0, 0);
+					pfkey_remove(nbr);
+				}
+			}
+			LIST_REMOVE(nbrp, entry);
+			free(nbrp);
+		}
+	}
+	LIST_FOREACH_SAFE(xn, &xconf->nbrp_list, entry, ntmp) {
+		/* find new nbrps */
+		if ((nbrp = nbr_params_find(conf, xn->addr)) == NULL) {
+			LIST_REMOVE(xn, entry);
+			LIST_INSERT_HEAD(&conf->nbrp_list, xn, entry);
+
+			if (ldpd_process == PROC_LDP_ENGINE) {
+				nbr = nbr_find_ldpid(xn->addr.s_addr);
+				if (nbr) {
+					if (nbr->state == NBR_STA_OPER)
+						session_shutdown(nbr,
+						    S_SHUTDOWN, 0, 0);
+					pfkey_remove(nbr);
+					if (pfkey_establish(nbr, xn) == -1)
+						fatalx("pfkey setup failed");
 				}
 			}
 			continue;
 		}
-		a->stub = xa->stub;
-		a->stub_default_cost = xa->stub_default_cost;
-		if (ldpd_process == PROC_LDE_ENGINE)
-			a->dirty = 1;
 
-		if (merge_interfaces(a, xa) &&
-		    ldpd_process == PROC_LDP_ENGINE)
-			a->dirty = 1;
-	}
+		/* update existing nbrps */
+		nbrp->auth.method = xn->auth.method;
+		strlcpy(nbrp->auth.md5key, xn->auth.md5key,
+		    sizeof(nbrp->auth.md5key));
+		nbrp->auth.md5key_len = xn->auth.md5key_len;
 
-	if (ldpd_process == PROC_LDP_ENGINE) {
-		LIST_FOREACH(a, &conf->lspace_list, entry) {
-			LIST_FOREACH(iface, &a->iface_list, entry) {
-				if (iface->state == IF_STA_NEW) {
-					iface->state = IF_STA_DOWN;
-					if_init(conf, iface);
-					if (if_fsm(iface, IF_EVT_UP)) {
-						log_debug("error starting "
-						    "interface %s",
-						    iface->name);
-					}
-				}
+		if (ldpd_process == PROC_LDP_ENGINE) {
+			nbr = nbr_find_ldpid(nbrp->addr.s_addr);
+			if (nbr &&
+			    (nbr->auth.method != nbrp->auth.method ||
+			    strcmp(nbr->auth.md5key, nbrp->auth.md5key) != 0)) {
+				if (nbr->state == NBR_STA_OPER)
+					session_shutdown(nbr, S_SHUTDOWN,
+					    0, 0);
+				pfkey_remove(nbr);
+				if (pfkey_establish(nbr, nbrp) == -1)
+					fatalx("pfkey setup failed");
 			}
 		}
 	}
 
-done:
-	while ((a = LIST_FIRST(&xconf->lspace_list)) != NULL) {
-		LIST_REMOVE(a, entry);
-		lspace_del(a);
-	}
 	free(xconf);
 }
-
-int
-merge_interfaces(struct lspace *a, struct lspace *xa)
-{
-	struct iface	*i, *xi, *ni;
-	int		 dirty = 0;
-
-	for (i = LIST_FIRST(&a->iface_list); i != NULL; i = ni) {
-		ni = LIST_NEXT(i, entry);
-		if (iface_lookup(xa, i) == NULL) {
-			log_debug("merge_config: proc %d label space %s removing "
-			    "interface %s", ldpd_process, inet_ntoa(a->id),
-			    i->name);
-			if (ldpd_process == PROC_LDP_ENGINE)
-				if_fsm(i, IF_EVT_DOWN);
-			LIST_REMOVE(i, entry);
-			if_del(i);
-		}
-	}
-
-	for (xi = LIST_FIRST(&xa->iface_list); xi != NULL; xi = ni) {
-		ni = LIST_NEXT(xi, entry);
-		if ((i = iface_lookup(a, xi)) == NULL) {
-			log_debug("merge_config: proc %d label space %s adding "
-			    "interface %s", ldpd_process, inet_ntoa(a->id),
-			    xi->name);
-			LIST_REMOVE(xi, entry);
-			LIST_INSERT_HEAD(&a->iface_list, xi, entry);
-			xi->lspace = a;
-			if (ldpd_process == PROC_LDP_ENGINE)
-				xi->state = IF_STA_NEW;
-			continue;
-		}
-		log_debug("merge_config: proc %d label space %s merging interface %s",
-		    ldpd_process, inet_ntoa(a->id), i->name);
-		i->addr = xi->addr;
-		i->dst = xi->dst;
-		i->mask = xi->mask;
-		i->abr_id = xi->abr_id;
-		i->baudrate = xi->baudrate;
-		i->dead_interval = xi->dead_interval;
-		i->mtu = xi->mtu;
-		i->transmit_delay = xi->transmit_delay;
-		i->hello_interval = xi->hello_interval;
-		i->rxmt_interval = xi->rxmt_interval;
-		if (i->metric != xi->metric)
-			dirty = 1;
-		i->metric = xi->metric;
-		i->priority = xi->priority;
-		i->flags = xi->flags;
-		i->type = xi->type;
-		i->media_type = xi->media_type;
-		i->linkstate = xi->linkstate;
-
-		if (i->passive != xi->passive) {
-			if (ldpd_process == PROC_LDP_ENGINE)
-				if_fsm(i, IF_EVT_DOWN);
-			i->passive = xi->passive;
-			if (ldpd_process == PROC_LDP_ENGINE)
-				if_fsm(i, IF_EVT_UP);
-		}
-	}
-	return (dirty);
-}
-
-struct iface *
-iface_lookup(struct lspace *lspace, struct iface *iface)
-{
-	struct iface	*i;
-
-	LIST_FOREACH(i, &lspace->iface_list, entry)
-		if (i->ifindex == iface->ifindex)
-			return (i);
-	return (NULL);
-}
-*/

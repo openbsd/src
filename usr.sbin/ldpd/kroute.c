@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.44 2015/07/21 04:39:28 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.45 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -495,12 +495,6 @@ kr_redistribute(struct kroute_prefix *kp)
 				kr_redist_remove(&kn->r);
 		}
 	}
-}
-
-void
-kr_reload(void)
-{
-	/* XXX TODO */
 }
 
 /* rb-tree compare */

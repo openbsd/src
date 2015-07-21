@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.40 2015/07/21 04:39:28 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.41 2015/07/21 04:43:28 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -290,7 +290,7 @@ session_accept(int fd, short event, void *bula)
 		return;
 	}
 
-	nbrp = nbr_params_find(src.sin_addr);
+	nbrp = nbr_params_find(leconf, src.sin_addr);
 	if (nbrp && nbrp->auth.method == AUTH_MD5SIG) {
 		if (sysdep.no_pfkey || sysdep.no_md5sig) {
 			log_warnx("md5sig configured but not available");
