@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.16 2015/07/21 16:12:04 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.17 2015/07/21 16:15:20 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -297,7 +297,8 @@ main(int argc, char **argv, char **envp)
 	while ((ch = getopt(argc, argv, "C:su:")) != -1) {
 		switch (ch) {
 		case 'C':
-			setuid(getuid());
+			target = getuid();
+			setresuid(target, target, target);
 			parseconfig(optarg);
 			exit(0);
 		case 'u':
