@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.29 2015/07/21 03:38:22 reyk Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.30 2015/07/21 20:12:00 reyk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -173,14 +173,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if NPVBUS > 0
-	/* Probe first to hide the "not configured" message */
-	if (pvbus_probe()) {
-		mba.mba_pvba.pvba_busname = "pvbus";
-		config_found(self, &mba.mba_pvba.pvba_busname, mainbus_print);
-	}
-#endif
-
 	if ((cpu_info_primary.ci_flags & CPUF_PRESENT) == 0) {
 		struct cpu_attach_args caa;
 
@@ -203,6 +195,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef MULTIPROCESSOR
 	mp_setperf_init();
+#endif
+
+#if NPVBUS > 0
+	/* Probe first to hide the "not configured" message */
+	if (pvbus_probe()) {
+		mba.mba_pvba.pvba_busname = "pvbus";
+		config_found(self, &mba.mba_pvba.pvba_busname, mainbus_print);
+	}
 #endif
 
 #if NPCI > 0
