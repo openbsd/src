@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.54 2015/06/26 10:17:21 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.55 2015/07/21 05:58:34 jsg Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -231,10 +231,11 @@ save_ofw_mapping(void)
 	/* Get firmware mappings. */
 	if (OF_getprop(chosen, "mmu", &mmui, sizeof(int)) != -1)
 		mmu = OF_instance_to_package(mmui);
-	if (mmu != -1)
+	if (mmu != -1) {
 		len = OF_getproplen(mmu, "translations");
-	if (len <= 0)
-		return (0);
+		if (len <= 0)
+			return (0);
+	}
 
 	switch (acells) {
 	case 2:
