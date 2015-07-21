@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.c,v 1.2 2015/07/18 03:40:51 schwarze Exp $    */
+/*      $OpenBSD: tag.c,v 1.3 2015/07/21 03:26:02 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -48,7 +48,7 @@ static int		 tag_fd = -1;
  * where various marked-up terms are documented and create
  * the temporary tags file, saving the name for the pager.
  */
-void
+char *
 tag_init(void)
 {
 	struct ohash_info	 tag_info;
@@ -60,7 +60,7 @@ tag_init(void)
 	if ((tag_fd = mkstemp(tag_fn)) == -1) {
 		free(tag_fn);
 		tag_fn = NULL;
-		return;
+		return(NULL);
 	}
 
 	tag_info.alloc = tag_alloc;
@@ -69,12 +69,6 @@ tag_init(void)
 	tag_info.key_offset = offsetof(struct tag_entry, s);
 	tag_info.data = NULL;
 	ohash_init(&tag_data, 4, &tag_info);
-}
-
-char *
-tag_filename(void)
-{
-
 	return(tag_fn);
 }
 

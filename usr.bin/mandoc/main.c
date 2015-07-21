@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.147 2015/07/19 05:59:07 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.148 2015/07/21 03:26:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -968,15 +968,18 @@ spawn_pager(void)
 
 	/* Read all text right away and use the tag file. */
 
-	if ((cmdlen = strlen(argv[0])) >= 4) {
+	for (;;) {
+		if ((cmdlen = strlen(argv[0])) < 4)
+			break;
 		cp = argv[0] + cmdlen - 4;
-		if (strcmp(cp, "less") == 0 ||
-		    strcmp(cp, "more") == 0) {
-			tag_init();
-			argv[argc++] = mandoc_strdup("+G1G");
-			argv[argc++] = mandoc_strdup("-T");
-			argv[argc++] = tag_filename();
-		}
+		if (strcmp(cp, "less") && strcmp(cp, "more"))
+			break;
+		if ((cp = tag_init()) == NULL)
+			break;
+		argv[argc++] = mandoc_strdup("+G1G");
+		argv[argc++] = mandoc_strdup("-T");
+		argv[argc++] = cp;
+		break;
 	}
 	argv[argc] = NULL;
 
