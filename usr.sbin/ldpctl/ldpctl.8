@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpctl.8,v 1.7 2015/07/21 05:43:46 renato Exp $
+.\"	$OpenBSD: ldpctl.8,v 1.8 2015/07/21 05:44:50 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -75,7 +75,11 @@ Show details for all interfaces.
 .It Cm show neighbor
 Show neighbors.
 .It Cm show lib
-Show the Label Information Base.
+Show the IPv4 Label Information Base.
+.It Cm show l2vpn bindings
+Show the PWID Label Information Base.
+.It Cm show l2vpn pseudowires
+Show the status of the configured pseudowires.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/ldpd.sockXX" -compact

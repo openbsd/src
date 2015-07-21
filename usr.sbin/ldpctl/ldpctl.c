@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.19 2015/07/21 05:42:50 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.20 2015/07/21 05:44:50 renato Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -52,8 +52,11 @@ void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
 void		 show_interface_head(void);
 int		 show_fib_interface_msg(struct imsg *);
+int		 show_l2vpn_pw_msg(struct imsg *);
+int		 show_l2vpn_binding_msg(struct imsg *);
 const char	*get_media_descr(int);
 void		 print_baudrate(u_int64_t);
+const char	*print_pw_type(u_int16_t);
 
 struct imsgbuf	*ibuf;
 
@@ -147,6 +150,15 @@ main(int argc, char *argv[])
 			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
 		show_interface_head();
 		break;
+	case SHOW_L2VPN_PW:
+		printf("%-11s %-15s %-14s %-10s\n",
+		    "Interface", "Neighbor", "PWID", "Status");
+		imsg_compose(ibuf, IMSG_CTL_SHOW_L2VPN_PW, 0, 0, -1, NULL, 0);
+		break;
+	case SHOW_L2VPN_BINDING:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_L2VPN_BINDING, 0, 0, -1,
+		    NULL, 0);
+		break;
 	case FIB:
 		errx(1, "fib couple|decouple");
 		break;
@@ -210,6 +222,12 @@ main(int argc, char *argv[])
 				break;
 			case SHOW_FIB_IFACE:
 				done = show_fib_interface_msg(&imsg);
+				break;
+			case SHOW_L2VPN_PW:
+				done = show_l2vpn_pw_msg(&imsg);
+				break;
+			case SHOW_L2VPN_BINDING:
+				done = show_l2vpn_binding_msg(&imsg);
 				break;
 			case NONE:
 			case FIB:
@@ -533,6 +551,67 @@ show_fib_interface_msg(struct imsg *imsg)
 	return (0);
 }
 
+int
+show_l2vpn_pw_msg(struct imsg *imsg)
+{
+	struct ctl_pw	*pw;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_L2VPN_PW:
+		pw = imsg->data;
+
+		printf("%-11s %-15s %-14u %-10s\n", pw->ifname,
+		    inet_ntoa(pw->nexthop), pw->pwid,
+		    (pw->status ? "UP" : "DOWN"));
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_l2vpn_binding_msg(struct imsg *imsg)
+{
+	struct ctl_pw	*pw;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_L2VPN_BINDING:
+		pw = imsg->data;
+
+		printf("Neighbor: %s - PWID: %u (%s)\n",
+		    inet_ntoa(pw->nexthop), pw->pwid,
+		    print_pw_type(pw->type));
+		printf("%-12s%-15s%-15s%-10s\n", "", "Label", "Group-ID",
+		    "MTU");
+		if (pw->local_label != NO_LABEL)
+			printf("  %-10s%-15u%-15u%u\n", "Local",
+			    pw->local_label, pw->local_gid, pw->local_ifmtu);
+		else
+			printf("  %-10s%-15s%-15s%s\n", "Local", "-",
+			    "-", "-");
+		if (pw->remote_label != NO_LABEL)
+			printf("  %-10s%-15u%-15u%u\n", "Remote",
+			    pw->remote_label, pw->remote_gid,
+			    pw->remote_ifmtu);
+		else
+			printf("  %-10s%-15s%-15s%s\n", "Remote", "-",
+			    "-", "-");
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
 const struct if_status_description
 		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 const struct ifmedia_description
@@ -575,4 +654,20 @@ print_baudrate(u_int64_t baudrate)
 		printf("%llu KBit/s", baudrate / IF_Kbps(1));
 	else
 		printf("%llu Bit/s", baudrate);
+}
+
+const char *
+print_pw_type(u_int16_t pw_type)
+{
+	static char buf[64];
+
+	switch (pw_type) {
+	case PW_TYPE_ETHERNET_TAGGED:
+		return ("Eth Tagged");
+	case PW_TYPE_ETHERNET:
+		return ("Ethernet");
+	default:
+		snprintf(buf, sizeof(buf), "[%0x]", pw_type);
+		return (buf);
+	}
 }

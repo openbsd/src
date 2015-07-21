@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.6 2013/06/04 02:40:17 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.7 2015/07/21 05:44:50 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,6 +39,8 @@ enum actions {
 	SHOW_LIB,
 	SHOW_FIB,
 	SHOW_FIB_IFACE,
+	SHOW_L2VPN_PW,
+	SHOW_L2VPN_BINDING,
 	RELOAD
 };
 

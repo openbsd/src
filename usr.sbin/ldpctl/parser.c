@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.7 2015/07/21 05:43:46 renato Exp $ */
+/*	$OpenBSD: parser.c,v 1.8 2015/07/21 05:44:50 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -55,11 +55,11 @@ static const struct token t_fib[];
 static const struct token t_show[];
 static const struct token t_show_iface[];
 static const struct token t_show_disc[];
-static const struct token t_show_db[];
-static const struct token t_show_area[];
+
 static const struct token t_show_nbr[];
 static const struct token t_show_lib[];
 static const struct token t_show_fib[];
+static const struct token t_show_l2vpn[];
 static const struct token t_log[];
 
 static const struct token t_main[] = {
@@ -83,6 +83,7 @@ static const struct token t_show[] = {
 	{KEYWORD,	"neighbor",	SHOW_NBR,	t_show_nbr},
 	{KEYWORD,	"lib",		SHOW_LIB,	t_show_lib},
 	{KEYWORD,	"fib",		SHOW_FIB,	t_show_fib},
+	{KEYWORD,	"l2vpn",	NONE,		t_show_l2vpn},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -118,6 +119,12 @@ static const struct token t_show_fib[] = {
 	{FLAG,		"connected",	F_CONNECTED,		t_show_fib},
 	{FLAG,		"static",	F_STATIC,		t_show_fib},
 	{ADDRESS,	"",		NONE,			NULL},
+	{ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_show_l2vpn[] = {
+	{KEYWORD,	"bindings",	SHOW_L2VPN_BINDING,	NULL},
+	{KEYWORD,	"pseudowires",	SHOW_L2VPN_PW,		NULL},
 	{ENDTOKEN,	"",		NONE,			NULL}
 };
 
