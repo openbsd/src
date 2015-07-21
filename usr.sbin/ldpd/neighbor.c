@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.51 2015/07/21 05:01:46 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.52 2015/07/21 05:02:57 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -573,30 +573,6 @@ nbr_send_labelmappings(struct nbr *nbr)
 {
 	ldpe_imsg_compose_lde(IMSG_LABEL_MAPPING_FULL, nbr->peerid, 0,
 	    NULL, 0);
-}
-
-void
-nbr_mapping_add(struct nbr *nbr, struct mapping_head *mh, struct map *map)
-{
-	struct mapping_entry	*me;
-
-	me = calloc(1, sizeof(*me));
-	if (me == NULL)
-		fatal("nbr_mapping_add");
-	me->map = *map;
-
-	TAILQ_INSERT_TAIL(mh, me, entry);
-}
-
-void
-mapping_list_clr(struct mapping_head *mh)
-{
-	struct mapping_entry	*me;
-
-	while ((me = TAILQ_FIRST(mh)) != NULL) {
-		TAILQ_REMOVE(mh, me, entry);
-		free(me);
-	}
 }
 
 struct nbr_params *

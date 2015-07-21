@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.41 2015/07/21 04:58:48 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.42 2015/07/21 05:02:57 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -153,7 +153,8 @@ int		 ldpe_imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		 ldpe_imsg_compose_lde(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
 u_int32_t	 ldpe_router_id(void);
-void		 ldpe_fib_update(int);
+void		 mapping_list_add(struct mapping_head *, struct map *);
+void		 mapping_list_clr(struct mapping_head *);
 void		 ldpe_iface_ctl(struct ctl_conn *, unsigned int);
 
 /* interface.c */
@@ -217,13 +218,7 @@ void	 nbr_start_idtimer(struct nbr *);
 void	 nbr_stop_idtimer(struct nbr *);
 int	 nbr_pending_idtimer(struct nbr *);
 int	 nbr_pending_connect(struct nbr *);
-
 int	 nbr_establish_connection(struct nbr *);
-
-void			 nbr_mapping_add(struct nbr *, struct mapping_head *,
-			    struct map *);
-void			 mapping_list_clr(struct mapping_head *);
-
 
 struct nbr_params	*nbr_params_new(struct in_addr);
 struct nbr_params	*nbr_params_find(struct ldpd_conf *, struct in_addr);

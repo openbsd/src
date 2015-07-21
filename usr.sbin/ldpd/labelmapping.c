@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.33 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.34 2015/07/21 05:02:57 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -144,6 +144,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 	int				 feclen, lbllen, tlen;
 	struct mapping_entry		*me;
 	struct mapping_head		 mh;
+	struct map			 map;
 
 	bcopy(buf, &lm, sizeof(lm));
 
@@ -173,16 +174,15 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 
 	TAILQ_INIT(&mh);
 	do {
-		me = calloc(1, sizeof(*me));
-		me->map.messageid = lm.msgid;
-		TAILQ_INSERT_HEAD(&mh, me, entry);
+		memset(&map, 0, sizeof(map));
+		map.messageid = lm.msgid;
 
 		if ((tlen = tlv_decode_fec_elm(nbr, &lm, buf, feclen,
-		    &me->map)) == -1)
+		    &map)) == -1)
 			goto err;
-		if (me->map.type == FEC_PWID &&
+		if (map.type == FEC_PWID &&
 		    type == MSG_TYPE_LABELMAPPING &&
-		    !(me->map.flags & F_MAP_PW_ID)) {
+		    !(map.flags & F_MAP_PW_ID)) {
 			send_notification_nbr(nbr, S_MISS_MSG, lm.msgid,
 			    lm.type);
 			return (-1);
@@ -192,7 +192,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 		 * The Wildcard FEC Element can be used only in the
 		 * Label Withdraw and Label Release messages.
 		 */
-		if (me->map.type == FEC_WILDCARD) {
+		if (map.type == FEC_WILDCARD) {
 			switch (type) {
 			case MSG_TYPE_LABELMAPPING:
 			case MSG_TYPE_LABELREQUEST:
@@ -215,6 +215,8 @@ recv_labelmessage(struct nbr *nbr, char *buf, u_int16_t len, u_int16_t type)
 			    lm.type);
 			goto err;
 		}
+
+		mapping_list_add(&mh, &map);
 
 		buf += tlen;
 		len -= tlen;
