@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.22 2015/07/19 21:06:04 krw Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.23 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -372,8 +372,8 @@ sr_raid5_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
-	daddr_t			blk, lba;
-	int64_t			chunk_offs, lbaoffs, phys_offs, strip_offs;
+	daddr_t			blkno, lba;
+	int64_t			chunk_offs, lbaoffs, offset, strip_offs;
 	int64_t			strip_bits, strip_no, strip_size;
 	int64_t			chunk, no_chunk;
 	int64_t			parity, row_size;
@@ -381,14 +381,14 @@ sr_raid5_rw(struct sr_workunit *wu)
 	void			*data;
 	int			s;
 
-	/* blk and scsi error will be handled by sr_validate_io */
-	if (sr_validate_io(wu, &blk, "sr_raid5_rw"))
+	/* blkno and scsi error will be handled by sr_validate_io */
+	if (sr_validate_io(wu, &blkno, "sr_raid5_rw"))
 		goto bad;
 
-	DNPRINTF(SR_D_DIS, "%s: %s sr_raid5_rw %s: lba %lld size %d\n",
+	DNPRINTF(SR_D_DIS, "%s: %s sr_raid5_rw %s: blkno %lld size %d\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 	    (xs->flags & SCSI_DATA_IN) ? "read" : "write",
-	    (long long)blk, xs->datalen);
+	    (long long)blkno, xs->datalen);
 
 	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
 	strip_bits = sd->mds.mdd_raid5.sr5_strip_bits;
@@ -397,7 +397,7 @@ sr_raid5_rw(struct sr_workunit *wu)
 
 	data = xs->data;
 	datalen = xs->datalen;
-	lbaoffs	= blk << DEV_BSHIFT;
+	lbaoffs	= blkno << DEV_BSHIFT;
 
 	if (xs->flags & SCSI_DATA_OUT) {
 		if ((wu_r = sr_scsi_wu_get(sd, SCSI_NOSLEEP)) == NULL){
@@ -414,7 +414,7 @@ sr_raid5_rw(struct sr_workunit *wu)
 		strip_no = lbaoffs >> strip_bits;
 		strip_offs = lbaoffs & (strip_size - 1);
 		chunk_offs = (strip_no / no_chunk) << strip_bits;
-		phys_offs = chunk_offs + strip_offs;
+		offset = chunk_offs + strip_offs;
 
 		/* get size remaining in this stripe */
 		length = MIN(strip_size - strip_offs, datalen);
@@ -428,7 +428,7 @@ sr_raid5_rw(struct sr_workunit *wu)
 		if (chunk >= parity)
 			chunk++;
 
-		lba = phys_offs >> DEV_BSHIFT;
+		lba = offset >> DEV_BSHIFT;
 
 		/* XXX big hammer.. exclude I/O from entire stripe */
 		if (wu->swu_blk_start == 0)
@@ -580,7 +580,7 @@ sr_raid5_write(struct sr_workunit *wu, struct sr_workunit *wu_r, int chunk,
 	 */
 
 	DNPRINTF(SR_D_DIS, "%s: %s sr_raid5_write chunk %i parity %i "
-	    "blk %llu\n", DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    "blkno %llu\n", DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 	    chunk, parity, (unsigned long long)blkno);
 
 	chunk_online = sr_raid5_chunk_online(sd, chunk);

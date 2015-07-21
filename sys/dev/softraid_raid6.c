@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.68 2015/07/19 21:06:04 krw Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.69 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -376,15 +376,15 @@ sr_raid6_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
 	int			s, fail, i, gxinv, pxinv;
-	daddr_t			blk, lba;
-	int64_t			chunk_offs, lbaoffs, phys_offs, strip_offs;
+	daddr_t			blkno, lba;
+	int64_t			chunk_offs, lbaoffs, offset, strip_offs;
 	int64_t			strip_no, strip_size, strip_bits, row_size;
 	int64_t			fchunk, no_chunk, chunk, qchunk, pchunk;
 	long			length, datalen;
 	void			*pbuf, *data, *qbuf;
 
-	/* blk and scsi error will be handled by sr_validate_io */
-	if (sr_validate_io(wu, &blk, "sr_raid6_rw"))
+	/* blkno and scsi error will be handled by sr_validate_io */
+	if (sr_validate_io(wu, &blkno, "sr_raid6_rw"))
 		goto bad;
 
 	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
@@ -394,7 +394,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 
 	data = xs->data;
 	datalen = xs->datalen;
-	lbaoffs	= blk << DEV_BSHIFT;
+	lbaoffs	= blkno << DEV_BSHIFT;
 
 	if (xs->flags & SCSI_DATA_OUT) {
 		if ((wu_r = sr_scsi_wu_get(sd, SCSI_NOSLEEP)) == NULL){
@@ -410,7 +410,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 		strip_no = lbaoffs >> strip_bits;
 		strip_offs = lbaoffs & (strip_size - 1);
 		chunk_offs = (strip_no / no_chunk) << strip_bits;
-		phys_offs = chunk_offs + strip_offs;
+		offset = chunk_offs + strip_offs;
 
 		/* get size remaining in this stripe */
 		length = MIN(strip_size - strip_offs, datalen);
@@ -428,7 +428,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 		if (chunk >= qchunk)
 			chunk++;
 
-		lba = phys_offs >> DEV_BSHIFT;
+		lba = offset >> DEV_BSHIFT;
 
 		/* XXX big hammer.. exclude I/O from entire stripe */
 		if (wu->swu_blk_start == 0)
@@ -737,10 +737,9 @@ sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
 	struct sr_ccb		*ccb;
 	struct sr_raid6_opaque  *pqbuf;
 
-	DNPRINTF(SR_D_DIS, "sr_raid6_addio: %s %d.%llx %llx %p:%p\n",
+	DNPRINTF(SR_D_DIS, "sr_raid6_addio: %s %d.%lld %ld %p:%p\n",
 	    (xsflags & SCSI_DATA_IN) ? "read" : "write", chunk,
-	    (long long)blkno, (long long)len,
-	    pbuf, qbuf);
+	    (long long)blkno, len, pbuf, qbuf);
 
 	/* Allocate temporary buffer. */
 	if (data == NULL) {

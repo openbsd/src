@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.120 2015/07/19 17:20:15 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.121 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -250,7 +250,7 @@ sr_crypto_prepare(struct sr_workunit *wu, int encrypt)
 	struct sr_crypto_wu	*crwu;
 	struct cryptodesc	*crd;
 	int			flags, i, n;
-	daddr_t			blk;
+	daddr_t			blkno;
 	u_int			keyndx;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_prepare wu %p encrypt %d\n",
@@ -265,7 +265,7 @@ sr_crypto_prepare(struct sr_workunit *wu, int encrypt)
 	} else
 		crwu->cr_uio.uio_iov->iov_base = xs->data;
 
-	blk = wu->swu_blk_start;
+	blkno = wu->swu_blk_start;
 	n = xs->datalen >> DEV_BSHIFT;
 
 	/*
@@ -289,7 +289,7 @@ sr_crypto_prepare(struct sr_workunit *wu, int encrypt)
 	 * across a different key blocks (e.g. 0.5TB boundary). Currently
 	 * this is already broken by the use of scr_key[0] below.
 	 */
-	keyndx = blk >> SR_CRYPTO_KEY_BLKSHIFT;
+	keyndx = blkno >> SR_CRYPTO_KEY_BLKSHIFT;
 	crwu->cr_crp->crp_sid = sd->mds.mdd_crypto.scr_sid[keyndx];
 
 	crwu->cr_crp->crp_opaque = crwu;
@@ -297,7 +297,7 @@ sr_crypto_prepare(struct sr_workunit *wu, int encrypt)
 	crwu->cr_crp->crp_alloctype = M_DEVBUF;
 	crwu->cr_crp->crp_buf = &crwu->cr_uio;
 	for (i = 0, crd = crwu->cr_crp->crp_desc; crd;
-	    i++, blk++, crd = crd->crd_next) {
+	    i++, blkno++, crd = crd->crd_next) {
 		crd->crd_skip = i << DEV_BSHIFT;
 		crd->crd_len = DEV_BSIZE;
 		crd->crd_inject = 0;
@@ -305,7 +305,7 @@ sr_crypto_prepare(struct sr_workunit *wu, int encrypt)
 		crd->crd_alg = sd->mds.mdd_crypto.scr_alg;
 		crd->crd_klen = sd->mds.mdd_crypto.scr_klen;
 		crd->crd_key = sd->mds.mdd_crypto.scr_key[0];
-		memcpy(crd->crd_iv, &blk, sizeof(blk));
+		memcpy(crd->crd_iv, &blkno, sizeof(blkno));
 	}
 
 	return (crwu);
@@ -1099,13 +1099,13 @@ int
 sr_crypto_rw(struct sr_workunit *wu)
 {
 	struct sr_crypto_wu	*crwu;
-	daddr_t			blk;
+	daddr_t			blkno;
 	int			rv = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw wu %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu);
 
-	if (sr_validate_io(wu, &blk, "sr_crypto_rw"))
+	if (sr_validate_io(wu, &blkno, "sr_crypto_rw"))
 		return (1);
 
 	if (wu->swu_xs->flags & SCSI_DATA_OUT) {
@@ -1148,11 +1148,11 @@ sr_crypto_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct uio		*uio;
-	daddr_t			blk;
+	daddr_t			blkno;
 
-	blk = wu->swu_blk_start;
+	blkno = wu->swu_blk_start;
 
-	ccb = sr_ccb_rw(sd, 0, blk, xs->datalen, xs->data, xs->flags, 0);
+	ccb = sr_ccb_rw(sd, 0, blkno, xs->datalen, xs->data, xs->flags, 0);
 	if (!ccb) {
 		/* should never happen but handle more gracefully */
 		printf("%s: %s: too many ccbs queued\n",

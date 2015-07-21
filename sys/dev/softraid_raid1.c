@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.62 2015/07/19 21:06:04 krw Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.63 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -329,10 +329,10 @@ sr_raid1_rw(struct sr_workunit *wu)
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
 	int			ios, chunk, i, rt;
-	daddr_t			blk;
+	daddr_t			blkno;
 
-	/* blk and scsi error will be handled by sr_validate_io */
-	if (sr_validate_io(wu, &blk, "sr_raid1_rw"))
+	/* blkno and scsi error will be handled by sr_validate_io */
+	if (sr_validate_io(wu, &blkno, "sr_raid1_rw"))
 		goto bad;
 
 	if (xs->flags & SCSI_DATA_IN)
@@ -385,7 +385,7 @@ ragain:
 			}
 		}
 
-		ccb = sr_ccb_rw(sd, chunk, blk, xs->datalen, xs->data,
+		ccb = sr_ccb_rw(sd, chunk, blkno, xs->datalen, xs->data,
 		    xs->flags, 0);
 		if (!ccb) {
 			/* should never happen but handle more gracefully */

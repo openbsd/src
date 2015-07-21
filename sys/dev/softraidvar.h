@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.160 2015/07/19 18:24:16 krw Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.161 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -153,7 +153,7 @@ struct sr_metadata {
 	char			ssd_devname[32];/* /dev/XXXXX */
 	u_int32_t		ssd_meta_flags;
 #define	SR_META_DIRTY		0x1
-	u_int32_t		ssd_data_offset;
+	u_int32_t		ssd_data_blkno;
 	u_int64_t		ssd_ondisk;	/* on disk version counter */
 	int64_t			ssd_rebuild;	/* last block of rebuild */
 } __packed;
@@ -271,7 +271,7 @@ struct sr_boot_volume {
 	u_int32_t	sbv_flags;		/* Volume specific flags. */
 	u_int32_t	sbv_state;		/* Volume state. */
 	int64_t		sbv_size;		/* Virtual disk size. */
-	u_int32_t	sbv_data_offset;	/* Data offset. */
+	u_int32_t	sbv_data_blkno;		/* Data offset. */
 	u_int64_t	sbv_ondisk;		/* Ondisk version. */
 
 	u_int32_t	sbv_chunks_found;	/* Number of chunks found. */

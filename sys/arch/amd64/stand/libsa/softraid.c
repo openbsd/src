@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.10 2015/07/19 16:12:10 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.11 2015/07/21 03:30:51 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -222,7 +222,7 @@ srprobe(void)
 				bv->sbv_chunk_no = md->ssdi.ssd_chunk_no;
 				bv->sbv_flags = md->ssdi.ssd_vol_flags;
 				bv->sbv_size = md->ssdi.ssd_size;
-				bv->sbv_data_offset = md->ssd_data_offset;
+				bv->sbv_data_blkno = md->ssd_data_blkno;
 				bcopy(&md->ssdi.ssd_uuid, &bv->sbv_uuid,
 				    sizeof(md->ssdi.ssd_uuid));
 				SLIST_INIT(&bv->sbv_chunks);
@@ -353,7 +353,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 
 		dip = (struct diskinfo *)bc->sbc_diskinfo;
 		dip->bsddev = bc->sbc_mm;
-		blk += bv->sbv_data_offset;
+		blk += bv->sbv_data_blkno;
 
 		/* XXX - If I/O failed we should try another chunk... */
 		return biosstrategy(dip, rw, blk, size, buf, rsize);
@@ -377,7 +377,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 		for (i = 0; i < nsect; i++) {
 			blkno = blk + i;
 			bp = ((u_char *)buf) + i * DEV_BSIZE;
-			err = biosstrategy(dip, rw, bv->sbv_data_offset + blkno,
+			err = biosstrategy(dip, rw, bv->sbv_data_blkno + blkno,
 			    DEV_BSIZE, bp, NULL);
 			if (err != 0)
 				return err;

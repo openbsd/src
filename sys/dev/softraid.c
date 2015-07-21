@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.359 2015/07/20 18:27:36 mlarkin Exp $ */
+/* $OpenBSD: softraid.c,v 1.360 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -401,7 +401,7 @@ sr_meta_getdevname(struct sr_softc *sc, dev_t dev, char *buf, int size)
 }
 
 int
-sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
+sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t blkno,
     long flags)
 {
 	struct vnode		*vp;
@@ -411,7 +411,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 	char			*dma_buf;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %zu, %lld 0x%lx)\n",
-	    DEVNAME(sc), dev, buf, size, (long long)offset, flags);
+	    DEVNAME(sc), dev, buf, size, (long long)blkno, flags);
 
 	dma_bufsize = (size > MAXPHYS) ? MAXPHYS : size;
 	dma_buf = dma_alloc(dma_bufsize, PR_WAITOK);
@@ -422,8 +422,8 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 	}
 
 	while (size > 0) {
-		DNPRINTF(SR_D_MISC, "%s: dma_buf %p, size %zu, offset %llu)\n",
-		    DEVNAME(sc), dma_buf, size, offset);
+		DNPRINTF(SR_D_MISC, "%s: dma_buf %p, size %zu, blkno %lld)\n",
+		    DEVNAME(sc), dma_buf, size, (long long)blkno);
 
 		bufsize = (size > MAXPHYS) ? MAXPHYS : size;
 		if (flags == B_WRITE)
@@ -435,7 +435,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 		b.b_dev = dev;
 		b.b_iodone = NULL;
 		b.b_error = 0;
-		b.b_blkno = offset;
+		b.b_blkno = blkno;
 		b.b_data = dma_buf;
 		b.b_bcount = bufsize;
 		b.b_bufsize = bufsize;
@@ -460,7 +460,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
 
 		size -= bufsize;
 		buf += bufsize;
-		offset += howmany(bufsize, DEV_BSIZE);
+		blkno += howmany(bufsize, DEV_BSIZE);
 	}
 
 	rv = 0;
@@ -476,12 +476,12 @@ done:
 
 int
 sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
-    daddr_t offset, long flags)
+    daddr_t blkno, long flags)
 {
 	int			rv = 1;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, %zu, %lld 0x%lx)\n",
-	    DEVNAME(sd->sd_sc), dev, md, size, (long long)offset, flags);
+	    DEVNAME(sd->sd_sc), dev, md, size, (long long)blkno, flags);
 
 	if (md == NULL) {
 		printf("%s: sr_meta_rw: invalid metadata pointer\n",
@@ -489,7 +489,7 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
 		goto done;
 	}
 
-	rv = sr_rw(sd->sd_sc, dev, md, size, offset, flags);
+	rv = sr_rw(sd->sd_sc, dev, md, size, blkno, flags);
 
 done:
 	return (rv);
@@ -555,7 +555,7 @@ sr_meta_init(struct sr_discipline *sd, int level, int no_chunk)
 	sm->ssdi.ssd_chunk_no = no_chunk;
 	sm->ssdi.ssd_level = level;
 
-	sm->ssd_data_offset = SR_DATA_OFFSET;
+	sm->ssd_data_blkno = SR_DATA_OFFSET;
 	sm->ssd_ondisk = 0;
 
 	sr_uuid_generate(&sm->ssdi.ssd_uuid);
@@ -939,20 +939,20 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 	if (sm->ssdi.ssd_version == 3) {
 
 		/*
-		 * Version 3 - update metadata version and fix up data offset
+		 * Version 3 - update metadata version and fix up data blkno
 		 * value since this did not exist in version 3.
 		 */
-		if (sm->ssd_data_offset == 0)
-			sm->ssd_data_offset = SR_META_V3_DATA_OFFSET;
+		if (sm->ssd_data_blkno == 0)
+			sm->ssd_data_blkno = SR_META_V3_DATA_OFFSET;
 
 	} else if (sm->ssdi.ssd_version == 4) {
 
 		/*
 		 * Version 4 - original metadata format did not store
-		 * data offset so fix this up if necessary.
+		 * data blkno so fix this up if necessary.
 		 */
-		if (sm->ssd_data_offset == 0)
-			sm->ssd_data_offset = SR_DATA_OFFSET;
+		if (sm->ssd_data_blkno == 0)
+			sm->ssd_data_blkno = SR_DATA_OFFSET;
 
 	} else if (sm->ssdi.ssd_version == SR_META_VERSION) {
 
@@ -2031,7 +2031,7 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
 	else
 		ccb->ccb_buf.b_flags |= B_WRITE;
 
-	ccb->ccb_buf.b_blkno = blkno + sd->sd_meta->ssd_data_offset;
+	ccb->ccb_buf.b_blkno = blkno + sd->sd_meta->ssd_data_blkno;
 	ccb->ccb_buf.b_bcount = len;
 	ccb->ccb_buf.b_bufsize = len;
 	ccb->ccb_buf.b_resid = len;
@@ -2609,8 +2609,7 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 	int			vol = -1, rv = EINVAL;
 	struct sr_discipline	*sd;
 	struct sr_chunk		*hotspare;
-	daddr_t			rb;
-	int64_t			sz;
+	int64_t			rb, sz;
 
 	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
 		vol++;
@@ -2834,7 +2833,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	struct sr_uuid		uuid;
 	struct disklabel	label;
 	struct vnode		*vn;
-	daddr_t			size;
+	u_int64_t		size;
 	char			devname[32];
 	int			rv = EINVAL;
 	int			c, part, open = 0;
@@ -3207,12 +3206,12 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 
 	/* Is the partition large enough? */
 	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
-	if (size <= sd->sd_meta->ssd_data_offset) {
+	if (size <= sd->sd_meta->ssd_data_blkno) {
 		sr_error(sc, "%s: %s partition too small\n", DEVNAME(sc),
 		    devname);
 		goto done;
 	}
-	size -= sd->sd_meta->ssd_data_offset;
+	size -= sd->sd_meta->ssd_data_blkno;
 	if (size > INT64_MAX) {
 		sr_error(sc, "%s: %s partition too large\n", DEVNAME(sc),
 		    devname);
@@ -3706,7 +3705,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	memcpy(duid, dk->dk_label->d_uid, sizeof(duid));
 
 	/* Ensure that boot storage area is large enough. */
-	if (sd->sd_meta->ssd_data_offset < (SR_BOOT_OFFSET + SR_BOOT_SIZE)) {
+	if (sd->sd_meta->ssd_data_blkno < (SR_BOOT_OFFSET + SR_BOOT_SIZE)) {
 		sr_error(sc, "insufficient boot storage");
 		goto done;
 	}
@@ -4048,7 +4047,7 @@ sr_raid_read_cap(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct scsi_read_cap_data rcd;
 	struct scsi_read_cap_data_16 rcd16;
-	daddr_t			addr;
+	int64_t			addr;
 	int			rv = 1;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_read_cap\n", DEVNAME(sd->sd_sc));
@@ -4557,7 +4556,7 @@ sr_shutdown(void)
 }
 
 int
-sr_validate_io(struct sr_workunit *wu, daddr_t *blk, char *func)
+sr_validate_io(struct sr_workunit *wu, daddr_t *blkno, char *func)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
@@ -4566,8 +4565,8 @@ sr_validate_io(struct sr_workunit *wu, daddr_t *blk, char *func)
 	DNPRINTF(SR_D_DIS, "%s: %s 0x%02x\n", DEVNAME(sd->sd_sc), func,
 	    xs->cmd->opcode);
 
-	if (sd->sd_meta->ssd_data_offset == 0)
-		panic("invalid data offset");
+	if (sd->sd_meta->ssd_data_blkno == 0)
+		panic("invalid data blkno");
 
 	if (sd->sd_vol_status == BIOC_SVOFFLINE) {
 		DNPRINTF(SR_D_DIS, "%s: %s device offline\n",
@@ -4582,19 +4581,19 @@ sr_validate_io(struct sr_workunit *wu, daddr_t *blk, char *func)
 	}
 
 	if (xs->cmdlen == 10)
-		*blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
+		*blkno = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
 	else if (xs->cmdlen == 16)
-		*blk = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
+		*blkno = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
 	else if (xs->cmdlen == 6)
-		*blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
+		*blkno = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 	else {
 		printf("%s: %s: illegal cmdlen for %s\n",
 		    DEVNAME(sd->sd_sc), func, sd->sd_meta->ssd_devname);
 		goto bad;
 	}
 
-	wu->swu_blk_start = *blk;
-	wu->swu_blk_end = *blk + (xs->datalen >> DEV_BSHIFT) - 1;
+	wu->swu_blk_start = *blkno;
+	wu->swu_blk_end = *blkno + (xs->datalen >> DEV_BSHIFT) - 1;
 
 	if (wu->swu_blk_end > sd->sd_meta->ssdi.ssd_size) {
 		DNPRINTF(SR_D_DIS, "%s: %s out of bounds start: %lld "
@@ -4651,7 +4650,8 @@ sr_rebuild(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	u_int64_t		sz, psz, whole_blk, partial_blk, blk, restart;
-	daddr_t			lba, rb;
+	daddr_t			lba;
+	int64_t			rb;
 	struct sr_workunit	*wu_r, *wu_w;
 	struct scsi_xfer	xs_r, xs_w;
 	struct scsi_rw_16	*cr, *cw;
@@ -5085,7 +5085,7 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		my->subfn = get_hibernate_io_function(my->subdev);
 
 		/*
-		 * Find block offset where this raid partition is on
+		 * Find blkno where this raid partition starts on
 		 * the underlying disk.
 		 */
 		dl_ret = disk_readlabel(&dl, my->subdev, errstr,
@@ -5099,13 +5099,13 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		if (pp->p_fstype != FS_RAID || DL_GETPSIZE(pp) == 0)
 			return (ENOTSUP);
 
-		/* Find the offset of the SR part in the underlying device */
-		sub_raidoff = my->srd->sd_meta->ssd_data_offset +
+		/* Find the blkno of the SR part in the underlying device */
+		sub_raidoff = my->srd->sd_meta->ssd_data_blkno +
 		    DL_SECTOBLK(&dl, DL_GETPOFFSET(pp));
 		DNPRINTF(SR_D_MISC,"sr_hibernate_io: blk trans ofs: %d blks\n",
 		    sub_raidoff);
 
-		/* Save the offset of the swap partition in the SR disk */
+		/* Save the blkno of the swap partition in the SR disk */
 		my->sr_swapoff = blkno;
 
 		/* Initialize the sub-device */

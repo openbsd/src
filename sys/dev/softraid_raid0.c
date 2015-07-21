@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.49 2015/07/19 21:06:04 krw Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.50 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -118,32 +118,32 @@ sr_raid0_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
-	daddr_t			blk;
-	int64_t			chunkoffs, lbaoffs, physoffs, stripoffs;
+	daddr_t			blkno;
+	int64_t			chunkoffs, lbaoffs, offset, stripoffs;
 	int64_t			strip_bits, strip_no, strip_size;
 	int64_t			chunk, no_chunk;
 	int64_t			length, leftover;
 	u_int8_t		*data;
 
-	/* blk and scsi error will be handled by sr_validate_io */
-	if (sr_validate_io(wu, &blk, "sr_raid0_rw"))
+	/* blkno and scsi error will be handled by sr_validate_io */
+	if (sr_validate_io(wu, &blkno, "sr_raid0_rw"))
 		goto bad;
 
 	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
 	strip_bits = sd->mds.mdd_raid0.sr0_strip_bits;
 	no_chunk = sd->sd_meta->ssdi.ssd_chunk_no;
 
-	DNPRINTF(SR_D_DIS, "%s: %s: front end io: lba %lld size %d\n",
+	DNPRINTF(SR_D_DIS, "%s: %s: front end io: blkno %lld size %d\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-	    (long long)blk, xs->datalen);
+	    (long long)blkno, xs->datalen);
 
 	/* all offs are in bytes */
-	lbaoffs = blk << DEV_BSHIFT;
+	lbaoffs = blkno << DEV_BSHIFT;
 	strip_no = lbaoffs >> strip_bits;
 	chunk = strip_no % no_chunk;
 	stripoffs = lbaoffs & (strip_size - 1);
 	chunkoffs = (strip_no / no_chunk) << strip_bits;
-	physoffs = chunkoffs + stripoffs;
+	offset = chunkoffs + stripoffs;
 	length = MIN(xs->datalen, strip_size - stripoffs);
 	leftover = xs->datalen;
 	data = xs->data;
@@ -155,14 +155,14 @@ sr_raid0_rw(struct sr_workunit *wu)
 
 		DNPRINTF(SR_D_DIS, "%s: %s %s io lbaoffs %lld "
 		    "strip_no %lld chunk %lld stripoffs %lld "
-		    "chunkoffs %lld physoffs %lld length %lld "
+		    "chunkoffs %lld offset %lld length %lld "
 		    "leftover %lld data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
-		    lbaoffs, strip_no, chunk, stripoffs, chunkoffs, physoffs,
+		    lbaoffs, strip_no, chunk, stripoffs, chunkoffs, offset,
 		    length, leftover, data);
 
-		blk = physoffs >> DEV_BSHIFT;
-		ccb = sr_ccb_rw(sd, chunk, blk, length, data, xs->flags, 0);
+		blkno = offset >> DEV_BSHIFT;
+		ccb = sr_ccb_rw(sd, chunk, blkno, length, data, xs->flags, 0);
 		if (!ccb) {
 			/* should never happen but handle more gracefully */
 			printf("%s: %s: too many ccbs queued\n",
@@ -179,9 +179,9 @@ sr_raid0_rw(struct sr_workunit *wu)
 		data += length;
 		if (++chunk > no_chunk - 1) {
 			chunk = 0;
-			physoffs += length;
+			offset += length;
 		} else if (wu->swu_io_count == 1)
-			physoffs -= stripoffs;
+			offset -= stripoffs;
 		length = MIN(leftover,strip_size);
 	}
 

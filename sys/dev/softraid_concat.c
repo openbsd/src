@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.22 2015/07/19 17:04:31 krw Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.23 2015/07/21 03:30:51 krw Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -98,37 +98,37 @@ sr_concat_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
-	daddr_t			blk;
-	int64_t			lbaoffs, physoffs;
+	daddr_t			blkno;
+	int64_t			lbaoffs, offset;
 	int64_t			no_chunk, chunkend, chunk, chunksize;
 	int64_t			length, leftover;
 	u_int8_t		*data;
 
-	/* blk and scsi error will be handled by sr_validate_io */
-	if (sr_validate_io(wu, &blk, "sr_concat_rw"))
+	/* blkno and scsi error will be handled by sr_validate_io */
+	if (sr_validate_io(wu, &blkno, "sr_concat_rw"))
 		goto bad;
 
 	no_chunk = sd->sd_meta->ssdi.ssd_chunk_no;
 
-	DNPRINTF(SR_D_DIS, "%s: %s: front end io: lba %lld size %d\n",
+	DNPRINTF(SR_D_DIS, "%s: %s: front end io: blkno %lld size %d\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-	    (long long)blk, xs->datalen);
+	    (long long)blkno, xs->datalen);
 
 	/* All offsets are in bytes. */
-	lbaoffs = blk << DEV_BSHIFT;
+	lbaoffs = blkno << DEV_BSHIFT;
 	leftover = xs->datalen;
 	data = xs->data;
 	for (;;) {
 
 		chunkend = 0;
-		physoffs = lbaoffs;
+		offset = lbaoffs;
 		for (chunk = 0; chunk < no_chunk; chunk++) {
 			chunksize = sd->sd_vol.sv_chunks[chunk]->src_size <<
 			    DEV_BSHIFT;
 			chunkend += chunksize;
 			if (lbaoffs < chunkend)
 				break;
-			physoffs -= chunksize;
+			offset -= chunksize;
 		}
 		if (lbaoffs > chunkend)
 			goto bad;
@@ -141,13 +141,13 @@ sr_concat_rw(struct sr_workunit *wu)
 			goto bad;
 
 		DNPRINTF(SR_D_DIS, "%s: %s %s io lbaoffs %lld "
-		    "chunk %lld chunkend %lld physoffs %lld length %lld "
+		    "chunk %lld chunkend %lld offset %lld length %lld "
 		    "leftover %lld data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
-		    lbaoffs, chunk, chunkend, physoffs, length, leftover, data);
+		    lbaoffs, chunk, chunkend, offset, length, leftover, data);
 
-		blk = physoffs >> DEV_BSHIFT;
-		ccb = sr_ccb_rw(sd, chunk, blk, length, data, xs->flags, 0);
+		blkno = offset >> DEV_BSHIFT;
+		ccb = sr_ccb_rw(sd, chunk, blkno, length, data, xs->flags, 0);
 		if (!ccb) {
 			/* should never happen but handle more gracefully */
 			printf("%s: %s: too many ccbs queued\n",
