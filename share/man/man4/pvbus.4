@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pvbus.4,v 1.1 2015/07/21 03:40:01 reyk Exp $
+.\"	$OpenBSD: pvbus.4,v 1.2 2015/07/21 07:01:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
@@ -35,13 +35,13 @@ driver is responsible for detecting the hypervisor interface,
 checking the capabilities, and attaching the paravirtual devices.
 .Ss Supported hypervisors
 .Bl -tag -width 13n -offset ind -compact
-.It Xr KVM
+.It KVM
 Kernel-based Virtual Machine
-.It Xr Hyper-V
+.It Hyper-V
 Microsoft Hyper-V
-.It Xr VMware
+.It VMware
 VMware vSphere Hypervisor and ESXi
-.It Xr Xen
+.It Xen
 Xen VMM
 .El
 .Pp
