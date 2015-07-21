@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.78 2015/03/14 03:38:51 jsg Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.79 2015/07/21 02:32:04 sashan Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -68,10 +68,10 @@ int			  pfi_buffer_max;
 void		 pfi_kif_update(struct pfi_kif *);
 void		 pfi_dynaddr_update(struct pfi_dynaddr *dyn);
 void		 pfi_table_update(struct pfr_ktable *, struct pfi_kif *,
-		    int, int);
+		    u_int8_t, int);
 void		 pfi_kifaddr_update(void *);
-void		 pfi_instance_add(struct ifnet *, int, int);
-void		 pfi_address_add(struct sockaddr *, int, int);
+void		 pfi_instance_add(struct ifnet *, u_int8_t, int);
+void		 pfi_address_add(struct sockaddr *, sa_family_t, u_int8_t);
 int		 pfi_if_compare(struct pfi_kif *, struct pfi_kif *);
 int		 pfi_skip_if(const char *, struct pfi_kif *);
 int		 pfi_unmask(void *);
@@ -458,7 +458,7 @@ pfi_dynaddr_update(struct pfi_dynaddr *dyn)
 }
 
 void
-pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
+pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, u_int8_t net, int flags)
 {
 	int			 e, size2 = 0;
 	struct ifg_member	*ifgm;
@@ -479,7 +479,7 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 }
 
 void
-pfi_instance_add(struct ifnet *ifp, int net, int flags)
+pfi_instance_add(struct ifnet *ifp, u_int8_t net, int flags)
 {
 	struct ifaddr	*ifa;
 	int		 got4 = 0, got6 = 0;
@@ -536,7 +536,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 }
 
 void
-pfi_address_add(struct sockaddr *sa, int af, int net)
+pfi_address_add(struct sockaddr *sa, sa_family_t af, u_int8_t net)
 {
 	struct pfr_addr	*p;
 	int		 i;

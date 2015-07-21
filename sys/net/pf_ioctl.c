@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.288 2015/07/19 05:54:54 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.289 2015/07/21 02:32:04 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -179,7 +179,7 @@ pfattach(int num)
 	/* default rule should never be garbage collected */
 	pf_default_rule.entries.tqe_prev = &pf_default_rule.entries.tqe_next;
 	pf_default_rule.action = PF_PASS;
-	pf_default_rule.nr = -1;
+	pf_default_rule.nr = (u_int32_t)-1;
 	pf_default_rule.rtableid = -1;
 
 	/* initialize default timeouts */
@@ -265,7 +265,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		}
 		TAILQ_REMOVE(rulequeue, rule, entries);
 		rule->entries.tqe_prev = NULL;
-		rule->nr = -1;
+		rule->nr = (u_int32_t)-1;
 	}
 
 	if (rule->states_cur > 0 || rule->src_nodes > 0 ||
@@ -1193,7 +1193,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_addr_copyout(&pr->rule.route.addr);
 		for (i = 0; i < PF_SKIP_COUNT; ++i)
 			if (rule->skip[i].ptr == NULL)
-				pr->rule.skip[i].nr = -1;
+				pr->rule.skip[i].nr = (u_int32_t)-1;
 			else
 				pr->rule.skip[i].nr =
 				    rule->skip[i].ptr->nr;
