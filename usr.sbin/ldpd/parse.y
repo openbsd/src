@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.30 2015/07/21 04:56:44 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -106,6 +106,8 @@ struct config_defaults	 tnbrdefs;
 struct config_defaults	 pwdefs;
 struct config_defaults	*defs;
 
+int			 bad_ip_addr(struct in_addr);
+
 struct iface		*conf_get_if(struct kif *);
 struct tnbr		*conf_get_tnbr(struct in_addr);
 struct nbr_params	*conf_get_nbrp(struct in_addr);
@@ -196,6 +198,10 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			free($2);
+			if (bad_ip_addr(conf->rtr_id)) {
+				yyerror("invalid router-id");
+				YYERROR;
+			}
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -520,6 +526,10 @@ tneighbor	: TNEIGHBOR STRING	{
 				YYERROR;
 			}
 			free($2);
+			if (bad_ip_addr(addr)) {
+				yyerror("invalid neighbor address");
+				YYERROR;
+			}
 
 			tnbr = conf_get_tnbr(addr);
 			if (tnbr == NULL)
@@ -558,6 +568,10 @@ neighbor	: NEIGHBOR STRING	{
 				YYERROR;
 			}
 			free($2);
+			if (bad_ip_addr(addr)) {
+				yyerror("invalid neighbor address");
+				YYERROR;
+			}
 
 			nbrp = conf_get_nbrp(addr);
 			if (nbrp == NULL)
@@ -1114,6 +1128,16 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
+}
+
+int
+bad_ip_addr(struct in_addr addr)
+{
+	u_int32_t a = ntohl(addr.s_addr);
+
+	return (((a >> IN_CLASSA_NSHIFT) == 0)
+	    || ((a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+	    || IN_MULTICAST(a) || IN_BADCLASS(a));
 }
 
 struct iface *
