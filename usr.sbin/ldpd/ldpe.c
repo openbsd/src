@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.36 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.37 2015/07/21 04:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -566,10 +566,10 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 			if (nbr == NULL) {
 				log_debug("ldpe_dispatch_lde: cannot find "
 				    "neighbor");
-				return;
+				break;
 			}
 			if (nbr->state != NBR_STA_OPER)
-				return;
+				break;
 
 			switch (imsg.hdr.type) {
 			case IMSG_MAPPING_ADD:
@@ -594,10 +594,10 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 			if (nbr == NULL) {
 				log_debug("ldpe_dispatch_lde: cannot find "
 				    "neighbor");
-				return;
+				break;
 			}
 			if (nbr->state != NBR_STA_OPER)
-				return;
+				break;
 
 			switch (imsg.hdr.type) {
 			case IMSG_MAPPING_ADD_END:
@@ -627,10 +627,10 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 			if (nbr == NULL) {
 				log_debug("ldpe_dispatch_lde: cannot find "
 				    "neighbor");
-				return;
+				break;
 			}
 			if (nbr->state != NBR_STA_OPER)
-				return;
+				break;
 
 			send_notification_full(nbr->tcp, &nm);
 			break;

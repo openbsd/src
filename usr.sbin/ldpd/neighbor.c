@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.49 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.50 2015/07/21 04:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -222,14 +222,8 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	nbr->state = NBR_STA_PRESENT;
 	nbr->id.s_addr = id.s_addr;
 	nbr->addr.s_addr = addr.s_addr;
+	nbr->peerid = 0;
 
-	/* get next unused peerid */
-	while (nbr_find_peerid(++peercnt))
-		;
-	nbr->peerid = peercnt;
-
-	if (RB_INSERT(nbr_pid_head, &nbrs_by_pid, nbr) != NULL)
-		fatalx("nbr_new: RB_INSERT(nbrs_by_pid) failed");
 	if (RB_INSERT(nbr_id_head, &nbrs_by_id, nbr) != NULL)
 		fatalx("nbr_new: RB_INSERT(nbrs_by_id) failed");
 
@@ -273,10 +267,26 @@ nbr_del(struct nbr *nbr)
 	mapping_list_clr(&nbr->release_list);
 	mapping_list_clr(&nbr->abortreq_list);
 
-	RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
+	if (nbr->peerid)
+		RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
 	RB_REMOVE(nbr_id_head, &nbrs_by_id, nbr);
 
 	free(nbr);
+}
+
+void
+nbr_update_peerid(struct nbr *nbr)
+{
+	if (nbr->peerid)
+		RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
+
+	/* get next unused peerid */
+	while (nbr_find_peerid(++peercnt))
+		;
+	nbr->peerid = peercnt;
+
+	if (RB_INSERT(nbr_pid_head, &nbrs_by_pid, nbr) != NULL)
+		fatalx("nbr_new: RB_INSERT(nbrs_by_pid) failed");
 }
 
 struct nbr *
@@ -351,8 +361,7 @@ nbr_ktimeout(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	log_debug("nbr_ktimeout: neighbor ID %s peerid %u", inet_ntoa(nbr->id),
-	    nbr->peerid);
+	log_debug("nbr_ktimeout: neighbor ID %s", inet_ntoa(nbr->id));
 
 	session_shutdown(nbr, S_KEEPALIVE_TMR, 0, 0);
 }
@@ -384,8 +393,7 @@ nbr_idtimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	log_debug("nbr_idtimer: neighbor ID %s peerid %u", inet_ntoa(nbr->id),
-	    nbr->peerid);
+	log_debug("nbr_idtimer: neighbor ID %s", inet_ntoa(nbr->id));
 
 	if (nbr_session_active_role(nbr))
 		nbr_establish_connection(nbr);
@@ -552,6 +560,9 @@ int
 nbr_act_session_operational(struct nbr *nbr)
 {
 	nbr->idtimer_cnt = 0;
+
+	/* this is necessary to avoid ipc synchronization issues */
+	nbr_update_peerid(nbr);
 
 	return (ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0,
 	    &nbr->id, sizeof(nbr->id)));

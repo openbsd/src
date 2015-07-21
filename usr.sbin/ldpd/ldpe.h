@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.40 2015/07/21 04:52:29 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.41 2015/07/21 04:58:48 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -198,6 +198,7 @@ void		 ldpe_adj_ctl(struct ctl_conn *);
 /* neighbor.c */
 struct nbr	*nbr_new(struct in_addr, struct in_addr);
 void		 nbr_del(struct nbr *);
+void		 nbr_update_peerid(struct nbr *);
 
 struct nbr	*nbr_find_ldpid(u_int32_t);
 struct nbr	*nbr_find_peerid(u_int32_t);
