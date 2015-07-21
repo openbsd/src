@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.54 2015/07/21 03:00:20 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.55 2015/07/21 03:03:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -301,7 +301,6 @@ pflow_clone_destroy(struct ifnet *ifp)
 	return (error);
 }
 
-/* ARGSUSED */
 int
 pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
