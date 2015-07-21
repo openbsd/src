@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2015/07/19 21:04:38 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.27 2015/07/21 04:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -200,6 +200,7 @@ conf_main	: ROUTERID STRING {
 		| iface_defaults
 		| tnbr_defaults
 		;
+
 iface_defaults	: LHELLOHOLDTIME NUMBER {
 			if ($2 < MIN_HOLDTIME ||
 			    $2 > MAX_HOLDTIME) {
@@ -318,6 +319,8 @@ tneighbor	: TNEIGHBOR STRING	{
 			tnbr = conf_get_tnbr(addr);
 			if (tnbr == NULL)
 				YYERROR;
+
+			tnbr->flags |= F_TNBR_CONFIGURED;
 			LIST_INSERT_HEAD(&conf->tnbr_list, tnbr, entry);
 
 			memcpy(&tnbrdefs, defs, sizeof(tnbrdefs));
@@ -903,7 +906,7 @@ conf_get_tnbr(struct in_addr addr)
 		}
 	}
 
-	t = tnbr_new(conf, addr, 1);
+	t = tnbr_new(conf, addr);
 
 	return (t);
 }

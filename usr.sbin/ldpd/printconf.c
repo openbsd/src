@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.9 2015/07/19 21:01:56 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.10 2015/07/21 04:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -92,7 +92,8 @@ print_config(struct ldpd_conf *conf)
 		print_iface(iface);
 	printf("\n");
 	LIST_FOREACH(tnbr, &conf->tnbr_list, entry)
-		print_tnbr(tnbr);
+		if (tnbr->flags & F_TNBR_CONFIGURED)
+			print_tnbr(tnbr);
 	printf("\n");
 	LIST_FOREACH(nbrp, &conf->nbrp_list, entry)
 		print_nbrp(nbrp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.50 2015/07/21 04:39:28 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.51 2015/07/21 04:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -220,6 +220,7 @@ struct tnbr {
 	u_int8_t		 flags;
 };
 #define F_TNBR_CONFIGURED	 0x01
+#define F_TNBR_DYNAMIC		 0x02
 
 enum auth_method {
 	AUTH_NONE,

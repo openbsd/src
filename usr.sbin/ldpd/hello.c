@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.25 2015/04/04 15:09:47 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.26 2015/07/21 04:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -129,17 +129,25 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	bzero(&source, sizeof(source));
 	if (flags & TARGETED_HELLO) {
 		tnbr = tnbr_find(src);
+
+		/* remove the dynamic tnbr if the 'R' bit was cleared */
+		if (tnbr && (tnbr->flags & F_TNBR_DYNAMIC) &&
+		    !((flags & REQUEST_TARG_HELLO))) {
+			tnbr->flags &= ~F_TNBR_DYNAMIC;
+			tnbr = tnbr_check(tnbr);
+		}
+
 		if (!tnbr) {
 			if (!((flags & REQUEST_TARG_HELLO) &&
 			    leconf->flags & LDPD_FLAG_TH_ACCEPT))
 				return;
 
-			tnbr = tnbr_new(leconf, src, 0);
-			if (!tnbr)
-				return;
+			tnbr = tnbr_new(leconf, src);
+			tnbr->flags |= F_TNBR_DYNAMIC;
 			tnbr_init(leconf, tnbr);
 			LIST_INSERT_HEAD(&leconf->tnbr_list, tnbr, entry);
 		}
+
 		source.type = HELLO_TARGETED;
 		source.target = tnbr;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.4 2015/04/04 15:09:47 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.5 2015/07/21 04:40:56 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -148,11 +148,13 @@ adj_itimer(int fd, short event, void *arg)
 		LIST_REMOVE(adj, iface_entry);
 		break;
 	case HELLO_TARGETED:
-		adj->source.target->adj = NULL;
 		if (!(adj->source.target->flags & F_TNBR_CONFIGURED)) {
+			/* remove dynamic targeted neighbor */
 			LIST_REMOVE(adj->source.target, entry);
 			tnbr_del(adj->source.target);
+			return;
 		}
+		adj->source.target->adj = NULL;
 		break;
 	}
 
@@ -182,7 +184,7 @@ adj_stop_itimer(struct adj *adj)
 /* targeted neighbors */
 
 struct tnbr *
-tnbr_new(struct ldpd_conf *xconf, struct in_addr addr, int configured)
+tnbr_new(struct ldpd_conf *xconf, struct in_addr addr)
 {
 	struct tnbr		*tnbr;
 
@@ -190,12 +192,8 @@ tnbr_new(struct ldpd_conf *xconf, struct in_addr addr, int configured)
 		fatal("tnbr_new");
 
 	tnbr->addr.s_addr = addr.s_addr;
-	if (configured)
-		tnbr->flags |= F_TNBR_CONFIGURED;
-	else {
-		tnbr->hello_holdtime = xconf->thello_holdtime;
-		tnbr->hello_interval = xconf->thello_interval;
-	}
+	tnbr->hello_holdtime = xconf->thello_holdtime;
+	tnbr->hello_interval = xconf->thello_interval;
 
 	return (tnbr);
 }
@@ -207,6 +205,18 @@ tnbr_del(struct tnbr *tnbr)
 	if (tnbr->adj)
 		adj_del(tnbr->adj);
 	free(tnbr);
+}
+
+struct tnbr *
+tnbr_check(struct tnbr *tnbr)
+{
+	if (!(tnbr->flags & (F_TNBR_CONFIGURED|F_TNBR_DYNAMIC))) {
+		LIST_REMOVE(tnbr, entry);
+		tnbr_del(tnbr);
+		return (NULL);
+	}
+
+	return (tnbr);
 }
 
 void
