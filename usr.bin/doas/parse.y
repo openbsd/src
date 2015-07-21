@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.7 2015/07/21 11:04:06 zhuk Exp $ */
+/* $OpenBSD: parse.y,v 1.8 2015/07/21 16:12:04 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -198,27 +198,27 @@ yylex(void)
 repeat:
 	c = getc(yyfp);
 	switch (c) {
-		case ' ':
-		case '\t':
-			goto repeat; /* skip spaces */
-		case '\\':
-			next = getc(yyfp);
-			if (next == '\n')
-				goto repeat;
-			else
-				c = next;
-		case '\n':
-		case '{':
-		case '}':
-			return c;
-		case '#':
-			while ((c = getc(yyfp)) != '\n' && c != EOF)
-				; /* skip comments */
-			if (c == EOF)
-				return 0;
-			return c;
-		case EOF:
+	case ' ':
+	case '\t':
+		goto repeat; /* skip spaces */
+	case '\\':
+		next = getc(yyfp);
+		if (next == '\n')
+			goto repeat;
+		else
+			c = next;
+	case '\n':
+	case '{':
+	case '}':
+		return c;
+	case '#':
+		while ((c = getc(yyfp)) != '\n' && c != EOF)
+			; /* skip comments */
+		if (c == EOF)
 			return 0;
+		return c;
+	case EOF:
+		return 0;
 	}
 	while (1) {
 		switch (c) {

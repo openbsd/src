@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.1,v 1.8 2015/07/21 11:04:06 zhuk Exp $
+.\" $OpenBSD: doas.1,v 1.9 2015/07/21 16:12:04 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -21,6 +21,7 @@
 .Nd execute commands as another user
 .Sh SYNOPSIS
 .Nm doas
+.Op Fl C Ar config
 .Op Fl s
 .Op Fl u Ar user
 .Ar command
@@ -32,6 +33,11 @@ utility executes the given command as another user.
 .Pp
 The options are as follows:
 .Bl -tag -width tenletters
+.It Fl C Ar config
+Parse and check the configuration file
+.Ar config ,
+then exit.
+No command is executed.
 .It Fl s
 Execute the shell from
 .Ev SHELL
