@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.20 2015/07/21 05:44:50 renato Exp $
+/*	$OpenBSD: ldpctl.c,v 1.21 2015/07/21 09:34:57 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -393,7 +393,7 @@ show_lib_msg(struct imsg *imsg)
 		if (!rt->in_use) {
 			if (asprintf(&remote, "-") == -1)
 				err(1, NULL);
-		} else if (rt->connected || rt->remote_label == NO_LABEL) {
+		} else if (rt->remote_label == NO_LABEL) {
 			if (asprintf(&remote, "Untagged") == -1)
 				err(1, NULL);
 		} else if (rt->remote_label == MPLS_LABEL_IMPLNULL) {
