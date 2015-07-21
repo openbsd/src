@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.35 2015/07/21 04:45:21 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.36 2015/07/21 04:46:51 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -162,7 +162,7 @@ void
 lde_shutdown(void)
 {
 	lde_nbr_clear();
-	rt_clear();
+	fec_tree_clear();
 
 	config_clear(ldeconf);
 
@@ -231,7 +231,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				return;
 			}
 
-			rt_snap(nbr);
+			fec_snap(nbr);
 			break;
 		case IMSG_LABEL_MAPPING:
 		case IMSG_LABEL_REQUEST:
@@ -471,39 +471,39 @@ lde_assign_label(void)
 }
 
 void
-lde_send_change_klabel(struct rt_node *rr, struct rt_lsp *rl)
+lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 {
 	struct kroute	kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = rr->fec.prefix.s_addr;
-	kr.prefixlen = rr->fec.prefixlen;
-	kr.local_label = rr->local_label;
+	kr.prefix.s_addr = fn->fec.prefix.s_addr;
+	kr.prefixlen = fn->fec.prefixlen;
+	kr.local_label = fn->local_label;
 
-	kr.nexthop.s_addr = rl->nexthop.s_addr;
-	kr.remote_label = rl->remote_label;
+	kr.nexthop.s_addr = fnh->nexthop.s_addr;
+	kr.remote_label = fnh->remote_label;
 
 	lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr, sizeof(kr));
 }
 
 void
-lde_send_delete_klabel(struct rt_node *rr, struct rt_lsp *rl)
+lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 {
 	struct kroute	 kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = rr->fec.prefix.s_addr;
-	kr.prefixlen = rr->fec.prefixlen;
-	kr.local_label = rr->local_label;
+	kr.prefix.s_addr = fn->fec.prefix.s_addr;
+	kr.prefixlen = fn->fec.prefixlen;
+	kr.local_label = fn->local_label;
 
-	kr.nexthop.s_addr = rl->nexthop.s_addr;
-	kr.remote_label = rl->remote_label;
+	kr.nexthop.s_addr = fnh->nexthop.s_addr;
+	kr.remote_label = fnh->remote_label;
 
 	lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr, sizeof(kr));
 }
 
 void
-lde_send_labelmapping(struct lde_nbr *ln, struct rt_node *rn)
+lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn)
 {
 	struct lde_req	*lre;
 	struct lde_map	*me;
@@ -516,12 +516,12 @@ lde_send_labelmapping(struct lde_nbr *ln, struct rt_node *rn)
 	 */
 
 	bzero(&map, sizeof(map));
-	map.label = rn->local_label;
-	map.prefix = rn->fec.prefix;
-	map.prefixlen = rn->fec.prefixlen;
+	map.label = fn->local_label;
+	map.prefix = fn->fec.prefix;
+	map.prefixlen = fn->fec.prefixlen;
 
 	/* SL.6: is there a pending request for this mapping? */
-	lre = (struct lde_req *)fec_find(&ln->recv_req, &rn->fec);
+	lre = (struct lde_req *)fec_find(&ln->recv_req, &fn->fec);
 	if (lre) {
 		/* set label request msg id in the mapping response. */
 		map.requestid = lre->msgid;
@@ -536,24 +536,24 @@ lde_send_labelmapping(struct lde_nbr *ln, struct rt_node *rn)
 	    &map, sizeof(map));
 
 	/* SL.5: record sent label mapping */
-	me = (struct lde_map *)fec_find(&ln->sent_map, &rn->fec);
+	me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
 	if (me == NULL)
-		me = lde_map_add(ln, rn, 1);
+		me = lde_map_add(ln, fn, 1);
 	me->label = map.label;
 }
 
 void
-lde_send_labelwithdraw(struct lde_nbr *ln, struct rt_node *rn)
+lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn)
 {
 	struct lde_wdraw	*lw;
 	struct map		 map;
 	struct fec		*f;
 
 	bzero(&map, sizeof(map));
-	if (rn) {
-		map.label = rn->local_label;
-		map.prefix = rn->fec.prefix;
-		map.prefixlen = rn->fec.prefixlen;
+	if (fn) {
+		map.label = fn->local_label;
+		map.prefix = fn->fec.prefix;
+		map.prefixlen = fn->fec.prefixlen;
 	} else {
 		map.label = NO_LABEL;
 		map.flags = F_MAP_WILDCARD;
@@ -565,33 +565,33 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct rt_node *rn)
 	lde_imsg_compose_ldpe(IMSG_WITHDRAW_ADD_END, ln->peerid, 0, NULL, 0);
 
 	/* SWd.2: record label withdraw. */
-	if (rn) {
-		lw = (struct lde_wdraw *)fec_find(&ln->sent_wdraw, &rn->fec);
+	if (fn) {
+		lw = (struct lde_wdraw *)fec_find(&ln->sent_wdraw, &fn->fec);
 		if (lw == NULL)
-			lw = lde_wdraw_add(ln, rn);
+			lw = lde_wdraw_add(ln, fn);
 		lw->label = map.label;
 	} else {
-		RB_FOREACH(f, fec_tree, &rt) {
-			rn = (struct rt_node *)f;
+		RB_FOREACH(f, fec_tree, &ft) {
+			fn = (struct fec_node *)f;
 
 			lw = (struct lde_wdraw *)fec_find(&ln->sent_wdraw,
-			    &rn->fec);
+			    &fn->fec);
 			if (lw == NULL)
-				lw = lde_wdraw_add(ln, rn);
+				lw = lde_wdraw_add(ln, fn);
 			lw->label = map.label;
 		}
 	}
 }
 
 void
-lde_send_labelrelease(struct lde_nbr *ln, struct rt_node *rn, u_int32_t label)
+lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, u_int32_t label)
 {
 	struct map	 map;
 
 	bzero(&map, sizeof(map));
-	if (rn) {
-		map.prefix = rn->fec.prefix;
-		map.prefixlen = rn->fec.prefixlen;
+	if (fn) {
+		map.prefix = fn->fec.prefix;
+		map.prefixlen = fn->fec.prefixlen;
 	} else
 		map.flags = F_MAP_WILDCARD;
 	map.label = label;
@@ -670,20 +670,20 @@ void
 lde_nbr_del(struct lde_nbr *nbr)
 {
 	struct fec	*f;
-	struct rt_node	*rn;
-	struct rt_lsp	*rl;
+	struct fec_node	*fn;
+	struct fec_nh	*fnh;
 
 	if (nbr == NULL)
 		return;
 
 	/* uninstall received mappings */
-	RB_FOREACH(f, fec_tree, &rt) {
-		rn = (struct rt_node *)f;
+	RB_FOREACH(f, fec_tree, &ft) {
+		fn = (struct fec_node *)f;
 
-		LIST_FOREACH(rl, &rn->lsp, entry) {
-			if (lde_address_find(nbr, &rl->nexthop)) {
-				lde_send_delete_klabel(rn, rl);
-				rl->remote_label = NO_LABEL;
+		LIST_FOREACH(fnh, &fn->nexthops, entry) {
+			if (lde_address_find(nbr, &fnh->nexthop)) {
+				lde_send_delete_klabel(fn, fnh);
+				fnh->remote_label = NO_LABEL;
 			}
 		}
 	}
@@ -711,7 +711,7 @@ lde_nbr_clear(void)
 }
 
 struct lde_map *
-lde_map_add(struct lde_nbr *ln, struct rt_node *rn, int sent)
+lde_map_add(struct lde_nbr *ln, struct fec_node *fn, int sent)
 {
 	struct lde_map  *me;
 
@@ -719,17 +719,17 @@ lde_map_add(struct lde_nbr *ln, struct rt_node *rn, int sent)
 	if (me == NULL)
 		fatal("lde_map_add");
 
-	me->fec = rn->fec;
+	me->fec = fn->fec;
 	me->nexthop = ln;
 
 	if (sent) {
-		LIST_INSERT_HEAD(&rn->upstream, me, entry);
+		LIST_INSERT_HEAD(&fn->upstream, me, entry);
 		if (fec_insert(&ln->sent_map, &me->fec))
 			log_warnx("failed to add %s/%u to sent map",
 			    inet_ntoa(me->fec.prefix), me->fec.prefixlen);
 			/* XXX on failure more cleanup is needed */
 	} else {
-		LIST_INSERT_HEAD(&rn->downstream, me, entry);
+		LIST_INSERT_HEAD(&fn->downstream, me, entry);
 		if (fec_insert(&ln->recv_map, &me->fec))
 			log_warnx("failed to add %s/%u to recv map",
 			    inet_ntoa(me->fec.prefix), me->fec.prefixlen);
@@ -761,16 +761,16 @@ lde_map_free(void *ptr)
 struct lde_req *
 lde_req_add(struct lde_nbr *ln, struct fec *fec, int sent)
 {
-	struct fec_tree	*ft;
+	struct fec_tree	*t;
 	struct lde_req	*lre;
 
-	ft = sent ? &ln->sent_req : &ln->recv_req;
+	t = sent ? &ln->sent_req : &ln->recv_req;
 
 	lre = calloc(1, sizeof(*lre));
 	if (lre != NULL) {
 		lre->fec = *fec;
 
-		if (fec_insert(ft, &lre->fec)) {
+		if (fec_insert(t, &lre->fec)) {
 			log_warnx("failed to add %s/%u to %s req",
 			    inet_ntoa(lre->fec.prefix), lre->fec.prefixlen,
 			    sent ? "sent" : "recv");
@@ -794,7 +794,7 @@ lde_req_del(struct lde_nbr *ln, struct lde_req *lre, int sent)
 }
 
 struct lde_wdraw *
-lde_wdraw_add(struct lde_nbr *ln, struct rt_node *rn)
+lde_wdraw_add(struct lde_nbr *ln, struct fec_node *fn)
 {
 	struct lde_wdraw  *lw;
 
@@ -802,7 +802,7 @@ lde_wdraw_add(struct lde_nbr *ln, struct rt_node *rn)
 	if (lw == NULL)
 		fatal("lde_wdraw_add");
 
-	lw->fec = rn->fec;
+	lw->fec = fn->fec;
 
 	if (fec_insert(&ln->sent_wdraw, &lw->fec))
 		log_warnx("failed to add %s/%u to sent wdraw",
