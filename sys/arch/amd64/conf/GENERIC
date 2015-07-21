@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.390 2015/07/19 18:17:06 bmercer Exp $
+#	$OpenBSD: GENERIC,v 1.391 2015/07/21 03:38:22 reyk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -38,6 +38,7 @@ isa0	at pcib?
 isa0	at amdpcib?
 isa0	at tcpcib?
 pci*	at mainbus0
+pvbus0	at mainbus0
 
 acpi0		at bios0
 acpitimer*	at acpi?
@@ -64,7 +65,8 @@ aibs*		at acpi?
 mpbios0		at bios0
 
 ipmi0	at mainbus? disable	# IPMI
-vmt0	at mainbus?		# VMware Tools
+
+vmt0	at pvbus?		# VMware Tools
 
 option		PCIVERBOSE
 option		USBVERBOSE

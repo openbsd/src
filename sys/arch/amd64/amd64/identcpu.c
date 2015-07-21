@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.62 2015/05/28 20:10:58 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.63 2015/07/21 03:38:22 reyk Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -55,6 +55,11 @@ int amd64_has_xcrypt;
 int amd64_has_aesni;
 #endif
 int has_rdrand;
+
+#include "pvbus.h"
+#if NPVBUS > 0
+#include <dev/pv/pvvar.h>
+#endif
 
 const struct {
 	u_int32_t	bit;
@@ -560,6 +565,11 @@ identifycpu(struct cpu_info *ci)
 
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
+
+#if NPVBUS > 0
+		if (cpu_ecxfeature & CPUIDECX_HV)
+			has_hv_cpuid = 1;
+#endif
 
 		if (ci->ci_feature_sefflags & SEFF0EBX_SMAP)
 			replacesmap();

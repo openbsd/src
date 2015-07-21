@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.29 2015/03/14 03:38:46 jsg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.30 2015/07/21 03:38:22 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -226,6 +226,8 @@ void	 vmt_tclo_resume(struct vmt_softc *);
 void	 vmt_tclo_capreg(struct vmt_softc *);
 void	 vmt_tclo_broadcastip(struct vmt_softc *);
 
+int	 vmt_probe(void);
+
 struct vmt_tclo_rpc {
 	const char	*name;
 	void		(*cb)(struct vmt_softc *);
@@ -316,6 +318,9 @@ int
 vmt_match(struct device *parent, void *match, void *aux)
 {
 	const char **busname = (const char **)aux;
+
+	if (!vmt_probe())
+		return (0);
 
 	return (strcmp(*busname, vmt_cd.cd_name) == 0);
 }

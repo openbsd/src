@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.28 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.29 2015/07/21 03:38:22 reyk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include "ipmi.h"
 #include "bios.h"
 #include "mpbios.h"
-#include "vmt.h"
+#include "pvbus.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -59,8 +59,8 @@
 #include <dev/ipmivar.h>
 #endif
 
-#if NVMT > 0
-#include <dev/vmtvar.h>
+#if NPVBUS > 0
+#include <dev/pv/pvvar.h>
 #endif
 
 #if NBIOS > 0
@@ -91,6 +91,9 @@ union mainbus_attach_args {
 #endif
 #if NBIOS > 0
 	struct bios_attach_args mba_bios;
+#endif
+#if NPVBUS > 0
+	struct pvbus_attach_args mba_pvba;
 #endif
 };
 
@@ -170,10 +173,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if NVMT > 0
-	if (vmt_probe()) {
-		mba.mba_busname = "vmt";
-		config_found(self, &mba.mba_busname, mainbus_print);
+#if NPVBUS > 0
+	/* Probe first to hide the "not configured" message */
+	if (pvbus_probe()) {
+		mba.mba_pvba.pvba_busname = "pvbus";
+		config_found(self, &mba.mba_pvba.pvba_busname, mainbus_print);
 	}
 #endif
 

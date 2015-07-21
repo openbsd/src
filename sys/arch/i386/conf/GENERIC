@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.800 2015/07/19 18:17:06 bmercer Exp $
+#	$OpenBSD: GENERIC,v 1.801 2015/07/21 03:38:22 reyk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -42,9 +42,11 @@ acpi0	at bios?
 mpbios0	at bios0
 pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
 ipmi0	at mainbus? disable	# IPMI
-vmt0	at mainbus?		# VMware Tools
 esm0	at mainbus? 		# Dell Embedded Server Management
 amdmsr0	at mainbus?		# MSR access for AMD Geode LX CPUs with GP
+
+pvbus0	at mainbus0		# Paravirtual device bus
+vmt0	at pvbus?		# VMware Tools
 
 acpitimer*	at acpi?
 acpihpet*	at acpi?
