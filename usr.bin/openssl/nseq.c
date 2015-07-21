@@ -1,4 +1,4 @@
-/* $OpenBSD: nseq.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: nseq.c,v 1.3 2015/07/21 16:41:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,75 +64,86 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 
+static struct {
+	char *infile;
+	char *outfile;
+	int toseq;
+} nseq_config;
+
+static struct option nseq_options[] = {
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input file to read from (default stdin)",
+		.type = OPTION_ARG,
+		.opt.arg = &nseq_config.infile,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file to write to (default stdout)",
+		.type = OPTION_ARG,
+		.opt.arg = &nseq_config.outfile,
+	},
+	{
+		.name = "toseq",
+		.desc = "Convert certificates to Netscape certificate sequence",
+		.type = OPTION_FLAG,
+		.opt.flag = &nseq_config.toseq,
+	},
+	{ NULL },
+};
+
+static void
+nseq_usage()
+{
+	fprintf(stderr, "usage: nseq [-in file] [-out file] [-toseq]\n");
+	options_usage(nseq_options);
+}
+
 int nseq_main(int, char **);
 
 int
 nseq_main(int argc, char **argv)
 {
-	char **args, *infile = NULL, *outfile = NULL;
 	BIO *in = NULL, *out = NULL;
-	int toseq = 0;
 	X509 *x509 = NULL;
 	NETSCAPE_CERT_SEQUENCE *seq = NULL;
 	int i, ret = 1;
-	int badarg = 0;
 
-	args = argv + 1;
-	while (!badarg && *args && *args[0] == '-') {
-		if (!strcmp(*args, "-toseq"))
-			toseq = 1;
-		else if (!strcmp(*args, "-in")) {
-			if (args[1]) {
-				args++;
-				infile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-out")) {
-			if (args[1]) {
-				args++;
-				outfile = *args;
-			} else
-				badarg = 1;
-		} else
-			badarg = 1;
-		args++;
-	}
+	memset(&nseq_config, 0, sizeof(nseq_config));
 
-	if (badarg) {
-		BIO_printf(bio_err, "Netscape certificate sequence utility\n");
-		BIO_printf(bio_err, "Usage nseq [options]\n");
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, "-in file  input file\n");
-		BIO_printf(bio_err, "-out file output file\n");
-		BIO_printf(bio_err, "-toseq    output NS Sequence file\n");
+	if (options_parse(argc, argv, nseq_options, NULL, NULL) != 0) {
+		nseq_usage();
 		return (1);
 	}
-	if (infile) {
-		if (!(in = BIO_new_file(infile, "r"))) {
+
+	if (nseq_config.infile) {
+		if (!(in = BIO_new_file(nseq_config.infile, "r"))) {
 			BIO_printf(bio_err,
-			    "Can't open input file %s\n", infile);
+			    "Can't open input file %s\n", nseq_config.infile);
 			goto end;
 		}
 	} else
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 
-	if (outfile) {
-		if (!(out = BIO_new_file(outfile, "w"))) {
+	if (nseq_config.outfile) {
+		if (!(out = BIO_new_file(nseq_config.outfile, "w"))) {
 			BIO_printf(bio_err,
-			    "Can't open output file %s\n", outfile);
+			    "Can't open output file %s\n", nseq_config.outfile);
 			goto end;
 		}
 	} else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 	}
-	if (toseq) {
+	if (nseq_config.toseq) {
 		seq = NETSCAPE_CERT_SEQUENCE_new();
 		seq->certs = sk_X509_new_null();
 		while ((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)))
 			sk_X509_push(seq->certs, x509);
 
 		if (!sk_X509_num(seq->certs)) {
-			BIO_printf(bio_err, "Error reading certs file %s\n", infile);
+			BIO_printf(bio_err, "Error reading certs file %s\n", nseq_config.infile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -141,7 +152,7 @@ nseq_main(int argc, char **argv)
 		goto end;
 	}
 	if (!(seq = PEM_read_bio_NETSCAPE_CERT_SEQUENCE(in, NULL, NULL, NULL))) {
-		BIO_printf(bio_err, "Error reading sequence file %s\n", infile);
+		BIO_printf(bio_err, "Error reading sequence file %s\n", nseq_config.infile);
 		ERR_print_errors(bio_err);
 		goto end;
 	}
