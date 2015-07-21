@@ -1,0 +1,118 @@
+.\"	$OpenBSD: mpw.4,v 1.1 2015/07/21 05:25:24 rzalamena Exp $
+.\"
+.\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 21 2015 $
+.Dt MPW 4
+.Os
+.Sh NAME
+.Nm mpw
+.Nd MPLS Pseudowire
+.Sh SYNOPSIS
+.Cd "pseudo-device mpw"
+.Pp
+.Fd #include <sys/types.h>
+.Fd #include <netmpls/mpls.h>
+.Sh DESCRIPTION
+The
+.Nm
+interface is used to create a MPLS layer 2 tunnel between two points.
+.Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig mpw Ns Ar N Ic create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+The interface itself can be configured with
+.Xr ifconfig 8
+see its man page for more information.
+.Pp
+The supported pseudowire operation modes are
+.Ql ethernet
+and
+.Ql ethernet-tagged .
+The
+.Ql ethernet
+operating mode passes all ethernet packets transparently through the
+interface, meanwhile the
+.Ql ethernet-tagged
+requires that the client uses at least one VLAN to pass the traffic.
+The
+.Nm
+interface labels, neighbor, encapsulation and administrative state is normally
+configured by
+.Xr ldpd 8 ,
+but it is also possible to configure it manually.
+The configuration information that will be used by the ioctl are
+defined below:
+.Bd -literal
+#define IMR_TYPE_NONE                   0
+#define IMR_TYPE_ETHERNET               1
+#define IMR_TYPE_ETHERNET_TAGGED        2
+
+#define IMR_FLAG_CONTROLWORD            0x1
+
+struct ifmpwreq {
+        uint32_t        imr_flags;
+        uint32_t        imr_type; /* pseudowire type */
+        struct          shim_hdr imr_lshim; /* local label */
+        struct          shim_hdr imr_rshim; /* remote label */
+        struct          sockaddr_storage imr_nexthop;
+};
+.Ed
+.Pp
+.Nm
+interfaces support the following unique ioctls:
+.Bl -tag -width "SIOCSETMPWCFG" -offset 3n
+.It SIOCSETMPWCFG
+Configure mpw using the supplied configuration.
+.It SIOCGETMPWCFG
+Report the mpw configuration.
+.El
+.\"
+.Sh EXAMPLES
+Create a pseudowire to neighbor 10.254.0.1 using ethernet encapsulation
+with local label 20 and encapsulate MPLS packets with label 21:
+.Bd -literal -offset indent
+# ifconfig mpw5 neighbor 10.254.0.1 encap ethernet mpwlabel 20 21 up
+.Ed
+.Pp
+Create a pseudowire to neighbor 10.254.0.3 using ethernet encapsulation
+with local label 30 and encapsulate MPLS packets with label 31 and
+control-word:
+.Bd -literal -offset indent
+# ifconfig mpw5 neighbor 10.254.0.3 encap ethernet mpwlabel 30 31 controlword
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr ldpd 8 ,
+.Xr netstart 8
+.\"
+.Sh HISTORY
+The
+.Nm
+kernel interface first appeared in
+.Ox 5.8 .
+.\"
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Rafael Zalamena Aq Mt rzalamena@openbsd.org .
