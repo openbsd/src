@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.354 2015/07/20 22:54:29 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.355 2015/07/21 04:21:50 jca Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2220,10 +2220,6 @@ ifa_print_all(void)
 				    addr, sizeof(addr)));
 				break;
 #endif
-			case AF_LINK:
-				printf("%s",
-				    ether_sprintf(ifa->ifa_addr->sa_data));
-				break;
 			}
 			printf(" on %s\n", ifa->ifa_ifp->if_xname);
 		}
