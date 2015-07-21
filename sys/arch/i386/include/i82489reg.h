@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489reg.h,v 1.3 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: i82489reg.h,v 1.4 2015/07/21 06:19:50 uebayasi Exp $	*/
 /*	$NetBSD: i82489reg.h,v 1.1.2.1 2000/02/20 16:30:27 sommerfeld Exp $	*/
 
 /*-
@@ -113,6 +113,9 @@
 #	define LAPIC_LVTT_DS		0x00001000
 #	define LAPIC_LVTT_M		0x00010000
 #	define LAPIC_LVTT_TM		0x00020000
+#	 define LAPIC_LVTT_TM_ONESHOT	0x00000000
+#	 define LAPIC_LVTT_TM_PERIODIC	0x00020000
+#	 define LAPIC_LVTT_TM_TSCDL	0x00040000
 
 #define LAPIC_PCINT	0x340
 #define LAPIC_LVINT0	0x350			/* Loc.vec (LINT0) RW */
