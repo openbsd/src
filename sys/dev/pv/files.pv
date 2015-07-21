@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.1 2015/07/21 03:38:22 reyk Exp $
+#	$OpenBSD: files.pv,v 1.2 2015/07/21 09:13:11 reyk Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -11,4 +11,4 @@ file	dev/pv/pvbus.c			pvbus	needs-flag
 # VMware Tools
 device	vmt
 attach	vmt at pvbus
-file	dev/vmt.c			vmt	needs-flag
+file	dev/pv/vmt.c			vmt	needs-flag

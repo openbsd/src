@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.30 2015/07/21 03:38:22 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.1 2015/07/21 09:13:11 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
