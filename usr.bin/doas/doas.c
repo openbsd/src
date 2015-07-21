@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.17 2015/07/21 16:15:20 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.18 2015/07/21 17:49:33 jmc Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -36,7 +36,7 @@
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: doas [-s] [-u user] command [args]\n");
+	fprintf(stderr, "usage: doas [-s] [-C config] [-u user] command [args]\n");
 	exit(1);
 }
 
