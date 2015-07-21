@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.53 2015/07/20 23:15:54 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.54 2015/07/21 03:00:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -105,8 +105,6 @@ struct if_clone	pflow_cloner =
     IF_CLONE_INITIALIZER("pflow", pflow_clone_create,
     pflow_clone_destroy);
 
-extern struct proc proc0;
-
 void
 pflowattach(int npflow)
 {
@@ -135,7 +133,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(0);
-	error = sobind(so, m, &proc0);
+	error = sobind(so, m, curproc);
 	m_freem(m);
 	if (error) {
 		soclose(so);
@@ -404,7 +402,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sin->sin_addr.s_addr = pflowr.sender_ip.s_addr;
 			sin->sin_port = 0;
 
-			error = sobind(so, m, &proc0);
+			error = sobind(so, m, p);
 			m_freem(m);
 			if (error) {
 				soclose(so);
