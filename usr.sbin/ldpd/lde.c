@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.37 2015/07/21 04:48:42 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.38 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -83,6 +83,7 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	struct timeval		 now;
 	struct passwd		*pw;
 	pid_t			 pid;
+	struct l2vpn		*l2vpn;
 
 	switch (pid = fork()) {
 	case -1:
@@ -150,6 +151,10 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	gettimeofday(&now, NULL);
 	ldeconf->uptime = now.tv_sec;
 
+	/* initialize l2vpns */
+	LIST_FOREACH(l2vpn, &ldeconf->l2vpn_list, entry)
+		l2vpn_init(l2vpn);
+
 	event_dispatch();
 
 	lde_shutdown();
@@ -200,6 +205,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	struct lde_nbr		 *nbr;
 	struct map		 map;
 	struct in_addr		 addr;
+	struct notify_msg	 nm;
 	ssize_t			 n;
 	int			 shut = 0, verbose;
 
@@ -257,13 +263,13 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				lde_check_request(&map, nbr);
 				break;
 			case IMSG_LABEL_RELEASE:
-				if (map.flags & F_MAP_WILDCARD)
+				if (map.type == FEC_WILDCARD)
 					lde_check_release_wcard(&map, nbr);
 				else
 					lde_check_release(&map, nbr);
 				break;
 			case IMSG_LABEL_WITHDRAW:
-				if (map.flags & F_MAP_WILDCARD)
+				if (map.type == FEC_WILDCARD)
 					lde_check_withdraw_wcard(&map, nbr);
 				else
 					lde_check_withdraw(&map, nbr);
@@ -311,6 +317,26 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			}
 
 			break;
+		case IMSG_NOTIFICATION:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(nm))
+				fatalx("invalid size of OE request");
+			memcpy(&nm, imsg.data, sizeof(nm));
+
+			nbr = lde_nbr_find(imsg.hdr.peerid);
+			if (nbr == NULL) {
+				log_debug("lde_dispatch_imsg: cannot find "
+				    "lde neighbor");
+				return;
+			}
+
+			switch (nm.status) {
+			case S_PW_STATUS:
+				l2vpn_recv_pw_status(nbr, &nm);
+				break;
+			default:
+				break;
+			}
+			break;
 		case IMSG_NEIGHBOR_UP:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(addr))
 				fatalx("invalid size of OE request");
@@ -326,6 +352,18 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_SHOW_LIB:
 			rt_dump(imsg.hdr.pid);
+
+			lde_imsg_compose_ldpe(IMSG_CTL_END, 0,
+			    imsg.hdr.pid, NULL, 0);
+			break;
+		case IMSG_CTL_SHOW_L2VPN_PW:
+			l2vpn_pw_ctl(imsg.hdr.pid);
+
+			lde_imsg_compose_ldpe(IMSG_CTL_END, 0,
+			    imsg.hdr.pid, NULL, 0);
+			break;
+		case IMSG_CTL_SHOW_L2VPN_BINDING:
+			l2vpn_binding_ctl(imsg.hdr.pid);
 
 			lde_imsg_compose_ldpe(IMSG_CTL_END, 0,
 			    imsg.hdr.pid, NULL, 0);
@@ -358,12 +396,16 @@ lde_dispatch_parent(int fd, short event, void *bula)
 	struct iface		*niface;
 	struct tnbr		*ntnbr;
 	struct nbr_params	*nnbrp;
+	static struct l2vpn	*nl2vpn;
+	struct l2vpn_if		*nlif;
+	struct l2vpn_pw		*npw;
 	struct imsg		 imsg;
 	struct kroute		 kr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	ssize_t			 n;
 	int			 shut = 0;
+	struct fec		 fec;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -393,7 +435,11 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
 
-			lde_kernel_insert(&kr);
+			fec.type = FEC_TYPE_IPV4;
+			fec.u.ipv4.prefix.s_addr = kr.prefix.s_addr;
+			fec.u.ipv4.prefixlen = kr.prefixlen;
+			lde_kernel_insert(&fec, kr.nexthop,
+			    kr.flags & F_CONNECTED, NULL);
 			break;
 		case IMSG_NETWORK_DEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
@@ -403,7 +449,10 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
 
-			lde_kernel_remove(&kr);
+			fec.type = FEC_TYPE_IPV4;
+			fec.u.ipv4.prefix.s_addr = kr.prefix.s_addr;
+			fec.u.ipv4.prefixlen = kr.prefixlen;
+			lde_kernel_remove(&fec, kr.nexthop);
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==
@@ -415,6 +464,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			LIST_INIT(&nconf->addr_list);
 			LIST_INIT(&nconf->tnbr_list);
 			LIST_INIT(&nconf->nbrp_list);
+			LIST_INIT(&nconf->l2vpn_list);
 			break;
 		case IMSG_RECONF_IFACE:
 			if ((niface = malloc(sizeof(struct iface))) == NULL)
@@ -439,6 +489,32 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			memcpy(nnbrp, imsg.data, sizeof(struct nbr_params));
 
 			LIST_INSERT_HEAD(&nconf->nbrp_list, nnbrp, entry);
+			break;
+		case IMSG_RECONF_L2VPN:
+			if ((nl2vpn = malloc(sizeof(struct l2vpn))) == NULL)
+				fatal(NULL);
+			memcpy(nl2vpn, imsg.data, sizeof(struct l2vpn));
+
+			LIST_INIT(&nl2vpn->if_list);
+			LIST_INIT(&nl2vpn->pw_list);
+
+			LIST_INSERT_HEAD(&nconf->l2vpn_list, nl2vpn, entry);
+			break;
+		case IMSG_RECONF_L2VPN_IF:
+			if ((nlif = malloc(sizeof(struct l2vpn_if))) == NULL)
+				fatal(NULL);
+			memcpy(nlif, imsg.data, sizeof(struct l2vpn_if));
+
+			nlif->l2vpn = nl2vpn;
+			LIST_INSERT_HEAD(&nl2vpn->if_list, nlif, entry);
+			break;
+		case IMSG_RECONF_L2VPN_PW:
+			if ((npw = malloc(sizeof(struct l2vpn_pw))) == NULL)
+				fatal(NULL);
+			memcpy(npw, imsg.data, sizeof(struct l2vpn_pw));
+
+			npw->l2vpn = nl2vpn;
+			LIST_INSERT_HEAD(&nl2vpn->pw_list, npw, entry);
 			break;
 		case IMSG_RECONF_END:
 			merge_config(ldeconf, nconf);
@@ -474,40 +550,140 @@ void
 lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 {
 	struct kroute	kr;
+	struct kpw	kpw;
+	struct l2vpn_pw	*pw;
 
-	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = fn->fec.prefix.s_addr;
-	kr.prefixlen = fn->fec.prefixlen;
-	kr.local_label = fn->local_label;
+	switch (fn->fec.type) {
+	case FEC_TYPE_IPV4:
+		bzero(&kr, sizeof(kr));
+		kr.prefix.s_addr = fn->fec.u.ipv4.prefix.s_addr;
+		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
+		kr.local_label = fn->local_label;
+		kr.nexthop.s_addr = fnh->nexthop.s_addr;
+		kr.remote_label = fnh->remote_label;
 
-	kr.nexthop.s_addr = fnh->nexthop.s_addr;
-	kr.remote_label = fnh->remote_label;
+		lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr,
+		    sizeof(kr));
 
-	lde_imsg_compose_parent(IMSG_KLABEL_CHANGE, 0, &kr, sizeof(kr));
+		if (fnh->remote_label != NO_LABEL &&
+		    fn->fec.u.ipv4.prefixlen == 32)
+			l2vpn_sync_pws(fn->fec.u.ipv4.prefix);
+		break;
+	case FEC_TYPE_PWID:
+		if (fn->local_label == NO_LABEL ||
+		    fnh->remote_label == NO_LABEL)
+			return;
+
+		pw = (struct l2vpn_pw *) fnh->data;
+		if (pw->flags & F_PW_STATUS_UP)
+			return;
+		pw->flags |= F_PW_STATUS_UP;
+
+		bzero(&kpw, sizeof(kpw));
+		kpw.ifindex = pw->ifindex;
+		kpw.pw_type = fn->fec.u.pwid.type;
+		kpw.nexthop.s_addr = fnh->nexthop.s_addr;
+		kpw.local_label = fn->local_label;
+		kpw.remote_label = fnh->remote_label;
+		kpw.flags = pw->flags;
+
+		lde_imsg_compose_parent(IMSG_KPWLABEL_CHANGE, 0, &kpw,
+		    sizeof(kpw));
+		break;
+	}
 }
 
 void
 lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 {
 	struct kroute	 kr;
+	struct kpw	 kpw;
+	struct l2vpn_pw	*pw;
 
-	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = fn->fec.prefix.s_addr;
-	kr.prefixlen = fn->fec.prefixlen;
-	kr.local_label = fn->local_label;
+	switch (fn->fec.type) {
+	case FEC_TYPE_IPV4:
+		bzero(&kr, sizeof(kr));
+		kr.prefix.s_addr = fn->fec.u.ipv4.prefix.s_addr;
+		kr.prefixlen = fn->fec.u.ipv4.prefixlen;
+		kr.local_label = fn->local_label;
+		kr.nexthop.s_addr = fnh->nexthop.s_addr;
+		kr.remote_label = fnh->remote_label;
 
-	kr.nexthop.s_addr = fnh->nexthop.s_addr;
-	kr.remote_label = fnh->remote_label;
+		lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr,
+		    sizeof(kr));
 
-	lde_imsg_compose_parent(IMSG_KLABEL_DELETE, 0, &kr, sizeof(kr));
+		if (fn->fec.u.ipv4.prefixlen == 32)
+			l2vpn_sync_pws(fn->fec.u.ipv4.prefix);
+		break;
+	case FEC_TYPE_PWID:
+		pw = (struct l2vpn_pw *) fnh->data;
+		if (!(pw->flags & F_PW_STATUS_UP))
+			return;
+		pw->flags &= ~F_PW_STATUS_UP;
+
+		bzero(&kpw, sizeof(kpw));
+		kpw.ifindex = pw->ifindex;
+		kpw.pw_type = fn->fec.u.pwid.type;
+		kpw.nexthop.s_addr = fnh->nexthop.s_addr;
+		kpw.local_label = fn->local_label;
+		kpw.remote_label = fnh->remote_label;
+		kpw.flags = pw->flags;
+
+		lde_imsg_compose_parent(IMSG_KPWLABEL_DELETE, 0, &kpw,
+		    sizeof(kpw));
+		break;
+	}
 }
 
 void
-lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn)
+lde_fec2map(struct fec *fec, struct map *map)
+{
+	bzero(map, sizeof(*map));
+
+	switch (fec->type) {
+	case FEC_TYPE_IPV4:
+		map->type = FEC_PREFIX;
+		map->fec.ipv4.prefix = fec->u.ipv4.prefix;
+		map->fec.ipv4.prefixlen = fec->u.ipv4.prefixlen;
+		break;
+	case FEC_TYPE_PWID:
+		map->type = FEC_PWID;
+		map->fec.pwid.type = fec->u.pwid.type;
+		map->fec.pwid.group_id = 0;
+		map->flags |= F_MAP_PW_ID;
+		map->fec.pwid.pwid = fec->u.pwid.pwid;
+		break;
+	}
+}
+
+void
+lde_map2fec(struct map *map, struct in_addr nbrid, struct fec *fec)
+{
+	bzero(fec, sizeof(*fec));
+
+	switch (map->type) {
+	case FEC_PREFIX:
+		fec->type = FEC_TYPE_IPV4;
+		fec->u.ipv4.prefix.s_addr = map->fec.ipv4.prefix.s_addr;
+		fec->u.ipv4.prefixlen = map->fec.ipv4.prefixlen;
+		break;
+	case FEC_PWID:
+		fec->type = FEC_TYPE_PWID;
+		fec->u.pwid.type = map->fec.pwid.type;
+		fec->u.pwid.pwid = map->fec.pwid.pwid;
+		fec->u.pwid.nexthop.s_addr = nbrid.s_addr;
+		break;
+	}
+}
+
+void
+lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 {
 	struct lde_req	*lre;
 	struct lde_map	*me;
 	struct map	 map;
+	struct fec_nh	*fnh;
+	struct l2vpn_pw	*pw;
 
 	/*
 	 * This function skips SL.1 - 3 and SL.9 - 14 because the label
@@ -516,9 +692,26 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn)
 	 */
 
 	bzero(&map, sizeof(map));
+	lde_fec2map(&fn->fec, &map);
+
+	if (fn->fec.type == FEC_TYPE_PWID) {
+		fnh = fec_nh_find(fn, ln->id);
+		if (fnh == NULL)
+			/* not the other end of the pseudowire */
+			return;
+
+		pw = (struct l2vpn_pw *) fnh->data;
+		map.flags |= F_MAP_PW_IFMTU;
+		map.fec.pwid.ifmtu = pw->l2vpn->mtu;
+		if (pw->flags & F_PW_CONTROLWORD)
+			map.flags |= F_MAP_PW_CWORD;
+		if (pw->flags & F_PW_STATUSTLV) {
+			map.flags |= F_MAP_PW_STATUS;
+			/* VPLS are always up */
+			map.pw_status = PW_FORWARDING;
+		}
+	}
 	map.label = fn->local_label;
-	map.prefix = fn->fec.prefix;
-	map.prefixlen = fn->fec.prefixlen;
 
 	/* SL.6: is there a pending request for this mapping? */
 	lre = (struct lde_req *)fec_find(&ln->recv_req, &fn->fec);
@@ -534,6 +727,9 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn)
 	/* SL.4: send label mapping */
 	lde_imsg_compose_ldpe(IMSG_MAPPING_ADD, ln->peerid, 0,
 	    &map, sizeof(map));
+	if (single)
+		lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END, ln->peerid, 0,
+		    NULL, 0);
 
 	/* SL.5: record sent label mapping */
 	me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
@@ -548,15 +744,29 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn)
 	struct lde_wdraw	*lw;
 	struct map		 map;
 	struct fec		*f;
+	struct fec_nh		*fnh = NULL;
+	struct l2vpn_pw		*pw;
+
+	if (fn->fec.type == FEC_TYPE_PWID) {
+		fnh = fec_nh_find(fn, ln->id);
+		if (fnh == NULL)
+			/* not the other end of the pseudowire */
+			return;
+	}
 
 	bzero(&map, sizeof(map));
 	if (fn) {
+		lde_fec2map(&fn->fec, &map);
 		map.label = fn->local_label;
-		map.prefix = fn->fec.prefix;
-		map.prefixlen = fn->fec.prefixlen;
+
+		if (fn->fec.type == FEC_TYPE_PWID) {
+			pw = (struct l2vpn_pw *) fnh->data;
+			if (pw->flags & F_PW_CONTROLWORD)
+				map.flags |= F_MAP_PW_CWORD;
+		}
 	} else {
+		map.type = FEC_WILDCARD;
 		map.label = NO_LABEL;
-		map.flags = F_MAP_WILDCARD;
 	}
 
 	/* SWd.1: send label withdraw. */
@@ -586,14 +796,28 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn)
 void
 lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, u_int32_t label)
 {
-	struct map	 map;
+	struct map		 map;
+	struct fec_nh		*fnh = NULL;
+	struct l2vpn_pw		*pw;
+
+	if (fn->fec.type == FEC_TYPE_PWID) {
+		fnh = fec_nh_find(fn, ln->id);
+		if (fnh == NULL)
+			/* not the other end of the pseudowire */
+			return;
+	}
 
 	bzero(&map, sizeof(map));
 	if (fn) {
-		map.prefix = fn->fec.prefix;
-		map.prefixlen = fn->fec.prefixlen;
+		lde_fec2map(&fn->fec, &map);
+
+		if (fn->fec.type == FEC_TYPE_PWID) {
+			pw = (struct l2vpn_pw *) fnh->data;
+			if (pw->flags & F_PW_CONTROLWORD)
+				map.flags |= F_MAP_PW_CWORD;
+		}
 	} else
-		map.flags = F_MAP_WILDCARD;
+		map.type = FEC_WILDCARD;
 	map.label = label;
 
 	lde_imsg_compose_ldpe(IMSG_RELEASE_ADD, ln->peerid, 0,
@@ -725,14 +949,14 @@ lde_map_add(struct lde_nbr *ln, struct fec_node *fn, int sent)
 	if (sent) {
 		LIST_INSERT_HEAD(&fn->upstream, me, entry);
 		if (fec_insert(&ln->sent_map, &me->fec))
-			log_warnx("failed to add %s/%u to sent map",
-			    inet_ntoa(me->fec.prefix), me->fec.prefixlen);
+			log_warnx("failed to add %s to sent map",
+			    log_fec(&me->fec));
 			/* XXX on failure more cleanup is needed */
 	} else {
 		LIST_INSERT_HEAD(&fn->downstream, me, entry);
 		if (fec_insert(&ln->recv_map, &me->fec))
-			log_warnx("failed to add %s/%u to recv map",
-			    inet_ntoa(me->fec.prefix), me->fec.prefixlen);
+			log_warnx("failed to add %s to recv map",
+			    log_fec(&me->fec));
 	}
 
 	return (me);
@@ -772,8 +996,7 @@ lde_req_add(struct lde_nbr *ln, struct fec *fec, int sent)
 
 		if (fec_insert(t, &lre->fec)) {
 			log_warnx("failed to add %s/%u to %s req",
-			    inet_ntoa(lre->fec.prefix), lre->fec.prefixlen,
-			    sent ? "sent" : "recv");
+			    log_fec(&lre->fec), sent ? "sent" : "recv");
 			free(lre);
 			return (NULL);
 		}
@@ -805,8 +1028,8 @@ lde_wdraw_add(struct lde_nbr *ln, struct fec_node *fn)
 	lw->fec = fn->fec;
 
 	if (fec_insert(&ln->sent_wdraw, &lw->fec))
-		log_warnx("failed to add %s/%u to sent wdraw",
-		    inet_ntoa(lw->fec.prefix), lw->fec.prefixlen);
+		log_warnx("failed to add %s to sent wdraw",
+		    log_fec(&lw->fec));
 
 	return (lw);
 }

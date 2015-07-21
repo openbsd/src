@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.17 2015/07/19 22:36:30 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.18 2015/07/21 04:52:29 renato Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2015 $
+.Dd $Mdocdate: July 21 2015 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ daemon implements the Label Distribution Protocol as described in RFC 5036.
 .Sh SECTIONS
 The
 .Nm
-config file is divided into five main sections.
+config file is divided into six main sections.
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -45,6 +45,8 @@ Interface-specific parameters.
 Targeted neighbor specific parameters.
 .It Sy Neighbors Configuration
 Neighbor-specific parameters.
+.It Sy Layer 2 VPNs Configuration
+Layer 2 VPNs parameters as per RFC 4447.
 .El
 .Sh MACROS
 Much like
@@ -159,6 +161,87 @@ Neighbor-specific parameters are listed below.
 .It Ic password Ar secret
 Enable TCP MD5 signatures per RFC 5036.
 .El
+.Sh LAYER 2 VPNS
+.Xr ldpd 8
+implements the signaling of pseudowires which can be used to
+implement either the VPWS solution (also known as PWE3) or the VPLS
+solution. Currently only the VPLS solution is supported.
+.Bd -literal -offset indent
+l2vpn name type vpls {
+        bridge bridge0
+        interface em1
+        pseudowire mpw1 {
+                pw-id 100
+                neighbor 192.168.1.10
+        }
+        pseudowire mpw2 {
+                pw-id 200
+                neighbor 10.0.1.5
+        }
+}
+.Ed
+.Pp
+Layer 2 VPN specific parameters are listed below.
+.Bl -tag -width Ds
+.It Xo
+.Ic type
+.Pq Ic ethernet Ns | Ns Ic ethernet-tagged
+.Xc
+Specify the type of the configured pseudowires. The type must be the
+same at both endpoints. The default is
+.Ic ethernet .
+.Pp
+.It Ic mtu Ar number
+Set the MTU advertised in the pseudowires. Local and remote MTUs must
+match for a pseudowire to be set up. The default value is 1500.
+.Pp
+.It Ic bridge Ar interface
+Set the bridge interface the VPLS is associated with. This parameter
+is optional and is only used to remove MAC addresses received from MAC
+address withdrawal messages. Only one bridge interface can be set.
+.Pp
+.It Ic interface Ar interface
+Configure a non pseudowire interface pertaining to the VPLS. This
+parameter is optional and is only used to send MAC address withdrawal
+messages when the specified interface is shutdown. Multiple interfaces
+can be configured.
+.Sh PSEUDOWIRES
+Each
+.Xr mpw 4
+pseudowire interface can have several parameters configured individually,
+otherwise they are inherited. A pseudowire interface is specified by
+its name.
+.Bd -literal -offset indent
+pseudowire mpw5 {
+	pw-id 5000
+	neighbor 172.16.1.50
+}
+.Ed
+.Pp
+Pseudowire-specific parameters are listed below.
+.Bl -tag -width Ds
+.Pp
+.It Ic neighbor Ar address
+Specify the endpoint of the pseudowire on the remote PE router. A targeted
+neighbor will automatically be created for this address.
+.Pp
+.It Ic pw-id Ar number
+Set the PW ID used to identify the pseudowire. The PW ID must be the
+same at both endpoints. Valid range is 1\-4294967295.
+.It Xo
+.Ic status-tlv
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+Specify whether the use of the Status TLV is preferred or not
+preferred. The default is
+.Ic yes .
+.It Xo
+.Ic control-word
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+Specify whether the use of the control word is preferred or not
+preferred. The default is
+.Ic yes .
 .Sh FILES
 .Bl -tag -width "/etc/ldpd.conf" -compact
 .It Pa /etc/ldpd.conf

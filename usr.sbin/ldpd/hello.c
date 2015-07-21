@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.27 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.28 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -66,7 +66,7 @@ send_hello(enum hello_type type, struct iface *iface, struct tnbr *tnbr)
 		dst.sin_addr.s_addr = tnbr->addr.s_addr;
 		holdtime = tnbr->hello_holdtime;
 		flags = TARGETED_HELLO;
-		if (tnbr->flags & F_TNBR_CONFIGURED)
+		if ((tnbr->flags & F_TNBR_CONFIGURED) || tnbr->pw_count)
 			flags |= REQUEST_TARG_HELLO;
 		fd = tnbr->discovery_fd;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.24 2015/07/21 04:45:21 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.25 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,6 +56,7 @@ void	main_dispatch_lde(int, short, void *);
 
 int	ldp_reload(void);
 int	ldp_sendboth(enum imsg_type, void *, u_int16_t);
+void	merge_l2vpns(struct ldpd_conf *, struct l2vpn *, struct l2vpn *);
 
 int	pipe_parent2ldpe[2];
 int	pipe_parent2lde[2];
@@ -399,6 +400,7 @@ main_dispatch_lde(int fd, short event, void *bula)
 	struct imsg	 imsg;
 	ssize_t		 n;
 	int		 shut = 0;
+	struct kpw	*kpw;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -436,6 +438,22 @@ main_dispatch_lde(int fd, short event, void *bula)
 			if (kr_delete(imsg.data))
 				log_warn("main_dispatch_lde: error deleting "
 				    "route");
+			break;
+		case IMSG_KPWLABEL_CHANGE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct kpw))
+				fatalx("invalid size of IMSG_KPWLABEL_CHANGE");
+
+			kpw = imsg.data;
+			kmpw_set(kpw);
+			break;
+		case IMSG_KPWLABEL_DELETE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct kpw))
+				fatalx("invalid size of IMSG_KPWLABEL_DELETE");
+
+			kpw = imsg.data;
+			kmpw_unset(kpw);
 			break;
 		default:
 			log_debug("main_dispatch_lde: error handling imsg %d",
@@ -528,6 +546,9 @@ ldp_reload(void)
 	struct iface		*iface;
 	struct tnbr		*tnbr;
 	struct nbr_params	*nbrp;
+	struct l2vpn		*l2vpn;
+	struct l2vpn_if		*lif;
+	struct l2vpn_pw		*pw;
 	struct ldpd_conf	*xconf;
 
 	if ((xconf = parse_config(conffile, ldpd_conf->opts)) == NULL)
@@ -554,6 +575,23 @@ ldp_reload(void)
 			return (-1);
 	}
 
+	LIST_FOREACH(l2vpn, &xconf->l2vpn_list, entry) {
+		if (ldp_sendboth(IMSG_RECONF_L2VPN, l2vpn,
+		    sizeof(*l2vpn)) == -1)
+			return (-1);
+
+		LIST_FOREACH(lif, &l2vpn->if_list, entry) {
+			if (ldp_sendboth(IMSG_RECONF_L2VPN_IF, lif,
+			    sizeof(*lif)) == -1)
+				return (-1);
+		}
+		LIST_FOREACH(pw, &l2vpn->pw_list, entry) {
+			if (ldp_sendboth(IMSG_RECONF_L2VPN_PW, pw,
+			    sizeof(*pw)) == -1)
+				return (-1);
+		}
+	}
+
 	if (ldp_sendboth(IMSG_RECONF_END, NULL, 0) == -1)
 		return (-1);
 
@@ -578,6 +616,7 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	struct iface		*iface, *itmp, *xi;
 	struct tnbr		*tnbr, *ttmp, *xt;
 	struct nbr_params	*nbrp, *ntmp, *xn;
+	struct l2vpn		*l2vpn, *ltmp, *xl;
 	struct nbr		*nbr;
 
 	/* change of rtr_id needs a restart */
@@ -706,7 +745,155 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		}
 	}
 
+	/* merge l2vpns */
+	LIST_FOREACH_SAFE(l2vpn, &conf->l2vpn_list, entry, ltmp) {
+		/* find deleted l2vpns */
+		if ((xl = l2vpn_find(xconf, l2vpn->name)) == NULL) {
+			LIST_REMOVE(l2vpn, entry);
+
+			switch (ldpd_process) {
+			case PROC_LDE_ENGINE:
+				l2vpn_del(l2vpn);
+				break;
+			case PROC_LDP_ENGINE:
+				ldpe_l2vpn_exit(l2vpn);
+				free(l2vpn);
+				break;
+			case PROC_MAIN:
+				free(l2vpn);
+				break;
+			}
+		}
+	}
+	LIST_FOREACH_SAFE(xl, &xconf->l2vpn_list, entry, ltmp) {
+		/* find new l2vpns */
+		if ((l2vpn = l2vpn_find(conf, xl->name)) == NULL) {
+			LIST_REMOVE(xl, entry);
+			LIST_INSERT_HEAD(&conf->l2vpn_list, xl, entry);
+
+			switch (ldpd_process) {
+			case PROC_LDE_ENGINE:
+				l2vpn_init(xl);
+				break;
+			case PROC_LDP_ENGINE:
+				ldpe_l2vpn_init(xl);
+				break;
+			case PROC_MAIN:
+				break;
+			}
+			continue;
+		}
+
+		/* update existing l2vpns */
+		merge_l2vpns(conf, l2vpn, xl);
+	}
+
 	free(xconf);
+}
+
+void
+merge_l2vpns(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
+{
+	struct l2vpn_if		*lif, *ftmp, *xf;
+	struct l2vpn_pw		*pw, *ptmp, *xp;
+
+	/* merge intefaces */
+	LIST_FOREACH_SAFE(lif, &l2vpn->if_list, entry, ftmp) {
+		/* find deleted interfaces */
+		if ((xf = l2vpn_if_find(xl, lif->ifindex)) == NULL) {
+			LIST_REMOVE(lif, entry);
+			free(lif);
+		}
+	}
+	LIST_FOREACH_SAFE(xf, &xl->if_list, entry, ftmp) {
+		/* find new interfaces */
+		if ((lif = l2vpn_if_find(l2vpn, xf->ifindex)) == NULL) {
+			LIST_REMOVE(xf, entry);
+			LIST_INSERT_HEAD(&l2vpn->if_list, xf, entry);
+			lif->l2vpn = l2vpn;
+			continue;
+		}
+
+		/* update existing interfaces */
+		lif->l2vpn = l2vpn;
+	}
+
+	/* merge pseudowires */
+	LIST_FOREACH_SAFE(pw, &l2vpn->pw_list, entry, ptmp) {
+		/* find deleted pseudowires */
+		if ((xp = l2vpn_pw_find(xl, pw->ifindex)) == NULL) {
+			LIST_REMOVE(pw, entry);
+
+			switch (ldpd_process) {
+			case PROC_LDE_ENGINE:
+				l2vpn_pw_del(pw);
+				break;
+			case PROC_LDP_ENGINE:
+				ldpe_l2vpn_pw_exit(pw);
+				free(pw);
+				break;
+			case PROC_MAIN:
+				free(pw);
+				break;
+			}
+		}
+	}
+	LIST_FOREACH_SAFE(xp, &xl->pw_list, entry, ptmp) {
+		/* find new pseudowires */
+		if ((pw = l2vpn_pw_find(l2vpn, xp->ifindex)) == NULL) {
+			LIST_REMOVE(xp, entry);
+			LIST_INSERT_HEAD(&l2vpn->pw_list, xp, entry);
+
+			switch (ldpd_process) {
+			case PROC_LDE_ENGINE:
+				l2vpn_pw_init(xp);
+				break;
+			case PROC_LDP_ENGINE:
+				ldpe_l2vpn_pw_init(xp);
+				break;
+			case PROC_MAIN:
+				break;
+			}
+			continue;
+		}
+
+		/* changes that require a full reset of the pseudowire */
+		if (l2vpn->pw_type != xl->pw_type ||
+		    l2vpn->mtu != xl->mtu ||
+		    pw->addr.s_addr != xp->addr.s_addr ||
+		    pw->pwid != xp->pwid ||
+		    ((pw->flags &
+		    (F_PW_STATUSTLV_CONF|F_PW_CONTROLWORD_CONF)) !=
+		    (xp->flags &
+		    (F_PW_STATUSTLV_CONF|F_PW_CONTROLWORD_CONF)))) {
+			LIST_REMOVE(pw, entry);
+			LIST_REMOVE(xp, entry);
+			LIST_INSERT_HEAD(&l2vpn->pw_list, xp, entry);
+
+			switch (ldpd_process) {
+			case PROC_LDE_ENGINE:
+				l2vpn_pw_del(pw);
+				l2vpn_pw_init(xp);
+				break;
+			case PROC_LDP_ENGINE:
+		    		if (pw->addr.s_addr != xp->addr.s_addr) {
+					ldpe_l2vpn_pw_exit(pw);
+					ldpe_l2vpn_pw_init(xp);
+				}
+				free(pw);
+				break;
+			case PROC_MAIN:
+				free(pw);
+				break;
+			}
+		}
+
+		/* update existing pseudowires */
+		pw->l2vpn = xp->l2vpn;
+	}
+
+	l2vpn->mtu = xl->mtu;
+	l2vpn->br_ifindex = xl->br_ifindex;
 }
 
 void
@@ -720,6 +907,7 @@ config_clear(struct ldpd_conf *conf)
 	LIST_INIT(&xconf->iface_list);
 	LIST_INIT(&xconf->tnbr_list);
 	LIST_INIT(&xconf->nbrp_list);
+	LIST_INIT(&xconf->l2vpn_list);
 	merge_config(conf, xconf);
 
 	free(conf);

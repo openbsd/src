@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.14 2015/07/19 20:54:17 renato Exp $ */
+/*	$OpenBSD: log.c,v 1.15 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "ldpd.h"
+#include "lde.h"
 #include "log.h"
 
 static const char * const procnames[] = {
@@ -276,6 +277,22 @@ notification_name(u_int32_t status)
 		return ("Bad KeepAlive Time");
 	case S_INTERN_ERR:
 		return ("Internal Error");
+	case S_ILLEGAL_CBIT:
+		return ("Illegal C-Bit");
+	case S_WRONG_CBIT:
+		return ("Wrong C-Bit");
+	case S_INCPT_BITRATE:
+		return ("Incompatible bit-rate");
+	case S_CEP_MISCONF:
+		return ("CEP-TDM mis-configuration");
+	case S_PW_STATUS:
+		return ("PW Status");
+	case S_UNASSIGN_TAI:
+		return ("Unassigned/Unrecognized TAI");
+	case S_MISCONF_ERR:
+		return ("Generic Misconfiguration Error");
+	case S_WITHDRAW_MTHD:
+		return ("Label Withdraw PW Status Method");
 	default:
 		snprintf(buf, sizeof(buf), "[%08x]", status);
 		return (buf);
@@ -283,18 +300,74 @@ notification_name(u_int32_t status)
 }
 
 const char *
-log_fec(struct map *map)
+pw_type_name(u_int16_t pw_type)
 {
-	static char	buf[32];
+	static char buf[64];
+
+	switch (pw_type) {
+	case PW_TYPE_ETHERNET_TAGGED:
+		return ("Eth Tagged");
+	case PW_TYPE_ETHERNET:
+		return ("Ethernet");
+	default:
+		snprintf(buf, sizeof(buf), "[%0x]", pw_type);
+		return (buf);
+	}
+}
+
+const char *
+log_map(struct map *map)
+{
+	static char	buf[64];
+	char		pstr[64];
+
+	switch (map->type) {
+	case FEC_WILDCARD:
+		if (snprintf(buf, sizeof(buf), "wildcard"))
+			return ("???");
+		break;
+	case FEC_PREFIX:
+		if (snprintf(buf, sizeof(buf), "%s/%u",
+		    inet_ntop(AF_INET, &map->fec.ipv4.prefix, pstr,
+		    sizeof(pstr)), map->fec.ipv4.prefixlen) == -1)
+			return ("???");
+		break;
+	case FEC_PWID:
+		if (snprintf(buf, sizeof(buf), "pwid %u (%s)",
+		    map->fec.pwid.pwid,
+		    pw_type_name(map->fec.pwid.type)) == -1)
+			return ("???");
+		break;
+	default:
+		return ("???");
+	}
+
+	return (buf);
+}
+
+const char *
+log_fec(struct fec *fec)
+{
+	static char	buf[64];
 	char		pstr[32];
 
-	if (map->flags & F_MAP_WILDCARD)
-		return ("wildcard");
-
-	if (snprintf(buf, sizeof(buf), "%s/%u",
-	    inet_ntop(AF_INET, &map->prefix, pstr, sizeof(pstr)),
-	    map->prefixlen) == -1)
+	switch (fec->type) {
+	case FEC_TYPE_IPV4:
+		if (snprintf(buf, sizeof(buf), "%s/%u",
+		    inet_ntop(AF_INET, &fec->u.ipv4.prefix, pstr,
+		    sizeof(pstr)), fec->u.ipv4.prefixlen) == -1)
+			return ("???");
+		break;
+	case FEC_TYPE_PWID:
+		if (snprintf(buf, sizeof(buf),
+		    "pwid %u (%s) - %s",
+		    fec->u.pwid.pwid, pw_type_name(fec->u.pwid.type),
+		    inet_ntoa(fec->u.pwid.nexthop)) == -1)
+			return ("???");
+		break;
+	default:
 		return ("???");
+	}
 
 	return (buf);
 }

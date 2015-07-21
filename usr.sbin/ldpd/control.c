@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.15 2015/02/09 11:54:24 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.16 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -251,6 +251,8 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			ldpe_adj_ctl(c);
 			break;
 		case IMSG_CTL_SHOW_LIB:
+		case IMSG_CTL_SHOW_L2VPN_PW:
+		case IMSG_CTL_SHOW_L2VPN_BINDING:
 			c->iev.ibuf.pid = imsg.hdr.pid;
 			ldpe_imsg_compose_lde(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);

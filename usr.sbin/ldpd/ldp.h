@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.18 2015/07/19 20:54:17 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.19 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -49,6 +49,13 @@
 #define	INIT_DELAY_TMR		15
 #define	MAX_DELAY_TMR		120
 
+#define	MIN_PWID_ID		1
+#define	MAX_PWID_ID		0xffffffff
+
+#define	DEFAULT_L2VPN_MTU	1500
+#define	MIN_L2VPN_MTU		512
+#define	MAX_L2VPN_MTU		0xffff
+
 /* LDP message types */
 #define MSG_TYPE_NOTIFICATION	0x0001
 #define MSG_TYPE_HELLO		0x0100
@@ -82,6 +89,10 @@
 #define TLV_TYPE_ATMSESSIONPAR	0x0501
 #define TLV_TYPE_FRSESSION	0x0502
 #define TLV_TYPE_LABELREQUEST	0x0600
+/* RFC 4447 */
+#define TLV_TYPE_PW_STATUS	0x096A
+#define TLV_TYPE_PW_IF_PARAM	0x096B
+#define TLV_TYPE_PW_GROUP_ID	0x096C
 
 /* LDP header */
 struct ldp_hdr {
@@ -158,6 +169,15 @@ struct hello_prms_opt4_tlv {
 #define	S_UNSUP_ADDR	0x00000017
 #define	S_KEEPALIVE_BAD	0x80000018
 #define	S_INTERN_ERR	0x80000019
+/* RFC 4447 */
+#define S_ILLEGAL_CBIT	0x00000024
+#define S_WRONG_CBIT	0x00000025
+#define S_INCPT_BITRATE	0x00000026
+#define S_CEP_MISCONF	0x00000027
+#define S_PW_STATUS	0x00000028
+#define S_UNASSIGN_TAI	0x00000029
+#define S_MISCONF_ERR	0x0000002A
+#define S_WITHDRAW_MTHD	0x0000002B
 
 struct sess_prms_tlv {
 	u_int16_t	type;
@@ -185,6 +205,9 @@ struct status_tlv {
 #define STATUS_TLV_LEN		10
 #define	STATUS_FATAL		0x80000000
 
+#define	AF_IPV4			0x1
+#define	AF_IPV6			0x2
+
 struct address_list_tlv {
 	u_int16_t	type;
 	u_int16_t	length;
@@ -192,14 +215,30 @@ struct address_list_tlv {
 	/* address entries */
 } __packed;
 
-#define	ADDR_IPV4		0x1
-#define	ADDR_IPV6		0x2
-
 #define FEC_ELM_WCARD_LEN	1
 #define FEC_ELM_PREFIX_MIN_LEN	4
+#define FEC_PWID_ELM_MIN_LEN	8
 #define	FEC_WILDCARD		0x01
 #define	FEC_PREFIX		0x02
-#define	FEC_IPV4		0x0001
+#define	FEC_PWID		0x80
+#define	FEC_GENPWID		0x81
+
+#define CONTROL_WORD_FLAG	0x8000
+#define PW_TYPE_ETHERNET_TAGGED	0x0004
+#define PW_TYPE_ETHERNET	0x0005
+
+/* RFC 4447 Sub-TLV record */
+struct subtlv {
+	u_int8_t	type;
+	u_int8_t	length;
+};
+#define	SUBTLV_HDR_LEN		2
+
+#define SUBTLV_IFMTU		0x01
+#define SUBTLV_VLANID		0x06
+
+#define FEC_SUBTLV_IFMTU_LEN	4
+#define FEC_SUBTLV_VLANID_LEN	4
 
 struct label_tlv {
 	u_int16_t	type;
@@ -216,6 +255,21 @@ struct reqid_tlv {
 };
 
 #define REQID_TLV_LEN		8
+
+struct pw_status_tlv {
+	u_int16_t	type;
+	u_int16_t	length;
+	u_int32_t	value;
+};
+
+#define PW_STATUS_TLV_LEN	8
+
+#define PW_FORWARDING		0
+#define PW_NOT_FORWARDING	(1 << 0)
+#define PW_LOCAL_RX_FAULT	(1 << 1)
+#define PW_LOCAL_TX_FAULT	(1 << 2)
+#define PW_PSN_RX_FAULT		(1 << 3)
+#define PW_PSN_TX_FAULT		(1 << 4)
 
 #define	NO_LABEL		UINT_MAX
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.45 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.46 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/tree.h>
 #include <sys/uio.h>
@@ -47,6 +48,7 @@ struct {
 	pid_t			pid;
 	int			fib_sync;
 	int			fd;
+	int			ioctl_fd;
 	struct event		ev;
 } kr_state;
 
@@ -79,6 +81,7 @@ struct kif_node {
 	RB_ENTRY(kif_node)	 entry;
 	TAILQ_HEAD(, kif_addr)	 addrs;
 	struct kif		 k;
+	struct kpw		*kpw;
 };
 
 void	kr_redist_remove(struct kroute *);
@@ -208,6 +211,12 @@ kr_init(int fs)
 	    kr_dispatch_msg, NULL);
 	event_add(&kr_state.ev, NULL);
 
+	if ((kr_state.ioctl_fd = socket(AF_INET,
+	    SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
+		log_warn("kr_init: ioctl socket");
+		return (-1);
+	}
+
 	return (0);
 }
 
@@ -294,6 +303,7 @@ kr_fib_couple(void)
 	struct kroute_prefix	*kp;
 	struct kroute_priority	*kprio;
 	struct kroute_node	*kn;
+	struct kif_node		*kif;
 
 	if (kr_state.fib_sync == 1)	/* already coupled */
 		return;
@@ -319,6 +329,10 @@ kr_fib_couple(void)
 		}
 	}
 
+	RB_FOREACH(kif, kif_tree, &kit)
+		if (kif->kpw)
+			kmpw_install(kif->k.ifname, kif->kpw);
+
 	log_info("kernel routing table coupled");
 }
 
@@ -329,6 +343,7 @@ kr_fib_decouple(void)
 	struct kroute_priority	*kprio;
 	struct kroute_node	*kn;
 	u_int32_t		 rl;
+	struct kif_node		*kif;
 
 	if (kr_state.fib_sync == 0)	/* already decoupled */
 		return;
@@ -355,6 +370,10 @@ kr_fib_decouple(void)
 			}
 		}
 	}
+
+	RB_FOREACH(kif, kif_tree, &kit)
+		if (kif->kpw)
+			kmpw_uninstall(kif->k.ifname, kif->kpw);
 
 	kr_state.fib_sync = 0;
 	log_info("kernel routing table decoupled");
@@ -1426,4 +1445,98 @@ rtmsg_process(char *buf, size_t len)
 	}
 
 	return (offset);
+}
+
+void
+kmpw_set(struct kpw *kpw)
+{
+	struct kif_node		*kif;
+
+	kif = kif_find(kpw->ifindex);
+	if (kif == NULL) {
+		log_warn("kmpw_set: failed to find mpw by index (%u)",
+		    kpw->ifindex);
+		return;
+	}
+
+	if (kif->kpw == NULL)
+		kif->kpw = malloc(sizeof(*kif->kpw));
+	memcpy(kif->kpw, kpw, sizeof(*kif->kpw));
+
+	kmpw_install(kif->k.ifname, kpw);
+}
+
+void
+kmpw_unset(struct kpw *kpw)
+{
+	struct kif_node		*kif;
+
+	kif = kif_find(kpw->ifindex);
+	if (kif == NULL) {
+		log_warn("kmpw_unset: failed to find mpw by index (%u)",
+		    kpw->ifindex);
+		return;
+	}
+
+	if (kif->kpw == NULL) {
+		log_warn("kmpw_unset: %s is not set", kif->k.ifname);
+		return;
+	}
+
+	free(kif->kpw);
+	kif->kpw = NULL;
+	kmpw_uninstall(kif->k.ifname, kpw);
+}
+
+void
+kmpw_install(const char *ifname, struct kpw *kpw)
+{
+	struct sockaddr_in	*sin;
+	struct ifreq		 ifr;
+	struct ifmpwreq		 imr;
+
+	memset(&imr, 0, sizeof(imr));
+	switch (kpw->pw_type) {
+	case PW_TYPE_ETHERNET:
+		imr.imr_type = IMR_TYPE_ETHERNET;
+		break;
+	case PW_TYPE_ETHERNET_TAGGED:
+		imr.imr_type = IMR_TYPE_ETHERNET_TAGGED;
+		break;
+
+	default:
+		log_warn("kmpw_install: unhandled pseudowire type (%#X)",
+		    kpw->pw_type);
+	}
+
+	if (kpw->flags & F_PW_CONTROLWORD)
+		imr.imr_flags |= IMR_FLAG_CONTROLWORD;
+
+	sin = (struct sockaddr_in *) &imr.imr_nexthop;
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = kpw->nexthop.s_addr;
+	sin->sin_len = sizeof(struct sockaddr_in);
+
+	imr.imr_lshim.shim_label = kpw->local_label;
+	imr.imr_rshim.shim_label = kpw->remote_label;
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t) &imr;
+	if (ioctl(kr_state.ioctl_fd, SIOCSETMPWCFG, &ifr))
+		log_warn("ioctl SETMPWCFG");
+}
+
+void
+kmpw_uninstall(const char *ifname, struct kpw *kpw)
+{
+	struct ifreq		 ifr;
+	struct ifmpwreq		 imr;
+
+	memset(&imr, 0, sizeof(imr));
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t) &imr;
+	if (ioctl(kr_state.ioctl_fd, SIOCSETMPWCFG, &ifr))
+		log_warn("ioctl SETMPWCFG");
 }

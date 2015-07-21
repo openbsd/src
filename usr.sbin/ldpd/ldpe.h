@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.39 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.40 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -127,6 +127,7 @@ int	 recv_keepalive(struct nbr *, char *, u_int16_t);
 void	 send_notification_nbr(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
 void	 send_notification(u_int32_t, struct tcp_conn *, u_int32_t,
 	    u_int32_t);
+void	 send_notification_full(struct tcp_conn *, struct notify_msg *);
 int	 recv_notification(struct nbr *, char *, u_int16_t);
 
 /* address.c */
@@ -138,6 +139,10 @@ void	 send_address_withdraw(struct nbr *, struct if_addr *);
 #define PREFIX_SIZE(x)	(((x) + 7) / 8)
 void	 send_labelmessage(struct nbr *, u_int16_t, struct mapping_head *);
 int	 recv_labelmessage(struct nbr *, char *, u_int16_t, u_int16_t);
+void	 gen_fec_tlv(struct ibuf *, struct map *);
+void	 gen_pw_status_tlv(struct ibuf *, u_int32_t);
+int	 tlv_decode_fec_elm(struct nbr *, struct ldp_msg *, char *,
+    u_int16_t, struct map *);
 
 /* ldpe.c */
 pid_t		 ldpe(struct ldpd_conf *, int[2], int[2], int[2]);
@@ -247,5 +252,11 @@ int	pfkey_read(int, struct sadb_msg *);
 int	pfkey_establish(struct nbr *, struct nbr_params *);
 int	pfkey_remove(struct nbr *);
 int	pfkey_init(struct ldpd_sysdep *);
+
+/* l2vpn.c */
+void	ldpe_l2vpn_init(struct l2vpn *);
+void	ldpe_l2vpn_exit(struct l2vpn *);
+void	ldpe_l2vpn_pw_init(struct l2vpn_pw *);
+void	ldpe_l2vpn_pw_exit(struct l2vpn_pw *);
 
 #endif	/* _LDPE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adjacency.c,v 1.6 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: adjacency.c,v 1.7 2015/07/21 04:52:29 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -148,7 +148,8 @@ adj_itimer(int fd, short event, void *arg)
 		LIST_REMOVE(adj, iface_entry);
 		break;
 	case HELLO_TARGETED:
-		if (!(adj->source.target->flags & F_TNBR_CONFIGURED)) {
+		if (!(adj->source.target->flags & F_TNBR_CONFIGURED) &&
+		    adj->source.target->pw_count == 0) {
 			/* remove dynamic targeted neighbor */
 			LIST_REMOVE(adj->source.target, entry);
 			tnbr_del(adj->source.target);
@@ -210,7 +211,8 @@ tnbr_del(struct tnbr *tnbr)
 struct tnbr *
 tnbr_check(struct tnbr *tnbr)
 {
-	if (!(tnbr->flags & (F_TNBR_CONFIGURED|F_TNBR_DYNAMIC))) {
+	if (!(tnbr->flags & (F_TNBR_CONFIGURED|F_TNBR_DYNAMIC)) &&
+	    tnbr->pw_count == 0) {
 		LIST_REMOVE(tnbr, entry);
 		tnbr_del(tnbr);
 		return (NULL);
