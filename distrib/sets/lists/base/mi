@@ -2120,6 +2120,7 @@
 ./usr/libexec/mail.local
 ./usr/libexec/makewhatis
 ./usr/libexec/ntalkd
+./usr/libexec/radiusd
 ./usr/libexec/rpc.rquotad
 ./usr/libexec/rpc.rstatd
 ./usr/libexec/rpc.rusersd

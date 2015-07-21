@@ -742,6 +742,9 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pcmcia/pcmciadevs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pcmcia/pcmciareg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pcmcia/pcmciavar.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pv
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pv/pvreg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pv/pvvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/radio_if.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/radiovar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/rasops
@@ -891,7 +894,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/videomode/vesagtf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/videomode/videomode.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/videovar.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/vscsivar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/wscons

@@ -1076,6 +1076,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pcmcia/pcmciadevs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pcmcia/pcmciareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pcmcia/pcmciavar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/pvreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pv/pvvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/radio_if.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/radiovar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/rasops
@@ -1225,7 +1228,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/videomode/vesagtf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/videomode/videomode.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/videovar.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/vscsivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wscons
