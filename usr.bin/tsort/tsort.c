@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.24 2014/10/11 03:57:13 deraadt Exp $ */
+/* $OpenBSD: tsort.c,v 1.25 2015/07/21 07:13:59 jasper Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -158,7 +158,6 @@ static struct ohash_info node_info = {
 
 int main(int, char *[]);
 
-
 /***
  *** Memory handling.
  ***/
@@ -238,7 +237,7 @@ node_lookup(struct ohash *h, const char *start, const char *end)
 		n = ohash_insert(h, i, new_node(start, end));
 	return n;
 }
-	
+
 #ifdef DEBUG
 static void
 dump_node(struct node *n)
@@ -262,7 +261,7 @@ dump_array(struct array *a)
 	for (i = 0; i < a->entries; i++)
 		dump_node(a->t[i]);
 }
-		
+
 static void
 dump_hash(struct ohash *h)
 {
@@ -273,8 +272,7 @@ dump_hash(struct ohash *h)
 		dump_node(n);
 }
 #endif
-		
-
+
 /***
  *** Reading data.
  ***/
@@ -307,7 +305,7 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 
 	toggle = 1;
 	a = NULL;
-	
+
 	while ((str = fgetln(f, &size)) != NULL) {
 		char *sentinel;
 
@@ -438,7 +436,7 @@ dequeue(struct array *h)
 	}
 	return n;
 }
-	
+
 #define ENQUEUE(h, n) do {			\
 	if (hints_flag)				\
 		enqueue((h), (n));		\
@@ -558,7 +556,7 @@ find_good_cycle_break(struct array *h)
 	assert(h->entries != 0);
 	for (i = 0; i < h->entries; i++) {
 		struct node *n = h->t[i];
-		/* No need to look further. */		
+		/* No need to look further. */
 		if (n->refs == 1)
 			return n;
 		if (n->refs != 0 && n->refs < best) {
@@ -569,7 +567,7 @@ find_good_cycle_break(struct array *h)
 	assert(u != NULL);
 	return u;
 }
-			
+
 /*  Retrieve the node with the smallest order.  */
 static struct node *
 find_smallest_node(struct array *h)
@@ -733,7 +731,7 @@ traverse_node(struct node *n, unsigned int o, struct array *c)
 			n = n->from;
 			if (!n)
 				return max;
-			o--;	
+			o--;
 		}
 	}
 }
@@ -785,7 +783,7 @@ find_longest_cycle(struct array *h, struct array *c)
 			o = traverse_node(n, o, c);
 		}
 	}
-	
+
 	assert(c->entries != 0);
 	n = c->t[0];
 	best = n->refs;
