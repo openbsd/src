@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.3 2015/07/20 16:48:11 doug Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.4 2015/07/21 16:34:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,12 +70,93 @@
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 
-/* -inform arg	- input format - default PEM (DER or PEM)
- * -outform arg - output format - default PEM
- * -in arg	- input file - default stdin
- * -out arg	- output file - default stdout
- * -print_certs
- */
+static struct {
+#ifndef OPENSSL_NO_ENGINE
+	char *engine;
+#endif
+	char *infile;
+	int informat;
+	int noout;
+	char *outfile;
+	int outformat;
+	int p7_print;
+	int print_certs;
+	int text;
+} pkcs7_config;
+
+static struct option pkcs7_options[] = {
+#ifndef OPENSSL_NO_ENGINE
+	{
+		.name = "engine",
+		.argname = "id",
+		.desc = "Use the engine specified by the given identifier",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs7_config.engine,
+	},
+#endif
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input file (default stdin)",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs7_config.infile,
+	},
+	{
+		.name = "inform",
+		.argname = "format",
+		.desc = "Input format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &pkcs7_config.informat,
+	},
+	{
+		.name = "noout",
+		.desc = "Do not output encoded version of PKCS#7 structure",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs7_config.noout,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file (default stdout)",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs7_config.outfile,
+	},
+	{
+		.name = "outform",
+		.argname = "format",
+		.desc = "Output format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &pkcs7_config.outformat,
+	},
+	{
+		.name = "print",
+		.desc = "Output ASN.1 representation of PKCS#7 structure",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs7_config.p7_print,
+	},
+	{
+		.name = "print_certs",
+		.desc = "Print out any certificates or CRLs contained in file",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs7_config.print_certs,
+	},
+	{
+		.name = "text",
+		.desc = "Print out full certificate details",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs7_config.text,
+	},
+	{ NULL },
+};
+
+static void
+pkcs7_usage()
+{
+	fprintf(stderr, "usage: pkcs7 [-engine id] [-in file] "
+	    "[-inform DER | PEM] [-noout]\n"
+	    "    [-out file] [-outform DER | PEM] [-print_certs] [-text]\n\n");
+        options_usage(pkcs7_options);
+}
 
 int pkcs7_main(int, char **);
 
@@ -83,85 +164,22 @@ int
 pkcs7_main(int argc, char **argv)
 {
 	PKCS7 *p7 = NULL;
-	int i, badops = 0;
 	BIO *in = NULL, *out = NULL;
-	int informat, outformat;
-	char *infile, *outfile, *prog;
-	int print_certs = 0, text = 0, noout = 0, p7_print = 0;
 	int ret = 1;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
+	int i;
 
-	infile = NULL;
-	outfile = NULL;
-	informat = FORMAT_PEM;
-	outformat = FORMAT_PEM;
+	memset(&pkcs7_config, 0, sizeof(pkcs7_config));
 
-	prog = argv[0];
-	argc--;
-	argv++;
-	while (argc >= 1) {
-		if (strcmp(*argv, "-inform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			informat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-outform") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outformat = str2fmt(*(++argv));
-		} else if (strcmp(*argv, "-in") == 0) {
-			if (--argc < 1)
-				goto bad;
-			infile = *(++argv);
-		} else if (strcmp(*argv, "-out") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outfile = *(++argv);
-		} else if (strcmp(*argv, "-noout") == 0)
-			noout = 1;
-		else if (strcmp(*argv, "-text") == 0)
-			text = 1;
-		else if (strcmp(*argv, "-print") == 0)
-			p7_print = 1;
-		else if (strcmp(*argv, "-print_certs") == 0)
-			print_certs = 1;
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine = *(++argv);
-		}
-#endif
-		else {
-			BIO_printf(bio_err, "unknown option %s\n", *argv);
-			badops = 1;
-			break;
-		}
-		argc--;
-		argv++;
-	}
+	pkcs7_config.informat = FORMAT_PEM;
+	pkcs7_config.outformat = FORMAT_PEM;
 
-	if (badops) {
-bad:
-		BIO_printf(bio_err, "%s [options] <infile >outfile\n", prog);
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, " -inform arg   input format - DER or PEM\n");
-		BIO_printf(bio_err, " -outform arg  output format - DER or PEM\n");
-		BIO_printf(bio_err, " -in arg       input file\n");
-		BIO_printf(bio_err, " -out arg      output file\n");
-		BIO_printf(bio_err, " -print_certs  print any certs or crl in the input\n");
-		BIO_printf(bio_err, " -text         print full details of certificates\n");
-		BIO_printf(bio_err, " -noout        don't output encoded data\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, " -engine e     use engine e, possibly a hardware device.\n");
-#endif
-		ret = 1;
+	if (options_parse(argc, argv, pkcs7_options, NULL, NULL) != 0) {
+		pkcs7_usage();
 		goto end;
 	}
 
 #ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, engine, 0);
+	setup_engine(bio_err, pkcs7_config.engine, 0);
 #endif
 
 	in = BIO_new(BIO_s_file());
@@ -170,18 +188,18 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (infile == NULL)
+	if (pkcs7_config.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, infile) <= 0) {
-			perror(infile);
+		if (BIO_read_filename(in, pkcs7_config.infile) <= 0) {
+			perror(pkcs7_config.infile);
 			goto end;
 		}
 	}
 
-	if (informat == FORMAT_ASN1)
+	if (pkcs7_config.informat == FORMAT_ASN1)
 		p7 = d2i_PKCS7_bio(in, NULL);
-	else if (informat == FORMAT_PEM)
+	else if (pkcs7_config.informat == FORMAT_PEM)
 		p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
 	else {
 		BIO_printf(bio_err, "bad input format specified for pkcs7 object\n");
@@ -192,19 +210,19 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (outfile == NULL) {
+	if (pkcs7_config.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, outfile) <= 0) {
-			perror(outfile);
+		if (BIO_write_filename(out, pkcs7_config.outfile) <= 0) {
+			perror(pkcs7_config.outfile);
 			goto end;
 		}
 	}
 
-	if (p7_print)
+	if (pkcs7_config.p7_print)
 		PKCS7_print_ctx(out, p7, 0, NULL);
 
-	if (print_certs) {
+	if (pkcs7_config.print_certs) {
 		STACK_OF(X509) * certs = NULL;
 		STACK_OF(X509_CRL) * crls = NULL;
 
@@ -227,12 +245,12 @@ bad:
 
 			for (i = 0; i < sk_X509_num(certs); i++) {
 				x = sk_X509_value(certs, i);
-				if (text)
+				if (pkcs7_config.text)
 					X509_print(out, x);
 				else
 					dump_cert_text(out, x);
 
-				if (!noout)
+				if (!pkcs7_config.noout)
 					PEM_write_bio_X509(out, x);
 				BIO_puts(out, "\n");
 			}
@@ -245,7 +263,7 @@ bad:
 
 				X509_CRL_print(out, crl);
 
-				if (!noout)
+				if (!pkcs7_config.noout)
 					PEM_write_bio_X509_CRL(out, crl);
 				BIO_puts(out, "\n");
 			}
@@ -253,10 +271,10 @@ bad:
 		ret = 0;
 		goto end;
 	}
-	if (!noout) {
-		if (outformat == FORMAT_ASN1)
+	if (!pkcs7_config.noout) {
+		if (pkcs7_config.outformat == FORMAT_ASN1)
 			i = i2d_PKCS7_bio(out, p7);
-		else if (outformat == FORMAT_PEM)
+		else if (pkcs7_config.outformat == FORMAT_PEM)
 			i = PEM_write_bio_PKCS7(out, p7);
 		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");
