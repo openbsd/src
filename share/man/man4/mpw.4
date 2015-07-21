@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpw.4,v 1.1 2015/07/21 05:25:24 rzalamena Exp $
+.\"	$OpenBSD: mpw.4,v 1.2 2015/07/21 06:15:33 schwarze Exp $
 .\"
 .\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
 .\"
@@ -23,8 +23,8 @@
 .Sh SYNOPSIS
 .Cd "pseudo-device mpw"
 .Pp
-.Fd #include <sys/types.h>
-.Fd #include <netmpls/mpls.h>
+.In sys/types.h
+.In netmpls/mpls.h
 .Sh DESCRIPTION
 The
 .Nm
@@ -33,7 +33,7 @@ interface is used to create a MPLS layer 2 tunnel between two points.
 A
 .Nm
 interface can be created at runtime using the
-.Ic ifconfig mpw Ns Ar N Ic create
+.Sy ifconfig Nm Ns Ar N Cm create
 command or by setting up a
 .Xr hostname.if 5
 configuration file for
@@ -79,12 +79,11 @@ struct ifmpwreq {
 .Nm
 interfaces support the following unique ioctls:
 .Bl -tag -width "SIOCSETMPWCFG" -offset 3n
-.It SIOCSETMPWCFG
+.It Dv SIOCSETMPWCFG
 Configure mpw using the supplied configuration.
-.It SIOCGETMPWCFG
+.It Dv SIOCGETMPWCFG
 Report the mpw configuration.
 .El
-.\"
 .Sh EXAMPLES
 Create a pseudowire to neighbor 10.254.0.1 using ethernet encapsulation
 with local label 20 and encapsulate MPLS packets with label 21:
@@ -98,19 +97,16 @@ control-word:
 .Bd -literal -offset indent
 # ifconfig mpw5 neighbor 10.254.0.3 encap ethernet mpwlabel 30 31 controlword
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr ldpd 8 ,
 .Xr netstart 8
-.\"
 .Sh HISTORY
 The
 .Nm
 kernel interface first appeared in
 .Ox 5.8 .
-.\"
 .Sh AUTHORS
 The
 .Nm
