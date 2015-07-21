@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.6 2015/07/19 22:11:41 benno Exp $ */
+/* $OpenBSD: parse.y,v 1.7 2015/07/21 11:04:06 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -32,6 +32,8 @@ typedef struct {
 		struct {
 			int action;
 			int options;
+			const char *cmd;
+			const char **cmdargs;
 			const char **envlist;
 		};
 		const char *str;
@@ -50,7 +52,7 @@ int yyparse(void);
 
 %}
 
-%token TPERMIT TDENY TAS TCMD
+%token TPERMIT TDENY TAS TCMD TARGS
 %token TNOPASS TKEEPENV
 %token TSTRING
 
@@ -71,7 +73,8 @@ rule:		action ident target cmd {
 			r->envlist = $1.envlist;
 			r->ident = $2.str;
 			r->target = $3.str;
-			r->cmd = $4.str;
+			r->cmd = $4.cmd;
+			r->cmdargs = $4.cmdargs;
 			if (nrules == maxrules) {
 				if (maxrules == 0)
 					maxrules = 63;
@@ -136,9 +139,28 @@ target:		/* optional */ {
 		} ;
 
 cmd:		/* optional */ {
-			$$.str = NULL;
-		} | TCMD TSTRING {
-			$$.str = $2.str;
+			$$.cmd = NULL;
+			$$.cmdargs = NULL;
+		} | TCMD TSTRING args {
+			$$.cmd = $2.str;
+			$$.cmdargs = $3.cmdargs;
+		} ;
+
+args:		/* empty */ {
+			$$.cmdargs = NULL;
+		} | TARGS argslist {
+			$$.cmdargs = $2.cmdargs;
+		} ;
+
+argslist:	/* empty */ {
+			if (!($$.cmdargs = calloc(1, sizeof(char *))))
+				errx(1, "can't allocate args");
+		} | argslist TSTRING {
+			int nargs = arraylen($1.cmdargs);
+			if (!($$.cmdargs = reallocarray($1.cmdargs, nargs + 2, sizeof(char *))))
+				errx(1, "can't allocate args");
+			$$.cmdargs[nargs] = $2.str;
+			$$.cmdargs[nargs + 1] = NULL;
 		} ;
 
 %%
@@ -160,6 +182,7 @@ struct keyword {
 	{ "permit", TPERMIT },
 	{ "as", TAS },
 	{ "cmd", TCMD },
+	{ "args", TARGS },
 	{ "nopass", TNOPASS },
 	{ "keepenv", TKEEPENV },
 };
