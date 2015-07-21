@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpw.4,v 1.2 2015/07/21 06:15:33 schwarze Exp $
+.\"	$OpenBSD: mpw.4,v 1.3 2015/07/21 15:19:34 jmc Exp $
 .\"
 .\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm mpw
-.Nd MPLS Pseudowire
+.Nd MPLS pseudowire
 .Sh SYNOPSIS
 .Cd "pseudo-device mpw"
 .Pp
@@ -28,7 +28,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is used to create a MPLS layer 2 tunnel between two points.
+interface is used to create an MPLS layer 2 tunnel between two points.
 .Pp
 A
 .Nm
@@ -39,8 +39,7 @@ command or by setting up a
 configuration file for
 .Xr netstart 8 .
 The interface itself can be configured with
-.Xr ifconfig 8
-see its man page for more information.
+.Xr ifconfig 8 .
 .Pp
 The supported pseudowire operation modes are
 .Ql ethernet
@@ -48,16 +47,16 @@ and
 .Ql ethernet-tagged .
 The
 .Ql ethernet
-operating mode passes all ethernet packets transparently through the
+operating mode passes all Ethernet packets transparently through the
 interface, meanwhile the
 .Ql ethernet-tagged
 requires that the client uses at least one VLAN to pass the traffic.
 The
 .Nm
-interface labels, neighbor, encapsulation and administrative state is normally
+interface labels, neighbor, encapsulation and administrative state are normally
 configured by
 .Xr ldpd 8 ,
-but it is also possible to configure it manually.
+but it is also possible to configure them manually.
 The configuration information that will be used by the ioctl are
 defined below:
 .Bd -literal
@@ -85,13 +84,13 @@ Configure mpw using the supplied configuration.
 Report the mpw configuration.
 .El
 .Sh EXAMPLES
-Create a pseudowire to neighbor 10.254.0.1 using ethernet encapsulation
+Create a pseudowire to neighbor 10.254.0.1 using Ethernet encapsulation
 with local label 20 and encapsulate MPLS packets with label 21:
 .Bd -literal -offset indent
 # ifconfig mpw5 neighbor 10.254.0.1 encap ethernet mpwlabel 20 21 up
 .Ed
 .Pp
-Create a pseudowire to neighbor 10.254.0.3 using ethernet encapsulation
+Create a pseudowire to neighbor 10.254.0.3 using Ethernet encapsulation
 with local label 30 and encapsulate MPLS packets with label 31 and
 control-word:
 .Bd -literal -offset indent
