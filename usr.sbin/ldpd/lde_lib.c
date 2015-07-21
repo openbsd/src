@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.38 2015/07/21 04:46:51 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.39 2015/07/21 04:48:42 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -160,7 +160,7 @@ rt_dump(pid_t pid)
 		LIST_FOREACH(me, &fn->downstream, entry) {
 			rtctl.in_use = lde_nbr_is_nexthop(fn, me->nexthop);
 			rtctl.nexthop = me->nexthop->id;
-			rtctl.remote_label = me->label;
+			rtctl.remote_label = me->map.label;
 
 			lde_imsg_compose_ldpe(IMSG_CTL_SHOW_LIB, 0, pid,
 			    &rtctl, sizeof(rtctl));
@@ -338,17 +338,9 @@ lde_kernel_insert(struct kroute *kr)
 	if (ln) {
 		/* FEC.2  */
 		me = (struct lde_map *)fec_find(&ln->recv_map, &fn->fec);
-		if (me) {
-			struct map	map;
-
-			bzero(&map, sizeof(map));
-			map.prefix.s_addr = me->fec.prefix.s_addr;
-			map.prefixlen = me->fec.prefixlen;
-			map.label = me->label;
-
+		if (me)
 			/* FEC.5 */
-			lde_check_mapping(&map, ln);
-		}
+			lde_check_mapping(&me->map, ln);
 	}
 }
 
@@ -411,9 +403,9 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	me = (struct lde_map *)fec_find(&ln->recv_map, &fn->fec);
 	if (me) {
 		/* LMp.10 */
-		if (me->label != map->label && lre == NULL) {
+		if (me->map.label != map->label && lre == NULL) {
 			/* LMp.10a */
-			lde_send_labelrelease(ln, fn, me->label);
+			lde_send_labelrelease(ln, fn, me->map.label);
 
 			LIST_FOREACH(fnh, &fn->nexthops, entry)
 				TAILQ_FOREACH(addr, &ln->addr_list, entry)
@@ -442,14 +434,14 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 		/* LMp.13: perform lsr label release procedure */
 		if (me == NULL)
 			me = lde_map_add(ln, fn, 0);
-		me->label = map->label;
+		memcpy(&me->map, map, sizeof(*map));
 		return;
 	}
 
 	/* LMp.16: Record the mapping from this peer */
 	if (me == NULL)
 		me = lde_map_add(ln, fn, 0);
-	me->label = map->label;
+	memcpy(&me->map, map, sizeof(*map));
 
 	/*
 	 * LMp.17 - LMp.27 are unnecessary since we don't need to implement
@@ -530,7 +522,7 @@ lde_check_release(struct map *map, struct lde_nbr *ln)
 
 	/* LRl.6: check sent map list and remove it if available */
 	me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
-	if (me && (map->label == NO_LABEL || map->label == me->label))
+	if (me && (map->label == NO_LABEL || map->label == me->map.label))
 		lde_map_del(ln, me, 1);
 
 	/*
@@ -561,7 +553,7 @@ lde_check_release_wcard(struct map *map, struct lde_nbr *ln)
 		/* LRl.6: check sent map list and remove it if available */
 		me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
 		if (me &&
-		    (map->label == NO_LABEL || map->label == me->label)) {
+		    (map->label == NO_LABEL || map->label == me->map.label)) {
 			lde_map_del(ln, me, 1);
 		}
 
@@ -597,7 +589,7 @@ lde_check_withdraw(struct map *map, struct lde_nbr *ln)
 
 	/* LWd.3: check previously received label mapping */
 	me = (struct lde_map *)fec_find(&ln->recv_map, &fn->fec);
-	if (me && (map->label == NO_LABEL || map->label == me->label))
+	if (me && (map->label == NO_LABEL || map->label == me->map.label))
 		/* LWd.4: remove record of previously received lbl mapping */
 		lde_map_del(ln, me, 0);
 }
@@ -626,7 +618,8 @@ lde_check_withdraw_wcard(struct map *map, struct lde_nbr *ln)
 
 		/* LWd.3: check previously received label mapping */
 		me = (struct lde_map *)fec_find(&ln->recv_map, &fn->fec);
-		if (me && (map->label == NO_LABEL || map->label == me->label))
+		if (me && (map->label == NO_LABEL ||
+		    map->label == me->map.label))
 			/*
 			 * LWd.4: remove record of previously received
 			 * label mapping

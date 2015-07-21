@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.27 2015/07/21 04:46:51 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.28 2015/07/21 04:48:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -47,7 +47,7 @@ struct lde_map {
 	struct fec		 fec;
 	LIST_ENTRY(lde_map)	 entry;
 	struct lde_nbr		*nexthop;
-	u_int32_t		 label;
+	struct map		 map;
 };
 
 /* withdraw entries */

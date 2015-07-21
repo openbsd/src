@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.36 2015/07/21 04:46:51 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.37 2015/07/21 04:48:42 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -539,7 +539,7 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn)
 	me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
 	if (me == NULL)
 		me = lde_map_add(ln, fn, 1);
-	me->label = map.label;
+	memcpy(&me->map, &map, sizeof(map));
 }
 
 void
