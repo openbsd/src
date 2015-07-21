@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2015/07/20 20:53:43 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2015/07/21 17:51:50 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -271,21 +271,21 @@ check-setup:
 	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 	ssh ${RT_SSH} ifconfig | fgrep 'mtu 1300'
 	@echo '\n======== $@ ECO ========'
-	ssh ${ECO_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
-	ssh ${ECO_SSH} route -n get -inet ${ECO_IN} | fgrep -q 'interface: lo0'  # ECO_IN
+.for ip in ECO_IN ECO_OUT
+	ssh ${ECO_SSH} ping -n -c 1 ${${ip}}  # ${ip}
+	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'interface: lo0'  # ${ip}
+.endfor
 	ssh ${ECO_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT
 	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_OUT}'  # ${ip} RT_OUT
 .endfor
-	ssh ${ECO_SSH} ping -n -c 1 ${ECO_OUT}  # ECO_OUT
-	ssh ${ECO_SSH} route -n get -inet ${ECO_OUT} | fgrep -q 'interface: lo0'  # ECO_OUT
-	ssh ${ECO_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
-	ssh ${ECO_SSH} route -n get -inet6 ${ECO_IN6} | fgrep -q 'interface: lo0'  # ECO_IN6
+.for ip in ECO_IN ECO_OUT
+	ssh ${ECO_SSH} ping6 -n -c 1 ${${ip}6}  # ${ip}6
+	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'interface: lo0'  # ${ip}6
+.endfor
 	ssh ${ECO_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT
 	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_OUT6}'  # ${ip}6 RT_OUT6
-	ssh ${ECO_SSH} ping6 -n -c 1 ${ECO_OUT6}  # ECO_OUT6
-	ssh ${ECO_SSH} route -n get -inet6 ${ECO_OUT6} | fgrep -q 'interface: lo0'  # ECO_OUT6
 .endfor
 .for af in inet inet6
 .for proto in udp tcp

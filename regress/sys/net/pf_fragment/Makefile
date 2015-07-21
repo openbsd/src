@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2015/07/20 20:53:44 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2015/07/21 17:51:50 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -16,17 +16,19 @@ regress:
 .endif
 
 # This test needs a manual setup of four machines
+# The setup is the same as for regress/sys/net/pf_forward
 # Set up machines: SRC PF RT ECO
 # SRC is the machine where this makefile is running.
 # PF is running OpenBSD forwarding through pf, it is the test target.
 # RT is a router forwarding packets, maximum MTU is 1300.
 # ECO is reflecting the ping and UDP echo packets.
 # RDR does not exist, PF redirects the traffic to ECO.
+# RTT addresses exist on ECO, PF has not route and must use route-to
 #
-# +---+   0   +--+   1   +--+   2   +---+ 3   4 +---+
-# |SRC| ----> |PF| ----> |RT| ----> |ECO|       |RDR|
-# +---+       +--+       +--+       +---+       +---+
-#     out    in  out    in  out    in          in
+# +---+   0   +--+   1   +--+   2   +---+ 7   4 +---+   7 +---+
+# |SRC| ----> |PF| ----> |RT| ----> |ECO|       |RDR|     |RTT|
+# +---+       +--+       +--+       +---+       +---+     +---+
+#     out    in  out    in  out    in   rtt    in        in
 
 # Configure Addresses on the machines, there must be routes for the
 # networks.  Adapt interface and addresse variables to your local
@@ -51,6 +53,7 @@ RT_IN ?=	10.188.211.51
 RT_OUT ?=	10.188.212.51
 ECO_IN ?=	10.188.212.52
 RDR_IN ?=	10.188.214.188
+RTT_IN ?=	10.188.217.52
 
 SRC_OUT6 ?=	fdd7:e83e:66bc:210:fce1:baff:fed1:561f
 PF_IN6 ?=	fdd7:e83e:66bc:210:5054:ff:fe12:3450
@@ -59,6 +62,7 @@ RT_IN6 ?=	fdd7:e83e:66bc:211:5054:ff:fe12:3451
 RT_OUT6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3451
 ECO_IN6 ?=	fdd7:e83e:66bc:212:5054:ff:fe12:3452
 RDR_IN6 ?=	fdd7:e83e:66bc:214::188
+RTT_IN6 ?=	fdd7:e83e:66bc:217:5054:ff:fe12:3452
 
 .if empty (PF_SSH) || empty (RT_SSH) || empty (ECO_SSH)
 regress:
@@ -88,7 +92,7 @@ addr.py: Makefile
 	echo 'SRC_IF="${SRC_IF}"' >>$@.tmp
 	echo 'SRC_MAC="${SRC_MAC}"' >>$@.tmp
 	echo 'PF_MAC="${PF_MAC}"' >>$@.tmp
-.for var in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
+.for var in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
 	echo '${var}="${${var}}"' >>$@.tmp
 	echo '${var}6="${${var}6}"' >>$@.tmp
 .endfor
@@ -312,14 +316,14 @@ check-setup:
 	route -n get -inet ${SRC_OUT} | fgrep -q 'interface: lo0'  # SRC_OUT
 	ping -n -c 1 ${PF_IN}  # PF_IN
 	route -n get -inet ${PF_IN} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN SRC_IF
-.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
+.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
 	route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_IN}'  # ${ip} PF_IN
 .endfor
 	ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
 	route -n get -inet6 ${SRC_OUT6} | fgrep -q 'interface: lo0'  # SRC_OUT6
 	ping6 -n -c 1 ${PF_IN6}  # PF_IN6
 	route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN6 SRC_IF
-.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN
+.for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
 	route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_IN6}'  # ${ip}6 PF_IN6
 .endfor
 	@echo '\n======== $@ PF ========'
@@ -332,6 +336,7 @@ check-setup:
 .for ip in RT_OUT ECO_IN
 	ssh ${PF_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_IN}'  # ${ip} RT_IN
 .endfor
+	! ssh ${PF_SSH} route -n get -inet ${RTT_IN} | fgrep -q 'gateway: ${RT_IN}'  # RTT_IN RT_IN
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_IN6}  # PF_IN6
 	ssh ${PF_SSH} route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: lo0'  # PF_IN6
 	ssh ${PF_SSH} ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
@@ -341,6 +346,7 @@ check-setup:
 .for ip in RT_OUT ECO_IN
 	ssh ${PF_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_IN6}'  # ${ip}6 RT_IN6
 .endfor
+	! ssh ${PF_SSH} route -n get -inet6 ${RTT_IN6} | fgrep -q 'gateway: ${RT_IN6}'  # RTT_IN6 RT_IN6
 	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 	ssh ${PF_SSH} sysctl net.inet.ip.forwarding | fgrep =1
@@ -355,6 +361,7 @@ check-setup:
 	ssh ${RT_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
 	ssh ${RT_SSH} route -n get -inet ${RT_OUT} | fgrep -q 'interface: lo0'  # RT_OUT
 	ssh ${RT_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
+	ssh ${RT_SSH} route -n get -inet ${RTT_IN} | fgrep -q 'gateway: ${ECO_IN}'  # RTT_IN ECO_IN
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
 	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | fgrep -q 'interface: lo0'  # RT_IN6
 	ssh ${RT_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
@@ -364,18 +371,23 @@ check-setup:
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6
 	ssh ${RT_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
+	ssh ${RT_SSH} route -n get -inet6 ${RTT_IN6} | fgrep -q 'gateway: ${ECO_IN6}'  # RTT_IN6 ECO_IN6
 	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep =1
 	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 	ssh ${RT_SSH} ifconfig | fgrep 'mtu 1300'
 	@echo '\n======== $@ ECO ========'
-	ssh ${ECO_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
-	ssh ${ECO_SSH} route -n get -inet ${ECO_IN} | fgrep -q 'interface: lo0'  # ECO_IN
+.for ip in ECO_IN RTT_IN
+	ssh ${ECO_SSH} ping -n -c 1 ${${ip}}  # ${ip}
+	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'interface: lo0'  # ${ip}
+.endfor
 	ssh ${ECO_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT
 	ssh ${ECO_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_OUT}'  # ${ip} RT_OUT
 .endfor
-	ssh ${ECO_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
-	ssh ${ECO_SSH} route -n get -inet6 ${ECO_IN6} | fgrep -q 'interface: lo0'  # ECO_IN6
+.for ip in ECO_IN RTT_IN
+	ssh ${ECO_SSH} ping6 -n -c 1 ${${ip}6}  # ${ip}6
+	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'interface: lo0'  # ${ip}6
+.endfor
 	ssh ${ECO_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 .for ip in RT_IN PF_OUT PF_IN SRC_OUT
 	ssh ${ECO_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_OUT6}'  # ${ip}6 RT_OUT6
