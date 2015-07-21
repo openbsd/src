@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.34 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.35 2015/07/21 04:45:21 renato Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -164,11 +164,12 @@ lde_shutdown(void)
 	lde_nbr_clear();
 	rt_clear();
 
+	config_clear(ldeconf);
+
 	msgbuf_clear(&iev_ldpe->ibuf.w);
 	free(iev_ldpe);
 	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
-	free(ldeconf);
 
 	log_info("label decision engine exiting");
 	_exit(0);

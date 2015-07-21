@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.34 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.35 2015/07/21 04:45:21 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,8 @@ void	 ldpe_shutdown(void);
 struct ldpd_conf	*leconf = NULL, *nconf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_lde;
+struct event		 disc_ev;
+struct event		 edisc_ev;
 struct event             pfkey_ev;
 struct ldpd_sysdep	 sysdep;
 
@@ -245,13 +247,13 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    ldpe_dispatch_pfkey, NULL);
 	event_add(&pfkey_ev, NULL);
 
-	event_set(&leconf->disc_ev, leconf->ldp_discovery_socket,
+	event_set(&disc_ev, leconf->ldp_discovery_socket,
 	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
-	event_add(&leconf->disc_ev, NULL);
+	event_add(&disc_ev, NULL);
 
-	event_set(&leconf->edisc_ev, leconf->ldp_ediscovery_socket,
+	event_set(&edisc_ev, leconf->ldp_ediscovery_socket,
 	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
-	event_add(&leconf->edisc_ev, NULL);
+	event_add(&edisc_ev, NULL);
 
 	accept_add(leconf->ldp_session_socket, session_accept, NULL);
 	/* listen on ldpd control socket */
@@ -279,9 +281,14 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 void
 ldpe_shutdown(void)
 {
-	struct if_addr	*if_addr;
-	struct iface	*iface;
-	struct tnbr	*tnbr;
+	struct if_addr		*if_addr;
+
+	event_del(&disc_ev);
+	event_del(&edisc_ev);
+	event_del(&pfkey_ev);
+	close(leconf->ldp_discovery_socket);
+	close(leconf->ldp_ediscovery_socket);
+	close(leconf->ldp_session_socket);
 
 	/* remove addresses from global list */
 	while ((if_addr = LIST_FIRST(&leconf->addr_list)) != NULL) {
@@ -289,21 +296,7 @@ ldpe_shutdown(void)
 		free(if_addr);
 	}
 
-	/* stop all interfaces */
-	while ((iface = LIST_FIRST(&leconf->iface_list)) != NULL) {
-		LIST_REMOVE(iface, entry);
-		if_del(iface);
-	}
-
-	/* stop all targeted neighbors */
-	while ((tnbr = LIST_FIRST(&leconf->tnbr_list)) != NULL) {
-		LIST_REMOVE(tnbr, entry);
-		tnbr_del(tnbr);
-	}
-
-	close(leconf->ldp_discovery_socket);
-	close(leconf->ldp_ediscovery_socket);
-	close(leconf->ldp_session_socket);
+	config_clear(leconf);
 
 	/* clean up */
 	msgbuf_write(&iev_lde->ibuf.w);
@@ -312,7 +305,6 @@ ldpe_shutdown(void)
 	msgbuf_write(&iev_main->ibuf.w);
 	msgbuf_clear(&iev_main->ibuf.w);
 	free(iev_main);
-	free(leconf);
 	free(pkt_ptr);
 
 	log_info("ldp engine exiting");

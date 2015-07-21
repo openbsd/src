@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.23 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.24 2015/07/21 04:45:21 renato Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -282,11 +282,12 @@ ldpd_shutdown(void)
 			fatal("wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
+	config_clear(ldpd_conf);
+
 	msgbuf_clear(&iev_ldpe->ibuf.w);
 	free(iev_ldpe);
 	msgbuf_clear(&iev_lde->ibuf.w);
 	free(iev_lde);
-	free(ldpd_conf);
 
 	log_info("terminating");
 	exit(0);
@@ -706,4 +707,20 @@ merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 	}
 
 	free(xconf);
+}
+
+void
+config_clear(struct ldpd_conf *conf)
+{
+	struct ldpd_conf	*xconf;
+
+	/* merge current config with an empty config */
+	xconf = malloc(sizeof(*xconf));
+	memcpy(xconf, conf, sizeof(*xconf));
+	LIST_INIT(&xconf->iface_list);
+	LIST_INIT(&xconf->tnbr_list);
+	LIST_INIT(&xconf->nbrp_list);
+	merge_config(conf, xconf);
+
+	free(conf);
 }

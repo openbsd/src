@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.52 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.53 2015/07/21 04:45:21 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -252,8 +252,6 @@ enum hello_type {
 };
 
 struct ldpd_conf {
-	struct event		disc_ev;
-	struct event		edisc_ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, iface)	iface_list;
 	struct if_addr_head	addr_list;
@@ -373,6 +371,7 @@ const char	*notification_name(u_int32_t);
 void	main_imsg_compose_ldpe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_lde(int, pid_t, void *, u_int16_t);
 void	merge_config(struct ldpd_conf *, struct ldpd_conf *);
+void	config_clear(struct ldpd_conf *);
 int	imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
 	    int, void *, u_int16_t);
 void	imsg_event_add(struct imsgev *);
