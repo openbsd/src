@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.9 2015/07/22 06:30:12 jmc Exp $
+.\" $OpenBSD: doas.conf.5,v 1.10 2015/07/22 20:15:24 zhuk Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -82,11 +82,25 @@ alone means that command should be run without any arguments.
 .Pp
 The last matching rule determines the action taken.
 .Pp
-The current line can be extended over multiple lines using a backslash
-.Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
 and extend to the end of the current line.
+.Pp
+The following quoting rules apply:
+.Bl -dash
+.It
+The text between a pair of double quotes
+.Pq Sq \&"
+is taken as is.
+.It
+The backslash
+.Pq Sq \e
+escapes next character, including new line character, outside comment;
+as a result, comments may not be extended over multiple lines.
+.It
+If quotes or backslash are used in the word, this word won't be
+considered a keyword.
+.El
 .Sh EXAMPLES
 The following example permits users in group wsrc to build ports,
 wheel to execute commands as root while keeping the environment

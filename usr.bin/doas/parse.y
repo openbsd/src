@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.8 2015/07/21 16:12:04 tedu Exp $ */
+/* $OpenBSD: parse.y,v 1.9 2015/07/22 20:15:24 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -190,59 +190,114 @@ struct keyword {
 int
 yylex(void)
 {
+	static int colno = 1, lineno = 1;
+
 	char buf[1024], *ebuf, *p, *str;
-	int i, c, next;
+	int i, c, quotes = 0, escape = 0, qpos = 0, nonkw = 0;
 
 	p = buf;
 	ebuf = buf + sizeof(buf);
+
 repeat:
-	c = getc(yyfp);
+	/* skip whitespace first */
+	for (c = getc(yyfp); c == ' ' || c == '\t'; c = getc(yyfp))
+		colno++;
+
+	/* check for special one-character constructions */
 	switch (c) {
-	case ' ':
-	case '\t':
-		goto repeat; /* skip spaces */
-	case '\\':
-		next = getc(yyfp);
-		if (next == '\n')
-			goto repeat;
-		else
-			c = next;
-	case '\n':
-	case '{':
-	case '}':
-		return c;
-	case '#':
-		while ((c = getc(yyfp)) != '\n' && c != EOF)
-			; /* skip comments */
-		if (c == EOF)
-			return 0;
-		return c;
-	case EOF:
-		return 0;
-	}
-	while (1) {
-		switch (c) {
 		case '\n':
+			colno = 1;
+			lineno++;
+			/* FALLTHROUGH */
+		case '{':
+		case '}':
+			return c;
+		case '#':
+			/* skip comments; NUL is allowed; no continuation */
+			while ((c = getc(yyfp)) != '\n')
+				if (c == EOF)
+					return 0;
+			colno = 1;
+			lineno++;
+			return c;
+		case EOF:
+			return 0;
+	}
+
+	/* parsing next word */
+	for (;; c = getc(yyfp), colno++) {
+		switch (c) {
+		case '\0':
+			yyerror("unallowed character NUL at "
+			    "line %d, column %d", lineno, colno);
+			escape = 0;
+			continue;
+		case '\\':
+			escape = !escape;
+			if (escape)
+				continue;
+			break;
+		case '\n':
+			if (quotes)
+				yyerror("unterminated quotes at line %d, column %d",
+				    lineno, qpos);
+			if (escape) {
+				nonkw = 1;
+				escape = 0;
+				continue;
+			}
+			goto eow;
+		case EOF:
+			if (escape)
+				yyerror("unterminated escape at line %d, column %d",
+				    lineno, colno - 1);
+			if (quotes)
+				yyerror("unterminated quotes at line %d, column %d",
+				    lineno, qpos);
+			/* FALLTHROUGH */
 		case '{':
 		case '}':
 		case '#':
 		case ' ':
 		case '\t':
-		case EOF:
-			goto eow;
+			if (!escape && !quotes)
+				goto eow;
+			break;
+		case '"':
+			if (!escape) {
+				quotes = !quotes;
+				if (quotes) {
+					nonkw = 1;
+					qpos = colno;
+				}
+				continue;
+			}
 		}
 		*p++ = c;
 		if (p == ebuf)
-			yyerror("too much stuff");
-		c = getc(yyfp);
+			yyerror("too long line %d", lineno);
+		escape = 0;
 	}
+
 eow:
 	*p = 0;
 	if (c != EOF)
 		ungetc(c, yyfp);
-	for (i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
-		if (strcmp(buf, keywords[i].word) == 0)
-			return keywords[i].token;
+	if (p == buf) {
+		/*
+		 * There could be a number of reasons for empty buffer, and we handle
+		 * all of them here, to avoid cluttering the main loop.
+		 */
+		if (c == EOF)
+			return 0;
+		else if (!qpos)    /* accept, e.g., empty args: cmd foo args "" */
+			goto repeat;
+	}
+	if (!nonkw) {
+		for (i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
+			if (strcmp(buf, keywords[i].word) == 0)
+				return keywords[i].token;
+		}
 	}
 	if ((str = strdup(buf)) == NULL)
 		err(1, "strdup");
