@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.297 2015/07/21 17:50:23 rzalamena Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.298 2015/07/22 06:20:06 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -770,8 +770,10 @@ nextarg:
 	/* Process any media commands that may have been issued. */
 	process_media_commands();
 
+#ifndef SMALL
 	/* Process mpw commands */
 	process_mpw_commands();
+#endif
 
 	if (af == AF_INET6 && explicit_prefix == 0) {
 		/*
