@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.132 2015/06/25 06:43:45 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.133 2015/07/22 19:06:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,7 +66,7 @@ struct audio_buf {
 	size_t start;			/* first byte used in the FIFO */
 	size_t used;			/* bytes used in the FIFO */
 	size_t blksz;			/* DMA block size */
-	unsigned long pos;		/* bytes transferred */
+	unsigned long ticks;		/* blocks transferred */
 	unsigned long xrun;		/* bytes lost by xruns */
 	struct selinfo sel;		/* to record & wakeup poll(2) */
 	int blocking;			/* read/write blocking */
@@ -327,12 +327,12 @@ audio_clear(struct audio_softc *sc)
 {
 	if (sc->mode & AUMODE_PLAY) {
 		sc->play.used = sc->play.start = 0;
-		sc->play.pos = sc->play.xrun = 0;
+		sc->play.ticks = sc->play.xrun = 0;
 		audio_fill_sil(sc, sc->play.data, sc->play.len);
 	}
 	if (sc->mode & AUMODE_RECORD) {
 		sc->rec.used = sc->rec.start = 0;
-		sc->rec.pos = sc->rec.xrun = 0;
+		sc->rec.ticks = sc->rec.xrun = 0;
 		audio_fill_sil(sc, sc->rec.data, sc->rec.len);
 	}
 }
@@ -358,7 +358,7 @@ audio_pintr(void *addr)
 		return;
 	}
 
-	sc->play.pos += sc->play.blksz;
+	sc->play.ticks++;
 	audio_fill_sil(sc, sc->play.data + sc->play.start, sc->play.blksz);
 	audio_buf_rdiscard(&sc->play, sc->play.blksz);
 	if (sc->play.used < sc->play.blksz) {
@@ -412,7 +412,7 @@ audio_rintr(void *addr)
 		return;
 	}
 
-	sc->rec.pos += sc->rec.blksz;
+	sc->rec.ticks++;
 	audio_buf_wcommit(&sc->rec, sc->rec.blksz);
 	if (sc->rec.used == sc->rec.len) {
 		DPRINTFN(1, "%s: rec overrun\n", DEVNAME(sc));
@@ -525,7 +525,7 @@ int
 audio_start(struct audio_softc *sc)
 {
 	sc->active = 1;
-	sc->play.xrun = sc->play.pos = sc->rec.xrun = sc->rec.pos = 0;
+	sc->play.xrun = sc->play.ticks = sc->rec.xrun = sc->rec.ticks = 0;
 	return audio_start_do(sc);
 }
 
@@ -956,8 +956,8 @@ audio_getinfo(struct audio_softc *sc, struct audio_info *ai)
 	 * and the pos counters are more useful
 	 */
 	mtx_enter(&audio_lock);
-	ai->play.samples = sc->play.pos - sc->play.xrun;
-	ai->record.samples = sc->rec.pos - sc->rec.xrun;
+	ai->play.samples = sc->play.ticks * sc->play.blksz - sc->play.xrun;
+	ai->record.samples = sc->rec.ticks * sc->rec.blksz - sc->rec.xrun;
 	mtx_leave(&audio_lock);
 
 	ai->play.pause = ai->record.pause = sc->pause;
@@ -1045,7 +1045,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	sc->rchan = 2;
 	sc->round = 960;
 	sc->nblks = 2;
-	sc->play.pos = sc->play.xrun = sc->rec.pos = sc->rec.xrun = 0;
+	sc->play.ticks = sc->play.xrun = sc->rec.ticks = sc->rec.xrun = 0;
 }
 
 int
@@ -1507,13 +1507,13 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 	case AUDIO_GETOOFFS:
 		mtx_enter(&audio_lock);
 		ao = (struct audio_offset *)addr;
-		ao->samples = sc->play.pos;
+		ao->samples = sc->play.ticks * sc->play.blksz;
 		mtx_leave(&audio_lock);
 		break;
 	case AUDIO_GETIOFFS:
 		mtx_enter(&audio_lock);
 		ao = (struct audio_offset *)addr;
-		ao->samples = sc->rec.pos;
+		ao->samples = sc->rec.ticks * sc->rec.blksz;
 		mtx_leave(&audio_lock);
 		break;
 	case AUDIO_SETINFO:
