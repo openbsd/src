@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.19 2015/07/22 05:37:23 deraadt Exp $ */
+/* $OpenBSD: doas.c,v 1.20 2015/07/22 16:35:03 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -214,7 +214,7 @@ copyenv(const char **oldenvp, struct rule *rule)
 	int ei;
 	int nsafe, nbad;
 	int nextras = 0;
-	
+
 	nbad = arraylen(badset);
 	if ((rule->options & KEEPENV) && !rule->envlist) {
 		size_t i, ii;
@@ -294,11 +294,11 @@ main(int argc, char **argv, char **envp)
 	int i, ch;
 	int sflag = 0;
 
+	uid = getuid();
 	while ((ch = getopt(argc, argv, "C:su:")) != -1) {
 		switch (ch) {
 		case 'C':
-			target = getuid();
-			setresuid(target, target, target);
+			setresuid(uid, uid, uid);
 			parseconfig(optarg);
 			exit(0);
 		case 'u':
@@ -321,7 +321,6 @@ main(int argc, char **argv, char **envp)
 
 	parseconfig("/etc/doas.conf");
 
-	uid = getuid();
 	pw = getpwuid(uid);
 	if (!pw)
 		err(1, "getpwuid failed");
