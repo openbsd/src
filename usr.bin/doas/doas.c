@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.18 2015/07/21 17:49:33 jmc Exp $ */
+/* $OpenBSD: doas.c,v 1.19 2015/07/22 05:37:23 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -227,7 +227,7 @@ copyenv(const char **oldenvp, struct rule *rule)
 			for (j = 0; j < nbad; j++) {
 				size_t len = strlen(badset[j]);
 				if (strncmp(oldenvp[i], badset[j], len) == 0 &&
-			    	    oldenvp[i][len] == '=') {
+				    oldenvp[i][len] == '=') {
 					break;
 				}
 			}
