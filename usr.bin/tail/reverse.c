@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.19 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.20 2015/07/22 16:37:04 tobias Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -147,12 +147,13 @@ r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	return (0);
 }
 
-typedef struct bf {
+#define	BSZ	(128 * 1024)
+struct bf {
 	struct bf *next;
 	struct bf *prev;
 	size_t len;
-	char *l;
-} BF;
+	char l[BSZ];
+};
 
 /*
  * r_buf -- display a non-regular file in reverse order by line.
@@ -167,21 +168,19 @@ typedef struct bf {
 static void
 r_buf(FILE *fp)
 {
-	BF *mark, *tr, *tl = NULL;
+	struct bf *mark, *tr, *tl = NULL;
 	int ch;
 	size_t len, llen;
 	char *p;
 	off_t enomem;
 
-#define	BSZ	(128 * 1024)
 	for (mark = NULL, enomem = 0;;) {
 		/*
 		 * Allocate a new block and link it into place in a doubly
 		 * linked list.  If out of memory, toss the LRU block and
 		 * keep going.
 		 */
-		if (enomem || (tl = malloc(sizeof(BF))) == NULL ||
-		    (tl->l = malloc(BSZ)) == NULL) {
+		if (enomem || (tl = malloc(sizeof(*tl))) == NULL) {
 			if (!mark)
 				err(1, NULL);
 			tl = enomem ? tl->next : mark;
@@ -259,5 +258,12 @@ r_buf(FILE *fp)
 	while ((tl = tl->next)->len) {
 		WR(tl->l, tl->len);
 		tl->len = 0;
+	}
+
+	tl->prev->next = NULL;
+	while (tl != NULL) {
+		tr = tl->next;
+		free(tl);
+		tl = tr;
 	}
 }
