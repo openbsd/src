@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.12 2015/07/21 16:17:17 guenther Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.13 2015/07/22 05:32:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -41,6 +41,7 @@
 
 #include <sys/tame.h>
 
+#include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -247,25 +248,13 @@ tame_fail(struct proc *p, int error, int code)
 {
 	printf("tame: pid %d %s syscall %d\n", p->p_pid, p->p_comm,
 	    p->p_tame_syscall);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_PSIG)) {
-		siginfo_t si;
+	if (p->p_p->ps_tame & _TM_ABORT) {	/* Core dump requested */
+		struct sigaction sa;
 
-		memset(&si, 0, sizeof(si));
-		if (p->p_p->ps_tame & _TM_ABORT)
-			si.si_signo = SIGABRT;
-		else
-			si.si_signo = SIGKILL;
-		si.si_code = code;
-		// si.si_syscall = p->p_tame_syscall;
-		/// si.si_nsysarg ...
-		ktrpsig(p, si.si_signo, SIG_DFL, p->p_sigmask, code, &si);
-	}
-#endif
-	if (p->p_p->ps_tame & _TM_ABORT) {
-		/* Core dump requested */
-		atomic_clearbits_int(&p->p_sigmask, sigmask(SIGABRT));
-		atomic_clearbits_int(&p->p_p->ps_flags, PS_TAMED);
+		p->p_p->ps_tame = 0;		/* Disable all TAME_ flags */
+		memset(&sa, 0, sizeof sa);
+		sa.sa_handler = SIG_DFL;
+		setsigvec(p, SIGABRT, &sa);
 		psignal(p, SIGABRT);
 	} else
 		psignal(p, SIGKILL);
