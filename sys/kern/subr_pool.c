@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.186 2015/07/20 23:47:20 uebayasi Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.187 2015/07/23 12:44:43 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -101,9 +101,6 @@ int	pool_debug = 1;
 #else
 int	pool_debug = 0;
 #endif
-
-#define	POOL_NEEDS_CATCHUP(pp)						\
-	((pp)->pr_nitems < (pp)->pr_minitems)
 
 #define POOL_INPGHDR(pp) ((pp)->pr_phoffset != 0)
 
