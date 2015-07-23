@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.92 2015/07/19 05:17:27 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.93 2015/07/23 09:36:32 semarie Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -742,6 +742,7 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 	char			*httpmsg, *body = NULL, *extraheader = NULL;
 	char			 tmbuf[32], hbuf[128], *hstsheader = NULL;
 	char			 buf[IBUF_READ_SIZE];
+	char			*escapedmsg = NULL;
 	int			 bodylen;
 
 	if (code == 0) {
@@ -782,8 +783,12 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 		msg = buf;
 		break;
 	case 401:
-		if (asprintf(&extraheader,
-		    "WWW-Authenticate: Basic realm=\"%s\"\r\n", msg) == -1) {
+		if (stravis(&escapedmsg, msg, VIS_DQ) == -1) {
+			code = 500;
+			extraheader = NULL;
+		} else if (asprintf(&extraheader,
+		    "WWW-Authenticate: Basic realm=\"%s\"\r\n", escapedmsg)
+		    == -1) {
 			code = 500;
 			extraheader = NULL;
 		}
@@ -805,6 +810,8 @@ server_abort_http(struct client *clt, u_int code, const char *msg)
 		 */
 		break;
 	}
+
+	free(escapedmsg);
 
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
