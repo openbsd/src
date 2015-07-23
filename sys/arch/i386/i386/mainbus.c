@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.51 2015/07/21 03:38:22 reyk Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.52 2015/07/23 06:21:37 reyk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -167,14 +167,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if NPVBUS > 0
-	/* Probe first to hide the "not configured" message */
-	if (pvbus_probe()) {
-		mba.mba_pvba.pvba_busname = "pvbus";
-		config_found(self, &mba.mba_pvba.pvba_busname, mainbus_print);
-	}
-#endif
-
 	if ((cpu_info_primary.ci_flags & CPUF_PRESENT) == 0) {
 		struct cpu_attach_args caa;
 
@@ -225,6 +217,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_eaa.eaa_memt = I386_BUS_SPACE_MEM;
 		if (esm_probe(&mba.mba_eaa))
 			config_found(self, &mba.mba_eaa, mainbus_print);
+	}
+#endif
+
+#if NPVBUS > 0
+	/* Probe first to hide the "not configured" message */
+	if (pvbus_probe()) {
+		mba.mba_pvba.pvba_busname = "pvbus";
+		config_found(self, &mba.mba_pvba.pvba_busname, mainbus_print);
 	}
 #endif
 
