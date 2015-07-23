@@ -1252,6 +1252,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/pthread.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/pwd.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/radius.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ranlib.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline
 ./usr/libdata/perl5/site_perl/vax-openbsd/readline/chardefs.ph

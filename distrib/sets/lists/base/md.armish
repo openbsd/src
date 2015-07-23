@@ -59,6 +59,7 @@
 ./usr/lib/libpcap.so.8.0
 ./usr/lib/libperl.so.17.1
 ./usr/lib/libpthread.so.19.0
+./usr/lib/libradius.so.1.0
 ./usr/lib/libreadline.so.4.0
 ./usr/lib/librpcsvc.so.2.0
 ./usr/lib/libskey.so.6.0
@@ -1887,6 +1888,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/pthread.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/pthread_np.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/pwd.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/radius.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ranlib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/readline
 ./usr/libdata/perl5/site_perl/arm-openbsd/readline/chardefs.ph

@@ -1198,6 +1198,7 @@
 ./usr/include/pthread.h
 ./usr/include/pthread_np.h
 ./usr/include/pwd.h
+./usr/include/radius.h
 ./usr/include/ranlib.h
 ./usr/include/readline
 ./usr/include/readline/chardefs.h
@@ -1557,6 +1558,8 @@
 ./usr/lib/libperl.a
 ./usr/lib/libpthread.a
 ./usr/lib/libpthread_p.a
+./usr/lib/libradius.a
+./usr/lib/libradius_p.a
 ./usr/lib/libreadline.a
 ./usr/lib/libreadline_p.a
 ./usr/lib/librpcsvc.a
@@ -5126,6 +5129,7 @@
 ./usr/share/man/man3/qiflush.3
 ./usr/share/man/man3/qsort.3
 ./usr/share/man/man3/queue.3
+./usr/share/man/man3/radius.3
 ./usr/share/man/man3/radixsort.3
 ./usr/share/man/man3/raise.3
 ./usr/share/man/man3/rand.3

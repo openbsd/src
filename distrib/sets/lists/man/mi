@@ -2228,6 +2228,7 @@
 ./usr/share/man/man5/port-modules.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
+./usr/share/man/man5/radiusd.conf.5
 ./usr/share/man/man5/ranlib.5
 ./usr/share/man/man5/relayd.conf.5
 ./usr/share/man/man5/remote.5
@@ -2563,6 +2564,7 @@
 ./usr/share/man/man8/quotacheck.8
 ./usr/share/man/man8/quotaoff.8
 ./usr/share/man/man8/quotaon.8
+./usr/share/man/man8/radiusd.8
 ./usr/share/man/man8/rarpd.8
 ./usr/share/man/man8/rbootd.8
 ./usr/share/man/man8/rc.8

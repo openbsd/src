@@ -2121,6 +2121,8 @@
 ./usr/libexec/makewhatis
 ./usr/libexec/ntalkd
 ./usr/libexec/radiusd
+./usr/libexec/radiusd/radiusd_bsdauth
+./usr/libexec/radiusd/radiusd_radius
 ./usr/libexec/rpc.rquotad
 ./usr/libexec/rpc.rstatd
 ./usr/libexec/rpc.rusersd
@@ -2354,6 +2356,8 @@
 ./usr/sbin/quot
 ./usr/sbin/quotaoff
 ./usr/sbin/quotaon
+./usr/sbin/radiusctl
+./usr/sbin/radiusd
 ./usr/sbin/rarpd
 ./usr/sbin/rbootd
 ./usr/sbin/rcctl
