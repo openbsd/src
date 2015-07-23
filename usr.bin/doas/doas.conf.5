@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.10 2015/07/22 20:15:24 zhuk Exp $
+.\" $OpenBSD: doas.conf.5,v 1.11 2015/07/23 15:26:37 jmc Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 22 2015 $
+.Dd $Mdocdate: July 23 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -93,13 +93,13 @@ The text between a pair of double quotes
 .Pq Sq \&"
 is taken as is.
 .It
-The backslash
+The backslash character
 .Pq Sq \e
-escapes next character, including new line character, outside comment;
+escapes the next character, including new line characters, outside comments;
 as a result, comments may not be extended over multiple lines.
 .It
-If quotes or backslash are used in the word, this word won't be
-considered a keyword.
+If quotes or backslashes are used in a word,
+it isn't considered a keyword.
 .El
 .Sh EXAMPLES
 The following example permits users in group wsrc to build ports,
