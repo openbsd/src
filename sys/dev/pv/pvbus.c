@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.2 2015/07/21 17:59:58 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.3 2015/07/23 12:08:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -72,6 +72,7 @@ struct pvbus_type {
 	{ "Microsoft Hv",	"Hyper-V",	PVBUS_HYPERV },
 	{ "VMwareVMware",	"VMware",	PVBUS_VMWARE },
 	{ "XenVMMXenVMM",	"Xen",		PVBUS_XEN },
+	{ "bhyve bhyve ",	"bhyve",	PVBUS_BHYVE },
 	{ NULL }
 };
 
