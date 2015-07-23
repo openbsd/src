@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.8 2015/02/24 19:22:12 tedu Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.9 2015/07/23 22:20:02 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 24 2015 $
+.Dd $Mdocdate: July 23 2015 $
 .Dt CRYPT_CHECKPASS 3
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ The
 argument identifies the preferred hashing algorithm and parameters.
 Possible values are:
 .Bl -tag -width Ds
-.It Dq blowfish,<rounds>
+.It Dq bcrypt,<rounds>
 The bcrypt algorithm, where the value of rounds can be between 4 and 31 and
 specifies the base 2 logarithm of the number of rounds.
 The special rounds value
