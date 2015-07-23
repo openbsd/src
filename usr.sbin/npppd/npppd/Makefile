@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2014/03/22 04:30:31 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.18 2015/07/23 09:04:06 yasuoka Exp $
 
 NPPPD_COMMON_DIR=	${.CURDIR}/../common
 
@@ -9,7 +9,7 @@ CPPFLAGS+=	-I${NPPPD_COMMON_DIR} -I${.CURDIR}
 CPPFLAGS+=	-I${.CURDIR}/../pptp -I${.CURDIR}/../l2tp -I${.CURDIR}/../pppoe
 SRCS=		ccp.c chap.c chap_ms.c fsm.c ipcp.c lcp.c mppe.c pap.c ppp.c
 SRCS+=		npppd.c npppd_config.c npppd_subr.c npppd_auth.c npppd_iface.c
-SRCS+=		npppd_pool.c radius+.c radius_req.c npppd_radius.c npppd_ctl.c
+SRCS+=		npppd_pool.c radius_req.c npppd_radius.c npppd_ctl.c
 SRCS+=		privsep.c parse.y log.c accept.c control.c
 SRCS+=		debugutil.c net_utils.c radish.c time_utils.c slist.c hash.c
 SRCS+=		bytebuf.c addr_range.c recvfromto.c
@@ -35,8 +35,8 @@ CPPFLAGS+=	-DUSE_SA_COOKIE
 
 CPPFLAGS+=	-DGENERIC_USE -DRADISH
 
-LDADD+=		-levent -lcrypto -ly -lutil
-DPADD+=		${LIBEVENT} ${LIBCRYPTO} ${LIBY} ${LIBUTIL}
+LDADD+=		-levent -lradius -lcrypto -ly -lutil
+DPADD+=		${LIBEVENT} ${LIBRADIUS} ${LIBCRYPTO} ${LIBY} ${LIBUTIL}
 
 .ifdef	DEBUG
 CPPFLAGS+=	-DDEBUG=1

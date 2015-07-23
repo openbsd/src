@@ -1,4 +1,4 @@
-/*	$OpenBSD: pap.c,v 1.8 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: pap.c,v 1.9 2015/07/23 09:04:06 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.8 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: pap.c,v 1.9 2015/07/23 09:04:06 yasuoka Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
@@ -50,7 +50,7 @@
 #include "ppp.h"
 
 #ifdef USE_NPPPD_RADIUS
-#include <radius+.h>
+#include <radius.h>
 #include "radius_chap_const.h"
 #include "npppd_radius.h"
 #endif

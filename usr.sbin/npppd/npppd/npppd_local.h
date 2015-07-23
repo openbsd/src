@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.14 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.15 2015/07/23 09:04:06 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -42,7 +42,6 @@
 #include "debugutil.h"
 
 #ifdef	USE_NPPPD_RADIUS
-#include <radius+.h>
 #include "radius_req.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.24 2015/01/19 01:48:59 deraadt Exp $ */
+/*	$OpenBSD: ppp.c,v 1.25 2015/07/23 09:04:06 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.24 2015/01/19 01:48:59 deraadt Exp $ */
+/* $Id: ppp.c,v 1.25 2015/07/23 09:04:06 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -54,7 +54,7 @@
 #include "ppp.h"
 #include "psm-opt.h"
 #ifdef USE_NPPPD_RADIUS
-#include <radius+.h>
+#include <radius.h>
 #include "npppd_radius.h"
 #endif
 

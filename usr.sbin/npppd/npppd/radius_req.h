@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.h,v 1.6 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.h,v 1.7 2015/07/23 09:04:06 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -27,6 +27,11 @@
  */
 #ifndef	RADIUS_REQ_H
 #define	RADIUS_REQ_H 1
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdbool.h>
+#include <radius.h>
 
 /** maximum number of length for RADIUS shared secret */
 #define MAX_RADIUS_SECRET				128

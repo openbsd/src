@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.7 2015/06/10 20:50:05 miod Exp $ */
+/* $Id: npppd_radius.c,v 1.8 2015/07/23 09:04:06 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -33,6 +33,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
 #include <netinet/in.h>
@@ -41,10 +42,10 @@
 #include <netdb.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
+#include <radius.h>
 
-#include <event.h>		/* event(3) */
-#include <radius+.h>		/* radius+(3) */
-#include <radiusconst.h>	/* radius+(3) */
+#include <event.h>
 
 #include "radius_req.h"
 #include "npppd_local.h"
@@ -300,7 +301,7 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 		    ppp->obytes >> 32);
 	}
 
-	radius_set_request_authenticator(radpkt,
+	radius_set_accounting_request_authenticator(radpkt,
 	    radius_get_server_secret(radctx));
 
 	/* Send the request */

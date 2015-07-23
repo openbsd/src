@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.13 2015/06/24 04:45:20 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.14 2015/07/23 09:04:06 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.13 2015/06/24 04:45:20 yasuoka Exp $ */
+/* $Id: chap.c,v 1.14 2015/07/23 09:04:06 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -875,7 +875,7 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
 #ifdef USE_NPPPD_MPPE
 		struct RADIUS_MPPE_KEY sendkey, recvkey;
 #endif
-		u_char len;
+		size_t len;
 
 		len = sizeof(success);
 		if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
@@ -886,14 +886,12 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
 #ifdef	USE_NPPPD_MPPE
 		if (_this->ppp->mppe.enabled != 0) {
 			len = sizeof(sendkey);
-			/* XXX: radius_get_vs_raw_attr doesn't read 'len' */
 			if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
 			    RADIUS_VTYPE_MPPE_SEND_KEY, &sendkey, &len) != 0) {
 				chap_log(_this, LOG_ERR, "no mppe_send_key");
 				goto auth_failed;
 			}
 			len = sizeof(recvkey);
-			/* XXX: radius_get_vs_raw_attr doesn't read 'len' */
 			if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
 			    RADIUS_VTYPE_MPPE_RECV_KEY, &recvkey, &len) != 0) {
 				chap_log(_this, LOG_ERR, "no mppe_recv_key");
