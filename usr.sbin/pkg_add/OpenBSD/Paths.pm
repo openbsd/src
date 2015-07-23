@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.32 2015/07/21 05:10:12 naddy Exp $
+# $OpenBSD: Paths.pm,v 1.33 2015/07/23 19:46:52 jung Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -105,7 +105,7 @@ sub compute_osversion
 	close($cmd);
 	if ($line =~ m/^OpenBSD (\d\.\d)(\S*)\s/) {
 		$osversion = $1;
-		if ($2 eq '-current') {
+		if ($2 eq '-current' or $2 eq '-beta') {
 			$osdirectory = 'snapshots';
 		} else {
 			$osdirectory = $osversion;
