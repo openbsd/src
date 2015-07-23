@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.183 2015/05/09 17:11:26 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.184 2015/07/23 18:02:59 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -514,14 +514,6 @@ notmbr:
 	}
 
 notfat:
-#ifdef GPT
-	if (n == 0 && part_blkno == DOSBBSECTOR && ourpart == -1) {
-		error = readgptlabel(bp, strat, lp, partoffp, spoofonly);
-		if (error == 0)
-			return (0);
-	}
-#endif
-
 	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)
 		*partoffp = DL_SECTOBLK(lp, dospartoff);
@@ -556,22 +548,45 @@ notfat:
 
 #ifdef GPT
 
-int gpt_get_fstype(struct uuid *);
-int gpt_get_hdr(struct buf *, void (*strat)(struct buf *),
-    struct disklabel *, u_int64_t, struct gpt_header *);
-struct gpt_partition *gpt_get_partition_table(dev_t, void (*)(struct buf *),
-    struct disklabel *, struct gpt_header *, u_int64_t *);
+int gpt_chk_hdr(struct gpt_header *);
+int gpt_chk_parts(struct gpt_header *, struct gpt_partition *);
+int get_fstype(struct uuid *);
 
 int
-gpt_get_fstype(struct uuid *uuid_part)
+gpt_chk_hdr(struct gpt_header *gh)
+{
+	u_int32_t orig_gh_csum = gh->gh_csum;
+	gh->gh_csum = 0;
+	gh->gh_csum = crc32(0, (unsigned char *)gh, gh->gh_size);
+
+	if (orig_gh_csum != gh->gh_csum)
+		return (EINVAL);
+
+	return 0;
+}
+
+int
+gpt_chk_parts(struct gpt_header *gh, struct gpt_partition *gp)
+{
+	u_int32_t checksum;
+	checksum = crc32(0, (unsigned char *)gp,
+	    gh->gh_part_num * gh->gh_part_size);
+
+	if (checksum != gh->gh_part_csum)
+		return (EINVAL);
+
+	return 0;
+}
+
+int
+get_fstype(struct uuid *uuid_part)
 {
 	static int init = 0;
-	static struct uuid uuid_openbsd, uuid_msdos, uuid_chromerootfs,
-	    uuid_chromekernelfs, uuid_linux, uuid_hfs, uuid_unused;
+	static struct uuid uuid_openbsd, uuid_msdos, uuid_chromefs,
+	    uuid_linux, uuid_hfs, uuid_unused;
 	static const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	static const uint8_t gpt_uuid_msdos[] = GPT_UUID_MSDOS;
 	static const uint8_t gpt_uuid_chromerootfs[] = GPT_UUID_CHROMEROOTFS;
-	static const uint8_t gpt_uuid_chromekernelfs[] = GPT_UUID_CHROMEKERNELFS;
 	static const uint8_t gpt_uuid_linux[] = GPT_UUID_LINUX;
 	static const uint8_t gpt_uuid_hfs[] = GPT_UUID_APPLE_HFS;
 	static const uint8_t gpt_uuid_unused[] = GPT_UUID_UNUSED;
@@ -579,8 +594,7 @@ gpt_get_fstype(struct uuid *uuid_part)
 	if (init == 0) {
 		uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
 		uuid_dec_be(gpt_uuid_msdos, &uuid_msdos);
-		uuid_dec_be(gpt_uuid_chromerootfs, &uuid_chromerootfs);
-		uuid_dec_be(gpt_uuid_chromekernelfs, &uuid_chromekernelfs);
+		uuid_dec_be(gpt_uuid_chromerootfs, &uuid_chromefs);
 		uuid_dec_be(gpt_uuid_linux, &uuid_linux);
 		uuid_dec_be(gpt_uuid_hfs, &uuid_hfs);
 		uuid_dec_be(gpt_uuid_unused, &uuid_unused);
@@ -588,218 +602,19 @@ gpt_get_fstype(struct uuid *uuid_part)
 	}
 
 	if (!memcmp(uuid_part, &uuid_unused, sizeof(struct uuid)))
-		return (FS_UNUSED);
+		return FS_UNUSED;
 	else if (!memcmp(uuid_part, &uuid_openbsd, sizeof(struct uuid)))
-		return (FS_BSDFFS);
+		return FS_BSDFFS;
 	else if (!memcmp(uuid_part, &uuid_msdos, sizeof(struct uuid)))
-		return (FS_MSDOS);
-	else if (!memcmp(uuid_part, &uuid_chromerootfs, sizeof(struct uuid)))
-		return (FS_EXT2FS);
-	else if (!memcmp(uuid_part, &uuid_chromekernelfs, sizeof(struct uuid)))
-		return (FS_MSDOS);
+		return FS_MSDOS;
+	else if (!memcmp(uuid_part, &uuid_chromefs, sizeof(struct uuid)))
+		return FS_EXT2FS;
 	else if (!memcmp(uuid_part, &uuid_linux, sizeof(struct uuid)))
-		return (FS_EXT2FS);
+		return FS_EXT2FS;
 	else if (!memcmp(uuid_part, &uuid_hfs, sizeof(struct uuid)))
-		return (FS_HFS);
-	else {
-		DPRINTF("Unknown GUID: %02x%02x%02x%02x-%02x%02x-%02x%02x-"
-		    "%02x%02x-%02x%02x%02x%02x%02x%02x\n",
-		    *(((u_int8_t *)uuid_part) + 0),
-		    *(((u_int8_t *)uuid_part) + 1),
-		    *(((u_int8_t *)uuid_part) + 2),
-		    *(((u_int8_t *)uuid_part) + 3),
-		    *(((u_int8_t *)uuid_part) + 4),
-		    *(((u_int8_t *)uuid_part) + 5),
-		    *(((u_int8_t *)uuid_part) + 6),
-		    *(((u_int8_t *)uuid_part) + 7),
-		    *(((u_int8_t *)uuid_part) + 8),
-		    *(((u_int8_t *)uuid_part) + 9),
-		    *(((u_int8_t *)uuid_part) + 10),
-		    *(((u_int8_t *)uuid_part) + 11),
-		    *(((u_int8_t *)uuid_part) + 12),
-		    *(((u_int8_t *)uuid_part) + 13),
-		    *(((u_int8_t *)uuid_part) + 14),
-		    *(((u_int8_t *)uuid_part) + 15)
-		    );
-		return (FS_OTHER);
-	}
-}
-
-int
-gpt_get_hdr(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, u_int64_t gptlba, struct gpt_header *gh)
-{
-	u_int64_t partlastlba;
-	int error, partspersec;
-	u_int32_t orig_gh_csum, new_gh_csum;
-
-	bp->b_blkno = DL_SECTOBLK(lp, gptlba);
-	bp->b_bcount = lp->d_secsize;
-	bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-
-	DPRINTF("gpt header being read from LBA %llu\n", gptlba);
-
-	(*strat)(bp);
-
-	error = biowait(bp);
-	if (error) {
-		DPRINTF("error reading gpt from disk (%d)\n", error);
-		return (1);
-	}
-	memcpy(gh, bp->b_data, sizeof(struct gpt_header));
-
-	if (letoh64(gh->gh_sig) != GPTSIGNATURE) {
-		DPRINTF("gpt signature: expected 0x%llx, got 0x%llx\n",
-		    GPTSIGNATURE, letoh64(gh->gh_sig));
-		return (1);
-	}
-
-	if (letoh32(gh->gh_rev) != GPTREVISION) {
-		DPRINTF("gpt revision: expected 0x%x, got 0x%x\n",
-		    GPTREVISION, letoh32(gh->gh_rev));
-		return (1);
-	}
-
-	if (letoh64(gh->gh_lba_self) != gptlba) {
-		DPRINTF("gpt self lba: expected %lld, got %llu\n",
-		    gptlba, letoh64(gh->gh_lba_self));
-		return (1);
-	}
-
-	if (letoh32(gh->gh_size) != GPTMINHDRSIZE) {
-		DPRINTF("gpt header size: expected %u, got %u\n",
-		    GPTMINHDRSIZE, letoh32(gh->gh_size));
-		return (1);
-	}
-
-	if (letoh32(gh->gh_part_size) != GPTMINPARTSIZE) {
-		DPRINTF("gpt partition entry size: expected %u, got %u\n",
-		    GPTMINPARTSIZE, letoh32(gh->gh_part_size));
-		return (1);
-	}
-
-	if (letoh32(gh->gh_part_num) > GPTPARTITIONS) {
-		DPRINTF("gpt partition count: expected <= %u, got %u\n",
-		    GPTPARTITIONS, letoh32(gh->gh_part_num));
-		return (1);
-	}
-
-	orig_gh_csum = gh->gh_csum;
-	gh->gh_csum = 0;
-	new_gh_csum = crc32(0, (unsigned char *)gh, letoh32(gh->gh_size));
-	gh->gh_csum = orig_gh_csum;
-	if (letoh32(orig_gh_csum) != new_gh_csum) {
-		DPRINTF("gpt header checksum: expected 0x%x, got 0x%x\n",
-		    new_gh_csum, orig_gh_csum);
-		return (1);
-	}
-
-	if (letoh64(gh->gh_lba_end) >= DL_GETDSIZE(lp)) {
-		DPRINTF("gpt last usable LBA: expected < %lld, got %llu\n",
-		    DL_GETDSIZE(lp), letoh64(gh->gh_lba_end));
-		return (1);
-	}
-
-	if (letoh64(gh->gh_lba_start) >= letoh64(gh->gh_lba_end)) {
-		DPRINTF("gpt first usable LBA: expected < %llu, got %llu\n",
-		    letoh64(gh->gh_lba_end), letoh64(gh->gh_lba_start));
-		return (1);
-	}
-
-	if (letoh64(gh->gh_part_lba) <= letoh64(gh->gh_lba_end) &&
-	    letoh64(gh->gh_part_lba) >= letoh64(gh->gh_lba_start)) {
-		DPRINTF("gpt partition table start LBA: expected < %llu or "
-		    "> %llu, got %llu\n", letoh64(gh->gh_lba_start),
-		    letoh64(gh->gh_lba_end), letoh64(gh->gh_part_lba));
-		return (1);
-	}
-
-	partspersec = lp->d_secsize / letoh32(gh->gh_part_size);
-	partlastlba = letoh64(gh->gh_part_lba) +
-	    ((letoh32(gh->gh_part_num) + partspersec - 1) / partspersec) - 1;
-	if (partlastlba <= letoh64(gh->gh_lba_end) &&
-	    partlastlba >= letoh64(gh->gh_lba_start)) {
-		DPRINTF("gpt partition table last LBA: expected < %llu or "
-		    "> %llu, got %llu\n", letoh64(gh->gh_lba_start),
-		    letoh64(gh->gh_lba_end), partlastlba);
-		return (1);
-	}
-
-	/*
-	 * Other possible paranoia checks:
-	 *	1) partition table starts before primary gpt lba.
-	 *	2) partition table extends into lowest partition.
-	 *	3) alt partition table starts before gh_lba_end.
-	 */
-	return (0);
-}
-
-struct gpt_partition *
-gpt_get_partition_table(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct gpt_header *gh, u_int64_t *gpsz)
-{
-	struct buf *bp;
-	unsigned char *gp;
-	int error, secs;
-	uint32_t partspersec;
-	uint32_t checksum;
-
-	partspersec = lp->d_secsize / letoh32(gh->gh_part_size);
-	if (partspersec * letoh32(gh->gh_part_size) != lp->d_secsize) {
-		DPRINTF("gpt partition table entry invalid size %u.\n",
-		    letoh32(gh->gh_part_size));
-		return (NULL);
-	}
-	secs = (letoh32(gh->gh_part_num) + partspersec - 1) / partspersec;
-
-	gp = mallocarray(secs, lp->d_secsize, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (gp == NULL) {
-		DPRINTF("gpt partition table can't be allocated\n");
-		return (NULL);
-	}
-	*gpsz = secs * lp->d_secsize;
-
-	bp = geteblk((int)*gpsz);
-	bp->b_dev = dev;
-
-	bp->b_blkno = DL_SECTOBLK(lp, letoh64(gh->gh_part_lba));
-	bp->b_bcount = *gpsz;
-	/* B_ERROR and b_error may have stale data. */
-	bp->b_error = 0;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-
-	DPRINTF("gpt partition table being read from LBA %llu\n",
-	    letoh64(gh->gh_part_lba));
-
-	(*strat)(bp);
-
-	error = biowait(bp);
-	if (error) {
-		DPRINTF("gpt partition table read error %d\n", error);
-		free(gp, M_DEVBUF, *gpsz);
-		gp = NULL;
-		goto done;
-	}
-
-	checksum = crc32(0, bp->b_data, letoh32(gh->gh_part_num) *
-	    letoh32(gh->gh_part_size));
-	if (checksum == letoh32(gh->gh_part_csum))
-		memcpy(gp, bp->b_data, *gpsz);
-	else {
-		DPRINTF("gpt partition table checksum: expected %x, got %x\n",
-		    checksum, letoh32(gh->gh_part_csum));
-		free(gp, M_DEVBUF, *gpsz);
-		gp = NULL;
-	}
-
-done:
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
-
-	return ((struct gpt_partition *)gp);
+		return FS_HFS;
+	else
+		return FS_OTHER;
 }
 
 /*
@@ -810,17 +625,20 @@ done:
  * XXX: readgptlabel() is based on readdoslabel(), so they should be merged
  */
 int
-readgptlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
-    daddr_t *partoffp, int spoofonly)
+readgptlabel(struct buf *bp, void (*strat)(struct buf *),
+    struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
-	struct gpt_header gh, altgh;
+	struct gpt_header gh;
 	struct gpt_partition *gp, *gp_tmp;
+	size_t gpsz;
 	struct uuid uuid_part, uuid_openbsd;
 	struct partition *pp;
-	static const u_int8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
-	u_int64_t gpsz;
+
+	daddr_t part_blkno;
 	u_int64_t gptpartoff = 0, gptpartend = DL_GETBEND(lp);
-	int i, error, n=0, ourpart = -1, offset, ghinvalid, altghinvalid;
+	int i, altheader = 0, error, n=0, ourpart = -1, offset;
+
+	static const u_int8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	u_int8_t fstype;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
@@ -830,16 +648,143 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if (lp->d_secsize == 0)
 		return (ENOSPC);	/* disk too small */
 
-	ghinvalid = gpt_get_hdr(bp, strat, lp, GPTSECTOR, &gh);
-	altghinvalid = gpt_get_hdr(bp, strat, lp, DL_GETDSIZE(lp) - 1, &altgh);
-	if (ghinvalid && altghinvalid)
-		return(EINVAL);
-	if (ghinvalid)
-		gh = altgh;
+	/*
+	 * XXX: We should not trust the primary header and instead
+	 * use the last LBA of the disk, as defined in the standard.
+	 */
+	for (part_blkno = GPTSECTOR; ; part_blkno = gh.gh_lba_alt,
+	    altheader = 1) {
+		uint32_t ghsize;
+		uint32_t ghpartsize;
+		uint32_t ghpartnum;
 
-	gp = gpt_get_partition_table(bp->b_dev, strat, lp, &gh, &gpsz);
-	if (gp == NULL)
-		return (EINVAL);
+		/* read header record */
+		bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) * DL_BLKSPERSEC(lp);
+		offset = DL_BLKOFFSET(lp, part_blkno);
+		bp->b_bcount = lp->d_secsize;
+		bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
+		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
+		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+		(*strat)(bp);
+		error = biowait(bp);
+
+		if (error) {
+			DPRINTF("error reading from disk\n");
+	/*wrong*/	if (partoffp)
+	/*wrong*/		*partoffp = -1;
+			return (error);
+		}
+
+		bcopy(bp->b_data + offset, &gh, sizeof(gh));
+		ghsize = letoh32(gh.gh_size);
+		ghpartsize = letoh32(gh.gh_part_size);
+		ghpartnum = letoh32(gh.gh_part_num);
+
+
+		if (letoh64(gh.gh_sig) != GPTSIGNATURE)
+			return (EINVAL);
+
+		/* we only support version 1.0 */
+		if (letoh32(gh.gh_rev) != GPTREVISION)
+			return (EINVAL);
+
+		if (gpt_chk_hdr(&gh)) {
+			/* header broken, using alternate header */
+			if (altheader) {
+				DPRINTF("alternate header also broken\n");
+				return (EINVAL);
+			}
+
+			if (gh.gh_lba_alt >= DL_GETDSIZE(lp)) {
+				DPRINTF("alternate header's position is "
+				    "bogous\n");
+				return (EINVAL);
+			}
+
+			continue;
+		}
+
+		/*
+		 * Header size must be greater than or equal to 92 and less
+		 * than or equal to the logical block size.
+		 */
+		if (ghsize < GPTMINHDRSIZE || ghsize > DEV_BSIZE)
+			return (EINVAL);
+
+		if (letoh64(gh.gh_lba_start) >= DL_GETDSIZE(lp) ||
+		    letoh64(gh.gh_lba_end) >= DL_GETDSIZE(lp) ||
+		    letoh64(gh.gh_part_lba) >= DL_GETDSIZE(lp))
+			return (EINVAL);
+
+		/*
+		* Size per partition entry shall be 128*(2**n) with n >= 0.
+		* We don't support partition entries larger than block size.
+		*/
+		if (ghpartsize % GPTMINPARTSIZE
+		    || ghpartsize > DEV_BSIZE
+		    || GPT_PARTSPERSEC(&gh) == 0) {
+			DPRINTF("invalid partition size\n");
+			return (EINVAL);
+		}
+
+		/* XXX: we don't support multiples of GPTMINPARTSIZE yet */
+		if (letoh32(gh.gh_part_size) != GPTMINPARTSIZE) {
+			DPRINTF("partition sizes larger than %d bytes are not "
+			    "supported", GPTMINPARTSIZE);
+			return (EINVAL);
+		}
+
+		/* read GPT partition entry array */
+		gp = mallocarray(ghpartnum, sizeof(struct gpt_partition), M_DEVBUF, M_NOWAIT|M_ZERO);
+		if (gp == NULL)
+			return (ENOMEM);
+		gpsz = ghpartnum * sizeof(struct gpt_partition);
+
+		/*
+		* XXX: Fails if # of partition entries is no multiple of
+		* GPT_PARTSPERSEC(&gh)
+		*/
+		for (i = 0; i < ghpartnum / GPT_PARTSPERSEC(&gh);
+		     i++) {
+			part_blkno = letoh64(gh.gh_part_lba) + i;
+			/* read partition record */
+			bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) *
+			    DL_BLKSPERSEC(lp);
+			offset = DL_BLKOFFSET(lp, part_blkno);
+			bp->b_bcount = lp->d_secsize;
+			/* B_ERROR and b_error may have stale data. */
+			bp->b_error = 0;
+			CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
+			SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+			(*strat)(bp);
+			error = biowait(bp);
+			if (error) {
+	/*wrong*/		if (partoffp)
+	/*wrong*/			*partoffp = -1;
+				free(gp, M_DEVBUF, gpsz);
+				return (error);
+			}
+
+			bcopy(bp->b_data + offset, gp +
+			    i * GPT_PARTSPERSEC(&gh), GPT_PARTSPERSEC(&gh) *
+			    sizeof(struct gpt_partition));
+		}
+
+		if (gpt_chk_parts(&gh, gp)) {
+			DPRINTF("partition entries broken, using alternate "
+			    "header\n");
+			free(gp, M_DEVBUF, gpsz);
+
+			if (altheader) {
+				DPRINTF("alternate partition entries are also "
+				    "broken\n");
+				return (EINVAL);
+			}
+
+			continue;
+		}
+		break;
+	}
 
 	/* find OpenBSD partition */
 	for (gp_tmp = gp, i = 0; i < letoh32(gh.gh_part_num) && ourpart == -1;
@@ -858,7 +803,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		 * In case the disklabel read below fails, we want to
 		 * provide a fake label in i-p.
 		 */
-		fstype = gpt_get_fstype(&uuid_part);
+		fstype = get_fstype(&uuid_part);
 
 		/*
 		 * Don't set fstype/offset/size when just looking for
@@ -887,16 +832,15 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	} else
 		spoofonly = 1;	/* No disklabel to read from disk. */
 
-	free(gp, M_DEVBUF, gpsz);
-
 	if (!partoffp)
 		/* Must not modify *lp when partoffp is set. */
 		lp->d_npartitions = MAXPARTITIONS;
 
+	free(gp, M_DEVBUF, gpsz);
 
 	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)
-		*partoffp = DL_SECTOBLK(lp, gptpartoff);
+		*partoffp = gptpartoff;
 	else {
 		DL_SETBSTART(lp, gptpartoff);
 		DL_SETBEND(lp, (gptpartend < DL_GETDSIZE(lp)) ? gptpartend :
@@ -907,10 +851,9 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if (spoofonly)
 		return (0);
 
-	bp->b_blkno = DL_BLKTOSEC(lp, DL_SECTOBLK(lp, gptpartoff) +
-	    DOS_LABELSECTOR) * DL_BLKSPERSEC(lp);
-	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, gptpartoff) +
-	    DOS_LABELSECTOR);
+	bp->b_blkno = DL_BLKTOSEC(lp, gptpartoff + DOS_LABELSECTOR) *
+	    DL_BLKSPERSEC(lp);
+	offset = DL_BLKOFFSET(lp, gptpartoff + DOS_LABELSECTOR);
 	bp->b_bcount = lp->d_secsize;
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
@@ -919,11 +862,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		return (bp->b_error);
 
 	/* sub-GPT disklabels are always at a LABELOFFSET of 0 */
-	error = checkdisklabel(bp->b_data + offset, lp,
-	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
-	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
-
-	return (error);
+	return checkdisklabel(bp->b_data + offset, lp, gptpartoff, gptpartend);
 }
 
 #endif
