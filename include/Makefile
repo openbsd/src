@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.201 2015/03/17 20:40:41 millert Exp $
+#	$OpenBSD: Makefile,v 1.202 2015/07/23 06:04:12 yasuoka Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -43,8 +43,8 @@ RDIRS=	../lib/libcrypto ../lib/libcurses ../lib/libedit \
 	../lib/libevent ../lib/libexpat ../lib/libform \
 	../lib/libfuse ../lib/libkeynote ../lib/libmenu \
 	../lib/libocurses ../lib/libossaudio ../lib/libpanel \
-	../lib/libpcap ../lib/librpcsvc ../lib/librthread ../lib/libskey \
-	../lib/libsqlite3 ../lib/libssl  ../lib/libtls \
+	../lib/libpcap ../lib/libradius ../lib/librpcsvc ../lib/librthread \
+	../lib/libskey ../lib/libsqlite3 ../lib/libssl  ../lib/libtls \
 	../lib/libusbhid ../lib/libutil ../lib/libz \
 	../usr.bin/lex ../gnu/lib/libreadline \
 	../sys/arch/${MACHINE}
