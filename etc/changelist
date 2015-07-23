@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.106 2015/07/07 14:13:01 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.107 2015/07/23 14:49:10 sthen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -26,6 +26,7 @@
 /etc/dhcpd.conf
 /etc/disktab
 /etc/distfile
+/etc/doas.conf
 /etc/dvmrpd.conf
 /etc/ethers
 /etc/exports

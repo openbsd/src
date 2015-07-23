@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.113 2015/07/03 22:05:53 millert Exp $
+#	$OpenBSD: special,v 1.114 2015/07/23 14:49:10 sthen Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -22,6 +22,7 @@ csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
 daily.local	type=file mode=0644 uname=root gname=wheel optional
 dhcpd.conf	type=file mode=0644 uname=root gname=wheel optional
+doas.conf	type=file mode=0640 uname=root gname=wheel optional
 dvmrpd.conf	type=file mode=0600 uname=root gname=wheel optional
 exports		type=file mode=0644 uname=root gname=wheel optional
 fbtab		type=file mode=0644 uname=root gname=wheel
