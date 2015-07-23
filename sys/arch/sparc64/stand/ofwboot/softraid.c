@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.2 2015/07/19 16:12:10 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.3 2015/07/23 16:35:34 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -222,7 +222,7 @@ srprobe(void)
 				bv->sbv_chunk_no = md->ssdi.ssd_chunk_no;
 				bv->sbv_flags = md->ssdi.ssd_vol_flags;
 				bv->sbv_size = md->ssdi.ssd_size;
-				bv->sbv_data_offset = md->ssd_data_offset;
+				bv->sbv_data_blkno = md->ssd_data_blkno;
 				bcopy(&md->ssdi.ssd_uuid, &bv->sbv_uuid,
 				    sizeof(md->ssdi.ssd_uuid));
 				SLIST_INIT(&bv->sbv_chunks);
@@ -358,7 +358,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 
 		dip = (struct diskinfo *)bc->sbc_diskinfo;
 		pp = &dip->disklabel.d_partitions[bc->sbc_part - 'a'];
-		blk += bv->sbv_data_offset;
+		blk += bv->sbv_data_blkno;
 
 		/* XXX - If I/O failed we should try another chunk... */
 		ihandle = OF_open(dip->path);
@@ -403,7 +403,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 			bp = ((u_char *)buf) + i * DEV_BSIZE;
 
 			err = strategy(&ofdev, rw,
-			    bv->sbv_data_offset + blkno,
+			    bv->sbv_data_blkno + blkno,
 			    DEV_BSIZE, bp, rsize);
 			if (err != 0 || *rsize != DEV_BSIZE) {
 				printf("Read from crypto volume failed "
