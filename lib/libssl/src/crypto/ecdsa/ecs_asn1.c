@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_asn1.c,v 1.4 2015/02/10 04:01:26 jsing Exp $ */
+/* $OpenBSD: ecs_asn1.c,v 1.5 2015/07/24 15:51:49 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -57,10 +57,32 @@
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 
-ASN1_SEQUENCE(ECDSA_SIG) = {
-	ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
-	ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
-} ASN1_SEQUENCE_END(ECDSA_SIG)
+static const ASN1_TEMPLATE ECDSA_SIG_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ECDSA_SIG, r),
+		.field_name = "r",
+		.item = &CBIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ECDSA_SIG, s),
+		.field_name = "s",
+		.item = &CBIGNUM_it,
+	},
+};
+
+const ASN1_ITEM ECDSA_SIG_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ECDSA_SIG_seq_tt,
+	.tcount = sizeof(ECDSA_SIG_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ECDSA_SIG),
+	.sname = "ECDSA_SIG",
+};
 
 DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
