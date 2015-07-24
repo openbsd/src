@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.111 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.112 2015/07/24 01:19:18 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4474,6 +4474,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				m->m_flags |= M_VLANTAG;
 #else
 				m_freem(m);
+				m = NULL;
 				goto bnx_rx_int_next_rx;
 #endif			
 			}
