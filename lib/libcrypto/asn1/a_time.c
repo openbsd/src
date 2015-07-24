@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.23 2015/02/09 15:05:59 jsing Exp $ */
+/* $OpenBSD: a_time.c,v 1.24 2015/07/24 13:49:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -69,7 +69,16 @@
 
 #include "o_time.h"
 
-IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
+
+const ASN1_ITEM ASN1_TIME_it = {
+	.itype = ASN1_ITYPE_MSTRING,
+	.utype = B_ASN1_TIME,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = sizeof(ASN1_STRING),
+	.sname = "ASN1_TIME",
+};
 
 
 ASN1_TIME *

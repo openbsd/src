@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.11 2015/02/10 09:52:16 jsing Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.12 2015/07/24 13:49:58 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -595,7 +595,16 @@ ASN1_TYPE_free(ASN1_TYPE *a)
 
 /* Multistring types */
 
-IMPLEMENT_ASN1_MSTRING(ASN1_PRINTABLE, B_ASN1_PRINTABLE)
+
+const ASN1_ITEM ASN1_PRINTABLE_it = {
+	.itype = ASN1_ITYPE_MSTRING,
+	.utype = B_ASN1_PRINTABLE,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = sizeof(ASN1_STRING),
+	.sname = "ASN1_PRINTABLE",
+};
 
 ASN1_STRING *
 d2i_ASN1_PRINTABLE(ASN1_STRING **a, const unsigned char **in, long len)
@@ -622,7 +631,16 @@ ASN1_PRINTABLE_free(ASN1_STRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_PRINTABLE_it);
 }
 
-IMPLEMENT_ASN1_MSTRING(DISPLAYTEXT, B_ASN1_DISPLAYTEXT)
+
+const ASN1_ITEM DISPLAYTEXT_it = {
+	.itype = ASN1_ITYPE_MSTRING,
+	.utype = B_ASN1_DISPLAYTEXT,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = sizeof(ASN1_STRING),
+	.sname = "DISPLAYTEXT",
+};
 
 ASN1_STRING *
 d2i_DISPLAYTEXT(ASN1_STRING **a, const unsigned char **in, long len)
@@ -649,7 +667,16 @@ DISPLAYTEXT_free(ASN1_STRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &DISPLAYTEXT_it);
 }
 
-IMPLEMENT_ASN1_MSTRING(DIRECTORYSTRING, B_ASN1_DIRECTORYSTRING)
+
+const ASN1_ITEM DIRECTORYSTRING_it = {
+	.itype = ASN1_ITYPE_MSTRING,
+	.utype = B_ASN1_DIRECTORYSTRING,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = sizeof(ASN1_STRING),
+	.sname = "DIRECTORYSTRING",
+};
 
 ASN1_STRING *
 d2i_DIRECTORYSTRING(ASN1_STRING **a, const unsigned char **in, long len)
