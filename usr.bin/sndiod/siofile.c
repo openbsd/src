@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.7 2015/07/24 08:43:04 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.8 2015/07/24 08:43:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -495,5 +495,11 @@ dev_sio_hup(void *arg)
 {
 	struct dev *d = arg;
 
+#ifdef DEBUG
+	if (log_level >= 2) {
+		dev_log(d);
+		log_puts(": disconnected\n");
+	}
+#endif
 	dev_close(d);
 }
