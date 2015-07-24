@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.8 2015/07/24 08:43:58 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.9 2015/07/24 08:46:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,7 +31,7 @@
 #include "siofile.h"
 #include "utils.h"
 
-#define WATCHDOG_USEC	2000000		/* 2 seconds */
+#define WATCHDOG_USEC	4000000		/* 4 seconds */
 
 void dev_sio_onmove(void *, int);
 void dev_sio_timeout(void *);
