@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.9 2015/07/22 20:15:24 zhuk Exp $ */
+/* $OpenBSD: parse.y,v 1.10 2015/07/24 06:36:42 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -38,6 +38,8 @@ typedef struct {
 		};
 		const char *str;
 	};
+	int lineno;
+	int colno;
 } yystype;
 #define YYSTYPE yystype
 
@@ -45,6 +47,7 @@ FILE *yyfp;
 
 struct rule **rules;
 int nrules, maxrules;
+int parse_errors = 0;
 
 void yyerror(const char *, ...);
 int yylex(void);
@@ -61,6 +64,7 @@ int yyparse(void);
 grammar:	/* empty */
 		| grammar '\n'
 		| grammar rule '\n'
+		| error '\n'
 		;
 
 rule:		action ident target cmd {
@@ -100,9 +104,10 @@ options:	/* none */
 			$$.options = $1.options | $2.options;
 			$$.envlist = $1.envlist;
 			if ($2.envlist) {
-				if ($$.envlist)
-					errx(1, "can't have two keepenv sections");
-				else
+				if ($$.envlist) {
+					yyerror("can't have two keepenv sections");
+					YYERROR;
+				} else
 					$$.envlist = $2.envlist;
 			}
 		} ;
@@ -171,7 +176,10 @@ yyerror(const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	verrx(1, fmt, va);
+	vfprintf(stderr, fmt, va);
+	va_end(va);
+	fprintf(stderr, " at line %d\n", yylval.lineno + 1);
+	parse_errors++;
 }
 
 struct keyword {
@@ -190,10 +198,8 @@ struct keyword {
 int
 yylex(void)
 {
-	static int colno = 1, lineno = 1;
-
 	char buf[1024], *ebuf, *p, *str;
-	int i, c, quotes = 0, escape = 0, qpos = 0, nonkw = 0;
+	int i, c, quotes = 0, escape = 0, qpos = -1, nonkw = 0;
 
 	p = buf;
 	ebuf = buf + sizeof(buf);
@@ -201,13 +207,13 @@ yylex(void)
 repeat:
 	/* skip whitespace first */
 	for (c = getc(yyfp); c == ' ' || c == '\t'; c = getc(yyfp))
-		colno++;
+		yylval.colno++;
 
 	/* check for special one-character constructions */
 	switch (c) {
 		case '\n':
-			colno = 1;
-			lineno++;
+			yylval.colno = 0;
+			yylval.lineno++;
 			/* FALLTHROUGH */
 		case '{':
 		case '}':
@@ -217,19 +223,18 @@ repeat:
 			while ((c = getc(yyfp)) != '\n')
 				if (c == EOF)
 					return 0;
-			colno = 1;
-			lineno++;
+			yylval.colno = 0;
+			yylval.lineno++;
 			return c;
 		case EOF:
 			return 0;
 	}
 
 	/* parsing next word */
-	for (;; c = getc(yyfp), colno++) {
+	for (;; c = getc(yyfp), yylval.colno++) {
 		switch (c) {
 		case '\0':
-			yyerror("unallowed character NUL at "
-			    "line %d, column %d", lineno, colno);
+			yyerror("unallowed character NUL in column %d", yylval.colno + 1);
 			escape = 0;
 			continue;
 		case '\\':
@@ -239,8 +244,8 @@ repeat:
 			break;
 		case '\n':
 			if (quotes)
-				yyerror("unterminated quotes at line %d, column %d",
-				    lineno, qpos);
+				yyerror("unterminated quotes in column %d",
+				    qpos + 1);
 			if (escape) {
 				nonkw = 1;
 				escape = 0;
@@ -249,11 +254,12 @@ repeat:
 			goto eow;
 		case EOF:
 			if (escape)
-				yyerror("unterminated escape at line %d, column %d",
-				    lineno, colno - 1);
+				yyerror("unterminated escape in column %d",
+				    yylval.colno);
 			if (quotes)
-				yyerror("unterminated quotes at line %d, column %d",
-				    lineno, qpos);
+				yyerror("unterminated quotes in column %d",
+				    qpos + 1);
+			goto eow;
 			/* FALLTHROUGH */
 		case '{':
 		case '}':
@@ -268,14 +274,14 @@ repeat:
 				quotes = !quotes;
 				if (quotes) {
 					nonkw = 1;
-					qpos = colno;
+					qpos = yylval.colno;
 				}
 				continue;
 			}
 		}
 		*p++ = c;
 		if (p == ebuf)
-			yyerror("too long line %d", lineno);
+			yyerror("too long line");
 		escape = 0;
 	}
 
@@ -290,7 +296,7 @@ eow:
 		 */
 		if (c == EOF)
 			return 0;
-		else if (!qpos)    /* accept, e.g., empty args: cmd foo args "" */
+		else if (qpos == -1)    /* accept, e.g., empty args: cmd foo args "" */
 			goto repeat;
 	}
 	if (!nonkw) {
