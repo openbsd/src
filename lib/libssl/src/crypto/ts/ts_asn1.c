@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_asn1.c,v 1.8 2015/02/10 05:25:45 jsing Exp $ */
+/* $OpenBSD: ts_asn1.c,v 1.9 2015/07/24 15:25:44 jsing Exp $ */
 /* Written by Nils Larsch for the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -61,10 +61,32 @@
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 
-ASN1_SEQUENCE(TS_MSG_IMPRINT) = {
-	ASN1_SIMPLE(TS_MSG_IMPRINT, hash_algo, X509_ALGOR),
-	ASN1_SIMPLE(TS_MSG_IMPRINT, hashed_msg, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(TS_MSG_IMPRINT)
+static const ASN1_TEMPLATE TS_MSG_IMPRINT_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_MSG_IMPRINT, hash_algo),
+		.field_name = "hash_algo",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_MSG_IMPRINT, hashed_msg),
+		.field_name = "hashed_msg",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM TS_MSG_IMPRINT_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = TS_MSG_IMPRINT_seq_tt,
+	.tcount = sizeof(TS_MSG_IMPRINT_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(TS_MSG_IMPRINT),
+	.sname = "TS_MSG_IMPRINT",
+};
 
 
 TS_MSG_IMPRINT *
@@ -126,14 +148,60 @@ i2d_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT *a)
 	return ASN1_i2d_fp_of_const(TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, fp, a);
 }
 
-ASN1_SEQUENCE(TS_REQ) = {
-	ASN1_SIMPLE(TS_REQ, version, ASN1_INTEGER),
-	ASN1_SIMPLE(TS_REQ, msg_imprint, TS_MSG_IMPRINT),
-	ASN1_OPT(TS_REQ, policy_id, ASN1_OBJECT),
-	ASN1_OPT(TS_REQ, nonce, ASN1_INTEGER),
-	ASN1_OPT(TS_REQ, cert_req, ASN1_FBOOLEAN),
-	ASN1_IMP_SEQUENCE_OF_OPT(TS_REQ, extensions, X509_EXTENSION, 0)
-} ASN1_SEQUENCE_END(TS_REQ)
+static const ASN1_TEMPLATE TS_REQ_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_REQ, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_REQ, msg_imprint),
+		.field_name = "msg_imprint",
+		.item = &TS_MSG_IMPRINT_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_REQ, policy_id),
+		.field_name = "policy_id",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_REQ, nonce),
+		.field_name = "nonce",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_REQ, cert_req),
+		.field_name = "cert_req",
+		.item = &ASN1_FBOOLEAN_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_REQ, extensions),
+		.field_name = "extensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM TS_REQ_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = TS_REQ_seq_tt,
+	.tcount = sizeof(TS_REQ_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(TS_REQ),
+	.sname = "TS_REQ",
+};
 
 
 TS_REQ *
@@ -193,11 +261,39 @@ i2d_TS_REQ_fp(FILE *fp, TS_REQ *a)
 	return ASN1_i2d_fp_of_const(TS_REQ, i2d_TS_REQ, fp, a);
 }
 
-ASN1_SEQUENCE(TS_ACCURACY) = {
-	ASN1_OPT(TS_ACCURACY, seconds, ASN1_INTEGER),
-	ASN1_IMP_OPT(TS_ACCURACY, millis, ASN1_INTEGER, 0),
-	ASN1_IMP_OPT(TS_ACCURACY, micros, ASN1_INTEGER, 1)
-} ASN1_SEQUENCE_END(TS_ACCURACY)
+static const ASN1_TEMPLATE TS_ACCURACY_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_ACCURACY, seconds),
+		.field_name = "seconds",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_ACCURACY, millis),
+		.field_name = "millis",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(TS_ACCURACY, micros),
+		.field_name = "micros",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM TS_ACCURACY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = TS_ACCURACY_seq_tt,
+	.tcount = sizeof(TS_ACCURACY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(TS_ACCURACY),
+	.sname = "TS_ACCURACY",
+};
 
 
 TS_ACCURACY *
@@ -231,18 +327,88 @@ TS_ACCURACY_dup(TS_ACCURACY *x)
 	return ASN1_item_dup(&TS_ACCURACY_it, x);
 }
 
-ASN1_SEQUENCE(TS_TST_INFO) = {
-	ASN1_SIMPLE(TS_TST_INFO, version, ASN1_INTEGER),
-	ASN1_SIMPLE(TS_TST_INFO, policy_id, ASN1_OBJECT),
-	ASN1_SIMPLE(TS_TST_INFO, msg_imprint, TS_MSG_IMPRINT),
-	ASN1_SIMPLE(TS_TST_INFO, serial, ASN1_INTEGER),
-	ASN1_SIMPLE(TS_TST_INFO, time, ASN1_GENERALIZEDTIME),
-	ASN1_OPT(TS_TST_INFO, accuracy, TS_ACCURACY),
-	ASN1_OPT(TS_TST_INFO, ordering, ASN1_FBOOLEAN),
-	ASN1_OPT(TS_TST_INFO, nonce, ASN1_INTEGER),
-	ASN1_EXP_OPT(TS_TST_INFO, tsa, GENERAL_NAME, 0),
-	ASN1_IMP_SEQUENCE_OF_OPT(TS_TST_INFO, extensions, X509_EXTENSION, 1)
-} ASN1_SEQUENCE_END(TS_TST_INFO)
+static const ASN1_TEMPLATE TS_TST_INFO_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, policy_id),
+		.field_name = "policy_id",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, msg_imprint),
+		.field_name = "msg_imprint",
+		.item = &TS_MSG_IMPRINT_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, serial),
+		.field_name = "serial",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, time),
+		.field_name = "time",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, accuracy),
+		.field_name = "accuracy",
+		.item = &TS_ACCURACY_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, ordering),
+		.field_name = "ordering",
+		.item = &ASN1_FBOOLEAN_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, nonce),
+		.field_name = "nonce",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_TST_INFO, tsa),
+		.field_name = "tsa",
+		.item = &GENERAL_NAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(TS_TST_INFO, extensions),
+		.field_name = "extensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM TS_TST_INFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = TS_TST_INFO_seq_tt,
+	.tcount = sizeof(TS_TST_INFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(TS_TST_INFO),
+	.sname = "TS_TST_INFO",
+};
 
 
 TS_TST_INFO *
@@ -304,11 +470,39 @@ i2d_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO *a)
 	return ASN1_i2d_fp_of_const(TS_TST_INFO, i2d_TS_TST_INFO, fp, a);
 }
 
-ASN1_SEQUENCE(TS_STATUS_INFO) = {
-	ASN1_SIMPLE(TS_STATUS_INFO, status, ASN1_INTEGER),
-	ASN1_SEQUENCE_OF_OPT(TS_STATUS_INFO, text, ASN1_UTF8STRING),
-	ASN1_OPT(TS_STATUS_INFO, failure_info, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END(TS_STATUS_INFO)
+static const ASN1_TEMPLATE TS_STATUS_INFO_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_STATUS_INFO, status),
+		.field_name = "status",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_STATUS_INFO, text),
+		.field_name = "text",
+		.item = &ASN1_UTF8STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_STATUS_INFO, failure_info),
+		.field_name = "failure_info",
+		.item = &ASN1_BIT_STRING_it,
+	},
+};
+
+const ASN1_ITEM TS_STATUS_INFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = TS_STATUS_INFO_seq_tt,
+	.tcount = sizeof(TS_STATUS_INFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(TS_STATUS_INFO),
+	.sname = "TS_STATUS_INFO",
+};
 
 
 TS_STATUS_INFO *
@@ -387,10 +581,40 @@ ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(TS_RESP, ts_resp_cb) = {
-	ASN1_SIMPLE(TS_RESP, status_info, TS_STATUS_INFO),
-	ASN1_OPT(TS_RESP, token, PKCS7),
-} ASN1_SEQUENCE_END_cb(TS_RESP, TS_RESP)
+static const ASN1_AUX TS_RESP_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = ts_resp_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE TS_RESP_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(TS_RESP, status_info),
+		.field_name = "status_info",
+		.item = &TS_STATUS_INFO_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(TS_RESP, token),
+		.field_name = "token",
+		.item = &PKCS7_it,
+	},
+};
+
+const ASN1_ITEM TS_RESP_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = TS_RESP_seq_tt,
+	.tcount = sizeof(TS_RESP_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &TS_RESP_aux,
+	.size = sizeof(TS_RESP),
+	.sname = "TS_RESP",
+};
 
 
 TS_RESP *
@@ -450,10 +674,32 @@ i2d_TS_RESP_fp(FILE *fp, TS_RESP *a)
 	return ASN1_i2d_fp_of_const(TS_RESP, i2d_TS_RESP, fp, a);
 }
 
-ASN1_SEQUENCE(ESS_ISSUER_SERIAL) = {
-	ASN1_SEQUENCE_OF(ESS_ISSUER_SERIAL, issuer, GENERAL_NAME),
-	ASN1_SIMPLE(ESS_ISSUER_SERIAL, serial, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(ESS_ISSUER_SERIAL)
+static const ASN1_TEMPLATE ESS_ISSUER_SERIAL_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(ESS_ISSUER_SERIAL, issuer),
+		.field_name = "issuer",
+		.item = &GENERAL_NAME_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ESS_ISSUER_SERIAL, serial),
+		.field_name = "serial",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM ESS_ISSUER_SERIAL_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ESS_ISSUER_SERIAL_seq_tt,
+	.tcount = sizeof(ESS_ISSUER_SERIAL_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ESS_ISSUER_SERIAL),
+	.sname = "ESS_ISSUER_SERIAL",
+};
 
 
 ESS_ISSUER_SERIAL *
@@ -487,10 +733,32 @@ ESS_ISSUER_SERIAL_dup(ESS_ISSUER_SERIAL *x)
 	return ASN1_item_dup(&ESS_ISSUER_SERIAL_it, x);
 }
 
-ASN1_SEQUENCE(ESS_CERT_ID) = {
-	ASN1_SIMPLE(ESS_CERT_ID, hash, ASN1_OCTET_STRING),
-	ASN1_OPT(ESS_CERT_ID, issuer_serial, ESS_ISSUER_SERIAL)
-} ASN1_SEQUENCE_END(ESS_CERT_ID)
+static const ASN1_TEMPLATE ESS_CERT_ID_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ESS_CERT_ID, hash),
+		.field_name = "hash",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(ESS_CERT_ID, issuer_serial),
+		.field_name = "issuer_serial",
+		.item = &ESS_ISSUER_SERIAL_it,
+	},
+};
+
+const ASN1_ITEM ESS_CERT_ID_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ESS_CERT_ID_seq_tt,
+	.tcount = sizeof(ESS_CERT_ID_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ESS_CERT_ID),
+	.sname = "ESS_CERT_ID",
+};
 
 
 ESS_CERT_ID *
@@ -524,10 +792,32 @@ ESS_CERT_ID_dup(ESS_CERT_ID *x)
 	return ASN1_item_dup(&ESS_CERT_ID_it, x);
 }
 
-ASN1_SEQUENCE(ESS_SIGNING_CERT) = {
-	ASN1_SEQUENCE_OF(ESS_SIGNING_CERT, cert_ids, ESS_CERT_ID),
-	ASN1_SEQUENCE_OF_OPT(ESS_SIGNING_CERT, policy_info, POLICYINFO)
-} ASN1_SEQUENCE_END(ESS_SIGNING_CERT)
+static const ASN1_TEMPLATE ESS_SIGNING_CERT_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(ESS_SIGNING_CERT, cert_ids),
+		.field_name = "cert_ids",
+		.item = &ESS_CERT_ID_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(ESS_SIGNING_CERT, policy_info),
+		.field_name = "policy_info",
+		.item = &POLICYINFO_it,
+	},
+};
+
+const ASN1_ITEM ESS_SIGNING_CERT_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ESS_SIGNING_CERT_seq_tt,
+	.tcount = sizeof(ESS_SIGNING_CERT_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ESS_SIGNING_CERT),
+	.sname = "ESS_SIGNING_CERT",
+};
 
 
 ESS_SIGNING_CERT *
