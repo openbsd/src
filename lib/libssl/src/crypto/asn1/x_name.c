@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.30 2015/07/15 17:41:56 miod Exp $ */
+/* $OpenBSD: x_name.c,v 1.31 2015/07/24 15:09:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,13 +145,41 @@ X509_NAME_ENTRY_dup(X509_NAME_ENTRY *x)
  * so declare two template wrappers for this
  */
 
-ASN1_ITEM_TEMPLATE(X509_NAME_ENTRIES) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_OF, 0, RDNS, X509_NAME_ENTRY)
-ASN1_ITEM_TEMPLATE_END(X509_NAME_ENTRIES)
+static const ASN1_TEMPLATE X509_NAME_ENTRIES_item_tt = {
+	.flags = ASN1_TFLG_SET_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "RDNS",
+	.item = &X509_NAME_ENTRY_it,
+};
 
-ASN1_ITEM_TEMPLATE(X509_NAME_INTERNAL) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Name, X509_NAME_ENTRIES)
-ASN1_ITEM_TEMPLATE_END(X509_NAME_INTERNAL)
+const ASN1_ITEM X509_NAME_ENTRIES_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &X509_NAME_ENTRIES_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "X509_NAME_ENTRIES",
+};
+
+static const ASN1_TEMPLATE X509_NAME_INTERNAL_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "Name",
+	.item = &X509_NAME_ENTRIES_it,
+};
+
+const ASN1_ITEM X509_NAME_INTERNAL_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &X509_NAME_INTERNAL_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "X509_NAME_INTERNAL",
+};
 
 /* Normally that's where it would end: we'd have two nested STACK structures
  * representing the ASN1. Unfortunately X509_NAME uses a completely different

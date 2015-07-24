@@ -1,4 +1,4 @@
-/* $OpenBSD: x_exten.c,v 1.15 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: x_exten.c,v 1.16 2015/07/24 15:09:52 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -89,9 +89,23 @@ const ASN1_ITEM X509_EXTENSION_it = {
 	.sname = "X509_EXTENSION",
 };
 
-ASN1_ITEM_TEMPLATE(X509_EXTENSIONS) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Extension, X509_EXTENSION)
-ASN1_ITEM_TEMPLATE_END(X509_EXTENSIONS)
+static const ASN1_TEMPLATE X509_EXTENSIONS_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "Extension",
+	.item = &X509_EXTENSION_it,
+};
+
+const ASN1_ITEM X509_EXTENSIONS_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &X509_EXTENSIONS_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "X509_EXTENSIONS",
+};
 
 
 X509_EXTENSION *

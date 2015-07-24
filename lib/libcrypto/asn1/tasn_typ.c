@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.12 2015/07/24 13:49:58 jsing Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.13 2015/07/24 15:09:52 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -735,13 +735,41 @@ const ASN1_ITEM ASN1_OCTET_STRING_NDEF_it = {
 	.sname = "ASN1_OCTET_STRING_NDEF",
 };
 
-ASN1_ITEM_TEMPLATE(ASN1_SEQUENCE_ANY) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, ASN1_SEQUENCE_ANY, ASN1_ANY)
-ASN1_ITEM_TEMPLATE_END(ASN1_SEQUENCE_ANY)
+static const ASN1_TEMPLATE ASN1_SEQUENCE_ANY_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "ASN1_SEQUENCE_ANY",
+	.item = &ASN1_ANY_it,
+};
 
-ASN1_ITEM_TEMPLATE(ASN1_SET_ANY) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_OF, 0, ASN1_SET_ANY, ASN1_ANY)
-ASN1_ITEM_TEMPLATE_END(ASN1_SET_ANY)
+const ASN1_ITEM ASN1_SEQUENCE_ANY_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &ASN1_SEQUENCE_ANY_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_SEQUENCE_ANY",
+};
+
+static const ASN1_TEMPLATE ASN1_SET_ANY_item_tt = {
+	.flags = ASN1_TFLG_SET_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "ASN1_SET_ANY",
+	.item = &ASN1_ANY_it,
+};
+
+const ASN1_ITEM ASN1_SET_ANY_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &ASN1_SET_ANY_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "ASN1_SET_ANY",
+};
 
 
 ASN1_SEQUENCE_ANY *

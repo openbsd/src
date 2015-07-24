@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.20 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: x_algor.c,v 1.21 2015/07/24 15:09:52 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -84,9 +84,23 @@ const ASN1_ITEM X509_ALGOR_it = {
 	.sname = "X509_ALGOR",
 };
 
-ASN1_ITEM_TEMPLATE(X509_ALGORS) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
-ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
+static const ASN1_TEMPLATE X509_ALGORS_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "algorithms",
+	.item = &X509_ALGOR_it,
+};
+
+const ASN1_ITEM X509_ALGORS_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &X509_ALGORS_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "X509_ALGORS",
+};
 
 
 X509_ALGOR *
