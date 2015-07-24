@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.80 2015/07/19 20:32:18 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.81 2015/07/24 03:50:12 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2336,17 +2336,20 @@ tls12_get_hash(unsigned char hash_alg)
 int
 tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 {
-	int i, idx;
+	int idx;
 	const EVP_MD *md;
 	CERT *c = s->cert;
+	CBS cbs;
 
 	/* Extension ignored for inappropriate versions */
 	if (!SSL_USE_SIGALGS(s))
 		return 1;
 
 	/* Should never happen */
-	if (!c)
+	if (!c || dsize < 0)
 		return 0;
+
+	CBS_init(&cbs, data, dsize);
 
 	c->pkeys[SSL_PKEY_DSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
@@ -2354,8 +2357,14 @@ tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	c->pkeys[SSL_PKEY_ECC].digest = NULL;
 	c->pkeys[SSL_PKEY_GOST01].digest = NULL;
 
-	for (i = 0; i < dsize; i += 2) {
-		unsigned char hash_alg = data[i], sig_alg = data[i + 1];
+	while (CBS_len(&cbs) > 0) {
+		uint8_t hash_alg, sig_alg;
+
+		if (!CBS_get_u8(&cbs, &hash_alg) ||
+		    !CBS_get_u8(&cbs, &sig_alg)) {
+			/* Should never happen */
+			return 0;
+		}
 
 		switch (sig_alg) {
 		case TLSEXT_signature_rsa:
