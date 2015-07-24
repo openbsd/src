@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_pkt.c,v 1.55 2015/07/18 19:41:54 doug Exp $ */
+/* $OpenBSD: s3_pkt.c,v 1.56 2015/07/24 02:39:43 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,6 +116,8 @@
 
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+
+#include "bytestring.h"
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     unsigned int len, int create_empty_fragment);
@@ -276,13 +278,11 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 static int
 ssl3_get_record(SSL *s)
 {
-	int ssl_major, ssl_minor, al;
+	int al;
 	int enc_err, n, i, ret = -1;
 	SSL3_RECORD *rr;
 	SSL_SESSION *sess;
-	unsigned char *p;
 	unsigned char md[EVP_MAX_MD_SIZE];
-	short version;
 	unsigned mac_size, orig_len;
 
 	rr = &(s->s3->rrec);
@@ -292,35 +292,42 @@ again:
 	/* check if we have the header */
 	if ((s->rstate != SSL_ST_READ_BODY) ||
 	    (s->packet_length < SSL3_RT_HEADER_LENGTH)) {
+		CBS header;
+		uint16_t len, ssl_version;
+		uint8_t type;
+
 		n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH, s->s3->rbuf.len, 0);
 		if (n <= 0)
 			return(n); /* error or non-blocking */
 		s->rstate = SSL_ST_READ_BODY;
 
-		p = s->packet;
+		CBS_init(&header, s->packet, n);
 
 		/* Pull apart the header into the SSL3_RECORD */
-		rr->type= *(p++);
-		ssl_major= *(p++);
-		ssl_minor= *(p++);
-		version = (ssl_major << 8)|ssl_minor;
-		n2s(p, rr->length);
-
-		/* Lets check version */
-		if (!s->first_packet) {
-			if (version != s->version) {
-				SSLerr(SSL_F_SSL3_GET_RECORD,
-				    SSL_R_WRONG_VERSION_NUMBER);
-				if ((s->version & 0xFF00) == (version & 0xFF00) &&
-				    !s->enc_write_ctx && !s->write_hash)
-					/* Send back error using their minor version number :-) */
-					s->version = (unsigned short)version;
-				al = SSL_AD_PROTOCOL_VERSION;
-				goto f_err;
-			}
+		if (!CBS_get_u8(&header, &type) ||
+		    !CBS_get_u16(&header, &ssl_version) ||
+		    !CBS_get_u16(&header, &len)) {
+			SSLerr(SSL_F_SSL3_GET_RECORD,
+			    SSL_R_BAD_PACKET_LENGTH);
+			goto err;
 		}
 
-		if ((version >> 8) != SSL3_VERSION_MAJOR) {
+		rr->type = type;
+		rr->length = len;
+
+		/* Lets check version */
+		if (!s->first_packet && ssl_version != s->version) {
+			SSLerr(SSL_F_SSL3_GET_RECORD,
+			    SSL_R_WRONG_VERSION_NUMBER);
+			if ((s->version & 0xFF00) == (ssl_version & 0xFF00) &&
+			    !s->enc_write_ctx && !s->write_hash)
+				/* Send back error using their minor version number :-) */
+				s->version = ssl_version;
+			al = SSL_AD_PROTOCOL_VERSION;
+			goto f_err;
+		}
+
+		if ((ssl_version >> 8) != SSL3_VERSION_MAJOR) {
 			SSLerr(SSL_F_SSL3_GET_RECORD,
 			    SSL_R_WRONG_VERSION_NUMBER);
 			goto err;
