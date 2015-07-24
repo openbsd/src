@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.14 2015/02/16 06:04:06 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.15 2015/07/24 08:50:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -875,7 +875,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		DPRINTFN(2, "will drop %d and pause %d\n", offset, doerr);
 	} else if (offset < 0) {
 		hdl->sio.wsil += -offset * hdl->obpf;
-		hdl->odelta -= offset;
+		hdl->odelta -= -offset;
 		DPRINTFN(2, "will insert %d and pause %d\n", -offset, dierr);
 	}
 
