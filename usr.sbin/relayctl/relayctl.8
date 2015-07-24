@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.30 2014/12/12 10:05:10 reyk Exp $
+.\" $OpenBSD: relayctl.8,v 1.31 2015/07/24 15:25:08 jmc Exp $
 .\"
 .\" Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2014 $
+.Dd $Mdocdate: July 24 2015 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ This indicates that
 .Xr relayd 8
 was running low on resources,
 file descriptors, or was too busy to run the request.
-It can also indicate that an TLS or TCP protocol error occurred or
+It can also indicate that a TLS or TCP protocol error occurred or
 that the connection was unexpectedly aborted.
 .Pp
 .It Em tls connect failed
