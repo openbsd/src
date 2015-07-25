@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.13 2015/02/10 08:33:10 jsing Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.14 2015/07/25 16:00:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -90,10 +90,32 @@ const X509V3_EXT_METHOD v3_sxnet = {
 	NULL
 };
 
-ASN1_SEQUENCE(SXNETID) = {
-	ASN1_SIMPLE(SXNETID, zone, ASN1_INTEGER),
-	ASN1_SIMPLE(SXNETID, user, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(SXNETID)
+static const ASN1_TEMPLATE SXNETID_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(SXNETID, zone),
+		.field_name = "zone",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(SXNETID, user),
+		.field_name = "user",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM SXNETID_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = SXNETID_seq_tt,
+	.tcount = sizeof(SXNETID_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(SXNETID),
+	.sname = "SXNETID",
+};
 
 
 SXNETID *
@@ -121,10 +143,32 @@ SXNETID_free(SXNETID *a)
 	ASN1_item_free((ASN1_VALUE *)a, &SXNETID_it);
 }
 
-ASN1_SEQUENCE(SXNET) = {
-	ASN1_SIMPLE(SXNET, version, ASN1_INTEGER),
-	ASN1_SEQUENCE_OF(SXNET, ids, SXNETID)
-} ASN1_SEQUENCE_END(SXNET)
+static const ASN1_TEMPLATE SXNET_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(SXNET, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(SXNET, ids),
+		.field_name = "ids",
+		.item = &SXNETID_it,
+	},
+};
+
+const ASN1_ITEM SXNET_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = SXNET_seq_tt,
+	.tcount = sizeof(SXNET_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(SXNET),
+	.sname = "SXNET",
+};
 
 
 SXNET *

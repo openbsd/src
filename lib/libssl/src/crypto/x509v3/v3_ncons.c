@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ncons.c,v 1.6 2015/02/10 05:43:09 jsing Exp $ */
+/* $OpenBSD: v3_ncons.c,v 1.7 2015/07/25 16:00:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -89,18 +89,56 @@ const X509V3_EXT_METHOD v3_name_constraints = {
 	NULL
 };
 
-ASN1_SEQUENCE(GENERAL_SUBTREE) = {
-	ASN1_SIMPLE(GENERAL_SUBTREE, base, GENERAL_NAME),
-	ASN1_IMP_OPT(GENERAL_SUBTREE, minimum, ASN1_INTEGER, 0),
-	ASN1_IMP_OPT(GENERAL_SUBTREE, maximum, ASN1_INTEGER, 1)
-} ASN1_SEQUENCE_END(GENERAL_SUBTREE)
+static const ASN1_TEMPLATE GENERAL_SUBTREE_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(GENERAL_SUBTREE, base),
+		.field_name = "base",
+		.item = &GENERAL_NAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(GENERAL_SUBTREE, minimum),
+		.field_name = "minimum",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(GENERAL_SUBTREE, maximum),
+		.field_name = "maximum",
+		.item = &ASN1_INTEGER_it,
+	},
+};
 
-ASN1_SEQUENCE(NAME_CONSTRAINTS) = {
+const ASN1_ITEM GENERAL_SUBTREE_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = GENERAL_SUBTREE_seq_tt,
+	.tcount = sizeof(GENERAL_SUBTREE_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(GENERAL_SUBTREE),
+	.sname = "GENERAL_SUBTREE",
+};
+
+static const ASN1_TEMPLATE NAME_CONSTRAINTS_seq_tt[] = {
 	ASN1_IMP_SEQUENCE_OF_OPT(NAME_CONSTRAINTS, permittedSubtrees,
 	GENERAL_SUBTREE, 0),
 	ASN1_IMP_SEQUENCE_OF_OPT(NAME_CONSTRAINTS, excludedSubtrees,
 	GENERAL_SUBTREE, 1),
-} ASN1_SEQUENCE_END(NAME_CONSTRAINTS)
+};
+
+const ASN1_ITEM NAME_CONSTRAINTS_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = NAME_CONSTRAINTS_seq_tt,
+	.tcount = sizeof(NAME_CONSTRAINTS_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(NAME_CONSTRAINTS),
+	.sname = "NAME_CONSTRAINTS",
+};
 
 
 

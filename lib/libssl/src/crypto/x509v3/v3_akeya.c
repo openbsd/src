@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akeya.c,v 1.6 2015/02/09 16:03:11 jsing Exp $ */
+/* $OpenBSD: v3_akeya.c,v 1.7 2015/07/25 16:00:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -63,11 +63,39 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-ASN1_SEQUENCE(AUTHORITY_KEYID) = {
-	ASN1_IMP_OPT(AUTHORITY_KEYID, keyid, ASN1_OCTET_STRING, 0),
-	ASN1_IMP_SEQUENCE_OF_OPT(AUTHORITY_KEYID, issuer, GENERAL_NAME, 1),
-	ASN1_IMP_OPT(AUTHORITY_KEYID, serial, ASN1_INTEGER, 2)
-} ASN1_SEQUENCE_END(AUTHORITY_KEYID)
+static const ASN1_TEMPLATE AUTHORITY_KEYID_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(AUTHORITY_KEYID, keyid),
+		.field_name = "keyid",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(AUTHORITY_KEYID, issuer),
+		.field_name = "issuer",
+		.item = &GENERAL_NAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 2,
+		.offset = offsetof(AUTHORITY_KEYID, serial),
+		.field_name = "serial",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM AUTHORITY_KEYID_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = AUTHORITY_KEYID_seq_tt,
+	.tcount = sizeof(AUTHORITY_KEYID_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(AUTHORITY_KEYID),
+	.sname = "AUTHORITY_KEYID",
+};
 
 
 AUTHORITY_KEYID *

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pcia.c,v 1.5 2015/02/09 16:03:11 jsing Exp $ */
+/* $OpenBSD: v3_pcia.c,v 1.6 2015/07/25 16:00:14 jsing Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */
@@ -38,10 +38,32 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-ASN1_SEQUENCE(PROXY_POLICY) = {
-	ASN1_SIMPLE(PROXY_POLICY, policyLanguage, ASN1_OBJECT),
-	ASN1_OPT(PROXY_POLICY, policy, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(PROXY_POLICY)
+static const ASN1_TEMPLATE PROXY_POLICY_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PROXY_POLICY, policyLanguage),
+		.field_name = "policyLanguage",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PROXY_POLICY, policy),
+		.field_name = "policy",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM PROXY_POLICY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PROXY_POLICY_seq_tt,
+	.tcount = sizeof(PROXY_POLICY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PROXY_POLICY),
+	.sname = "PROXY_POLICY",
+};
 
 
 PROXY_POLICY *
@@ -69,11 +91,32 @@ PROXY_POLICY_free(PROXY_POLICY *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PROXY_POLICY_it);
 }
 
-ASN1_SEQUENCE(PROXY_CERT_INFO_EXTENSION) = {
-	ASN1_OPT(PROXY_CERT_INFO_EXTENSION, pcPathLengthConstraint,
-	    ASN1_INTEGER),
-	ASN1_SIMPLE(PROXY_CERT_INFO_EXTENSION, proxyPolicy, PROXY_POLICY)
-} ASN1_SEQUENCE_END(PROXY_CERT_INFO_EXTENSION)
+static const ASN1_TEMPLATE PROXY_CERT_INFO_EXTENSION_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PROXY_CERT_INFO_EXTENSION, pcPathLengthConstraint),
+		.field_name = "pcPathLengthConstraint",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PROXY_CERT_INFO_EXTENSION, proxyPolicy),
+		.field_name = "proxyPolicy",
+		.item = &PROXY_POLICY_it,
+	},
+};
+
+const ASN1_ITEM PROXY_CERT_INFO_EXTENSION_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PROXY_CERT_INFO_EXTENSION_seq_tt,
+	.tcount = sizeof(PROXY_CERT_INFO_EXTENSION_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PROXY_CERT_INFO_EXTENSION),
+	.sname = "PROXY_CERT_INFO_EXTENSION",
+};
 
 
 PROXY_CERT_INFO_EXTENSION *

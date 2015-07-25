@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_genn.c,v 1.10 2015/02/09 16:03:11 jsing Exp $ */
+/* $OpenBSD: v3_genn.c,v 1.11 2015/07/25 16:00:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -63,11 +63,33 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-ASN1_SEQUENCE(OTHERNAME) = {
-	ASN1_SIMPLE(OTHERNAME, type_id, ASN1_OBJECT),
+static const ASN1_TEMPLATE OTHERNAME_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OTHERNAME, type_id),
+		.field_name = "type_id",
+		.item = &ASN1_OBJECT_it,
+	},
 	/* Maybe have a true ANY DEFINED BY later */
-	ASN1_EXP(OTHERNAME, value, ASN1_ANY, 0)
-} ASN1_SEQUENCE_END(OTHERNAME)
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(OTHERNAME, value),
+		.field_name = "value",
+		.item = &ASN1_ANY_it,
+	},
+};
+
+const ASN1_ITEM OTHERNAME_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OTHERNAME_seq_tt,
+	.tcount = sizeof(OTHERNAME_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OTHERNAME),
+	.sname = "OTHERNAME",
+};
 
 
 OTHERNAME *
@@ -95,10 +117,32 @@ OTHERNAME_free(OTHERNAME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OTHERNAME_it);
 }
 
-ASN1_SEQUENCE(EDIPARTYNAME) = {
-	ASN1_IMP_OPT(EDIPARTYNAME, nameAssigner, DIRECTORYSTRING, 0),
-	ASN1_IMP_OPT(EDIPARTYNAME, partyName, DIRECTORYSTRING, 1)
-} ASN1_SEQUENCE_END(EDIPARTYNAME)
+static const ASN1_TEMPLATE EDIPARTYNAME_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(EDIPARTYNAME, nameAssigner),
+		.field_name = "nameAssigner",
+		.item = &DIRECTORYSTRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(EDIPARTYNAME, partyName),
+		.field_name = "partyName",
+		.item = &DIRECTORYSTRING_it,
+	},
+};
+
+const ASN1_ITEM EDIPARTYNAME_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = EDIPARTYNAME_seq_tt,
+	.tcount = sizeof(EDIPARTYNAME_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(EDIPARTYNAME),
+	.sname = "EDIPARTYNAME",
+};
 
 
 EDIPARTYNAME *
@@ -126,19 +170,83 @@ EDIPARTYNAME_free(EDIPARTYNAME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &EDIPARTYNAME_it);
 }
 
-ASN1_CHOICE(GENERAL_NAME) = {
-	ASN1_IMP(GENERAL_NAME, d.otherName, OTHERNAME, GEN_OTHERNAME),
-	ASN1_IMP(GENERAL_NAME, d.rfc822Name, ASN1_IA5STRING, GEN_EMAIL),
-	ASN1_IMP(GENERAL_NAME, d.dNSName, ASN1_IA5STRING, GEN_DNS),
+static const ASN1_TEMPLATE GENERAL_NAME_ch_tt[] = {
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_OTHERNAME,
+		.offset = offsetof(GENERAL_NAME, d.otherName),
+		.field_name = "d.otherName",
+		.item = &OTHERNAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_EMAIL,
+		.offset = offsetof(GENERAL_NAME, d.rfc822Name),
+		.field_name = "d.rfc822Name",
+		.item = &ASN1_IA5STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_DNS,
+		.offset = offsetof(GENERAL_NAME, d.dNSName),
+		.field_name = "d.dNSName",
+		.item = &ASN1_IA5STRING_it,
+	},
 	/* Don't decode this */
-	ASN1_IMP(GENERAL_NAME, d.x400Address, ASN1_SEQUENCE, GEN_X400),
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_X400,
+		.offset = offsetof(GENERAL_NAME, d.x400Address),
+		.field_name = "d.x400Address",
+		.item = &ASN1_SEQUENCE_it,
+	},
 	/* X509_NAME is a CHOICE type so use EXPLICIT */
-	ASN1_EXP(GENERAL_NAME, d.directoryName, X509_NAME, GEN_DIRNAME),
-	ASN1_IMP(GENERAL_NAME, d.ediPartyName, EDIPARTYNAME, GEN_EDIPARTY),
-	ASN1_IMP(GENERAL_NAME, d.uniformResourceIdentifier, ASN1_IA5STRING, GEN_URI),
-	ASN1_IMP(GENERAL_NAME, d.iPAddress, ASN1_OCTET_STRING, GEN_IPADD),
-	ASN1_IMP(GENERAL_NAME, d.registeredID, ASN1_OBJECT, GEN_RID)
-} ASN1_CHOICE_END(GENERAL_NAME)
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = GEN_DIRNAME,
+		.offset = offsetof(GENERAL_NAME, d.directoryName),
+		.field_name = "d.directoryName",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_EDIPARTY,
+		.offset = offsetof(GENERAL_NAME, d.ediPartyName),
+		.field_name = "d.ediPartyName",
+		.item = &EDIPARTYNAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_URI,
+		.offset = offsetof(GENERAL_NAME, d.uniformResourceIdentifier),
+		.field_name = "d.uniformResourceIdentifier",
+		.item = &ASN1_IA5STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_IPADD,
+		.offset = offsetof(GENERAL_NAME, d.iPAddress),
+		.field_name = "d.iPAddress",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = GEN_RID,
+		.offset = offsetof(GENERAL_NAME, d.registeredID),
+		.field_name = "d.registeredID",
+		.item = &ASN1_OBJECT_it,
+	},
+};
+
+const ASN1_ITEM GENERAL_NAME_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(GENERAL_NAME, type),
+	.templates = GENERAL_NAME_ch_tt,
+	.tcount = sizeof(GENERAL_NAME_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(GENERAL_NAME),
+	.sname = "GENERAL_NAME",
+};
 
 
 GENERAL_NAME *
@@ -166,9 +274,23 @@ GENERAL_NAME_free(GENERAL_NAME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &GENERAL_NAME_it);
 }
 
-ASN1_ITEM_TEMPLATE(GENERAL_NAMES) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, GeneralNames, GENERAL_NAME)
-ASN1_ITEM_TEMPLATE_END(GENERAL_NAMES)
+static const ASN1_TEMPLATE GENERAL_NAMES_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "GeneralNames",
+	.item = &GENERAL_NAME_it,
+};
+
+const ASN1_ITEM GENERAL_NAMES_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &GENERAL_NAMES_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "GENERAL_NAMES",
+};
 
 
 GENERAL_NAMES *

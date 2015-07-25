@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pcons.c,v 1.6 2015/02/10 05:43:09 jsing Exp $ */
+/* $OpenBSD: v3_pcons.c,v 1.7 2015/07/25 16:00:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -82,11 +82,27 @@ const X509V3_EXT_METHOD v3_policy_constraints = {
 	NULL
 };
 
-ASN1_SEQUENCE(POLICY_CONSTRAINTS) = {
+static const ASN1_TEMPLATE POLICY_CONSTRAINTS_seq_tt[] = {
 	ASN1_IMP_OPT(POLICY_CONSTRAINTS, requireExplicitPolicy,
 	    ASN1_INTEGER, 0),
-	ASN1_IMP_OPT(POLICY_CONSTRAINTS, inhibitPolicyMapping, ASN1_INTEGER, 1)
-} ASN1_SEQUENCE_END(POLICY_CONSTRAINTS)
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(POLICY_CONSTRAINTS, inhibitPolicyMapping),
+		.field_name = "inhibitPolicyMapping",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM POLICY_CONSTRAINTS_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = POLICY_CONSTRAINTS_seq_tt,
+	.tcount = sizeof(POLICY_CONSTRAINTS_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(POLICY_CONSTRAINTS),
+	.sname = "POLICY_CONSTRAINTS",
+};
 
 
 POLICY_CONSTRAINTS *

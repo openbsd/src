@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_extku.c,v 1.11 2015/02/09 16:03:11 jsing Exp $ */
+/* $OpenBSD: v3_extku.c,v 1.12 2015/07/25 16:00:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -91,10 +91,23 @@ const X509V3_EXT_METHOD v3_ocsp_accresp = {
 	NULL
 };
 
-ASN1_ITEM_TEMPLATE(EXTENDED_KEY_USAGE) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, EXTENDED_KEY_USAGE,
-	ASN1_OBJECT)
-ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE)
+static const ASN1_TEMPLATE EXTENDED_KEY_USAGE_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "EXTENDED_KEY_USAGE",
+	.item = &ASN1_OBJECT_it,
+};
+
+const ASN1_ITEM EXTENDED_KEY_USAGE_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &EXTENDED_KEY_USAGE_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "EXTENDED_KEY_USAGE",
+};
 
 
 EXTENDED_KEY_USAGE *

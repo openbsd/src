@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pku.c,v 1.10 2015/02/09 16:03:11 jsing Exp $ */
+/* $OpenBSD: v3_pku.c,v 1.11 2015/07/25 16:00:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -75,10 +75,32 @@ const X509V3_EXT_METHOD v3_pkey_usage_period = {
 	NULL
 };
 
-ASN1_SEQUENCE(PKEY_USAGE_PERIOD) = {
-	ASN1_IMP_OPT(PKEY_USAGE_PERIOD, notBefore, ASN1_GENERALIZEDTIME, 0),
-	ASN1_IMP_OPT(PKEY_USAGE_PERIOD, notAfter, ASN1_GENERALIZEDTIME, 1)
-} ASN1_SEQUENCE_END(PKEY_USAGE_PERIOD)
+static const ASN1_TEMPLATE PKEY_USAGE_PERIOD_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKEY_USAGE_PERIOD, notBefore),
+		.field_name = "notBefore",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(PKEY_USAGE_PERIOD, notAfter),
+		.field_name = "notAfter",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+};
+
+const ASN1_ITEM PKEY_USAGE_PERIOD_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKEY_USAGE_PERIOD_seq_tt,
+	.tcount = sizeof(PKEY_USAGE_PERIOD_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKEY_USAGE_PERIOD),
+	.sname = "PKEY_USAGE_PERIOD",
+};
 
 
 PKEY_USAGE_PERIOD *
