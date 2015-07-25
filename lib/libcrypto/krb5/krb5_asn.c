@@ -1,4 +1,4 @@
-/* $OpenBSD: krb5_asn.c,v 1.3 2015/02/09 16:04:46 jsing Exp $ */
+/* $OpenBSD: krb5_asn.c,v 1.4 2015/07/25 14:49:45 jsing Exp $ */
 /* Written by Vern Staats <staatsvr@asc.hpc.mil> for the OpenSSL project,
 ** using ocsp/{*.h,*asn*.c} as a starting point
 */
@@ -60,11 +60,39 @@
 #include <openssl/krb5_asn.h>
 
 
-ASN1_SEQUENCE(KRB5_ENCDATA) = {
-	ASN1_EXP(KRB5_ENCDATA, etype,		ASN1_INTEGER,	  0),
-	ASN1_EXP_OPT(KRB5_ENCDATA, kvno,	ASN1_INTEGER,	  1),
-	ASN1_EXP(KRB5_ENCDATA, cipher,		ASN1_OCTET_STRING,2)
-} ASN1_SEQUENCE_END(KRB5_ENCDATA)
+static const ASN1_TEMPLATE KRB5_ENCDATA_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_ENCDATA, etype),
+		.field_name = "etype",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(KRB5_ENCDATA, kvno),
+		.field_name = "kvno",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 2,
+		.offset = offsetof(KRB5_ENCDATA, cipher),
+		.field_name = "cipher",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM KRB5_ENCDATA_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_ENCDATA_seq_tt,
+	.tcount = sizeof(KRB5_ENCDATA_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_ENCDATA),
+	.sname = "KRB5_ENCDATA",
+};
 
 
 KRB5_ENCDATA *
@@ -93,10 +121,32 @@ KRB5_ENCDATA_free(KRB5_ENCDATA *a)
 }
 
 
-ASN1_SEQUENCE(KRB5_PRINCNAME) = {
-	ASN1_EXP(KRB5_PRINCNAME, nametype,	ASN1_INTEGER,	  0),
-	ASN1_EXP_SEQUENCE_OF(KRB5_PRINCNAME, namestring, ASN1_GENERALSTRING, 1)
-} ASN1_SEQUENCE_END(KRB5_PRINCNAME)
+static const ASN1_TEMPLATE KRB5_PRINCNAME_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_PRINCNAME, nametype),
+		.field_name = "nametype",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF,
+		.tag = 1,
+		.offset = offsetof(KRB5_PRINCNAME, namestring),
+		.field_name = "namestring",
+		.item = &ASN1_GENERALSTRING_it,
+	},
+};
+
+const ASN1_ITEM KRB5_PRINCNAME_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_PRINCNAME_seq_tt,
+	.tcount = sizeof(KRB5_PRINCNAME_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_PRINCNAME),
+	.sname = "KRB5_PRINCNAME",
+};
 
 
 KRB5_PRINCNAME *
@@ -126,12 +176,46 @@ KRB5_PRINCNAME_free(KRB5_PRINCNAME *a)
 
 
 /* [APPLICATION 1] = 0x61 */
-ASN1_SEQUENCE(KRB5_TKTBODY) = {
-	ASN1_EXP(KRB5_TKTBODY, tktvno,		ASN1_INTEGER,	  0),
-	ASN1_EXP(KRB5_TKTBODY, realm, 		ASN1_GENERALSTRING, 1),
-	ASN1_EXP(KRB5_TKTBODY, sname,		KRB5_PRINCNAME,	  2),
-	ASN1_EXP(KRB5_TKTBODY, encdata,		KRB5_ENCDATA,	  3)
-} ASN1_SEQUENCE_END(KRB5_TKTBODY)
+static const ASN1_TEMPLATE KRB5_TKTBODY_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_TKTBODY, tktvno),
+		.field_name = "tktvno",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 1,
+		.offset = offsetof(KRB5_TKTBODY, realm),
+		.field_name = "realm",
+		.item = &ASN1_GENERALSTRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 2,
+		.offset = offsetof(KRB5_TKTBODY, sname),
+		.field_name = "sname",
+		.item = &KRB5_PRINCNAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 3,
+		.offset = offsetof(KRB5_TKTBODY, encdata),
+		.field_name = "encdata",
+		.item = &KRB5_ENCDATA_it,
+	},
+};
+
+const ASN1_ITEM KRB5_TKTBODY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_TKTBODY_seq_tt,
+	.tcount = sizeof(KRB5_TKTBODY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_TKTBODY),
+	.sname = "KRB5_TKTBODY",
+};
 
 
 KRB5_TKTBODY *
@@ -160,10 +244,23 @@ KRB5_TKTBODY_free(KRB5_TKTBODY *a)
 }
 
 
-ASN1_ITEM_TEMPLATE(KRB5_TICKET) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_EXPTAG|ASN1_TFLG_APPLICATION, 1,
-			KRB5_TICKET, KRB5_TKTBODY)
-ASN1_ITEM_TEMPLATE_END(KRB5_TICKET)
+static const ASN1_TEMPLATE KRB5_TICKET_item_tt =  {
+	.flags = ASN1_TFLG_EXPTAG | ASN1_TFLG_APPLICATION,
+	.tag = 1,
+	.offset = 0,
+	.field_name = "KRB5_TICKET",
+	.item = &KRB5_TKTBODY_it,
+};
+
+const ASN1_ITEM KRB5_TICKET_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &KRB5_TICKET_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "KRB5_TICKET",
+};
 
 
 KRB5_TICKET *
@@ -193,13 +290,53 @@ KRB5_TICKET_free(KRB5_TICKET *a)
 
 
 /* [APPLICATION 14] = 0x6e */
-ASN1_SEQUENCE(KRB5_APREQBODY) = {
-	ASN1_EXP(KRB5_APREQBODY, pvno,		ASN1_INTEGER,	  0),
-	ASN1_EXP(KRB5_APREQBODY, msgtype,	ASN1_INTEGER,	  1),
-	ASN1_EXP(KRB5_APREQBODY, apoptions,	ASN1_BIT_STRING,  2),
-	ASN1_EXP(KRB5_APREQBODY, ticket, 	KRB5_TICKET,	  3),
-	ASN1_EXP(KRB5_APREQBODY, authenticator,	KRB5_ENCDATA,	  4),
-} ASN1_SEQUENCE_END(KRB5_APREQBODY)
+static const ASN1_TEMPLATE KRB5_APREQBODY_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_APREQBODY, pvno),
+		.field_name = "pvno",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 1,
+		.offset = offsetof(KRB5_APREQBODY, msgtype),
+		.field_name = "msgtype",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 2,
+		.offset = offsetof(KRB5_APREQBODY, apoptions),
+		.field_name = "apoptions",
+		.item = &ASN1_BIT_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 3,
+		.offset = offsetof(KRB5_APREQBODY, ticket),
+		.field_name = "ticket",
+		.item = &KRB5_TICKET_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 4,
+		.offset = offsetof(KRB5_APREQBODY, authenticator),
+		.field_name = "authenticator",
+		.item = &KRB5_ENCDATA_it,
+	},
+};
+
+const ASN1_ITEM KRB5_APREQBODY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_APREQBODY_seq_tt,
+	.tcount = sizeof(KRB5_APREQBODY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_APREQBODY),
+	.sname = "KRB5_APREQBODY",
+};
 
 
 KRB5_APREQBODY *
@@ -227,10 +364,23 @@ KRB5_APREQBODY_free(KRB5_APREQBODY *a)
 	ASN1_item_free((ASN1_VALUE *)a, &KRB5_APREQBODY_it);
 }
 
-ASN1_ITEM_TEMPLATE(KRB5_APREQ) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_EXPTAG|ASN1_TFLG_APPLICATION, 14,
-			KRB5_APREQ, KRB5_APREQBODY)
-ASN1_ITEM_TEMPLATE_END(KRB5_APREQ)
+static const ASN1_TEMPLATE KRB5_APREQ_item_tt =  {
+	.flags = ASN1_TFLG_EXPTAG | ASN1_TFLG_APPLICATION,
+	.tag = 14,
+	.offset = 0,
+	.field_name = "KRB5_APREQ",
+	.item = &KRB5_APREQBODY_it,
+};
+
+const ASN1_ITEM KRB5_APREQ_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &KRB5_APREQ_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "KRB5_APREQ",
+};
 
 
 KRB5_APREQ *
@@ -261,10 +411,32 @@ KRB5_APREQ_free(KRB5_APREQ *a)
 
 /*  Authenticator stuff 	*/
 
-ASN1_SEQUENCE(KRB5_CHECKSUM) = {
-	ASN1_EXP(KRB5_CHECKSUM, ctype,		ASN1_INTEGER,	  0),
-	ASN1_EXP(KRB5_CHECKSUM, checksum,	ASN1_OCTET_STRING,1)
-} ASN1_SEQUENCE_END(KRB5_CHECKSUM)
+static const ASN1_TEMPLATE KRB5_CHECKSUM_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_CHECKSUM, ctype),
+		.field_name = "ctype",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 1,
+		.offset = offsetof(KRB5_CHECKSUM, checksum),
+		.field_name = "checksum",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM KRB5_CHECKSUM_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_CHECKSUM_seq_tt,
+	.tcount = sizeof(KRB5_CHECKSUM_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_CHECKSUM),
+	.sname = "KRB5_CHECKSUM",
+};
 
 
 KRB5_CHECKSUM *
@@ -293,10 +465,32 @@ KRB5_CHECKSUM_free(KRB5_CHECKSUM *a)
 }
 
 
-ASN1_SEQUENCE(KRB5_ENCKEY) = {
-	ASN1_EXP(KRB5_ENCKEY,	ktype,		ASN1_INTEGER,	  0),
-	ASN1_EXP(KRB5_ENCKEY,	keyvalue,	ASN1_OCTET_STRING,1)
-} ASN1_SEQUENCE_END(KRB5_ENCKEY)
+static const ASN1_TEMPLATE KRB5_ENCKEY_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_ENCKEY, ktype),
+		.field_name = "ktype",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 1,
+		.offset = offsetof(KRB5_ENCKEY, keyvalue),
+		.field_name = "keyvalue",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM KRB5_ENCKEY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_ENCKEY_seq_tt,
+	.tcount = sizeof(KRB5_ENCKEY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_ENCKEY),
+	.sname = "KRB5_ENCKEY",
+};
 
 
 KRB5_ENCKEY *
@@ -326,10 +520,32 @@ KRB5_ENCKEY_free(KRB5_ENCKEY *a)
 
 
 /* SEQ OF SEQ; see ASN1_EXP_SEQUENCE_OF_OPT() below */
-ASN1_SEQUENCE(KRB5_AUTHDATA) = {
-	ASN1_EXP(KRB5_AUTHDATA,	adtype,		ASN1_INTEGER,	  0),
-	ASN1_EXP(KRB5_AUTHDATA,	addata, 	ASN1_OCTET_STRING,1)
-} ASN1_SEQUENCE_END(KRB5_AUTHDATA)
+static const ASN1_TEMPLATE KRB5_AUTHDATA_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_AUTHDATA, adtype),
+		.field_name = "adtype",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 1,
+		.offset = offsetof(KRB5_AUTHDATA, addata),
+		.field_name = "addata",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM KRB5_AUTHDATA_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_AUTHDATA_seq_tt,
+	.tcount = sizeof(KRB5_AUTHDATA_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_AUTHDATA),
+	.sname = "KRB5_AUTHDATA",
+};
 
 
 KRB5_AUTHDATA *
@@ -359,18 +575,81 @@ KRB5_AUTHDATA_free(KRB5_AUTHDATA *a)
 
 
 /* [APPLICATION 2] = 0x62 */
-ASN1_SEQUENCE(KRB5_AUTHENTBODY) = {
-	ASN1_EXP(KRB5_AUTHENTBODY,	avno,	ASN1_INTEGER,	  0),
-	ASN1_EXP(KRB5_AUTHENTBODY,	crealm,	ASN1_GENERALSTRING, 1),
-	ASN1_EXP(KRB5_AUTHENTBODY,	cname,	KRB5_PRINCNAME,	  2),
-	ASN1_EXP_OPT(KRB5_AUTHENTBODY,	cksum,	KRB5_CHECKSUM,	  3),
-	ASN1_EXP(KRB5_AUTHENTBODY,	cusec,	ASN1_INTEGER,	  4),
-	ASN1_EXP(KRB5_AUTHENTBODY,	ctime,	ASN1_GENERALIZEDTIME, 5),
-	ASN1_EXP_OPT(KRB5_AUTHENTBODY,	subkey,	KRB5_ENCKEY,	  6),
-	ASN1_EXP_OPT(KRB5_AUTHENTBODY,	seqnum,	ASN1_INTEGER,	  7),
-	ASN1_EXP_SEQUENCE_OF_OPT
-		    (KRB5_AUTHENTBODY,	authorization,	KRB5_AUTHDATA, 8),
-} ASN1_SEQUENCE_END(KRB5_AUTHENTBODY)
+static const ASN1_TEMPLATE KRB5_AUTHENTBODY_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 0,
+		.offset = offsetof(KRB5_AUTHENTBODY, avno),
+		.field_name = "avno",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 1,
+		.offset = offsetof(KRB5_AUTHENTBODY, crealm),
+		.field_name = "crealm",
+		.item = &ASN1_GENERALSTRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 2,
+		.offset = offsetof(KRB5_AUTHENTBODY, cname),
+		.field_name = "cname",
+		.item = &KRB5_PRINCNAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 3,
+		.offset = offsetof(KRB5_AUTHENTBODY, cksum),
+		.field_name = "cksum",
+		.item = &KRB5_CHECKSUM_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 4,
+		.offset = offsetof(KRB5_AUTHENTBODY, cusec),
+		.field_name = "cusec",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 5,
+		.offset = offsetof(KRB5_AUTHENTBODY, ctime),
+		.field_name = "ctime",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 6,
+		.offset = offsetof(KRB5_AUTHENTBODY, subkey),
+		.field_name = "subkey",
+		.item = &KRB5_ENCKEY_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 7,
+		.offset = offsetof(KRB5_AUTHENTBODY, seqnum),
+		.field_name = "seqnum",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 8,
+		.offset = offsetof(KRB5_AUTHENTBODY, authorization),
+		.field_name = "authorization",
+		.item = &KRB5_AUTHDATA_it,
+	},
+};
+
+const ASN1_ITEM KRB5_AUTHENTBODY_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = KRB5_AUTHENTBODY_seq_tt,
+	.tcount = sizeof(KRB5_AUTHENTBODY_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(KRB5_AUTHENTBODY),
+	.sname = "KRB5_AUTHENTBODY",
+};
 
 
 KRB5_AUTHENTBODY *
@@ -398,10 +677,23 @@ KRB5_AUTHENTBODY_free(KRB5_AUTHENTBODY *a)
 	ASN1_item_free((ASN1_VALUE *)a, &KRB5_AUTHENTBODY_it);
 }
 
-ASN1_ITEM_TEMPLATE(KRB5_AUTHENT) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_EXPTAG|ASN1_TFLG_APPLICATION, 2,
-			KRB5_AUTHENT, KRB5_AUTHENTBODY)
-ASN1_ITEM_TEMPLATE_END(KRB5_AUTHENT)
+static const ASN1_TEMPLATE KRB5_AUTHENT_item_tt =  {
+	.flags = ASN1_TFLG_EXPTAG | ASN1_TFLG_APPLICATION,
+	.tag = 2,
+	.offset = 0,
+	.field_name = "KRB5_AUTHENT",
+	.item = &KRB5_AUTHENTBODY_it,
+};
+
+const ASN1_ITEM KRB5_AUTHENT_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &KRB5_AUTHENT_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "KRB5_AUTHENT",
+};
 
 
 KRB5_AUTHENT *
@@ -428,4 +720,3 @@ KRB5_AUTHENT_free(KRB5_AUTHENT *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &KRB5_AUTHENT_it);
 }
-
