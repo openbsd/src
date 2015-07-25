@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.c,v 1.4 2015/07/25 14:01:39 schwarze Exp $    */
+/*      $OpenBSD: tag.c,v 1.5 2015/07/25 14:28:40 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -74,49 +74,27 @@ tag_init(void)
 }
 
 /*
- * Return the line number where a term is defined,
- * or 0 if the term is unknown.
- */
-size_t
-tag_get(const char *s, size_t len, int prio)
-{
-	struct tag_entry	*entry;
-	const char		*end;
-	unsigned int		 slot;
-
-	if (tag_fd == -1)
-		return(0);
-	if (len == 0)
-		len = strlen(s);
-	end = s + len;
-	slot = ohash_qlookupi(&tag_data, s, &end);
-	entry = ohash_find(&tag_data, slot);
-	return((entry == NULL || prio < entry->prio) ? 0 : entry->line);
-}
-
-/*
- * Set the line number where a term is defined.
+ * Set the line number where a term is defined,
+ * unless it is already defined at a higher priority.
  */
 void
-tag_put(const char *s, size_t len, int prio, size_t line)
+tag_put(const char *s, int prio, size_t line)
 {
 	struct tag_entry	*entry;
-	const char		*end;
+	size_t			 len;
 	unsigned int		 slot;
 
 	if (tag_fd == -1)
 		return;
-	if (len == 0)
-		len = strlen(s);
-	end = s + len;
-	slot = ohash_qlookupi(&tag_data, s, &end);
+	slot = ohash_qlookup(&tag_data, s);
 	entry = ohash_find(&tag_data, slot);
 	if (entry == NULL) {
-		entry = mandoc_malloc(sizeof(*entry) + len + 1);
+		len = strlen(s) + 1;
+		entry = mandoc_malloc(sizeof(*entry) + len);
 		memcpy(entry->s, s, len);
-		entry->s[len] = '\0';
 		ohash_insert(&tag_data, slot, entry);
-	}
+	} else if (entry->prio <= prio)
+		return;
 	entry->line = line;
 	entry->prio = prio;
 }
