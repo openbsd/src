@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.253 2015/03/12 18:28:34 benno Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.254 2015/07/25 18:07:18 rzalamena Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 12 2015 $
+.Dd $Mdocdate: July 25 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -178,6 +178,7 @@ At least the following devices can be created on demand:
 .Xr gre 4 ,
 .Xr lo 4 ,
 .Xr mpe 4 ,
+.Xr mpw 4 ,
 .Xr pflog 4 ,
 .Xr pflow 4 ,
 .Xr pfsync 4 ,
@@ -485,6 +486,8 @@ IEEE 802.11 (wireless devices)
 interface groups
 .It
 .Xr mpe 4
+.It
+.Xr mpw 4
 .It
 .Xr pflow 4
 .It
@@ -1215,6 +1218,54 @@ Set the MPLS label to
 .Ar mpls-label .
 This value is a 20-bit number which will be used as the MPLS header for
 packets entering the MPLS domain.
+.El
+.\" mpw
+.Sh MPW
+.nr nS 1
+.Bk -words
+.Nm ifconfig
+.Ar mpw-interface
+.Op Oo Fl Oc Ns Cm controlword
+.Op Cm encap Ar encapsulation
+.Op Cm mpwlabel Ar local-label remote-label Cm neighbor Ar dest-address
+.Ek
+.nr Ns 0
+.Pp
+The following options are available for an
+.Xr mpw 4
+interface:
+.Bl -tag -width Ds
+.It Cm controlword
+Configure the mpw interface to use control-word.
+.It Cm -controlword
+Remove control-word configuration from the interface.
+.It Cm encap Ar encapsulation
+Configures the mpw encapsulation type with value
+.Ar encapsulation
+which can be
+.Cm ethernet
+or
+.Cm ethernet-tagged .
+By default it's assumed to be
+.Cm ethernet
+mode.
+.It Cm mpwlabel Ar local-label remote-label
+Set mpw local label to
+.Ar local-label
+and remote label to
+.Ar remote-label .
+The
+.Ar local-label
+is a 20-bit number which will be used to create a local label route to
+the mpw interface and the
+.Ar remote-label
+is another 20-bit number which will be used to create the output label header.
+.It Cm neighbor Ar dest-address
+Sets the destination address where this mpw should output.
+The
+.Ar dest-address
+is an IPv4 address that will be used to find the nexthop in the MPLS
+network.
 .El
 .\" PFLOW
 .Sh PFLOW
