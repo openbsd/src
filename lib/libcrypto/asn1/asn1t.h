@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.12 2015/02/14 19:41:39 miod Exp $ */
+/* $OpenBSD: asn1t.h,v 1.13 2015/07/25 17:20:02 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -70,7 +70,7 @@
 extern "C" {
 #endif
 
-
+#ifndef LIBRESSL_INTERNAL
 
 /* Macro to obtain ASN1_ADB pointer from a type (only used internally) */
 #define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)(iptr))
@@ -386,6 +386,8 @@ extern "C" {
 
 #define ASN1_ADB_TEMPLATE(name) \
 	static const ASN1_TEMPLATE name##_tt 
+
+#endif /* !LIBRESSL_INTERNAL */
 
 /* This is the ASN1 template structure that defines
  * a wrapper round the actual type. It determines the
@@ -708,6 +710,8 @@ typedef struct ASN1_STREAM_ARG_st {
 #define ASN1_OP_DETACHED_PRE	12
 #define ASN1_OP_DETACHED_POST	13
 
+#ifndef LIBRESSL_INTERNAL
+
 /* Macro to implement a primitive type */
 #define IMPLEMENT_ASN1_TYPE(stname) IMPLEMENT_ASN1_TYPE_ex(stname, stname, 0)
 #define IMPLEMENT_ASN1_TYPE_ex(itname, vname, ex) \
@@ -731,7 +735,6 @@ typedef struct ASN1_STREAM_ARG_st {
 		#sname \
 	ASN1_ITEM_end(sname)
 
-#ifndef LIBRESSL_INTERNAL
 /* Macro to implement standard functions in terms of ASN1_ITEM structures */
 
 #define IMPLEMENT_ASN1_FUNCTIONS(stname) IMPLEMENT_ASN1_FUNCTIONS_fname(stname, stname, stname)
