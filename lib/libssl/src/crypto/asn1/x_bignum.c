@@ -1,4 +1,4 @@
-/* $OpenBSD: x_bignum.c,v 1.7 2014/07/12 16:42:47 miod Exp $ */
+/* $OpenBSD: x_bignum.c,v 1.8 2015/07/25 17:07:17 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -86,13 +86,25 @@ static ASN1_PRIMITIVE_FUNCS bignum_pf = {
 	bn_i2c
 };
 
-ASN1_ITEM_start(BIGNUM)
-ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &bignum_pf, 0, "BIGNUM"
-ASN1_ITEM_end(BIGNUM)
+const ASN1_ITEM BIGNUM_it = {
+        .itype = ASN1_ITYPE_PRIMITIVE,
+        .utype = V_ASN1_INTEGER,
+        .templates = NULL,
+        .tcount = 0,
+        .funcs = &bignum_pf,
+        .size = 0,
+        .sname = "BIGNUM",
+};
 
-ASN1_ITEM_start(CBIGNUM)
-ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &bignum_pf, 0, "BIGNUM"
-ASN1_ITEM_end(CBIGNUM)
+const ASN1_ITEM CBIGNUM_it = {
+        .itype = ASN1_ITYPE_PRIMITIVE,
+        .utype = V_ASN1_INTEGER,
+        .templates = NULL,
+        .tcount = 0,
+        .funcs = &bignum_pf,
+        .size = 0,
+        .sname = "BIGNUM",
+};
 
 static int
 bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)

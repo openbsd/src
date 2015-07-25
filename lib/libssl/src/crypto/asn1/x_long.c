@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.10 2015/07/25 17:07:17 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -85,13 +85,25 @@ static ASN1_PRIMITIVE_FUNCS long_pf = {
 	long_print
 };
 
-ASN1_ITEM_start(LONG)
-ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &long_pf, ASN1_LONG_UNDEF, "LONG"
-ASN1_ITEM_end(LONG)
+const ASN1_ITEM LONG_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_INTEGER,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = &long_pf,
+	.size = ASN1_LONG_UNDEF,
+	.sname = "LONG",
+};
 
-ASN1_ITEM_start(ZLONG)
-ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &long_pf, 0, "ZLONG"
-ASN1_ITEM_end(ZLONG)
+const ASN1_ITEM ZLONG_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_INTEGER,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = &long_pf,
+	.size = 0,
+	.sname = "ZLONG",
+};
 
 static int
 long_new(ASN1_VALUE **pval, const ASN1_ITEM *it)

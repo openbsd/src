@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_utl.c,v 1.10 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: tasn_utl.c,v 1.11 2015/07/25 17:07:17 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -232,7 +232,7 @@ asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt, int nullerr)
 		return tt;
 
 	/* Else ANY DEFINED BY ... get the table */
-	adb = ASN1_ADB_ptr(tt->item);
+	adb = (const ASN1_ADB *)tt->item;
 
 	/* Get the selector field */
 	sfld = offset2ptr(*pval, adb->offset);
