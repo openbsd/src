@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_asn.c,v 1.8 2015/07/25 15:42:14 jsing Exp $ */
+/* $OpenBSD: p12_asn.c,v 1.9 2015/07/25 17:08:40 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -323,7 +323,13 @@ static const ASN1_ADB_TABLE PKCS12_SAFEBAG_adbtbl[] = {
 	},
 	{
 		.value = NID_safeContentsBag,
-		.tt = ASN1_EXP_SET_OF(PKCS12_SAFEBAG, value.safes, PKCS12_SAFEBAG, 0)
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SET_OF,
+			.tag = 0,
+			.offset = offsetof(PKCS12_SAFEBAG, value.safes),
+			.field_name = "value.safes",
+			.item = &PKCS12_SAFEBAG_it,
+		},
 	},
 	{
 		.value = NID_certBag,
