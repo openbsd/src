@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.17 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.18 2015/07/25 16:14:29 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -390,7 +390,13 @@ static const ASN1_TEMPLATE DIST_POINT_NAME_ch_tt[] = {
 		.field_name = "name.fullname",
 		.item = &GENERAL_NAME_it,
 	},
-	ASN1_IMP_SET_OF(DIST_POINT_NAME, name.relativename, X509_NAME_ENTRY, 1)
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SET_OF,
+		.tag = 1,
+		.offset = offsetof(DIST_POINT_NAME, name.relativename),
+		.field_name = "name.relativename",
+		.item = &X509_NAME_ENTRY_it,
+	},
 };
 
 const ASN1_ITEM DIST_POINT_NAME_it = {

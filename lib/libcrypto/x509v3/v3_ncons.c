@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ncons.c,v 1.7 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_ncons.c,v 1.8 2015/07/25 16:14:29 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -124,10 +124,20 @@ const ASN1_ITEM GENERAL_SUBTREE_it = {
 };
 
 static const ASN1_TEMPLATE NAME_CONSTRAINTS_seq_tt[] = {
-	ASN1_IMP_SEQUENCE_OF_OPT(NAME_CONSTRAINTS, permittedSubtrees,
-	GENERAL_SUBTREE, 0),
-	ASN1_IMP_SEQUENCE_OF_OPT(NAME_CONSTRAINTS, excludedSubtrees,
-	GENERAL_SUBTREE, 1),
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(NAME_CONSTRAINTS, permittedSubtrees),
+		.field_name = "permittedSubtrees",
+		.item = &GENERAL_SUBTREE_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(NAME_CONSTRAINTS, excludedSubtrees),
+		.field_name = "excludedSubtrees",
+		.item = &GENERAL_SUBTREE_it,
+	},
 };
 
 const ASN1_ITEM NAME_CONSTRAINTS_it = {
@@ -139,7 +149,6 @@ const ASN1_ITEM NAME_CONSTRAINTS_it = {
 	.size = sizeof(NAME_CONSTRAINTS),
 	.sname = "NAME_CONSTRAINTS",
 };
-
 
 
 GENERAL_SUBTREE *

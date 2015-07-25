@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pcons.c,v 1.7 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_pcons.c,v 1.8 2015/07/25 16:14:29 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -83,8 +83,13 @@ const X509V3_EXT_METHOD v3_policy_constraints = {
 };
 
 static const ASN1_TEMPLATE POLICY_CONSTRAINTS_seq_tt[] = {
-	ASN1_IMP_OPT(POLICY_CONSTRAINTS, requireExplicitPolicy,
-	    ASN1_INTEGER, 0),
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(POLICY_CONSTRAINTS, requireExplicitPolicy),
+		.field_name = "requireExplicitPolicy",
+		.item = &ASN1_INTEGER_it,
+	},
 	{
 		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
 		.tag = 1,
