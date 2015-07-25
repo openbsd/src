@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.11 2015/02/10 06:37:38 jsing Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.12 2015/07/25 15:33:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -66,23 +66,92 @@
 
 /* This is the ANY DEFINED BY table for the top level PKCS#7 structure */
 
-ASN1_ADB_TEMPLATE(p7default) = ASN1_EXP_OPT(PKCS7, d.other, ASN1_ANY, 0);
+static const ASN1_TEMPLATE p7default_tt = {
+	.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+	.tag = 0,
+	.offset = offsetof(PKCS7, d.other),
+	.field_name = "d.other",
+	.item = &ASN1_ANY_it,
+};
 
-ASN1_ADB(PKCS7) = {
-	ADB_ENTRY(NID_pkcs7_data,
-	    ASN1_NDEF_EXP_OPT(PKCS7, d.data, ASN1_OCTET_STRING_NDEF, 0)),
-	ADB_ENTRY(NID_pkcs7_signed,
-	    ASN1_NDEF_EXP_OPT(PKCS7, d.sign, PKCS7_SIGNED, 0)),
-	ADB_ENTRY(NID_pkcs7_enveloped,
-	    ASN1_NDEF_EXP_OPT(PKCS7, d.enveloped, PKCS7_ENVELOPE, 0)),
-	ADB_ENTRY(NID_pkcs7_signedAndEnveloped,
-	    ASN1_NDEF_EXP_OPT(PKCS7, d.signed_and_enveloped,
-		PKCS7_SIGN_ENVELOPE, 0)),
-	ADB_ENTRY(NID_pkcs7_digest,
-	    ASN1_NDEF_EXP_OPT(PKCS7, d.digest, PKCS7_DIGEST, 0)),
-	ADB_ENTRY(NID_pkcs7_encrypted,
-	    ASN1_NDEF_EXP_OPT(PKCS7, d.encrypted, PKCS7_ENCRYPT, 0))
-} ASN1_ADB_END(PKCS7, 0, type, 0, &p7default_tt, NULL);
+static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
+	{
+		.value = NID_pkcs7_data,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL | ASN1_TFLG_NDEF,
+			.tag = 0,
+			.offset = offsetof(PKCS7, d.data),
+			.field_name = "d.data",
+			.item = &ASN1_OCTET_STRING_NDEF_it,
+		},
+	
+	},
+	{
+		.value = NID_pkcs7_signed,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL | ASN1_TFLG_NDEF,
+			.tag = 0,
+			.offset = offsetof(PKCS7, d.sign),
+			.field_name = "d.sign",
+			.item = &PKCS7_SIGNED_it,
+		},
+	
+	},
+	{
+		.value = NID_pkcs7_enveloped,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL | ASN1_TFLG_NDEF,
+			.tag = 0,
+			.offset = offsetof(PKCS7, d.enveloped),
+			.field_name = "d.enveloped",
+			.item = &PKCS7_ENVELOPE_it,
+		},
+	
+	},
+	{
+		.value = NID_pkcs7_signedAndEnveloped,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL | ASN1_TFLG_NDEF,
+			.tag = 0,
+			.offset = offsetof(PKCS7, d.signed_and_enveloped),
+			.field_name = "d.signed_and_enveloped",
+			.item = &PKCS7_SIGN_ENVELOPE_it,
+		},
+	
+	},
+	{
+		.value = NID_pkcs7_digest,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL | ASN1_TFLG_NDEF,
+			.tag = 0,
+			.offset = offsetof(PKCS7, d.digest),
+			.field_name = "d.digest",
+			.item = &PKCS7_DIGEST_it,
+		},
+	
+	},
+	{
+		.value = NID_pkcs7_encrypted,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL | ASN1_TFLG_NDEF,
+			.tag = 0,
+			.offset = offsetof(PKCS7, d.encrypted),
+			.field_name = "d.encrypted",
+			.item = &PKCS7_ENCRYPT_it,
+		},
+	
+	},
+};
+
+static const ASN1_ADB PKCS7_adb = {
+	.flags = 0,
+	.offset = offsetof(PKCS7, type),
+	.app_items = 0,
+	.tbl = PKCS7_adbtbl,
+	.tblcount = sizeof(PKCS7_adbtbl) / sizeof(ASN1_ADB_TABLE),
+	.default_tt = &p7default_tt,
+	.null_tt = NULL,
+};
 
 /* PKCS#7 streaming support */
 static int
@@ -111,10 +180,40 @@ pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_NDEF_SEQUENCE_cb(PKCS7, pk7_cb) = {
-	ASN1_SIMPLE(PKCS7, type, ASN1_OBJECT),
-	ASN1_ADB_OBJECT(PKCS7)
-}ASN1_NDEF_SEQUENCE_END_cb(PKCS7, PKCS7)
+static const ASN1_AUX PKCS7_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = pk7_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE PKCS7_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7, type),
+		.field_name = "type",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_ADB_OID,
+		.tag = -1,
+		.offset = 0,
+		.field_name = "PKCS7",
+		.item = (const ASN1_ITEM *)&PKCS7_adb,
+	},
+};
+
+const ASN1_ITEM PKCS7_it = {
+	.itype = ASN1_ITYPE_NDEF_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_seq_tt,
+	.tcount = sizeof(PKCS7_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &PKCS7_aux,
+	.size = sizeof(PKCS7),
+	.sname = "PKCS7",
+};
 
 
 PKCS7 *
@@ -154,14 +253,60 @@ PKCS7_dup(PKCS7 *x)
 	return ASN1_item_dup(&PKCS7_it, x);
 }
 
-ASN1_NDEF_SEQUENCE(PKCS7_SIGNED) = {
-	ASN1_SIMPLE(PKCS7_SIGNED, version, ASN1_INTEGER),
-	ASN1_SET_OF(PKCS7_SIGNED, md_algs, X509_ALGOR),
-	ASN1_SIMPLE(PKCS7_SIGNED, contents, PKCS7),
-	ASN1_IMP_SEQUENCE_OF_OPT(PKCS7_SIGNED, cert, X509, 0),
-	ASN1_IMP_SET_OF_OPT(PKCS7_SIGNED, crl, X509_CRL, 1),
-	ASN1_SET_OF(PKCS7_SIGNED, signer_info, PKCS7_SIGNER_INFO)
-} ASN1_NDEF_SEQUENCE_END(PKCS7_SIGNED)
+static const ASN1_TEMPLATE PKCS7_SIGNED_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNED, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_SET_OF,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNED, md_algs),
+		.field_name = "md_algs",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNED, contents),
+		.field_name = "contents",
+		.item = &PKCS7_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNED, cert),
+		.field_name = "cert",
+		.item = &X509_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SET_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(PKCS7_SIGNED, crl),
+		.field_name = "crl",
+		.item = &X509_CRL_it,
+	},
+	{
+		.flags = ASN1_TFLG_SET_OF,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNED, signer_info),
+		.field_name = "signer_info",
+		.item = &PKCS7_SIGNER_INFO_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_SIGNED_it = {
+	.itype = ASN1_ITYPE_NDEF_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_SIGNED_seq_tt,
+	.tcount = sizeof(PKCS7_SIGNED_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS7_SIGNED),
+	.sname = "PKCS7_SIGNED",
+};
 
 
 PKCS7_SIGNED *
@@ -200,22 +345,80 @@ si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(PKCS7_SIGNER_INFO, si_cb) = {
-	ASN1_SIMPLE(PKCS7_SIGNER_INFO, version, ASN1_INTEGER),
-	ASN1_SIMPLE(PKCS7_SIGNER_INFO, issuer_and_serial,
-	    PKCS7_ISSUER_AND_SERIAL),
-	ASN1_SIMPLE(PKCS7_SIGNER_INFO, digest_alg, X509_ALGOR),
+static const ASN1_AUX PKCS7_SIGNER_INFO_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = si_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE PKCS7_SIGNER_INFO_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNER_INFO, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNER_INFO, issuer_and_serial),
+		.field_name = "issuer_and_serial",
+		.item = &PKCS7_ISSUER_AND_SERIAL_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNER_INFO, digest_alg),
+		.field_name = "digest_alg",
+		.item = &X509_ALGOR_it,
+	},
 	/* NB this should be a SET OF but we use a SEQUENCE OF so the
 	 * original order * is retained when the structure is reencoded.
 	 * Since the attributes are implicitly tagged this will not affect
 	 * the encoding.
 	 */
-	ASN1_IMP_SEQUENCE_OF_OPT(PKCS7_SIGNER_INFO, auth_attr,
-	    X509_ATTRIBUTE, 0),
-	ASN1_SIMPLE(PKCS7_SIGNER_INFO, digest_enc_alg, X509_ALGOR),
-	ASN1_SIMPLE(PKCS7_SIGNER_INFO, enc_digest, ASN1_OCTET_STRING),
-	ASN1_IMP_SET_OF_OPT(PKCS7_SIGNER_INFO, unauth_attr, X509_ATTRIBUTE, 1)
-} ASN1_SEQUENCE_END_cb(PKCS7_SIGNER_INFO, PKCS7_SIGNER_INFO)
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNER_INFO, auth_attr),
+		.field_name = "auth_attr",
+		.item = &X509_ATTRIBUTE_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNER_INFO, digest_enc_alg),
+		.field_name = "digest_enc_alg",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGNER_INFO, enc_digest),
+		.field_name = "enc_digest",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SET_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(PKCS7_SIGNER_INFO, unauth_attr),
+		.field_name = "unauth_attr",
+		.item = &X509_ATTRIBUTE_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_SIGNER_INFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_SIGNER_INFO_seq_tt,
+	.tcount = sizeof(PKCS7_SIGNER_INFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &PKCS7_SIGNER_INFO_aux,
+	.size = sizeof(PKCS7_SIGNER_INFO),
+	.sname = "PKCS7_SIGNER_INFO",
+};
 
 
 PKCS7_SIGNER_INFO *
@@ -243,10 +446,32 @@ PKCS7_SIGNER_INFO_free(PKCS7_SIGNER_INFO *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_SIGNER_INFO_it);
 }
 
-ASN1_SEQUENCE(PKCS7_ISSUER_AND_SERIAL) = {
-	ASN1_SIMPLE(PKCS7_ISSUER_AND_SERIAL, issuer, X509_NAME),
-	ASN1_SIMPLE(PKCS7_ISSUER_AND_SERIAL, serial, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(PKCS7_ISSUER_AND_SERIAL)
+static const ASN1_TEMPLATE PKCS7_ISSUER_AND_SERIAL_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ISSUER_AND_SERIAL, issuer),
+		.field_name = "issuer",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ISSUER_AND_SERIAL, serial),
+		.field_name = "serial",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_ISSUER_AND_SERIAL_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_ISSUER_AND_SERIAL_seq_tt,
+	.tcount = sizeof(PKCS7_ISSUER_AND_SERIAL_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS7_ISSUER_AND_SERIAL),
+	.sname = "PKCS7_ISSUER_AND_SERIAL",
+};
 
 
 PKCS7_ISSUER_AND_SERIAL *
@@ -274,11 +499,39 @@ PKCS7_ISSUER_AND_SERIAL_free(PKCS7_ISSUER_AND_SERIAL *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_ISSUER_AND_SERIAL_it);
 }
 
-ASN1_NDEF_SEQUENCE(PKCS7_ENVELOPE) = {
-	ASN1_SIMPLE(PKCS7_ENVELOPE, version, ASN1_INTEGER),
-	ASN1_SET_OF(PKCS7_ENVELOPE, recipientinfo, PKCS7_RECIP_INFO),
-	ASN1_SIMPLE(PKCS7_ENVELOPE, enc_data, PKCS7_ENC_CONTENT)
-} ASN1_NDEF_SEQUENCE_END(PKCS7_ENVELOPE)
+static const ASN1_TEMPLATE PKCS7_ENVELOPE_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENVELOPE, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_SET_OF,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENVELOPE, recipientinfo),
+		.field_name = "recipientinfo",
+		.item = &PKCS7_RECIP_INFO_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENVELOPE, enc_data),
+		.field_name = "enc_data",
+		.item = &PKCS7_ENC_CONTENT_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_ENVELOPE_it = {
+	.itype = ASN1_ITYPE_NDEF_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_ENVELOPE_seq_tt,
+	.tcount = sizeof(PKCS7_ENVELOPE_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS7_ENVELOPE),
+	.sname = "PKCS7_ENVELOPE",
+};
 
 
 PKCS7_ENVELOPE *
@@ -317,13 +570,54 @@ ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	return 1;
 }
 
-ASN1_SEQUENCE_cb(PKCS7_RECIP_INFO, ri_cb) = {
-	ASN1_SIMPLE(PKCS7_RECIP_INFO, version, ASN1_INTEGER),
-	ASN1_SIMPLE(PKCS7_RECIP_INFO, issuer_and_serial,
-	    PKCS7_ISSUER_AND_SERIAL),
-	ASN1_SIMPLE(PKCS7_RECIP_INFO, key_enc_algor, X509_ALGOR),
-	ASN1_SIMPLE(PKCS7_RECIP_INFO, enc_key, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END_cb(PKCS7_RECIP_INFO, PKCS7_RECIP_INFO)
+static const ASN1_AUX PKCS7_RECIP_INFO_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = ri_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE PKCS7_RECIP_INFO_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_RECIP_INFO, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_RECIP_INFO, issuer_and_serial),
+		.field_name = "issuer_and_serial",
+		.item = &PKCS7_ISSUER_AND_SERIAL_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_RECIP_INFO, key_enc_algor),
+		.field_name = "key_enc_algor",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_RECIP_INFO, enc_key),
+		.field_name = "enc_key",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_RECIP_INFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_RECIP_INFO_seq_tt,
+	.tcount = sizeof(PKCS7_RECIP_INFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = &PKCS7_RECIP_INFO_aux,
+	.size = sizeof(PKCS7_RECIP_INFO),
+	.sname = "PKCS7_RECIP_INFO",
+};
 
 
 PKCS7_RECIP_INFO *
@@ -351,11 +645,39 @@ PKCS7_RECIP_INFO_free(PKCS7_RECIP_INFO *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_RECIP_INFO_it);
 }
 
-ASN1_NDEF_SEQUENCE(PKCS7_ENC_CONTENT) = {
-	ASN1_SIMPLE(PKCS7_ENC_CONTENT, content_type, ASN1_OBJECT),
-	ASN1_SIMPLE(PKCS7_ENC_CONTENT, algorithm, X509_ALGOR),
-	ASN1_IMP_OPT(PKCS7_ENC_CONTENT, enc_data, ASN1_OCTET_STRING_NDEF, 0)
-} ASN1_NDEF_SEQUENCE_END(PKCS7_ENC_CONTENT)
+static const ASN1_TEMPLATE PKCS7_ENC_CONTENT_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENC_CONTENT, content_type),
+		.field_name = "content_type",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENC_CONTENT, algorithm),
+		.field_name = "algorithm",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENC_CONTENT, enc_data),
+		.field_name = "enc_data",
+		.item = &ASN1_OCTET_STRING_NDEF_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_ENC_CONTENT_it = {
+	.itype = ASN1_ITYPE_NDEF_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_ENC_CONTENT_seq_tt,
+	.tcount = sizeof(PKCS7_ENC_CONTENT_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS7_ENC_CONTENT),
+	.sname = "PKCS7_ENC_CONTENT",
+};
 
 
 PKCS7_ENC_CONTENT *
@@ -383,15 +705,67 @@ PKCS7_ENC_CONTENT_free(PKCS7_ENC_CONTENT *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_ENC_CONTENT_it);
 }
 
-ASN1_NDEF_SEQUENCE(PKCS7_SIGN_ENVELOPE) = {
-	ASN1_SIMPLE(PKCS7_SIGN_ENVELOPE, version, ASN1_INTEGER),
-	ASN1_SET_OF(PKCS7_SIGN_ENVELOPE, recipientinfo, PKCS7_RECIP_INFO),
-	ASN1_SET_OF(PKCS7_SIGN_ENVELOPE, md_algs, X509_ALGOR),
-	ASN1_SIMPLE(PKCS7_SIGN_ENVELOPE, enc_data, PKCS7_ENC_CONTENT),
-	ASN1_IMP_SET_OF_OPT(PKCS7_SIGN_ENVELOPE, cert, X509, 0),
-	ASN1_IMP_SET_OF_OPT(PKCS7_SIGN_ENVELOPE, crl, X509_CRL, 1),
-	ASN1_SET_OF(PKCS7_SIGN_ENVELOPE, signer_info, PKCS7_SIGNER_INFO)
-} ASN1_NDEF_SEQUENCE_END(PKCS7_SIGN_ENVELOPE)
+static const ASN1_TEMPLATE PKCS7_SIGN_ENVELOPE_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGN_ENVELOPE, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_SET_OF,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGN_ENVELOPE, recipientinfo),
+		.field_name = "recipientinfo",
+		.item = &PKCS7_RECIP_INFO_it,
+	},
+	{
+		.flags = ASN1_TFLG_SET_OF,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGN_ENVELOPE, md_algs),
+		.field_name = "md_algs",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGN_ENVELOPE, enc_data),
+		.field_name = "enc_data",
+		.item = &PKCS7_ENC_CONTENT_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SET_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGN_ENVELOPE, cert),
+		.field_name = "cert",
+		.item = &X509_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_SET_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(PKCS7_SIGN_ENVELOPE, crl),
+		.field_name = "crl",
+		.item = &X509_CRL_it,
+	},
+	{
+		.flags = ASN1_TFLG_SET_OF,
+		.tag = 0,
+		.offset = offsetof(PKCS7_SIGN_ENVELOPE, signer_info),
+		.field_name = "signer_info",
+		.item = &PKCS7_SIGNER_INFO_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_SIGN_ENVELOPE_it = {
+	.itype = ASN1_ITYPE_NDEF_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_SIGN_ENVELOPE_seq_tt,
+	.tcount = sizeof(PKCS7_SIGN_ENVELOPE_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS7_SIGN_ENVELOPE),
+	.sname = "PKCS7_SIGN_ENVELOPE",
+};
 
 
 PKCS7_SIGN_ENVELOPE *
@@ -419,10 +793,32 @@ PKCS7_SIGN_ENVELOPE_free(PKCS7_SIGN_ENVELOPE *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_SIGN_ENVELOPE_it);
 }
 
-ASN1_NDEF_SEQUENCE(PKCS7_ENCRYPT) = {
-	ASN1_SIMPLE(PKCS7_ENCRYPT, version, ASN1_INTEGER),
-	ASN1_SIMPLE(PKCS7_ENCRYPT, enc_data, PKCS7_ENC_CONTENT)
-} ASN1_NDEF_SEQUENCE_END(PKCS7_ENCRYPT)
+static const ASN1_TEMPLATE PKCS7_ENCRYPT_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENCRYPT, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_ENCRYPT, enc_data),
+		.field_name = "enc_data",
+		.item = &PKCS7_ENC_CONTENT_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_ENCRYPT_it = {
+	.itype = ASN1_ITYPE_NDEF_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_ENCRYPT_seq_tt,
+	.tcount = sizeof(PKCS7_ENCRYPT_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS7_ENCRYPT),
+	.sname = "PKCS7_ENCRYPT",
+};
 
 
 PKCS7_ENCRYPT *
@@ -450,12 +846,46 @@ PKCS7_ENCRYPT_free(PKCS7_ENCRYPT *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_ENCRYPT_it);
 }
 
-ASN1_NDEF_SEQUENCE(PKCS7_DIGEST) = {
-	ASN1_SIMPLE(PKCS7_DIGEST, version, ASN1_INTEGER),
-	ASN1_SIMPLE(PKCS7_DIGEST, md, X509_ALGOR),
-	ASN1_SIMPLE(PKCS7_DIGEST, contents, PKCS7),
-	ASN1_SIMPLE(PKCS7_DIGEST, digest, ASN1_OCTET_STRING)
-} ASN1_NDEF_SEQUENCE_END(PKCS7_DIGEST)
+static const ASN1_TEMPLATE PKCS7_DIGEST_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_DIGEST, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_DIGEST, md),
+		.field_name = "md",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_DIGEST, contents),
+		.field_name = "contents",
+		.item = &PKCS7_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS7_DIGEST, digest),
+		.field_name = "digest",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM PKCS7_DIGEST_it = {
+	.itype = ASN1_ITYPE_NDEF_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS7_DIGEST_seq_tt,
+	.tcount = sizeof(PKCS7_DIGEST_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS7_DIGEST),
+	.sname = "PKCS7_DIGEST",
+};
 
 
 PKCS7_DIGEST *
@@ -489,19 +919,45 @@ PKCS7_DIGEST_free(PKCS7_DIGEST *a)
  * encoding.
  */
 
-ASN1_ITEM_TEMPLATE(PKCS7_ATTR_SIGN) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SET_ORDER, 0, PKCS7_ATTRIBUTES,
-	X509_ATTRIBUTE)
-ASN1_ITEM_TEMPLATE_END(PKCS7_ATTR_SIGN)
+static const ASN1_TEMPLATE PKCS7_ATTR_SIGN_item_tt = {
+	.flags = ASN1_TFLG_SET_ORDER,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "PKCS7_ATTRIBUTES",
+	.item = &X509_ATTRIBUTE_it,
+};
+
+const ASN1_ITEM PKCS7_ATTR_SIGN_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &PKCS7_ATTR_SIGN_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "PKCS7_ATTR_SIGN",
+};
 
 /* When verifying attributes we need to use the received order. So
  * we use SEQUENCE OF and tag it to SET OF
  */
 
-ASN1_ITEM_TEMPLATE(PKCS7_ATTR_VERIFY) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_IMPTAG |
-	ASN1_TFLG_UNIVERSAL, V_ASN1_SET, PKCS7_ATTRIBUTES, X509_ATTRIBUTE)
-ASN1_ITEM_TEMPLATE_END(PKCS7_ATTR_VERIFY)
+static const ASN1_TEMPLATE PKCS7_ATTR_VERIFY_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_IMPTAG | ASN1_TFLG_UNIVERSAL,
+	.tag = V_ASN1_SET,
+	.offset = 0,
+	.field_name = "PKCS7_ATTRIBUTES",
+	.item = &X509_ATTRIBUTE_it,
+};
+
+const ASN1_ITEM PKCS7_ATTR_VERIFY_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &PKCS7_ATTR_VERIFY_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "PKCS7_ATTR_VERIFY",
+};
 
 
 int
