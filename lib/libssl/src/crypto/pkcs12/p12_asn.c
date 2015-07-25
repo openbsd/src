@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_asn.c,v 1.7 2015/02/09 16:04:46 jsing Exp $ */
+/* $OpenBSD: p12_asn.c,v 1.8 2015/07/25 15:42:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -63,11 +63,39 @@
 
 /* PKCS#12 ASN1 module */
 
-ASN1_SEQUENCE(PKCS12) = {
-	ASN1_SIMPLE(PKCS12, version, ASN1_INTEGER),
-	ASN1_SIMPLE(PKCS12, authsafes, PKCS7),
-	ASN1_OPT(PKCS12, mac, PKCS12_MAC_DATA)
-} ASN1_SEQUENCE_END(PKCS12)
+static const ASN1_TEMPLATE PKCS12_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS12, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS12, authsafes),
+		.field_name = "authsafes",
+		.item = &PKCS7_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS12, mac),
+		.field_name = "mac",
+		.item = &PKCS12_MAC_DATA_it,
+	},
+};
+
+const ASN1_ITEM PKCS12_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS12_seq_tt,
+	.tcount = sizeof(PKCS12_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS12),
+	.sname = "PKCS12",
+};
 
 
 PKCS12 *
@@ -95,11 +123,39 @@ PKCS12_free(PKCS12 *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS12_it);
 }
 
-ASN1_SEQUENCE(PKCS12_MAC_DATA) = {
-	ASN1_SIMPLE(PKCS12_MAC_DATA, dinfo, X509_SIG),
-	ASN1_SIMPLE(PKCS12_MAC_DATA, salt, ASN1_OCTET_STRING),
-	ASN1_OPT(PKCS12_MAC_DATA, iter, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(PKCS12_MAC_DATA)
+static const ASN1_TEMPLATE PKCS12_MAC_DATA_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS12_MAC_DATA, dinfo),
+		.field_name = "dinfo",
+		.item = &X509_SIG_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS12_MAC_DATA, salt),
+		.field_name = "salt",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS12_MAC_DATA, iter),
+		.field_name = "iter",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM PKCS12_MAC_DATA_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS12_MAC_DATA_seq_tt,
+	.tcount = sizeof(PKCS12_MAC_DATA_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS12_MAC_DATA),
+	.sname = "PKCS12_MAC_DATA",
+};
 
 
 PKCS12_MAC_DATA *
@@ -127,22 +183,86 @@ PKCS12_MAC_DATA_free(PKCS12_MAC_DATA *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS12_MAC_DATA_it);
 }
 
-ASN1_ADB_TEMPLATE(bag_default) =
-    ASN1_EXP(PKCS12_BAGS, value.other, ASN1_ANY, 0);
+static const ASN1_TEMPLATE bag_default_tt = {
+	.flags = ASN1_TFLG_EXPLICIT,
+	.tag = 0,
+	.offset = offsetof(PKCS12_BAGS, value.other),
+	.field_name = "value.other",
+	.item = &ASN1_ANY_it,
+};
 
-ASN1_ADB(PKCS12_BAGS) = {
-	ADB_ENTRY(NID_x509Certificate,
-	    ASN1_EXP(PKCS12_BAGS, value.x509cert, ASN1_OCTET_STRING, 0)),
-	ADB_ENTRY(NID_x509Crl,
-	    ASN1_EXP(PKCS12_BAGS, value.x509crl, ASN1_OCTET_STRING, 0)),
-	ADB_ENTRY(NID_sdsiCertificate,
-	    ASN1_EXP(PKCS12_BAGS, value.sdsicert, ASN1_IA5STRING, 0)),
-} ASN1_ADB_END(PKCS12_BAGS, 0, type, 0, &bag_default_tt, NULL);
+static const ASN1_ADB_TABLE PKCS12_BAGS_adbtbl[] = {
+	{
+		.value = NID_x509Certificate,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_BAGS, value.x509cert),
+			.field_name = "value.x509cert",
+			.item = &ASN1_OCTET_STRING_it,
+		},
+	
+	},
+	{
+		.value = NID_x509Crl,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_BAGS, value.x509crl),
+			.field_name = "value.x509crl",
+			.item = &ASN1_OCTET_STRING_it,
+		},
+	
+	},
+	{
+		.value = NID_sdsiCertificate,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_BAGS, value.sdsicert),
+			.field_name = "value.sdsicert",
+			.item = &ASN1_IA5STRING_it,
+		},
+	
+	},
+};
 
-ASN1_SEQUENCE(PKCS12_BAGS) = {
-	ASN1_SIMPLE(PKCS12_BAGS, type, ASN1_OBJECT),
-	ASN1_ADB_OBJECT(PKCS12_BAGS),
-} ASN1_SEQUENCE_END(PKCS12_BAGS)
+static const ASN1_ADB PKCS12_BAGS_adb = {
+	.flags = 0,
+	.offset = offsetof(PKCS12_BAGS, type),
+	.app_items = 0,
+	.tbl = PKCS12_BAGS_adbtbl,
+	.tblcount = sizeof(PKCS12_BAGS_adbtbl) / sizeof(ASN1_ADB_TABLE),
+	.default_tt = &bag_default_tt,
+	.null_tt = NULL,
+};
+
+static const ASN1_TEMPLATE PKCS12_BAGS_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS12_BAGS, type),
+		.field_name = "type",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_ADB_OID,
+		.tag = -1,
+		.offset = 0,
+		.field_name = "PKCS12_BAGS",
+		.item = (const ASN1_ITEM *)&PKCS12_BAGS_adb,
+	},
+};
+
+const ASN1_ITEM PKCS12_BAGS_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS12_BAGS_seq_tt,
+	.tcount = sizeof(PKCS12_BAGS_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS12_BAGS),
+	.sname = "PKCS12_BAGS",
+};
 
 
 PKCS12_BAGS *
@@ -170,29 +290,119 @@ PKCS12_BAGS_free(PKCS12_BAGS *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS12_BAGS_it);
 }
 
-ASN1_ADB_TEMPLATE(safebag_default) =
-    ASN1_EXP(PKCS12_SAFEBAG, value.other, ASN1_ANY, 0);
+static const ASN1_TEMPLATE safebag_default_tt = {
+	.flags = ASN1_TFLG_EXPLICIT,
+	.tag = 0,
+	.offset = offsetof(PKCS12_SAFEBAG, value.other),
+	.field_name = "value.other",
+	.item = &ASN1_ANY_it,
+};
 
-ASN1_ADB(PKCS12_SAFEBAG) = {
-	ADB_ENTRY(NID_keyBag,
-	    ASN1_EXP(PKCS12_SAFEBAG, value.keybag, PKCS8_PRIV_KEY_INFO, 0)),
-	ADB_ENTRY(NID_pkcs8ShroudedKeyBag,
-	    ASN1_EXP(PKCS12_SAFEBAG, value.shkeybag, X509_SIG, 0)),
-	ADB_ENTRY(NID_safeContentsBag,
-	    ASN1_EXP_SET_OF(PKCS12_SAFEBAG, value.safes, PKCS12_SAFEBAG, 0)),
-	ADB_ENTRY(NID_certBag,
-	    ASN1_EXP(PKCS12_SAFEBAG, value.bag, PKCS12_BAGS, 0)),
-	ADB_ENTRY(NID_crlBag,
-	    ASN1_EXP(PKCS12_SAFEBAG, value.bag, PKCS12_BAGS, 0)),
-	ADB_ENTRY(NID_secretBag,
-	    ASN1_EXP(PKCS12_SAFEBAG, value.bag, PKCS12_BAGS, 0))
-} ASN1_ADB_END(PKCS12_SAFEBAG, 0, type, 0, &safebag_default_tt, NULL);
+static const ASN1_ADB_TABLE PKCS12_SAFEBAG_adbtbl[] = {
+	{
+		.value = NID_keyBag,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_SAFEBAG, value.keybag),
+			.field_name = "value.keybag",
+			.item = &PKCS8_PRIV_KEY_INFO_it,
+		},
+	
+	},
+	{
+		.value = NID_pkcs8ShroudedKeyBag,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_SAFEBAG, value.shkeybag),
+			.field_name = "value.shkeybag",
+			.item = &X509_SIG_it,
+		},
+	
+	},
+	{
+		.value = NID_safeContentsBag,
+		.tt = ASN1_EXP_SET_OF(PKCS12_SAFEBAG, value.safes, PKCS12_SAFEBAG, 0)
+	},
+	{
+		.value = NID_certBag,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_SAFEBAG, value.bag),
+			.field_name = "value.bag",
+			.item = &PKCS12_BAGS_it,
+		},
+	
+	},
+	{
+		.value = NID_crlBag,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_SAFEBAG, value.bag),
+			.field_name = "value.bag",
+			.item = &PKCS12_BAGS_it,
+		},
+	
+	},
+	{
+		.value = NID_secretBag,
+		.tt = {
+			.flags = ASN1_TFLG_EXPLICIT,
+			.tag = 0,
+			.offset = offsetof(PKCS12_SAFEBAG, value.bag),
+			.field_name = "value.bag",
+			.item = &PKCS12_BAGS_it,
+		},
+	
+	},
+};
 
-ASN1_SEQUENCE(PKCS12_SAFEBAG) = {
-	ASN1_SIMPLE(PKCS12_SAFEBAG, type, ASN1_OBJECT),
-	ASN1_ADB_OBJECT(PKCS12_SAFEBAG),
-	ASN1_SET_OF_OPT(PKCS12_SAFEBAG, attrib, X509_ATTRIBUTE)
-} ASN1_SEQUENCE_END(PKCS12_SAFEBAG)
+static const ASN1_ADB PKCS12_SAFEBAG_adb = {
+	.flags = 0,
+	.offset = offsetof(PKCS12_SAFEBAG, type),
+	.app_items = 0,
+	.tbl = PKCS12_SAFEBAG_adbtbl,
+	.tblcount = sizeof(PKCS12_SAFEBAG_adbtbl) / sizeof(ASN1_ADB_TABLE),
+	.default_tt = &safebag_default_tt,
+	.null_tt = NULL,
+};
+
+static const ASN1_TEMPLATE PKCS12_SAFEBAG_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(PKCS12_SAFEBAG, type),
+		.field_name = "type",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = ASN1_TFLG_ADB_OID,
+		.tag = -1,
+		.offset = 0,
+		.field_name = "PKCS12_SAFEBAG",
+		.item = (const ASN1_ITEM *)&PKCS12_SAFEBAG_adb,
+	},
+	{
+		.flags = ASN1_TFLG_SET_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(PKCS12_SAFEBAG, attrib),
+		.field_name = "attrib",
+		.item = &X509_ATTRIBUTE_it,
+	},
+};
+
+const ASN1_ITEM PKCS12_SAFEBAG_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = PKCS12_SAFEBAG_seq_tt,
+	.tcount = sizeof(PKCS12_SAFEBAG_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(PKCS12_SAFEBAG),
+	.sname = "PKCS12_SAFEBAG",
+};
 
 
 PKCS12_SAFEBAG *
@@ -221,12 +431,40 @@ PKCS12_SAFEBAG_free(PKCS12_SAFEBAG *a)
 }
 
 /* SEQUENCE OF SafeBag */
-ASN1_ITEM_TEMPLATE(PKCS12_SAFEBAGS) =
-ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, PKCS12_SAFEBAGS, PKCS12_SAFEBAG)
-ASN1_ITEM_TEMPLATE_END(PKCS12_SAFEBAGS)
+static const ASN1_TEMPLATE PKCS12_SAFEBAGS_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "PKCS12_SAFEBAGS",
+	.item = &PKCS12_SAFEBAG_it,
+};
+
+const ASN1_ITEM PKCS12_SAFEBAGS_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &PKCS12_SAFEBAGS_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "PKCS12_SAFEBAGS",
+};
 
 /* Authsafes: SEQUENCE OF PKCS7 */
-ASN1_ITEM_TEMPLATE(PKCS12_AUTHSAFES) =
-ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, PKCS12_AUTHSAFES, PKCS7)
-ASN1_ITEM_TEMPLATE_END(PKCS12_AUTHSAFES)
+static const ASN1_TEMPLATE PKCS12_AUTHSAFES_item_tt = {
+	.flags = ASN1_TFLG_SEQUENCE_OF,
+	.tag = 0,
+	.offset = 0,
+	.field_name = "PKCS12_AUTHSAFES",
+	.item = &PKCS7_it,
+};
+
+const ASN1_ITEM PKCS12_AUTHSAFES_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = -1,
+	.templates = &PKCS12_AUTHSAFES_item_tt,
+	.tcount = 0,
+	.funcs = NULL,
+	.size = 0,
+	.sname = "PKCS12_AUTHSAFES",
+};
 
