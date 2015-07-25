@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.c,v 1.3 2015/07/21 03:26:02 schwarze Exp $    */
+/*      $OpenBSD: tag.c,v 1.4 2015/07/25 14:01:39 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -30,6 +30,7 @@
 
 struct tag_entry {
 	size_t	 line;
+	int	 prio;
 	char	 s[];
 };
 
@@ -77,7 +78,7 @@ tag_init(void)
  * or 0 if the term is unknown.
  */
 size_t
-tag_get(const char *s, size_t len)
+tag_get(const char *s, size_t len, int prio)
 {
 	struct tag_entry	*entry;
 	const char		*end;
@@ -90,14 +91,14 @@ tag_get(const char *s, size_t len)
 	end = s + len;
 	slot = ohash_qlookupi(&tag_data, s, &end);
 	entry = ohash_find(&tag_data, slot);
-	return(entry == NULL ? 0 : entry->line);
+	return((entry == NULL || prio < entry->prio) ? 0 : entry->line);
 }
 
 /*
  * Set the line number where a term is defined.
  */
 void
-tag_put(const char *s, size_t len, size_t line)
+tag_put(const char *s, size_t len, int prio, size_t line)
 {
 	struct tag_entry	*entry;
 	const char		*end;
@@ -117,6 +118,7 @@ tag_put(const char *s, size_t len, size_t line)
 		ohash_insert(&tag_data, slot, entry);
 	}
 	entry->line = line;
+	entry->prio = prio;
 }
 
 /*
