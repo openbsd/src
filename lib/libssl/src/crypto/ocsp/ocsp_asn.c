@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_asn.c,v 1.7 2015/02/09 16:04:46 jsing Exp $ */
+/* $OpenBSD: ocsp_asn.c,v 1.8 2015/07/25 14:52:47 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -59,11 +59,39 @@
 #include <openssl/asn1t.h>
 #include <openssl/ocsp.h>
 
-ASN1_SEQUENCE(OCSP_SIGNATURE) = {
-	ASN1_SIMPLE(OCSP_SIGNATURE, signatureAlgorithm, X509_ALGOR),
-	ASN1_SIMPLE(OCSP_SIGNATURE, signature, ASN1_BIT_STRING),
-	ASN1_EXP_SEQUENCE_OF_OPT(OCSP_SIGNATURE, certs, X509, 0)
-} ASN1_SEQUENCE_END(OCSP_SIGNATURE)
+static const ASN1_TEMPLATE OCSP_SIGNATURE_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_SIGNATURE, signatureAlgorithm),
+		.field_name = "signatureAlgorithm",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_SIGNATURE, signature),
+		.field_name = "signature",
+		.item = &ASN1_BIT_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_SIGNATURE, certs),
+		.field_name = "certs",
+		.item = &X509_it,
+	},
+};
+
+const ASN1_ITEM OCSP_SIGNATURE_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_SIGNATURE_seq_tt,
+	.tcount = sizeof(OCSP_SIGNATURE_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_SIGNATURE),
+	.sname = "OCSP_SIGNATURE",
+};
 
 
 OCSP_SIGNATURE *
@@ -91,12 +119,46 @@ OCSP_SIGNATURE_free(OCSP_SIGNATURE *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_SIGNATURE_it);
 }
 
-ASN1_SEQUENCE(OCSP_CERTID) = {
-	ASN1_SIMPLE(OCSP_CERTID, hashAlgorithm, X509_ALGOR),
-	ASN1_SIMPLE(OCSP_CERTID, issuerNameHash, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(OCSP_CERTID, issuerKeyHash, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(OCSP_CERTID, serialNumber, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(OCSP_CERTID)
+static const ASN1_TEMPLATE OCSP_CERTID_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_CERTID, hashAlgorithm),
+		.field_name = "hashAlgorithm",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_CERTID, issuerNameHash),
+		.field_name = "issuerNameHash",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_CERTID, issuerKeyHash),
+		.field_name = "issuerKeyHash",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_CERTID, serialNumber),
+		.field_name = "serialNumber",
+		.item = &ASN1_INTEGER_it,
+	},
+};
+
+const ASN1_ITEM OCSP_CERTID_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_CERTID_seq_tt,
+	.tcount = sizeof(OCSP_CERTID_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_CERTID),
+	.sname = "OCSP_CERTID",
+};
 
 
 OCSP_CERTID *
@@ -124,10 +186,32 @@ OCSP_CERTID_free(OCSP_CERTID *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_CERTID_it);
 }
 
-ASN1_SEQUENCE(OCSP_ONEREQ) = {
-	ASN1_SIMPLE(OCSP_ONEREQ, reqCert, OCSP_CERTID),
-	ASN1_EXP_SEQUENCE_OF_OPT(OCSP_ONEREQ, singleRequestExtensions, X509_EXTENSION, 0)
-} ASN1_SEQUENCE_END(OCSP_ONEREQ)
+static const ASN1_TEMPLATE OCSP_ONEREQ_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_ONEREQ, reqCert),
+		.field_name = "reqCert",
+		.item = &OCSP_CERTID_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_ONEREQ, singleRequestExtensions),
+		.field_name = "singleRequestExtensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM OCSP_ONEREQ_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_ONEREQ_seq_tt,
+	.tcount = sizeof(OCSP_ONEREQ_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_ONEREQ),
+	.sname = "OCSP_ONEREQ",
+};
 
 
 OCSP_ONEREQ *
@@ -155,12 +239,46 @@ OCSP_ONEREQ_free(OCSP_ONEREQ *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_ONEREQ_it);
 }
 
-ASN1_SEQUENCE(OCSP_REQINFO) = {
-	ASN1_EXP_OPT(OCSP_REQINFO, version, ASN1_INTEGER, 0),
-	ASN1_EXP_OPT(OCSP_REQINFO, requestorName, GENERAL_NAME, 1),
-	ASN1_SEQUENCE_OF(OCSP_REQINFO, requestList, OCSP_ONEREQ),
-	ASN1_EXP_SEQUENCE_OF_OPT(OCSP_REQINFO, requestExtensions, X509_EXTENSION, 2)
-} ASN1_SEQUENCE_END(OCSP_REQINFO)
+static const ASN1_TEMPLATE OCSP_REQINFO_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_REQINFO, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(OCSP_REQINFO, requestorName),
+		.field_name = "requestorName",
+		.item = &GENERAL_NAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(OCSP_REQINFO, requestList),
+		.field_name = "requestList",
+		.item = &OCSP_ONEREQ_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 2,
+		.offset = offsetof(OCSP_REQINFO, requestExtensions),
+		.field_name = "requestExtensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM OCSP_REQINFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_REQINFO_seq_tt,
+	.tcount = sizeof(OCSP_REQINFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_REQINFO),
+	.sname = "OCSP_REQINFO",
+};
 
 
 OCSP_REQINFO *
@@ -188,10 +306,32 @@ OCSP_REQINFO_free(OCSP_REQINFO *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_REQINFO_it);
 }
 
-ASN1_SEQUENCE(OCSP_REQUEST) = {
-	ASN1_SIMPLE(OCSP_REQUEST, tbsRequest, OCSP_REQINFO),
-	ASN1_EXP_OPT(OCSP_REQUEST, optionalSignature, OCSP_SIGNATURE, 0)
-} ASN1_SEQUENCE_END(OCSP_REQUEST)
+static const ASN1_TEMPLATE OCSP_REQUEST_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_REQUEST, tbsRequest),
+		.field_name = "tbsRequest",
+		.item = &OCSP_REQINFO_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_REQUEST, optionalSignature),
+		.field_name = "optionalSignature",
+		.item = &OCSP_SIGNATURE_it,
+	},
+};
+
+const ASN1_ITEM OCSP_REQUEST_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_REQUEST_seq_tt,
+	.tcount = sizeof(OCSP_REQUEST_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_REQUEST),
+	.sname = "OCSP_REQUEST",
+};
 
 
 OCSP_REQUEST *
@@ -221,10 +361,32 @@ OCSP_REQUEST_free(OCSP_REQUEST *a)
 
 /* OCSP_RESPONSE templates */
 
-ASN1_SEQUENCE(OCSP_RESPBYTES) = {
-	ASN1_SIMPLE(OCSP_RESPBYTES, responseType, ASN1_OBJECT),
-	ASN1_SIMPLE(OCSP_RESPBYTES, response, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(OCSP_RESPBYTES)
+static const ASN1_TEMPLATE OCSP_RESPBYTES_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPBYTES, responseType),
+		.field_name = "responseType",
+		.item = &ASN1_OBJECT_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPBYTES, response),
+		.field_name = "response",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM OCSP_RESPBYTES_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_RESPBYTES_seq_tt,
+	.tcount = sizeof(OCSP_RESPBYTES_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_RESPBYTES),
+	.sname = "OCSP_RESPBYTES",
+};
 
 
 OCSP_RESPBYTES *
@@ -252,10 +414,32 @@ OCSP_RESPBYTES_free(OCSP_RESPBYTES *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPBYTES_it);
 }
 
-ASN1_SEQUENCE(OCSP_RESPONSE) = {
-	ASN1_SIMPLE(OCSP_RESPONSE, responseStatus, ASN1_ENUMERATED),
-	ASN1_EXP_OPT(OCSP_RESPONSE, responseBytes, OCSP_RESPBYTES, 0)
-} ASN1_SEQUENCE_END(OCSP_RESPONSE)
+static const ASN1_TEMPLATE OCSP_RESPONSE_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPONSE, responseStatus),
+		.field_name = "responseStatus",
+		.item = &ASN1_ENUMERATED_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPONSE, responseBytes),
+		.field_name = "responseBytes",
+		.item = &OCSP_RESPBYTES_it,
+	},
+};
+
+const ASN1_ITEM OCSP_RESPONSE_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_RESPONSE_seq_tt,
+	.tcount = sizeof(OCSP_RESPONSE_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_RESPONSE),
+	.sname = "OCSP_RESPONSE",
+};
 
 
 OCSP_RESPONSE *
@@ -283,10 +467,32 @@ OCSP_RESPONSE_free(OCSP_RESPONSE *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPONSE_it);
 }
 
-ASN1_CHOICE(OCSP_RESPID) = {
-	ASN1_EXP(OCSP_RESPID, value.byName, X509_NAME, 1),
-	ASN1_EXP(OCSP_RESPID, value.byKey, ASN1_OCTET_STRING, 2)
-} ASN1_CHOICE_END(OCSP_RESPID)
+static const ASN1_TEMPLATE OCSP_RESPID_ch_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 1,
+		.offset = offsetof(OCSP_RESPID, value.byName),
+		.field_name = "value.byName",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT,
+		.tag = 2,
+		.offset = offsetof(OCSP_RESPID, value.byKey),
+		.field_name = "value.byKey",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+};
+
+const ASN1_ITEM OCSP_RESPID_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(OCSP_RESPID, type),
+	.templates = OCSP_RESPID_ch_tt,
+	.tcount = sizeof(OCSP_RESPID_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_RESPID),
+	.sname = "OCSP_RESPID",
+};
 
 
 OCSP_RESPID *
@@ -314,10 +520,32 @@ OCSP_RESPID_free(OCSP_RESPID *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPID_it);
 }
 
-ASN1_SEQUENCE(OCSP_REVOKEDINFO) = {
-	ASN1_SIMPLE(OCSP_REVOKEDINFO, revocationTime, ASN1_GENERALIZEDTIME),
-	ASN1_EXP_OPT(OCSP_REVOKEDINFO, revocationReason, ASN1_ENUMERATED, 0)
-} ASN1_SEQUENCE_END(OCSP_REVOKEDINFO)
+static const ASN1_TEMPLATE OCSP_REVOKEDINFO_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_REVOKEDINFO, revocationTime),
+		.field_name = "revocationTime",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_REVOKEDINFO, revocationReason),
+		.field_name = "revocationReason",
+		.item = &ASN1_ENUMERATED_it,
+	},
+};
+
+const ASN1_ITEM OCSP_REVOKEDINFO_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_REVOKEDINFO_seq_tt,
+	.tcount = sizeof(OCSP_REVOKEDINFO_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_REVOKEDINFO),
+	.sname = "OCSP_REVOKEDINFO",
+};
 
 
 OCSP_REVOKEDINFO *
@@ -345,11 +573,39 @@ OCSP_REVOKEDINFO_free(OCSP_REVOKEDINFO *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_REVOKEDINFO_it);
 }
 
-ASN1_CHOICE(OCSP_CERTSTATUS) = {
-	ASN1_IMP(OCSP_CERTSTATUS, value.good, ASN1_NULL, 0),
-	ASN1_IMP(OCSP_CERTSTATUS, value.revoked, OCSP_REVOKEDINFO, 1),
-	ASN1_IMP(OCSP_CERTSTATUS, value.unknown, ASN1_NULL, 2)
-} ASN1_CHOICE_END(OCSP_CERTSTATUS)
+static const ASN1_TEMPLATE OCSP_CERTSTATUS_ch_tt[] = {
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = 0,
+		.offset = offsetof(OCSP_CERTSTATUS, value.good),
+		.field_name = "value.good",
+		.item = &ASN1_NULL_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = 1,
+		.offset = offsetof(OCSP_CERTSTATUS, value.revoked),
+		.field_name = "value.revoked",
+		.item = &OCSP_REVOKEDINFO_it,
+	},
+	{
+		.flags = ASN1_TFLG_IMPLICIT,
+		.tag = 2,
+		.offset = offsetof(OCSP_CERTSTATUS, value.unknown),
+		.field_name = "value.unknown",
+		.item = &ASN1_NULL_it,
+	},
+};
+
+const ASN1_ITEM OCSP_CERTSTATUS_it = {
+	.itype = ASN1_ITYPE_CHOICE,
+	.utype = offsetof(OCSP_CERTSTATUS, type),
+	.templates = OCSP_CERTSTATUS_ch_tt,
+	.tcount = sizeof(OCSP_CERTSTATUS_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_CERTSTATUS),
+	.sname = "OCSP_CERTSTATUS",
+};
 
 
 OCSP_CERTSTATUS *
@@ -377,13 +633,53 @@ OCSP_CERTSTATUS_free(OCSP_CERTSTATUS *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_CERTSTATUS_it);
 }
 
-ASN1_SEQUENCE(OCSP_SINGLERESP) = {
-	ASN1_SIMPLE(OCSP_SINGLERESP, certId, OCSP_CERTID),
-	ASN1_SIMPLE(OCSP_SINGLERESP, certStatus, OCSP_CERTSTATUS),
-	ASN1_SIMPLE(OCSP_SINGLERESP, thisUpdate, ASN1_GENERALIZEDTIME),
-	ASN1_EXP_OPT(OCSP_SINGLERESP, nextUpdate, ASN1_GENERALIZEDTIME, 0),
-	ASN1_EXP_SEQUENCE_OF_OPT(OCSP_SINGLERESP, singleExtensions, X509_EXTENSION, 1)
-} ASN1_SEQUENCE_END(OCSP_SINGLERESP)
+static const ASN1_TEMPLATE OCSP_SINGLERESP_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_SINGLERESP, certId),
+		.field_name = "certId",
+		.item = &OCSP_CERTID_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_SINGLERESP, certStatus),
+		.field_name = "certStatus",
+		.item = &OCSP_CERTSTATUS_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_SINGLERESP, thisUpdate),
+		.field_name = "thisUpdate",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_SINGLERESP, nextUpdate),
+		.field_name = "nextUpdate",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(OCSP_SINGLERESP, singleExtensions),
+		.field_name = "singleExtensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM OCSP_SINGLERESP_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_SINGLERESP_seq_tt,
+	.tcount = sizeof(OCSP_SINGLERESP_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_SINGLERESP),
+	.sname = "OCSP_SINGLERESP",
+};
 
 
 OCSP_SINGLERESP *
@@ -411,13 +707,53 @@ OCSP_SINGLERESP_free(OCSP_SINGLERESP *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_SINGLERESP_it);
 }
 
-ASN1_SEQUENCE(OCSP_RESPDATA) = {
-	ASN1_EXP_OPT(OCSP_RESPDATA, version, ASN1_INTEGER, 0),
-	ASN1_SIMPLE(OCSP_RESPDATA, responderId, OCSP_RESPID),
-	ASN1_SIMPLE(OCSP_RESPDATA, producedAt, ASN1_GENERALIZEDTIME),
-	ASN1_SEQUENCE_OF(OCSP_RESPDATA, responses, OCSP_SINGLERESP),
-	ASN1_EXP_SEQUENCE_OF_OPT(OCSP_RESPDATA, responseExtensions, X509_EXTENSION, 1)
-} ASN1_SEQUENCE_END(OCSP_RESPDATA)
+static const ASN1_TEMPLATE OCSP_RESPDATA_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPDATA, version),
+		.field_name = "version",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPDATA, responderId),
+		.field_name = "responderId",
+		.item = &OCSP_RESPID_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPDATA, producedAt),
+		.field_name = "producedAt",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(OCSP_RESPDATA, responses),
+		.field_name = "responses",
+		.item = &OCSP_SINGLERESP_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(OCSP_RESPDATA, responseExtensions),
+		.field_name = "responseExtensions",
+		.item = &X509_EXTENSION_it,
+	},
+};
+
+const ASN1_ITEM OCSP_RESPDATA_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_RESPDATA_seq_tt,
+	.tcount = sizeof(OCSP_RESPDATA_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_RESPDATA),
+	.sname = "OCSP_RESPDATA",
+};
 
 
 OCSP_RESPDATA *
@@ -445,12 +781,46 @@ OCSP_RESPDATA_free(OCSP_RESPDATA *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPDATA_it);
 }
 
-ASN1_SEQUENCE(OCSP_BASICRESP) = {
-	ASN1_SIMPLE(OCSP_BASICRESP, tbsResponseData, OCSP_RESPDATA),
-	ASN1_SIMPLE(OCSP_BASICRESP, signatureAlgorithm, X509_ALGOR),
-	ASN1_SIMPLE(OCSP_BASICRESP, signature, ASN1_BIT_STRING),
-	ASN1_EXP_SEQUENCE_OF_OPT(OCSP_BASICRESP, certs, X509, 0)
-} ASN1_SEQUENCE_END(OCSP_BASICRESP)
+static const ASN1_TEMPLATE OCSP_BASICRESP_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_BASICRESP, tbsResponseData),
+		.field_name = "tbsResponseData",
+		.item = &OCSP_RESPDATA_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_BASICRESP, signatureAlgorithm),
+		.field_name = "signatureAlgorithm",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_BASICRESP, signature),
+		.field_name = "signature",
+		.item = &ASN1_BIT_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_BASICRESP, certs),
+		.field_name = "certs",
+		.item = &X509_it,
+	},
+};
+
+const ASN1_ITEM OCSP_BASICRESP_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_BASICRESP_seq_tt,
+	.tcount = sizeof(OCSP_BASICRESP_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_BASICRESP),
+	.sname = "OCSP_BASICRESP",
+};
 
 
 OCSP_BASICRESP *
@@ -478,11 +848,39 @@ OCSP_BASICRESP_free(OCSP_BASICRESP *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_BASICRESP_it);
 }
 
-ASN1_SEQUENCE(OCSP_CRLID) = {
-	ASN1_EXP_OPT(OCSP_CRLID, crlUrl, ASN1_IA5STRING, 0),
-	ASN1_EXP_OPT(OCSP_CRLID, crlNum, ASN1_INTEGER, 1),
-	ASN1_EXP_OPT(OCSP_CRLID, crlTime, ASN1_GENERALIZEDTIME, 2)
-} ASN1_SEQUENCE_END(OCSP_CRLID)
+static const ASN1_TEMPLATE OCSP_CRLID_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_CRLID, crlUrl),
+		.field_name = "crlUrl",
+		.item = &ASN1_IA5STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 1,
+		.offset = offsetof(OCSP_CRLID, crlNum),
+		.field_name = "crlNum",
+		.item = &ASN1_INTEGER_it,
+	},
+	{
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
+		.tag = 2,
+		.offset = offsetof(OCSP_CRLID, crlTime),
+		.field_name = "crlTime",
+		.item = &ASN1_GENERALIZEDTIME_it,
+	},
+};
+
+const ASN1_ITEM OCSP_CRLID_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_CRLID_seq_tt,
+	.tcount = sizeof(OCSP_CRLID_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_CRLID),
+	.sname = "OCSP_CRLID",
+};
 
 
 OCSP_CRLID *
@@ -510,10 +908,32 @@ OCSP_CRLID_free(OCSP_CRLID *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_CRLID_it);
 }
 
-ASN1_SEQUENCE(OCSP_SERVICELOC) = {
-	ASN1_SIMPLE(OCSP_SERVICELOC, issuer, X509_NAME),
-	ASN1_SEQUENCE_OF_OPT(OCSP_SERVICELOC, locator, ACCESS_DESCRIPTION)
-} ASN1_SEQUENCE_END(OCSP_SERVICELOC)
+static const ASN1_TEMPLATE OCSP_SERVICELOC_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(OCSP_SERVICELOC, issuer),
+		.field_name = "issuer",
+		.item = &X509_NAME_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(OCSP_SERVICELOC, locator),
+		.field_name = "locator",
+		.item = &ACCESS_DESCRIPTION_it,
+	},
+};
+
+const ASN1_ITEM OCSP_SERVICELOC_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = OCSP_SERVICELOC_seq_tt,
+	.tcount = sizeof(OCSP_SERVICELOC_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(OCSP_SERVICELOC),
+	.sname = "OCSP_SERVICELOC",
+};
 
 
 OCSP_SERVICELOC *
