@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.25 2015/02/15 21:34:33 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.26 2015/07/25 20:45:05 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -15,9 +15,9 @@
 #ifndef _M88K_PMAP_H_
 #define _M88K_PMAP_H_
 
-#include <machine/mmu.h>
-
 #ifdef	_KERNEL
+
+#include <machine/mmu.h>
 
 /*
  * PMAP structure
@@ -88,18 +88,19 @@ struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
-	int		pv_flags;
 };
 
 struct vm_page_md {
-	struct pv_entry pvent;
+	struct pv_entry pv_ent;
+	int		pv_flags;
 };
 
-#define	VM_MDPAGE_INIT(pg) do {			\
-	(pg)->mdpage.pvent.pv_next = NULL;	\
-	(pg)->mdpage.pvent.pv_pmap = NULL;	\
-	(pg)->mdpage.pvent.pv_va = 0;		\
-	(pg)->mdpage.pvent.pv_flags = 0;	\
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	(pg)->mdpage.pv_ent.pv_next = NULL;				\
+	(pg)->mdpage.pv_ent.pv_pmap = NULL;				\
+	(pg)->mdpage.pv_ent.pv_va = 0;					\
+	(pg)->mdpage.pv_flags = 0;					\
 } while (0)
 
 #endif /* _LOCORE */

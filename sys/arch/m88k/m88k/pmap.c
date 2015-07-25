@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.80 2015/07/25 20:45:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -68,7 +68,6 @@
 #include <uvm/uvm.h>
 
 #include <machine/asm_macro.h>
-#include <machine/mmu.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/pmap_table.h>
@@ -172,7 +171,7 @@ boolean_t	 pmap_testbit(struct vm_page *, int);
 static __inline pv_entry_t
 pg_to_pvh(struct vm_page *pg)
 {
-	return &pg->mdpage.pvent;
+	return &pg->mdpage.pv_ent;
 }
 
 /*
@@ -1002,7 +1001,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	int s;
 	pt_entry_t *pte, npte;
 	paddr_t old_pa;
-	pv_entry_t pv_e, pvl;
+	pv_entry_t pv_e, head;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	struct vm_page *pg;
 
@@ -1035,10 +1034,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	s = splvm();
-	if (pg != NULL)
-		pvl = pg_to_pvh(pg);
-	else
-		pvl = NULL;
 
 	if (old_pa == pa) {
 		/* May be changing its wired attributes or protection */
@@ -1051,19 +1046,20 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (PDT_VALID(pte))
 			pmap_remove_pte(pmap, va, pte, NULL, FALSE);
 
-		if (pvl != NULL) {
+		if (pg != NULL) {
 			/*
 			 * Enter the mapping in the PV list for this
 			 * managed page.
 			 */
-			if (pvl->pv_pmap == NULL) {
+			head = pg_to_pvh(pg);
+			if (head->pv_pmap == NULL) {
 				/*
 				 * No mappings yet.
 				 */
-				pvl->pv_va = va;
-				pvl->pv_pmap = pmap;
-				pvl->pv_next = NULL;
-				pvl->pv_flags = 0;
+				head->pv_va = va;
+				head->pv_pmap = pmap;
+				head->pv_next = NULL;
+				pg->mdpage.pv_flags = 0;
 			} else {
 				/*
 				 * Add new pv_entry after header.
@@ -1082,9 +1078,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				}
 				pv_e->pv_va = va;
 				pv_e->pv_pmap = pmap;
-				pv_e->pv_next = pvl->pv_next;
-				pv_e->pv_flags = 0;
-				pvl->pv_next = pv_e;
+				pv_e->pv_next = head->pv_next;
+				head->pv_next = pv_e;
 			}
 		}
 
@@ -1106,7 +1101,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * know the page is dirty, or we are using the kernel pmap.
 		 */
 		if (CPU_IS88110 && pmap != pmap_kernel() &&
-		    pg != NULL && (pvl->pv_flags & PG_M) == 0)
+		    pg != NULL && (pg->mdpage.pv_flags & PG_M) == 0)
 			npte |= PG_U;
 		else
 			npte |= PG_M_U;
@@ -1133,14 +1128,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Cache attribute flags
 	 */
-	if (pvl != NULL) {
+	if (pg != NULL) {
 		if (flags & PROT_WRITE) {
 			if (CPU_IS88110 && pmap != pmap_kernel())
-				pvl->pv_flags |= PG_U;
+				pg->mdpage.pv_flags |= PG_U;
 			else
-				pvl->pv_flags |= PG_M_U;
+				pg->mdpage.pv_flags |= PG_M_U;
 		} else if (flags & PROT_MASK)
-			pvl->pv_flags |= PG_U;
+			pg->mdpage.pv_flags |= PG_U;
 	}
 
 	splx(s);
@@ -1192,14 +1187,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
  * [INTERNAL]
  * Remove the page at `va' in `pmap', which pte is pointed to by `pte', and
  * update the status of the vm_page matching this translation (if this is
- * indeed a managed page). Flushe the tlb entry if `flush' is nonzero.
+ * indeed a managed page). Flush the tlb entry if `flush' is nonzero.
  */
 void
 pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
    boolean_t flush)
 {
 	pt_entry_t opte;
-	pv_entry_t prev, cur, pvl;
+	pv_entry_t prev, cur, head;
 	paddr_t pa;
 
 	splassert(IPL_VM);
@@ -1233,16 +1228,16 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 	 * Remove the mapping from the pvlist for
 	 * this physical page.
 	 */
-	pvl = pg_to_pvh(pg);
+	head = pg_to_pvh(pg);
 
 #ifdef DIAGNOSTIC
-	if (pvl->pv_pmap == NULL)
+	if (head->pv_pmap == NULL)
 		panic("pmap_remove_pte(%p, %p, %p, %p/%p, %d): null pv_list",
 		   pmap, (void *)va, pte, (void *)pa, pg, flush);
 #endif
 
 	prev = NULL;
-	for (cur = pvl; cur != NULL; cur = cur->pv_next) {
+	for (cur = head; cur != NULL; cur = cur->pv_next) {
 		if (cur->pv_va == va && cur->pv_pmap == pmap)
 			break;
 		prev = cur;
@@ -1250,7 +1245,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 	if (cur == NULL) {
 		panic("pmap_remove_pte(%p, %p, %p, %p, %d): mapping for va "
 		    "(pa %p) not in pv list at %p",
-		    pmap, (void *)va, pte, pg, flush, (void *)pa, pvl);
+		    pmap, (void *)va, pte, pg, flush, (void *)pa, head);
 	}
 
 	if (prev == NULL) {
@@ -1261,11 +1256,10 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 		 */
 		cur = cur->pv_next;
 		if (cur != NULL) {
-			cur->pv_flags = pvl->pv_flags;
-			*pvl = *cur;
+			*head = *cur;
 			pool_put(&pvpool, cur);
 		} else {
-			pvl->pv_pmap = NULL;
+			head->pv_pmap = NULL;
 			/*
 			 * This page is no longer in use, and is likely
 			 * to be reused soon; since it may still have
@@ -1282,7 +1276,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 	}
 
 	/* Update saved attributes for managed page */
-	pvl->pv_flags |= opte;
+	pg->mdpage.pv_flags |= opte;
 }
 
 /*
@@ -1399,7 +1393,7 @@ void
 pmap_remove_page(struct vm_page *pg)
 {
 	pt_entry_t *pte;
-	pv_entry_t pvl;
+	pv_entry_t head, pvep;
 	vaddr_t va;
 	pmap_t pmap;
 	int s;
@@ -1410,17 +1404,18 @@ pmap_remove_page(struct vm_page *pg)
 	/*
 	 * Walk down PV list, removing all mappings.
 	 */
-	pvl = pg_to_pvh(pg);
-	while (pvl != NULL && (pmap = pvl->pv_pmap) != NULL) {
-		va = pvl->pv_va;
+	pvep = head = pg_to_pvh(pg);
+	while (pvep != NULL && (pmap = pvep->pv_pmap) != NULL) {
+		va = pvep->pv_va;
 		pte = pmap_pte(pmap, va);
 
 		if (pte == NULL || !PDT_VALID(pte)) {
-			pvl = pvl->pv_next;
+			pvep = pvep->pv_next;
 			continue;	/* no page mapping */
 		}
 
 		pmap_remove_pte(pmap, va, pte, pg, TRUE);
+		pvep = head;
 		/*
 		 * Do not free any empty page tables,
 		 * leave that for when VM calls pmap_collect().
@@ -1549,7 +1544,7 @@ pmap_zero_page(struct vm_page *pg)
 void
 pmap_changebit(struct vm_page *pg, int set, int mask)
 {
-	pv_entry_t pvl, pvep;
+	pv_entry_t head, pvep;
 	pt_entry_t *pte, npte, opte;
 	pmap_t pmap;
 	int s;
@@ -1559,15 +1554,15 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 
 	s = splvm();
 
-	pvl = pg_to_pvh(pg);
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
-	pvl->pv_flags &= mask;
+	pg->mdpage.pv_flags &= mask;
 
-	if (pvl->pv_pmap != NULL) {
+	head = pg_to_pvh(pg);
+	if (head->pv_pmap != NULL) {
 		/* for each listed pmap, update the affected bits */
-		for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
+		for (pvep = head; pvep != NULL; pvep = pvep->pv_next) {
 			pmap = pvep->pv_pmap;
 			va = pvep->pv_va;
 			pte = pmap_pte(pmap, va);
@@ -1615,7 +1610,7 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 boolean_t
 pmap_testbit(struct vm_page *pg, int bit)
 {
-	pv_entry_t pvl, pvep;
+	pv_entry_t head, pvep;
 	pt_entry_t *pte;
 	pmap_t pmap;
 	int s;
@@ -1624,8 +1619,7 @@ pmap_testbit(struct vm_page *pg, int bit)
 
 	s = splvm();
 
-	pvl = pg_to_pvh(pg);
-	if (pvl->pv_flags & bit) {
+	if (pg->mdpage.pv_flags & bit) {
 		/* we've already cached this flag for this page,
 		   no use looking further... */
 		DPRINTF(CD_TBIT, ("cached\n"));
@@ -1633,9 +1627,10 @@ pmap_testbit(struct vm_page *pg, int bit)
 		return (TRUE);
 	}
 
-	if (pvl->pv_pmap != NULL) {
+	head = pg_to_pvh(pg);
+	if (head->pv_pmap != NULL) {
 		/* for each listed pmap, check modified bit for given page */
-		for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
+		for (pvep = head; pvep != NULL; pvep = pvep->pv_next) {
 			pmap = pvep->pv_pmap;
 
 			pte = pmap_pte(pmap, pvep->pv_va);
@@ -1649,7 +1644,7 @@ pmap_testbit(struct vm_page *pg, int bit)
 #endif
 
 			if ((*pte & bit) != 0) {
-				pvl->pv_flags |= bit;
+				pg->mdpage.pv_flags |= bit;
 				DPRINTF(CD_TBIT, ("found\n"));
 				splx(s);
 				return (TRUE);
@@ -1673,7 +1668,7 @@ boolean_t
 pmap_unsetbit(struct vm_page *pg, int bit)
 {
 	boolean_t rv = FALSE;
-	pv_entry_t pvl, pvep;
+	pv_entry_t head, pvep;
 	pt_entry_t *pte, opte, npte;
 	pmap_t pmap;
 	int s;
@@ -1683,19 +1678,18 @@ pmap_unsetbit(struct vm_page *pg, int bit)
 
 	s = splvm();
 
-	pvl = pg_to_pvh(pg);
-
 	/*
 	 * Clear saved attributes
 	 */
-	if (pvl->pv_flags & bit) {
-		pvl->pv_flags ^= bit;
+	if (pg->mdpage.pv_flags & bit) {
+		pg->mdpage.pv_flags ^= bit;
 		rv = TRUE;
 	}
 
-	if (pvl->pv_pmap != NULL) {
+	head = pg_to_pvh(pg);
+	if (head->pv_pmap != NULL) {
 		/* for each listed pmap, update the specified bit */
-		for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
+		for (pvep = head; pvep != NULL; pvep = pvep->pv_next) {
 			pmap = pvep->pv_pmap;
 			va = pvep->pv_va;
 			pte = pmap_pte(pmap, va);
@@ -1751,11 +1745,9 @@ pmap_is_modified(struct vm_page *pg)
 	 * ptes in case the page flags are behind actual usage.
 	 */
 	if (CPU_IS88110) {
-		pv_entry_t pvl;
 		boolean_t rc = FALSE;
 
-		pvl = pg_to_pvh(pg);
-		if (pvl->pv_flags & PG_M)
+		if (pg->mdpage.pv_flags & PG_M)
 			rc = TRUE;
 		DPRINTF(CD_TBIT, ("pmap_is_modified(%p) -> %x\n", pg, rc));
 		return (rc);
@@ -1870,7 +1862,6 @@ pmap_set_modify(pmap_t pmap, vaddr_t va)
 	pt_entry_t *pte;
 	paddr_t pa;
 	vm_page_t pg;
-	pv_entry_t pvl;
 
 	pte = pmap_pte(pmap, va);
 #ifdef DEBUG
@@ -1891,8 +1882,7 @@ pmap_set_modify(pmap_t pmap, vaddr_t va)
 		panic("Write fault to unmanaged page %p", (void *)pa);
 #endif
 
-	pvl = pg_to_pvh(pg);
-	pvl->pv_flags |= PG_M_U;
+	pg->mdpage.pv_flags |= PG_M_U;
 
 	if (pmap == pmap_kernel())
 		set_dcmd(CMMU_DCMD_INV_SATC);
@@ -1975,15 +1965,15 @@ pmap_page_uncache(paddr_t pa)
 {
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	struct pmap *pmap;
-	pv_entry_t pvl, pvep;
+	pv_entry_t head, pvep;
 	pt_entry_t *pte, opte, npte;
 	vaddr_t va;
 	int s;
 
 	s = splvm();
-	pvl = pg_to_pvh(pg);
-	if (pvl->pv_pmap != NULL) {
-		for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
+	head = pg_to_pvh(pg);
+	if (head->pv_pmap != NULL) {
+		for (pvep = head; pvep != NULL; pvep = pvep->pv_next) {
 			pmap = pvep->pv_pmap;
 			va = pvep->pv_va;
 			pte = pmap_pte(pmap, va);
