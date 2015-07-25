@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.221 2015/07/25 14:17:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.222 2015/07/25 14:22:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,6 +93,7 @@ static	int	  termp_bx_pre(DECL_ARGS);
 static	int	  termp_cd_pre(DECL_ARGS);
 static	int	  termp_d1_pre(DECL_ARGS);
 static	int	  termp_eo_pre(DECL_ARGS);
+static	int	  termp_er_pre(DECL_ARGS);
 static	int	  termp_ex_pre(DECL_ARGS);
 static	int	  termp_fa_pre(DECL_ARGS);
 static	int	  termp_fd_pre(DECL_ARGS);
@@ -144,7 +145,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_cd_pre, NULL }, /* Cd */
 	{ termp_bold_pre, NULL }, /* Cm */
 	{ NULL, NULL }, /* Dv */
-	{ NULL, NULL }, /* Er */
+	{ termp_er_pre, NULL }, /* Er */
 	{ termp_tag_pre, NULL }, /* Ev */
 	{ termp_ex_pre, NULL }, /* Ex */
 	{ termp_fa_pre, NULL }, /* Fa */
@@ -2267,6 +2268,19 @@ termp_under_pre(DECL_ARGS)
 {
 
 	term_fontpush(p, TERMFONT_UNDER);
+	return(1);
+}
+
+static int
+termp_er_pre(DECL_ARGS)
+{
+
+	if (n->sec == SEC_ERRORS &&
+	    (n->parent->tok == MDOC_It ||
+	     (n->parent->tok == MDOC_Bq &&
+	      n->parent->parent->parent->tok == MDOC_It)) &&
+	    ! tag_get(n->child->string, 0, 1))
+		tag_put(n->child->string, 0, 1, p->line);
 	return(1);
 }
 
