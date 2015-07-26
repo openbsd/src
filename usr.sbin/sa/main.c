@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2015/07/26 22:16:43 chl Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 			/* XXX cutoff could be converted to quad_t? */
 			cutoff = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
-				errx(1, "-v $s: %s", optarg, errstr);
+				errx(1, "-v %s: %s", optarg, errstr);
 			break;
 		case '?':
 		default:
