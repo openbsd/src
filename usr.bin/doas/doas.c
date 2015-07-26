@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.21 2015/07/24 06:36:42 zhuk Exp $ */
+/* $OpenBSD: doas.c,v 1.22 2015/07/26 17:24:02 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -152,7 +152,7 @@ permit(uid_t uid, gid_t *groups, int ngroups, struct rule **lastr,
 }
 
 static void
-parseconfig(const char *filename)
+parseconfig(const char *filename, int checkperms)
 {
 	extern FILE *yyfp;
 	extern int yyparse(void);
@@ -160,16 +160,21 @@ parseconfig(const char *filename)
 
 	yyfp = fopen(filename, "r");
 	if (!yyfp) {
-		fprintf(stderr, "doas is not enabled.\n");
+		if (checkperms)
+			fprintf(stderr, "doas is not enabled.\n");
+		else
+			warn("could not open config file");
 		exit(1);
 	}
 
-	if (fstat(fileno(yyfp), &sb) != 0)
-		err(1, "fstat(\"%s\")", filename);
-	if ((sb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
-		errx(1, "%s is writable by group or other", filename);
-	if (sb.st_uid != 0)
-		errx(1, "%s is not owned by root", filename);
+	if (checkperms) {
+		if (fstat(fileno(yyfp), &sb) != 0)
+			err(1, "fstat(\"%s\")", filename);
+		if ((sb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
+			errx(1, "%s is writable by group or other", filename);
+		if (sb.st_uid != 0)
+			errx(1, "%s is not owned by root", filename);
+	}
 
 	yyparse();
 	fclose(yyfp);
@@ -277,11 +282,32 @@ fail(void)
 	exit(1);
 }
 
+static int
+checkconfig(const char *confpath, int argc, char **argv,
+    uid_t uid, gid_t *groups, int ngroups, uid_t target) {
+	struct rule *rule;
+
+	setresuid(uid, uid, uid);
+	parseconfig(confpath, 0);
+	if (!argc)
+		exit(0);
+
+	if (permit(uid, groups, ngroups, &rule, target, argv[0],
+	    (const char **)argv + 1)) {
+		printf("permit%s\n", (rule->options & NOPASS) ? " nopass" : "");
+		return 1;
+	} else {
+		printf("deny\n");
+		return 0;
+	}
+}
+
 int
 main(int argc, char **argv, char **envp)
 {
 	const char *safepath = "/bin:/sbin:/usr/bin:/usr/sbin:"
 	    "/usr/local/bin:/usr/local/sbin";
+	const char *confpath = NULL;
 	char *shargv[] = { NULL, NULL };
 	char *sh;
 	const char *cmd;
@@ -296,13 +322,11 @@ main(int argc, char **argv, char **envp)
 	int i, ch;
 	int sflag = 0;
 
-	uid = getuid();
 	while ((ch = getopt(argc, argv, "C:su:")) != -1) {
 		switch (ch) {
 		case 'C':
-			setresuid(uid, uid, uid);
-			parseconfig(optarg);
-			exit(0);
+			confpath = optarg;
+			break;
 		case 'u':
 			if (parseuid(optarg, &target) != 0)
 				errx(1, "unknown user");
@@ -318,11 +342,13 @@ main(int argc, char **argv, char **envp)
 	argv += optind;
 	argc -= optind;
 
-	if ((!sflag && !argc) || (sflag && argc))
+	if (confpath) {
+		if (sflag)
+			usage();
+	} else if ((!sflag && !argc) || (sflag && argc))
 		usage();
 
-	parseconfig("/etc/doas.conf");
-
+	uid = getuid();
 	pw = getpwuid(uid);
 	if (!pw)
 		err(1, "getpwuid failed");
@@ -342,6 +368,11 @@ main(int argc, char **argv, char **envp)
 		argv = shargv;
 		argc = 1;
 	}
+
+	if (confpath)
+		exit(!checkconfig(confpath, argc, argv, uid, groups, ngroups,
+		    target));
+	parseconfig("/etc/doas.conf", 1);
 
 	cmd = argv[0];
 	if (strlcpy(cmdline, argv[0], sizeof(cmdline)) >= sizeof(cmdline))
