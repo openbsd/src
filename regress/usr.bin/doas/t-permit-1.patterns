@@ -1,0 +1,6 @@
+root echo la-la-la
+permit
+operator echo zzz
+deny
+www echo slackers
+permit nopass
