@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.1,v 1.11 2015/07/26 17:24:02 zhuk Exp $
+.\" $OpenBSD: doas.1,v 1.12 2015/07/26 20:47:01 espie Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -21,7 +21,7 @@
 .Nd execute commands as another user
 .Sh SYNOPSIS
 .Nm doas
-.Op Fl s
+.Op Fl ns
 .Op Fl C Ar config
 .Op Fl u Ar user
 .Ar command
@@ -58,6 +58,10 @@ or
 will be printed on standard output, depending on command
 matching results.
 No command is executed.
+.It Fl n
+Non interactive mode, fail if
+.Nm
+would prompt for password.
 .It Fl s
 Execute the shell from
 .Ev SHELL

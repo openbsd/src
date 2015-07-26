@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.25 2015/07/26 19:49:11 zhuk Exp $ */
+/* $OpenBSD: doas.c,v 1.26 2015/07/26 20:47:01 espie Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -322,8 +322,10 @@ main(int argc, char **argv, char **envp)
 	int ngroups;
 	int i, ch;
 	int sflag = 0;
+	int nflag = 0;
 
-	while ((ch = getopt(argc, argv, "C:su:")) != -1) {
+	uid = getuid();
+	while ((ch = getopt(argc, argv, "C:nsu:")) != -1) {
 		switch (ch) {
 		case 'C':
 			confpath = optarg;
@@ -331,6 +333,9 @@ main(int argc, char **argv, char **envp)
 		case 'u':
 			if (parseuid(optarg, &target) != 0)
 				errx(1, "unknown user");
+			break;
+		case 'n':
+			nflag = 1;
 			break;
 		case 's':
 			sflag = 1;
@@ -396,6 +401,8 @@ main(int argc, char **argv, char **envp)
 	}
 
 	if (!(rule->options & NOPASS)) {
+		if (nflag)
+			errx(1, "Authorization required");
 		if (!auth_userokay(myname, NULL, NULL, NULL)) {
 			syslog(LOG_AUTHPRIV | LOG_NOTICE,
 			    "failed password for %s", myname);
