@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.32 2014/07/12 18:48:17 tedu Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.33 2015/07/26 02:14:09 miod Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ pcic_ident_ok(ident)
 		return (0);
 
 	if ((ident & PCIC_IDENT_IFTYPE_MASK) != PCIC_IDENT_IFTYPE_MEM_AND_IO) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		printf("pcic: does not support memory and I/O cards, "
 		    "ignored (ident=%0x)\n", ident);
 #endif
@@ -1406,8 +1406,8 @@ pcic_chip_socket_enable(pch)
 
 	/* power up the socket */
 
-	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV
-			   | PCIC_PWRCTL_PWR_ENABLE);
+	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV |
+	    PCIC_PWRCTL_PWR_ENABLE);
 
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
