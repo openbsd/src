@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.66 2015/07/18 00:48:05 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.67 2015/07/26 03:17:07 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -109,6 +109,7 @@ void	vga_init_screen(struct vga_config *, struct vgascreen *,
     const struct wsscreen_descr *, int, long *);
 void	vga_init(struct vga_config *, bus_space_tag_t, bus_space_tag_t);
 void	vga_setfont(struct vga_config *, struct vgascreen *);
+void	vga_pick_monitor_type(struct vga_config *);
 
 int	vga_mapchar(void *, int, unsigned int *);
 int	vga_putchar(void *, int, int, u_int, long);
@@ -497,10 +498,20 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 				&vh->vh_memh))
                 panic("vga_common_setup: mem subrange failed");
 
+#ifdef __alpha__
+	vga_pick_monitor_type(vc);
+#endif
+
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
-	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
+#ifdef __alpha__
+	if (vc->custom_list.screens != NULL)
+		vc->currenttype = vc->custom_list.screens[0];
+	else
+#endif
+		vc->currenttype =
+		    vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
 
 	vc->vc_fonts[0] = &vga_builtinfont;
 	for (i = 1; i < VGA_MAXFONT; i++)
@@ -547,7 +558,14 @@ vga_extended_attach(struct device *self, bus_space_tag_t iot,
 	vc->vc_mmap = map;
 
 	aa.console = console;
-	aa.scrdata = (vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist);
+#ifdef __alpha__
+	if (vc->custom_list.screens != NULL)
+		aa.scrdata = &vc->custom_list;
+	else
+#endif
+		aa.scrdata =
+		    vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist;
+
 	aa.accessops = &vga_accessops;
 	aa.accesscookie = vc;
 	aa.defaultscreens = 0;
@@ -1239,6 +1257,51 @@ vga_restore_fonts(struct vga_config *vc)
 		vga_loadchars(&vc->hdl, slot, 0, 256, f->height, f->fontdata);
 	}
 }
+
+#ifdef __alpha__
+void
+vga_pick_monitor_type(struct vga_config *vc)
+{
+	struct vga_handle *vh = &vc->hdl;
+
+	/*
+	 * The Tadpole Alphabook1 uses a 800x600 flat panel in text mode,
+	 * causing the display console to really be 100x37 instead of the
+	 * usual 80x25.
+	 * We attempt to detect this here by checking the CRTC registers.
+	 */
+	unsigned int hend, oflow, vend;
+	unsigned int width, height;
+
+	hend = vga_6845_read(vh, hdisple);
+	oflow = vga_6845_read(vh, overfll);
+	vend = vga_6845_read(vh, vde);
+	if (oflow & 0x02)
+		vend |= 0x100;
+	if (oflow & 0x40)
+		vend |= 0x200;
+
+	width = hend + 1;
+	height = (vend + 1) / 16;
+
+	/* check that the values sound plausible */
+	if ((width > 80 && width <= 128) && (height > 25 && height <= 50)) {
+		snprintf(vc->custom_scr.name, sizeof(vc->custom_scr.name),
+		    "%ux%u", width, height);
+		vc->custom_scr.ncols = width;
+		vc->custom_scr.nrows = height;
+		vc->custom_scr.textops = &vga_emulops;
+		vc->custom_scr.fontwidth = 8;
+		vc->custom_scr.fontheight = 16;
+		vc->custom_scr.capabilities =
+		    WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK;
+		vc->custom_scrlist[0] = &vc->custom_scr;
+		vc->custom_list.nscreens = 1;
+		vc->custom_list.screens =
+		    (const struct wsscreen_descr **)vc->custom_scrlist;
+	}
+}
+#endif
 
 struct cfdriver vga_cd = {
 	NULL, "vga", DV_DULL

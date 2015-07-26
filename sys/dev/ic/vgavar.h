@@ -1,4 +1,4 @@
-/* $OpenBSD: vgavar.h,v 1.12 2015/03/29 18:45:22 miod Exp $ */
+/* $OpenBSD: vgavar.h,v 1.13 2015/07/26 03:17:07 miod Exp $ */
 /* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
 
 /*
@@ -75,6 +75,13 @@ struct vga_config {
 	paddr_t (*vc_mmap)(void *, off_t, int);
 
 	struct timeout vc_switch_timeout;
+
+#ifdef __alpha__
+	/* placeholder for a custom wsscreen_descr for odd resolutions */
+	struct wsscreen_descr custom_scr;
+	struct wsscreen_descr *custom_scrlist[1];
+	struct wsscreen_list custom_list;
+#endif
 };
 
 static inline u_int8_t _vga_attr_read(struct vga_handle *, int);
