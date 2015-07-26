@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.24 2015/07/26 19:14:46 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.25 2015/07/26 19:49:11 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -379,9 +379,7 @@ main(int argc, char **argv, char **envp)
 	parseconfig("/etc/doas.conf", 1);
 
 	/* cmdline is used only for logging, no need to abort on truncate */
-	(void) strlcpy(cmdline, argv[0], sizeof(cmdline)) < sizeof(cmdline);
-	if (strlcpy(cmdline, argv[0], sizeof(cmdline)) >= sizeof(cmdline))
-		errx(1, "command line too long");
+	(void) strlcpy(cmdline, argv[0], sizeof(cmdline));
 	for (i = 1; i < argc; i++) {
 		if (strlcat(cmdline, " ", sizeof(cmdline)) >= sizeof(cmdline))
 			break;
