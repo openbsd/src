@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.26 2015/07/26 20:47:01 espie Exp $ */
+/* $OpenBSD: doas.c,v 1.27 2015/07/26 22:44:33 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -282,7 +282,7 @@ fail(void)
 	exit(1);
 }
 
-static int
+static void __dead
 checkconfig(const char *confpath, int argc, char **argv,
     uid_t uid, gid_t *groups, int ngroups, uid_t target)
 {
