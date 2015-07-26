@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.1,v 1.12 2015/07/26 20:47:01 espie Exp $
+.\" $OpenBSD: doas.1,v 1.13 2015/07/26 23:00:15 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -57,7 +57,7 @@ or
 .Sq deny
 will be printed on standard output, depending on command
 matching results.
-No command is executed.
+In either case, no command is executed.
 .It Fl n
 Non interactive mode, fail if
 .Nm
@@ -86,7 +86,7 @@ The user attempted to run a command which is not permitted.
 .It
 The password was incorrect.
 .It
-The actual program is absent or not executable.
+The specified command was not found or is not executable.
 .El
 .Sh SEE ALSO
 .Xr doas.conf 5
