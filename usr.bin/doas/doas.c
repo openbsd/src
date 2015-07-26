@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.22 2015/07/26 17:24:02 zhuk Exp $ */
+/* $OpenBSD: doas.c,v 1.23 2015/07/26 19:08:17 zhuk Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -374,16 +374,18 @@ main(int argc, char **argv, char **envp)
 		    target));
 	parseconfig("/etc/doas.conf", 1);
 
-	cmd = argv[0];
+	/* cmdline is used only for logging, no need to abort on truncate */
+	(void) strlcpy(cmdline, argv[0], sizeof(cmdline)) < sizeof(cmdline);
 	if (strlcpy(cmdline, argv[0], sizeof(cmdline)) >= sizeof(cmdline))
 		errx(1, "command line too long");
 	for (i = 1; i < argc; i++) {
 		if (strlcat(cmdline, " ", sizeof(cmdline)) >= sizeof(cmdline))
-			errx(1, "command line too long");
+			break;
 		if (strlcat(cmdline, argv[i], sizeof(cmdline)) >= sizeof(cmdline))
-			errx(1, "command line too long");
+			break;
 	}
 
+	cmd = argv[0];
 	if (!permit(uid, groups, ngroups, &rule, target, cmd,
 	    (const char**)argv + 1)) {
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
