@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.14 2014/03/30 05:05:08 deraadt Exp $
+#	$OpenBSD: disktab,v 1.15 2015/07/26 14:07:49 krw Exp $
 
 mini34|gzip bsd.rd disk image 3.40625MB:\
 	:ty=SCSI:se#512:nt#1:ns#64:nc#109:\
@@ -30,6 +30,6 @@ floppy|floppy3|3in|3.5in High Density Floppy:\
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=ramdisk:se#512:nt#2:ns#140:nc#16:\
-	:pa#4480:oa#0:ta=4.2BSD:ba#4480:fa#512:\
+	:pa#4480:oa#0:ta=4.2BSD:ba#4096:fa#512:\
 	:pb#0:ob#0:tb=swap:\
 	:pc#4480:oc#0:
