@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.23 2015/07/26 19:08:17 zhuk Exp $ */
+/* $OpenBSD: doas.c,v 1.24 2015/07/26 19:14:46 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -284,7 +284,8 @@ fail(void)
 
 static int
 checkconfig(const char *confpath, int argc, char **argv,
-    uid_t uid, gid_t *groups, int ngroups, uid_t target) {
+    uid_t uid, gid_t *groups, int ngroups, uid_t target)
+{
 	struct rule *rule;
 
 	setresuid(uid, uid, uid);
@@ -295,10 +296,10 @@ checkconfig(const char *confpath, int argc, char **argv,
 	if (permit(uid, groups, ngroups, &rule, target, argv[0],
 	    (const char **)argv + 1)) {
 		printf("permit%s\n", (rule->options & NOPASS) ? " nopass" : "");
-		return 1;
+		exit(0);
 	} else {
 		printf("deny\n");
-		return 0;
+		exit(1);
 	}
 }
 
@@ -369,9 +370,12 @@ main(int argc, char **argv, char **envp)
 		argc = 1;
 	}
 
-	if (confpath)
-		exit(!checkconfig(confpath, argc, argv, uid, groups, ngroups,
-		    target));
+	if (confpath) {
+		checkconfig(confpath, argc, argv, uid, groups, ngroups,
+		    target);
+		exit(1);	/* fail safe */
+	}
+
 	parseconfig("/etc/doas.conf", 1);
 
 	/* cmdline is used only for logging, no need to abort on truncate */
