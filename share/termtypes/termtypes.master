@@ -1,6 +1,10 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.53 2015/04/29 16:01:48 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.54 2015/07/26 08:20:29 nicm Exp $
+#
+# OpenBSD local changes:
+#   - add rxvt-unicode and rxvt-unicode-256color
+#   - xterm-r5, xterm-r6, xterm-xf86-v32, xterm+kbs change kbs=^H to kbs=\177
 #
 # This version of terminfo.src is distributed with ncurses and is maintained
 # by Thomas E. Dickey (TD).
@@ -8,8 +12,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.53 $
-#	$Date: 2015/04/29 16:01:48 $
+#	$Revision: 1.54 $
+#	$Date: 2015/07/26 08:20:29 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -1225,6 +1229,9 @@ nsterm-16color|AppKit Terminal.app v240.2+ with Mac OS X version 10.5,
 #   + the vt52 emulation does not give a usable shell because screen-clearing
 #     does not work as expected.
 #   + selecting "xterm" or "xterm-16color" sets TERM to "xterm-256color".
+# + OSX 10.9 (Yosemite) added more extended keys in the default configuration
+#   as well as unmasking F10 (which had been used in the window manager). Those
+#   keys are listed in this entry.
 nsterm-bce|AppKit Terminal.app v71+/v100.1.8+ with Mac OS X version 10.3/10.4 (bce),
 	bce, use=nsterm-16color,
 
@@ -1235,9 +1242,19 @@ nsterm-bce|AppKit Terminal.app v71+/v100.1.8+ with Mac OS X version 10.3/10.4 (b
 nsterm-256color|Terminal.app in OS X 10.8,
 	use=xterm+256setaf, use=nsterm-bce,
 
+nsterm-build326|Terminal.app in OS X 10.9,
+	kDC=\E[3;2~, kLFT=\E[1;2D, kRIT=\E[1;2C, kcbt=\E[Z,
+	kf18=\E[32~, kDC5=\E[3;5~, kDC7=\E[3;5~, kLFT3=\Eb,
+	kLFT5=\E[1;5D, kRIT3=\Ef, kRIT5=\E[1;5C,
+	use=nsterm-256color,
+
+# actually "343.7"
+nsterm-build343|Terminal.app in OS X 10.10,
+	kend=\EOF, khome=\EOH, use=nsterm-build326,
+
 # This is an alias which should always point to the "current" version
 nsterm|Apple_Terminal|AppKit Terminal.app,
-	use=nsterm-256color,
+	use=nsterm-build343,
 
 # iTerm.app from http://iterm.sourceforge.net/ is an alternative (and
 # more featureful) terminal emulator for Mac OS X. It is similar
@@ -1642,7 +1659,7 @@ linux2.6|linux 2.6.x console,
 # The 3.0 kernel adds support for clearing scrollback buffer (capability E3).
 # It is the same as xterm's erase-saved-lines feature.
 linux3.0|linux 3.0 kernels,
-	E3=\E[3;J, use=linux2.6,
+	E3=\E[3J, use=linux2.6,
 
 # This is Linux console for ncurses.
 linux|linux console,
@@ -3513,14 +3530,10 @@ putty|PuTTY terminal emulator,
 	ind=^J, indn=\E[%p1%dS,
 	initc=\E]P%p1%x%p2%{255}%*%{1000}%/%02x%p3%{255}%*%{1000}%/%02x%p4%{255}%*%{1000}%/%02x,
 	is2=\E7\E[r\E[m\E[?7h\E[?1;4;6l\E[4l\E8\E>\E]R,
-	kb2=\E[G, kbs=\177, kcbt=\E[Z, kcub1=\E[D, kcud1=\E[B,
-	kcuf1=\E[C, kcuu1=\E[A, kdch1=\E[3~, kend=\E[4~,
-	kf1=\E[11~, kf10=\E[21~, kf11=\E[23~, kf12=\E[24~,
-	kf13=\E[25~, kf14=\E[26~, kf15=\E[28~, kf16=\E[29~,
-	kf17=\E[31~, kf18=\E[32~, kf19=\E[33~, kf2=\E[12~,
-	kf20=\E[34~, kf3=\E[13~, kf4=\E[14~, kf5=\E[15~,
-	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~,
-	khome=\E[1~, kich1=\E[2~, kmous=\E[M, knp=\E[6~, kpp=\E[5~,
+	kLFT=\EOD, kRIT=\EOC, kb2=\E[G, kbs=\177, kcbt=\E[Z,
+	kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
+	kdch1=\E[3~, kend=\E[4~, khome=\E[1~, kich1=\E[2~,
+	kind=\EOB, kmous=\E[M, knp=\E[6~, kpp=\E[5~, kri=\EOA,
 	kspd=^Z, nel=^M^J, oc=\E]R, op=\E[39;49m, rc=\E8, rev=\E[7m,
 	ri=\EM, rin=\E[%p1%dT, rmacs=^O, rmam=\E[?7l,
 	rmcup=\E[2J\E[?47l, rmir=\E[4l, rmpch=\E[10m,
@@ -3531,8 +3544,8 @@ putty|PuTTY terminal emulator,
 	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smacs=^N, smam=\E[?7h, smcup=\E[?47h,
 	smir=\E[4h, smpch=\E[11m, smso=\E[7m, smul=\E[4m,
-	tbc=\E[3g, vpa=\E[%i%p1%dd, E3=\E[3;J, use=vt102+enq,
-	use=xterm+sl,
+	tbc=\E[3g, vpa=\E[%i%p1%dd, E3=\E[3J, use=putty+fnkeys,
+	use=vt102+enq, use=xterm+sl,
 vt100-putty|Reset PuTTY to pure vt100,
 	rs2=\E<\E["p\Ec\E[?3l\E]R\E[40"p\E[61"p\E[50;1;2"p,
 	use=vt100,
@@ -3543,9 +3556,48 @@ putty-256color|PuTTY 0.58 with xterm 256-colors,
 # One of the keyboard selections is "VT100+".
 # pterm (the X11 port) uses shifted F1-F10 as F11-F20
 putty-vt100|VT100+ keyboard layout,
+	use=putty+fnkeys+vt100, use=putty,
+
+putty-sco|putty with SCO function keys,
+	use=putty+fnkeys+sco, use=putty,
+
+# PuTTY has more than one section in its Keyboard configuration:
+# a) backspace/delete, which we ignore since that choice largely depends on
+#    whether one matches Unix and BSD or Linux.
+# b) home/end keys, also ignored because the "rxvt" setting sends keys which
+#    are unrelated to rxvt's actual settings.
+# c) function keys and keypad - this is the interesting part.  None of the
+#    selections match any of their respective namesakes, but they are shown
+#    here to help users who expect that the selections do what is implied.
+#
+# This is the default setting for PuTTY
+putty+fnkeys|fn-keys for PuTTY,
+	use=putty+fnkeys+esc,
+
+putty+fnkeys+esc|ESC[n~ fn-keys for PuTTY,
+	kf1=\E[11~, kf10=\E[21~, kf11=\E[23~, kf12=\E[24~,
+	kf13=\E[25~, kf14=\E[26~, kf15=\E[28~, kf16=\E[29~,
+	kf17=\E[31~, kf18=\E[32~, kf19=\E[33~, kf2=\E[12~,
+	kf20=\E[34~, kf3=\E[13~, kf4=\E[14~, kf5=\E[15~,
+	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~,
+
+putty+fnkeys+linux|Linux fn-keys for PuTTY,
+	kf1=\E[[A, kf2=\E[[B, kf3=\E[[C, kf4=\E[[D, kf5=\E[[E,
+	use=putty+fnkeys+esc,
+
+putty+fnkeys+xterm|Xterm R6 fn-keys for PuTTY,
+	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS,
+	use=putty+fnkeys+esc,
+
+putty+fnkeys+vt400|VT400 fn-keys for PuTTY,
+	use=putty+fnkeys+esc,
+
+# Shifted F1 is F11.  F13-F20 inherit from the defaults, and the last distinct
+# key is F20.
+putty+fnkeys+vt100|VT100+ fn-keys for PuTTY,
 	kf1=\EOP, kf10=\EOY, kf11=\EOZ, kf12=\EO[, kf2=\EOQ,
 	kf3=\EOR, kf4=\EOS, kf5=\EOT, kf6=\EOU, kf7=\EOV, kf8=\EOW,
-	kf9=\EOX, use=putty,
+	kf9=\EOX, use=putty+fnkeys+esc,
 
 # Unlike xterm-sco, this leaves kmous ambiguous with kf1.
 #
@@ -3555,7 +3607,7 @@ putty-vt100|VT100+ keyboard layout,
 # F25-F36 - control/alt
 # F37-F48 - control/shift
 #
-putty-sco|putty with SCO function keys,
+putty+fnkeys+sco|SCO fn-keys for PuTTY,
 	kbeg=\E[E, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A,
 	kdch1=\177, kend=\E[F, kf1=\E[M, kf10=\E[V, kf11=\E[W,
 	kf12=\E[X, kf13=\E[Y, kf14=\E[Z, kf15=\E[a, kf16=\E[b,
@@ -3567,7 +3619,7 @@ putty-sco|putty with SCO function keys,
 	kf4=\E[P, kf40=\E[z, kf41=\E[@, kf42=\E[[, kf43=\E[\\,
 	kf44=\E[], kf45=\E[\^, kf46=\E[_, kf47=\E[`, kf48=\E[{,
 	kf5=\E[Q, kf6=\E[R, kf7=\E[S, kf8=\E[T, kf9=\E[U, khome=\E[H,
-	kich1=\E[L, knp=\E[G, kpp=\E[I, use=putty,
+	kich1=\E[L, knp=\E[G, kpp=\E[I,
 
 # This entry is for Tera Term Pro version 2.3, for MS-Windows 95/NT written by
 # T. Teranishi dated Mar 10, 1998.  It is a free software terminal emulator
@@ -4107,7 +4159,7 @@ xterm-basic|modern xterm terminal emulator - common,
 	sgr0=\E(B\E[m, sitm=\E[3m, smacs=\E(0, smam=\E[?7h,
 	smcup=\E[?1049h, smir=\E[4h, smkx=\E[?1h\E=,
 	smm=\E[?1034h, smso=\E[7m, smul=\E[4m, tbc=\E[3g,
-	vpa=\E[%i%p1%dd, E3=\E[3;J, use=ansi+pp, use=xterm+kbs,
+	vpa=\E[%i%p1%dd, E3=\E[3J, use=ansi+pp, use=xterm+kbs,
 	use=vt100+enq,
 
 # From: David J. MacKenzie <djm@va.pubnix.com>, 14 Nov 1997
@@ -4446,7 +4498,7 @@ xterm-x11hilite|X11 mouse with highlight,
 # CDE's dtterm was introduced around the same time, with no mouse protocol -TD
 
 # xterm patch #83 (1998/10/7), added Jason Bacon's changes to provide an
-# "any-event" mouse mode. 
+# "any-event" mouse mode.
 xterm+sm+1002|xterm any-event mouse,
 	kmous=\E[M, XM=\E[?1002%?%p1%{1}%=%th%el%;,
 xterm-1002|xterm any-event mouse,
@@ -4763,10 +4815,16 @@ vte+pcfkeys|VTE's variation on xterm+pcfkeys,
 gnome+pcfkeys|VTE's variation on xterm+pcfkeys,
 	use=vte+pcfkeys,
 
-vte|VTE aka GNOME Terminal,
-	use=vte-2012,
+# deprecated - use "vte" for newer versions
 gnome|GNOME Terminal,
-	use=vte,
+	use=vte-2012,
+
+# relevant changes were made in January 2014
+vte-2014|VTE 0.35.1,
+	use=xterm+pcfkeys, use=vte-2012,
+
+vte|VTE aka GNOME Terminal,
+	use=vte-2014,
 
 # palette is hardcoded...
 vte-256color|VTE with xterm 256-colors,
@@ -5159,7 +5217,7 @@ rxvt-cygwin-native|rxvt terminal emulator (native MS Window System port) on cygw
 
 # This variant is supposed to work with rxvt 2.7.7 when compiled with
 # NO_BRIGHTCOLOR defined.  rxvt needs more work...
-rxvt-16color|xterm with 16 colors like aixterm,
+rxvt-16color|rxvt with 16 colors like aixterm,
 	ncv#32, use=ibm+16color, use=rxvt,
 
 # From: Thomas Dickey <dickey@clark.net> 04 Oct 1997
@@ -5587,8 +5645,13 @@ mgr-linux|Mgr window with Linux keyboard,
 # Rather, it acts like xterm - when the meta feature is disabled.
 #
 # Removed invis -TD
+# Added eo, removed ul -TD
+#
+# Reviewed st 0.5:
+# implements control-modifier, but not control-shift for special keys
+# implements alt-modifier, but not alt-shift for special keys
 st|stterm| simpleterm 0.4.1,
-	am, bce, hs, mir, msgr, ul, xenl,
+	am, bce, eo, hs, mir, msgr, xenl,
 	colors#8, cols#80, it#8, lines#24, ncv#3, pairs#64,
 	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
@@ -5633,7 +5696,7 @@ st|stterm| simpleterm 0.4.1,
 	setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
 	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
 	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%;m,
+	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m,
 	sgr0=\E[0m, sitm=\E[3m, smacs=\E(0, smcup=\E[?1049h,
 	smir=\E[4h, smkx=\E[?1h\E=, smso=\E[7m, smul=\E[4m,
 	tbc=\E[3g, tsl=\E]0;, u6=\E[%i%d;%dR, u7=\E[6n,
@@ -5956,19 +6019,19 @@ screen|VT 100/ANSI X3.64 virtual terminal,
 	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H,
 	cud=\E[%p1%dB, cud1=^J, cuf=\E[%p1%dC, cuf1=\E[C,
 	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\EM,
-	cvvis=\E[34l, dch=\E[%p1%dP, dch1=\E[P, dl=\E[%p1%dM,
-	dl1=\E[M, ed=\E[J, el=\E[K, el1=\E[1K, enacs=\E(B\E)0,
-	flash=\Eg, home=\E[H, ht=^I, hts=\EH, ich=\E[%p1%d@,
-	il=\E[%p1%dL, il1=\E[L, ind=^J, is2=\E)0, kbs=\177, kcbt=\E[Z,
-	kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA,
-	kdch1=\E[3~, kend=\E[4~, kf1=\EOP, kf10=\E[21~,
+	cvvis=\E[34l, dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m,
+	dl=\E[%p1%dM, dl1=\E[M, ed=\E[J, el=\E[K, el1=\E[1K,
+	enacs=\E(B\E)0, flash=\Eg, home=\E[H, ht=^I, hts=\EH,
+	ich=\E[%p1%d@, il=\E[%p1%dL, il1=\E[L, ind=^J, is2=\E)0,
+	kbs=^H, kcbt=\E[Z, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC,
+	kcuu1=\EOA, kdch1=\E[3~, kend=\E[4~, kf1=\EOP, kf10=\E[21~,
 	kf11=\E[23~, kf12=\E[24~, kf2=\EOQ, kf3=\EOR, kf4=\EOS,
 	kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~,
 	khome=\E[1~, kich1=\E[2~, kmous=\E[M, knp=\E[6~, kpp=\E[5~,
 	nel=\EE, rc=\E8, rev=\E[7m, ri=\EM, rmacs=^O,
 	rmcup=\E[?1049l, rmir=\E[4l, rmkx=\E[?1l\E>, rmso=\E[23m,
 	rmul=\E[24m, rs2=\Ec\E[?1000l\E[?25h, sc=\E7,
-	sgr=\E[0%?%p6%t;1%;%?%p1%t;3%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;,
+	sgr=\E[0%?%p6%t;1%;%?%p1%t;3%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;m%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017, smacs=^N, smcup=\E[?1049h, smir=\E[4h,
 	smkx=\E[?1h\E=, smso=\E[3m, smul=\E[4m, tbc=\E[3g, E0=\E(B,
 	S0=\E(%p1%c, use=ecma+color,
@@ -5997,7 +6060,7 @@ screen-16color-s|GNU Screen with 16 colors and status line,
 screen-16color-bce|GNU Screen with 16 colors and BCE,
 	use=ibm+16color, use=screen-bce,
 
-screen-16color-bce-s|GNU Screen with 16 colors, BCE, and status line,
+screen-16color-bce-s|GNU Screen with 16 colors using BCE and status line,
 	bce, use=ibm+16color, use=screen-s,
 
 # ======================================================================
@@ -6012,8 +6075,23 @@ screen-256color-s|GNU Screen with 256 colors and status line,
 screen-256color-bce|GNU Screen with 256 colors and BCE,
 	bce, use=xterm+256setaf, use=screen-bce,
 
-screen-256color-bce-s|GNU Screen with 256 colors, BCE, and status line,
+screen-256color-bce-s|GNU Screen with 256 colors using BCE and status line,
 	bce, use=xterm+256setaf, use=screen-s,
+
+screen.xterm-256color|GNU Screen with xterm using 256 colors,
+	use=xterm+256setaf, use=screen.xterm-new,
+
+screen.konsole-256color|GNU Screen with konsole using 256 colors,
+	use=xterm+256setaf, use=screen.konsole,
+
+screen.vte-256color|GNU Screen with vte using 256 colors,
+	use=xterm+256setaf, use=screen.vte,
+
+screen.putty-256color|GNU Screen with putty using 256 colors,
+	use=xterm+256setaf, use=screen.putty,
+
+screen.mlterm-256color|GNU Screen with mlterm using 256 colors,
+	use=xterm+256setaf, use=screen.mlterm,
 
 # ======================================================================
 
@@ -6059,6 +6137,8 @@ screen.xterm-xfree86|screen.xterm-new|screen customized for modern xterm,
 	invis@, kIC@, kNXT@, kPRV@, meml@, memu@,
 	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p5%t;2%;m,
 	E3@, use=screen+italics, use=screen+fkeys, use=xterm-new,
+#:screen.xterm|screen for modern xterm,
+#:	use=screen.xterm-new,
 # xterm-r6 does not really support khome/kend unless it is propped up by
 # the translations resource.
 screen.xterm-r6|screen customized for X11R6 xterm,
@@ -6091,6 +6171,8 @@ screen.linux|screen in linux console,
 	kbs=\177, kcbt@, use=screen+fkeys, use=screen,
 screen.mlterm|screen in mlterm,
 	use=screen+fkeys, use=mlterm,
+screen.putty|screen in putty,
+	use=screen+fkeys, use=putty,
 
 # The default "screen" entry is reasonably portable, but not optimal for the
 # most widely-used terminal emulators.  The "bce" capability is supported in
@@ -6126,9 +6208,6 @@ screen-bce.konsole|screen optimized for KDE console window,
 screen-bce.linux|screen optimized for linux console,
 	bce,
 	ech@, use=screen.linux,
-screen-bce.mlterm|screen optimized for mlterm,
-	bce,
-	ech@, use=screen.mlterm,
 
 screen-w|VT 100/ANSI X3.64 virtual terminal with 132 cols,
 	cols#132, use=screen,
@@ -6166,8 +6245,8 @@ screen3|older VT 100/ANSI X3.64 virtual terminal,
 # tmux is compatible with screen, but has support for italics, and some of the
 # xterm cursor bits.
 tmux|tmux terminal multiplexer,
-	use=xterm+tmux, use=screen, Ms@, smso=\E[7m, rmso=\E[27m, sitm=\E[3m,
-	ritm=\E[23m,
+	ritm=\E[23m, rmso=\E[27m, sitm=\E[3m, smso=\E[7m, Ms@,
+	use=xterm+sl, use=xterm+tmux, use=screen,
 
 tmux-256color|tmux with 256 colors,
 	use=xterm+256setaf, use=tmux,
@@ -15308,31 +15387,42 @@ ibm3151|IBM 3151 display,
 	sgr0=\E4@\E>B, smacs=\E>A, smcup=\E>B, use=ibm3162,
 # From: Mark Easter <marke@fsi-ssd.csg.ssd.fsi.com> 29 Oct 1992
 # removed kend, knp, kpp -TD
+#
+# From: Stephen Powell <zlinuxman@wowway.com> 23 Apr 2015
+# Added ich1 (kich1 without ich1 doesn't make sense).
+# Added il1 (kil1 without il1 doesn't make sense).
+# Added xon (terminal uses XON/XOFF flow control).
+#
 ibm3161|ibm3163|wy60-316X|wyse60-316X|IBM 3161/3163 display,
-	OTbs, am, mir, msgr,
+	OTbs, am, mir, msgr, xon,
 	cols#80, it#8, lines#24,
 	acsc=j\352k\353l\354m\355n\356q\361t\364u\365v\366w\367x\370,
 	bel=^G, blink=\E4D, bold=\E4H, clear=\EH\EJ, cr=^M, cub1=\ED,
 	cud1=\EB, cuf1=\EC, cup=\EY%p1%{32}%+%c%p2%{32}%+%c,
-	cuu1=\EA, dch1=\EQ, dl1=\EO, ed=\EJ, el=\EI, home=\EH, ind=^J,
-	invis=\E4P, kbs=^H, kcbt=\E2, kclr=\EL\r, kctab=\E1,
-	kcub1=\ED, kcud1=\EB, kcuf1=\EC, kcuu1=\EA, kdch1=\EQ,
-	kdl1=\EO, ked=\EJ, kel=\EI, kf1=\Ea\r, kf10=\Ej\r,
-	kf11=\Ek\r, kf12=\El\r, kf13=\E!a\r, kf14=\E!b\r,
-	kf15=\E!c\r, kf16=\E!d\r, kf17=\E!e\r, kf18=\E!f\r,
-	kf19=\E!g\r, kf2=\Eb\r, kf20=\E!h\r, kf21=\E!i\r,
-	kf22=\E!j\r, kf23=\E!k\r, kf24=\E!l\r, kf3=\Ec\r,
-	kf4=\Ed\r, kf5=\Ee\r, kf6=\Ef\r, kf7=\Eg\r, kf8=\Eh\r,
-	kf9=\Ei\r, khome=\EH, khts=\E0, kich1=\EP \010, kil1=\EN,
-	ktbc=\E 1, mc4=^P^T, mc5=^P^R, rev=\E4A, rmcup=\E>A,
-	rmso=\E4@, rmul=\E4@,
+	cuu1=\EA, dch1=\EQ, dl1=\EO, ed=\EJ, el=\EI, home=\EH,
+	ich1=\EP \010, il1=\EN, ind=^J, invis=\E4P, kbs=^H, kcbt=\E2,
+	kclr=\EL\r, kctab=\E1, kcub1=\ED, kcud1=\EB, kcuf1=\EC,
+	kcuu1=\EA, kdch1=\EQ, kdl1=\EO, ked=\EJ, kel=\EI, kf1=\Ea\r,
+	kf10=\Ej\r, kf11=\Ek\r, kf12=\El\r, kf13=\E!a\r,
+	kf14=\E!b\r, kf15=\E!c\r, kf16=\E!d\r, kf17=\E!e\r,
+	kf18=\E!f\r, kf19=\E!g\r, kf2=\Eb\r, kf20=\E!h\r,
+	kf21=\E!i\r, kf22=\E!j\r, kf23=\E!k\r, kf24=\E!l\r,
+	kf3=\Ec\r, kf4=\Ed\r, kf5=\Ee\r, kf6=\Ef\r, kf7=\Eg\r,
+	kf8=\Eh\r, kf9=\Ei\r, khome=\EH, khts=\E0, kich1=\EP \010,
+	kil1=\EN, ktbc=\E 1, mc4=^P^T, mc5=^P^R, rev=\E4A,
+	rmcup=\E>A, rmso=\E4@, rmul=\E4@,
 	sgr=\E4%{64}%?%p1%t%{65}%|%;%?%p2%t%{66}%|%;%?%p3%t%{65}%|%;%?%p4%t%{68}%|%;%?%p5%t%{64}%|%;%?%p6%t%{72}%|%;%?%p7%t%{80}%|%;%c%?%p9%t\E>A%e\E<@%;,
 	sgr0=\E4@\E<@, smcup=\E>A, smso=\E4A, smul=\E4B,
 
 ibm3161-C|IBM 3161-C NLS terminal using cartridge,
 	rmcup=\E>B, s0ds=\E>B, s1ds=\E>A, smcup=\E>B, use=ibm3161,
+#
+# From: Stephen Powell <zlinuxman@wowway.com> 23 Apr 2015
+# Deleted il1.  (il1 will now be inherited from ibm3161-C, which inherits
+# it from ibm3161.
+#
 ibm3162|IBM 3162 display,
-	blink=\E4$a, bold=\E4(a, il1=\EN, invis=\E40a, rev=\E4!a,
+	blink=\E4$a, bold=\E4(a, invis=\E40a, rev=\E4!a,
 	rmso=\E4>b, rmul=\E4=b, sgr0=\E4@, smso=\E4!a, smul=\E4"a,
 	use=ibm3161-C,
 
@@ -23638,5 +23728,39 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 # 2014-10-18
 #	+ reviewed terminology 0.6.1, add function key definitions.  None of
 #	  the vt100-compatibility issues were improved -TD
+#
+# 2015-04-22
+#	+ add 'dim' capability to screen entry (report by Leonardo B Schenkel)
+#	+ add several key definitions to nsterm-bce to match preconfigured
+#	  keys, e.g., with OSX 10.9 and 10.10 (report by Leonardo B Schenkel)
+#
+# 2015-05-02
+#	+ remove unnecessary ';' from E3 capabilities -TD
+#	+ add tmux entry, derived from screen (patch by Nicholas Marriott).
+#	+ split-out recent change to nsterm-bce as nsterm-build326, and add
+#	  nsterm-build342 to reflect changes with successive releases of OSX
+#	  (discussion with Leonardo B Schenkel)
+#	+ add xon, ich1, il1 to ibm3161 (patch by Stephen Powell,
+#	  Debian #783806)
+#
+# 2015-05-17
+#	+ remove screen-bce.mlterm, since mlterm does not do "bce" -TD
+#	+ add several screen.XXX entries to support the respective variations
+#	  for 256 colors -TD
+#
+# 2015-05-23
+#	+ add putty+fnkeys* building-block entries -TD
+#
+# 2015-05-30
+#	+ remove spurious "%;" from st entry (report by Daniel Pitts) -TD
+#	+ add vte-2014, update vte to use that -TD
+#
+# 2015-06-27
+#	+ comment-out "screen.xterm" entry, and inherit screen.xterm-256color
+#	  from xterm-new (report by Richard Birkett) -TD
+#
+# 2015-07-25
+#	+ add status line to tmux via xterm+sl (patch by Nicholas Marriott).
+#	+ fixes for st 0.5 from testing with tack -TD
 #
 ######## SHANTIH!  SHANTIH!  SHANTIH!
