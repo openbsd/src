@@ -1,3 +1,4 @@
+/* $OpenBSD: pci_alphabook1.c,v 1.3 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_alphabook1.c,v 1.16 2012/02/06 02:14:15 matt Exp $ */
 
 /*-
@@ -69,6 +70,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/pci/lcavar.h>
 
@@ -122,25 +124,25 @@ pci_alphabook1_pickintr(struct lca_config *lcp)
 }
 
 int
-dec_alphabook1_intr_map(struct pci_attach_args *pa,
-    pci_intr_handle_t *ihp)
+dec_alphabook1_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	int device, irq;
+	int buspin, device;
 
-	if (buspin == 0) {
-		/* No IRQ used. */
-		return 1;
-	}
-	if (buspin > 4) {
-		printf("dec_alphabook1_intr_map: bad interrupt pin %d\n",
-		    buspin);
-		return 1;
-	}
+#ifdef notyet
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] == 0)
+			return 1;
 
-	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+		*ihp = pa->pa_bridgeih[buspin - 1];
+		return 0;
+	}
+#endif
+
+	buspin = pa->pa_intrpin;
+	pci_decompose_tag(pa->pa_pc, bustag, NULL, &device, NULL);
 
 	/*
 	 * There are only two interrupting PCI devices on the AlphaBook:
@@ -154,17 +156,14 @@ dec_alphabook1_intr_map(struct pci_attach_args *pa,
 
 	switch (device) {
 	case 6:					/* NCR SCSI */
-		irq = 14;
-		break;
+		*ihp = 14;
+		return 0;
 	case 8:					/* Cirrus CL-PD6729 */
-		irq = 15;
-		break;
+		*ihp = 15;
+		return 0;
 	default:
 	        return 1;
 	}
-
-	*ihp = irq;
-	return (0);
 }
 
 const char *

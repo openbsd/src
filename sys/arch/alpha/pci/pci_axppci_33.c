@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.20 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.21 2015/07/26 05:09:44 miod Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/pci/lcavar.h>
 
@@ -89,7 +90,7 @@ pci_axppci_33_pickintr(lcp)
         pc->pc_pciide_compat_intr_establish = NULL;
         pc->pc_pciide_compat_intr_disestablish = NULL;
 
-#if NSIO
+#if NSIO > 0
 	sio_intr_setup(pc, iot);
 #else
 	panic("pci_axppci_33_pickintr: no I/O interrupt handler (no sio)");
@@ -102,21 +103,23 @@ dec_axppci_33_intr_map(pa, ihp)
 	pci_intr_handle_t *ihp;
 {
 	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	int device, pirq;
+	int buspin, device, pirq;
 	pcireg_t pirqreg;
 	u_int8_t pirqline;
 
-        if (buspin == 0) {
-                /* No IRQ used. */
-                return 1;
-        }
-        if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
-                return 1;
-        }
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
 
+		return 1;
+	}
+
+	buspin = pa->pa_intrpin;
 	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
 	switch (device) {
@@ -126,6 +129,7 @@ dec_axppci_33_intr_map(pa, ihp)
 
 	case 11:				/* slot 1 */
 		switch (buspin) {
+		default:
 		case PCI_INTERRUPT_PIN_A:
 		case PCI_INTERRUPT_PIN_D:
 			pirq = 0;
@@ -136,16 +140,12 @@ dec_axppci_33_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 1;
 			break;
-#ifdef DIAGNOSTIC
-		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d",
-			    buspin);
-#endif
 		};
 		break;
 
 	case 12:				/* slot 2 */
 		switch (buspin) {
+		default:
 		case PCI_INTERRUPT_PIN_A:
 		case PCI_INTERRUPT_PIN_D:
 			pirq = 1;
@@ -156,16 +156,12 @@ dec_axppci_33_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 2;
 			break;
-#ifdef DIAGNOSTIC
-		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d",
-			    buspin);
-#endif
 		};
 		break;
 
 	case 8:				/* slot 3 */
 		switch (buspin) {
+		default:
 		case PCI_INTERRUPT_PIN_A:
 		case PCI_INTERRUPT_PIN_D:
 			pirq = 2;
@@ -176,35 +172,20 @@ dec_axppci_33_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 0;
 			break;
-#ifdef DIAGNOSTIC
-		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus PCI pin %d",
-			    buspin);
-#endif
 		};
 		break;
 
 	default:
-                printf("dec_axppci_33_intr_map: weird device number %d\n",
-		    device);
                 return 1;
 	}
 
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),
 	    SIO_PCIREG_PIRQ_RTCTRL);
-#if 0
-	printf("pci_axppci_33_map_int: device %d pin %c: pirq %d, reg = %x\n",
-		device, '@' + buspin, pirq, pirqreg);
-#endif
+
 	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
 	if ((pirqline & 0x80) != 0)
 		return 1;			/* not routed? */
 	pirqline &= 0xf;
-
-#if 0
-	printf("pci_axppci_33_map_int: device %d pin %c: mapped to line %d\n",
-	    device, '@' + buspin, pirqline);
-#endif
 
 	*ihp = pirqline;
 	return (0);

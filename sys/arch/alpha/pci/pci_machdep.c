@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.19 2010/04/21 15:00:14 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.20 2015/07/26 05:09:44 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/ppbreg.h>
 
 #include "vga.h"
 #if NVGA_PCI
@@ -139,4 +140,16 @@ alpha_sysctl_chipset(int *name, u_int namelen, char *where, size_t *sizep)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+int
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	if (pa->pa_intrpin == 0)	/* No IRQ used. */
+		return 1;
+
+	if (!(1 <= pa->pa_intrpin && pa->pa_intrpin <= 4))
+		return 1;
+
+	return (*(pa->pa_pc)->pc_intr_map)(pa, ihp);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.20 2014/04/14 07:36:12 mpi Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.21 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -45,6 +45,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
@@ -134,46 +135,38 @@ dec_6600_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	int bus, device, function;
-
-	if (buspin == 0) {
-		/* No IRQ used. */
-		return 1;
-	}
-	if (buspin > 4) {
-		printf("intr_map: bad interrupt pin %d\n", buspin);
-		return 1;
-	}
-
-	pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	int buspin, line = pa->pa_intrline;
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
-	 * A value of (char)-1 indicates there is no mapping.
+	 * We trust it whenever possible.
 	 */
-	if (line == 0xff) {
-		printf("dec_6600_intr_map: no mapping for %d/%d/%d\n",
-		    bus, device, function);
-		return (1);
+	if (line >= 0 && line < PCI_NIRQ) {
+		*ihp = line;
+		return 0;
 	}
-
-#if NSIO == 0
 	if (DEC_6600_LINE_IS_ISA(line)) {
+#if NSIO > 0
+		*ihp = line;
+		return 0;
+#else
 		printf("dec_6600_intr_map: ISA IRQ %d for %d/%d/%d\n",
-		    DEC_6600_LINE_ISA_IRQ(line), bus, device, function);
-		return (1);
-	}
+		    DEC_6600_LINE_ISA_IRQ(line),
+		    pa->pa_bus, pa->pa_device, pa->pa_function);
+		return 1;
 #endif
+	}
+	
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
+	}
 
-	if (DEC_6600_LINE_IS_ISA(line) == 0 && line >= PCI_NIRQ)
-		panic("dec_6600_intr_map: dec 6600 irq too large (%d)",
-		    line);
-
-	*ihp = line;
-	return (0);
+	return 1;
 }
 
 const char *
@@ -286,7 +279,7 @@ dec_6600_iointr(arg, vec)
 	irq = SCB_VECTOIDX(vec - 0x900);
 
 	if (irq >= PCI_NIRQ)
-		panic("iointr: irq %d is too high", irq);
+		panic("dec_6600_iointr: irq %d is too high", irq);
 
 	if (!alpha_shared_intr_dispatch(dec_6600_pci_intr, irq)) {
 		alpha_shared_intr_stray(dec_6600_pci_intr, irq, "6600 irq");

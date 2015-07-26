@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.22 2010/08/07 03:50:01 krw Exp $ */
+/* $OpenBSD: pci_550.c,v 1.23 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -74,6 +74,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
@@ -170,21 +171,7 @@ dec_550_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	int bus, device, function;
-
-	if (buspin == 0) {
-		/* No IRQ used. */
-		return 1;
-	}
-	if (buspin > 4) {
-		printf("dec_550_intr_map: bad interrupt pin %d\n", buspin);
-		return 1;
-	}
-
-	pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	int buspin, line = pa->pa_intrline;
 
 	/*
 	 * There are two main variants of Miata: Miata 1 (Intel SIO)
@@ -201,19 +188,20 @@ dec_550_intr_map(pa, ihp)
 	 * There will be no interrupt mapping for these devices, so just
 	 * bail out now.
 	 */
-	if (bus == 0) {
+	if (pa->pa_bus == 0) {
 		if ((hwrpb->rpb_variation & SV_ST_MASK) < SV_ST_MIATA_1_5) {
 			/* Miata 1 */
-			if (device == 7)
+			if (pa->pa_device == 7)
 				panic("dec_550_intr_map: SIO device");
-			else if (device == 4)
+			else if (pa->pa_device == 4)
 				return (1);
 		} else {
 			/* Miata 1.5 or Miata 2 */
-			if (device == 7) {
-				if (function == 0)
+			if (pa->pa_device == 7) {
+				if (pa->pa_function == 0)
 					panic("dec_550_intr_map: SIO device");
-				if (function == 1 || function == 2)
+				if (pa->pa_function == 1 ||
+				    pa->pa_function == 2)
 					return (1);
 			}
 		}
@@ -221,30 +209,34 @@ dec_550_intr_map(pa, ihp)
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
-	 * A value of (char)-1 indicates there is no mapping.
+	 * We trust it whenever possible.
 	 */
-	if (line == 0xff) {
-		printf("dec_550_intr_map: no mapping for %d/%d/%d\n",
-		    bus, device, function);
-		return (1);
+	if (line >= 0 && line < DEC_550_MAX_IRQ) {
+		*ihp = line;
+		return 0;
 	}
-
-#if NSIO == 0
 	if (DEC_550_LINE_IS_ISA(line)) {
+#if NSIO > 0
+		*ihp = line;
+		return 0;
+#else
 		printf("dec_550_intr_map: ISA IRQ %d for %d/%d/%d\n",
-		    DEC_550_LINE_ISA_IRQ(line), bus, device, function);
-		return (1);
-	}
+		    DEC_550_LINE_ISA_IRQ(line),
+		    pa->pa_bus, pa->pa_device, pa->pa_function);
+		return 1;
 #endif
-
-	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ) {
-		printf("dec_550_intr_map: dec 550 irq too large (%d)",
-		    line);
-		return (1);
 	}
 
-	*ihp = line;
-	return (0);
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 const char *

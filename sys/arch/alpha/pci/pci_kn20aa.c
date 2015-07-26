@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.27 2014/05/08 20:46:49 miod Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.28 2015/07/26 05:09:44 miod Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
@@ -113,14 +114,16 @@ dec_kn20aa_intr_map(pa, ihp)
 	int device;
 	int kn20aa_irq;
 
-        if (buspin == 0) {
-                /* No IRQ used. */
-                return 1;
-        }
-        if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
-                return 1;
-        }
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
+
+		return 1;
+	}
 
 	/*
 	 * Slot->interrupt translation.  Appears to work, though it
@@ -153,18 +156,22 @@ dec_kn20aa_intr_map(pa, ihp)
 		break;
 
 	default:
-                printf("dec_kn20aa_intr_map: weird device number %d\n",
-		    device);
+		printf("dec_kn20aa_intr_map: don't know how to setup %d/%d/%d\n",
+		    pa->pa_bus, pa->pa_device, pa->pa_function);
                 return 1;
 	}
 
-	kn20aa_irq += buspin - 1;
-	if (kn20aa_irq >= KN20AA_MAX_IRQ)
-		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)",
-		    kn20aa_irq);
+	if (kn20aa_irq != 13)
+		kn20aa_irq += buspin - 1;
+
+	if (kn20aa_irq >= KN20AA_MAX_IRQ) {
+		printf("dec_kn20aa_intr_map: kn20aa_irq %d too large for %d/%d/%d\n",
+		    kn20aa_irq, pa->pa_bus, pa->pa_device, pa->pa_function);
+		return 1;
+	}
 
 	*ihp = kn20aa_irq;
-	return (0);
+	return 0;
 }
 
 const char *

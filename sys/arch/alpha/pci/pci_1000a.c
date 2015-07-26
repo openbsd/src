@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000a.c,v 1.12 2009/09/30 20:16:30 miod Exp $ */
+/* $OpenBSD: pci_1000a.c,v 1.13 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_1000a.c,v 1.14 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -146,7 +146,7 @@ dec_1000a_intr_map(pa, ihp)
         pci_intr_handle_t *ihp;
 {
 	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
+	int buspin, line = pa->pa_intrline;
 	int imrbit = 0, bus, device;
 	/*
 	 * Get bit number in mystery ICU imr
@@ -176,13 +176,6 @@ dec_1000a_intr_map(pa, ihp)
 		/*  3 */  IRQSPLIT(12),
 		/*  4 */  IRQSPLIT(14)
 	};
-
-	if (buspin == 0)	/* No IRQ used. */
-		return 1;
-	if (!(1 <= buspin && buspin <= 4))
-		goto bad;
-
-	pci_decompose_tag(pa->pa_pc, bustag, &bus, &device, NULL);
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
@@ -217,6 +210,9 @@ dec_1000a_intr_map(pa, ihp)
 				}
 			}
 		} else {
+			pci_decompose_tag(pa->pa_pc, bustag, &bus, &device,
+			    NULL);
+			buspin = pa->pa_intrpin;
 			if (0 <= device &&
 			    device < sizeof imrmap / sizeof imrmap[0])
 				imrbit = imrmap[device][buspin - 1];
@@ -227,7 +223,7 @@ dec_1000a_intr_map(pa, ihp)
 		*ihp = IMR2IRQ(imrbit);
 		return 0;
 	}
-bad:
+
 	return 1;
 }
 

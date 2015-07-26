@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.28 2013/11/05 10:12:35 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.29 2015/07/26 05:09:44 miod Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -103,8 +103,6 @@ int alpha_sysctl_chipset(int *, u_int, char *, size_t *);
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
-#define	pci_intr_map(pa, ihp)						\
-    (*((pa)->pa_pc)->pc_intr_map)((pa), (ihp))
 #define	pci_intr_map_msi(pa, ihp)	(-1)
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
@@ -138,5 +136,7 @@ void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 #define	pci_dev_postattach(a, b)
 
 #ifdef _KERNEL
-void pci_display_console(bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t, int, int, int);
+void	pci_display_console(bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+	    int, int, int);
+int	pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 #endif /* _KERNEL */

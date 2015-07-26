@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.22 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.23 2015/07/26 05:09:44 miod Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/pci/apecsvar.h>
 
@@ -101,22 +102,23 @@ dec_2100_a50_intr_map(pa, ihp)
 	pci_intr_handle_t *ihp;
 {
 	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	int device, pirq;
+	int buspin, device, pirq;
 	pcireg_t pirqreg;
 	u_int8_t pirqline;
 
-        if (buspin == 0) {
-                /* No IRQ used. */
-                return 1;
-        }
-        if (buspin > 4) {
-                printf("dec_2100_a50_intr_map: bad interrupt pin %d\n",
-		    buspin);
-                return 1;
-        }
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
 
+		return 1;
+	}
+
+	buspin = pa->pa_intrpin;
 	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
 	switch (device) {
@@ -127,6 +129,7 @@ dec_2100_a50_intr_map(pa, ihp)
 	case 11:				/* slot 1 */
 	case 14:				/* slot 3 */
 		switch (buspin) {
+		default:
 		case PCI_INTERRUPT_PIN_A:
 		case PCI_INTERRUPT_PIN_D:
 			pirq = 0;
@@ -137,16 +140,12 @@ dec_2100_a50_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 1;
 			break;
-#ifdef DIAGNOSTIC
-		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d",
-			    buspin);
-#endif
 		};
-		break;
+			break;
 
 	case 12:				/* slot 2 */
 		switch (buspin) {
+		default:
 		case PCI_INTERRUPT_PIN_A:
 		case PCI_INTERRUPT_PIN_D:
 			pirq = 1;
@@ -157,16 +156,12 @@ dec_2100_a50_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 2;
 			break;
-#ifdef DIAGNOSTIC
-		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d",
-			    buspin);
-#endif
-		};
-		break;
+	};
+	break;
 
 	case 13:				/* slot 3 */
 		switch (buspin) {
+		default:
 		case PCI_INTERRUPT_PIN_A:
 		case PCI_INTERRUPT_PIN_D:
 			pirq = 2;
@@ -177,38 +172,24 @@ dec_2100_a50_intr_map(pa, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 0;
 			break;
-#ifdef DIAGNOSTIC
-		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d",
-			    buspin);
-#endif
 		};
 		break;
 
 	default:
-                printf("dec_2100_a50_intr_map: weird device number %d\n",
-		    device);
+		printf("dec_2100_a50_intr_map: don't know how to setup %d/%d/%d\n",
+		    pa->pa_bus, pa->pa_device, pa->pa_function);
                 return 1;
 	}
 
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, APECS_SIO_DEVICE, 0),
 	    SIO_PCIREG_PIRQ_RTCTRL);
-#if 0
-	printf("pci_2100_a50_map_int: device %d pin %c: pirq %d, reg = %x\n",
-		device, '@' + buspin, pirq, pirqreg);
-#endif
 	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
 	if ((pirqline & 0x80) != 0)
 		return 1;
 	pirqline &= 0xf;
 
-#if 0
-	printf("pci_2100_a50_map_int: device %d pin %c: mapped to line %d\n",
-	    device, '@' + buspin, pirqline);
-#endif
-
 	*ihp = pirqline;
-	return (0);
+	return 0;
 }
 
 const char *

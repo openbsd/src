@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.26 2014/04/14 07:36:12 mpi Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.27 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -72,6 +72,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
@@ -158,24 +159,8 @@ dec_eb164_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	int bus, device, function;
+	int buspin, line = pa->pa_intrline;
 	u_int64_t variation;
-
-	if (buspin == 0) {
-		/* No IRQ used. */
-		return 1;
-	}
-	if (buspin > 4) {
-		printf("dec_eb164_intr_map: bad interrupt pin %d\n", buspin);
-		return 1;
-	}
-
-	pci_decompose_tag(pc, bustag, &bus, &device, &function);
-
-	variation = hwrpb->rpb_variation & SV_ST_MASK;
 
 	/*
 	 *
@@ -189,42 +174,46 @@ dec_eb164_intr_map(pa, ihp)
 	 *
 	 * Real EB164s have ISA IDE on the Super I/O chip.
 	 */
-	if (bus == 0) {
+	variation = hwrpb->rpb_variation & SV_ST_MASK;
+	if (pa->pa_bus == 0) {
 		if (variation >= SV_ST_ALPHAPC164_366 &&
 		    variation <= SV_ST_ALPHAPC164LX_600) {
-			if (device == 8)
+			if (pa->pa_device == 8)
 				panic("dec_eb164_intr_map: SIO device");
-			if (device == 11)
+			if (pa->pa_device == 11)
 				return (1);
 		} else if (variation >= SV_ST_ALPHAPC164SX_400 &&
 			   variation <= SV_ST_ALPHAPC164SX_600) {
-			if (device == 8) {
-				if (function == 0)
+			if (pa->pa_device == 8) {
+				if (pa->pa_function == 0)
 					panic("dec_eb164_intr_map: SIO device");
 				return (1);
 			}
 		} else {
-			if (device == 8)
+			if (pa->pa_device == 8)
 				panic("dec_eb164_intr_map: SIO device");
 		}
 	}
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
-	 * A value of (char)-1 indicates there is no mapping.
+	 * We trust it whenever possible.
 	 */
-	if (line == 0xff) {
-		printf("dec_eb164_intr_map: no mapping for %d/%d/%d\n",
-		    bus, device, function);
-		return (1);
+	if (line >= 0 && line < EB164_MAX_IRQ) {
+		*ihp = line;
+		return 0;
 	}
 
-	if (line > EB164_MAX_IRQ)
-		panic("dec_eb164_intr_map: eb164 irq too large (%d)",
-		    line);
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
+	}
 
-	*ihp = line;
-	return (0);
+	return 1;
 }
 
 const char *

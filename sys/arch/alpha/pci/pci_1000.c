@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.10 2009/09/30 20:16:30 miod Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.11 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -73,6 +73,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/pci/pci_1000.h>
 
@@ -107,9 +108,6 @@ pci_1000_pickintr(core, iot, memt, pc)
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 {
-#if 0
-	char *cp;
-#endif
 	int i;
 
 	another_mystery_icu_iot = iot;
@@ -145,19 +143,33 @@ dec_1000_intr_map(pa, ihp)
         pci_intr_handle_t *ihp;
 {
 	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin;
-	int device;
+	int buspin, device, line = pa->pa_intrline;
 
-	if (buspin == 0)	/* No IRQ used. */
-		return 1;
-	if (!(1 <= buspin && buspin <= 4))
-		goto bad;
+	/*
+	 * The console places the interrupt mapping in the "line" value.
+	 * We trust it whenever possible.
+	 */
+	if (line >= 0 && line < PCI_NIRQ) {
+		*ihp = line;
+		return 0;
+	}
 
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] == 0)
+			return 1;
+
+		*ihp = pa->pa_bridgeih[buspin - 1];
+		return 0;
+	}
+
+	buspin = pa->pa_intrpin;
 	pci_decompose_tag(pa->pa_pc, bustag, NULL, &device, NULL);
 
-	switch(device) {
+	switch (device) {
 	case 6:
-		if(buspin != 1)
+		if (buspin != 1)
 			break;
 		*ihp = 0xc;		/* integrated ncr scsi */
 		return 0;
@@ -168,7 +180,6 @@ dec_1000_intr_map(pa, ihp)
 		return 0;
 	}
 
-bad:
 	return 1;
 }
 

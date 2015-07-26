@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.15 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.16 2015/07/26 05:09:44 miod Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -47,6 +47,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
@@ -97,50 +98,34 @@ pci_up1000_pickintr(struct irongate_config *icp)
 int
 api_up1000_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	int bus, device, function;
-
-	if (buspin == 0) {
-		/* No IRQ used. */
-		return 1;
-	}
-	if (buspin > 4) {
-		printf("api_up1000_intr_map: bad interrupt pin %d\n",
-		    buspin);
-		return 1;
-	}
-
-	pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	int buspin, line = pa->pa_intrline;
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
-	 * A value of (char)-1 indicates there is no mapping.
+	 * We trust it whenever possible.
 	 */
-	if (line == 0xff) {
-		printf("api_up1000_intr_map: no mapping for %d/%d/%d\n",
-		    bus, device, function);
-		return (1);
+	if (line >= 0 && line <= 15) {
+		if (line == 2) {
+#ifdef DEBUG
+			printf("api_up1000_intr_map: changed IRQ 2 to IRQ 9\n");
+#endif
+			line = 9;
+		}
+
+		*ihp = line;
+		return 0;
 	}
 
-	/* XXX Check for 0? */
-	if (line > 15) {
-#ifdef DIAGNOSTIC
-		printf("api_up1000_intr_map: ISA IRQ too large (%d)\n",
-		    line);
-#endif
-		return (1);
-	}
-	if (line == 2) {
-#ifdef DIAGNOSTIC
-		printf("api_up1000_intr_map: changed IRQ 2 to IRQ 9\n");
-#endif
-		line = 9;
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
 	}
 
-	*ihp = line;
-	return (0);
+	return 1;
 }
 
 const char *

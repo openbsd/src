@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.14 2009/09/30 20:18:06 miod Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.15 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -73,6 +73,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
@@ -132,7 +133,7 @@ pci_eb64plus_pickintr(acp)
 			PCI_STRAY_MAX);
 	}
 
-#if NSIO
+#if NSIO > 0
 	sio_intr_setup(pc, iot);
 #endif
 }
@@ -142,38 +143,27 @@ dec_eb64plus_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	pcitag_t bustag = pa->pa_intrtag;
-	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	int bus, device, function;
-
-	if (buspin == 0) {
-		/* No IRQ used. */
-		return 1;
-	}
-	if (buspin > 4) {
-		printf("dec_eb64plus_intr_map: bad interrupt pin %d\n", buspin);
-		return 1;
-	}
-
-	pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	int buspin, line = pa->pa_intrline;
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
-	 * A value of (char)-1 indicates there is no mapping.
+	 * We trust it whenever possible.
 	 */
-	if (line == 0xff) {
-		printf("dec_eb64plus_intr_map: no mapping for %d/%d/%d\n",
-		    bus, device, function);
-		return (1);
+	if (line >= 0 && line < EB64PLUS_MAX_IRQ) {
+		*ihp = line;
+		return 0;
 	}
 
-	if (line >= EB64PLUS_MAX_IRQ)
-		panic("dec_eb64plus_intr_map: eb64+ irq too large (%d)",
-		    line);
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
+	}
 
-	*ihp = line;
-	return (0);
+	return 1;
 }
 
 const char *

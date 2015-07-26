@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_kn300.c,v 1.6 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: pci_kn300.c,v 1.7 2015/07/26 05:09:44 miod Exp $ */
 /* $NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $ */
 
 /*
@@ -46,6 +46,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <alpha/mcbus/mcbusvar.h>
 #include <alpha/mcbus/mcbusreg.h>
@@ -126,12 +127,14 @@ dec_kn300_intr_map(pa, ihp)
 	int device;
 	int mcpcia_irq;
 
-	if (buspin == 0) {
-		/* No IRQ used. */
-		return 1;
-	}
-	if (buspin > 4 || buspin < 0) {
-		printf("dec_kn300_intr_map: bad interrupt pin %d\n", buspin);
+	if (pa->pa_bridgetag) {
+		buspin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin,
+		    pa->pa_device);
+		if (pa->pa_bridgeih[buspin - 1] != 0) {
+			*ihp = pa->pa_bridgeih[buspin - 1];
+			return 0;
+		}
+
 		return 1;
 	}
 
@@ -145,8 +148,9 @@ dec_kn300_intr_map(pa, ihp)
 	} else if (device >= 2 && device <= 5) {
 		mcpcia_irq = (device - 2) * 4 + buspin - 1;
 	} else {
-		printf("dec_kn300_intr_map: weird device number %d\n", device);
-		return(1);
+		printf("dec_kn300_intr_map: don't know how to setup %d/%d/%d\n",
+		    pa->pa_bus, pa->pa_device, pa->pa_function);
+		return 1;
 	}
 
 	/*
@@ -167,6 +171,7 @@ dec_kn300_intr_map(pa, ihp)
 		((ccp->cc_mid - 4)		<< 5)	|
 		((7 - ccp->cc_gid)		<< 8)	|
 		(mcpcia_irq			<< 11);
+
 	return (0);
 }
 
