@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.184 2015/07/23 18:02:59 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.185 2015/07/26 14:01:07 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -532,7 +532,8 @@ notfat:
 	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, dospartoff) +
 	    DOS_LABELSECTOR);
 	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+	bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 	(*strat)(bp);
 	if (biowait(bp))
@@ -855,7 +856,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	    DL_BLKSPERSEC(lp);
 	offset = DL_BLKOFFSET(lp, gptpartoff + DOS_LABELSECTOR);
 	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+	bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
 	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
 	(*strat)(bp);
 	if (biowait(bp))
