@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.29 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: patch.1,v 1.30 2015/07/26 14:32:19 millert Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: July 26 2015 $
 .Dt PATCH 1
 .Os
 .Sh NAME
@@ -478,15 +478,6 @@ file names or, for a non-context diff, the
 .Dq index
 file name, and choose the file name with the fewest path components,
 the shortest basename, and the shortest total file name length (in that order).
-.It
-If no file exists,
-.Nm
-checks for the existence of the files in an RCS directory
-(using the appropriate suffix) using the criteria specified
-above.
-If found,
-.Nm
-will attempt to get or check out the file.
 .It
 If no suitable file was found to patch, the patch file is a context or
 unified diff, and the old file was zero length, the new file name is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.28 2014/11/25 10:26:07 tobias Exp $	*/
+/*	$OpenBSD: common.h,v 1.29 2015/07/26 14:32:19 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -40,10 +40,6 @@
 #define MAXLINELEN 8192
 #define BUFFERSIZE 1024
 #define LINENUM_MAX LONG_MAX
-
-#define RCSSUFFIX ",v"
-#define CHECKOUT "co -l %s"
-#define RCSDIFF "rcsdiff %s > /dev/null"
 
 #define ORIGEXT ".orig"
 #define REJEXT ".rej"
