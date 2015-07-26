@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2015/07/26 17:28:05 zhuk Exp $
+# $OpenBSD: Makefile,v 1.2 2015/07/26 17:31:18 zhuk Exp $
 
 REGRESS_TARGETS = \
 	t-okay \
@@ -21,7 +21,7 @@ CLEANFILES +=	${REGRESS_TARGETS:=.err}
 
 .for t in ${REGRESS_TARGETS:N*-fail*:N*-permit*}
 ${t}:
-	@echo '===> $@'
+	@echo '$@'
 	@${TEST_RUN_CMD}
 	@${TEST_ERRORS_CMD}
 	@${TEST_OUTPUT_CMD}
@@ -29,7 +29,7 @@ ${t}:
 
 .for t in ${REGRESS_TARGETS:M*-fail*}
 ${t}:
-	@echo '===> $@'
+	@echo '$@'
 	@ ! ${TEST_RUN_CMD}
 	@${TEST_ERRORS_CMD}
 	@${TEST_OUTPUT_CMD}
@@ -37,7 +37,7 @@ ${t}:
 
 .for t in ${REGRESS_TARGETS:M*-permit*}
 ${t}:
-	@echo '===> $@'
+	@echo '$@'
 	@rv=true; \
 	while read ident cmdline; do \
 		read expected; \
