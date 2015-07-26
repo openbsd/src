@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.129 2015/03/26 21:22:50 tobias Exp $ */
+/* $OpenBSD: netcat.c,v 1.130 2015/07/26 19:12:28 chl Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -749,7 +749,7 @@ readwrite(int net_fd)
 	size_t netinbufpos = 0;
 	unsigned char stdinbuf[BUFSIZE];
 	size_t stdinbufpos = 0;
-	int n, num_fds, flags;
+	int n, num_fds;
 	ssize_t ret;
 
 	/* don't read from stdin if requested */
