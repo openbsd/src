@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.22 2014/05/25 21:27:07 brad Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.23 2015/07/26 03:08:16 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -287,8 +287,7 @@ resolve_failed:
 			Elf_Addr soff;
 
 			soff = _dl_find_symbol(symn, &srcsym,
-			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|
-			    ((type == R_TYPE(JUMP_SLOT)) ? SYM_PLT:SYM_NOTPLT),
+			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
 			    dstsym, object, NULL);
 			if (srcsym == NULL)
 				goto resolve_failed;
@@ -465,7 +464,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	}
 
-	/* PLT is already RO on i386, no point in mprotecting it, just GOT */
+	/* PLT is already RO on amd64, no point in mprotecting it, just GOT */
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
