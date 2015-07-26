@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.298 2015/07/22 06:20:06 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.299 2015/07/26 22:37:40 chl Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3533,7 +3533,6 @@ setmpwencap(const char *value, int d)
 void
 setmpwlabel(const char *local, const char *remote)
 {
-	struct	shim_hdr shim;
 	const	char *errstr;
 
 	wconfig = 1;
