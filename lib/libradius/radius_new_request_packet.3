@@ -1,4 +1,4 @@
-.\" $OpenBSD: radius_new_request_packet.3,v 1.1 2015/07/27 02:27:32 yasuoka Exp $
+.\" $OpenBSD: radius_new_request_packet.3,v 1.2 2015/07/27 03:01:22 yasuoka Exp $
 .\"
 .\" Copyright (c) 2009 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -312,6 +312,11 @@ and
 .Fn radius_put_mppe_recv_key_attr
 are shortcuts of combination of encrypt/decrypt functions
 and get/put functions.
+.Pp
+.Fn radius_get_eap_msk
+retrieves a Master Session Key (MSK) for Extensible Authentication Protocol
+(EAP).
+Currently retrieving a MSK from MS-MPPE key attributes is supported.
 .Sh SENDING AND RECEIVING PACKETS
 There exist helper functions to sending and receiving packets.
 .Pp

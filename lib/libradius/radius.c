@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.1 2015/07/20 23:52:29 yasuoka Exp $ */
+/*	$OpenBSD: radius.c,v 1.2 2015/07/27 03:01:22 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -45,8 +45,7 @@
 static uint8_t radius_id_counter = 0;
 
 static int
-radius_check_packet_data(const RADIUS_PACKET_DATA * pdata,
-    size_t length)
+radius_check_packet_data(const RADIUS_PACKET_DATA * pdata, size_t length)
 {
 	const RADIUS_ATTRIBUTE	*attr;
 	const RADIUS_ATTRIBUTE	*end;
