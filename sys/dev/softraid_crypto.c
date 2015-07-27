@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.121 2015/07/21 03:30:51 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.122 2015/07/27 04:11:58 halex Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -655,7 +655,7 @@ sr_crypto_create_key_disk(struct sr_discipline *sd, dev_t dev)
 		goto fail;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
-		sr_error(sc, "%s partition not of type RAID (%d)\n",
+		sr_error(sc, "%s partition not of type RAID (%d)",
 		    devname, label.d_partitions[part].p_fstype);
 		goto fail;
 	}
@@ -825,7 +825,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, dev_t dev)
 		goto done;
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
-		sr_error(sc, "%s partition not of type RAID (%d)\n",
+		sr_error(sc, "%s partition not of type RAID (%d)",
 		    devname, label.d_partitions[part].p_fstype);
 		goto done;
 	}

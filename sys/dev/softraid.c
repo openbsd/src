@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.360 2015/07/21 03:30:51 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.361 2015/07/27 04:11:58 halex Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3207,13 +3207,13 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	/* Is the partition large enough? */
 	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
 	if (size <= sd->sd_meta->ssd_data_blkno) {
-		sr_error(sc, "%s: %s partition too small\n", DEVNAME(sc),
+		sr_error(sc, "%s: %s partition too small", DEVNAME(sc),
 		    devname);
 		goto done;
 	}
 	size -= sd->sd_meta->ssd_data_blkno;
 	if (size > INT64_MAX) {
-		sr_error(sc, "%s: %s partition too large\n", DEVNAME(sc),
+		sr_error(sc, "%s: %s partition too large", DEVNAME(sc),
 		    devname);
 		goto done;
 	}
@@ -4345,7 +4345,7 @@ sr_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 die:
 		splx(s); /* XXX */
 		panic("%s: %s: %s: invalid chunk state transition "
-		    "%d -> %d\n", DEVNAME(sd->sd_sc),
+		    "%d -> %d", DEVNAME(sd->sd_sc),
 		    sd->sd_meta->ssd_devname,
 		    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname,
 		    old_state, new_state);
@@ -4411,7 +4411,7 @@ sr_set_vol_state(struct sr_discipline *sd)
 	default:
 die:
 		panic("%s: %s: invalid volume state transition "
-		    "%d -> %d\n", DEVNAME(sd->sd_sc),
+		    "%d -> %d", DEVNAME(sd->sd_sc),
 		    sd->sd_meta->ssd_devname,
 		    old_state, new_state);
 		/* NOTREACHED */
