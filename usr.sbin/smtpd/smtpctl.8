@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.49 2014/09/29 20:56:46 jmc Exp $
+.\" $OpenBSD: smtpctl.8,v 1.50 2015/07/27 18:48:05 sobrado Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 29 2014 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -309,7 +309,7 @@ a command which specifies an
 applies to a specific recipient of a message.
 .Sh FILES
 .Bl -tag -width "/var/run/smtpd.sockXXX" -compact
-.It /var/run/smtpd.sock
+.It Pa /var/run/smtpd.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr smtpd 8 .

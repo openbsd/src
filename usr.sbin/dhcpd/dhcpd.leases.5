@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.leases.5,v 1.12 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: dhcpd.leases.5,v 1.13 2015/07/27 18:48:04 sobrado Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt DHCPD.LEASES 5
 .Os
 .Sh NAME
@@ -164,7 +164,7 @@ causing it to be abandoned.
 In that case, the address is immediately assigned to the client.
 .Sh FILES
 .Bl -tag -width Ds -compact
-.It /var/db/dhcpd.leases
+.It Pa /var/db/dhcpd.leases
 .El
 .Sh SEE ALSO
 .Xr dhcp-options 5 ,
