@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.2 2015/07/21 07:04:53 schwarze Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.3 2015/07/27 08:43:11 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 
 	if ((pw = getpwnam(RADIUSD_USER)) == NULL)
-	    errx(EXIT_FAILURE, "user `%s' is not found in password "
+		errx(EXIT_FAILURE, "user `%s' is not found in password "
 		    "database", RADIUSD_USER);
 
 	if (chroot(pw->pw_dir) == -1)
@@ -742,7 +742,7 @@ radius_code_string(int code)
 		if (codestrings[i].code == code)
 			return (codestrings[i].string);
 
-	return "Unknown";
+	return ("Unknown");
 }
 
 void
@@ -935,7 +935,7 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 		fatal("Out of memory");
 	module->radiusd = radiusd;
 
-        if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pairsock) == -1) {
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pairsock) == -1) {
 		log_warn("Could not load module `%s'(%s): pipe()", name, path);
 		goto on_error;
 	}
@@ -956,7 +956,7 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 		close(pairsock[1]);
 		closefrom(STDERR_FILENO + 1);
 		execv(path, (char * const *)av);
-		warn("Failed to execute %s", path);
+		log_warn("Failed to execute %s", path);
 		_exit(EXIT_FAILURE);
 	}
 	close(pairsock[1]);
