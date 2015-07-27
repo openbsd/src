@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.445 2015/07/20 15:50:04 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.446 2015/07/27 08:45:45 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2015 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2322,9 +2322,9 @@ restores a global option to the default).
 .Pp
 The
 .Fl o
-flag prevents setting an option that is already set and
+flag prevents setting an option that is already set and the
 .Fl q
-flag suppresses errors about unknown options.
+flag suppresses errors about unknown or ambiguous options.
 .Pp
 With
 .Fl a ,

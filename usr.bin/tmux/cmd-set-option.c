@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.75 2015/06/04 14:29:33 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.76 2015/07/27 08:45:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -110,8 +110,11 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 	/* Find the option entry, try each table. */
 	table = oe = NULL;
 	if (options_table_find(optstr, &table, &oe) != 0) {
-		cmdq_error(cmdq, "ambiguous option: %s", optstr);
-		return (CMD_RETURN_ERROR);
+		if (!args_has(args, 'q')) {
+			cmdq_error(cmdq, "ambiguous option: %s", optstr);
+			return (CMD_RETURN_ERROR);
+		}
+		return (CMD_RETURN_NORMAL);
 	}
 	if (oe == NULL) {
 		if (!args_has(args, 'q')) {
