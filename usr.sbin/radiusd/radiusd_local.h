@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -127,8 +127,6 @@ struct radius_query {
 #ifndef nitems
 #define nitems(_x)    (sizeof((_x)) / sizeof((_x)[0]))
 #endif
-
-#define	RADIUSD_USER "_radiusd"
 
 #ifdef RADIUSD_DEBUG
 #define	RADIUSD_DBG(x)	log_debug x

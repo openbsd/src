@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -120,12 +120,11 @@ main(int argc, char *argv[])
 	module_radius_init(&module_radius);
 	openlog(NULL, LOG_PID, LOG_DAEMON);
 
-	// XXX drop privilledge
-	// XXX change root
-
 	if ((module_radius.base = module_create(
 	    STDIN_FILENO, &module_radius, &module_radius_handlers)) == NULL)
 		err(1, "Could not create a module instance");
+	module_drop_privilege(module_radius.base);
+	setproctitle("[main]");
 
 	module_load(module_radius.base);
 	log_init(1);
@@ -523,7 +522,7 @@ module_radius_req_reset_event(struct module_radius_req *req)
 		    "Cannot proccess the request for q=%u: "
 		    "evtimer_add() failed: %m", req->q_id);
 		module_radius_req_on_failure(req);
-		return(-1);
+		return (-1);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -33,6 +33,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include "radiusd.h"
 #include "radiusd_module.h"
@@ -50,10 +51,11 @@ static void	(*module_access_request) (void *, u_int, const u_char *,
 struct module_base {
 	void			*ctx;
 	struct imsgbuf		 ibuf;
+	bool			 priv_dropped;
 
 	/* Buffer for receiving the RADIUS packet */
 	u_char			*radpkt;
-	int 			 radpktsiz;
+	int			 radpktsiz;
 	int			 radpktoff;
 
 #ifdef USE_LIBEVENT
@@ -76,7 +78,7 @@ static void	 module_reset_event(struct module_base *);
 struct module_base *
 module_create(int sock, void *ctx, struct module_handlers *handler)
 {
-	struct module_base		*base;
+	struct module_base	*base;
 
 	if ((base = calloc(1, sizeof(struct module_base))) == NULL)
 		return (NULL);
@@ -138,6 +140,28 @@ module_load(struct module_base *base)
 	imsg_compose(&base->ibuf, IMSG_RADIUSD_MODULE_LOAD, 0, 0, -1, &load,
 	    sizeof(load));
 	imsg_flush(&base->ibuf);
+}
+
+void
+module_drop_privilege(struct module_base *base)
+{
+	struct passwd	*pw;
+
+	/* Drop the privilege */
+	if ((pw = getpwnam(RADIUSD_USER)) == NULL)
+		goto on_fail;
+	if (chroot(pw->pw_dir) == -1)
+		goto on_fail;
+	if (chdir("/") == -1)
+		goto on_fail;
+	if (setgroups(1, &pw->pw_gid) ||
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		goto on_fail;
+	base->priv_dropped = true;
+
+on_fail:
+	return;
 }
 
 int
@@ -336,10 +360,21 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 		break;
 	    }
 	case IMSG_RADIUSD_MODULE_START:
-		if (module_start_module != NULL)
+		if (module_start_module != NULL) {
 			module_start_module(base->ctx);
-		else
+			if (!base->priv_dropped) {
+				syslog(LOG_ERR, "Module tried to start with "
+				    "root priviledge");
+				abort();
+			}
+		} else {
+			if (!base->priv_dropped) {
+				syslog(LOG_ERR, "Module tried to start with "
+				    "root priviledge");
+				abort();
+			}
 			module_send_message(base, IMSG_OK, NULL);
+		}
 		break;
 	case IMSG_RADIUSD_MODULE_STOP:
 		if (module_stop_module != NULL)
