@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pkey.c,v 1.17 2015/07/20 15:27:00 miod Exp $ */
+/* $OpenBSD: x_pkey.c,v 1.18 2015/07/27 12:53:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/asn1_mac.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -71,19 +70,16 @@ X509_PKEY_new(void)
 	X509_PKEY *ret = NULL;
 
 	if ((ret = malloc(sizeof(X509_PKEY))) == NULL) {
-		ASN1_MAC_H_err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE,
-		    __LINE__);
+		ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	ret->version = 0;
 	if ((ret->enc_algor = X509_ALGOR_new()) == NULL) {
-		ASN1_MAC_H_err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE,
-		    __LINE__);
+		ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	if ((ret->enc_pkey = M_ASN1_OCTET_STRING_new()) == NULL) {
-		ASN1_MAC_H_err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE,
-		    __LINE__);
+		ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	ret->dec_pkey = NULL;
