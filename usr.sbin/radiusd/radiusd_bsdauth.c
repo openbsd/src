@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.3 2015/07/27 09:27:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -249,33 +249,33 @@ static void
 module_bsdauth_config_set(void *ctx, const char *name, int argc,
     char * const * argv)
 {
-	struct module_bsdauth	 *_this = ctx;
+	struct module_bsdauth	 *module = ctx;
 	int			  i;
 	char			**groups = NULL;
 
 	if (strcmp(name, "restrict-group") == 0) {
-		if (_this->okgroups != NULL) {
-			module_send_message(_this->base, IMSG_NG,
+		if (module->okgroups != NULL) {
+			module_send_message(module->base, IMSG_NG,
 			    "`restrict-group' is already defined");
 			goto on_error;
 		}
 		if ((groups = calloc(sizeof(char *), argc + 1)) == NULL) {
-			module_send_message(_this->base, IMSG_NG,
+			module_send_message(module->base, IMSG_NG,
 			    "Out of memory");
 			goto on_error;
 		}
 		for (i = 0; i < argc; i++) {
 			if ((groups[i] = strdup(argv[i])) == NULL) {
-				module_send_message(_this->base,
+				module_send_message(module->base,
 				    IMSG_NG, "Out of memory");
 				goto on_error;
 			}
 		}
 		groups[i] = NULL;
-		_this->okgroups = groups;
-		module_send_message(_this->base, IMSG_OK, NULL);
+		module->okgroups = groups;
+		module_send_message(module->base, IMSG_OK, NULL);
 	} else
-		module_send_message(_this->base, IMSG_NG,
+		module_send_message(module->base, IMSG_NG,
 		    "Unknown config parameter `%s'", name);
 	return;
 on_error:
@@ -292,7 +292,7 @@ static void
 module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
     const char *pass)
 {
-	struct module_bsdauth	*_this = ctx;
+	struct module_bsdauth	*module = ctx;
 	struct auth_usercheck_args
 				 usercheck;
 	struct auth_groupcheck_args
@@ -317,21 +317,21 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 	iov[2].iov_base = (char *)pass;
 	iov[2].iov_len = usercheck.passlen;
 
-	imsg_composev(&_this->ibuf, IMSG_BSDAUTH_USERCHECK, 0, 0, -1, iov, 3);
-	imsg_flush(&_this->ibuf);
-	if ((n = imsg_read(&_this->ibuf)) == -1 || n == 0)
+	imsg_composev(&module->ibuf, IMSG_BSDAUTH_USERCHECK, 0, 0, -1, iov, 3);
+	imsg_flush(&module->ibuf);
+	if ((n = imsg_read(&module->ibuf)) == -1 || n == 0)
 		fatal("imsg_read() failed in module_bsdauth_userpass()");
-	if ((n = imsg_get(&_this->ibuf, &imsg)) <= 0)
+	if ((n = imsg_get(&module->ibuf, &imsg)) <= 0)
 		fatal("imsg_get() failed in module_bsdauth_userpass()");
 
 	if (imsg.hdr.type != IMSG_BSDAUTH_OK) {
 		reason = "Authentication failed";
 		goto auth_ng;
 	}
-	if (_this->okgroups != NULL) {
+	if (module->okgroups != NULL) {
 		reason = "Group restriction is not allowed";
-		for (i = 0; _this->okgroups[i] != NULL; i++) {
-			group = _this->okgroups[i];
+		for (i = 0; module->okgroups[i] != NULL; i++) {
+			group = module->okgroups[i];
 
 			groupcheck.userlen = strlen(user) + 1;
 			groupcheck.grouplen = strlen(group) + 1;
@@ -341,13 +341,13 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 			iov[1].iov_len = groupcheck.userlen;
 			iov[2].iov_base = (char *)group;
 			iov[2].iov_len = groupcheck.grouplen;
-			imsg_composev(&_this->ibuf, IMSG_BSDAUTH_GROUPCHECK,
+			imsg_composev(&module->ibuf, IMSG_BSDAUTH_GROUPCHECK,
 			    0, 0, -1, iov, 3);
-			imsg_flush(&_this->ibuf);
-			if ((n = imsg_read(&_this->ibuf)) == -1 || n == 0)
+			imsg_flush(&module->ibuf);
+			if ((n = imsg_read(&module->ibuf)) == -1 || n == 0)
 				fatal("imsg_read() failed in "
 				    "module_bsdauth_userpass()");
-			if ((n = imsg_get(&_this->ibuf, &imsg)) <= 0)
+			if ((n = imsg_get(&module->ibuf, &imsg)) <= 0)
 				fatal("imsg_get() failed in "
 				    "module_bsdauth_userpass()");
 			if (imsg.hdr.type == IMSG_BSDAUTH_OK)
@@ -356,11 +356,11 @@ module_bsdauth_userpass(void *ctx, u_int q_id, const char *user,
 		goto auth_ng;
 	}
 group_ok:
-	module_userpass_ok(_this->base, q_id, "Authentication succeeded");
+	module_userpass_ok(module->base, q_id, "Authentication succeeded");
 	imsg_free(&imsg);
 	return;
 auth_ng:
-	module_userpass_fail(_this->base, q_id, reason);
+	module_userpass_fail(module->base, q_id, reason);
 	imsg_free(&imsg);
 	return;
 }

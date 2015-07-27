@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.3 2015/07/27 09:27:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -136,10 +136,10 @@ main(int argc, char *argv[])
 }
 
 static void
-module_radius_init(struct module_radius *_this)
+module_radius_init(struct module_radius *module)
 {
-	memset(_this, 0, sizeof(struct module_radius));
-	TAILQ_INIT(&_this->req);
+	memset(module, 0, sizeof(struct module_radius));
+	TAILQ_INIT(&module->req);
 }
 
 static void
@@ -148,44 +148,44 @@ module_radius_config_set(void *ctx, const char *paramname, int paramvalc,
 {
 	const char		*errmsg = NULL;
 	struct addrinfo		*res;
-	struct module_radius	*_this = ctx;
+	struct module_radius	*module = ctx;
 
 	if (strcmp(paramname, "server") == 0) {
 		SYNTAX_ASSERT(paramvalc == 1,
 		    "`server' must have just one argument");
-		SYNTAX_ASSERT(_this->nserver < (int)nitems(_this->server),
+		SYNTAX_ASSERT(module->nserver < (int)nitems(module->server),
 		    "number of server reached limit");
 
 		if (addrport_parse(paramvalv[0], IPPROTO_UDP, &res) != 0)
 			SYNTAX_ASSERT(0, "could not parse address and port");
-		memcpy(&_this->server[_this->nserver].addr, res->ai_addr,
+		memcpy(&module->server[module->nserver].addr, res->ai_addr,
 		    res->ai_addrlen);
 
-		if (ntohs(_this->server[_this->nserver].addr.sin4.sin_port)
+		if (ntohs(module->server[module->nserver].addr.sin4.sin_port)
 		    == 0)
-			_this->server[_this->nserver].addr.sin4.sin_port
+			module->server[module->nserver].addr.sin4.sin_port
 			    = htons(RADIUS_DEFAULT_PORT);
 
-		_this->server[_this->nserver].sock = -1;
-		_this->nserver++;
+		module->server[module->nserver].sock = -1;
+		module->nserver++;
 		freeaddrinfo(res);
 	} else if (strcmp(paramname, "request-timeout") == 0) {
 		SYNTAX_ASSERT(paramvalc == 1,
 		    "`request-timeout' must have just one argument");
-		_this->req_timeout = (int)strtonum(paramvalv[0], 0,
+		module->req_timeout = (int)strtonum(paramvalv[0], 0,
 		    UINT16_MAX, &errmsg);
-		if (_this->req_timeout == 0 && errmsg != NULL) {
-			module_send_message(_this->base, IMSG_NG,
+		if (module->req_timeout == 0 && errmsg != NULL) {
+			module_send_message(module->base, IMSG_NG,
 			    "`request-timeout must be 0-%d", UINT16_MAX);
 			return;
 		}
 	} else if (strcmp(paramname, "max-tries") == 0) {
 		SYNTAX_ASSERT(paramvalc == 1,
 		    "`max-tries' must have just one argument");
-		_this->max_tries = (int)strtonum(paramvalv[0], 0,
+		module->max_tries = (int)strtonum(paramvalv[0], 0,
 		    UINT16_MAX, &errmsg);
-		if (_this->max_tries == 0 && errmsg != NULL) {
-			module_send_message(_this->base, IMSG_NG,
+		if (module->max_tries == 0 && errmsg != NULL) {
+			module_send_message(module->base, IMSG_NG,
 			    "`max-tries must be 0-%d", UINT16_MAX);
 			return;
 		}
@@ -193,60 +193,60 @@ module_radius_config_set(void *ctx, const char *paramname, int paramvalc,
 	} else if (strcmp(paramname, "max-failovers") == 0) {
 		SYNTAX_ASSERT(paramvalc == 1,
 		    "`max-failovers' must have just one argument");
-		_this->max_failovers = (int)strtonum(paramvalv[0], 0,
+		module->max_failovers = (int)strtonum(paramvalv[0], 0,
 		    UINT16_MAX, &errmsg);
-		if (_this->max_failovers == 0 && errmsg != NULL) {
-			module_send_message(_this->base, IMSG_NG,
+		if (module->max_failovers == 0 && errmsg != NULL) {
+			module_send_message(module->base, IMSG_NG,
 			    "`max-failovers' must be 0-%d", UINT16_MAX);
 			return;
 		}
 	} else if (strcmp(paramname, "secret") == 0) {
 		SYNTAX_ASSERT(paramvalc == 1,
 		    "`secret' must have just one argument");
-		if (strlcpy(_this->secret, paramvalv[0], sizeof(_this->secret))
-		    >= sizeof(_this->secret)) {
-			module_send_message(_this->base, IMSG_NG,
+		if (strlcpy(module->secret, paramvalv[0],
+		    sizeof(module->secret)) >= sizeof(module->secret)) {
+			module_send_message(module->base, IMSG_NG,
 			    "`secret' length must be 0-%lu",
-			    (u_long) sizeof(_this->secret) - 1);
+			    (u_long) sizeof(module->secret) - 1);
 			return;
 		}
 	} else {
-		module_send_message(_this->base, IMSG_NG,
+		module_send_message(module->base, IMSG_NG,
 		    "Unknown config parameter name `%s'", paramname);
 		return;
 	}
-	module_send_message(_this->base, IMSG_OK, NULL);
+	module_send_message(module->base, IMSG_OK, NULL);
 
 	return;
 syntax_error:
-	module_send_message(_this->base, IMSG_NG, "%s", errmsg);
+	module_send_message(module->base, IMSG_NG, "%s", errmsg);
 }
 
 static void
 module_radius_start(void *ctx)
 {
 	u_int			 i;
-	struct module_radius	*_this = ctx;
+	struct module_radius	*module = ctx;
 
-	if (_this->nserver <= 0) {
-		module_send_message(_this->base, IMSG_NG,
+	if (module->nserver <= 0) {
+		module_send_message(module->base, IMSG_NG,
 			"module `radius' needs one `server' at least");
 		return;
 	}
 
-	for (i = 0; i < _this->nserver; i++) {
-		_this->server[i].module = _this;
-		if (radius_server_start(&_this->server[i]) != 0) {
-			module_send_message(_this->base, IMSG_NG,
+	for (i = 0; i < module->nserver; i++) {
+		module->server[i].module = module;
+		if (radius_server_start(&module->server[i]) != 0) {
+			module_send_message(module->base, IMSG_NG,
 				"module `radius' failed to start one of "
 				"the servers");
 			return;
 		}
 	}
-	module_send_message(_this->base, IMSG_OK, NULL);
+	module_send_message(module->base, IMSG_OK, NULL);
 
-	if (_this->secret[0] != '\0')
-		module_notify_secret(_this->base, _this->secret);
+	if (module->secret[0] != '\0')
+		module_notify_secret(module->base, module->secret);
 }
 
 static void
@@ -254,38 +254,38 @@ module_radius_stop(void *ctx)
 {
 	u_int				 i;
 	struct module_radius_req	*req, *treq;
-	struct module_radius		*_this = ctx;
+	struct module_radius		*module = ctx;
 
-	TAILQ_FOREACH_SAFE(req, &_this->req, next, treq) {
+	TAILQ_FOREACH_SAFE(req, &module->req, next, treq) {
 		module_radius_req_on_failure(req);
-		TAILQ_REMOVE(&_this->req, req, next);
+		TAILQ_REMOVE(&module->req, req, next);
 	}
 
-	for (i = 0; i < _this->nserver; i++)
-		radius_server_stop(&_this->server[i]);
+	for (i = 0; i < module->nserver; i++)
+		radius_server_stop(&module->server[i]);
 }
 
 static void
 module_radius_access_request(void *ctx, u_int q_id, const u_char *pkt,
     size_t pktlen)
 {
-	struct module_radius		*_this = ctx;
+	struct module_radius		*module = ctx;
 	struct module_radius_req	*req;
 	u_char				 attrbuf[256];
 	ssize_t				 attrlen;
 
 	req = malloc(sizeof(struct module_radius_req));
 	if (req == NULL) {
-		module_radius_log(_this, LOG_WARNING,
+		module_radius_log(module, LOG_WARNING,
 		    "%s: Out of memory: %m", __func__);
 		goto on_fail;
 	}
 
 	req->ntry = 0;
-	req->module = _this;
+	req->module = module;
 	req->q_id = q_id;
 	if ((req->q_pkt = radius_convert_packet(pkt, pktlen)) == NULL) {
-		module_radius_log(_this, LOG_WARNING,
+		module_radius_log(module, LOG_WARNING,
 		    "%s: radius_convert_packet() failed: %m", __func__);
 		goto on_fail;
 	}
@@ -297,13 +297,13 @@ module_radius_access_request(void *ctx, u_int q_id, const u_char *pkt,
 	 * secret.
 	 */
 	attrlen = sizeof(attrbuf);
-	if (_this->secret[0] != '\0' &&
+	if (module->secret[0] != '\0' &&
 	    radius_get_raw_attr(req->q_pkt, RADIUS_TYPE_USER_PASSWORD,
 		    attrbuf, &attrlen) == 0) {
 		attrbuf[attrlen] = '\0';
 		radius_del_attr_all(req->q_pkt, RADIUS_TYPE_USER_PASSWORD);
 		radius_put_user_password_attr(req->q_pkt, attrbuf,
-		    _this->secret);
+		    module->secret);
 	}
 
 	/* select current server */
@@ -315,65 +315,65 @@ module_radius_access_request(void *ctx, u_int q_id, const u_char *pkt,
 
 on_fail:
 	free(req);
-	module_accsreq_aborted(_this->base, q_id);
+	module_accsreq_aborted(module->base, q_id);
 }
 
 /*
  * radius_server
  */
 static int
-radius_server_start(struct radius_server *_this)
+radius_server_start(struct radius_server *module)
 {
 	socklen_t	 locallen;
 	char		 buf0[NI_MAXHOST + NI_MAXSERV + 32];
 	char		 buf1[NI_MAXHOST + NI_MAXSERV + 32];
 
-	if ((_this->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((module->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		log_warn("%s: socket() failed", __func__);
 		goto on_error;
 	}
-	if (connect(_this->sock, (struct sockaddr *)&_this->addr,
-		_this->addr.sin4.sin_len) != 0) {
+	if (connect(module->sock, (struct sockaddr *)&module->addr,
+		module->addr.sin4.sin_len) != 0) {
 		log_warn("%s: connect to %s failed", __func__,
-		    addrport_tostring((struct sockaddr *)&_this->addr,
-			_this->addr.sin4.sin_len, buf1, sizeof(buf1)));
+		    addrport_tostring((struct sockaddr *)&module->addr,
+			module->addr.sin4.sin_len, buf1, sizeof(buf1)));
 		goto on_error;
 	}
-	locallen = sizeof(_this->local);
-	if (getsockname(_this->sock, (struct sockaddr *)&_this->local,
+	locallen = sizeof(module->local);
+	if (getsockname(module->sock, (struct sockaddr *)&module->local,
 	    &locallen) != 0) {
 		log_warn("%s: getsockanme() failed", __func__);
 		goto on_error;
 	}
-	module_radius_log(_this->module, LOG_INFO,
+	module_radius_log(module->module, LOG_INFO,
 	    "Use %s to send requests for %s",
-	    addrport_tostring((struct sockaddr *)&_this->local,
+	    addrport_tostring((struct sockaddr *)&module->local,
 		    locallen, buf0, sizeof(buf0)),
-	    addrport_tostring((struct sockaddr *)&_this->addr,
-		    _this->addr.sin4.sin_len, buf1, sizeof(buf1)));
+	    addrport_tostring((struct sockaddr *)&module->addr,
+		    module->addr.sin4.sin_len, buf1, sizeof(buf1)));
 
-	event_set(&_this->ev, _this->sock, EV_READ | EV_PERSIST,
-	    radius_server_on_event, _this);
-	if (event_add(&_this->ev, NULL)) {
+	event_set(&module->ev, module->sock, EV_READ | EV_PERSIST,
+	    radius_server_on_event, module);
+	if (event_add(&module->ev, NULL)) {
 		log_warn("%s: event_add() failed", __func__);
 		goto on_error;
 	}
 
 	return (0);
 on_error:
-	if (_this->sock >= 0)
-		close(_this->sock);
-	_this->sock = -1;
+	if (module->sock >= 0)
+		close(module->sock);
+	module->sock = -1;
 	return (-1);
 }
 
 static void
-radius_server_stop(struct radius_server *_this)
+radius_server_stop(struct radius_server *module)
 {
-	event_del(&_this->ev);
-	if (_this->sock >= 0)
-		close(_this->sock);
-	_this->sock = -1;
+	event_del(&module->ev);
+	if (module->sock >= 0)
+		close(module->sock);
+	module->sock = -1;
 }
 
 static void
@@ -382,32 +382,32 @@ radius_server_on_event(int fd, short evmask, void *ctx)
 	int				 sz, res_id;
 	u_char				 pkt[65535];
 	char				 buf[NI_MAXHOST + NI_MAXSERV + 32];
-	struct radius_server		*_this = ctx;
+	struct radius_server		*module = ctx;
 	RADIUS_PACKET			*radpkt = NULL;
 	struct module_radius_req	*req;
 	struct sockaddr			*peer;
 
-	peer = (struct sockaddr *)&_this->addr;
-	if ((sz = recv(_this->sock, pkt, sizeof(pkt), 0)) <= 0) {
-		module_radius_log(_this->module, LOG_WARNING,
+	peer = (struct sockaddr *)&module->addr;
+	if ((sz = recv(module->sock, pkt, sizeof(pkt), 0)) <= 0) {
+		module_radius_log(module->module, LOG_WARNING,
 		    "server=%s recv() failed: %m",
 		    addrport_tostring(peer, peer->sa_len, buf, sizeof(buf)));
 		return;
 	}
 	if ((radpkt = radius_convert_packet(pkt, sz)) == NULL) {
-		module_radius_log(_this->module, LOG_WARNING,
+		module_radius_log(module->module, LOG_WARNING,
 		    "server=%s could not convert the received message to a "
 		    "RADIUS packet object: %m",
 		    addrport_tostring(peer, peer->sa_len, buf, sizeof(buf)));
 		return;
 	}
 	res_id = radius_get_id(radpkt);
-	TAILQ_FOREACH(req, &_this->module->req, next) {
-		if (req->server == _this && req->req_id == res_id)
+	TAILQ_FOREACH(req, &module->module->req, next) {
+		if (req->server == module && req->req_id == res_id)
 			break;
 	}
 	if (req == NULL) {
-		module_radius_log(_this->module, LOG_WARNING,
+		module_radius_log(module->module, LOG_WARNING,
 		    "server=%s Received radius message has unknown id=%d",
 		    addrport_tostring(peer, peer->sa_len, buf, sizeof(buf)),
 		    res_id);
@@ -415,10 +415,10 @@ radius_server_on_event(int fd, short evmask, void *ctx)
 	}
 	radius_set_request_packet(radpkt, req->q_pkt);
 
-	if (_this->module->secret[0] != '\0') {
+	if (module->module->secret[0] != '\0') {
 		if (radius_check_response_authenticator(radpkt,
-		    _this->module->secret) != 0) {
-			module_radius_log(_this->module, LOG_WARNING,
+		    module->module->secret) != 0) {
+			module_radius_log(module->module, LOG_WARNING,
 			    "server=%s Received radius message(id=%d) has bad "
 			    "authenticator",
 			    addrport_tostring(peer, peer->sa_len, buf,
@@ -428,8 +428,8 @@ radius_server_on_event(int fd, short evmask, void *ctx)
 		if (radius_has_attr(radpkt,
 		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
 		    radius_check_message_authenticator(radpkt,
-			    _this->module->secret) != 0) {
-			module_radius_log(_this->module, LOG_WARNING,
+			    module->module->secret) != 0) {
+			module_radius_log(module->module, LOG_WARNING,
 			    "server=%s Received radius message(id=%d) has bad "
 			    "message authenticator",
 			    addrport_tostring(peer, peer->sa_len, buf,
@@ -438,7 +438,7 @@ radius_server_on_event(int fd, short evmask, void *ctx)
 		}
 	}
 
-	module_radius_log(_this->module, LOG_INFO,
+	module_radius_log(module->module, LOG_INFO,
 	    "q=%u received a response from server %s", req->q_id,
 	    addrport_tostring(peer, peer->sa_len, buf, sizeof(buf)));
 
@@ -450,26 +450,26 @@ out:
 }
 
 static void
-radius_server_on_fail(struct radius_server *_this, const char *failmsg)
+radius_server_on_fail(struct radius_server *module, const char *failmsg)
 {
 	char		 buf0[NI_MAXHOST + NI_MAXSERV + 32];
 	char		 buf1[NI_MAXHOST + NI_MAXSERV + 32];
 	struct sockaddr	*caddr, *naddr;
 
-	caddr = (struct sockaddr *)&_this->addr;
-	if (_this->module->nserver <= 1) {
-		module_radius_log(_this->module, LOG_WARNING,
+	caddr = (struct sockaddr *)&module->addr;
+	if (module->module->nserver <= 1) {
+		module_radius_log(module->module, LOG_WARNING,
 		    "Server %s failed: %s",
 		    addrport_tostring(caddr, caddr->sa_len, buf0, sizeof(buf0)),
 		    failmsg);
 		return;
 	}
-	_this->module->curr_server++;
-	_this->module->curr_server %= _this->module->nserver;
+	module->module->curr_server++;
+	module->module->curr_server %= module->module->nserver;
 	naddr = (struct sockaddr *)
-	    &_this->module->server[_this->module->curr_server].addr;
+	    &module->module->server[module->module->curr_server].addr;
 
-	module_radius_log(_this->module, LOG_WARNING,
+	module_radius_log(module->module, LOG_WARNING,
 	    "Server %s failed: %s  Fail over to %s",
 	    addrport_tostring(caddr, caddr->sa_len, buf0, sizeof(buf0)),
 	    failmsg,
@@ -600,7 +600,7 @@ module_radius_req_reset_msgauth(struct module_radius_req *req)
 }
 
 static void
-module_radius_log(struct module_radius *_this, int pri, const char *fmt, ...)
+module_radius_log(struct module_radius *module, int pri, const char *fmt, ...)
 {
 	char		fmt0[BUFSIZ];
 	va_list		va;
