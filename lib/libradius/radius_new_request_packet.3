@@ -1,4 +1,4 @@
-.\" $OpenBSD: radius_new_request_packet.3,v 1.2 2015/07/27 03:01:22 yasuoka Exp $
+.\" $OpenBSD: radius_new_request_packet.3,v 1.3 2015/07/27 18:42:53 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -134,7 +134,7 @@ RADIUS packet objects are created by
 .Fn radius_new_response_packet
 or
 .Fn radius_convert_packet .
-Authenticator field of the packet that is returned by
+The authenticator field of the packet that is returned by
 .Fn radius_new_request_packet
 and
 .Fn radius_new_response_packet
@@ -150,33 +150,33 @@ to free memory associated with the packet object.
 .Fn radius_get_authenticator_retval
 and
 .Fn radius_get_length
-retreives specified property of the packet.
+retrieves the specified property of the packet.
 .Fn radius_update_id
-update packet's ID field with internal id counter.
+updates a packet's ID field with an internal ID counter.
 .Fn radius_set_id
-sets packet's ID field.
+sets a packet's ID field.
 .Pp
 .Fn radius_set_request_packet
-associate request packet to response packet.
-Associated request packet can be retrieved by
+associates a request packet to a response packet.
+The associated request packet can be retrieved by
 .Fn radius_get_request_packet .
 .Pp
 .Fn radius_set_response_authenticator
-sets response authenticator to response packet.
+sets a response authenticator to a response packet.
 .Fn radius_check_response_authenticator
-checks response authenticator of response packet.
-The request packet must be associated with response packet by
+checks the response authenticator of a response packet.
+The request packet must be associated with a response packet by
 .Fn radius_new_response_packet
 or
 .Fn radius_set_request_packet .
 .Pp
 .Fn radius_set_accounting_request_authenticator
-sets request authenticator to accounting request packet.
+sets a request authenticator to an accounting request packet.
 .Fn radius_check_accounting_request_authenticator
-checks request authenticator of accounting request packet.
+checks a request authenticator of an accounting request packet.
 .Pp
 .Fn radius_get_request_authenticator_retval
-returns authenticator field of the packet if the argument is
+returns the authenticator field of the packet if the argument is
 a request packet, and returns that of the associated request packet
 if the argument is a response packet.
 .Pp
@@ -184,59 +184,61 @@ if the argument is a response packet.
 returns packet data itself.
 .Sh RAW ATTRIBUTE ACCESSOR
 .Fn radius_get_raw_attr
-retrieves attribute value.
+retrieves an attribute value.
 .Fa length
 is a value-result parameter, initially containing the size of the buffer
 and modified on return to indicate the size of the value returned.
-If buffer size is not sufficient, returned value is truncated.
+If the buffer size is not sufficient, the returned value is truncated.
 .Pp
 .Fn radius_put_raw_attr
-appends attribute data to the last of the packet.
-If buffer size is larger than maximum size of single attribute, this
-function returns error.
+appends attribute data to the end of the packet.
+If buffer size is larger than the maximum size of a single attribute,
+the function returns an error.
 .Pp
 .Fn radius_get_raw_attr_cat
-retrieves attrbute value.
+retrieves an attribute value.
 Unlike
 .Fn radius_get_raw_attr ,
 .Fn radius_get_raw_attr_cat
-retreives concatenated ALL attrbiute value that have specified attribute type.
-If buffer size is not sufficient, this function returns error.
+retrieves ALL attribute values that have the specified attribute type
+concatenated.
+If the buffer size is not sufficient, the function returns an error.
 If
 .Fa buf
 is
 .Dv NULL ,
 the initial value of
 .Fa length
-is not cared and the actual size of concatenated values is returned.
+is ignored and the actual size of concatenated values is returned.
 .Pp
 .Fn radius_put_raw_attr_cat
 appends attribute data to the last of the packet.
 Unlike
 .Fn radius_put_raw_attr ,
 .Fn radius_put_raw_attr_cat
-divides data into multiple attributes and append them if buffer size is
-larger than maximum size of single attribute.
-Note that packet object may be broken (but can be deleted normally by
+divides data into multiple attributes and appends them if the buffer size is
+larger than the maximum size of a single attribute.
+Note that packet objects may be broken (but can be deleted normally by
 .Fn radius_delete_packet )
-if this function have returned error.
+if this function has returned an error.
 .Pp
 .Fn radius_get_raw_attr_ptr
-retreives pointer and length of specified attribute.
-returned buffer must not be modified.
+retrieves a pointer and length of specified attribute.
+The returned buffer must not be modified.
 .Pp
 .Fn radius_set_raw_attr
-overwrite existing attribute value.
-If specified attribute does not exist, this function returns error.
+overwrites existing an attribute value.
+If the specified attribute does not exist, this function returns an error.
 If
 .Fa length
-is different from length of the specified attribute, this function returns error.
+is different from the length of the specified attribute,
+the function returns an error.
 .Pp
 .Fn radius_del_attr_all
 deletes all attributes matching its arguments.
 .Pp
 .Fn radius_has_attr
-returns whether packet has specified attribute.
+returns whether packet has a specified attribute.
 .Pp
 .Fn radius_get_vs_raw_attr ,
 .Fn radius_put_vs_raw_attr ,
@@ -247,7 +249,7 @@ returns whether packet has specified attribute.
 .Fn radius_del_vs_attr_all
 and
 .Fn radius_has_vs_attr
-are vendor-specific version of raw attribute accessors.
+are vendor-specific versions of raw attribute accessors.
 .Sh TYPED ATTRIBUTE ACCESSOR
 To make code simple, there are many typed attribute accessors.
 .Nm radius
@@ -267,33 +269,33 @@ and
 These typed accessors do not requires
 .Fa length
 parameters because length is implied by the type.
-For "get" functions, if actual attribute size is different from the size of
-the type, the functions return error.
+For "get" functions, if the actual attribute size is different from the size of
+the type, the functions returns an error.
 .Pp
-There are also typed accessors for string (
-.Li char * ).
-For "get" function for string, returned string is always NUL-terminated
+There are also typed accessors for string
+.Pq Li char * .
+For "get" functions for strings, the returned string is always NUL-terminated
 even if buffer size is smaller than actual attribute size.
 This behavior is similar to
 .Fn strlcpy .
 .Sh MESSAGE AUTHENTICATOR
-There exist helper functions for Message-Authenticator attribute.
+There are helper functions for Message-Authenticator attributes.
 .Pp
 .Fn radius_put_message_authenticator
 and
 .Fn radius_set_message_authenticator
-calculate Message-Authenticator and put or set it to packet, respectively.
+calculate a Message-Authenticator and put or set it to packet, respectively.
 .Pp
 .Fn radius_check_message_authenticator
-checks Message-Authenticator.
+checks a Message-Authenticator.
 .Pp
-The request packet must be associated with response packet by
+The request packet must be associated with a response packet by
 .Fn radius_new_response_packet
 or
 .Fn radius_set_request_packet ,
-otherwise packet is treated as request packet.
+otherwise the packet is treated as a request packet.
 .Sh ENCRYPTED ATTRIBUTE
-There exist helper functions for encrypted attributes.
+There are helper functions for encrypted attributes.
 .Pp
 .Fn radius_encrypt_user_password_attr ,
 .Fn radius_decrypt_user_password_attr ,
@@ -316,9 +318,9 @@ and get/put functions.
 .Fn radius_get_eap_msk
 retrieves a Master Session Key (MSK) for Extensible Authentication Protocol
 (EAP).
-Currently retrieving a MSK from MS-MPPE key attributes is supported.
+Currently retrieving an MSK from MS-MPPE key attributes is supported.
 .Sh SENDING AND RECEIVING PACKETS
-There exist helper functions to sending and receiving packets.
+There are helper functions for sending and receiving packets.
 .Pp
 .Fn radius_send ,
 .Fn radius_sendto ,
@@ -347,7 +349,7 @@ return 0 on success and nonzero on failure.
 .Fn radius_recvfrom
 and
 .Fn radius_recvmsg
-return received packet on success and return NULL on failure.
+return the received packet on success and return NULL on failure.
 .Pp
 Note that
 .Li msg_iov
@@ -364,12 +366,17 @@ Functions that return int return 0 on success and nonzero on failure.
 Functions that return pointer return non-NULL pointer on success and
 NULL on failure.
 .Sh HISTORY
+The
 .Nm radius+
-library is first written by UMEZAWA Takeshi in 2002 for ID gateway service
+library was first written by UMEZAWA Takeshi in 2002 for the ID gateway service
 of Internet Initiative Japan.
-YASUOKA Masahiko added support for Message-Authentication attribute in 2008.
-OpenBSD project rewrite C++ code to pure C code in 2010.
+YASUOKA Masahiko added support for Message-Authentication attributes in 2008.
+.Ox
+project rewrote C++ code to pure C code in 2010.
+The
 .Nm radius+
-library is renamed
+library was renamed
 .Nm radius
-library and moved to under lib/ in 2013.
+and moved to
+.Pa lib/
+in 2013.
