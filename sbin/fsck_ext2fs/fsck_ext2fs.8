@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.16 2010/01/10 10:53:33 jmc Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.17 2015/07/27 18:46:19 jmc Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
-.Dd $Mdocdate: January 10 2010 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt FSCK_EXT2FS 8
 .Os
 .Sh NAME
@@ -165,6 +165,17 @@ response to all questions asked by
 this should be used with great caution as this is a free license
 to continue after essentially unlimited trouble has been encountered.
 .El
+.Pp
+If neither of the
+.Fl y
+or
+.Fl n
+options are specified, the user may force
+.Nm
+to assume an answer of
+.Dq yes
+to all the remaining questions by replying to a question with a value of
+.Dq F .
 .Pp
 Inconsistencies checked are as follows:
 .Pp
