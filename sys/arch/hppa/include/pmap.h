@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.50 2015/07/14 06:50:04 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.51 2015/07/27 03:36:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -30,9 +30,9 @@
 #define _MACHINE_PMAP_H_
 
 #include <uvm/uvm_object.h>
+#include <sys/mutex.h>
 
 #ifdef	_KERNEL
-#include <sys/mutex.h>
 #include <machine/pte.h>
 
 struct pmap {
