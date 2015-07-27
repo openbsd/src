@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.24 2013/07/16 11:13:34 schwarze Exp $
+.\"	$OpenBSD: relayd.8,v 1.25 2015/07/27 14:50:58 sobrado Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt RELAYD 8
 .Os
 .Sh NAME
@@ -123,9 +123,9 @@ Produce more verbose output.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/relayd.sockXX" -compact
-.It /etc/relayd.conf
+.It Pa /etc/relayd.conf
 Default configuration file.
-.It /var/run/relayd.sock
+.It Pa /var/run/relayd.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr relayctl 8 .
