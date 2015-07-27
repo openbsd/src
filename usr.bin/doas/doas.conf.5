@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.12 2015/07/27 17:57:06 jmc Exp $
+.\" $OpenBSD: doas.conf.5,v 1.13 2015/07/27 21:44:11 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -68,7 +68,7 @@ Groups may be specified by prepending a colon
 Numeric IDs are also accepted.
 .It Ic as Ar target
 The target user the running user is allowed to run the command as.
-The default is root.
+The default is all users.
 .It Ic cmd Ar command
 The command the user is allowed or denied to run.
 The default is all commands.
