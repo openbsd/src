@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.11 2015/07/23 15:26:37 jmc Exp $
+.\" $OpenBSD: doas.conf.5,v 1.12 2015/07/27 17:57:06 jmc Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 23 2015 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -57,12 +57,14 @@ The default is to reset the environment, except for the variables
 .Ev USER
 and
 .Ev USERNAME .
-.It Ic keepenv { Oo variable names Oc Ic }
-Reset the environment, but keep the space-separated specified variables.
+.It Ic keepenv { Oo Ar variable ... Oc Ic }
+In addition to the variables mentioned above, keep the space-separated
+specified variables.
 .El
 .It Ar identity
 The username to match.
-Groups may be specified by prepending a colon (:).
+Groups may be specified by prepending a colon
+.Pq Sq \&: .
 Numeric IDs are also accepted.
 .It Ic as Ar target
 The target user the running user is allowed to run the command as.
