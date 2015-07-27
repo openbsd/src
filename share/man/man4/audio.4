@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.66 2014/06/28 08:20:51 matthew Exp $
+.\"	$OpenBSD: audio.4,v 1.67 2015/07/27 06:10:22 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 28 2014 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -80,17 +80,14 @@ device while it is in use.
 .Sh SAMPLING DEVICES
 When
 .Pa /dev/audio
-is opened, it automatically configures the underlying driver for the
-hardware's default sample format, or monaural 8-bit mu-law if a default
-sample format has not been specified by the underlying driver.
+or
+.Pa /dev/sound
+is opened, it attempts to maintain the previous audio sample format and
+record/playback mode.
 In addition, if it is opened read-only
 (write-only) the device is set to half-duplex record (play) mode with
-recording (playing) unpaused and playing (recording) paused.
-When
-.Pa /dev/sound
-is opened, it maintains the previous audio sample format and
-record/playback mode.
-In all other respects
+recording (playing) unpaused.
+In all respects
 .Pa /dev/audio
 and
 .Pa /dev/sound
@@ -100,97 +97,36 @@ Only one process may hold open a sampling device at a given time
 (although file descriptors may be shared between processes once the
 first open completes).
 .Pp
-On a half-duplex device, writes while recording is in progress will be
-immediately discarded.
-Similarly, reads while playback is in progress
-will be filled with silence but delayed to return at the current
-sampling rate.
-If both playback and recording are requested on a half-duplex
-device, playback mode takes precedence and recordings will get silence.
+On a half-duplex device, either reads or writes are allowed,
+but not both.
 On a full-duplex device, reads and writes may operate
 concurrently without interference.
-If a full-duplex capable
-.Nm audio
-device is opened for both reading and writing,
-it will start in half-duplex play mode with recording paused.
-For proper full-duplex operation, after the device is opened for reading
-and writing, full-duplex mode must be set and then recording must be unpaused.
-On either type of device, if the playback mode is paused then silence is
-played instead of the provided samples and, if recording is paused, then
-the process blocks in
-.Xr read 2
-until recording is unpaused.
 .Pp
 If a writing process does not call
 .Xr write 2
 frequently enough to provide samples at the pace the hardware
 consumes them silence is inserted.
-If the
-.Dv AUMODE_PLAY_ALL
-mode is not set the writing process must
-provide enough data via
-subsequent write calls to
-.Dq catch up
-in time to the current audio
-block before any more process-provided samples will be played.
 If a reading process does not call
 .Xr read 2
 frequently enough, it will simply miss samples.
 .Pp
 The
 .Nm audio
-device is normally accessed with
+device is accessed with
 .Xr read 2
 or
-.Xr write 2
-calls, but it can also be mapped into user memory with
-.Xr mmap 2
-(when supported by the device).
-Once the device has been mapped it can no longer be accessed
-by read or write; all access is by reading and writing to
-the mapped memory.
-The device appears as a block of memory
-of size
-.Va buffer_size
-(as available via
-.Dv AUDIO_GETINFO ) .
-The device driver will continuously move data between this buffer
-and the audio hardware, wrapping around at the end of the buffer.
-To find out where the hardware is currently accessing data in the buffer the
-.Dv AUDIO_GETIOFFS
-and
-.Dv AUDIO_GETOOFFS
-calls can be used.
-The playing and recording buffers are distinct and must be
-mapped separately if both are to be used.
-Only encodings that are not emulated (i.e., where
-.Dv AUDIO_ENCODINGFLAG_EMULATED
-is not set) work properly for a mapped device.
+.Xr write 2 .
 .Pp
 The
 .Nm audio
 device, like most devices, can be used in
-.Xr select 2 ,
-can be set in non-blocking mode, and can be set (with an
-.Dv FIOASYNC
-.Xr ioctl 2 )
-to send a
-.Dv SIGIO
-when I/O is possible.
-The mixer device can be set to generate a
-.Dv SIGIO
-whenever a mixer value is changed.
+.Xr poll 2 ,
 .Pp
 The following
 .Xr ioctl 2
 commands are supported on the sample devices:
 .Pp
 .Bl -tag -width Ds -compact
-.It Dv AUDIO_FLUSH
-This command stops all playback and recording, clears all queued
-buffers, resets error counters, and restarts recording and playback as
-appropriate for the current sampling mode.
-.Pp
 .It Dv AUDIO_RERROR Fa "int *"
 .It Dv AUDIO_PERROR Fa "int *"
 These commands fetch the count of dropped input or output samples into
@@ -199,16 +135,6 @@ the
 argument, respectively.
 There is no information regarding when in the sample stream
 they were dropped.
-.Pp
-.It Dv AUDIO_WSEEK Fa "u_long *"
-This command fetches the count of bytes that are queued ahead of the
-first sample in the most recent sample block written into its
-.Vt u_long *
-argument.
-.Pp
-.It Dv AUDIO_DRAIN
-This command suspends the calling process until all queued playback
-samples have been played by the hardware.
 .Pp
 .It Dv AUDIO_GETDEV Fa "audio_device_t *"
 This command fetches the current hardware device information into the
@@ -223,7 +149,7 @@ typedef struct audio_device {
 .Ed
 .Pp
 .It Dv AUDIO_GETFD Fa "int *"
-This command returns the current setting of the full-duplex mode.
+This command returns 1 if in full-duplex mode, else 0.
 .Pp
 .It Dv AUDIO_GETENC Fa "audio_encoding_t *"
 This command is used iteratively to fetch sample encoding
@@ -241,8 +167,6 @@ typedef struct audio_encoding {
 	int precision;  /* value for precision parameter */
 	int bps;        /* value for bps parameter */
 	int msb;        /* value for msb parameter */
-	int flags;
-#define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
 .Ed
 .Pp
@@ -252,11 +176,8 @@ continue with successive encodings (1, 2, ...) until the command returns
 an error.
 .Pp
 .It Dv AUDIO_SETFD Fa "int *"
-This command sets the device into full-duplex operation if its integer
-argument has a non-zero value, or into half-duplex operation if it
-contains a zero value.
-If the device does not support full-duplex
-operation, attempting to set full-duplex mode returns an error.
+Does nothing, left for compatibility; argument must point to a non-zero
+integer if the device is opened in read-write mode.
 .Pp
 .It Dv AUDIO_GETPROPS Fa "int *"
 This command gets a bit set of hardware properties.
@@ -267,54 +188,21 @@ The properties can have the following values:
 .Bl -tag -width AUDIO_PROP_INDEPENDENT -compact
 .It Dv AUDIO_PROP_FULLDUPLEX
 The device admits full-duplex operation.
-.It Dv AUDIO_PROP_MMAP
-The device can be used with
-.Xr mmap 2 .
 .It Dv AUDIO_PROP_INDEPENDENT
-The device can set the playing and recording encoding parameters
-independently.
+The device can set playing and recording channel counts independently.
 .El
 .Pp
 .It Dv AUDIO_GETIOFFS Fa "audio_offset_t *"
 .It Dv AUDIO_GETOOFFS Fa "audio_offset_t *"
-These commands fetch the current offset in the input (output) buffer where
-the audio hardware's DMA engine will be putting (getting) data.
-They are mostly useful when the device
-buffer is available in user space via the
-.Xr mmap 2
-call.
+These commands fetch the number of bytes played or recorded.
 The information is returned in the
 .Vt audio_offset
 structure.
 .Bd -literal
 typedef struct audio_offset {
 	u_int	samples;   /* Total number of bytes transferred */
-	u_int	deltablks; /* Blocks transferred since last checked */
-	u_int	offset;    /* Physical transfer offset in buffer */
 } audio_offset_t;
 .Ed
-.Pp
-.It Dv AUDIO_GETRRINFO Fa "audio_bufinto_t *"
-.It Dv AUDIO_GETPRINFO Fa "audio_bufinfo_t *"
-These commands fetch the current information about the input or
-output buffer, respectively.
-The block size, high and low water marks and current position
-are returned in the
-.Vt audio_bufinfo
-structure.
-.Bd -literal
-typedef struct audio_bufinfo {
-	u_int	blksize;	/* block size */
-	u_int	hiwat;		/* high water mark */
-	u_int	lowat;		/* low water mark */
-	u_int	seek;		/* current position */
-} audio_bufinfo_t;
-.Ed
-.Pp
-This information is mostly useful in input or output loops to determine
-how much data to read or write, respectively.
-Note, these ioctls were added to aid in porting third party applications
-and libraries, and should not be used in new code.
 .Pp
 .It Dv AUDIO_GETINFO Fa "audio_info_t *"
 .It Dv AUDIO_SETINFO Fa "audio_info_t *"
@@ -325,17 +213,10 @@ structure.
 typedef struct audio_info {
 	struct	audio_prinfo play;   /* info for play (output) side */
 	struct	audio_prinfo record; /* info for record (input) side */
-	u_int	monitor_gain;	     /* input to output mix */
-	/* BSD extensions */
-	u_int	blocksize;	/* H/W read/write block size */
-	u_int	hiwat;		/* output high water mark */
-	u_int	lowat;		/* output low water mark */
-	u_char	output_muted;	/* toggle play mute */
-	u_char	cspare[3];
+	u_int	hiwat;		/* blocks count in play buffer */
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
-#define AUMODE_PLAY_ALL 0x04	/* do not do real-time correction */
 } audio_info_t;
 .Ed
 .Pp
@@ -355,36 +236,18 @@ first.
 .Pp
 The
 .Va mode
-field should be set to
+field is read-only and set to
 .Dv AUMODE_PLAY ,
 .Dv AUMODE_RECORD ,
-.Dv AUMODE_PLAY_ALL ,
 or a bitwise OR combination of the three.
 Only full-duplex audio devices support
 simultaneous record and playback.
 .Pp
-.Va blocksize
-is used to attempt to set both play and record block sizes
-to the same value, it is left for compatibility only and
-its use is discouraged.
-.Pp
 .Va hiwat
-and
-.Va lowat
-are used to control write behavior.
-Writes to the audio devices will queue up blocks until the high-water
-mark is reached, at which point any more write calls will block
-until the queue is drained to the low-water mark.
-.Va hiwat
-and
-.Va lowat
-set those high- and low-water marks (in audio blocks).
-The default for
-.Va hiwat
-is the maximum value and for
-.Va lowat
-75% of
-.Va hiwat .
+contains the number of blocks in the kernel play buffer.
+Writes to the audio devices will queue blocks until the play buffer
+is full, at which point any more write calls will block
+until space for at least one byte is available.
 .Bd -literal
 struct audio_prinfo {
 	u_int	sample_rate;	/* sample rate in bit/s */
@@ -393,31 +256,17 @@ struct audio_prinfo {
 	u_int	bps;		/* number of bytes/sample */
 	u_int	msb;		/* data alignment */
 	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
-	u_int	gain;		/* volume level */
-	u_int	port;		/* selected I/O port */
-	u_int	seek;		/* BSD extension */
-	u_int	avail_ports;	/* available I/O ports */
-	u_int	buffer_size;	/* total size audio buffer */
 	u_int	block_size;     /* size a block */
 	/* Current state of device: */
-	u_int	samples;	/* number of samples */
-	u_int	eof;		/* End Of File (zero-size writes) counter */
 	u_char	pause;		/* non-zero if paused, zero to resume */
-	u_char	error;		/* non-zero if underflow/overflow occurred */
-	u_char	waiting;	/* non-zero if another process hangs in open */
-	u_char	balance;	/* stereo channel balance */
-	u_char	cspare[2];
-	u_char	open;		/* non-zero if currently open */
 	u_char	active;		/* non-zero if I/O is currently active */
 };
 .Ed
 .Pp
-Note:  many hardware audio drivers require identical playback and
-recording sample rates, sample encodings, and channel counts.
-The playing information is always set last and will prevail on such hardware.
-If the hardware can handle different settings the
-.Dv AUDIO_PROP_INDEPENDENT
-property is set.
+The
+.Nm
+driver requires identical playback and
+recording sample rates, sample encodings, and block durations.
 .Pp
 The
 .Va encoding
@@ -428,12 +277,6 @@ parameter can have the following values:
 mu-law encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_ALAW
 A-law encoding, 8 bits/sample
-.It Dv AUDIO_ENCODING_SLINEAR
-two's complement signed linear encoding with the platform byte order
-.It Dv AUDIO_ENCODING_ULINEAR
-unsigned linear encoding with the platform byte order
-.It Dv AUDIO_ENCODING_ADPCM
-ADPCM encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_SLINEAR_LE
 two's complement signed linear encoding with little endian byte order
 .It Dv AUDIO_ENCODING_SLINEAR_BE
@@ -459,106 +302,27 @@ It is only meaningful when
 .Va bps .
 A value of 1 means the data is aligned to the most significant bit.
 .Pp
-The
-.Va gain ,
-.Va port ,
-and
-.Va balance
-settings provide simple shortcuts to the richer
-.Nm mixer
-interface described below.
-The
-.Va gain
-should be in the range
-.Bq Dv AUDIO_MIN_GAIN , AUDIO_MAX_GAIN
-and the balance in the range
-.Bq Dv AUDIO_LEFT_BALANCE , AUDIO_RIGHT_BALANCE
-with the normal setting at
-.Dv AUDIO_MID_BALANCE .
-.Pp
-The input port should be a combination of:
-.Pp
-.Bl -tag -width AUDIO_MICROPHONE -compact
-.It Dv AUDIO_MICROPHONE
-to select microphone input.
-.It Dv AUDIO_LINE_IN
-to select line input.
-.It Dv AUDIO_CD
-to select CD input.
-.El
-.Pp
-The output port should be a combination of:
-.Pp
-.Bl -tag -width AUDIO_HEADPHONE -compact
-.It Dv AUDIO_SPEAKER
-to select speaker output.
-.It Dv AUDIO_HEADPHONE
-to select headphone output.
-.It Dv AUDIO_LINE_OUT
-to select line output.
-.El
-.Pp
-The available ports can be found in
-.Va avail_ports .
-.Pp
-.Va buffer_size
-is the total size of the audio buffer.
-The buffer size divided by the
 .Va block_size
-gives the maximum value for
-.Va hiwat .
-Currently the
-.Va buffer_size
-can only be read and not set.
-.Pp
-.Va block_size
-sets the current audio block size.
+is the block size in bytes, which determines the frequency at which
+blocking
+.Xr read 2 ,
+.Xr write 2 ,
+or
+.Xr poll 2 ,
+wake up.
 The generic
 .Nm audio
 driver layer and the hardware driver have the
 opportunity to adjust this block size to get it within
 implementation-required limits.
-Upon return from an
-.Dv AUDIO_SETINFO
-call, the actual block_size set is returned in this field.
 Normally the
 .Va block_size
-is calculated to correspond to 50ms of sound and it is recalculated
-when the encoding parameter changes, but if the
-.Va block_size
-is set explicitly this value becomes sticky, i.e., it remains
-even when the encoding is changed.
-The stickiness can be cleared by reopening the device or setting the
-.Va block_size
-to 0.
+is recalculated
+when other parameters changes.
 .Pp
-Care should be taken when setting the
-.Va block_size
-before other parameters.
-If the device does not natively support the audio parameters, then the
-internal block size may be scaled to a larger size to accommodate
-conversion to a native format.
-If the
-.Va block_size
-has been set, the internal block size will not be rescaled when the
-parameters, and thus possibly the scaling factor, change.
-This can result in a block size much larger than was originally requested.
 It is recommended to set
 .Va block_size
 at the same time as, or after, all other parameters have been set.
-.Pp
-The
-.Va seek
-and
-.Va samples
-fields are only used for
-.Dv AUDIO_GETINFO .
-.Va seek
-represents the count of
-bytes pending;
-.Va samples
-represents the total number of bytes recorded or played, less those
-that were dropped due to inadequate consumption/production rates.
 .Pp
 .Va pause
 returns the current pause/unpause state for recording or playback.
@@ -566,6 +330,8 @@ For
 .Dv AUDIO_SETINFO ,
 if the pause value is specified it will either pause
 or unpause the particular direction.
+In full-duplex the pause values for both directions must
+be equal.
 .El
 .Sh MIXER DEVICE
 The
@@ -787,13 +553,8 @@ string values.
 .Xr cdio 1 ,
 .Xr mixerctl 1 ,
 .Xr ioctl 2 ,
-.Xr ossaudio 3 ,
 .Xr sio_open 3 ,
 .Xr ac97 4 ,
 .Xr uaudio 4 ,
 .Xr audio 9
-.Sh BUGS
-If the device is used in
-.Xr mmap 2
-it is currently always mapped for writing (playing) due to
-VM system weirdness.
+.\" .Sh BUGS
