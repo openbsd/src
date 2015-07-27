@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.104 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.105 2015/07/27 04:01:51 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -492,12 +492,12 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 	int error;
 
 	error = copyin(SCARG(uap, msg), &msg, sizeof (msg));
+	if (error)
+		return (error);
 
 	if (tame_sendto_check(p, msg.msg_name))
 		return (tame_fail(p, EPERM, _TM_UNIX));
 
-	if (error)
-		return (error);
 	if (msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
@@ -665,12 +665,12 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 	int error;
 
 	error = copyin(SCARG(uap, msg), &msg, sizeof (msg));
+	if (error)
+		return (error);
 
 	if (tame_recvfrom_check(p, msg.msg_name))
 		return (tame_fail(p, EPERM, _TM_UNIX));
 
-	if (error)
-		return (error);
 	if (msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
