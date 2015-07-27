@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.42 2015/07/15 16:09:25 millert Exp $
+.\"	$OpenBSD: passwd.1,v 1.43 2015/07/27 17:28:39 sobrado Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: July 15 2015 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ capability in
 If none is specified, then blowfish with 8 rounds is used.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
-.It /etc/login.conf
+.It Pa /etc/login.conf
 configuration options
 .It Pa /etc/master.passwd
 user database
@@ -100,7 +100,7 @@ user database
 user database, with confidential information removed
 .It Pa /etc/passwd.XXXXXX
 temporary copy of the password file
-.It /etc/ptmp
+.It Pa /etc/ptmp
 lock file for the passwd database
 .El
 .Sh DIAGNOSTICS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplugd.8,v 1.12 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: hotplugd.8,v 1.13 2015/07/27 17:28:39 sobrado Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt HOTPLUGD 8
 .Os
 .Sh NAME
@@ -76,13 +76,13 @@ and the unit number, e.g.\&
 .Pa sd1 .
 .Sh FILES
 .Bl -tag -width "/dev/hotplug/attach" -compact
-.It /dev/hotplug
+.It Pa /dev/hotplug
 Pseudo-device file.
-.It /etc/hotplug
+.It Pa /etc/hotplug
 Directory where the scripts to execute are located.
-.It /etc/hotplug/attach
+.It Pa /etc/hotplug/attach
 Script to execute on device attachment.
-.It /etc/hotplug/detach
+.It Pa /etc/hotplug/detach
 Script to execute on device detachment.
 .El
 .Sh EXAMPLES

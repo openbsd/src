@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.16 2015/07/08 16:37:25 sthen Exp $
+.\" $OpenBSD: openssl.1,v 1.17 2015/07/27 17:28:39 sobrado Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: July 8 2015 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -10177,17 +10177,17 @@ or similar.
 .\"
 .Sh FILES
 .Bl -tag -width "/etc/ssl/openssl.cnf" -compact
-.It /etc/ssl/
+.It Pa /etc/ssl/
 Default config directory for
 .Nm openssl .
-.It /etc/ssl/lib/
+.It Pa /etc/ssl/lib/
 Unused.
-.It /etc/ssl/private/
+.It Pa /etc/ssl/private/
 Default private key directory.
-.It /etc/ssl/openssl.cnf
+.It Pa /etc/ssl/openssl.cnf
 Default configuration file for
 .Nm openssl .
-.It /etc/ssl/x509v3.cnf
+.It Pa /etc/ssl/x509v3.cnf
 Default configuration file for
 .Nm x509
 certificates.

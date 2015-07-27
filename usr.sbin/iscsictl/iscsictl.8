@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iscsictl.8,v 1.5 2014/04/21 18:05:45 claudio Exp $
+.\"	$OpenBSD: iscsictl.8,v 1.6 2015/07/27 17:28:39 sobrado Exp $
 .\"
 .\" Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2014 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt ISCSICTL 8
 .Os
 .Sh NAME
@@ -58,11 +58,11 @@ It shows how many calls were issued and how many bytes were read or written.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/iscsid.sockXX" -compact
-.It /etc/iscsi.conf
+.It Pa /etc/iscsi.conf
 Default
 .Xr iscsid 8
 configuration file.
-.It /var/run/iscsid.sock
+.It Pa /var/run/iscsid.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr iscsid 8 .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.43 2014/03/17 17:07:45 deraadt Exp $
+.\" $OpenBSD: pppd.8,v 1.44 2015/07/27 17:28:39 sobrado Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2014 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -1241,7 +1241,7 @@ script.
 .El
 .Sh FILES
 .Bl -tag -width Ds
-.It /var/run/ppp Ns Ar n Ns .pid
+.It Pa /var/run/ppp Ns Ar n Ns .pid
 .\" (BSD or Linux),
 .\" /etc/ppp/ppp Ns Ar n Ns .pid
 .\" (others)
@@ -1249,13 +1249,13 @@ Process-ID for
 .Nm
 process on PPP interface unit
 .Ar n .
-.It /etc/ppp/pap-secrets
+.It Pa /etc/ppp/pap-secrets
 Usernames, passwords and IP addresses for PAP authentication.
 This file should be owned by root and not readable or writable by any other
 user.
 .Nm
 will log a warning if this is not the case.
-.It /etc/ppp/chap-secrets
+.It Pa /etc/ppp/chap-secrets
 Names, secrets and IP addresses for CHAP authentication.
 As for
 .Pa /etc/ppp/pap-secrets ,
@@ -1263,21 +1263,21 @@ this file should be owned by root and not readable or writable
 by any other user.
 .Nm
 will log a warning if this is not the case.
-.It /etc/ppp/options
+.It Pa /etc/ppp/options
 System default options for
 .Nm pppd ,
 read before user default options or command-line options.
-.It ~/.ppprc
+.It Pa ~/.ppprc
 User default options, read before
 .Pf /etc/ppp/options. Ns Ar ttyname .
-.It /etc/ppp/options. Ns Ar ttyname
+.It Pa /etc/ppp/options. Ns Ar ttyname
 System default options for the serial port being used, read after
 .Pa ~/.ppprc .
 In forming the
 .Ar ttyname
 part of this filename, an initial /dev/ is stripped from the port name (if
 present), and any slashes in the remaining part are converted to dots.
-.It /etc/ppp/peers
+.It Pa /etc/ppp/peers
 A directory containing options files which may contain privileged
 options, even if
 .Nm

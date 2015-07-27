@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.8,v 1.17 2013/08/14 06:32:36 jmc Exp $
+.\"	$OpenBSD: ospf6d.8,v 1.18 2015/07/27 17:28:39 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt OSPF6D 8
 .Os
 .Sh NAME
@@ -153,11 +153,11 @@ Produce more verbose output.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/ospf6d.sockXX" -compact
-.It /etc/ospf6d.conf
+.It Pa /etc/ospf6d.conf
 Default
 .Nm
 configuration file.
-.It /var/run/ospf6d.sock
+.It Pa /var/run/ospf6d.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr ospf6ctl 8 .

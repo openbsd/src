@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.68 2014/11/26 15:52:30 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.69 2015/07/27 17:28:40 sobrado Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2014 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -153,19 +153,19 @@ If unset, this defaults to
 .El
 .Sh FILES
 .Bl -tag -width "${TMPDIR}/sysmerge.XXXXXXXXXX" -compact
-.It ${TMPDIR}/sysmerge.XXXXXXXXXX
+.It Pa ${TMPDIR}/sysmerge.XXXXXXXXXX
 Default work directory.
 The
 .Sy temproot
 and
 .Sy backup
 directories are created relative to this.
-.It /etc/sysmerge.ignore
+.It Pa /etc/sysmerge.ignore
 Files and directories to ignore from comparison.
-.It /usr/share/sysmerge/etc.tgz
+.It Pa /usr/share/sysmerge/etc.tgz
 Base system set containing the reference files
 corresponding to the currently installed release.
-.It /usr/share/sysmerge/xetc.tgz
+.It Pa /usr/share/sysmerge/xetc.tgz
 .Xr X 7
 set containing the reference files
 corresponding to the currently installed release.

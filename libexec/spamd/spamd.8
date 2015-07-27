@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.128 2015/05/18 16:04:21 reyk Exp $
+.\"	$OpenBSD: spamd.8,v 1.129 2015/07/27 17:28:38 sobrado Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2015 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt SPAMD 8
 .Os
 .Sh NAME
@@ -585,13 +585,13 @@ The file needs to be copied to all hosts
 sending or receiving synchronisation messages.
 .Sh FILES
 .Bl -tag -width "/etc/mail/spamd.alloweddomainsXX" -compact
-.It /etc/mail/spamd.alloweddomains
+.It Pa /etc/mail/spamd.alloweddomains
 Required suffixes for greytrapping.
-.It /etc/mail/spamd.conf
+.It Pa /etc/mail/spamd.conf
 Default configuration file.
-.It /etc/mail/spamd.key
+.It Pa /etc/mail/spamd.key
 Authentication key for synchronisation messages.
-.It /var/db/spamd
+.It Pa /var/db/spamd
 Greylisting database.
 .El
 .Sh SEE ALSO

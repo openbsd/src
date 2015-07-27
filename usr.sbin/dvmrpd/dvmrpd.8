@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.8,v 1.9 2013/08/14 06:32:37 jmc Exp $
+.\"	$OpenBSD: dvmrpd.8,v 1.10 2015/07/27 17:28:39 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt DVMRPD 8
 .Os
 .Sh NAME
@@ -96,11 +96,11 @@ Produce more verbose output.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/dvmrpd.sockXX" -compact
-.It /etc/dvmrpd.conf
+.It Pa /etc/dvmrpd.conf
 Default
 .Nm
 configuration file.
-.It /var/run/dvmrpd.sock
+.It Pa /var/run/dvmrpd.sock
 .Ux Ns -domain
 socket used for communication with
 .Xr dvmrpctl 8 .

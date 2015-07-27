@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.22 2015/02/28 21:51:57 bentley Exp $
+.\" $OpenBSD: ikectl.8,v 1.23 2015/07/27 17:28:39 sobrado Exp $
 .\"
 .\" Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: July 27 2015 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -250,17 +250,17 @@ from the named
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/iked.sockXX" -compact
-.It /etc/iked/
+.It Pa /etc/iked/
 Active configuration.
-.It /etc/ssl/
+.It Pa /etc/ssl/
 Directory to store the CA files.
-.It /usr/share/iked
+.It Pa /usr/share/iked
 If this optional directory exists,
 .Nm
 will include the contents with the
 .Cm ca export
 commands.
-.It /var/run/iked.sock
+.It Pa /var/run/iked.sock
 default
 .Ux Ns -domain
 socket used for communication with
