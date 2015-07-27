@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.10 2015/04/20 19:08:52 miod Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.11 2015/07/27 16:33:40 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -98,15 +98,12 @@ mips64_ipi_intr(void *arg)
 
 	KASSERT (cpuid == cpu_number());
 
-	/* figure out which ipi are pending */
-	pending_ipis = ipi_mailbox[cpuid];
 	/* clear ipi interrupt */
 	hw_ipi_intr_clear(cpuid);
+	/* get and clear pending ipis */
+	pending_ipis = atomic_swap_uint(&ipi_mailbox[cpuid], 0);
 	
 	if (pending_ipis > 0) {
-		/* clear pending ipi, since we're about to handle them */
-		atomic_clearbits_int(&ipi_mailbox[cpuid], pending_ipis);
-
 		for (bit = 0; bit < MIPS64_NIPIS; bit++)
 			if (pending_ipis & (1UL << bit))
 				(*ipifuncs[bit])();
@@ -128,7 +125,7 @@ mips64_send_ipi(unsigned int cpuid, unsigned int ipimask)
 	        panic("mips_send_ipi: CPU %ld not running", cpuid);
 #endif
 
-	atomic_wait_and_setbits_int(&ipi_mailbox[cpuid], ipimask);
+	atomic_setbits_int(&ipi_mailbox[cpuid], ipimask);
 
 	hw_ipi_intr_set(cpuid);
 }
