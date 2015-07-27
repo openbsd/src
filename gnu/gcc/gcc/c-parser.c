@@ -109,6 +109,7 @@ static const struct resword reswords[] =
   { "__attribute",	RID_ATTRIBUTE,	0 },
   { "__attribute__",	RID_ATTRIBUTE,	0 },
   { "__builtin_choose_expr", RID_CHOOSE_EXPR, 0 },
+  { "__builtin_complex", RID_BUILTIN_COMPLEX, 0 },
   { "__builtin_offsetof", RID_OFFSETOF, 0 },
   { "__builtin_types_compatible_p", RID_TYPES_COMPATIBLE_P, 0 },
   { "__builtin_va_arg",	RID_VA_ARG,	0 },
@@ -5017,6 +5018,7 @@ c_parser_alignof_expression (c_parser *parser)
 			     assignment-expression ,
 			     assignment-expression )
      __builtin_types_compatible_p ( type-name , type-name )
+     __builtin_complex ( assignment-expression , assignment-expression )
 
    offsetof-member-designator:
      identifier
@@ -5402,6 +5404,44 @@ c_parser_postfix_expression (c_parser *parser)
 	    expr.value = objc_build_encode_expr (type);
 	    expr.original_code = ERROR_MARK;
 	  }
+	  break;
+	case RID_BUILTIN_COMPLEX:
+	  c_parser_consume_token (parser);
+	  if (!c_parser_require (parser, CPP_OPEN_PAREN, "expected %<(%>"))
+	    {
+	      expr.value = error_mark_node;
+	      break;
+	    }
+	  e1 = c_parser_expr_no_commas (parser, NULL);
+	  if (!c_parser_require (parser, CPP_COMMA, "expected %<,%>"))
+	    {
+	      expr.value = error_mark_node;
+	      c_parser_skip_until_found (parser, CPP_CLOSE_PAREN, NULL);
+	      break;
+	    }
+	  e2 = c_parser_expr_no_commas (parser, NULL);
+	  c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
+				     "expected %<)%>");
+	  if (!SCALAR_FLOAT_TYPE_P (TREE_TYPE (e1.value))
+	      || !SCALAR_FLOAT_TYPE_P (TREE_TYPE (e2.value))
+	      || DECIMAL_FLOAT_TYPE_P (TREE_TYPE (e1.value))
+	      || DECIMAL_FLOAT_TYPE_P (TREE_TYPE (e2.value)))
+	    {
+	      error ("%<__builtin_complex%> operand not of real binary "
+		     "floating-point type");
+	      expr.value = error_mark_node;
+	      break;
+	    }
+	  if (TYPE_MAIN_VARIANT (TREE_TYPE (e1.value)) !=
+	      TYPE_MAIN_VARIANT (TREE_TYPE (e2.value)))
+	    {
+	      error ("%<__builtin_complex%> operands of different types");
+	      expr.value = error_mark_node;
+	      break;
+	    }
+	  expr.value = build2 (COMPLEX_EXPR, build_complex_type (
+				 TYPE_MAIN_VARIANT (TREE_TYPE (e1.value))),
+			       e1.value, e2.value);
 	  break;
 	default:
 	  c_parser_error (parser, "expected expression");
