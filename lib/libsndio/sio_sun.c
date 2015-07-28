@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.15 2015/07/24 08:50:29 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.16 2015/07/28 20:48:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -804,65 +804,46 @@ int
 sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
-	struct audio_offset ao;
-	int xrun, dierr = 0, doerr = 0, offset, delta;
+	struct audio_pos ap;
+	int dierr = 0, doerr = 0, offset, delta;
 	int revents = pfd->revents;
 
 	if (!hdl->sio.started)
 		return pfd->revents;
+	if (ioctl(hdl->fd, AUDIO_GETPOS, &ap) < 0) {
+		DPERROR("sio_sun_revents: GETPOS");
+		hdl->sio.eof = 1;
+		return POLLHUP;
+	}
 	if (hdl->sio.mode & SIO_PLAY) {
-		if (ioctl(hdl->fd, AUDIO_GETOOFFS, &ao) < 0) {
-			DPERROR("sio_sun_revents: GETOOFFS");
-			hdl->sio.eof = 1;
-			return POLLHUP;
-		}
-		delta = (ao.samples - hdl->obytes) / hdl->obpf;
-		hdl->obytes = ao.samples;
-		hdl->odelta += delta;
-		if (!(hdl->sio.mode & SIO_REC))
+		delta = (ap.play_pos - hdl->obytes) / hdl->obpf;
+		doerr = (ap.play_xrun - hdl->oerr) / hdl->obpf;
+		hdl->obytes = ap.play_pos;
+		hdl->oerr = ap.play_xrun;
+		hdl->odelta += delta;	
+		if (!(hdl->sio.mode & SIO_REC)) {
 			hdl->idelta += delta;
-	}
-	if (hdl->sio.mode & SIO_REC) {
-		if (ioctl(hdl->fd, AUDIO_GETIOFFS, &ao) < 0) {
-			DPERROR("sio_sun_revents: GETIOFFS");
-			hdl->sio.eof = 1;
-			return POLLHUP;
-		}
-		delta = (ao.samples - hdl->ibytes) / hdl->ibpf;
-		hdl->ibytes = ao.samples;
-		hdl->idelta += delta;
-		if (!(hdl->sio.mode & SIO_PLAY))
-			hdl->odelta += delta;
-	}
-	if (hdl->sio.mode & SIO_PLAY) {
-		if (ioctl(hdl->fd, AUDIO_PERROR, &xrun) < 0) {
-			DPERROR("sio_sun_revents: PERROR");
-			hdl->sio.eof = 1;
-			return POLLHUP;
-		}
-		doerr = xrun - hdl->oerr;
-		hdl->oerr = xrun;
-		if (!(hdl->sio.mode & SIO_REC))
 			dierr = doerr;
+		}
 		if (doerr > 0)
 			DPRINTFN(2, "play xrun %d\n", doerr);
 	}
 	if (hdl->sio.mode & SIO_REC) {
-		if (ioctl(hdl->fd, AUDIO_RERROR, &xrun) < 0) {
-			DPERROR("sio_sun_revents: RERROR");
-			hdl->sio.eof = 1;
-			return POLLHUP;
-		}
-		dierr = xrun - hdl->ierr;
-		hdl->ierr = xrun;
-		if (!(hdl->sio.mode & SIO_PLAY))
+		delta = (ap.rec_pos - hdl->ibytes) / hdl->ibpf;
+		dierr = (ap.rec_xrun - hdl->ierr) / hdl->ibpf;
+		hdl->ibytes = ap.rec_pos;
+		hdl->ierr = ap.rec_xrun;
+		hdl->idelta += delta;
+		if (!(hdl->sio.mode & SIO_PLAY)) {
+			hdl->odelta += delta;
 			doerr = dierr;
+		}
 		if (dierr > 0)
 			DPRINTFN(2, "rec xrun %d\n", dierr);
 	}
 
 	/*
-	 * GET{I,O}OFFS report positions including xruns,
+	 * GETPOS reports positions including xruns,
 	 * so we have to substract to get the real position
 	 */
 	hdl->idelta -= dierr;
