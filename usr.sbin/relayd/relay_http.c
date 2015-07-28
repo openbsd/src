@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.51 2015/07/18 16:01:28 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.52 2015/07/28 10:24:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1349,7 +1349,7 @@ relay_httpcookie_test(struct ctl_relay_event *cre, struct relay_rule *rule,
     struct kvlist *actions)
 {
 	struct http_descriptor	*desc = cre->desc;
-	struct kv               *kv = &rule->rule_kv[KEY_TYPE_COOKIE], key;
+	struct kv		*kv = &rule->rule_kv[KEY_TYPE_COOKIE], key;
 	struct kv		*match = NULL;
 
 	if (kv->kv_type != KEY_TYPE_COOKIE)
