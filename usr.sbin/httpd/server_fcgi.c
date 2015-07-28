@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.58 2015/07/19 16:34:35 blambert Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.59 2015/07/28 10:13:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -589,11 +589,12 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 int
 server_fcgi_header(struct client *clt, u_int code)
 {
+	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct http_descriptor	*resp = clt->clt_descresp;
 	const char		*error;
 	char			 tmbuf[32];
-	struct kv		*kv, key;
+	struct kv		*kv, *cl, key;
 
 	if (desc == NULL || (error = server_httperror_byid(code)) == NULL)
 		return (-1);
@@ -633,6 +634,19 @@ server_fcgi_header(struct client *clt, u_int code)
 			return (-1);
 	} else if (kv_add(&resp->http_headers, "Connection", "close") == NULL)
 		return (-1);
+
+	/* HSTS header */
+	if (srv_conf->flags & SRVFLAG_SERVER_HSTS) {
+		if ((cl =
+		    kv_add(&resp->http_headers, "Strict-Transport-Security",
+		    NULL)) == NULL ||
+		    kv_set(cl, "max-age=%d%s%s%s", srv_conf->hsts_max_age,
+		    srv_conf->hsts_flags & HSTSFLAG_SUBDOMAINS ?
+		    "; includeSubDomains" : "",
+		    srv_conf->hsts_flags & HSTSFLAG_PRELOAD ?
+		    "; preload" : "") == -1)
+			return (-1);
+	}
 
 	/* Date header is mandatory and should be added as late as possible */
 	if (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
