@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.83 2015/07/15 23:09:59 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.84 2015/07/28 12:22:07 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -148,9 +148,12 @@ rip_input(struct mbuf *m, ...)
 			/* XXX rdomain support */
 			if ((divert = pf_find_divert(m)) == NULL)
 				continue;
+			if (!divert->addr.v4.s_addr)
+				goto divert_reply;
 			if (inp->inp_laddr.s_addr != divert->addr.v4.s_addr)
 				continue;
 		} else
+ divert_reply:
 #endif
 		if (inp->inp_laddr.s_addr &&
 		    inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
