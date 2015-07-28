@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.28 2015/05/26 18:17:12 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.29 2015/07/28 20:51:10 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -59,9 +59,9 @@ audio_info_t info;
 
 char encbuf[1000];
 
-int properties, fullduplex, perrors, rerrors;
+int properties, fullduplex;
 
-struct audio_offset poffs, roffs;
+struct audio_pos getpos;
 
 struct field {
 	const char *name;
@@ -97,8 +97,8 @@ struct field {
 	{ "play.pause",		&info.play.pause,	UCHAR,	0 },
 	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
 	{ "play.block_size",	&info.play.block_size,	UINT,	0 },
-	{ "play.bytes",		&poffs.samples,		INT,	READONLY },
-	{ "play.errors",	&perrors,		INT,	READONLY },
+	{ "play.bytes",		&getpos.play_pos,	UINT,	READONLY },
+	{ "play.errors",	&getpos.play_xrun,	UINT,	READONLY },
 	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
 	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
 	{ "record.channels",	&info.record.channels,	UINT,	0 },
@@ -109,8 +109,8 @@ struct field {
 	{ "record.pause",	&info.record.pause,	UCHAR,	0 },
 	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
 	{ "record.block_size",	&info.record.block_size,UINT,	0 },
-	{ "record.bytes",	&roffs.samples,		INT,	READONLY },
-	{ "record.errors",	&rerrors,		INT,	READONLY },
+	{ "record.bytes",	&getpos.rec_pos,	UINT,	READONLY },
+	{ "record.errors",	&getpos.rec_xrun,	UINT,	READONLY },
 	{ 0 }
 };
 
@@ -297,16 +297,12 @@ getinfo(int fd)
 		err(1, "AUDIO_GETFD");
 	if (ioctl(fd, AUDIO_GETPROPS, &properties) < 0)
 		err(1, "AUDIO_GETPROPS");
-	if (ioctl(fd, AUDIO_PERROR, &perrors) < 0)
-		err(1, "AUDIO_PERROR");
-	if (ioctl(fd, AUDIO_RERROR, &rerrors) < 0)
-		err(1, "AUDIO_RERROR");
-	if (ioctl(fd, AUDIO_GETOOFFS, &poffs) < 0)
-		err(1, "AUDIO_GETOOFFS");
-	if (ioctl(fd, AUDIO_GETIOFFS, &roffs) < 0)
-		err(1, "AUDIO_GETOIFFS");
+	if (ioctl(fd, AUDIO_GETPROPS, &properties) < 0)
+		err(1, "AUDIO_GETPROPS");
 	if (ioctl(fd, AUDIO_GETINFO, &info) < 0)
 		err(1, "AUDIO_GETINFO");
+	if (ioctl(fd, AUDIO_GETPOS, &getpos) < 0)
+		err(1, "AUDIO_GETPOS");
 }
 
 void
