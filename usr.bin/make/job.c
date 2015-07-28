@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.135 2012/12/14 11:10:03 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.136 2015/07/28 14:22:26 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ static void setup_signal(int);
 static void notice_signal(int);
 static void setup_all_signals(void);
 static const char *really_kill(Job *, int);
-static void kill_with_sudo_maybe(pid_t, int, const char *);
+static void kill_with_doas_maybe(pid_t, int, const char *);
 static void debug_kill_printf(const char *, ...);
 static void debug_vprintf(const char *, va_list);
 static void may_remove_target(Job *);
@@ -169,22 +169,28 @@ static int dying_signal = 0;
 const char *	basedirectory = NULL;
 
 static void 
-kill_with_sudo_maybe(pid_t pid, int signo, const char *p)
+kill_with_doas_maybe(pid_t pid, int signo, const char *p)
 {
 	char buf[32]; /* largely enough */
+	int sudo;
 
 	for (;*p != '\0'; p++) {
-		if (*p != 's')
+		if (*p == 's')
+			sudo = 1;
+		else if (*p == 'd')
+			sudo = 0;
+		else
 			continue;
-		if (p[1] != 'u')
+		if (sudo && p[1] != 'u' || !sudo && p[1] != 'o')
 			continue;
 		p++;
-		if (p[1] != 'd')
+		if (sudo && p[1] != 'd' || !sudo && p[1] != 'a')
 			continue;
 		p++;
-		if (p[1] != 'o')
+		if (sudo && p[1] != 'o' || !sudo && p[1] != 's')
 			continue;
-		snprintf(buf, sizeof buf, "sudo -n /bin/kill -%d %ld", 
+		snprintf(buf, sizeof buf, "%s -n /bin/kill -%d %ld", 
+		    sudo ? "sudo" : "doas",
 		    signo, (long)pid);
 		debug_kill_printf("trying to kill with %s", buf);
 		system(buf);
@@ -209,7 +215,7 @@ really_kill(Job *job, int signo)
 		job->flags |= JOB_LOST;
 		return "not found";
 	} else if (errno == EPERM) {
-		kill_with_sudo_maybe(pid, signo, job->cmd);
+		kill_with_doas_maybe(pid, signo, job->cmd);
 		return "";
 	} else
 		return "should not happen";
