@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.77 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.78 2015/07/28 11:44:51 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -475,7 +475,8 @@ rip6_output(struct mbuf *m, ...)
 	m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;
 
 #if NPF > 0
-	if (in6p->inp_socket->so_state & SS_ISCONNECTED)
+	if (in6p->inp_socket->so_state & SS_ISCONNECTED &&
+	    so->so_proto->pr_protocol != IPPROTO_ICMPV6)
 		m->m_pkthdr.pf.inp = in6p;
 #endif
 
