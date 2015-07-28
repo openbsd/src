@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.14 2015/07/28 18:12:57 jmc Exp $
+.\" $OpenBSD: tame.2,v 1.15 2015/07/28 18:20:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -234,17 +234,6 @@ write-effects on the filesystem:
 .Xr fchownat 2 ,
 .Xr fstat 2 ,
 .Xr fstat 2 .
-.It Dv TAME_TMPPATH
-A number of system calls are allowed to do operations in the
-.Pa /tmp
-directory, including create, read, or write:
-.Pp
-.Xr lstat 2 ,
-.Xr chmod 2 ,
-.Xr chflags 2 ,
-.Xr chown 2 ,
-.Xr unlink 2 ,
-.Xr fstat 2 .
 .It Dv TAME_CPATH
 A number of system calls and sub-modes are allowed, which may
 create new files or directories in the filesystem:
@@ -259,6 +248,17 @@ create new files or directories in the filesystem:
 .Xr unlinkat 2 ,
 .Xr mkdir 2 ,
 .Xr mkdirat 2 .
+.It Dv TAME_TMPPATH
+A number of system calls are allowed to do operations in the
+.Pa /tmp
+directory, including create, read, or write:
+.Pp
+.Xr lstat 2 ,
+.Xr chmod 2 ,
+.Xr chflags 2 ,
+.Xr chown 2 ,
+.Xr unlink 2 ,
+.Xr fstat 2 .
 .It Dv TAME_INET
 The following system calls are allowed to operate in the
 .Dv AF_INET
