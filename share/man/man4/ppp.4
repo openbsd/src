@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ppp.4,v 1.15 2014/10/01 10:05:17 mpi Exp $
+.\"	$OpenBSD: ppp.4,v 1.16 2015/07/28 14:31:50 sthen Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     From:	@(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: October 1 2014 $
+.Dd $Mdocdate: July 28 2015 $
 .Dt PPP 4
 .Os
 .Sh NAME
@@ -61,6 +61,8 @@ family; the packet was dropped.
 .El
 .Sh SEE ALSO
 .Xr inet 4 ,
+.Xr pppoe 4 ,
+.Xr pppx 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8 ,
@@ -81,4 +83,8 @@ device appeared in
 .Sh BUGS
 Currently, only the
 .Xr ip 4
-protocol is supported.
+protocol is supported by this device.
+Note that the
+.Xr pppoe 4
+device does support
+.Xr ip6 4 .
