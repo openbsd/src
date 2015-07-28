@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.143 2015/05/18 10:41:19 espie Exp $
+# $OpenBSD: Delete.pm,v 1.144 2015/07/28 13:22:07 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -165,7 +165,7 @@ sub rename_file_to_temp
 	my ($self, $state) = @_;
 	require OpenBSD::Temp;
 
-	my $n = $self->fullname;
+	my $n = $self->realname($state);
 
 	my ($fh, $j) = OpenBSD::Temp::permanent_file(undef, $n);
 	close $fh;
