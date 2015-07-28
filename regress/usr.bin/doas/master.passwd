@@ -1,0 +1,6 @@
+root:$2b$08$roIBH3ArOv0Mp64KeE71GOJtHbyNwPzQvc212q1ZfLUuMbXO6fUu6:0:0:daemon:0:0:Charlie &:/root:/bin/ksh
+daemon:*:1:1::0:0:The devil himself:/root:/sbin/nologin
+operator:*:2:5::0:0:System &:/operator:/sbin/nologin
+bin:*:3:7::0:0:Binaries Commands and Source:/:/sbin/nologin
+www:*:67:67::0:0:HTTP Server:/var/www:/sbin/nologin
+nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
