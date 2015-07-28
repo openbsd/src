@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.148 2015/07/21 03:26:02 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.149 2015/07/28 18:38:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -88,7 +88,6 @@ static	int		  fs_lookup(const struct manpaths *,
 static	void		  fs_search(const struct mansearch *,
 				const struct manpaths *, int, char**,
 				struct manpage **, size_t *);
-static	void		  handle_sigpipe(int);
 static	int		  koptions(int *, char *);
 int			  mandocdb(int, char**);
 static	int		  moptions(int *, char *);
@@ -96,7 +95,7 @@ static	void		  mmsg(enum mandocerr, enum mandoclevel,
 				const char *, int, int, const char *);
 static	void		  parse(struct curparse *, int, const char *);
 static	void		  passthrough(const char *, int, int);
-static	pid_t		  spawn_pager(void);
+static	pid_t		  spawn_pager(struct tag_files *);
 static	int		  toptions(struct curparse *, char *);
 static	void		  usage(enum argmode) __attribute__((noreturn));
 static	int		  woptions(struct curparse *, char *);
@@ -114,6 +113,7 @@ main(int argc, char *argv[])
 	struct manconf	 conf;
 	struct curparse	 curp;
 	struct mansearch search;
+	struct tag_files *tag_files;
 	char		*auxpaths;
 	char		*defos;
 	unsigned char	*uc;
@@ -127,8 +127,8 @@ main(int argc, char *argv[])
 	int		 fd;
 	int		 show_usage;
 	int		 options;
+	int		 use_pager;
 	int		 c;
-	pid_t		 pager_pid;  /* 0: don't use; 1: not yet spawned. */
 
 	if (argc < 1)
 		progname = "mandoc";
@@ -170,7 +170,8 @@ main(int argc, char *argv[])
 	options = MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1;
 	defos = NULL;
 
-	pager_pid = 1;
+	use_pager = 1;
+	tag_files = NULL;
 	show_usage = 0;
 	outmode = OUTMODE_DEF;
 
@@ -184,14 +185,14 @@ main(int argc, char *argv[])
 			conf_file = optarg;
 			break;
 		case 'c':
-			pager_pid = 0;
+			use_pager = 0;
 			break;
 		case 'f':
 			search.argmode = ARG_WORD;
 			break;
 		case 'h':
 			conf.output.synopsisonly = 1;
-			pager_pid = 0;
+			use_pager = 0;
 			outmode = OUTMODE_ALL;
 			break;
 		case 'I':
@@ -267,7 +268,7 @@ main(int argc, char *argv[])
 		switch (search.argmode) {
 		case ARG_FILE:
 			outmode = OUTMODE_ALL;
-			pager_pid = 0;
+			use_pager = 0;
 			break;
 		case ARG_NAME:
 			outmode = OUTMODE_ONE;
@@ -398,8 +399,8 @@ main(int argc, char *argv[])
 	if (search.argmode == ARG_FILE && ! moptions(&options, auxpaths))
 		return((int)MANDOCLEVEL_BADARG);
 
-	if (pager_pid == 1 && isatty(STDOUT_FILENO) == 0)
-		pager_pid = 0;
+	if (use_pager && ! isatty(STDOUT_FILENO))
+		use_pager = 0;
 
 	curp.mchars = mchars_alloc();
 	curp.mp = mparse_alloc(options, curp.wlevel, mmsg,
@@ -412,8 +413,8 @@ main(int argc, char *argv[])
 		mparse_keep(curp.mp);
 
 	if (argc < 1) {
-		if (pager_pid == 1)
-			pager_pid = spawn_pager();
+		if (use_pager)
+			tag_files = tag_init();
 		parse(&curp, STDIN_FILENO, "<stdin>");
 	}
 
@@ -424,8 +425,10 @@ main(int argc, char *argv[])
 			rc = rctmp;
 
 		if (fd != -1) {
-			if (pager_pid == 1)
-				pager_pid = spawn_pager();
+			if (use_pager) {
+				tag_files = tag_init();
+				use_pager = 0;
+			}
 
 			if (resp == NULL)
 				parse(&curp, fd, *argv);
@@ -467,15 +470,14 @@ out:
 	free(defos);
 
 	/*
-	 * If a pager is attached, flush the pipe leading to it
-	 * and signal end of file such that the user can browse
-	 * to the end.  Then wait for the user to close the pager.
+	 * When using a pager, finish writing both temporary files,
+	 * fork it, wait for the user to close it, and clean up.
 	 */
 
-	if (pager_pid != 0 && pager_pid != 1) {
+	if (tag_files != NULL) {
 		fclose(stdout);
 		tag_write();
-		waitpid(pager_pid, NULL, 0);
+		waitpid(spawn_pager(tag_files), NULL, 0);
 		tag_unlink();
 	}
 
@@ -922,22 +924,14 @@ mmsg(enum mandocerr t, enum mandoclevel lvl,
 	fputc('\n', stderr);
 }
 
-static void
-handle_sigpipe(int signum)
-{
-
-	exit((int)rc);
-}
-
 static pid_t
-spawn_pager(void)
+spawn_pager(struct tag_files *tag_files)
 {
 #define MAX_PAGER_ARGS 16
 	char		*argv[MAX_PAGER_ARGS];
 	const char	*pager;
 	char		*cp;
 	size_t		 cmdlen;
-	int		 fildes[2];
 	int		 argc;
 	pid_t		 pager_pid;
 
@@ -966,28 +960,17 @@ spawn_pager(void)
 			break;
 	}
 
-	/* Read all text right away and use the tag file. */
+	/* For more(1) and less(1), use the tag file. */
 
-	for (;;) {
-		if ((cmdlen = strlen(argv[0])) < 4)
-			break;
+	if ((cmdlen = strlen(argv[0])) >= 4) {
 		cp = argv[0] + cmdlen - 4;
-		if (strcmp(cp, "less") && strcmp(cp, "more"))
-			break;
-		if ((cp = tag_init()) == NULL)
-			break;
-		argv[argc++] = mandoc_strdup("+G1G");
-		argv[argc++] = mandoc_strdup("-T");
-		argv[argc++] = cp;
-		break;
+		if (strcmp(cp, "less") == 0 || strcmp(cp, "more") == 0) {
+			argv[argc++] = mandoc_strdup("-T");
+			argv[argc++] = tag_files->tfn;
+		}
 	}
+	argv[argc++] = tag_files->ofn;
 	argv[argc] = NULL;
-
-	if (pipe(fildes) == -1) {
-		fprintf(stderr, "%s: pipe: %s\n",
-		    progname, strerror(errno));
-		return(0);
-	}
 
 	switch (pager_pid = fork()) {
 	case -1:
@@ -997,29 +980,17 @@ spawn_pager(void)
 	case 0:
 		break;
 	default:
-		close(fildes[0]);
-		if (dup2(fildes[1], STDOUT_FILENO) == -1) {
-			fprintf(stderr, "%s: dup output: %s\n",
-			    progname, strerror(errno));
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
-		close(fildes[1]);
-		signal(SIGPIPE, handle_sigpipe);
 		return(pager_pid);
 	}
 
 	/* The child process becomes the pager. */
 
-	close(fildes[1]);
-	if (dup2(fildes[0], STDIN_FILENO) == -1) {
-		fprintf(stderr, "%s: dup input: %s\n",
-		    progname, strerror(errno));
+	if (dup2(tag_files->ofd, STDOUT_FILENO) == -1) {
+		fprintf(stderr, "pager: stdout: %s\n", strerror(errno));
 		exit((int)MANDOCLEVEL_SYSERR);
 	}
-	close(fildes[0]);
-
-	/* Hand over to the pager. */
-
+	close(tag_files->ofd);
+	close(tag_files->tfd);
 	execvp(argv[0], argv);
 	fprintf(stderr, "%s: exec %s: %s\n",
 	    progname, argv[0], strerror(errno));

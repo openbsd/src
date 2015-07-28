@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.h,v 1.4 2015/07/25 14:28:40 schwarze Exp $    */
+/*      $OpenBSD: tag.h,v 1.5 2015/07/28 18:38:05 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -15,9 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct	tag_files {
+	char	 ofn[20];
+	char	 tfn[20];
+	int	 ofd;
+	int	 tfd;
+};
+
 __BEGIN_DECLS
 
-char	*tag_init(void);
+struct tag_files *tag_init(void);
 void	 tag_put(const char *, int, size_t);
 void	 tag_write(void);
 void	 tag_unlink(void);

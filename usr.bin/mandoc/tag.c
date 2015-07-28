@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.c,v 1.5 2015/07/25 14:28:40 schwarze Exp $    */
+/*      $OpenBSD: tag.c,v 1.6 2015/07/28 18:38:05 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -40,29 +40,49 @@ static	void	 tag_free(void *, void *);
 static	void	*tag_calloc(size_t, size_t, void *);
 
 static struct ohash	 tag_data;
-static char		*tag_fn = NULL;
-static int		 tag_fd = -1;
+static struct tag_files	 tag_files;
 
 
 /*
- * Set up the ohash table to collect output line numbers
- * where various marked-up terms are documented and create
- * the temporary tags file, saving the name for the pager.
+ * Prepare for using a pager.
+ * Not all pagers are capable of using a tag file,
+ * but for simplicity, create it anyway.
  */
-char *
+struct tag_files *
 tag_init(void)
 {
 	struct ohash_info	 tag_info;
+	int			 ofd;
 
-	tag_fn = mandoc_strdup("/tmp/man.XXXXXXXXXX");
+	ofd = -1;
+	tag_files.tfd = -1;
+
+	/* Save the original standard output for use by the pager. */
+
+	if ((tag_files.ofd = dup(STDOUT_FILENO)) == -1)
+		goto fail;
+
+	/* Create both temporary output files. */
+
+	(void)strlcpy(tag_files.ofn, "/tmp/man.XXXXXXXXXX",
+	    sizeof(tag_files.ofn));
+	(void)strlcpy(tag_files.tfn, "/tmp/man.XXXXXXXXXX",
+	    sizeof(tag_files.tfn));
 	signal(SIGHUP, tag_signal);
 	signal(SIGINT, tag_signal);
 	signal(SIGTERM, tag_signal);
-	if ((tag_fd = mkstemp(tag_fn)) == -1) {
-		free(tag_fn);
-		tag_fn = NULL;
-		return(NULL);
-	}
+	if ((ofd = mkstemp(tag_files.ofn)) == -1)
+		goto fail;
+	if ((tag_files.tfd = mkstemp(tag_files.tfn)) == -1)
+		goto fail;
+	if (dup2(ofd, STDOUT_FILENO) == -1)
+		goto fail;
+	close(ofd);
+
+	/*
+	 * Set up the ohash table to collect output line numbers
+	 * where various marked-up terms are documented.
+	 */
 
 	tag_info.alloc = tag_alloc;
 	tag_info.calloc = tag_calloc;
@@ -70,7 +90,21 @@ tag_init(void)
 	tag_info.key_offset = offsetof(struct tag_entry, s);
 	tag_info.data = NULL;
 	ohash_init(&tag_data, 4, &tag_info);
-	return(tag_fn);
+	return(&tag_files);
+
+fail:
+	tag_unlink();
+	if (ofd != -1)
+		close(ofd);
+	if (tag_files.ofd != -1)
+		close(tag_files.ofd);
+	if (tag_files.tfd != -1)
+		close(tag_files.tfd);
+	*tag_files.ofn = '\0';
+	*tag_files.tfn = '\0';
+	tag_files.ofd = -1;
+	tag_files.tfd = -1;
+	return(NULL);
 }
 
 /*
@@ -84,7 +118,7 @@ tag_put(const char *s, int prio, size_t line)
 	size_t			 len;
 	unsigned int		 slot;
 
-	if (tag_fd == -1)
+	if (tag_files.tfd <= 0)
 		return;
 	slot = ohash_qlookup(&tag_data, s);
 	entry = ohash_find(&tag_data, slot);
@@ -110,13 +144,14 @@ tag_write(void)
 	struct tag_entry	*entry;
 	unsigned int		 slot;
 
-	if (tag_fd == -1)
+	if (tag_files.tfd <= 0)
 		return;
-	stream = fdopen(tag_fd, "w");
+	stream = fdopen(tag_files.tfd, "w");
 	entry = ohash_first(&tag_data, &slot);
 	while (entry != NULL) {
 		if (stream != NULL)
-			fprintf(stream, "%s - %zu\n", entry->s, entry->line);
+			fprintf(stream, "%s %s %zu\n",
+			    entry->s, tag_files.ofn, entry->line);
 		free(entry);
 		entry = ohash_next(&tag_data, &slot);
 	}
@@ -129,8 +164,10 @@ void
 tag_unlink(void)
 {
 
-	if (tag_fn != NULL)
-		unlink(tag_fn);
+	if (*tag_files.ofn != '\0')
+		unlink(tag_files.ofn);
+	if (*tag_files.tfn != '\0')
+		unlink(tag_files.tfn);
 }
 
 static void
