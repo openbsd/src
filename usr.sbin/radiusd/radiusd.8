@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.8,v 1.4 2015/07/21 15:36:22 jmc Exp $
+.\"	$OpenBSD: radiusd.8,v 1.5 2015/07/28 08:41:30 sobrado Exp $
 .\"
 .\" Copyright (c) 2013 Internet Initiative Japan Inc.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2015 $
+.Dd $Mdocdate: July 28 2015 $
 .Dt RADIUSD 8
 .Os
 .Sh NAME
@@ -44,6 +44,11 @@ Display usage text and exit.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/radiusd.confXX" -compact
+.It Pa /etc/radiusd.conf
+Default configuration file.
 .El
 .Sh SEE ALSO
 .Xr radiusd.conf 5
