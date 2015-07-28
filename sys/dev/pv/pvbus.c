@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.3 2015/07/23 12:08:42 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.4 2015/07/28 09:48:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -49,6 +49,9 @@ void	 pvbus_attach(struct device *, struct device *, void *);
 int	 pvbus_print(void *, const char *);
 int	 pvbus_search(struct device *, void *, void *);
 
+void	 pvbus_kvm(struct pvbus_softc *, struct pvbus_hv *);
+void	 pvbus_hyperv(struct pvbus_softc *, struct pvbus_hv *);
+
 struct cfattach pvbus_ca = {
 	sizeof(struct pvbus_softc),
 	pvbus_match,
@@ -66,14 +69,13 @@ struct cfdriver pvbus_cd = {
 struct pvbus_type {
 	const char	*signature;
 	const char	*name;
-	unsigned int	 type;
-} pvbus_types[] = {
-	{ "KVMKVMKVM\0\0\0",	"KVM",		PVBUS_KVM },
-	{ "Microsoft Hv",	"Hyper-V",	PVBUS_HYPERV },
-	{ "VMwareVMware",	"VMware",	PVBUS_VMWARE },
-	{ "XenVMMXenVMM",	"Xen",		PVBUS_XEN },
-	{ "bhyve bhyve ",	"bhyve",	PVBUS_BHYVE },
-	{ NULL }
+	void		(*init)(struct pvbus_softc *, struct pvbus_hv *);
+} pvbus_types[PVBUS_MAX] = {
+	{ "KVMKVMKVM\0\0\0",	"KVM",		pvbus_kvm },
+	{ "Microsoft Hv",	"Hyper-V",	pvbus_hyperv },
+	{ "VMwareVMware",	"VMware",	NULL },
+	{ "XenVMMXenVMM",	"Xen",		NULL },
+	{ "bhyve bhyve ",	"bhyve",	NULL }
 };
 
 int
@@ -96,16 +98,17 @@ void
 pvbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pvbus_softc *sc = (struct pvbus_softc *)self;
+	struct pvbus_hv *hv;
 	uint32_t reg0, base;
 	union {
 		uint32_t	regs[3];
 		char		str[CPUID_HV_SIGNATURE_STRLEN];
 	} r;
-	int i;
+	int i, cnt;
 
 	printf(":");
 
-	for (base = CPUID_HV_SIGNATURE_START;
+	for (base = CPUID_HV_SIGNATURE_START, cnt = 0;
 	    base < CPUID_HV_SIGNATURE_END;
 	    base += CPUID_HV_SIGNATURE_STEP) {
 		CPUID(base, reg0, r.regs[0], r.regs[1], r.regs[2]);
@@ -118,32 +121,23 @@ pvbus_attach(struct device *parent, struct device *self, void *aux)
 				goto out;
 		}
 
-		for (i = 0; pvbus_types[i].signature != NULL; i++) {
+		for (i = 0; i < PVBUS_MAX; i++) {
 			if (memcmp(pvbus_types[i].signature, r.str,
 			    CPUID_HV_SIGNATURE_STRLEN) != 0)
 				continue;
-			sc->pvbus_types |= pvbus_types[i].type;
+			hv = &sc->pvbus_hv[i];
+			hv->hv_base = base;
 
+			if (cnt++)
+				printf(",");
 			printf(" %s", pvbus_types[i].name);
+			if (pvbus_types[i].init != NULL)
+				(pvbus_types[i].init)(sc, hv);
 		}
 	}
 
  out:
 	printf("\n");
-
-#ifdef notyet
-	/* XXX get hypervisor-specific features */
-	if (sc->pvbus_types & PVBUS_KVM) {
-		kvm_cpuid_base = base;
-		CPUID(base + CPUID_OFFSET_KVM_FEATURES,
-		    reg0, r.regs[0], r.regs[1], r.regs[2]);
-		kvm_features = reg0;
-	}
-	if (sc->pvbus_types & PVBUS_HYPERV) {
-		/* XXX */
-	}
-#endif
-
 	config_search(pvbus_search, self, sc);
 }
 
@@ -178,7 +172,7 @@ pvbus_search(struct device *parent, void *arg, void *aux)
 	struct pv_attach_args	 pva;
 
 	pva.pva_busname = cf->cf_driver->cd_name;
-	pva.pva_types = sc->pvbus_types;
+	pva.pva_hv = sc->pvbus_hv;
 
 	if (cf->cf_attach->ca_match(parent, cf, &pva) > 0)
 		config_attach(parent, cf, &pva, pvbus_print);
@@ -193,4 +187,35 @@ pvbus_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", pva->pva_busname, pnp);
 	return (UNCONF);
+}
+
+void
+pvbus_kvm(struct pvbus_softc *sc, struct pvbus_hv *hv)
+{
+	uint32_t regs[4];
+
+	CPUID(hv->hv_base + CPUID_OFFSET_KVM_FEATURES,
+	    regs[0], regs[1], regs[2], regs[3]);
+	hv->hv_features = regs[0];
+}
+
+void
+pvbus_hyperv(struct pvbus_softc *sc, struct pvbus_hv *hv)
+{
+	uint32_t regs[4];
+
+	CPUID(hv->hv_base + CPUID_OFFSET_HYPERV_FEATURES,
+	    regs[0], regs[1], regs[2], regs[3]);
+	hv->hv_features = regs[0];
+
+	CPUID(hv->hv_base + CPUID_OFFSET_HYPERV_VERSION,
+	    regs[0], regs[1], regs[2], regs[3]);
+	hv->hv_version = regs[1];
+
+	printf(" %u.%u.%u",
+	    (regs[1] & HYPERV_VERSION_EBX_MAJOR_M) >>
+	    HYPERV_VERSION_EBX_MAJOR_S,
+	    (regs[1] & HYPERV_VERSION_EBX_MINOR_M) >>
+	    HYPERV_VERSION_EBX_MINOR_S,
+	    regs[0]);
 }

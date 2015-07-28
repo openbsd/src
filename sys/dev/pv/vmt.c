@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.2 2015/07/21 17:59:58 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.3 2015/07/28 09:48:52 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -318,9 +318,10 @@ vmt_probe(void)
 int
 vmt_match(struct device *parent, void *match, void *aux)
 {
-	struct pv_attach_args *pva = aux;
+	struct pv_attach_args	*pva = aux;
+	struct pvbus_hv		*hv = &pva->pva_hv[PVBUS_VMWARE];
 
-	if ((pva->pva_types & PVBUS_VMWARE) == 0)
+	if (hv->hv_base == 0)
 		return (0);
 	if (!vmt_probe())
 		return (0);

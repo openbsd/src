@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvvar.h,v 1.3 2015/07/23 12:08:42 reyk Exp $	*/
+/*	$OpenBSD: pvvar.h,v 1.4 2015/07/28 09:48:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -19,9 +19,25 @@
 #ifndef _DEV_PV_PVVAR_H_
 #define _DEV_PV_PVVAR_H_
 
+enum {
+	PVBUS_KVM,
+	PVBUS_HYPERV,
+	PVBUS_VMWARE,
+	PVBUS_XEN,
+	PVBUS_BHYVE,
+
+	PVBUS_MAX
+};
+
+struct pvbus_hv {
+	uint32_t		 hv_base;
+	uint32_t		 hv_features;
+	uint32_t		 hv_version;
+};
+
 struct pvbus_softc {
 	struct device		 pvbus_dev;
-	uint8_t			 pvbus_types;
+	struct pvbus_hv		 pvbus_hv[PVBUS_MAX];
 };
 
 struct pvbus_attach_args {
@@ -30,16 +46,10 @@ struct pvbus_attach_args {
 
 struct pv_attach_args {
 	const char		*pva_busname;
-	uint8_t			 pva_types;	/* detected hv types */
+	struct pvbus_hv		*pva_hv;
 };
 
 extern int has_hv_cpuid;
-
-#define PVBUS_KVM	0x01
-#define PVBUS_HYPERV	0x02
-#define PVBUS_VMWARE	0x04
-#define PVBUS_XEN	0x08
-#define PVBUS_BHYVE	0x10
 
 int	 pvbus_probe(void);
 
