@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.4 2013/06/05 04:34:27 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.5 2015/07/28 12:31:29 bluhm Exp $
 
-# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 
 use strict;
 use warnings;
+use Socket;
+use Socket6;
 
 ########################################################################
 # Client and Server funcs
@@ -35,28 +37,65 @@ sub write_read_stream {
 
 sub write_datagram {
 	my $self = shift;
+	my $dgram = shift;
 
-	my $out = ref($self). "\n";
-	print $out;
-	IO::Handle::flush(\*STDOUT);
-	print STDERR ">>> $out";
+	my $out = $dgram || ref($self). "\n";
+	my $addr = $self->{toaddr};
+	my $port = $self->{toport};
+	if ($addr) {
+		my ($to, $netaddr);
+		if ($self->{af} eq "inet") {
+			$netaddr = inet_pton(AF_INET, $addr);
+			$to = pack_sockaddr_in($port, $netaddr);
+		} else {
+			$netaddr = inet_pton(AF_INET6, $addr);
+			$to = pack_sockaddr_in6($port, $netaddr);
+		}
+		$self->{toaddr} = $addr;
+		$self->{toport} = $port;
+		print STDERR "send to: $addr $port\n";
+
+		send(STDIN, $out, 0, $to)
+		    or die ref($self), " send to failed: $!";
+	} else {
+		send(STDIN, $out, 0)
+		    or die ref($self), " send failed: $!";
+	}
+
+	unless ($dgram) {
+		print STDERR ">>> $out";
+	}
 }
 
 sub read_datagram {
 	my $self = shift;
-	my $skip = $self->{skip};
-	$skip = $skip->($self) if ref $skip eq 'CODE';
+	my $dgram = shift;
 
-	my $in;
-	if ($skip) {
-		# Raw sockets include the IPv4 header.
-		sysread(STDIN, $in, 70000);
-		# Cut the header off.
-		substr($in, 0, $skip, "");
-	} else {
-		$in = <STDIN>;
+	my $from = recv(STDIN, my $in, 70000, 0)
+	    or die ref($self), " recv from failed: $!";
+	# Raw sockets include the IPv4 header.
+	if ($self->{socktype} && $self->{socktype} == Socket::SOCK_RAW &&
+	    $self->{af} eq "inet") {
+		substr($in, 0, 20, "");
 	}
-	print STDERR "<<< $in";
+
+	my ($port, $netaddr, $addr);
+	if ($self->{af} eq "inet") {
+		($port, $netaddr) = unpack_sockaddr_in($from);
+		$addr = inet_ntop(AF_INET, $netaddr);
+	} else {
+		($port, $netaddr) = unpack_sockaddr_in6($from);
+		$addr = inet_ntop(AF_INET6, $netaddr);
+	}
+	$self->{fromaddr} = $addr;
+	$self->{fromport} = $port;
+	print STDERR "recv from: $addr $port\n";
+
+	if ($dgram) {
+		$$dgram = $in;
+	} else {
+		print STDERR "<<< $in";
+	}
 }
 
 sub in_cksum {
@@ -73,16 +112,19 @@ sub in_cksum {
 
 use constant IPPROTO_ICMPV6	=> 58;
 use constant ICMP_ECHO		=> 8;
+use constant ICMP_ECHOREPLY	=> 0;
 use constant ICMP6_ECHO_REQUEST	=> 128;
+use constant ICMP6_ECHO_REPLY	=> 129;
 
 my $seq = 0;
 sub write_icmp_echo {
 	my $self = shift;
+	my $pid = shift || $$;
 	my $af = $self->{af};
 
 	my $type = $af eq "inet" ? ICMP_ECHO : ICMP6_ECHO_REQUEST;
 	# type, code, cksum, id, seq
-	my $icmp = pack("CCnnn", $type, 0, 0, $$, ++$seq);
+	my $icmp = pack("CCnnn", $type, 0, 0, $pid, ++$seq);
 	if ($af eq "inet") {
 		substr($icmp, 2, 2, pack("n", in_cksum($icmp)));
 	} else {
@@ -95,24 +137,21 @@ sub write_icmp_echo {
 		substr($icmp, 2, 2, pack("n", in_cksum($phdr. $icmp)));
 	}
 
-	print $icmp;
-	IO::Handle::flush(\*STDOUT);
+	write_datagram($self, $icmp);
 	my $text = $af eq "inet" ? "ICMP" : "ICMP6";
 	print STDERR ">>> $text ", unpack("H*", $icmp), "\n";
 }
 
 sub read_icmp_echo {
 	my $self = shift;
+	my $reply = shift;
 	my $af = $self->{af};
 
-	# Raw sockets include the IPv4 header.
-	sysread(STDIN, my $icmp, 70000);
-	# Cut the header off.
-	if ($af eq "inet") {
-		substr($icmp, 0, 20, "");
-	}
+	my $icmp;
+	read_datagram($self, \$icmp);
 
 	my $text = $af eq "inet" ? "ICMP" : "ICMP6";
+	$text .= " reply" if $reply;
 	my $phdr = "";
 	if ($af eq "inet6") {
 		# src, dst, plen, pad, next
@@ -127,7 +166,10 @@ sub read_icmp_echo {
 		$text = "BAD $text CHECKSUM";
 	} else {
 		my($type, $code, $cksum, $id, $seq) = unpack("CCnnn", $icmp);
-		if ($type != ($af eq "inet" ? ICMP_ECHO : ICMP6_ECHO_REQUEST)) {
+		my $t = $reply ?
+		    ($af eq "inet" ? ICMP_ECHOREPLY : ICMP6_ECHO_REPLY) :
+		    ($af eq "inet" ? ICMP_ECHO : ICMP6_ECHO_REQUEST);
+		if ($type != $t) {
 			$text = "BAD $text TYPE";
 		} elsif ($code != 0) {
 			$text = "BAD $text CODE";
@@ -152,7 +194,7 @@ sub check_logs {
 sub check_inout {
 	my ($c, $s, %args) = @_;
 
-	if ($c && !$args{client}{nocheck}) {
+	if ($args{client} && !$args{client}{nocheck}) {
 		my $out = $args{client}{out} || "Client";
 		$c->loggrep(qr/^>>> $out/) or die "no client output"
 		    unless $args{client}{noout};
@@ -160,7 +202,7 @@ sub check_inout {
 		$c->loggrep(qr/^<<< $in/) or die "no client input"
 		    unless $args{client}{noin};
 	}
-	if ($s && !$args{server}{nocheck}) {
+	if ($args{server} && !$args{server}{nocheck}) {
 		my $out = $args{server}{out} || "Server";
 		$s->loggrep(qr/^>>> $out/) or die "no server output"
 		    unless $args{server}{noout};

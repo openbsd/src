@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2015/07/28 12:31:29 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -54,9 +54,13 @@ TARGETS ?=		inet-args-tcp-to inet6-args-tcp-to \
 			inet-args-tcp-reply inet6-args-tcp-reply \
 			inet-args-udp-to inet6-args-udp-to \
 			inet-args-udp-reply inet6-args-udp-reply \
+			inet-args-udp-reply-to inet6-args-udp-reply-to \
 			inet-args-rip-to inet6-args-rip-to \
 			inet-args-rip-reply inet6-args-rip-reply \
+			inet-args-rip-reply-to inet6-args-rip-reply-to \
 			inet-args-icmp-to inet6-args-icmp-to \
+			inet-args-icmp-reply-to inet6-args-icmp-reply-to \
+			inet-args-icmp-reply-reuse inet6-args-icmp-reply-reuse \
 			inet-reuse-tcp inet6-reuse-tcp \
 			inet-reuse-udp inet6-reuse-udp \
 			inet-reuse-rip inet6-reuse-rip

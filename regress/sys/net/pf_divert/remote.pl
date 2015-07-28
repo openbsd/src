@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.5 2013/11/03 00:32:36 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.6 2015/07/28 12:31:29 bluhm Exp $
 
-# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -82,7 +82,6 @@ if (@ARGV == 5 && $mode eq "auto") {
 }
 
 my($c, $l, $r, $s, $logfile);
-my $func	= \&write_read_stream;
 my $divert	= $args{divert} || "to";
 my $local	= $divert eq "to" ? "client" : "server";
 my $remote	= $divert eq "to" ? "server" : "client";
@@ -99,7 +98,6 @@ if ($mode eq "divert" xor $divert eq "reply") {
 
 if ($local eq "server") {
 	$l = $s = Server->new(
-	    func		=> $func,
 	    %args,
 	    %{$args{server}},
 	    logfile		=> $logfile,
@@ -111,7 +109,7 @@ if ($local eq "server") {
 	    listenport		=> $serverport || $bindport,
 	    srcaddr		=> $srcaddr,
 	    dstaddr		=> $dstaddr,
-	);
+	) if $args{server};
 }
 if ($mode eq "auto") {
 	$r = Remote->new(
@@ -133,7 +131,6 @@ if ($mode eq "auto") {
 }
 if ($local eq "client") {
 	$l = $c = Client->new(
-	    func		=> $func,
 	    %args,
 	    %{$args{client}},
 	    logfile		=> $logfile,
@@ -147,9 +144,9 @@ if ($local eq "client") {
 	    bindport		=> $clientport || $bindport,
 	    srcaddr		=> $srcaddr,
 	    dstaddr		=> $dstaddr,
-	);
+	) if $args{client};
 }
-$l->{log}->print("local command: $command\n");
+$l->{log}->print("local command: $command\n") if $l;
 
 if ($mode eq "divert") {
 	open(my $log, '<', $l->{logfile})

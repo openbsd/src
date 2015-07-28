@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 our %args = (
-	protocol => "tcp",
-	divert => "reply",
+    protocol => "tcp",
+    client => { func => \&write_read_stream },
+    server => { func => \&write_read_stream },
+    divert => "reply",
 );
