@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2015/07/14 19:16:33 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2015/07/28 17:46:52 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -1315,7 +1315,7 @@ dup_line_node(line_t *lp)
 {
 	line_t *np;
 
-	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
+	if ((np = malloc(sizeof(line_t))) == NULL) {
 		perror(NULL);
 		seterrmsg("out of memory");
 		return NULL;

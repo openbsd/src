@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.12 2015/01/16 06:39:32 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.13 2015/07/28 17:46:52 deraadt Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
@@ -59,7 +59,7 @@ get_compiled_pattern(void)
 	/* buffer alloc'd && not reserved */
 	if (exp && !patlock)
 		regfree(exp);
-	else if ((exp = (pattern_t *) malloc(sizeof(pattern_t))) == NULL) {
+	else if ((exp = malloc(sizeof(pattern_t))) == NULL) {
 		perror(NULL);
 		seterrmsg("out of memory");
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.20 2014/11/20 15:22:39 tedu Exp $	*/
+/*	$OpenBSD: buf.c,v 1.21 2015/07/28 17:46:52 deraadt Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
@@ -83,7 +83,7 @@ put_sbuf_line(char *cs)
 	int len, ct;
 	char *s;
 
-	if ((lp = (line_t *) malloc(sizeof(line_t))) == NULL) {
+	if ((lp = malloc(sizeof(line_t))) == NULL) {
 		perror(NULL);
 		seterrmsg("out of memory");
 		return NULL;
