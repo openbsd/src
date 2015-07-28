@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.136 2015/07/28 20:57:35 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.137 2015/07/28 21:04:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -680,7 +680,7 @@ audio_setpar(struct audio_softc *sc)
 		    p.bps != r.bps ||
 		    p.msb != r.msb ||
 		    p.sample_rate != r.sample_rate) {
-			printf("%s: different play and record parameters"
+			printf("%s: different play and record parameters "
 			    "returned by hardware\n", DEVNAME(sc));
 			return ENODEV;
 		}
