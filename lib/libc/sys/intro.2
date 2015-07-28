@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.58 2015/01/19 21:29:38 millert Exp $
+.\"	$OpenBSD: intro.2,v 1.59 2015/07/28 22:48:31 deraadt Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: July 28 2015 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -109,9 +109,7 @@ no disk pack is loaded on a drive.
 .It Er 7 E2BIG Em "Argument list too long" .
 The number of bytes used for the argument and environment
 list of the new process exceeded the limit
-.Dv NCARGS
-(specified in
-.In sys/param.h ) .
+.Dv ARG_MAX .
 .It Er 8 ENOEXEC Em "Exec format error" .
 A request was made to execute a file that, although it has the appropriate
 permissions, was not in the format required for an executable file.
