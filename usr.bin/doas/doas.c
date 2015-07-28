@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.30 2015/07/28 19:49:04 zhuk Exp $ */
+/* $OpenBSD: doas.c,v 1.31 2015/07/28 21:36:03 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -143,7 +143,8 @@ permit(uid_t uid, gid_t *groups, int ngroups, struct rule **lastr,
 
 	*lastr = NULL;
 	for (i = 0; i < nrules; i++) {
-		if (match(uid, groups, ngroups, target, cmd, cmdargs, rules[i]))
+		if (match(uid, groups, ngroups, target, cmd,
+		    cmdargs, rules[i]))
 			*lastr = rules[i];
 	}
 	if (!*lastr)

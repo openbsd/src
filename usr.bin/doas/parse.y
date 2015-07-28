@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.10 2015/07/24 06:36:42 zhuk Exp $ */
+/* $OpenBSD: parse.y,v 1.11 2015/07/28 21:36:03 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -162,7 +162,8 @@ argslist:	/* empty */ {
 				errx(1, "can't allocate args");
 		} | argslist TSTRING {
 			int nargs = arraylen($1.cmdargs);
-			if (!($$.cmdargs = reallocarray($1.cmdargs, nargs + 2, sizeof(char *))))
+			if (!($$.cmdargs = reallocarray($1.cmdargs, nargs + 2,
+			    sizeof(char *))))
 				errx(1, "can't allocate args");
 			$$.cmdargs[nargs] = $2.str;
 			$$.cmdargs[nargs + 1] = NULL;
@@ -234,7 +235,8 @@ repeat:
 	for (;; c = getc(yyfp), yylval.colno++) {
 		switch (c) {
 		case '\0':
-			yyerror("unallowed character NUL in column %d", yylval.colno + 1);
+			yyerror("unallowed character NUL in column %d",
+			    yylval.colno + 1);
 			escape = 0;
 			continue;
 		case '\\':
@@ -291,8 +293,9 @@ eow:
 		ungetc(c, yyfp);
 	if (p == buf) {
 		/*
-		 * There could be a number of reasons for empty buffer, and we handle
-		 * all of them here, to avoid cluttering the main loop.
+		 * There could be a number of reasons for empty buffer,
+		 * and we handle all of them here, to avoid cluttering
+		 * the main loop.
 		 */
 		if (c == EOF)
 			return 0;
