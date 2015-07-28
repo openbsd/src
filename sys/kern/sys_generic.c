@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.99 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.100 2015/07/28 05:50:41 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -161,6 +161,10 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 		}
 		if ((error = copyin(iovp, iov, iovlen)))
 			goto done;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktriovec(p, iov, iovcnt);
+#endif
 	} else {
 		iov = (struct iovec *)iovp;		/* de-constify */
 	}
@@ -309,6 +313,10 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 		}
 		if ((error = copyin(iovp, iov, iovlen)))
 			goto done;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktriovec(p, iov, iovcnt);
+#endif
 	} else {
 		iov = (struct iovec *)iovp;		/* de-constify */
 	}

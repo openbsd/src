@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.105 2015/07/27 04:01:51 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.106 2015/07/28 05:50:41 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -494,6 +494,10 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 	error = copyin(SCARG(uap, msg), &msg, sizeof (msg));
 	if (error)
 		return (error);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrmsghdr(p, &msg);
+#endif
 
 	if (tame_sendto_check(p, msg.msg_name))
 		return (tame_fail(p, EPERM, _TM_UNIX));
@@ -509,6 +513,10 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 	    (error = copyin(msg.msg_iov, iov,
 		    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)))))
 		goto done;
+#ifdef KTRACE
+	if (msg.msg_iovlen && KTRPOINT(p, KTR_STRUCT))
+		ktriovec(p, iov, msg.msg_iovlen);
+#endif
 	msg.msg_iov = iov;
 	msg.msg_flags = 0;
 	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
@@ -572,6 +580,11 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		    mp->msg_controllen, MT_CONTROL);
 		if (error)
 			goto bad;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT) && mp->msg_controllen)
+			ktrcmsghdr(p, mtod(control, char *),
+			    mp->msg_controllen);
+#endif
 
 		if (tame_cmsg_send(p, control, mp->msg_controllen)) {
 			m_free(control);
@@ -689,6 +702,13 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 	msg.msg_iov = iov;
 	if ((error = recvit(p, SCARG(uap, s), &msg, NULL, retval)) == 0) {
 		msg.msg_iov = uiov;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT)) {
+			ktrmsghdr(p, &msg);
+			if (msg.msg_iovlen)
+				ktriovec(p, iov, msg.msg_iovlen);
+		}
+#endif
 		error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
 	}
 done:
@@ -790,6 +810,10 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 			struct mbuf *m = control;
 			caddr_t cp = mp->msg_control;
 
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_STRUCT) && len)
+				ktrcmsghdr(p, mtod(control, char *), len);
+#endif
 			do {
 				i = m->m_len;
 				if (len < i) {

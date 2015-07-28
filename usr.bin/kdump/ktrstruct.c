@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.9 2014/12/16 03:19:23 jsg Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.10 2015/07/28 05:50:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -42,6 +42,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
+#include <netdb.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -364,6 +365,84 @@ ktrquota(const struct dqblk *quota)
 	printf(" }\n");
 }
 
+static void
+ktrmsghdr(const struct msghdr *msg)
+{
+	printf("struct msghdr { name=%p, namelen=%u, iov=%p, iovlen=%u,"
+	    " control=%p, controllen=%u, flags=%d }\n",
+	    msg->msg_name, msg->msg_namelen, msg->msg_iov, msg->msg_iovlen,
+	    msg->msg_control, msg->msg_controllen, msg->msg_flags);
+}
+
+static void
+ktriovec(const char *data, int count)
+{
+	struct iovec iov;
+	int i;
+
+	printf("struct iovec");
+	if (count > 1)
+		printf(" [%d]", count);
+	for (i = 0; i < count; i++) {
+		memcpy(&iov, data, sizeof(iov));
+		data += sizeof(iov);
+		printf(" { base=%p, len=%lu }", iov.iov_base, iov.iov_len);
+	}
+	printf("\n");
+}
+
+static void
+ktrcmsghdr(char *data, socklen_t len)
+{
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
+	int i, count, *fds;
+
+	msg.msg_control = data;
+	msg.msg_controllen = len;
+
+	/* count the control messages */
+	count = 0;
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
+	     cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		count++;
+	}
+
+	printf("struct cmsghdr");
+	if (count > 1)
+		printf(" [%d]", count);
+
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
+	     cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		printf(" { len=%u, level=", cmsg->cmsg_len);
+		if (cmsg->cmsg_level == SOL_SOCKET) {
+			printf("SOL_SOCKET, type=");
+			switch (cmsg->cmsg_type) {
+			case SCM_RIGHTS:
+				printf("SCM_RIGHTS, data=");
+				fds = (int *)CMSG_DATA(cmsg);
+				for (i = 0;
+				    cmsg->cmsg_len > CMSG_LEN(sizeof(int) * i);
+				    i++) {
+					printf("%s%d", i ? "," : "", fds[i]);
+				}
+				break;
+			case SCM_TIMESTAMP:
+			default:
+				printf("%d", cmsg->cmsg_type);
+				break;
+			}
+		} else {
+			struct protoent *p = getprotobynumber(cmsg->cmsg_level);
+
+			printf("%u<%s>, type=%d", cmsg->cmsg_level,
+			    p != NULL ? p->p_name : "unknown", cmsg->cmsg_type);
+		}
+		printf(" }");
+	}
+	printf("\n");
+}
+
 void
 ktrstruct(char *buf, size_t buflen)
 {
@@ -449,6 +528,7 @@ ktrstruct(char *buf, size_t buflen)
 		ktrtfork(&tf);
 	} else if (strcmp(name, "fdset") == 0) {
 		struct fd_set *fds;
+
 		if ((fds = malloc(datalen)) == NULL)
 			err(1, "malloc");
 		memcpy(fds, data, datalen);
@@ -461,6 +541,25 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&quota, data, datalen);
 		ktrquota(&quota);
+	} else if (strcmp(name, "msghdr") == 0) {
+		struct msghdr msg;
+
+		if (datalen != sizeof(msg))
+			goto invalid;
+		memcpy(&msg, data, datalen);
+		ktrmsghdr(&msg);
+	} else if (strcmp(name, "iovec") == 0) {
+		if (datalen % sizeof(struct iovec))
+			goto invalid;
+		ktriovec(data, datalen / sizeof(struct iovec));
+	} else if (strcmp(name, "cmsghdr") == 0) {
+		char *cmsg;
+
+		if ((cmsg = malloc(datalen)) == NULL)
+			err(1, "malloc");
+		memcpy(cmsg, data, datalen);
+		ktrcmsghdr(cmsg, datalen);
+		free(cmsg);
 	} else {
 		printf("unknown structure %s\n", name);
 	}
