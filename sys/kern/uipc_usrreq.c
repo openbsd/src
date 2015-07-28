@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.82 2015/07/18 15:00:01 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.83 2015/07/28 14:20:10 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -162,10 +162,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Adjust backpressure on sender
 			 * and wakeup any waiting to write.
 			 */
-			snd->sb_mbmax += unp->unp_mbcnt - rcv->sb_mbcnt;
-			unp->unp_mbcnt = rcv->sb_mbcnt;
-			snd->sb_hiwat += unp->unp_cc - rcv->sb_cc;
-			unp->unp_cc = rcv->sb_cc;
+			snd->sb_mbcnt = rcv->sb_mbcnt;
+			snd->sb_cc = rcv->sb_cc;
 			sowwakeup(so2);
 #undef snd
 #undef rcv
@@ -228,8 +226,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			}
 			so2 = unp->unp_conn->unp_socket;
 			/*
-			 * Send to paired receive port, and then reduce
-			 * send buffer hiwater marks to maintain backpressure.
+			 * Send to paired receive port, and then raise
+			 * send buffer counts to maintain backpressure.
 			 * Wake up readers.
 			 */
 			if (control) {
@@ -239,11 +237,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				sbappendrecord(rcv, m);
 			else
 				sbappend(rcv, m);
-			snd->sb_mbmax -=
-			    rcv->sb_mbcnt - unp->unp_conn->unp_mbcnt;
-			unp->unp_conn->unp_mbcnt = rcv->sb_mbcnt;
-			snd->sb_hiwat -= rcv->sb_cc - unp->unp_conn->unp_cc;
-			unp->unp_conn->unp_cc = rcv->sb_cc;
+			snd->sb_mbcnt = rcv->sb_mbcnt;
+			snd->sb_cc = rcv->sb_cc;
 			sorwakeup(so2);
 			m = NULL;
 #undef snd
@@ -266,17 +261,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		struct stat *sb = (struct stat *)m;
 
 		sb->st_blksize = so->so_snd.sb_hiwat;
-		switch (so->so_type) {
-		case SOCK_STREAM:
-		case SOCK_SEQPACKET:
-			if (unp->unp_conn != NULL) {
-				so2 = unp->unp_conn->unp_socket;
-				sb->st_blksize += so2->so_rcv.sb_cc;
-			}
-			break;
-		default:
-			break;
-		}
 		sb->st_dev = NODEV;
 		if (unp->unp_ino == 0)
 			unp->unp_ino = unp_ino++;
@@ -589,8 +573,12 @@ unp_disconnect(struct unpcb *unp)
 
 	case SOCK_STREAM:
 	case SOCK_SEQPACKET:
+		unp->unp_socket->so_snd.sb_mbcnt = 0;
+		unp->unp_socket->so_snd.sb_cc = 0;
 		soisdisconnected(unp->unp_socket);
 		unp2->unp_conn = NULL;
+		unp2->unp_socket->so_snd.sb_mbcnt = 0;
+		unp2->unp_socket->so_snd.sb_cc = 0;
 		soisdisconnected(unp2->unp_socket);
 		break;
 	}
