@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.22 2015/06/25 06:43:46 ratchov Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.23 2015/07/28 20:45:02 ratchov Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -92,6 +92,13 @@ typedef struct audio_offset {
 	u_int	unused[2];
 } audio_offset_t;
 
+struct audio_pos {
+	unsigned int play_pos;	/* total bytes played */
+	unsigned int play_xrun;	/* bytes of silence inserted */
+	unsigned int rec_pos;	/* total bytes recorded */
+	unsigned int rec_xrun;	/* bytes dropped */
+};
+
 /*
  * Supported audio encodings
  */
@@ -141,6 +148,7 @@ typedef struct audio_encoding {
 #define AUDIO_GETIOFFS	_IOR('A', 32, struct audio_offset)
 #define AUDIO_GETOOFFS	_IOR('A', 33, struct audio_offset)
 #define AUDIO_GETPROPS	_IOR('A', 34, int)
+#define AUDIO_GETPOS	_IOR('A', 35, struct audio_pos)
 #define  AUDIO_PROP_FULLDUPLEX	0x01
 #define  AUDIO_PROP_MMAP	0x02
 #define  AUDIO_PROP_INDEPENDENT	0x04

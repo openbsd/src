@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.134 2015/07/24 08:56:45 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.135 2015/07/28 20:45:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,9 +66,9 @@ struct audio_buf {
 	size_t start;			/* first byte used in the FIFO */
 	size_t used;			/* bytes used in the FIFO */
 	size_t blksz;			/* DMA block size */
-	unsigned long pos;		/* bytes transferred */
-	unsigned long xrun;		/* bytes lost by xruns */
 	struct selinfo sel;		/* to record & wakeup poll(2) */
+	unsigned int pos;		/* bytes transferred */
+	unsigned int xrun;		/* bytes lost by xruns */
 	int blocking;			/* read/write blocking */
 };
 
@@ -1298,7 +1298,7 @@ audio_drain(struct audio_softc *sc)
 
 	xrun = sc->play.xrun;
 	while (sc->play.xrun == xrun) {
-		DPRINTF("%s: drain: used = %zu, xrun = %ld\n",
+		DPRINTF("%s: drain: used = %zu, xrun = %d\n",
 		    DEVNAME(sc), sc->play.used, sc->play.xrun);
 
 		/*
@@ -1486,6 +1486,7 @@ int
 audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 {
 	struct audio_offset *ao;
+	struct audio_pos *ap;
 	int error = 0, fd;
 
 	/* block if quiesced */
@@ -1516,6 +1517,15 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 		mtx_enter(&audio_lock);
 		ao = (struct audio_offset *)addr;
 		ao->samples = sc->rec.pos;
+		mtx_leave(&audio_lock);
+		break;
+	case AUDIO_GETPOS:
+		mtx_enter(&audio_lock);
+		ap = (struct audio_pos *)addr;
+		ap->play_pos = sc->play.pos;
+		ap->play_xrun = sc->play.xrun;
+		ap->rec_pos = sc->rec.pos;
+		ap->rec_xrun = sc->rec.xrun;
 		mtx_leave(&audio_lock);
 		break;
 	case AUDIO_SETINFO:

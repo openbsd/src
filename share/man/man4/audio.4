@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.67 2015/07/27 06:10:22 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.68 2015/07/28 20:45:02 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: July 28 2015 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -129,6 +129,7 @@ commands are supported on the sample devices:
 .Bl -tag -width Ds -compact
 .It Dv AUDIO_RERROR Fa "int *"
 .It Dv AUDIO_PERROR Fa "int *"
+Obsolete.
 These commands fetch the count of dropped input or output samples into
 the
 .Vt int *
@@ -194,6 +195,7 @@ The device can set playing and recording channel counts independently.
 .Pp
 .It Dv AUDIO_GETIOFFS Fa "audio_offset_t *"
 .It Dv AUDIO_GETOOFFS Fa "audio_offset_t *"
+Obsolete.
 These commands fetch the number of bytes played or recorded.
 The information is returned in the
 .Vt audio_offset
@@ -332,6 +334,37 @@ if the pause value is specified it will either pause
 or unpause the particular direction.
 In full-duplex the pause values for both directions must
 be equal.
+.Pp
+.It Dv AUDIO_GETPOS Fa "struct audio_pos *"
+Fetch an atomic snapshot of device timing information in the
+.Vt audio_pos
+structure.
+.Bd -literal
+struct audio_pos {
+	unsigned int play_pos;	/* total bytes played */
+	unsigned int play_xrun;	/* bytes of silence inserted */
+	unsigned int rec_pos;	/* total bytes recorded */
+	unsigned int rec_xrun;	/* bytes dropped */
+};
+.Ed
+.Pp
+The properties have the following meaning:
+.Bl -tag -width "play_xrun"
+.It Va play_pos
+Total number of bytes played by the device since playback started
+(a.k.a the device wall clock).
+.It Va play_xrun
+The number of bytes corresponding to silence played because
+.Xr write 2
+wasn't called fast enough.
+.It Va rec_pos
+Total number of bytes recorded by the device since recording started
+(a.k.a the device wall clock).
+.It Va rec_xrun
+The number of bytes dropped because
+.Xr read 2
+wasn't called fast enough.
+.El
 .El
 .Sh MIXER DEVICE
 The
