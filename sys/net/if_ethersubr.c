@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.220 2015/07/20 21:16:39 rzalamena Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.221 2015/07/29 00:04:03 rzalamena Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -412,12 +412,8 @@ decapsulate:
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MCAST:
-		/* Let's call mpls_input() handler. */
-		if (ifp->if_xflags & IFXF_MPLS)
-			return (0);
-
-		/* Otherwise this packet has nowhere to go. */
-		goto dropanyway;
+		mpls_input(ifp, m);
+		return (1);
 #endif
 	default:
 		if (llcfound || etype > ETHERMTU)

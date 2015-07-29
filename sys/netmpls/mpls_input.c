@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.46 2015/07/20 22:16:41 rzalamena Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.47 2015/07/29 00:04:03 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -51,54 +51,13 @@ int	mpls_ip6_adjttl(struct mbuf *, u_int8_t);
 #endif
 
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
-int		 mpls_input(struct ifnet *, struct mbuf *);
 
 void
 mpls_init(void)
 {
 }
 
-int
-mpls_install_handler(struct ifnet *ifp)
-{
-	struct ifih *ifih, *ifihn;
-
-	ifih = malloc(sizeof(*ifih), M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (ifih == NULL)
-		return (-1);
-
-	ifih->ifih_input = mpls_input;
-
-	/* We must install mpls_input() after ether_input(). */
-	SLIST_FOREACH(ifihn, &ifp->if_inputs, ifih_next)
-		if (SLIST_NEXT(ifihn, ifih_next) == NULL)
-			break;
-
-	if (ifihn == NULL)
-		SLIST_INSERT_HEAD(&ifp->if_inputs, ifih, ifih_next);
-	else
-		SLIST_INSERT_AFTER(ifihn, ifih, ifih_next);
-
-	return (0);
-}
-
 void
-mpls_uninstall_handler(struct ifnet *ifp)
-{
-	struct ifih *ifih;
-
-	SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
-		if (ifih->ifih_input != mpls_input)
-			continue;
-
-		SLIST_REMOVE(&ifp->if_inputs, ifih, ifih, ifih_next);
-		break;
-	}
-
-	free(ifih, M_DEVBUF, sizeof(*ifih));
-}
-
-int
 mpls_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct sockaddr_mpls *smpls;
@@ -111,18 +70,18 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 
 	if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
 		m_freem(m);
-		return (1);
+		return;
 	}
 
 	/* drop all broadcast and multicast packets */
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
 		m_freem(m);
-		return (1);
+		return;
 	}
 
 	if (m->m_len < sizeof(*shim))
 		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
-			return (1);
+			return;
 
 	shim = mtod(m, struct shim_hdr *);
 
@@ -139,7 +98,7 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 		/* TTL exceeded */
 		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
 		if (m == NULL)
-			return (1);
+			return;
 		shim = mtod(m, struct shim_hdr *);
 		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
 	}
@@ -211,7 +170,9 @@ do_v6:
 			}
 		}
 
+		KERNEL_LOCK();
 		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
+		KERNEL_UNLOCK();
 		if (rt == NULL) {
 			/* no entry for this label */
 #ifdef MPLS_DEBUG
@@ -330,7 +291,9 @@ do_v6:
 		if (ifp != NULL && rt_mpls->mpls_operation != MPLS_OP_LOCAL)
 			break;
 
+		KERNEL_LOCK();
 		rtfree(rt);
+		KERNEL_UNLOCK();
 		rt = NULL;
 	}
 
@@ -357,12 +320,15 @@ do_v6:
 		goto done;
 	}
 
+	KERNEL_LOCK();
 	(*ifp->if_ll_output)(ifp, m, smplstosa(smpls), rt);
+	KERNEL_UNLOCK();
 done:
-	if (rt)
+	if (rt) {
+		KERNEL_LOCK();
 		rtfree(rt);
-
-	return (1);
+		KERNEL_UNLOCK();
+	}
 }
 
 int
@@ -462,7 +428,9 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 		smpls->smpls_len = sizeof(*smpls);
 		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 
+		KERNEL_LOCK();
 		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
+		KERNEL_UNLOCK();
 		if (rt == NULL) {
 			/* no entry for this label */
 			m_freem(m);
@@ -475,14 +443,20 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 			 * less interface we need to find some other IP to
 			 * use as source.
 			 */
+			KERNEL_LOCK();
 			rtfree(rt);
+			KERNEL_UNLOCK();
 			m_freem(m);
 			return (NULL);
 		}
 		rt->rt_use++;
+		KERNEL_LOCK();
 		rtfree(rt);
-		if (icmp_reflect(m, NULL, ia))
+		if (icmp_reflect(m, NULL, ia)) {
+			KERNEL_UNLOCK();
 			return (NULL);
+		}
+		KERNEL_UNLOCK();
 
 		ip = mtod(m, struct ip *);
 		/* stuff to fix up which is normaly done in ip_output */
