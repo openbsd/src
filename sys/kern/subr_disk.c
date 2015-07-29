@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.186 2015/07/28 23:10:13 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.187 2015/07/29 00:15:36 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -539,7 +539,6 @@ notfat:
 	if (biowait(bp))
 		return (bp->b_error);
 
-
 	error = checkdisklabel(bp->b_data + offset, lp,
 	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
 	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
@@ -680,7 +679,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		ghsize = letoh32(gh.gh_size);
 		ghpartsize = letoh32(gh.gh_part_size);
 		ghpartnum = letoh32(gh.gh_part_num);
-
 
 		if (letoh64(gh.gh_sig) != GPTSIGNATURE)
 			return (EINVAL);
