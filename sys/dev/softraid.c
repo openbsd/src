@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.362 2015/07/28 15:42:23 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.363 2015/07/29 12:58:16 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -267,8 +267,7 @@ sr_meta_attach(struct sr_discipline *sd, int chunk_no, int force)
 		goto bad;
 
 	/* Force chunks into correct order now that metadata is attached. */
-	SLIST_FOREACH(ch_entry, cl, src_link)
-		SLIST_REMOVE(cl, ch_entry, sr_chunk, src_link);
+	SLIST_INIT(cl);
 	for (i = 0; i < chunk_no; i++) {
 		ch_entry = sd->sd_vol.sv_chunks[i];
 		chunk2 = NULL;
