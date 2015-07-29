@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.17 2015/07/28 15:22:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.18 2015/07/29 17:55:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -206,6 +206,9 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 int
 sys_tame(struct proc *p, void *v, register_t *retval)
 {
+#if 1
+	return (ENOSYS);
+#else
 	struct sys_tame_args /* {
 		syscallarg(int) flags;
 	} */	*uap = v;
@@ -227,6 +230,7 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 	p->p_p->ps_tame &= flags;
 	p->p_p->ps_tame &= _TM_USERSET;
 	return (0);
+#endif
 }
 
 int
