@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.104 2015/04/29 04:43:25 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.105 2015/07/29 18:52:44 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -255,7 +255,6 @@ trap(struct trapframe *frame)
 			if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
 				frame->srr0 = fb->pc;		/* PC */
-				frame->srr1 = fb->sr;		/* SR */
 				frame->fixreg[1] = fb->sp;	/* SP */
 				frame->fixreg[3] = 1;		/* != 0 */
 				frame->cr = fb->cr;

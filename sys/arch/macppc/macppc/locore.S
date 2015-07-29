@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.49 2015/03/31 16:00:38 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.50 2015/07/29 18:52:44 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1185,14 +1185,12 @@ decrintr:
 _C_LABEL(setfault):
 	mflr	%r0
 	mfcr	%r12
-	mfmsr	%r2
 	GET_CPUINFO(%r4)
 	lwz	%r4,CI_CURPCB(%r4)
 	stw	%r3,PCB_FAULT(%r4)
 	stw	%r0,0(%r3)
-	stw	%r2,4(%r3)
-	stw	%r1,8(%r3)
-	stmw	%r12,12(%r3)
+	stw	%r1,4(%r3)
+	stmw	%r12,8(%r3)
 	li	%r3,0
 	blr
 

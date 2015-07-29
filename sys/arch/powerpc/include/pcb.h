@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.14 2015/05/05 02:13:47 guenther Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.15 2015/07/29 18:52:44 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 
 typedef struct __faultbuf {
 	int	pc;
-	int	sr;
 	int	sp;
 	int	cr;
 	int	regs[20];
