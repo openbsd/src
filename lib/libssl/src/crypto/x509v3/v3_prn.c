@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_prn.c,v 1.17 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_prn.c,v 1.18 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -178,7 +178,7 @@ X509V3_extensions_print(BIO *bp, char *title, STACK_OF(X509_EXTENSION) *exts,
 			return 0;
 		if (!X509V3_EXT_print(bp, ex, flag, indent + 4)) {
 			BIO_printf(bp, "%*s", indent + 4, "");
-			M_ASN1_OCTET_STRING_print(bp, ex->value);
+			ASN1_STRING_print(bp, ex->value);
 		}
 		if (BIO_write(bp, "\n",1) <= 0)
 			return 0;

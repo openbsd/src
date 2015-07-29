@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.11 2014/09/28 10:53:57 miod Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.12 2015/07/29 14:58:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -267,7 +267,7 @@ X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
 
 	if (ex == NULL)
 		return (0);
-	i = M_ASN1_OCTET_STRING_set(ex->value, data->data, data->length);
+	i = ASN1_STRING_set(ex->value, data->data, data->length);
 	if (!i)
 		return (0);
 	return (1);

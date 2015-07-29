@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.19 2014/10/22 18:37:22 miod Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.20 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -160,7 +160,7 @@ PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen, unsigned char *salt,
 		    PKCS12_R_MAC_GENERATION_ERROR);
 		return 0;
 	}
-	if (!(M_ASN1_OCTET_STRING_set(p12->mac->dinfo->digest, mac, maclen))) {
+	if (!(ASN1_STRING_set(p12->mac->dinfo->digest, mac, maclen))) {
 		PKCS12err(PKCS12_F_PKCS12_SET_MAC,
 		    PKCS12_R_MAC_STRING_SET_ERROR);
 		return 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_lib.c,v 1.8 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ts_lib.c,v 1.9 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -117,7 +117,7 @@ TS_ext_print_bio(BIO *bio, const STACK_OF(X509_EXTENSION) *extensions)
 		BIO_printf(bio, ": %s\n", critical ? "critical" : "");
 		if (!X509V3_EXT_print(bio, ex, 0, 4)) {
 			BIO_printf(bio, "%4s", "");
-			M_ASN1_OCTET_STRING_print(bio, ex->value);
+			ASN1_STRING_print(bio, ex->value);
 		}
 		BIO_write(bio, "\n", 1);
 	}

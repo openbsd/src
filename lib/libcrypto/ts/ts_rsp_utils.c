@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_utils.c,v 1.4 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ts_rsp_utils.c,v 1.5 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -200,7 +200,7 @@ TS_TST_INFO_set_time(TS_TST_INFO *a, const ASN1_GENERALIZEDTIME *gtime)
 
 	if (a->time == gtime)
 		return 1;
-	new_time = M_ASN1_GENERALIZEDTIME_dup(gtime);
+	new_time = ASN1_STRING_dup(gtime);
 	if (new_time == NULL) {
 		TSerr(TS_F_TS_TST_INFO_SET_TIME, ERR_R_MALLOC_FAILURE);
 		return 0;

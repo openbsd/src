@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.21 2015/07/19 18:29:31 miod Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.22 2015/07/29 14:58:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,7 +65,7 @@
 int
 ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
-	return M_ASN1_BIT_STRING_set(x, d, len);
+	return ASN1_STRING_set(x, d, len);
 }
 
 int

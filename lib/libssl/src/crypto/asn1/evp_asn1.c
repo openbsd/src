@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.13 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.14 2015/07/29 14:58:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,7 +70,7 @@ ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 
 	if ((os = M_ASN1_OCTET_STRING_new()) == NULL)
 		return (0);
-	if (!M_ASN1_OCTET_STRING_set(os, data, len)) {
+	if (!ASN1_STRING_set(os, data, len)) {
 		M_ASN1_OCTET_STRING_free(os);
 		return (0);
 	}

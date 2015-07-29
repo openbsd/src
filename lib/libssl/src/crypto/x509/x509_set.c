@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_set.c,v 1.10 2015/07/29 14:58:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,7 +84,7 @@ X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 		return (0);
 	in = x->cert_info->serialNumber;
 	if (in != serial) {
-		in = M_ASN1_INTEGER_dup(serial);
+		in = ASN1_STRING_dup(serial);
 		if (in != NULL) {
 			M_ASN1_INTEGER_free(x->cert_info->serialNumber);
 			x->cert_info->serialNumber = in;
@@ -118,7 +118,7 @@ X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
 		return (0);
 	in = x->cert_info->validity->notBefore;
 	if (in != tm) {
-		in = M_ASN1_TIME_dup(tm);
+		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
 			M_ASN1_TIME_free(x->cert_info->validity->notBefore);
 			x->cert_info->validity->notBefore = in;
@@ -136,7 +136,7 @@ X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
 		return (0);
 	in = x->cert_info->validity->notAfter;
 	if (in != tm) {
-		in = M_ASN1_TIME_dup(tm);
+		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
 			M_ASN1_TIME_free(x->cert_info->validity->notAfter);
 			x->cert_info->validity->notAfter = in;

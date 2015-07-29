@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.13 2014/10/05 18:26:22 miod Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.14 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -169,7 +169,7 @@ v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 	if ((issuer && !ikeyid) || (issuer == 2)) {
 		isname = X509_NAME_dup(X509_get_issuer_name(cert));
-		serial = M_ASN1_INTEGER_dup(X509_get_serialNumber(cert));
+		serial = ASN1_STRING_dup(X509_get_serialNumber(cert));
 		if (!isname || !serial) {
 			X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,
 			    X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_octet.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_octet.c,v 1.10 2015/07/29 14:58:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,17 +63,17 @@
 ASN1_OCTET_STRING *
 ASN1_OCTET_STRING_dup(const ASN1_OCTET_STRING *x)
 {
-	return M_ASN1_OCTET_STRING_dup(x);
+	return ASN1_STRING_dup(x);
 }
 
 int
 ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a, const ASN1_OCTET_STRING *b)
 {
-	return M_ASN1_OCTET_STRING_cmp(a, b);
+	return ASN1_STRING_cmp(a, b);
 }
 
 int
 ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *x, const unsigned char *d, int len)
 {
-	return M_ASN1_OCTET_STRING_set(x, d, len);
+	return ASN1_STRING_set(x, d, len);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.15 2015/07/25 14:36:39 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.16 2015/07/29 14:58:34 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -858,8 +858,8 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 	}
 
 	/* set a and b */
-	if (!M_ASN1_OCTET_STRING_set(curve->a, a_buf, len_1) ||
-	    !M_ASN1_OCTET_STRING_set(curve->b, b_buf, len_2)) {
+	if (!ASN1_STRING_set(curve->a, a_buf, len_1) ||
+	    !ASN1_STRING_set(curve->b, b_buf, len_2)) {
 		ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_ASN1_LIB);
 		goto err;
 	}
@@ -1447,7 +1447,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 		ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!M_ASN1_OCTET_STRING_set(priv_key->privateKey, buffer, buf_len)) {
+	if (!ASN1_STRING_set(priv_key->privateKey, buffer, buf_len)) {
 		ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_ASN1_LIB);
 		goto err;
 	}
@@ -1484,7 +1484,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 		}
 		priv_key->publicKey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
 		priv_key->publicKey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-		if (!M_ASN1_BIT_STRING_set(priv_key->publicKey, buffer,
+		if (!ASN1_STRING_set(priv_key->publicKey, buffer,
 			buf_len)) {
 			ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_ASN1_LIB);
 			goto err;

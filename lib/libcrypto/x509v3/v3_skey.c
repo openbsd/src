@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_skey.c,v 1.10 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_skey.c,v 1.11 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -138,7 +138,7 @@ s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
 	    EVP_sha1(), NULL))
 		goto err;
 
-	if (!M_ASN1_OCTET_STRING_set(oct, pkey_dig, diglen)) {
+	if (!ASN1_STRING_set(oct, pkey_dig, diglen)) {
 		X509V3err(X509V3_F_S2I_SKEY_ID, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}

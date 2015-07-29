@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.8 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.9 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -92,7 +92,7 @@ X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 		return (0);
 	in = x->crl->lastUpdate;
 	if (in != tm) {
-		in = M_ASN1_TIME_dup(tm);
+		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
 			M_ASN1_TIME_free(x->crl->lastUpdate);
 			x->crl->lastUpdate = in;
@@ -110,7 +110,7 @@ X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 		return (0);
 	in = x->crl->nextUpdate;
 	if (in != tm) {
-		in = M_ASN1_TIME_dup(tm);
+		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
 			M_ASN1_TIME_free(x->crl->nextUpdate);
 			x->crl->nextUpdate = in;
@@ -145,7 +145,7 @@ X509_REVOKED_set_revocationDate(X509_REVOKED *x, ASN1_TIME *tm)
 		return (0);
 	in = x->revocationDate;
 	if (in != tm) {
-		in = M_ASN1_TIME_dup(tm);
+		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
 			M_ASN1_TIME_free(x->revocationDate);
 			x->revocationDate = in;
@@ -163,7 +163,7 @@ X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial)
 		return (0);
 	in = x->serialNumber;
 	if (in != serial) {
-		in = M_ASN1_INTEGER_dup(serial);
+		in = ASN1_STRING_dup(serial);
 		if (in != NULL) {
 			M_ASN1_INTEGER_free(x->serialNumber);
 			x->serialNumber = in;

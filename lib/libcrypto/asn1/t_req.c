@@ -1,4 +1,4 @@
-/* $OpenBSD: t_req.c,v 1.17 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: t_req.c,v 1.18 2015/07/29 14:58:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,7 +239,7 @@ get_next:
 					goto err;
 				if (!X509V3_EXT_print(bp, ex, cflag, 16)) {
 					BIO_printf(bp, "%16s", "");
-					M_ASN1_OCTET_STRING_print(bp, ex->value);
+					ASN1_STRING_print(bp, ex->value);
 				}
 				if (BIO_write(bp, "\n", 1) <= 0)
 					goto err;

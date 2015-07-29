@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.14 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.15 2015/07/29 14:58:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -211,7 +211,7 @@ sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out, int indent)
 		tmp = i2s_ASN1_INTEGER(NULL, id->zone);
 		BIO_printf(out, "\n%*sZone: %s, User: ", indent, "", tmp);
 		free(tmp);
-		M_ASN1_OCTET_STRING_print(out, id->user);
+		ASN1_STRING_print(out, id->user);
 	}
 	return 1;
 }
@@ -316,7 +316,7 @@ SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user, int userlen)
 	if (userlen == -1)
 		userlen = strlen(user);
 
-	if (!M_ASN1_OCTET_STRING_set(id->user, user, userlen))
+	if (!ASN1_STRING_set(id->user, user, userlen))
 		goto err;
 	if (!sk_SXNETID_push(sx->ids, id))
 		goto err;
@@ -372,7 +372,7 @@ SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
 
 	for (i = 0; i < sk_SXNETID_num(sx->ids); i++) {
 		id = sk_SXNETID_value(sx->ids, i);
-		if (!M_ASN1_INTEGER_cmp(id->zone, zone))
+		if (!ASN1_STRING_cmp(id->zone, zone))
 			return id->user;
 	}
 	return NULL;
