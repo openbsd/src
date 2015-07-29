@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.31 2015/07/28 21:36:03 deraadt Exp $ */
+/* $OpenBSD: doas.c,v 1.32 2015/07/29 00:00:31 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -184,8 +184,7 @@ parseconfig(const char *filename, int checkperms)
 }
 
 /*
- * Copy to envp environment variables from oldenvp which names are
- * in safeset.
+ * Copy the environment variables in safeset from oldenvp to envp.
  */
 static int
 copyenvhelper(const char **oldenvp, const char **safeset, int nsafe,
