@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.221 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.222 2015/07/29 08:06:29 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -123,11 +123,7 @@ typedef struct {
 	int bufsize;
 	uint16_t fmt;
 	int blk;
-	int nblks;			/* # of blocks in the buffer */
-	u_long swpos;			/* position in the audio(4) layer */
-	u_int last_hwpos;		/* last known lpib */
-	u_long hw_base;			/* this + lpib = overall position */
-	u_int pos_offs;			/* hardware fifo space */
+	unsigned int swpos;		/* position in the audio(4) layer */
 } stream_t;
 #define STR_READ_1(s, r)	\
 	bus_space_read_1((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r)
@@ -3672,7 +3668,6 @@ azalia_stream_init(stream_t *this, azalia_t *az, int regindex, int strnum,
 	this->intr_bit = 1 << regindex;
 	this->number = strnum;
 	this->dir = dir;
-	this->pos_offs = STR_READ_2(this, FIFOS) & 0xff;
 
 	/* setup BDL buffers */
 	err = azalia_alloc_dmamem(az, sizeof(bdlist_entry_t) * HDA_BDL_MAX,
@@ -3764,7 +3759,6 @@ azalia_stream_start(stream_t *this)
 			break;
 		}
 	}
-	this->nblks = index;
 
 	DPRINTFN(1, ("%s: size=%d fmt=0x%4.4x index=%d\n",
 	    __func__, this->bufsize, this->fmt, index));
@@ -3813,7 +3807,7 @@ azalia_stream_halt(stream_t *this)
 int
 azalia_stream_intr(stream_t *this)
 {
-	u_long hwpos, swpos;
+	unsigned int lpib, fifos, hwpos, cnt;
 	u_int8_t sts;
 
 	sts = STR_READ_1(this, STS);
@@ -3825,31 +3819,30 @@ azalia_stream_intr(stream_t *this)
 		    this->number, sts, HDA_SD_STS_BITS));
 
 	if (sts & HDA_SD_STS_BCIS) {
-		hwpos = STR_READ_4(this, LPIB) + this->pos_offs;
-		if (hwpos < this->last_hwpos)
-			this->hw_base += this->blk * this->nblks;
-		this->last_hwpos = hwpos;
-		hwpos += this->hw_base;
-
-		/*
-		 * We got the interrupt, so we should advance our count.
-		 * But we might *not* advance the count if software is
-		 * ahead.
-		 */
-		swpos = this->swpos + this->blk;
-
-		if (hwpos >= swpos + this->blk) {
-			DPRINTF(("%s: stream %d: swpos %lu hwpos %lu, adding intr\n",
-			    __func__, this->number, swpos, hwpos));
+		lpib = STR_READ_4(this, LPIB);
+		fifos = STR_READ_2(this, FIFOS);
+		if (fifos & 1)
+			fifos++;
+		hwpos = lpib;
+		if (this->dir == AUMODE_PLAY)
+			hwpos += fifos + 1;
+		if (hwpos >= this->bufsize)
+			hwpos -= this->bufsize;
+		DPRINTFN(2, ("%s: stream %d, pos = %d -> %d, "
+		    "lpib = %u, fifos = %u\n", __func__,
+		    this->number, this->swpos, hwpos, lpib, fifos));
+		cnt = 0;
+		while (hwpos - this->swpos >= this->blk) {
 			this->intr(this->intr_arg);
 			this->swpos += this->blk;
-		} else if (swpos >= hwpos + this->blk) {
-			DPRINTF(("%s: stream %d: swpos %lu hwpos %lu, ignoring intr\n",
-			    __func__, this->number, swpos, hwpos));
-			return (1);
+			if (this->swpos == this->bufsize)
+				this->swpos = 0;
+			cnt++;
 		}
-		this->intr(this->intr_arg);
-		this->swpos += this->blk;
+		if (cnt != 1) {
+			DPRINTF(("%s: stream %d: hwpos %u, %u intrs\n",
+			    __func__, this->number, this->swpos, cnt));
+		}
 	}
 	return (1);
 }
@@ -4233,10 +4226,7 @@ azalia_trigger_output(void *v, void *start, void *end, int blk,
 	az->pstream.fmt = fmt;
 	az->pstream.intr = intr;
 	az->pstream.intr_arg = arg;
-
 	az->pstream.swpos = 0;
-	az->pstream.last_hwpos = 0;
-	az->pstream.hw_base = 0;
 
 	return azalia_stream_start(&az->pstream);
 }
@@ -4269,10 +4259,7 @@ azalia_trigger_input(void *v, void *start, void *end, int blk,
 	az->rstream.fmt = fmt;
 	az->rstream.intr = intr;
 	az->rstream.intr_arg = arg;
-
 	az->rstream.swpos = 0;
-	az->rstream.last_hwpos = 0;
-	az->rstream.hw_base = 0;
 
 	return azalia_stream_start(&az->rstream);
 }
