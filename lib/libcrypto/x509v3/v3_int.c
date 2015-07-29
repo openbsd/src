@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_int.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_int.c,v 1.10 2015/07/29 16:13:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,21 +61,37 @@
 #include <openssl/x509v3.h>
 
 const X509V3_EXT_METHOD v3_crl_num = {
-	NID_crl_number, 0, ASN1_ITEM_ref(ASN1_INTEGER),
-	0, 0, 0, 0,
-	(X509V3_EXT_I2S)i2s_ASN1_INTEGER,
-	0,
-	0, 0, 0, 0,
-	NULL
+	.ext_nid = NID_crl_number,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_INTEGER),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_INTEGER,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_delta_crl = {
-	NID_delta_crl, 0, ASN1_ITEM_ref(ASN1_INTEGER),
-	0, 0, 0, 0,
-	(X509V3_EXT_I2S)i2s_ASN1_INTEGER,
-	0,
-	0, 0, 0, 0,
-	NULL
+	.ext_nid = NID_delta_crl,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_INTEGER),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = (X509V3_EXT_I2S)i2s_ASN1_INTEGER,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static void *

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_cpols.c,v 1.21 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_cpols.c,v 1.22 2015/07/29 16:13:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -83,13 +83,20 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
 
 const X509V3_EXT_METHOD v3_cpols = {
-	NID_certificate_policies, 0, ASN1_ITEM_ref(CERTIFICATEPOLICIES),
-	0, 0, 0, 0,
-	0, 0,
-	0, 0,
-	(X509V3_EXT_I2R)i2r_certpol,
-	(X509V3_EXT_R2I)r2i_certpol,
-	NULL
+	.ext_nid = NID_certificate_policies,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(CERTIFICATEPOLICIES),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = (X509V3_EXT_I2R)i2r_certpol,
+	.r2i = (X509V3_EXT_R2I)r2i_certpol,
+	.usr_data = NULL,
 };
 
 static const ASN1_TEMPLATE CERTIFICATEPOLICIES_item_tt = {

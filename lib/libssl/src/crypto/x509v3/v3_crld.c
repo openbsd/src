@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.18 2015/07/25 16:14:29 jsing Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.19 2015/07/29 16:13:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -71,23 +71,37 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
     int indent);
 
 const X509V3_EXT_METHOD v3_crld = {
-	NID_crl_distribution_points, 0, ASN1_ITEM_ref(CRL_DIST_POINTS),
-	0, 0, 0, 0,
-	0, 0,
-	0,
-	v2i_crld,
-	i2r_crldp, 0,
-	NULL
+	.ext_nid = NID_crl_distribution_points,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(CRL_DIST_POINTS),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = v2i_crld,
+	.i2r = i2r_crldp,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_freshest_crl = {
-	NID_freshest_crl, 0, ASN1_ITEM_ref(CRL_DIST_POINTS),
-	0, 0, 0, 0,
-	0, 0,
-	0,
-	v2i_crld,
-	i2r_crldp, 0,
-	NULL
+	.ext_nid = NID_freshest_crl,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(CRL_DIST_POINTS),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = v2i_crld,
+	.i2r = i2r_crldp,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static

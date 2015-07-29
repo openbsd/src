@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_info.c,v 1.22 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_info.c,v 1.23 2015/07/29 16:13:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -72,25 +72,37 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(
     X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 
 const X509V3_EXT_METHOD v3_info = {
-	NID_info_access, X509V3_EXT_MULTILINE,
-	ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
-	0, 0, 0, 0,
-	0, 0,
-	(X509V3_EXT_I2V)i2v_AUTHORITY_INFO_ACCESS,
-	(X509V3_EXT_V2I)v2i_AUTHORITY_INFO_ACCESS,
-	0, 0,
-	NULL
+	.ext_nid = NID_info_access,
+	.ext_flags = X509V3_EXT_MULTILINE,
+	.it = ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_AUTHORITY_INFO_ACCESS,
+	.v2i = (X509V3_EXT_V2I)v2i_AUTHORITY_INFO_ACCESS,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_sinfo = {
-	NID_sinfo_access, X509V3_EXT_MULTILINE,
-	ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
-	0, 0, 0, 0,
-	0, 0,
-	(X509V3_EXT_I2V)i2v_AUTHORITY_INFO_ACCESS,
-	(X509V3_EXT_V2I)v2i_AUTHORITY_INFO_ACCESS,
-	0, 0,
-	NULL
+	.ext_nid = NID_sinfo_access,
+	.ext_flags = X509V3_EXT_MULTILINE,
+	.it = ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_AUTHORITY_INFO_ACCESS,
+	.v2i = (X509V3_EXT_V2I)v2i_AUTHORITY_INFO_ACCESS,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static const ASN1_TEMPLATE ACCESS_DESCRIPTION_seq_tt[] = {

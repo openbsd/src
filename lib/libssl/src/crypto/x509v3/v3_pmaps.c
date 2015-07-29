@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pmaps.c,v 1.8 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_pmaps.c,v 1.9 2015/07/29 16:13:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -70,14 +70,20 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(
     const X509V3_EXT_METHOD *method, void *pmps, STACK_OF(CONF_VALUE) *extlist);
 
 const X509V3_EXT_METHOD v3_policy_mappings = {
-	NID_policy_mappings, 0,
-	ASN1_ITEM_ref(POLICY_MAPPINGS),
-	0, 0, 0, 0,
-	0, 0,
-	i2v_POLICY_MAPPINGS,
-	v2i_POLICY_MAPPINGS,
-	0, 0,
-	NULL
+	.ext_nid = NID_policy_mappings,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(POLICY_MAPPINGS),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = i2v_POLICY_MAPPINGS,
+	.v2i = v2i_POLICY_MAPPINGS,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static const ASN1_TEMPLATE POLICY_MAPPING_seq_tt[] = {

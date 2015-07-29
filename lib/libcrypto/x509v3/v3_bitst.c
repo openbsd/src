@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_bitst.c,v 1.10 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: v3_bitst.c,v 1.11 2015/07/29 16:13:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -88,11 +88,39 @@ static BIT_STRING_BITNAME key_usage_type_table[] = {
 	{-1, NULL, NULL}
 };
 
+const X509V3_EXT_METHOD v3_nscert = {
+	.ext_nid = NID_netscape_cert_type,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_BIT_STRING),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_ASN1_BIT_STRING,
+	.v2i = (X509V3_EXT_V2I)v2i_ASN1_BIT_STRING,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = ns_cert_type_table,
+};
 
-const X509V3_EXT_METHOD v3_nscert =
-    EXT_BITSTRING(NID_netscape_cert_type, ns_cert_type_table);
-const X509V3_EXT_METHOD v3_key_usage =
-    EXT_BITSTRING(NID_key_usage, key_usage_type_table);
+const X509V3_EXT_METHOD v3_key_usage = {
+	.ext_nid = NID_key_usage,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_BIT_STRING),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_ASN1_BIT_STRING,
+	.v2i = (X509V3_EXT_V2I)v2i_ASN1_BIT_STRING,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = key_usage_type_table,
+};
 
 STACK_OF(CONF_VALUE) *
 i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits,

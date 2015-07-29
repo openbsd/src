@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ocsp.c,v 1.11 2015/02/15 08:45:27 miod Exp $ */
+/* $OpenBSD: v3_ocsp.c,v 1.12 2015/07/29 16:13:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -94,69 +94,122 @@ static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *method, void *in,
     BIO *bp, int ind);
 
 const X509V3_EXT_METHOD v3_ocsp_crlid = {
-	NID_id_pkix_OCSP_CrlID, 0, ASN1_ITEM_ref(OCSP_CRLID),
-	0, 0, 0, 0,
-	0, 0,
-	0, 0,
-	i2r_ocsp_crlid, 0,
-	NULL
+	.ext_nid = NID_id_pkix_OCSP_CrlID,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(OCSP_CRLID),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = i2r_ocsp_crlid,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_ocsp_acutoff = {
-	NID_id_pkix_OCSP_archiveCutoff, 0, ASN1_ITEM_ref(ASN1_GENERALIZEDTIME),
-	0, 0, 0, 0,
-	0, 0,
-	0, 0,
-	i2r_ocsp_acutoff, 0,
-	NULL
+	.ext_nid = NID_id_pkix_OCSP_archiveCutoff,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_GENERALIZEDTIME),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = i2r_ocsp_acutoff,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_crl_invdate = {
-	NID_invalidity_date, 0, ASN1_ITEM_ref(ASN1_GENERALIZEDTIME),
-	0, 0, 0, 0,
-	0, 0,
-	0, 0,
-	i2r_ocsp_acutoff, 0,
-	NULL
+	.ext_nid = NID_invalidity_date,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_GENERALIZEDTIME),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = i2r_ocsp_acutoff,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_crl_hold = {
-	NID_hold_instruction_code, 0, ASN1_ITEM_ref(ASN1_OBJECT),
-	0, 0, 0, 0,
-	0, 0,
-	0, 0,
-	i2r_object, 0,
-	NULL
+	.ext_nid = NID_hold_instruction_code,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_OBJECT),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = i2r_object,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_ocsp_nonce = {
-	NID_id_pkix_OCSP_Nonce, 0, NULL,
-	ocsp_nonce_new,
-	ocsp_nonce_free,
-	d2i_ocsp_nonce,
-	i2d_ocsp_nonce,
-	0, 0,
-	0, 0,
-	i2r_ocsp_nonce, 0,
-	NULL
+	.ext_nid = NID_id_pkix_OCSP_Nonce,
+	.ext_flags = 0,
+	.it = NULL,
+	.ext_new = ocsp_nonce_new,
+	.ext_free = ocsp_nonce_free,
+	.d2i = d2i_ocsp_nonce,
+	.i2d = i2d_ocsp_nonce,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = i2r_ocsp_nonce,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_ocsp_nocheck = {
-	NID_id_pkix_OCSP_noCheck, 0, ASN1_ITEM_ref(ASN1_NULL),
-	0, 0, 0, 0,
-	0, s2i_ocsp_nocheck,
-	0, 0,
-	i2r_ocsp_nocheck, 0,
-	NULL
+	.ext_nid = NID_id_pkix_OCSP_noCheck,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(ASN1_NULL),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = s2i_ocsp_nocheck,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = i2r_ocsp_nocheck,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 const X509V3_EXT_METHOD v3_ocsp_serviceloc = {
-	NID_id_pkix_OCSP_serviceLocator, 0, ASN1_ITEM_ref(OCSP_SERVICELOC),
-	0, 0, 0, 0,
-	0, 0,
-	0, 0,
-	i2r_ocsp_serviceloc, 0,
-	NULL
+	.ext_nid = NID_id_pkix_OCSP_serviceLocator,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(OCSP_SERVICELOC),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = i2r_ocsp_serviceloc,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static int

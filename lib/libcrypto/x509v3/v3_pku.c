@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pku.c,v 1.11 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_pku.c,v 1.12 2015/07/29 16:13:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,11 +68,20 @@ static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
 static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
 */
 const X509V3_EXT_METHOD v3_pkey_usage_period = {
-	NID_private_key_usage_period, 0, ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
-	0, 0, 0, 0,
-	0, 0, 0, 0,
-	(X509V3_EXT_I2R)i2r_PKEY_USAGE_PERIOD, NULL,
-	NULL
+	.ext_nid = NID_private_key_usage_period,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(PKEY_USAGE_PERIOD),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = NULL,
+	.i2r = (X509V3_EXT_I2R)i2r_PKEY_USAGE_PERIOD,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static const ASN1_TEMPLATE PKEY_USAGE_PERIOD_seq_tt[] = {

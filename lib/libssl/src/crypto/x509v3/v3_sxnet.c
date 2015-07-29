@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.15 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.16 2015/07/29 16:13:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -75,19 +75,26 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
 static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     STACK_OF(CONF_VALUE) *nval);
 #endif
+
 const X509V3_EXT_METHOD v3_sxnet = {
-	NID_sxnet, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(SXNET),
-	0, 0, 0, 0,
-	0, 0,
-	0,
+	.ext_nid = NID_sxnet,
+	.ext_flags = X509V3_EXT_MULTILINE,
+	.it = ASN1_ITEM_ref(SXNET),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
 #ifdef SXNET_TEST
-	(X509V3_EXT_V2I)sxnet_v2i,
+	.v2i = (X509V3_EXT_V2I)sxnet_v2i,
 #else
-	0,
+	.v2i = NULL,
 #endif
-	(X509V3_EXT_I2R)sxnet_i2r,
-	0,
-	NULL
+	.i2r = (X509V3_EXT_I2R)sxnet_i2r,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static const ASN1_TEMPLATE SXNETID_seq_tt[] = {

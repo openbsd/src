@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ncons.c,v 1.8 2015/07/25 16:14:29 jsing Exp $ */
+/* $OpenBSD: v3_ncons.c,v 1.9 2015/07/29 16:13:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -80,13 +80,20 @@ static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 
 const X509V3_EXT_METHOD v3_name_constraints = {
-	NID_name_constraints, 0,
-	ASN1_ITEM_ref(NAME_CONSTRAINTS),
-	0, 0, 0, 0,
-	0, 0,
-	0, v2i_NAME_CONSTRAINTS,
-	i2r_NAME_CONSTRAINTS, 0,
-	NULL
+	.ext_nid = NID_name_constraints,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(NAME_CONSTRAINTS),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = v2i_NAME_CONSTRAINTS,
+	.i2r = i2r_NAME_CONSTRAINTS,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static const ASN1_TEMPLATE GENERAL_SUBTREE_seq_tt[] = {

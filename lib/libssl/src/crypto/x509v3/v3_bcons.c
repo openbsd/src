@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_bcons.c,v 1.12 2015/07/25 16:00:14 jsing Exp $ */
+/* $OpenBSD: v3_bcons.c,v 1.13 2015/07/29 16:13:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -71,14 +71,20 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
 
 const X509V3_EXT_METHOD v3_bcons = {
-	NID_basic_constraints, 0,
-	ASN1_ITEM_ref(BASIC_CONSTRAINTS),
-	0, 0, 0, 0,
-	0, 0,
-	(X509V3_EXT_I2V)i2v_BASIC_CONSTRAINTS,
-	(X509V3_EXT_V2I)v2i_BASIC_CONSTRAINTS,
-	NULL, NULL,
-	NULL
+	.ext_nid = NID_basic_constraints,
+	.ext_flags = 0,
+	.it = ASN1_ITEM_ref(BASIC_CONSTRAINTS),
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = (X509V3_EXT_I2V)i2v_BASIC_CONSTRAINTS,
+	.v2i = (X509V3_EXT_V2I)v2i_BASIC_CONSTRAINTS,
+	.i2r = NULL,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 static const ASN1_TEMPLATE BASIC_CONSTRAINTS_seq_tt[] = {
