@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.131 2015/07/28 15:18:10 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.132 2015/07/29 11:56:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -140,16 +140,6 @@ status_prompt_save_history(void)
 	}
 	fclose(f);
 
-}
-
-/* Status output tree. */
-RB_GENERATE(status_out_tree, status_out, entry, status_out_cmp);
-
-/* Output tree comparison function. */
-int
-status_out_cmp(struct status_out *so1, struct status_out *so2)
-{
-	return (strcmp(so1->cmd, so2->cmd));
 }
 
 /* Get screen line of status line. -1 means off. */
