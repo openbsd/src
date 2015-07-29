@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2015 $
+.Dd $Mdocdate: July 29 2015 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -62,6 +62,13 @@ The passphrase for the client.
 Require message authentication if
 .Ar yes
 is specified.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/radiusd.confXX" -compact
+.It Pa /etc/radiusd.conf
+Default
+.Xr radiusd 8
+configuration file.
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent
