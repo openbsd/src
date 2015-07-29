@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.93 2015/07/23 09:36:32 semarie Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.94 2015/07/29 20:03:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -632,6 +632,7 @@ server_reset_http(struct client *clt)
 	clt->clt_line = 0;
 	clt->clt_done = 0;
 	clt->clt_chunk = 0;
+	clt->clt_fcgi_http_header_state = FCGI_HTTP_HEADER_UNREAD;
 	free(clt->clt_remote_user);
 	clt->clt_remote_user = NULL;
 	clt->clt_bev->readcb = server_read_http;
