@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.289 2015/07/21 15:44:04 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.290 2015/07/29 18:33:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -218,50 +218,6 @@ struct acpi_softc *acpi_softc;
 #define acpi_bus_space_map	_bus_space_map
 #define acpi_bus_space_unmap	_bus_space_unmap
 
-uint8_t
-acpi_pci_conf_read_1(pci_chipset_tag_t pc, pcitag_t tag, int reg)
-{
-	uint32_t val = pci_conf_read(pc, tag, reg & ~0x3);
-	return (val >> ((reg & 0x3) << 3));
-}
-
-uint16_t
-acpi_pci_conf_read_2(pci_chipset_tag_t pc, pcitag_t tag, int reg)
-{
-	uint32_t val = pci_conf_read(pc, tag, reg & ~0x2);
-	return (val >> ((reg & 0x2) << 3));
-}
-
-uint32_t
-acpi_pci_conf_read_4(pci_chipset_tag_t pc, pcitag_t tag, int reg)
-{
-	return pci_conf_read(pc, tag, reg);
-}
-
-void
-acpi_pci_conf_write_1(pci_chipset_tag_t pc, pcitag_t tag, int reg, uint8_t val)
-{
-	uint32_t tmp = pci_conf_read(pc, tag, reg & ~0x3);
-	tmp &= ~(0xff << ((reg & 0x3) << 3));
-	tmp |= (val << ((reg & 0x3) << 3));
-	pci_conf_write(pc, tag, reg & ~0x3, tmp);
-}
-
-void
-acpi_pci_conf_write_2(pci_chipset_tag_t pc, pcitag_t tag, int reg, uint16_t val)
-{
-	uint32_t tmp = pci_conf_read(pc, tag, reg & ~0x2);
-	tmp &= ~(0xffff << ((reg & 0x2) << 3));
-	tmp |= (val << ((reg & 0x2) << 3));
-	pci_conf_write(pc, tag, reg & ~0x2, tmp);
-}
-
-void
-acpi_pci_conf_write_4(pci_chipset_tag_t pc, pcitag_t tag, int reg, uint32_t val)
-{
-	pci_conf_write(pc, tag, reg, val);
-}
-
 int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
     int access_size, int len, void *buffer)
@@ -271,7 +227,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 	bus_space_handle_t ioh;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
-	int reg, idx;
+	int reg, idx, ival, sval;
 
 	dnprintf(50, "gasio: %.2x 0x%.8llx %s\n",
 	    iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
@@ -370,47 +326,19 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		    ACPI_PCI_BUS(address), ACPI_PCI_DEV(address),
 		    ACPI_PCI_FN(address));
 
+		/* XXX: This is ugly. read-modify-write does a byte at a time */
 		reg = ACPI_PCI_REG(address);
-		for (idx = 0; idx < len; idx += access_size) {
+		for (idx = reg; idx < reg+len; idx++) {
+			ival = pci_conf_read(pc, tag, idx & ~0x3);
 			if (iodir == ACPI_IOREAD) {
-				switch (access_size) {
-				case 1:
-					*(uint8_t *)(pb + idx) = 
-					    acpi_pci_conf_read_1(pc, tag, reg + idx);
-					break;
-				case 2:
-					*(uint16_t *)(pb + idx) =
-					    acpi_pci_conf_read_2(pc, tag, reg + idx);
-					break;
-				case 4:
-					*(uint32_t *)(pb + idx) =
-					    acpi_pci_conf_read_4(pc, tag, reg + idx);
-					break;
-				default:
-					printf("%s: rdcfg: invalid size %d\n",
-					    DEVNAME(sc), access_size);
-					return (-1);
-				}
+				*pb = ival >> (8 * (idx & 0x3));
 			} else {
-				switch (access_size) {
-				case 1:
-					acpi_pci_conf_write_1(pc, tag, reg + idx,
-					    *(uint8_t *)(pb + idx));
-					break;
-				case 2:
-					acpi_pci_conf_write_2(pc, tag, reg + idx,
-					    *(uint16_t *)(pb + idx));
-					break;
-				case 4:
-					acpi_pci_conf_write_4(pc, tag, reg + idx,
-					    *(uint32_t *)(pb + idx));
-					break;
-				default:
-					printf("%s: wrcfg: invalid size %d\n",
-					    DEVNAME(sc), access_size);
-					return (-1);
-				}
+				sval = *pb;
+				ival &= ~(0xFF << (8* (idx & 0x3)));
+				ival |= sval << (8* (idx & 0x3));
+				pci_conf_write(pc, tag, idx & ~0x3, ival);
 			}
+			pb++;
 		}
 		break;
 
