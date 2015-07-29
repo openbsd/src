@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.137 2015/07/28 21:04:28 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.138 2015/07/29 21:13:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -223,7 +223,8 @@ audio_buf_rdiscard(struct audio_buf *buf, size_t count)
 {
 #ifdef AUDIO_DEBUG
 	if (count > buf->used) {
-		panic("audio_buf_rdiscard: bad count = %zu\n", count);
+		panic("audio_buf_rdiscard: bad count = %zu, "
+		    "start = %zu, used = %zu\n", count, buf->start, buf->used);
 	}
 #endif
 	buf->used -= count;
@@ -240,7 +241,8 @@ audio_buf_wcommit(struct audio_buf *buf, size_t count)
 {
 #ifdef AUDIO_DEBUG
 	if (count > (buf->len - buf->used)) {
-		panic("audio_buf_wcommit: bad count = %zu\n", count);
+		panic("audio_buf_wcommit: bad count = %zu, "
+		    "start = %zu, used = %zu\n", count, buf->start, buf->used);
 	}
 #endif
 	buf->used += count;
@@ -1461,7 +1463,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	 */
 	mtx_enter(&audio_lock);
 	if (uio->uio_resid > 0 && (ioflag & IO_NDELAY)) {
-		if (sc->play.used == sc->play.len ) {
+		if (sc->play.used == sc->play.len) {
 			mtx_leave(&audio_lock);
 			return EWOULDBLOCK;
 		}
