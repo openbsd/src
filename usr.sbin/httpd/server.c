@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.72 2015/07/29 20:03:14 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.73 2015/07/29 22:03:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1093,8 +1093,6 @@ server_close(struct client *clt, const char *msg)
 		evbuffer_free(clt->clt_output);
 	if (clt->clt_srvevb != NULL)
 		evbuffer_free(clt->clt_srvevb);
-	if (clt->clt_fcgi_http_header_evb != NULL)
-		evbuffer_free(clt->clt_fcgi_http_header_evb);
 
 	if (clt->clt_srvbev != NULL)
 		bufferevent_free(clt->clt_srvbev);

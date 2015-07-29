@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.60 2015/07/29 20:03:14 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.61 2015/07/29 22:03:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -76,8 +76,6 @@ struct server_fcgi_param {
 	uint8_t		buf[FCGI_RECORD_SIZE];
 };
 
-enum fcgihttpheaderstate
-	server_fcgi_read_header(struct client *);
 int	server_fcgi_header(struct client *, u_int);
 void	server_fcgi_read(struct bufferevent *, void *);
 int	server_fcgi_writeheader(struct client *, struct kv *, void *);
@@ -152,14 +150,6 @@ server_fcgi(struct httpd *env, struct client *clt)
 
 	clt->clt_srvevb = evbuffer_new();
 	if (clt->clt_srvevb == NULL) {
-		errstr = "failed to allocate evbuffer";
-		goto fail;
-	}
-
-	if (clt->clt_fcgi_http_header_evb != NULL)
-		evbuffer_free(clt->clt_fcgi_http_header_evb);
-
-	if ((clt->clt_fcgi_http_header_evb = evbuffer_new()) == NULL) {
 		errstr = "failed to allocate evbuffer";
 		goto fail;
 	}
@@ -553,25 +543,7 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 				}
 				break;
 			case FCGI_STDOUT:
-				clt->clt_chunk++;
-				if (clt->clt_fcgi_http_header_state ==
-				    FCGI_HTTP_HEADER_UNREAD) {
-					clt->clt_fcgi_http_header_state =
-					    server_fcgi_read_header(clt);
-					if (clt->clt_fcgi_http_header_state ==
-					    FCGI_HTTP_HEADER_ERROR) {
-						server_abort_http(clt,
-						    500, "out of memory");
-						return;
-					}
-					if (clt->clt_fcgi_http_header_state ==
-				    	    FCGI_HTTP_HEADER_UNREAD)
-						break;
-				}
-				if (clt->clt_fcgi_http_header_state == 
-				    FCGI_HTTP_HEADER_READ) {
-					clt->clt_fcgi_http_header_state = 
-					    FCGI_HTTP_HEADER_DONE;
+				if (++clt->clt_chunk == 1) {
 					if (server_fcgi_header(clt,
 					    server_fcgi_getheaders(clt))
 					    == -1) {
@@ -612,35 +584,6 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 			break;
 		}
 	} while (len > 0);
-}
-
-enum fcgihttpheaderstate
-server_fcgi_read_header(struct client *clt)
-{
-	size_t	 len;
-	int	 ret = FCGI_HTTP_HEADER_UNREAD;
-	u_char	*ptr;
-	
-	if ((ptr = evbuffer_find(clt->clt_srvevb, "\r\n\r\n", 4)) !=  NULL) {
-		len = ptr - EVBUFFER_DATA(clt->clt_srvevb) + 4;
-		if (evbuffer_add(clt->clt_fcgi_http_header_evb,
-		    EVBUFFER_DATA(clt->clt_srvevb), len) == -1)
-			ret = FCGI_HTTP_HEADER_ERROR;
-		ret = FCGI_HTTP_HEADER_READ;
-	} else if ((ptr = evbuffer_find(clt->clt_srvevb, "\n\n", 2)) !=  NULL) {
-		len = ptr - EVBUFFER_DATA(clt->clt_srvevb) + 2;
-		if (evbuffer_add(clt->clt_fcgi_http_header_evb,
-		    EVBUFFER_DATA(clt->clt_srvevb), len) == -1)
-			ret = FCGI_HTTP_HEADER_ERROR;
-		ret = FCGI_HTTP_HEADER_READ;
-	} else {
-		len = EVBUFFER_LENGTH(clt->clt_srvevb);
-		if (evbuffer_add_buffer(clt->clt_fcgi_http_header_evb,
-		    clt->clt_srvevb) == -1)
-			ret = FCGI_HTTP_HEADER_ERROR;
-	}
-	evbuffer_drain(clt->clt_srvevb, len);
-	return (ret);
 }
 
 int
@@ -710,7 +653,7 @@ server_fcgi_header(struct client *clt, u_int code)
 	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL)
 		return (-1);
 
-	/* Write header */
+	/* Write initial header (fcgi might append more) */
 	if (server_writeresponse_http(clt) == -1 ||
 	    server_bufferevent_print(clt, "\r\n") == -1 ||
 	    server_headers(clt, resp, server_writeheader_http, NULL) == -1 ||
@@ -801,7 +744,7 @@ int
 server_fcgi_getheaders(struct client *clt)
 {
 	struct http_descriptor	*resp = clt->clt_descresp;
-	struct evbuffer		*evb = clt->clt_fcgi_http_header_evb;
+	struct evbuffer		*evb = clt->clt_srvevb;
 	int			 code = 200;
 	char			*line, *key, *value;
 	const char		*errstr;
