@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.120 2015/07/19 07:34:52 doug Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.121 2015/07/29 19:16:09 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,6 +169,12 @@
 #endif
 
 #include "bytestring.h"
+
+#ifdef __OpenBSD__
+#include <sys/cdefs.h>
+__warn_references(SSLv3_client_method,
+    "SSLv3_client_method() enables the use of insecure protocols");
+#endif
 
 static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);

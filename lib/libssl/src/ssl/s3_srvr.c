@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.111 2015/07/18 01:42:26 doug Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.112 2015/07/29 19:16:09 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,6 +165,12 @@
 #include <openssl/x509.h>
 
 #include "bytestring.h"
+
+#ifdef __OpenBSD__
+#include <sys/cdefs.h>
+__warn_references(SSLv3_server_method,
+    "SSLv3_server_method() enables the use of insecure protocols");
+#endif
 
 static const SSL_METHOD *ssl3_get_server_method(int ver);
 

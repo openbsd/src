@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_meth.c,v 1.13 2015/02/06 08:30:23 jsing Exp $ */
+/* $OpenBSD: s3_meth.c,v 1.14 2015/07/29 19:16:09 miod Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,12 @@
 #include <openssl/objects.h>
 
 #include "ssl_locl.h"
+
+#ifdef __OpenBSD__
+#include <sys/cdefs.h>
+__warn_references(SSLv3_method,
+    "SSLv3_method() enables the use of insecure protocols");
+#endif
 
 static const SSL_METHOD *ssl3_get_method(int ver);
 
