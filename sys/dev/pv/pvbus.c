@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.4 2015/07/28 09:48:52 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.5 2015/07/29 17:08:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -51,6 +51,7 @@ int	 pvbus_search(struct device *, void *, void *);
 
 void	 pvbus_kvm(struct pvbus_softc *, struct pvbus_hv *);
 void	 pvbus_hyperv(struct pvbus_softc *, struct pvbus_hv *);
+void	 pvbus_xen(struct pvbus_softc *, struct pvbus_hv *);
 
 struct cfattach pvbus_ca = {
 	sizeof(struct pvbus_softc),
@@ -74,7 +75,7 @@ struct pvbus_type {
 	{ "KVMKVMKVM\0\0\0",	"KVM",		pvbus_kvm },
 	{ "Microsoft Hv",	"Hyper-V",	pvbus_hyperv },
 	{ "VMwareVMware",	"VMware",	NULL },
-	{ "XenVMMXenVMM",	"Xen",		NULL },
+	{ "XenVMMXenVMM",	"Xen",		pvbus_xen },
 	{ "bhyve bhyve ",	"bhyve",	NULL }
 };
 
@@ -218,4 +219,17 @@ pvbus_hyperv(struct pvbus_softc *sc, struct pvbus_hv *hv)
 	    (regs[1] & HYPERV_VERSION_EBX_MINOR_M) >>
 	    HYPERV_VERSION_EBX_MINOR_S,
 	    regs[0]);
+}
+
+void
+pvbus_xen(struct pvbus_softc *sc, struct pvbus_hv *hv)
+{
+	uint32_t regs[4];
+
+	CPUID(hv->hv_base + CPUID_OFFSET_XEN_VERSION,
+	    regs[0], regs[1], regs[2], regs[3]);
+	hv->hv_version = regs[0];
+
+	printf(" %u.%u", regs[0] >> XEN_VERSION_MAJOR_S,
+	    regs[0] & XEN_VERSION_MINOR_M);
 }
