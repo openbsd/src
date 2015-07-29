@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.80 2015/07/25 20:45:05 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.81 2015/07/29 17:54:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -1328,9 +1328,11 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int s;
 
+	KERNEL_LOCK();
 	s = splvm();
 	pmap_remove_range(pmap, sva, eva);
 	splx(s);
+	KERNEL_UNLOCK();
 }
 
 /*
