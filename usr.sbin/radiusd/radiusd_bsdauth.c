@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.3 2015/07/27 09:27:23 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.4 2015/07/30 08:46:04 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 	module_bsdauth_main(pairsock[0], pairsock[1]);
 
 	/*
-	 * Priviledged process
+	 * Privileged process
 	 */
 	openlog(NULL, LOG_PID, LOG_DAEMON);
 	setproctitle("[priv]");
