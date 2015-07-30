@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.13 2015/07/27 21:44:11 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.14 2015/07/30 14:02:04 zhuk Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: July 30 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ it isn't considered a keyword.
 .El
 .Sh EXAMPLES
 The following example permits users in group wsrc to build ports,
-wheel to execute commands as root while keeping the environment
+wheel to execute commands as any user while keeping the environment
 variables
 .Ev ENV ,
 .Ev PS1 ,
@@ -122,7 +122,7 @@ permit nopass keepenv { \e
         PKG_DESTDIR PKG_TMPDIR PORTSDIR RELEASEDIR SHARED_ONLY \e
         SUBPACKAGE WRKOBJDIR SUDO_PORT_V1 } :wsrc
 permit nopass keepenv { ENV PS1 SSH_AUTH_SOCK } :wheel
-permit nopass tedu cmd /usr/sbin/procmap
+permit nopass tedu as root cmd /usr/sbin/procmap
 .Ed
 .Sh SEE ALSO
 .Xr doas 1
