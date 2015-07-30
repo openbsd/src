@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2015/05/02 14:33:19 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.80 2015/07/30 17:02:17 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -123,7 +123,7 @@ struct {
 	if (pmapdebug & (flag)) 	\
 		printf printdata;
 
-#define stat_count(what)	(what)++
+#define stat_count(what)	atomic_inc_int(&(what))
 int pmapdebug = PDB_ENTER|PDB_FOLLOW;
 
 #else
@@ -649,6 +649,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (pmap == NULL)
 		return;
 
+	KERNEL_LOCK();
 	if (pmap == pmap_kernel()) {
 		/* remove entries from kernel pmap */
 #ifdef DIAGNOSTIC
@@ -676,6 +677,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			pmap_invalidate_kernel_page(sva);
 			stat_count(remove_stats.flushes);
 		}
+		KERNEL_UNLOCK();
 		return;
 	}
 
@@ -718,6 +720,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			stat_count(remove_stats.flushes);
 		}
 	}
+	KERNEL_UNLOCK();
 }
 
 /*
