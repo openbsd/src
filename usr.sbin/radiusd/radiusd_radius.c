@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.3 2015/07/27 09:27:23 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.4 2015/07/30 06:17:36 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -68,7 +68,7 @@ struct module_radius {
 struct module_radius_req {
 	struct module_radius		*module;
 	struct radius_server		*server;
-	u_char				 q_id;
+	u_int				 q_id;
 	RADIUS_PACKET			*q_pkt;
 	u_int				 ntry;
 	u_int				 nfailover;
