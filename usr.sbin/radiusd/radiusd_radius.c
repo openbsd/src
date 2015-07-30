@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.5 2015/07/30 09:16:30 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.6 2015/07/30 09:21:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -322,48 +322,52 @@ on_fail:
  * radius_server
  */
 static int
-radius_server_start(struct radius_server *module)
+radius_server_start(struct radius_server *server)
 {
 	socklen_t	 locallen;
 	char		 buf0[NI_MAXHOST + NI_MAXSERV + 32];
 	char		 buf1[NI_MAXHOST + NI_MAXSERV + 32];
 
-	if ((module->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		log_warn("%s: socket() failed", __func__);
+	if ((server->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		module_radius_log(server->module, LOG_WARNING,
+		    "%s: socket() failed", __func__);
 		goto on_error;
 	}
-	if (connect(module->sock, (struct sockaddr *)&module->addr,
-		module->addr.sin4.sin_len) != 0) {
-		log_warn("%s: connect to %s failed", __func__,
-		    addrport_tostring((struct sockaddr *)&module->addr,
-			module->addr.sin4.sin_len, buf1, sizeof(buf1)));
+	if (connect(server->sock, (struct sockaddr *)&server->addr,
+		server->addr.sin4.sin_len) != 0) {
+		module_radius_log(server->module, LOG_WARNING,
+		    "%s: connect to %s failed", __func__,
+		    addrport_tostring((struct sockaddr *)&server->addr,
+			server->addr.sin4.sin_len, buf1, sizeof(buf1)));
 		goto on_error;
 	}
-	locallen = sizeof(module->local);
-	if (getsockname(module->sock, (struct sockaddr *)&module->local,
+	locallen = sizeof(server->local);
+	if (getsockname(server->sock, (struct sockaddr *)&server->local,
 	    &locallen) != 0) {
-		log_warn("%s: getsockanme() failed", __func__);
+		module_radius_log(server->module, LOG_WARNING,
+		    "%s: getsockanme() failed", __func__);
 		goto on_error;
 	}
-	module_radius_log(module->module, LOG_INFO,
+	module_radius_log(server->module, LOG_INFO,
 	    "Use %s to send requests for %s",
-	    addrport_tostring((struct sockaddr *)&module->local,
+	    addrport_tostring((struct sockaddr *)&server->local,
 		    locallen, buf0, sizeof(buf0)),
-	    addrport_tostring((struct sockaddr *)&module->addr,
-		    module->addr.sin4.sin_len, buf1, sizeof(buf1)));
+	    addrport_tostring((struct sockaddr *)&server->addr,
+		    server->addr.sin4.sin_len, buf1, sizeof(buf1)));
 
-	event_set(&module->ev, module->sock, EV_READ | EV_PERSIST,
-	    radius_server_on_event, module);
-	if (event_add(&module->ev, NULL)) {
-		log_warn("%s: event_add() failed", __func__);
+	event_set(&server->ev, server->sock, EV_READ | EV_PERSIST,
+	    radius_server_on_event, server);
+	if (event_add(&server->ev, NULL)) {
+		module_radius_log(server->module, LOG_WARNING,
+		    "%s: event_add() failed", __func__);
 		goto on_error;
 	}
 
 	return (0);
 on_error:
-	if (module->sock >= 0)
-		close(module->sock);
-	module->sock = -1;
+	if (server->sock >= 0)
+		close(server->sock);
+	server->sock = -1;
 	return (-1);
 }
 
