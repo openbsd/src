@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.101 2015/02/17 16:29:16 bentley Exp $
+.\" $OpenBSD: ports.7,v 1.102 2015/07/30 08:03:50 jmc Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: February 17 2015 $
+.Dd $Mdocdate: July 30 2015 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ automatically fetches the
 application source code, either from a local disk or via ftp, unpacks it
 on the local system, applies the patches, and compiles it.
 If all goes well, simply type
-.Ic sudo make install
+.Ic doas make install
 to install the application.
 .Pp
 For more information about using ports, see

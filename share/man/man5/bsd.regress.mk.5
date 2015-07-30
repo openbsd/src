@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.7 2013/06/17 11:57:10 schwarze Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.8 2015/07/30 08:03:50 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 17 2013 $
+.Dd $Mdocdate: July 30 2015 $
 .Dt BSD.REGRESS.MK 5
 .Os
 .Sh NAME
@@ -96,8 +96,10 @@ for this Makefile.
 Defaults to
 .Ar run-regress-${PROG} .
 .It Ev SUDO
-Location of the sudo command, used to switch to root for certain
+Location of a command used to switch to root for certain
 test targets which require it.
+See
+.Xr doas 1 .
 .El
 .Sh SEE ALSO
 .Xr bsd.port.mk 5

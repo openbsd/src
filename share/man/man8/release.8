@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.68 2014/04/06 12:15:26 millert Exp $
+.\"	$OpenBSD: release.8,v 1.69 2015/07/30 08:03:50 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 6 2014 $
+.Dd $Mdocdate: July 30 2015 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -184,8 +184,8 @@ The steps are:
 Move all your existing object files out of the way and then remove
 them in the background:
 .Bd -literal -offset indent
-$ cd /usr/obj && mkdir -p .old && sudo mv * .old && \e
-	sudo rm -rf .old &
+$ cd /usr/obj && mkdir -p .old && doas mv * .old && \e
+	doas rm -rf .old &
 .Ed
 .Pp
 Re-build your obj directories:
@@ -194,11 +194,11 @@ Re-build your obj directories:
 .Pp
 Create directories that might be missing:
 .Pp
-.Dl $ cd /usr/src/etc && sudo DESTDIR=/ make distrib-dirs
+.Dl $ cd /usr/src/etc && doas DESTDIR=/ make distrib-dirs
 .Pp
 Begin the build:
 .Pp
-.Dl $ cd /usr/src && make SUDO=sudo build
+.Dl $ cd /usr/src && make SUDO=doas build
 .Pp
 Update
 .Pa /etc ,
@@ -342,9 +342,9 @@ This is described in
 .Xr ports 7 .
 .Sh SEE ALSO
 .Xr cvs 1 ,
+.Xr doas 1 ,
 .Xr pkg_add 1 ,
 .Xr ports 7 ,
-.Xr sudo 8 ,
 .Xr sysmerge 8
 .Sh HISTORY
 This document first appeared in
