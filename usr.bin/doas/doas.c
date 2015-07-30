@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.32 2015/07/29 00:00:31 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.33 2015/07/30 17:04:33 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -80,19 +80,20 @@ uidcheck(const char *s, uid_t desired)
 	return 0;
 }
 
-static gid_t
-strtogid(const char *s)
+static int
+parsegid(const char *s, gid_t *gid)
 {
 	struct group *gr;
 	const char *errstr;
-	gid_t gid;
 
-	if ((gr = getgrnam(s)) != NULL)
-		return gr->gr_gid;
-	gid = strtonum(s, 0, GID_MAX, &errstr);
+	if ((gr = getgrnam(s)) != NULL) {
+		*gid = gr->gr_gid;
+		return 0;
+	}
+	*gid = strtonum(s, 0, GID_MAX, &errstr);
 	if (errstr)
 		return -1;
-	return gid;
+	return 0;
 }
 
 static int
@@ -102,8 +103,8 @@ match(uid_t uid, gid_t *groups, int ngroups, uid_t target, const char *cmd,
 	int i;
 
 	if (r->ident[0] == ':') {
-		gid_t rgid = strtogid(r->ident + 1);
-		if (rgid == -1)
+		gid_t rgid;
+		if (parsegid(r->ident + 1, &rgid) == -1)
 			return 0;
 		for (i = 0; i < ngroups; i++) {
 			if (rgid == groups[i])
