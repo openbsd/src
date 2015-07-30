@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.49 2013/12/17 16:37:06 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.50 2015/07/30 14:59:12 zhuk Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1370,7 +1370,8 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 					    "\\%c", *cp);
 					break;
 				}
-				n = cp[0] * 8 * 8 + cp[1] * 8 + cp[2];
+				n = (cp[0] - '0') * 8 * 8 + (cp[1] - '0') * 8 +
+				    (cp[2] - '0');
 				snprintf(strbuf, sizeof strbuf, "%c", n);
 				cp += 2;
 				break;
