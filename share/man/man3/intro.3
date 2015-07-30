@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.70 2015/07/25 12:29:41 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.71 2015/07/30 17:46:35 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: July 25 2015 $
+.Dd $Mdocdate: July 30 2015 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -291,8 +291,9 @@ See
 .Xr pthreads 3 .
 .Pp
 .It libradius Pq Fl lradius
-Support routines for
-.Xr radius 3 .
+Support routines for the RADIUS library.
+See
+.Xr radius_new_request_packet 3 .
 .Pp
 .It libreadline Pq Fl lreadline
 Command line editing interface.
