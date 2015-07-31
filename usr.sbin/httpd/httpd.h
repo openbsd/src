@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.94 2015/07/29 22:03:41 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.95 2015/07/31 00:10:51 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -635,8 +635,8 @@ u_int32_t	 prefixlen2mask(u_int8_t);
 int		 accept_reserve(int, struct sockaddr *, socklen_t *, int,
 		    volatile int *);
 struct kv	*kv_add(struct kvtree *, char *, char *);
-int		 kv_set(struct kv *, char *, ...);
-int		 kv_setkey(struct kv *, char *, ...);
+int		 kv_set(struct kv *, char *, ...) __attribute__((__format__ (printf, 2, 3)));
+int		 kv_setkey(struct kv *, char *, ...) __attribute__((__format__ (printf, 2, 3)));
 void		 kv_delete(struct kvtree *, struct kv *);
 struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
 void		 kv_purge(struct kvtree *);
