@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.254 2015/07/25 18:07:18 rzalamena Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.255 2015/07/31 15:36:15 mpi Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: July 25 2015 $
+.Dd $Mdocdate: July 31 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1191,14 +1191,17 @@ Increase
 .Xr carp 4
 demote count for given interface group by
 .Ar number .
+Acceptable values are 0 to 128.
 If
 .Ar number
 is omitted, it is increased by 1.
+Demote count can be set up to 255.
 .It Fl carpdemote Op Ar number
 Decrease
 .Xr carp 4
 demote count for given interface group by
 .Ar number .
+Acceptable values are 0 to 128.
 If
 .Ar number
 is omitted, it is decreased by 1.
