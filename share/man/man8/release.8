@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.69 2015/07/30 08:03:50 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.70 2015/07/31 11:30:12 tedu Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: July 31 2015 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -194,7 +194,7 @@ Re-build your obj directories:
 .Pp
 Create directories that might be missing:
 .Pp
-.Dl $ cd /usr/src/etc && doas DESTDIR=/ make distrib-dirs
+.Dl $ cd /usr/src/etc && doas env DESTDIR=/ make distrib-dirs
 .Pp
 Begin the build:
 .Pp
