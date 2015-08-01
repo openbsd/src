@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2015/07/17 17:02:52 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2015/08/01 00:15:37 jsg Exp $
 
 ALLSOC=EXYNOS IMX OMAP SUNXI VEXPRESSA9 VEXPRESSA15
 MDEXT=		bsd.rd
@@ -28,4 +28,5 @@ kernels: bootblocks ${ALL_KERNELS}
 
 MDEXT+=	miniroot-am335x-${OSrev}.fs miniroot-beagle-${OSrev}.fs \
 	miniroot-cubie-${OSrev}.fs miniroot-cubox-${OSrev}.fs \
-	miniroot-nitrogen-${OSrev}.fs miniroot-panda-${OSrev}.fs
+	miniroot-nitrogen-${OSrev}.fs miniroot-panda-${OSrev}.fs \
+	miniroot-wandboard-${OSrev}.fs

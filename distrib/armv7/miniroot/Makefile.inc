@@ -58,6 +58,13 @@ do_files:
 	dd if=/usr/mdec/cubox/SPL of=${VND_CDEV} bs=1024 seek=1
 	dd if=/usr/mdec/cubox/u-boot.img of=${VND_CDEV} bs=1024 seek=42
 .endif
+.if ${BOARD} == "wandboard"
+	echo "; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in mmc ; do for disk in 0 1 ; do \$${dtype} dev \$${disk} ; for fs in fat ext2 ; do if \$${fs}load \$${dtype} \$${disk}:1 \$${loadaddr} bsd.umg ; then bootm \$${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg" > boot.cmd
+	${MKUBOOT} -t script -a arm -o linux boot.cmd boot.scr
+	cp boot.scr ${MOUNT_POINT}/boot.scr
+	dd if=/usr/mdec/wandboard/SPL of=${VND_CDEV} bs=1024 seek=1
+	dd if=/usr/mdec/wandboard/u-boot.img of=${VND_CDEV} bs=1024 seek=69
+.endif
 .if ${PLATFORM} == "SUNXI"
 	echo 'bootargs=sd0a:/bsd' > ${MOUNT_POINT}/uEnv.tx
 	echo 'mmcboot=mmc rescan ; fatload mmc 0 ${LOADADDR} bsd.umg && bootm ${LOADADDR};' >> ${MOUNT_POINT}/uEnv.txt
@@ -74,7 +81,7 @@ rd_setup:
 .if ${PLATFORM} == "SUNXI"
 	echo "u\ne 0\n${PART_ID}\ny\n0\n99\n1\n1\n254\n63\nf 0\nw\nq\n" \
 	    | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
-.elif ${BOARD} == "cubox"
+.elif ${BOARD} == "cubox" || ${BOARD} == "wandboard"
 	echo "u\ne 3\n0\ne 0\n${PART_ID}\ny\n0\n32\n33\n1\n254\n63\n63\nf 0\nw\nq" \
 	    | fdisk -c 2 -h 255 -s 63 -e ${VND} >/dev/null
 .else
