@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.18 2015/08/01 00:15:37 jsg Exp $
+#	$OpenBSD: install.md,v 1.19 2015/08/01 00:25:14 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,9 +108,12 @@ __EOT
 			cat > /tmp/boot.cmd<<__EOT
 ; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in usb mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg
 __EOT
-			mkuboot -t script -a arm -o linux /tmp/boot.cmd /mnt/mnt/boot.scr
-			dd if=/mnt/usr/mdec/cubox/SPL of=/dev/${_disk}c bs=1024 seek=1
-			dd if=/mnt/usr/mdec/cubox/u-boot.img of=/dev/${_disk}c bs=1024 seek=42
+			mkuboot -t script -a arm -o linux /tmp/boot.cmd \
+			    /mnt/mnt/boot.scr
+			dd if=/mnt/usr/mdec/cubox/SPL \
+			    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
+			dd if=/mnt/usr/mdec/cubox/u-boot.img \
+			    of=/dev/${_disk}c bs=1024 seek=42 >/dev/null
 		elif [[ -n $NITROGEN ]]; then
 			cat > /tmp/6x_bootscript.scr<<__EOT
 	; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in sata mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg 
@@ -120,9 +123,12 @@ __EOT
 			cat > /tmp/boot.cmd<<__EOT
 ; setenv loadaddr ${LOADADDR} ; setenv bootargs sd0i:/bsd.umg ; for dtype in mmc ; do for disk in 0 1 ; do \${dtype} dev \${disk} ; for fs in fat ext2 ; do if \${fs}load \${dtype} \${disk}:1 \${loadaddr} bsd.umg ; then bootm \${loadaddr} ; fi ; done; done; done; echo; echo failed to load bsd.umg
 __EOT
-			mkuboot -t script -a arm -o linux /tmp/boot.cmd /mnt/mnt/boot.scr
-			dd if=/mnt/usr/mdec/wandboard/SPL of=/dev/${_disk}c bs=1024 seek=1
-			dd if=/mnt/usr/mdec/wandboard/u-boot.img of=/dev/${_disk}c bs=1024 seek=69
+			mkuboot -t script -a arm -o linux /tmp/boot.cmd \
+			    /mnt/mnt/boot.scr
+			dd if=/mnt/usr/mdec/wandboard/SPL \
+			    of=/dev/${_disk}c bs=1024 seek=1 >/dev/null
+			dd if=/mnt/usr/mdec/wandboard/u-boot.img \
+			    of=/dev/${_disk}c bs=1024 seek=69 >/dev/null
 		fi
 	elif [[ ${MDPLAT} == "SUNXI" ]]; then
 		cat > /mnt/mnt/uenv.txt<<__EOT
