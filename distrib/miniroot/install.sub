@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.850 2015/07/30 19:40:32 rpe Exp $
+#	$OpenBSD: install.sub,v 1.851 2015/08/01 16:20:40 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1633,6 +1633,8 @@ user_setup() {
 # If no user is setup, show a hint to enable root logins, but warn about risks
 # of doing so.
 ask_root_sshd() {
+	typeset -l _resp
+
 	[[ $sshd == y ]] || return
 	if [[ -z $user ]]; then
 		echo "Since no user was setup, root logins via sshd(8) might be useful."
@@ -1640,13 +1642,21 @@ ask_root_sshd() {
 	fi
 	while :; do
 		ask "Allow root ssh login? (yes, no, without-password)" without-password
-		case $resp in
-		[yY]*)	sshd_enableroot=yes;;
-		[nN]*)	sshd_enableroot=no;;
-		[wW]*)	sshd_enableroot=without-password;;
-		*)	$AUTO && exit 1 || continue;;
+		_resp=$resp
+		case $_resp in
+		y|yes)	sshd_enableroot=yes
+			;;
+		n|no)	sshd_enableroot=no
+			;;
+		w|without-password)
+			sshd_enableroot=without-password
+			;;
+		*)	echo "'$resp' is not a valid choice."
+			$AUTO && exit 1
+			continue
+			;;
 		esac
-		return
+		break
 	done
 }
 
@@ -2083,16 +2093,13 @@ install_sets() {
 
 # Apply configuration settings based on the previously gathered information.
 apply() {
-	local _sshd_default
-
 	if [[ $sshd == n ]]; then
 		echo "sshd_flags=NO" >>/mnt/etc/rc.conf.local
 	elif [[ -n $sshd_enableroot ]]; then
-		_sshd_default=$(sed -n '/^#PermitRootLogin \(.*\)$/s//\1/p' \
-			/mnt/etc/ssh/sshd_config)
 		# Only change sshd_config if the user choice is not the default.
-		if [[ $sshd_enableroot != $_sshd_default ]]; then
-			sed -i "/^#\(PermitRootLogin\) .*$/s//\1 $sshd_enableroot/" \
+		if ! grep -q "^#PermitRootLogin $sshd_enableroot\$" \
+				/mnt/etc/ssh/sshd_config; then
+			sed -i "s/^#\(PermitRootLogin\) .*/\1 $sshd_enableroot/" \
 				/mnt/etc/ssh/sshd_config
 		fi
 	fi
