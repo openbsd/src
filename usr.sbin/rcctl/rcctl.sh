@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.76 2015/07/25 04:12:43 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.77 2015/08/01 11:28:14 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,7 +34,7 @@ usage()
 
 needs_root()
 {
-	[ "$(id -u)" -ne 0 ] && _rc_err "${0##*/} $1: need root privileges"
+	[ "$(id -u)" -ne 0 ] && _rc_err "${0##*/}: \"$*\" needs root privileges"
 }
 
 rcctl_err()
@@ -485,7 +485,7 @@ case ${action} in
 		;;
 	ls)
 		# some rc.d(8) scripts need root for rc_check()
-		[[ ${lsarg} == @(started|stopped|faulty) ]] && needs_root
+		[[ ${lsarg} == @(started|stopped|faulty) ]] && needs_root ${action} ${lsarg}
 		svc_ls ${lsarg}
 		;;
 	order)
