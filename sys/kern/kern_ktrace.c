@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.74 2015/07/19 04:45:25 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.75 2015/08/01 20:12:34 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -361,21 +361,17 @@ ktruser(struct proc *p, const char *id, const void *addr, size_t len)
 	ktrinitheader(&kth, p, KTR_USER);
 	memset(ktp.ktr_id, 0, KTR_USER_MAXIDLEN);
 	error = copyinstr(id, ktp.ktr_id, KTR_USER_MAXIDLEN, NULL);
-	if (error)
-		goto out;
-
-	if (len > sizeof(stkbuf))
-		memp = malloc(len, M_TEMP, M_WAITOK);
-	else
-		memp = stkbuf;
-	error = copyin(addr, memp, len);
-	if (error)
-		goto out;
-
-	ktrwrite2(p, &kth, &ktp, sizeof(ktp), memp, len);
-out:
-	if (memp != stkbuf)
-		free(memp, M_TEMP, len);
+	if (error == 0) {
+		if (len > sizeof(stkbuf))
+			memp = malloc(len, M_TEMP, M_WAITOK);
+		else
+			memp = stkbuf;
+		error = copyin(addr, memp, len);
+		if (error == 0)
+			ktrwrite2(p, &kth, &ktp, sizeof(ktp), memp, len);
+		if (memp != stkbuf)
+			free(memp, M_TEMP, len);
+	}
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 	return (error);
 }
