@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.3 2015/07/17 10:15:24 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.4 2015/08/01 10:47:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,7 +53,7 @@ struct file {
 #define FILE_ZOMB	1		/* closed, but not free()d yet */
 	unsigned int state;		/* one of above */
 	unsigned int max_nfds;		/* max number of descriptors */	
-	int nfds;			/* number of descriptors polled */
+	unsigned int nfds;		/* number of descriptors polled */
 	char *name;			/* for debug purposes */
 };
 
