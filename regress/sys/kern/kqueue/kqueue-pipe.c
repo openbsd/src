@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pipe.c,v 1.4 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: kqueue-pipe.c,v 1.5 2015/08/01 00:04:01 uebayasi Exp $	*/
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -40,44 +40,44 @@ int do_pipe(void);
 int
 do_pipe(void)
 {
-        int kq;
-        int n;
-        int fd[2];
-        struct kevent ev;
-        struct timespec ts;
-        char buf[8000];
+	int kq;
+	int n;
+	int fd[2];
+	struct kevent ev;
+	struct timespec ts;
+	char buf[8000];
 
-        if (pipe(fd) == -1)
-                return (1);
-        if (fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1)
-                return (1);
+	if (pipe(fd) == -1)
+		return (1);
+	if (fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1)
+		return (1);
 
 	if ((kq = kqueue()) == -1)
-                return (1);
+		return (1);
 
-        ev.ident = fd[1];
-        ev.filter = EVFILT_WRITE;
-        ev.flags = EV_ADD | EV_ENABLE;
-        n = kevent(kq, &ev, 1, NULL, 0, NULL);
-        if (n == -1)
-                return (1);
-        
-        while ((n = write(fd[1], buf, sizeof(buf))) == sizeof(buf))
-                ;
+	ev.ident = fd[1];
+	ev.filter = EVFILT_WRITE;
+	ev.flags = EV_ADD | EV_ENABLE;
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	if (n == -1)
+		return (1);
+	
+	while ((n = write(fd[1], buf, sizeof(buf))) == sizeof(buf))
+		;
 
-        ts.tv_sec = 0;
-        ts.tv_nsec = 0;
-        n = kevent(kq, NULL, 0, &ev, 1, &ts);
-        if (n != 0)
-                return (1);
+	ts.tv_sec = 0;
+	ts.tv_nsec = 0;
+	n = kevent(kq, NULL, 0, &ev, 1, &ts);
+	if (n != 0)
+		return (1);
 
 	read(fd[0], buf, sizeof(buf));
 
-        ts.tv_sec = 0;
-        ts.tv_nsec = 0;
-        n = kevent(kq, NULL, 0, &ev, 1, &ts);
-        if (n == -1 || n == 0)
-                return (1);
+	ts.tv_sec = 0;
+	ts.tv_nsec = 0;
+	n = kevent(kq, NULL, 0, &ev, 1, &ts);
+	if (n == -1 || n == 0)
+		return (1);
 
-        return (0);
+	return (0);
 }
