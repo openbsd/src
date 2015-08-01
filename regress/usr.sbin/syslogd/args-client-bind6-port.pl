@@ -9,6 +9,7 @@
 
 use strict;
 use warnings;
+use Socket;
 require 'funcs.pl';
 
 my $port = find_ports(domain => AF_INET6, addr => "::1");

@@ -8,6 +8,7 @@
 
 use strict;
 use warnings;
+use Socket;
 
 my %threegrep = (
     get_firstlog() => 1,

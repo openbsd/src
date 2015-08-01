@@ -8,6 +8,7 @@
 
 use strict;
 use warnings;
+use Socket;
 
 my $msglen = length(get_testlog());
 my $framelen = $msglen + 1;

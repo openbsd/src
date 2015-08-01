@@ -9,6 +9,7 @@
 
 use strict;
 use warnings;
+use Socket;
 
 our %args = (
     client => {

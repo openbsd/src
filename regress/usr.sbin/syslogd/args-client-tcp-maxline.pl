@@ -8,6 +8,7 @@
 
 use strict;
 use warnings;
+use Socket;
 use constant MAXLINE => 8192;
 use constant MAX_UDPMSG => 1180;
 
