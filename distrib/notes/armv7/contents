@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.7 2015/06/02 01:48:25 jsg Exp $
+dnl	$OpenBSD: contents,v 1.8 2015/08/01 00:44:06 jsg Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.fs
@@ -24,6 +24,10 @@ TopPart
 	miniroot-panda-{:--:}OSrev.fs
 			A miniroot filesystem to be used for
 			installation; PandaBoard (ES) version.
+
+	miniroot-wandboard-{:--:}OSrev.fs
+			A miniroot filesystem to be used for
+			installation; Wandboard version.
 
 OpenBSDdistsets
 
