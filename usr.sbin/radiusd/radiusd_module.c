@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.3 2015/08/02 21:30:34 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -61,6 +61,7 @@ struct module_base {
 #ifdef USE_LIBEVENT
 	struct module_imsgbuf	*module_imsgbuf;
 	bool			 writeready;
+	bool			 stopped;
 	bool			 ev_onhandler;
 	struct event		 ev;
 #endif
@@ -73,6 +74,7 @@ static int	 module_imsg_handler(struct module_base *, struct imsg *);
 #ifdef USE_LIBEVENT
 static void	 module_on_event(int, short, void *);
 #endif
+static void	 module_stop(struct module_base *);
 static void	 module_reset_event(struct module_base *);
 
 struct module_base *
@@ -104,7 +106,8 @@ module_start(struct module_base *base)
 	on = 1;
 	if (fcntl(base->ibuf.fd, O_NONBLOCK, &on) == -1)
 		err(1, "Failed to setup NONBLOCK");
-	module_reset_event(base);
+	event_set(&base->ev, base->ibuf.fd, EV_READ, module_on_event, base);
+	event_add(&base->ev, NULL);
 #endif
 }
 
@@ -296,14 +299,18 @@ module_recv_imsg(struct module_base *base)
 	struct imsg	 imsg;
 
 	if ((n = imsg_read(&base->ibuf)) == -1 || n == 0) {
-		/* XXX */
+		if (n != 0)
+			syslog(LOG_ERR, "%s: imsg_read(): %m", __func__);
+		module_stop(base);
 		return (-1);
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&base->ibuf, &imsg)) == -1)
-			/* XXX */
+		if ((n = imsg_get(&base->ibuf, &imsg)) == -1) {
+			syslog(LOG_ERR, "%s: imsg_get(): %m", __func__);
+			module_stop(base);
 			return (-1);
+		}
 		if (n == 0)
 			break;
 		module_imsg_handler(base, &imsg);
@@ -377,8 +384,7 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 		}
 		break;
 	case IMSG_RADIUSD_MODULE_STOP:
-		if (module_stop_module != NULL)
-			module_stop_module(base->ctx);
+		module_stop(base);
 		break;
 	case IMSG_RADIUSD_MODULE_USERPASS:
 	    {
@@ -462,6 +468,18 @@ accsreq_out:
 	return (0);
 }
 
+static void
+module_stop(struct module_base *base)
+{
+	if (module_stop_module != NULL)
+		module_stop_module(base->ctx);
+#ifdef USE_LIBEVENT
+	event_del(&base->ev);
+	base->stopped = true;
+#endif
+	close(base->ibuf.fd);
+}
+
 #ifdef USE_LIBEVENT
 static void
 module_on_event(int fd, short evmask, void *ctx)
@@ -475,7 +493,7 @@ module_on_event(int fd, short evmask, void *ctx)
 	if (evmask & EV_READ) {
 		ret = module_recv_imsg(base);
 		if (ret < 0)
-			goto on_error;
+			return;
 	}
 	while (base->writeready && base->ibuf.w.queued) {
 		ret = msgbuf_write(&base->ibuf.w);
@@ -484,17 +502,13 @@ module_on_event(int fd, short evmask, void *ctx)
 		base->writeready = false;
 		if (ret == 0 && errno == EAGAIN)
 			break;
-		syslog(LOG_ERR, "Write fail");
-		goto on_error;
+		syslog(LOG_ERR, "%s: msgbuf_write: %m", __func__);
+		module_stop(base);
+		return;
 	}
 	base->ev_onhandler = false;
 	module_reset_event(base);
 	return;
-
-on_error:
-	if (event_initialized(&base->ev))
-		event_del(&base->ev);
-	close(base->ibuf.fd);
 }
 #endif
 
@@ -507,8 +521,9 @@ module_reset_event(struct module_base *base)
 
 	if (base->ev_onhandler)
 		return;
-	if (event_initialized(&base->ev))
-		event_del(&base->ev);
+	if (base->stopped)
+		return;
+	event_del(&base->ev);
 
 	evmask |= EV_READ;
 	if (base->ibuf.w.queued) {
