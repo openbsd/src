@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.2 2015/08/02 23:49:31 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -35,7 +35,7 @@
 #include "chap_ms.h"
 
 
-static void	 	 radius_test (struct parse_result *);
+static void		 radius_test (struct parse_result *);
 static void		 radius_dump (FILE *, RADIUS_PACKET *, bool,
 			    const char *);
 static const char	*radius_code_str (int code);
@@ -46,7 +46,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-h] command [arg ...]\n", __progname);
+	fprintf(stderr, "usage: %s command [arg ...]\n", __progname);
 }
 
 int
@@ -55,9 +55,9 @@ main(int argc, char *argv[])
 	int			 ch;
 	struct parse_result	*result;
 
-	while ((ch = getopt(argc, argv, "h")) != -1)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
-		case 'h':
+		default:
 			usage();
 			exit(EX_USAGE);
 		}
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 		radius_test(result);
 		break;
 	}
-		
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -269,21 +269,24 @@ radius_dump(FILE *out, RADIUS_PACKET *pkt, bool resp, const char *secret)
 	if (radius_get_raw_attr(pkt, RADIUS_TYPE_CHAP_PASSWORD, buf, &len)
 	    == 0)
 		fprintf(out, "    CHAP-Password             = %s\n",
-		    (hexstr(buf, len, buf1, sizeof(buf1)))? buf1 : "(too long)");
+		    (hexstr(buf, len, buf1, sizeof(buf1)))
+			    ? buf1 : "(too long)");
 
 	memset(buf, 0, sizeof(buf));
 	len = sizeof(buf);
 	if (radius_get_raw_attr(pkt, RADIUS_TYPE_CHAP_CHALLENGE, buf, &len)
 	    == 0)
 		fprintf(out, "    CHAP-Challenge            = %s\n",
-		    (hexstr(buf, len, buf1, sizeof(buf1)))? buf1 : "(too long)");
+		    (hexstr(buf, len, buf1, sizeof(buf1)))
+			? buf1 : "(too long)");
 
 	memset(buf, 0, sizeof(buf));
 	len = sizeof(buf);
 	if (radius_get_vs_raw_attr(pkt, RADIUS_VENDOR_MICROSOFT,
 	    RADIUS_VTYPE_MS_CHAP_CHALLENGE, buf, &len) == 0)
 		fprintf(out, "    MS-CHAP-Challenge         = %s\n",
-		    (hexstr(buf, len, buf1, sizeof(buf1)))? buf1 : "(too long)");
+		    (hexstr(buf, len, buf1, sizeof(buf1)))
+			? buf1 : "(too long)");
 
 	memset(buf, 0, sizeof(buf));
 	len = sizeof(buf);
