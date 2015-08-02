@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.3 2015/08/02 21:30:34 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.4 2015/08/02 23:29:27 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -450,7 +450,7 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 		base->radpktoff += chunklen;
 		if (!accessreq->final)
 			goto accsreq_out;
-		if (base->radpktoff != base->radpktsiz) {
+		if (base->radpktoff != accessreq->datalen) {
 			syslog(LOG_ERR,
 			    "Could not handle received ACCSREQ "
 			    "message: length is mismatch");
