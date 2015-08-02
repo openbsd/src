@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.31 2015/01/25 19:31:38 tedu Exp $
+.\"	$OpenBSD: ptrace.2,v 1.32 2015/08/02 21:54:21 jmc Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: January 25 2015 $
+.Dd $Mdocdate: August 2 2015 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -166,7 +166,7 @@ as the tracing process, and that it must not be executing a set-user-ID
 or set-group-ID executable.
 Additionally, if the
 .Dv kern.global_ptrace
-sysctl is 0, then the target process must be a descendent of the tracing
+sysctl is 0, then the target process must be a descendant of the tracing
 process.
 (If the tracing process is running as root, these restrictions do not apply.)
 The tracing process will see the newly traced process stop and may then
