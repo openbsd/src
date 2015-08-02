@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.5 2010/08/04 05:55:29 guenther Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.6 2015/08/02 00:47:25 uebayasi Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -108,19 +108,21 @@ do_process(void)
 	if (wait(&status) < 0)
 		err(1, "wait");
 
-	/* make sure we get an exit note */
-	ASS(kevent(kq, NULL, 0, &ke, 1, &ts) == 1,
-	    warnx("didn't receive event"));
-	ASSX(ke.filter == EVFILT_PROC);
-	switch (ke.fflags) {
-	case NOTE_EXIT:
-		didchild = 1;
-		ASSX((pid_t)ke.ident == pid);
-		fprintf(stderr, "exit %d\n", pid);
-		break;
-	default:
-		errx(1, "kevent returned weird event 0x%x pid %d",
-		    ke.fflags, (pid_t)ke.ident);
+	for (i = 0; i < 1; i++) {
+		/* make sure we get an exit note */
+		ASS(kevent(kq, NULL, 0, &ke, 1, &ts) == 1,
+		    warnx("didn't receive event"));
+		ASSX(ke.filter == EVFILT_PROC);
+		switch (ke.fflags) {
+		case NOTE_EXIT:
+			didchild = 1;
+			ASSX((pid_t)ke.ident == pid);
+			fprintf(stderr, "exit %d\n", pid);
+			break;
+		default:
+			errx(1, "kevent returned weird event 0x%x pid %d",
+			    ke.fflags, (pid_t)ke.ident);
+		}
 	}
 
 	if (!WIFEXITED(status))
