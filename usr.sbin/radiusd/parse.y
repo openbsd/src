@@ -322,6 +322,7 @@ authopts	: AUTHENTICATE_BY STRING {
 				YYERROR;
 			authen.auth = modref;
 		}
+		/* XXX decoration doesn't work for this moment.  */
 		| DECORATE_BY str_l {
 			int				 i;
 			struct radiusd_module_ref	*modref;

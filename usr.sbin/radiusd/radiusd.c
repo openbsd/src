@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.4 2015/08/02 21:24:25 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.5 2015/08/02 21:48:55 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -442,12 +442,11 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 				break;	/* found it */
 		}
 		if (q != NULL) {
-			/* RFC 5080 suggests to answer the cached result */
 			log_info("Received %s(code=%d) from %s id=%d: "
 			    "duplicate request by q=%u",
 			    radius_code_string(req_code), req_code, peerstr,
 			    req_id, q->id);
-			// XXX
+			/* XXX RFC 5080 suggests to answer the cached result */
 			return;
 		}
 
@@ -546,8 +545,7 @@ radius_query_request_decoration(struct radius_query *q)
 	struct radiusd_module_ref	*deco;
 
 	TAILQ_FOREACH(deco, &q->authen->deco, next) {
-		/* XXX module is running? */
-		/* XXX */
+		/* XXX decoration doesn't work for this moment.  */
 		if (deco->module->request_decoration != NULL &&
 		    deco->module->request_decoration(NULL, q) != 0) {
 			log_warnx("q=%u request decoration `%s' failed", q->id,
@@ -565,8 +563,7 @@ radius_query_response_decoration(struct radius_query *q)
 	struct radiusd_module_ref	*deco;
 
 	TAILQ_FOREACH(deco, &q->authen->deco, next) {
-		/* XXX module is running? */
-		/* XXX */
+		/* XXX decoration doesn't work for this moment.  */
 		if (deco->module->response_decoration != NULL &&
 		    deco->module->response_decoration(NULL, q) != 0) {
 			log_warnx("q=%u response decoration `%s' failed", q->id,
