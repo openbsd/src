@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.5 2015/08/02 21:48:55 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.6 2015/08/02 23:27:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -1007,6 +1007,7 @@ radiusd_module_start(struct radiusd_module *module)
 {
 	int		 datalen;
 	struct imsg	 imsg;
+	struct timeval	 tv = { 0, 0 };
 
 	RADIUSD_ASSERT(module->fd >= 0);
 	imsg_compose(&module->ibuf, IMSG_RADIUSD_MODULE_START, 0, 0, -1,
@@ -1037,6 +1038,7 @@ radiusd_module_start(struct radiusd_module *module)
 
 	event_set(&module->ev, module->fd, EV_READ, radiusd_module_on_imsg_io,
 	    module);
+	event_add(&module->ev, &tv);
 	log_debug("Module `%s' started successfully", module->name);
 
 	return;
