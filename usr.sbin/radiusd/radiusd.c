@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.3 2015/07/27 08:43:11 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.4 2015/08/02 21:24:25 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -139,7 +139,6 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&radiusd->query);
 
 	log_init(debug);
-	event_init();
 	if (parse_config(conffile, radiusd) != 0)
 		errx(EX_DATAERR, "config error");
 	if (noaction) {
@@ -149,6 +148,7 @@ main(int argc, char *argv[])
 
 	if (debug == 0)
 		daemon(0, 0);
+	event_init();
 
 	if ((pw = getpwnam(RADIUSD_USER)) == NULL)
 		errx(EXIT_FAILURE, "user `%s' is not found in password "
@@ -987,7 +987,6 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 
 	module->capabilities =
 	    ((struct radiusd_module_load_arg *)imsg.data)->cap;
-	radiusd_module_reset_ev_handler(module);
 
 	log_debug("Loaded module `%s' successfully.  pid=%d", module->name,
 	    module->pid);
@@ -1039,8 +1038,10 @@ radiusd_module_start(struct radiusd_module *module)
 		goto on_fail;
 	}
 
+	event_set(&module->ev, module->fd, EV_READ, radiusd_module_on_imsg_io,
+	    module);
 	log_debug("Module `%s' started successfully", module->name);
-	radiusd_module_reset_ev_handler(module);
+
 	return;
 on_fail:
 	radiusd_module_close(module);
@@ -1123,8 +1124,7 @@ radiusd_module_reset_ev_handler(struct radiusd_module *module)
 	struct timeval	*tvp = NULL, tv = { 0, 0 };
 
 	RADIUSD_ASSERT(module->fd >= 0);
-	if (event_initialized(&module->ev))
-		event_del(&module->ev);
+	event_del(&module->ev);
 
 	evmask = EV_READ;
 	if (module->ibuf.w.queued) {
@@ -1405,13 +1405,11 @@ radiusd_module_set(struct radiusd_module *module, const char *name,
 		goto on_error;
 	}
 	imsg_free(&imsg);
-	radiusd_module_reset_ev_handler(module);
 
 	free(buf);
 	return (0);
 
 on_error:
-	radiusd_module_reset_ev_handler(module);
 	if (buf != NULL)
 		free(buf);
 	return (-1);
