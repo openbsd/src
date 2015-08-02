@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.6 2015/08/02 00:47:25 uebayasi Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.7 2015/08/02 02:42:22 uebayasi Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -115,7 +115,6 @@ do_process(void)
 		ASSX(ke.filter == EVFILT_PROC);
 		switch (ke.fflags) {
 		case NOTE_EXIT:
-			didchild = 1;
 			ASSX((pid_t)ke.ident == pid);
 			fprintf(stderr, "exit %d\n", pid);
 			break;
