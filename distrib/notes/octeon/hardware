@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.7 2015/06/09 19:29:57 jasper Exp $
+dnl	$OpenBSD: hardware,v 1.8 2015/08/02 09:54:29 jasper Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Portwell CAM-0100
@@ -7,14 +7,9 @@ The following machines are targeted by OpenBSD/MACHINE:
 	  some effort.
 
 	Ubiquiti Networks EdgeRouter Lite / PoE
-	  onboard serial port and Ethernet are supported; it's possible
-	  to boot OpenBSD/MACHINE on this machine over NFS. There is no
-	  USB support yet, which means that there is no local storage
-	  (no onboard CompactFlash).
+	  onboard serial port, Ethernet and USB controller are supported.
 
 	D-Link DSR-500
-	  onboard serial port and Ethernet are supported; it's possible
-	  to boot OpenBSD/MACHINE on this machine over NFS. The onboard
-	  CompactFlash is not yet supported which, together with the
-	  lack of USB support, means that there is no local storage
-	  available at the moment for this model.
+	  onboard serial port, Ethernet and USB controller are supported;
+	  it's possible to boot OpenBSD/MACHINE on this machine over NFS.
+	  The onboard CompactFlash is not yet supported.

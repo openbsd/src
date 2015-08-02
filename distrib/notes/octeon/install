@@ -1,75 +1,5 @@
-dnl	$OpenBSD: install,v 1.11 2014/07/13 18:08:16 jasper Exp $
+dnl	$OpenBSD: install,v 1.12 2015/08/02 09:54:29 jasper Exp $
 OpenBSDInstallPrelude
-
-Booting the installation media:
-
-There are two ways to load an OpenBSD/MACHINE kernel (or ramdisk),
-over TFTP or from the internal CompactFlash storage.
-
-For TFTP you will first need to setup a TFTP server as described in
-diskless(8). Assuming tftpd(8) chroots into /tftpboot, copy bsd.rd into that
-directory.
-
-Power on your OpenBSD/MACHINE device and from the U-Boot prompt set up
-networking. In this example it is assumed you have a DHCP server in your
-network:
-
-	# dhcp
-
-If you don't have a DHCP server, you need to set the ipaddr U-Boot environment
-variable:
-
-	# setenv ipaddr <static ip address>
-
-Now set the IP address of your TFTP server:
-
-	# setenv serverip <server ip>
-
-The ramdisk kernel needs to be loaded into memory. If you use "0" as the
-address, the default address location will be used by U-Boot:
-
-	# tftpboot 0 bsd.rd
-	Using octeth0 device
-	TFTP from server 192.168.178.30; our IP address is 192.168.178.89
-	Filename 'bsd.rd'.
-	Load address: 0x9f00000
-	Loading: #########################
-	done
-	Bytes transferred = 7191474 (6dbbb2 hex), 8617 Kbytes/sec
-
-Now the kernel can be booted from the default memory location, with no
-arguments provided:
-
-	# bootoctlinux
-
-OpenBSD/MACHINE currently lacks a real bootloader. It is possible however to
-boot into bsd upon powering on the machine.
-
-From the U-Boot commandline, make a copy of the current ${bootcmd} so you can
-restore it later if needed:
-
-	# setenv old_bootcmd ${bootcmd}
-
-${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
-${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
-partition on the first CF card (created by the installer) and save the
-environment to persistent storage:
-
-	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux rootdev=/dev/octcf0'
-	# setenv bootdelay 5
-	# saveenv
-	Saving Environment to Flash...
-	Un-Protected 1 sectors
-	Erasing Flash...
-	. done
-	Erased 1 sectors
-	Writing to Flash... .done
-	Protected 1 sectors
-	#
-
-Depending on your hardware you may need to replace 'ide' with 'usb'.
-
-No miniroot is provided at this time.
 
 OpenBSDInstallPart2
 
@@ -116,10 +46,35 @@ OpenBSDCommonInstall
 
 OpenBSDInstallWrapup
 
-dnl CAM-0100 systems final steps:
+OpenBSD/MACHINE currently lacks a real bootloader. It is possible however to
+boot into OpenBSD upon powering on the machine.
+
+From the U-Boot commandline, make a copy of the current ${bootcmd} so you can
+restore it later if needed:
+
+	# setenv old_bootcmd ${bootcmd}
+
+${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
+${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
+partition on the first CF card or USB device. The FAT partition has been created
+by the installer.
+
+	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux rootdev=/dev/octcf0'
+	# setenv bootdelay 5
+	# saveenv
+	Saving Environment to Flash...
+	Un-Protected 1 sectors
+	Erasing Flash...
+	. done
+	Erased 1 sectors
+	Writing to Flash... .done
+	Protected 1 sectors
+	#
+
+If you've installed onto USB replace the 'fatload' part with:
+
+	fatload usb 0 $loadaddr bsd
 
 OpenBSDCongratulations
-
-
 
 OpenBSDUnattendedInstallation

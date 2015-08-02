@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2014/02/28 00:47:14 afresh1 Exp $
+dnl	$OpenBSD: prep,v 1.5 2015/08/02 09:54:29 jasper Exp $
 By default MACHINE systems are shipped with a Linux (or proprietary) system
 installated on the CompactFlash card or USB drive.
 
@@ -10,3 +10,67 @@ power to the device and start it.
 Unless you have removed or changed the Linux installation it will be booted
 automatically. If you are quick you can interrupt booting (while still in
 U-Boot) with ^C.
+
+There are several ways to load an OpenBSD/MACHINE kernel (or ramdisk),
+over TFTP, from the internal CompactFlash or USB storage.
+
+Booting from a CF card or USB:
+
+  To use the miniroot image you will need another machine to plug the
+  SD card in to. Any machine type will do, as long as it supports SD card
+  storage devices.  Under OpenBSD, it will appear as a ``sd'' device, for
+  example sd1.
+  
+  Use the dd(1) utility to copy the miniroot to the hard drive.
+  The command would likely be, under OpenBSD:
+
+  	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c
+
+  Now load the ramdisk kernel using either of the following commands depending
+  on the medium used. For USB:
+  
+    Octeon ubnt_e100# fatload usb 0 $loadaddr bsd.rd
+  
+  For Compact Flash use:
+
+    # fatload ide 0:1 ${loadaddr} bsd.rd
+
+Booting over the network:
+
+  For TFTP you will first need to setup a TFTP server as described in
+  diskless(8). Assuming tftpd(8) chroots into /tftpboot, copy bsd.rd into that
+  directory.
+
+  Power on your OpenBSD/MACHINE device and from the U-Boot prompt set up
+  networking. In this example it is assumed you have a DHCP server in your
+  network:
+
+	# dhcp
+
+  If you don't have a DHCP server, you need to set the ipaddr U-Boot environment
+  variable:
+
+	# setenv ipaddr <static ip address>
+
+  Now set the IP address of your TFTP server:
+
+	# setenv serverip <server ip>
+
+  The ramdisk kernel needs to be loaded into memory. If you use "0" as the
+  address, the default address location will be used by U-Boot:
+
+	# tftpboot 0 bsd.rd
+	Using octeth0 device
+	TFTP from server 192.168.178.30; our IP address is 192.168.178.89
+	Filename 'bsd.rd'.
+	Load address: 0x9f00000
+	Loading: #########################
+	done
+	Bytes transferred = 7191474 (6dbbb2 hex), 8617 Kbytes/sec
+
+Booting the installation kernel
+
+  Now the kernel can be booted from the default memory location, with no
+  arguments provided:
+
+	# bootoctlinux
