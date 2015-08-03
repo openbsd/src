@@ -3809,7 +3809,7 @@ ppc_elf_gc_sweep_hook (bfd *abfd,
 	    {
 	      bfd_vma addend = r_type == R_PPC_PLTREL24 ? rel->r_addend : 0;
 	      struct plt_entry *ent = find_plt_ent (h, got2, addend);
-	      if (ent->plt.refcount > 0)
+	      if (ent != NULL && ent->plt.refcount > 0)
 		ent->plt.refcount -= 1;
 	    }
 	  break;
