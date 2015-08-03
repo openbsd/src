@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.33 2015/07/30 17:04:33 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.34 2015/08/03 15:31:05 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -333,6 +333,7 @@ main(int argc, char **argv, char **envp)
 	int nflag = 0;
 
 	uid = getuid();
+
 	while ((ch = getopt(argc, argv, "C:nsu:")) != -1) {
 		switch (ch) {
 		case 'C':
@@ -362,7 +363,6 @@ main(int argc, char **argv, char **envp)
 	} else if ((!sflag && !argc) || (sflag && argc))
 		usage();
 
-	uid = getuid();
 	pw = getpwuid(uid);
 	if (!pw)
 		err(1, "getpwuid failed");
