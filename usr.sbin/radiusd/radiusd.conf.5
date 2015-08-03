@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.4 2015/08/03 02:23:09 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.5 2015/08/03 07:35:25 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014 Internet Initiative Japan Inc.
@@ -44,58 +44,66 @@ and a
 .Ar port
 to listen on.
 .It Ic client Ar address/mask Brq ...
-Specify an clients' address and mask which are allowed to access.
-Followed by a block of options that is enclosed in curly brackets:
+Allow access to a client with the specified
+.Ar address
+and
+.Ar mask .
+It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
 .It Ic secret Ar secret
 The shared secret with the clients.
-This options cannot be omitted.
+This option cannot be omitted.
 .It Ic msgauth-required Ar yes | no
 Message authentication is required if
 .Dq yes
 is specified.
 .El
-.It Ic module Ic load Ar name Ar path
+.It Ic module Ic load Ar name path
 Load module
 .Ar name
 from
 .Ar path .
-The following moudles are available:
+The following modules are available:
 .Bl -column "/usr/libexec/radiusd/radiusd_bsdauthXXX"
-.It Em "Path" Ta "Description"
+.It Sy "Path" Ta Sy "Description"
 .It Pa /usr/libexec/radiusd/radiusd_bsdauth Ta Do bsdauth Dc module
 .It Pa /usr/libexec/radiusd/radiusd_radius Ta Do radius Dc module
 .El
 .Bl -tag -width Ds
 .It Do bsdauth Dc module
+The
 .Dq bsdauth
-module provides authentication by local system's
-.Xr authenticate 3 ,
+module provides authentication from the local system's
+.Xr authenticate 3
+interface,
 known as
 .Dq bsd auth .
 It only supports PAP, password based authentication.
 .It Do radius Dc module
+The
 .Dq radius
-module provides authentication by upstream RADIUS servers.
+module provides authentication from upstream RADIUS servers.
 .El
-
 .It Ic module Ic set Ar key Ar value ...
 Configure the module specific configuration by
-.Ar key and
+.Ar key
+and
 .Ar value .
 .Pp
+The
 .Dq bsdauth
 module supports the following configuration key and value:
-.Bl -offset indent -tag -width Ds
+.Bl -tag -width Ds -offset indent
 .It Ic restrict-group Ar group ...
 Restrict login only if the user is a member of the specfied groups.
 .El
 .Pp
+The
 .Dq radius
 module supports the following configuration key and value:
-.Bl -offset indent -tag -width Ds
-.It Ic server Ar address Ns Op :port
-Specify the upstrem server's adddress and port.
+.Bl -tag -width Ds -offset indent
+.It Ic server Ar address Ns Op : Ns Ar port
+Specify the upstream server's address and port.
 If
 .Ar port
 is omitted, 1812 is used.
@@ -103,23 +111,21 @@ This configuration can be specified multiple times.
 .It Ic secret Ar secret
 Specify the shared secret with the servers.
 .It Ic max-tries Ar number
-Specify the maximum number of retransmission for a server.
-The
+Specify the maximum number of retransmissions for a server.
 .Xr radiusd 8
-will retransmit 2, 6, 14, 22, 30 secs after the first transmission.
-If the number of retransmission per server reaches this value,
+will retransmit 2, 6, 14, 22, and 30 seconds after the first transmission.
+If the number of retransmissions per server reaches this value,
 the current server is marked as
 .Dq fail ,
-next server is used for the following requests.
+and the next server is used for subsequent requests.
 The default value is 3.
 .It Ic max-failovers Ar number
-If positive number is specified,
+If a positive number is specified,
 .Xr radiusd 8
 will failover to the next server
 when the current server is marked
 .Dq fail .
-This key and value specifies the maximum number of
-.Dq fail overs .
+This key and value specifies the maximum number of failovers.
 The default value is 0.
 .It Ic request-timeout Ar sec
 Specify the request timeout in seconds.
@@ -130,18 +136,18 @@ and
 will not be used.
 .El
 .It Ic authenticate Ar username-pattern ... Brq ...
-Specify authentication configuration for the users specified by
+Specify an authentication configuration for the users specified by
 .Ar username-pattern .
-Use the shell grobbing rule for the pattern and multiple patterns can
-be specified by separating space chars.
+Use shell globbing rules for the pattern;
+multiple patterns can be specified by separating with space characters.
 When multiple
 .Ic authenticate
 lines are specified, the first
 .Ic authenticate
 setting whose
 .Ar username-pattern
-matches to the authenticating user is used.
-Followed by a block of options that is enclosed in curly brackets:
+matches an authenticating user is used.
+It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
 .It Ic authenticate-by Ar module
 Specify the module name.
