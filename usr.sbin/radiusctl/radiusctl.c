@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.2 2015/08/02 23:49:31 yasuoka Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.3 2015/08/03 07:49:05 jmc Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -46,7 +46,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s command [arg ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-h] command [argument ...]\n", __progname);
 }
 
 int
