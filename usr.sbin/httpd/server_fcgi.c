@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.62 2015/07/31 00:10:51 benno Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.63 2015/08/03 11:45:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -160,6 +160,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	if (clt->clt_srvbev != NULL)
 		bufferevent_free(clt->clt_srvbev);
 
+	clt->clt_srvbev_throttled = 0;
 	clt->clt_srvbev = bufferevent_new(fd, server_fcgi_read,
 	    NULL, server_file_error, clt);
 	if (clt->clt_srvbev == NULL) {

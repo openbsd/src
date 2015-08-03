@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.73 2015/07/29 22:03:41 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.74 2015/08/03 11:45:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -728,8 +728,10 @@ server_write(struct bufferevent *bev, void *arg)
 
 	bufferevent_enable(bev, EV_READ);
 
-	if (clt->clt_srvbev && !(clt->clt_srvbev->enabled & EV_READ))
+	if (clt->clt_srvbev && clt->clt_srvbev_throttled) {
 		bufferevent_enable(clt->clt_srvbev, EV_READ);
+		clt->clt_srvbev_throttled = 0;
+	}
 
 	return;
  done:
@@ -773,8 +775,10 @@ server_read(struct bufferevent *bev, void *arg)
 		goto done;
 
 	if (EVBUFFER_LENGTH(EVBUFFER_OUTPUT(clt->clt_bev)) > (size_t)
-	    SERVER_MAX_PREFETCH * clt->clt_sndbufsiz)
-		bufferevent_disable(bev, EV_READ);
+	    SERVER_MAX_PREFETCH * clt->clt_sndbufsiz) {
+		bufferevent_disable(clt->clt_srvbev, EV_READ);
+		clt->clt_srvbev_throttled = 1;
+	}
 
 	return;
  done:
