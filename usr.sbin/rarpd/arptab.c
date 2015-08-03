@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.23 2015/01/16 06:40:19 deraadt Exp $ */
+/*	$OpenBSD: arptab.c,v 1.24 2015/08/03 13:39:22 mpi Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -61,8 +61,14 @@
 #include <string.h>
 #include <err.h>
 
+/* ROUNDUP() is nasty, but it is identical to what's in the kernel. */
+#define ROUNDUP(a)					\
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
 static pid_t pid;
 static int s = -1;
+
+int rtget(struct sockaddr_inarp **, struct sockaddr_dl **);
 
 static void
 getsocket(void)
@@ -75,6 +81,7 @@ getsocket(void)
 struct	sockaddr_in so_mask = {8, 0, 0, { 0xffffffff}};
 struct	sockaddr_inarp blank_sin = {sizeof(blank_sin), AF_INET }, sin_m;
 struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
+struct	sockaddr_dl ifp_m = {sizeof(&ifp_m), AF_LINK};
 time_t	expire_time;
 int	flags, export_only, doing_proxy;
 
@@ -112,14 +119,13 @@ arptab_set(u_char *eaddr, u_int32_t host)
 	expire_time = now.tv_sec + 20 * 60;
 
 tryagain:
-	if (rtmsg(RTM_GET) < 0) {
+	if (rtget(&sin, &sdl)) {
 		syslog(LOG_ERR,"%s: %m", inet_ntoa(sin->sin_addr));
 		close(s);
 		s = -1;
 		return (1);
 	}
-	sin = (struct sockaddr_inarp *)((char *)rtm + rtm->rtm_hdrlen);
-	sdl = (struct sockaddr_dl *)(sin->sin_len + (char *)sin);
+
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -204,7 +210,7 @@ rtmsg(int cmd)
 		}
 		/* FALLTHROUGH */
 	case RTM_GET:
-		rtm->rtm_addrs |= RTA_DST;
+		rtm->rtm_addrs |= (RTA_DST | RTA_IFP);
 	}
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
@@ -215,6 +221,7 @@ rtmsg(int cmd)
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
 	NEXTADDR(RTA_NETMASK, so_mask);
+	NEXTADDR(RTA_IFP, ifp_m);
 
 	rtm->rtm_msglen = cp - (char *)&m_rtmsg;
 doit:
@@ -233,5 +240,47 @@ doit:
 	    rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l < 0)
 		syslog(LOG_ERR, "arptab_set: read from routing socket: %m");
+	return (0);
+}
+
+int
+rtget(struct sockaddr_inarp **sinp, struct sockaddr_dl **sdlp)
+{
+	struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
+	struct sockaddr_inarp *sin = NULL;
+	struct sockaddr_dl *sdl = NULL;
+	struct sockaddr *sa;
+	char *cp;
+	int i;
+
+	if (rtmsg(RTM_GET) < 0)
+		return (1);
+
+	if (rtm->rtm_addrs) {
+		cp = ((char *)rtm + rtm->rtm_hdrlen);
+		for (i = 1; i; i <<= 1) {
+			if (i & rtm->rtm_addrs) {
+				sa = (struct sockaddr *)cp;
+				switch (i) {
+				case RTA_DST:
+					sin = (struct sockaddr_inarp *)sa;
+					break;
+				case RTA_IFP:
+					sdl = (struct sockaddr_dl *)sa;
+					break;
+				default:
+					break;
+				}
+				cp += ROUNDUP(sa->sa_len);
+			}
+		}
+	}
+
+	if (sin == NULL || sdl == NULL)
+		return (1);
+
+	*sinp = sin;
+	*sdlp = sdl;
+
 	return (0);
 }
