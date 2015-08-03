@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.107 2015/07/23 14:49:10 sthen Exp $
+#	$OpenBSD: changelist,v 1.108 2015/08/03 04:19:25 yasuoka Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -90,6 +90,7 @@
 /etc/profile
 /etc/protocols
 +/etc/pwd.db
++/etc/radiusd.conf
 /etc/rbootd.conf
 /etc/rc
 /etc/rc.conf

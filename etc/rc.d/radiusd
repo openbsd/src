@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: radiusd,v 1.1 2015/08/03 04:19:25 yasuoka Exp $
+
+daemon="/usr/sbin/radiusd"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1

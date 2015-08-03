@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.454 2015/07/20 06:59:39 rpe Exp $
+#	$OpenBSD: rc,v 1.455 2015/08/03 04:19:25 yasuoka Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -494,7 +494,7 @@ echo 'preserving editor files.'; /usr/libexec/vi.recover
 
 echo -n 'starting network daemons:'
 start_daemon ldomd sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
-start_daemon relayd dhcpd dhcrelay mrouted dvmrpd
+start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
