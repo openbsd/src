@@ -2564,6 +2564,7 @@
 ./usr/share/man/man8/quotacheck.8
 ./usr/share/man/man8/quotaoff.8
 ./usr/share/man/man8/quotaon.8
+./usr/share/man/man8/radiusctl.8
 ./usr/share/man/man8/radiusd.8
 ./usr/share/man/man8/rarpd.8
 ./usr/share/man/man8/rbootd.8
