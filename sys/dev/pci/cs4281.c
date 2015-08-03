@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.32 2015/05/11 06:46:22 ratchov Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.33 2015/08/03 09:20:44 stsp Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -696,7 +696,6 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	u_int32_t fmt=0;
 	int dma_count;
 
-	printf("cs4281_trigger_input: not implemented yet\n");
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4281_trigger_input: already running\n");
