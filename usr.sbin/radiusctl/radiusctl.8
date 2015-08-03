@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusctl.8,v 1.1 2015/08/03 04:10:21 yasuoka Exp $
+.\"	$OpenBSD: radiusctl.8,v 1.2 2015/08/03 07:45:05 jmc Exp $
 .\"
 .\" Copyright (c) YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\"
@@ -14,9 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" The following requests are required for all man pages.
 .\"
-.\" Remove `\&' from the line below.
 .Dd $Mdocdate: August 3 2015 $
 .Dt RADIUSCTL 8
 .Os
@@ -45,34 +43,21 @@ The following commands are available:
 .Op options
 .Xc
 Sends a RADIUS authentication request packet and shows the result.
-The request is 
-for the user specified by the
+The request is for the user specified by
 .Ar user_name
-and sent to the RADIUS server specified by the
+and sent to the RADIUS server specified by
 .Ar hostname .
-The
 .Ar radius_secret
 is the shared secret with the server.
 The options are as follows:
 .Bl -tag -width Ds
-.It Cm password Ar password
-Use the
-.Ar password
-for the
-.Ar user_name .
-.It Cm port Ar port
-Use the
-.Ar port
-when send a packet to the
-.Ar hostname .
-If the port is omitted,
-the default port number 1812 is used.
 .It Cm method Ar method
-Use the
+Use
 .Ar method
-for the authenticaiton.  It can be either
+for authentication.
+It can be either
 .Cm pap ,
-.Cm chap
+.Cm chap ,
 or
 .Cm mschapv2 .
 If this option is omitted,
@@ -81,6 +66,18 @@ is used.
 .It Cm nas-port Ar nas-port
 Specify an integer value for the NAS-Port attribute in the packet.
 If this option is omitted, 0 is used.
+.It Cm password Ar password
+Use
+.Ar password
+for
+.Ar user_name .
+.It Cm port Ar port
+Use
+.Ar port
+when sending a packet to
+.Ar hostname .
+If the port is omitted,
+the default port number 1812 is used.
 .El
 .El
 .Sh SEE ALSO
