@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.77 2015/08/01 11:28:14 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.78 2015/08/03 13:18:48 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -426,6 +426,7 @@ shift $((OPTIND-1))
 action=$1
 if [ "${action}" = "ls" ]; then
 	lsarg=$2
+	[[ ${lsarg} == @(all|faulty|off|on|started|stopped) ]] || usage
 elif [ "${action}" = "order" ]; then
 	shift 1
 	svcs="$*"
@@ -435,9 +436,6 @@ else
 	[ $# -ge 3 ] && shift 3 || shift $#
 	args="$*"
 fi
-
-[ -n "${lsarg}" ] && [[ ${lsarg} != @(all|faulty|off|on|started|stopped) ]] && \
-	usage
 
 if [ -n "${svc}" ]; then
 	[[ ${action} == @(disable|enable|get|getdef|set|start|stop|restart|reload|check) ]] || \
