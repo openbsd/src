@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.67 2015/08/04 15:21:59 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.68 2015/08/04 22:25:54 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -545,18 +545,23 @@ void
 acpicpu_getcst_from_fadt(struct acpicpu_softc *sc)
 {
 	struct acpi_fadt	*fadt = sc->sc_acpi->sc_fadt;
+	int flags;
 
 	/* FADT has to set flag to do C2 and higher on MP */
 	if ((fadt->flags & FADT_P_LVL2_UP) == 0 && ncpus > 1)
 		return;
 
+	/* skip these C2 and C3 states if the CPU doesn't have ARAT */
+	flags = (sc->sc_ci->ci_feature_tpmflags & TPM_ARAT)
+	    ? 0 : CST_FLAG_SKIP;
+
 	/* Some systems don't export a full PBLK; reduce functionality */
 	if (sc->sc_pblk_len >= 5 && fadt->p_lvl2_lat <= ACPI_MAX_C2_LATENCY) {
-		acpicpu_add_cstate(sc, ACPI_STATE_C2, CST_METH_GAS_IO, 0,
+		acpicpu_add_cstate(sc, ACPI_STATE_C2, CST_METH_GAS_IO, flags,
 		    fadt->p_lvl2_lat, -1, sc->sc_pblk_addr + 4);
 	}
 	if (sc->sc_pblk_len >= 6 && fadt->p_lvl3_lat <= ACPI_MAX_C3_LATENCY)
-		acpicpu_add_cstate(sc, ACPI_STATE_C3, CST_METH_GAS_IO, 0,
+		acpicpu_add_cstate(sc, ACPI_STATE_C3, CST_METH_GAS_IO, flags,
 		    fadt->p_lvl3_lat, -1, sc->sc_pblk_addr + 5);
 }
 
