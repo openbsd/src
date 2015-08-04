@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1766 2015/06/05 05:24:08 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1767 2015/08/04 21:19:28 tedu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4569,6 +4569,7 @@
 #define	PCI_PRODUCT_INTEL_C610_PCIE_6	0x8d1a		/* C610 PCIE */
 #define	PCI_PRODUCT_INTEL_C610_PCIE_7	0x8d1c		/* C610 PCIE */
 #define	PCI_PRODUCT_INTEL_C610_PCIE_8	0x8d1e		/* C610 PCIE */
+#define	PCI_PRODUCT_INTEL_C610_HDA	0x8d20		/* C610 HD Audio */
 #define	PCI_PRODUCT_INTEL_C610_SMB	0x8d22		/* C610 SMBus */
 #define	PCI_PRODUCT_INTEL_C610_EHCI_1	0x8d26		/* C610 USB */
 #define	PCI_PRODUCT_INTEL_C610_EHCI_2	0x8d2d		/* C610 USB */
