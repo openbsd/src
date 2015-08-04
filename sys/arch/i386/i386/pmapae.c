@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.40 2015/07/10 13:06:26 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.41 2015/08/04 06:12:16 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -596,7 +596,6 @@ pmap_bootstrap_pae(void)
 	paddr_t ptaddr;
 	u_int32_t bits;
 	vaddr_t va, eva;
-	int i, pn, pe;
 
 	if ((cpu_feature & CPUID_PAE) == 0 ||
 	    (ecpu_feature & CPUID_NXE) == 0)
@@ -671,18 +670,6 @@ pmap_bootstrap_pae(void)
 
 		bzero((void *)kpm->pm_pdir + 8, (PDSLOT_PTE-1) * 8);
 		/* TODO also reclaim old PDPs */
-		for (i = 0; i < vm_nphysseg; i++)
-			if (vm_physmem[i].start > atop(0xfffff000)) {
-				vm_physmem[i].avail_end = vm_physmem[i].end;
-				/* free vm_pages (uvm had already zeroed 'em) */
-				for (pn = 0, pe = vm_physmem[i].end -
-				    vm_physmem[i].start; pn < pe ; pn++) {
-					uvmexp.npages++;
-					/* add page to free pool */
-					uvm_pagefree(&vm_physmem[i].pgs[pn]);
-				}
-
-			}
 	}
 }
 
