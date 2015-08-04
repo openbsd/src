@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.36 2014/11/23 20:33:47 mlarkin Exp $ */
+/* $OpenBSD: acpidev.h,v 1.37 2015/08/04 04:20:35 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -192,12 +192,12 @@ struct acpibat_bmd {
 #define	HPET_TIMER0_CONFIG	0x100
 #define	HPET_TIMER0_COMPARE	0x108
 #define	HPET_TIMER0_INTERRUPT	0x110
-#define	HPET_TIMER1_CONFIG	0x200
-#define	HPET_TIMER1_COMPARE	0x208
-#define	HPET_TIMER1_INTERRUPT	0x310
-#define	HPET_TIMER2_CONFIG	0x400
-#define	HPET_TIMER2_COMPARE	0x408
-#define	HPET_TIMER2_INTERRUPT	0x510
+#define	HPET_TIMER1_CONFIG	((0x20 * 1) + HPET_TIMER0_CONFIG)
+#define	HPET_TIMER1_COMPARE	((0x20 * 1) + HPET_TIMER0_COMPARE)
+#define	HPET_TIMER1_INTERRUPT	((0x20 * 1) + HPET_TIMER0_INTERRUPT)
+#define	HPET_TIMER2_CONFIG	((0x20 * 2) + HPET_TIMER0_CONFIG)
+#define	HPET_TIMER2_COMPARE	((0x20 * 2) + HPET_TIMER0_COMPARE)
+#define	HPET_TIMER2_INTERRUPT	((0x20 * 2) + HPET_TIMER0_INTERRUPT)
 
 #define STA_PRESENT   (1L << 0)
 #define STA_ENABLED   (1L << 1)
