@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.42 2015/08/04 07:24:31 mlarkin Exp $
+.\"	$OpenBSD: apm.8,v 1.43 2015/08/04 09:22:19 jmc Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -94,13 +94,14 @@ Request more verbose description of the displayed states.
 .It Fl Z
 Put the system into hibernation.
 System memory is saved to disk (swap space)
-and the machine is powered down. For machines supporting the
-.Xr acpi 4 
+and the machine is powered down.
+For machines supporting the
+.Xr acpi 4
 style hibernate functionality, on resume a full kernel
 boot will occur, followed by the reading of the saved
-memory image. The image will then be unpacked and the system
-resumed at the point immediately after the hibernation
-request.
+memory image.
+The image will then be unpacked and the system resumed
+at the point immediately after the hibernation request.
 .It Fl z
 Put the system into suspend (deep sleep) state.
 .El
@@ -120,18 +121,19 @@ These commands do not wait for positive confirmation that the requested
 state has been entered; to do so would mean the command does not return
 until the system resumes from its sleep state.
 .Pp
-Each system provides methods for waking from suspend or hibernate. For
-those machines supporting
-.Xr acpi 4 
+Each system provides methods for waking from suspend or hibernate.
+For those machines supporting
+.Xr acpi 4
 style suspend/resume (or hibernate/unhibernate) semantics, the wakeup
 devices for each sleep state are printed during system boot in
 .Xr dmesg 8 .
 .Pp
 The system will attempt to provide as much feedback as is possible on
-the specific hardware being suspended/resumed. This includes setting
-system LEDs or other indicators to illustrate progress throughout the
-suspend/resume (or hibernate/unhibernate) process. Such feedback is
-machine-dependent.
+the specific hardware being suspended/resumed.
+This includes setting system LEDs or other indicators
+to illustrate progress throughout the suspend/resume
+(or hibernate/unhibernate) process.
+Such feedback is machine-dependent.
 .Sh FILES
 .Bl -tag -width /var/run/apmdev -compact
 .It Pa /var/run/apmdev
