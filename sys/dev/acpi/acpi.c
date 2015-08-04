@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.290 2015/07/29 18:33:17 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.291 2015/08/04 15:21:59 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2107,6 +2107,8 @@ acpi_sleep_pm(struct acpi_softc *sc, int state)
 	}
 }
 
+u_int32_t acpi_force_bm;
+
 void
 acpi_resume_pm(struct acpi_softc *sc, int fromstate)
 {
@@ -2123,7 +2125,8 @@ acpi_resume_pm(struct acpi_softc *sc, int fromstate)
 	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, 0, regb);
 
 	/* Force SCI_EN on resume to fix horribly broken machines */
-	acpi_write_pmreg(sc, ACPIREG_PM1_CNT, 0, ACPI_PM1_SCI_EN);
+	acpi_write_pmreg(sc, ACPIREG_PM1_CNT, 0,
+	    ACPI_PM1_SCI_EN | acpi_force_bm);
 
 	/* Clear fixed event status */
 	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, ACPI_PM1_ALL_STS);

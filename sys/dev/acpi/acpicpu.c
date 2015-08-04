@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.66 2015/08/04 05:15:02 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.67 2015/08/04 15:21:59 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -701,19 +701,21 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (!SLIST_EMPTY(&sc->sc_cstates)) {
+		extern u_int32_t acpi_force_bm;
+
 		cpu_idle_cycle_fcn = &acpicpu_idle;
 
 		/*
 		 * C3 (and maybe C2?) needs BM_RLD to be set to
 		 * wake the system
-		 * XXX need to save and restore this in suspend/resume?
 		 */
-		if (SLIST_FIRST(&sc->sc_cstates)->state > 1) {
+		if (SLIST_FIRST(&sc->sc_cstates)->state > 1 && acpi_force_bm == 0) {
 			uint16_t en = acpi_read_pmreg(sc->sc_acpi,
 			    ACPIREG_PM1_CNT, 0);
 			if ((en & ACPI_PM1_BM_RLD) == 0) {
 				acpi_write_pmreg(sc->sc_acpi, ACPIREG_PM1_CNT,
 				    0, en | ACPI_PM1_BM_RLD);
+				acpi_force_bm = ACPI_PM1_BM_RLD;
 			}
 		}
 	}
