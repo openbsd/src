@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.33 2015/08/03 09:20:44 stsp Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.34 2015/08/04 14:53:08 stsp Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -66,14 +66,12 @@
 struct cs4281_dma {
 	bus_dmamap_t map;
 	caddr_t addr;		/* real dma buffer */
-	caddr_t dum;		/* dummy buffer for audio driver */
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;
 	struct cs4281_dma *next;
 };
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
-#define BUFADDR(p)  ((void *)((p)->dum))
 #define KERNADDR(p) ((void *)((p)->addr))
 
 /*
@@ -95,19 +93,10 @@ struct cs4281_softc {
 	/* DMA */
 	bus_dma_tag_t		sc_dmatag;
 	struct cs4281_dma	*sc_dmas;
-	size_t dma_size;
-	size_t dma_align;
-
-	int	hw_blocksize;
 
         /* playback */
 	void	(*sc_pintr)(void *);	/* dma completion intr handler */
 	void	*sc_parg;		/* arg for sc_intr() */
-	char	*sc_ps, *sc_pe, *sc_pn;
-	int	sc_pcount;
-	int	sc_pi;
-	struct cs4281_dma *sc_pdma;
-	char	*sc_pbuf;
 	int	(*halt_output)(void *);
 #ifdef DIAGNOSTIC
         char	sc_prun;
@@ -116,11 +105,6 @@ struct cs4281_softc {
 	/* capturing */
 	void	(*sc_rintr)(void *);	/* dma completion intr handler */
 	void	*sc_rarg;		/* arg for sc_intr() */
-	char	*sc_rs, *sc_re, *sc_rn;
-	int	sc_rcount;
-	int	sc_ri;
-	struct	cs4281_dma *sc_rdma;
-	char	*sc_rbuf;
 	int	sc_rparam;		/* record format */
 	int	(*halt_input)(void *);
 #ifdef DIAGNOSTIC
@@ -151,6 +135,16 @@ struct cs4281_softc {
 #define MAX_CHANNELS  (2)
 #define MAX_FIFO_SIZE 64 /* 128/2 channels */
 #endif
+
+/* 
+ * Hardware imposes the buffer size to be twice the block size, this
+ * is OK, except that round_blocksize() is the only mean to expose
+ * this hardware constraint but it doesn't know the buffer size.
+ * 
+ * So we've no other choice than hardcoding a buffer size
+ */
+#define DMA_SIZE	(1024 * 4 * 2)
+#define DMA_ALIGN	0x10
 
 int cs4281_match(struct device *, void *, void *);
 void cs4281_attach(struct device *, struct device *, void *);
@@ -333,7 +327,7 @@ cs4281_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(" %s\n", intrstr);
+	printf(": %s\n", intrstr);
 
 	/*
 	 * Sound System start-up
@@ -344,10 +338,6 @@ cs4281_attach(parent, self, aux)
 	sc->halt_input  = cs4281_halt_input;
 	sc->halt_output = cs4281_halt_output;
 
-	sc->dma_size     = CS4281_BUFFER_SIZE / MAX_CHANNELS;
-	sc->dma_align    = 0x10;
-	sc->hw_blocksize = sc->dma_size / 2;
-	
 	/* AC 97 attachment */
 	sc->host_if.arg = sc;
 	sc->host_if.attach = cs4281_attach_codec;
@@ -372,14 +362,13 @@ cs4281_intr(p)
 {
 	struct cs4281_softc *sc = p;
 	u_int32_t intr, val;
-	char *empty_dma;
 	
 	mtx_enter(&audio_lock);
 	intr = BA0READ4(sc, CS4281_HISR);
 	if (!(intr & (HISR_DMA0 | HISR_DMA1 | HISR_MIDI))) {
 		BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
 		mtx_leave(&audio_lock);
-		return (0);
+		return (-1);
 	}
 	DPRINTF(("cs4281_intr:"));
 
@@ -394,38 +383,26 @@ cs4281_intr(p)
 		DPRINTF((" PB DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA0),
 			 (int)BA0READ4(sc, CS4281_DCC0)));
 		if (sc->sc_pintr) {
-			if ((sc->sc_pi%sc->sc_pcount) == 0)
-				sc->sc_pintr(sc->sc_parg);
+			sc->sc_pintr(sc->sc_parg);
 		} else {
-			printf("unexpected play intr\n");
+#ifdef DIAGNOSTIC
+			printf("%s: unexpected play intr\n",
+			    sc->sc_dev.dv_xname);
+#endif
 		}
-		/* copy buffer */
-		++sc->sc_pi;
-		empty_dma = sc->sc_pdma->addr;
-		if (sc->sc_pi&1)
-			empty_dma += sc->hw_blocksize;
-		memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
-		sc->sc_pn += sc->hw_blocksize;
-		if (sc->sc_pn >= sc->sc_pe)
-			sc->sc_pn = sc->sc_ps;
 	}
 	if (intr & HISR_DMA1) {
 		val = BA0READ4(sc, CS4281_HDSR1);
 		/* copy from dma */
 		DPRINTF((" CP DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA1),
 			 (int)BA0READ4(sc, CS4281_DCC1)));
-		++sc->sc_ri;
-		empty_dma = sc->sc_rdma->addr;
-		if ((sc->sc_ri & 1) == 0)
-			empty_dma += sc->hw_blocksize;
-		memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
-		if (sc->sc_rn >= sc->sc_re)
-			sc->sc_rn = sc->sc_rs;
 		if (sc->sc_rintr) {
-			if ((sc->sc_ri % sc->sc_rcount) == 0)
-				sc->sc_rintr(sc->sc_rarg);
+			sc->sc_rintr(sc->sc_rarg);
 		} else {
-			printf("unexpected record intr\n");
+#ifdef DIAGNOSTIC
+			printf("%s: unexpected record intr\n",
+			    sc->sc_dev.dv_xname);
+#endif
 		}
 	}
 	DPRINTF(("\n"));
@@ -586,7 +563,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct cs4281_softc *sc = addr;
-	u_int32_t fmt=0;
+	u_int32_t fmt = 0;
 	struct cs4281_dma *p;
 	int dma_count;
 
@@ -595,6 +572,14 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 		printf("cs4281_trigger_output: already running\n");
 	sc->sc_prun = 1;
 #endif
+
+	if ((char *)end - (char *)start != 2 * blksize) {
+#ifdef DIAGNOSTIC
+		printf("%s: play block size must be half the buffer size\n",
+		    sc->sc_dev.dv_xname);
+#endif
+		return EIO;
+	}
 
 	DPRINTF(("cs4281_trigger_output: sc=%p start=%p end=%p "
 		 "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
@@ -607,7 +592,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	DPRINTF(("param: precision=%d channels=%d encoding=%d\n",
 	       param->precision, param->channels,
 	       param->encoding));
-	for (p = sc->sc_dmas; p != NULL && BUFADDR(p) != start; p = p->next)
+	for (p = sc->sc_dmas; p != NULL && KERNADDR(p) != start; p = p->next)
 		;
 	if (p == NULL) {
 		printf("cs4281_trigger_output: bad addr %p\n", start);
@@ -615,23 +600,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 		return (EINVAL);
 	}
 
-	sc->sc_pcount = blksize / sc->hw_blocksize;
-	sc->sc_ps = (char *)start;
-	sc->sc_pe = (char *)end;
-	sc->sc_pdma = p;
-	sc->sc_pbuf = KERNADDR(p);
-	sc->sc_pi = 0;
-	sc->sc_pn = sc->sc_ps;
-	if (blksize >= sc->dma_size) {
-		sc->sc_pn = sc->sc_ps + sc->dma_size;
-		memcpy(sc->sc_pbuf, start, sc->dma_size);
-		++sc->sc_pi;
-	} else {
-		sc->sc_pn = sc->sc_ps + sc->hw_blocksize;
-		memcpy(sc->sc_pbuf, start, sc->hw_blocksize);
-	}
-
-	dma_count = sc->dma_size;
+	dma_count = (char *)end - (char *)start;
 	if (param->precision != 8)
 		dma_count /= 2;   /* 16 bit */
 	if (param->channels > 1)
@@ -640,7 +609,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	DPRINTF(("cs4281_trigger_output: DMAADDR(p)=0x%x count=%d\n",
 		 (int)DMAADDR(p), dma_count));
 	BA0WRITE4(sc, CS4281_DBA0, DMAADDR(p));
-	BA0WRITE4(sc, CS4281_DBC0, dma_count-1);
+	BA0WRITE4(sc, CS4281_DBC0, dma_count - 1);
 
 	/* set playback format */
 	fmt = BA0READ4(sc, CS4281_DMR0) & ~DMRn_FMTMSK;
@@ -693,8 +662,16 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 {
 	struct cs4281_softc *sc = addr;
 	struct cs4281_dma *p;
-	u_int32_t fmt=0;
+	u_int32_t fmt = 0;
 	int dma_count;
+
+	if ((char *)end - (char *)start != 2 * blksize) {
+#ifdef DIAGNOSTIC
+		printf("%s: rec block size must be half the buffer size\n",
+		    sc->sc_dev.dv_xname);
+#endif
+		return EIO;
+	}
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
@@ -709,23 +686,15 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	/* stop recording DMA */
 	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
 
-	for (p = sc->sc_dmas; p && BUFADDR(p) != start; p = p->next)
+	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
 		printf("cs4281_trigger_input: bad addr %p\n", start);
 		return (EINVAL);
 	}
 
-	sc->sc_rcount = blksize / sc->hw_blocksize;
-	sc->sc_rs = (char *)start;
-	sc->sc_re = (char *)end;
-	sc->sc_rdma = p;
-	sc->sc_rbuf = KERNADDR(p);
-	sc->sc_ri = 0;
-	sc->sc_rn = sc->sc_rs;
-
-	dma_count = sc->dma_size;
-	if (param->precision == 8)
+	dma_count = (char *)end - (char *)start;
+	if (param->precision != 8)
 		dma_count /= 2;
 	if (param->channels > 1)
 		dma_count /= 2;
@@ -1157,7 +1126,8 @@ cs4281_reset_codec(void *addr)
 	while((BA0READ4(sc, CS4281_ACSTS) & ACSTS_CRDY) == 0) {
 		delay(100);
 		if (++n > 1000) {
-			printf("reset_codec: AC97 codec ready timeout\n");
+			printf("%s: AC97 codec ready timeout\n",
+			    sc->sc_dev.dv_xname);
 			return;
 		}
 	}
@@ -1244,20 +1214,7 @@ cs4281_close(void *addr)
 int
 cs4281_round_blocksize(void *addr, int blk)
 {
-	struct cs4281_softc *sc;
-	int retval;
-	
-	DPRINTFN(5,("cs4281_round_blocksize blk=%d -> ", blk));
-	
-	sc=addr;
-	if (blk < sc->hw_blocksize)
-		retval = sc->hw_blocksize;
-	else
-		retval = blk & -(sc->hw_blocksize);
-
-	DPRINTFN(5,("%d\n", retval));
-
-	return (retval);
+	return DMA_SIZE / 2;
 }
 
 int
@@ -1313,7 +1270,7 @@ cs4281_malloc(void *addr, int direction, size_t size, int pool, int flags)
 
 	p->next = sc->sc_dmas;
 	sc->sc_dmas = p;
-	return (BUFADDR(p));
+	return (KERNADDR(p));
 }
 
 
@@ -1326,12 +1283,11 @@ cs4281_free(void *addr, void *ptr, int pool)
 
 	sc = addr;
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
-		if (BUFADDR(p) == ptr) {
+		if (KERNADDR(p) == ptr) {
 			bus_dmamap_unload(sc->sc_dmatag, p->map);
 			bus_dmamap_destroy(sc->sc_dmatag, p->map);
 			bus_dmamem_unmap(sc->sc_dmatag, p->addr, p->size);
 			bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-			free(p->dum, pool, 0);
 			*pp = p->next;
 			free(p, pool, 0);
 			return;
@@ -1342,13 +1298,7 @@ cs4281_free(void *addr, void *ptr, int pool)
 size_t
 cs4281_round_buffersize(void *addr, int direction, size_t size)
 {
-	/* The real dma buffersize are 4KB for CS4280
-	 * and 64kB/MAX_CHANNELS for CS4281.
-	 * But they are too small for high quality audio,
-	 * let the upper layer(audio) use a larger buffer.
-	 * (originally suggested by Lennart Augustsson.)
-	 */
-	return (size);
+	return (DMA_SIZE);
 }
 
 paddr_t
@@ -1361,7 +1311,7 @@ cs4281_mappage(void *addr, void *mem, off_t off, int prot)
 	if (off < 0)
 		return -1;
 
-	for (p = sc->sc_dmas; p && BUFADDR(p) != mem; p = p->next)
+	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
 		;
 
 	if (!p) {
@@ -1471,15 +1421,17 @@ cs4281_allocmem(struct cs4281_softc *sc, size_t size, int pool, int flags,
 		struct cs4281_dma *p)
 {
 	int error;
-	size_t align;
 	
-	align   = sc->dma_align;
-	p->size = sc->dma_size;
+	if (size != DMA_SIZE) {
+		printf("%s: dma size is %zd should be %d\n",
+		    sc->sc_dev.dv_xname, size, DMA_SIZE);
+		return ENOMEM;
+
+	}
+	p->size = size;	
+
 	/* allocate memory for upper audio driver */
-	p->dum  = malloc(size, pool, flags);
-	if (!p->dum)
-		return (1);
-	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
+	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, DMA_ALIGN, 0,
 				 p->segs, nitems(p->segs),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error) {
