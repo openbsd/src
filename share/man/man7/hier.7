@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.141 2015/07/30 11:11:33 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.142 2015/08/04 06:34:24 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: August 4 2015 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -578,6 +578,10 @@ System information files describing various info about the
 system since it was booted.
 .Pp
 .Bl -tag -width Fl -compact
+.It rc.d/
+Details of currently running daemons;
+used by
+.Xr rc.d 8 .
 .It utmp
 Database of current users (see
 .Xr utmp 5 ) .
