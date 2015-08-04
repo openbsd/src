@@ -171,6 +171,7 @@
 ./etc/rc.d/ospfd
 ./etc/rc.d/pflogd
 ./etc/rc.d/portmap
+./etc/rc.d/radiusd
 ./etc/rc.d/rarpd
 ./etc/rc.d/rbootd
 ./etc/rc.d/rc.subr
