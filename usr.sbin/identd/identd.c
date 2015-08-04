@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.28 2015/03/27 07:16:38 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.29 2015/08/04 11:05:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -473,11 +473,14 @@ parent_wr(int fd, short events, void *arg)
 
 	n = writev(fd, iov, iovcnt);
 	if (n == -1) {
-		if (errno == EAGAIN) {
+		switch (errno) {
+		case EINTR:
+		case EAGAIN:
 			event_add(&proc_wr, NULL);
 			return;
+		default:
+			lerr(1, "parent write");
 		}
-		lerr(1, "parent write");
 	}
 
 	if (n != sizeof(r->error) + r->buflen)
@@ -585,6 +588,7 @@ child_wr(int fd, short events, void *arg)
 	switch (n) {
 	case -1:
 		switch (errno) {
+		case EINTR:
 		case EAGAIN:
 			event_add(&proc_wr, NULL);
 			return;
@@ -866,9 +870,10 @@ identd_resolving(int fd, short events, void *arg)
 		case EAGAIN:
 			return;
 		default:
-			lerrx(1, "resolving read");
+			lwarn("resolving read");
+			break;
 		}
-		/* NOTREACHED */
+		break;
 	case 0:
 		ldebug("%s closed connection during resolving",
 		    gethost(&c->client.ss));
@@ -989,7 +994,8 @@ identd_response(int fd, short events, void *arg)
 				/* meh, try a write */
 				break;
 			default:
-				lerrx(1, "response read");
+				lwarn("response read");
+				goto done;
 			}
 			break;
 		case 0:
@@ -1012,6 +1018,7 @@ identd_response(int fd, short events, void *arg)
 	n = write(fd, c->buf + c->bufoff, c->buflen - c->bufoff);
 	if (n == -1) {
 		switch (errno) {
+		case EINTR:
 		case EAGAIN:
 			return; /* try again later */
 		default:
