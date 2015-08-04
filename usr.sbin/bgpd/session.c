@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.339 2015/07/20 16:10:38 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.340 2015/08/04 14:46:38 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -485,13 +485,13 @@ session_main(int debug, int verbose)
 			pauseaccept = 0;
 
 		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1)
-			fatalx("Lost connection to parent");
+			fatalx("SE: Lost connection to parent");
 		else
 			session_dispatch_imsg(ibuf_main, PFD_PIPE_MAIN,
 			    &listener_cnt);
 
 		if (handle_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde) == -1) {
-			log_warnx("Lost connection to RDE");
+			log_warnx("SE: Lost connection to RDE");
 			msgbuf_clear(&ibuf_rde->w);
 			free(ibuf_rde);
 			ibuf_rde = NULL;
@@ -501,7 +501,7 @@ session_main(int debug, int verbose)
 
 		if (handle_pollfd(&pfd[PFD_PIPE_ROUTE_CTL], ibuf_rde_ctl) ==
 		    -1) {
-			log_warnx("Lost connection to RDE");
+			log_warnx("SE: Lost connection to RDE control");
 			msgbuf_clear(&ibuf_rde_ctl->w);
 			free(ibuf_rde_ctl);
 			ibuf_rde_ctl = NULL;

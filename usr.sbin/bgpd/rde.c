@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.335 2015/07/20 16:10:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.336 2015/08/04 14:46:38 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -270,7 +270,7 @@ rde_main(int debug, int verbose)
 			rde_dispatch_imsg_parent(ibuf_main);
 
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se) == -1) {
-			log_warnx("Lost connection to SE");
+			log_warnx("RDE: Lost connection to SE");
 			msgbuf_clear(&ibuf_se->w);
 			free(ibuf_se);
 			ibuf_se = NULL;
@@ -279,7 +279,7 @@ rde_main(int debug, int verbose)
 
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION_CTL], ibuf_se_ctl) ==
 		    -1) {
-			log_warnx("Lost connection to SE");
+			log_warnx("RDE: Lost connection to SE control");
 			msgbuf_clear(&ibuf_se_ctl->w);
 			free(ibuf_se_ctl);
 			ibuf_se_ctl = NULL;

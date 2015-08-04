@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.178 2015/07/20 16:10:37 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.179 2015/08/04 14:46:38 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 			}
 
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se) == -1) {
-			log_warnx("Lost connection to SE");
+			log_warnx("main: Lost connection to SE");
 			msgbuf_clear(&ibuf_se->w);
 			free(ibuf_se);
 			ibuf_se = NULL;
@@ -270,7 +270,7 @@ main(int argc, char *argv[])
 		}
 
 		if (handle_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde) == -1) {
-			log_warnx("Lost connection to RDE");
+			log_warnx("main: Lost connection to RDE");
 			msgbuf_clear(&ibuf_rde->w);
 			free(ibuf_rde);
 			ibuf_rde = NULL;
