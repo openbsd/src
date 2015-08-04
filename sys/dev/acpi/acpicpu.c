@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.65 2015/07/18 15:20:13 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.66 2015/08/04 05:15:02 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -490,12 +490,12 @@ acpicpu_getcst(struct acpicpu_softc *sc)
 		free(cx, M_DEVBUF, sizeof(*cx));
 	}
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res))
-		return (1);
-
 	/* provide a fallback C1-via-halt in case _CST's C1 is bogus */
 	acpicpu_add_cstate(sc, ACPI_STATE_C1, CST_METH_HALT,
 	    CST_FLAG_FALLBACK, 1, -1, 0);
+
+	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CST", 0, NULL, &res))
+		return (1);
 
 	aml_foreachpkg(&res, 1, acpicpu_add_cstatepkg, sc);
 	aml_freevalue(&res);
