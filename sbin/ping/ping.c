@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.123 2015/05/02 18:03:37 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.124 2015/08/05 12:46:12 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -651,7 +651,7 @@ pinger(void)
 
 		memcpy(&outpack[8], &payload, sizeof(payload));
 
-		if (!(options & F_PINGFILLED) && datalen > sizeof(payload)) {
+		if (!(options & F_PINGFILLED) && datalen >= sizeof(payload)) {
 			u_int8_t *dp = &outpack[8 + sizeof(payload)];
 
 			chacha_ivsetup(&fill_stream, payload.mac);
@@ -803,7 +803,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 				(void)printf(" (TRUNC!)");
 			cp = (u_char *)&icp->icmp_data[sizeof(struct payload)];
 			dp = &outpack[8 + sizeof(struct payload)];
-			if (!(options & F_PINGFILLED)) {
+			if (!(options & F_PINGFILLED) && datalen >= sizeof(payload)) {
 				chacha_ivsetup(&fill_stream, payload.mac);
 				chacha_encrypt_bytes(&fill_stream, dp, dp,
 				    datalen - sizeof(payload));
