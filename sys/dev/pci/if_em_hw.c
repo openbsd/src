@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.86 2015/07/17 16:56:34 yuo Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.87 2015/08/05 18:31:14 sf Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -91,6 +91,7 @@ static int32_t	em_id_led_init(struct em_hw *);
 static int32_t	em_init_lcd_from_nvm_config_region(struct em_hw *,  uint32_t,
 		    uint32_t);
 static int32_t	em_init_lcd_from_nvm(struct em_hw *);
+static int32_t	em_phy_no_cable_workaround(struct em_hw *);
 static void	em_init_rx_addrs(struct em_hw *);
 static void	em_initialize_hardware_bits(struct em_hw *);
 static boolean_t em_is_onboard_nvm_eeprom(struct em_hw *);
@@ -7018,6 +7019,96 @@ em_read_mac_addr(struct em_hw *hw)
 }
 
 /******************************************************************************
+ * Explicitly disables jumbo frames and resets some PHY registers back to hw-
+ * defaults. This is necessary in case the ethernet cable was inserted AFTER
+ * the firmware initialized the PHY. Otherwise it is left in a state where
+ * it is possible to transmit but not receive packets. Observed on I217-LM and
+ * fixed in FreeBSD's sys/dev/e1000/e1000_ich8lan.c.
+ *
+ * hw - Struct containing variables accessed by shared code
+ *****************************************************************************/
+STATIC int32_t
+em_phy_no_cable_workaround(struct em_hw *hw) {
+	int32_t ret_val, dft_ret_val;
+	uint32_t mac_reg;
+	uint16_t data, phy_reg;
+
+	/* disable Rx path while enabling workaround */
+	em_read_phy_reg(hw, I2_DFT_CTRL, &phy_reg);
+	ret_val = em_write_phy_reg(hw, I2_DFT_CTRL, phy_reg | (1 << 14));
+	if (ret_val)
+		return ret_val;
+
+	/* Write MAC register values back to h/w defaults */
+	mac_reg = E1000_READ_REG(hw, FFLT_DBG);
+	mac_reg &= ~(0xF << 14);
+	E1000_WRITE_REG(hw, FFLT_DBG, mac_reg);
+
+	mac_reg = E1000_READ_REG(hw, RCTL);
+	mac_reg &= ~E1000_RCTL_SECRC;
+	E1000_WRITE_REG(hw, RCTL, mac_reg);
+
+	ret_val = em_read_kmrn_reg(hw, E1000_KUMCTRLSTA_OFFSET_CTRL, &data);
+	if (ret_val)
+		goto out;
+	ret_val = em_write_kmrn_reg(hw, E1000_KUMCTRLSTA_OFFSET_CTRL,
+	    data & ~(1 << 0));
+	if (ret_val)
+		goto out;
+
+	ret_val = em_read_kmrn_reg(hw, E1000_KUMCTRLSTA_OFFSET_HD_CTRL, &data);
+	if (ret_val)
+		goto out;
+
+	data &= ~(0xF << 8);
+	data |= (0xB << 8);
+	ret_val = em_write_kmrn_reg(hw, E1000_KUMCTRLSTA_OFFSET_HD_CTRL, data);
+	if (ret_val)
+		goto out;
+
+	/* Write PHY register values back to h/w defaults */
+	em_read_phy_reg(hw, I2_SMBUS_CTRL, &data);
+	data &= ~(0x7F << 5);
+	ret_val = em_write_phy_reg(hw, I2_SMBUS_CTRL, data);
+	if (ret_val)
+		goto out;
+
+	em_read_phy_reg(hw, I2_MODE_CTRL, &data);
+	data |= (1 << 13);
+	ret_val = em_write_phy_reg(hw, I2_MODE_CTRL, data);
+	if (ret_val)
+		goto out;
+
+	/*
+	 * 776.20 and 776.23 are not documented in
+	 * i217-ethernet-controller-datasheet.pdf...
+	 */
+	em_read_phy_reg(hw, PHY_REG(776, 20), &data);
+	data &= ~(0x3FF << 2);
+	data |= (0x8 << 2);
+	ret_val = em_write_phy_reg(hw, PHY_REG(776, 20), data);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, PHY_REG(776, 23), 0x7E00);
+	if (ret_val)
+		goto out;
+
+	em_read_phy_reg(hw, I2_PCIE_POWER_CTRL, &data);
+	ret_val = em_write_phy_reg(hw, I2_PCIE_POWER_CTRL, data & ~(1 << 10));
+	if (ret_val)
+		goto out;
+
+out:
+	/* re-enable Rx path after enabling workaround */
+	dft_ret_val = em_write_phy_reg(hw, I2_DFT_CTRL, phy_reg & ~(1 << 14));
+	if (ret_val)
+		return ret_val;
+	else
+		return dft_ret_val;
+}
+
+/******************************************************************************
  * Initializes receive address filters.
  *
  * hw - Struct containing variables accessed by shared code
@@ -7032,6 +7123,11 @@ em_init_rx_addrs(struct em_hw *hw)
 	uint32_t i;
 	uint32_t rar_num;
 	DEBUGFUNC("em_init_rx_addrs");
+
+	if (hw->mac_type == em_pch_lpt || hw->mac_type == em_pch2lan)
+		if (em_phy_no_cable_workaround(hw))
+			printf(" ...failed to apply em_phy_no_cable_"
+			    "workaround.\n");
 
 	/* Setup the receive address. */
 	DEBUGOUT("Programming MAC Address into RAR[0]\n");

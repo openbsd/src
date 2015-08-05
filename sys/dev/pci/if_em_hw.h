@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.65 2015/06/04 18:33:41 dms Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.66 2015/08/05 18:31:14 sf Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -3712,6 +3712,12 @@ union ich8_hws_flash_regacc {
 
 #define HV_KMRN_MODE_CTRL	PHY_REG(769, 16)
 #define HV_KMRN_MDIO_SLOW	0x0400
+
+/* I217 definitions */
+#define I2_DFT_CTRL		PHY_REG(769, 20)
+#define I2_SMBUS_CTRL		PHY_REG(769, 23)
+#define I2_MODE_CTRL		HV_KMRN_MODE_CTRL
+#define I2_PCIE_POWER_CTRL	IGP3_KMRN_POWER_MNG_CTRL
 
 /* BM/HV Specific Registers */
 #define BM_PORT_CTRL_PAGE                 769
