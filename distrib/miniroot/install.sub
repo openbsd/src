@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.852 2015/08/06 06:39:41 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.853 2015/08/06 13:15:53 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1639,7 +1639,7 @@ ask_root_sshd() {
 	if [[ -z $user ]]; then
 		echo "Since no user was setup, root logins via sshd(8) might be useful."
 	fi
-	echo "WARNING: root is targetted by password guessing attacks, pubkeys are safer."
+	echo "WARNING: root is targeted by password guessing attacks, pubkeys are safer."
 	while :; do
 		ask "Allow root ssh login? (yes, no, pubkeys-only)" pubkeys-only
 		_resp=$resp
