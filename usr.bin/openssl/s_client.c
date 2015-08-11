@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.14 2015/07/17 16:07:44 doug Exp $ */
+/* $OpenBSD: s_client.c,v 1.15 2015/08/11 05:01:03 landry Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -237,6 +237,7 @@ sc_usage(void)
 	BIO_printf(bio_err, "                 'prot' defines which one to assume.  Currently,\n");
 	BIO_printf(bio_err, "                 only \"smtp\", \"lmtp\", \"pop3\", \"imap\", \"ftp\" and \"xmpp\"\n");
 	BIO_printf(bio_err, "                 are supported.\n");
+	BIO_printf(bio_err, " -xmpphost host - connect to this virtual host on the xmpp server\n");
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
 #endif
@@ -334,6 +335,7 @@ s_client_main(int argc, char **argv)
 	char *port = PORT_STR;
 	int full_log = 1;
 	char *host = SSL_HOST_NAME;
+	char *xmpphost = NULL;
 	char *proxy = NULL, *connect = NULL;
 	char *cert_file = NULL, *key_file = NULL;
 	int cert_format = FORMAT_PEM, key_format = FORMAT_PEM;
@@ -414,6 +416,10 @@ s_client_main(int argc, char **argv)
 			if (--argc < 1)
 				goto bad;
 			proxy = *(++argv);
+		} else if (strcmp(*argv,"-xmpphost") == 0) {
+			if (--argc < 1)
+				goto bad;
+			xmpphost= *(++argv);
 		} else if (strcmp(*argv, "-verify") == 0) {
 			verify = SSL_VERIFY_PEER;
 			if (--argc < 1)
@@ -982,13 +988,20 @@ re_start:
 		int seen = 0;
 		BIO_printf(sbio, "<stream:stream "
 		    "xmlns:stream='http://etherx.jabber.org/streams' "
-		    "xmlns='jabber:client' to='%s' version='1.0'>", host);
+		    "xmlns='jabber:client' to='%s' version='1.0'>", xmpphost ? xmpphost : host);
 		seen = BIO_read(sbio, mbuf, BUFSIZZ);
+
+		if (seen <= 0)
+			goto shut;
+
 		mbuf[seen] = 0;
-		while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'")) {
-			if (strstr(mbuf, "/stream:features>"))
-				goto shut;
+		while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'") &&
+		       !strstr(mbuf, "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"")) {
 			seen = BIO_read(sbio, mbuf, BUFSIZZ);
+
+			if (seen <= 0)
+				goto shut;
+
 			mbuf[seen] = 0;
 		}
 		BIO_printf(sbio, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");

@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.18 2015/08/02 12:43:44 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.19 2015/08/11 05:01:03 landry Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 2 2015 $
+.Dd $Mdocdate: August 11 2015 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6487,6 +6487,7 @@ which it can be seen agrees with the recovered value above.
 .Op Fl tlsextdebug
 .Op Fl verify Ar depth
 .Op Fl x509_strict
+.Op Fl xmpphost Ar host
 .Ek
 .nr nS 0
 .Pp
@@ -6675,6 +6676,13 @@ Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen.
 As a side effect the connection will never fail due to a server
 certificate verify failure.
+.It Fl xmpphost Ar hostname
+This option, when used with
+.Fl starttls Ar xmpp ,
+specifies the host for the "to" attribute of the stream element.
+If this option is not specified then the host specified with
+.Fl connect
+will be used.
 .El
 .Sh S_CLIENT CONNECTED COMMANDS
 If a connection is established with an SSL server, any data received
