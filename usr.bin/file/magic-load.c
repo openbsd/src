@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.13 2015/08/11 22:23:51 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.14 2015/08/11 22:27:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1024,8 +1024,6 @@ magic_load(FILE *f, const char *path, int warnings)
 			 * case it has any children.
 			 */
 			ml->type = MAGIC_TYPE_NONE;
-			ml = NULL;
-			continue;
 		}
 
 		ml->strength = magic_get_strength(ml);
