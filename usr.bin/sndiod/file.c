@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2015/08/01 10:47:30 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2015/08/11 16:43:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,6 +64,7 @@
 void timo_update(unsigned int);
 void timo_init(void);
 void timo_done(void);
+void file_process(struct file *, struct pollfd *);
 
 struct timespec file_ts;
 struct file *file_list;
@@ -316,7 +317,7 @@ file_poll(void)
 	int i;
 #endif
 	long long delta_nsec;
-	int nfds, res;
+	int nfds, res, timo;
 
 	log_flush();
 
@@ -380,14 +381,22 @@ file_poll(void)
 	}
 
 	/*
-	 * sleep
+	 * Sleep. Calculate the number off milliseconds poll(2) must
+	 * wait before the timo_update() needs to be called. If there're
+	 * no timeouts scheduled, then call poll(2) with -1 timeout.
 	 */
 #ifdef DEBUG
 	clock_gettime(CLOCK_MONOTONIC, &sleepts);
 	file_utime += 1000000000LL * (sleepts.tv_sec - file_ts.tv_sec);
 	file_utime += sleepts.tv_nsec - file_ts.tv_nsec;
 #endif
-	res = poll(pfds, nfds, TIMER_MSEC);
+	if (timo_queue != NULL) {
+		timo = ((int)timo_queue->val - (int)timo_abstime) / 1000;
+		if (timo < TIMER_MSEC)
+			timo = TIMER_MSEC;
+	} else
+		timo = -1;
+	res = poll(pfds, nfds, timo);
 	if (res < 0) {
 		if (errno != EINTR)
 			err(1, "poll");
