@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.80 2015/07/30 17:02:17 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.81 2015/08/11 13:15:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -595,8 +595,7 @@ pmap_reference(pmap_t pmap)
 
 	DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
-	if (pmap)
-		pmap->pm_count++;
+	pmap->pm_count++;
 }
 
 /*
@@ -645,9 +644,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		("pmap_remove(%p, %p, %p)\n", pmap, (void *)sva, (void *)eva));
 
 	stat_count(remove_stats.calls);
-
-	if (pmap == NULL)
-		return;
 
 	KERNEL_LOCK();
 	if (pmap == pmap_kernel()) {
