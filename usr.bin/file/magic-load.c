@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.10 2015/08/11 22:06:19 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.11 2015/08/11 22:12:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -842,19 +842,34 @@ magic_parse_value(struct magic_line *ml, char **line)
 		*cp++ = *(*line)++;
 	*cp = '\0';
 
-	if (*ml->type_string == 'u')
-		endptr = magic_strtoull(copy, &ml->test_unsigned);
-	else {
-		endptr = magic_strtoll(copy, &ml->test_signed);
-		if (endptr == NULL || *endptr != '\0') {
-			/*
-			 * If we can't parse this as a signed number, try as
-			 * unsigned instead.
-			 */
-			endptr = magic_strtoull(copy, &u);
-			if (endptr != NULL && *endptr == '\0')
-				ml->test_signed = (int64_t)u;
+	switch (ml->type) {
+	case MAGIC_TYPE_FLOAT:
+	case MAGIC_TYPE_DOUBLE:
+	case MAGIC_TYPE_BEFLOAT:
+	case MAGIC_TYPE_BEDOUBLE:
+	case MAGIC_TYPE_LEFLOAT:
+	case MAGIC_TYPE_LEDOUBLE:
+		errno = 0;
+		ml->test_double = strtod(copy, &endptr);
+		if (errno == ERANGE)
+			endptr = NULL;
+		break;
+	default:
+		if (*ml->type_string == 'u')
+			endptr = magic_strtoull(copy, &ml->test_unsigned);
+		else {
+			endptr = magic_strtoll(copy, &ml->test_signed);
+			if (endptr == NULL || *endptr != '\0') {
+				/*
+				 * If we can't parse this as a signed number,
+				 * try as unsigned instead.
+				 */
+				endptr = magic_strtoull(copy, &u);
+				if (endptr != NULL && *endptr == '\0')
+					ml->test_signed = (int64_t)u;
+			}
 		}
+		break;
 	}
 	if (endptr == NULL || *endptr != '\0') {
 		magic_warn(ml, "can't parse number: %s", copy);

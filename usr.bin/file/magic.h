@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.h,v 1.7 2015/08/11 21:42:16 nicm Exp $ */
+/* $OpenBSD: magic.h,v 1.8 2015/08/11 22:12:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -129,6 +129,7 @@ struct magic_line {
 	size_t			 test_string_size;
 	uint64_t		 test_unsigned;
 	int64_t			 test_signed;
+	double			 test_double;
 
 	int			 stringify;
 	const char		*result;

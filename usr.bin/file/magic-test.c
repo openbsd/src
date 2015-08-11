@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.6 2015/05/29 15:58:01 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.7 2015/08/11 22:12:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -201,6 +201,18 @@ magic_test_unsigned(struct magic_line *ml, uint64_t value, uint64_t wanted)
 		return ((value & wanted) == wanted);
 	case '^':
 		return ((~value & wanted) == wanted);
+	}
+	return (-1);
+}
+
+static int
+magic_test_double(struct magic_line *ml, double value, double wanted)
+{
+	switch (ml->test_operator) {
+	case 'x':
+		return (1);
+	case '=':
+		return (value == wanted);
 	}
 	return (-1);
 }
@@ -417,6 +429,7 @@ magic_test_type_float(struct magic_line *ml, struct magic_state *ms)
 {
 	uint32_t	value0;
 	double		value;
+	int		result;
 
 	if (magic_copy_from(ms, -1, &value0, sizeof value0) != 0)
 		return (0);
@@ -429,11 +442,11 @@ magic_test_type_float(struct magic_line *ml, struct magic_state *ms)
 	if (ml->type_operator != ' ')
 		return (-1);
 
-	if (ml->test_operator != 'x')
-		return (-1);
-
-	magic_add_result(ms, ml, "%g", value);
-	ms->offset += sizeof value0;
+	result = magic_test_double(ml, value, (float)ml->test_double);
+	if (result == !ml->test_not && ml->result != NULL) {
+		magic_add_result(ms, ml, "%g", value);
+		ms->offset += sizeof value0;
+	}
 	return (1);
 }
 
@@ -442,6 +455,7 @@ magic_test_type_double(struct magic_line *ml, struct magic_state *ms)
 {
 	uint64_t	value0;
 	double		value;
+	int		result;
 
 	if (magic_copy_from(ms, -1, &value0, sizeof value0) != 0)
 		return (0);
@@ -454,11 +468,11 @@ magic_test_type_double(struct magic_line *ml, struct magic_state *ms)
 	if (ml->type_operator != ' ')
 		return (-1);
 
-	if (ml->test_operator != 'x')
-		return (-1);
-
-	magic_add_result(ms, ml, "%g", value);
-	ms->offset += sizeof value0;
+	result = magic_test_double(ml, value, (double)ml->test_double);
+	if (result == !ml->test_not && ml->result != NULL) {
+		magic_add_result(ms, ml, "%g", value);
+		ms->offset += sizeof value0;
+	}
 	return (1);
 }
 
