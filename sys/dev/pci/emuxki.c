@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.48 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.49 2015/08/11 21:10:59 ratchov Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -543,7 +543,7 @@ emuxki_activate(struct device *self, int act)
 
 /* Misc stuff relative to emu10k1 */
 
-static __inline u_int32_t
+static u_int32_t
 emuxki_rate_to_pitch(u_int32_t rate)
 {
 	static const u_int32_t logMagTable[128] = {
@@ -605,7 +605,7 @@ emuxki_rate_to_pitch(u_int32_t rate)
 
 /* Emu10k1 Low level */
 
-static __inline u_int32_t
+static u_int32_t
 emuxki_read(struct emuxki_softc *sc, u_int16_t chano, u_int32_t reg)
 {
 	u_int32_t       ptr, mask = 0xffffffff;
@@ -627,7 +627,7 @@ emuxki_read(struct emuxki_softc *sc, u_int16_t chano, u_int32_t reg)
 	return (ptr);
 }
 
-static __inline void
+static void
 emuxki_write(struct emuxki_softc *sc, u_int16_t chano,
 	      u_int32_t reg, u_int32_t data)
 {
