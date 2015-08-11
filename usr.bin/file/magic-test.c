@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.9 2015/08/11 22:48:09 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.10 2015/08/11 23:03:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -603,6 +603,7 @@ magic_test_type_string(struct magic_line *ml, struct magic_state *ms)
 		result = result > 0;
 		break;
 	case '=':
+		slen = ml->test_string_size; /* only print what was found */
 		result = result == 0;
 		break;
 	default:
