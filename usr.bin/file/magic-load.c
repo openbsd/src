@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.15 2015/08/11 22:35:54 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.16 2015/08/11 22:48:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -612,24 +612,48 @@ magic_parse_type(struct magic_line *ml, char **line)
 	*cp = '\0';
 
 	ml->type = MAGIC_TYPE_NONE;
-	ml->type_string = xstrdup(s);
-
 	ml->type_operator = ' ';
 	ml->type_operand = 0;
 
-	if (strncmp(s, "string", (sizeof "string") - 1) == 0) {
+	if (strncmp(s, "string", (sizeof "string") - 1) == 0 ||
+	    strncmp(s, "ustring", (sizeof "ustring") - 1) == 0) {
+		if (*s == 'u')
+			ml->type_string = xstrdup(s + 1);
+		else
+			ml->type_string = xstrdup(s);
 		ml->type = MAGIC_TYPE_STRING;
 		magic_mark_text(ml, 0);
 		goto done;
 	}
-	if (strncmp(s, "search", (sizeof "search") - 1) == 0) {
+	if (strncmp(s, "pstring", (sizeof "pstring") - 1) == 0 ||
+	    strncmp(s, "upstring", (sizeof "upstring") - 1) == 0) {
+		if (*s == 'u')
+			ml->type_string = xstrdup(s + 1);
+		else
+			ml->type_string = xstrdup(s);
+		ml->type = MAGIC_TYPE_PSTRING;
+		magic_mark_text(ml, 0);
+		goto done;
+	}
+	if (strncmp(s, "search", (sizeof "search") - 1) == 0 ||
+	    strncmp(s, "usearch", (sizeof "usearch") - 1) == 0) {
+		if (*s == 'u')
+			ml->type_string = xstrdup(s + 1);
+		else
+			ml->type_string = xstrdup(s);
 		ml->type = MAGIC_TYPE_SEARCH;
 		goto done;
 	}
-	if (strncmp(s, "regex", (sizeof "regex") - 1) == 0) {
+	if (strncmp(s, "regex", (sizeof "regex") - 1) == 0 ||
+	    strncmp(s, "uregex", (sizeof "uregex") - 1) == 0) {
+		if (*s == 'u')
+			ml->type_string = xstrdup(s + 1);
+		else
+			ml->type_string = xstrdup(s);
 		ml->type = MAGIC_TYPE_REGEX;
 		goto done;
 	}
+	ml->type_string = xstrdup(s);
 
 	cp = &s[strcspn(s, "+-&/%*")];
 	if (*cp != '\0') {
@@ -658,12 +682,10 @@ magic_parse_type(struct magic_line *ml, char **line)
 		ml->type = MAGIC_TYPE_ULONG;
 	else if (strcmp(s, "uquad") == 0)
 		ml->type = MAGIC_TYPE_UQUAD;
-	else if (strcmp(s, "float") == 0)
+	else if (strcmp(s, "float") == 0 || strcmp(s, "ufloat") == 0)
 		ml->type = MAGIC_TYPE_FLOAT;
-	else if (strcmp(s, "double") == 0)
+	else if (strcmp(s, "double") == 0 || strcmp(s, "udouble") == 0)
 		ml->type = MAGIC_TYPE_DOUBLE;
-	else if (strcmp(s, "pstring") == 0)
-		ml->type = MAGIC_TYPE_PSTRING;
 	else if (strcmp(s, "date") == 0)
 		ml->type = MAGIC_TYPE_DATE;
 	else if (strcmp(s, "qdate") == 0)
@@ -692,9 +714,9 @@ magic_parse_type(struct magic_line *ml, char **line)
 		ml->type = MAGIC_TYPE_UBELONG;
 	else if (strcmp(s, "ubequad") == 0)
 		ml->type = MAGIC_TYPE_UBEQUAD;
-	else if (strcmp(s, "befloat") == 0)
+	else if (strcmp(s, "befloat") == 0 || strcmp(s, "ubefloat") == 0)
 		ml->type = MAGIC_TYPE_BEFLOAT;
-	else if (strcmp(s, "bedouble") == 0)
+	else if (strcmp(s, "bedouble") == 0 || strcmp(s, "ubedouble") == 0)
 		ml->type = MAGIC_TYPE_BEDOUBLE;
 	else if (strcmp(s, "bedate") == 0)
 		ml->type = MAGIC_TYPE_BEDATE;
@@ -712,7 +734,7 @@ magic_parse_type(struct magic_line *ml, char **line)
 		ml->type = MAGIC_TYPE_UBELDATE;
 	else if (strcmp(s, "ubeqldate") == 0)
 		ml->type = MAGIC_TYPE_UBEQLDATE;
-	else if (strcmp(s, "bestring16") == 0)
+	else if (strcmp(s, "bestring16") == 0 || strcmp(s, "ubestring16") == 0)
 		ml->type = MAGIC_TYPE_BESTRING16;
 	else if (strcmp(s, "leshort") == 0)
 		ml->type = MAGIC_TYPE_LESHORT;
@@ -726,9 +748,9 @@ magic_parse_type(struct magic_line *ml, char **line)
 		ml->type = MAGIC_TYPE_ULELONG;
 	else if (strcmp(s, "ulequad") == 0)
 		ml->type = MAGIC_TYPE_ULEQUAD;
-	else if (strcmp(s, "lefloat") == 0)
+	else if (strcmp(s, "lefloat") == 0 || strcmp(s, "ulefloat") == 0)
 		ml->type = MAGIC_TYPE_LEFLOAT;
-	else if (strcmp(s, "ledouble") == 0)
+	else if (strcmp(s, "ledouble") == 0 || strcmp(s, "uledouble") == 0)
 		ml->type = MAGIC_TYPE_LEDOUBLE;
 	else if (strcmp(s, "ledate") == 0)
 		ml->type = MAGIC_TYPE_LEDATE;
@@ -746,15 +768,15 @@ magic_parse_type(struct magic_line *ml, char **line)
 		ml->type = MAGIC_TYPE_ULELDATE;
 	else if (strcmp(s, "uleqldate") == 0)
 		ml->type = MAGIC_TYPE_ULEQLDATE;
-	else if (strcmp(s, "lestring16") == 0)
+	else if (strcmp(s, "lestring16") == 0 || strcmp(s, "ulestring16") == 0)
 		ml->type = MAGIC_TYPE_LESTRING16;
-	else if (strcmp(s, "melong") == 0)
+	else if (strcmp(s, "melong") == 0 || strcmp(s, "umelong") == 0)
 		ml->type = MAGIC_TYPE_MELONG;
-	else if (strcmp(s, "medate") == 0)
+	else if (strcmp(s, "medate") == 0 || strcmp(s, "umedate") == 0)
 		ml->type = MAGIC_TYPE_MEDATE;
-	else if (strcmp(s, "meldate") == 0)
+	else if (strcmp(s, "meldate") == 0 || strcmp(s, "umeldate") == 0)
 		ml->type = MAGIC_TYPE_MELDATE;
-	else if (strcmp(s, "default") == 0)
+	else if (strcmp(s, "default") == 0 || strcmp(s, "udefault") == 0)
 		ml->type = MAGIC_TYPE_DEFAULT;
 	else {
 		magic_warn(ml, "unknown type: %s", s);

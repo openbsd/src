@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.8 2015/08/11 22:18:43 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.9 2015/08/11 22:48:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -621,9 +621,22 @@ magic_test_type_string(struct magic_line *ml, struct magic_state *ms)
 static int
 magic_test_type_pstring(struct magic_line *ml, struct magic_state *ms)
 {
-	const char	*s;
+	const char	*s, *cp;
 	size_t		 slen;
 	int		 result;
+
+	cp = &ml->type_string[(sizeof "pstring") - 1];
+	if (*cp != '\0') {
+		if (*cp != '/')
+			return (-1);
+		cp++;
+		for (; *cp != '\0'; cp++) {
+			switch (*cp) {
+			default:
+				return (-1);
+			}
+		}
+	}
 
 	s = ms->base + ms->offset;
 	if (ms->size - ms->offset < 1)
