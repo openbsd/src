@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-common.c,v 1.1 2015/04/24 16:24:11 nicm Exp $ */
+/* $OpenBSD: magic-common.c,v 1.2 2015/08/11 21:42:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -63,21 +63,35 @@ magic_strtoll(const char *s, int64_t *i)
 }
 
 void
+magic_vwarnm(struct magic *m, u_int line, const char *fmt, va_list ap)
+{
+	char	*msg;
+
+	if (!m->warnings)
+		return;
+
+	if (vasprintf(&msg, fmt, ap) == -1)
+		return;
+	fprintf(stderr, "%s:%u: %s\n", m->path, line, msg);
+	free(msg);
+}
+
+void
+magic_warnm(struct magic *m, u_int line, const char *fmt, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, fmt);
+	magic_vwarnm (m, line, fmt, ap);
+	va_end(ap);
+}
+
+void
 magic_warn(struct magic_line *ml, const char *fmt, ...)
 {
 	va_list	 ap;
-	char	*msg;
-
-	if (!ml->root->warnings)
-		return;
 
 	va_start(ap, fmt);
-	if (vasprintf(&msg, fmt, ap) == -1) {
-		va_end(ap);
-		return;
-	}
+	magic_vwarnm (ml->root, ml->line, fmt, ap);
 	va_end(ap);
-
-	fprintf(stderr, "%s:%u: %s\n", ml->root->path, ml->line, msg);
-	free(msg);
 }
