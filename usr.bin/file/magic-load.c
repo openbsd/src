@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.12 2015/08/11 22:18:43 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.13 2015/08/11 22:23:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -283,6 +283,9 @@ magic_get_strength(struct magic_line *ml)
 {
 	int	n;
 	size_t	size;
+
+	if (ml->type == MAGIC_TYPE_NONE)
+		return (0);
 
 	if (ml->test_not || ml->test_operator == 'x')
 		return (1);
@@ -884,17 +887,6 @@ fail:
 	return (-1);
 }
 
-static void
-magic_free_line(struct magic_line *ml)
-{
-	free((void *)ml->type_string);
-
-	free((void *)ml->mimetype);
-	free((void *)ml->result);
-
-	free(ml);
-}
-
 int
 magic_compare(struct magic_line *ml1, struct magic_line *ml2)
 {
@@ -1005,6 +997,11 @@ magic_load(FILE *f, const char *path, int warnings)
 		TAILQ_INIT(&ml->children);
 		ml->text = 1;
 
+		/*
+		 * At this point n is the level we want, level is the current
+		 * level. parent0 is the last line at the same level and parent
+		 * is the last line at the previous level.
+		 */
 		if (n == level + 1) {
 			parent = parent0;
 		} else if (n < level) {
@@ -1022,7 +1019,11 @@ magic_load(FILE *f, const char *path, int warnings)
 		    magic_parse_type(ml, &line) != 0 ||
 		    magic_parse_value(ml, &line) != 0 ||
 		    magic_set_result(ml, line) != 0) {
-			magic_free_line(ml);
+			/*
+			 * An invalid line still needs to appear in the tree in
+			 * case it has any children.
+			 */
+			ml->type = MAGIC_TYPE_NONE;
 			ml = NULL;
 			continue;
 		}
