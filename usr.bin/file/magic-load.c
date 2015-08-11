@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.7 2015/08/11 21:42:16 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.8 2015/08/11 21:52:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -262,7 +262,7 @@ magic_set_result(struct magic_line *ml, const char *s)
 			break;
 		case MAGIC_TYPE_BESTRING16:
 		case MAGIC_TYPE_LESTRING16:
-			magic_warn(ml, "unsupported type %s", ml->type_string);
+			magic_warn(ml, "unsupported type: %s", ml->type_string);
 			return (-1);
 		}
 	}
@@ -540,7 +540,7 @@ magic_parse_offset(struct magic_line *ml, char **line)
 
 	endptr = magic_strtoll(s, &ml->indirect_offset);
 	if (endptr == NULL) {
-		magic_warn(ml, "can't parse offset");
+		magic_warn(ml, "can't parse offset: %s", s);
 		goto fail;
 	}
 	s = endptr;
@@ -550,7 +550,7 @@ magic_parse_offset(struct magic_line *ml, char **line)
 	if (*s == '.') {
 		s++;
 		if (*s == '\0' || strchr("bslBSL", *s) == NULL) {
-			magic_warn(ml, "unknown offset type");
+			magic_warn(ml, "unknown offset type: %c", *s);
 			goto fail;
 		}
 		ml->indirect_type = *s;
@@ -560,7 +560,7 @@ magic_parse_offset(struct magic_line *ml, char **line)
 	}
 
 	if (*s == '\0' || strchr("+-*", *s) == NULL) {
-		magic_warn(ml, "unknown offset operator");
+		magic_warn(ml, "unknown offset operator: %c", *s);
 		goto fail;
 	}
 	ml->indirect_operator = *s;
@@ -633,7 +633,7 @@ magic_parse_type(struct magic_line *ml, char **line)
 		ml->type_operator = *cp;
 		endptr = magic_strtoull(cp + 1, &ml->type_operand);
 		if (endptr == NULL || *endptr != '\0') {
-			magic_warn(ml, "can't parse operand");
+			magic_warn(ml, "can't parse operand: %s", cp + 1);
 			goto fail;
 		}
 		*cp = '\0';
@@ -754,7 +754,7 @@ magic_parse_type(struct magic_line *ml, char **line)
 	else if (strcmp(s, "default") == 0)
 		ml->type = MAGIC_TYPE_DEFAULT;
 	else {
-		magic_warn(ml, "unknown type");
+		magic_warn(ml, "unknown type: %s", s);
 		goto fail;
 	}
 	magic_mark_text(ml, 0);
@@ -850,7 +850,7 @@ magic_parse_value(struct magic_line *ml, char **line)
 	else
 		endptr = magic_strtoll(s, &ml->test_signed);
 	if (endptr == NULL || *endptr != '\0') {
-		magic_warn(ml, "can't parse number");
+		magic_warn(ml, "can't parse number: %s", s);
 		goto fail;
 	}
 
