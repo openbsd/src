@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.16 2015/08/11 22:48:09 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.17 2015/08/11 23:17:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -192,6 +192,8 @@ magic_set_result(struct magic_line *ml, const char *s)
 		switch (ml->type) {
 		case MAGIC_TYPE_NONE:
 		case MAGIC_TYPE_DEFAULT:
+		case MAGIC_TYPE_BESTRING16:
+		case MAGIC_TYPE_LESTRING16:
 			return (0); /* don't use result */
 		case MAGIC_TYPE_BYTE:
 		case MAGIC_TYPE_UBYTE:
@@ -260,10 +262,6 @@ magic_set_result(struct magic_line *ml, const char *s)
 		case MAGIC_TYPE_SEARCH:
 			re = &ml->root->format_string;
 			break;
-		case MAGIC_TYPE_BESTRING16:
-		case MAGIC_TYPE_LESTRING16:
-			magic_warn(ml, "unsupported type: %s", ml->type_string);
-			return (-1);
 		}
 	}
 
