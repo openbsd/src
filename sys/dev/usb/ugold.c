@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.8 2015/07/15 08:39:11 jung Exp $   */
+/*	$OpenBSD: ugold.c,v 1.9 2015/08/11 13:37:44 jung Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <sasano@openbsd.org>
@@ -231,6 +231,21 @@ ugold_ds75_temp(uint8_t msb, uint8_t lsb)
 	return (((msb * 100) + ((lsb >> 4) * 25 / 4)) * 10000) + 273150000;
 }
 
+static void
+ugold_ds75_type(struct ugold_softc *sc, uint8_t *buf, u_int len)
+{
+	if (memcmp(buf, "TEMPer1F", len) == 0 ||
+	    memcmp(buf, "TEMPer2F", len) == 0 ||
+	    memcmp(buf, "TEMPerF1", len) == 0)
+		return; /* skip first half of the answer */
+
+	printf("%s: %d sensor%s type ds75/12bit (temperature)\n",
+	    sc->sc_hdev.sc_dev.dv_xname, sc->sc_num_sensors,
+	    (sc->sc_num_sensors == 1) ? "" : "s");
+
+	sc->sc_type = -1; /* ignore type */
+}
+
 void
 ugold_ds75_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
@@ -250,9 +265,6 @@ ugold_ds75_intr(struct uhidev *addr, void *ibuf, u_int len)
 			sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
 		}
 
-		printf("%s: %d sensor%s type ds75/12bit (temperature)\n",
-		    sc->sc_hdev.sc_dev.dv_xname, sc->sc_num_sensors,
-		    (sc->sc_num_sensors == 1) ? "" : "s");
 		break;
 	case UGOLD_CMD_DATA:
 		switch (buf[1]) {
@@ -272,8 +284,8 @@ ugold_ds75_intr(struct uhidev *addr, void *ibuf, u_int len)
 		}
 		break;
 	default:
-		if (!sc->sc_type) {
-			sc->sc_type = -1; /* ignore type */
+		if (!sc->sc_type) { /* type command returns arbitrary string */
+			ugold_ds75_type(sc, buf, len);
 			break;
 		}
 		printf("%s: unknown command 0x%02x\n",
@@ -308,8 +320,8 @@ ugold_si700x_rhum(int type, uint8_t msb, uint8_t lsb, int temp)
 	case UGOLD_TYPE_SI7005: /* 12bit 16 codes per %RH 0x0000 = -24 %RH */
 		rhum = (((rhum & 0x0fff) * 1000) / 16) - 24000;
 #if 0		/* todo: linearization and temperature compensation */
-        	rhum -= -0.00393 * rhum * rhum + 0.4008 * rhum - 4.7844;
-        	rhum += (temp - 30) * (0.00237 * rhum + 0.1973);
+		rhum -= -0.00393 * rhum * rhum + 0.4008 * rhum - 4.7844;
+		rhum += (temp - 30) * (0.00237 * rhum + 0.1973);
 #endif
 		break;
 	case UGOLD_TYPE_SI7006: /* 14bit and status bit */
@@ -324,7 +336,7 @@ ugold_si700x_rhum(int type, uint8_t msb, uint8_t lsb, int temp)
 		rhum = 0;
 	else if (rhum > 100000)
 		rhum = 100000;
-        return rhum;
+	return rhum;
 }
 
 static void
@@ -342,8 +354,10 @@ ugold_si700x_type(struct ugold_softc *sc, uint8_t *buf, u_int len)
 	} else if (memcmp(buf, "mM12V1.2", len) == 0) {
 		sc->sc_type = UGOLD_TYPE_SI7006;
 		printf("si7006 (temperature and humidity)\n");
-	} else
+	} else {
+		sc->sc_type = -1;
 		printf("unknown\n");
+	}
 }
 
 void
