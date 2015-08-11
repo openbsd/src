@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.8 2015/08/11 21:52:14 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.9 2015/08/11 22:02:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -784,6 +784,9 @@ magic_parse_value(struct magic_line *ml, char **line)
 	ml->test_unsigned = 0;
 	ml->test_signed = 0;
 
+	if (**line == '\0')
+		return (0);
+
 	s = *line;
 	if (s[0] == 'x' && (s[1] == '\0' || isspace((u_char)s[1]))) {
 		(*line)++;
@@ -818,43 +821,35 @@ magic_parse_value(struct magic_line *ml, char **line)
 		break;
 	}
 
-	copy = s = cp = xmalloc(strlen(*line) + 1);
-	if ((*line)[0] == '=' && (*line)[1] == ' ') {
-		/*
-		 * Extra spaces such as "byte&7 = 0" are accepted, which is
-		 * annoying. But it seems to be only for =, so special case it.
-		 */
-		*cp++ = '=';
+	while (isspace((u_char)**line))
+		(*line)++;
+	if ((*line)[0] == '<' && (*line)[1] == '=') {
+		ml->test_operator = '[';
 		(*line) += 2;
+	} else if ((*line)[0] == '>' && (*line)[1] == '=') {
+		ml->test_operator = ']';
+		(*line) += 2;
+	} else if (strchr("=<>&^", **line) != NULL) {
+		ml->test_operator = **line;
+		(*line)++;
 	}
+
+	while (isspace((u_char)**line))
+		(*line)++;
+	copy = cp = xmalloc(strlen(*line) + 1);
 	while (**line != '\0' && !isspace((u_char)**line))
 		*cp++ = *(*line)++;
 	*cp = '\0';
 
-	if (*s == '\0')
-		goto done;
-
-	if (s[0] == '<' && s[1] == '=') {
-		ml->test_operator = '[';
-		s += 2;
-	} else if (s[0] == '>' && s[1] == '=') {
-		ml->test_operator = ']';
-		s += 2;
-	} else if (strchr("=<>&^", *s) != NULL) {
-		ml->test_operator = *s;
-		s++;
-	}
-
 	if (*ml->type_string == 'u')
-		endptr = magic_strtoull(s, &ml->test_unsigned);
+		endptr = magic_strtoull(copy, &ml->test_unsigned);
 	else
-		endptr = magic_strtoll(s, &ml->test_signed);
+		endptr = magic_strtoll(copy, &ml->test_signed);
 	if (endptr == NULL || *endptr != '\0') {
-		magic_warn(ml, "can't parse number: %s", s);
+		magic_warn(ml, "can't parse number: %s", copy);
 		goto fail;
 	}
 
-done:
 	free(copy);
 	return (0);
 
