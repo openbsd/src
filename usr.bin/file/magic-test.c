@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.7 2015/08/11 22:12:48 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.8 2015/08/11 22:18:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -235,6 +235,16 @@ magic_test_type_byte(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (int8_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (int8_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (int8_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (int8_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (int8_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (int8_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -261,6 +271,16 @@ magic_test_type_short(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (int16_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (int16_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (int16_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (int16_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (int16_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (int16_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -287,6 +307,16 @@ magic_test_type_long(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (int32_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (int32_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (int32_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (int32_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (int32_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (int32_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -313,6 +343,16 @@ magic_test_type_quad(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (int64_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (int64_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (int64_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (int64_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (int64_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (int64_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -335,6 +375,16 @@ magic_test_type_ubyte(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (uint8_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (uint8_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (uint8_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (uint8_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (uint8_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (uint8_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -361,6 +411,16 @@ magic_test_type_ushort(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (uint16_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (uint16_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (uint16_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (uint16_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (uint16_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (uint16_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -387,6 +447,16 @@ magic_test_type_ulong(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (uint32_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (uint32_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (uint32_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (uint32_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (uint32_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (uint32_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -413,6 +483,16 @@ magic_test_type_uquad(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (uint64_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (uint64_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (uint64_t)ml->type_operand;
+	else if (ml->type_operator == '/')
+		value /= (uint64_t)ml->type_operand;
+	else if (ml->type_operator == '%')
+		value %= (uint64_t)ml->type_operand;
+	else if (ml->type_operator == '*')
+		value *= (uint64_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 

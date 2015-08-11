@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.11 2015/08/11 22:12:48 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.12 2015/08/11 22:18:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -628,7 +628,7 @@ magic_parse_type(struct magic_line *ml, char **line)
 		goto done;
 	}
 
-	cp = &s[strcspn(s, "-&")];
+	cp = &s[strcspn(s, "+-&/%*")];
 	if (*cp != '\0') {
 		ml->type_operator = *cp;
 		endptr = magic_strtoull(cp + 1, &ml->type_operand);
