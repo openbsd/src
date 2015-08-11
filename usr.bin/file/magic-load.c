@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.14 2015/08/11 22:27:06 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.15 2015/08/11 22:35:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -981,8 +981,16 @@ magic_load(FILE *f, const char *path, int warnings)
 		if (*line == '\0' || *line == '#')
 			continue;
 
-		if (strncmp (line, "!:mime", (sizeof "!:mime") - 1) == 0) {
+		if (strncmp (line, "!:mime", 6) == 0) {
 			magic_set_mimetype(m, at, ml, line);
+			continue;
+		}
+		if (strncmp (line, "!:", 2) == 0) {
+			for (i = 0; i < 64 && line[i] != '\0'; i++) {
+				if (isspace((u_char)line[i]))
+					break;
+			}
+			magic_warnm(m, at, "%.*s not supported", i, line);
 			continue;
 		}
 
