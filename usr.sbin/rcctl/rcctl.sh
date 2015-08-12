@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.78 2015/08/03 13:18:48 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.79 2015/08/12 06:28:18 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -442,7 +442,7 @@ if [ -n "${svc}" ]; then
 		usage
 	svc_is_avail ${svc} || \
 		rcctl_err "service ${svc} does not exist" 2
-elif [[ ${action} != @(getall|ls|order) ]] ; then
+elif [[ ${action} != @(ls|order) ]] ; then
 	usage
 fi
 
@@ -473,10 +473,6 @@ case ${action} in
 		;;
 	get)
 		svc_get ${svc} "${var}"
-		;;
-	getall) # undocumented, deprecated
-		for i in $(svc_ls all); do svc_get ${i}; done
-		return 0
 		;;
 	getdef)
 		( svc_getdef ${svc} "${var}" )
