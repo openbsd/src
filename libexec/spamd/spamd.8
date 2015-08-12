@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.130 2015/08/12 14:36:47 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.131 2015/08/12 14:41:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -285,12 +285,12 @@ contains addresses of hosts who should be passed directly
 to the SMTP agent (thus bypassing
 .Nm ) .
 .Bd -literal -offset 4n
-table \*(Ltspamd-white\*(Gt persist
-table \*(Ltnospamd\*(Gt persist file "/etc/mail/nospamd"
+table <spamd-white> persist
+table <nospamd> persist file "/etc/mail/nospamd"
 pass in on egress proto tcp from any to any port smtp \e
     divert-to 127.0.0.1 port spamd
-pass in on egress proto tcp from \*(Ltnospamd\*(Gt to any port smtp
-pass in log on egress proto tcp from \*(Ltspamd-white\*(Gt to any port smtp
+pass in on egress proto tcp from <nospamd> to any port smtp
+pass in log on egress proto tcp from <spamd-white> to any port smtp
 pass out log on egress proto tcp to any port smtp
 .Ed
 .Pp
@@ -467,15 +467,13 @@ However when running in blacklist-only mode,
 a slightly modified
 .Xr pf.conf 5
 ruleset is required,
-diverting any addresses found in the
-<spamd>
-table to
+diverting any addresses found in the <spamd> table to
 .Nm .
 Any other addresses
 are passed to the real MTA.
 .Bd -literal -offset 4n
-table \*(Ltspamd\*(Gt persist
-pass in on egress inet proto tcp from \*(Ltspamd\*(Gt to any port smtp \e
+table <spamd> persist
+pass in on egress inet proto tcp from <spamd> to any port smtp \e
     divert-to 127.0.0.1 port spamd
 .Ed
 .Pp
@@ -487,9 +485,7 @@ like:
 .Ed
 .Pp
 .Xr spamd-setup 8
-can also be used to load addresses into the
-<spamd>
-table.
+can also be used to load addresses into the <spamd> table.
 It has the added benefit of being able to remove addresses from
 blacklists, and will connect to
 .Nm
