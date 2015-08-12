@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.34 2015/08/03 15:31:05 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.35 2015/08/12 15:59:53 espie Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -163,9 +163,9 @@ parseconfig(const char *filename, int checkperms)
 	yyfp = fopen(filename, "r");
 	if (!yyfp) {
 		if (checkperms)
-			fprintf(stderr, "doas is not enabled.\n");
+			warn("doas is not enabled, %s", filename);
 		else
-			warn("could not open config file");
+			warn("could not open config file %s", filename);
 		exit(1);
 	}
 
