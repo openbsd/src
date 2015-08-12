@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.63 2015/07/21 03:38:22 reyk Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.64 2015/08/12 05:31:41 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -544,11 +544,12 @@ identifycpu(struct cpu_info *ci)
 
 #ifndef SMALL_KERNEL
 	if (ci->ci_flags & CPUF_PRIMARY) {
-		if (pnfeatset > 0x80000007) {
+		if (!strcmp(cpu_vendor, "AuthenticAMD") &&
+		    pnfeatset >= 0x80000007) {
 			CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);
 
 			if (pnfeatset & 0x06) {
-				if ((ci->ci_signature & 0xF00) == 0xf00)
+				if ((ci->ci_signature & 0xF00) == 0xF00)
 					setperf_setup = k8_powernow_init;
 			}
 			if (ci->ci_family >= 0x10)
