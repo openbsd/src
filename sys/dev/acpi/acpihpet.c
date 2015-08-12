@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.19 2015/08/04 22:22:28 deraadt Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.20 2015/08/12 05:59:54 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -249,13 +249,15 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 
 	period = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    HPET_CAPABILITIES + sizeof(u_int32_t));
-	if (period == 0) {
+
+	/* Period must be > 0 and less than 100ns (10^8 fs) */
+	if (period == 0 || period > HPET_MAX_PERIOD) {
 		printf(": invalid period\n");
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    HPET_CONFIGURATION, sc->sc_conf);
 		return;
 	}
-	freq =  1000000000000000ull / period;
+	freq = 1000000000000000ull / period;
 	printf(": %lld Hz\n", freq);
 
 	hpet_timecounter.tc_frequency = (u_int32_t)freq;

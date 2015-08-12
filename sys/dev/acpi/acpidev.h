@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.37 2015/08/04 04:20:35 mlarkin Exp $ */
+/* $OpenBSD: acpidev.h,v 1.38 2015/08/12 05:59:54 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -198,6 +198,9 @@ struct acpibat_bmd {
 #define	HPET_TIMER2_CONFIG	((0x20 * 2) + HPET_TIMER0_CONFIG)
 #define	HPET_TIMER2_COMPARE	((0x20 * 2) + HPET_TIMER0_COMPARE)
 #define	HPET_TIMER2_INTERRUPT	((0x20 * 2) + HPET_TIMER0_INTERRUPT)
+
+/* Max period is 10^8 fs (100 ns) == 0x5F5E100 as per the HPET SDM */
+#define HPET_MAX_PERIOD		0x5F5E100
 
 #define STA_PRESENT   (1L << 0)
 #define STA_ENABLED   (1L << 1)
