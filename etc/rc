@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.455 2015/08/03 04:19:25 yasuoka Exp $
+#	$OpenBSD: rc,v 1.456 2015/08/12 17:27:27 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -10,47 +10,41 @@ set +o sh
 # Subroutines (have to come first).
 
 
-# Strip comments (and leading/trailing whitespace if IFS is set) from a file
-# and spew to stdout.
+# Strip in- and whole-line comments from a file.
+# Strip leading and trailing whitespace if IFS is set.
+# Usage: stripcom /path/to/file
 stripcom() {
-	local _file="$1"
-	local _line
+	local _file=$1 _line
 
-	{
-		while read _line ; do
-			_line=${_line%%#*}		# strip comments
-			[ -z "$_line" ] && continue
-			echo $_line
-		done
-	} <$_file
+	[[ -s $_file ]] || return
+
+	while read _line ; do
+		_line=${_line%%#*}
+		[[ -n $_line ]] && print -r -- "$_line"
+	done <$_file
 }
 
-# Update resource limits when sysctl changes.
-# Usage: update_limit -X loginconf_name
+# Update resource limits based on login.conf settings.
+# Usage: update_limit -flag capability
 update_limit() {
-	local _fl="$1"	# ulimit flag
-	local _lc="$2"	# login.conf name
-	local _new _suf
+	local _flag=$1		# ulimit flag
+	local _cap=$2 _val	# login.conf capability and its value
+	local _suffix
 
-	for _suf in "" -cur -max; do
-		_new=`getcap -f /etc/login.conf -s ${_lc}${_suf} daemon 2>/dev/null`
-		if [ X"$_new" != X"" ]; then
-			if [ X"$_new" = X"infinity" ]; then
-				_new=unlimited
-			fi
-			case "$_suf" in
-			-cur)
-				ulimit -S $_fl $_new
-				;;
-			-max)
-				ulimit -H $_fl $_new
-				;;
-			*)
-				ulimit $_fl $_new
-				return
-				;;
-			esac
-		fi
+	for _suffix in {,-cur,-max}; do
+		_val=$(getcap -f /etc/login.conf -s ${_cap}${_suffix} daemon 2>/dev/null)
+		[[ -n $_val ]] || continue
+		[[ $_val == infinity ]] && _val=unlimited
+
+		case $_suffix in
+		-cur)	ulimit -S $_flag $_val
+			;;
+		-max)	ulimit -H $_flag $_val
+			;;
+		*)	ulimit $_flag $_val
+			return
+			;;
+		esac
 	done
 }
 
