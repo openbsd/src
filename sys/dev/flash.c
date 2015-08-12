@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.30 2014/05/08 21:17:00 miod Exp $	*/
+/*	$OpenBSD: flash.c,v 1.31 2015/08/12 22:37:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -949,7 +949,6 @@ flashgetdefaultlabel(dev_t dev, struct flash_softc *sc,
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_type = 0;
-	lp->d_subtype = 0;
 	strncpy(lp->d_typename, "NAND flash", sizeof(lp->d_typename));
 
 	/* Use the product name up to the first space. */

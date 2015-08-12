@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.187 2015/07/29 00:15:36 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.188 2015/08/12 22:37:32 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -196,7 +196,6 @@ checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
 
 		dlp->d_magic = swap32(dlp->d_magic);
 		dlp->d_type = swap16(dlp->d_type);
-		dlp->d_subtype = swap16(dlp->d_subtype);
 
 		/* d_typename and d_packname are strings */
 
