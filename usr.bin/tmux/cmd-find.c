@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.10 2015/06/05 09:09:08 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.11 2015/08/12 08:55:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -102,10 +102,10 @@ const char *cmd_find_pane_table[][2] = {
 	{ "{top-right}", "top-right" },
 	{ "{bottom-left}", "bottom-left" },
 	{ "{bottom-right}", "bottom-right" },
-	{ "{up}", "{up}" },
-	{ "{down}", "{down}" },
-	{ "{left}", "{left}" },
-	{ "{right}", "{right}" },
+	{ "{up-of}", "{up}" },
+	{ "{down-of}", "{down}" },
+	{ "{left-of}", "{left}" },
+	{ "{right-up}", "{right}" },
 	{ NULL, NULL }
 };
 
