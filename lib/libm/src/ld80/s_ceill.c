@@ -37,7 +37,7 @@ ceill(long double x)
 	    if(jj0<0) {	/* raise inexact if x != 0 */
 		if(huge+x>0.0) {/* return 0*sign(x) if |x|<1 */
 		    if(sx) {se=0x8000;i0=0;i1=0;}
-		    else if((i0|i1)!=0) { se=0x3fff;i0=0;i1=0;}
+		    else if((i0|i1)!=0) { se=0x3fff;i0=0x80000000;i1=0;}
 		}
 	    } else {
 		i = (0x7fffffff)>>jj0;
