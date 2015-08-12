@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.15 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: ti.c,v 1.16 2015/08/12 08:04:20 semarie Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -560,7 +560,7 @@ ti_handle_events(struct ti_softc *sc)
 }
 
 /*
- * Intialize a standard receive ring descriptor.
+ * Initialize a standard receive ring descriptor.
  */
 int
 ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m,
@@ -620,7 +620,7 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m,
 }
 
 /*
- * Intialize a mini receive ring descriptor. This only applies to
+ * Initialize a mini receive ring descriptor. This only applies to
  * the Tigon 2.
  */
 int
@@ -654,7 +654,7 @@ ti_newbuf_mini(struct ti_softc *sc, int i, struct mbuf *m,
 
 		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m_new,
 		    BUS_DMA_NOWAIT)) {
-			m_freem(m);
+			m_freem(m_new);
 			return (ENOBUFS);
 		}
 	} else {
@@ -712,7 +712,7 @@ ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m,
 
 		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m_new,
 		    BUS_DMA_NOWAIT)) {
-			m_freem(m);
+			m_freem(m_new);
 			return (ENOBUFS);
 		}
 	} else {
