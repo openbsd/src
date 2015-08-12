@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.3 2015/07/28 09:48:52 reyk Exp $ */
+/*	$OpenBSD: vmt.c,v 1.4 2015/08/12 09:15:52 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -780,8 +780,8 @@ vmt_tclo_tick(void *xarg)
 		if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
 			DPRINTF("%s: unable to reopen TCLO channel\n",
 			    DEVNAME(sc));
-			timeout_add_sec(&sc->sc_tclo_tick, 15);
-			return;
+			delay = 15;
+			goto out;
 		}
 
 		if (vm_rpc_send_str(&sc->sc_tclo_rpc,
