@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.11 2015/08/12 07:43:27 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.12 2015/08/12 09:29:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -677,7 +677,7 @@ magic_test_type_pstring(struct magic_line *ml, struct magic_state *ms)
 	if (result == !ml->test_not) {
 		if (ml->result != NULL)
 			magic_add_string(ms, ml, s, slen);
-		if (result)
+		if (result && ml->test_operator == '=')
 			ms->offset += slen + 1;
 	}
 	return (result);
@@ -919,8 +919,9 @@ magic_test_type_regex(struct magic_line *ml, struct magic_state *ms)
 	m.rm_eo = ms->size;
 
 	result = (regexec(&re, ms->base, 1, &m, REG_STARTEND) == 0);
-	if (result == !ml->test_not && ml->result != NULL) {
-		magic_add_result(ms, ml, "%s", "");
+	if (result == !ml->test_not) {
+		if (ml->result != NULL)
+			magic_add_result(ms, ml, "%s", "");
 		if (result) {
 			if (sflag)
 				ms->offset = m.rm_so;
@@ -1022,9 +1023,11 @@ magic_test_type_search(struct magic_line *ml, struct magic_state *ms)
 	}
 	result = (found != NULL);
 
-	if (result == !ml->test_not && ml->result != NULL && found != NULL) {
-		magic_add_string(ms, ml, found, ms->size - ms->offset);
-		ms->offset = found - start + size;
+	if (result == !ml->test_not) {
+		if (ml->result != NULL)
+			magic_add_string(ms, ml, found, ms->size - ms->offset);
+		if (result && found != NULL && ml->test_operator == '=')
+			ms->offset = (found + size) - ms->base;
 	}
 	return (result);
 }
