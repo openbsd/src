@@ -1,7 +1,7 @@
-/*	$OpenBSD: ugold.c,v 1.9 2015/08/11 13:37:44 jung Exp $   */
+/*	$OpenBSD: ugold.c,v 1.10 2015/08/12 07:21:15 yuo Exp $   */
 
 /*
- * Copyright (c) 2013 Takayoshi SASANO <sasano@openbsd.org>
+ * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
