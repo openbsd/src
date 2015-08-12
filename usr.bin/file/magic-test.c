@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.12 2015/08/12 09:29:49 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.13 2015/08/12 09:39:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -702,6 +702,10 @@ magic_test_type_date(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (int32_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (int32_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (int32_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -744,6 +748,10 @@ magic_test_type_qdate(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (int64_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (int64_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (int64_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -786,6 +794,10 @@ magic_test_type_udate(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (uint32_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (uint32_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (uint32_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
@@ -828,6 +840,10 @@ magic_test_type_uqdate(struct magic_line *ml, struct magic_state *ms)
 
 	if (ml->type_operator == '&')
 		value &= (uint64_t)ml->type_operand;
+	else if (ml->type_operator == '-')
+		value -= (uint64_t)ml->type_operand;
+	else if (ml->type_operator == '+')
+		value += (uint64_t)ml->type_operand;
 	else if (ml->type_operator != ' ')
 		return (-1);
 
