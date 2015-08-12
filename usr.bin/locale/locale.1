@@ -1,4 +1,4 @@
-.\" $OpenBSD: locale.1,v 1.4 2014/03/24 07:29:22 jmc Exp $
+.\" $OpenBSD: locale.1,v 1.5 2015/08/12 09:38:23 zhuk Exp $
 .\"
 .\" Copyright 2013 Stefan Sperling <stsp@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 24 2014 $
+.Dd $Mdocdate: August 12 2015 $
 .Dt LOCALE 1
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@ Overrides all other LC_* variables below.
 Locale for string collation routines.
 .It Dv LC_CTYPE
 Locale for character set.
+.It Dv LC_MESSAGES
+Locale for message strings.
 .It Dv LC_MONETARY
 Locale for formatting monetary values.
 .It Dv LC_NUMERIC
