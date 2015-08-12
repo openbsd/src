@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.159 2015/07/16 22:06:08 mlarkin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.160 2015/08/12 06:19:25 mlarkin Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -194,6 +194,7 @@
 	.globl	_C_LABEL(cold), _C_LABEL(cnvmem), _C_LABEL(extmem)
 	.globl	_C_LABEL(cpu_pae)
 	.globl	_C_LABEL(esym)
+	.globl	_C_LABEL(ssym)
 	.globl	_C_LABEL(nkptp_max)
 	.globl	_C_LABEL(boothowto), _C_LABEL(bootdev), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr), _C_LABEL(PTDpaddr), _C_LABEL(PTDsize)
@@ -240,6 +241,7 @@ _C_LABEL(cpu_apmi_edx):	.long	0	# adv. power management info. 'cpuid'
 _C_LABEL(cpu_vendor): .space 16	# vendor string returned by 'cpuid' instruction
 _C_LABEL(cpu_brandstr):	.space 48 # brand string returned by 'cpuid'
 _C_LABEL(cold):		.long	1	# cold till we are not
+_C_LABEL(ssym):		.long	0	# ptr to start of syms
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(cnvmem):	.long	0	# conventional memory size
 _C_LABEL(extmem):	.long	0	# extended memory size
@@ -278,6 +280,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	jz	1f
 	addl	$KERNBASE,%eax
 1:	movl	%eax,RELOC(_C_LABEL(esym))
+	movl	$__kernel_bss_end, RELOC(_C_LABEL(ssym))
 
 	movl	12(%esp),%eax
 	movl	%eax,RELOC(_C_LABEL(bootapiver))

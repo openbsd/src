@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.92 2015/01/13 01:12:49 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.93 2015/08/12 06:19:25 mlarkin Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,8 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LINKFLAGS=	-Ttext 0xD0200120 -e start -N --warn-common -nopie
+LDSCRIPT=	${_machdir}/conf/ld.script
+LINKFLAGS=	-T ${LDSCRIPT} -X --warn-common -nopie
 
 .if ${MACHINE} == "amd64"
 CFLAGS+=	-m32
@@ -74,7 +75,7 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_TAIL}
 SYSTEM_HEAD=	locore.o param.o ioconf.o
 SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS}
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ${LDSCRIPT}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
