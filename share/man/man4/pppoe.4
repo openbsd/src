@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.28 2015/02/16 16:38:54 naddy Exp $
+.\"	$OpenBSD: pppoe.4,v 1.29 2015/08/12 09:15:49 mpi Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: August 12 2015 $
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -96,13 +96,13 @@ This all is typically accomplished using an
 file.
 A typical file looks like this:
 .Bd -literal -offset indent
-inet6 eui64
 inet 0.0.0.0 255.255.255.255 NONE \e
 	pppoedev em0 authproto pap \e
 	authname 'testcaller' authkey 'donttell' up
 dest 0.0.0.1
+inet6 eui64
 !/sbin/route add default -ifp pppoe0 0.0.0.1
-!/sbin/route add default -ifp pppoe0 fe80::
+!/sbin/route add -inet6 default -ifp pppoe0 fe80::
 .Ed
 .Pp
 The physical interface must also be marked
