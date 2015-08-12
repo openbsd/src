@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.27 2014/03/19 01:59:49 tedu Exp $
+dnl	$OpenBSD: install,v 1.28 2015/08/12 06:47:16 mlarkin Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -69,7 +69,7 @@ dnl XXX provide more details!!!
   On Indigo, Indigo2, Indy and O2 systems, this address can be found by using
   the ``printenv'' command in the Maintenance Console, looking for the
   ``eaddr'' variable.
-  On other systems, or if this variable is missing, this address is ususally
+  On other systems, or if this variable is missing, this address is usually
   written on a factory sticker on the back of the machine.
 
   The server should also provide a tftp location, where the proper bsd.rd
