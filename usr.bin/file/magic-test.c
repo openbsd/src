@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.10 2015/08/11 23:03:26 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.11 2015/08/12 07:43:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -571,13 +571,17 @@ magic_test_type_string(struct magic_line *ml, struct magic_state *ms)
 		for (; *cp != '\0'; cp++) {
 			switch (*cp) {
 			case 'B':
+			case 'W':
 				Bflag = 1;
 				break;
 			case 'b':
+			case 'w':
 				bflag = 1;
 				break;
 			case 'c':
 				cflag = 1;
+				break;
+			case 't':
 				break;
 			default:
 				return (-1);
@@ -950,13 +954,17 @@ magic_test_type_search(struct magic_line *ml, struct magic_state *ms)
 			for (cp = endptr + 1; *cp != '\0'; cp++) {
 				switch (*cp) {
 				case 'B':
+				case 'W':
 					Bflag = 1;
 					break;
 				case 'b':
+				case 'w':
 					bflag = 1;
 					break;
 				case 'c':
 					cflag = 1;
+					break;
+				case 't':
 					break;
 				default:
 					return (-1);
