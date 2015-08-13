@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.298 2015/08/13 14:59:13 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.299 2015/08/13 23:42:16 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3542,9 +3542,7 @@ syn_cache_cleanup(struct tcpcb *tp)
 
 	s = splsoftnet();
 
-	for (sc = LIST_FIRST(&tp->t_sc); sc != NULL; sc = nsc) {
-		nsc = LIST_NEXT(sc, sc_tpq);
-
+	LIST_FOREACH_SAFE(sc, &tp->t_sc, sc_tpq, nsc) {
 #ifdef DIAGNOSTIC
 		if (sc->sc_tp != tp)
 			panic("invalid sc_tp in syn_cache_cleanup");
@@ -3575,8 +3573,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 	scp = &tcp_syn_cache[hash % tcp_syn_cache_size];
 	*headp = scp;
 	s = splsoftnet();
-	for (sc = TAILQ_FIRST(&scp->sch_bucket); sc != NULL;
-	     sc = TAILQ_NEXT(sc, sc_bucketq)) {
+	TAILQ_FOREACH(sc, &scp->sch_bucket, sc_bucketq) {
 		if (sc->sc_hash != hash)
 			continue;
 		if (!bcmp(&sc->sc_src, src, src->sa_len) &&
