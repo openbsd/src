@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.356 2015/07/29 00:04:03 rzalamena Exp $	*/
+/*	$OpenBSD: if.c,v 1.357 2015/08/13 07:19:58 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -538,6 +538,8 @@ if_input_process(void *xmq)
 			if ((*ifih->ifih_input)(ifp, m))
 				break;
 		}
+		if (ifih == NULL)
+			m_freem(m);
 	}
 	splx(s);
 	KERNEL_UNLOCK();
