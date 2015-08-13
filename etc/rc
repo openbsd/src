@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.456 2015/08/12 17:27:27 rpe Exp $
+#	$OpenBSD: rc,v 1.457 2015/08/13 17:24:42 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -48,52 +48,36 @@ update_limit() {
 	done
 }
 
-# Apply sysctl(8) settings.
+# Apply sysctl.conf(5) settings.
 sysctl_conf() {
-	[ -s /etc/sysctl.conf ] || return
+	stripcom /etc/sysctl.conf |
+	while read _line; do
+		sysctl "$_line"
 
-	# delete comments and blank lines
-	set -- `stripcom /etc/sysctl.conf`
-	while [ $# -ge 1 ] ; do
-		sysctl $1
-		# update limits if needed
-		case $1 in
+		case $_line in
 		kern.maxproc=*)
-			update_limit -p maxproc
-			;;
+			update_limit -p maxproc;;
 		kern.maxfiles=*)
-			update_limit -n openfiles
-			;;
+			update_limit -n openfiles;;
 		esac
-		shift
 	done
 }
 
-# Apply mixerctl(1) settings.
+# Apply mixerctl.conf(5) settings.
 mixerctl_conf() {
-	[ -s /etc/mixerctl.conf ] || return
-
-	# delete comments and blank lines
-	set -- `stripcom /etc/mixerctl.conf`
-	while [ $# -ge 1 ] ; do
-		mixerctl -q $1 >/dev/null 2>&1
-		shift
+	stripcom /etc/mixerctl.conf |
+	while read _line; do
+		mixerctl -q "$_line" 2>/dev/null
 	done
 }
 
-# Apply wscons system driver settings using wsconsctl(8).
+# Apply wsconsctl.conf(5) settings.
 wsconsctl_conf() {
-	local save_IFS="$IFS"
+	[[ -x /sbin/wsconsctl ]] || return
 
-	[ -x /sbin/wsconsctl -a -s /etc/wsconsctl.conf ] || return
-	# delete comments and blank lines
-	IFS="
-"
-	set -- `stripcom /etc/wsconsctl.conf`
-	IFS="$save_IFS"
-	while [ $# -ge 1 ] ; do
-		eval wsconsctl $1
-		shift
+	stripcom /etc/wsconsctl.conf |
+	while read _line; do
+		wsconsctl "$_line"
 	done
 }
 
