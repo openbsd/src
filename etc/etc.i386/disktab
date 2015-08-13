@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.23 2015/07/27 19:17:10 krw Exp $
+#	$OpenBSD: disktab,v 1.24 2015/08/13 18:02:57 krw Exp $
 
 mini34|gzip bsd.rd disk image 3.40625MB:\
 	:ty=SCSI:se#512:nt#1:ns#64:nc#109:\
@@ -11,19 +11,19 @@ install240|install.fs disk image 240MB:\
 	:pc#491520:oc#0:
 
 floppy288|3in|3.5in High Density Floppy, 2.88MB:\
-	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
+	:dt=floppy:ty=floppy:se#512:nt#2:ns#36:nc#80:\
 	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD: \
 	:pb#5760:ob#0:\
 	:pc#5760:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
-	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:dt=floppy:ty=floppy:se#512:nt#2:ns#18:nc#80:\
 	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD: \
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
 
 floppy5|5in|5.25in High Density Floppy:\
-	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#15:nc#80:\
+	:dt=floppy:ty=floppy:se#512:nt#2:ns#15:nc#80:\
 	:pa#2400:oa#0:ba#4096:fa#512:ta=4.2BSD: \
 	:pb#2400:ob#0:bb#4096:fb#512:\
 	:pc#2400:oc#0:bc#4096:fc#512:

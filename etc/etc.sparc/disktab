@@ -1,32 +1,32 @@
-# $OpenBSD: disktab,v 1.26 2012/09/10 18:49:42 deraadt Exp $
+# $OpenBSD: disktab,v 1.27 2015/08/13 18:02:57 krw Exp $
 
 miniroot:\
-	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#96:\
+	:ty=winchester:se#512:nt#2:ns#64:nc#96:\
 	:ts=3500:\
 	:pa#12288:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
 	:pb#0:ob#0:\
 	:pc#12288:oc#0:
 
 rdroot:\
-	:ty=ramdisk:se#512:nt#2:rm#300:ns#4:nc#500:\
+	:ty=ramdisk:se#512:nt#2:ns#4:nc#500:\
 	:pa#4000:oa#0:ta=4.2BSD:ba#8192:fa#1024:\
 	:pc#4000:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
-	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:dt=floppy:ty=floppy:se#512:nt#2:ns#18:nc#80:\
 	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:\
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
 
 # test if not having an 'a' works?
 fakecdrom|Fake image for Bootable CDROM:\
-	:ty=winchester:se#512:nt#1:rm#350:ns#640:nc#2048:\
+	:ty=winchester:se#512:nt#1:ns#640:nc#2048:\
 	:pa#1310720:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
 	:pb#1310720:ob#0:bb#8192:fb#1024:tb=4.2BSD:\
 	:pc#1310720:oc#0:bc#8192:fc#1024:tc=4.2BSD:\
 	:pd#1310720:od#0:bd#8192:fd#1024:td=4.2BSD:
 
 fakeramdisk:\
-	:ty=winchester:se#512:nt#1:rm#350:ns#32:nc#384:\
+	:ty=winchester:se#512:nt#1:ns#32:nc#384:\
 	:pa#12288:oa#0:ba#8192:fa#4096:ta=4.2BSD:\
 	:pc#12288:oc#0:
