@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nm.1,v 1.28 2015/08/13 19:13:28 miod Exp $
+.\"	$OpenBSD: nm.1,v 1.29 2015/08/13 21:18:12 jmc Exp $
 .\"	$NetBSD: nm.1,v 1.3 1995/08/31 23:41:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm nm
 .Op Fl AaCDegnoPprsuw
-.Op Fl t d|o|x
+.Op Fl t Ar d|o|x
 .Op Ar
 .Sh DESCRIPTION
 The symbol table (name list) of each object in
@@ -98,7 +98,8 @@ Reverse order sort.
 Show archive index.
 .It Fl t Ar d|o|x
 In POSIX format output, choose the numeric radix as follows:
-.Bl -tag -width 3n -compact
+.Pp
+.Bl -tag -width 3n -compact -offset indent
 .It d
 Decimal.
 .It o
