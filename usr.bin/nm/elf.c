@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.32 2015/06/23 15:16:34 semarie Exp $	*/
+/*	$OpenBSD: elf.c,v 1.33 2015/08/13 19:13:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -37,8 +37,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "elfuncs.h"
 #include "util.h"
+#include "elfuncs.h"
 
 #if ELFSIZE == 32
 #define	swap_addr	swap32
@@ -116,7 +116,7 @@
 #endif
 
 int elf_shn2type(Elf_Ehdr *, u_int, const char *);
-int elf2nlist(Elf_Sym *, Elf_Ehdr *, Elf_Shdr *, char *, struct nlist *);
+int elf2nlist(Elf_Sym *, Elf_Ehdr *, Elf_Shdr *, char *, struct xnlist *);
 
 int
 elf_fix_header(Elf_Ehdr *eh)
@@ -342,11 +342,12 @@ elf_shn2type(Elf_Ehdr *eh, u_int shn, const char *sn)
 }
 
 /*
- * Devise nlist's type from Elf_Sym.
+ * Devise xnlist's type from Elf_Sym.
  * XXX this task is done as well in libc and kvm_mkdb.
  */
 int
-elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist *np)
+elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr,
+    struct xnlist *np)
 {
 	u_char stt;
 	const char *sn;
@@ -372,60 +373,61 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 		type = elf_shn2type(eh, sym->st_shndx, sn);
 		if (type < 0) {
 			if (sn == NULL)
-				np->n_other = '?';
+				np->nl.n_other = '?';
 			else
-				np->n_type = stt == STT_NOTYPE? N_COMM : N_DATA;
+				np->nl.n_type = stt == STT_NOTYPE ?
+				    N_COMM : N_DATA;
 		} else {
 			/* a hack for .rodata check (; */
 			if (type == N_SIZE) {
-				np->n_type = N_DATA;
-				np->n_other = 'r';
+				np->nl.n_type = N_DATA;
+				np->nl.n_other = 'r';
 			} else
-				np->n_type = type;
+				np->nl.n_type = type;
 		}
 		if (ELF_ST_BIND(sym->st_info) == STB_WEAK)
-			np->n_other = 'W';
+			np->nl.n_other = 'W';
 		break;
 
 	case STT_FUNC:
 		type = elf_shn2type(eh, sym->st_shndx, NULL);
-		np->n_type = type < 0? N_TEXT : type;
+		np->nl.n_type = type < 0? N_TEXT : type;
 		if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-			np->n_other = 'W';
+			np->nl.n_other = 'W';
 		} else if (sn != NULL && *sn != 0 &&
 		    strcmp(sn, ELF_INIT) &&
 		    strcmp(sn, ELF_TEXT) &&
 		    strcmp(sn, ELF_FINI))	/* XXX GNU compat */
-			np->n_other = '?';
+			np->nl.n_other = '?';
 		break;
 
 	case STT_SECTION:
 		type = elf_shn2type(eh, sym->st_shndx, NULL);
 		if (type < 0)
-			np->n_other = '?';
+			np->nl.n_other = '?';
 		else
-			np->n_type = type;
+			np->nl.n_type = type;
 		break;
 
 	case STT_FILE:
-		np->n_type = N_FN | N_EXT;
+		np->nl.n_type = N_FN | N_EXT;
 		break;
 
 	case STT_PARISC_MILLI:
 		if (eh->e_machine == EM_PARISC)
-			np->n_type = N_TEXT;
+			np->nl.n_type = N_TEXT;
 		else
-			np->n_other = '?';
+			np->nl.n_other = '?';
 		break;
 
 	default:
-		np->n_other = '?';
+		np->nl.n_other = '?';
 		break;
 	}
-	if (np->n_type != N_UNDF && ELF_ST_BIND(sym->st_info) != STB_LOCAL) {
-		np->n_type |= N_EXT;
-		if (np->n_other)
-			np->n_other = toupper((unsigned char)np->n_other);
+	if (np->nl.n_type != N_UNDF && ELF_ST_BIND(sym->st_info) != STB_LOCAL) {
+		np->nl.n_type |= N_EXT;
+		if (np->nl.n_other)
+			np->nl.n_other = toupper((unsigned char)np->nl.n_other);
 	}
 
 	return (0);
@@ -456,12 +458,12 @@ elf_size(Elf_Ehdr *head, Elf_Shdr *shdr,
 
 int
 elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
-    Elf_Shdr *shdr, char *shstr, long shstrsize, struct nlist **pnames,
-    struct nlist ***psnames, size_t *pstabsize, int *pnrawnames,
+    Elf_Shdr *shdr, char *shstr, long shstrsize, struct xnlist **pnames,
+    struct xnlist ***psnames, size_t *pstabsize, int *pnrawnames,
     const char *strtab, const char *symtab)
 {
 	long symsize;
-	struct nlist *np;
+	struct xnlist *np;
 	Elf_Sym sbuf;
 	int i;
 
@@ -532,8 +534,9 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 					continue;
 
 				elf2nlist(&sbuf, eh, shdr, shstr, np);
-				np->n_value = sbuf.st_value;
-				np->n_un.n_strx = sbuf.st_name;
+				np->nl.n_value = sbuf.st_value;
+				np->nl.n_un.n_strx = sbuf.st_name;
+				np->n_size = sbuf.st_size;
 				np++;
 			}
 			*pnrawnames = np - *pnames;
@@ -544,7 +547,7 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 
 int
 elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
-    Elf_Shdr *shdr, struct nlist **pnames, struct nlist ***psnames,
+    Elf_Shdr *shdr, struct xnlist **pnames, struct xnlist ***psnames,
     size_t *pstabsize, int *pnrawnames)
 {
 	long shstrsize;

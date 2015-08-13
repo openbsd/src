@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nm.1,v 1.27 2015/05/17 20:19:08 guenther Exp $
+.\"	$OpenBSD: nm.1,v 1.28 2015/08/13 19:13:28 miod Exp $
 .\"	$NetBSD: nm.1,v 1.3 1995/08/31 23:41:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)nm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 17 2015 $
+.Dd $Mdocdate: August 13 2015 $
 .Dt NM 1
 .Os
 .Sh NAME
@@ -38,7 +38,8 @@
 .Nd display name list (symbol table)
 .Sh SYNOPSIS
 .Nm nm
-.Op Fl aCDegnoprsuw
+.Op Fl AaCDegnoPprsuw
+.Op Fl t d|o|x
 .Op Ar
 .Sh DESCRIPTION
 The symbol table (name list) of each object in
@@ -58,6 +59,8 @@ and displays its symbol table if it exists.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Display the full path or library name of object on every line.
 .It Fl a
 Display symbol table entries inserted for use by debuggers.
 .It Fl C
@@ -73,13 +76,36 @@ Restrict display to external (global) symbols.
 .It Fl n
 Present results in numerical order.
 .It Fl o
-Display full path or library name of object on every line.
+Display the full path or library name of object on every line
+.Pq this is similar to Fl A .
+.It Fl P
+Report information in POSIX format: full path or library name of object if
+either
+.Fl A
+or
+.Fl o
+has been specified; symbol name; symbol type;
+symbol value and size (unless the symbol is undefined).
+The radix of symbol values and sizes defaults to decimal, and may be changed
+with the
+.Fl t
+option.
 .It Fl p
 Do not sort at all.
 .It Fl r
 Reverse order sort.
 .It Fl s
 Show archive index.
+.It Fl t Ar d|o|x
+In POSIX format output, choose the numeric radix as follows:
+.Bl -tag -width 3n -compact
+.It d
+Decimal.
+.It o
+Octal.
+.It x
+Hexadecimal.
+.El
 .It Fl u
 Display undefined symbols only.
 .It Fl w

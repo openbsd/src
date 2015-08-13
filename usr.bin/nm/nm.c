@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.46 2015/05/17 21:41:50 guenther Exp $	*/
+/*	$OpenBSD: nm.c,v 1.47 2015/08/13 19:13:28 miod Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -49,8 +49,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#include "elfuncs.h"
 #include "util.h"
+#include "elfuncs.h"
 
 #define	SYMTABMAG	"/ "
 #define	STRTABMAG	"//"
@@ -70,6 +70,9 @@ int print_all_symbols;
 int print_file_each_line;
 int show_extensions;
 int issize;
+char posix_fmtstr[6];
+int posix_output;
+char posix_radix = 'x';
 int usemmap = 1;
 int dynamic_only;
 
@@ -81,9 +84,9 @@ int rev;
 int fname(const void *, const void *);
 int rname(const void *, const void *);
 int value(const void *, const void *);
-char *otherstring(struct nlist *);
+char *otherstring(struct xnlist *);
 int (*sfunc)(const void *, const void *) = fname;
-char typeletter(struct nlist *);
+char typeletter(struct xnlist *);
 int mmbr_name(struct ar_hdr *, char **, int, int *, FILE *);
 int show_symtab(off_t, u_long, const char *, FILE *);
 int show_symdef(off_t, u_long, const char *, FILE *);
@@ -94,13 +97,13 @@ int show_symdef(off_t, u_long, const char *, FILE *);
 
 void	 pipe2cppfilt(void);
 void	 usage(void);
-char	*symname(struct nlist *);
+char	*symname(struct xnlist *);
 int	process_file(int, const char *);
 int	show_archive(int, const char *, FILE *);
 int	show_file(int, int, const char *, FILE *fp, off_t, union hdr *);
-void	print_symbol(const char *, struct nlist *);
+void	print_symbol(const char *, struct xnlist *);
 
-#define	OPTSTRING_NM	"aABCDegnoprsuvw"
+#define	OPTSTRING_NM	"aABCDegnopPrst:uvw"
 const struct option longopts_nm[] = {
 	{ "debug-syms",		no_argument,		0,	'a' },
 	{ "demangle",		no_argument,		0,	'C' },
@@ -171,6 +174,9 @@ main(int argc, char *argv[])
 		case 'p':
 			sfunc = NULL;
 			break;
+		case 'P':
+			posix_output = 1;
+			break;
 		case 'r':
 			rev = 1;
 			break;
@@ -186,14 +192,23 @@ main(int argc, char *argv[])
 		case 't':
 			if (issize) {
 				print_totals = 1;
-				break;
+			} else {
+				posix_radix = *optarg;
+				if (strlen(optarg) != 1 ||
+				    (posix_radix != 'd' && posix_radix != 'o' &&
+				     posix_radix != 'x'))
+					usage();
 			}
+			break;
 		case '?':
 		default:
 			usage();
 		}
 	}
 
+	if (posix_output)
+		(void)snprintf(posix_fmtstr, sizeof posix_fmtstr, "%%%c %%%c",
+		    posix_radix, posix_radix);
 	if (demangle)
 		pipe2cppfilt();
 	argv += optind;
@@ -468,6 +483,8 @@ show_archive(int count, const char *fname, FILE *fp)
 	u_long mmbrlen, symtablen;
 
 	baselen = strlen(fname) + 3;
+	if (posix_output)
+		baselen += 2;
 	namelen = sizeof(ar_head.ar_name);
 	if ((name = malloc(baselen + namelen)) == NULL)
 		err(1, NULL);
@@ -555,13 +572,18 @@ show_archive(int count, const char *fname, FILE *fp)
 		 * on each output line
 		 */
 		*name = '\0';
-		if (count > 1)
+		if (posix_output)
+			snprintf(name, baselen - 1, "%s[", fname);
+		else if (count > 1)
 			snprintf(name, baselen - 1, "%s:", fname);
 
 		if (mmbr_name(&ar_head, &name, baselen, &namelen, fp)) {
 			rval = 1;
 			break;
 		}
+
+		if (posix_output)
+			strlcat(name, "]", baselen + namelen);
 
 		foff = ftello(fp);
 
@@ -605,7 +627,7 @@ int
 show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union hdr *head)
 {
 	u_long text, data, bss, total;
-	struct nlist *np, *names, **snames;
+	struct xnlist *np, *names, **snames;
 	int i, nrawnames, nnames;
 	size_t stabsize;
 
@@ -693,14 +715,14 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 		 *
 		 * don't mess with zero offsets
 		 */
-		if (np->n_un.n_strx)
-			np->n_un.n_name = stab + np->n_un.n_strx;
+		if (np->nl.n_un.n_strx)
+			np->nl.n_un.n_name = stab + np->nl.n_un.n_strx;
 		else
-			np->n_un.n_name = "";
-		if (print_only_external_symbols && !IS_EXTERNAL(np->n_type))
+			np->nl.n_un.n_name = "";
+		if (print_only_external_symbols && !IS_EXTERNAL(np->nl.n_type))
 			continue;
 		if (print_only_undefined_symbols &&
-		    SYMBOL_TYPE(np->n_type) != N_UNDF)
+		    SYMBOL_TYPE(np->nl.n_type) != N_UNDF)
 			continue;
 
 		snames[nnames++] = np;
@@ -724,9 +746,9 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 }
 
 char *
-symname(struct nlist *sym)
+symname(struct xnlist *sym)
 {
-	return sym->n_un.n_name;
+	return sym->nl.n_un.n_name;
 }
 
 /*
@@ -734,30 +756,42 @@ symname(struct nlist *sym)
  *	show one symbol
  */
 void
-print_symbol(const char *name, struct nlist *sym)
+print_symbol(const char *name, struct xnlist *sym)
 {
-	if (print_file_each_line)
-		(void)printf("%s:", name);
-
-	/*
-	 * handle undefined-only format especially (no space is
-	 * left for symbol values, no type field is printed)
-	 */
-	if (!print_only_undefined_symbols) {
-		/* print symbol's value */
-		if (SYMBOL_TYPE(sym->n_type) == N_UNDF)
-			(void)printf("        ");
+	if (print_file_each_line) {
+		if (posix_output)
+			(void)printf("%s: ", name);
 		else
-			(void)printf("%08lx", sym->n_value);
-
-		/* print type information */
-		if (show_extensions)
-			(void)printf(" %c   ", typeletter(sym));
-		else
-			(void)printf(" %c ", typeletter(sym));
+			(void)printf("%s:", name);
 	}
 
-	(void)puts(symname(sym));
+	if (posix_output) {
+		(void)printf("%s %c ", symname(sym), typeletter(sym));
+		if (SYMBOL_TYPE(sym->nl.n_type) != N_UNDF)
+			(void)printf(posix_fmtstr, sym->nl.n_value,
+			    sym->n_size);
+		(void)printf("\n");
+	} else {
+		/*
+		 * handle undefined-only format especially (no space is
+		 * left for symbol values, no type field is printed)
+		 */
+		if (!print_only_undefined_symbols) {
+			/* print symbol's value */
+			if (SYMBOL_TYPE(sym->nl.n_type) == N_UNDF)
+				(void)printf("        ");
+			else
+				(void)printf("%08lx", sym->nl.n_value);
+
+			/* print type information */
+			if (show_extensions)
+				(void)printf(" %c   ", typeletter(sym));
+			else
+				(void)printf(" %c ", typeletter(sym));
+		}
+
+		(void)puts(symname(sym));
+	}
 }
 
 /*
@@ -767,14 +801,14 @@ print_symbol(const char *name, struct nlist *sym)
  *	external, lower case for internal symbols.
  */
 char
-typeletter(struct nlist *np)
+typeletter(struct xnlist *np)
 {
-	int ext = IS_EXTERNAL(np->n_type);
+	int ext = IS_EXTERNAL(np->nl.n_type);
 
-	if (np->n_other)
-		return np->n_other;
+	if (np->nl.n_other)
+		return np->nl.n_other;
 
-	switch(SYMBOL_TYPE(np->n_type)) {
+	switch(SYMBOL_TYPE(np->nl.n_type)) {
 	case N_ABS:
 		return(ext? 'A' : 'a');
 	case N_BSS:
@@ -802,39 +836,39 @@ typeletter(struct nlist *np)
 int
 fname(const void *a0, const void *b0)
 {
-	struct nlist * const *a = a0, * const *b = b0;
+	struct xnlist * const *a = a0, * const *b = b0;
 
-	return(strcmp((*a)->n_un.n_name, (*b)->n_un.n_name));
+	return(strcmp((*a)->nl.n_un.n_name, (*b)->nl.n_un.n_name));
 }
 
 int
 rname(const void *a0, const void *b0)
 {
-	struct nlist * const *a = a0, * const *b = b0;
+	struct xnlist * const *a = a0, * const *b = b0;
 
-	return(strcmp((*b)->n_un.n_name, (*a)->n_un.n_name));
+	return(strcmp((*b)->nl.n_un.n_name, (*a)->nl.n_un.n_name));
 }
 
 int
 value(const void *a0, const void *b0)
 {
-	struct nlist * const *a = a0, * const *b = b0;
+	struct xnlist * const *a = a0, * const *b = b0;
 
-	if (SYMBOL_TYPE((*a)->n_type) == N_UNDF)
-		if (SYMBOL_TYPE((*b)->n_type) == N_UNDF)
+	if (SYMBOL_TYPE((*a)->nl.n_type) == N_UNDF)
+		if (SYMBOL_TYPE((*b)->nl.n_type) == N_UNDF)
 			return(0);
 		else
 			return(-1);
-	else if (SYMBOL_TYPE((*b)->n_type) == N_UNDF)
+	else if (SYMBOL_TYPE((*b)->nl.n_type) == N_UNDF)
 		return(1);
 	if (rev) {
-		if ((*a)->n_value == (*b)->n_value)
+		if ((*a)->nl.n_value == (*b)->nl.n_value)
 			return(rname(a0, b0));
-		return((*b)->n_value > (*a)->n_value ? 1 : -1);
+		return((*b)->nl.n_value > (*a)->nl.n_value ? 1 : -1);
 	} else {
-		if ((*a)->n_value == (*b)->n_value)
+		if ((*a)->nl.n_value == (*b)->nl.n_value)
 			return(fname(a0, b0));
-		return((*a)->n_value > (*b)->n_value ? 1 : -1);
+		return((*a)->nl.n_value > (*b)->nl.n_value ? 1 : -1);
 	}
 }
 
@@ -875,7 +909,7 @@ usage(void)
 	if (issize)
 		fprintf(stderr, "usage: %s [-tw] [file ...]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-aCDegnoprsuw] [file ...]\n",
+		fprintf(stderr, "usage: %s [-AaCDegnoPprsuw] [-t d|o|x] [file ...]\n",
 		    __progname);
 	exit(1);
 }

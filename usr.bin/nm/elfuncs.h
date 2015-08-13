@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfuncs.h,v 1.4 2015/06/23 15:02:58 semarie Exp $	*/
+/*	$OpenBSD: elfuncs.h,v 1.5 2015/08/13 19:13:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -36,10 +36,10 @@ int	elf32_fix_phdrs(Elf32_Ehdr *eh, Elf32_Phdr *phdr);
 int	elf32_fix_sym(Elf32_Ehdr *eh, Elf32_Sym *sym);
 int	elf32_size(Elf32_Ehdr *, Elf32_Shdr *, u_long *, u_long *, u_long *);
 int	elf32_symloadx(const char *, FILE *, off_t, Elf32_Ehdr *, Elf32_Shdr *,
-	    char *, long, struct nlist **, struct nlist ***, size_t *, int *,
+	    char *, long, struct xnlist **, struct xnlist ***, size_t *, int *,
 	    const char *, const char *);
 int	elf32_symload(const char *, FILE *, off_t, Elf32_Ehdr *, Elf32_Shdr *,
-	    struct nlist **, struct nlist ***, size_t *, int *);
+	    struct xnlist **, struct xnlist ***, size_t *, int *);
 
 int	elf64_fix_header(Elf64_Ehdr *eh);
 Elf64_Shdr*elf64_load_shdrs(const char *, FILE *, off_t, Elf64_Ehdr *);
@@ -49,7 +49,7 @@ int	elf64_fix_phdrs(Elf64_Ehdr *eh, Elf64_Phdr *phdr);
 int	elf64_fix_sym(Elf64_Ehdr *eh, Elf64_Sym *sym);
 int	elf64_size(Elf64_Ehdr *, Elf64_Shdr *, u_long *, u_long *, u_long *);
 int	elf64_symloadx(const char *, FILE *, off_t, Elf64_Ehdr *, Elf64_Shdr *,
-	    char *, long, struct nlist **, struct nlist ***, size_t *, int *,
+	    char *, long, struct xnlist **, struct xnlist ***, size_t *, int *,
 	    const char *, const char *);
 int	elf64_symload(const char *, FILE *, off_t, Elf64_Ehdr *, Elf64_Shdr *,
-	    struct nlist **, struct nlist ***, size_t *, int *);
+	    struct xnlist **, struct xnlist ***, size_t *, int *);
