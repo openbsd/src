@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pty.c,v 1.5 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: kqueue-pty.c,v 1.6 2015/08/13 10:11:38 uebayasi Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public Domain	*/
 
@@ -11,6 +11,7 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <err.h>
+#include <string.h>
 
 static int
 pty_check(int kq, struct kevent *ev, int n, int rm, int rs, int wm, int ws)
@@ -74,6 +75,8 @@ do_pty(void)
 	if (kevent(kq, ev, 4, NULL, 0, NULL) < 0)
 		err(1, "slave: kevent add");
 
+	memset(buf, 0, sizeof buf);
+
 	if (write(massa, " ", 1) != 1)
 		err(1, "massa: write");
 
@@ -85,7 +88,8 @@ do_pty(void)
 	if (pty_check(kq, ev, 4, -massa, -slave, massa, slave))
 		return (1);
 
-	while (write(massa, buf, sizeof(buf)) > 0);
+	while (write(massa, buf, sizeof(buf)) > 0)
+		continue;
 
 	if (pty_check(kq, ev, 4, -massa, slave, -massa, slave))
 		return (1);
@@ -95,7 +99,8 @@ do_pty(void)
 	if (pty_check(kq, ev, 4, -massa, slave, massa, slave))
 		return (1);
 
-	while (read(slave, buf, sizeof(buf)) > 0);
+	while (read(slave, buf, sizeof(buf)) > 0)
+		continue;
 
 	if (pty_check(kq, ev, 4, -massa, -slave, massa, slave))
 		return (1);
