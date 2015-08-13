@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.297 2015/07/16 16:12:15 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.298 2015/08/13 14:59:13 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3285,9 +3285,9 @@ u_int32_t syn_hash1, syn_hash2;
 #ifndef INET6
 #define	SYN_HASHALL(hash, src, dst) \
 do {									\
-	hash = SYN_HASH(&((struct sockaddr_in *)(src))->sin_addr,	\
-		((struct sockaddr_in *)(src))->sin_port,		\
-		((struct sockaddr_in *)(dst))->sin_port);		\
+	hash = SYN_HASH(&satosin(src)->sin_addr,			\
+		satosin(src)->sin_port,					\
+		satosin(dst)->sin_port);				\
 } while (/*CONSTCOND*/ 0)
 #else
 #define SYN_HASH6(sa, sp, dp) \
@@ -3299,14 +3299,14 @@ do {									\
 do {									\
 	switch ((src)->sa_family) {					\
 	case AF_INET:							\
-		hash = SYN_HASH(&((struct sockaddr_in *)(src))->sin_addr, \
-			((struct sockaddr_in *)(src))->sin_port,	\
-			((struct sockaddr_in *)(dst))->sin_port);	\
+		hash = SYN_HASH(&satosin(src)->sin_addr,		\
+			satosin(src)->sin_port,				\
+			satosin(dst)->sin_port);			\
 		break;							\
 	case AF_INET6:							\
-		hash = SYN_HASH6(&((struct sockaddr_in6 *)(src))->sin6_addr, \
-			((struct sockaddr_in6 *)(src))->sin6_port,	\
-			((struct sockaddr_in6 *)(dst))->sin6_port);	\
+		hash = SYN_HASH6(&satosin6(src)->sin6_addr,		\
+			satosin6(src)->sin6_port,			\
+			satosin6(dst)->sin6_port);			\
 		break;							\
 	default:							\
 		hash = 0;						\
@@ -3709,12 +3709,11 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	switch (src->sa_family) {
 #ifdef INET6
 	case AF_INET6:
-		inp->inp_laddr6 = ((struct sockaddr_in6 *)dst)->sin6_addr;
+		inp->inp_laddr6 = satosin6(dst)->sin6_addr;
 		break;
 #endif /* INET6 */
 	case AF_INET:
-
-		inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
+		inp->inp_laddr = satosin(dst)->sin_addr;
 		inp->inp_options = ip_srcroute(m);
 		if (inp->inp_options == NULL) {
 			inp->inp_options = sc->sc_ipopts;
