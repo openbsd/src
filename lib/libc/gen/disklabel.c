@@ -51,7 +51,7 @@ getdiskbyname(const char *name)
 	struct	disklabel *dp = &disk;
 	struct partition *pp;
 	char	*buf;
-	char  	*db_array[2] = { _PATH_DISKTAB, 0 };
+	char	*db_array[2] = { _PATH_DISKTAB, 0 };
 	char	*cp, *cq;
 	char	p, max, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];
@@ -106,7 +106,7 @@ getdiskbyname(const char *name)
 	strlcpy(ptype, "tx", sizeof ptype);
 	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
-	dp->d_version = 1; 
+	dp->d_version = 1;
 	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
 		long f;
 
