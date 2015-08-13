@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-process.c,v 1.7 2015/08/02 02:42:22 uebayasi Exp $	*/
+/*	$OpenBSD: kqueue-process.c,v 1.8 2015/08/13 10:26:54 uebayasi Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -105,18 +105,24 @@ do_process(void)
 	kill(pid2, SIGUSR1);	/* sync 2.1 */
 	kill(pid, SIGUSR1);	/* sync 2 */
 
+	/* Wait for child's exit. */
 	if (wait(&status) < 0)
 		err(1, "wait");
+	/* Wait for child-child's exec/exit to receive two events at once. */
+	sleep(1);
 
-	for (i = 0; i < 1; i++) {
-		/* make sure we get an exit note */
+	for (i = 0; i < 2; i++) {
 		ASS(kevent(kq, NULL, 0, &ke, 1, &ts) == 1,
 		    warnx("didn't receive event"));
 		ASSX(ke.filter == EVFILT_PROC);
 		switch (ke.fflags) {
 		case NOTE_EXIT:
 			ASSX((pid_t)ke.ident == pid);
-			fprintf(stderr, "exit %d\n", pid);
+			fprintf(stderr, "child exit %d\n", pid);
+			break;
+		case NOTE_EXEC | NOTE_EXIT:
+			ASSX((pid_t)ke.ident == pid2);
+			fprintf(stderr, "child-child exec/exit %d\n", pid2);
 			break;
 		default:
 			errx(1, "kevent returned weird event 0x%x pid %d",
