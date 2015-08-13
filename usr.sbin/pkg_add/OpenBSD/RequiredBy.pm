@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.26 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.27 2015/08/13 16:34:11 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,14 @@ package OpenBSD::RequirementList;
 use OpenBSD::PackageInfo;
 use Carp;
 
+sub fatal_error
+{
+	my ($self, $msg) = @_;
+	require OpenBSD::Tracker;
+	OpenBSD::Tracker->dump;
+	confess ref($self), ": $msg $self->{filename}: $!";
+}
+
 sub fill_entries
 {
 	my $self = shift;
@@ -29,9 +37,8 @@ sub fill_entries
 		my $l = $self->{entries} = {};
 
 		if (-f $self->{filename}) {
-			open(my $fh, '<', $self->{filename}) or
-			    croak ref($self),
-			    	": reading $self->{filename}: $!";
+			open(my $fh, '<', $self->{filename}) or 
+			    $self->fatal_error("reading");
 			while(<$fh>) {
 				s/\s+$//o;
 				next if /^$/o;
@@ -57,8 +64,8 @@ sub synch
 		}
 	}
 	if (%{$self->{entries}}) {
-		open(my $fh, '>', $self->{filename}) or
-		    croak ref($self), ": writing $self->{filename}: $!";
+		open(my $fh, '>', $self->{filename}) or 
+		    $self->fatal_error("writing");
 		while (my ($k, $v) = each %{$self->{entries}}) {
 			print $fh "$k\n";
 		}

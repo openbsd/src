@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.27 2014/02/06 17:13:05 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.28 2015/08/13 16:34:11 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -32,10 +32,41 @@ use strict;
 use warnings;
 
 package OpenBSD::Tracker;
+our $s;
+
 sub new
 {
 	my $class = shift;
-	return bless {}, $class;
+	return $s = bless {}, $class;
+}
+
+sub dump2
+{
+	my $set = shift;
+	if (defined $set->{merged}) {
+		return "merged from ".dump2($set->{merged});
+	}
+	return join("/",
+	    join(",", $set->newer_names), 
+	    join(",", $set->older_names), 
+	    join(",", $set->kept_names),
+	    join(",", $set->hint_names));
+}
+
+sub dump
+{
+	return unless defined $s;
+	for my $l ('to_install', 'to_update') {
+		next unless defined $s->{$l};
+		print STDERR "$l:\n";
+		while (my ($k, $e) = each %{$s->{$l}}) {
+			print STDERR "\t$k => ", dump2($e), "\n";
+		}
+	}
+	for my $l ('uptodate', 'can_install', 'cant_update') {
+		next unless defined $s->{$l};
+		print STDERR "$l: ", join(' ', keys %{$s->{$l}}), "\n";
+	}
 }
 
 sub sets_todo
