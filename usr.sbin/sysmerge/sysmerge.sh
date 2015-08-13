@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.197 2015/07/18 20:27:37 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.198 2015/08/13 07:06:41 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -24,18 +24,16 @@ usage() {
 	echo "usage: ${0##*/} [-bdp]" >&2 && exit 1
 }
 
-# OpenBSD /etc/rc v1.438
+# OpenBSD /etc/rc v1.456
 stripcom() {
-	local _file=$1
-	local _line
+	local _file=$1 _line
 
-	{
-		while read _line ; do
-			_line=${_line%%#*}		# strip comments
-			test -z "$_line" && continue
-			echo $_line
-		done
-	} < $_file
+	[[ -s $_file ]] || return
+
+	while read _line ; do
+		_line=${_line%%#*}
+		[[ -n $_line ]] && print -r -- "$_line"
+	done <$_file
 }
 
 sm_error() {
