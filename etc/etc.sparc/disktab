@@ -1,8 +1,7 @@
-# $OpenBSD: disktab,v 1.27 2015/08/13 18:02:57 krw Exp $
+# $OpenBSD: disktab,v 1.28 2015/08/13 21:37:56 krw Exp $
 
 miniroot:\
 	:ty=winchester:se#512:nt#2:ns#64:nc#96:\
-	:ts=3500:\
 	:pa#12288:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
 	:pb#0:ob#0:\
 	:pc#12288:oc#0:
