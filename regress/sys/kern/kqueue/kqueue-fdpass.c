@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-fdpass.c,v 1.1 2011/07/07 02:00:51 guenther Exp $	*/
+/*	$OpenBSD: kqueue-fdpass.c,v 1.2 2015/08/13 10:14:41 uebayasi Exp $	*/
 /*
  *	Written by Philip Guenther <guenther@openbsd.org> 2011 Public Domain
  */
@@ -53,6 +53,7 @@ do_fdpass(void)
 		if (kevent(fd, &ke, 1, NULL, 0, NULL) != 0)
 			err(1, "can't register events on kqueue");
 
+		memset(&cmsgbuf.buf, 0, sizeof cmsgbuf.buf);
 		memset(&msg, 0, sizeof msg);
 		msg.msg_control = &cmsgbuf.buf;
 		msg.msg_controllen = sizeof(cmsgbuf);
@@ -69,11 +70,13 @@ do_fdpass(void)
 		if (errno != EINVAL)
 			err(1, "child sendmsg");
 		printf("sendmsg failed with EINVAL as expected\n");
+		close(pfd[1]);
 		exit(0);
 	}
 
 	close(pfd[1]);
 	wait(&status);
+	close(pfd[0]);
 
 	return (0);
 }
