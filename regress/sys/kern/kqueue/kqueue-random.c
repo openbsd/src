@@ -1,10 +1,11 @@
-/*	$OpenBSD: kqueue-random.c,v 1.8 2014/11/22 18:58:33 deraadt Exp $	*/
+/*	$OpenBSD: kqueue-random.c,v 1.9 2015/08/13 10:12:04 uebayasi Exp $	*/
 /*	Written by Michael Shalayeff, 2002, Public Domain	*/
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <err.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -39,6 +40,7 @@ do_random(void)
 		return (1);
 	}
 
+	memset(&ev, 0, sizeof(ev));
 	ev.ident = fd;
 	ev.filter = EVFILT_READ;
 	ev.flags = EV_ADD | EV_ENABLE;
