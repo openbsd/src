@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.20 2014/10/01 14:09:28 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.21 2015/08/14 14:03:27 millert Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 1 2014 $
+.Dd $Mdocdate: August 14 2015 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
@@ -74,60 +74,44 @@ For the purposes of this example the certificates will be stored in
 .Pa /etc/ssl ,
 though it is possible to use a different directory if needed.
 .Pp
-Next, you must generate a
-.Ar DSA
-parameter set with a command like the following:
+Next, you must generate an
+.Ar RSA
+private key:
 .Pp
-.Dl # openssl dsaparam 1024 -out dsa1024.pem
+.Dl # openssl genrsa -out /etc/ssl/private/mail.example.com.key 4096
 .Pp
-This would generate
-.Ar DSA
-parameters for 1024-bit
-.Ar DSA
-keys, and save them to the
-file
-.Pa dsa1024.pem .
+This would generate a 4096-bit
+.Ar RSA
+key stored in the file
+.Pa mail.example.com.key .
 .Pp
-Once you have the
-.Ar DSA
-parameters generated, you can generate a certificate
-and unencrypted private key using the command:
+Once you have generated the
+.Ar RSA
+key, you can generate a certificate from it using the command:
 .Bd -literal -offset indent
-# openssl req -x509 -nodes -days 365 -newkey dsa:dsa1024.pem \e
-  -out /etc/ssl/mycert.pem -keyout /etc/ssl/private/mykey.pem
+# openssl req -x509 -new -key /etc/ssl/private/mail.example.com.key \e
+  -out /etc/ssl/mail.example.com.crt -days 365
 .Ed
 .Pp
 You may adjust the lifetime of the certificate via the
 .Fl days
 parameter (one year in this example).
 .Pp
-Make sure to leave the private key files unencrypted, using the
-.Fl nodes
-option.
-Otherwise the MTA
-will be unable to initiate TLS server functions.
-.Pp
 You can verify that the newly-generated certificate has correct information
 with the following command:
 .Pp
-.Dl # openssl x509 -in /etc/ssl/mycert.pem -text
+.Dl # openssl x509 -in /etc/ssl/mail.example.com.crt -text
 .Pp
 If you don't intend to use TLS for authentication (and if you are using
 self-signed certificates you probably don't) you can simply link
 your new certificate to
 .Pa CAcert.pem .
 .Pp
-.Dl # ln -s /etc/ssl/mycert.pem /etc/ssl/CAcert.pem
+.Dl # ln -s /etc/ssl/mail.example.com.crt /etc/ssl/CAcert.pem
 .Pp
 If, on the other hand, you intend to use TLS for authentication
 you should install your certificate authority bundle as
 .Pa /etc/ssl/CAcert.pem .
-.Pp
-At this point, you no longer need the
-.Pa dsa1024.pem
-file and it can be removed.
-.Pp
-.Dl # rm dsa1024.pem
 .Pp
 Because the private key files are unencrypted,
 MTAs
@@ -139,11 +123,11 @@ A simple way to ensure this is to run the following:
 .Dl # chmod -R go-rwx /etc/ssl/private
 .Ss Creating a certificate with an existing private key
 This example assumes you already have an existing private key,
-.Pa /etc/ssl/private/mykey.pem .
+.Pa /etc/ssl/private/mail.example.com.key .
 You can generate a new certificate based on this key using the command:
 .Bd -literal -offset indent
-# openssl req -x509 -new -days 365 -key /etc/ssl/private/mykey.pem \e
-  -out /etc/ssl/mycert.pem
+# openssl req -x509 -new -key /etc/ssl/private/mail.example.com.key \e
+  -out /etc/ssl/mail.example.com.crt -days 365
 # chmod 600 /etc/ssl/mycert.pem
 .Ed
 .Pp
@@ -152,13 +136,18 @@ You may adjust the lifetime of the certificate via the
 parameter (one year in this example).
 .Pp
 After having installed the certificates
-the mail server needs to be configured to accept TLS sessions.
+the mail server needs to be configured to accept TLS sessions
+and use the key and certificate.
 For
 .Xr smtpd 8 ,
-it's as simple as adding a line like the following to
+it's as simple as adding pki configuration to
 .Xr smtpd.conf 5 :
-.Pp
-.Dl listen on [...] tls
+.Bd -literal -offset indent
+pki mail.example.com certificate "/etc/ssl/mail.example.com.crt"
+pki mail.example.com key "/etc/ssl/private/mail.example.com.key"
+
+listen on [...] tls pki mail.example.com auth
+.Ed
 .Pp
 After restarting the mail server, a new option should be presented for ESMTP
 transactions, STARTTLS.
