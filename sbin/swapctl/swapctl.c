@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.20 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.21 2015/08/14 08:56:21 semarie Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 
 #include <sys/stat.h>
 #include <sys/swap.h>
+#include <sys/wait.h>
 
 #include <unistd.h>
 #include <err.h>
@@ -366,8 +367,9 @@ do_fstab(void)
 			priority = pri;
 
 		if ((s = strstr(fp->fs_mntops, NFSMNTPT)) != NULL) {
-			char *t, cmd[sizeof(PATH_MOUNT)+PATH_MAX+1+PATH_MAX+1];
-			int l;
+			char *t;
+			pid_t pid;
+			int status;
 
 			/*
 			 * Skip this song and dance if we're only
@@ -391,11 +393,19 @@ do_fstab(void)
 				free((char *)spec);
 				continue;
 			}
-			l = snprintf(cmd, sizeof(cmd), "%s %s %s",
-			    PATH_MOUNT, fp->fs_spec, spec);
-			if (l == -1 || l >= sizeof(cmd))
-				errx(1, "path too long");
-			if (system(cmd) != 0) {
+
+			switch (pid = vfork()) {
+			case -1:	/* error */
+				err(1, "vfork");
+			case 0:
+				execl(PATH_MOUNT, PATH_MOUNT, fp->fs_spec, spec,
+				    NULL);
+				err(1, "execl");
+			}
+			while (waitpid(pid, &status, 0) < 0)
+				if (errno != EINTR)
+					err(1, "waitpid");
+			if (status != 0) {
 				warnx("%s: mount failed", fp->fs_spec);
 				free((char *)spec);
 				continue;
