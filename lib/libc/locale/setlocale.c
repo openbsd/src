@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.22 2015/07/02 16:07:43 semarie Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.23 2015/08/14 14:30:40 stsp Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -207,9 +207,6 @@ revert_to_default(int category)
 static int
 set_lc_messages_locale(const char *locname)
 {
-	const char *charset;
-	char charsets[sizeof(LOCALE_CHARSETS)];
-	char *s = charsets;
 	const char *dot, *loc_encoding;
 
 	/* Assumes "language[_territory][.codeset]" locale name. */
@@ -218,19 +215,7 @@ set_lc_messages_locale(const char *locname)
 		return -1;
 	loc_encoding = dot + 1;
 
-	/* Allow message catalogs in encodings supported by LC_CTYPE.
-	 * We don't care about the language name since it is application
-	 * specific. */
-	memcpy(charsets, LOCALE_CHARSETS, sizeof(charsets));
-	do {
-		charset = strsep(&s, " \t");
-		if (charset && charset[0]) {
-			if (strcmp(loc_encoding, charset) == 0)
-				return 0;
-		}
-	} while (charset);
-
-	return -1;
+	return strcmp(loc_encoding, "UTF-8") == 0 ? 0 : -1;
 }
 
 static int
