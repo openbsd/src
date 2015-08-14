@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.49 2014/11/02 10:34:52 jca Exp $
+#	$OpenBSD: Makefile,v 1.50 2015/08/14 06:38:16 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -38,6 +38,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers7-2 \
 		cmp-vers7-3 \
 		cmp-vers7-4 \
+		cmp-vers8-1 \
 		corrupt1 \
 		corrupt2 \
 		corrupt3 \
@@ -341,6 +342,12 @@ cmp-vers7-4:
 	# Test suffixed version (vers3 > 1.0.1)
 	@touch ${WANT}
 	@${VPCONFIG} "vers3 > 1.0.1"
+	@diff -u ${WANT} ${GOT}
+
+cmp-vers8-1:
+	# Test Version: x.y.z-stable w/compare()
+	@touch ${WANT}
+	@${VPCONFIG} --atleast-version=2.0.1 vers4
 	@diff -u ${WANT} ${GOT}
 
 # Tests for various environment variables
