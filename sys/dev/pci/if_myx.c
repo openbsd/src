@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.79 2015/08/14 07:24:18 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.80 2015/08/14 10:42:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -93,22 +93,21 @@ struct myx_buf_list {
 struct pool *myx_buf_pool;
 struct pool *myx_mcl_pool;
 
-struct myx_ring_lock {
-};
-
 struct myx_rx_slot {
 	bus_dmamap_t		 mrs_map;
 	struct mbuf		*mrs_m;
 };
 
 struct myx_rx_ring {
-	struct mutex		 mrr_rxr_mtx;
+	struct myx_softc	*mrr_softc;
+	struct timeout		 mrr_refill;
 	struct if_rxring	 mrr_rxr;
+	struct myx_rx_slot	*mrr_slots;
 	u_int32_t		 mrr_offset;
 	u_int			 mrr_running;
 	u_int			 mrr_prod;
 	u_int			 mrr_cons;
-	struct myx_rx_slot	*mrr_slots;
+	struct mbuf		*(*mrr_mclget)(void);
 };
 
 enum myx_state {
@@ -153,7 +152,6 @@ struct myx_softc {
 #define  MYX_RXSMALL		 0
 #define  MYX_RXBIG		 1
 	struct myx_rx_ring	 sc_rx_ring[2];
-	struct timeout		 sc_refill;
 
 	bus_size_t		 sc_tx_boundary;
 	u_int			 sc_tx_ring_count;
@@ -229,15 +227,15 @@ void			myx_bufs_init(struct myx_buf_list *);
 int			myx_bufs_empty(struct myx_buf_list *);
 struct myx_buf *	myx_buf_get(struct myx_buf_list *);
 void			myx_buf_put(struct myx_buf_list *, struct myx_buf *);
-int			myx_buf_fill(struct myx_softc *, int,
-			    struct myx_rx_slot *);
+int			myx_buf_fill(struct myx_softc *, struct myx_rx_slot *,
+			    struct mbuf *(*)(void));
 struct mbuf *		myx_mcl_small(void);
 struct mbuf *		myx_mcl_big(void);
 
 int			myx_rx_init(struct myx_softc *, int, bus_size_t);
-int			myx_rx_fill(struct myx_softc *, int);
-void			myx_rx_empty(struct myx_softc *, int);
-void			myx_rx_free(struct myx_softc *, int);
+int			myx_rx_fill(struct myx_softc *, struct myx_rx_ring *);
+void			myx_rx_empty(struct myx_softc *, struct myx_rx_ring *);
+void			myx_rx_free(struct myx_softc *, struct myx_rx_ring *);
 
 void			myx_refill(void *);
 
@@ -291,13 +289,17 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
-	mtx_init(&sc->sc_rx_ring[MYX_RXSMALL].mrr_rxr_mtx, IPL_NET);
-	mtx_init(&sc->sc_rx_ring[MYX_RXBIG].mrr_rxr_mtx, IPL_NET);
+	sc->sc_rx_ring[MYX_RXSMALL].mrr_softc = sc;
+	sc->sc_rx_ring[MYX_RXSMALL].mrr_mclget = myx_mcl_small;
+	timeout_set(&sc->sc_rx_ring[MYX_RXSMALL].mrr_refill, myx_refill,
+	    &sc->sc_rx_ring[MYX_RXSMALL]);
+	sc->sc_rx_ring[MYX_RXBIG].mrr_softc = sc;
+	sc->sc_rx_ring[MYX_RXBIG].mrr_mclget = myx_mcl_big;
+	timeout_set(&sc->sc_rx_ring[MYX_RXBIG].mrr_refill, myx_refill,
+	    &sc->sc_rx_ring[MYX_RXBIG]);
 
 	myx_bufs_init(&sc->sc_tx_buf_free);
 	myx_bufs_init(&sc->sc_tx_buf_list);
-
-	timeout_set(&sc->sc_refill, myx_refill, sc);
 
 	mtx_init(&sc->sc_sts_mtx, IPL_NET);
 
@@ -1020,14 +1022,10 @@ myx_rxrinfo(struct myx_softc *sc, struct if_rxrinfo *ifri)
 	memset(ifr, 0, sizeof(ifr));
 
 	ifr[0].ifr_size = MYX_RXSMALL_SIZE;
-	mtx_enter(&sc->sc_rx_ring[MYX_RXSMALL].mrr_rxr_mtx);
 	ifr[0].ifr_info = sc->sc_rx_ring[0].mrr_rxr;
-	mtx_leave(&sc->sc_rx_ring[MYX_RXSMALL].mrr_rxr_mtx);
 
 	ifr[1].ifr_size = MYX_RXBIG_SIZE;
-	mtx_enter(&sc->sc_rx_ring[MYX_RXBIG].mrr_rxr_mtx);
 	ifr[1].ifr_info = sc->sc_rx_ring[1].mrr_rxr;
-	mtx_leave(&sc->sc_rx_ring[MYX_RXBIG].mrr_rxr_mtx);
 
 	return (if_rxr_info_ioctl(ifri, nitems(ifr), ifr));
 }
@@ -1234,13 +1232,13 @@ myx_up(struct myx_softc *sc)
 	if (myx_rx_init(sc, MYX_RXSMALL, MCLBYTES) != 0)
 		goto free_tx_bufs;
 
-	if (myx_rx_fill(sc, MYX_RXSMALL) != 0)
+	if (myx_rx_fill(sc, &sc->sc_rx_ring[MYX_RXSMALL]) != 0)
 		goto free_rx_ring_small;
 
 	if (myx_rx_init(sc, MYX_RXBIG, MYX_RXBIG_SIZE) != 0)
 		goto empty_rx_ring_small;
 
-	if (myx_rx_fill(sc, MYX_RXBIG) != 0)
+	if (myx_rx_fill(sc, &sc->sc_rx_ring[MYX_RXBIG]) != 0)
 		goto free_rx_ring_big;
 
 	memset(&mc, 0, sizeof(mc));
@@ -1274,13 +1272,13 @@ myx_up(struct myx_softc *sc)
 	return;
 
 empty_rx_ring_big:
-	myx_rx_empty(sc, MYX_RXBIG);
+	myx_rx_empty(sc, &sc->sc_rx_ring[MYX_RXBIG]);
 free_rx_ring_big:
-	myx_rx_free(sc, MYX_RXBIG);
+	myx_rx_free(sc, &sc->sc_rx_ring[MYX_RXBIG]);
 empty_rx_ring_small:
-	myx_rx_empty(sc, MYX_RXSMALL);
+	myx_rx_empty(sc, &sc->sc_rx_ring[MYX_RXSMALL]);
 free_rx_ring_small:
-	myx_rx_free(sc, MYX_RXSMALL);
+	myx_rx_free(sc, &sc->sc_rx_ring[MYX_RXSMALL]);
 free_tx_bufs:
 	while ((mb = myx_buf_get(&sc->sc_tx_buf_free)) != NULL)
 		myx_buf_free(sc, mb);
@@ -1407,8 +1405,6 @@ myx_down(struct myx_softc *sc)
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	mtx_leave(&sc->sc_sts_mtx);
 
-	timeout_del(&sc->sc_refill);
-
 	s = splnet();
 	if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
 		ifp->if_link_state = LINK_STATE_UNKNOWN;
@@ -1425,8 +1421,11 @@ myx_down(struct myx_softc *sc)
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
 
 	for (ring = 0; ring < 2; ring++) {
-		myx_rx_empty(sc, ring);
-		myx_rx_free(sc, ring);
+		struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
+
+		timeout_del(&mrr->mrr_refill);
+		myx_rx_empty(sc, mrr);
+		myx_rx_free(sc, mrr);
 	}
 
 	while ((mb = myx_buf_get(&sc->sc_tx_buf_list)) != NULL) {
@@ -1729,19 +1728,15 @@ myx_intr(void *arg)
 }
 
 void
-myx_refill(void *xsc)
+myx_refill(void *xmrr)
 {
-	struct myx_softc *sc = xsc;
-	struct myx_rx_ring *mrr;
-	int ring;
+	struct myx_rx_ring *mrr = xmrr;
+	struct myx_softc *sc = mrr->mrr_softc;
 
-	for (ring = 0; ring < 2; ring++) {
-		mrr = &sc->sc_rx_ring[ring];
+	myx_rx_fill(sc, mrr);
 
-		if (myx_rx_fill(sc, ring) >= 0 &&
-		    mrr->mrr_prod == mrr->mrr_cons)
-			timeout_add(&sc->sc_refill, 1);
-	}
+	if (mrr->mrr_prod == mrr->mrr_cons)
+		timeout_add(&mrr->mrr_refill, 1);
 }
 
 void
@@ -1832,29 +1827,25 @@ myx_rxeof(struct myx_softc *sc)
 
 		mrr = &sc->sc_rx_ring[ring];
 
-		mtx_enter(&mrr->mrr_rxr_mtx);
 		if_rxr_put(&mrr->mrr_rxr, rxfree[ring]);
-		mtx_leave(&mrr->mrr_rxr_mtx);
-
-		if (myx_rx_fill(sc, ring) >= 0 &&
-		    mrr->mrr_prod == mrr->mrr_cons)
-			timeout_add(&sc->sc_refill, 0);
+		myx_rx_fill(sc, mrr);
+		if (mrr->mrr_prod == mrr->mrr_cons)
+			timeout_add(&mrr->mrr_refill, 0);
 	}
 
 	if_input(ifp, &ml);
 }
 
 static int
-myx_rx_fill_slots(struct myx_softc *sc, int ring, u_int slots)
+myx_rx_fill_slots(struct myx_softc *sc, struct myx_rx_ring *mrr, u_int slots)
 {
 	struct myx_rx_desc rxd;
-	struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
 	struct myx_rx_slot *mrs;
 	u_int32_t offset = mrr->mrr_offset;
 	u_int p, first, fills;
 
 	first = p = mrr->mrr_prod;
-	if (myx_buf_fill(sc, ring, &mrr->mrr_slots[first]) != 0)
+	if (myx_buf_fill(sc, &mrr->mrr_slots[first], mrr->mrr_mclget) != 0)
 		return (slots);
 
 	if (++p >= sc->sc_rx_ring_count)
@@ -1863,7 +1854,7 @@ myx_rx_fill_slots(struct myx_softc *sc, int ring, u_int slots)
 	for (fills = 1; fills < slots; fills++) {
 		mrs = &mrr->mrr_slots[p];
 
-		if (myx_buf_fill(sc, ring, mrs) != 0)
+		if (myx_buf_fill(sc, mrs, mrr->mrr_mclget) != 0)
 			break;
 
 		rxd.rx_addr = htobe64(mrs->mrs_map->dm_segs[0].ds_addr);
@@ -1950,41 +1941,24 @@ myx_rx_ring_leave(struct myx_rx_ring *mrr)
 }
 
 int
-myx_rx_fill(struct myx_softc *sc, int ring)
+myx_rx_fill(struct myx_softc *sc, struct myx_rx_ring *mrr)
 {
-	struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
 	u_int slots;
-	int rv = 1;
 
-	if (!myx_rx_ring_enter(mrr))
-		return (-1);
+	slots = if_rxr_get(&mrr->mrr_rxr, sc->sc_rx_ring_count);
+	if (slots == 0)
+		return (1);
 
-	do {
-		mtx_enter(&sc->sc_rx_ring[ring].mrr_rxr_mtx);
-		slots = if_rxr_get(&sc->sc_rx_ring[ring].mrr_rxr,
-		    sc->sc_rx_ring_count);
-		mtx_leave(&sc->sc_rx_ring[ring].mrr_rxr_mtx);
+	slots = myx_rx_fill_slots(sc, mrr, slots);
+	if (slots > 0)
+		if_rxr_put(&mrr->mrr_rxr, slots);
 
-		if (slots == 0)
-			continue;
-
-		slots = myx_rx_fill_slots(sc, ring, slots);
-		rv = 0;
-
-		if (slots > 0) {
-			mtx_enter(&sc->sc_rx_ring[ring].mrr_rxr_mtx);
-			if_rxr_put(&sc->sc_rx_ring[ring].mrr_rxr, slots);
-			mtx_leave(&sc->sc_rx_ring[ring].mrr_rxr_mtx);
-		}
-	} while (!myx_rx_ring_leave(mrr));
-
-	return (rv);
+	return (0);
 }
 
 void
-myx_rx_empty(struct myx_softc *sc, int ring)
+myx_rx_empty(struct myx_softc *sc, struct myx_rx_ring *mrr)
 {
-	struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
 	struct myx_rx_slot *mrs;
 
 	while (mrr->mrr_cons != mrr->mrr_prod) {
@@ -2003,9 +1977,8 @@ myx_rx_empty(struct myx_softc *sc, int ring)
 }
 
 void
-myx_rx_free(struct myx_softc *sc, int ring)
+myx_rx_free(struct myx_softc *sc, struct myx_rx_ring *mrr)
 {
-	struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
 	struct myx_rx_slot *mrs;
 	int i;
 
@@ -2054,13 +2027,13 @@ myx_mcl_big(void)
 }
 
 int
-myx_buf_fill(struct myx_softc *sc, int ring, struct myx_rx_slot *mrs)
+myx_buf_fill(struct myx_softc *sc, struct myx_rx_slot *mrs,
+    struct mbuf *(*mclget)(void))
 {
-	struct mbuf *(*mclget[2])(void) = { myx_mcl_small, myx_mcl_big };
 	struct mbuf *m;
 	int rv;
 
-	m = (*mclget[ring])();
+	m = (*mclget)();
 	if (m == NULL)
 		return (ENOMEM);
 
