@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ml_init.9,v 1.1 2015/06/17 06:24:46 mpi Exp $
+.\"     $OpenBSD: ml_init.9,v 1.2 2015/08/14 05:25:29 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2015 $
+.Dd $Mdocdate: August 14 2015 $
 .Dt ML_INIT 9
 .Os
 .Sh NAME
 .Nm ml_init ,
 .Nm ml_enqueue ,
 .Nm ml_dequeue ,
+.Nm ml_requeue ,
 .Nm ml_dechain ,
 .Nm ml_len ,
 .Nm ml_empty ,
@@ -34,6 +35,8 @@
 .Fn "ml_enqueue" "struct mbuf_list *ml" "struct mbuf *m"
 .Ft struct mbuf *
 .Fn "ml_dequeue" "struct mbuf_list *ml"
+.Ft void
+.Fn "ml_requeue" "struct mbuf_list *ml" "struct mbuf *m"
 .Ft struct mbuf *
 .Fn "ml_dechain" "struct mbuf_list *ml"
 .Ft struct mbuf *
@@ -61,6 +64,8 @@ Insertion of a new mbuf at the end of the list.
 .It
 Removal of an mbuf from the head of the list.
 .It
+Reinsertion of an mbuf at the head of the list.
+.It
 Removal of the entire chain of mbufs on the list.
 .El
 .Bl -tag -width Ds
@@ -78,6 +83,12 @@ on the end of the
 mbuf list.
 .It Fn "ml_dequeue" "struct mbuf_list *ml"
 Dequeue an mbuf from the front of the
+.Fa ml
+mbuf list.
+.It Fn "ml_requeue" "struct mbuf_list *ml" "struct mbuf *m"
+Enqueue mbuf
+.Fa m
+at the head of the
 .Fa ml
 mbuf list.
 .It Fn "ml_dechain" "struct mbuf_list *ml"
@@ -124,6 +135,7 @@ Note that it is unsafe to modify the list while iterating over it.
 .Fn ml_init ,
 .Fn ml_enqueue ,
 .Fn ml_dequeue ,
+.Fn ml_requeue ,
 .Fn ml_dechain ,
 .Fn ml_len ,
 .Fn ml_empty ,

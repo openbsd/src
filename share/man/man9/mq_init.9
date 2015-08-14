@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.1 2015/06/17 06:24:46 mpi Exp $
+.\"     $OpenBSD: mq_init.9,v 1.2 2015/08/14 05:25:29 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2015 $
+.Dd $Mdocdate: August 14 2015 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
 .Nm mq_init ,
 .Nm mq_enqueue ,
 .Nm mq_dequeue ,
+.Nm mq_requeue ,
 .Nm mq_enlist ,
 .Nm mq_delist ,
 .Nm mq_dechain ,
@@ -37,6 +38,8 @@
 .Fn "mq_enqueue" "struct mbuf_queue *mq" "struct mbuf *m"
 .Ft struct mbuf *
 .Fn "mq_dequeue" "struct mbuf_queue *mq"
+.Ft int
+.Fn "mq_requeue" "struct mbuf_queue *mq" "struct mbuf *m"
 .Ft int
 .Fn "mq_enlist" "struct mbuf_queue *mq" "struct mbuf_list *ml"
 .Ft void
@@ -78,6 +81,8 @@ Insertion of a new mbuf at the end of the queue.
 .It
 Removal of an mbuf from the head of the queue.
 .It
+Reinsertion of an mbuf at the head of the queue.
+.It
 Removal of the entire chain of mbufs on the queue.
 .It
 Insertion of the mbufs in an mbuf_list at the end of the queue.
@@ -88,14 +93,14 @@ Removal of all the mbufs on the queue as an mbuf_list.
 .It Fn "mq_init" "struct mbuf_queue *mq" "unsigned int maxlen" "int ipl"
 Initialises the mbuf queue structure
 .Fa mq .
-The maximum number of mbufs that can be queued is specified with
+The maximum number of mbufs that should be queued is specified with
 .Fa maxlen .
 The highest interrupt priority level the queue will be operated at is
 specified via
 .Fa ipl .
 .It Fn "MBUF_QUEUE_INITIALIZER" "unsigned int maxlen" "int ipl"
 Initialises an mbuf queue structure declaration.
-The maximum number of mbufs that can be queued is specified with
+The maximum number of mbufs that should be queued is specified with
 .Fa maxlen .
 The highest interrupt priority level the queue will be operated at is
 specified via
@@ -110,6 +115,14 @@ mbuf queue.
 Dequeue an mbuf from the front of the
 .Fa mq
 mbuf queue.
+.It Fn "mq_requeue" "struct mbuf_queue *mq" "struct mbuf *m"
+Enqueue mbuf
+.Fa m
+at the head of the
+.Fa mq
+mbuf queue.
+Note, this operation will succeed even if it will cause the queue to exceed its
+maximum length.
 .It Fn "mq_enlist" "struct mbuf_queue *mq" "struct mbuf_list *ml"
 Enqueue all the mbufs on the
 .Fa ml
@@ -161,7 +174,7 @@ if the
 .Fa mq
 mbuf queue was too full.
 .It Fn "mq_set_maxlen" "struct mbuf_queue *mq" "unsigned int"
-Alter the maximum number of mbufs that can be queued on the
+Alter the maximum number of mbufs that should be queued on the
 .Fa mq
 mbuf queue.
 Note,
@@ -173,6 +186,7 @@ already exist on the queue.
 .Fn mq_init ,
 .Fn mq_enqueue ,
 .Fn mq_dequeue ,
+.Fn mq_requeue ,
 .Fn mq_enlist ,
 .Fn mq_delist ,
 .Fn mq_dechain ,
@@ -213,6 +227,10 @@ returns a non-zero value if the queue is empty, otherwise 0.
 .Fn mq_enqueue
 returns 0 if the mbuf was successfully queued, or non-zero if the
 mbuf was freed because it would cause the queue to exceed its maximum
+length.
+.Pp
+.Fn mq_requeue
+returns non-zero if the mbuf queue is now full, otherwise 0.
 length.
 .Pp
 .Fn mq_enlist

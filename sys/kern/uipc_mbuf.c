@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.206 2015/07/15 22:29:32 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.207 2015/08/14 05:25:29 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1299,6 +1299,19 @@ ml_dequeue(struct mbuf_list *ml)
 	return (m);
 }
 
+void
+ml_requeue(struct mbuf_list *ml, struct mbuf *m)
+{
+	if (ml->ml_tail == NULL)
+		ml->ml_head = ml->ml_tail = m;
+	else {
+		m->m_nextpkt = ml->ml_head;
+		ml->ml_head = m;
+	}
+
+	ml->ml_len++;
+}
+
 struct mbuf *
 ml_dechain(struct mbuf_list *ml)
 {
@@ -1382,6 +1395,19 @@ mq_dequeue(struct mbuf_queue *mq)
 	mtx_leave(&mq->mq_mtx);
 
 	return (m);
+}
+
+int
+mq_requeue(struct mbuf_queue *mq, struct mbuf *m)
+{
+	int full;
+
+	mtx_enter(&mq->mq_mtx);
+	ml_requeue(&mq->mq_list, m);
+	full = mq_len(mq) > mq->mq_maxlen;
+	mtx_leave(&mq->mq_mtx);
+
+	return (full);
 }
 
 int
