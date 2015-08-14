@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.15 2015/08/13 18:02:56 krw Exp $
+.\"	$OpenBSD: disktab.5,v 1.16 2015/08/14 23:45:56 krw Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)disktab.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 13 2015 $
+.Dd $Mdocdate: August 14 2015 $
 .Dt DISKTAB 5
 .Os
 .Sh NAME
@@ -61,7 +61,6 @@ The last name given should be a long name fully identifying the disk.
 The following list indicates the normal values stored for each disk entry:
 .Bl -column "d[0-4]" "bool" "Description"
 .It Sy Name Ta Sy Type Ta Sy Description
-.It \&ty Ta str Ta "Type of disk (e.g., removable, winchester)."
 .It \&dt Ta str Ta "Type of controller (e.g.,SMD, ESDI, floppy)."
 .It \&ns Ta num Ta "Number of sectors per track."
 .It \&nt Ta num Ta "Number of tracks per cylinder."

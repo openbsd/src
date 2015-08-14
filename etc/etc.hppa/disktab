@@ -1,6 +1,6 @@
-#	$OpenBSD: disktab,v 1.8 2010/08/26 01:35:44 krw Exp $
+#	$OpenBSD: disktab,v 1.9 2015/08/14 23:45:55 krw Exp $
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#18:nt#2:ns#128:\
+	:dt=rdroot:se#512:nc#18:nt#2:ns#128:\
 	:ta=4.2BSD:oa#0:pa#4608:fa#1024:ba#8192:\
 	:ob#0:pb#0:oc#0:pc#4608:

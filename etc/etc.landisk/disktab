@@ -1,20 +1,20 @@
-# $OpenBSD: disktab,v 1.3 2010/07/02 20:33:54 tedu Exp $
+# $OpenBSD: disktab,v 1.4 2015/08/14 23:45:55 krw Exp $
 
 # Leave nc=16; adjust size using: ns
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#16:nt#2:ns#256:\
+	:dt=rdroot:se#512:nc#16:nt#2:ns#256:\
 	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
 	:ob#0:pb#0:oc#0:pc#8192:
 
 
 rdroot2.5M|ramdiskroot2.5M|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#16:nt#2:ns#160:\
+	:dt=rdroot:se#512:nc#16:nt#2:ns#160:\
 	:oa#0:pa#5120:ta=4.2BSD:fa#512:ba#4096:\
 	:ob#0:pb#0:tb=swap:\
 	:oc#0:pc#5120:
 
 mroot2.5M|miniroot2.5M|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#160:nt#2:ns#16:\
+	:dt=rdroot:se#512:nc#160:nt#2:ns#16:\
 	:oa#16:pa#5104:ta=4.2BSD:fa#512:ba#4096:\
 	:ob#0:pb#0:tb=swap:\
 	:oc#0:pc#5120:
