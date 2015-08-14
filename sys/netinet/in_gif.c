@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.45 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.46 2015/08/14 18:07:28 bluhm Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -62,8 +62,8 @@ int
 in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
-	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
+	struct sockaddr_in *sin_src = satosin(sc->gif_psrc);
+	struct sockaddr_in *sin_dst = satosin(sc->gif_pdst);
 	struct tdb tdb;
 	struct xformsw xfs;
 	int error;

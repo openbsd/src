@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.35 2015/07/15 22:16:42 deraadt Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.36 2015/08/14 18:07:28 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -217,7 +217,7 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
-			addr.sin_addr.s_addr = ((struct sockaddr_in *)
+			addr.sin_addr.s_addr = satosin(
 			    ifa->ifa_addr)->sin_addr.s_addr;
 			break;
 		}

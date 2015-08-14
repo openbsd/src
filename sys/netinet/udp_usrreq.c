@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.204 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.205 2015/08/14 18:07:28 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -741,7 +741,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		ip6 = NULL;
 		cmdarg = NULL;
 		/* XXX: translate addresses into internal form */
-		sa6 = *(struct sockaddr_in6 *)sa;
+		sa6 = *satosin6(sa);
 		if (in6_embedscope(&sa6.sin6_addr, &sa6, NULL, NULL)) {
 			/* should be impossible */
 			return;
@@ -762,7 +762,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		}
 	} else {
 		/* XXX: translate addresses into internal form */
-		sa6 = *(struct sockaddr_in6 *)sa;
+		sa6 = *satosin6(sa);
 		if (in6_embedscope(&sa6.sin6_addr, &sa6, NULL, NULL)) {
 			/* should be impossible */
 			return;

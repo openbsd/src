@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.37 2015/07/15 22:16:42 deraadt Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.38 2015/08/14 18:07:28 bluhm Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	memset(&ifra, 0, sizeof(ifra));
 	bcopy(ifp->if_xname, ifra.ifra_name, sizeof(ifra.ifra_name));
 
-	sin = (struct sockaddr_in *)&ifra.ifra_addr;
+	sin = &ifra.ifra_addr;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = my_ip.s_addr;

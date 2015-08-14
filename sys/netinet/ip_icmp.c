@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.136 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.137 2015/08/14 18:07:28 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1037,7 +1037,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		struct sockaddr_in sa;
 		int s;
 
-		sa = *(struct sockaddr_in *)rt_key(rt);
+		sa = *satosin(rt_key(rt));
 
 		s = splsoftnet();
 		rtdeletemsg(rt, r->rtt_tableid);
