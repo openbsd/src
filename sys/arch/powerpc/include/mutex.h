@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.4 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.5 2015/08/14 06:14:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,9 +28,9 @@
 #define _POWERPC_MUTEX_H_
 
 struct mutex {
-	int mtx_wantipl;
-	int mtx_oldcpl;
 	volatile void *mtx_owner;
+	int mtx_wantipl;
+	int mtx_oldipl;
 };
 
 /*
@@ -47,7 +47,7 @@ struct mutex {
 #define __MUTEX_IPL(ipl) (ipl)
 #endif
 
-#define MUTEX_INITIALIZER(ipl) { __MUTEX_IPL((ipl)), 0, NULL }
+#define MUTEX_INITIALIZER(ipl) { NULL, __MUTEX_IPL(ipl), IPL_NONE }
 
 void __mtx_init(struct mutex *, int);
 #define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
@@ -67,6 +67,6 @@ void __mtx_init(struct mutex *, int);
 #define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
 #endif
 
-#define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldcpl
+#define MUTEX_OLDIPL(mtx)	((mtx)->mtx_oldipl)
 
 #endif

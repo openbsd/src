@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.6 2015/06/26 12:46:13 dlg Exp $	*/
+/*	$OpenBSD: lock.h,v 1.7 2015/08/14 06:14:19 dlg Exp $	*/
 /*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
@@ -36,5 +36,7 @@
 
 #ifndef _POWERPC_LOCK_H_
 #define _POWERPC_LOCK_H_
+
+#define SPINLOCK_SPIN_HOOK do { } while (0)
 
 #endif /* _POWERPC_LOCK_H_ */

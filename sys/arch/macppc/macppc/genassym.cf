@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.24 2014/09/06 10:45:29 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.25 2015/08/14 06:14:19 dlg Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -97,8 +97,3 @@ member	ci_disisave
 ifdef DIAGNOSTIC
 member	ci_mutex_level
 endif
-
-struct	mutex
-member	mtx_wantipl
-member	mtx_oldcpl
-member	mtx_owner

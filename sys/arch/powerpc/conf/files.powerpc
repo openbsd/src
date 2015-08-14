@@ -1,4 +1,4 @@
-#	$OpenBSD: files.powerpc,v 1.52 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: files.powerpc,v 1.53 2015/08/14 06:14:19 dlg Exp $
 #
 
 file	arch/powerpc/powerpc/setjmp.S			ddb
@@ -13,8 +13,8 @@ file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/sys_machdep.c
 file	arch/powerpc/powerpc/trap.c
 file	arch/powerpc/powerpc/vm_machdep.c
+file	arch/powerpc/powerpc/mutex.c
 file	arch/powerpc/powerpc/lock_machdep.c		multiprocessor
-file	arch/powerpc/powerpc/mutex.S
 file	arch/powerpc/powerpc/intr.c
 file	arch/powerpc/powerpc/softintr.c
 
