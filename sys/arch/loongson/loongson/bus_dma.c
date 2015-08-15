@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.18 2014/11/16 12:30:57 deraadt Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.19 2015/08/15 22:31:38 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -433,6 +433,14 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	bus_addr_t addr;
 	int curseg, error, pmap_flags;
 	const struct kmem_dyn_mode *kd;
+
+#ifdef CPU_LOONGSON3
+	/*
+	 * Loongson 3 caches are coherent.
+	 */
+	if (loongson_ver >= 0x3a)
+		flags &= ~BUS_DMA_COHERENT;
+#endif
 
 	if (nsegs == 1) {
 		pa = (*t->_device_to_pa)(segs[0].ds_addr);

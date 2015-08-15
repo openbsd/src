@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.4 2014/03/31 20:21:18 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.5 2015/08/15 22:31:38 miod Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 
 #ifdef	_KERNEL
 
+#if defined(CPU_LOONGSON2) && !defined(CPU_LOONGSON3)
 #define	Mips_SyncCache(ci)			\
 	Loongson2_SyncCache((ci))
 #define	Mips_InvalidateICache(ci, va, l)	\
@@ -59,6 +60,26 @@
 	Loongson2_IOSyncDCache((ci), (va), (l), (h))
 #define	Mips_HitInvalidateDCache(ci, va, l)	\
 	Loongson2_HitInvalidateDCache((ci), (va), (l))
+#endif
+
+#if defined(CPU_LOONGSON3) && !defined(CPU_LOONGSON2)
+#define	Mips_SyncCache(ci)			\
+	Loongson3_SyncCache((ci))
+#define	Mips_InvalidateICache(ci, va, l)	\
+	Loongson3_InvalidateICache((ci), (va), (l))
+#define	Mips_InvalidateICachePage(ci, va)	\
+	Loongson3_InvalidateICachePage((ci), (va))
+#define	Mips_SyncICache(ci)			\
+	Loongson3_SyncICache((ci))
+#define	Mips_SyncDCachePage(ci, va, pa)		\
+	Loongson3_SyncDCachePage((ci), (va), (pa))
+#define	Mips_HitSyncDCache(ci, va, l)	\
+	Loongson3_HitSyncDCache((ci), (va), (l))
+#define	Mips_IOSyncDCache(ci, va, l, h)	\
+	Loongson3_IOSyncDCache((ci), (va), (l), (h))
+#define	Mips_HitInvalidateDCache(ci, va, l)	\
+	Loongson3_HitInvalidateDCache((ci), (va), (l))
+#endif
 
 #endif	/* _KERNEL */
 

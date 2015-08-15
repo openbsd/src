@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.19 2015/07/08 13:37:31 dlg Exp $
+#	$OpenBSD: files.loongson,v 1.20 2015/08/15 22:31:38 miod Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -17,17 +17,19 @@ file	arch/loongson/loongson/bus_dma.c
 file	arch/loongson/loongson/bus_space.c
 file	arch/loongson/loongson/conf.c
 file	arch/loongson/loongson/disksubr.c		disk
-file	arch/loongson/loongson/gdium_machdep.c
-file	arch/loongson/loongson/generic2e_machdep.c
+file	arch/loongson/loongson/gdium_machdep.c		cpu_loongson2
+file	arch/loongson/loongson/generic2e_machdep.c	cpu_loongson2
 file	arch/loongson/loongson/isa_machdep.c		isa
+file	arch/loongson/loongson/lemote3a_machdep.c	cpu_loongson3
 file	arch/loongson/loongson/loongson2_machdep.c
+file	arch/loongson/loongson/loongson3_machdep.c	cpu_loongson3
 file	arch/loongson/loongson/machdep.c
 file	arch/loongson/loongson/hibernate_machdep.c	hibernate
 file	arch/loongson/loongson/pciide_machdep.c		pciide
 file	arch/loongson/loongson/pmon.c
 file	arch/loongson/loongson/pmon32.S
 file	arch/loongson/loongson/wscons_machdep.c		wsdisplay
-file	arch/loongson/loongson/yeeloong_machdep.c
+file	arch/loongson/loongson/yeeloong_machdep.c	cpu_loongson2
 
 include "dev/ata/files.ata"
 include "dev/atapiscsi/files.atapiscsi"
@@ -112,6 +114,11 @@ file	arch/loongson/dev/smfb.c			smfb	needs-flag
 device	sisfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32
 attach	sisfb at pci
 file	arch/loongson/dev/sisfb.c			sisfb	needs-flag
+
+# Radeon frame buffer
+device	radeonfb: wsemuldisplaydev, rasops16
+attach	radeonfb at pci
+file	arch/loongson/dev/radeonfb.c			radeonfb needs-flag
 
 device	apm
 attach	apm at mainbus

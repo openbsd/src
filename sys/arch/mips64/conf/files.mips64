@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mips64,v 1.24 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: files.mips64,v 1.25 2015/08/15 22:31:38 miod Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c		clock
@@ -16,6 +16,8 @@ file	arch/mips64/mips64/vm_machdep.c
 file	arch/mips64/mips64/mutex.c
 
 file	arch/mips64/mips64/cache_loongson2.c	cpu_loongson2
+file	arch/mips64/mips64/cache_loongson3.c	cpu_loongson3
+file	arch/mips64/mips64/cache_mips64r2.c	cpu_mips64r2
 file	arch/mips64/mips64/cache_octeon.c	cpu_octeon
 file	arch/mips64/mips64/cache_r4k.c		cpu_r4000
 file	arch/mips64/mips64/cache_r5k.c		cpu_r5000 | cpu_rm7000
@@ -29,6 +31,7 @@ file	arch/mips64/mips64/exception_tfp.S	cpu_r8000
 file	arch/mips64/mips64/fp_emulate.c
 file	arch/mips64/mips64/lcore_access.S
 file	arch/mips64/mips64/lcore_float.S
+file	arch/mips64/mips64/mips64r2.S		cpu_mips64r2
 file	arch/mips64/mips64/r4000_errata.c	cpu_r4000
 file	arch/mips64/mips64/tlbhandler.S		!cpu_r8000
 file	arch/mips64/mips64/tlb_tfp.S		cpu_r8000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.6 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cache.h,v 1.7 2015/08/15 22:31:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -60,6 +60,11 @@ CACHE_PROTOS(Octeon)
 CACHE_PROTOS(Loongson2)
  
 /*
+ * Loongson 3A and 2Gq.
+ */
+CACHE_PROTOS(Loongson3)
+ 
+/*
  * MIPS R4000 and R4400.
  */
 CACHE_PROTOS(Mips4k)
@@ -78,6 +83,11 @@ CACHE_PROTOS(tfp)
  * MIPS/NEC R10000/R120000/R140000/R16000.
  */
 CACHE_PROTOS(Mips10k)
+
+/*
+ * mips64r2-compliant processors.
+ */
+CACHE_PROTOS(mips64r2)
 
 /*
  * Values used by the IOSyncDCache routine [which acts as the backend of
