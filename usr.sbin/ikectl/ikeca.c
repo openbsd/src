@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.31 2015/08/15 04:45:49 semarie Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.32 2015/08/15 04:47:28 semarie Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -683,7 +683,7 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 				    de->d_name);
 				snprintf(dst, sizeof(dst), "%s/export/%s", p,
 				    de->d_name);
-				fcopy(src, dst, 644);
+				fcopy(src, dst, 0644);
 			}
 			closedir(dexp);
 		}
