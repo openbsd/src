@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.33 2015/06/24 21:26:04 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.34 2015/08/15 22:20:20 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -225,7 +225,6 @@ typedef struct pv_addr {
  * Commonly referenced structures
  */
 extern struct pmap	kernel_pmap_store;
-extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 /*
  * Macros that we need to export
@@ -261,7 +260,6 @@ boolean_t pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
 boolean_t pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
 void	pmap_set_pcb_pagedir(pmap_t, struct pcb *);
 
-void	pmap_debug(int);
 void	pmap_postinit(void);
 
 void	vector_page_setprot(int);

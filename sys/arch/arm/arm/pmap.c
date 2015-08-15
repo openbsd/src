@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 2015/02/07 01:46:27 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.54 2015/08/15 22:20:20 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -175,11 +175,6 @@
  *       in a significant slow-down if both processes are in tight loops.
  */
 
-/*
- * Special compilation symbols
- * PMAP_DEBUG		- Build in pmap_debug_level code
- */
-
 /* Include header files */
 
 #include <sys/types.h>
@@ -202,12 +197,6 @@
 
 #ifdef PMAP_DEBUG
 
-/* XXX need to get rid of all refs to this */
-int pmap_debug_level = 0;
-
-/*
- * for switching to potentially finer grained debugging
- */
 #define	PDB_FOLLOW	0x0001
 #define	PDB_INIT	0x0002
 #define	PDB_ENTER	0x0004
@@ -227,7 +216,6 @@ int pmap_debug_level = 0;
 #define	PDB_KENTER	0x20000
 #define	PDB_KREMOVE	0x40000
 
-int debugmap = 1;
 int pmapdebug = PDB_ENTER|PDB_PVDUMP; 
 #define	NPDEBUG(_lev_,_stat_) \
 	if (pmapdebug & (_lev_)) \
@@ -474,17 +462,6 @@ vaddr_t virtual_end;
 vaddr_t pmap_curmaxkvaddr;
 
 extern pv_addr_t systempage;
-
-/* Function to set the debug level of the pmap code */
-
-#ifdef PMAP_DEBUG
-void
-pmap_debug(int level)
-{
-	pmap_debug_level = level;
-	printf("pmap_debug: level=%d\n", pmap_debug_level);
-}
-#endif	/* PMAP_DEBUG */
 
 /*
  * A bunch of routines to conditionally flush the caches/TLB depending

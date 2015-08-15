@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2015/05/05 02:13:46 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2015/08/15 22:20:20 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -108,11 +108,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct trapframe *tf;
 	struct switchframe *sf;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("cpu_fork: %p %p %p\n", p1, p2, &proc0);
-#endif	/* PMAP_DEBUG */
-
 	if (p1 == curproc) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
@@ -137,17 +132,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	memset(((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
 	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
 #endif	/* STACKCHECKS */
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
-		printf("p1->procaddr=%p p1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    p1->p_addr, &p1->p_addr->u_pcb, p1->p_pid,
-		    p1->p_vmspace->vm_map.pmap);
-		printf("p2->procaddr=%p p2->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    p2->p_addr, &p2->p_addr->u_pcb, p2->p_pid,
-		    p2->p_vmspace->vm_map.pmap);
-	}
-#endif	/* PMAP_DEBUG */
 
 	pmap_activate(p2);
 
@@ -189,12 +173,6 @@ vmapbuf(bp, len)
 	paddr_t fpa;
 
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
-		    (u_int)bp->b_data, (u_int)len);
-#endif	/* PMAP_DEBUG */
-    
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
@@ -230,12 +208,6 @@ vunmapbuf(bp, len)
 	vsize_t len;
 {
 	vaddr_t addr, off;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
-		    (u_int)bp, (u_int)bp->b_data, (u_int)len);
-#endif	/* PMAP_DEBUG */
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
