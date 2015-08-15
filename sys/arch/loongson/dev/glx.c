@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.9 2013/01/15 23:30:36 pirofti Exp $	*/
+/*	$OpenBSD: glx.c,v 1.10 2015/08/15 22:25:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -97,7 +97,7 @@ glx_init(pci_chipset_tag_t pc, pcitag_t tag, int dev)
 	bonito_pci_hook(pc, NULL, glx_pci_read_hook, glx_pci_write_hook);
 
 	/*
-	 * Perform some Geode intialization.
+	 * Perform some Geode initialization.
 	 */
 
 	msr = rdmsr(DIVIL_BALL_OPTS);	/* 0x71 */
