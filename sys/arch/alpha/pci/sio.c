@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.39 2015/08/15 19:15:18 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.40 2015/08/15 19:26:00 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -49,11 +49,14 @@
 #include "isadma.h"
 
 struct sio_softc {
-	struct device	sc_dv;
+	struct device			sc_dv;
 
-	bus_space_tag_t sc_iot, sc_memt;
-	bus_dma_tag_t	sc_dmat;
-	int		sc_haseisa;
+	bus_space_tag_t			sc_iot, sc_memt;
+	bus_dma_tag_t			sc_dmat;
+	int				sc_haseisa;
+
+	struct alpha_eisa_chipset	sc_ec;
+	struct alpha_isa_chipset	sc_ic;
 };
 
 int	siomatch(struct device *, void *, void *);
@@ -63,7 +66,7 @@ int	sioactivate(struct device *, int);
 extern int sio_intr_alloc(isa_chipset_tag_t, int, int, int *);
 extern int sio_intr_check(isa_chipset_tag_t, int, int);
 
-struct cfattach sio_ca = {
+const struct cfattach sio_ca = {
 	.ca_devsize = sizeof(struct sio_softc),
 	.ca_match = siomatch,
 	.ca_attach = sioattach,
@@ -181,34 +184,32 @@ sio_bridge_callback(self)
 	struct device *self;
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
-	struct alpha_eisa_chipset ec;
-	struct alpha_isa_chipset ic;
 	union sio_attach_args sa;
 
 	if (sc->sc_haseisa) {
-		ec.ec_v = NULL;
-		ec.ec_maxslots = 0;	/* will be filled by attach_hook */
-		ec.ec_attach_hook = sio_eisa_attach_hook;
-		ec.ec_intr_map = sio_eisa_intr_map;
-		ec.ec_intr_string = sio_intr_string;
-		ec.ec_intr_establish = sio_intr_establish;
-		ec.ec_intr_disestablish = sio_intr_disestablish;
+		sc->sc_ec.ec_v = NULL;
+		sc->sc_ec.ec_maxslots = 0; /* will be filled by attach_hook */
+		sc->sc_ec.ec_attach_hook = sio_eisa_attach_hook;
+		sc->sc_ec.ec_intr_map = sio_eisa_intr_map;
+		sc->sc_ec.ec_intr_string = sio_intr_string;
+		sc->sc_ec.ec_intr_establish = sio_intr_establish;
+		sc->sc_ec.ec_intr_disestablish = sio_intr_disestablish;
 
 		sa.sa_eba.eba_busname = "eisa";
 		sa.sa_eba.eba_iot = sc->sc_iot;
 		sa.sa_eba.eba_memt = sc->sc_memt;
 		sa.sa_eba.eba_dmat =
 		    alphabus_dma_get_tag(sc->sc_dmat, ALPHA_BUS_EISA);
-		sa.sa_eba.eba_ec = &ec;
+		sa.sa_eba.eba_ec = &sc->sc_ec;
 		config_found(&sc->sc_dv, &sa.sa_eba, sioprint);
 	}
 
-	ic.ic_v = NULL;
-	ic.ic_attach_hook = sio_isa_attach_hook;
-	ic.ic_intr_establish = sio_intr_establish;
-	ic.ic_intr_disestablish = sio_intr_disestablish;
-	ic.ic_intr_alloc = sio_intr_alloc;
-	ic.ic_intr_check = sio_intr_check;
+	sc->sc_ic.ic_v = NULL;
+	sc->sc_ic.ic_attach_hook = sio_isa_attach_hook;
+	sc->sc_ic.ic_intr_establish = sio_intr_establish;
+	sc->sc_ic.ic_intr_disestablish = sio_intr_disestablish;
+	sc->sc_ic.ic_intr_alloc = sio_intr_alloc;
+	sc->sc_ic.ic_intr_check = sio_intr_check;
 
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
@@ -217,7 +218,7 @@ sio_bridge_callback(self)
 	sa.sa_iba.iba_dmat =
 		alphabus_dma_get_tag(sc->sc_dmat, ALPHA_BUS_ISA);
 #endif
-	sa.sa_iba.iba_ic = &ic;
+	sa.sa_iba.iba_ic = &sc->sc_ic;
 	config_found(&sc->sc_dv, &sa.sa_iba, sioprint);
 }
 
