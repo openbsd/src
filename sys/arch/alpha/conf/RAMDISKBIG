@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.97 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.98 2015/08/15 19:07:09 miod Exp $
 
 machine		alpha
 maxusers	4
@@ -26,6 +26,7 @@ option		DEC_3000_300	# Pelican etc:	3000/300*
 option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 option		DEC_KN20AA	# KN20AA:	AlphaStation 600
 option		DEC_KN300	# KN300:	AlphaServer 4100 and 1200
+option		DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
