@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc2822.h,v 1.1 2014/10/12 16:19:30 gilles Exp $	*/
+/*	$OpenBSD: rfc2822.h,v 1.2 2015/08/15 16:49:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,7 @@
 #ifndef _RFC2822_H_
 #define	_RFC2822_H_
 
-#define	RFC2822_MAX_LINE_SIZE		998
+#define	RFC2822_MAX_LINE_SIZE		4096
 
 struct rfc2822_line {
 	TAILQ_ENTRY(rfc2822_line)	next;
