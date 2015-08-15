@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.1 2015/08/12 06:19:25 mlarkin Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 2015/08/15 19:01:39 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -39,7 +39,7 @@ PHDRS
  */
 __ALIGN_SIZE = 0x1000;
 __kernel_base_virt = 0xd0200000 + SIZEOF_HEADERS;
-__kernel_base_phys = __kernel_base_virt & 0xffffff;
+__kernel_base_phys = __kernel_base_virt & 0xfffffff;
 
 /* We use physical address to jump to kernel */
 start_phys = LOADADDR(.text) + (start - __kernel_base_virt);
@@ -63,7 +63,7 @@ SECTIONS
 	/* Move rodata to the next page, so we can nuke X and W bit on them */
 	. = ALIGN(__ALIGN_SIZE);
 	__kernel_rodata_virt = .;
-	__kernel_rodata_phys = . & 0xffffff;
+	__kernel_rodata_phys = . & 0xfffffff;
 	.rodata (__kernel_rodata_virt) : AT (__kernel_rodata_phys)
 	{
 		__rodata_start = ABSOLUTE(.);
@@ -79,7 +79,7 @@ SECTIONS
 	/* Move data to the next page, so we can add W bit on them */
 	. = ALIGN(__ALIGN_SIZE);
 	__kernel_data_virt = .;
-	__kernel_data_phys = . & 0xffffff;
+	__kernel_data_phys = . & 0xfffffff;
 	.data (__kernel_data_virt) : AT (__kernel_data_phys)
 	{
 		__data_start = ABSOLUTE(.);
@@ -88,7 +88,7 @@ SECTIONS
 		*(.data .data.*)
 	} :data
 	. = ALIGN(0x1000);
-	__kernel_randomdata_phys = . & 0xffffff;
+	__kernel_randomdata_phys = . & 0xfffffff;
 	.openbsd.randomdata : AT (__kernel_randomdata_phys)
 	{
 		*(.openbsd.randomdata)
@@ -99,7 +99,7 @@ SECTIONS
 
 	/* BSS starts right after padded data */
 	__kernel_bss_virt = .;
-	__kernel_bss_phys = . & 0xffffff;
+	__kernel_bss_phys = . & 0xfffffff;
 	.bss (__kernel_bss_virt) : AT (__kernel_bss_phys)
 	{
 		__bss_start = ABSOLUTE(.);
@@ -116,7 +116,7 @@ SECTIONS
 	. = ALIGN(0x200000);
 	_end = .;
 	PROVIDE (end = .);
-	__kernel_end_phys = . & 0xffffff;
+	__kernel_end_phys = . & 0xfffffff;
 
 	/* XXX - hack alert, since we are not C++, nuke these */
 	/DISCARD/ :
