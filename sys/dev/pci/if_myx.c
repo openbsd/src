@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.80 2015/08/14 10:42:25 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.81 2015/08/15 00:49:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -79,30 +79,18 @@ struct myx_dmamem {
 	caddr_t			 mxm_kva;
 };
 
-struct myx_buf {
-	SIMPLEQ_ENTRY(myx_buf)	 mb_entry;
-	bus_dmamap_t		 mb_map;
-	struct mbuf		*mb_m;
-};
-
-struct myx_buf_list {
-	SIMPLEQ_HEAD(, myx_buf)	mbl_q;
-	struct mutex		mbl_mtx;
-};
-
-struct pool *myx_buf_pool;
 struct pool *myx_mcl_pool;
 
-struct myx_rx_slot {
-	bus_dmamap_t		 mrs_map;
-	struct mbuf		*mrs_m;
+struct myx_slot {
+	bus_dmamap_t		 ms_map;
+	struct mbuf		*ms_m;
 };
 
 struct myx_rx_ring {
 	struct myx_softc	*mrr_softc;
 	struct timeout		 mrr_refill;
 	struct if_rxring	 mrr_rxr;
-	struct myx_rx_slot	*mrr_slots;
+	struct myx_slot		*mrr_slots;
 	u_int32_t		 mrr_offset;
 	u_int			 mrr_running;
 	u_int			 mrr_prod;
@@ -158,10 +146,12 @@ struct myx_softc {
 	u_int32_t		 sc_tx_ring_offset;
 	u_int			 sc_tx_nsegs;
 	u_int32_t		 sc_tx_count; /* shadows ms_txdonecnt */
-	u_int			 sc_tx_free;
-	struct myx_buf_list	 sc_tx_buf_free;
-	struct myx_buf_list	 sc_tx_buf_list;
 	u_int			 sc_tx_ring_idx;
+
+	u_int			 sc_tx_free;
+	u_int			 sc_tx_prod;
+	u_int			 sc_tx_cons;
+	struct myx_slot		*sc_tx_slots;
 
 	struct ifmedia		 sc_media;
 
@@ -212,22 +202,15 @@ void	 myx_iff(struct myx_softc *);
 void	 myx_down(struct myx_softc *);
 
 void	 myx_start(struct ifnet *);
-void	 myx_write_txd_tail(struct myx_softc *, struct myx_buf *, u_int8_t,
+void	 myx_write_txd_tail(struct myx_softc *, struct myx_slot *, u_int8_t,
 	    u_int32_t, u_int);
-int	 myx_load_buf(struct myx_softc *, struct myx_buf *, struct mbuf *);
+int	 myx_load_mbuf(struct myx_softc *, struct myx_slot *, struct mbuf *);
 int	 myx_setlladdr(struct myx_softc *, u_int32_t, u_int8_t *);
 int	 myx_intr(void *);
 void	 myx_rxeof(struct myx_softc *);
 void	 myx_txeof(struct myx_softc *, u_int32_t);
 
-struct myx_buf *	myx_buf_alloc(struct myx_softc *, bus_size_t, int,
-			    bus_size_t, bus_size_t);
-void			myx_buf_free(struct myx_softc *, struct myx_buf *);
-void			myx_bufs_init(struct myx_buf_list *);
-int			myx_bufs_empty(struct myx_buf_list *);
-struct myx_buf *	myx_buf_get(struct myx_buf_list *);
-void			myx_buf_put(struct myx_buf_list *, struct myx_buf *);
-int			myx_buf_fill(struct myx_softc *, struct myx_rx_slot *,
+int			myx_buf_fill(struct myx_softc *, struct myx_slot *,
 			    struct mbuf *(*)(void));
 struct mbuf *		myx_mcl_small(void);
 struct mbuf *		myx_mcl_big(void);
@@ -236,6 +219,10 @@ int			myx_rx_init(struct myx_softc *, int, bus_size_t);
 int			myx_rx_fill(struct myx_softc *, struct myx_rx_ring *);
 void			myx_rx_empty(struct myx_softc *, struct myx_rx_ring *);
 void			myx_rx_free(struct myx_softc *, struct myx_rx_ring *);
+
+int			myx_tx_init(struct myx_softc *, bus_size_t);
+void			myx_tx_empty(struct myx_softc *);
+void			myx_tx_free(struct myx_softc *);
 
 void			myx_refill(void *);
 
@@ -298,9 +285,6 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_rx_ring[MYX_RXBIG].mrr_refill, myx_refill,
 	    &sc->sc_rx_ring[MYX_RXBIG]);
 
-	myx_bufs_init(&sc->sc_tx_buf_free);
-	myx_bufs_init(&sc->sc_tx_buf_list);
-
 	mtx_init(&sc->sc_sts_mtx, IPL_NET);
 
 	/* Map the PCI memory space */
@@ -331,19 +315,8 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* this is sort of racy */
-	if (myx_buf_pool == NULL) {
+	if (myx_mcl_pool == NULL) {
 		extern struct kmem_pa_mode kp_dma_contig;
-
-		myx_buf_pool = malloc(sizeof(*myx_buf_pool), M_DEVBUF,
-		    M_WAITOK);
-		if (myx_buf_pool == NULL) {
-			printf("%s: unable to allocate buf pool\n",
-			    DEVNAME(sc));
-			goto unmap;
-		}
-		pool_init(myx_buf_pool, sizeof(struct myx_buf),
-		    0, 0, 0, "myxbufs", &pool_allocator_nointr);
-		pool_setipl(myx_buf_pool, IPL_NONE);
 
 		myx_mcl_pool = malloc(sizeof(*myx_mcl_pool), M_DEVBUF,
 		    M_WAITOK);
@@ -1034,13 +1007,11 @@ void
 myx_up(struct myx_softc *sc)
 {
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	struct myx_buf		*mb;
 	struct myx_cmd		mc;
 	bus_dmamap_t		map;
 	size_t			size;
 	u_int			maxpkt;
 	u_int32_t		r;
-	int			i;
 
 	memset(&mc, 0, sizeof(mc));
 	if (myx_cmd(sc, MYXCMD_RESET, &mc, NULL) != 0) {
@@ -1220,17 +1191,11 @@ myx_up(struct myx_softc *sc)
 		goto free_sts;
 	}
 
-	for (i = 0; i < sc->sc_tx_ring_count; i++) {
-		mb = myx_buf_alloc(sc, maxpkt, sc->sc_tx_nsegs,
-		    sc->sc_tx_boundary, sc->sc_tx_boundary);
-		if (mb == NULL)
-			goto free_tx_bufs;
-
-		myx_buf_put(&sc->sc_tx_buf_free, mb);
-	}
+	if (myx_tx_init(sc, maxpkt) != 0)
+		goto free_sts;
 
 	if (myx_rx_init(sc, MYX_RXSMALL, MCLBYTES) != 0)
-		goto free_tx_bufs;
+		goto free_tx_ring;
 
 	if (myx_rx_fill(sc, &sc->sc_rx_ring[MYX_RXSMALL]) != 0)
 		goto free_rx_ring_small;
@@ -1279,9 +1244,8 @@ empty_rx_ring_small:
 	myx_rx_empty(sc, &sc->sc_rx_ring[MYX_RXSMALL]);
 free_rx_ring_small:
 	myx_rx_free(sc, &sc->sc_rx_ring[MYX_RXSMALL]);
-free_tx_bufs:
-	while ((mb = myx_buf_get(&sc->sc_tx_buf_free)) != NULL)
-		myx_buf_free(sc, mb);
+free_tx_ring:
+	myx_tx_free(sc);
 free_sts:
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_sts_dma.mxm_map, 0,
 	    sc->sc_sts_dma.mxm_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1385,7 +1349,6 @@ myx_down(struct myx_softc *sc)
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	volatile struct myx_status *sts = sc->sc_sts;
 	bus_dmamap_t		 map = sc->sc_sts_dma.mxm_map;
-	struct myx_buf		*mb;
 	struct myx_cmd		 mc;
 	int			 s;
 	int			 ring;
@@ -1428,16 +1391,8 @@ myx_down(struct myx_softc *sc)
 		myx_rx_free(sc, mrr);
 	}
 
-	while ((mb = myx_buf_get(&sc->sc_tx_buf_list)) != NULL) {
-		bus_dmamap_sync(sc->sc_dmat, mb->mb_map, 0,
-		    mb->mb_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, mb->mb_map);
-		m_freem(mb->mb_m);
-		myx_buf_free(sc, mb);
-	}
-
-	while ((mb = myx_buf_get(&sc->sc_tx_buf_free)) != NULL)
-		myx_buf_free(sc, mb);
+	myx_tx_empty(sc);
+	myx_tx_free(sc);
 
 	/* the sleep shizz above already synced this dmamem */
 	myx_dmamem_free(sc, &sc->sc_sts_dma);
@@ -1456,12 +1411,12 @@ myx_down(struct myx_softc *sc)
 }
 
 void
-myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
+myx_write_txd_tail(struct myx_softc *sc, struct myx_slot *ms, u_int8_t flags,
     u_int32_t offset, u_int idx)
 {
 	struct myx_tx_desc		txd;
 	bus_dmamap_t			zmap = sc->sc_zerodma.mxm_map;
-	bus_dmamap_t			map = mb->mb_map;
+	bus_dmamap_t			map = ms->ms_map;
 	int				i;
 
 	for (i = 1; i < map->dm_nsegs; i++) {
@@ -1492,13 +1447,12 @@ void
 myx_start(struct ifnet *ifp)
 {
 	struct myx_tx_desc		txd;
-	SIMPLEQ_HEAD(, myx_buf)		list = SIMPLEQ_HEAD_INITIALIZER(list);
 	struct myx_softc		*sc = ifp->if_softc;
+	struct myx_slot			*ms;
 	bus_dmamap_t			map;
-	struct myx_buf			*mb, *firstmb;
 	struct mbuf			*m;
 	u_int32_t			offset = sc->sc_tx_ring_offset;
-	u_int				idx, firstidx;
+	u_int				idx, cons, prod;
 	u_int8_t			flags;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
@@ -1506,22 +1460,22 @@ myx_start(struct ifnet *ifp)
 	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
+	cons = prod = sc->sc_tx_prod;
+
 	for (;;) {
-		if (sc->sc_tx_free <= sc->sc_tx_nsegs ||
-		    (mb = myx_buf_get(&sc->sc_tx_buf_free)) == NULL) {
+		if (sc->sc_tx_free <= sc->sc_tx_nsegs) {
 			SET(ifp->if_flags, IFF_OACTIVE);
 			break;
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL) {
-			myx_buf_put(&sc->sc_tx_buf_free, mb);
+		if (m == NULL)
 			break;
-		}
 
-		if (myx_load_buf(sc, mb, m) != 0) {
+		ms = &sc->sc_tx_slots[prod];
+
+		if (myx_load_mbuf(sc, ms, m) != 0) {
 			m_freem(m);
-			myx_buf_put(&sc->sc_tx_buf_free, mb);
 			ifp->if_oerrors++;
 			continue;
 		}
@@ -1531,36 +1485,37 @@ myx_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		mb->mb_m = m;
-
-		map = mb->mb_map;
+		map = ms->ms_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-		SIMPLEQ_INSERT_TAIL(&list, mb, mb_entry);
-
 		atomic_sub_int(&sc->sc_tx_free, map->dm_nsegs +
 		    (map->dm_mapsize < 60 ? 1 : 0));
+
+		if (++prod >= sc->sc_tx_ring_count)
+			prod = 0;
 	}
 
-	/* post the first descriptor last */
-	firstmb = SIMPLEQ_FIRST(&list);
-	if (firstmb == NULL)
+	if (cons == prod)
 		return;
-	
-	SIMPLEQ_REMOVE_HEAD(&list, mb_entry);
-	myx_buf_put(&sc->sc_tx_buf_list, firstmb);
 
-	idx = firstidx = sc->sc_tx_ring_idx;
-	idx += firstmb->mb_map->dm_nsegs +
-	    (firstmb->mb_map->dm_mapsize < 60 ? 1 : 0);
-	idx %= sc->sc_tx_ring_count;
+	ms = &sc->sc_tx_slots[cons];
+	idx = sc->sc_tx_ring_idx;
 
-	while ((mb = SIMPLEQ_FIRST(&list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&list, mb_entry);
-		myx_buf_put(&sc->sc_tx_buf_list, mb);
+	for (;;) {
+		idx += ms->ms_map->dm_nsegs +
+		    (ms->ms_map->dm_mapsize < 60 ? 1 : 0);
+		if (idx >= sc->sc_tx_ring_count)
+			idx -= sc->sc_tx_ring_count;
 
-		map = mb->mb_map;
+		if (++cons >= sc->sc_tx_ring_count)
+			cons = 0;
+
+		if (cons == prod)
+			break;
+
+		ms = &sc->sc_tx_slots[cons];
+		map = ms->ms_map;
 
 		flags = MYXTXD_FLAGS_NO_TSO;
 		if (map->dm_mapsize < 1520)
@@ -1574,50 +1529,52 @@ myx_start(struct ifnet *ifp)
 		myx_bus_space_write(sc,
 		    offset + sizeof(txd) * idx, &txd, sizeof(txd));
 
-		myx_write_txd_tail(sc, mb, flags, offset, idx);
-
-		idx += map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
-		idx %= sc->sc_tx_ring_count;
+		myx_write_txd_tail(sc, ms, flags, offset, idx);
 	}
-	sc->sc_tx_ring_idx = idx;
 
-	/* go back and post first mb */
-	map = firstmb->mb_map;
+	/* go back and post first packet */
+	ms = &sc->sc_tx_slots[sc->sc_tx_prod];
+	map = ms->ms_map;
 
 	flags = MYXTXD_FLAGS_NO_TSO;
 	if (map->dm_mapsize < 1520)
 		flags |= MYXTXD_FLAGS_SMALL;
 
+	memset(&txd, 0, sizeof(txd));
 	txd.tx_addr = htobe64(map->dm_segs[0].ds_addr);
 	txd.tx_length = htobe16(map->dm_segs[0].ds_len);
 	txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
 	txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
 
 	/* make sure the first descriptor is seen after the others */
-	myx_write_txd_tail(sc, firstmb, flags, offset, firstidx);
+	myx_write_txd_tail(sc, ms, flags, offset, sc->sc_tx_ring_idx);
 
 	myx_bus_space_write(sc,
-	    offset + sizeof(txd) * firstidx, &txd,
+	    offset + sizeof(txd) * sc->sc_tx_ring_idx, &txd,
 	    sizeof(txd) - sizeof(myx_bus_t));
 
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, offset,
 	    sizeof(txd) * sc->sc_tx_ring_count, BUS_SPACE_BARRIER_WRITE);
 
 	myx_bus_space_write(sc,
-	    offset + sizeof(txd) * (firstidx + 1) - sizeof(myx_bus_t),
+	    offset + sizeof(txd) * (sc->sc_tx_ring_idx + 1) - sizeof(myx_bus_t),
 	    (u_int8_t *)&txd + sizeof(txd) - sizeof(myx_bus_t),
 	    sizeof(myx_bus_t));
 
 	bus_space_barrier(sc->sc_memt, sc->sc_memh,
-	    offset + sizeof(txd) * firstidx, sizeof(txd),
+	    offset + sizeof(txd) * sc->sc_tx_ring_idx, sizeof(txd),
 	    BUS_SPACE_BARRIER_WRITE);
+
+	/* commit */
+	sc->sc_tx_ring_idx = idx;
+	sc->sc_tx_prod = prod;
 }
 
 int
-myx_load_buf(struct myx_softc *sc, struct myx_buf *mb, struct mbuf *m)
+myx_load_mbuf(struct myx_softc *sc, struct myx_slot *ms, struct mbuf *m)
 {
 	bus_dma_tag_t			dmat = sc->sc_dmat;
-	bus_dmamap_t			dmap = mb->mb_map;
+	bus_dmamap_t			dmap = ms->ms_map;
 
 	switch (bus_dmamap_load_mbuf(dmat, dmap, m,
 	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT)) {
@@ -1633,7 +1590,7 @@ myx_load_buf(struct myx_softc *sc, struct myx_buf *mb, struct mbuf *m)
 		return (1);
 	}
 
-	mb->mb_m = m;
+	ms->ms_m = m;
 	return (0);
 }
 
@@ -1743,35 +1700,32 @@ void
 myx_txeof(struct myx_softc *sc, u_int32_t done_count)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct myx_buf *mb;
-	struct mbuf *m;
+	struct myx_slot *ms;
 	bus_dmamap_t map;
 	u_int free = 0;
+	u_int cons;
+
+	cons = sc->sc_tx_cons;
 
 	do {
-		mb = myx_buf_get(&sc->sc_tx_buf_list);
-		if (mb == NULL) {
-			printf("oh noes, no mb!\n");
-			break;
-		}
-
-		m = mb->mb_m;
-		map = mb->mb_map;
+		ms = &sc->sc_tx_slots[cons];
+		map = ms->ms_map;
 
 		free += map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-
 		bus_dmamap_unload(sc->sc_dmat, map);
+		m_freem(ms->ms_m);
+
 		ifp->if_opackets++;
 
-		m_freem(m);
-		myx_buf_put(&sc->sc_tx_buf_free, mb);
+		if (++cons >= sc->sc_tx_ring_count)
+			cons = 0;
 	} while (++sc->sc_tx_count != done_count);
 
-	if (free)
-		atomic_add_int(&sc->sc_tx_free, free);
+	sc->sc_tx_cons = cons;
+	atomic_add_int(&sc->sc_tx_free, free);
 }
 
 void
@@ -1781,7 +1735,7 @@ myx_rxeof(struct myx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct myx_rx_ring *mrr;
-	struct myx_rx_slot *mrs;
+	struct myx_slot *ms;
 	struct mbuf *m;
 	int ring;
 	u_int rxfree[2] = { 0 , 0 };
@@ -1800,16 +1754,16 @@ myx_rxeof(struct myx_softc *sc)
 		    MYX_RXSMALL : MYX_RXBIG;
 
 		mrr = &sc->sc_rx_ring[ring];
-		mrs = &mrr->mrr_slots[mrr->mrr_cons];
+		ms = &mrr->mrr_slots[mrr->mrr_cons];
 
 		if (++mrr->mrr_cons >= sc->sc_rx_ring_count)
 			mrr->mrr_cons = 0;
 
-		bus_dmamap_sync(sc->sc_dmat, mrs->mrs_map, 0,
-		    mrs->mrs_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, mrs->mrs_map);
+		bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0,
+		    ms->ms_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, ms->ms_map);
 
-		m = mrs->mrs_m;
+		m = ms->ms_m;
 		m->m_data += ETHER_ALIGN;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1840,7 +1794,7 @@ static int
 myx_rx_fill_slots(struct myx_softc *sc, struct myx_rx_ring *mrr, u_int slots)
 {
 	struct myx_rx_desc rxd;
-	struct myx_rx_slot *mrs;
+	struct myx_slot *ms;
 	u_int32_t offset = mrr->mrr_offset;
 	u_int p, first, fills;
 
@@ -1852,12 +1806,12 @@ myx_rx_fill_slots(struct myx_softc *sc, struct myx_rx_ring *mrr, u_int slots)
 		p = 0;
 
 	for (fills = 1; fills < slots; fills++) {
-		mrs = &mrr->mrr_slots[p];
+		ms = &mrr->mrr_slots[p];
 
-		if (myx_buf_fill(sc, mrs, mrr->mrr_mclget) != 0)
+		if (myx_buf_fill(sc, ms, mrr->mrr_mclget) != 0)
 			break;
 
-		rxd.rx_addr = htobe64(mrs->mrs_map->dm_segs[0].ds_addr);
+		rxd.rx_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
 		myx_bus_space_write(sc, offset + p * sizeof(rxd),
 		    &rxd, sizeof(rxd));
 
@@ -1874,8 +1828,8 @@ myx_rx_fill_slots(struct myx_softc *sc, struct myx_rx_ring *mrr, u_int slots)
 		    BUS_SPACE_BARRIER_WRITE);
 	}
 
-	mrs = &mrr->mrr_slots[first];
-	rxd.rx_addr = htobe64(mrs->mrs_map->dm_segs[0].ds_addr);
+	ms = &mrr->mrr_slots[first];
+	rxd.rx_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
 	myx_bus_space_write(sc, offset + first * sizeof(rxd),
 	    &rxd, sizeof(rxd));
 
@@ -1887,21 +1841,21 @@ myx_rx_init(struct myx_softc *sc, int ring, bus_size_t size)
 {
 	struct myx_rx_desc rxd;
 	struct myx_rx_ring *mrr = &sc->sc_rx_ring[ring];
-	struct myx_rx_slot *mrs;
+	struct myx_slot *ms;
 	u_int32_t offset = mrr->mrr_offset;
 	int rv;
 	int i;
 
-	mrr->mrr_slots = mallocarray(sizeof(*mrs), sc->sc_rx_ring_count,
+	mrr->mrr_slots = mallocarray(sizeof(*ms), sc->sc_rx_ring_count,
 	    M_DEVBUF, M_WAITOK);
 	if (mrr->mrr_slots == NULL)
 		return (ENOMEM);
 
 	memset(&rxd, 0xff, sizeof(rxd));
 	for (i = 0; i < sc->sc_rx_ring_count; i++) {
-		mrs = &mrr->mrr_slots[i];
+		ms = &mrr->mrr_slots[i];
 		rv = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &mrs->mrs_map);
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ms->ms_map);
 		if (rv != 0)
 			goto destroy;
 
@@ -1916,10 +1870,10 @@ myx_rx_init(struct myx_softc *sc, int ring, bus_size_t size)
 
 destroy:
 	while (i-- > 0) {
-		mrs = &mrr->mrr_slots[i];
-		bus_dmamap_destroy(sc->sc_dmat, mrs->mrs_map);
+		ms = &mrr->mrr_slots[i];
+		bus_dmamap_destroy(sc->sc_dmat, ms->ms_map);
 	}
-	free(mrr->mrr_slots, M_DEVBUF, sizeof(*mrs) * sc->sc_rx_ring_count);
+	free(mrr->mrr_slots, M_DEVBUF, sizeof(*ms) * sc->sc_rx_ring_count);
 	return (rv);
 }
 
@@ -1959,18 +1913,18 @@ myx_rx_fill(struct myx_softc *sc, struct myx_rx_ring *mrr)
 void
 myx_rx_empty(struct myx_softc *sc, struct myx_rx_ring *mrr)
 {
-	struct myx_rx_slot *mrs;
+	struct myx_slot *ms;
 
 	while (mrr->mrr_cons != mrr->mrr_prod) {
-		mrs = &mrr->mrr_slots[mrr->mrr_cons];
+		ms = &mrr->mrr_slots[mrr->mrr_cons];
 
 		if (++mrr->mrr_cons >= sc->sc_rx_ring_count)
 			mrr->mrr_cons = 0;
 
-		bus_dmamap_sync(sc->sc_dmat, mrs->mrs_map, 0,
-		    mrs->mrs_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, mrs->mrs_map);
-		m_freem(mrs->mrs_m);
+		bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0,
+		    ms->ms_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, ms->ms_map);
+		m_freem(ms->ms_m);
 	}
 
 	if_rxr_init(&mrr->mrr_rxr, 2, sc->sc_rx_ring_count - 2);
@@ -1979,15 +1933,15 @@ myx_rx_empty(struct myx_softc *sc, struct myx_rx_ring *mrr)
 void
 myx_rx_free(struct myx_softc *sc, struct myx_rx_ring *mrr)
 {
-	struct myx_rx_slot *mrs;
+	struct myx_slot *ms;
 	int i;
 
 	for (i = 0; i < sc->sc_rx_ring_count; i++) {
-		mrs = &mrr->mrr_slots[i];
-		bus_dmamap_destroy(sc->sc_dmat, mrs->mrs_map);
+		ms = &mrr->mrr_slots[i];
+		bus_dmamap_destroy(sc->sc_dmat, ms->ms_map);
 	}
 
-	free(mrr->mrr_slots, M_DEVBUF, sizeof(*mrs) * sc->sc_rx_ring_count);
+	free(mrr->mrr_slots, M_DEVBUF, sizeof(*ms) * sc->sc_rx_ring_count);
 }
 
 struct mbuf *
@@ -2027,7 +1981,7 @@ myx_mcl_big(void)
 }
 
 int
-myx_buf_fill(struct myx_softc *sc, struct myx_rx_slot *mrs,
+myx_buf_fill(struct myx_softc *sc, struct myx_slot *ms,
     struct mbuf *(*mclget)(void))
 {
 	struct mbuf *m;
@@ -2037,83 +1991,86 @@ myx_buf_fill(struct myx_softc *sc, struct myx_rx_slot *mrs,
 	if (m == NULL)
 		return (ENOMEM);
 
-	rv = bus_dmamap_load_mbuf(sc->sc_dmat, mrs->mrs_map, m, BUS_DMA_NOWAIT);
+	rv = bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m, BUS_DMA_NOWAIT);
 	if (rv != 0) {
 		m_freem(m);
 		return (rv);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, mrs->mrs_map, 0,
-	    mrs->mrs_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0,
+	    ms->ms_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	mrs->mrs_m = m;
+	ms->ms_m = m;
 
 	return (0);
 }
 
-struct myx_buf *
-myx_buf_alloc(struct myx_softc *sc, bus_size_t size, int nsegs,
-    bus_size_t maxsegsz, bus_size_t boundary)
+int
+myx_tx_init(struct myx_softc *sc, bus_size_t size)
 {
-	struct myx_buf *mb;
+	struct myx_slot *ms;
+	int rv;
+	int i;
 
-	mb = pool_get(myx_buf_pool, PR_WAITOK);
-	if (mb == NULL)
-		return (NULL);
+	sc->sc_tx_slots = mallocarray(sizeof(*ms), sc->sc_tx_ring_count,
+	    M_DEVBUF, M_WAITOK);
+	if (sc->sc_tx_slots == NULL)
+		return (ENOMEM);
 
-	if (bus_dmamap_create(sc->sc_dmat, size, nsegs, maxsegsz, boundary,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &mb->mb_map) != 0) {
-		pool_put(myx_buf_pool, mb);
-		return (NULL);
+	for (i = 0; i < sc->sc_tx_ring_count; i++) {
+		ms = &sc->sc_tx_slots[i];
+		rv = bus_dmamap_create(sc->sc_dmat, size, sc->sc_tx_nsegs,
+		    sc->sc_tx_boundary, sc->sc_tx_boundary,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ms->ms_map);
+		if (rv != 0)
+			goto destroy;
 	}
 
-	return (mb);
-}
+	sc->sc_tx_prod = sc->sc_tx_cons = 0;
 
-void
-myx_buf_free(struct myx_softc *sc, struct myx_buf *mb)
-{
-	bus_dmamap_destroy(sc->sc_dmat, mb->mb_map);
-	pool_put(myx_buf_pool, mb);
-}
+	return (0);
 
-struct myx_buf *
-myx_buf_get(struct myx_buf_list *mbl)
-{
-	struct myx_buf *mb;
-
-	mtx_enter(&mbl->mbl_mtx);
-	mb = SIMPLEQ_FIRST(&mbl->mbl_q);
-	if (mb != NULL)
-		SIMPLEQ_REMOVE_HEAD(&mbl->mbl_q, mb_entry);
-	mtx_leave(&mbl->mbl_mtx);
-
-	return (mb);
-}
-
-int
-myx_bufs_empty(struct myx_buf_list *mbl)
-{
-	int rv;
-
-	mtx_enter(&mbl->mbl_mtx);
-	rv = SIMPLEQ_EMPTY(&mbl->mbl_q);
-	mtx_leave(&mbl->mbl_mtx);
-
+destroy:
+	while (i-- > 0) {
+		ms = &sc->sc_tx_slots[i];
+		bus_dmamap_destroy(sc->sc_dmat, ms->ms_map);
+	}
+	free(sc->sc_tx_slots, M_DEVBUF, sizeof(*ms) * sc->sc_tx_ring_count);
 	return (rv);
 }
 
 void
-myx_buf_put(struct myx_buf_list *mbl, struct myx_buf *mb)
+myx_tx_empty(struct myx_softc *sc)
 {
-	mtx_enter(&mbl->mbl_mtx);
-	SIMPLEQ_INSERT_TAIL(&mbl->mbl_q, mb, mb_entry);
-	mtx_leave(&mbl->mbl_mtx);
+	struct myx_slot *ms;
+	u_int cons = sc->sc_tx_cons;
+	u_int prod = sc->sc_tx_prod;
+
+	while (cons != prod) {
+		ms = &sc->sc_tx_slots[cons];
+		
+		bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0,
+		    ms->ms_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, ms->ms_map);
+		m_freem(ms->ms_m);
+
+		if (++cons >= sc->sc_tx_ring_count)
+			cons = 0;
+	}
+
+	sc->sc_tx_cons = cons;
 }
 
 void
-myx_bufs_init(struct myx_buf_list *mbl)
+myx_tx_free(struct myx_softc *sc)
 {
-	SIMPLEQ_INIT(&mbl->mbl_q);
-	mtx_init(&mbl->mbl_mtx, IPL_NET);
+	struct myx_slot *ms;
+	int i;
+
+	for (i = 0; i < sc->sc_tx_ring_count; i++) {
+		ms = &sc->sc_tx_slots[i];
+		bus_dmamap_destroy(sc->sc_dmat, ms->ms_map);
+	}
+
+	free(sc->sc_tx_slots, M_DEVBUF, sizeof(*ms) * sc->sc_tx_ring_count);
 }
