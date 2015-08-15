@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.16 2015/07/26 05:09:44 miod Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.17 2015/08/15 19:18:27 miod Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -55,7 +55,6 @@
 
 #include <alpha/pci/pci_up1000.h>
 #include <alpha/pci/siovar.h>
-#include <alpha/pci/sioreg.h>
 
 #include "sio.h"
 
