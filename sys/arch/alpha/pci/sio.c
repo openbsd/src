@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.38 2014/02/18 19:37:33 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.39 2015/08/15 19:15:18 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -60,8 +60,8 @@ int	siomatch(struct device *, void *, void *);
 void	sioattach(struct device *, struct device *, void *);
 int	sioactivate(struct device *, int);
 
-extern int sio_intr_alloc(isa_chipset_tag_t *, int, int, int *);
-extern int sio_intr_check(isa_chipset_tag_t *, int, int);
+extern int sio_intr_alloc(isa_chipset_tag_t, int, int, int *);
+extern int sio_intr_check(isa_chipset_tag_t, int, int);
 
 struct cfattach sio_ca = {
 	.ca_devsize = sizeof(struct sio_softc),
