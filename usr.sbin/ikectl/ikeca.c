@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.30 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.31 2015/08/15 04:45:49 semarie Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -219,7 +219,7 @@ ca_sign(struct ca *ca, char *keyname, int type, char *envargs)
 		    ca->sslpath, keyname, ca->sslpath, ca->sslpath,
 		    ca->extcnf, ca->sslpath, keyname, ca->passfile);
 	} else
-		err(1, "unknown host type %d", type);
+		errx(1, "unknown host type %d", type);
 
 	system(cmd);
 
@@ -561,7 +561,7 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 
 	if (keyname != NULL) {
 		if (strlcpy(oname, keyname, sizeof(oname)) >= sizeof(oname))
-			err(1, "name too long");
+			errx(1, "name too long");
 	} else {
 		strlcpy(oname, "ca", sizeof(oname));
 	}
@@ -758,7 +758,7 @@ ca_revoke(struct ca *ca, char *keyname)
 	snprintf(path, sizeof(path), "%s/ikeca.passwd", ca->sslpath);
 	pass = ca_readpass(path, &len);
 	if (pass == NULL)
-		err(1, "could not open passphrase file");
+		errx(1, "could not open passphrase file");
 
 	/* create index if it doesn't already exist */
 	snprintf(path, sizeof(path), "%s/index.txt", ca->sslpath);
