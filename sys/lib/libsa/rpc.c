@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.c,v 1.14 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.15 2015/08/15 19:42:56 miod Exp $	*/
 /*	$NetBSD: rpc.c,v 1.16 1996/10/13 02:29:06 christos Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ rpc_call(struct iodesc *d, u_int32_t prog, u_int32_t vers, u_int32_t proc, void 
 	if (debug)
 		printf("callrpc: cc=%d rlen=%d\n", cc, rlen);
 #endif
-	if (cc < -1)
+	if (cc <= -1)
 		return (-1);
 
 	if ((size_t)cc <= sizeof(*reply)) {
