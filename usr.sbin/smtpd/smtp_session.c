@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.230 2015/05/15 07:34:45 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.231 2015/08/15 17:27:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1034,7 +1034,7 @@ smtp_io(struct io *io, int evt)
 	struct smtp_session    *s = io->arg;
 	const char	       *sn;
 	char		       *line;
-	size_t			len, i;
+	size_t			len;
 	X509		       *x;
 
 	log_trace(TRACE_IO, "smtp: %p: %s %s", s, io_strevent(evt),
@@ -1119,11 +1119,6 @@ smtp_io(struct io *io, int evt)
 				line += 1;
 				len -= 1;
 			}
-
-			if (!(s->flags & SF_8BITMIME))
-				for (i = 0; i < len; ++i)
-					if (line[i] & 0x80)
-						line[i] = line[i] & 0x7f;
 
 			smtp_message_write(s, line);
 			goto nextline;
