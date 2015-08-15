@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.38 2015/01/04 18:52:46 miod Exp $ */
+/* $OpenBSD: cpu.c,v 1.39 2015/08/15 19:04:31 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -446,7 +446,7 @@ cpu_boot_secondary_processors(void)
 	 * Reset the HWRPB to prevent processors resetting from
 	 * running through the hatching code again.
 	 */
-	hwrpb->rpb_restart = 0;
+	hwrpb->rpb_restart = (u_int64_t) cpu_halt;
 	hwrpb->rpb_checksum = hwrpb_checksum();
 }
 
@@ -548,15 +548,11 @@ cpu_pause_resume_all(int pause)
 void
 cpu_halt(void)
 {
-#if 0
 	struct cpu_info *ci = curcpu();
-#endif
 	u_long cpu_id = cpu_number();
 	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
 
-#if 0
 	printf("%s: shutting down...\n", ci->ci_dev->dv_xname);
-#endif
 
 	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
