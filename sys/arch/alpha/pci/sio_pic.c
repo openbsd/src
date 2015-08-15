@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.37 2014/04/04 20:00:12 miod Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.38 2015/08/15 20:06:21 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -107,14 +107,15 @@ static struct alpha_shared_intr *sio_intr;
 #define	STRAY_MAX	5
 #endif
 
-#ifdef BROKEN_PROM_CONSOLE
 /*
  * If prom console is broken, must remember the initial interrupt
  * settings and enforce them.  WHEE!
  */
 u_int8_t initial_ocw1[2];
 u_int8_t initial_elcr[2];
-#endif
+
+#define	INITIALLY_LEVEL_TRIGGERED(irq)	\
+	((initial_elcr[(irq) / 8] & (1 << ((irq) % 8))) != 0)
 
 /*
  * Overrides for ELCR settings.
@@ -357,7 +358,6 @@ sio_intr_setup(pc, iot)
 	if (sio_elcr_setup_funcs[i] == NULL)
 		panic("sio_intr_setup: can't map ELCR");
 
-#ifdef BROKEN_PROM_CONSOLE
 	/*
 	 * Remember the initial values, so we can restore them later.
 	 */
@@ -365,7 +365,6 @@ sio_intr_setup(pc, iot)
 	initial_ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
 	initial_elcr[0] = (*sio_read_elcr)(0);			/* XXX */
 	initial_elcr[1] = (*sio_read_elcr)(1);			/* XXX */
-#endif
 
 	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
 
@@ -384,6 +383,11 @@ sio_intr_setup(pc, iot)
 			 * IRQs 0, 1, 8, and 13 must always be
 			 * edge-triggered.
 			 */
+#ifdef DIAGNOSTIC
+			if (INITIALLY_LEVEL_TRIGGERED(i))
+				printf("WARNING: PROM set irq %d"
+				    " level-triggered\n", i);
+#endif
 			sio_setirqstat(i, 0, IST_EDGE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
 			    IST_EDGE);
@@ -403,11 +407,14 @@ sio_intr_setup(pc, iot)
 		default:
 			/*
 			 * Otherwise, disable the IRQ and set its
-			 * type to (effectively) "unknown."
+			 * type to (effectively) "unknown", or "level"
+			 * if it was set so by the PROM.
 			 */
-			sio_setirqstat(i, 0, IST_NONE);
+			sio_setirqstat(i, 0, INITIALLY_LEVEL_TRIGGERED(i) ?
+			    IST_LEVEL : IST_NONE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
-			    IST_NONE);
+			    INITIALLY_LEVEL_TRIGGERED(i) ?
+			      IST_LEVEL : IST_NONE);
 			specific_eoi(i);
 			break;
 		}
@@ -436,7 +443,7 @@ sio_intr_string(v, irq)
 	void *v;
 	int irq;
 {
-	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
+	static char irqstr[12];		/* 8 + 2 + NUL + sanity */
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
 		panic("sio_intr_string: bogus isa irq 0x%x", irq);
@@ -466,6 +473,14 @@ sio_intr_establish(v, irq, type, level, fn, arg, name)
 
 	if (irq >= ICU_LEN || type == IST_NONE)
 		panic("sio_intr_establish: bogus irq or type");
+
+	/*
+	 * XXX This is a workaround to let com(4) attach on Multia
+	 * XXX where its interrupts are actually level triggered.
+	 */
+	if (type == IST_EDGE && INITIALLY_LEVEL_TRIGGERED(irq) &&
+	    (irq == 3 || irq == 4))
+		type = IST_LEVEL;
 
 	cookie = alpha_shared_intr_establish(sio_intr, irq, type, level, fn,
 	    arg, name);
@@ -518,7 +533,8 @@ sio_intr_disestablish(v, cookie)
 			break;
 
 		default:
-			ist = IST_NONE;
+			ist = INITIALLY_LEVEL_TRIGGERED(irq) ?
+			    IST_LEVEL : IST_NONE;
 			break;
 		}
 		sio_setirqstat(irq, 0, ist);
@@ -648,6 +664,14 @@ sio_intr_check(void *v, int irq, int type)
 {
 	if (type == IST_NONE)
 		return (0);
+
+	/*
+	 * XXX This is a workaround to let com(4) attach on Multia
+	 * XXX where its interrupts are actually level triggered.
+	 */
+	if (type == IST_EDGE && INITIALLY_LEVEL_TRIGGERED(irq) &&
+	    (irq == 3 || irq == 4))
+		type = IST_LEVEL;
 
 	switch (sio_intr[irq].intr_sharetype) {
 	case IST_NONE:
