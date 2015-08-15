@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.81 2015/08/15 00:49:15 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.82 2015/08/15 01:17:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1453,6 +1453,7 @@ myx_start(struct ifnet *ifp)
 	struct mbuf			*m;
 	u_int32_t			offset = sc->sc_tx_ring_offset;
 	u_int				idx, cons, prod;
+	u_int				free, used;
 	u_int8_t			flags;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
@@ -1461,9 +1462,11 @@ myx_start(struct ifnet *ifp)
 		return;
 
 	cons = prod = sc->sc_tx_prod;
+	free = sc->sc_tx_free;
+	used = 0;
 
 	for (;;) {
-		if (sc->sc_tx_free <= sc->sc_tx_nsegs) {
+		if (used + sc->sc_tx_nsegs > free) {
 			SET(ifp->if_flags, IFF_OACTIVE);
 			break;
 		}
@@ -1489,8 +1492,7 @@ myx_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-		atomic_sub_int(&sc->sc_tx_free, map->dm_nsegs +
-		    (map->dm_mapsize < 60 ? 1 : 0));
+		used += map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
 
 		if (++prod >= sc->sc_tx_ring_count)
 			prod = 0;
@@ -1498,6 +1500,8 @@ myx_start(struct ifnet *ifp)
 
 	if (cons == prod)
 		return;
+
+	atomic_sub_int(&sc->sc_tx_free, used);
 
 	ms = &sc->sc_tx_slots[cons];
 	idx = sc->sc_tx_ring_idx;
