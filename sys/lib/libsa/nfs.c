@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.12 2014/11/19 20:28:56 miod Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.13 2015/08/15 19:40:59 miod Exp $	*/
 /*	$NetBSD: nfs.c,v 1.19 1996/10/13 02:29:04 christos Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ nfs_getrootfh(struct iodesc *d, const char *path, u_char *fhp)
 		u_int32_t	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 
 #ifdef NFS_DEBUG
 	if (debug)
@@ -280,7 +280,7 @@ nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 		u_int32_t	h[RPC_HEADER_WORDS];
 		struct nfs_read_repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	long x;
 	int hlen, rlen;
 
