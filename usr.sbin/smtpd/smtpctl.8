@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.50 2015/07/27 18:48:05 sobrado Exp $
+.\" $OpenBSD: smtpctl.8,v 1.51 2015/08/16 22:26:11 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: August 16 2015 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -33,9 +33,9 @@ The
 program controls
 .Xr smtpd 8 .
 Commands may be abbreviated to the minimum unambiguous prefix; for example,
-.Cm sh s
+.Cm sh ro
 for
-.Cm show stats .
+.Cm show routes .
 .Pp
 The
 .Nm mailq
