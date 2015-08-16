@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.357 2015/08/13 07:19:58 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.358 2015/08/16 11:28:31 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -471,6 +471,9 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
 	struct mbuf *m;
 	size_t ibytes = 0;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 
 	MBUF_LIST_FOREACH(ml, m) {
 		m->m_pkthdr.ph_ifidx = ifp->if_index;
@@ -482,10 +485,11 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 	ifp->if_ibytes += ibytes;
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
+	if_bpf = ifp->if_bpf;
+	if (if_bpf) {
 		KERNEL_LOCK();
 		MBUF_LIST_FOREACH(ml, m)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_IN);
 		KERNEL_UNLOCK();
 	}
 #endif
