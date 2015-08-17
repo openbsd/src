@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.113 2015/07/18 15:51:17 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.114 2015/08/17 10:57:24 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -2043,12 +2043,7 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 	}
 
 	/* make ifaddr */
-
 	bzero(&ifra, sizeof(ifra));
-	/*
-	 * in6_update_ifa() does not use ifra_name, but we accurately set it
-	 * for safety.
-	 */
 	strncpy(ifra.ifra_name, ifp->if_xname, sizeof(ifra.ifra_name));
 	ifra.ifra_addr.sin6_family = AF_INET6;
 	ifra.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);

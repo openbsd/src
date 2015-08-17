@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.90 2015/07/18 15:05:32 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.91 2015/08/17 10:57:24 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -300,13 +300,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	 * configure link-local address.
 	 */
 	bzero(&ifra, sizeof(ifra));
-
-	/*
-	 * in6_update_ifa() does not use ifra_name, but we accurately set it
-	 * for safety.
-	 */
 	strncpy(ifra.ifra_name, ifp->if_xname, sizeof(ifra.ifra_name));
-
 	ifra.ifra_addr.sin6_family = AF_INET6;
 	ifra.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
 	ifra.ifra_addr.sin6_addr.s6_addr16[0] = htons(0xfe80);
@@ -408,13 +402,7 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	KASSERT(ifp->if_flags & IFF_LOOPBACK);
 
 	bzero(&ifra, sizeof(ifra));
-
-	/*
-	 * in6_update_ifa() does not use ifra_name, but we accurately set it
-	 * for safety.
-	 */
 	strncpy(ifra.ifra_name, ifp->if_xname, sizeof(ifra.ifra_name));
-
 	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 	ifra.ifra_prefixmask.sin6_family = AF_INET6;
 	ifra.ifra_prefixmask.sin6_addr = in6mask128;
