@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.47 2015/04/09 19:29:53 sthen Exp $   */
+/*      $OpenBSD: whois.c,v 1.48 2015/08/17 10:48:10 sthen Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -310,22 +310,21 @@ choose_server(const char *name, const char *country)
 	 * Post-2003 ("new") gTLDs are all supposed to have "whois.nic.domain"
 	 * (per registry agreement), some older gTLDs also support this...
 	 */
-	strlcpy(server, "whois.nic.", len);
-	strlcat(server, qhead, len);
+	snprintf(server, len, "whois.nic.%s", qhead);
 
 	/* most ccTLDs don't do this, but QNICHOST/whois-servers mostly works */
 	if ((strlen(qhead) == 2 ||
 	    /* and is required for most of the <=2003 TLDs/gTLDs */
-	    strncasecmp(qhead, "org", 3) == 0 ||
-	    strncasecmp(qhead, "com", 3) == 0 ||
-	    strncasecmp(qhead, "net", 3) == 0 ||
-	    strncasecmp(qhead, "cat", 3) == 0 ||
-	    strncasecmp(qhead, "pro", 3) == 0 ||
-	    strncasecmp(qhead, "info", 4) == 0 ||
-	    strncasecmp(qhead, "aero", 4) == 0 ||
-	    strncasecmp(qhead, "jobs", 4) == 0 ||
-	    strncasecmp(qhead, "mobi", 4) == 0 ||
-	    strncasecmp(qhead, "museum", 6) == 0 ||
+	    strcasecmp(qhead, "org") == 0 ||
+	    strcasecmp(qhead, "com") == 0 ||
+	    strcasecmp(qhead, "net") == 0 ||
+	    strcasecmp(qhead, "cat") == 0 ||
+	    strcasecmp(qhead, "pro") == 0 ||
+	    strcasecmp(qhead, "info") == 0 ||
+	    strcasecmp(qhead, "aero") == 0 ||
+	    strcasecmp(qhead, "jobs") == 0 ||
+	    strcasecmp(qhead, "mobi") == 0 ||
+	    strcasecmp(qhead, "museum") == 0 ||
 	     /* for others, if whois.nic.TLD doesn't exist, try whois-servers */
 	    getaddrinfo(server, NULL, &hints, &res) != 0)) {
 		strlcpy(server, qhead, len);
