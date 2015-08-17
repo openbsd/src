@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/08/13 15:46:01 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.15 2015/08/17 22:06:50 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -23,7 +23,7 @@ regress:
 # RT is a router forwarding packets, maximum MTU is 1300.
 # ECO is reflecting the ping and UDP echo packets.
 # RDR does not exist, PF redirects the traffic to ECO.
-# RTT addresses exist on ECO, PF has not route and must use route-to
+# RTT addresses exist on ECO, PF has no route and must use route-to RT
 #
 # +---+   0   +--+   1   +--+   2   +---+ 7   4 +---+   7 +---+
 # |SRC| ----> |PF| ----> |RT| ----> |ECO|       |RDR|     |RTT|
@@ -117,7 +117,7 @@ PYTHON =	python2.7 ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 .endif
 
-# Ping all addresses.  This ensures that the ip addresses are configured
+# Ping all addresses.  This ensures that the IP addresses are configured
 # and all routing table are set up to allow bidirectional packet flow.
 # Note that RDR does not exist physically.  So this traffic is rewritten
 # by PF and handled by ECO.
@@ -165,7 +165,7 @@ run-regress-fragping6: stamp-pfctl
 TARGETS +=	ping-mtu
 
 # Currently this test fails as pf does not fix the checksum of
-# NATed packets inside of icmp packets.
+# NATed packets inside of ICMP packets.
 # XXX TARGETS +=	ping6-mtu
 
 run-regress-ping-mtu: addr.py stamp-pfctl
@@ -183,37 +183,37 @@ run-regress-ping6-mtu: addr.py stamp-pfctl
 .endfor
 
 # Send packet to big to get to destination.
-# Check that checksum of the quoted original packet in icmp is correct.
+# Check that checksum of the quoted original packet in ICMP is correct.
 
 # Currently these test fail as pf does not fix the checksum of
-# NATed packets inside of icmp packets.
+# NATed packets inside of ICMP packets.
 # XXX TARGETS +=	ping-cksum ping6-cksum udp-cksum udp6-cksum
 
 run-regress-ping-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
-	@echo Check icmp chksum in fragmentation needed to ${ip}
+	@echo Check ICMP chksum in fragmentation needed to ${ip}
 	${SUDO} ${PYTHON}ping_cksum.py ${${ip}}
 .endfor
 
 run-regress-ping6-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
-	@echo Check icmp6 chksum in packet too big to ${ip}6
+	@echo Check ICMP6 chksum in packet too big to ${ip}6
 	${SUDO} ${PYTHON}ping6_cksum.py ${${ip}6}
 .endfor
 
 run-regress-udp-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
-	@echo Check udp chksum in packet too big to ${ip}
+	@echo Check UDP chksum in packet too big to ${ip}
 	${SUDO} ${PYTHON}udp_cksum.py ${${ip}}
 .endfor
 
 run-regress-udp6-cksum: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
-	@echo Check udp6 chksum in packet too big to ${ip}6
+	@echo Check UDP6 chksum in packet too big to ${ip}6
 	${SUDO} ${PYTHON}udp6_cksum.py ${${ip}6}
 .endfor
 
@@ -316,15 +316,19 @@ CLEANFILES +=		addr.py *.pyc *.log stamp-*
 # Check wether the address, route and remote setup is correct
 check-setup:
 	@echo '\n======== $@ SRC ========'
-	ping -n -c 1 ${SRC_OUT}  # SRC_OUT
-	route -n get -inet ${SRC_OUT} | fgrep -q 'interface: lo0'  # SRC_OUT
+.for ip in SRC_OUT
+	ping -n -c 1 ${${ip}}  # ${ip}
+	route -n get -inet ${${ip}} | fgrep -q 'interface: lo0'  # ${ip}
+.endfor
 	ping -n -c 1 ${PF_IN}  # PF_IN
 	route -n get -inet ${PF_IN} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN SRC_IF
 .for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
 	route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_IN}'  # ${ip} PF_IN
 .endfor
-	ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
-	route -n get -inet6 ${SRC_OUT6} | fgrep -q 'interface: lo0'  # SRC_OUT6
+.for ip in SRC_OUT
+	ping6 -n -c 1 ${${ip}6}  # ${ip}6
+	route -n get -inet6 ${${ip}6} | fgrep -q 'interface: lo0'  # ${ip}6
+.endfor
 	ping6 -n -c 1 ${PF_IN6}  # PF_IN6
 	route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: ${SRC_IF}'  # PF_IN6 SRC_IF
 .for ip in PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
@@ -340,8 +344,9 @@ check-setup:
 .for ip in RT_OUT ECO_IN
 	ssh ${PF_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${RT_IN}'  # ${ip} RT_IN
 .endfor
-	ssh ${PF_SSH} route -n get -inet ${RTT_IN} | grep -q 'flags: .*REJECT'  # RTT_IN reject
-	! ssh ${PF_SSH} route -n get -inet ${RTT_IN} | fgrep -q 'gateway: ${RT_IN}'  # RTT_IN RT_IN
+.for ip in RTT_IN
+	ssh ${PF_SSH} route -n get -inet ${${ip}} | grep -q 'flags: .*REJECT'  # ${ip} reject
+.endfor
 	ssh ${PF_SSH} ping6 -n -c 1 ${PF_IN6}  # PF_IN6
 	ssh ${PF_SSH} route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: lo0'  # PF_IN6
 	ssh ${PF_SSH} ping6 -n -c 1 ${SRC_OUT6}  # SRC_OUT6
@@ -351,8 +356,9 @@ check-setup:
 .for ip in RT_OUT ECO_IN
 	ssh ${PF_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${RT_IN6}'  # ${ip}6 RT_IN6
 .endfor
-	ssh ${PF_SSH} route -n get -inet6 ${RTT_IN6} | grep -q 'flags: .*REJECT'  # RTT_IN6 reject
-	! ssh ${PF_SSH} route -n get -inet6 ${RTT_IN6} | fgrep -q 'gateway: ${RT_IN6}'  # RTT_IN6 RT_IN6
+.for ip in RTT_IN
+	ssh ${PF_SSH} route -n get -inet6 ${${ip}6} | grep -q 'flags: .*REJECT'  # ${ip}6 reject
+.endfor
 	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 	ssh ${PF_SSH} sysctl net.inet.ip.forwarding | fgrep =1
@@ -367,7 +373,9 @@ check-setup:
 	ssh ${RT_SSH} ping -n -c 1 ${RT_OUT}  # RT_OUT
 	ssh ${RT_SSH} route -n get -inet ${RT_OUT} | fgrep -q 'interface: lo0'  # RT_OUT
 	ssh ${RT_SSH} ping -n -c 1 ${ECO_IN}  # ECO_IN
-	ssh ${RT_SSH} route -n get -inet ${RTT_IN} | fgrep -q 'gateway: ${ECO_IN}'  # RTT_IN ECO_IN
+.for ip in RTT_IN
+	ssh ${RT_SSH} route -n get -inet ${${ip}} | fgrep -q 'gateway: ${ECO_IN}'  # ${ip} ECO_IN
+.endfor
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_IN6}  # RT_IN6
 	ssh ${RT_SSH} route -n get -inet6 ${RT_IN6} | fgrep -q 'interface: lo0'  # RT_IN6
 	ssh ${RT_SSH} ping6 -n -c 1 ${PF_OUT6}  # PF_OUT6
@@ -377,7 +385,9 @@ check-setup:
 	ssh ${RT_SSH} ping6 -n -c 1 ${RT_OUT6}  # RT_OUT6
 	ssh ${RT_SSH} route -n get -inet6 ${RT_OUT6} | fgrep -q 'interface: lo0'  # RT_OUT6
 	ssh ${RT_SSH} ping6 -n -c 1 ${ECO_IN6}  # ECO_IN6
-	ssh ${RT_SSH} route -n get -inet6 ${RTT_IN6} | fgrep -q 'gateway: ${ECO_IN6}'  # RTT_IN6 ECO_IN6
+.for ip in RTT_IN
+	ssh ${RT_SSH} route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${ECO_IN6}'  # ${ip}6 ECO_IN6
+.endfor
 	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep =1
 	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 	ssh ${RT_SSH} ifconfig | fgrep 'mtu 1300'
