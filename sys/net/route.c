@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.219 2015/08/17 09:46:26 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.220 2015/08/17 09:50:12 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1148,7 +1148,7 @@ int
 rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
-	struct rtentry		*rt, *nrt = NULL;
+	struct rtentry		*rt = NULL;
 	struct sockaddr_rtlabel	 sa_rl;
 	struct rt_addrinfo	 info;
 	u_short			 rtableid = ifp->if_rdomain;
@@ -1180,8 +1180,8 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
 
-	error = rtrequest1(RTM_ADD, &info, prio, &nrt, rtableid);
-	if (error == 0 && (rt = nrt) != NULL) {
+	error = rtrequest1(RTM_ADD, &info, prio, &rt, rtableid);
+	if (error == 0 && rt != NULL) {
 		if (rt->rt_ifa != ifa) {
 			printf("%s: wrong ifa (%p) was (%p)\n", __func__,
 			    ifa, rt->rt_ifa);
