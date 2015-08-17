@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.217 2015/07/18 15:51:16 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.218 2015/08/17 09:41:24 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -379,7 +379,8 @@ rtfree(struct rtentry *rt)
 {
 	struct ifaddr	*ifa;
 
-	KASSERT(rt != NULL);
+	if (rt == NULL)
+		return;
 
 	rt->rt_refcnt--;
 
