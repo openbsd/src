@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.218 2015/08/17 09:41:24 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.219 2015/08/17 09:46:26 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1182,7 +1182,6 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	error = rtrequest1(RTM_ADD, &info, prio, &nrt, rtableid);
 	if (error == 0 && (rt = nrt) != NULL) {
-		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
 			printf("%s: wrong ifa (%p) was (%p)\n", __func__,
 			    ifa, rt->rt_ifa);
@@ -1202,8 +1201,9 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		 * userland that a new address has been added.
 		 */
 		if (flags & RTF_LOCAL)
-			rt_sendaddrmsg(nrt, RTM_NEWADDR);
-		rt_sendmsg(nrt, RTM_ADD, rtableid);
+			rt_sendaddrmsg(rt, RTM_NEWADDR);
+		rt_sendmsg(rt, RTM_ADD, rtableid);
+		rtfree(rt);
 	}
 	return (error);
 }
