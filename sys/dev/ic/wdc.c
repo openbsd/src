@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.128 2015/03/09 18:50:08 miod Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.129 2015/08/17 15:36:29 krw Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1688,7 +1688,7 @@ __wdccommand_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 		DELAY(10);
 
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
-	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
+	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_features);
 
 	if ((wdc_c->flags & AT_WRITE) == AT_WRITE) {
 		/* wait at least 400ns before reading status register */
@@ -1789,9 +1789,7 @@ __wdccommand_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 		wdc_c->r_sector = CHP_READ_REG(chp, wdr_sector);
 		wdc_c->r_count = CHP_READ_REG(chp, wdr_seccnt);
 		wdc_c->r_error = CHP_READ_REG(chp, wdr_error);
-		wdc_c->r_precomp = wdc_c->r_error;
-		/* XXX CHP_READ_REG(chp, wdr_precomp); - precomp
-		   isn't a readable register */
+		wdc_c->r_features = wdc_c->r_error;
 	}
 
 killit:
@@ -1822,20 +1820,20 @@ killit:
 void
 wdccommand(struct channel_softc *chp, u_int8_t drive, u_int8_t command,
     u_int16_t cylin, u_int8_t head, u_int8_t sector, u_int8_t count,
-    u_int8_t precomp)
+    u_int8_t features)
 {
 	WDCDEBUG_PRINT(("wdccommand %s:%d:%d: command=0x%x cylin=%d head=%d "
-	    "sector=%d count=%d precomp=%d\n", chp->wdc->sc_dev.dv_xname,
-	    chp->channel, drive, command, cylin, head, sector, count, precomp),
+	    "sector=%d count=%d features=%d\n", chp->wdc->sc_dev.dv_xname,
+	    chp->channel, drive, command, cylin, head, sector, count, features),
 	    DEBUG_FUNCS);
-	WDC_LOG_ATA_CMDLONG(chp, head, precomp, cylin, cylin >> 8, sector,
+	WDC_LOG_ATA_CMDLONG(chp, head, features, cylin, cylin >> 8, sector,
 	    count, command);
 
 	/* Select drive, head, and addressing mode. */
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4) | head);
 
-	/* Load parameters. wdr_features(ATA/ATAPI) = wdr_precomp(ST506) */
-	CHP_WRITE_REG(chp, wdr_precomp, precomp);
+	/* Load parameters. */
+	CHP_WRITE_REG(chp, wdr_features, features);
 	CHP_WRITE_REG(chp, wdr_cyl_lo, cylin);
 	CHP_WRITE_REG(chp, wdr_cyl_hi, cylin >> 8);
 	CHP_WRITE_REG(chp, wdr_sector, sector);
@@ -2077,7 +2075,7 @@ wdc_ioc_ata_cmd(struct ata_drive_datas *drvp, atareq_t *atareq)
 	wdc_c.r_cyl = atareq->cylinder;
 	wdc_c.r_sector = atareq->sec_num;
 	wdc_c.r_count = atareq->sec_count;
-	wdc_c.r_precomp = atareq->features;
+	wdc_c.r_features = atareq->features;
 	if (drvp->drive_flags & DRIVE_ATAPI) {
 		if (wdc_c.r_command == WDCC_IDENTIFY)
 			wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
@@ -2106,7 +2104,7 @@ wdc_ioc_ata_cmd(struct ata_drive_datas *drvp, atareq_t *atareq)
 			atareq->cylinder = wdc_c.r_cyl;
 			atareq->sec_num = wdc_c.r_sector;
 			atareq->sec_count = wdc_c.r_count;
-			atareq->features = wdc_c.r_precomp;
+			atareq->features = wdc_c.r_features;
 			atareq->error = wdc_c.r_error;
 		}
 	}

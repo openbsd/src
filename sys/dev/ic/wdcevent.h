@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdcevent.h,v 1.7 2014/12/19 07:23:57 deraadt Exp $	*/
+/*	$OpenBSD: wdcevent.h,v 1.8 2015/08/17 15:36:29 krw Exp $	*/
 /*
  * Copyright (c) 2001 Constantine Sapuntzakis
  *
@@ -83,9 +83,9 @@ static __inline void WDC_LOG_ATA_CMDSHORT(struct channel_softc *chp, u_int8_t cm
 }
 
 static __inline void WDC_LOG_ATA_CMDLONG(struct channel_softc *chp,
-    u_int8_t head, u_int8_t precomp, u_int8_t cylinhi, u_int8_t cylinlo,
+    u_int8_t head, u_int8_t features, u_int8_t cylinhi, u_int8_t cylinlo,
     u_int8_t sector, u_int8_t count, u_int8_t command) {
-	char record[8] = { head, precomp, cylinhi, cylinlo,
+	char record[8] = { head, features, cylinhi, cylinlo,
 			   sector, count, command };
 
 	wdc_log(chp, WDCEVENT_ATA_LONG, 7, record);
@@ -123,7 +123,7 @@ static __inline void WDC_LOG_ATA_CMDEXT(struct channel_softc *chp,
 #define WDC_LOG_ATAPI_CMD(chp, drive, flags, len, cmd)
 #define WDC_LOG_ATAPI_DONE(chp, drive, flags, error)
 #define WDC_LOG_ATA_CMDSHORT(chp, cmd)
-#define WDC_LOG_ATA_CMDLONG(chp, head, precomp, cylinhi, cylinlo, \
+#define WDC_LOG_ATA_CMDLONG(chp, head, features, cylinhi, cylinlo, \
     sector, count, command)
 #define WDC_LOG_SET_DRIVE(chp, drive)
 #define WDC_LOG_REG(chp, reg, val)

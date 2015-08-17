@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.117 2014/09/14 14:17:24 jsg Exp $ */
+/*	$OpenBSD: wd.c,v 1.118 2015/08/17 15:36:29 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -278,7 +278,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	if (wd->sc_params.atap_cmd_set1 & WDC_CMD1_AHEAD) {
 		bzero(&wdc_c, sizeof(struct wdc_command));
 		wdc_c.r_command = SET_FEATURES;
-		wdc_c.r_precomp = WDSF_READAHEAD_EN;
+		wdc_c.r_features = WDSF_READAHEAD_EN;
 		wdc_c.timeout = 1000;
 		wdc_c.flags = at_poll;
 
@@ -292,7 +292,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	if (wd->sc_params.atap_cmd_set1 & WDC_CMD1_CACHE) {
 		bzero(&wdc_c, sizeof(struct wdc_command));
 		wdc_c.r_command = SET_FEATURES;
-		wdc_c.r_precomp = WDSF_EN_WR_CACHE;
+		wdc_c.r_features = WDSF_EN_WR_CACHE;
 		wdc_c.timeout = 1000;
 		wdc_c.flags = at_poll;
 	

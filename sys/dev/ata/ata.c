@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.34 2015/03/14 03:38:47 jsg Exp $      */
+/*      $OpenBSD: ata.c,v 1.35 2015/08/17 15:36:29 krw Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -168,7 +168,7 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 	wdc_c.r_command = SET_FEATURES;
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
-	wdc_c.r_precomp = WDSF_SET_MODE;
+	wdc_c.r_features = WDSF_SET_MODE;
 	wdc_c.r_count = mode;
 	wdc_c.flags = flags;
 	wdc_c.timeout = 1000; /* 1s */

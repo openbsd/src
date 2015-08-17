@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.49 2015/04/04 13:03:44 mpi Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.50 2015/08/17 15:36:29 krw Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -399,9 +399,7 @@ again:
 			    (u_int64_t)ata_bio->blkno, nblks);
 		} else {
 			wdccommand(chp, xfer->drive, cmd, cyl,
-			    head, sect, nblks,
-			    (ata_bio->lp->d_type == DTYPE_ST506) ?
-			    ata_bio->lp->d_precompcyl / 4 : 0);
+			    head, sect, nblks, 0);
 		}
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -701,9 +699,7 @@ again:
 			goto multimode;
 		wdccommand(chp, xfer->drive, WDCC_IDP,
 		    ata_bio->lp->d_ncylinders,
-		    ata_bio->lp->d_ntracks - 1, 0, ata_bio->lp->d_nsectors,
-		    (ata_bio->lp->d_type == DTYPE_ST506) ?
-			ata_bio->lp->d_precompcyl / 4 : 0);
+		    ata_bio->lp->d_ntracks - 1, 0, ata_bio->lp->d_nsectors, 0);
 		drvp->state = GEOMETRY_WAIT;
 		break;
 

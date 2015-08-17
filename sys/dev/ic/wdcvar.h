@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.54 2014/01/22 06:05:21 dlg Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.55 2015/08/17 15:36:29 krw Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -95,7 +95,6 @@ struct channel_softc { /* Per channel data */
 #define _WDC_WRONLY  32
 enum wdc_regs {
 	wdr_error = _WDC_RDONLY | 1,
-	wdr_precomp = _WDC_WRONLY | 1,
 	wdr_features = _WDC_WRONLY | 1,
 	wdr_seccnt = 2,
 	wdr_ireason = 2,
