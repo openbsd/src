@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.159 2015/07/18 15:51:16 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.160 2015/08/17 09:58:10 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -358,8 +358,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		}
 
 		if ((rt->rt_flags & RTF_LLINFO) == 0) {
-			log(LOG_DEBUG, "arpresolve: %s: route contains no arp"
-			    " information\n", inet_ntop(AF_INET,
+			log(LOG_DEBUG, "%s: %s: route contains no arp"
+			    " information\n", __func__, inet_ntop(AF_INET,
 				&satosin(rt_key(rt))->sin_addr, addr,
 				sizeof(addr)));
 			m_freem(m);
@@ -368,16 +368,16 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 		if (la == NULL)
-			log(LOG_DEBUG, "arpresolve: %s: route without link "
-			    "local address\n", inet_ntop(AF_INET,
+			log(LOG_DEBUG, "%s: %s: route without link "
+			    "local address\n", __func__, inet_ntop(AF_INET,
 				&satosin(dst)->sin_addr, addr, sizeof(addr)));
 	} else {
 		if ((la = arplookup(satosin(dst)->sin_addr.s_addr, 1, 0,
 		    ifp->if_rdomain)) != NULL)
 			rt = la->la_rt;
 		else
-			log(LOG_DEBUG,
-			    "arpresolve: %s: can't allocate llinfo\n",
+			log(LOG_DEBUG, "%s: %s: can't allocate llinfo\n",
+			    __func__,
 			    inet_ntop(AF_INET, &satosin(dst)->sin_addr,
 				addr, sizeof(addr)));
 	}
@@ -434,7 +434,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 #ifdef	DIAGNOSTIC
 	if (rt->rt_expire == 0) {
 		/* This should never happen. (Should it? -gwr) */
-		printf("arpresolve: unresolved and rt_expire == 0\n");
+		printf("%s: unresolved and rt_expire == 0\n", __func__);
 		/* Set expiration time to now (expired). */
 		rt->rt_expire = time_second;
 	}
