@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.113 2014/10/23 21:33:21 rpe Exp $
+dnl	$OpenBSD: m4.common,v 1.114 2015/08/17 20:07:12 guenther Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -439,13 +439,7 @@ ifelse(MDTZ,,,
 dnl install.sh ask whether to use DUIDs before the md_prep_disklabel loop
 	The installation program will now tell you which disks it can
 	install on, and ask you which it should use.
-	Reply with the name of your root disk.
-
-	You will the be asked if you want to use DUID notation in
-	/etc/fstab, instead of traditional device names. You are strongly
-	advised to use DUIDs, as they allow you to move your disks to
-	different controllers, or change their bus identifiers, without
-	having to modify /etc/fstab every time your configuration changes.-:})dnl
+	Reply with the name of your root disk.-:})dnl
 dnl install.sh md_prep_disklabel loop
 dnl
 dnl OpenBSDInstallMBRPart1
