@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 2015/08/15 22:20:20 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2015/08/18 20:25:28 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1476,7 +1476,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 *
 				 * Don't turn caching on again if this is a 
 				 * modified emulation. This would be
-				 * inconsitent with the settings created by
+				 * inconsistent with the settings created by
 				 * pmap_vac_me_harder(). Otherwise, it's safe
 				 * to re-enable cacheing.
 				 *

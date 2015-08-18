@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.53 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.54 2015/08/18 20:25:28 miod Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -907,7 +907,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	return;
 }
 
-/* return a non-zero value if the received prefix is inconsitent with ours */
+/* return a non-zero value if the received prefix is inconsistent with ours */
 static int
 prefix_check(struct nd_opt_prefix_info *pinfo,
 	     struct rainfo *rai, struct sockaddr_in6 *from)
