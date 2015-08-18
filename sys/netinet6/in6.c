@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.162 2015/08/12 09:06:18 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.163 2015/08/18 08:48:36 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -479,7 +479,11 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		 * is no link-local yet.
 		 */
 		s = splsoftnet();
-		in6_ifattach(ifp);
+		error = in6_ifattach(ifp);
+		if (error != 0) {
+			splx(s);
+			return (error);
+		}
 		error = in6_update_ifa(ifp, ifra, ia6);
 		splx(s);
 		if (error != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.359 2015/08/16 12:19:06 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.360 2015/08/18 08:48:36 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1314,11 +1314,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		case AF_INET6:
 			s = splsoftnet();
 			if (cmd == SIOCIFAFATTACH)
-				in6_ifattach(ifp);
+				error = in6_ifattach(ifp);
 			else
 				in6_ifdetach(ifp);
 			splx(s);
-			return (0);
+			return (error);
 #endif /* INET6 */
 		default:
 			return (EAFNOSUPPORT);
@@ -1382,8 +1382,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 #ifdef INET6
 		if (ISSET(ifr->ifr_flags, IFXF_AUTOCONF6)) {
 			s = splsoftnet();
-			in6_ifattach(ifp);
+			error = in6_ifattach(ifp);
 			splx(s);
+			if (error != 0)
+				return (error);
 		}
 
 		if ((ifr->ifr_flags & IFXF_AUTOCONF6) &&
