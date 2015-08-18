@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.59 2015/03/17 19:31:30 millert Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.60 2015/08/18 17:35:59 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -681,7 +681,7 @@ username
 password
 	: /* empty */
 		{
-			$$ = (char *)calloc(1, sizeof(char));
+			$$ = calloc(1, sizeof(char));
 		}
 	| STRING
 	;
