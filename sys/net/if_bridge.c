@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.257 2015/07/20 22:54:29 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.258 2015/08/18 09:01:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -115,7 +115,8 @@
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
 void	bridge_start(struct ifnet *);
-void	bridgeintr_frame(struct bridge_softc *, struct mbuf *);
+void	bridge_process(struct mbuf *);
+void	bridgeintr_frame(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
 void	bridge_localbroadcast(struct bridge_softc *, struct ifnet *,
@@ -166,7 +167,7 @@ struct	mbuf *bridge_m_dup(struct mbuf *);
 	 (a)->ether_addr_octet[1] == 0x00 &&			\
 	 (a)->ether_addr_octet[2] == 0x5e)
 
-LIST_HEAD(, bridge_softc) bridge_list;
+struct niqueue bridgeintrq = NIQUEUE_INITIALIZER(1024, NETISR_BRIDGE);
 
 struct if_clone bridge_cloner =
     IF_CLONE_INITIALIZER("bridge", bridge_clone_create, bridge_clone_destroy);
@@ -175,7 +176,6 @@ struct if_clone bridge_cloner =
 void
 bridgeattach(int n)
 {
-	LIST_INIT(&bridge_list);
 	if_clone_attach(&bridge_cloner);
 }
 
@@ -185,7 +185,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	struct bridge_softc *sc;
 	struct ifih *bridge_ifih;
 	struct ifnet *ifp;
-	int i, s;
+	int i;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
@@ -222,8 +222,6 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = bridge_start;
 	ifp->if_type = IFT_BRIDGE;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -235,10 +233,6 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	bridge_ifih->ifih_input = ether_input;
 	SLIST_INSERT_HEAD(&ifp->if_inputs, bridge_ifih, ifih_next);
-
-	s = splnet();
-	LIST_INSERT_HEAD(&bridge_list, sc, sc_list);
-	splx(s);
 
 	return (0);
 }
@@ -1104,60 +1098,36 @@ bridge_start(struct ifnet *ifp)
 void
 bridgeintr(void)
 {
-	struct bridge_softc *sc;
+	struct mbuf_list ml;
 	struct mbuf *m;
-	int s;
 
-	LIST_FOREACH(sc, &bridge_list, sc_list) {
-		for (;;) {
-			s = splnet();
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
-			splx(s);
-			if (m == NULL)
-				break;
-			bridgeintr_frame(sc, m);
-		}
-	}
+	niq_delist(&bridgeintrq, &ml);
+	if (ml_empty(&ml))
+		return;
+
+	while ((m = ml_dequeue(&ml)) != NULL)
+		bridge_process(m);
 }
 
 /*
  * Process a single frame.  Frame must be freed or queued before returning.
  */
 void
-bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
+bridgeintr_frame(struct bridge_softc *sc, struct ifnet *src_if, struct mbuf *m)
 {
-	struct ifnet *src_if, *dst_if;
+	struct ifnet *dst_if;
 	struct bridge_iflist *ifl;
 	struct bridge_rtnode *dst_p;
 	struct ether_addr *dst, *src;
 	struct ether_header eh;
 	int len;
 
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
-		m_freem(m);
-		return;
-	}
-
-	src_if = if_get(m->m_pkthdr.ph_ifidx);
-	if (src_if == NULL) {
-		m_freem(m);
-		return;
-	}
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
 	ifl = (struct bridge_iflist *)src_if->if_bridgeport;
-	if (ifl == NULL) {
-		m_freem(m);
-		return;
-	}
-
-	if ((ifl->bif_flags & IFBIF_STP) &&
-	    (ifl->bif_state == BSTP_IFSTATE_DISCARDING)) {
-		m_freem(m);
-		return;
-	}
+	KASSERT(ifl != NULL);
 
 	if (m->m_pkthdr.len < sizeof(eh)) {
 		m_freem(m);
@@ -1305,25 +1275,38 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 struct mbuf *
 bridge_input(struct ifnet *ifp, struct mbuf *m)
 {
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("bridge_input(): no HDR");
+
+	niq_enqueue(&bridgeintrq, m);
+	return (NULL);
+}
+
+void
+bridge_process(struct mbuf *m)
+{
 	struct bridge_softc *sc;
 	struct bridge_iflist *ifl;
 	struct bridge_iflist *srcifl;
 	struct ether_header *eh;
+	struct ifnet *ifp;
 	struct arpcom *ac;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *mc;
-	int s;
 
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("bridge_input(): no HDR");
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
 
 	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
 	if (ifl == NULL)
-		return (m);
+		goto reenqueue;
 
 	sc = ifl->bridge_sc;
 	if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
-		return (m);
+		goto reenqueue;
 
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf)
@@ -1347,32 +1330,27 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				/* STP traffic */
 				if ((m = bstp_input(sc->sc_stp, ifl->bif_stp,
 				    eh, m)) == NULL)
-					return (NULL);
+					return;
 			} else if (eh->ether_dhost[ETHER_ADDR_LEN - 1] <= 0xf) {
 				m_freem(m);
-				return (NULL);
+				return;
 			}
 		}
 
 		/*
-		 * No need to queue frames for ifs in the discarding state
+		 * No need to process frames for ifs in the discarding state
 		 */
 		if ((ifl->bif_flags & IFBIF_STP) &&
 		    (ifl->bif_state == BSTP_IFSTATE_DISCARDING))
-			return (m);
+	    		goto reenqueue;
 
 		mc = bridge_m_dup(m);
 		if (mc == NULL)
-			return (m);
-		s = splnet();
-		if (IF_QFULL(&sc->sc_if.if_snd)) {
-			m_freem(mc);
-			splx(s);
-			return (m);
-		}
-		IF_ENQUEUE(&sc->sc_if.if_snd, mc);
-		splx(s);
-		schednetisr(NETISR_BRIDGE);
+	    		goto reenqueue;
+
+		mc->m_flags |= M_PROTO1;
+		ml_enqueue(&ml, mc);
+		if_input(ifp, &ml);
 #if NGIF > 0
 		if (ifp->if_type == IFT_GIF) {
 			TAILQ_FOREACH(ifl, &sc->sc_iflist, next) {
@@ -1382,11 +1360,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				m->m_flags |= M_PROTO1;
 				ml_enqueue(&ml, m);
 				if_input(ifl->ifp, &ml);
-				return (NULL);
+				return;
 			}
 		}
 #endif /* NGIF */
-		return (m);
+		bridgeintr_frame(sc, ifp, m);
+		return;
 	}
 
 	/*
@@ -1394,7 +1373,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if ((ifl->bif_flags & IFBIF_STP) &&
 	    (ifl->bif_state == BSTP_IFSTATE_DISCARDING))
-		return (m);
+	    	goto reenqueue;
 
 	/*
 	 * Unicast, make sure it's not for us.
@@ -1417,7 +1396,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			if (bridge_filterrule(&srcifl->bif_brlin, eh, m) ==
 			    BRL_ACTION_BLOCK) {
 				m_freem(m);
-				return (NULL);
+				return;
 			}
 
 			/* Count for the bridge */
@@ -1427,7 +1406,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			m->m_flags |= M_PROTO1;
 			ml_enqueue(&ml, m);
 			if_input(ifl->ifp, &ml);
-			return (NULL);
+			return;
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
 #if NCARP > 0
@@ -1436,19 +1415,17 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 		    ) {
 			m_freem(m);
-			return (NULL);
+			return;
 		}
 	}
-	s = splnet();
-	if (IF_QFULL(&sc->sc_if.if_snd)) {
-		m_freem(m);
-		splx(s);
-		return (NULL);
-	}
-	IF_ENQUEUE(&sc->sc_if.if_snd, m);
-	splx(s);
-	schednetisr(NETISR_BRIDGE);
-	return (NULL);
+
+	bridgeintr_frame(sc, ifp, m);
+	return;
+
+reenqueue:
+	m->m_flags |= M_PROTO1;
+	ml_enqueue(&ml, m);
+	if_input(ifp, &ml);
 }
 
 /*
