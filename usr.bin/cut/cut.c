@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.18 2014/02/02 11:44:01 sobrado Exp $	*/
+/*	$OpenBSD: cut.c,v 1.19 2015/08/18 17:10:48 deraadt Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ f_cut(FILE *fp, char *fname)
 		output = 0;
 		if (lbuf[len - 1] != '\n') {
 			/* no newline at the end of the last line so add one */
-			if ((tbuf = (char *)malloc(len + 1)) == NULL)
+			if ((tbuf = malloc(len + 1)) == NULL)
 				err(1, NULL);
 			memcpy(tbuf, lbuf, len);
 			tbuf[len] = '\n';
