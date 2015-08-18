@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_isa.c,v 1.18 2015/05/24 10:57:47 miod Exp $	*/
+/*	$OpenBSD: pckbc_isa.c,v 1.19 2015/08/18 06:54:00 stsp Exp $	*/
 /*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ pckbc_isa_attach(struct device *parent, struct device *self, void *aux)
 		rv = isa_intr_establish(ia->ia_ic, ia->ipa_irq[slot].num,
 		    IST_EDGE, IPL_TTY, pckbcintr, sc, sc->sc_dv.dv_xname);
 		if (rv == NULL) {
-			printf("%s: unable to establish interrupt for irq %d",
+			printf("%s: unable to establish interrupt for irq %d\n",
 			    sc->sc_dv.dv_xname, ia->ipa_irq[slot].num);
 			/* XXX fail attach? */
 		}
