@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.154 2015/05/06 01:03:31 jsg Exp $ */
+/*	$OpenBSD: loader.c,v 1.155 2015/08/18 17:34:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -556,7 +556,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 			DL_DEB(("failed to mark DTDEBUG\n"));
 	}
 	if (map_link) {
-		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
+		debug_map = _dl_malloc(sizeof(*debug_map));
 		if (debug_map == NULL)
 			_dl_exit(5);
 		debug_map->r_version = 1;
