@@ -29,7 +29,7 @@ A typical application of this function is to derive keying material for an
 encryption algorithm from a password in the B<data> parameter.
 
 Increasing the B<count> parameter slows down the algorithm which makes it
-harder for an attacker to peform a brute force attack using a large number
+harder for an attacker to perform a brute force attack using a large number
 of candidate passwords.
 
 If the total key and IV length is less than the digest length and

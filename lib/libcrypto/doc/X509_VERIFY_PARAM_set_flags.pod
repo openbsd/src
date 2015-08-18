@@ -104,7 +104,7 @@ certificates and makes the verification strictly apply B<X509> rules.
 B<X509_V_FLAG_ALLOW_PROXY_CERTS> enables proxy certificate verification.
 
 B<X509_V_FLAG_POLICY_CHECK> enables certificate policy checking, by default
-no policy checking is peformed. Additional information is sent to the
+no policy checking is performed. Additional information is sent to the
 verification callback relating to policy checking.
 
 B<X509_V_FLAG_EXPLICIT_POLICY>, B<X509_V_FLAG_INHIBIT_ANY> and
