@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.3 2015/06/26 10:07:48 semarie Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.4 2015/08/18 08:26:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,7 @@
 
 /*
  * Derived from Lua 5.3.1:
- * $Id: patterns.c,v 1.3 2015/06/26 10:07:48 semarie Exp $
+ * $Id: patterns.c,v 1.4 2015/08/18 08:26:39 reyk Exp $
  * Standard library for string operations and pattern-matching
  */
 
@@ -673,7 +673,7 @@ str_match(const char *string, const char *pattern, struct str_match *m,
 	memset(m, 0, sizeof(*m));
 
 	ret = str_find_aux(&ms, pattern, string, sm, nsm, 0);
-	if (ret == 0 || ms.error != NULL) {
+	if (ret <= 0 || ms.error != NULL) {
 		/* Return -1 on error and store the error string */
 		*errstr = ms.error;
 		return (-1);
