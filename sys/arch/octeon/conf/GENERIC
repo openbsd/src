@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2015/07/20 19:44:32 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.23 2015/08/18 12:49:41 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -13,6 +13,7 @@ machine		octeon mips64
 include		"../../../conf/GENERIC"
 maxusers	32
 
+option		CPU_MIPS64R2
 option		CPU_OCTEON
 option		FPUEMUL
 makeoption	LINK_ADDRESS="0xffffffff81000000"
