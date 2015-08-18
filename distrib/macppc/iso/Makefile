@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2014/09/21 13:44:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2015/08/18 16:28:00 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -28,7 +28,7 @@ ${CDROM}: ${BASE} ${XBASE}
 	    ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
 	# XXX no SHA256.sig
 
-	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/stand/tbxidata/bsd.tbxi \
+	cp ${.CURDIR}/../../../sys/arch/${MACHINE}/stand/tbxidata/bsd.tbxi \
 	    ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/ofwboot ${.OBJDIR}/cd-dir/
 
