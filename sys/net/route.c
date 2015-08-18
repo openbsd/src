@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.220 2015/08/17 09:50:12 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.221 2015/08/18 08:56:16 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -328,15 +328,9 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 		} else
 			rt->rt_refcnt++;
 	} else {
-		if (dst->sa_family != PF_KEY)
-			rtstat.rts_unreach++;
-	/*
-	 * IP encapsulation does lots of lookups where we don't need nor want
-	 * the RTM_MISSes that would be generated.  It causes RTM_MISS storms
-	 * sent upward breaking user-level routing queries.
-	 */
+		rtstat.rts_unreach++;
 miss:
-		if (ISSET(flags, RT_REPORT) && dst->sa_family != PF_KEY) {
+		if (ISSET(flags, RT_REPORT)) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, NULL, err, tableid);
