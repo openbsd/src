@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.33 2015/08/19 12:25:59 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.34 2015/08/19 13:30:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -504,7 +504,7 @@ int
 fcopy(char *src, char *dst, mode_t mode)
 {
 	int		ifd, ofd;
-	u_int8_t	buf[BUFSIZ];
+	uint8_t		buf[BUFSIZ];
 	ssize_t		r;
 
 	if ((ifd = open(src, O_RDONLY)) == -1)
@@ -530,7 +530,7 @@ int
 fcopy_env(const char *src, const char *dst, mode_t mode)
 {
 	int		 ofd = -1, i;
-	u_int8_t	 buf[BUFSIZ];
+	uint8_t		 buf[BUFSIZ];
 	ssize_t		 r = -1, len;
 	FILE		*ifp = NULL;
 	int		 saved_errno;
@@ -608,7 +608,7 @@ ca_hier(char *path)
 {
 	struct stat	 st;
 	char		 dst[PATH_MAX];
-	u_int		 i;
+	unsigned int	 i;
 
 	for (i = 0; i < nitems(hier); i++) {
 		strlcpy(dst, path, sizeof(dst));
@@ -635,7 +635,7 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 	char		 dst[PATH_MAX];
 	char		*p;
 	char		 tpl[] = "/tmp/ikectl.XXXXXXXXXX";
-	u_int		 i;
+	unsigned int	 i;
 	int		 fd;
 
 	if (keyname != NULL) {
