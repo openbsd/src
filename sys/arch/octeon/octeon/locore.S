@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 2014/03/13 02:17:13 yasuoka Exp $ */
+/*	$OpenBSD: locore.S,v 1.7 2015/08/19 13:14:09 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -73,10 +73,11 @@ start:
 
 	LA	gp, _gp
 
-#if defined(MULTIPROCESSOR)
-	rdhwr	t2, $0
-	beqz	t2, 2f
+	/* Let the init core continue. The others have to wait. */
+	bne	a2, zero, 2f
 	nop
+#if defined(MULTIPROCESSOR)
+	rdhwr   t2, $0
 1:	ll	t0, cpu_spinup_mask
 	bne	t2, t0, 1b
 	nop
@@ -86,8 +87,13 @@ start:
 	nop
 	j	hw_cpu_spinup_trampoline
 	nop
-2:
+#else
+	/* Halt extra cores on single-processor kernel. */
+1:	wait
+	j	1b
+	nop
 #endif
+2:
 	/*
 	 * Initialize stack and call machine startup.
 	 */
