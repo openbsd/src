@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.73 2015/07/19 05:17:27 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.74 2015/08/19 21:26:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1007,7 +1007,7 @@ mediaoptsl	: mediastring medianames_l optsemicolon
 		| include
 		;
 
-mediastring	: STRING '/' STRING 	{
+mediastring	: STRING '/' STRING	{
 			if (strlcpy(media.media_type, $1,
 			    sizeof(media.media_type)) >=
 			    sizeof(media.media_type) ||
