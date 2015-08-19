@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.50 2015/03/26 19:52:35 markus Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.51 2015/08/19 14:12:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1180,7 +1180,10 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    group);
 		sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
 		msg->msg_sa = NULL;
-		/* XXX chould also happen for PFS so we have to check state XXX*/
+
+		/*
+		 * XXX should also happen for PFS so we have to check state.
+		 */
 		timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
 		timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
 		break;

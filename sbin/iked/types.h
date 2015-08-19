@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.19 2015/06/11 18:49:09 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.20 2015/08/19 14:12:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -20,26 +20,28 @@
 #define IKED_TYPES_H
 
 #ifndef IKED_USER
-#define IKED_USER	"_iked"
+#define IKED_USER		"_iked"
 #endif
 
 #ifndef IKED_CONFIG
-#define IKED_CONFIG	"/etc/iked.conf"
+#define IKED_CONFIG		"/etc/iked.conf"
 #endif
-#define IKED_SOCKET	"/var/run/iked.sock"
+
+#define IKED_SOCKET		"/var/run/iked.sock"
 
 #ifndef IKED_CA
-#define IKED_CA		"/etc/iked/"
+#define IKED_CA			"/etc/iked/"
 #endif
-#define IKED_CA_DIR	"ca/"
-#define IKED_CRL_DIR	"crls/"
-#define IKED_CERT_DIR	"certs/"
-#define IKED_PUBKEY_DIR	"pubkeys/"
-#define IKED_PRIVKEY	IKED_CA "private/local.key"
-#define IKED_PUBKEY	"local.pub"
 
-#define IKED_OCSP_RESPCERT        "ocsp/responder.crt"
-#define IKED_OCSP_ISSUER          "ocsp/issuer.crt"
+#define IKED_CA_DIR		"ca/"
+#define IKED_CRL_DIR		"crls/"
+#define IKED_CERT_DIR		"certs/"
+#define IKED_PUBKEY_DIR		"pubkeys/"
+#define IKED_PRIVKEY		IKED_CA "private/local.key"
+#define IKED_PUBKEY		"local.pub"
+
+#define IKED_OCSP_RESPCERT	"ocsp/responder.crt"
+#define IKED_OCSP_ISSUER	"ocsp/issuer.crt"
 
 #define IKED_OPT_VERBOSE	0x00000001
 #define IKED_OPT_NOACTION	0x00000002

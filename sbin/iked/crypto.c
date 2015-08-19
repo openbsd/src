@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.16 2015/03/26 19:52:35 markus Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.17 2015/08/19 14:12:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -58,9 +58,12 @@ struct {
 	const u_int8_t	*sc_oid;
 	const EVP_MD	*(*sc_md)(void);
 } schemes[] = {
-	{ sizeof(sha256WithRSAEncryption), sha256WithRSAEncryption, EVP_sha256 },
-	{ sizeof(sha384WithRSAEncryption), sha384WithRSAEncryption, EVP_sha384 },
-	{ sizeof(sha512WithRSAEncryption), sha512WithRSAEncryption, EVP_sha512 },
+	{ sizeof(sha256WithRSAEncryption),
+	    sha256WithRSAEncryption, EVP_sha256 },
+	{ sizeof(sha384WithRSAEncryption),
+	    sha384WithRSAEncryption, EVP_sha384 },
+	{ sizeof(sha512WithRSAEncryption),
+	    sha512WithRSAEncryption, EVP_sha512 },
 };
 
 int	_dsa_verify_init(struct iked_dsa *, const u_int8_t *, size_t);
@@ -670,7 +673,8 @@ _dsa_verify_init(struct iked_dsa *dsa, const u_int8_t *sig, size_t len)
 	}
 	for (i = 0; i < nitems(schemes); i++) {
 		if (oidlen == schemes[i].sc_len &&
-		    memcmp(sig + 1, schemes[i].sc_oid, schemes[i].sc_len) == 0) {
+		    memcmp(sig + 1, schemes[i].sc_oid,
+		    schemes[i].sc_len) == 0) {
 			dsa->dsa_priv = (*schemes[i].sc_md)();
 			log_debug("%s: signature scheme %zd selected",
 			    __func__, i);
@@ -684,7 +688,7 @@ _dsa_verify_init(struct iked_dsa *dsa, const u_int8_t *sig, size_t len)
 int
 dsa_init(struct iked_dsa *dsa, const void *buf, size_t len)
 {
-	int	 		 ret;
+	int	 ret;
 
 	if (dsa->dsa_hmac) {
 		if (!HMAC_Init_ex(dsa->dsa_ctx, ibuf_data(dsa->dsa_keydata),

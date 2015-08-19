@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.37 2015/07/07 19:13:31 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.38 2015/08/19 14:12:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -231,7 +231,7 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 {
 	const char		*a;
 	const char		*b;
-	int 			ostate = sa->sa_state;
+	int			 ostate = sa->sa_state;
 
 	a = print_map(ostate, ikev2_state_map);
 	b = print_map(state, ikev2_state_map);

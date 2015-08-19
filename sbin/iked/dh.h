@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.h,v 1.7 2015/06/11 18:49:09 reyk Exp $	*/
+/*	$OpenBSD: dh.h,v 1.8 2015/08/19 14:12:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -51,8 +51,8 @@ struct group {
 
 #define DH_MAXSZ	1024	/* 8192 bits */
 
-void             group_init(void);
-void             group_free(struct group *);
+void		 group_init(void);
+void		 group_free(struct group *);
 struct group	*group_get(u_int32_t);
 
 int		 dh_getlen(struct group *);

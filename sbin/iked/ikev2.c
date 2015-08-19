@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.121 2015/07/07 19:13:31 markus Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.122 2015/08/19 14:12:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -533,7 +533,8 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			/* move sa to new policy */
 			policy = sa->sa_policy = msg->msg_policy;
 			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
-			TAILQ_INSERT_TAIL(&policy->pol_sapeers, sa, sa_peer_entry);
+			TAILQ_INSERT_TAIL(&policy->pol_sapeers,
+			    sa, sa_peer_entry);
 		} else {
 			/* restore */
 			msg->msg_policy = sa->sa_policy = old;
@@ -2432,9 +2433,9 @@ int
 ikev2_set_sa_proposal(struct iked_sa *sa, struct iked_policy *pol,
     u_int proto)
 {
-	struct iked_proposal	 	*prop, *copy;
-	struct iked_transform	 	*xform;
-	u_int			 	 i;
+	struct iked_proposal		*prop, *copy;
+	struct iked_transform		*xform;
+	u_int				 i;
 
 	/* create copy of the policy proposals */
 	config_free_proposals(&sa->sa_proposals, proto);
@@ -2958,8 +2959,8 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 void
 ikev2_ikesa_delete(struct iked *env, struct iked_sa *sa, int initiator)
 {
-	struct ibuf                     *buf = NULL;
-	struct ikev2_delete             *del;
+	struct ibuf			*buf = NULL;
+	struct ikev2_delete		*del;
 
 	if (initiator) {
 		/* Send PAYLOAD_DELETE */
@@ -2992,7 +2993,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	struct iked_childsa		*csa;
 	struct iked_proposal		*prop;
 	struct iked_proposals		 proposals;
-	struct iked_kex		 	*kex, *kextmp = NULL;
+	struct iked_kex			*kex, *kextmp = NULL;
 	struct iked_sa			*nsa = NULL, *sa = msg->msg_sa;
 	struct iked_spi			*spi, *rekey = &msg->msg_rekey;
 	struct ikev2_keyexchange	*ke;
@@ -4254,7 +4255,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	}
 	if (pfs) {
 		log_debug("%s: using PFS", __func__);
-		if (kex->kex_dhpeer == NULL || ibuf_length(kex->kex_dhpeer) == 0 ||
+		if (kex->kex_dhpeer == NULL ||
+		    ibuf_length(kex->kex_dhpeer) == 0 ||
 		    (group = kex->kex_dhgroup) == NULL) {
 			log_debug("%s: no dh group for pfs", __func__);
 			goto done;
@@ -4266,8 +4268,9 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		if (dh_create_shared(group, dhsecret->buf,
 		    kex->kex_dhpeer->buf) == -1) {
 			log_debug("%s: failed to get dh secret"
-			    " group %d len %d secret %zu exchange %zu", __func__,
-			    group->id, dh_getlen(group), ibuf_length(dhsecret),
+			    " group %d len %d secret %zu exchange %zu",
+			    __func__, group->id, dh_getlen(group),
+			    ibuf_length(dhsecret),
 			    ibuf_length(kex->kex_dhpeer));
 			goto done;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2015/07/03 17:46:52 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.49 2015/08/19 14:12:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -457,9 +457,11 @@ user		: USER STRING STRING		{
 		;
 
 ikev2rule	: IKEV2 name ikeflags satype af proto hosts_list peers
-		    ike_sa child_sa ids ikelifetime lifetime ikeauth ikecfg filters {
+		    ike_sa child_sa ids ikelifetime lifetime ikeauth ikecfg
+		    filters {
 			if (create_ike($2, $5, $6, $7, &$8, $9, $10, $4, $3,
-			    $11.srcid, $11.dstid, $12, &$13, &$14, $16, $15) == -1)
+			    $11.srcid, $11.dstid, $12, &$13, &$14,
+			    $16, $15) == -1)
 				YYERROR;
 		}
 		;
@@ -1164,7 +1166,8 @@ lgetc(int quotec)
 
 	if (quotec) {
 		if ((c = getc(file->stream)) == EOF) {
-			yyerror("reached end of file while parsing quoted string");
+			yyerror("reached end of file while parsing "
+			    "quoted string");
 			if (popfile() == EOF)
 				return (EOF);
 			return (quotec);
@@ -2402,7 +2405,7 @@ create_ike(char *name, int af, u_int8_t ipproto, struct ipsec_hosts *hosts,
     struct ipsec_addr_wrap *ikecfg)
 {
 	char			 idstr[IKED_ID_SIZE];
-	u_int 			 idtype = IKEV2_ID_NONE;
+	u_int			 idtype = IKEV2_ID_NONE;
 	struct ipsec_addr_wrap	*ipa, *ipb;
 	struct iked_policy	 pol;
 	struct iked_proposal	 prop[2];
