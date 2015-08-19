@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.172 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.173 2015/08/19 13:27:38 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -668,7 +668,7 @@ in_losing(struct inpcb *inp)
 		    inp->inp_rtableid);
 		if (rt->rt_flags & RTF_DYNAMIC)
 			(void)rtrequest1(RTM_DELETE, &info, rt->rt_priority,
-				(struct rtentry **)0, inp->inp_rtableid);
+			    NULL, inp->inp_rtableid);
 		/*
 		 * A new route can be allocated
 		 * the next time output is attempted.

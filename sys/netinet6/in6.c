@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.164 2015/08/19 11:09:24 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.165 2015/08/19 13:27:38 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -895,8 +895,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
 			info.rti_info[RTAX_IFA] = sin6tosa(&ia6->ia_addr);
 			info.rti_flags = RTF_UP | RTF_CLONING;
-			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
-			    NULL, ifp->if_rdomain);
+			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, NULL,
+			    ifp->if_rdomain);
 			if (error)
 				goto cleanup;
 		} else {

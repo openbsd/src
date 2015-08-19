@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rtrequest1.9,v 1.3 2014/10/15 11:58:13 mpi Exp $
+.\"     $OpenBSD: rtrequest1.9,v 1.4 2015/08/19 13:27:38 bluhm Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2014 $
+.Dd $Mdocdate: August 19 2015 $
 .Dt RTREQUEST1 9
 .Os
 .Sh NAME
@@ -80,12 +80,11 @@ and the requested action is
 then a default priority based on the priority of the associated
 interface is chosen.
 .It Fa rtp
-Points to the cloning entry if the action is
-.Dv RTM_RESOLVE
-or, if the action is
-.Dv RTM_DELETE
-and it is non-NULL, a pointer to the removed entry is placed there.
-In this case, the caller must take care of releasing the returned entry by
+Must be non-NULL and point to the cloning entry if the action is
+.Dv RTM_RESOLVE .
+In all cases when no error is returned and it is non-NULL, a pointer
+to the deleted or added entry is placed there.
+The caller must take care of releasing the returned reference by
 calling
 .Xr rtfree 9 .
 .It Fa rtableid

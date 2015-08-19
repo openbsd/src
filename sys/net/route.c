@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.222 2015/08/19 10:42:37 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.223 2015/08/19 13:27:38 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -301,9 +301,11 @@ struct rtentry *
 rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 {
 	struct rtentry		*rt;
-	struct rtentry		*newrt = 0;
+	struct rtentry		*newrt = NULL;
 	struct rt_addrinfo	 info;
-	int			 s = splsoftnet(), err = 0, msgtype = RTM_MISS;
+	int			 s, error = 0, msgtype = RTM_MISS;
+
+	s = splsoftnet();
 
 	bzero(&info, sizeof(info));
 	info.rti_info[RTAX_DST] = dst;
@@ -312,14 +314,15 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 	if (rt != NULL) {
 		newrt = rt;
 		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
-			err = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
+			error = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &newrt, tableid);
-			if (err) {
+			if (error) {
 				newrt = rt;
 				rt->rt_refcnt++;
 				goto miss;
 			}
-			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
+			rt = newrt;
+			if (rt->rt_flags & RTF_XRESOLVE) {
 				msgtype = RTM_RESOLVE;
 				goto miss;
 			}
@@ -333,7 +336,7 @@ miss:
 		if (ISSET(flags, RT_REPORT)) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
-			rt_missmsg(msgtype, &info, 0, NULL, err, tableid);
+			rt_missmsg(msgtype, &info, 0, NULL, error, tableid);
 		}
 	}
 	splx(s);
@@ -510,7 +513,7 @@ create:
 			rt = NULL;
 			error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &rt,
 			    rdomain);
-			if (rt != NULL)
+			if (error == 0)
 				flags = rt->rt_flags;
 			stat = &rtstat.rts_dynamic;
 		} else {
@@ -1146,7 +1149,7 @@ int
 rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
-	struct rtentry		*rt = NULL;
+	struct rtentry		*rt;
 	struct sockaddr_rtlabel	 sa_rl;
 	struct rt_addrinfo	 info;
 	u_short			 rtableid = ifp->if_rdomain;
@@ -1179,7 +1182,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		prio = RTP_LOCAL;
 
 	error = rtrequest1(RTM_ADD, &info, prio, &rt, rtableid);
-	if (error == 0 && rt != NULL) {
+	if (error == 0) {
 		if (rt->rt_ifa != ifa) {
 			printf("%s: wrong ifa (%p) was (%p)\n", __func__,
 			    ifa, rt->rt_ifa);
@@ -1210,7 +1213,7 @@ int
 rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
-	struct rtentry		*rt, *nrt = NULL;
+	struct rtentry		*rt;
 	struct mbuf		*m = NULL;
 	struct sockaddr		*deldst;
 	struct rt_addrinfo	 info;
@@ -1261,11 +1264,11 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
 
-	error = rtrequest1(RTM_DELETE, &info, prio, &nrt, rtableid);
-	if (error == 0 && (rt = nrt) != NULL) {
-		rt_sendmsg(nrt, RTM_DELETE, rtableid);
+	error = rtrequest1(RTM_DELETE, &info, prio, &rt, rtableid);
+	if (error == 0) {
+		rt_sendmsg(rt, RTM_DELETE, rtableid);
 		if (flags & RTF_LOCAL)
-			rt_sendaddrmsg(nrt, RTM_DELADDR);
+			rt_sendaddrmsg(rt, RTM_DELADDR);
 		if (rt->rt_refcnt <= 0) {
 			rt->rt_refcnt++;
 			rtfree(rt);

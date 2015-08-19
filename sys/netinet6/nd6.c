@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.144 2015/08/17 09:58:10 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.145 2015/08/19 13:27:38 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -646,7 +646,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 	if (!rt) {
 		if (create && ifp) {
 			struct rt_addrinfo info;
-			int e;
+			int error;
 
 			/*
 			 * If no route is available and create is set,
@@ -671,18 +671,9 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
 			info.rti_info[RTAX_GATEWAY] =
 			    (struct sockaddr *)ifp->if_sadl;
-			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
-			    &rt, rtableid)) != 0) {
-#if 0
-				char ip[INET6_ADDRSTRLEN];
-				log(LOG_ERR, "%s: failed to add route for a "
-				    "neighbor(%s), errno=%d\n", __func__,
-				    inet_ntop(AF_INET6, addr6, ip, sizeof(ip)),
-				    e);
-#endif
-				return (NULL);
-			}
-			if (rt == NULL)
+			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, &rt,
+			    rtableid);
+			if (error)
 				return (NULL);
 			if (rt->rt_llinfo) {
 				struct llinfo_nd6 *ln =
