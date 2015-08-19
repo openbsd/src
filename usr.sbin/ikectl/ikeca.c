@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.35 2015/08/19 21:01:20 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.36 2015/08/19 21:03:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -104,7 +104,7 @@ const char *ca_env[][2] = {
 int		 ca_sign(struct ca *, char *, int);
 int		 ca_request(struct ca *, char *);
 int		 ca_newpass(char *, char *);
-char *		 ca_readpass(char *, size_t *);
+char		*ca_readpass(char *, size_t *);
 int		 fcopy(char *, char *, mode_t);
 void		 fcopy_env(const char *, const char *, mode_t);
 int		 rm_dir(char *);
