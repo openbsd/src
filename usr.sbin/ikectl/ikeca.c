@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.34 2015/08/19 13:30:54 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.35 2015/08/19 21:01:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -106,7 +106,7 @@ int		 ca_request(struct ca *, char *);
 int		 ca_newpass(char *, char *);
 char *		 ca_readpass(char *, size_t *);
 int		 fcopy(char *, char *, mode_t);
-int		 fcopy_env(const char *, const char *, mode_t);
+void		 fcopy_env(const char *, const char *, mode_t);
 int		 rm_dir(char *);
 int		 ca_hier(char *);
 void		 ca_setenv(const char *, const char *);
@@ -526,7 +526,7 @@ fcopy(char *src, char *dst, mode_t mode)
 	return (r == -1);
 }
 
-int
+void
 fcopy_env(const char *src, const char *dst, mode_t mode)
 {
 	int		 ofd = -1, i;
@@ -563,8 +563,6 @@ fcopy_env(const char *src, const char *dst, mode_t mode)
 		fclose(ifp);
 	if (r == -1)
 		errc(1, saved_errno, "open %s", dst);
-
-	return (0);
 }
 
 int
