@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.36 2015/08/19 21:03:11 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.37 2015/08/19 21:07:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -103,12 +103,12 @@ const char *ca_env[][2] = {
 
 int		 ca_sign(struct ca *, char *, int);
 int		 ca_request(struct ca *, char *);
-int		 ca_newpass(char *, char *);
+void		 ca_newpass(char *, char *);
 char		*ca_readpass(char *, size_t *);
 int		 fcopy(char *, char *, mode_t);
 void		 fcopy_env(const char *, const char *, mode_t);
 int		 rm_dir(char *);
-int		 ca_hier(char *);
+void		 ca_hier(char *);
 void		 ca_setenv(const char *, const char *);
 void		 ca_clrenv(void);
 void		 ca_setcnf(struct ca *, const char *);
@@ -346,7 +346,7 @@ ca_cert_install(struct ca *ca, char *keyname, char *dir)
 	return (0);
 }
 
-int
+void
 ca_newpass(char *passfile, char *password)
 {
 	FILE	*f;
@@ -375,8 +375,6 @@ ca_newpass(char *passfile, char *password)
 	fprintf(f, "%s\n%s\n", pass, pass);
 
 	fclose(f);
-
-	return (0);
 }
 
 int
@@ -600,8 +598,7 @@ rm_dir(char *path)
 	return (0);
 }
 
-
-int
+void
 ca_hier(char *path)
 {
 	struct stat	 st;
@@ -615,8 +612,6 @@ ca_hier(char *path)
 		    mkdir(dst, hier[i].mode) != 0)
 			err(1, "failed to create dir %s", dst);
 	}
-
-	return (0);
 }
 
 int
