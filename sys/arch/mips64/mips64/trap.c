@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.108 2015/08/03 13:32:15 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.109 2015/08/19 16:40:10 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -656,8 +656,10 @@ fault_common_no_miss:
 				 * Prevent access to the relocation page.
 				 * XXX needs to be fixed to work with rthreads
 				 */
+				KERNEL_LOCK();
 				uvm_fault_unwire(map, p->p_md.md_fppgva,
 				    p->p_md.md_fppgva + PAGE_SIZE);
+				KERNEL_UNLOCK();
 				(void)uvm_map_protect(map, p->p_md.md_fppgva,
 				    p->p_md.md_fppgva + PAGE_SIZE,
 				    PROT_NONE, FALSE);
@@ -1562,7 +1564,9 @@ fpe_branch_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
 	return 0;
 
 err:
+	KERNEL_LOCK();
 	uvm_fault_unwire(map, p->p_md.md_fppgva, p->p_md.md_fppgva + PAGE_SIZE);
+	KERNEL_UNLOCK();
 err2:
 	(void)uvm_map_protect(map, p->p_md.md_fppgva,
 	    p->p_md.md_fppgva + PAGE_SIZE, PROT_NONE, FALSE);
