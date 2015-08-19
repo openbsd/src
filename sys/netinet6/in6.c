@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.163 2015/08/18 08:48:36 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.164 2015/08/19 11:09:24 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -638,17 +638,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * must be 128.
 	 */
 	if (ifra->ifra_dstaddr.sin6_family == AF_INET6) {
-		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0) {
-			/* XXX: noisy message */
-			nd6log((LOG_INFO, "in6_update_ifa: a destination can "
-			    "be specified for a p2p or a loopback IF only\n"));
+		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0)
 			return (EINVAL);
-		}
-		if (plen != 128) {
-			nd6log((LOG_INFO, "in6_update_ifa: prefixlen should "
-			    "be 128 when dstaddr is specified\n"));
+		if (plen != 128)
 			return (EINVAL);
-		}
 	}
 	/* lifetime consistency check */
 	lt = &ifra->ifra_lifetime;
@@ -708,10 +701,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 */
 		if (ia6->ia_prefixmask.sin6_len &&
 		    in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL) != plen) {
-			nd6log((LOG_INFO, "in6_update_ifa: the prefix length of an"
-			    " existing (%s) address should not be changed\n",
-			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-				addr, sizeof(addr))));
 			error = EINVAL;
 			goto unlink;
 		}
@@ -803,14 +792,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    ifra->ifra_addr.sin6_addr.s6_addr32[3];
 		llsol.sin6_addr.s6_addr8[12] = 0xff;
 		imm = in6_joingroup(ifp, &llsol.sin6_addr, &error);
-		if (!imm) {
-			nd6log((LOG_ERR, "in6_update_ifa: "
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    inet_ntop(AF_INET6, &llsol.sin6_addr,
-				addr, sizeof(addr)),
-			    ifp->if_xname, error));
+		if (!imm)
 			goto cleanup;
-		}
 		LIST_INSERT_HEAD(&ia6->ia6_memberships, imm, i6mm_chain);
 
 		bzero(&mltmask, sizeof(mltmask));
@@ -864,15 +847,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-		if (!imm) {
-			nd6log((LOG_WARNING,
-			    "in6_update_ifa: addmulti failed for "
-			    "%s on %s (errno=%d)\n",
-			    inet_ntop(AF_INET6, &mltaddr.sin6_addr,
-				addr, sizeof(addr)),
-			    ifp->if_xname, error));
+		if (!imm)
 			goto cleanup;
-		}
 		LIST_INSERT_HEAD(&ia6->ia6_memberships, imm, i6mm_chain);
 
 		/*
@@ -881,11 +857,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) == 0) {
 			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
 			if (!imm) {
-				nd6log((LOG_WARNING, "in6_update_ifa: "
-				    "addmulti failed for %s on %s (errno=%d)\n",
-				    inet_ntop(AF_INET6, &mltaddr.sin6_addr,
-					addr, sizeof(addr)),
-				    ifp->if_xname, error));
 				/* XXX not very fatal, go on... */
 			} else {
 				LIST_INSERT_HEAD(&ia6->ia6_memberships,
@@ -932,14 +903,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-		if (!imm) {
-			nd6log((LOG_WARNING, "in6_update_ifa: "
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    inet_ntop(AF_INET6, &mltaddr.sin6_addr,
-				addr, sizeof(addr)),
-			    ifp->if_xname, error));
+		if (!imm)
 			goto cleanup;
-		}
 		LIST_INSERT_HEAD(&ia6->ia6_memberships, imm, i6mm_chain);
 	}
 
