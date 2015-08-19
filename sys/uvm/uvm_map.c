@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.192 2015/07/17 21:56:14 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.193 2015/08/19 12:23:25 visa Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2923,8 +2923,8 @@ uvm_object_printit(uobj, full, pr)
  */
 static const char page_flagbits[] =
 	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5CLEANCHK\6RELEASED\7FAKE\10RDONLY"
-	"\11ZERO\15PAGER1\20FREE\21INACTIVE\22ACTIVE\24ENCRYPT\30PMAP0"
-	"\31PMAP1\32PMAP2\33PMAP3";
+	"\11ZERO\12DEV\15PAGER1\21FREE\22INACTIVE\23ACTIVE\25ANON\26AOBJ"
+	"\27ENCRYPT\31PMAP0\32PMAP1\33PMAP2\34PMAP3\35PMAP4\36PMAP5";
 
 void
 uvm_page_printit(pg, full, pr)
