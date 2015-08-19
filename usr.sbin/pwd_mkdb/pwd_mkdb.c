@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.48 2015/04/24 21:14:48 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.49 2015/08/19 17:58:32 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -84,6 +84,8 @@ __dead void	fatalc(int, const char *, ...)
 		    __attribute__((__format__ (printf, 2, 3)));
 __dead void	fatalx(const char *, ...)
 		    __attribute__((__format__ (printf, 1, 2)));
+int		write_old_entry(FILE *, const struct passwd *);
+
 void		cp(char *, char *, mode_t);
 void		mv(char *, char *);
 int		scan(FILE *, struct passwd *, int *);
