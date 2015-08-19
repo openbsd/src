@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.46 2015/06/27 21:25:55 miod Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.47 2015/08/19 12:24:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1557,7 +1557,7 @@ uvm_pmr_isfree(struct vm_page *pg)
 	r = RB_NFIND(uvm_pmr_addr, &pmr->addr, pg);
 	if (r == NULL)
 		r = RB_MAX(uvm_pmr_addr, &pmr->addr);
-	else
+	else if (r != pg)
 		r = RB_PREV(uvm_pmr_addr, &pmr->addr, r);
 	if (r == NULL)
 		return 0; /* Empty tree. */
