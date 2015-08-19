@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.161 2015/08/19 10:50:14 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.162 2015/08/19 11:05:33 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -638,42 +638,43 @@ in_arpinput(struct mbuf *m)
 	if (rt != NULL && (sdl = SDL(rt->rt_gateway)) != NULL) {
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 		if (sdl->sdl_alen) {
-		    if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
-			if (rt->rt_flags &
-			    (RTF_PERMANENT_ARP|RTF_LOCAL)) {
-				inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
-				log(LOG_WARNING,
-				   "arp: attempt to overwrite permanent "
-				   "entry for %s by %s on %s\n", addr,
-				   ether_sprintf(ea->arp_sha),
-				   ifp->if_xname);
-				goto out;
-			} else if (rt->rt_ifp != ifp) {
-#if NCARP > 0
-				if (ifp->if_type != IFT_CARP)
-#endif
-				{
-					inet_ntop(AF_INET, &isaddr,
-					    addr, sizeof(addr));
-					log(LOG_WARNING,
-					   "arp: attempt to overwrite entry for"
-					   " %s on %s by %s on %s\n", addr,
-					   rt->rt_ifp->if_xname,
+			if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
+				if (rt->rt_flags &
+				    (RTF_PERMANENT_ARP|RTF_LOCAL)) {
+					inet_ntop(AF_INET, &isaddr, addr,
+					    sizeof(addr));
+					log(LOG_WARNING, "arp: attempt to"
+					   " overwrite permanent entry for %s"
+					   " by %s on %s\n", addr,
 					   ether_sprintf(ea->arp_sha),
 					   ifp->if_xname);
+					goto out;
+				} else if (rt->rt_ifp != ifp) {
+#if NCARP > 0
+					if (ifp->if_type != IFT_CARP)
+#endif
+					{
+						inet_ntop(AF_INET, &isaddr,
+						    addr, sizeof(addr));
+						log(LOG_WARNING, "arp: attempt"
+						   " to overwrite entry for"
+						   " %s on %s by %s on %s\n",
+						   addr, rt->rt_ifp->if_xname,
+						   ether_sprintf(ea->arp_sha),
+						   ifp->if_xname);
+					}
+					goto out;
+				} else {
+					inet_ntop(AF_INET, &isaddr, addr,
+					    sizeof(addr));
+					log(LOG_INFO, "arp info overwritten for"
+					   " %s by %s on %s\n", addr,
+					   ether_sprintf(ea->arp_sha),
+					   ifp->if_xname);
+					rt->rt_expire = 1;/* no longer static */
 				}
-				goto out;
-			} else {
-				inet_ntop(AF_INET, &isaddr, addr, sizeof(addr));
-				log(LOG_INFO,
-				   "arp info overwritten for %s by %s on %s\n",
-				   addr,
-				   ether_sprintf(ea->arp_sha),
-				   ifp->if_xname);
-				rt->rt_expire = 1; /* no longer static */
-			}
 			changed = 1;
-		    }
+			}
 		} else if (rt->rt_ifp != ifp &&
 #if NBRIDGE > 0
 		    !SAME_BRIDGE(ifp->if_bridgeport,
