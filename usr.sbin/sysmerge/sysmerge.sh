@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.198 2015/08/13 07:06:41 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.199 2015/08/19 09:28:48 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -577,8 +577,6 @@ sm_check_an_eg() {
 }
 
 sm_post() {
-	# XXX drop -f after OPENBSD_5_7
-	rm -f ${_WRKDIR}/*sum
 	cd ${_WRKDIR} && \
 		find . -type d -depth -empty -exec rmdir -p '{}' + 2>/dev/null
 	rmdir ${_WRKDIR} 2>/dev/null
