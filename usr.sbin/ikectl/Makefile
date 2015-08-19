@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.3 2014/01/18 05:54:51 martynas Exp $
+# $OpenBSD: Makefile,v 1.4 2015/08/19 12:25:59 reyk Exp $
 
 .PATH:		${.CURDIR}/../../sbin/iked
 
 PROG=		ikectl
-SRCS=		log.c ikeca.c ikectl.c parser.c
+SRCS=		log.c ikeca.c ikectl.c parser.c util.c
 
 MAN=		ikectl.8
 
