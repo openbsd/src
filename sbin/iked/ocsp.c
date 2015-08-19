@@ -1,3 +1,5 @@
+/*	$OpenBSD: ocsp.c,v 1.5 2015/08/19 19:31:59 reyk Exp $ */
+
 /*
  * Copyright (c) 2014 Markus Friedl
  * Copyright (c) 2005 Marco Pfatschbacher
