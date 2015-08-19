@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.3 2015/01/24 05:48:39 doug Exp $ */
+/* $OpenBSD: rsa.c,v 1.4 2015/08/19 18:25:31 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,7 @@
 #include <time.h>
 
 #include "apps.h"
+#include "progs.h"
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>

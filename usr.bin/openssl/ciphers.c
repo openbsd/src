@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.5 2015/07/17 16:04:09 doug Exp $ */
+/* $OpenBSD: ciphers.c,v 1.6 2015/08/19 18:25:31 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -22,6 +22,7 @@
 #include <openssl/ssl.h>
 
 #include "apps.h"
+#include "progs.h"
 
 struct {
 	int usage;
