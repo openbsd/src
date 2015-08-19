@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.363 2015/07/29 12:58:16 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.364 2015/08/19 19:05:24 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -155,8 +155,7 @@ void			sr_sensors_delete(struct sr_discipline *);
 /* metadata */
 int			sr_meta_probe(struct sr_discipline *, dev_t *, int);
 int			sr_meta_attach(struct sr_discipline *, int, int);
-int			sr_meta_rw(struct sr_discipline *, dev_t, void *,
-			    size_t, daddr_t, long);
+int			sr_meta_rw(struct sr_discipline *, dev_t, void *, long);
 int			sr_meta_clear(struct sr_discipline *);
 void			sr_meta_init(struct sr_discipline *, int, int);
 void			sr_meta_init_complete(struct sr_discipline *);
@@ -474,13 +473,12 @@ done:
 }
 
 int
-sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
-    daddr_t blkno, long flags)
+sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, long flags)
 {
 	int			rv = 1;
 
-	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, %zu, %lld 0x%lx)\n",
-	    DEVNAME(sd->sd_sc), dev, md, size, (long long)blkno, flags);
+	DNPRINTF(SR_D_META, "%s: sr_meta_rw(0x%x, %p, 0x%lx)\n",
+	    DEVNAME(sd->sd_sc), dev, md, flags);
 
 	if (md == NULL) {
 		printf("%s: sr_meta_rw: invalid metadata pointer\n",
@@ -488,7 +486,8 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
 		goto done;
 	}
 
-	rv = sr_rw(sd->sd_sc, dev, md, size, blkno, flags);
+	rv = sr_rw(sd->sd_sc, dev, md, SR_META_SIZE * DEV_BSIZE,
+	    SR_META_OFFSET, flags);
 
 done:
 	return (rv);
@@ -1707,8 +1706,7 @@ sr_meta_native_read(struct sr_discipline *sd, dev_t dev,
 	DNPRINTF(SR_D_META, "%s: sr_meta_native_read(0x%x, %p)\n",
 	    DEVNAME(sc), dev, md);
 
-	return (sr_meta_rw(sd, dev, md, SR_META_SIZE * DEV_BSIZE,
-	    SR_META_OFFSET, B_READ));
+	return (sr_meta_rw(sd, dev, md, B_READ));
 }
 
 int
@@ -1721,8 +1719,7 @@ sr_meta_native_write(struct sr_discipline *sd, dev_t dev,
 	DNPRINTF(SR_D_META, "%s: sr_meta_native_write(0x%x, %p)\n",
 	    DEVNAME(sc), dev, md);
 
-	return (sr_meta_rw(sd, dev, md, SR_META_SIZE * DEV_BSIZE,
-	    SR_META_OFFSET, B_WRITE));
+	return (sr_meta_rw(sd, dev, md, B_WRITE));
 }
 
 void
