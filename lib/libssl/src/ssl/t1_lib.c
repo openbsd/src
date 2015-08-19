@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.82 2015/07/24 07:57:48 doug Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.83 2015/08/19 23:34:34 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2087,6 +2087,8 @@ tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
 		return -1;
 
 	/* Now at start of extensions */
+	if (CBS_len(&session_id) == 0)
+		return 0;
 	if (!CBS_get_u16_length_prefixed(&session_id, &extensions))
 		return -1;
 
