@@ -43,18 +43,18 @@ ELFNAME(locate_image)(int fd, struct elfhdr *ghead,  char *file,
 	/* elfhdr may not have the full header? */
 	lseek(fd, 0, SEEK_SET);
 
-	if (read(fd, (char *)&head, sizeof(head)) != sizeof(head)) {
+	if (read(fd, &head, sizeof(head)) != sizeof(head)) {
 		fprintf(stderr, "%s: can't read phdr area\n", file);
 		exit(1);
 	}
 
 	phsize = head.e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize);
+	ph = malloc(phsize);
 
 
 	lseek(fd, head.e_phoff, SEEK_SET);
 
-	if (read(fd, (char *)ph, phsize) != phsize) {
+	if (read(fd, ph, phsize) != phsize) {
 		fprintf(stderr, "%s: can't read phdr area\n", file);
 		exit(1);
 	}
