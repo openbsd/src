@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.167 2015/08/04 21:21:38 tedu Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.168 2015/08/20 06:44:06 mlarkin Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -98,6 +98,23 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0269:
 		this->name = "Realtek ALC269";
 		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+
+		/*
+		 * Enable dock audio on Thinkpad docks
+		 * 0x17aa : 0x21f3 = Thinkpad T430
+		 * 0x17aa : 0x21f6 = Thinkpad T530
+		 * 0x17aa : 0x21fa = Thinkpad X230
+		 * 0x17aa : 0x21fb = Thinkpad T430s
+		 * 0x17aa : 0x2203 = Thinkpad X230t
+		 * 0x17aa : 0x2208 = Thinkpad T431s
+		 */
+		if (this->subid == 0x21f317aa ||
+		    this->subid == 0x21f617aa ||
+		    this->subid == 0x21fa17aa ||
+		    this->subid == 0x21fb17aa ||
+		    this->subid == 0x220317aa ||
+		    this->subid == 0x220817aa)
+			this->qrks |= AZ_QRK_WID_TPDOCK1;
 		break;
 	case 0x10ec0272:
 		this->name = "Realtek ALC272";
@@ -108,6 +125,31 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0292:
 		this->name = "Realtek ALC292";
+
+		/*
+		 * Enable dock audio on Thinkpad docks
+		 * 0x17aa : 0x220c = Thinkpad T440s
+		 * 0x17aa : 0x220e = Thinkpad T440p
+		 * 0x17aa : 0x2210 = Thinkpad T540p
+		 * 0x17aa : 0x2212 = Thinkpad T440
+		 * 0x17aa : 0x2214 = Thinkpad X240
+		 * 0x17aa : 0x2226 = Thinkpad X250
+		 * 0x17aa : 0x501e = Thinkpad L440
+		 * 0x17aa : 0x5034 = Thinkpad T450
+		 * 0x17aa : 0x5036 = Thinkpad T450s
+		 * 0x17aa : 0x503c = Thinkpad L450
+		 */
+		if (this->subid == 0x220c17aa ||
+		    this->subid == 0x220e17aa ||
+		    this->subid == 0x221017aa ||
+		    this->subid == 0x221217aa ||
+		    this->subid == 0x221417aa ||
+		    this->subid == 0x222617aa ||
+		    this->subid == 0x501e17aa ||
+		    this->subid == 0x503417aa ||
+		    this->subid == 0x503617aa ||
+		    this->subid == 0x503c17aa)
+			this->qrks |= AZ_QRK_WID_TPDOCK2;
 		break;
 	case 0x10ec0660:
 		this->name = "Realtek ALC660";
@@ -2466,6 +2508,34 @@ azalia_codec_widget_quirks(codec_t *this, nid_t nid)
 		azalia_pin_config_ov(w, CORB_CD_DEVICE_MASK, CORB_CD_BEEP);
 		azalia_pin_config_ov(w, CORB_CD_PORT_MASK, CORB_CD_FIXED);
 		w->widgetcap |= COP_AWCAP_STEREO;
+		w->enable = 1;
+	}
+
+	if (this->qrks & AZ_QRK_WID_TPDOCK1 &&
+	    nid == 0x19) {
+		/* Thinkpad x230/t430 style dock microphone */
+		w->d.pin.config = 0x23a11040;
+		w->enable = 1;
+	}
+
+	if (this->qrks & AZ_QRK_WID_TPDOCK1 &&
+	    nid == 0x1b) {
+		/* Thinkpad x230/t430 style dock headphone */
+		w->d.pin.config = 0x2121103f;
+		w->enable = 1;
+	}
+
+	if (this->qrks & AZ_QRK_WID_TPDOCK2 &&
+	    nid == 0x16) {
+		/* Thinkpad x240/t440 style dock headphone */
+		w->d.pin.config = 0x21211010;
+		w->enable = 1;
+	}
+
+	if (this->qrks & AZ_QRK_WID_TPDOCK2 &&
+	    nid == 0x19) {
+		/* Thinkpad x240/t440 style dock microphone */
+		w->d.pin.config = 0x21a11010;
 		w->enable = 1;
 	}
 
