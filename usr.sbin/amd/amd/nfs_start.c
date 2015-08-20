@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.19 2015/01/21 09:50:25 guenther Exp $
+ *	$Id: nfs_start.c,v 1.20 2015/08/20 22:46:32 deraadt Exp $
  */
 
 #include "am.h"
@@ -159,7 +159,7 @@ rpc_pending_now(void)
 	int fdsn;
 
 	fdsn = howmany(max_fds+1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+	if ((fdsp = malloc(fdsn)) == NULL)
 		return(0);
 	memset(fdsp, 0, fdsn);
 	FD_SET(fwd_sock, fdsp);

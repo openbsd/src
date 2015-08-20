@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.38 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.39 2015/08/20 22:46:32 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ getq(struct queue ***namelist)
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
 	arraysz = (stbuf.st_size / 24);
-	queue = (struct queue **)calloc(arraysz, sizeof(struct queue *));
+	queue = calloc(arraysz, sizeof(struct queue *));
 	if (queue == NULL)
 		goto errdone;
 
@@ -258,7 +258,7 @@ getq(struct queue ***namelist)
 			continue;	/* Doesn't exist */
 		}
 		PRIV_END;
-		q = (struct queue *)malloc(sizeof(struct queue));
+		q = malloc(sizeof(struct queue));
 		if (q == NULL)
 			goto errdone;
 		q->q_time = stbuf.st_mtime;

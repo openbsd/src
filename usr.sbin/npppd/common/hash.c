@@ -42,7 +42,7 @@ hash_create(cmp_func, hash_func, hsz)
 {
 	hash_table *htbl;
 
-	htbl = (hash_table *)malloc(sizeof(hash_table));
+	htbl = malloc(sizeof(hash_table));
 	if (htbl == NULL)
 		return NULL;
 
@@ -135,7 +135,7 @@ hash_insert(htbl, k, i)
 	if (htbl == NULL || k == NULL)
 		return -1;
 
-	if ((n = (hash_link *)malloc(sizeof(hash_link))) == NULL) {
+	if ((n = malloc(sizeof(hash_link))) == NULL) {
 		return -1;
 	}
 

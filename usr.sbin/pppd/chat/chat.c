@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.31 2015/02/09 23:00:14 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.32 2015/08/20 22:46:32 deraadt Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -654,7 +654,7 @@ int sending;  /* set to 1 when sending (putting) this string. */
 
     new_length += 3;	/* \r and two nuls */
 
-    ret = (char *)malloc(new_length);
+    ret = malloc(new_length);
     if (ret == NULL)
 	    fatal(2, "cannot allocate memory");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.24 2015/02/09 23:00:14 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.25 2015/08/20 22:46:32 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ dumpit(void)
 
 	hp = hashtab[0];
 	hno = 1;
-	base = (struct hent **) calloc(hcount, sizeof(hp));
+	base = calloc(hcount, sizeof(hp));
 	if (base == NULL)
 		err(1, NULL);
 	for (ap = base, c = hcount; c--; ap++) {
@@ -353,7 +353,7 @@ enter(const char *name)
 		return(hp);
 	h = hash(name);
 	hcount++;
-	hp = (struct hent *) malloc(sizeof *hp);
+	hp = malloc(sizeof *hp);
 	if (hp == NULL)
 		err(1, NULL);
 	hp->h_name = strdup(name);
@@ -444,7 +444,7 @@ chkprinter(const char *s)
 	if (!pflag && (cgetnum(bp, "pc", &price100) == 0))
 		price = price100/10000.0;
 	len = strlen(acctfile) + 5;
-	sumfile = (char *) malloc(len);
+	sumfile = malloc(len);
 	if (sumfile == NULL)
 		err(1, "pac");
 	strlcpy(sumfile, acctfile, len);

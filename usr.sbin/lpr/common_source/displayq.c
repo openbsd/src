@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.36 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.37 2015/08/20 22:46:32 deraadt Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ displayq(int format)
 		nsa.sa_flags = 0;
 		(void)sigaction(SIGALRM, &nsa, &osa);
 		alarm(wait_time);
-		if ((visline = (char *)malloc(4 * sizeof(line) + 1)) == NULL)
+		if ((visline = malloc(4 * sizeof(line) + 1)) == NULL)
 			fatal("Out of memory");
 		while ((i = read(fd, line, sizeof(line))) > 0) {
 			n = strvisx(visline, line, i, VIS_SAFE|VIS_NOSLASH);

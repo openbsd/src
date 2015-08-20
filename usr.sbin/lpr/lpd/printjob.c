@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.54 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.55 2015/08/20 22:46:32 deraadt Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -1572,7 +1572,7 @@ setty(void)
 			syslog(LOG_INFO, "%s: ioctl(TIOCGWINSZ): %m",
 			       printer);
 
-		argv = (char **)calloc(256, sizeof(char *));
+		argv = calloc(256, sizeof(char *));
 		if (argv == NULL) {
 			syslog(LOG_ERR, "%s: malloc: %m", printer);
 			exit(1);
