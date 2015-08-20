@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.14 2007/09/09 05:46:17 deraadt Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.15 2015/08/20 21:34:04 deraadt Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -96,7 +96,7 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 		else {
-			if ((tbuf = (char *)malloc(len + 1)) == NULL)
+			if ((tbuf = malloc(len + 1)) == NULL)
 				break;
 			memcpy(tbuf, buf, len);
 			tbuf[len] = '\0';
