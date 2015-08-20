@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.2 2015/07/27 03:01:22 yasuoka Exp $ */
+/*	$OpenBSD: radius.c,v 1.3 2015/08/20 21:51:42 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -108,11 +108,10 @@ radius_new_request_packet(uint8_t code)
 {
 	RADIUS_PACKET	*packet;
 
-	packet = (RADIUS_PACKET *)malloc(sizeof(RADIUS_PACKET));
+	packet = malloc(sizeof(RADIUS_PACKET));
 	if (packet == NULL)
 		return (NULL);
-	packet->pdata =
-	    (RADIUS_PACKET_DATA *)malloc(RADIUS_PACKET_CAPACITY_INITIAL);
+	packet->pdata = malloc(RADIUS_PACKET_CAPACITY_INITIAL);
 	if (packet->pdata == NULL) {
 		free(packet);
 		return (NULL);
@@ -150,10 +149,10 @@ radius_convert_packet(const void *pdata, size_t length)
 	if (radius_check_packet_data((const RADIUS_PACKET_DATA *)pdata,
 	    length) != 0)
 		return (NULL);
-	packet = (RADIUS_PACKET *)malloc(sizeof(RADIUS_PACKET));
+	packet = malloc(sizeof(RADIUS_PACKET));
 	if (packet == NULL)
 		return (NULL);
-	packet->pdata = (RADIUS_PACKET_DATA *)malloc(length);
+	packet->pdata = malloc(length);
 	packet->capacity = length;
 	packet->request = NULL;
 	if (packet->pdata == NULL) {
