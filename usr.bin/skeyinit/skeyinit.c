@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.57 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.58 2015/08/20 22:32:42 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -305,7 +305,7 @@ main(int argc, char **argv)
 	alarm(0);
 
 	/* XXX - why use malloc here? */
-	if ((skey.val = (char *)malloc(16 + 1)) == NULL)
+	if ((skey.val = malloc(16 + 1)) == NULL)
 		err(1, "Can't allocate memory");
 	btoa8(skey.val, key);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nullopen.c,v 1.4 2011/09/22 10:41:04 deraadt Exp $	*/
+/*	$OpenBSD: nullopen.c,v 1.5 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -60,7 +60,7 @@ null_open(int fd, const char *mode, char *name, int bits,
 		return NULL;
 	}
 
-	if ((s = (null_stream *) calloc(1, sizeof(null_stream))) == NULL)
+	if ((s = calloc(1, sizeof(null_stream))) == NULL)
 		return NULL;
 
 	s->fd = fd;

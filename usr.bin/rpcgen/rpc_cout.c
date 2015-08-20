@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.24 2013/11/28 18:24:54 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.25 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ emit_union(def)
 			int len = strlen(def->def_name) + strlen(format) +
 			    strlen(cs->name) + 1;
 
-			object = alloc(len);
+			object = malloc(len);
 			if (object == NULL) {
 				fprintf(stderr, "Fatal error: no memory\n");
 				crash();
@@ -380,7 +380,7 @@ emit_union(def)
 			    strlen(dflt->name) + 1;
 
 			fprintf(fout, "\tdefault:\n");
-			object = alloc(len);
+			object = malloc(len);
 			if (object == NULL) {
 				fprintf(stderr, "Fatal error: no memory\n");
 				crash();
@@ -515,7 +515,7 @@ emit_struct(def)
 
 						len = strlen(sizestr) +
 						    strlen(ptemp) + 1;
-						sizestr = (char *)realloc(sizestr, len);
+						sizestr = realloc(sizestr, len);
 						if (sizestr == NULL) {
 							fprintf(stderr,
 							    "Fatal error: no memory\n");
@@ -731,7 +731,7 @@ upcase(str)
 {
 	char   *ptr, *hptr;
 
-	ptr = (char *) malloc(strlen(str)+1);
+	ptr = malloc(strlen(str)+1);
 	if (ptr == (char *) NULL) {
 		fprintf(stderr, "malloc failed\n");
 		exit(1);

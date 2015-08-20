@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.29 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.30 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -76,7 +76,7 @@ remember_host(struct in_addr addr)
 {
 	struct host_list *hp;
 
-	if (!(hp = (struct host_list *)malloc(sizeof(struct host_list)))) {
+	if (!(hp = malloc(sizeof(struct host_list)))) {
 		err(1, NULL);
 		/* NOTREACHED */
 	}

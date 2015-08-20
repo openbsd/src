@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.94 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.95 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 		p = x;
 	}
 
-	pidlist = (struct pidinfo *)calloc(listlen + 1, sizeof(struct pidinfo));
+	pidlist = calloc(listlen + 1, sizeof(struct pidinfo));
 	if (pidlist == NULL)
 		err(1, "calloc");
 
@@ -1019,7 +1019,7 @@ domonitor(struct conf_entry *ent)
 
 	/* Now see if current size is larger. */
 	if (sb.st_size > osize) {
-		rb = (char *) malloc(sb.st_size - osize);
+		rb = malloc(sb.st_size - osize);
 		if (rb == NULL)
 			err(1, "malloc");
 

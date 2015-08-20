@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.13 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ addarc(nltype *parentp, nltype *childp, long count)
 	arcp -> arc_count += count;
 	return;
     }
-    arcp = (arctype *)calloc( 1 , sizeof *arcp );
+    arcp = calloc( 1 , sizeof *arcp );
     arcp -> arc_parentp = parentp;
     arcp -> arc_childp = childp;
     arcp -> arc_count = count;
@@ -189,7 +189,7 @@ doarcs()
 	/*
 	 *	Sort the symbol table in reverse topological order
 	 */
-    topsortnlp = (nltype **) calloc( nname , sizeof(nltype *) );
+    topsortnlp = calloc( nname , sizeof(nltype *) );
     if ( topsortnlp == (nltype **) 0 )
 	warnx("[doarcs] ran out of memory for topo sorting");
     for ( index = 0 ; index < nname ; index += 1 ) {
@@ -225,7 +225,7 @@ doarcs()
 	 *	sorting both the regular function names
 	 *	and cycle headers.
 	 */
-    timesortnlp = (nltype **) calloc( nname + ncycle , sizeof(nltype *) );
+    timesortnlp = calloc( nname + ncycle , sizeof(nltype *) );
     if ( timesortnlp == (nltype **) 0 )
 	warnx("ran out of memory for sorting");
     for ( index = 0 ; index < nname ; index++ ) {
@@ -364,7 +364,7 @@ cyclelink()
 	 *	cyclenl is indexed by cycle number:
 	 *	i.e. it is origin 1, not origin 0.
 	 */
-    cyclenl = (nltype *) calloc( ncycle + 1 , sizeof( nltype ) );
+    cyclenl = calloc( ncycle + 1 , sizeof( nltype ) );
     if ( cyclenl == 0 )
 	errx(0, "No room for %ld bytes of cycle headers",
 	    (ncycle + 1) * sizeof(nltype));
@@ -467,7 +467,7 @@ cycleanalyze()
 	if ( size <= cyclethreshold )
 	    continue;
 	done = FALSE;
-        cyclestack = (arctype **) calloc( size + 1 , sizeof( arctype *) );
+        cyclestack = calloc( size + 1 , sizeof( arctype *) );
 	if ( cyclestack == 0 ) {
 	    warnx("No room for %ld bytes of cycle stack" ,
 		(size + 1) * sizeof(arctype *));
@@ -581,8 +581,7 @@ addcycle(arctype **stkstart, arctype **stkend)
 	    return( TRUE );
 	}
     }
-    clp = (cltype *)
-	calloc( 1 , sizeof ( cltype ) + ( size - 1 ) * sizeof( arctype * ) );
+    clp = calloc( 1 , sizeof ( cltype ) + ( size - 1 ) * sizeof( arctype * ) );
     if ( clp == 0 ) {
 	warnx("No room for %ld bytes of subcycle storage" ,
 	    sizeof(cltype) + (size - 1) * sizeof(arctype *));

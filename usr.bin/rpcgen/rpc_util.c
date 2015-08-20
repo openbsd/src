@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.16 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.17 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ storeval(lstp, val)
 
 	for (l = lstp; *l != NULL; l = (list **) & (*l)->next)
 		;
-	lst = ALLOC(list);
+	lst = malloc(sizeof(list));
 	if (lst == NULL) {
 		fprintf(stderr, "failed in alloc\n");
 		exit(1);
@@ -444,7 +444,7 @@ make_argname(pname, vname)
 	char *name;
 	int len = strlen(pname) + strlen(vname) + strlen(ARGEXT) + 3;
 
-	name = (char *)malloc(len);
+	name = malloc(len);
 	if (!name) {
 		fprintf(stderr, "failed in malloc\n");
 		exit(1);
@@ -463,7 +463,7 @@ add_type(len, type)
 {
 	bas_type *ptr;
 
-	if ((ptr = (bas_type *)malloc(sizeof(bas_type))) == (bas_type *)NULL) {
+	if ((ptr = malloc(sizeof(bas_type))) == (bas_type *)NULL) {
 		fprintf(stderr, "failed in malloc\n");
 		exit(1);
 	}

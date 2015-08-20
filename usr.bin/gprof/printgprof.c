@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.13 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ printprof()
 	/*
 	 *	Sort the symbol table in by time
 	 */
-    sortednlp = (nltype **) calloc( nname , sizeof(nltype *) );
+    sortednlp = calloc( nname , sizeof(nltype *) );
     if ( sortednlp == (nltype **) 0 )
 	warnx("[printprof] ran out of memory for time sorting");
     for ( index = 0 ; index < nname ; index += 1 ) {
@@ -659,7 +659,7 @@ printindex()
 	 *	Now, sort regular function name alphbetically
 	 *	to create an index.
 	 */
-    namesortnlp = (nltype **) calloc( nname + ncycle , sizeof(nltype *) );
+    namesortnlp = calloc( nname + ncycle , sizeof(nltype *) );
     if ( namesortnlp == (nltype **) 0 )
 	warnx("ran out of memory for sorting");
     for ( index = 0 , nnames = 0 ; index < nname ; index++ ) {

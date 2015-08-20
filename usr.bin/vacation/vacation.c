@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.36 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.37 2015/08/20 22:32:42 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
 		switch ((char)ch) {
 		case 'a':			/* alias */
-			if (!(cur = (ALIAS *)malloc((u_int)sizeof(ALIAS))))
+			if (!(cur = malloc(sizeof(ALIAS))))
 				break;
 			cur->name = optarg;
 			cur->next = names;
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (!(cur = malloc((u_int)sizeof(ALIAS))))
+	if (!(cur = malloc(sizeof(ALIAS))))
 		exit(1);
 	cur->name = pw->pw_name;
 	cur->next = names;

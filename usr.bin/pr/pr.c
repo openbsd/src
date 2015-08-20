@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.35 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.36 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -391,21 +391,21 @@ vertcol(int argc, char *argv[])
      * col pointers when no headers
      */
     mvc = lines * clcnt;
-    if ((vc=(struct vcol *)calloc((unsigned)mvc, sizeof(struct vcol))) == NULL)
+    if ((vc = calloc((unsigned)mvc, sizeof(struct vcol))) == NULL)
 	goto oomem;
 
     /*
      * pointer into page where last data per line is located
      */
-    if ((lstdat = (char **)calloc((unsigned)lines, sizeof(char *))) == NULL)
+    if ((lstdat = calloc((unsigned)lines, sizeof(char *))) == NULL)
 	goto oomem;
 
     /*
      * fast index lookups to locate start of lines
      */
-    if ((indy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL)
+    if ((indy = calloc((unsigned)lines, sizeof(int))) == NULL)
 	goto oomem;
-    if ((lindy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL)
+    if ((lindy = calloc((unsigned)lines, sizeof(int))) == NULL)
 	goto oomem;
 
     if (nmwd)
@@ -915,13 +915,13 @@ mulfile(int argc, char *argv[])
     /*
      * array of FILE *, one for each operand
      */
-    if ((fbuf = (FILE **)calloc((unsigned)clcnt, sizeof(FILE *))) == NULL)
+    if ((fbuf = calloc((unsigned)clcnt, sizeof(FILE *))) == NULL)
 	goto oomem;
 
     /*
      * array of int *, one for each operand
      */
-    if ((rc = (int *)calloc((unsigned)clcnt, sizeof(int))) == NULL)
+    if ((rc = calloc((unsigned)clcnt, sizeof(int))) == NULL)
 	goto oomem;
 
     /*

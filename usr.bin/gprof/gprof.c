@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.21 2014/12/22 18:21:10 tedu Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.22 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -369,7 +369,7 @@ readsamples(FILE *pfile)
     int i;
     
     if (samples == 0) {
-	samples = (UNIT *) calloc(sampbytes, sizeof (UNIT));
+	samples = calloc(sampbytes, sizeof (UNIT));
 	if (samples == 0)
 	    errx(1, "No room for %ld sample pc's", sampbytes / sizeof (UNIT));
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.104 2015/04/04 14:19:10 stsp Exp $	*/
+/*	$OpenBSD: entries.c,v 1.105 2015/08/20 22:32:41 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -51,7 +51,7 @@ cvs_ent_open(const char *dir)
 		current_list = NULL;
 	}
 
-	ep = (CVSENTRIES *)xcalloc(1, sizeof(*ep));
+	ep = xcalloc(1, sizeof(*ep));
 	ep->cef_path = xstrdup(buf);
 
 	(void)xsnprintf(buf, sizeof(buf), "%s/%s",
@@ -72,7 +72,7 @@ cvs_ent_open(const char *dir)
 			if (buf[0] == 'D' && buf[1] == '\0')
 				break;
 
-			line = (struct cvs_ent_line *)xmalloc(sizeof(*line));
+			line = xmalloc(sizeof(*line));
 			line->buf = xstrdup(buf);
 			TAILQ_INSERT_TAIL(&(ep->cef_ent), line, entries_list);
 		}
@@ -329,7 +329,7 @@ cvs_ent_add(CVSENTRIES *ep, const char *line)
 
 	(void)fclose(fp);
 
-	l = (struct cvs_ent_line *)xmalloc(sizeof(*l));
+	l = xmalloc(sizeof(*l));
 	l->buf = xstrdup(line);
 	TAILQ_INSERT_TAIL(&(ep->cef_ent), l, entries_list);
 }

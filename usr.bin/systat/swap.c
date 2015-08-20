@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.26 2015/01/16 00:03:38 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.27 2015/08/20 22:32:42 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ read_sw(void)
 	if (swap_devices)
 		(void)free(swap_devices);
 
-	swap_devices = (struct swapent *)calloc(nswap, sizeof(*swap_devices));
+	swap_devices = calloc(nswap, sizeof(*swap_devices));
 	if (swap_devices == NULL)
 		return 0;
 

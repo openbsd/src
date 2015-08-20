@@ -103,7 +103,7 @@ getnfile(const char *filename, char ***defaultEs)
 #endif
 
     /* Allocate memory for them, plus a terminating entry. */
-    if ((nl = (nltype *)calloc(nname + 1, sizeof(nltype))) == NULL)
+    if ((nl = calloc(nname + 1, sizeof(nltype))) == NULL)
 	errx(1, "Insufficient memory for symbol table");
 
     /* Read them in. */

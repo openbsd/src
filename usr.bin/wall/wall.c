@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.26 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.27 2015/08/20 22:32:42 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -235,12 +235,12 @@ addgroup(struct group *grp, char *name)
 	for (i = 0; grp->gr_mem[i]; i++)
 		;
 
-	g = (struct wallgroup *)malloc(sizeof *g);
+	g = malloc(sizeof *g);
 	if (g == NULL)
 		err(1, NULL);
 	g->gid = grp->gr_gid;
 	g->name = name;
-	g->mem = (char **)calloc(i + 1, sizeof(char *));
+	g->mem = calloc(i + 1, sizeof(char *));
 	if (g->mem == NULL)
 		err(1, NULL);
 	for (i = 0; grp->gr_mem[i] != NULL; i++) {

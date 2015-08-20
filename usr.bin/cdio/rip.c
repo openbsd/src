@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.15 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: rip.c,v 1.16 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -220,7 +220,7 @@ _add_pair(struct track_pair_head *head, int val1, int val2, int issorted)
 		}
 	}
 
-	tp = (struct track_pair *)malloc(sizeof(*tp));
+	tp = malloc(sizeof(*tp));
 	if (tp == NULL)
 		return (-1);
 
@@ -369,7 +369,7 @@ read_track(struct track *ti)
 
 	n_sec = ti->end_lba - ti->start_lba;
 	blksize = (ti->isaudio) ? 2352 : 2048;
-	sec = (u_char *)malloc(blksize);
+	sec = malloc(blksize);
 	if (sec == NULL)
 		return (-1);
 

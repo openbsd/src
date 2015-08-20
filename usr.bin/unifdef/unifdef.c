@@ -1518,7 +1518,7 @@ astrcat(const char *s1, const char *s2)
 	if (len < 0)
 		err(2, "snprintf");
 	size = (size_t)len + 1;
-	s = (char *)malloc(size);
+	s = malloc(size);
 	if (s == NULL)
 		err(2, "malloc");
 	snprintf(s, size, "%s%s", s1, s2);

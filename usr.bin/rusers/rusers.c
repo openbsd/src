@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.34 2015/01/16 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.35 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -540,7 +540,7 @@ allhosts(void)
 	xdr_destroy(&xdr);
 
 	maxfd = MAXIMUM(sock[0], sock[1]) + 1;
-	fds = (fd_set *)calloc(howmany(maxfd, NFDBITS), sizeof(fd_mask));
+	fds = calloc(howmany(maxfd, NFDBITS), sizeof(fd_mask));
 	if (fds == NULL)
 		err(1, NULL);
 
@@ -690,7 +690,7 @@ expandhosts(void)
 	for (i = 0, count = 0; i < nentries; i++)
 		count += hostinfo[i].count;
 
-	new_hostinfo = (struct host_info *)calloc(sizeof(*entry), count);
+	new_hostinfo = calloc(sizeof(*entry), count);
 	if (new_hostinfo == NULL)
 		err(1, NULL);
 	for (i = 0, entry = new_hostinfo; i < nentries; i++) {

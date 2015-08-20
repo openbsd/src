@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.24 2014/10/08 04:07:24 doug Exp $	*/
+/*	$OpenBSD: rs.c,v 1.25 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -268,7 +268,7 @@ prepfile(void)
 			*ep = *(ep - nelem);
 		nelem = lp - elem;
 	}
-	if (!(colwidths = (short *) calloc(ocols, sizeof(short))))
+	if (!(colwidths = calloc(ocols, sizeof(short))))
 		errx(1, "malloc:  No gutter space");
 	if (flags & SQUEEZE) {
 		if (flags & TRANSPOSE)
@@ -321,7 +321,7 @@ get_line(void)	/* get line; maintain curline, curlen; manage storage */
 			printf(" %d line %d\n", curlen, irows);
 	}
 	if (!putlength && endblock - curline < BUFSIZ) {   /* need storage */
-		if (!(curline = (char *) malloc(BSIZE)))
+		if (!(curline = malloc(BSIZE)))
 			errx(1, "File too large");
 		endblock = curline + BSIZE;
 	}

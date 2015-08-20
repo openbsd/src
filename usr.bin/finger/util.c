@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -302,7 +302,7 @@ palloc(void)
 {
 	PERSON *p;
 
-	if ((p = (PERSON *)malloc((u_int) sizeof(PERSON))) == NULL)
+	if ((p = malloc((u_int) sizeof(PERSON))) == NULL)
 		err(1, "malloc");
 	return (p);
 }
@@ -312,7 +312,7 @@ walloc(PERSON *pn)
 {
 	WHERE *w;
 
-	if ((w = (WHERE *)malloc((u_int) sizeof(WHERE))) == NULL)
+	if ((w = malloc((u_int) sizeof(WHERE))) == NULL)
 		err(1, "malloc");
 	if (pn->whead == NULL)
 		pn->whead = pn->wtail = w;

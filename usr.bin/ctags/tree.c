@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.10 2009/10/27 23:59:37 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.11 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $	*/
 
 /*
@@ -54,12 +54,12 @@ pfnote(char *name, int ln)
 	char	nbuf[1+MAXNAMLEN+1];
 
 	/*NOSTRICT*/
-	if (!(np = (NODE *)malloc(sizeof(NODE)))) {
+	if (!(np = malloc(sizeof(NODE)))) {
 		warnx("too many entries to sort");
 		put_entries(head);
 		free_tree(head);
 		/*NOSTRICT*/
-		if (!(head = np = (NODE *)malloc(sizeof(NODE))))
+		if (!(head = np = malloc(sizeof(NODE))))
 			err(1, NULL);
 	}
 	if (!xflag && !strcmp(name, "main")) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.31 2015/02/09 02:00:38 jsg Exp $	 */
+/* $OpenBSD: pftop.c,v 1.32 2015/08/20 22:32:42 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1014,7 +1014,7 @@ alloc_anchor_name(const char *path)
 
 	a = anchor_free;
 	if (a == NULL) {
-		a = (struct anchor_name *)malloc(sizeof(struct anchor_name));
+		a = malloc(sizeof(struct anchor_name));
 		if (a == NULL)
 			return (NULL);
 	} else

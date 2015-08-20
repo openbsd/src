@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.35 2015/01/16 06:40:10 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.36 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -330,7 +330,7 @@ ypgetpwnam(char *nam, int secure)
 	val[vallen] = '\0';
 	if (__yplin)
 		free(__yplin);
-	__yplin = (char *)malloc(vallen + 1);
+	__yplin = malloc(vallen + 1);
 	if (__yplin == NULL)
 		pw_error(NULL, 1, 1);
 	strlcpy(__yplin, val, vallen + 1);

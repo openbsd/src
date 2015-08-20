@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.48 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: last.c,v 1.49 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -463,7 +463,7 @@ addarg(int type, char *arg)
 {
 	struct arg *cur;
 
-	if (!(cur = (struct arg *)malloc((u_int)sizeof(struct arg))))
+	if (!(cur = malloc((u_int)sizeof(struct arg))))
 		err(1, "malloc failure");
 	cur->next = arglist;
 	cur->type = type;
@@ -479,7 +479,7 @@ addtty(char *ttyname)
 {
 	struct ttytab *cur;
 
-	if (!(cur = (struct ttytab *)malloc((u_int)sizeof(struct ttytab))))
+	if (!(cur = malloc((u_int)sizeof(struct ttytab))))
 		err(1, "malloc failure");
 	cur->next = ttylist;
 	cur->logout = currentout;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.18 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.19 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ get_definition(void)
 	definition *defp;
 	token tok;
 
-	defp = ALLOC(definition);
+	defp = malloc(sizeof(definition));
 	get_token(&tok);
 	switch (tok.kind) {
 	case TOK_STRUCT:
@@ -122,7 +122,7 @@ def_struct(defp)
 	tailp = &defp->def.st.decls;
 	do {
 		get_declaration(&dec, DEF_STRUCT);
-		decls = ALLOC(decl_list);
+		decls = malloc(sizeof(decl_list));
 		decls->decl = dec;
 		*tailp = decls;
 		tailp = &decls->next;
@@ -156,13 +156,13 @@ def_program(defp)
 	scan(TOK_VERSION, &tok);
 	do {
 		scan(TOK_IDENT, &tok);
-		vlist = ALLOC(version_list);
+		vlist = malloc(sizeof(version_list));
 		vlist->vers_name = tok.str;
 		scan(TOK_LBRACE, &tok);
 		ptailp = &vlist->procs;
 		do {
 			/* get result type */
-			plist = ALLOC(proc_list);
+			plist = malloc(sizeof(proc_list));
 			get_type(&plist->res_prefix, &plist->res_type,
 			    DEF_PROGRAM);
 			if (streq(plist->res_type, "opaque")) {
@@ -181,7 +181,7 @@ def_program(defp)
 			get_prog_declaration(&dec, DEF_PROGRAM, num_args);
 			if (streq(dec.type, "void"))
 				isvoid = TRUE;
-			decls = ALLOC(decl_list);
+			decls = malloc(sizeof(decl_list));
 			plist->args.decls = decls;
 			decls->decl = dec;
 			tailp = &decls->next;
@@ -190,7 +190,7 @@ def_program(defp)
 				num_args++;
 				get_prog_declaration(&dec, DEF_STRUCT,
 				    num_args);
-				decls = ALLOC(decl_list);
+				decls = malloc(sizeof(decl_list));
 				decls->decl = dec;
 				*tailp = decls;
 				if (streq(dec.type, "void"))
@@ -254,7 +254,7 @@ def_enum(defp)
 	tailp = &defp->def.en.vals;
 	do {
 		scan(TOK_IDENT, &tok);
-		elist = ALLOC(enumval_list);
+		elist = malloc(sizeof(enumval_list));
 		elist->name = tok.str;
 		elist->assignment = NULL;
 		scan3(TOK_COMMA, TOK_RBRACE, TOK_EQUAL, &tok);
@@ -306,7 +306,7 @@ def_union(defp)
 	scan(TOK_CASE, &tok);
 	while (tok.kind == TOK_CASE) {
 		scan2(TOK_IDENT, TOK_CHARCONST, &tok);
-		cases = ALLOC(case_list);
+		cases = malloc(sizeof(case_list));
 		cases->case_name = tok.str;
 		scan(TOK_COLON, &tok);
 		/* now peek at next token */
@@ -317,14 +317,14 @@ def_union(defp)
 				cases->contflag=1;	/* continued case statement */
 				*tailp = cases;
 				tailp = &cases->next;
-				cases = ALLOC(case_list);
+				cases = malloc(sizeof(case_list));
 				cases->case_name = tok.str;
 				scan(TOK_COLON, &tok);
 			} while (peekscan(TOK_CASE,&tok));
 		} else if (flag) {
 			*tailp = cases;
 			tailp = &cases->next;
-			cases = ALLOC(case_list);
+			cases = malloc(sizeof(case_list));
 		}
 		get_declaration(&dec, DEF_UNION);
 		cases->case_decl = dec;
@@ -340,7 +340,7 @@ def_union(defp)
 	if (tok.kind == TOK_DEFAULT) {
 		scan(TOK_COLON, &tok);
 		get_declaration(&dec, DEF_UNION);
-		defp->def.un.default_decl = ALLOC(declaration);
+		defp->def.un.default_decl = malloc(sizeof(declaration));
 		*defp->def.un.default_decl = dec;
 		scan(TOK_SEMICOLON, &tok);
 		scan(TOK_RBRACE, &tok);

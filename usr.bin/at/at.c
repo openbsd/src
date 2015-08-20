@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.64 2014/10/08 03:56:52 doug Exp $	*/
+/*	$OpenBSD: at.c,v 1.65 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -514,7 +514,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	 */
 	numjobs = 0;
 	maxjobs = stbuf.st_nlink + 4;
-	atjobs = (struct atjob **)calloc(maxjobs, sizeof(struct atjob *));
+	atjobs = calloc(maxjobs, sizeof(struct atjob *));
 	if (atjobs == NULL)
 		panic("Insufficient virtual memory");
 
@@ -561,7 +561,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 			continue;
 		}
 
-		job = (struct atjob *)malloc(sizeof(struct atjob));
+		job = malloc(sizeof(struct atjob));
 		if (job == NULL)
 			panic("Insufficient virtual memory");
 		job->runtimer = runtimer;

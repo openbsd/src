@@ -1,4 +1,4 @@
-/*	$OpenBSD: printlist.c,v 1.7 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: printlist.c,v 1.8 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: printlist.c,v 1.5 1995/04/19 07:16:23 cgd Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ addlist(struct stringlist *listp, char *funcname)
 {
     struct stringlist	*slp;
 
-    slp = (struct stringlist *) malloc( sizeof(struct stringlist));
+    slp = malloc(sizeof(struct stringlist));
     if (slp == (struct stringlist *) 0)
 	errx(0, "ran out room for printlist");
     slp -> next = listp -> next;

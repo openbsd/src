@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.84 2015/05/06 07:53:29 mpi Exp $	 */
+/* $OpenBSD: machine.c,v 1.85 2015/08/20 22:32:42 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -378,8 +378,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 		quit(23);
 	}
 	if (nproc > onproc)
-		pref = (struct kinfo_proc **)realloc(pref,
-		    sizeof(struct kinfo_proc *) * (onproc = nproc));
+		pref = reallocarray(pref, (onproc = nproc),
+		    sizeof(struct kinfo_proc *));
 	if (pref == NULL) {
 		warnx("Out of memory.");
 		quit(23);

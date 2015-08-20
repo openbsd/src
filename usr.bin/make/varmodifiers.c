@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.41 2015/01/23 22:35:58 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.42 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -658,7 +658,7 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 		Buf_AddChar(&buf, *cp2);
 	}
 
-	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	pattern = emalloc(sizeof(VarPattern));
 	pattern->lbuffer = pattern->lhs = Str_dupi(*p, cp);
 	pattern->leftLen = cp - *p;
 	pattern->rhs = Buf_Retrieve(&buf);
@@ -1280,7 +1280,7 @@ common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc,
 	char delim;
 	const char *s;
 
-	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	pattern = emalloc(sizeof(VarPattern));
 	pattern->flags = 0;
 	s = *p;
 
@@ -1354,7 +1354,7 @@ get_value(const char **p, SymTable *ctxt, bool err, int endc)
 	VarPattern *pattern;
 	const char *s;
 
-	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	pattern = emalloc(sizeof(VarPattern));
 	s = *p + 1;
 	pattern->rhs = NULL;
 	pattern->lbuffer = VarGetPattern(ctxt, err, &s, ':', endc,
@@ -1373,7 +1373,7 @@ get_cmd(const char **p, SymTable *ctxt, bool err, int endc UNUSED)
 	VarPattern *pattern;
 	const char *s;
 
-	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	pattern = emalloc(sizeof(VarPattern));
 	s = *p + 1;
 	pattern->rhs = NULL;
 	pattern->lbuffer = VarGetPattern(ctxt, err, &s, '!', '!',

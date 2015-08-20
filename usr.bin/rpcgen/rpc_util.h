@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.15 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.16 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 
 /*
@@ -37,9 +37,6 @@
 /*
  * rpc_util.h, Useful definitions for the RPC protocol compiler 
  */
-
-#define alloc(size)		(void *)malloc((unsigned)(size))
-#define ALLOC(object)   (object *) malloc(sizeof(object))
 
 struct list {
 	definition *val;

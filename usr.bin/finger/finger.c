@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.19 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.20 2015/08/20 22:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -194,7 +194,7 @@ userlist(int argc, char **argv)
 	struct passwd *pw;
 	int dolocal, *used;
 
-	if (!(used = (int *)calloc((u_int)argc, (u_int)sizeof(int))))
+	if (!(used = calloc((u_int)argc, (u_int)sizeof(int))))
 		err(2, "malloc");
 
 	/* pull out all network requests */

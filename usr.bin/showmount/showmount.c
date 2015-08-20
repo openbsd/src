@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.17 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.18 2015/08/20 22:32:42 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 	if (!xdr_bool(xdrsp, &bool))
 		return (0);
 	while (bool) {
-		mp = (struct mountlist *)malloc(sizeof(struct mountlist));
+		mp = malloc(sizeof(struct mountlist));
 		if (mp == NULL)
 			return (0);
 		mp->ml_left = mp->ml_right = (struct mountlist *)0;
@@ -313,7 +313,7 @@ xdr_exports(XDR *xdrsp, struct exportslist **exp)
 	if (!xdr_bool(xdrsp, &bool))
 		return (0);
 	while (bool) {
-		ep = (struct exportslist *)malloc(sizeof(struct exportslist));
+		ep = malloc(sizeof(struct exportslist));
 		if (ep == NULL)
 			return (0);
 		ep->ex_groups = (struct grouplist *)0;
@@ -323,8 +323,7 @@ xdr_exports(XDR *xdrsp, struct exportslist **exp)
 		if (!xdr_bool(xdrsp, &grpbool))
 			return (0);
 		while (grpbool) {
-			gp = (struct grouplist *)malloc(
-			    sizeof(struct grouplist));
+			gp = malloc(sizeof(struct grouplist));
 			if (gp == NULL)
 				return (0);
 			strp = gp->gr_name;

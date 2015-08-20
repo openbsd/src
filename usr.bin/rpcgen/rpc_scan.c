@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.17 2013/11/28 18:24:54 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.18 2015/08/20 22:32:41 deraadt Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ findstrconst(str, val)
 	}
 	p++;
 	size = p - *str;
-	*val = alloc(size + 1);
+	*val = malloc(size + 1);
 	if (val == NULL)
 		error("alloc failed");
 	(void) strncpy(*val, *str, size);
@@ -354,7 +354,7 @@ findchrconst(str, val)
 	if (size != 3) {
 		error("empty char string");
 	}
-	*val = alloc(size + 1);
+	*val = malloc(size + 1);
 	if (val == NULL)
 		error("alloc failed");
 	(void) strncpy(*val, *str, size);
@@ -382,7 +382,7 @@ findconst(str, val)
 		} while (isdigit((unsigned char)*p));
 	}
 	size = p - *str;
-	*val = alloc(size + 1);
+	*val = malloc(size + 1);
 	if (val == NULL)
 		error("alloc failed");
 	(void) strncpy(*val, *str, size);
@@ -441,7 +441,7 @@ findkind(mark, tokp)
 	for (len = 0; isalnum((unsigned char)str[len]) || str[len] == '_';
 	    len++)
 		;
-	tokp->str = alloc(len + 1);
+	tokp->str = malloc(len + 1);
 	if (tokp->str == NULL)
 		error("alloc failed");
 	(void) strncpy(tokp->str, str, len);
@@ -495,7 +495,7 @@ docppline(line, lineno, fname)
 		error("preprocessor error");
 	}
 	line++;
-	p = file = alloc(strlen(line) + 1);
+	p = file = malloc(strlen(line) + 1);
 	if (p == NULL)
 		error("alloc failed");
 	while (*line && *line != '"') {
