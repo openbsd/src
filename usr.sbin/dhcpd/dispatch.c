@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.34 2014/10/08 04:26:07 deraadt Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.35 2015/08/20 22:39:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -156,7 +156,7 @@ discover_interfaces(int *rdomain)
 			   which we found it. */
 			if (!tmp->ifp) {
 				int len = (IFNAMSIZ + ifa->ifa_addr->sa_len);
-				tif = (struct ifreq *)malloc(len);
+				tif = malloc(len);
 				if (!tif)
 					error("no space to remember ifp.");
 				strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
@@ -530,7 +530,7 @@ add_timeout(time_t when, void (*where)(void *), void *what)
 			q->func = where;
 			q->what = what;
 		} else {
-			q = (struct dhcpd_timeout *)malloc(sizeof (struct dhcpd_timeout));
+			q = malloc(sizeof (struct dhcpd_timeout));
 			if (!q)
 				error("Can't allocate timeout structure!");
 			q->func = where;
@@ -595,7 +595,7 @@ add_protocol(char *name, int fd, void (*handler)(struct protocol *),
 {
 	struct protocol *p;
 
-	p = (struct protocol *)malloc(sizeof *p);
+	p = malloc(sizeof *p);
 	if (!p)
 		error("can't allocate protocol struct for %s", name);
 	p->fd = fd;

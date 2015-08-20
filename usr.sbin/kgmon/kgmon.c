@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.21 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.22 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -341,7 +341,7 @@ dumpstate(struct kvmvars *kvp, int cpuid)
 	 */
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROF;
-	if ((tickbuf = (u_short *)malloc(kvp->gpm.kcountsize)) == NULL)
+	if ((tickbuf = malloc(kvp->gpm.kcountsize)) == NULL)
 		errx(5, "cannot allocate kcount space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.kcount, (void *)tickbuf,
@@ -364,7 +364,7 @@ dumpstate(struct kvmvars *kvp, int cpuid)
 	/*
 	 * Write out the arc info.
 	 */
-	if ((froms = (u_short *)malloc(kvp->gpm.fromssize)) == NULL)
+	if ((froms = malloc(kvp->gpm.fromssize)) == NULL)
 		errx(8, "cannot allocate froms space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.froms, (void *)froms,
@@ -380,7 +380,7 @@ dumpstate(struct kvmvars *kvp, int cpuid)
 		errx(9, "read froms: read %lu, got %zu: %s",
 		    kvp->gpm.fromssize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
-	if ((tos = (struct tostruct *)malloc(kvp->gpm.tossize)) == NULL)
+	if ((tos = malloc(kvp->gpm.tossize)) == NULL)
 		errx(10, "cannot allocate tos space");
 	if (kflag) {
 		i = kvm_read(kvp->kd, (u_long)kvp->gpm.tos, (void *)tos,
@@ -462,7 +462,7 @@ reset(struct kvmvars *kvp, int cpuid)
 		biggest = kvp->gpm.fromssize;
 	if (kvp->gpm.tossize > biggest)
 		biggest = kvp->gpm.tossize;
-	if ((zbuf = (char *)malloc(biggest)) == NULL)
+	if ((zbuf = malloc(biggest)) == NULL)
 		errx(12, "cannot allocate zbuf space");
 	bzero(zbuf, biggest);
 	if (kflag) {

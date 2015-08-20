@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.19 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.20 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -277,7 +277,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 	if (m_read(m_state.s, sadbsize, sizeof *sadbsize) < 1)
 		return -1;
 	if (*sadbsize) {
-		*sadb = (u_int8_t *)malloc(*sadbsize);
+		*sadb = malloc(*sadbsize);
 		if (!*sadb) {
 			log_err("monitor_get_pfkey_snap: malloc()");
 			monitor_drain_input();
@@ -300,7 +300,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 		return -1;
 	}
 	if (*spdsize) {
-		*spd = (u_int8_t *)malloc(*spdsize);
+		*spd = malloc(*spdsize);
 		if (!*spd) {
 			log_err("monitor_get_pfkey_snap: malloc()");
 			monitor_drain_input();

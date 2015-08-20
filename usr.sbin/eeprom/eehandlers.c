@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.20 2015/01/15 20:48:51 miod Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.21 2015/08/20 22:39:29 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -458,7 +458,7 @@ doio(struct keytabent *ktent, u_char *buf, ssize_t len, int wr)
 	int fd, rval = 0;
 	u_char *buf2;
 
-	buf2 = (u_char *)calloc(1, len);
+	buf2 = calloc(1, len);
 	if (buf2 == NULL) {
 		snprintf(err_str, sizeof err_str, "memory allocation failed");
 		return (1);

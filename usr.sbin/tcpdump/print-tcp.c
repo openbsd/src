@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.32 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.33 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -392,8 +392,7 @@ tcp_print(register const u_char *bp, register u_int length,
 		if (!th->nxt || flags & TH_SYN) {
 			/* didn't find it or new conversation */
 			if (th->nxt == NULL) {
-				th->nxt = (struct tcp_seq_hash *)
-					calloc(1, sizeof(*th));
+				th->nxt = calloc(1, sizeof(*th));
 				if (th->nxt == NULL)
 					error("tcp_print: calloc");
 			}

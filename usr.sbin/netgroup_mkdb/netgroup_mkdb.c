@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.17 2015/01/16 15:40:16 deraadt Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.18 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -50,8 +50,6 @@
 #include "util.h"
 
 #define DEBUG_NG
-
-#define NEW(a)	(a *) emalloc(sizeof(a))
 
 struct nentry {
 	int             n_type;
@@ -249,7 +247,7 @@ ng_load(const char *fname)
 				break;
 
 			case _NG_NAME:
-				e = NEW(struct nentry);
+				e = emalloc(sizeof(struct nentry));
 				e->n_type = _NG_NAME;
 				e->n_name = name;
 				e->n_next = NULL;
@@ -268,7 +266,7 @@ ng_load(const char *fname)
 					_ng_print(fmt, sizeof(fmt), ng);
 					errx(1, "no netgroup key for %s", fmt);
 				} else {
-					e = NEW(struct nentry);
+					e = emalloc(sizeof(struct nentry));
 					e->n_type = _NG_GROUP;
 					e->n_group = ng;
 					e->n_next = NULL;

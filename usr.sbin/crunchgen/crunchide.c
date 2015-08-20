@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.9 2015/01/18 05:30:58 guenther Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.10 2015/08/20 22:39:29 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -138,7 +138,7 @@ add_to_keep_list(char *symbol)
 	if (curp && cmp == 0)
 		return;		/* already in table */
 
-	newp = (struct keep *) calloc(1, sizeof(struct keep));
+	newp = calloc(1, sizeof(struct keep));
 	if (newp)
 		newp->sym = strdup(symbol);
 	if (newp == NULL || newp->sym == NULL) {

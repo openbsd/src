@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.23 2012/04/14 12:11:08 haesbaert Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.24 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -63,13 +63,13 @@ sasyncd_run(pid_t ppid)
 	n = getdtablesize();
 	fdsetsize = howmany(n, NFDBITS) * sizeof(fd_mask);
 
-	rfds = (fd_set *)malloc(fdsetsize);
+	rfds = malloc(fdsetsize);
 	if (!rfds) {
 		log_err("malloc(%lu) failed", (unsigned long)fdsetsize);
 		return -1;
 	}
 
-	wfds = (fd_set *)malloc(fdsetsize);
+	wfds = malloc(fdsetsize);
 	if (!wfds) {
 		log_err("malloc(%lu) failed", (unsigned long)fdsetsize);
 		free(rfds);

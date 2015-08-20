@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.26 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.27 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -220,8 +220,7 @@ inituser(void)
 
 	if (!nusers) {
 		nusers = 8;
-		if (!(users =
-		    (struct user *)calloc(nusers, sizeof(struct user)))) {
+		if (!(users = calloc(nusers, sizeof(struct user)))) {
 			err(1, "allocate users");
 		}
 	} else {
@@ -241,7 +240,7 @@ usrrehash(void)
 
 	svusr = users;
 	nusers <<= 1;
-	if (!(users = (struct user *)calloc(nusers, sizeof(struct user))))
+	if (!(users = calloc(nusers, sizeof(struct user))))
 		err(1, "allocate users");
 	for (usr = svusr, i = nusers >> 1; --i >= 0; usr++) {
 		for (usrn = users + (usr->uid&(nusers - 1));
@@ -354,7 +353,7 @@ dofsizes(int fd, struct fs *super, char *name)
 
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 #ifdef	COMPAT
-	if (!(fsizes = (struct fsizes *)malloc(sizeof(struct fsizes))))
+	if (!(fsizes = malloc(sizeof(struct fsizes))))
 		err(1, "alloc fsize structure");
 #endif	/* COMPAT */
 	for (inode = 0; inode < maxino; inode++) {
@@ -435,7 +434,7 @@ douser(int fd, struct fs *super, char *name)
 		else if (errno)
 			err(1, "%s", name);
 	}
-	if (!(usrs = (struct user *)calloc(nusers, sizeof(struct user))))
+	if (!(usrs = calloc(nusers, sizeof(struct user))))
 		err(1, "allocate users");
 	memcpy(usrs, users, nusers * sizeof(struct user));
 	sortusers(usrs);

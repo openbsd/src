@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.63 2015/01/16 06:40:22 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.64 2015/08/20 22:39:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -153,7 +153,7 @@ ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 			break;
 
 	if (ypdb == NULL) {
-		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
+		ypdb = malloc(sizeof *ypdb);
 		if (ypdb == NULL)
 			return NULL;
 		memset(ypdb, 0, sizeof *ypdb);
@@ -512,7 +512,7 @@ main(int argc, char *argv[])
 		errx(1, "bad domainname %s", domain);
 
 	/* build initial domain binding, make it "unsuccessful" */
-	ypbindlist = (struct _dom_binding *)malloc(sizeof *ypbindlist);
+	ypbindlist = malloc(sizeof *ypbindlist);
 	if (ypbindlist == NULL)
 		errx(1, "no memory");
 	memset(ypbindlist, 0, sizeof *ypbindlist);
@@ -545,8 +545,7 @@ main(int argc, char *argv[])
 				width = rpcsock;
 			if (pingsock > __svc_fdsetsize)
 				width = pingsock;
-			fdsrp = (fd_set *)calloc(howmany(width+1, NFDBITS),
-			    sizeof(fd_mask));
+			fdsrp = calloc(howmany(width+1, NFDBITS), sizeof(fd_mask));
 			if (fdsrp == NULL)
 				errx(1, "no memory");
 		}
@@ -990,7 +989,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	if (ypdb == NULL) {
 		if (force == 0)
 			return;
-		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
+		ypdb = malloc(sizeof *ypdb);
 		if (ypdb == NULL)
 			return;
 		memset(ypdb, 0, sizeof *ypdb);

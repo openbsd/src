@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.13 2015/01/16 06:40:19 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.14 2015/08/20 22:39:29 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ NewClient(u_int8_t *addr)
 {
 	CLIENT *ctmp;
 
-	if ((ctmp = (CLIENT *) malloc(sizeof(CLIENT))) == NULL) {
+	if ((ctmp = malloc(sizeof(CLIENT))) == NULL) {
 		syslog(LOG_ERR, "NewClient: out of memory (%s)",
 		    GetEtherAddr(addr));
 		return(NULL);
@@ -359,7 +359,7 @@ NewConn(RMPCONN *rconn)
 	RMPCONN *rtmp;
 
 	if (LastFree == NULL) {		/* nothing cached; make a new one */
-		if ((rtmp = (RMPCONN *) malloc(sizeof(RMPCONN))) == NULL) {
+		if ((rtmp = malloc(sizeof(RMPCONN))) == NULL) {
 			syslog(LOG_ERR, "NewConn: out of memory (%s)",
 			    EnetStr(rconn));
 			return(NULL);

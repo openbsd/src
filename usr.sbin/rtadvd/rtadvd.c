@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.54 2015/08/18 20:25:28 miod Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.55 2015/08/20 22:39:29 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -721,7 +721,7 @@ rs_input(int len, struct nd_router_solicit *rs,
 		/*
 		 * record sockaddr waiting for RA, if possible
 		 */
-		sol = (struct soliciter *)malloc(sizeof(*sol));
+		sol = malloc(sizeof(*sol));
 		if (sol) {
 			sol->addr = *from;
 			/*XXX RFC2553 need clarification on flowinfo */
@@ -1197,13 +1197,13 @@ sock_open()
 
 	rcvcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
-	rcvcmsgbuf = (u_char *)malloc(rcvcmsgbuflen);
+	rcvcmsgbuf = malloc(rcvcmsgbuflen);
 	if (rcvcmsgbuf == NULL)
 		fatal("malloc");
 
 	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
 	    CMSG_SPACE(sizeof(int));
-	sndcmsgbuf = (u_char *)malloc(sndcmsgbuflen);
+	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL)
 		fatal("malloc");
 

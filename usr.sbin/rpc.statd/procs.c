@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.1 2008/06/15 04:43:28 sturm Exp $	*/
+/*	$OpenBSD: procs.c,v 1.2 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -113,7 +113,7 @@ sm_mon_1_svc(mon *arg, struct svc_req *req)
 	if ((hp = find_host(arg->mon_id.mon_name, &h)) == NULL)
 		memset(hp = &h, 0, sizeof(h));
 
-	lp = (MonList *)malloc(sizeof(MonList));
+	lp = malloc(sizeof(MonList));
 	if (!lp)
 		syslog(LOG_ERR, "Out of memory");
 	else {

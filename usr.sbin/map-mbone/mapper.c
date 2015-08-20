@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.22 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.23 2015/08/20 22:39:29 deraadt Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -108,7 +108,7 @@ Node *find_node(u_int32_t addr, Node **ptr)
     Node *n = *ptr;
 
     if (!n) {
-	*ptr = n = (Node *) malloc(sizeof(Node));
+	*ptr = n = malloc(sizeof(Node));
 	n->addr = addr;
 	n->version = 0;
 	n->tries = 0;
@@ -132,7 +132,7 @@ Interface *find_interface(u_int32_t addr, Node *node)
 	if (ifc->addr == addr)
 	    return ifc;
 
-    ifc = (Interface *) malloc(sizeof(Interface));
+    ifc = malloc(sizeof(Interface));
     ifc->addr = addr;
     ifc->next = node->u.interfaces;
     node->u.interfaces = ifc;
@@ -406,7 +406,7 @@ void accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 		    goto next_neighbor;
 		}
 
-	    nb = (Neighbor *) malloc(sizeof(Neighbor));
+	    nb = malloc(sizeof(Neighbor));
 	    nb->next = ifc->neighbors;
 	    ifc->neighbors = nb;
 	    nb->addr = neighbor;
@@ -550,7 +550,7 @@ void accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 		    goto next_neighbor;
 		}
 
-	    nb = (Neighbor *) malloc(sizeof(Neighbor));
+	    nb = malloc(sizeof(Neighbor));
 	    nb->next = ifc->neighbors;
 	    ifc->neighbors = nb;
 	    nb->addr = neighbor;

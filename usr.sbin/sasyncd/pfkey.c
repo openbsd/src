@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.23 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.24 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -110,7 +110,7 @@ pfkey_set_promisc(void)
 static void
 pfkey_send_flush(struct syncpeer *p)
 {
-	struct sadb_msg *m = (struct sadb_msg *)calloc(1, sizeof *m);
+	struct sadb_msg *m = calloc(1, sizeof *m);
 	static u_int32_t seq = 1;
 
 	if (m) {
@@ -412,7 +412,7 @@ pfkey_queue_message(u_int8_t *data, u_int32_t datalen)
 	struct sadb_msg		*sadb = (struct sadb_msg *)data;
 	static u_int32_t	 seq = 1;
 
-	pmsg = (struct pfkey_msg *)malloc(sizeof *pmsg);
+	pmsg = malloc(sizeof *pmsg);
 	if (!pmsg) {
 		log_err("malloc()");
 		return -1;
@@ -486,7 +486,7 @@ pfkey_snapshot(void *v)
 				continue;
 
 			/* Allocate msgbuffer, net_queue() will free it. */
-			sendbuf = (u_int8_t *)calloc(m->sadb_msg_len, CHUNK);
+			sendbuf = calloc(m->sadb_msg_len, CHUNK);
 			if (sendbuf) {
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
@@ -516,7 +516,7 @@ pfkey_snapshot(void *v)
 				continue;
 
 			/* Allocate msgbuffer, freed by net_queue(). */
-			sendbuf = (u_int8_t *)calloc(m->sadb_msg_len, CHUNK);
+			sendbuf = calloc(m->sadb_msg_len, CHUNK);
 			if (sendbuf) {
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,

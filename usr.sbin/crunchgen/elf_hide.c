@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.9 2015/01/18 05:30:58 guenther Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.10 2015/08/20 22:39:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -349,8 +349,8 @@ reorder_syms(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 
 	nsyms = symtabsize / sizeof(Elf_Sym);
 
-	tmpsymtab = (Elf_Sym *) calloc(1, symtabsize);
-	symmap = (Symmap *) calloc(nsyms, sizeof(Symmap));
+	tmpsymtab = calloc(1, symtabsize);
+	symmap = calloc(nsyms, sizeof(Symmap));
 	if (!tmpsymtab || !symmap)
 		errc(5, ENOMEM, "calloc");
 

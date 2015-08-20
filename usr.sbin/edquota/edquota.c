@@ -255,7 +255,7 @@ getprivs(u_int id, int quotatype)
 			continue;
 		qfpathnamelen = strlen(qfpathname);
 		qupsize = sizeof(*qup) + qfpathnamelen;
-		if ((qup = (struct quotause *)malloc(qupsize)) == NULL)
+		if ((qup = malloc(qupsize)) == NULL)
 			errx(2, "out of memory");
 		if (quotactl(fs->fs_file, qcmd, id, (char *)&qup->dqblk) != 0) {
 	    		if (errno == EOPNOTSUPP && !warned) {

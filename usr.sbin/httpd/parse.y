@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.75 2015/08/20 13:00:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.76 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -2116,9 +2116,8 @@ is_if_in_group(const char *ifname, const char *groupname)
 	}
 
 	len = ifgr.ifgr_len;
-	ifgr.ifgr_groups =
-	    (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
-		sizeof(struct ifg_req));
+	ifgr.ifgr_groups = calloc(len / sizeof(struct ifg_req),
+	    sizeof(struct ifg_req));
 	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
 	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.21 2014/07/04 22:32:29 guenther Exp $	*/
+/*	$OpenBSD: net.c,v 1.22 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -86,7 +86,7 @@ dump_buf(int lvl, u_int8_t *b, u_int32_t len, char *title)
 		return;
 
 	blen = 2 * (len + len / 36) + 3 + (title ? strlen(title) : sizeof def);
-	if (!(buf = (u_int8_t *)calloc(1, blen)))
+	if (!(buf = calloc(1, blen)))
 		return;
 
 	snprintf(buf, blen, "%s\n ", title ? title : def);
@@ -162,7 +162,7 @@ net_setup_listeners(void)
 	/* Setup listening sockets.  */
 	memset(&sa_storage, 0, sizeof sa_storage);
 	if (net_set_sa(sa, cfgstate.listen_on, cfgstate.listen_port) == 0) {
-		listeners = (int *)calloc(2, sizeof(int));
+		listeners = calloc(2, sizeof(int));
 		if (!listeners) {
 			perror("net_setup_listeners: calloc()");
 			goto errout;
@@ -208,7 +208,7 @@ net_setup_listeners(void)
 	}
 
 	/* Allocate one extra slot and set to -1, marking end of array. */
-	listeners = (int *)calloc(count + 1, sizeof(int));
+	listeners = calloc(count + 1, sizeof(int));
 	if (!listeners) {
 		perror("net_setup_listeners: calloc()");
 		goto errout;
@@ -330,7 +330,7 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 	u_int32_t	 v, padlen = 0;
 	int		 i, offset;
 
-	m = (struct msg *)calloc(1, sizeof *m);
+	m = calloc(1, sizeof *m);
 	if (!m) {
 		log_err("net_queue: calloc()");
 		free(buf);
@@ -376,7 +376,7 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 
 	/* Allocate send buffer */
 	m->len = len + sizeof iv + sizeof hash + 3 * sizeof(u_int32_t);
-	m->buf = (u_int8_t *)malloc(m->len);
+	m->buf = malloc(m->len);
 	if (!m->buf) {
 		free(m);
 		free(buf);
@@ -687,7 +687,7 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 		return NULL;
 
 	/* Read message blob */
-	blob = (u_int8_t *)malloc(blob_len);
+	blob = malloc(blob_len);
 	if (!blob) {
 		log_err("net_read: malloc()");
 		return NULL;
@@ -725,7 +725,7 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 
 	rhash = blob + offset;
 	iv    = rhash + sizeof hash;
-	msg = (u_int8_t *)malloc(*msglen);
+	msg = malloc(*msglen);
 	if (!msg) {
 		free(blob);
 		return NULL;
@@ -807,8 +807,7 @@ net_connect(void)
 		if (p->socket > -1)
 			continue;
 		if (!p->sa) {
-			p->sa = (void *)calloc(1,
-			    sizeof(struct sockaddr_storage));
+			p->sa = calloc(1, sizeof(struct sockaddr_storage));
 			if (!p->sa)
 				return;
 			if (net_set_sa(p->sa, p->name, cfgstate.listen_port))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.42 2015/04/15 12:40:57 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.43 2015/08/20 22:39:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -874,7 +874,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 			lt.uid_len = packet->options[i].len;
 		} else {
 			lt.uid_max = lt.uid_len = packet->options[i].len;
-			lt.uid = (unsigned char *)malloc(lt.uid_max);
+			lt.uid = malloc(lt.uid_max);
 			if (!lt.uid)
 				error("can't allocate memory for large uid.");
 			memcpy(lt.uid, packet->options[i].data, lt.uid_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.27 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.28 2015/08/20 22:39:29 deraadt Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 	iflentry_size = sizeof(struct if_msghdr);
 	/* roughly estimate max list size of pointers to each if_msghdr */
 	malloc_size = (bufsize/iflentry_size) * sizeof(size_t);
-	if ((*ifmlist_p = (struct if_msghdr **)malloc(malloc_size)) == NULL)
+	if ((*ifmlist_p = malloc(malloc_size)) == NULL)
 		fatal("malloc");
 
 	lim = buf + bufsize;

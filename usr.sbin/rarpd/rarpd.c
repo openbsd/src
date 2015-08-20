@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.60 2015/07/16 17:51:22 miod Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.61 2015/08/20 22:39:29 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ init_one(char *ifname)
 	if (fd < 0)
 		return;
 
-	p = (struct if_info *)malloc(sizeof(*p));
+	p = malloc(sizeof(*p));
 	if (p == 0) {
 		error(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */
@@ -400,7 +400,7 @@ rarp_loop(void)
 		error(FATAL, "BIOCGBLEN: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	buf = (u_char *) malloc((size_t) bufsize);
+	buf = malloc((size_t) bufsize);
 	if (buf == 0) {
 		error(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */

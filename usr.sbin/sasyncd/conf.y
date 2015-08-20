@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.17 2012/12/21 13:53:01 gsoares Exp $	*/
+/*	$OpenBSD: conf.y,v 1.18 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
@@ -182,8 +183,7 @@ setting		: INTERFACE STRING
 			if (duplicate)
 				free($2);
 			else {
-				peer = (struct syncpeer *)calloc(1,
-				    sizeof *peer);
+				peer = calloc(1, sizeof *peer);
 				if (!peer) {
 					log_err("config: calloc(1, %lu) "
 					    "failed", sizeof *peer);
@@ -372,7 +372,7 @@ conf_parse_file(char *cfgfile)
 		goto bad;
 
 	conflen = st.st_size;
-	buf = (char *)malloc(conflen + 1);
+	buf = malloc(conflen + 1);
 	if (!buf) {
 		log_err("malloc(%d) failed", conflen + 1);
 		close(fd);

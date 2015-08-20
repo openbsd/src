@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.15 2015/04/18 18:28:38 deraadt Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.16 2015/08/20 22:39:29 deraadt Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 	if (ifidx >= 0)
 		sin6.sin6_scope_id = ifidx;
 
-	if ((ripbuf = (struct rip6 *)malloc(BUFSIZ)) == NULL) {
+	if ((ripbuf = malloc(BUFSIZ)) == NULL) {
 		err(1, "malloc");
 		/*NOTREACHED*/
 	}

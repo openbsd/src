@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.50 2015/08/20 22:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -367,8 +367,8 @@ event		: HOSTAP HANDLE
 			/* IEEE 802.11 raw frame to send as an action */
 			frame_ieee80211 = &frame.f_action_data.a_frame;
 		} action limit rate {
-			if ((frame_ptr = (struct hostapd_frame *)calloc(1,
-				 sizeof(struct hostapd_frame))) == NULL) {
+			if ((frame_ptr = calloc(1, sizeof(struct hostapd_frame)))
+			    == NULL) {
 				yyerror("calloc");
 				YYERROR;
 			}
@@ -647,7 +647,7 @@ authalg		: OPEN REQUEST
 frmreason	: frmreason_l
 		{
 			if ($1 != 0) {
-				if ((frame_ieee80211->i_data = (u_int16_t *)
+				if ((frame_ieee80211->i_data =
 				    malloc(sizeof(u_int16_t))) == NULL) {
 					yyerror("failed to allocate "
 					    "reason code %u", $1);
@@ -1611,7 +1611,7 @@ symset(const char *nam, const char *val, int persist)
 			free(sym);
 		}
 	}
-	if ((sym = (struct sym *)calloc(1, sizeof(*sym))) == NULL)
+	if ((sym = calloc(1, sizeof(*sym))) == NULL)
 		return (-1);
 
 	sym->nam = strdup(nam);
@@ -1645,7 +1645,7 @@ hostapd_parse_symset(char *s)
 		return (-1);
 
 	len = strlen(s) - strlen(val) + 1;
-	if ((sym = (char *)malloc(len)) == NULL)
+	if ((sym = malloc(len)) == NULL)
 		hostapd_fatal("cmdline_symset: malloc");
 
 	(void)strlcpy(sym, s, len);

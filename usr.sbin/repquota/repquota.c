@@ -320,7 +320,7 @@ addid(uid_t id, int type, char *name)
 		len = strlen(name);
 	else
 		len = 10;
-	if ((fup = (struct fileusage *)calloc(1, sizeof(*fup) + len)) == NULL) {
+	if ((fup = calloc(1, sizeof(*fup) + len)) == NULL) {
 		fprintf(stderr, "out of memory for fileusage structures\n");
 		exit(1);
 	}

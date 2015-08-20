@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.65 2015/02/04 20:16:23 bluhm Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.66 2015/08/20 22:39:29 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -254,8 +254,6 @@ struct ifc *ifc_find(char *);
 struct iff *iff_find(struct ifc *, int);
 void setindex2ifc(int, struct ifc *);
 
-#define	MALLOC(type)	((type *)malloc(sizeof(type)))
-
 int
 main(int argc, char *argv[])
 {
@@ -339,7 +337,7 @@ main(int argc, char *argv[])
 	openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 	logopened++;
 
-	if ((ripbuf = (struct rip6 *)malloc(RIP6_MAXMTU)) == NULL)
+	if ((ripbuf = malloc(RIP6_MAXMTU)) == NULL)
 		fatal("malloc");
 	memset(ripbuf, 0, RIP6_MAXMTU);
 	ripbuf->rip6_cmd = RIP6_RESPONSE;
@@ -372,7 +370,7 @@ main(int argc, char *argv[])
 
 	pidfile(NULL);
 
-	if ((ripbuf = (struct rip6 *)malloc(RIP6_MAXMTU)) == NULL) {
+	if ((ripbuf = malloc(RIP6_MAXMTU)) == NULL) {
 		fatal("malloc");
 		/*NOTREACHED*/
 	}
@@ -1283,7 +1281,7 @@ riprecv(void)
 			 */
 		} else if (np->rip6_metric < HOPCNT_INFINITY6) {
 			/* Got a new valid route */
-			if ((rrt = MALLOC(struct riprt)) == NULL) {
+			if ((rrt = malloc(sizeof(struct riprt))) == NULL) {
 				fatal("malloc: struct riprt");
 				/*NOTREACHED*/
 			}
@@ -1413,7 +1411,7 @@ ifconfig(void)
 			continue;
 		if (!ifcp) {
 			/* new interface */
-			if ((ifcp = MALLOC(struct ifc)) == NULL) {
+			if ((ifcp = malloc(sizeof(struct ifc))) == NULL) {
 				fatal("malloc: struct ifc");
 				/*NOTREACHED*/
 			}
@@ -1486,7 +1484,7 @@ ifconfig1(const char *name, const struct sockaddr *sa, struct ifc *ifcp, int s)
 	/*
 	 * New address is found
 	 */
-	if ((ifa = MALLOC(struct ifac)) == NULL) {
+	if ((ifa = malloc(sizeof(struct ifac))) == NULL) {
 		fatal("malloc: struct ifac");
 		/*NOTREACHED*/
 	}
@@ -2011,7 +2009,7 @@ ifrt(struct ifc *ifcp, int again)
 			continue;
 		}
 		if (ifcp->ifc_flags & IFF_UP) {
-			if ((rrt = MALLOC(struct riprt)) == NULL)
+			if ((rrt = malloc(sizeof(struct riprt))) == NULL)
 				fatal("malloc: struct riprt");
 			memset(rrt, 0, sizeof(*rrt));
 			rrt->rrt_same = NULL;
@@ -2167,7 +2165,7 @@ ifrt_p2p(struct ifc *ifcp, int again)
 		for (i = 1; i <= P2PADVERT_MAX; i *= 2) {
 			if ((ignore & i) != 0)
 				continue;
-			if ((rrt = MALLOC(struct riprt)) == NULL) {
+			if ((rrt = malloc(sizeof(struct riprt))) == NULL) {
 				fatal("malloc: struct riprt");
 				/*NOTREACHED*/
 			}
@@ -2541,7 +2539,7 @@ rt_entry(struct rt_msghdr *rtm, int again)
 	if (IN6_IS_ADDR_MULTICAST(&sin6_dst->sin6_addr))
 		return;
 
-	if ((rrt = MALLOC(struct riprt)) == NULL) {
+	if ((rrt = malloc(sizeof(struct riprt))) == NULL) {
 		fatal("malloc: struct riprt");
 		/*NOTREACHED*/
 	}
@@ -3031,7 +3029,7 @@ ifonly:
 				fatal("no interface %s exists", ifname);
 				/*NOTREACHED*/
 			}
-			iff_obj = (struct iff *)malloc(sizeof(struct iff));
+			iff_obj = malloc(sizeof(struct iff));
 			if (iff_obj == NULL) {
 				fatal("malloc of iff_obj");
 				/*NOTREACHED*/
@@ -3049,7 +3047,7 @@ ifonly:
 		if (filtertype[i] != 'A')
 			continue;
 		/* put the aggregate to the kernel routing table */
-		rrt = (struct riprt *)malloc(sizeof(struct riprt));
+		rrt = malloc(sizeof(struct riprt));
 		if (rrt == NULL) {
 			fatal("malloc: rrt");
 			/*NOTREACHED*/
@@ -3234,7 +3232,7 @@ char *
 allocopy(char *p)
 {
 	int len = strlen(p) + 1;
-	char *q = (char *)malloc(len);
+	char *q = malloc(len);
 
 	if (!q) {
 		fatal("malloc");
