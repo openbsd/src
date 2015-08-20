@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.109 2015/07/18 15:51:16 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.110 2015/08/20 12:39:43 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -93,7 +93,14 @@ struct rt_metrics {
  */
 
 struct rtentry {
+#ifndef ART
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
+#else
+	struct art_node	*rt_node;	/* ART entry */
+	struct sockaddr	*rt_dest;	/* destination */
+	struct sockaddr *rt_mask;	/* mask (radix tree compat) */
+	LIST_ENTRY(rtentry)  rt_next;	/* Next multipath entry to our dst. */
+#endif
 	struct sockaddr	*rt_gateway;	/* value */
 	struct ifnet	*rt_ifp;	/* the answer: interface to use */
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.223 2015/08/19 13:27:38 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.224 2015/08/20 12:39:43 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1238,6 +1238,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	}
 	if ((rt = rtalloc(dst, 0, rtableid)) != NULL) {
 		rt->rt_refcnt--;
+#ifndef ART
 		/* try to find the right route */
 		while (rt && rt->rt_ifa != ifa)
 			rt = (struct rtentry *)
@@ -1248,6 +1249,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 			return (flags & RTF_HOST ? EHOSTUNREACH
 						: ENETUNREACH);
 		}
+#endif
 	}
 
 	memset(&info, 0, sizeof(info));

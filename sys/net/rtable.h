@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.1 2015/07/18 15:51:16 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.2 2015/08/20 12:39:43 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -19,6 +19,8 @@
 #ifndef	_NET_RTABLE_H_
 #define	_NET_RTABLE_H_
 
+#ifndef ART
+
 /*
  * Traditional BSD routing table implementation based on a radix tree.
  */
@@ -31,6 +33,21 @@
 #define	rt_mask(rt)	(((struct sockaddr *)(rt)->rt_nodes[0].rn_mask))
 #define	RT_ACTIVE(rt)	((rt)->rt_nodes[0].rn_flags & RNF_ACTIVE)
 #define	RT_ROOT(rt)	((rt)->rt_nodes[0].rn_flags & RNF_ROOT)
+
+#else /* ART */
+
+/*
+ * Newer routing table implementation based on ART (Allotment Routing
+ * Table).
+ */
+#include <net/art.h>
+
+#define	rt_key(rt)	((rt)->rt_dest)
+#define	rt_mask(rt)	((rt)->rt_mask)
+#define	RT_ACTIVE(rt)	((rt)->rt_node != NULL)
+#define	RT_ROOT(rt)	(0)
+
+#endif /* ART */
 
 void		 rtable_init(void);
 int		 rtable_attach(void **, int);
