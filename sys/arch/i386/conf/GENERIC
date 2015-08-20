@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.802 2015/07/23 00:38:06 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.803 2015/08/20 04:41:46 mlarkin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -382,11 +382,6 @@ drm0		at radeondrm? console 1
 drm*		at radeondrm?
 wsdisplay0	at radeondrm? console 1
 wsdisplay*	at radeondrm?
-
-#option		VESABIOSVERBOSE
-#option		VESAFB		# VESA bios framebuffer support for X11
-#vesabios0	at mainbus?
-
 
 pcppi0		at isa?
 

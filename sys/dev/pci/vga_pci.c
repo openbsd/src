@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.85 2015/07/18 00:48:05 miod Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.86 2015/08/20 04:41:46 mlarkin Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -94,10 +94,6 @@
 #include <machine/vga_post.h>
 #endif
 
-#ifdef VESAFB
-#include <dev/vesa/vesabiosvar.h>
-#endif
-
 #include "intagp.h"
 
 int	vga_pci_match(struct device *, void *, void *);
@@ -109,11 +105,6 @@ paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
 int	intagpsubmatch(struct device *, void *, void *);
 int	intagp_print(void *, const char *);
 #endif 
-
-#ifdef VESAFB
-int	vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
-int	vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
-#endif
 
 #if !defined(SMALL_KERNEL) && NACPI > 0
 void	vga_save_state(struct vga_pci_softc *);
@@ -234,15 +225,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_type = WSDISPLAY_TYPE_PCIVGA;
 
-#ifdef VESAFB
-	if (vesabios_softc != NULL && vesabios_softc->sc_nmodes > 0) {
-		sc->sc_textmode = vesafb_get_mode(sc);
-		printf(", vesafb\n");
-		sc->sc_vc = vga_extended_attach(self, pa->pa_iot, pa->pa_memt,
-		    sc->sc_type, vga_pci_mmap);
-		return;
-	}
-#endif
 	printf("\n");
 
 	vga_pci_bar_init(sc, pa);
@@ -360,16 +342,6 @@ intagp_print(void *vaa, const char *pnp)
 paddr_t
 vga_pci_mmap(void *v, off_t off, int prot)
 {
-#ifdef VESAFB
-	struct vga_config *vc = (struct vga_config *)v;
-	struct vga_pci_softc *sc = (struct vga_pci_softc *)vc->vc_softc;
-
-	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
-		if (off < 0 || off > vesabios_softc->sc_size)
-			return (-1);
-		return (sc->sc_base + off);
-	}
-#endif
 	return -1;
 }
 
@@ -384,78 +356,8 @@ int
 vga_pci_ioctl(void *v, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 {
 	int error = 0;
-#ifdef VESAFB
-	struct vga_config *vc = (struct vga_config *)v;
-	struct vga_pci_softc *sc = (struct vga_pci_softc *)vc->vc_softc;
-	struct wsdisplay_fbinfo *wdf;
-	struct wsdisplay_gfx_mode *gfxmode;
-	int mode;
-#endif
 
 	switch (cmd) {
-#ifdef VESAFB
-	case WSDISPLAYIO_SMODE:
-		mode = *(u_int *)addr;
-		switch (mode) {
-		case WSDISPLAYIO_MODE_EMUL:
-			/* back to text mode */
-			vesafb_set_mode(sc, sc->sc_textmode);
-			sc->sc_mode = mode;
-			break;
-		case WSDISPLAYIO_MODE_DUMBFB:
-			if (sc->sc_gfxmode == -1)
-				return (-1);
-			vesafb_set_mode(sc, sc->sc_gfxmode);
-			sc->sc_mode = mode;
-			break;
-		default:
-			error = -1;
-		}
-		break;
-	case WSDISPLAYIO_GINFO:
-		if (sc->sc_gfxmode == -1)
-			return (-1);
-		wdf = (void *)addr;
-		wdf->height = sc->sc_height;
-		wdf->width = sc->sc_width;
-		wdf->depth = sc->sc_depth;
-		wdf->cmsize = 256;
-		break;
-
-	case WSDISPLAYIO_LINEBYTES:
-		if (sc->sc_gfxmode == -1)
-			return (-1);
-		*(u_int *)addr = sc->sc_linebytes;
-		break;
-
-	case WSDISPLAYIO_SVIDEO:
-	case WSDISPLAYIO_GVIDEO:
-		break;
-	case WSDISPLAYIO_GETCMAP:
-		if (sc->sc_depth == 8)
-			error = vesafb_getcmap(sc,
-			    (struct wsdisplay_cmap *)addr);
-		break;
-
-	case WSDISPLAYIO_PUTCMAP:
-		if (sc->sc_depth == 8)
-			error = vesafb_putcmap(sc,
-			    (struct wsdisplay_cmap *)addr);
-		break;
-
-	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
-		*(int *)addr = vesafb_get_supported_depth(sc);
-		break;
-		
-	case WSDISPLAYIO_SETGFXMODE:
-		gfxmode = (struct wsdisplay_gfx_mode *)addr;
-		sc->sc_gfxmode = vesafb_find_mode(sc, gfxmode->width,
-		    gfxmode->height, gfxmode->depth);
-		if (sc->sc_gfxmode == -1) 
-			error = -1;
-		break;
-
-#endif
 	case WSDISPLAYIO_GETPARAM:
 		if (ws_get_param != NULL)
 			return (*ws_get_param)((struct wsdisplay_param *)addr);

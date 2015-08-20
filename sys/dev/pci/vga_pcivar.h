@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pcivar.h,v 1.18 2014/07/22 04:42:51 jsg Exp $ */
+/* $OpenBSD: vga_pcivar.h,v 1.19 2015/08/20 04:41:46 mlarkin Exp $ */
 /* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
@@ -94,13 +94,6 @@ int	vga_aperture_needed(struct pci_attach_args *);
 
 #if NDRM > 0
 int	vga_drmsubmatch(struct device *, void *, void *);
-#endif
-
-#ifdef VESAFB
-int	vesafb_find_mode(struct vga_pci_softc *, int, int, int);
-void	vesafb_set_mode(struct vga_pci_softc *, int);
-int	vesafb_get_mode(struct vga_pci_softc *);
-int	vesafb_get_supported_depth(struct vga_pci_softc *);
 #endif
 
 #endif /* _PCI_VGA_PCIVAR_H_ */
