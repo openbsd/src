@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_exp2.c,v 1.7 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: s_exp2.c,v 1.8 2015/08/20 19:24:58 naddy Exp $	*/
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -373,14 +373,14 @@ exp2(double x)
 	/* Compute r = exp2(y) = exp2t[i0] * p(z - eps[i]). */
 	t = tbl[i0];		/* exp2t[i0] */
 	z -= tbl[i0 + 1];	/* eps[i0]   */
-	if (k >= -1021 << 20)
+	if (k >= -(1021 << 20))
 		INSERT_WORDS(twopk, 0x3ff00000 + k, 0);
 	else
 		INSERT_WORDS(twopkp1000, 0x3ff00000 + k + (1000 << 20), 0);
 	r = t + t * z * (P1 + z * (P2 + z * (P3 + z * (P4 + z * P5))));
 
 	/* Scale by 2**(k>>20). */
-	if(k >= -1021 << 20) {
+	if(k >= -(1021 << 20)) {
 		if (k == 1024 << 20)
 			return (r * 2.0 * 0x1p1023);
 		return (r * twopk);
