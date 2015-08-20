@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypexclude.c,v 1.1 2009/06/03 16:02:44 schwarze Exp $ */
+/*	$OpenBSD: ypexclude.c,v 1.2 2015/08/20 21:49:29 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1995, 1996, Jason Downs.  All rights reserved.
@@ -40,7 +40,7 @@ __ypexclude_add(struct _ypexclude **headp, const char *name)
 	if (name[0] == '\0')    /* skip */
 		return (0);
 
-	new = (struct _ypexclude *)malloc(sizeof(struct _ypexclude));
+	new = malloc(sizeof(struct _ypexclude));
 	if (new == NULL)
 		return (1);
 	new->name = strdup(name);

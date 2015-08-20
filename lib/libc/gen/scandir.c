@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.19 2015/02/05 12:59:57 millert Exp $ */
+/*	$OpenBSD: scandir.c,v 1.20 2015/08/20 21:49:29 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 		errno = ENOMEM;
 		goto fail;
 	}
-	names = (struct dirent **)calloc(arraysz, sizeof(struct dirent *));
+	names = calloc(arraysz, sizeof(struct dirent *));
 	if (names == NULL)
 		goto fail;
 
@@ -114,7 +114,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 		/*
 		 * Make a minimum size copy of the data
 		 */
-		p = (struct dirent *)malloc(DIRSIZ(d));
+		p = malloc(DIRSIZ(d));
 		if (p == NULL)
 			goto fail;
 

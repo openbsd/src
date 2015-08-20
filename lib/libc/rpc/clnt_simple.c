@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_simple.c,v 1.17 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: clnt_simple.c,v 1.18 2015/08/20 21:49:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -64,7 +64,7 @@ callrpc(char *host, int prognum, int versnum, int procnum, xdrproc_t inproc,
 	struct timeval timeout, tottimeout;
 
 	if (crp == NULL) {
-		crp = (struct callrpc_private *)calloc(1, sizeof (*crp));
+		crp = calloc(1, sizeof (*crp));
 		if (crp == NULL)
 			return RPC_SYSTEMERROR;
 		callrpc_private = crp;

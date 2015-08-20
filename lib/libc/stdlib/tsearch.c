@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsearch.c,v 1.8 2014/03/16 18:38:30 guenther Exp $	*/
+/*	$OpenBSD: tsearch.c,v 1.9 2015/08/20 21:49:29 deraadt Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -40,7 +40,7 @@ tsearch(const void *vkey, void **vrootp,
 	    &(*rootp)->left :		/* T3: follow left branch */
 	    &(*rootp)->right;		/* T4: follow right branch */
     }
-    q = (node *) malloc(sizeof(node));	/* T5: key not found */
+    q = malloc(sizeof(node));	/* T5: key not found */
     if (q != (struct node_t *)0) {	/* make new node */
 	*rootp = q;			/* link new node to old */
 	q->key = key;			/* initialize new node */

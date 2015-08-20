@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_raw.c,v 1.10 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: svc_raw.c,v 1.11 2015/08/20 21:49:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -76,7 +76,7 @@ svcraw_create(void)
 	struct svcraw_private *srp = svcraw_private;
 
 	if (srp == NULL) {
-		srp = (struct svcraw_private *)calloc(1, sizeof (*srp));
+		srp = calloc(1, sizeof (*srp));
 		if (srp == NULL)
 			return (NULL);
 	}

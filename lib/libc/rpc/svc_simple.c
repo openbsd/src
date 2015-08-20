@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_simple.c,v 1.11 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: svc_simple.c,v 1.12 2015/08/20 21:49:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -79,7 +79,7 @@ registerrpc(int prognum, int versnum, int procnum, char *(*progname)(),
 		    prognum, versnum);
 		return (-1);
 	}
-	pl = (struct proglst *)malloc(sizeof(struct proglst));
+	pl = malloc(sizeof(struct proglst));
 	if (pl == NULL) {
 		(void) fprintf(stderr, "registerrpc: out of memory\n");
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.c,v 1.26 2014/10/08 05:29:07 deraadt Exp $ */
+/*	$OpenBSD: svc.c,v 1.27 2015/08/20 21:49:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -103,7 +103,7 @@ __xprt_register(SVCXPRT *xprt)
 
 		while (sock + 1 > size)
 			size += FD_SETSIZE;
-		xp = (SVCXPRT **)calloc(size, sizeof(SVCXPRT *));
+		xp = calloc(size, sizeof(SVCXPRT *));
 		if (xp == NULL)
 			return (0);
 		if (xports) {

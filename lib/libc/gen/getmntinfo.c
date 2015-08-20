@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntinfo.c,v 1.8 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: getmntinfo.c,v 1.9 2015/08/20 21:49:29 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ getmntinfo(struct statfs **mntbufp, int flags)
 		if (mntbuf)
 			free(mntbuf);
 		bufsize = (mntsize + 1) * sizeof(struct statfs);
-		if ((mntbuf = (struct statfs *)malloc(bufsize)) == 0) {
+		if ((mntbuf = malloc(bufsize)) == 0) {
 			bufsize = 0;
 			return (0);
 		}

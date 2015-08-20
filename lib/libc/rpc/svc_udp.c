@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_udp.c,v 1.20 2015/05/18 13:57:34 deraadt Exp $ */
+/*	$OpenBSD: svc_udp.c,v 1.21 2015/08/20 21:49:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -123,14 +123,14 @@ svcudp_bufcreate(int sock, u_int sendsz, u_int recvsz)
 			(void)close(sock);
 		return (NULL);
 	}
-	xprt = (SVCXPRT *)malloc(sizeof(SVCXPRT));
+	xprt = malloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
 		(void)fprintf(stderr, "svcudp_create: out of memory\n");
 		if (madesock)
 			(void)close(sock);
 		return (NULL);
 	}
-	su = (struct svcudp_data *)malloc(sizeof(*su));
+	su = malloc(sizeof(*su));
 	if (su == NULL) {
 		(void)fprintf(stderr, "svcudp_create: out of memory\n");
 		if (madesock)

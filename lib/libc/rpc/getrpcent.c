@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrpcent.c,v 1.18 2015/04/25 21:38:22 miod Exp $ */
+/*	$OpenBSD: getrpcent.c,v 1.19 2015/08/20 21:49:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -60,7 +60,7 @@ _rpcdata(void)
 	struct rpcdata *d = rpcdata;
 
 	if (d == NULL) {
-		d = (struct rpcdata *)calloc(1, sizeof (struct rpcdata));
+		d = calloc(1, sizeof (struct rpcdata));
 		rpcdata = d;
 	}
 	return (d);

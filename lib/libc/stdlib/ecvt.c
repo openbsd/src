@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecvt.c,v 1.8 2013/11/01 19:05:11 guenther Exp $	*/
+/*	$OpenBSD: ecvt.c,v 1.9 2015/08/20 21:49:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,7 +55,7 @@ __cvt(double value, int ndigit, int *decpt, int *sign, int fmode, int pad)
 	if (value == 0.0) {
 		*decpt = 1 - fmode;	/* 1 for 'e', 0 for 'f' */
 		*sign = 0;
-		if ((rve = s = (char *)malloc(siz)) == NULL)
+		if ((rve = s = malloc(siz)) == NULL)
 			return(NULL);
 		*rve++ = '0';
 		*rve = '\0';
@@ -73,7 +73,7 @@ __cvt(double value, int ndigit, int *decpt, int *sign, int fmode, int pad)
 		/* Make a local copy and adjust rve to be in terms of s */
 		if (pad && fmode)
 			siz += *decpt;
-		if ((s = (char *)malloc(siz)) == NULL) {
+		if ((s = malloc(siz)) == NULL) {
 			__freedtoa(p);
 			return(NULL);
 		}

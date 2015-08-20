@@ -1,4 +1,4 @@
-/*	$OpenBSD: vswprintf.c,v 1.4 2012/12/05 23:20:01 deraadt Exp $	*/
+/*	$OpenBSD: vswprintf.c,v 1.5 2015/08/20 21:49:29 deraadt Exp $	*/
 /*	$NetBSD: vswprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ vswprintf(wchar_t * __restrict s, size_t n, const wchar_t * __restrict fmt,
 	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
-	f._bf._base = f._p = (unsigned char *)malloc(128);
+	f._bf._base = f._p = malloc(128);
 	if (f._bf._base == NULL) {
 		errno = ENOMEM;
 		return (-1);
