@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.57 2015/06/29 02:54:51 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.58 2015/08/20 03:43:29 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 
 #ifndef _LOCORE
 #ifdef _KERNEL
-#include <sys/mman.h>
 #include <machine/cpufunc.h>
 #include <machine/segments.h>
 #endif /* _KERNEL */

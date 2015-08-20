@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.76 2015/07/02 16:14:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.77 2015/08/20 03:43:29 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 #define	_MACHINE_PMAP_H_
 
 #ifdef _KERNEL
-#include <sys/mman.h>
 #include <machine/cpufunc.h>
 #include <machine/segments.h>
 #endif
