@@ -1015,6 +1015,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net
+./usr/libdata/perl5/site_perl/vax-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/ethertypes.ph

@@ -1549,6 +1549,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/ethertypes.ph

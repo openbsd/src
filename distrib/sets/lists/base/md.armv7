@@ -1647,6 +1647,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net
+./usr/libdata/perl5/site_perl/arm-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/ethertypes.ph

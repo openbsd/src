@@ -1636,6 +1636,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net
+./usr/libdata/perl5/site_perl/hppa-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/net/ethertypes.ph

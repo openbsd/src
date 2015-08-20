@@ -1671,6 +1671,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net
+./usr/libdata/perl5/site_perl/i386-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/ethertypes.ph

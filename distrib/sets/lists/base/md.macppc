@@ -1636,6 +1636,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/ethertypes.ph

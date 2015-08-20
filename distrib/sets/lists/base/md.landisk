@@ -1593,6 +1593,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/net
+./usr/libdata/perl5/site_perl/sh-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/net/ethertypes.ph

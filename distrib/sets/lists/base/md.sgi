@@ -1630,6 +1630,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net
+./usr/libdata/perl5/site_perl/mips64-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/net/ethertypes.ph

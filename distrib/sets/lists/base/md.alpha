@@ -1634,6 +1634,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net
+./usr/libdata/perl5/site_perl/alpha-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/ethertypes.ph

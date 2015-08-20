@@ -1128,6 +1128,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/art.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/bpf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/bpfdesc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/ethertypes.ph
