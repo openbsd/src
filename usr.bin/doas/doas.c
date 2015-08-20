@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.36 2015/08/13 16:27:22 espie Exp $ */
+/* $OpenBSD: doas.c,v 1.37 2015/08/20 18:42:11 rzalamena Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -280,10 +280,10 @@ copyenv(const char **oldenvp, struct rule *rule)
 }
 
 static void __dead
-fail(void)
+permfail(void)
 {
-	fprintf(stderr, "Permission denied\n");
-	exit(1);
+	errno = EPERM;
+	err(1, NULL);
 }
 
 static void __dead
@@ -401,7 +401,7 @@ main(int argc, char **argv, char **envp)
 	    (const char**)argv + 1)) {
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
 		    "failed command for %s: %s", myname, cmdline);
-		fail();
+		permfail();
 	}
 
 	if (!(rule->options & NOPASS)) {
@@ -410,7 +410,7 @@ main(int argc, char **argv, char **envp)
 		if (!auth_userokay(myname, NULL, NULL, NULL)) {
 			syslog(LOG_AUTHPRIV | LOG_NOTICE,
 			    "failed password for %s", myname);
-			fail();
+			permfail();
 		}
 	}
 	envp = copyenv((const char **)envp, rule);
