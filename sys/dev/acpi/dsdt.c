@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.217 2015/05/04 10:42:06 jmatthew Exp $ */
+/* $OpenBSD: dsdt.c,v 1.218 2015/08/20 20:50:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2260,7 +2260,8 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 		break;
 	}
 
-	pi.addr = rgn->v_opregion.iobase + ((bpos >> 3) & ~(sz - 1));
+	pi.addr = (rgn->v_opregion.iobase + (bpos >> 3)) & ~(sz - 1);
+	bpos += ((rgn->v_opregion.iobase & (sz - 1)) << 3);
 	bpos &= ((sz << 3) - 1);
 
 	if (rgn->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
