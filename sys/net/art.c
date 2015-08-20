@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.2 2015/08/20 12:41:54 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.3 2015/08/20 12:51:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -126,27 +126,16 @@ art_attach(void **head, int off)
 }
 
 /*
- * Return a pointer to the address (key).  This is an heritage from the
- * BSD radix tree needed to skip the non-address fields from the flavor
- * of "struct sockaddr" used by this routing table.
- */
-static inline uint8_t *
-art_satoaddr(struct art_root *at, struct sockaddr *sa)
-{
-	return (((uint8_t *)sa) + at->ar_off);
-}
-
-/*
  * Return 1 if ``old'' and ``new`` are identical, 0 otherwise.
  */
 static inline int
 art_check_duplicate(struct art_root *ar, struct art_node *old,
     struct art_node *new)
 {
-	if (old == NULL || old->an_plen != new->an_plen)
+	if (old == NULL)
 		return (0);
 
-	if (memcmp(old->an_dst, new->an_dst, new->an_dst->sa_len) == 0)
+	if (old->an_plen == new->an_plen)
 		return (1);
 
 	return (0);
@@ -231,14 +220,11 @@ art_findex(struct art_table *at, uint8_t *addr)
  * Return the best existing match for a destination.
  */
 struct art_node *
-art_match(struct art_root *ar, struct sockaddr *dst)
+art_match(struct art_root *ar, uint8_t *addr)
 {
 	struct art_table	*at = ar->ar_root;
 	struct art_node		*dflt = NULL;
-	uint8_t			*addr;
 	int			 j;
-
-	addr = art_satoaddr(ar, dst);
 
 	/*
 	 * Iterate until we find a leaf.
@@ -274,16 +260,13 @@ art_match(struct art_root *ar, struct sockaddr *dst)
  * it does not exist.
  */
 struct art_node *
-art_lookup(struct art_root *ar, struct sockaddr *dst, int plen)
+art_lookup(struct art_root *ar, uint8_t *addr, int plen)
 {
 	struct art_table	*at = ar->ar_root;
 	struct art_node		*an;
-	uint8_t			*addr;
 	int			 i, j;
 
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
-
-	addr = art_satoaddr(ar, dst);
 
 	/* Default route */
 	if (plen == 0)
@@ -314,11 +297,6 @@ art_lookup(struct art_root *ar, struct sockaddr *dst, int plen)
 	else
 		an = at->at_heap[i].node;
 
-	/* Make sure we've got a perfect match. */
-	if (an == NULL || an->an_plen != plen ||
-	    memcmp(an->an_dst, dst, dst->sa_len))
-		return (NULL);
-
 	return (an);
 }
 
@@ -330,14 +308,10 @@ art_lookup(struct art_root *ar, struct sockaddr *dst, int plen)
  * same destination/mask pair is already present.
  */
 struct art_node *
-art_insert(struct art_root *ar, struct art_node *an)
+art_insert(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 {
 	struct art_table	*at = ar->ar_root;
-	uint8_t			*addr;
-	int			 i, j, plen;
-
-	addr = art_satoaddr(ar, an->an_dst);
-	plen = an->an_plen;
+	int			 i, j;
 
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
 
@@ -424,15 +398,11 @@ art_table_insert(struct art_root *ar, struct art_table *at, int i,
  * Deletion API function.
  */
 struct art_node *
-art_delete(struct art_root *ar, struct art_node *an)
+art_delete(struct art_root *ar, struct art_node *an, uint8_t *addr, int plen)
 {
 	struct art_table	*at = ar->ar_root;
 	struct art_node		*dflt;
-	uint8_t			*addr;
-	int			 i, j, plen;
-
-	addr = art_satoaddr(ar, an->an_dst);
-	plen = an->an_plen;
+	int			 i, j;
 
 	KASSERT(plen >= 0 && plen <= ar->ar_alen);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.2 2015/08/20 12:39:43 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.3 2015/08/20 12:51:10 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -212,7 +212,8 @@ rtable_mpath_reprio(struct rtentry *rt, uint8_t newprio)
 
 struct pool		an_pool;	/* pool for ART node structures */
 
-static inline int	satoplen(struct art_root *, struct sockaddr *);
+static inline int	 satoplen(struct art_root *, struct sockaddr *);
+static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 
 void
 rtable_init(void)
@@ -232,20 +233,28 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 {
 	struct art_root			*ar;
 	struct art_node			*an;
+	uint8_t				*addr;
 	int				 plen;
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
 		return (NULL);
 
+	addr = satoaddr(ar, dst);
+
 	/* No need for a perfect match. */
 	if (mask == NULL) {
-		an = art_match(ar, dst);
+		an = art_match(ar, addr);
 	} else {
 		plen = satoplen(ar, mask);
 		if (plen == -1)
 			return (NULL);
-		an = art_lookup(ar, dst, plen);
+
+		an = art_lookup(ar, addr, plen);
+		/* Make sure we've got a perfect match. */
+		if (an == NULL || an->an_plen != plen ||
+		    memcmp(an->an_dst, dst, dst->sa_len))
+			return (NULL);
 	}
 
 	if (an == NULL)
@@ -259,12 +268,14 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
+	uint8_t				*addr;
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
 		return (NULL);
 
-	an = art_match(ar, dst);
+	addr = satoaddr(ar, dst);
+	an = art_match(ar, addr);
 	if (an == NULL)
 		return (NULL);
 
@@ -280,12 +291,14 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 #endif
 	struct art_root			*ar;
 	struct art_node			*an, *prev;
-	int				 plen = 0;
+	uint8_t				*addr;
+	int				 plen;
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
 		return (EAFNOSUPPORT);
 
+	addr = satoaddr(ar, dst);
 	plen = satoplen(ar, mask);
 	if (plen == -1)
 		return (EINVAL);
@@ -297,7 +310,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	an->an_dst = dst;
 	an->an_plen = plen;
 
-	prev = art_insert(ar, an);
+	prev = art_insert(ar, an, addr, plen);
 	if (prev == NULL) {
 		pool_put(&an_pool, an);
 		return (ESRCH);
@@ -387,6 +400,8 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 {
 	struct art_root			*ar;
 	struct art_node			*an = rt->rt_node;
+	uint8_t				*addr;
+	int				 plen;
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
@@ -424,7 +439,10 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	}
 #endif /* SMALL_KERNEL */
 
-	if (art_delete(ar, an) == NULL)
+	addr = satoaddr(ar, an->an_dst);
+	plen = an->an_plen;
+
+	if (art_delete(ar, an, addr, plen) == NULL)
 		return (ESRCH);
 
 	pool_put(&an_pool, an);
@@ -524,17 +542,22 @@ rtable_mpath_conflict(unsigned int rtableid, struct sockaddr *dst,
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt;
+	uint8_t				*addr;
 	int				 plen;
 
 	ar = rtable_get(rtableid, dst->sa_family);
 	if (ar == NULL)
 		return (EAFNOSUPPORT);
 
+	addr = satoaddr(ar, dst);
 	plen = satoplen(ar, mask);
 	if (plen == -1)
 		return (EINVAL);
-	an = art_lookup(ar, dst, plen);
-	if (an == NULL)
+
+	an = art_lookup(ar, addr, plen);
+	/* Make sure we've got a perfect match. */
+	if (an == NULL || an->an_plen != plen ||
+	    memcmp(an->an_dst, dst, dst->sa_len))
 		return (0);
 
 	LIST_FOREACH(rt, &an->an_rtlist, rt_next) {
@@ -571,6 +594,17 @@ rtable_mpath_reprio(struct rtentry *rt, uint8_t newprio)
 	/* XXX */
 }
 #endif /* SMALL_KERNEL */
+
+/*
+ * Return a pointer to the address (key).  This is an heritage from the
+ * BSD radix tree needed to skip the non-address fields from the flavor
+ * of "struct sockaddr" used by this routing table.
+ */
+static inline uint8_t *
+satoaddr(struct art_root *at, struct sockaddr *sa)
+{
+	return (((uint8_t *)sa) + at->ar_off);
+}
 
 /*
  * Return the prefix length of a mask.
