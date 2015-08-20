@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.36 2013/09/18 16:21:30 millert Exp $	*/
+/*	$OpenBSD: tset.c,v 1.37 2015/08/20 22:28:58 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -105,7 +105,7 @@ char *ttyname(int fd);
 #include <dump_entry.h>
 #include <transform.h>
 
-MODULE_ID("$Id: tset.c,v 1.36 2013/09/18 16:21:30 millert Exp $")
+MODULE_ID("$Id: tset.c,v 1.37 2015/08/20 22:28:58 deraadt Exp $")
 
 /*
  * SCO defines TIOCGSIZE and the corresponding struct.  Other systems (SunOS,
@@ -373,7 +373,7 @@ add_mapping(const char *port, char *arg)
     char *base = 0;
 
     copy = strdup(arg);
-    mapp = (MAP *) malloc(sizeof(MAP));
+    mapp = malloc(sizeof(MAP));
     if (copy == 0 || mapp == 0)
 	failed("malloc");
     mapp->next = 0;
