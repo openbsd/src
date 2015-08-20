@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.23 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.24 2015/08/20 22:05:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -227,7 +227,7 @@ nat_t_generate_nat_d_hash(struct message *msg, struct sockaddr *sa,
 
 	*hashlen = hash->hashsize;
 
-	res = malloc((unsigned long)*hashlen);
+	res = malloc(*hashlen);
 	if (!res) {
 		log_print("nat_t_generate_nat_d_hash: malloc (%lu) failed",
 		    (unsigned long)*hashlen);
