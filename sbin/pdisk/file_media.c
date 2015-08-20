@@ -427,7 +427,7 @@ step_file_iterator(MEDIA_ITERATOR m)
 		}
 #endif
 		/* generate result */
-		result = (char *) malloc(20);
+		result = malloc(20);
 		if (result != NULL) {
 		    /*
 		     * for DR3 we should actually iterate through:

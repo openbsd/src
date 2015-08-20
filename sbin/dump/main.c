@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2015/05/23 05:17:20 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2015/08/20 22:02:20 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -450,9 +450,9 @@ main(int argc, char *argv[])
 #endif
 	maxino = sblock->fs_ipg * sblock->fs_ncg;
 	mapsize = roundup(howmany(maxino, NBBY), TP_BSIZE);
-	usedinomap = (char *)calloc((unsigned) mapsize, sizeof(char));
-	dumpdirmap = (char *)calloc((unsigned) mapsize, sizeof(char));
-	dumpinomap = (char *)calloc((unsigned) mapsize, sizeof(char));
+	usedinomap = calloc((unsigned) mapsize, sizeof(char));
+	dumpdirmap = calloc((unsigned) mapsize, sizeof(char));
+	dumpinomap = calloc((unsigned) mapsize, sizeof(char));
 	tapesize = 3 * (howmany(mapsize * sizeof(char), TP_BSIZE) + 1);
 
 	nonodump = spcl.c_level < honorlevel;

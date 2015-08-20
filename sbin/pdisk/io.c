@@ -316,7 +316,7 @@ get_string(int eos)
     char *limit;
     int length;
 
-    ret_value = (char *) malloc(STRING_CHUNK);
+    ret_value = malloc(STRING_CHUNK);
     if (ret_value == NULL) {
 	error(errno, "can't allocate memory for string buffer");
 	return NULL;
@@ -328,7 +328,7 @@ get_string(int eos)
     for (s = ret_value; ; c = my_getch()) {
 	if (s >= limit) {
 	    // expand string
-	    limit = (char *) malloc(length+STRING_CHUNK);
+	    limit = malloc(length+STRING_CHUNK);
 	    if (limit == NULL) {
 		error(errno, "can't allocate memory for string buffer");
 		ret_value[length-1] = 0;

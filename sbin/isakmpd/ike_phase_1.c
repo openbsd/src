@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.74 2015/02/15 01:56:42 tedu Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.75 2015/08/20 22:02:21 deraadt Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -284,11 +284,11 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 	proto->xf_cnt = conf->cnt;
 	TAILQ_INIT(&proto->xfs);
 	for (i = 0; i < proto->xf_cnt; i++) {
-		pa = (struct proto_attr *)calloc(1, sizeof *pa);
+		pa = calloc(1, sizeof *pa);
 		if (!pa)
 			goto bail_out;
 		pa->len = transform_len[i];
-		pa->attrs = (u_int8_t *)malloc(pa->len);
+		pa->attrs = malloc(pa->len);
 		if (!pa->attrs) {
 			free(pa);
 			goto bail_out;

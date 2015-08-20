@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.39 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.40 2015/08/20 22:02:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -1240,7 +1240,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Allocate the space for the array of blocks to be relocated.
 	 */
- 	bp = (struct gfs_bpp *)calloc(((dupper-odupper) / sblock.fs_frag + 2),
+ 	bp = calloc(((dupper-odupper) / sblock.fs_frag + 2),
 	    sizeof(struct gfs_bpp));
 	if (bp == NULL)
 		errx(1, "calloc failed");
@@ -2211,7 +2211,7 @@ get_disklabel(int fd)
 
 	DBG_ENTER;
 
-	lab = (struct disklabel *)malloc(sizeof(struct disklabel));
+	lab = malloc(sizeof(struct disklabel));
 	if (!lab)
 		errx(1, "malloc failed");
 	if (ioctl(fd, DIOCGDINFO, (char *)lab) != 0)

@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.73 2015/01/16 06:39:59 deraadt Exp $	 */
+/* $OpenBSD: monitor.c,v 1.74 2015/08/20 22:02:21 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -555,7 +555,7 @@ m_priv_setsockopt(void)
 	must_read(&optname, sizeof optname);
 	must_read(&optlen, sizeof optlen);
 
-	optval = (char *)malloc(optlen);
+	optval = malloc(optlen);
 	if (!optval) {
 		log_print("m_priv_setsockopt: malloc failed");
 		close(sock);
@@ -598,7 +598,7 @@ m_priv_bind(void)
 	}
 
 	must_read(&namelen, sizeof namelen);
-	name = (struct sockaddr *)malloc(namelen);
+	name = malloc(namelen);
 	if (!name) {
 		log_print("m_priv_bind: malloc failed");
 		close(sock);

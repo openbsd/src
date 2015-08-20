@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.9 2013/11/22 04:12:48 deraadt Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.10 2015/08/20 22:02:21 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -80,7 +80,7 @@ scsireq_reset(scsireq_t *scsireq)
 scsireq_t *
 scsireq_new(void)
 {
-	scsireq_t *p = (scsireq_t *)malloc(sizeof(scsireq_t));
+	scsireq_t *p = malloc(sizeof(scsireq_t));
 
 	if (p)
 		scsireq_reset(p);

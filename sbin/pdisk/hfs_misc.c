@@ -171,7 +171,7 @@ get_HFS_name(partition_map *entry, int *kind)
 
     *kind = kHFS_not;
 
-    mdb = (struct mdb_record *) malloc(PBLOCK_SIZE);
+    mdb = malloc(PBLOCK_SIZE);
     if (mdb == NULL) {
 	error(errno, "can't allocate memory for MDB");
 	return NULL;
@@ -196,7 +196,7 @@ get_HFS_name(partition_map *entry, int *kind)
 	    // printf("%lu HFS\n", entry->disk_address);
 	    *kind = kHFS_std;
 	    len = mdb->drVN[0];
-	    name = (char *) malloc(len+1);
+	    name = malloc(len+1);
 	    strncpy(name, &mdb->drVN[1], len);
 	    name[len] = 0;
 	} else {
@@ -204,7 +204,7 @@ get_HFS_name(partition_map *entry, int *kind)
 	    // printf("%lu embedded HFS Plus\n", entry->disk_address);
 	    *kind = kHFS_embed;
 	    len = mdb->drVN[0];
-	    name = (char *) malloc(len+1);
+	    name = malloc(len+1);
 	    strncpy(name, &mdb->drVN[1], len);
 	    name[len] = 0;
 	}

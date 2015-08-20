@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.103 2013/11/22 04:12:47 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.104 2015/08/20 22:02:21 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -978,7 +978,7 @@ conf_report(void)
 	char           *current_section = (char *)0;
 	struct dumper  *dumper, *dnode;
 
-	dumper = dnode = (struct dumper *)calloc(1, sizeof *dumper);
+	dumper = dnode = calloc(1, sizeof *dumper);
 	if (!dumper)
 		goto mem_fail;
 
@@ -995,17 +995,15 @@ conf_report(void)
 						if (asprintf(&dnode->s, "[%s]",
 						    current_section) == -1)
 							goto mem_fail;
-						dnode->next = (struct dumper *)
-						    calloc(1,
-							sizeof(struct dumper));
+						dnode->next = calloc(1,
+						    sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)
 							goto mem_fail;
 
 						dnode->s = "";
-						dnode->next = (struct dumper *)
-						    calloc(1,
-							sizeof(struct dumper));
+						dnode->next = calloc(1,
+						    sizeof(struct dumper));
 						dnode = dnode->next;
 						if (!dnode)
 							goto mem_fail;
@@ -1014,8 +1012,7 @@ conf_report(void)
 				}
 				dnode->s = cb->tag;
 				dnode->v = cb->value;
-				dnode->next = (struct dumper *)
-				    calloc(1, sizeof(struct dumper));
+				dnode->next = calloc(1, sizeof(struct dumper));
 				dnode = dnode->next;
 				if (!dnode)
 					goto mem_fail;

@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.c,v 1.24 2015/01/16 06:39:58 deraadt Exp $	 */
+/* $OpenBSD: dnssec.c,v 1.25 2015/08/20 22:02:21 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -215,7 +215,7 @@ dns_get_key(int type, struct message *msg, int *keylen)
 			continue;
 		}
 		/* This key seems to fit our requirements... */
-		key_rr.data = (char *)malloc(key_rr.datalen);
+		key_rr.data = malloc(key_rr.datalen);
 		if (!key_rr.data) {
 			log_error("dns_get_key: malloc (%d) failed",
 			    key_rr.datalen);

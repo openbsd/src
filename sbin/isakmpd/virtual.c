@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.31 2011/02/03 08:49:46 phessler Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.32 2015/08/20 22:02:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -228,7 +228,7 @@ virtual_bind(const struct sockaddr *addr)
 	char	*stport;
 	in_port_t port;
 
-	v = (struct virtual_transport *)calloc(1, sizeof *v);
+	v = calloc(1, sizeof *v);
 	if (!v) {
 		log_error("virtual_bind: calloc(1, %lu) failed",
 		    (unsigned long)sizeof *v);
@@ -590,7 +590,7 @@ virtual_create(char *name)
 		}
 	}
 
-	v = (struct virtual_transport *)calloc(1, sizeof *v);
+	v = calloc(1, sizeof *v);
 	if (!v) {
 		log_error("virtual_create: calloc(1, %lu) failed",
 		    (unsigned long)sizeof *v);

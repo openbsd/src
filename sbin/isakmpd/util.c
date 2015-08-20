@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.68 2014/01/23 01:04:28 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.69 2015/08/20 22:02:21 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -153,7 +153,7 @@ raw2hex(u_int8_t *buf, size_t sz)
 	char *s;
 	size_t i;
 
-	if ((s = (char *)malloc(sz * 2 + 1)) == NULL) {
+	if ((s = malloc(sz * 2 + 1)) == NULL) {
 		log_error("raw2hex: malloc (%lu) failed", (unsigned long)sz * 2 + 1);
 		return NULL;
 	}

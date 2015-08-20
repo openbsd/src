@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.121 2014/10/09 02:38:56 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.122 2015/08/20 22:02:21 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1038,7 +1038,7 @@ sa_validate_proto_xf(struct proto *match, struct payload *xf, int phase)
 		    "protocol mismatch", match, match->no));
 		return 1;
 	}
-	avs = (struct attr_validation_state *)calloc(1, sizeof *avs);
+	avs = calloc(1, sizeof *avs);
 	if (!avs) {
 		log_error("sa_validate_proto_xf: calloc (1, %lu)",
 		    (unsigned long)sizeof *avs);

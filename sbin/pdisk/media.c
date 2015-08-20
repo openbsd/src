@@ -73,7 +73,7 @@ allocate_media_kind(void)
 MEDIA
 new_media(long size)
 {
-    return (MEDIA) malloc(size);
+    return malloc(size);
 }
 
 
@@ -169,5 +169,5 @@ os_reload_media(MEDIA m)
 MEDIA_ITERATOR
 new_media_iterator(long size)
 {
-    return (MEDIA_ITERATOR) malloc(size);
+    return malloc(size);
 }

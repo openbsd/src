@@ -1,4 +1,4 @@
-/*	$OpenBSD: swaplist.c,v 1.10 2015/01/16 06:40:01 deraadt Exp $	*/
+/*	$OpenBSD: swaplist.c,v 1.11 2015/08/20 22:02:21 deraadt Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ list_swap(int pri, int kflag, int pflag, int dolong)
 	if (nswap < 1)
 		errx(1, "no swap devices configured");
 
-	fsep = sep = (struct swapent *)calloc(nswap, sizeof(*sep));
+	fsep = sep = calloc(nswap, sizeof(*sep));
 	if (sep == NULL)
 		err(1, "calloc");
 	rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);

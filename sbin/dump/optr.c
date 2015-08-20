@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.37 2015/05/23 05:17:20 guenther Exp $	*/
+/*	$OpenBSD: optr.c,v 1.38 2015/08/20 22:02:20 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -274,7 +274,7 @@ allocfsent(struct fstab *fs)
 {
 	struct fstab *new;
 
-	new = (struct fstab *)malloc(sizeof(*fs));
+	new = malloc(sizeof(*fs));
 	if (new == NULL ||
 	    (new->fs_file = strdup(fs->fs_file)) == NULL ||
 	    (new->fs_type = strdup(fs->fs_type)) == NULL ||
@@ -312,7 +312,7 @@ getfstab(void)
 		    strcmp(fs->fs_type, FSTAB_RQ))
 			continue;
 		fs = allocfsent(fs);
-		if ((pf = (struct pfstab *)malloc(sizeof(*pf))) == NULL)
+		if ((pf = malloc(sizeof(*pf))) == NULL)
 			quit("%s\n", strerror(errno));
 		pf->pf_fstab = fs;
 		pf->pf_next = table;

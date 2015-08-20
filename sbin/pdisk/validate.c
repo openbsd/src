@@ -152,7 +152,7 @@ new_range_list_item(enum range_state state, int valid, u32 low, u32 high)
 {
     range_list *item;
 
-    item = (range_list *) malloc(sizeof(struct range_list));
+    item = malloc(sizeof(struct range_list));
     item->next = 0;
     item->prev = 0;
     item->state = state;

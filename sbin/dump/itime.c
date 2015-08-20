@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.21 2015/05/23 05:17:20 guenther Exp $	*/
+/*	$OpenBSD: itime.c,v 1.22 2015/08/20 22:02:20 deraadt Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ readdumptimes(FILE *df)
 	struct	dumptime *dtwalk;
 
 	for (;;) {
-		dtwalk = (struct dumptime *)calloc(1, sizeof(struct dumptime));
+		dtwalk = calloc(1, sizeof(struct dumptime));
 		if (getrecord(df, &(dtwalk->dt_value)) < 0) {
 			free(dtwalk);
 			break;
@@ -111,8 +111,7 @@ readdumptimes(FILE *df)
 	 *	arrayify the list, leaving enough room for the additional
 	 *	record that we may have to add to the ddate structure
 	 */
-	ddatev = (struct dumpdates **)
-		calloc((unsigned) (nddates + 1), sizeof(struct dumpdates *));
+	ddatev = calloc((unsigned) (nddates + 1), sizeof(struct dumpdates *));
 	dtwalk = dthead;
 	for (i = nddates - 1; i >= 0; i--, dtwalk = dtwalk->dt_next)
 		ddatev[i] = &dtwalk->dt_value;
@@ -190,8 +189,7 @@ putdumptime(void)
 	 *	construct the new upper bound;
 	 *	Enough room has been allocated.
 	 */
-	dtwalk = ddatev[nddates] =
-		(struct dumpdates *)calloc(1, sizeof(struct dumpdates));
+	dtwalk = ddatev[nddates] = calloc(1, sizeof(struct dumpdates));
 	nddates += 1;
   found:
 	(void) strlcpy(dtwalk->dd_name, fname, sizeof(dtwalk->dd_name));

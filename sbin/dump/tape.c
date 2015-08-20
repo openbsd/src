@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.42 2015/01/20 18:22:20 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.43 2015/08/20 22:02:20 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -138,8 +138,7 @@ alloctape(void)
 	 * Align tape buffer on page boundary to speed up tape write().
 	 */
 	for (i = 0; i <= SLAVES; i++) {
-		buf = (char *)
-		    malloc((unsigned)(reqsiz + writesize + pgoff + TP_BSIZE));
+		buf = malloc((unsigned)(reqsiz + writesize + pgoff + TP_BSIZE));
 		if (buf == NULL)
 			return(0);
 		slaves[i].tblock = (char (*)[TP_BSIZE])

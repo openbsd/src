@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.25 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.26 2015/08/20 22:02:20 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ setup(char *dev)
 		    (unsigned)(maxino + 1));
 		goto badsblabel;
 	}
-	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
+	lncntp = calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
 		printf("cannot alloc %u bytes for lncntp\n",
 			(unsigned)((maxino + 1) * sizeof(int16_t)));
@@ -229,10 +229,8 @@ setup(char *dev)
 	}
 	inplast = 0;
 	listmax = numdirs + 10;
-	inpsort = (struct inoinfo **)calloc((unsigned)listmax,
-		sizeof(struct inoinfo *));
-	inphead = (struct inoinfo **)calloc((unsigned)numdirs,
-		sizeof(struct inoinfo *));
+	inpsort = calloc((unsigned)listmax, sizeof(struct inoinfo *));
+	inphead = calloc((unsigned)numdirs, sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
 		printf("cannot alloc %u bytes for inphead\n",
 			(unsigned)(numdirs * sizeof(struct inoinfo *)));

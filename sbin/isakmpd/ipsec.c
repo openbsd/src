@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.143 2015/01/16 06:39:58 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.144 2015/08/20 22:02:21 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -623,15 +623,13 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct sa *sa)
 	/* Set source address/mask.  */
 	switch (src_af) {
 	case AF_INET:
-		isa->src_net = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in));
+		isa->src_net = calloc(1, sizeof(struct sockaddr_in));
 		if (!isa->src_net)
 			goto memfail;
 		isa->src_net->sa_family = AF_INET;
 		isa->src_net->sa_len = sizeof(struct sockaddr_in);
 
-		isa->src_mask = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in));
+		isa->src_mask = calloc(1, sizeof(struct sockaddr_in));
 		if (!isa->src_mask)
 			goto memfail;
 		isa->src_mask->sa_family = AF_INET;
@@ -639,15 +637,13 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct sa *sa)
 		break;
 
 	case AF_INET6:
-		isa->src_net = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in6));
+		isa->src_net = calloc(1, sizeof(struct sockaddr_in6));
 		if (!isa->src_net)
 			goto memfail;
 		isa->src_net->sa_family = AF_INET6;
 		isa->src_net->sa_len = sizeof(struct sockaddr_in6);
 
-		isa->src_mask = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in6));
+		isa->src_mask = calloc(1, sizeof(struct sockaddr_in6));
 		if (!isa->src_mask)
 			goto memfail;
 		isa->src_mask->sa_family = AF_INET6;
@@ -677,15 +673,13 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct sa *sa)
 	/* Set destination address.  */
 	switch (dst_af) {
 	case AF_INET:
-		isa->dst_net = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in));
+		isa->dst_net = calloc(1, sizeof(struct sockaddr_in));
 		if (!isa->dst_net)
 			goto memfail;
 		isa->dst_net->sa_family = AF_INET;
 		isa->dst_net->sa_len = sizeof(struct sockaddr_in);
 
-		isa->dst_mask = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in));
+		isa->dst_mask = calloc(1, sizeof(struct sockaddr_in));
 		if (!isa->dst_mask)
 			goto memfail;
 		isa->dst_mask->sa_family = AF_INET;
@@ -693,15 +687,13 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct sa *sa)
 		break;
 
 	case AF_INET6:
-		isa->dst_net = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in6));
+		isa->dst_net = calloc(1, sizeof(struct sockaddr_in6));
 		if (!isa->dst_net)
 			goto memfail;
 		isa->dst_net->sa_family = AF_INET6;
 		isa->dst_net->sa_len = sizeof(struct sockaddr_in6);
 
-		isa->dst_mask = (struct sockaddr *)calloc(1,
-		    sizeof(struct sockaddr_in6));
+		isa->dst_mask = calloc(1, sizeof(struct sockaddr_in6));
 		if (!isa->dst_mask)
 			goto memfail;
 		isa->dst_mask->sa_family = AF_INET6;
@@ -1734,7 +1726,7 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			    spisz, proto);
 			return -1;
 		}
-		spis = (u_int8_t *) calloc(nspis, spisz);
+		spis = calloc(nspis, spisz);
 		if (!spis) {
 			log_error("ipsec_handle_leftover_payload: malloc "
 			    "(%d) failed", nspis * spisz);

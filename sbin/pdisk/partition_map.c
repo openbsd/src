@@ -133,7 +133,7 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
     }
     *valid_file = 1;
 
-    map = (partition_map_header *) malloc(sizeof(partition_map_header));
+    map = malloc(sizeof(partition_map_header));
     if (map == NULL) {
 	error(errno, "can't allocate memory for open partition map");
 	close_media(m);
@@ -149,7 +149,7 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
     map->physical_block = media_granularity(m);	/* preflight */
     m = open_deblock_media(PBLOCK_SIZE, m);
     map->m = m;
-    map->misc = (Block0 *) malloc(PBLOCK_SIZE);
+    map->misc = malloc(PBLOCK_SIZE);
     if (map->misc == NULL) {
 	error(errno, "can't allocate memory for block zero buffer");
 	close_media(map->m);
@@ -237,7 +237,7 @@ read_partition_map(partition_map_header *map)
 
 //printf("called read_partition_map\n");
 //printf("logical = %d, physical = %d\n", map->logical_block, map->physical_block);
-    data = (DPME *) malloc(PBLOCK_SIZE);
+    data = malloc(PBLOCK_SIZE);
     if (data == NULL) {
 	error(errno, "can't allocate memory for disk buffers");
 	return -1;
@@ -286,7 +286,7 @@ read_partition_map(partition_map_header *map)
 	    ix++;
 	}
 
-	data = (DPME *) malloc(PBLOCK_SIZE);
+	data = malloc(PBLOCK_SIZE);
 	if (data == NULL) {
 	    error(errno, "can't allocate memory for disk buffers");
 	    return -1;
@@ -323,7 +323,7 @@ write_partition_map(partition_map_header *map)
 	result = write_block(map, 0, (char *)map->misc);
 	convert_block0(map->misc, 1);
     } else {
-	block = (char *) calloc(1, PBLOCK_SIZE);
+	block = calloc(1, PBLOCK_SIZE);
 	if (block != NULL) {
 	    result = write_block(map, 0, block);
 	    free(block);
@@ -355,7 +355,7 @@ add_data_to_map(struct dpme *data, long ix, partition_map_header *map)
     partition_map *entry;
 
 //printf("add data %d to map\n", ix);
-    entry = (partition_map *) malloc(sizeof(partition_map));
+    entry = malloc(sizeof(partition_map));
     if (entry == NULL) {
 	error(errno, "can't allocate memory for map entries");
 	return 0;
@@ -426,7 +426,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	return NULL;
     }
 
-    map = (partition_map_header *) malloc(sizeof(partition_map_header));
+    map = malloc(sizeof(partition_map_header));
     if (map == NULL) {
 	error(errno, "can't allocate memory for open partition map");
 	close_media(m);
@@ -523,7 +523,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
     }
     map->media_size = number;
 
-    map->misc = (Block0 *) calloc(1, PBLOCK_SIZE);
+    map->misc = calloc(1, PBLOCK_SIZE);
     if (map->misc == NULL) {
 	error(errno, "can't allocate memory for block zero buffer");
     } else {
@@ -531,7 +531,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	coerce_block0(map);
 	sync_device_size(map);
 	
-	data = (DPME *) calloc(1, PBLOCK_SIZE);
+	data = calloc(1, PBLOCK_SIZE);
 	if (data == NULL) {
 	    error(errno, "can't allocate memory for disk buffers");
 	} else {
@@ -725,7 +725,7 @@ create_data(const char *name, const char *dptype, u32 base, u32 length)
 {
     DPME *data;
 
-    data = (DPME *) calloc(1, PBLOCK_SIZE);
+    data = calloc(1, PBLOCK_SIZE);
     if (data == NULL) {
 	error(errno, "can't allocate memory for disk buffers");
     } else {
@@ -884,7 +884,7 @@ compute_device_size(partition_map_header *map, partition_map_header *oldmap)
 
     // else case
 
-    data = (char *) malloc(PBLOCK_SIZE);
+    data = malloc(PBLOCK_SIZE);
     if (data == NULL) {
 	error(errno, "can't allocate memory for try buffer");
 	x = 0;

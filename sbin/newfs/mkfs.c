@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.91 2015/04/18 18:28:37 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.92 2015/08/20 22:02:21 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	sblock.fs_cssize =
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
 
-	fscs = (struct csum *)calloc(1, sblock.fs_cssize);
+	fscs = calloc(1, sblock.fs_cssize);
 	if (fscs == NULL)
 		errx(31, "calloc failed");
 

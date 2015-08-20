@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.45 2015/01/16 06:39:56 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.46 2015/08/20 22:02:20 deraadt Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -1461,7 +1461,7 @@ device_smart_readlog(int argc, char *argv[])
 		 * the latest one.
 		 */
 		nsect = nerr / 5 + (nerr % 5 != 0 ? 1 : 0);
-		if ((newbuf = (u_int8_t *)calloc(nsect, DEV_BSIZE)) == NULL)
+		if ((newbuf = calloc(nsect, DEV_BSIZE)) == NULL)
 			err(1, "calloc()");
 		memset(&req, 0, sizeof(req));
 		req.flags = ATACMD_READ;

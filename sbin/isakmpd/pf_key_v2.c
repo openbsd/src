@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.194 2015/04/17 10:04:37 mikeb Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.195 2015/08/20 22:02:21 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -326,7 +326,7 @@ pf_key_v2_write(struct pf_key_v2_msg *pmsg)
 	struct sadb_msg *msg = TAILQ_FIRST(pmsg)->seg;
 	struct pf_key_v2_node *np = TAILQ_FIRST(pmsg);
 
-	iov = (struct iovec *) calloc(cnt, sizeof *iov);
+	iov = calloc(cnt, sizeof *iov);
 	if (!iov) {
 		log_error("pf_key_v2_write: malloc (%lu) failed",
 		    cnt * (unsigned long) sizeof *iov);
@@ -686,7 +686,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 		goto cleanup;
 
 	/* SPI */
-	ssa = (struct sadb_sa *)calloc(1, sizeof *ssa);
+	ssa = calloc(1, sizeof *ssa);
 	if (!ssa) {
 		log_print("pf_key_v2_get_kernel_sa: calloc(1, %lu) failed",
 		    (unsigned long)sizeof *ssa);
@@ -1378,7 +1378,7 @@ nodid:
 	/* Add a pf tag to matching packets of this SA. */
 	if (sa->tag != NULL) {
 		len = sizeof(*stag) + PF_KEY_V2_ROUND(strlen(sa->tag) + 1);
-		if ((stag = (struct sadb_x_tag *)calloc(1, len)) == NULL)
+		if ((stag = calloc(1, len)) == NULL)
 			goto cleanup;
 		stag->sadb_x_tag_exttype = SADB_X_EXT_TAG;
 		stag->sadb_x_tag_len = len / PF_KEY_V2_CHUNK;

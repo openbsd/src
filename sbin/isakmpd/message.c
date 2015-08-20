@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.127 2014/10/09 02:38:56 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.128 2015/08/20 22:02:21 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -119,7 +119,7 @@ message_alloc(struct transport *t, u_int8_t *buf, size_t sz)
 	 * We use calloc(3) because it zeroes the structure which we rely on in
 	 * message_free when determining what sub-allocations to free.
 	 */
-	msg = (struct message *)calloc(1, sizeof *msg);
+	msg = calloc(1, sizeof *msg);
 	if (!msg)
 		return 0;
 	msg->iov = calloc(1, sizeof *msg->iov);
@@ -140,8 +140,7 @@ message_alloc(struct transport *t, u_int8_t *buf, size_t sz)
 	    ISAKMP_HDR_NEXT_PAYLOAD_OFF;
 	msg->transport = t;
 	transport_reference(t);
-	msg->payload = (struct payload_head *)calloc(ISAKMP_PAYLOAD_MAX,
-	    sizeof *msg->payload);
+	msg->payload = calloc(ISAKMP_PAYLOAD_MAX, sizeof *msg->payload);
 	if (!msg->payload) {
 		message_free(msg);
 		return 0;

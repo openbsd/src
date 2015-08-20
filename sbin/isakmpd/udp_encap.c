@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.22 2014/01/22 03:09:31 deraadt Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.23 2015/08/20 22:02:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -111,7 +111,7 @@ udp_encap_make(struct sockaddr *laddr)
 
 	t = calloc(1, sizeof *t);
 	if (!t) {
-		log_print("udp_encap_make: malloc (%lu) failed",
+		log_print("udp_encap_make: malloc(%lu) failed",
 		    (unsigned long)sizeof *t);
 		free(laddr);
 		return 0;
@@ -421,11 +421,10 @@ udp_encap_send_message(struct message *msg, struct transport *t)
 
 	if (msg) {
 		/* Construct new iov array, prefixing NULL-ESP Marker.  */
-		new_iov = (struct iovec *)calloc (msg->iovlen + 1,
-		    sizeof *new_iov);
+		new_iov = calloc(msg->iovlen + 1, sizeof *new_iov);
 		if (!new_iov) {
 			log_error ("udp_encap_send_message: "
-			    "calloc (%lu, %lu) failed",
+			    "calloc(%lu, %lu) failed",
 			    (unsigned long)msg->iovlen + 1,
 			    (unsigned long)sizeof *new_iov);
 			return -1;

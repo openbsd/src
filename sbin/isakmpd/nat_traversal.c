@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.22 2014/11/19 13:35:37 krw Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.23 2015/08/20 22:02:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -106,7 +106,7 @@ nat_t_setup_hashes(void)
 	/* Populate isakmp_nat_t_cap with hashes.  */
 	for (i = 0; i < n; i++) {
 		isakmp_nat_t_cap[i].hashsize = hash->hashsize;
-		isakmp_nat_t_cap[i].hash = (char *)malloc(hash->hashsize);
+		isakmp_nat_t_cap[i].hash = malloc(hash->hashsize);
 		if (!isakmp_nat_t_cap[i].hash) {
 			log_error("nat_t_setup_hashes: malloc (%lu) failed",
 			    (unsigned long)hash->hashsize);
@@ -227,7 +227,7 @@ nat_t_generate_nat_d_hash(struct message *msg, struct sockaddr *sa,
 
 	*hashlen = hash->hashsize;
 
-	res = (u_int8_t *)malloc((unsigned long)*hashlen);
+	res = malloc((unsigned long)*hashlen);
 	if (!res) {
 		log_print("nat_t_generate_nat_d_hash: malloc (%lu) failed",
 		    (unsigned long)*hashlen);

@@ -276,7 +276,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 	printf("%2ld: %*.32s", entry->disk_address, type_length, p->dpme_type);
     }
 
-    buf = (char *) malloc(name_length+1);
+    buf = malloc(name_length+1);
     if (entry->HFS_name == NULL || fflag == 0) {
 	strncpy(buf, p->dpme_name, name_length);
 	buf[name_length] = 0;
@@ -681,7 +681,7 @@ display_patches(partition_map *entry)
     m = entry->the_map->m;
     offset = ((long long) entry->data->dpme_pblock_start) * entry->the_map->logical_block;
     if (patch_block == NULL) {
-	patch_block = (unsigned char *) malloc(PBLOCK_SIZE);
+	patch_block = malloc(PBLOCK_SIZE);
 	if (patch_block == NULL) {
 	    error(errno, "can't allocate memory for patch block buffer");
 	    return;
@@ -695,7 +695,7 @@ display_patches(partition_map *entry)
     if (p->numPatchBlocks != 1) {
 	i = p->numPatchBlocks;
 	free(patch_block);
-	patch_block = (unsigned char *) malloc(PBLOCK_SIZE*i);
+	patch_block = malloc(PBLOCK_SIZE*i);
 	if (patch_block == NULL) {
 	    error(errno, "can't allocate memory for patch blocks buffer");
 	    return;

@@ -947,7 +947,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     	    free(display_block);
     	    display_g = 0;
 	}
-	display_block = (unsigned char *) malloc(g);
+	display_block = malloc(g);
 	if (display_block == NULL) {
 	    error(errno, "can't allocate memory for display block buffer");
 	    goto xit;

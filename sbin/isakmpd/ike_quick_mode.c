@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.108 2014/10/09 02:38:56 deraadt Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.109 2015/08/20 22:02:21 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -756,8 +756,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 			proto->xf_cnt = transform_cnt[prop_no];
 			TAILQ_INIT(&proto->xfs);
 			for (xf_no = 0; xf_no < proto->xf_cnt; xf_no++) {
-				pa = (struct proto_attr *)calloc(1,
-				    sizeof *pa);
+				pa = calloc(1, sizeof *pa);
 				if (!pa) {
 					if (proto->data)
 						free(proto->data);
@@ -765,7 +764,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 					goto bail_out;
 				}
 				pa->len = transform_len[prop_no][xf_no];
-				pa->attrs = (u_int8_t *)malloc(pa->len);
+				pa->attrs = malloc(pa->len);
 				if (!pa->attrs) {
 					if (proto->data)
 						free(proto->data);

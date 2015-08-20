@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.203 2015/08/15 17:16:10 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.204 2015/08/20 22:02:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -573,7 +573,7 @@ makebootarea(char *boot, struct disklabel *dp)
 	if (bootsize > 0) {
 		/* XXX assume d_secsize is a power of two */
 		bootsize = (bootsize + dp->d_secsize-1) & ~(dp->d_secsize-1);
-		bootbuf = (char *)malloc((size_t)bootsize);
+		bootbuf = malloc((size_t)bootsize);
 		if (bootbuf == NULL)
 			err(4, "%s", xxboot);
 		if (read(b, bootbuf, bootsize) < 0) {

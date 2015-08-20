@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.24 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.25 2015/08/20 22:02:20 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ bufinit(void)
 	if (bufcnt < MINBUFS)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
-		bp = (struct bufarea *)malloc(sizeof(struct bufarea));
+		bp = malloc(sizeof(struct bufarea));
 		bufp = malloc((unsigned int)sblock.e2fs_bsize);
 		if (bp == NULL || bufp == NULL) {
 			free(bp);
