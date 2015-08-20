@@ -695,7 +695,7 @@ display_patches(partition_map *entry)
     if (p->numPatchBlocks != 1) {
 	i = p->numPatchBlocks;
 	free(patch_block);
-	patch_block = malloc(PBLOCK_SIZE*i);
+	patch_block = reallocarray(NULL, i, PBLOCK_SIZE);
 	if (patch_block == NULL) {
 	    error(errno, "can't allocate memory for patch blocks buffer");
 	    return;

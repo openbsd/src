@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.80 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.81 2015/08/20 22:16:35 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1466,7 +1466,7 @@ get_host(char *cp, struct grouplist *grp, struct grouplist *tgrp)
 	i = 1;
 	while (*addrp++)
 		i++;
-	naddrp = nhp->h_addr_list = malloc(i*sizeof(char *));
+	naddrp = nhp->h_addr_list = reallocarray(NULL, i, sizeof(char *));
 	if (naddrp == NULL)
 		out_of_mem();
 	addrp = hp->h_addr_list;
