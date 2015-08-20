@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2015/01/21 22:21:05 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -183,7 +183,7 @@ const char *
 print_time(struct timeval *a, struct timeval *b, char *buf, size_t len)
 {
 	struct timeval		tv;
-	u_long			h, sec, min;
+	unsigned long		h, sec, min;
 
 	timerclear(&tv);
 	timersub(a, b, &tv);
@@ -196,7 +196,7 @@ print_time(struct timeval *a, struct timeval *b, char *buf, size_t len)
 }
 
 const char *
-printb_flags(const u_int32_t v, const char *bits)
+printb_flags(const uint32_t v, const char *bits)
 {
 	static char	 buf[2][BUFSIZ];
 	static int	 idx = 0;
@@ -219,7 +219,8 @@ printb_flags(const u_int32_t v, const char *bits)
 					if (c == '_')
 						*p++ = ' ';
 					else
-						*p++ = tolower((u_char)c);
+						*p++ =
+						    tolower((unsigned char)c);
 				}
 			} else
 				for (; *bits > 32; bits++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.96 2015/07/31 00:10:51 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.97 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -152,7 +152,7 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 	if (strncmp(ba->kv_value, "Basic ", strlen("Basic ")) != 0)
 		goto done;
 
-	if (b64_pton(strchr(ba->kv_value, ' ') + 1, (u_int8_t *)decoded,
+	if (b64_pton(strchr(ba->kv_value, ' ') + 1, (uint8_t *)decoded,
 	    sizeof(decoded)) <= 0)
 		goto done;
 
@@ -733,7 +733,7 @@ server_http_parsehost(char *host, char *buf, size_t len, int *portval)
 }
 
 void
-server_abort_http(struct client *clt, u_int code, const char *msg)
+server_abort_http(struct client *clt, unsigned int code, const char *msg)
 {
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct bufferevent	*bev = clt->clt_bev;
@@ -1226,7 +1226,7 @@ server_getlocation(struct client *clt, const char *path)
 }
 
 int
-server_response_http(struct client *clt, u_int code,
+server_response_http(struct client *clt, unsigned int code,
     struct media_type *media, off_t size, time_t mtime)
 {
 	struct server_config	*srv_conf = clt->clt_srv_conf;
@@ -1397,7 +1397,7 @@ server_httpmethod_byname(const char *name)
 }
 
 const char *
-server_httpmethod_byid(u_int id)
+server_httpmethod_byid(unsigned int id)
 {
 	const char	*name = "<UNKNOWN>";
 	int		 i;
@@ -1426,7 +1426,7 @@ server_httpmethod_cmp(const void *a, const void *b)
 }
 
 const char *
-server_httperror_byid(u_int id)
+server_httperror_byid(unsigned int id)
 {
 	struct http_error	 error, *res;
 
@@ -1450,7 +1450,7 @@ server_httperror_cmp(const void *a, const void *b)
 }
 
 int
-server_log_http(struct client *clt, u_int code, size_t len)
+server_log_http(struct client *clt, unsigned int code, size_t len)
 {
 	static char		 tstamp[64];
 	static char		 ip[INET6_ADDRSTRLEN];

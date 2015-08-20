@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.63 2015/08/03 11:45:17 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.64 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -76,7 +76,7 @@ struct server_fcgi_param {
 	uint8_t		buf[FCGI_RECORD_SIZE];
 };
 
-int	server_fcgi_header(struct client *, u_int);
+int	server_fcgi_header(struct client *, unsigned int);
 void	server_fcgi_read(struct bufferevent *, void *);
 int	server_fcgi_writeheader(struct client *, struct kv *, void *);
 int	server_fcgi_writechunk(struct client *);
@@ -588,7 +588,7 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 }
 
 int
-server_fcgi_header(struct client *clt, u_int code)
+server_fcgi_header(struct client *clt, unsigned int code)
 {
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor	*desc = clt->clt_descreq;

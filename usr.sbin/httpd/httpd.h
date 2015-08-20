@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.96 2015/08/03 11:45:17 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.97 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -97,8 +97,8 @@ enum httpchunk {
 #endif
 
 struct ctl_flags {
-	u_int8_t	 cf_opts;
-	u_int32_t	 cf_flags;
+	uint8_t		 cf_opts;
+	uint32_t	 cf_flags;
 };
 
 enum key_type {
@@ -122,7 +122,7 @@ struct kv {
 
 #define KV_FLAG_INVALID		 0x01
 #define KV_FLAG_GLOBBING	 0x02
-	u_int8_t		 kv_flags;
+	uint8_t			 kv_flags;
 
 	struct kvlist		 kv_children;
 	struct kv		*kv_parent;
@@ -133,7 +133,7 @@ struct kv {
 
 struct portrange {
 	in_port_t		 val[2];
-	u_int8_t		 op;
+	uint8_t			 op;
 };
 
 struct address {
@@ -186,8 +186,8 @@ struct imsgev {
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
-	u_int8_t		 flags;
-	u_int			 waiting;
+	uint8_t			 flags;
+	unsigned int		 waiting;
 #define CTL_CONN_NOTIFY		 0x01
 	struct imsgev		 iev;
 
@@ -238,11 +238,11 @@ struct privsep {
 	struct imsgev			*ps_ievs[PROC_MAX];
 	const char			*ps_title[PROC_MAX];
 	pid_t				 ps_pid[PROC_MAX];
-	u_int8_t			 ps_what[PROC_MAX];
+	uint8_t				 ps_what[PROC_MAX];
 
-	u_int				 ps_instances[PROC_MAX];
-	u_int				 ps_ninstances;
-	u_int				 ps_instance;
+	unsigned int			 ps_instances[PROC_MAX];
+	unsigned int			 ps_ninstances;
+	unsigned int			 ps_instance;
 
 	struct control_sock		 ps_csock;
 	struct control_socks		 ps_rcsocks;
@@ -268,7 +268,7 @@ struct privsep_proc {
 	pid_t			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	void			(*p_shutdown)(void);
-	u_int			 p_instance;
+	unsigned int		 p_instance;
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	struct httpd		*p_env;
@@ -281,11 +281,11 @@ enum fcgistate {
 };
 
 struct client {
-	u_int32_t		 clt_id;
+	uint32_t		 clt_id;
 	pid_t			 clt_pid;
 	void			*clt_srv;
 	void			*clt_srv_conf;
-	u_int32_t		 clt_srv_id;
+	uint32_t		 clt_srv_id;
 	struct sockaddr_storage	 clt_srv_ss;
 	struct str_match	 clt_srv_match;
 
@@ -306,7 +306,7 @@ struct client {
 
 	off_t			 clt_toread;
 	size_t			 clt_headerlen;
-	u_int			 clt_persist;
+	unsigned int		 clt_persist;
 	int			 clt_line;
 	int			 clt_done;
 	int			 clt_chunk;
@@ -389,7 +389,7 @@ enum log_format {
 struct log_file {
 	char			log_name[NAME_MAX];
 	int			log_fd;
-	u_int32_t		log_id;
+	uint32_t		log_id;
 	TAILQ_ENTRY(log_file)	log_entry;
 };
 TAILQ_HEAD(log_files, log_file) log_files;
@@ -405,14 +405,14 @@ RB_HEAD(mediatypes, media_type);
 
 struct auth {
 	char			 auth_htpasswd[PATH_MAX];
-	u_int32_t		 auth_id;
+	uint32_t		 auth_id;
 	TAILQ_ENTRY(auth)	 auth_entry;
 };
 TAILQ_HEAD(serverauth, auth);
 
 struct server_config {
-	u_int32_t		 id;
-	u_int32_t		 parent_id;
+	uint32_t		 id;
+	uint32_t		 parent_id;
 	char			 name[HOST_NAME_MAX+1];
 	char			 location[NAME_MAX];
 	char			 index[NAME_MAX];
@@ -426,34 +426,34 @@ struct server_config {
 	struct sockaddr_storage	 ss;
 	int			 prefixlen;
 	struct timeval		 timeout;
-	u_int32_t		 maxrequests;
+	uint32_t		 maxrequests;
 	size_t			 maxrequestbody;
 
-	u_int8_t		*tls_cert;
+	uint8_t			*tls_cert;
 	size_t			 tls_cert_len;
 	char			*tls_cert_file;
 	char			 tls_ciphers[NAME_MAX];
 	char			 tls_dhe_params[NAME_MAX];
 	char			 tls_ecdhe_curve[NAME_MAX];
-	u_int8_t		*tls_key;
+	uint8_t			*tls_key;
 	size_t			 tls_key_len;
 	char			*tls_key_file;
-	u_int32_t		 tls_protocols;
+	uint32_t		 tls_protocols;
 
-	u_int32_t		 flags;
+	uint32_t		 flags;
 	int			 strip;
-	u_int8_t		 tcpflags;
+	uint8_t			 tcpflags;
 	int			 tcpbufsiz;
 	int			 tcpbacklog;
-	u_int8_t		 tcpipttl;
-	u_int8_t		 tcpipminttl;
+	uint8_t			 tcpipttl;
+	uint8_t			 tcpipminttl;
 
 	enum log_format		 logformat;
 	struct log_file		*logaccess;
 	struct log_file		*logerror;
 
 	char			 auth_realm[NAME_MAX];
-	u_int32_t		 auth_id;
+	uint32_t		 auth_id;
 	struct auth		*auth;
 
 	int			 return_code;
@@ -461,14 +461,14 @@ struct server_config {
 	off_t			 return_uri_len;
 
 	int			 hsts_max_age;
-	u_int8_t		 hsts_flags;
+	uint8_t			 hsts_flags;
 
 	TAILQ_ENTRY(server_config) entry;
 };
 TAILQ_HEAD(serverhosts, server_config);
 
 struct tls_config {
-	u_int32_t		 id;
+	uint32_t		 id;
 
 	in_port_t		 port;
 	struct sockaddr_storage	 ss;
@@ -494,12 +494,12 @@ struct server {
 TAILQ_HEAD(serverlist, server);
 
 struct httpd {
-	u_int8_t		 sc_opts;
-	u_int32_t		 sc_flags;
+	uint8_t			 sc_opts;
+	uint32_t		 sc_flags;
 	const char		*sc_conffile;
 	struct event		 sc_ev;
-	u_int16_t		 sc_prefork_server;
-	u_int16_t		 sc_id;
+	uint16_t		 sc_prefork_server;
+	uint16_t		 sc_id;
 	int			 sc_paused;
 	char			*sc_chroot;
 	char			*sc_logdir;
@@ -566,7 +566,7 @@ int	 server_bufferevent_write(struct client *, void *, size_t);
 struct server *
 	 server_byaddr(struct sockaddr *, in_port_t);
 struct server_config *
-	 serverconfig_byid(u_int32_t);
+	 serverconfig_byid(uint32_t);
 int	 server_foreach(int (*)(struct server *,
 	    struct server_config *, void *), void *);
 
@@ -577,19 +577,20 @@ void	 server_http_init(struct server *);
 void	 server_http(struct httpd *);
 int	 server_httpdesc_init(struct client *);
 void	 server_read_http(struct bufferevent *, void *);
-void	 server_abort_http(struct client *, u_int, const char *);
-u_int	 server_httpmethod_byname(const char *);
+void	 server_abort_http(struct client *, unsigned int, const char *);
+unsigned int
+	 server_httpmethod_byname(const char *);
 const char
-	*server_httpmethod_byid(u_int);
+	*server_httpmethod_byid(unsigned int);
 const char
-	*server_httperror_byid(u_int);
+	*server_httperror_byid(unsigned int);
 void	 server_read_httpcontent(struct bufferevent *, void *);
 void	 server_read_httpchunks(struct bufferevent *, void *);
 int	 server_writeheader_http(struct client *clt, struct kv *, void *);
 int	 server_headers(struct client *, void *,
 	    int (*)(struct client *, struct kv *, void *), void *);
 int	 server_writeresponse_http(struct client *);
-int	 server_response_http(struct client *, u_int, struct media_type *,
+int	 server_response_http(struct client *, unsigned int, struct media_type *,
 	    off_t, time_t);
 void	 server_reset_http(struct client *);
 void	 server_close_http(struct client *);
@@ -602,7 +603,7 @@ const char *
 	 server_http_host(struct sockaddr_storage *, char *, size_t);
 char	*server_http_parsehost(char *, char *, size_t, int *);
 ssize_t	 server_http_time(time_t, char *, size_t);
-int	 server_log_http(struct client *, u_int, size_t);
+int	 server_log_http(struct client *, unsigned int, size_t);
 
 /* server_file.c */
 int	 server_file(struct httpd *, struct client *);
@@ -624,20 +625,22 @@ const char	*canonicalize_path(const char *, char *, size_t);
 size_t		 path_info(char *);
 char		*escape_html(const char *);
 void		 imsg_event_add(struct imsgev *);
-int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
-		    pid_t, int, void *, u_int16_t);
+int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
+		    pid_t, int, void *, uint16_t);
 void		 socket_rlimit(int);
 char		*evbuffer_getline(struct evbuffer *);
-char		*get_string(u_int8_t *, size_t);
-void		*get_data(u_int8_t *, size_t);
+char		*get_string(uint8_t *, size_t);
+void		*get_data(uint8_t *, size_t);
 int		 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);
-struct in6_addr *prefixlen2mask6(u_int8_t, u_int32_t *);
-u_int32_t	 prefixlen2mask(u_int8_t);
+struct in6_addr *prefixlen2mask6(uint8_t, uint32_t *);
+uint32_t	 prefixlen2mask(uint8_t);
 int		 accept_reserve(int, struct sockaddr *, socklen_t *, int,
 		    volatile int *);
 struct kv	*kv_add(struct kvtree *, char *, char *);
-int		 kv_set(struct kv *, char *, ...) __attribute__((__format__ (printf, 2, 3)));
-int		 kv_setkey(struct kv *, char *, ...) __attribute__((__format__ (printf, 2, 3)));
+int		 kv_set(struct kv *, char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
+int		 kv_setkey(struct kv *, char *, ...)
+		    __attribute__((__format__ (printf, 2, 3)));
 void		 kv_delete(struct kvtree *, struct kv *);
 struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
 void		 kv_purge(struct kvtree *);
@@ -659,7 +662,7 @@ int		 media_cmp(struct media_type *, struct media_type *);
 RB_PROTOTYPE(kvtree, kv, kv_node, kv_cmp);
 RB_PROTOTYPE(mediatypes, media_type, media_entry, media_cmp);
 struct auth	*auth_add(struct serverauth *, struct auth *);
-struct auth	*auth_byid(struct serverauth *, u_int32_t);
+struct auth	*auth_byid(struct serverauth *, uint32_t);
 void		 auth_free(struct serverauth *, struct auth *);
 
 /* log.c */
@@ -675,22 +678,22 @@ __dead void fatal(const char *);
 __dead void fatalx(const char *);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
-const char *printb_flags(const u_int32_t, const char *);
+const char *printb_flags(const uint32_t, const char *);
 void	 getmonotime(struct timeval *);
 
 /* proc.c */
-void	 proc_init(struct privsep *, struct privsep_proc *, u_int);
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_kill(struct privsep *);
 void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
 void	 proc_dispatch(int, short event, void *);
 pid_t	 proc_run(struct privsep *, struct privsep_proc *,
-	    struct privsep_proc *, u_int,
+	    struct privsep_proc *, unsigned int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
 int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,
-	    u_int16_t, int, void *, u_int16_t);
+	    uint16_t, int, void *, uint16_t);
 int	 proc_composev_imsg(struct privsep *, enum privsep_procid, int,
-	    u_int16_t, int, const struct iovec *, int);
+	    uint16_t, int, const struct iovec *, int);
 int	 proc_forward_imsg(struct privsep *, struct imsg *,
 	    enum privsep_procid, int);
 struct imsgbuf *
@@ -698,15 +701,15 @@ struct imsgbuf *
 struct imsgev *
 	 proc_iev(struct privsep *, enum privsep_procid, int);
 void	 imsg_event_add(struct imsgev *);
-int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
-	    pid_t, int, void *, u_int16_t);
-int	 imsg_composev_event(struct imsgev *, u_int16_t, u_int32_t,
+int	 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
+	    pid_t, int, void *, uint16_t);
+int	 imsg_composev_event(struct imsgev *, uint16_t, uint32_t,
 	    pid_t, int, const struct iovec *, int);
 
 /* config.c */
 int	 config_init(struct httpd *);
-void	 config_purge(struct httpd *, u_int);
-int	 config_setreset(struct httpd *, u_int);
+void	 config_purge(struct httpd *, unsigned int);
+int	 config_setreset(struct httpd *, unsigned int);
 int	 config_getreset(struct httpd *, struct imsg *);
 int	 config_getcfg(struct httpd *, struct imsg *);
 int	 config_setserver(struct httpd *, struct server *);

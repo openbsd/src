@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2015/08/19 21:26:21 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1212,10 +1212,10 @@ lookup(char *s)
 
 #define MAXPUSHBACK	128
 
-u_char	*parsebuf;
-int	 parseindex;
-u_char	 pushback_buffer[MAXPUSHBACK];
-int	 pushback_index = 0;
+unsigned char	*parsebuf;
+int		 parseindex;
+unsigned char	 pushback_buffer[MAXPUSHBACK];
+int		 pushback_index = 0;
 
 int
 lgetc(int quotec)
@@ -1307,10 +1307,10 @@ findeol(void)
 int
 yylex(void)
 {
-	u_char	 buf[8096];
-	u_char	*p, *val;
-	int	 quotec, next, c;
-	int	 token;
+	unsigned char	 buf[8096];
+	unsigned char	*p, *val;
+	int		 quotec, next, c;
+	int		 token;
 
 top:
 	p = buf;
@@ -2091,7 +2091,7 @@ getservice(char *n)
 		return (s->s_port);
 	}
 
-	return (htons((u_short)llval));
+	return (htons((unsigned short)llval));
 }
 
 int

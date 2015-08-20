@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.42 2015/07/19 05:17:27 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.43 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -38,7 +38,7 @@ int
 config_init(struct httpd *env)
 {
 	struct privsep	*ps = env->sc_ps;
-	u_int		 what;
+	unsigned int	 what;
 
 	/* Global configuration */
 	if (privsep_process == PROC_PARENT) {
@@ -78,12 +78,12 @@ config_init(struct httpd *env)
 }
 
 void
-config_purge(struct httpd *env, u_int reset)
+config_purge(struct httpd *env, unsigned int reset)
 {
 	struct privsep		*ps = env->sc_ps;
 	struct server		*srv;
 	struct auth		*auth;
-	u_int			 what;
+	unsigned int		 what;
 
 	what = ps->ps_what[privsep_process] & reset;
 
@@ -104,7 +104,7 @@ config_purge(struct httpd *env, u_int reset)
 }
 
 int
-config_setreset(struct httpd *env, u_int reset)
+config_setreset(struct httpd *env, unsigned int reset)
 {
 	struct privsep	*ps = env->sc_ps;
 	int		 id;
@@ -123,7 +123,7 @@ config_setreset(struct httpd *env, u_int reset)
 int
 config_getreset(struct httpd *env, struct imsg *imsg)
 {
-	u_int		 mode;
+	unsigned int	 mode;
 
 	IMSG_SIZE_CHECK(imsg, &mode);
 	memcpy(&mode, imsg->data, sizeof(mode));
@@ -138,7 +138,7 @@ config_getcfg(struct httpd *env, struct imsg *imsg)
 {
 	struct privsep		*ps = env->sc_ps;
 	struct ctl_flags	 cf;
-	u_int			 what;
+	unsigned int		 what;
 
 	if (IMSG_DATA_SIZE(imsg) != sizeof(cf))
 		return (0); /* ignore */
@@ -166,7 +166,7 @@ config_setserver(struct httpd *env, struct server *srv)
 	int			 fd, n, m;
 	struct iovec		 iov[6];
 	size_t			 c;
-	u_int			 what;
+	unsigned int		 what;
 
 	/* opens listening sockets etc. */
 	if (server_privinit(srv) == -1)
@@ -319,8 +319,8 @@ config_getserver_config(struct httpd *env, struct server *srv,
 	struct privsep		*ps = env->sc_ps;
 #endif
 	struct server_config	*srv_conf, *parent;
-	u_int8_t		*p = imsg->data;
-	u_int			 f;
+	uint8_t			*p = imsg->data;
+	unsigned int		 f;
 	size_t			 s;
 
 	if ((srv_conf = calloc(1, sizeof(*srv_conf))) == NULL)
@@ -485,7 +485,7 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 #endif
 	struct server		*srv = NULL;
 	struct server_config	 srv_conf;
-	u_int8_t		*p = imsg->data;
+	uint8_t			*p = imsg->data;
 	size_t			 s;
 
 	IMSG_SIZE_CHECK(imsg, &srv_conf);
@@ -567,7 +567,7 @@ config_gettls(struct httpd *env, struct imsg *imsg)
 #endif
 	struct server		*srv = NULL;
 	struct tls_config	 tls_conf;
-	u_int8_t		*p = imsg->data;
+	uint8_t			*p = imsg->data;
 	size_t			 s;
 
 	IMSG_SIZE_CHECK(imsg, &tls_conf);
@@ -617,7 +617,7 @@ config_setmedia(struct httpd *env, struct media_type *media)
 {
 	struct privsep		*ps = env->sc_ps;
 	int			 id;
-	u_int			 what;
+	unsigned int		 what;
 
 	for (id = 0; id < PROC_MAX; id++) {
 		what = ps->ps_what[id];
@@ -642,7 +642,7 @@ config_getmedia(struct httpd *env, struct imsg *imsg)
 	struct privsep		*ps = env->sc_ps;
 #endif
 	struct media_type	 media;
-	u_int8_t		*p = imsg->data;
+	uint8_t			*p = imsg->data;
 
 	IMSG_SIZE_CHECK(imsg, &media);
 	memcpy(&media, p, sizeof(media));
@@ -665,7 +665,7 @@ config_setauth(struct httpd *env, struct auth *auth)
 {
 	struct privsep		*ps = env->sc_ps;
 	int			 id;
-	u_int			 what;
+	unsigned int		 what;
 
 	for (id = 0; id < PROC_MAX; id++) {
 		what = ps->ps_what[id];
@@ -690,7 +690,7 @@ config_getauth(struct httpd *env, struct imsg *imsg)
 	struct privsep		*ps = env->sc_ps;
 #endif
 	struct auth		 auth;
-	u_int8_t		*p = imsg->data;
+	uint8_t			*p = imsg->data;
 
 	IMSG_SIZE_CHECK(imsg, &auth);
 	memcpy(&auth, p, sizeof(auth));

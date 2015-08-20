@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.38 2015/07/18 06:00:43 reyk Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.39 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -49,7 +49,7 @@ __dead void	 usage(void);
 
 int		 parent_configure(struct httpd *);
 void		 parent_configure_done(struct httpd *);
-void		 parent_reload(struct httpd *, u_int, const char *);
+void		 parent_reload(struct httpd *, unsigned int, const char *);
 void		 parent_reopen(struct httpd *);
 void		 parent_sig_handler(int, short, void *);
 void		 parent_shutdown(struct httpd *);
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 	int			 c;
 	unsigned int		 proc;
 	int			 debug = 0, verbose = 0;
-	u_int32_t		 opts = 0;
+	uint32_t		 opts = 0;
 	struct httpd		*env;
 	struct privsep		*ps;
 	const char		*conffile = CONF_FILE;
@@ -342,7 +342,7 @@ parent_configure(struct httpd *env)
 }
 
 void
-parent_reload(struct httpd *env, u_int reset, const char *filename)
+parent_reload(struct httpd *env, unsigned int reset, const char *filename)
 {
 	if (env->sc_reload) {
 		log_debug("%s: already in progress: %d pending",
@@ -441,7 +441,7 @@ int
 parent_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct httpd		*env = p->p_env;
-	u_int			 v;
+	unsigned int		 v;
 	char			*str = NULL;
 
 	switch (imsg->hdr.type) {
@@ -591,9 +591,9 @@ canonicalize_host(const char *host, char *name, size_t len)
 const char *
 url_decode(char *url)
 {
-	char	*p, *q;
-	char	 hex[3];
-	u_long	 x;
+	char		*p, *q;
+	char		 hex[3];
+	unsigned long	 x;
 
 	hex[2] = '\0';
 	p = q = url;
@@ -792,7 +792,7 @@ socket_rlimit(int maxfd)
 char *
 evbuffer_getline(struct evbuffer *evb)
 {
-	u_int8_t	*ptr = EVBUFFER_DATA(evb);
+	uint8_t		*ptr = EVBUFFER_DATA(evb);
 	size_t		 len = EVBUFFER_LENGTH(evb);
 	char		*str;
 	size_t		 i;
@@ -824,7 +824,7 @@ evbuffer_getline(struct evbuffer *evb)
 }
 
 char *
-get_string(u_int8_t *ptr, size_t len)
+get_string(uint8_t *ptr, size_t len)
 {
 	size_t	 i;
 	char	*str;
@@ -841,9 +841,9 @@ get_string(u_int8_t *ptr, size_t len)
 }
 
 void *
-get_data(u_int8_t *ptr, size_t len)
+get_data(uint8_t *ptr, size_t len)
 {
-	u_int8_t	*data;
+	uint8_t		*data;
 
 	if ((data = calloc(1, len)) == NULL)
 		return (NULL);
@@ -857,7 +857,7 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 {
 	struct sockaddr_in	*a4, *b4;
 	struct sockaddr_in6	*a6, *b6;
-	u_int32_t		 av[4], bv[4], mv[4];
+	uint32_t		 av[4], bv[4], mv[4];
 
 	if (a->sa_family == AF_UNSPEC || b->sa_family == AF_UNSPEC)
 		return (0);
@@ -915,8 +915,8 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 	return (0);
 }
 
-u_int32_t
-prefixlen2mask(u_int8_t prefixlen)
+uint32_t
+prefixlen2mask(uint8_t prefixlen)
 {
 	if (prefixlen == 0)
 		return (0);
@@ -928,7 +928,7 @@ prefixlen2mask(u_int8_t prefixlen)
 }
 
 struct in6_addr *
-prefixlen2mask6(u_int8_t prefixlen, u_int32_t *mask)
+prefixlen2mask6(uint8_t prefixlen, uint32_t *mask)
 {
 	static struct in6_addr  s6;
 	int			i;
@@ -1285,7 +1285,7 @@ auth_add(struct serverauth *serverauth, struct auth *auth)
 }
 
 struct auth *
-auth_byid(struct serverauth *serverauth, u_int32_t id)
+auth_byid(struct serverauth *serverauth, uint32_t id)
 {
 	struct auth	*auth;
 

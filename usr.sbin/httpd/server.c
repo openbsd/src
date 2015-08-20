@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.74 2015/08/03 11:45:17 florian Exp $	*/
+/*	$OpenBSD: server.c,v 1.75 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -74,7 +74,7 @@ extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 
 volatile int server_clients;
 volatile int server_inflight = 0;
-u_int32_t server_cltid;
+uint32_t server_cltid;
 
 static struct httpd		*env = NULL;
 int				 proc_id;
@@ -356,7 +356,7 @@ server_byaddr(struct sockaddr *addr, in_port_t port)
 }
 
 struct server_config *
-serverconfig_byid(u_int32_t id)
+serverconfig_byid(uint32_t id)
 {
 	struct server		*srv;
 	struct server_config	*srv_conf;

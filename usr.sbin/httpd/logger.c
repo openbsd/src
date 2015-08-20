@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.12 2015/04/11 14:52:49 jsing Exp $	*/
+/*	$OpenBSD: logger.c,v 1.13 2015/08/20 13:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@ int		 logger_log(struct imsg *);
 
 static struct httpd		*env = NULL;
 int				 proc_id;
-static u_int32_t		 last_log_id = 0;
+static uint32_t		 last_log_id = 0;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	logger_dispatch_parent },
@@ -138,7 +138,7 @@ int
 logger_open_fd(struct imsg *imsg)
 {
 	struct log_file		*log;
-	u_int32_t		 id;
+	uint32_t		 id;
 
 	IMSG_SIZE_CHECK(imsg, &id);
 	memcpy(&id, imsg->data, sizeof(id));
@@ -160,7 +160,7 @@ logger_open_priv(struct imsg *imsg)
 {
 	char			 path[PATH_MAX];
 	char			 name[NAME_MAX], *p;
-	u_int32_t		 id;
+	uint32_t		 id;
 	size_t			 len;
 	int			 fd;
 
@@ -244,7 +244,7 @@ int
 logger_log(struct imsg *imsg)
 {
 	char			*logline;
-	u_int32_t		 id;
+	uint32_t		 id;
 	struct server_config	*srv_conf;
 	struct log_file		*log;
 
