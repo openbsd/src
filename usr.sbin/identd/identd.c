@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.29 2015/08/04 11:05:18 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.30 2015/08/20 10:54:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -308,6 +309,9 @@ main(int argc, char *argv[])
 	}
 
 	event_init();
+
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+		lerr(1, "signal(SIGPIPE)");
 
 	if (ioctl(sibling, FIONBIO, &on) == -1)
 		lerr(1, "sibling ioctl(FIONBIO)");
@@ -1021,8 +1025,11 @@ identd_response(int fd, short events, void *arg)
 		case EINTR:
 		case EAGAIN:
 			return; /* try again later */
+		case EPIPE:
+			goto done;
 		default:
-			lerr(1, "response write");
+			lwarn("response write");
+			goto done;
 		}
 	}
 
