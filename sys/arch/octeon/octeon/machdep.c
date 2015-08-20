@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2015/07/19 16:48:38 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.68 2015/08/20 13:41:41 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -56,6 +56,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
+#include <sys/timetc.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -78,6 +79,7 @@
 
 #include <dev/cons.h>
 
+#include <octeon/dev/cn30xxipdreg.h>
 #include <octeon/dev/iobusvar.h>
 #include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
@@ -136,6 +138,18 @@ extern void 	parse_uboot_root(void);
 
 cons_decl(cn30xxuart);
 struct consdev uartcons = cons_init(cn30xxuart);
+
+u_int		ipdclock_get_timecount(struct timecounter *);
+
+struct timecounter ipdclock_timecounter = {
+	.tc_get_timecount = ipdclock_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffff,	/* truncated to 32 bits */
+	.tc_frequency = 0,		/* determined at runtime */
+	.tc_name = "ipdclock",
+	.tc_quality = 0			/* ipdclock can be overridden
+					 * by cp0 counter */
+};
 
 #define btoc(x) (((x)+PAGE_MASK)>>PAGE_SHIFT)
 
@@ -476,6 +490,9 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	set_intr(INTPRI_IPI, CR_INT_1, ipi_intr);
 #endif
 
+	ipdclock_timecounter.tc_frequency = octeon_ioclock_speed();
+	tc_init(&ipdclock_timecounter);
+
 	/*
 	 * Return the new kernel stack pointer.
 	 */
@@ -753,6 +770,12 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 			return TRUE;
 
 	return FALSE;
+}
+
+u_int
+ipdclock_get_timecount(struct timecounter *arg)
+{
+        return octeon_xkphys_read_8(IPD_CLK_COUNT);
 }
 
 #ifdef MULTIPROCESSOR
