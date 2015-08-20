@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.28 2015/07/20 04:28:03 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.29 2015/08/20 11:28:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -389,7 +389,6 @@ rewrite_connect(const char *path)
 	int s;
 	struct sockaddr_un remote;
 	size_t len;
-	int on = 1;
 
 	rwmap = malloc(sizeof(*rwmap));
 	if (rwmap == NULL)
@@ -405,7 +404,7 @@ rewrite_connect(const char *path)
 
 	TAILQ_INIT(&rwmap->clients);
 
-	s = socket(AF_UNIX, SOCK_STREAM, 0);
+	s = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (s == -1)
 		err(1, "rewrite socket");
 
@@ -417,9 +416,6 @@ rewrite_connect(const char *path)
 	len += sizeof(remote.sun_family) + 1;
 	if (connect(s, (struct sockaddr *)&remote, len) == -1)
 		err(1, "%s", path);
-
-	if (ioctl(s, FIONBIO, &on) < 0)
-		err(1, "rewrite ioctl(FIONBIO)");
 
 	rwmap->s = s;
 }
@@ -532,7 +528,8 @@ tftpd_listen(const char *addr, const char *port, int family)
 	}
 
 	for (res = res0; res != NULL; res = res->ai_next) {
-		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		s = socket(res->ai_family, res->ai_socktype | SOCK_NONBLOCK,
+		    res->ai_protocol);
 		if (s == -1) {
 			cause = "socket";
 			cerrno = errno;
@@ -545,9 +542,6 @@ tftpd_listen(const char *addr, const char *port, int family)
 			close(s);
 			continue;
 		}
-
-		if (ioctl(s, FIONBIO, &on) < 0)
-			err(1, "ioctl(FIONBIO)");
 
 		switch (res->ai_family) {
 		case AF_INET:
@@ -671,7 +665,8 @@ tftpd_recv(int fd, short events, void *arg)
 	if (n < 4)
 		goto err;
 
-	client->sock = socket(client->ss.ss_family, SOCK_DGRAM, 0);
+	client->sock = socket(client->ss.ss_family,
+	    SOCK_DGRAM | SOCK_NONBLOCK, 0);
 	if (client->sock == -1) {
 		lwarn("socket");
 		goto err;
@@ -725,9 +720,6 @@ tftpd_recv(int fd, short events, void *arg)
 		lwarn("connect to %s", getip(&client->ss));
 		goto err;
 	}
-
-	if (ioctl(client->sock, FIONBIO, &on) < 0)
-		err(1, "client ioctl(FIONBIO)");
 
 	tp = (struct tftphdr *)client->buf;
 	client->opcode = ntohs(tp->th_opcode);
