@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.97 2015/08/20 13:00:23 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.98 2015/08/21 07:30:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -388,6 +388,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_OPTIONS:
 		/* WebDAV methods */
 		case HTTP_METHOD_COPY:
+		case HTTP_METHOD_MOVE:
 			clt->clt_toread = 0;
 			break;
 		case HTTP_METHOD_POST:
