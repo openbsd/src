@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.69 2015/01/23 13:18:40 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.70 2015/08/21 02:19:49 jsg Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ try_to_make_node(GNode *gn)
 	if (has_been_built(gn)) {
 		if (DEBUG(MAKE))
 			printf(" already made\n");
-			return false;
+		return false;
 	}
 	if (has_unmade_predecessor(gn)) {
 		if (DEBUG(MAKE))
