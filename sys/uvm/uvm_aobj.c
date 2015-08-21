@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.79 2015/05/07 01:55:44 jsg Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.80 2015/08/21 16:04:35 visa Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -960,9 +960,8 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			/* FALLTHROUGH */
 		case PGO_DEACTIVATE:
  deactivate_it:
-			/* skip the page if it's loaned or wired */
-			if (pp->loan_count != 0 ||
-			    pp->wire_count != 0)
+			/* skip the page if it's wired */
+			if (pp->wire_count != 0)
 				continue;
 
 			uvm_lock_pageq();
@@ -982,9 +981,8 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			if (uobj->uo_refs > 1)
 				goto deactivate_it;
 
-			/* XXX skip the page if it's loaned or wired */
-			if (pp->loan_count != 0 ||
-			    pp->wire_count != 0)
+			/* XXX skip the page if it's wired */
+			if (pp->wire_count != 0)
 				continue;
 
 			/* zap all mappings for the page. */

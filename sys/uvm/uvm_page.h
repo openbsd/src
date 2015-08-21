@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.58 2015/04/22 03:48:52 dlg Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.59 2015/08/21 16:04:35 visa Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -105,9 +105,6 @@ struct vm_page {
 	u_int			pg_version;	/* version count */
 	u_int			wire_count;	/* wired down map refs [P] */
 
-	u_int			loan_count;	/* number of active loans
-						 * to read: [P]
-						 * to modify: [P] */
 	paddr_t			phys_addr;	/* physical address of page */
 	psize_t			fpgsz;		/* free page range size */
 

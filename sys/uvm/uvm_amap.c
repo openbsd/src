@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.58 2014/12/23 04:56:47 tedu Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.59 2015/08/21 16:04:35 visa Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -613,8 +613,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
  *	so we resolve the COW here.
  *
  * => assume parent's entry was wired, thus all pages are resident.
- * => assume pages that are loaned out (loan_count) are already mapped
- *	read-only in all maps, and thus no need for us to worry about them
  * => caller passes child's map/entry in to us
  * => XXXCDC: out of memory should cause fork to fail, but there is
  *	currently no easy way to do this (needs fix)
@@ -646,15 +644,10 @@ ReStart:
 			    " in anon %p", anon);
 
 		/*
-		 * if the anon ref count is one and the page is not loaned,
-		 * then we are safe (the child has exclusive access to the
-		 * page).  if the page is loaned, then it must already be
-		 * mapped read-only.
-		 *
-		 * we only need to get involved when these are not true.
-		 * [note: if loan_count == 0, then the anon must own the page]
+		 * if the anon ref count is one, we are safe (the child has
+		 * exclusive access to the page).
 		 */
-		if (anon->an_ref > 1 && pg->loan_count == 0) {
+		if (anon->an_ref > 1) {
 			/*
 			 * if the page is busy then we have to wait for
 			 * it and then restart.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.193 2015/08/19 12:23:25 visa Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.194 2015/08/21 16:04:35 visa Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2940,8 +2940,8 @@ uvm_page_printit(pg, full, pr)
 	(*pr)("  flags=%b, vers=%d, wire_count=%d, pa=0x%llx\n",
 	    pg->pg_flags, page_flagbits, pg->pg_version, pg->wire_count,
 	    (long long)pg->phys_addr);
-	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
-	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
+	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx\n",
+	    pg->uobject, pg->uanon, (long long)pg->offset);
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->pg_flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s",
@@ -4232,6 +4232,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			if (pg == NULL) {
 				continue;
 			}
+			KASSERT(pg->pg_flags & PQ_ANON);
 
 			switch (flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE)) {
 			/*
@@ -4244,24 +4245,12 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			case PGO_CLEANIT|PGO_DEACTIVATE:
 			case PGO_DEACTIVATE:
 deactivate_it:
-				/* skip the page if it's loaned or wired */
-				if (pg->loan_count != 0 ||
-				    pg->wire_count != 0) {
+				/* skip the page if it's wired */
+				if (pg->wire_count != 0)
 					break;
-				}
 
 				uvm_lock_pageq();
 
-				/*
-				 * skip the page if it's not actually owned
-				 * by the anon (may simply be loaned to the
-				 * anon).
-				 */
-				if ((pg->pg_flags & PQ_ANON) == 0) {
-					KASSERT(pg->uobject == NULL);
-					uvm_unlock_pageq();
-					break;
-				}
 				KASSERT(pg->uanon == anon);
 
 				/* zap all mappings for the page. */

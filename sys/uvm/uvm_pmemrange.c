@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.47 2015/08/19 12:24:30 visa Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.48 2015/08/21 16:04:35 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -1244,12 +1244,10 @@ uvm_pmr_assertvalid(struct uvm_pmemrange *pmr)
 			/*
 			 * Free pages are:
 			 * - not wired
-			 * - not loaned
 			 * - have no vm_anon
 			 * - have no uvm_object
 			 */
 			KASSERT(i[lcv].wire_count == 0);
-			KASSERT(i[lcv].loan_count == 0);
 			KASSERT(i[lcv].uanon == (void*)0xdeadbeef ||
 			    i[lcv].uanon == NULL);
 			KASSERT(i[lcv].uobject == (void*)0xdeadbeef ||

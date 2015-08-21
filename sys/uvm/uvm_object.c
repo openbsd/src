@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.12 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.13 2015/08/21 16:04:35 visa Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -91,22 +91,6 @@ uvm_objwire(struct uvm_object *uobj, voff_t start, voff_t end,
 
 			KASSERT(pgs[i] != NULL);
 			KASSERT(!(pgs[i]->pg_flags & PG_RELEASED));
-
-#if 0
-			/*
-			 * Loan break
-			 */
-			if (pgs[i]->loan_count) {
-				while (pgs[i]->loan_count) {
-					pg = uvm_loanbreak(pgs[i]);
-					if (!pg) {
-						uvm_wait("uobjwirepg");
-						continue;
-					}
-				}
-				pgs[i] = pg;
-			}
-#endif
 
 			if (pgs[i]->pg_flags & PQ_AOBJ) {
 				atomic_clearbits_int(&pgs[i]->pg_flags,

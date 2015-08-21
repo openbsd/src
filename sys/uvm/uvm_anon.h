@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.18 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.19 2015/08/21 16:04:35 visa Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.13 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ struct vm_aref {
 struct vm_anon	*uvm_analloc(void);
 void		 uvm_anfree(struct vm_anon *);
 void		 uvm_anon_init(void);
-struct vm_page	*uvm_anon_lockloanpg(struct vm_anon *);
 void		 uvm_anon_dropswap(struct vm_anon *);
 boolean_t	 uvm_anon_pagein(struct vm_anon *);
 #endif /* _KERNEL */

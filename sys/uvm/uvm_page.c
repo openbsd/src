@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.140 2015/07/19 22:52:30 beck Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.141 2015/08/21 16:04:35 visa Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -967,7 +967,6 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 void
 uvm_pagefree(struct vm_page *pg)
 {
-	int saved_loan_count = pg->loan_count;
 	u_int flags_to_clear = 0;
 
 #ifdef DEBUG
@@ -983,44 +982,8 @@ uvm_pagefree(struct vm_page *pg)
 	 * if the page was an object page (and thus "TABLED"), remove it
 	 * from the object.
 	 */
-	if (pg->pg_flags & PG_TABLED) {
-		/*
-		 * if the object page is on loan we are going to drop ownership.
-		 * it is possible that an anon will take over as owner for this
-		 * page later on.   the anon will want a !PG_CLEAN page so that
-		 * it knows it needs to allocate swap if it wants to page the
-		 * page out.
-		 */
-
-		/* in case an anon takes over */
-		if (saved_loan_count)
-			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
+	if (pg->pg_flags & PG_TABLED)
 		uvm_pageremove(pg);
-
-		/*
-		 * if our page was on loan, then we just lost control over it
-		 * (in fact, if it was loaned to an anon, the anon may have
-		 * already taken over ownership of the page by now and thus
-		 * changed the loan_count [e.g. in uvmfault_anonget()]) we just
-		 * return (when the last loan is dropped, then the page can be
-		 * freed by whatever was holding the last loan).
-		 */
-		if (saved_loan_count)
-			return;
-	} else if (saved_loan_count && pg->uanon) {
-		/*
-		 * if our page is owned by an anon and is loaned out to the
-		 * kernel then we just want to drop ownership and return.
-		 * the kernel must free the page when all its loans clear ...
-		 * note that the kernel can't change the loan status of our
-		 * page as long as we are holding PQ lock.
-		 */
-		atomic_clearbits_int(&pg->pg_flags, PQ_ANON);
-		pg->uanon->an_page = NULL;
-		pg->uanon = NULL;
-		return;
-	}
-	KASSERT(saved_loan_count == 0);
 
 	/* now remove the page from the queues */
 	if (pg->pg_flags & PQ_ACTIVE) {

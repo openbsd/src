@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.75 2014/12/17 19:42:15 tedu Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.76 2015/08/21 16:04:35 visa Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -419,31 +419,9 @@ uvmpd_scan_inactive(struct pglist *pglst)
 				continue;
 			}
 
-			/*
-			 * the only time we expect to see an ownerless page
-			 * (i.e. a page with no uobject and !PQ_ANON) is if an
-			 * anon has loaned a page from a uvm_object and the
-			 * uvm_object has dropped the ownership.  in that
-			 * case, the anon can "take over" the loaned page
-			 * and make it its own.
-			 */
-
-			/* is page part of an anon or ownerless ? */
-			if ((p->pg_flags & PQ_ANON) || p->uobject == NULL) {
+			if (p->pg_flags & PQ_ANON) {
 				anon = p->uanon;
 				KASSERT(anon != NULL);
-
-				/*
-				 * if the page is ownerless, claim it in the
-				 * name of "anon"!
-				 */
-				if ((p->pg_flags & PQ_ANON) == 0) {
-					KASSERT(p->loan_count > 0);
-					p->loan_count--;
-					atomic_setbits_int(&p->pg_flags,
-					    PQ_ANON);
-					/* anon now owns it */
-				}
 				if (p->pg_flags & PG_BUSY) {
 					uvmexp.pdbusy++;
 					/* someone else owns page, skip it */
@@ -872,25 +850,15 @@ uvmpd_scan(void)
 	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
 	     p = nextpg) {
 		nextpg = TAILQ_NEXT(p, pageq);
+
+		/* skip this page if it's busy. */
 		if (p->pg_flags & PG_BUSY)
 			continue;
 
-		/* is page anon owned or ownerless? */
-		if ((p->pg_flags & PQ_ANON) || p->uobject == NULL) {
+		if (p->pg_flags & PQ_ANON)
 			KASSERT(p->uanon != NULL);
-
-			/* take over the page? */
-			if ((p->pg_flags & PQ_ANON) == 0) {
-				KASSERT(p->loan_count > 0);
-				p->loan_count--;
-				atomic_setbits_int(&p->pg_flags, PQ_ANON);
-			}
-		}
-
-		/* skip this page if it's busy. */
-		if ((p->pg_flags & PG_BUSY) != 0) {
-			continue;
-		}
+		else
+			KASSERT(p->uobject != NULL);
 
 		/*
 		 * if there's a shortage of swap, free any swap allocated
