@@ -514,7 +514,7 @@ smi_print_element(struct ber_element *root)
 			    inet_ntoa(*(struct in_addr *)buf)) == -1)
 				goto fail;
 		} else {
-			if ((p = malloc(root->be_len * 4 + 1)) == NULL)
+			if ((p = reallocarray(NULL, 4, root->be_len + 1)) == NULL)
 				goto fail;
 			strvisx(p, buf, root->be_len, VIS_NL);
 			if (asprintf(&str, "\"%s\"", p) == -1) {
