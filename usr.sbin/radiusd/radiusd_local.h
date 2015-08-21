@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.3 2015/08/21 06:16:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -75,7 +75,7 @@ struct radiusd_module {
 	bool				 stopped;
 	uint32_t			 capabilities;
 	u_char				*radpkt;
-	int 				 radpktsiz;
+	int				 radpktsiz;
 	int				 radpktoff;
 	char				*secret;
 	TAILQ_ENTRY(radiusd_module)	 next;
@@ -91,8 +91,8 @@ struct radiusd_module_ref {
 struct radiusd_authentication {
 	char					**username;
 	char					 *secret;
-	struct radiusd_module_ref 	  	 *auth;
-	TAILQ_HEAD(,radiusd_module_ref) 	  deco;
+	struct radiusd_module_ref		 *auth;
+	TAILQ_HEAD(,radiusd_module_ref)		  deco;
 	TAILQ_ENTRY(radiusd_authentication)	  next;
 };
 
@@ -102,7 +102,7 @@ struct radiusd {
 	struct event				 ev_sighup;
 	struct event				 ev_sigint;
 	struct event				 ev_sigchld;
-	TAILQ_HEAD(,radiusd_module) 	 	 module;
+	TAILQ_HEAD(,radiusd_module)		 module;
 	TAILQ_HEAD(,radiusd_authentication)	 authen;
 	TAILQ_HEAD(,radiusd_client)		 client;
 	TAILQ_HEAD(,radius_query)		 query;
@@ -162,9 +162,9 @@ struct radiusd_module	*radiusd_module_load(struct radiusd *, const char *,
 			    const char *);
 void			 radiusd_module_unload(struct radiusd_module *);
 
-void	 	 radiusd_access_request_answer(struct radius_query *);
-int	 	 radiusd_access_request_fixup(struct radius_query *);
-void	 	 radiusd_access_request_aborted(struct radius_query *);
+void		 radiusd_access_request_answer(struct radius_query *);
+int		 radiusd_access_request_fixup(struct radius_query *);
+void		 radiusd_access_request_aborted(struct radius_query *);
 void		 radius_attr_hide(const char *, const char *, const u_char *,
 		    u_char *, int);
 void		 radius_attr_unhide(const char *, const char *, const u_char *,
