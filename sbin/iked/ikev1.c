@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev1.c,v 1.17 2015/02/06 10:39:01 deraadt Exp $	*/
+/*	$OpenBSD: ikev1.c,v 1.18 2015/08/21 11:59:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -90,7 +90,7 @@ ikev1_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->p_env;
 	struct iked_message	 msg;
-	u_int8_t		*buf;
+	uint8_t			*buf;
 	ssize_t			 len;
 
 	switch (imsg->hdr.type) {
@@ -100,7 +100,7 @@ ikev1_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&msg, imsg->data, sizeof(msg));
 
 		len = IMSG_DATA_SIZE(imsg) - sizeof(msg);
-		buf = (u_int8_t *)imsg->data + sizeof(msg);
+		buf = (uint8_t *)imsg->data + sizeof(msg);
 		if (len <= 0 || (msg.msg_data = ibuf_new(buf, len)) == NULL) {
 			log_debug("%s: short message", __func__);
 			return (0);
@@ -131,7 +131,7 @@ ikev1_msg_cb(int fd, short event, void *arg)
 	struct iked		*env = sock->sock_env;
 	struct iked_message	 msg;
 	struct ike_header	 hdr;
-	u_int8_t		 buf[IKED_MSGBUF_MAX];
+	uint8_t			 buf[IKED_MSGBUF_MAX];
 	size_t			 len;
 	struct iovec		 iov[2];
 

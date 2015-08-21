@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.43 2015/07/17 14:48:17 mikeb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.44 2015/08/21 11:59:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -42,12 +42,12 @@
 #define ROUNDUP(x) (((x) + (PFKEYV2_CHUNK - 1)) & ~(PFKEYV2_CHUNK - 1))
 #define IOV_CNT 20
 
-#define PFKEYV2_CHUNK sizeof(u_int64_t)
+#define PFKEYV2_CHUNK sizeof(uint64_t)
 #define PFKEY_REPLY_TIMEOUT 1000
 
-static u_int32_t sadb_msg_seq = 0;
-static u_int sadb_decoupled = 0;
-static u_int sadb_ipv6refcnt = 0;
+static uint32_t sadb_msg_seq = 0;
+static unsigned int sadb_decoupled = 0;
+static unsigned int sadb_ipv6refcnt = 0;
 
 static int pfkey_blockipv6 = 0;
 static struct event pfkey_timer_ev;
@@ -56,16 +56,16 @@ static struct timeval pfkey_timer_tv;
 struct pfkey_message {
 	SIMPLEQ_ENTRY(pfkey_message)
 			 pm_entry;
-	u_int8_t	*pm_data;
+	uint8_t		*pm_data;
 	ssize_t		 pm_length;
 };
 SIMPLEQ_HEAD(, pfkey_message) pfkey_retry, pfkey_postponed =
     SIMPLEQ_HEAD_INITIALIZER(pfkey_postponed);
 
 struct pfkey_constmap {
-	u_int8_t	 pfkey_id;
-	u_int		 pfkey_ikeid;
-	u_int		 pfkey_fixedkey;
+	uint8_t		 pfkey_id;
+	unsigned int	 pfkey_ikeid;
+	unsigned int	 pfkey_fixedkey;
 };
 
 static const struct pfkey_constmap pfkey_encr[] = {
@@ -104,20 +104,20 @@ static const struct pfkey_constmap pfkey_satype[] = {
 	{ 0 }
 };
 
-int	pfkey_map(const struct pfkey_constmap *, u_int16_t, u_int8_t *);
-int	pfkey_flow(int, u_int8_t, u_int8_t, struct iked_flow *);
-int	pfkey_sa(int, u_int8_t, u_int8_t, struct iked_childsa *);
-int	pfkey_sa_getspi(int, u_int8_t, struct iked_childsa *, u_int32_t *);
-int	pfkey_sagroup(int, u_int8_t, u_int8_t,
+int	pfkey_map(const struct pfkey_constmap *, uint16_t, uint8_t *);
+int	pfkey_flow(int, uint8_t, uint8_t, struct iked_flow *);
+int	pfkey_sa(int, uint8_t, uint8_t, struct iked_childsa *);
+int	pfkey_sa_getspi(int, uint8_t, struct iked_childsa *, uint32_t *);
+int	pfkey_sagroup(int, uint8_t, uint8_t,
 	    struct iked_childsa *, struct iked_childsa *);
 int	pfkey_write(int, struct sadb_msg *, struct iovec *, int,
-	    u_int8_t **, ssize_t *);
-int	pfkey_reply(int, u_int8_t **, ssize_t *);
+	    uint8_t **, ssize_t *);
+int	pfkey_reply(int, uint8_t **, ssize_t *);
 void	pfkey_dispatch(int, short, void *);
 
 struct sadb_ident *
-	pfkey_id2ident(struct iked_id *, u_int);
-void	*pfkey_find_ext(u_int8_t *, ssize_t, int);
+	pfkey_id2ident(struct iked_id *, unsigned int);
+void	*pfkey_find_ext(uint8_t *, ssize_t, int);
 
 void	pfkey_timer_cb(int, short, void *);
 int	pfkey_process(struct iked *, struct pfkey_message *);
@@ -164,7 +164,7 @@ pfkey_couple(int sd, struct iked_sas *sas, int couple)
 }
 
 int
-pfkey_map(const struct pfkey_constmap *map, u_int16_t alg, u_int8_t *pfkalg)
+pfkey_map(const struct pfkey_constmap *map, uint16_t alg, uint8_t *pfkalg)
 {
 	int	 i;
 
@@ -177,7 +177,7 @@ pfkey_map(const struct pfkey_constmap *map, u_int16_t alg, u_int8_t *pfkalg)
 }
 
 int
-pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
+pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 {
 	struct sadb_msg		 smsg;
 	struct sadb_address	 sa_src, sa_dst, sa_local, sa_peer, sa_smask,
@@ -207,7 +207,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	case AF_INET6:
 		prefixlen2mask6(flow->flow_src.addr_net ?
 		    flow->flow_src.addr_mask : 128,
-		    (u_int32_t *)((struct sockaddr_in6 *)
+		    (uint32_t *)((struct sockaddr_in6 *)
 		    &smask)->sin6_addr.s6_addr);
 		break;
 	default:
@@ -234,7 +234,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 	case AF_INET6:
 		prefixlen2mask6(flow->flow_dst.addr_net ?
 		    flow->flow_dst.addr_mask : 128,
-		    (u_int32_t *)((struct sockaddr_in6 *)
+		    (uint32_t *)((struct sockaddr_in6 *)
 		    &dmask)->sin6_addr.s6_addr);
 		break;
 	default:
@@ -420,7 +420,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, struct iked_flow *flow)
 }
 
 int
-pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
+pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 {
 	struct sadb_msg		 smsg;
 	struct sadb_sa		 sadb;
@@ -436,7 +436,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 	struct iked_lifetime	*lt;
 	struct iked_policy	*pol;
 	struct iovec		 iov[IOV_CNT];
-	u_int32_t		 jitter;
+	uint32_t		 jitter;
 	int			 iov_cnt;
 
 	sa_srcid = sa_dstid = NULL;
@@ -725,7 +725,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, struct iked_childsa *sa)
 }
 
 int
-pfkey_sa_last_used(int sd, struct iked_childsa *sa, u_int64_t *last_used)
+pfkey_sa_last_used(int sd, struct iked_childsa *sa, uint64_t *last_used)
 {
 	struct sadb_msg		*msg, smsg;
 	struct sadb_address	 sa_src, sa_dst;
@@ -733,10 +733,10 @@ pfkey_sa_last_used(int sd, struct iked_childsa *sa, u_int64_t *last_used)
 	struct sadb_lifetime	*sa_life;
 	struct sockaddr_storage	 ssrc, sdst;
 	struct iovec		 iov[IOV_CNT];
-	u_int8_t		*data;
+	uint8_t			*data;
 	ssize_t			 n;
 	int			 iov_cnt, ret = -1;
-	u_int8_t		 satype;
+	uint8_t			 satype;
 
 	*last_used = 0;
 
@@ -837,8 +837,8 @@ done:
 }
 
 int
-pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
-    u_int32_t *spip)
+pfkey_sa_getspi(int sd, uint8_t satype, struct iked_childsa *sa,
+    uint32_t *spip)
 {
 	struct sadb_msg		*msg, smsg;
 	struct sadb_address	 sa_src, sa_dst;
@@ -846,7 +846,7 @@ pfkey_sa_getspi(int sd, u_int8_t satype, struct iked_childsa *sa,
 	struct sadb_spirange	 sa_spirange;
 	struct sockaddr_storage	 ssrc, sdst;
 	struct iovec		 iov[IOV_CNT];
-	u_int8_t		*data;
+	uint8_t			*data;
 	ssize_t			 n;
 	int			 iov_cnt, ret = -1;
 
@@ -945,7 +945,7 @@ done:
 }
 
 int
-pfkey_sagroup(int sd, u_int8_t satype1, u_int8_t action,
+pfkey_sagroup(int sd, uint8_t satype1, uint8_t action,
     struct iked_childsa *sa1, struct iked_childsa *sa2)
 {
 	struct sadb_msg		smsg;
@@ -955,7 +955,7 @@ pfkey_sagroup(int sd, u_int8_t satype1, u_int8_t action,
 	struct sadb_protocol	sa_proto;
 	struct iovec		iov[IOV_CNT];
 	int			iov_cnt;
-	u_int8_t		satype2;
+	uint8_t			satype2;
 
 	if (pfkey_map(pfkey_satype, sa2->csa_saproto, &satype2) == -1)
 		return (-1);
@@ -1059,7 +1059,7 @@ pfkey_sagroup(int sd, u_int8_t satype1, u_int8_t action,
 
 int
 pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
-    u_int8_t **datap, ssize_t *lenp)
+    uint8_t **datap, ssize_t *lenp)
 {
 	ssize_t n, len = smsg->sadb_msg_len * 8;
 
@@ -1090,12 +1090,12 @@ pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
 }
 
 int
-pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
+pfkey_reply(int sd, uint8_t **datap, ssize_t *lenp)
 {
 	struct pfkey_message	*pm;
 	struct sadb_msg		 hdr;
 	ssize_t			 len;
-	u_int8_t		*data;
+	uint8_t			*data;
 	struct pollfd		pfd[1];
 	int			 n;
 
@@ -1145,12 +1145,12 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 
 		/* XXX: Only one message can be outstanding. */
 		if (hdr.sadb_msg_seq == sadb_msg_seq &&
-		    hdr.sadb_msg_pid == (u_int32_t)getpid())
+		    hdr.sadb_msg_pid == (uint32_t)getpid())
 			break;
 
 		/* ignore messages for other processes */
 		if (hdr.sadb_msg_pid != 0 &&
-		    hdr.sadb_msg_pid != (u_int32_t)getpid()) {
+		    hdr.sadb_msg_pid != (uint32_t)getpid()) {
 			free(data);
 			continue;
 		}
@@ -1187,7 +1187,7 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 int
 pfkey_flow_add(int fd, struct iked_flow *flow)
 {
-	u_int8_t	 satype;
+	uint8_t		 satype;
 
 	if (flow->flow_loaded)
 		return (0);
@@ -1212,7 +1212,7 @@ pfkey_flow_add(int fd, struct iked_flow *flow)
 int
 pfkey_flow_delete(int fd, struct iked_flow *flow)
 {
-	u_int8_t	satype;
+	uint8_t		satype;
 
 	if (!flow->flow_loaded)
 		return (0);
@@ -1235,7 +1235,7 @@ pfkey_flow_delete(int fd, struct iked_flow *flow)
 }
 
 int
-pfkey_block(int fd, int af, u_int action)
+pfkey_block(int fd, int af, unsigned int action)
 {
 	struct iked_flow	 flow;
 
@@ -1265,9 +1265,9 @@ pfkey_block(int fd, int af, u_int action)
 }
 
 int
-pfkey_sa_init(int fd, struct iked_childsa *sa, u_int32_t *spi)
+pfkey_sa_init(int fd, struct iked_childsa *sa, uint32_t *spi)
 {
-	u_int8_t	satype;
+	uint8_t		 satype;
 
 	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
 		return (-1);
@@ -1283,8 +1283,8 @@ pfkey_sa_init(int fd, struct iked_childsa *sa, u_int32_t *spi)
 int
 pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 {
-	u_int8_t	 satype;
-	u_int		 cmd;
+	uint8_t		 satype;
+	unsigned int	 cmd;
 
 	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
 		return (-1);
@@ -1328,7 +1328,7 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 int
 pfkey_sa_delete(int fd, struct iked_childsa *sa)
 {
-	u_int8_t	satype;
+	uint8_t		satype;
 
 	if (!sa->csa_loaded || sa->csa_spi.spi == 0)
 		return (0);
@@ -1368,10 +1368,10 @@ pfkey_flush(int sd)
 }
 
 struct sadb_ident *
-pfkey_id2ident(struct iked_id *id, u_int exttype)
+pfkey_id2ident(struct iked_id *id, unsigned int exttype)
 {
 	char			 idstr[IKED_ID_SIZE];
-	u_int			 type;
+	unsigned int		 type;
 	size_t			 len;
 	struct sadb_ident	*sa_id;
 
@@ -1484,15 +1484,15 @@ pfkey_init(struct iked *env, int fd)
 }
 
 void *
-pfkey_find_ext(u_int8_t *data, ssize_t len, int type)
+pfkey_find_ext(uint8_t *data, ssize_t len, int type)
 {
 	struct sadb_ext	*ext = (struct sadb_ext *)(data +
 	    sizeof(struct sadb_msg));
 
-	while (ext && ((u_int8_t *)ext - data < len)) {
+	while (ext && ((uint8_t *)ext - data < len)) {
 		if (ext->sadb_ext_type == type)
 			return (ext);
-		ext = (struct sadb_ext *)((u_int8_t *)ext +
+		ext = (struct sadb_ext *)((uint8_t *)ext +
 		    ext->sadb_ext_len * PFKEYV2_CHUNK);
 	}
 
@@ -1506,7 +1506,7 @@ pfkey_dispatch(int sd, short event, void *arg)
 	struct pfkey_message	 pm, *pmp;
 	struct sadb_msg		 hdr;
 	ssize_t			 len;
-	u_int8_t		*data;
+	uint8_t			*data;
 
 	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
 		log_warn("%s: short recv", __func__);
@@ -1598,10 +1598,10 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	struct sockaddr		*ssrc, *sdst, *smask, *dmask, *speer;
 	struct iovec		 iov[IOV_CNT];
 	int			 ret = 0, iov_cnt, sd;
-	u_int8_t		*reply;
+	uint8_t			*reply;
 	ssize_t			 rlen;
 	const char		*errmsg = NULL;
-	u_int8_t		*data = pm->pm_data;
+	uint8_t			*data = pm->pm_data;
 	ssize_t			 len = pm->pm_length;
 	size_t			 slen;
 

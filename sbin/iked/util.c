@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2015/08/21 11:59:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -240,7 +240,7 @@ sockaddr_cmp(struct sockaddr *a, struct sockaddr *b, int prefixlen)
 {
 	struct sockaddr_in	*a4, *b4;
 	struct sockaddr_in6	*a6, *b6;
-	u_int32_t		 av[4], bv[4], mv[4];
+	uint32_t		 av[4], bv[4], mv[4];
 
 	if (a->sa_family == AF_UNSPEC || b->sa_family == AF_UNSPEC)
 		return (0);
@@ -369,7 +369,7 @@ recvfromto(int s, void *buf, size_t len, int flags, struct sockaddr *from,
 }
 
 const char *
-print_spi(u_int64_t spi, int size)
+print_spi(uint64_t spi, int size)
 {
 	static char		 buf[IKED_CYCLE_BUFFERS][32];
 	static int		 i = 0;
@@ -379,10 +379,10 @@ print_spi(u_int64_t spi, int size)
 
 	switch (size) {
 	case 2:
-		snprintf(ptr, 32, "0x%04x", (u_int16_t)spi);
+		snprintf(ptr, 32, "0x%04x", (uint16_t)spi);
 		break;
 	case 4:
-		snprintf(ptr, 32, "0x%08x", (u_int32_t)spi);
+		snprintf(ptr, 32, "0x%08x", (uint32_t)spi);
 		break;
 	case 8:
 		snprintf(ptr, 32, "0x%016llx", spi);
@@ -399,9 +399,9 @@ print_spi(u_int64_t spi, int size)
 }
 
 const char *
-print_map(u_int type, struct iked_constmap *map)
+print_map(unsigned int type, struct iked_constmap *map)
 {
-	u_int			 i;
+	unsigned int		 i;
 	static char		 buf[IKED_CYCLE_BUFFERS][32];
 	static int		 idx = 0;
 	const char		*name = NULL;
@@ -431,9 +431,9 @@ lc_string(char *str)
 }
 
 void
-print_hex(u_int8_t *buf, off_t offset, size_t length)
+print_hex(uint8_t *buf, off_t offset, size_t length)
 {
-	u_int		 i;
+	unsigned int	 i;
 	extern int	 verbose;
 
 	if (verbose < 3 || !length)
@@ -452,9 +452,9 @@ print_hex(u_int8_t *buf, off_t offset, size_t length)
 }
 
 void
-print_hexval(u_int8_t *buf, off_t offset, size_t length)
+print_hexval(uint8_t *buf, off_t offset, size_t length)
 {
-	u_int		 i;
+	unsigned int	 i;
 	extern int	 verbose;
 
 	if (verbose < 2 || !length)
@@ -467,12 +467,12 @@ print_hexval(u_int8_t *buf, off_t offset, size_t length)
 }
 
 const char *
-print_bits(u_short v, u_char *bits)
+print_bits(unsigned short v, unsigned char *bits)
 {
 	static char	 buf[IKED_CYCLE_BUFFERS][BUFSIZ];
 	static int	 idx = 0;
-	u_int		 i, any = 0, j = 0;
-	u_char		 c;
+	unsigned int	 i, any = 0, j = 0;
+	unsigned char	 c;
 
 	if (!bits)
 		return ("");
@@ -504,7 +504,7 @@ print_bits(u_short v, u_char *bits)
 	return (buf[idx]);
 }
 
-u_int8_t
+uint8_t
 mask2prefixlen(struct sockaddr *sa)
 {
 	struct sockaddr_in	*sa_in = (struct sockaddr_in *)sa;
@@ -516,18 +516,18 @@ mask2prefixlen(struct sockaddr *sa)
 		return (33 - ffs(ntohl(ina)));
 }
 
-u_int8_t
+uint8_t
 mask2prefixlen6(struct sockaddr *sa)
 {
 	struct sockaddr_in6	*sa_in6 = (struct sockaddr_in6 *)sa;
-	u_int8_t		 l = 0, *ap, *ep;
+	uint8_t			 l = 0, *ap, *ep;
 
 	/*
 	 * sin6_len is the size of the sockaddr so substract the offset of
 	 * the possibly truncated sin6_addr struct.
 	 */
-	ap = (u_int8_t *)&sa_in6->sin6_addr;
-	ep = (u_int8_t *)sa_in6 + sa_in6->sin6_len;
+	ap = (uint8_t *)&sa_in6->sin6_addr;
+	ep = (uint8_t *)sa_in6 + sa_in6->sin6_len;
 	for (; ap < ep; ap++) {
 		/* this "beauty" is adopted from sbin/route/show.c ... */
 		switch (*ap) {
@@ -565,8 +565,8 @@ mask2prefixlen6(struct sockaddr *sa)
 	return (l);
 }
 
-u_int32_t
-prefixlen2mask(u_int8_t prefixlen)
+uint32_t
+prefixlen2mask(uint8_t prefixlen)
 {
 	if (prefixlen == 0)
 		return (0);
@@ -578,7 +578,7 @@ prefixlen2mask(u_int8_t prefixlen)
 }
 
 struct in6_addr *
-prefixlen2mask6(u_int8_t prefixlen, u_int32_t *mask)
+prefixlen2mask6(uint8_t prefixlen, uint32_t *mask)
 {
 	static struct in6_addr  s6;
 	int			i;
@@ -633,7 +633,7 @@ print_host(struct sockaddr *sa, char *buf, size_t len)
 }
 
 char *
-get_string(u_int8_t *ptr, size_t len)
+get_string(uint8_t *ptr, size_t len)
 {
 	size_t	 i;
 	char	*str;
@@ -650,7 +650,7 @@ get_string(u_int8_t *ptr, size_t len)
 }
 
 const char *
-print_proto(u_int8_t proto)
+print_proto(uint8_t proto)
 {
 	struct protoent *p;
 	static char	 buf[IKED_CYCLE_BUFFERS][BUFSIZ];
@@ -701,10 +701,10 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	return (0);
 }
 
-u_int8_t *
+uint8_t *
 string2unicode(const char *ascii, size_t *outlen)
 {
-	u_int8_t	*uc = NULL;
+	uint8_t		*uc = NULL;
 	size_t		 i, len = strlen(ascii);
 
 	if ((uc = calloc(1, (len * 2) + 2)) == NULL)

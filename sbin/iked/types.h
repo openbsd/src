@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.20 2015/08/19 14:12:43 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.21 2015/08/21 11:59:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -70,17 +70,17 @@
 #define IKED_E			0x1000	/* Decrypted flag */
 
 struct iked_constmap {
-	u_int		 cm_type;
+	unsigned int	 cm_type;
 	const char	*cm_name;
 	const char	*cm_descr;
 };
 
 struct iked_transform {
-	u_int8_t			 xform_type;
-	u_int16_t			 xform_id;
-	u_int16_t			 xform_length;
-	u_int16_t			 xform_keylength;
-	u_int				 xform_score;
+	uint8_t				 xform_type;
+	uint16_t			 xform_id;
+	uint16_t			 xform_length;
+	uint16_t			 xform_keylength;
+	unsigned int			 xform_score;
 	struct iked_constmap		*xform_map;
 };
 

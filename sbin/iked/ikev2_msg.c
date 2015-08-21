@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.42 2015/03/26 19:52:35 markus Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.43 2015/08/21 11:59:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -53,8 +53,8 @@ ikev2_msg_cb(int fd, short event, void *arg)
 	struct iked		*env = sock->sock_env;
 	struct iked_message	 msg;
 	struct ike_header	 hdr;
-	u_int32_t		 natt = 0x00000000;
-	u_int8_t		 buf[IKED_MSGBUF_MAX];
+	uint32_t		 natt = 0x00000000;
+	uint8_t			 buf[IKED_MSGBUF_MAX];
 	ssize_t			 len;
 	off_t			 off;
 	struct iovec		 iov[2];
@@ -270,9 +270,9 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 {
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ibuf		*buf = msg->msg_data;
-	u_int32_t		 natt = 0x00000000;
+	uint32_t		 natt = 0x00000000;
 	int			 isnatt = 0;
-	u_int8_t		 exchange, flags;
+	uint8_t			 exchange, flags;
 	struct ike_header	*hdr;
 	struct iked_message	*m;
 
@@ -328,10 +328,10 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	return (0);
 }
 
-u_int32_t
+uint32_t
 ikev2_msg_id(struct iked *env, struct iked_sa *sa)
 {
-	u_int32_t		id = sa->sa_reqid;
+	uint32_t		id = sa->sa_reqid;
 
 	if (++sa->sa_reqid == UINT32_MAX) {
 		/* XXX we should close and renegotiate the connection now */
@@ -345,7 +345,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 {
 	size_t			 len, ivlen, encrlen, integrlen, blocklen,
 				    outlen;
-	u_int8_t		*buf, pad = 0, *ptr;
+	uint8_t			*buf, pad = 0, *ptr;
 	struct ibuf		*encr, *dst = NULL, *out = NULL;
 
 	buf = ibuf_data(src);
@@ -428,7 +428,7 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	int			 ret = -1;
 	size_t			 integrlen, tmplen;
 	struct ibuf		*integr, *tmp = NULL;
-	u_int8_t		*ptr;
+	uint8_t			*ptr;
 
 	log_debug("%s: message length %zu", __func__, ibuf_size(src));
 	print_hex(ibuf_data(src), 0, ibuf_size(src));
@@ -486,7 +486,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 {
 	ssize_t			 ivlen, encrlen, integrlen, blocklen,
 				    outlen, tmplen;
-	u_int8_t		 pad = 0, *ptr;
+	uint8_t			 pad = 0, *ptr;
 	struct ibuf		*integr, *encr, *tmp = NULL, *out = NULL;
 	off_t			 ivoff, encroff, integroff;
 
@@ -591,7 +591,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 
 int
 ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf **ep,
-    u_int8_t exchange, u_int8_t firstpayload, int response)
+    uint8_t exchange, uint8_t firstpayload, int response)
 {
 	struct iked_message		 resp;
 	struct ike_header		*hdr;
@@ -654,7 +654,7 @@ struct ibuf *
 ikev2_msg_auth(struct iked *env, struct iked_sa *sa, int response)
 {
 	struct ibuf		*authmsg = NULL, *nonce, *prfkey, *buf;
-	u_int8_t		*ptr;
+	uint8_t			*ptr;
 	struct iked_id		*id;
 	size_t			 tmplen;
 
@@ -712,14 +712,14 @@ ikev2_msg_auth(struct iked *env, struct iked_sa *sa, int response)
 
 int
 ikev2_msg_authverify(struct iked *env, struct iked_sa *sa,
-    struct iked_auth *auth, u_int8_t *buf, size_t len, struct ibuf *authmsg)
+    struct iked_auth *auth, uint8_t *buf, size_t len, struct ibuf *authmsg)
 {
-	u_int8_t			*key, *psk = NULL;
+	uint8_t				*key, *psk = NULL;
 	ssize_t				 keylen;
 	struct iked_id			*id;
 	struct iked_dsa			*dsa = NULL;
 	int				 ret = -1;
-	u_int8_t			 keytype;
+	uint8_t				 keytype;
 
 	if (sa->sa_hdr.sh_initiator)
 		id = &sa->sa_rcert;
@@ -788,14 +788,14 @@ int
 ikev2_msg_authsign(struct iked *env, struct iked_sa *sa,
     struct iked_auth *auth, struct ibuf *authmsg)
 {
-	u_int8_t			*key, *psk = NULL;
+	uint8_t				*key, *psk = NULL;
 	ssize_t				 keylen;
 	struct iked_hash		*prf = sa->sa_prf;
 	struct iked_id			*id;
 	struct iked_dsa			*dsa = NULL;
 	struct ibuf			*buf;
 	int				 ret = -1;
-	u_int8_t			 keytype;
+	uint8_t			 keytype;
 
 	if (sa->sa_hdr.sh_initiator)
 		id = &sa->sa_icert;

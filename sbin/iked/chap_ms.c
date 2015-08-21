@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.8 2014/11/20 03:48:12 tedu Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.9 2015/08/21 11:59:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -56,32 +56,32 @@
  * "It is unclear to us why this protocol is so complicated."
  */
 
-static u_int8_t sha1_pad1[40] = {
+static uint8_t sha1_pad1[40] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static u_int8_t sha1_pad2[40] = {
+static uint8_t sha1_pad2[40] = {
 	0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
 	0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
 	0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
 	0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2
 };
 
-u_int8_t	 get7bits(u_int8_t *, int);
-void		 mschap_des_addparity(u_int8_t *, u_int8_t *);
-void		 mschap_des_encrypt(u_int8_t *, u_int8_t *, u_int8_t *);
-void		 mschap_challenge_response(u_int8_t *, u_int8_t *, u_int8_t *);
+uint8_t		 get7bits(uint8_t *, int);
+void		 mschap_des_addparity(uint8_t *, uint8_t *);
+void		 mschap_des_encrypt(uint8_t *, uint8_t *, uint8_t *);
+void		 mschap_challenge_response(uint8_t *, uint8_t *, uint8_t *);
 
-u_int8_t
-get7bits(u_int8_t *in, int start)
+uint8_t
+get7bits(uint8_t *in, int start)
 {
-	u_int	 word;
+	unsigned int	 word;
 
-	word = (u_int)in[start / 8] << 8;
-	word |= (u_int)in[start / 8 + 1];
+	word = (unsigned int)in[start / 8] << 8;
+	word |= (unsigned int)in[start / 8 + 1];
 	word >>= 15 - (start % 8 + 7);
 
 	return (word & 0xfe);
@@ -90,7 +90,7 @@ get7bits(u_int8_t *in, int start)
 /* IN  56 bit DES key missing parity bits
    OUT 64 bit DES key with parity bits added */
 void
-mschap_des_addparity(u_int8_t *key, u_int8_t *des_key)
+mschap_des_addparity(uint8_t *key, uint8_t *des_key)
 {
 	des_key[0] = get7bits(key,  0);
 	des_key[1] = get7bits(key,  7);
@@ -105,7 +105,7 @@ mschap_des_addparity(u_int8_t *key, u_int8_t *des_key)
 }
 
 void
-mschap_des_encrypt(u_int8_t *clear, u_int8_t *key, u_int8_t *cipher)
+mschap_des_encrypt(uint8_t *clear, uint8_t *key, uint8_t *cipher)
 {
 	DES_cblock		des_key;
 	DES_key_schedule	key_schedule;
@@ -118,10 +118,10 @@ mschap_des_encrypt(u_int8_t *clear, u_int8_t *key, u_int8_t *cipher)
 }
 
 void
-mschap_challenge_response(u_int8_t *challenge, u_int8_t *pwhash,
-    u_int8_t *response)
+mschap_challenge_response(uint8_t *challenge, uint8_t *pwhash,
+    uint8_t *response)
 {
-	u_int8_t	 padpwhash[21 + 1];
+	uint8_t		 padpwhash[21 + 1];
 
 	bzero(&padpwhash, sizeof(padpwhash));
 	memcpy(padpwhash, pwhash, MSCHAP_HASH_SZ);
@@ -132,10 +132,10 @@ mschap_challenge_response(u_int8_t *challenge, u_int8_t *pwhash,
 }
 
 void
-mschap_ntpassword_hash(u_int8_t *in, int inlen, u_int8_t *hash)
+mschap_ntpassword_hash(uint8_t *in, int inlen, uint8_t *hash)
 {
 	EVP_MD_CTX	 ctx;
-	u_int		 mdlen;
+	unsigned int	 mdlen;
 
 	EVP_DigestInit(&ctx, EVP_md4());
 	EVP_DigestUpdate(&ctx, in, inlen);
@@ -143,13 +143,13 @@ mschap_ntpassword_hash(u_int8_t *in, int inlen, u_int8_t *hash)
 }
 
 void
-mschap_challenge_hash(u_int8_t *peer_challenge, u_int8_t *auth_challenge,
-    u_int8_t *username, int usernamelen, u_int8_t *challenge)
+mschap_challenge_hash(uint8_t *peer_challenge, uint8_t *auth_challenge,
+    uint8_t *username, int usernamelen, uint8_t *challenge)
 {
 	EVP_MD_CTX	 ctx;
-	u_int8_t	 md[SHA_DIGEST_LENGTH];
-	u_int		 mdlen;
-	u_int8_t	*name;
+	uint8_t		 md[SHA_DIGEST_LENGTH];
+	unsigned int	 mdlen;
+	uint8_t		*name;
 
 	if ((name = strrchr(username, '\\')) == NULL)
 		name = username;
@@ -166,12 +166,12 @@ mschap_challenge_hash(u_int8_t *peer_challenge, u_int8_t *auth_challenge,
 }
 
 void
-mschap_nt_response(u_int8_t *auth_challenge, u_int8_t *peer_challenge,
-    u_int8_t *username, int usernamelen, u_int8_t *password, int passwordlen,
-    u_int8_t *response)
+mschap_nt_response(uint8_t *auth_challenge, uint8_t *peer_challenge,
+    uint8_t *username, int usernamelen, uint8_t *password, int passwordlen,
+    uint8_t *response)
 {
-	u_int8_t challenge[MSCHAP_CHALLENGE_SZ];
-	u_int8_t password_hash[MSCHAP_HASH_SZ];
+	uint8_t		 challenge[MSCHAP_CHALLENGE_SZ];
+	uint8_t		 password_hash[MSCHAP_HASH_SZ];
 
 	mschap_challenge_hash(peer_challenge, auth_challenge,
 	    username, usernamelen, challenge);
@@ -181,25 +181,25 @@ mschap_nt_response(u_int8_t *auth_challenge, u_int8_t *peer_challenge,
 }
 
 void
-mschap_auth_response(u_int8_t *password, int passwordlen,
-    u_int8_t *ntresponse, u_int8_t *auth_challenge, u_int8_t *peer_challenge,
-    u_int8_t *username, int usernamelen, u_int8_t *auth_response)
+mschap_auth_response(uint8_t *password, int passwordlen,
+    uint8_t *ntresponse, uint8_t *auth_challenge, uint8_t *peer_challenge,
+    uint8_t *username, int usernamelen, uint8_t *auth_response)
 {
 	EVP_MD_CTX	 ctx;
-	u_int8_t	 password_hash[MSCHAP_HASH_SZ];
-	u_int8_t	 password_hash2[MSCHAP_HASH_SZ];
-	u_int8_t	 challenge[MSCHAP_CHALLENGE_SZ];
-	u_int8_t	 md[SHA_DIGEST_LENGTH], *ptr;
-	u_int		 mdlen;
+	uint8_t		 password_hash[MSCHAP_HASH_SZ];
+	uint8_t		 password_hash2[MSCHAP_HASH_SZ];
+	uint8_t		 challenge[MSCHAP_CHALLENGE_SZ];
+	uint8_t		 md[SHA_DIGEST_LENGTH], *ptr;
+	unsigned int	 mdlen;
 	int		 i;
-	const u_int8_t	 hex[] = "0123456789ABCDEF";
-	static u_int8_t	 magic1[39] = {
+	const uint8_t	 hex[] = "0123456789ABCDEF";
+	static uint8_t	 magic1[39] = {
 		0x4D, 0x61, 0x67, 0x69, 0x63, 0x20, 0x73, 0x65, 0x72, 0x76,
 		0x65, 0x72, 0x20, 0x74, 0x6F, 0x20, 0x63, 0x6C, 0x69, 0x65,
 		0x6E, 0x74, 0x20, 0x73, 0x69, 0x67, 0x6E, 0x69, 0x6E, 0x67,
 		0x20, 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x61, 0x6E, 0x74
 	};
-	static u_int8_t	 magic2[41] = {
+	static uint8_t	 magic2[41] = {
 		0x50, 0x61, 0x64, 0x20, 0x74, 0x6F, 0x20, 0x6D, 0x61, 0x6B,
 		0x65, 0x20, 0x69, 0x74, 0x20, 0x64, 0x6F, 0x20, 0x6D, 0x6F,
 		0x72, 0x65, 0x20, 0x74, 0x68, 0x61, 0x6E, 0x20, 0x6F, 0x6E,
@@ -242,13 +242,13 @@ mschap_auth_response(u_int8_t *password, int passwordlen,
 }
 
 void
-mschap_masterkey(u_int8_t *password_hash2, u_int8_t *ntresponse,
-    u_int8_t *masterkey)
+mschap_masterkey(uint8_t *password_hash2, uint8_t *ntresponse,
+    uint8_t *masterkey)
 {
-	u_int8_t	 md[SHA_DIGEST_LENGTH];
-	u_int		 mdlen;
+	uint8_t		 md[SHA_DIGEST_LENGTH];
+	unsigned int	 mdlen;
 	EVP_MD_CTX	 ctx;
-	static u_int8_t	 magic1[27] = {
+	static uint8_t	 magic1[27] = {
 		0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74,
 		0x68, 0x65, 0x20, 0x4d, 0x50, 0x50, 0x45, 0x20, 0x4d,
 		0x61, 0x73, 0x74, 0x65, 0x72, 0x20, 0x4b, 0x65, 0x79
@@ -264,14 +264,14 @@ mschap_masterkey(u_int8_t *password_hash2, u_int8_t *ntresponse,
 }
 
 void
-mschap_asymetric_startkey(u_int8_t *masterkey, u_int8_t *sessionkey,
+mschap_asymetric_startkey(uint8_t *masterkey, uint8_t *sessionkey,
     int sessionkeylen, int issend, int isserver)
 {
 	EVP_MD_CTX	 ctx;
-	u_int8_t	 md[SHA_DIGEST_LENGTH];
-	u_int		 mdlen;
-	u_int8_t	*s;
-	static u_int8_t	 magic2[84] = {
+	uint8_t		 md[SHA_DIGEST_LENGTH];
+	unsigned int	 mdlen;
+	uint8_t		*s;
+	static uint8_t	 magic2[84] = {
 		0x4f, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x63, 0x6c, 0x69,
 		0x65, 0x6e, 0x74, 0x20, 0x73, 0x69, 0x64, 0x65, 0x2c, 0x20,
 		0x74, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74, 0x68,
@@ -282,7 +282,7 @@ mschap_asymetric_startkey(u_int8_t *masterkey, u_int8_t *sessionkey,
 		0x65, 0x20, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x20,
 		0x6b, 0x65, 0x79, 0x2e
 	};
-	static u_int8_t	 magic3[84] = {
+	static uint8_t	 magic3[84] = {
 		0x4f, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x63, 0x6c, 0x69,
 		0x65, 0x6e, 0x74, 0x20, 0x73, 0x69, 0x64, 0x65, 0x2c, 0x20,
 		0x74, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74, 0x68,
@@ -310,14 +310,14 @@ mschap_asymetric_startkey(u_int8_t *masterkey, u_int8_t *sessionkey,
 }
 
 void
-mschap_msk(u_int8_t *password, int passwordlen,
-    u_int8_t *ntresponse, u_int8_t *msk)
+mschap_msk(uint8_t *password, int passwordlen,
+    uint8_t *ntresponse, uint8_t *msk)
 {
-	u_int8_t	 password_hash[MSCHAP_HASH_SZ];
-	u_int8_t	 password_hash2[MSCHAP_HASH_SZ];
-	u_int8_t	 masterkey[MSCHAP_MASTERKEY_SZ];
-	u_int8_t	 sendkey[MSCHAP_MASTERKEY_SZ];
-	u_int8_t	 recvkey[MSCHAP_MASTERKEY_SZ];
+	uint8_t		 password_hash[MSCHAP_HASH_SZ];
+	uint8_t		 password_hash2[MSCHAP_HASH_SZ];
+	uint8_t		 masterkey[MSCHAP_MASTERKEY_SZ];
+	uint8_t		 sendkey[MSCHAP_MASTERKEY_SZ];
+	uint8_t		 recvkey[MSCHAP_MASTERKEY_SZ];
 
 	mschap_ntpassword_hash(password, passwordlen, password_hash);
 	mschap_ntpassword_hash(password_hash, MSCHAP_HASH_SZ, password_hash2);
@@ -333,12 +333,12 @@ mschap_msk(u_int8_t *password, int passwordlen,
 }
 
 void
-mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
-    const u_int8_t *authenticator, const u_int8_t *secret)
+mschap_radiuskey(uint8_t *plain, const uint8_t *crypted,
+    const uint8_t *authenticator, const uint8_t *secret)
 {
 	EVP_MD_CTX	 ctx;
-	u_int8_t	 b[MD5_DIGEST_LENGTH], p[32];
-	u_int		 i, mdlen;
+	uint8_t		 b[MD5_DIGEST_LENGTH], p[32];
+	unsigned int	 i, mdlen;
 
 	EVP_DigestInit(&ctx, EVP_md5());
 	EVP_DigestUpdate(&ctx, secret, strlen(secret));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.51 2015/08/19 14:12:43 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.52 2015/08/21 11:59:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@
 int	 ikev2_validate_pld(struct iked_message *, size_t, size_t,
 	    struct ikev2_payload *);
 int	 ikev2_pld_payloads(struct iked *, struct iked_message *,
-	    size_t, size_t, u_int);
+	    size_t, size_t, unsigned int);
 int	 ikev2_validate_sa(struct iked_message *, size_t, size_t,
 	    struct ikev2_payload *, struct ikev2_sa_proposal *);
 int	 ikev2_pld_sa(struct iked *, struct ikev2_payload *,
@@ -66,7 +66,7 @@ int	 ikev2_pld_ke(struct iked *, struct ikev2_payload *,
 int	 ikev2_validate_id(struct iked_message *, size_t, size_t,
 	    struct ikev2_payload *, struct ikev2_id *);
 int	 ikev2_pld_id(struct iked *, struct ikev2_payload *,
-	    struct iked_message *, size_t, size_t, u_int);
+	    struct iked_message *, size_t, size_t, unsigned int);
 int	 ikev2_validate_cert(struct iked_message *, size_t, size_t,
 	    struct ikev2_payload *, struct ikev2_cert *);
 int	 ikev2_pld_cert(struct iked *, struct ikev2_payload *,
@@ -90,7 +90,7 @@ int	 ikev2_pld_delete(struct iked *, struct ikev2_payload *,
 int	 ikev2_validate_ts(struct iked_message *, size_t, size_t,
 	    struct ikev2_payload *, struct ikev2_tsp *);
 int	 ikev2_pld_ts(struct iked *, struct ikev2_payload *,
-	    struct iked_message *, size_t, size_t, u_int);
+	    struct iked_message *, size_t, size_t, unsigned int);
 int	 ikev2_validate_auth(struct iked_message *, size_t, size_t,
 	    struct ikev2_payload *, struct ikev2_auth *);
 int	 ikev2_pld_auth(struct iked *, struct ikev2_payload *,
@@ -138,7 +138,7 @@ int
 ikev2_validate_pld(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	/* We need at least the generic header. */
@@ -176,12 +176,12 @@ ikev2_validate_pld(struct iked_message *msg, size_t offset, size_t left,
 
 int
 ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
-    size_t offset, size_t length, u_int payload)
+    size_t offset, size_t length, unsigned int payload)
 {
 	struct ikev2_payload	 pld;
-	u_int			 e;
+	unsigned int		 e;
 	int			 ret;
-	u_int8_t		*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t			*msgbuf = ibuf_data(msg->msg_data);
 	size_t			 left;
 
 	/* Check if message was decrypted in an E payload */
@@ -282,7 +282,7 @@ int
 ikev2_validate_sa(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_sa_proposal *sap)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length, sap_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -355,9 +355,9 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 {
 	struct ikev2_sa_proposal	 sap;
 	struct iked_proposal		*prop = NULL;
-	u_int32_t			 spi32;
-	u_int64_t			 spi = 0, spi64;
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint32_t			 spi32;
+	uint64_t			 spi = 0, spi64;
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 	struct iked_proposals		*props;
 	size_t				 total;
 
@@ -463,7 +463,7 @@ int
 ikev2_validate_xform(struct iked_message *msg, size_t offset, size_t total,
     struct ikev2_transform *xfrm)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 xfrm_length;
 
 	if (total < sizeof(*xfrm)) {
@@ -572,7 +572,7 @@ int
 ikev2_validate_attr(struct iked_message *msg, size_t offset, size_t total,
     struct ikev2_attribute *attr)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 
 	if (total < sizeof(*attr)) {
 		log_debug("%s: payload malformed: too short for header "
@@ -589,8 +589,8 @@ ikev2_pld_attr(struct iked *env, struct ikev2_transform *xfrm,
     struct iked_message *msg, size_t offset, size_t total)
 {
 	struct ikev2_attribute		 attr;
-	u_int				 type;
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	unsigned int			 type;
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 	int				 ret = 0;
 	size_t				 attr_length;
 
@@ -643,7 +643,7 @@ int
 ikev2_validate_ke(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_keyexchange *kex)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -670,9 +670,9 @@ ikev2_pld_ke(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
 	struct ikev2_keyexchange	 kex;
-	u_int8_t			*buf;
+	uint8_t				*buf;
 	size_t				 len;
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 
 	if (ikev2_validate_ke(msg, offset, left, pld, &kex))
 		return (-1);
@@ -712,7 +712,7 @@ int
 ikev2_validate_id(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_id *id)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -736,14 +736,14 @@ ikev2_validate_id(struct iked_message *msg, size_t offset, size_t left,
 
 int
 ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
-    struct iked_message *msg, size_t offset, size_t left, u_int payload)
+    struct iked_message *msg, size_t offset, size_t left, unsigned int payload)
 {
-	u_int8_t			*ptr;
+	uint8_t				*ptr;
 	struct ikev2_id			 id;
 	size_t				 len;
 	struct iked_id			*idp, idb;
 	struct iked_sa			*sa = msg->msg_sa;
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 	char				 idstr[IKED_ID_SIZE];
 
 	if (ikev2_validate_id(msg, offset, left, pld, &id))
@@ -795,7 +795,7 @@ int
 ikev2_validate_cert(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_cert *cert)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -822,10 +822,10 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
 	struct ikev2_cert		 cert;
-	u_int8_t			*buf;
+	uint8_t				*buf;
 	size_t				 len;
 	struct iked_id			*certid;
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 
 	if (ikev2_validate_cert(msg, offset, left, pld, &cert))
 		return (-1);
@@ -862,7 +862,7 @@ int
 ikev2_validate_certreq(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_cert *cert)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -890,9 +890,9 @@ ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
 {
 	struct iked_sa			*sa = msg->msg_sa;
 	struct ikev2_cert		 cert;
-	u_int8_t			*buf;
+	uint8_t				*buf;
 	ssize_t				 len;
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 
 	if (ikev2_validate_certreq(msg, offset, left, pld, &cert))
 		return (-1);
@@ -941,7 +941,7 @@ int
 ikev2_validate_auth(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_auth *auth)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -969,10 +969,10 @@ ikev2_pld_auth(struct iked *env, struct ikev2_payload *pld,
 {
 	struct ikev2_auth		 auth;
 	struct iked_id			*idp;
-	u_int8_t			*buf;
+	uint8_t				*buf;
 	size_t				 len;
 	struct iked_sa			*sa = msg->msg_sa;
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 
 	if (ikev2_validate_auth(msg, offset, left, pld, &auth))
 		return (-1);
@@ -1031,8 +1031,8 @@ ikev2_pld_nonce(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
 	size_t		 len;
-	u_int8_t	*buf;
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*buf;
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 
 	if (ikev2_validate_nonce(msg, offset, left, pld))
 		return (-1);
@@ -1069,7 +1069,7 @@ int
 ikev2_validate_notify(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_notify *n)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -1096,16 +1096,16 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
 	struct ikev2_notify	 n;
-	u_int8_t		*buf, md[SHA_DIGEST_LENGTH];
+	uint8_t			*buf, md[SHA_DIGEST_LENGTH];
 	size_t			 len;
-	u_int32_t		 spi32;
-	u_int64_t		 spi64;
+	uint32_t		 spi32;
+	uint64_t		 spi64;
 	struct iked_spi		*rekey;
-	u_int16_t		 type;
-	u_int16_t		 group;
-	u_int16_t		 cpi;
-	u_int16_t		 signature_hash;
-	u_int8_t		 transform;
+	uint16_t		 type;
+	uint16_t		 group;
+	uint16_t		 cpi;
+	uint16_t		 signature_hash;
+	uint8_t			 transform;
 
 	if (ikev2_validate_notify(msg, offset, left, pld, &n))
 		return (-1);
@@ -1296,7 +1296,7 @@ int
 ikev2_validate_delete(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_delete *del)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -1326,10 +1326,10 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ikev2_delete	 del, *localdel;
 	struct ibuf		*resp = NULL;
-	u_int64_t		*localspi = NULL;
-	u_int64_t		 spi64, spi = 0;
-	u_int32_t		 spi32;
-	u_int8_t		*buf, *msgbuf = ibuf_data(msg->msg_data);
+	uint64_t		*localspi = NULL;
+	uint64_t		 spi64, spi = 0;
+	uint32_t		 spi32;
+	uint8_t			*buf, *msgbuf = ibuf_data(msg->msg_data);
 	size_t			 found = 0, failed = 0;
 	int			 cnt, i, len, sz, ret = -1;
 
@@ -1389,7 +1389,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 
 	if (ikev2_msg_frompeer(msg) &&
 	    ((peersas = calloc(cnt, sizeof(struct iked_childsa *))) == NULL ||
-	     (localspi = calloc(cnt, sizeof(u_int64_t))) == NULL)) {
+	     (localspi = calloc(cnt, sizeof(uint64_t))) == NULL)) {
 		log_warn("%s", __func__);
 		goto done;
 	}
@@ -1492,7 +1492,7 @@ int
 ikev2_validate_ts(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_tsp *tsp)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -1516,15 +1516,15 @@ ikev2_validate_ts(struct iked_message *msg, size_t offset, size_t left,
 
 int
 ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
-    struct iked_message *msg, size_t offset, size_t left, u_int payload)
+    struct iked_message *msg, size_t offset, size_t left, unsigned int payload)
 {
 	struct ikev2_tsp		 tsp;
 	struct ikev2_ts			 ts;
 	size_t				 len, i;
 	struct sockaddr_in		 s4;
 	struct sockaddr_in6		 s6;
-	u_int8_t			 buf[2][128];
-	u_int8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				 buf[2][128];
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 
 	if (ikev2_validate_ts(msg, offset, left, pld, &tsp))
 		return (-1);
@@ -1592,9 +1592,9 @@ ikev2_pld_e(struct iked *env, struct ikev2_payload *pld,
 {
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ibuf		*e = NULL;
-	u_int8_t		*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t			*msgbuf = ibuf_data(msg->msg_data);
 	struct iked_message	 emsg;
-	u_int8_t		*buf;
+	uint8_t			*buf;
 	size_t			 len;
 	int			 ret = -1;
 
@@ -1638,7 +1638,7 @@ int
 ikev2_validate_cp(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct ikev2_cp *cp)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);
@@ -1666,9 +1666,9 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 {
 	struct ikev2_cp		 cp;
 	struct ikev2_cfg	*cfg;
-	u_int8_t		*buf;
+	uint8_t			*buf;
 	size_t			 len, i;
-	u_int8_t		*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t			*msgbuf = ibuf_data(msg->msg_data);
 	struct iked_sa		*sa = msg->msg_sa;
 
 	if (ikev2_validate_cp(msg, offset, left, pld, &cp))
@@ -1706,7 +1706,7 @@ int
 ikev2_validate_eap(struct iked_message *msg, size_t offset, size_t left,
     struct ikev2_payload *pld, struct eap_header *hdr)
 {
-	u_int8_t	*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t		*msgbuf = ibuf_data(msg->msg_data);
 	size_t		 pld_length;
 
 	pld_length = betoh16(pld->pld_length);

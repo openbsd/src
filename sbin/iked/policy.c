@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.38 2015/08/19 14:12:43 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.39 2015/08/21 11:59:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -100,7 +100,7 @@ policy_test(struct iked *env, struct iked_policy *key)
 {
 	struct iked_policy	*p = NULL, *pol = NULL;
 	struct iked_flow	*flow = NULL, *flowkey;
-	u_int			 cnt = 0;
+	unsigned int		 cnt = 0;
 
 	p = TAILQ_FIRST(&env->sc_policies);
 	while (p != NULL) {
@@ -263,9 +263,9 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 }
 
 void
-sa_stateflags(struct iked_sa *sa, u_int flags)
+sa_stateflags(struct iked_sa *sa, unsigned int flags)
 {
-	u_int	require;
+	unsigned int	require;
 
 	if (sa->sa_state > IKEV2_STATE_SA_INIT)
 		require = sa->sa_statevalid;
@@ -283,7 +283,7 @@ sa_stateflags(struct iked_sa *sa, u_int flags)
 int
 sa_stateok(struct iked_sa *sa, int state)
 {
-	u_int	 require;
+	unsigned int	 require;
 
 	if (sa->sa_state < state)
 		return (0);
@@ -308,13 +308,13 @@ sa_stateok(struct iked_sa *sa, int state)
 }
 
 struct iked_sa *
-sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
-    u_int initiator, struct iked_policy *pol)
+sa_new(struct iked *env, uint64_t ispi, uint64_t rspi,
+    unsigned int initiator, struct iked_policy *pol)
 {
 	struct iked_sa	*sa;
 	struct iked_sa	*old;
 	struct iked_id	*localid;
-	u_int		 diff;
+	unsigned int	 diff;
 
 	if ((ispi == 0 && rspi == 0) ||
 	    (sa = sa_lookup(env, ispi, rspi, initiator)) == NULL) {
@@ -442,7 +442,7 @@ childsa_free(struct iked_childsa *csa)
 }
 
 struct iked_childsa *
-childsa_lookup(struct iked_sa *sa, u_int64_t spi, u_int8_t protoid)
+childsa_lookup(struct iked_sa *sa, uint64_t spi, uint8_t protoid)
 {
 	struct iked_childsa	*csa;
 
@@ -464,8 +464,8 @@ flow_free(struct iked_flow *flow)
 }
 
 struct iked_sa *
-sa_lookup(struct iked *env, u_int64_t ispi, u_int64_t rspi,
-    u_int initiator)
+sa_lookup(struct iked *env, uint64_t ispi, uint64_t rspi,
+    unsigned int initiator)
 {
 	struct iked_sa	*sa, key;
 

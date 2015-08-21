@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.16 2015/01/16 06:39:58 deraadt Exp $	*/
+/*	$OpenBSD: dh.c,v 1.17 2015/08/21 11:59:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -32,32 +32,33 @@ int	dh_init(struct group *);
 /* MODP */
 int	modp_init(struct group *);
 int	modp_getlen(struct group *);
-int	modp_create_exchange(struct group *, u_int8_t *);
-int	modp_create_shared(struct group *, u_int8_t *, u_int8_t *);
+int	modp_create_exchange(struct group *, uint8_t *);
+int	modp_create_shared(struct group *, uint8_t *, uint8_t *);
 
 /* EC2N/ECP */
 int	ec_init(struct group *);
 int	ec_getlen(struct group *);
-int	ec_create_exchange(struct group *, u_int8_t *);
-int	ec_create_shared(struct group *, u_int8_t *, u_int8_t *);
+int	ec_create_exchange(struct group *, uint8_t *);
+int	ec_create_shared(struct group *, uint8_t *, uint8_t *);
 
-int	ec_point2raw(struct group *, const EC_POINT *, u_int8_t *, size_t);
+int	ec_point2raw(struct group *, const EC_POINT *, uint8_t *, size_t);
 EC_POINT *
-	ec_raw2point(struct group *, u_int8_t *, size_t);
+	ec_raw2point(struct group *, uint8_t *, size_t);
 
 /* curve25519 */
 int	ec25519_init(struct group *);
 int	ec25519_getlen(struct group *);
-int	ec25519_create_exchange(struct group *, u_int8_t *);
-int	ec25519_create_shared(struct group *, u_int8_t *, u_int8_t *);
+int	ec25519_create_exchange(struct group *, uint8_t *);
+int	ec25519_create_shared(struct group *, uint8_t *, uint8_t *);
 
 #define CURVE25519_SIZE 32	/* 256 bits */
 struct curve25519_key {
-	u_int8_t	 secret[CURVE25519_SIZE];
-	u_int8_t	 public[CURVE25519_SIZE];
+	uint8_t		 secret[CURVE25519_SIZE];
+	uint8_t		 public[CURVE25519_SIZE];
 };
-extern int crypto_scalarmult_curve25519(u_char a[CURVE25519_SIZE],
-    const u_char b[CURVE25519_SIZE], const u_char c[CURVE25519_SIZE])
+extern int crypto_scalarmult_curve25519(unsigned char a[CURVE25519_SIZE],
+    const unsigned char b[CURVE25519_SIZE],
+    const unsigned char c[CURVE25519_SIZE])
 	__attribute__((__bounded__(__minbytes__, 1, CURVE25519_SIZE)))
 	__attribute__((__bounded__(__minbytes__, 2, CURVE25519_SIZE)))
 	__attribute__((__bounded__(__minbytes__, 3, CURVE25519_SIZE)));
@@ -333,11 +334,11 @@ group_free(struct group *group)
 }
 
 struct group *
-group_get(u_int32_t id)
+group_get(uint32_t id)
 {
 	struct group_id	*p = NULL;
 	struct group	*group;
-	u_int		 i, items;
+	unsigned int	 i, items;
 
 	items = sizeof(ike_groups) / sizeof(ike_groups[0]);
 	for (i = 0; i < items; i++) {
@@ -401,13 +402,13 @@ dh_getlen(struct group *group)
 }
 
 int
-dh_create_exchange(struct group *group, u_int8_t *buf)
+dh_create_exchange(struct group *group, uint8_t *buf)
 {
 	return (group->exchange(group, buf));
 }
 
 int
-dh_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
+dh_create_shared(struct group *group, uint8_t *secret, uint8_t *exchange)
 {
 	return (group->shared(group, secret, exchange));
 }
@@ -437,7 +438,7 @@ modp_getlen(struct group *group)
 }
 
 int
-modp_create_exchange(struct group *group, u_int8_t *buf)
+modp_create_exchange(struct group *group, uint8_t *buf)
 {
 	DH	*dh = group->dh;
 	int	 len, ret;
@@ -460,7 +461,7 @@ modp_create_exchange(struct group *group, u_int8_t *buf)
 }
 
 int
-modp_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
+modp_create_shared(struct group *group, uint8_t *secret, uint8_t *exchange)
 {
 	BIGNUM	*ex;
 	int	 len, ret;
@@ -508,7 +509,7 @@ ec_getlen(struct group *group)
 }
 
 int
-ec_create_exchange(struct group *group, u_int8_t *buf)
+ec_create_exchange(struct group *group, uint8_t *buf)
 {
 	size_t	 len;
 
@@ -520,7 +521,7 @@ ec_create_exchange(struct group *group, u_int8_t *buf)
 }
 
 int
-ec_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
+ec_create_shared(struct group *group, uint8_t *secret, uint8_t *exchange)
 {
 	const EC_GROUP	*ecgroup = NULL;
 	const BIGNUM	*privkey;
@@ -568,7 +569,7 @@ ec_create_shared(struct group *group, u_int8_t *secret, u_int8_t *exchange)
 
 int
 ec_point2raw(struct group *group, const EC_POINT *point,
-    u_int8_t *buf, size_t len)
+    uint8_t *buf, size_t len)
 {
 	const EC_GROUP	*ecgroup = NULL;
 	BN_CTX		*bnctx = NULL;
@@ -627,7 +628,7 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 }
 
 EC_POINT *
-ec_raw2point(struct group *group, u_int8_t *buf, size_t len)
+ec_raw2point(struct group *group, uint8_t *buf, size_t len)
 {
 	const EC_GROUP	*ecgroup = NULL;
 	EC_POINT	*point = NULL;
@@ -687,7 +688,7 @@ ec_raw2point(struct group *group, u_int8_t *buf, size_t len)
 int
 ec25519_init(struct group *group)
 {
-	static const u_int8_t	 basepoint[CURVE25519_SIZE] = { 9 };
+	static const uint8_t	 basepoint[CURVE25519_SIZE] = { 9 };
 	struct curve25519_key	*curve25519;
 
 	if ((curve25519 = calloc(1, sizeof(*curve25519))) == NULL)
@@ -711,7 +712,7 @@ ec25519_getlen(struct group *group)
 }
 
 int
-ec25519_create_exchange(struct group *group, u_int8_t *buf)
+ec25519_create_exchange(struct group *group, uint8_t *buf)
 {
 	struct curve25519_key	*curve25519 = group->curve25519;
 
@@ -720,7 +721,7 @@ ec25519_create_exchange(struct group *group, u_int8_t *buf)
 }
 
 int
-ec25519_create_shared(struct group *group, u_int8_t *shared, u_int8_t *public)
+ec25519_create_shared(struct group *group, uint8_t *shared, uint8_t *public)
 {
 	struct curve25519_key	*curve25519 = group->curve25519;
 

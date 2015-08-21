@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.h,v 1.4 2015/06/11 18:49:09 reyk Exp $	*/
+/*	$OpenBSD: eap.h,v 1.5 2015/08/21 11:59:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -20,16 +20,16 @@
 #define IKED_EAP_H
 
 struct eap_header {
-	u_int8_t	eap_code;
-	u_int8_t	eap_id;
-	u_int16_t	eap_length;
+	uint8_t		eap_code;
+	uint8_t		eap_id;
+	uint16_t	eap_length;
 } __packed;
 
 struct eap_message {
-	u_int8_t	eap_code;
-	u_int8_t	eap_id;
-	u_int16_t	eap_length;
-	u_int8_t	eap_type;
+	uint8_t		eap_code;
+	uint8_t		eap_id;
+	uint16_t	eap_length;
+	uint8_t		eap_type;
 	/* Followed by type-specific data */
 } __packed;
 
@@ -114,48 +114,48 @@ extern struct iked_constmap eap_type_map[];
 extern struct iked_constmap eap_msopcode_map[];
 
 struct eap_mschap {
-	u_int8_t			ms_opcode;
+	uint8_t				ms_opcode;
 } __packed;
 
 struct eap_mschap_challenge {
-	u_int8_t			msc_opcode;
-	u_int8_t			msc_id;
-	u_int16_t			msc_length;
-	u_int8_t			msc_valuesize;
-	u_int8_t			msc_challenge[EAP_MSCHAP_CHALLENGE_SZ];
+	uint8_t				msc_opcode;
+	uint8_t				msc_id;
+	uint16_t			msc_length;
+	uint8_t				msc_valuesize;
+	uint8_t				msc_challenge[EAP_MSCHAP_CHALLENGE_SZ];
 	/* Followed by variable-size name field */
 } __packed;
 
 struct eap_mschap_peer {
-	u_int8_t			msp_challenge[EAP_MSCHAP_CHALLENGE_SZ];
-	u_int8_t			msp_reserved[8];
-	u_int8_t			msp_ntresponse[EAP_MSCHAP_NTRESPONSE_SZ];
-	u_int8_t			msp_flags;
+	uint8_t				msp_challenge[EAP_MSCHAP_CHALLENGE_SZ];
+	uint8_t				msp_reserved[8];
+	uint8_t				msp_ntresponse[EAP_MSCHAP_NTRESPONSE_SZ];
+	uint8_t				msp_flags;
 };
 
 struct eap_mschap_response {
-	u_int8_t			msr_opcode;
-	u_int8_t			msr_id;
-	u_int16_t			msr_length;
-	u_int8_t			msr_valuesize;
+	uint8_t				msr_opcode;
+	uint8_t				msr_id;
+	uint16_t			msr_length;
+	uint8_t				msr_valuesize;
 	union {
-		u_int8_t		resp_data[EAP_MSCHAP_RESPONSE_SZ];
+		uint8_t			resp_data[EAP_MSCHAP_RESPONSE_SZ];
 		struct eap_mschap_peer	resp_peer;
 	}				msr_response;
 	/* Followed by variable-size name field */
 } __packed;
 
 struct eap_mschap_success {
-	u_int8_t			mss_opcode;
-	u_int8_t			mss_id;
-	u_int16_t			mss_length;
+	uint8_t				mss_opcode;
+	uint8_t				mss_id;
+	uint16_t			mss_length;
 	/* Followed by variable-size success message */
 } __packed;
 
 struct eap_mschap_failure {
-	u_int8_t			msf_opcode;
-	u_int8_t			msf_id;
-	u_int16_t			msf_length;
+	uint8_t				msf_opcode;
+	uint8_t				msf_id;
+	uint16_t			msf_length;
 	/* Followed by variable-size message field */
 } __packed;
 

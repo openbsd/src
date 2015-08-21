@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.5 2015/08/19 19:31:59 reyk Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.6 2015/08/21 11:59:27 reyk Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -42,7 +42,7 @@
 struct iked_ocsp {
 	struct iked		*ocsp_env;	/* back pointer to env */
 	struct iked_sahdr	 ocsp_sh;	/* ike sa */
-	u_int8_t		 ocsp_type;	/* auth type */
+	uint8_t			 ocsp_type;	/* auth type */
 	struct iked_socket	*ocsp_sock;	/* socket to ocsp responder */
 	BIO			*ocsp_cbio;	/* matching OpenSSL obj */
 	OCSP_CERTID		*ocsp_id;	/* ocsp-id for cert */
@@ -207,7 +207,7 @@ ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc)
 /* validate the certifcate stored in 'data' by querying the ocsp-responder */
 int
 ocsp_validate_cert(struct iked *env, struct iked_static_id *id,
-    void *data, size_t len, struct iked_sahdr sh, u_int8_t type)
+    void *data, size_t len, struct iked_sahdr sh, uint8_t type)
 {
 	struct iked_ocsp_entry	*ioe;
 	struct iked_ocsp	*ocsp;

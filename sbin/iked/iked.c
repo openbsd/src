@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.24 2015/06/03 02:24:36 millert Exp $	*/
+/*	$OpenBSD: iked.c,v 1.25 2015/08/21 11:59:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -362,7 +362,7 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct iked	*env = p->p_ps->ps_env;
 	int		 v;
 	char		*str = NULL;
-	u_int		 type = imsg->hdr.type;
+	unsigned int	 type = imsg->hdr.type;
 
 	switch (type) {
 	case IMSG_CTL_RESET:
