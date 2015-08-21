@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.168 2015/08/20 06:44:06 mlarkin Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.169 2015/08/21 06:11:04 jsg Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -125,6 +125,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0292:
 		this->name = "Realtek ALC292";
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 
 		/*
 		 * Enable dock audio on Thinkpad docks
