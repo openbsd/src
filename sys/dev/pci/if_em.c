@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.299 2015/06/24 09:40:54 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.300 2015/08/21 09:16:06 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -352,6 +352,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	sc = (struct em_softc *)self;
 	sc->osdep.em_pa = *pa;
+
+	mtx_init(&sc->rx_mtx, IPL_NET);
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
@@ -922,6 +924,8 @@ em_intr(void *arg)
 		refill = 1;
 	}
 
+	KERNEL_LOCK();
+
 	/* Link status change */
 	if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
 		sc->hw.get_link_status = 1;
@@ -941,6 +945,8 @@ em_intr(void *arg)
 		/* Advance the Rx Queue #0 "Tail Pointer". */
 		E1000_WRITE_REG(&sc->hw, RDT, sc->last_rx_desc_filled);
 	}
+
+	KERNEL_UNLOCK();
 
 	return (1);
 }
@@ -1698,8 +1704,8 @@ em_allocate_pci_resources(struct em_softc *sc)
 	sc->hw.back = &sc->osdep;
 
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET, em_intr, sc,
-					      sc->sc_dv.dv_xname);
+	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
+	    em_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_intrhand == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -2413,6 +2419,8 @@ em_txeof(struct em_softc *sc)
 	if (sc->num_tx_desc_avail == sc->num_tx_desc)
 		return;
 
+	KERNEL_LOCK();
+
 	num_avail = sc->num_tx_desc_avail;
 	first = sc->next_tx_to_clean;
 	tx_desc = &sc->tx_desc_base[first];
@@ -2494,6 +2502,8 @@ em_txeof(struct em_softc *sc)
 		ifp->if_timer = EM_TX_TIMEOUT;
 
 	sc->num_tx_desc_avail = num_avail;
+
+	KERNEL_UNLOCK();
 }
 
 /*********************************************************************
@@ -2743,6 +2753,10 @@ em_free_receive_structures(struct em_softc *sc)
 
 	INIT_DEBUGOUT("free_receive_structures: begin");
 
+	mtx_enter(&sc->rx_mtx);
+	if_rxr_init(&sc->rx_ring, 0, 0);
+	mtx_leave(&sc->rx_mtx);
+
 	if (sc->rx_buffer_area != NULL) {
 		rx_buffer = sc->rx_buffer_area;
 		for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
@@ -2825,6 +2839,8 @@ em_rxfill(struct em_softc *sc)
 	int post = 0;
 	int i;
 
+	mtx_enter(&sc->rx_mtx);
+
 	i = sc->last_rx_desc_filled;
 
 	for (slots = if_rxr_get(&sc->rx_ring, sc->num_rx_desc);
@@ -2841,6 +2857,8 @@ em_rxfill(struct em_softc *sc)
 
 	if_rxr_put(&sc->rx_ring, slots);
 
+	mtx_leave(&sc->rx_mtx);
+
 	return (post);
 }
 
@@ -2856,6 +2874,7 @@ em_rxeof(struct em_softc *sc)
 {
 	struct ifnet	    *ifp = &sc->interface_data.ac_if;
 	struct mbuf_list    ml = MBUF_LIST_INITIALIZER();
+	struct mbuf_list    free_ml = MBUF_LIST_INITIALIZER();
 	struct mbuf	    *m;
 	u_int8_t	    accept_frame = 0;
 	u_int8_t	    eop = 0;
@@ -2867,8 +2886,11 @@ em_rxeof(struct em_softc *sc)
 	struct em_buffer    *pkt;
 	u_int8_t	    status;
 
-	if (if_rxr_inuse(&sc->rx_ring) == 0)
+	mtx_enter(&sc->rx_mtx);
+	if (if_rxr_inuse(&sc->rx_ring) == 0) {
+		mtx_leave(&sc->rx_mtx);
 		return;
+	}
 
 	i = sc->next_rx_desc_to_check;
 
@@ -2988,12 +3010,12 @@ em_rxeof(struct em_softc *sc)
 			sc->dropped_pkts++;
 
 			if (sc->fmp != NULL) {
- 				m_freem(sc->fmp);
+				ml_enqueue(&free_ml, sc->fmp);
 				sc->fmp = NULL;
 				sc->lmp = NULL;
 			}
 
-			m_freem(m);
+			ml_enqueue(&free_ml, m);
 		}
 
 		/* Advance our pointers to the next descriptor. */
@@ -3005,9 +3027,14 @@ em_rxeof(struct em_softc *sc)
 	    0, sizeof(*desc) * sc->num_rx_desc,
 	    BUS_DMASYNC_PREREAD);
 
-	if_input(ifp, &ml);
-
 	sc->next_rx_desc_to_check = i;
+
+	mtx_leave(&sc->rx_mtx);
+
+	while ((m = ml_dequeue(&free_ml)))
+		m_freem(m);
+
+	if_input(ifp, &ml);
 }
 
 /*********************************************************************

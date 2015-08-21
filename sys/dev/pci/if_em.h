@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.54 2014/12/26 05:46:32 tedu Exp $ */
+/* $OpenBSD: if_em.h,v 1.55 2015/08/21 09:16:06 kettenis Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -373,6 +373,7 @@ struct em_softc {
 	struct em_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
 	struct em_rx_desc	*rx_desc_base;
 	struct if_rxring	rx_ring;
+	struct mutex		rx_mtx;
 	u_int32_t		next_rx_desc_to_check;
 	u_int32_t		last_rx_desc_filled;
 	u_int32_t		rx_buffer_len;
