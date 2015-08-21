@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.28 2015/03/09 19:52:02 tedu Exp $	*/
+/*	$OpenBSD: worm.c,v 1.29 2015/08/21 02:42:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -132,10 +132,9 @@ main(int argc, char **argv)
 	prize();		/* Put up a goal */
 	wmove(tv, head->y, head->x);    /* Leave cursor on worm */
 	wrefresh(tv);
-	while(1)
-	{
+	while (1) {
 		if (wantleave) {
-			endwin();		/* XXX signal race */
+			endwin();
 			exit(0);
 		}
 		if (wantsuspend) {
@@ -151,13 +150,10 @@ main(int argc, char **argv)
 			wantsuspend = 0;
 		}
 
-		if (running)
-		{
+		if (running) {
 			running--;
 			process(lastch);
-		}
-		else
-		{
+		} else {
 			/* fflush(stdout); */
 			/* Delay could be a command line option */
 			t.tv_sec = 1;
@@ -257,54 +253,82 @@ process(int ch)
 
 	x = head->x;
 	y = head->y;
-	switch(ch)
-	{
+	switch(ch) {
 #ifdef KEY_LEFT
-		case KEY_LEFT:
+	case KEY_LEFT:
 #endif
-		case 'h':
-			x--; break;
+	case 'h':
+		x--;
+		break;
 #ifdef KEY_DOWN
-		case KEY_DOWN:
+	case KEY_DOWN:
 #endif
-		case 'j':
-			y++; break;
+	case 'j':
+		y++;
+		break;
 #ifdef KEY_UP
-		case KEY_UP:
+	case KEY_UP:
 #endif
-		case 'k':
-			y--; break;
+	case 'k':
+		y--;
+		break;
 #ifdef KEY_RIGHT
-		case KEY_RIGHT:
+	case KEY_RIGHT:
 #endif
-		case 'l':
-			x++; break;
-		case 'H': x--; running = RUNLEN; ch = tolower(ch); break;
-		case 'J': y++; running = RUNLEN/2; ch = tolower(ch); break;
-		case 'K': y--; running = RUNLEN/2; ch = tolower(ch); break;
-		case 'L': x++; running = RUNLEN; ch = tolower(ch); break;
-		case '\f': setup(); return;
-		case CNTRL('Z'): suspend(0); return;
-		case CNTRL('C'): crash(); return;
-		case CNTRL('D'): crash(); return;
-		case ERR: leave(0); return;
-		default: return;
+	case 'l':
+		x++;
+		break;
+	case 'H':
+		x--;
+		running = RUNLEN;
+		ch = tolower(ch);
+		break;
+	case 'J':
+		y++;
+		running = RUNLEN/2;
+		ch = tolower(ch);
+		break;
+	case 'K':
+		y--;
+		running = RUNLEN/2;
+		ch = tolower(ch);
+		break;
+	case 'L':
+		x++;
+		running = RUNLEN;
+		ch = tolower(ch);
+		break;
+	case '\f':
+		setup();
+		return;
+	case CNTRL('Z'):
+		suspend(0);
+		return;
+	case CNTRL('C'):
+		crash();
+		return;
+	case CNTRL('D'):
+		crash();
+		return;
+	case ERR:
+		leave(0);
+		return;
+	default:
+		return;
 	}
 	lastch = ch;
-	if (growing == 0)
-	{
+	if (growing == 0) {
 		display(tail, ' ');
 		tail->next->prev = NULL;
 		nh = tail->next;
 		free(tail);
 		tail = nh;
 		visible_len--;
-	}
-	else growing--;
+	} else
+		growing--;
 	display(head, BODY);
 	wmove(tv, y, x);
-	if (isdigit(ch = winch(tv)))
-	{
+	if (isdigit(ch = winch(tv))) {
 		int amt = ch - '0';
 		growing += amt * growthscale;
 		prize();
@@ -313,8 +337,8 @@ process(int ch)
 		wmove(stw, 0, COLS - 12);
 		wprintw(stw, "Score: %3d", score);
 		wrefresh(stw);
-	}
-	else if(ch != ' ') crash();
+	} else if(ch != ' ')
+		crash();
 	nh = newlink();
 	nh->next = NULL;
 	nh->prev = head;
