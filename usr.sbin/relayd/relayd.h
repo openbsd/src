@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.213 2015/07/18 16:01:28 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.214 2015/08/21 08:45:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -89,6 +89,7 @@
 
 #define SMALL_READ_BUF_SIZE	1024
 #define ICMP_BUF_SIZE		64
+#define ICMP_RCVBUF_SIZE	262144
 
 #define SNMP_RECONNECT_TIMEOUT	{ 3, 0 }	/* sec, usec */
 

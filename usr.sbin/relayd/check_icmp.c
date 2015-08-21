@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.40 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.41 2015/08/21 08:45:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,12 +48,15 @@ int	in_cksum(u_short *, int);
 void
 icmp_setup(struct relayd *env, struct ctl_icmp_event *cie, int af)
 {
-	int proto = IPPROTO_ICMP;
+	int proto = IPPROTO_ICMP, val;
 
 	if (af == AF_INET6)
 		proto = IPPROTO_ICMPV6;
 	if ((cie->s = socket(af, SOCK_RAW, proto)) < 0)
 		fatal("icmp_setup: socket");
+	val = ICMP_RCVBUF_SIZE;
+	if (setsockopt(cie->s, SOL_SOCKET, SO_RCVBUF, &val, sizeof(val)) == -1)
+		fatal("icmp_setup: setsockopt");
 	socket_set_blockmode(cie->s, BM_NONBLOCK);
 	cie->env = env;
 	cie->af = af;
