@@ -1,4 +1,4 @@
-/*	$OpenBSD: savestr.c,v 1.8 2015/04/05 17:02:57 guenther Exp $	*/
+/*	$OpenBSD: savestr.c,v 1.9 2015/08/21 02:07:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -47,7 +47,7 @@ savestr(register const char *str)
 		strsize = 1024;
 		if (strsize < size)
 			strsize = size;
-		strptr = (char *)malloc(strsize);
+		strptr = malloc(strsize);
 		if (strptr == NULL) {
 			fprintf(stderr, "savestr: malloc\n");
 			exit(1);

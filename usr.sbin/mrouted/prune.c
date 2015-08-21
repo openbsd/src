@@ -417,7 +417,7 @@ add_table_entry(u_int32_t origin, u_int32_t mcastgrp)
     }
 
     if (gt == NULL || gt->gt_mcastgrp != mcastgrp) {
-	gt = (struct gtable *)malloc(sizeof(struct gtable));
+	gt = malloc(sizeof(struct gtable));
 	if (gt == NULL)
 	    logit(LOG_ERR, 0, "ran out of memory");
 
@@ -498,7 +498,7 @@ add_table_entry(u_int32_t origin, u_int32_t mcastgrp)
     }
 
     if (st == NULL || st->st_origin != origin) {
-	st = (struct stable *)malloc(sizeof(struct stable));
+	st = malloc(sizeof(struct stable));
 	if (st == NULL)
 	    logit(LOG_ERR, 0, "ran out of memory");
 
@@ -988,7 +988,7 @@ accept_prune(u_int32_t src, u_int32_t dst, char *p, int datalen)
 	    pt->pt_timer = prun_tmr;
 	} else {
 	    /* allocate space for the prune structure */
-	    pt = (struct ptable *)(malloc(sizeof(struct ptable)));
+	    pt = malloc(sizeof(struct ptable));
 	    if (pt == NULL)
 	      logit(LOG_ERR, 0, "pt: ran out of memory");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-decnet.c,v 1.13 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-decnet.c,v 1.14 2015/08/21 02:07:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -731,7 +731,7 @@ dnnum_string(u_short dnaddr)
 	int node = dnaddr & NODEMASK;
 	int len = sizeof("00.0000");
 
-	str = (char *)malloc(len);
+	str = malloc(len);
 	if (str == NULL)
 		error("dnnum_string: malloc");
 	snprintf(str, len, "%d.%d", area, node);

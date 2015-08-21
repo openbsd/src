@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.33 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.34 2015/08/21 02:07:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -324,7 +324,7 @@ lookup_emem(const u_char *ep)
 	tp->e_addr0 = i;
 	tp->e_addr1 = j;
 	tp->e_addr2 = k;
-	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
+	tp->e_nxt = calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)
 		error("lookup_emem: calloc");
 
@@ -367,11 +367,11 @@ lookup_bytestring(register const u_char *bs, const int nlen)
 	tp->e_addr1 = j;
 	tp->e_addr2 = k;
 
-	tp->e_bs = (u_char *) calloc(1, nlen + 1);
+	tp->e_bs = calloc(1, nlen + 1);
 	if (tp->e_bs == NULL)
 		error("lookup_bytestring: calloc");
 	bcopy(bs, tp->e_bs, nlen);
-	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
+	tp->e_nxt = calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)
 		error("lookup_bytestring: calloc");
 
@@ -410,11 +410,11 @@ lookup_nsap(register const u_char *nsap)
 	tp->e_addr0 = i;
 	tp->e_addr1 = j;
 	tp->e_addr2 = k;
-	tp->e_nsap = (u_char *)malloc(nlen + 1);
+	tp->e_nsap = malloc(nlen + 1);
 	if (tp->e_nsap == NULL)
 		error("lookup_nsap: malloc");
 	memcpy((char *)tp->e_nsap, (char *)nsap, nlen + 1);
-	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
+	tp->e_nxt = calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)
 		error("lookup_nsap: calloc");
 
@@ -442,7 +442,7 @@ lookup_protoid(const u_char *pi)
 			tp = tp->p_nxt;
 	tp->p_oui = i;
 	tp->p_proto = j;
-	tp->p_nxt = (struct protoidmem *)calloc(1, sizeof(*tp));
+	tp->p_nxt = calloc(1, sizeof(*tp));
 	if (tp->p_nxt == NULL)
 		error("lookup_protoid: calloc");
 
@@ -586,7 +586,7 @@ isonsap_string(const u_char *nsap)
 	if (tp->e_name)
 		return tp->e_name;
 
-	tp->e_name = cp = (char *)malloc(nlen * 2 + 2);
+	tp->e_name = cp = malloc(nlen * 2 + 2);
 	if (cp == NULL)
 		error("isonsap_string: malloc");
 
@@ -896,7 +896,7 @@ newhnamemem(void)
 
 	if (num  <= 0) {
 		num = 64;
-		ptr = (struct hnamemem *)calloc(num, sizeof (*ptr));
+		ptr = calloc(num, sizeof (*ptr));
 		if (ptr == NULL)
 			error("newhnamemem: calloc");
 	}
@@ -916,7 +916,7 @@ newh6namemem(void)
 
 	if (num  <= 0) {
 		num = 64;
-		ptr = (struct h6namemem *)calloc(num, sizeof (*ptr));
+		ptr = calloc(num, sizeof (*ptr));
 		if (ptr == NULL)
 			error("newh6namemem: calloc");
 	}

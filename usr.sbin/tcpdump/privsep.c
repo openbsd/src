@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.34 2015/07/14 20:23:40 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.35 2015/08/21 02:07:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -570,7 +570,7 @@ impl_getlines(int fd)
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 		else {
-			if ((lbuf = (char *)malloc(len + 1)) == NULL)
+			if ((lbuf = malloc(len + 1)) == NULL)
 				err(1, NULL);
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';

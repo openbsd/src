@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.21 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.22 2015/08/21 02:07:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -79,7 +79,7 @@ ip6_print(register const u_char *bp, register u_int length)
 			clen = snaplen;
 
 		if (abuf == NULL) {
-			abuf = (u_char *)malloc(snaplen);
+			abuf = malloc(snaplen);
 			if (abuf == NULL)
 				error("ip6_print: malloc");
 		}

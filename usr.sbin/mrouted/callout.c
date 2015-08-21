@@ -95,7 +95,7 @@ timer_setTimer(int delay, cfunc_t action, char *data)
     in_callout = 1;
 
     /* create a node */
-    node = (struct timeout_q *)malloc(sizeof(struct timeout_q));
+    node = malloc(sizeof(struct timeout_q));
     if (node == 0) {
 	logit(LOG_WARNING, 0, "Malloc Failed in timer_settimer\n");
 	in_callout = 0;

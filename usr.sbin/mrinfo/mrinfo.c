@@ -348,7 +348,7 @@ main(int argc, char *argv[])
 	if ((target_addr = inet_addr(host)) != -1) {
 		hp = &bogus;
 		hp->h_length = sizeof(target_addr);
-		if (!(hp->h_addr_list = (char **)calloc(2, sizeof(char *))))
+		if (!(hp->h_addr_list = calloc(2, sizeof(char *))))
 			err(1, "can't allocate memory");
 		if (!(hp->h_addr_list[0] = malloc(hp->h_length)))
 			err(1, "can't allocate memory");

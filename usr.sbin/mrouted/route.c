@@ -283,9 +283,9 @@ create_route(u_int32_t origin, u_int32_t mask)
 {
     struct rtentry *r;
 
-    if ((r = (struct rtentry *) malloc(sizeof(struct rtentry) +
-				       (2 * numvifs * sizeof(u_int32_t)) +
-				       (numvifs * sizeof(u_int)))) == NULL) {
+    if ((r = malloc(sizeof(struct rtentry) +
+	(2 * numvifs * sizeof(u_int32_t)) +
+	(numvifs * sizeof(u_int)))) == NULL) {
 	logit(LOG_ERR, 0, "ran out of memory");	/* fatal */
     }
     r->rt_origin     = origin;

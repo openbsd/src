@@ -572,7 +572,7 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
      * If not found, add it to the list and update kernel cache.
      */
     if (g == NULL) {
-	g = (struct listaddr *)malloc(sizeof(struct listaddr));
+	g = malloc(sizeof(struct listaddr));
 	if (g == NULL)
 	    logit(LOG_ERR, 0, "ran out of memory");    /* fatal */
 
@@ -1049,7 +1049,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 	    inet_fmt(addr, s1), vifi, level & 0xff, (level >> 8) & 0xff,
 	    (level >> 16) & 0xff);
 
-	n = (struct listaddr *)malloc(sizeof(struct listaddr));
+	n = malloc(sizeof(struct listaddr));
 	if (n == NULL)
 	    logit(LOG_ERR, 0, "ran out of memory");    /* fatal */
 
@@ -1388,7 +1388,7 @@ SetTimer(int vifi, struct listaddr *g)
 {
     cbk_t *cbk;
 
-    cbk = (cbk_t *) malloc(sizeof(cbk_t));
+    cbk = malloc(sizeof(cbk_t));
     cbk->g = g;
     cbk->vifi = vifi;
     return timer_setTimer(g->al_timer, (cfunc_t)DelVif, (void *)cbk);
@@ -1428,7 +1428,7 @@ SetQueryTimer(struct listaddr *g, vifi_t vifi, int to_expire, int q_time)
 {
     cbk_t *cbk;
 
-    cbk = (cbk_t *) malloc(sizeof(cbk_t));
+    cbk = malloc(sizeof(cbk_t));
     cbk->g = g;
     cbk->q_time = q_time;
     cbk->vifi = vifi;

@@ -246,7 +246,7 @@ ifmod	: mod
 
 		    struct phaddr *ph;
 
-		    ph = (struct phaddr *)malloc(sizeof(struct phaddr));
+		    ph = malloc(sizeof(struct phaddr));
 		    if (ph == NULL)
 			fatal("out of memory");
 		    if ($2.mask) {
@@ -300,7 +300,7 @@ mod	: THRESHOLD NUMBER	{ if ($2 < 1 || $2 > 255)
 
 		    struct vif_acl *v_acl;
 
-		    v_acl = (struct vif_acl *)malloc(sizeof(struct vif_acl));
+		    v_acl = malloc(sizeof(struct vif_acl));
 		    if (v_acl == NULL)
 			fatal("out of memory");
 		    VAL_TO_MASK(v_acl->acl_mask, $2.mask);

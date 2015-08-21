@@ -277,11 +277,11 @@ lwres_printb64len(const char *p0)
 	if (p + 2 + l > (u_int8_t *)snapend)
 		goto trunc;
 
-	dbuf = (char *)malloc(l + 1);
+	dbuf = malloc(l + 1);
 	if (!dbuf)
 	  return -1;
 
-	b64buf = (char *)malloc((l + 2) * 4 / 3);
+	b64buf = malloc((l + 2) * 4 / 3);
 	if (!b64buf)
 	  {
 	    free(dbuf);

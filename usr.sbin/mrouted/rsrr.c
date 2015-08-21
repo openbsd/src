@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsrr.c,v 1.13 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: rsrr.c,v 1.14 2015/08/21 02:07:32 deraadt Exp $	*/
 /*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
 
 /*
@@ -423,7 +423,7 @@ rsrr_cache(struct gtable *gt, struct rsrr_rq *route_query)
     /* Cache entry doesn't already exist.  Create one and insert at
      * front of list.
      */
-    rc = (struct rsrr_cache *) malloc(sizeof(struct rsrr_cache));
+    rc = malloc(sizeof(struct rsrr_cache));
     if (rc == NULL)
 	logit(LOG_ERR, 0, "ran out of memory");
     rc->route_query.source_addr.s_addr = route_query->source_addr.s_addr;

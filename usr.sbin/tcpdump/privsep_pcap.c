@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.17 2012/11/14 03:33:04 lteo Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.18 2015/08/21 02:07:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -239,7 +239,7 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 		return (NULL);
 	}
 
-	p = (pcap_t *)malloc(sizeof(*p));
+	p = malloc(sizeof(*p));
 	if (p == NULL) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 		    pcap_strerror(errno));
@@ -324,7 +324,7 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 		goto bad;
 	}
 	p->bufsize = v;
-	p->buffer = (u_char *)malloc(p->bufsize);
+	p->buffer = malloc(p->bufsize);
 	if (p->buffer == NULL) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 		    pcap_strerror(errno));
@@ -368,7 +368,7 @@ priv_pcap_offline(const char *fname, char *errbuf)
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
 
-	p = (pcap_t *)malloc(sizeof(*p));
+	p = malloc(sizeof(*p));
 	if (p == NULL) {
 		strlcpy(errbuf, "out of swap", PCAP_ERRBUF_SIZE);
 		return (NULL);
@@ -445,7 +445,7 @@ priv_pcap_offline(const char *fname, char *errbuf)
 
 	if (p->bufsize < 0)
 		p->bufsize = BPF_MAXBUFSIZE;
-	p->sf.base = (u_char *)malloc(p->bufsize + BPF_ALIGNMENT);
+	p->sf.base = malloc(p->bufsize + BPF_ALIGNMENT);
 	if (p->sf.base == NULL) {
 		strlcpy(errbuf, "out of swap", PCAP_ERRBUF_SIZE);
 		goto bad;
