@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.19 2015/08/20 06:00:23 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.20 2015/08/21 07:26:09 doug Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -728,6 +728,7 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		return (EPERM);
 
 	/* tty subsystem */
+	case TIOCGPGRP:
 	case TIOCGWINSZ:	/* various programs */
 	case TIOCSTI:		/* ksh? csh? */
 		if (fp->f_type == DTYPE_VNODE && (vp->v_flag & VISTTY))
