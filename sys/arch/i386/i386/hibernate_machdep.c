@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.46 2015/04/26 11:09:32 kettenis Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.47 2015/08/21 07:01:38 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -269,8 +269,8 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	/*
 	 * Map current kernel VA range using 4M pages
 	 */
-	kern_start_4m_va = (paddr_t)&start & ~(PAGE_MASK_L2);
-	kern_end_4m_va = (paddr_t)&end & ~(PAGE_MASK_L2);
+	kern_start_4m_va = (vaddr_t)&start & ~(PAGE_MASK_L2);
+	kern_end_4m_va = (vaddr_t)&end & ~(PAGE_MASK_L2);
 
 	/* i386 kernels load at 2MB phys (on the 0th 4mb page) */
 	phys_page_number = 0;
