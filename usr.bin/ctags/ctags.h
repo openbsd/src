@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.h,v 1.8 2014/12/10 19:44:21 tobias Exp $	*/
+/*	$OpenBSD: ctags.h,v 1.9 2015/08/22 04:23:07 semarie Exp $	*/
 /*	$NetBSD: ctags.h,v 1.3 1995/03/26 20:14:07 glass Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ typedef struct nd_st {			/* sorting structure */
 		*pat;			/* search pattern */
 	int	lno;			/* for -x option */
 	bool	been_warned;		/* set if noticed dup */
+	bool	dynfile;		/* set if file will need freed */
 } NODE;
 
 extern char	*curfile;		/* current input file name */
@@ -72,6 +73,7 @@ extern bool	_wht[], _itk[], _btk[];
 extern char	lbuf[LINE_MAX];
 extern char    *lbp;
 extern char	searchar;		/* ex search character */
+extern bool	in_preload;
 
 extern int	cicmp(char *);
 extern void	get_line(void);

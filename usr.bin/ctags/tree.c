@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.11 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.12 2015/08/22 04:23:07 semarie Exp $	*/
 /*	$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $	*/
 
 /*
@@ -38,6 +38,8 @@
 #include <sys/dirent.h>
 
 #include "ctags.h"
+
+bool	in_preload = NO;
 
 static void	add_node(NODE *, NODE *);
 static void	free_tree(NODE *);
@@ -79,6 +81,7 @@ pfnote(char *name, int ln)
 	np->lno = ln;
 	np->left = np->right = 0;
 	np->been_warned = NO;
+	np->dynfile = in_preload;
 	if (!(np->pat = strdup(lbuf)))
 		err(1, NULL);
 	if (!head)
@@ -128,6 +131,8 @@ free_tree(NODE *node)
 
 		free(node->entry);
 		free(node->pat);
+		if (node->dynfile == YES)
+			free(node->file);
 		free(node);
 	}
 }

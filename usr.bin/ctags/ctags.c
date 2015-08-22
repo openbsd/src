@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.15 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.16 2015/08/22 04:23:07 semarie Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -65,6 +65,7 @@ char	lbuf[LINE_MAX];
 
 void	init(void);
 void	find_entries(char *);
+void	preload_entries(char *, int, char *[]);
 
 int
 main(int argc, char *argv[])
@@ -75,7 +76,6 @@ main(int argc, char *argv[])
 	int	exit_val;			/* exit value */
 	int	step;				/* step through args */
 	int	ch;				/* getopts char */
-	char	*cmd;
 
 	aflag = uflag = NO;
 	while ((ch = getopt(argc, argv, "BFadf:tuwvx")) != -1)
@@ -122,6 +122,8 @@ usage:		(void)fprintf(stderr,
 	}
 
 	init();
+	if (uflag && !vflag && !xflag)
+		preload_entries(outfile, argc, argv);
 
 	for (exit_val = step = 0; step < argc; ++step)
 		if (!(inf = fopen(argv[step], "r"))) {
@@ -138,30 +140,10 @@ usage:		(void)fprintf(stderr,
 		if (xflag)
 			put_entries(head);
 		else {
-			if (uflag) {
-				for (step = 0; step < argc; step++) {
-					if (asprintf(&cmd,
-					    "mv %s OTAGS; fgrep -v '\t%s\t' OTAGS >%s; rm OTAGS",
-					    outfile, argv[step], outfile) == -1)
-						err(1, "out of space");
-					system(cmd);
-					free(cmd);
-					cmd = NULL;
-				}
-				aflag = 1;
-			}
 			if (!(outf = fopen(outfile, aflag ? "a" : "w")))
 				err(exit_val, "%s", outfile);
 			put_entries(head);
 			(void)fclose(outf);
-			if (uflag) {
-				if (asprintf(&cmd, "sort -o %s %s",
-				    outfile, outfile) == -1)
-						err(1, "out of space");
-				system(cmd);
-				free(cmd);
-				cmd = NULL;
-			}
 		}
 	}
 	exit(exit_val);
@@ -252,4 +234,80 @@ find_entries(char *file)
 		}
 	}
 /* C */	c_entries();
+}
+
+void
+preload_entries(char *tagsfile, int argc, char *argv[])
+{
+	FILE	*fp;
+	char	 line[LINE_MAX];
+	char	*entry = NULL;
+	char	*file = NULL;
+	char	*pattern = NULL;
+	char	*eol;
+	int	 i;
+
+	in_preload = YES;
+
+	if ((fp = fopen(tagsfile, "r")) == NULL)
+		err(1, "preload_entries: %s", tagsfile);
+
+	while (1) {
+next:
+		if (fgets(line, sizeof(line), fp) == NULL)
+			break;
+
+		if ((eol = strchr(line, '\n')) == NULL)
+			errx(1, "preload_entries: line too long");
+		*eol = '\0';
+
+		/* extract entry */
+		entry = line;
+		if ((file = strchr(line, '\t')) == NULL)
+			errx(1, "preload_entries: couldn't parse entry: %s",
+			    tagsfile);
+		*file = '\0';
+
+		/* extract file */
+		file++;
+		if ((pattern = strchr(file, '\t')) == NULL)
+			errx(1, "preload_entries: couldn't parse filename: %s",
+			    tagsfile);
+		*pattern = '\0';
+
+		/* skip this file ? */
+		for(i = 0; i < argc; i++)
+			if (strcmp(file, argv[i]) == 0)
+				goto next;
+
+		/* rest of string is pattern */
+		pattern++;
+
+		/* grab searchar, and don't keep it around the pattern */
+		if ((pattern[0] == '/' || pattern[0] == '?')
+		    && pattern[1] == '^') {
+
+			i = strlen(pattern);
+			if (pattern[i-1] == pattern[0])
+				/* remove searchar at end */
+				pattern[i-1] = '\0';
+			else
+				errx(1, "preload_entries: couldn't parse "
+				    "pattern: %s", tagsfile);
+
+			/* remove searchar at begin */
+			pattern += 2;
+		}
+
+		/* add entry */
+		if ((curfile = strdup(file)) == NULL)
+			err(1, "preload_entries: strdup");
+		(void)strlcpy(lbuf, pattern, sizeof(lbuf));
+		pfnote(entry, 0);
+	}
+	if (ferror(fp))
+		err(1, "preload_entries: fgets");
+
+	(void)fclose(fp);
+	in_preload = NO;
 }

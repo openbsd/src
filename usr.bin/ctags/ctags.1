@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.28 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: ctags.1,v 1.29 2015/08/22 04:23:07 semarie Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: August 22 2015 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -89,12 +89,8 @@ The default behaviour is to place them in a file called
 Update the specified files in the
 .Ar tags
 file, that is, all
-references to them are deleted, and the new values are appended to the
+references to them are regenerated, keeping only the others values in the
 file.
-(Beware: this option is implemented in a way which is rather
-slow; it is usually faster to simply rebuild the
-.Ar tags
-file.)
 .It Fl v
 An index of the form expected by vgrind
 is produced on the standard output.
