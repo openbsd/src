@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.18 2013/08/29 20:22:09 naddy Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.19 2015/08/22 14:47:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -284,7 +284,7 @@ penalise(int value, int op, int operand)
 	struct penalty *p;
 
 	op = opnum(op);
-	if ((p = (struct penalty *)malloc((u_int)sizeof(*p))) == NULL)
+	if ((p = malloc(sizeof(*p))) == NULL)
 		return;
 	p->next = penlist[op][operand];
 	penlist[op][operand] = p;

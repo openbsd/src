@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.8 2004/01/16 00:13:19 espie Exp $	*/
+/*	$OpenBSD: execute.c,v 1.9 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: execute.c,v 1.2 1997/10/10 16:33:13 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -516,7 +516,7 @@ create_shot(type, y, x, face, charge, size, owner, score, expl, over)
 {
 	BULLET	*bp;
 
-	bp = (BULLET *) malloc(sizeof (BULLET));	/* NOSTRICT */
+	bp = malloc(sizeof (BULLET));	/* NOSTRICT */
 	if (bp == NULL) {
 		logit(LOG_ERR, "malloc");
 		if (owner != NULL)

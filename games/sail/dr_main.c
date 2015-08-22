@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_main.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: dr_main.c,v 1.6 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: dr_main.c,v 1.4 1995/04/22 10:36:52 cgd Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ dr_main()
 		nat[n] = 0;
 	foreachship(sp) {
 		if (sp->file == NULL &&
-		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL) {
+		    (sp->file = calloc(1, sizeof (struct File))) == NULL) {
 			(void) fprintf(stderr, "DRIVER: Out of memory.\n");
 			exit(1);
 		}

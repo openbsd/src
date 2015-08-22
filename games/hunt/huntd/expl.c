@@ -1,4 +1,4 @@
-/*	$OpenBSD: expl.c,v 1.9 2007/09/04 22:39:31 hshoexer Exp $	*/
+/*	$OpenBSD: expl.c,v 1.10 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -58,7 +58,7 @@ showexpl(y, x, type)
 		return;
 	if (x < 0 || x >= WIDTH)
 		return;
-	ep = (EXPL *) malloc(sizeof (EXPL));	/* NOSTRICT */
+	ep = malloc(sizeof (EXPL));	/* NOSTRICT */
 	if (ep == NULL) {
 		logit(LOG_ERR, "malloc");
 		return;

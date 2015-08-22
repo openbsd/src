@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.11 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: save.c,v 1.12 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ save_file_name(const char *filename, size_t len)
 	size_t	tmpl;
 
 	if (memchr(filename, '/', len)) {
-		if ((newname = (char *)malloc(len + 1)) == NULL) {
+		if ((newname = malloc(len + 1)) == NULL) {
 			warnx("out of memory");
 			return NULL;
 		}
@@ -162,7 +162,7 @@ save_file_name(const char *filename, size_t len)
 	} else {
 		if ((home = getenv("HOME")) != NULL) {
 			tmpl = strlen(home);
-			if ((newname = (char *)malloc(tmpl + len + 2)) == NULL) {
+			if ((newname = malloc(tmpl + len + 2)) == NULL) {
 				warnx("out of memory");
 				return NULL;
 			}
@@ -171,7 +171,7 @@ save_file_name(const char *filename, size_t len)
 			memcpy(newname + tmpl + 1, filename, len);
 			newname[tmpl + len + 1] = 0;
 		} else {
-			if ((newname = (char *)malloc(len + 1)) == NULL) {
+			if ((newname = malloc(len + 1)) == NULL) {
 				warnx("out of memory");
 				return NULL;
 			}

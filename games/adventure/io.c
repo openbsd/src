@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.19 2014/12/08 21:56:27 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.20 2015/08/22 14:47:40 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -572,7 +572,7 @@ pspeak(int m, int skip)
 	char   *tbuf;
 
 	msg = &ptext[m];
-	if ((tbuf = (char *) malloc(msg->txtlen + 1)) == 0)
+	if ((tbuf = malloc(msg->txtlen + 1)) == 0)
 		err(1, NULL);
 	memcpy(tbuf, msg->seekadr, msg->txtlen + 1);	/* Room to null */
 	s = tbuf;

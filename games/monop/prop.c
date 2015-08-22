@@ -1,4 +1,4 @@
-/*	$OpenBSD: prop.c,v 1.8 2014/12/08 21:11:02 tedu Exp $	*/
+/*	$OpenBSD: prop.c,v 1.9 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: prop.c,v 1.3 1995/03/23 08:35:06 cgd Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ add_list(plr, head, op_sqr)
 	OWN	*tp, *last_tp;
 	OWN	*op;
 
-	if ((op = (OWN *)calloc(1, sizeof (OWN))) == NULL)
+	if ((op = calloc(1, sizeof (OWN))) == NULL)
 		err(1, NULL);
 	op->sqr = &board[op_sqr];
 	val = value(op->sqr);

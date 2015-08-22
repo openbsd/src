@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.9 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: cards.c,v 1.10 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/23 08:34:35 cgd Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ set_up(dp)
 	int	r1, r2;
 	int	i;
 
-	if ((dp->offsets = (int32_t *) calloc(dp->num_cards, sizeof (int32_t))) == NULL)
+	if ((dp->offsets = calloc(dp->num_cards, sizeof (int32_t))) == NULL)
 		err(1, NULL);
 	for (i = 0 ; i < dp->num_cards ; i++) {
 		if (fread(&dp->offsets[i], sizeof(dp->offsets[i]), 1, deckf) != 1)

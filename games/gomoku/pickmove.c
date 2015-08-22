@@ -1,4 +1,4 @@
-/*	$OpenBSD: pickmove.c,v 1.13 2014/12/05 00:48:57 deraadt Exp $	*/
+/*	$OpenBSD: pickmove.c,v 1.14 2015/08/22 14:47:41 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -464,8 +464,7 @@ makecombo2(ocbp, osp, off, s)
 		    n = baseB;
 
 		/* make a new combo! */
-		ncbp = (struct combostr *)malloc(sizeof(struct combostr) +
-		    2 * sizeof(struct combostr *));
+		ncbp = reallocarray(NULL, 3, sizeof(struct combostr));
 		if (ncbp == (struct combostr *)NULL)
 		    qlog("Memory allocation failure.");
 		scbpp = (struct combostr **)(ncbp + 1);
@@ -707,7 +706,7 @@ makecombo(ocbp, osp, off, s)
 		n = baseB;
 
 	    /* make a new combo! */
-	    ncbp = (struct combostr *)malloc(sizeof(struct combostr) +
+	    ncbp = malloc(sizeof(struct combostr) +
 		(cbp->c_nframes + 1) * sizeof(struct combostr *));
 	    if (ncbp == (struct combostr *)NULL)
 		qlog("Memory allocation failure.");
@@ -910,7 +909,7 @@ makeempty(ocbp)
 				continue;
 
 			/* add the combo to the list of empty spots */
-			nep = (struct elist *)malloc(sizeof(struct elist));
+			nep = malloc(sizeof(struct elist));
 			if (nep == (struct elist *)NULL)
 				qlog("Memory allocation failure.");
 			nep->e_combo = ocbp;

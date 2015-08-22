@@ -1,4 +1,4 @@
-/*	$OpenBSD: initdeck.c,v 1.13 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: initdeck.c,v 1.14 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -77,9 +77,9 @@ main(ac, av)
 	/*
 	 * allocate space for pointers.
 	 */
-	if ((CC_D.offsets = (int32_t *)calloc(CC_D.num_cards + 1,
+	if ((CC_D.offsets = calloc(CC_D.num_cards + 1,
 			sizeof (int32_t))) == NULL ||
-	    (CH_D.offsets = (int32_t *)calloc(CH_D.num_cards + 1,
+	    (CH_D.offsets = calloc(CH_D.num_cards + 1,
 			sizeof (int32_t))) == NULL)
 		err(1, NULL);
 	fseek(inf, 0L, SEEK_SET);

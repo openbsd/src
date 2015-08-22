@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.11 2015/06/26 19:18:03 otto Exp $	*/
+/*	$OpenBSD: move.c,v 1.12 2015/08/22 14:47:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -306,7 +306,7 @@ nextfree()
 	struct BOARD *new;
 
 	if (freeq == 0) {
-		new = (struct BOARD *)calloc (1, sizeof(struct BOARD));
+		new = calloc (1, sizeof(struct BOARD));
 		if (new == 0) {
 			addstr("\nOut of memory\n");
 			getout(0);

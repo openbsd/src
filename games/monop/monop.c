@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.12 2014/12/08 21:11:02 tedu Exp $	*/
+/*	$OpenBSD: monop.c,v 1.13 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ blew_it:
 		else
 			break;
 	}
-	if ((cur_p = play = (PLAY *) calloc(num_play, sizeof (PLAY))) == NULL)
+	if ((cur_p = play = calloc(num_play, sizeof (PLAY))) == NULL)
 		err(1, NULL);
 	for (i = 0; i < num_play; i++) {
 		do {

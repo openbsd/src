@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.10 2014/12/08 21:11:02 tedu Exp $	*/
+/*	$OpenBSD: execute.c,v 1.11 2015/08/22 14:47:41 deraadt Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ badness:
 	    player < 0 || player >= num_play ||
 	    num_doub < 0 || num_doub > 2)
 		goto badness;
-	if ((play = (PLAY *)calloc(num_play, sizeof(PLAY))) == NULL)
+	if ((play = calloc(num_play, sizeof(PLAY))) == NULL)
 		err(1, NULL);
 	cur_p = play + player;
 	/* Names */
