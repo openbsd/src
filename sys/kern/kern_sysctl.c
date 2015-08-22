@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.287 2015/08/03 14:20:39 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.288 2015/08/22 20:18:49 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -70,7 +70,6 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/timetc.h>
-#include <sys/tame.h>
 #include <sys/evcount.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>

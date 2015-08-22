@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.100 2015/07/28 05:50:41 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.101 2015/08/22 20:18:49 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
-#include <sys/tame.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif

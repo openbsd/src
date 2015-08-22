@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.222 2015/07/20 21:31:57 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.223 2015/08/22 20:18:50 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -562,6 +562,7 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
+	p->p_tamenote = TMN_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -845,13 +846,18 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	struct nameidata nd;
 
 	switch (oflags & O_ACCMODE) {
+	case O_RDONLY:
+		p->p_tamenote = TMN_RPATH;
+		break;
 	case O_WRONLY:
+		p->p_tamenote = TMN_WPATH;
+		break;
 	case O_RDWR:
-		p->p_tamenote |= TMN_WRITE;
+		p->p_tamenote = TMN_RPATH | TMN_WPATH;
 		break;
 	}
 	if (oflags & O_CREAT)
-		p->p_tamenote |= TMN_CREAT;
+		p->p_tamenote |= TMN_CPATH;
 
 	fdplock(fdp);
 
@@ -1195,7 +1201,6 @@ sys_mknod(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) dev;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_IMODIFY;
 	return (domknodat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode),
 	    SCARG(uap, dev)));
 }
@@ -1290,7 +1295,7 @@ sys_mkfifo(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_CREAT;
+	p->p_tamenote = TMN_CPATH | TMN_RPATH;
 	return (domknodat(p, AT_FDCWD, SCARG(uap, path),
 	    (SCARG(uap, mode) & ALLPERMS) | S_IFIFO, 0));
 }
@@ -1320,7 +1325,6 @@ sys_link(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) link;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_CREAT;
 	return (dolinkat(p, AT_FDCWD, SCARG(uap, path), AT_FDCWD,
 	    SCARG(uap, link), AT_SYMLINK_FOLLOW));
 }
@@ -1353,6 +1357,7 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_FOLLOW) ? FOLLOW : NOFOLLOW;
+	p->p_tamenote = TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd1, path1, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -1363,6 +1368,7 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 		flags |= STRIPSLASHES;
 	}
 
+	p->p_tamenote = TMN_CPATH;
 	NDINITAT(&nd, CREATE, flags, UIO_USERSPACE, fd2, path2, p);
 	if ((error = namei(&nd)) != 0)
 		goto out;
@@ -1394,7 +1400,6 @@ sys_symlink(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) link;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_CREAT;
 	return (dosymlinkat(p, SCARG(uap, path), AT_FDCWD, SCARG(uap, link)));
 }
 
@@ -1423,6 +1428,7 @@ dosymlinkat(struct proc *p, const char *upath, int fd, const char *link)
 	error = copyinstr(upath, path, MAXPATHLEN, NULL);
 	if (error)
 		goto out;
+	p->p_tamenote = TMN_CPATH;
 	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, link, p);
 	if ((error = namei(&nd)) != 0)
 		goto out;
@@ -1455,7 +1461,6 @@ sys_unlink(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_CREAT;
 	return (dounlinkat(p, AT_FDCWD, SCARG(uap, path), 0));
 }
 
@@ -1482,6 +1487,7 @@ dounlinkat(struct proc *p, int fd, const char *path, int flag)
 	if (flag & ~AT_REMOVEDIR)
 		return (EINVAL);
 
+	p->p_tamenote = TMN_CPATH;
 	NDINITAT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
 	    fd, path, p);
 	if ((error = namei(&nd)) != 0)
@@ -1602,6 +1608,7 @@ sys_access(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) amode;
 	} */ *uap = v;
 
+	p->p_tamenote = TMN_RPATH;
 	return (dofaccessat(p, AT_FDCWD, SCARG(uap, path),
 	    SCARG(uap, amode), 0));
 }
@@ -1648,6 +1655,7 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 		newcred->cr_gid = newcred->cr_rgid;
 	}
 
+	p->p_tamenote = TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		goto out;
@@ -1716,7 +1724,9 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 	if (flag & ~AT_SYMLINK_NOFOLLOW)
 		return (EINVAL);
 
+
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	p->p_tamenote = TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -1815,6 +1825,7 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 	int error;
 	struct nameidata nd;
 
+	p->p_tamenote = TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -1849,7 +1860,6 @@ sys_chflags(struct proc *p, void *v, register_t *retval)
 		syscallarg(u_int) flags;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_IMODIFY;
 	return (dochflagsat(p, AT_FDCWD, SCARG(uap, path),
 	    SCARG(uap, flags), 0));
 }
@@ -1878,6 +1888,7 @@ dochflagsat(struct proc *p, int fd, const char *path, u_int flags, int atflags)
 		return (EINVAL);
 
 	follow = (atflags & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	p->p_tamenote = TMN_FATTR | TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -1948,7 +1959,6 @@ sys_chmod(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_IMODIFY;
 	return (dofchmodat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode), 0));
 }
 
@@ -1976,10 +1986,14 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag)
 
 	if (mode & ~(S_IFMT | ALLPERMS))
 		return (EINVAL);
+	if ((p->p_p->ps_flags & PS_TAMED) &&
+	    (mode & (S_ISUID|S_ISGID|S_ISTXT)))
+		return (tame_fail(p, EPERM, TAME_FATTR));
 	if (flag & ~AT_SYMLINK_NOFOLLOW)
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	p->p_tamenote = TMN_FATTR | TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2010,10 +2024,14 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
+	mode_t mode = SCARG(uap, mode);
 	int error;
 
-	if (SCARG(uap, mode) & ~(S_IFMT | ALLPERMS))
+	if (mode & ~(S_IFMT | ALLPERMS))
 		return (EINVAL);
+	if ((p->p_p->ps_flags & PS_TAMED) &&
+	    (mode & (S_ISUID|S_ISGID|S_ISTXT)))
+		return (tame_fail(p, EPERM, TAME_FATTR));
 
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -2023,7 +2041,7 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 		error = EROFS;
 	else {
 		VATTR_NULL(&vattr);
-		vattr.va_mode = SCARG(uap, mode) & ALLPERMS;
+		vattr.va_mode = mode & ALLPERMS;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 	VOP_UNLOCK(vp, 0, p);
@@ -2044,7 +2062,6 @@ sys_chown(struct proc *p, void *v, register_t *retval)
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_IMODIFY;
 	return (dofchownat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, uid),
 	    SCARG(uap, gid), 0));
 }
@@ -2078,6 +2095,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	p->p_tamenote = TMN_FATTR | TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2087,7 +2105,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 		error = EROFS;
 	else {
 		if ((uid != -1 || gid != -1) &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p, 0) || (p->p_p->ps_flags & PS_TAMED) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2128,7 +2146,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 	uid_t uid = SCARG(uap, uid);
 	gid_t gid = SCARG(uap, gid);
 
-	p->p_tamenote |= TMN_IMODIFY;
+	p->p_tamenote = TMN_FATTR | TMN_RPATH;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2138,7 +2156,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 		error = EROFS;
 	else {
 		if ((uid != -1 || gid != -1) &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p, 0) || (p->p_p->ps_flags & PS_TAMED) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2187,7 +2205,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 		error = EROFS;
 	else {
 		if ((uid != -1 || gid != -1) &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p, 0) || (p->p_p->ps_flags & PS_TAMED) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2225,7 +2243,6 @@ sys_utimes(struct proc *p, void *v, register_t *retval)
 	const struct timeval *tvp;
 	int error;
 
-	p->p_tamenote |= TMN_IMODIFY;
 	tvp = SCARG(uap, tptr);
 	if (tvp != NULL) {
 		error = copyin(tvp, tv, sizeof(tv));
@@ -2277,6 +2294,7 @@ doutimensat(struct proc *p, int fd, const char *path,
 		return (EINVAL);
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	p->p_tamenote = TMN_FATTR | TMN_RPATH;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2421,7 +2439,7 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	p->p_tamenote |= TMN_IMODIFY;
+	p->p_tamenote = TMN_FATTR | TMN_RPATH;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -2521,7 +2539,6 @@ sys_rename(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) to;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_IMODIFY;
 	return (dorenameat(p, AT_FDCWD, SCARG(uap, from), AT_FDCWD,
 	    SCARG(uap, to)));
 }
@@ -2549,6 +2566,7 @@ dorenameat(struct proc *p, int fromfd, const char *from, int tofd,
 	int error;
 	int flags;
 
+	p->p_tamenote = TMN_RPATH | TMN_CPATH;
 	NDINITAT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_USERSPACE,
 	    fromfd, from, p);
 	if ((error = namei(&fromnd)) != 0)
@@ -2562,6 +2580,7 @@ dorenameat(struct proc *p, int fromfd, const char *from, int tofd,
 	if (fvp->v_type == VDIR)
 		flags |= STRIPSLASHES;
 
+	p->p_tamenote = TMN_CPATH;
 	NDINITAT(&tond, RENAME, flags, UIO_USERSPACE, tofd, to, p);
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
@@ -2630,7 +2649,7 @@ sys_mkdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_CREAT;
+	p->p_tamenote = TMN_CPATH | TMN_RPATH;
 	return (domkdirat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, mode)));
 }
 
@@ -2655,6 +2674,7 @@ domkdirat(struct proc *p, int fd, const char *path, mode_t mode)
 	int error;
 	struct nameidata nd;
 
+	p->p_tamenote = TMN_CPATH | TMN_RPATH;
 	NDINITAT(&nd, CREATE, LOCKPARENT | STRIPSLASHES, UIO_USERSPACE,
 	    fd, path, p);
 	if ((error = namei(&nd)) != 0)
@@ -2689,7 +2709,7 @@ sys_rmdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 
-	p->p_tamenote |= TMN_CREAT;
+	p->p_tamenote = TMN_CPATH | TMN_RPATH;
 	return (dounlinkat(p, AT_FDCWD, SCARG(uap, path), AT_REMOVEDIR));
 }
 
@@ -2784,7 +2804,6 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	p->p_tamenote |= TMN_CREAT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);

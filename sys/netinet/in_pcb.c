@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.173 2015/08/19 13:27:38 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.174 2015/08/22 20:18:50 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -79,7 +79,6 @@
 #include <sys/proc.h>
 #include <sys/domain.h>
 #include <sys/pool.h>
-#include <sys/tame.h>
 
 #include <net/if.h>
 #include <net/if_var.h>

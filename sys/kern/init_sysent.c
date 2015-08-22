@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.168 2015/07/20 00:57:06 guenther Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.169 2015/08/22 20:18:49 deraadt Exp $	*/
 
 /*
  * System call switch table.
@@ -248,7 +248,7 @@ struct sysent sysent[] = {
 	    sys_listen },			/* 106 = listen */
 	{ 4, s(struct sys_chflagsat_args), 0,
 	    sys_chflagsat },			/* 107 = chflagsat */
-	{ 1, s(struct sys_tame_args), 0,
+	{ 2, s(struct sys_tame_args), 0,
 	    sys_tame },				/* 108 = tame */
 	{ 4, s(struct sys_ppoll_args), 0,
 	    sys_ppoll },			/* 109 = ppoll */

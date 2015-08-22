@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.75 2015/08/01 20:12:34 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.76 2015/08/22 20:18:49 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ ktruser(struct proc *p, const char *id, const void *addr, size_t len)
  */
 /* ARGSUSED */
 int
-sys_ktrace(struct proc *curp, void *v, register_t *retval)
+sys_ktrace(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -407,14 +407,15 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		/*
 		 * an operation which requires a file argument.
 		 */
-		cred = curp->p_ucred;
+		cred = p->p_ucred;
+		p->p_tamenote = TMN_CPATH;
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname),
-		    curp);
+		    p);
 		if ((error = vn_open(&nd, FREAD|FWRITE|O_NOFOLLOW, 0)) != 0)
 			goto done;
 		vp = nd.ni_vp;
 
-		VOP_UNLOCK(vp, 0, curp);
+		VOP_UNLOCK(vp, 0, p);
 		if (vp->v_type != VREG) {
 			error = EACCES;
 			goto done;
@@ -426,7 +427,7 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 	if (ops == KTROP_CLEARFILE) {
 		LIST_FOREACH(pr, &allprocess, ps_list) {
 			if (pr->ps_tracevp == vp) {
-				if (ktrcanset(curp, pr))
+				if (ktrcanset(p, pr))
 					ktrcleartrace(pr);
 				else
 					error = EPERM;
@@ -442,9 +443,9 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		goto done;
 	}
 	if (ops == KTROP_SET) {
-		if (suser(curp, 0) == 0)
+		if (suser(p, 0) == 0)
 			facs |= KTRFAC_ROOT;
-		ktrstart(curp, vp, cred);
+		ktrstart(p, vp, cred);
 	}
 	/*
 	 * do it
@@ -460,10 +461,10 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 		}
 		LIST_FOREACH(pr, &pg->pg_members, ps_pglist) {
 			if (descend)
-				ret |= ktrsetchildren(curp, pr, ops, facs, vp,
+				ret |= ktrsetchildren(p, pr, ops, facs, vp,
 				    cred);
 			else
-				ret |= ktrops(curp, pr, ops, facs, vp, cred);
+				ret |= ktrops(p, pr, ops, facs, vp, cred);
 		}
 	} else {
 		/*
@@ -475,15 +476,15 @@ sys_ktrace(struct proc *curp, void *v, register_t *retval)
 			goto done;
 		}
 		if (descend)
-			ret |= ktrsetchildren(curp, pr, ops, facs, vp, cred);
+			ret |= ktrsetchildren(p, pr, ops, facs, vp, cred);
 		else
-			ret |= ktrops(curp, pr, ops, facs, vp, cred);
+			ret |= ktrops(p, pr, ops, facs, vp, cred);
 	}
 	if (!ret)
 		error = EPERM;
 done:
 	if (vp != NULL)
-		(void) vn_close(vp, FREAD|FWRITE, cred, curp);
+		(void) vn_close(vp, FREAD|FWRITE, cred, p);
 	return (error);
 }
 

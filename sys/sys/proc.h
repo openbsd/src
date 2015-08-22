@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.203 2015/07/27 18:22:37 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.204 2015/08/22 20:18:50 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <sys/timeout.h>		/* For struct timeout */
 #include <sys/event.h>			/* For struct klist */
 #include <sys/mutex.h>			/* For struct mutex */
+#include <sys/tame.h>
 #include <sys/resource.h>		/* For struct rusage */
 #include <machine/atomic.h>
 
@@ -212,6 +213,7 @@ struct process {
 	u_short	ps_acflag;		/* Accounting flags. */
 
 	u_int	ps_tame;
+	struct whitepaths *ps_tamepaths;
 
 	int64_t ps_kbind_cookie;
 	u_long  ps_kbind_addr;
@@ -326,13 +328,14 @@ struct proc {
 
 	int	p_tame_syscall;	/* Cache of current syscall */
 	int	p_tamenote;	/* Observance during syscall */
-#define TMN_CREAT	0x00000001
-#define TMN_WRITE	0x00000002
-#define TMN_IMODIFY	0x00000004
-#define TMN_YPLOCK	0x00000008
-#define TMN_DNSRESOLV	0x00000010
-#define TMN_COREDUMP	0x00000020
+#define TMN_RPATH	0x00000001
+#define TMN_WPATH	0x00000002
+#define TMN_CPATH	0x00000004
+#define TMN_FATTR	0x00000008
+#define TMN_COREDUMP	0x00000010
 	int	p_tameafter;
+#define TMA_YPLOCK	0x00000001
+#define TMA_DNSRESOLV	0x00000002
 
 #ifndef	__HAVE_MD_TCB
 	void	*p_tcb;		/* user-space thread-control-block address */

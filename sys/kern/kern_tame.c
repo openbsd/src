@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.20 2015/08/21 07:26:09 doug Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.21 2015/08/22 20:18:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -39,8 +39,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include <sys/tame.h>
-
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
@@ -76,8 +74,6 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_umask] = _TM_SELF,
 	[SYS___sysctl] = _TM_SELF,	/* read-only; narrow subset */
 	[SYS_adjtime] = _TM_SELF,	/* read-only */
-
-	[SYS_chdir] = _TM_RPATH,
 
 	[SYS_fchdir] = _TM_SELF,	/* careful of directory fd inside jails */
 
@@ -121,18 +117,13 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_pwritev] = _TM_RW,
 	[SYS_ftruncate] = _TM_RW,
 	[SYS_lseek] = _TM_RW,
-
-	[SYS_utimes] = _TM_RW,
-	[SYS_futimes] = _TM_RW,
-	[SYS_utimensat] = _TM_RW,
-	[SYS_futimens] = _TM_RW,
+	[SYS_fstat] = _TM_RW,
 
 	[SYS_fcntl] = _TM_RW,
 	[SYS_fsync] = _TM_RW,
 	[SYS_pipe] = _TM_RW,
 	[SYS_pipe2] = _TM_RW,
 	[SYS_socketpair] = _TM_RW,
-
 	[SYS_getdents] = _TM_RW,
 
 	[SYS_sendto] = _TM_RW | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
@@ -158,24 +149,18 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mquery] = _TM_MALLOC,
 	[SYS_munmap] = _TM_MALLOC,
 
-	[SYS___getcwd] = _TM_RPATH | _TM_WPATH,
 	[SYS_open] = _TM_SELF,
-	[SYS_openat] = _TM_RPATH | _TM_WPATH,
 	[SYS_stat] = _TM_SELF,
-	[SYS_fstatat] = _TM_RPATH | _TM_WPATH,
 	[SYS_access] = _TM_SELF,
-	[SYS_faccessat] = _TM_RPATH | _TM_WPATH,
 	[SYS_readlink] = _TM_SELF,
+
+	[SYS_chdir] = _TM_RPATH,
+	[SYS___getcwd] = _TM_RPATH | _TM_WPATH,
+	[SYS_openat] = _TM_RPATH | _TM_WPATH,
+	[SYS_fstatat] = _TM_RPATH | _TM_WPATH,
+	[SYS_faccessat] = _TM_RPATH | _TM_WPATH,
 	[SYS_readlinkat] = _TM_RPATH | _TM_WPATH,
 	[SYS_lstat] = _TM_RPATH | _TM_WPATH | _TM_TMPPATH | _TM_DNSPATH,
-	[SYS_chmod] = _TM_RPATH | _TM_WPATH | _TM_TMPPATH,
-	[SYS_fchmod] = _TM_RPATH | _TM_WPATH,
-	[SYS_fchmodat] = _TM_RPATH | _TM_WPATH,
-	[SYS_chflags] = _TM_RPATH | _TM_WPATH | _TM_TMPPATH,
-	[SYS_chflagsat] = _TM_RPATH | _TM_WPATH,
-	[SYS_chown] = _TM_RPATH | _TM_WPATH | _TM_TMPPATH,
-	[SYS_fchown] = _TM_RPATH | _TM_WPATH,
-	[SYS_fchownat] = _TM_RPATH | _TM_WPATH,
 	[SYS_rename] = _TM_CPATH,
 	[SYS_rmdir] = _TM_CPATH,
 	[SYS_renameat] = _TM_CPATH,
@@ -187,17 +172,31 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mkdir] = _TM_CPATH,
 	[SYS_mkdirat] = _TM_CPATH,
 
-	[SYS_fstat] = _TM_RW | _TM_RPATH | _TM_WPATH | _TM_TMPPATH,	/* rare */
+	[SYS_utimes] = _TM_FATTR,
+	[SYS_futimes] = _TM_FATTR,
+	[SYS_utimensat] = _TM_FATTR,
+	[SYS_futimens] = _TM_FATTR,
+	[SYS_chmod] = _TM_FATTR,
+	[SYS_fchmod] = _TM_FATTR,
+	[SYS_fchmodat] = _TM_FATTR,
+	[SYS_chflags] = _TM_FATTR,
+	[SYS_chflagsat] = _TM_FATTR,
+	[SYS_chown] = _TM_FATTR,
+	[SYS_fchownat] = _TM_FATTR,
+	[SYS_lchown] = _TM_FATTR,
+	[SYS_fchown] = _TM_FATTR,
+	[SYS_utimes] = _TM_FATTR,
 
 	[SYS_socket] = _TM_INET | _TM_UNIX | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
+	[SYS_connect] = _TM_INET | _TM_UNIX | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
+
 	[SYS_listen] = _TM_INET | _TM_UNIX,
 	[SYS_bind] = _TM_INET | _TM_UNIX,
-	[SYS_connect] = _TM_INET | _TM_UNIX | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
 	[SYS_accept4] = _TM_INET | _TM_UNIX,
 	[SYS_accept] = _TM_INET | _TM_UNIX,
 	[SYS_getpeername] = _TM_INET | _TM_UNIX,
 	[SYS_getsockname] = _TM_INET | _TM_UNIX,
-	[SYS_setsockopt] = _TM_INET | _TM_UNIX,		/* small subset */
+	[SYS_setsockopt] = _TM_INET | _TM_UNIX,
 	[SYS_getsockopt] = _TM_INET | _TM_UNIX,
 
 	[SYS_flock] = _TM_GETPW,
@@ -208,24 +207,139 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_tame_args /* {
 		syscallarg(int) flags;
+		syscallarg(char **)paths;
 	} */	*uap = v;
 	int	 flags = SCARG(uap, flags);
 
-	flags &= _TM_USERSET;
-	if ((p->p_p->ps_flags & PS_TAMED) == 0) {
-		p->p_p->ps_flags |= PS_TAMED;
-		p->p_p->ps_tame = flags;
-		return (0);
+	if (flags & ~_TM_USERSET)
+		return (EINVAL);
+	
+	if ((p->p_p->ps_flags & PS_TAMED)) {
+		/* Already tamed, only allow reductions */
+		if (((flags | p->p_p->ps_tame) & _TM_USERSET) !=
+		    (p->p_p->ps_tame & _TM_USERSET)) {
+			printf("%s(%d): fail change %x %x\n", p->p_comm, p->p_pid,
+			    flags, p->p_p->ps_tame);
+			return (EPERM);
+		}
+
+		flags &= p->p_p->ps_tame;
+		flags &= _TM_USERSET;		/* Relearn _ACTIVE */
 	}
 
-	/* May not set new bits */
-	if (((flags | p->p_p->ps_tame) & _TM_USERSET) !=
-	    (p->p_p->ps_tame & _TM_USERSET))
-		return (EPERM);
+	if (SCARG(uap, paths)) {
+		char **u = SCARG(uap, paths), *sp;
+		struct whitepaths *wl;
+		char *ipath, *path;
+		size_t len, maxargs = 0;
+		int i, error;
 
-	/* More tame bits being cleared.  Force re-learning of _ACTIVE things */
-	p->p_p->ps_tame &= flags;
-	p->p_p->ps_tame &= _TM_USERSET;
+		if (p->p_p->ps_tamepaths)
+			return (EPERM);
+
+		/* Count paths */
+		for (i = 0; i < TAME_MAXPATHS; i++) {
+			if ((error = copyin(u + i, &sp, sizeof(sp))) != 0)
+				return (error);
+			if (sp == NULL)
+				break;
+		}
+		if (i == TAME_MAXPATHS)
+			return (E2BIG);
+
+		wl = malloc(sizeof *wl + sizeof(struct whitepath) * (i+1),
+		    M_TEMP, M_WAITOK | M_ZERO);
+		wl->wl_size = sizeof *wl + sizeof(struct whitepath) * (i+1);
+		wl->wl_count = i;
+		wl->wl_ref = 1;
+
+		ipath = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+
+		/* Copy in */
+		for (i = 0; i < wl->wl_count; i++) {
+			char *fullpath = path, *builtpath = NULL;
+			size_t builtlen;
+
+			if ((error = copyin(u + i, &sp, sizeof(sp))) != 0)
+				break;
+			if (sp == NULL)
+				break;
+			if ((error = copyinstr(sp, ipath, MAXPATHLEN, &len)) != 0)
+				break;
+
+			if (canonpath(ipath, path, MAXPATHLEN) != 0) {
+				free(ipath, M_TEMP, MAXPATHLEN);
+				free(path, M_TEMP, MAXPATHLEN);
+				return (tame_fail(p, EPERM, TAME_RPATH));
+			}
+
+			/* If path is relative, prepend cwd */
+			if (path[0] != '/') {
+				char *cwdpath, *bp, *bpend;
+				size_t cwdlen = MAXPATHLEN * 4;
+
+				cwdpath = malloc(cwdlen, M_TEMP, M_WAITOK);
+				bp = &cwdpath[cwdlen];
+				bpend = bp;
+				*(--bp) = '\0';
+
+				error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp,
+				    cwdpath, cwdlen/2, GETCWD_CHECK_ACCESS, p);
+				if (error) {
+					free(cwdpath, M_TEMP, cwdlen);
+					printf("getcwd: %d\n", error);
+					break;
+				}
+
+				/* NUL included in cwd component */
+				builtlen = (bpend - bp) + 1 + strlen(path);
+				if (builtlen > PATH_MAX) {
+					free(cwdpath, M_TEMP, cwdlen);
+					error = ENAMETOOLONG;
+					break;
+				}
+				builtpath = malloc(builtlen, M_TEMP, M_WAITOK);
+				snprintf(builtpath, builtlen, "%s/%s", bp, path);
+				// printf("builtpath = %s\n", builtpath);
+				free(cwdpath, M_TEMP, cwdlen);
+				fullpath = builtpath;
+				len = builtlen;
+			}
+
+			if (maxargs += len > ARG_MAX) {
+				if (builtpath)
+					free(builtpath, M_TEMP, len);
+				error = E2BIG;
+				break;
+			}
+			wl->wl_paths[i].name = malloc(len, M_TEMP, M_WAITOK);
+			memcpy(wl->wl_paths[i].name, fullpath, len);
+			wl->wl_paths[i].len = len;
+			if (builtpath)
+				free(builtpath, M_TEMP, len);
+		}
+		free(ipath, M_TEMP, MAXPATHLEN);
+		free(path, M_TEMP, MAXPATHLEN);
+
+		if (error) {
+			printf("%s(%d): path load error %d\n",
+			    p->p_comm, p->p_pid, error);
+			for (i = 0; i < wl->wl_count; i++)
+				free(wl->wl_paths[i].name,
+				    M_TEMP, wl->wl_paths[i].len);
+			free(wl, M_TEMP, wl->wl_size);
+			return (error);
+		}
+		p->p_p->ps_tamepaths = wl;
+		printf("%s(%d): paths loaded:\n", p->p_comm, p->p_pid);
+		for (i = 0; i < wl->wl_count; i++)
+			if (wl->wl_paths[i].name)
+				printf("%d=%s\n", i, wl->wl_paths[i].name);
+	}
+
+	p->p_p->ps_tame = flags;
+	p->p_p->ps_flags |= PS_TAMED;
 	return (0);
 }
 
@@ -246,8 +360,7 @@ tame_check(struct proc *p, int code)
 int
 tame_fail(struct proc *p, int error, int code)
 {
-	printf("tame: pid %d %s syscall %d\n", p->p_pid, p->p_comm,
-	    p->p_tame_syscall);
+	printf("%s(%d): syscall %d\n", p->p_comm, p->p_pid, p->p_tame_syscall);
 	if (p->p_p->ps_tame & _TM_ABORT) {	/* Core dump requested */
 		struct sigaction sa;
 
@@ -277,10 +390,17 @@ tame_namei(struct proc *p, char *origpath)
 	if (canonpath(origpath, path, sizeof(path)) != 0)
 		return (tame_fail(p, EPERM, TAME_RPATH));
 
+	if ((p->p_tamenote & TMN_FATTR) &&
+	    (p->p_p->ps_tame & _TM_FATTR) == 0) {
+		printf("%s(%d): inode syscall%d, not allowed\n",
+		    p->p_comm, p->p_pid, p->p_tame_syscall);
+		return (tame_fail(p, EPERM, TAME_FATTR));
+	}
+
 	/* Detect what looks like a mkstemp(3) family operation */
 	if ((p->p_p->ps_tame & _TM_TMPPATH) &&
 	    (p->p_tame_syscall == SYS_open) &&
-	    (p->p_tamenote & (TMN_CREAT | TMN_IMODIFY)) == TMN_CREAT &&
+	    (p->p_tamenote & TMN_CPATH) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
@@ -295,37 +415,26 @@ tame_namei(struct proc *p, char *origpath)
 	}
 
 	/* open, mkdir, or other path creation operation */
-	if ((p->p_tamenote & (TMN_CREAT | TMN_IMODIFY)) == TMN_CREAT &&
+	if ((p->p_tamenote & TMN_CPATH) &&
 	    ((p->p_p->ps_tame & _TM_CPATH) == 0))
 		return (tame_fail(p, EPERM, TAME_CPATH));
 
-	/* inode change operation, issued against a path */
-	if ((p->p_tamenote & (TMN_CREAT | TMN_IMODIFY)) == TMN_IMODIFY &&
-	    ((p->p_p->ps_tame & _TM_CPATH) == 0)) {
-		// XXX should _TM_CPATH be a seperate check?
-		return (tame_fail(p, EPERM, TAME_CPATH));
-	}
-
-	if ((p->p_tamenote & TMN_WRITE) &&
+	if ((p->p_tamenote & TMN_WPATH) &&
 	    (p->p_p->ps_tame & _TM_WPATH) == 0)
 		return (tame_fail(p, EPERM, TAME_WPATH));
 
-	if (p->p_p->ps_tame & _TM_RPATH)
-		return (0);
-
-	if (p->p_p->ps_tame & _TM_WPATH)
-		return (0);
-
-	/* All remaining cases are RPATH */
+	/* Read-only paths used occasionally by libc */
 	switch (p->p_tame_syscall) {
 	case SYS_access:
 		/* tzset() needs this. */
-		if (strcmp(path, "/etc/localtime") == 0)
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 		break;
 	case SYS_open:
 		/* getpw* and friends need a few files */
-		if (p->p_p->ps_tame & _TM_GETPW) {
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    (p->p_p->ps_tame & _TM_GETPW)) {		    
 			if (strcmp(path, "/etc/spwd.db") == 0)
 				return (0);
 			if (strcmp(path, "/etc/pwd.db") == 0)
@@ -335,10 +444,10 @@ tame_namei(struct proc *p, char *origpath)
 		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
-		if (p->p_p->ps_tame & _TM_DNSPATH) {
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    (p->p_p->ps_tame & _TM_DNSPATH)) {
 			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				p->p_tamenote |= TMN_DNSRESOLV;
-				p->p_tameafter = 1;
+				p->p_tameafter |= TMA_DNSRESOLV;
 				return (0);
 			}
 			if (strcmp(path, "/etc/hosts") == 0)
@@ -346,10 +455,10 @@ tame_namei(struct proc *p, char *origpath)
 			if (strcmp(path, "/etc/services") == 0)
 				return (0);
 		}
-		if (p->p_p->ps_tame & _TM_GETPW) {
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    (p->p_p->ps_tame & _TM_GETPW)) {
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
-				p->p_tamenote |= TMN_YPLOCK;
-				p->p_tameafter = 1;
+				p->p_tameafter |= TMA_YPLOCK;
 				return (0);
 			}
 			if (strncmp(path, "/var/yp/binding/",
@@ -357,34 +466,98 @@ tame_namei(struct proc *p, char *origpath)
 				return (0);
 		}
 		/* tzset() needs these. */
-		if (strncmp(path, "/usr/share/zoneinfo/",
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    strncmp(path, "/usr/share/zoneinfo/",
 		    sizeof("/usr/share/zoneinfo/") - 1) == 0)
 			return (0);
-		if (strcmp(path, "/etc/localtime") == 0)
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    strcmp(path, "/etc/localtime") == 0)
 			return (0);
 
 		/* /usr/share/nls/../libc.cat returns EPERM, for strerror(3). */
-		if (strncmp(path, "/usr/share/nls/",
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    strncmp(path, "/usr/share/nls/",
 		    sizeof("/usr/share/nls/") - 1) == 0 &&
 		    strcmp(path + strlen(path) - 9, "/libc.cat") == 0)
 			return (EPERM);
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
-		if (strcmp(path, "/etc/malloc.conf") == 0)
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    strcmp(path, "/etc/malloc.conf") == 0)
 			return (0);
 		break;
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
-		if (p->p_p->ps_tame & _TM_DNSPATH) {
-			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				p->p_tamenote |= TMN_DNSRESOLV;
-				p->p_tameafter = 1;
+		if ((p->p_tamenote == TMN_RPATH) &&
+		    (p->p_p->ps_tame & _TM_DNSPATH)) {
+		    	if (strcmp(path, "/etc/resolv.conf") == 0) {
+				p->p_tameafter |= TMA_DNSRESOLV;
 				return (0);
 			}
 		}
 		break;
 	}
+
+	/*
+	 * If a whitelist is set, compare canonical paths.  Anything
+	 * not on the whitelist gets ENOENT.
+	 */
+	if (p->p_p->ps_tamepaths) {
+		struct whitepaths *wl = p->p_p->ps_tamepaths;
+		char *fullpath = path, *builtpath = NULL;
+		size_t builtlen;
+		int i, error;
+
+		if (path[0] != '/') {
+			char *cwdpath, *bp, *bpend;
+			size_t cwdlen = MAXPATHLEN * 4;
+
+			cwdpath = malloc(cwdlen, M_TEMP, M_WAITOK);
+			bp = &cwdpath[cwdlen];
+			bpend = bp;
+			*(--bp) = '\0';
+
+			error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp,
+			    cwdpath, cwdlen/2, GETCWD_CHECK_ACCESS, p);
+			if (error) {
+				free(cwdpath, M_TEMP, cwdlen);
+				printf("getcwd: %d\n", error);
+				return (error);
+			}
+
+			/* NUL included in cwd component */
+			builtlen = (bpend - bp) + 1 + strlen(path);
+			builtpath = malloc(builtlen, M_TEMP, M_WAITOK);
+			snprintf(builtpath, builtlen, "%s/%s", bp, path);
+			// printf("builtpath = %s\n", builtpath);
+			free(cwdpath, M_TEMP, cwdlen);
+			fullpath = builtpath;
+		}
+
+		error = EACCES;
+		for (i = 0; i < wl->wl_count && wl->wl_paths[i].name && error; i++) {
+			if (strncmp(fullpath, wl->wl_paths[i].name,
+			    wl->wl_paths[i].len - 1) == 0) {
+				char term = fullpath[wl->wl_paths[i].len];
+
+				if (term == '\0' || term == '/')
+					error = 0;
+			}
+		}
+		if (error)
+			printf("bad path: %s\n", fullpath);
+		if (builtpath)
+			free(builtpath, M_TEMP, builtlen);
+		if (error)
+			return (ENOENT);	/* Don't hint why it failed */
+	}
+
+	if (p->p_p->ps_tame & _TM_RPATH)
+		return (0);
+
+	if (p->p_p->ps_tame & _TM_WPATH)
+		return (0);
 
 	return (tame_fail(p, EPERM, TAME_RPATH));
 }
@@ -392,9 +565,9 @@ tame_namei(struct proc *p, char *origpath)
 void
 tame_aftersyscall(struct proc *p, int code, int error)
 {
-	if ((p->p_tamenote & TMN_YPLOCK) && error == 0)
+	if ((p->p_tameafter & TMA_YPLOCK) && error == 0)
 		atomic_setbits_int(&p->p_p->ps_tame, _TM_YP_ACTIVE | TAME_INET);
-	if ((p->p_tamenote & TMN_DNSRESOLV) && error == 0)
+	if ((p->p_tameafter & TMA_DNSRESOLV) && error == 0)
 		atomic_setbits_int(&p->p_p->ps_tame, _TM_DNS_ACTIVE);
 }
 
@@ -603,8 +776,8 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 	    name[0] == CTL_HW && name[1] == HW_PAGESIZE)
 		return (0);
 
-	printf("tame: pid %d %s sysctl %d: %d %d %d %d %d %d\n",
-	    p->p_pid, p->p_comm, namelen, name[0], name[1],
+	printf("%s(%d): sysctl %d: %d %d %d %d %d %d\n",
+	    p->p_comm, p->p_pid, namelen, name[0], name[1],
 	    name[2], name[3], name[4], name[5]);
 	return (EFAULT);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.91 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.92 2015/08/22 20:18:49 deraadt Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/ktrace.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
-#include <sys/tame.h>
 #include <sys/timetc.h>
 
 #include <sys/mount.h>

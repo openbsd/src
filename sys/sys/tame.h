@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.3 2015/07/28 15:22:25 deraadt Exp $	*/
+/*	$OpenBSD: tame.h,v 1.4 2015/08/22 20:18:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -35,7 +35,8 @@
 #define _TM_IOCTL	0x00000400	/* scary */
 #define _TM_GETPW	0x00000800	/* enough to enable YP */
 #define _TM_PROC	0x00001000	/* fork, waitpid, etc */
-#define _TM_CPATH	0x00002000	/* allow create, mkdir, or inode mods */
+#define _TM_CPATH	0x00002000	/* allow creat, mkdir, path creations */
+#define _TM_FATTR	0x00004000	/* allow explicit file st_* mods */
 
 #define _TM_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
 
@@ -60,6 +61,7 @@
 #define TAME_PROC	(_TM_PROC)
 #define TAME_CPATH	(_TM_CPATH)
 #define TAME_ABORT	(_TM_ABORT)
+#define TAME_FATTR	(_TM_FATTR)
 
 #ifdef _KERNEL
 
@@ -81,9 +83,21 @@ int	tame_setsockopt_check(struct proc *p, int level, int optname);
 int	tame_dns_check(struct proc *p, in_port_t port);
 int	tame_ioctl_check(struct proc *p, long com, void *);
 
+#define TAME_MAXPATHS	8192
+
+struct whitepaths {
+	size_t	wl_size;
+	int	wl_count;
+	int	wl_ref;
+	struct whitepath {
+		char		*name;
+		size_t		len;
+	} wl_paths[0];
+};
+
 #else /* _KERNEL */
 
-int	tame(int);
+int	tame(int, char **);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.54 2015/07/19 02:35:35 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.55 2015/08/22 20:18:50 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
-#include <sys/tame.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>

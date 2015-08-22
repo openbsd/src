@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.166 2015/07/20 00:57:06 guenther Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.167 2015/08/22 20:18:50 deraadt Exp $	*/
 
 /*
  * System call numbers.
@@ -331,7 +331,7 @@
 /* syscall: "chflagsat" ret: "int" args: "int" "const char *" "u_int" "int" */
 #define	SYS_chflagsat	107
 
-/* syscall: "tame" ret: "int" args: "int" */
+/* syscall: "tame" ret: "int" args: "int" "char **" */
 #define	SYS_tame	108
 
 /* syscall: "ppoll" ret: "int" args: "struct pollfd *" "u_int" "const struct timespec *" "const sigset_t *" */

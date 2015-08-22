@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.7 2015/07/19 04:45:25 guenther Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.8 2015/08/22 20:18:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/tame.h>
 #include <sys/proc.h>
 
 #ifdef KTRACE
@@ -72,15 +71,6 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	}
 #endif
 
-#if NSYSTRACE > 0
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_LOCK();
-		error = systrace_redirect(code, p, argp, retval);
-		KERNEL_UNLOCK();
-		return (error);
-	}
-#endif
-
 	if (lock)
 		KERNEL_LOCK();
 	tamed = (p->p_p->ps_flags & PS_TAMED);
@@ -88,14 +78,21 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 		if (!lock)
 			KERNEL_LOCK();
 		error = tame_fail(p, EPERM, tval);
-		if (!lock)
-			KERNEL_UNLOCK();
-		}
-	else {
-		error = (*callp->sy_call)(p, argp, retval);
-		if (tamed && p->p_tameafter)
-			tame_aftersyscall(p, code, error);
+		KERNEL_UNLOCK();
+		return (error);
 	}
+#if NSYSTRACE > 0
+	if (!tamed && ISSET(p->p_flag, P_SYSTRACE)) {
+		if (!lock)
+			KERNEL_LOCK();
+		error = systrace_redirect(code, p, argp, retval);
+		KERNEL_UNLOCK();
+		return (error);
+	}
+#endif
+	error = (*callp->sy_call)(p, argp, retval);
+	if (tamed && p->p_tameafter)
+		tame_aftersyscall(p, code, error);
 	if (lock)
 		KERNEL_UNLOCK();
 
