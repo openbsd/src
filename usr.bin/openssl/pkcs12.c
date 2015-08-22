@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -91,8 +91,6 @@ void hex_prin(BIO * out, unsigned char *buf, int len);
 int alg_print(BIO * x, X509_ALGOR * alg);
 int cert_load(BIO * in, STACK_OF(X509) * sk);
 static int set_pbe(BIO * err, int *ppbe, const char *str);
-
-int pkcs12_main(int, char **);
 
 int
 pkcs12_main(int argc, char **argv)

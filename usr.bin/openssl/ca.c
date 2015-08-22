@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.8 2015/07/22 15:52:32 jsing Exp $ */
+/* $OpenBSD: ca.c,v 1.9 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,8 +214,6 @@ static char *section = NULL;
 static int preserve = 0;
 static int msie_hack = 0;
 
-
-int ca_main(int, char **);
 
 int
 ca_main(int argc, char **argv)

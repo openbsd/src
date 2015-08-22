@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.3 2015/07/12 22:21:38 doug Exp $ */
+/* $OpenBSD: dsa.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,8 +242,6 @@ dsa_usage(void)
 	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_ciphers, NULL);
 	fprintf(stderr, "\n");
 }
-
-int dsa_main(int, char **);
 
 int
 dsa_main(int argc, char **argv)

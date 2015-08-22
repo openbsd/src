@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.2 2014/12/02 19:39:16 deraadt Exp $ */
+/* $OpenBSD: ocsp.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -101,9 +101,6 @@ static int send_ocsp_response(BIO * cbio, OCSP_RESPONSE * resp);
 static OCSP_RESPONSE *query_responder(BIO * err, BIO * cbio, char *path,
     STACK_OF(CONF_VALUE) * headers,
     OCSP_REQUEST * req, int req_timeout);
-
-
-int ocsp_main(int, char **);
 
 int
 ocsp_main(int argc, char **argv)

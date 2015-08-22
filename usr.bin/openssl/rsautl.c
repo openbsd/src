@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.5 2015/07/19 03:14:09 doug Exp $ */
+/* $OpenBSD: rsautl.c,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -77,8 +77,6 @@
 #define KEY_CERT	3
 
 static void usage(void);
-
-int rsautl_main(int argc, char **);
 
 int
 rsautl_main(int argc, char **argv)

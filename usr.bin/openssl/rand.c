@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.6 2014/12/28 15:48:52 jsing Exp $ */
+/* $OpenBSD: rand.c,v 1.7 2015/08/22 16:36:05 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -108,8 +108,6 @@ rand_usage()
 	    "usage: rand [-base64 | -hex] [-engine id] [-out file] num\n");
 	options_usage(rand_options);
 }
-
-int rand_main(int, char **);
 
 int
 rand_main(int argc, char **argv)

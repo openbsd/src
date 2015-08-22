@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.2 2015/02/08 10:22:45 doug Exp $ */
+/* $OpenBSD: smime.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -81,8 +81,6 @@ static int smime_cb(int ok, X509_STORE_CTX * ctx);
 #define SMIME_VERIFY	(4 | SMIME_IP)
 #define SMIME_PK7OUT	(5 | SMIME_IP | SMIME_OP)
 #define SMIME_RESIGN	(6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
-
-int smime_main(int, char **);
 
 int
 smime_main(int argc, char **argv)

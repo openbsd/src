@@ -1,4 +1,4 @@
-/* $OpenBSD: nseq.c,v 1.3 2015/07/21 16:41:34 jsing Exp $ */
+/* $OpenBSD: nseq.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -100,8 +100,6 @@ nseq_usage()
 	fprintf(stderr, "usage: nseq [-in file] [-out file] [-toseq]\n");
 	options_usage(nseq_options);
 }
-
-int nseq_main(int, char **);
 
 int
 nseq_main(int argc, char **argv)

@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.6 2014/12/28 15:48:52 jsing Exp $ */
+/* $OpenBSD: crl.c,v 1.7 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,8 +214,6 @@ crl_usage(void)
 
 static X509_CRL *load_crl(char *file, int format);
 static BIO *bio_out = NULL;
-
-int crl_main(int, char **);
 
 int
 crl_main(int argc, char **argv)

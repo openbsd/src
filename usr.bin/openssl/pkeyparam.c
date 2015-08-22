@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.5 2015/04/11 15:41:57 jsing Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -122,8 +122,6 @@ pkeyparam_usage()
 	    "[-text]\n");
 	options_usage(pkeyparam_options);
 }
-
-int pkeyparam_main(int, char **);
 
 int
 pkeyparam_main(int argc, char **argv)

@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: gendsa.c,v 1.2 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,8 +75,6 @@
 #include <openssl/x509.h>
 
 #define DEFBITS	512
-
-int gendsa_main(int, char **);
 
 int
 gendsa_main(int argc, char **argv)

@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.4 2015/08/19 18:25:31 deraadt Exp $ */
+/* $OpenBSD: openssl.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,6 +132,21 @@
 
 #include "progs.h"
 #include "s_apps.h"
+
+#define FUNC_TYPE_GENERAL       1
+#define FUNC_TYPE_MD            2
+#define FUNC_TYPE_CIPHER        3
+#define FUNC_TYPE_PKEY          4
+#define FUNC_TYPE_MD_ALG        5
+#define FUNC_TYPE_CIPHER_ALG    6
+
+typedef struct {
+        int type;
+        const char *name;
+        int (*func)(int argc, char **argv);
+} FUNCTION;
+
+DECLARE_LHASH_OF(FUNCTION);
 
 FUNCTION functions[] = {
 

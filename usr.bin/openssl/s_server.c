@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.14 2015/07/20 18:31:01 doug Exp $ */
+/* $OpenBSD: s_server.c,v 1.15 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -576,8 +576,6 @@ alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
 
 	return (SSL_TLSEXT_ERR_OK);
 }
-
-int s_server_main(int, char **);
 
 #ifndef OPENSSL_NO_SRTP
 static char *srtp_profiles = NULL;

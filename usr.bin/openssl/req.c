@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.5 2015/06/20 01:07:25 doug Exp $ */
+/* $OpenBSD: req.c,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,8 +144,6 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
     ENGINE * keygen_engine);
 static CONF *req_conf = NULL;
 static int batch = 0;
-
-int req_main(int, char **);
 
 int
 req_main(int argc, char **argv)

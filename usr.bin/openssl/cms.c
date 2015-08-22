@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.1 2014/08/26 17:47:24 jsing Exp $ */
+/* $OpenBSD: cms.c,v 1.2 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -95,8 +95,6 @@ static CMS_ReceiptRequest * make_receipt_request(
 #define SMIME_VERIFY_RECEIPT	(16 | SMIME_IP)
 
 int verify_err = 0;
-
-int cms_main(int, char **);
 
 int
 cms_main(int argc, char **argv)

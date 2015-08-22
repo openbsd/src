@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.2 2014/08/28 14:23:52 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,8 +72,6 @@ static int cb(int ok, X509_STORE_CTX * ctx);
 static int check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
     STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls, ENGINE * e);
 static int v_verbose = 0, vflags = 0;
-
-int verify_main(int, char **);
 
 int
 verify_main(int argc, char **argv)

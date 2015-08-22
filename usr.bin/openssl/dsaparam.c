@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.3 2015/07/12 16:37:37 doug Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,8 +169,6 @@ dsaparam_usage(void)
 }
 
 static int dsa_cb(int p, int n, BN_GENCB * cb);
-
-int dsaparam_main(int, char **);
 
 int
 dsaparam_main(int argc, char **argv)

@@ -1,4 +1,4 @@
-/* $OpenBSD: crl2p7.c,v 1.3 2015/07/12 16:32:21 doug Exp $ */
+/* $OpenBSD: crl2p7.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,8 +155,6 @@ crl2p7_usage(void)
 	    "    [-nocrl] [-out file] [-outform DER | PEM]\n\n");
 	options_usage(crl2p7_options);
 }
-
-int crl2pkcs7_main(int, char **);
 
 int
 crl2pkcs7_main(int argc, char **argv)

@@ -1,4 +1,4 @@
-/* $OpenBSD: errstr.c,v 1.3 2015/04/14 10:54:40 jsing Exp $ */
+/* $OpenBSD: errstr.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,8 +88,6 @@ errstr_usage()
 	fprintf(stderr, "usage: errstr [-stats] errno ...\n");
 	options_usage(errstr_options);
 }
-
-int errstr_main(int, char **);
 
 int
 errstr_main(int argc, char **argv)

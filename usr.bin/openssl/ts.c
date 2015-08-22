@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.4 2015/06/20 01:07:25 doug Exp $ */
+/* $OpenBSD: ts.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -115,9 +115,6 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     char *untrusted);
 static X509_STORE *create_cert_store(char *ca_path, char *ca_file);
 static int verify_cb(int ok, X509_STORE_CTX * ctx);
-
-/* Main function definition. */
-int ts_main(int, char **);
 
 int
 ts_main(int argc, char **argv)

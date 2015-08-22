@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.4 2015/07/11 15:04:56 jsing Exp $ */
+/* $OpenBSD: dhparam.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,8 +244,6 @@ dhparam_usage()
 }
 
 static int dh_cb(int p, int n, BN_GENCB * cb);
-
-int dhparam_main(int, char **);
 
 int
 dhparam_main(int argc, char **argv)

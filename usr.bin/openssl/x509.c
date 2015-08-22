@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.4 2015/07/19 03:18:10 doug Exp $ */
+/* $OpenBSD: x509.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,8 +156,6 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     ASN1_INTEGER *sno);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile = 0;
-
-int x509_main(int, char **);
 
 int
 x509_main(int argc, char **argv)

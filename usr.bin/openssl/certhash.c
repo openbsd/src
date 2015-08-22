@@ -643,8 +643,6 @@ certhash_usage(void)
 	options_usage(certhash_options);
 }
 
-int certhash_main(int argc, char **argv);
-
 int
 certhash_main(int argc, char **argv)
 {

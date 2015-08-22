@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.4 2015/07/12 22:57:00 doug Exp $ */
+/* $OpenBSD: dh.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,8 +161,6 @@ dh_usage(void)
 	    "    [-noout] [-out file] [-outform format] [-text]\n\n");
 	options_usage(dh_options);
 }
-
-int dh_main(int, char **);
 
 int
 dh_main(int argc, char **argv)
