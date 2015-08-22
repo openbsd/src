@@ -1,0 +1,17 @@
+.div
+.mul
+.rem
+.udiv
+.umul
+.urem
+__builtin_saveregs
+__fixunsdfsi
+__floatundidf
+__plt_end
+__plt_start
+_mcount
+_thread_sys_exect
+fabsl
+frexpl
+ldexpl
+minbrk

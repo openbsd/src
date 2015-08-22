@@ -1,0 +1,12 @@
+_GLOBAL_OFFSET_TABLE_
+_mcount
+_thread_sys_brk
+_thread_sys_exect
+_thread_sys_sbrk
+_thread_sys_syscall
+end
+fabsl
+frexpl
+ldexpl
+minbrk
+modfl

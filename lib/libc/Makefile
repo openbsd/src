@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2014/06/09 20:47:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.35 2015/08/22 19:40:06 guenther Exp $
 #
 # The NLS (message catalog) functions are always in libc.  To choose that
 # strerror(), perror(), strsignal(), psignal(), etc. actually call the NLS
@@ -14,6 +14,11 @@ CLEANFILES+=tags
 CFLAGS+=-Wimplicit
 #CFLAGS+=-Werror
 LDADD=-nodefaultlibs -lgcc
+
+VERSION_SCRIPT=	Symbols.map
+SYMBOL_LISTS=	${LIBCSRCDIR}/Symbols.list \
+		${LIBCSRCDIR}/arch/${MACHINE_CPU}/Symbols.list
+
 
 LIBCSRCDIR=${.CURDIR}
 .include "${LIBCSRCDIR}/Makefile.inc"
@@ -35,5 +40,10 @@ tags: ${SRCS}
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 tags \
 		${DESTDIR}/var/db/lib${LIB}.tags
+
+${VERSION_SCRIPT}: ${SYMBOL_LISTS}
+	{ printf '{\n\tglobal:\n'; \
+	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LISTS}; \
+	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
 
 .include <bsd.lib.mk>
