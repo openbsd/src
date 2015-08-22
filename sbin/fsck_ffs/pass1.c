@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.42 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.43 2015/08/22 06:00:27 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	n_files++;
 	ILNCOUNT(inumber) = DIP(dp, di_nlink);
 	if (DIP(dp, di_nlink) <= 0) {
-		zlnp =  malloc(sizeof *zlnp);
+		zlnp = malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0) {
