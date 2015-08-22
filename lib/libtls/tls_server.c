@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.7 2015/03/31 14:03:38 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.8 2015/08/22 14:51:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -120,13 +120,15 @@ tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
 			tls_set_error(ctx, "ssl failure");
 			goto err;
 		}
-
+		if (SSL_set_app_data(conn_ctx->ssl_conn, conn_ctx) != 1) {
+			tls_set_error(ctx, "ssl application data failure");
+			goto err;
+		}
 		if (SSL_set_rfd(conn_ctx->ssl_conn, fd_read) != 1 ||
 		    SSL_set_wfd(conn_ctx->ssl_conn, fd_write) != 1) {
 			tls_set_error(ctx, "ssl set fd failure");
 			goto err;
 		}
-		SSL_set_app_data(conn_ctx->ssl_conn, conn_ctx);
 	}
 
 	if ((ret = SSL_accept(conn_ctx->ssl_conn)) != 1) {
