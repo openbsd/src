@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.37 2015/08/20 18:42:11 rzalamena Exp $ */
+/* $OpenBSD: doas.c,v 1.38 2015/08/22 16:01:05 doug Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -327,6 +327,8 @@ main(int argc, char **argv, char **envp)
 	int i, ch;
 	int sflag = 0;
 	int nflag = 0;
+	char cwdpath[PATH_MAX];
+	const char *cwd;
 
 	uid = getuid();
 
@@ -423,8 +425,14 @@ main(int argc, char **argv, char **envp)
 	    LOGIN_SETUSER) != 0)
 		errx(1, "failed to set user context for target");
 
-	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command as %s: %s",
-	    myname, pw->pw_name, cmdline);
+	if (getcwd(cwdpath, sizeof(cwdpath)) == NULL)
+		cwd = "(failed)";
+	else
+		cwd = cwdpath;
+
+	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
+	    myname, cmdline, pw->pw_name, cwd);
+
 	if (setenv("PATH", safepath, 1) == -1)
 		err(1, "failed to set PATH '%s'", safepath);
 	execvpe(cmd, argv, envp);
