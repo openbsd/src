@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.458 2015/08/22 10:45:59 rpe Exp $
+#	$OpenBSD: rc,v 1.459 2015/08/22 23:32:18 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -95,22 +95,26 @@ random_seed() {
 # Populate net.inet.(tcp|udp).baddynamic with the contents of /etc/services so
 # as to avoid randomly allocating source ports that correspond to well-known
 # services.
+# Usage: fill_baddynamic tcp|udp
 fill_baddynamic() {
 	local _service=$1
 	local _sysctl="net.inet.${_service}.baddynamic"
+
 	stripcom /etc/services |
 	{
-		# Variables are local
+		_ban=
 		while IFS=" 	/" read _name _port _srv _junk; do
-			[ "x${_srv}" = "x${_service}" ] || continue
-			_ban="${_ban:+${_ban},}+${_port}"
+			[[ $_srv == $_service ]] || continue
+
+			_ban="${_ban:+$_ban,}+$_port"
+
 			# Flush before argv gets too long
-			if [ ${#_ban} -gt 1024 ]; then
-				sysctl -q ${_sysctl}=${_ban}
-				_ban=""
+			if ((${#_ban} > 1024)); then
+				sysctl -q "$_sysctl=$_ban"
+				_ban=
 			fi
 		done
-		[ "${_ban}" ] && sysctl -q ${_sysctl}=${_ban}
+		[[ -n $_ban ]] && sysctl -q "$_sysctl=$_ban"
 	}
 }
 
