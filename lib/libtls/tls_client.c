@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.17 2015/03/31 12:21:27 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.18 2015/08/22 14:40:25 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -225,6 +225,8 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		tls_set_error(ctx, "ssl connection failure");
 		goto err;
 	}
+	SSL_set_app_data(ctx->ssl_conn, ctx);
+
 	if (SSL_set_rfd(ctx->ssl_conn, fd_read) != 1 ||
 	    SSL_set_wfd(ctx->ssl_conn, fd_write) != 1) {
 		tls_set_error(ctx, "ssl file descriptor failure");
