@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.181 2015/07/10 10:07:31 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.182 2015/08/22 07:16:10 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -290,7 +290,6 @@
  * The following defines give the virtual addresses of various MMU
  * data structures:
  * PTE_BASE and APTE_BASE: the base VA of the linear PTE mappings
- * PTD_BASE and APTD_BASE: the base VA of the recursive mapping of the PTD
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 #define PTE_BASE	((pt_entry_t *) (PDSLOT_PTE * NBPD))
