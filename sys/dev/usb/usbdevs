@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.654 2015/07/15 13:25:49 mpi Exp $
+$OpenBSD: usbdevs,v 1.655 2015/08/22 15:10:19 stsp Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3135,6 +3135,7 @@ product NETGEAR RTL8192CU	0x9021	RTL8192CU
 product NETGEAR WNA1100		0x9030	WNA1100
 product NETGEAR WNA1000		0x9040	WNA1000
 product NETGEAR WNA1000M	0x9041	WNA1000M
+product NETGEAR WNA1000Mv2	0x9043	WNA1000Mv2
 
 /* Netgear(2) products */
 product NETGEAR2 MA101		0x4100	MA101
