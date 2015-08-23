@@ -1,6 +1,6 @@
 /* auto-host.h.  enerated b configure.  */
 /* config.in.  Generated from configure.ac by autoheader.  */
-/* $OpenBSD: auto-host.h,v 1.5 2015/06/01 18:59:41 miod Exp $ */
+/* $OpenBSD: auto-host.h,v 1.6 2015/08/23 15:33:18 kettenis Exp $ */
 
 /* Define as the number of bits in a byte, if \`limits.h' doesn't. */
 #ifndef USED_FOR_TARGET
@@ -253,7 +253,7 @@
 
 /* Define if your assembler supports R_PPC_REL16 relocs. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_AS_REL16 */
+#define HAVE_AS_REL16
 #endif
 
 
