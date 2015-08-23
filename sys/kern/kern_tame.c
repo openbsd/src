@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.25 2015/08/23 19:32:20 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.26 2015/08/23 21:30:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -423,7 +423,7 @@ tame_namei(struct proc *p, char *origpath)
 	 */
 	if ((p->p_p->ps_tame & _TM_TMPPATH) &&
 	    (p->p_tame_syscall == SYS_unlink) &&
-	    strncmp(path, "/tmp/", sizeof("/tmp") - 1) == 0) {
+	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
 	}
 
