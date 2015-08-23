@@ -1,4 +1,4 @@
-/* $OpenBSD: setlocale.c,v 1.1 2015/07/07 17:38:53 semarie Exp $ */
+/* $OpenBSD: setlocale.c,v 1.2 2015/08/23 07:33:50 guenther Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -87,13 +87,6 @@ main(int argc, char *argv[])
 	test_setlocale("C", LC_CTYPE, "C"); /* set */
 	test_MB_CUR_MAX(1);
 	test_setlocale("C", LC_ALL, NULL); /* check */
-
-	/* iso-8859-1 */
-	test_setlocale("C", LC_ALL, "C"); /* set */
-	test_isalpha(0, 0xe9); /* iso-8859-1 eacute */
-	test_setlocale("en_US.ISO8859-1", LC_CTYPE, "en_US.ISO8859-1"); /* set */
-	test_isalpha(1, 0xe9); /* iso-8859-1 eacute */
-	test_MB_CUR_MAX(1);
 
 	/* check for errors on checking */
 	test_setlocale("C", LC_ALL, "C"); /* reset */
