@@ -1,0 +1,18 @@
+{
+	global:
+		/* actual exports */
+		dl_iterate_phdr;
+		dladdr;
+		dlclose;
+		dlctl;
+		dlerror;
+		dlopen;
+		dlsym;
+
+		/* looked up by gdb */
+		_dl_bind;
+		_dl_debug_state;
+
+	local:
+		*;
+};
