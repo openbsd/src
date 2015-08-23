@@ -1165,7 +1165,7 @@ elf_i386_check_relocs (bfd *abfd,
 	       && (sec->flags & SEC_ALLOC) != 0
 	       && (r_type != R_386_PC32
 		   || (h != NULL
-		       && (! info->symbolic
+		       && (! SYMBOLIC_BIND (info, h)
 			   || h->root.type == bfd_link_hash_defweak
 			   || !h->def_regular))))
 	      || (ELIMINATE_COPY_RELOCS
@@ -2652,7 +2652,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 		       && h->dynindx != -1
 		       && (r_type == R_386_PC32
 			   || !info->shared
-			   || !info->symbolic
+			   || !SYMBOLIC_BIND (info, h)
 			   || !h->def_regular))
 		outrel.r_info = ELF32_R_INFO (h->dynindx, r_type);
 	      else

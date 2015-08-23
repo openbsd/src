@@ -305,19 +305,19 @@ CC_FOR_TARGET = ` \
     fi; \
   fi`
 
-CXX = gcc
+CXX = g++
 CXX_FOR_TARGET = ` \
-  if [ -f $$r/../gcc/xgcc ] ; then \
+  if [ -f $$r/../gcc/g++ ] ; then \
     if [ -f $$r/../newlib/Makefile ] ; then \
-      echo $$r/../gcc/xgcc -B$$r/../gcc/ -idirafter $$r/../newlib/targ-include -idirafter $${srcroot}/../newlib/libc/include -nostdinc; \
+      echo $$r/../gcc/g++ -B$$r/../gcc/ -idirafter $$r/../newlib/targ-include -idirafter $${srcroot}/../newlib/libc/include -nostdinc; \
     else \
-      echo $$r/../gcc/xgcc -B$$r/../gcc/; \
+      echo $$r/../gcc/g++ -B$$r/../gcc/; \
     fi; \
   else \
     if [ "@host@" = "@target@" ] ; then \
       echo $(CXX); \
     else \
-      echo gcc | sed '$(transform)'; \
+      echo g++ | sed '$(transform)'; \
     fi; \
   fi`
 

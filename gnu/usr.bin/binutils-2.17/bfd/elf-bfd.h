@@ -155,6 +155,8 @@ struct elf_link_hash_entry
   unsigned int hidden : 1;
   /* Symbol was forced to local scope due to a version script file.  */
   unsigned int forced_local : 1;
+  /* Symbol was forced to be dynamic due to a version script file.  */
+  unsigned int dynamic : 1;
   /* Symbol was marked during garbage collection.  */
   unsigned int mark : 1;
   /* Symbol is referenced by a non-GOT/non-PLT relocation.  This is
@@ -1805,6 +1807,10 @@ extern bfd_boolean bfd_elf_link_record_dynamic_symbol
 extern int bfd_elf_link_record_local_dynamic_symbol
   (struct bfd_link_info *, bfd *, long);
 
+extern void bfd_elf_link_mark_dynamic_symbol
+  (struct bfd_link_info *, struct elf_link_hash_entry *,
+   Elf_Internal_Sym *);
+
 extern bfd_boolean _bfd_elf_close_and_cleanup
   (bfd *);
 
@@ -1954,5 +1960,10 @@ extern bfd_boolean _sh_elf_set_mach_from_flags
 	}								\
     }									\
   while (0)
+
+/* Will a symbol be bound to the the definition within the shared
+   library, if any.  */
+#define SYMBOLIC_BIND(INFO, H) \
+    ((INFO)->symbolic || ((INFO)->dynamic && !(H)->dynamic))
 
 #endif /* _LIBELF_H_ */

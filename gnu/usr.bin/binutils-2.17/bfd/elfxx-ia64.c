@@ -2733,7 +2733,7 @@ elfNN_ia64_check_relocs (abfd, info, sec, relocs)
 	 have yet been processed.  Do something with what we know, as
 	 this may help reduce memory usage and processing time later.  */
       maybe_dynamic = (h && ((!info->executable
-			      && (!info->symbolic
+			      && (!SYMBOLIC_BIND (info, h)
 				  || info->unresolved_syms_in_shared_libs == RM_IGNORE))
 			     || !h->def_regular
 			     || h->root.type == bfd_link_hash_defweak));
@@ -2905,7 +2905,7 @@ elfNN_ia64_check_relocs (abfd, info, sec, relocs)
 	 have yet been processed.  Do something with what we know, as
 	 this may help reduce memory usage and processing time later.  */
       maybe_dynamic = (h && ((!info->executable
-			      && (!info->symbolic
+			      && (!SYMBOLIC_BIND (info, h)
 				  || info->unresolved_syms_in_shared_libs == RM_IGNORE))
 			     || !h->def_regular
 			     || h->root.type == bfd_link_hash_defweak));
