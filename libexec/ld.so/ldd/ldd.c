@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.19 2015/01/20 02:16:19 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.20 2015/08/23 06:28:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -99,7 +99,7 @@ doit(char *name)
 	int fd, i, size, status, interp=0;
 	char buf[PATH_MAX];
 	struct stat st;
-	void * dlhandle; 
+	void * dlhandle;
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
 		warn("%s", name);
@@ -107,7 +107,7 @@ doit(char *name)
 	}
 
 	if (fstat(fd, &st) == -1) {
-		warn("%s", name);	
+		warn("%s", name);
 		close(fd);
 		return 1;
 	}
