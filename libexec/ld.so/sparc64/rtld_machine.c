@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.53 2014/08/30 21:30:23 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.54 2015/08/23 20:45:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -67,6 +67,9 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
+#include <machine/trap.h>
 
 #include <nlist.h>
 #include <link.h>
@@ -75,6 +78,8 @@
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 /*
  * The following table holds for each relocation type:
@@ -196,8 +201,8 @@ static long reloc_target_bitmask[] = {
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
-void _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
-	Elf_RelA *rela);
+int _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
+	Elf_Addr value);
 void _dl_install_plt(Elf_Word *pltgot, Elf_Addr proc);
 
 int
@@ -258,10 +263,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		type = ELF_R_TYPE(relas->r_info);
 
-		if (type == R_TYPE(NONE))
-			continue;
-
-		if (type == R_TYPE(JMP_SLOT) && rel != DT_JMPREL)
+		if (type == R_TYPE(NONE) || type == R_TYPE(JMP_SLOT))
 			continue;
 
 		where = (Elf_Addr *)(relas->r_offset + loff);
@@ -302,11 +304,6 @@ resolve_failed:
 				prev_value = (Elf_Addr)(ooff + this->st_value);
 				value += prev_value;
 			}
-		}
-
-		if (type == R_TYPE(JMP_SLOT)) {
-			_dl_reloc_plt(object, (Elf_Word *)where, value, relas);
-			continue;
 		}
 
 		if (type == R_TYPE(COPY)) {
@@ -381,14 +378,14 @@ resolve_failed:
 
 #define	BAA	0x30680000	/*	ba,a	%xcc, 0 */
 #define	SETHI	0x03000000	/*	sethi	%hi(0), %g1 */
-#define	JMP	0x81c06000	/*	jmpl	%g1+%lo(0), %g0 */
+#define	JMP	0x81c06000	/*	jmpl	%g1+%lo(0), %g0	  <-- simm13 */
 #define	NOP	0x01000000	/*	sethi	%hi(0), %g0 */
 #define	OR	0x82106000	/*	or	%g1, 0, %g1 */
 #define	ORG5	0x8a116000	/*	or	%g5, 0, %g5 */
 #define	XOR	0x82186000	/*	xor	%g1, 0, %g1 */
 #define	MOV71	0x8210000f	/*	or	%o7, 0, %g1 */
 #define	MOV17	0x9e100001	/*	or	%g1, 0, %o7 */
-#define	CALL	0x40000000	/*	call	0 */
+#define	CALL	0x40000000	/*	call	0	  <-- disp30 */
 #define	SLLX	0x83287000	/*	sllx	%g1, 0, %g1 */
 #define	SLLXG5	0x8b297000	/*	sllx	%g5, 0, %g5 */
 #define	SRAX	0x83387000	/*	srax	%g1, 0, %g1 */
@@ -400,9 +397,9 @@ resolve_failed:
 #define	HIVAL(v, s)	(((v) >> (s)) &  0x003fffff)
 #define LOVAL(v)	((v) & 0x000003ff)
 
-void
-_dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
-    Elf_RelA *rela)
+int
+_dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
+    Elf_Addr value)
 {
 	Elf_Addr offset;
 
@@ -414,7 +411,7 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 	 * A PLT entry is supposed to start by looking like this:
 	 *
 	 *	sethi	%hi(. - .PLT0), %g1
-	 *	ba,a	%xcc, .PLT1
+	 *	ba,a,pt	%xcc, .PLT1
 	 *	nop
 	 *	nop
 	 *	nop
@@ -422,28 +419,24 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 	 *	nop
 	 *	nop
 	 *
-	 * When we replace these entries we start from the second
-	 * entry and do it in reverse order so the last thing we
-	 * do is replace the branch.  That allows us to change this
-	 * atomically.
+	 * When we replace these entries we either (a) only replace
+	 * the second word (the ba,a,pt), or (b) replace multiple
+	 * words: one or more nops, then finally the ba,a,pt.  By
+	 * replacing the ba,a,pt last, we guarantee that the PLT can
+	 * be used by other threads even while it's being updated.
+	 * This is made slightly more complicated by kbind, for which
+	 * we need to pass them to the kernel in the order they get
+	 * written.  To that end, we store the word to overwrite the 
+	 * ba,a,pt at *where1, and the words to overwrite the nops at
+	 * where2[0], where2[1], ...
 	 *
 	 * We now need to find out how far we need to jump.  We
 	 * have a choice of several different relocation techniques
 	 * which are increasingly expensive.
 	 */
 
-	offset = value - ((Elf_Addr)where);
-	if (rela->r_addend) {
-		Elf_Addr *ptr = (Elf_Addr *)where;
-		/*
-		 * This entry is >32768.  The relocation points to a
-		 * PC-relative pointer to the _dl_bind_start_0 stub at
-		 * the top of the PLT section.  Update it to point to
-		 * the target function.
-		 */
-		ptr[0] = value + rela->r_addend - object->obj_base;
-
-	} else if ((int64_t)(offset-4) <= (1L<<20) &&
+	offset = value - ((Elf_Addr)pltaddr);
+	if ((int64_t)(offset-4) <= (1L<<20) &&
 	    (int64_t)(offset-4) >= -(1L<<20)) {
 		/*
 		 * We're within 1MB -- we can use a direct branch insn.
@@ -451,7 +444,7 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 * We can generate this pattern:
 		 *
 		 *	sethi	%hi(. - .PLT0), %g1
-		 *	ba,a	%xcc, addr
+		 *	ba,a,pt	%xcc, addr
 		 *	nop
 		 *	nop
 		 *	nop
@@ -460,8 +453,8 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[1] = BAA | (((offset-4) >> 2) &0x7ffff);
-		__asm volatile("iflush %0+4" : : "r" (where));
+		*where1 = BAA | (((offset-4) >> 2) &0x7ffff);
+		return (0);
 	} else if (value < (1UL<<32)) {
 		/*
 		 * We're within 32-bits of address zero.
@@ -478,11 +471,9 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[2] = JMP   | LOVAL(value);
-		where[1] = SETHI | HIVAL(value, 10);
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-
+		*where1 = SETHI | HIVAL(value, 10);
+		where2[0] = JMP   | LOVAL(value);
+		return (1);
 	} else if (value > -(1UL<<32)) {
 		/*
 		 * We're within 32-bits of address -1.
@@ -499,13 +490,10 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[3] = JMP;
-		where[2] = XOR | ((~value) & 0x00001fff);
-		where[1] = SETHI | HIVAL(~value, 10);
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-
+		*where1 = SETHI | HIVAL(~value, 10);
+		where2[0] = XOR | ((~value) & 0x00001fff);
+		where2[1] = JMP;
+		return (2);
 	} else if ((int64_t)(offset-8) <= (1L<<31) &&
 	    (int64_t)(offset-8) >= -((1L<<31) - 4)) {
 		/*
@@ -523,13 +511,10 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[3] = MOV17;
-		where[2] = CALL	  | (((offset-8) >> 2) & 0x3fffffff);
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		where[1] = MOV71;
-		__asm volatile("iflush %0+4" : : "r" (where));
-
+		*where1 = MOV71;
+		where2[0] = CALL | (((offset-8) >> 2) & 0x3fffffff);
+		where2[1] = MOV17;
+		return (2);
 	} else if (value < (1L<<42)) {
 		/*
 		 * Target 42bits or smaller. 
@@ -548,15 +533,11 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *
 		 * this can handle addresses 0 - 0x3fffffffffc
 		 */
-		where[4] = JMP   | LOVAL(value);
-		where[3] = SLLX  | 10;
-		where[2] = OR    | LOVAL(value >> 10);
-		where[1] = SETHI | HIVAL(value, 20);
-		__asm volatile("iflush %0+16" : : "r" (where));
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-
+		*where1 = SETHI | HIVAL(value, 20);
+		where2[0] = OR    | LOVAL(value >> 10);
+		where2[1] = SLLX  | 10;
+		where2[2] = JMP   | LOVAL(value);
+		return (3);
 	} else if (value > -(1UL<<41)) {
 		/*
 		 * Large target >= 0xfffffe0000000000UL
@@ -575,17 +556,12 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[5] = JMP   | LOVAL(value);
-		where[4] = SRAX  | 22;
-		where[3] = SLLX  | 32;
-		where[2] = OR   | LOVAL(value >> 10);
-		where[1] = SETHI | HIVAL(value, 20);
-
-		__asm volatile("iflush %0+16" : : "r" (where));
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
-
+		*where1 = SETHI | HIVAL(value, 20);
+		where2[0] = OR   | LOVAL(value >> 10);
+		where2[1] = SLLX  | 32;
+		where2[2] = SRAX  | 22;
+		where2[3] = JMP   | LOVAL(value);
+		return (4);
 	} else {
 		/*
 		 * We need to load all 64-bits
@@ -602,18 +578,13 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[6] = JMP | LOVAL(value);
-		where[5] = ORG15;
-		where[4] = SLLXG5 | 32;
-		where[3] = ORG5 | LOVAL(value >> 32);
-		where[2] = SETHI | HIVAL(value, 10);
-		where[1] = SETHIG5 | HIVAL(value, 42);
-		__asm volatile("iflush %0+24" : : "r" (where));
-		__asm volatile("iflush %0+20" : : "r" (where));
-		__asm volatile("iflush %0+16" : : "r" (where));
-		__asm volatile("iflush %0+12" : : "r" (where));
-		__asm volatile("iflush %0+8" : : "r" (where));
-		__asm volatile("iflush %0+4" : : "r" (where));
+		*where1 = SETHIG5 | HIVAL(value, 42);
+		where2[0] = SETHI | HIVAL(value, 10);
+		where2[1] = ORG5 | LOVAL(value >> 32);
+		where2[2] = SLLXG5 | 32;
+		where2[3] = ORG15;
+		where2[4] = JMP | LOVAL(value);
+		return (5);
 	}
 }
 
@@ -625,11 +596,18 @@ _dl_bind(elf_object_t *object, int index)
 {
 	Elf_RelA *rela;
 	Elf_Word *addr;
-	Elf_Addr ooff;
+	Elf_Addr ooff, newvalue;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	const elf_object_t *sobj;
-	sigset_t savedmask;
+	int64_t cookie = pcookie;
+	struct {
+		struct __kbind param[2];
+		Elf_Word newval[6];
+	} buf;
+	struct __kbind *param;
+	size_t psize;
+	int i;
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 	if (ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT)) {
@@ -651,16 +629,14 @@ _dl_bind(elf_object_t *object, int index)
 		 * is JMP_SLOT, then the 4 reserved entries were
 		 * not generated and our index is 4 entries too far.
 		 */
-		index -= 4;
-	}
-
-	rela += index;
+		rela += index - 4;
+	} else
+		rela += index;
 
 	sym = object->dyn.symtab;
 	sym += ELF64_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Word *)(object->obj_base + rela->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
@@ -669,26 +645,109 @@ _dl_bind(elf_object_t *object, int index)
 		*(volatile int *)0 = 0;		/* XXX */
 	}
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return ooff + this->st_value;
+	newvalue = ooff + this->st_value;
 
-	/* if PLT is protected, allow the write */
-	if (object->plt_size != 0)  {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_WRITE|PROT_EXEC);
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (newvalue);
+
+	/*
+	 * While some relocations just need to write one word and
+	 * can do that with kbind() with just one block, many
+	 * require two blocks to be written: all but first word,
+	 * then the first word.  So, if we want to write 5 words
+	 * in total, then the layout of the buffer we pass to
+	 * kbind() needs to be one of these:
+	 *   +------------+
+	 *   | kbind.addr |
+	 *   |     """    |
+	 *   | kbind.size |
+	 *   |     """    |		+------------+
+	 *   | kbind.addr |		| kbind.addr |
+	 *   |     """    |		|     """    |
+	 *   | kbind.size |		| kbind.size |
+	 *   |     """    |		|     """    |
+	 *   |   word 2   |		|    word    |
+	 *   |   word 3   |		+------------+
+	 *   |   word 4   |
+	 *   |   word 5   |
+	 *   |   word 1   |
+	 *   +------------+
+	 *
+	 * We first handle the special case of relocations with a
+	 * non-zero r_addend, which have one block to update whose
+	 * address is the relocation address itself.  This is only
+	 * used for PLT entries after the 2^15th, i.e., truly monstrous
+	 * programs, thus the __predict_false().
+	 */
+	addr = (Elf_Word *)(object->obj_base + rela->r_offset);
+	_dl_memset(&buf, 0, sizeof(buf));
+	if (__predict_false(rela->r_addend)) {
+		/*
+		 * This entry is >32768.  The relocation points to a
+		 * PC-relative pointer to the _dl_bind_start_0 stub at
+		 * the top of the PLT section.  Update it to point to
+		 * the target function.
+		 */
+		buf.newval[0] = rela->r_addend + newvalue
+		    - object->Dyn.info[DT_PLTGOT];
+		buf.param[1].kb_addr = addr;
+		buf.param[1].kb_size = sizeof(buf.newval[0]);
+		param = &buf.param[1];
+		psize = sizeof(struct __kbind) + sizeof(buf.newval[0]);
+	} else {
+		Elf_Word first;
+
+		/*
+		 * For the other relocations, the word at the relocation
+		 * address will be left unchanged.  Assume _dl_reloc_plt()
+		 * will tell us to update multiple words, so save the first
+		 * word to the side.
+		 */
+		i = _dl_reloc_plt(&first, &buf.newval[0], addr, newvalue);
+
+		/*
+		 * _dl_reloc_plt() returns the number of words that must be
+		 * written after the first word in location, but before it
+		 * in time.  If it returns zero, then only a single block
+		 * with one word is needed, so we just put it in place per
+		 * the right-hand diagram and just use param[1] and newval[0]
+		 */
+		if (i == 0) {
+			/* fill in the __kbind structure */
+			buf.param[1].kb_addr = &addr[1];
+			buf.param[1].kb_size = sizeof(Elf_Word);
+			buf.newval[0] = first;
+			param = &buf.param[1];
+			psize = sizeof(struct __kbind) + sizeof(buf.newval[0]);
+		} else {
+			/*
+			 * Two blocks are necessary.  Save the first word
+			 * after the other words.
+			 */
+			buf.param[0].kb_addr = &addr[2];
+			buf.param[0].kb_size = i * sizeof(Elf_Word);
+			buf.param[1].kb_addr = &addr[1];
+			buf.param[1].kb_size = sizeof(Elf_Word);
+			buf.newval[i] = first;
+			param = &buf.param[0];
+			psize = 2 * sizeof(struct __kbind) +
+			    (i + 1) * sizeof(buf.newval[0]);
+		}
 	}
 
-	_dl_reloc_plt(object, addr, ooff + this->st_value, rela);
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("g1") = SYS_kbind;
+		register void *arg1 __asm("o0") = param;
+		register long  arg2 __asm("o1") = psize;
+		register long  arg3 __asm("o2") = cookie;
 
-	/* if PLT is (to be protected), change back to RO/X */
-	if (object->plt_size != 0) {
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_EXEC);
-		_dl_thread_bind_lock(1, &savedmask);
+		__asm volatile("t %2" : "+r" (arg1), "+r" (arg2)
+		    : "i" (ST_SYSCALL), "r" (syscall_num), "r" (arg3)
+		    : "cc", "memory");
 	}
 
-	return ooff + this->st_value;
+	return (newvalue);
 }
 
 /*
@@ -718,6 +777,60 @@ _dl_install_plt(Elf_Word *pltgot, Elf_Addr proc)
 
 void _dl_bind_start_0(long, long);
 void _dl_bind_start_1(long, long);
+
+static int
+_dl_md_reloc_all_plt(elf_object_t *object)
+{
+	long	i;
+	long	numrela;
+	int	fails = 0;
+	Elf_Addr loff;
+	Elf_RelA *relas;
+
+	loff = object->obj_base;
+	numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf64_Rela);
+	relas = (Elf64_Rela *)(object->Dyn.info[DT_JMPREL]);
+
+	if (relas == NULL)
+		return(0);
+
+	for (i = 0; i < numrela; i++, relas++) {
+		Elf_Addr value;
+		Elf_Word *where;
+		const Elf_Sym *sym, *this;
+
+		if (ELF_R_TYPE(relas->r_info) != R_TYPE(JMP_SLOT))
+			continue;
+
+		sym = object->dyn.symtab + ELF_R_SYM(relas->r_info);
+
+		this = NULL;
+		value = _dl_find_symbol_bysym(object, ELF_R_SYM(relas->r_info),
+		    &this, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, NULL);
+		if (this == NULL) {
+			if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+				fails++;
+			continue;
+		}
+
+		where = (Elf_Word *)(relas->r_offset + loff);
+		value += this->st_value;
+
+		if (__predict_false(relas->r_addend)) {
+			/*
+			 * This entry is >32768.  The relocation points to a
+			 * PC-relative pointer to the _dl_bind_start_0 stub at
+			 * the top of the PLT section.  Update it to point to
+			 * the target function.
+			 */
+			*(Elf_Addr *)where = relas->r_addend + value -
+			    object->Dyn.info[DT_PLTGOT];
+		} else
+			_dl_reloc_plt(&where[1], &where[2], where, value);
+	}
+
+	return (fails);
+}
 
 /*
  *	Relocate the Global Offset Table (GOT).
@@ -786,7 +899,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		lazy = 1;
 
 	if (!lazy) {
-		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		fails = _dl_md_reloc_all_plt(object);
 	} else {
 		_dl_install_plt(&entry[0], (Elf_Addr)&_dl_bind_start_0);
 		_dl_install_plt(&entry[8], (Elf_Addr)&_dl_bind_start_1);

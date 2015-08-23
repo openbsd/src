@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.23 2015/07/26 03:08:16 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.24 2015/08/23 20:45:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -67,19 +67,22 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
 
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
+
 /*
  * The following table holds for each relocation type:
  *	- the width in bits of the memory location the relocation
- *	  applies to (not currently used)
+ *	  applies to
  *	- the number of bits the relocation value must be shifted to the
  *	  right (i.e. discard least significant bits) to fit into
  *	  the appropriate field in the instruction word.
@@ -95,7 +98,6 @@
 #define _RF_P		0x20000000		/* Location relative */
 #define _RF_G		0x10000000		/* GOT offset */
 #define _RF_B		0x08000000		/* Load address relative */
-#define _RF_U		0x04000000		/* Unaligned */
 #define _RF_E		0x02000000		/* ERROR */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
@@ -129,7 +131,6 @@ static int reloc_target_flags[] = {
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
 #define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
 #define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
-#define RELOC_UNALIGNED(t)		((reloc_target_flags[t] & _RF_U) != 0)
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
@@ -306,23 +307,7 @@ resolve_failed:
 		value >>= RELOC_VALUE_RIGHTSHIFT(type);
 		value &= mask;
 
-		if (RELOC_UNALIGNED(type)) {
-			/* Handle unaligned relocations. */
-			Elf_Addr tmp = 0;
-			char *ptr = (char *)where;
-			int i, size = RELOC_TARGET_SIZE(type)/8;
-
-			/* Read it in one byte at a time. */
-			for (i=0; i<size; i++)
-				tmp = (tmp << 8) | ptr[i];
-
-			tmp &= ~mask;
-			tmp |= value;
-
-			/* Write it back out. */
-			for (i=0; i<size; i++)
-				ptr[i] = ((tmp >> (8*i)) & 0xff);
-		} else if (RELOC_TARGET_SIZE(type) > 32) {
+		if (RELOC_TARGET_SIZE(type) > 32) {
 			*where &= ~mask;
 			*where |= value;
 		} else {
@@ -358,22 +343,22 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int index)
 {
 	Elf_RelA *rel;
-	Elf_Word *addr;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	const elf_object_t *sobj;
-	Elf_Addr ooff, newval;
-	sigset_t savedmask;
+	Elf_Addr ooff;
+	int64_t cookie = pcookie;
+	struct {
+		struct __kbind param;
+		Elf_Addr newval;
+	} buf;
 
-	rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
-
-	rel += index;
+	rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]) + index;
 
 	sym = object->dyn.symtab;
 	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Word *)(object->obj_base + rel->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
@@ -382,28 +367,25 @@ _dl_bind(elf_object_t *object, int index)
 		*(volatile int *)0 = 0;		/* XXX */
 	}
 
-	newval = ooff + this->st_value + rel->r_addend;
+	buf.newval = ooff + this->st_value + rel->r_addend;
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return newval;
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (buf.newval);
 
-	/* if GOT is protected, allow the write */
-	if (object->got_size != 0) {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ|PROT_WRITE);
+	buf.param.kb_addr = (Elf_Word *)(object->obj_base + rel->r_offset);
+	buf.param.kb_size = sizeof(Elf_Addr);
+
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("rax") = SYS_kbind;
+		register void *arg1 __asm("rdi") = &buf;
+		register long  arg2 __asm("rsi") = sizeof(buf);
+		register long  arg3 __asm("rdx") = cookie;
+
+		__asm volatile("syscall" : "+r" (syscall_num), "+r" (arg3) :
+		    "r" (arg1), "r" (arg2) : "cc", "rcx", "r11", "memory");
 	}
-
-	_dl_reloc_plt((Elf_Addr *)addr, newval);
-
-	/* put the GOT back to RO */
-	if (object->got_size != 0) {
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
-		_dl_thread_bind_lock(1, &savedmask);
-	}
-
-	return(newval);
+	return (buf.newval);
 }
 
 int
@@ -451,7 +433,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->traced)
 		lazy = 1;
 
-	if (!lazy) {
+	if (__predict_false(!lazy)) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
