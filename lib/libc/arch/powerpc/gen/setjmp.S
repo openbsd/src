@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.6 2011/11/22 21:13:30 guenther Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.7 2015/08/23 15:42:01 kettenis Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -62,12 +62,22 @@ ENTRY(setjmp)
 	stw 31, JMP_r31(3)
 	mflr 0
 	stw 0, JMP_lr(3)
+#ifdef __PIC__
+	stw 30, JMP_r30(3)
+	bcl 20, 31, 1f
+1:	mflr 30
+	addis 30, 30, _GLOBAL_OFFSET_TABLE_-1b@ha
+	addi 30, 30, _GLOBAL_OFFSET_TABLE_-1b@l
+#endif
 	mr 31, 3
 	li 3, 0
 	bl PIC_PLT(sigblock)
 	stw 3, JMP_sig(31)
 	/* should sigaltstack be checked and saved */
 	mr 3, 31
+#ifdef __PIC__
+	lwz 30, JMP_r30(3)
+#endif
 	lwz 0, JMP_lr(3)
 	mtlr 0
 	lwz 31, JMP_r31(3)
@@ -109,13 +119,21 @@ ENTRY(_setjmp)
 .extern sigsetmask
 ENTRY(longjmp)
 	/* r31, mask */
-	mr 30, 3
+	mr 29, 3
 	mr 31, 4
+#ifdef __PIC__
+	mflr 0
+	bcl 20, 31, 1f
+1:	mflr 30
+	addis 30, 30, _GLOBAL_OFFSET_TABLE_-1b@ha
+	addi 30, 30, _GLOBAL_OFFSET_TABLE_-1b@l
+	mtlr 0
+#endif
 	lwz 3, JMP_sig(3)
 	bl PIC_PLT(sigsetmask)
 	/* should we deal with sigonstack here ?? */
 	mr 4, 31
-	mr 3, 30
+	mr 3, 29
 ENTRY(_longjmp)
 	lwz 31, JMP_r31(3)
 	/* r1, r14-r30 */
