@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.21 2015/08/22 20:18:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.22 2015/08/23 14:20:59 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -305,7 +305,8 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 				free(cwdpath, M_TEMP, cwdlen);
 				fullpath = builtpath;
 				len = builtlen;
-			}
+			} else
+				len = strlen(path) + 1;
 
 			if (maxargs += len > ARG_MAX) {
 				if (builtpath)
