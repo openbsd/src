@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.135 2015/05/04 10:21:15 dlg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.136 2015/08/23 04:58:37 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1517,7 +1517,6 @@ uvm_swap_free(int startslot, int nslots)
  * uvm_swap_put: put any number of pages into a contig place on swap
  *
  * => can be sync or async
- * => XXXMRG: consider making it an inline or macro
  */
 int
 uvm_swap_put(int swslot, struct vm_page **ppsp, int npages, int flags)
@@ -1534,7 +1533,6 @@ uvm_swap_put(int swslot, struct vm_page **ppsp, int npages, int flags)
  * uvm_swap_get: get a single page from swap
  *
  * => usually a sync op (from fault)
- * => XXXMRG: consider making it an inline or macro
  */
 int
 uvm_swap_get(struct vm_page *page, int swslot, int flags)
