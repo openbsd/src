@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigabrt.c,v 1.1 2015/07/27 18:03:36 semarie Exp $ */
+/*	$OpenBSD: sigabrt.c,v 1.2 2015/08/23 04:59:31 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -37,7 +37,7 @@ main(int argc, char *argv[])
 	printf("permitted STDIO\n");
 	fflush(stdout);
 
-	tame(TAME_ABORT);
+	tame(TAME_ABORT, NULL);
 
 	/* this will triggered tame_fail() */
 	printf("forbidden STDIO 1\n");
