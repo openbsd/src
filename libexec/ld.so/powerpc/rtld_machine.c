@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.53 2014/11/24 05:50:08 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.54 2015/08/23 15:28:41 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -39,6 +39,8 @@
 #include "archdep.h"
 #include "resolve.h"
 
+#define	DT_PROC(n)	((n) - DT_LOPROC + DT_NUM)
+
 void _dl_syncicache(char *from, size_t len);
 
 /* relocation bits */
@@ -62,9 +64,12 @@ void _dl_syncicache(char *from, size_t len);
 	(from) = lval; \
 } while (0)
 
+#define SLWI_R12_R11_1	0x556c083c
+#define ADD_R11_R12_R11 0x7d6c5a14
+
 /* these are structures/functions offset from PLT region */
-#define PLT_CALL_OFFSET		6
-#define PLT_INFO_OFFSET		10
+#define PLT_CALL_OFFSET		8
+#define PLT_INFO_OFFSET		12
 #define PLT_1STRELA_OFFSET	18
 #define B24_VALID_RANGE(x) \
     ((((x) & 0xfe000000) == 0x00000000) || (((x) &  0xfe000000) == 0xfe000000))
@@ -114,7 +119,8 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	plttable = NULL;
 
 	/* for plt relocation usage */
-	if (object->Dyn.info[DT_JMPREL] != 0) {
+	if (object->Dyn.info[DT_JMPREL] != 0 &&
+	    object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0) {
 		/* resolver stub not set up */
 		int nplt;
 
@@ -141,14 +147,16 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		    (object->Dyn.info[DT_PLTRELSZ]/sizeof(Elf32_Rela)));
 		_dl_printf("md_reloc: plttable %x\n", plttable);
 #endif
-		pltresolve[0] = ADDIS_R12_R0 | HA(_dl_bind_start);
-		pltresolve[1] = ADDI_R12_R12 | L(_dl_bind_start);
-		pltresolve[2] = MCTR_R12;
-		pltresolve[3] = ADDIS_R12_R0 | HA(object);
-		pltresolve[4] = ADDI_R12_R12 | L(object);
-		pltresolve[5] = BCTR;
+		pltresolve[0] = SLWI_R12_R11_1;
+		pltresolve[1] = ADD_R11_R12_R11;
+		pltresolve[2] = ADDIS_R12_R0 | HA(_dl_bind_start);
+		pltresolve[3] = ADDI_R12_R12 | L(_dl_bind_start);
+		pltresolve[4] = MCTR_R12;
+		pltresolve[5] = ADDIS_R12_R0 | HA(object);
+		pltresolve[6] = ADDI_R12_R12 | L(object);
+		pltresolve[7] = BCTR;
 		_dl_dcbf(&pltresolve[0]);
-		_dl_dcbf(&pltresolve[5]);
+		_dl_dcbf(&pltresolve[7]);
 
 		/* addis r11,r11,.PLTtable@ha*/
 		pltcall[0] = ADDIS_R11_R11 | HA(plttable);
@@ -244,8 +252,16 @@ _dl_printf("object relocation size %x, numrela %x\n",
 			}
 		}
 
+		/*
+		 * For Secure-PLT, RELOC_JMP_SLOT simply sets PLT
+		 * slots similarly to how RELOC_GLOB_DAT updates GOT
+		 * slots.
+		 */
+		if (type == RELOC_JMP_SLOT &&
+		    object->Dyn.info[DT_PROC(DT_PPC_GOT)])
+			type = RELOC_GLOB_DAT;
+
 		switch (type) {
-#if 1
 		case RELOC_32:
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
@@ -256,7 +272,6 @@ _dl_printf("object relocation size %x, numrela %x\n",
 				    relas->r_addend;
 			}
 			break;
-#endif
 		case RELOC_RELATIVE:
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
@@ -460,6 +475,66 @@ _dl_printf(" found other symbol at %x size %d\n",
 	return(fails);
 }
 
+void
+_dl_setup_secure_plt(elf_object_t *object)
+{
+	Elf32_Addr *got;
+	Elf32_Addr *plt;
+	int numplt, i;
+
+	/* Relocate processor-specific tags. */
+	object->Dyn.info[DT_PROC(DT_PPC_GOT)] += object->obj_base;
+
+	got = (Elf32_Addr *)
+	    (Elf32_Rela *)(object->Dyn.info[DT_PROC(DT_PPC_GOT)]);
+	got[1] = (Elf32_Addr)_dl_bind_start;
+	got[2] = (Elf32_Addr)object;
+
+	plt = (Elf32_Addr *)
+	   (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
+	numplt = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf32_Rela);
+	for (i = 0; i < numplt; i++)
+		plt[i] += object->obj_base;
+}
+
+void
+_dl_setup_bss_plt(elf_object_t *object)
+{
+	Elf_Addr *pltresolve;
+	Elf_Addr *first_rela;
+	Elf_RelA *relas;
+	Elf32_Addr *r_addr;
+	int numrela, i;
+	int index;
+
+	first_rela = (Elf32_Addr *)
+	    (((Elf32_Rela *)(object->Dyn.info[DT_JMPREL]))->r_offset +
+	    object->obj_base);
+	pltresolve = (Elf32_Addr *)(first_rela) - 18;
+
+	relas = (Elf32_Rela *)(object->Dyn.info[DT_JMPREL]);
+	numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf32_Rela);
+	r_addr = (Elf32_Addr *)(relas->r_offset + object->obj_base);
+
+	for (i = 0, index = 0; i < numrela; i++, r_addr+=2, index++) {
+		if (index >= (2 << 12)) {
+			/* addis r11,r0,.PLTtable@ha*/
+			r_addr[0] = ADDIS_R11_R0 | HA(index*4);
+			r_addr[1] = ADDI_R11_R11 | L(index*4);
+			BR(r_addr[2], pltresolve);
+			/* only every other slot is used after
+			 * index == 2^14
+			 */
+			r_addr += 2;
+		} else {
+			r_addr[0] = LI_R11 | (index * 4);
+			BR(r_addr[1], pltresolve);
+		}
+		_dl_dcbf(&r_addr[0]);
+		_dl_dcbf(&r_addr[2]);
+	}
+}
+
 /*
  *	Relocate the Global Offset Table (GOT).
  *	This is done by calling _dl_md_reloc on DT_JMPREL for DL_BIND_NOW,
@@ -468,20 +543,21 @@ _dl_printf(" found other symbol at %x size %d\n",
 int
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	Elf_Addr *pltresolve;
-	Elf_Addr *first_rela;
-	Elf_RelA *relas;
-	Elf_Addr  plt_addr;
-	int	i;
-	int	numrela;
-	int	fails = 0;
-	int index;
-	Elf32_Addr *r_addr;
+	Elf_Addr plt_addr;
 	Elf_Addr ooff;
 	const Elf_Sym *this;
+	int fails = 0;
+	int prot_exec = 0;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return (0);
+
+	/*
+	 * For BSS-PLT, both the GOT and the PLT need to be
+	 * executable.  Yuck!
+	 */
+	if (object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0)
+		prot_exec = PROT_EXEC;
 
 	object->got_addr = 0;
 	object->got_size = 0;
@@ -536,42 +612,19 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
-		first_rela = (Elf32_Addr *)
-		    (((Elf32_Rela *)(object->Dyn.info[DT_JMPREL]))->r_offset +
-		    object->obj_base);
-		pltresolve = (Elf32_Addr *)(first_rela) - 18;
-
-		relas = (Elf32_Rela *)(object->Dyn.info[DT_JMPREL]);
-		numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf32_Rela);
-		r_addr = (Elf32_Addr *)(relas->r_offset + object->obj_base);
-
-		for (i = 0, index = 0; i < numrela; i++, r_addr+=2, index++) {
-			if (index >= (2 << 12)) {
-				/* addis r11,r0,.PLTtable@ha*/
-				r_addr[0] = ADDIS_R11_R0 | HA(index*4);
-				r_addr[1] = ADDI_R11_R11 | L(index*4);
-				BR(r_addr[2], pltresolve);
-				/* only every other slot is used after
-				 * index == 2^14
-				 */
-				r_addr += 2;
-			} else {
-				r_addr[0] = LI_R11 | (index * 4);
-				BR(r_addr[1], pltresolve);
-			}
-			_dl_dcbf(&r_addr[0]);
-			_dl_dcbf(&r_addr[2]);
-		}
+		if (object->Dyn.info[DT_PROC(DT_PPC_GOT)])
+			_dl_setup_secure_plt(object);
+		else
+			_dl_setup_bss_plt(object);
 	}
 	if (object->got_size != 0) {
-
 		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
+		    PROT_READ|prot_exec);
 		_dl_syncicache((void*)object->got_addr, 4);
 	}
 	if (object->plt_size != 0)
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_EXEC);
+		    PROT_READ|prot_exec);
 
 	return (fails);
 }
@@ -591,8 +644,9 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf32_Addr *pltinfo;
 	Elf32_Addr *plttable;
 	sigset_t savedmask;
+	int prot_exec = 0;
 
-	relas = ((Elf_RelA *)object->Dyn.info[DT_JMPREL]) + (reloff>>2);
+	relas = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
 	sym = object->dyn.symtab;
 	sym += ELF_R_SYM(relas->r_info);
@@ -612,58 +666,73 @@ _dl_bind(elf_object_t *object, int reloff)
 	if (sobj->traced && _dl_trace_plt(sobj, symn))
 		return value;
 
+	/*
+	 * For BSS-PLT, both the GOT and the PLT need to be
+	 * executable.  Yuck!
+	 */
+	if (object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0)
+		prot_exec = PROT_EXEC;
+
 	/* if PLT is protected, allow the write */
 	if (object->plt_size != 0)  {
 		_dl_thread_bind_lock(0, &savedmask);
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_WRITE|PROT_EXEC);
+		    PROT_READ|PROT_WRITE|prot_exec);
 	}
 
 	val = value - (Elf32_Addr)r_addr;
 
-	pltresolve = (Elf32_Addr *)
-	    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
-	pltcall = (Elf32_Addr *)(pltresolve) + PLT_CALL_OFFSET;
+	if (object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0) {
+		pltresolve = (Elf32_Addr *)
+		    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
+		pltcall = (Elf32_Addr *)(pltresolve) + PLT_CALL_OFFSET;
 
-	if (!B24_VALID_RANGE(val)) {
-		int index;
-		/* if offset is > RELOC_24 deal with it */
-		index = reloff >> 2;
+		if (!B24_VALID_RANGE(val)) {
+			int index;
+			/* if offset is > RELOC_24 deal with it */
+			index = reloff / sizeof(Elf32_Rela);
 
-		/* update plttable before pltcall branch, to make
-		 * this a safe race for threads
-		 */
-		val = ooff + this->st_value + relas->r_addend;
-
-		pltinfo = (Elf32_Addr *)(pltresolve) + PLT_INFO_OFFSET;
-		plttable = (Elf32_Addr *)pltinfo[0];
-		plttable[index] = val;
-
-		if (index >= (2 << 12)) {
-			/* r_addr[0,1] is initialized to correct
-			 * value in reloc_got.
+			/* update plttable before pltcall branch, to make
+			 * this a safe race for threads
 			 */
-			BR(r_addr[2], pltcall);
-			_dl_dcbf(&r_addr[2]);
+			val = ooff + this->st_value + relas->r_addend;
+
+			pltinfo = (Elf32_Addr *)(pltresolve) + PLT_INFO_OFFSET;
+			plttable = (Elf32_Addr *)pltinfo[0];
+			plttable[index] = val;
+
+			if (index >= (2 << 12)) {
+				/* r_addr[0,1] is initialized to correct
+				 * value in reloc_got.
+				 */
+				BR(r_addr[2], pltcall);
+				_dl_dcbf(&r_addr[2]);
+			} else {
+				/* r_addr[0] is initialized to correct
+				 * value in reloc_got.
+				 */
+				BR(r_addr[1], pltcall);
+				_dl_dcbf(&r_addr[1]);
+			}
 		} else {
-			/* r_addr[0] is initialized to correct
-			 * value in reloc_got.
+			/* if the offset is small enough,
+			 * branch directly to the dest
 			 */
-			BR(r_addr[1], pltcall);
-			_dl_dcbf(&r_addr[1]);
+			BR(r_addr[0], value);
+			_dl_dcbf(&r_addr[0]);
 		}
 	} else {
-		/* if the offset is small enough,
-		 * branch directly to the dest
-		 */
-		BR(r_addr[0], value);
-		_dl_dcbf(&r_addr[0]);
+		int index = reloff / sizeof(Elf32_Rela);
+
+		plttable = (Elf32_Addr *)
+		    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
+		plttable[index] = value;
 	}
 
 	/* if PLT is to be protected, change back to RO/X */
 	if (object->plt_size != 0) {
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
+		    PROT_READ|prot_exec);
 		_dl_thread_bind_lock(1, &savedmask);
 	}
 	return (value);
