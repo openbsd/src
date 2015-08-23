@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.12 2015/08/14 14:29:45 stsp Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.13 2015/08/23 10:14:40 semarie Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ _xpg4_setrunelocale(const char *locname)
 	}
 
 	/* Assumes "language[_territory][.codeset]" locale name. */
-	dot = strstr(locname, ".UTF-8");
+	dot = strrchr(locname, '.');
 	if (dot == NULL) {
 		/* No encoding specified. Fall back to ASCII. */
 		rl = &_DefaultRuneLocale;
