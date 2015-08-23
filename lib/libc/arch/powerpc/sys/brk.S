@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.8 2012/08/22 22:26:16 deraadt Exp $ */
+/* $OpenBSD: brk.S,v 1.9 2015/08/23 15:44:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -38,8 +38,10 @@ PREFIX2(brk,break)
 	ori  5,5,_C_LABEL(end)@l		/* # 5 = &_end */
 #else
 	mflr	10
-	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	9
+	bcl	20, 31, 1f
+1:	mflr	9
+	addis	9, 9, _GLOBAL_OFFSET_TABLE_-1b@ha
+	addi	9, 9, _GLOBAL_OFFSET_TABLE_-1b@l
 	mtlr	10
 	lwz	5,_C_LABEL(end)@got(9)
 #endif
@@ -62,7 +64,7 @@ PREFIX2(brk,break)
 	/* check for error */
 	cmpwi	0, 0
 	beq+	.L_brk_ok	/* OK so this is stupid but I haven't read b */
-	b	PIC_PLT(_ASM_LABEL(__cerror))
+	b	_ASM_LABEL(___cerror)
 
 	/* update, __curbrk and return */
 .L_brk_ok:
