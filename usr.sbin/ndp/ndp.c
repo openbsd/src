@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.61 2015/06/03 08:10:53 mpi Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.62 2015/08/23 14:12:05 naddy Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -1043,9 +1043,8 @@ void
 plist(void)
 {
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_PRLIST };
-	char *buf;
-	struct in6_prefix *p, *ep, *n;
-	struct sockaddr_in6 *advrtr;
+	char *buf, *p, *ep;
+	struct in6_prefix pfx;
 	size_t l;
 	struct timeval now;
 	const int niflags = NI_NUMERICHOST;
@@ -1066,17 +1065,17 @@ plist(void)
 		/*NOTREACHED*/
 	}
 
-	ep = (struct in6_prefix *)(buf + l);
-	for (p = (struct in6_prefix *)buf; p < ep; p = n) {
-		advrtr = (struct sockaddr_in6 *)(p + 1);
-		n = (struct in6_prefix *)&advrtr[p->advrtrs];
+	ep = buf + l;
+	for (p = buf; p < ep; ) {
+		memcpy(&pfx, p, sizeof(pfx));
+		p += sizeof(pfx);
 
-		if (getnameinfo((struct sockaddr *)&p->prefix,
-		    p->prefix.sin6_len, namebuf, sizeof(namebuf),
+		if (getnameinfo((struct sockaddr *)&pfx.prefix,
+		    pfx.prefix.sin6_len, namebuf, sizeof(namebuf),
 		    NULL, 0, niflags) != 0)
 			strlcpy(namebuf, "?", sizeof(namebuf));
-		printf("%s/%d if=%s\n", namebuf, p->prefixlen,
-		    if_indextoname(p->if_index, ifix_buf));
+		printf("%s/%d if=%s\n", namebuf, pfx.prefixlen,
+		    if_indextoname(pfx.if_index, ifix_buf));
 
 		gettimeofday(&now, 0);
 		/*
@@ -1084,50 +1083,52 @@ plist(void)
 		 * by origin.  notify the difference to the users.
 		 */
 		printf("flags=%s%s%s%s%s",
-		    p->raflags.onlink ? "L" : "",
-		    p->raflags.autonomous ? "A" : "",
-		    (p->flags & NDPRF_ONLINK) != 0 ? "O" : "",
-		    (p->flags & NDPRF_DETACHED) != 0 ? "D" : "",
-		    (p->flags & NDPRF_HOME) != 0 ? "H" : ""
+		    pfx.raflags.onlink ? "L" : "",
+		    pfx.raflags.autonomous ? "A" : "",
+		    (pfx.flags & NDPRF_ONLINK) != 0 ? "O" : "",
+		    (pfx.flags & NDPRF_DETACHED) != 0 ? "D" : "",
+		    (pfx.flags & NDPRF_HOME) != 0 ? "H" : ""
 		    );
-		if (p->vltime == ND6_INFINITE_LIFETIME)
+		if (pfx.vltime == ND6_INFINITE_LIFETIME)
 			printf(" vltime=infinity");
 		else
-			printf(" vltime=%lu", (unsigned long)p->vltime);
-		if (p->pltime == ND6_INFINITE_LIFETIME)
+			printf(" vltime=%lu", (unsigned long)pfx.vltime);
+		if (pfx.pltime == ND6_INFINITE_LIFETIME)
 			printf(", pltime=infinity");
 		else
-			printf(", pltime=%lu", (unsigned long)p->pltime);
-		if (p->expire == 0)
+			printf(", pltime=%lu", (unsigned long)pfx.pltime);
+		if (pfx.expire == 0)
 			printf(", expire=Never");
-		else if (p->expire >= now.tv_sec)
+		else if (pfx.expire >= now.tv_sec)
 			printf(", expire=%s",
-			    sec2str(p->expire - now.tv_sec));
+			    sec2str(pfx.expire - now.tv_sec));
 		else
 			printf(", expired");
-		printf(", ref=%d", p->refcnt);
+		printf(", ref=%d", pfx.refcnt);
 		printf("\n");
 		/*
 		 * "advertising router" list is meaningful only if the prefix
 		 * information is from RA.
 		 */
-		if (p->advrtrs) {
+		if (pfx.advrtrs) {
 			int j;
-			struct sockaddr_in6 *sin6;
+			struct sockaddr_in6 sin6;
 
-			sin6 = advrtr;
 			printf("  advertised by\n");
-			for (j = 0; j < p->advrtrs; j++) {
+			for (j = 0; j < pfx.advrtrs && p <= ep; j++) {
 				struct in6_nbrinfo *nbi;
 
-				if (getnameinfo((struct sockaddr *)sin6,
-				    sin6->sin6_len, namebuf, sizeof(namebuf),
+				memcpy(&sin6, p, sizeof(sin6));
+				p += sizeof(sin6);
+
+				if (getnameinfo((struct sockaddr *)&sin6,
+				    sin6.sin6_len, namebuf, sizeof(namebuf),
 				    NULL, 0, ninflags) != 0)
 					strlcpy(namebuf, "?", sizeof(namebuf));
 				printf("    %s", namebuf);
 
-				nbi = getnbrinfo(&sin6->sin6_addr,
-				    p->if_index, 0);
+				nbi = getnbrinfo(&sin6.sin6_addr,
+				    pfx.if_index, 0);
 				if (nbi) {
 					switch (nbi->state) {
 					case ND6_LLINFO_REACHABLE:
@@ -1141,7 +1142,6 @@ plist(void)
 					}
 				} else
 					printf(" (no neighbor state)\n");
-				sin6++;
 			}
 		} else
 			printf("  No advertising router\n");
