@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.50 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ch.c,v 1.51 2015/08/23 01:55:39 tedu Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -614,7 +614,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 	if (data != NULL)
 		dma_free(data, size);
 	if (user_data != NULL)
-		free(user_data, M_DEVBUF, 0);
+		free(user_data, M_DEVBUF, udsize);
 	return (error);
 }
 

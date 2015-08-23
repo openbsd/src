@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.52 2015/06/07 19:13:27 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.53 2015/08/23 01:55:39 tedu Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -199,8 +199,9 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_sensortask == NULL) {
 			printf("%s: unable to register update task\n",
 			    DEVNAME(sc));
+			free(sc->sc_sensors, M_DEVBUF,
+			    sc->sc_nsensors * sizeof(struct safte_sensor));
 			sc->sc_nsensors = sc->sc_ntemps = 0;
-			free(sc->sc_sensors, M_DEVBUF, 0);
 		} else {
 			for (i = 0; i < sc->sc_nsensors; i++)
 				sensor_attach(&sc->sc_sensordev,
@@ -246,7 +247,8 @@ safte_detach(struct device *self, int flags)
 		for (i = 0; i < sc->sc_nsensors; i++)
 			sensor_detach(&sc->sc_sensordev,
 			    &sc->sc_sensors[i].se_sensor);
-		free(sc->sc_sensors, M_DEVBUF, 0);
+		free(sc->sc_sensors, M_DEVBUF,
+		    sc->sc_nsensors * sizeof(struct safte_sensor));
 	}
 
 	if (sc->sc_encbuf != NULL)

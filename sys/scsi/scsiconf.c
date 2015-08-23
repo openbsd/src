@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.192 2015/06/07 19:13:27 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.193 2015/08/23 01:55:39 tedu Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -505,7 +505,7 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	/* 3. if its using the openings io allocator, clean it up */
 	if (ISSET(link->flags, SDEV_OWN_IOPL)) {
 		scsi_iopool_destroy(link->pool);
-		free(link->pool, M_DEVBUF, 0);
+		free(link->pool, M_DEVBUF, sizeof(*link->pool));
 	}
 
 	/* 4. free up its state in the adapter */
@@ -516,7 +516,7 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	if (link->id != NULL)
 		devid_free(link->id);
 	scsi_remove_link(sc, link);
-	free(link, M_DEVBUF, 0);
+	free(link, M_DEVBUF, sizeof(*link));
 
 	return (0);
 }
@@ -1067,12 +1067,12 @@ free_devid:
 		devid_free(sc_link->id);
 bad:
 	if (ISSET(sc_link->flags, SDEV_OWN_IOPL))
-		free(sc_link->pool, M_DEVBUF, 0);
+		free(sc_link->pool, M_DEVBUF, sizeof(*sc_link->pool));
 
 	if (scsi->adapter_link->adapter->dev_free != NULL)
 		scsi->adapter_link->adapter->dev_free(sc_link);
 free:
-	free(sc_link, M_DEVBUF, 0);
+	free(sc_link, M_DEVBUF, sizeof(*sc_link));
 	return (rslt);
 }
 
@@ -1274,6 +1274,7 @@ scsi_devid_pg80(struct scsi_link *link)
 	struct scsi_vpd_hdr *hdr = NULL;
 	u_int8_t *pg = NULL;
 	char *id;
+	size_t idlen;
 	int pglen, len;
 	int rv;
 
@@ -1297,8 +1298,9 @@ scsi_devid_pg80(struct scsi_link *link)
 	if (rv != 0)
 		goto free;
 
-	id = malloc(sizeof(link->inqdata.vendor) +
-	    sizeof(link->inqdata.product) + len, M_TEMP, M_WAITOK);
+	idlen = sizeof(link->inqdata.vendor) +
+	    sizeof(link->inqdata.product) + len;
+	id = malloc(idlen, M_TEMP, M_WAITOK);
 	memcpy(id, link->inqdata.vendor, sizeof(link->inqdata.vendor));
 	memcpy(id + sizeof(link->inqdata.vendor), link->inqdata.product,
 	    sizeof(link->inqdata.product));
@@ -1309,7 +1311,7 @@ scsi_devid_pg80(struct scsi_link *link)
 	    sizeof(link->inqdata.vendor) + sizeof(link->inqdata.product) + len,
 	    id);
 
-	free(id, M_TEMP, 0);
+	free(id, M_TEMP, idlen);
 
 free:
 	dma_free(pg, pglen);
@@ -1371,5 +1373,5 @@ void
 devid_free(struct devid *d)
 {
 	if (--d->d_refcount == 0)
-		free(d, M_DEVBUF, 0);
+		free(d, M_DEVBUF, sizeof(*d) + d->d_len);
 }
