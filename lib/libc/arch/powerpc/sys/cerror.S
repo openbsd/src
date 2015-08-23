@@ -1,4 +1,4 @@
-/* $OpenBSD: cerror.S,v 1.9 2012/08/22 22:26:16 deraadt Exp $ */
+/* $OpenBSD: cerror.S,v 1.10 2015/08/23 15:51:28 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -28,28 +28,36 @@
 #include "SYS.h"
 #include <machine/asm.h>
 
+#define ERRNOPTR_OFFSET	16
+
 WEAK_ALIAS(__cerror, ___cerror)
 
 	.text
+	.protected _ASM_LABEL(___cerror)
 ASENTRY(___cerror)
+	cmpwi	2, 0
+	bne-	.L_threaded
+
 #if defined (__PIC__)
-	stwu	1, -16(1) 		/* follow the SVR4 ABI */
 	mflr	3			/* error value is in r0, use r3 */
-	stw	3, 20(1)
-	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	4
+	bcl	20, 31, 1f
+1:	mflr	4
+	addis	4, 4, _GLOBAL_OFFSET_TABLE_-1b@ha
+	addi	4, 4, _GLOBAL_OFFSET_TABLE_-1b@l
 	lwz	5,_C_LABEL(errno)@got(4)
+	mtlr	3
 #else
 	addis 5, 0, errno@H
 	ori 5, 5, errno@L
 #endif
+	b	.L_do_store
 
+.L_threaded:
+	lwz  5, 4(2)
+	lwz  5, ERRNOPTR_OFFSET(5)
+
+.L_do_store:
 	stw 0, 0(5)
 	addi 3, 0, -1
 	addi 4, 0, -1
-#if defined (__PIC__)
-	lwz	0, 20(1)
-	mtlr	0
-	addi	1, 1, 16	/* follow the SVR4 ABI */
-#endif
 	blr
