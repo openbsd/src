@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.96 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.97 2015/08/23 23:15:57 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -197,6 +197,13 @@ const struct puc_device_description puc_devs[] = {
 	{   /* Intel EG20T */
 	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_4, 0x0000, 0x0000 },
 	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{	/* Atom S1200 UART */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_UART, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
 	    },
