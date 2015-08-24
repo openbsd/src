@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.39 2015/05/03 19:44:59 guenther Exp $	*/
+/*	$OpenBSD: mv.c,v 1.40 2015/08/24 00:10:59 guenther Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -260,6 +260,15 @@ fastcopy(char *from, char *to, struct stat *sbp)
 	int nread, from_fd, to_fd;
 	int badchown = 0, serrno = 0;
 
+	if (!blen) {
+		blen = sbp->st_blksize;
+		if ((bp = malloc(blen)) == NULL) {
+			warn(NULL);
+			blen = 0;
+			return (1);
+		}
+	}
+
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
 		warn("%s", from);
 		return (1);
@@ -276,14 +285,6 @@ fastcopy(char *from, char *to, struct stat *sbp)
 	}
 	(void) fchmod(to_fd, sbp->st_mode & ~(S_ISUID|S_ISGID));
 
-	if (!blen) {
-		blen = sbp->st_blksize;
-		if ((bp = malloc(blen)) == NULL) {
-			warn(NULL);
-			blen = 0;
-			return (1);
-		}
-	}
 	while ((nread = read(from_fd, bp, blen)) > 0)
 		if (write(to_fd, bp, nread) != nread) {
 			warn("%s", to);
