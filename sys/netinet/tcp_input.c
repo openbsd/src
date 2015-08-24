@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.300 2015/08/24 15:37:03 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.301 2015/08/24 23:31:35 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3370,6 +3370,7 @@ syn_cache_init()
 	/* Initialize the syn cache pool. */
 	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
 	    "syncache", NULL);
+	pool_setipl(&syn_cache_pool, IPL_SOFTNET);
 }
 
 void
@@ -3521,11 +3522,8 @@ void
 syn_cache_reaper(void *arg)
 {
 	struct syn_cache *sc = arg;
-	int s;
 
-	s = splsoftnet();
 	pool_put(&syn_cache_pool, (sc));
-	splx(s);
 	return;
 }
 
@@ -3566,7 +3564,8 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 	u_int32_t hash;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (tcp_syn_cache_count == 0)
 		return (NULL);
@@ -3574,18 +3573,14 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 	SYN_HASHALL(hash, src, dst);
 	scp = &tcp_syn_cache[hash % tcp_syn_cache_size];
 	*headp = scp;
-	s = splsoftnet();
 	TAILQ_FOREACH(sc, &scp->sch_bucket, sc_bucketq) {
 		if (sc->sc_hash != hash)
 			continue;
 		if (!bcmp(&sc->sc_src, src, src->sa_len) &&
 		    !bcmp(&sc->sc_dst, dst, dst->sa_len) &&
-		    rtable_l2(rtableid) == rtable_l2(sc->sc_rtableid)) {
-			splx(s);
+		    rtable_l2(rtableid) == rtable_l2(sc->sc_rtableid))
 			return (sc);
-		}
 	}
-	splx(s);
 	return (NULL);
 }
 
