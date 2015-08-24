@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.168 2015/08/19 13:27:38 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.169 2015/08/24 22:11:33 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -593,8 +593,7 @@ route_output(struct mbuf *m, ...)
 			error = EINVAL;
 			goto flush;
 		}
-		error = rtrequest1(rtm->rtm_type, &info, prio, &saved_nrt,
-		    tableid);
+		error = rtrequest1(RTM_ADD, &info, prio, &saved_nrt, tableid);
 		if (error == 0) {
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &saved_nrt->rt_rmx);
@@ -606,12 +605,9 @@ route_output(struct mbuf *m, ...)
 		}
 		break;
 	case RTM_DELETE:
-		error = rtrequest1(rtm->rtm_type, &info, prio, &saved_nrt,
-		    tableid);
-		if (error == 0) {
-			(rt = saved_nrt)->rt_refcnt++;
+		error = rtrequest1(RTM_DELETE, &info, prio, &rt, tableid);
+		if (error == 0)
 			goto report;
-		}
 		break;
 	case RTM_GET:
 	case RTM_CHANGE:

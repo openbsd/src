@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.224 2015/08/20 12:39:43 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.225 2015/08/24 22:11:33 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -570,14 +570,9 @@ rtdeletemsg(struct rtentry *rt, u_int tableid)
 	info.rti_flags = rt->rt_flags;
 	ifp = rt->rt_ifp;
 	error = rtrequest1(RTM_DELETE, &info, rt->rt_priority, &rt, tableid);
-
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, ifp, error, tableid);
-
-	/* Adjust the refcount */
-	if (error == 0 && rt->rt_refcnt <= 0) {
-		rt->rt_refcnt++;
+	if (error == 0)
 		rtfree(rt);
-	}
 	return (error);
 }
 
@@ -820,12 +815,11 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			ifa->ifa_rtrequest(RTM_DELETE, rt);
 		rttrash++;
 
-		if (ret_nrt)
+		rt->rt_refcnt++;
+		if (ret_nrt != NULL)
 			*ret_nrt = rt;
-		else if (rt->rt_refcnt <= 0) {
-			rt->rt_refcnt++;
+		else
 			rtfree(rt);
-		}
 		break;
 
 	case RTM_RESOLVE:
@@ -1271,10 +1265,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		rt_sendmsg(rt, RTM_DELETE, rtableid);
 		if (flags & RTF_LOCAL)
 			rt_sendaddrmsg(rt, RTM_DELADDR);
-		if (rt->rt_refcnt <= 0) {
-			rt->rt_refcnt++;
-			rtfree(rt);
-		}
+		rtfree(rt);
 	}
 	if (m != NULL)
 		m_free(m);

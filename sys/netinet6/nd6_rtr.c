@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.117 2015/08/24 15:58:35 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.118 2015/08/24 22:11:34 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -732,14 +732,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 	    dr->ifp->if_rdomain);
 	if (error == 0) {
 		rt_sendmsg(rt, RTM_DELETE, dr->ifp->if_rdomain);
-		if (rt->rt_refcnt <= 0) {
-			/*
-			 * XXX: borrowed from the RTM_DELETE case of
-			 * rtrequest1().
-			 */
-			rt->rt_refcnt++;
-			rtfree(rt);
-		}
+		rtfree(rt);
 	}
 
 	dr->installed = 0;
@@ -1904,8 +1897,8 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 	if (error == 0) {
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
 
-		/* report the route deletion to the routing socket. */
 		rt_sendmsg(rt, RTM_DELETE, ifp->if_rdomain);
+		rtfree(rt);
 
 		/*
 		 * There might be the same prefix on another interface,
@@ -1945,12 +1938,6 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 					    opr->ndpr_ifp->if_xname, e));
 				}
 			}
-		}
-
-		if (rt->rt_refcnt <= 0) {
-			/* XXX: we should free the entry ourselves. */
-			rt->rt_refcnt++;
-			rtfree(rt);
 		}
 	} else {
 		/* XXX: can we still set the NDPRF_ONLINK flag? */
