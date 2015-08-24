@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.854 2015/08/06 14:55:51 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.855 2015/08/24 10:41:11 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1260,7 +1260,7 @@ install_files() {
 		*.tgz)	ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
 			if [[ $_f == ?(x)base*.tgz && $MODE == install ]]; then
 				ftp -D Extracting -Vmo - \
-				file:///mnt/usr/share/sysmerge/${_f%%base*}etc.tgz |
+				file:///mnt/var/sysmerge/${_f%%base*}etc.tgz |
 				tar -zxphf - -C /mnt
 			fi
 			;;

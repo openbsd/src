@@ -2644,8 +2644,6 @@
 ./usr/share/snmp/mibs/OPENBSD-PF-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SENSORS-MIB.txt
 ./usr/share/snmp/mibs/OPENBSD-SNMPD-CONF.txt
-./usr/share/sysmerge
-./usr/share/sysmerge/etc.tgz
 ./usr/share/tabset
 ./usr/share/tabset/std
 ./usr/share/tabset/stdcrt
@@ -4549,6 +4547,8 @@
 ./var/spool/smtpd/temporary
 ./var/spool/uucp
 ./var/spool/uucppublic
+./var/sysmerge
+./var/sysmerge/etc.tgz
 ./var/tmp
 ./var/unbound
 ./var/unbound/db

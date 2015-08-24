@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.272 2015/07/21 04:06:04 yasuoka Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.273 2015/08/24 10:41:11 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -622,10 +622,6 @@ usr
             ..
         ..
 
-	# ./usr/share/sysmerge
-        sysmerge
-        ..
-
         # ./usr/share/tabset
         tabset
         ..
@@ -751,6 +747,10 @@ var
     quotas			gname=operator mode=0750
     ..
     run
+    ..
+
+    # ./var/sysmerge
+    sysmerge			uname=root gname=wheel mode=0700
     ..
 
     # ./var/spool

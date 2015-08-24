@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.406 2015/08/04 04:24:08 jsg Exp $
+#	$OpenBSD: Makefile,v 1.407 2015/08/24 10:41:11 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -210,19 +210,19 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 ${RCDAEMONS} \
 		    ${DESTDIR}/etc/rc.d
 	cd ${DESTDIR}/var; ln -fs ../tmp
-	touch ${DESTDIR}/usr/share/sysmerge/etcsum
-	touch ${DESTDIR}/usr/share/sysmerge/examplessum
+	touch ${DESTDIR}/var/sysmerge/etcsum
+	touch ${DESTDIR}/var/sysmerge/examplessum
 	cd ${DESTDIR}/ && \
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
-		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/etcsum || true
+		xargs sha256 -h ${DESTDIR}/var/sysmerge/etcsum || true
 	cd ${DESTDIR}/ && \
 		grep -h '/etc/examples/' \
 		    ${.CURDIR}/../distrib/sets/lists/base/{mi,md.${MACHINE}} | \
 		sort | \
-		xargs sha256 -h ${DESTDIR}/usr/share/sysmerge/examplessum || true
+		xargs sha256 -h ${DESTDIR}/var/sysmerge/examplessum || true
 	cd ${DESTDIR}/ && \
 		sort ${.CURDIR}/../distrib/sets/lists/etc/{mi,md.${MACHINE}} | \
-	    	pax -w -d | gzip -9 > ${DESTDIR}/usr/share/sysmerge/etc.tgz
+	    	pax -w -d | gzip -9 > ${DESTDIR}/var/sysmerge/etc.tgz
 
 distribution:
 	exec ${SUDO} ${MAKE} distribution-etc-root-var

@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.38 2015/04/15 07:41:53 jsg Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.39 2015/08/24 10:41:11 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -417,10 +417,6 @@
                 ..
             ..
         ..
-        share
-            sysmerge
-            ..
-        ..
     ..
     var
         cache
@@ -432,6 +428,8 @@
             ..
         ..
         log
+        ..
+        sysmerge uname=root gname=wheel mode=0700
         ..
     ..
 ..

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.114 2015/08/17 20:07:12 guenther Exp $
+dnl	$OpenBSD: m4.common,v 1.115 2015/08/24 10:41:11 ajacoutot Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -843,7 +843,7 @@ From then, the upgrade procedure is very close to the installation
 procedure described earlier in this document.
 
 However, it is strongly advised that you unpack the etc{:--:}.tgz and the
-xetc{:--:}.tgz files found in /usr/share/sysmerge in a temporary
+xetc{:--:}.tgz files found in /var/sysmerge in a temporary
 directory and merge changes by hand, or with the help of the sysmerge(8)
 helper script, since all components of your system may not function
 correctly until your files in `/etc' are updated.-:})dnl
