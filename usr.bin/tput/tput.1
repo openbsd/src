@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.21 2014/06/03 20:28:24 jmc Exp $
+.\"	$OpenBSD: tput.1,v 1.22 2015/08/24 19:25:09 jca Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,11 +30,12 @@
 .\"
 .\"     @(#)tput.1	8.2 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: June 3 2014 $
+.Dd $Mdocdate: August 24 2015 $
 .Dt TPUT 1
 .Os
 .Sh NAME
-.Nm tput
+.Nm tput ,
+.Nm clear
 .Nd terminal capability interface
 .Sh SYNOPSIS
 .Nm tput
@@ -45,11 +46,17 @@
 .Nm tput
 .Op Fl T Ar term
 .Fl S
+.Nm clear
+.Op Fl T Ar term
 .Sh DESCRIPTION
 The
 .Nm
 utility makes terminal-dependent information available to users or shell
 applications.
+When invoked as
+.Nm clear
+it provides the same functionality as
+.Nm tput Cm clear .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -166,11 +173,9 @@ and the attribute
 .Cm longname
 are extensions to that specification.
 .Sh HISTORY
-A
+The
 .Nm clear
-utility implementing the functionality of
-.Nm tput Cm clear
-first appeared in
+utility first appeared in
 .Bx 2 .
 The
 .Nm
