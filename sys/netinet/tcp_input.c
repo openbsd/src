@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.299 2015/08/13 23:42:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.300 2015/08/24 15:37:03 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3276,7 +3276,7 @@ tcp_mss_adv(struct ifnet *ifp, int af)
  * state for SYN_RECEIVED.
  */
 
-u_long	syn_cache_count;
+int	tcp_syn_cache_count;
 u_int32_t syn_hash1, syn_hash2;
 
 #define SYN_HASH(sa, sp, dp) \
@@ -3324,7 +3324,7 @@ syn_cache_rm(struct syn_cache *sc)
 	LIST_REMOVE(sc, sc_tpq);
 	tcp_syn_cache[sc->sc_bucketidx].sch_length--;
 	timeout_del(&sc->sc_timer);
-	syn_cache_count--;
+	tcp_syn_cache_count--;
 }
 
 void
@@ -3383,7 +3383,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 * If there are no entries in the hash table, reinitialize
 	 * the hash secrets.
 	 */
-	if (syn_cache_count == 0) {
+	if (tcp_syn_cache_count == 0) {
 		syn_hash1 = arc4random();
 		syn_hash2 = arc4random();
 	}
@@ -3414,7 +3414,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 #endif
 		syn_cache_rm(sc2);
 		syn_cache_put(sc2);
-	} else if (syn_cache_count >= tcp_syn_cache_limit) {
+	} else if (tcp_syn_cache_count >= tcp_syn_cache_limit) {
 		struct syn_cache_head *scp2, *sce;
 
 		tcpstat.tcps_sc_overflowed++;
@@ -3463,7 +3463,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	/* Put it into the bucket. */
 	TAILQ_INSERT_TAIL(&scp->sch_bucket, sc, sc_bucketq);
 	scp->sch_length++;
-	syn_cache_count++;
+	tcp_syn_cache_count++;
 
 	tcpstat.tcps_sc_added++;
 	splx(s);
@@ -3568,8 +3568,10 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 	u_int32_t hash;
 	int s;
 
-	SYN_HASHALL(hash, src, dst);
+	if (tcp_syn_cache_count == 0)
+		return (NULL);
 
+	SYN_HASHALL(hash, src, dst);
 	scp = &tcp_syn_cache[hash % tcp_syn_cache_size];
 	*headp = scp;
 	s = splsoftnet();

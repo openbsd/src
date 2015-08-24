@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.144 2015/07/16 16:12:15 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.145 2015/08/24 15:37:03 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -731,10 +731,9 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			    SEQ_GEQ(seq, tp->snd_una) &&
 			    SEQ_LT(seq, tp->snd_max))
 				notify(inp, inet6ctlerrmap[cmd]);
-		} else if (syn_cache_count &&
-		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
-		     inet6ctlerrmap[cmd] == ENETUNREACH ||
-		     inet6ctlerrmap[cmd] == EHOSTDOWN))
+		} else if (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
+		    inet6ctlerrmap[cmd] == ENETUNREACH ||
+		    inet6ctlerrmap[cmd] == EHOSTDOWN)
 			syn_cache_unreach((struct sockaddr *)sa6_src,
 			    sa, &th, rdomain);
 	} else {
@@ -849,10 +848,9 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			    SEQ_GEQ(seq, tp->snd_una) &&
 			    SEQ_LT(seq, tp->snd_max))
 				notify(inp, errno);
-		} else if (syn_cache_count &&
-		    (inetctlerrmap[cmd] == EHOSTUNREACH ||
-		     inetctlerrmap[cmd] == ENETUNREACH ||
-		     inetctlerrmap[cmd] == EHOSTDOWN)) {
+		} else if (inetctlerrmap[cmd] == EHOSTUNREACH ||
+		    inetctlerrmap[cmd] == ENETUNREACH ||
+		    inetctlerrmap[cmd] == EHOSTDOWN) {
 			struct sockaddr_in sin;
 
 			bzero(&sin, sizeof(sin));
