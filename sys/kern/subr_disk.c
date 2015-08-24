@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.188 2015/08/12 22:37:32 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.189 2015/08/24 23:03:11 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -647,15 +647,12 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	if (lp->d_secsize == 0)
 		return (ENOSPC);	/* disk too small */
 
-	/*
-	 * XXX: We should not trust the primary header and instead
-	 * use the last LBA of the disk, as defined in the standard.
-	 */
-	for (part_blkno = GPTSECTOR; ; part_blkno = gh.gh_lba_alt,
-	    altheader = 1) {
+	for (part_blkno = DL_SECTOBLK(lp, GPTSECTOR); ;
+	    part_blkno = DL_SECTOBLK(lp, DL_GETDSIZE(lp)-1), altheader = 1) {
 		uint32_t ghsize;
 		uint32_t ghpartsize;
 		uint32_t ghpartnum;
+		uint32_t ghpartspersec;
 
 		/* read header record */
 		bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) * DL_BLKSPERSEC(lp);
@@ -677,6 +674,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		bcopy(bp->b_data + offset, &gh, sizeof(gh));
 		ghsize = letoh32(gh.gh_size);
 		ghpartsize = letoh32(gh.gh_part_size);
+		ghpartspersec = lp->d_secsize / ghpartsize;
 		ghpartnum = letoh32(gh.gh_part_num);
 
 		if (letoh64(gh.gh_sig) != GPTSIGNATURE)
@@ -706,7 +704,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		 * Header size must be greater than or equal to 92 and less
 		 * than or equal to the logical block size.
 		 */
-		if (ghsize < GPTMINHDRSIZE || ghsize > DEV_BSIZE)
+		if (ghsize < GPTMINHDRSIZE || ghsize > lp->d_secsize)
 			return (EINVAL);
 
 		if (letoh64(gh.gh_lba_start) >= DL_GETDSIZE(lp) ||
@@ -718,33 +716,32 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		* Size per partition entry shall be 128*(2**n) with n >= 0.
 		* We don't support partition entries larger than block size.
 		*/
-		if (ghpartsize % GPTMINPARTSIZE
-		    || ghpartsize > DEV_BSIZE
-		    || GPT_PARTSPERSEC(&gh) == 0) {
+		if (ghpartsize % GPTMINPARTSIZE || ghpartsize > lp->d_secsize
+		    || ghpartspersec == 0) {
 			DPRINTF("invalid partition size\n");
 			return (EINVAL);
 		}
 
 		/* XXX: we don't support multiples of GPTMINPARTSIZE yet */
-		if (letoh32(gh.gh_part_size) != GPTMINPARTSIZE) {
+		if (ghpartsize != GPTMINPARTSIZE) {
 			DPRINTF("partition sizes larger than %d bytes are not "
 			    "supported", GPTMINPARTSIZE);
 			return (EINVAL);
 		}
 
 		/* read GPT partition entry array */
-		gp = mallocarray(ghpartnum, sizeof(struct gpt_partition), M_DEVBUF, M_NOWAIT|M_ZERO);
+		gp = mallocarray(ghpartnum, sizeof(struct gpt_partition),
+		    M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (gp == NULL)
 			return (ENOMEM);
 		gpsz = ghpartnum * sizeof(struct gpt_partition);
 
 		/*
-		* XXX: Fails if # of partition entries is no multiple of
-		* GPT_PARTSPERSEC(&gh)
+		* XXX:	Fails if # of partition entries is not a multiple of
+		*	ghpartspersec.
 		*/
-		for (i = 0; i < ghpartnum / GPT_PARTSPERSEC(&gh);
-		     i++) {
-			part_blkno = letoh64(gh.gh_part_lba) + i;
+		for (i = 0; i < ghpartnum / ghpartspersec; i++) {
+			part_blkno = DL_SECTOBLK(lp, letoh64(gh.gh_part_lba)+i);
 			/* read partition record */
 			bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) *
 			    DL_BLKSPERSEC(lp);
@@ -763,9 +760,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 				return (error);
 			}
 
-			bcopy(bp->b_data + offset, gp +
-			    i * GPT_PARTSPERSEC(&gh), GPT_PARTSPERSEC(&gh) *
-			    sizeof(struct gpt_partition));
+			bcopy(bp->b_data + offset, gp + i * ghpartspersec,
+			    ghpartspersec * sizeof(struct gpt_partition));
 		}
 
 		if (gpt_chk_parts(&gh, gp)) {
