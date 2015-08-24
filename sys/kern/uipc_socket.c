@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.141 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.142 2015/08/24 14:28:25 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -86,11 +86,12 @@ struct pool sosplice_pool;
 void
 soinit(void)
 {
-
 	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL);
+	pool_setipl(&socket_pool, IPL_SOFTNET);
 #ifdef SOCKET_SPLICE
 	pool_init(&sosplice_pool, sizeof(struct sosplice), 0, 0, 0, "sosppl",
 	    NULL);
+	pool_setipl(&sosplice_pool, IPL_SOFTNET);
 #endif
 }
 
