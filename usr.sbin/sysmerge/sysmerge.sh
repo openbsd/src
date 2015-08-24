@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.199 2015/08/19 09:28:48 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.200 2015/08/24 10:42:08 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -43,9 +43,9 @@ sm_error() {
 	for _i in ${_WRKDIR}/{etcsum,xetcsum,examplessum,pkgsum}; do
 		_j=$(basename ${_i})
 		if [[ -f ${_i} ]]; then
-			mv ${_i} /usr/share/sysmerge/${_j}
-		elif [[ -f /usr/share/sysmerge/${_j} ]]; then
-			rm /usr/share/sysmerge/${_j}
+			mv ${_i} /var/sysmerge/${_j}
+		elif [[ -f /var/sysmerge/${_j} ]]; then
+			rm /var/sysmerge/${_j}
 		fi
 	done
 
@@ -65,15 +65,16 @@ sm_extract_sets() {
 	${PKGMODE} && return
 	local _e _x _set
 
-	[[ -f /usr/share/sysmerge/etc.tgz ]] && _e=etc
-	[[ -f /usr/share/sysmerge/xetc.tgz ]] && _x=xetc
+	[[ -f /var/sysmerge/etc.tgz ]] && _e=etc
+	[[ -f /var/sysmerge/xetc.tgz ]] && _x=xetc
+	[[ -z ${_e}${_x} ]] && sm_error "cannot find sets to extract"
 
 	for _set in ${_e} ${_x}; do
-		[[ -f /usr/share/sysmerge/${_set}sum ]] && \
-			cp /usr/share/sysmerge/${_set}sum \
+		[[ -f /var/sysmerge/${_set}sum ]] && \
+			cp /var/sysmerge/${_set}sum \
 			${_WRKDIR}/${_set}sum
 		tar -xzphf \
-			/usr/share/sysmerge/${_set}.tgz || \
+			/var/sysmerge/${_set}.tgz || \
 			sm_error "failed to extract ${_set}.tgz"
 	done
 }
@@ -132,8 +133,8 @@ sm_cp_pkg_samples() {
 	! ${PKGMODE} && return
 	local _install_args _i _ret=0 _sample
 
-	[[ -f /usr/share/sysmerge/pkgsum ]] && \
-		cp /usr/share/sysmerge/pkgsum ${_WRKDIR}/pkgsum
+	[[ -f /var/sysmerge/pkgsum ]] && \
+		cp /var/sysmerge/pkgsum ${_WRKDIR}/pkgsum
 
 	# access to full base system hierarchy is implied in packages
 	mtree -qdef /etc/mtree/4.4BSD.dist -U >/dev/null
@@ -165,7 +166,7 @@ sm_cp_pkg_samples() {
 
 	if [[ ${_ret} -eq 0 ]]; then
 		find . -type f -exec sha256 '{}' + | sort \
-			>./usr/share/sysmerge/pkgsum || _ret=1
+			>./var/sysmerge/pkgsum || _ret=1
 	fi
 	[[ ${_ret} -ne 0 ]] && \
 		sm_error "failed to populate packages @samples and create sum file"
@@ -175,33 +176,40 @@ sm_init() {
 	local _auto_upg _c _c1 _c2 _cursum _diff _i _k _j _cfdiff _cffiles
 	local _ignorefiles _cvsid1 _cvsid2 _matchsum _mismatch
 
+	# XXX remove after OPENBSD_6_0
+	# and remove /usr/share/sysmerge/* from _ignorefiles in sm_init()
+	if [[ -d /usr/share/sysmerge && -d /var/sysmerge/ ]]; then
+		mv -f /usr/share/sysmerge/*sum /var/sysmerge/
+		rm -rf /usr/share/sysmerge
+	fi
+
 	sm_extract_sets
 	sm_add_user_grp
 	sm_check_an_eg
 	sm_cp_pkg_samples
 
 	for _i in etcsum xetcsum pkgsum; do
-		if [[ -f /usr/share/sysmerge/${_i} && \
-			-f ./usr/share/sysmerge/${_i} ]] && \
+		if [[ -f /var/sysmerge/${_i} && \
+			-f ./var/sysmerge/${_i} ]] && \
 			! ${DIFFMODE}; then
 			# redirect stderr: file may not exist
-			_matchsum=$(sha256 -c /usr/share/sysmerge/${_i} 2>/dev/null | \
+			_matchsum=$(sha256 -c /var/sysmerge/${_i} 2>/dev/null | \
 				sed -n 's/^(SHA256) \(.*\): OK$/\1/p')
 			# delete file in temproot if it has not changed since
 			# last release and is present in current installation
 			for _j in ${_matchsum}; do
 				# skip sum files
-				[[ ${_j} == ./usr/share/sysmerge/${_i} ]] && continue
+				[[ ${_j} == ./var/sysmerge/${_i} ]] && continue
 				[[ -f ${_j#.} && -f ${_j} ]] && \
 					rm ${_j}
 			done
 
 			# set auto-upgradable files
-			_mismatch=$(diff -u ./usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i} | \
+			_mismatch=$(diff -u ./var/sysmerge/${_i} /var/sysmerge/${_i} | \
 				sed -n 's/^+SHA256 (\(.*\)).*/\1/p')
 			for _k in ${_mismatch}; do
 				# skip sum files
-				[[ ${_k} == ./usr/share/sysmerge/${_i} ]] && continue
+				[[ ${_k} == ./var/sysmerge/${_i} ]] && continue
 				# compare CVS Id first so if the file hasn't been modified,
 				# it will be deleted from temproot and ignored from comparison;
 				# several files are generated from scripts so CVS ID is not a
@@ -218,14 +226,14 @@ sm_init() {
 				fi
 				# redirect stderr: file may not exist
 				_cursum=$(cd / && sha256 ${_k} 2>/dev/null)
-				grep -q "${_cursum}" /usr/share/sysmerge/${_i} && \
-					! grep -q "${_cursum}" ./usr/share/sysmerge/${_i} && \
+				grep -q "${_cursum}" /var/sysmerge/${_i} && \
+					! grep -q "${_cursum}" ./var/sysmerge/${_i} && \
 					_auto_upg="${_auto_upg} ${_k}"
 			done
 			[[ -n ${_auto_upg} ]] && set -A AUTO_UPG -- ${_auto_upg}
 		fi
-		[[ -f ./usr/share/sysmerge/${_i} ]] && \
-			mv ./usr/share/sysmerge/${_i} /usr/share/sysmerge/${_i}
+		[[ -f ./var/sysmerge/${_i} ]] && \
+			mv ./var/sysmerge/${_i} /var/sysmerge/${_i}
 	done
 
 	# files we don't want/need to deal with
@@ -240,6 +248,9 @@ sm_init() {
 		      /usr/share/sysmerge/etcsum
 		      /usr/share/sysmerge/examplessum
 		      /usr/share/sysmerge/xetcsum
+		      /var/sysmerge/etcsum
+		      /var/sysmerge/examplessum
+		      /var/sysmerge/xetcsum
 		      /var/db/locate.database
 		      /var/mail/root"
 	[[ -f /etc/sysmerge.ignore ]] && \
@@ -559,10 +570,10 @@ sm_check_an_eg() {
 	${PKGMODE} && return
 	local _egmods _i _managed
 
-	if [[ -f /usr/share/sysmerge/examplessum ]]; then
-		cp /usr/share/sysmerge/examplessum ${_WRKDIR}/examplessum
+	if [[ -f /var/sysmerge/examplessum ]]; then
+		cp /var/sysmerge/examplessum ${_WRKDIR}/examplessum
 		_egmods=$(cd / && \
-			 sha256 -c /usr/share/sysmerge/examplessum 2>/dev/null | \
+			 sha256 -c /var/sysmerge/examplessum 2>/dev/null | \
 			 sed -n 's/^(SHA256) \(.*\): FAILED$/\1/p')
 	fi
 	for _i in ${_egmods}; do
@@ -572,8 +583,8 @@ sm_check_an_eg() {
 	done
 	# only warn for files we care about
 	[[ -n ${_managed} ]] && sm_warn "example(s) changed for: ${_managed}"
-	mv ./usr/share/sysmerge/examplessum \
-		/usr/share/sysmerge/examplessum
+	mv ./var/sysmerge/examplessum \
+		/var/sysmerge/examplessum
 }
 
 sm_post() {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.69 2015/07/27 17:28:40 sobrado Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.70 2015/08/24 10:42:08 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: August 24 2015 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -121,9 +121,9 @@ The following files will always be skipped from direct comparison:
 .Pa /etc/passwd ,
 .Pa /etc/pwd.db ,
 .Pa /etc/spwd.db ,
-.Pa /usr/share/sysmerge/etcsum ,
-.Pa /usr/share/sysmerge/examplessum ,
-.Pa /usr/share/sysmerge/xetcsum ,
+.Pa /var/sysmerge/etcsum ,
+.Pa /var/sysmerge/examplessum ,
+.Pa /var/sysmerge/xetcsum ,
 .Pa /var/db/locate.database ,
 .Pa /var/mail/root .
 .Sh ENVIRONMENT
@@ -162,10 +162,10 @@ and
 directories are created relative to this.
 .It Pa /etc/sysmerge.ignore
 Files and directories to ignore from comparison.
-.It Pa /usr/share/sysmerge/etc.tgz
+.It Pa /var/sysmerge/etc.tgz
 Base system set containing the reference files
 corresponding to the currently installed release.
-.It Pa /usr/share/sysmerge/xetc.tgz
+.It Pa /var/sysmerge/xetc.tgz
 .Xr X 7
 set containing the reference files
 corresponding to the currently installed release.
