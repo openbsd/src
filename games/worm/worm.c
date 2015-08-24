@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.30 2015/08/22 14:47:41 deraadt Exp $	*/
+/*	$OpenBSD: worm.c,v 1.31 2015/08/24 21:52:12 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -78,7 +78,7 @@ void	leave(int);
 void	life(void);
 void	newpos(struct body *);
 struct body 	*newlink(void);
-void	process(int);
+int	process(int);
 void	prize(void);
 int	rnd(int);
 void	setup(void);
@@ -88,10 +88,11 @@ int
 main(int argc, char **argv)
 {
 	int retval;
-	struct timeval t, tod;
-	struct timezone tz;
 	struct pollfd pfd[1];
 	const char *errstr;
+	struct timespec t, tn, tdiff;
+
+	timespecclear(&t);
 
 	setbuf(stdout, outbuf);
 	signal(SIGINT, leave);
@@ -154,18 +155,33 @@ main(int argc, char **argv)
 			running--;
 			process(lastch);
 		} else {
-			/* fflush(stdout); */
-			/* Delay could be a command line option */
-			t.tv_sec = 1;
-			t.tv_usec = 0;
-			(void)gettimeofday(&tod, &tz);
+			/* Check for timeout. */
+			clock_gettime(CLOCK_UPTIME, &tn);
+			if (timespeccmp(&t, &tn, <=)) {
+				t = tn;
+				t.tv_sec += 1;
+
+				process(lastch);
+				continue;
+			}
+
+			/* Prepare next read */
 			pfd[0].fd = STDIN_FILENO;
 			pfd[0].events = POLLIN;
-			retval = poll(pfd, 1, t.tv_sec * 1000 + t.tv_usec / 1000);
-			if (retval > 0)
-				process(getch());
-			else
-				process(lastch);
+			timespecsub(&t, &tn, &tdiff);
+			retval = ppoll(pfd, 1, &tdiff, NULL);
+
+			/* Nothing to do if timed out or signal. */
+			if (retval <= 0)
+				continue;
+
+			/* Only update timer if valid key was pressed. */
+			if (process(getch()) == 0)
+				continue;
+
+			/* Update using clock_gettime(), tn is too old now. */
+			clock_gettime(CLOCK_UPTIME, &t);
+			t.tv_sec += 1;
 		}
 	}
 }
@@ -245,7 +261,7 @@ prize(void)
 	wrefresh(tv);
 }
 
-void
+int
 process(int ch)
 {
 	int x,y;
@@ -300,21 +316,21 @@ process(int ch)
 		break;
 	case '\f':
 		setup();
-		return;
+		return (0);
 	case CNTRL('Z'):
 		suspend(0);
-		return;
+		return (0);
 	case CNTRL('C'):
 		crash();
-		return;
+		return (0);
 	case CNTRL('D'):
 		crash();
-		return;
+		return (0);
 	case ERR:
 		leave(0);
-		return;
+		return (0);
 	default:
-		return;
+		return (0);
 	}
 	lastch = ch;
 	if (growing == 0) {
@@ -352,6 +368,7 @@ process(int ch)
 		wmove(tv, head->y, head->x);
 		wrefresh(tv);
 	}
+	return (1);
 }
 
 struct body *
