@@ -7,7 +7,7 @@ from scapy.all import *
 
 dstaddr=sys.argv[1]
 pid=os.getpid()
-payload="a" * 1452
+payload="a" * 1472
 p=(Ether(src=SRC_MAC, dst=PF_MAC)/IP(flags="DF", src=SRC_OUT, dst=dstaddr)/
     ICMP(id=pid)/payload)
 ipcksum=IP(str(p.payload)).chksum

@@ -7,9 +7,10 @@ from scapy.all import *
 
 dstaddr=sys.argv[1]
 pid=os.getpid()
-payload="a" * 1452
-eth=Ether(src=SRC_MAC, dst=PF_MAC)/IPv6(src=SRC_OUT6, dst=dstaddr)/\
-    ICMPv6EchoRequest(id=pid, data=payload)
+hdr=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=pid)
+payload="a" * (1400 - len(str(hdr)))
+ip=hdr/payload
+eth=Ether(src=SRC_MAC, dst=PF_MAC)/ip
 
 # work around the broken sniffing of packages with bad checksum
 #a=srp1(eth, iface=SRC_IF, timeout=2)

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2015/08/17 22:06:50 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2015/08/24 23:12:53 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -27,15 +27,15 @@ regress:
 # RTT addresses exist on ECO, PF has no route and must use route-to RT
 # RPT addresses exist on SRC, PF has no route and must use reply-to SRC
 #
-# +---+   0   +--+   1   +--+   2   +---+ 3   4 +---+ 5   6 +--+
-# |SRC| ----> |PF| ----> |RT| ----> |ECO| 7     |RDR|       |AF|
-# +---+ 8     +--+       +--+       +---+ 9     +---+       +--+
-#     out    in  out    in  out    in   out    in   out    in
+# +---+   0   +--+   1   +--+   2   +---+ 3
+# |SRC| ----> |PF| ----> |RT| ----> |ECO| 7
+# +---+ 8     +--+       +--+       +---+ 9
+#     out    in  out    in  out    in   out
 #
-# 7 +---+   +---+ 8
-#   |RTT|   |RPT|
-#   +---+   +---+
-#  in           out
+# 4 +---+ 5   6 +--+   7 +---+   +---+ 8
+#   |RDR|       |AF|     |RTT|   |RPT|
+#   +---+       +--+     +---+   +---+
+#  in   out    in       in           out
 
 # Configure Addresses on the machines, there must be routes for the
 # networks.  Adapt interface and addresse variables to your local
@@ -48,7 +48,8 @@ regress:
 
 SRC_IF ?=	tun0
 SRC_MAC ?=	fe:e1:ba:d1:0a:dc
-PF_IF ?=	vio0
+PF_IFIN ?=	vio0
+PF_IFOUT ?=	vio1
 PF_MAC ?=	52:54:00:12:34:50
 PF_SSH ?=
 RT_SSH ?=
@@ -107,7 +108,8 @@ addr.py: Makefile
 	rm -f $@ $@.tmp
 	echo 'SRC_IF="${SRC_IF}"' >>$@.tmp
 	echo 'SRC_MAC="${SRC_MAC}"' >>$@.tmp
-	echo 'PF_IF="${PF_IF}"' >>$@.tmp
+	echo 'PF_IFIN="${PF_IFIN}"' >>$@.tmp
+	echo 'PF_IFOUT="${PF_IFOUT}"' >>$@.tmp
 	echo 'PF_MAC="${PF_MAC}"' >>$@.tmp
 .for var in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN RTT_IN RPT_OUT
 	echo '${var}="${${var}}"' >>$@.tmp
@@ -120,7 +122,7 @@ addr.py: Makefile
 stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
-	    sed 's/@$$PF_IF /@${PF_IF} /g' | \
+	    sed 's/@$$PF_IFIN /@${PF_IFIN} /;s/@$$PF_IFOUT /@${PF_IFOUT} /' | \
 	    ssh ${PF_SSH} ${SUDO} pfctl -a regress -f -
 	@date >$@
 
@@ -157,30 +159,59 @@ run-regress-ping6: stamp-pfctl
 	ping6 -n -c 1 -S ${RPT_OUT6} ${ECO_IN6}
 
 # Send a large IPv4/ICMP-Echo-Request packet with enabled DF bit and
-# parse response packet to determine MTU of the router.  The MTU has
-# to be 1300 octets.  The MTU has to be defined at out interface of
-# the router RT before.
+# parse response packet to determine MTU of the packet filter.  The
+# outgoing MTU of PF has to be 1400 octets.  Packet size is 1500.
 # Check that the IP length of the original packet and the ICMP
 # quoted packet are the same.
-TARGETS +=	ping-mtu ping6-mtu
+TARGETS +=	ping-mtu-1400 ping6-mtu-1400
 
-run-regress-ping-mtu: addr.py stamp-pfctl
+run-regress-ping-mtu-1400: addr.py stamp-pfctl
+	@echo '\n======== $@ ========'
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT RTT_IN
+	@echo Check path MTU to ${ip} is 1400
+	${SUDO} ${PYTHON}ping_mtu.py ${SRC_OUT} ${${ip}} 1500 1400
+.endfor
+	@echo Check path MTU from RPT_OUT is 1400
+	${SUDO} ${PYTHON}ping_mtu.py ${RPT_OUT} ${ECO_IN} 1500 1400
+
+run-regress-ping6-mtu-1400: addr.py stamp-pfctl
+	@echo '\n======== $@ ========'
+.for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT RTT_IN
+	@echo Check path MTU to ${ip}6 is 1400
+	${SUDO} ${PYTHON}ping6_mtu.py ${SRC_OUT6} ${${ip}6} 1500 1400
+.endfor
+	@echo Check path MTU from RPT_OUT6 is 1400
+	${SUDO} ${PYTHON}ping6_mtu.py ${RPT_OUT6} ${ECO_IN6} 1500 1400
+
+# Send a large IPv4/ICMP-Echo-Request packet with enabled DF bit and
+# parse response packet to determine MTU of the router.  The MTU has
+# to be 1300 octets.  The MTU has to be defined at out interface of
+# the router RT before.  Packet size is 1400 to pass PF MTU.
+# Check that the IP length of the original packet and the ICMP
+# quoted packet are the same.
+TARGETS +=	ping-mtu-1300 ping6-mtu-1300
+
+run-regress-ping-mtu-1300: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT RTT_IN
 	@echo Check path MTU to ${ip} is 1300
-	${SUDO} ${PYTHON}ping_mtu.py ${${ip}} 1300
+	${SUDO} ${PYTHON}ping_mtu.py ${SRC_OUT} ${${ip}} 1400 1300
 .endfor
 	@echo Check path MTU to AF_IN is 1280
-	${SUDO} ${PYTHON}ping_mtu.py ${AF_IN} 1280
+	${SUDO} ${PYTHON}ping_mtu.py ${SRC_OUT} ${AF_IN} 1380 1280
+	@echo Check path MTU from RPT_OUT is 1300
+	${SUDO} ${PYTHON}ping_mtu.py ${RPT_OUT} ${ECO_IN} 1400 1300
 
-run-regress-ping6-mtu: addr.py stamp-pfctl
+run-regress-ping6-mtu-1300: addr.py stamp-pfctl
 	@echo '\n======== $@ ========'
 .for ip in ECO_IN ECO_OUT RDR_IN RDR_OUT RTT_IN
 	@echo Check path MTU to ${ip}6 is 1300
-	${SUDO} ${PYTHON}ping6_mtu.py ${${ip}6} 1300
+	${SUDO} ${PYTHON}ping6_mtu.py ${SRC_OUT6} ${${ip}6} 1400 1300
 .endfor
 	@echo Check path MTU to AF_IN6 is 1320
-	${SUDO} ${PYTHON}ping6_mtu.py ${AF_IN6} 1320
+	${SUDO} ${PYTHON}ping6_mtu.py ${SRC_OUT6} ${AF_IN6} 1420 1320
+	@echo Check path MTU from RPT_OUT6 is 1300
+	${SUDO} ${PYTHON}ping6_mtu.py ${RPT_OUT6} ${ECO_IN6} 1400 1300
 
 # Send one UDP echo port 7 packet to all destination addresses with netcat.
 # The response must arrive in 1 second.
@@ -283,6 +314,7 @@ check-setup:
 	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 	ssh ${PF_SSH} sysctl net.inet.ip.forwarding | fgrep =1
 	ssh ${PF_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
+	ssh ${PF_SSH} ifconfig ${PF_IFOUT} | fgrep 'mtu 1400'
 	@echo '\n======== $@ RT ========'
 	ssh ${RT_SSH} ping -n -c 1 ${RT_IN}  # RT_IN
 	ssh ${RT_SSH} route -n get -inet ${RT_IN} | fgrep -q 'interface: lo0'  # RT_IN
