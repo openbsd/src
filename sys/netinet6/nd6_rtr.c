@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.118 2015/08/24 22:11:34 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.119 2015/08/24 23:26:43 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1071,7 +1071,7 @@ purge_detached(struct ifnet *ifp)
 
 struct nd_prefix *
 nd6_prefix_add(struct ifnet *ifp, struct sockaddr_in6 *addr,
-    struct sockaddr_in6 *mask, struct in6_addrlifetime *lt, int autoconf)
+    struct sockaddr_in6 *mask, struct in6_addrlifetime *lt)
 {
 	struct nd_prefix pr0, *pr;
 	int i;
@@ -1098,7 +1098,7 @@ nd6_prefix_add(struct ifnet *ifp, struct sockaddr_in6 *addr,
 	 * an intended behavior.
 	 */
 	pr0.ndpr_raf_onlink = 1; /* should be configurable? */
-	pr0.ndpr_raf_auto = autoconf;
+	pr0.ndpr_raf_auto = 1;
 	pr0.ndpr_vltime = lt->ia6t_vltime;
 	pr0.ndpr_pltime = lt->ia6t_pltime;
 
@@ -1188,14 +1188,7 @@ prelist_remove(struct nd_prefix *pr)
 	/* make sure to invalidate the prefix until it is really freed. */
 	pr->ndpr_vltime = 0;
 	pr->ndpr_pltime = 0;
-#if 0
-	/*
-	 * Though these flags are now meaningless, we'd rather keep the value
-	 * not to confuse users when executing "ndp -p".
-	 */
-	pr->ndpr_raf_onlink = 0;
-	pr->ndpr_raf_auto = 0;
-#endif
+
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) != 0 &&
 	    (e = nd6_prefix_offlink(pr)) != 0) {
 		char addr[INET6_ADDRSTRLEN];

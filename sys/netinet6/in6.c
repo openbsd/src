@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.167 2015/08/24 15:58:35 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.168 2015/08/24 23:26:43 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -462,7 +462,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 
 	case SIOCAIFADDR_IN6:
 	{
-		struct nd_prefix *pr;
 		int plen, error = 0;
 
 		/* reject read-only flags */
@@ -509,40 +508,20 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
 			nd6_dad_start(&ia6->ia_ifa);
 
-
 		plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr, NULL);
 		if (plen == 128) {
 			dohooks(ifp->if_addrhooks, 0);
 			break;	/* we don't need to install a host route. */
 		}
 
-		/*
-		 * then, make the prefix on-link on the interface.
-		 * XXX: we'd rather create the prefix before the address, but
-		 * we need at least one address to install the corresponding
-		 * interface route, so we configure the address first.
-		 */
-		pr = nd6_prefix_add(ifp, &ifra->ifra_addr,
-		    &ifra->ifra_prefixmask, &ifra->ifra_lifetime,
-		    ((ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0));
-		if (pr == NULL) {
-			log(LOG_ERR, "cannot add prefix\n");
-			return (EINVAL); /* XXX panic here? */
-		}
-
-		/* relate the address to the prefix */
-		if (ia6->ia6_ndpr == NULL) {
-			ia6->ia6_ndpr = pr;
-			pr->ndpr_refcnt++;
-		}
-
 		s = splsoftnet();
-		/*
-		 * this might affect the status of autoconfigured addresses,
-		 * that is, this address might make other addresses detached.
-		 */
-		pfxlist_onlink_check();
-
+		error = rt_ifa_add(&ia6->ia_ifa,
+		    RTF_UP|RTF_CLONING|RTF_CONNECTED, ia6->ia_ifa.ifa_addr);
+		if (error) {
+			in6_purgeaddr(&ia6->ia_ifa);
+			splx(s);
+			return (error);
+		}
 		dohooks(ifp->if_addrhooks, 0);
 		splx(s);
 		break;
@@ -977,24 +956,19 @@ in6_purgeaddr(struct ifaddr *ifa)
 void
 in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 {
+	struct ifaddr *ifa = &ia6->ia_ifa;
+
 	splsoftassert(IPL_SOFTNET);
 
-	ifa_del(ifp, &ia6->ia_ifa);
+	ifa_del(ifp, ifa);
 
 	TAILQ_REMOVE(&in6_ifaddr, ia6, ia_list);
 
 	/* Release the reference to the base prefix. */
 	if (ia6->ia6_ndpr == NULL) {
-		char addr[INET6_ADDRSTRLEN];
-
-		if (!IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia6)) &&
-		    !IN6_IS_ADDR_LOOPBACK(IA6_IN6(ia6)) &&
-		    !IN6_ARE_ADDR_EQUAL(IA6_MASKIN6(ia6), &in6mask128))
-			log(LOG_NOTICE, "in6_unlink_ifa: interface address "
-			    "%s has no prefix\n",
-			    inet_ntop(AF_INET6, IA6_IN6(ia6), addr,
-				sizeof(addr)));
+		rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED, ifa->ifa_addr);
 	} else {
+		KASSERT(ia6->ia6_flags & IN6_IFF_AUTOCONF);
 		ia6->ia6_flags &= ~IN6_IFF_AUTOCONF;
 		if (--ia6->ia6_ndpr->ndpr_refcnt == 0)
 			prelist_remove(ia6->ia6_ndpr);

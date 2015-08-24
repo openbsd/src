@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.92 2015/08/24 15:58:35 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.93 2015/08/24 23:26:43 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -293,7 +293,8 @@ int
 in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 {
 	struct in6_aliasreq ifra;
-	int  s, error;
+	struct in6_ifaddr *ia6;
+	int s, error;
 
 	/*
 	 * configure link-local address.
@@ -355,32 +356,23 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 		return (-1);
 	}
 
+	ia6 = in6ifa_ifpforlinklocal(ifp, 0);
+
 	/*
 	 * Perform DAD.
 	 *
 	 * XXX: Some P2P interfaces seem not to send packets just after
 	 * becoming up, so we skip p2p interfaces for safety.
 	 */
-	if (in6if_do_dad(ifp) && ((ifp->if_flags & IFF_POINTOPOINT) ||
-	    (ifp->if_type == IFT_CARP)) == 0) {
-		struct in6_ifaddr *ia6;
-		ia6 = in6ifa_ifpforlinklocal(ifp, 0);
+	if (in6if_do_dad(ifp) && ((ifp->if_flags & IFF_POINTOPOINT) == 0)) {
 		ia6->ia6_flags |= IN6_IFF_TENTATIVE;
 		nd6_dad_start(&ia6->ia_ifa);
 	}
 
-	/*
-	 * Make the link-local prefix (fe80::/64%link) as on-link.
-	 * Since we'd like to manage prefixes separately from addresses,
-	 * we make an ND6 prefix structure for the link-local prefix,
-	 * and add it to the prefix list as a never-expire prefix.
-	 * XXX: this change might affect some existing code base...
-	 */
-	if (nd6_prefix_add(ifp, &ifra.ifra_addr, &ifra.ifra_prefixmask,
-		&ifra.ifra_lifetime, 1) == NULL)
-		return (EINVAL);
+	error = rt_ifa_add(&ia6->ia_ifa, RTF_UP|RTF_CLONING|RTF_CONNECTED,
+	    ia6->ia_ifa.ifa_addr);
 
-	return (0);
+	return (error);
 }
 
 int
