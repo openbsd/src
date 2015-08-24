@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.91 2015/07/16 15:28:38 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.92 2015/08/24 15:58:35 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1128,15 +1128,14 @@ nd6_dad_stoptimer(struct dadq *dp)
 
 /*
  * Start Duplicated Address Detection (DAD) for specified interface address.
- *
- * tick - minimum delay ticks for IFF_UP event
  */
 void
-nd6_dad_start(struct ifaddr *ifa, int *tick)
+nd6_dad_start(struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
+	int s;
 
 	if (!dad_init) {
 		TAILQ_INIT(&dadq);
@@ -1149,31 +1148,15 @@ nd6_dad_start(struct ifaddr *ifa, int *tick)
 	 * - DAD is disabled (ip6_dad_count == 0)
 	 * - the interface address is anycast
 	 */
-	if (!(ia6->ia6_flags & IN6_IFF_TENTATIVE)) {
-		log(LOG_DEBUG,
-			"nd6_dad_start: called with non-tentative address "
-			"%s(%s)\n",
-			inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
-			    addr, sizeof(addr)),
-			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
-		return;
-	}
-	if (ia6->ia6_flags & IN6_IFF_ANYCAST) {
+	KASSERT(ia6->ia6_flags & IN6_IFF_TENTATIVE);
+	if ((ia6->ia6_flags & IN6_IFF_ANYCAST) || (!ip6_dad_count)) {
 		ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
 		return;
 	}
-	if (!ip6_dad_count) {
-		ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
+
+	/* DAD already in progress */
+	if (nd6_dad_find(ifa) != NULL)
 		return;
-	}
-	if (!ifa->ifa_ifp)
-		panic("nd6_dad_start: ifa->ifa_ifp == NULL");
-	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
-		return;
-	if (nd6_dad_find(ifa) != NULL) {
-		/* DAD already in progress */
-		return;
-	}
 
 	dp = malloc(sizeof(*dp), M_IP6NDP, M_NOWAIT | M_ZERO);
 	if (dp == NULL) {
@@ -1185,6 +1168,8 @@ nd6_dad_start(struct ifaddr *ifa, int *tick)
 		return;
 	}
 	bzero(&dp->dad_timer_ch, sizeof(dp->dad_timer_ch));
+
+	s = splsoftnet();
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 	ip6_dad_pending++;
 
@@ -1202,21 +1187,10 @@ nd6_dad_start(struct ifaddr *ifa, int *tick)
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
-	if (tick == NULL) {
-		nd6_dad_ns_output(dp, ifa);
-		nd6_dad_starttimer(dp,
-		    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
-	} else {
-		int ntick;
-
-		if (*tick == 0)
-			ntick = arc4random_uniform(MAX_RTR_SOLICITATION_DELAY *
-			    hz);
-		else
-			ntick = *tick + arc4random_uniform(hz / 2);
-		*tick = ntick;
-		nd6_dad_starttimer(dp, ntick);
-	}
+	nd6_dad_ns_output(dp, ifa);
+	nd6_dad_starttimer(dp,
+	    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
+	splx(s);
 }
 
 /*

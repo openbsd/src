@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.91 2015/08/17 10:57:24 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.92 2015/08/24 15:58:35 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -292,7 +292,6 @@ success:
 int
 in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 {
-	struct in6_ifaddr *ia6;
 	struct in6_aliasreq ifra;
 	int  s, error;
 
@@ -332,12 +331,6 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 
 	/*
-	 * Do not let in6_update_ifa() do DAD, since we need a random delay
-	 * before sending an NS at the first time the interface becomes up.
-	 */
-	ifra.ifra_flags |= IN6_IFF_NODAD;
-
-	/*
 	 * Now call in6_update_ifa() to do a bunch of procedures to configure
 	 * a link-local address. In the case of CARP, we may be called after
 	 * one has already been configured, so check if it's already there
@@ -363,21 +356,17 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	}
 
 	/*
-	 * Adjust ia6_flags so that in6_ifattach() will perform DAD.
+	 * Perform DAD.
+	 *
 	 * XXX: Some P2P interfaces seem not to send packets just after
 	 * becoming up, so we skip p2p interfaces for safety.
 	 */
-	ia6 = in6ifa_ifpforlinklocal(ifp, 0); /* ia6 must not be NULL */
-#ifdef DIAGNOSTIC
-	if (!ia6) {
-		panic("ia6 == NULL in in6_ifattach_linklocal");
-		/* NOTREACHED */
-	}
-#endif
 	if (in6if_do_dad(ifp) && ((ifp->if_flags & IFF_POINTOPOINT) ||
 	    (ifp->if_type == IFT_CARP)) == 0) {
-		ia6->ia6_flags &= ~IN6_IFF_NODAD;
+		struct in6_ifaddr *ia6;
+		ia6 = in6ifa_ifpforlinklocal(ifp, 0);
 		ia6->ia6_flags |= IN6_IFF_TENTATIVE;
+		nd6_dad_start(&ia6->ia_ifa);
 	}
 
 	/*
@@ -422,9 +411,6 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	/* the loopback  address should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
-
-	/* we don't need to perform DAD on loopback interfaces. */
-	ifra.ifra_flags |= IN6_IFF_NODAD;
 
 	/*
 	 * We are sure that this is a newly assigned address, so we can set
@@ -492,9 +478,6 @@ in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 int
 in6_ifattach(struct ifnet *ifp)
 {
-	struct ifaddr *ifa;
-	int dad_delay = 0;		/* delay ticks before DAD output */
-
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
 	case IFT_BRIDGE:
@@ -529,14 +512,6 @@ in6_ifattach(struct ifnet *ifp)
 			return (0);
 
 		return (in6_ifattach_loopback(ifp));
-	}
-
-	/* Perform DAD. */
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		if (ifatoia6(ifa)->ia6_flags & IN6_IFF_TENTATIVE)
-			nd6_dad_start(ifa, &dad_delay);
 	}
 
 	if (ifp->if_xflags & IFXF_AUTOCONF6)

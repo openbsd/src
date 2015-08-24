@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.166 2015/08/24 14:00:29 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.167 2015/08/24 15:58:35 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -468,11 +468,19 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
-		    (ifra->ifra_flags & IN6_IFF_NODAD) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DEPRECATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0) {
 			return (EINVAL);
 		}
+
+		/*
+		 * Make the address tentative before joining multicast
+		 * addresses, so that corresponding MLD responses would
+		 * not have a tentative source address.
+		 */
+		if ((ia6 == NULL) && in6if_do_dad(ifp))
+			ifra->ifra_flags |= IN6_IFF_TENTATIVE;
+
 		/*
 		 * first, make or update the interface address structure,
 		 * and link it to the list. try to enable inet6 if there
@@ -496,6 +504,11 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			 */
 			break;
 		}
+
+		/* Perform DAD, if needed. */
+		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
+			nd6_dad_start(&ia6->ia_ifa);
+
 
 		plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr, NULL);
 		if (plen == 128) {
@@ -753,15 +766,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * configure address flags.
 	 */
 	ia6->ia6_flags = ifra->ifra_flags;
-	/*
-	 * Make the address tentative before joining multicast addresses,
-	 * so that corresponding MLD responses would not have a tentative
-	 * source address.
-	 */
-	ia6->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
-	if (hostIsNew && in6if_do_dad(ifp) &&
-	    (ifra->ifra_flags & IN6_IFF_NODAD) == 0)
-		ia6->ia6_flags |= IN6_IFF_TENTATIVE;
 
 	/*
 	 * We are done if we have simply modified an existing address.
@@ -906,17 +910,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!imm)
 			goto cleanup;
 		LIST_INSERT_HEAD(&ia6->ia6_memberships, imm, i6mm_chain);
-	}
-
-	/*
-	 * Perform DAD, if needed.
-	 * XXX It may be of use, if we can administratively
-	 * disable DAD.
-	 */
-	if (hostIsNew && in6if_do_dad(ifp) &&
-	    (ifra->ifra_flags & IN6_IFF_NODAD) == 0)
-	{
-		nd6_dad_start(&ia6->ia_ifa, NULL);
 	}
 
 	return (error);

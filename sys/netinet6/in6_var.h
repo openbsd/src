@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.52 2015/07/08 08:48:34 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.53 2015/08/24 15:58:35 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -433,9 +433,6 @@ struct	in6_rrenumreq {
 #define IN6_IFF_DUPLICATED	0x04	/* DAD detected duplicate */
 #define IN6_IFF_DETACHED	0x08	/* may be detached from the link */
 #define IN6_IFF_DEPRECATED	0x10	/* deprecated address */
-#define IN6_IFF_NODAD		0x20	/* don't perform DAD on this address
-					 * (used only at first SIOC* call)
-					 */
 #define IN6_IFF_AUTOCONF	0x40	/* autoconfigurable address. */
 #define IN6_IFF_PRIVACY		0x80	/* RFC 4941 temporary address */
 

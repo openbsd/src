@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.136 2015/07/18 15:51:16 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.137 2015/08/24 15:58:35 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4789,9 +4789,6 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src,
 	 * But it is legal to use other values.
 	 */
 	ifra->ifra_prefixmask.sin6_family = AF_UNSPEC;
-
-	/* DAD is redundant after an IPv6CP exchange. */
-	ifra->ifra_flags |= IN6_IFF_NODAD;
 
 	task_add(systq, &sp->ipv6cp.set_addr_task);
 }

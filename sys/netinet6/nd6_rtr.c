@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.116 2015/08/19 13:27:38 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.117 2015/08/24 15:58:35 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -2082,7 +2082,7 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 
 	/* XXX: scope zone ID? */
 
-	ifra.ifra_flags |= IN6_IFF_AUTOCONF; /* obey autoconf */
+	ifra.ifra_flags |= IN6_IFF_AUTOCONF|IN6_IFF_TENTATIVE;
 
 	/* allocate ifaddr structure, link into chain, etc. */
 	s = splsoftnet();
@@ -2101,7 +2101,13 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 	}
 
 	/* this is always non-NULL */
-	return (in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr));
+	ia6 = in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr);
+
+	/* Perform DAD, if needed. */
+	if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
+		nd6_dad_start(&ia6->ia_ifa);
+
+	return (ia6);
 }
 
 int
