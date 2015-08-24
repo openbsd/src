@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.200 2015/08/24 10:42:08 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.201 2015/08/24 11:03:41 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -49,9 +49,7 @@ sm_error() {
 		fi
 	done
 
-	# do not empty _WRKDIR, it may still contain our backup files
-	rm -rf ${_TMPROOT}
-	rmdir ${_WRKDIR} 2>/dev/null
+	rm -rf ${_WRKDIR}
 	exit 1
 }
 
@@ -77,6 +75,18 @@ sm_extract_sets() {
 			/var/sysmerge/${_set}.tgz || \
 			sm_error "failed to extract ${_set}.tgz"
 	done
+}
+
+sm_rotate_bak() {
+	local _b
+
+	for _b in $(jot 4 3 0); do
+		[[ -d ${_BKPDIR}.${_b} ]] && \
+			mv ${_BKPDIR}.${_b} ${_BKPDIR}.$((_b+1))
+	done
+	rm -rf ${_BKPDIR}.4
+	[[ -d ${_BKPDIR} ]] && mv ${_BKPDIR} ${_BKPDIR}.0
+	install -d ${_BKPDIR} || return
 }
 
 # get pkg @sample information
@@ -178,8 +188,8 @@ sm_init() {
 
 	# XXX remove after OPENBSD_6_0
 	# and remove /usr/share/sysmerge/* from _ignorefiles in sm_init()
-	if [[ -d /usr/share/sysmerge && -d /var/sysmerge/ ]]; then
-		mv -f /usr/share/sysmerge/*sum /var/sysmerge/
+	if [[ -d /usr/share/sysmerge && -d /var/sysmerge ]]; then
+		mv -f /usr/share/sysmerge/*sum /var/sysmerge/ 2>/dev/null
 		rm -rf /usr/share/sysmerge
 	fi
 
@@ -314,6 +324,7 @@ sm_install() {
 	fi
 
 	if [[ -f ${TARGET} ]]; then
+		sm_rotate_bak || return
 		mkdir -p ${_BKPDIR}/${_instdir} || return
 		cp -p ${TARGET} ${_BKPDIR}/${_instdir} || return
 	fi
@@ -477,19 +488,15 @@ sm_diff_loop() {
 			fi
 		else
 			# file does not exist on the target system
-			if ${IS_LINK}; then
-				if ${DIFFMODE}; then
-					echo && _nonexistent=true
-				else
-					echo "===> Linking ${TARGET}"
-					sm_install && \
-						_autoinst="${_autoinst}${TARGET}\n" || \
-						sm_warn "problem creating ${TARGET} link"
-					return
-				fi
-			fi
 			if ${DIFFMODE}; then
-				echo && _nonexistent=true
+				_nonexistent=true
+				${BATCHMODE} || echo "\n===> Missing ${TARGET}\n"
+			elif ${IS_LINK}; then
+				echo "===> Linking ${TARGET}"
+				sm_install && \
+					_autoinst="${_autoinst}${TARGET}\n" || \
+					sm_warn "problem creating ${TARGET} link"
+				return
 			else
 				echo -n "===> Installing ${TARGET}"
 				sm_install && \
@@ -588,17 +595,20 @@ sm_check_an_eg() {
 }
 
 sm_post() {
+	local _f
+
 	cd ${_WRKDIR} && \
 		find . -type d -depth -empty -exec rmdir -p '{}' + 2>/dev/null
 	rmdir ${_WRKDIR} 2>/dev/null
 
-	[[ -d ${_BKPDIR} ]] && \
-		echo "===> Backup file(s):" && \
-		find ${_BKPDIR} -type f -size +0
-
-	[[ -d ${_TMPROOT} ]] && \
-		sm_warn "file(s) left for comparison:" && \
-		find ${_TMPROOT} -type f ! -name \*.merged -size +0
+	if [[ -d ${_TMPROOT} ]]; then
+		sm_warn "file(s) left for comparison:"
+		for _f in $(find ${_TMPROOT} ! -type d ! -name \*.merged -size +0)
+		do
+			echo "${_f}" && ${BATCHMODE} && [[ -f ${_f} ]] && \
+				sed -i "/$(sha256 -q ${_f})/d" /var/sysmerge/*sum
+		done
+	fi
 
 	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
 	[[ -d /etc/X11 ]] && \
@@ -623,11 +633,11 @@ shift $(( OPTIND -1 ))
 [[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && usage
 
 # global constants
-_WRKDIR=$(mktemp -d -p ${TMPDIR:=/tmp} sysmerge.XXXXXXXXXX) || exit 1
-_BKPDIR=${_WRKDIR}/backups
-_TMPROOT=${_WRKDIR}/temproot
+_BKPDIR=/var/sysmerge/backups
 _RELINT=$(uname -r | tr -d '.') || exit 1
-readonly _WRKDIR _BKPDIR _TMPROOT _RELINT
+_WRKDIR=$(mktemp -d -p ${TMPDIR:=/tmp} sysmerge.XXXXXXXXXX) || exit 1
+_TMPROOT=${_WRKDIR}/temproot
+readonly _BKPDIR _RELINT _TMPROOT _WRKDIR
 
 [[ -z ${VISUAL} ]] && EDITOR=${EDITOR:=/usr/bin/vi} || EDITOR=${VISUAL}
 PAGER=${PAGER:=/usr/bin/more}

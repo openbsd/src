@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.70 2015/08/24 10:42:08 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.71 2015/08/24 11:03:41 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -40,10 +40,7 @@ All work is done under
 (known as the
 .Em work directory )
 which contains the temporary root directory
-.Pa temproot ,
-and the
-.Pa backup
-directory containing modified and/or replaced files.
+.Pa temproot .
 .Pp
 .Nm
 will work through the fileset,
@@ -121,11 +118,11 @@ The following files will always be skipped from direct comparison:
 .Pa /etc/passwd ,
 .Pa /etc/pwd.db ,
 .Pa /etc/spwd.db ,
+.Pa /var/db/locate.database ,
+.Pa /var/mail/root ,
 .Pa /var/sysmerge/etcsum ,
 .Pa /var/sysmerge/examplessum ,
-.Pa /var/sysmerge/xetcsum ,
-.Pa /var/db/locate.database ,
-.Pa /var/mail/root .
+.Pa /var/sysmerge/xetcsum .
 .Sh ENVIRONMENT
 .Bl -tag -width "EDITORXXVISUAL"
 .It Ev EDITOR , VISUAL
@@ -157,11 +154,17 @@ If unset, this defaults to
 Default work directory.
 The
 .Sy temproot
-and
-.Sy backup
-directories are created relative to this.
+directory is created relative to this.
 .It Pa /etc/sysmerge.ignore
 Files and directories to ignore from comparison.
+.It Pa /var/sysmerge/backups
+Directory containing backup of
+.Nm
+last run modified files.
+Rotated automatically in order of increasing age from
+.Pa backups.0
+to
+.Pa backups.3 .
 .It Pa /var/sysmerge/etc.tgz
 Base system set containing the reference files
 corresponding to the currently installed release.
