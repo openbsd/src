@@ -32,6 +32,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "getopt.h"
 #include "safe-ctype.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <err.h>
 
 char *program_name;
 #if 0
