@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.61 2014/11/19 05:42:26 deraadt Exp $
+.\"	$OpenBSD: malloc.9,v 1.62 2015/08/24 15:33:49 mpi Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 19 2014 $
+.Dd $Mdocdate: August 24 2015 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -304,8 +304,6 @@ NTFS vrun storage.
 .It Dv M_KEVENT
 .Xr kqueue 2
 data structures.
-.It Dv M_BWMETER
-Multicast upcall bandwidth meters.
 .It Dv M_UDFMOUNT
 UDF mount structures.
 .It Dv M_UDFFENTRY
