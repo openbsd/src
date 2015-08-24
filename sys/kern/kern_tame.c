@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.26 2015/08/23 21:30:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.27 2015/08/24 06:17:48 doug Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -519,7 +519,7 @@ tame_namei(struct proc *p, char *origpath)
 	if (p->p_p->ps_tamepaths) {
 		struct whitepaths *wl = p->p_p->ps_tamepaths;
 		char *fullpath = path, *builtpath = NULL, *canopath = NULL;
-		char *cwdpath, *cwd;
+		char *cwdpath = NULL, *cwd;
 		size_t cwdpathlen, cwdlen, builtlen;
 		int i, error;
 
