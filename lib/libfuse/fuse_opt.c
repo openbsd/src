@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.13 2015/07/07 13:03:58 ajacoutot Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.14 2015/08/24 15:31:36 mpi Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -266,8 +266,10 @@ parse_opt(const struct fuse_opt *o, const char *val, void *data,
 	}
 
 	if (!found) {
-		printf("fuse: unknown option %s\n", val);
-		return (-1);
+		ret = f(data, val, FUSE_OPT_KEY_OPT, arg);
+		if (ret == 1)
+			fuse_opt_add_arg(arg, val);
+		return (ret);
 	}
 
 	return (ret);
@@ -300,7 +302,7 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 
 		/* not - and not -- */
 		if (arg[0] != '-') {
-			ret = f(data, arg, FUSE_OPT_KEY_NONOPT, 0);
+			ret = f(data, arg, FUSE_OPT_KEY_NONOPT, &outargs);
 
 			if (ret == 1)
 				fuse_opt_add_arg(&outargs, arg);
