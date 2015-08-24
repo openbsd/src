@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.102 2015/07/30 08:03:50 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.103 2015/08/24 12:57:14 bentley Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: August 24 2015 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -80,19 +80,19 @@ The ports master Makefile, normally located in
 below)
 offers a few useful targets.
 .Bl -tag -width configure
-.It Ar index
+.It Cm index
 rebuild the ports complete index,
 .Pa /usr/ports/INDEX
-.It Ar pkglocatedb
+.It Cm pkglocatedb
 build a
 .Xr pkg_mklocatedb 1
 database file and place it in
 .Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/ftp ,
 for use by
 .Xr locate 1 ,
-.It Ar print-index
+.It Cm print-index
 display the contents of the index in a user-friendly way,
-.It Ar search
+.It Cm search
 invoked with a key, e.g.,
 .Ic make search key=foo ,
 retrieve information relevant to a given port (obsolescent).
@@ -128,10 +128,10 @@ port maintained by a given person.
 .El
 .Pp
 For instance, to invoke
-.Ar clean
+.Cm clean
 on all ports in the x11 category, one can say:
 .Bd -literal -offset indent
-	$ make category=x11 clean
+$ make category=x11 clean
 .Ed
 .Pp
 The index search is done by a perl script, so all regular expressions from
@@ -201,17 +201,17 @@ with the target that failed to
 and proceed.
 .Pp
 Some targets that do this are
-.Ar all , build , checksum , clean ,
-.Ar configure , extract , fake ,
-.Ar fetch , install , distclean ,
-.Ar deinstall , reinstall , package , prepare ,
-.Ar link-categories , unlink-categories ,
-.Ar describe , show , regress ,
-.Ar lib-depends-check , homepage-links , manpages-check ,
-.Ar license-check , all-dir-depends , build-dir-depends ,
-.Ar run-dir-depends
+.Cm all , build , checksum , clean ,
+.Cm configure , extract , fake ,
+.Cm fetch , install , distclean ,
+.Cm deinstall , reinstall , package , prepare ,
+.Cm link-categories , unlink-categories ,
+.Cm describe , show , regress ,
+.Cm lib-depends-check , homepage-links , manpages-check ,
+.Cm license-check , all-dir-depends , build-dir-depends ,
+.Cm run-dir-depends
 and
-.Ar readmes .
+.Cm readmes .
 .Pp
 Target names starting with
 .Sq _
@@ -221,26 +221,26 @@ should not be invoked directly, and are liable to change without notice.
 In the following list, each target will run the preceding targets
 in order automatically.
 That is,
-.Ar build
+.Cm build
 will be run
 .Pq if necessary
 by
-.Ar install ,
+.Cm install ,
 and so on all the way to
-.Ar fetch .
+.Cm fetch .
 In typical use, one will only run
-.Ar install
+.Cm install
 explicitly (as normal user, with
 .Ev SUDO
 defined in
 .Pa /etc/mk.conf ) ,
 or
-.Ar build
+.Cm build
 (as user), then
-.Ar install
+.Cm install
 (as root).
 .Bl -tag -width configure
-.It Ar fetch
+.It Cm fetch
 Fetch all of the files needed to build this port from the site(s)
 listed in
 .Ev MASTER_SITES .
@@ -253,7 +253,7 @@ Use
 with option
 .Fl F
 to quickly fetch distfiles for a subtree.
-.It Ar checksum
+.It Cm checksum
 Verify that the fetched distfile matches the one the port was tested against.
 Defining
 .Ev NO_CHECKSUM
@@ -270,7 +270,7 @@ $ make checksum REFETCH=true
 .Ed
 .Pp
 will try to get a set of distfiles that match the recorded checksum.
-.It Ar prepare
+.It Cm prepare
 Install
 any build dependencies of the current port.
 Defining
@@ -278,63 +278,63 @@ Defining
 to
 .Dv Yes
 will skip this step.
-.It Ar extract
+.It Cm extract
 Expand the distfile into a work directory.
-.It Ar patch
+.It Cm patch
 Apply any patches that are necessary for the port.
-.It Ar configure
+.It Cm configure
 Configure the port.
 Some ports will ask questions during this stage.
 See
 .Ev INTERACTIVE
 and
 .Ev BATCH .
-.It Ar build
+.It Cm build
 Build the port.
 This is the same as calling the
-.Ar all
+.Cm all
 target.
-.It Ar fake
+.It Cm fake
 Pretend to install the port under a subdirectory of the work directory.
-.It Ar package
+.It Cm package
 Create a binary package from the fake installation.
 The package is a .tgz file that can be used to
 install the port with
 .Xr pkg_add 1 .
-.It Ar install
+.It Cm install
 Install the resulting package.
 .El
 .Pp
 The following targets are not run during the normal install process.
 .Bl -tag -width fetch-list
-.It Ar print-build-depends , print-run-depends
+.It Cm print-build-depends , print-run-depends
 Print an ordered list of all the compile and run dependencies.
-.It Ar clean
+.It Cm clean
 Remove the expanded source code.
 This does not recurse to dependencies unless
 .Ev CLEANDEPENDS
 is defined to
 .Dv Yes .
-.It Ar distclean
+.It Cm distclean
 Remove the port's distfile(s).
 This does not recurse to dependencies.
-.It Ar regress
+.It Cm regress
 Runs the ports regression tests.
 Usually needs a completed build.
-.It Ar reinstall
+.It Cm reinstall
 Use this to restore a port after using
 .Xr pkg_delete 1 .
-.It Ar update
+.It Cm update
 Alternative target to
-.Ar install .
+.Cm install .
 Does not install new packages, but updates existing ones.
-.It Ar link-categories
+.It Cm link-categories
 Populate the ports tree with symbolic links for each category the port
 belongs to.
-.It Ar unlink-categories
+.It Cm unlink-categories
 Remove the symbolic links created by
-.Ar link-categories .
-.It Ar homepage-links
+.Cm link-categories .
+.It Cm homepage-links
 creates an html list of links for each port
 .Ev HOMEPAGE .
 .El
@@ -375,12 +375,12 @@ $ make build
 .Pp
 will acquire the lock, run the port
 through
-.Ar fetch ,
-.Ar checksum ,
-.Ar extract ,
-.Ar patch ,
-.Ar configure ,
-.Ar build ,
+.Cm fetch ,
+.Cm checksum ,
+.Cm extract ,
+.Cm patch ,
+.Cm configure ,
+.Cm build ,
 then release the lock.
 If dependencies are involved, they will invoke top-level targets in other
 directories, and thus acquire some other locks as well.
@@ -392,9 +392,9 @@ twice, thus recursive locking is not needed for
 Starting with
 .Ox 4.3 ,
 the infrastructure supports manual locking: the targets
-.Ar lock
+.Cm lock
 and
-.Ar unlock
+.Cm unlock
 can be used to acquire and release individual locks.
 Both these targets output a shell command that must be used to update
 environment variables.
@@ -405,7 +405,7 @@ given port.
 Instead of deinstalling each package and rebuilding from scratch, the
 ports tree can be used to update installed packages.
 The
-.Ar update
+.Cm update
 target will replace an installed package using
 .Xr pkg_add 1
 in replacement mode.
@@ -531,7 +531,7 @@ In this instance, the corresponding package will be called
 .Ic screen-4.0.2-static .
 .Pp
 To see the flavors of a port, use the
-.Ar show
+.Cm show
 target:
 .Bd -literal -offset indent
 $ make show=FLAVORS
@@ -637,7 +637,7 @@ Where to find/put distfiles, normally
 .Pa ${PORTSDIR}/distfiles
 .It Ev PACKAGE_REPOSITORY
 Used only for the
-.Ar package
+.Cm package
 target; the base directory for the packages tree, normally
 .Pa ${PORTSDIR}/packages .
 If this directory exists, the package tree will be (partially) constructed.
@@ -662,7 +662,7 @@ Primary sites for distribution files if not found locally.
 If set to
 .Dv Yes ,
 let
-.Ar clean
+.Cm clean
 recurse to dependencies.
 .It Ev FETCH_CMD
 Command to use to fetch files.
@@ -685,9 +685,9 @@ If defined, only operate on a port if it can be installed 100% automatically.
 Set to
 .Dv Yes
 to protect the
-.Ar configure , build ,
+.Cm configure , build ,
 and
-.Ar fake
+.Cm fake
 targets with
 .Xr systrace 1 .
 This way it is ensured that ports do not make any network connections
