@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.10 2015/07/18 15:00:01 guenther Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.11 2015/08/24 15:55:53 bluhm Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -68,8 +68,6 @@ struct	unpcb {
 	struct	mbuf *unp_addr;		/* bound address of socket */
 	int	unp_flags;		/* this unpcb contains peer eids */
 	struct	sockpeercred unp_connid;/* id of peer process */
-	int	unp_cc;			/* copy of rcv.sb_cc */
-	int	unp_mbcnt;		/* copy of rcv.sb_mbcnt */
 	struct	timespec unp_ctime;	/* holds creation time */
 };
 

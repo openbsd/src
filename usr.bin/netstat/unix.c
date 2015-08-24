@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.27 2015/04/22 18:07:32 bluhm Exp $	*/
+/*	$OpenBSD: unix.c,v 1.28 2015/08/24 15:55:53 bluhm Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -117,8 +117,6 @@ unpcb_dump(u_long off)
 	p("%u", unp_connid.uid, ", ");
 	p("%u", unp_connid.gid, ", ");
 	p("%d", unp_connid.pid, "\n ");
-	p("%d", unp_cc, ", ");
-	p("%d", unp_mbcnt, "\n ");
 	pll("%lld", unp_ctime.tv_sec, ", ");
 	p("%ld", unp_ctime.tv_nsec, "\n");
 #undef p
