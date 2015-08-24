@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.72 2015/07/16 16:12:15 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.73 2015/08/24 14:00:28 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1736,12 +1736,14 @@ drop:
 struct pipex_session *
 pipex_pptp_userland_lookup_session_ipv4(struct mbuf *m0, struct in_addr dst)
 {
-	struct sockaddr_in sin4;
+	struct sockaddr_in sin;
 
-	sin4.sin_family = AF_INET;
-	sin4.sin_addr = dst;
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr = dst;
 
-	return pipex_pptp_userland_lookup_session(m0, (struct sockaddr *)&sin4);
+	return pipex_pptp_userland_lookup_session(m0, sintosa(&sin));
 }
 
 #ifdef INET6
@@ -1750,10 +1752,12 @@ pipex_pptp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
 {
 	struct sockaddr_in6 sin6;
 
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_len = sizeof(sin6);
 	sin6.sin6_family = AF_INET6;
 	in6_recoverscope(&sin6, &dst, NULL);
 
-	return pipex_pptp_userland_lookup_session(m0, (struct sockaddr *)&sin6);
+	return pipex_pptp_userland_lookup_session(m0, sin6tosa(&sin6));
 }
 #endif
 
@@ -2168,12 +2172,14 @@ drop:
 struct pipex_session *
 pipex_l2tp_userland_lookup_session_ipv4(struct mbuf *m0, struct in_addr dst)
 {
-	struct sockaddr_in sin4;
+	struct sockaddr_in sin;
 
-	sin4.sin_family = AF_INET;
-	sin4.sin_addr = dst;
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr = dst;
 
-	return pipex_l2tp_userland_lookup_session(m0, (struct sockaddr *)&sin4);
+	return pipex_l2tp_userland_lookup_session(m0, sintosa(&sin));
 }
 
 #ifdef INET6
@@ -2182,10 +2188,12 @@ pipex_l2tp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
 {
 	struct sockaddr_in6 sin6;
 
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_len = sizeof(sin6);
 	sin6.sin6_family = AF_INET6;
 	in6_recoverscope(&sin6, &dst, NULL);
 
-	return pipex_l2tp_userland_lookup_session(m0, (struct sockaddr *)&sin6);
+	return pipex_l2tp_userland_lookup_session(m0, sin6tosa(&sin6));
 }
 #endif
 

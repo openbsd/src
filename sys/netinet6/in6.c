@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.165 2015/08/19 13:27:38 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.166 2015/08/24 14:00:29 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -868,7 +868,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * join interface-local all-nodes address.
 		 * (ff01::1%ifN, and ff01::%ifN/32)
 		 */
-		bzero(&mltaddr.sin6_addr, sizeof(mltaddr.sin6_addr));
+		bzero(&mltaddr, sizeof(mltaddr));
 		mltaddr.sin6_len = sizeof(struct sockaddr_in6);
 		mltaddr.sin6_family = AF_INET6;
 		mltaddr.sin6_addr = in6addr_intfacelocal_allnodes;
@@ -1346,7 +1346,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
 		 */
-		in6m = malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT);
+		in6m = malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT | M_ZERO);
 		if (in6m == NULL) {
 			*errorp = ENOBUFS;
 			return (NULL);

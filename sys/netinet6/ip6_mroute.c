@@ -557,6 +557,7 @@ ip6_mrouter_done(void)
 		for (mifi = 0; mifi < nummifs; mifi++) {
 			if (mif6table[mifi].m6_ifp &&
 			    !(mif6table[mifi].m6_flags & MIFF_REGISTER)) {
+				memset(&ifr, 0, sizeof(ifr));
 				ifr.ifr_addr.sin6_family = AF_INET6;
 				ifr.ifr_addr.sin6_addr= in6addr_any;
 				ifp = mif6table[mifi].m6_ifp;
@@ -695,6 +696,7 @@ add_m6if(struct mif6ctl *mifcp)
 		 * Enable promiscuous reception of all IPv6 multicasts
 		 * from the interface.
 		 */
+		memset(&ifr, 0, sizeof(ifr));
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6addr_any;
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
@@ -760,6 +762,7 @@ del_m6if(mifi_t *mifip)
 		 */
 		ifp = mifp->m6_ifp;
 
+		memset(&ifr, 0, sizeof(ifr));
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6addr_any;
 		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);

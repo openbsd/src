@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.146 2015/08/23 14:12:05 naddy Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.147 2015/08/24 14:00:29 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1834,9 +1834,7 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 			bzero(d, sizeof(*d));
 			d->rtaddr.sin6_family = AF_INET6;
 			d->rtaddr.sin6_len = sizeof(struct sockaddr_in6);
-			d->rtaddr.sin6_addr = dr->rtaddr;
-			in6_recoverscope(&d->rtaddr, &d->rtaddr.sin6_addr,
-			    dr->ifp);
+			in6_recoverscope(&d->rtaddr, &dr->rtaddr, dr->ifp);
 			d->flags = dr->flags;
 			d->rtlifetime = dr->rtlifetime;
 			d->expire = dr->expire;
@@ -1927,9 +1925,9 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 					advrtrs++;
 					continue;
 				}
+				bzero(&sin6, sizeof(sin6));
 				sin6.sin6_family = AF_INET6;
 				sin6.sin6_len = sizeof(struct sockaddr_in6);
-				sin6.sin6_addr = pfr->router->rtaddr;
 				in6_recoverscope(&sin6, &pfr->router->rtaddr,
 				    pfr->router->ifp);
 				advrtrs++;

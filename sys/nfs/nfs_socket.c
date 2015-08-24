@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.110 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.111 2015/08/24 14:00:29 bluhm Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -258,7 +258,8 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 
 		MGET(m, M_WAIT, MT_SONAME);
 		sin = mtod(m, struct sockaddr_in *);
-		sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
+		memset(sin, 0, sizeof(*sin));
+		sin->sin_len = m->m_len = sizeof(struct sockaddr_in);
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = htons(0);

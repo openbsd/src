@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.79 2015/07/15 17:55:08 deraadt Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.80 2015/08/24 14:00:29 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -889,6 +889,7 @@ add_vif(struct mbuf *m)
 			return (EOPNOTSUPP);
 
 		/* Enable promiscuous reception of all IP multicasts. */
+		memset(&ifr, 0, sizeof(ifr));
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
@@ -943,6 +944,7 @@ reset_vif(struct vif *vifp)
 		reg_vif_num = VIFI_INVALID;
 #endif
 	} else {
+		memset(&ifr, 0, sizeof(ifr));
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;

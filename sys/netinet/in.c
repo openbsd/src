@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.120 2015/07/08 07:56:51 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.121 2015/08/24 14:00:29 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -809,7 +809,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
 		 */
-		inm = malloc(sizeof(*inm), M_IPMADDR, M_NOWAIT);
+		inm = malloc(sizeof(*inm), M_IPMADDR, M_NOWAIT | M_ZERO);
 		if (inm == NULL)
 			return (NULL);
 
@@ -824,6 +824,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
+		memset(&ifr, 0, sizeof(ifr));
 		memcpy(&ifr.ifr_addr, &inm->inm_sin, sizeof(inm->inm_sin));
 		if ((*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
 			free(inm, M_IPMADDR, sizeof(*inm));
@@ -867,6 +868,7 @@ in_delmulti(struct in_multi *inm)
 		 * reception filter.
 		 */
 		if (ifp != NULL) {
+			memset(&ifr, 0, sizeof(ifr));
 			satosin(&ifr.ifr_addr)->sin_len =
 			    sizeof(struct sockaddr_in);
 			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
