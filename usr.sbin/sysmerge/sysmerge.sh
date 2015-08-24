@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.201 2015/08/24 11:03:41 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.202 2015/08/24 12:16:36 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -187,9 +187,8 @@ sm_init() {
 	local _ignorefiles _cvsid1 _cvsid2 _matchsum _mismatch
 
 	# XXX remove after OPENBSD_6_0
-	# and remove /usr/share/sysmerge/* from _ignorefiles in sm_init()
 	if [[ -d /usr/share/sysmerge && -d /var/sysmerge ]]; then
-		mv -f /usr/share/sysmerge/*sum /var/sysmerge/ 2>/dev/null
+		cp -fp /usr/share/sysmerge/*sum /var/sysmerge/ 2>/dev/null
 		rm -rf /usr/share/sysmerge
 	fi
 
@@ -255,14 +254,16 @@ sm_init() {
 		      /etc/passwd
 		      /etc/pwd.db
 		      /etc/spwd.db
-		      /usr/share/sysmerge/etcsum
-		      /usr/share/sysmerge/examplessum
-		      /usr/share/sysmerge/xetcsum
 		      /var/sysmerge/etcsum
 		      /var/sysmerge/examplessum
 		      /var/sysmerge/xetcsum
 		      /var/db/locate.database
 		      /var/mail/root"
+	# XXX remove after OPENBSD_6_0
+	_ignorefiles="${_ignorefiles}
+		      /usr/share/sysmerge/etcsum
+		      /usr/share/sysmerge/examplessum
+		      /usr/share/sysmerge/xetcsum"
 	[[ -f /etc/sysmerge.ignore ]] && \
 		_ignorefiles="${_ignorefiles} $(stripcom /etc/sysmerge.ignore)"
 	for _i in ${_ignorefiles}; do
