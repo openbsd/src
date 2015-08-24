@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.63 2015/08/20 06:44:06 mlarkin Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.64 2015/08/24 04:50:40 jsg Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -512,6 +512,7 @@
 #define AZ_QRK_WID_AD1981_OAMP	0x00008000
 #define AZ_QRK_WID_TPDOCK1	0x00010000
 #define AZ_QRK_WID_TPDOCK2	0x00020000
+#define AZ_QRK_WID_TPDOCK3	0x00040000
 
 /* memory-mapped types */
 typedef struct {

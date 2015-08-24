@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.169 2015/08/21 06:11:04 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.170 2015/08/24 04:50:40 jsg Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -320,6 +320,27 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x14f15051:
 		this->name = "Conexant CX20561";  /* Hermosa */
+		break;
+	case 0x14f1506e:
+		this->name = "Conexant CX20590";
+		/*
+		 * Enable dock audio on Thinkpad docks
+		 * 0x17aa : 0x20f2 = Thinkpad T400
+		 * 0x17aa : 0x215e = Thinkpad T410
+		 * 0x17aa : 0x215f = Thinkpad T510
+		 * 0x17aa : 0x21ce = Thinkpad T420
+		 * 0x17aa : 0x21cf = Thinkpad T520
+		 * 0x17aa : 0x21da = Thinkpad X220
+		 * 0x17aa : 0x21db = Thinkpad X220t
+		 */
+		if (this->subid == 0x20f217aa ||
+		    this->subid == 0x215e17aa ||
+		    this->subid == 0x215f17aa ||
+		    this->subid == 0x21ce17aa ||
+		    this->subid == 0x21cf17aa ||
+		    this->subid == 0x21da17aa ||
+		    this->subid == 0x21db17aa)
+			this->qrks |= AZ_QRK_WID_TPDOCK3;
 		break;
 	case 0x434d4980:
 		this->name = "CMedia CMI9880";
@@ -2537,6 +2558,20 @@ azalia_codec_widget_quirks(codec_t *this, nid_t nid)
 	    nid == 0x19) {
 		/* Thinkpad x240/t440 style dock microphone */
 		w->d.pin.config = 0x21a11010;
+		w->enable = 1;
+	}
+
+	if (this->qrks & AZ_QRK_WID_TPDOCK3 &&
+	    nid == 0x1a) {
+		/* Thinkpad x220/t420 style dock microphone */
+		w->d.pin.config = 0x21a190f0;
+		w->enable = 1;
+	}
+
+	if (this->qrks & AZ_QRK_WID_TPDOCK3 &&
+	    nid == 0x1c) {
+		/* Thinkpad x220/t420 style dock headphone */
+		w->d.pin.config = 0x212140ff;
 		w->enable = 1;
 	}
 
