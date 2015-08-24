@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.34 2015/07/08 07:21:49 mpi Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.35 2015/08/24 16:38:43 mpi Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -558,6 +558,8 @@ next:
 		cmd->d_resid = 0;
 		sc->sc_rxlast = i + 1;
 	}
+	bmac_mediachange(ifp);
+
 	dbdma_continue(sc->sc_rxdma);
 
 	if_input(ifp, &ml);
