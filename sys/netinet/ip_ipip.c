@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.64 2015/08/14 18:07:28 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.65 2015/08/24 22:04:06 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -146,10 +146,8 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 {
 	struct sockaddr_in *sin;
 	struct ifnet *ifp;
-	struct ifaddr *ifa;
 	struct niqueue *ifq = NULL;
 	struct ip *ipo;
-	u_int rdomain;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 	struct ip6_hdr *ip6;
@@ -297,43 +295,34 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp, int proto)
 	/* Check for local address spoofing. */
 	if (((ifp = if_get(m->m_pkthdr.ph_ifidx)) == NULL ||
 	    !(ifp->if_flags & IFF_LOOPBACK)) && ipip_allow != 2) {
-		rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
-		TAILQ_FOREACH(ifp, &ifnet, if_list) {
-			if (ifp->if_rdomain != rdomain)
-				continue;
-			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-				if (ipo) {
-					if (ifa->ifa_addr->sa_family !=
-					    AF_INET)
-						continue;
+		struct sockaddr_storage ss;
+		struct rtentry *rt;
 
-					sin = satosin(ifa->ifa_addr); 
-					if (sin->sin_addr.s_addr ==
-					    ipo->ip_src.s_addr)	{
-						ipipstat.ipips_spoof++;
-						m_freem(m);
-						return;
-					}
-				}
+		memset(&ss, 0, sizeof(ss));
+
+		if (ipo) {
+			sin = (struct sockaddr_in *)&ss;
+			sin->sin_family = AF_INET;
+			sin->sin_len = sizeof(*sin);
+			sin->sin_addr = ipo->ip_src;
 #ifdef INET6
-				if (ip6) {
-					if (ifa->ifa_addr->sa_family !=
-					    AF_INET6)
-						continue;
-
-					sin6 = satosin6(ifa->ifa_addr);
-					if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr,
-					    &ip6->ip6_src)) {
-						ipipstat.ipips_spoof++;
-						m_freem(m);
-						return;
-					}
-
-				}
+		} else if (ip6) {
+			sin6 = (struct sockaddr_in6 *)&ss;
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_len = sizeof(*sin6);
+			sin6->sin6_addr = ip6->ip6_src;
 #endif /* INET6 */
-			}
 		}
-	}
+		rt = rtalloc((struct sockaddr *)&ss, 0,
+		    m->m_pkthdr.ph_rtableid);
+		if ((rt != NULL) && (rt->rt_flags & RTF_LOCAL)) {
+			ipipstat.ipips_spoof++;
+			m_freem(m);
+			rtfree(rt);
+			return;
+ 		}
+		rtfree(rt);
+ 	}
 
 	/* Statistics */
 	ipipstat.ipips_ibytes += m->m_pkthdr.len - iphlen;
