@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.54 2014/11/26 20:06:53 stsp Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.55 2015/08/24 21:09:43 jca Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -530,7 +530,7 @@ typedef struct {
 /*
  * OpenBSD-specific core file information.
  *
- * OpenBSDBSD ELF core files use notes to provide information about
+ * OpenBSD ELF core files use notes to provide information about
  * the process's state.  The note name is "OpenBSD" for information
  * that is global to the process, and "OpenBSD@nn", where "nn" is the
  * thread ID of the thread that the information belongs to (such as
@@ -541,7 +541,7 @@ typedef struct {
  *	NT_OPENBSD_PROCINFO
  *		Note is a "elfcore_procinfo" structure.
  *	NT_OPENBSD_AUXV
- *		Note is a a bunch of Auxilliary Vectors, terminted by
+ *		Note is a a bunch of Auxilliary Vectors, terminated by
  *		an AT_NULL entry.
  *	NT_OPENBSD_REGS
  *		Note is a "reg" structure.
