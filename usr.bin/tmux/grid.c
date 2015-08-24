@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.43 2015/05/08 15:56:49 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.44 2015/08/24 22:49:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -652,7 +652,8 @@ grid_duplicate_lines(struct grid *dst, u_int dy, struct grid *src, u_int sy,
 			    srcl->cellsize, sizeof *dstl->celldata);
 			memcpy(dstl->celldata, srcl->celldata,
 			    srcl->cellsize * sizeof *dstl->celldata);
-		}
+		} else
+			dstl->celldata = NULL;
 
 		sy++;
 		dy++;
