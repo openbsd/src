@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.3 2015/08/03 07:49:05 jmc Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.4 2015/08/25 01:21:57 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -46,7 +46,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-h] command [argument ...]\n", __progname);
+	fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
 }
 
 int
@@ -59,13 +59,13 @@ main(int argc, char *argv[])
 		switch (ch) {
 		default:
 			usage();
-			exit(EX_USAGE);
+			return (EX_USAGE);
 		}
 	argc -= optind;
 	argv += optind;
 
 	if ((result = parse(argc, argv)) == NULL)
-		exit(EXIT_FAILURE);
+		return (EXIT_FAILURE);
 
 	switch (result->action) {
 	case NONE:
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	exit(EXIT_SUCCESS);
+	return (EXIT_SUCCESS);
 }
 
 static void
