@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.39 2015/06/13 02:33:58 bcook Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.40 2015/08/25 17:26:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -299,7 +299,7 @@ sysctlfailed:
 }
 #endif /* SYS__sysctl */
 
-static int cl[] = {
+static const int cl[] = {
 	CLOCK_REALTIME,
 #ifdef CLOCK_MONOTONIC
 	CLOCK_MONOTONIC,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_solaris.c,v 1.9 2014/07/21 20:19:47 guenther Exp $	*/
+/*	$OpenBSD: getentropy_solaris.c,v 1.10 2015/08/25 17:26:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -64,7 +64,7 @@
 
 #define HR(x, l) (SHA512_Update(&ctx, (char *)(x), (l)))
 #define HD(x)	 (SHA512_Update(&ctx, (char *)&(x), sizeof (x)))
-#define HF(x)	 (SHA512_Update(&ctx, (char *)&(x), sizeof (void*)))
+#define HF(x)    (SHA512_Update(&ctx, (char *)&(x), sizeof (void*)))
 
 int	getentropy(void *buf, size_t len);
 
