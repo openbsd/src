@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.28 2015/02/09 23:00:14 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.29 2015/08/25 20:09:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@ static void run_job(atjob *, char *);
  * Scan the at jobs dir and build up a list of jobs found.
  */
 int
-scan_atjobs(at_db *old_db, struct timeval *tv)
+scan_atjobs(at_db *old_db, struct timespec *ts)
 {
 	DIR *atdir = NULL;
 	int cwd, queue, pending;
@@ -110,7 +110,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 		if (new_db.tail != NULL)
 			new_db.tail->next = job;
 		new_db.tail = job;
-		if (tv != NULL && run_time <= tv->tv_sec)
+		if (ts != NULL && run_time <= ts->tv_sec)
 			pending = 1;
 	}
 	closedir(atdir);

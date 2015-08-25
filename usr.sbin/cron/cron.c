@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.52 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: cron.c,v 1.53 2015/08/25 20:09:27 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,7 @@ static	void	usage(void),
 		run_reboot_jobs(cron_db *),
 		find_jobs(time_t, cron_db *, int, int),
 		set_time(int),
-		cron_sleep(time_t),
+		cron_sleep(time_t, sigset_t *),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigchld_reaper(void),
@@ -54,6 +54,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sigaction sact;
+	sigset_t blocked, omask;
 	int fd;
 
 	ProgramName = argv[0];
@@ -130,6 +131,15 @@ main(int argc, char *argv[])
 	timeRunning = virtualTime = clockTime;
 
 	/*
+	 * We block SIGHUP and SIGCHLD while running jobs and receive them
+	 * only while sleeping in ppoll().  This ensures no signal is lost.
+	 */
+	sigemptyset(&blocked);
+	sigaddset(&blocked, SIGCHLD);
+	sigaddset(&blocked, SIGHUP);
+	sigprocmask(SIG_BLOCK, &blocked, &omask);
+
+	/*
 	 * Too many clocks, not enough time (Al. Einstein)
 	 * These clocks are in minutes since the epoch, adjusted for timezone.
 	 * virtualTime: is the time it *would* be if we woke up
@@ -145,7 +155,7 @@ main(int argc, char *argv[])
 
 		/* ... wait for the time (in minutes) to change ... */
 		do {
-			cron_sleep(timeRunning + 1);
+			cron_sleep(timeRunning + 1, &omask);
 			set_time(FALSE);
 		} while (clockTime == timeRunning);
 		timeRunning = clockTime;
@@ -242,15 +252,7 @@ main(int argc, char *argv[])
 		atrun(&at_database, batch_maxload,
 		    timeRunning * SECONDS_PER_MINUTE - GMToff);
 
-		/* Check to see if we received a signal while running jobs. */
-		if (got_sighup) {
-			got_sighup = 0;
-			log_close();
-		}
-		if (got_sigchld) {
-			got_sigchld = 0;
-			sigchld_reaper();
-		}
+		/* Reload jobs as needed. */
 		load_database(&database);
 		scan_atjobs(&at_database, NULL);
 	}
@@ -339,28 +341,28 @@ set_time(int initialize)
  * Try to just hit the next minute.
  */
 static void
-cron_sleep(time_t target)
+cron_sleep(time_t target, sigset_t *mask)
 {
 	int fd, nfds;
 	unsigned char poke;
-	struct timeval t1, t2, tv;
+	struct timespec t1, t2, timeout;
 	struct sockaddr_un s_un;
 	socklen_t sunlen;
 	static struct pollfd pfd[1];
 
-	gettimeofday(&t1, NULL);
+	clock_gettime(CLOCK_REALTIME, &t1);
 	t1.tv_sec += GMToff;
-	tv.tv_sec = (target * SECONDS_PER_MINUTE - t1.tv_sec) + 1;
-	tv.tv_usec = 0;
+	timeout.tv_sec = (target * SECONDS_PER_MINUTE - t1.tv_sec) + 1;
+	timeout.tv_nsec = 0;
 
 	pfd[0].fd = cronSock;
 	pfd[0].events = POLLIN;
 
-	while (timerisset(&tv) && tv.tv_sec < 65) {
+	while (timespecisset(&timeout) && timeout.tv_sec < 65) {
 		poke = RELOAD_CRON | RELOAD_AT;
 
 		/* Sleep until we time out, get a poke, or get a signal. */
-		nfds = poll(pfd, 1, tv.tv_sec * 1000 + tv.tv_usec / 1000);
+		nfds = ppoll(pfd, 1, &timeout, mask);
 		if (nfds == 0)
 			break;		/* timer expired */
 		if (nfds == -1 && errno != EINTR)
@@ -381,7 +383,7 @@ cron_sleep(time_t target)
 					 * away so that "at now" really runs
 					 * jobs immediately.
 					 */
-					gettimeofday(&t2, NULL);
+					clock_gettime(CLOCK_REALTIME, &t2);
 					at_database.mtime = 0;
 					if (scan_atjobs(&at_database, &t2))
 						atrun(&at_database,
@@ -401,15 +403,15 @@ cron_sleep(time_t target)
 		}
 
 		/* Adjust tv and continue where we left off.  */
-		gettimeofday(&t2, NULL);
+		clock_gettime(CLOCK_REALTIME, &t2);
 		t2.tv_sec += GMToff;
-		timersub(&t2, &t1, &t1);
-		timersub(&tv, &t1, &tv);
+		timespecsub(&t2, &t1, &t1);
+		timespecsub(&timeout, &t1, &timeout);
 		memcpy(&t1, &t2, sizeof(t1));
-		if (tv.tv_sec < 0)
-			tv.tv_sec = 0;
-		if (tv.tv_usec < 0)
-			tv.tv_usec = 0;
+		if (timeout.tv_sec < 0)
+			timeout.tv_sec = 0;
+		if (timeout.tv_nsec < 0)
+			timeout.tv_nsec = 0;
 	}
 }
 

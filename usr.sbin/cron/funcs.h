@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.16 2015/01/23 01:01:06 tedu Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.17 2015/08/25 20:09:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,7 @@ int		job_runqueue(void),
 		allowed(const char *, const char *, const char *),
 		open_socket(void),
 		safe_p(const char *, const char *),
-		scan_atjobs(at_db *, struct timeval *);
+		scan_atjobs(at_db *, struct timespec *);
 
 int		strtot(const char *nptr, char **endptr, time_t *tp);
 
