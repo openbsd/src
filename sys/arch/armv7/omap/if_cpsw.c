@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.26 2015/06/24 09:40:53 mpi Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.27 2015/08/25 13:13:12 bmercer Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -613,7 +613,7 @@ cpsw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 cpsw_watchdog(struct ifnet *ifp)
 {
-	printf("device timeout\n");
+	printf("%s: device timeout\n", ifp->if_xname);
 
 	ifp->if_oerrors++;
 	cpsw_init(ifp);
