@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.43 2015/08/25 04:57:31 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.44 2015/08/25 20:18:44 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1516,7 +1516,7 @@ pmap_enter_pae(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		panic("pmap_enter_pae: too big");
 
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
-		panic("pmap_enter:_pae trying to map over PDP/APDP!");
+		panic("pmap_enter_pae: trying to map over PDP/APDP!");
 
 	/* sanity check: kernel PTPs should already have been pre-allocated */
 	if (va >= VM_MIN_KERNEL_ADDRESS &&
