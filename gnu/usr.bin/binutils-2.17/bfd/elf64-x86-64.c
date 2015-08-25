@@ -994,7 +994,7 @@ elf64_x86_64_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		    && (r_type != R_X86_64_PC32)
 		    && (r_type != R_X86_64_PC64))
 		   || (h != NULL
-		       && (! SYMBOLIC_BIND (info, h)
+		       && (! info->symbolic
 			   || h->root.type == bfd_link_hash_defweak
 			   || !h->def_regular))))
 	      || (ELIMINATE_COPY_RELOCS
@@ -2442,7 +2442,7 @@ elf64_x86_64_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 			   || r_type == R_X86_64_PC32
 			   || r_type == R_X86_64_PC64
 			   || !info->shared
-			   || !SYMBOLIC_BIND (info, h)
+			   || !info->symbolic
 			   || !h->def_regular))
 		{
 		  outrel.r_info = ELF64_R_INFO (h->dynindx, r_type);

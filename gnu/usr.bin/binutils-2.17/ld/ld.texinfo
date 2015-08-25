@@ -489,9 +489,9 @@ back to the symbols defined by the program, rather than some other
 dynamic object, then you will probably need to use this option when
 linking the program itself.
 
-You can also use the dynamic list to control what symbols should
+You can also use the version script to control what symbols should
 be added to the dynamic symbol table if the output format supports it.
-See the description of @samp{--dynamic-list}.
+See the description of @samp{--version-script} in @ref{VERSION}.
 
 @ifclear SingleFormat
 @cindex big-endian objects
@@ -1124,36 +1124,6 @@ definition within the shared library, if any.  Normally, it is possible
 for a program linked against a shared library to override the definition
 within the shared library.  This option is only meaningful on ELF
 platforms which support shared libraries.
-
-@kindex -Bsymbolic-functions
-@item -Bsymbolic-functions
-When creating a shared library, bind references to global function
-symbols to the definition within the shared library, if any. 
-@option{-Bsymbolic-functions} is an alias for @option{--dynamic-list-data}.
-This option is only meaningful on ELF platforms which support shared
-libraries.
-
-@kindex --dynamic-list=@var{dynamic-list-file}
-@item --dynamic-list=@var{dynamic-list-file}
-Specify the name of a dynamic list file to the linker.  This is
-typically used when creating shared libraries to specify a list of
-global symbols whose references shouldn't be bound to the definition
-within the shared library, or creating dynamically linked executables
-to specify a list of symbols which should be added to the symbol table
-in the executable.  This option is only meaningful on ELF platforms
-which support shared libraries.
-
-The format of the dynamic list is the same as the version node without
-scope and node name.  See @ref{VERSION} for more information.
-
-@kindex --dynamic-list-data
-@item --dynamic-list-data
-Include all global data symbols to the dynamic list.
-
-@kindex --dynamic-list-cpp-new
-@item --dynamic-list-cpp-new
-Provide the builtin dynamic list for C++ operator new and delete.  It
-is mainly useful for building shared libstdc++.
 
 @kindex --check-sections
 @kindex --no-check-sections

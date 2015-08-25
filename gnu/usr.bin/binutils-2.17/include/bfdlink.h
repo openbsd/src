@@ -221,8 +221,6 @@ enum report_method
   RM_GENERATE_ERROR
 };
 
-struct bfd_elf_dynamic_list;
-
 /* This structure holds all the information needed to communicate
    between BFD and the linker when doing a link.  */
 
@@ -326,13 +324,6 @@ struct bfd_link_info
   /* TRUE if unreferenced sections should be removed.  */
   unsigned int gc_sections: 1;
 
-  /* TRUE if all data symbols should be dynamic.  */
-   unsigned int dynamic_data: 1;
-
-  /* TRUE if some symbols have to be dynamic, controlled by
-     --dynamic-list command line options.  */
-  unsigned int dynamic: 1;
-
   /* What to do with unresolved symbols in an object file.
      When producing executables the default is GENERATE_ERROR.
      When producing shared libraries the default is IGNORE.  The
@@ -431,9 +422,6 @@ struct bfd_link_info
 
   /* Start and end of RELRO region.  */
   bfd_vma relro_start, relro_end;
-
-  /* List of symbols should be dynamic.  */
-  struct bfd_elf_dynamic_list *dynamic_list;
 };
 
 /* This structures holds a set of callback functions.  These are
@@ -722,14 +710,6 @@ struct bfd_elf_version_tree
   /* Whether this version tree was used.  This is used within BFD.  */
   int used;
   /* Matching hook.  */
-  struct bfd_elf_version_expr *(*match)
-    (struct bfd_elf_version_expr_head *head,
-     struct bfd_elf_version_expr *prev, const char *sym);
-};
-
-struct bfd_elf_dynamic_list
-{
-  struct bfd_elf_version_expr_head head;
   struct bfd_elf_version_expr *(*match)
     (struct bfd_elf_version_expr_head *head,
      struct bfd_elf_version_expr *prev, const char *sym);
