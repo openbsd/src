@@ -1,4 +1,4 @@
-#	$OpenBSD: Syslogd.pm,v 1.14 2015/07/20 05:34:16 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.15 2015/08/25 20:52:44 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -116,7 +116,7 @@ sub child {
 
 	my @libevent;
 	foreach (qw(EVENT_NOKQUEUE EVENT_NOPOLL EVENT_NOSELECT)) {
-		push @libevent, "$_=$ENV{$_}" if $ENV{$_};
+		push @libevent, "$_=1" if delete $ENV{$_};
 	}
 	push @libevent, "EVENT_SHOW_METHOD=1" if @libevent;
 	my @ktrace = $ENV{KTRACE} || ();
