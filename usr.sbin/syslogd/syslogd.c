@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.177 2015/07/20 19:49:33 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.178 2015/08/25 17:14:16 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1037,6 +1037,7 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 {
 	struct peer		*p = arg;
 	char			*msg, line[MAXLINE + 1];
+	size_t			 linelen;
 	int			 len;
 
 	while (EVBUFFER_LENGTH(bufev->input) > 0) {
@@ -1055,8 +1056,9 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 		if (len > 0 && msg[len-1] == '\n')
 			msg[len-1] = '\0';
 		if (len == 0 || msg[len-1] != '\0') {
-			strlcpy(line, msg,
-			    MINIMUM((size_t)len+1, sizeof(line)));
+			linelen = MINIMUM((size_t)len, sizeof(line)-1);
+			memcpy(line, msg, linelen);
+			line[linelen] = '\0';
 			msg = line;
 		}
 		printline(p->p_hostname, msg);
