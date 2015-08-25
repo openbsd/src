@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.182 2015/08/22 07:16:10 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.183 2015/08/25 04:57:31 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -812,6 +812,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	bits = pmap_pte_set(va, pa, ((prot & PROT_WRITE) ? PG_RW : PG_RO) |
 		PG_V | global | PG_U | PG_M |
+		((prot & PROT_EXEC) ? PG_X : 0) |
 		((pa & PMAP_NOCACHE) ? PG_N : 0) |
 		((pa & PMAP_WC) ? pmap_pg_wc : 0));
 	if (pmap_valid_entry(bits)) {

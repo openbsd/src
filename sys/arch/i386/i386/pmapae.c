@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.42 2015/08/22 07:16:10 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.43 2015/08/25 04:57:31 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -425,6 +425,10 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 extern u_int32_t protection_codes[];	/* maps MI prot to i386 prot code */
 extern boolean_t pmap_initialized;	/* pmap_init done yet? */
 
+/* Segment boundaries */
+extern vaddr_t kernel_text, etext, __rodata_start, erodata, __data_start;
+extern vaddr_t edata, __bss_start, end, ssym, esym, PTmap;
+
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
  * MAXCPUS*NPTECL array of PTE's, to avoid cache line thrashing
@@ -550,10 +554,16 @@ u_int32_t
 pmap_pte_set_pae(vaddr_t va, paddr_t pa, u_int32_t bits)
 {
 	pt_entry_t pte, *ptep = vtopte(va);
+	uint64_t nx;
 
 	pa &= PMAP_PA_MASK;
 
-	pte = i386_atomic_testset_uq(ptep, pa | bits);  /* zap! */
+	if (bits & PG_X)
+		nx = 0;
+	else
+		nx = PG_NX;
+
+	pte = i386_atomic_testset_uq(ptep, pa | bits | nx);  /* zap! */
 	return (pte & ~PG_FRAME);
 }
 
@@ -595,6 +605,7 @@ pmap_bootstrap_pae(void)
 	paddr_t ptaddr;
 	u_int32_t bits;
 	vaddr_t va, eva;
+	pt_entry_t pte;
 
 	if ((cpu_feature & CPUID_PAE) == 0 ||
 	    (ecpu_feature & CPUID_NXE) == 0)
@@ -629,6 +640,13 @@ pmap_bootstrap_pae(void)
 			kpm->pm_stats.resident_count++;
 		}
 		bits = pmap_pte_bits_86(va) | pmap_pg_g;
+
+		/* At this point, only kernel text should be executable */
+		if (va >= (vaddr_t)&kernel_text && va <= (vaddr_t)&etext)
+			bits |= PG_X;
+		else
+			bits &= ~PG_X;
+
 		if (pmap_valid_entry(bits))
 			pmap_pte_set_pae(va, pmap_pte_paddr_86(va), bits);
 	}
@@ -670,7 +688,23 @@ pmap_bootstrap_pae(void)
 		bzero((void *)kpm->pm_pdir + 8, (PDSLOT_PTE-1) * 8);
 		/* TODO also reclaim old PDPs */
 	}
-}
+
+	/* Set region permissions */
+	for (va = (vaddr_t)&PTmap; va < KERNBASE; va += NBPD) {
+		pte = PDE(kpm, pdei(va));
+		PDE(kpm, pdei(va)) = pte | PG_NX;
+	}
+
+	pmap_write_protect(kpm, (vaddr_t)&kernel_text, (vaddr_t)&etext,
+	    PROT_READ | PROT_EXEC);
+	pmap_write_protect(kpm, (vaddr_t)&__rodata_start,
+	    (vaddr_t)&erodata, PROT_READ);
+	pmap_write_protect(kpm, (vaddr_t)&__data_start, (vaddr_t)&edata,
+	    PROT_READ | PROT_WRITE);
+	pmap_write_protect(kpm, (vaddr_t)&__bss_start, (vaddr_t)&end,
+	    PROT_READ | PROT_WRITE);
+	pmap_write_protect(kpm, ssym, esym, PROT_READ);
+ }
 
 /*
  * p t p   f u n c t i o n s
@@ -800,13 +834,13 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	bzero((void *)pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
 	/* put in recursive PDE to map the PTEs */
 	PDE(pmap, PDSLOT_PTE+0) = pmap->pm_pdidx[0] | PG_KW | PG_U |
-	    PG_M | PG_V;
+	    PG_M | PG_V | PG_NX;
 	PDE(pmap, PDSLOT_PTE+1) = pmap->pm_pdidx[1] | PG_KW | PG_U |
-	    PG_M | PG_V;
+	    PG_M | PG_V | PG_NX;
 	PDE(pmap, PDSLOT_PTE+2) = pmap->pm_pdidx[2] | PG_KW | PG_U |
-	    PG_M | PG_V;
+	    PG_M | PG_V | PG_NX;
 	PDE(pmap, PDSLOT_PTE+3) = pmap->pm_pdidx[3] | PG_KW | PG_U |
-	    PG_M | PG_V;
+	    PG_M | PG_V | PG_NX;
 
 	/*
 	 * we need to lock pmaps_lock to prevent nkpde from changing on

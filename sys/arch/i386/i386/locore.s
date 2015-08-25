@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.160 2015/08/12 06:19:25 mlarkin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.161 2015/08/25 04:57:31 mlarkin Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1668,14 +1668,14 @@ ENTRY(cpu_paenable)
 	rep
 	movsl
 
-	movl	%cr4, %eax
-	orl	$CR4_PAE, %eax
-	movl	%eax, %cr4      /* BANG!!! */
-
 	movl	$MSR_EFER, %ecx
 	rdmsr
 	orl	$EFER_NXE, %eax
 	wrmsr
+
+	movl	%cr4, %eax
+	orl	$CR4_PAE, %eax
+	movl	%eax, %cr4      /* BANG!!! */
 
 	movl	12(%esp), %eax
 	subl	$KERNBASE, %eax
