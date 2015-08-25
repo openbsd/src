@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.70 2015/07/15 22:16:41 deraadt Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.71 2015/08/25 12:06:47 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -359,12 +359,12 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	m_inithdr(mhdr);
 	mhdr->m_len = 0;	/* XXX not done in m_inithdr() */
 
-#if INET && INET6
+#ifdef INET6
 	/* offset for a new header */
 	if (afto && pfloghdr->af == AF_INET)
 		mhdr->m_data += sizeof(struct ip6_hdr) -
 		    sizeof(struct ip);
-#endif /* INET && INET6 */
+#endif /* INET6 */
 
 	mdst = mtod(mhdr, char *);
 	switch (pfloghdr->af) {
@@ -443,12 +443,12 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	    pfloghdr->dir))) {
 		m_copyback(pd.m, pd.off, min(pd.m->m_len - pd.off, pd.hdrlen),
 		    pd.hdr.any, M_NOWAIT);
-#if INET && INET6
+#ifdef INET6
 		if (afto) {
 			PF_ACPY(&pd.nsaddr, &pfloghdr->saddr, pd.naf);
 			PF_ACPY(&pd.ndaddr, &pfloghdr->daddr, pd.naf);
 		}
-#endif /* INET && INET6 */
+#endif /* INET6 */
 		PF_ACPY(&pfloghdr->saddr, &osaddr, pd.af);
 		PF_ACPY(&pfloghdr->daddr, &odaddr, pd.af);
 		pfloghdr->sport = osport;
@@ -458,10 +458,10 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 	pd.tot_len = min(pd.tot_len, len);
 	pd.tot_len -= pd.m->m_data - pd.m->m_pktdat;
 
-#if INET && INET6
+#ifdef INET6
 	if (afto && pfloghdr->rewritten)
 		pf_translate_af(&pd);
-#endif /* INET && INET6 */
+#endif /* INET6 */
 
 	m = pd.m;
  copy:
