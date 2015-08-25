@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.54 2015/08/23 15:28:41 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.55 2015/08/25 08:01:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -30,10 +30,11 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
@@ -42,6 +43,8 @@
 #define	DT_PROC(n)	((n) - DT_LOPROC + DT_NUM)
 
 void _dl_syncicache(char *from, size_t len);
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 /* relocation bits */
 #define HA(x) (((Elf_Addr)(x) >> 16) + (((Elf_Addr)(x) & 0x00008000) >> 15))
@@ -57,12 +60,11 @@ void _dl_syncicache(char *from, size_t len);
 #define MCTR_R11	0x7d6903a6
 #define MCTR_R12	0x7d8903a6
 #define BCTR		0x4e800420
-#define BR(from, to)	do { \
-	int lval = (Elf32_Addr)(to) - (Elf32_Addr)(&(from)); \
-	lval &= ~0xfc000000; \
-	lval |= 0x48000000; \
-	(from) = lval; \
-} while (0)
+#define BRVAL(from, to)					\
+	((((Elf32_Addr)(to) - (Elf32_Addr)(&(from)))	\
+	    & ~0xfc000000) | 0x48000000)
+#define BR(from, to)	((from) = BRVAL(from, to))
+
 
 #define SLWI_R12_R11_1	0x556c083c
 #define ADD_R11_R12_R11 0x7d6c5a14
@@ -643,8 +645,13 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf32_Addr *pltcall;
 	Elf32_Addr *pltinfo;
 	Elf32_Addr *plttable;
-	sigset_t savedmask;
-	int prot_exec = 0;
+	int64_t cookie = pcookie;
+	struct {
+		struct __kbind param[2];
+		Elf_Addr newval[2];
+	} buf;
+	struct __kbind *param;
+	size_t psize;
 
 	relas = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
@@ -652,7 +659,6 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF_R_SYM(relas->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	r_addr = (Elf_Addr *)(object->obj_base + relas->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
@@ -663,78 +669,82 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	value = ooff + this->st_value;
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return value;
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (value);
 
-	/*
-	 * For BSS-PLT, both the GOT and the PLT need to be
-	 * executable.  Yuck!
-	 */
-	if (object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0)
-		prot_exec = PROT_EXEC;
-
-	/* if PLT is protected, allow the write */
-	if (object->plt_size != 0)  {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_WRITE|prot_exec);
-	}
-
+	r_addr = (Elf_Addr *)(object->obj_base + relas->r_offset);
 	val = value - (Elf32_Addr)r_addr;
 
 	if (object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0) {
-		pltresolve = (Elf32_Addr *)
-		    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
-		pltcall = (Elf32_Addr *)(pltresolve) + PLT_CALL_OFFSET;
-
 		if (!B24_VALID_RANGE(val)) {
-			int index;
+			int index, addr_off;
+
 			/* if offset is > RELOC_24 deal with it */
 			index = reloff / sizeof(Elf32_Rela);
 
-			/* update plttable before pltcall branch, to make
+			pltresolve = (Elf32_Addr *)
+			    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
+			pltcall = (Elf32_Addr *)(pltresolve) + PLT_CALL_OFFSET;
+
+			/*
+			 * Early plt entries can make short jumps; later ones
+			 * use a 3 word sequence.  c.f. _dl_md_reloc_got()
+			 */
+			addr_off = (index >= (2 << 12)) ? 2 : 1;
+
+			/*
+			 * Update plttable before pltcall branch, to make
 			 * this a safe race for threads
 			 */
-			val = ooff + this->st_value + relas->r_addend;
-
 			pltinfo = (Elf32_Addr *)(pltresolve) + PLT_INFO_OFFSET;
 			plttable = (Elf32_Addr *)pltinfo[0];
-			plttable[index] = val;
 
-			if (index >= (2 << 12)) {
-				/* r_addr[0,1] is initialized to correct
-				 * value in reloc_got.
-				 */
-				BR(r_addr[2], pltcall);
-				_dl_dcbf(&r_addr[2]);
-			} else {
-				/* r_addr[0] is initialized to correct
-				 * value in reloc_got.
-				 */
-				BR(r_addr[1], pltcall);
-				_dl_dcbf(&r_addr[1]);
-			}
+			buf.param[0].kb_addr = &plttable[index];
+			buf.param[0].kb_size = sizeof(Elf_Addr);
+			buf.param[1].kb_addr = &r_addr[addr_off];
+			buf.param[1].kb_size = sizeof(Elf_Addr);
+			buf.newval[0] = value + relas->r_addend;
+			buf.newval[1] = BRVAL(r_addr[addr_off], pltcall);
+			param = &buf.param[0];
+			psize = sizeof(buf);
 		} else {
-			/* if the offset is small enough,
-			 * branch directly to the dest
+			/*
+			 * If the offset is small enough, branch directly to
+			 * the dest.  We use the _second_ kbind params only.
 			 */
-			BR(r_addr[0], value);
-			_dl_dcbf(&r_addr[0]);
+			buf.param[1].kb_addr = &r_addr[0];
+			buf.param[1].kb_size = sizeof(Elf_Addr);
+			buf.newval[0] = BRVAL(r_addr[0], value);
+			param = &buf.param[1];
+			psize = sizeof(struct __kbind) + sizeof(Elf_Addr);
 		}
 	} else {
 		int index = reloff / sizeof(Elf32_Rela);
 
+		/*
+		 * Secure PLT; only needs one update so use the
+		 * second kbind params.
+		 */
 		plttable = (Elf32_Addr *)
 		    (Elf32_Rela *)(object->Dyn.info[DT_PLTGOT]);
-		plttable[index] = value;
+		buf.param[1].kb_addr = &plttable[index];
+		buf.param[1].kb_size = sizeof(Elf_Addr);
+		buf.newval[0] = value;
+		param = &buf.param[1];
+		psize = sizeof(struct __kbind) + sizeof(Elf_Addr);
 	}
 
-	/* if PLT is to be protected, change back to RO/X */
-	if (object->plt_size != 0) {
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|prot_exec);
-		_dl_thread_bind_lock(1, &savedmask);
+	{
+		register long syscall_num __asm("r0") = SYS_kbind;
+		register void *arg1 __asm("r3") = param;
+		register long  arg2 __asm("r4") = psize;
+		register long  arg3 __asm("r5") = 0xffffffff & (cookie >> 32);
+		register long  arg4 __asm("r6") = 0xffffffff &  cookie;
+
+		__asm volatile("sc" : "+r" (syscall_num), "+r" (arg1),
+		    "+r" (arg2) : "r" (arg3), "r" (arg4) : "cc", "memory");
 	}
+
 	return (value);
 }
 

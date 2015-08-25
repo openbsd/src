@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.30 2015/07/26 03:08:16 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.31 2015/08/25 08:01:12 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -67,14 +67,17 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 /*
  * The following table holds for each relocation type:
@@ -362,12 +365,15 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int index)
 {
 	Elf_Rel *rel;
-	Elf_Word *addr;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	const elf_object_t *sobj;
 	Elf_Addr ooff;
-	sigset_t savedmask;
+	uint64_t cookie = pcookie;
+	struct {
+		struct __kbind param;
+		Elf_Addr newval;
+	} buf;
 
 	rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
 
@@ -377,7 +383,6 @@ _dl_bind(elf_object_t *object, int index)
 	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Word *)(object->obj_base + rel->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
@@ -386,26 +391,25 @@ _dl_bind(elf_object_t *object, int index)
 		*(volatile int *)0 = 0;		/* XXX */
 	}
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return ooff + this->st_value;
+	buf.newval = ooff + this->st_value;
 
-	/* if GOT is protected, allow the write */
-	if (object->got_size != 0) {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ|PROT_WRITE);
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (buf.newval);
+
+	buf.param.kb_addr = (Elf_Word *)(object->obj_base + rel->r_offset);
+	buf.param.kb_size = sizeof(Elf_Addr);
+
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("eax") = SYS_kbind;
+
+		__asm volatile("pushl 4 %3; pushl %3; pushl %2; pushl %1;"
+		    " push %%eax; int $0x80; addl $20, %%esp" :
+		    "+a" (syscall_num) : "r" (&buf), "i" (sizeof(buf)),
+		    "m" (cookie) : "edx", "cc", "memory");
 	}
 
-	_dl_reloc_plt(addr, ooff + this->st_value);
-
-	/* put the GOT back to RO */
-	if (object->got_size != 0) {
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
-		_dl_thread_bind_lock(1, &savedmask);
-	}
-
-	return((Elf_Addr)ooff + this->st_value);
+	return (buf.newval);
 }
 
 int
