@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.28 2015/08/24 06:19:39 semarie Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.29 2015/08/25 15:35:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -185,7 +185,6 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_fchownat] = _TM_FATTR,
 	[SYS_lchown] = _TM_FATTR,
 	[SYS_fchown] = _TM_FATTR,
-	[SYS_utimes] = _TM_FATTR,
 
 	[SYS_socket] = _TM_INET | _TM_UNIX | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
 	[SYS_connect] = _TM_INET | _TM_UNIX | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
