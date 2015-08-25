@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.40 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.41 2015/08/25 04:18:43 guenther Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -75,8 +75,8 @@ static struct inotab *inotab[HASHSIZE];
  */
 struct modeinfo {
 	ino_t ino;
-	struct timeval ctimep[2];
-	struct timeval mtimep[2];
+	struct timespec ctimep[2];
+	struct timespec mtimep[2];
 	mode_t mode;
 	uid_t uid;
 	gid_t gid;
@@ -618,8 +618,8 @@ setdirmodes(int flags)
 				(void)chown(cp, node.uid, node.gid);
 				(void)chmod(cp, node.mode);
 				(void)chflags(cp, node.flags);
-				(void)utimes(cp, node.ctimep);
-				(void)utimes(cp, node.mtimep);
+				(void)utimensat(AT_FDCWD, cp, node.ctimep, 0);
+				(void)utimensat(AT_FDCWD, cp, node.mtimep, 0);
 			}
 			ep->e_flags &= ~NEW;
 		}
@@ -696,13 +696,13 @@ allocinotab(FILE *mf, struct context *ctxp, long seekpt)
 		return (itp);
 	node.ino = ctxp->ino;
 	node.mtimep[0].tv_sec = ctxp->atime_sec;
-	node.mtimep[0].tv_usec = ctxp->atime_nsec / 1000;
+	node.mtimep[0].tv_nsec = ctxp->atime_nsec;
 	node.mtimep[1].tv_sec = ctxp->mtime_sec;
-	node.mtimep[1].tv_usec = ctxp->mtime_nsec / 1000;
+	node.mtimep[1].tv_nsec = ctxp->mtime_nsec;
 	node.ctimep[0].tv_sec = ctxp->atime_sec;
-	node.ctimep[0].tv_usec = ctxp->atime_nsec / 1000;
+	node.ctimep[0].tv_nsec = ctxp->atime_nsec;
 	node.ctimep[1].tv_sec = ctxp->birthtime_sec;
-	node.ctimep[1].tv_usec = ctxp->birthtime_nsec / 1000;
+	node.ctimep[1].tv_nsec = ctxp->birthtime_nsec;
 	node.mode = ctxp->mode;
 	node.flags = ctxp->file_flags;
 	node.uid = ctxp->uid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.45 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.46 2015/08/25 04:18:43 guenther Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -505,23 +505,23 @@ extractfile(char *name)
 	uid_t uid;
 	gid_t gid;
 	mode_t mode;
-	struct timeval mtimep[2], ctimep[2];
+	struct timespec mtimep[2], ctimep[2];
 	struct entry *ep;
 	int setbirth;
 
 	curfile.name = name;
 	curfile.action = USING;
 	mtimep[0].tv_sec = curfile.atime_sec;
-	mtimep[0].tv_usec = curfile.atime_nsec / 1000;
+	mtimep[0].tv_nsec = curfile.atime_nsec;
 	mtimep[1].tv_sec = curfile.mtime_sec;
-	mtimep[1].tv_usec = curfile.mtime_nsec / 1000;
+	mtimep[1].tv_nsec = curfile.mtime_nsec;
 
 	setbirth = curfile.birthtime_sec != 0;
 	if (setbirth) {
 		ctimep[0].tv_sec = curfile.atime_sec;
-		ctimep[0].tv_usec = curfile.atime_nsec / 1000;
+		ctimep[0].tv_nsec = curfile.atime_nsec;
 		ctimep[1].tv_sec = curfile.birthtime_sec;
-		ctimep[1].tv_usec = curfile.birthtime_nsec / 1000;
+		ctimep[1].tv_nsec = curfile.birthtime_nsec;
 	}
 	uid = curfile.uid;
 	gid = curfile.gid;
@@ -583,8 +583,8 @@ extractfile(char *name)
 		(void)chflags(name, flags);
 		skipfile();
 		if (setbirth)
-			(void)utimes(name, ctimep);
-		(void)utimes(name, mtimep);
+			(void)utimensat(AT_FDCWD, name, ctimep, 0);
+		(void)utimensat(AT_FDCWD, name, mtimep, 0);
 		return (GOOD);
 
 	case IFIFO:
@@ -603,8 +603,8 @@ extractfile(char *name)
 		(void)chflags(name, flags);
 		skipfile();
 		if (setbirth)
-			(void)utimes(name, ctimep);
-		(void)utimes(name, mtimep);
+			(void)utimensat(AT_FDCWD, name, ctimep, 0);
+		(void)utimensat(AT_FDCWD, name, mtimep, 0);
 		return (GOOD);
 
 	case IFREG:
@@ -625,8 +625,8 @@ extractfile(char *name)
 		getfile(xtrfile, xtrskip);
 		(void)close(ofile);
 		if (setbirth)
-			(void)utimes(name, ctimep);
-		(void)utimes(name, mtimep);
+			(void)utimensat(AT_FDCWD, name, ctimep, 0);
+		(void)utimensat(AT_FDCWD, name, mtimep, 0);
 		return (GOOD);
 	}
 	/* NOTREACHED */
