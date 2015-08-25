@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.803 2015/08/20 04:41:46 mlarkin Exp $
+#	$OpenBSD: GENERIC,v 1.804 2015/08/25 01:57:44 bmercer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -26,7 +26,7 @@ option		MTRR		# CPU memory range attributes control
 
 option		COMPAT_LINUX	# binary compatibility with Linux
 
-#option		GPT		# GPT partition table support
+option		GPT		# GPT partition table support
 option		NTFS		# NTFS support
 option		HIBERNATE	# Hibernate support
 
