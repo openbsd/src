@@ -1,0 +1,12 @@
+__divsi3
+__mcount
+__minbrk
+__modsi3
+__udivsi3
+__umodsi3
+_mcount
+_thread_sys_exect
+_thread_sys_syscall
+frexpl
+ldexpl
+modfl
