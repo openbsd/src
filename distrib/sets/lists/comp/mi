@@ -1753,6 +1753,7 @@
 ./usr/share/man/man2/intro.2
 ./usr/share/man/man2/ioctl.2
 ./usr/share/man/man2/issetugid.2
+./usr/share/man/man2/kbind.2
 ./usr/share/man/man2/kevent.2
 ./usr/share/man/man2/kill.2
 ./usr/share/man/man2/kqueue.2
