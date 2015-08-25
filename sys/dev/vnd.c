@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.155 2014/12/13 21:05:32 doug Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.156 2015/08/25 07:01:24 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -578,7 +578,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		vndgetdisklabel(dev, sc, lp, 0);
 		*(sc->sc_dk.dk_label) = *lp;
-		free(lp, M_TEMP, 0);
+		free(lp, M_TEMP, sizeof(*lp));
 		return (0);
 
 	case DIOCGPDINFO:
@@ -650,7 +650,7 @@ vndsetcred(struct vnd_softc *sc, struct ucred *cred)
 	error = vn_rdwr(UIO_READ, sc->sc_vp, buf, size, 0, UIO_SYSSPACE, 0,
 	    sc->sc_cred, NULL, curproc);
 
-	free(buf, M_TEMP, 0);
+	free(buf, M_TEMP, DEV_BSIZE);
 	return (error);
 }
 
