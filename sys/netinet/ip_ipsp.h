@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.171 2015/07/17 18:31:08 blambert Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.172 2015/08/25 11:50:14 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -490,7 +490,7 @@ void	ip4_input(struct mbuf *, ...);
 
 #ifdef INET6
 int	ip4_input6(struct mbuf **, int *, int);
-#endif /* INET */
+#endif /* INET6 */
 
 /* XF_AH */
 int 	ah_attach(void);
