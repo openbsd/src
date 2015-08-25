@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.6 2015/08/02 23:27:50 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.7 2015/08/25 01:12:59 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -94,7 +94,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dhn] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-dn] [-f file]\n", __progname);
 	exit(EX_USAGE);
 }
 
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	bool			 noaction = false;
 	struct passwd		*pw;
 
-	while ((ch = getopt(argc, argv, "df:nh")) != -1)
+	while ((ch = getopt(argc, argv, "df:n")) != -1)
 		switch (ch) {
 		case 'd':
 			debug++;
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 			noaction = true;
 			break;
 
-		case 'h':
+		default:
 			usage();
 			/* NOTREACHED */
 		}
