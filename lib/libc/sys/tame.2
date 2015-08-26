@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.20 2015/08/26 14:46:22 semarie Exp $
+.\" $OpenBSD: tame.2,v 1.21 2015/08/26 15:17:06 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -403,11 +403,13 @@ will fail if:
 .Fa paths
 points outside the process's allocated address space.
 .It Bq Er ENAMETOOLONG
-A element of
+An element of
 .Fa paths
 is too large, or prepending
 .Fa cwd
-to it would exceeded PATH_MAX bytes.
+to it would exceed
+.Dv PATH_MAX
+bytes.
 .It Bq Er EPERM
 This process is attempting to increase permissions.
 .It Bq Er E2BIG
