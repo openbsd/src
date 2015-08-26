@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.32 2015/08/26 06:33:57 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.33 2015/08/26 14:46:22 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1034,13 +1034,13 @@ canonpath(const char *input, char *buf, size_t bufsize)
 	/* can't canon relative paths, don't bother */
 	if (input[0] != '/') {
 		if (strlcpy(buf, input, bufsize) >= bufsize)
-			return (EINVAL);
+			return (ENAMETOOLONG);
 		return (0);
 	}
 
 	/* easiest to work with strings always ending in '/' */
 	if (snprintf(buf, bufsize, "%s/", input) >= bufsize)
-		return (EINVAL);
+		return (ENAMETOOLONG);
 
 	/* after this we will only be shortening the string. */
 	p = buf;
