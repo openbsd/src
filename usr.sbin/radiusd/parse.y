@@ -212,9 +212,9 @@ prefix		: STRING '/' NUMBER {
 
 			if ((gai_errno = getaddrinfo($1, NULL, &hints, &res))
 			    != 0) {
-				free($1);
 				yyerror("Could not parse the address: %s: %s",
 				    $1, gai_strerror(gai_errno));
+				free($1);
 				YYERROR;
 			}
 			free($1);
