@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.300 2015/08/21 09:16:06 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.301 2015/08/26 09:17:20 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -229,11 +229,6 @@ void em_disable_aspm(struct em_softc *);
 void em_txeof(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
-#ifdef __STRICT_ALIGNMENT
-void em_realign(struct em_softc *, struct mbuf *, u_int16_t *);
-#else
-#define em_realign(a, b, c) /* a, b, c */
-#endif
 int  em_rxfill(struct em_softc *);
 void em_rxeof(struct em_softc *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
@@ -708,7 +703,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, MCLBYTES, &sc->rx_ring);
+		    NULL, EM_MCLBYTES, &sc->rx_ring);
 		break;
 
 	default:
@@ -2528,14 +2523,15 @@ em_get_buf(struct em_softc *sc, int i)
 		return (ENOBUFS);
 	}
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, EM_MCLBYTES);
 	if (!m) {
 		sc->mbuf_cluster_failed++;
 		return (ENOBUFS);
 	}
-	m->m_len = m->m_pkthdr.len = MCLBYTES;
-	if (sc->hw.max_frame_size <= (MCLBYTES - ETHER_ALIGN))
-		m_adj(m, ETHER_ALIGN);
+	m->m_len = m->m_pkthdr.len = EM_MCLBYTES;
+#ifdef __STRICT_ALIGNMENT
+	m_adj(m, ETHER_ALIGN);
+#endif
 
 	error = bus_dmamap_load_mbuf(sc->rxtag, pkt->map, m, BUS_DMA_NOWAIT);
 	if (error) {
@@ -2584,8 +2580,8 @@ em_allocate_receive_structures(struct em_softc *sc)
 
 	rx_buffer = sc->rx_buffer_area;
 	for (i = 0; i < sc->num_rx_desc; i++, rx_buffer++) {
-		error = bus_dmamap_create(sc->rxtag, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &rx_buffer->map);
+		error = bus_dmamap_create(sc->rxtag, EM_MCLBYTES, 1,
+		    EM_MCLBYTES, 0, BUS_DMA_NOWAIT, &rx_buffer->map);
 		if (error != 0) {
 			printf("%s: em_allocate_receive_structures: "
 			    "bus_dmamap_create failed; error %u\n",
@@ -2785,53 +2781,6 @@ em_free_receive_structures(struct em_softc *sc)
 	}
 }
 
-#ifdef __STRICT_ALIGNMENT
-void
-em_realign(struct em_softc *sc, struct mbuf *m, u_int16_t *prev_len_adj)
-{
-	unsigned char tmp_align_buf[ETHER_ALIGN];
-	int tmp_align_buf_len = 0;
-
-	/*
-	 * The Ethernet payload is not 32-bit aligned when
-	 * Jumbo packets are enabled, so on architectures with
-	 * strict alignment we need to shift the entire packet
-	 * ETHER_ALIGN bytes. Ugh.
-	 */
-	if (sc->hw.max_frame_size <= (MCLBYTES - ETHER_ALIGN))
-		return;
-
-	if (*prev_len_adj > sc->align_buf_len)
-		*prev_len_adj -= sc->align_buf_len;
-	else
-		*prev_len_adj = 0;
-
-	if (m->m_len > (MCLBYTES - ETHER_ALIGN)) {
-		bcopy(m->m_data + (MCLBYTES - ETHER_ALIGN),
-		    &tmp_align_buf, ETHER_ALIGN);
-		tmp_align_buf_len = m->m_len -
-		    (MCLBYTES - ETHER_ALIGN);
-		m->m_len -= ETHER_ALIGN;
-	} 
-
-	if (m->m_len) {
-		bcopy(m->m_data, m->m_data + ETHER_ALIGN, m->m_len);
-		if (!sc->align_buf_len)
-			m->m_data += ETHER_ALIGN;
-	}
-
-	if (sc->align_buf_len) {
-		m->m_len += sc->align_buf_len;
-		bcopy(&sc->align_buf, m->m_data, sc->align_buf_len);
-	}
-
-	if (tmp_align_buf_len) 
-		bcopy(&tmp_align_buf, &sc->align_buf, tmp_align_buf_len);
-
-	sc->align_buf_len = tmp_align_buf_len;
-}
-#endif /* __STRICT_ALIGNMENT */
-
 int
 em_rxfill(struct em_softc *sc)
 {
@@ -2966,8 +2915,6 @@ em_rxeof(struct em_softc *sc)
 		if (accept_frame) {
 			/* Assign correct length to the current fragment */
 			m->m_len = len;
-
-			em_realign(sc, m, &prev_len_adj); /* STRICT_ALIGN */
 
 			if (sc->fmp == NULL) {
 				m->m_pkthdr.len = m->m_len;

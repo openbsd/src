@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.55 2015/08/21 09:16:06 kettenis Exp $ */
+/* $OpenBSD: if_em.h,v 1.56 2015/08/26 09:17:20 kettenis Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -266,6 +266,12 @@ typedef int	boolean_t;
 #define EM_RXBUFFER_8192	8192
 #define EM_RXBUFFER_16384	16384
 
+#ifdef __STRICT_ALIGNMENT
+#define EM_MCLBYTES		(EM_RXBUFFER_2048 + ETHER_ALIGN)
+#else
+#define EM_MCLBYTES		EM_RXBUFFER_2048
+#endif
+
 #define EM_MAX_SCATTER		64
 #define EM_TSO_SIZE		65535
 
@@ -323,12 +329,6 @@ struct em_softc {
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
-
-#ifdef __STRICT_ALIGNMENT
-	/* Used for carrying forward alignment adjustments */
-	unsigned char	align_buf[ETHER_ALIGN];	/* tail of unaligned packet */
-	u_int8_t	align_buf_len;		/* bytes in tail */
-#endif /* __STRICT_ALIGNMENT */
 
 	/* Info about the board itself */
 	u_int32_t	part_num;
