@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.42 2015/02/06 10:50:48 tedu Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.43 2015/08/26 14:49:20 semarie Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -149,18 +149,14 @@ regex_t regex;
 int
 main(int ac, char *av[])
 {
-#ifdef	OK_TO_WRITE_DISK
-	int	fd;
-#endif	/* OK_TO_WRITE_DISK */
-
 	getargs(ac, av);
 
 	if (Match)
 		exit(find_matches() != 0);
 
 	init_prob();
-	if (Short_only && minlen_in_list(File_list) > SLEN ||
-	    Long_only && maxlen_in_list(File_list) <= SLEN)
+	if ((Short_only && minlen_in_list(File_list) > SLEN) ||
+	    (Long_only && maxlen_in_list(File_list) <= SLEN))
 		exit(0);
 
 	do {
@@ -170,24 +166,6 @@ main(int ac, char *av[])
 
 	display(Fortfile);
 
-#ifdef	OK_TO_WRITE_DISK
-	if ((fd = creat(Fortfile->posfile, 0666)) < 0) {
-		perror(Fortfile->posfile);
-		exit(1);
-	}
-	/*
-	 * if we can, we exclusive lock, but since it isn't very
-	 * important, we just punt if we don't have easy locking
-	 * available.
-	 */
-	(void) flock(fd, LOCK_EX);
-	Fortfile->pos = htonl(Fortfile->pos);
-	write(fd, (char *) &Fortfile->pos, sizeof Fortfile->pos);
-	Fortfile->pos = ntohl(Fortfile->pos);
-	if (!Fortfile->was_pos_file)
-		(void) chmod(Fortfile->path, 0666);
-	(void) flock(fd, LOCK_UN);
-#endif	/* OK_TO_WRITE_DISK */
 	if (Wait) {
 		if (Fort_len == 0)
 			(void) fortlen();
@@ -212,7 +190,6 @@ rot13(char *p, size_t len)
 void
 display(FILEDESC *fp)
 {
-	char	*p, ch;
 	char	line[BUFSIZ];
 
 	open_fp(fp);
@@ -337,13 +314,14 @@ form_file_list(char **files, int file_cnt)
 	int	i, percent;
 	char	*sp;
 
-	if (file_cnt == 0)
+	if (file_cnt == 0) {
 		if (Find_files)
 			return add_file(NO_PROB, FORTDIR, NULL, &File_list,
 					&File_tail, NULL);
 		else
 			return add_file(NO_PROB, "fortunes", FORTDIR,
 					&File_list, &File_tail, NULL);
+	}
 	for (i = 0; i < file_cnt; i++) {
 		percent = NO_PROB;
 		if (!isdigit(files[i][0]))
@@ -504,9 +482,6 @@ over:
 		fp->next = *head;
 		*head = fp;
 	}
-#ifdef	OK_TO_WRITE_DISK
-	fp->was_pos_file = (access(fp->posfile, W_OK) >= 0);
-#endif	/* OK_TO_WRITE_DISK */
 
 	return 1;
 }
@@ -603,9 +578,6 @@ all_forts(FILEDESC *fp, char *offensive)
 	obscene->datfile = datfile;
 	obscene->posfile = posfile;
 	obscene->read_tbl = 0;
-#ifdef	OK_TO_WRITE_DISK
-	obscene->was_pos_file = (access(obscene->posfile, W_OK) >= 0);
-#endif	/* OK_TO_WRITE_DISK */
 }
 
 /*
@@ -722,10 +694,6 @@ is_fortfile(char *file, char **datp, char **posp, int check_for_offend)
 		*datp = datfile;
 	else
 		free(datfile);
-#ifdef	OK_TO_WRITE_DISK
-	if (posp != NULL)
-		*posp = copy(file, ".pos");
-#endif	/* OK_TO_WRITE_DISK */
 	DPRINTF(2, (stderr, "1\n"));
 	return 1;
 }
@@ -816,7 +784,7 @@ init_prob(void)
 		exit(1);
 	}
 	percent = 100 - percent;
-	if (Equal_probs)
+	if (Equal_probs) {
 		if (num_noprob != 0) {
 			if (num_noprob > 1) {
 				frac = percent / num_noprob;
@@ -830,7 +798,7 @@ init_prob(void)
 			last->percent = percent;
 			DPRINTF(1, (stderr, ", residual = %d%%", percent));
 		}
-	else {
+	} else {
 		DPRINTF(1, (stderr,
 			    ", %d%% distributed over remaining fortunes\n",
 			    percent));
@@ -1003,25 +971,9 @@ open_dat(FILEDESC *fp)
 void
 get_pos(FILEDESC *fp)
 {
-#ifdef	OK_TO_WRITE_DISK
-	int	fd;
-#endif /* OK_TO_WRITE_DISK */
-
 	assert(fp->read_tbl);
 	if (fp->pos == POS_UNKNOWN) {
-#ifdef	OK_TO_WRITE_DISK
-		if ((fd = open(fp->posfile, 0)) < 0 ||
-		    read(fd, &fp->pos, sizeof fp->pos) != sizeof fp->pos)
-			fp->pos = arc4random_uniform(fp->tbl.str_numstr);
-		else if (ntohl(fp->pos) >= fp->tbl.str_numstr)
-			fp->pos %= fp->tbl.str_numstr;
-		else
-			fp->pos = ntohl(fp->pos);
-		if (fd >= 0)
-			(void) close(fd);
-#else
 		fp->pos = arc4random_uniform(fp->tbl.str_numstr);
-#endif /* OK_TO_WRITE_DISK */
 	}
 	if (++(fp->pos) >= fp->tbl.str_numstr)
 		fp->pos -= fp->tbl.str_numstr;
