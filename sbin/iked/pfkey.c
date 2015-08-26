@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.44 2015/08/21 11:59:28 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.45 2015/08/26 02:09:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -196,7 +196,7 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 	memcpy(&smask, &flow->flow_src.addr, sizeof(smask));
 	socket_af((struct sockaddr *)&ssrc, flow->flow_src.addr_port);
 	socket_af((struct sockaddr *)&smask, flow->flow_src.addr_port ?
-	    0xfffff : 0);
+	    0xffff : 0);
 
 	switch (flow->flow_src.addr_af) {
 	case AF_INET:
