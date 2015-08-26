@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.72 2015/07/23 18:02:58 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.73 2015/08/26 13:56:04 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -94,15 +94,15 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
+		goto done;
+
 #if defined(GPT)
 	error = readgptlabel(bp, strat, lp, NULL, spoofonly);
 	if (error == 0)
 		goto done;
 #endif
-
-	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
-	if (error == 0)
-		goto done;
 
 #if defined(CD9660)
 	error = iso_disklabelspoof(dev, strat, lp);
