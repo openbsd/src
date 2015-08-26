@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.6 2014/11/03 22:14:54 deraadt Exp $	*/
+/*	$OpenBSD: extern.c,v 1.7 2015/08/26 00:29:24 rzalamena Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/04/22 10:08:49 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ int	Score;			/* Current score */
 int	Start_level = 1;	/* Level on which to start */
 int	Wait_bonus;		/* bonus for waiting */
 
-struct timeval	tv;		/* how long to wait; could be an option */
+struct timespec	tv;		/* how long to wait; could be an option */
 
 COORD	Max;			/* Max area robots take up */
 COORD	Min;			/* Min area robots take up */

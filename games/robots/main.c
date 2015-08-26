@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2014/11/03 22:14:54 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2015/08/26 00:29:24 rzalamena Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ main(int ac, char *av[])
 			Real_time = TRUE;
 			/* Could be a command-line option */
 			tv.tv_sec = 3;
-			tv.tv_usec = 0;
 			break;
 		case 'a':
 			Start_level = 4;

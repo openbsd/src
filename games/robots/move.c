@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.10 2014/11/03 22:14:54 deraadt Exp $	*/
+/*	$OpenBSD: move.c,v 1.11 2015/08/26 00:29:24 rzalamena Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -43,8 +43,7 @@ get_move(void)
 {
 	int	c;
 	int retval;
-	struct timeval t, tod;
-	struct timezone tz;
+	struct timespec t, tn;
 #ifdef FANCY
 	int lastmove;
 #endif
@@ -61,9 +60,8 @@ get_move(void)
 	}
 #endif
 	if (Real_time) {
-		t.tv_sec = tv.tv_sec;
-		t.tv_usec = tv.tv_usec;
-		(void)gettimeofday(&tod, &tz);
+		t = tv;
+		clock_gettime(CLOCK_MONOTONIC, &tn);
 	}
 	for (;;) {
 		if (Teleport && must_telep())
@@ -94,8 +92,7 @@ over:
 
 				pfd[0].fd = STDIN_FILENO;
 				pfd[0].events = POLLIN;
-				retval = poll(pfd, 1,
-				    t.tv_sec * 1000 + t.tv_usec / 1000);
+				retval = ppoll(pfd, 1, &t, NULL);
 				if (retval > 0)
 					c = getchar();
 				else	/* Don't move if timed out or error */
@@ -203,15 +200,16 @@ teleport:
 			break;
 		}
 		if (Real_time) {
-			(void)gettimeofday(&t, &tz);
-			t.tv_sec = tod.tv_sec + tv.tv_sec - t.tv_sec;
-			t.tv_usec = tod.tv_usec + tv.tv_usec - t.tv_usec;
-			if (t.tv_usec < 0) {
-				t.tv_sec--;
-				t.tv_usec += 1000000;	/* Now it must be > 0 */
-			}
-			if (t.tv_sec < 0)
+			/* Update current time. */
+			clock_gettime(CLOCK_MONOTONIC, &t);
+
+			/* Check whether tv time has passed. */
+			timespecadd(&tn, &tv, &tn);
+			if (timespeccmp(&tn, &t, <))
 				goto ret;
+
+			/* Keep the difference otherwise. */
+			timespecsub(&tn, &t, &t);
 		}
 	}
 ret:
