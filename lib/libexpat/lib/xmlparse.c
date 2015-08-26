@@ -667,6 +667,8 @@ struct XML_ParserStruct {
 #endif /* XML_DTD */
 #define hash_secret_salt (parser->m_hash_secret_salt)
 
+#define MAXLEN 0x7fffffff
+
 XML_Parser XMLCALL
 XML_ParserCreate(const XML_Char *encodingName)
 {
@@ -1513,6 +1515,11 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
     ps_parsing = XML_PARSING;
   }
 
+  /* Avoid integer overflow */
+  if (len > MAXLEN / 2) {
+    errorCode = XML_ERROR_NO_MEMORY;
+    return XML_STATUS_ERROR; 
+  }
   if (len == 0) {
     ps_finalBuffer = (XML_Bool)isFinal;
     if (!isFinal)
@@ -1581,7 +1588,6 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
     nLeftOver = s + len - end;
     if (nLeftOver) {
       if (buffer == NULL || nLeftOver > bufferLim - buffer) {
-        /* FIXME avoid integer overflow */
         char *temp;
         temp = (buffer == NULL
                 ? (char *)MALLOC(len * 2)
@@ -1686,8 +1692,12 @@ XML_GetBuffer(XML_Parser parser, int len)
   default: ;
   }
 
+  /* Avoid integer overflow */
+  if (len > MAXLEN - (bufferEnd - bufferPtr)) {
+    errorCode = XML_ERROR_NO_MEMORY;
+    return NULL; 
+  }
   if (len > bufferLim - bufferEnd) {
-    /* FIXME avoid integer overflow */
     int neededSize = len + (int)(bufferEnd - bufferPtr);
 #ifdef XML_CONTEXT_BYTES
     int keep = (int)(bufferPtr - buffer);
