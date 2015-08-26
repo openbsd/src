@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.18 2014/05/02 04:55:48 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.19 2015/08/26 02:04:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -30,13 +30,17 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
 
 #include <link.h>
-#include <signal.h>
 
 #include "resolve.h"
 #include "syscall.h"
 #include "archdep.h"
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
+
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
@@ -274,11 +278,15 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int symidx)
 {
 	Elf_Addr *gotp = object->dyn.pltgot;
-	Elf_Addr *addr, ooff;
+	Elf_Addr ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	const elf_object_t *sobj;
-	sigset_t savedmask;
+	int64_t cookie = pcookie;
+	struct {
+		struct __kbind param;
+		Elf_Addr newval;
+	} buf;
 	int n;
 
 	sym = object->dyn.symtab;
@@ -295,24 +303,25 @@ _dl_bind(elf_object_t *object, int symidx)
 		*(volatile int *)0 = 0;		/* XXX */
 	}
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return ooff + this->st_value;
+	buf.newval = ooff + this->st_value;
 
-	addr = &gotp[n + symidx];
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (buf.newval);
 
-	/* if GOT is protected, allow the write */
-	if (object->got_size != 0) {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect(addr, sizeof(Elf_Addr), PROT_READ|PROT_WRITE);
+	buf.param.kb_addr = &gotp[n + symidx];
+	buf.param.kb_size = sizeof(Elf_Addr);
+
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("v0") = SYS_kbind;
+		register void *arg1 __asm("a0") = &buf;
+		register long  arg2 __asm("a1") = sizeof(buf);
+		register long  arg3 __asm("a2") = cookie;
+
+		__asm volatile("syscall" : "+r" (syscall_num)
+		    : "r" (arg1), "r" (arg2), "r" (arg3)
+		    : "v1", "a3", "memory");
 	}
 
-	*addr = ooff + this->st_value;
-
-	/* if GOT is (to be protected, change back to RO */
-	if (object->got_size != 0) {
-		_dl_mprotect(addr, sizeof (Elf_Addr), PROT_READ);
-		_dl_thread_bind_lock(1, &savedmask);
-	}
-
-	return *addr;
+	return (buf.newval);
 }

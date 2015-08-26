@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.53 2015/05/29 19:12:26 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.54 2015/08/26 02:04:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -33,16 +33,20 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/exec.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
+#include <machine/pal.h>
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
 
 #define	DT_PROC(n)	((n) - DT_LOPROC + DT_NUM)
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relasz)
@@ -207,14 +211,17 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int reloff)
 {
 	Elf_RelA *rela;
-	Elf_Addr *addr, ooff;
+	Elf_Addr ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	const elf_object_t *sobj;
-	sigset_t savedmask;
+	uint64_t cookie = pcookie;
+	struct {
+		struct __kbind param;
+		Elf_Addr newval;
+	} buf;
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
-	addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
 
 	sym = object->dyn.symtab;
 	sym += ELF64_R_SYM(rela->r_info);
@@ -228,24 +235,27 @@ _dl_bind(elf_object_t *object, int reloff)
 		*(volatile int *)0 = 0;		/* XXX */
 	}
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return ooff + this->st_value + rela->r_addend;
+	buf.newval = ooff + this->st_value + rela->r_addend;
 
-	/* if GOT is protected, allow the write */
-	if (object->got_size != 0) {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect(addr, sizeof(Elf_Addr), PROT_READ | PROT_WRITE);
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (buf.newval);
+
+	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
+	buf.param.kb_size = sizeof(Elf_Addr);
+
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("$0") /* v0 */ = SYS_kbind;
+		register void *arg1 __asm("$16") /* a0 */ = &buf;
+		register long  arg2 __asm("$17") /* a1 */ = sizeof(buf);
+		register long  arg3 __asm("$18") /* a2 */ = cookie;
+
+		__asm volatile( "call_pal %1" : "+r" (syscall_num)
+		    : "i" (PAL_OSF1_callsys), "r" (arg1), "r" (arg2),
+		    "r" (arg3) : "$19", "$20", "memory");
 	}
 
-	*addr = ooff + this->st_value + rela->r_addend;
-
-	/* if GOT is to be protected, change back to RO */
-	if (object->got_size != 0) {
-		_dl_mprotect(addr, sizeof(Elf_Addr), PROT_READ);
-		_dl_thread_bind_lock(1, &savedmask);
-	}
-
-	return *addr;
+	return (buf.newval);
 }
 
 /*
