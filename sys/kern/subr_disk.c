@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.189 2015/08/24 23:03:11 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.190 2015/08/26 15:36:46 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -923,6 +923,12 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 		} while (dk != NULL &&
 		    memcmp(nlp->d_uid, &uid, sizeof(nlp->d_uid)) == 0);
 	}
+
+	/* Preserve the disk size and RAW_PART values. */
+	DL_SETDSIZE(nlp, DL_GETDSIZE(olp));
+	npp = &nlp->d_partitions[RAW_PART];
+	DL_SETPOFFSET(npp, 0);
+	DL_SETPSIZE(npp, DL_GETDSIZE(nlp));
 
 	nlp->d_checksum = 0;
 	nlp->d_checksum = dkcksum(nlp);
