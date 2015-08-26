@@ -46,7 +46,7 @@ htinit(unsigned char *h, unsigned char *s, int inc)
 	}
 
  void
-hexdig_init_D2A(Void)
+__hexdig_init_D2A(Void)
 {
 #define USC (unsigned char *)
 	htinit(hexdig, USC "0123456789", 0x10);

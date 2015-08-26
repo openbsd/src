@@ -30,7 +30,6 @@ __lesf2
 __ltdf2
 __ltsf2
 __mcount
-__minbrk
 __modsi3
 __muldf3
 __mulsf3
@@ -45,7 +44,6 @@ __udivsi3
 __umodsi3
 __unorddf2
 __unordsf2
-_brk
 _bss_end__
 _fpgetmask
 _fpgetround
@@ -55,7 +53,6 @@ _fpsetround
 _fpsetsticky
 _mcount
 _memcpy
-_sbrk
 _softfloat_float32_eq
 _softfloat_float32_le
 _softfloat_float32_lt
@@ -67,10 +64,6 @@ _softfloat_float_exception_mask
 _softfloat_float_raise
 _softfloat_float_rounding_mode
 _stack
-_thread_sys__brk
-_thread_sys__sbrk
-_thread_sys_exect
-_thread_sys_syscall
 add64
 add96
 end
@@ -80,7 +73,6 @@ frexpl
 ldexpl
 le64
 lt64
-minbrk
 modfl
 mul32To64
 mul64By32To96

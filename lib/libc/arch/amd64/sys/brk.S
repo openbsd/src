@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.5 2015/06/17 03:04:50 uebayasi Exp $	*/
+/*	$OpenBSD: brk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -40,23 +40,18 @@
 #include "SYS.h"
 
 	.globl	_end
-	.globl	_C_LABEL(__minbrk)
-	.globl	_C_LABEL(minbrk)
 	.globl	__curbrk
 
-#ifdef WEAK_ALIAS
 WEAK_ALIAS(brk, _brk)
-#endif
 
 	.data
-_C_LABEL(minbrk):
-_C_LABEL(__minbrk):
+__minbrk:
 	.quad	_end
 	.text
 
-SYSENTRY(_brk)
+ENTRY(_brk)
 #ifdef __PIC__
-	movq	PIC_GOT(_C_LABEL(__minbrk)),%rdx
+	movq	PIC_GOT(__minbrk),%rdx
 	cmpq	%rdi,(%rdx)
 	jb	1f
 	movq	(%rdx),%rdi
@@ -71,9 +66,9 @@ err:
 	movq	PIC_GOT(CERROR),%rdx
 	jmp	*%rdx
 #else
-	cmpq	%rdi,_C_LABEL(__minbrk)(%rip)
+	cmpq	%rdi,__minbrk(%rip)
 	jb	1f
-	movq	_C_LABEL(__minbrk)(%rip),%rdi
+	movq	__minbrk(%rip),%rdi
 1:
 	SYSTRAP(break)
 	jc	err
@@ -83,4 +78,4 @@ err:
 err:
 	jmp	CERROR
 #endif
-SYSEXIT(_brk)
+END(_brk)

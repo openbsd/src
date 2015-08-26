@@ -1,8 +1,6 @@
 __ULtox_D2A
 __mcount
-__minbrk
 __strtorx
-_brk
 _fpgetmask
 _fpgetround
 _fpgetsticky
@@ -10,9 +8,3 @@ _fpsetmask
 _fpsetround
 _fpsetsticky
 _mcount
-_sbrk
-_thread_sys__brk
-_thread_sys__sbrk
-_thread_sys_exect
-_thread_sys_syscall
-minbrk

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.2 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.3 2015/08/26 01:54:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.9 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -38,18 +38,17 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(end)
-	.globl	_C_LABEL(__curbrk)
+	.globl	__curbrk
+	.hidden	__curbrk
 
-#ifdef WEAK_ALIAS
 WEAK_ALIAS(sbrk,_sbrk)
-#endif
 
 	.data
-_C_LABEL(__curbrk):
+__curbrk:
 	.long	_C_LABEL(end)
 	.text
 
-SYSENTRY(_sbrk)
+ENTRY(_sbrk)
 	mov	r4, r2
 #ifdef __PIC__
 	mova	L_GOT, r0
@@ -82,8 +81,8 @@ err:
 LSYS_break:	.long	SYS_break
 #ifdef __PIC__
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
-Lcurbrk:	.long	_C_LABEL(__curbrk)@GOT
+Lcurbrk:	.long	__curbrk@GOT
 #else
-Lcurbrk:	.long	_C_LABEL(__curbrk)
+Lcurbrk:	.long	__curbrk
 #endif
 	SET_ENTRY_SIZE(_sbrk)

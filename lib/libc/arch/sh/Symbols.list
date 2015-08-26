@@ -4,13 +4,6 @@ ___dtors
 ___dtors_end
 __floatundidf
 __mcount
-__minbrk
-_brk
-_sbrk
-_thread_sys__brk
-_thread_sys__sbrk
-_thread_sys_exect
-_thread_sys_syscall
 end
 fabsl
 frexpl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.5 2015/06/17 03:04:50 uebayasi Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -45,16 +45,15 @@
 
 	.globl	_end
 	.globl	__curbrk
+	.hidden	__curbrk
 
-#ifdef WEAK_ALIAS
 WEAK_ALIAS(sbrk, _sbrk)
-#endif
 
 	.data
 __curbrk:	.quad	_end
 	.text
 
-SYSENTRY(_sbrk)
+ENTRY(_sbrk)
 #ifdef __PIC__
 	movq	PIC_GOT(__curbrk),%rdx
 	movslq  %edi, %rax
@@ -82,4 +81,4 @@ err:
 err:
 	jmp	CERROR
 #endif
-SYSEXIT(_sbrk)
+END(_sbrk)

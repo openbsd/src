@@ -876,6 +876,8 @@ tens[] = {
 #endif
 		};
 
+#ifdef NO_STRING_H
+
  char *
 #ifdef KR_headers
 strcp_D2A(a, b) char *a; char *b;
@@ -887,8 +889,6 @@ strcp_D2A(char *a, CONST char *b)
 		a++;
 	return a;
 	}
-
-#ifdef NO_STRING_H
 
  Char *
 #ifdef KR_headers

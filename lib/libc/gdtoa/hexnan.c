@@ -62,7 +62,7 @@ hexnan( CONST char **sp, FPI *fpi, ULong *x0)
 	int havedig, hd0, i, nbits;
 
 	if (!hexdig['0'])
-		hexdig_init_D2A();
+		__hexdig_init_D2A();
 	nbits = fpi->nbits;
 	x = x0 + (nbits >> kshift);
 	if (nbits & kmask)

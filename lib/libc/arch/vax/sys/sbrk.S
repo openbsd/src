@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.9 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,17 +32,16 @@
 
 
 	.globl	_end
-	.globl	_C_LABEL(minbrk)
 	.globl	__curbrk
 
 	.data
-_C_LABEL(minbrk):
-	.long	_end
 __curbrk:
 	.long	_end
 	.text
 
-ENTRY(sbrk, R3)
+WEAK_ALIAS(sbrk,_sbrk)
+
+ENTRY(_sbrk, R3)
 	addl3	__curbrk,4(%ap),-(%sp)
 	pushl	$1
 	movl	%ap,%r3

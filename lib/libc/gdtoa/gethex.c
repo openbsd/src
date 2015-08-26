@@ -67,7 +67,7 @@ gethex( CONST char **sp, FPI *fpi, Long *exp, Bigint **bp, int sign)
 #endif
 
 	if (!hexdig['0'])
-		hexdig_init_D2A();
+		__hexdig_init_D2A();
 	*bp = 0;
 	havedig = 0;
 	s0 = *(CONST unsigned char **)sp + 2;

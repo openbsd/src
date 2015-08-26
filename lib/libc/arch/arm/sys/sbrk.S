@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.5 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -36,19 +36,14 @@
 
 	.globl	_C_LABEL(end)
 
-#ifdef WEAK_ALIAS
 WEAK_ALIAS(sbrk, _sbrk)
-#endif
 
 	.data
 	.align	0
-	.globl	CURBRK
-	.type	CURBRK,#object
-	.globl	minbrk
-	.type	minbrk,#object
-CURBRK:
-	.word	_C_LABEL(end)
-_ASM_LABEL(minbrk):
+	.globl	__curbrk
+	.type	__curbrk,#object
+	.hidden	__curbrk
+__curbrk:
 	.word	_C_LABEL(end)
 
 /*
@@ -88,4 +83,4 @@ SYSENTRY(_sbrk)
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)
 #endif
 .Lcurbrk:
-	.word	PIC_SYM(CURBRK, GOT)
+	.word	PIC_SYM(__curbrk, GOT)

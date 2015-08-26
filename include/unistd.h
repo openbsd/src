@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.97 2014/12/13 20:42:41 tedu Exp $ */
+/*	$OpenBSD: unistd.h,v 1.98 2015/08/26 01:54:08 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -489,7 +489,6 @@ int	 closefrom(int);
 int	 crypt_checkpass(const char *, const char *);
 int	 crypt_newhash(const char *, const char *, char *, size_t);
 void	 endusershell(void);
-int	 exect(const char *, char * const *, char * const *);
 char	*fflagstostr(u_int32_t);
 int	 getdomainname(char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,2)));

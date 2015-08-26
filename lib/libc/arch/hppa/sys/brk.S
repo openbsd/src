@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.15 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: brk.S,v 1.16 2015/08/26 01:54:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -32,18 +32,20 @@
 	.import	end, data
 
 	.data
-	.export	minbrk, data
-minbrk
+	.export	__minbrk, data
+__minbrk
 	.long	end
 
-SYSENTRY(brk)
+WEAK_ALIAS(brk, _brk)
+
+LEAF_ENTRY(_brk)
 #ifdef __PIC__
-	addil	LT%minbrk, r19
-	ldw	RT%minbrk(r1), t1
+	addil	LT%__minbrk, r19
+	ldw	RT%__minbrk(r1), t1
 	ldw	0(t1), t2
 #else
-	ldil	L%minbrk, t1
-	ldw	R%minbrk(t1), t2
+	ldil	L%__minbrk, t1
+	ldw	R%__minbrk(t1), t2
 #endif
 	sub,<<	t2, arg0, r0
 	copy	t2, arg0
@@ -62,7 +64,7 @@ SYSENTRY(brk)
 	bv	r0(rp)
 	stw	arg0, R%__curbrk(t1)
 #endif
-SYSEXIT(brk)
+EXIT(_brk)
 
 	.end
 

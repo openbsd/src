@@ -1,4 +1,4 @@
-/*	$OpenBSD: devname.c,v 1.10 2015/07/14 19:05:52 millert Exp $ */
+/*	$OpenBSD: devname.c,v 1.11 2015/08/26 01:54:09 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,16 +76,15 @@ devname_nodb(dev_t dev, mode_t type)
  * type of the file (mode & S_IFMT), the latter is the st_rdev field.
  * Note that the structure may contain padding.
  */
-struct {
-	mode_t type;
-	dev_t dev;
-} bkey;
-
 char *
 devname(dev_t dev, mode_t type)
 {
 	static DB *db;
 	static bool failure;
+	struct {
+		mode_t type;
+		dev_t dev;
+	} bkey;
 	DBT data, key;
 	char *name = NULL;
 

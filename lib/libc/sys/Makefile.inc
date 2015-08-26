@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.127 2015/08/25 19:58:04 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.128 2015/08/26 01:54:09 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -6,7 +6,7 @@
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/sys ${LIBCSRCDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S \
+SRCS+=	Ovfork.S brk.S cerror.S fork.S \
 	sbrk.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S tfork_thread.S
 
@@ -235,7 +235,6 @@ MLINKS+=clock_gettime.2 clock_getres.2
 MLINKS+=clock_gettime.2 clock_settime.2
 MLINKS+=dup.2 dup2.2
 MLINKS+=dup.2 dup3.2
-MLINKS+=execve.2 exect.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
 MLINKS+=fsync.2 fdatasync.2
 MLINKS+=getgid.2 getegid.2

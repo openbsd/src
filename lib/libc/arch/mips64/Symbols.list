@@ -5,17 +5,12 @@ __pack_t
 __strtorQ
 __thenan_tf
 __unpack_t
-_brk
 _fbss
 _flush_cache
 _ftext
 _gp
 _mcount
-_thread_sys_exect
-_thread_sys_syscall
 cacheflush
-curbrk
 end
 get_fpc_csr
-minbrk
 set_fpc_csr

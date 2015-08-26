@@ -5,6 +5,4 @@ __fixunsdfsi
 __mcount
 __strtorx
 __udivsi3
-_thread_sys_syscall
 mcount
-minbrk

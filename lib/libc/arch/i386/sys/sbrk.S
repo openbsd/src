@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.9 2012/08/22 17:19:34 pascal Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,6 +35,7 @@
 
 	.globl	_end
 	.globl	__curbrk
+	.hidden	__curbrk
 
 	.data
 __curbrk:	.long	_end

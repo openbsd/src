@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.4 2015/08/26 01:54:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
@@ -38,19 +38,22 @@
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(__curbrk)
+	.globl	__curbrk
+	.hidden	__curbrk
 	.globl	_C_LABEL(_end)
 
 	.data
 	.align	8
-_C_LABEL(__curbrk):
+__curbrk:
 	.xword	_C_LABEL(_end)
 	.text
 
-ENTRY(sbrk)
+WEAK_ALIAS(sbrk, _sbrk)
+
+ENTRY(_sbrk)
 #ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
-	set	_C_LABEL(__curbrk), %o3
+	set	__curbrk, %o3
 	ldx	[%o5 + %o3], %o2
 	ldx	[%o2], %o3			/* %o3 = old break */
 	add	%o3, %o0, %o4			/* %o4 = new break */
@@ -64,8 +67,8 @@ ENTRY(sbrk)
 	retl					/* and update curbrk */
 	 stx	%o4, [%o2]
 #else
-	sethi	%hi(_C_LABEL(__curbrk)), %o2
-	ldx	[%o2 + %lo(_C_LABEL(__curbrk))], %o3	/* %o3 = old break */
+	sethi	%hi(__curbrk), %o2
+	ldx	[%o2 + %lo(__curbrk)], %o3	/* %o3 = old break */
 	add	%o3, %o0, %o4			/* %o4 = new break */
 	mov	%o4, %o0			/* copy for syscall */
 	mov	SYS_break, %g1
@@ -75,5 +78,5 @@ ENTRY(sbrk)
 	ERROR()
 1:
 	retl					/* and update curbrk */
-	 stx	%o4, [%o2 + %lo(_C_LABEL(__curbrk))]
+	 stx	%o4, [%o2 + %lo(__curbrk)]
 #endif

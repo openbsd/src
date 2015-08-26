@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.9 2012/08/22 17:19:34 pascal Exp $ */
+/*	$OpenBSD: brk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,18 +34,18 @@
 #include "SYS.h"
 
 	.globl	_end
-	.globl	minbrk
 	.globl	__curbrk
 
 	.data
-minbrk:	.long	_end
+__minbrk:
+	.long	_end
 	.text
 
 ENTRY(brk)
 #ifdef __PIC__
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
-	movl	PIC_GOT(minbrk),%edx
+	movl	PIC_GOT(__minbrk),%edx
 	PIC_EPILOGUE
 	cmpl	%ecx,(%edx)
 	jb	1f
@@ -70,9 +70,9 @@ err:
 #else
 
 	movl	4(%esp),%ecx
-	cmpl	%ecx,minbrk
+	cmpl	%ecx,__minbrk
 	jb	1f
-	movl	minbrk,%ecx
+	movl	__minbrk,%ecx
 	movl	%ecx,4(%esp)
 1:
 	movl	$(SYS_break),%eax

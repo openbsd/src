@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.14 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.15 2015/08/26 01:54:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -35,7 +35,9 @@
 __curbrk
 	.long	end
 
-SYSENTRY(sbrk)
+WEAK_ALIAS(sbrk, _sbrk)
+
+LEAF_ENTRY(_sbrk)
 #ifdef __PIC__
 	addil	LT%__curbrk, r19
 	ldw	RT%__curbrk(r1), t1
@@ -61,7 +63,7 @@ SYSENTRY(sbrk)
 	bv	r0(rp)
 	stw	arg0, 0(t1)
 
-SYSEXIT(sbrk)
+EXIT(_sbrk)
 
 	.end
 

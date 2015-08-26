@@ -9,11 +9,8 @@ __remlu
 __remq
 __remqu
 _mcount
-_thread_sys_exect
-_thread_sys_syscall
 fabsl
 frexpl
 ldexpl
 mcount
-minbrk
 modfl

@@ -3,13 +3,8 @@ __floatundidf
 __plt_end
 __plt_start
 _mcount
-_thread_sys_brk
-_thread_sys_exect
-_thread_sys_sbrk
-_thread_sys_syscall
 end
 fabsl
 frexpl
 ldexpl
-minbrk
 modfl

@@ -82,8 +82,4 @@ __ftoul
 __plt_end
 __plt_start
 __strtorQ
-_brk
 _mcount
-_thread_sys_exect
-_thread_sys_syscall
-minbrk

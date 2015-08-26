@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.20 2015/04/07 01:27:06 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.21 2015/08/26 01:54:09 guenther Exp $
  */
 
 #include <machine/asm.h>
@@ -58,7 +58,6 @@
 
 #define CERROR		_C_LABEL(__cerror)
 #define _CERROR		_C_LABEL(___cerror)
-#define CURBRK		_C_LABEL(__curbrk)
 
 /* perform a syscall */
 #define	_SYSCALL_NOERROR(x,y)				\

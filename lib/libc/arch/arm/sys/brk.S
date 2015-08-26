@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.5 2012/08/22 17:19:34 pascal Exp $	*/
+/*	$OpenBSD: brk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.7 2003/12/26 11:23:44 martin Exp $	*/
 
 /*-
@@ -35,23 +35,20 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(end)
-	.globl	CURBRK
+	.globl	__curbrk
 
-#ifdef WEAK_ALIAS
 WEAK_ALIAS(brk, _brk)
-#endif
 
 	.data
 	.align	0
-	.globl	_C_LABEL(__minbrk)
-	.type	_C_LABEL(__minbrk),#object
-_C_LABEL(__minbrk):
+	.type	__minbrk,#object
+__minbrk:
 	.word	_C_LABEL(end)
 
 /*
  * Change the data segment size
  */
-SYSENTRY(_brk)
+ENTRY(_brk)
 #ifdef __PIC__
 	/* Setup the GOT */
 	ldr	r3, .Lgot
@@ -94,6 +91,6 @@ SYSENTRY(_brk)
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)
 #endif
 .Lminbrk:
-	.word	PIC_SYM(_C_LABEL(__minbrk), GOT)
+	.word	PIC_SYM(__minbrk, GOT)
 .Lcurbrk:
-	.word	PIC_SYM(CURBRK, GOT)
+	.word	PIC_SYM(__curbrk, GOT)
