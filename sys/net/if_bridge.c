@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.259 2015/08/24 21:28:47 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.260 2015/08/26 09:40:31 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1537,7 +1537,7 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			return;
 	}
 
-	m1 = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+	m1 = bridge_m_dup(m);
 	if (m1 == NULL) {
 		sc->sc_if.if_oerrors++;
 		return;
