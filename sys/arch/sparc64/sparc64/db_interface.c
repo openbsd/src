@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.36 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.37 2015/08/26 13:59:24 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -295,33 +295,6 @@ kdb_trap(type, tf)
 		ddb_regs.ddb_fpstate = *fpproc->p_md.md_fpstate;
 		loadfpstate(fpproc->p_md.md_fpstate);
 	}
-	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
-/*	if (tf->tf_tstate & TSTATE_PRIV) { */
-	
-#if 0
-	/* make sure this is not causing ddb problems. */
-	if (tf->tf_out[6] & 1) {
-		if ((unsigned)(tf->tf_out[6] + BIAS) > (unsigned)KERNBASE)
-			ddb_regs.ddb_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
-		else
-			copyin((caddr_t)(tf->tf_out[6] + BIAS), &ddb_regs.ddb_fr, sizeof(struct frame64));
-	} else {
-		struct frame32 tfr;
-		
-		/* First get a local copy of the frame32 */
-		if ((unsigned)(tf->tf_out[6]) > (unsigned)KERNBASE)
-			tfr = *(struct frame32 *)tf->tf_out[6];
-		else
-			copyin((caddr_t)(tf->tf_out[6]), &tfr, sizeof(struct frame32));
-		/* Now copy each field from the 32-bit value to the 64-bit value */
-		for (i=0; i<8; i++)
-			ddb_regs.ddb_fr.fr_local[i] = tfr.fr_local[i];
-		for (i=0; i<6; i++)
-			ddb_regs.ddb_fr.fr_arg[i] = tfr.fr_arg[i];
-		ddb_regs.ddb_fr.fr_fp = (long)tfr.fr_fp;
-		ddb_regs.ddb_fr.fr_pc = tfr.fr_pc;
-	}
-#endif
 
 	s = splhigh();
 	db_active++;
