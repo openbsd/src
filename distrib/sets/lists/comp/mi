@@ -1686,7 +1686,6 @@
 ./usr/share/man/man2/dup2.2
 ./usr/share/man/man2/dup3.2
 ./usr/share/man/man2/errno.2
-./usr/share/man/man2/exect.2
 ./usr/share/man/man2/execve.2
 ./usr/share/man/man2/faccessat.2
 ./usr/share/man/man2/fchdir.2
