@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.16 2015/05/29 00:33:37 uebayasi Exp $	*/
+/*	$OpenBSD: bio.c,v 1.17 2015/08/26 22:28:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -135,7 +135,7 @@ bio_unregister(struct device *dev)
 
 		if (dev == bm->bm_dev) {
 			LIST_REMOVE(bm, bm_link);
-			free(bm, M_DEVBUF, 0);
+			free(bm, M_DEVBUF, sizeof(*bm));
 		}
 	}
 }
