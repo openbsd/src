@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.31 2015/08/24 21:52:12 rzalamena Exp $	*/
+/*	$OpenBSD: worm.c,v 1.32 2015/08/26 01:25:57 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 			process(lastch);
 		} else {
 			/* Check for timeout. */
-			clock_gettime(CLOCK_UPTIME, &tn);
+			clock_gettime(CLOCK_MONOTONIC, &tn);
 			if (timespeccmp(&t, &tn, <=)) {
 				t = tn;
 				t.tv_sec += 1;
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 				continue;
 
 			/* Update using clock_gettime(), tn is too old now. */
-			clock_gettime(CLOCK_UPTIME, &t);
+			clock_gettime(CLOCK_MONOTONIC, &t);
 			t.tv_sec += 1;
 		}
 	}
