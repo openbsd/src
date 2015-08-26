@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.17 2015/08/22 20:18:50 deraadt Exp $
+.\" $OpenBSD: tame.2,v 1.18 2015/08/26 05:20:06 doug Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2015 $
+.Dd $Mdocdate: August 26 2015 $
 .Dt TAME 2
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .In sys/tame.h
 .Ft int
-.Fn tame "int flags" "char *paths[]"
+.Fn tame "int flags" "const char *paths[]"
 .Sh DESCRIPTION
 The current process is forced into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory

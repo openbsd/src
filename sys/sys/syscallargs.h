@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.169 2015/08/22 20:18:50 deraadt Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.170 2015/08/26 05:20:06 doug Exp $	*/
 
 /*
  * System call argument lists.
@@ -546,7 +546,7 @@ struct sys_chflagsat_args {
 
 struct sys_tame_args {
 	syscallarg(int) flags;
-	syscallarg(char **) paths;
+	syscallarg(const char **) paths;
 };
 
 struct sys_ppoll_args {

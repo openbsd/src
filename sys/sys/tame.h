@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.4 2015/08/22 20:18:50 deraadt Exp $	*/
+/*	$OpenBSD: tame.h,v 1.5 2015/08/26 05:20:06 doug Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -97,7 +97,7 @@ struct whitepaths {
 
 #else /* _KERNEL */
 
-int	tame(int, char **);
+int	tame(int, const char **);
 
 #endif /* _KERNEL */
 
