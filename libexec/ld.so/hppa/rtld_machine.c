@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.29 2014/04/16 10:52:59 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.30 2015/08/27 04:10:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -34,10 +34,13 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/tree.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
+
+#include <machine/vmparam.h>	/* SYSCALLGATE */
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 #include <string.h>
 
 #include "syscall.h"
@@ -56,6 +59,8 @@ struct hppa_plabel {
 SPLAY_HEAD(_dl_md_plabels, hppa_plabel) _dl_md_plabel_root;
 
 void	_hppa_dl_set_dp(Elf_Addr *dp);	/* from ldasm.S */
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 static __inline int
 _dl_md_plcmp(hppa_plabel_t *a, hppa_plabel_t *b)
@@ -431,11 +436,15 @@ _dl_bind(elf_object_t *object, int reloff)
 {
 	const elf_object_t *sobj;
 	const Elf_Sym *sym, *this;
-	Elf_Addr *addr, ooff;
+	Elf_Addr ooff;
 	const char *symn;
 	Elf_Addr value;
 	Elf_RelA *rela;
-	sigset_t savedmask;
+	uint64_t cookie = pcookie;
+	struct {
+		struct __kbind param;
+		uint64_t newval;
+	} buf;
 
 	rela = (Elf_RelA *)object->dyn.jmprel + reloff;
 
@@ -443,7 +452,6 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
@@ -455,27 +463,27 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	value = ooff + this->st_value + rela->r_addend;
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return ((uint64_t)value << 32) | (Elf_Addr)sobj->dyn.pltgot;
+	buf.newval = ((uint64_t)value << 32) | (Elf_Addr)sobj->dyn.pltgot;
 
-	/* if PLT+GOT is protected, allow the write */
-	if (object->got_size != 0) {
-		_dl_thread_bind_lock(0, &savedmask);
-		/* mprotect the actual modified region, not the whole plt */
-		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 2,
-		    PROT_READ|PROT_WRITE|PROT_EXEC);
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (buf.newval);
+
+	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
+	buf.param.kb_size = sizeof(uint64_t);
+
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long r1 __asm__("r1") = SYSCALLGATE;
+		register void *arg0 __asm__("r26") = &buf;
+		register long arg1 __asm__("r25") = sizeof(buf);
+		register long arg2 __asm__("r24") = 0xffffffff & (cookie >> 32);
+		register long arg3 __asm__("r23") = 0xffffffff & cookie;
+		__asm__ __volatile__ ("ble 4(%%sr7, %%r1) ! ldi %0, %%r22"
+		    :
+		    : "i" (SYS_kbind), "r" (r1), "r"(arg0), "r"(arg1),
+		      "r"(arg2), "r"(arg3)
+		    : "r22", "r28", "r29", "cc", "memory");
 	}
 
-	addr[0] = value;
-	addr[1] = (Elf_Addr)sobj->dyn.pltgot;
-
-	/* if PLT is (to be protected, change back to RO */
-	if (object->got_size != 0) {
-		/* mprotect the actual modified region, not the whole plt */
-		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
-		    PROT_READ|PROT_EXEC);
-		_dl_thread_bind_lock(1, &savedmask);
-	}
-
-	return ((uint64_t)addr[0] << 32) | addr[1];
+	return (buf.newval);
 }
