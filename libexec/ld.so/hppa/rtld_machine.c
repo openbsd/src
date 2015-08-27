@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.30 2015/08/27 04:10:35 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.31 2015/08/27 20:55:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -391,8 +391,16 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		got[-2] = (Elf_Addr)&_dl_bind_start;
 		got[-1] = ltp;
 		/*
+		 * We need the real address of the trampoline.  Get it
+		 * from the function descriptor if that's what we got.
+		 */
+		if (got[-2] & 2) {
+			hppa_plabel_t *p = (hppa_plabel_t *)(got[-2] & ~2);
+			got[-2] = p->pc;
+		}
+		/*
 		 * Even though we didn't modify any instructions it
-		 * seems we still need to syncronize the caches.
+		 * seems we still need to synchronize the caches.
 		 * There may be instructions in the same cache line
 		 * and they end up being corrupted otherwise.
 		 */
