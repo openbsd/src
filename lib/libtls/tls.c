@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.13 2015/08/22 14:20:53 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.14 2015/08/27 14:34:46 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -233,6 +233,7 @@ tls_reset(struct tls *ctx)
 	ctx->ssl_ctx = NULL;
 
 	ctx->socket = -1;
+	ctx->state = 0;
 
 	ctx->err = 0;
 	free(ctx->errmsg);

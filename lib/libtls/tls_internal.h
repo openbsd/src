@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.12 2015/03/31 12:21:27 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.13 2015/08/27 14:34:46 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -51,11 +51,13 @@ struct tls_config {
 #define TLS_CLIENT		(1 << 0)
 #define TLS_SERVER		(1 << 1)
 #define TLS_SERVER_CONN		(1 << 2)
-#define TLS_CONNECTING		(1 << 3)
+
+#define TLS_STATE_CONNECTING	(1 << 0)
 
 struct tls {
 	struct tls_config *config;
-	uint64_t flags;
+	uint32_t flags;
+	uint32_t state;
 
 	int err;
 	char *errmsg;
