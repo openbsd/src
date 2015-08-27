@@ -827,7 +827,7 @@ int
 afile_seek(struct afile *f, off_t pos)
 {
 	pos += f->startpos;
-	if (f->endpos >= 0 && pos > f->endpos) {
+	if (f->endpos >= 0 && pos > f->endpos && !f->par.sig) {
 		log_puts(f->path);
 		log_puts(": attempt to seek outside file boundaries\n");
 		return 0;
