@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.49 2015/08/19 17:58:32 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.50 2015/08/27 19:11:37 gsoares Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -435,6 +435,7 @@ fatalx(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	vwarnx(fmt, ap);
+	va_end(ap);
 	cleanup();
 	exit(EXIT_FAILURE);
 }
