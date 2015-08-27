@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.60 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: nlist.c,v 1.61 2015/08/27 04:37:58 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,10 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <a.out.h>		/* pulls in nlist.h */
-
-#ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
-#endif
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
@@ -51,7 +48,6 @@ int	__fdnlist(int, struct nlist *);
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
-#ifdef _NLIST_DO_ELF
 /*
  * __elf_is_okay__ - Determine if ehdr really
  * is ELF and valid for the target platform.
@@ -276,7 +272,6 @@ elf_done:
 		munmap(strtab, symstrsize);
 	return (nent);
 }
-#endif /* _NLIST_DO_ELF */
 
 int
 nlist(const char *name, struct nlist *list)
