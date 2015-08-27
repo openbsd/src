@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.145 2015/08/24 15:37:03 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.146 2015/08/27 20:56:16 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -119,14 +119,6 @@ u_int32_t	tcp_now = 1;
 #ifndef TCB_INITIAL_HASH_SIZE
 #define	TCB_INITIAL_HASH_SIZE	128
 #endif
-
-/* syn hash parameters */
-#define	TCP_SYN_HASH_SIZE	293
-#define	TCP_SYN_BUCKET_SIZE	35
-int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
-int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
-int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
-struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 
 int tcp_reass_limit = NMBCLUSTERS / 2; /* hardlimit for tcpqe_pool */
 #ifdef TCP_SACK
