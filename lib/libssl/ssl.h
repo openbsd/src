@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.92 2015/07/19 06:31:32 doug Exp $ */
+/* $OpenBSD: ssl.h,v 1.93 2015/08/27 06:21:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1675,10 +1675,6 @@ const char *SSL_get_version(const SSL *s);
 
 /* This sets the 'default' SSL version that SSL_new() will create */
 int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
-
-const SSL_METHOD *SSLv3_method(void);		/* SSLv3 */
-const SSL_METHOD *SSLv3_server_method(void);	/* SSLv3 */
-const SSL_METHOD *SSLv3_client_method(void);	/* SSLv3 */
 
 const SSL_METHOD *SSLv23_method(void);		/* SSLv3 or TLSv1.* */
 const SSL_METHOD *SSLv23_server_method(void);	/* SSLv3 or TLSv1.* */

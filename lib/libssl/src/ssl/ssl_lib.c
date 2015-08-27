@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.105 2015/07/19 20:32:18 doug Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.106 2015/08/27 06:21:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2549,8 +2549,6 @@ ssl_version_string(int ver)
 		return (SSL_TXT_DTLS1_BAD);
 	case DTLS1_VERSION:
 		return (SSL_TXT_DTLS1);
-	case SSL3_VERSION:
-		return (SSL_TXT_SSLV3);
 	case TLS1_VERSION:
 		return (SSL_TXT_TLSV1);
 	case TLS1_1_VERSION:
@@ -2591,9 +2589,6 @@ ssl_max_server_version(SSL *s)
 	if ((s->options & SSL_OP_NO_TLSv1) == 0 &&
 	    max_version >= TLS1_VERSION)
 		return (TLS1_VERSION);
-	if ((s->options & SSL_OP_NO_SSLv3) == 0 &&
-	    max_version >= SSL3_VERSION)
-		return (SSL3_VERSION);
 
 	return (0);
 }

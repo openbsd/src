@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.99 2015/07/19 06:23:51 doug Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.100 2015/08/27 06:21:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2112,7 +2112,7 @@ ssl3_clear(SSL *s)
 	s->s3->total_renegotiations = 0;
 	s->s3->num_renegotiations = 0;
 	s->s3->in_read_app_data = 0;
-	s->version = SSL3_VERSION;
+	s->version = TLS1_VERSION;
 
 	free(s->next_proto_negotiated);
 	s->next_proto_negotiated = NULL;

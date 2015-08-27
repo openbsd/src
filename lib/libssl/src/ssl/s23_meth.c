@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_meth.c,v 1.19 2015/07/19 07:30:06 doug Exp $ */
+/* $OpenBSD: s23_meth.c,v 1.20 2015/08/27 06:21:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,8 +106,6 @@ SSLv23_method(void)
 static const SSL_METHOD *
 ssl23_get_method(int ver)
 {
-	if (ver == SSL3_VERSION)
-		return (SSLv3_method());
 	if (ver == TLS1_VERSION)
 		return (TLSv1_method());
 	if (ver == TLS1_1_VERSION)

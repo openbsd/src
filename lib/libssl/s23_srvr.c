@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_srvr.c,v 1.41 2015/07/19 07:30:06 doug Exp $ */
+/* $OpenBSD: s23_srvr.c,v 1.42 2015/08/27 06:21:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,8 +194,6 @@ SSLv23_server_method(void)
 static const SSL_METHOD *
 ssl23_get_server_method(int ver)
 {
-	if (ver == SSL3_VERSION)
-		return (SSLv3_server_method());
 	if (ver == TLS1_VERSION)
 		return (TLSv1_server_method());
 	if (ver == TLS1_1_VERSION)
@@ -357,16 +355,12 @@ ssl23_get_client_hello(SSL *s)
 						/* type=2; */ /* done later to survive restarts */
 						s->state = SSL23_ST_SR_CLNT_HELLO_B;
 					} else if (!(s->options & SSL_OP_NO_SSLv3)) {
-						s->version = SSL3_VERSION;
-						/* type=2; */
-						s->state = SSL23_ST_SR_CLNT_HELLO_B;
+						type = 1;
 					} else if (!(s->options & SSL_OP_NO_SSLv2)) {
 						type = 1;
 					}
 				} else if (!(s->options & SSL_OP_NO_SSLv3)) {
-					s->version = SSL3_VERSION;
-					/* type=2; */
-					s->state = SSL23_ST_SR_CLNT_HELLO_B;
+					type = 1;
 				} else if (!(s->options & SSL_OP_NO_SSLv2))
 					type = 1;
 
@@ -415,16 +409,9 @@ ssl23_get_client_hello(SSL *s)
 				} else if (!(s->options & SSL_OP_NO_TLSv1)) {
 					s->version = TLS1_VERSION;
 					type = 3;
-				} else if (!(s->options & SSL_OP_NO_SSLv3)) {
-					s->version = SSL3_VERSION;
-					type = 3;
 				}
 			} else {
-				/* client requests SSL 3.0 */
-				if (!(s->options & SSL_OP_NO_SSLv3)) {
-					s->version = SSL3_VERSION;
-					type = 3;
-				} else if (!(s->options & SSL_OP_NO_TLSv1)) {
+				if (!(s->options & SSL_OP_NO_TLSv1)) {
 					/* we won't be able to use TLS of course,
 					 * but this will send an appropriate alert */
 					s->version = TLS1_VERSION;
@@ -587,10 +574,8 @@ ssl23_get_client_hello(SSL *s)
 			s->method = TLSv1_2_server_method();
 		else if (s->version == TLS1_1_VERSION)
 			s->method = TLSv1_1_server_method();
-		else if (s->version == TLS1_VERSION)
-			s->method = TLSv1_server_method();
 		else
-			s->method = SSLv3_server_method();
+			s->method = TLSv1_server_method();
 		s->handshake_func = s->method->ssl_accept;
 	}
 

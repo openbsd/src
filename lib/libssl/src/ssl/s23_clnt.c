@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.40 2015/07/19 07:30:06 doug Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.41 2015/08/27 06:21:15 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -196,8 +196,6 @@ SSLv23_client_method(void)
 static const SSL_METHOD *
 ssl23_get_client_method(int ver)
 {
-	if (ver == SSL3_VERSION)
-		return (SSLv3_client_method());
 	if (ver == TLS1_VERSION)
 		return (TLSv1_client_method());
 	if (ver == TLS1_1_VERSION)
@@ -331,7 +329,7 @@ ssl23_client_hello(SSL *s)
 	 * TLS1>=1, it would be insufficient to pass SSL_NO_TLSv1, the
 	 * answer is SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2.
 	 */
-	mask = SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3;
+	mask = SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1;
 	version = TLS1_2_VERSION;
 
 	if ((options & SSL_OP_NO_TLSv1_2) && (options & mask) != mask)
@@ -340,9 +338,6 @@ ssl23_client_hello(SSL *s)
 	if ((options & SSL_OP_NO_TLSv1_1) && (options & mask) != mask)
 		version = TLS1_VERSION;
 	mask &= ~SSL_OP_NO_TLSv1;
-	if ((options & SSL_OP_NO_TLSv1) && (options & mask) != mask)
-		version = SSL3_VERSION;
-	mask &= ~SSL_OP_NO_SSLv3;
 
 	buf = (unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
@@ -357,9 +352,6 @@ ssl23_client_hello(SSL *s)
 		} else if (version == TLS1_VERSION) {
 			version_major = TLS1_VERSION_MAJOR;
 			version_minor = TLS1_VERSION_MINOR;
-		} else if (version == SSL3_VERSION) {
-			version_major = SSL3_VERSION_MAJOR;
-			version_minor = SSL3_VERSION_MINOR;
 		} else {
 			SSLerr(SSL_F_SSL23_CLIENT_HELLO, SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return (-1);
@@ -494,11 +486,7 @@ ssl23_get_server_hello(SSL *s)
 	    (p[0] == SSL3_RT_ALERT && p[3] == 0 && p[4] == 2))) {
 		/* we have sslv3 or tls1 (server hello or alert) */
 
-		if ((p[2] == SSL3_VERSION_MINOR) &&
-		    !(s->options & SSL_OP_NO_SSLv3)) {
-			s->version = SSL3_VERSION;
-			s->method = SSLv3_client_method();
-		} else if ((p[2] == TLS1_VERSION_MINOR) &&
+		if ((p[2] == TLS1_VERSION_MINOR) &&
 		    !(s->options & SSL_OP_NO_TLSv1)) {
 			s->version = TLS1_VERSION;
 			s->method = TLSv1_client_method();
