@@ -87,10 +87,6 @@ cipher_get_put_tests(void)
 	failed |= get_put_test("SSLv23_client", SSLv23_client_method());
 	failed |= get_put_test("SSLv23_server", SSLv23_server_method());
 
-	failed |= get_put_test("SSLv3", SSLv3_method());
-	failed |= get_put_test("SSLv3_client", SSLv3_client_method());
-	failed |= get_put_test("SSLv3_server", SSLv3_server_method());
-
 	failed |= get_put_test("TLSv1", TLSv1_method());
 	failed |= get_put_test("TLSv1_client", TLSv1_client_method());
 	failed |= get_put_test("TLSv1_server", TLSv1_server_method());
