@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.90 2015/05/07 01:55:44 jsg Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.91 2015/08/27 18:59:58 deraadt Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -140,9 +140,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	struct vattr vattr;
 	int oldflags, result;
 	struct partinfo pi;
-	u_quad_t used_vnode_size;
-
-	used_vnode_size = (u_quad_t)0;	/* XXX gcc -Wuninitialized */
+	u_quad_t used_vnode_size = 0;
 
 	/* first get a lock on the uvn. */
 	while (uvn->u_flags & UVM_VNODE_BLOCKED) {
