@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.79 2015/07/17 07:04:41 doug Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.80 2015/08/27 14:16:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -698,7 +698,7 @@ tls1_enc(SSL *s, int send)
 	if (aead) {
 		unsigned char ad[13], *in, *out, nonce[16];
 		unsigned nonce_used;
-		ssize_t n;
+		size_t out_len;
 
 		if (SSL_IS_DTLS(s)) {
 			dtls1_build_sequence_number(ad, seq,
@@ -753,11 +753,11 @@ tls1_enc(SSL *s, int send)
 			ad[12] = len & 0xff;
 
 			if (!EVP_AEAD_CTX_seal(&aead->ctx,
-			    out + eivlen, &n, len + aead->tag_len, nonce,
+			    out + eivlen, &out_len, len + aead->tag_len, nonce,
 			    nonce_used, in + eivlen, len, ad, sizeof(ad)))
 				return -1;
-			if (n >= 0 && aead->variable_nonce_in_record)
-				n += aead->variable_nonce_len;
+			if (aead->variable_nonce_in_record)
+				out_len += aead->variable_nonce_len;
 		} else {
 			/* receive */
 			size_t len = rec->length;
@@ -786,17 +786,15 @@ tls1_enc(SSL *s, int send)
 			ad[11] = len >> 8;
 			ad[12] = len & 0xff;
 
-			if (!EVP_AEAD_CTX_open(&aead->ctx, out, &n, len, nonce,
-			    nonce_used, in, len + aead->tag_len, ad,
+			if (!EVP_AEAD_CTX_open(&aead->ctx, out, &out_len, len,
+			    nonce, nonce_used, in, len + aead->tag_len, ad,
 			    sizeof(ad)))
 				return -1;
 
 			rec->data = rec->input = out;
 		}
 
-		if (n == -1)
-			return -1;
-		rec->length = n;
+		rec->length = out_len;
 
 		return 1;
 	}
