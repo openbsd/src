@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: util.h,v 1.2 2015/08/27 01:02:35 yasuoka Exp $	*/
 
 #ifndef RADIUSD_UTIL_H
 #define	RADIUSD_UTIL_H
@@ -25,7 +25,7 @@
 __BEGIN_DECLS
 
 int		 addrport_parse(const char *, int, struct addrinfo **);
-const char	*addrport_tostring (struct sockaddr *, socklen_t, char *, int);
+const char	*addrport_tostring (struct sockaddr *, socklen_t, char *, size_t);
 
 __END_DECLS
 #endif

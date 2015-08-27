@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2015/08/27 01:02:35 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -21,6 +21,7 @@
 
 #include <netdb.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "util.h"
 
@@ -78,9 +79,10 @@ addrport_parse(const char *addrport, int proto, struct addrinfo **p_ai)
  * sockaddr
  */
 const char *
-addrport_tostring(struct sockaddr *sa, socklen_t salen, char *buf, int lbuf)
+addrport_tostring(struct sockaddr *sa, socklen_t salen, char *buf, size_t lbuf)
 {
 	char	 hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+	int	 ret;
 
 	if (getnameinfo(sa, salen, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
 	    NI_NUMERICHOST | NI_NUMERICSERV) != 0)
@@ -88,21 +90,18 @@ addrport_tostring(struct sockaddr *sa, socklen_t salen, char *buf, int lbuf)
 
 	switch (sa->sa_family) {
 	case AF_INET6:
-		strlcpy(buf, "[", lbuf);
-		strlcat(buf, hbuf, lbuf);
-		strlcat(buf, "]:", lbuf);
-		strlcat(buf, sbuf, lbuf);
+		ret = snprintf(buf, lbuf, "[%s]:%s", hbuf, sbuf);
 		break;
 
 	case AF_INET:
-		strlcpy(buf, hbuf, lbuf);
-		strlcat(buf, ":", lbuf);
-		strlcat(buf, sbuf, lbuf);
+		ret = snprintf(buf, lbuf, "%s:%s", hbuf, sbuf);
 		break;
 
 	default:
-		return (NULL);
+		return "error";
 	}
 
+	if (ret == -1 || ret >= (int)lbuf)
+		return "(error)";
 	return (buf);
 }
