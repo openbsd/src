@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.126 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.127 2015/08/27 17:10:45 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -980,6 +980,14 @@ tcp_update_sndspace(struct tcpcb *tp)
 		nmax = MIN(sb_max, so->so_snd.sb_wat + tp->snd_max -
 		    tp->snd_una);
 
+	/* a writable socket must be preserved because of poll(2) semantics */
+	if (sbspace(&so->so_snd) >= so->so_snd.sb_lowat) {
+		if (nmax < so->so_snd.sb_cc + so->so_snd.sb_lowat)
+			nmax = so->so_snd.sb_cc + so->so_snd.sb_lowat;
+		if (nmax * 2 < so->so_snd.sb_mbcnt + so->so_snd.sb_lowat)
+			nmax = (so->so_snd.sb_mbcnt+so->so_snd.sb_lowat+1) / 2;
+	}
+
 	/* round to MSS boundary */
 	nmax = roundup(nmax, tp->t_maxseg);
 
@@ -1011,6 +1019,11 @@ tcp_update_rcvspace(struct tcpcb *tp)
 			nmax = MIN(sb_max, so->so_rcv.sb_hiwat +
 			    tcp_autorcvbuf_inc);
 	}
+
+	/* a readable socket must be preserved because of poll(2) semantics */
+	if (so->so_rcv.sb_cc >= so->so_rcv.sb_lowat &&
+	    nmax < so->so_snd.sb_lowat)
+		nmax = so->so_snd.sb_lowat;
 
 	if (nmax == so->so_rcv.sb_hiwat)
 		return;
