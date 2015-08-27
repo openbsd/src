@@ -70,7 +70,7 @@
 #define DEFAULT_BUFSZ_MS	200
 
 struct slot {
-	struct slot *next;		/* next on the play list */
+	struct slot *next;		/* next on the play/rec list */
 	int vol;			/* dynamic range */
 	int volctl;			/* volume in the 0..127 range */
 	struct abuf buf;		/* file i/o buffer */
@@ -90,7 +90,7 @@ struct slot {
 #define SLOT_RUN	2		/* playing/recording */
 #define SLOT_STOP	3		/* draining (play only) */
 	int pstate;			/* one of above */
-	struct afile afile;			/* file desc & friends */
+	struct afile afile;		/* file desc & friends */
 };
 
 /*
@@ -859,7 +859,7 @@ dev_imsg(unsigned char *msg, unsigned int len)
 }
 
 /*
- * parse then given data chunk, and calling imsg() for each message
+ * parse the given data chunk and call imsg() for each message
  */
 static void
 midi_in(unsigned char *idata, int icount)
@@ -870,7 +870,7 @@ midi_in(unsigned char *idata, int icount)
 	for (i = 0; i < icount; i++) {
 		c = *idata++;
 		if (c >= 0xf8) {
-			/* we don't use reat-time events */
+			/* we don't use real-time events */
 		} else if (c == SYSEX_END) {
 			if (dev_mst == SYSEX_START) {
 				dev_msg[dev_midx++] = c;
@@ -1356,7 +1356,7 @@ main(int argc, char **argv)
 		if (dev == NULL)
 			dev = SIO_DEVANY;
 		if (mode == 0) {
-			log_puts("at least of -i and -o required\n");
+			log_puts("at least -i or -o required\n");
 			return 1;
 		} 
 		if (!playrec(dev, mode, bufsz, port))
