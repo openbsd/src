@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.h,v 1.2 2010/07/29 00:50:10 stsp Exp $ */
+/*	$OpenBSD: citrus_utf8.h,v 1.3 2015/08/27 04:37:09 guenther Exp $ */
 /*	$NetBSD: citrus_utf8.h,v 1.2 2003/06/25 09:51:49 tshiozak Exp $	*/
 
 /*-
@@ -30,10 +30,12 @@
 #ifndef _CITRUS_UTF8_H_
 #define _CITRUS_UTF8_H_
 
+__BEGIN_HIDDEN_DECLS
 extern struct _citrus_ctype_ops_rec	_citrus_utf8_ctype_ops;
 
 #define _CITRUS_UTF8_MB_CUR_MAX	4
 
 _CITRUS_CTYPE_DECLS(utf8);
+__END_HIDDEN_DECLS
 
 #endif

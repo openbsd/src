@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2015/08/27 04:37:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -31,9 +31,9 @@
  *	@(#)extern.h	8.10 (Berkeley) 7/20/94
  */
 
+__BEGIN_HIDDEN_DECLS
 int	 __bt_close(DB *);
 int	 __bt_cmp(BTREE *, const DBT *, EPG *);
-int	 __bt_crsrdel(BTREE *, EPGNO *);
 int	 __bt_defcmp(const DBT *, const DBT *);
 size_t	 __bt_defpfx(const DBT *, const DBT *);
 int	 __bt_delete(const DB *, const DBT *, u_int);
@@ -44,7 +44,6 @@ int	 __bt_get(const DB *, const DBT *, DBT *, u_int);
 PAGE	*__bt_new(BTREE *, pgno_t *);
 void	 __bt_pgin(void *, pgno_t, void *);
 void	 __bt_pgout(void *, pgno_t, void *);
-int	 __bt_push(BTREE *, pgno_t, int);
 int	 __bt_put(const DB *dbp, DBT *, const DBT *, u_int);
 int	 __bt_ret(BTREE *, EPG *, DBT *, DBT *, DBT *, DBT *, int);
 EPG	*__bt_search(BTREE *, const DBT *, int *);
@@ -66,3 +65,4 @@ void	 __bt_dump(DB *);
 #ifdef STATISTICS
 void	 __bt_stat(DB *);
 #endif
+__END_HIDDEN_DECLS

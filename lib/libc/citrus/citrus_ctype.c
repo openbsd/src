@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_ctype.c,v 1.4 2013/05/03 13:53:49 stsp Exp $ */
+/*	$OpenBSD: citrus_ctype.c,v 1.5 2015/08/27 04:37:09 guenther Exp $ */
 /*	$NetBSD: citrus_ctype.c,v 1.5 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@ struct _citrus_ctype_rec _citrus_ctype_none = {
 	1				/* cc_mb_cur_max */
 };
 
-struct _citrus_ctype_rec _citrus_ctype_utf8 = {
+static struct _citrus_ctype_rec _citrus_ctype_utf8 = {
 	&_citrus_utf8_ctype_ops,	/* cc_ops */
 	_CITRUS_UTF8_MB_CUR_MAX		/* cc_mb_cur_max */
 };

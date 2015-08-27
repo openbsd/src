@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.20 2011/11/08 18:30:42 guenther Exp $	*/
+/*	$OpenBSD: local.h,v 1.21 2015/08/27 04:37:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,6 +41,12 @@
 #include "wcio.h"
 #include "fileext.h"
 
+void	_cleanup(void);
+int	_fwalk(int (*)(FILE *));
+
+extern void __atexit_register_cleanup(void (*)(void));
+
+__BEGIN_HIDDEN_DECLS
 int	__sflush(FILE *);
 int	__sflush_locked(FILE *);
 FILE	*__sfp(void);
@@ -50,10 +56,8 @@ int	__swrite(void *, const char *, int);
 fpos_t	__sseek(void *, fpos_t, int);
 int	__sclose(void *);
 void	__sinit(void);
-void	_cleanup(void);
 void	__smakebuf(FILE *);
 int	__swhatbuf(FILE *, size_t *, int *);
-int	_fwalk(int (*)(FILE *));
 int	__swsetup(FILE *);
 int	__sflags(const char *, int *);
 wint_t __fgetwc_unlock(FILE *);
@@ -63,8 +67,8 @@ int	__svfscanf(FILE * __restrict, const char * __restrict, __va_list);
 int	__vfwprintf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 int	__vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 
-extern void __atexit_register_cleanup(void (*)(void));
 extern int __sdidinit;
+__END_HIDDEN_DECLS
 
 /*
  * Return true if the given FILE cannot be written now.

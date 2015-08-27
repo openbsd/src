@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.h,v 1.9 2014/03/10 07:54:14 schwarze Exp $	*/
+/*	$OpenBSD: telldir.h,v 1.10 2015/08/27 04:37:09 guenther Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,6 +48,8 @@ struct _dirdesc {
 	void	*dd_lock;	/* mutex to protect struct */
 };
 
+__BEGIN_HIDDEN_DECLS
 int _readdir_unlocked(DIR *, struct dirent **);
+__END_HIDDEN_DECLS
 
 #endif

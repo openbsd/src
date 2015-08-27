@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_none.h,v 1.1 2010/07/27 16:59:03 stsp Exp $ */
+/*	$OpenBSD: citrus_none.h,v 1.2 2015/08/27 04:37:09 guenther Exp $ */
 /*	$NetBSD: citrus_none.h,v 1.3 2003/06/25 09:51:38 tshiozak Exp $	*/
 
 /*-
@@ -30,8 +30,10 @@
 #ifndef _CITRUS_NONE_H_
 #define _CITRUS_NONE_H_
 
+__BEGIN_HIDDEN_DECLS
 extern struct _citrus_ctype_ops_rec	_citrus_none_ctype_ops;
 
 _CITRUS_CTYPE_DECLS(none);
+__END_HIDDEN_DECLS
 
 #endif
