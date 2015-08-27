@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.14 2015/08/11 16:49:50 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.15 2015/08/27 07:38:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -383,7 +383,8 @@ file_poll(void)
 	/*
 	 * Sleep. Calculate the number off milliseconds poll(2) must
 	 * wait before the timo_update() needs to be called. If there're
-	 * no timeouts scheduled, then call poll(2) with INFTIM timeout.
+	 * no timeouts scheduled, then call poll(2) with infinite
+	 * timeout (i.e -1).
 	 */
 #ifdef DEBUG
 	clock_gettime(CLOCK_MONOTONIC, &sleepts);
@@ -395,7 +396,7 @@ file_poll(void)
 		if (timo < TIMER_MSEC)
 			timo = TIMER_MSEC;
 	} else
-		timo = INFTIM;
+		timo = -1;
 	res = poll(pfds, nfds, timo);
 	if (res < 0) {
 		if (errno != EINTR)
