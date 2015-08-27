@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.194 2015/08/21 16:04:35 visa Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.195 2015/08/27 21:58:15 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4160,7 +4160,6 @@ fail:
  * => caller must not write-lock map (read OK).
  * => we may sleep while cleaning if SYNCIO [with map read-locked]
  */
-int	amap_clean_works = 1;	/* XXX for now, just in case... */
 
 int
 uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
@@ -4215,8 +4214,6 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		 *  - we're not deactivating or freeing pages.
 		 */
 		if (amap == NULL || (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
-			goto flush_object;
-		if (!amap_clean_works)
 			goto flush_object;
 
 		cp_start = MAX(entry->start, start);
