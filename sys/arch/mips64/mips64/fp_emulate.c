@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.11 2015/05/05 21:24:58 jmatthew Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.12 2015/08/27 18:45:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -44,24 +44,30 @@
 #include <machine/db_machdep.h>
 #endif
 
-int	fpu_emulate(struct trap_frame *, uint32_t, union sigval *);
-int	fpu_emulate_cop1(struct trap_frame *, uint32_t);
-int	fpu_emulate_cop1x(struct trap_frame *, uint32_t);
+int	fpu_emulate(struct proc *, struct trap_frame *, uint32_t,
+	    union sigval *);
+int	fpu_emulate_cop1(struct proc *, struct trap_frame *, uint32_t);
+int	fpu_emulate_cop1x(struct proc *, struct trap_frame *, uint32_t);
 uint64_t
-	fpu_load(struct trap_frame *, uint, uint);
-void	fpu_store(struct trap_frame *, uint, uint, uint64_t);
+	fpu_load(struct proc *, struct trap_frame *, uint, uint);
+void	fpu_store(struct proc *, struct trap_frame *, uint, uint, uint64_t);
 #ifdef FPUEMUL
-int	nofpu_emulate_cop1(struct trap_frame *, uint32_t, union sigval *);
-int	nofpu_emulate_cop1x(struct trap_frame *, uint32_t, union sigval *);
-int	nofpu_emulate_loadstore(struct trap_frame *, uint32_t, union sigval *);
+int	nofpu_emulate_cop1(struct proc *, struct trap_frame *, uint32_t,
+	    union sigval *);
+int	nofpu_emulate_cop1x(struct proc *, struct trap_frame *, uint32_t,
+	    union sigval *);
+int	nofpu_emulate_loadstore(struct proc *, struct trap_frame *, uint32_t,
+	    union sigval *);
 int	nofpu_emulate_movci(struct trap_frame *, uint32_t);
 #endif
 
-typedef	int (fpu_fn3)(struct trap_frame *, uint, uint, uint, uint);
-typedef	int (fpu_fn4)(struct trap_frame *, uint, uint, uint, uint, uint);
+typedef	int (fpu_fn3)(struct proc *, struct trap_frame *, uint, uint, uint,
+	    uint);
+typedef	int (fpu_fn4)(struct proc *, struct trap_frame *, uint, uint, uint,
+	    uint, uint);
 fpu_fn3	fpu_abs;
 fpu_fn3	fpu_add;
-int	fpu_c(struct trap_frame *, uint, uint, uint, uint, uint);
+int	fpu_c(struct proc *, struct trap_frame *, uint, uint, uint, uint, uint);
 fpu_fn3	fpu_ceil_l;
 fpu_fn3	fpu_ceil_w;
 fpu_fn3	fpu_cvt_d;
@@ -71,8 +77,10 @@ fpu_fn3	fpu_cvt_w;
 fpu_fn3	fpu_div;
 fpu_fn3	fpu_floor_l;
 fpu_fn3	fpu_floor_w;
-int	fpu_int_l(struct trap_frame *, uint, uint, uint, uint, uint);
-int	fpu_int_w(struct trap_frame *, uint, uint, uint, uint, uint);
+int	fpu_int_l(struct proc *, struct trap_frame *, uint, uint, uint, uint,
+	    uint);
+int	fpu_int_w(struct proc *, struct trap_frame *, uint, uint, uint, uint,
+	    uint);
 fpu_fn4	fpu_madd;
 fpu_fn4	fpu_msub;
 fpu_fn3	fpu_mov;
@@ -301,7 +309,7 @@ MipsFPTrap(struct trap_frame *tf)
 #endif
 		update_pcb = 1;
 
-		sig = fpu_emulate(tf, insn, &sv);
+		sig = fpu_emulate(p, tf, insn, &sv);
 		/* reload fsr, possibly modified by softfloat code */
 		fsr = tf->fsr;
 		if (sig == 0) {
@@ -401,7 +409,8 @@ deliver:
  * current PCB, and is pointed to by the trap frame.
  */
 int
-fpu_emulate(struct trap_frame *tf, uint32_t insn, union sigval *sv)
+fpu_emulate(struct proc *p, struct trap_frame *tf, uint32_t insn,
+    union sigval *sv)
 {
 	InstFmt inst;
 
@@ -418,7 +427,7 @@ fpu_emulate(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 	case OP_LWC1:
 	case OP_SDC1:
 	case OP_SWC1:
-		return nofpu_emulate_loadstore(tf, insn, sv);
+		return nofpu_emulate_loadstore(p, tf, insn, sv);
 #endif
 	case OP_COP1:
 		switch (inst.RType.rs) {
@@ -430,10 +439,10 @@ fpu_emulate(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 		case OP_DMT:
 		case OP_CT:
 		case OP_BC:
-			return nofpu_emulate_cop1(tf, insn, sv);
+			return nofpu_emulate_cop1(p, tf, insn, sv);
 #endif
 		default:
-			return fpu_emulate_cop1(tf, insn);
+			return fpu_emulate_cop1(p, tf, insn);
 		}
 		break;
 	case OP_COP1X:
@@ -446,7 +455,7 @@ fpu_emulate(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			case OP_SDXC1:
 			case OP_SWXC1:
 			case OP_PREFX:
-				return nofpu_emulate_cop1x(tf, insn, sv);
+				return nofpu_emulate_cop1x(p, tf, insn, sv);
 			default:
 				break;
 			}
@@ -455,10 +464,10 @@ fpu_emulate(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 		case OP_MSUB:
 		case OP_NMADD:
 		case OP_NMSUB:
-			return fpu_emulate_cop1x(tf, insn);
+			return fpu_emulate_cop1x(p, tf, insn);
 #else
 		default:
-			return fpu_emulate_cop1x(tf, insn);
+			return fpu_emulate_cop1x(p, tf, insn);
 #endif
 		}
 	}
@@ -470,7 +479,7 @@ fpu_emulate(struct trap_frame *tf, uint32_t insn, union sigval *sv)
  * Emulate a COP1 FPU instruction.
  */
 int
-fpu_emulate_cop1(struct trap_frame *tf, uint32_t insn)
+fpu_emulate_cop1(struct proc *p, struct trap_frame *tf, uint32_t insn)
 {
 	InstFmt inst;
 	uint ft, fs, fd;
@@ -592,16 +601,17 @@ fpu_emulate_cop1(struct trap_frame *tf, uint32_t insn)
 	 */
 
 	if (fpu_op == (fpu_fn3 *)&fpu_c)
-		return fpu_c(tf, inst.FRType.fmt, ft, fs, fd, inst.FRType.func);
+		return
+		    fpu_c(p, tf, inst.FRType.fmt, ft, fs, fd, inst.FRType.func);
 	else
-		return (*fpu_op)(tf, inst.FRType.fmt, ft, fs, fd);
+		return (*fpu_op)(p, tf, inst.FRType.fmt, ft, fs, fd);
 }
 
 /*
  * Emulate a COP1X FPU instruction.
  */
 int
-fpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn)
+fpu_emulate_cop1x(struct proc *p, struct trap_frame *tf, uint32_t insn)
 {
 	InstFmt inst;
 	uint fr, ft, fs, fd;
@@ -660,19 +670,18 @@ fpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn)
 	 * Finally dispatch to the proper routine.
 	 */
 
-	return (*fpu_op)(tf, inst.FRType.fmt, fr, ft, fs, fd);
+	return (*fpu_op)(p, tf, inst.FRType.fmt, fr, ft, fs, fd);
 }
 
 /*
  * Load a floating-point argument according to the specified format.
  */
 uint64_t
-fpu_load(struct trap_frame *tf, uint fmt, uint regno)
+fpu_load(struct proc *p, struct trap_frame *tf, uint fmt, uint regno)
 {
-	register_t *regs = (register_t *)tf;
 	uint64_t tmp, tmp2;
 
-	tmp = (uint64_t)regs[FPBASE + regno];
+	tmp = ((uint64_t *)p->p_md.md_regs)[FPBASE + regno];
 	if (tf->sr & SR_FR_32) {
 		switch (fmt) {
 		case FMT_D:
@@ -689,7 +698,8 @@ fpu_load(struct trap_frame *tf, uint fmt, uint regno)
 		case FMT_D:
 		case FMT_L:
 			/* caller has enforced regno is even */
-			tmp2 = (uint64_t)regs[FPBASE + regno + 1];
+			tmp2 =
+			    ((uint64_t *)p->p_md.md_regs)[FPBASE + regno + 1];
 			tmp |= tmp2 << 32;
 			break;
 		case FMT_S:
@@ -705,16 +715,17 @@ fpu_load(struct trap_frame *tf, uint fmt, uint regno)
  * Store a floating-point result according to the specified format.
  */
 void
-fpu_store(struct trap_frame *tf, uint fmt, uint regno, uint64_t rslt)
+fpu_store(struct proc *p, struct trap_frame *tf, uint fmt, uint regno,
+    uint64_t rslt)
 {
-	register_t *regs = (register_t *)tf;
-
 	if (tf->sr & SR_FR_32) {
-		regs[FPBASE + regno] = rslt;
+		((uint64_t *)p->p_md.md_regs)[FPBASE + regno] = rslt;
 	} else {
 		/* caller has enforced regno is even */
-		regs[FPBASE + regno] = rslt & 0xffffffff;
-		regs[FPBASE + regno + 1] = (rslt >> 32) & 0xffffffff;
+		((uint64_t *)p->p_md.md_regs)[FPBASE + regno] =
+		    rslt & 0xffffffff;
+		((uint64_t *)p->p_md.md_regs)[FPBASE + regno + 1] =
+		    (rslt >> 32) & 0xffffffff;
 	}
 }
 
@@ -723,7 +734,8 @@ fpu_store(struct trap_frame *tf, uint fmt, uint regno, uint64_t rslt)
  */
 
 int
-fpu_int_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint rm)
+fpu_int_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd, uint rm)
 {
 	uint64_t raw;
 	uint32_t oldrm;
@@ -733,7 +745,7 @@ fpu_int_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint rm)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 
 	/* round towards required mode */
 	oldrm = tf->fsr & FPCSR_RM_MASK;
@@ -746,13 +758,14 @@ fpu_int_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint rm)
 	tf->fsr = (tf->fsr & ~FPCSR_RM_MASK) | oldrm;
 
 	if ((tf->fsr & (FPCSR_C_V | FPCSR_E_V)) != (FPCSR_C_V | FPCSR_E_V))
-		fpu_store(tf, fmt, fd, raw);
+		fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_int_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint rm)
+fpu_int_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd, uint rm)
 {
 	uint64_t raw;
 	uint32_t oldrm;
@@ -762,7 +775,7 @@ fpu_int_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint rm)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 
 	/* round towards required mode */
 	oldrm = tf->fsr & FPCSR_RM_MASK;
@@ -775,7 +788,7 @@ fpu_int_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint rm)
 	tf->fsr = (tf->fsr & ~FPCSR_RM_MASK) | oldrm;
 
 	if ((tf->fsr & (FPCSR_C_V | FPCSR_E_V)) != (FPCSR_C_V | FPCSR_E_V))
-		fpu_store(tf, fmt, fd, raw);
+		fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
@@ -785,7 +798,8 @@ fpu_int_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint rm)
  */
 
 int
-fpu_abs(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_abs(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -794,7 +808,7 @@ fpu_abs(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	/* clear sign bit unless NaN */
 	if (fmt == FMT_S) {
 		float32 f32 = (float32)raw;
@@ -813,21 +827,22 @@ fpu_abs(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 			raw = (uint64_t)f64;
 		}
 	}
-	fpu_store(tf, fmt, fd, raw);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_add(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_add(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw1, raw2, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_add((float32)raw1, (float32)raw2);
 		rslt = (uint64_t)f32;
@@ -835,13 +850,14 @@ fpu_add(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		float64 f64 = float64_add((float64)raw1, (float64)raw2);
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_c(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint op)
+fpu_c(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd, uint op)
 {
 	uint64_t raw1, raw2;
 	uint cc, lt, eq, uo;
@@ -854,8 +870,8 @@ fpu_c(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd, uint op)
 	lt = eq = uo = 0;
 	cc = fd >> 2;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
 
 	if (fmt == FMT_S) {
 		float32 f32a = (float32)raw1;
@@ -915,21 +931,24 @@ skip:
 }
 
 int
-fpu_ceil_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_ceil_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards positive infinity */
-	return fpu_int_l(tf, fmt, ft, fs, fd, FP_RP);
+	return fpu_int_l(p, tf, fmt, ft, fs, fd, FP_RP);
 }
 
 int
-fpu_ceil_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_ceil_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards positive infinity */
-	return fpu_int_w(tf, fmt, ft, fs, fd, FP_RP);
+	return fpu_int_w(p, tf, fmt, ft, fs, fd, FP_RP);
 }
 
 int
-fpu_cvt_d(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_cvt_d(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -938,7 +957,7 @@ fpu_cvt_d(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt == FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	switch (fmt) {
 	case FMT_L:
 		raw = int64_to_float64((int64_t)raw);
@@ -950,13 +969,14 @@ fpu_cvt_d(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		raw = int32_to_float64((int32_t)raw);
 		break;
 	}
-	fpu_store(tf, fmt, fd, raw);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_cvt_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_cvt_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 	uint32_t rm;
@@ -967,7 +987,7 @@ fpu_cvt_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		return SIGILL;
 
 	rm = tf->fsr & FPCSR_RM_MASK;
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	if (fmt == FMT_D) {
 		if (rm == FP_RZ)
 			raw = float64_to_int64_round_to_zero((float64)raw);
@@ -980,13 +1000,14 @@ fpu_cvt_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 			raw = float32_to_int64((float32)raw);
 	}
 	if ((tf->fsr & (FPCSR_C_V | FPCSR_E_V)) != (FPCSR_C_V | FPCSR_E_V))
-		fpu_store(tf, fmt, fd, raw);
+		fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_cvt_s(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_cvt_s(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -995,7 +1016,7 @@ fpu_cvt_s(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt == FMT_S)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	switch (fmt) {
 	case FMT_D:
 		raw = float64_to_float32((float64)raw);
@@ -1007,13 +1028,14 @@ fpu_cvt_s(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		raw = int32_to_float32((int32_t)raw);
 		break;
 	}
-	fpu_store(tf, fmt, fd, raw);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_cvt_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_cvt_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 	uint32_t rm;
@@ -1024,7 +1046,7 @@ fpu_cvt_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		return SIGILL;
 
 	rm = tf->fsr & FPCSR_RM_MASK;
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	if (fmt == FMT_D) {
 		if (rm == FP_RZ)
 			raw = float64_to_int32_round_to_zero((float64)raw);
@@ -1037,21 +1059,22 @@ fpu_cvt_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 			raw = float32_to_int32((float32)raw);
 	}
 	if ((tf->fsr & (FPCSR_C_V | FPCSR_E_V)) != (FPCSR_C_V | FPCSR_E_V))
-		fpu_store(tf, fmt, fd, raw);
+		fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_div(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_div(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw1, raw2, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_div((float32)raw1, (float32)raw2);
 		rslt = (uint64_t)f32;
@@ -1059,36 +1082,39 @@ fpu_div(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		float64 f64 = float64_div((float64)raw1, (float64)raw2);
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_floor_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_floor_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards negative infinity */
-	return fpu_int_l(tf, fmt, ft, fs, fd, FP_RM);
+	return fpu_int_l(p, tf, fmt, ft, fs, fd, FP_RM);
 }
 
 int
-fpu_floor_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_floor_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards negative infinity */
-	return fpu_int_w(tf, fmt, ft, fs, fd, FP_RM);
+	return fpu_int_w(p, tf, fmt, ft, fs, fd, FP_RM);
 }
 
 int
-fpu_madd(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
+fpu_madd(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+    uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
-	raw3 = fpu_load(tf, fmt, fr);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
+	raw3 = fpu_load(p, tf, fmt, fr);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_add(
 		    float32_mul((float32)raw1, (float32)raw2),
@@ -1100,13 +1126,14 @@ fpu_madd(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
 		    (float64)raw3);
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_mov(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_mov(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -1115,14 +1142,15 @@ fpu_mov(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
-	fpu_store(tf, fmt, fd, raw);
+	raw = fpu_load(p, tf, fmt, fs);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_movcf(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_movcf(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 	uint cc, istf;
@@ -1137,15 +1165,16 @@ fpu_movcf(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	condition = tf->fsr & FPCSR_CONDVAL(cc);
 	istf = ft & COPz_BC_TF_MASK;
 	if ((!condition && !istf) /*movf*/ || (condition && istf) /*movt*/) {
-		raw = fpu_load(tf, fmt, fs);
-		fpu_store(tf, fmt, fd, raw);
+		raw = fpu_load(p, tf, fmt, fs);
+		fpu_store(p, tf, fmt, fd, raw);
 	}
 
 	return 0;
 }
 
 int
-fpu_movn(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_movn(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	register_t *regs = (register_t *)tf;
 	uint64_t raw;
@@ -1154,15 +1183,16 @@ fpu_movn(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		return SIGILL;
 
 	if (ft != ZERO && regs[ft] != 0) {
-		raw = fpu_load(tf, fmt, fs);
-		fpu_store(tf, fmt, fd, raw);
+		raw = fpu_load(p, tf, fmt, fs);
+		fpu_store(p, tf, fmt, fd, raw);
 	}
 
 	return 0;
 }
 
 int
-fpu_movz(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_movz(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	register_t *regs = (register_t *)tf;
 	uint64_t raw;
@@ -1171,24 +1201,25 @@ fpu_movz(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		return SIGILL;
 
 	if (ft == ZERO || regs[ft] == 0) {
-		raw = fpu_load(tf, fmt, fs);
-		fpu_store(tf, fmt, fd, raw);
+		raw = fpu_load(p, tf, fmt, fs);
+		fpu_store(p, tf, fmt, fd, raw);
 	}
 
 	return 0;
 }
 
 int
-fpu_msub(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
+fpu_msub(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+    uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
-	raw3 = fpu_load(tf, fmt, fr);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
+	raw3 = fpu_load(p, tf, fmt, fr);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_sub(
 		    float32_mul((float32)raw1, (float32)raw2),
@@ -1200,21 +1231,22 @@ fpu_msub(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
 		    (float64)raw3);
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_mul(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_mul(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw1, raw2, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_mul((float32)raw1, (float32)raw2);
 		rslt = (uint64_t)f32;
@@ -1222,13 +1254,14 @@ fpu_mul(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		float64 f64 = float64_mul((float64)raw1, (float64)raw2);
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_neg(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_neg(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -1237,7 +1270,7 @@ fpu_neg(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	/* flip sign bit unless NaN */
 	if (fmt == FMT_S) {
 		float32 f32 = (float32)raw;
@@ -1256,22 +1289,23 @@ fpu_neg(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 			raw = (uint64_t)f64;
 		}
 	}
-	fpu_store(tf, fmt, fd, raw);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_nmadd(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
+fpu_nmadd(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+    uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
-	raw3 = fpu_load(tf, fmt, fr);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
+	raw3 = fpu_load(p, tf, fmt, fr);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_add(
 		    float32_mul((float32)raw1, (float32)raw2),
@@ -1291,22 +1325,23 @@ fpu_nmadd(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
 			f64 ^= 1L << 63;
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_nmsub(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
+fpu_nmsub(struct proc *p, struct trap_frame *tf, uint fmt, uint fr, uint ft,
+    uint fs, uint fd)
 {
 	uint64_t raw1, raw2, raw3, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
-	raw3 = fpu_load(tf, fmt, fr);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
+	raw3 = fpu_load(p, tf, fmt, fr);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_sub(
 		    float32_mul((float32)raw1, (float32)raw2),
@@ -1326,13 +1361,14 @@ fpu_nmsub(struct trap_frame *tf, uint fmt, uint fr, uint ft, uint fs, uint fd)
 			f64 ^= 1L << 63;
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_recip(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_recip(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -1341,7 +1377,7 @@ fpu_recip(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_div(ONE_F32, (float32)raw);
 		raw = (uint64_t)f32;
@@ -1349,27 +1385,30 @@ fpu_recip(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		float64 f64 = float64_div(ONE_F64, (float64)raw);
 		raw = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, raw);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_round_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_round_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards nearest */
-	return fpu_int_l(tf, fmt, ft, fs, fd, FP_RN);
+	return fpu_int_l(p, tf, fmt, ft, fs, fd, FP_RN);
 }
 
 int
-fpu_round_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_round_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards nearest */
-	return fpu_int_w(tf, fmt, ft, fs, fd, FP_RN);
+	return fpu_int_w(p, tf, fmt, ft, fs, fd, FP_RN);
 }
 
 int
-fpu_rsqrt(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_rsqrt(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -1378,7 +1417,7 @@ fpu_rsqrt(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_sqrt((float32)raw);
 		if ((tf->fsr & (FPCSR_C_V | FPCSR_E_V)) !=
@@ -1392,13 +1431,14 @@ fpu_rsqrt(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 			f64 = float64_div(ONE_F64, f64);
 		raw = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, raw);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_sqrt(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_sqrt(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw;
 
@@ -1407,7 +1447,7 @@ fpu_sqrt(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw = fpu_load(tf, fmt, fs);
+	raw = fpu_load(p, tf, fmt, fs);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_sqrt((float32)raw);
 		raw = (uint64_t)f32;
@@ -1415,21 +1455,22 @@ fpu_sqrt(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		float64 f64 = float64_sqrt((float64)raw);
 		raw = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, raw);
+	fpu_store(p, tf, fmt, fd, raw);
 
 	return 0;
 }
 
 int
-fpu_sub(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_sub(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	uint64_t raw1, raw2, rslt;
 
 	if (fmt != FMT_S && fmt != FMT_D)
 		return SIGILL;
 
-	raw1 = fpu_load(tf, fmt, fs);
-	raw2 = fpu_load(tf, fmt, ft);
+	raw1 = fpu_load(p, tf, fmt, fs);
+	raw2 = fpu_load(p, tf, fmt, ft);
 	if (fmt == FMT_S) {
 		float32 f32 = float32_sub((float32)raw1, (float32)raw2);
 		rslt = (uint64_t)f32;
@@ -1437,23 +1478,25 @@ fpu_sub(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
 		float64 f64 = float64_sub((float64)raw1, (float64)raw2);
 		rslt = (uint64_t)f64;
 	}
-	fpu_store(tf, fmt, fd, rslt);
+	fpu_store(p, tf, fmt, fd, rslt);
 
 	return 0;
 }
 
 int
-fpu_trunc_l(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_trunc_l(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards zero */
-	return fpu_int_l(tf, fmt, ft, fs, fd, FP_RZ);
+	return fpu_int_l(p, tf, fmt, ft, fs, fd, FP_RZ);
 }
 
 int
-fpu_trunc_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
+fpu_trunc_w(struct proc *p, struct trap_frame *tf, uint fmt, uint ft, uint fs,
+    uint fd)
 {
 	/* round towards zero */
-	return fpu_int_w(tf, fmt, ft, fs, fd, FP_RZ);
+	return fpu_int_w(p, tf, fmt, ft, fs, fd, FP_RZ);
 }
 
 #ifdef FPUEMUL
@@ -1462,7 +1505,8 @@ fpu_trunc_w(struct trap_frame *tf, uint fmt, uint ft, uint fs, uint fd)
  * Emulate a COP1 non-FPU instruction.
  */
 int
-nofpu_emulate_cop1(struct trap_frame *tf, uint32_t insn, union sigval *sv)
+nofpu_emulate_cop1(struct proc *p, struct trap_frame *tf, uint32_t insn,
+    union sigval *sv)
 {
 	register_t *regs = (register_t *)tf;
 	InstFmt inst;
@@ -1475,8 +1519,9 @@ nofpu_emulate_cop1(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
 			return SIGILL;
 		if (inst.FRType.ft != ZERO)
-			regs[inst.FRType.ft] = 
-			    (int32_t)regs[FPBASE + inst.FRType.fs];
+			regs[inst.FRType.ft] = (int32_t)
+			    ((uint64_t *)p->p_md.md_regs)
+			      [FPBASE + inst.FRType.fs];
 		break;
 	case OP_DMF:
 		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
@@ -1484,7 +1529,7 @@ nofpu_emulate_cop1(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 		if ((tf->sr & SR_FR_32) != 0 || (inst.FRType.fs & 1) == 0) {
 			if (inst.FRType.ft != ZERO)
 				regs[inst.FRType.ft] =
-				    fpu_load(tf, FMT_L, inst.FRType.fs);
+				    fpu_load(p, tf, FMT_L, inst.FRType.fs);
 		}
 		break;
 	case OP_CF:
@@ -1508,13 +1553,14 @@ nofpu_emulate_cop1(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 	case OP_MT:
 		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
 			return SIGILL;
-		regs[FPBASE + inst.FRType.fs] = (int32_t)regs[inst.FRType.ft];
+		((uint64_t *)p->p_md.md_regs)[FPBASE + inst.FRType.fs] =
+		    (int32_t)regs[inst.FRType.ft];
 		break;
 	case OP_DMT:
 		if (inst.FRType.fd != 0 || inst.FRType.func != 0)
 			return SIGILL;
 		if ((tf->sr & SR_FR_32) != 0 || (inst.FRType.fs & 1) == 0) {
-			fpu_store(tf, FMT_L, inst.FRType.fs,
+			fpu_store(p, tf, FMT_L, inst.FRType.fs,
 			    regs[inst.FRType.ft]);
 		}
 		break;
@@ -1589,7 +1635,8 @@ nofpu_emulate_cop1(struct trap_frame *tf, uint32_t insn, union sigval *sv)
  * Emulate a COP1X non-FPU instruction.
  */
 int
-nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
+nofpu_emulate_cop1x(struct proc *p, struct trap_frame *tf, uint32_t insn,
+    union sigval *sv)
 {
 	register_t *regs = (register_t *)tf;
 	InstFmt inst;
@@ -1613,7 +1660,7 @@ nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			return SIGSEGV;
 		}
 		if ((tf->sr & SR_FR_32) != 0 || (inst.FQType.fd & 1) == 0)
-			fpu_store(tf, FMT_L, inst.FQType.fd, ddata);
+			fpu_store(p, tf, FMT_L, inst.FQType.fd, ddata);
 		break;
 	case OP_LWXC1:
 		if (inst.FQType.fs != 0)
@@ -1628,7 +1675,7 @@ nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGSEGV;
 		}
-		regs[FPBASE + inst.FQType.fd] = wdata;
+		((uint64_t *)p->p_md.md_regs)[FPBASE + inst.FQType.fd] = wdata;
 		break;
 	case OP_SDXC1:
 		if (inst.FQType.fd != 0)
@@ -1640,7 +1687,7 @@ nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			return SIGBUS;
 		}
 		if ((tf->sr & SR_FR_32) != 0 || (inst.FQType.fs & 1) == 0)
-			ddata = fpu_load(tf, FMT_L, inst.FQType.fs);
+			ddata = fpu_load(p, tf, FMT_L, inst.FQType.fs);
 		else {
 			/* undefined behaviour, don't expose stack content */
 			ddata = 0;
@@ -1659,7 +1706,7 @@ nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGBUS;
 		}
-		wdata = regs[FPBASE + inst.FQType.fs];
+		wdata = ((uint64_t *)p->p_md.md_regs)[FPBASE + inst.FQType.fs];
 		if (copyout(&wdata, (void *)va, sizeof wdata) != 0) {
 			sv->sival_ptr = (void *)va;
 			return SIGSEGV;
@@ -1677,7 +1724,8 @@ nofpu_emulate_cop1x(struct trap_frame *tf, uint32_t insn, union sigval *sv)
  * Emulate a load/store instruction on FPU registers.
  */
 int
-nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
+nofpu_emulate_loadstore(struct proc *p, struct trap_frame *tf, uint32_t insn,
+    union sigval *sv)
 {
 	register_t *regs = (register_t *)tf;
 	InstFmt inst;
@@ -1698,7 +1746,7 @@ nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			return SIGSEGV;
 		}
 		if ((tf->sr & SR_FR_32) != 0 || (inst.IType.rt & 1) == 0)
-			fpu_store(tf, FMT_L, inst.IType.rt, ddata);
+			fpu_store(p, tf, FMT_L, inst.IType.rt, ddata);
 		break;
 	case OP_LWC1:
 		va = (vaddr_t)regs[inst.IType.rs] + (int16_t)inst.IType.imm;
@@ -1710,7 +1758,7 @@ nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGSEGV;
 		}
-		regs[FPBASE + inst.IType.rt] = wdata;
+		((uint64_t *)p->p_md.md_regs)[FPBASE + inst.IType.rt] = wdata;
 		break;
 	case OP_SDC1:
 		va = (vaddr_t)regs[inst.IType.rs] + (int16_t)inst.IType.imm;
@@ -1719,7 +1767,7 @@ nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			return SIGBUS;
 		}
 		if ((tf->sr & SR_FR_32) != 0 || (inst.IType.rt & 1) == 0)
-			ddata = fpu_load(tf, FMT_L, inst.IType.rt);
+			ddata = fpu_load(p, tf, FMT_L, inst.IType.rt);
 		else {
 			/* undefined behaviour, don't expose stack content */
 			ddata = 0;
@@ -1735,7 +1783,7 @@ nofpu_emulate_loadstore(struct trap_frame *tf, uint32_t insn, union sigval *sv)
 			sv->sival_ptr = (void *)va;
 			return SIGBUS;
 		}
-		wdata = regs[FPBASE + inst.IType.rt];
+		wdata = ((uint64_t *)p->p_md.md_regs)[FPBASE + inst.IType.rt];
 		if (copyout(&wdata, (void *)va, sizeof wdata) != 0) {
 			sv->sival_ptr = (void *)va;
 			return SIGSEGV;
