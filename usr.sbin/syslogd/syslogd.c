@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.178 2015/08/25 17:14:16 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.179 2015/08/27 17:53:35 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -393,12 +393,16 @@ main(int argc, char *argv[])
 			path_ctlsock = optarg;
 			break;
 		case 'T':		/* allow tcp and listen on address */
-			if (loghost_parse(optarg, NULL, &listen_host,
-			    &listen_port) == -1)
+			if ((p = strdup(optarg)) == NULL)
+				err(1, "strdup listen address");
+			if (loghost_parse(p, NULL, &listen_host, &listen_port)
+			    == -1)
 				errx(1, "bad listen address: %s", optarg);
 			break;
 		case 'U':		/* allow udp only from address */
-			if (loghost_parse(optarg, NULL, &bind_host, &bind_port)
+			if ((p = strdup(optarg)) == NULL)
+				err(1, "strdup bind address");
+			if (loghost_parse(p, NULL, &bind_host, &bind_port)
 			    == -1)
 				errx(1, "bad bind address: %s", optarg);
 			break;
