@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.51 2015/04/30 13:49:04 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.52 2015/08/27 05:11:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -235,7 +235,8 @@ main(int argc, char *argv[])
 	int c, lastc, prevoptind, newarg, i, needpattern, exprs, expr_sz;
 	struct patfile *patfile, *pf_next;
 	long l;
-	char *ep, **expr;
+	char **expr;
+	const char *errstr;
 
 	SLIST_INIT(&patfilelh);
 	switch (__progname[0]) {
@@ -279,10 +280,9 @@ main(int argc, char *argv[])
 			break;
 		case 'A':
 		case 'B':
-			l = strtol(optarg, &ep, 10);
-			if (ep == optarg || *ep != '\0' ||
-			    l <= 0 || l >= INT_MAX)
-				errx(2, "context out of range");
+			l = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(2, "context %s", errstr);
 			if (c == 'A')
 				Aflag = (int)l;
 			else
@@ -292,10 +292,9 @@ main(int argc, char *argv[])
 			if (optarg == NULL)
 				Aflag = Bflag = 2;
 			else {
-				l = strtol(optarg, &ep, 10);
-				if (ep == optarg || *ep != '\0' ||
-				    l <= 0 || l >= INT_MAX)
-					errx(2, "context out of range");
+				l = strtonum(optarg, 1, INT_MAX, &errstr);
+				if (errstr != NULL)
+					errx(2, "context %s", errstr);
 				Aflag = Bflag = (int)l;
 			}
 			break;
