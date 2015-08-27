@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.75 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.76 2015/08/27 06:16:41 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -494,7 +494,7 @@ systraceioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case STRIOCCLONE:
-		fst = (struct fsystrace *)malloc(sizeof(struct fsystrace),
+		fst = (struct fsystrace *)malloc(sizeof(*fst),
 		    M_XDATA, M_WAITOK | M_ZERO);
 		rw_init(&fst->lock, "systrace");
 		TAILQ_INIT(&fst->processes);
@@ -510,7 +510,7 @@ systraceioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = falloc(p, &f, &fd);
 		fdpunlock(p->p_fd);
 		if (error) {
-			free(fst, M_XDATA, 0);
+			free(fst, M_XDATA, sizeof(*fst));
 			return (error);
 		}
 		f->f_flag = FREAD | FWRITE;
@@ -957,7 +957,7 @@ systrace_prepinject(struct str_process *strp, struct systrace_inject *inj)
 	kaddr = malloc(inj->stri_len, M_XDATA, M_WAITOK);
 	ret = copyin(inj->stri_addr, kaddr, inj->stri_len);
 	if (ret) {
-		free(kaddr, M_XDATA, 0);
+		free(kaddr, M_XDATA, inj->stri_len);
 		return (ret);
 	}
 
@@ -1357,7 +1357,8 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 	memcpy(strp->replace, repl, sizeof(struct systrace_replace));
 	ret = copyin(repl->strr_base, strp->replace + 1, len);
 	if (ret) {
-		free(strp->replace, M_XDATA, 0);
+		free(strp->replace, M_XDATA,
+		    sizeof(struct systrace_replace) + len);
 		strp->replace = NULL;
 		return (ret);
 	}
