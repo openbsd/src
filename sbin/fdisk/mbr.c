@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.52 2015/04/02 18:00:55 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.53 2015/08/27 20:58:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -116,7 +116,7 @@ MBR_init(struct mbr *mbr)
 		i *= 2;
 	adj = DL_BLKTOSEC(&dl, i) - mbr->part[3].bs;
 	mbr->part[3].bs += adj;
-	mbr->part[3].ns -= adj; 
+	mbr->part[3].ns -= adj;
 	PRT_fix_CHS(&mbr->part[3]);
 }
 

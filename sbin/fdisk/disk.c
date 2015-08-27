@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.47 2015/03/30 17:11:49 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.48 2015/08/27 20:58:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -111,7 +111,7 @@ DISK_printgeometry(char *units)
 }
 
 /*
- * Read the sector at 'where' from the file descriptor 'fd' into newly 
+ * Read the sector at 'where' from the file descriptor 'fd' into newly
  * calloc'd memory. Return a pointer to the memory if it contains the
  * requested data, or NULL if it does not.
  *
