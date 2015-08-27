@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.20 2015/08/27 14:34:46 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.21 2015/08/27 15:26:50 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -95,12 +95,12 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	int rv = -1, s = -1, ret;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_error(ctx, "not a client context");
+		tls_set_errorx(ctx, "not a client context");
 		goto err;
 	}
 
 	if (host == NULL) {
-		tls_set_error(ctx, "host not specified");
+		tls_set_errorx(ctx, "host not specified");
 		goto err;
 	}
 
@@ -111,7 +111,7 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	if ((p = (char *)port) == NULL) {
 		ret = tls_host_port(host, &hs, &ps);
 		if (ret == -1) {
-			tls_set_error(ctx, "memory allocation failure");
+			tls_set_errorx(ctx, "memory allocation failure");
 			goto err;
 		}
 		if (ret != 0)
@@ -169,7 +169,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	int ret, err;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_error(ctx, "not a client context");
+		tls_set_errorx(ctx, "not a client context");
 		goto err;
 	}
 
@@ -177,12 +177,12 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		goto connecting;
 
 	if (fd_read < 0 || fd_write < 0) {
-		tls_set_error(ctx, "invalid file descriptors");
+		tls_set_errorx(ctx, "invalid file descriptors");
 		return (-1);
 	}
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
-		tls_set_error(ctx, "ssl context failure");
+		tls_set_errorx(ctx, "ssl context failure");
 		goto err;
 	}
 
@@ -191,7 +191,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 
 	if (ctx->config->verify_name) {
 		if (servername == NULL) {
-			tls_set_error(ctx, "server name not specified");
+			tls_set_errorx(ctx, "server name not specified");
 			goto err;
 		}
 	}
@@ -201,19 +201,19 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 
 		if (ctx->config->ca_mem != NULL) {
 			if (ctx->config->ca_len > INT_MAX) {
-				tls_set_error(ctx, "ca too long");
+				tls_set_errorx(ctx, "ca too long");
 				goto err;
 			}
 
 			if (SSL_CTX_load_verify_mem(ctx->ssl_ctx,
 			    ctx->config->ca_mem, ctx->config->ca_len) != 1) {
-				tls_set_error(ctx,
+				tls_set_errorx(ctx,
 				    "ssl verify memory setup failure");
 				goto err;
 			}
 		} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
 		    ctx->config->ca_file, ctx->config->ca_path) != 1) {
-			tls_set_error(ctx, "ssl verify setup failure");
+			tls_set_errorx(ctx, "ssl verify setup failure");
 			goto err;
 		}
 		if (ctx->config->verify_depth >= 0)
@@ -222,16 +222,16 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	}
 
 	if ((ctx->ssl_conn = SSL_new(ctx->ssl_ctx)) == NULL) {
-		tls_set_error(ctx, "ssl connection failure");
+		tls_set_errorx(ctx, "ssl connection failure");
 		goto err;
 	}
 	if (SSL_set_app_data(ctx->ssl_conn, ctx) != 1) {
-		tls_set_error(ctx, "ssl application data failure");
+		tls_set_errorx(ctx, "ssl application data failure");
 		goto err;
 	}
 	if (SSL_set_rfd(ctx->ssl_conn, fd_read) != 1 ||
 	    SSL_set_wfd(ctx->ssl_conn, fd_write) != 1) {
-		tls_set_error(ctx, "ssl file descriptor failure");
+		tls_set_errorx(ctx, "ssl file descriptor failure");
 		goto err;
 	}
 
@@ -243,7 +243,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	    inet_pton(AF_INET, servername, &addrbuf) != 1 &&
 	    inet_pton(AF_INET6, servername, &addrbuf) != 1) {
 		if (SSL_set_tlsext_host_name(ctx->ssl_conn, servername) == 0) {
-			tls_set_error(ctx, "server name indication failure");
+			tls_set_errorx(ctx, "server name indication failure");
 			goto err;
 		}
 	}
@@ -262,12 +262,12 @@ connecting:
 	if (ctx->config->verify_name) {
 		cert = SSL_get_peer_certificate(ctx->ssl_conn);
 		if (cert == NULL) {
-			tls_set_error(ctx, "no server certificate");
+			tls_set_errorx(ctx, "no server certificate");
 			goto err;
 		}
 		if ((ret = tls_check_servername(ctx, cert, servername)) != 0) {
 			if (ret != -2)
-				tls_set_error(ctx, "name `%s' not present in"
+				tls_set_errorx(ctx, "name `%s' not present in"
 				    " server certificate", servername);
 			goto err;
 		}

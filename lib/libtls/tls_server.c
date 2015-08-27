@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.9 2015/08/22 14:52:39 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.10 2015/08/27 15:26:50 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -54,7 +54,7 @@ tls_configure_server(struct tls *ctx)
 	unsigned char sid[SSL_MAX_SSL_SESSION_ID_LENGTH];
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_server_method())) == NULL) {
-		tls_set_error(ctx, "ssl context failure");
+		tls_set_errorx(ctx, "ssl context failure");
 		goto err;
 	}
 
@@ -73,7 +73,7 @@ tls_configure_server(struct tls *ctx)
 	} else if (ctx->config->ecdhecurve != NID_undef) {
 		if ((ecdh_key = EC_KEY_new_by_curve_name(
 		    ctx->config->ecdhecurve)) == NULL) {
-			tls_set_error(ctx, "failed to set ECDHE curve");
+			tls_set_errorx(ctx, "failed to set ECDHE curve");
 			goto err;
 		}
 		SSL_CTX_set_options(ctx->ssl_ctx, SSL_OP_SINGLE_ECDH_USE);
@@ -88,7 +88,7 @@ tls_configure_server(struct tls *ctx)
 	 */
 	arc4random_buf(sid, sizeof(sid));
 	if (!SSL_CTX_set_session_id_context(ctx->ssl_ctx, sid, sizeof(sid))) {
-		tls_set_error(ctx, "failed to set session id context");
+		tls_set_errorx(ctx, "failed to set session id context");
 		goto err;
 	}
 
@@ -105,28 +105,28 @@ tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
 	int ret, err;
 	
 	if ((ctx->flags & TLS_SERVER) == 0) {
-		tls_set_error(ctx, "not a server context");
+		tls_set_errorx(ctx, "not a server context");
 		goto err;
 	}
 
 	if (conn_ctx == NULL) {
 		if ((conn_ctx = tls_server_conn(ctx)) == NULL) {
-			tls_set_error(ctx, "connection context failure");
+			tls_set_errorx(ctx, "connection context failure");
 			goto err;
 		}
 		*cctx = conn_ctx;
 
 		if ((conn_ctx->ssl_conn = SSL_new(ctx->ssl_ctx)) == NULL) {
-			tls_set_error(ctx, "ssl failure");
+			tls_set_errorx(ctx, "ssl failure");
 			goto err;
 		}
 		if (SSL_set_app_data(conn_ctx->ssl_conn, conn_ctx) != 1) {
-			tls_set_error(ctx, "ssl application data failure");
+			tls_set_errorx(ctx, "ssl application data failure");
 			goto err;
 		}
 		if (SSL_set_rfd(conn_ctx->ssl_conn, fd_read) != 1 ||
 		    SSL_set_wfd(conn_ctx->ssl_conn, fd_write) != 1) {
-			tls_set_error(ctx, "ssl file descriptor failure");
+			tls_set_errorx(ctx, "ssl file descriptor failure");
 			goto err;
 		}
 	}

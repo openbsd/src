@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.9 2015/08/27 07:15:39 jsing Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.10 2015/08/27 15:26:50 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -125,7 +125,7 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 				len = ASN1_STRING_length(altname->d.dNSName);
 
 				if (len < 0 || len != strlen(data)) {
-					tls_set_error(ctx,
+					tls_set_errorx(ctx,
 					    "error verifying name '%s': "
 					    "NUL byte in subjectAltName, "
 					    "probably a malicious certificate",
@@ -168,7 +168,7 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name)
 			data = ASN1_STRING_data(altname->d.iPAddress);
 
 			if (datalen < 0) {
-				tls_set_error(ctx,
+				tls_set_errorx(ctx,
 				    "Unexpected negative length for an "
 				    "IP address: %d", datalen);
 				rv = -2;
@@ -218,7 +218,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name)
 
 	/* NUL bytes in CN? */
 	if (common_name_len != strlen(common_name)) {
-		tls_set_error(ctx, "error verifying name '%s': "
+		tls_set_errorx(ctx, "error verifying name '%s': "
 		    "NUL byte in Common Name field, "
 		    "probably a malicious certificate", name);
 		rv = -2;

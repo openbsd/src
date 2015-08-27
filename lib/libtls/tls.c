@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.14 2015/08/27 14:34:46 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.15 2015/08/27 15:26:49 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -58,18 +58,61 @@ tls_error(struct tls *ctx)
 	return ctx->errmsg;
 }
 
+static int
+tls_set_verror(struct tls *ctx, int errnum, const char *fmt, va_list ap)
+{
+	char *errmsg = NULL;
+	int rv = -1;
+
+	free(ctx->errmsg);
+	ctx->errmsg = NULL;
+
+	if (vasprintf(&errmsg, fmt, ap) == -1) {
+		errmsg = NULL;
+		goto err;
+	}
+
+	if (errnum == -1) {
+		ctx->errmsg = errmsg;
+		return (0);
+	}
+
+	if (asprintf(&ctx->errmsg, "%s: %s", errmsg, strerror(errnum)) == -1) {
+		ctx->errmsg = NULL;
+		goto err;
+	}
+	
+	rv = 0;
+
+err:
+	free(errmsg);
+
+	return (rv);
+}
+
 int
-tls_set_error(struct tls *ctx, char *fmt, ...)
+tls_set_error(struct tls *ctx, const char *fmt, ...)
 {
 	va_list ap;
 	int rv;
 
-	ctx->err = errno;
-	free(ctx->errmsg);
-	ctx->errmsg = NULL;
+	ctx->errnum = errno;
 
 	va_start(ap, fmt);
-	rv = vasprintf(&ctx->errmsg, fmt, ap);
+	rv = tls_set_verror(ctx, ctx->errnum, fmt, ap);
+	va_end(ap);
+
+	return (rv);
+}
+
+int
+tls_set_errorx(struct tls *ctx, const char *fmt, ...)
+{
+	va_list ap;
+	int rv;
+
+	va_start(ap, fmt);
+	rv = tls_set_verror(ctx, -1, fmt, ap);
 	va_end(ap);
 
 	return (rv);
@@ -113,35 +156,35 @@ tls_configure_keypair(struct tls *ctx)
 
 	if (ctx->config->cert_mem != NULL) {
 		if (ctx->config->cert_len > INT_MAX) {
-			tls_set_error(ctx, "certificate too long");
+			tls_set_errorx(ctx, "certificate too long");
 			goto err;
 		}
 
 		if (SSL_CTX_use_certificate_chain_mem(ctx->ssl_ctx,
 		    ctx->config->cert_mem, ctx->config->cert_len) != 1) {
-			tls_set_error(ctx, "failed to load certificate");
+			tls_set_errorx(ctx, "failed to load certificate");
 			goto err;
 		}
 		cert = NULL;
 	}
 	if (ctx->config->key_mem != NULL) {
 		if (ctx->config->key_len > INT_MAX) {
-			tls_set_error(ctx, "key too long");
+			tls_set_errorx(ctx, "key too long");
 			goto err;
 		}
 
 		if ((bio = BIO_new_mem_buf(ctx->config->key_mem,
 		    ctx->config->key_len)) == NULL) {
-			tls_set_error(ctx, "failed to create buffer");
+			tls_set_errorx(ctx, "failed to create buffer");
 			goto err;
 		}
 		if ((pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL,
 		    NULL)) == NULL) {
-			tls_set_error(ctx, "failed to read private key");
+			tls_set_errorx(ctx, "failed to read private key");
 			goto err;
 		}
 		if (SSL_CTX_use_PrivateKey(ctx->ssl_ctx, pkey) != 1) {
-			tls_set_error(ctx, "failed to load private key");
+			tls_set_errorx(ctx, "failed to load private key");
 			goto err;
 		}
 		BIO_free(bio);
@@ -153,20 +196,20 @@ tls_configure_keypair(struct tls *ctx)
 	if (ctx->config->cert_file != NULL) {
 		if (SSL_CTX_use_certificate_chain_file(ctx->ssl_ctx,
 		    ctx->config->cert_file) != 1) {
-			tls_set_error(ctx, "failed to load certificate file");
+			tls_set_errorx(ctx, "failed to load certificate file");
 			goto err;
 		}
 	}
 	if (ctx->config->key_file != NULL) {
 		if (SSL_CTX_use_PrivateKey_file(ctx->ssl_ctx,
 		    ctx->config->key_file, SSL_FILETYPE_PEM) != 1) {
-			tls_set_error(ctx, "failed to load private key file");
+			tls_set_errorx(ctx, "failed to load private key file");
 			goto err;
 		}
 	}
 
 	if (SSL_CTX_check_private_key(ctx->ssl_ctx) != 1) {
-		tls_set_error(ctx, "private/public key mismatch");
+		tls_set_errorx(ctx, "private/public key mismatch");
 		goto err;
 	}
 
@@ -203,7 +246,7 @@ tls_configure_ssl(struct tls *ctx)
 	if (ctx->config->ciphers != NULL) {
 		if (SSL_CTX_set_cipher_list(ctx->ssl_ctx,
 		    ctx->config->ciphers) != 1) {
-			tls_set_error(ctx, "failed to set ciphers");
+			tls_set_errorx(ctx, "failed to set ciphers");
 			goto err;
 		}
 	}
@@ -235,9 +278,9 @@ tls_reset(struct tls *ctx)
 	ctx->socket = -1;
 	ctx->state = 0;
 
-	ctx->err = 0;
 	free(ctx->errmsg);
 	ctx->errmsg = NULL;
+	ctx->errnum = 0;
 }
 
 int
@@ -267,21 +310,21 @@ tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret, const char *prefix)
 		} else if (ssl_ret == -1) {
 			errstr = strerror(errno);
 		}
-		tls_set_error(ctx, "%s failed: %s", prefix, errstr);
+		tls_set_errorx(ctx, "%s failed: %s", prefix, errstr);
 		return (-1);
 
 	case SSL_ERROR_SSL:
 		if ((err = ERR_peek_error()) != 0) {
 			errstr = ERR_error_string(err, NULL);
 		}
-		tls_set_error(ctx, "%s failed: %s", prefix, errstr);
+		tls_set_errorx(ctx, "%s failed: %s", prefix, errstr);
 		return (-1);
 
 	case SSL_ERROR_WANT_CONNECT:
 	case SSL_ERROR_WANT_ACCEPT:
 	case SSL_ERROR_WANT_X509_LOOKUP:
 	default:
-		tls_set_error(ctx, "%s failed (%i)", prefix, ssl_err);
+		tls_set_errorx(ctx, "%s failed (%i)", prefix, ssl_err);
 		return (-1);
 	}
 }
@@ -294,7 +337,7 @@ tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
 	*outlen = 0;
 
 	if (buflen > INT_MAX) {
-		tls_set_error(ctx, "buflen too long");
+		tls_set_errorx(ctx, "buflen too long");
 		return (-1);
 	}
 
@@ -315,7 +358,7 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 	*outlen = 0;
 
 	if (buflen > INT_MAX) {
-		tls_set_error(ctx, "buflen too long");
+		tls_set_errorx(ctx, "buflen too long");
 		return (-1);
 	}
 
