@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.21 2015/03/21 13:42:06 mpi Exp $ */
+/*	$OpenBSD: ahci.c,v 1.22 2015/08/27 18:47:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -700,7 +700,7 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 	if (ap->ap_ccbs) {
 		while ((ccb = ahci_get_ccb(ap)) != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
-		free(ap->ap_ccbs, M_DEVBUF, 0);
+		free(ap->ap_ccbs, M_DEVBUF, sc->sc_ncmds * sizeof(*ccb));
 	}
 
 	if (ap->ap_dmamem_cmd_list)
@@ -714,7 +714,7 @@ ahci_port_free(struct ahci_softc *sc, u_int port)
 
 	/* bus_space(9) says we dont free the subregions handle */
 
-	free(ap, M_DEVBUF, 0);
+	free(ap, M_DEVBUF, sizeof(*ap));
 	sc->sc_ports[port] = NULL;
 }
 
@@ -2625,7 +2625,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, adm->adm_map);
 admfree:
-	free(adm, M_DEVBUF, 0);
+	free(adm, M_DEVBUF, sizeof(*adm));
 
 	return (NULL);
 }
@@ -2637,7 +2637,7 @@ ahci_dmamem_free(struct ahci_softc *sc, struct ahci_dmamem *adm)
 	bus_dmamem_unmap(sc->sc_dmat, adm->adm_kva, adm->adm_size);
 	bus_dmamem_free(sc->sc_dmat, &adm->adm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, adm->adm_map);
-	free(adm, M_DEVBUF, 0);
+	free(adm, M_DEVBUF, sizeof(*adm));
 }
 
 u_int32_t
