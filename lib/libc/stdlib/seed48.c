@@ -1,4 +1,4 @@
-/*	$OpenBSD: seed48.c,v 1.4 2014/12/08 21:45:20 deraadt Exp $ */
+/*	$OpenBSD: seed48.c,v 1.5 2015/08/27 04:33:31 guenther Exp $ */
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
@@ -13,10 +13,6 @@
  */
 
 #include "rand48.h"
-
-extern unsigned short __rand48_seed[3];
-extern unsigned short __rand48_mult[3];
-extern unsigned short __rand48_add;
 
 unsigned short *
 seed48(unsigned short xseed[3])
