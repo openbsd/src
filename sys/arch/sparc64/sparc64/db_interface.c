@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.37 2015/08/26 13:59:24 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.38 2015/08/28 22:17:14 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -358,10 +358,10 @@ db_write_bytes(addr, size, data)
 
 	dst = (char *)addr;
 	while (size-- > 0) {
-		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
+		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS+0x800000))
 			*dst = *data;
 		else if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
-			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
+			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x800000))
 			/* Read Only mapping -- need to do a bypass access */
 			stba((u_long)dst - ktext + ktextp, ASI_PHYS_CACHED, *data);
 		else
