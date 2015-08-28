@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.27 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.28 2015/08/28 00:03:54 deraadt Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ nfsrv_cleancache(void)
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 		nfsrv_cleanentry(rp);
-		free(rp, M_NFSD, 0);
+		free(rp, M_NFSD, sizeof(*rp));
 	}
 	numnfsrvcache = 0;
 }

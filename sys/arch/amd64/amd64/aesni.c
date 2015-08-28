@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.32 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.33 2015/08/28 00:03:53 deraadt Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -160,7 +160,7 @@ aesni_setup(void)
 
 	aesni_sc->sc_cid = crypto_get_driverid(0);
 	if (aesni_sc->sc_cid < 0) {
-		free(aesni_sc, M_DEVBUF, 0);
+		free(aesni_sc, M_DEVBUF, sizeof(*aesni_sc));
 		return;
 	}
 

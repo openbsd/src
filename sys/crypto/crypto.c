@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.74 2015/02/09 03:15:41 dlg Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.75 2015/08/28 00:03:53 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -260,9 +260,11 @@ crypto_get_driverid(u_int8_t flags)
 
 		newdrv[i].cc_sessions = 1; /* Mark */
 		newdrv[i].cc_flags = flags;
-		crypto_drivers_num *= 2;
 
-		free(crypto_drivers, M_CRYPTO_DATA, 0);
+		free(crypto_drivers, M_CRYPTO_DATA,
+		    crypto_drivers_num * sizeof(struct cryptocap));
+
+		crypto_drivers_num *= 2;
 		crypto_drivers = newdrv;
 		splx(s);
 		return i;

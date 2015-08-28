@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.32 2014/07/12 18:48:53 tedu Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.33 2015/08/28 00:03:53 deraadt Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -248,7 +248,7 @@ wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp)
 	f(edp->nrctab)
 #undef f
 	if (edp != &wsemul_vt100_console_emuldata)
-		free(edp, M_DEVBUF, 0);
+		free(edp, M_DEVBUF, sizeof *edp);
 }
 
 void

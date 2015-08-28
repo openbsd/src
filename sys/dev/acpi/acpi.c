@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.292 2015/08/20 20:50:10 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.293 2015/08/28 00:03:53 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -645,13 +645,13 @@ acpi_getpci(struct aml_node *node, void *arg)
 
 	/* Check if PCI device exists */
 	if (pci->dev > 0x1F || pci->fun > 7) {
-		free(pci, M_DEVBUF, 0);
+		free(pci, M_DEVBUF, sizeof(*pci));
 		return (1);
 	}
 	tag = pci_make_tag(pc, pci->bus, pci->dev, pci->fun);
 	reg = pci_conf_read(pc, tag, PCI_ID_REG);
 	if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID) {
-		free(pci, M_DEVBUF, 0);
+		free(pci, M_DEVBUF, sizeof(*pci));
 		return (1);
 	}
 	node->pci = pci;
@@ -1555,7 +1555,7 @@ acpi_dotask(struct acpi_softc *sc)
 
 	wq->handler(wq->arg0, wq->arg1);
 
-	free(wq, M_DEVBUF, 0);
+	free(wq, M_DEVBUF, sizeof(*wq));
 
 	/* We did something */
 	return (1);	
@@ -2033,7 +2033,7 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	wq->q_wakepkg = malloc(sizeof(struct aml_value), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
 	if (wq->q_wakepkg == NULL) {
-		free(wq, M_DEVBUF, 0);
+		free(wq, M_DEVBUF, sizeof(*wq));
 		return 0;
 	}
 	dnprintf(10, "Found _PRW (%s)\n", node->parent->name);
@@ -2544,7 +2544,7 @@ acpi_thread(void *arg)
 		while(acpi_dotask(acpi_softc))
 			;
 	}
-	free(thread, M_DEVBUF, 0);
+	free(thread, M_DEVBUF, sizeof(*thread));
 
 	kthread_exit(0);
 }

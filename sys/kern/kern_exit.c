@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.150 2015/08/22 20:18:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.151 2015/08/28 00:03:53 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -669,7 +669,7 @@ process_zap(struct process *pr)
 
 	KASSERT(pr->ps_refcnt == 1);
 	if (pr->ps_ptstat != NULL)
-		free(pr->ps_ptstat, M_SUBPROC, 0);
+		free(pr->ps_ptstat, M_SUBPROC, sizeof(*pr->ps_ptstat));
 	pool_put(&rusage_pool, pr->ps_ru);
 	KASSERT(TAILQ_EMPTY(&pr->ps_threads));
 	limfree(pr->ps_limit);

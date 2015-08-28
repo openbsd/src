@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.50 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.51 2015/08/28 00:03:53 deraadt Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
 		out:
 			while ((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&rom_image, next);
-				free(p, M_DEVBUF, 0);
+				free(p, M_DEVBUF, sizeof(*p));
 			}
 			exrom = pci_conf_read(pc, tag, reg);
 			pci_conf_write(pc, tag, reg, exrom & ~1);
@@ -532,7 +532,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 			/* do not match */
 			disable_function(sc, function);
 			sc->sc_funcs[function] = NULL;
-			free(ct, M_DEVBUF, 0);
+			free(ct, M_DEVBUF, sizeof(struct cardbus_devfunc));
 		} else {
 			/* found */
 			ct->ct_device = csc;
@@ -544,7 +544,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	 * if no functions were attached).
 	 */
 	disable_function(sc, 8);
-	free(tuple, M_TEMP, 0);
+	free(tuple, M_TEMP, 2048);
 
 	return (no_work_funcs);
 }
@@ -617,7 +617,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		} else {
 			sc->sc_poweron_func &= ~(1 << ct->ct_func);
 			sc->sc_funcs[ct->ct_func] = NULL;
-			free(ct, M_DEVBUF, 0);
+			free(ct, M_DEVBUF, sizeof(struct cardbus_devfunc));
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.20 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: via.c,v 1.21 2015/08/28 00:03:53 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ viac3_crypto_setup(void)
 
 	vc3_sc->sc_cid = crypto_get_driverid(0);
 	if (vc3_sc->sc_cid < 0) {
-		free(vc3_sc, M_DEVBUF, 0);
+		free(vc3_sc, M_DEVBUF, sizeof(*vc3_sc));
 		return;		/* YYY bitch? */
 	}
 

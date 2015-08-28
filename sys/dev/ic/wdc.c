@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.129 2015/08/17 15:36:29 krw Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.130 2015/08/28 00:03:53 deraadt Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -731,7 +731,7 @@ wdc_alloc_queue(void)
 void
 wdc_free_queue(struct channel_queue *queue)
 {
-	free(queue, M_DEVBUF, 0);
+	free(queue, M_DEVBUF, sizeof(*queue));
 }
 
 void

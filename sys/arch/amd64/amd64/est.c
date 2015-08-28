@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.36 2015/03/14 03:38:46 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.37 2015/08/28 00:03:53 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -253,7 +253,7 @@ est_acpi_init()
 	return acpilist;
 
 notable:
-	free(acpilist, M_DEVBUF, 0);
+	free(acpilist, M_DEVBUF, sizeof(struct fqlist));
 	acpilist = NULL;
 nolist:
 	return NULL;
@@ -281,7 +281,7 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 	    M_DEVBUF, M_NOWAIT)) == NULL) {
 		printf("est_acpi_pss_changed: cannot allocate memory for new "
 		    "operating points");
-		free(acpilist, M_DEVBUF, 0);
+		free(acpilist, M_DEVBUF, sizeof(struct fqlist));
 		return;
 	}
 
@@ -292,8 +292,8 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 			needtran = 0;
 	}
 
-	free(est_fqlist->table, M_DEVBUF, 0);
-	free(est_fqlist, M_DEVBUF, 0);
+	free(est_fqlist->table, M_DEVBUF, npss * sizeof(struct est_op));
+	free(est_fqlist, M_DEVBUF, sizeof(struct fqlist));
 	est_fqlist = acpilist;
 
 	if (needtran) {
@@ -381,7 +381,7 @@ est_init(struct cpu_info *ci)
 
 		if ((fake_table = malloc(sizeof(struct est_op) * 3, M_DEVBUF,
 		     M_NOWAIT)) == NULL) {
-			free(fake_fqlist, M_DEVBUF, 0);
+			free(fake_fqlist, M_DEVBUF, sizeof(struct fqlist));
 			printf("%s: EST: cannot allocate memory for fake "
 			    "table\n", cpu_device);
 			return;
@@ -442,7 +442,7 @@ est_init(struct cpu_info *ci)
 
 nospeedstep:
 	free(est_fqlist->table, M_DEVBUF, 0);
-	free(est_fqlist, M_DEVBUF, 0);
+	free(est_fqlist, M_DEVBUF, sizeof(*est_fqlist));
 }
 
 void

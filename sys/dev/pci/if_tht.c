@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.132 2015/06/24 09:40:54 mpi Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.133 2015/08/28 00:03:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1717,7 +1717,7 @@ tht_fw_load(struct tht_softc *sc)
 	tht_write(sc, THT_REG_INIT_SEMAPHORE, 0x1);
 
 err:
-	free(fw, M_DEVBUF, 0);
+	free(fw, M_DEVBUF, fwlen);
 	return (error);
 }
 

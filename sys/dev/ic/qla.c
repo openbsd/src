@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.51 2015/06/19 11:12:24 jmatthew Exp $ */
+/*	$OpenBSD: qla.c,v 1.52 2015/08/28 00:03:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -2516,7 +2516,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
 qdmfree:
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, sizeof(*m));
 
 	return (NULL);
 }
@@ -2528,7 +2528,7 @@ qla_dmamem_free(struct qla_softc *sc, struct qla_dmamem *m)
 	bus_dmamem_unmap(sc->sc_dmat, m->qdm_kva, m->qdm_size);
 	bus_dmamem_free(sc->sc_dmat, &m->qdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, sizeof(*m));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.30 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.31 2015/08/28 00:03:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -328,7 +328,9 @@ bufq_fifo_create(void)
 void
 bufq_fifo_destroy(void *data)
 {
-	free(data, M_DEVBUF, 0);
+	struct bufq_fifo_head	*head = data;
+	
+	free(head, M_DEVBUF, sizeof(*head));
 }
 
 void
@@ -445,7 +447,9 @@ bufq_nscan_create(void)
 void
 bufq_nscan_destroy(void *vdata)
 {
-	free(vdata, M_DEVBUF, 0);
+	struct bufq_nscan_data *data = vdata;
+
+	free(data, M_DEVBUF, sizeof(*data));
 }
 
 void

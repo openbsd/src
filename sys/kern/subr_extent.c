@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.56 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.57 2015/08/28 00:03:53 deraadt Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -284,7 +284,7 @@ extent_destroy(struct extent *ex)
 
 	/* If we're not a fixed extent, free the extent descriptor itself. */
 	if ((ex->ex_flags & EXF_FIXED) == 0)
-		free(ex, ex->ex_mtype, 0);
+		free(ex, ex->ex_mtype, sizeof(*ex));
 }
 
 /*

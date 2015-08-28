@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_aiod.c,v 1.6 2014/07/12 18:43:52 tedu Exp $	*/
+/*	$OpenBSD: nfs_aiod.c,v 1.7 2015/08/28 00:03:54 deraadt Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -147,7 +147,7 @@ loop:	/* Loop around until SIGKILL */
 	goto loop;
 
 out1:
-	free(aiod, M_TEMP, 0);
+	free(aiod, M_TEMP, sizeof(*aiod));
 	nfs_numaiods--;
 	KASSERT(nfs_numaiods >= 0);
 	/* Rejust the limit of bufs to queue. See comment above. */

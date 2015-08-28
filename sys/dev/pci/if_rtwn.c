@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.6 2015/08/28 00:03:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2311,7 +2311,7 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 		goto fail;
 	}
  fail:
-	free(fw, M_DEVBUF, 0);
+	free(fw, M_DEVBUF, len);
 	return (error);
 }
 
