@@ -1,4 +1,4 @@
-/*	$OpenBSD: mquery.c,v 1.2 2004/08/02 20:18:50 drahn Exp $ */
+/*	$OpenBSD: mquery.c,v 1.3 2015/08/28 05:55:06 guenther Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -27,6 +27,8 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <machine/vmparam.h>
