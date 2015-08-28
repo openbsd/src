@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.109 2015/06/12 15:47:31 mpi Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.110 2015/08/28 15:37:04 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2168,7 +2168,10 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 	struct rt2860_rxwi *rxwi;
 	struct mbuf *m;
 	uint32_t flags;
-	uint16_t len, phy;
+	uint16_t len;
+#if NBPFILTER > 0
+	uint16_t phy;
+#endif
 	uint16_t rxwisize;
 	uint8_t ant, rssi;
 	int s;
