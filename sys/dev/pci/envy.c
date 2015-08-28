@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.62 2015/08/28 13:51:22 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.63 2015/08/28 15:50:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1369,7 +1369,7 @@ envy_midi_wait(struct envy_softc *sc)
 void
 envy_reset(struct envy_softc *sc)
 {
-	int i;
+	int i, reg;
 
 	/*
 	 * full reset
@@ -1449,8 +1449,10 @@ envy_reset(struct envy_softc *sc)
 	 * clear all interrupts and unmask used ones
 	 */
 	envy_ccs_write(sc, ENVY_CCS_INTSTAT, 0xff);
-	envy_ccs_write(sc, ENVY_CCS_INTMASK,
-	    ~(ENVY_CCS_INT_MT | ENVY_CCS_INT_MIDI0));
+	reg = ~ENVY_CCS_INT_MT;
+	if (sc->midi_isopen)
+		reg &= ~ENVY_CCS_INT_MIDI0;
+	envy_ccs_write(sc, ENVY_CCS_INTMASK, ~ENVY_CCS_INT_MT);
 	if (sc->isht) {
 		envy_mt_write_1(sc, ENVY_MT_NSTREAM, 4 - sc->card->noch / 2);
 		envy_mt_write_1(sc, ENVY_MT_IMASK, ~(ENVY_MT_IMASK_PDMA0 |
@@ -1707,10 +1709,11 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	envy_reset(sc);
 	sc->audio = audio_attach_mi(&envy_hw_if, sc, &sc->dev);
 #if NMIDI > 0
-	if (!sc->isht || sc->eeprom[ENVY_EEPROM_CONF] & ENVY_CONF_MIDI)
+	sc->midi_isopen = 0;
+	if (!sc->isht || sc->eeprom[ENVY_EEPROM_CONF] & ENVY_CONF_MIDI) {
 		sc->midi = midi_attach_mi(&envy_midi_hw_if, sc, &sc->dev);
+	}
 #endif
-
 }
 
 int
@@ -2393,12 +2396,33 @@ envy_midi_open(void *self, int flags,
     void *arg)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
+	unsigned int i, reg;
 
-	mtx_enter(&audio_lock);
+	/* discard pending data */
+	for (i = 0; i < 128; i++) {
+		reg = envy_ccs_read(sc, ENVY_CCS_MIDISTAT0);
+		if (reg & ENVY_MIDISTAT_IEMPTY(sc))
+			break;
+		(void)envy_ccs_read(sc, ENVY_CCS_MIDIDATA0);
+	}
+#ifdef ENVY_DEBUG
+	if (i > 0)
+		DPRINTF("%s: midi: discarded %u bytes\n", DEVNAME(sc), i);
+#endif
+
+	/* clear pending midi interrupt */
+	envy_ccs_write(sc, ENVY_CCS_INTSTAT, ENVY_CCS_INT_MIDI0);
+
+	/* interrupts are disabled, it safe to manipulate these */
 	sc->midi_in = in;
 	sc->midi_out = out;
 	sc->midi_arg = arg;
-	mtx_leave(&audio_lock);
+	sc->midi_isopen = 1;
+
+	/* enable interrupts */
+	reg = envy_ccs_read(sc, ENVY_CCS_INTMASK);
+	reg &= ~ENVY_CCS_INT_MIDI0;
+	envy_ccs_write(sc, ENVY_CCS_INTMASK, reg);
 	return 0;
 }
 
@@ -2406,12 +2430,21 @@ void
 envy_midi_close(void *self)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
+	unsigned int reg;
 
+	/* wait for output fifo to drain */
 	tsleep(sc, PWAIT, "envymid", hz / 10);
-	mtx_enter(&audio_lock);
+
+	/* disable interrupts */
+	reg = envy_ccs_read(sc, ENVY_CCS_INTMASK);
+	reg |= ENVY_CCS_INT_MIDI0;
+	envy_ccs_write(sc, ENVY_CCS_INTMASK, reg);
+
+	/* interrupts are disabled, it safe to manipulate these */
 	sc->midi_in = NULL;
 	sc->midi_out = NULL;
-	mtx_leave(&audio_lock);
+	sc->midi_isopen = 0;
+	printf("envy: midi closed\n");
 }
 
 int

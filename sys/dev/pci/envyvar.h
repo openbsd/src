@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.17 2015/07/29 21:10:50 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.18 2015/08/28 15:50:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -102,6 +102,7 @@ struct envy_softc {
 	void (*midi_out)(void *);
 	void *midi_arg;
 	struct device *midi;
+	int midi_isopen;
 #endif
 };
 
