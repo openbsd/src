@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.34 2014/11/18 15:16:35 mikeb Exp $	*/
+/*	$OpenBSD: file.h,v 1.35 2015/08/28 04:38:47 guenther Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ struct file {
 #define	DTYPE_SYSTRACE	6	/* system call tracing */
 	short	f_type;		/* descriptor type */
 	long	f_count;	/* reference count */
-	long	f_msgcount;	/* references from message queue */
 	struct	ucred *f_cred;	/* credentials associated with descriptor */
 	struct	fileops *f_ops;
 	off_t	f_offset;
@@ -87,8 +86,6 @@ struct file {
 
 #define FIF_HASLOCK		0x01	/* descriptor holds advisory lock */
 #define FIF_LARVAL		0x02	/* not fully constructed, don't use */
-#define FIF_MARK		0x04	/* mark during gc() */
-#define FIF_DEFER		0x08	/* defer for next gc() pass */
 
 #define FILE_IS_USABLE(fp) \
 	(((fp)->f_iflags & FIF_LARVAL) == 0)

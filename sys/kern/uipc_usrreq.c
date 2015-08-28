@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.84 2015/08/22 20:18:50 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.85 2015/08/28 04:38:47 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -48,8 +48,28 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mbuf.h>
+#include <sys/task.h>
 
 void	uipc_setaddr(const struct unpcb *, struct mbuf *);
+
+/* list of all UNIX domain sockets, for unp_gc() */
+LIST_HEAD(unp_head, unpcb) unp_head = LIST_HEAD_INITIALIZER(&unp_head);
+
+/*
+ * Stack of sets of files that were passed over a socket but were
+ * not received and need to be closed.
+ */
+struct	unp_deferral {
+	SLIST_ENTRY(unp_deferral)	ud_link;
+	int	ud_n;
+	/* followed by ud_n struct file * pointers */
+};
+
+/* list of sets of files that were sent over sockets that are now closed */
+SLIST_HEAD(,unp_deferral) unp_deferred = SLIST_HEAD_INITIALIZER(&unp_deferred);
+
+struct task unp_gc_task = TASK_INITIALIZER(unp_gc, NULL);
+
 
 /*
  * Unix communications domain.
@@ -349,6 +369,7 @@ unp_attach(struct socket *so)
 	unp->unp_socket = so;
 	so->so_pcb = unp;
 	getnanotime(&unp->unp_ctime);
+	LIST_INSERT_HEAD(&unp_head, unp, unp_link);
 	return (0);
 }
 
@@ -357,6 +378,7 @@ unp_detach(struct unpcb *unp)
 {
 	struct vnode *vp;
 	
+	LIST_REMOVE(unp, unp_link);
 	if (unp->unp_vnode) {
 		unp->unp_vnode->v_socket = NULL;
 		vp = unp->unp_vnode;
@@ -370,19 +392,9 @@ unp_detach(struct unpcb *unp)
 	soisdisconnected(unp->unp_socket);
 	unp->unp_socket->so_pcb = NULL;
 	m_freem(unp->unp_addr);
-	if (unp_rights) {
-		/*
-		 * Normally the receive buffer is flushed later,
-		 * in sofree, but if our receive buffer holds references
-		 * to descriptors that are now garbage, we will dispose
-		 * of those descriptor references after the garbage collector
-		 * gets them (resulting in a "panic: closef: count < 0").
-		 */
-		sorflush(unp->unp_socket);
-		free(unp, M_PCB, 0);
-		unp_gc();
-	} else
-		free(unp, M_PCB, 0);
+	free(unp, M_PCB, 0);
+	if (unp_rights)
+		task_add(systq, &unp_gc_task);
 }
 
 int
@@ -624,6 +636,22 @@ unp_drain(void)
 }
 #endif
 
+extern	struct domain unixdomain;
+
+static struct unpcb *
+fptounp(struct file *fp)
+{
+	struct socket *so;
+
+	if (fp->f_type != DTYPE_SOCKET)
+		return (NULL);
+	if ((so = fp->f_data) == NULL)
+		return (NULL);
+	if (so->so_proto->pr_domain != &unixdomain)
+		return (NULL);
+	return (sotounpcb(so));
+}
+
 int
 unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 {
@@ -674,8 +702,10 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 restart:
 	fdplock(p->p_fd);
 	if (error != 0) {
-		rp = ((struct file **)CMSG_DATA(cm));
-		unp_discard(rp, nfds);
+		if (nfds > 0) {
+			rp = ((struct file **)CMSG_DATA(cm));
+			unp_discard(rp, nfds);
+		}
 		goto out;
 	}
 
@@ -724,8 +754,11 @@ restart:
 	 */
 	rp = (struct file **)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
+		struct unpcb *unp;
+
 		fp = *rp++;
-		fp->f_msgcount--;
+		if ((unp = fptounp(fp)) != NULL)
+			unp->unp_msgcount--;
 		unp_rights--;
 	}
 
@@ -749,6 +782,7 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	struct filedesc *fdp = p->p_fd;
 	struct cmsghdr *cm = mtod(control, struct cmsghdr *);
 	struct file **rp, *fp;
+	struct unpcb *unp;
 	int i, error;
 	int nfds, *ip, fd, neededspace;
 
@@ -806,8 +840,7 @@ morespace:
 			error = EBADF;
 			goto fail;
 		}
-		if (fp->f_count == LONG_MAX-2 ||
-		    fp->f_msgcount == LONG_MAX-2) {
+		if (fp->f_count == LONG_MAX-2) {
 			error = EDEADLK;
 			goto fail;
 		}
@@ -820,7 +853,10 @@ morespace:
 		memcpy(rp, &fp, sizeof fp);
 		rp--;
 		fp->f_count++;
-		fp->f_msgcount++;
+		if ((unp = fptounp(fp)) != NULL) {
+			unp->unp_file = fp;
+			unp->unp_msgcount++;
+		}
 		unp_rights++;
 	}
 	return (0);
@@ -830,7 +866,8 @@ fail:
 		rp++;
 		memcpy(&fp, rp, sizeof(fp));
 		fp->f_count--;
-		fp->f_msgcount--;
+		if ((unp = fptounp(fp)) != NULL)
+			unp->unp_msgcount--;
 		unp_rights--;
 	}
 
@@ -838,43 +875,83 @@ fail:
 }
 
 int	unp_defer, unp_gcing;
-extern	struct domain unixdomain;
 
 void
-unp_gc(void)
+unp_gc(void *arg __unused)
 {
-	struct file *fp, *nextfp;
+	struct unp_deferral *defer;
+	struct file *fp;
 	struct socket *so;
-	struct file **extra_ref, **fpp;
+	struct unpcb *unp;
 	int nunref, i;
 
 	if (unp_gcing)
 		return;
 	unp_gcing = 1;
-	unp_defer = 0;
-	LIST_FOREACH(fp, &filehead, f_list)
-		fp->f_iflags &= ~(FIF_MARK|FIF_DEFER);
-	do {
-		LIST_FOREACH(fp, &filehead, f_list) {
-			if (fp->f_iflags & FIF_DEFER) {
-				fp->f_iflags &= ~FIF_DEFER;
-				unp_defer--;
-			} else {
-				if (fp->f_count == 0)
-					continue;
-				if (fp->f_iflags & FIF_MARK)
-					continue;
-				if (fp->f_count == fp->f_msgcount)
-					continue;
-			}
-			fp->f_iflags |= FIF_MARK;
 
-			if (fp->f_type != DTYPE_SOCKET ||
-			    (so = fp->f_data) == NULL)
+	/* close any fds on the deferred list */
+	while ((defer = SLIST_FIRST(&unp_deferred)) != NULL) {
+		SLIST_REMOVE_HEAD(&unp_deferred, ud_link);
+		for (i = 0; i < defer->ud_n; i++) {
+			memcpy(&fp, &((struct file **)(defer + 1))[i],
+			    sizeof(fp));
+			FREF(fp);
+			if ((unp = fptounp(fp)) != NULL)
+				unp->unp_msgcount--;
+			unp_rights--;
+			(void) closef(fp, NULL);
+		}
+		free(defer, M_TEMP, sizeof(*defer) + sizeof(fp) * defer->ud_n);
+	}
+
+	unp_defer = 0;
+	LIST_FOREACH(unp, &unp_head, unp_link)
+		unp->unp_flags &= ~(UNP_GCMARK | UNP_GCDEFER | UNP_GCDEAD);
+	do {
+		nunref = 0;
+		LIST_FOREACH(unp, &unp_head, unp_link) {
+			if (unp->unp_flags & UNP_GCDEFER) {
+				/*
+				 * This socket is referenced by another
+				 * socket which is known to be live,
+				 * so it's certainly live.
+				 */
+				unp->unp_flags &= ~UNP_GCDEFER;
+				unp_defer--;
+			} else if (unp->unp_flags & UNP_GCMARK) {
+				/* marked as live in previous pass */
 				continue;
-			if (so->so_proto->pr_domain != &unixdomain ||
-			    (so->so_proto->pr_flags&PR_RIGHTS) == 0)
-				continue;
+			} else if ((fp = unp->unp_file) == NULL) {
+				/* not being passed, so can't be in loop */
+			} else if (fp->f_count == 0) {
+				/*
+				 * Already being closed, let normal close
+				 * path take its course
+				 */
+			} else {
+				/*
+				 * Unreferenced by other sockets so far,
+				 * so if all the references (f_count) are
+				 * from passing (unp_msgcount) then this
+				 * socket is prospectively dead
+				 */
+				if (fp->f_count == unp->unp_msgcount) {
+					nunref++;
+					unp->unp_flags |= UNP_GCDEAD;
+					continue;
+				}
+			}
+
+			/*
+			 * This is the first time we've seen this socket on
+			 * the mark pass and known it has a live reference,
+			 * so mark it, then scan its receive buffer for
+			 * sockets and note them as deferred (== referenced,
+			 * but not yet marked).
+			 */
+			unp->unp_flags |= UNP_GCMARK;
+
+			so = unp->unp_socket;
 #ifdef notdef
 			if (so->so_rcv.sb_flags & SB_LOCK) {
 				/*
@@ -894,65 +971,18 @@ unp_gc(void)
 			unp_scan(so->so_rcv.sb_mb, unp_mark);
 		}
 	} while (unp_defer);
+
 	/*
-	 * We grab an extra reference to each of the file table entries
-	 * that are not otherwise accessible and then free the rights
-	 * that are stored in messages on them.
-	 *
-	 * The bug in the original code is a little tricky, so I'll describe
-	 * what's wrong with it here.
-	 *
-	 * It is incorrect to simply unp_discard each entry for f_msgcount
-	 * times -- consider the case of sockets A and B that contain
-	 * references to each other.  On a last close of some other socket,
-	 * we trigger a gc since the number of outstanding rights (unp_rights)
-	 * is non-zero.  If during the sweep phase the gc code un_discards,
-	 * we end up doing a (full) closef on the descriptor.  A closef on A
-	 * results in the following chain.  Closef calls soo_close, which
-	 * calls soclose.   Soclose calls first (through the switch
-	 * uipc_usrreq) unp_detach, which re-invokes unp_gc.  Unp_gc simply
-	 * returns because the previous instance had set unp_gcing, and
-	 * we return all the way back to soclose, which marks the socket
-	 * with SS_NOFDREF, and then calls sofree.  Sofree calls sorflush
-	 * to free up the rights that are queued in messages on the socket A,
-	 * i.e., the reference on B.  The sorflush calls via the dom_dispose
-	 * switch unp_dispose, which unp_scans with unp_discard.  This second
-	 * instance of unp_discard just calls closef on B.
-	 *
-	 * Well, a similar chain occurs on B, resulting in a sorflush on B,
-	 * which results in another closef on A.  Unfortunately, A is already
-	 * being closed, and the descriptor has already been marked with
-	 * SS_NOFDREF, and soclose panics at this point.
-	 *
-	 * Here, we first take an extra reference to each inaccessible
-	 * descriptor.  Then, we call sorflush ourself, since we know
-	 * it is a Unix domain socket anyhow.  After we destroy all the
-	 * rights carried in messages, we do a last closef to get rid
-	 * of our extra reference.  This is the last close, and the
-	 * unp_detach etc will shut down the socket.
-	 *
-	 * 91/09/19, bsy@cs.cmu.edu
+	 * If there are any unreferenced sockets, then for each dispose
+	 * of files in its receive buffer and then close it.
 	 */
-	extra_ref = mallocarray(nfiles, sizeof(struct file *), M_FILE, M_WAITOK);
-	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref;
-	    fp != NULL; fp = nextfp) {
-		nextfp = LIST_NEXT(fp, f_list);
-		if (fp->f_count == 0)
-			continue;
-		if (fp->f_count == fp->f_msgcount &&
-		    !(fp->f_iflags & FIF_MARK)) {
-			*fpp++ = fp;
-			nunref++;
-			FREF(fp);
-			fp->f_count++;
+	if (nunref) {
+		LIST_FOREACH(unp, &unp_head, unp_link) {
+			if (unp->unp_flags & UNP_GCDEAD)
+				unp_scan(unp->unp_socket->so_rcv.sb_mb,
+				    unp_discard);
 		}
 	}
-	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
-	        if ((*fpp)->f_type == DTYPE_SOCKET && (*fpp)->f_data != NULL)
-		        sorflush((*fpp)->f_data);
-	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
-		(void) closef(*fpp, NULL);
-	free(extra_ref, M_FILE, 0);
 	unp_gcing = 0;
 }
 
@@ -996,37 +1026,37 @@ unp_scan(struct mbuf *m0, void (*op)(struct file **, int))
 void
 unp_mark(struct file **rp, int nfds)
 {
+	struct unpcb *unp;
 	int i;
 
 	for (i = 0; i < nfds; i++) {
 		if (rp[i] == NULL)
 			continue;
 
-		if (rp[i]->f_iflags & (FIF_MARK|FIF_DEFER))
+		unp = fptounp(rp[i]);
+		if (unp == NULL)
 			continue;
 
-		if (rp[i]->f_type == DTYPE_SOCKET) {
-			unp_defer++;
-			rp[i]->f_iflags |= FIF_DEFER;
-		} else {
-			rp[i]->f_iflags |= FIF_MARK;
-		}
+		if (unp->unp_flags & (UNP_GCMARK|UNP_GCDEFER))
+			continue;
+
+		unp_defer++;
+		unp->unp_flags |= UNP_GCDEFER;
+		unp->unp_flags &= ~UNP_GCDEAD;
 	}
 }
 
 void
 unp_discard(struct file **rp, int nfds)
 {
-	struct file *fp;
-	int i;
+	struct unp_deferral *defer;
 
-	for (i = 0; i < nfds; i++) {
-		if ((fp = rp[i]) == NULL)
-			continue;
-		rp[i] = NULL;
-		FREF(fp);
-		fp->f_msgcount--;
-		unp_rights--;
-		(void) closef(fp, NULL);
-	}
+	/* copy the file pointers to a deferral structure */
+	defer = malloc(sizeof(*defer) + sizeof(*rp) * nfds, M_TEMP, M_WAITOK);
+	defer->ud_n = nfds;
+	memcpy(defer + 1, rp, sizeof(*rp) * nfds);
+	memset(rp, 0, sizeof(*rp) * nfds);
+	SLIST_INSERT_HEAD(&unp_deferred, defer, ud_link);
+
+	task_add(systq, &unp_gc_task);
 }

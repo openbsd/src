@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.11 2015/08/24 15:55:53 bluhm Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.12 2015/08/28 04:38:47 guenther Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -61,21 +61,27 @@
 struct	unpcb {
 	struct	socket *unp_socket;	/* pointer back to socket */
 	struct	vnode *unp_vnode;	/* if associated with file */
-	ino_t	unp_ino;		/* fake inode number */
+	struct	file *unp_file;		/* backpointer for unp_gc() */
 	struct	unpcb *unp_conn;	/* control block of connected socket */
+	ino_t	unp_ino;		/* fake inode number */
 	SLIST_HEAD(,unpcb) unp_refs;	/* referencing socket linked list */
 	SLIST_ENTRY(unpcb) unp_nextref;	/* link in unp_refs list */
 	struct	mbuf *unp_addr;		/* bound address of socket */
+	long	unp_msgcount;		/* references from socket rcv buf */
 	int	unp_flags;		/* this unpcb contains peer eids */
 	struct	sockpeercred unp_connid;/* id of peer process */
 	struct	timespec unp_ctime;	/* holds creation time */
+	LIST_ENTRY(unpcb) unp_link;	/* link in per-AF list of sockets */
 };
 
 /*
  * flag bits in unp_flags
  */
-#define UNP_FEIDS	1		/* unp_connid contains information */
-#define UNP_FEIDSBIND	2		/* unp_connid was set by a bind */
+#define UNP_FEIDS	0x01		/* unp_connid contains information */
+#define UNP_FEIDSBIND	0x02		/* unp_connid was set by a bind */
+#define UNP_GCMARK	0x04		/* mark during unp_gc() */
+#define UNP_GCDEFER	0x08		/* ref'd, but not marked in this pass */
+#define UNP_GCDEAD	0x10		/* unref'd in this pass */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 
@@ -88,7 +94,7 @@ void	unp_detach(struct unpcb *);
 void	unp_discard(struct file **, int);
 void	unp_disconnect(struct unpcb *);
 void	unp_drop(struct unpcb *, int);
-void	unp_gc(void);
+void	unp_gc(void *);
 void	unp_mark(struct file **, int);
 void	unp_scan(struct mbuf *, void (*)(struct file **, int));
 void	unp_shutdown(struct unpcb *);

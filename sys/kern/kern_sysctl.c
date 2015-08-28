@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.288 2015/08/22 20:18:49 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.289 2015/08/28 04:38:47 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1021,7 +1021,6 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		kf->f_iflags = fp->f_iflags;
 		kf->f_type = fp->f_type;
 		kf->f_count = fp->f_count;
-		kf->f_msgcount = fp->f_msgcount;
 		if (show_pointers)
 			kf->f_ucred = PTRTOINT64(fp->f_cred);
 		kf->f_uid = fp->f_cred->cr_uid;
@@ -1154,6 +1153,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		case AF_UNIX: {
 			struct unpcb *unpcb = so->so_pcb;
 
+			kf->f_msgcount = unpcb->unp_msgcount;
 			if (show_pointers) {
 				kf->unp_conn	= PTRTOINT64(unpcb->unp_conn);
 				kf->unp_refs	= PTRTOINT64(

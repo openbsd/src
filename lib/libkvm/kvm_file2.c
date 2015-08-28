@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.45 2015/03/28 23:50:55 bluhm Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.46 2015/08/28 04:38:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -484,7 +484,6 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
 		kf->f_iflags = fp->f_iflags;
 		kf->f_type = fp->f_type;
 		kf->f_count = fp->f_count;
-		kf->f_msgcount = fp->f_msgcount;
 		kf->f_ucred = PTRTOINT64(fp->f_cred);
 		kf->f_uid = f_cred.cr_uid;
 		kf->f_gid = f_cred.cr_gid;
@@ -655,6 +654,7 @@ fill_file(kvm_t *kd, struct kinfo_file *kf, struct file *fp, u_long fpaddr,
 				_kvm_err(kd, kd->program, "can't read unpcb");
 				return (-1);
 			}
+			kf->f_msgcount	= unpcb.unp_msgcount;
 			kf->unp_conn	= PTRTOINT64(unpcb.unp_conn);
 			kf->unp_refs	= PTRTOINT64(
 			    SLIST_FIRST(&unpcb.unp_refs));
