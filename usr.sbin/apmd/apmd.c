@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.75 2015/02/06 08:16:50 dcoppa Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.76 2015/08/28 16:13:58 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -153,7 +153,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 		    bstate.ac_state != last.ac_state ||
 		    bstate.battery_state != last.battery_state ||
 		    (bstate.minutes_left && bstate.minutes_left < 15) ||
-		    abs(bstate.battery_life - last.battery_life) > 20) {
+		    abs(bstate.battery_life - last.battery_life) >= 10) {
 #ifdef __powerpc__
 			/*
 			 * When the battery is charging, the estimated life
