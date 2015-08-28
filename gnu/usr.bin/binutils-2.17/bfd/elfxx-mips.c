@@ -2782,7 +2782,8 @@ mips_elf_sort_hash_table_f (struct mips_elf_link_hash_entry *h, void *data)
   /* Global symbols that need GOT entries that are not explicitly
      referenced are marked with got offset 2.  Those that are
      referenced get a 1, and those that don't need GOT entries get
-     -1.  */
+     -1.  Forced local symbols may also be marked with got offset 1,
+     but are never given global GOT entries.  */
   if (h->root.got.offset == 2)
     {
       BFD_ASSERT (h->tls_type == GOT_NORMAL);
@@ -2791,7 +2792,7 @@ mips_elf_sort_hash_table_f (struct mips_elf_link_hash_entry *h, void *data)
 	hsd->low = (struct elf_link_hash_entry *) h;
       h->root.dynindx = hsd->max_unref_got_dynindx++;
     }
-  else if (h->root.got.offset != 1)
+  else if (h->root.got.offset != 1 || h->forced_local)
     h->root.dynindx = hsd->max_non_got_dynindx++;
   else
     {
@@ -3248,6 +3249,7 @@ mips_elf_set_global_got_offset (void **entryp, void *p)
 
   if (entry->abfd != NULL && entry->symndx == -1
       && entry->d.h->root.dynindx != -1
+      && !entry->d.h->forced_local
       && entry->d.h->tls_type == GOT_NORMAL)
     {
       if (g)
