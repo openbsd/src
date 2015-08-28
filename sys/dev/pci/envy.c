@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.63 2015/08/28 15:50:18 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.64 2015/08/28 16:15:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2444,7 +2444,6 @@ envy_midi_close(void *self)
 	sc->midi_in = NULL;
 	sc->midi_out = NULL;
 	sc->midi_isopen = 0;
-	printf("envy: midi closed\n");
 }
 
 int
