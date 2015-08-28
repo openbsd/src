@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.61 2015/07/20 15:50:04 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.62 2015/08/28 12:31:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -204,11 +204,6 @@ const struct options_table_entry session_options_table[] = {
 	{ .name = "lock-command",
 	  .type = OPTIONS_TABLE_STRING,
 	  .default_str = "lock -np"
-	},
-
-	{ .name = "lock-server",
-	  .type = OPTIONS_TABLE_FLAG,
-	  .default_num = 1
 	},
 
 	{ .name = "message-attr",

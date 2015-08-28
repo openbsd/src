@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.447 2015/08/12 08:55:20 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.448 2015/08/28 12:31:55 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2015 $
+.Dd $Mdocdate: August 28 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2561,9 +2561,7 @@ Lock the session (like the
 .Ic lock-session
 command) after
 .Ar number
-seconds of inactivity, or the entire server (all sessions) if the
-.Ic lock-server
-option is set.
+seconds of inactivity.
 The default is not to lock (set to 0).
 .It Ic lock-command Ar shell-command
 Command to run when locking each client.
@@ -2571,19 +2569,6 @@ The default is to run
 .Xr lock 1
 with
 .Fl np .
-.It Xo Ic lock-server
-.Op Ic on | off
-.Xc
-If this option is
-.Ic on
-(the default),
-instead of each session locking individually as each has been
-idle for
-.Ic lock-after-time ,
-the entire server will lock after
-.Em all
-sessions would have locked.
-This has no effect as a session option; it must be set as a global option.
 .It Ic message-command-style Ar style
 Set status line message command style, where
 .Ar style
