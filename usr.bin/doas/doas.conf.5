@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.14 2015/07/30 14:02:04 zhuk Exp $
+.\" $OpenBSD: doas.conf.5,v 1.15 2015/08/28 13:19:50 reyk Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: August 28 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -111,7 +111,8 @@ variables
 .Ev PS1 ,
 and
 .Ev SSH_AUTH_SOCK ,
-and additionally permits tedu to run procmap as root without a password.
+permits tedu to run procmap as root without a password,
+and additionally permits root to run unrestricted commands as itself.
 .Bd -literal -offset indent
 # Non-exhaustive list of variables needed to
 # build release(8) and ports(7)
@@ -123,6 +124,7 @@ permit nopass keepenv { \e
         SUBPACKAGE WRKOBJDIR SUDO_PORT_V1 } :wsrc
 permit nopass keepenv { ENV PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu as root cmd /usr/sbin/procmap
+permit nopass keepenv root as root
 .Ed
 .Sh SEE ALSO
 .Xr doas 1
