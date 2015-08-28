@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.81 2015/08/25 15:00:05 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.82 2015/08/28 07:49:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -843,6 +843,8 @@ input_parse(struct window_pane *wp)
 
 	if (EVBUFFER_LENGTH(evb) == 0)
 		return;
+
+	wp->flags |= PANE_CHANGED;
 
 	wp->window->flags |= WINDOW_ACTIVITY;
 	wp->window->flags &= ~WINDOW_SILENCE;

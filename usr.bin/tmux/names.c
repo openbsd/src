@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.24 2015/02/05 10:29:43 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.25 2015/08/28 07:49:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,6 +49,10 @@ window_name_callback(unused int fd, unused short events, void *data)
 
 	if (w->active == NULL)
 		return;
+
+	if (~w->active->flags & PANE_CHANGED)
+		return;
+	w->active->flags &= ~PANE_CHANGED;
 
 	if (!options_get_number(&w->options, "automatic-rename")) {
 		if (event_initialized(&w->name_timer))
