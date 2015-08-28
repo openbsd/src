@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.131 2015/08/28 12:16:28 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.132 2015/08/28 12:25:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -504,21 +504,12 @@ server_child_stopped(pid_t pid, int status)
 void
 server_second_callback(unused int fd, unused short events, unused void *arg)
 {
-	struct window		*w;
-	struct window_pane	*wp;
 	struct timeval		 tv;
 
 	if (options_get_number(&global_s_options, "lock-server"))
 		server_lock_server();
 	else
 		server_lock_sessions();
-
-	RB_FOREACH(w, windows, &windows) {
-		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if (wp->mode != NULL && wp->mode->timer != NULL)
-				wp->mode->timer(wp);
-		}
-	}
 
 	evtimer_del(&server_ev_second);
 	memset(&tv, 0, sizeof tv);

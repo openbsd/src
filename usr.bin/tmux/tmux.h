@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.534 2015/08/28 12:16:28 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.535 2015/08/28 12:25:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -777,7 +777,6 @@ struct window_mode {
 	void	(*resize)(struct window_pane *, u_int, u_int);
 	void	(*key)(struct window_pane *, struct client *, struct session *,
 		    int, struct mouse_event *);
-	void	(*timer)(struct window_pane *);
 };
 
 /* Structures for choose mode. */

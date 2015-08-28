@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.65 2015/06/05 18:18:32 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.66 2015/08/28 12:25:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,7 +57,6 @@ const struct window_mode window_choose_mode = {
 	window_choose_free,
 	window_choose_resize,
 	window_choose_key,
-	NULL,
 };
 
 struct window_choose_mode_item {
