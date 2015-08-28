@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_openssl.c,v 1.10 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: eng_openssl.c,v 1.11 2015/08/28 01:06:09 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -193,7 +193,7 @@ ENGINE_load_openssl(void)
 
 	if (!toadd)
 		return;
-	ENGINE_add(toadd);
+	(void) ENGINE_add(toadd);
 	/* If the "add" worked, it gets a structural reference. So either way,
 	 * we release our just-created reference. */
 	ENGINE_free(toadd);
