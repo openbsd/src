@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.69 2015/08/28 12:16:28 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.70 2015/08/28 13:01:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -277,7 +277,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 		c->session = s;
 		status_timer_start(c);
 		notify_attached_session_changed(c);
-		session_update_activity(s);
+		session_update_activity(s, NULL);
 		server_redraw_client(c);
 	}
 	recalculate_sizes();
