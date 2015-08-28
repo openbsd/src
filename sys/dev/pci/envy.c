@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.61 2015/07/29 21:10:50 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.62 2015/08/28 13:51:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -278,6 +278,7 @@ struct envy_card envy_cards[] = {
 		delta_codec_write,
 		NULL
 	}, {
+#define ENVY_SUBID_DELTA44	(PCI_ID_CODE(0x1412, 0xd633))
 		PCI_ID_CODE(0x1412, 0xd633),
 		"M-Audio Delta 44",
 		4, &ak4524_adc, 4, &ak4524_dac,
@@ -358,14 +359,6 @@ struct envy_card envy_cards[] = {
  * M-Audio Delta specific code
  */
 
-/*
- * GPIO pin numbers
- */
-#define DELTA_GPIO_CLK		0x2
-#define DELTA_GPIO_DOUT		0x8
-#define DELTA_GPIO_CSMASK	0x70
-#define DELTA_GPIO_CS(dev)	((dev) << 4)
-
 void
 delta_init(struct envy_softc *sc)
 {
@@ -390,27 +383,43 @@ void
 delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 {
 	int bits, i, reg;
+	int clk, dout, csmask, cs;
+
+	/*
+	 * GPIO pin numbers
+	 */
+	if (sc->card->subid == ENVY_SUBID_DELTA44) {
+		clk = 0x20;
+		dout = 0x10;
+		csmask = 0xc0;
+		cs = dev ? 0x40 : 0x80;
+	} else {
+		clk = 0x2;
+		dout = 0x8;
+		csmask = 0x70;
+		cs = dev << 4;
+	}
 
 	reg = envy_gpio_getstate(sc);
-	reg &= ~DELTA_GPIO_CSMASK;
-	reg |=  DELTA_GPIO_CS(dev);
+	reg &= ~csmask;
+	reg |= cs;
 	envy_gpio_setstate(sc, reg);
 	delay(1);
 
 	bits  = 0xa000 | (addr << 8) | data;
 	for (i = 0; i < 16; i++) {
-		reg &= ~(DELTA_GPIO_CLK | DELTA_GPIO_DOUT);
-		reg |= (bits & 0x8000) ? DELTA_GPIO_DOUT : 0;
+		reg &= ~(clk | dout);
+		reg |= (bits & 0x8000) ? dout : 0;
 		envy_gpio_setstate(sc, reg);
 		delay(1);
 
-		reg |= DELTA_GPIO_CLK;
+		reg |= clk;
 		envy_gpio_setstate(sc, reg);
 		delay(1);
 		bits <<= 1;
 	}
 
-	reg |= DELTA_GPIO_CSMASK;
+	reg |= csmask;
 	envy_gpio_setstate(sc, reg);
 	delay(1);
 }
