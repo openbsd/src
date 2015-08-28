@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.190 2015/08/26 15:36:46 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.191 2015/08/28 11:12:57 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 	u_int64_t dospartoff = 0, dospartend = DL_GETBEND(lp);
 	int i, ourpart = -1, wander = 1, n = 0, loop = 0, offset;
 	struct dos_partition dp[NDOSPART], *dp2;
-	daddr_t part_blkno = DOSBBSECTOR;
+	u_int64_t sector = DOSBBSECTOR;
 	u_int32_t extoff = 0;
 	int error;
 
@@ -324,11 +324,11 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 	while (wander && loop < DOS_MAXEBR) {
 		loop++;
 		wander = 0;
-		if (part_blkno < extoff)
-			part_blkno = extoff;
+		if (sector < extoff)
+			sector = extoff;
 
 		/* read MBR/EBR */
-		bp->b_blkno = DL_SECTOBLK(lp, part_blkno);
+		bp->b_blkno = DL_SECTOBLK(lp, sector);
 		bp->b_bcount = lp->d_secsize;
 		bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
 		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
@@ -343,7 +343,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 
 		bcopy(bp->b_data + DOSPARTOFF, dp, sizeof(dp));
 
-		if (n == 0 && part_blkno == DOSBBSECTOR) {
+		if (n == 0 && sector == DOSBBSECTOR) {
 			u_int16_t mbrtest;
 
 			/* Check the end of sector marker. */
@@ -368,7 +368,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			 * ESDI/ST506/RLL
 			 */
 			dp2 = &dp[ourpart];
-			dospartoff = letoh32(dp2->dp_start) + part_blkno;
+			dospartoff = letoh32(dp2->dp_start) + sector;
 			dospartend = dospartoff + letoh32(dp2->dp_size);
 
 			/*
@@ -432,10 +432,10 @@ donot:
 				break;
 			case DOSPTYP_EXTEND:
 			case DOSPTYP_EXTENDL:
-				part_blkno = letoh32(dp2->dp_start) + extoff;
+				sector = letoh32(dp2->dp_start) + extoff;
 				if (!extoff) {
 					extoff = letoh32(dp2->dp_start);
-					part_blkno = 0;
+					sector = 0;
 				}
 				wander = 1;
 				continue;
@@ -461,7 +461,7 @@ donot:
 			pp->p_fstype = fstype;
 			if (letoh32(dp2->dp_start))
 				DL_SETPOFFSET(pp,
-				    letoh32(dp2->dp_start) + part_blkno);
+				    letoh32(dp2->dp_start) + sector);
 			DL_SETPSIZE(pp, letoh32(dp2->dp_size));
 		}
 	}
@@ -471,7 +471,7 @@ notmbr:
 		/* Must not modify *lp when partoffp is set. */
 		lp->d_npartitions = MAXPARTITIONS;
 
-	if (n == 0 && part_blkno == DOSBBSECTOR && ourpart == -1) {
+	if (n == 0 && sector == DOSBBSECTOR && ourpart == -1) {
 		u_int16_t fattest;
 
 		/* Check for a valid initial jmp instruction. */
