@@ -1,4 +1,4 @@
-/* $OpenBSD: server-window.c,v 1.37 2015/08/28 15:51:48 nicm Exp $ */
+/* $OpenBSD: server-window.c,v 1.38 2015/08/28 16:10:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,6 @@ server_window_loop(void)
 					server_status_session(s);
 			}
 		}
-		check_window_name(w);
 	}
 }
 

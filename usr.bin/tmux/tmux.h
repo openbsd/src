@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.538 2015/08/28 15:51:48 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.539 2015/08/28 16:10:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -870,6 +870,7 @@ RB_HEAD(window_pane_tree, window_pane);
 struct window {
 	u_int		 id;
 	char		*name;
+	struct event	 name_timer;
 	struct timeval	 silence_timer;
 	struct timeval	 activity_time;
 
@@ -2208,7 +2209,7 @@ void	window_choose_collapse_all(struct window_pane *);
 void	window_choose_set_current(struct window_pane *, u_int);
 
 /* names.c */
-void	 check_window_name(struct window *);
+void	 queue_window_name(struct window *);
 char	*default_window_name(struct window *);
 char	*format_window_name(struct window *);
 char	*parse_window_name(const char *);
