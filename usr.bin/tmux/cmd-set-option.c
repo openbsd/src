@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.77 2015/08/28 12:16:28 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.78 2015/08/28 13:12:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -176,7 +176,7 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 	}
 
-	/* Start or stop timers when name or status options changed. */
+	/* Start or stop timers if necessary. */
 	if (strcmp(oe->name, "automatic-rename") == 0) {
 		RB_FOREACH(w, windows, &windows) {
 			if (options_get_number(&w->options, "automatic-rename"))
