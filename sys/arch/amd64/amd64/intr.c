@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.44 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.45 2015/08/28 16:16:44 tedu Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ other:
 found:
 		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
 		if (idtvec == 0) {
-			free(ci->ci_isources[slot], M_DEVBUF, 0);
+			free(ci->ci_isources[slot], M_DEVBUF, sizeof (struct intrsource));
 			ci->ci_isources[slot] = NULL;
 			return EBUSY;
 		}
@@ -500,7 +500,7 @@ intr_disestablish(struct intrhand *ih)
 #endif
 
 	if (source->is_handlers == NULL) {
-		free(source, M_DEVBUF, 0);
+		free(source, M_DEVBUF, sizeof (struct intrsource));
 		ci->ci_isources[ih->ih_slot] = NULL;
 		if (pic != &i8259_pic)
 			idt_vec_free(idtvec);
