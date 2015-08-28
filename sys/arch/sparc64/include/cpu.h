@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.87 2015/07/02 01:33:59 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.88 2015/08/28 23:28:39 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -129,6 +129,13 @@ struct cpu_info {
 	void			*ci_intrpending[16][8];
 	u_int64_t		ci_tick;
 	struct intrhand		ci_tickintr;
+
+	volatile int		ci_ddb_paused;
+#define CI_DDB_RUNNING		0
+#define CI_DDB_SHOULDSTOP	1
+#define CI_DDB_STOPPED		2
+#define CI_DDB_ENTERDDB		3
+#define CI_DDB_INDDB		4
 
 	/* Spinning up the CPU */
 	void			(*ci_spinup)(void); /* spinup routine */

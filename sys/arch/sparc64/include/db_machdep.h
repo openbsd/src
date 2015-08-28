@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.14 2014/03/16 20:31:46 guenther Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.15 2015/08/28 23:28:39 kettenis Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -133,6 +133,16 @@ void		db_machine_init(void);
 
 void db_machine_init(void);
 int kdb_trap(int, struct trapframe64 *);
+
+int db_enter_ddb(void);
+void db_startcpu(struct cpu_info *);
+void db_stopcpu(struct cpu_info *);
+
+extern struct mutex ddb_mp_mutex;
+
+#define DDB_STATE_NOT_RUNNING	0
+#define DDB_STATE_RUNNING	1
+#define DDB_STATE_EXITING	2
 
 /* Register device-specific method for triggering XIRs. */
 void db_register_xir(void (*)(void *, int), void *);
