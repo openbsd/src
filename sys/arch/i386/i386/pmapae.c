@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.44 2015/08/25 20:18:44 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.45 2015/08/28 05:00:42 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -694,6 +694,10 @@ pmap_bootstrap_pae(void)
 		pte = PDE(kpm, pdei(va));
 		PDE(kpm, pdei(va)) = pte | PG_NX;
 	}
+
+	va = (vaddr_t)APTE_BASE;
+	pte = PDE(kpm, pdei(va));
+	PDE(kpm, pdei(va)) = pte | PG_NX;
 
 	pmap_write_protect(kpm, (vaddr_t)&kernel_text, (vaddr_t)&etext,
 	    PROT_READ | PROT_EXEC);
