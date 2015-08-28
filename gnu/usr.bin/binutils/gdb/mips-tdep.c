@@ -4722,12 +4722,18 @@ mips_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  /* On Irix, ELF64 executables use the N64 ABI.  The
 	     pseudo-sections which describe the ABI aren't present
 	     on IRIX.  (Even for executables created by gcc.)  */
-	  if (bfd_get_flavour (info.abfd) == bfd_target_elf_flavour
+	  if (info.abfd
+	      && bfd_get_flavour (info.abfd) == bfd_target_elf_flavour
 	      && elf_elfheader (info.abfd)->e_ident[EI_CLASS] == ELFCLASS64)
 	    found_abi = MIPS_ABI_N64;
 	  else
 	    found_abi = MIPS_ABI_N32;
 	  break;
+	default:
+	  if (info.abfd
+	      && bfd_get_flavour (info.abfd) == bfd_target_elf_flavour
+	      && elf_elfheader (info.abfd)->e_ident[EI_CLASS] == ELFCLASS64)
+	    found_abi = MIPS_ABI_N64;
 	}
     }
 
