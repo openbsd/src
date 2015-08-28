@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.134 2015/08/28 13:12:20 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.135 2015/08/28 13:21:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -62,8 +62,6 @@ void	server_signal_callback(int, short, void *);
 void	server_child_signal(void);
 void	server_child_exited(pid_t, int);
 void	server_child_stopped(pid_t, int);
-void	server_second_callback(int, short, void *);
-void	server_lock_sessions(void);
 
 /* Set marked pane. */
 void
