@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.52 2015/08/28 13:12:20 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.53 2015/08/28 13:16:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -189,8 +189,10 @@ session_free(unused int fd, unused short events, void *arg)
 
 	log_debug("sesson %s freed (%d references)", s->name, s->references);
 
-	if (s->references == 0)
+	if (s->references == 0) {
+		free(s->name);
 		free(s);
+	}
 }
 
 /* Destroy a session. */
