@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.64 2015/08/28 16:15:39 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.65 2015/08/28 16:21:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1662,6 +1662,9 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	int subid;
 
+#if NMIDI > 0
+	sc->midi_isopen = 0;
+#endif
 	sc->pci_tag = pa->pa_tag;
 	sc->pci_pc = pa->pa_pc;
 	sc->pci_dmat = pa->pa_dmat;
@@ -1709,7 +1712,6 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	envy_reset(sc);
 	sc->audio = audio_attach_mi(&envy_hw_if, sc, &sc->dev);
 #if NMIDI > 0
-	sc->midi_isopen = 0;
 	if (!sc->isht || sc->eeprom[ENVY_EEPROM_CONF] & ENVY_CONF_MIDI) {
 		sc->midi = midi_attach_mi(&envy_midi_hw_if, sc, &sc->dev);
 	}
