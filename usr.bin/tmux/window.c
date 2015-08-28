@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.136 2015/08/28 07:49:24 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.137 2015/08/28 07:55:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -934,7 +934,7 @@ window_pane_read_callback(unused struct bufferevent *bufev, void *data)
 	 */
 	wp->window->flags |= WINDOW_SILENCE;
 	if (gettimeofday(&wp->window->silence_timer, NULL) != 0)
-		fatal("gettimeofday failed.");
+		fatal("gettimeofday failed");
 	return;
 
 start_timer:
