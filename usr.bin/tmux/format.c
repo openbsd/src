@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.77 2015/08/28 11:38:27 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.78 2015/08/28 12:16:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -247,7 +247,7 @@ format_job_timer(unused int fd, unused short events, unused void *arg)
 		if (fj->job != NULL)
 			job_free(fj->job);
 
-		free((void*)fj->cmd);
+		free((void *)fj->cmd);
 		free(fj->out);
 
 		free(fj);
