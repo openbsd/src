@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.123 2015/08/26 21:21:57 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.124 2015/08/28 03:49:34 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ int	filt_ttyread(struct knote *kn, long hint);
 void 	filt_ttyrdetach(struct knote *kn);
 int	filt_ttywrite(struct knote *kn, long hint);
 void 	filt_ttywdetach(struct knote *kn);
-void	ttystats_init(struct itty **);
+void	ttystats_init(struct itty **, size_t *);
 
 /* Symbolic sleep message strings. */
 char ttclos[]	= "ttycls";
@@ -2370,11 +2370,12 @@ ttyfree(struct tty *tp)
 }
 
 void
-ttystats_init(struct itty **ttystats)
+ttystats_init(struct itty **ttystats, size_t *ttystatssiz)
 {
 	struct itty *itp;
 	struct tty *tp;
 
+	*ttystatssiz = tty_count * sizeof(struct itty);
 	*ttystats = mallocarray(tty_count, sizeof(struct itty),
 	    M_SYSCTL, M_WAITOK|M_ZERO);
 	for (tp = TAILQ_FIRST(&ttylist), itp = *ttystats; tp;
@@ -2420,11 +2421,12 @@ sysctl_tty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_TTY_INFO:
 	    {
 		struct itty *ttystats;
+		size_t ttystatssiz;
 
-		ttystats_init(&ttystats);
+		ttystats_init(&ttystats, &ttystatssiz);
 		err = sysctl_rdstruct(oldp, oldlenp, newp, ttystats,
 		    tty_count * sizeof(struct itty));
-		free(ttystats, M_SYSCTL, 0);
+		free(ttystats, M_SYSCTL, ttystatssiz);
 		return (err);
 	    }
 	default:
