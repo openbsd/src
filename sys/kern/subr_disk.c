@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.191 2015/08/28 11:12:57 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.192 2015/08/28 22:42:05 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -528,8 +528,6 @@ notfat:
 
 	bp->b_blkno = DL_BLKTOSEC(lp, DL_SECTOBLK(lp, dospartoff) +
 	    DOS_LABELSECTOR) * DL_BLKSPERSEC(lp);
-	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, dospartoff) +
-	    DOS_LABELSECTOR);
 	bp->b_bcount = lp->d_secsize;
 	bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
@@ -538,6 +536,8 @@ notfat:
 	if (biowait(bp))
 		return (bp->b_error);
 
+	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, dospartoff) +
+	    DOS_LABELSECTOR);
 	error = checkdisklabel(bp->b_data + offset, lp,
 	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
 	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
@@ -847,8 +847,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 
 	bp->b_blkno = DL_BLKTOSEC(lp, DL_SECTOBLK(lp, gptpartoff) +
 	    DOS_LABELSECTOR) * DL_BLKSPERSEC(lp);
-	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, gptpartoff) +
-	    DOS_LABELSECTOR);
 	bp->b_bcount = lp->d_secsize;
 	bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
@@ -857,6 +855,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	if (biowait(bp))
 		return (bp->b_error);
 
+	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, gptpartoff) +
+	    DOS_LABELSECTOR);
 	error = checkdisklabel(bp->b_data + offset, lp,
 	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
 	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
