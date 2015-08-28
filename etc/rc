@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.459 2015/08/22 23:32:18 rpe Exp $
+#	$OpenBSD: rc,v 1.460 2015/08/28 18:10:46 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -121,36 +121,38 @@ fill_baddynamic() {
 # Start daemon using the rc.d daemon control scripts.
 # Usage: start_daemon daemon1 daemon2 daemon3
 start_daemon() {
-	local _n
-	for _n; do
-		eval _do=\${${_n}_flags}
-		if [ X"${_do}" != X"NO" ]; then
-			/etc/rc.d/${_n} start
-		fi
+	local _daemon
+
+	for _daemon; do
+		eval "_do=\${${_daemon}_flags}"
+		[[ $_do != NO ]] && /etc/rc.d/${_daemon} start
 	done
 }
 
 # Generate keys for isakmpd, iked and sshd if the don't exist yet.
 make_keys() {
-	if [ ! -f /etc/isakmpd/private/local.key ]; then
-		echo -n "openssl: generating isakmpd/iked RSA key... "
-		if openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
-		    >/dev/null 2>&1; then
-			chmod 600 /etc/isakmpd/private/local.key
-			openssl rsa -out /etc/isakmpd/local.pub -in \
-			    /etc/isakmpd/private/local.key -pubout \
-			    >/dev/null 2>&1
+	local _isakmpd_key=/etc/isakmpd/private/local.key
+	local _isakmpd_pub=/etc/isakmpd/local.pub
+	local _iked_key=/etc/iked/private/local.key
+	local _iked_pub=/etc/iked/local.pub
+
+	if [[ ! -f $_isakmpd_key ]]; then
+		echo -n "openssl: generating isakmpd/iked RSA keys... "
+		if openssl genrsa -out $_isakmpd_key 2048 >/dev/null 2>&1 &&
+			chmod 600 $_isakmpd_key &&
+			openssl rsa -out $_isakmpd_pub -in $_isakmpd_key \
+			    -pubout >/dev/null 2>&1; then
 			echo done.
 		else
 			echo failed.
 		fi
 	fi
 
-	if [ ! -f /etc/iked/private/local.key ]; then
+	if [[ ! -f $_iked_key ]]; then
 		# Just copy the generated isakmpd key
-		cp /etc/isakmpd/private/local.key /etc/iked/private/local.key
-		chmod 600 /etc/iked/private/local.key
-		cp /etc/isakmpd/local.pub /etc/iked/local.pub
+		cp $_isakmpd_key $_iked_key
+		chmod 600 $_iked_key
+		cp $_isakmpd_pub $_iked_pub
 	fi
 
 	ssh-keygen -A
