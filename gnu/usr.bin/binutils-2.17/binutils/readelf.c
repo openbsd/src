@@ -9121,7 +9121,8 @@ process_archive (char *file_name, FILE *file)
       return 1;
     }
 
-  if (memcmp (arhdr.ar_name, "/               ", 16) == 0)
+  if (memcmp (arhdr.ar_name, "/               ", 16) == 0
+      || memcmp (arhdr.ar_name, "/SYM64/         ", 16) == 0)
     {
       /* This is the archive symbol table.  Skip it.
 	 FIXME: We should have an option to dump it.  */
