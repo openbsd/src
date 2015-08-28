@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.139 2015/08/28 16:10:46 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.140 2015/08/28 17:11:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -704,6 +704,7 @@ struct window_pane *
 window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 {
 	struct window_pane	*wp;
+	char			 host[HOST_NAME_MAX + 1];
 
 	wp = xcalloc(1, sizeof *wp);
 	wp->window = w;
@@ -739,6 +740,9 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 
 	screen_init(&wp->base, sx, sy, hlimit);
 	wp->screen = &wp->base;
+
+	if (gethostname(host, sizeof host) == 0)
+		screen_set_title(&wp->base, host);
 
 	input_init(wp);
 
