@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.143 2015/08/29 08:30:54 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.144 2015/08/29 23:55:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -438,16 +438,6 @@ window_get_active_at(struct window *w, u_int x, u_int y)
 		return (wp);
 	}
 	return (NULL);
-}
-
-void
-window_set_active_at(struct window *w, u_int x, u_int y)
-{
-	struct window_pane	*wp;
-
-	wp = window_get_active_at(w, x, y);
-	if (wp != NULL && wp != w->active)
-		window_set_active_pane(w, wp);
 }
 
 struct window_pane *

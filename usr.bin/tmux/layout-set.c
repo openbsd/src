@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.11 2014/04/17 14:45:49 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.12 2015/08/29 23:55:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,12 +43,6 @@ const struct {
 	{ "main-vertical", layout_set_main_v },
 	{ "tiled", layout_set_tiled },
 };
-
-const char *
-layout_set_name(u_int layout)
-{
-	return (layout_sets[layout].name);
-}
 
 int
 layout_set_lookup(const char *name)
