@@ -1,7 +1,7 @@
-.\"	$OpenBSD: roff.7,v 1.53 2015/08/29 21:37:11 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.54 2015/08/29 22:39:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011, 2013-2015 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -1837,9 +1837,15 @@ For short names, there are variants
 .No \e* Ns Ar c
 and
 .No \e*( Ns Ar cc .
+.Ss \e,
+Left italic correction (groff extension); ignored by
+.Xr mandoc 1 .
 .Ss \e-
 Special character
 .Dq mathematical minus sign .
+.Ss \e/
+Right italic correction (groff extension); ignored by
+.Xr mandoc 1 .
 .Ss \e[ Ns Ar name ]
 .Sx Special Characters
 with names of arbitrary length, see
