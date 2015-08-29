@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.80 2015/08/28 17:01:42 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.81 2015/08/29 09:25:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1074,10 +1074,12 @@ void
 format_defaults_paste_buffer(struct format_tree *ft, struct paste_buffer *pb,
     int utf8flag)
 {
+	size_t	 bufsize;
 	char	*s;
 
-	format_add(ft, "buffer_size", "%zu", pb->size);
-	format_add(ft, "buffer_name", "%s", pb->name);
+	paste_buffer_data(pb, &bufsize);
+	format_add(ft, "buffer_size", "%zu", bufsize);
+	format_add(ft, "buffer_name", "%s", paste_buffer_name(pb));
 
 	s = paste_make_sample(pb, utf8flag);
 	format_add(ft, "buffer_sample", "%s", s);

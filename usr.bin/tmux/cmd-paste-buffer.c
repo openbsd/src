@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.27 2014/11/05 23:25:02 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.28 2015/08/29 09:25:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -58,7 +58,7 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		bufname = args_get(args, 'b');
 
 	if (bufname == NULL)
-		pb = paste_get_top();
+		pb = paste_get_top(NULL);
 	else {
 		pb = paste_get_name(bufname);
 		if (pb == NULL) {
