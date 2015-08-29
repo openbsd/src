@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.44 2014/12/18 20:59:21 tedu Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.45 2015/08/29 23:07:51 deraadt Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -171,9 +171,9 @@ struct nfsm_info {
 	}								\
 } } while (0)
 
-#define nfsm_strsiz(s,m) {						\
-	nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED);			\
-	if (((s) = fxdr_unsigned(int32_t,*tl)) > (m)) {			\
+#define nfsm_strsiz(s, m) {						\
+	nfsm_dissect(tl, u_int32_t *,NFSX_UNSIGNED);			\
+	if (((s) = fxdr_unsigned(int32_t, *tl)) > (m)) {		\
 		m_freem(info.nmi_mrep);					\
 		error = EBADRPC;					\
 		goto nfsmout;						\
@@ -181,8 +181,8 @@ struct nfsm_info {
 }
 
 #define nfsm_srvnamesiz(s) {						\
-	nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED);			\
-	if (((s) = fxdr_unsigned(int32_t,*tl)) > NFS_MAXNAMLEN) 	\
+	nfsm_dissect(tl, u_int32_t *,NFSX_UNSIGNED);			\
+	if (((s) = fxdr_unsigned(int32_t, *tl)) > NFS_MAXNAMLEN) 	\
 		error = NFSERR_NAMETOL;					\
 	if ((s) <= 0)							\
 		error = EBADRPC;					\
@@ -190,9 +190,9 @@ struct nfsm_info {
 		nfsm_reply(0);						\
 }
 
-#define nfsm_mtouio(p,s)						\
+#define nfsm_mtouio(p, s)						\
 	if ((s) > 0 &&							\
-	    (t1 = nfsm_mbuftouio(&info.nmi_md,(p),(s),			\
+	    (t1 = nfsm_mbuftouio(&info.nmi_md, (p), (s),		\
 	        &info.nmi_dpos)) != 0) {				\
 		error = t1;						\
 		m_freem(info.nmi_mrep);					\
@@ -201,7 +201,7 @@ struct nfsm_info {
 
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
 
-#define nfsm_strtom(a,s,m)						\
+#define nfsm_strtom(a, s, m)						\
 	if ((s) > (m)) {						\
 		m_freem(info.nmi_mreq);					\
 		error = ENAMETOOLONG;					\
