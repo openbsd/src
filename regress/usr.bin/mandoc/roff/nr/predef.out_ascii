@@ -12,7 +12,10 @@ DDEESSCCRRIIPPTTIIOONN
        adjustment mode: 0
        output device defined: 1
        vertical resolution: 40
+       user defined macro with 0 arguments:
+       user defined macro with 1 arguments: one
+       user defined macro with 2 arguments: one two
 
 
 
-OpenBSD                        February 4, 2014                   NR-PREDEF(1)
+OpenBSD                         August 29, 2015                   NR-PREDEF(1)
