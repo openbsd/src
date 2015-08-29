@@ -1,4 +1,4 @@
-/*	$OpenBSD: videovar.h,v 1.7 2010/07/14 21:24:33 jakemsr Exp $	*/
+/*	$OpenBSD: videovar.h,v 1.8 2015/08/29 20:51:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -30,6 +30,7 @@ struct video_softc {
 
 	int			 sc_fsize;
 	uint8_t			*sc_fbuffer;
+	size_t			 sc_fbufferlen;
 	int			 sc_vidmode;	/* access mode */
 #define		VIDMODE_NONE	0
 #define		VIDMODE_MMAP	1
