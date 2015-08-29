@@ -1,4 +1,4 @@
-/*      $OpenBSD: tag.c,v 1.6 2015/07/28 18:38:05 schwarze Exp $    */
+/*      $OpenBSD: tag.c,v 1.7 2015/08/29 15:28:19 schwarze Exp $    */
 /*
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -18,6 +18,7 @@
 
 #include <signal.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
