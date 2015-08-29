@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.52 2015/05/31 23:12:16 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.53 2015/08/29 21:37:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2015 $
+.Dd $Mdocdate: August 29 2015 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -663,6 +663,8 @@ produces
 .D1 \efI\e^XtFree\e^\efP.
 .Pp
 in the input stream, and thus in the output: \fI\^XtFree\^\fP.
+Each occurrence of \e\e$* is replaced with all the arguments,
+joined together with single blank characters.
 .Pp
 Since macros and user-defined strings share a common string table,
 defining a macro

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.145 2015/08/29 20:24:34 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.146 2015/08/29 21:37:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -3078,7 +3078,7 @@ roff_userdef(ROFF_ARGS)
 {
 	const char	 *arg[9], *ap;
 	char		 *cp, *n1, *n2;
-	int		  i;
+	int		  i, ib, ie;
 	size_t		  asz, rsz;
 
 	/*
@@ -3112,9 +3112,14 @@ roff_userdef(ROFF_ARGS)
 			continue;
 		if (*cp++ != '$')
 			continue;
-		i = *cp - '1';
-		if (0 > i || 8 < i)
-			continue;
+		if (*cp == '*') {  /* \\$* inserts all arguments */
+			ib = 0;
+			ie = r->argc - 1;
+		} else {  /* \\$1 .. \\$9 insert one argument */
+			ib = ie = *cp - '1';
+			if (ib < 0 || ib > 8)
+				continue;
+		}
 		cp -= 2;
 
 		/*
@@ -3122,11 +3127,13 @@ roff_userdef(ROFF_ARGS)
 		 * taking escaping of quotes into account.
 		 */
 
-		asz = 0;
-		for (ap = arg[i]; *ap != '\0'; ap++) {
-			asz++;
-			if (*ap == '"')
-				asz += 3;
+		asz = ie > ib ? ie - ib : 0;  /* for blanks */
+		for (i = ib; i <= ie; i++) {
+			for (ap = arg[i]; *ap != '\0'; ap++) {
+				asz++;
+				if (*ap == '"')
+					asz += 3;
+			}
 		}
 		if (asz != 3) {
 
@@ -3167,12 +3174,16 @@ roff_userdef(ROFF_ARGS)
 		/* Copy the expanded argument, escaping quotes. */
 
 		n2 = cp;
-		for (ap = arg[i]; *ap != '\0'; ap++) {
-			if (*ap == '"') {
-				memcpy(n2, "\\(dq", 4);
-				n2 += 4;
-			} else
-				*n2++ = *ap;
+		for (i = ib; i <= ie; i++) {
+			for (ap = arg[i]; *ap != '\0'; ap++) {
+				if (*ap == '"') {
+					memcpy(n2, "\\(dq", 4);
+					n2 += 4;
+				} else
+					*n2++ = *ap;
+			}
+			if (i < ie)
+				*n2++ = ' ';
 		}
 	}
 
