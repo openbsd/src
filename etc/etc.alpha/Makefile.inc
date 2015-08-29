@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 2014/12/13 14:45:57 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 2015/08/29 17:22:41 deraadt Exp $
 
 KERNELS += GENERIC.MP bsd.mp
 
@@ -11,5 +11,6 @@ bootblocks:
 	cp ${DESTDIR}/usr/mdec/netboot.mop ${RELEASEDIR}
 
 MDEXT=	bsd.rd cd${OSrev}.iso \
+	miniroot${OSrev}.fs \
 	floppy${OSrev}.fs floppyB${OSrev}.fs floppyC${OSrev}.fs \
 	boot bootxx netboot netboot.mop
