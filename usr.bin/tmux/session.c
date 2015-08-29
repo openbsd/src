@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.53 2015/08/28 13:16:03 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.54 2015/08/29 08:30:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -519,6 +519,7 @@ session_set_current(struct session *s, struct winlink *wl)
 	winlink_stack_push(&s->lastw, s->curw);
 	s->curw = wl;
 	winlink_clear_flags(wl);
+	window_update_activity(wl->window);
 	return (0);
 }
 

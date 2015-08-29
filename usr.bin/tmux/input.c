@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.82 2015/08/28 07:49:24 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.83 2015/08/29 08:30:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -844,13 +844,8 @@ input_parse(struct window_pane *wp)
 	if (EVBUFFER_LENGTH(evb) == 0)
 		return;
 
+	window_update_activity(wp->window);
 	wp->flags |= PANE_CHANGED;
-
-	wp->window->flags |= WINDOW_ACTIVITY;
-	wp->window->flags &= ~WINDOW_SILENCE;
-
-	if (gettimeofday(&wp->window->activity_time, NULL) != 0)
-		fatal("gettimeofday failed");
 
 	/*
 	 * Open the screen. Use NULL wp if there is a mode set as don't want to
@@ -1081,7 +1076,7 @@ input_c0_dispatch(struct input_ctx *ictx)
 	case '\000':	/* NUL */
 		break;
 	case '\007':	/* BEL */
-		wp->window->flags |= WINDOW_BELL;
+		alerts_queue(wp->window, WINDOW_BELL);
 		break;
 	case '\010':	/* BS */
 		screen_write_backspace(sctx);

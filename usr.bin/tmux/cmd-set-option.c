@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.81 2015/08/29 00:29:15 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.82 2015/08/29 08:30:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -186,6 +186,8 @@ cmd_set_option_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (strcmp(oe->name, "status") == 0 ||
 	    strcmp(oe->name, "status-interval") == 0)
 		status_timer_start_all();
+	if (strcmp(oe->name, "monitor-silence") == 0)
+		alerts_reset_all();
 
 	/* Update sizes and redraw. May not need it but meh. */
 	recalculate_sizes();

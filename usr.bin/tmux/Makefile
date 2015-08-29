@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.78 2015/04/27 16:25:57 nicm Exp $
+# $OpenBSD: Makefile,v 1.79 2015/08/29 08:30:54 nicm Exp $
 
 PROG=	tmux
-SRCS=	arguments.c \
+SRCS=	alerts.c \
+	arguments.c \
 	attributes.c \
 	cfg.c \
 	client.c \
@@ -101,7 +102,6 @@ SRCS=	arguments.c \
 	screen.c \
 	server-client.c \
 	server-fn.c \
-	server-window.c \
 	server.c \
 	session.c \
 	signal.c \
