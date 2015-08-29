@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.149 2015/08/28 13:01:03 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.150 2015/08/29 08:54:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -717,6 +717,7 @@ server_client_loop(void)
 			}
 			wp->flags &= ~PANE_REDRAW;
 		}
+		check_window_name(w);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.136 2015/08/29 08:30:54 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.137 2015/08/29 08:54:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -249,13 +249,11 @@ server_start(int lockfd, char *lockfile)
 void
 server_loop(void)
 {
-	struct window	*w;
-
 	while (!server_should_shutdown()) {
+		log_debug("event dispatch enter");
 		event_loop(EVLOOP_ONCE);
+		log_debug("event dispatch exit");
 
-		RB_FOREACH(w, windows, &windows)
-		    check_window_name(w);
 		server_client_loop();
 	}
 }
