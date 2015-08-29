@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.53 2015/05/25 14:50:10 deraadt Exp $
+#	$OpenBSD: airport,v 1.54 2015/08/29 21:46:04 sthen Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -620,7 +620,6 @@ GRO:Costa Brava, Gerona, Spain
 GRQ:Eelde, Groningen, Netherlands
 GRR:Grand Rapids/Kent County International, Michigan, USA
 GRU:Guarulhos, Sao Paulo, Sao Paulo, Brazil
-GRU:Sao Paulo, Brazil
 GRX:Granada, Spain
 GRZ:Thalerhof, Graz, Austria
 GSE:Goteborg-Save, Sweden
