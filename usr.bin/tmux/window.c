@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.140 2015/08/28 17:11:12 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.141 2015/08/29 00:29:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -299,8 +299,6 @@ window_create1(u_int sx, u_int sy)
 		fatal("gettimeofday failed");
 
 	options_init(&w->options, &global_w_options);
-	if (options_get_number(&w->options, "automatic-rename"))
-		queue_window_name(w);
 
 	w->references = 0;
 
@@ -349,8 +347,8 @@ window_destroy(struct window *w)
 		layout_free_cell(w->saved_layout_root);
 	free(w->old_layout);
 
-	if (event_initialized(&w->name_timer))
-		evtimer_del(&w->name_timer);
+	if (event_initialized(&w->name_event))
+		evtimer_del(&w->name_event);
 
 	options_free(&w->options);
 
