@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.10 2014/10/20 23:27:14 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.11 2015/08/29 23:19:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,6 +28,12 @@
 /*
  * Manipulate command arguments.
  */
+
+struct args_entry {
+	u_char			 flag;
+	char			*value;
+	RB_ENTRY(args_entry)	 entry;
+};
 
 struct args_entry	*args_find(struct args *, u_char);
 
