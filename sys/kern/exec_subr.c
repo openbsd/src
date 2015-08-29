@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.50 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.51 2015/08/29 05:40:01 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -115,7 +115,8 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 	 */
 	evsp->evs_used = 0;
 	if (evsp->evs_cmds != evsp->evs_start)
-		free(evsp->evs_cmds, M_EXEC, 0);
+		free(evsp->evs_cmds, M_EXEC,
+		    evsp->evs_cnt * sizeof(struct exec_vmcmd));
 	evsp->evs_cmds = evsp->evs_start;
 	evsp->evs_cnt = EXEC_DEFAULT_VMCMD_SETSIZE;
 }
