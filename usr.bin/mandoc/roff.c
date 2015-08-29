@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.146 2015/08/29 21:37:11 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.147 2015/08/29 23:55:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1482,9 +1482,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 }
 
 /*
- * Process text streams:
- * Convert all breakable hyphens into ASCII_HYPH.
- * Decrement and spring input line trap.
+ * Process text streams.
  */
 static enum rofferr
 roff_parsetext(struct buf *buf, int pos, int *offs)
@@ -1494,6 +1492,22 @@ roff_parsetext(struct buf *buf, int pos, int *offs)
 	char		*p;
 	int		 isz;
 	enum mandoc_esc	 esc;
+
+	/* Spring the input line trap. */
+
+	if (roffit_lines == 1) {
+		isz = mandoc_asprintf(&p, "%s\n.%s", buf->buf, roffit_macro);
+		free(buf->buf);
+		buf->buf = p;
+		buf->sz = isz + 1;
+		*offs = 0;
+		free(roffit_macro);
+		roffit_lines = 0;
+		return(ROFF_REPARSE);
+	} else if (roffit_lines > 1)
+		--roffit_lines;
+
+	/* Convert all breakable hyphens into ASCII_HYPH. */
 
 	start = p = buf->buf + pos;
 
@@ -1523,19 +1537,6 @@ roff_parsetext(struct buf *buf, int pos, int *offs)
 			*p = ASCII_HYPH;
 		p++;
 	}
-
-	/* Spring the input line trap. */
-	if (roffit_lines == 1) {
-		isz = mandoc_asprintf(&p, "%s\n.%s", buf->buf, roffit_macro);
-		free(buf->buf);
-		buf->buf = p;
-		buf->sz = isz + 1;
-		*offs = 0;
-		free(roffit_macro);
-		roffit_lines = 0;
-		return(ROFF_REPARSE);
-	} else if (roffit_lines > 1)
-		--roffit_lines;
 	return(ROFF_CONT);
 }
 
