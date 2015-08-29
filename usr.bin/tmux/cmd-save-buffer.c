@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.29 2015/08/29 09:25:00 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.30 2015/08/29 09:36:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -57,8 +57,8 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct client		*c = cmdq->client;
 	struct session          *s;
 	struct paste_buffer	*pb;
-	const char		*path, *bufname, *bufdata;
-	char			*start, *end, *msg;
+	const char		*path, *bufname, *bufdata, *start, *end;
+	char			*msg;
 	size_t			 size, used, msglen, bufsize;
 	int			 cwd, fd;
 	FILE			*f;
