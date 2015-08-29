@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.54 2015/08/29 21:46:04 sthen Exp $
+#	$OpenBSD: airport,v 1.55 2015/08/29 22:13:56 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1508,7 +1508,7 @@ SHC:Indaselassie, Ethiopia
 SHD:Shenandoah Valley Regional, Staunton, Virginia, USA
 SHE:Shenyang, China
 SHJ:Sharjah, United Arab Emirates
-SHO:Sokcho, South Korea
+SHO:King Mswati-III International Airport, Swaziland
 SHR:Sheridan, Wyoming, USA
 SHV:Shreveport, Louisiana, USA
 SID:Amilcar Cabral International, Sal, Cape Verde
