@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.77 2015/02/16 16:38:54 naddy Exp $
+.\"	$OpenBSD: ddb.4,v 1.78 2015/08/29 00:01:54 guenther Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: August 29 2015 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -928,7 +928,7 @@ A synonym for
 Perform a platform-specific command.
 .Pp
 The following commands are supported by multiprocessor kernels on
-these platforms: amd64, i386, macppc, and mips64.
+these platforms: amd64, i386, macppc, mips64, and sparc64.
 .Pp
 .Bl -tag -width "searchframe [addr]" -compact
 .It Ic cpuinfo
