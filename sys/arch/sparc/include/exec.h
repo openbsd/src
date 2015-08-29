@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.17 2013/10/17 08:02:17 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.18 2015/08/29 01:58:39 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.7 1994/11/20 20:53:02 deraadt Exp $ */
 
 /*
@@ -94,7 +94,6 @@
 #define	ELF_TARG_DATA	ELFDATA2MSB
 #define	ELF_TARG_MACH	EM_SPARC
 
-#define	_NLIST_DO_ELF
 #define _KERN_DO_ELF
 
 #endif  /* _MACHINE_EXEC_H_ */

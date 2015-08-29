@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.6 2013/02/09 19:25:13 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.7 2015/08/29 01:58:39 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -40,8 +40,6 @@
 #define ELF_TARG_DATA		ELFDATA2LSB
 #endif
 #define ELF_TARG_MACH		EM_MIPS
-
-#define _NLIST_DO_ELF
 
 #define _KERN_DO_ELF64
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.13 2015/08/23 15:28:41 kettenis Exp $ */
+/*	$OpenBSD: exec.h,v 1.14 2015/08/29 01:58:39 guenther Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.13 2015/08/23 15:28:41 kettenis Exp $
+ *	$Id: exec.h,v 1.14 2015/08/29 01:58:39 guenther Exp $
  */
 
 #ifndef _POWERPC_EXEC_H_
@@ -37,8 +37,6 @@
 #define ELF_TARG_CLASS          ELFCLASS32
 #define ELF_TARG_DATA           ELFDATA2MSB
 #define ELF_TARG_MACH           EM_PPC
-
-#define _NLIST_DO_ELF
 
 #define _KERN_DO_ELF
 

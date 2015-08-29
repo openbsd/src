@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.15 2015/05/29 19:12:26 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.16 2015/08/29 01:58:39 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_ALPHA_EXP
 
-#define _NLIST_DO_ELF
 #define _KERN_DO_ELF64
 
 /* Processor specific dynamic tag values.  */

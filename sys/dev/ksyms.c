@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.29 2015/08/12 06:19:25 mlarkin Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.30 2015/08/29 01:58:39 guenther Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -32,10 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
-
-#ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
-#endif
 
 extern char *esym;				/* end of symbol table */
 #if defined(__sparc64__) || defined(__mips__) || defined(__amd64__) || \
@@ -56,7 +53,6 @@ void	ksymsattach(int);
  * We assume __LDPGSZ is a multiple of PAGE_SIZE (it is)
  */
 
-/*ARGSUSED*/
 void
 ksymsattach(int num)
 {
@@ -74,7 +70,6 @@ ksymsattach(int num)
 	}
 #endif
 
-#ifdef _NLIST_DO_ELF
 	do {
 #if defined(__sparc64__) || defined(__mips__) || defined(__amd64__) || \
     defined(__i386__)
@@ -114,10 +109,8 @@ ksymsattach(int num)
 
 		return;
 	} while (0);
-#endif
 }
 
-/*ARGSUSED*/
 int
 ksymsopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -137,7 +130,6 @@ ksymsopen(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 ksymsclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -145,7 +137,6 @@ ksymsclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 ksymsread(dev_t dev, struct uio *uio, int flags)
 {
