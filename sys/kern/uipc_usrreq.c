@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.85 2015/08/28 04:38:47 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.86 2015/08/29 21:10:20 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ unp_detach(struct unpcb *unp)
 	soisdisconnected(unp->unp_socket);
 	unp->unp_socket->so_pcb = NULL;
 	m_freem(unp->unp_addr);
-	free(unp, M_PCB, 0);
+	free(unp, M_PCB, sizeof *unp);
 	if (unp_rights)
 		task_add(systq, &unp_gc_task);
 }
@@ -625,7 +625,7 @@ unp_drop(struct unpcb *unp, int errno)
 		so->so_pcb = NULL;
 		sofree(so);
 		m_freem(unp->unp_addr);
-		free(unp, M_PCB, sizeof(*unp));
+		free(unp, M_PCB, sizeof *unp);
 	}
 }
 
@@ -772,7 +772,7 @@ restart:
  out:
 	fdpunlock(p->p_fd);
 	if (fdp)
-		free(fdp, M_TEMP, 0);
+		free(fdp, M_TEMP, nfds * sizeof(int));
 	return (error);
 }
 
