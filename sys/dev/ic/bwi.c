@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.116 2015/02/10 23:25:46 mpi Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.117 2015/08/29 20:55:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1652,7 +1652,7 @@ bwi_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
 		}
 	}
 
-	free(h, M_DEVBUF, 0);
+	free(h, M_DEVBUF, sizeof *h);
 
 	return (ret);
 }
@@ -1832,7 +1832,7 @@ void
 bwi_mac_fw_free(struct bwi_mac *mac)
 {
 	if (mac->mac_fw != NULL) {
-		free(mac->mac_fw, M_DEVBUF, 0);
+		free(mac->mac_fw, M_DEVBUF, mac->mac_fw_size);
 		mac->mac_fw = NULL;
 	}
 }
@@ -7826,7 +7826,7 @@ bwi_dma_txstats_free(struct bwi_softc *sc)
 	bus_dmamap_unload(sc->sc_dmat, st->stats_dmap);
 	bus_dmamem_free(sc->sc_dmat, &st->stats_seg, 1);
 
-	free(st, M_DEVBUF, 0);
+	free(st, M_DEVBUF, sizeof *st);
 }
 
 int

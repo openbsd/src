@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.121 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.122 2015/08/29 20:55:34 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1048,7 +1048,7 @@ fxp_detach(struct fxp_softc *sc)
 
 #ifndef SMALL_KERNEL
 	if (sc->sc_ucodebuf)
-		free(sc->sc_ucodebuf, M_DEVBUF, 0);
+		free(sc->sc_ucodebuf, M_DEVBUF, sc->sc_ucodelen);
 #endif
 }
 
