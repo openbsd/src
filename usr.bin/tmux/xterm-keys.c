@@ -1,4 +1,4 @@
-/* $OpenBSD: xterm-keys.c,v 1.15 2014/07/21 10:25:48 nicm Exp $ */
+/* $OpenBSD: xterm-keys.c,v 1.16 2015/08/30 15:43:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -119,6 +119,8 @@ xterm_keys_match(const char *template, const char *buf, size_t len,
 {
 	size_t	pos;
 	int	retval;
+
+	*modifiers = 0;
 
 	if (len == 0)
 		return (0);

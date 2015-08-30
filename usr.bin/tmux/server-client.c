@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.150 2015/08/29 08:54:41 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.151 2015/08/30 15:43:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -549,13 +549,6 @@ server_client_handle_key(struct client *c, int key)
 	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
 		return;
 	w = s->curw->window;
-	wp = w->active;
-
-	/* No session, do nothing. */
-	if (c->session == NULL)
-		return;
-	s = c->session;
-	w = c->session->curw->window;
 	wp = w->active;
 
 	/* Update the activity timer. */

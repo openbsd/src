@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.10 2015/07/13 13:36:29 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.11 2015/08/30 15:43:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,7 +56,7 @@ cmd_show_environment_escape(struct environ_entry *envent)
 	}
 	*out = '\0';
 
-	return ret;
+	return (ret);
 }
 
 void
