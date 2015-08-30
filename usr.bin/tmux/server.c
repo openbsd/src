@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.137 2015/08/29 08:54:41 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.138 2015/08/30 22:19:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -158,7 +158,7 @@ server_create_socket(void)
 
 /* Fork new server. */
 int
-server_start(int lockfd, char *lockfile)
+server_start(struct event_base *base, int lockfd, char *lockfile)
 {
 	int	 pair[2];
 	char	*cause;
@@ -188,7 +188,7 @@ server_start(int lockfd, char *lockfile)
 
 	/* event_init() was called in our parent, need to reinit. */
 	clear_signals(0);
-	if (event_reinit(ev_base) != 0)
+	if (event_reinit(base) != 0)
 		fatal("event_reinit failed");
 
 	logfile("server");

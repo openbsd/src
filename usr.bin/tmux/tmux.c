@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.138 2015/08/30 15:43:40 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.139 2015/08/30 22:19:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,8 +40,6 @@ struct options	 global_options;	/* server options */
 struct options	 global_s_options;	/* session options */
 struct options	 global_w_options;	/* window options */
 struct environ	 global_environ;
-
-struct event_base *ev_base;
 
 char		*cfg_file;
 char		*shell_cmd;
@@ -386,6 +384,5 @@ main(int argc, char **argv)
 	setproctitle("%s (%s)", __progname, socket_path);
 
 	/* Pass control to the client. */
-	ev_base = event_init();
-	exit(client_main(argc, argv, flags));
+	exit(client_main(event_init(), argc, argv, flags));
 }
