@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.193 2015/08/29 20:48:55 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.194 2015/08/30 15:35:05 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -536,8 +536,7 @@ notfat:
 	if (biowait(bp))
 		return (bp->b_error);
 
-	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, dospartoff) +
-	    DOS_LABELSECTOR);
+	offset = DL_BLKOFFSET(lp, DOS_LABELSECTOR);
 	error = checkdisklabel(bp->b_data + offset, lp,
 	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
 	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
@@ -853,8 +852,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	if (biowait(bp))
 		return (bp->b_error);
 
-	offset = DL_BLKOFFSET(lp, DL_SECTOBLK(lp, gptpartoff) +
-	    DOS_LABELSECTOR);
+	offset = DL_BLKOFFSET(lp, DOS_LABELSECTOR);
 	error = checkdisklabel(bp->b_data + offset, lp,
 	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
 	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
