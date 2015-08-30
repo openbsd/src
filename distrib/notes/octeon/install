@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.12 2015/08/02 09:54:29 jasper Exp $
+dnl	$OpenBSD: install,v 1.13 2015/08/30 19:53:58 matthieu Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -52,7 +52,7 @@ boot into OpenBSD upon powering on the machine.
 From the U-Boot commandline, make a copy of the current ${bootcmd} so you can
 restore it later if needed:
 
-	# setenv old_bootcmd ${bootcmd}
+	# setenv old_bootcmd "${bootcmd}"
 
 ${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
 ${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
