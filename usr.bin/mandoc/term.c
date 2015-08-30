@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.108 2015/04/29 18:32:57 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.109 2015/08/30 21:10:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -497,6 +497,9 @@ term_word(struct termp *p, const char *word)
 						p->flags |= TERMP_BACKBEFORE;
 				}
 			}
+			/* Trim trailing backspace/blank pair. */
+			if (p->col > 2 && p->buf[p->col - 1] == ' ')
+				p->col -= 2;
 			continue;
 		default:
 			continue;
@@ -559,7 +562,10 @@ encode1(struct termp *p, int c)
 	    p->fontq[p->fonti] : TERMFONT_NONE;
 
 	if (p->flags & TERMP_BACKBEFORE) {
-		p->buf[p->col++] = 8;
+		if (p->buf[p->col - 1] == ' ')
+			p->col--;
+		else
+			p->buf[p->col++] = 8;
 		p->flags &= ~TERMP_BACKBEFORE;
 	}
 	if (TERMFONT_UNDER == f || TERMFONT_BI == f) {
