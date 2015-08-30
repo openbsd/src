@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.108 2015/05/02 17:19:42 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.109 2015/08/30 18:27:03 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -263,9 +263,7 @@ main(int argc, char *argv[])
 	int sockbufsize = 0;
 	int usepktinfo = 0;
 	struct in6_pktinfo *pktinfo = NULL;
-	struct ip6_rthdr *rthdr = NULL;
 	double intval;
-	size_t rthlen;
 	int mflag = 0;
 	uid_t uid;
 	u_int rtableid;
@@ -485,14 +483,8 @@ main(int argc, char *argv[])
 		/*NOTREACHED*/
 	}
 
-	if (argc > 1) {
-		rthlen = inet6_rth_space(IPV6_RTHDR_TYPE_0, argc - 1);
-		if (rthlen == 0) {
-			errx(1, "too many intermediate hops");
-			/*NOTREACHED*/
-		}
-		ip6optlen += CMSG_SPACE(rthlen);
-	}
+	if (argc != 1)
+		usage();
 
 	if (options & F_NIGROUP) {
 		target = nigroup(argv[argc - 1]);
@@ -694,40 +686,6 @@ main(int argc, char *argv[])
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
 	}
 
-	if (argc > 1) {	/* some intermediate addrs are specified */
-		int hops, error;
-		int rthdrlen;
-
-		rthdrlen = inet6_rth_space(IPV6_RTHDR_TYPE_0, argc - 1);
-		scmsgp->cmsg_len = CMSG_LEN(rthdrlen);
-		scmsgp->cmsg_level = IPPROTO_IPV6;
-		scmsgp->cmsg_type = IPV6_RTHDR;
-		rthdr = (struct ip6_rthdr *)CMSG_DATA(scmsgp);
-		rthdr = inet6_rth_init((void *)rthdr, rthdrlen,
-		    IPV6_RTHDR_TYPE_0, argc - 1);
-		if (rthdr == NULL)
-			errx(1, "can't initialize rthdr");
-
-		for (hops = 0; hops < argc - 1; hops++) {
-			struct addrinfo *iaip;
-
-			if ((error = getaddrinfo(argv[hops], NULL, &hints,
-			    &iaip)))
-				errx(1, "%s", gai_strerror(error));
-			if (SIN6(iaip->ai_addr)->sin6_family != AF_INET6)
-				errx(1,
-				    "bad addr family of an intermediate addr");
-
-			if (inet6_rth_add(rthdr,
-			    &(SIN6(iaip->ai_addr))->sin6_addr))
-				errx(1, "can't add an intermediate node");
-			freeaddrinfo(iaip);
-		}
-
-
-		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
-	}
-
 	if (!(options & F_SRCADDR)) {
 		/*
 		 * get the source address. XXX since we revoked the root
@@ -758,11 +716,6 @@ main(int argc, char *argv[])
 		    setsockopt(dummy, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		    (void *)&hoplimit, sizeof(hoplimit)))
 			err(1, "UDP setsockopt(IPV6_MULTICAST_HOPS)");
-
-		if (rthdr &&
-		    setsockopt(dummy, IPPROTO_IPV6, IPV6_RTHDR,
-		    (void *)rthdr, (rthdr->ip6r_len + 1) << 3))
-			err(1, "UDP setsockopt(IPV6_RTHDR)");
 
 		if (connect(dummy, (struct sockaddr *)&src, len) < 0)
 			err(1, "UDP connect");
@@ -2424,7 +2377,6 @@ usage(void)
 	    "NnqtvWw"
 	    "] [-a addrtype] [-b bufsiz] [-c count] [-g gateway]\n\t"
 	    "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
-	    "\n\t[-S sourceaddr] [-s packetsize] [-V rtable] [hops ...]"
-	    " host\n");
+	    "\n\t[-S sourceaddr] [-s packetsize] [-V rtable] host\n");
 	exit(1);
 }
