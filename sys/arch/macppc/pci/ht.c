@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.17 2015/06/25 18:08:53 miod Exp $	*/
+/*	$OpenBSD: ht.c,v 1.18 2015/08/30 09:48:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -109,8 +109,8 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (bus_space_map(sc->sc_memt, regs[1] + 0x01000000, 0x80000, 0,
-	    &sc->sc_config1_memh)) {
+	if (bus_space_map(sc->sc_memt, regs[1] + 0x01000000,
+	    regs[2] - 0x01000000, 0, &sc->sc_config1_memh)) {
 		printf(": can't map PCI config1 memory\n");
 		return;
 	}
