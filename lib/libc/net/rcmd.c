@@ -45,6 +45,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <stdlib.h>
 #include <poll.h>
 
@@ -66,7 +67,8 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 	struct sockaddr_storage from;
 	sigset_t oldmask, mask;
 	pid_t pid;
-	int s, lport, timo;
+	int s, lport;
+	struct timespec timo;
 	char c, *p;
 	int refused;
 	in_port_t rport = porta;
@@ -110,10 +112,11 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 
 	r = res;
 	refused = 0;
+	timespecclear(&timo);
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGURG);
 	sigprocmask(SIG_BLOCK, &mask, &oldmask);
-	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
+	for (timo.tv_sec = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport_af(&lport, r->ai_family);
 		if (s < 0) {
 			if (errno == EAGAIN)
@@ -161,9 +164,9 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 			(void)fprintf(stderr, "Trying %s...\n", hbuf);
 			continue;
 		}
-		if (refused && timo <= 16) {
-			(void)sleep(timo);
-			timo *= 2;
+		if (refused && timo.tv_sec <= 16) {
+			(void)nanosleep(&timo, NULL);
+			timo.tv_sec *= 2;
 			r = res;
 			refused = 0;
 			continue;
