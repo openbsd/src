@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.19 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.20 2015/08/30 18:12:52 deraadt Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -69,26 +69,15 @@ db_trap(int type, int code)
 		db_dot = PC_REGS(DDB_REGS);
 		db_print_loc_and_inst(db_dot);
 
-		/*
-		 * Just in case we do not have any usable console driver,
-		 * give the user a traceback.
-		 */
-		if (cold) {
+		if (panicstr != NULL) {
 			db_stack_trace_print(db_dot, 0, 10 /* arbitrary */, "",
 			    db_printf);
-		}
 
-		if (panicstr != NULL) {
 			if (db_print_position() != 0)
 				db_printf("\n");
-			db_printf("RUN AT LEAST 'trace' AND 'ps' AND INCLUDE "
-			    "OUTPUT WHEN REPORTING THIS PANIC!\n");
-#ifdef MULTIPROCESSOR
-			db_printf("IF RUNNING SMP, USE 'mach ddbcpu <#>' AND "
-			    "'trace' ON OTHER PROCESSORS, TOO.\n");
-#endif
-			db_printf("DO NOT EVEN BOTHER REPORTING THIS WITHOUT "
-			    "INCLUDING THAT INFORMATION!\n");
+			db_printf(
+"http://www.openbsd.org/ddb.html describes the minimum info required in bug\n"
+"reports.  Insufficient info makes it difficult to find and fix bugs.\n");
 		}
 
 		db_command_loop();
