@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.93 2014/12/12 18:15:51 tedu Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.94 2015/08/30 23:20:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -423,7 +423,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 	u_int8_t	*seg = data;
 	u_int16_t	 seg_size, as_size = 2;
 	u_int8_t	 seg_len, seg_type;
-	int		 err = 0;
+	int		 error = 0;
 
 	if (len & 1)
 		/* odd length aspath are invalid */
@@ -444,7 +444,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 		 * bgp session running.
 		 */
 		if (seg_type == AS_CONFED_SEQUENCE || seg_type == AS_CONFED_SET)
-			err = AS_ERR_SOFT;
+			error = AS_ERR_SOFT;
 		if (seg_type != AS_SET && seg_type != AS_SEQUENCE &&
 		    seg_type != AS_CONFED_SEQUENCE && seg_type != AS_CONFED_SET)
 			return (AS_ERR_TYPE);
@@ -458,7 +458,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 			/* empty aspath segments are not allowed */
 			return (AS_ERR_BAD);
 	}
-	return (err);	/* aspath is valid but probably not loop free */
+	return (error);	/* aspath is valid but probably not loop free */
 }
 
 void
