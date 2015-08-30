@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 2013/03/28 17:41:04 martynas Exp $	*/
+/*	$OpenBSD: asm.h,v 1.9 2015/08/30 10:19:49 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -107,6 +107,7 @@
 #define NENTRY(name)		_ENTRY(_C_LABEL(name))
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)); _PROF_PROLOGUE
 #define	FUNC(name)		ASENTRY(name)
+#define	END(y)			.size y, . - y
 #define RODATA(name)		.align 4; .text; .globl _C_LABEL(name); \
 				OTYPE(_C_LABEL(name)); _C_LABEL(name):
 

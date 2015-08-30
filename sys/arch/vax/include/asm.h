@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.12 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.13 2015/08/30 10:19:49 guenther Exp $ */
 /*	$NetBSD: asm.h,v 1.9 1999/01/15 13:31:28 bouyer Exp $ */
 /*
  * Copyright (c) 1982, 1993
@@ -96,6 +96,7 @@
 #define ASENTRY_NOPROFILE(x, regs)	_ENTRY(_ASM_LABEL(x), regs)
 
 #define ALTENTRY(x)		_ALTENTRY(_C_LABEL(x))
+#define END(y)			.size y, . - y
 #define RCSID(x)		.text; .asciz x
 
 #ifdef	__ELF__
