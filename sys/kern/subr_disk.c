@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.194 2015/08/30 15:35:05 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.195 2015/08/30 17:19:51 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -632,7 +632,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	struct uuid uuid_part, uuid_openbsd;
 	struct partition *pp;
 
-	daddr_t part_blkno;
+	u_int64_t sector;
 	u_int64_t gptpartoff = 0, gptpartend = DL_GETBEND(lp);
 	int i, altheader = 0, error, n=0, ourpart = -1, offset;
 
@@ -646,15 +646,14 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	if (lp->d_secsize == 0)
 		return (ENOSPC);	/* disk too small */
 
-	for (part_blkno = DL_SECTOBLK(lp, GPTSECTOR); ;
-	    part_blkno = DL_SECTOBLK(lp, DL_GETDSIZE(lp)-1), altheader = 1) {
+	for (sector = GPTSECTOR; ; sector = DL_GETDSIZE(lp)-1, altheader = 1) {
 		uint32_t ghsize;
 		uint32_t ghpartsize;
 		uint32_t ghpartnum;
 		uint32_t ghpartspersec;
 
 		/* read header record */
-		bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) * DL_BLKSPERSEC(lp);
+		bp->b_blkno = DL_SECTOBLK(lp, sector);
 		bp->b_bcount = lp->d_secsize;
 		bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
 		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
@@ -738,11 +737,10 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		* XXX:	Fails if # of partition entries is not a multiple of
 		*	ghpartspersec.
 		*/
-		for (i = 0; i < ghpartnum / ghpartspersec; i++) {
-			part_blkno = DL_SECTOBLK(lp, letoh64(gh.gh_part_lba)+i);
+		sector = letoh64(gh.gh_part_lba);
+		for (i = 0; i < ghpartnum / ghpartspersec; i++, sector++) {
 			/* read partition record */
-			bp->b_blkno = DL_BLKTOSEC(lp, part_blkno) *
-			    DL_BLKSPERSEC(lp);
+			bp->b_blkno = DL_SECTOBLK(lp, sector);
 			bp->b_bcount = lp->d_secsize;
 			/* B_ERROR and b_error may have stale data. */
 			bp->b_error = 0;
