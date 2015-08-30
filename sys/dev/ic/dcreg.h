@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.49 2013/12/02 23:40:41 brad Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.50 2015/08/30 02:12:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -734,6 +734,7 @@ struct dc_softc {
 	u_int32_t		dc_flags;
 	u_int32_t		dc_txthresh;
 	u_int8_t		*dc_srom;
+	size_t			dc_sromsize;
 	struct dc_mediainfo	*dc_mi;
 	struct dc_list_data	*dc_ldata;
 	struct dc_chain_data	dc_cdata;

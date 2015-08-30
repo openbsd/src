@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.141 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: dc.c,v 1.142 2015/08/30 02:12:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1485,13 +1485,11 @@ dc_decode_leaf_mii(struct dc_softc *sc, struct dc_eblock_mii *l)
 void
 dc_read_srom(struct dc_softc *sc, int bits)
 {
-	int size;
-
-	size = 2 << bits;
-	sc->dc_srom = malloc(size, M_DEVBUF, M_NOWAIT);
+	sc->dc_sromsize = 2 << bits;
+	sc->dc_srom = malloc(sc->dc_sromsize, M_DEVBUF, M_NOWAIT);
 	if (sc->dc_srom == NULL)
 		return;
-	dc_read_eeprom(sc, (caddr_t)sc->dc_srom, 0, (size / 2), 0);
+	dc_read_eeprom(sc, (caddr_t)sc->dc_srom, 0, (sc->dc_sromsize / 2), 0);
 }
 
 void
@@ -3110,7 +3108,7 @@ dc_detach(struct dc_softc *sc)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
 	if (sc->dc_srom)
-		free(sc->dc_srom, M_DEVBUF, 0);
+		free(sc->dc_srom, M_DEVBUF, sc->dc_sromsize);
 
 	for (i = 0; i < DC_RX_LIST_CNT; i++)
 		bus_dmamap_destroy(sc->sc_dmat, sc->dc_cdata.dc_rx_chain[i].sd_map);
