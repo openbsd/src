@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.79 2015/07/21 03:38:22 reyk Exp $
+#	$OpenBSD: files.amd64,v 1.80 2015/08/30 10:05:09 yasuoka Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -105,6 +105,13 @@ file	arch/amd64/amd64/lapic.c		lapic needs-flag
 device	ioapic: mpbios, lapic
 attach	ioapic at mainbus
 file	arch/amd64/amd64/ioapic.c		ioapic needs-flag
+
+#
+# EFI Framebuffer
+#
+device efifb: wsemuldisplaydev, rasops16, rasops8, rasops4
+attach efifb at mainbus
+file arch/amd64/amd64/efifb.c			efifb needs-flag
 
 #
 # PCI drivers

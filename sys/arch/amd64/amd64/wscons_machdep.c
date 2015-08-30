@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.10 2011/06/28 20:19:18 matthieu Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.11 2015/08/30 10:05:09 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -71,8 +71,12 @@
 #if NWSKBD > 0
 #include <dev/wscons/wskbdvar.h>
 #endif
+#include "efifb.h"
+#if NEFIFB > 0
+#include <machine/efifbvar.h>
+#endif
 
-void	wscn_video_init(void);
+int	wscn_video_init(void);
 void	wscn_input_init(int);
 
 cons_decl(ws);
@@ -104,10 +108,11 @@ wscninit(struct consdev *cp)
 
 	if (initted)
 		return;
-	initted = 1;
 
-	wscn_video_init();
-	wscn_input_init(0);
+	if (wscn_video_init() == 0) {
+		initted = 1;
+		wscn_input_init(0);
+	}
 }
 
 void
@@ -131,17 +136,22 @@ wscnpollc(dev_t dev, int on)
 /*
  * Configure the display part of the console.
  */
-void
+int
 wscn_video_init()
 {
+#if (NEFIFB > 0)
+	if (efifb_cnattach() == 0)
+		return (0);
+#endif
 #if (NVGA > 0)
 	if (vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM, -1, 1) == 0)
-		return;
+		return (0);
 #endif
 #if (NPCDISPLAY > 0)
 	if (pcdisplay_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM) == 0)
-		return;
+		return (0);
 #endif
+	return (-1);
 }
 
 /*

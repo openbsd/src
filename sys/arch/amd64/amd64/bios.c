@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.31 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.32 2015/08/30 10:05:09 yasuoka Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -46,6 +46,7 @@ struct bios_softc {
 	struct device sc_dev;
 };
 
+struct smbhdr *smbios_find(u_int8_t *);
 void smbios_info(char *);
 int bios_match(struct device *, void *, void *);
 void bios_attach(struct device *, struct device *, void *);
@@ -95,35 +96,28 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 	paddr_t pa, end;
 	u_int8_t *p;
 	int smbiosrev = 0;
+	struct smbhdr *hdr = NULL;
 
-	/* see if we have SMBIOS extentions */
-	for (p = ISA_HOLE_VADDR(SMBIOS_START);
-	    p < (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
-		struct smbhdr * hdr = (struct smbhdr *)p;
-		u_int8_t chksum;
-		int i;
+	if (bios_efiinfo != NULL && bios_efiinfo->config_smbios != 0)
+		hdr = smbios_find(PMAP_DIRECT_MAP(
+		    (u_int8_t *)bios_efiinfo->config_smbios));
 
-		if (hdr->sig != SMBIOS_SIGNATURE)
-			continue;
-		i = hdr->len;
-		for (chksum = 0; i--; chksum += p[i])
-			;
-		if (chksum != 0)
-			continue;
-		p += 0x10;
-		if (p[0] != '_' && p[1] != 'D' && p[2] != 'M' &&
-		    p[3] != 'I' && p[4] != '_')
-			continue;
-		for (chksum = 0, i = 0xf; i--; chksum += p[i])
-			;
-		if (chksum != 0)
-			continue;
+	if (hdr == NULL) {
+		/* see if we have SMBIOS extentions */
+		for (p = ISA_HOLE_VADDR(SMBIOS_START);
+		    p < (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
+			hdr = smbios_find(p);
+			if (hdr == NULL)
+				continue;
+		}
+	}
 
+	if (hdr != NULL) {
 		pa = trunc_page(hdr->addr);
 		end = round_page(hdr->addr + hdr->size);
 		va = uvm_km_valloc(kernel_map, end-pa);
 		if (va == 0)
-			break;
+			goto out;
 
 		smbios_entry.addr = (u_int8_t *)(va + (hdr->addr & PGOFSET));
 		smbios_entry.len = hdr->size;
@@ -159,8 +153,8 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		smbios_info(sc->sc_dev.dv_xname);
-		break;
 	}
+out:
 	printf("\n");
 
 	/* No SMBIOS extensions, go looking for Soekris comBIOS */
@@ -205,6 +199,9 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		ba.ba_iot = X86_BUS_SPACE_IO;
 		ba.ba_memt = X86_BUS_SPACE_MEM;
 
+		if (bios_efiinfo != NULL)
+			ba.ba_acpipbase = bios_efiinfo->config_acpi;
+
 		config_found(self, &ba, bios_print);
 	}
 #endif
@@ -221,6 +218,32 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &ba, bios_print);
 	}
 #endif
+}
+
+struct smbhdr *
+smbios_find(u_int8_t *p)
+{
+	struct smbhdr * hdr = (struct smbhdr *)p;
+	u_int8_t chksum;
+	int i;
+
+	if (hdr->sig != SMBIOS_SIGNATURE)
+		return (NULL);
+	i = hdr->len;
+	for (chksum = 0; i--; chksum += p[i])
+		;
+	if (chksum != 0)
+		return (NULL);
+	p += 0x10;
+	if (p[0] != '_' && p[1] != 'D' && p[2] != 'M' && p[3] != 'I' &&
+	    p[4] != '_')
+		return (NULL);
+	for (chksum = 0, i = 0xf; i--; chksum += p[i])
+		;
+	if (chksum != 0)
+		return (NULL);
+
+	return (hdr);
 }
 
 /*

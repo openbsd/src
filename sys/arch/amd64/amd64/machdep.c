@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.215 2015/07/16 23:03:40 sf Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.216 2015/08/30 10:05:09 yasuoka Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -244,6 +244,7 @@ void getbootinfo(char *, int);
 bios_diskinfo_t	*bios_diskinfo;
 bios_memmap_t	*bios_memmap;
 u_int32_t	bios_cksumlen;
+bios_efiinfo_t	*bios_efiinfo;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -1804,6 +1805,7 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 	bios_ddb_t *bios_ddb;
 	bios_bootduid_t *bios_bootduid;
 	bios_bootsr_t *bios_bootsr;
+	int docninit = 0;
 
 #undef BOOTINFO_DEBUG
 #ifdef BOOTINFO_DEBUG
@@ -1861,7 +1863,7 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 					comconsiot = X86_BUS_SPACE_IO;
 
 					/* Probe the serial port this time. */
-					cninit();
+					docninit++;
 				}
 #endif
 #ifdef BOOTINFO_DEBUG
@@ -1897,6 +1899,12 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 			explicit_bzero(bios_bootsr, sizeof(bios_bootsr_t));
 			break;
 
+		case BOOTARG_EFIINFO:
+			bios_efiinfo = (bios_efiinfo_t *)q->ba_arg;
+			if (bios_efiinfo->fb_addr != 0)
+				docninit++;
+			break;
+
 		default:
 #ifdef BOOTINFO_DEBUG
 			printf(" unsupported arg (%d) %p", q->ba_type,
@@ -1905,6 +1913,8 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 			break;
 		}
 	}
+	if (docninit > 0)
+		cninit();
 #ifdef BOOTINFO_DEBUG
 	printf("\n");
 #endif

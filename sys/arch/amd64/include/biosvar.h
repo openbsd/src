@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.21 2015/07/17 21:53:56 mlarkin Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.22 2015/08/30 10:05:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -190,6 +190,21 @@ typedef struct _bios_bootsr {
 	u_int8_t	maskkey[BOOTSR_CRYPTO_MAXKEYBYTES];
 } __packed bios_bootsr_t;
 
+#define	BOOTARG_EFIINFO 11
+typedef struct _bios_efiinfo {
+	uint64_t	config_acpi;
+	uint64_t	config_smbios;
+	uint64_t	fb_addr;
+	uint64_t	fb_size;
+	uint32_t	fb_height;
+	uint32_t	fb_width;
+	uint32_t	fb_pixpsl;	/* pixels per scan line */
+	uint32_t	fb_red_mask;
+	uint32_t	fb_green_mask;
+	uint32_t	fb_blue_mask;
+	uint32_t	fb_reserved_mask;
+} __packed bios_efiinfo_t;
+
 #if defined(_KERNEL) || defined (_STANDALONE)
 
 #ifdef _LOCORE
@@ -237,6 +252,7 @@ bios_diskinfo_t *bios_getdiskinfo(dev_t);
 
 extern u_int bootapiver;
 extern bios_memmap_t *bios_memmap;
+extern bios_efiinfo_t *bios_efiinfo;
 
 #endif /* _KERNEL */
 #endif /* _LOCORE */

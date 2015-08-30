@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.71 2015/01/15 01:19:29 jsg Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.72 2015/08/30 10:05:09 yasuoka Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -326,6 +326,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_LIGHT	68	/* SGI Light */
 #define		WSDISPLAY_TYPE_INTELDRM	69	/* Intel KMS framebuffer */
 #define		WSDISPLAY_TYPE_RADEONDRM 70	/* ATI Radeon KMS framebuffer */
+#define		WSDISPLAY_TYPE_EFIFB	71	/* EFI framebuffer */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.70 2015/03/16 20:31:47 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.71 2015/08/30 10:05:09 yasuoka Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -137,7 +137,18 @@ acpi_probe(struct device *parent, struct cfdata *match,
 	paddr_t ebda;
 
 	/*
-	 * First try to find ACPI table entries in the EBDA
+	 * First try to scan the ACPI table passed by parent if any
+	 */
+	if (ba->ba_acpipbase != 0) {
+		if (acpi_scan(&handle, ba->ba_acpipbase, 16) != NULL) {
+			acpi_unmap(&handle);
+			return (1);
+		}
+		ba->ba_acpipbase = 0;
+	}
+
+	/*
+	 * Next try to find ACPI table entries in the EBDA
 	 */
 	if (acpi_map(0, NBPG, &handle))
 		printf("acpi: failed to map BIOS data area\n");
