@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.547 2015/08/30 22:40:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.548 2015/08/30 22:56:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1412,7 +1412,6 @@ extern char	*shell_cmd;
 extern int	 debug_level;
 extern time_t	 start_time;
 extern char	 socket_path[PATH_MAX];
-extern char	*environ_path;
 void		 logfile(const char *);
 const char	*getshell(void);
 int		 checkshell(const char *);
