@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.85 2015/06/25 02:04:08 uebayasi Exp $	*/
+/*	$OpenBSD: main.c,v 1.86 2015/08/30 21:06:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -768,11 +768,10 @@ setfile(const char *name, int fd, struct stat *fs)
 
 	/*
 	 * Changing the ownership probably won't succeed, unless we're root
-	 * or POSIX_CHOWN_RESTRICTED is not set.  Set uid/gid before setting
-	 * the mode; current BSD behavior is to remove all setuid bits on
-	 * chown.  If chown fails, lose setuid/setgid bits.
+	 * or POSIX_CHOWN_RESTRICTED is not set.  Set uid/gid bits are not
+	 * allowed.
 	 */
-	fs->st_mode &= S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO;
+	fs->st_mode &= ACCESSPERMS;
 	if (fchown(fd, fs->st_uid, fs->st_gid)) {
 		if (errno != EPERM)
 			warn("fchown: %s", name);
