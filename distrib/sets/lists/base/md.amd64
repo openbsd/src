@@ -525,6 +525,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/cpuvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/db_machdep.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/disklabel.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/efifbvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/endian.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/exec.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/fenv.ph

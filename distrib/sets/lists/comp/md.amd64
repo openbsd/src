@@ -19,6 +19,7 @@
 ./usr/include/amd64/cpuvar.h
 ./usr/include/amd64/db_machdep.h
 ./usr/include/amd64/disklabel.h
+./usr/include/amd64/efifbvar.h
 ./usr/include/amd64/endian.h
 ./usr/include/amd64/exec.h
 ./usr/include/amd64/fenv.h
