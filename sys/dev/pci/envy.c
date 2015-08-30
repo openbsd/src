@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.65 2015/08/28 16:21:41 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.66 2015/08/30 08:52:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -266,14 +266,14 @@ struct envy_card envy_cards[] = {
 	{
 		PCI_ID_CODE(0x1412, 0xd630),
 		"M-Audio Delta 1010",
-		8, &ak4524_adc, 8, &ak4524_dac,
+		8, &ak4524_adc, 8, &ak4524_dac, 1,
 		delta_init,
 		delta_codec_write,
 		NULL
 	}, {
 		PCI_ID_CODE(0x1412, 0xd632),
 		"M-Audio Delta 66",
-		4, &ak4524_adc, 4, &ak4524_dac,
+		4, &ak4524_adc, 4, &ak4524_dac, 0,
 		delta_init,
 		delta_codec_write,
 		NULL
@@ -281,35 +281,35 @@ struct envy_card envy_cards[] = {
 #define ENVY_SUBID_DELTA44	(PCI_ID_CODE(0x1412, 0xd633))
 		PCI_ID_CODE(0x1412, 0xd633),
 		"M-Audio Delta 44",
-		4, &ak4524_adc, 4, &ak4524_dac,
+		4, &ak4524_adc, 4, &ak4524_dac, 0,
 		delta_init,
 		delta_codec_write,
 		NULL
 	}, {
 		PCI_ID_CODE(0x1412, 0xd63b),
 		"M-Audio Delta 1010LT",
-		8, &ak4524_adc, 8, &ak4524_dac,
+		8, &ak4524_adc, 8, &ak4524_dac, 1,
 		delta_init,
 		delta_codec_write,
 		NULL
 	}, {
 		PCI_ID_CODE(0x1412, 0xd634),
 		"M-Audio Audiophile 2496",
-		2, &ak4524_adc, 2, &ak4524_dac,
+		2, &ak4524_adc, 2, &ak4524_dac, 1,
 		delta_init,
 		delta_codec_write,
 		NULL
 	}, {
 		PCI_ID_CODE(0x153b, 0x1130),
 		"Terratec EWX 24/96",
-		2, &ak4524_adc, 2, &ak4524_dac,
+		2, &ak4524_adc, 2, &ak4524_dac, 1,
 		delta_init,
 		ewx_codec_write,
 		NULL
 	}, {
 		0,
 		"unknown 1712-based card",
-		8, &unkenvy_codec, 8, &unkenvy_codec,
+		8, &unkenvy_codec, 8, &unkenvy_codec, 1,
 		unkenvy_init,
 		unkenvy_codec_write
 	}
@@ -317,38 +317,38 @@ struct envy_card envy_cards[] = {
 	{
 		PCI_ID_CODE(0x3031, 0x4553),
 		"ESI Julia",
-		2, &unkenvy_codec, 2, &ak4358_dac,
+		2, &unkenvy_codec, 2, &ak4358_dac, 1,
 		julia_init,
 		julia_codec_write,
 		julia_eeprom
 	}, {
 		PCI_ID_CODE(0x1412, 0x3632),
 		"M-Audio Audiophile 192k",
-		2, &unkenvy_codec, 2, &ak4358_dac,
+		2, &unkenvy_codec, 2, &ak4358_dac, 1,
 		ap192k_init,
 		ap192k_codec_write
 	}, {
 		PCI_ID_CODE(0x1412, 0x3631),
 		"M-Audio Revolution 5.1",
-		2, &ak5365_adc, 6, &ak4358_dac,
+		2, &ak5365_adc, 6, &ak4358_dac, 1,
 		revo51_init,
 		revo51_codec_write
 	}, {
 		PCI_ID_CODE(0x1412, 0x2403),
 		"VIA Tremor 5.1",
-		2, &unkenvy_codec, 6, &unkenvy_codec,
+		2, &unkenvy_codec, 6, &unkenvy_codec, 1,
 		envy_ac97_init,
 		unkenvy_codec_write
 	}, {
 		PCI_ID_CODE(0x14c3, 0x1705),
 		"Dynex DX-SC51",
-		2, &unkenvy_codec, 6, &unkenvy_codec,
+		2, &unkenvy_codec, 6, &unkenvy_codec, 0,
 		dynex_sc51_init,
 		unkenvy_codec_write
 	}, {
 		0,
 		"unknown 1724-based card",
-		2, &unkenvy_codec, 8, &unkenvy_codec,
+		2, &unkenvy_codec, 8, &unkenvy_codec, 1,
 		unkenvy_init,
 		unkenvy_codec_write
 	}
@@ -1712,7 +1712,8 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	envy_reset(sc);
 	sc->audio = audio_attach_mi(&envy_hw_if, sc, &sc->dev);
 #if NMIDI > 0
-	if (!sc->isht || sc->eeprom[ENVY_EEPROM_CONF] & ENVY_CONF_MIDI) {
+	if (sc->card->nmidi > 0 && (!sc->isht ||
+		sc->eeprom[ENVY_EEPROM_CONF] & ENVY_CONF_MIDI)) {
 		sc->midi = midi_attach_mi(&envy_midi_hw_if, sc, &sc->dev);
 	}
 #endif
