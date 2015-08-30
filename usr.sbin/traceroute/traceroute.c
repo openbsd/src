@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.140 2015/07/16 22:47:46 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.141 2015/08/30 22:10:57 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ main(int argc, char *argv[])
 		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 			strlcpy(hbuf, "?", sizeof(hbuf));
 		warnx("Warning: %s has multiple "
-		    "addresses; using %s\n", hostname, hbuf);
+		    "addresses; using %s", hostname, hbuf);
 	}
 	freeaddrinfo(res);
 
