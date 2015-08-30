@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.112 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.113 2015/08/30 09:49:41 mpi Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -136,12 +136,14 @@ wd*		at pciide?
 atapiscsi*	at wdc? flags 0x0000
 atapiscsi*	at pciide? flags 0x0000
 
+xhci*		at pci?
 ohci*		at pci?
 ohci*		at cardbus?
 uhci*		at pci?
 ehci*		at pci?
 ehci*		at cardbus?
 
+usb*		at xhci?
 usb*		at ohci?
 usb*		at uhci?
 usb*		at ehci?

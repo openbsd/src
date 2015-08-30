@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.251 2015/06/02 13:53:43 mpi Exp $g
+#	$OpenBSD: GENERIC,v 1.252 2015/08/30 09:49:41 mpi Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -192,6 +192,7 @@ atapiscsi*	at wdc? flags 0x0000
 atapiscsi*	at pciide? flags 0x0000
 
 # USB Controllers
+xhci*	at pci?			# eXtensible Host Controller
 ohci*	at pci?			# Open Host Controller
 ohci*	at cardbus?		# Open Host Controller
 uhci*	at pci?			# Universal Host Controller
@@ -200,6 +201,7 @@ uhci*	at cardbus?		# Universal Host Controller
 ehci*	at cardbus?		# Enhanced Host Controller
 
 # USB bus support
+usb*	at xhci?
 usb*	at ohci?
 usb*	at uhci?
 usb*	at ehci?
