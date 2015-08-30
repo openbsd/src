@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.109 2015/08/30 18:27:03 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.110 2015/08/30 18:48:45 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -175,10 +175,8 @@ u_int options;
 int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
-struct addrinfo *res;
 struct sockaddr_in6 dst;	/* who to ping6 */
 struct sockaddr_in6 src;	/* src addr of this packet */
-socklen_t srclen;
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpack[MAXPACKETLEN];
@@ -250,10 +248,11 @@ void	 usage(void);
 int
 main(int argc, char *argv[])
 {
+	struct addrinfo *res0;
 	struct itimerval itimer;
 	struct sockaddr_in6 from;
 	struct addrinfo hints;
-	int ch, i, packlen, preload, optval, ret_ga;
+	int ch, i, packlen, preload, optval, error;
 	u_char *datap, *packet;
 	char *e, *target, *ifname = NULL, *gateway = NULL;
 	const char *errstr;
@@ -424,18 +423,16 @@ main(int argc, char *argv[])
 			hints.ai_socktype = SOCK_RAW;
 			hints.ai_protocol = IPPROTO_ICMPV6;
 
-			ret_ga = getaddrinfo(optarg, NULL, &hints, &res);
-			if (ret_ga) {
+			error = getaddrinfo(optarg, NULL, &hints, &res0);
+			if (error)
 				errx(1, "invalid source address: %s",
-				     gai_strerror(ret_ga));
-			}
-			/*
-			 * res->ai_family must be AF_INET6 and res->ai_addrlen
-			 * must be sizeof(src).
-			 */
-			memcpy(&src, res->ai_addr, res->ai_addrlen);
-			srclen = res->ai_addrlen;
-			freeaddrinfo(res);
+				     gai_strerror(error));
+
+			if (res0->ai_family != AF_INET6 || res0->ai_addrlen !=
+			    sizeof(src))
+				errx(1, "invalid source address");
+			memcpy(&src, res0->ai_addr, sizeof(src));
+			freeaddrinfo(res0);
 			options |= F_SRCADDR;
 			break;
 		case 's':		/* size of packet to send */
@@ -502,49 +499,47 @@ main(int argc, char *argv[])
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_ICMPV6;
 
-	ret_ga = getaddrinfo(target, NULL, &hints, &res);
-	if (ret_ga)
-		errx(1, "%s", gai_strerror(ret_ga));
-	if (res->ai_canonname)
-		hostname = res->ai_canonname;
-	else
+	error = getaddrinfo(target, NULL, &hints, &res0);
+	if (error)
+		errx(1, "host %s: %s", target, gai_strerror(error));
+	if (res0->ai_canonname) {
+		if ((hostname = strdup(res0->ai_canonname)) == NULL)
+			errx(1, "out of memory");
+	} else
 		hostname = target;
-
-	if (!res->ai_addr)
+	if (res0->ai_next && (options & F_VERBOSE))
+		warnx("host resolves to multiple addresses");
+	if (res0->ai_family != AF_INET6 || res0->ai_addrlen != sizeof(dst))
 		errx(1, "getaddrinfo failed");
+	memcpy(&dst, res0->ai_addr, sizeof(dst));
 
-	memcpy(&dst, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res0);
 
 	/* set the source address if specified. */
 	if ((options & F_SRCADDR) &&
-	    bind(s, (struct sockaddr *)&src, srclen) != 0) {
+	    bind(s, (struct sockaddr *)&src, sizeof(src)) != 0) {
 		err(1, "bind");
 	}
 
 	/* set the gateway (next hop) if specified */
 	if (gateway) {
-		struct addrinfo ghints, *gres;
-		int error;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET6;
+		hints.ai_socktype = SOCK_RAW;
+		hints.ai_protocol = IPPROTO_ICMPV6;
 
-		memset(&ghints, 0, sizeof(ghints));
-		ghints.ai_family = AF_INET6;
-		ghints.ai_socktype = SOCK_RAW;
-		ghints.ai_protocol = IPPROTO_ICMPV6;
+		error = getaddrinfo(gateway, NULL, &hints, &res0);
+		if (error)
+			errx(1, "gateway %s: %s", gateway, gai_strerror(error));
 
-		error = getaddrinfo(gateway, NULL, &ghints, &gres);
-		if (error) {
-			errx(1, "getaddrinfo for the gateway %s: %s",
-			     gateway, gai_strerror(error));
-		}
-		if (gres->ai_next && (options & F_VERBOSE))
+		if (res0->ai_next && (options & F_VERBOSE))
 			warnx("gateway resolves to multiple addresses");
 
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_NEXTHOP,
-		    gres->ai_addr, gres->ai_addrlen)) {
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_NEXTHOP, res0->ai_addr,
+		    res0->ai_addrlen))
 			err(1, "setsockopt(IPV6_NEXTHOP)");
-		}
 
-		freeaddrinfo(gres);
+		freeaddrinfo(res0);
 	}
 
 	/*
