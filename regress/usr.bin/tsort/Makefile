@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.8 2014/07/16 20:04:21 okan Exp $
+# $OpenBSD: Makefile,v 1.9 2015/08/30 16:42:48 espie Exp $
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7
 REGRESS_SLOW_TARGETS=t4
 
 t1: t1.out
@@ -39,13 +39,16 @@ t5.out: pairs5
 t6.out: pairs6
 	tsort <${.CURDIR}/pairs6 >$@ 2>&1
 
+t7:
+	tsort -hhints1 -h hints2 pairs7 2>&1|diff - ${.CURDIR}/t7.canonical
+
 pairs3:
 	perl ${.CURDIR}/build-tree 4 8 >$@
 
 pairs4:
 	perl ${.CURDIR}/build-tree 5 10 >$@
 
-.PHONY: t1 t2
+.PHONY: t1 t2 t7
 CLEANFILES+=t1.out t2.out t3.out t4.out t5.out t6.out pairs3 pairs4
 
 .include <bsd.regress.mk>
