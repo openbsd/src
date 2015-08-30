@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.225 2015/08/24 22:11:33 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.226 2015/08/30 10:39:16 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -173,17 +173,18 @@ rtable_alloc(void ***table, u_int id)
 {
 	void		**p;
 	struct domain	 *dom;
-	u_int8_t	  i;
+	int		  i;
 
 	if ((p = mallocarray(rtafidx_max + 1, sizeof(void *), M_RTABLE,
 	    M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
 	/* 2nd pass: attach */
-	for (dom = domains; dom != NULL; dom = dom->dom_next)
+	for (i = 0; (dom = domains[i]) != NULL; i++) {
 		if (dom->dom_rtattach)
 			dom->dom_rtattach(&p[af2rtafidx[dom->dom_family]],
 			    dom->dom_rtoffset);
+	}
 
 	for (i = 0; i < rtafidx_max; i++)
 		rtable_setid(p, id, i);
@@ -196,7 +197,8 @@ rtable_alloc(void ***table, u_int id)
 void
 route_init(void)
 {
-	struct domain	 *dom;
+	struct domain	*dom;
+	int		 i;
 
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentry",
 	    NULL);
@@ -206,9 +208,10 @@ route_init(void)
 	rtafidx_max = 1;	/* must have NULL at index 0, so start at 1 */
 
 	/* find out how many tables to allocate */
-	for (dom = domains; dom != NULL; dom = dom->dom_next)
+	for (i = 0; (dom = domains[i]) != NULL; i++) {
 		if (dom->dom_rtattach)
 			af2rtafidx[dom->dom_family] = rtafidx_max++;
+	}
 
 	if (rtable_add(0) != 0)
 		panic("route_init rtable_add");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.46 2015/07/16 18:17:27 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.47 2015/08/30 10:39:16 mpi Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -1193,17 +1193,19 @@ rn_init(void)
 {
 	char *cp, *cplim;
 	struct domain *dom;
+	int i;
+
+	if (rn_zeros != NULL)
+		return;
 
 	pool_init(&rtmask_pool, sizeof(struct radix_mask), 0, 0, 0, "rtmask",
 	    NULL);
-	for (dom = domains; dom; dom = dom->dom_next)
+	for (i = 0; (dom = domains[i]) != NULL; i++) {
 		if (dom->dom_maxrtkey > max_keylen)
 			max_keylen = dom->dom_maxrtkey;
-	if (max_keylen == 0) {
-		log(LOG_ERR,
-		    "rn_init: radix functions require max_keylen be set\n");
-		return;
 	}
+	if (max_keylen == 0)
+		panic("radix functions require max_keylen be set");
 	rn_zeros = mallocarray(3, max_keylen, M_RTABLE, M_NOWAIT | M_ZERO);
 	if (rn_zeros == NULL)
 		panic("rn_init");

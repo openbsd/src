@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.361 2015/08/23 10:01:27 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.362 2015/08/30 10:39:16 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -125,7 +125,7 @@
 #endif
 
 void	if_attachsetup(struct ifnet *);
-void	if_attachdomain1(struct ifnet *);
+void	if_attachdomain(struct ifnet *);
 void	if_attach_common(struct ifnet *);
 
 void	if_detached_start(struct ifnet *);
@@ -265,8 +265,7 @@ if_attachsetup(struct ifnet *ifp)
 	if (ifp->if_snd.ifq_maxlen == 0)
 		IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 
-	if (domains)
-		if_attachdomain1(ifp);
+	if_attachdomain(ifp);
 #if NPF > 0
 	pfi_attach_ifnet(ifp);
 #endif
@@ -332,28 +331,16 @@ if_free_sadl(struct ifnet *ifp)
 }
 
 void
-if_attachdomain()
-{
-	struct ifnet *ifp;
-	int s;
-
-	s = splnet();
-	TAILQ_FOREACH(ifp, &ifnet, if_list)
-		if_attachdomain1(ifp);
-	splx(s);
-}
-
-void
-if_attachdomain1(struct ifnet *ifp)
+if_attachdomain(struct ifnet *ifp)
 {
 	struct domain *dp;
-	int s;
+	int i, s;
 
 	s = splnet();
 
 	/* address family dependent data region */
 	bzero(ifp->if_afdata, sizeof(ifp->if_afdata));
-	for (dp = domains; dp; dp = dp->dom_next) {
+	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifattach)
 			ifp->if_afdata[dp->dom_family] =
 			    (*dp->dom_ifattach)(ifp);
@@ -603,7 +590,7 @@ if_detach(struct ifnet *ifp)
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
 	struct domain *dp;
-	int s;
+	int i, s;
 
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
@@ -669,7 +656,7 @@ if_detach(struct ifnet *ifp)
 	free(ifp->if_slowtimo, M_TEMP, sizeof(*ifp->if_slowtimo));
 	free(ifp->if_linkstatetask, M_TEMP, sizeof(*ifp->if_linkstatetask));
 
-	for (dp = domains; dp; dp = dp->dom_next) {
+	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
 			(*dp->dom_ifdetach)(ifp,
 			    ifp->if_afdata[dp->dom_family]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.164 2015/06/07 12:02:28 jsg Exp $	*/
+/*	$OpenBSD: if.h,v 1.165 2015/08/30 10:39:16 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -443,7 +443,6 @@ struct ifnet;
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);
-void	if_attachdomain(void);
 void	if_attachtail(struct ifnet *);
 void	if_attachhead(struct ifnet *);
 void	if_deactivate(struct ifnet *);

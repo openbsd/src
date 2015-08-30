@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.25 2015/07/17 18:31:08 blambert Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.26 2015/08/30 10:39:16 mpi Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -269,7 +269,6 @@ struct domain pfkeydomain = {
 	NULL, /* dispose */
 	NULL, /* protosw */
 	NULL, /* protoswNPROTOSW */
-	NULL, /* dom_next */
 	NULL, /* dom_rtattach */
 	16, /* rtoffset */
 	sizeof(struct sockaddr_encap)  /* maxrtkey */
