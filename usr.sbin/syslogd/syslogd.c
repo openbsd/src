@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.179 2015/08/27 17:53:35 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.180 2015/08/31 20:44:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1937,7 +1937,7 @@ die(int signo)
 void
 init(void)
 {
-	char progblock[NAME_MAX+1], hostblock[NAME_MAX+1], *cline, *p;
+	char progblock[NAME_MAX+1], hostblock[NAME_MAX+1], *cline, *p, *q;
 	struct filed_list mb;
 	struct filed *f, *m;
 	FILE *cf;
@@ -2025,40 +2025,22 @@ init(void)
 			continue;
 		if (*p == '\0' || *p == '#')
 			continue;
-		if (*p == '!') {
+		if (*p == '!' || *p == '+') {
+			q = (*p == '!') ? progblock : hostblock;
 			p++;
 			while (isspace((unsigned char)*p))
 				p++;
-			if (!*p || (*p == '*' && (!p[1] ||
+			if (*p == '\0' || (*p == '*' && (p[1] == '\0' ||
 			    isspace((unsigned char)p[1])))) {
-				strlcpy(progblock, "*", sizeof(progblock));
+				strlcpy(q, "*", NAME_MAX+1);
 				continue;
 			}
 			for (i = 0; i < NAME_MAX; i++) {
-				if (!isalnum((unsigned char)p[i]) &&
-				    p[i] != '-' && p[i] != '!')
+				if (*p == '\0' || isspace((unsigned char)*p))
 					break;
-				progblock[i] = p[i];
+				*q++ = *p++;
 			}
-			progblock[i] = 0;
-			continue;
-		}
-		if (*p == '+') {
-			p++;
-			while (isspace((unsigned char)*p))
-				p++;
-			if (!*p || (*p == '*' && (!p[1] ||
-			    isspace((unsigned char)p[1])))) {
-				strlcpy(hostblock, "*", sizeof(hostblock));
-				continue;
-			}
-			for (i = 0; i < NAME_MAX; i++) {
-				if (!isalnum((unsigned char)p[i]) &&
-				    p[i] != '-' && p[i] != '+')
-					break;
-				hostblock[i] = p[i];
-			}
-			hostblock[i] = 0;
+			*q = '\0';
 			continue;
 		}
 
