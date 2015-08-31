@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.11 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.12 2015/08/31 06:48:24 deraadt Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
 	.hidden _HIDDEN(x)
 #define _HIDDEN_FALIAS(x,y)			\
 	_HIDDEN_ALIAS(x,y);			\
-	.type _HIDDEN(x),@function
+	.type _HIDDEN(x),#function
 
 /*
  * For functions implemented in ASM that aren't syscalls.
