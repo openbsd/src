@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.1 2015/08/30 10:05:09 yasuoka Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.2 2015/08/31 19:56:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -90,7 +90,10 @@ struct efifb efifb_console;
 int
 efifb_match(struct device *parent, void *cf, void *aux)
 {
-	if (bios_efiinfo != NULL)
+	struct efifb_attach_args *eaa = aux;
+
+	if (strcmp(eaa->eaa_name, efifb_cd.cd_name) == 0 &&
+	    bios_efiinfo != NULL)
 		return (1);
 
 	return (0);

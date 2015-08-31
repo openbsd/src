@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.32 2015/08/30 18:08:24 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.33 2015/08/31 19:56:32 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -68,6 +68,10 @@
 #include <machine/biosvar.h>
 #endif
 
+#if NEFIFB > 0
+#include <machine/efifbvar.h>
+#endif
+
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
@@ -95,6 +99,9 @@ union mainbus_attach_args {
 #endif
 #if NPVBUS > 0
 	struct pvbus_attach_args mba_pvba;
+#endif
+#if NEFIFB > 0
+	struct efifb_attach_args mba_eaa;
 #endif
 };
 
@@ -234,7 +241,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NEFIFB > 0
 	if (bios_efiinfo != NULL) {
-		mba.mba_busname = "efifb";
+		mba.mba_eaa.eaa_name = "efifb";
 		config_found(self, &mba, mainbus_print);
 	}
 #endif
