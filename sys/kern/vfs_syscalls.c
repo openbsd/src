@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.224 2015/08/30 05:38:38 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.225 2015/08/31 00:45:09 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2112,8 +2112,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 			mode = vattr.va_mode & ~(VSUID | VSGID);
 			if (mode == vattr.va_mode)
 				mode = VNOVAL;
-		}
-		else
+		} else
 			mode = VNOVAL;
 		VATTR_NULL(&vattr);
 		vattr.va_uid = uid;
@@ -2163,8 +2162,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 			mode = vattr.va_mode & ~(VSUID | VSGID);
 			if (mode == vattr.va_mode)
 				mode = VNOVAL;
-		}
-		else
+		} else
 			mode = VNOVAL;
 		VATTR_NULL(&vattr);
 		vattr.va_uid = uid;
