@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.93 2015/08/24 23:26:43 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.94 2015/08/31 08:33:01 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -332,47 +332,41 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 
 	/*
-	 * Now call in6_update_ifa() to do a bunch of procedures to configure
-	 * a link-local address. In the case of CARP, we may be called after
-	 * one has already been configured, so check if it's already there
-	 * with in6ifa_ifpforlinklocal() and clobber it if it exists.
-	 */
-	s = splsoftnet();
-	error = in6_update_ifa(ifp, &ifra, in6ifa_ifpforlinklocal(ifp, 0));
-	splx(s);
-
-	if (error != 0) {
-		/*
-		 * XXX: When the interface does not support IPv6, this call
-		 * would fail in the SIOCSIFADDR ioctl.  I believe the
-		 * notification is rather confusing in this case, so just
-		 * suppress it.  (jinmei@kame.net 20010130)
-		 */
-		if (error != EAFNOSUPPORT)
-			nd6log((LOG_NOTICE, "in6_ifattach_linklocal: failed to "
-			    "configure a link-local address on %s "
-			    "(errno=%d)\n",
-			    ifp->if_xname, error));
-		return (-1);
-	}
-
-	ia6 = in6ifa_ifpforlinklocal(ifp, 0);
-
-	/*
-	 * Perform DAD.
-	 *
 	 * XXX: Some P2P interfaces seem not to send packets just after
 	 * becoming up, so we skip p2p interfaces for safety.
 	 */
-	if (in6if_do_dad(ifp) && ((ifp->if_flags & IFF_POINTOPOINT) == 0)) {
-		ia6->ia6_flags |= IN6_IFF_TENTATIVE;
+	if (in6if_do_dad(ifp) && ((ifp->if_flags & IFF_POINTOPOINT) == 0))
+		ifra.ifra_flags |= IN6_IFF_TENTATIVE;
+
+	s = splsoftnet();
+	error = in6_update_ifa(ifp, &ifra, in6ifa_ifpforlinklocal(ifp, 0));
+	splx(s);
+	if (error != 0)
+		return (error);
+
+	ia6 = in6ifa_ifpforlinklocal(ifp, 0);
+
+	/* Perform DAD, if needed. */
+	if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
 		nd6_dad_start(&ia6->ia_ifa);
+
+	if (ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) {
+		dohooks(ifp->if_addrhooks, 0);
+		return (0); /* No need to install a connected route. */
 	}
 
+	s = splsoftnet();
 	error = rt_ifa_add(&ia6->ia_ifa, RTF_UP|RTF_CLONING|RTF_CONNECTED,
 	    ia6->ia_ifa.ifa_addr);
+	if (error) {
+		in6_purgeaddr(&ia6->ia_ifa);
+		splx(s);
+		return (error);
+	}
+	dohooks(ifp->if_addrhooks, 0);
+	splx(s);
 
-	return (error);
+	return (0);
 }
 
 int

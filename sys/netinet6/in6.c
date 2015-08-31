@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.168 2015/08/24 23:26:43 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.169 2015/08/31 08:33:01 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -462,7 +462,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 
 	case SIOCAIFADDR_IN6:
 	{
-		int plen, error = 0;
+		int error = 0;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -508,10 +508,9 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
 			nd6_dad_start(&ia6->ia_ifa);
 
-		plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr, NULL);
-		if (plen == 128) {
+		if (ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) {
 			dohooks(ifp->if_addrhooks, 0);
-			break;	/* we don't need to install a host route. */
+			break;	/* No need to install a connected route. */
 		}
 
 		s = splsoftnet();
@@ -966,7 +965,10 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 
 	/* Release the reference to the base prefix. */
 	if (ia6->ia6_ndpr == NULL) {
-		rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED, ifa->ifa_addr);
+		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0) {
+			rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED,
+			    ifa->ifa_addr);
+		}
 	} else {
 		KASSERT(ia6->ia6_flags & IN6_IFF_AUTOCONF);
 		ia6->ia6_flags &= ~IN6_IFF_AUTOCONF;
