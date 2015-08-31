@@ -1197,6 +1197,7 @@
 ./usr/share/man/man4/amd64/autoconf.4
 ./usr/share/man/man4/amd64/bios.4
 ./usr/share/man/man4/amd64/cpu.4
+./usr/share/man/man4/amd64/efifb.4
 ./usr/share/man/man4/amd64/intro.4
 ./usr/share/man/man4/amd64/ioapic.4
 ./usr/share/man/man4/amd64/kmem.4
