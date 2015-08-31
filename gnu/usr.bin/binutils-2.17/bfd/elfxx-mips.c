@@ -7206,9 +7206,9 @@ _bfd_mips_elf_always_size_sections (bfd *output_bfd,
        not include R_MIPS_GOT_PAGE.  */
     local_gotno = 0;
   else
-    /* Assume there are two loadable segments consisting of contiguous
-       sections.  Is 5 enough?  */
-    local_gotno = (loadable_size >> 16) + 5;
+    /* Assume there are four loadable segments consisting of contiguous
+       sections.  Is 7 enough?  */
+    local_gotno = (loadable_size >> 16) + 7;
 
   g->local_gotno += local_gotno;
   s->size += g->local_gotno * MIPS_ELF_GOT_SIZE (output_bfd);
