@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.26 2015/07/29 10:42:37 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.27 2015/08/31 09:33:43 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -864,8 +864,8 @@ main(int argc, char *argv[])
 
 		f = fopen(argv[0], "r");
 		if (f == NULL)
-			err(EX_NOINPUT, "Can't open file %s", argv[1]);
-		order = read_pairs(f, &pairs, reverse_flag, argv[1], order,
+			err(EX_NOINPUT, "Can't open file %s", argv[0]);
+		order = read_pairs(f, &pairs, reverse_flag, argv[0], order,
 		    hints_flag == 2);
 		fclose(f);
 		break;
