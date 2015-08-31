@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.195 2015/08/30 17:19:51 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.196 2015/08/31 14:02:36 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -526,8 +526,8 @@ notfat:
 	if (spoofonly)
 		return (0);
 
-	bp->b_blkno = DL_BLKTOSEC(lp, DL_SECTOBLK(lp, dospartoff) +
-	    DOS_LABELSECTOR) * DL_BLKSPERSEC(lp);
+	bp->b_blkno = DL_SECTOBLK(lp, dospartoff + DL_BLKTOSEC(lp,
+	    DOS_LABELSECTOR));
 	bp->b_bcount = lp->d_secsize;
 	bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
@@ -840,8 +840,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	if (spoofonly)
 		return (0);
 
-	bp->b_blkno = DL_BLKTOSEC(lp, DL_SECTOBLK(lp, gptpartoff) +
-	    DOS_LABELSECTOR) * DL_BLKSPERSEC(lp);
+	bp->b_blkno = DL_SECTOBLK(lp, gptpartoff + DL_BLKTOSEC(lp,
+	    DOS_LABELSECTOR));
 	bp->b_bcount = lp->d_secsize;
 	bp->b_error = 0; /* B_ERROR and b_error may have stale data. */
 	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE | B_ERROR);
