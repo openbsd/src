@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.3 2009/10/28 06:49:54 deraadt Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.4 2015/08/31 02:53:56 guenther Exp $	*/
 /*	$NetBSD: ffs.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -61,6 +61,7 @@ ENTRY(ffs)
 	ldrneb  r0, [ r2, r0, lsr #26 ]
 
         mov   pc, lr
+END_WEAK(ffs)
 .text;
 .type .L_ffs_table, _ASM_TYPE_OBJECT;
 .L_ffs_table:

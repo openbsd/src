@@ -1,4 +1,4 @@
-/*	$OpenBSD: warnc.c,v 1.1 2014/04/22 00:33:02 guenther Exp $ */
+/*	$OpenBSD: warnc.c,v 1.2 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,14 +32,12 @@
 #include <stdarg.h>
 
 void
-_warnc(int code, const char *fmt, ...)
+warnc(int code, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	_vwarnc(code, fmt, ap);
+	vwarnc(code, fmt, ap);
 	va_end(ap);
 }
-
-__weak_alias(warnc, _warnc);
-
+DEF_WEAK(warnc);

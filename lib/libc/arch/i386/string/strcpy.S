@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcpy.S,v 1.8 2005/08/07 11:30:38 espie Exp $ */
+/*	$OpenBSD: strcpy.S,v 1.9 2015/08/31 02:53:56 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -61,3 +61,4 @@ L1:	movb	(%edx),%al		/* unroll loop, but not too much */
 	jnz	L1
 L2:	popl	%eax			/* pop dst address */
 	ret
+END(strcpy)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.4 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.5 2015/08/31 02:53:56 guenther Exp $	*/
 /*	$NetBSD: bzero.S,v 1.2 1996/10/17 03:08:12 cgd Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 LEAF(bzero,2)
 	ble	a1,bzero_done
@@ -108,4 +108,4 @@ bzero_finish_lp_done:
 bzero_done:
 	RET
 
-	END(bzero)
+	END_WEAK(bzero)

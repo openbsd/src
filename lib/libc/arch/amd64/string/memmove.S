@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 	/*
 	 * memmove (dst,src,cnt)
@@ -86,5 +86,5 @@ ENTRY(memmove)
 	cld
 	ret
 // END(memcpy)
-END(memmove)
-END(bcopy)
+END_STRONG(memmove)
+END_WEAK(bcopy)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setvbuf.c,v 1.12 2015/01/13 07:18:21 guenther Exp $ */
+/*	$OpenBSD: setvbuf.c,v 1.13 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -158,3 +158,4 @@ nbf:
 
 	return (ret);
 }
+DEF_STRONG(setvbuf);

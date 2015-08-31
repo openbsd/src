@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.S,v 1.2 2015/05/15 22:29:37 millert Exp $ */
+/*	$OpenBSD: strchr.S,v 1.3 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,3 +56,4 @@ ENTRY(strchr, 0)
 	jneq	3b
 	decl	%r0
 	jbr	2b
+END_STRONG(strchr)

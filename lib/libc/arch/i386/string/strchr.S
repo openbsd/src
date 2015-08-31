@@ -1,10 +1,10 @@
-/*	$OpenBSD: strchr.S,v 1.6 2015/05/15 22:29:37 millert Exp $ */
+/*	$OpenBSD: strchr.S,v 1.7 2015/08/31 02:53:56 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 WEAK_ALIAS(index, strchr)
 
@@ -22,3 +22,4 @@ L1:
 	xorl	%eax,%eax
 L2:
 	ret
+END_STRONG(strchr)

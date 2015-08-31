@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.S,v 1.2 2015/05/15 22:29:37 millert Exp $ */
+/*	$OpenBSD: strchr.S,v 1.3 2015/08/31 02:53:56 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 WEAK_ALIAS(index, strchr)
 
@@ -48,4 +48,4 @@ notfnd:
 fnd:
 	dsubu	v0, a0, 1
 	j	ra
-END(strchr)
+END_STRONG(strchr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.3 2005/08/07 16:40:14 espie Exp $	*/
+/*	$OpenBSD: strcmp.S,v 1.4 2015/08/31 02:53:56 guenther Exp $	*/
 /*      $NetBSD: strcmp.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(strcmp)
 1:
@@ -40,3 +40,4 @@ ENTRY(strcmp)
 	beq	1b
 	sub	r0, r2, r3
 	mov	pc, lr
+END_STRONG(strcmp)

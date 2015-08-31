@@ -1,4 +1,4 @@
-/*	$OpenBSD: setbuf.c,v 1.5 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: setbuf.c,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,3 +39,4 @@ setbuf(FILE *fp, char *buf)
 {
 	(void) setvbuf(fp, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }
+DEF_STRONG(setbuf);

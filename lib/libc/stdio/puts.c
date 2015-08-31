@@ -1,4 +1,4 @@
-/*	$OpenBSD: puts.c,v 1.11 2009/11/21 09:53:44 guenther Exp $ */
+/*	$OpenBSD: puts.c,v 1.12 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,3 +60,4 @@ puts(const char *s)
 	FUNLOCKFILE(stdout);
 	return (ret ? EOF : '\n');
 }
+DEF_STRONG(puts);

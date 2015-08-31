@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnlen.c,v 1.5 2014/06/10 04:17:37 deraadt Exp $	*/
+/*	$OpenBSD: strnlen.c,v 1.6 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -30,3 +30,4 @@ strnlen(const char *str, size_t maxlen)
 
 	return (size_t)(cp - str);
 }
+DEF_WEAK(strnlen);

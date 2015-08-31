@@ -1,4 +1,4 @@
-/*	$OpenBSD: clrerr.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: clrerr.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,3 +42,4 @@ clearerr(FILE *fp)
 	__sclearerr(fp);
 	FUNLOCKFILE(fp);
 }
+DEF_STRONG(clearerr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getc.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: getc.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@ getc_unlocked(FILE *fp)
 {
 	return (__sgetc(fp));
 }
+DEF_WEAK(getc_unlocked);
 
 /*
  * A subroutine version of the macro getc.
@@ -60,3 +61,4 @@ getc(FILE *fp)
 	FUNLOCKFILE(fp);
 	return (c);
 }
+DEF_STRONG(getc);

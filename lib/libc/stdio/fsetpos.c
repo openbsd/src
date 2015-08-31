@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsetpos.c,v 1.6 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: fsetpos.c,v 1.7 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,3 +41,4 @@ fsetpos(FILE *iop, const fpos_t *pos)
 {
 	return (fseeko(iop, (off_t)*pos, SEEK_SET));
 }
+DEF_STRONG(fsetpos);

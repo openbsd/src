@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdprintf.c,v 1.1 2013/01/30 00:08:13 brad Exp $	*/
+/*	$OpenBSD: vdprintf.c,v 1.2 2015/08/31 02:53:57 guenther Exp $	*/
 /*	$FreeBSD: src/lib/libc/stdio/vdprintf.c,v 1.4 2012/11/17 01:49:40 svnexp Exp $ */
 
 /*-
@@ -71,3 +71,4 @@ vdprintf(int fd, const char * __restrict fmt, va_list ap)
 
 	return fflush(&f) ? EOF : ret;
 }
+DEF_WEAK(vdprintf);

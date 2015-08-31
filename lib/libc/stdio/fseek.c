@@ -1,4 +1,4 @@
-/*	$OpenBSD: fseek.c,v 1.11 2012/05/21 22:24:19 matthew Exp $ */
+/*	$OpenBSD: fseek.c,v 1.12 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -243,9 +243,11 @@ dumb:
 	FUNLOCKFILE(fp);
 	return (0);
 }
+DEF_WEAK(fseeko);
 
 int
 fseek(FILE *fp, long offset, int whence)
 {
 	return (fseeko(fp, offset, whence));
 }
+DEF_STRONG(fseek);

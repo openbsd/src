@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.2 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
 /*	$NetBSD: strlen.S,v 1.1 1998/09/11 04:56:33 eeh Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(strlen)
 	add	%o0, 1, %o1	! save starting point + 1
@@ -44,3 +44,4 @@ ENTRY(strlen)
 	 inc	%o0		! always increment pointer
 	retl
 	 sub	%o0, %o1, %o0	! return length (ptr - (origptr+1))
+END_STRONG(strlen)

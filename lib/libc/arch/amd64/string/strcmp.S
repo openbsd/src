@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.5 2015/05/29 07:21:09 uebayasi Exp $	*/
+/*	$OpenBSD: strcmp.S,v 1.6 2015/08/31 02:53:56 guenther Exp $	*/
 /*	$NetBSD: strcmp.S,v 1.2 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(strcmp)
 	/*
@@ -69,4 +69,4 @@ ENTRY(strcmp)
 	movzbq	%dl,%rdx
 	subq	%rdx,%rax
 	ret
-END(strcmp)
+END_STRONG(strcmp)

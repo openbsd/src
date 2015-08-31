@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanf.c,v 1.10 2011/05/30 18:48:33 martynas Exp $ */
+/*	$OpenBSD: scanf.c,v 1.11 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-/* SCANFLIKE1 */
 int
 scanf(const char *fmt, ...)
 {
@@ -46,3 +45,4 @@ scanf(const char *fmt, ...)
 	va_end(ap);
 	return (ret);
 }
+DEF_STRONG(scanf);

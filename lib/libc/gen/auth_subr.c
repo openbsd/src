@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.41 2014/08/25 07:50:25 doug Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.42 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -361,7 +361,7 @@ auth_setenv(auth_session_t *as)
 				for (; isblank((unsigned char)*line); ++line)
 					;
 				if (*line != '\0' && setenv(name, line, 1))
-					_warn("setenv(%s, %s)", name, line);
+					warn("setenv(%s, %s)", name, line);
 			}
 		} else
 		if (!strncasecmp(line, BI_UNSETENV, sizeof(BI_UNSETENV)-1)) {
@@ -842,20 +842,20 @@ auth_call(auth_session_t *as, char *path, ...)
 
 	if (secure_path(path) < 0) {
 		syslog(LOG_ERR, "%s: path not secure", path);
-		_warnx("invalid script: %s", path);
+		warnx("invalid script: %s", path);
 		goto fail;
 	}
 
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, pfd) < 0) {
 		syslog(LOG_ERR, "unable to create backchannel %m");
-		_warnx("internal resource failure");
+		warnx("internal resource failure");
 		goto fail;
 	}
 
 	switch (pid = fork()) {
 	case -1:
 		syslog(LOG_ERR, "%s: %m", path);
-		_warnx("internal resource failure");
+		warnx("internal resource failure");
 		close(pfd[0]);
 		close(pfd[1]);
 		goto fail;
@@ -896,7 +896,7 @@ auth_call(auth_session_t *as, char *path, ...)
 		if (pid < 0) {
 			if (errno != ECHILD) {
 				syslog(LOG_ERR, "%s: waitpid: %m", path);
-				_warnx("internal failure");
+				warnx("internal failure");
 				goto fail;
 			}
 		} else if (!WIFEXITED(status))

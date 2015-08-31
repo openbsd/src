@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.6 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: bzero.S,v 1.7 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,3 +44,4 @@ ENTRY(bzero, R2|R3|R4|R5)
 	jgtr	1b
 	movc5	$0,(%r3),$0,8(%ap),(%r3)
 	ret
+END_WEAK(bzero)

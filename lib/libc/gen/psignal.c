@@ -1,4 +1,4 @@
-/*	$OpenBSD: psignal.c,v 1.9 2007/05/17 04:57:31 ray Exp $ */
+/*	$OpenBSD: psignal.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +38,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
-
-extern char *__strsignal(int , char *);
 
 void
 psignal(unsigned int sig, const char *s)

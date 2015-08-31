@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: bzero.S,v 1.5 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -134,3 +134,4 @@ Lstd:
 1:
 	retl
 	 nop
+END_WEAK(bzero)

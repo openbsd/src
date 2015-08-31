@@ -1,4 +1,4 @@
-/*	$OpenBSD: perror.c,v 1.8 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: perror.c,v 1.9 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,3 +60,4 @@ perror(const char *s)
 	v->iov_len = 1;
 	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
 }
+DEF_STRONG(perror);

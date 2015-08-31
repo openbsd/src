@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.20 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: popen.c,v 1.21 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -137,6 +137,7 @@ popen(const char *program, const char *type)
 
 	return (iop);
 }
+DEF_WEAK(popen);
 
 /*
  * pclose --
@@ -178,3 +179,4 @@ pclose(FILE *iop)
 
 	return (pid == -1 ? -1 : pstat);
 }
+DEF_WEAK(pclose);

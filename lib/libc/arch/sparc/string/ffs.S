@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.5 2012/08/22 17:19:35 pascal Exp $ */
+/*	$OpenBSD: ffs.S,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,6 +83,7 @@ ENTRY(ffs)
 	ldsb	[%o2 + %o0], %o0
 	retl
 	 add	%o0, 24, %o0
+END_WEAK(ffs)
 
 ffstab:
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcmp.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: memcmp.c,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -49,3 +49,4 @@ memcmp(const void *s1, const void *s2, size_t n)
 	}
 	return (0);
 }
+DEF_STRONG(memcmp);

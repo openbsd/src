@@ -1,4 +1,4 @@
-/*	$OpenBSD: ungetwc.c,v 1.5 2011/10/16 13:20:51 stsp Exp $	*/
+/*	$OpenBSD: ungetwc.c,v 1.6 2015/08/31 02:53:57 guenther Exp $	*/
 /* $NetBSD: ungetwc.c,v 1.2 2003/01/18 11:29:59 thorpej Exp $ */
 
 /*-
@@ -75,3 +75,4 @@ ungetwc(wint_t wc, FILE *fp)
 	FUNLOCKFILE(fp);
 	return (r);
 }
+DEF_STRONG(ungetwc);

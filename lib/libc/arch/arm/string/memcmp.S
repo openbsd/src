@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcmp.S,v 1.4 2009/10/28 06:49:54 deraadt Exp $	*/
+/*	$OpenBSD: memcmp.S,v 1.5 2015/08/31 02:53:56 guenther Exp $	*/
 /*      $NetBSD: memcmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(memcmp)
 /* if (len == 0) return 0 */
@@ -50,3 +50,4 @@ ENTRY(memcmp)
 	beq	1b
 	sub	r0, r2, r3
 	mov	pc, lr
+END_STRONG(memcmp)

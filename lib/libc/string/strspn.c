@@ -1,4 +1,4 @@
-/*	$OpenBSD: strspn.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: strspn.c,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -49,3 +49,4 @@ cont:
 			goto cont;
 	return (p - 1 - s1);
 }
+DEF_STRONG(strspn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vwarn.c,v 1.9 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: vwarn.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 extern char *__progname;		/* Program name, from crt0. */
 
 void
-_vwarn(const char *fmt, va_list ap)
+vwarn(const char *fmt, va_list ap)
 {
 	int sverrno;
 
@@ -49,6 +49,4 @@ _vwarn(const char *fmt, va_list ap)
 	}
 	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 }
-
-__weak_alias(vwarn, _vwarn);
-
+DEF_WEAK(vwarn);

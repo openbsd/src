@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncmp.c,v 1.8 2014/06/10 04:17:37 deraadt Exp $	*/
+/*	$OpenBSD: strncmp.c,v 1.9 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -45,3 +45,4 @@ strncmp(const char *s1, const char *s2, size_t n)
 	} while (--n != 0);
 	return (0);
 }
+DEF_STRONG(strncmp);

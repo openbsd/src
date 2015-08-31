@@ -1,4 +1,4 @@
-/*	$OpenBSD: timingsafe_bcmp.c,v 1.2 2014/06/10 04:17:37 deraadt Exp $	*/
+/*	$OpenBSD: timingsafe_bcmp.c,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
 /*
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
  *
@@ -27,3 +27,4 @@ timingsafe_bcmp(const void *b1, const void *b2, size_t n)
 		ret |= *p1++ ^ *p2++;
 	return (ret != 0);
 }
+DEF_WEAK(timingsafe_bcmp);

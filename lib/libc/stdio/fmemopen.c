@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmemopen.c,v 1.2 2013/03/27 15:06:25 mpi Exp $	*/
+/*	$OpenBSD: fmemopen.c,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -181,3 +181,4 @@ fmemopen(void *buf, size_t size, const char *mode)
 
 	return (fp);
 }
+DEF_WEAK(fmemopen);

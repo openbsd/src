@@ -1,4 +1,4 @@
-/*	$OpenBSD: stpncpy.c,v 1.2 2012/07/11 10:44:59 naddy Exp $	*/
+/*	$OpenBSD: stpncpy.c,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,3 +54,4 @@ stpncpy(char *dst, const char *src, size_t n)
 	}
 	return (dst);
 }
+DEF_WEAK(stpncpy);

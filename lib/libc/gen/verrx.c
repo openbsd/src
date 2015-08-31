@@ -1,4 +1,4 @@
-/*	$OpenBSD: verrx.c,v 1.9 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: verrx.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 extern char *__progname;		/* Program name, from crt0. */
 
 __dead void
-_verrx(int eval, const char *fmt, va_list ap)
+verrx(int eval, const char *fmt, va_list ap)
 {
 	(void)fprintf(stderr, "%s: ", __progname);
 	if (fmt != NULL)
@@ -44,6 +44,4 @@ _verrx(int eval, const char *fmt, va_list ap)
 	(void)fprintf(stderr, "\n");
 	exit(eval);
 }
-
-__weak_alias(verrx, _verrx);
-
+DEF_WEAK(verrx);

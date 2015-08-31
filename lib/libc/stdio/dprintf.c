@@ -1,4 +1,4 @@
-/*	$OpenBSD: dprintf.c,v 1.1 2013/01/30 00:08:13 brad Exp $	*/
+/*	$OpenBSD: dprintf.c,v 1.2 2015/08/31 02:53:57 guenther Exp $	*/
 /*	$FreeBSD: src/lib/libc/stdio/dprintf.c,v 1.2 2012/11/17 01:49:39 svnexp Exp $	*/
 
 /*-
@@ -46,3 +46,4 @@ dprintf(int fd, const char * __restrict fmt, ...)
 	va_end(ap);
 	return ret;
 }
+DEF_WEAK(dprintf);

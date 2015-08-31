@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.22 2014/08/31 09:36:39 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.23 2015/08/31 02:53:56 guenther Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -8,7 +8,8 @@ all:
 	@echo "need to define LIBCSRCDIR" >&2; exit 1
 .endif
 
-CFLAGS+=	-I${LIBCSRCDIR}/include -Werror-implicit-function-declaration
+CFLAGS+=-I${LIBCSRCDIR}/include -I${LIBCSRCDIR}/hidden \
+	-Werror-implicit-function-declaration
 
 # Include link-time warnings about unsafe API uses (ie. strcpy)
 CFLAGS+=-DAPIWARN

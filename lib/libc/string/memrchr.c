@@ -1,4 +1,4 @@
-/*	$OpenBSD: memrchr.c,v 1.2 2007/11/27 16:22:12 martynas Exp $	*/
+/*	$OpenBSD: memrchr.c,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -36,3 +36,4 @@ memrchr(const void *s, int c, size_t n)
 	}
 	return(NULL);
 }
+DEF_WEAK(memrchr);

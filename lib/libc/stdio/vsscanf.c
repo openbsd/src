@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsscanf.c,v 1.12 2011/11/08 18:30:42 guenther Exp $ */
+/*	$OpenBSD: vsscanf.c,v 1.13 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,6 @@
 #include <string.h>
 #include "local.h"
 
-/* ARGSUSED */
 static int
 eofread(void *cookie, char *buf, int len)
 {
@@ -57,3 +56,4 @@ vsscanf(const char *str, const char *fmt, __va_list ap)
 	f._lb._base = NULL;
 	return (__svfscanf(&f, fmt, ap));
 }
+DEF_STRONG(vsscanf);

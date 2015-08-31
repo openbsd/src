@@ -1,4 +1,4 @@
-/*	$OpenBSD: vswprintf.c,v 1.5 2015/08/20 21:49:29 deraadt Exp $	*/
+/*	$OpenBSD: vswprintf.c,v 1.6 2015/08/31 02:53:57 guenther Exp $	*/
 /*	$NetBSD: vswprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
 
 /*
@@ -94,3 +94,4 @@ vswprintf(wchar_t * __restrict s, size_t n, const wchar_t * __restrict fmt,
 
 	return (ret);
 }
+DEF_STRONG(vswprintf);

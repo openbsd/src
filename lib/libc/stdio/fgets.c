@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgets.c,v 1.14 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fgets.c,v 1.15 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -103,3 +103,4 @@ fgets(char *buf, int n, FILE *fp)
 	FUNLOCKFILE(fp);
 	return (buf);
 }
+DEF_STRONG(fgets);

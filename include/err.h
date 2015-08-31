@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.h,v 1.12 2014/04/22 00:33:02 guenther Exp $	*/
+/*	$OpenBSD: err.h,v 1.13 2015/08/31 02:53:56 guenther Exp $	*/
 /*	$NetBSD: err.h,v 1.11 1994/10/26 00:55:52 cgd Exp $	*/
 
 /*-
@@ -63,34 +63,6 @@ void		vwarnc(int, const char *, __va_list)
 void		warnx(const char *, ...)
 			__attribute__((__format__ (printf, 1, 2)));
 void		vwarnx(const char *, __va_list)
-			__attribute__((__format__ (printf, 1, 0)));
-
-/*
- * The _* versions are for use inside libc only and will go away
- */
-__dead void	_err(int, const char *, ...)
-			__attribute__((__format__ (printf, 2, 3)));
-__dead void	_verr(int, const char *, __va_list)
-			__attribute__((__format__ (printf, 2, 0)));
-__dead void	_errc(int, int, const char *, ...)
-			__attribute__((__format__ (printf, 3, 4)));
-__dead void	_verrc(int, int, const char *, __va_list)
-			__attribute__((__format__ (printf, 3, 0)));
-__dead void	_errx(int, const char *, ...)
-			__attribute__((__format__ (printf, 2, 3)));
-__dead void	_verrx(int, const char *, __va_list)
-			__attribute__((__format__ (printf, 2, 0)));
-void		_warn(const char *, ...)
-			__attribute__((__format__ (printf, 1, 2)));
-void		_vwarn(const char *, __va_list)
-			__attribute__((__format__ (printf, 1, 0)));
-void		_warnc(int, const char *, ...)
-			__attribute__((__format__ (printf, 2, 3)));
-void		_vwarnc(int, const char *, __va_list)
-			__attribute__((__format__ (printf, 2, 0)));
-void		_warnx(const char *, ...)
-			__attribute__((__format__ (printf, 1, 2)));
-void		_vwarnx(const char *, __va_list)
 			__attribute__((__format__ (printf, 1, 0)));
 
 __END_DECLS

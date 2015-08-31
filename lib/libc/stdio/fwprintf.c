@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwprintf.c,v 1.3 2011/04/28 17:38:46 stsp Exp $ */
+/*	$OpenBSD: fwprintf.c,v 1.4 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,3 +46,4 @@ fwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt, ...)
 	va_end(ap);
 	return (ret);
 }
+DEF_STRONG(fwprintf);

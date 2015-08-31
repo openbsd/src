@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.4 2009/12/11 05:10:17 miod Exp $ */
+/*	$OpenBSD: strlen.S,v 1.5 2015/08/31 02:53:56 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 LEAF(strlen, 0)
 	.set	reorder
@@ -42,4 +42,4 @@ LEAF(strlen, 0)
 	bne	v0, zero, 1b		# continue if not end
 	dsubu	v0, a0, v1		# compute length - 1 for '\0' char
 	j	ra
-END(strlen)
+END_STRONG(strlen)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memccpy.c,v 1.6 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: memccpy.c,v 1.7 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,3 +46,4 @@ memccpy(void *t, const void *f, int c, size_t n)
 	}
 	return (0);
 }
+DEF_WEAK(memccpy);

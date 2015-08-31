@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.20 2015/08/20 21:49:29 deraadt Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.21 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,7 +23,6 @@
 #include <stdarg.h>
 #include "local.h"
 
-/* PRINTFLIKE2 */
 int
 asprintf(char **str, const char *fmt, ...)
 {
@@ -61,3 +60,4 @@ err:
 	errno = ENOMEM;
 	return (-1);
 }
+DEF_WEAK(asprintf);

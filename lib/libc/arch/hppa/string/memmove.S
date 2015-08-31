@@ -31,11 +31,7 @@
  */
 
 
-
-#undef _LOCORE
-#define _LOCORE
-#include <machine/asm.h>
-#include <machine/frame.h>
+#include "SYS.h"
 
 
 LEAF_ENTRY(bcopy)
@@ -155,6 +151,6 @@ $bcopy_r.done
 
 	bv	0(rp)
 	nop
-EXIT(bcopy)
+EXIT_WEAK(bcopy)
 
 	.end

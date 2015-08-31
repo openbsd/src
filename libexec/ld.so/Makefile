@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2015/08/28 14:16:01 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.60 2015/08/31 02:53:57 guenther Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -33,6 +33,7 @@ SRCS+=	library.c
 DEBUG?=	-g
 CFLAGS += -Wall -Werror
 CFLAGS += -I${.CURDIR} -I${.CURDIR}/${MACHINE_CPU} \
+	-D'DEF_WEAK(x)=asm("")' -D'DEF_STRONG(x)=asm("")' \
 	-Dstrsep=_dl_strsep -Dstrlcat=_dl_strlcat -Dstrlen=_dl_strlen
 CDIAGFLAGS=
 INSTALL_STRIP=

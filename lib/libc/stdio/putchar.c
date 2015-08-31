@@ -1,4 +1,4 @@
-/*	$OpenBSD: putchar.c,v 1.7 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: putchar.c,v 1.8 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@ putchar_unlocked(int c)
 
 	return (putc_unlocked(c,so));
 }
+DEF_WEAK(putchar_unlocked);
 
 #undef putchar
 
@@ -57,3 +58,4 @@ putchar(int c)
 
 	return (putc(c, so));
 }
+DEF_STRONG(putchar);

@@ -1,4 +1,4 @@
-/* $OpenBSD: wscanf.c,v 1.2 2012/12/05 23:20:01 deraadt Exp $ */
+/* $OpenBSD: wscanf.c,v 1.3 2015/08/31 02:53:57 guenther Exp $ */
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -42,3 +42,4 @@ wscanf(const wchar_t * __restrict fmt, ...)
 
 	return (r);
 }
+DEF_STRONG(wscanf);

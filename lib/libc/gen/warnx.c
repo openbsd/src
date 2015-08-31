@@ -1,4 +1,4 @@
-/*	$OpenBSD: warnx.c,v 1.9 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: warnx.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,17 +31,13 @@
 #include <err.h>
 #include <stdarg.h>
 
-/* PRINTFLIKE1 */
 void
-_warnx(const char *fmt, ...)
+warnx(const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	_vwarnx(fmt, ap);
+	vwarnx(fmt, ap);
 	va_end(ap);
 }
-
-/* PRINTFLIKE1 */
-__weak_alias(warnx, _warnx);
-
+DEF_WEAK(warnx);

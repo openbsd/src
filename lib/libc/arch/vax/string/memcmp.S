@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcmp.S,v 1.5 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: memcmp.S,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,3 +63,4 @@ ENTRY(memcmp, 0)
 	subl3	%r4,%r3,%r0
 9:
 	ret
+END_STRONG(memcmp)

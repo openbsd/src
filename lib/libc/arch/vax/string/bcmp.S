@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.S,v 1.5 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: bcmp.S,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,3 +54,4 @@ ENTRY(bcmp, 0)
 	clrl	%r0		# we have a match!
 9:
 	ret
+END_WEAK(bcmp)

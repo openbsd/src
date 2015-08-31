@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.6 2008/03/15 21:40:39 ray Exp $ */
+/*	$OpenBSD: memset.c,v 1.7 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -45,3 +45,4 @@ memset(void *dst, int c, size_t n)
 	}
 	return (dst);
 }
+DEF_STRONG(memset);

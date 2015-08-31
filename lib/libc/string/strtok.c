@@ -36,6 +36,7 @@ strtok(char *s, const char *delim)
 
 	return strtok_r(s, delim, &last);
 }
+DEF_STRONG(strtok);
 
 char *
 strtok_r(char *s, const char *delim, char **last)
@@ -83,3 +84,4 @@ cont:
 	}
 	/* NOTREACHED */
 }
+DEF_WEAK(strtok_r);

@@ -1,4 +1,4 @@
-/* $OpenBSD: vwscanf.c,v 1.2 2012/12/05 23:20:01 deraadt Exp $ */
+/* $OpenBSD: vwscanf.c,v 1.3 2015/08/31 02:53:57 guenther Exp $ */
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -36,3 +36,4 @@ vwscanf(const wchar_t * __restrict fmt, __va_list ap)
 
 	return (vfwscanf(stdin, fmt, ap));
 }
+DEF_STRONG(vwscanf);

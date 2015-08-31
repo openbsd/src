@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputc.c,v 1.10 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fputc.c,v 1.11 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,3 +39,4 @@ fputc(int c, FILE *fp)
 {
 	return (putc(c, fp));
 }
+DEF_STRONG(fputc);

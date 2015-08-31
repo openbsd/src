@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctermid.c,v 1.7 2006/01/13 18:10:10 miod Exp $ */
+/*	$OpenBSD: ctermid.c,v 1.8 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,3 +43,4 @@ ctermid(char *s)
 	}
 	return(def);
 }
+DEF_WEAK(ctermid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.2 2014/11/30 19:43:56 deraadt Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
 /*	$NetBSD: memcpy.S,v 1.2 2006/04/22 23:53:47 uwe Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 #define	REG_SRC		r4
 #define	REG_DST		r5
@@ -238,3 +238,4 @@ ov_no_align_delay:
 9:
 	rts
 	nop
+END_WEAK(bcopy)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.17 2015/04/07 01:27:07 guenther Exp $ */
+/*	$OpenBSD: SYS.h,v 1.18 2015/08/31 02:53:57 guenther Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 #include <sys/syscall.h>
 
 #define	_CAT(x,y)	x##y

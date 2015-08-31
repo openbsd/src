@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscanf.c,v 1.8 2006/01/06 18:53:04 millert Exp $ */
+/*	$OpenBSD: vscanf.c,v 1.9 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,3 +39,4 @@ vscanf(const char *fmt, __va_list ap)
 
 	return (vfscanf(stdin, fmt, ap));
 }
+DEF_STRONG(vscanf);

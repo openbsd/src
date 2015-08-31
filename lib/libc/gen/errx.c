@@ -1,4 +1,4 @@
-/*	$OpenBSD: errx.c,v 1.10 2012/12/05 23:19:59 deraadt Exp $ */
+/*	$OpenBSD: errx.c,v 1.11 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,17 +31,13 @@
 #include <err.h>
 #include <stdarg.h>
 
-/* PRINTFLIKE2 */
 __dead void
-_errx(int eval, const char *fmt, ...)
+errx(int eval, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	_verrx(eval, fmt, ap);
+	verrx(eval, fmt, ap);
 	va_end(ap);
 }
-
-/* PRINTFLIKE2 */
-__weak_alias(errx, _errx);
-
+DEF_WEAK(errx);

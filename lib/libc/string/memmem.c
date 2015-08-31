@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmem.c,v 1.3 2013/05/30 01:10:45 ajacoutot Exp $ */
+/*	$OpenBSD: memmem.c,v 1.4 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 2005 Pascal Gloor <pascal.gloor@spale.com>
  *
@@ -61,3 +61,4 @@ memmem(const void *l, size_t l_len, const void *s, size_t s_len)
 
 	return NULL;
 }
+DEF_WEAK(memmem);

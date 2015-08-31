@@ -4,7 +4,7 @@
  * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(memset)
 	movq	%rsi,%rax
@@ -53,4 +53,4 @@ L1:	rep
 	movq	%r11,%rax
 
 	ret
-END(memset)
+END_STRONG(memset)

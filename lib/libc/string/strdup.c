@@ -1,4 +1,4 @@
-/*	$OpenBSD: strdup.c,v 1.6 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: strdup.c,v 1.7 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -47,3 +47,4 @@ strdup(const char *str)
 	(void)memcpy(copy, str, siz);
 	return(copy);
 }
+DEF_WEAK(strdup);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.67 2014/12/21 00:23:30 daniel Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.68 2015/08/31 02:53:57 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -268,6 +268,7 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	FUNLOCKFILE(fp);
 	return (ret);
 }
+DEF_STRONG(vfprintf);
 
 int
 __vfprintf(FILE *fp, const char *fmt0, __va_list ap)

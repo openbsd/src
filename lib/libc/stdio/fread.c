@@ -1,4 +1,4 @@
-/*	$OpenBSD: fread.c,v 1.13 2014/12/08 20:40:53 tedu Exp $ */
+/*	$OpenBSD: fread.c,v 1.14 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,3 +101,4 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	FUNLOCKFILE(fp);
 	return (count);
 }
+DEF_STRONG(fread);

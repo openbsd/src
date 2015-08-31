@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.c,v 1.1 2014/11/30 19:43:56 deraadt Exp $ */
+/*	$OpenBSD: memmove.c,v 1.2 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -110,3 +110,4 @@ memmove(void *dst0, const void *src0, size_t length)
 done:
 	return (dst0);
 }
+DEF_STRONG(memmove);

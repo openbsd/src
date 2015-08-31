@@ -1,4 +1,4 @@
-/*	$OpenBSD: strsep.c,v 1.7 2014/02/05 20:42:32 stsp Exp $	*/
+/*	$OpenBSD: strsep.c,v 1.8 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,3 +68,4 @@ strsep(char **stringp, const char *delim)
 	}
 	/* NOTREACHED */
 }
+DEF_WEAK(strsep);

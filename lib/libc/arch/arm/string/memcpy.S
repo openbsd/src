@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.S,v 1.4 2014/11/30 19:43:56 deraadt Exp $	*/
+/*	$OpenBSD: memcpy.S,v 1.5 2015/08/31 02:53:56 guenther Exp $	*/
 /*	$NetBSD: memcpy.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 /*
  * XXX
@@ -42,3 +42,4 @@ ENTRY(memcpy)
 	stmfd	sp!, {r0, lr}
 	bl	PIC_SYM(_C_LABEL(_memcpy), PLT)
 	ldmfd	sp!, {r0, pc}
+END_STRONG(memcpy)

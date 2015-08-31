@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.3 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: ffs.S,v 1.4 2015/08/31 02:53:56 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 /* bit = ffs(value) */
 
@@ -46,4 +46,4 @@ LEAF(ffs, 0)
 	beq	v1, zero, 1b		# no, continue
 done:
 	j	ra
-END(ffs)
+END_WEAK(ffs)

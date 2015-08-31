@@ -1,4 +1,4 @@
-/*	$OpenBSD: strrchr.c,v 1.2 2015/05/15 22:29:37 millert Exp $ */
+/*	$OpenBSD: strrchr.c,v 1.3 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -45,3 +45,4 @@ strrchr(const char *p, int ch)
 	}
 	/* NOTREACHED */
 }
+DEF_STRONG(strrchr);

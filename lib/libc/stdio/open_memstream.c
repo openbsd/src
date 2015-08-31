@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstream.c,v 1.5 2015/02/05 12:59:57 millert Exp $	*/
+/*	$OpenBSD: open_memstream.c,v 1.6 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -156,3 +156,4 @@ open_memstream(char **pbuf, size_t *psize)
 
 	return (fp);
 }
+DEF_WEAK(open_memstream);

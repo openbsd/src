@@ -4,7 +4,7 @@
  * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(memchr)
 	movb	%sil,%al		/* set character to search for */
@@ -19,4 +19,4 @@ ENTRY(memchr)
 	ret
 L1:	xorq	%rax,%rax
 	ret
-END(memchr)
+END_STRONG(memchr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strerror.c,v 1.7 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: strerror.c,v 1.8 2015/08/31 02:53:57 guenther Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,3 +39,4 @@ strerror(int num)
 	(void)strerror_r(num, buf, sizeof(buf));
 	return (buf);
 }
+DEF_STRONG(strerror);

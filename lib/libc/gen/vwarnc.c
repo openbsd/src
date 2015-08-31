@@ -1,4 +1,4 @@
-/*	$OpenBSD: vwarnc.c,v 1.1 2014/04/22 00:33:02 guenther Exp $ */
+/*	$OpenBSD: vwarnc.c,v 1.2 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 extern char *__progname;		/* Program name, from crt0. */
 
 void
-_vwarnc(int code, const char *fmt, va_list ap)
+vwarnc(int code, const char *fmt, va_list ap)
 {
 	(void)fprintf(stderr, "%s: ", __progname);
 	if (fmt != NULL) {
@@ -45,6 +45,4 @@ _vwarnc(int code, const char *fmt, va_list ap)
 	}
 	(void)fprintf(stderr, "%s\n", strerror(code));
 }
-
-__weak_alias(vwarnc, _vwarnc);
-
+DEF_WEAK(vwarnc);

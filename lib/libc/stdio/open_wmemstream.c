@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_wmemstream.c,v 1.6 2015/02/05 12:59:57 millert Exp $	*/
+/*	$OpenBSD: open_wmemstream.c,v 1.7 2015/08/31 02:53:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -167,3 +167,4 @@ open_wmemstream(wchar_t **pbuf, size_t *psize)
 
 	return (fp);
 }
+DEF_WEAK(open_wmemstream);

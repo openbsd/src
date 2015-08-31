@@ -39,3 +39,4 @@ strsignal(int sig)
 
 	return __strsignal(sig, buf);
 }
+DEF_WEAK(strsignal);

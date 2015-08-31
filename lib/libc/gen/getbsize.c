@@ -1,4 +1,4 @@
-/*	$OpenBSD: getbsize.c,v 1.10 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: getbsize.c,v 1.11 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -73,18 +73,18 @@ getbsize(int *headerlenp, long *blocksizep)
 			mul = 1;
 			break;
 		default:
-fmterr:			_warnx("%s: unknown blocksize", p);
+fmterr:			warnx("%s: unknown blocksize", p);
 			n = 512;
 			max = MAXB;
 			mul = 1;
 			break;
 		}
 		if (n > max) {
-			_warnx("maximum blocksize is %dG", MAXB / GB);
+			warnx("maximum blocksize is %dG", MAXB / GB);
 			n = max;
 		}
 		if ((blocksize = n * mul) < 512) {
-underflow:		_warnx("%s: minimum blocksize is 512", p);
+underflow:		warnx("%s: minimum blocksize is 512", p);
 			form = "";
 			blocksize = n = 512;
 		}

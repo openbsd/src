@@ -1,4 +1,4 @@
-/*	$OpenBSD: getwc.c,v 1.1 2005/06/17 20:40:32 espie Exp $	*/
+/*	$OpenBSD: getwc.c,v 1.2 2015/08/31 02:53:57 guenther Exp $	*/
 /* $NetBSD: getwc.c,v 1.2 2003/01/18 11:29:55 thorpej Exp $ */
 
 /*-
@@ -43,3 +43,4 @@ getwc(FILE *fp)
 
 	return fgetwc(fp);
 }
+DEF_STRONG(getwc);

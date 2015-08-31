@@ -1,10 +1,10 @@
-/*	$OpenBSD: memset.S,v 1.4 2007/05/25 20:32:29 krw Exp $ */
+/*	$OpenBSD: memset.S,v 1.5 2015/08/31 02:53:56 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(memset)
 	pushl	%edi
@@ -53,3 +53,4 @@ L1:	rep
 	popl	%ebx
 	popl	%edi
 	ret
+END_STRONG(memset)

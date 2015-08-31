@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.5 2014/11/30 19:43:54 deraadt Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.6 2015/08/31 02:53:56 guenther Exp $	*/
 /*	$NetBSD: bcopy.S,v 1.3 1996/10/17 03:08:11 cgd Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 #define	SRCREG		a1
 #define	DSTREG		a0
@@ -270,4 +270,4 @@ bcopy_ov_short:
 	ldq_u	t2,0(SRCREG)
 	br	zero,bcopy_da_finish
 
-	END(memmove)
+	END_STRONG(memmove)

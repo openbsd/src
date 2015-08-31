@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.4 2009/12/11 05:10:17 miod Exp $ */
+/*	$OpenBSD: strcmp.S,v 1.5 2015/08/31 02:53:56 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
@@ -55,4 +55,4 @@ NotEq:
 LessOrEq:
 	dsubu	v0, zero, t1
 	j	ra
-END(strcmp)
+END_STRONG(strcmp)

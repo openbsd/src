@@ -1,4 +1,4 @@
-/* $OpenBSD: memmove.S,v 1.1 2014/12/04 12:10:26 deraadt Exp $ */
+/* $OpenBSD: memmove.S,v 1.2 2015/08/31 02:53:57 guenther Exp $ */
 /* $NetBSD: memmove.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
 
 /* stropt/memmove.S, pl_string_common, pl_linux 10/11/04 11:45:37
@@ -39,7 +39,7 @@
  * ==========================================================================
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
         .text
 
@@ -166,3 +166,5 @@ rlast2:
 	bdnz+	rlast2		 	/* Dec ctr, and branch if more	*/
 					/* bytes left			*/
 	blr
+END_STRONG(memmove)
+END_WEAK(bcopy)

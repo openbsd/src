@@ -1,10 +1,10 @@
-/*	$OpenBSD: bcmp.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
+/*	$OpenBSD: bcmp.S,v 1.4 2015/08/31 02:53:56 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(bcmp)
 	pushl	%edi
@@ -30,3 +30,4 @@ L1:	incl	%eax
 L2:	popl	%esi
 	popl	%edi
 	ret
+END_WEAK(bcmp)

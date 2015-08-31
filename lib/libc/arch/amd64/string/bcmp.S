@@ -1,4 +1,4 @@
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(bcmp)
 	xorl	%eax,%eax		/* clear return value */
@@ -18,4 +18,4 @@ ENTRY(bcmp)
 
 L1:	incl	%eax
 L2:	ret
-END(bcmp)
+END_WEAK(bcmp)

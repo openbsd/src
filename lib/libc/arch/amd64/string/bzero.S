@@ -4,7 +4,7 @@
  * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(bzero)
 	movq	%rsi,%rdx
@@ -38,4 +38,4 @@ L1:	movq	%rdx,%rcx		/* zero remainder by bytes */
 	stosb
 
 	ret
-END(bzero)
+END_WEAK(bzero)

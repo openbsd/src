@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscanf.c,v 1.14 2011/11/08 18:30:42 guenther Exp $ */
+/*	$OpenBSD: sscanf.c,v 1.15 2015/08/31 02:53:57 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,6 @@
 #include <stdarg.h>
 #include "local.h"
 
-/* ARGSUSED */
 static int
 eofread(void *cookie, char *buf, int len)
 {
@@ -44,7 +43,6 @@ eofread(void *cookie, char *buf, int len)
 	return (0);
 }
 
-/* SCANFLIKE2 */
 int
 sscanf(const char *str, const char *fmt, ...)
 {
@@ -64,3 +62,4 @@ sscanf(const char *str, const char *fmt, ...)
 	va_end(ap);
 	return (ret);
 }
+DEF_STRONG(sscanf);
