@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.148 2015/08/24 23:26:43 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.149 2015/08/31 10:03:47 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1306,7 +1306,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
  * type - ICMP6 type
  * code - type dependent information
  */
-struct rtentry *
+void
 nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
     int lladdrlen, int type, int code)
 {
@@ -1326,7 +1326,7 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 
 	/* nothing must be updated for unspecified address */
 	if (IN6_IS_ADDR_UNSPECIFIED(from))
-		return NULL;
+		return;
 
 	/*
 	 * Validation about ifp->if_addrlen and lladdrlen must be done in
@@ -1351,16 +1351,16 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 	} else {
 		/* do nothing if static ndp is set */
 		if (rt->rt_flags & RTF_STATIC)
-			return NULL;
+			return;
 		is_newentry = 0;
 	}
 
 	if (!rt)
-		return NULL;
+		return;
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) != RTF_LLINFO) {
 fail:
 		(void)nd6_free(rt, 0);
-		return NULL;
+		return;
 	}
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	if (!ln)
@@ -1535,8 +1535,6 @@ fail:
 	 */
 	if (do_update && ln->ln_router && (ifp->if_xflags & IFXF_AUTOCONF6))
 		defrouter_select();
-
-	return rt;
 }
 
 void
