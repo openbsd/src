@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2015/03/02 21:43:28 claudio Exp $
+# $OpenBSD: Makefile,v 1.7 2015/08/31 08:34:46 mpi Exp $
 
 RDOMAIN?=	5
 
@@ -11,7 +11,7 @@ GW=	192.0.2.1
 .ifmake !obj && !clean && !cleandir && !depend && !regress
 .if (${.TARGET} != all && ! make(all)) || (${.TARGET} == all)
 
-.SILENT: .BEGIN .END
+.SILENT: .BEGIN .END .INTERRUPT
 
 .BEGIN:
 	-${SUDO} ifconfig lo10001 up rdomain ${RDOMAIN} 192.0.2.1/32
