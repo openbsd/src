@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.33 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uow.c,v 1.34 2015/08/31 07:32:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -49,7 +49,8 @@ struct uow_softc {
 	struct usbd_pipe	*sc_ph_obulk;
 	struct usbd_pipe	*sc_ph_intr;
 	u_int8_t		 sc_regs[DS2490_NREGS];
-	struct usbd_xfer	*sc_xfer;
+	struct usbd_xfer	*sc_xfer_in;
+	struct usbd_xfer	*sc_xfer_out;
 	u_int8_t		 sc_fifo[DS2490_DATAFIFOSIZE];
 };
 
@@ -186,14 +187,17 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
-#if 0
-	/* Allocate xfer for bulk transfers */
-	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
-		printf("%s: failed to alloc bulk xfer\n",
+	/* Allocate xfers for bulk transfers */
+	if ((sc->sc_xfer_in = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+		printf("%s: failed to alloc bulk-in xfer\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
-#endif
+	if ((sc->sc_xfer_out = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+		printf("%s: failed to alloc bulk-out xfer\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
 
 	memset(sc->sc_fifo, 0xff, sizeof(sc->sc_fifo));
 
@@ -220,14 +224,26 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 fail:
-	if (sc->sc_ph_ibulk != NULL)
+	if (sc->sc_ph_ibulk != NULL) {
 		usbd_close_pipe(sc->sc_ph_ibulk);
-	if (sc->sc_ph_obulk != NULL)
+		sc->sc_ph_ibulk = NULL;
+	}
+	if (sc->sc_ph_obulk != NULL) {
 		usbd_close_pipe(sc->sc_ph_obulk);
-	if (sc->sc_ph_intr != NULL)
+		sc->sc_ph_obulk = NULL;
+	}
+	if (sc->sc_ph_intr != NULL) {
 		usbd_close_pipe(sc->sc_ph_intr);
-	if (sc->sc_xfer != NULL)
-		usbd_free_xfer(sc->sc_xfer);
+		sc->sc_ph_intr = NULL;
+	}
+	if (sc->sc_xfer_in != NULL) {
+		usbd_free_xfer(sc->sc_xfer_in);
+		sc->sc_xfer_in = NULL;
+	}
+	if (sc->sc_xfer_out != NULL) {
+		usbd_free_xfer(sc->sc_xfer_out);
+		sc->sc_xfer_out = NULL;
+	}
 }
 
 int
@@ -251,8 +267,10 @@ uow_detach(struct device *self, int flags)
 		usbd_close_pipe(sc->sc_ph_intr);
 	}
 
-	if (sc->sc_xfer != NULL)
-		usbd_free_xfer(sc->sc_xfer);
+	if (sc->sc_xfer_in != NULL)
+		usbd_free_xfer(sc->sc_xfer_in);
+	if (sc->sc_xfer_out != NULL)
+		usbd_free_xfer(sc->sc_xfer_out);
 
 	if (sc->sc_ow_dev != NULL)
 		rv = config_detach(sc->sc_ow_dev, flags);
@@ -457,14 +475,9 @@ uow_read(struct uow_softc *sc, void *buf, int len)
 		return (-1);
 	}
 
-	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
-		printf("%s: failed to alloc xfer\n", sc->sc_dev.dv_xname);
-		return (-1);
-	}
-	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, len,
+	usbd_setup_xfer(sc->sc_xfer_in, sc->sc_ph_ibulk, sc, buf, len,
 	    USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS, UOW_TIMEOUT, NULL);
-	error = usbd_transfer(sc->sc_xfer);
-	usbd_free_xfer(sc->sc_xfer);
+	error = usbd_transfer(sc->sc_xfer_in);
 	if (error != 0) {
 		printf("%s: read failed, len %d: %s\n",
 		    sc->sc_dev.dv_xname, len, usbd_errstr(error));
@@ -472,7 +485,7 @@ uow_read(struct uow_softc *sc, void *buf, int len)
 		return (-1);
 	}
 
-	usbd_get_xfer_status(sc->sc_xfer, NULL, NULL, &count, &error);
+	usbd_get_xfer_status(sc->sc_xfer_in, NULL, NULL, &count, &error);
 	return (count);
 }
 
@@ -488,14 +501,9 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 		return (1);
 	}
 
-	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
-		printf("%s: failed to alloc xfer\n", sc->sc_dev.dv_xname);
-		return (-1);
-	}
-	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_obulk, sc, (void *)buf, len,
-	    USBD_SYNCHRONOUS, UOW_TIMEOUT, NULL);
-	error = usbd_transfer(sc->sc_xfer);
-	usbd_free_xfer(sc->sc_xfer);
+	usbd_setup_xfer(sc->sc_xfer_out, sc->sc_ph_obulk, sc, (void *)buf,
+	    len, USBD_SYNCHRONOUS, UOW_TIMEOUT, NULL);
+	error = usbd_transfer(sc->sc_xfer_out);
 	if (error != 0) {
 		printf("%s: write failed, len %d: %s\n",
 		    sc->sc_dev.dv_xname, len, usbd_errstr(error));
