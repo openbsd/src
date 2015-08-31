@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.225 2015/08/31 00:45:09 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.226 2015/08/31 16:07:12 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1986,9 +1986,8 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag)
 
 	if (mode & ~(S_IFMT | ALLPERMS))
 		return (EINVAL);
-	if ((p->p_p->ps_flags & PS_TAMED) &&
-	    (mode & (S_ISUID|S_ISGID)))
-		return (tame_fail(p, EPERM, TAME_FATTR));
+	if ((p->p_p->ps_flags & PS_TAMED))
+		mode &= ACCESSPERMS;
 	if (flag & ~AT_SYMLINK_NOFOLLOW)
 		return (EINVAL);
 
@@ -2029,9 +2028,8 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 
 	if (mode & ~(S_IFMT | ALLPERMS))
 		return (EINVAL);
-	if ((p->p_p->ps_flags & PS_TAMED) &&
-	    (mode & (S_ISUID|S_ISGID|S_ISTXT)))
-		return (tame_fail(p, EPERM, TAME_FATTR));
+	if ((p->p_p->ps_flags & PS_TAMED))
+		mode &= ACCESSPERMS;
 
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
