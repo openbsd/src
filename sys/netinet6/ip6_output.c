@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.178 2015/08/31 07:17:12 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.179 2015/08/31 07:27:48 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -597,6 +597,7 @@ reroute:
 			error = ENETUNREACH;
 			goto bad;
 		}
+
 		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
 		if (in6m != NULL &&
 		    (im6o == NULL || im6o->im6o_loop)) {
@@ -604,9 +605,14 @@ reroute:
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not
 			 * forbid loopback, loop back a copy.
+			 * Can't defer TCP/UDP checksumming, do the
+			 * computation now.
 			 */
+			in6_proto_cksum_out(m, NULL);
 			ip6_mloopback(ifp, m, dst);
-		} else {
+		}
+#ifdef MROUTING
+		else {
 			/*
 			 * If we are acting as a multicast router, perform
 			 * multicast forwarding as if the packet had just
@@ -619,7 +625,6 @@ reroute:
 			 * above, will be forwarded by the ip6_input() routine,
 			 * if necessary.
 			 */
-#ifdef MROUTING
 			if (ip6_mforwarding && ip6_mrouter &&
 			    (flags & IPV6_FORWARDING) == 0) {
 				if (ip6_mforward(ip6, ifp, m) != 0) {
@@ -627,8 +632,8 @@ reroute:
 					goto done;
 				}
 			}
-#endif
 		}
+#endif
 		/*
 		 * Multicasts with a hoplimit of zero may be looped back,
 		 * above, but must not be transmitted on a network.
