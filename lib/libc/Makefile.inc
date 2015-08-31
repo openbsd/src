@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.23 2015/08/31 02:53:56 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.24 2015/08/31 19:43:39 deraadt Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -42,9 +42,15 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .include "${LIBCSRCDIR}/asr/Makefile.inc"
 .include "${LIBCSRCDIR}/net/Makefile.inc"
 .include "${LIBCSRCDIR}/nls/Makefile.inc"
-.if (${MACHINE_CPU} != "alpha")
+
+# 32-bit systems need these
+.if (${MACHINE_CPU} == "i386") || (${MACHINE_CPU} == "powerpc") || \
+    (${MACHINE_CPU} == "hppa") || (${MACHINE_CPU} == "arm") || \
+    (${MACHINE_CPU} == "sparc") || (${MACHINE_CPU} == "vax") || \
+    (${MACHINE_CPU} == "sh") || (${MACHINE_CPU} == "m88k")
 .include "${LIBCSRCDIR}/quad/Makefile.inc"
 .endif
+
 .include "${LIBCSRCDIR}/regex/Makefile.inc"
 .include "${LIBCSRCDIR}/rpc/Makefile.inc"
 .include "${LIBCSRCDIR}/stdio/Makefile.inc"
