@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.45 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.46 2015/08/31 06:56:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -102,12 +102,12 @@ const struct vfsops udf_vfsops = {
 int
 udf_init(struct vfsconf *foo)
 {
-	pool_init(&udf_trans_pool, MAXNAMLEN * sizeof(unicode_t), 0, 0, 0,
-	    "udftrpl", &pool_allocator_nointr);
-	pool_init(&unode_pool, sizeof(struct unode), 0, 0, 0,
-	    "udfndpl", &pool_allocator_nointr);
-	pool_init(&udf_ds_pool, sizeof(struct udf_dirstream), 0, 0, 0,
-	    "udfdspl", &pool_allocator_nointr);
+	pool_init(&udf_trans_pool, MAXNAMLEN * sizeof(unicode_t), 0, 0,
+	    PR_WAITOK, "udftrpl", NULL);
+	pool_init(&unode_pool, sizeof(struct unode), 0, 0,
+	    PR_WAITOK, "udfndpl", NULL);
+	pool_init(&udf_ds_pool, sizeof(struct udf_dirstream), 0, 0,
+	    PR_WAITOK, "udfdspl", NULL);
 
 	return (0);
 }
