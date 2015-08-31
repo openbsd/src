@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.19 2015/08/31 04:53:36 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.20 2015/08/31 04:58:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -51,6 +51,8 @@
  * For functions implemented in ASM that aren't syscalls.
  *   EXIT_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
  *   EXIT_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
+ *   ALTEXIT_STRONG(x) and ALTEXIT_WEAK()
+ *			Matching macros for ALTENTRY functions
  */
 #define	ALTEXIT_STRONG(x)					\
 			_HIDDEN_FALIAS(x,x)			!\
