@@ -1,5 +1,9 @@
-dnl	$OpenBSD: contents,v 1.59 2014/12/13 15:45:53 miod Exp $
+dnl	$OpenBSD: contents,v 1.60 2015/08/31 16:04:49 deraadt Exp $
 TopPart
+
+OpenBSDminiroot
+			It can be copied to the swap partition of an existing
+			disk to allow installing or upgrading to OpenBSD OSREV.
 
 OpenBSDfloppy
 			This floppy image will boot on the following MACHINE
