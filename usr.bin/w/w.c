@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.58 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: w.c,v 1.59 2015/08/31 15:49:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -219,6 +219,17 @@ main(int argc, char *argv[])
 	kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(*kp), &nentries);
 	if (kp == NULL)
 		errx(1, "%s", kvm_geterr(kd));
+
+	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
+	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
+	    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
+		ttywidth = 79;
+	else
+		ttywidth = ws.ws_col - 1;
+	argwidth = ttywidth - WUSED;
+	if (argwidth < 4)
+		argwidth = 8;
+
 	for (i = 0; i < nentries; i++, kp++) {
 		if (kp->p_psflags & (PS_EMBRYO | PS_ZOMBIE))
 			continue;
@@ -247,15 +258,6 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
-	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
-	    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
-		ttywidth = 79;
-	else
-		ttywidth = ws.ws_col - 1;
-	argwidth = ttywidth - WUSED;
-	if (argwidth < 4)
-		argwidth = 8;
 	/* sort by idle time */
 	if (sortidle && ehead != NULL) {
 		struct entry *from = ehead, *save;
