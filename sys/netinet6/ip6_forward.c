@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.79 2015/07/16 21:14:21 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.80 2015/08/31 07:17:12 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -346,9 +346,8 @@ reroute:
 		 * Until now the change was not reconsidered.
 		 * What's the behaviour?
 		 */
-#endif
 		in6_proto_cksum_out(m, encif);
-
+#endif
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
 		/* Callee frees mbuf */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.286 2015/07/16 21:14:21 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.287 2015/08/31 07:17:12 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -523,8 +523,8 @@ sendit:
 		 * Until now the change was not reconsidered.
 		 * What's the behaviour?
 		 */
-#endif
 		in_proto_cksum_out(m, encif);
+#endif
 
 		/* Check if we are allowed to fragment */
 		if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
