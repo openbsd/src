@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.361 2015/05/18 14:59:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.362 2015/08/31 21:32:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,7 @@ int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
 void		 usage(void);
 int		 res_hnok(const char *dn);
+int		 res_hnok_list(const char *dn);
 
 void		 fork_privchld(int, int);
 void		 get_ifname(char *);
@@ -1119,8 +1120,20 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 		if (strlen(pretty) == 0)
 			continue;
 		switch (i) {
-		case DHO_HOST_NAME:
 		case DHO_DOMAIN_NAME:
+			/*
+			 * Allow deviant but historically blessed
+			 * practice of supplying multiple domain names
+			 * with DHO_DOMAIN_NAME. Thus allowing multiple
+			 * entries in the resolv.conf 'search' statement.
+			 */
+			if (!res_hnok_list(pretty)) {
+				warning("Bogus data for option %s",
+				    dhcp_options[i].name);
+				continue;
+			}
+			break;
+		case DHO_HOST_NAME:
 		case DHO_NIS_DOMAIN:
 			if (!res_hnok(pretty)) {
 				warning("Bogus data for option %s",
@@ -1901,6 +1914,39 @@ res_hnok(const char *name)
 		pch = ch, ch = nch;
 	}
 	return (1);
+}
+
+/*
+ * resolv_conf(5) says a max of 6 domains and total length of 1024 bytes are
+ * acceptable for the 'search' statement.
+ */
+int
+res_hnok_list(const char *names)
+{
+	char *hn, *inputstring;
+	int count;
+
+	if (strlen(names) >= 1024)
+		return (0);
+
+	inputstring = strdup(names);
+	if (inputstring == NULL)
+		error("Cannot copy domain name list");
+
+	count = 0;
+	while ((hn = strsep(&inputstring, " \t")) != NULL) {
+		if (strlen(hn) == 0)
+			continue;
+		if (res_hnok(hn) == 0)
+			break;
+		count++;
+		if (count > 6)
+			break;
+	}
+
+	free(inputstring);
+
+	return (count > 0 && count < 7 && hn == NULL);
 }
 
 void
