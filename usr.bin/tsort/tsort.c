@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.27 2015/08/31 09:33:43 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.28 2015/08/31 09:36:02 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -888,7 +888,7 @@ main(int argc, char *argv[])
 	    broken_cycles = 0;
 
 	    if (hints_flag)
-	    	make_transparent(&pairs);
+		    make_transparent(&pairs);
 	    split_nodes(&pairs, &aux, &remaining);
 	    ohash_delete(&pairs);
 
