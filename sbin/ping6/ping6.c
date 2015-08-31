@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.110 2015/08/30 18:48:45 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.111 2015/08/31 16:42:33 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -163,8 +163,6 @@ u_int options;
 #define IN6LEN		sizeof(struct in6_addr)
 #define SA6LEN		sizeof(struct sockaddr_in6)
 #define DUMMY_PORT	10101
-
-#define SIN6(s)	((struct sockaddr_in6 *)(s))
 
 /*
  * MAX_DUP_CHK is the number of bits in received table, i.e. the maximum
