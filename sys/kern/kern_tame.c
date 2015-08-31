@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.33 2015/08/26 14:46:22 semarie Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.34 2015/08/31 00:51:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -212,7 +212,7 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 
 	if (flags & ~_TM_USERSET)
 		return (EINVAL);
-	
+
 	if ((p->p_p->ps_flags & PS_TAMED)) {
 		/* Already tamed, only allow reductions */
 		if (((flags | p->p_p->ps_tame) & _TM_USERSET) !=
@@ -437,7 +437,7 @@ tame_namei(struct proc *p, char *origpath)
 	case SYS_open:
 		/* getpw* and friends need a few files */
 		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & _TM_GETPW)) {		    
+		    (p->p_p->ps_tame & _TM_GETPW)) {
 			if (strcmp(path, "/etc/spwd.db") == 0)
 				return (0);
 			if (strcmp(path, "/etc/pwd.db") == 0)
@@ -494,7 +494,7 @@ tame_namei(struct proc *p, char *origpath)
 		/* DNS needs /etc/resolv.conf. */
 		if ((p->p_tamenote == TMN_RPATH) &&
 		    (p->p_p->ps_tame & _TM_DNSPATH)) {
-		    	if (strcmp(path, "/etc/resolv.conf") == 0) {
+			if (strcmp(path, "/etc/resolv.conf") == 0) {
 				p->p_tameafter |= TMA_DNSRESOLV;
 				return (0);
 			}
@@ -633,7 +633,7 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 	if ((p->p_p->ps_tame & _TM_CMSG) == 0)
 		return tame_fail(p, EPERM, TAME_CMSG);
 
-	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */ 
+	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
 	fdp = (int *)CMSG_DATA(cmsg);
 	nfds = (cmsg->cmsg_len - CMSG_ALIGN(sizeof(*cmsg))) /
 	    sizeof(struct file *);
@@ -668,7 +668,6 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 
 /*
  * When tamed, default prevents sending of a cmsg.
- * If CMSG flag is set, 
  */
 int
 tame_cmsg_send(struct proc *p, void *v, int controllen)
@@ -703,7 +702,7 @@ tame_cmsg_send(struct proc *p, void *v, int controllen)
 	if (cmsg == NULL)
 		return (0);
 
-	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */ 
+	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
 	fdp = (int *)CMSG_DATA(cmsg);
 	nfds = (cmsg->cmsg_len - CMSG_ALIGN(sizeof(*cmsg))) /
 	    sizeof(struct file *);
@@ -747,7 +746,7 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 
 	/* getifaddrs() */
 	if ((p->p_p->ps_tame & _TM_INET) &&
-    	    namelen == 6 &&
+	    namelen == 6 &&
 	    name[0] == CTL_NET && name[1] == PF_ROUTE &&
 	    name[2] == 0 && name[3] == 0 &&
 	    name[4] == NET_RT_IFLIST && name[5] == 0)
@@ -756,7 +755,7 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 	/* used by arp(8).  Exposes MAC addresses known on local nets */
 	/* XXX Put into a special catagory. */
 	if ((p->p_p->ps_tame & _TM_INET) &&
-    	    namelen == 7 &&
+	    namelen == 7 &&
 	    name[0] == CTL_NET && name[1] == PF_ROUTE &&
 	    name[2] == 0 && name[3] == AF_INET &&
 	    name[4] == NET_RT_FLAGS && name[5] == RTF_LLINFO)
@@ -850,7 +849,7 @@ int
 tame_sendto_check(struct proc *p, const void *v)
 {
 	const struct sockaddr *to = v;
-		
+
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
@@ -940,7 +939,7 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 	 */
 
 	switch (com) {
-	case BIOCGSTATS:        /* bpf: tcpdump privsep on ^C */
+	case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
 		if (fp->f_type == DTYPE_VNODE &&
 		    fp->f_ops->fo_ioctl == vn_ioctl)
 			return (0);
@@ -986,7 +985,7 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 			return (EPERM);
 		}
 		return (0);
-	case IPPROTO_TCP: 
+	case IPPROTO_TCP:
 		switch (optname) {
 		case TCP_NODELAY:
 		case TCP_MD5SIG:
@@ -1063,7 +1062,7 @@ canonpath(const char *input, char *buf, size_t bufsize)
 	while (1) {
 		/* find "/../" (where's strstr when you need it?) */
 		while (p < end) {
-		    	if (p[0] == '/' && strncmp(p + 1, "../", 3) == 0)
+			if (p[0] == '/' && strncmp(p + 1, "../", 3) == 0)
 				break;
 			p++;
 		}
