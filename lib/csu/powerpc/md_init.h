@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.3 2014/12/26 13:52:01 kurt Exp $ */
+/* $OpenBSD: md_init.h,v 1.4 2015/09/01 05:40:06 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -246,3 +246,8 @@ __asm(									\
 "_dl_printf:								\n" \
 "	blr								\n" \
 )
+
+#include <sys/syscall.h>
+#define	MD_DISABLE_KBIND						\
+	__asm volatile("li %%r3, 0; li %%r0, %0; sc" :			\
+	    : "i" (SYS_kbind) : "r0", "r3", "r4", "cc")

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2014/12/27 16:04:22 kettenis Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2015/09/01 05:40:06 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -104,8 +104,11 @@ MD_START(MD_START_ARGS)
 		atexit(cleanup);
 	else
 #endif
-	if (__init_tcb != NULL)
-		__init_tcb(envp);
+	{
+		MD_DISABLE_KBIND;
+		if (__init_tcb != NULL)
+			__init_tcb(envp);
+	}
 
 #ifdef MCRT0
 	atexit(_mcleanup);

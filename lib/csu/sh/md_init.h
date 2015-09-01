@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.4 2014/12/30 19:26:38 miod Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.5 2015/09/01 05:40:06 guenther Exp $	*/
 /*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
@@ -147,3 +147,12 @@ __asm(".section " #section "\n"		\
 
 /* no ASM stub for __start; the C routine can be called directly */
 #define	MD_START	___start
+
+#include <sys/syscall.h>
+#define	MD_DISABLE_KBIND						\
+	do {								\
+		register long syscall_num __asm("r0") = SYS_kbind;	\
+		register void *arg1 __asm("r4") = NULL;			\
+		__asm volatile("trapa #0x80" : "+r" (syscall_num)	\
+		    : "r" (arg1) : "r1", "cc");				\
+	} while (0)

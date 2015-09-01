@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.3 2015/07/03 11:17:25 miod Exp $ */
+/* $OpenBSD: md_init.h,v 1.4 2015/09/01 05:40:06 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -136,3 +136,12 @@
 	"	 neg	%o0						\n" \
 									\
 	"	.previous")
+
+#include <sys/syscall.h>
+#define	MD_DISABLE_KBIND						\
+	do {								\
+		register long syscall_num __asm("g1") = SYS_kbind;	\
+		register void *arg1 __asm("o0") = NULL;			\
+		__asm volatile("t 0" : "+r" (arg1) : "r" (syscall_num)	\
+		    : "o1", "cc");						\
+	} while (0)

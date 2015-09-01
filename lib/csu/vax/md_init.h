@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.2 2013/12/03 06:21:41 guenther Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.3 2015/09/01 05:40:06 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -61,6 +61,8 @@ struct kframe {
 
 /* no cleanup() callback passed to ___start, because no ld.so */
 #define	MD_NO_CLEANUP
+/* kbind disabled in the kernel for vax until we do dynamic linking */
+#define	MD_DISABLE_KBIND	do { } while (0)
 
 #define	MD_START_ARGS		struct kframe *kfp
 #define	MD_START_SETUP				\

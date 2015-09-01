@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.10 2015/02/07 04:57:22 miod Exp $ */
+/* $OpenBSD: md_init.h,v 1.11 2015/09/01 05:40:06 guenther Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -66,6 +66,7 @@
 	#entry_pt":				\n"	\
 	MD_FUNCTION_PROLOGUE(entry_pt)			\
 	"       /* fall thru */			\n"	\
+	".end "#entry_pt"			\n"	\
 	".previous")
 
 #define MD_SECTION_EPILOGUE(sect)                       \
@@ -165,3 +166,12 @@ struct kframe {
 	argc = kfp->kargc;			\
 	argv = &kfp->kargv[0];			\
 	environ = envp = argv + argc + 1;
+
+#include <sys/syscall.h>
+#define	MD_DISABLE_KBIND						\
+	do {								\
+		register long syscall_num __asm("v0") = SYS_kbind;	\
+		register void *arg1 __asm("a0") = NULL;			\
+		__asm volatile("syscall" : "+r" (syscall_num)		\
+		    : "r" (arg1) : "v1", "a3");				\
+	} while (0)
