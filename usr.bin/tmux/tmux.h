@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.550 2015/09/01 10:01:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.551 2015/09/01 10:10:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1407,7 +1407,6 @@ extern struct options global_options;
 extern struct options global_s_options;
 extern struct options global_w_options;
 extern struct environ global_environ;
-extern char	*cfg_file;
 extern char	*shell_cmd;
 extern int	 debug_level;
 extern time_t	 start_time;
@@ -1425,6 +1424,7 @@ extern int cfg_references;
 extern struct client *cfg_client;
 void		 start_cfg(void);
 int		 load_cfg(const char *, struct cmd_q *, char **);
+void		 set_cfg_file(const char *);
 void		 cfg_add_cause(const char *, ...);
 void		 cfg_print_causes(struct cmd_q *);
 void		 cfg_show_causes(struct session *);
