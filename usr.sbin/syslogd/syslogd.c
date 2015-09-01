@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.180 2015/08/31 20:44:47 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.181 2015/09/01 17:53:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -334,7 +334,7 @@ void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
 int	loghost_parse(char *, char **, char **, char **);
 int	getmsgbufsize(void);
-int	socket_bind(const char *, const char *, const char *, int, int,
+int	socket_bind(const char *, const char *, const char *, int,
     int *, int *);
 int	unix_socket(char *, int, mode_t);
 void	double_rbuf(int);
@@ -450,7 +450,7 @@ main(int argc, char *argv[])
 		die(0);
 	}
 
-	if (socket_bind("udp", NULL, "syslog", 0, SecureMode,
+	if (socket_bind("udp", NULL, "syslog", SecureMode,
 	    &fd_udp, &fd_udp6) == -1) {
 		errno = 0;
 		logerror("socket bind *");
@@ -458,7 +458,7 @@ main(int argc, char *argv[])
 			die(0);
 	}
 	fd_bind = -1;
-	if (bind_host && socket_bind("udp", bind_host, bind_port, 1, 0,
+	if (bind_host && socket_bind("udp", bind_host, bind_port, 0,
 	    &fd_bind, &fd_bind) == -1) {
 		errno = 0;
 		logerror("socket bind udp");
@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 			die(0);
 	}
 	fd_listen = -1;
-	if (listen_host && socket_bind("tcp", listen_host, listen_port, 1, 0,
+	if (listen_host && socket_bind("tcp", listen_host, listen_port, 0,
 	    &fd_listen, &fd_listen) == -1) {
 		errno = 0;
 		logerror("socket listen tcp");
@@ -695,12 +695,12 @@ main(int argc, char *argv[])
 
 int
 socket_bind(const char *proto, const char *host, const char *port,
-    int reuseaddr, int shutread, int *fd, int *fd6)
+    int shutread, int *fd, int *fd6)
 {
 	struct addrinfo	 hints, *res, *res0;
 	char		 hostname[NI_MAXHOST], servname[NI_MAXSERV];
 	char		 ebuf[ERRBUFSIZE];
-	int		*fdp, error;
+	int		*fdp, error, reuseaddr;
 
 	*fd = *fd6 = -1;
 	if (proto == NULL)
@@ -761,6 +761,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 			*fdp = -1;
 			continue;
 		}
+		reuseaddr = 1;
 		if (setsockopt(*fdp, SOL_SOCKET, SO_REUSEADDR, &reuseaddr,
 		    sizeof(reuseaddr)) == -1) {
 			snprintf(ebuf, sizeof(ebuf), "setsockopt SO_REUSEADDR "
