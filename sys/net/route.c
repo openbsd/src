@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.227 2015/09/01 10:04:51 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.228 2015/09/01 12:50:03 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -295,6 +295,25 @@ rtable_exists(u_int id)	/* verify table with that ID exists */
 		return (0);
 
 	if (rt_tables[id] == NULL)
+		return (0);
+
+	return (1);
+}
+
+/*
+ * Returns 1 if the (cached) ``rt'' entry is still valid, 0 otherwise.
+ */
+int
+rtisvalid(struct rtentry *rt)
+{
+	if (rt == NULL)
+		return (0);
+
+	if ((rt->rt_flags & RTF_UP) == 0)
+		return (0);
+
+	/* Routes attached to stall ifas should be freed. */
+	if (rt->rt_ifa == NULL || rt->rt_ifa->ifa_ifp == NULL)
 		return (0);
 
 	return (1);
@@ -659,19 +678,13 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 	}
 	if (ifa == NULL) {
 		struct rtentry	*rt = rtalloc(gateway, 0, rtableid);
-		if (rt == NULL)
-			return (NULL);
 		/* The gateway must be local if the same address family. */
-		if ((rt->rt_flags & RTF_GATEWAY) &&
-		    rt_key(rt)->sa_family == dst->sa_family) {
+		if (!rtisvalid(rt) || ((rt->rt_flags & RTF_GATEWAY) &&
+		    rt_key(rt)->sa_family == dst->sa_family)) {
 			rtfree(rt);
 			return (NULL);
 		}
 		ifa = rt->rt_ifa;
-		if (ifa == NULL || ifa->ifa_ifp == NULL) {
-			rtfree(rt);
-			return (NULL);
-		}
 		rtfree(rt);
 	}
 	if (ifa->ifa_addr->sa_family != dst->sa_family) {
