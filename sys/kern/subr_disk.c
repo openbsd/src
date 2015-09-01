@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.199 2015/09/01 00:27:10 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.200 2015/09/01 01:06:35 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1780,7 +1780,7 @@ disk_map(char *path, char *mappath, int size, int flags)
 			c -= '0';
 		else if (c >= 'a' && c <= 'f')
 			c -= ('a' - 10);
-                else
+		else
 			return -1;
 
 		uid[i / 2] <<= 4;
