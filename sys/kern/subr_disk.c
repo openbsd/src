@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.198 2015/09/01 00:17:15 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.199 2015/09/01 00:27:10 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -692,7 +692,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 
 			if (letoh64(gh.gh_lba_alt) >= DL_GETDSIZE(lp)) {
 				DPRINTF("alternate header's position is "
-				    "bogous\n");
+				    "bogus\n");
 				return (EINVAL);
 			}
 
