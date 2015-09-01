@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.54 2014/12/19 07:23:57 deraadt Exp $	*/
+/*	$OpenBSD: cac.c,v 1.55 2015/09/01 05:46:00 deraadt Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -942,7 +942,8 @@ cac_create_sensors(struct cac_softc *sc)
 	return (0);
 
 bad:
-	free(sc->sc_sensors, M_DEVBUF, 0);
+	free(sc->sc_sensors, M_DEVBUF,
+	    sc->sc_nunits * sizeof(struct ksensor));
 
 	return (1);
 }
