@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.33 2014/10/25 03:18:58 lteo Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.34 2015/09/01 17:31:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -134,10 +134,8 @@ svctcp_create(int sock, u_int sendsize, u_int recvsize)
 	socklen_t len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
-		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-			perror("svctcp_.c - udp socket creation problem");
+		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
 			return (NULL);
-		}
 		madesock = TRUE;
 	}
 	memset(&addr, 0, sizeof (addr));
@@ -149,7 +147,6 @@ svctcp_create(int sock, u_int sendsize, u_int recvsize)
 	}
 	if ((getsockname(sock, (struct sockaddr *)&addr, &len) != 0)  ||
 	    (listen(sock, 2) != 0)) {
-		perror("svctcp_.c - cannot getsockname or listen");
 		if (madesock)
 			(void)close(sock);
 		return (NULL);

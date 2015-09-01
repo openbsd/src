@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_run.c,v 1.24 2014/11/05 21:06:51 sthen Exp $ */
+/*	$OpenBSD: svc_run.c,v 1.25 2015/09/01 17:31:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -53,7 +53,6 @@ svc_run(void)
 			newp = reallocarray(pfd, svc_max_pollfd, sizeof(*pfd));
 			if (newp == NULL) {
 				free(pfd);
-				perror("svc_run");	/* XXX */
 				return;			/* XXX */
 			}
 			saved_max_pollfd = svc_max_pollfd;
@@ -66,7 +65,6 @@ svc_run(void)
 		case -1:
 			if (errno == EINTR)
 				continue;
-			perror("svc_run: - poll failed");	/* XXX */
 			free(pfd);
 			return;					/* XXX */
 		case 0:
