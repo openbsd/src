@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.11 2015/07/28 21:36:03 deraadt Exp $ */
+/* $OpenBSD: parse.y,v 1.12 2015/09/01 16:20:55 mikeb Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -251,6 +251,8 @@ repeat:
 			if (escape) {
 				nonkw = 1;
 				escape = 0;
+				yylval.colno = 0;
+				yylval.lineno++;
 				continue;
 			}
 			goto eow;
