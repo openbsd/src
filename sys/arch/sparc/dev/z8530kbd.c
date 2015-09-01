@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.17 2013/05/10 16:00:08 mikeb Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.18 2015/09/01 05:18:19 jsg Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -602,8 +602,10 @@ zsenqueue_tx(v, str, len)
 	u_int i;
 
 	s = splzs();
-	if (zst->zst_tbc + len > ZSKBD_RING_SIZE)
+	if (zst->zst_tbc + len > ZSKBD_RING_SIZE) {
+		splx(s);
 		return (-1);
+	}
 	zst->zst_tbc += len;
 	for (i = 0; i < len; i++) {
 		*zst->zst_tbp = str[i];
