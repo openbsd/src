@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.34 2013/12/17 16:37:05 deraadt Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.35 2015/09/01 13:12:31 tedu Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -943,7 +943,7 @@ c_alias(char **wp)
 		if ((val && !tflag) || (!val && tflag && !Uflag)) {
 			if (ap->flag&ALLOC) {
 				ap->flag &= ~(ALLOC|ISSET);
-				afree((void*)ap->val.s, APERM);
+				afree(ap->val.s, APERM);
 			}
 			/* ignore values for -t (at&t ksh does this) */
 			newval = tflag ? search(alias, path, X_OK, (int *) 0) :
@@ -998,7 +998,7 @@ c_unalias(char **wp)
 		}
 		if (ap->flag&ALLOC) {
 			ap->flag &= ~(ALLOC|ISSET);
-			afree((void*)ap->val.s, APERM);
+			afree(ap->val.s, APERM);
 		}
 		ap->flag &= ~(DEFINED|ISSET|EXPORT);
 	}
@@ -1009,7 +1009,7 @@ c_unalias(char **wp)
 		for (ktwalk(&ts, t); (ap = ktnext(&ts)); ) {
 			if (ap->flag&ALLOC) {
 				ap->flag &= ~(ALLOC|ISSET);
-				afree((void*)ap->val.s, APERM);
+				afree(ap->val.s, APERM);
 			}
 			ap->flag &= ~(DEFINED|ISSET|EXPORT);
 		}

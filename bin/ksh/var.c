@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.42 2015/08/19 16:05:46 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.43 2015/09/01 13:12:31 tedu Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -366,7 +366,7 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 				internal_errorf(true,
 				    "setstr: %s=%s: assigning to self",
 				    vq->name, s);
-			afree((void*)vq->val.s, vq->areap);
+			afree(vq->val.s, vq->areap);
 		}
 		vq->flag &= ~(ISSET|ALLOC);
 		vq->type = 0;
@@ -385,8 +385,7 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 	vq->flag |= ISSET;
 	if ((vq->flag&SPECIAL))
 		setspec(vq);
-	if (fs)
-		afree((char *)fs, ATEMP);
+	afree((void *)fs, ATEMP);
 	return 1;
 }
 
@@ -576,8 +575,7 @@ export(struct tbl *vp, const char *val)
 	*xp++ = '=';
 	vp->type = xp - vp->val.s; /* offset to value */
 	memcpy(xp, val, vallen);
-	if (op != NULL)
-		afree((void*)op, vp->areap);
+	afree(op, vp->areap);
 }
 
 /*
@@ -698,14 +696,12 @@ typeset(const char *var, Tflag set, Tflag clr, int field, int base)
 						t->flag &= ~ISSET;
 					else {
 						if (t->flag & ALLOC)
-							afree((void*) t->val.s,
-							    t->areap);
+							afree(t->val.s, t->areap);
 						t->flag &= ~(ISSET|ALLOC);
 						t->type = 0;
 					}
 				}
-				if (free_me)
-					afree((void *) free_me, t->areap);
+				afree(free_me, t->areap);
 			}
 		}
 		if (!ok)
@@ -739,7 +735,7 @@ void
 unset(struct tbl *vp, int array_ref)
 {
 	if (vp->flag & ALLOC)
-		afree((void*)vp->val.s, vp->areap);
+		afree(vp->val.s, vp->areap);
 	if ((vp->flag & ARRAY) && !array_ref) {
 		struct tbl *a, *tmp;
 
@@ -748,7 +744,7 @@ unset(struct tbl *vp, int array_ref)
 			tmp = a;
 			a = a->u.array;
 			if (tmp->flag & ALLOC)
-				afree((void *) tmp->val.s, tmp->areap);
+				afree(tmp->val.s, tmp->areap);
 			afree(tmp, tmp->areap);
 		}
 		vp->u.array = (struct tbl *) 0;
@@ -952,8 +948,7 @@ setspec(struct tbl *vp)
 
 	switch (special(vp->name)) {
 	case V_PATH:
-		if (path)
-			afree(path, APERM);
+		afree(path, APERM);
 		path = str_save(str_val(vp), APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;
@@ -1059,8 +1054,7 @@ unsetspec(struct tbl *vp)
 {
 	switch (special(vp->name)) {
 	case V_PATH:
-		if (path)
-			afree(path, APERM);
+		afree(path, APERM);
 		path = str_save(def_path, APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;

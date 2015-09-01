@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.15 2012/02/19 07:52:30 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.16 2015/09/01 13:12:31 tedu Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -58,10 +58,10 @@ texpand(struct table *tp, int nsize)
 				*p = tblp;
 				tp->nfree--;
 			} else if (!(tblp->flag & FINUSE)) {
-				afree((void*)tblp, tp->areap);
+				afree(tblp, tp->areap);
 			}
 		}
-	afree((void*)otblp, tp->areap);
+	afree(otblp, tp->areap);
 }
 
 /* table */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.40 2014/11/20 15:22:39 tedu Exp $	*/
+/*	$OpenBSD: history.c,v 1.41 2015/09/01 13:12:31 tedu Exp $	*/
 
 /*
  * command history
@@ -417,7 +417,7 @@ histbackup(void)
 
 	if (histptr >= history && last_line != hist_source->line) {
 		hist_source->line--;
-		afree((void*)*histptr, APERM);
+		afree(*histptr, APERM);
 		histptr--;
 		last_line = hist_source->line;
 	}
@@ -589,7 +589,7 @@ histsave(int lno, const char *cmd, int dowrite)
 	hp = histptr;
 
 	if (++hp >= history + histsize) { /* remove oldest command */
-		afree((void*)*history, APERM);
+		afree(*history, APERM);
 		for (hp = history; hp < history + histsize - 1; hp++)
 			hp[0] = hp[1];
 	}
@@ -872,7 +872,7 @@ histinsert(Source *s, int lno, unsigned char *line)
 	if (lno >= s->line-(histptr-history) && lno <= s->line) {
 		hp = &histptr[lno-s->line];
 		if (*hp)
-			afree((void*)*hp, APERM);
+			afree(*hp, APERM);
 		*hp = str_save((char *)line, APERM);
 	}
 }

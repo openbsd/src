@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.20 2012/06/27 07:17:19 otto Exp $	*/
+/*	$OpenBSD: tree.c,v 1.21 2015/09/01 13:12:31 tedu Exp $	*/
 
 /*
  * command tree climbing
@@ -666,18 +666,18 @@ tfree(struct op *t, Area *ap)
 		return;
 
 	if (t->str != NULL)
-		afree((void*)t->str, ap);
+		afree(t->str, ap);
 
 	if (t->vars != NULL) {
 		for (w = t->vars; *w != NULL; w++)
-			afree((void*)*w, ap);
-		afree((void*)t->vars, ap);
+			afree(*w, ap);
+		afree(t->vars, ap);
 	}
 
 	if (t->args != NULL) {
 		for (w = t->args; *w != NULL; w++)
-			afree((void*)*w, ap);
-		afree((void*)t->args, ap);
+			afree(*w, ap);
+		afree(t->args, ap);
 	}
 
 	if (t->ioact != NULL)
@@ -686,7 +686,7 @@ tfree(struct op *t, Area *ap)
 	tfree(t->left, ap);
 	tfree(t->right, ap);
 
-	afree((void*)t, ap);
+	afree(t, ap);
 }
 
 static	void
@@ -697,12 +697,12 @@ iofree(struct ioword **iow, Area *ap)
 
 	for (iop = iow; (p = *iop++) != NULL; ) {
 		if (p->name != NULL)
-			afree((void*)p->name, ap);
+			afree(p->name, ap);
 		if (p->delim != NULL)
-			afree((void*)p->delim, ap);
+			afree(p->delim, ap);
 		if (p->heredoc != NULL)
-			afree((void*)p->heredoc, ap);
-		afree((void*)p, ap);
+			afree(p->heredoc, ap);
+		afree(p, ap);
 	}
 	afree(iow, ap);
 }

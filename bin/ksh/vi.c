@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.28 2013/12/18 16:45:46 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.29 2015/09/01 13:12:31 tedu Exp $	*/
 
 /*
  *	vi command editing
@@ -1401,7 +1401,7 @@ static void
 free_edstate(struct edstate *old)
 {
 	afree(old->cbuf, APERM);
-	afree((char *)old, APERM);
+	afree(old, APERM);
 }
 
 
