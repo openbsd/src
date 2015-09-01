@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.226 2015/08/30 10:39:16 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.227 2015/09/01 10:04:51 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1232,21 +1232,6 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		deldst = mtod(m, struct sockaddr *);
 		rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
 		dst = deldst;
-	}
-	if ((rt = rtalloc(dst, 0, rtableid)) != NULL) {
-		rt->rt_refcnt--;
-#ifndef ART
-		/* try to find the right route */
-		while (rt && rt->rt_ifa != ifa)
-			rt = (struct rtentry *)
-			    ((struct radix_node *)rt)->rn_dupedkey;
-		if (!rt) {
-			if (m != NULL)
-				(void) m_free(m);
-			return (flags & RTF_HOST ? EHOSTUNREACH
-						: ENETUNREACH);
-		}
-#endif
 	}
 
 	memset(&info, 0, sizeof(info));
