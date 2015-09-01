@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.83 2015/08/19 23:34:34 bcook Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.84 2015/09/01 13:38:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1826,18 +1826,6 @@ ri_check:
 		return 0;
 	}
 
-	return 1;
-}
-
-int
-ssl_prepare_clienthello_tlsext(SSL *s)
-{
-	return 1;
-}
-
-int
-ssl_prepare_serverhello_tlsext(SSL *s)
-{
 	return 1;
 }
 

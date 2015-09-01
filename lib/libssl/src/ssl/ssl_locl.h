@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.101 2015/08/29 17:15:52 doug Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.102 2015/09/01 13:38:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -816,8 +816,6 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data,
     unsigned char *d, int n, int *al);
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
     unsigned char *d, int n, int *al);
-int ssl_prepare_clienthello_tlsext(SSL *s);
-int ssl_prepare_serverhello_tlsext(SSL *s);
 int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.123 2015/08/29 16:51:17 doug Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.124 2015/09/01 13:38:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -675,11 +675,6 @@ ssl3_client_hello(SSL *s)
 		*(p++) = 0; /* Add the NULL method */
 
 		/* TLS extensions*/
-		if (ssl_prepare_clienthello_tlsext(s) <= 0) {
-			SSLerr(SSL_F_SSL3_CLIENT_HELLO,
-			    SSL_R_CLIENTHELLO_TLSEXT);
-			goto err;
-		}
 		bufend = (unsigned char *)s->init_buf->data +
 		    SSL3_RT_MAX_PLAIN_LENGTH;
 		if ((p = ssl_add_clienthello_tlsext(s, p, bufend)) == NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.114 2015/08/29 16:51:17 doug Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.115 2015/09/01 13:38:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1132,11 +1132,6 @@ ssl3_send_server_hello(SSL *s)
 		/* put the compression method */
 		*(p++) = 0;
 
-		if (ssl_prepare_serverhello_tlsext(s) <= 0) {
-			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,
-			    SSL_R_SERVERHELLO_TLSEXT);
-			return (-1);
-		}
 		bufend = (unsigned char *)s->init_buf->data +
 		    SSL3_RT_MAX_PLAIN_LENGTH;
 		if ((p = ssl_add_serverhello_tlsext(s, p, bufend)) == NULL) {

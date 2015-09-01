@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.42 2015/08/29 17:15:52 doug Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.43 2015/09/01 13:38:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -359,11 +359,6 @@ ssl23_client_hello(SSL *s)
 		*(p++) = 0;
 
 		/* TLS extensions*/
-		if (ssl_prepare_clienthello_tlsext(s) <= 0) {
-			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
-			    SSL_R_CLIENTHELLO_TLSEXT);
-			return -1;
-		}
 		if ((p = ssl_add_clienthello_tlsext(s, p,
 		    buf + SSL3_RT_MAX_PLAIN_LENGTH)) == NULL) {
 			SSLerr(SSL_F_SSL23_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
