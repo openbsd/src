@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.54 2015/08/29 08:30:54 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.55 2015/09/01 18:50:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -187,7 +187,7 @@ session_free(unused int fd, unused short events, void *arg)
 {
 	struct session	*s = arg;
 
-	log_debug("sesson %s freed (%d references)", s->name, s->references);
+	log_debug("session %s freed (%d references)", s->name, s->references);
 
 	if (s->references == 0) {
 		free(s->name);
