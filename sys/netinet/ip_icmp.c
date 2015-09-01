@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.137 2015/08/14 18:07:28 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.138 2015/09/01 21:24:04 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1034,10 +1034,10 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
-		struct sockaddr_in sa;
+		struct sockaddr_in sin;
 		int s;
 
-		sa = *satosin(rt_key(rt));
+		sin = *satosin(rt_key(rt));
 
 		s = splsoftnet();
 		rtdeletemsg(rt, r->rtt_tableid);
@@ -1045,7 +1045,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		/* Notify TCP layer of increased Path MTU estimate */
 		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
 		if (ctlfunc)
-			(*ctlfunc)(PRC_MTUINC,(struct sockaddr *)&sa,
+			(*ctlfunc)(PRC_MTUINC, sintosa(&sin),
 			    r->rtt_tableid, NULL);
 		splx(s);
 	} else

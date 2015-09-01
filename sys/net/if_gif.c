@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.77 2015/07/17 18:05:59 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.78 2015/09/01 21:24:04 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -339,17 +339,17 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSLIFPHYADDR:
 		switch (cmd) {
 		case SIOCSIFPHYADDR:
-			src = (struct sockaddr *)
-				&(((struct in_aliasreq *)data)->ifra_addr);
-			dst = (struct sockaddr *)
-				&(((struct in_aliasreq *)data)->ifra_dstaddr);
+			src = sintosa(
+				&(((struct in_aliasreq *)data)->ifra_addr));
+			dst = sintosa(
+				&(((struct in_aliasreq *)data)->ifra_dstaddr));
 			break;
 #ifdef INET6
 		case SIOCSIFPHYADDR_IN6:
-			src = (struct sockaddr *)
-				&(((struct in6_aliasreq *)data)->ifra_addr);
-			dst = (struct sockaddr *)
-				&(((struct in6_aliasreq *)data)->ifra_dstaddr);
+			src = sin6tosa(
+				&(((struct in6_aliasreq *)data)->ifra_addr));
+			dst = sin6tosa(
+				&(((struct in6_aliasreq *)data)->ifra_dstaddr));
 			break;
 #endif
 		case SIOCSLIFPHYADDR:
@@ -432,10 +432,10 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 			/* can't configure multiple multi-dest interfaces */
 #define multidest(x) \
-	(((struct sockaddr_in *)(x))->sin_addr.s_addr == INADDR_ANY)
+	(satosin(x)->sin_addr.s_addr == INADDR_ANY)
 #ifdef INET6
 #define multidest6(x) \
-	(IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)(x))->sin6_addr))
+	(IN6_IS_ADDR_UNSPECIFIED(&satosin6(x)->sin6_addr))
 #endif
 			if (dst->sa_family == AF_INET &&
 			    multidest(dst) && multidest(sc2->gif_pdst)) {
@@ -501,8 +501,8 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 #ifdef INET6
 		case SIOCGIFPSRCADDR_IN6:
-			dst = (struct sockaddr *)
-				&(((struct in6_ifreq *)data)->ifr_addr);
+			dst = sin6tosa(
+				&(((struct in6_ifreq *)data)->ifr_addr));
 			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
 			break;
 #endif /* INET6 */
@@ -531,8 +531,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 #ifdef INET6
 		case SIOCGIFPDSTADDR_IN6:
-			dst = (struct sockaddr *)
-				&(((struct in6_ifreq *)data)->ifr_addr);
+			dst = sin6tosa(&(((struct in6_ifreq *)data)->ifr_addr));
 			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
 			break;
 #endif /* INET6 */

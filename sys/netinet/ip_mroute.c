@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.80 2015/08/24 14:00:29 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.81 2015/09/01 21:24:04 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -2201,7 +2201,7 @@ pim_input(struct mbuf *m, ...)
 			    reg_vif_num);
 		}
 		/* NB: vifp was collected above; can it change on us? */
-		looutput(vifp, m, (struct sockaddr *)&dst, NULL);
+		looutput(vifp, m, sintosa(&dst), NULL);
 
 		/* prepare the register head to send to the mrouting daemon */
 		m = mcp;

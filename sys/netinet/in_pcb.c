@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.174 2015/08/22 20:18:50 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.175 2015/09/01 21:24:04 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -895,7 +895,7 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 		 * It is important to zero out the rest of the
 		 * struct sockaddr_in when mixing v6 & v4!
 		 */
-		sin2 = (struct sockaddr_in *)&ro->ro_dst;
+		sin2 = satosin(&ro->ro_dst);
 		memset(sin2->sin_zero, 0, sizeof(sin2->sin_zero));
 	}
 	/*

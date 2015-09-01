@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.73 2015/08/24 14:00:28 bluhm Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.74 2015/09/01 21:24:04 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2959,10 +2959,9 @@ pipex_sockaddr_hash_key(struct sockaddr *sa)
 {
 	switch (sa->sa_family) {
 	case AF_INET:
-		return ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
+		return ntohl(satosin(sa)->sin_addr.s_addr);
 	case AF_INET6:
-		return ntohl(((struct sockaddr_in6 *)sa)->sin6_addr
-		    .s6_addr32[3]);
+		return ntohl(satosin6(sa)->sin6_addr.s6_addr32[3]);
 	}
 	panic("pipex_sockaddr_hash_key: unknown address family");
 	return (0);
@@ -2982,16 +2981,15 @@ pipex_sockaddr_compar_addr(struct sockaddr *a, struct sockaddr *b)
 		return cmp;
 	switch (a->sa_family) {
 	case AF_INET:
-		return ((struct sockaddr_in *)b)->sin_addr.s_addr -
-		    ((struct sockaddr_in *)a)->sin_addr.s_addr;
+		return (satosin(b)->sin_addr.s_addr -
+		    satosin(a)->sin_addr.s_addr);
 	case AF_INET6:
-		cmp = ((struct sockaddr_in6 *)b)->sin6_scope_id -
-		    ((struct sockaddr_in6 *)a)->sin6_scope_id;
+		cmp = (satosin6(b)->sin6_scope_id - satosin6(a)->sin6_scope_id);
 		if (cmp != 0)
 			return cmp;
-		return memcmp(&((struct sockaddr_in6 *)a)->sin6_addr,
-		    &((struct sockaddr_in6 *)b)->sin6_addr,
-		    sizeof(struct in6_addr));
+		return (memcmp(&satosin6(a)->sin6_addr,
+		    &satosin6(b)->sin6_addr,
+		    sizeof(struct in6_addr)));
 	}
 	panic("pipex_sockaddr_compar_addr: unknown address family");
 

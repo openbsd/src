@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.38 2015/08/14 18:07:28 bluhm Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.39 2015/09/01 21:24:04 bluhm Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ nfs_boot_getfh(struct sockaddr_in *bpsin, char *key,
 
 	/* Initialize mount args. */
 	memset(args, 0, sizeof(*args));
-	args->addr     = (struct sockaddr *)&ndmntp->ndm_saddr;
+	args->addr     = sintosa(&ndmntp->ndm_saddr);
 	args->addrlen  = args->addr->sa_len;
 	args->sotype   = SOCK_DGRAM;
 	args->fh       = ndmntp->ndm_fh;

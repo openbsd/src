@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.146 2015/08/27 20:56:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.147 2015/09/01 21:24:04 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -850,8 +850,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			sin.sin_family = AF_INET;
 			sin.sin_port = th->th_sport;
 			sin.sin_addr = ip->ip_src;
-			syn_cache_unreach((struct sockaddr *)&sin,
-			    sa, th, rdomain);
+			syn_cache_unreach(sintosa(&sin), sa, th, rdomain);
 		}
 	} else
 		in_pcbnotifyall(&tcbtable, sa, rdomain, errno, notify);

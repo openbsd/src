@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.31 2015/07/18 15:51:16 mpi Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.32 2015/09/01 21:24:04 bluhm Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ rn_mpath_hash(struct sockaddr *dst, u_int32_t *srcaddrp)
 	    {
 		struct sockaddr_in *sin_dst;
 
-		sin_dst = (struct sockaddr_in *)dst;
+		sin_dst = satosin(dst);
 		a += sin_dst->sin_addr.s_addr;
 		b += srcaddrp ? srcaddrp[0] : 0;
 		mix(a, b, c);
@@ -463,7 +463,7 @@ rn_mpath_hash(struct sockaddr *dst, u_int32_t *srcaddrp)
 	    {
 		struct sockaddr_in6 *sin6_dst;
 
-		sin6_dst = (struct sockaddr_in6 *)dst;
+		sin6_dst = satosin6(dst);
 		a += sin6_dst->sin6_addr.s6_addr32[0];
 		b += sin6_dst->sin6_addr.s6_addr32[2];
 		c += srcaddrp ? srcaddrp[0] : 0;
