@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.40 2015/06/21 20:49:18 jca Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.41 2015/09/01 01:54:04 deraadt Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1371,7 +1371,7 @@ rasops_alloc_screen(void *v, void **cookiep,
 	size_t size;
 	int i;
 
-	scr = malloc(sizeof(struct rasops_screen), M_DEVBUF, M_NOWAIT);
+	scr = malloc(sizeof(*scr), M_DEVBUF, M_NOWAIT);
 	if (scr == NULL)
 		return (ENOMEM);
 
@@ -1379,7 +1379,7 @@ rasops_alloc_screen(void *v, void **cookiep,
 	    ri->ri_cols * sizeof(struct wsdisplay_charcell), M_DEVBUF,
 	    M_NOWAIT);
 	if (scr->rs_bs == NULL) {
-		free(scr, M_DEVBUF, 0);
+		free(scr, M_DEVBUF, sizeof(*scr));
 		return (ENOMEM);
 	}
 	size = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
@@ -1414,8 +1414,9 @@ rasops_free_screen(void *v, void *cookie)
 	LIST_REMOVE(scr, rs_next);
 	ri->ri_nscreens--;
 
-	free(scr->rs_bs, M_DEVBUF, 0);
-	free(scr, M_DEVBUF, 0);
+	free(scr->rs_bs, M_DEVBUF,
+	    ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell));
+	free(scr, M_DEVBUF, sizeof(*scr));
 }
 
 int
