@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2015/05/02 14:33:19 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2015/09/01 05:16:55 jsg Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -968,9 +968,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			if (cur == NULL) {
 				cur = pool_get(&pvpool, PR_NOWAIT);
 				if (cur == NULL) {
-					if (flags & PMAP_CANFAIL)
+					if (flags & PMAP_CANFAIL) {
+						splx(s);
 						return (ENOMEM);
-					else
+					} else
 						panic("pmap_enter: "
 						    "pvlist pool exhausted");
 				}
