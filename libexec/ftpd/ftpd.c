@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.207 2015/01/19 01:24:39 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.208 2015/09/01 06:50:53 jsg Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1959,10 +1959,10 @@ reply(int n, const char *fmt, ...)
 	}
 	next = buf;
 	while ((p = strsep(&next, "\n\r"))) {
-		printf("%d%s %s\r\n", n, (next != '\0') ? "-" : "", p);
+		printf("%d%s %s\r\n", n, (next != NULL) ? "-" : "", p);
 		if (debug)
 			syslog(LOG_DEBUG, "<--- %d%s %s", n,
-			    (next != '\0') ? "-" : "", p);
+			    (next != NULL) ? "-" : "", p);
 	}
 	(void)fflush(stdout);
 	free(buf);
@@ -1987,7 +1987,7 @@ reply_r(int n, const char *fmt, ...)
 
 	while ((p = strsep(&next, "\n\r"))) {
 		snprintf(buf, sizeof(buf), "%d%s %s\r\n", n,
-		    (next != '\0') ? "-" : "", p);
+		    (next != NULL) ? "-" : "", p);
 		write(STDOUT_FILENO, buf, strlen(buf));
 		if (debug) {
 			buf[strlen(buf) - 2] = '\0';
