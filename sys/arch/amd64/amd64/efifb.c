@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.2 2015/08/31 19:56:32 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.3 2015/09/01 06:57:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -182,8 +182,10 @@ efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
 		/* can't change the depth */
-		if (ri->ri_depth == 32 || ri->ri_depth == 24)
-			*(u_int *)data = WSDISPLAYIO_DEPTH_24;
+		if (ri->ri_depth == 32)
+			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
+		else if (ri->ri_depth == 24)
+			*(u_int *)data = WSDISPLAYIO_DEPTH_24_24;
 		else if (ri->ri_depth == 16)
 			*(u_int *)data = WSDISPLAYIO_DEPTH_16;
 		else if (ri->ri_depth == 15)
@@ -212,7 +214,7 @@ efifb_mmap(void *v, off_t off, int prot)
 	if (off > sc->sc_fb->psize)
 		return (-1);
 
-	return (sc->sc_fb->paddr + off);
+	return ((sc->sc_fb->paddr + off) | PMAP_WC);
 }
 
 int
