@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.111 2015/08/31 16:42:33 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.112 2015/09/01 19:53:23 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -263,7 +263,7 @@ main(int argc, char *argv[])
 	double intval;
 	int mflag = 0;
 	uid_t uid;
-	u_int rtableid;
+	u_int rtableid = 0;
 
 	if ((s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		err(1, "socket");
@@ -709,6 +709,11 @@ main(int argc, char *argv[])
 		    setsockopt(dummy, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		    (void *)&hoplimit, sizeof(hoplimit)))
 			err(1, "UDP setsockopt(IPV6_MULTICAST_HOPS)");
+
+		if (rtableid > 0 &&
+		    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
+		    sizeof(rtableid)) < 0)
+			err(1, "setsockopt(SO_RTABLE)");
 
 		if (connect(dummy, (struct sockaddr *)&src, len) < 0)
 			err(1, "UDP connect");
