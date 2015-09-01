@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.151 2015/08/30 15:43:40 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.152 2015/09/01 19:50:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1060,7 +1060,7 @@ server_client_msg_dispatch(struct client *c)
 			s = c->session;
 
 			if (gettimeofday(&c->activity_time, NULL) != 0)
-				fatal("gettimeofday");
+				fatal("gettimeofday failed");
 			if (s != NULL)
 				session_update_activity(s, &c->activity_time);
 
