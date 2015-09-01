@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.648 2015/04/21 16:34:59 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.649 2015/09/01 19:12:25 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3997,8 +3997,9 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 		problems++;
 	}
 
-	/* match rules rules */
-	if (r->action == PF_MATCH) {
+	/* Basic rule sanity check. */
+	switch (r->action) {
+	case PF_MATCH:
 		if (r->divert.port) {
 			yyerror("divert is not supported on match rules");
 			problems++;
@@ -4009,13 +4010,22 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 		}
 		if (r->rt) {
 			yyerror("route-to, reply-to and dup-to "
-			   "must not be used on match rules");
+			   "are not supported on match rules");
 			problems++;
 		}
 		if (r->rule_flag & PFRULE_AFTO) {
 			yyerror("af-to is not supported on match rules");
 			problems++;
 		}
+		break;
+	case PF_DROP:
+		if (r->rt) {
+			yyerror("route-to, reply-to and dup-to "
+			   "are not supported on block rules");
+			problems++;
+		}
+		break;
+	default:;
 	}
 	return (-problems);
 }
