@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.26 2015/06/12 04:51:08 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.27 2015/09/01 01:19:46 bentley Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2015 $
+.Dd $Mdocdate: September 1 2015 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ names; instead, provide ASCII transcriptions of the names.
 .Ss Dashes and Hyphens
 In typography there are different types of dashes of various width:
 the hyphen (-),
-the minus sign (\-),
+the minus sign (\(mi),
 the en-dash (\(en),
 and the em-dash (\(em).
 .Pp
@@ -64,10 +64,10 @@ lorry-driver
 .Pp
 The mathematical minus sign is used for negative numbers or subtraction.
 It should be written as
-.Sq \e- :
+.Sq \e(mi :
 .Bd -unfilled -offset indent
-a = 3 \e- 1;
-b = \e-2;
+a = 3 \e(mi 1;
+b = \e(mi2;
 .Ed
 .Pp
 The en-dash is used to separate the two elements of a range,
@@ -720,7 +720,7 @@ In
 .Fl T Ns Cm ascii ,
 the
 \e(ss, \e(nm, \e(nb, \e(nc, \e(ib, \e(ip, \e(pp, \e[sum], \e[product],
-\e[coproduct], \e(gr, \e(\-h, and \e(a. special characters render
+\e[coproduct], \e(gr, \e(-h, and \e(a. special characters render
 differently between mandoc and groff.
 .It
 In
