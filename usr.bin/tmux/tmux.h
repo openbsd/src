@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.551 2015/09/01 10:10:59 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.552 2015/09/01 11:13:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1728,7 +1728,6 @@ void	alerts_queue(struct window *, int);
 
 /* server.c */
 extern struct clients clients;
-extern struct clients dead_clients;
 extern struct session *marked_session;
 extern struct winlink *marked_winlink;
 extern struct window_pane *marked_window_pane;
