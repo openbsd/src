@@ -6628,6 +6628,7 @@
 ./usr/share/man/man9/rtalloc_mpath.9
 ./usr/share/man/man9/rtdeletemsg.9
 ./usr/share/man/man9/rtfree.9
+./usr/share/man/man9/rtisvalid.9
 ./usr/share/man/man9/rtlabel_id2name.9
 ./usr/share/man/man9/rtlabel_id2sa.9
 ./usr/share/man/man9/rtlabel_name2id.9
@@ -6689,6 +6690,7 @@
 ./usr/share/man/man9/splx.9
 ./usr/share/man/man9/srp_enter.9
 ./usr/share/man/man9/srp_finalize.9
+./usr/share/man/man9/srp_follow.9
 ./usr/share/man/man9/srp_gc_init.9
 ./usr/share/man/man9/srp_get_locked.9
 ./usr/share/man/man9/srp_init.9
