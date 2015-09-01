@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_struct.c,v 1.3 2013/10/19 21:02:50 guenther Exp $	*/
+/*	$OpenBSD: db_struct.c,v 1.4 2015/09/01 05:26:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -203,6 +203,7 @@ db_struct_offset_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 			break;
 
 	if (oidx == NOFFS) {
+		width = 0;
 		db_format(tmpfmt, sizeof tmpfmt, (long)offset,
 		    DB_FORMAT_N, 0, width);
 		db_printf("no known structure element at offset %-*s\n",
