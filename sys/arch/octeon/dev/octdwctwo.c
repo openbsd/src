@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.8 2015/07/19 00:33:36 jasper Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.9 2015/09/01 14:45:24 visa Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -80,9 +80,9 @@ static struct dwc2_core_params octdwctwo_params = {
 	.speed = 0,
 	.enable_dynamic_fifo = 1,
 	.en_multiple_tx_fifo = 0,
-	.host_rx_fifo_size = 256/*XXX*/,
-	.host_nperio_tx_fifo_size = 128/*XXX*/,
-	.host_perio_tx_fifo_size = 128/*XXX*/,
+	.host_rx_fifo_size = 456,
+	.host_nperio_tx_fifo_size = 912,
+	.host_perio_tx_fifo_size = 256,
 	.max_transfer_size = 65535,
 	.max_packet_count = 511,
 	.host_channels = 8,
