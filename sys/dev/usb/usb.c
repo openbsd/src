@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.107 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: usb.c,v 1.108 2015/09/01 10:00:26 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -622,7 +622,16 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (EBADF);
 
 		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%d\n", addr, len));
-		if (len < 0 || len > 32768)
+		/* Avoid requests that would damage the bus integrity. */
+		if ((ur->ucr_request.bmRequestType == UT_WRITE_DEVICE &&
+		     ur->ucr_request.bRequest == UR_SET_ADDRESS) ||
+		    (ur->ucr_request.bmRequestType == UT_WRITE_DEVICE &&
+		     ur->ucr_request.bRequest == UR_SET_CONFIG) ||
+		    (ur->ucr_request.bmRequestType == UT_WRITE_INTERFACE &&
+		     ur->ucr_request.bRequest == UR_SET_INTERFACE))
+			return (EINVAL);
+
+		if (len < 0 || len > 32767)
 			return (EINVAL);
 		if (addr < 0 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
