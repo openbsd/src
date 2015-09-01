@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.15 2015/08/28 13:19:50 reyk Exp $
+.\" $OpenBSD: doas.conf.5,v 1.16 2015/09/01 13:20:53 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: August 28 2015 $
+.Dd $Mdocdate: September 1 2015 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -73,6 +73,9 @@ The default is all users.
 The command the user is allowed or denied to run.
 The default is all commands.
 Be advised that it's best to specify absolute paths.
+If a cmd is specified, only a restricted
+.Ev PATH
+will be searched.
 .It Ic args ...
 Arguments to command.
 If specified, the command arguments provided by the user

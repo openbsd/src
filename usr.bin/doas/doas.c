@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.39 2015/08/27 16:31:02 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.40 2015/09/01 13:20:53 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -433,8 +433,10 @@ main(int argc, char **argv, char **envp)
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
 	    myname, cmdline, pw->pw_name, cwd);
 
-	if (setenv("PATH", safepath, 1) == -1)
-		err(1, "failed to set PATH '%s'", safepath);
+	if (rule->cmd) {
+		if (setenv("PATH", safepath, 1) == -1)
+			err(1, "failed to set PATH '%s'", safepath);
+	}
 	execvpe(cmd, argv, envp);
 	if (errno == ENOENT)
 		errx(1, "%s: command not found", cmd);
