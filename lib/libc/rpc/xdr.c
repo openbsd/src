@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.c,v 1.12 2014/03/16 18:38:30 guenther Exp $ */
+/*	$OpenBSD: xdr.c,v 1.13 2015/09/01 19:54:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -508,10 +508,8 @@ xdr_bytes(XDR *xdrs, char **cpp, u_int *sizep, u_int maxsize)
 		if (sp == NULL) {
 			*cpp = sp = (char *)mem_alloc(nodesize);
 		}
-		if (sp == NULL) {
-			(void) fprintf(stderr, "xdr_bytes: out of memory\n");
+		if (sp == NULL)
 			return (FALSE);
-		}
 		/* fall into ... */
 
 	case XDR_ENCODE:
@@ -635,10 +633,8 @@ xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 		}
 		if (sp == NULL)
 			*cpp = sp = (char *)mem_alloc(nodesize);
-		if (sp == NULL) {
-			(void) fprintf(stderr, "xdr_string: out of memory\n");
+		if (sp == NULL)
 			return (FALSE);
-		}
 		sp[size] = 0;
 		/* fall into ... */
 

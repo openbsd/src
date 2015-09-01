@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_reference.c,v 1.9 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: xdr_reference.c,v 1.10 2015/09/01 19:54:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -69,11 +69,8 @@ xdr_reference(XDR *xdrs,
 
 		case XDR_DECODE:
 			*pp = loc = (caddr_t) calloc(size, 1);
-			if (loc == NULL) {
-				(void) fprintf(stderr,
-				    "xdr_reference: out of memory\n");
+			if (loc == NULL)
 				return (FALSE);
-			}
 			break;
 	}
 

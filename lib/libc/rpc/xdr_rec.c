@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_rec.c,v 1.17 2013/11/26 20:33:08 deraadt Exp $ */
+/*	$OpenBSD: xdr_rec.c,v 1.18 2015/09/01 19:54:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -159,7 +159,6 @@ xdrrec_create(XDR *xdrs, u_int sendsize, u_int recvsize, caddr_t tcp_handle,
 		(RECSTREAM *)mem_alloc(sizeof(RECSTREAM));
 
 	if (rstrm == NULL) {
-		(void)fprintf(stderr, "xdrrec_create: out of memory\n");
 		/* 
 		 *  This is bad.  Should rework xdrrec_create to 
 		 *  return a handle, and in this case return NULL
@@ -170,7 +169,6 @@ xdrrec_create(XDR *xdrs, u_int sendsize, u_int recvsize, caddr_t tcp_handle,
 	rstrm->sendsize = sendsize = fix_buf_size(sendsize);
 	rstrm->out_base = malloc(rstrm->sendsize);
 	if (rstrm->out_base == NULL) {
-		(void)fprintf(stderr, "xdrrec_create: out of memory\n");
 		mem_free(rstrm, sizeof(RECSTREAM));
 		return;
 	}
@@ -178,7 +176,6 @@ xdrrec_create(XDR *xdrs, u_int sendsize, u_int recvsize, caddr_t tcp_handle,
 	rstrm->recvsize = recvsize = fix_buf_size(recvsize);
 	rstrm->in_base = malloc(recvsize);
 	if (rstrm->in_base == NULL) {
-		(void)fprintf(stderr, "xdrrec_create: out of memory\n");
 		mem_free(rstrm->out_base, sendsize);
 		mem_free(rstrm, sizeof(RECSTREAM));
 		return;

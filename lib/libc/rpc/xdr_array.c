@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_array.c,v 1.10 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: xdr_array.c,v 1.11 2015/09/01 19:54:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -86,11 +86,8 @@ xdr_array(XDR *xdrs,
 			if (c == 0)
 				return (TRUE);
 			*addrp = target = mem_alloc(nodesize);
-			if (target == NULL) {
-				(void) fprintf(stderr, 
-				    "xdr_array: out of memory\n");
+			if (target == NULL)
 				return (FALSE);
-			}
 			memset(target, 0, nodesize);
 			break;
 		case XDR_FREE:

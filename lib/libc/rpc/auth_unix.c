@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_unix.c,v 1.22 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: auth_unix.c,v 1.23 2015/09/01 19:54:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -103,15 +103,12 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 	 */
 	auth = (AUTH *)mem_alloc(sizeof(*auth));
 #ifndef KERNEL
-	if (auth == NULL) {
-		(void)fprintf(stderr, "authunix_create: out of memory\n");
+	if (auth == NULL)
 		return (NULL);
-	}
 #endif
 	au = (struct audata *)mem_alloc(sizeof(*au));
 #ifndef KERNEL
 	if (au == NULL) {
-		(void)fprintf(stderr, "authunix_create: out of memory\n");
 		free(auth);
 		return (NULL);
 	}
@@ -143,10 +140,8 @@ authunix_create(char *machname, int uid, int gid, int len, int *aup_gids)
 #ifdef KERNEL
 	au->au_origcred.oa_base = mem_alloc((u_int) len);
 #else
-	if ((au->au_origcred.oa_base = mem_alloc((u_int) len)) == NULL) {
-		(void)fprintf(stderr, "authunix_create: out of memory\n");
+	if ((au->au_origcred.oa_base = mem_alloc((u_int) len)) == NULL)
 		goto authfail;	
-	}
 #endif
 	memcpy(au->au_origcred.oa_base, mymem, (u_int)len);
 

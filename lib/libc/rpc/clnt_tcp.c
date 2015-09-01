@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.26 2014/11/11 04:51:49 guenther Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.27 2015/09/01 19:54:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -119,14 +119,12 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 
 	h  = (CLIENT *)mem_alloc(sizeof(*h));
 	if (h == NULL) {
-		(void)fprintf(stderr, "clnttcp_create: out of memory\n");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;
 	}
 	ct = (struct ct_data *)mem_alloc(sizeof(*ct));
 	if (ct == NULL) {
-		(void)fprintf(stderr, "clnttcp_create: out of memory\n");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.28 2015/05/17 01:15:44 deraadt Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.29 2015/09/01 19:54:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -114,7 +114,6 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (cl == NULL) {
-		(void) fprintf(stderr, "clntudp_create: out of memory\n");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;
@@ -123,7 +122,6 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 	recvsz = ((recvsz + 3) / 4) * 4;
 	cu = (struct cu_data *)mem_alloc(sizeof(*cu) + sendsz + recvsz);
 	if (cu == NULL) {
-		(void) fprintf(stderr, "clntudp_create: out of memory\n");
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 		rpc_createerr.cf_error.re_errno = errno;
 		goto fooy;

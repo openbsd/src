@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_simple.c,v 1.12 2015/08/20 21:49:29 deraadt Exp $ */
+/*	$OpenBSD: svc_simple.c,v 1.13 2015/09/01 19:54:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -60,30 +60,20 @@ registerrpc(int prognum, int versnum, int procnum, char *(*progname)(),
 {
 	struct proglst *pl;
 	
-	if (procnum == NULLPROC) {
-		(void) fprintf(stderr,
-		    "can't reassign procedure number %u\n", NULLPROC);
+	if (procnum == NULLPROC)
 		return (-1);
-	}
 	if (transp == NULL) {
 		transp = svcudp_create(RPC_ANYSOCK);
-		if (transp == NULL) {
-			(void) fprintf(stderr, "couldn't create an rpc server\n");
+		if (transp == NULL)
 			return (-1);
-		}
 	}
 	(void) pmap_unset((u_long)prognum, (u_long)versnum);
 	if (!svc_register(transp, (u_long)prognum, (u_long)versnum, 
-	    universal, IPPROTO_UDP)) {
-	    	(void) fprintf(stderr, "couldn't register prog %d vers %d\n",
-		    prognum, versnum);
+	    universal, IPPROTO_UDP))
 		return (-1);
-	}
 	pl = malloc(sizeof(struct proglst));
-	if (pl == NULL) {
-		(void) fprintf(stderr, "registerrpc: out of memory\n");
+	if (pl == NULL)
 		return (-1);
-	}
 	pl->p_progname = progname;
 	pl->p_prognum = prognum;
 	pl->p_procnum = procnum;
@@ -106,10 +96,8 @@ universal(struct svc_req *rqstp, SVCXPRT *transp)
 	 * enforce "procnum 0 is echo" convention
 	 */
 	if (rqstp->rq_proc == NULLPROC) {
-		if (svc_sendreply(transp, xdr_void, NULL) == FALSE) {
-			(void) fprintf(stderr, "xxx\n");
+		if (svc_sendreply(transp, xdr_void, NULL) == FALSE)
 			exit(1);
-		}
 		return;
 	}
 	prog = rqstp->rq_prog;
@@ -127,17 +115,12 @@ universal(struct svc_req *rqstp, SVCXPRT *transp)
 			    pl->p_outproc != xdr_void)
 				/* there was an error */
 				return;
-			if (!svc_sendreply(transp, pl->p_outproc, outdata)) {
-				(void) fprintf(stderr,
-				    "trouble replying to prog %d\n",
-				    pl->p_prognum);
+			if (!svc_sendreply(transp, pl->p_outproc, outdata))
 				exit(1);
-			}
 			/* free the decoded arguments */
 			(void)svc_freeargs(transp, pl->p_inproc, xdrbuf);
 			return;
 		}
-	(void) fprintf(stderr, "never registered prog %d\n", prog);
 	exit(1);
 }
 
