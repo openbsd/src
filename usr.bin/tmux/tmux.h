@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.549 2015/09/01 09:48:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.550 2015/09/01 10:01:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1420,12 +1420,11 @@ void		 setblocking(int, int);
 const char	*find_home(void);
 
 /* cfg.c */
-extern struct cmd_q *cfg_cmd_q;
 extern int cfg_finished;
 extern int cfg_references;
 extern struct client *cfg_client;
+void		 start_cfg(void);
 int		 load_cfg(const char *, struct cmd_q *, char **);
-void		 cfg_default_done(struct cmd_q *);
 void		 cfg_add_cause(const char *, ...);
 void		 cfg_print_causes(struct cmd_q *);
 void		 cfg_show_causes(struct session *);
