@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.188 2015/08/21 03:03:44 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.189 2015/09/01 08:22:45 kettenis Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1404,9 +1404,7 @@ pool_allocator_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	void *v;
 
-	KERNEL_LOCK();
 	v = (*pp->pr_alloc->pa_alloc)(pp, flags, slowdown);
-	KERNEL_UNLOCK();
 
 #ifdef DIAGNOSTIC
 	if (v != NULL && POOL_INPGHDR(pp)) {
@@ -1426,26 +1424,31 @@ pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
 
-	KERNEL_LOCK();
 	(*pa->pa_free)(pp, v);
-	KERNEL_UNLOCK();
 }
 
 void *
 pool_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
+	void *v;
 
 	kd.kd_waitok = ISSET(flags, PR_WAITOK);
 	kd.kd_slowdown = slowdown;
 
-	return (km_alloc(pp->pr_pgsize, &kv_page, pp->pr_crange, &kd));
+	KERNEL_LOCK();
+	v = km_alloc(pp->pr_pgsize, &kv_page, pp->pr_crange, &kd);
+	KERNEL_UNLOCK();
+
+	return (v);
 }
 
 void
 pool_page_free(struct pool *pp, void *v)
 {
+	KERNEL_LOCK();
 	km_free(v, pp->pr_pgsize, &kv_page, pp->pr_crange);
+	KERNEL_UNLOCK();
 }
 
 void *
@@ -1463,7 +1466,9 @@ pool_large_alloc(struct pool *pp, int flags, int *slowdown)
 	kd.kd_slowdown = slowdown;
 
 	s = splvm();
+	KERNEL_LOCK();
 	v = km_alloc(pp->pr_pgsize, &kv, pp->pr_crange, &kd);
+	KERNEL_UNLOCK();
 	splx(s);
 
 	return (v);
@@ -1479,7 +1484,9 @@ pool_large_free(struct pool *pp, void *v)
 		kv.kv_align = pp->pr_pgsize;
 
 	s = splvm();
+	KERNEL_LOCK();
 	km_free(v, pp->pr_pgsize, &kv, pp->pr_crange);
+	KERNEL_UNLOCK();
 	splx(s);
 }
 
@@ -1488,6 +1495,7 @@ pool_large_alloc_ni(struct pool *pp, int flags, int *slowdown)
 {
 	struct kmem_va_mode kv = kv_any;
 	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
+	void *v;
 
 	if (POOL_INPGHDR(pp))
 		kv.kv_align = pp->pr_pgsize;
@@ -1495,7 +1503,11 @@ pool_large_alloc_ni(struct pool *pp, int flags, int *slowdown)
 	kd.kd_waitok = ISSET(flags, PR_WAITOK);
 	kd.kd_slowdown = slowdown;
 
-	return (km_alloc(pp->pr_pgsize, &kv, pp->pr_crange, &kd));
+	KERNEL_LOCK();
+	v = km_alloc(pp->pr_pgsize, &kv, pp->pr_crange, &kd);
+	KERNEL_UNLOCK();
+
+	return (v);
 }
 
 void
@@ -1506,5 +1518,7 @@ pool_large_free_ni(struct pool *pp, void *v)
 	if (POOL_INPGHDR(pp))
 		kv.kv_align = pp->pr_pgsize;
 
+	KERNEL_LOCK();
 	km_free(v, pp->pr_pgsize, &kv, pp->pr_crange);
+	KERNEL_UNLOCK();
 }
