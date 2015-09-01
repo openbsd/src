@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.108 2015/05/27 22:10:52 kettenis Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.109 2015/09/01 07:09:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1632,7 +1632,6 @@ ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 {
 	const struct ipw_firmware_hdr *hdr;
 	const char *name;
-	size_t size;
 	int error;
 
 	switch (sc->sc_ic.ic_opmode) {
@@ -1651,10 +1650,10 @@ ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 		/* should not get there */
 		return ENODEV;
 	}
-	if ((error = loadfirmware(name, &fw->data, &size)) != 0)
+	if ((error = loadfirmware(name, &fw->data, &fw->size)) != 0)
 		return error;
 
-	if (size < sizeof (*hdr)) {
+	if (fw->size < sizeof (*hdr)) {
 		error = EINVAL;
 		goto fail;
 	}
@@ -1662,7 +1661,7 @@ ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 	fw->main_size  = letoh32(hdr->main_size);
 	fw->ucode_size = letoh32(hdr->ucode_size);
 
-	if (size < sizeof (*hdr) + fw->main_size + fw->ucode_size) {
+	if (fw->size < sizeof (*hdr) + fw->main_size + fw->ucode_size) {
 		error = EINVAL;
 		goto fail;
 	}
@@ -1671,7 +1670,7 @@ ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 
 	return 0;
 
-fail:	free(fw->data, M_DEVBUF, 0);
+fail:	free(fw->data, M_DEVBUF, fw->size);
 	return error;
 }
 
@@ -2012,7 +2011,7 @@ ipw_init(struct ifnet *ifp)
 		goto fail2;
 	}
 	sc->sc_flags |= IPW_FLAG_FW_INITED;
-	free(fw.data, M_DEVBUF, 0);
+	free(fw.data, M_DEVBUF, fw.size);
 	fw.data = NULL;
 
 	/* retrieve information tables base addresses */
@@ -2037,7 +2036,7 @@ ipw_init(struct ifnet *ifp)
 
 	return 0;
 
-fail2:	free(fw.data, M_DEVBUF, 0);
+fail2:	free(fw.data, M_DEVBUF, fw.size);
 	fw.data = NULL;
 fail1:	ipw_stop(ifp, 0);
 	return error;
