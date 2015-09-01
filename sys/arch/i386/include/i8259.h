@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: i8259.h,v 1.6 2015/09/01 12:14:57 mikeb Exp $	*/
 /*	$NetBSD: i8259.h,v 1.3 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -49,9 +49,6 @@ extern	unsigned imen;		/* interrupt mask enable */
 extern unsigned i8259_setmask(unsigned);
 
 #define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IO_ICU2 + 1, imen >> 8))
-
-extern void i8259_default_setup(void);
-extern void i8259_reinit(void);
 
 #endif /* !_LOCORE */
 
