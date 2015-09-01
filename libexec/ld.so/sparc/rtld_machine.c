@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.39 2015/07/26 03:08:16 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.40 2015/09/01 05:10:43 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -29,19 +29,22 @@
 
 #define _DYN_LOADER
 
-#include <sys/types.h>
-#include <sys/mman.h>
 #include <sys/param.h>
+#include <sys/mman.h>
 #include <sys/sysctl.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
 #include <machine/cpu.h>
+#include <machine/trap.h>
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 /*
  * The following table holds for each relocation type:
@@ -143,7 +146,7 @@ static int reloc_target_bitmask[] = {
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
 static inline void
-_dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
+_dl_reloc_plt(Elf_Addr *where1, Elf_Addr *where2, Elf_Addr value)
 {
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
@@ -154,23 +157,24 @@ _dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
 	 *	sethi	%hi(addr), %g1
 	 *	jmp	%g1+%lo(addr)
 	 *
-	 * We write the third instruction first, since that leaves the
-	 * previous `b,a' at the second word in place. Hence the whole
+	 * If this was being directly applied to the PLT during resolution
+	 * of a lazy binding, then to make it thread safe we would need to
+	 * update the third instruction first, since that leaves the
+	 * previous `b,a' at the second word in place, so that the whole
 	 * PLT slot can be atomically change to the new sequence by
-	 * writing the `sethi' instruction at word 2.
+	 * writing the `sethi' instruction at word 2.  We would also need
+	 * iflush instructions to guarantee that the third instruction
+	 * made it to the I-cache before the second instruction.
+	 *
+	 * HOWEVER, we do lazy binding via the kbind syscall, so we can
+	 * write them in order here and reorder by the kbind blocking.
+	 * Non-lazy binding does lots of work before returning, so no
+	 * reordering or iflushing is needed.
 	 */
 #define SETHI	0x03000000
 #define JMP	0x81c06000
-#define NOP	0x01000000
-	where[2] = JMP   | (value & 0x000003ff);
-	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm volatile("iflush %0+8" : : "r" (where));
-	__asm volatile("iflush %0+4" : : "r" (where));
-	/*
-	 * iflush requires 5 subsequent cycles to be sure all copies
-	 * are flushed from the CPU and the icache.
-	 */
-	__asm volatile("nop;nop;nop;nop;nop");
+	*where1 = SETHI | ((value >> 10) & 0x003fffff);
+	*where2 = JMP   | (value & 0x000003ff);
 }
 
 int
@@ -301,7 +305,7 @@ resolve_failed:
 		}
 
 		if (type == R_TYPE(JMP_SLOT)) {
-			_dl_reloc_plt(where, value);
+			_dl_reloc_plt(&where[1], &where[2], value);
 			continue;
 		}
 
@@ -341,7 +345,11 @@ _dl_bind(elf_object_t *object, int reloff)
 	const elf_object_t *sobj;
 	Elf_Addr value;
 	Elf_RelA *rela;
-	sigset_t savedmask;
+	int64_t cookie = pcookie;
+	struct {
+		struct __kbind param[2];
+		Elf_Word buf[2];
+	} buf;
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
@@ -349,7 +357,6 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
@@ -360,25 +367,40 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	value = ooff + this->st_value;
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return value;
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (value);
 
-	/* if PLT is protected, allow the write */
-	if (object->plt_size != 0) {
-		_dl_thread_bind_lock(0, &savedmask);
-		/* mprotect the actual modified region, not the whole plt */
-		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
-		    PROT_READ|PROT_WRITE|PROT_EXEC);
-	}
+	/*
+	 * Relocations require two blocks to be written: the second word
+	 * then the first word. So the layout of the buffer we pass to
+	 * kbind() needs to be this:
+	 *   +------------+
+	 *   | kbind.addr |
+	 *   | kbind.size |
+	 *   | kbind.addr |
+	 *   | kbind.size |
+	 *   |   word 2   |
+	 *   |   word 1   |
+	 *   +------------+
+	 */
+	addr = (Elf_Addr *)(object->obj_base + rela->r_offset);
+	_dl_reloc_plt(&buf.buf[1], &buf.buf[0], value);
+	buf.param[0].kb_addr = &addr[2];
+	buf.param[0].kb_size = sizeof(Elf_Word);
+	buf.param[1].kb_addr = &addr[1];
+	buf.param[1].kb_size = sizeof(Elf_Word);
 
-	_dl_reloc_plt(addr, value);
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("g1") = SYS_kbind;
+		register void *arg1 __asm("o0") = &buf;
+		register long  arg2 __asm("o1") = sizeof(buf);
+		register long  arg3 __asm("o2") = 0xffffffff & (cookie >> 32);
+		register long  arg4 __asm("o3") = 0xffffffff &  cookie;
 
-	/* if PLT is (to be protected, change back to RO/X */
-	if (object->plt_size != 0) {
-		/* mprotect the actual modified region, not the whole plt */
-		_dl_mprotect((void*)addr, sizeof (Elf_Addr) * 3,
-		    PROT_READ|PROT_EXEC);
-		_dl_thread_bind_lock(1, &savedmask);
+		__asm volatile("t %2" : "+r" (arg1), "+r" (arg2)
+		    : "i" (ST_SYSCALL), "r" (syscall_num), "r" (arg3),
+		    "r" (arg4) : "cc", "memory" );
 	}
 
 	return (value);

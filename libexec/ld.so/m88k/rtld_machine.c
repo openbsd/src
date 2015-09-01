@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.11 2014/12/14 19:55:12 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.12 2015/09/01 05:10:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -45,10 +45,11 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
@@ -56,6 +57,8 @@
 
 Elf_Addr _dl_bind(elf_object_t *object, int reloff);
 void	_dl_md_reloc_gotp_ent(Elf_Addr, Elf_Addr, Elf_Addr);
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relasz)
@@ -398,11 +401,15 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int reloff)
 {
 	Elf_RelA *rel;
-	Elf_Addr *r_addr, ooff, value;
+	Elf_Addr ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	const elf_object_t *sobj;
-	sigset_t savedmask;
+	uint64_t cookie = pcookie;
+	struct {
+		struct __kbind param;
+		Elf_Addr newval;
+	} buf;
 
 	rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
@@ -410,7 +417,6 @@ _dl_bind(elf_object_t *object, int reloff)
 	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	r_addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
 	    SYM_SEARCH_ALL | SYM_WARNNOTFOUND | SYM_PLT, sym, object, &sobj);
@@ -419,26 +425,26 @@ _dl_bind(elf_object_t *object, int reloff)
 		*(volatile int *)0 = 0;		/* XXX */
 	}
 
-	value = ooff + this->st_value;
+	buf.newval = ooff + this->st_value;
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return value;
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (buf.newval);
 
-	/* if GOT is protected, allow the write */
-	if (object->got_size != 0)  {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ | PROT_WRITE);
+	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
+	buf.param.kb_size = sizeof(Elf_Addr);
+
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("r13") = SYS_kbind;
+		register void *arg1 __asm("r2") = &buf;
+		register long  arg2 __asm("r3") = sizeof(buf);
+		register long  arg3 __asm("r4") = 0xffffffff & (cookie >> 32);
+		register long  arg4 __asm("r5") = 0xffffffff &  cookie;
+
+		__asm volatile("tb0 0, %%r0, 450; or %%r0, %%r0, %%r0"
+		    : "+r" (arg1), "+r" (arg2) : "r" (syscall_num),
+		    "r" (arg3), "r" (arg4) : "cc", "memory");
 	}
 
-	*r_addr = value;
-
-	/* put the GOT back to RO */
-	if (object->got_size != 0) {
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
-		_dl_thread_bind_lock(1, &savedmask);
-	}
-
-	return (value);
+	return (buf.newval);
 }
