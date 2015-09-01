@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.80 2015/07/13 17:45:01 mikeb Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.81 2015/09/01 06:01:26 deraadt Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -504,7 +504,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
 		printf("%s: isa_intr_establish: bogus irq or type\n", ih_what);
-		free(ih, M_DEVBUF, 0);
+		free(ih, M_DEVBUF, sizeof *ih);
 		return (NULL);
 	}
 	switch (intrtype[irq]) {
@@ -522,7 +522,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
 			    ih_what, isa_intr_typename(intrtype[irq]),
 			    isa_intr_typename(type), irq);*/
-			free(ih, M_DEVBUF, 0);
+			free(ih, M_DEVBUF, sizeof *ih);
 			return (NULL);
 		}
 		break;
@@ -592,7 +592,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 	else
 		panic("intr_disestablish: handler not registered");
 	evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF, 0);
+	free(ih, M_DEVBUF, sizeof *ih);
 
 	intr_calculatemasks();
 

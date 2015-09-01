@@ -1,4 +1,4 @@
-/*	$OpenBSD: piix.c,v 1.10 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: piix.c,v 1.11 2015/09/01 06:01:24 deraadt Exp $	*/
 /*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ piix_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 
 	if (bus_space_map(iot, PIIX_REG_ELCR, PIIX_REG_ELCR_SIZE, 0,
 	    &ph->ph_elcr_ioh) != 0) {
-		free(ph, M_DEVBUF, 0);
+		free(ph, M_DEVBUF, sizeof *ph);
 		return (1);
 	}
 

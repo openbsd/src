@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.80 2015/01/24 15:13:55 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.81 2015/09/01 06:01:24 deraadt Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -868,7 +868,7 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 		idt_vec_free(ih->ih_vec);
 
 		evcount_detach(&ih->ih_count);
-		free(ih, M_DEVBUF, 0);
+		free(ih, M_DEVBUF, sizeof *ih);
 		return;
 	}
 

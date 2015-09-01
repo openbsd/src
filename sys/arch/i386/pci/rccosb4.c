@@ -1,4 +1,4 @@
-/*	$OpenBSD: rccosb4.c,v 1.5 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: rccosb4.c,v 1.6 2015/09/01 06:01:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004,2005 Michael Shalayeff
@@ -79,12 +79,12 @@ osb4_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 	ph->piix.ph_tag = tag;
 
 	if (bus_space_map(iot, OSB4_PIAIR, 2, 0, &ph->osb4_ioh)) {
-		free(ph, M_DEVBUF, 0);
+		free(ph, M_DEVBUF, sizeof *ph);
 		return (1);
 	}
 
 	if (bus_space_map(iot, OSB4_REG_ELCR, 2, 0, &ph->piix.ph_elcr_ioh)) {
-		free(ph, M_DEVBUF, 0);
+		free(ph, M_DEVBUF, sizeof *ph);
 		return (1);
 	}
 
