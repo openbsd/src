@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.1 2015/07/02 01:34:00 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.2 2015/09/01 03:47:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -52,10 +52,12 @@ void		 srp_init(struct srp *);
 #ifdef MULTIPROCESSOR
 void		 srp_update(struct srp_gc *, struct srp *, void *);
 void		*srp_enter(struct srp *);
+void		*srp_follow(struct srp *, void *, struct srp *);
 void		 srp_leave(struct srp *, void *);
 #else /* MULTIPROCESSOR */
 #define srp_update(_gc, _srp, _v)	srp_update_locked((_gc), (_srp), (_v))
 #define srp_enter(_srp)			((_srp)->ref)
+#define srp_follow(_srp, _v, _next)	((_next)->ref)
 #define srp_leave(_srp, _v)		do { } while (0)
 #endif /* MULTIPROCESSOR */
 

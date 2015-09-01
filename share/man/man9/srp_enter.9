@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.3 2015/08/14 05:18:50 dlg Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.4 2015/09/01 03:47:58 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2015 $
+.Dd $Mdocdate: September 1 2015 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm srp_update ,
 .Nm srp_update_locked ,
 .Nm srp_enter ,
+.Nm srp_follow ,
 .Nm srp_leave ,
 .Nm srp_get_locked ,
 .Nm srp_finalize ,
@@ -45,6 +46,8 @@
 .Fn "srp_update_locked" "struct srp_gc *gc" "struct srp *p" "void *v"
 .Ft void *
 .Fn "srp_enter" "struct srp *p"
+.Ft void *
+.Fn "srp_follow" "struct srp *p" "void *v" "struct srp *n"
 .Ft void
 .Fn "srp_leave" "struct srp *p" "void *v"
 .Ft void *
@@ -100,8 +103,38 @@ are already serialised by the caller.
 .Fn srp_enter
 returns a pointer to a data structure referenced by the srp struct
 .Fa p
-and guarantees it will remain available for use until a call to
-.Fn srp_leave .
+and guarantees it will remain available for use until it is released with a
+call to
+.Fn srp_leave
+or
+.Fn srp_follow .
+.Pp
+.Fn srp_follow
+returns a pointer to the data structure referenced by the srp struct
+.Fa n
+that exists within the structure referenced by
+.Fa v
+via
+.Fa p ,
+while releasing the reference to
+.Fa v
+and making it available for garbage collection.
+It is equivalent to a call to
+.Fn srp_enter
+using
+.Fa n
+as an argument
+followed by a call to
+.Fn srp_leave
+with
+.Fa p
+and
+.Fa v
+as arguments.
+.Fn srp_follow
+is necessary to correctly order the taking and releasing of SRP
+critical sections in situations such as following a chain of data
+structures linked with SRPs.
 .Pp
 .Fn srp_leave
 releases the reference to
@@ -147,17 +180,30 @@ and
 .Fn srp_finalize
 can be called during autoconf, or from process context.
 .Pp
-.Fn srp_enter
+.Fn srp_enter ,
+.Fn srp_follow ,
 and
 .Fn srp_leave
 can be called during autoconf, from process context, or from interrupt context.
 Calling
+.Fn srp_follow
+or
 .Fn srp_leave
 from a different context or on a different CPU to the preceding
 .Fn srp_enter
-call will lead to undefined behaviour.
-.Sh RETURN VALUES
+or
+.Fn srp_follow
+calls will lead to undefined behaviour.
+.Pp
+SRP critical sections must be released with
+.Fn srp_leave
+in the opposite order in which they were taken with
 .Fn srp_enter
+unless a critical section is exchanged with
+.Fn srp_follow .
+.Sh RETURN VALUES
+.Fn srp_enter ,
+.Fn srp_follow ,
 and
 .Fn srp_get_locked
 returns a pointer to the data referenced by the srp structure

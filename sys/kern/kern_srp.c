@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.1 2015/07/02 01:34:00 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.2 2015/09/01 03:47:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -187,24 +187,12 @@ srp_finalize(struct srp_gc *srp_gc)
 	}
 }
 
-void *
-srp_enter(struct srp *srp)
+static inline void *
+srp_v(struct srp_hazard *hzrd, struct srp *srp)
 {
-	struct cpu_info *ci = curcpu();
-	struct srp_hazard *hzrd;
 	void *v;
-	u_int i;
-
-	for (i = 0; i < nitems(ci->ci_srp_hazards); i++) {
-		hzrd = &ci->ci_srp_hazards[i];
-		if (hzrd->sh_p == NULL)
-			break;
-	}
-	if (__predict_false(i == nitems(ci->ci_srp_hazards)))
-		panic("%s: not enough srp hazard records", __func__);
 
 	hzrd->sh_p = srp;
-	membar_producer();
 
 	/*
 	 * ensure we update this cpu's hazard pointer to a value that's still
@@ -220,8 +208,8 @@ srp_enter(struct srp *srp)
 	return (v);
 }
 
-void
-srp_leave(struct srp *srp, void *v)
+void *
+srp_enter(struct srp *srp)
 {
 	struct cpu_info *ci = curcpu();
 	struct srp_hazard *hzrd;
@@ -229,9 +217,44 @@ srp_leave(struct srp *srp, void *v)
 
 	for (i = 0; i < nitems(ci->ci_srp_hazards); i++) {
 		hzrd = &ci->ci_srp_hazards[i];
-		if (hzrd->sh_p == srp) {
+		if (hzrd->sh_p == NULL)
+			return (srp_v(hzrd, srp));
+	}
+
+	panic("%s: not enough srp hazard records", __func__);
+
+	/* NOTREACHED */
+	return (NULL);
+}
+
+void *
+srp_follow(struct srp *srp, void *v, struct srp *next)
+{
+	struct cpu_info *ci = curcpu();
+	struct srp_hazard *hzrd;
+
+	hzrd = ci->ci_srp_hazards + nitems(ci->ci_srp_hazards);
+	while (hzrd-- != ci->ci_srp_hazards) {
+		if (hzrd->sh_p == srp && hzrd->sh_v == v)
+			return (srp_v(hzrd, next));
+	}
+
+	panic("%s: unexpected ref %p via %p", __func__, v, srp);
+
+	/* NOTREACHED */
+	return (NULL);
+}
+
+void
+srp_leave(struct srp *srp, void *v)
+{
+	struct cpu_info *ci = curcpu();
+	struct srp_hazard *hzrd;
+
+	hzrd = ci->ci_srp_hazards + nitems(ci->ci_srp_hazards);
+	while (hzrd-- != ci->ci_srp_hazards) {
+		if (hzrd->sh_p == srp && hzrd->sh_v == v) {
 			hzrd->sh_p = NULL;
-			hzrd->sh_v = NULL;
 			return;
 		}
 	}
