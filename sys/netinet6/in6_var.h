@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.53 2015/08/24 15:58:35 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.54 2015/09/01 17:21:36 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ struct	in6_ifaddr {
 #define	ia_flags	ia_ifa.ifa_flags
 
 	struct	sockaddr_in6 ia_addr;	/* interface address */
-	struct	sockaddr_in6 ia_net;	/* network number of interface */
 	struct	sockaddr_in6 ia_dstaddr; /* space for destination addr */
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
 	TAILQ_ENTRY(in6_ifaddr) ia_list;	/* list of IP6 addresses */
@@ -115,7 +114,7 @@ struct	in6_ifaddr {
 				 */
 	time_t	ia6_updatetime;
 
-	/* back pointer to the prefix (for all addresses, not just autoconf) */
+	/* back pointer to the prefix (for autoconf) */
 	struct nd_prefix *ia6_ndpr;
 
 	/* multicast addresses joined from the kernel */
