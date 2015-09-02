@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.47 2015/07/15 18:35:34 beck Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.48 2015/09/02 17:59:15 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -263,7 +263,7 @@ dtls1_connect(SSL *s)
 			}
 
 			dtls1_start_timer(s);
-			ret = dtls1_client_hello(s);
+			ret = ssl3_client_hello(s);
 			if (ret <= 0)
 				goto end;
 
@@ -275,9 +275,10 @@ dtls1_connect(SSL *s)
 
 			s->init_num = 0;
 
-				/* turn on buffering for the next lot of output */
-				if (s->bbio != s->wbio)
-					s->wbio = BIO_push(s->bbio, s->wbio);
+			/* turn on buffering for the next lot of output */
+			if (s->bbio != s->wbio)
+				s->wbio = BIO_push(s->bbio, s->wbio);
+
 			break;
 
 		case SSL3_ST_CR_SRVR_HELLO_A:
@@ -601,100 +602,6 @@ end:
 		cb(s, SSL_CB_CONNECT_EXIT, ret);
 
 	return (ret);
-}
-
-int
-dtls1_client_hello(SSL *s)
-{
-	unsigned char *bufend, *d, *p;
-	unsigned int i;
-
-	if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
-		SSL_SESSION *sess = s->session;
-
-		if ((s->session == NULL) ||
-		    (s->session->ssl_version != s->version) ||
-		    (!sess->session_id_length && !sess->tlsext_tick) ||
-		    (s->session->not_resumable)) {
-			if (!ssl_get_new_session(s, 0))
-				goto err;
-		}
-		/* else use the pre-loaded session */
-
-		p = s->s3->client_random;
-
-		/* if client_random is initialized, reuse it, we are
-		 * required to use same upon reply to HelloVerify */
-		for (i = 0; p[i]=='\0' && i < sizeof(s->s3->client_random); i++)
-			;
-		if (i == sizeof(s->s3->client_random))
-			arc4random_buf(p, sizeof(s->s3->client_random));
-
-		d = p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_HELLO);
-
-		*(p++) = s->version >> 8;
-		*(p++) = s->version&0xff;
-		s->client_version = s->version;
-
-		/* Random stuff */
-		memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
-		p += SSL3_RANDOM_SIZE;
-
-		/* Session ID */
-		if (s->new_session)
-			i = 0;
-		else
-			i = s->session->session_id_length;
-		*(p++) = i;
-		if (i != 0) {
-			if (i > sizeof s->session->session_id) {
-				SSLerr(SSL_F_DTLS1_CLIENT_HELLO,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			memcpy(p, s->session->session_id, i);
-			p += i;
-		}
-
-		/* cookie stuff */
-		if (s->d1->cookie_len > sizeof(s->d1->cookie)) {
-			SSLerr(SSL_F_DTLS1_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-		*(p++) = s->d1->cookie_len;
-		memcpy(p, s->d1->cookie, s->d1->cookie_len);
-		p += s->d1->cookie_len;
-
-		/* Ciphers supported */
-		i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2]);
-		if (i == 0) {
-			SSLerr(SSL_F_DTLS1_CLIENT_HELLO,
-			    SSL_R_NO_CIPHERS_AVAILABLE);
-			goto err;
-		}
-		s2n(i, p);
-		p += i;
-
-		/* add in (no) COMPRESSION */
-		*(p++) = 1;
-		*(p++) = 0; /* Add the NULL method */
-
-		bufend = (unsigned char *)s->init_buf->data +
-		    SSL3_RT_MAX_PLAIN_LENGTH;
-		if ((p = ssl_add_clienthello_tlsext(s, p, bufend)) == NULL) {
-			SSLerr(SSL_F_DTLS1_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-
-		ssl3_handshake_msg_finish(s, p - d);
-
-		s->state = SSL3_ST_CW_CLNT_HELLO_B;
-	}
-
-	/* SSL3_ST_CW_CLNT_HELLO_B */
-	return (ssl3_handshake_write(s));
-err:
-	return (-1);
 }
 
 static int

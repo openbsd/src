@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.124 2015/09/01 13:38:27 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.125 2015/09/02 17:59:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -584,7 +584,6 @@ end:
 	return (ret);
 }
 
-
 int
 ssl3_client_hello(SSL *s)
 {
@@ -603,7 +602,13 @@ ssl3_client_hello(SSL *s)
 		}
 		/* else use the pre-loaded session */
 
-		arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
+		/*
+		 * If a DTLS ClientHello message is being resent after a
+		 * HelloVerifyRequest, we must retain the original client
+		 * random value.
+		 */
+		if (!SSL_IS_DTLS(s) || s->d1->send_cookie == 0)
+			arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
 		d = p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_HELLO);
 
@@ -660,6 +665,18 @@ ssl3_client_hello(SSL *s)
 			p += i;
 		}
 
+		/* DTLS Cookie. */
+		if (SSL_IS_DTLS(s)) {
+			if (s->d1->cookie_len > sizeof(s->d1->cookie)) {
+				SSLerr(SSL_F_DTLS1_CLIENT_HELLO,
+				    ERR_R_INTERNAL_ERROR);
+				goto err;
+			}
+			*(p++) = s->d1->cookie_len;
+			memcpy(p, s->d1->cookie, s->d1->cookie_len);
+			p += s->d1->cookie_len;
+		}
+
 		/* Ciphers supported */
 		i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2]);
 		if (i == 0) {
@@ -683,9 +700,9 @@ ssl3_client_hello(SSL *s)
 			goto err;
 		}
 
-		s->state = SSL3_ST_CW_CLNT_HELLO_B;
-
 		ssl3_handshake_msg_finish(s, p - d);
+
+		s->state = SSL3_ST_CW_CLNT_HELLO_B;
 	}
 
 	/* SSL3_ST_CW_CLNT_HELLO_B */

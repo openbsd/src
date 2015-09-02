@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.102 2015/09/01 13:38:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.103 2015/09/02 17:59:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -729,7 +729,6 @@ int ssl3_check_cert_and_algorithm(SSL *s);
 int ssl3_check_finished(SSL *s);
 int ssl3_send_next_proto(SSL *s);
 
-int dtls1_client_hello(SSL *s);
 int dtls1_send_client_certificate(SSL *s);
 int dtls1_send_client_key_exchange(SSL *s);
 int dtls1_send_client_verify(SSL *s);
