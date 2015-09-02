@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.30 2015/05/06 08:52:17 mpi Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.31 2015/09/02 13:21:37 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -82,6 +82,8 @@ int filt_logread(struct knote *kn, long hint);
    
 struct filterops logread_filtops =
 	{ 1, NULL, filt_logrdetach, filt_logread};
+
+int dosendsyslog(struct proc *, const char *, size_t, enum uio_seg);
 
 void
 initmsgbuf(caddr_t buf, size_t bufsize)
@@ -354,6 +356,40 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 		syscallarg(const void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
+	int error;
+#ifndef SMALL_KERNEL
+	static int dropped_count, orig_error;
+	int len;
+	char buf[64];
+
+	if (dropped_count) {
+		len = snprintf(buf, sizeof(buf),
+		    "<%d> sendsyslog: dropped %d message%s, error %d",
+		    LOG_KERN|LOG_WARNING, dropped_count,
+		    dropped_count == 1 ? "" : "s", orig_error);
+		error = dosendsyslog(p, buf, MIN((size_t)len, sizeof(buf) - 1),
+		    UIO_SYSSPACE);
+		if (error) {
+			dropped_count++;
+			return (error);
+		}
+		dropped_count = 0;
+	}
+#endif
+	error = dosendsyslog(p, SCARG(uap, buf), SCARG(uap, nbyte),
+	    UIO_USERSPACE);
+#ifndef SMALL_KERNEL
+	if (error) {
+		dropped_count++;
+		orig_error = error;
+	}
+#endif
+	return (error);
+}
+
+int
+dosendsyslog(struct proc *p, const char *buf, size_t nbyte, enum uio_seg sflg)
+{
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 	int iovlen;
@@ -369,11 +405,11 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 	f = syslogf;
 	FREF(f);
 
-	aiov.iov_base = (char *)SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, nbyte);
+	aiov.iov_base = (char *)buf;
+	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_segflg = sflg;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_procp = p;
 	auio.uio_offset = 0;
