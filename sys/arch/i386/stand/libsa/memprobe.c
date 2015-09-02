@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.53 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.54 2015/09/02 04:09:24 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -36,7 +36,8 @@
 
 u_int cnvmem, extmem;		/* XXX - compatibility */
 
-
+bios_memmap_t bios_memmap[64];	/* This is easier */
+#ifndef EFIBOOT
 /*
  * Check gateA20
  *
@@ -232,7 +233,7 @@ addrprobe(u_int kloc)
 	u_int save[nitems(addrprobe_pat)];
 
 	/* Get location */
-	loc = (int *)(kloc * 1024);
+	loc = (int *)(intptr_t)(kloc * 1024);
 
 	save[0] = *loc;
 	/* Probe address */
@@ -295,7 +296,6 @@ badprobe(bios_memmap_t *mp)
 	return ++mp;
 }
 
-bios_memmap_t bios_memmap[64];	/* This is easier */
 #ifndef _TEST
 void
 memprobe(void)
@@ -365,6 +365,7 @@ memprobe(void)
 	/* Check if gate A20 is on */
 	printf("a20=o%s] ", checkA20()? "n" : "ff!");
 }
+#endif
 #endif
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.89 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.90 2015/09/02 04:09:24 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -52,6 +52,7 @@ static int biosdisk_errno(u_int);
 int CHS_rw (int, int, int, int, int, int, void *);
 static int EDD_rw (int, int, u_int32_t, u_int32_t, void *);
 
+static int biosd_io(int, bios_diskinfo_t *, u_int, int, void *);
 static u_int findopenbsd(bios_diskinfo_t *, const char **);
 
 extern int debug;
@@ -246,7 +247,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 {
 	int dev = bd->bios_number;
 	int j, error;
-	void *bb;
+	void *bb, *bb1 = NULL;
 	int bbsize = nsect * DEV_BSIZE;
 
 	if (bd->flags & BDI_EL_TORITO) {	/* It's a CD device */
@@ -273,7 +274,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 		 * XXX we believe that all the io is buffered
 		 * by fs routines, so no big reads anyway
 		 */
-		bb = alloca(bbsize);
+		bb = bb1 = alloc(bbsize);
 		if (rw != F_READ)
 			bcopy(buf, bb, bbsize);
 	} else
@@ -327,6 +328,8 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 
 	if (bb != buf && rw == F_READ)
 		bcopy(bb, buf, bbsize);
+	if (bb1 != NULL)
+		free(bb1, bbsize);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
@@ -339,6 +342,11 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 	return error;
 }
 
+int
+biosd_diskio(int rw, struct diskinfo *dip, u_int off, int nsect, void *buf)
+{
+	return biosd_io(rw, &dip->bios_info, off, nsect, buf);
+}
 /*
  * Try to read the bsd label on the given BIOS device.
  */
@@ -417,7 +425,7 @@ const char *
 bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 {
 	u_int start = 0;
-	char *buf;
+	char buf[DEV_BSIZE];
 	const char *err = NULL;
 	int error;
 
@@ -438,7 +446,6 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 	start = LABELSECTOR + start;
 
 	/* Load BSD disklabel */
-	buf = alloca(DEV_BSIZE);
 #ifdef BIOS_DEBUG
 	if (debug)
 		printf("loading disklabel @ %u\n", start);

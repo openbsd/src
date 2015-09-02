@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.11 2015/07/21 03:30:51 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.12 2015/09/02 04:09:24 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -30,7 +30,6 @@
 #include <lib/libsa/rijndael.h>
 
 #include "libsa.h"
-#include "biosdev.h"
 #include "disk.h"
 #include "softraid.h"
 
@@ -173,8 +172,7 @@ srprobe(void)
 			bzero(md, SR_META_SIZE * DEV_BSIZE);
 			off = DL_SECTOBLK(&dip->disklabel, DL_GETPOFFSET(pp));
 			off += SR_META_OFFSET;
-			error = biosd_io(F_READ, &dip->bios_info, off,
-			    SR_META_SIZE, md);
+			error = dip->diskio(F_READ, dip, off, SR_META_SIZE, md);
 			if (error)
 				continue;
 
@@ -356,7 +354,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 		blk += bv->sbv_data_blkno;
 
 		/* XXX - If I/O failed we should try another chunk... */
-		return biosstrategy(dip, rw, blk, size, buf, rsize);
+		return dip->strategy(dip, rw, blk, size, buf, rsize);
 
 	} else if (bv->sbv_level == 'C') {
 
@@ -377,7 +375,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 		for (i = 0; i < nsect; i++) {
 			blkno = blk + i;
 			bp = ((u_char *)buf) + i * DEV_BSIZE;
-			err = biosstrategy(dip, rw, bv->sbv_data_blkno + blkno,
+			err = dip->strategy(dip, rw, bv->sbv_data_blkno + blkno,
 			    DEV_BSIZE, bp, NULL);
 			if (err != 0)
 				return err;
@@ -402,7 +400,7 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	struct dos_partition *dp;
 	struct dos_mbr mbr;
 	u_int start = 0;
-	char *buf;
+	char buf[DEV_BSIZE];
 	int i;
 
 	/* Check for MBR to determine partition offset. */
@@ -426,7 +424,6 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	start += LABELSECTOR;
 
 	/* Read the disklabel. */
-	buf = alloca(DEV_BSIZE);
 	sr_strategy(bv, F_READ, start, sizeof(struct disklabel), buf, NULL);
 
 #ifdef BIOS_DEBUG

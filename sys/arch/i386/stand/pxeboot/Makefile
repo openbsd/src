@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2014/11/19 20:10:01 miod Exp $
+#	$OpenBSD: Makefile,v 1.21 2015/09/02 04:09:24 yasuoka Exp $
 
 MAN=	pxeboot.8
 
@@ -17,7 +17,7 @@ BINMODE=644
 CLEANFILES+=	crt0.o ${PROG}.whole
 
 .PATH:	${SADIR}/libsa
-SRCS+=	alloca.S debug_i386.S gidt.S random_i386.S
+SRCS+=	debug_i386.S gidt.S random_i386.S
 SRCS+=	cmd_i386.c exec_i386.c gateA20.c machdep.c
 SRCS+=	apmprobe.c bioscons.c biosdev.c debug.c diskprobe.c memprobe.c \
 	pciprobe.c ps2probe.c time.c

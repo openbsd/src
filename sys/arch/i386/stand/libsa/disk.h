@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.5 2012/10/31 13:55:58 jsing Exp $	*/
+/*	$OpenBSD: disk.h,v 1.6 2015/09/02 04:09:24 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,11 +32,18 @@
 
 #include <sys/queue.h>
 
+struct efi_diskinfo;
+typedef struct efi_diskinfo *efi_diskinfo_t;
+
 /* All the info on a disk we've found */
 struct diskinfo {
+	efi_diskinfo_t efi_info;
 	bios_diskinfo_t bios_info;
 	struct disklabel disklabel;
 	struct sr_boot_volume *sr_vol;
+
+	int (*diskio)(int, struct diskinfo *, u_int, int, void *);
+	int (*strategy)(void *, int, daddr32_t, size_t, void *, size_t *);
 
 	dev_t bsddev, bootdev;
 
