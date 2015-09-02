@@ -1,0 +1,74 @@
+#	$OpenBSD: Makefile.common,v 1.1 2015/09/02 01:52:25 yasuoka Exp $
+
+S=		${.CURDIR}/../../../../..
+SADIR=		${.CURDIR}/../..
+EFIDIR=		${.CURDIR}/../../efi
+
+OBJCOPY?=	objcopy
+OBJDUMP?=	objdump
+
+LDFLAGS+=	-nostdlib -T${.CURDIR}/../${LDSCRIPT} -Bsymbolic -shared
+
+COPTS+=		-DEFIBOOT -DNEEDS_HEAP_H -DLINKADDR=${LINKADDR} -I${.CURDIR}/..
+COPTS+=		-I${EFIDIR}/include -I${S}/stand/boot
+COPTS+=		-ffreestanding -std=gnu99
+COPTS+=		-fshort-wchar -fPIC
+.if ${SOFTRAID:L} == "yes"
+COPTS+=		-DSOFTRAID
+.endif
+COPTS+=		-D_STANDALONE -nostdinc -fno-builtin
+
+AFLAGS+=	-pipe -fPIC
+
+.PATH:	${.CURDIR}/..
+SRCS+=	self_reloc.c
+SRCS+=	efiboot.c efidev.c
+SRCS+=	conf.c
+
+.PATH:	${S}/stand/boot
+SRCS+=	boot.c bootarg.c cmd.c vars.c
+
+.PATH:	${S}/lib/libsa
+SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memset.c printf.c \
+	putchar.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c \
+	strtol.c strtoll.c
+SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
+	lseek.c open.c read.c readdir.c stat.c
+SRCS+=	ufs.c
+.if ${SOFTRAID:L} == "yes"
+SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
+.endif
+
+.PATH:	${S}/lib/libz
+SRCS+=	adler32.c crc32.c inflate.c inftrees.c
+
+.PATH:	${S}/lib/libkern
+SRCS+=	divdi3.c moddi3.c qdivrem.c
+SRCS+=	strlcpy.c
+
+.PATH:	${SADIR}/libsa
+SRCS+=	loadfile.c elf64.c elf32.c memprobe.c cmd_i386.c dev_i386.c exec_i386.c
+SRCS+=	machdep.c diskprobe.c
+
+.if ${SOFTRAID:L} == "yes"
+SRCS+=	softraid.c
+.endif
+
+PROG.so=	${PROG:S/.EFI/.so/}
+CLEANFILES+=	${PROG.so} ${PROG.so}.tmp
+
+${PROG}: ${PROG.so}
+	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
+	    -j .rel.* -j .rela -j .rela.* -j .reloc \
+	    --target=${OBJFMT} ${PROG.so} ${.TARGET}
+
+.include <bsd.prog.mk>
+CFLAGS+=	-Wno-pointer-sign
+CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
+
+${PROG.so}: ${OBJS}
+	${LD} ${LDFLAGS} -o ${.TARGET}.tmp ${OBJS} ${LDADD}
+	@if ${OBJDUMP} -t ${.TARGET}.tmp | grep 'UND'; then	\
+		(echo Undefined symbols; false);		\
+	fi
+	mv ${.TARGET}.tmp ${.TARGET}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbkdf2.c,v 1.1 2012/10/09 12:36:50 jsing Exp $	*/
+/*	$OpenBSD: pbkdf2.c,v 1.2 2015/09/02 01:52:26 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -41,7 +41,7 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const char *salt,
 		return -1;
 	if (salt_len == 0 || salt_len > SIZE_MAX - 1)
 		return -1;
-	if ((asalt = alloca(salt_len + 4)) == NULL)
+	if ((asalt = alloc(salt_len + 4)) == NULL)
 		return -1;
 
 	memcpy(asalt, salt, salt_len);
@@ -67,6 +67,7 @@ pkcs5_pbkdf2(const char *pass, size_t pass_len, const char *salt,
 		key_len -= r;
 	};
 	explicit_bzero(asalt, salt_len + 4);
+	free(asalt, salt_len + 4);
 	explicit_bzero(d1, sizeof(d1));
 	explicit_bzero(d2, sizeof(d2));
 	explicit_bzero(obuf, sizeof(obuf));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.6 2013/10/23 05:05:19 mlarkin Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.7 2015/09/02 01:52:26 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -37,6 +37,9 @@
 #include "libsa.h"
 #include <cmd.h>
 
+#ifdef EFIBOOT
+#include "efiboot.h"
+#endif
 
 extern const char version[];
 
@@ -54,6 +57,11 @@ const struct cmd_table cmd_machine[] = {
 	{ "comaddr",	CMDT_CMD, Xcomaddr },
 	{ "diskinfo",	CMDT_CMD, Xdiskinfo },
 	{ "memory",	CMDT_CMD, Xmemory },
+#ifdef EFIBOOT
+	{ "video",	CMDT_CMD, Xvideo_efi },
+	{ "exit",	CMDT_CMD, Xexit_efi },
+	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
+#endif
 #ifdef DEBUG
 	{ "regs",	CMDT_CMD, Xregs },
 #endif
@@ -81,9 +89,12 @@ Xregs(void)
 int
 Xboot(void)
 {
+#ifdef EFIBOOT
+	printf("Not supported yet\n");
+#else
 #ifndef _TEST
 	int dev, part, st;
-	bios_diskinfo_t *bd = NULL;
+	struct diskinfo *dip;
 	char buf[DEV_BSIZE], *dest = (void *)BOOTBIOS_ADDR;
 
 	if (cmd.argc != 2) {
@@ -116,8 +127,8 @@ Xboot(void)
 		printf("[%x]\n", dev);
 
 	/* Read boot sector from device */
-	bd = bios_dklookup(dev);
-	st = biosd_io(F_READ, bd, 0, 1, buf);
+	dip = dklookup(dev);
+	st = dip->diskio(F_READ, dip, 0, 1, buf);
 	if (st)
 		goto bad;
 
@@ -138,6 +149,7 @@ Xboot(void)
 
 bad:
 	printf("Invalid device!\n");
+#endif
 #endif
 	return 0;
 }

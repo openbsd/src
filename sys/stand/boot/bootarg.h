@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootarg.h,v 1.13 2014/01/24 05:24:07 deraadt Exp $	*/
+/*	$OpenBSD: bootarg.h,v 1.14 2015/09/02 01:52:26 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -55,4 +55,5 @@ int	mdrandom(char *buf, size_t buflen);
 #ifdef _STANDALONE
 void addbootarg(int, size_t, void *);
 void makebootargs(caddr_t, size_t *);
+void makebootargs32(caddr_t, size_t *);
 #endif /* _STANDALONE */

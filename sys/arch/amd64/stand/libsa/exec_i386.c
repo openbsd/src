@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.12 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.13 2015/09/02 01:52:26 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -43,6 +43,10 @@
 #include "softraid.h"
 #endif
 
+#ifdef EFIBOOT
+#include "efiboot.h"
+#endif
+
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));
 
@@ -69,6 +73,11 @@ run_loadfile(u_long *marks, int howto)
 	struct sr_boot_volume *bv;
 #endif
 
+#ifdef EFIBOOT
+	if ((av = alloc(ac)) == NULL)
+		panic("alloc for bootarg");
+	efi_makebootargs();
+#endif
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
 
@@ -107,7 +116,11 @@ run_loadfile(u_long *marks, int howto)
 	/* Pass memory map to the kernel */
 	mem_pass();
 
-	makebootargs(av, &ac);
+	/*
+	 * This code may be used both for 64bit and 32bit.  Make sure the
+	 * bootarg is 32bit always on even on amd64.
+	 */
+	makebootargs32(av, &ac);
 
 	entry = marks[MARK_ENTRY] & 0x0fffffff;
 
@@ -115,8 +128,16 @@ run_loadfile(u_long *marks, int howto)
 	    ((int *)entry)[0], ((int *)entry)[1],
 	    ((int *)entry)[2], ((int *)entry)[3]);
 
+#if defined(EFIBOOT)
+	efi_cleanup();
+#endif
+#if defined(EFIBOOT) && defined(__amd64__)
+	(*run_i386)((u_long)run_i386, entry, howto, bootdev, BOOTARG_APIVER,
+	    marks[MARK_END], extmem, cnvmem, ac, (intptr_t)av);
+#else
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
 	    extmem, cnvmem, ac, (int)av);
 	/* not reached */
+#endif
 }
