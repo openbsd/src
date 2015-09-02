@@ -1,8 +1,9 @@
-/*	$OpenBSD: efidev.c,v 1.1 2015/09/02 01:52:25 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.2 2015/09/02 08:24:29 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
  * Copyright (c) 2003 Tobias Weingartner
+ * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
