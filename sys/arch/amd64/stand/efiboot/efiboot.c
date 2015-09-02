@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.1 2015/09/02 01:52:25 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.2 2015/09/02 21:22:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -300,7 +300,7 @@ efi_memprobe_internal(void)
 		    bm->addr / 1024 == extmem + 1024)
 			extmem += bm->size / 1024;
 	}
-	free(mm, siz);
+	free(mm0, siz);
 }
 
 /***********************************************************************
