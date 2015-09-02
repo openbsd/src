@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.21 2015/05/19 20:28:14 miod Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.22 2015/09/02 14:07:43 deraadt Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -205,7 +205,7 @@ alpha_shared_intr_disestablish(intr, cookie)
 	 */
 	evcount_detach(&ih->ih_count);
 	TAILQ_REMOVE(&intr[num].intr_q, ih, ih_q);
-	free(ih, M_DEVBUF, 0);
+	free(ih, M_DEVBUF, sizeof *ih);
 }
 
 int
