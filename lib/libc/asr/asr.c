@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.38 2015/06/04 19:23:17 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.39 2015/09/02 13:47:47 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -57,7 +57,7 @@
 #include "thread_private.h"
 #endif
 
-#define DEFAULT_CONFFILE	"/etc/resolv.conf"
+#define DEFAULT_CONFFILE	_PATH_RESCONF
 #define DEFAULT_CONF		"lookup file\n"
 #define DEFAULT_LOOKUP		"lookup bind file"
 
