@@ -20,8 +20,8 @@
 #include <machine/specialreg.h>
 
 /*
- * Random data is xored into the buffer in 4 byte blocks. If the buffer size
- * is not a multiple of 4, the remaining bytes will be left untouched.
+ * Random data is xored into the buffer in 8-byte blocks. If the buffer size
+ * is not a multiple of 8, the remaining bytes will be left untouched.
  */
 ENTRY(mdrandom)
 	pushq   %rbx
