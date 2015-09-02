@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.8 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.9 2015/09/02 13:39:23 mikeb Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -206,15 +206,4 @@ i8259_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
 {
 	if (CPU_IS_PRIMARY(ci))
 		i8259_reinit_irqs();
-}
-
-unsigned
-i8259_setmask(unsigned mask)
-{
-	unsigned old = i8259_imen;
-
-	i8259_imen = mask;
-	outb(IO_ICU1 + 1, i8259_imen);
-	outb(IO_ICU2 + 1, i8259_imen >> 8);
-	return old;
 }
