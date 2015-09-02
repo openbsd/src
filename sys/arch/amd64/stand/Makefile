@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2014/01/20 08:43:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/09/02 04:12:49 deraadt Exp $
 
 .if ${MACHINE} == "amd64"
 SUBDIR=	mbr cdbr
 .endif
-SUBDIR+=biosboot boot cdboot fdboot pxeboot
+SUBDIR+=biosboot boot cdboot fdboot pxeboot efiboot
 
 .include <bsd.subdir.mk>
