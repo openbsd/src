@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_unix.c,v 1.23 2015/09/01 19:54:00 deraadt Exp $ */
+/*	$OpenBSD: auth_unix.c,v 1.24 2015/09/02 06:47:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -322,7 +322,7 @@ marshal_new_auth(AUTH *auth)
 	xdrmem_create(xdrs, au->au_marshed, MAX_AUTH_BYTES, XDR_ENCODE);
 	if ((! xdr_opaque_auth(xdrs, &(auth->ah_cred))) ||
 	    (! xdr_opaque_auth(xdrs, &(auth->ah_verf)))) {
-		perror("auth_none.c - Fatal marshalling problem");
+		/* XXX nothing we can do */
 	} else {
 		au->au_mpos = XDR_GETPOS(xdrs);
 	}

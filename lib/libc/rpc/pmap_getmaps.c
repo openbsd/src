@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_getmaps.c,v 1.12 2014/11/11 04:51:49 guenther Exp $ */
+/*	$OpenBSD: pmap_getmaps.c,v 1.13 2015/09/02 06:47:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -70,7 +70,8 @@ pmap_getmaps(struct sockaddr_in *address)
 	if (client != NULL) {
 		if (CLNT_CALL(client, PMAPPROC_DUMP, xdr_void, NULL, xdr_pmaplist,
 		    &head, minutetimeout) != RPC_SUCCESS) {
-			clnt_perror(client, "pmap_getmaps rpc problem");
+			CLNT_DESTROY(client);
+			return (NULL);
 		}
 		CLNT_DESTROY(client);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_clnt.c,v 1.17 2014/11/11 04:51:49 guenther Exp $ */
+/*	$OpenBSD: pmap_clnt.c,v 1.18 2015/09/02 06:47:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -74,7 +74,6 @@ pmap_set(u_long program, u_long version, u_int protocol, int iport)
 	if (CLNT_CALL(client, PMAPPROC_SET, xdr_pmap, &parms, xdr_bool, &rslt,
 	    tottimeout) != RPC_SUCCESS) {
 		save_errno = errno;
-		clnt_perror(client, "Cannot register service");
 		rslt = FALSE;
 	} else
 		save_errno = errno;
