@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.18 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.19 2015/09/02 13:53:55 deraadt Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ softintr_disestablish(void *arg)
 	}
 	mtx_leave(&siq->siq_mtx);
 
-	free(sih, M_DEVBUF, 0);
+	free(sih, M_DEVBUF, sizeof *sih);
 }
 
 /*
