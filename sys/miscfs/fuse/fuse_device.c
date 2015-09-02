@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.18 2015/02/10 22:04:00 miod Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.19 2015/09/02 04:07:11 deraadt Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -148,7 +148,7 @@ fuse_destroy(dev_t dev, struct fuse_d *fd)
 {
 	LIST_REMOVE(fd, fd_list);
 	fuse_device_cleanup(dev, NULL);
-	free(fd, M_DEVBUF, 0);
+	free(fd, M_DEVBUF, sizeof *fd);
 }
 
 /*
