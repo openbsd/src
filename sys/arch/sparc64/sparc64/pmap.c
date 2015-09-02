@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2015/08/30 16:47:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.94 2015/09/02 21:59:29 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -305,7 +305,7 @@ pmap_enter_kpage(vaddr_t va, int64_t data)
 			prom_printf("pmap_enter_kpage: out of pages\n");
 			panic("pmap_enter_kpage");
 		}
-		pmap_kernel()->pm_stats.resident_count++;
+		atomic_inc_long(&pmap_kernel()->pm_stats.resident_count);
 
 		BDPRINTF(PDB_BOOT1, 
 			 ("pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
@@ -1674,23 +1674,21 @@ pmap_deactivate(struct proc *p)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pte_t tte;
 	struct pmap *pm = pmap_kernel();
-	int s;
+	pte_t tte;
 
 	KDASSERT(va < INTSTACK || va > EINTSTACK);
 	KDASSERT(va < kdata || va > ekdata);
 
 #ifdef DIAGNOSTIC
 	if (pa & (PMAP_NVC|PMAP_NC|PMAP_LITTLE))
-		panic("pmap_kenter_pa: illegal cache flags %ld", pa);
+		panic("%s: illegal cache flags 0x%lx", __func__, pa);
 #endif
 
 	/*
 	 * Construct the TTE.
 	 */
-	s = splvm();
-	tte.tag = TSB_TAG(0,pm->pm_ctx,va);
+	tte.tag = TSB_TAG(0, pm->pm_ctx,va);
 	if (CPU_ISSUN4V) {
 		tte.data = SUN4V_TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
 		    (PROT_WRITE & prot), 1, 0, 1, 0);
@@ -1717,12 +1715,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	KDASSERT((tte.data & TLB_NFO) == 0);
 
 	/* Kernel page tables are pre-allocated. */
-	if (pseg_set(pmap_kernel(), va, tte.data, 0) != 0)
-		panic("pmap_kenter_pa: no pseg");
+	if (pseg_set(pm, va, tte.data, 0) != 0)
+		panic("%s: no pseg", __func__);
 
-	pmap_kernel()->pm_stats.resident_count++;
+	atomic_inc_long(&pm->pm_stats.resident_count);
 
-	splx(s);
 	/* this is correct */
 	dcache_flush_page(pa);
 }
@@ -1737,33 +1734,29 @@ void
 pmap_kremove(vaddr_t va, vsize_t size)
 {
 	struct pmap *pm = pmap_kernel();
-	int64_t data;
-	int s;
 
 	KDASSERT(va < INTSTACK || va > EINTSTACK);
 	KDASSERT(va < kdata || va > ekdata);
 
-	s = splvm();
 	while (size >= NBPG) {
 		/*
 		 * Is this part of the permanent 4MB mapping?
 		 */
 #ifdef DIAGNOSTIC
 		if (pm == pmap_kernel() && 
-			(va >= ktext && va < roundup(ekdata, 4*MEG)))
-			panic("pmap_kremove: va=%08x in locked TLB", 
-				(u_int)va);
+		    (va >= ktext && va < roundup(ekdata, 4*MEG)))
+			panic("%s: va=0x%lx in locked TLB", __func__, va);
 #endif
 		/* Shouldn't need to do this if the entry's not valid. */
-		if ((data = pseg_get(pm, va))) {
+		if (pseg_get(pm, va)) {
 			/* We need to flip the valid bit and clear the access statistics. */
 			if (pseg_set(pm, va, 0, 0)) {
 				printf("pmap_kremove: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
 			}
-			
-			pmap_kernel()->pm_stats.resident_count--;
+
+			atomic_dec_long(&pm->pm_stats.resident_count);
 			tsb_invalidate(pm->pm_ctx, va);
 			/* Here we assume nothing can get into the TLB unless it has a PTE */
 			tlb_flush_pte(va, pm->pm_ctx);
@@ -1771,7 +1764,6 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		va += NBPG;
 		size -= NBPG;
 	}
-	splx(s);
 }
 
 /*
@@ -1874,7 +1866,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	if (pv != NULL)
 		npv = pmap_enter_pv(pm, npv, va, pa);
-	pm->pm_stats.resident_count++;
+	atomic_inc_long(&pm->pm_stats.resident_count);
 	mtx_leave(&pm->pm_mtx);
 	if (pm->pm_ctx || pm == pmap_kernel()) {
 		tsb_invalidate(pm->pm_ctx, va);
@@ -1944,7 +1936,7 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 				Debugger();
 				/* panic? */
 			}
-			pm->pm_stats.resident_count--;
+			atomic_dec_long(&pm->pm_stats.resident_count);
 			if (!pm->pm_ctx && pm != pmap_kernel())
 				continue;
 			tsb_invalidate(pm->pm_ctx, va);
@@ -2547,7 +2539,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				    (pv->pv_va & PV_VAMASK));
 				tlb_flush_pte(pv->pv_va & PV_VAMASK, pv->pv_pmap->pm_ctx);
 			}
-			pv->pv_pmap->pm_stats.resident_count--;
+			atomic_dec_long(&pv->pv_pmap->pm_stats.resident_count);
 
 			/* free the pv */
 			firstpv->pv_next = pv->pv_next;
@@ -2575,7 +2567,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				tlb_flush_pte(pv->pv_va & PV_VAMASK,
 				    pv->pv_pmap->pm_ctx);
 			}
-			pv->pv_pmap->pm_stats.resident_count--;
+			atomic_dec_long(&pv->pv_pmap->pm_stats.resident_count);
 			KASSERT(pv->pv_next == NULL);
 			/* dump the first pv */
 			pv->pv_pmap = NULL;
