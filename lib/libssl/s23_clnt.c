@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.43 2015/09/01 13:38:27 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.44 2015/09/02 17:53:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -319,7 +319,8 @@ ssl23_client_hello(SSL *s)
 			version_major = TLS1_VERSION_MAJOR;
 			version_minor = TLS1_VERSION_MINOR;
 		} else {
-			SSLerr(SSL_F_SSL23_CLIENT_HELLO, SSL_R_NO_PROTOCOLS_AVAILABLE);
+			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+			    SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return (-1);
 		}
 
@@ -331,7 +332,7 @@ ssl23_client_hello(SSL *s)
 		 * Do the record header (5 bytes) and handshake
 		 * message header (4 bytes) last
 		 */
-		d = p = &(buf[9]);
+		d = p = &(buf[SSL3_RT_HEADER_LENGTH + SSL3_HM_HEADER_LENGTH]);
 
 		*(p++) = version_major;
 		*(p++) = version_minor;
@@ -368,7 +369,7 @@ ssl23_client_hello(SSL *s)
 		l = p - d;
 
 		/* fill in 4-byte handshake header */
-		d = &(buf[5]);
+		d = &(buf[SSL3_RT_HEADER_LENGTH]);
 		*(d++) = SSL3_MT_CLIENT_HELLO;
 		l2n3(l, d);
 
@@ -398,7 +399,8 @@ ssl23_client_hello(SSL *s)
 		s->init_num = p - buf;
 		s->init_off = 0;
 
-		ssl3_finish_mac(s, &(buf[5]), s->init_num - 5);
+		ssl3_finish_mac(s, &(buf[SSL3_RT_HEADER_LENGTH]),
+		    s->init_num - SSL3_RT_HEADER_LENGTH);
 
 		s->state = SSL23_ST_CW_CLNT_HELLO_B;
 		s->init_off = 0;
