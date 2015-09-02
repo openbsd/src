@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.123 2015/09/01 07:09:55 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.124 2015/09/02 16:08:49 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -2033,7 +2033,7 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 
 	if (txr->tx_buffers != NULL)
 		free(txr->tx_buffers, M_DEVBUF,
-		    sc->num_queues * sizeof(struct tx_ring));
+		    sc->num_tx_desc * sizeof(struct ixgbe_tx_buf));
 	txr->tx_buffers = NULL;
 	txr->txtag = NULL;
 }
@@ -2795,7 +2795,7 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 			rxbuf->map = NULL;
 		}
 		free(rxr->rx_buffers, M_DEVBUF,
-		    sc->num_queues * sizeof(struct rx_ring));
+		    sc->num_rx_desc * sizeof(struct ixgbe_rx_buf));
 		rxr->rx_buffers = NULL;
 	}
 }
