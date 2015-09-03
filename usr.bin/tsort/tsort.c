@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.28 2015/08/31 09:36:02 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.29 2015/09/03 11:16:50 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -137,6 +137,7 @@ static struct node *find_cycle_from(struct node *, struct array *);
 static struct node *find_predecessor(struct array *, struct node *);
 static unsigned int traverse_node(struct node *, unsigned int, struct array *);
 static struct node *find_longest_cycle(struct array *, struct array *);
+static struct node *find_normal_cycle(struct array *, struct array *);
 
 static void heap_down(struct array *, unsigned int);
 static void heapify(struct array *, int);
@@ -153,6 +154,11 @@ static void *emem(void *);
 #define DEBUG_TRAVERSE 0
 static struct ohash_info node_info = {
 	offsetof(struct node, k), NULL, hash_calloc, hash_free, entry_alloc };
+static void parse_args(int, char *[], struct ohash *);
+static int tsort(struct ohash *);
+
+static int 		quiet_flag, long_flag,
+			warn_flag, hints_flag, verbose_flag;
 
 
 int main(int, char *[]);
@@ -795,68 +801,76 @@ find_longest_cycle(struct array *h, struct array *c)
 	return n;
 }
 
+static struct node *
+find_normal_cycle(struct array *h, struct array *c)
+{
+	struct node *b, *n;
+
+	if (hints_flag)
+		n = find_smallest_node(h);
+	else
+		n = find_good_cycle_break(h);
+	while ((b = find_cycle_from(n, c)) == NULL)
+		n = find_predecessor(h, n);
+	return b;
+}
+
 
 #define plural(n) ((n) > 1 ? "s" : "")
 
-int
-main(int argc, char *argv[])
+static void 
+parse_args(int argc, char *argv[], struct ohash *pairs)
 {
-	struct ohash 	pairs;
-	int 		reverse_flag, quiet_flag, long_flag,
-			    warn_flag, hints_flag, verbose_flag;
+	int c;
 	unsigned int	order;
+	int reverse_flag;
 
 	order = 0;
 
 	reverse_flag = quiet_flag = long_flag =
 		warn_flag = hints_flag = verbose_flag = 0;
-	nodes_init(&pairs);
+	nodes_init(pairs);
+	while ((c = getopt(argc, argv, "h:flqrvw")) != -1) {
+		switch(c) {
+		case 'h': {
+			FILE *f;
 
-	{
-	    int c;
-
-	    while ((c = getopt(argc, argv, "h:flqrvw")) != -1) {
-		    switch(c) {
-		    case 'h': {
-			    FILE *f;
-
-			    f = fopen(optarg, "r");
-			    if (f == NULL)
-				    err(EX_NOINPUT, "Can't open hint file %s",
-					optarg);
-			    order = read_hints(f, &pairs, quiet_flag,
-				optarg, order);
-			    fclose(f);
-		    }
-			    hints_flag = 1;
-			    break;
-			    /*FALLTHRU*/
-		    case 'f':
-			    hints_flag = 2;
-			    break;
-		    case 'l':
-			    long_flag = 1;
-			    break;
-		    case 'q':
-			    quiet_flag = 1;
-			    break;
-		    case 'r':
-			    reverse_flag = 1;
-			    break;
-		    case 'v':
-			    verbose_flag = 1;
-			    break;
-		    case 'w':
-			    warn_flag = 1;
-			    break;
-		    default:
-			    usage();
-		    }
-	    }
-
-	    argc -= optind;
-	    argv += optind;
+			f = fopen(optarg, "r");
+			if (f == NULL)
+				err(EX_NOINPUT, "Can't open hint file %s",
+				    optarg);
+			order = read_hints(f, pairs, quiet_flag,
+			    optarg, order);
+			fclose(f);
+		}
+			hints_flag = 1;
+			break;
+			/*FALLTHRU*/
+		case 'f':
+			hints_flag = 2;
+			break;
+		case 'l':
+			long_flag = 1;
+			break;
+		case 'q':
+			quiet_flag = 1;
+			break;
+		case 'r':
+			reverse_flag = 1;
+			break;
+		case 'v':
+			verbose_flag = 1;
+			break;
+		case 'w':
+			warn_flag = 1;
+			break;
+		default:
+			usage();
+		}
 	}
+
+	argc -= optind;
+	argv += optind;
 
 	switch(argc) {
 	case 1: {
@@ -865,20 +879,23 @@ main(int argc, char *argv[])
 		f = fopen(argv[0], "r");
 		if (f == NULL)
 			err(EX_NOINPUT, "Can't open file %s", argv[0]);
-		order = read_pairs(f, &pairs, reverse_flag, argv[0], order,
+		order = read_pairs(f, pairs, reverse_flag, argv[0], order,
 		    hints_flag == 2);
 		fclose(f);
 		break;
 	}
 	case 0:
-		order = read_pairs(stdin, &pairs, reverse_flag, "stdin",
+		order = read_pairs(stdin, pairs, reverse_flag, "stdin",
 		    order, hints_flag == 2);
 		break;
 	default:
 		usage();
 	}
+}
 
-	{
+static int
+tsort(struct ohash *pairs)
+{
 	    struct array 	aux;	/* Unrefed nodes/cycle reporting.  */
 	    struct array	remaining;
 	    unsigned int	broken_arcs, broken_cycles;
@@ -888,9 +905,9 @@ main(int argc, char *argv[])
 	    broken_cycles = 0;
 
 	    if (hints_flag)
-		    make_transparent(&pairs);
-	    split_nodes(&pairs, &aux, &remaining);
-	    ohash_delete(&pairs);
+		    make_transparent(pairs);
+	    split_nodes(pairs, &aux, &remaining);
+	    ohash_delete(pairs);
 
 	    if (hints_flag)
 		    heapify(&aux, verbose_flag);
@@ -925,19 +942,10 @@ main(int argc, char *argv[])
 			    /* XXX Simple cycle detection and long cycle
 			     * detection are mutually exclusive.  */
 
-			    if (long_flag) {
+			    if (long_flag)
 				    n = find_longest_cycle(&remaining, &aux);
-			    } else {
-				    struct node *b;
-
-				    if (hints_flag)
-					    n = find_smallest_node(&remaining);
-				    else
-					    n = find_good_cycle_break(&remaining);
-				    while ((b = find_cycle_from(n, &aux)) == NULL)
-					    n = find_predecessor(&remaining, n);
-				    n = b;
-			    }
+			    else
+				    n = find_normal_cycle(&remaining, &aux);
 
 			    if (!quiet_flag) {
 				    warnx("cycle in data");
@@ -959,10 +967,18 @@ main(int argc, char *argv[])
 			broken_cycles, plural(broken_cycles),
 			broken_arcs, plural(broken_arcs));
 	    if (warn_flag)
-		    exit(broken_cycles < 256 ? broken_cycles : 255);
+		    return (broken_cycles < 256 ? broken_cycles : 255);
 	    else
-		    exit(EX_OK);
-	}
+		    return (EX_OK);
+}
+
+int
+main(int argc, char *argv[])
+{
+	struct ohash 	pairs;
+
+	parse_args(argc, argv, &pairs);
+	return tsort(&pairs);
 }
 
 
