@@ -1,7 +1,7 @@
 /*
  * Computer
  *
- * $OpenBSD: calendar.computer,v 1.16 2015/07/03 11:07:08 jmc Exp $
+ * $OpenBSD: calendar.computer,v 1.17 2015/09/03 23:04:18 sobrado Exp $
  */
 
 #ifndef _calendar_computer_
@@ -40,7 +40,7 @@
 04/07	IBM announces System/360, 1964
 04/09	ENIAC Project begun, 1943
 04/20	Apple announces the Apple ][ at the 1st West Coast Computer Faire, 1977
-04/28	Zilog Z-80 introduced
+04/28	Zilog Z-80 introduced, 1976
 05/06	EDSAC demonstrated, 1949
 05/01	First BASIC program run at Dartmouth, 1964
 05/16	First report on SNOBOL distributed (within BTL), 1963
