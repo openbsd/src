@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.10 2014/07/08 10:28:02 deraadt Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.11 2015/09/03 11:30:13 yasuoka Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -30,10 +30,12 @@
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <machine/biosvar.h>
 
 #include <assert.h>
 #include <err.h>
 #include <fcntl.h>
+#include <kvm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -185,6 +187,7 @@ void	acpi_handle_facp(struct FACPbody *_facp);
 void	acpi_handle_rsdt(struct ACPIsdt *_rsdp);
 void	asl_dump_from_devmem(void);
 void	usage(void);
+u_long	bios_acpi_addr(void);
 
 
 struct ACPIsdt	dsdt_header = {
@@ -259,19 +262,34 @@ acpi_user_init(void)
 	}
 }
 
+
 struct ACPIrsdp *
 acpi_find_rsd_ptr(void)
 {
 	int		i;
 	u_int8_t	buf[sizeof(struct ACPIrsdp)];
+	u_long		addr;
 
 	acpi_user_init();
+	if ((addr = bios_acpi_addr()) != 0) {
+		lseek(acpi_mem_fd, addr, SEEK_SET);
+		read(acpi_mem_fd, buf, 16);
+		if (!memcmp(buf, "RSD PTR ", 8)) {
+			read(acpi_mem_fd, buf + 16,
+			    sizeof(struct ACPIrsdp) - 16);
+			if (!acpi_checksum(buf, sizeof(struct ACPIrsdp)))
+				return (acpi_map_physical(addr,
+				    sizeof(struct ACPIrsdp)));
+		}
+		lseek(acpi_mem_fd, 0, SEEK_SET);
+	}
 	for (i = 0; i < 1024 * 1024; i += 16) {
 		lseek(acpi_mem_fd, i, SEEK_SET);
 		read(acpi_mem_fd, buf, 16);
 		if (!memcmp(buf, "RSD PTR ", 8)) {
 			/* Read the rest of the structure */
-			read(acpi_mem_fd, buf + 16, sizeof(struct ACPIrsdp) - 16);
+			read(acpi_mem_fd, buf + 16,
+			    sizeof(struct ACPIrsdp) - 16);
 
 			/* Verify checksum before accepting it. */
 			if (acpi_checksum(buf, sizeof(struct ACPIrsdp)))
@@ -560,5 +578,34 @@ main(int argc, char *argv[])
 
 	asl_dump_from_devmem();
 
+	return (0);
+}
+
+u_long
+bios_acpi_addr(void)
+{
+	kvm_t		*kd;
+	struct nlist	 nl[2];
+	bios_efiinfo_t	 efiinfo;
+	u_long	 ptr;
+
+	memset(&nl, 0, sizeof(nl));
+	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
+	if (kd == NULL)
+		goto on_error;
+	nl[0].n_name = "_bios_efiinfo";
+	if (kvm_nlist(kd, nl) == -1)
+		goto on_error;
+	if (kvm_read(kd, nl[0].n_value, &ptr, sizeof(ptr)) == -1)
+		goto on_error;
+	if (kvm_read(kd, ptr, &efiinfo, sizeof(efiinfo)) == -1)
+		goto on_error;
+
+	kvm_close(kd);
+	return (efiinfo.config_acpi);
+
+on_error:
+	if (kd != NULL)
+		kvm_close(kd);
 	return (0);
 }
