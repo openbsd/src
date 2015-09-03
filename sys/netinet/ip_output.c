@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.290 2015/09/03 09:59:59 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.291 2015/09/03 14:59:23 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -168,13 +168,12 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		dst = satosin(&ro->ro_dst);
 
 		/*
-		 * If there is a cached route, check that it is to the
-		 * same destination and is still valid.  If not, free
-		 * it and try again.
+		 * If there is a cached route, check that it is to the same
+		 * destination and is still up.  If not, free it and try again.
 		 */
-		if (!rtisvalid(ro->ro_rt) ||
+		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
-		    ro->ro_tableid != m->m_pkthdr.ph_rtableid) {
+		    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
 			rtfree(ro->ro_rt);
 			ro->ro_rt = NULL;
 		}
@@ -196,9 +195,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
 				    NULL, ro->ro_tableid);
 
-			if (!rtisvalid(ro->ro_rt)) {
-				rtfree(ro->ro_rt);
-				ro->ro_rt = NULL;
+			if (ro->ro_rt == NULL) {
 				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;
@@ -299,13 +296,12 @@ reroute:
 		dst = satosin(&ro->ro_dst);
 
 		/*
-		 * If there is a cached route, check that it is to the
-		 * same destination and is still valid.  If not, free
-		 * it and try again.
+		 * If there is a cached route, check that it is to the same
+		 * destination and is still up.  If not, free it and try again.
 		 */
-		if (!rtisvalid(ro->ro_rt) ||
+		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
-		    ro->ro_tableid != m->m_pkthdr.ph_rtableid) {
+		    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
 			rtfree(ro->ro_rt);
 			ro->ro_rt = NULL;
 		}
@@ -327,9 +323,7 @@ reroute:
 				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
 				    &ip->ip_src.s_addr, ro->ro_tableid);
 
-			if (!rtisvalid(ro->ro_rt)) {
-				rtfree(ro->ro_rt);
-				ro->ro_rt = NULL;
+			if (ro->ro_rt == NULL) {
 				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;
