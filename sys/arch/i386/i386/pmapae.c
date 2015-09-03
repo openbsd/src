@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.45 2015/08/28 05:00:42 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.46 2015/09/03 18:49:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1178,6 +1178,7 @@ void
 pmap_page_remove_pae(struct vm_page *pg)
 {
 	struct pv_entry *pve;
+	struct pmap *pm;
 	pt_entry_t *ptes, opte;
 	TAILQ_HEAD(, vm_page) empty_ptps;
 	struct vm_page *ptp;
@@ -1189,11 +1190,33 @@ pmap_page_remove_pae(struct vm_page *pg)
 
 	mtx_enter(&pg->mdpage.pv_mtx);
 	while ((pve = pg->mdpage.pv_list) != NULL) {
-		pg->mdpage.pv_list = pve->pv_next;
 		pmap_reference(pve->pv_pmap);
+		pm = pve->pv_pmap;
 		mtx_leave(&pg->mdpage.pv_mtx);
 
 		ptes = pmap_map_ptes_pae(pve->pv_pmap);	/* locks pmap */
+
+		/*
+		 * We dropped the pvlist lock before grabbing the pmap
+		 * lock to avoid lock ordering problems.  This means
+		 * we have to check the pvlist again since somebody
+		 * else might have modified it.  All we care about is
+		 * that the pvlist entry matches the pmap we just
+		 * locked.  If it doesn't, unlock the pmap and try
+		 * again.
+		 */
+		mtx_enter(&pg->mdpage.pv_mtx);
+		if ((pve = pg->mdpage.pv_list) == NULL ||
+		    pve->pv_pmap != pm) {
+			mtx_leave(&pg->mdpage.pv_mtx);
+			pmap_unmap_ptes_pae(pm);	/* unlocks pmap */
+			pmap_destroy(pm);
+			mtx_enter(&pg->mdpage.pv_mtx);
+			continue;
+		}
+
+		pg->mdpage.pv_list = pve->pv_next;
+		mtx_leave(&pg->mdpage.pv_mtx);
 
 #ifdef DIAGNOSTIC
 		if (pve->pv_ptp && (PDE(pve->pv_pmap, pdei(pve->pv_va)) &
