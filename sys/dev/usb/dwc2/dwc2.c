@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.33 2015/09/03 14:22:27 visa Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.34 2015/09/03 15:14:08 visa Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -572,6 +572,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (sc->sc_dying) {
 		xfer->status = status;
 		timeout_del(&xfer->timeout_handle);
+		usb_rem_task(xfer->device, &xfer->abort_task);
 		usb_transfer_complete(xfer);
 		return;
 	}
@@ -588,14 +589,23 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		return;
 	}
 
+	mtx_enter(&hsotg->lock);
+
+	/* The transfer might have been completed already. */
+	if (xfer->status != USBD_IN_PROGRESS) {
+		DPRINTF("xfer=%p already completed\n", xfer);
+		mtx_leave(&hsotg->lock);
+		return;
+	}
+
 	/*
 	 * Step 1: Make the stack ignore it and stop the timeout.
 	 */
-	mtx_enter(&hsotg->lock);
 	dxfer->flags |= DWC2_XFER_ABORTING;
 
 	xfer->status = status;	/* make software ignore it */
 	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->device, &xfer->abort_task);
 
 	/* XXXNH suboptimal */
 	TAILQ_FOREACH_SAFE(d, &sc->sc_complete, xnext, tmp) {
@@ -1749,6 +1759,7 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 
 	qtd->urb = NULL;
 	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->device, &xfer->abort_task);
 
 	KASSERT(mtx_owned(&hsotg->lock));
 
