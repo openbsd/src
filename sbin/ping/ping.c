@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.124 2015/08/05 12:46:12 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.125 2015/09/03 17:59:54 florian Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -347,15 +347,6 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
-	arc4random_buf(&mac_key, sizeof(mac_key));
-
-	memset(&interstr, 0, sizeof(interstr));
-
-	interstr.it_value.tv_sec = interval;
-	interstr.it_value.tv_usec =
-		(long) ((interval - interstr.it_value.tv_sec) * 1000000);
-
 	target = *argv;
 
 	memset(&whereto, 0, sizeof(whereto));
@@ -373,6 +364,33 @@ main(int argc, char *argv[])
 		(void)strlcpy(hnamebuf, hp->h_name, sizeof(hnamebuf));
 		hostname = hnamebuf;
 	}
+
+	if (options & F_SADDR) {
+		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
+			moptions |= MULTICAST_IF;
+		else {
+			memset(&whence, 0, sizeof(whence));
+			whence.sin_len = sizeof(whence);
+			whence.sin_family = AF_INET;
+			memcpy(&whence.sin_addr.s_addr, &saddr, sizeof(saddr));
+			if (bind(s, (struct sockaddr *)&whence,
+			    sizeof(whence)) < 0)
+				err(1, "bind");
+		}
+	}
+
+	if (options & F_SO_DEBUG)
+		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &optval,
+		    sizeof(optval));
+
+	arc4random_buf(&tv64_offset, sizeof(tv64_offset));
+	arc4random_buf(&mac_key, sizeof(mac_key));
+
+	memset(&interstr, 0, sizeof(interstr));
+
+	interstr.it_value.tv_sec = interval;
+	interstr.it_value.tv_usec =
+		(long) ((interval - interstr.it_value.tv_sec) * 1000000);
 
 	if (options & F_FLOOD && options & F_INTERVAL)
 		errx(1, "-f and -i options are incompatible");
@@ -392,24 +410,6 @@ main(int argc, char *argv[])
 	}
 
 	ident = getpid() & 0xFFFF;
-
-	if (options & F_SADDR) {
-		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
-			moptions |= MULTICAST_IF;
-		else {
-			memset(&whence, 0, sizeof(whence));
-			whence.sin_len = sizeof(whence);
-			whence.sin_family = AF_INET;
-			memcpy(&whence.sin_addr.s_addr, &saddr, sizeof(saddr));
-			if (bind(s, (struct sockaddr *)&whence,
-			    sizeof(whence)) < 0)
-				err(1, "bind");
-		}
-	}
-
-	if (options & F_SO_DEBUG)
-		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &optval,
-		    sizeof(optval));
 
 	if (options & F_TTL) {
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
