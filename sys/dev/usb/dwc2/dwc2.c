@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.32 2015/09/03 12:55:54 visa Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.33 2015/09/03 14:22:27 visa Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -441,11 +441,9 @@ STATIC void
 dwc2_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);
-// 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
  	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 
-	DPRINTF("dxfer=%p\n", dxfer);
+	DPRINTF("xfer=%p\n", xfer);
 
 	if (sc->sc_dying) {
 		dwc2_timeout_task(addr);
@@ -453,9 +451,9 @@ dwc2_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&dxfer->abort_task, dwc2_timeout_task, addr,
+	usb_init_task(&xfer->abort_task, dwc2_timeout_task, addr,
 	    USB_TASK_TYPE_ABORT);
-	usb_add_task(dxfer->xfer.pipe->device, &dxfer->abort_task);
+	usb_add_task(xfer->device, &xfer->abort_task);
 }
 
 STATIC void
