@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.c,v 1.5 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: iobuf.c,v 1.6 2015/09/03 06:26:17 jsg Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -395,7 +395,7 @@ iobuf_flush_ssl(struct iobuf *io, void *ssl)
 	ssize_t	s;
 
 	while (io->queued)
-		if ((s = iobuf_write_ssl(io, ssl) < 0))
+		if ((s = iobuf_write_ssl(io, ssl)) < 0)
 			return (s);
 
 	return (0);
