@@ -58,27 +58,27 @@
   [ Skip steps: i=end d=end r=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 pass in on lo0 inet6 from ::/8 to any flags S/SA label "::/8"
+@15 pass in on lo0 inet6 from fe00::/8 to any flags S/SA label "fe00::/8"
   [ Skip steps: i=end d=end r=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 pass in on lo0 inet6 from fe00::/8 to any flags S/SA label "fe00::/8"
+@16 pass in on lo0 inet6 from ::/8 to any flags S/SA label "::/8"
   [ Skip steps: i=end d=end r=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@17 pass in on lo0 inet6 from ::/64 to any flags S/SA label "::/64::/64"
+@17 pass in on lo0 inet6 from fe80::/64 to any flags S/SA label "fe80::/64fe80::/64"
   [ Skip steps: i=end d=end r=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@18 pass in on lo0 inet6 from fe80::/64 to any flags S/SA label "fe80::/64fe80::/64"
+@18 pass in on lo0 inet6 from ::/64 to any flags S/SA label "::/64::/64"
   [ Skip steps: i=end d=end r=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@19 pass in on lo0 inet6 from ::/127 to any flags S/SA label ":::/127:::/127:"
+@19 pass in on lo0 inet6 from fe80::/127 to any flags S/SA label ":fe80::/127:fe80::/127:"
   [ Skip steps: i=end d=end r=end f=21 p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@20 pass in on lo0 inet6 from fe80::/127 to any flags S/SA label ":fe80::/127:fe80::/127:"
+@20 pass in on lo0 inet6 from ::/127 to any flags S/SA label ":::/127:::/127:"
   [ Skip steps: i=end d=end r=end p=35 da=22 sp=35 dp=47 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
