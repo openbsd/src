@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.32 2015/08/30 10:05:09 yasuoka Exp $	*/
+/*	$OpenBSD: bios.c,v 1.33 2015/09/03 03:13:56 yasuoka Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -235,8 +235,8 @@ smbios_find(u_int8_t *p)
 	if (chksum != 0)
 		return (NULL);
 	p += 0x10;
-	if (p[0] != '_' && p[1] != 'D' && p[2] != 'M' && p[3] != 'I' &&
-	    p[4] != '_')
+	if (!(p[0] == '_' && p[1] == 'D' && p[2] == 'M' && p[3] == 'I' &&
+	    p[4] == '_'))
 		return (NULL);
 	for (chksum = 0, i = 0xf; i--; chksum += p[i])
 		;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.111 2015/07/17 22:31:16 mlarkin Exp $	*/
+/*	$OpenBSD: bios.c,v 1.112 2015/09/03 03:13:56 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -255,8 +255,8 @@ biosattach(struct device *parent, struct device *self, void *aux)
 			if (chksum != 0)
 				continue;
 			va += 0x10;
-			if (va[0] != '_' && va[1] != 'D' && va[2] != 'M' &&
-			    va[3] != 'I' && va[4] != '_')
+			if (!(va[0] == '_' && va[1] == 'D' && va[2] == 'M' &&
+			    va[3] == 'I' && va[4] == '_'))
 				continue;
 			for (chksum = 0, i = 0xf; i--; chksum += va[i])
 				;
