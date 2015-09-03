@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.228 2015/09/01 12:50:03 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.229 2015/09/03 09:50:26 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -900,21 +900,18 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (ENOBUFS);
 		}
 
-		rt->rt_flags = info->rti_flags;
+		rt->rt_flags = info->rti_flags | RTF_UP;
 		rt->rt_tableid = tableid;
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
 
 #ifndef SMALL_KERNEL
-		if (rtable_mpath_capable(tableid, ndst->sa_family)) {
-			/* check the link state since the table supports it */
-			if (LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) &&
-			    ifa->ifa_ifp->if_flags & IFF_UP)
-				rt->rt_flags |= RTF_UP;
-			else {
-				rt->rt_flags &= ~RTF_UP;
-				rt->rt_priority |= RTP_DOWN;
-			}
+		/* Check the link state if the table supports it. */
+		if (rtable_mpath_capable(tableid, ndst->sa_family) &&
+		    (!LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
+		    !ISSET(ifa->ifa_ifp->if_flags, IFF_UP))) {
+			rt->rt_flags &= ~RTF_UP;
+			rt->rt_priority |= RTP_DOWN;
 		}
 #endif
 
