@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.305 2015/06/03 02:24:36 millert Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.306 2015/09/03 12:46:47 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1198,7 +1198,7 @@ print_queuespec(struct pf_queuespec *q)
 	printf("queue %s", q->qname);
 	if (q->parent[0] && q->parent[0] != '_')
 		printf(" parent %s", q->parent);
-	if (q->ifname[0])
+	else if (q->ifname[0])
 		printf(" on %s", q->ifname);
 	print_scspec(" bandwidth ", &q->linkshare);
 	print_scspec(", min ", &q->realtime);
