@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.231 2015/08/15 17:27:43 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.232 2015/09/03 05:10:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -48,9 +48,6 @@
 #define SMTP_LIMIT_MAIL		100
 #define SMTP_LIMIT_RCPT		1000
 
-#define SMTP_KICK_CMD		5
-#define SMTP_KICK_RCPTFAIL	50
-
 #define	APPEND_DOMAIN_BUFFER_SIZE	4096
 
 enum smtp_phase {
@@ -78,10 +75,9 @@ enum session_flags {
 	SF_SECURE		= 0x0004,
 	SF_AUTHENTICATED	= 0x0008,
 	SF_BOUNCE		= 0x0010,
-	SF_KICK			= 0x0020,
-	SF_VERIFIED		= 0x0040,
-	SF_MFACONNSENT		= 0x0080,
-	SF_BADINPUT		= 0x0100,
+	SF_VERIFIED		= 0x0020,
+	SF_MFACONNSENT		= 0x0040,
+	SF_BADINPUT		= 0x0080,
 };
 
 enum message_flags {
@@ -136,14 +132,12 @@ struct smtp_session {
 
 	struct envelope		 evp;
 
-	size_t			 kickcount;
 	size_t			 mailcount;
 
 	int			 msgflags;
 	int			 msgcode;
 	size_t			 rcptcount;
 	size_t			 destcount;
-	size_t			 rcptfail;
 	TAILQ_HEAD(, smtp_rcpt)	 rcpts;
 
 	size_t			 datalen;
@@ -595,12 +589,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			fatalx("unexpected ok");
 		case LKA_PERMFAIL:
 			smtp_reply(s, "%s", line);
-			s->rcptfail += 1;
-			if (s->rcptfail >= SMTP_KICK_RCPTFAIL) {
-				log_info("smtp-in: Ending session %016"PRIx64
-				    ": too many failed RCPT", s->id);
-				smtp_enter_state(s, STATE_QUIT);
-			}
 			break;
 		case LKA_TEMPFAIL:
 			smtp_reply(s, "%s", line);
@@ -743,7 +731,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 
 			s->destcount = 0;
 			s->rcptcount++;
-			s->kickcount--;
 			smtp_reply(s, "250 %s %s: Recipient ok",
 			    esc_code(ESC_STATUS_OK, ESC_DESTINATION_ADDRESS_VALID),
 			    esc_description(ESC_DESTINATION_ADDRESS_VALID));
@@ -789,7 +776,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 
 		s->mailcount++;
-		s->kickcount = 0;
 		s->phase = PHASE_SETUP;
 		smtp_message_reset(s, 0);
 		smtp_enter_state(s, STATE_HELO);
@@ -807,7 +793,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (success == LKA_OK) {
 			log_info("smtp-in: Accepted authentication for user %s "
 			    "on session %016"PRIx64, user, s->id);
-			s->kickcount = 0;
 			s->flags |= SF_AUTHENTICATED;
 			smtp_reply(s, "235 %s: Authentication succeeded",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
@@ -953,7 +938,6 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 				smtp_reply(s, "250-AUTH PLAIN LOGIN");
 			smtp_reply(s, "250 HELP");
 		}
-		s->kickcount = 0;
 		s->phase = PHASE_SETUP;
 		io_reload(&s->io);
 		return;
@@ -978,13 +962,6 @@ smtp_mfa_response(struct smtp_session *s, int msg, int status, uint32_t code,
 			code = code ? code : 530;
 			line = line ? line : "Recipient rejected";
 			smtp_reply(s, "%d %s", code, line);
-
-			s->rcptfail += 1;
-			if (s->rcptfail >= SMTP_KICK_RCPTFAIL) {
-				log_info("smtp-in: Ending session %016" PRIx64
-				    ": too many failed RCPT", s->id);
-				smtp_enter_state(s, STATE_QUIT);
-			}
 			io_reload(&s->io);
 			return;
 		}
@@ -1047,7 +1024,6 @@ smtp_io(struct io *io, int evt)
 		    s->id, ssl_to_text(s->io.ssl));
 
 		s->flags |= SF_SECURE;
-		s->kickcount = 0;
 		s->phase = PHASE_INIT;
 
 		sn = smtp_sni_get_servername(s);
@@ -1149,8 +1125,6 @@ smtp_io(struct io *io, int evt)
 		io_set_write(io);
 		smtp_command(s, line);
 		iobuf_normalize(&s->iobuf);
-		if (s->flags & SF_KICK)
-			smtp_free(s, "kick");
 		break;
 
 	case IO_LOWAT:
@@ -1208,14 +1182,6 @@ smtp_command(struct smtp_session *s, char *line)
 	int				cmd, i;
 
 	log_trace(TRACE_SMTP, "smtp: %p: <<< %s", s, line);
-
-	if (++s->kickcount >= SMTP_KICK_CMD) {
-		log_info("smtp-in: Disconnecting session %016" PRIx64
-		    ": session not moving forward", s->id);
-		s->flags |= SF_KICK;
-		stat_increment("smtp.kick", 1);
-		return;
-	}
 
 	/*
 	 * These states are special.
