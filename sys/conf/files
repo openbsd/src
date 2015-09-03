@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.599 2015/07/21 03:38:22 reyk Exp $
+#	$OpenBSD: files,v 1.600 2015/09/03 09:16:33 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -753,6 +753,7 @@ file tmpfs/tmpfs_vfsops.c		tmpfs
 file tmpfs/tmpfs_vnops.c		tmpfs
 file tmpfs/tmpfs_specops.c		tmpfs
 file tmpfs/tmpfs_fifoops.c		tmpfs & fifo
+file net/art.c				art
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
