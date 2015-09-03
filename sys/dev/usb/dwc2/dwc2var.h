@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.14 2015/02/12 11:38:42 uebayasi Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.15 2015/09/03 12:55:54 visa Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -90,8 +90,6 @@ typedef struct dwc2_softc {
 	 */
 
 	struct dwc2_hsotg *sc_hsotg;
-
-	struct mutex sc_lock;
 
 	bool sc_hcdenabled;
 	void *sc_rhc_si;
