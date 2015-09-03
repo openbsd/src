@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.128 2015/08/15 16:09:25 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.129 2015/09/03 12:23:23 millert Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 15 2015 $
+.Dd $Mdocdate: September 3 2015 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -899,7 +899,7 @@ For example, with recipient
 .It %{rcpt:raw} Ta expands to Dq user+t?g@example.org
 .El
 .Sh FILES
-.Bl -tag -width "/etc/mail/smtpd.confXXX"
+.Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
 .It Pa /etc/mail/smtpd.conf
 Default
 .Xr smtpd 8
