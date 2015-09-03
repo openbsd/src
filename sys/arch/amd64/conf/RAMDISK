@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.69 2015/08/31 03:42:51 yasuoka Exp $
+#	$OpenBSD: RAMDISK,v 1.70 2015/09/03 18:00:11 kettenis Exp $
 
 machine		amd64
 maxusers	4
@@ -74,9 +74,6 @@ wsdisplay*	at vga?
 
 com0		at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1		at isa? port 0x2f8 irq 3
-
-efifb0		at mainbus?		# EFI Framebuffer
-wsdisplay0	at efifb? console 1
 
 mpi*		at pci?			# LSI Logic Message Passing Interface
 mfi*		at pci?			# LSI MegaRAID SAS controllers

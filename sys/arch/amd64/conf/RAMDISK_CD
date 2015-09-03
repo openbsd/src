@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.153 2015/07/17 22:52:28 tedu Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.154 2015/09/03 18:00:11 kettenis Exp $
 
 machine		amd64
 maxusers	4
@@ -111,6 +111,9 @@ wskbd*		at pckbd? mux 1
 vga0		at isa?
 vga*		at pci?
 wsdisplay*	at vga?
+
+efifb0		at mainbus?		# EFI Framebuffer
+wsdisplay0	at efifb? console 1
 
 com0		at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1		at isa? port 0x2f8 irq 3
