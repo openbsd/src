@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.289 2015/08/28 04:38:47 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.290 2015/09/03 12:13:13 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1269,7 +1269,10 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 	case KERN_FILE_BYFILE:
 		/* use the inp-tables to pick up closed connections, too */
 		if (arg == DTYPE_SOCKET) {
-			extern struct inpcbtable rawcbtable, rawin6pcbtable;
+			extern struct inpcbtable rawcbtable;
+#ifdef INET6
+			extern struct inpcbtable rawin6pcbtable;
+#endif
 			struct inpcb *inp;
 			int s;
 
