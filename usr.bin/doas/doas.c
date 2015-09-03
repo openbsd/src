@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.40 2015/09/01 13:20:53 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.41 2015/09/03 20:05:58 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -280,13 +280,6 @@ copyenv(const char **oldenvp, struct rule *rule)
 }
 
 static void __dead
-permfail(void)
-{
-	errno = EPERM;
-	err(1, NULL);
-}
-
-static void __dead
 checkconfig(const char *confpath, int argc, char **argv,
     uid_t uid, gid_t *groups, int ngroups, uid_t target)
 {
@@ -403,7 +396,7 @@ main(int argc, char **argv, char **envp)
 	    (const char**)argv + 1)) {
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
 		    "failed command for %s: %s", myname, cmdline);
-		permfail();
+		errc(1, EPERM, NULL);
 	}
 
 	if (!(rule->options & NOPASS)) {
@@ -412,7 +405,7 @@ main(int argc, char **argv, char **envp)
 		if (!auth_userokay(myname, NULL, "auth-doas", NULL)) {
 			syslog(LOG_AUTHPRIV | LOG_NOTICE,
 			    "failed password for %s", myname);
-			permfail();
+			errc(1, EPERM, NULL);
 		}
 	}
 	envp = copyenv((const char **)envp, rule);
