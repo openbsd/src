@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.81 2015/08/29 09:25:00 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.82 2015/09/03 14:30:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -218,8 +218,7 @@ format_job_get(struct format_tree *ft, const char *cmd)
 	struct format_job	fj0, *fj;
 
 	fj0.cmd = cmd;
-	if ((fj = RB_FIND(format_job_tree, &format_jobs, &fj0)) == NULL)
-	{
+	if ((fj = RB_FIND(format_job_tree, &format_jobs, &fj0)) == NULL) {
 		fj = xcalloc(1, sizeof *fj);
 		fj->cmd = xstrdup(cmd);
 		fj->status = ft->status;
