@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.94 2015/08/31 08:33:01 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.95 2015/09/03 16:42:01 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -484,20 +484,24 @@ in6_ifattach(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_MULTICAST) == 0)
 		return (EINVAL);
 
+	/* Assign loopback address, if there's none. */
+	if (ifp->if_flags & IFF_LOOPBACK) {
+		struct in6_addr in6 = in6addr_loopback;
+		int error;
+
+		if (in6ifa_ifpwithaddr(ifp, &in6) != NULL)
+			return (0);
+
+		error = in6_ifattach_loopback(ifp);
+		if (error)
+			return (error);
+	}
+
 	/* Assign a link-local address, if there's none. */
 	if (in6ifa_ifpforlinklocal(ifp, 0) == NULL) {
 		if (in6_ifattach_linklocal(ifp, NULL) != 0) {
 			/* failed to assign linklocal address. bark? */
 		}
-	}
-
-	/* Assign loopback address, if there's none. */
-	if (ifp->if_flags & IFF_LOOPBACK) {
-		struct in6_addr in6 = in6addr_loopback;
-		if (in6ifa_ifpwithaddr(ifp, &in6) != NULL)
-			return (0);
-
-		return (in6_ifattach_loopback(ifp));
 	}
 
 	if (ifp->if_xflags & IFXF_AUTOCONF6)
