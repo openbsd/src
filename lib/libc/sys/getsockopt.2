@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.48 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.49 2015/09/04 19:12:31 bluhm Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: September 4 2015 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -368,7 +368,9 @@ previously selected using
 .Xr setrtable 2 .
 .Pp
 .Dv SO_SPLICE
-can splice together two TCP or UDP sockets for zero-copy data transfers.
+can splice together two TCP or UDP sockets for unidirectional
+zero-copy data transfers.
+Splice also the other way around to get bidirectional data flow.
 Both sockets must be of the same type.
 In the first form,
 .Fn setsockopt
@@ -403,6 +405,7 @@ or
 .Xr kqueue 2
 operation testing the ability to read from the source socket indicates
 that the splicing has terminated.
+When one of the sockets gets closed, splicing ends.
 The error status can be examined with
 .Dv SO_ERROR
 at the source socket.
