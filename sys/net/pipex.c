@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.74 2015/09/01 21:24:04 bluhm Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.75 2015/09/04 08:43:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -125,10 +125,11 @@ void
 pipex_init(void)
 {
 	int		 i;
-	extern int	 max_keylen;		/* for radix.c */
 
 	if (pipex_softintr != NULL)
 		return;
+
+	rn_init(sizeof(struct sockaddr_in6));
 
 	pool_init(&pipex_session_pool, sizeof(struct pipex_session), 0, 0, 0,
 	    "ppxss", NULL);
@@ -138,8 +139,6 @@ pipex_init(void)
 	LIST_INIT(&pipex_session_list);
 	LIST_INIT(&pipex_close_wait_list);
 
-	if (sizeof(struct sockaddr_in) > max_keylen)
-		max_keylen = sizeof(struct sockaddr_in);
 	for (i = 0; i < nitems(pipex_id_hashtable); i++)
 		LIST_INIT(&pipex_id_hashtable[i]);
 	for (i = 0; i < nitems(pipex_peer_addr_hashtable); i++)

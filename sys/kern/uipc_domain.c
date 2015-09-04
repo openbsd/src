@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.42 2015/08/30 10:39:16 mpi Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.43 2015/09/04 08:43:39 mpi Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -45,15 +45,14 @@
 #include "bpfilter.h"
 #include "pflow.h"
 
-extern struct domain routedomain;
 extern struct domain mplsdomain;
 extern struct domain pfkeydomain;
 extern struct domain inet6domain;
 extern struct domain inetdomain;
 extern struct domain unixdomain;
+extern struct domain routedomain;
 
 struct domain *domains[] = {
-	&routedomain,
 #ifdef MPLS
 	&mplsdomain,
 #endif
@@ -65,6 +64,7 @@ struct domain *domains[] = {
 #endif /* INET6 */
 	&inetdomain,
 	&unixdomain,
+	&routedomain,
 	NULL
 };
 

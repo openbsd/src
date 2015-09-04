@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.113 2015/07/20 18:42:08 jsg Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.114 2015/09/04 08:43:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -213,6 +213,8 @@ pfr_gcd(int m, int n)
 void
 pfr_initialize(void)
 {
+	rn_init(sizeof(struct sockaddr_in6));
+
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
 	    "pfrktable", NULL);
 	pool_init(&pfr_kentry_pl[PFRKE_PLAIN], sizeof(struct pfr_kentry),

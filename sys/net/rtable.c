@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.3 2015/08/20 12:51:10 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.4 2015/09/04 08:43:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -29,9 +29,9 @@
 #ifndef ART
 
 void
-rtable_init(void)
+rtable_init(unsigned int keylen)
 {
-	rn_init();
+	rn_init(keylen); /* initialize all zeroes, all ones, mask table */
 }
 
 int
@@ -216,7 +216,7 @@ static inline int	 satoplen(struct art_root *, struct sockaddr *);
 static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 
 void
-rtable_init(void)
+rtable_init(unsigned int keylen)
 {
 	pool_init(&an_pool, sizeof(struct art_node), 0, 0, 0, "art node", NULL);
 }

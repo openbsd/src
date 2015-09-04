@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.47 2015/08/30 10:39:16 mpi Exp $	*/
+/*	$OpenBSD: radix.c,v 1.48 2015/09/04 08:43:39 mpi Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/domain.h>
 #include <sys/syslog.h>
 #include <sys/pool.h>
 #include <net/radix.h>
@@ -50,7 +49,7 @@
 #include <net/radix_mpath.h>
 #endif
 
-int	max_keylen;
+static unsigned int max_keylen;
 struct radix_node_head *mask_rnhead;
 static char *addmask_key;
 static char normal_chars[] = {0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, -1};
@@ -1151,17 +1150,38 @@ rn_walktree(struct radix_node_head *h, int (*f)(struct radix_node *, void *,
 }
 
 int
+rn_initmask(void)
+{
+	if (mask_rnhead != NULL)
+		return (0);
+
+	KASSERT(max_keylen > 0);
+
+	mask_rnhead = malloc(sizeof(*mask_rnhead), M_RTABLE, M_NOWAIT);
+	if (mask_rnhead == NULL)
+		return (1);
+
+	rn_inithead0(mask_rnhead, 0);
+	return (0);
+}
+
+int
 rn_inithead(void **head, int off)
 {
 	struct radix_node_head *rnh;
 
-	if (*head)
+	if (*head != NULL)
 		return (1);
+
+	if (rn_initmask())
+		panic("failed to initialize the mask tree");
+
 	rnh = malloc(sizeof(*rnh), M_RTABLE, M_NOWAIT);
 	if (rnh == NULL)
 		return (0);
 	*head = rnh;
-	return rn_inithead0(rnh, off);
+	rn_inithead0(rnh, off);
+	return (1);
 }
 
 int
@@ -1188,31 +1208,33 @@ rn_inithead0(struct radix_node_head *rnh, int off)
 	return (1);
 }
 
+/*
+ * rn_init() can be called multiple time with a different key length
+ * as long as not radix tree head has been allocated.
+ */
 void
-rn_init(void)
+rn_init(unsigned int keylen)
 {
 	char *cp, *cplim;
-	struct domain *dom;
-	int i;
 
-	if (rn_zeros != NULL)
+	if (max_keylen == 0) {
+		pool_init(&rtmask_pool, sizeof(struct radix_mask), 0, 0, 0,
+		    "rtmask", NULL);
+	}
+
+	if (keylen <= max_keylen)
 		return;
 
-	pool_init(&rtmask_pool, sizeof(struct radix_mask), 0, 0, 0, "rtmask",
-	    NULL);
-	for (i = 0; (dom = domains[i]) != NULL; i++) {
-		if (dom->dom_maxrtkey > max_keylen)
-			max_keylen = dom->dom_maxrtkey;
-	}
-	if (max_keylen == 0)
-		panic("radix functions require max_keylen be set");
-	rn_zeros = mallocarray(3, max_keylen, M_RTABLE, M_NOWAIT | M_ZERO);
+	KASSERT(mask_rnhead == NULL);
+
+	free(rn_zeros, M_RTABLE, 3 * max_keylen);
+	rn_zeros = mallocarray(3, keylen, M_RTABLE, M_NOWAIT | M_ZERO);
 	if (rn_zeros == NULL)
-		panic("rn_init");
+		panic("cannot initialize a radix tree without memory");
+	max_keylen = keylen;
+
 	rn_ones = cp = rn_zeros + max_keylen;
 	addmask_key = cplim = rn_ones + max_keylen;
 	while (cp < cplim)
 		*cp++ = -1;
-	if (rn_inithead((void *)&mask_rnhead, 0) == 0)
-		panic("rn_init 2");
 }

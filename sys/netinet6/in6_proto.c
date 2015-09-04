@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.79 2015/08/30 10:39:16 mpi Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.80 2015/09/04 08:43:39 mpi Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -248,7 +248,6 @@ struct domain inet6domain =
       (struct protosw *)&inet6sw[nitems(inet6sw)],
       rtable_attach,
       offsetof(struct sockaddr_in6, sin6_addr) << 3,
-      sizeof(struct sockaddr_in6),
       in6_domifattach, in6_domifdetach, };
 
 /*

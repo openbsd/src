@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.2 2015/08/20 12:39:43 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.3 2015/09/04 08:43:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -49,7 +49,7 @@
 
 #endif /* ART */
 
-void		 rtable_init(void);
+void		 rtable_init(unsigned int);
 int		 rtable_attach(void **, int);
 struct rtentry	*rtable_lookup(unsigned int, struct sockaddr *,
 		     struct sockaddr *);

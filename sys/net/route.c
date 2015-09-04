@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.229 2015/09/03 09:50:26 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.230 2015/09/04 08:43:39 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -198,11 +198,25 @@ void
 route_init(void)
 {
 	struct domain	*dom;
+	unsigned int	 keylen;
 	int		 i;
 
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentry",
 	    NULL);
-	rtable_init();	/* initialize all zeroes, all ones, mask table */
+
+	/*
+	 * Compute the maximum supported key length in case the routing
+	 * table backend needs it.
+	 */
+	keylen = sizeof(struct sockaddr_in);
+#ifdef INET6
+	keylen = max(keylen, (sizeof(struct sockaddr_in6)));
+#endif
+#ifdef MPLS
+	keylen = max(keylen, (sizeof(struct sockaddr_mpls)));
+#endif
+
+	rtable_init(keylen);
 
 	bzero(af2rtafidx, sizeof(af2rtafidx));
 	rtafidx_max = 1;	/* must have NULL at index 0, so start at 1 */

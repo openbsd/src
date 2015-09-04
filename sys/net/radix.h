@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.25 2014/05/27 19:38:15 claudio Exp $	*/
+/*	$OpenBSD: radix.h,v 1.26 2015/09/04 08:43:39 mpi Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct radix_node_head {
 
 #ifdef _KERNEL
 
-void	rn_init(void);
+void	rn_init(unsigned int);
 int	rn_inithead(void **, int);
 int	rn_inithead0(struct radix_node_head *, int);
 int	rn_refines(void *, void *);
