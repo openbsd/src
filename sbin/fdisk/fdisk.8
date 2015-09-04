@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.80 2015/09/04 19:02:49 kettenis Exp $
+.\"	$OpenBSD: fdisk.8,v 1.81 2015/09/04 21:19:45 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -23,16 +23,16 @@
 .Nd MBR partition maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
-.Op Fl i | u
 .Op Fl egy
+.Op Fl b Ar blocks
 .Oo
 .Fl c Ar cylinders
 .Fl h Ar heads
 .Fl s Ar sectors
 .Oc
 .Op Fl f Ar mbrfile
+.Op Fl i | u
 .Op Fl l Ar blocks
-.Op Fl b Ar blocks
 .Ar disk
 .Sh DESCRIPTION
 On the i386 and other architectures, sector 0 of a bootable hard disk
@@ -70,6 +70,11 @@ sector.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl b Ar blocks
+A special boot partition of the specified size will be written to disk
+on architectures that need one.
+Only valid with
+.Fl i .
 .It Xo
 .Fl c Ar cylinders
 .Fl h Ar heads
@@ -86,11 +91,6 @@ These figures are taken from the in-core disklabel
 or values that
 .Em /boot
 has passed to the kernel.
-.It Fl b Ar blocks
-A special boot partition of the specified size will be written to disk
-on architectures that need one.
-Only valid with
-.Fl i .
 .It Fl e
 Use the
 .Nm

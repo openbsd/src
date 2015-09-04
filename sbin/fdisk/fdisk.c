@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.75 2015/09/04 19:02:49 kettenis Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.76 2015/09/04 21:19:45 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,17 +49,17 @@ usage(void)
 	extern char * __progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-i|-u] [-egy] [-c # -h # -s #] [-f mbrfile] "
-	    "[-l blocks] [-b blocks] disk\n"
-	    "\t-i: initialize disk with virgin MBR\n"
-	    "\t-u: update MBR code, preserve partition table\n"
+	    "[-egy] [-b blocks] [-c # -h # -s #] [-f mbrfile] "
+	    "[-i|-u] [-l blocks] disk\n"
+	    "\t-b: add special boot partition; requires -i\n"
+	    "\t-chs: specify disk geometry\n"
 	    "\t-e: edit MBRs on disk interactively\n"
 	    "\t-f: specify non-standard MBR template\n"
-	    "\t-chs: specify disk geometry\n"
+	    "\t-g: initialize disk with EFI/GPT partition; requires -i\n"
+	    "\t-i: initialize disk with virgin MBR\n"
 	    "\t-l: specify LBA block count\n"
+	    "\t-u: update MBR code; preserve partition table\n"
 	    "\t-y: do not ask questions\n"
-	    "\t-g: initialize disk with EFI/GPT partition, requires -i\n"
-	    "\t-b: add special boot partition, requires -i\n"
 	    "`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
 	    __progname);
 	exit(1);
