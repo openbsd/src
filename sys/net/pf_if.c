@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.79 2015/07/21 02:32:04 sashan Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.80 2015/09/04 21:40:25 kettenis Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -89,7 +89,7 @@ pfi_initialize(void)
 		return;
 
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
-	    "pfiaddrpl", &pool_allocator_nointr);
+	    "pfiaddrpl", NULL);
 	pfi_buffer_max = 64;
 	pfi_buffer = mallocarray(pfi_buffer_max, sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);

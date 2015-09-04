@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.31 2015/07/18 19:19:00 sashan Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.32 2015/09/04 21:40:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -287,10 +287,10 @@ pf_osfp_match(struct pf_osfp_enlist *list, pf_osfp_t os)
 void
 pf_osfp_initialize(void)
 {
-	pool_init(&pf_osfp_entry_pl, sizeof(struct pf_osfp_entry), 0, 0, 0,
-	    "pfosfpen", &pool_allocator_nointr);
-	pool_init(&pf_osfp_pl, sizeof(struct pf_os_fingerprint), 0, 0, 0,
-	    "pfosfp", &pool_allocator_nointr);
+	pool_init(&pf_osfp_entry_pl, sizeof(struct pf_osfp_entry), 0, 0,
+	    PR_WAITOK, "pfosfpen", NULL);
+	pool_init(&pf_osfp_pl, sizeof(struct pf_os_fingerprint), 0, 0,
+	    PR_WAITOK, "pfosfp", NULL);
 	SLIST_INIT(&pf_osfp_list);
 }
 

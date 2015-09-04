@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.289 2015/07/21 02:32:04 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.290 2015/09/04 21:40:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -140,7 +140,7 @@ pfattach(int num)
 	u_int32_t *timeout = pf_default_rule.timeout;
 
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrule",
-	    &pool_allocator_nointr);
+	    NULL);
 	pool_init(&pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
 	    "pfsrctr", NULL);
 	pool_init(&pf_sn_item_pl, sizeof(struct pf_sn_item), 0, 0, 0,
