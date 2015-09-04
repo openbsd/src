@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.86 2015/09/03 07:50:22 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.87 2015/09/04 08:59:43 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -645,6 +645,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	u_int32_t n;
 	int flags, error = 0;
 	char buf[UGEN_BBSIZE];
+	void *ptr = NULL;
 	struct usbd_xfer *xfer;
 	usbd_status err;
 
@@ -666,7 +667,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		return (EIO);
 	}
 #endif
-	flags = USBD_SYNCHRONOUS;
+	flags = USBD_SYNCHRONOUS | USBD_NO_COPY;
 	if (sce->timeout == 0)
 		flags |= USBD_CATCH;
 
@@ -675,12 +676,17 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
 			return (EIO);
-		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
-			error = uiomovei(buf, n, uio);
+		if ((n = uio->uio_resid) != 0) {
+			ptr = usbd_alloc_buffer(xfer, n);
+			if (ptr == NULL) {
+				error = ENOMEM;
+				goto done;
+			}
+			error = uiomovei(ptr, n, uio);
 			if (error)
-				break;
+				goto done;
 			DPRINTFN(1, ("ugenwrite: transfer %d bytes\n", n));
-			usbd_setup_xfer(xfer, sce->pipeh, 0, buf, n,
+			usbd_setup_xfer(xfer, sce->pipeh, 0, NULL, n,
 			    flags, sce->timeout, NULL);
 			err = usbd_transfer(xfer);
 			if (err) {
@@ -691,9 +697,9 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 					error = ETIMEDOUT;
 				else
 					error = EIO;
-				break;
 			}
 		}
+	done:
 		usbd_free_xfer(xfer);
 		break;
 	case UE_INTERRUPT:
