@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.11 2015/09/03 11:30:13 yasuoka Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.12 2015/09/04 05:58:40 jasper Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -261,7 +261,6 @@ acpi_user_init(void)
 		LIST_INIT(&maplist);
 	}
 }
-
 
 struct ACPIrsdp *
 acpi_find_rsd_ptr(void)
