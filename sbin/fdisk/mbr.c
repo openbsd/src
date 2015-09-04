@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.53 2015/08/27 20:58:27 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.54 2015/09/04 19:02:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -55,6 +55,7 @@ MBR_init_GPT(struct mbr *mbr)
 void
 MBR_init(struct mbr *mbr)
 {
+	extern u_int32_t b_arg;
 	extern int g_flag;
 	u_int64_t adj;
 	daddr_t i;
@@ -108,6 +109,19 @@ MBR_init(struct mbr *mbr)
 	}
 	/* Fix up start/length fields */
 	PRT_fix_BN(&mbr->part[3], 3);
+#endif
+#if defined(__i386__) || defined(__amd64__)
+	if (b_arg > 0) {
+		/* Add an EFI system partition on i386/amd64. */
+		mbr->part[0].id = DOSPTYP_EFISYS;
+		mbr->part[0].bs = 64;
+		mbr->part[0].ns = b_arg;
+		PRT_fix_CHS(&mbr->part[0]);
+		mbr->part[3].ns += mbr->part[3].bs;
+		mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
+		mbr->part[3].ns -= mbr->part[3].bs;
+		PRT_fix_CHS(&mbr->part[3]);
+	}
 #endif
 
 	/* Start OpenBSD MBR partition on a power of 2 block number. */

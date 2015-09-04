@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.79 2015/03/16 18:45:51 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.80 2015/09/04 19:02:49 kettenis Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2015 $
+.Dd $Mdocdate: September 4 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Oc
 .Op Fl f Ar mbrfile
 .Op Fl l Ar blocks
+.Op Fl b Ar blocks
 .Ar disk
 .Sh DESCRIPTION
 On the i386 and other architectures, sector 0 of a bootable hard disk
@@ -85,6 +86,11 @@ These figures are taken from the in-core disklabel
 or values that
 .Em /boot
 has passed to the kernel.
+.It Fl b Ar blocks
+A special boot partition of the specified size will be written to disk
+on architectures that need one.
+Only valid with
+.Fl i .
 .It Fl e
 Use the
 .Nm

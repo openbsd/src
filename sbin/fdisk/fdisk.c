@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.74 2015/07/09 19:48:36 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.75 2015/09/04 19:02:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,6 +39,7 @@ static unsigned char builtin_mbr[] = {
 #include "mbrcode.h"
 };
 
+u_int32_t b_arg;
 int	g_flag;
 int	y_flag;
 
@@ -49,7 +50,7 @@ usage(void)
 
 	fprintf(stderr, "usage: %s "
 	    "[-i|-u] [-egy] [-c # -h # -s #] [-f mbrfile] "
-	    "[-l blocks] disk\n"
+	    "[-l blocks] [-b blocks] disk\n"
 	    "\t-i: initialize disk with virgin MBR\n"
 	    "\t-u: update MBR code, preserve partition table\n"
 	    "\t-e: edit MBRs on disk interactively\n"
@@ -58,6 +59,7 @@ usage(void)
 	    "\t-l: specify LBA block count\n"
 	    "\t-y: do not ask questions\n"
 	    "\t-g: initialize disk with EFI/GPT partition, requires -i\n"
+	    "\t-b: add special boot partition, requires -i\n"
 	    "`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
 	    __progname);
 	exit(1);
@@ -80,7 +82,7 @@ main(int argc, char *argv[])
 #endif
 	struct dos_mbr dos_mbr;
 
-	while ((ch = getopt(argc, argv, "ieguf:c:h:s:l:y")) != -1) {
+	while ((ch = getopt(argc, argv, "ieguf:c:h:s:l:b:y")) != -1) {
 		const char *errstr;
 
 		switch(ch) {
@@ -115,6 +117,12 @@ main(int argc, char *argv[])
 		case 'g':
 			g_flag = 1;
 			break;
+		case 'b':
+			b_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
+			if (errstr)
+				errx(1, "Block argument %s [64..%u].", errstr,
+				    UINT32_MAX);
+			break;
 		case 'l':
 			l_arg = strtonum(optarg, 64, UINT32_MAX, &errstr);
 			if (errstr)
@@ -141,6 +149,11 @@ main(int argc, char *argv[])
 
 	if (g_flag != 0 && i_flag == 0) {
 		warnx("-g specified without -i");
+		usage();
+	}
+
+	if (b_arg > 0 && i_flag == 0) {
+		warnx("-b specified without -i");
 		usage();
 	}
 
