@@ -1,0 +1,16 @@
+.TH TP-FILL 1 "September 4, 2015" OpenBSD
+.SH NAME
+TP-fill \- interaction of tagged paragraphs and fill mode
+.SH DESCRIPTION
+Switching off fill mode:
+.TP
+.nf
+tag
+indented
+text
+Switching it back on:
+.fi
+.TP
+This is an extremely long tag that will certainly wrap the line and continue onto the next one.
+indented
+text
