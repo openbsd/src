@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.46 2015/08/28 04:38:47 guenther Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.47 2015/09/04 02:58:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -114,6 +114,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "kvm_private.h"
 #include "kvm_file.h"
@@ -132,16 +133,8 @@ struct kinfo_file *
 kvm_getfiles(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 {
 	int mib[6], rv;
+	void *filebase;
 	size_t size;
-
-	if (kd->filebase != NULL) {
-		free(kd->filebase);
-		/*
-		 * Clear this pointer in case this call fails.  Otherwise,
-		 * kvm_close() will free it again.
-		 */
-		kd->filebase = 0;
-	}
 
 	if (ISALIVE(kd)) {
 		mib[0] = CTL_KERN;
@@ -149,27 +142,37 @@ kvm_getfiles(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		mib[2] = op;
 		mib[3] = arg;
 		mib[4] = esize;
-		mib[5] = 0;
 
-		/* find size and alloc buffer */
-		rv = sysctl(mib, 6, NULL, &size, NULL, 0);
-		if (rv == -1) {
-			if (kd->vmfd != -1)
-				goto deadway;
-			_kvm_syserr(kd, kd->program, "kvm_getfiles");
-			return (NULL);
-		}
-		kd->filebase = _kvm_malloc(kd, size);
-		if (kd->filebase == NULL)
-			return (NULL);
+		do {
+			mib[5] = 0;
 
-		/* get actual data */
-		mib[5] = size / esize;
-		rv = sysctl(mib, 6, kd->filebase, &size, NULL, 0);
-		if (rv == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getfiles");
-			return (NULL);
-		}
+			/* find size and alloc buffer */
+			rv = sysctl(mib, 6, NULL, &size, NULL, 0);
+			if (rv == -1) {
+				if (kd->vmfd != -1)
+					goto deadway;
+				_kvm_syserr(kd, kd->program, "kvm_getfiles");
+				return (NULL);
+			}
+
+			size += size / 8; /* add ~10% */
+
+			filebase = _kvm_realloc(kd, kd->filebase, size);
+			if (filebase == NULL)
+				return (NULL);
+
+			kd->filebase = filebase;
+
+			/* get actual data */
+			mib[5] = size / esize;
+			rv = sysctl(mib, 6, kd->filebase, &size, NULL, 0);
+			if (rv == -1 && errno != ENOMEM) {
+				_kvm_syserr(kd, kd->program,
+				    "kvm_getfiles");
+				return (NULL);
+			}
+		} while (rv == -1);
+
 		*cnt = size / esize;
 		return (kd->filebase);
 	} else {
@@ -224,10 +227,11 @@ kvm_deadfile_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		_kvm_err(kd, kd->program, "can't read nfiles");
 		return (NULL);
 	}
-	where = _kvm_reallocarray(kd, NULL, nfiles, esize);
-	kd->filebase = (void *)where;
-	if (kd->filebase == NULL)
+	where = _kvm_reallocarray(kd, kd->filebase, nfiles, esize);
+	if (where == NULL)
 		return (NULL);
+
+	kd->filebase = (void *)where;
 	buflen = nfiles * esize;
 
 	for (fp = LIST_FIRST(&filehead);
@@ -301,10 +305,11 @@ kvm_deadfile_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		return (NULL);
 	}
 	/* this may be more room than we need but counting is expensive */
-	where = _kvm_reallocarray(kd, NULL, nfiles + 10, esize);
-	kd->filebase = (void *)where;
-	if (kd->filebase == NULL)
+	where = _kvm_reallocarray(kd, kd->filebase, nfiles + 10, esize);
+	if (where == NULL)
 		return (NULL);
+
+	kd->filebase = (void *)where;
 	buflen = (nfiles + 10) * esize;
 
 	for (pr = LIST_FIRST(&allprocess);
