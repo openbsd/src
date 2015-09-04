@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.35 2015/01/20 18:26:57 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.36 2015/09/04 08:21:01 mpi Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ mbpr(void)
 	struct kinfo_pool pool;
 	struct mbtypes *mp;
 	size_t size;
-	int page_size = getpagesize();
 
 	if (nmbtypes != 256) {
 		fprintf(stderr,
@@ -167,19 +166,22 @@ mbpr(void)
 			    mbstat.m_mtypes[i],
 			    plural(mbstat.m_mtypes[i]), i);
 		}
-	totmem = (mbpool.pr_npages * (unsigned long)page_size);
+	totmem = (mbpool.pr_npages * mbpool.pr_pgsize);
 	totused = mbpool.pr_nout * mbpool.pr_size;
 	for (i = 0; i < mclp; i++) {
-		printf("%u/%lu/%lu mbuf %d byte clusters in use (current/peak/max)\n",
+		printf("%u/%lu/%lu mbuf %d byte clusters in use"
+		    " (current/peak/max)\n",
 		    mclpools[i].pr_nout,
-		    (u_long)mclpools[i].pr_hiwat * mclpools[i].pr_itemsperpage,
-		    (u_long)mclpools[i].pr_maxpages * mclpools[i].pr_itemsperpage,
+		    (unsigned long)
+			(mclpools[i].pr_hiwat * mclpools[i].pr_itemsperpage),
+		    (unsigned long)
+			(mclpools[i].pr_maxpages * mclpools[i].pr_itemsperpage),
 		    mclpools[i].pr_size);
-		totmem += (mclpools[i].pr_npages * (unsigned long)page_size);
+		totmem += (mclpools[i].pr_npages * mclpools[i].pr_pgsize);
 		totused += mclpools[i].pr_nout * mclpools[i].pr_size;
 	}
 
-	totpct = (totmem == 0)? 0 : (totused/(totmem / 100));
+	totpct = (totmem == 0) ? 0 : (totused/(totmem / 100));
 	printf("%lu Kbytes allocated to network (%d%% in use)\n",
 	    totmem / 1024, totpct);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
