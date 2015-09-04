@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.179 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: re.c,v 1.180 2015/09/04 07:05:44 jsg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -245,6 +245,7 @@ static const struct re_revision {
 	{ RL_HWREV_8168F,	"RTL8168F/8111F" },
 	{ RL_HWREV_8168G,	"RTL8168G/8111G" },
 	{ RL_HWREV_8168GU,	"RTL8168GU/8111GU" },
+	{ RL_HWREV_8168H,	"RTL8168H/8111H" },
 	{ RL_HWREV_8105E,	"RTL8105E" },
 	{ RL_HWREV_8105E_SPIN1,	"RTL8105E" },
 	{ RL_HWREV_8168D,	"RTL8168D/8111D" },
@@ -771,14 +772,9 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		break;
 	case RL_HWREV_8168EP:
 	case RL_HWREV_8168G:
-	case RL_HWREV_8411B:
-		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_PAR |
-		    RL_FLAG_DESCV2 | RL_FLAG_MACSTAT | RL_FLAG_CMDSTOP |
-		    RL_FLAG_AUTOPAD | RL_FLAG_JUMBOV2 | RL_FLAG_CMDSTOP_WAIT_TXQ |
-		    RL_FLAG_WOL_MANLINK | RL_FLAG_EARLYOFFV2 | RL_FLAG_RXDV_GATED;
-		sc->rl_max_mtu = RL_JUMBO_MTU_9K;
-		break;
 	case RL_HWREV_8168GU:
+	case RL_HWREV_8168H:
+	case RL_HWREV_8411B:
 		if (sc->sc_product == PCI_PRODUCT_REALTEK_RT8101E) {
 			/* RTL8106EUS */
 			sc->rl_flags |= RL_FLAG_FASTETHER;
