@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.103 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.104 2015/09/04 11:50:33 kettenis Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -547,7 +547,7 @@ nfsrv_init(int terminating)
 
 	if (!terminating)
 		pool_init(&nfsrv_descript_pl, sizeof(struct nfsrv_descript),
-		    0, 0, 0, "ndscpl", &pool_allocator_nointr);
+		    0, 0, PR_WAITOK, "ndscpl", NULL);
 }
 #endif /* NFSSERVER */
 
