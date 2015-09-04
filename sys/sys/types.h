@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.43 2015/07/20 23:55:27 uebayasi Exp $	*/
+/*	$OpenBSD: types.h,v 1.44 2015/09/04 23:47:09 daniel Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -247,8 +247,9 @@ struct	uio;
 #endif
 
 #ifdef _KERNEL
-#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__PCC__)
-/* Support for _C99: type _Bool is already built-in. */
+#if defined(__GNUC__) || \
+	(defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901)
+/* Support for C99: type _Bool is already built-in. */
 #define false	0
 #define true	1
 
