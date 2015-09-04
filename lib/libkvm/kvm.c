@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.55 2015/05/11 00:42:54 guenther Exp $ */
+/*	$OpenBSD: kvm.c,v 1.56 2015/09/04 02:55:09 dlg Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -159,6 +159,14 @@ _kvm_malloc(kvm_t *kd, size_t n)
 	void *p;
 
 	if ((p = malloc(n)) == NULL)
+		_kvm_err(kd, kd->program, "%s", strerror(errno));
+	return (p);
+}
+
+void *
+_kvm_realloc(kvm_t *kd, void *p, size_t n)
+{
+	if ((p = realloc(p, n)) == NULL)
 		_kvm_err(kd, kd->program, "%s", strerror(errno));
 	return (p);
 }

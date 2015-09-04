@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.23 2014/10/15 02:03:05 deraadt Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.24 2015/09/04 02:55:09 dlg Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ void	 _kvm_freevtop(kvm_t *);
 int	 _kvm_initvtop(kvm_t *);
 int	 _kvm_kvatop(kvm_t *, u_long, paddr_t *);
 void	*_kvm_malloc(kvm_t *kd, size_t);
+void	*_kvm_realloc(kvm_t *kd, void *, size_t);
 off_t	 _kvm_pa2off(kvm_t *, paddr_t);
 void	*_kvm_reallocarray(kvm_t *kd, void *, size_t, size_t);
 void	 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
