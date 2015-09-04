@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.138 2015/07/29 21:13:32 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.139 2015/09/04 16:02:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1841,6 +1841,8 @@ wskbd_initvol(struct audio_softc *sc, struct wskbd_vol *vol, char *cn, char *dn)
 	for (dev.index = 0; ; dev.index++) {
 		if (sc->ops->query_devinfo(sc->arg, &dev) != 0)
 			break;
+		if (dev.type != AUDIO_MIXER_VALUE)
+			continue;
 		cls.index = dev.mixer_class;
 		if (sc->ops->query_devinfo(sc->arg, &cls) != 0)
 			continue;
@@ -1851,8 +1853,8 @@ wskbd_initvol(struct audio_softc *sc, struct wskbd_vol *vol, char *cn, char *dn)
 			vol->step = dev.un.v.delta > 8 ? dev.un.v.delta : 8;
 			vol->mute = wskbd_initmute(sc, &dev);
 			vol->val_pending = vol->mute_pending = 0;
-			DPRINTF("%s: wskbd using %s.%s, %s\n",
-			    DEVNAME(sc), cn, dn, vol->mute >= -1 ? "mute control" : "");
+			DPRINTF("%s: wskbd using %s.%s%s\n",
+			    DEVNAME(sc), cn, dn, vol->mute >= 0 ? ", mute control" : "");
 			return 1;
 		}
 	}
