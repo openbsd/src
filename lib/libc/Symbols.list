@@ -519,7 +519,6 @@ __sys_errlist
 __sys_nerr
 __sys_siglist
 _ctype_
-_getgrent_yp
 _longjmp
 _ng_makekey
 _ng_parse
@@ -1724,15 +1723,6 @@ uuid_is_nil
 uuid_to_string
 
 /* yp */
-__ypexclude_add
-__ypexclude_free
-__ypexclude_is
-_yp_check
-_yp_dobind
-_yp_domain
-_yp_unbind
-_ypbindlist
-_yplib_timeout
 xdr_domainname
 xdr_keydat
 xdr_mapname
@@ -1762,8 +1752,9 @@ yp_master
 yp_match
 yp_next
 yp_order
-yp_unbind
 yperr_string
 ypprot_err
-ypresp_allfn
-ypresp_data
+_yp_check		/* chpass, passwd, login_chpass */
+yp_unbind		/* passwd */
+ypresp_allfn		/* ypserv */
+ypresp_data		/* ypserv */
