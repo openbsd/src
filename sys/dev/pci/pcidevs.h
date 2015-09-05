@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1767 2015/08/04 21:19:28 tedu Exp 
+ *	OpenBSD: pcidevs,v 1.1768 2015/09/05 02:05:27 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3480,7 +3480,32 @@
 #define	PCI_PRODUCT_INTEL_I354_BP_1GBPS	0x1f40		/* I354 */
 #define	PCI_PRODUCT_INTEL_I354_SGMII	0x1f41		/* I354 SGMII */
 #define	PCI_PRODUCT_INTEL_I354_BP_2_5GBPS	0x1f45		/* I354 */
+#define	PCI_PRODUCT_INTEL_BSW_HB	0x2280		/* Braswell Host */
+#define	PCI_PRODUCT_INTEL_BSW_HDA	0x2284		/* Braswell HD Audio */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_DMA_2	0x2286		/* Braswell SIO DMA */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_1	0x228a		/* Braswell Serial */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_2	0x228c		/* Braswell Serial */
 #define	PCI_PRODUCT_INTEL_BRASWELL_SMB	0x2292		/* Braswell SMBus */
+#define	PCI_PRODUCT_INTEL_BSW_TXE	0x2298		/* Baswell TXE */
+#define	PCI_PRODUCT_INTEL_BSW_PCU_LPC	0x229c		/* Braswell PCU LPC */
+#define	PCI_PRODUCT_INTEL_BSW_AHCI	0x22a3		/* Braswell AHCI */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_1	0x22b0		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_2	0x22b1		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_3	0x22b2		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_4	0x22b3		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BSW_XHCI	0x22b5		/* Braswell xHCI */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_DMA_1	0x22c0		/* Braswell SIO DMA */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_1	0x22c1		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_2	0x22c2		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_3	0x22c3		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_4	0x22c4		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_5	0x22c5		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_6	0x22c6		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_7	0x22c7		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_1	0x22c8		/* Braswell PCIE */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_2	0x22ca		/* Braswell PCIE */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_3	0x22cc		/* Braswell PCIE */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_4	0x22ce		/* Braswell PCIE */
 #define	PCI_PRODUCT_INTEL_DH8900_LPC	0x2310		/* DH8900 LPC */
 #define	PCI_PRODUCT_INTEL_DH8900_AHCI	0x2323		/* DH8900 AHCI */
 #define	PCI_PRODUCT_INTEL_DH8900_SATA_1	0x2326		/* DH8900 SATA */
