@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.221 2015/06/17 08:13:31 nicm Exp $	*/
+/*	$OpenBSD: ci.c,v 1.222 2015/09/05 09:38:23 jsg Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -731,7 +731,7 @@ checkin_attach_symbol(struct checkin_params *pb)
 			}
 		}
 	}
-	if ((ret = rcs_sym_add(pb->file, pb->symbol, pb->newrev) == -1) &&
+	if ((ret = rcs_sym_add(pb->file, pb->symbol, pb->newrev)) == -1 &&
 	    (rcs_errno == RCS_ERR_DUPENT)) {
 		rcsnum_tostr(rcs_sym_getrev(pb->file, pb->symbol),
 		    rbuf, sizeof(rbuf));

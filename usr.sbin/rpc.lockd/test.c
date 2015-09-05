@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.6 2013/04/19 05:06:21 deraadt Exp $	*/
+/*	$OpenBSD: test.c,v 1.7 2015/09/05 09:38:23 jsg Exp $	*/
 
 #include <rpc/rpc.h>
 #include <rpcsvc/nlm_prot.h>
@@ -27,8 +27,8 @@ nlm_lock_1(struct nlm_lockargs *argp, CLIENT *clnt)
 	static nlm_res res;
 
 	bzero((char *) &res, sizeof(res));
-	if (st = clnt_call(clnt, NLM_LOCK, xdr_nlm_lockargs, argp, xdr_nlm_res,
-	    &res, TIMEOUT) != RPC_SUCCESS) {
+	if ((st = clnt_call(clnt, NLM_LOCK, xdr_nlm_lockargs, argp, xdr_nlm_res,
+	    &res, TIMEOUT)) != RPC_SUCCESS) {
 		printf("clnt_call returns %d\n", st);
 		clnt_perror(clnt, "humbug");
 		return (NULL);
