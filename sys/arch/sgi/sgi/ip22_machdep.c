@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.20 2014/07/17 19:51:58 miod Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.21 2015/09/05 21:14:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -70,7 +70,9 @@ void	ip22_cache_halt(int);
 void	ip22_cache_sync(struct cpu_info *, paddr_t, size_t, int);
 void	ip22_ecc_halt(int);
 void	ip22_ecc_init(int);
+void	ip22_fast_mode(void);
 void	ip22_memory_setup(void);
+void	ip22_slow_mode(void);
 void	ip22_video_setup(void);
 
 /*
@@ -635,7 +637,7 @@ ip22_ecc_unmap(uint32_t omemc1)
 	mips_sync();
 }
 
-int
+void
 ip22_fast_mode()
 {
 	register uint32_t memc1;
@@ -652,13 +654,10 @@ ip22_fast_mode()
 		/* if (sys_config.system_type == SGI_IP26) */
 			tcc_prefetch_enable();
 #endif
-		return 0;
 	}
-
-	return 1;
 }
 
-int
+void
 ip22_slow_mode()
 {
 	register uint32_t memc1;
@@ -675,16 +674,7 @@ ip22_slow_mode()
 		(void)imc_read(IMC_MEMCFG1);
 		ip22_ecc_unmap(memc1);
 		ip22_ecc_mode = 0;
-		return 1;
 	}
-
-	return 0;
-}
-
-int
-ip22_restore_mode(int mode)
-{
-	return mode ? ip22_fast_mode() : ip22_slow_mode();
 }
 
 void
