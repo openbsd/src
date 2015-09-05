@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.12 2015/05/11 06:31:17 guenther Exp $	*/
+/*	$OpenBSD: db.c,v 1.13 2015/09/05 11:28:35 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,6 +66,7 @@ dbopen(const char *fname, int flags, int mode, DBTYPE type,
 	errno = EINVAL;
 	return (NULL);
 }
+DEF_WEAK(dbopen);
 
 static int
 __dberr(void)

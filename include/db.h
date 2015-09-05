@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.h,v 1.10 2015/08/27 04:37:09 guenther Exp $	*/
+/*	$OpenBSD: db.h,v 1.11 2015/09/05 11:28:35 guenther Exp $	*/
 /*	$NetBSD: db.h,v 1.13 1994/10/26 00:55:48 cgd Exp $	*/
 
 /*-
@@ -208,13 +208,4 @@ typedef struct {
 __BEGIN_DECLS
 DB *dbopen(const char *, int, int, DBTYPE, const void *);
 __END_DECLS
-
-#ifdef __DBINTERFACE_PRIVATE
-__BEGIN_HIDDEN_DECLS
-DB	*__bt_open(const char *, int, int, const BTREEINFO *, int);
-DB	*__hash_open(const char *, int, int, const HASHINFO *, int);
-DB	*__rec_open(const char *, int, int, const RECNOINFO *, int);
-void	 __dbpanic(DB *dbp);
-__END_HIDDEN_DECLS
-#endif
 #endif /* !_DB_H_ */
