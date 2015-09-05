@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.3 2015/09/01 06:57:10 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.4 2015/09/05 08:21:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -211,7 +211,7 @@ efifb_mmap(void *v, off_t off, int prot)
 {
 	struct efifb_softc	*sc = v;
 
-	if (off > sc->sc_fb->psize)
+	if (off < 0 || off >= sc->sc_fb->psize)
 		return (-1);
 
 	return ((sc->sc_fb->paddr + off) | PMAP_WC);
