@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.12 2015/09/05 13:52:54 bru Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.13 2015/09/05 14:02:21 bru Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -119,6 +119,7 @@
 #define SYNAPTICS_MODEL_GEOMETRY(m)		((m) & 0x0f)
 
 /* Resolutions */
+#define SYNAPTICS_RESOLUTION_VALID		(1 << 15)
 #define SYNAPTICS_RESOLUTION_X(r)		(((r) >> 16) & 0xff)
 #define SYNAPTICS_RESOLUTION_Y(r)		((r) & 0xff)
 
