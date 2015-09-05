@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.25 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.26 2015/09/05 20:07:11 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -447,11 +447,10 @@ void
 catchquit(int signo)
 {
 	extern volatile sig_atomic_t returntosingle;
-	char buf[1024];
+	static const char message[] =
+	    "returning to single-user after filesystem check\n";
 
-	snprintf(buf, sizeof buf,
-	    "returning to single-user after filesystem check\n");
-	write(STDOUT_FILENO, buf, strlen(buf));
+	write(STDOUT_FILENO, message, sizeof(message)-1);
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
 }
