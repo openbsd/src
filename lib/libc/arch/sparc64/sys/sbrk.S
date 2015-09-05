@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.4 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.5 2015/09/05 06:22:47 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
@@ -46,11 +46,13 @@
 	.align	8
 __curbrk:
 	.xword	_C_LABEL(_end)
+	END(__curbrk)
+	OTYPE(__curbrk)
 	.text
 
-WEAK_ALIAS(sbrk, _sbrk)
+	.weak	sbrk
 
-ENTRY(_sbrk)
+ENTRY(sbrk)
 #ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 	set	__curbrk, %o3
@@ -80,3 +82,4 @@ ENTRY(_sbrk)
 	retl					/* and update curbrk */
 	 stx	%o4, [%o2 + %lo(__curbrk)]
 #endif
+END(sbrk)

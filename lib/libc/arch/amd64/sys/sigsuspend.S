@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.4 2015/06/17 03:04:50 uebayasi Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.5 2015/09/05 06:22:47 guenther Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.1 2001/06/19 00:25:07 fvdl Exp $	*/
 
 /*-
@@ -42,10 +42,10 @@
 SYSENTRY(sigsuspend)
 	movl	(%rdi),%edi		# indirect to mask arg
 	SYSTRAP(sigsuspend)
-	jc	err
+	jc	1f
 	xorl	%eax,%eax		# shouldn t happen
 	ret
-err:
+1:
 #ifdef __PIC__
 	movq	PIC_GOT(CERROR), %rcx
 	jmp	*%rcx

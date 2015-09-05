@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.9 2012/08/22 17:19:34 pascal Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.10 2015/09/05 06:22:47 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -44,7 +44,7 @@ SYSENTRY(sigprocmask)
 	movl	%ecx,8(%esp)		# to new mask arg
 2:	movl	$(SYS_sigprocmask),%eax
 	int	$0x80
-	jc	err
+	jc	1f
 	movl	12(%esp),%ecx		# fetch old mask requested
 	testl	%ecx,%ecx		# test if old mask requested
 	jz	out
@@ -52,7 +52,7 @@ SYSENTRY(sigprocmask)
 out:
 	xorl	%eax,%eax
 	ret
-err:
+1:
 #ifdef __PIC__
 	PIC_PROLOGUE             
 	movl	PIC_GOT(CERROR), %ecx
@@ -62,3 +62,4 @@ err:
 #else
 	jmp	CERROR
 #endif
+SYSCALL_END(sigprocmask)

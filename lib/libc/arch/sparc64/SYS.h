@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.13 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.14 2015/09/05 06:22:47 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,11 @@
 #define	END_WEAK(x)	END_STRONG(x); .weak x
 
 
+#define __END_HIDDEN(p,x)	END(_CAT(p,x));				\
+				_HIDDEN_FALIAS(x, _CAT(p,x));		\
+				END(_HIDDEN(x))
+#define __END(p,x)		__END_HIDDEN(p,x); END(x)
+
 /*
  * ERROR branches to cerror.  This is done with a macro so that I can
  * change it to be position independent later, if need be.
@@ -112,17 +117,17 @@
  */
 #define	__RSYSCALL(p,x) \
 	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; \
-	add %o7,8,%g2; t ST_SYSCALL; ERROR()
+	add %o7,8,%g2; t ST_SYSCALL; ERROR(); __END(p,x)
 #define	__RSYSCALL_HIDDEN(p,x) \
 	__ENTRY_HIDDEN(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; \
-	add %o7,8,%g2; t ST_SYSCALL; ERROR()
+	add %o7,8,%g2; t ST_SYSCALL; ERROR(); __END_HIDDEN(p,x)
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
  */
 #define	__PSEUDO(p,x,y) \
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
-	t ST_SYSCALL; ERROR()
+	t ST_SYSCALL; ERROR(); __END(p,x)
 
 /*
  * SYSCALL_NOERROR is like SYSCALL, except it's used for syscalls 
@@ -141,14 +146,14 @@
  */
 #define __RSYSCALL_NOERROR(p,x) \
 	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
-	t ST_SYSCALL
+	t ST_SYSCALL; __END(p,x)
 
 /*
  * PSEUDO_NOERROR(x,y) is like RSYSCALL_NOERROR(y) except that the name is x.
  */
 #define __PSEUDO_NOERROR(p,x,y) \
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
-	t ST_SYSCALL
+	t ST_SYSCALL; __END(p,x)
 
 	.globl	_C_LABEL(__cerror)
 
@@ -164,3 +169,4 @@
 #define	PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 #define	SYSENTRY(x)		__SYSENTRY(_thread_sys_,x)
+#define	SYSCALL_END(x)		__END(_thread_sys_,x)

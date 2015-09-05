@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.7 2015/09/05 06:22:47 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.9 2000/07/25 20:15:40 mycroft Exp $	*/
 
 /*
@@ -41,15 +41,17 @@
 	.globl	__curbrk
 	.globl	_C_LABEL(_end)
 
-WEAK_ALIAS(brk, _brk)
+	.weak	brk
 
 	.data
 	.align	8
 __minbrk:
 	.xword	_C_LABEL(_end)		/* lower brk limit; also for gmon code */
+	END(__minbrk)
+	OTYPE(__minbrk)
 	.text
 
-ENTRY(_brk)
+ENTRY(brk)
 #ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 	set	__minbrk, %o4
@@ -82,3 +84,4 @@ ENTRY(_brk)
 	retl				/* success, return 0 & record new break */
 	 stx	%o2, [%g1 + %lo(__curbrk)]
 #endif
+END(brk)

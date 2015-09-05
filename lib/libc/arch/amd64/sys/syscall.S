@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.5 2015/06/17 03:04:50 uebayasi Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.6 2015/09/05 06:22:47 guenther Exp $	*/
 /*	$NetBSD: syscall.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -43,9 +43,9 @@ SYSENTRY(syscall)
 	movq	$0,%rax
 	movq	%rcx,%r10
 	syscall
-	jc	err
+	jc	1f
 	ret
-err:
+1:
 #ifdef __PIC__
 	movq	PIC_GOT(CERROR), %rcx
 	jmp	*%rcx

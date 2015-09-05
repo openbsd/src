@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.9 2012/08/22 17:19:34 pascal Exp $ */
+/*	$OpenBSD: cerror.S,v 1.10 2015/09/05 06:22:47 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -49,3 +49,4 @@ _ENTRY(_CERROR)
 	movl	$-1,%eax
 	movl	$-1,%edx
 	ret
+END(_CERROR)

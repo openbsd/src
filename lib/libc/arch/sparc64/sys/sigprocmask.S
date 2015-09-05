@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.2 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.3 2015/09/05 06:22:47 guenther Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,3 +56,4 @@ SYSENTRY(sigprocmask)
 3:
 	retl			/* in any case, return 0 */
 	 clr	%o0
+SYSCALL_END(sigprocmask)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.18 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.19 2015/09/05 06:22:47 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -78,7 +78,11 @@
 
 #define PSEUDO_NOERROR_SUFFIX	blr
 
-#define SUFFIX			PSEUDO_SUFFIX
+#define __END_HIDDEN(p,x)	END(p##x);			\
+				_HIDDEN_FALIAS(x,p##x);		\
+				END(_HIDDEN(x))
+#define __END(p,x)		__END_HIDDEN(p,x); END(x)
+
 
 #define ALIAS(x,y)		WEAK_ALIAS(y,_CONCAT(x,y));
 		
@@ -89,13 +93,18 @@
 #define	PSEUDO_NOERROR(x,y)	ALIAS(_thread_sys_,x) \
 				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
 				sc ; \
-				PSEUDO_NOERROR_SUFFIX
+				PSEUDO_NOERROR_SUFFIX; \
+				__END(_thread_sys_,x)
 
 #define	PSEUDO_HIDDEN(x,y)	PSEUDO_PREFIX(_thread_sys_,x,y) ; \
 				sc ; \
-				PSEUDO_SUFFIX
+				PSEUDO_SUFFIX; \
+				__END_HIDDEN(_thread_sys_,x)
 #define	PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
-				PSEUDO_HIDDEN(x,y)
+				PSEUDO_HIDDEN(x,y); \
+				__END(_thread_sys_,x)
 
 #define RSYSCALL(x)		PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)	PSEUDO_HIDDEN(x,x)
+#define SYSCALL_END(x)		__END(_thread_sys_,x)
+

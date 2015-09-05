@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.7 2015/09/05 06:22:47 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -42,14 +42,15 @@
 	.globl	_end
 	.globl	__curbrk
 
-WEAK_ALIAS(brk, _brk)
-
 	.data
 __minbrk:
 	.quad	_end
+	END(__minbrk)
+	.type	__minbrk,@object
 	.text
 
-ENTRY(_brk)
+	.weak	brk
+ENTRY(brk)
 #ifdef __PIC__
 	movq	PIC_GOT(__minbrk),%rdx
 	cmpq	%rdi,(%rdx)
@@ -57,12 +58,12 @@ ENTRY(_brk)
 	movq	(%rdx),%rdi
 1:
 	SYSTRAP(break)
-	jc	err
+	jc	1f
 	movq	PIC_GOT(__curbrk),%rdx	# set up GOT addressing
 	movq	%rdi,(%rdx)
 	xorl	%eax,%eax
 	ret
-err:
+1:
 	movq	PIC_GOT(CERROR),%rdx
 	jmp	*%rdx
 #else
@@ -71,11 +72,11 @@ err:
 	movq	__minbrk(%rip),%rdi
 1:
 	SYSTRAP(break)
-	jc	err
+	jc	1f
 	movq	%rdi,__curbrk(%rip)
 	xorl	%eax,%eax
 	ret
-err:
+1:
 	jmp	CERROR
 #endif
-END(_brk)
+END(brk)

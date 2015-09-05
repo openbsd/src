@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: brk.S,v 1.11 2015/09/05 06:22:47 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,11 @@
 	.data
 __minbrk:
 	.long	_end
+	END(__minbrk)
+	.type	__minbrk,@object
 	.text
+
+	.weak	brk
 
 ENTRY(brk)
 #ifdef __PIC__
@@ -54,14 +58,14 @@ ENTRY(brk)
 1:
 	movl	$(SYS_break),%eax
 	int	$0x80
-	jc	err
+	jc	2f
 	PIC_PROLOGUE
 	movl	PIC_GOT(__curbrk),%edx	# set up GOT addressing
 	PIC_EPILOGUE
 	xorl	%eax,%eax
 	movl	%ecx,(%edx)
 	ret
-err:
+2:
 	PIC_PROLOGUE
 	movl	PIC_GOT(CERROR),%ecx	# set up GOT addressing
 	PIC_EPILOGUE
@@ -77,10 +81,11 @@ err:
 1:
 	movl	$(SYS_break),%eax
 	int	$0x80
-	jc	err
+	jc	2f
 	xorl	%eax,%eax
 	movl	%ecx,__curbrk
 	ret
-err:
+2:
 	jmp	CERROR
 #endif
+END(brk)

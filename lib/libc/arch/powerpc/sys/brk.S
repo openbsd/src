@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
+/* $OpenBSD: brk.S,v 1.11 2015/09/05 06:22:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -30,9 +30,9 @@
 	.extern __curbrk
 	.extern _C_LABEL(end)
 
-WEAK_ALIAS(brk, _brk)
+	.weak	brk
 
-PREFIX2(_brk,break)
+PSEUDO_PREFIX(,brk,break)
 	
 	/* check >= _end, if not make the call for _end */
 #ifndef __PIC__
@@ -73,3 +73,4 @@ PREFIX2(_brk,break)
 	stw	7, 0(6)		/* # remember, 6=&__curbrk, 3= new value */
 	mr	3, 0		/* # return 0 */
 	blr
+END(brk)

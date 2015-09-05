@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.3 2015/09/05 06:22:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -66,3 +66,4 @@ ENTRY(__tfork_thread)
 	 * System call failure.
 	 */
 	ERROR()
+END(__tfork_thread)

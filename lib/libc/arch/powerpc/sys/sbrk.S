@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.9 2015/08/26 01:54:09 guenther Exp $ */
+/* $OpenBSD: sbrk.S,v 1.10 2015/09/05 06:22:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -33,11 +33,13 @@
 	.hidden __curbrk
 __curbrk:
 	.long _C_LABEL(end)
+	END(__curbrk)
+	.type	__curbrk,@object
 
-WEAK_ALIAS(sbrk, _sbrk)
+	.weak	sbrk
 
 	.text
-PREFIX2(_sbrk,break)
+PSEUDO_PREFIX(,sbrk,break)
 	
 	/* call break(__curbrk + size) */
 #ifndef __PIC__
@@ -68,3 +70,4 @@ PREFIX2(_sbrk,break)
 	stw	7, 0(6)		/* # remember, 6=&__curbrk, 7=new_curbrk */
 	mr	3, 5		/* # remember, 5=old_curbrk */
 	blr
+END(sbrk)

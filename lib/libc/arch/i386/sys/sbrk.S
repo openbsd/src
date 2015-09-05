@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.11 2015/09/05 06:22:47 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,11 @@
 
 	.data
 __curbrk:	.long	_end
+	END(__curbrk)
+	.type	__curbrk,@object
 	.text
+
+	.weak	sbrk
 
 ENTRY(sbrk)
 #ifdef __PIC__
@@ -51,14 +55,14 @@ ENTRY(sbrk)
 	addl	%eax,4(%esp)
 	movl	$(SYS_break),%eax
 	int	$0x80
-	jc	err
+	jc	2f
 	PIC_PROLOGUE
 	movl	PIC_GOT(__curbrk),%edx
 	PIC_EPILOGUE
 	movl	(%edx),%eax
 	addl	%ecx,(%edx)
 	ret
-err:
+2:
 	PIC_PROLOGUE             
 	movl	PIC_GOT(CERROR), %ecx
 	PIC_EPILOGUE
@@ -71,10 +75,11 @@ err:
 	addl	%eax,4(%esp)
 	movl	$(SYS_break),%eax
 	int	$0x80
-	jc	err
+	jc	2f
 	movl	__curbrk,%eax
 	addl	%ecx,__curbrk
 	ret
-err:
+2:
 	jmp	CERROR
 #endif
+END(sbrk)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.5 2011/04/04 12:42:39 guenther Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.6 2015/09/05 06:22:47 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,23 +40,23 @@ SYSLEAF(sigprocmask, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
 	SETUP_GP64(GPOFF, sigprocmask)
 	.set	reorder
-	bne	a1, zero, gotptr	# if new sigset pointer not null
+	bne	a1, zero, .Lgotptr	# if new sigset pointer not null
 	li	a0, 1			# how = SIG_BLOCK
-	b	doit			# mask = zero
-gotptr:
+	b	.Ldoit			# mask = zero
+.Lgotptr:
 	lw	a1, 0(a1)		# indirect to new mask arg
-doit:
+.Ldoit:
 	li	v0, SYS_sigprocmask
 	syscall
-	bne	a3, zero, err
-	beq	a2, zero, out		# test if old mask requested
+	bne	a3, zero, .Lerr
+	beq	a2, zero, .Lout		# test if old mask requested
 	sw	v0, 0(a2)		# store old mask
-out:
+.Lout:
 	move	v0, zero
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	j	ra
-err:
+.Lerr:
 	LA	t9, CERROR
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ

@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.8 2015/03/31 04:32:01 guenther Exp $ */
+/*	$OpenBSD: Ovfork.S,v 1.9 2015/09/05 06:22:47 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,9 +37,9 @@ SYSENTRY(vfork)
 	popl	%ecx		/* my rta into ecx */
 	movl	$(SYS_vfork),%eax
 	int	$0x80
-	jc	err
+	jc	1f
 	jmp	*%ecx
-err:
+1:
 #ifdef __PIC__
 	PIC_PROLOGUE
 	movl	PIC_GOT(_C_LABEL(errno)),%edx
@@ -50,3 +50,4 @@ err:
 #endif
 	movl	$-1,%eax
 	jmp	*%ecx
+SYSCALL_END(vfork)

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.22 2015/08/31 02:53:56 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.23 2015/09/05 06:22:47 guenther Exp $
  */
 
 #include <machine/asm.h>
@@ -75,6 +75,10 @@
 			_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
 #define	SYSENTRY_HIDDEN(x)				\
 			ENTRY(_thread_sys_ ## x)
+#define	__END_HIDDEN(x)	END(_thread_sys_ ## x);			\
+			_HIDDEN_FALIAS(x,_thread_sys_ ## x);	\
+			END(_HIDDEN(x))
+#define	__END(x)	__END_HIDDEN(x); END(x)
 
 #define	__DO_SYSCALL(x)					\
 			movl $(SYS_ ## x),%eax;		\
@@ -137,20 +141,24 @@
 /* perform a syscall, return */
 #define	PSEUDO_NOERROR(x,y)				\
 		_SYSCALL_NOERROR(x,y);			\
-			ret
+			ret;				\
+		__END(x)
 
 /* perform a syscall, set errno, return */
 #define	PSEUDO(x,y)					\
 		_SYSCALL(x,y);				\
-			ret
+			ret;				\
+		__END(x)
 #define	PSEUDO_HIDDEN(x,y)				\
 		_SYSCALL_HIDDEN(x,y);			\
-			ret
+			ret;				\
+		__END_HIDDEN(x)
 
 /* perform a syscall with the same name, set errno, return */
 #define	RSYSCALL(x)					\
 			PSEUDO(x,x);
 #define	RSYSCALL_HIDDEN(x)				\
 			PSEUDO_HIDDEN(x,x)
+#define	SYSCALL_END(x)	__END(x)
 
 	.globl	CERROR

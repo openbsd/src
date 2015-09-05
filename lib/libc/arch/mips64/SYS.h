@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.8 2015/08/31 02:53:56 guenther Exp $ 
+ *      $OpenBSD: SYS.h,v 1.9 2015/09/05 06:22:47 guenther Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -72,7 +72,11 @@
 # define __LEAF2(p,x,sz)	LEAF(p ## x, sz) \
 				WEAK_ALIAS(x, p ## x);
 
-# define __END2(p,x)		END(p ## x)
+# define __END2_HIDDEN(p,x)	END(p ## x); 		\
+				_HIDDEN_FALIAS(x, p ## x)
+				.size _HIDDEN(x), . - _HIDDEN(x)
+# define __END2(p,x)		__END2_HIDDEN(p,x);	\
+				.size x, . - x
 
 # define __CLABEL2(p,x)		_C_LABEL(p ## x)
 
@@ -87,11 +91,11 @@
 			PTR_SUBU sp,32;			\
 			SETUP_GP64(16,__CLABEL2(p,x));	\
 			__DO_SYSCALL(y);		\
-			bne	a3,zero,err;		\
+			bne	a3,zero,1f;		\
 			RESTORE_GP64;			\
 			PTR_ADDU sp,32;			\
 			j	ra;			\
-		err:	LA	t9,CERROR;		\
+		1:	LA	t9,CERROR;		\
 			RESTORE_GP64;			\
 			PTR_ADDU sp,32;			\
 			jr	t9;			\
@@ -101,15 +105,15 @@
 			PTR_SUBU sp,32;			\
 			SETUP_GP64(16,__CLABEL2(p,x));	\
 			__DO_SYSCALL(y);		\
-			bne	a3,zero,err;		\
+			bne	a3,zero,1f;		\
 			RESTORE_GP64;			\
 			PTR_ADDU sp,32;			\
 			j	ra;			\
-		err:	LA	t9,CERROR;		\
+		1:	LA	t9,CERROR;		\
 			RESTORE_GP64;			\
 			PTR_ADDU sp,32;			\
 			jr	t9;			\
-		END(p ## x)
+		__END2_HIDDEN(p,x)
 
 
 #define RSYSCALL(x)		__PSEUDO(_thread_sys_,x,x)

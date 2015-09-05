@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsuspend.S,v 1.2 2002/10/07 04:47:12 drahn Exp $ */
+/* $OpenBSD: sigsuspend.S,v 1.3 2015/09/05 06:22:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -33,4 +33,4 @@
 PREFIX(sigsuspend)
 	lwz 3, 0(3)		/* load the mask */
 	sc
-	SUFFIX
+SYSCALL_END(sigsuspend)

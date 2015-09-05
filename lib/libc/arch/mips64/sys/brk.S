@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: brk.S,v 1.7 2015/09/05 06:22:47 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,16 +38,18 @@
 	.data
 __minbrk:
 	PTR_VAL	_C_LABEL(end)
+	.size	__minbrk, . - __minbrk
+	.type	__minbrk,@object
 	.text
 
 FRAMESZ= MKFSIZ(1,1)
 GPOFF= FRAMESZ-2*REGSZ
 
-WEAK_ALIAS(brk, _brk)
+	.weak	brk
 
-LEAF(_brk, FRAMESZ)
+LEAF(brk, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
-	SETUP_GP64(GPOFF, _brk)
+	SETUP_GP64(GPOFF, brk)
 	.set	reorder
 	PTR_L	v0, __minbrk
 	bgtu	a0, v0, 1f
@@ -67,4 +69,4 @@ LEAF(_brk, FRAMESZ)
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
 	jr	t9
-END(_brk)
+END(brk)
