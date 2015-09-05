@@ -1,12 +1,9 @@
-/*	$OpenBSD: namespace.h,v 1.3 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.4 2015/09/05 11:25:30 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
 
 /* These will be replaced with symbol renaming ala PROTO_NORMAL */
-#define catclose	_catclose
-#define catgets		_catgets
-#define catopen		_catopen
 #define strtoq		_strtoq
 #define strtouq		_strtouq
 #define sys_errlist	_sys_errlist

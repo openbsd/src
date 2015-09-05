@@ -1,4 +1,4 @@
-/*	$OpenBSD: catgets.c,v 1.8 2008/06/26 05:42:05 ray Exp $ */
+/*	$OpenBSD: catgets.c,v 1.9 2015/09/05 11:25:30 guenther Exp $ */
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <nl_types.h>
 
 char *
-_catgets(nl_catd catd, int set_id, int msg_id, const char *s)
+catgets(nl_catd catd, int set_id, int msg_id, const char *s)
 {
 	struct _nls_cat_hdr *cat_hdr;
 	struct _nls_set_hdr *set_hdr;
@@ -94,3 +94,4 @@ _catgets(nl_catd catd, int set_id, int msg_id, const char *s)
 	/* not found */
 	return (char *) s;
 }
+DEF_WEAK(catgets);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: catopen.c,v 1.16 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: catopen.c,v 1.17 2015/09/05 11:25:30 guenther Exp $ */
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,9 +45,8 @@
 
 static nl_catd load_msgcat(const char *);
 
-/* ARGSUSED */
 nl_catd
-_catopen(const char *name, int oflag)
+catopen(const char *name, int oflag)
 {
 	char tmppath[PATH_MAX];
 	char *nlspath;
@@ -156,6 +155,7 @@ _catopen(const char *name, int oflag)
 
 	return (nl_catd) -1;
 }
+DEF_WEAK(catopen);
 
 static nl_catd
 load_msgcat(const char *path)

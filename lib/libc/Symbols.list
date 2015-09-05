@@ -1196,9 +1196,6 @@ setservent_r
 sockatmark
 
 /* nls */
-_catclose
-_catgets
-_catopen
 catclose
 catgets
 catopen
