@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.9 2015/09/05 06:22:47 guenther Exp $ 
+ *      $OpenBSD: SYS.h,v 1.10 2015/09/05 17:32:18 miod Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -73,7 +73,7 @@
 				WEAK_ALIAS(x, p ## x);
 
 # define __END2_HIDDEN(p,x)	END(p ## x); 		\
-				_HIDDEN_FALIAS(x, p ## x)
+				_HIDDEN_FALIAS(x, p ## x); \
 				.size _HIDDEN(x), . - _HIDDEN(x)
 # define __END2(p,x)		__END2_HIDDEN(p,x);	\
 				.size x, . - x
