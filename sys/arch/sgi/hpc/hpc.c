@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.16 2013/09/28 14:00:00 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.17 2015/09/05 21:13:24 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -363,17 +363,14 @@ void	hpc_blink_ioc(void *);
 int	hpc_read_eeprom(int, bus_space_tag_t, bus_space_handle_t, uint8_t *,
 	    size_t);
 
-struct hpc_dma_desc *hpc_read_dma_desc_par(struct hpc_dma_desc *,
-	    struct hpc_dma_desc *);
-struct hpc_dma_desc *hpc_read_dma_desc_ecc(struct hpc_dma_desc *,
-	    struct hpc_dma_desc *);
-void	hpc_write_dma_desc_par(struct hpc_dma_desc *, struct hpc_dma_desc *);
-void	hpc_write_dma_desc_ecc(struct hpc_dma_desc *, struct hpc_dma_desc *);
+void	hpc_sync_dma_desc_par(struct hpc_dma_desc *);
+void	hpc_sync_dma_desc_ecc(struct hpc_dma_desc *);
+void	hpc_update_dma_desc_par(struct hpc_dma_desc *);
+void	hpc_update_dma_desc_ecc(struct hpc_dma_desc *);
 
 /* globals since they depend upon the system type, not the hpc version */
-struct hpc_dma_desc *(*hpc_read_dma_desc_fn)(struct hpc_dma_desc *,
-	    struct hpc_dma_desc *);
-void	(*hpc_write_dma_desc_fn)(struct hpc_dma_desc *, struct hpc_dma_desc *);
+void	(*hpc_sync_dma_desc_fn)(struct hpc_dma_desc *);
+void	(*hpc_update_dma_desc_fn)(struct hpc_dma_desc *);
 
 const struct cfattach hpc_ca = {
 	sizeof(struct hpc_softc), hpc_match, hpc_attach
@@ -436,13 +433,13 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ga->ga_dmat;
 
 	/* setup HPC DMA helpers if not done already */
-	if (hpc_read_dma_desc_fn == NULL) {
+	if (hpc_sync_dma_desc_fn == NULL) {
 		if (ip22_ecc) {
-			hpc_read_dma_desc_fn = hpc_read_dma_desc_ecc;
-			hpc_write_dma_desc_fn = hpc_write_dma_desc_ecc;
+			hpc_sync_dma_desc_fn = hpc_sync_dma_desc_ecc;
+			hpc_update_dma_desc_fn = hpc_update_dma_desc_ecc;
 		} else {
-			hpc_read_dma_desc_fn = hpc_read_dma_desc_par;
-			hpc_write_dma_desc_fn = hpc_write_dma_desc_par;
+			hpc_sync_dma_desc_fn = hpc_sync_dma_desc_par;
+			hpc_update_dma_desc_fn = hpc_update_dma_desc_par;
 		}
 	}
 
@@ -975,50 +972,53 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
 }
 
 /*
- * Routines to copy and update HPC DMA descriptors in uncached memory.
+ * Routines to update HPC DMA descriptors.
  */
 
-struct hpc_dma_desc *
-hpc_read_dma_desc(struct hpc_dma_desc *src, struct hpc_dma_desc *store)
+void
+hpc_sync_dma_desc(struct hpc_dma_desc *desc)
 {
-	return (*hpc_read_dma_desc_fn)(src, store);
+	(*hpc_sync_dma_desc_fn)(desc);
 }
 
 void
-hpc_write_dma_desc(struct hpc_dma_desc *dst, struct hpc_dma_desc *src)
+hpc_update_dma_desc(struct hpc_dma_desc *desc)
 {
-	(*hpc_write_dma_desc_fn)(dst, src);
+	(*hpc_update_dma_desc_fn)(desc);
 }
 
-/* parity MC flavour: no copy */
-struct hpc_dma_desc *
-hpc_read_dma_desc_par(struct hpc_dma_desc *src, struct hpc_dma_desc *store)
+/*
+ * Parity MC flavour: descriptors are in non-cacheable memory, to which
+ * accesses are allowed. No cache operation is needed.
+ */
+
+void
+hpc_sync_dma_desc_par(struct hpc_dma_desc *desc)
 {
-	return src;
+	/* nothing to do */
 }
 
 void
-hpc_write_dma_desc_par(struct hpc_dma_desc *dst, struct hpc_dma_desc *src)
+hpc_update_dma_desc_par(struct hpc_dma_desc *desc)
 {
+	/* nothing to do */
 }
 
-/* ECC MC flavour: copy, and update in slow mode */
-struct hpc_dma_desc *
-hpc_read_dma_desc_ecc(struct hpc_dma_desc *src, struct hpc_dma_desc *store)
+/*
+ * ECC MC flavour: descriptor are in cacheable memory, and need to be
+ * evicted from cache before reading, and flushed from cache after updating.
+ */
+
+void
+hpc_sync_dma_desc_ecc(struct hpc_dma_desc *desc)
 {
-	bcopy(src, store, sizeof(struct hpc_dma_desc));
-	return store;
+	Mips_HitInvalidateDCache(curcpu(),
+	    (vaddr_t)desc, sizeof(struct hpc_dma_desc));
 }
 
 void
-hpc_write_dma_desc_ecc(struct hpc_dma_desc *dst, struct hpc_dma_desc *src)
+hpc_update_dma_desc_ecc(struct hpc_dma_desc *desc)
 {
-	register_t sr;
-	int mode;
-
-	sr = disableintr();
-	mode = ip22_slow_mode();
-	bcopy(src, dst, sizeof(struct hpc_dma_desc));
-	ip22_restore_mode(mode);
-	setsr(sr);
+	Mips_HitSyncDCache(curcpu(),
+	    (vaddr_t)desc, sizeof(struct hpc_dma_desc));
 }

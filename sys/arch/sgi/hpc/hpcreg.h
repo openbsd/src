@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcreg.h,v 1.1 2012/03/28 20:44:23 miod Exp $	*/
+/*	$OpenBSD: hpcreg.h,v 1.2 2015/09/05 21:13:24 miod Exp $	*/
 /*	$NetBSD: hpcreg.h,v 1.20 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
@@ -44,14 +44,21 @@ struct hpc_dma_desc {
 	uint32_t	hdd_bufptr;	/* Physical address of buffer */
 	uint32_t	hdd_ctl;	/* Control flags and byte count */
 	uint32_t	hdd_descptr;	/* Physical address of next descr. */
+#if defined(CPU_R8000) || defined (CPU_R10000)
+	uint32_t	hdd_pad[29];	/* Pad out to largest cache line */
+#else
 	uint32_t	hdd_pad;	/* Pad out to quadword alignment */
+#endif
 };
+
+#define	HPC1_DMA_BOUNDARY	0x1000
+#define	HPC3_DMA_BOUNDARY	0x2000
 
 /*
  * The hdd_bufptr and hdd_ctl fields are swapped between HPC1 and
  * HPC3. These fields are referenced by macro for readability.
  */
-#define hpc1_hdd_ctl	hdd_bufptr	
+#define hpc1_hdd_ctl	hdd_bufptr
 #define hpc1_hdd_bufptr	hdd_ctl
 #define hpc3_hdd_ctl	hdd_ctl
 #define hpc3_hdd_bufptr	hdd_bufptr

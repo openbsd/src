@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.39 2014/11/16 12:30:58 deraadt Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.40 2015/09/05 21:13:24 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -460,11 +460,9 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	/*
 	 * On ECC MC systems, which do not allow uncached writes to memory
 	 * during regular operation, fail requests for uncached (coherent)
-	 * memory, unless the caller tells us it is aware of this and will
-	 * do the right thing, by passing BUS_DMA_BUS1 as well.
+	 * memory.
 	 */
-	if ((flags & (BUS_DMA_COHERENT | BUS_DMA_BUS1)) == BUS_DMA_COHERENT &&
-	    ip22_ecc)
+	if ((flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE)) && ip22_ecc)
 		return EINVAL;
 #endif
 

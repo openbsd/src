@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sqvar.h,v 1.4 2012/05/28 17:03:36 miod Exp $	*/
+/*	$OpenBSD: if_sqvar.h,v 1.5 2015/09/05 21:13:24 miod Exp $	*/
 /*	$NetBSD: sqvar.h,v 1.12 2011/01/25 13:12:39 tsutsui Exp $	*/
 
 /*
@@ -160,10 +160,12 @@ struct sq_softc {
 #define	SQ_CDTXADDR(sc, x)	((sc)->sc_cddma + SQ_CDTXOFF((x)))
 #define	SQ_CDRXADDR(sc, x)	((sc)->sc_cddma + SQ_CDRXOFF((x)))
 
-#if 0 /* not necessary as this memory is mapped uncached */
 static inline void
 SQ_CDTXSYNC(struct sq_softc *sc, int __x, int __n, int ops)
 {
+	if (!ip22_ecc)
+		return;
+
 	/* If it will wrap around, sync to the end of the ring. */
 	if ((__x + __n) > SQ_NTXDESC) {
 		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,
@@ -179,20 +181,20 @@ SQ_CDTXSYNC(struct sq_softc *sc, int __x, int __n, int ops)
 }
 
 #define	SQ_CDRXSYNC(sc, x, ops)						\
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,			\
-	    SQ_CDRXOFF((x)), sizeof(struct hpc_dma_desc), (ops))
-#else
-#define	SQ_CDTXSYNC(sc, x, n, ops)	do { } while (0)
-#define	SQ_CDRXSYNC(sc, x, ops)		do { } while (0)
-#endif
+do {									\
+	if (ip22_ecc)							\
+		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,		\
+		    SQ_CDRXOFF((x)), sizeof(struct hpc_dma_desc), (ops)); \
+} while (0)
 
 static inline void
 SQ_INIT_RXDESC(struct sq_softc *sc, unsigned int x)
 {
-	struct hpc_dma_desc *__rxd, rxd_store;
+	struct hpc_dma_desc *__rxd;
 	struct mbuf *__m = (sc)->sc_rxmbuf[(x)];
 
-	__rxd = hpc_read_dma_desc(&(sc)->sc_rxdesc[(x)], &rxd_store);
+	__rxd = &(sc)->sc_rxdesc[(x)];
+	hpc_sync_dma_desc(__rxd);
 	__m->m_data = __m->m_ext.ext_buf;
 	if (sc->hpc_regs->revision == 3) {
 		__rxd->hpc3_hdd_bufptr =
@@ -208,6 +210,6 @@ SQ_INIT_RXDESC(struct sq_softc *sc, unsigned int x)
 		    HPC1_HDD_CTL_INTR | HPC1_HDD_CTL_EOPACKET;
 	}
 	__rxd->hdd_descptr = SQ_CDRXADDR((sc), SQ_NEXTRX((x)));
-	hpc_write_dma_desc(&(sc)->sc_rxdesc[(x)], __rxd);
+	hpc_update_dma_desc(__rxd);
 	SQ_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
