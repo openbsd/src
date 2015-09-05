@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl_types.h,v 1.1 2015/09/05 11:25:30 guenther Exp $	*/
+/*	$OpenBSD: nl_types.h,v 1.2 2015/09/05 11:32:10 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*	$OpenBSD: nl_types.h,v 1.1 2015/09/05 11:25:30 guenther Exp $	*/
-/*	$NetBSD: nl_types.h,v 1.6 1996/05/13 23:11:15 jtc Exp $	*/
 
 #ifndef _LIBC_NL_TYPES_H_
 #define _LIBC_NL_TYPES_H_
