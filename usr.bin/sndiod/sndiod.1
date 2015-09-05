@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.1,v 1.4 2014/08/13 08:42:46 nicm Exp $
+.\"	$OpenBSD: sndiod.1,v 1.5 2015/09/05 11:19:20 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 13 2014 $
+.Dd $Mdocdate: September 5 2015 $
 .Dt SNDIOD 1
 .Os
 .Sh NAME
@@ -474,7 +474,7 @@ the default
 and a MIDI-controlled
 .Va snd/0.mmc :
 .Bd -literal -offset indent
-$ sndiod -r 48000 -z 400 -s default -t slave -s mmc
+$ sndiod \-r 48000 \-z 400 \-s default \-t slave \-s mmc
 .Ed
 .Pp
 Streams connected to
@@ -493,7 +493,7 @@ and
 .Pa snd/0.rear
 devices:
 .Bd -literal -offset indent
-$ sndiod -s default -c 2:3 -s rear
+$ sndiod \-s default \-c 2:3 \-s rear
 .Ed
 .Pp
 Start server creating the default sub-device with low volume and
@@ -503,7 +503,7 @@ and
 .Pa snd/0.max
 devices:
 .Bd -literal -offset indent
-$ sndiod -v 65 -s default -v 127 -s max
+$ sndiod \-v 65 \-s default \-v 127 \-s max
 .Ed
 .Pp
 Start server configuring the audio device to use
@@ -512,7 +512,7 @@ and 2-block buffers.
 The corresponding latency is 10ms, which is
 the time it takes the sound to propagate 3.5 meters.
 .Bd -literal -offset indent
-$ sndiod -r 48000 -b 480 -z 240
+$ sndiod \-r 48000 \-b 480 \-z 240
 .Ed
 .Sh SEE ALSO
 .Xr sndio 7

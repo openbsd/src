@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.17 2014/06/02 07:51:25 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.18 2015/09/05 11:19:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1452,7 +1452,7 @@ slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
 	}
 
 	/*
-	 * find a xfree controller slot with the same name/unit
+	 * find a free controller slot with the same name/unit
 	 */
 	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
 		if (s->ops == NULL &&
@@ -1470,7 +1470,7 @@ slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
 	}
 
 	/*
-	 * couldn't find a matching slot, pick oldest xfree slot
+	 * couldn't find a matching slot, pick oldest free slot
 	 * and set its name/unit
 	 */
 	bestser = 0;
