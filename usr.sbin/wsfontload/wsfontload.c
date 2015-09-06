@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.14 2015/02/09 23:00:15 deraadt Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.15 2015/09/06 19:56:43 tobias Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -33,17 +33,18 @@
  *
  */
 
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
+#include <err.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
 
 #include <dev/wscons/wsconsio.h>
 
@@ -90,6 +91,7 @@ main(int argc, char *argv[])
 	struct stat stat;
 	size_t len;
 	void *buf;
+	const char *errstr;
 
 	wsdev = DEFDEV;
 	memset(&f, 0, sizeof f);
@@ -103,14 +105,14 @@ main(int argc, char *argv[])
 			wsdev = optarg;
 			break;
 		case 'w':
-			if (sscanf(optarg, "%d", &f.fontwidth) != 1)
-				errx(1, "invalid font width of %d",
-				    f.fontwidth);
+			f.fontwidth = strtonum(optarg, 1, UINT_MAX, &errstr);
+			if (errstr)
+				errx(1, "font width is %s: %s", errstr, optarg);
 			break;
 		case 'h':
-			if (sscanf(optarg, "%d", &f.fontheight) != 1)
-				errx(1, "invalid font height of %d",
-				    f.fontheight);
+			f.fontheight = strtonum(optarg, 1, UINT_MAX, &errstr);
+			if (errstr)
+				errx(1, "font height is %s: %s", errstr, optarg);
 			break;
 		case 'e':
 			f.encoding = getencoding(optarg);
