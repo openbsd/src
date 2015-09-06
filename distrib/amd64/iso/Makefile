@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2014/09/21 13:44:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2015/09/06 18:22:10 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -30,17 +30,32 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
+VND_IDEV=	/dev/${VND}i
+VND_IRDEV=	/dev/r${VND}i
 BOOT?=		${DESTDIR}/usr/mdec/boot
+EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
+MSDOSSIZE=	960
+TOTALSIZE!=	expr ${FSSIZE} + ${MSDOSSIZE}
+TEMPLATE=	${.CURDIR}/template
 
 all: ${CDROM} ${FS}
 
 ${FS}: ${BASE} ${XBASE} bsd.gz
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FSSIZE}
+	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${TOTALSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	fdisk -yi -l ${FSSIZE} -f ${DESTDIR}/usr/mdec/mbr ${VND}
+	fdisk -yi -l ${FSSIZE} -b ${MSDOSSIZE} -f ${DESTDIR}/usr/mdec/mbr ${VND}
+.ifdef TEMPLATE
+	disklabel -wAT ${TEMPLATE} ${VND}
+	newfs -t msdos ${VND_IRDEV}
+	mount ${VND_IDEV} ${MOUNT_POINT}
+	mkdir -p ${MOUNT_POINT}/efi/boot
+	cp ${EFIBOOT} ${MOUNT_POINT}/efi/boot
+	umount ${MOUNT_POINT}
+.else
 	disklabel -w ${VND} ${FSTYPE}
+.endif
 	newfs -m 0 -o space -i 524288 -c ${FSSIZE} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${MOUNT_POINT}/boot
