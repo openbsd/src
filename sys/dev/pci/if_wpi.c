@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.127 2015/05/27 22:10:52 kettenis Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.128 2015/09/06 04:09:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -2622,7 +2622,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 
 	DPRINTF(("sending scan command nchan=%d\n", hdr->nchan));
 	error = wpi_cmd(sc, WPI_CMD_SCAN, buf, buflen, 1);
-	free(buf, M_DEVBUF, 0);
+	free(buf, M_DEVBUF, WPI_SCAN_MAXSZ);
 	return error;
 }
 
@@ -2979,7 +2979,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	if (size < sizeof (*hdr)) {
 		printf("%s: truncated firmware header: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
-		free(fw->data, M_DEVBUF, 0);
+		free(fw->data, M_DEVBUF, size);
 		return EINVAL;
 	}
 	/* Extract firmware header information. */
@@ -2999,7 +2999,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	    fw->boot.textsz > WPI_FW_BOOT_TEXT_MAXSZ ||
 	    (fw->boot.textsz & 3) != 0) {
 		printf("%s: invalid firmware header\n", sc->sc_dev.dv_xname);
-		free(fw->data, M_DEVBUF, 0);
+		free(fw->data, M_DEVBUF, size);
 		return EINVAL;
 	}
 
@@ -3008,7 +3008,7 @@ wpi_read_firmware(struct wpi_softc *sc)
 	    fw->init.textsz + fw->init.datasz + fw->boot.textsz) {
 		printf("%s: firmware file too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
-		free(fw->data, M_DEVBUF, 0);
+		free(fw->data, M_DEVBUF, size);
 		return EINVAL;
 	}
 
