@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1768 2015/09/05 02:05:27 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1769 2015/09/06 17:35:06 sf Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6258,6 +6258,9 @@
 
 /* Red Hat products */
 #define	PCI_PRODUCT_REDHAT_PPB	0x0001		/* Qemu PCI-PCI */
+#define	PCI_PRODUCT_REDHAT_SERIAL	0x0002		/* Qemu Serial */
+#define	PCI_PRODUCT_REDHAT_SERIAL2	0x0003		/* Qemu Serial 2x */
+#define	PCI_PRODUCT_REDHAT_SERIAL4	0x0004		/* Qemu Serial 4x */
 #define	PCI_PRODUCT_REDHAT_QXL	0x0100		/* QXL Video */
 
 /* RICOH products */

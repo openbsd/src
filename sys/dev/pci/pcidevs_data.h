@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1768 2015/09/05 02:05:27 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1769 2015/09/06 17:35:06 sf Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21774,6 +21774,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_PPB,
 	    "Qemu PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL,
+	    "Qemu Serial",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL2,
+	    "Qemu Serial 2x",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL4,
+	    "Qemu Serial 4x",
 	},
 	{
 	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_QXL,
