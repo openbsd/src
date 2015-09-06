@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.21 2015/05/28 20:53:05 jcs Exp $	*/
+/*	$OpenBSD: mem.c,v 1.22 2015/09/06 16:24:19 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -152,7 +152,7 @@ mem_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		/* No need to keep the "dimm-info" contents around. */
-		free(sc->sc_buf, M_DEVBUF, 0);
+		free(sc->sc_buf, M_DEVBUF, sc->sc_len);
 		sc->sc_len = -1;
 	}
 }
