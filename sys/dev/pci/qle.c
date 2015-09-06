@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.36 2015/07/08 10:48:19 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.37 2015/09/06 04:54:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -901,11 +901,11 @@ qle_add_loop_port(struct qle_softc *sc, struct qle_fc_port *port)
 		sc->sc_targets[port->loopid] = port;
 		break;
 	case QLE_PORT_DISP_DUP:
-		free(port, M_DEVBUF, 0);
+		free(port, M_DEVBUF, sizeof *port);
 		break;
 	case QLE_PORT_DISP_SAME:
 		TAILQ_REMOVE(&sc->sc_ports_gone, pport, update);
-		free(port, M_DEVBUF, 0);
+		free(port, M_DEVBUF, sizeof *port);
 		break;
 	}
 	mtx_leave(&sc->sc_port_mtx);
@@ -931,7 +931,7 @@ qle_add_fabric_port(struct qle_softc *sc, struct qle_fc_port *port)
 	struct qle_get_port_db *pdb;
 
 	if (qle_get_port_db(sc, port->loopid, sc->sc_scratch) != 0) {
-		free(port, M_DEVBUF, 0);
+		free(port, M_DEVBUF, sizeof *port);
 		return (1);
 	}
 	pdb = QLE_DMA_KVA(sc->sc_scratch);
@@ -1610,22 +1610,22 @@ qle_update_start(struct qle_softc *sc, int task)
 void
 qle_clear_port_lists(struct qle_softc *sc)
 {
-	struct qle_fc_port *p;
+	struct qle_fc_port *port;
 	while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
-		p = TAILQ_FIRST(&sc->sc_ports_found);
-		TAILQ_REMOVE(&sc->sc_ports_found, p, update);
-		free(p, M_DEVBUF, 0);
+		port = TAILQ_FIRST(&sc->sc_ports_found);
+		TAILQ_REMOVE(&sc->sc_ports_found, port, update);
+		free(port, M_DEVBUF, sizeof *port);
 	}
 
 	while (!TAILQ_EMPTY(&sc->sc_ports_new)) {
-		p = TAILQ_FIRST(&sc->sc_ports_new);
-		TAILQ_REMOVE(&sc->sc_ports_new, p, update);
-		free(p, M_DEVBUF, 0);
+		port = TAILQ_FIRST(&sc->sc_ports_new);
+		TAILQ_REMOVE(&sc->sc_ports_new, port, update);
+		free(port, M_DEVBUF, sizeof *port);
 	}
 
 	while (!TAILQ_EMPTY(&sc->sc_ports_gone)) {
-		p = TAILQ_FIRST(&sc->sc_ports_gone);
-		TAILQ_REMOVE(&sc->sc_ports_gone, p, update);
+		port = TAILQ_FIRST(&sc->sc_ports_gone);
+		TAILQ_REMOVE(&sc->sc_ports_gone, port, update);
 	}
 }
 
@@ -2110,7 +2110,7 @@ qle_do_update(void *xsc)
 				if (port->location & QLE_LOCATION_FABRIC)
 					qle_fabric_plogo(sc, port);
 
-				free(port, M_DEVBUF, 0);
+				free(port, M_DEVBUF, sizeof *port);
 			}
 
 			qle_update_done(sc, QLE_UPDATE_TASK_CLEAR_ALL);
@@ -2202,12 +2202,12 @@ qle_do_update(void *xsc)
 				DPRINTF(QLE_D_PORT, "%s: loop port %04x\n",
 				    DEVNAME(sc), fport->loopid);
 				if (qle_add_loop_port(sc, fport) != 0)
-					free(fport, M_DEVBUF, 0);
+					free(fport, M_DEVBUF, sizeof *port);
 			} else if (fport->location & QLE_LOCATION_FABRIC) {
 				qle_add_fabric_port(sc, fport);
 			} else {
 				/* already processed */
-				free(fport, M_DEVBUF, 0);
+				free(fport, M_DEVBUF, sizeof *port);
 			}
 			continue;
 		}
@@ -2245,7 +2245,7 @@ qle_do_update(void *xsc)
 					    fport, update);
 					break;
 				case QLE_PORT_DISP_DUP:
-					free(fport, M_DEVBUF, 0);
+					free(fport, M_DEVBUF, sizeof *port);
 					break;
 				case QLE_PORT_DISP_SAME:
 					DPRINTF(QLE_D_PORT, "%s: existing port "
@@ -2253,7 +2253,7 @@ qle_do_update(void *xsc)
 					    fport->portid);
 					TAILQ_REMOVE(&sc->sc_ports_gone, port,
 					    update);
-					free(fport, M_DEVBUF, 0);
+					free(fport, M_DEVBUF, sizeof *port);
 					break;
 				}
 				mtx_leave(&sc->sc_port_mtx);
@@ -2286,7 +2286,7 @@ qle_do_update(void *xsc)
 					DPRINTF(QLE_D_PORT, "%s: plogi %06x "
 					    "failed\n", DEVNAME(sc),
 					    port->portid);
-					free(port, M_DEVBUF, 0);
+					free(port, M_DEVBUF, sizeof *port);
 				}
 			} else {
 				DPRINTF(QLE_D_PORT, "%s: done with logins\n",
@@ -2334,7 +2334,7 @@ qle_do_update(void *xsc)
 				if (port->location & QLE_LOCATION_FABRIC)
 					qle_fabric_plogo(sc, port);
 
-				free(port, M_DEVBUF, 0);
+				free(port, M_DEVBUF, sizeof *port);
 			} else {
 				DPRINTF(QLE_D_PORT, "%s: nothing to detach\n",
 				    DEVNAME(sc));
@@ -2809,7 +2809,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
 qdmfree:
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, sizeof *m);
 
 	return (NULL);
 }
@@ -2821,7 +2821,7 @@ qle_dmamem_free(struct qle_softc *sc, struct qle_dmamem *m)
 	bus_dmamem_unmap(sc->sc_dmat, m->qdm_kva, m->qdm_size);
 	bus_dmamem_free(sc->sc_dmat, &m->qdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, m->qdm_map);
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, sizeof *m);
 }
 
 int
