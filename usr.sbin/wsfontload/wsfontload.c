@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.15 2015/09/06 19:56:43 tobias Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.16 2015/09/06 20:07:46 tobias Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -105,14 +105,15 @@ main(int argc, char *argv[])
 			wsdev = optarg;
 			break;
 		case 'w':
-			f.fontwidth = strtonum(optarg, 1, UINT_MAX, &errstr);
+			f.fontwidth = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "font width is %s: %s", errstr, optarg);
 			break;
 		case 'h':
-			f.fontheight = strtonum(optarg, 1, UINT_MAX, &errstr);
+			f.fontheight = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
-				errx(1, "font height is %s: %s", errstr, optarg);
+				errx(1, "font height is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'e':
 			f.encoding = getencoding(optarg);
