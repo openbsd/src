@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.2 2015/09/02 08:24:29 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.3 2015/09/06 09:35:59 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <lib/libz/zlib.h>
 
 #include "libsa.h"
 #include "disk.h"
@@ -246,13 +247,16 @@ static uint64_t
 findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 {
 	EFI_STATUS		 status;
-	u_char			 buf[DEV_BSIZE];
 	struct			 gpt_header gh;
-	struct			 gpt_partition *gp;
 	int			 i, part;
 	uint64_t		 lba;
+	uint32_t		 orig_csum, new_csum;
+	uint32_t		 ghpartsize, ghpartnum, ghpartspersec;
 	const char		 openbsd_uuid_code[] = GPT_UUID_OPENBSD;
 	static struct uuid	*openbsd_uuid = NULL, openbsd_uuid_space;
+	static struct gpt_partition
+				 gp[NGPTPARTITIONS];
+	static u_char		 buf[4096];
 
 	/* Prepare OpenBSD UUID */
 	if (openbsd_uuid == NULL) {
@@ -269,9 +273,19 @@ findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 		openbsd_uuid = &openbsd_uuid_space;
 	}
 
+	if (EFI_BLKSPERSEC(ed) > 8) {
+		*err = "disk sector > 4096 bytes\n";
+		return (-1);
+	}
+
 	/* LBA1: GPT Header */
 	lba = 1;
-	status = efid_io(F_READ, ed, EFI_SECTOBLK(ed, lba), 1, buf);
+	status = efid_io(F_READ, ed, EFI_SECTOBLK(ed, lba), EFI_BLKSPERSEC(ed),
+	    buf);
+	if (EFI_ERROR(status)) {
+		*err = "Disk I/O Error";
+		return (-1);
+	}
 	memcpy(&gh, buf, sizeof(gh));
 
 	/* Check signature */
@@ -280,38 +294,41 @@ findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 		return (-1);
 	}
 
-	/* assert and some checks not to read random place */
-	if (gh.gh_part_size > DEV_BSIZE) {
-		*err = "GPT paritition size beyonds the limit\n";
-		return (-1);
+	/* Check checksum */
+	orig_csum = gh.gh_csum;
+	gh.gh_csum = 0;
+	new_csum = crc32(0, (unsigned char *)&gh, letoh32(gh.gh_size));
+	gh.gh_csum = orig_csum;
+	if (letoh32(orig_csum) != new_csum) {
+		*err = "bad GPT header checksum\n";
+		return (1);
 	}
-	if (gh.gh_lba_start >= ed->blkio->Media->LastBlock ||
-	    gh.gh_part_lba >= gh.gh_lba_start) {
-		*err = "bad GPT header\n";
-		return (-1);
+
+	lba = letoh64(gh.gh_part_lba);
+	ghpartsize = letoh32(gh.gh_part_size);
+	ghpartspersec = ed->blkio->Media->BlockSize / ghpartsize;
+	ghpartnum = letoh32(gh.gh_part_num);
+	for (i = 0; (ghpartnum + ghpartspersec - 1) / ghpartspersec;
+	    i++, lba++) {
+		status = efid_io(F_READ, ed, EFI_SECTOBLK(ed, lba),
+		    EFI_BLKSPERSEC(ed), buf);
+		if (EFI_ERROR(status)) {
+			*err = "Disk I/O Error";
+			return (-1);
+		}
+		memcpy(gp + i * ghpartspersec, buf,
+		    ghpartspersec * sizeof(struct gpt_partition));
 	}
-	if ((gh.gh_part_num * gh.gh_part_size) / ed->blkio->Media->BlockSize
-	    > gh.gh_lba_start - gh.gh_part_lba) {
-		*err = "bad GPT number of partition entries\n";
+	new_csum = crc32(0, (unsigned char *)&gp, ghpartnum * ghpartsize);
+	if (new_csum != letoh32(gh.gh_part_csum)) {
+		*err = "bad GPT partitions checksum\n";
 		return (-1);
 	}
 
-	part = 0;
-	lba = letoh64(gh.gh_part_lba);
-	while (part < letoh32(gh.gh_part_num)) {
-		status = efid_io(F_READ, ed, EFI_SECTOBLK(ed, lba++), 1, buf);
-		if (EFI_ERROR(status)) {
-			*err = "I/O Error\n";
-			return (-1);
-		}
-		for (i = 0; i < GPT_PARTSPERSEC(&gh); i++) {
-			gp = (struct gpt_partition *)
-			    (buf + GPT_SECOFFSET(&gh, i));
-			if (memcmp(&gp->gp_type, openbsd_uuid,
-			    sizeof(struct uuid)) == 0)
-				return letoh64(gp->gp_lba_start);
-		}
-		part += GPT_PARTSPERSEC(&gh);
+	for (part = 0; part < ghpartnum; part++) {
+		if (memcmp(&gp[part].gp_type, openbsd_uuid,
+		    sizeof(struct uuid)) == 0)
+			return letoh64(gp[part].gp_lba_start);
 	}
 
 	return (-1);
