@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.97 2015/08/23 23:15:57 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.98 2015/09/06 17:40:54 sf Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -2140,6 +2140,31 @@ const struct puc_device_description puc_devs[] = {
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
 		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* "Redhat QEMU PCI Serial" */
+	    {   PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL, 0x0000, 0x0000 },
+	    {   0xffff, 0xffff, 0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+	    },
+	},
+	{   /* "Redhat QEMU PCI Serial 2x" */
+	    {   PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL2, 0x0000, 0x0000 },
+	    {   0xffff, 0xffff, 0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_COM_POW2(0), 0x10, 0x0008 },
+	    },
+	},
+	{   /* "Redhat QEMU PCI Serial 4x" */
+	    {   PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL4, 0x0000, 0x0000 },
+	    {   0xffff, 0xffff, 0x0000, 0x0000 },
+	    {
+		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_COM_POW2(0), 0x10, 0x0008 },
+		{ PUC_COM_POW2(0), 0x10, 0x0010 },
+		{ PUC_COM_POW2(0), 0x10, 0x0018 },
 	    },
 	},
 };
