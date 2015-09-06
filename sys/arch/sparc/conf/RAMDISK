@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.80 2015/07/17 22:52:29 tedu Exp $
+#	$OpenBSD: RAMDISK,v 1.81 2015/09/06 16:39:44 miod Exp $
 
 machine		sparc
 maxusers	4
@@ -100,6 +100,10 @@ esp0		at dma0 flags 0x00ff000f	# sun4m
 dma*		at sbus?			# SBus SCSI
 esp*		at sbus? flags 0x00ff000f	# two flavours
 esp*		at dma? flags 0x00ff000f	# depending on model
+
+#sun4c, sun4e, sun4m
+qlw*		at sbus?
+#qla*		at sbus?
 
 ledma0		at sbus?			# sun4m on-board
 le0		at ledma0
