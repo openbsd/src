@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.29 2015/06/03 02:24:36 millert Exp $ */
+/* $OpenBSD: prebind.c,v 1.30 2015/09/06 08:44:07 tobias Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -518,6 +518,10 @@ elf_load_object(void *pexe, const char *name)
 
 	object->load_base = lbase;
 	object->load_name = strdup(name);
+	if (object->load_name == NULL) {
+		printf("unable to allocate object for %s\n", name);
+		exit(10);
+	}
 
 	phdr = (Elf_Phdr *)((char *)pexe + ehdr->e_phoff);
 	for (i = 0; i < ehdr->e_phnum; i++) {
@@ -529,6 +533,11 @@ elf_load_object(void *pexe, const char *name)
 			/* XXX can only occur in programs */
 			curbin->interp = strdup((char *)((char *)pexe +
 			    phdr[i].p_offset));
+			if (curbin->interp == NULL) {
+				printf("unable to allocate object for %s\n",
+				    name);
+				exit(10);
+			}
 			break;
 		default:
 			break;

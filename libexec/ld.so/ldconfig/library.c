@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.9 2015/06/10 20:50:05 miod Exp $ */
+/* $OpenBSD: library.c,v 1.10 2015/09/06 08:44:07 tobias Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -60,6 +60,8 @@ load_lib(const char *name, struct elf_object *parent)
 		char *lpath, *lname;
 
 		lpath = strdup(name);
+		if (lpath == NULL)
+			return (1);
 		lname = strrchr(lpath, '/');
 		if (lname == NULL || lname[1] == '\0') {
 			free(lpath);
