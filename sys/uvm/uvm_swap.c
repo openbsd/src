@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.136 2015/08/23 04:58:37 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.137 2015/09/06 17:06:43 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -757,7 +757,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 			if (vp->v_type == VREG) {
 				crfree(sdp->swd_cred);
 			}
-			free(sdp->swd_path, M_VMSWAP, 0);
+			free(sdp->swd_path, M_VMSWAP, sdp->swd_pathlen);
 			free(sdp, M_VMSWAP, sizeof(*sdp));
 			break;
 		}
@@ -1911,7 +1911,7 @@ gotit:
 		swaplist_find(vp, 1);
 		swaplist_trim();
 		vput(sdp->swd_vp);
-		free(sdp->swd_path, M_VMSWAP, 0);
+		free(sdp->swd_path, M_VMSWAP, sdp->swd_pathlen);
 		free(sdp, M_VMSWAP, sizeof(*sdp));
 		return;
 	}
