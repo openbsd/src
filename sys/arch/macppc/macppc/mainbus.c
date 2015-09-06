@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.24 2015/05/06 02:36:01 jsg Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.25 2015/09/06 16:46:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -69,15 +69,15 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	struct confargs nca;
 	char name[64], *t = NULL;
 	int reg[4], cpucnt;
-	int node, len, slen;
+	int node, len, tlen;
 
 	node = OF_peer(0);
 	len = OF_getprop(node, "model", name, sizeof(name));
 	if (len > 1) {
 		name[len] = '\0';
-		slen = strlen(name)+1;
-		if ((t = malloc(slen, M_DEVBUF, M_NOWAIT)) != NULL)
-			strlcpy(t, name, slen);
+		tlen = strlen(name)+1;
+		if ((t = malloc(tlen, M_DEVBUF, M_NOWAIT)) != NULL)
+			strlcpy(t, name, tlen);
 
 	}
 
@@ -86,11 +86,13 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		name[len] = '\0';
 		/* Old World Macintosh */
 		if ((strncmp(name, "AAPL", 4)) == 0) {
+			size_t plen;
+
 			hw_vendor = "Apple Computer, Inc.";
-			slen = strlen(t) + strlen(name) - 3;
-			if ((hw_prod = malloc(slen, M_DEVBUF, M_NOWAIT)) != NULL) {
-				snprintf(hw_prod, slen, "%s %s", t, name + 5);
-				free(t, M_DEVBUF, 0);
+			plen = strlen(t) + strlen(name) - 3;
+			if ((hw_prod = malloc(plen, M_DEVBUF, M_NOWAIT)) != NULL) {
+				snprintf(hw_prod, plen, "%s %s", t, name + 5);
+				free(t, M_DEVBUF, tlen);
 			}
 		} else {
 			/* New World Macintosh or Unknown */
