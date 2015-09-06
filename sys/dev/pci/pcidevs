@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1768 2015/09/05 02:05:27 jsg Exp $
+$OpenBSD: pcidevs,v 1.1769 2015/09/06 17:35:06 sf Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6253,6 +6253,9 @@ product REALTEK RT8191SE	0xb723	8191SE
 
 /* Red Hat products */
 product REDHAT PPB		0x0001	Qemu PCI-PCI
+product REDHAT SERIAL		0x0002	Qemu Serial
+product REDHAT SERIAL2		0x0003	Qemu Serial 2x
+product REDHAT SERIAL4		0x0004	Qemu Serial 4x
 product REDHAT QXL		0x0100	QXL Video
 
 /* RICOH products */
