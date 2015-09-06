@@ -515,9 +515,6 @@ __sigintr
 __signbit
 __signbitf
 __signbitl
-__sys_errlist
-__sys_nerr
-__sys_siglist
 _ctype_
 _longjmp
 _ng_makekey

@@ -1,13 +1,9 @@
-/* $OpenBSD: strerror_r.c,v 1.10 2015/09/05 11:25:30 guenther Exp $ */
+/* $OpenBSD: strerror_r.c,v 1.11 2015/09/06 20:26:20 guenther Exp $ */
 /* Public Domain <marc@snafu.org> */
 
 #ifdef NLS
 #include <nl_types.h>
 #endif
-
-#define sys_errlist	_sys_errlist
-#define sys_nerr	_sys_nerr
-#define sys_siglist	_sys_siglist
 
 #include <errno.h>
 #include <limits.h>
@@ -65,7 +61,7 @@ __itoa(int num, int sign, char *buffer, size_t start, size_t end)
 
 static int
 __num2string(int num, int sign, int setid, char *buf, size_t buflen,
-    char * list[], size_t max, const char *def)
+    const char * const list[], size_t max, const char *def)
 {
 	int ret = 0;
 	size_t len;
@@ -129,7 +125,7 @@ DEF_WEAK(strerror_r);
 char *
 __strsignal(int num, char *buf)
 {
-	__num2string(num, 0, 2, buf, NL_TEXTMAX, (char **)sys_siglist, NSIG,
+	__num2string(num, 0, 2, buf, NL_TEXTMAX, sys_siglist, NSIG,
 	    USIGPREFIX);
 	return buf;
 }

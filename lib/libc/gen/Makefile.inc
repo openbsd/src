@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.68 2015/04/07 01:47:04 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.69 2015/09/06 20:26:20 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -26,9 +26,6 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c \
         utime.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c \
         warnc.c warnx.c vwarn.c vwarnc.c vwarnx.c verr.c verrc.c verrx.c
-
-# indirect reference stubs, to be removed soon.
-SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:

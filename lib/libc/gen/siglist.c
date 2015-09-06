@@ -1,4 +1,4 @@
-/*	$OpenBSD: siglist.c,v 1.6 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: siglist.c,v 1.7 2015/09/06 20:26:20 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <signal.h>
 
-const char *const _sys_siglist[NSIG] = {
+const char *const sys_siglist[NSIG] = {
 	"Signal 0",
 	"Hangup",			/* SIGHUP */
 	"Interrupt",			/* SIGINT */
@@ -65,3 +65,5 @@ const char *const _sys_siglist[NSIG] = {
 	"User defined signal 2",	/* SIGUSR2 */
 	"Thread AST",			/* SIGTHR */
 };
+DEF_WEAK(sys_siglist);
+__strong_alias(_sys_siglist, sys_siglist);
