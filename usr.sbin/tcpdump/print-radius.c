@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-radius.c,v 1.9 2012/01/28 13:48:38 sthen Exp $	*/
+/*	$OpenBSD: print-radius.c,v 1.10 2015/09/06 17:29:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Thomas H. Ptacek. All rights reserved.
@@ -230,7 +230,7 @@ static void r_print_hex(int code, int len, const u_char *data) {
 	fputs(" [", stdout);
 	
 	for(i = 0; i < len; i++)
-		fprintf(stdout, "%x", data[i]);
+		fprintf(stdout, "%02x", data[i]);
 
 	fputc(']', stdout);
 }
