@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.49 2014/07/02 05:48:38 jmc Exp $
+.\"	$OpenBSD: pool.9,v 1.50 2015/09/06 16:52:20 kettenis Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 2 2014 $
+.Dd $Mdocdate: September 6 2015 $
 .Dt POOL 9
 .Os
 .Sh NAME
@@ -129,10 +129,12 @@ The back-end allocator used to manage the memory for the pool.
 .Fa palloc
 may be
 .Dv NULL ,
-in which case the pool manager uses an interrupt safe allocator.
-It is recommended that this be set to
-.Em pool_allocator_nointr
-if the pool will never be accessed in an interrupt context.
+in which case the pool manager chooses an appropriate back-end allocator.
+If the
+.Dv PR_WAITOK
+flag has been specified, this allocator may not be interrupt safe.
+It is recommended to specify this flag if the pool will never be
+accessed in interrupt context.
 .El
 .Ss DESTROYING A POOL
 The
@@ -193,8 +195,7 @@ If the number of available items in the pool exceeds the maximum pool
 size set by
 .Fn pool_sethiwat
 and there are no outstanding requests for pool items,
-the excess items will be returned to the system by calling
-.Fn prelease .
+the excess items will be returned to the system if possible.
 .Bl -tag -offset indent -width "item"
 .It Fa pp
 The handle identifying the pool resource instance.
@@ -202,6 +203,13 @@ The handle identifying the pool resource instance.
 A pointer to a pool item previously obtained by
 .Fn pool_get .
 .El
+.Pp
+If a non-interrupt safe allocator has been selected by passing the
+.Dv PR_WAITOK
+flag to
+.Fn pmap_init ,
+.Fn pool_put
+may sleep when completely unused pages are released.
 .Ss PRIMING A POOL
 .Fn pool_prime
 adds items to the pool.
@@ -239,8 +247,7 @@ The handle identifying the pool resource instance.
 The maximum number of items to keep in the pool.
 As items are returned and the total number of pages in the pool is larger
 than the maximum set by this function,
-any completely unused pages are released immediately
-.Pq by calling Fn prelease .
+any completely unused pages are released immediately.
 If this function is not used to specify a maximum number of items,
 the pages will remain associated with the pool until the system runs low
 on memory,
