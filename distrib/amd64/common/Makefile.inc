@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.26 2014/03/29 17:31:40 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.27 2015/09/06 19:35:19 kettenis Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -18,9 +18,12 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
+VND_IDEV=	/dev/${VND}i
+VND_IRDEV=	/dev/r${VND}i
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 BOOT?=		${DESTDIR}/usr/mdec/boot
+EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy3
 
@@ -30,9 +33,18 @@ ${FS}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 .ifdef LBA
-	fdisk -yi -l ${FLOPPYSIZE} -f ${DESTDIR}/usr/mdec/mbr ${VND}
+	fdisk -yi -l ${FLOPPYSIZE} -b 960 -f ${DESTDIR}/usr/mdec/mbr ${VND}
 .endif
+.ifdef TEMPLATE
+	disklabel -wAT ${TEMPLATE} ${VND}
+	newfs -t msdos ${VND_IRDEV}
+	mount ${VND_IDEV} ${MOUNT_POINT}
+	mkdir -p ${MOUNT_POINT}/efi/boot
+	cp ${EFIBOOT} ${MOUNT_POINT}/efi/boot
+	umount ${MOUNT_POINT}
+.else
 	disklabel -w ${VND} ${FLOPPYTYPE}
+.endif
 	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${.OBJDIR}/boot
