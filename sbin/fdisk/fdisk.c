@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.76 2015/09/04 21:19:45 jmc Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.77 2015/09/06 09:06:23 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,8 +49,8 @@ usage(void)
 	extern char * __progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-egy] [-b blocks] [-c # -h # -s #] [-f mbrfile] "
-	    "[-i|-u] [-l blocks] disk\n"
+	    "[-egy] [-i|-u] [-b blocks] [-c # -h # -s #] "
+	    "[-f mbrfile] [-l blocks] disk\n"
 	    "\t-b: add special boot partition; requires -i\n"
 	    "\t-chs: specify disk geometry\n"
 	    "\t-e: edit MBRs on disk interactively\n"

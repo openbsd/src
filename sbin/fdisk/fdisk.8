@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.81 2015/09/04 21:19:45 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.82 2015/09/06 09:06:23 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2015 $
+.Dd $Mdocdate: September 6 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Sh SYNOPSIS
 .Nm fdisk
 .Op Fl egy
+.Op Fl i | u
 .Op Fl b Ar blocks
 .Oo
 .Fl c Ar cylinders
@@ -31,7 +32,6 @@
 .Fl s Ar sectors
 .Oc
 .Op Fl f Ar mbrfile
-.Op Fl i | u
 .Op Fl l Ar blocks
 .Ar disk
 .Sh DESCRIPTION
