@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.19 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: factor.c,v 1.20 2015/09/07 00:49:20 tedu Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -87,17 +87,18 @@ main(int argc, char *argv[])
 	int ch;
 	char *p, buf[100];		/* > max number of digits. */
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
 		case '?':
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
 	/* No args supplied, read numbers from stdin. */
-	if (argc == 0)
+	if (argc == 0) {
 		for (;;) {
 			if (fgets(buf, sizeof(buf), stdin) == NULL) {
 				if (ferror(stdin))
@@ -105,7 +106,8 @@ main(int argc, char *argv[])
 				exit (0);
 			}
 			buf[strcspn(buf, "\n")] = '\0';
-			for (p = buf; isblank(*p); ++p);
+			for (p = buf; isblank(*p); ++p)
+				;
 			if (*p == '\0')
 				continue;
 			if (*p == '-')
@@ -114,13 +116,14 @@ main(int argc, char *argv[])
 			val = strtouq(buf, &p, 10);
 			if (errno)
 				err(1, "%s", buf);
-			for (; isblank(*p); ++p);
+			for (; isblank(*p); ++p)
+				;
 			if (*p != '\0')
 				errx(1, "%s: illegal numeric format.", buf);
 			pr_fact(val);
 		}
 	/* Factor the arguments. */
-	else
+	} else {
 		for (; *argv != NULL; ++argv) {
 			if (argv[0][0] == '-')
 				errx(1, "negative numbers aren't permitted.");
@@ -132,6 +135,7 @@ main(int argc, char *argv[])
 				errx(1, "%s: illegal numeric format.", argv[0]);
 			pr_fact(val);
 		}
+	}
 	exit(0);
 }
 

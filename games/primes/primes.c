@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.15 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: primes.c,v 1.16 2015/09/07 00:49:20 tedu Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -103,12 +103,13 @@ main(int argc, char *argv[])
 	int ch;
 	char *p;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
 		case '?':
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -183,7 +184,8 @@ read_num_buf(void)
 			exit(0);
 		}
 		buf[strcspn(buf, "\n")] = '\0';
-		for (p = buf; isblank(*p); ++p);
+		for (p = buf; isblank(*p); ++p)
+			;
 		if (*p == '\0')
 			continue;
 		if (*p == '-')
@@ -192,7 +194,8 @@ read_num_buf(void)
 		val = strtoul(buf, &p, 10);
 		if (errno)
 			err(1, "%s", buf);
-		for (; isblank(*p); ++p);
+		for (; isblank(*p); ++p)
+			;
 		if (*p != '\0')
 			errx(1, "%s: illegal numeric format.", buf);
 		return (val);
