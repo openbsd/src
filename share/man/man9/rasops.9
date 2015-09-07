@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rasops.9,v 1.15 2014/01/20 05:07:49 schwarze Exp $
+.\"	$OpenBSD: rasops.9,v 1.16 2015/09/07 18:43:54 kettenis Exp $
 .\"     $NetBSD: rasops.9,v 1.4 2002/02/13 08:18:50 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: September 7 2015 $
 .Dt RASOPS 9
 .Os
 .Sh NAME
@@ -72,6 +72,7 @@ struct rasops_info {
 	struct	wsdisplay_font *ri_font;
 	int	ri_wsfcookie;	/* wsfont cookie */
 	void	*ri_hw;		/* driver private data */
+	struct wsdisplay_charcell *ri_bs; /* character backing store */
 	int	ri_crow;	/* cursor row */
 	int	ri_ccol;	/* cursor column */
 	int	ri_flg;		/* various operational flags */
@@ -160,7 +161,9 @@ Do not read back pixels from the frame buffer memory when performing
 screen-to-screen copy operations.
 This flag is ignored unless
 .Dv RI_VCONS
-is set.
+is set or the
+.Em ri_bs
+member is set.
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
