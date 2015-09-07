@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.52 2015/08/28 00:03:53 deraadt Exp $ */
+/*	$OpenBSD: qla.c,v 1.53 2015/09/07 01:37:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -306,11 +306,11 @@ qla_add_loop_port(struct qla_softc *sc, struct qla_fc_port *port)
 		sc->sc_targets[port->loopid] = port;
 		break;
 	case QLA_PORT_DISP_DUP:
-		free(port, M_DEVBUF, 0);
+		free(port, M_DEVBUF, sizeof *port);
 		break;
 	case QLA_PORT_DISP_SAME:
 		TAILQ_REMOVE(&sc->sc_ports_gone, pport, update);
-		free(port, M_DEVBUF, 0);
+		free(port, M_DEVBUF, sizeof *port);
 		break;
 	}
 	mtx_leave(&sc->sc_port_mtx);
@@ -1719,16 +1719,17 @@ void
 qla_clear_port_lists(struct qla_softc *sc)
 {
 	struct qla_fc_port *p;
+
 	while (!TAILQ_EMPTY(&sc->sc_ports_found)) {
 		p = TAILQ_FIRST(&sc->sc_ports_found);
 		TAILQ_REMOVE(&sc->sc_ports_found, p, update);
-		free(p, M_DEVBUF, 0);
+		free(p, M_DEVBUF, sizeof *p);
 	}
 
 	while (!TAILQ_EMPTY(&sc->sc_ports_new)) {
 		p = TAILQ_FIRST(&sc->sc_ports_new);
 		TAILQ_REMOVE(&sc->sc_ports_new, p, update);
-		free(p, M_DEVBUF, 0);
+		free(p, M_DEVBUF, sizeof *p);
 	}
 
 	while (!TAILQ_EMPTY(&sc->sc_ports_gone)) {
@@ -1772,7 +1773,7 @@ qla_do_update(void *xsc)
 				if (port->location & QLA_LOCATION_FABRIC)
 					qla_fabric_plogo(sc, port);
 
-				free(port, M_DEVBUF, 0);
+				free(port, M_DEVBUF, sizeof *port);
 			}
 
 			qla_update_done(sc, QLA_UPDATE_TASK_CLEAR_ALL);
@@ -1859,12 +1860,12 @@ qla_do_update(void *xsc)
 				DPRINTF(QLA_D_PORT, "%s: loop port %d\n",
 				    DEVNAME(sc), fport->loopid);
 				if (qla_add_loop_port(sc, fport) != 0)
-					free(fport, M_DEVBUF, 0);
+					free(fport, M_DEVBUF, sizeof *fport);
 			} else if (fport->location & QLA_LOCATION_FABRIC) {
 				qla_add_fabric_port(sc, fport);
 			} else {
 				/* already processed */
-				free(fport, M_DEVBUF, 0);
+				free(fport, M_DEVBUF, sizeof *fport);
 			}
 			continue;
 		}
@@ -1901,7 +1902,7 @@ qla_do_update(void *xsc)
 					    fport, update);
 					break;
 				case QLA_PORT_DISP_DUP:
-					free(fport, M_DEVBUF, 0);
+					free(fport, M_DEVBUF, sizeof *fport);
 					break;
 				case QLA_PORT_DISP_SAME:
 					DPRINTF(QLA_D_PORT, "%s: existing port"
@@ -1909,7 +1910,7 @@ qla_do_update(void *xsc)
 					    fport->portid);
 					TAILQ_REMOVE(&sc->sc_ports_gone, port,
 					    update);
-					free(fport, M_DEVBUF, 0);
+					free(fport, M_DEVBUF, sizeof *fport);
 					break;
 				}
 				mtx_leave(&sc->sc_port_mtx);
@@ -1939,7 +1940,7 @@ qla_do_update(void *xsc)
 				if (qla_fabric_plogi(sc, port) == 0) {
 					qla_add_fabric_port(sc, port);
 				} else {
-					free(port, M_DEVBUF, 0);
+					free(port, M_DEVBUF, sizeof *port);
 				}
 			} else {
 				DPRINTF(QLA_D_PORT, "%s: done with logins\n",
@@ -1987,7 +1988,7 @@ qla_do_update(void *xsc)
 				if (port->location & QLA_LOCATION_FABRIC)
 					qla_fabric_plogo(sc, port);
 
-				free(port, M_DEVBUF, 0);
+				free(port, M_DEVBUF, sizeof *port);
 			} else {
 				qla_update_done(sc,
 				    QLA_UPDATE_TASK_DETACH_TARGET);
