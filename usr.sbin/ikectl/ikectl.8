@@ -1,4 +1,4 @@
-.\" $OpenBSD: ikectl.8,v 1.23 2015/07/27 17:28:39 sobrado Exp $
+.\" $OpenBSD: ikectl.8,v 1.24 2015/09/07 15:24:53 sobrado Exp $
 .\"
 .\" Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: September 7 2015 $
 .Dt IKECTL 8
 .Os
 .Sh NAME
@@ -254,17 +254,17 @@ from the named
 Active configuration.
 .It Pa /etc/ssl/
 Directory to store the CA files.
-.It Pa /usr/share/iked
+.It Pa /usr/share/iked/
 If this optional directory exists,
 .Nm
 will include the contents with the
 .Cm ca export
 commands.
 .It Pa /var/run/iked.sock
-default
+Default
 .Ux Ns -domain
 socket used for communication with
-.Xr iked 8
+.Xr iked 8 .
 .El
 .Sh EXAMPLES
 First create a new certificate authority:
