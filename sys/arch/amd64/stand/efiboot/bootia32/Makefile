@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2015/09/02 01:52:26 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.1 2015/09/07 01:38:32 yasuoka Exp $
 
 .include <bsd.own.mk>
 
-PROG=		BOOTX86.EFI
+PROG=		BOOTIA32.EFI
 NOMAN=		#
 OBJFMT=		efi-app-ia32
 SOFTRAID=	yes
