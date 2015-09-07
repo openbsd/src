@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.75 2015/08/20 13:00:23 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.76 2015/09/07 14:46:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -313,7 +313,6 @@ server_purge(struct server *srv)
 void
 serverconfig_free(struct server_config *srv_conf)
 {
-	free(srv_conf->auth);
 	free(srv_conf->return_uri);
 	free(srv_conf->tls_cert_file);
 	free(srv_conf->tls_key_file);

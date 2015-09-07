@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.98 2015/08/21 07:30:50 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.99 2015/09/07 14:46:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -134,7 +134,7 @@ server_http_authenticate(struct server_config *srv_conf, struct client *clt)
 	char			 decoded[1024];
 	FILE			*fp = NULL;
 	struct http_descriptor	*desc = clt->clt_descreq;
-	struct auth		*auth = srv_conf->auth;
+	const struct auth	*auth = srv_conf->auth;
 	struct kv		*ba, key;
 	size_t			 linesize = 0;
 	ssize_t			 linelen;
