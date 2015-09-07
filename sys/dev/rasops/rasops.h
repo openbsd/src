@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.16 2014/12/22 20:08:05 krw Exp $ */
+/*	$OpenBSD: rasops.h,v 1.17 2015/09/07 18:00:58 kettenis Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -74,6 +74,7 @@ struct rasops_info {
 	struct	wsdisplay_font *ri_font;
 	int	ri_wsfcookie;	/* wsfont cookie */
 	void	*ri_hw;		/* driver private data; ignored by rasops */
+	struct wsdisplay_charcell *ri_bs; /* character backing store */
 	int	ri_crow;	/* cursor row */
 	int	ri_ccol;	/* cursor column */
 	int	ri_flg;		/* various operational flags */

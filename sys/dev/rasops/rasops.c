@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.41 2015/09/01 01:54:04 deraadt Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.42 2015/09/07 18:00:58 kettenis Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -174,6 +174,12 @@ int	rasops_vcons_eraserows(void *, int, int, long);
 int	rasops_vcons_alloc_attr(void *, int, int, int, long *);
 void	rasops_vcons_unpack_attr(void *, long, int *, int *, int *);
 
+int	rasops_wronly_putchar(void *, int, int, u_int, long);
+int	rasops_wronly_copycols(void *, int, int, int, int);
+int	rasops_wronly_erasecols(void *, int, int, int, long);
+int	rasops_wronly_copyrows(void *, int, int, int);
+int	rasops_wronly_eraserows(void *, int, int, long);
+
 int	rasops_add_font(struct rasops_info *, struct wsdisplay_font *);
 int	rasops_use_font(struct rasops_info *, struct wsdisplay_font *);
 int	rasops_list_font_cb(void *, struct wsdisplay_font *);
@@ -271,6 +277,21 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_ops.eraserows = rasops_vcons_eraserows;
 		ri->ri_ops.alloc_attr = rasops_vcons_alloc_attr;
 		ri->ri_ops.unpack_attr = rasops_vcons_unpack_attr;
+	} else if ((ri->ri_flg & RI_WRONLY) && ri->ri_bs != NULL) {
+		long attr;
+		int i;
+
+		ri->ri_ops.putchar = rasops_wronly_putchar;
+		ri->ri_ops.copycols = rasops_wronly_copycols;
+		ri->ri_ops.erasecols = rasops_wronly_erasecols;
+		ri->ri_ops.copyrows = rasops_wronly_copyrows;
+		ri->ri_ops.eraserows = rasops_wronly_eraserows;
+
+		ri->ri_alloc_attr(ri, 0, 0, 0, &attr);
+		for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
+			ri->ri_bs[i].uc = ' ';
+			ri->ri_bs[i].attr = attr;
+		}
 	}
 
 	task_set(&ri->ri_switchtask, rasops_doswitch, ri);
@@ -1368,7 +1389,6 @@ rasops_alloc_screen(void *v, void **cookiep,
 {
 	struct rasops_info *ri = v;
 	struct rasops_screen *scr;
-	size_t size;
 	int i;
 
 	scr = malloc(sizeof(*scr), M_DEVBUF, M_NOWAIT);
@@ -1382,7 +1402,6 @@ rasops_alloc_screen(void *v, void **cookiep,
 		free(scr, M_DEVBUF, sizeof(*scr));
 		return (ENOMEM);
 	}
-	size = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
 
 	*cookiep = scr;
 	*curxp = 0;
@@ -1394,9 +1413,14 @@ rasops_alloc_screen(void *v, void **cookiep,
 	scr->rs_crow = -1;
 	scr->rs_ccol = -1;
 
-	for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
-		scr->rs_bs[i].uc = ' ';
-		scr->rs_bs[i].attr = *attrp;
+	if (ri->ri_bs) {
+		memcpy(scr->rs_bs, ri->ri_bs, ri->ri_rows * ri->ri_cols *
+		    sizeof(struct wsdisplay_charcell));
+	} else {
+		for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
+			scr->rs_bs[i].uc = ' ';
+			scr->rs_bs[i].attr = *attrp;
+		}
 	}
 
 	LIST_INSERT_HEAD(&ri->ri_screens, scr, rs_next);
@@ -1627,6 +1651,94 @@ rasops_vcons_unpack_attr(void *cookie, long attr, int *fg, int *bg,
 	struct rasops_screen *scr = cookie;
 
 	rasops_unpack_attr(scr->rs_ri, attr, fg, bg, underline);
+}
+
+int
+rasops_wronly_putchar(void *cookie, int row, int col, u_int uc, long attr)
+{
+	struct rasops_info *ri = cookie;
+	int off = row * ri->ri_cols + col;
+
+	ri->ri_bs[off].uc = uc;
+	ri->ri_bs[off].attr = attr;
+
+	return ri->ri_putchar(ri, row, col, uc, attr);
+}
+
+int
+rasops_wronly_copycols(void *cookie, int row, int src, int dst, int num)
+{
+	struct rasops_info *ri = cookie;
+	int cols = ri->ri_cols;
+	int col, rc;
+
+	memmove(&ri->ri_bs[row * cols + dst], &ri->ri_bs[row * cols + src],
+	    num * sizeof(struct wsdisplay_charcell));
+
+	for (col = dst; col < dst + num; col++) {
+		int off = row * cols + col;
+
+		rc = ri->ri_putchar(ri, row, col,
+		    ri->ri_bs[off].uc, ri->ri_bs[off].attr);
+		if (rc != 0)
+			return rc;
+	}
+
+	return 0;
+}
+
+int
+rasops_wronly_erasecols(void *cookie, int row, int col, int num, long attr)
+{
+	struct rasops_info *ri = cookie;
+	int cols = ri->ri_cols;
+	int i;
+
+	for (i = 0; i < num; i++) {
+		ri->ri_bs[row * cols + col + i].uc = ' ';
+		ri->ri_bs[row * cols + col + i].attr = attr;
+	}
+
+	return ri->ri_erasecols(ri, row, col, num, attr);
+}
+
+int
+rasops_wronly_copyrows(void *cookie, int src, int dst, int num)
+{
+	struct rasops_info *ri = cookie;
+	int cols = ri->ri_cols;
+	int row, col, rc;
+
+	memmove(&ri->ri_bs[dst * cols], &ri->ri_bs[src * cols],
+	    num * cols * sizeof(struct wsdisplay_charcell));
+
+	for (row = dst; row < dst + num; row++) {
+		for (col = 0; col < cols; col++) {
+			int off = row * cols + col;
+
+			rc = ri->ri_putchar(ri, row, col,
+			    ri->ri_bs[off].uc, ri->ri_bs[off].attr);
+			if (rc != 0)
+				return rc;
+		}
+	}
+
+	return 0;
+}
+
+int
+rasops_wronly_eraserows(void *cookie, int row, int num, long attr)
+{
+	struct rasops_info *ri = cookie;
+	int cols = ri->ri_cols;
+	int i;
+
+	for (i = 0; i < num * cols; i++) {
+		ri->ri_bs[row * cols + i].uc = ' ';
+		ri->ri_bs[row * cols + i].attr = attr;
+	}
+
+	return ri->ri_eraserows(ri, row, num, attr);
 }
 
 /*
