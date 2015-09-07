@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.71 2015/08/24 11:03:41 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.72 2015/09/07 10:02:04 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2015 $
+.Dd $Mdocdate: September 7 2015 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -109,7 +109,9 @@ against their target on the system (@sample).
 .Pp
 Files can be excluded from comparison by listing them in
 .Pa /etc/sysmerge.ignore .
-The following files will always be skipped from direct comparison:
+Checksum files stored under
+.Pa /var/sysmerge
+as well as the following files will always be skipped from direct comparison:
 .Pa /etc/group ,
 .Pa /etc/localtime ,
 .Pa /etc/mail/aliases.db ,
@@ -119,10 +121,7 @@ The following files will always be skipped from direct comparison:
 .Pa /etc/pwd.db ,
 .Pa /etc/spwd.db ,
 .Pa /var/db/locate.database ,
-.Pa /var/mail/root ,
-.Pa /var/sysmerge/etcsum ,
-.Pa /var/sysmerge/examplessum ,
-.Pa /var/sysmerge/xetcsum .
+.Pa /var/mail/root .
 .Sh ENVIRONMENT
 .Bl -tag -width "EDITORXXVISUAL"
 .It Ev EDITOR , VISUAL
