@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.3 2015/09/06 09:35:59 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.4 2015/09/07 05:10:52 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -308,7 +308,7 @@ findopenbsd_gpt(efi_diskinfo_t ed, const char **err)
 	ghpartsize = letoh32(gh.gh_part_size);
 	ghpartspersec = ed->blkio->Media->BlockSize / ghpartsize;
 	ghpartnum = letoh32(gh.gh_part_num);
-	for (i = 0; (ghpartnum + ghpartspersec - 1) / ghpartspersec;
+	for (i = 0; i < (ghpartnum + ghpartspersec - 1) / ghpartspersec;
 	    i++, lba++) {
 		status = efid_io(F_READ, ed, EFI_SECTOBLK(ed, lba),
 		    EFI_BLKSPERSEC(ed), buf);
