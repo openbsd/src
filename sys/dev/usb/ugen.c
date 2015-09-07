@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.87 2015/09/04 08:59:43 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.88 2015/09/07 19:58:42 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -667,7 +667,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		return (EIO);
 	}
 #endif
-	flags = USBD_SYNCHRONOUS | USBD_NO_COPY;
+	flags = USBD_SYNCHRONOUS;
 	if (sce->timeout == 0)
 		flags |= USBD_CATCH;
 
@@ -685,6 +685,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			error = uiomovei(ptr, n, uio);
 			if (error)
 				goto done;
+			flags |= USBD_NO_COPY;
 			DPRINTFN(1, ("ugenwrite: transfer %d bytes\n", n));
 			usbd_setup_xfer(xfer, sce->pipeh, 0, NULL, n,
 			    flags, sce->timeout, NULL);
