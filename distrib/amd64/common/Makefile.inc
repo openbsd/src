@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.27 2015/09/06 19:35:19 kettenis Exp $
+#	$OpenBSD: Makefile.inc,v 1.28 2015/09/07 01:41:35 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,7 +23,7 @@ VND_IRDEV=	/dev/r${VND}i
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 BOOT?=		${DESTDIR}/usr/mdec/boot
-EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI
+EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy3
 

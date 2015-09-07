@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2015/09/06 18:22:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2015/09/07 01:41:35 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -33,7 +33,7 @@ VND_CRDEV=	/dev/r${VND}c
 VND_IDEV=	/dev/${VND}i
 VND_IRDEV=	/dev/r${VND}i
 BOOT?=		${DESTDIR}/usr/mdec/boot
-EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI
+EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 MSDOSSIZE=	960
