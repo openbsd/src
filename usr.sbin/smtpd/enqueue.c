@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.94 2015/05/13 07:34:49 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.95 2015/09/07 15:36:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -344,11 +344,6 @@ enqueue(int argc, char *argv[])
 	/* add Date */
 	if (!msg.saw_date)
 		send_line(fout, 0, "Date: %s\n", time_to_text(timestamp));
-
-	/* add Message-Id */
-	if (!msg.saw_msgid)
-		send_line(fout, 0, "Message-Id: <%"PRIu64".enqueue@%s>\n",
-		    generate_uid(), host);
 
 	if (msg.need_linesplit) {
 		/* we will always need to mime encode for long lines */
@@ -892,11 +887,6 @@ savedeadletter(struct passwd *pw, FILE *in)
 	/* add Date */
 	if (!msg.saw_date)
 		fprintf(fp, "Date: %s\n", time_to_text(timestamp));
-
-	/* add Message-Id */
-	if (!msg.saw_msgid)
-		fprintf(fp, "Message-Id: <%"PRIu64".enqueue@%s>\n",
-		    generate_uid(), host);
 
 	if (msg.need_linesplit) {
 		/* we will always need to mime encode for long lines */

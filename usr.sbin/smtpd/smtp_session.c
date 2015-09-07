@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.232 2015/09/03 05:10:19 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.233 2015/09/07 15:36:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -457,6 +457,23 @@ ioerror:
 }
 
 static void
+header_missing_callback(const char *header, void *arg)
+{
+	struct smtp_session	*s = arg;
+	int			 len;
+
+	if (strcasecmp(header, "message-id") == 0) {
+		len = fprintf(s->ofile, "Message-Id: <%016"PRIx64"@%s>\n",
+		    generate_uid(), s->listener->hostname);
+		if (len == -1) {
+			s->msgflags |= MF_ERROR_IO;
+			return;
+		}
+		s->datalen += len;
+	}
+}
+
+static void
 smtp_session_init(void)
 {
 	static int	init = 0;
@@ -520,6 +537,11 @@ smtp_session(struct listener *listener, int sock,
 	    header_masquerade_callback, s);
 	rfc2822_body_callback(&s->rfc2822_parser,
 	    dataline_callback, s);
+
+	if (hostname || listener->local) {
+		rfc2822_missing_header_callback(&s->rfc2822_parser, "message-id",
+		    header_missing_callback, s);
+	}
 
 	/* For local enqueueing, the hostname is already set */
 	if (hostname) {
