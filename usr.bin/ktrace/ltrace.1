@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.6 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: ltrace.1,v 1.7 2015/09/07 15:38:45 guenther Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: September 7 2015 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -129,12 +129,8 @@ trace various structures
 .It Cm u
 trace user data coming from
 .Xr utrace 2
-.It Cm w
-trace context switch points
 .It Cm +
 trace the default points
-.Pq everything but context switch points
-.El
 .It Fl u Ar trspec
 Restrict the trace to a list of shared objects and/or function names, as
 specified by the

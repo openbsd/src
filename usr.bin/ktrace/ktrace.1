@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.25 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: ktrace.1,v 1.26 2015/09/07 15:38:45 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: September 7 2015 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -138,8 +138,6 @@ trace various structures
 .It Cm u
 trace user data coming from
 .Xr utrace 2
-.It Cm w
-trace context switch points
 .It Cm +
 trace the default points
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.23 2015/07/28 05:50:41 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.24 2015/09/07 15:38:45 guenther Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -129,15 +129,6 @@ struct ktr_psig {
 };
 
 /*
- * KTR_CSW - trace context switches
- */
-#define KTR_CSW		6
-struct ktr_csw {
-	int	out;	/* 1 if switch out, 0 if switch in */
-	int	user;	/* 1 if usermode (ivcsw), 0 if kernel (vcsw) */
-};
-
-/*
  * KTR_EMUL - emulation change
  */
 #define KTR_EMUL	7
@@ -176,7 +167,6 @@ struct ktr_user {
 #define KTRFAC_NAMEI	(1<<KTR_NAMEI)
 #define KTRFAC_GENIO	(1<<KTR_GENIO)
 #define	KTRFAC_PSIG	(1<<KTR_PSIG)
-#define KTRFAC_CSW	(1<<KTR_CSW)
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define KTRFAC_STRUCT   (1<<KTR_STRUCT)
 #define KTRFAC_USER	(1<<KTR_USER)
@@ -198,7 +188,6 @@ __END_DECLS
 
 #else
 
-void ktrcsw(struct proc *, int, int);
 void ktremul(struct proc *);
 void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, ssize_t);
 void ktrnamei(struct proc *, char *);

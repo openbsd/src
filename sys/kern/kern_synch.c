@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.121 2015/05/12 09:30:35 mikeb Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.122 2015/09/07 15:38:45 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -234,11 +234,6 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 		panic("tsleep: not SONPROC");
 #endif
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 1, 0);
-#endif
-
 	sls->sls_catch = 0;
 	sls->sls_do_sleep = 1;
 	sls->sls_sig = 1;
@@ -279,11 +274,6 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 	 * we need to clear it before the ktrace.
 	 */
 	atomic_clearbits_int(&p->p_flag, P_SINTR);
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p, 0, 0);
-#endif
 }
 
 void
