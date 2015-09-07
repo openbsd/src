@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.40 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: flex.1,v 1.41 2015/09/07 15:28:06 sobrado Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: September 7 2015 $
 .Dt FLEX 1
 .Os
 .Sh NAME
@@ -4090,23 +4090,23 @@ Actions that are not enclosed in braces
 are simply terminated at the end of the line.
 .Sh FILES
 .Bl -tag -width "<g++/FlexLexer.h>"
-.It flex.skl
+.It Pa flex.skl
 Skeleton scanner.
 This file is only used when building flex, not when
 .Nm
 executes.
-.It lex.backup
+.It Pa lex.backup
 Backing-up information for the
 .Fl b
 flag (called
 .Pa lex.bck
 on some systems).
-.It lex.yy.c
+.It Pa lex.yy.c
 Generated scanner
 (called
 .Pa lexyy.c
 on some systems).
-.It lex.yy.cc
+.It Pa lex.yy.cc
 Generated C++ scanner class, when using
 .Fl + .
 .It In g++/FlexLexer.h
@@ -4114,7 +4114,7 @@ Header file defining the C++ scanner base class,
 .Fa FlexLexer ,
 and its derived class,
 .Fa yyFlexLexer .
-.It /usr/lib/libl.*
+.It Pa /usr/lib/libl.*
 .Nm
 libraries.
 The
