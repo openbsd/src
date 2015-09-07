@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.202 2015/08/24 12:16:36 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.203 2015/09/07 09:34:56 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -38,17 +38,6 @@ stripcom() {
 
 sm_error() {
 	(($#)) && echo "!!!! ERROR: $@"
-
-	# restore sum files from backups or remove the newly created ones
-	for _i in ${_WRKDIR}/{etcsum,xetcsum,examplessum,pkgsum}; do
-		_j=$(basename ${_i})
-		if [[ -f ${_i} ]]; then
-			mv ${_i} /var/sysmerge/${_j}
-		elif [[ -f /var/sysmerge/${_j} ]]; then
-			rm /var/sysmerge/${_j}
-		fi
-	done
-
 	rm -rf ${_WRKDIR}
 	exit 1
 }
@@ -68,9 +57,6 @@ sm_extract_sets() {
 	[[ -z ${_e}${_x} ]] && sm_error "cannot find sets to extract"
 
 	for _set in ${_e} ${_x}; do
-		[[ -f /var/sysmerge/${_set}sum ]] && \
-			cp /var/sysmerge/${_set}sum \
-			${_WRKDIR}/${_set}sum
 		tar -xzphf \
 			/var/sysmerge/${_set}.tgz || \
 			sm_error "failed to extract ${_set}.tgz"
@@ -142,9 +128,6 @@ EOF
 sm_cp_pkg_samples() {
 	! ${PKGMODE} && return
 	local _install_args _i _ret=0 _sample
-
-	[[ -f /var/sysmerge/pkgsum ]] && \
-		cp /var/sysmerge/pkgsum ${_WRKDIR}/pkgsum
 
 	# access to full base system hierarchy is implied in packages
 	mtree -qdef /etc/mtree/4.4BSD.dist -U >/dev/null
@@ -579,7 +562,6 @@ sm_check_an_eg() {
 	local _egmods _i _managed
 
 	if [[ -f /var/sysmerge/examplessum ]]; then
-		cp /var/sysmerge/examplessum ${_WRKDIR}/examplessum
 		_egmods=$(cd / && \
 			 sha256 -c /var/sysmerge/examplessum 2>/dev/null | \
 			 sed -n 's/^(SHA256) \(.*\): FAILED$/\1/p')
