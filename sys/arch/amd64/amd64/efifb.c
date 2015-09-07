@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.5 2015/09/07 18:06:00 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.6 2015/09/07 18:19:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -104,10 +104,11 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct efifb		*fb;
 	struct efifb_softc	*sc = (struct efifb_softc *)self;
-	struct wsemuldisplaydev_attach_args
-				 aa;
+	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info 	*ri;
 	int			 ccol = 0, crow = 0;
+	bus_space_tag_t		 iot = X86_BUS_SPACE_MEM;
+	bus_space_handle_t	 ioh;
 	long			 defattr;
 
 	printf("\n");
@@ -118,6 +119,11 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 		ri = &fb->rinfo;
 		ccol = ri->ri_ccol;
 		crow = ri->ri_crow;
+
+		if (bus_space_map(iot, fb->paddr, fb->psize,
+		    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR,
+		    &ioh) == 0)
+			ri->ri_origbits = bus_space_vaddr(iot, ioh);
 
 		efifb_rasops_preinit(fb);
 		ri->ri_flg &= ~RI_CLEAR;
