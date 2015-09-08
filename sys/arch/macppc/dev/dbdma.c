@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.10 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.11 2015/09/08 08:29:35 deraadt Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -153,5 +153,5 @@ dbdma_free(dbdma_t dt)
 		bus_dmamem_unmap(dt->d_dmat, (caddr_t)dt->d_addr, dt->d_size);
 	if (dt->d_nsegs)
 		bus_dmamem_free(dt->d_dmat, dt->d_segs, dt->d_nsegs);
-	free(dt, M_DEVBUF, 0);
+	free(dt, M_DEVBUF, sizeof *dt);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.52 2015/06/24 11:58:06 mpi Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.53 2015/09/08 08:29:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -368,7 +368,7 @@ macintr_disestablish(void *lcp, void *arg)
 	ppc_intr_enable(s);
 
 	evcount_detach(&ih->ih_count);
-	free((void *)ih, M_DEVBUF, 0);
+	free(ih, M_DEVBUF, sizeof *ih);
 
 	if (TAILQ_EMPTY(&iq->iq_list))
 		iq->iq_ist = IST_NONE;
