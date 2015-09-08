@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.25 2014/10/15 02:03:05 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.26 2015/09/08 15:40:32 dlg Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@
 #include <sys/sysctl.h>
 
 #include <limits.h>
+#include <errno.h>
 #include <db.h>
 #include <paths.h>
 
@@ -397,19 +398,11 @@ struct kinfo_proc *
 kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 {
 	int mib[6], st, nthreads;
+	void *procbase;
 	size_t size;
 
 	if ((ssize_t)esize < 0)
 		return (NULL);
-
-	if (kd->procbase != NULL) {
-		free(kd->procbase);
-		/*
-		 * Clear this pointer in case this call fails.  Otherwise,
-		 * kvm_close() will free it again.
-		 */
-		kd->procbase = 0;
-	}
 
 	if (ISALIVE(kd)) {
 		size = 0;
@@ -418,22 +411,31 @@ kvm_getprocs(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		mib[2] = op;
 		mib[3] = arg;
 		mib[4] = esize;
-		mib[5] = 0;
-		st = sysctl(mib, 6, NULL, &size, NULL, 0);
-		if (st == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getprocs");
-			return (NULL);
-		}
 
-		mib[5] = size / esize;
-		kd->procbase = _kvm_malloc(kd, size);
-		if (kd->procbase == 0)
-			return (NULL);
-		st = sysctl(mib, 6, kd->procbase, &size, NULL, 0);
-		if (st == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getprocs");
-			return (NULL);
-		}
+		do {
+			mib[5] = 0;
+			st = sysctl(mib, 6, NULL, &size, NULL, 0);
+			if (st == -1) {
+				_kvm_syserr(kd, kd->program, "kvm_getprocs");
+				return (NULL);
+			}
+
+			size += size / 8; /* add ~10% */
+
+			procbase = _kvm_realloc(kd, kd->procbase, size);
+			if (procbase == NULL)
+				return (NULL);
+
+			kd->procbase = procbase;
+
+			mib[5] = size / esize;
+			st = sysctl(mib, 6, kd->procbase, &size, NULL, 0);
+			if (st == -1 && errno != ENOMEM) {
+				_kvm_syserr(kd, kd->program, "kvm_getprocs");
+				return (NULL);
+			}
+		} while (st == -1);
+
 		nthreads = size / esize;
 	} else {
 		struct nlist nl[5];
