@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.35 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.36 2015/09/08 11:35:57 jca Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -534,7 +534,7 @@ c_command(char **wp)
 int
 c_typeset(char **wp)
 {
-	struct block *l = e->loc;
+	struct block *l;
 	struct tbl *vp, **p;
 	Tflag fset = 0, fclr = 0;
 	int thing = 0, func = 0, local = 0;
