@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2015/09/01 05:16:55 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2015/09/08 21:28:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -482,7 +482,7 @@ void
 pmap_init()
 {
 	pool_init(&pmappool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_single);
 	pool_init(&pvpool, sizeof(struct pvlist), 0, 0, 0, "pvpl", NULL);
 }
 

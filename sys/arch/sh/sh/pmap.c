@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2014/11/16 12:30:58 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2015/09/08 21:28:36 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -204,7 +204,7 @@ pmap_init()
 {
 	/* Initialize pmap module */
 	pool_init(&__pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_single);
 	pool_init(&__pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator);
 	pool_setlowat(&__pmap_pv_pool, 16);

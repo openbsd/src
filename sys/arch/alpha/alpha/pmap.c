@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.78 2015/07/20 00:16:16 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.79 2015/09/08 21:28:35 kettenis Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -850,7 +850,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	pmap_ncpuids = ncpuids;
 	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(pmap_ncpuids), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_single);
 	pool_init(&pmap_l1pt_pool, PAGE_SIZE, 0, 0, 0, "l1ptpl",
 	    &pmap_l1pt_allocator);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",

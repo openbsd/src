@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.160 2015/07/20 00:16:16 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.161 2015/09/08 21:28:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -2094,7 +2094,7 @@ pmap_init()
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmap", NULL);
 	pool_setlowat(&pmap_pmap_pool, 2);
 	pool_init(&pmap_vp_pool, sizeof(struct pmapvp), 0, 0, 0, "vp",
-	    &pool_allocator_nointr);
+	    &pool_allocator_single);
 	pool_setlowat(&pmap_vp_pool, 10);
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, 0, 0, "pted",
 	    NULL);

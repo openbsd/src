@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.20 2015/02/02 09:29:53 mlarkin Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.21 2015/09/08 21:28:36 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2791,7 +2791,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 * Initialize the pmap pool.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
+	    &pool_allocator_single);
 
 	/*
 	 * Initialize the pv pool.
@@ -2809,7 +2809,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	 * Initialise the L2 descriptor table pool.
 	 */
 	pool_init(&pmap_l2ptp_pool, L2_TABLE_SIZE_REAL, L2_TABLE_SIZE_REAL, 0,
-	    0, "l2ptppl", &pool_allocator_nointr);
+	    0, "l2ptppl", &pool_allocator_single);
 
 	cpu_dcache_wbinv_all();
 	cpu_sdcache_wbinv_all();
