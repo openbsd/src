@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.14 2015/08/27 15:26:50 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.15 2015/09/08 15:29:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -20,8 +20,6 @@
 #define HEADER_TLS_INTERNAL_H
 
 #include <openssl/ssl.h>
-
-#define HTTPS_PORT "443"
 
 #define _PATH_SSL_CA_FILE "/etc/ssl/cert.pem"
 

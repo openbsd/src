@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.21 2015/08/27 15:26:50 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.22 2015/09/08 15:29:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -114,8 +114,10 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 			tls_set_errorx(ctx, "memory allocation failure");
 			goto err;
 		}
-		if (ret != 0)
-			port = HTTPS_PORT;
+		if (ret != 0) {
+			tls_set_errorx(ctx, "no port provided");
+			goto err;
+		}
 	}
 
 	h = (hs != NULL) ? hs : host;
