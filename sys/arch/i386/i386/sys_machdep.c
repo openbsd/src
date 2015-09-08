@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.34 2014/12/09 06:58:28 doug Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.35 2015/09/08 07:12:56 deraadt Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ i386_get_ldt(struct proc *p, void *args, register_t *retval)
 	}
 
 	if (ua.start > nldt) {
-		free(cp, M_TEMP, 0);
+		free(cp, M_TEMP, ua.num * sizeof(union descriptor));
 		return (EINVAL);
 	}
 
@@ -143,7 +143,7 @@ i386_get_ldt(struct proc *p, void *args, register_t *retval)
 	if (error == 0)
 		*retval = num;
 
-	free(cp, M_TEMP, 0);
+	free(cp, M_TEMP, ua.num * sizeof(union descriptor));
 	return (error);
 }
 
@@ -310,7 +310,7 @@ copy:
 	*retval = ua.start;
 
 out:
-	free(descv, M_TEMP, 0);
+	free(descv, M_TEMP, ua.num * sizeof(*descv));
 	return (error);
 }
 #endif	/* USER_LDT */

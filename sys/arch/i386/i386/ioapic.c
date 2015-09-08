@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.36 2015/07/13 17:45:01 mikeb Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.37 2015/09/08 07:12:56 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -706,7 +706,7 @@ apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
 			    ih_what, isa_intr_typename(pin->ip_type),
 			    isa_intr_typename(type), intr);*/
-			free(ih, M_DEVBUF, 0);
+			free(ih, M_DEVBUF, sizeof(*ih));
 			return (NULL);
 		}
 		break;
@@ -822,7 +822,7 @@ apic_intr_disestablish(void *arg)
 		apic_vectorset(sc, intr, minlevel, maxlevel);
 
 	evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF, 0);
+	free(ih, M_DEVBUF, sizeof(*ih));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.46 2015/09/08 04:28:34 semarie Exp $ */
+/*	$OpenBSD: est.c,v 1.47 2015/09/08 07:12:56 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -997,7 +997,7 @@ est_acpi_init()
 	return acpilist;
 
 notable:
-	free(acpilist, M_DEVBUF, 0);
+	free(acpilist, M_DEVBUF, sizeof(*acpilist));
 	acpilist = NULL;
 nolist:
 	return NULL;
@@ -1025,7 +1025,7 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 	    M_DEVBUF, M_NOWAIT)) == NULL) {
 		printf("est_acpi_pss_changed: cannot allocate memory for new "
 		    "operating points");
-		free(acpilist, M_DEVBUF, 0);
+		free(acpilist, M_DEVBUF, sizeof(*acpilist));
 		return;
 	}
 
@@ -1037,7 +1037,7 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 	}
 
 	free(est_fqlist->table, M_DEVBUF, 0);
-	free(est_fqlist, M_DEVBUF, 0);
+	free(est_fqlist, M_DEVBUF, sizeof *est_fqlist);
 	est_fqlist = acpilist;
 
 	if (needtran) {

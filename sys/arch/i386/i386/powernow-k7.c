@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.36 2014/09/14 14:17:23 jsg Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.37 2015/09/08 07:12:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -447,5 +447,5 @@ k7_powernow_init(void)
 		setperf_prio = 1;
 		return;
 	}
-	free(cstate, M_DEVBUF, 0);
+	free(cstate, M_DEVBUF, sizeof(*cstate));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.58 2015/09/08 04:28:34 semarie Exp $ */
+/*	$OpenBSD: esm.c,v 1.59 2015/09/08 07:12:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -888,7 +888,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			s = mallocarray(nsensors, sizeof(struct ksensor),
 			    M_DEVBUF, M_NOWAIT|M_ZERO);
 			if (s == NULL) {
-				free(es, M_DEVBUF, 0);
+				free(es, M_DEVBUF, sizeof(*es));
 				return;
 			}
 
@@ -906,7 +906,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			s = mallocarray(nsensors, sizeof(struct ksensor),
 			    M_DEVBUF, M_NOWAIT|M_ZERO);
 			if (s == NULL) {
-				free(es, M_DEVBUF, 0);
+				free(es, M_DEVBUF, sizeof(*es));
 				return;
 			}
 
@@ -922,7 +922,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 		case ESM_S_VOLTS:
 		case ESM_S_VOLTSx10:
 			if (esm_thresholds(sc, devmap, es) != 0) {
-				free(es, M_DEVBUF, 0);
+				free(es, M_DEVBUF, sizeof(*es));
 				continue;
 			}
 			/* FALLTHROUGH */
@@ -932,7 +932,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			s = malloc(sizeof(struct ksensor), M_DEVBUF,
 			    M_NOWAIT|M_ZERO);
 			if (s == NULL) {
-				free(es, M_DEVBUF, 0);
+				free(es, M_DEVBUF, sizeof(*es));
 				return;
 			}
 
