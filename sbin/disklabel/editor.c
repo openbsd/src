@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.295 2015/05/08 12:15:50 sthen Exp $	*/
+/*	$OpenBSD: editor.c,v 1.296 2015/09/08 13:54:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2436,10 +2436,8 @@ get_token(char **s, size_t *len)
 		(*len)--;
 	}
 
-	tlen++;	/* null termination */
-	if ((r = malloc(tlen)) == NULL)
+	if ((r = strndup(p, tlen)) == NULL)
 		err(1, NULL);
-	strlcpy(r, p, tlen);
 	return (r);
 }
 
