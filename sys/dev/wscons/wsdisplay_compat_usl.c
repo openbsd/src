@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.27 2015/03/14 03:38:50 jsg Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.28 2015/09/08 11:13:20 deraadt Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -100,7 +100,7 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	if (acqsig <= 0 || acqsig >= NSIG || relsig <= 0 || relsig >= NSIG ||
 	    frsig <= 0 || frsig >= NSIG)
 		return (EINVAL);
-	sd = malloc(sizeof(struct usl_syncdata), M_DEVBUF, M_NOWAIT);
+	sd = malloc(sizeof(*sd), M_DEVBUF, M_NOWAIT);
 	if (!sd)
 		return (ENOMEM);
 	sd->s_scr = scr;
@@ -114,7 +114,7 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	timeout_set(&sd->s_detach_ch, usl_detachtimeout, sd);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
-		free(sd, M_DEVBUF, 0);
+		free(sd, M_DEVBUF, sizeof(*sd));
 		return (res);
 	}
 	*sdp = sd;
@@ -133,7 +133,7 @@ usl_sync_done(struct usl_syncdata *sd)
 		(*sd->s_callback)(sd->s_cbarg, ENXIO, 0);
 	}
 	wsscreen_detach_sync(sd->s_scr);
-	free(sd, M_DEVBUF, 0);
+	free(sd, M_DEVBUF, sizeof(*sd));
 }
 
 int

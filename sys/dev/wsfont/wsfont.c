@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.40 2015/03/14 03:38:50 jsg Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.41 2015/09/08 11:13:22 deraadt Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -338,8 +338,9 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 		 * If we seem to have rotated this font already, drop the
 		 * new one...
 		 */
-		free(newbits, M_DEVBUF, 0);
-		free(newfont, M_DEVBUF, 0);
+		free(newbits, M_DEVBUF,
+		    font->numchars * newstride * font->fontwidth);
+		free(newfont, M_DEVBUF, sizeof *font);
 		newfont = NULL;
 	}
 

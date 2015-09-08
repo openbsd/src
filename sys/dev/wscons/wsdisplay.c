@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.123 2015/05/08 19:17:20 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.124 2015/09/08 11:13:20 deraadt Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -264,7 +264,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	struct wsscreen_internal *dconf;
 	struct wsscreen *scr;
 
-	scr = malloc(sizeof(struct wsscreen), M_DEVBUF, M_ZERO | M_NOWAIT);
+	scr = malloc(sizeof(*scr), M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (!scr)
 		return (NULL);
 
@@ -276,8 +276,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 		 */
 		(void)(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr, 0);
 	} else { /* not console */
-		dconf = malloc(sizeof(struct wsscreen_internal),
-		    M_DEVBUF, M_NOWAIT);
+		dconf = malloc(sizeof(*dconf), M_DEVBUF, M_NOWAIT);
 		if (dconf == NULL)
 			goto fail;
 		dconf->emulops = type->textops;
@@ -299,8 +298,8 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 
 fail:
 	if (dconf != NULL)
-		free(dconf, M_DEVBUF, 0);
-	free(scr, M_DEVBUF, 0);
+		free(dconf, M_DEVBUF, sizeof(*dconf));
+	free(scr, M_DEVBUF, sizeof(*scr));
 	return (NULL);
 }
 
@@ -315,8 +314,8 @@ wsscreen_detach(struct wsscreen *scr)
 	}
 	(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
 	    &ccol, &crow);
-	free(scr->scr_dconf, M_DEVBUF, 0);
-	free(scr, M_DEVBUF, 0);
+	free(scr->scr_dconf, M_DEVBUF, sizeof(*scr->scr_dconf));
+	free(scr, M_DEVBUF, sizeof(*scr));
 }
 
 const struct wsscreen_descr *
@@ -1313,14 +1312,14 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		buf = malloc(fontsz, M_DEVBUF, M_WAITOK);
 		error = copyin(d->data, buf, fontsz);
 		if (error) {
-			free(buf, M_DEVBUF, 0);
+			free(buf, M_DEVBUF, fontsz);
 			return (error);
 		}
 		d->data = buf;
 		error =
 		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
 		if (error)
-			free(buf, M_DEVBUF, 0);
+			free(buf, M_DEVBUF, fontsz);
 		return (error);
 
 	case WSDISPLAYIO_LSFONT:
