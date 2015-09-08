@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.30 2015/05/11 06:46:21 ratchov Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.31 2015/09/08 07:14:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -921,7 +921,7 @@ fail3:
 fail2:
 	bus_dmamap_destroy(sc->sc_dmat, d->d_map);
 fail1:
-	free(d, pool, 0);
+	free(d, pool, sizeof *d);
 fail:
 	return (NULL);
 }
@@ -939,7 +939,7 @@ harmony_freem(void *vsc, void *ptr, int pool)
 		bus_dmamem_unmap(sc->sc_dmat, d->d_kva, d->d_size);
 		bus_dmamem_free(sc->sc_dmat, &d->d_seg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, d->d_map);
-		free(d, pool, 0);
+		free(d, pool, sizeof *d);
 		return;
 	}
 	printf("%s: free rogue pointer\n", sc->sc_dv.dv_xname);
