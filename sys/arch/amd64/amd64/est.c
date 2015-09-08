@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.37 2015/08/28 00:03:53 deraadt Exp $ */
+/*	$OpenBSD: est.c,v 1.38 2015/09/08 04:28:34 semarie Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -379,8 +379,8 @@ est_init(struct cpu_info *ci)
 		}
 
 
-		if ((fake_table = malloc(sizeof(struct est_op) * 3, M_DEVBUF,
-		     M_NOWAIT)) == NULL) {
+		if ((fake_table = mallocarray(3, sizeof(struct est_op),
+		    M_DEVBUF, M_NOWAIT)) == NULL) {
 			free(fake_fqlist, M_DEVBUF, sizeof(struct fqlist));
 			printf("%s: EST: cannot allocate memory for fake "
 			    "table\n", cpu_device);

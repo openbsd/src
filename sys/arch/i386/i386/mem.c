@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.45 2015/06/22 18:57:26 kettenis Exp $ */
+/*	$OpenBSD: mem.c,v 1.46 2015/09/08 04:28:34 semarie Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -294,9 +294,8 @@ mem_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case MEMRANGE_GET:
 		nd = imin(mo->mo_arg[0], mem_range_softc.mr_ndesc);
 		if (nd > 0) {
-			md = (struct mem_range_desc *)
-				malloc(nd * sizeof(struct mem_range_desc),
-				       M_MEMDESC, M_WAITOK);
+			md = mallocarray(nd, sizeof(struct mem_range_desc),
+			    M_MEMDESC, M_WAITOK);
 			error = mem_range_attr_get(md, &nd);
 			if (!error)
 				error = copyout(md, mo->mo_desc,

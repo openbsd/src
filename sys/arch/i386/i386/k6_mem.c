@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.11 2010/02/23 21:54:53 kettenis Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.12 2015/09/08 04:28:34 semarie Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -103,7 +103,7 @@ k6_mrinit(struct mem_range_softc *sc)
 
 	sc->mr_cap = 0;
 	sc->mr_ndesc = 2; /* XXX (BFF) For now, we only have one msr for this */
-	sc->mr_desc = malloc(sc->mr_ndesc * sizeof(struct mem_range_desc),
+	sc->mr_desc = mallocarray(sc->mr_ndesc, sizeof(struct mem_range_desc),
 	    M_MEMDESC, M_NOWAIT|M_ZERO);
 	if (sc->mr_desc == NULL)
 		panic("k6_mrinit: malloc returns NULL");
