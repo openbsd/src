@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.28 2014/09/26 14:32:07 jsing Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.29 2015/09/08 08:33:26 deraadt Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -468,7 +468,7 @@ bonito_intr_disestablish(void *vih)
 
 	splx(s);
 
-	free(ih, M_DEVBUF, 0);
+	free(ih, M_DEVBUF, sizeof *ih);
 }
 
 /*
@@ -1204,7 +1204,7 @@ bonito_get_resource_extent(pci_chipset_tag_t pc, int io)
 
 out:
 	if (exname != NULL)
-		free(exname, M_DEVBUF, 0);
+		free(exname, M_DEVBUF, exnamesz);
 
 	return ex;
 }

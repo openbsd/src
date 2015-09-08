@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.29 2014/12/09 06:58:28 doug Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.30 2015/09/08 08:33:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -384,7 +384,7 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 		if (sesn != 0) {
 			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
 			explicit_bzero(sc->sc_sessions, sesn * sizeof(*ses));
-			free(sc->sc_sessions, M_DEVBUF, 0);
+			free(sc->sc_sessions, M_DEVBUF, sesn * sizeof(*ses));
 		}
 		sc->sc_sessions = ses;
 		ses = &sc->sc_sessions[sesn];
@@ -541,7 +541,7 @@ glxsb_crypto_freesession(uint64_t tid)
 			explicit_bzero(swd->sw_octx, axf->ctxsize);
 			free(swd->sw_octx, M_CRYPTO_DATA, 0);
 		}
-		free(swd, M_CRYPTO_DATA, 0);
+		free(swd, M_CRYPTO_DATA, sizeof *swd);
 	}
 	explicit_bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 	return (0);

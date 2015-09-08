@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.47 2015/09/08 04:28:34 semarie Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.48 2015/09/08 08:33:26 deraadt Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -321,7 +321,9 @@ pcibios_pir_init(struct pcibios_softc *sc)
 		    &pcibios_pir_header.exclusive_irq) != PCIBIOS_SUCCESS) {
 			printf("%s: PCI IRQ Routing information unavailable.\n",
 			    sc->sc_dev.dv_xname);
-			free(pcibios_pir_table, M_DEVBUF, 0);
+			free(pcibios_pir_table, M_DEVBUF,
+			    pcibios_pir_table_nentries *
+			    sizeof(*pcibios_pir_table));
 			pcibios_pir_table = NULL;
 			pcibios_pir_table_nentries = 0;
 			return NULL;
