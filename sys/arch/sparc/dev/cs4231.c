@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.34 2015/05/11 06:52:36 ratchov Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.35 2015/09/08 10:21:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -1396,7 +1396,7 @@ cs4231_alloc(addr, direction, size, pool, flags)
 
 	p->addr_dva = dvma_malloc(size, &p->addr, flags);
 	if (p->addr_dva == NULL) {
-		free(p, pool, 0);
+		free(p, pool, sizeof *p);
 		return (NULL);
 	}
 
@@ -1420,7 +1420,7 @@ cs4231_free(addr, ptr, pool)
 			continue;
 		dvma_free(p->addr_dva, p->size, &p->addr);
 		*pp = p->next;
-		free(p, pool, 0);
+		free(p, pool, sizeof *p);
 		return;
 	}
 	printf("%s: attempt to free rogue pointer\n", sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.60 2015/05/05 02:13:47 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.61 2015/09/08 10:21:16 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -278,7 +278,7 @@ cpu_exit(p)
 			savefpstate(fs);
 			cpuinfo.fpproc = NULL;
 		}
-		free((void *)fs, M_SUBPROC, 0);
+		free(fs, M_SUBPROC, sizeof *fs);
 	}
 
 	pmap_deactivate(p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.40 2014/11/22 22:48:38 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.41 2015/09/08 10:21:16 deraadt Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -419,7 +419,7 @@ softintr_disestablish(void *arg)
 	struct sintrhand *sih = (struct sintrhand *)arg;
 
 	ih_remove(&sintrhand[sih->sih_ipl], &sih->sih_ih);
-	free(sih, M_DEVBUF, 0);
+	free(sih, M_DEVBUF, sizeof *sih);
 }
 
 void *

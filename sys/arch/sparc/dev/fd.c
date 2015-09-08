@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.90 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: fd.c,v 1.91 2015/09/08 10:21:16 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1766,7 +1766,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		fdgetdisklabel(dev, fd, lp, 0);
 		bcopy(lp, fd->sc_dk.dk_label, sizeof(*lp));
-		free(lp, M_TEMP, 0);
+		free(lp, M_TEMP, sizeof *lp);
 		return 0;
 
 	case DIOCGPDINFO:
@@ -1938,7 +1938,7 @@ fdformat(dev, finfo, p)
 
 	/* ...and wait for it to complete */
 	rv = biowait(bp);
-	free(bp, M_TEMP, 0);
+	free(bp, M_TEMP, sizeof *bp);
 	return (rv);
 }
 
