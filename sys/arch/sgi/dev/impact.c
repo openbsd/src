@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.7 2014/12/13 21:05:32 doug Exp $	*/
+/*	$OpenBSD: impact.c,v 1.8 2015/09/08 10:21:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2012 Miodrag Vallat.
@@ -168,7 +168,7 @@ impact_attach_common(struct impact_softc *sc, bus_space_tag_t iot,
 		impact_setup(scr, has_hq4);
 		if (impact_init_screen(scr) != 0) {
 			printf("failed to allocate memory\n");
-			free(scr, M_DEVBUF, 0);
+			free(scr, M_DEVBUF, sizeof *scr);
 			return ENOMEM;
 		}
 	}

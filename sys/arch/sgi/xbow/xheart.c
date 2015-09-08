@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.27 2014/09/30 06:51:58 jmatthew Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.28 2015/09/08 10:21:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -374,7 +374,7 @@ xheart_intr_disestablish(int intrbit)
 	splx(s);
 
 	if (ISSET(ih->ih_flags, IH_ALLOCATED))
-		free(ih, M_DEVBUF, 0);
+		free(ih, M_DEVBUF, sizeof *ih);
 }
 
 void

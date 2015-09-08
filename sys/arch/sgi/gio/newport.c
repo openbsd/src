@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.9 2014/07/12 18:44:42 tedu Exp $	*/
+/*	$OpenBSD: newport.c,v 1.10 2015/09/08 10:21:50 deraadt Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -554,7 +554,7 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 
 	if (fail) {
 		printf("%s: failed to initialize screen\n", self->dv_xname);
-		free(dc, M_DEVBUF, 0);
+		free(dc, M_DEVBUF, sizeof *dc);
 		return;
 	}
 

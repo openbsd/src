@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.11 2014/12/09 06:58:29 doug Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.12 2015/09/08 10:21:50 deraadt Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -411,11 +411,11 @@ grtwo_attach(struct device *parent, struct device *self, void *aux)
 			goto out;
 		if (grtwo_attach_common(dc, ga) != 0) {
 			printf("\n%s: not responding\n", self->dv_xname);
-			free(dc, M_DEVBUF, 0);
+			free(dc, M_DEVBUF, sizeof *dc);
 			return;
 		}
 		if (grtwo_init_screen(dc, M_WAITOK | M_CANFAIL) != 0) {
-			free(dc, M_DEVBUF, 0);
+			free(dc, M_DEVBUF, sizeof *dc);
 			goto out;
 		}
 #endif

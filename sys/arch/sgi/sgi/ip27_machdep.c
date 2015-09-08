@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.65 2014/11/25 19:08:42 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.66 2015/09/08 10:21:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -786,7 +786,7 @@ ip27_hub_intr_disestablish(int intrbit)
 	splx(s);
 
 	if (ISSET(ih->ih_flags, IH_ALLOCATED))
-		free(ih, M_DEVBUF, 0);
+		free(ih, M_DEVBUF, sizeof *ih);
 }
 
 void

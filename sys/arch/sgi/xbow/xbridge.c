@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.96 2015/06/24 16:52:52 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.97 2015/09/08 10:21:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -1331,7 +1331,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		LIST_INIT(&xi->xi_handlers);
 
 		if (xbow_intr_register(xb->xb_widget, level, &intrsrc) != 0) {
-			free(xi, M_DEVBUF, 0);
+			free(xi, M_DEVBUF, sizeof *xi);
 			return NULL;
 		}
 
@@ -1439,7 +1439,7 @@ xbridge_intr_disestablish(void *cookie, void *vih)
 		 */
 	}
 
-	free(xih, M_DEVBUF, 0);
+	free(xih, M_DEVBUF, sizeof *xih);
 }
 
 int
