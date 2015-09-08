@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.76 2015/08/27 06:16:41 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.77 2015/09/08 11:58:58 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -457,7 +457,7 @@ systracef_close(struct file *fp, struct proc *p)
 		vrele(fst->fd_rdir);
 	rw_exit_write(&fst->lock);
 
-	free(fp->f_data, M_XDATA, 0);
+	free(fp->f_data, M_XDATA, sizeof(struct fsystrace));
 	fp->f_data = NULL;
 
 	return (0);
@@ -1585,7 +1585,7 @@ systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 	fst->npolicies--;
 
 	if (policy->nsysent)
-		free(policy->sysent, M_XDATA, 0);
+		free(policy->sysent, M_XDATA, policy->nsysent);
 
 	TAILQ_REMOVE(&fst->policies, policy, next);
 

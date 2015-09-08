@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.76 2015/06/21 00:15:12 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.77 2015/09/08 11:58:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1028,7 +1028,7 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 		goto done;
 	}
 	rc = sc->sc_if->sendmsg(sc, txlen, buf);
-	free(buf, M_DEVBUF, 0);
+	free(buf, M_DEVBUF, txlen);
 
 	ipmi_delay(sc, 5); /* give bmc chance to digest command */
 
@@ -1051,7 +1051,7 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	/* Receive message from interface, copy out result data */
 	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf) ||
 	    rawlen < IPMI_MSG_DATARCV) {
-		free(buf, M_DEVBUF, 0);
+		free(buf, M_DEVBUF, maxlen + 3);
 		return (-1);
 	}
 
@@ -1071,7 +1071,7 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	    *rxlen);
 	dbg_dump(10, " recv", *rxlen, data);
 
-	free(buf, M_DEVBUF, 0);
+	free(buf, M_DEVBUF, maxlen + 3);
 
 	ipmi_delay(sc, 5); /* give bmc chance to digest command */
 
@@ -1162,14 +1162,14 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 		    psdr + offset, NULL)) {
 			printf("%s: get chunk: %d,%d fails\n", DEVNAME(sc),
 			    offset, len);
-			free(psdr, M_DEVBUF, 0);
+			free(psdr, M_DEVBUF, sdrlen);
 			return (1);
 		}
 	}
 
 	/* Add SDR to sensor list, if not wanted, free buffer */
 	if (add_sdr_sensor(sc, psdr) == 0)
-		free(psdr, M_DEVBUF, 0);
+		free(psdr, M_DEVBUF, sdrlen);
 
 	return (0);
 }
