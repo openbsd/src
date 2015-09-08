@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.190 2015/09/06 20:58:14 kettenis Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.191 2015/09/08 13:37:21 kettenis Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1431,24 +1431,11 @@ void *
 pool_page_alloc(struct pool *pp, int flags, int *slowdown)
 {
 	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
-	void *v;
 
 	kd.kd_waitok = ISSET(flags, PR_WAITOK);
 	kd.kd_slowdown = slowdown;
 
-	/* 
-	 * XXX Until we can call msleep(9) without holding the kernel
-	 * lock.
-	 */
-	if (ISSET(flags, PR_WAITOK))
-		KERNEL_LOCK();
-
-	v = km_alloc(pp->pr_pgsize, &kv_page, pp->pr_crange, &kd);
-
-	if (ISSET(flags, PR_WAITOK))
-		KERNEL_UNLOCK();
-
-	return (v);
+	return (km_alloc(pp->pr_pgsize, &kv_page, pp->pr_crange, &kd));
 }
 
 void
