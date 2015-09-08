@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.172 2014/12/10 15:29:53 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.173 2015/09/08 10:24:26 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -333,7 +333,7 @@ setregs(p, pack, stack, retval)
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		fpusave_proc(p, 0);
-		free(p->p_md.md_fpstate, M_SUBPROC, 0);
+		free(p->p_md.md_fpstate, M_SUBPROC, sizeof(struct fpstate64));
 		p->p_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
