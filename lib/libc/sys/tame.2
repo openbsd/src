@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.25 2015/09/09 17:56:59 deraadt Exp $
+.\" $OpenBSD: tame.2,v 1.26 2015/09/09 21:54:02 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -102,13 +102,15 @@ permit the following system calls:
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
 .Pp
-.Bl -tag -width "tmppath" -offset indent -compact
+.Bl -tag -width "readlink(2)" -offset indent -compact
 .It Xr access 2
 May check for existence of
 .Pa /etc/localtime .
+.Pp
 .It Xr adjtime 2
 Read-only, for
 .Xr ntpd 8 .
+.Pp
 .It Xr chmod 2
 .It Xr fchmod 2
 .It Xr fchmodat 2
@@ -118,6 +120,7 @@ Read-only, for
 .It Xr fchownat 2
 Setuid/setgid/sticky bits are ignored.
 The user or group cannot be changed on a file.
+.Pp
 .It Xr open 2
 May open
 .Pa /etc/localtime ,
@@ -127,9 +130,11 @@ and files ending in
 .Pa libc.cat
 below the directory
 .Pa /usr/share/nls/ .
+.Pp
 .It Xr readlink 2
 May operate on
 .Pa /etc/malloc.conf .
+.Pp
 .It Xr sysctl 3
 A small set of read-only operations are allowed, sufficient to
 support:
@@ -138,6 +143,7 @@ support:
 .Xr getifaddrs 3 ,
 .Xr uname 3 ,
 system sensor readings.
+.Pp
 .It Xr tame 2
 Can only reduce permissions; can only set a list of
 .Pa paths
@@ -146,7 +152,7 @@ once.
 .Pp
 The
 .Ar request
-is specified as a string, with space seperate keywords:
+is specified as a string, with space separate keywords:
 .Bl -tag -width "tmppath" -offset indent
 .It Va "malloc"
 To allow use of the
