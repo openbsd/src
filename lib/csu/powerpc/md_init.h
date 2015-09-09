@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.5 2015/09/09 09:41:42 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.6 2015/09/09 09:46:53 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -101,50 +101,16 @@ __asm(									\
 "	mr %r22, %r5			# envp				\n" \
 "	mflr	%r27	/* save off old link register */		\n" \
 "	stw	%r27, 4(%r19)		# save in normal location	\n" \
-"	bl	1f							\n" \
-"	# this instruction never gets executed but can be used		\n" \
-"	# to find the virtual address where the page is loaded.		\n" \
-"	bl _GLOBAL_OFFSET_TABLE_@local-4				\n" \
-"	bl _DYNAMIC@local						\n" \
-"1:									\n" \
-"	mflr	%r6		# this stores where we are (+4)		\n" \
-"	lwz	%r18, 0(%r6)	# load the instruction at offset_sym	\n" \
-"				# it contains an offset to the location	\n" \
-"				# of the GOT.				\n" \
 "									\n" \
-"	rlwinm %r18,%r18,0,8,30 # mask off offset portion of the instr. \n" \
+"	bcl	20, 31, 1f						\n" \
+"1:	mflr	%r28							\n" \
+"	addis	%r28, %r28, _GLOBAL_OFFSET_TABLE_-1b@ha			\n" \
+"	addi	%r28, %r28, _GLOBAL_OFFSET_TABLE_-1b@l			\n" \
 "									\n" \
-"	/*								\n" \
-"	 * these adds effectively calculate the value the		\n" \
-"	 * bl _GLOBAL_OFFSET_TABLE_@local-4				\n" \
-"	 * operation that would be below would calculate.		\n" \
-"	 */								\n" \
-"	add	%r28, %r18, %r6						\n" \
-"									\n" \
-"	/* mprotect GOT-4 for correct execution of blrl instruction */	\n" \
-"	li	%r0, " STR(SYS_mprotect) "				\n" \
-"	mr	%r3, %r28						\n" \
-"	li	%r4, 4							\n" \
-"	li	%r5, 7	/* (PROT_READ|PROT_WRITE|PROT_EXEC) */		\n" \
-"	sc								\n" \
-"									\n" \
-"	li	%r0, 0							\n" \
-"	# flush the blrl instruction out of the data cache		\n" \
-"	dcbf	%r6, %r18						\n" \
-"	sync								\n" \
-"	isync								\n" \
-"	# make certain that the got table addr is not in the icache	\n" \
-"	icbi	%r6, %r18						\n" \
-"	sync								\n" \
-"	isync								\n" \
-"									\n" \
-"	/* This calculates the address of _DYNAMIC the same way		\n" \
-"	 * that the GLOBAL_OFFSET_TABLE was calculated.			\n" \
-"	 */								\n" \
-"	lwz	%r18, 4(%r6)						\n" \
-"	rlwinm	%r18,%r18,0,8,30 # mask off offset portion of the instr. \n" \
-"	add	%r8, %r18, %r6	# address of _DYNAMIC (arg6 for _dl_boot) \n" \
-"	addi	%r18, %r8, 4	# correction.				\n" \
+"	bcl	20, 31, 1f						\n" \
+"1:	mflr	%r18							\n" \
+"	addis	%r18, %r18, _DYNAMIC-1b@ha				\n" \
+"	addi	%r18, %r18, _DYNAMIC-1b@l				\n" \
 "	lwz	%r4, 4(%r28)	# load addr of _DYNAMIC according to got. \n" \
 "	sub	%r4, %r18, %r4	# determine load offset			\n" \
 "									\n" \
