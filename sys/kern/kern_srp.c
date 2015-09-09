@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.2 2015/09/01 03:47:58 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.3 2015/09/09 11:21:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -27,6 +27,14 @@
 void	srp_v_gc_start(struct srp_gc *, struct srp *, void *);
 
 void
+srpl_rc_init(struct srpl_rc *rc,  void (*ref)(void *, void *),
+    void (*unref)(void *, void *), void *cookie)
+{
+	rc->srpl_ref = ref;
+	srp_gc_init(&rc->srpl_gc, unref, cookie);
+}
+
+void
 srp_gc_init(struct srp_gc *srp_gc, void (*dtor)(void *, void *), void *cookie)
 {
 	srp_gc->srp_gc_dtor = dtor;
@@ -39,6 +47,12 @@ srp_init(struct srp *srp)
 {
 	srp->ref = NULL;
 }
+
+void            srpl_refs_init(struct srpl_rc *, void (*)(void *, void *),
+                    void (*)(void *, void *), void *);
+
+#define SRPL_RC_INITIALIZER(_r, _u, _c) { _r, SRP_GC_INITIALIZER(_u, _c) }
+
 
 void
 srp_update_locked(struct srp_gc *srp_gc, struct srp *srp, void *nv)

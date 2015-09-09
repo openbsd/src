@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.2 2015/09/01 03:47:58 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.3 2015/09/09 11:21:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -60,6 +60,111 @@ void		 srp_leave(struct srp *, void *);
 #define srp_follow(_srp, _v, _next)	((_next)->ref)
 #define srp_leave(_srp, _v)		do { } while (0)
 #endif /* MULTIPROCESSOR */
+
+#endif /* _KERNEL */
+
+/*
+ * singly linked list built by following srps
+ */
+
+struct srpl_rc {
+	void			(*srpl_ref)(void *, void *);
+	struct srp_gc		srpl_gc;
+};
+#define srpl_cookie		srpl_gc.srp_gc_cookie
+
+struct srpl {
+	struct srp		sl_head;
+};
+
+struct srpl_entry {
+	struct srp		se_next;
+};
+
+struct srpl_iter {
+	struct srp *		si_ref;
+};
+
+#ifdef _KERNEL
+
+void		srpl_rc_init(struct srpl_rc *, void (*)(void *, void *),
+		    void (*)(void *, void *), void *);
+
+#define SRPL_RC_INITIALIZER(_r, _u, _c) { _r, SRP_GC_INITIALIZER(_u, _c) }
+
+#define SRPL_INIT(_sl)			srp_init(&(_sl)->sl_head)
+
+static inline void *
+_srpl_enter(struct srpl *sl, struct srpl_iter *si)
+{
+	si->si_ref = &sl->sl_head;
+	return (srp_enter(si->si_ref));
+}
+
+static inline void *
+_srpl_next(struct srpl_iter *si, void *elm, struct srp *nref)
+{
+	void *n;
+
+	n = srp_follow(si->si_ref, elm, nref);
+	si->si_ref = nref;
+
+	return (n);
+}
+
+#define SRPL_ENTER(_sl, _si)		_srpl_enter(_sl, _si)
+
+#define SRPL_NEXT(_si, _e, _ENTRY)					\
+	 _srpl_next(_si, _e, &(_e)->_ENTRY.se_next)
+
+#define SRPL_FOREACH(_c, _sl, _si, _ENTRY)				\
+	for ((_c) = SRPL_ENTER(_sl, _si);				\
+	    (_c) != NULL; 						\
+	    (_c) = SRPL_NEXT(_si, _c, _ENTRY))
+
+#define SRPL_LEAVE(_si, _c)		srp_leave((_si)->si_ref, (_c))
+
+#define SRPL_EMPTY_LOCKED(_sl)		(SRPL_FIRST_LOCKED(_sl) == NULL)
+#define SRPL_FIRST_LOCKED(_sl)		srp_get_locked(&(_sl)->sl_head)
+
+#define SRPL_NEXT_LOCKED(_e, _ENTRY)					\
+    srp_get_locked(&(_e)->_ENTRY.se_next)
+
+#define SRPL_FOREACH_LOCKED(_c, _sl, _ENTRY)				\
+	for ((_c) = SRPL_FIRST_LOCKED(_sl);				\
+	    (_c) != NULL;						\
+	    (_c) = SRPL_NEXT_LOCKED((_c), _ENTRY))
+
+#define SRPL_INSERT_HEAD_LOCKED(_rc, _sl, _e, _ENTRY) do {		\
+	void *head;							\
+									\
+	srp_init(&(_e)->_ENTRY.se_next);				\
+									\
+	head = SRPL_FIRST_LOCKED(_sl);					\
+	if (head != NULL) {						\
+		(_rc)->srpl_ref(&(_rc)->srpl_cookie, head);		\
+		srp_update_locked(&(_rc)->srpl_gc,			\
+		    &(_e)->_ENTRY.se_next, head);	 		\
+	}								\
+									\
+	(_rc)->srpl_ref(&(_rc)->srpl_cookie, _e);			\
+	srp_update_locked(&(_rc)->srpl_gc, &(_sl)->sl_head, (_e));	\
+} while (0)
+
+#define SRPL_REMOVE_LOCKED(_rc, _sl, _e, _type, _ENTRY) do {		\
+	struct srp *ref;						\
+	struct _type *c, *n;						\
+									\
+	ref = &(_sl)->sl_head;						\
+	while ((c = srp_get_locked(ref)) != (_e))			\
+		ref = &c->_ENTRY.se_next;				\
+									\
+	n = SRPL_NEXT_LOCKED(c, _ENTRY);				\
+	if (n != NULL)							\
+		(_rc)->srpl_ref(&(_rc)->srpl_cookie, n);		\
+	srp_update_locked(&(_rc)->srpl_gc, ref, n);			\
+	srp_update_locked(&(_rc)->srpl_gc, &c->_ENTRY.se_next, NULL);	\
+} while (0)
 
 #endif /* _KERNEL */
 

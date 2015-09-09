@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.240 2015/09/01 12:50:03 mpi Exp $
+#	$OpenBSD: Makefile,v 1.241 2015/09/09 11:21:51 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -29,7 +29,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	route.9 rt_ifa_add.9 rt_timer_add.9 rtalloc.9 rtable_add.9 \
 	rtlabel_id2name.9 rtrequest1.9 rwlock.9 SipHash24.9 sensor_attach.9 \
-	spl.9 srp_enter.9 startuphook_establish.9 \
+	spl.9 srp_enter.9 srpl_rc_init.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 systrace.9 sysctl_int.9 \
 	task_add.9 tc_init.9 time.9 timeout.9 tsleep.9 tvtohz.9 \
 	uiomove.9 uvm.9 usbd_close_pipe.9 usbd_open_pipe.9 usbd_transfer.9 \
@@ -369,6 +369,16 @@ MLINKS+=srp_enter.9 srp_init.9 srp_enter.9 srp_gc_init.9 \
 	srp_enter.9 srp_follow.9 srp_enter.9 srp_leave.9 \
 	srp_enter.9 srp_get_locked.9 srp_enter.9 srp_finalize.9 \
 	srp_enter.9 SRP_INITIALIZER.9 srp_enter.9 SRP_GC_INITIALIZER.9
+MLINKS+=srpl_rc_init.9 SRPL_HEAD_INIT.9 srpl_rc_init.9 SRPL_HEAD_INIT.9 \
+	srpl_rc_init.9 SRPL_ENTRY_INIT.9 srpl_rc_init.9 SRPL_ENTER.9 \
+	srpl_rc_init.9 SRPL_NEXT.9 srpl_rc_init.9 SRPL_FOREACH.9 \
+	srpl_rc_init.9 SRPL_LEAVE.9 srpl_rc_init.9 SRPL_EMPTY_LOCKED.9 \
+	srpl_rc_init.9 SRPL_FIRST_LOCKED.9 srpl_rc_init.9 SRPL_NEXT_LOCKED.9 \
+	srpl_rc_init.9 SRPL_FOREACH_LOCKED.9 \
+	srpl_rc_init.9 SRPL_INSERT_HEAD_LOCKED.9 \
+	srpl_rc_init.9 SRPL_REMOVE_LOCKED.9 \
+	srpl_rc_init.9 SRPL_RC_INITIALIZER.9 \
+
 MLINKS+=sysctl_int.9 sysctl_int_arr.9 sysctl_int.9 sysctl_quad.9 \
 	sysctl_int.9 sysctl_string.9 sysctl_int.9 sysctl_tstring.9 \
 	sysctl_int.9 sysctl_rdint.9 sysctl_int.9 sysctl_rdquad.9 \
