@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.3 2015/02/02 17:40:24 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.4 2015/09/09 08:48:46 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -37,7 +37,8 @@ sub new {
 sub child {
 	my $self = shift;
 
-	if (defined($self->{connectdomain})) {
+	if (defined($self->{connectdomain}) &&
+	    $self->{connectdomain} ne "sendsyslog") {
 		my $cs;
 		if ($self->{connectdomain} == AF_UNIX) {
 			$cs = IO::Socket::UNIX->new(
