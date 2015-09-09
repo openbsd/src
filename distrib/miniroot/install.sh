@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.269 2015/07/19 21:05:41 rpe Exp $
+#	$OpenBSD: install.sh,v 1.270 2015/09/09 23:07:10 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
@@ -63,7 +63,7 @@ MODE=install
 # Include common subroutines and initialization code.
 . install.sub
 
-# Ask for/set the system hostname and add the hostname specific siteXX set. 
+# Ask for/set the system hostname and add the hostname specific siteXX set.
 ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
 [[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
