@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.196 2015/09/01 05:49:37 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.197 2015/09/09 14:52:12 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2819,13 +2819,8 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 	(*pr)("\tsz=%u, ref=%d, version=%u, flags=0x%x\n",
 	    map->size, map->ref_count, map->timestamp,
 	    map->flags);
-#ifdef pmap_resident_count
 	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap, 
 	    pmap_resident_count(map->pmap));
-#else
-	/* XXXCDC: this should be required ... */
-	(*pr)("\tpmap=%p(resident=<<NOT SUPPORTED!!!>>)\n", map->pmap);
-#endif
 
 	/* struct vmspace handling. */
 	if (map->flags & VM_MAP_ISVMSPACE) {

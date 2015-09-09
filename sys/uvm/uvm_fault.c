@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.85 2015/08/21 16:04:35 visa Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.86 2015/09/09 14:52:12 miod Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -443,9 +443,6 @@ uvmfault_update_stats(struct uvm_faultinfo *ufi)
 	struct vm_map		*map;
 	struct proc		*p;
 	vsize_t			 res;
-#ifndef pmap_resident_count
-	struct vm_space		*vm;
-#endif
 
 	map = ufi->orig_map;
 
@@ -454,18 +451,7 @@ uvmfault_update_stats(struct uvm_faultinfo *ufi)
 		p = curproc;
 		KASSERT(p != NULL && &p->p_vmspace->vm_map == map);
 
-#ifdef pmap_resident_count
 		res = pmap_resident_count(map->pmap);
-#else
-		/*
-		 * Rather inaccurate, but this is the current anon size
-		 * of the vmspace.  It's basically the resident size
-		 * minus the mmapped in files/text.
-		 */
-		vm = (struct vmspace*)map;
-		res = vm->dsize;
-#endif
-
 		/* Convert res from pages to kilobytes. */
 		res <<= (PAGE_SHIFT - 10);
 
