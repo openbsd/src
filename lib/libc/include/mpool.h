@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.h,v 1.11 2013/12/02 02:28:21 krw Exp $	*/
+/*	$OpenBSD: mpool.h,v 1.1 2015/09/09 15:35:24 guenther Exp $	*/
 /*	$NetBSD: mpool.h,v 1.7 1996/05/03 21:13:41 cgd Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ typedef struct MPOOL {
 #define	MPOOL_PAGE_NEXT		0x02	/* Allocate a new page with the next
 					  page number. */
 
-__BEGIN_DECLS
+__BEGIN_HIDDEN_DECLS
 MPOOL	*mpool_open(void *, int, pgno_t, pgno_t);
 void	 mpool_filter(MPOOL *, void (*)(void *, pgno_t, void *),
 	    void (*)(void *, pgno_t, void *), void *);
@@ -103,9 +103,20 @@ int	 mpool_delete(MPOOL *, void *);
 int	 mpool_put(MPOOL *, void *, unsigned int);
 int	 mpool_sync(MPOOL *);
 int	 mpool_close(MPOOL *);
+
+PROTO_NORMAL(mpool_open);
+PROTO_NORMAL(mpool_filter);
+PROTO_NORMAL(mpool_new);
+PROTO_NORMAL(mpool_get);
+PROTO_NORMAL(mpool_delete);
+PROTO_NORMAL(mpool_put);
+PROTO_NORMAL(mpool_sync);
+PROTO_NORMAL(mpool_close);
+
 #ifdef STATISTICS
 void	 mpool_stat(MPOOL *);
+PROTO_NORMAL(mpool_stat);
 #endif
-__END_DECLS
+__END_HIDDEN_DECLS
 
 #endif

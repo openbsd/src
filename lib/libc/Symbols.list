@@ -462,14 +462,6 @@ dbopen
 delete
 fetch
 firstkey
-mpool_close
-mpool_delete
-mpool_filter
-mpool_get
-mpool_new
-mpool_open
-mpool_put
-mpool_sync
 nextkey
 store
 
