@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.206 2015/09/09 08:10:33 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.207 2015/09/09 09:44:31 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -507,21 +507,17 @@ sm_diff_loop() {
 			echo
 			if ${IS_LINK}; then
 				echo "===> Linking ${TARGET}"
-				sm_install && \
-					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
+				sm_install || \
 					sm_warn "problem creating ${TARGET} link"
 			else
 				echo -n "===> Updating ${TARGET}"
-				sm_install && \
-					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
+				sm_install || \
 					(echo && sm_warn "problem updating ${TARGET}")
 			fi
 			;;
 		[mM])
 			if ! ${_nonexistent} && ! ${IS_BIN} && ! ${IS_LINK}; then
-				sm_merge_loop && \
-					MERGED_FILES="${MERGED_FILES}${TARGET}\n" || \
-						_handle=todo
+				sm_merge_loop || _handle=todo
 			else
 				echo "invalid choice: ${_handle}\n"
 				_handle=todo
