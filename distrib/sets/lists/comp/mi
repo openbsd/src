@@ -4719,15 +4719,6 @@
 ./usr/share/man/man3/move.3
 ./usr/share/man/man3/move_field.3
 ./usr/share/man/man3/move_panel.3
-./usr/share/man/man3/mpool.3
-./usr/share/man/man3/mpool_close.3
-./usr/share/man/man3/mpool_delete.3
-./usr/share/man/man3/mpool_filter.3
-./usr/share/man/man3/mpool_get.3
-./usr/share/man/man3/mpool_new.3
-./usr/share/man/man3/mpool_open.3
-./usr/share/man/man3/mpool_put.3
-./usr/share/man/man3/mpool_sync.3
 ./usr/share/man/man3/mrand48.3
 ./usr/share/man/man3/msgbuf_clear.3
 ./usr/share/man/man3/msgbuf_drain.3

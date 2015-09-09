@@ -1,5 +1,5 @@
 ./etc/examples/wsconsctl.conf
-./usr/lib/libc.so.81.0
+./usr/lib/libc.so.82.0
 ./usr/lib/libcrypto.so.35.0
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
