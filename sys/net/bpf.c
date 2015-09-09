@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.123 2015/09/01 04:50:27 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.124 2015/09/09 11:55:37 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -128,8 +128,10 @@ void bpfilter_destroy(struct bpf_d *);
  * garbage collector srps
  */
 
-void bpf_d_dtor(void *, void *);
-struct srp_gc bpf_d_gc = SRP_GC_INITIALIZER(bpf_d_dtor, NULL);
+void bpf_d_ref(void *, void *);
+void bpf_d_unref(void *, void *);
+struct srpl_rc bpf_d_rc = SRPL_RC_INITIALIZER(bpf_d_ref, bpf_d_unref, NULL);
+
 void bpf_insn_dtor(void *, void *);
 struct srp_gc bpf_insn_gc = SRP_GC_INITIALIZER(bpf_insn_dtor, NULL);
 
@@ -261,8 +263,6 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 void
 bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 {
-	struct bpf_d *head;
-
 	/*
 	 * Point d at bp, and add d to the interface's list of listeners.
 	 * Finally, point the driver's bpf cookie at the interface so
@@ -270,16 +270,9 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 	 */
 
 	d->bd_bif = bp;
-	srp_init(&d->bd_next);
 
 	KERNEL_ASSERT_LOCKED();
-	head = srp_get_locked(&bp->bif_dlist);
-	if (head != NULL) {
-		D_GET(head);
-		srp_update_locked(&bpf_d_gc, &d->bd_next, head);
-	}
-	D_GET(d);
-	srp_update_locked(&bpf_d_gc, &bp->bif_dlist, d);
+	SRPL_INSERT_HEAD_LOCKED(&bpf_d_rc, &bp->bif_dlist, d, bd_next);
 
 	*bp->bif_driverp = bp;
 }
@@ -290,8 +283,6 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 void
 bpf_detachd(struct bpf_d *d)
 {
-	struct srp *dref;
-	struct bpf_d *p, *next;
 	struct bpf_if *bp;
 
 	bp = d->bd_bif;
@@ -315,24 +306,9 @@ bpf_detachd(struct bpf_d *d)
 
 	/* Remove d from the interface's descriptor list. */
 	KERNEL_ASSERT_LOCKED();
-	dref = &bp->bif_dlist;
-	for (;;) {
-		p = srp_get_locked(dref);
-		if (p == NULL)
-			panic("bpf_detachd: descriptor not in list");
-		if (d == p)
-			break;
+	SRPL_REMOVE_LOCKED(&bpf_d_rc, &bp->bif_dlist, d, bpf_d, bd_next);
 
-		dref = &p->bd_next;
-	}
-
-	next = srp_get_locked(&d->bd_next);
-	if (next != NULL)
-		D_GET(next);
-	srp_update_locked(&bpf_d_gc, dref, next);
-	srp_update_locked(&bpf_d_gc, &d->bd_next, NULL);
-
-	if (srp_get_locked(&bp->bif_dlist) == NULL) {
+	if (SRPL_EMPTY_LOCKED(&bp->bif_dlist)) {
 		/*
 		 * Let the driver know that there are no more listeners.
 		 */
@@ -1146,15 +1122,13 @@ int
 bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct srp *dref, *nref;
-	struct bpf_d *d, *next;
+	struct srpl_iter i;
+	struct bpf_d *d;
 	size_t slen;
 	struct timeval tv;
 	int drop = 0, gottime = 0;
 
-	dref = &bp->bif_dlist;
-	d = srp_enter(dref);
-	while (d != NULL) {
+	SRPL_FOREACH(d, &bp->bif_dlist, &i, bd_next) {
 		atomic_inc_long(&d->bd_rcount);
 
 		if ((direction & d->bd_dirfilt) != 0)
@@ -1177,13 +1151,8 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 			if (d->bd_fildrop)
 				drop++;
 		}
-
-		nref = &d->bd_next;
-		next = srp_follow(dref, d, nref);
-		dref = nref;
-		d = next;
 	}
-	srp_leave(dref, d);
+	SRPL_LEAVE(&i, d);
 
 	return (drop);
 }
@@ -1220,8 +1189,8 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
     void (*cpfn)(const void *, void *, size_t))
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct srp *dref, *nref;
-	struct bpf_d *d, *next;
+	struct srpl_iter i;
+	struct bpf_d *d;
 	size_t pktlen, slen;
 	struct mbuf *m0;
 	struct timeval tv;
@@ -1237,9 +1206,7 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
 		pktlen += m0->m_len;
 
-	dref = &bp->bif_dlist;
-	d = srp_enter(dref);
-	while (d != NULL) {
+	SRPL_FOREACH(d, &bp->bif_dlist, &i, bd_next) {
 		atomic_inc_long(&d->bd_rcount);
 
 		if ((direction & d->bd_dirfilt) != 0)
@@ -1265,13 +1232,8 @@ _bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction,
 			if (d->bd_fildrop)
 				m->m_flags |= M_FILDROP;
 		}
-
-		nref = &d->bd_next;
-		next = srp_follow(dref, d, nref);
-		dref = nref;
-		d = next;
 	}
-	srp_leave(dref, d);
+	SRPL_LEAVE(&i, d);
 }
 
 /*
@@ -1497,7 +1459,7 @@ bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
 
 	if ((bp = malloc(sizeof(*bp), M_DEVBUF, M_NOWAIT)) == NULL)
 		panic("bpfattach");
-	srp_init(&bp->bif_dlist);
+	SRPL_INIT(&bp->bif_dlist);
 	bp->bif_driverp = (struct bpf_if **)driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
@@ -1536,8 +1498,7 @@ bpfdetach(struct ifnet *ifp)
 				if (cdevsw[maj].d_open == bpfopen)
 					break;
 
-			for (bd = srp_get_locked(&bp->bif_dlist);
-			    bd != NULL; bd = srp_get_locked(&bp->bif_dlist)) {
+			SRPL_FOREACH_LOCKED(bd, &bp->bif_dlist, bd_next) {
 				struct bpf_d *d;
 
 				/*
@@ -1706,7 +1667,13 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 }
 
 void
-bpf_d_dtor(void *null, void *d)
+bpf_d_ref(void *null, void *d)
+{
+	D_GET((struct bpf_d *)d);
+}
+
+void
+bpf_d_unref(void *null, void *d)
 {
 	D_PUT(d);
 }

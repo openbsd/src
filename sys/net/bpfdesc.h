@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.27 2015/09/01 04:50:27 dlg Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.28 2015/09/09 11:55:37 dlg Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  * Descriptor associated with each open bpf file.
  */
 struct bpf_d {
-	struct srp	bd_next;	/* Linked list of descriptors */
+	struct srpl_entry bd_next;	/* Linked list of descriptors */
 	/*
 	 * Buffer slots: two mbuf clusters buffer the incoming packets.
 	 *   The model has three slots.  Sbuf is always occupied.
@@ -98,7 +98,7 @@ struct bpf_d {
  */
 struct bpf_if {
 	struct bpf_if *bif_next;	/* list of all interfaces */
-	struct srp bif_dlist;		/* descriptor list */
+	struct srpl bif_dlist;		/* descriptor list */
 	struct bpf_if **bif_driverp;	/* pointer into softc */
 	u_int bif_dlt;			/* link layer type */
 	u_int bif_hdrlen;		/* length of header (with padding) */
