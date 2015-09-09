@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.363 2015/09/01 04:56:55 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.364 2015/09/09 16:01:10 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <sys/domain.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
+#include <sys/atomic.h>
 
 #include <dev/rndvar.h>
 
@@ -260,7 +261,8 @@ if_attachsetup(struct ifnet *ifp)
 
 	if_addgroup(ifp, IFG_ALL);
 
-	ifindex2ifnet[if_index] = ifp;
+	ifp->if_refcnt = 0;
+	ifindex2ifnet[if_index] = if_ref(ifp);
 
 	if (ifp->if_snd.ifq_maxlen == 0)
 		IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
@@ -664,6 +666,7 @@ if_detach(struct ifnet *ifp)
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
 	ifindex2ifnet[ifp->if_index] = NULL;
+	if_put(ifp);
 	splx(s);
 }
 
@@ -1231,7 +1234,24 @@ if_get(unsigned int index)
 	if (index < if_indexlim)
 		ifp = ifindex2ifnet[index];
 
+	return (if_ref(ifp));
+}
+
+struct ifnet *
+if_ref(struct ifnet *ifp)
+{
+	atomic_inc_int(&ifp->if_refcnt);
+
 	return (ifp);
+}
+
+void
+if_put(struct ifnet *ifp)
+{
+	if (ifp == NULL)
+		return;
+
+	atomic_dec_int(&ifp->if_refcnt);
 }
 
 /*

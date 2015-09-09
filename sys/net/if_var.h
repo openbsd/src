@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.34 2015/07/02 09:40:02 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.35 2015/09/09 16:01:10 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
+	unsigned int if_refcnt;
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_ENTRY(ifnet) if_txlist;	/* list of ifnets ready to tx */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
