@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.90 2015/03/17 15:20:38 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.91 2015/09/09 19:03:13 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: March 17 2015 $
+.Dd $Mdocdate: September 9 2015 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -979,7 +979,7 @@ If the cursor is on a directory it will be opened in dired mode.
 .It dired-flag-file-deletion
 Flag the file listed on the current line for deletion.
 This is indicated in the buffer by putting a D at the left margin.
-No files are actually deleted until the function dired-do-deletions
+No files are actually deleted until the function dired-do-flagged-delete
 is executed.
 .It dired-find-file-other-window
 Open the file on the current line of the dired buffer in a
