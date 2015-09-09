@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.183 2015/09/03 20:50:48 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.184 2015/09/09 08:12:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -337,7 +337,7 @@ int	getmsgbufsize(void);
 int	socket_bind(const char *, const char *, const char *, int,
     int *, int *);
 int	unix_socket(char *, int, mode_t);
-void	double_rbuf(int);
+void	double_sockbuf(int, int);
 void	tailify_replytext(char *, int);
 
 int
@@ -484,13 +484,16 @@ main(int argc, char *argv[])
 				die(0);
 			continue;
 		}
-		double_rbuf(fd_unix[i]);
+		double_sockbuf(fd_unix[i], SO_RCVBUF);
 	}
 
-	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pair) == -1)
+	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pair) == -1) {
+		logerror("socketpair");
 		die(0);
+	}
+	double_sockbuf(pair[0], SO_RCVBUF);
+	double_sockbuf(pair[1], SO_SNDBUF);
 	fd_sendsys = pair[0];
-	double_rbuf(fd_sendsys);
 
 	fd_ctlsock = fd_ctlconn = -1;
 	if (path_ctlsock != NULL) {
@@ -792,7 +795,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 			continue;
 		}
 		if (!shutread && res->ai_protocol == IPPROTO_UDP)
-			double_rbuf(*fdp);
+			double_sockbuf(*fdp, SO_RCVBUF);
 	}
 
 	freeaddrinfo(res0);
@@ -2671,20 +2674,28 @@ unix_socket(char *path, int type, mode_t mode)
 	optval = MAXLINE + PATH_MAX;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &optval, sizeof(optval))
 	    == -1)
-		logerror("cannot setsockopt unix");
+		logerror("setsockopt unix");
 
 	return (fd);
 }
 
 void
-double_rbuf(int fd)
+double_sockbuf(int fd, int optname)
 {
-	socklen_t slen, len;
+	socklen_t len;
+	int i, newsize, oldsize = 0;
 
-	slen = sizeof(len);
-	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, &slen) == 0) {
-		len *= 2;
-		setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, slen);
+	len = sizeof(oldsize);
+	if (getsockopt(fd, SOL_SOCKET, optname, &oldsize, &len) == -1)
+		logerror("getsockopt bufsize");
+	len = sizeof(newsize);
+	newsize =  MAXLINE + 128;  /* data + control */
+	/* allow 8 full length messages */
+	for (i = 0; i < 4; i++, newsize *= 2) {
+		if (newsize <= oldsize)
+			continue;
+		if (setsockopt(fd, SOL_SOCKET, optname, &newsize, len) == -1)
+			logerror("setsockopt bufsize");
 	}
 }
 
