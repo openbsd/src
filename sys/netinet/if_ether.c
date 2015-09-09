@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.163 2015/09/09 10:53:54 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.164 2015/09/09 15:59:19 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -826,29 +826,25 @@ arplookup(u_int32_t addr, int create, int proxy, u_int tableid)
  * Check whether we do proxy ARP for this address and we point to ourselves.
  */
 int
-arpproxy(struct in_addr in, u_int rdomain)
+arpproxy(struct in_addr in, unsigned int rtableid)
 {
+	struct sockaddr_dl *sdl;
 	struct rtentry *rt;
-	struct llinfo_arp *la;
 	struct ifnet *ifp;
 	int found = 0;
 
-	rt = arplookup(in.s_addr, 0, SIN_PROXY, rdomain);
+	rt = arplookup(in.s_addr, 0, SIN_PROXY, rtableid);
 	if (rt == NULL)
 		return (0);
-	la = ((struct llinfo_arp *)rt->rt_llinfo);
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		if (ifp->if_rdomain != rdomain)
-			continue;
+	/* Check that arp information are correct. */
+	sdl = (struct sockaddr_dl *)rt->rt_gateway;
+	if (sdl->sdl_alen != ETHER_ADDR_LEN)
+		return (0);
 
-		if (!memcmp(LLADDR((struct sockaddr_dl *)la->la_rt->rt_gateway),
-		    LLADDR(ifp->if_sadl),
-		    ETHER_ADDR_LEN)) {
-			found = 1;
-			break;
-		}
-	}
+	ifp = rt->rt_ifp;
+	if (!memcmp(LLADDR(sdl), LLADDR(ifp->if_sadl), sdl->sdl_alen))
+		found = 1;
 
 	return (found);
 }
