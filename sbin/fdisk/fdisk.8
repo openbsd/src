@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.83 2015/09/09 15:13:35 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.84 2015/09/09 15:20:22 deraadt Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -327,6 +327,8 @@ will cause the partition to be sized to use the remainder of the disk.
 Make the given MBR partition table entry bootable
 and mark all others as not bootable
 (only one entry can be marked bootable).
+The bootable partition is denoted with
+.Sq * .
 .\" If you wish to boot from an extended
 .\" MBR partition, you will need to mark the MBR partition table entry for the
 .\" extended MBR partition as bootable.
