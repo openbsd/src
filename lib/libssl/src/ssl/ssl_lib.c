@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.106 2015/08/27 06:21:15 doug Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.107 2015/09/09 19:42:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -927,7 +927,7 @@ SSL_check_private_key(const SSL *ssl)
 int
 SSL_accept(SSL *s)
 {
-	if (s->handshake_func == 0)
+	if (s->handshake_func == NULL)
 		SSL_set_accept_state(s); /* Not properly initialized yet */
 
 	return (s->method->ssl_accept(s));
@@ -936,7 +936,7 @@ SSL_accept(SSL *s)
 int
 SSL_connect(SSL *s)
 {
-	if (s->handshake_func == 0)
+	if (s->handshake_func == NULL)
 		SSL_set_connect_state(s); /* Not properly initialized yet */
 
 	return (s->method->ssl_connect(s));
@@ -951,7 +951,7 @@ SSL_get_default_timeout(const SSL *s)
 int
 SSL_read(SSL *s, void *buf, int num)
 {
-	if (s->handshake_func == 0) {
+	if (s->handshake_func == NULL) {
 		SSLerr(SSL_F_SSL_READ,
 		    SSL_R_UNINITIALIZED);
 		return (-1);
@@ -967,7 +967,7 @@ SSL_read(SSL *s, void *buf, int num)
 int
 SSL_peek(SSL *s, void *buf, int num)
 {
-	if (s->handshake_func == 0) {
+	if (s->handshake_func == NULL) {
 		SSLerr(SSL_F_SSL_PEEK,
 		    SSL_R_UNINITIALIZED);
 		return (-1);
@@ -982,7 +982,7 @@ SSL_peek(SSL *s, void *buf, int num)
 int
 SSL_write(SSL *s, const void *buf, int num)
 {
-	if (s->handshake_func == 0) {
+	if (s->handshake_func == NULL) {
 		SSLerr(SSL_F_SSL_WRITE,
 		    SSL_R_UNINITIALIZED);
 		return (-1);
@@ -1007,7 +1007,7 @@ SSL_shutdown(SSL *s)
 	 * even if blocking I/O is used (see ssl3_shutdown).
 	 */
 
-	if (s->handshake_func == 0) {
+	if (s->handshake_func == NULL) {
 		SSLerr(SSL_F_SSL_SHUTDOWN,
 		    SSL_R_UNINITIALIZED);
 		return (-1);
