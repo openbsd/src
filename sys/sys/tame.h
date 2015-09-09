@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.5 2015/08/26 05:20:06 doug Exp $	*/
+/*	$OpenBSD: tame.h,v 1.6 2015/09/09 17:56:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -19,6 +19,8 @@
 
 #ifndef _SYS_TAME_H_
 #define _SYS_TAME_H_
+
+#ifdef _KERNEL
 
 #include <sys/cdefs.h>
 
@@ -54,16 +56,14 @@
 #define TAME_TMPPATH	(_TM_SELF | _TM_RW | _TM_TMPPATH)
 #define TAME_INET	(_TM_SELF | _TM_RW | _TM_INET)
 #define TAME_UNIX	(_TM_SELF | _TM_RW | _TM_UNIX)
-#define TAME_CMSG	(TAME_UNIX | _TM_CMSG)
-#define TAME_DNS	(TAME_MALLOC | _TM_DNSPATH)
+#define TAME_CMSG	(_TM_SELF | _TM_RW | _TM_UNIX | _TM_CMSG)
+#define TAME_DNS	(_TM_SELF | _TM_MALLOC | _TM_DNSPATH)
 #define TAME_IOCTL	(_TM_IOCTL)
-#define TAME_GETPW	(TAME_STDIO | _TM_GETPW)
+#define TAME_GETPW	(_TM_SELF | _TM_MALLOC | _TM_RW | _TM_GETPW)
 #define TAME_PROC	(_TM_PROC)
 #define TAME_CPATH	(_TM_CPATH)
 #define TAME_ABORT	(_TM_ABORT)
 #define TAME_FATTR	(_TM_FATTR)
-
-#ifdef _KERNEL
 
 int	tame_check(struct proc *, int);
 int	tame_fail(struct proc *, int, int);
@@ -94,10 +94,6 @@ struct whitepaths {
 		size_t		len;
 	} wl_paths[0];
 };
-
-#else /* _KERNEL */
-
-int	tame(int, const char **);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.37 2015/09/01 18:26:19 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.38 2015/09/09 17:56:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -205,14 +205,74 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_flock] = _TM_GETPW,
 };
 
+static const struct {
+	char *name;
+	int flags;
+} tamereq[] = {
+	{ "malloc",		_TM_SELF | _TM_MALLOC },
+	{ "rw",			_TM_SELF | _TM_RW },
+	{ "stdio",		_TM_SELF | _TM_MALLOC | _TM_RW },
+	{ "rpath",		_TM_SELF | _TM_RW | _TM_RPATH },
+	{ "wpath",		_TM_SELF | _TM_RW | _TM_WPATH },
+	{ "tmppath",		_TM_SELF | _TM_RW | _TM_TMPPATH },
+	{ "inet",		_TM_SELF | _TM_RW | _TM_INET },
+	{ "unix",		_TM_SELF | _TM_RW | _TM_UNIX },
+	{ "cmsg",		TAME_UNIX | _TM_CMSG },
+	{ "dns",		TAME_MALLOC | _TM_DNSPATH },
+	{ "ioctl",		_TM_IOCTL },
+	{ "getpw",		TAME_STDIO | _TM_GETPW },
+	{ "proc",		_TM_PROC },
+	{ "cpath",		_TM_CPATH },
+	{ "abort",		_TM_ABORT },
+	{ "fattr",		_TM_FATTR }
+};
+
 int
 sys_tame(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_tame_args /* {
-		syscallarg(int) flags;
+		syscallarg(const char *)request;
 		syscallarg(const char **)paths;
 	} */	*uap = v;
-	int	 flags = SCARG(uap, flags);
+	int flags = 0;
+	int error;
+
+	if (SCARG(uap, request)) {
+		size_t rbuflen;
+		char *rbuf, *rp, *pn;
+		int f, i;
+
+		rbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		error = copyinstr(SCARG(uap, request), rbuf, MAXPATHLEN,
+		    &rbuflen);
+		if (error) {
+			free(rbuf, M_TEMP, MAXPATHLEN);
+			return (error);
+		}
+
+		for (rp = rbuf; rp && *rp && error == 0; rp = pn) {
+			pn = strchr(rp, ' ');	/* find terminator */
+			if (pn) {
+				while (*pn == ' ')
+					*pn++ = '\0';
+			}
+
+			for (f = i = 0; i < nitems(tamereq); i++) {
+				if (strcmp(rp, tamereq[i].name) == 0) {
+					f = tamereq[i].flags;
+					break;
+				}
+			}
+			if (f == 0) {
+				printf("%s(%d): unknown req %s\n",
+				    p->p_comm, p->p_pid, rp);
+				free(rbuf, M_TEMP, MAXPATHLEN);
+				return (EINVAL);
+			}
+			flags |= f;
+		}
+		free(rbuf, M_TEMP, MAXPATHLEN);
+	}
 
 	if (flags & ~_TM_USERSET)
 		return (EINVAL);

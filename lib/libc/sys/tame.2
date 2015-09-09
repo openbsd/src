@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.24 2015/09/07 05:23:30 tim Exp $
+.\" $OpenBSD: tame.2,v 1.25 2015/09/09 17:56:59 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,16 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2015 $
+.Dd $Mdocdate: September 9 2015 $
 .Dt TAME 2
 .Os
 .Sh NAME
 .Nm tame
 .Nd restrict system operations
 .Sh SYNOPSIS
-.In sys/tame.h
+.In unistd.h
 .Ft int
-.Fn tame "int flags" "const char *paths[]"
+.Fn tame "const char *request" "const char *paths[]"
 .Sh DESCRIPTION
 The current process is forced into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
@@ -46,7 +46,7 @@ can reduce the abilities further, but abilities can never be regained.
 A process which attempts a restricted operation is killed with
 .Dv SIGKILL .
 If
-.Dv TAME_ABORT
+.Va "abort"
 is set, then a non-blockable
 .Dv SIGABRT
 is delivered instead, possibly resulting in a
@@ -62,9 +62,9 @@ This can be used for pure computation operating on memory shared
 with another process.
 .Pp
 All
-.Dv TAME_*
-options below (with the exception of
-.Dv TAME_ABORT )
+.Dv requests
+below (with the exception of
+.Va "abort" )
 permit the following system calls:
 .Bd -ragged -offset indent
 .Xr clock_getres 2 ,
@@ -102,7 +102,7 @@ permit the following system calls:
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
 .Pp
-.Bl -tag -width TAME_TMPPATH -offset indent -compact
+.Bl -tag -width "tmppath" -offset indent -compact
 .It Xr access 2
 May check for existence of
 .Pa /etc/localtime .
@@ -116,8 +116,8 @@ Read-only, for
 .It Xr lchown 2
 .It Xr fchown 2
 .It Xr fchownat 2
-Setuid/setgid bits do not work, nor can the user or group be changed
-on a file.
+Setuid/setgid/sticky bits are ignored.
+The user or group cannot be changed on a file.
 .It Xr open 2
 May open
 .Pa /etc/localtime ,
@@ -145,10 +145,10 @@ once.
 .El
 .Pp
 The
-.Ar flags
-are specified as a bitwise OR of the following values:
-.Bl -tag -width TAME_TMPPATH -offset indent
-.It Dv TAME_MALLOC
+.Ar request
+is specified as a string, with space seperate keywords:
+.Bl -tag -width "tmppath" -offset indent
+.It Va "malloc"
 To allow use of the
 .Xr malloc 3
 family of functions, the following system calls are permitted:
@@ -160,7 +160,7 @@ family of functions, the following system calls are permitted:
 .Xr mprotect 2 ,
 .Xr mquery 2 ,
 .Xr munmap 2 .
-.It Dv TAME_RW
+.It Va "rw"
 The following system calls are permitted to allow most types of IO
 operations on previously allocated file descriptors, including
 libevent or handwritten async IO loops:
@@ -196,14 +196,14 @@ libevent or handwritten async IO loops:
 .Xr recvmsg 2 ,
 .Xr recvfrom 2 ,
 .Xr fstat 2 .
-.It Dv TAME_STDIO
+.It Va "stdio"
 This subset is simply the combination of
-.Dv TAME_MALLOC
+.Va "malloc"
 and
-.Dv TAME_RW .
+.Va "rw" .
 As a result, all the expected functionalities of libc
 stdio work.
-.It Dv TAME_RPATH
+.It Va "rpath"
 A number of system calls are allowed if they only cause
 read-only effects on the filesystem:
 .Pp
@@ -224,7 +224,7 @@ read-only effects on the filesystem:
 .Xr fchownat 2 ,
 .Xr fstat 2 ,
 .Xr getfsstat 2 .
-.It Dv TAME_WPATH
+.It Va "wpath"
 A number of system calls are allowed and may cause
 write-effects on the filesystem:
 .Pp
@@ -243,7 +243,7 @@ write-effects on the filesystem:
 .Xr fchown 2 ,
 .Xr fchownat 2 ,
 .Xr fstat 2 .
-.It Dv TAME_CPATH
+.It Va "cpath"
 A number of system calls and sub-modes are allowed, which may
 create new files or directories in the filesystem:
 .Pp
@@ -257,7 +257,7 @@ create new files or directories in the filesystem:
 .Xr unlinkat 2 ,
 .Xr mkdir 2 ,
 .Xr mkdirat 2 .
-.It Dv TAME_TMPPATH
+.It Va "tmppath"
 A number of system calls are allowed to do operations in the
 .Pa /tmp
 directory, including create, read, or write:
@@ -268,7 +268,7 @@ directory, including create, read, or write:
 .Xr chown 2 ,
 .Xr unlink 2 ,
 .Xr fstat 2 .
-.It Dv TAME_INET
+.It Va "inet"
 The following system calls are allowed to operate in the
 .Dv AF_INET
 and
@@ -288,7 +288,7 @@ domains:
 .Pp
 .Xr setsockopt 2
 has been reduced in functionality substantially.
-.It Dv TAME_FATTR
+.It Va "fattr"
 The following system calls are allowed to make explicit changes
 to fields in
 .Va struct stat
@@ -306,8 +306,9 @@ relating to a file:
 .Xr chown 2 ,
 .Xr fchownat 2 ,
 .Xr lchown 2 ,
-.Xr fchown 2 .
-.It Dv TAME_UNIX
+.Xr fchown 2 ,
+.Xr utimes 2 .
+.It Va "unix"
 The following system calls are allowed to operate in the
 .Dv AF_UNIX
 domain:
@@ -322,7 +323,7 @@ domain:
 .Xr getsockname 2 ,
 .Xr setsockopt 2 ,
 .Xr getsockopt 2 .
-.It Dv TAME_DNS
+.It Va "dns"
 Subsequent to a successful
 .Xr open 2
 of
@@ -333,7 +334,7 @@ a few system calls become able to allow DNS network transactions:
 .Xr recvfrom 2 ,
 .Xr socket 2 ,
 .Xr connect 2 .
-.It Dv TAME_GETPW
+.It Va "getpw"
 This allows read-only opening of files in
 .Pa /etc
 for the
@@ -350,15 +351,15 @@ environment, so a successful
 of
 .Pa /var/run/ypbind.lock
 enables the
-.Dv TAME_INET
+.Va "inet"
 flag.
-.It Dv TAME_CMSG
+.It Va "cmsg"
 Allows passing of file descriptors using the
 .Xr sendmsg 2
 and
 .Xr recvmsg 2
 functions.
-.It Dv TAME_IOCTL
+.It Va "ioctl"
 Allows a subset of
 .Xr ioctl 2
 operations:
@@ -372,7 +373,7 @@ operations:
 .Dv TIOCGPGRP ,
 .Dv TIOCGWINSZ ,
 .Dv TIOCSTI .
-.It Dv TAME_PROC
+.It Va "proc"
 Allows the following process relationship operations:
 .Pp
 .Xr fork 2 ,
@@ -381,7 +382,7 @@ Allows the following process relationship operations:
 .Xr setgroups 2 ,
 .Xr setresgid 2 ,
 .Xr setresuid 2 ,
-.It Dv TAME_ABORT
+.It Va "abort"
 Deliver an unblockable
 .Dv SIGABRT
 upon violation instead of
