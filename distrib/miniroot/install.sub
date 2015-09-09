@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.855 2015/08/24 10:41:11 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.856 2015/09/09 15:04:54 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -210,7 +210,7 @@ diskinfo() {
 		makedev $_d
 		echo -n "$_d: "
 		disklabel -dpg $_d 2>/dev/null |
-		sed	-e '/^label: /{s,,,;s/ *$//;s/^$/<no label>/;H;d;}' \
+		sed	-e '/^label: /{s,,,;s/ *$//;s/^$/<no label>/;h;d;}' \
 			-e '/.*# total bytes: \(.*\)/{s//(\1)/;H;}' \
 			-e '$!d;x;s/\n/ /'
 		rm -f /dev/{r,}$_d?
