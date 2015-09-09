@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.15 2015/05/25 19:30:25 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.16 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -33,7 +33,6 @@
 
 static int res_search_async_run(struct asr_query *, struct asr_result *);
 static size_t domcat(const char *, const char *, char *, size_t);
-static int iter_domain(struct asr_query *, const char *, char *, size_t);
 
 /*
  * Unlike res_query_async(), this function returns a valid packet only if
@@ -47,15 +46,15 @@ res_search_async(const char *name, int class, int type, void *asr)
 
 	DPRINT("asr: res_search_async(\"%s\", %i, %i)\n", name, class, type);
 
-	ac = asr_use_resolver(asr);
-	as = res_search_async_ctx(name, class, type, ac);
-	asr_ctx_unref(ac);
+	ac = _asr_use_resolver(asr);
+	as = _res_search_async_ctx(name, class, type, ac);
+	_asr_ctx_unref(ac);
 
 	return (as);
 }
 
 struct asr_query *
-res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
+_res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
 {
 	struct asr_query	*as;
 	char			 alias[MAXDNAME];
@@ -63,10 +62,10 @@ res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
 	DPRINT("asr: res_search_async_ctx(\"%s\", %i, %i)\n", name, class,
 	    type);
 
-	if (asr_hostalias(ac, name, alias, sizeof(alias)))
-		return res_query_async_ctx(alias, class, type, ac);
+	if (_asr_hostalias(ac, name, alias, sizeof(alias)))
+		return _res_query_async_ctx(alias, class, type, ac);
 
-	if ((as = asr_async_new(ac, ASR_SEARCH)) == NULL)
+	if ((as = _asr_async_new(ac, ASR_SEARCH)) == NULL)
 		goto err; /* errno set */
 	as->as_run  = res_search_async_run;
 	if ((as->as.search.name = strdup(name)) == NULL)
@@ -78,7 +77,7 @@ res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
 	return (as);
     err:
 	if (as)
-		asr_async_free(as);
+		_asr_async_free(as);
 	return (NULL);
 }
 
@@ -112,7 +111,7 @@ res_search_async_run(struct asr_query *as, struct asr_result *ar)
 		 */
 		as->as_dom_flags = 0;
 
-		r = iter_domain(as, as->as.search.name, fqdn, sizeof(fqdn));
+		r = _asr_iter_domain(as, as->as.search.name, fqdn, sizeof(fqdn));
 		if (r == -1) {
 			async_set_state(as, ASR_STATE_NOT_FOUND);
 			break;
@@ -125,7 +124,7 @@ res_search_async_run(struct asr_query *as, struct asr_result *ar)
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
-		as->as.search.subq = res_query_async_ctx(fqdn,
+		as->as.search.subq = _res_query_async_ctx(fqdn,
 		    as->as.search.class, as->as.search.type, as->as_ctx);
 		if (as->as.search.subq == NULL) {
 			ar->ar_errno = errno;
@@ -221,7 +220,7 @@ domcat(const char *name, const char *domain, char *buf, size_t buflen)
 {
 	size_t	r;
 
-	r = asr_make_fqdn(name, domain, buf, buflen);
+	r = _asr_make_fqdn(name, domain, buf, buflen);
 	if (r == 0)
 		return (0);
 	buf[r - 1] = '\0';
@@ -248,7 +247,7 @@ enum {
  * error generating the next name, or the resulting name length.
  */
 int
-iter_domain(struct asr_query *as, const char *name, char * buf, size_t len)
+_asr_iter_domain(struct asr_query *as, const char *name, char * buf, size_t len)
 {
 	const char	*c;
 	int		 dots;

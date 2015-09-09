@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.7 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.8 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -42,8 +42,8 @@ getrrsetbyname_async(const char *hostname, unsigned int rdclass,
 	struct asr_ctx	 *ac;
 	struct asr_query *as;
 
-	ac = asr_use_resolver(asr);
-	if ((as = asr_async_new(ac, ASR_GETRRSETBYNAME)) == NULL)
+	ac = _asr_use_resolver(asr);
+	if ((as = _asr_async_new(ac, ASR_GETRRSETBYNAME)) == NULL)
 		goto abort; /* errno set */
 	as->as_run = getrrsetbyname_async_run;
 
@@ -54,13 +54,13 @@ getrrsetbyname_async(const char *hostname, unsigned int rdclass,
 	if (as->as.rrset.name == NULL)
 		goto abort; /* errno set */
 
-	asr_ctx_unref(ac);
+	_asr_ctx_unref(ac);
 	return (as);
     abort:
 	if (as)
-		asr_async_free(as);
+		_asr_async_free(as);
 
-	asr_ctx_unref(ac);
+	_asr_ctx_unref(ac);
 	return (NULL);
 }
 
@@ -94,7 +94,7 @@ getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 		}
 
 		/* Create a delegate the lookup to a subquery. */
-		as->as.rrset.subq = res_query_async_ctx(
+		as->as.rrset.subq = _res_query_async_ctx(
 		    as->as.rrset.name,
 		    as->as.rrset.class,
 		    as->as.rrset.type,
@@ -170,7 +170,7 @@ getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.7 2014/03/26 18:13:15 eric Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.8 2015/09/09 15:49:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.

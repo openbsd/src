@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.39 2015/09/02 13:47:47 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.40 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -88,7 +88,7 @@ static struct asr *_asr = NULL;
 
 /* Allocate and configure an async "resolver". */
 void *
-asr_resolver(const char *conf)
+_asr_resolver(const char *conf)
 {
 	static int	 init = 0;
 	struct asr	*asr;
@@ -157,7 +157,7 @@ asr_resolver(const char *conf)
  * Drop the reference to the current context.
  */
 void
-asr_resolver_done(void *arg)
+_asr_resolver_done(void *arg)
 {
 	struct asr *asr = arg;
 	struct asr **priv;
@@ -170,7 +170,7 @@ asr_resolver_done(void *arg)
 		*priv = NULL;
 	}
 
-	asr_ctx_unref(asr->a_ctx);
+	_asr_ctx_unref(asr->a_ctx);
 	free(asr->a_path);
 	free(asr);
 }
@@ -181,7 +181,7 @@ asr_resolver_done(void *arg)
 void
 asr_abort(struct asr_query *as)
 {
-	asr_async_free(as);
+	_asr_async_free(as);
 }
 
 /*
@@ -205,7 +205,7 @@ asr_run(struct asr_query *as, struct asr_result *ar)
 		DPRINT(" fd=%i timeout=%i", ar->ar_fd, ar->ar_timeout);
 	DPRINT("\n");
 	if (r == ASYNC_DONE)
-		asr_async_free(as);
+		_asr_async_free(as);
 
 	errno = saved_errno;
 
@@ -245,7 +245,7 @@ asr_run_sync(struct asr_query *as, struct asr_result *ar)
  * is running.
  */
 struct asr_query *
-asr_async_new(struct asr_ctx *ac, int type)
+_asr_async_new(struct asr_ctx *ac, int type)
 {
 	struct asr_query	*as;
 
@@ -267,7 +267,7 @@ asr_async_new(struct asr_ctx *ac, int type)
  * Free an async query and unref the associated context.
  */
 void
-asr_async_free(struct asr_query *as)
+_asr_async_free(struct asr_query *as)
 {
 	DPRINT("asr: asr_async_free(%p)\n", as);
 	switch (as->as_type) {
@@ -284,14 +284,14 @@ asr_async_free(struct asr_query *as)
 
 	case ASR_SEARCH:
 		if (as->as.search.subq)
-			asr_async_free(as->as.search.subq);
+			_asr_async_free(as->as.search.subq);
 		if (as->as.search.name)
 			free(as->as.search.name);
 		break;
 
 	case ASR_GETRRSETBYNAME:
 		if (as->as.rrset.subq)
-			asr_async_free(as->as.rrset.subq);
+			_asr_async_free(as->as.rrset.subq);
 		if (as->as.rrset.name)
 			free(as->as.rrset.name);
 		break;
@@ -299,7 +299,7 @@ asr_async_free(struct asr_query *as)
 	case ASR_GETHOSTBYNAME:
 	case ASR_GETHOSTBYADDR:
 		if (as->as.hostnamadr.subq)
-			asr_async_free(as->as.hostnamadr.subq);
+			_asr_async_free(as->as.hostnamadr.subq);
 		if (as->as.hostnamadr.name)
 			free(as->as.hostnamadr.name);
 		break;
@@ -307,14 +307,14 @@ asr_async_free(struct asr_query *as)
 	case ASR_GETNETBYNAME:
 	case ASR_GETNETBYADDR:
 		if (as->as.netnamadr.subq)
-			asr_async_free(as->as.netnamadr.subq);
+			_asr_async_free(as->as.netnamadr.subq);
 		if (as->as.netnamadr.name)
 			free(as->as.netnamadr.name);
 		break;
 
 	case ASR_GETADDRINFO:
 		if (as->as.ai.subq)
-			asr_async_free(as->as.ai.subq);
+			_asr_async_free(as->as.ai.subq);
 		if (as->as.ai.aifirst)
 			freeaddrinfo(as->as.ai.aifirst);
 		if (as->as.ai.hostname)
@@ -327,11 +327,11 @@ asr_async_free(struct asr_query *as)
 
 	case ASR_GETNAMEINFO:
 		if (as->as.ni.subq)
-			asr_async_free(as->as.ni.subq);
+			_asr_async_free(as->as.ni.subq);
 		break;
 	}
 
-	asr_ctx_unref(as->as_ctx);
+	_asr_ctx_unref(as->as_ctx);
 	free(as);
 }
 
@@ -341,7 +341,7 @@ asr_async_free(struct asr_query *as)
  * using this context.
  */
 struct asr_ctx *
-asr_use_resolver(void *arg)
+_asr_use_resolver(void *arg)
 {
 	struct asr *asr = arg;
 	struct asr **priv;
@@ -351,7 +351,7 @@ asr_use_resolver(void *arg)
 		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
 		if (*priv == NULL) {
 			DPRINT("setting up thread-local resolver\n");
-			*priv = asr_resolver(NULL);
+			*priv = _asr_resolver(NULL);
 		}
 		asr = *priv;
 	}
@@ -375,7 +375,7 @@ asr_ctx_ref(struct asr_ctx *ac)
  * count drops to 0.
  */
 void
-asr_ctx_unref(struct asr_ctx *ac)
+_asr_ctx_unref(struct asr_ctx *ac)
 {
 	DPRINT("asr: asr_ctx_unref(ctx=%p) refcount=%i\n", ac,
 	    ac ? ac->ac_refcount : 0);
@@ -454,7 +454,7 @@ asr_check_reload(struct asr *asr)
 	asr_ctx_envopts(ac);
 #endif
 	if (asr->a_ctx)
-		asr_ctx_unref(asr->a_ctx);
+		_asr_ctx_unref(asr->a_ctx);
 	asr->a_ctx = ac;
 }
 
@@ -467,7 +467,7 @@ asr_check_reload(struct asr *asr)
  * error.
  */
 size_t
-asr_make_fqdn(const char *name, const char *domain, char *buf, size_t buflen)
+_asr_make_fqdn(const char *name, const char *domain, char *buf, size_t buflen)
 {
 	size_t	len;
 
@@ -548,7 +548,7 @@ asr_ctx_add_searchdomain(struct asr_ctx *ac, const char *domain)
 	if (ac->ac_domcount == ASR_MAXDOM)
 		return (-1);
 
-	if (asr_make_fqdn(domain, NULL, buf, sizeof(buf)) == 0)
+	if (_asr_make_fqdn(domain, NULL, buf, sizeof(buf)) == 0)
 		return (-1);
 
 	if ((ac->ac_dom[ac->ac_domcount] = strdup(buf)) == NULL)
@@ -817,7 +817,7 @@ asr_parse_nameserver(struct sockaddr *sa, const char *s)
 			return (-1);
 	}
 
-	if (asr_sockaddr_from_str(sa, PF_UNSPEC, s) == -1)
+	if (_asr_sockaddr_from_str(sa, PF_UNSPEC, s) == -1)
 		return (-1);
 
 	if (sa->sa_family == PF_INET)
@@ -834,7 +834,7 @@ asr_parse_nameserver(struct sockaddr *sa, const char *s)
  * truncated if it exceeds "max" chars. The function returns "buf".
  */
 char *
-asr_strdname(const char *_dname, char *buf, size_t max)
+_asr_strdname(const char *_dname, char *buf, size_t max)
 {
 	const unsigned char *dname = _dname;
 	char	*res;
@@ -869,7 +869,7 @@ asr_strdname(const char *_dname, char *buf, size_t max)
  * size "ntoken" and returns the number of token on the line.
  */
 int
-asr_parse_namedb_line(FILE *file, char **tokens, int ntoken, char *lbuf, size_t sz)
+_asr_parse_namedb_line(FILE *file, char **tokens, int ntoken, char *lbuf, size_t sz)
 {
 	size_t	  len;
 	char	 *buf;
@@ -902,7 +902,7 @@ asr_parse_namedb_line(FILE *file, char **tokens, int ntoken, char *lbuf, size_t 
  * Return 0 on success, or -1 if no more DBs is available.
  */
 int
-asr_iter_db(struct asr_query *as)
+_asr_iter_db(struct asr_query *as)
 {
 	if (as->as_db_idx >= as->as_ctx->ac_dbcount) {
 		DPRINT("asr_iter_db: done\n");
@@ -921,7 +921,7 @@ asr_iter_db(struct asr_query *as)
  * return "abuf". Otherwise return NULL.
  */
 char *
-asr_hostalias(struct asr_ctx *ac, const char *name, char *abuf, size_t abufsz)
+_asr_hostalias(struct asr_ctx *ac, const char *name, char *abuf, size_t abufsz)
 {
 #if ASR_OPT_HOSTALIASES
 	FILE	 *fp;

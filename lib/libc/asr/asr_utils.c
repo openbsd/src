@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.12 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.13 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -59,7 +59,7 @@ dname_check_label(const char *s, size_t l)
 }
 
 ssize_t
-asr_dname_from_fqdn(const char *str, char *dst, size_t max)
+_asr_dname_from_fqdn(const char *str, char *dst, size_t max)
 {
 	ssize_t	 res;
 	size_t	 l, n;
@@ -162,7 +162,7 @@ dname_expand(const unsigned char *data, size_t len, size_t offset,
 }
 
 void
-asr_pack_init(struct asr_pack *pack, char *buf, size_t len)
+_asr_pack_init(struct asr_pack *pack, char *buf, size_t len)
 {
 	pack->buf = buf;
 	pack->len = len;
@@ -171,7 +171,7 @@ asr_pack_init(struct asr_pack *pack, char *buf, size_t len)
 }
 
 void
-asr_unpack_init(struct asr_unpack *unpack, const char *buf, size_t len)
+_asr_unpack_init(struct asr_unpack *unpack, const char *buf, size_t len)
 {
 	unpack->buf = buf;
 	unpack->len = len;
@@ -252,7 +252,7 @@ unpack_dname(struct asr_unpack *p, char *dst, size_t max)
 }
 
 int
-asr_unpack_header(struct asr_unpack *p, struct asr_dns_header *h)
+_asr_unpack_header(struct asr_unpack *p, struct asr_dns_header *h)
 {
 	if (unpack_data(p, h, HFIXEDSZ) == -1)
 		return (-1);
@@ -267,7 +267,7 @@ asr_unpack_header(struct asr_unpack *p, struct asr_dns_header *h)
 }
 
 int
-asr_unpack_query(struct asr_unpack *p, struct asr_dns_query *q)
+_asr_unpack_query(struct asr_unpack *p, struct asr_dns_query *q)
 {
 	unpack_dname(p, q->q_dname, sizeof(q->q_dname));
 	unpack_u16(p, &q->q_type);
@@ -277,7 +277,7 @@ asr_unpack_query(struct asr_unpack *p, struct asr_dns_query *q)
 }
 
 int
-asr_unpack_rr(struct asr_unpack *p, struct asr_dns_rr *rr)
+_asr_unpack_rr(struct asr_unpack *p, struct asr_dns_rr *rr)
 {
 	uint16_t	rdlen;
 	size_t		save_offset;
@@ -390,7 +390,7 @@ pack_dname(struct asr_pack *p, const char *dname)
 }
 
 int
-asr_pack_header(struct asr_pack *p, const struct asr_dns_header *h)
+_asr_pack_header(struct asr_pack *p, const struct asr_dns_header *h)
 {
 	struct asr_dns_header c;
 
@@ -405,7 +405,7 @@ asr_pack_header(struct asr_pack *p, const struct asr_dns_header *h)
 }
 
 int
-asr_pack_query(struct asr_pack *p, uint16_t type, uint16_t class, const char *dname)
+_asr_pack_query(struct asr_pack *p, uint16_t type, uint16_t class, const char *dname)
 {
 	pack_dname(p, dname);
 	pack_u16(p, type);
@@ -415,7 +415,7 @@ asr_pack_query(struct asr_pack *p, uint16_t type, uint16_t class, const char *dn
 }
 
 int
-asr_sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
+_asr_sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 {
 	struct in_addr		 ina;
 	struct in6_addr		 in6a;
@@ -426,9 +426,9 @@ asr_sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 
 	switch (family) {
 	case PF_UNSPEC:
-		if (asr_sockaddr_from_str(sa, PF_INET, str) == 0)
+		if (_asr_sockaddr_from_str(sa, PF_INET, str) == 0)
 			return (0);
-		return asr_sockaddr_from_str(sa, PF_INET6, str);
+		return _asr_sockaddr_from_str(sa, PF_INET6, str);
 
 	case PF_INET:
 		if (inet_pton(PF_INET, str, &ina) != 1)
@@ -485,7 +485,7 @@ asr_sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 }
 
 ssize_t
-asr_addr_as_fqdn(const char *addr, int family, char *dst, size_t max)
+_asr_addr_as_fqdn(const char *addr, int family, char *dst, size_t max)
 {
 	const struct in6_addr	*in6_addr;
 	in_addr_t		 in_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.31 2015/06/20 01:16:25 jca Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.32 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -297,36 +297,40 @@ enum asr_state {
 };
 
 
+__BEGIN_HIDDEN_DECLS
+
 /* asr_utils.c */
-void asr_pack_init(struct asr_pack *, char *, size_t);
-int asr_pack_header(struct asr_pack *, const struct asr_dns_header *);
-int asr_pack_query(struct asr_pack *, uint16_t, uint16_t, const char *);
-void asr_unpack_init(struct asr_unpack *, const char *, size_t);
-int asr_unpack_header(struct asr_unpack *, struct asr_dns_header *);
-int asr_unpack_query(struct asr_unpack *, struct asr_dns_query *);
-int asr_unpack_rr(struct asr_unpack *, struct asr_dns_rr *);
-int asr_sockaddr_from_str(struct sockaddr *, int, const char *);
-ssize_t asr_dname_from_fqdn(const char *, char *, size_t);
-ssize_t asr_addr_as_fqdn(const char *, int, char *, size_t);
+void _asr_pack_init(struct asr_pack *, char *, size_t);
+int _asr_pack_header(struct asr_pack *, const struct asr_dns_header *);
+int _asr_pack_query(struct asr_pack *, uint16_t, uint16_t, const char *);
+void _asr_unpack_init(struct asr_unpack *, const char *, size_t);
+int _asr_unpack_header(struct asr_unpack *, struct asr_dns_header *);
+int _asr_unpack_query(struct asr_unpack *, struct asr_dns_query *);
+int _asr_unpack_rr(struct asr_unpack *, struct asr_dns_rr *);
+int _asr_sockaddr_from_str(struct sockaddr *, int, const char *);
+ssize_t _asr_dname_from_fqdn(const char *, char *, size_t);
+ssize_t _asr_addr_as_fqdn(const char *, int, char *, size_t);
 
 /* asr.c */
-void *asr_resolver(const char *);
-void asr_resolver_done(void *);
-struct asr_ctx *asr_use_resolver(void *);
-void asr_ctx_unref(struct asr_ctx *);
-struct asr_query *asr_async_new(struct asr_ctx *, int);
-void asr_async_free(struct asr_query *);
-size_t asr_make_fqdn(const char *, const char *, char *, size_t);
-char *asr_strdname(const char *, char *, size_t);
-int asr_iter_db(struct asr_query *);
-int asr_parse_namedb_line(FILE *, char **, int, char *, size_t);
-char *asr_hostalias(struct asr_ctx *, const char *, char *, size_t);
+void *_asr_resolver(const char *);
+void _asr_resolver_done(void *);
+struct asr_ctx *_asr_use_resolver(void *);
+void _asr_ctx_unref(struct asr_ctx *);
+struct asr_query *_asr_async_new(struct asr_ctx *, int);
+void _asr_async_free(struct asr_query *);
+size_t _asr_make_fqdn(const char *, const char *, char *, size_t);
+char *_asr_strdname(const char *, char *, size_t);
+int _asr_iter_db(struct asr_query *);
+int _asr_parse_namedb_line(FILE *, char **, int, char *, size_t);
+char *_asr_hostalias(struct asr_ctx *, const char *, char *, size_t);
 
 /* *_async.c */
-struct asr_query *res_query_async_ctx(const char *, int, int, struct asr_ctx *);
-struct asr_query *res_search_async_ctx(const char *, int, int, struct asr_ctx *);
-struct asr_query *gethostbyaddr_async_ctx(const void *, socklen_t, int,
+struct asr_query *_res_query_async_ctx(const char *, int, int, struct asr_ctx *);
+struct asr_query *_res_search_async_ctx(const char *, int, int, struct asr_ctx *);
+struct asr_query *_gethostbyaddr_async_ctx(const void *, socklen_t, int,
     struct asr_ctx *);
+
+int _asr_iter_domain(struct asr_query *, const char *, char *, size_t);
 
 #ifdef DEBUG
 
@@ -339,14 +343,14 @@ struct asr_query *gethostbyaddr_async_ctx(const void *, socklen_t, int,
 		fprintf(asr_debug, "--------------\n");		\
 	} } while (0)
 
-const char *asr_querystr(int);
-const char *asr_statestr(int);
-const char *asr_transitionstr(int);
-const char *asr_print_sockaddr(const struct sockaddr *, char *, size_t);
-void asr_dump_config(FILE *, struct asr *);
-void asr_dump_packet(FILE *, const void *, size_t);
+const char *_asr_querystr(int);
+const char *_asr_statestr(int);
+const char *_asr_transitionstr(int);
+const char *_asr_print_sockaddr(const struct sockaddr *, char *, size_t);
+void _asr_dump_config(FILE *, struct asr *);
+void _asr_dump_packet(FILE *, const void *, size_t);
 
-extern FILE * asr_debug;
+extern FILE *_asr_debug;
 
 #else /* DEBUG */
 
@@ -362,3 +366,5 @@ extern FILE * asr_debug;
 		asr_statestr((a)->as_state),	\
 		asr_statestr((s)));		\
 	(a)->as_state = (s); } while (0)
+
+__END_HIDDEN_DECLS

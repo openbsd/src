@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.41 2015/08/16 20:37:25 jca Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.42 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -51,7 +51,6 @@ struct match {
 static int getaddrinfo_async_run(struct asr_query *, struct asr_result *);
 static int get_port(const char *, const char *, int);
 static int iter_family(struct asr_query *, int);
-static int iter_domain(struct asr_query *, const char *, char *, size_t);
 static int addrinfo_add(struct asr_query *, const struct sockaddr *, const char *);
 static int addrinfo_from_file(struct asr_query *, int,  FILE *);
 static int addrinfo_from_pkt(struct asr_query *, char *, size_t);
@@ -90,13 +89,13 @@ getaddrinfo_async(const char *hostname, const char *servname,
 	struct asr_query	*as;
 	char			 alias[MAXDNAME];
 
-	ac = asr_use_resolver(asr);
-	if ((as = asr_async_new(ac, ASR_GETADDRINFO)) == NULL)
+	ac = _asr_use_resolver(asr);
+	if ((as = _asr_async_new(ac, ASR_GETADDRINFO)) == NULL)
 		goto abort; /* errno set */
 	as->as_run = getaddrinfo_async_run;
 
 	if (hostname) {
-		if (asr_hostalias(ac, hostname, alias, sizeof(alias)))
+		if (_asr_hostalias(ac, hostname, alias, sizeof(alias)))
 			hostname = alias;
 		if ((as->as.ai.hostname = strdup(hostname)) == NULL)
 			goto abort; /* errno set */
@@ -111,12 +110,12 @@ getaddrinfo_async(const char *hostname, const char *servname,
 		as->as.ai.hints.ai_flags = AI_ADDRCONFIG;
 	}
 
-	asr_ctx_unref(ac);
+	_asr_ctx_unref(ac);
 	return (as);
     abort:
 	if (as)
-		asr_async_free(as);
-	asr_ctx_unref(ac);
+		_asr_async_free(as);
+	_asr_ctx_unref(ac);
 	return (NULL);
 }
 
@@ -260,7 +259,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 					str = (ai->ai_flags & AI_PASSIVE) ? \
 						"::" : "::1";
 				 /* This can't fail */
-				asr_sockaddr_from_str(&sa.sa, family, str);
+				_asr_sockaddr_from_str(&sa.sa, family, str);
 				if ((r = addrinfo_add(as, &sa.sa, NULL))) {
 					ar->ar_gai_errno = r;
 					break;
@@ -278,7 +277,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 		    family != -1;
 		    family = iter_family(as, 0)) {
 
-			if (asr_sockaddr_from_str(&sa.sa, family,
+			if (_asr_sockaddr_from_str(&sa.sa, family,
 			    as->as.ai.hostname) == -1)
 				continue;
 
@@ -301,7 +300,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 		break;
 
 	case ASR_STATE_NEXT_DB:
-		if (asr_iter_db(as) == -1) {
+		if (_asr_iter_db(as) == -1) {
 			async_set_state(as, ASR_STATE_NOT_FOUND);
 			break;
 		}
@@ -336,7 +335,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 
 		free(as->as.ai.fqdn);
 		as->as.ai.fqdn = NULL;
-		r = iter_domain(as, as->as.ai.hostname, fqdn, sizeof(fqdn));
+		r = _asr_iter_domain(as, as->as.ai.hostname, fqdn, sizeof(fqdn));
 		if (r == -1) {
 			async_set_state(as, ASR_STATE_NEXT_DB);
 			break;
@@ -380,7 +379,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 				break;
 			}
 
-			as->as.ai.subq = res_query_async_ctx(as->as.ai.fqdn,
+			as->as.ai.subq = _res_query_async_ctx(as->as.ai.fqdn,
 			    C_IN, (family == AF_INET6) ? T_AAAA : T_A,
 			    as->as_ctx);
 
@@ -571,108 +570,12 @@ domcat(const char *name, const char *domain, char *buf, size_t buflen)
 {
 	size_t	r;
 
-	r = asr_make_fqdn(name, domain, buf, buflen);
+	r = _asr_make_fqdn(name, domain, buf, buflen);
 	if (r == 0)
 		return (0);
 	buf[r - 1] = '\0';
 
 	return (r - 1);
-}
-
-/*
- * Implement the search domain strategy.
- *
- * XXX duplicate from res_search_async
- *
- * This function works as a generator that constructs complete domains in
- * buffer "buf" of size "len" for the given host name "name", according to the
- * search rules defined by the resolving context.  It is supposed to be called
- * multiple times (with the same name) to generate the next possible domain
- * name, if any.
- *
- * It returns -1 if all possibilities have been exhausted, 0 if there was an
- * error generating the next name, or the resulting name length.
- */
-static int
-iter_domain(struct asr_query *as, const char *name, char * buf, size_t len)
-{
-	const char	*c;
-	int		 dots;
-
-	switch (as->as_dom_step) {
-
-	case DOM_INIT:
-		/* First call */
-
-		/*
-		 * If "name" is an FQDN, that's the only result and we
-		 * don't try anything else.
-		 */
-		if (strlen(name) && name[strlen(name) - 1] ==  '.') {
-			DPRINT("asr: iter_domain(\"%s\") fqdn\n", name);
-			as->as_dom_flags |= ASYNC_DOM_FQDN;
-			as->as_dom_step = DOM_DONE;
-			return (domcat(name, NULL, buf, len));
-		}
-
-		/*
-		 * Otherwise, we iterate through the specified search domains.
-		 */
-		as->as_dom_step = DOM_DOMAIN;
-		as->as_dom_idx = 0;
-
-		/*
-		 * If "name" as enough dots, use it as-is first, as indicated
-		 * in resolv.conf(5).
-		 */
-		dots = 0;
-		for (c = name; *c; c++)
-			dots += (*c == '.');
-		if (dots >= as->as_ctx->ac_ndots) {
-			DPRINT("asr: iter_domain(\"%s\") ndots\n", name);
-			as->as_dom_flags |= ASYNC_DOM_NDOTS;
-			if (strlcpy(buf, name, len) >= len)
-				return (0);
-			return (strlen(buf));
-		}
-		/* Otherwise, starts using the search domains */
-		/* FALLTHROUGH */
-
-	case DOM_DOMAIN:
-		if (as->as_dom_idx < as->as_ctx->ac_domcount &&
-		    (as->as_ctx->ac_options & RES_DNSRCH || (
-			as->as_ctx->ac_options & RES_DEFNAMES &&
-			as->as_dom_idx == 0 &&
-			strchr(name, '.') == NULL))) {
-			DPRINT("asr: iter_domain(\"%s\") domain \"%s\"\n",
-			    name, as->as_ctx->ac_dom[as->as_dom_idx]);
-			as->as_dom_flags |= ASYNC_DOM_DOMAIN;
-			return (domcat(name,
-			    as->as_ctx->ac_dom[as->as_dom_idx++], buf, len));
-		}
-
-		/* No more domain to try. */
-
-		as->as_dom_step = DOM_DONE;
-
-		/*
-		 * If the name was not tried as an absolute name before,
-		 * do it now.
-		 */
-		if (!(as->as_dom_flags & ASYNC_DOM_NDOTS)) {
-			DPRINT("asr: iter_domain(\"%s\") as is\n", name);
-			as->as_dom_flags |= ASYNC_DOM_ASIS;
-			if (strlcpy(buf, name, len) >= len)
-				return (0);
-			return (strlen(buf));
-		}
-		/* Otherwise, we are done. */
-
-	case DOM_DONE:
-	default:
-		DPRINT("asr: iter_domain(\"%s\") done\n", name);
-		return (-1);
-	}
 }
 
 /*
@@ -754,14 +657,14 @@ addrinfo_from_file(struct asr_query *as, int family, FILE *f)
 	} u;
 
 	for (;;) {
-		n = asr_parse_namedb_line(f, tokens, MAXTOKEN, buf, sizeof(buf));
+		n = _asr_parse_namedb_line(f, tokens, MAXTOKEN, buf, sizeof(buf));
 		if (n == -1)
 			break; /* ignore errors reading the file */
 
 		for (i = 1; i < n; i++) {
 			if (strcasecmp(as->as.ai.hostname, tokens[i]))
 				continue;
-			if (asr_sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
+			if (_asr_sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
 				continue;
 			break;
 		}
@@ -794,13 +697,13 @@ addrinfo_from_pkt(struct asr_query *as, char *pkt, size_t pktlen)
 	} u;
 	char		 buf[MAXDNAME], *c;
 
-	asr_unpack_init(&p, pkt, pktlen);
-	asr_unpack_header(&p, &h);
+	_asr_unpack_init(&p, pkt, pktlen);
+	_asr_unpack_header(&p, &h);
 	for (; h.qdcount; h.qdcount--)
-		asr_unpack_query(&p, &q);
+		_asr_unpack_query(&p, &q);
 
 	for (i = 0; i < h.ancount; i++) {
-		asr_unpack_rr(&p, &rr);
+		_asr_unpack_rr(&p, &rr);
 		if (rr.rr_type != q.q_type ||
 		    rr.rr_class != q.q_class)
 			continue;
@@ -820,7 +723,7 @@ addrinfo_from_pkt(struct asr_query *as, char *pkt, size_t pktlen)
 			continue;
 
 		if (as->as.ai.hints.ai_flags & AI_CANONNAME) {
-			asr_strdname(rr.rr_dname, buf, sizeof buf);
+			_asr_strdname(rr.rr_dname, buf, sizeof buf);
 			buf[strlen(buf) - 1] = '\0';
 			c = res_hnok(buf) ? buf : NULL;
 		} else if (as->as.ai.hints.ai_flags & AI_FQDN)
@@ -915,7 +818,7 @@ addrinfo_from_yp(struct asr_query *as, int family, char *line)
 		if (ntok < 2)
 			continue;
 
-		if (asr_sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
+		if (_asr_sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
 			continue;
 
 		if (as->as.ai.hints.ai_flags & (AI_CANONNAME | AI_FQDN))

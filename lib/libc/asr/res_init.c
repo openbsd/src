@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.4 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.5 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -41,7 +41,7 @@ res_init(void)
 	struct asr_ctx	*ac;
 	int i;
 
-	ac = asr_use_resolver(NULL);
+	ac = _asr_use_resolver(NULL);
 
 	/*
 	 * The first thread to call res_init() will setup the global _res
@@ -82,7 +82,7 @@ res_init(void)
 		ac->ac_dbcount = strlen(ac->ac_db);
 	}
 
-	asr_ctx_unref(ac);
+	_asr_ctx_unref(ac);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.24 2015/09/09 15:40:04 guenther Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.25 2015/09/09 15:49:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -61,9 +61,9 @@ res_send_async(const unsigned char *buf, int buflen, void *asr)
 
 	DPRINT_PACKET("asr: res_send_async()", buf, buflen);
 
-	ac = asr_use_resolver(asr);
-	if ((as = asr_async_new(ac, ASR_SEND)) == NULL) {
-		asr_ctx_unref(ac);
+	ac = _asr_use_resolver(asr);
+	if ((as = _asr_async_new(ac, ASR_SEND)) == NULL) {
+		_asr_ctx_unref(ac);
 		return (NULL); /* errno set */
 	}
 	as->as_run = res_send_async_run;
@@ -73,9 +73,9 @@ res_send_async(const unsigned char *buf, int buflen, void *asr)
 	as->as.dns.obuflen = buflen;
 	as->as.dns.obufsize = buflen;
 
-	asr_unpack_init(&p, buf, buflen);
-	asr_unpack_header(&p, &h);
-	asr_unpack_query(&p, &q);
+	_asr_unpack_init(&p, buf, buflen);
+	_asr_unpack_header(&p, &h);
+	_asr_unpack_query(&p, &q);
 	if (p.err) {
 		errno = EINVAL;
 		goto err;
@@ -87,12 +87,12 @@ res_send_async(const unsigned char *buf, int buflen, void *asr)
 	if (as->as.dns.dname == NULL)
 		goto err; /* errno set */
 
-	asr_ctx_unref(ac);
+	_asr_ctx_unref(ac);
 	return (as);
     err:
 	if (as)
-		asr_async_free(as);
-	asr_ctx_unref(ac);
+		_asr_async_free(as);
+	_asr_ctx_unref(ac);
 	return (NULL);
 }
 
@@ -109,21 +109,21 @@ res_query_async(const char *name, int class, int type, void *asr)
 
 	DPRINT("asr: res_query_async(\"%s\", %i, %i)\n", name, class, type);
 
-	ac = asr_use_resolver(asr);
-	as = res_query_async_ctx(name, class, type, ac);
-	asr_ctx_unref(ac);
+	ac = _asr_use_resolver(asr);
+	as = _res_query_async_ctx(name, class, type, ac);
+	_asr_ctx_unref(ac);
 
 	return (as);
 }
 
 struct asr_query *
-res_query_async_ctx(const char *name, int class, int type, struct asr_ctx *a_ctx)
+_res_query_async_ctx(const char *name, int class, int type, struct asr_ctx *a_ctx)
 {
 	struct asr_query	*as;
 
 	DPRINT("asr: res_query_async_ctx(\"%s\", %i, %i)\n", name, class, type);
 
-	if ((as = asr_async_new(a_ctx, ASR_SEND)) == NULL)
+	if ((as = _asr_async_new(a_ctx, ASR_SEND)) == NULL)
 		return (NULL); /* errno set */
 	as->as_run = res_send_async_run;
 
@@ -137,7 +137,7 @@ res_query_async_ctx(const char *name, int class, int type, struct asr_ctx *a_ctx
 
     err:
 	if (as)
-		asr_async_free(as);
+		_asr_async_free(as);
 
 	return (NULL);
 }
@@ -350,13 +350,13 @@ setup_query(struct asr_query *as, const char *name, const char *dom,
 		return (-1);
 	}
 
-	if (asr_make_fqdn(name, dom, fqdn, sizeof(fqdn)) > sizeof(fqdn)) {
+	if (_asr_make_fqdn(name, dom, fqdn, sizeof(fqdn)) > sizeof(fqdn)) {
 		errno = EINVAL;
 		DPRINT("asr_make_fqdn: name too long\n");
 		return (-1);
 	}
 
-	if (asr_dname_from_fqdn(fqdn, dname, sizeof(dname)) == -1) {
+	if (_asr_dname_from_fqdn(fqdn, dname, sizeof(dname)) == -1) {
 		errno = EINVAL;
 		DPRINT("asr_dname_from_fqdn: invalid\n");
 		return (-1);
@@ -376,9 +376,9 @@ setup_query(struct asr_query *as, const char *name, const char *dom,
 		h.flags |= RD_MASK;
 	h.qdcount = 1;
 
-	asr_pack_init(&p, as->as.dns.obuf, as->as.dns.obufsize);
-	asr_pack_header(&p, &h);
-	asr_pack_query(&p, type, class, dname);
+	_asr_pack_init(&p, as->as.dns.obuf, as->as.dns.obufsize);
+	_asr_pack_header(&p, &h);
+	_asr_pack_query(&p, type, class, dname);
 	if (p.err) {
 		DPRINT("error packing query");
 		errno = EINVAL;
@@ -418,7 +418,7 @@ udp_send(struct asr_query *as)
 #endif
 
 	DPRINT("asr: [%p] connecting to %s UDP\n", as,
-	    asr_print_sockaddr(AS_NS_SA(as), buf, sizeof buf));
+	    _asr_print_sockaddr(AS_NS_SA(as), buf, sizeof buf));
 
 	as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_DGRAM);
 	if (as->as_fd == -1)
@@ -495,7 +495,7 @@ tcp_write(struct asr_query *as)
 	/* First try to connect if not already */
 	if (as->as_fd == -1) {
 		DPRINT("asr: [%p] connecting to %s TCP\n", as,
-		    asr_print_sockaddr(AS_NS_SA(as), buf, sizeof buf));
+		    _asr_print_sockaddr(AS_NS_SA(as), buf, sizeof buf));
 		as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_STREAM);
 		if (as->as_fd == -1)
 			return (-1); /* errno set */
@@ -671,9 +671,9 @@ validate_packet(struct asr_query *as)
 	struct asr_dns_rr	 rr;
 	int			 r;
 
-	asr_unpack_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
+	_asr_unpack_init(&p, as->as.dns.ibuf, as->as.dns.ibuflen);
 
-	asr_unpack_header(&p, &h);
+	_asr_unpack_header(&p, &h);
 	if (p.err)
 		goto inval;
 
@@ -696,7 +696,7 @@ validate_packet(struct asr_query *as)
 	as->as.dns.rcode = RCODE(h.flags);
 	as->as.dns.ancount = h.ancount;
 
-	asr_unpack_query(&p, &q);
+	_asr_unpack_query(&p, &q);
 	if (p.err)
 		goto inval;
 
@@ -716,7 +716,7 @@ validate_packet(struct asr_query *as)
 
 	/* Validate the rest of the packet */
 	for (r = h.ancount + h.nscount + h.arcount; r; r--)
-		asr_unpack_rr(&p, &rr);
+		_asr_unpack_rr(&p, &rr);
 
 	if (p.err || (p.offset != as->as.dns.ibuflen))
 		goto inval;
