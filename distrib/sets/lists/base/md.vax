@@ -1004,7 +1004,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fuse
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fuse/fusefs_node.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/vax-openbsd/msdosfs/bootsect.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/msdosfs/bpb.ph

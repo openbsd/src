@@ -1655,7 +1655,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/fuse/fusefs_node.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/mm_malloc.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/mmintrin.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/amd64-openbsd/msdosfs/bootsect.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/msdosfs/bpb.ph

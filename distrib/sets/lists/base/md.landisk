@@ -1582,7 +1582,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/fuse
 ./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/miscfs/fuse/fusefs_node.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/sh-openbsd/msdosfs/bootsect.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/msdosfs/bpb.ph

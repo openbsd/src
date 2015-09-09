@@ -1623,7 +1623,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fuse
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fuse/fusefs_node.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/alpha-openbsd/msdosfs/bootsect.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/msdosfs/bpb.ph

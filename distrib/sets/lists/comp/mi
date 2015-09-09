@@ -950,7 +950,6 @@
 ./usr/include/miscfs/fuse
 ./usr/include/miscfs/fuse/fusefs.h
 ./usr/include/miscfs/fuse/fusefs_node.h
-./usr/include/mpool.h
 ./usr/include/msdosfs
 ./usr/include/msdosfs/bootsect.h
 ./usr/include/msdosfs/bpb.h
@@ -6057,6 +6056,19 @@
 ./usr/share/man/man9/NDINIT.9
 ./usr/share/man/man9/NDINITAT.9
 ./usr/share/man/man9/RWLOCK_INITIALIZER.9
+./usr/share/man/man9/SRPL_EMPTY_LOCKED.9
+./usr/share/man/man9/SRPL_ENTER.9
+./usr/share/man/man9/SRPL_ENTRY_INIT.9
+./usr/share/man/man9/SRPL_FIRST_LOCKED.9
+./usr/share/man/man9/SRPL_FOREACH.9
+./usr/share/man/man9/SRPL_FOREACH_LOCKED.9
+./usr/share/man/man9/SRPL_HEAD_INIT.9
+./usr/share/man/man9/SRPL_INSERT_HEAD_LOCKED.9
+./usr/share/man/man9/SRPL_LEAVE.9
+./usr/share/man/man9/SRPL_NEXT.9
+./usr/share/man/man9/SRPL_NEXT_LOCKED.9
+./usr/share/man/man9/SRPL_RC_INITIALIZER.9
+./usr/share/man/man9/SRPL_REMOVE_LOCKED.9
 ./usr/share/man/man9/SRP_GC_INITIALIZER.9
 ./usr/share/man/man9/SRP_INITIALIZER.9
 ./usr/share/man/man9/SipHash24.9
@@ -6697,6 +6709,7 @@
 ./usr/share/man/man9/srp_leave.9
 ./usr/share/man/man9/srp_update.9
 ./usr/share/man/man9/srp_update_locked.9
+./usr/share/man/man9/srpl_rc_init.9
 ./usr/share/man/man9/startuphook_disestablish.9
 ./usr/share/man/man9/startuphook_establish.9
 ./usr/share/man/man9/stathz.9

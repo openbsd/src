@@ -1644,7 +1644,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/miscfs/fuse
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/miscfs/fuse/fusefs_node.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/msdosfs/bootsect.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/msdosfs/bpb.ph

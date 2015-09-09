@@ -1538,7 +1538,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/fuse
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/fuse/fusefs_node.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/bootsect.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/bpb.ph

@@ -1636,7 +1636,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse/fusefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse/fusefs_node.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/mmintrin.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/msdosfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/msdosfs/bootsect.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/msdosfs/bpb.ph
