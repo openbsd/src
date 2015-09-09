@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.204 2015/09/07 10:02:04 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.205 2015/09/09 08:04:22 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -562,10 +562,10 @@ sm_check_an_eg() {
 	fi
 	for _i in ${_egmods}; do
 		_i=${_i##*/}
+		# only check files we care about
 		[[ -f /etc/${_i} ]] && \
 			_managed="${_managed:+${_managed} }${_i}"
 	done
-	# only warn for files we care about
 	[[ -n ${_managed} ]] && sm_warn "example(s) changed for: ${_managed}"
 	mv ./var/sysmerge/examplessum \
 		/var/sysmerge/examplessum
