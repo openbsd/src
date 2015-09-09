@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.23 2015/09/09 14:32:06 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.24 2015/09/09 19:23:04 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -190,6 +189,8 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 
 	if (tls_configure_ssl(ctx) != 0)
 		goto err;
+	if (tls_configure_keypair(ctx, 0) != 0)
+		goto err;
 
 	if (ctx->config->verify_name) {
 		if (servername == NULL) {
@@ -198,30 +199,9 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		}
 	}
 
-	if (ctx->config->verify_cert) {
-		SSL_CTX_set_verify(ctx->ssl_ctx, SSL_VERIFY_PEER, NULL);
-
-		if (ctx->config->ca_mem != NULL) {
-			if (ctx->config->ca_len > INT_MAX) {
-				tls_set_errorx(ctx, "ca too long");
-				goto err;
-			}
-
-			if (SSL_CTX_load_verify_mem(ctx->ssl_ctx,
-			    ctx->config->ca_mem, ctx->config->ca_len) != 1) {
-				tls_set_errorx(ctx,
-				    "ssl verify memory setup failure");
-				goto err;
-			}
-		} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
-		    ctx->config->ca_file, ctx->config->ca_path) != 1) {
-			tls_set_errorx(ctx, "ssl verify setup failure");
-			goto err;
-		}
-		if (ctx->config->verify_depth >= 0)
-			SSL_CTX_set_verify_depth(ctx->ssl_ctx,
-			    ctx->config->verify_depth);
-	}
+	if (ctx->config->verify_cert &&
+	    (tls_configure_ssl_verify(ctx, SSL_VERIFY_PEER) == -1))
+		goto err;
 
 	if ((ctx->ssl_conn = SSL_new(ctx->ssl_ctx)) == NULL) {
 		tls_set_errorx(ctx, "ssl connection failure");

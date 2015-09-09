@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.11 2015/09/09 14:32:06 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.12 2015/09/09 19:23:04 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -60,8 +60,15 @@ tls_configure_server(struct tls *ctx)
 
 	if (tls_configure_ssl(ctx) != 0)
 		goto err;
-	if (tls_configure_keypair(ctx) != 0)
+	if (tls_configure_keypair(ctx, 1) != 0)
 		goto err;
+	if (ctx->config->verify_client != 0) {
+		int verify = SSL_VERIFY_PEER;
+		if (ctx->config->verify_client == 1)
+			verify |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+		if (tls_configure_ssl_verify(ctx, verify) == -1)
+			goto err;
+	}
 
 	if (ctx->config->dheparams == -1)
 		SSL_CTX_set_dh_auto(ctx->ssl_ctx, 1);

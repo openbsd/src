@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.17 2015/09/09 18:22:33 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.18 2015/09/09 19:23:04 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -147,11 +147,18 @@ tls_configure(struct tls *ctx, struct tls_config *config)
 }
 
 int
-tls_configure_keypair(struct tls *ctx)
+tls_configure_keypair(struct tls *ctx, int required)
 {
 	EVP_PKEY *pkey = NULL;
 	X509 *cert = NULL;
 	BIO *bio = NULL;
+
+	if (!required &&
+	    ctx->config->cert_mem == NULL &&
+	    ctx->config->key_mem == NULL &&
+	    ctx->config->cert_file == NULL &&
+	    ctx->config->key_file == NULL)
+		return(0);
 
 	if (ctx->config->cert_mem != NULL) {
 		if (ctx->config->cert_len > INT_MAX) {
@@ -253,6 +260,37 @@ tls_configure_ssl(struct tls *ctx)
 	return (0);
 
 err:
+	return (-1);
+}
+
+int
+tls_configure_ssl_verify(struct tls *ctx, int verify)
+{
+	SSL_CTX_set_verify(ctx->ssl_ctx, verify, NULL);
+
+	if (ctx->config->ca_mem != NULL) {
+		/* XXX do this in set. */
+		if (ctx->config->ca_len > INT_MAX) {
+			tls_set_error(ctx, "client ca too long");
+			goto err;
+		}
+		if (SSL_CTX_load_verify_mem(ctx->ssl_ctx,
+		    ctx->config->ca_mem, ctx->config->ca_len) != 1) {
+			tls_set_error(ctx,
+			    "ssl verify memory setup failure");
+			goto err;
+		}
+	} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
+            ctx->config->ca_file, ctx->config->ca_path) != 1) {
+		tls_set_error(ctx, "ssl verify setup failure");
+		goto err;
+	}
+	if (ctx->config->verify_depth >= 0)
+		SSL_CTX_set_verify_depth(ctx->ssl_ctx,
+		    ctx->config->verify_depth);
+	return (0);
+
+ err:
 	return (-1);
 }
 
