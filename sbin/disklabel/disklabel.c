@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.204 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.205 2015/09/09 13:51:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -543,17 +543,15 @@ makebootarea(char *boot, struct disklabel *dp)
 			*np++ = *p++;
 		*np++ = '\0';
 
-		if (!xxboot) {
-			(void)snprintf(np, namebuf + sizeof namebuf - np,
-			    "%s%sboot", _PATH_BOOTDIR, dkbasename);
-			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
-				dkbasename++;
-			xxboot = np;
-			(void)snprintf(xxboot,
-			    namebuf + sizeof namebuf - np,
-			    "%s%sboot", _PATH_BOOTDIR, dkbasename);
-			np += strlen(xxboot) + 1;
-		}
+		(void)snprintf(np, namebuf + sizeof namebuf - np,
+		    "%s%sboot", _PATH_BOOTDIR, dkbasename);
+		if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
+			dkbasename++;
+		xxboot = np;
+		(void)snprintf(xxboot,
+		    namebuf + sizeof namebuf - np,
+		    "%s%sboot", _PATH_BOOTDIR, dkbasename);
+		np += strlen(xxboot) + 1;
 	}
 	if (verbose)
 		warnx("bootstrap: xxboot = %s", xxboot);
