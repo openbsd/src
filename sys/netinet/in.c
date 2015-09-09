@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.121 2015/08/24 14:00:29 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.122 2015/09/09 20:12:36 dlg Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -880,6 +880,7 @@ in_delmulti(struct in_multi *inm)
 			    ifma_list);
 			splx(s);
 		}
+		if_put(ifp);
 
 		free(inm, M_IPMADDR, sizeof(*inm));
 	}
