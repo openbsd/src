@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.112 2015/09/01 19:53:23 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.113 2015/09/09 14:37:07 claudio Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ u_short naflags;
 /* for ancillary data(advanced API) */
 struct msghdr smsghdr;
 struct iovec smsgiov;
-char *scmsg = 0;
+char *scmsg;
 
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
@@ -272,10 +272,6 @@ main(int argc, char *argv[])
 	uid = getuid();
 	if (setresuid(uid, uid, uid) == -1)
 		err(1, "setresuid");
-
-	/* just to be sure */
-	memset(&smsghdr, 0, sizeof(smsghdr));
-	memset(&smsgiov, 0, sizeof(smsgiov));
 
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
@@ -787,7 +783,7 @@ main(int argc, char *argv[])
 			struct cmsghdr hdr;
 			u_char buf[CMSG_SPACE(1024)];
 		}		cmsgbuf;
-		struct iovec	iov[2];
+		struct iovec	iov[1];
 		struct pollfd	pfd;
 		ssize_t		cc;
 		int		timeout;
@@ -952,7 +948,6 @@ int
 pinger(void)
 {
 	struct icmp6_hdr *icp;
-	struct iovec iov[2];
 	int i, cc;
 	struct icmp6_nodeinfo *nip;
 	int seq;
@@ -1053,10 +1048,9 @@ pinger(void)
 
 	smsghdr.msg_name = &dst;
 	smsghdr.msg_namelen = sizeof(dst);
-	memset(&iov, 0, sizeof(iov));
-	iov[0].iov_base = (caddr_t)outpack;
-	iov[0].iov_len = cc;
-	smsghdr.msg_iov = iov;
+	smsgiov.iov_base = (caddr_t)outpack;
+	smsgiov.iov_len = cc;
+	smsghdr.msg_iov = &smsgiov;
 	smsghdr.msg_iovlen = 1;
 
 	i = sendmsg(s, &smsghdr, 0);
