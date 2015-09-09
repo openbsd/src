@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.45 2014/07/13 23:10:23 deraadt Exp $ */
+/* $OpenBSD: agp.c,v 1.46 2015/09/09 19:47:11 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -240,7 +240,7 @@ agp_alloc_gatt(bus_dma_tag_t dmat, u_int32_t apsize)
 
 	if (agp_alloc_dmamem(dmat, gatt->ag_size, &gatt->ag_dmamap,
 	    &gatt->ag_physical, &gatt->ag_dmaseg) != 0) {
-		free(gatt, M_AGP, 0);
+		free(gatt, M_AGP, sizeof *gatt);
 		return (NULL);
 	}
 
@@ -248,7 +248,7 @@ agp_alloc_gatt(bus_dma_tag_t dmat, u_int32_t apsize)
 	    (caddr_t *)&gatt->ag_virtual, BUS_DMA_NOWAIT) != 0) {
 		agp_free_dmamem(dmat, gatt->ag_size, gatt->ag_dmamap,
 		    &gatt->ag_dmaseg);
-		free(gatt, M_AGP, 0);
+		free(gatt, M_AGP, sizeof *gatt);
 		return (NULL);
 	}
 
@@ -262,7 +262,7 @@ agp_free_gatt(bus_dma_tag_t dmat, struct agp_gatt *gatt)
 {
 	bus_dmamem_unmap(dmat, (caddr_t)gatt->ag_virtual, gatt->ag_size);
 	agp_free_dmamem(dmat, gatt->ag_size, gatt->ag_dmamap, &gatt->ag_dmaseg);
-	free(gatt, M_AGP, 0);
+	free(gatt, M_AGP, sizeof *gatt);
 }
 
 int
@@ -340,7 +340,7 @@ agp_generic_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 
 	if (bus_dmamap_create(sc->sc_dmat, size, size / PAGE_SIZE + 1,
 	    size, 0, BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {
-		free(mem, M_AGP, 0);
+		free(mem, M_AGP, sizeof *mem);
 		return (NULL);
 	}
 
@@ -361,7 +361,7 @@ agp_generic_free_memory(struct agp_softc *sc, struct agp_memory *mem)
 	sc->sc_allocated -= mem->am_size;
 	TAILQ_REMOVE(&sc->sc_memory, mem, am_link);
 	bus_dmamap_destroy(sc->sc_dmat, mem->am_dmamap);
-	free(mem, M_AGP, 0);
+	free(mem, M_AGP, sizeof *mem);
 	return (0);
 }
 
@@ -401,7 +401,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	segs = mallocarray(nseg, sizeof *segs, M_AGP, M_WAITOK);
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, mem->am_size, PAGE_SIZE, 0,
 	    segs, nseg, &mem->am_nseg, BUS_DMA_ZERO | BUS_DMA_WAITOK)) != 0) {
-		free(segs, M_AGP, 0);
+		free(segs, M_AGP, nseg * sizeof *segs);
 		rw_exit_write(&sc->sc_lock);
 		AGP_DPF("bus_dmamem_alloc failed %d\n", error);
 		return (error);
@@ -409,7 +409,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	if ((error = bus_dmamap_load_raw(sc->sc_dmat, mem->am_dmamap, segs,
 	    mem->am_nseg, mem->am_size, BUS_DMA_WAITOK)) != 0) {
 		bus_dmamem_free(sc->sc_dmat, segs, mem->am_nseg);
-		free(segs, M_AGP, 0);
+		free(segs, M_AGP, nseg * sizeof *segs);
 		rw_exit_write(&sc->sc_lock);
 		AGP_DPF("bus_dmamap_load failed %d\n", error);
 		return (error);

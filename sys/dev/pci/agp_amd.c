@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.20 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.21 2015/09/09 19:47:11 deraadt Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ agp_amd_alloc_gatt(bus_dma_tag_t dmat, bus_size_t apsize)
 	if (agp_alloc_dmamem(dmat, gatt->ag_size, &gatt->ag_dmamap,
 	    &gatt->ag_pdir, &gatt->ag_dmaseg) != 0) {
 		printf("failed to allocate GATT\n");
-		free(gatt, M_AGP, 0);
+		free(gatt, M_AGP, sizeof *gatt);
 		return (NULL);
 	}
 
@@ -128,7 +128,7 @@ agp_amd_alloc_gatt(bus_dma_tag_t dmat, bus_size_t apsize)
 		printf("failed to map GATT\n");
 		agp_free_dmamem(dmat, gatt->ag_size, gatt->ag_dmamap,
 		    &gatt->ag_dmaseg);
-		free(gatt, M_AGP, 0);
+		free(gatt, M_AGP, sizeof *gatt);
 		return (NULL);
 	}
 
