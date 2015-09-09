@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.27 2015/07/20 22:54:30 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.28 2015/09/09 20:05:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -194,6 +194,8 @@ vxlan_multicast_cleanup(struct ifnet *ifp)
 			    sc->sc_dhcookie);
 			sc->sc_dhcookie = NULL;
 		}
+
+		if_put(mifp);
 	}
 
 	if (imo->imo_num_memberships > 0) {
