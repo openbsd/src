@@ -127,7 +127,7 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
     
     memset(boot_desc, 0, sizeof(*boot_desc));
     boot_desc->id[0] = 0;
-    memcpy(boot_desc->id2, ISO_STANDARD_ID, sizeof(ISO_STANDARD_ID));
+    memcpy(boot_desc->id2, ISO_STANDARD_ID, sizeof(ISO_STANDARD_ID) - 1);
     boot_desc->version[0] = 1;
     
     memcpy(boot_desc->system_id, EL_TORITO_ID, sizeof(EL_TORITO_ID));

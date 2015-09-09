@@ -1037,7 +1037,7 @@ FDECL3(insert_file_entry,struct directory *, this_dir,
   int				  deep_flag;
 #ifdef APPLE_HYB
   int				  x_hfs = 0;
-  int				  htype;
+  int				  htype = 0;
 #endif /* APPLE_HYB */
 
   status = stat_filter(whole_path, &statbuf);
@@ -1263,7 +1263,8 @@ FDECL3(insert_file_entry,struct directory *, this_dir,
 #ifdef APPLE_HYB 
     /* Should we exclude this HFS file ? - only works with -hfs */
     if (!have_rsrc && apple_hyb && strcmp(short_name,".") && strcmp(short_name,"..")) {
-      if (x_hfs = hfs_matches(short_name) || hfs_matches(whole_path)) {
+      x_hfs = hfs_matches(short_name) || hfs_matches(whole_path);
+      if (x_hfs) {
 	if (verbose > 1) {
 	  fprintf(stderr, "Hidden from HFS tree: %s\n", whole_path);
 	}

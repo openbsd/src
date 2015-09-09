@@ -800,10 +800,9 @@ struct iso_directory_record * FDECL1(merge_isofs, char *, path)
   /*
    * Get the location and size of the root directory.
    */
-  rootp = (struct iso_directory_record *) 
-    malloc(sizeof(struct iso_directory_record));
+  rootp = calloc(1, sizeof(struct iso_directory_record));
 
-  memcpy(rootp, pri->root_directory_record, sizeof(*rootp));
+  memcpy(rootp, pri->root_directory_record, sizeof(pri->root_directory_record));
 
   return rootp;
 }

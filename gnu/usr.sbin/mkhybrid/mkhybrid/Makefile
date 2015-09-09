@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2013/08/08 18:11:36 brad Exp $
+#	$OpenBSD: Makefile,v 1.7 2015/09/09 20:02:31 miod Exp $
 
 # NOTE: The mkhybrid distrib also makes an "mkisofs" which is the same binary
 # linked. When we know mkhybrid makes distrib CDs ok we should modify this
@@ -14,7 +14,7 @@ CLEANFILES+= mkhybrid.8
 SRCS=	data.c block.c low.c lfile.c btree.c node.c record.c lvolume.c \
 	hfs.c file.c apprentice.c softmagic.c mkisofs.c tree.c write.c \
 	hash.c rock.c multi.c joliet.c match.c name.c eltorito.c \
-	getopt.c getopt1.c apple.c volume.c desktop.c mac_label.c		
+	apple.c volume.c desktop.c mac_label.c		
 
 CFLAGS+=-DSYSTEM_ID_DEFAULT=\"OpenBSD\" -DAPPLE_HYB -DVANILLA_AUTOCONF \
 	-I${.CURDIR}/../src -I${.CURDIR}/../src/include \

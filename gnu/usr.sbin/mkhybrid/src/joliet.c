@@ -229,7 +229,7 @@ static void FDECL1(get_joliet_vol_desc, struct iso_primary_descriptor *, jvol_de
    * Set this one up.
    */
   memcpy(jvol_desc->root_directory_record, &jroot_record, 
-	 sizeof(struct iso_directory_record));
+	 sizeof(jvol_desc->root_directory_record));
 
   /*
    * Finally, we have a bunch of strings to convert to Unicode.

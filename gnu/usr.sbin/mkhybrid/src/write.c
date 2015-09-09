@@ -1330,7 +1330,7 @@ static int FDECL1(pvd_write, FILE *, outfile)
    */
   memset(&vol_desc, 0, sizeof(vol_desc));
   vol_desc.type[0] = ISO_VD_PRIMARY;
-  memcpy(vol_desc.id, ISO_STANDARD_ID, sizeof(ISO_STANDARD_ID));
+  memcpy(vol_desc.id, ISO_STANDARD_ID, sizeof(ISO_STANDARD_ID) - 1);
   vol_desc.version[0] = 1;
   
   memset(vol_desc.system_id, ' ', sizeof(vol_desc.system_id));
@@ -1360,7 +1360,7 @@ static int FDECL1(pvd_write, FILE *, outfile)
    * Now we copy the actual root directory record 
    */
   memcpy(vol_desc.root_directory_record, &root_record, 
-	 sizeof(struct iso_directory_record) + 1);
+	 sizeof(vol_desc.root_directory_record));
 
   /*
    * The rest is just fluff.  It looks nice to fill in many of these fields,
@@ -1422,7 +1422,7 @@ static int FDECL1(evd_write, FILE *, outfile)
    */
   memset(&evol_desc, 0, sizeof(evol_desc));
   evol_desc.type[0] = ISO_VD_END;
-  memcpy(evol_desc.id, ISO_STANDARD_ID, sizeof(ISO_STANDARD_ID));
+  memcpy(evol_desc.id, ISO_STANDARD_ID, sizeof(ISO_STANDARD_ID) - 1);
   evol_desc.version[0] = 1;
   xfwrite(&evol_desc, 1, 2048, outfile);
   last_extent_written += 1;
