@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.18 2015/09/09 19:23:04 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.19 2015/09/09 19:49:07 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -83,7 +83,7 @@ tls_set_verror(struct tls *ctx, int errnum, const char *fmt, va_list ap)
 	}
 	rv = 0;
 
-err:
+ err:
 	free(errmsg);
 
 	return (rv);
@@ -221,7 +221,7 @@ tls_configure_keypair(struct tls *ctx, int required)
 
 	return (0);
 
-err:
+ err:
 	EVP_PKEY_free(pkey);
 	X509_free(cert);
 	BIO_free(bio);
@@ -259,7 +259,7 @@ tls_configure_ssl(struct tls *ctx)
 
 	return (0);
 
-err:
+ err:
 	return (-1);
 }
 

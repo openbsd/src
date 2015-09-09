@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.10 2015/08/27 15:26:50 jsing Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.11 2015/09/09 19:49:07 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -240,7 +240,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name)
 
 	if (tls_match_name(common_name, name) == 0)
 		rv = 0;
-out:
+ out:
 	free(common_name);
 	return rv;
 }

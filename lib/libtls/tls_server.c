@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.12 2015/09/09 19:23:04 beck Exp $ */
+/* $OpenBSD: tls_server.c,v 1.13 2015/09/09 19:49:07 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -101,7 +101,7 @@ tls_configure_server(struct tls *ctx)
 
 	return (0);
 
-err:
+ err:
 	return (-1);
 }
 
@@ -148,7 +148,7 @@ tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
 
 	return (0);
 
-err:
+ err:
 	return (-1);
 }
 
