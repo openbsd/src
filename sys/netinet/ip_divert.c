@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.37 2015/09/01 21:24:04 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.38 2015/09/09 20:15:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -221,6 +221,7 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 			    ifa->ifa_addr)->sin_addr.s_addr;
 			break;
 		}
+		if_put(ifp);
 	}
 
 	if (inp) {
