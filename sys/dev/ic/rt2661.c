@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.81 2015/08/29 20:55:34 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.82 2015/09/09 19:26:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -561,7 +561,7 @@ rt2661_free_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring)
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
 		}
-		free(ring->data, M_DEVBUF, 0);
+		free(ring->data, M_DEVBUF, ring->count * sizeof *ring->data);
 	}
 }
 
@@ -712,7 +712,7 @@ rt2661_free_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
 		}
-		free(ring->data, M_DEVBUF, 0);
+		free(ring->data, M_DEVBUF, ring->count * sizeof *ring->data);
 	}
 }
 
@@ -753,7 +753,7 @@ rt2661_amrr_node_free(struct rt2661_softc *sc, struct rt2661_amrr_node *amn)
 	TAILQ_REMOVE(&sc->amn, amn, entry);
 	sc->amn_count--;
 	splx(s);
-	free(amn, M_DEVBUF, 0);
+	free(amn, M_DEVBUF, sizeof *amn);
 }
 
 void
