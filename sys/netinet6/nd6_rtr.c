@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.120 2015/08/24 23:28:27 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.121 2015/09/09 15:51:40 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -274,8 +274,6 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	ip6_output(m, NULL, NULL, 0, &im6o, NULL, NULL);
 	splx(s);
 
-	icmp6_ifstat_inc(ifp, ifs6_out_msg);
-	icmp6_ifstat_inc(ifp, ifs6_out_routersolicit);
 	icmp6stat.icp6s_outhist[ND_ROUTER_SOLICIT]++;
 }
 

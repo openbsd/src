@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.80 2015/09/09 12:50:08 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.81 2015/09/09 15:51:40 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -478,10 +478,8 @@ rip6_output(struct mbuf *m, ...)
 #endif
 
 	error = ip6_output(m, optp, &in6p->inp_route6, flags,
-	    in6p->inp_moptions6, &oifp, in6p);
+	    in6p->inp_moptions6, NULL, in6p);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
-		if (oifp)
-			icmp6_ifoutstat_inc(oifp, type, code);
 		icmp6stat.icp6s_outhist[type]++;
 	} else
 		rip6stat.rip6s_opackets++;

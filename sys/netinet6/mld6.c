@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.42 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.43 2015/09/09 15:51:40 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -455,21 +455,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	im6o.im6o_loop = (ip6_mrouter != NULL);
 #endif
 
-	/* increment output statictics */
 	icmp6stat.icp6s_outhist[type]++;
-	icmp6_ifstat_inc(ifp, ifs6_out_msg);
-	switch (type) {
-	case MLD_LISTENER_QUERY:
-		icmp6_ifstat_inc(ifp, ifs6_out_mldquery);
-		break;
-	case MLD_LISTENER_REPORT:
-		icmp6_ifstat_inc(ifp, ifs6_out_mldreport);
-		break;
-	case MLD_LISTENER_DONE:
-		icmp6_ifstat_inc(ifp, ifs6_out_mlddone);
-		break;
-	}
-
 	ip6_output(mh, &ip6_opts, NULL, ia6 ? 0 : IPV6_UNSPECSRC, &im6o, NULL,
 	    NULL);
 }

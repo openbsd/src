@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.41 2014/08/27 14:04:15 florian Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.42 2015/09/09 15:51:40 mpi Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -609,64 +609,6 @@ int	icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 struct	ip6ctlparam;
 void	icmp6_mtudisc_update(struct ip6ctlparam *, int);
 void	icmp6_mtudisc_callback_register(void (*)(struct sockaddr_in6 *, u_int));
-
-/* XXX: is this the right place for these macros? */
-#define icmp6_ifstat_inc(ifp, tag) \
-do {								\
-	if (ifp)						\
-		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->icmp6_ifstat->tag++; \
-} while (0)
-
-#define icmp6_ifoutstat_inc(ifp, type, code) \
-do { \
-		icmp6_ifstat_inc(ifp, ifs6_out_msg); \
-		switch(type) { \
-		 case ICMP6_DST_UNREACH: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_dstunreach); \
-			 if (code == ICMP6_DST_UNREACH_ADMIN) \
-				 icmp6_ifstat_inc(ifp, ifs6_out_adminprohib); \
-			 break; \
-		 case ICMP6_PACKET_TOO_BIG: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_pkttoobig); \
-			 break; \
-		 case ICMP6_TIME_EXCEEDED: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_timeexceed); \
-			 break; \
-		 case ICMP6_PARAM_PROB: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_paramprob); \
-			 break; \
-		 case ICMP6_ECHO_REQUEST: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_echo); \
-			 break; \
-		 case ICMP6_ECHO_REPLY: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_echoreply); \
-			 break; \
-		 case MLD_LISTENER_QUERY: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_mldquery); \
-			 break; \
-		 case MLD_LISTENER_REPORT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_mldreport); \
-			 break; \
-		 case MLD_LISTENER_DONE: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_mlddone); \
-			 break; \
-		 case ND_ROUTER_SOLICIT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_routersolicit); \
-			 break; \
-		 case ND_ROUTER_ADVERT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_routeradvert); \
-			 break; \
-		 case ND_NEIGHBOR_SOLICIT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit); \
-			 break; \
-		 case ND_NEIGHBOR_ADVERT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert); \
-			 break; \
-		 case ND_REDIRECT: \
-			 icmp6_ifstat_inc(ifp, ifs6_out_redirect); \
-			 break; \
-		} \
-} while (0)
 
 extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
 
