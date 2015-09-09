@@ -1,4 +1,4 @@
-/* $OpenBSD: cerror.S,v 1.11 2015/09/05 06:22:47 guenther Exp $ */
+/* $OpenBSD: cerror.S,v 1.12 2015/09/09 08:24:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -35,30 +35,28 @@ WEAK_ALIAS(__cerror, ___cerror)
 	.text
 	.protected _ASM_LABEL(___cerror)
 ASENTRY(___cerror)
-	cmpwi	2, 0
-	bne-	.L_threaded
-
-#if defined (__PIC__)
+	stwu	1, -16(1)		/* follow the SVR4 ABI */
 	mflr	3			/* error value is in r0, use r3 */
+	stw	3, 20(1)
+	stw	31, 12(1)
+#ifdef __PIC__
+	stw	30, 8(1)
 	bcl	20, 31, 1f
-1:	mflr	4
-	addis	4, 4, _GLOBAL_OFFSET_TABLE_-1b@ha
-	addi	4, 4, _GLOBAL_OFFSET_TABLE_-1b@l
-	lwz	5,_C_LABEL(errno)@got(4)
-	mtlr	3
-#else
-	addis 5, 0, errno@H
-	ori 5, 5, errno@L
+1:	mflr	30
+	addis	30, 30, _GLOBAL_OFFSET_TABLE_-1b@ha
+	addi	30, 30, _GLOBAL_OFFSET_TABLE_-1b@l
 #endif
-	b	.L_do_store
-
-.L_threaded:
-	lwz  5, 4(2)
-	lwz  5, ERRNOPTR_OFFSET(5)
-
-.L_do_store:
-	stw 0, 0(5)
-	addi 3, 0, -1
-	addi 4, 0, -1
+	mr	31, 0
+	bl	PIC_PLT(__errno)
+	stw	31, 0(3)
+#ifdef __PIC__
+	lwz	30, 8(1)
+#endif
+	lwz	31, 12(1)
+	lwz	0, 20(1)
+	mtlr	0
+	addi	1, 1, 16	/* fllow the SVR4 ABI */
+	li	3, -1
+	li	4, -1
 	blr
 END(___cerror)
