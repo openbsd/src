@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.1 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.2 2015/09/09 16:10:03 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,10 +21,9 @@
 #include_next <string.h>
 #include "namespace.h"
 
-/* XXX should make this __BEGIN_HIDDEN_DECLS */
-__BEGIN_DECLS
+__BEGIN_HIDDEN_DECLS
 char	*__strsignal(int , char *);
-__END_DECLS
+__END_HIDDEN_DECLS
 
 PROTO_NORMAL(bcmp);
 PROTO_NORMAL(bcopy);

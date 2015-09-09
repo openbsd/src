@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.7 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: signal.c,v 1.8 2015/09/09 16:10:03 guenther Exp $ */
 /*
  * Copyright (c) 1985, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 sigset_t __sigintr;		/* shared with siginterrupt */
 
 sig_t
-_signal(int s, sig_t a)
+signal(int s, sig_t a)
 {
 	struct sigaction sa, osa;
 
@@ -51,6 +51,6 @@ _signal(int s, sig_t a)
 		return (SIG_ERR);
 	return (osa.sa_handler);
 }
+DEF_STRONG(signal);
 
-__weak_alias(signal, _signal);
-__weak_alias(bsd_signal, _signal);
+__weak_alias(bsd_signal, signal);

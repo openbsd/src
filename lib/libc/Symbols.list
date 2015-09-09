@@ -511,7 +511,6 @@ __isnormal
 __isnormalf
 __isnormall
 __nan
-__sigintr
 __signbit
 __signbitf
 __signbitl
@@ -1537,7 +1536,6 @@ unsetenv
 
 /* string */
 __explicit_bzero_hook
-__strsignal
 bcmp
 bcopy
 bzero
