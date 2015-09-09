@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.175 2015/09/01 21:24:04 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.176 2015/09/09 20:14:40 dlg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -867,10 +867,13 @@ in_selectsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 		if (ifp != NULL) {
 			if (ifp->if_rdomain == rtable_l2(rtableid))
 				IFP_TO_IA(ifp, ia);
-			if (ia == NULL)
+			if (ia == NULL) {
+				if_put(ifp);
 				return (EADDRNOTAVAIL);
+			}
 
 			*insrc = &ia->ia_addr.sin_addr;
+			if_put(ifp);
 			return (0);
 		}
 	}
