@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.32 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.33 2015/09/09 15:57:15 stsp Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -331,8 +331,7 @@ u_int64_t	ifmedia_baudrate(int);
  */
 #define	IFM_MAKEWORD(type, subtype, options, instance)			\
 	((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
-#define IFM_MAKEMODE(mode)						\
-	(((mode) << IFM_MSHIFT) & IFM_MMASK)
+
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
  * places to get the canonical description for a given type/subtype.
