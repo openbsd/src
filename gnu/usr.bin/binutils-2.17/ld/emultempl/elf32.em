@@ -1109,6 +1109,22 @@ EOF
 if test x"$LDEMUL_AFTER_OPEN" != xgld"$EMULATION_NAME"_after_open; then
 cat >>e${EMULATION_NAME}.c <<EOF
 
+static void
+gld${EMULATION_NAME}_force_readonly(lang_input_statement_type *s)
+{
+  asection *sec;
+
+  if (s->the_bfd == NULL)
+	  return;
+
+  sec = bfd_get_section_by_name (s->the_bfd, ".ctors");
+  if (sec)
+    sec->flags |= SEC_READONLY;
+  sec = bfd_get_section_by_name (s->the_bfd, ".dtors");
+  if (sec)
+    sec->flags |= SEC_READONLY;
+}
+
 /* This is called after all the input files have been opened.  */
 
 static void
@@ -1119,6 +1135,27 @@ gld${EMULATION_NAME}_after_open (void)
   /* We only need to worry about this when doing a final link.  */
   if (link_info.relocatable || !link_info.executable)
     return;
+
+  /* If we don't have a .dynamic section, we have no relocations, and
+     we can make .got, .ctors and .dtors read-only.  This will make
+     the segment containing those sections to be read-only in static
+     executables.  */
+  if (link_info.hash->type == bfd_link_elf_hash_table
+      && !elf_hash_table (&link_info)->dynamic_sections_created)
+    {
+      bfd *dynobj = elf_hash_table (&link_info)->dynobj;
+
+      if (dynobj != NULL)
+	{
+	  asection *sec;
+
+	  sec = bfd_get_section_by_name (dynobj, ".got");
+	  if (sec)
+	    sec->flags |= SEC_READONLY;
+	}
+
+      lang_for_each_input_file (gld${EMULATION_NAME}_force_readonly);
+    }
 
   /* Get the list of files which appear in DT_NEEDED entries in
      dynamic objects included in the link (often there will be none).
