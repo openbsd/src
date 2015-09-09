@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.2 2015/07/21 04:58:52 rzalamena Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.3 2015/09/09 20:13:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -375,7 +375,7 @@ mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 		uint16_t	vs_tci;
 	} vs;
 
-	ifp0 = ifp = if_get(m->m_pkthdr.ph_ifidx);
+	ifp = ifp0 = if_get(m->m_pkthdr.ph_ifidx);
 	KASSERT(ifp != NULL);
 	if (ifp->if_start == vlan_start)
 		ifv = ifp->if_softc;
@@ -406,8 +406,10 @@ mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 	 * NOTE: In case of raw access mode, the if_vlan will do the job
 	 * of dropping non tagged packets for us.
 	 */
-	if (sc->sc_type == IMR_TYPE_ETHERNET && ifv == NULL)
+	if (sc->sc_type == IMR_TYPE_ETHERNET && ifv == NULL) {
+		if_put(ifp0);
 		return (m);
+	}
 
 	/*
 	 * Case ethernet-tagged:
@@ -417,6 +419,7 @@ mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 	 */
 	if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED && ifv == NULL) {
 		m_freem(m);
+		if_put(ifp0);
 		return (NULL);
 	}
 
@@ -444,8 +447,10 @@ mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 
 	/* Add VLAN to the beginning of the packet */
 	M_PREPEND(m, moff, M_NOWAIT);
-	if (m == NULL)
+	if (m == NULL) {
+		if_put(ifp0);
 		return (NULL);
+	}
 
 	/* Copy original ethernet type */
 	moff -= sizeof(eh.ether_type);
@@ -488,6 +493,8 @@ mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
 		evh->evl_tag = ntohs((m->m_pkthdr.pf.prio << EVL_PRIO_BITS) +
 		    ifv->ifv_tag);
 	}
+
+	if_put(ifp0);
 
 	return (m);
 }
