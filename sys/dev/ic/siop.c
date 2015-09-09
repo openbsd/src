@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.70 2015/03/14 03:38:47 jsg Exp $ */
+/*	$OpenBSD: siop.c,v 1.71 2015/09/09 18:24:26 deraadt Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1425,7 +1425,7 @@ siop_scsiprobe(struct scsi_link *link)
 		if (siop_target->lunsw == NULL) {
 			printf("%s: can't alloc lunsw for target %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target);
-			free(siop_target, M_DEVBUF, 0);
+			free(siop_target, M_DEVBUF, sizeof *siop_target);
 			return (ENOMEM);
 		}
 		for (i = 0; i < 8; i++)
@@ -1763,7 +1763,6 @@ end:
 	bus_space_write_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 	    SIOP_ISTAT, ISTAT_SIGP);
 	/* and wait for IRQ */
-	return;
 }
 
 void
@@ -1787,8 +1786,6 @@ siop_timeout(v)
 	siop_cmd->cmd_c.flags |= CMDFL_TIMEOUT;
 	siop_handle_reset(sc);
 	splx(s);
-
-	return;
 }
 
 #ifdef DUMP_SCRIPT
@@ -1951,10 +1948,9 @@ bad0:
 bad1:
 	siop_dmamem_free(sc, newcbd->xfers);
 bad2:
-	free(newcbd->cmds, M_DEVBUF, 0);
+	free(newcbd->cmds, M_DEVBUF, SIOP_NCMDPB * sizeof(struct siop_cmd));
 bad3:
-	free(newcbd, M_DEVBUF, 0);
-	return;
+	free(newcbd, M_DEVBUF, sizeof *newcbd);
 }
 
 struct siop_lunsw *
@@ -2264,7 +2260,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_c.sc_dmat, sdm->sdm_map);
 sdmfree:
-	free(sdm, M_DEVBUF, 0);
+	free(sdm, M_DEVBUF, sizeof *sdm);
 
 	return (NULL);
 }
@@ -2276,6 +2272,6 @@ siop_dmamem_free(struct siop_softc *sc, struct siop_dmamem *sdm)
 	bus_dmamem_unmap(sc->sc_c.sc_dmat, sdm->sdm_kva, sdm->sdm_size);
 	bus_dmamem_free(sc->sc_c.sc_dmat, &sdm->sdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_c.sc_dmat, sdm->sdm_map);
-	free(sdm, M_DEVBUF, 0);
+	free(sdm, M_DEVBUF, sizeof *sdm);
 }
 

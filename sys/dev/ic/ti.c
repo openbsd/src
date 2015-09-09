@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.16 2015/08/12 08:04:20 semarie Exp $	*/
+/*	$OpenBSD: ti.c,v 1.17 2015/09/09 18:24:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -427,7 +427,7 @@ ti_loadfw(struct ti_softc *sc)
 		    TI_FIRMWARE_MAJOR, TI_FIRMWARE_MINOR,
 		    TI_FIRMWARE_FIX, tf->FwReleaseMajor,
 		    tf->FwReleaseMinor, tf->FwReleaseFix);
-		free(buf, M_DEVBUF, 0);
+		free(buf, M_DEVBUF, buflen);
 		return;
 	}
 	ti_mem_write(sc, tf->FwTextAddr, tf->FwTextLen,
@@ -439,7 +439,7 @@ ti_loadfw(struct ti_softc *sc)
 	ti_mem_set(sc, tf->FwBssAddr, tf->FwBssLen);
 	ti_mem_set(sc, tf->FwSbssAddr, tf->FwSbssLen);
 	CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tf->FwStartAddr);
-	free(buf, M_DEVBUF, 0);
+	free(buf, M_DEVBUF, buflen);
 }
 
 /*
@@ -870,7 +870,7 @@ ti_free_tx_ring(struct ti_softc *sc)
 	while ((entry = SLIST_FIRST(&sc->ti_tx_map_listhead))) {
 		SLIST_REMOVE_HEAD(&sc->ti_tx_map_listhead, link);
 		bus_dmamap_destroy(sc->sc_dmatag, entry->dmamap);
-		free(entry, M_DEVBUF, 0);
+		free(entry, M_DEVBUF, sizeof *entry);
 	}
 }
 
@@ -1009,7 +1009,7 @@ ti_iff(struct ti_softc *sc)
 			mc = SLIST_FIRST(&sc->ti_mc_listhead);
 			ti_del_mcast(sc, &mc->mc_addr);
 			SLIST_REMOVE_HEAD(&sc->ti_mc_listhead, mc_entries);
-			free(mc, M_DEVBUF, 0);
+			free(mc, M_DEVBUF, sizeof *mc);
 		}
 
 		/* Now program new ones. */

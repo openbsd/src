@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.56 2015/03/14 03:38:47 jsg Exp $ */
+/*	$OpenBSD: sili.c,v 1.57 2015/09/09 18:24:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -767,7 +767,7 @@ sili_ports_alloc(struct sili_softc *sc)
 
 freeports:
 	/* bus_space(9) says subregions dont have to be freed */
-	free(sp, M_DEVBUF, 0);
+	free(sp, M_DEVBUF, sc->sc_nports * sizeof(struct sili_port));
 	sc->sc_ports = NULL;
 	return (1);
 }
@@ -786,7 +786,7 @@ sili_ports_free(struct sili_softc *sc)
 	}
 
 	/* bus_space(9) says subregions dont have to be freed */
-	free(sc->sc_ports, M_DEVBUF, 0);
+	free(sc->sc_ports, M_DEVBUF, sc->sc_nports * sizeof(struct sili_port));
 	sc->sc_ports = NULL;
 }
 
@@ -938,7 +938,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, sdm->sdm_map);
 sdmfree:
-	free(sdm, M_DEVBUF, 0);
+	free(sdm, M_DEVBUF, sizeof *sdm);
 
 	return (NULL);
 }
@@ -950,7 +950,7 @@ sili_dmamem_free(struct sili_softc *sc, struct sili_dmamem *sdm)
 	bus_dmamem_unmap(sc->sc_dmat, sdm->sdm_kva, sdm->sdm_size);
 	bus_dmamem_free(sc->sc_dmat, &sdm->sdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, sdm->sdm_map);
-	free(sdm, M_DEVBUF, 0);
+	free(sdm, M_DEVBUF, sizeof *sdm);
 }
 
 u_int32_t
