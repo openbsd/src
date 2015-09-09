@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.82 2015/09/06 09:06:23 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.83 2015/09/09 15:13:35 deraadt Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2015 $
+.Dd $Mdocdate: September 9 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -35,38 +35,23 @@
 .Op Fl l Ar blocks
 .Ar disk
 .Sh DESCRIPTION
-On the i386 and other architectures, sector 0 of a bootable hard disk
-must contain MBR bootcode, the MBR partition table containing 4 slots,
-and a specific magic number (0xAA55).
-The 4 slots in the MBR partition table allow a disk drive to be
-divided into chunks known as MBR partitions.
+.Nm fdisk
+makes changes to the MBR table found on some disks.
+On such disks sector 0 contains a 4-entry MBR partition table
+that divides the space.
 .Pp
-On the i386, the BIOS loads sector 0 of the boot disk into memory,
-verifies the magic number, and begins executing the MBR bootcode
-at the first byte.
-The MBR bootcode then searches the MBR partition table for an
-.Dq active
-MBR partition (indicated by a
-.Ql \&*
-in the first column), and if one
-is found, the boot block from that MBR partition is loaded and executed in
-place of the original (MBR) boot block.
-.Pp
-Some other architectures (like the zaurus), consider sector 0 of the disk
-to contain the MBR partition table, but do not use the MBR bootcode at all.
-.Pp
-Upon first access to a disk, the partition information is retrieved,
-typically in
-.Xr disklabel 5
-format.
-The location of the disklabel can vary from architecture to architecture,
-but if one is not found the existence of an MBR partition table will create
-a spoofed prototypical disklabel which can be viewed using
+Each entry has a type.
+A type of
+.Ar 0xA6
+indicates an OpenBSD MBR partition, which starts with its own
+16-entry partition table known as a
+.Xr disklabel 5 .
+This can be edited using
 .Xr disklabel 8 .
-This spoofing mechanism is useful for permitting partition access for
-devices which would not normally have a
-.Xr disklabel 5
-sector.
+.Pp
+Caution is advised when editing these tables, since some platforms
+use tricks to boot and may rely on specific configurations created
+at install time.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
