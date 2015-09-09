@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.54 2015/03/30 21:08:40 miod Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.55 2015/09/09 23:33:37 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -288,6 +288,7 @@ RB_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	struct rwlock		lock;		/* Lock for map data */
+	struct mutex		mtx;
 
 	struct uvm_map_addr	addr;		/* Entry tree, by addr */
 
