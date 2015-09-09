@@ -1728,26 +1728,7 @@ uuid_is_nil
 uuid_to_string
 
 /* yp */
-xdr_domainname
-xdr_keydat
-xdr_mapname
-xdr_peername
-xdr_valdat
-xdr_ypbind_binding
-xdr_ypbind_resp
-xdr_ypbind_resptype
-xdr_ypbind_setdom
-xdr_ypmaplist
-xdr_ypreq_key
-xdr_ypreq_nokey
-xdr_ypresp_all
 xdr_ypresp_all_seq
-xdr_ypresp_key_val
-xdr_ypresp_maplist
-xdr_ypresp_master
-xdr_ypresp_order
-xdr_ypresp_val
-xdr_ypstat
 yp_all
 yp_bind
 yp_first

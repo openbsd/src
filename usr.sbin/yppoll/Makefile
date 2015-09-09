@@ -1,6 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:44:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2015/09/09 15:33:18 deraadt Exp $
 
 PROG=	yppoll
 MAN=	yppoll.8
+
+LDADD=-lrpcsvc
+DPADD=${LIBRPCSVC}
 
 .include <bsd.prog.mk>
