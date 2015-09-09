@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.260 2015/08/26 09:40:31 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.261 2015/09/09 12:50:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2378,11 +2378,7 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		ip6 = mtod(m, struct ip6_hdr *);
 
 		if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
-			struct ifnet *ifp;
 			ip6stat.ip6s_badvers++;
-			ifp = if_get(m->m_pkthdr.ph_ifidx);
-			if (ifp != NULL)
-				in6_ifstat_inc(ifp, ifs6_in_hdrerr);
 			goto dropit;
 		}
 

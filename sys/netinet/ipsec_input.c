@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.133 2015/06/16 11:09:40 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.134 2015/09/09 12:50:08 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1019,12 +1019,7 @@ ah6_input_cb(struct mbuf *m, int off, int protoff)
 		 * more sanity checks in header chain processing.
 		 */
 		if (m->m_pkthdr.len < off) {
-			struct ifnet *ifp;
-
 			ip6stat.ip6s_tooshort++;
-			ifp = if_get(m->m_pkthdr.ph_ifidx);
-			if (ifp != NULL)
-				in6_ifstat_inc(ifp, ifs6_in_truncated);
 			goto bad;
 		}
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);

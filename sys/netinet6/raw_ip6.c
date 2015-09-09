@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.79 2015/07/28 12:22:07 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.80 2015/09/09 12:50:08 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -224,15 +224,9 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			m_freem(m);
 		else {
 			u_int8_t *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
-			struct ifnet *ifp;
-
-			ifp = if_get(m->m_pkthdr.ph_ifidx);
-			if (ifp != NULL) {
-				in6_ifstat_inc(ifp, ifs6_in_protounknown);
-				icmp6_error(m, ICMP6_PARAM_PROB,
-				    ICMP6_PARAMPROB_NEXTHEADER,
-				    prvnxtp - mtod(m, u_int8_t *));
-			}
+			icmp6_error(m, ICMP6_PARAM_PROB,
+			    ICMP6_PARAMPROB_NEXTHEADER,
+			    prvnxtp - mtod(m, u_int8_t *));
 		}
 		ip6stat.ip6s_delivered--;
 	}
