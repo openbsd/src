@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.937 2015/09/01 19:12:25 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.938 2015/09/09 20:03:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2606,6 +2606,8 @@ pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
 	else
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
+
+	if_put(ifp);
 
 	if (kif == NULL) {
 		DPFPRINTF(LOG_ERR,
