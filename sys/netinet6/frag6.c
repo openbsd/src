@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.61 2015/07/08 07:31:14 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.62 2015/09/09 14:02:29 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -632,7 +632,6 @@ frag6_slowtimo(void)
 	TAILQ_FOREACH_SAFE(q6, &frag6_queue, ip6q_queue, nq6)
 		if (--q6->ip6q_ttl == 0) {
 			ip6stat.ip6s_fragtimeout++;
-			/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 			frag6_freef(q6);
 		}
 
@@ -644,7 +643,6 @@ frag6_slowtimo(void)
 	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets &&
 	    !TAILQ_EMPTY(&frag6_queue)) {
 		ip6stat.ip6s_fragoverflow++;
-		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(TAILQ_LAST(&frag6_queue, ip6q_head));
 	}
 	IP6Q_UNLOCK();
@@ -674,7 +672,6 @@ frag6_drain(void)
 		return;
 	while ((q6 = TAILQ_FIRST(&frag6_queue)) != NULL) {
 		ip6stat.ip6s_fragdropped++;
-		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(q6);
 	}
 	IP6Q_UNLOCK();
