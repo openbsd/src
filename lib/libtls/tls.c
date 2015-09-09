@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.16 2015/09/09 17:43:42 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.17 2015/09/09 18:22:33 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -332,42 +332,52 @@ int
 tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
 {
 	int ssl_ret;
+	int rv = -1;
 
 	*outlen = 0;
 
 	if (buflen > INT_MAX) {
 		tls_set_errorx(ctx, "buflen too long");
-		return (-1);
+		goto out;
 	}
 
 	ssl_ret = SSL_read(ctx->ssl_conn, buf, buflen);
 	if (ssl_ret > 0) {
 		*outlen = (size_t)ssl_ret;
-		return (0);
+		rv = 0;
+		goto out;
 	}
 
-	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read");
+	rv = tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read");
+ out:
+	errno = 0;
+	return (rv);
 }
 
 int
 tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 {
 	int ssl_ret;
+	int rv = -1;
 
 	*outlen = 0;
 
 	if (buflen > INT_MAX) {
 		tls_set_errorx(ctx, "buflen too long");
-		return (-1);
+		goto out;
 	}
 
 	ssl_ret = SSL_write(ctx->ssl_conn, buf, buflen);
 	if (ssl_ret > 0) {
 		*outlen = (size_t)ssl_ret;
-		return (0);
+		rv = 0;
+		goto out;
 	}
 
-	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
+	rv =  tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
+ out:
+	errno = 0;
+	return (rv);
 }
 
 int
@@ -382,7 +392,7 @@ tls_close(struct tls *ctx)
 			rv = tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret,
 			    "shutdown");
 			if (rv == TLS_READ_AGAIN || rv == TLS_WRITE_AGAIN)
-				return (rv);
+				goto out;
 		}
 	}
 
@@ -402,6 +412,7 @@ tls_close(struct tls *ctx)
 		}
 		ctx->socket = -1;
 	}
-
+ out:
+	errno = 0;
 	return (rv);
 }
