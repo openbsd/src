@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.40 2015/09/01 05:10:43 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.41 2015/09/09 12:16:43 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -149,13 +149,13 @@ static inline void
 _dl_reloc_plt(Elf_Addr *where1, Elf_Addr *where2, Elf_Addr value)
 {
 	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
+	 * At the PLT entry pointed at by `where1' and `where2', we now
+	 * construct a direct transfer to the now fully resolved function
 	 * address.  The resulting code in the jump slot is:
 	 *
-	 *	sethi	%hi(roffset), %g1
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
+	 *		sethi	%hi(roffset), %g1
+	 * where1:	sethi	%hi(addr), %g1
+	 * where2:	jmp	%g1+%lo(addr)
 	 *
 	 * If this was being directly applied to the PLT during resolution
 	 * of a lazy binding, then to make it thread safe we would need to
@@ -168,8 +168,6 @@ _dl_reloc_plt(Elf_Addr *where1, Elf_Addr *where2, Elf_Addr value)
 	 *
 	 * HOWEVER, we do lazy binding via the kbind syscall, so we can
 	 * write them in order here and reorder by the kbind blocking.
-	 * Non-lazy binding does lots of work before returning, so no
-	 * reordering or iflushing is needed.
 	 */
 #define SETHI	0x03000000
 #define JMP	0x81c06000
@@ -402,6 +400,13 @@ _dl_bind(elf_object_t *object, int reloff)
 		    : "i" (ST_SYSCALL), "r" (syscall_num), "r" (arg3),
 		    "r" (arg4) : "cc", "memory" );
 	}
+
+	/*
+	 * iflush requires 5 subsequent cycles to be sure all copies
+	 * are flushed from the CPU and the icache.
+	 */
+	__asm volatile("iflush %0+8; iflush %0+4; nop; nop; nop; nop; nop" :
+	    : "r" (addr));
 
 	return (value);
 }
