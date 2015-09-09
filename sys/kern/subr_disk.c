@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.200 2015/09/01 01:06:35 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.201 2015/09/09 19:43:26 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -482,10 +482,6 @@ donot:
 	}
 
 notmbr:
-	if (partoffp == NULL)
-		/* Must not modify *lp when partoffp is set. */
-		lp->d_npartitions = MAXPARTITIONS;
-
 	if (n == 0 && sector == DOSBBSECTOR && ourpart == -1) {
 		u_int16_t fattest;
 
@@ -814,10 +810,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		gptpartend = letoh64(gp_tmp->gp_lba_end) + 1;
 	} else
 		spoofonly = 1;	/* No disklabel to read from disk. */
-
-	if (!partoffp)
-		/* Must not modify *lp when partoffp is set. */
-		lp->d_npartitions = MAXPARTITIONS;
 
 	free(gp, M_DEVBUF, gpsz);
 
