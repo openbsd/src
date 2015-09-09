@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.15 2015/08/27 15:26:49 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.16 2015/09/09 17:43:42 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -81,7 +81,6 @@ tls_set_verror(struct tls *ctx, int errnum, const char *fmt, va_list ap)
 		ctx->errmsg = NULL;
 		goto err;
 	}
-	
 	rv = 0;
 
 err:
@@ -347,7 +346,7 @@ tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
 		return (0);
 	}
 
-	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read"); 
+	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read");
 }
 
 int
@@ -368,7 +367,7 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 		return (0);
 	}
 
-	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write"); 
+	return tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
 }
 
 int
