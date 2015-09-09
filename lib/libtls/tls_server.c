@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.10 2015/08/27 15:26:50 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.11 2015/09/09 14:32:06 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -148,11 +148,5 @@ err:
 int
 tls_accept_socket(struct tls *ctx, struct tls **cctx, int socket)
 {
-	int rv;
-
-	rv = tls_accept_fds(ctx, cctx, socket, socket);
-	if (*cctx != NULL)
-		(*cctx)->socket = socket;
-
-	return (rv);
+	return (tls_accept_fds(ctx, cctx, socket, socket));
 }

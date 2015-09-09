@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.22 2015/09/08 15:29:34 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.23 2015/09/09 14:32:06 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -145,6 +145,8 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 		goto err;
 	}
 
+	ctx->socket = s;
+
 	rv = 0;
 
 err:
@@ -157,8 +159,6 @@ err:
 int
 tls_connect_socket(struct tls *ctx, int s, const char *servername)
 {
-	ctx->socket = s;
-
 	return tls_connect_fds(ctx, s, s, servername);
 }
 
