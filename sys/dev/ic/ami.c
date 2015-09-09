@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.230 2014/11/05 01:02:10 daniel Exp $	*/
+/*	$OpenBSD: ami.c,v 1.231 2015/09/09 18:23:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -261,7 +261,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, am->am_map);
 amfree:
-	free(am, M_DEVBUF, 0);
+	free(am, M_DEVBUF, sizeof *am);
 
 	return (NULL);
 }
@@ -273,7 +273,7 @@ ami_freemem(struct ami_softc *sc, struct ami_mem *am)
 	bus_dmamem_unmap(sc->sc_dmat, am->am_kva, am->am_size);
 	bus_dmamem_free(sc->sc_dmat, &am->am_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, am->am_map);
-	free(am, M_DEVBUF, 0);
+	free(am, M_DEVBUF, sizeof *am);
 }
 
 void
@@ -1948,7 +1948,7 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 	bcopy(bi, &sc->sc_bi, sizeof sc->sc_bi);
 	error = 0;
 bail:
-	free(p, M_DEVBUF, 0);
+	free(p, M_DEVBUF, sizeof *p);
 done:
 	dma_free(inqbuf, sizeof(*inqbuf));
 	return (error);
@@ -2181,7 +2181,7 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 	strlcpy(bv->bv_dev, sc->sc_hdr[i].dev, sizeof(bv->bv_dev));
 	
 bail:
-	free(p, M_DEVBUF, 0);
+	free(p, M_DEVBUF, sizeof *p);
 
 	return (error);
 }
@@ -2444,9 +2444,9 @@ ami_create_sensors(struct ami_softc *sc)
 	return (0);
 
 freebd:
-	free(sc->sc_bd, M_DEVBUF, 0);
+	free(sc->sc_bd, M_DEVBUF, sizeof(*sc->sc_bd));
 bad:
-	free(sc->sc_sensors, M_DEVBUF, 0);
+	free(sc->sc_sensors, M_DEVBUF, sc->sc_nunits * sizeof(struct ksensor));
 
 	return (1);
 }

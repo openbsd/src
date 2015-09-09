@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.73 2015/05/03 02:10:13 jsg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.74 2015/09/09 18:23:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -401,7 +401,8 @@ ciss_attach(struct ciss_softc *sc)
 			sensor_attach(&sc->sensordev, &sc->sensors[i]);
 		}
 		if (sensor_task_register(sc, ciss_sensors, 10) == NULL)
-			free(sc->sensors, M_DEVBUF, 0);
+			free(sc->sensors, M_DEVBUF,
+			    sc->maxunits * sizeof(struct ksensor));
 		else
 			sensordev_install(&sc->sensordev);
 	}

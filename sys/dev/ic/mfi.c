@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.164 2015/05/29 00:33:37 uebayasi Exp $ */
+/* $OpenBSD: mfi.c,v 1.165 2015/09/09 18:23:55 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -377,7 +377,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, mm->am_map);
 amfree:
-	free(mm, M_DEVBUF, 0);
+	free(mm, M_DEVBUF, sizeof *mm);
 
 	return (NULL);
 }
@@ -391,7 +391,7 @@ mfi_freemem(struct mfi_softc *sc, struct mfi_mem *mm)
 	bus_dmamem_unmap(sc->sc_dmat, mm->am_kva, mm->am_size);
 	bus_dmamem_free(sc->sc_dmat, &mm->am_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, mm->am_map);
-	free(mm, M_DEVBUF, 0);
+	free(mm, M_DEVBUF, sizeof *mm);
 }
 
 int
@@ -862,7 +862,7 @@ mfi_syspd(struct mfi_softc *sc)
 		sc->sc_pd->pd_links[i] = pl;
 	}
 
-	free(pd, M_TEMP, 0);
+	free(pd, M_TEMP, sizeof *pd);
 
 	link = &sc->sc_pd->pd_link;
 	link->adapter = &mfi_pd_switch;
@@ -885,12 +885,12 @@ nopl:
 		if (pl == NULL)
 			break;
 
-		free(pl, M_DEVBUF, 0);
+		free(pl, M_DEVBUF, sizeof *pl);
 	}
 nopd:
-	free(pd, M_TEMP, 0);
+	free(pd, M_TEMP, sizeof *pd);
 nopdsc:
-	free(sc->sc_pd, M_DEVBUF, 0);
+	free(sc->sc_pd, M_DEVBUF, sizeof *sc->sc_pd);
 	return (1);
 }
 
@@ -1599,19 +1599,19 @@ mfi_bio_getitall(struct mfi_softc *sc)
 		goto done;
 	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg,
 	    NULL)) {
-		free(cfg, M_DEVBUF, 0);
+		free(cfg, M_DEVBUF, sizeof *cfg);
 		goto done;
 	}
 
 	size = cfg->mfc_size;
-	free(cfg, M_DEVBUF, 0);
+	free(cfg, M_DEVBUF, sizeof *cfg);
 
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (cfg == NULL)
 		goto done;
 	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL)) {
-		free(cfg, M_DEVBUF, 0);
+		free(cfg, M_DEVBUF, size);
 		goto done;
 	}
 
@@ -1631,7 +1631,7 @@ mfi_bio_getitall(struct mfi_softc *sc)
 		if (sc->sc_ld_details)
 			free(sc->sc_ld_details, M_DEVBUF, 0);
 
-		ld_det = malloc( size, M_DEVBUF, M_NOWAIT | M_ZERO);
+		ld_det = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ld_det == NULL)
 			goto done;
 		sc->sc_ld_sz = size;
@@ -1894,7 +1894,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 
 	rv = 0;
 freeme:
-	free(pd, M_DEVBUF, 0);
+	free(pd, M_DEVBUF, sizeof *pd);
 
 	return (rv);
 }
@@ -2002,7 +2002,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 
 	rv = 0;
 done:
-	free(pd, M_DEVBUF, 0);
+	free(pd, M_DEVBUF, sizeof *pd);
 	return (rv);
 }
 
@@ -2074,8 +2074,8 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 
 	rv = 0;
 done:
-	free(pd, M_DEVBUF, 0);
-	free(info, M_DEVBUF, 0);
+	free(pd, M_DEVBUF, sizeof *pd);
+	free(info, M_DEVBUF, sizeof *info);
 	return (rv);
 }
 
@@ -2242,7 +2242,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 		goto freeme;
 
 	size = cfg->mfc_size;
-	free(cfg, M_DEVBUF, 0);
+	free(cfg, M_DEVBUF, sizeof *cfg);
 
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
@@ -2307,7 +2307,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs 6\n", DEVNAME(sc));
 	rv = 0;
 freeme:
-	free(pd, M_DEVBUF, 0);
+	free(pd, M_DEVBUF, sizeof *pd);
 	free(cfg, M_DEVBUF, 0);
 
 	return (rv);
@@ -2475,7 +2475,8 @@ mfi_create_sensors(struct mfi_softc *sc)
 	return (0);
 
 bad:
-	free(sc->sc_sensors, M_DEVBUF, 0);
+	free(sc->sc_sensors, M_DEVBUF,
+	    sc->sc_ld_cnt * sizeof(struct ksensor));
 
 	return (1);
 }

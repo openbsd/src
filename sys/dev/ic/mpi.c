@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.201 2015/05/04 03:59:42 jsg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.202 2015/09/09 18:23:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -561,7 +561,7 @@ mpi_run_ppr(struct mpi_softc *sc)
 	}
 
 out:
-	free(physdisk_pg, M_TEMP, 0);
+	free(physdisk_pg, M_TEMP, pagelen);
 }
 
 int
@@ -857,7 +857,7 @@ mpi_cfg_sas(struct mpi_softc *sc)
 	}
 
 out:
-	free(pg, M_TEMP, 0);
+	free(pg, M_TEMP, pagelen);
 	return (rv);
 }
 
@@ -1021,7 +1021,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, mdm->mdm_map);
 mdmfree:
-	free(mdm, M_DEVBUF, 0);
+	free(mdm, M_DEVBUF, sizeof *mdm);
 
 	return (NULL);
 }
@@ -1035,7 +1035,7 @@ mpi_dmamem_free(struct mpi_softc *sc, struct mpi_dmamem *mdm)
 	bus_dmamem_unmap(sc->sc_dmat, mdm->mdm_kva, mdm->mdm_size);
 	bus_dmamem_free(sc->sc_dmat, &mdm->mdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, mdm->mdm_map);
-	free(mdm, M_DEVBUF, 0);
+	free(mdm, M_DEVBUF, sizeof *mdm);
 }
 
 int
@@ -1641,7 +1641,7 @@ mpi_scsi_probe_virtual(struct scsi_link *link)
 	if (rv == 0)
 		SET(link->flags, SDEV_VIRTUAL);
 
-	free(rp0, M_TEMP, 0);
+	free(rp0, M_TEMP, len);
 	return (0);
 }
 
@@ -2710,7 +2710,7 @@ mpi_manufacturing(struct mpi_softc *sc)
 	rv = 0;
 
 out:
-	free(pg, M_TEMP, 0);
+	free(pg, M_TEMP, pagelen);
 	return (rv);
 }
 
@@ -2763,7 +2763,7 @@ mpi_get_raid(struct mpi_softc *sc)
 		sc->sc_flags |= MPI_F_RAID;
 
 out:
-	free(vol_page, M_TEMP, 0);
+	free(vol_page, M_TEMP, pagelen);
 }
 
 int
@@ -3086,7 +3086,7 @@ mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	scsi_io_put(&sc->sc_iopool, ccb);
 
 done:
-	free(rpg0, M_TEMP, 0);
+	free(rpg0, M_TEMP, len);
 	return (rv);
 }
 
@@ -3402,7 +3402,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 {
 	struct device		*dev;
 	struct scsi_link	*link;
-	int			i, vol;
+	int			i, vol, nsensors;
 
 	/* count volumes */
 	for (i = 0, vol = 0; i < sc->sc_buswidth; i++) {
@@ -3422,6 +3422,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
+	nsensors = vol;
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
@@ -3452,7 +3453,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 	return (0);
 
 bad:
-	free(sc->sc_sensors, M_DEVBUF, 0);
+	free(sc->sc_sensors, M_DEVBUF, nsensors * sizeof(struct ksensor));
 	return (1);
 }
 

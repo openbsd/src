@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.106 2015/07/06 07:20:03 stsp Exp $ */
+/*	$OpenBSD: malo.c,v 1.107 2015/09/09 18:23:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1798,10 +1798,10 @@ malo_load_bootimg(struct malo_softc *sc)
 	if (i == 10) {
 		printf("%s: timeout at boot firmware load!\n",
 		    sc->sc_dev.dv_xname);
-		free(ucode, M_DEVBUF, 0);
+		free(ucode, M_DEVBUF, size);
 		return (ETIMEDOUT);
 	}
-	free(ucode, M_DEVBUF, 0);
+	free(ucode, M_DEVBUF, size);
 
 	/* tell the card we're done and... */
 	malo_mem_write2(sc, 0xbef8, 0x001);
