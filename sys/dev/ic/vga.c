@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.67 2015/07/26 03:17:07 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.68 2015/09/09 18:23:39 deraadt Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -730,7 +730,7 @@ vga_free_screen(void *v, void *cookie)
 		if (vc->nscreens != 0)
 			free(vs->pcs.mem, M_DEVBUF, 0);
 
-		free(vs, M_DEVBUF, 0);
+		free(vs, M_DEVBUF, sizeof *vs);
 	} else
 		panic("vga_free_screen: console");
 

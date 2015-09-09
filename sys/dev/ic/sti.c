@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.76 2015/04/05 23:25:57 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.77 2015/09/09 18:23:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -165,7 +165,7 @@ sti_attach_common(struct sti_softc *sc, bus_space_tag_t iot,
 	rom->rom_softc = sc;
 	rc = sti_rom_setup(rom, iot, memt, romh, sc->bases, codebase);
 	if (rc != 0) {
-		free(rom, M_DEVBUF, 0);
+		free(rom, M_DEVBUF, sizeof *rom);
 		return (rc);
 	}
 
@@ -197,7 +197,7 @@ sti_attach_screen(struct sti_softc *sc, int flags)
 	scr->scr_rom = sc->sc_rom;
 	rc = sti_screen_setup(scr, flags);
 	if (rc != 0) {
-		free(scr, M_DEVBUF, 0);
+		free(scr, M_DEVBUF, sizeof *scr);
 		return (NULL);
 	}
 
