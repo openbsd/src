@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.20 2015/09/10 10:14:20 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.21 2015/09/10 10:22:28 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -383,13 +383,11 @@ tls_handshake(struct tls *ctx)
 	return (rv);
 }
 
-int
-tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
+ssize_t
+tls_read(struct tls *ctx, void *buf, size_t buflen)
 {
+	ssize_t rv = -1;
 	int ssl_ret;
-	int rv = -1;
-
-	*outlen = 0;
 
 	if ((ctx->state & TLS_HANDSHAKE_COMPLETE) == 0) {
 		if ((rv = tls_handshake(ctx)) != 0)
@@ -402,24 +400,21 @@ tls_read(struct tls *ctx, void *buf, size_t buflen, size_t *outlen)
 	}
 
 	if ((ssl_ret = SSL_read(ctx->ssl_conn, buf, buflen)) > 0) {
-		*outlen = (size_t)ssl_ret;
-		rv = 0;
+		rv = (ssize_t)ssl_ret;
 		goto out;
 	}
 
-	rv = tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read");
+	rv = (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read");
  out:
 	errno = 0;
 	return (rv);
 }
 
-int
-tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
+ssize_t
+tls_write(struct tls *ctx, const void *buf, size_t buflen)
 {
+	ssize_t rv = -1;
 	int ssl_ret;
-	int rv = -1;
-
-	*outlen = 0;
 
 	if ((ctx->state & TLS_HANDSHAKE_COMPLETE) == 0) {
 		if ((rv = tls_handshake(ctx)) != 0)
@@ -432,12 +427,11 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen, size_t *outlen)
 	}
 
 	if ((ssl_ret = SSL_write(ctx->ssl_conn, buf, buflen)) > 0) {
-		*outlen = (size_t)ssl_ret;
-		rv = 0;
+		rv = (ssize_t)ssl_ret;
 		goto out;
 	}
 
-	rv =  tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
+	rv =  (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
  out:
 	errno = 0;
 	return (rv);
