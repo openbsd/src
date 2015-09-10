@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.201 2015/09/09 19:43:26 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.202 2015/09/10 14:11:53 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -765,9 +765,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		break;
 	}
 
-	/* find OpenBSD partition */
-	for (gp_tmp = gp, i = 0; i < letoh32(gh.gh_part_num) && ourpart == -1;
-	    gp_tmp++, i++) {
+	/* Find OpenBSD partition and spoof others along the way. */
+	for (gp_tmp = gp, i = 0; i < letoh32(gh.gh_part_num); gp_tmp++, i++) {
 		if (letoh64(gp_tmp->gp_lba_start) > letoh64(gp_tmp->gp_lba_end)
 		    || letoh64(gp_tmp->gp_lba_start) < letoh64(gh.gh_lba_start)
 		    || letoh64(gp_tmp->gp_lba_end) > letoh64(gh.gh_lba_end))
