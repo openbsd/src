@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.32 2015/09/10 14:17:22 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.33 2015/09/10 14:57:29 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -131,10 +131,10 @@
 .Fn tls_accept_socket "struct tls *tls" "struct tls **cctx" "int socket"
 .Ft "int"
 .Fn tls_handshake "struct tls *ctx"
-.Ft "int"
-.Fn tls_read "struct tls *ctx" "void *buf" "size_t buflen" "size_t *outlen"
-.Ft "int"
-.Fn tls_write "struct tls *ctx" "const void *buf" "size_t buflen" "size_t *outlen"
+.Ft "ssize_t"
+.Fn tls_read "struct tls *ctx" "void *buf" "size_t buflen"
+.Ft "ssize_t"
+.Fn tls_write "struct tls *ctx" "const void *buf" "size_t buflen"
 .Ft "int"
 .Fn tls_close "struct tls *ctx"
 .Sh DESCRIPTION
@@ -431,6 +431,8 @@ or
 .Sh RETURN VALUES
 Functions that return
 .Vt int
+or 
+.Vt ssize_t 
 will return 0 on success and -1 on error.
 Functions that return a pointer will return NULL on error, which indicates an
 out of memory condition.
@@ -454,20 +456,61 @@ In the case of blocking file descriptors, the same function call should be
 repeated immediately.
 In the case of non-blocking file descriptors, the same function call should be
 repeated when the required condition has been met.
+.Pp
+Callers of these functions can not rely on the value of the global
+.Ar errno .
+To prevent mishandling of error conditions,
+.Fn tls_handshake ,
+.Fn tls_read ,
+.Fn tls_write ,
+and
+.Fn tls_close
+all explicitly clear
+.Ar errno .
 .Sh EXAMPLES
-Example showing how to handle TLS writes.
+The following example demonstrates how to handle TLS writes on a blocking
+file descriptor:
 .Bd -literal -offset indent
 \&...
 while (len > 0) {
-	ret = tls_write(ctx, buf, len, &num_written);
-	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
-		/* Retry - use select to wait for non-blocking. */
-	} else if (ret < 0) {
-		return -1;
-	} else {
-		buf += num_written;
-		len -= num_written;
-	}
+	ret = tls_write(ctx, buf, len);
+	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
+		continue;
+        if (ret < 0)
+		err(1, "tls_write: %s", tls_error(ctx));
+	buf += ret;
+	len -= ret;
+}
+\&...
+.Ed
+.Pp
+The following example demonstrates how to handle TLS writes on a
+non-blocking file descriptor using
+.Xr poll 2
+.Bd -literal -offset indent
+\&...
+pevent = POLLOUT;
+while (len > 0) {
+	pfd[0].fd = fd;
+	pfd[0].events = pevent;
+	nready = poll(pfd, 1, 0);
+	if (nready == -1)
+		err(1, "poll");
+	if ((pfd[0].revents & (POLLERR|POLLNVAL)))
+		errx(1, "bad fd %d", pfd[0].fd);
+	if ((pfd[0].revents & (pevent|POLLHUP))) {
+		ret = tls_write(ctx, buf, len);
+		if (ret == TLS_WANT_POLLIN)
+			pevent = POLLIN;
+		else if (ret == TLS_WANT_POLLOUT)
+			pevent = POLLOUT;
+		else if (ret < 0)
+			err(1, "tls_write: %s", tls_error(ctx));
+		else {
+			buf += ret;
+			len -= ret;
+		}
+        }
 }
 \&...
 .Ed
