@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.185 2015/09/10 18:32:06 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.186 2015/09/10 19:02:09 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -275,9 +275,7 @@ int	 linesize;
 
 int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys,
 		 fd_udp, fd_udp6, fd_bind, fd_listen, fd_unix[MAXUNIX];
-struct event	 ev_ctlaccept, ev_ctlread, ev_ctlwrite, ev_klog, ev_sendsys,
-		 ev_udp, ev_udp6, ev_bind, ev_listen, ev_unix[MAXUNIX],
-		 ev_hup, ev_int, ev_quit, ev_term, ev_mark;
+struct event	 *ev_ctlaccept, *ev_ctlread, *ev_ctlwrite;
 
 LIST_HEAD(peer_list, peer) peers;
 struct peer {
@@ -343,6 +341,9 @@ int
 main(int argc, char *argv[])
 {
 	struct timeval	 to;
+	struct event	*ev_klog, *ev_sendsys,
+			*ev_udp, *ev_udp6, *ev_bind, *ev_listen, *ev_unix,
+			*ev_hup, *ev_int, *ev_quit, *ev_term, *ev_mark;
 	const char	*errstr;
 	char		*p;
 	int		 ch, i;
@@ -599,30 +600,47 @@ main(int argc, char *argv[])
 	/* Process is now unprivileged and inside a chroot */
 	event_init();
 
-	event_set(&ev_ctlaccept, fd_ctlsock, EV_READ|EV_PERSIST,
-	    ctlsock_acceptcb, &ev_ctlaccept);
-	event_set(&ev_ctlread, fd_ctlconn, EV_READ|EV_PERSIST,
-	    ctlconn_readcb, &ev_ctlread);
-	event_set(&ev_ctlwrite, fd_ctlconn, EV_WRITE|EV_PERSIST,
-	    ctlconn_writecb, &ev_ctlwrite);
-	event_set(&ev_klog, fd_klog, EV_READ|EV_PERSIST, klog_readcb, &ev_klog);
-	event_set(&ev_sendsys, fd_sendsys, EV_READ|EV_PERSIST, unix_readcb,
-	    &ev_sendsys);
-	event_set(&ev_udp, fd_udp, EV_READ|EV_PERSIST, udp_readcb, &ev_udp);
-	event_set(&ev_udp6, fd_udp6, EV_READ|EV_PERSIST, udp_readcb, &ev_udp6);
-	event_set(&ev_bind, fd_bind, EV_READ|EV_PERSIST, udp_readcb, &ev_bind);
-	event_set(&ev_listen, fd_listen, EV_READ|EV_PERSIST, tcp_acceptcb,
-	    &ev_listen);
+	if ((ev_ctlaccept = malloc(sizeof(struct event))) == NULL ||
+	    (ev_ctlread = malloc(sizeof(struct event))) == NULL ||
+	    (ev_ctlwrite = malloc(sizeof(struct event))) == NULL ||
+	    (ev_klog = malloc(sizeof(struct event))) == NULL ||
+	    (ev_sendsys = malloc(sizeof(struct event))) == NULL ||
+	    (ev_udp = malloc(sizeof(struct event))) == NULL ||
+	    (ev_udp6 = malloc(sizeof(struct event))) == NULL ||
+	    (ev_bind = malloc(sizeof(struct event))) == NULL ||
+	    (ev_listen = malloc(sizeof(struct event))) == NULL ||
+	    (ev_unix = reallocarray(NULL,nunix,sizeof(struct event))) == NULL ||
+	    (ev_hup = malloc(sizeof(struct event))) == NULL ||
+	    (ev_int = malloc(sizeof(struct event))) == NULL ||
+	    (ev_quit = malloc(sizeof(struct event))) == NULL ||
+	    (ev_term = malloc(sizeof(struct event))) == NULL ||
+	    (ev_mark = malloc(sizeof(struct event))) == NULL)
+		err(1, "malloc");
+
+	event_set(ev_ctlaccept, fd_ctlsock, EV_READ|EV_PERSIST,
+	    ctlsock_acceptcb, ev_ctlaccept);
+	event_set(ev_ctlread, fd_ctlconn, EV_READ|EV_PERSIST,
+	    ctlconn_readcb, ev_ctlread);
+	event_set(ev_ctlwrite, fd_ctlconn, EV_WRITE|EV_PERSIST,
+	    ctlconn_writecb, ev_ctlwrite);
+	event_set(ev_klog, fd_klog, EV_READ|EV_PERSIST, klog_readcb, ev_klog);
+	event_set(ev_sendsys, fd_sendsys, EV_READ|EV_PERSIST, unix_readcb,
+	    ev_sendsys);
+	event_set(ev_udp, fd_udp, EV_READ|EV_PERSIST, udp_readcb, ev_udp);
+	event_set(ev_udp6, fd_udp6, EV_READ|EV_PERSIST, udp_readcb, ev_udp6);
+	event_set(ev_bind, fd_bind, EV_READ|EV_PERSIST, udp_readcb, ev_bind);
+	event_set(ev_listen, fd_listen, EV_READ|EV_PERSIST, tcp_acceptcb,
+	    ev_listen);
 	for (i = 0; i < nunix; i++)
 		event_set(&ev_unix[i], fd_unix[i], EV_READ|EV_PERSIST,
 		    unix_readcb, &ev_unix[i]);
 
-	signal_set(&ev_hup, SIGHUP, init_signalcb, &ev_hup);
-	signal_set(&ev_int, SIGINT, die_signalcb, &ev_int);
-	signal_set(&ev_quit, SIGQUIT, die_signalcb, &ev_quit);
-	signal_set(&ev_term, SIGTERM, die_signalcb, &ev_term);
+	signal_set(ev_hup, SIGHUP, init_signalcb, ev_hup);
+	signal_set(ev_int, SIGINT, die_signalcb, ev_int);
+	signal_set(ev_quit, SIGQUIT, die_signalcb, ev_quit);
+	signal_set(ev_term, SIGTERM, die_signalcb, ev_term);
 
-	evtimer_set(&ev_mark, mark_timercb, &ev_mark);
+	evtimer_set(ev_mark, mark_timercb, ev_mark);
 
 	init();
 
@@ -652,30 +670,30 @@ main(int argc, char *argv[])
 	priv_config_parse_done();
 
 	if (fd_ctlsock != -1)
-		event_add(&ev_ctlaccept, NULL);
+		event_add(ev_ctlaccept, NULL);
 	if (fd_klog != -1)
-		event_add(&ev_klog, NULL);
+		event_add(ev_klog, NULL);
 	if (fd_sendsys != -1)
-		event_add(&ev_sendsys, NULL);
+		event_add(ev_sendsys, NULL);
 	if (!SecureMode) {
 		if (fd_udp != -1)
-			event_add(&ev_udp, NULL);
+			event_add(ev_udp, NULL);
 		if (fd_udp6 != -1)
-			event_add(&ev_udp6, NULL);
+			event_add(ev_udp6, NULL);
 	}
 	if (fd_bind != -1)
-		event_add(&ev_bind, NULL);
+		event_add(ev_bind, NULL);
 	if (fd_listen != -1)
-		event_add(&ev_listen, NULL);
+		event_add(ev_listen, NULL);
 	for (i = 0; i < nunix; i++)
 		if (fd_unix[i] != -1)
 			event_add(&ev_unix[i], NULL);
 
-	signal_add(&ev_hup, NULL);
-	signal_add(&ev_term, NULL);
+	signal_add(ev_hup, NULL);
+	signal_add(ev_term, NULL);
 	if (Debug) {
-		signal_add(&ev_int, NULL);
-		signal_add(&ev_quit, NULL);
+		signal_add(ev_int, NULL);
+		signal_add(ev_quit, NULL);
 	} else {
 		(void)signal(SIGINT, SIG_IGN);
 		(void)signal(SIGQUIT, SIG_IGN);
@@ -685,7 +703,7 @@ main(int argc, char *argv[])
 
 	to.tv_sec = TIMERINTVL;
 	to.tv_usec = 0;
-	evtimer_add(&ev_mark, &to);
+	evtimer_add(ev_mark, &to);
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: start", LocalHostName, ADDDATE);
 	dprintf("syslogd: started\n");
@@ -2706,9 +2724,9 @@ ctlconn_cleanup(void)
 	if (close(fd_ctlconn) == -1)
 		logerror("close ctlconn");
 	fd_ctlconn = -1;
-	event_del(&ev_ctlread);
-	event_del(&ev_ctlwrite);
-	event_add(&ev_ctlaccept, NULL);
+	event_del(ev_ctlread);
+	event_del(ev_ctlwrite);
+	event_add(ev_ctlaccept, NULL);
 
 	if (ctl_state == CTL_WRITING_CONT_REPLY)
 		SIMPLEQ_FOREACH(f, &Files, f_next)
@@ -2741,11 +2759,11 @@ ctlsock_acceptcb(int fd, short event, void *arg)
 
 	fd_ctlconn = fd;
 	/* file descriptor has changed, reset event */
-	event_set(&ev_ctlread, fd_ctlconn, EV_READ|EV_PERSIST,
-	    ctlconn_readcb, &ev_ctlread);
-	event_set(&ev_ctlwrite, fd_ctlconn, EV_WRITE|EV_PERSIST,
-	    ctlconn_writecb, &ev_ctlwrite);
-	event_add(&ev_ctlread, NULL);
+	event_set(ev_ctlread, fd_ctlconn, EV_READ|EV_PERSIST,
+	    ctlconn_readcb, ev_ctlread);
+	event_set(ev_ctlwrite, fd_ctlconn, EV_WRITE|EV_PERSIST,
+	    ctlconn_writecb, ev_ctlwrite);
+	event_add(ev_ctlread, NULL);
 	ctl_state = CTL_READING_CMD;
 	ctl_cmd_bytes = 0;
 }
@@ -2888,11 +2906,11 @@ ctlconn_readcb(int fd, short event, void *arg)
 	ctl_state = (ctl_cmd.cmd == CMD_READ_CONT) ?
 	    CTL_WRITING_CONT_REPLY : CTL_WRITING_REPLY;
 
-	event_add(&ev_ctlwrite, NULL);
+	event_add(ev_ctlwrite, NULL);
 
 	/* another syslogc can kick us out */
 	if (ctl_state == CTL_WRITING_CONT_REPLY)
-		event_add(&ev_ctlaccept, NULL);
+		event_add(ev_ctlaccept, NULL);
 }
 
 void
@@ -2992,5 +3010,5 @@ ctlconn_logto(char *line)
 	memcpy(ctl_reply + ctl_reply_size, line, l);
 	memcpy(ctl_reply + ctl_reply_size + l, "\n", 2);
 	ctl_reply_size += l + 1;
-	event_add(&ev_ctlwrite, NULL);
+	event_add(ev_ctlwrite, NULL);
 }
