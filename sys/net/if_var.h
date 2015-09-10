@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.36 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.37 2015/09/10 14:56:41 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include <sys/queue.h>
 #include <sys/mbuf.h>
+#include <sys/srp.h>
 #ifdef _KERNEL
 #include <net/hfsc.h>
 #endif
