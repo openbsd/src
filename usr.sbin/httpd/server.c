@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.76 2015/09/07 14:46:24 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.77 2015/09/10 10:15:46 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ void		 server_tls_readcb(int, short, void *);
 void		 server_tls_writecb(int, short, void *);
 
 void		 server_accept(int, short, void *);
-void		 server_accept_tls(int, short, void *);
+void		 server_handshake_tls(int, short, void *);
 void		 server_input(struct client *);
 void		 server_inflight_dec(struct client *, const char *);
 
@@ -915,8 +915,13 @@ server_accept(int fd, short event, void *arg)
 	}
 
 	if (srv->srv_conf.flags & SRVFLAG_TLS) {
+		if (tls_accept_socket(srv->srv_tls_ctx, &clt->clt_tls_ctx,
+		    clt->clt_s) != 0) {
+			server_close(clt, "failed to setup tls context");
+			return;
+		}
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
-		    server_accept_tls, &clt->clt_tv_start,
+		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 		return;
 	}
@@ -937,34 +942,33 @@ server_accept(int fd, short event, void *arg)
 }
 
 void
-server_accept_tls(int fd, short event, void *arg)
+server_handshake_tls(int fd, short event, void *arg)
 {
 	struct client *clt = (struct client *)arg;
 	struct server *srv = (struct server *)clt->clt_srv;
 	int ret;
 
 	if (event == EV_TIMEOUT) {
-		server_close(clt, "TLS accept timeout");
+		server_close(clt, "TLS handshake timeout");
 		return;
 	}
 
 	if (srv->srv_tls_ctx == NULL)
 		fatalx("NULL tls context");
 
-	ret = tls_accept_socket(srv->srv_tls_ctx, &clt->clt_tls_ctx,
-	    clt->clt_s);
+	ret = tls_handshake(clt->clt_tls_ctx);
 	if (ret == TLS_READ_AGAIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
-		    server_accept_tls, &clt->clt_tv_start,
+		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 	} else if (ret == TLS_WRITE_AGAIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_WRITE,
-		    server_accept_tls, &clt->clt_tv_start,
+		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
 	} else if (ret != 0) {
-		log_warnx("%s: TLS accept failed - %s", __func__,
-		    tls_error(srv->srv_tls_ctx));
-		server_close(clt, "TLS accept failed");
+		log_warnx("%s: TLS handshake failed - %s", __func__,
+		    tls_error(clt->clt_tls_ctx));
+		server_close(clt, "TLS handshake failed");
 		return;
 	}
 
