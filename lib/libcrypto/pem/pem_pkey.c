@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.20 2015/02/11 03:19:37 doug Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.21 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,7 +144,7 @@ p8err:
 		PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, ERR_R_ASN1_LIB);
 err:
 	free(nm);
-	OPENSSL_cleanse(data, len);
+	explicit_bzero(data, len);
 	free(data);
 	return (ret);
 }

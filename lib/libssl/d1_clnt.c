@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.48 2015/09/02 17:59:15 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.49 2015/09/10 15:56:26 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -731,7 +731,7 @@ dtls1_send_client_key_exchange(SSL *s)
 			    s->method->ssl3_enc->generate_master_secret(s,
 			    s->session->master_key,
 			    tmp_buf, sizeof tmp_buf);
-			OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
+			explicit_bzero(tmp_buf, sizeof tmp_buf);
 		} else if (alg_k & SSL_kDHE) {
 			DH *dh_srvr, *dh_clnt;
 

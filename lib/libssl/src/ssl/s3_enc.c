@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.61 2015/07/19 20:32:18 doug Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.62 2015/09/10 15:56:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -209,7 +209,7 @@ ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 
 		km += MD5_DIGEST_LENGTH;
 	}
-	OPENSSL_cleanse(smd, SHA_DIGEST_LENGTH);
+	explicit_bzero(smd, SHA_DIGEST_LENGTH);
 	EVP_MD_CTX_cleanup(&m5);
 	EVP_MD_CTX_cleanup(&s1);
 	return 1;
@@ -392,7 +392,7 @@ void
 ssl3_cleanup_key_block(SSL *s)
 {
 	if (s->s3->tmp.key_block != NULL) {
-		OPENSSL_cleanse(s->s3->tmp.key_block,
+		explicit_bzero(s->s3->tmp.key_block,
 		    s->s3->tmp.key_block_length);
 		free(s->s3->tmp.key_block);
 		s->s3->tmp.key_block = NULL;

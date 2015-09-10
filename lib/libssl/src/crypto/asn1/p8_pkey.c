@@ -1,4 +1,4 @@
-/* $OpenBSD: p8_pkey.c,v 1.16 2015/07/16 18:21:57 miod Exp $ */
+/* $OpenBSD: p8_pkey.c,v 1.17 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
@@ -71,7 +72,7 @@ pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		if (key->pkey != NULL &&
 		    key->pkey->type == V_ASN1_OCTET_STRING &&
 		    key->pkey->value.octet_string != NULL)
-			OPENSSL_cleanse(key->pkey->value.octet_string->data,
+			explicit_bzero(key->pkey->value.octet_string->data,
 			    key->pkey->value.octet_string->length);
 	}
 	return 1;

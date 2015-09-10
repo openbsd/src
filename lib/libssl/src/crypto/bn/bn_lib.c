@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.33 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.34 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,11 +221,11 @@ BN_clear_free(BIGNUM *a)
 		return;
 	bn_check_top(a);
 	if (a->d != NULL && !(BN_get_flags(a, BN_FLG_STATIC_DATA))) {
-		OPENSSL_cleanse(a->d, a->dmax * sizeof(a->d[0]));
+		explicit_bzero(a->d, a->dmax * sizeof(a->d[0]));
 		free(a->d);
 	}
 	i = BN_get_flags(a, BN_FLG_MALLOCED);
-	OPENSSL_cleanse(a, sizeof(BIGNUM));
+	explicit_bzero(a, sizeof(BIGNUM));
 	if (i)
 		free(a);
 }
@@ -395,7 +395,7 @@ bn_expand2(BIGNUM *b, int words)
 		if (!a)
 			return NULL;
 		if (b->d) {
-			OPENSSL_cleanse(b->d, b->dmax * sizeof(b->d[0]));
+			explicit_bzero(b->d, b->dmax * sizeof(b->d[0]));
 			free(b->d);
 		}
 		b->d = a;

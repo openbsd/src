@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_asn1.c,v 1.6 2015/07/25 15:22:10 jsing Exp $ */
+/* $OpenBSD: cms_asn1.c,v 1.7 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -888,13 +888,13 @@ cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		} else if (ri->type == CMS_RECIPINFO_KEK) {
 			CMS_KEKRecipientInfo *kekri = ri->d.kekri;
 			if (kekri->key) {
-				OPENSSL_cleanse(kekri->key, kekri->keylen);
+				explicit_bzero(kekri->key, kekri->keylen);
 				free(kekri->key);
 			}
 		} else if (ri->type == CMS_RECIPINFO_PASS) {
 			CMS_PasswordRecipientInfo *pwri = ri->d.pwri;
 			if (pwri->pass) {
-				OPENSSL_cleanse(pwri->pass, pwri->passlen);
+				explicit_bzero(pwri->pass, pwri->passlen);
 				free(pwri->pass);
 			}
 		}

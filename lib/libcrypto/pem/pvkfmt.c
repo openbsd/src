@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.13 2015/05/15 11:00:14 jsg Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.14 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -765,7 +765,7 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 			if (!EVP_DecryptInit_ex(&cctx, EVP_rc4(), NULL, keybuf,
 			    NULL))
 				goto err;
-			OPENSSL_cleanse(keybuf, 20);
+			explicit_bzero(keybuf, 20);
 			if (!EVP_DecryptUpdate(&cctx, q, &enctmplen, p, inlen))
 				goto err;
 			if (!EVP_DecryptFinal_ex(&cctx, q + enctmplen,
@@ -777,7 +777,7 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 				goto err;
 			}
 		} else
-			OPENSSL_cleanse(keybuf, 20);
+			explicit_bzero(keybuf, 20);
 		p = enctmp;
 	}
 
@@ -823,7 +823,7 @@ b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
 
 err:
 	if (buf) {
-		OPENSSL_cleanse(buf, buflen);
+		explicit_bzero(buf, buflen);
 		free(buf);
 	}
 	return ret;
@@ -894,7 +894,7 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 		p = salt + PVK_SALTLEN + 8;
 		if (!EVP_EncryptInit_ex(&cctx, EVP_rc4(), NULL, keybuf, NULL))
 			goto error;
-		OPENSSL_cleanse(keybuf, 20);
+		explicit_bzero(keybuf, 20);
 		if (!EVP_DecryptUpdate(&cctx, p, &enctmplen, p, pklen - 8))
 			goto error;
 		if (!EVP_DecryptFinal_ex(&cctx, p + enctmplen, &enctmplen))

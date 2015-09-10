@@ -1,4 +1,4 @@
-/* $OpenBSD: md5_one.c,v 1.9 2015/09/10 15:03:59 jsing Exp $ */
+/* $OpenBSD: md5_one.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,7 +71,7 @@ unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
 		return NULL;
 	MD5_Update(&c,d,n);
 	MD5_Final(md,&c);
-	OPENSSL_cleanse(&c,sizeof(c));
+	explicit_bzero(&c,sizeof(c));
 	return(md);
 	}
 

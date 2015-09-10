@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.26 2015/03/19 14:00:22 tedu Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.27 2015/09/10 15:56:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,7 +277,7 @@ i2d_RSA_NET(const RSA *a, unsigned char **pp,
 	i2d_NETSCAPE_PKEY(pkey, &zz);
 
 	/* Wipe the private key encoding */
-	OPENSSL_cleanse(pkey->private_key->data, rsalen);
+	explicit_bzero(pkey->private_key->data, rsalen);
 
 	if (cb == NULL)
 		cb = EVP_read_pw_string;
@@ -297,7 +297,7 @@ i2d_RSA_NET(const RSA *a, unsigned char **pp,
 
 	if (!EVP_BytesToKey(EVP_rc4(), EVP_md5(), NULL, buf, i,1, key, NULL))
 		goto err;
-	OPENSSL_cleanse(buf, sizeof(buf));
+	explicit_bzero(buf, sizeof(buf));
 
 	/* Encrypt private key in place */
 	zz = enckey->enckey->digest->data;
@@ -394,7 +394,7 @@ d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 
 	if (!EVP_BytesToKey(EVP_rc4(), EVP_md5(), NULL, buf, i,1, key, NULL))
 		goto err;
-	OPENSSL_cleanse(buf, sizeof(buf));
+	explicit_bzero(buf, sizeof(buf));
 
 	if (!EVP_DecryptInit_ex(&ctx, EVP_rc4(), NULL, key, NULL))
 		goto err;

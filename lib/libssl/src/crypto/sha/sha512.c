@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.13 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.14 2015/09/10 15:56:26 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -248,7 +248,7 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
 	SHA384_Init(&c);
 	SHA512_Update(&c,d,n);
 	SHA512_Final(md,&c);
-	OPENSSL_cleanse(&c,sizeof(c));
+	explicit_bzero(&c,sizeof(c));
 	return(md);
 	}
 
@@ -261,7 +261,7 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
 	SHA512_Init(&c);
 	SHA512_Update(&c,d,n);
 	SHA512_Final(md,&c);
-	OPENSSL_cleanse(&c,sizeof(c));
+	explicit_bzero(&c,sizeof(c));
 	return(md);
 	}
 

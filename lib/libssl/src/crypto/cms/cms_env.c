@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.8 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: cms_env.c,v 1.9 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -406,7 +406,7 @@ cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 	ret = 1;
 
 	if (ec->key) {
-		OPENSSL_cleanse(ec->key, ec->keylen);
+		explicit_bzero(ec->key, ec->keylen);
 		free(ec->key);
 	}
 
@@ -654,7 +654,7 @@ cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 err:
 	if (!r && wkey)
 		free(wkey);
-	OPENSSL_cleanse(&actx, sizeof(actx));
+	explicit_bzero(&actx, sizeof(actx));
 
 	return r;
 }
@@ -727,7 +727,7 @@ cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 err:
 	if (!r && ukey)
 		free(ukey);
-	OPENSSL_cleanse(&actx, sizeof(actx));
+	explicit_bzero(&actx, sizeof(actx));
 
 	return r;
 }
@@ -806,7 +806,7 @@ cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 err:
 	ec->cipher = NULL;
 	if (ec->key) {
-		OPENSSL_cleanse(ec->key, ec->keylen);
+		explicit_bzero(ec->key, ec->keylen);
 		free(ec->key);
 		ec->key = NULL;
 		ec->keylen = 0;

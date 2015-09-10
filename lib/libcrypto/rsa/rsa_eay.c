@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.39 2015/06/13 08:38:10 doug Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.40 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,6 +110,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/opensslconf.h>
 
@@ -242,7 +243,7 @@ err:
 		BN_CTX_free(ctx);
 	}
 	if (buf != NULL) {
-		OPENSSL_cleanse(buf, num);
+		explicit_bzero(buf, num);
 		free(buf);
 	}
 	return r;
@@ -472,7 +473,7 @@ err:
 		BN_CTX_free(ctx);
 	}
 	if (buf != NULL) {
-		OPENSSL_cleanse(buf, num);
+		explicit_bzero(buf, num);
 		free(buf);
 	}
 	return r;
@@ -607,7 +608,7 @@ err:
 		BN_CTX_free(ctx);
 	}
 	if (buf != NULL) {
-		OPENSSL_cleanse(buf, num);
+		explicit_bzero(buf, num);
 		free(buf);
 	}
 	return r;
@@ -712,7 +713,7 @@ err:
 		BN_CTX_free(ctx);
 	}
 	if (buf != NULL) {
-		OPENSSL_cleanse(buf, num);
+		explicit_bzero(buf, num);
 		free(buf);
 	}
 	return r;

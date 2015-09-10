@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.28 2015/06/20 12:01:14 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.29 2015/09/10 15:56:25 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -690,7 +690,7 @@ aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 
 	if (gctx->iv != c->iv)
 		free(gctx->iv);
-	OPENSSL_cleanse(gctx, sizeof(*gctx));
+	explicit_bzero(gctx, sizeof(*gctx));
 	return 1;
 }
 
@@ -972,7 +972,7 @@ aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 		/* If tag mismatch wipe buffer */
 		if (memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN)) {
-			OPENSSL_cleanse(out, len);
+			explicit_bzero(out, len);
 			goto err;
 		}
 		rv = len;
@@ -1339,7 +1339,7 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			}
 		}
 		if (rv == -1)
-			OPENSSL_cleanse(out, len);
+			explicit_bzero(out, len);
 		cctx->iv_set = 0;
 		cctx->tag_set = 0;
 		cctx->len_set = 0;
@@ -1417,7 +1417,7 @@ aead_aes_gcm_cleanup(EVP_AEAD_CTX *ctx)
 {
 	struct aead_aes_gcm_ctx *gcm_ctx = ctx->aead_state;
 
-	OPENSSL_cleanse(gcm_ctx, sizeof(*gcm_ctx));
+	explicit_bzero(gcm_ctx, sizeof(*gcm_ctx));
 	free(gcm_ctx);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.18 2015/02/15 08:44:35 miod Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.19 2015/09/10 15:56:25 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -173,11 +173,11 @@ ec_pre_comp_clear_free(void *pre_)
 
 		for (p = pre->points; *p != NULL; p++) {
 			EC_POINT_clear_free(*p);
-			OPENSSL_cleanse(p, sizeof *p);
+			explicit_bzero(p, sizeof *p);
 		}
 		free(pre->points);
 	}
-	OPENSSL_cleanse(pre, sizeof *pre);
+	explicit_bzero(pre, sizeof *pre);
 	free(pre);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.9 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: e_idea.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/opensslconf.h>
 
@@ -115,7 +116,7 @@ idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 		idea_set_encrypt_key(key, &tmp);
 		idea_set_decrypt_key(&tmp, ctx->cipher_data);
-		OPENSSL_cleanse((unsigned char *)&tmp,
+		explicit_bzero((unsigned char *)&tmp,
 		    sizeof(IDEA_KEY_SCHEDULE));
 	}
 	return 1;

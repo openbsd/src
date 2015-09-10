@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp521.c,v 1.16 2015/02/08 22:25:03 miod Exp $ */
+/* $OpenBSD: ecp_nistp521.c,v 1.17 2015/09/10 15:56:25 jsing Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -1679,7 +1679,7 @@ nistp521_pre_comp_clear_free(void *pre_)
 	if (i > 0)
 		return;
 
-	OPENSSL_cleanse(pre, sizeof(*pre));
+	explicit_bzero(pre, sizeof(*pre));
 	free(pre);
 }
 

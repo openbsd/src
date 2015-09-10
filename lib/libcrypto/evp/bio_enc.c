@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_enc.c,v 1.18 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bio_enc.c,v 1.19 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,7 +135,7 @@ enc_free(BIO *a)
 		return (0);
 	b = (BIO_ENC_CTX *)a->ptr;
 	EVP_CIPHER_CTX_cleanup(&(b->cipher));
-	OPENSSL_cleanse(a->ptr, sizeof(BIO_ENC_CTX));
+	explicit_bzero(a->ptr, sizeof(BIO_ENC_CTX));
 	free(a->ptr);
 	a->ptr = NULL;
 	a->init = 0;

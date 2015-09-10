@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.5 2015/02/14 06:40:04 jsing Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.6 2015/09/10 15:56:25 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -48,6 +48,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+
+#include <string.h>
 
 #include <openssl/opensslconf.h>
 
@@ -103,7 +105,7 @@ GOST_KEY_free(GOST_KEY *r)
 	EC_POINT_free(r->pub_key);
 	BN_clear_free(r->priv_key);
 
-	OPENSSL_cleanse((void *)r, sizeof(GOST_KEY));
+	explicit_bzero((void *)r, sizeof(GOST_KEY));
 	free(r);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_open.c,v 1.16 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: p_open.c,v 1.17 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/opensslconf.h>
 
@@ -109,7 +110,7 @@ EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 
 err:
 	if (key != NULL)
-		OPENSSL_cleanse(key, size);
+		explicit_bzero(key, size);
 	free(key);
 	return (ret);
 }

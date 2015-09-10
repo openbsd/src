@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.15 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.16 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -147,9 +147,9 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	    EVP_CIPHER_iv_length(cipher));
 	if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, iv, en_de))
 		goto err;
-	OPENSSL_cleanse(md_tmp, EVP_MAX_MD_SIZE);
-	OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
-	OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
+	explicit_bzero(md_tmp, EVP_MAX_MD_SIZE);
+	explicit_bzero(key, EVP_MAX_KEY_LENGTH);
+	explicit_bzero(iv, EVP_MAX_IV_LENGTH);
 	rv = 1;
 err:
 	EVP_MD_CTX_cleanup(&ctx);

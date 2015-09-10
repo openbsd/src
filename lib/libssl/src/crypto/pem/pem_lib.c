@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.41 2015/07/19 18:29:31 miod Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.42 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -403,7 +403,7 @@ PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp, void *x,
 			goto err;
 
 		if (kstr == (unsigned char *)buf)
-			OPENSSL_cleanse(buf, PEM_BUFSIZE);
+			explicit_bzero(buf, PEM_BUFSIZE);
 
 		if (strlen(objstr) + 23 + 2 * enc->iv_len + 13 > sizeof buf) {
 			PEMerr(PEM_F_PEM_ASN1_WRITE_BIO,
@@ -434,12 +434,12 @@ PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp, void *x,
 	if (i <= 0)
 		ret = 0;
 err:
-	OPENSSL_cleanse(key, sizeof(key));
-	OPENSSL_cleanse(iv, sizeof(iv));
-	OPENSSL_cleanse((char *)&ctx, sizeof(ctx));
-	OPENSSL_cleanse(buf, PEM_BUFSIZE);
+	explicit_bzero(key, sizeof(key));
+	explicit_bzero(iv, sizeof(iv));
+	explicit_bzero((char *)&ctx, sizeof(ctx));
+	explicit_bzero(buf, PEM_BUFSIZE);
 	if (data != NULL) {
-		OPENSSL_cleanse(data, (unsigned int)dsize);
+		explicit_bzero(data, (unsigned int)dsize);
 		free(data);
 	}
 	return (ret);
@@ -480,8 +480,8 @@ PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
 	if (o)
 		o = EVP_DecryptFinal_ex(&ctx, &(data[i]), &j);
 	EVP_CIPHER_CTX_cleanup(&ctx);
-	OPENSSL_cleanse((char *)buf, sizeof(buf));
-	OPENSSL_cleanse((char *)key, sizeof(key));
+	explicit_bzero((char *)buf, sizeof(buf));
+	explicit_bzero((char *)key, sizeof(key));
 	if (!o) {
 		PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_DECRYPT);
 		return (0);
@@ -640,7 +640,7 @@ PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 	EVP_EncodeFinal(&ctx, buf, &outl);
 	if ((outl > 0) && (BIO_write(bp, (char *)buf, outl) != outl))
 		goto err;
-	OPENSSL_cleanse(buf, PEM_BUFSIZE * 8);
+	explicit_bzero(buf, PEM_BUFSIZE * 8);
 	free(buf);
 	buf = NULL;
 	if ((BIO_write(bp, "-----END ", 9) != 9) ||
@@ -651,7 +651,7 @@ PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 
 err:
 	if (buf) {
-		OPENSSL_cleanse(buf, PEM_BUFSIZE * 8);
+		explicit_bzero(buf, PEM_BUFSIZE * 8);
 		free(buf);
 	}
 	PEMerr(PEM_F_PEM_WRITE_BIO, reason);

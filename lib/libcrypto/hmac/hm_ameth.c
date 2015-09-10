@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.9 2015/07/20 15:45:29 miod Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -83,7 +83,7 @@ hmac_key_free(EVP_PKEY *pkey)
 
 	if (os) {
 		if (os->data)
-			OPENSSL_cleanse(os->data, os->length);
+			explicit_bzero(os->data, os->length);
 		ASN1_OCTET_STRING_free(os);
 	}
 }

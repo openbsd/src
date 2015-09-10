@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.36 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.37 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -233,7 +233,7 @@ pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen, PKCS7_RECIP_INFO *ri,
 	ret = 1;
 
 	if (*pek) {
-		OPENSSL_cleanse(*pek, *peklen);
+		explicit_bzero(*pek, *peklen);
 		free(*pek);
 	}
 
@@ -371,7 +371,7 @@ PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			if (pkcs7_encode_rinfo(ri, key, keylen) <= 0)
 				goto err;
 		}
-		OPENSSL_cleanse(key, keylen);
+		explicit_bzero(key, keylen);
 
 		if (out == NULL)
 			out = btmp;
@@ -588,7 +588,7 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			 */
 			if (!EVP_CIPHER_CTX_set_key_length(evp_ctx, eklen)) {
 				/* Use random key as MMA defence */
-				OPENSSL_cleanse(ek, eklen);
+				explicit_bzero(ek, eklen);
 				free(ek);
 				ek = tkey;
 				eklen = tkeylen;
@@ -601,12 +601,12 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			goto err;
 
 		if (ek) {
-			OPENSSL_cleanse(ek, eklen);
+			explicit_bzero(ek, eklen);
 			free(ek);
 			ek = NULL;
 		}
 		if (tkey) {
-			OPENSSL_cleanse(tkey, tkeylen);
+			explicit_bzero(tkey, tkeylen);
 			free(tkey);
 			tkey = NULL;
 		}
@@ -635,11 +635,11 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	if (0) {
 err:
 		if (ek) {
-			OPENSSL_cleanse(ek, eklen);
+			explicit_bzero(ek, eklen);
 			free(ek);
 		}
 		if (tkey) {
-			OPENSSL_cleanse(tkey, tkeylen);
+			explicit_bzero(tkey, tkeylen);
 			free(tkey);
 		}
 		if (out != NULL)

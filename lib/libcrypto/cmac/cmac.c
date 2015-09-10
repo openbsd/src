@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.9 2014/07/12 14:58:32 miod Exp $ */
+/* $OpenBSD: cmac.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -107,10 +107,10 @@ void
 CMAC_CTX_cleanup(CMAC_CTX *ctx)
 {
 	EVP_CIPHER_CTX_cleanup(&ctx->cctx);
-	OPENSSL_cleanse(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
-	OPENSSL_cleanse(ctx->k1, EVP_MAX_BLOCK_LENGTH);
-	OPENSSL_cleanse(ctx->k2, EVP_MAX_BLOCK_LENGTH);
-	OPENSSL_cleanse(ctx->last_block, EVP_MAX_BLOCK_LENGTH);
+	explicit_bzero(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
+	explicit_bzero(ctx->k1, EVP_MAX_BLOCK_LENGTH);
+	explicit_bzero(ctx->k2, EVP_MAX_BLOCK_LENGTH);
+	explicit_bzero(ctx->last_block, EVP_MAX_BLOCK_LENGTH);
 	ctx->nlast_block = -1;
 }
 
@@ -183,7 +183,7 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 			return 0;
 		make_kn(ctx->k1, ctx->tbl, bl);
 		make_kn(ctx->k2, ctx->k1, bl);
-		OPENSSL_cleanse(ctx->tbl, bl);
+		explicit_bzero(ctx->tbl, bl);
 		/* Reset context again ready for first data block */
 		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
@@ -260,7 +260,7 @@ CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 			out[i] = ctx->last_block[i] ^ ctx->k2[i];
 	}
 	if (!EVP_Cipher(&ctx->cctx, out, out, bl)) {
-		OPENSSL_cleanse(out, bl);
+		explicit_bzero(out, bl);
 		return 0;
 	}
 	return 1;

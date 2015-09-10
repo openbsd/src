@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.22 2015/02/10 09:55:39 miod Exp $ */
+/* $OpenBSD: evp_key.c,v 1.23 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,7 +116,7 @@ EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
 	}
 	ret = UI_process(ui);
 	UI_free(ui);
-	OPENSSL_cleanse(buff, BUFSIZ);
+	explicit_bzero(buff, BUFSIZ);
 	return ret;
 }
 
@@ -201,6 +201,6 @@ EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 
 err:
 	EVP_MD_CTX_cleanup(&c);
-	OPENSSL_cleanse(md_buf, sizeof md_buf);
+	explicit_bzero(md_buf, sizeof md_buf);
 	return rv;
 }

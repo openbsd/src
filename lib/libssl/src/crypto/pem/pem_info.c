@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.20 2015/02/10 09:52:35 miod Exp $ */
+/* $OpenBSD: pem_info.c,v 1.21 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -400,7 +400,7 @@ PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 	ret = 1;
 
 err:
-	OPENSSL_cleanse((char *)&ctx, sizeof(ctx));
-	OPENSSL_cleanse(buf, PEM_BUFSIZE);
+	explicit_bzero((char *)&ctx, sizeof(ctx));
+	explicit_bzero(buf, PEM_BUFSIZE);
 	return (ret);
 }

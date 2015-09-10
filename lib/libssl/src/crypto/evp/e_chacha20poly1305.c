@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.9 2015/06/20 12:01:14 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -71,7 +71,7 @@ aead_chacha20_poly1305_cleanup(EVP_AEAD_CTX *ctx)
 {
 	struct aead_chacha20_poly1305_ctx *c20_ctx = ctx->aead_state;
 
-	OPENSSL_cleanse(c20_ctx->key, sizeof(c20_ctx->key));
+	explicit_bzero(c20_ctx->key, sizeof(c20_ctx->key));
 	free(c20_ctx);
 }
 

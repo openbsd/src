@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.100 2015/08/27 06:21:15 doug Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.101 2015/09/10 15:56:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2066,7 +2066,7 @@ ssl3_free(SSL *s)
 	ssl3_free_digest_list(s);
 	free(s->s3->alpn_selected);
 
-	OPENSSL_cleanse(s->s3, sizeof *s->s3);
+	explicit_bzero(s->s3, sizeof *s->s3);
 	free(s->s3);
 	s->s3 = NULL;
 }

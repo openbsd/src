@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.8 2014/07/12 20:37:07 miod Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.9 2015/09/10 15:56:25 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -502,7 +502,7 @@ aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 			SHA1_Init(&key->tail);
 			SHA1_Update(&key->tail, hmac_key, sizeof(hmac_key));
 
-			OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+			explicit_bzero(hmac_key, sizeof(hmac_key));
 
 			return 1;
 		}

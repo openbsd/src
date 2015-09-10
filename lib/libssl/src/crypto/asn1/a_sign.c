@@ -1,4 +1,4 @@
-/* $OpenBSD: a_sign.c,v 1.20 2015/07/19 18:29:31 miod Exp $ */
+/* $OpenBSD: a_sign.c,v 1.21 2015/09/10 15:56:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,6 +112,7 @@
 #include <sys/types.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 #include <openssl/bn.h>
@@ -229,11 +230,11 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 err:
 	EVP_MD_CTX_cleanup(ctx);
 	if (buf_in != NULL) {
-		OPENSSL_cleanse((char *)buf_in, inl);
+		explicit_bzero((char *)buf_in, inl);
 		free(buf_in);
 	}
 	if (buf_out != NULL) {
-		OPENSSL_cleanse((char *)buf_out, outll);
+		explicit_bzero((char *)buf_out, outll);
 		free(buf_out);
 	}
 	return (outl);

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha_one.c,v 1.8 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: sha_one.c,v 1.9 2015/09/10 15:56:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,7 @@ unsigned char *SHA(const unsigned char *d, size_t n, unsigned char *md)
 		return NULL;
 	SHA_Update(&c,d,n);
 	SHA_Final(md,&c);
-	OPENSSL_cleanse(&c,sizeof(c));
+	explicit_bzero(&c,sizeof(c));
 	return(md);
 	}
 #endif

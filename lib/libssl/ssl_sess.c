@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.46 2015/08/27 06:21:15 doug Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.47 2015/09/10 15:56:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -694,8 +694,8 @@ SSL_SESSION_free(SSL_SESSION *ss)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
-	OPENSSL_cleanse(ss->master_key, sizeof ss->master_key);
-	OPENSSL_cleanse(ss->session_id, sizeof ss->session_id);
+	explicit_bzero(ss->master_key, sizeof ss->master_key);
+	explicit_bzero(ss->session_id, sizeof ss->session_id);
 	if (ss->sess_cert != NULL)
 		ssl_sess_cert_free(ss->sess_cert);
 	if (ss->peer != NULL)
@@ -708,7 +708,7 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	free(ss->tlsext_ecpointformatlist);
 	ss->tlsext_ellipticcurvelist_length = 0;
 	free(ss->tlsext_ellipticcurvelist);
-	OPENSSL_cleanse(ss, sizeof(*ss));
+	explicit_bzero(ss, sizeof(*ss));
 	free(ss);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pk8.c,v 1.9 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: pem_pk8.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/buffer.h>
 #include <openssl/err.h>
@@ -135,7 +136,7 @@ do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid, const EVP_CIPHER *enc,
 		}
 		p8 = PKCS8_encrypt(nid, enc, kstr, klen, NULL, 0, 0, p8inf);
 		if (kstr == buf)
-			OPENSSL_cleanse(buf, klen);
+			explicit_bzero(buf, klen);
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
 		if (isder)
 			ret = i2d_PKCS8_bio(bp, p8);

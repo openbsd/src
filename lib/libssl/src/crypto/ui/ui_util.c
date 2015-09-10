@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_util.c,v 1.9 2014/06/12 15:49:31 deraadt Exp $ */
+/* $OpenBSD: ui_util.c,v 1.10 2015/09/10 15:56:26 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -67,7 +67,7 @@ UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
 
 	ret = UI_UTIL_read_pw(buf, buff, (length > BUFSIZ) ? BUFSIZ : length,
 	    prompt, verify);
-	OPENSSL_cleanse(buff, BUFSIZ);
+	explicit_bzero(buff, BUFSIZ);
 	return (ret);
 }
 

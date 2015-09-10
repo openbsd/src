@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.80 2015/08/27 14:16:57 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.81 2015/09/10 15:56:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,7 +226,7 @@ err:
 	EVP_PKEY_free(mac_key);
 	EVP_MD_CTX_cleanup(&ctx);
 	EVP_MD_CTX_cleanup(&ctx_tmp);
-	OPENSSL_cleanse(A1, sizeof(A1));
+	explicit_bzero(A1, sizeof(A1));
 	return ret;
 }
 
@@ -659,7 +659,7 @@ tls1_setup_key_block(SSL *s)
 
 err:
 	if (tmp_block) {
-		OPENSSL_cleanse(tmp_block, key_block_len);
+		explicit_bzero(tmp_block, key_block_len);
 		free(tmp_block);
 	}
 	return (ret);

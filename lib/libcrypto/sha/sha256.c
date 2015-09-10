@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.8 2014/08/18 19:11:48 bcook Exp $ */
+/* $OpenBSD: sha256.c,v 1.9 2015/09/10 15:56:26 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -49,7 +49,7 @@ unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
 	SHA224_Init(&c);
 	SHA256_Update(&c,d,n);
 	SHA256_Final(md,&c);
-	OPENSSL_cleanse(&c,sizeof(c));
+	explicit_bzero(&c,sizeof(c));
 	return(md);
 	}
 
@@ -62,7 +62,7 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
 	SHA256_Init(&c);
 	SHA256_Update(&c,d,n);
 	SHA256_Final(md,&c);
-	OPENSSL_cleanse(&c,sizeof(c));
+	explicit_bzero(&c,sizeof(c));
 	return(md);
 	}
 

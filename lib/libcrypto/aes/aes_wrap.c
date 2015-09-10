@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_wrap.c,v 1.9 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: aes_wrap.c,v 1.10 2015/09/10 15:56:24 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -126,7 +126,7 @@ AES_unwrap_key(AES_KEY *key, const unsigned char *iv, unsigned char *out,
 	if (!iv)
 		iv = default_iv;
 	if (memcmp(A, iv, 8)) {
-		OPENSSL_cleanse(out, inlen);
+		explicit_bzero(out, inlen);
 		return 0;
 	}
 	return inlen;

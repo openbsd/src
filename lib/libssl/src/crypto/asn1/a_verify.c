@@ -1,4 +1,4 @@
-/* $OpenBSD: a_verify.c,v 1.21 2015/01/28 04:14:31 beck Exp $ */
+/* $OpenBSD: a_verify.c,v 1.22 2015/09/10 15:56:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,7 @@
 #include <sys/types.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 #include <openssl/bn.h>
@@ -152,7 +153,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 		goto err;
 	}
 
-	OPENSSL_cleanse(buf_in, (unsigned int)inl);
+	explicit_bzero(buf_in, (unsigned int)inl);
 	free(buf_in);
 
 	if (EVP_DigestVerifyFinal(&ctx, signature->data,

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.115 2015/09/01 13:38:27 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.116 2015/09/10 15:56:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1725,7 +1725,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		    s->method->ssl3_enc->generate_master_secret(s,
 		    s->session->master_key,
 		    p, i);
-		OPENSSL_cleanse(p, i);
+		explicit_bzero(p, i);
 	} else if (alg_k & SSL_kDHE) {
 		if (2 > n)
 			goto truncated;
@@ -1776,7 +1776,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		s->session->master_key_length =
 		    s->method->ssl3_enc->generate_master_secret(
 		        s, s->session->master_key, p, i);
-		OPENSSL_cleanse(p, i);
+		explicit_bzero(p, i);
 	} else
 
 	if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
@@ -1920,7 +1920,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		s->session->master_key_length = s->method->ssl3_enc-> \
 		    generate_master_secret(s, s->session->master_key, p, i);
 
-		OPENSSL_cleanse(p, i);
+		explicit_bzero(p, i);
 		return (ret);
 	} else
 	if (alg_k & SSL_kGOST) {

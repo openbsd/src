@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.20 2015/02/14 15:49:51 miod Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.21 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -300,7 +300,7 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	rv = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
 
 err:
-	OPENSSL_cleanse(key, keylen);
+	explicit_bzero(key, keylen);
 	PBKDF2PARAM_free(kdf);
 	return rv;
 }

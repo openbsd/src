@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.17 2015/02/19 06:10:29 jsing Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.18 2015/09/10 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,6 +111,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include <openssl/err.h>
@@ -186,7 +187,7 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 
 err:
 	if (buf != NULL) {
-		OPENSSL_cleanse(buf, bytes);
+		explicit_bzero(buf, bytes);
 		free(buf);
 	}
 	bn_check_top(rnd);

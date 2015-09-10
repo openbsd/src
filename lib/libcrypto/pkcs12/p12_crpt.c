@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crpt.c,v 1.11 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_crpt.c,v 1.12 2015/09/10 15:56:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
@@ -111,7 +112,7 @@ PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	}
 	PBEPARAM_free(pbe);
 	ret = EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, en_de);
-	OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
-	OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
+	explicit_bzero(key, EVP_MAX_KEY_LENGTH);
+	explicit_bzero(iv, EVP_MAX_IV_LENGTH);
 	return ret;
 }
