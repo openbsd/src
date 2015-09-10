@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.262 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.263 2015/09/10 15:27:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -115,7 +115,7 @@
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
 void	bridge_start(struct ifnet *);
-void	bridge_process(struct mbuf *);
+void	bridge_process(struct ifnet *, struct mbuf *);
 void	bridgeintr_frame(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
@@ -1082,13 +1082,24 @@ bridgeintr(void)
 {
 	struct mbuf_list ml;
 	struct mbuf *m;
+	struct ifnet *ifp;
 
 	niq_delist(&bridgeintrq, &ml);
 	if (ml_empty(&ml))
 		return;
 
-	while ((m = ml_dequeue(&ml)) != NULL)
-		bridge_process(m);
+	while ((m = ml_dequeue(&ml)) != NULL) {
+
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
+		if (ifp == NULL) {
+			m_freem(m);
+			continue;
+		}
+
+		bridge_process(ifp, m);
+
+		if_put(ifp);
+	}
 }
 
 /*
@@ -1265,22 +1276,15 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 }
 
 void
-bridge_process(struct mbuf *m)
+bridge_process(struct ifnet *ifp, struct mbuf *m)
 {
 	struct bridge_softc *sc;
 	struct bridge_iflist *ifl;
 	struct bridge_iflist *srcifl;
 	struct ether_header *eh;
-	struct ifnet *ifp;
 	struct arpcom *ac;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *mc;
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL) {
-		m_freem(m);
-		return;
-	}
 
 	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
 	if (ifl == NULL)
