@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.50 2015/08/28 00:03:54 deraadt Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.51 2015/09/10 13:19:25 dlg Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ void igmp_checktimer(struct ifnet *);
 void igmp_sendpkt(struct in_multi *, int, in_addr_t);
 int rti_fill(struct in_multi *);
 struct router_info * rti_find(struct ifnet *);
+void igmp_input_if(struct ifnet *, struct mbuf *, int);
 
 void
 igmp_init(void)
@@ -183,7 +184,7 @@ rti_find(struct ifnet *ifp)
 					   M_MRTABLE, M_NOWAIT);
 	if (rti == NULL)
 		return (NULL);
-	rti->rti_ifp = ifp;
+	rti->rti_ifp = if_ref(ifp);
 	rti->rti_type = IGMP_v2_ROUTER;
 	rti->rti_next = rti_head;
 	rti_head = rti;
@@ -197,6 +198,7 @@ rti_delete(struct ifnet *ifp)
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_ifp == ifp) {
+			if_put(ifp);
 			*prti = rti->rti_next;
 			free(rti, M_MRTABLE, sizeof(*rti));
 			break;
@@ -210,6 +212,27 @@ igmp_input(struct mbuf *m, ...)
 {
 	int iphlen;
 	struct ifnet *ifp;
+	va_list ap;
+
+	va_start(ap, m);
+	iphlen = va_arg(ap, int);
+	va_end(ap);
+
+	++igmpstat.igps_rcv_total;
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
+	
+	igmp_input_if(ifp, m, iphlen);
+	if_put(ifp);
+}
+
+void
+igmp_input_if(struct ifnet *ifp, struct mbuf *m, int iphlen)
+{
 	struct ip *ip = mtod(m, struct ip *);
 	struct igmp *igmp;
 	int igmplen;
@@ -219,21 +242,8 @@ igmp_input(struct mbuf *m, ...)
 	struct router_info *rti;
 	struct in_ifaddr *ia;
 	int timer;
-	va_list ap;
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	va_end(ap);
-
-	++igmpstat.igps_rcv_total;
 
 	igmplen = ntohs(ip->ip_len) - iphlen;
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL) {
-		m_freem(m);
-		return;
-	}
 
 	/*
 	 * Validate lengths
