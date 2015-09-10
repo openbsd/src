@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.302 2015/08/27 20:56:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.303 2015/09/10 08:40:23 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 
 struct	tcpiphdr tcp_saveti;
 
-int tcp_mss_adv(struct ifnet *, int);
+int tcp_mss_adv(struct mbuf *, int);
 int tcp_flush_queue(struct tcpcb *);
 
 #ifdef INET6
@@ -175,13 +175,16 @@ do { \
  */
 #define	TCP_SETUP_ACK(tp, tiflags, m) \
 do { \
+	struct ifnet *ifp = NULL; \
+	if (m && (m->m_flags & M_PKTHDR)) \
+		ifp = if_get(m->m_pkthdr.ph_ifidx); \
 	if ((tp)->t_flags & TF_DELACK || \
 	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
-	    (m && (m->m_flags & M_PKTHDR) && if_get(m->m_pkthdr.ph_ifidx) && \
-	    (if_get(m->m_pkthdr.ph_ifidx)->if_flags & IFF_LOOPBACK))) \
+	    (ifp && (ifp->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
+	if_put(ifp); \
 } while (0)
 
 void syn_cache_put(struct syn_cache *);
@@ -812,14 +815,19 @@ findpcb:
 				 */
 				if (ip6 && !ip6_use_deprecated) {
 					struct in6_ifaddr *ia6;
+					struct ifnet *ifp =
+					    if_get(m->m_pkthdr.ph_ifidx);
 
-					if ((ia6 = in6ifa_ifpwithaddr(
-					    if_get(m->m_pkthdr.ph_ifidx),
+					if (ifp &&
+					    (ia6 = in6ifa_ifpwithaddr(ifp,
 					    &ip6->ip6_dst)) &&
-					    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
+					    (ia6->ia6_flags &
+					    IN6_IFF_DEPRECATED)) {
 						tp = NULL;
+						if_put(ifp);
 						goto dropwithreset;
 					}
+					if_put(ifp);
 				}
 #endif
 
@@ -3246,10 +3254,14 @@ tcp_newreno(struct tcpcb *tp, struct tcphdr *th)
 #endif /* TCP_SACK */
 
 int
-tcp_mss_adv(struct ifnet *ifp, int af)
+tcp_mss_adv(struct mbuf *m, int af)
 {
 	int mss = 0;
 	int iphlen;
+	struct ifnet *ifp = NULL;
+
+	if (m && (m->m_flags & M_PKTHDR))
+		ifp = if_get(m->m_pkthdr.ph_ifidx);
 
 	switch (af) {
 	case AF_INET:
@@ -3267,6 +3279,7 @@ tcp_mss_adv(struct ifnet *ifp, int af)
 	default:
 		unhandled_af(af);
 	}
+	if_put(ifp);
 	mss = mss - iphlen - sizeof(struct tcphdr);
 	return (max(mss, tcp_mssdflt));
 }
@@ -4039,8 +4052,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 	sc->sc_iss = issp ? *issp : arc4random();
 	sc->sc_peermaxseg = oi->maxseg;
-	sc->sc_ourmaxseg = tcp_mss_adv(m->m_flags & M_PKTHDR ?
-	    if_get(m->m_pkthdr.ph_ifidx) : NULL, sc->sc_src.sa.sa_family);
+	sc->sc_ourmaxseg = tcp_mss_adv(m, sc->sc_src.sa.sa_family);
 	sc->sc_win = win;
 	sc->sc_timestamp = tb.ts_recent;
 	if ((tb.t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP)) ==
