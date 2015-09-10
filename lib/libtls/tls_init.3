@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.29 2015/09/10 11:21:08 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.30 2015/09/10 13:23:57 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -442,32 +442,25 @@ and
 .Fn tls_close
 functions have two special return values:
 .Pp
-.Bl -tag -width "TLS_WRITE_AGAIN" -offset indent -compact
-.It Dv TLS_READ_AGAIN
-A read operation is necessary to continue.
-.It Dv TLS_WRITE_AGAIN
-A write operation is necessary to continue.
+.Bl -tag -width "TLS_WANT_POLLOUT" -offset indent -compact
+.It Dv TLS_WANT_POLLIN
+The underlying read file descriptor needs to be readable in order to continue.
+.It Dv TLS_WANT_POLLOUT
+The underlying write file descriptor needs to be writeable in order to continue.
 .El
 .Pp
-There are underlying TLS engine read or write operations which may
-not correspond with the name of the function called.
-For example, it is possible to receive a
-.Dv TLS_READ_AGAIN
-even when calling
-.Fn tls_write .
-.Pp
-While there are cases where these functions will return one or the
-other or both, the best practice is to always check for both.
-In all cases the same function call should be repeated.
+In the case of blocking file descriptors, the same function call should be
+repeated immediately.
+In the case of non-blocking file descriptors, the same function call should be
+repeated when the required condition has been met.
 .Sh EXAMPLES
-Example showing how to handle partial TLS writes.
+Example showing how to handle TLS writes.
 .Bd -literal -offset indent
 \&...
 while (len > 0) {
 	ret = tls_write(ctx, buf, len, &num_written);
-
-	if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
-		/* retry.  May use select to wait for nonblocking */
+	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
+		/* Retry - use select to wait for non-blocking. */
 	} else if (ret < 0) {
 		return -1;
 	} else {
