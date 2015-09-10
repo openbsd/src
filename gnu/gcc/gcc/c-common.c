@@ -3416,9 +3416,9 @@ set_builtin_user_assembler_name (tree decl, const char *asmspec)
   builtin = built_in_decls [DECL_FUNCTION_CODE (decl)];
   set_user_assembler_name (builtin, asmspec);
   if (DECL_FUNCTION_CODE (decl) == BUILT_IN_MEMCPY)
-    init_block_move_fn (asmspec);
+    init_block_move_fn (decl, asmspec);
   else if (DECL_FUNCTION_CODE (decl) == BUILT_IN_MEMSET)
-    init_block_clear_fn (asmspec);
+    init_block_clear_fn (decl, asmspec);
 }
 
 /* The number of named compound-literals generated thus far.  */

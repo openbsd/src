@@ -1393,7 +1393,7 @@ emit_block_move_via_libcall (rtx dst, rtx src, rtx size, bool tailcall)
 static GTY(()) tree block_move_fn;
 
 void
-init_block_move_fn (const char *asmspec)
+init_block_move_fn (tree decl, const char *asmspec)
 {
   if (!block_move_fn)
     {
@@ -1409,7 +1409,10 @@ init_block_move_fn (const char *asmspec)
       TREE_PUBLIC (fn) = 1;
       DECL_ARTIFICIAL (fn) = 1;
       TREE_NOTHROW (fn) = 1;
-      DECL_VISIBILITY (fn) = VISIBILITY_DEFAULT;
+      if (decl != NULL_TREE && DECL_VISIBILITY_SPECIFIED (decl))
+	DECL_VISIBILITY (fn) = DECL_VISIBILITY (decl);
+      else
+	DECL_VISIBILITY (fn) = VISIBILITY_DEFAULT;
       DECL_VISIBILITY_SPECIFIED (fn) = 1;
 
       block_move_fn = fn;
@@ -1425,7 +1428,7 @@ emit_block_move_libcall_fn (int for_call)
   static bool emitted_extern;
 
   if (!block_move_fn)
-    init_block_move_fn (NULL);
+    init_block_move_fn (NULL_TREE, NULL);
 
   if (for_call && !emitted_extern)
     {
@@ -2597,7 +2600,7 @@ clear_storage_via_libcall (rtx object, rtx size, bool tailcall)
 static GTY(()) tree block_clear_fn;
 
 void
-init_block_clear_fn (const char *asmspec)
+init_block_clear_fn (tree decl, const char *asmspec)
 {
   if (!block_clear_fn)
     {
@@ -2613,7 +2616,10 @@ init_block_clear_fn (const char *asmspec)
       TREE_PUBLIC (fn) = 1;
       DECL_ARTIFICIAL (fn) = 1;
       TREE_NOTHROW (fn) = 1;
-      DECL_VISIBILITY (fn) = VISIBILITY_DEFAULT;
+      if (decl != NULL_TREE && DECL_VISIBILITY_SPECIFIED (decl))
+	DECL_VISIBILITY (fn) = DECL_VISIBILITY (decl);
+      else
+	DECL_VISIBILITY (fn) = VISIBILITY_DEFAULT;
       DECL_VISIBILITY_SPECIFIED (fn) = 1;
 
       block_clear_fn = fn;
@@ -2629,7 +2635,7 @@ clear_storage_libcall_fn (int for_call)
   static bool emitted_extern;
 
   if (!block_clear_fn)
-    init_block_clear_fn (NULL);
+    init_block_clear_fn (NULL_TREE, NULL);
 
   if (for_call && !emitted_extern)
     {

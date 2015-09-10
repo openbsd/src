@@ -3484,16 +3484,6 @@ finish_decl (tree decl, tree init, tree asmspec_tree)
 	TREE_USED (decl) = 1;
     }
 
-  /* If this is a function and an assembler name is specified, reset DECL_RTL
-     so we can give it its new name.  Also, update built_in_decls if it
-     was a normal built-in.  */
-  if (TREE_CODE (decl) == FUNCTION_DECL && asmspec)
-    {
-      if (DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL)
-	set_builtin_user_assembler_name (decl, asmspec);
-      set_user_assembler_name (decl, asmspec);
-    }
-
   /* If #pragma weak was used, mark the decl weak now.  */
   maybe_apply_pragma_weak (decl);
 
@@ -3513,12 +3503,24 @@ finish_decl (tree decl, tree init, tree asmspec_tree)
 
       if (asmspec)
 	{
+          /* If this is a function and an assembler name is specified,
+             reset DECL_RTL so we can give it its new name.  Also,
+             update built_in_decls if it was a normal built-in.  */
+          if (TREE_CODE (decl) == FUNCTION_DECL)
+            {
+              if (DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL)
+	        set_builtin_user_assembler_name (decl, asmspec);
+              else if (strcmp (IDENTIFIER_POINTER (DECL_NAME (decl)),
+	          "__stack_smash_handler") == 0)
+	        init_stack_smash_fn (decl, asmspec);
+              set_user_assembler_name (decl, asmspec);
+            }
 	  /* If this is not a static variable, issue a warning.
 	     It doesn't make any sense to give an ASMSPEC for an
 	     ordinary, non-register local variable.  Historically,
 	     GCC has accepted -- but ignored -- the ASMSPEC in
 	     this case.  */
-	  if (!DECL_FILE_SCOPE_P (decl)
+	  else if (!DECL_FILE_SCOPE_P (decl)
 	      && TREE_CODE (decl) == VAR_DECL
 	      && !C_DECL_REGISTER (decl)
 	      && !TREE_STATIC (decl))

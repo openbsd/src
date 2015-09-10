@@ -373,8 +373,9 @@ enum block_op_methods
   BLOCK_OP_TAILCALL
 };
 
-extern void init_block_move_fn (const char *);
-extern void init_block_clear_fn (const char *);
+extern void init_block_move_fn (tree, const char *);
+extern void init_block_clear_fn (tree, const char *);
+extern void init_stack_smash_fn (tree, const char *);
 
 extern rtx emit_block_move (rtx, rtx, rtx, enum block_op_methods);
 

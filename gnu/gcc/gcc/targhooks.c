@@ -393,10 +393,49 @@ static GTY(()) int stack_protect_labelno;
 
 #include "c-common.h"
 
+static GTY(()) tree stack_smash_fn;
+
+void
+init_stack_smash_fn (tree decl, const char *asmspec)
+{
+  if (!stack_smash_fn)
+    {
+      tree args, fn;
+
+      fn = get_identifier ("__stack_smash_handler");
+      args = build_function_type_list (void_type_node, ptr_type_node,
+				       NULL_TREE);
+      fn = build_decl (FUNCTION_DECL, fn, args);
+      DECL_EXTERNAL (fn) = 1;
+      TREE_PUBLIC (fn) = 1;
+      DECL_ARTIFICIAL (fn) = 1;
+      TREE_THIS_VOLATILE (fn) = 1;
+      TREE_NOTHROW (fn) = 1;
+      if (decl != NULL_TREE && DECL_VISIBILITY_SPECIFIED (decl))
+	DECL_VISIBILITY (fn) = DECL_VISIBILITY (decl);
+      else
+        DECL_VISIBILITY (fn) = VISIBILITY_DEFAULT;
+      DECL_VISIBILITY_SPECIFIED (fn) = 1;
+      stack_smash_fn = fn;
+    }
+
+  if (asmspec)
+    set_user_assembler_name (stack_smash_fn, asmspec);
+}
+
+static tree
+emit_stack_smash_libcall_fn (void)
+{
+  if (!stack_smash_fn)
+    init_stack_smash_fn (NULL_TREE, NULL);
+
+  return stack_smash_fn;
+}
+
 tree 
 default_external_stack_protect_fail (void)
 {
-  tree t, func, type, init, stack_smash_handler;
+  tree t, func, type, init;
   const char *name = fname_as_string (0);
   size_t length = strlen (name);
   char name_buf[32];
@@ -420,26 +459,10 @@ default_external_stack_protect_fail (void)
 
   assemble_variable (func, 0, 0, 0);
 
-  /* Build a decl for __stack_smash_handler.  */
-  t = build_pointer_type (TREE_TYPE (func));
-  t = build_function_type_list (void_type_node, t, NULL);
-  t = build_decl (FUNCTION_DECL, get_identifier ("__stack_smash_handler"), t);
-  TREE_STATIC (t) = 1;
-  TREE_PUBLIC (t) = 1;
-  DECL_EXTERNAL (t) = 1;
-  TREE_USED (t) = 1;
-  TREE_THIS_VOLATILE (t) = 1;
-  TREE_NOTHROW (t) = 1;
-  DECL_ARTIFICIAL (t) = 1;
-  DECL_IGNORED_P (t) = 1;
-  DECL_VISIBILITY (t) = VISIBILITY_DEFAULT;
-  DECL_VISIBILITY_SPECIFIED (t) = 1;
-  stack_smash_handler = t;
-
   /* Generate a call to __stack_smash_handler(__func__).  */
   t = build_fold_addr_expr (func);
   t = tree_cons (NULL, t, NULL);
-  return build_function_call_expr (stack_smash_handler, t);
+  return build_function_call_expr (emit_stack_smash_libcall_fn (), t);
 }
 
 tree
