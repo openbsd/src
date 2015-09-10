@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.184 2015/09/09 08:12:46 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.185 2015/09/10 18:32:06 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -306,7 +306,6 @@ void	 tcp_writecb(struct bufferevent *, void *);
 void	 tcp_errorcb(struct bufferevent *, short, void *);
 void	 tcp_connectcb(int, short, void *);
 void	 tcp_connect_retry(struct bufferevent *, struct filed *);
-struct tls *tls_socket(struct filed *);
 int	 tcpbuf_countmsg(struct bufferevent *bufev);
 void	 die_signalcb(int, short, void *);
 void	 mark_timercb(int, short, void *);
@@ -1229,7 +1228,7 @@ tcp_connectcb(int fd, short event, void *arg)
 {
 	struct filed		*f = arg;
 	struct bufferevent	*bufev = f->f_un.f_forw.f_bufev;
-	struct tls		*ctx;
+	char			 ebuf[ERRBUFSIZE];
 	int			 s;
 
 	if ((s = tcp_socket(f)) == -1) {
@@ -1248,19 +1247,43 @@ tcp_connectcb(int fd, short event, void *arg)
 	bufferevent_enable(bufev, EV_READ|EV_WRITE);
 
 	if (f->f_type == F_FORWTLS) {
-		if ((ctx = tls_socket(f)) == NULL) {
-			close(f->f_file);
-			f->f_file = -1;
-			tcp_connect_retry(bufev, f);
-			return;
+		if ((f->f_un.f_forw.f_ctx = tls_client()) == NULL) {
+			snprintf(ebuf, sizeof(ebuf), "tls_client \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			goto error;
 		}
-		dprintf("tcp connect callback: TLS context success\n");
-		f->f_un.f_forw.f_ctx = ctx;
+		if (tlsconfig &&
+		    tls_configure(f->f_un.f_forw.f_ctx, tlsconfig) == -1) {
+			snprintf(ebuf, sizeof(ebuf), "tls_configure "
+			    "\"%s\": %s", f->f_un.f_forw.f_loghost,
+			    tls_error(f->f_un.f_forw.f_ctx));
+			goto error;
+		}
+		if (tls_connect_socket(f->f_un.f_forw.f_ctx, s,
+		    f->f_un.f_forw.f_host) == -1) {
+			snprintf(ebuf, sizeof(ebuf), "tls_connect_socket "
+			    "\"%s\": %s", f->f_un.f_forw.f_loghost,
+			    tls_error(f->f_un.f_forw.f_ctx));
+			goto error;
+		}
+		dprintf("tcp connect callback: tls context success\n");
 
-		buffertls_set(&f->f_un.f_forw.f_buftls, bufev, ctx, s);
-		buffertls_connect(&f->f_un.f_forw.f_buftls, s,
-		    f->f_un.f_forw.f_host);
+		buffertls_set(&f->f_un.f_forw.f_buftls, bufev,
+		    f->f_un.f_forw.f_ctx, s);
+		buffertls_connect(&f->f_un.f_forw.f_buftls, s);
 	}
+
+	return;
+
+ error:
+	logerror(ebuf);
+	if (f->f_un.f_forw.f_ctx) {
+		tls_free(f->f_un.f_forw.f_ctx);
+		f->f_un.f_forw.f_ctx = NULL;
+	}
+	close(f->f_file);
+	f->f_file = -1;
+	tcp_connect_retry(bufev, f);
 }
 
 void
@@ -1282,30 +1305,6 @@ tcp_connect_retry(struct bufferevent *bufev, struct filed *f)
 	/* We can reuse the write event as bufferevent is disabled. */
 	evtimer_set(&bufev->ev_write, tcp_connectcb, f);
 	evtimer_add(&bufev->ev_write, &to);
-}
-
-struct tls *
-tls_socket(struct filed *f)
-{
-	struct tls	*ctx;
-	char		 ebuf[ERRBUFSIZE];
-
-	if ((ctx = tls_client()) == NULL) {
-		snprintf(ebuf, sizeof(ebuf), "tls_client \"%s\"",
-		    f->f_un.f_forw.f_loghost);
-		logerror(ebuf);
-		return (NULL);
-	}
-	if (tlsconfig) {
-		if (tls_configure(ctx, tlsconfig) < 0) {
-			snprintf(ebuf, sizeof(ebuf), "tls_configure \"%s\": %s",
-			    f->f_un.f_forw.f_loghost, tls_error(ctx));
-			logerror(ebuf);
-			tls_free(ctx);
-			return (NULL);
-		}
-	}
-	return (ctx);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.h,v 1.3 2015/07/18 22:33:46 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.h,v 1.4 2015/09/10 18:32:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Alexander Bluhm <bluhm@openbsd.org>
@@ -19,7 +19,7 @@
 #ifndef _EVBUFFER_TLS_H_
 #define _EVBUFFER_TLS_H_
 
-#define EVBUFFER_CONNECT	0x80
+#define EVBUFFER_HANDSHAKE	0x04
 
 struct bufferevent;
 struct tls;
@@ -27,11 +27,10 @@ struct tls;
 struct buffertls {
 	struct bufferevent	*bt_bufev;
 	struct tls		*bt_ctx;
-	const char		*bt_hostname;
 };
 
 void	buffertls_set(struct buffertls *, struct bufferevent *, struct tls *,
     int);
-void	buffertls_connect(struct buffertls *, int, const char *);
+void	buffertls_connect(struct buffertls *, int);
 
 #endif /* _EVBUFFER_TLS_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.6 2015/09/10 10:58:48 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.7 2015/09/10 18:32:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -210,29 +210,28 @@ buffertls_writecb(int fd, short event, void *arg)
 }
 
 static void
-buffertls_connectcb(int fd, short event, void *arg)
+buffertls_handshakecb(int fd, short event, void *arg)
 {
 	struct buffertls *buftls = arg;
 	struct bufferevent *bufev = buftls->bt_bufev;
 	struct tls *ctx = buftls->bt_ctx;
-	const char *hostname = buftls->bt_hostname;
 	int res = 0;
-	short what = EVBUFFER_CONNECT;
+	short what = EVBUFFER_HANDSHAKE;
 
 	if (event == EV_TIMEOUT) {
 		what |= EVBUFFER_TIMEOUT;
 		goto error;
 	}
 
-	res = tls_connect_socket(ctx, fd, hostname);
+	res = tls_handshake(ctx);
 	switch (res) {
 	case TLS_WANT_POLLIN:
 		event_set(&bufev->ev_write, fd, EV_READ,
-		    buffertls_connectcb, buftls);
+		    buffertls_handshakecb, buftls);
 		goto reschedule;
 	case TLS_WANT_POLLOUT:
 		event_set(&bufev->ev_write, fd, EV_WRITE,
-		    buffertls_connectcb, buftls);
+		    buffertls_handshakecb, buftls);
 		goto reschedule;
 	case -1:
 		if (errno == EAGAIN || errno == EINTR ||
@@ -278,15 +277,15 @@ buffertls_set(struct buffertls *buftls, struct bufferevent *bufev,
 }
 
 void
-buffertls_connect(struct buffertls *buftls, int fd, const char *hostname)
+buffertls_connect(struct buffertls *buftls, int fd)
 {
 	struct bufferevent *bufev = buftls->bt_bufev;
 
 	event_del(&bufev->ev_read);
 	event_del(&bufev->ev_write);
 
-	buftls->bt_hostname = hostname;
-	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_connectcb, buftls);
+	event_set(&bufev->ev_write, fd, EV_WRITE, buffertls_handshakecb,
+	    buftls);
 	bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 }
 
