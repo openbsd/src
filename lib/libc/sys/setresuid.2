@@ -1,4 +1,4 @@
-.\" $OpenBSD: setresuid.2,v 1.8 2014/12/10 19:19:00 schwarze Exp $
+.\" $OpenBSD: setresuid.2,v 1.9 2015/09/10 17:55:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2000
 .\"      Sheldon Hearn.  All rights reserved.
@@ -21,7 +21,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/setresuid.2,v 1.12 2001/10/01 16:09:02 ru Exp $
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt SETRESUID 2
 .Os
 .Sh NAME
@@ -31,8 +31,8 @@
 .Nm setresuid
 .Nd get or set real, effective and saved user or group ID
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <unistd.h>
+.In sys/types.h
+.In unistd.h
 .Ft int
 .Fn getresgid "gid_t *rgid" "gid_t *egid" "gid_t *sgid"
 .Ft int

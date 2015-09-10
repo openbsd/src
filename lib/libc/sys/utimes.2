@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.25 2015/04/17 04:43:20 guenther Exp $
+.\"	$OpenBSD: utimes.2,v 1.26 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 17 2015 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -40,13 +40,13 @@
 .Nm futimens
 .Nd set file access and modification times
 .Sh SYNOPSIS
-.Fd #include <sys/time.h>
+.In sys/time.h
 .Ft int
 .Fn utimes "const char *file" "const struct timeval *times"
 .Ft int
 .Fn futimes "int fd" "const struct timeval *times"
-.Fd #include <sys/stat.h>
-.Fd #include <fcntl.h>
+.In sys/stat.h
+.In fcntl.h
 .Ft int
 .Fn utimensat "int fd" "const char *file" "const struct timespec times[2]" "int flag"
 .Ft int

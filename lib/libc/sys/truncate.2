@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.17 2015/01/19 15:54:12 millert Exp $
+.\"	$OpenBSD: truncate.2,v 1.18 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm ftruncate
 .Nd truncate or extend a file to a specified length
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn truncate "const char *path" "off_t length"
 .Ft int

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsync.2,v 1.13 2013/08/14 06:32:28 jmc Exp $
+.\"	$OpenBSD: fsync.2,v 1.14 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: fsync.2,v 1.4 1995/02/27 12:32:38 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt FSYNC 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm fdatasync
 .Nd synchronize a file's in-core state with that on disk
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn fsync "int fd"
 .Ft int

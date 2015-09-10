@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrtable.2,v 1.3 2014/02/26 20:58:42 claudio Exp $
+.\" $OpenBSD: getrtable.2,v 1.4 2015/09/10 17:55:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2014 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt GETRTABLE 2
 .Os
 .Sh NAME
@@ -22,8 +22,8 @@
 .Nm setrtable
 .Nd get and set the default routing table of the current process
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
+.In sys/types.h
+.In sys/socket.h
 .Ft int
 .Fn getrtable "void"
 .Ft int

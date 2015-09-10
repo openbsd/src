@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknod.2,v 1.20 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: mknod.2,v 1.21 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: mknod.2,v 1.6 1995/02/27 12:34:33 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mknod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt MKNOD 2
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .Nm mknodat
 .Nd make a special file node
 .Sh SYNOPSIS
-.Fd #include <sys/stat.h>
+.In sys/stat.h
 .Ft int
 .Fn mknod "const char *path" "mode_t mode" "dev_t dev"
-.Fd #include <sys/stat.h>
-.Fd #include <fcntl.h>
+.In sys/stat.h
+.In fcntl.h
 .Ft int
 .Fn mknodat "int fd" "const char *path" "mode_t mode" "dev_t dev"
 .Sh DESCRIPTION

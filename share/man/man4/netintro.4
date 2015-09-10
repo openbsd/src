@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.47 2014/08/10 07:23:59 guenther Exp $
+.\"	$OpenBSD: netintro.4,v 1.48 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,16 +30,16 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: August 10 2014 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt NETINTRO 4
 .Os
 .Sh NAME
 .Nm netintro
 .Nd introduction to networking facilities
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
-.Fd #include <net/route.h>
-.Fd #include <net/if.h>
+.In sys/socket.h
+.In net/route.h
+.In net/if.h
 .Sh DESCRIPTION
 This section is a general introduction to the networking facilities
 available in the system.

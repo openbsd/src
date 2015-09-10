@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.25 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: connect.2,v 1.26 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt CONNECT 2
 .Os
 .Sh NAME
 .Nm connect
 .Nd initiate a connection on a socket
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
+.In sys/socket.h
 .Ft int
 .Fn connect "int s" "const struct sockaddr *name" "socklen_t namelen"
 .Sh DESCRIPTION

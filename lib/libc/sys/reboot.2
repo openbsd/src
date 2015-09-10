@@ -1,4 +1,4 @@
-.\"	$OpenBSD: reboot.2,v 1.17 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: reboot.2,v 1.18 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: reboot.2,v 1.5 1995/02/27 12:36:02 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,15 +30,15 @@
 .\"
 .\"     @(#)reboot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt REBOOT 2
 .Os
 .Sh NAME
 .Nm reboot
 .Nd reboot system or halt processor
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
-.Fd #include <sys/reboot.h>
+.In unistd.h
+.In sys/reboot.h
 .Ft int
 .Fn reboot "int howto"
 .Sh DESCRIPTION

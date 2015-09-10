@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_vm86.2,v 1.12 2008/06/26 05:42:04 ray Exp $
+.\"	$OpenBSD: i386_vm86.2,v 1.13 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: i386_vm86.2,v 1.1 1996/02/21 00:21:52 jtk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,18 +30,18 @@
 .\"
 .\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt I386_VM86 2 i386
 .Os
 .Sh NAME
 .Nm i386_vm86
 .Nd set virtual 8086 processor registers and mode
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <signal.h>
-.Fd #include <machine/segments.h>
-.Fd #include <machine/sysarch.h>
-.Fd #include <machine/vm86.h>
+.In sys/types.h
+.In signal.h
+.In machine/segments.h
+.In machine/sysarch.h
+.In machine/vm86.h
 .Ft int
 .Fn i386_vm86 "struct vm86_struct *vmcp"
 .Sh DESCRIPTION

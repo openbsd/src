@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.20 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.21 2015/09/10 17:55:21 schwarze Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,16 +29,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
 .Nm ifmedia
 .Nd network interface media settings
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
-.Fd #include <net/if.h>
-.Fd #include <net/if_media.h>
+.In sys/socket.h
+.In net/if.h
+.In net/if_media.h
 .Sh DESCRIPTION
 The
 .Nm
