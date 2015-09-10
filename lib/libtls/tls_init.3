@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.28 2015/09/10 11:00:54 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.29 2015/09/10 11:21:08 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -46,7 +46,6 @@
 .Nm tls_server ,
 .Nm tls_configure ,
 .Nm tls_reset ,
-.Nm tls_close ,
 .Nm tls_free ,
 .Nm tls_connect ,
 .Nm tls_connect_fds ,
@@ -54,8 +53,10 @@
 .Nm tls_connect_socket ,
 .Nm tls_accept_fds ,
 .Nm tls_accept_socket ,
+.Nm tls_handshake ,
 .Nm tls_read ,
-.Nm tls_write
+.Nm tls_write ,
+.Nm tls_close
 .Nd TLS client and server API
 .Sh SYNOPSIS
 .In tls.h
@@ -115,8 +116,6 @@
 .Fn tls_configure "struct tls *ctx" "struct tls_config *config"
 .Ft "void"
 .Fn tls_reset "struct tls *ctx"
-.Ft "int"
-.Fn tls_close "struct tls *ctx"
 .Ft "void"
 .Fn tls_free "struct tls *ctx"
 .Ft "int"
@@ -131,9 +130,13 @@
 .Ft "int"
 .Fn tls_accept_socket "struct tls *tls" "struct tls **cctx" "int socket"
 .Ft "int"
+.Fn tls_handshake "struct tls *ctx"
+.Ft "int"
 .Fn tls_read "struct tls *ctx" "void *buf" "size_t buflen" "size_t *outlen"
 .Ft "int"
 .Fn tls_write "struct tls *ctx" "const void *buf" "size_t buflen" "size_t *outlen"
+.Ft "int"
+.Fn tls_close "struct tls *ctx"
 .Sh DESCRIPTION
 The
 .Nm tls
@@ -193,10 +196,14 @@ Alternatively, a new client connection can be accepted over a pair of existing
 file descriptors by calling
 .Fn tls_accept_fds .
 .Pp
+The TLS handshake can be completed by calling
+.Fn tls_handshake .
 Two functions are provided for input and output,
 .Fn tls_read
 and
 .Fn tls_write .
+Both of these functions will result in the TLS handshake being performed if it
+has not already completed.
 .Pp
 After use, a tls
 .Em context
@@ -351,13 +358,6 @@ creates a new tls context for server connections.
 readies a tls context for use by applying the configuration
 options.
 .It
-.Fn tls_close
-closes a connection after use.
-If the connection was established using
-.Fn tls_connect_fds ,
-only the TLS layer will be closed and it is the caller's responsibility to close
-the file descriptors.
-.It
 .Fn tls_free
 frees a tls context after use.
 .El
@@ -385,20 +385,23 @@ creates a new context suitable for reading and writing on an existing pair of
 file descriptors and returns it in
 .Fa *cctx .
 A configured server context should be passed in
-.Fa ctx
-and
-.Fa *cctx
-should be initialized to NULL.
+.Fa ctx .
 .It
 .Fn tls_accept_socket
 creates a new context suitable for reading and writing on an already
 established socket connection and returns it in
 .Fa *cctx .
 A configured server context should be passed in
-.Fa ctx
+.Fa ctx .
+.It
+.Fn tls_handshake
+performs the TLS handshake.
+It is only neccessary to call this function if you need to guarantee that the
+handshake has completed, as both
+.Fn tls_read
 and
-.Fa *cctx
-should be initialized to NULL.
+.Fn tls_write
+will perform the TLS handshake if necessary.
 .It
 .Fn tls_read
 reads
@@ -416,23 +419,28 @@ bytes of data from
 to the socket.
 The amount of data written is returned in
 .Fa outlen .
+.It
+.Fn tls_close
+closes a connection after use.
+If the connection was established using
+.Fn tls_connect_fds ,
+only the TLS layer will be closed and it is the caller's responsibility to close
+the file descriptors.
 .El
 .Sh RETURN VALUES
 Functions that return
 .Vt int
 will return 0 on success and -1 on error.
-Functions that return a pointer will return NULL on error.
+Functions that return a pointer will return NULL on error, which indicates an
+out of memory condition.
 .Pp
 The
-.Fn tls_close ,
-.Fn tls_read
+.Fn tls_handshake ,
+.Fn tls_read ,
+.Fn tls_write ,
 and
-.Fn tls_write
-functions, along with the
-.Fn tls_accept
-and
-.Fn tls_connect
-function families, have two special return values:
+.Fn tls_close
+functions have two special return values:
 .Pp
 .Bl -tag -width "TLS_WRITE_AGAIN" -offset indent -compact
 .It Dv TLS_READ_AGAIN
@@ -450,13 +458,7 @@ even when calling
 .Pp
 While there are cases where these functions will return one or the
 other or both, the best practice is to always check for both.
-The caller should call the appropriate function or, in the case of the
-.Fn tls_close
-and the
-.Fn tls_accept
-and
-.Fn tls_connect
-function families, repeat the call.
+In all cases the same function call should be repeated.
 .Sh EXAMPLES
 Example showing how to handle partial TLS writes.
 .Bd -literal -offset indent
