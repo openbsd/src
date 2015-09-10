@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.23 2012/09/26 16:19:44 jmc Exp $
+.\"	$OpenBSD: route6d.8,v 1.24 2015/09/10 18:15:10 schwarze Exp $
 .\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
@@ -15,14 +15,13 @@
 .\" LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt ROUTE6D 8
 .Os
 .Sh NAME
 .Nm route6d
 .Nd RIP6 routing daemon
 .Sh SYNOPSIS
-.Bk -words
 .Nm route6d
 .Op Fl aDdhlnqSs
 .Sm off
@@ -42,7 +41,6 @@
 .Op Fl T No \~ Ar if1 Op , Ar if2 , ...
 .Sm on
 .Op Fl t Ar tag
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -52,8 +50,8 @@ The options are as follows:
 .Bl -tag -width indent
 .It Xo Fl A
 .Sm off
-.Ar prefix No / Ar preflen
-.No , Ar if1
+.Ar prefix No / Ar preflen ,
+.Ar if1
 .Op , Ar if2 , ...
 .Sm on
 .Xc
@@ -98,8 +96,8 @@ to run in foreground mode
 Disables split horizon processing.
 .It Xo Fl L
 .Sm off
-.Ar prefix No / Ar preflen
-.No , Ar if1
+.Ar prefix No / Ar preflen ,
+.Ar if1
 .Op , Ar if2 , ...
 .Sm on
 .Xc
@@ -156,8 +154,8 @@ Do not listen to, or advertise, route from/to interfaces specified by
 Do not update the kernel routing table.
 .It Xo Fl O
 .Sm off
-.Ar prefix No / Ar preflen
-.No , Ar if1
+.Ar prefix No / Ar preflen ,
+.Ar if1
 .Op , Ar if2 , ...
 .Sm on
 .Xc
