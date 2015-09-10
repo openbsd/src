@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.12 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.13 2015/09/10 18:10:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -581,7 +581,7 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 free_ccbs:
 	while ((ccb = vmwpvs_ccb_get(sc)) != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
-	free(sc->sc_ccbs, M_DEVBUF, 0);
+	free(sc->sc_ccbs, M_DEVBUF, r * sizeof(struct vmwpvs_ccb));
 /* free_sense: */
 	vmwpvs_dmamem_free(sc, sc->sc_sense);
 free_sgl:
@@ -1138,7 +1138,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, dm->dm_map);
 dmfree:
-	free(dm, M_DEVBUF, 0);
+	free(dm, M_DEVBUF, sizeof *dm);
 
 	return (NULL);
 }
@@ -1164,5 +1164,5 @@ vmwpvs_dmamem_free(struct vmwpvs_softc *sc, struct vmwpvs_dmamem *dm)
 	bus_dmamem_unmap(sc->sc_dmat, dm->dm_kva, dm->dm_size);
 	bus_dmamem_free(sc->sc_dmat, &dm->dm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, dm->dm_map);
-	free(dm, M_DEVBUF, 0);
+	free(dm, M_DEVBUF, sizeof *dm);
 }

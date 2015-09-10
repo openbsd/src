@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.35 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.36 2015/09/10 18:10:35 deraadt Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -287,7 +287,7 @@ fail:
 			free(*tmpsap, M_EXEC, 0);
 			tmpsap++;
 		}
-		free(shellargp, M_EXEC, 0);
+		free(shellargp, M_EXEC, 4 * sizeof(char *));
 	}
 
 	/*

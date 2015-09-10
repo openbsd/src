@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.353 2015/03/21 13:42:06 mpi Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.354 2015/09/10 18:10:34 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2565,7 +2565,7 @@ default_chip_unmap(struct pciide_softc *sc, int flags)
 	pciide_unmapreg_dma(sc);
 
 	if (sc->sc_cookie)
-		free(sc->sc_cookie, M_DEVBUF, 0);
+		free(sc->sc_cookie, M_DEVBUF, sc->sc_cookielen);
 }
 
 void
@@ -4283,7 +4283,8 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_satalink *sl;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(*sl), M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_cookielen = sizeof(*sl);
+	sc->sc_cookie = malloc(sc->sc_cookielen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	sl = sc->sc_cookie;
 
 	sc->chip_unmap = default_chip_unmap;
@@ -4555,7 +4556,8 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_satalink *sl;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(*sl), M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_cookielen = sizeof(*sl);
+	sc->sc_cookie = malloc(sc->sc_cookielen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	sl = sc->sc_cookie;
 
 #define	SII3114_RESET_BITS						\
@@ -4883,7 +4885,8 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_cy *cy;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(*cy), M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_cookielen = sizeof(*cy);
+	sc->sc_cookie = malloc(sc->sc_cookielen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	cy = sc->sc_cookie;
 
 	/*
@@ -5140,7 +5143,8 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_sis *sis;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(*sis), M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_cookielen = sizeof(*sis);
+	sc->sc_cookie = malloc(sc->sc_cookielen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	sis = sc->sc_cookie;
 
 	pci_find_device(NULL, sis_hostbr_match);
@@ -6795,7 +6799,8 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	const char *intrstr;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(*ps), M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_cookielen = sizeof(*ps);
+	sc->sc_cookie = malloc(sc->sc_cookielen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	ps = sc->sc_cookie;
 
 	/*
@@ -7714,7 +7719,8 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_svwsata *ss;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(*ss), M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_cookielen = sizeof(*ss);
+	sc->sc_cookie = malloc(sc->sc_cookielen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	ss = sc->sc_cookie;
 
 	/* The 4-port version has a dummy second function. */

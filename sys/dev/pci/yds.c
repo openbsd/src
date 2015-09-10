@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.50 2015/05/11 06:46:22 ratchov Exp $	*/
+/*	$OpenBSD: yds.c,v 1.51 2015/09/10 18:10:34 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -363,19 +363,19 @@ yds_download_mcode(struct yds_softc *sc)
 		p = (u_int32_t *)&yf->data[ntohl(yf->dsplen) + ntohl(yf->ds1len)];
 		size = ntohl(yf->ds1elen);
 	} else {
-		free(buf, M_DEVBUF, 0);
+		free(buf, M_DEVBUF, buflen);
 		return 1;	/* unknown */
 	}
 
 	if (size > buflen) {
 		printf("%s: old firmware file, update please\n",
 		    sc->sc_dev.dv_xname);
-		free(buf, M_DEVBUF, 0);
+		free(buf, M_DEVBUF, buflen);
 		return 1;
 	}
 
 	if (yds_disable_dsp(sc)) {
-		free(buf, M_DEVBUF, 0);
+		free(buf, M_DEVBUF, buflen);
 		return 1;
 	}
 
@@ -405,7 +405,7 @@ yds_download_mcode(struct yds_softc *sc)
 	yds_enable_dsp(sc);
 	delay(10*1000);		/* neccesary on my 724F (??) */
 
-	free(buf, M_DEVBUF, 0);
+	free(buf, M_DEVBUF, buflen);
 	return 0;
 }
 
@@ -1576,7 +1576,7 @@ yds_malloc(void *addr, int direction, size_t size, int pool, int flags)
 		return (0);
 	error = yds_allocmem(sc, size, 16, p);
 	if (error) {
-		free(p, pool, 0);
+		free(p, pool, sizeof *p);
 		return (0);
 	}
 	p->next = sc->sc_dmas;
@@ -1594,7 +1594,7 @@ yds_free(void *addr, void *ptr, int pool)
 		if (KERNADDR(p) == ptr) {
 			yds_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool, 0);
+			free(p, pool, sizeof *p);
 			return;
 		}
 	}
