@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.26 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.27 2015/09/10 15:21:40 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ setup(char *dev)
 			(unsigned)(maxino + 1));
 		goto badsblabel;
 	}
-	typemap = calloc((unsigned)(maxino + 1), sizeof(char));
+	typemap = calloc((unsigned)(maxino + 1), sizeof(u_char));
 	if (typemap == NULL) {
 		printf("cannot alloc %u bytes for typemap\n",
 		    (unsigned)(maxino + 1));
@@ -449,6 +449,10 @@ calcsb(char *dev, int devfd, struct m_ext2fs *fs)
 	}
 	memset(fs, 0, sizeof(struct m_ext2fs));
 	fs->e2fs_bsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock); /* XXX */
+	if (fs->e2fs_bsize == 0) {
+		pfatal("%s: BLOCK SIZE DETERMINED TO BE ZERO\n", dev);
+		return (0);
+	}
 	fs->e2fs.e2fs_log_bsize = fs->e2fs_bsize / 1024;
 	fs->e2fs.e2fs_bcount = (pp->p_size * DEV_BSIZE) / fs->e2fs_bsize;
 	fs->e2fs.e2fs_first_dblock = (fs->e2fs.e2fs_log_bsize == 0) ? 1 : 0;
