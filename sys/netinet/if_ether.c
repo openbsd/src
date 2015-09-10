@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.164 2015/09/09 15:59:19 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.165 2015/09/10 13:21:41 dlg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ int	la_hold_total;
 /* revarp state */
 struct in_addr revarp_myip, revarp_srvip;
 int revarp_finished;
-int revarp_in_progress;
 struct ifnet *revarp_ifp;
 #endif /* NFSCLIENT */
 
@@ -545,8 +544,10 @@ in_arpinput(struct mbuf *m)
 	unsigned int len;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL)
-		goto out;
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
 	ac = (struct arpcom *)ifp;
 
 	ea = mtod(m, struct ether_arp *);
@@ -724,6 +725,7 @@ in_arpinput(struct mbuf *m)
 reply:
 	if (op != ARPOP_REQUEST) {
 out:
+		if_put(ifp);
 		m_freem(m);
 		return;
 	}
@@ -759,6 +761,7 @@ out:
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
 	(*ifp->if_output)(ifp, m, &sa, NULL);
+	if_put(ifp);
 	return;
 }
 
@@ -901,9 +904,6 @@ out:
 void
 in_revarpinput(struct mbuf *m)
 {
-#ifdef NFSCLIENT
-	struct ifnet *ifp;
-#endif /* NFSCLIENT */
 	struct ether_arp *ar;
 	int op;
 
@@ -921,14 +921,13 @@ in_revarpinput(struct mbuf *m)
 		goto out;
 	}
 #ifdef NFSCLIENT
-	if (!revarp_in_progress)
+	if (revarp_ifp == NULL)
 		goto out;
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp != revarp_ifp) /* !same interface */
+	if (revarp_ifp->if_index != m->m_pkthdr.ph_ifidx) /* !same interface */
 		goto out;
 	if (revarp_finished)
 		goto wake;
-	if (memcmp(ar->arp_tha, ((struct arpcom *)ifp)->ac_enaddr,
+	if (memcmp(ar->arp_tha, ((struct arpcom *)revarp_ifp)->ac_enaddr,
 	    sizeof(ar->arp_tha)))
 		goto out;
 	memcpy(&revarp_srvip, ar->arp_spa, sizeof(revarp_srvip));
@@ -994,15 +993,15 @@ revarpwhoarewe(struct ifnet *ifp, struct in_addr *serv_in,
 	if (revarp_finished)
 		return EIO;
 
-	revarp_ifp = ifp;
-	revarp_in_progress = 1;
+	revarp_ifp = if_ref(ifp);
 	while (count--) {
 		revarprequest(ifp);
 		result = tsleep((caddr_t)&revarp_myip, PSOCK, "revarp", hz/2);
 		if (result != EWOULDBLOCK)
 			break;
 	}
-	revarp_in_progress = 0;
+	if_put(revarp_ifp);
+	revarp_ifp = NULL;
 	if (!revarp_finished)
 		return ENETUNREACH;
 
