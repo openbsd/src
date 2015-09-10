@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.12 2015/08/27 18:45:09 miod Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.13 2015/09/10 14:37:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -148,6 +148,10 @@ MipsFPTrap(struct trap_frame *tf)
 
 	KDASSERT(tf == p->p_md.md_regs);
 
+	pc = (vaddr_t)tf->pc;
+	if (tf->cause & CR_BR_DELAY)
+		pc += 4;
+
 #ifndef FPUEMUL
 	/*
 	 * Enable FPU, and read its status register.
@@ -183,9 +187,6 @@ MipsFPTrap(struct trap_frame *tf)
 	 * if it does, it's probably not your lucky day.
 	 */
 
-	pc = (vaddr_t)tf->pc;
-	if (tf->cause & CR_BR_DELAY)
-		pc += 4;
 	if (copyin((void *)pc, &insn, sizeof insn) != 0) {
 		sig = SIGBUS;
 		fault_type = BUS_OBJERR;
