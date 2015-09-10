@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.172 2015/09/10 08:45:32 claudio Exp $	*/
+/*	$OpenBSD: in6.c,v 1.173 2015/09/10 14:02:35 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1800,6 +1800,12 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			if ((ia6_best->ia6_flags & IN6_IFF_DEPRECATED) &&
 			    (ifatoia6(ifa)->ia6_flags &
 			     IN6_IFF_DEPRECATED) == 0)
+				goto replace;
+
+			/* RFC 3484 5. Rule 5: Prefer outgoing interface */
+			if (ia6_best->ia_ifp == oifp && ifp != oifp)
+				continue;
+			if (ia6_best->ia_ifp != oifp && ifp == oifp)
 				goto replace;
 
 			/*
