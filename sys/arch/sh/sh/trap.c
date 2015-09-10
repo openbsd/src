@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.33 2015/02/09 09:32:53 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.34 2015/09/10 17:32:19 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -514,7 +514,7 @@ syscall(struct proc *p, struct trapframe *tf)
 {
 	caddr_t params;
 	const struct sysent *callp;
-	int error, oerror, opc, nsys;
+	int error, opc, nsys;
 	size_t argsize;
 	register_t code, args[8], rval[2], ocode;
 
@@ -610,7 +610,7 @@ syscall(struct proc *p, struct trapframe *tf)
 
 	error = mi_syscall(p, code, callp, args, rval);
 
-	switch (oerror = error) {
+	switch (error) {
 	case 0:
 		tf->tf_r0 = rval[0];
 		tf->tf_r1 = rval[1];
@@ -630,7 +630,7 @@ syscall(struct proc *p, struct trapframe *tf)
 		break;
 	}
 
-	mi_syscall_return(p, code, oerror, rval);
+	mi_syscall_return(p, code, error, rval);
 }
 
 /*
