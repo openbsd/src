@@ -1,4 +1,4 @@
-/* $OpenBSD: wseventvar.h,v 1.7 2010/07/26 01:56:27 guenther Exp $ */
+/* $OpenBSD: wseventvar.h,v 1.8 2015/09/10 18:14:52 mpi Exp $ */
 /* $NetBSD: wseventvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
 
 /*
@@ -106,6 +106,7 @@ void	wsevent_init(struct wseventvar *);
 void	wsevent_fini(struct wseventvar *);
 int	wsevent_read(struct wseventvar *, struct uio *, int);
 int	wsevent_poll(struct wseventvar *, int, struct proc *);
+int	wsevent_kqfilter(struct wseventvar *, struct knote *);
 
 /*
  * PWSEVENT is set just above PSOCK, which is just above TTIPRI, on the

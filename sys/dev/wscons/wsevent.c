@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.13 2015/03/14 03:38:50 jsg Exp $ */
+/* $OpenBSD: wsevent.c,v 1.14 2015/09/10 18:14:52 mpi Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -84,6 +84,16 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wseventvar.h>
+
+void	filt_wseventdetach(struct knote *);
+int	filt_wseventread(struct knote *, long);
+
+const struct filterops wsevent_filtops = {
+	1,
+	NULL,
+	filt_wseventdetach,
+	filt_wseventread
+};
 
 /*
  * Initialize a wscons_event queue.
@@ -193,4 +203,57 @@ wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
 
 	splx(s);
 	return (revents);
+}
+
+int
+wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	klist = &ev->sel.si_note;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &wsevent_filtops;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	kn->kn_hook = ev;
+
+	s = splwsevent();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+void
+filt_wseventdetach(struct knote *kn)
+{
+	struct wseventvar *ev = kn->kn_hook;
+	struct klist *klist = &ev->sel.si_note;
+	int s;
+
+	s = splwsevent();
+	SLIST_REMOVE(klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_wseventread(struct knote *kn, long hint)
+{
+	struct wseventvar *ev = kn->kn_hook;
+
+	if (ev->get == ev->put)
+		return (0);
+
+	if (ev->get < ev->put)
+		kn->kn_data = ev->put - ev->get;
+	else
+		kn->kn_data = (WSEVENT_QSIZE - ev->get) + ev->put;
+
+	return (1);
 }

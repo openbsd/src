@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.133 2015/06/25 06:43:46 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.134 2015/09/10 18:14:52 mpi Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -195,12 +195,12 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,tty), ttpoll, (dev_type_mmap((*))) enodev, \
 	D_TTY, 0, ttkqfilter }
 
-/* open, close, read, ioctl, poll, nokqfilter */
+/* open, close, read, ioctl, poll, kqfilter */
 #define	cdev_mouse_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
+	(dev_type_mmap((*))) enodev , 0, 0, dev_init(c,n,kqfilter) }
 
 /* open, close, read, write, ioctl, poll, nokqfilter */
 #define	cdev_mousewr_init(c,n) { \

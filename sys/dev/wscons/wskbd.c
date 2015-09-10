@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.81 2014/12/13 21:05:33 doug Exp $ */
+/* $OpenBSD: wskbd.c,v 1.82 2015/09/10 18:14:52 mpi Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1193,6 +1193,16 @@ wskbdpoll(dev_t dev, int events, struct proc *p)
 	if (sc->sc_base.me_evp == NULL)
 		return (POLLERR);
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));
+}
+
+int
+wskbdkqfilter(dev_t dev, struct knote *kn)
+{
+	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+
+	if (sc->sc_base.me_evp == NULL)
+		return (ENXIO);
+	return (wsevent_kqfilter(sc->sc_base.me_evp, kn));
 }
 
 #if NWSDISPLAY > 0
