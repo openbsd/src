@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.22 2015/09/10 10:26:49 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.23 2015/09/10 10:59:22 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -379,6 +379,7 @@ tls_handshake(struct tls *ctx)
 	else if ((ctx->flags & TLS_SERVER_CONN) != 0)
 		rv = tls_handshake_server(ctx);
 
+	/* Prevent callers from performing incorrect error handling */
 	errno = 0;
 	return (rv);
 }
@@ -406,6 +407,7 @@ tls_read(struct tls *ctx, void *buf, size_t buflen)
 
 	rv = (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read");
  out:
+	/* Prevent callers from performing incorrect error handling */
 	errno = 0;
 	return (rv);
 }
@@ -433,6 +435,7 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen)
 
 	rv =  (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
  out:
+	/* Prevent callers from performing incorrect error handling */
 	errno = 0;
 	return (rv);
 }
@@ -470,6 +473,7 @@ tls_close(struct tls *ctx)
 		ctx->socket = -1;
 	}
  out:
+	/* Prevent callers from performing incorrect error handling */
 	errno = 0;
 	return (rv);
 }
