@@ -4574,7 +4574,6 @@
 ./usr/share/man/man3/lh_stats.3
 ./usr/share/man/man3/lh_stats_bio.3
 ./usr/share/man/man3/lhash.3
-./usr/share/man/man3/link_addr.3
 ./usr/share/man/man3/link_field.3
 ./usr/share/man/man3/link_fieldtype.3
 ./usr/share/man/man3/link_ntoa.3
@@ -5671,6 +5670,8 @@
 ./usr/share/man/man3/tls_config_insecure_noverifyname.3
 ./usr/share/man/man3/tls_config_new.3
 ./usr/share/man/man3/tls_config_parse_protocols.3
+./usr/share/man/man3/tls_config_prefer_ciphers_client.3
+./usr/share/man/man3/tls_config_prefer_ciphers_server.3
 ./usr/share/man/man3/tls_config_set_ca_file.3
 ./usr/share/man/man3/tls_config_set_ca_mem.3
 ./usr/share/man/man3/tls_config_set_ca_path.3
