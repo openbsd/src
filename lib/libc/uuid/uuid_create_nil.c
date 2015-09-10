@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid_create_nil.c,v 1.1 2014/08/31 09:36:39 miod Exp $	*/
+/*	$OpenBSD: uuid_create_nil.c,v 1.2 2015/09/10 18:13:46 guenther Exp $	*/
 /*	$NetBSD: uuid_create_nil.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*
@@ -29,8 +29,6 @@
  *
  * $FreeBSD: src/lib/libc/uuid/uuid_create_nil.c,v 1.2 2003/08/08 19:18:43 marcel Exp $
  */
-
-#include "namespace.h"
 
 #include <string.h>
 #include <uuid.h>

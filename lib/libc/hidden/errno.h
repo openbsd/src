@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.1 2015/09/06 20:26:20 guenther Exp $	*/
+/*	$OpenBSD: errno.h,v 1.2 2015/09/10 18:13:46 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -22,7 +22,6 @@
 #define __SYS_ERRLIST
 
 #include_next <errno.h>
-#include "namespace.h"
 
 extern const int sys_nerr;
 extern const char *const sys_errlist[];

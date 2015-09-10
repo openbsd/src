@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetmask.c,v 1.3 2012/12/05 23:20:00 deraadt Exp $	*/
+/*	$OpenBSD: fpgetmask.c,v 1.4 2015/09/10 18:13:46 guenther Exp $	*/
 /* $NetBSD: fpgetmask.c,v 1.3 2002/05/12 13:12:45 bjh21 Exp $ */
 
 /*-
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "namespace.h"
 
 #include <ieeefp.h>
 #ifdef SOFTFLOAT_FOR_GCC

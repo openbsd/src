@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.16 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.17 2015/09/10 18:13:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -32,11 +32,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
-void __stack_smash_handler(char func[], int damaged __attribute__((unused)));
-
-/*ARGSUSED*/
 void
-__stack_smash_handler(char func[], int damaged)
+__stack_smash_handler(const char func[], int damaged)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	const char message[] = "stack overflow in function %s";
@@ -61,3 +58,4 @@ __stack_smash_handler(char func[], int damaged)
 
 	_exit(127);
 }
+DEF_STRONG(__stack_smash_handler);

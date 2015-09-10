@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.c,v 1.3 2012/12/05 23:20:01 deraadt Exp $	*/
+/*	$OpenBSD: fpsetsticky.c,v 1.4 2015/09/10 18:13:46 guenther Exp $	*/
 /* $NetBSD: fpsetsticky.c,v 1.2 2002/01/13 21:45:54 thorpej Exp $ */
 
 /*-
@@ -29,8 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "namespace.h"
 
 #include <ieeefp.h>
 #ifdef SOFTFLOAT_FOR_GCC

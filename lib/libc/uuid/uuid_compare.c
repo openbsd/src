@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid_compare.c,v 1.2 2014/08/31 19:59:18 miod Exp $	*/
+/*	$OpenBSD: uuid_compare.c,v 1.3 2015/09/10 18:13:46 guenther Exp $	*/
 /*	$NetBSD: uuid_compare.c,v 1.2 2008/04/23 07:52:32 plunky Exp $	*/
 
 /*-
@@ -29,8 +29,6 @@
  *
  * $FreeBSD: src/lib/libc/uuid/uuid_compare.c,v 1.6 2007/04/05 02:07:33 delphij Exp $
  */
-
-#include "namespace.h"
 
 #include <string.h>
 #include <uuid.h>

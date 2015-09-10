@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl_types.h,v 1.2 2015/09/05 11:32:10 guenther Exp $	*/
+/*	$OpenBSD: nl_types.h,v 1.3 2015/09/10 18:13:46 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #define _LIBC_NL_TYPES_H_
 
 #include_next <nl_types.h>
-#include "namespace.h"
 
 PROTO_NORMAL(catclose);
 PROTO_NORMAL(catgets);

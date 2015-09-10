@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 2015/08/31 19:43:39 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 2015/09/10 18:13:46 guenther Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -9,7 +9,7 @@ all:
 .endif
 
 CFLAGS+=-I${LIBCSRCDIR}/include -I${LIBCSRCDIR}/hidden \
-	-Werror-implicit-function-declaration
+	-Werror-implicit-function-declaration -include namespace.h
 
 # Include link-time warnings about unsafe API uses (ie. strcpy)
 CFLAGS+=-DAPIWARN
@@ -64,5 +64,7 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .if (${YP:L} == "yes")
 .include "${LIBCSRCDIR}/yp/Makefile.inc"
 .endif
+
+${OBJS} ${GOBJS} ${POBJS} ${SOBJS} ${DOBJS}: ${LIBCSRCDIR}/include/namespace.h
 
 CFLAGS+=-DNLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.2 2015/09/09 16:10:03 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.3 2015/09/10 18:13:46 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #define	_LIBC_STRING_H_
 
 #include_next <string.h>
-#include "namespace.h"
 
 __BEGIN_HIDDEN_DECLS
 char	*__strsignal(int , char *);

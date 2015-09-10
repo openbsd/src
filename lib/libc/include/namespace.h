@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.5 2015/09/06 20:26:20 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.6 2015/09/10 18:13:46 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -126,6 +126,8 @@
  *	ex: DEF_SYS(pread)
  */
 
+#include <sys/cdefs.h>	/* for __dso_hidden and __{weak,strong}_alias */
+
 #define	HIDDEN(x)		_libc_##x
 #define	CANCEL(x)		_libc_##x##_cancel
 #define	WRAP(x)			_libc_##x##_wrap
@@ -143,6 +145,20 @@
 #define	DEF_CANCEL(x)		__weak_alias(x, CANCEL(x))
 #define	DEF_WRAP(x)		__weak_alias(x, WRAP(x))
 #define	DEF_SYS(x)		__strong_alias(_thread_sys_##x, HIDDEN(x))
+
+
+/*
+ * gcc will generate calls to the functions below.
+ * Declare and redirect them here so we always go
+ * directly to our hidden aliases.
+ */
+#include <sys/_types.h>
+void	*memcpy(void *__restrict, const void *__restrict, __size_t);
+void	*memset(void *, int, __size_t);
+void	__stack_smash_handler(const char [], int __attribute__((__unused__)));
+PROTO_NORMAL(memcpy);
+PROTO_NORMAL(memset);
+PROTO_NORMAL(__stack_smash_handler);
 
 #endif  /* _LIBC_NAMESPACE_H_ */
 

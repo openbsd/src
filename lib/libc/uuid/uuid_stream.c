@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid_stream.c,v 1.2 2014/08/31 19:58:53 miod Exp $	*/
+/*	$OpenBSD: uuid_stream.c,v 1.3 2015/09/10 18:13:46 guenther Exp $	*/
 /*	$NetBSD: uuid_stream.c,v 1.3 2008/04/19 18:21:38 plunky Exp $	*/
 
 /*-
@@ -53,8 +53,6 @@
  *
  * $FreeBSD: src/sys/sys/endian.h,v 1.7 2010/05/20 06:16:13 phk Exp $
  */
-
-#include "namespace.h"
 
 #include <sys/types.h>
 #include <endian.h>

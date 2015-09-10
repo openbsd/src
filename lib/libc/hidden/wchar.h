@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.1 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.2 2015/09/10 18:13:46 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #define _LIBC_WCHAR_H_
 
 #include_next <wchar.h>
-#include "namespace.h"
 
 /*PROTO_NORMAL(btowc);*/
 PROTO_NORMAL(fgetwc);
