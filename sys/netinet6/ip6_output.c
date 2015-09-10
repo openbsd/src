@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.179 2015/08/31 07:27:48 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.180 2015/09/10 09:11:11 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -541,8 +541,6 @@ reroute:
 		default:
 			break;	/* XXX statistics? */
 		}
-		if (ifp != NULL)
-			in6_ifstat_inc(ifp, ifs6_out_discard);
 		goto bad;
 	}
 	if (rt == NULL) {
@@ -558,11 +556,6 @@ reroute:
 	 */
 	if (rt)
 		rt->rt_use++;
-
-	if ((flags & IPV6_FORWARDING) == 0) {
-		/* XXX: the FORWARDING flag can be set for mrouting. */
-		in6_ifstat_inc(ifp, ifs6_out_request);
-	}
 
 	if (rt && !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		if (opt && opt->ip6po_nextroute.ro_rt) {
@@ -586,14 +579,11 @@ reroute:
 
 		m->m_flags = (m->m_flags & ~M_BCAST) | M_MCAST;
 
-		in6_ifstat_inc(ifp, ifs6_out_mcast);
-
 		/*
 		 * Confirm that the outgoing interface supports multicast.
 		 */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
 			ip6stat.ip6s_noroute++;
-			in6_ifstat_inc(ifp, ifs6_out_discard);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -833,12 +823,10 @@ reroute:
 	if (mtu < IPV6_MMTU) {
 		/* path MTU cannot be less than IPV6_MMTU */
 		error = EMSGSIZE;
-		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
 	} else if (ip6->ip6_plen == 0) {
 		/* jumbo payload cannot be fragmented */
 		error = EMSGSIZE;
-		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
 	} else {
 		u_char nextproto;
@@ -885,18 +873,8 @@ reroute:
 
 		m0 = m;
 		error = ip6_fragment(m0, hlen, nextproto, mtu);
-
-		switch (error) {
-		case 0:
-			in6_ifstat_inc(ifp, ifs6_out_fragok);
-			break;
-		case EMSGSIZE:
-			in6_ifstat_inc(ifp, ifs6_out_fragfail);
-			break;
-		default:
+		if (error)
 			ip6stat.ip6s_odropped++;
-			break;
-		}
 	}
 
 	/*
@@ -910,7 +888,6 @@ reroute:
 		m->m_nextpkt = 0;
 		if (error == 0) {
 			ip6stat.ip6s_ofragments++;
-			in6_ifstat_inc(ifp, ifs6_out_fragcreat);
 			error = nd6_output(ifp, m, dst, ro->ro_rt);
 		} else
 			m_freem(m);
