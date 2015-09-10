@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.230 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.231 2015/09/10 09:37:52 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -830,15 +830,11 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if ((rt->rt_flags & RTF_CLONING) != 0)
 			rtflushclone(tableid, rt);
 
-		if (rt->rt_gwroute) {
-			rtfree(rt->rt_gwroute);
-			rt->rt_gwroute = NULL;
-		}
+		rtfree(rt->rt_gwroute);
+		rt->rt_gwroute = NULL;
 
-		if (rt->rt_parent) {
-			rt->rt_parent->rt_refcnt--;
-			rt->rt_parent = NULL;
-		}
+		rtfree(rt->rt_parent);
+		rt->rt_parent = NULL;
 
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
