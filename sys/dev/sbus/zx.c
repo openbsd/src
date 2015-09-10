@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.19 2013/10/20 20:07:31 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.20 2015/09/10 15:02:32 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -729,6 +729,10 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	dp = (volatile u_int32_t *)ri->ri_bits +
 	    ZX_COORDS(col * font->fontwidth, row * font->fontheight);
 
+	sc = ri->ri_hw;
+	zc = sc->sc_zc;
+	zd = sc->sc_zd_ss0;
+
 	if (uc == ' ') {
 		zx_fillrect(ri, col, row, 1, 1, attr, ZX_STD_ROP);
 		if (ul == 0)
@@ -744,10 +748,6 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		SETREG(zd->zd_bg, bg << 24);
 		SETREG(zc->zc_fontmsk, 0xffffffff << (32 - font->fontwidth));
 	} else {
-		sc = ri->ri_hw;
-		zc = sc->sc_zc;
-		zd = sc->sc_zd_ss0;
-
 		fb = (u_int8_t *)font->data + (uc - font->firstchar) *
 		    ri->ri_fontscale;
 		fs = font->stride;
