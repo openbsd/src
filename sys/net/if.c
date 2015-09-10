@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.365 2015/09/10 06:00:37 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.366 2015/09/10 13:32:19 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <sys/domain.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
+#include <sys/proc.h>
 #include <sys/atomic.h>
 
 #include <dev/rndvar.h>
@@ -388,7 +389,7 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_linkstatetask = malloc(sizeof(*ifp->if_linkstatetask),
 	    M_TEMP, M_WAITOK|M_ZERO);
 
-	SLIST_INIT(&ifp->if_inputs);
+	SRPL_INIT(&ifp->if_inputs);
 }
 
 void
@@ -485,6 +486,93 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 	task_add(softnettq, &if_input_task);
 }
 
+struct ifih {
+	struct srpl_entry	  ifih_next;
+	int			(*ifih_input)(struct ifnet *, struct mbuf *);
+	int			  ifih_refcnt;
+	int			  ifih_srpcnt;
+};
+
+void	if_ih_ref(void *, void *);
+void	if_ih_unref(void *, void *);
+
+struct srpl_rc ifih_rc = SRPL_RC_INITIALIZER(if_ih_ref, if_ih_unref, NULL);
+
+void
+if_ih_insert(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *))
+{
+	struct ifih *ifih;
+
+	/* the kernel lock guarantees serialised modifications to if_inputs */
+	KERNEL_ASSERT_LOCKED();
+
+	SRPL_FOREACH_LOCKED(ifih, &ifp->if_inputs, ifih_next) {
+		if (ifih->ifih_input == input) {
+			ifih->ifih_refcnt++;
+			break;
+		}
+	}
+
+	if (ifih == NULL) {
+		ifih = malloc(sizeof(*ifih), M_DEVBUF, M_WAITOK);
+
+		ifih->ifih_input = input;
+		ifih->ifih_refcnt = 1;
+		ifih->ifih_srpcnt = 0;
+		SRPL_INSERT_HEAD_LOCKED(&ifih_rc, &ifp->if_inputs,
+		    ifih, ifih_next);
+	}
+}
+
+void
+if_ih_ref(void *null, void *i)
+{
+	struct ifih *ifih = i;
+
+	atomic_inc_int(&ifih->ifih_srpcnt);
+}
+
+void
+if_ih_unref(void *null, void *i)
+{
+	struct ifih *ifih = i;
+
+	if (atomic_dec_int_nv(&ifih->ifih_srpcnt) == 0)
+		wakeup_one(&ifih->ifih_srpcnt);
+}
+
+void
+if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *))
+{
+	struct sleep_state sls;
+	struct ifih *ifih;
+	int refs;
+
+	/* the kernel lock guarantees serialised modifications to if_inputs */
+	KERNEL_ASSERT_LOCKED();
+
+	SRPL_FOREACH_LOCKED(ifih, &ifp->if_inputs, ifih_next) {
+		if (ifih->ifih_input == input)
+			break;
+	}
+
+	KASSERT(ifih != NULL);
+
+	if (--ifih->ifih_refcnt == 0) {
+		SRPL_REMOVE_LOCKED(&ifih_rc, &ifp->if_inputs, ifih,
+		    ifih, ifih_next);
+
+		refs = ifih->ifih_srpcnt;
+		while (refs) {
+			sleep_setup(&sls, &ifih->ifih_srpcnt, PWAIT, "ifihrm");
+			refs = ifih->ifih_srpcnt;
+			sleep_finish(&sls, refs);
+		}
+
+		free(ifih, M_DEVBUF, sizeof(*ifih));
+	}
+}
+
 void
 if_input_process(void *xmq)
 {
@@ -493,6 +581,7 @@ if_input_process(void *xmq)
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct ifih *ifih;
+	struct srpl_iter i;
 	int s;
 
 	mq_delist(mq, &ml);
@@ -525,10 +614,12 @@ if_input_process(void *xmq)
 		 * Pass this mbuf to all input handlers of its
 		 * interface until it is consumed.
 		 */
-		SLIST_FOREACH(ifih, &ifp->if_inputs, ifih_next) {
+		SRPL_FOREACH(ifih, &ifp->if_inputs, &i, ifih_next) {
 			if ((*ifih->ifih_input)(ifp, m))
 				break;
 		}
+		SRPL_LEAVE(&i, ifih);
+
 		if (ifih == NULL)
 			m_freem(m);
 	}

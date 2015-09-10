@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.135 2015/07/20 22:16:41 rzalamena Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.136 2015/09/10 13:32:19 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -357,17 +357,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	if (ifv->ifv_p == p && ifv->ifv_tag == tag) /* noop */
 		return (0);
 
-	/* Can we share an ifih between multiple vlan(4) instances? */
-	ifv->ifv_ifih = SLIST_FIRST(&p->if_inputs);
-	if (ifv->ifv_ifih->ifih_input != vlan_input) {
-		ifv->ifv_ifih = malloc(sizeof(*ifv->ifv_ifih), M_DEVBUF,
-		    M_NOWAIT);
-		if (ifv->ifv_ifih == NULL)
-			return (ENOMEM);
-		ifv->ifv_ifih->ifih_input = vlan_input;
-		ifv->ifv_ifih->ifih_refcnt = 0;
-	}
-
 	/* Remember existing interface flags and reset the interface */
 	flags = ifv->ifv_flags;
 	vlan_unconfig(&ifv->ifv_if, p);
@@ -436,12 +425,11 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 
 	s = splnet();
-	/* Change input handler of the physical interface. */
-	if (++ifv->ifv_ifih->ifih_refcnt == 1)
-		SLIST_INSERT_HEAD(&p->if_inputs, ifv->ifv_ifih, ifih_next);
-
 	LIST_INSERT_HEAD(&tagh[TAG_HASH(tag)], ifv, ifv_list);
 	splx(s);
+
+        /* Change input handler of the physical interface. */
+	if_ih_insert(p, vlan_input);
 
 	return (0);
 }
@@ -466,13 +454,10 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
-
-	/* Restore previous input handler. */
-	if (--ifv->ifv_ifih->ifih_refcnt == 0) {
-		SLIST_REMOVE(&p->if_inputs, ifv->ifv_ifih, ifih, ifih_next);
-		free(ifv->ifv_ifih, M_DEVBUF, sizeof(*ifv->ifv_ifih));
-	}
 	splx(s);
+ 
+	/* Restore previous input handler. */
+	if_ih_remove(p, vlan_input);
 
 	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
 	hook_disestablish(p->if_detachhooks, ifv->dh_cookie);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.261 2015/09/09 12:50:08 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.262 2015/09/10 13:32:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -183,7 +183,6 @@ int
 bridge_clone_create(struct if_clone *ifc, int unit)
 {
 	struct bridge_softc *sc;
-	struct ifih *bridge_ifih;
 	struct ifnet *ifp;
 	int i;
 
@@ -191,15 +190,8 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	if (!sc)
 		return (ENOMEM);
 
-	bridge_ifih = malloc(sizeof(*bridge_ifih), M_DEVBUF, M_NOWAIT);
-	if (bridge_ifih == NULL) {
-		free(sc, M_DEVBUF, 0);
-		return (ENOMEM);
-	}
-
 	sc->sc_stp = bstp_create(&sc->sc_if);
 	if (!sc->sc_stp) {
-		free(bridge_ifih, M_DEVBUF, sizeof(*bridge_ifih));
 		free(sc, M_DEVBUF, 0);
 		return (ENOMEM);
 	}
@@ -231,8 +223,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	    DLT_EN10MB, ETHER_HDR_LEN);
 #endif
 
-	bridge_ifih->ifih_input = ether_input;
-	SLIST_INSERT_HEAD(&ifp->if_inputs, bridge_ifih, ifih_next);
+	if_ih_insert(ifp, ether_input);
 
 	return (0);
 }
@@ -242,7 +233,6 @@ bridge_clone_destroy(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 	struct bridge_iflist *bif;
-	struct ifih *bridge_ifih;
 
 	bridge_stop(sc);
 	bridge_rtflush(sc, IFBF_FLUSHALL);
@@ -258,12 +248,9 @@ bridge_clone_destroy(struct ifnet *ifp)
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
 
-	bridge_ifih = SLIST_FIRST(&ifp->if_inputs);
-	SLIST_REMOVE_HEAD(&ifp->if_inputs, ifih_next);
+	if_ih_remove(ifp, ether_input);
 
-	KASSERT(SLIST_EMPTY(&ifp->if_inputs));
-
-	free(bridge_ifih, M_DEVBUF, sizeof(*bridge_ifih));
+	KASSERT(SRPL_EMPTY_LOCKED(&ifp->if_inputs));
 
 	if_detach(ifp);
 

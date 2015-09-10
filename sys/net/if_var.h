@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.35 2015/09/09 16:01:10 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.36 2015/09/10 13:32:19 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -110,15 +110,6 @@ struct	ifqueue {
 };
 
 /*
- * Interface input hooks.
- */
-struct ifih {
-	SLIST_ENTRY(ifih) ifih_next;
-	int		(*ifih_input)(struct ifnet *, struct mbuf *);
-	int		  ifih_refcnt;
-};
-
-/*
  * Structure defining a queue for a network interface.
  *
  * (Would like to call this struct ``if'', but C isn't PL/1.)
@@ -161,7 +152,7 @@ struct ifnet {				/* and the entries */
 	struct	task *if_linkstatetask; /* task to do route updates */
 
 	/* procedure handles */
-	SLIST_HEAD(, ifih) if_inputs;	/* input routines (dequeue) */
+	struct	srpl if_inputs;		/* input routines (dequeue) */
 
 					/* output routine (enqueue) */
 	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -448,6 +439,9 @@ void	ifa_add(struct ifnet *, struct ifaddr *);
 void	ifa_del(struct ifnet *, struct ifaddr *);
 void	ifa_update_broadaddr(struct ifnet *, struct ifaddr *,
 	    struct sockaddr *);
+
+void	if_ih_insert(struct ifnet *, int (*)(struct ifnet *, struct mbuf *));
+void	if_ih_remove(struct ifnet *, int (*)(struct ifnet *, struct mbuf *));
 
 void	if_rxr_init(struct if_rxring *, u_int, u_int);
 u_int	if_rxr_get(struct if_rxring *, u_int);

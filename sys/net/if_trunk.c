@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.109 2015/07/17 23:32:18 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.110 2015/09/10 13:32:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -344,8 +344,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	ifp->if_type = IFT_IEEE8023ADLAG;
 
 	/* Change input handler of the physical interface. */
-	tp->tp_ifih.ifih_input = trunk_input;
-	SLIST_INSERT_HEAD(&ifp->if_inputs, &tp->tp_ifih, ifih_next);
+	if_ih_insert(ifp, trunk_input);
 
 	ifp->if_tp = (caddr_t)tp;
 	tp->tp_ioctl = ifp->if_ioctl;
@@ -438,7 +437,7 @@ trunk_port_destroy(struct trunk_port *tp)
 	ifp->if_type = tp->tp_iftype;
 
 	/* Restore previous input handler. */
-	SLIST_REMOVE(&ifp->if_inputs, &tp->tp_ifih, ifih, ifih_next);
+	if_ih_remove(ifp, trunk_input);
 
 	ifp->if_watchdog = tp->tp_watchdog;
 	ifp->if_ioctl = tp->tp_ioctl;
