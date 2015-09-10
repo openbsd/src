@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.17 2015/02/14 15:11:22 miod Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.18 2015/09/10 18:12:55 miod Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -519,13 +519,59 @@ static int
 old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 {
 	DSA *dsa;
+	BN_CTX *ctx = NULL;
+	BIGNUM *j, *p1, *newp1;
 
-	if (!(dsa = d2i_DSAPrivateKey (NULL, pder, derlen))) {
+	if (!(dsa = d2i_DSAPrivateKey(NULL, pder, derlen))) {
 		DSAerr(DSA_F_OLD_DSA_PRIV_DECODE, ERR_R_DSA_LIB);
 		return 0;
 	}
+
+	ctx = BN_CTX_new();
+	if (ctx == NULL)
+		goto err;
+
+	/*
+	 * Check that p and q are consistent with each other.
+	 */
+
+	j = BN_CTX_get(ctx);
+	p1 = BN_CTX_get(ctx);
+	newp1 = BN_CTX_get(ctx);
+	if (j == NULL || p1 == NULL || newp1 == NULL)
+		goto err;
+	/* p1 = p - 1 */
+	if (BN_sub(p1, dsa->p, BN_value_one()) == 0)
+		goto err;
+	/* j = (p - 1) / q */
+	if (BN_div(j, NULL, p1, dsa->q, ctx) == 0)
+		goto err;
+	/* q * j should == p - 1 */
+	if (BN_mul(newp1, dsa->q, j, ctx) == 0)
+		goto err;
+	if (BN_cmp(newp1, p1) != 0) {
+		DSAerr(DSA_F_DSA_PARAM_DECODE, DSA_R_BAD_Q_VALUE);
+		goto err;
+	}
+
+	/*
+	 * Check that q is not a composite number.
+	 */
+
+	if (BN_is_prime_ex(dsa->q, BN_prime_checks, ctx, NULL) == 0) {
+		DSAerr(DSA_F_DSA_PARAM_DECODE, DSA_R_BAD_Q_VALUE);
+		goto err;
+	}
+
+	BN_CTX_free(ctx);
+
 	EVP_PKEY_assign_DSA(pkey, dsa);
 	return 1;
+
+err:
+	BN_CTX_free(ctx);
+	DSA_free(dsa);
+	return 0;
 }
 
 static int
