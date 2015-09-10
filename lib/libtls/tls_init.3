@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.25 2015/07/19 17:10:23 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.26 2015/09/10 09:10:42 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2015 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -35,6 +35,8 @@
 .Nm tls_config_set_key_mem ,
 .Nm tls_config_set_protocols ,
 .Nm tls_config_set_verify_depth ,
+.Nm tls_config_prefer_ciphers_client ,
+.Nm tls_config_prefer_ciphers_server ,
 .Nm tls_config_clear_keys ,
 .Nm tls_config_insecure_noverifycert ,
 .Nm tls_config_insecure_noverifyname ,
@@ -91,6 +93,10 @@
 .Fn tls_config_set_protocols "struct tls_config *config" "uint32_t protocols"
 .Ft "void"
 .Fn tls_config_set_verify_depth "struct tls_config *config" "int verify_depth"
+.Ft "void"
+.Fn tls_config_prefer_ciphers_client "struct tls_config *config"
+.Ft "void"
+.Fn tls_config_prefer_ciphers_server "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_clear_keys "struct tls_config *config"
 .Ft "void"
@@ -290,6 +296,17 @@ Additionally, the values
 .Dv TLS_PROTOCOLS_DEFAULT
 (TLSv1.2 only) may be used.
 .Em (Client and server)
+.It
+.Fn tls_config_prefer_ciphers_client
+prefers ciphers in the client's cipher list when selecting a cipher suite.
+This is considered to be less secure than preferring the server's list.
+.Em (Server)
+.It
+.Fn tls_config_prefer_ciphers_server
+prefers ciphers in the server's cipher list when selecting a cipher suite.
+This is considered to be more secure than preferring the client's list and is
+the default.
+.Em (Server)
 .It
 .Fn tls_config_clear_keys
 clears any secret keys from memory.
