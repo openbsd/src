@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.27 2015/09/10 10:59:22 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.28 2015/09/10 11:00:54 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -435,16 +435,16 @@ and
 function families, have two special return values:
 .Pp
 .Bl -tag -width "TLS_WRITE_AGAIN" -offset indent -compact
-.It Dv TLS_WANT_POLLIN
+.It Dv TLS_READ_AGAIN
 A read operation is necessary to continue.
-.It Dv TLS_WANT_POLLOUT
+.It Dv TLS_WRITE_AGAIN
 A write operation is necessary to continue.
 .El
 .Pp
 There are underlying TLS engine read or write operations which may
 not correspond with the name of the function called.
 For example, it is possible to receive a
-.Dv TLS_WANT_POLLIN
+.Dv TLS_READ_AGAIN
 even when calling
 .Fn tls_write .
 .Pp
