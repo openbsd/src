@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.22 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.23 2015/09/10 07:58:28 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -396,9 +396,7 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 	ret = BN_ucmp(&u1, sig->r) == 0;
 
 err:
-	/* XXX: surely this is wrong - if ret is 0, it just didn't verify;
-	   there is no error in BN. Test should be ret == -1 (Ben) */
-	if (ret != 1)
+	if (ret < 0)
 		DSAerr(DSA_F_DSA_DO_VERIFY, ERR_R_BN_LIB);
 	BN_CTX_free(ctx);
 	BN_free(&u1);
