@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.23 2015/09/10 10:59:22 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.24 2015/09/10 18:43:03 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -271,23 +271,23 @@ tls_configure_ssl_verify(struct tls *ctx, int verify)
 	if (ctx->config->ca_mem != NULL) {
 		/* XXX do this in set. */
 		if (ctx->config->ca_len > INT_MAX) {
-			tls_set_error(ctx, "client ca too long");
+			tls_set_errorx(ctx, "ca too long");
 			goto err;
 		}
 		if (SSL_CTX_load_verify_mem(ctx->ssl_ctx,
 		    ctx->config->ca_mem, ctx->config->ca_len) != 1) {
-			tls_set_error(ctx,
-			    "ssl verify memory setup failure");
+			tls_set_errorx(ctx, "ssl verify memory setup failure");
 			goto err;
 		}
 	} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
             ctx->config->ca_file, ctx->config->ca_path) != 1) {
-		tls_set_error(ctx, "ssl verify setup failure");
+		tls_set_errorx(ctx, "ssl verify setup failure");
 		goto err;
 	}
 	if (ctx->config->verify_depth >= 0)
 		SSL_CTX_set_verify_depth(ctx->ssl_ctx,
 		    ctx->config->verify_depth);
+
 	return (0);
 
  err:
