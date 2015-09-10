@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.43 2015/09/09 15:51:40 mpi Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.44 2015/09/10 09:10:42 claudio Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -169,12 +169,6 @@ mld6_input(struct mbuf *m, int off)
 	struct ifmaddr *ifma;
 	int timer;		/* timer value in the MLD query header */
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL) {
-		m_freem(m);
-		return;
-	}
-
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
 		icmp6stat.icp6s_tooshort++;
@@ -197,6 +191,12 @@ mld6_input(struct mbuf *m, int off)
 		 * specify to discard the packet from a non link-local
 		 * source address. But we believe it's expected to do so.
 		 */
+		m_freem(m);
+		return;
+	}
+
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
 		m_freem(m);
 		return;
 	}
@@ -322,6 +322,7 @@ mld6_input(struct mbuf *m, int off)
 #endif
 		break;
 	}
+	if_put(ifp);
 
 	m_freem(m);
 }
@@ -391,8 +392,10 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	 * the case where we first join a link-local address.
 	 */
 	ignflags = (IN6_IFF_NOTREADY|IN6_IFF_ANYCAST) & ~IN6_IFF_TENTATIVE;
-	if ((ia6 = in6ifa_ifpforlinklocal(ifp, ignflags)) == NULL)
+	if ((ia6 = in6ifa_ifpforlinklocal(ifp, ignflags)) == NULL) {
+		if_put(ifp);
 		return;
+	}
 	if ((ia6->ia6_flags & IN6_IFF_TENTATIVE))
 		ia6 = NULL;
 
@@ -402,11 +405,14 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	 * it is more convenient when inserting the hop-by-hop option later.
 	 */
 	MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-	if (mh == NULL)
+	if (mh == NULL) {
+		if_put(ifp);
 		return;
+	}
 	MGET(md, M_DONTWAIT, MT_DATA);
 	if (md == NULL) {
 		m_free(mh);
+		if_put(ifp);
 		return;
 	}
 	mh->m_next = md;
@@ -446,6 +452,8 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	bzero(&im6o, sizeof(im6o));
 	im6o.im6o_ifidx = ifp->if_index;
 	im6o.im6o_hlim = 1;
+
+	if_put(ifp);
 
 	/*
 	 * Request loopback of the report if we are acting as a multicast
