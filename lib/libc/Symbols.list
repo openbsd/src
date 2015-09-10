@@ -843,7 +843,6 @@ crypt_newhash
 
 /* gdtoa */
 __dtoa
-__dtoa_locks
 __freedtoa
 __gdtoa
 __hdtoa

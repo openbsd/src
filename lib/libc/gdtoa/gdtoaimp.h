@@ -463,7 +463,6 @@ extern double rnd_prod(double, double), rnd_quot(double, double);
 #define FREE_DTOA_LOCK(n)	/*nothing*/
 #else
 #include "thread_private.h"
-extern void *__dtoa_locks[];
 #define ACQUIRE_DTOA_LOCK(n)	_MUTEX_LOCK(&__dtoa_locks[n])
 #define FREE_DTOA_LOCK(n)	_MUTEX_UNLOCK(&__dtoa_locks[n])
 #endif
