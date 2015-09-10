@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.202 2015/09/10 14:11:53 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.203 2015/09/10 14:28:17 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/dkio.h>
 #include <sys/vnode.h>
 #include <sys/task.h>
+#include <sys/stdint.h>
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -105,6 +106,9 @@ void disk_attach_callback(void *);
 
 int readdisksector(struct buf *, void (*)(struct buf *), struct disklabel *,
     u_int64_t);
+#ifdef GPT
+int gpt_chk_mbr(struct dos_partition *, struct disklabel *);
+#endif
 
 /*
  * Compute checksum for disk label.
@@ -366,6 +370,23 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			    (bp->b_data[511] & 0xff);
 			if (mbrtest != 0x55aa)
 				goto notmbr;
+#ifdef GPT
+			if (gpt_chk_mbr(dp, lp) == 0) {
+				error = readgptlabel(bp, strat, lp,
+				    partoffp ? &dospartoff : NULL, spoofonly);
+				if (error == 0) {
+					if (partoffp)
+						*partoffp = dospartoff;
+					return (0);
+				} else {
+					/* Restore all potentially tweakee's */
+					dospartoff = 0;
+					DL_SETBSTART(lp, 0);
+					DL_SETBEND(lp, DL_GETDSIZE(lp));
+					goto notmbr;
+				}
+			}
+#endif
 		}
 
 		if (ourpart == -1) {
@@ -555,6 +576,43 @@ notfat:
 int gpt_chk_hdr(struct gpt_header *);
 int gpt_chk_parts(struct gpt_header *, struct gpt_partition *);
 int get_fstype(struct uuid *);
+
+/*
+ * Returns 0 if the MBR with the provided partition array is a GPT protective
+ * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
+ * one MBR partition, an EFI partition that either covers the whole disk or as
+ * much of it as is possible with a 32bit size field.
+ *
+ * NOTE: MS always uses a size of UINT32_MAX for the EFI partition!**
+ */
+int
+gpt_chk_mbr(struct dos_partition *dp, struct disklabel *lp)
+{
+	struct dos_partition *dp2;
+	u_int64_t dsize;
+	int efi, found, i;
+	u_int32_t psize;
+
+	found = efi = 0;
+	for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+		if (dp2->dp_typ == DOSPTYP_UNUSED)
+			continue;
+		found++;
+		if (dp2->dp_typ != DOSPTYP_EFI)
+			continue;
+		dsize = DL_GETDSIZE(lp);
+		psize = letoh32(dp2->dp_size);
+		if (psize == (dsize - 1) ||
+		    psize == UINT32_MAX) {
+			if (letoh32(dp2->dp_start) == 1)
+				efi++;
+		}
+	}
+	if (found == 1 && efi == 1)
+		return (0);
+
+	return (EINVAL);
+}
 
 int
 gpt_chk_hdr(struct gpt_header *gh)
