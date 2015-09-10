@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dz.4,v 1.13 2013/06/02 20:42:27 tedu Exp $
+.\"	$OpenBSD: dz.4,v 1.14 2015/09/10 15:16:43 schwarze Exp $
 .\"	$NetBSD: dz.4,v 1.3 1996/03/03 17:13:29 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -30,14 +30,12 @@
 .\"
 .\"     from: @(#)dz.4	6.3 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt DZ 4 vax
 .Os
 .Sh NAME
 .Nm dz
-.Nd
-.Tn DZ-11
-multiplexer device interface
+.Nd DZ-11 multiplexer device interface
 .Sh SYNOPSIS
 .Cd "dz0 at uba0 csr 0160100"
 .Cd "dz0 at vsbus0 csr 0x200a0000" Pq "DC-367"
@@ -46,9 +44,7 @@ multiplexer device interface
 .Cd "lkkbd0 at dz0 line 0"
 .Cd "lkms0  at dz0 line 1"
 .Sh DESCRIPTION
-A
-.Tn DZ-11
-provides 4 or 8 communication lines with partial modem control,
+A DZ-11 provides 4 or 8 communication lines with partial modem control,
 adequate for
 .Ox
 dialup use.
@@ -107,8 +103,7 @@ dialups
 .It dz0: silo overflow.
 The 64 character input silo overflowed
 before it could be serviced.
-This can happen if a hard error occurs when the
-.Tn CPU
+This can happen if a hard error occurs when the CPU
 is running with elevated priority, as the system will
 then print a message on the console with interrupts disabled.
 It is not serious.

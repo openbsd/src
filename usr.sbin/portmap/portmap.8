@@ -1,4 +1,4 @@
-.\"	$OpenBSD: portmap.8,v 1.8 2010/12/16 20:22:07 jmc Exp $
+.\"	$OpenBSD: portmap.8,v 1.9 2015/09/10 15:16:44 schwarze Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -30,51 +30,34 @@
 .\"
 .\"     from: @(#)portmap.8	5.3 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: December 16 2010 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt PORTMAP 8
 .Os
 .Sh NAME
 .Nm portmap
-.Nd
-.Tn DARPA
-port to
-.Tn RPC
-program number mapper
+.Nd DARPA port to RPC program number mapper
 .Sh SYNOPSIS
 .Nm portmap
 .Op Fl d
 .Sh DESCRIPTION
 .Nm portmap
-is a server that converts
-.Tn RPC
-program numbers into
-.Tn DARPA
+is a server that converts RPC program numbers into DARPA
 protocol port numbers.
-It must be running in order to make
-.Tn RPC
-calls.
+It must be running in order to make RPC calls.
 .Pp
-When an
-.Tn RPC
-server is started, it will tell
+When an RPC server is started, it will tell
 .Nm portmap
-what port number it is listening to, and what
-.Tn RPC
+what port number it is listening to, and what RPC
 program numbers it is prepared to serve.
-When a client wishes to make an
-.Tn RPC
+When a client wishes to make an RPC
 call to a given program number,
 it will first contact
 .Nm portmap
 on the server machine to determine
-the port number where
-.Tn RPC
-packets should be sent.
+the port number where RPC packets should be sent.
 .Pp
 .Nm portmap
-must be started before any
-.Tn RPC
-servers are invoked.
+must be started before any RPC servers are invoked.
 .Pp
 Normally
 .Nm portmap

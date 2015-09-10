@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.14 2010/01/03 16:43:46 schwarze Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.15 2015/09/10 15:16:43 schwarze Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -30,14 +30,12 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 3 2010 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt BOOT_SPARC 8 sparc
 .Os
 .Sh NAME
 .Nm boot_sparc
-.Nd
-.Tn sparc
-system bootstrapping procedures
+.Nd sparc system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss System starts
 When powered on, after a panic, or if the system is rebooted via
@@ -57,9 +55,7 @@ which must currently be an
 .Dq xd
 or
 .Dq xy
-disk, or an
-.Tn SCSI
-CD-ROM
+disk, or an SCSI CD-ROM
 .Pq Dq cd
 or tape drive
 .Pq Dq st .

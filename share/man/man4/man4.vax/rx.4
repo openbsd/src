@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rx.4,v 1.17 2014/11/15 14:41:02 bentley Exp $
+.\"	$OpenBSD: rx.4,v 1.18 2015/09/10 15:16:43 schwarze Exp $
 .\"	$NetBSD: rx.4,v 1.3 1996/03/03 17:14:03 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -30,53 +30,33 @@
 .\"
 .\"     from: @(#)rx.4	6.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: November 15 2014 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt RX 4 vax
 .Os
 .Sh NAME
 .Nm rx
-.Nd
-.Tn DEC
-.Tn RX02
-floppy disk interface
+.Nd DEC RX02 floppy disk interface
 .Sh SYNOPSIS
 .Cd "rx* at mscpbus? drive?"
 .Sh DESCRIPTION
 The
 .Nm rx
-device provides access to a
-.Tn DEC
-.Tn RX02
-floppy disk
-unit with M8256 interface module
-.Pf ( Tn RX211
-configuration).
-The
-.Tn RX02
-uses 8-inch, single-sided, soft-sectored floppy
+device provides access to a DEC RX02 floppy disk
+unit with M8256 interface module (RX211 configuration).
+The RX02 uses 8-inch, single-sided, soft-sectored floppy
 disks (with pre-formatted industry-standard headers) in
 either single or double density.
 .Pp
-Floppy disks handled by the
-.Tn RX02
-contain 77 tracks, each with 26
+Floppy disks handled by the RX02 contain 77 tracks, each with 26
 sectors (for a total of 2,002 sectors).
 The sector size is 128 bytes for single density, 256 bytes for double density.
-Single density disks are compatible with the
-.Tn RX01
-floppy disk unit and with
-.Tn IBM
-3740 Series Diskette 1 systems.
+Single density disks are compatible with the RX01
+floppy disk unit and with IBM 3740 Series Diskette 1 systems.
 .Pp
-In addition to normal (`block' and `raw')
-.Tn I/O ,
-the driver supports
+In addition to normal (`block' and `raw') I/O, the driver supports
 formatting of disks for either density and
 the ability to invoke a 2 for 1 interleaved sector mapping
-compatible with the
-.Tn DEC
-operating system
-.Tn RT-11 .
+compatible with the DEC operating system RT-11.
 .Pp
 The minor device number is interpreted as follows:
 .Bl -column "Other" "Description" -offset indent
@@ -87,15 +67,9 @@ The minor device number is interpreted as follows:
 .It Other Ta "Drive number"
 .El
 .Pp
-The two drives in a single
-.Tn RX02
-unit are treated as
+The two drives in a single RX02 unit are treated as
 two disks attached to a single controller.
-Thus, if there are two
-.Tn RX02 Ns 's
-on a system, the drives on the first
-.Tn RX02
-are
+Thus, if there are two RX02's on a system, the drives on the first RX02 are
 .Dq Li rx0
 and
 .Dq Li rx1 ,
