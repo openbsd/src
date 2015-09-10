@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.31 2015/09/10 13:29:53 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.32 2015/09/10 14:17:22 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -396,7 +396,7 @@ A configured server context should be passed in
 .It
 .Fn tls_handshake
 performs the TLS handshake.
-It is only neccessary to call this function if you need to guarantee that the
+It is only necessary to call this function if you need to guarantee that the
 handshake has completed, as both
 .Fn tls_read
 and
@@ -422,7 +422,7 @@ The amount of data written is returned in
 .It
 .Fn tls_close
 closes a connection after use.
-Only the TLS layer will be shutdown and the caller is responsible for closing
+Only the TLS layer will be shut down and the caller is responsible for closing
 the file descriptors, unless the connection was established using
 .Fn tls_connect
 or
