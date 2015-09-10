@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.938 2015/09/09 20:03:56 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.939 2015/09/10 08:28:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5722,7 +5722,6 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	} else if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
 		nd6_output(ifp, m0, dst, NULL);
 	} else {
-		in6_ifstat_inc(ifp, ifs6_in_toobig);
 		icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
 	}
 
