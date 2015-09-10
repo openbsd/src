@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.121 2015/09/09 15:51:40 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.122 2015/09/10 09:17:16 claudio Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -126,10 +126,6 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL)
-		goto freeit;
-
 	/* If I'm not a router, ignore it. XXX - too restrictive? */
 	if (!ip6_forwarding)
 		goto freeit;
@@ -137,11 +133,11 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	/* Sanity checks */
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
-		    "nd6_rs_input: invalid hlim (%d) from %s to %s on %s\n",
+		    "nd6_rs_input: invalid hlim (%d) from %s to %s on %u\n",
 		    ip6->ip6_hlim,
 		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
 		    inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst)),
-		    ifp->if_xname));
+		    m->m_pkthdr.ph_ifidx));
 		goto bad;
 	}
 
@@ -172,16 +168,22 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 		lladdrlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
 	}
 
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto freeit;
+
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 		nd6log((LOG_INFO,
 		    "nd6_rs_input: lladdrlen mismatch for %s "
 		    "(if %d, RS packet %d)\n",
 		    inet_ntop(AF_INET6, &saddr6, src, sizeof(src)),
 		    ifp->if_addrlen, lladdrlen - 2));
+		if_put(ifp);
 		goto bad;
 	}
 
 	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT, 0);
+	if_put(ifp);
 
  freeit:
 	m_freem(m);
@@ -400,6 +402,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off, icmp6len);
 	if (nd_ra == NULL) {
 		icmp6stat.icp6s_tooshort++;
+		if_put(ifp);
 		return;
 	}
 
@@ -584,11 +587,13 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
     }
 
  freeit:
+	if_put(ifp);
 	m_freem(m);
 	return;
 
  bad:
 	icmp6stat.icp6s_badra++;
+	if_put(ifp);
 	m_freem(m);
 }
 
