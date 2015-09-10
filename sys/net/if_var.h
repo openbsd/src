@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.38 2015/09/10 16:41:30 mikeb Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.39 2015/09/10 18:11:05 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ struct ifnet {				/* and the entries */
 	} if_carp_ptr;
 #define if_carp		if_carp_ptr.carp_s
 #define if_carpdev	if_carp_ptr.carp_d
-	u_short	if_index;		/* numeric abbreviation for this if */
+	unsigned int if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */
 	int	if_xflags;		/* extra softnet flags */
@@ -225,7 +225,7 @@ struct ifaddr {
  */
 struct ifmaddr {
 	struct sockaddr		*ifma_addr;	/* Protocol address */
-	unsigned short		 ifma_ifidx;	/* Index of the interface */
+	unsigned int		 ifma_ifidx;	/* Index of the interface */
 	unsigned int		 ifma_refcnt;	/* Count of references */
 	TAILQ_ENTRY(ifmaddr)	 ifma_list;	/* Per-interface list */
 };

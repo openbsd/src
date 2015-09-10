@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.368 2015/09/10 16:41:30 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.369 2015/09/10 18:11:05 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -151,6 +151,41 @@ void	if_input_process(void *);
 void	ifa_print_all(void);
 #endif
 
+/*
+ * interface index map
+ *
+ * the kernel maintains a mapping of interface indexes to struct ifnet
+ * pointers.
+ *
+ * the map is an array of struct ifnet pointers prefixed by an if_map
+ * structure. the if_map structure stores the length of its array.
+ * 
+ * as interfaces are attached to the system, the map is grown on demand
+ * up to USHRT_MAX entries.
+ * 
+ * interface index 0 is reserved and represents no interface. this
+ * supports the use of the interface index as the scope for IPv6 link
+ * local addresses, where scope 0 means no scope has been specified.
+ * it also supports the use of interface index as the unique identifier
+ * for network interfaces in SNMP applications as per RFC2863. therefore
+ * if_get(0) returns NULL.
+ */ 
+
+struct if_map {
+	unsigned long		 limit;
+	/* followed by limit ifnet * pointers */
+};
+
+struct if_idxmap {
+	unsigned int		 serial;
+	unsigned int		 count;
+	struct if_map		*map;
+};
+
+void	if_idxmap_init(void);
+void	if_idxmap_insert(struct ifnet *);
+void	if_idxmap_remove(struct ifnet *);
+
 TAILQ_HEAD(, ifg_group) ifg_head = TAILQ_HEAD_INITIALIZER(ifg_head);
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
@@ -171,6 +206,8 @@ struct taskq *softnettq;
 void
 ifinit()
 {
+	if_idxmap_init();
+
 	timeout_set(&net_tick_to, net_tick, &net_tick_to);
 
 	softnettq = taskq_create("softnet", 1, IPL_NET,
@@ -181,12 +218,112 @@ ifinit()
 	net_tick(&net_tick_to);
 }
 
-static unsigned int if_index = 0;
-static unsigned int if_indexlim = 0;
-struct ifnet **ifindex2ifnet = NULL;
+static struct if_idxmap if_idxmap = {
+	0,
+	0,
+	NULL
+};
+
 struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
 struct ifnet_head iftxlist = TAILQ_HEAD_INITIALIZER(iftxlist);
 struct ifnet *lo0ifp;
+
+void
+if_idxmap_init(void)
+{
+	if_idxmap.serial = 1; /* skip ifidx 0 so it can return NULL */
+	if_idxmap.map = malloc(sizeof(*if_idxmap.map) +
+	    8 * sizeof(struct ifnet *), M_IFADDR, M_WAITOK | M_ZERO);
+	if_idxmap.map->limit = 8;
+}
+
+void
+if_idxmap_insert(struct ifnet *ifp)
+{
+	struct if_map *if_map;
+	struct ifnet **map;
+	unsigned int index, i;
+
+	/*
+	 * give the ifp an initial refcnt of 1 to ensure it will not
+	 * be freed until if_idxmap_remove returns.
+	 */
+	ifp->if_refcnt = 1;
+
+	/* the kernel lock guarantees serialised modifications to if_idxmap */
+	KERNEL_ASSERT_LOCKED();
+
+	if (++if_idxmap.count > USHRT_MAX)
+		panic("too many interfaces");
+
+	if_map = if_idxmap.map;
+	map = (struct ifnet **)(if_map + 1);
+
+	index = if_idxmap.serial++ & USHRT_MAX;
+
+	if (index >= if_map->limit) {
+		struct if_map *nif_map;
+		struct ifnet **nmap;
+		unsigned int nlimit;
+
+		nlimit = if_map->limit * 2;
+		nif_map = malloc(sizeof(*nif_map) + nlimit * sizeof(*nmap),
+		    M_IFADDR, M_WAITOK);
+		nmap = (struct ifnet **)(nif_map + 1);
+
+		nif_map->limit = nlimit;
+		for (i = 0; i < if_map->limit; i++)
+			nmap[i] = map[i];
+
+		while (i < nlimit)
+			nmap[i] = NULL;
+
+		if_idxmap.map = nif_map;
+		free(if_map, M_IFADDR, sizeof(*nif_map) +
+		    if_map->limit * sizeof(*map));
+		if_map = nif_map;
+		map = nmap;
+	}
+
+	/* pick the next free index */
+	for (i = 0; i < USHRT_MAX; i++) {
+		if (index != 0 && map[index] == NULL)
+			break;
+		
+		index = if_idxmap.serial++ & USHRT_MAX;
+	}
+
+	/* commit */
+	ifp->if_index = index;
+	map[index] = if_ref(ifp);
+}
+
+void
+if_idxmap_remove(struct ifnet *ifp)
+{
+	struct if_map *if_map;
+	struct ifnet **map;
+	unsigned int index, r;
+
+	index = ifp->if_index & USHRT_MAX;
+
+	/* the kernel lock guarantees serialised modifications to if_idxmap */
+	KERNEL_ASSERT_LOCKED();
+
+	if_map = if_idxmap.map;
+	map = (struct ifnet **)(if_map + 1);
+	KASSERT(ifp == map[index]);
+
+	map[index] = NULL;
+	if_put(ifp);
+	if_idxmap.count--;
+	/* end of if_idxmap modifications */
+
+	/* release the initial ifp refcnt */
+	r = atomic_dec_int_nv(&ifp->if_refcnt);
+	if (r != 0)
+		printf("%s: refcnt %u\n", ifp->if_xname, r);
+}
 
 /*
  * Attach an interface to the
@@ -195,75 +332,9 @@ struct ifnet *lo0ifp;
 void
 if_attachsetup(struct ifnet *ifp)
 {
-	int wrapped = 0;
-
-	/*
-	 * Always increment the index to avoid races.
-	 */
-	if_index++;
-
-	/*
-	 * If we hit USHRT_MAX, we skip back to 1 since there are a
-	 * number of places where the value of ifp->if_index or
-	 * if_index itself is compared to or stored in an unsigned
-	 * short.  By jumping back, we won't botch those assignments
-	 * or comparisons.
-	 */
-	if (if_index == USHRT_MAX) {
-		if_index = 1;
-		wrapped++;
-	}
-
-	while (if_index < if_indexlim && ifindex2ifnet[if_index] != NULL) {
-		if_index++;
-
-		if (if_index == USHRT_MAX) {
-			/*
-			 * If we have to jump back to 1 twice without
-			 * finding an empty slot then there are too many
-			 * interfaces.
-			 */
-			if (wrapped)
-				panic("too many interfaces");
-
-			if_index = 1;
-			wrapped++;
-		}
-	}
-	ifp->if_index = if_index;
-
-	/*
-	 * We have some arrays that should be indexed by if_index.
-	 * since if_index will grow dynamically, they should grow too.
-	 *	struct ifnet **ifindex2ifnet
-	 */
-	if (ifindex2ifnet == NULL || if_index >= if_indexlim) {
-		size_t m, n, oldlim;
-		caddr_t q;
-
-		oldlim = if_indexlim;
-		if (if_indexlim == 0)
-			if_indexlim = 8;
-		while (if_index >= if_indexlim)
-			if_indexlim <<= 1;
-
-		/* grow ifindex2ifnet */
-		m = oldlim * sizeof(struct ifnet *);
-		n = if_indexlim * sizeof(struct ifnet *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
-		if (ifindex2ifnet) {
-			bcopy((caddr_t)ifindex2ifnet, q, m);
-			free((caddr_t)ifindex2ifnet, M_IFADDR, 0);
-		}
-		ifindex2ifnet = (struct ifnet **)q;
-	}
-
 	TAILQ_INIT(&ifp->if_groups);
 
 	if_addgroup(ifp, IFG_ALL);
-
-	ifp->if_refcnt = 0;
-	ifindex2ifnet[if_index] = if_ref(ifp);
 
 	if (ifp->if_snd.ifq_maxlen == 0)
 		IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
@@ -277,6 +348,9 @@ if_attachsetup(struct ifnet *ifp)
 	if_slowtimo(ifp);
 
 	task_set(ifp->if_linkstatetask, if_link_state_change_task, ifp);
+
+	if_idxmap_insert(ifp);
+	KASSERT(if_get(0) == NULL);
 
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
@@ -765,8 +839,7 @@ if_detach(struct ifnet *ifp)
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
-	ifindex2ifnet[ifp->if_index] = NULL;
-	if_put(ifp);
+	if_idxmap_remove(ifp);
 	splx(s);
 }
 
@@ -1329,12 +1402,16 @@ ifunit(const char *name)
 struct ifnet *
 if_get(unsigned int index)
 {
+	struct if_map *if_map = if_idxmap.map;
+	struct ifnet **map = (struct ifnet **)(if_map + 1);
 	struct ifnet *ifp = NULL;
 
-	if (index < if_indexlim) {
-		ifp = ifindex2ifnet[index];
-		if (ifp != NULL)
+	if (index < if_map->limit) {
+		ifp = map[index];
+		if (ifp != NULL) {
+			KASSERT(ifp->if_index == index);
 			if_ref(ifp);
+		}
 	}
 
 	return (ifp);
