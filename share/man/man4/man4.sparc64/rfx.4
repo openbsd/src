@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfx.4,v 1.11 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: rfx.4,v 1.12 2015/09/10 15:53:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat.
 .\" All rights reserved.
@@ -24,29 +24,24 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt RFX 4 sparc64
 .Os
 .Sh NAME
 .Nm rfx
-.Nd Vitec/Connectware/AP&D
-.Tn RasterFlex
-framebuffer series
+.Nd Vitec/Connectware/AP&D RasterFlex framebuffer series
 .Sh SYNOPSIS
 .Cd "rfx* at sbus?"
 .Cd "wsdisplay* at rfx?"
 .Sh DESCRIPTION
-The
-.Tn RasterFlex
+The RasterFlex
 series, originally manufactured by Vitec, later bought by Connectware,
 then by Advanced Products & Design, are high-performance frame buffers
 and frame grabber devices.
 .Pp
 The
 .Nm
-driver only supports the
-.Tn RasterFlex
-frame buffers:
+driver only supports the RasterFlex frame buffers:
 .Bl -tag -width RasterFLEX-HR -offset indent -compact
 .It RasterFlex-24
 .It RasterFlex-32
@@ -63,12 +58,10 @@ but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
 .Sh DISPLAY RESOLUTION
-The
-.Tn RasterFlex
+The RasterFlex
 frame buffers will adapt their resolution to the monitor they are
 connected to.
-However, when not connected to a
-.Tn Sun
+However, when not connected to a Sun
 monitor, the device will default to the 1152x900 resolution, with a refresh
 rate of 66Hz.
 A different resolution can be forced using the jumpers J2 to J4, located
