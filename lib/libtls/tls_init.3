@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.30 2015/09/10 13:23:57 jsing Exp $
+.\" $OpenBSD: tls_init.3,v 1.31 2015/09/10 13:29:53 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -422,10 +422,11 @@ The amount of data written is returned in
 .It
 .Fn tls_close
 closes a connection after use.
-If the connection was established using
-.Fn tls_connect_fds ,
-only the TLS layer will be closed and it is the caller's responsibility to close
-the file descriptors.
+Only the TLS layer will be shutdown and the caller is responsible for closing
+the file descriptors, unless the connection was established using
+.Fn tls_connect
+or
+.Fn tls_connect_servername .
 .El
 .Sh RETURN VALUES
 Functions that return
