@@ -1139,7 +1139,6 @@ inet_ntop
 inet_pton
 iruserok
 iruserok_sa
-link_addr
 link_ntoa
 ntohl
 ntohs

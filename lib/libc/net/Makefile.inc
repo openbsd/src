@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.56 2014/08/31 02:27:37 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.57 2015/09/10 08:55:03 mpi Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
@@ -32,7 +32,7 @@ MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
 	getifaddrs.3 getnameinfo.3 getnetent.3 getpeereid.3 getprotoent.3 \
 	getrrsetbyname.3 getservent.3 htonl.3 if_indextoname.3 \
 	inet_addr.3 inet_lnaof.3 inet_net.3 inet_ntop.3 \
-	inet6_opt_init.3 inet6_rth_space.3 link_addr.3 \
+	inet6_opt_init.3 inet6_rth_space.3 link_ntoa.3 \
 	rcmd.3 rcmdsh.3 resolver.3 sockatmark.3
 
 MLINKS+=byteorder.3 htobe16.3 byteorder.3 htobe32.3 byteorder.3 htobe64.3 \
@@ -70,7 +70,6 @@ MLINKS+=inet_addr.3 inet_aton.3 inet_addr.3 inet_network.3 \
 MLINKS+=inet_lnaof.3 inet_makeaddr.3 inet_lnaof.3 inet_netof.3
 MLINKS+=inet_ntop.3 inet_pton.3
 MLINKS+=inet_net.3 inet_net_ntop.3 inet_net.3 inet_net_pton.3
-MLINKS+=link_addr.3 link_ntoa.3
 MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3 \
 	rcmd.3 rresvport_af.3 rcmd.3 rcmd_af.3 rcmd.3 iruserok_sa.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
