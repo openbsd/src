@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.25 2015/09/09 19:49:07 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.26 2015/09/10 10:14:20 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -166,20 +166,23 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
     const char *servername)
 {
 	union { struct in_addr ip4; struct in6_addr ip6; } addrbuf;
-	X509 *cert = NULL;
-	int ret, err;
+	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
 		tls_set_errorx(ctx, "not a client context");
 		goto err;
 	}
 
-	if (ctx->state & TLS_STATE_CONNECTING)
-		goto connecting;
-
 	if (fd_read < 0 || fd_write < 0) {
 		tls_set_errorx(ctx, "invalid file descriptors");
-		return (-1);
+		goto err;
+	}
+
+	if (servername != NULL) {
+		if ((ctx->servername = strdup(servername)) == NULL) {
+			tls_set_errorx(ctx, "out of memory");
+			goto err;
+		}
 	}
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
@@ -230,16 +233,28 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 		}
 	}
 
- connecting:
-	if ((ret = SSL_connect(ctx->ssl_conn)) != 1) {
-		err = tls_ssl_error(ctx, ctx->ssl_conn, ret, "connect");
-		if (err == TLS_READ_AGAIN || err == TLS_WRITE_AGAIN) {
-			ctx->state |= TLS_STATE_CONNECTING;
-			return (err);
-		}
+	rv = 0;
+
+ err:
+	return (rv);
+}
+
+int
+tls_handshake_client(struct tls *ctx)
+{
+	X509 *cert = NULL;
+	int ssl_ret;
+	int rv = -1;
+
+	if ((ctx->flags & TLS_CLIENT) == 0) {
+		tls_set_errorx(ctx, "not a client context");
 		goto err;
 	}
-	ctx->state &= ~TLS_STATE_CONNECTING;
+
+	if ((ssl_ret = SSL_connect(ctx->ssl_conn)) != 1) {
+		rv = tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "handshake");
+		goto err;
+	}
 
 	if (ctx->config->verify_name) {
 		cert = SSL_get_peer_certificate(ctx->ssl_conn);
@@ -247,19 +262,20 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 			tls_set_errorx(ctx, "no server certificate");
 			goto err;
 		}
-		if ((ret = tls_check_servername(ctx, cert, servername)) != 0) {
-			if (ret != -2)
+		if ((rv = tls_check_servername(ctx, cert,
+		    ctx->servername)) != 0) {
+			if (rv != -2)
 				tls_set_errorx(ctx, "name `%s' not present in"
-				    " server certificate", servername);
+				    " server certificate", ctx->servername);
 			goto err;
 		}
-		X509_free(cert);
 	}
 
-	return (0);
+	ctx->state |= TLS_HANDSHAKE_COMPLETE;
+	rv = 0;
 
  err:
 	X509_free(cert);
 
-	return (-1);
+	return (rv);
 }
