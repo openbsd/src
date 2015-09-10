@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.50 2015/08/24 04:07:38 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.51 2015/09/10 11:53:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2575,8 +2575,8 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 		mlen = MIN(len, R92C_FW_PAGE_SIZE);
 		error = urtwn_fw_loadpage(sc, page, ptr, mlen);
 		if (error != 0) {
-			printf("%s: could not load firmware page %d\n",
-			    sc->sc_dev.dv_xname, page);
+			printf("%s: could not load firmware page %d "
+			    "(error %d)\n", sc->sc_dev.dv_xname, page, error);
 			goto fail;
 		}
 		ptr += mlen;
