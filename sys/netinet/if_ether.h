@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.57 2015/06/23 13:20:17 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.58 2015/09/10 07:43:18 mpi Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ extern struct ifnet *revarp_ifp;
 #endif /* NFSCLIENT */
 
 void arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
-int arpproxy(struct in_addr, u_int);
+int arpproxy(struct in_addr, unsigned int);
 void revarpinput(struct mbuf *);
 void in_revarpinput(struct mbuf *);
 void revarprequest(struct ifnet *);
