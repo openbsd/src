@@ -1,4 +1,4 @@
-/*	$OpenBSD: actions.c,v 1.2 2015/08/24 09:23:04 semarie Exp $ */
+/*	$OpenBSD: actions.c,v 1.3 2015/09/10 11:18:10 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -18,7 +18,6 @@
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/tame.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -55,7 +54,7 @@ execute_action(action_t action, va_list opts)
 		break;
 
 	case AC_TAME:
-		tame(va_arg(opts, int), NULL);
+		tame(va_arg(opts, char *), NULL);
 		break;
 
 	case AC_ALLOWED_SYSCALLS:

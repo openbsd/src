@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.1 2015/08/24 09:21:10 semarie Exp $ */
+/*	$OpenBSD: manager.c,v 1.2 2015/09/10 11:18:10 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/syslimits.h>
-#include <sys/tame.h>
 #include <sys/wait.h>
 
 #include <err.h>
@@ -33,7 +32,6 @@
 
 extern char *__progname;
 
-int	parse_flags(char *);
 int	execute_action(action_t, va_list);
 
 static const char *
@@ -155,7 +153,7 @@ out:
 
 
 void
-start_test(int *ret, int ntest, int flags, char *paths[], ...)
+start_test(int *ret, int ntest, const char *request, const char *paths[], ...)
 {
 	static int ntest_check = 0;
 	pid_t pid;
@@ -188,7 +186,7 @@ start_test(int *ret, int ntest, int flags, char *paths[], ...)
 		setsid();
 
 		/* XXX redirect output to /dev/null ? */
-		if (tame(flags, paths) != 0)
+		if (tame(request, paths) != 0)
 			err(errno, "tame");
 		
 		va_start(ap, paths);
@@ -213,7 +211,7 @@ start_test(int *ret, int ntest, int flags, char *paths[], ...)
 	}
 
 	/* show status and details */
-	printf("test(%d): tame=(0x%x,{", ntest, flags);
+	printf("test(%d): tame=(\"%s\",{", ntest, request);
 	for (i = 0; paths && paths[i] != NULL; i++)
 		printf("\"%s\",", paths[i]);
 	printf("NULL}) status=%d", status);

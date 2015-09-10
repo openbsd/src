@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2015/08/24 09:21:10 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.2 2015/09/10 11:18:10 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -15,19 +15,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/tame.h>
-
 #include <err.h>
 #include <stdlib.h>
 
 #include "actions.h"
 
-void start_test(int *ret, int ntest, int flags, const char *paths[], ...);
+void start_test(int *ret, int ntest, const char *req, const char *paths[], ...);
 
-#define start_test1(ret,ntest,flags,path,...) \
+#define start_test1(ret,ntest,req,path,...) \
     do { \
 	    const char *_paths[] = {path, NULL}; \
-	    start_test(ret,ntest,flags,_paths,__VA_ARGS__); \
+	    start_test(ret,ntest,req,_paths,__VA_ARGS__); \
     } while (0)
 
 
@@ -41,57 +39,57 @@ main(int argc, char *argv[])
 
 	/* check for env */
 	if (getenv("LD_BIND_NOW") == NULL)
-		errx(1, "should use LD_BIND_NOW=1 in env");
+		warnx("depending of your arch, LD_BIND_NOW=1 in env may be needed");
 
 	/*
 	 * testsuite
 	 */
 
 	/* _exit is always allowed, and nothing else under flags=0 */
-	start_test(&ret, 1, 0, NULL, AC_EXIT);
-	start_test(&ret, 2, 0, NULL, AC_INET, AC_EXIT);
+	start_test(&ret, 1, "", NULL, AC_EXIT);
+	start_test(&ret, 2, "", NULL, AC_INET, AC_EXIT);
 
 	/* test coredump */
-	start_test(&ret, 3, TAME_ABORT, NULL, AC_INET, AC_EXIT);
+	start_test(&ret, 3, "abort", NULL, AC_INET, AC_EXIT);
 
 	/* inet under inet is ok */
-	start_test(&ret, 4, TAME_INET, NULL, AC_INET, AC_EXIT);
+	start_test(&ret, 4, "inet", NULL, AC_INET, AC_EXIT);
 
 	/* kill under inet is forbidden */
-	start_test(&ret, 5, TAME_INET, NULL, AC_KILL, AC_EXIT);
+	start_test(&ret, 5, "inet", NULL, AC_KILL, AC_EXIT);
 
 	/* kill under proc is allowed */
-	start_test(&ret, 6, TAME_PROC, NULL, AC_KILL, AC_EXIT);
+	start_test(&ret, 6, "proc", NULL, AC_KILL, AC_EXIT);
 
 	/* tests several permitted syscalls */
-	start_test(&ret, 7, TAME_DNS,  NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
-	start_test(&ret, 8, TAME_INET, NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
+	start_test(&ret, 7, "dns",  NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
+	start_test(&ret, 8, "inet", NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
 
 	/* these TAME_* don't have "permitted syscalls" */
 	// XXX it is a documentation bug
-	start_test(&ret, 9, TAME_PROC, NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
+	start_test(&ret, 9, "proc", NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
 
 	/*
 	 * test absolute whitelist path
 	 */
 	/* without wpaths */
-	start_test(&ret, 10, TAME_RPATH, NULL,
+	start_test(&ret, 10, "rpath", NULL,
 	    AC_OPENFILE_RDONLY, "/etc/passwd",
 	    AC_EXIT);
 	/* exact match */
-	start_test1(&ret, 11, TAME_RPATH, "/etc/passwd",
+	start_test1(&ret, 11, "rpath", "/etc/passwd",
 	    AC_OPENFILE_RDONLY, "/etc/passwd",
 	    AC_EXIT);
 	/* subdir match */
-	start_test1(&ret, 12, TAME_RPATH, "/etc/",
+	start_test1(&ret, 12, "rpath", "/etc/",
 	    AC_OPENFILE_RDONLY, "/etc/passwd",
 	    AC_EXIT);
 	/* same without trailing '/' */
-	start_test1(&ret, 13, TAME_RPATH, "/etc",
+	start_test1(&ret, 13, "rpath", "/etc",
 	    AC_OPENFILE_RDONLY, "/etc/passwd",
 	    AC_EXIT);
 	/* failing one */
-	start_test1(&ret, 14, TAME_RPATH, "/bin",
+	start_test1(&ret, 14, "rpath", "/bin",
 	    AC_OPENFILE_RDONLY, "/etc/passwd",
 	    AC_EXIT);
 
@@ -99,39 +97,39 @@ main(int argc, char *argv[])
 	 * test relative whitelist path
 	 */
 	/* without wpaths */
-	start_test(&ret, 15, TAME_RPATH, NULL,
+	start_test(&ret, 15, "rpath", NULL,
 	    AC_OPENFILE_RDONLY, "generic",
 	    AC_EXIT);
 	/* exact match */
-	start_test1(&ret, 16, TAME_RPATH, "generic",
+	start_test1(&ret, 16, "rpath", "generic",
 	    AC_OPENFILE_RDONLY, "generic",
 	    AC_EXIT);
 	/* subdir match */
-	start_test1(&ret, 17, TAME_RPATH, "./",
+	start_test1(&ret, 17, "rpath", "./",
 	    AC_OPENFILE_RDONLY, "generic",
 	    AC_EXIT);
 	/* same without trailing '/' */
-	start_test1(&ret, 18, TAME_RPATH, ".",
+	start_test1(&ret, 18, "rpath", ".",
 	    AC_OPENFILE_RDONLY, "generic",
 	    AC_EXIT);
 	/* failing one */
-	start_test1(&ret, 19, TAME_RPATH, ".",
+	start_test1(&ret, 19, "rpath", ".",
 	    AC_OPENFILE_RDONLY, "../../../../../../../../../../../../../../../etc/passwd",
 	    AC_EXIT);
 
 	/* tame: test reducing flags */
-	start_test1(&ret, 20, TAME_RPATH | TAME_WPATH, NULL,
-	    AC_TAME, TAME_RPATH,
+	start_test1(&ret, 20, "rpath wpath", NULL,
+	    AC_TAME, "rpath",
 	    AC_EXIT);
 
 	/* tame: test adding flags */
-	start_test1(&ret, 21, TAME_RPATH, NULL,
-	    AC_TAME, TAME_RPATH | TAME_WPATH,
+	start_test1(&ret, 21, "rpath", NULL,
+	    AC_TAME, "rpath wpath",
 	    AC_EXIT);
 
 	/* tame: test replacing flags */
-	start_test1(&ret, 22, TAME_RPATH, NULL,
-	    AC_TAME, TAME_WPATH,
+	start_test1(&ret, 22, "rpath", NULL,
+	    AC_TAME, "wpath",
 	    AC_EXIT);
 
 	return (ret);
