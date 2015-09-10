@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.16 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.17 2015/09/10 06:36:45 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -390,7 +390,6 @@ s_client_main(int argc, char **argv)
 		goto end;
 	}
 	verify_depth = 0;
-	verify_error = X509_V_OK;
 	c_nbio = 0;
 
 	argc--;

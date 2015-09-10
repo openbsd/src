@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.4 2015/07/20 21:52:07 doug Exp $ */
+/* $OpenBSD: s_cb.c,v 1.5 2015/09/10 06:36:45 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,7 +129,6 @@
 #define	COOKIE_SECRET_LENGTH	16
 
 int verify_depth = 0;
-int verify_error = X509_V_OK;
 int verify_return_error = 0;
 unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 int cookie_initialized = 0;
@@ -157,10 +156,8 @@ verify_callback(int ok, X509_STORE_CTX * ctx)
 		if (verify_depth >= depth) {
 			if (!verify_return_error)
 				ok = 1;
-			verify_error = X509_V_OK;
 		} else {
 			ok = 0;
-			verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
 		}
 	}
 	switch (err) {

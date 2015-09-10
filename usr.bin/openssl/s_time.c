@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.9 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: s_time.c,v 1.10 2015/09/10 06:36:45 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,7 +256,6 @@ s_time_main(int argc, char **argv)
 	s_time_meth = SSLv23_client_method();
 
 	verify_depth = 0;
-	verify_error = X509_V_OK;
 
 	memset(&s_time_config, 0, sizeof(s_time_config));
 
@@ -298,6 +297,8 @@ s_time_main(int argc, char **argv)
 			goto end;
 		}
 	}
+
+	SSL_CTX_set_verify(tm_ctx, s_time_config.verify, NULL);
 
 	if (!set_cert_stuff(tm_ctx, s_time_config.certfile,
 	    s_time_config.keyfile))
@@ -491,6 +492,7 @@ doConnection(SSL * scon)
 	struct pollfd pfd[1];
 	SSL *serverCon;
 	BIO *conn;
+	long verify_error;
 	int i;
 
 	if ((conn = BIO_new(BIO_s_connect())) == NULL)
@@ -524,6 +526,7 @@ doConnection(SSL * scon)
 	}
 	if (i <= 0) {
 		BIO_printf(bio_err, "ERROR\n");
+		verify_error = SSL_get_verify_result(serverCon);
 		if (verify_error != X509_V_OK)
 			BIO_printf(bio_err, "verify error:%s\n",
 			    X509_verify_cert_error_string(verify_error));

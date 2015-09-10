@@ -1,4 +1,4 @@
-/* $OpenBSD: s_apps.h,v 1.2 2015/04/14 12:56:36 jsing Exp $ */
+/* $OpenBSD: s_apps.h,v 1.3 2015/09/10 06:36:45 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,7 +116,6 @@
 #define PROTOCOL        "tcp"
 
 extern int verify_depth;
-extern int verify_error;
 extern int verify_return_error;
 
 int do_server(int port, int type, int *ret,
