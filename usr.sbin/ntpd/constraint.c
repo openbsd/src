@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.15 2015/09/09 15:05:58 millert Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.16 2015/09/10 10:34:19 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -661,13 +661,13 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 	buf = httpsdate->tls_request;
 	len = strlen(httpsdate->tls_request);
 	while (len > 0) {
-		ret = tls_write(httpsdate->tls_ctx, buf, len, &outlen);
-		if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN)
+		ret = tls_write(httpsdate->tls_ctx, buf, len);
+		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 			continue;
 		if (ret < 0)
 			goto fail;
-		buf += outlen;
-		len -= outlen;
+		buf += ret;
+		len -= ret;
 	}
 
 	while ((line = tls_readline(httpsdate->tls_ctx, &outlen,
@@ -742,7 +742,7 @@ char *
 tls_readline(struct tls *tls, size_t *lenp, size_t *maxlength,
     struct timeval *when)
 {
-	size_t i, len, nr;
+	size_t i, len;
 	char *buf, *q, c;
 	int ret;
 
@@ -757,8 +757,8 @@ tls_readline(struct tls *tls, size_t *lenp, size_t *maxlength,
 			len *= 2;
 		}
  again:
-		ret = tls_read(tls, &c, 1, &nr);
-		if (ret == TLS_READ_AGAIN)
+		ret = tls_read(tls, &c, 1);
+		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 			goto again;
 		if (ret != 0) {
 			/* SSL read error, ignore */
