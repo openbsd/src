@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.231 2015/09/10 09:37:52 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.232 2015/09/10 14:46:28 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -682,8 +682,6 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 			struct sockaddr_dl *sdl = (struct sockaddr_dl *)gateway;
 			struct ifnet *ifp = if_get(sdl->sdl_index);
 
-			if (ifp == NULL)
-				ifp = ifunit(sdl->sdl_data);
 			if (ifp != NULL)
 				ifa = ifaof_ifpforaddr(dst, ifp);
 		} else {
@@ -726,8 +724,6 @@ rt_getifa(struct rt_addrinfo *info, u_int rtid)
 
 		sdl = (struct sockaddr_dl *)info->rti_info[RTAX_IFP];
 		ifp = if_get(sdl->sdl_index);
-		if (ifp == NULL)
-			ifp = ifunit(sdl->sdl_data);
 	}
 
 #ifdef IPSEC
