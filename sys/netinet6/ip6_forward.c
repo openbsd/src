@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.81 2015/09/09 14:02:29 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.82 2015/09/10 09:14:59 mpi Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -288,7 +288,6 @@ reroute:
 	    in6_addr2scopeid(rt->rt_ifp->if_index, &ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
-		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
 
 		if (ip6_log_time + ip6_log_interval < time_second) {
 			ip6_log_time = time_second;
@@ -430,7 +429,6 @@ reroute:
 
 	/* Check the size after pf_test to give pf a chance to refragment. */
 	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
-		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy) {
 			u_long mtu;
 
@@ -444,11 +442,9 @@ reroute:
 
 	error = nd6_output(rt->rt_ifp, m, dst, rt);
 	if (error) {
-		in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
 		ip6stat.ip6s_cantforward++;
 	} else {
 		ip6stat.ip6s_forward++;
-		in6_ifstat_inc(rt->rt_ifp, ifs6_out_forward);
 		if (type)
 			ip6stat.ip6s_redirectsent++;
 		else {
