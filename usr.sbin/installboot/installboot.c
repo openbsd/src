@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.4 2014/01/19 04:14:22 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.5 2015/09/10 16:53:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -49,8 +49,7 @@ int
 main(int argc, char **argv)
 {
 	char *dev, *realdev;
-	int devfd;
-	char opt;
+	int devfd, opt;
 
 	md_init();
 
