@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.75 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.76 2015/09/10 17:52:05 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1754,7 +1754,7 @@ pipex_pptp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
 	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_len = sizeof(sin6);
 	sin6.sin6_family = AF_INET6;
-	in6_recoverscope(&sin6, &dst, NULL);
+	in6_recoverscope(&sin6, &dst);
 
 	return pipex_pptp_userland_lookup_session(m0, sin6tosa(&sin6));
 }
@@ -2190,7 +2190,7 @@ pipex_l2tp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
 	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_len = sizeof(sin6);
 	sin6.sin6_family = AF_INET6;
-	in6_recoverscope(&sin6, &dst, NULL);
+	in6_recoverscope(&sin6, &dst);
 
 	return pipex_l2tp_userland_lookup_session(m0, sin6tosa(&sin6));
 }

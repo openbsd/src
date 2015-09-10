@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.55 2015/09/03 14:59:23 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.56 2015/09/10 17:52:05 claudio Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -641,9 +641,8 @@ in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
  * this function should be nuked in the future, when we get rid of
  * embedded scopeid thing.
  */
-int
-in6_recoverscope(struct sockaddr_in6 *sin6, const struct in6_addr *in6,
-    struct ifnet *ifp)
+void
+in6_recoverscope(struct sockaddr_in6 *sin6, const struct in6_addr *in6)
 {
 	u_int32_t scopeid;
 
@@ -661,17 +660,10 @@ in6_recoverscope(struct sockaddr_in6 *sin6, const struct in6_addr *in6,
 		 */
 		scopeid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (scopeid) {
-			/* sanity check */
-			if (if_get(scopeid) == NULL)
-				return ENXIO;
-			if (ifp && ifp->if_index != scopeid)
-				return ENXIO;
 			sin6->sin6_addr.s6_addr16[1] = 0;
 			sin6->sin6_scope_id = scopeid;
 		}
 	}
-
-	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.164 2015/09/09 15:51:40 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.165 2015/09/10 17:52:05 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1061,7 +1061,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);
 	rip6src.sin6_family = AF_INET6;
 	/* KAME hack: recover scopeid */
-	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, NULL);
+	in6_recoverscope(&rip6src, &ip6->ip6_src);
 
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (!(in6p->inp_flags & INP_IPV6))
@@ -1216,13 +1216,13 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	sa6_src.sin6_family = AF_INET6;
 	sa6_src.sin6_len = sizeof(sa6_src);
 	sa6_src.sin6_addr = ip6->ip6_dst;
-	in6_recoverscope(&sa6_src, &ip6->ip6_dst, if_get(m->m_pkthdr.ph_ifidx));
+	in6_recoverscope(&sa6_src, &ip6->ip6_dst);
 	in6_embedscope(&ip6->ip6_dst, &sa6_src, NULL, NULL);
 	bzero(&sa6_dst, sizeof(sa6_dst));
 	sa6_dst.sin6_family = AF_INET6;
 	sa6_dst.sin6_len = sizeof(sa6_dst);
 	sa6_dst.sin6_addr = t;
-	in6_recoverscope(&sa6_dst, &t, if_get(m->m_pkthdr.ph_ifidx));
+	in6_recoverscope(&sa6_dst, &t);
 	in6_embedscope(&t, &sa6_dst, NULL, NULL);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.149 2015/08/31 10:03:47 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.150 2015/09/10 17:52:05 claudio Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1850,7 +1850,7 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 			bzero(d, sizeof(*d));
 			d->rtaddr.sin6_family = AF_INET6;
 			d->rtaddr.sin6_len = sizeof(struct sockaddr_in6);
-			in6_recoverscope(&d->rtaddr, &dr->rtaddr, dr->ifp);
+			in6_recoverscope(&d->rtaddr, &dr->rtaddr);
 			d->flags = dr->flags;
 			d->rtlifetime = dr->rtlifetime;
 			d->expire = dr->expire;
@@ -1896,19 +1896,14 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 		struct sockaddr_in6 sin6;
 		struct nd_pfxrouter *pfr;
 		struct in6_prefix pfx;
-		char addr[INET6_ADDRSTRLEN];
 
 		if (oldp && p + sizeof(struct in6_prefix) <= pe) {
 			memset(&pfx, 0, sizeof(pfx));
 			ps = p;
 
 			pfx.prefix = pr->ndpr_prefix;
-			if (in6_recoverscope(&pfx.prefix,
-			    &pfx.prefix.sin6_addr, pr->ndpr_ifp) != 0)
-				log(LOG_ERR,
-				    "scope error in prefix list (%s)\n",
-				    inet_ntop(AF_INET6, &pfx.prefix.sin6_addr,
-					addr, sizeof(addr)));
+			in6_recoverscope(&pfx.prefix,
+			    &pfx.prefix.sin6_addr);
 			pfx.raflags = pr->ndpr_raf;
 			pfx.prefixlen = pr->ndpr_plen;
 			pfx.vltime = pr->ndpr_vltime;
@@ -1944,8 +1939,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 				bzero(&sin6, sizeof(sin6));
 				sin6.sin6_family = AF_INET6;
 				sin6.sin6_len = sizeof(struct sockaddr_in6);
-				in6_recoverscope(&sin6, &pfr->router->rtaddr,
-				    pfr->router->ifp);
+				in6_recoverscope(&sin6, &pfr->router->rtaddr);
 				advrtrs++;
 				memcpy(p, &sin6, sizeof(sin6));
 				p += sizeof(sin6);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.86 2015/07/17 18:31:08 blambert Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.87 2015/09/10 17:52:05 claudio Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -241,8 +241,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		sdst.sin6.sin6_family = ssrc.sin6.sin6_family = AF_INET6;
 		sdst.sin6.sin6_len = ssrc.sin6.sin6_len =
 		    sizeof(struct sockaddr_in6);
-		in6_recoverscope(&ssrc.sin6, &ddst->sen_ip6_src, NULL);
-		in6_recoverscope(&sdst.sin6, &ddst->sen_ip6_dst, NULL);
+		in6_recoverscope(&ssrc.sin6, &ddst->sen_ip6_src);
+		in6_recoverscope(&sdst.sin6, &ddst->sen_ip6_dst);
 
 		/*
 		 * If TCP/UDP, extract the port numbers to use in the lookup.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.205 2015/08/14 18:07:28 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.206 2015/09/10 17:52:05 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ udp_input(struct mbuf *m, ...)
 		srcsa.sin6.sin6_flowinfo = htonl(0x0fffffff) & ip6->ip6_flow;
 #endif
 		/* KAME hack: recover scopeid */
-		(void)in6_recoverscope(&srcsa.sin6, &ip6->ip6_src, NULL);
+		in6_recoverscope(&srcsa.sin6, &ip6->ip6_src);
 		break;
 #endif /* INET6 */
 	}
