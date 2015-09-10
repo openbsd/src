@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.9 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: ca.c,v 1.10 2015/09/10 02:17:17 lteo Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,15 +88,10 @@
 #define STRING_MASK		"string_mask"
 #define UTF8_IN			"utf8"
 
-#define ENV_DIR			"dir"
-#define ENV_CERTS		"certs"
-#define ENV_CRL_DIR		"crl_dir"
-#define ENV_CA_DB		"CA_DB"
 #define ENV_NEW_CERTS_DIR	"new_certs_dir"
 #define ENV_CERTIFICATE 	"certificate"
 #define ENV_SERIAL		"serial"
 #define ENV_CRLNUMBER		"crlnumber"
-#define ENV_CRL			"crl"
 #define ENV_PRIVATE_KEY		"private_key"
 #define ENV_DEFAULT_DAYS 	"default_days"
 #define ENV_DEFAULT_STARTDATE 	"default_startdate"
