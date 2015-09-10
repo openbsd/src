@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.77 2015/09/10 10:15:46 jsing Exp $	*/
+/*	$OpenBSD: server.c,v 1.78 2015/09/10 10:42:40 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -574,13 +574,14 @@ server_tls_readcb(int fd, short event, void *arg)
 	if (bufev->wm_read.high != 0)
 		howmuch = MINIMUM(sizeof(rbuf), bufev->wm_read.high);
 
-	ret = tls_read(clt->clt_tls_ctx, rbuf, howmuch, &len);
-	if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
+	ret = tls_read(clt->clt_tls_ctx, rbuf, howmuch);
+	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
 		goto retry;
-	} else if (ret != 0) {
+	} else if (ret < 0) {
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}
+	len = ret;
 
 	if (len == 0) {
 		what |= EVBUFFER_EOF;
@@ -633,13 +634,14 @@ server_tls_writecb(int fd, short event, void *arg)
 	if (EVBUFFER_LENGTH(bufev->output)) {
 		ret = tls_write(clt->clt_tls_ctx,
 		    EVBUFFER_DATA(bufev->output),
-		    EVBUFFER_LENGTH(bufev->output), &len);
-		if (ret == TLS_READ_AGAIN || ret == TLS_WRITE_AGAIN) {
+		    EVBUFFER_LENGTH(bufev->output));
+		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
 			goto retry;
-		} else if (ret != 0) {
+		} else if (ret < 0) {
 			what |= EVBUFFER_ERROR;
 			goto err;
 		}
+		len = ret;
 		evbuffer_drain(bufev->output, len);
 	}
 
@@ -741,8 +743,6 @@ server_write(struct bufferevent *bev, void *arg)
 void
 server_dump(struct client *clt, const void *buf, size_t len)
 {
-	size_t			 outlen;
-
 	if (!len)
 		return;
 
@@ -753,7 +753,7 @@ server_dump(struct client *clt, const void *buf, size_t len)
 	 * error message before gracefully closing the client.
 	 */
 	if (clt->clt_tls_ctx != NULL)
-		(void)tls_write(clt->clt_tls_ctx, buf, len, &outlen);
+		(void)tls_write(clt->clt_tls_ctx, buf, len);
 	else
 		(void)write(clt->clt_s, buf, len);
 }
@@ -957,11 +957,11 @@ server_handshake_tls(int fd, short event, void *arg)
 		fatalx("NULL tls context");
 
 	ret = tls_handshake(clt->clt_tls_ctx);
-	if (ret == TLS_READ_AGAIN) {
+	if (ret == TLS_WANT_POLLIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
 		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
-	} else if (ret == TLS_WRITE_AGAIN) {
+	} else if (ret == TLS_WANT_POLLOUT) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_WRITE,
 		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
