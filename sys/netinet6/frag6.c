@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.62 2015/09/09 14:02:29 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.63 2015/09/10 16:39:39 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -194,7 +194,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	/* jumbo payload can't contain a fragment header */
 	if (ip6->ip6_plen == 0) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, offset);
-		in6_ifstat_inc(dstifp, ifs6_reass_fail);
 		return IPPROTO_DONE;
 	}
 
@@ -208,12 +207,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	    (((ntohs(ip6->ip6_plen) - offset) & 0x7) != 0)) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 		    offsetof(struct ip6_hdr, ip6_plen));
-		in6_ifstat_inc(dstifp, ifs6_reass_fail);
 		return IPPROTO_DONE;
 	}
 
 	ip6stat.ip6s_fragments++;
-	in6_ifstat_inc(dstifp, ifs6_reass_reqd);
 
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
@@ -227,7 +224,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
 		ip6stat.ip6s_reassembled++;
-		in6_ifstat_inc(dstifp, ifs6_reass_ok);
 		*offp = offset;
 		return ip6f->ip6f_nxt;
 	}
@@ -518,7 +514,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	ip6stat.ip6s_reassembled++;
-	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 
 	/*
 	 * Tell launch routine the next header
@@ -543,7 +538,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	frag6_nfragpackets--;
 
  dropfrag:
-	in6_ifstat_inc(dstifp, ifs6_reass_fail);
 	ip6stat.ip6s_fragdropped++;
 	m_freem(m);
 	IP6Q_UNLOCK();

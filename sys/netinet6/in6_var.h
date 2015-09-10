@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.55 2015/09/09 15:51:40 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.56 2015/09/10 16:39:39 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -89,7 +89,6 @@ struct in6_addrlifetime {
 #ifdef _KERNEL
 struct nd_ifinfo;
 struct in6_ifextra {
-	struct in6_ifstat *in6_ifstat;
 	struct nd_ifinfo *nd_ifinfo;
 	void *rs_lhcookie;
 	int nprefixes;
@@ -443,13 +442,7 @@ struct	in6_rrenumreq {
 
 TAILQ_HEAD(in6_ifaddrhead, in6_ifaddr);
 extern struct in6_ifaddrhead in6_ifaddr;
-
 extern struct icmp6stat icmp6stat;
-#define in6_ifstat_inc(ifp, tag) \
-do {								\
-	if (ifp)						\
-		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->in6_ifstat->tag++; \
-} while (0)
 
 /*
  * Multi-cast membership entry.  One for each group/ifp that a PCB
