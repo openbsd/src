@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.29 2014/07/08 05:35:18 dlg Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.30 2015/09/10 12:49:55 stsp Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -213,13 +213,6 @@ struct gem_softc {
 	(((_sc)->sc_pci) ? lemtoh64(_a) : bemtoh64(_a))
 #define	GEM_DMA_WRITE(_sc, _a, _v) \
 	(((_sc)->sc_pci) ? htolem64((_a), (_v)) : htobem64((_a), (_v)))
-
-/*
- * This macro returns the current media entry for *non-MII* media.
- */
-#define	GEM_CURRENT_MEDIA(sc)						\
-	(IFM_SUBTYPE((sc)->sc_mii.mii_media.ifm_cur->ifm_media) != IFM_AUTO ? \
-	 (sc)->sc_mii.mii_media.ifm_cur : (sc)->sc_nway_active)
 
 /*
  * This macro determines if a change to media-related OPMODE bits requires
