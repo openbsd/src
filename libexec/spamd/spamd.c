@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.129 2015/09/10 10:32:16 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.130 2015/09/10 13:56:12 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1064,7 +1064,7 @@ void
 handler(struct con *cp)
 {
 	int end = 0;
-	int n;
+	ssize_t n;
 
 	if (cp->r) {
 		if (cp->cctx) {
@@ -1104,7 +1104,7 @@ handler(struct con *cp)
 void
 handlew(struct con *cp, int one)
 {
-	int n;
+	ssize_t n;
 
 	/* kill stutter on greylisted connections after initial delay */
 	if (cp->stutter && greylist && cp->blacklists == NULL &&
