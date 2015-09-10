@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.7 2015/07/20 03:22:25 doug Exp $ */
+/* $OpenBSD: s_socket.c,v 1.8 2015/09/10 02:23:29 lteo Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,8 +76,6 @@
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port, char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
-
-#define SOCKET_PROTOCOL	IPPROTO_TCP
 
 int
 init_client(int *sock, char *host, char *port, int type, int af)
@@ -187,7 +185,7 @@ init_server_long(int *sock, int port, char *ip, int type)
 		memcpy(&server.sin_addr.s_addr, ip, 4);
 
 	if (type == SOCK_STREAM)
-		s = socket(AF_INET, SOCK_STREAM, SOCKET_PROTOCOL);
+		s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	else			/* type == SOCK_DGRAM */
 		s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
