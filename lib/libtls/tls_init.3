@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.34 2015/09/10 15:47:25 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.35 2015/09/10 16:59:00 deraadt Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -487,6 +487,8 @@ file descriptor:
 .Bd -literal -offset indent
 \&...
 while (len > 0) {
+	ssize_t ret;
+
 	ret = tls_write(ctx, buf, len);
 	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 		continue;
@@ -500,24 +502,25 @@ while (len > 0) {
 .Pp
 The following example demonstrates how to handle TLS writes on a
 non-blocking file descriptor using
-.Xr poll 2
+.Xr poll 2 :
 .Bd -literal -offset indent
 \&...
-pevent = POLLOUT;
+pfd[0].fd = fd;
+pfd[0].events = POLLIN|POLLOUT;
 while (len > 0) {
-	pfd[0].fd = fd;
-	pfd[0].events = pevent;
 	nready = poll(pfd, 1, 0);
 	if (nready == -1)
 		err(1, "poll");
 	if ((pfd[0].revents & (POLLERR|POLLNVAL)))
 		errx(1, "bad fd %d", pfd[0].fd);
-	if ((pfd[0].revents & (pevent|POLLHUP))) {
+	if ((pfd[0].revents & (pfd[0].events|POLLHUP))) {
+		ssize_t ret;
+
 		ret = tls_write(ctx, buf, len);
 		if (ret == TLS_WANT_POLLIN)
-			pevent = POLLIN;
+			pfd[0].events = POLLIN;
 		else if (ret == TLS_WANT_POLLOUT)
-			pevent = POLLOUT;
+			pfd[0].events = POLLOUT;
 		else if (ret < 0)
 			err(1, "tls_write: %s", tls_error(ctx));
 		else {
