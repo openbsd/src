@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.35 2015/06/20 12:01:54 jsing Exp $ */
+/* $OpenBSD: crypto.h,v 1.36 2015/09/10 16:07:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -298,29 +298,14 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
  * via CRYPTO_ex_data_new_class). */
 #define CRYPTO_EX_INDEX_USER		100
 
-/* This is the default callbacks, but we can have others as well:
- * this is needed in Win32 where the application malloc and the
- * library malloc may not be the same.
- */
-#define CRYPTO_malloc_init()	CRYPTO_set_mem_functions(\
-	malloc, realloc, free)
+#define CRYPTO_malloc_init()		(0)
+#define CRYPTO_malloc_debug_init()	(0)
 
 #if defined CRYPTO_MDEBUG_ALL || defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
 # ifndef CRYPTO_MDEBUG /* avoid duplicate #define */
 #  define CRYPTO_MDEBUG
 # endif
 #endif
-
-/* Set standard debugging functions (not done by default
- * unless CRYPTO_MDEBUG is defined) */
-#define CRYPTO_malloc_debug_init()	do {\
-	CRYPTO_set_mem_debug_functions(\
-		CRYPTO_dbg_malloc,\
-		CRYPTO_dbg_realloc,\
-		CRYPTO_dbg_free,\
-		CRYPTO_dbg_set_options,\
-		CRYPTO_dbg_get_options);\
-	} while(0)
 
 int CRYPTO_mem_ctrl(int mode);
 int CRYPTO_is_mem_check_on(void);
