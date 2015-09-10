@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.138 2015/09/01 21:24:04 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.139 2015/09/10 12:10:52 dlg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
 void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
+void icmp_input_if(struct ifnet *, struct mbuf *, int);
 
 void
 icmp_init(void)
@@ -306,22 +307,33 @@ void
 icmp_input(struct mbuf *m, ...)
 {
 	struct ifnet *ifp;
-	struct icmp *icp;
-	struct ip *ip = mtod(m, struct ip *);
-	struct sockaddr_in sin;
-	int icmplen, i, code, hlen;
-	struct in_ifaddr *ia;
-	void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
+	int hlen;
 	va_list ap;
-	struct mbuf *opts;
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
 	va_end(ap);
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL)
-		goto freeit;
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
+
+	icmp_input_if(ifp, m, hlen);
+	if_put(ifp);
+}
+
+void
+icmp_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
+{
+	struct icmp *icp;
+	struct ip *ip = mtod(m, struct ip *);
+	struct sockaddr_in sin;
+	int icmplen, i, code;
+	struct in_ifaddr *ia;
+	void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
+	struct mbuf *opts;
 
 	/*
 	 * Locate icmp structure in mbuf, and check
