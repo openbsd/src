@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.116 2015/09/10 15:56:26 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.117 2015/09/10 17:57:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1650,7 +1650,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		rsa = pkey->pkey.rsa;
 
 		/* TLS and [incidentally] DTLS{0xFEFF} */
-		if (s->version > SSL3_VERSION && s->version != DTLS1_BAD_VER) {
+		if (s->version > SSL3_VERSION) {
 			if (2 > n)
 				goto truncated;
 			n2s(p, i);

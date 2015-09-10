@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.93 2015/08/27 06:21:15 doug Exp $ */
+/* $OpenBSD: ssl.h,v 1.94 2015/09/10 17:57:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -302,7 +302,6 @@ extern "C" {
 #define SSL_TXT_STREEBOG512		"STREEBOG512"
 
 #define SSL_TXT_DTLS1		"DTLSv1"
-#define SSL_TXT_DTLS1_BAD	"DTLSv1-bad"
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
@@ -535,8 +534,6 @@ struct ssl_session_st {
 #define SSL_OP_COOKIE_EXCHANGE				0x00002000L
 /* Don't use RFC4507 ticket extension */
 #define SSL_OP_NO_TICKET				0x00004000L
-/* Use Cisco's "speshul" version of DTLS_BAD_VER (as client)  */
-#define SSL_OP_CISCO_ANYCONNECT				0x00008000L
 
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
@@ -590,6 +587,7 @@ struct ssl_session_st {
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x0
 #define SSL_OP_TLS_D5_BUG				0x0
 #define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x0
+#define SSL_OP_CISCO_ANYCONNECT				0x0
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */

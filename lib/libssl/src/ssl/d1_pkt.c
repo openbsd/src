@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.46 2015/07/19 01:07:40 doug Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.47 2015/09/10 17:57:50 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -971,9 +971,6 @@ start:
 
 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
 
-		if (s->version == DTLS1_BAD_VER)
-			ccs_hdr_len = 3;
-
 		/* 'Change Cipher Spec' is just a single byte, so we know
 		 * exactly what the record payload has to look like */
 		/* XDTLS: check that epoch is consistent */
@@ -1005,10 +1002,6 @@ start:
 
 		/* do this whenever CCS is processed */
 		dtls1_reset_seq_numbers(s, SSL3_CC_READ);
-
-		if (s->version == DTLS1_BAD_VER)
-			s->d1->handshake_read_seq++;
-
 
 		goto start;
 	}

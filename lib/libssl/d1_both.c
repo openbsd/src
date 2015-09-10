@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.34 2015/07/19 20:32:18 doug Exp $ */
+/* $OpenBSD: d1_both.c,v 1.35 2015/09/10 17:57:50 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -346,8 +346,7 @@ dtls1_do_write(SSL *s, int type)
 				const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
 				int xlen;
 
-				if (frag_off == 0 &&
-				    s->version != DTLS1_BAD_VER) {
+				if (frag_off == 0) {
 					/*
 					 * Reconstruct message header is if it
 					 * is being sent in single fragment
@@ -441,10 +440,9 @@ again:
 	s2n (msg_hdr->seq, p);
 	l2n3(0, p);
 	l2n3(msg_len, p);
-	if (s->version != DTLS1_BAD_VER) {
-		p -= DTLS1_HM_HEADER_LENGTH;
-		msg_len += DTLS1_HM_HEADER_LENGTH;
-	}
+
+	p -= DTLS1_HM_HEADER_LENGTH;
+	msg_len += DTLS1_HM_HEADER_LENGTH;
 
 	ssl3_finish_mac(s, p, msg_len);
 	if (s->msg_callback)
@@ -970,12 +968,6 @@ dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 		*p++=SSL3_MT_CCS;
 		s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
 		s->init_num = DTLS1_CCS_HEADER_LENGTH;
-
-		if (s->version == DTLS1_BAD_VER) {
-			s->d1->next_handshake_write_seq++;
-			s2n(s->d1->handshake_write_seq, p);
-			s->init_num += 2;
-		}
 
 		s->init_off = 0;
 
