@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.82 2015/09/03 14:30:23 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.83 2015/09/10 08:58:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -871,6 +871,13 @@ format_defaults_session(struct format_tree *ft, struct session *s)
 	t = s->creation_time.tv_sec;
 	format_add(ft, "session_created", "%lld", (long long) t);
 	format_add(ft, "session_created_string", "%s", format_time_string(t));
+
+	t = s->last_attached_time.tv_sec;
+	if (t != 0) { /* zero if never attached */
+		format_add(ft, "session_last_attached", "%lld", (long long) t);
+		format_add(ft, "session_last_attached_string", "%s",
+		    format_time_string(t));
+	}
 
 	t = s->activity_time.tv_sec;
 	format_add(ft, "session_activity", "%lld", (long long) t);

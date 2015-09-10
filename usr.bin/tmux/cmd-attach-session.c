@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.40 2015/08/28 13:01:03 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.41 2015/09/10 08:58:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -136,6 +136,7 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 		status_timer_start(c);
 		notify_attached_session_changed(c);
 		session_update_activity(s, NULL);
+		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 	} else {
@@ -181,6 +182,7 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 		status_timer_start(c);
 		notify_attached_session_changed(c);
 		session_update_activity(s, NULL);
+		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 

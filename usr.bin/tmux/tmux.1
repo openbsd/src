@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.448 2015/08/28 12:31:55 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.449 2015/09/10 08:58:14 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2015 $
+.Dd $Mdocdate: September 10 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3401,6 +3401,8 @@ The following variables are available, where appropriate:
 .It Li "session_activity_string" Ta "" Ta "String time of session last activity"
 .It Li "session_created" Ta "" Ta "Integer time session created"
 .It Li "session_created_string" Ta "" Ta "String time session created"
+.It Li "session_last_attached" Ta "" Ta "Integer time session last attached"
+.It Li "session_last_attached_string" Ta "" Ta "String time session last attached"
 .It Li "session_group" Ta "" Ta "Number of session group"
 .It Li "session_grouped" Ta "" Ta "1 if session in a group"
 .It Li "session_height" Ta "" Ta "Height of session"

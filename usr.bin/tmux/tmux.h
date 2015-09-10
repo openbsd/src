@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.554 2015/09/02 17:43:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.555 2015/09/10 08:58:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -981,6 +981,7 @@ struct session {
 	int		 cwd;
 
 	struct timeval	 creation_time;
+	struct timeval	 last_attached_time;
 	struct timeval	 activity_time;
 	struct timeval	 last_activity_time;
 
