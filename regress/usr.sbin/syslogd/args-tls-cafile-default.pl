@@ -15,7 +15,8 @@ our %args = (
 	loggrep => {
 	    qr/CAfile \/etc\/ssl\/cert.pem/ => 1,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
-	    qr/syslogd: loghost .* connection error: connect failed: error:.*/.
+	    qr/syslogd: loghost .* connection error: /.
+		qr/handshake failed: error:.*/.
 		qr/SSL3_GET_SERVER_CERTIFICATE:certificate verify failed/ => 2,
 	    get_testgrep() => 1,
 	},

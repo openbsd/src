@@ -39,7 +39,8 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: connect failed: error:.*/.
+	    qr/syslogd: loghost .* connection error: /.
+		qr/handshake failed: error:.*/.
 		qr/SSL23_GET_SERVER_HELLO:unknown protocol/ => 1,
 	},
     },

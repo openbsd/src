@@ -15,7 +15,7 @@ our %args = (
 	loggrep => {
 	    qr/CAfile larger than 1GB/ => 2,
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
-	    qr/syslogd: loghost .* connection error: /.
+	    qr/syslogd: tls_connect_socket .*: /.
 		qr/ssl verify setup failure/ => 2,
 	    get_testgrep() => 1,
 	},

@@ -21,8 +21,8 @@ our %args = (
 	    write_lines($self, 8, MAXLINE);
 	    IO::Handle::flush(\*STDOUT);
 	    ${$self->{syslogd}}->kill_syslogd('CONT');
-	    ${$self->{syslogd}}->loggrep(get_charlog(), 8)
-		or die ref($self), " syslogd did not receive all messages";
+	    ${$self->{server}}->loggrep(get_charlog(), 8)
+		or die ref($self), " server did not receive all messages";
 	    write_shutdown($self);
 	},
 	loggrep => { get_charlog() => 8 },
