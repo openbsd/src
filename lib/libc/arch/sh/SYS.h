@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.7 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.8 2015/09/10 13:29:09 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -68,6 +68,13 @@
 #define	SYSENTRY_HIDDEN(x)				\
 	ENTRY(_thread_sys_ ## x)
 
+#define	__END_HIDDEN(x)					\
+	SET_ENTRY_SIZE(_thread_sys_ ## x);		\
+	_HIDDEN_FALIAS(x,_thread_sys_ ## x);		\
+	SET_ENTRY_SIZE(_HIDDEN(x))
+#define	__END(x)					\
+	__END_HIDDEN(x); SET_ENTRY_SIZE(x)
+
 #define SYSTRAP(x)					\
 		mov.l	903f, r0;			\
 		.word	0xc380;	/* trapa #0x80; */	\
@@ -133,20 +140,24 @@
 #define PSEUDO_NOERROR(x,y)				\
 		_SYSCALL_NOERROR(x,y);			\
 		rts;					\
-		 nop
+		 nop;					\
+		__END(x)
 
 #define PSEUDO(x,y)					\
 		_SYSCALL(x,y);				\
 		rts;					\
-		 nop
+		 nop;					\
+		__END(x)
 
 #define PSEUDO_HIDDEN(x,y)				\
 		_SYSCALL_HIDDEN(x,y);			\
 		rts;					\
-		 nop
+		 nop;					\
+		__END_HIDDEN(x)
 
 #define RSYSCALL_NOERROR(x)		PSEUDO_NOERROR(x,x)
 #define RSYSCALL(x)			PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)		PSEUDO_HIDDEN(x,x)
+#define SYSCALL_END(x)			__END(x)
 
 	.globl	CERROR

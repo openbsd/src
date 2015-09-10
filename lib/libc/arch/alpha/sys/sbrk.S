@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.7 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.8 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.4 1996/10/17 03:08:20 cgd Exp $	*/
 
 /*
@@ -35,11 +35,12 @@
 	.data
 EXPORT(__curbrk)
 	.quad	_end
-
-WEAK_ALIAS(sbrk, _sbrk)
+	.size	__curbrk, . - __curbrk
+	.type	__curbrk,@object
 
 	.text
-LEAF(_sbrk, 1)
+	.weak	sbrk
+LEAF(sbrk, 1)
 	br	pv, L1				/* XXX profiling */
 L1:	LDGP(pv)
 	ldq	a1, __curbrk
@@ -48,4 +49,4 @@ L1:	LDGP(pv)
 	stq	a0, __curbrk
 	mov	a1, v0
 	RET
-END(_sbrk)
+END(sbrk)

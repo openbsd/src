@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.9 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: brk.S,v 1.10 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,12 +39,15 @@
 	.data
 __minbrk:
 	.long	_end			! lower brk limit; also for gmon code
+	END(__minbrk)
+	.type	__minbrk,@object
+
 	.text
 
-WEAK_ALIAS(brk, _brk)
+	.weak	brk
 
 #ifdef __PIC__
-ENTRY(_brk)
+ENTRY(brk)
 	PIC_PROLOGUE(%o5,%o4)
 #if __PIC__ == 1
 	ld	[%o5 + __minbrk], %o4
@@ -73,8 +76,9 @@ ENTRY(_brk)
 1:
 	retl				! success, return 0 & record new break
 	 st	%o2, [%o4]
+END(brk)
 #else
-ENTRY(_brk)
+ENTRY(brk)
 	sethi	%hi(__minbrk), %o1	! %o1 = minbrk
 	ld	[%o1 + %lo(__minbrk)], %o1
 	cmp	%o1, %o0		! if (minbrk > %o0)
@@ -90,4 +94,5 @@ ENTRY(_brk)
 1:
 	retl				! success, return 0 & record new break
 	 st	%o2, [%g1 + %lo(__curbrk)]
+END(brk)
 #endif

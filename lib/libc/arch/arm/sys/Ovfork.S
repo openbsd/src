@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.4 2015/03/31 04:32:01 guenther Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.5 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.6 2003/08/07 16:42:03 agc Exp $	*/
 
 /*-
@@ -42,3 +42,4 @@ SYSENTRY(vfork)
 	SYSTRAP(vfork)
 	bcs	PIC_SYM(CERROR, PLT)
 	mov	r15, r2
+SYSCALL_END(vfork)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.13 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.14 2015/09/10 13:29:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,11 +42,14 @@
 	.align 8
 __curbrk:
 	.long	_end
+	END(__curbrk)
+	.type	__curbrk,@object
+
 	.text
 
-WEAK_ALIAS(sbrk,_sbrk)
+	.weak	sbrk
 
-ENTRY(_sbrk)
+ENTRY(sbrk)
 #ifdef __PIC__
 	PIC_SAVE(%r9)
 	PIC_SETUP
@@ -92,4 +95,4 @@ ENTRY(_sbrk)
 	br.n	CERROR
 	 PIC_RESTORE(%r9)
 #endif
-END(_sbrk)
+END(sbrk)

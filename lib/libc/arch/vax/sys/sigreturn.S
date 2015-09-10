@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.7 2008/05/21 20:38:10 miod Exp $ */
+/*	$OpenBSD: sigreturn.S,v 1.8 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,3 +44,4 @@
 
 SYSCALL(sigreturn)
 	ret
+SYSCALL_END(sigreturn)

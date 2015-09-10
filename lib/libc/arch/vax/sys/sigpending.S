@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.5 2013/07/05 21:10:50 miod Exp $ */
+/*	$OpenBSD: sigpending.S,v 1.6 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,3 +34,4 @@ SYSCALL(sigpending)
 	movl	%r0,*4(%ap)		# store old mask
 	clrl	%r0
 	ret
+SYSCALL_END(sigpending)

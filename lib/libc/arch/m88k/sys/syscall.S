@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.13 2013/01/23 18:59:32 miod Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.14 2015/09/10 13:29:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,4 +40,4 @@ SYSENTRY(syscall)
 	tb0	0,%r0,450
 	br	CERROR
 	jmp	%r1
-END(syscall)
+SYSCALL_END(syscall)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.11 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,19 +37,23 @@
 	.data
 __curbrk:
 	.long	_end
+	END(__curbrk)
+	.type	__curbrk,@object
+
 	.text
 
-WEAK_ALIAS(sbrk,_sbrk)
+	.weak	sbrk
 
-ENTRY(_sbrk, R3)
+ENTRY(sbrk, R3)
 	addl3	__curbrk,4(%ap),-(%sp)
 	pushl	$1
 	movl	%ap,%r3
 	movl	%sp,%ap
 	chmk	$ SYS_break
-	jcs 	err
+	jcs 	1f
 	movl	__curbrk,%r0
 	addl2	4(%r3),__curbrk
 	ret
-err:
+1:
 	jmp	_C_LABEL(__cerror)
+END(sbrk)

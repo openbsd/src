@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.1.1.1 2006/10/10 22:07:10 miod Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.2 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -43,13 +43,14 @@ SYSENTRY(sigsuspend)
 	mov	r0, r4
 	mov.l	LSYS_sigsuspend, r0
 	trapa	#0x80
-	bf	err
+	bf	1f
 	xor	r0, r0		/* shouldn t happen */
 	rts
 	nop
-err:
+1:
 	JUMP_CERROR
 
 	.align	2
 LSYS_sigsuspend:
 	.long	SYS_sigsuspend
+SYSCALL_END(sigsuspend)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.7 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -36,8 +36,6 @@
 
 	.globl	_C_LABEL(end)
 
-WEAK_ALIAS(sbrk, _sbrk)
-
 	.data
 	.align	0
 	.globl	__curbrk
@@ -45,11 +43,13 @@ WEAK_ALIAS(sbrk, _sbrk)
 	.hidden	__curbrk
 __curbrk:
 	.word	_C_LABEL(end)
+	END(__curbrk)
 
+	.weak	sbrk
 /*
  * Change the data segment size
  */
-SYSENTRY(_sbrk)
+ENTRY(sbrk)
 #ifdef __PIC__
 	/* Setup the GOT */
 	ldr	r3, .Lgot
@@ -84,3 +84,4 @@ SYSENTRY(_sbrk)
 #endif
 .Lcurbrk:
 	.word	PIC_SYM(__curbrk, GOT)
+END(sbrk)

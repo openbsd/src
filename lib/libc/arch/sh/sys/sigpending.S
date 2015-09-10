@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.2 2012/07/03 13:17:45 jsg Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.3 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -38,4 +38,4 @@ SYSCALL(sigpending)
 	mov.l	r0, @r4		/* store returned mask */
 	rts
 	 mov	#0, r0
-
+SYSCALL_END(sigpending)

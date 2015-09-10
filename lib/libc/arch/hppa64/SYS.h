@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.9 2015/08/31 04:58:48 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.10 2015/09/10 13:29:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -71,7 +71,12 @@ LEAF_ENTRY(__CONCAT(_thread_sys_,x))		!\
 #define SYSENTRY_HIDDEN(x)			!\
 LEAF_ENTRY(__CONCAT(_thread_sys_,x))
 #define	SYSEXIT(x)				!\
-EXIT(__CONCAT(_thread_sys_,x))
+	SYSEXIT_HIDDEN(x)			!\
+	.size x, . - x
+#define	SYSEXIT_HIDDEN(x)			!\
+	EXIT(__CONCAT(_thread_sys_,x))
+	_HIDDEN_FALIAS(x,_thread_sys_##x)	!\
+	.size _HIDDEN(x), . - _HIDDEN(x)
 
 #define	SYSCALL(x)				!\
 	std	%rp, HPPA_FRAME_RP(%sr0,%sp)	!\
@@ -95,7 +100,7 @@ SYSENTRY_HIDDEN(x)				!\
 	SYSCALL(y)				!\
 	bv	%r0(%rp)			!\
 	nop					!\
-SYSEXIT(x)
+SYSEXIT_HIDDEN(x)
 
 #define	PSEUDO_NOERROR(x,y)			!\
 SYSENTRY(x)					!\

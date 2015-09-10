@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.3 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.4 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -37,16 +37,18 @@
 
 #include "SYS.h"
 
-WEAK_ALIAS(brk,_brk)
+	.weak	brk
 
 	.data
 	.align	2
 __minbrk:
 	.long	_C_LABEL(end)
+	.size	__minbrk, . - __minbrk
+	.type	__minbrk,@object
 
 	.text
 
-ENTRY(_brk)
+ENTRY(brk)
 #ifdef __PIC__
 	mova	L_GOT, r0
 	mov.l	L_GOT, r2
@@ -64,7 +66,7 @@ ENTRY(_brk)
 1:
 	mov.l	LSYS_break, r0
 	trapa	#0x80
-	bf	err
+	bf	2f
 #ifdef __PIC__
 	mov.l	Lcurbrk, r0
 	mov.l	@(r0, r2), r1
@@ -75,7 +77,7 @@ ENTRY(_brk)
 #endif
 	rts
 	mov.l	r4, @r1
-err:
+2:
 	JUMP_CERROR
 
 	.align	2
@@ -88,4 +90,4 @@ Lcurbrk:	.long	__curbrk@GOT
 Lminbrk:	.long	__minbrk
 Lcurbrk:	.long	__curbrk
 #endif
-	SET_ENTRY_SIZE(_brk)
+	SET_ENTRY_SIZE(brk)

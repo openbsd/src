@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.3 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.4 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.9 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -41,14 +41,17 @@
 	.globl	__curbrk
 	.hidden	__curbrk
 
-WEAK_ALIAS(sbrk,_sbrk)
+	.weak	sbrk
 
 	.data
 __curbrk:
 	.long	_C_LABEL(end)
+	.size	__curbrk, . - __curbrk
+	.type	__curbrk,@object
+
 	.text
 
-ENTRY(_sbrk)
+ENTRY(sbrk)
 	mov	r4, r2
 #ifdef __PIC__
 	mova	L_GOT, r0
@@ -63,7 +66,7 @@ ENTRY(_sbrk)
 	add	r0, r4
 	mov.l	LSYS_break, r0
 	trapa	#0x80
-	bf	err
+	bf	1f
 #ifdef __PIC__
 	mov.l	Lcurbrk, r0
 	mov.l	@(r0, r3), r1
@@ -74,7 +77,7 @@ ENTRY(_sbrk)
 	add	r0, r2
 	rts
 	mov.l	r2, @r1
-err:
+1:
 	JUMP_CERROR
 
 	.align	2
@@ -85,4 +88,4 @@ Lcurbrk:	.long	__curbrk@GOT
 #else
 Lcurbrk:	.long	__curbrk
 #endif
-	SET_ENTRY_SIZE(_sbrk)
+	SET_ENTRY_SIZE(sbrk)

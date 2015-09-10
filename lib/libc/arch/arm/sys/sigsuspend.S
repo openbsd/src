@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.3 2004/02/16 16:49:58 drahn Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.4 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.6 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -40,3 +40,4 @@ SYSENTRY(sigsuspend)
 	bcs	PIC_SYM(CERROR, PLT)
 	mov	r0, #0x00000000
 	mov	r15, r14
+SYSCALL_END(sigsuspend)

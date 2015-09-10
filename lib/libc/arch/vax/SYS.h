@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.18 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: SYS.h,v 1.19 2015/09/10 13:29:09 guenther Exp $ */
 /*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 
 /*
@@ -37,23 +37,27 @@
 #define	__ENTRY(p,x)	ENTRY(p##x,0)
 #define	__DO_SYSCALL(x)	chmk $ SYS_ ## x
 
+#define	__END(p,x)	END(p##x); _HIDDEN_FALIAS(x, p##x); END(_HIDDEN(x))
+
 #define	__SYSCALL(p,x,y)						\
-	err:	jmp _C_LABEL(__cerror);					\
+	99:	jmp _C_LABEL(__cerror);					\
 	__ENTRY(p,x);							\
 		__DO_SYSCALL(y);					\
-		jcs err
+		jcs 99b
 
 #define	__PSEUDO(p,x,y)							\
-	err:	jmp _C_LABEL(__cerror);					\
 	__ENTRY(p,x);							\
 		__DO_SYSCALL(y);					\
-		jcs err;						\
-		ret
+		jcs 1f;						\
+		ret;							\
+	1:	jmp _C_LABEL(__cerror);					\
+	__END(p,x)
 
 #define	__PSEUDO_NOERROR(p,x,y)						\
 	__ENTRY(p,x);							\
 		__DO_SYSCALL(y);					\
-		ret
+		ret;							\
+	__END(p,x)
 
 #define	__ALIAS(prefix,name)						\
 	WEAK_ALIAS(name,prefix##name);
@@ -64,13 +68,17 @@
  */
 #define	SYSCALL(x)		__ALIAS(_thread_sys_,x)		\
 				__SYSCALL(_thread_sys_,x,x)
+#define	SYSCALL_END(x)		__END(_thread_sys_,x); END(x)
 #define	RSYSCALL(x)		__ALIAS(_thread_sys_,x)		\
-				__PSEUDO(_thread_sys_,x,x)
+				__PSEUDO(_thread_sys_,x,x);	\
+				END(x)
 #define	RSYSCALL_HIDDEN(x)	__PSEUDO(_thread_sys_,x,x)
 #define	PSEUDO(x,y)		__ALIAS(_thread_sys_,x)		\
-				__PSEUDO(_thread_sys_,x,y)
+				__PSEUDO(_thread_sys_,x,y);	\
+				END(x)
 #define	PSEUDO_NOERROR(x,y)	__ALIAS(_thread_sys_,x)		\
-				__PSEUDO_NOERROR(_thread_sys_,x,y)
+				__PSEUDO_NOERROR(_thread_sys_,x,y); \
+				END(x)
 #define	SYSENTRY(x)		__ALIAS(_thread_sys_,x)		\
 				__ENTRY(_thread_sys_,x)
 #define	SYSNAME(x)		_CAT(__thread_sys_,x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.13 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.14 2015/09/10 13:29:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,10 +42,12 @@
 	.align 8
 __minbrk:
 	.long	_end
+	END(__minbrk)
+	.type	__minbrk,@object
 
-WEAK_ALIAS(brk,_brk)
+	.weak	brk
 
-ENTRY(_brk)
+ENTRY(brk)
 #ifdef __PIC__
 	PIC_SAVE(%r9)
 	PIC_SETUP
@@ -88,4 +90,4 @@ ENTRY(_brk)
 	br.n	CERROR
 	 PIC_RESTORE(%r9)
 #endif
-END(_brk)
+END(brk)

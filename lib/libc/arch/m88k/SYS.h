@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.20 2015/08/31 02:53:56 guenther Exp $*/
+/*	$OpenBSD: SYS.h,v 1.21 2015/09/10 13:29:09 guenther Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -62,7 +62,9 @@
 
 #define	__CONCAT(p,x)		p##x
 #define	__ENTRY(p,x)		ENTRY(__CONCAT(p,x))
-#define	__END(p,x)		END(__CONCAT(p,x))
+#define	__END(p,x)		END(__CONCAT(p,x)); \
+				_HIDDEN_ALIAS(x,__CONCAT(p,x)); \
+				END(_HIDDEN(x))
 #define	__SYSCALLNAME(p,x)	__CONCAT(p,x)
 #define	__ALIAS(prefix,name)	WEAK_ALIAS(name,__CONCAT(prefix,name))
 
@@ -120,12 +122,12 @@
 #define	__PSEUDO_NOERROR(p,x,y)						\
 	__SYSCALL__NOERROR(p,x,y);					\
 	jmp %r1;							\
-	__END(p,x)
+	__END(p,x); END(x)
 
 #define	__PSEUDO(p,x,y)							\
 	__SYSCALL(p,x,y);						\
 	jmp %r1;							\
-	__END(p,x)
+	__END(p,x); END(x)
 #define	__PSEUDO_HIDDEN(p,x,y)						\
 	__SYSCALL_HIDDEN(p,x,y);					\
 	jmp %r1;							\
@@ -143,6 +145,7 @@
 #define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 #define	SYSENTRY(x)		__ENTRY(_thread_sys_,x);		\
 				__ALIAS(_thread_sys_,x)
+#define	SYSCALL_END(x)		__END(_thread_sys_,x); END(x)
 
 #define	ASMSTR		.asciz
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: sigreturn.S,v 1.6 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,3 +38,4 @@ SYSENTRY(sigreturn)
 	mov	SYS_sigreturn, %g1
 	t	ST_SYSCALL
 	ERROR()
+SYSCALL_END(sigreturn)

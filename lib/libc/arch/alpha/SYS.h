@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.11 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.12 2015/09/10 13:29:09 guenther Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -46,12 +46,18 @@
 	.type _HIDDEN(x),@function
 
 /*
+ * END() uses the alpha .end pseudo-op which requires a matching .ent,
+ * so here's a short hand for just doing .size
+ */
+#define _END(x)		.size x, . - x
+
+/*
  * For functions implemented in ASM that aren't syscalls.
  *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
  *   END_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
  */
 #define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x);		\
-			.size _HIDDEN(x), . - _HIDDEN(x)
+			_END(_HIDDEN(x))
 #define	END_WEAK(x)	END_STRONG(x); .weak x
 
 
@@ -67,7 +73,9 @@ LLABEL(name,1):
 #define __LEAF(p,n,e)						\
 	LEAF(___CONCAT(p,n),e)
 #define __END(p,n)						\
-	END(___CONCAT(p,n))
+	END(___CONCAT(p,n));					\
+	_HIDDEN_FALIAS(n,___CONCAT(p,n));			\
+	_END(_HIDDEN(n))
 
 #define	__SYSCALL(p,name)					\
 __LEAF(p,name,0);			/* XXX # of args? */	\
@@ -112,14 +120,19 @@ __END(p,label);
 # define SYSCALL_NOERROR(x)	ALIAS(_thread_sys_,x) \
 				__SYSCALL_NOERROR(_thread_sys_,x)
 # define RSYSCALL(x)		ALIAS(_thread_sys_,x) \
-				__RSYSCALL(_thread_sys_,x)
+				__RSYSCALL(_thread_sys_,x); \
+				_END(x)
 # define RSYSCALL_HIDDEN(x)	__RSYSCALL(_thread_sys_,x)
 # define RSYSCALL_NOERROR(x)	ALIAS(_thread_sys_,x) \
-				__RSYSCALL_NOERROR(_thread_sys_,x)
+				__RSYSCALL_NOERROR(_thread_sys_,x); \
+				_END(x)
 # define PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
-				__PSEUDO(_thread_sys_,x,y)
+				__PSEUDO(_thread_sys_,x,y); \
+				_END(x)
 # define PSEUDO_NOERROR(x,y)	ALIAS(_thread_sys_,x) \
-				__PSEUDO_NOERROR(_thread_sys_,x,y)
+				__PSEUDO_NOERROR(_thread_sys_,x,y); \
+				_END(x)
 # define SYSLEAF(x,e)		ALIAS(_thread_sys_,x) \
 				__LEAF(_thread_sys_,x,e)
-# define SYSEND(x)		__END(_thread_sys_,x)
+# define SYSEND(x)		__END(_thread_sys_,x); \
+				_END(x)

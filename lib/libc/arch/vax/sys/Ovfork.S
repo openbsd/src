@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.9 2015/03/31 04:32:02 guenther Exp $ */
+/*	$OpenBSD: Ovfork.S,v 1.10 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,14 +43,15 @@
 
 SYSENTRY(vfork)
 	movl	16(%fp),%r2	# save return address before we smash it
-	movab	here,16(%fp)
+	movab	1f,16(%fp)
 	ret
-here:
+1:
 	chmk	$ SYS_vfork
-	bcs	err		# if failed, set errno and return -1
+	bcs	2f		# if failed, set errno and return -1
 	jmp	(%r2)
 
-err:
+2:
 	movl	%r0,_C_LABEL(errno)
 	mnegl	$1,%r0
 	jmp	(%r2)
+SYSCALL_END(vfork)

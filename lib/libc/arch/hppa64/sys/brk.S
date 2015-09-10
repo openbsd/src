@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.6 2015/08/26 01:54:09 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.7 2015/09/10 13:29:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -36,9 +36,9 @@
 __minbrk
 	.long	end
 
-WEAK_ALIAS(brk, _brk)
+	.weak	brk
 
-LEAF_ENTRY(_brk)
+LEAF_ENTRY(brk)
 #ifdef __PIC__
 	addil	LT%__minbrk, %r19
 	ldd	RT%__minbrk(%r1), arg4
@@ -64,7 +64,7 @@ LEAF_ENTRY(_brk)
 	bv	%r0(%rp)
 	std	%arg0, R%__curbrk(arg4)
 #endif
-EXIT(_brk)
+EXIT(brk)
 
 	.end
 

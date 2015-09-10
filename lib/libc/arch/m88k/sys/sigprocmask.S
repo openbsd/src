@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.10 2013/01/23 18:59:32 miod Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.11 2015/09/10 13:29:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,4 +50,4 @@ SYSENTRY(sigprocmask)
 3:
 	jmp.n	%r1
 	 or	%r2,%r0,0
-END(sigprocmask)
+SYSCALL_END(sigprocmask)

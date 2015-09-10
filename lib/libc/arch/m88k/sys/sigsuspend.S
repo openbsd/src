@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.11 2013/01/23 18:59:32 miod Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.12 2015/09/10 13:29:09 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,4 +49,4 @@ SYSENTRY(sigsuspend)
 	br	CERROR
 	jmp.n	%r1
 	 or	%r2,%r0,0
-END(sigsuspend)
+SYSCALL_END(sigsuspend)

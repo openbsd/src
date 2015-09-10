@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.10 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: brk.S,v 1.11 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,21 +33,25 @@
 	.data
 __minbrk:
 	.long	_end
+	END(__minbrk)
+	.type	__minbrk,@object
+
 	.text
 
 	.globl	__curbrk
 
-WEAK_ALIAS(brk,_brk)
+	.weak	brk
 
-ENTRY(_brk, 0)
+ENTRY(brk, 0)
 	cmpl	__minbrk,4(%ap)
-	blequ	ok
+	blequ	1f
 	movl	__minbrk,4(%ap)
-ok:
+1:
 	chmk	$ SYS_break
-	jcs	err
+	jcs	2f
 	movl	4(%ap),__curbrk
 	clrl	%r0
 	ret
-err:
+2:
 	jmp	_C_LABEL(__cerror)
+END(brk)

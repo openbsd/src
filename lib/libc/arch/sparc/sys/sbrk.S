@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.8 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.9 2015/09/10 13:29:09 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,14 @@
 
 	.data
 __curbrk:	.long	_end
+	END(__curbrk)
+	.type	__curbrk,@object
+
 	.text
 
-WEAK_ALIAS(sbrk, _sbrk)
+	.weak	sbrk
 
-ENTRY(_sbrk)
+ENTRY(sbrk)
 #ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 #if __PIC__ == 1
@@ -79,3 +82,4 @@ ENTRY(_sbrk)
 	retl					! and update curbrk
 	 st	%o4, [%o2 + %lo(__curbrk)]
 #endif
+END(sbrk)

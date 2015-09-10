@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.18 2015/08/31 02:53:57 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.19 2015/09/10 13:29:09 guenther Exp $
  */
 
 #include "DEFS.h"
@@ -41,6 +41,11 @@
 
 #define __ENTRY(p,x)		ENTRY(_CAT(p,x)) ; .weak x ; x = _CAT(p,x)
 #define __ENTRY_HIDDEN(p,x)	ENTRY(_CAT(p,x))
+
+#define __END_HIDDEN(p,x)	END(_CAT(p,x));				\
+				_HIDDEN_FALIAS(x, _CAT(p,x));		\
+				END(_HIDDEN(x))
+#define __END(p,x)		__END_HIDDEN(p,x); END(x)
 
 /*
  * ERROR branches to cerror.
@@ -82,21 +87,21 @@
  */
 #define	__RSYSCALL(p,x) \
 	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
-	t ST_SYSCALL; ERROR()
+	t ST_SYSCALL; ERROR(); __END(p,x)
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
  */
 #define	__PSEUDO(p,x,y) \
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
-	t ST_SYSCALL; ERROR()
+	t ST_SYSCALL; ERROR(); __END(p,x)
 
 /*
  * PSEUDO_NOERROR(x,y) is like PSEUDO(x,y) except that errno is not set.
  */
 #define	__PSEUDO_NOERROR(p,x,y) \
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
-	t ST_SYSCALL
+	t ST_SYSCALL; __END(p,x)
 
 # define SYSCALL(x)		__SYSCALL(_thread_sys_,x)
 # define RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
@@ -104,5 +109,6 @@
 # define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 # define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 # define SYSENTRY(x)		__ENTRY(_thread_sys_,x)
+# define SYSCALL_END(x)		__END(_thread_sys_,x)
 
 	.globl	_C_LABEL(__cerror)
