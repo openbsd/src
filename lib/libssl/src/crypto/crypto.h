@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.36 2015/09/10 16:07:58 jsing Exp $ */
+/* $OpenBSD: crypto.h,v 1.37 2015/09/10 16:35:15 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -438,11 +438,14 @@ char *CRYPTO_strdup(const char *str, const char *file, int line);
 void CRYPTO_free(void *ptr);
 void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
 #endif
+
 void *CRYPTO_realloc_clean(void *addr, int old_num, int num,
     const char *file, int line);
 void *CRYPTO_remalloc(void *addr, int num, const char *file, int line);
 
+#ifndef LIBRESSL_INTERNAL
 void OPENSSL_cleanse(void *ptr, size_t len);
+#endif
 
 void CRYPTO_set_mem_debug_options(long bits);
 long CRYPTO_get_mem_debug_options(void);
