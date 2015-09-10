@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.78 2015/09/10 10:42:40 beck Exp $	*/
+/*	$OpenBSD: server.c,v 1.79 2015/09/10 13:53:13 beck Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -563,7 +563,7 @@ server_tls_readcb(int fd, short event, void *arg)
 	char			 rbuf[IBUF_READ_SIZE];
 	int			 what = EVBUFFER_READ;
 	int			 howmuch = IBUF_READ_SIZE;
-	int			 ret;
+	ssize_t			 ret;
 	size_t			 len;
 
 	if (event == EV_TIMEOUT) {
@@ -622,7 +622,7 @@ server_tls_writecb(int fd, short event, void *arg)
 {
 	struct bufferevent	*bufev = arg;
 	struct client		*clt = bufev->cbarg;
-	int			 ret;
+	ssize_t			 ret;
 	short			 what = EVBUFFER_WRITE;
 	size_t			 len;
 
