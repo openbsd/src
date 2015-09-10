@@ -5685,6 +5685,8 @@
 ./usr/share/man/man3/tls_config_set_protocols.3
 ./usr/share/man/man3/tls_config_set_verify_depth.3
 ./usr/share/man/man3/tls_config_verify.3
+./usr/share/man/man3/tls_config_verify_client.3
+./usr/share/man/man3/tls_config_verify_client_optional.3
 ./usr/share/man/man3/tls_configure.3
 ./usr/share/man/man3/tls_connect.3
 ./usr/share/man/man3/tls_connect_fds.3
@@ -5692,6 +5694,7 @@
 ./usr/share/man/man3/tls_connect_socket.3
 ./usr/share/man/man3/tls_error.3
 ./usr/share/man/man3/tls_free.3
+./usr/share/man/man3/tls_handshake.3
 ./usr/share/man/man3/tls_init.3
 ./usr/share/man/man3/tls_load_file.3
 ./usr/share/man/man3/tls_read.3
