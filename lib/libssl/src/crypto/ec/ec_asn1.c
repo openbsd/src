@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.16 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.17 2015/09/10 14:29:22 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1367,8 +1367,8 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 
 	if (priv_key->privateKey) {
 		ret->priv_key = BN_bin2bn(
-		    M_ASN1_STRING_data(priv_key->privateKey),
-		    M_ASN1_STRING_length(priv_key->privateKey),
+		    ASN1_STRING_data(priv_key->privateKey),
+		    ASN1_STRING_length(priv_key->privateKey),
 		    ret->priv_key);
 		if (ret->priv_key == NULL) {
 			ECerr(EC_F_D2I_ECPRIVATEKEY,
@@ -1391,8 +1391,8 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 			ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
 			goto err;
 		}
-		pub_oct = M_ASN1_STRING_data(priv_key->publicKey);
-		pub_oct_len = M_ASN1_STRING_length(priv_key->publicKey);
+		pub_oct = ASN1_STRING_data(priv_key->publicKey);
+		pub_oct_len = ASN1_STRING_length(priv_key->publicKey);
 		/* save the point conversion form */
 		ret->conv_form = (point_conversion_form_t) (pub_oct[0] & ~0x01);
 		if (!EC_POINT_oct2point(ret->group, ret->pub_key,

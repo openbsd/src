@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.14 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.15 2015/09/10 14:29:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,8 +90,8 @@ ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len)
 		ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING, ASN1_R_DATA_IS_WRONG);
 		return (-1);
 	}
-	p = M_ASN1_STRING_data(a->value.octet_string);
-	ret = M_ASN1_STRING_length(a->value.octet_string);
+	p = ASN1_STRING_data(a->value.octet_string);
+	ret = ASN1_STRING_length(a->value.octet_string);
 	if (ret < max_len)
 		num = ret;
 	else
@@ -129,8 +129,8 @@ ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
 		return (0);
 	}
 
-	M_ASN1_STRING_length_set(osp, size);
-	p = M_ASN1_STRING_data(osp);
+	ASN1_STRING_length_set(osp, size);
+	p = ASN1_STRING_data(osp);
 
 	ASN1_put_object(&p, 1,n, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
 	i2d_ASN1_INTEGER(&in, &p);
@@ -157,8 +157,8 @@ ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
 	if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL)) {
 		goto err;
 	}
-	p = M_ASN1_STRING_data(a->value.sequence);
-	length = M_ASN1_STRING_length(a->value.sequence);
+	p = ASN1_STRING_data(a->value.sequence);
+	length = ASN1_STRING_length(a->value.sequence);
 
 	c.pp = &p;
 	c.p = p;
@@ -180,14 +180,14 @@ ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
 	if (num != NULL)
 		*num = ASN1_INTEGER_get(ai);
 
-	ret = M_ASN1_STRING_length(os);
+	ret = ASN1_STRING_length(os);
 	if (max_len > ret)
 		n = ret;
 	else
 		n = max_len;
 
 	if (data != NULL)
-		memcpy(data, M_ASN1_STRING_data(os), n);
+		memcpy(data, ASN1_STRING_data(os), n);
 	if (0) {
 err:
 		ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING,
