@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.141 2015/09/10 10:35:58 beck Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.142 2015/09/10 13:43:35 jsing Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1459,17 +1459,17 @@ ftp_readline(FILE *fp, struct tls *tls, size_t *lenp)
 size_t
 ftp_read(FILE *fp, struct tls *tls, char *buf, size_t len)
 {
-	size_t ret;
+	ssize_t tls_ret;
+	size_t ret = 0;
+
 	if (fp != NULL)
 		ret = fread(buf, sizeof(char), len, fp);
 #ifndef SMALL
-	else if (tls!= NULL) {
-		if ((ret = tls_read(tls, buf, len)) != 0)
-			ret = 0;
+	else if (tls != NULL) {
+		if ((tls_ret = tls_read(tls, buf, len)) >= 0)
+			ret = (size_t)tls_ret;
 	}
 #endif /* !SMALL */
-	else
-		ret = 0;
 	return (ret);
 }
 
@@ -1547,7 +1547,7 @@ again:
 		ret = tls_read(tls, &c, 1);
 		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 			goto again;
-		if (ret != 0)
+		if (ret < 0)
 			errx(1, "SSL read error: %s", tls_error(tls));
 
 		buf[i] = c;
