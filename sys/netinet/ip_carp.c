@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.265 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.266 2015/09/10 15:09:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -194,8 +194,9 @@ void	carp_hmac_generate(struct carp_vhost_entry *, u_int32_t *,
 int	carp_hmac_verify(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *);
 int	carp_input(struct ifnet *ifp, struct mbuf *);
-void	carp_proto_input_c(struct mbuf *, struct carp_header *, int,
-	    sa_family_t);
+void	carp_proto_input_c(struct ifnet *ifp, struct mbuf *,
+	    struct carp_header *, int, sa_family_t);
+void	carp_proto_input_if(struct ifnet *, struct mbuf *, int);
 void	carpattach(int);
 void	carpdetach(struct carp_softc *);
 int	carp_prepare_ad(struct mbuf *, struct carp_vhost_entry *,
@@ -389,19 +390,11 @@ carp_hmac_verify(struct carp_vhost_entry *vhe, u_int32_t counter[2],
 	return (1);
 }
 
-/*
- * process input packet.
- * we have rearranged checks order compared to the rfc,
- * but it seems more efficient this way or not possible otherwise.
- */
 void
 carp_proto_input(struct mbuf *m, ...)
 {
-	struct ip *ip = mtod(m, struct ip *);
 	struct ifnet *ifp;
-	struct carp_softc *sc = NULL;
-	struct carp_header *ch;
-	int iplen, len, hlen, ismulti;
+	int hlen;
 	va_list ap;
 
 	va_start(ap, m);
@@ -413,6 +406,23 @@ carp_proto_input(struct mbuf *m, ...)
 		m_freem(m);
 		return;
 	}
+
+	carp_proto_input_if(ifp, m, hlen);
+	if_put(ifp);
+}
+
+/*
+ * process input packet.
+ * we have rearranged checks order compared to the rfc,
+ * but it seems more efficient this way or not possible otherwise.
+ */
+void
+carp_proto_input_if(struct ifnet *ifp, struct mbuf *m, int hlen)
+{
+	struct ip *ip = mtod(m, struct ip *);
+	struct carp_softc *sc = NULL;
+	struct carp_header *ch;
+	int iplen, len, ismulti;
 
 	carpstats.carps_ipackets++;
 
@@ -475,25 +485,38 @@ carp_proto_input(struct mbuf *m, ...)
 	}
 	m->m_data -= iplen;
 
-	carp_proto_input_c(m, ch, ismulti, AF_INET);
+	carp_proto_input_c(ifp, m, ch, ismulti, AF_INET);
 }
 
 #ifdef INET6
+int	carp6_proto_input_if(struct ifnet *, struct mbuf *, int *);
+
 int
 carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct ifnet *ifp;
-	struct carp_softc *sc = NULL;
-	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct carp_header *ch;
-	u_int len;
+	int rv;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
 		m_freem(m);
 		return (IPPROTO_DONE);
 	}
+
+	rv = carp6_proto_input_if(ifp, m, offp);
+	if_put(ifp);
+
+	return (rv);
+}
+
+int
+carp6_proto_input_if(struct ifnet *ifp, struct mbuf *m, int *offp)
+{
+	struct carp_softc *sc = NULL;
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct carp_header *ch;
+	u_int len;
 
 	carpstats.carps_ipackets6++;
 
@@ -540,23 +563,19 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 	}
 	m->m_data -= *offp;
 
-	carp_proto_input_c(m, ch, 1, AF_INET6);
+	carp_proto_input_c(ifp, m, ch, 1, AF_INET6);
 	return (IPPROTO_DONE);
 }
 #endif /* INET6 */
 
 void
-carp_proto_input_c(struct mbuf *m, struct carp_header *ch, int ismulti,
-    sa_family_t af)
+carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
+    int ismulti, sa_family_t af)
 {
-	struct ifnet *ifp;
 	struct carp_softc *sc;
 	struct carp_vhost_entry *vhe;
 	struct timeval sc_tv, ch_tv;
 	struct carp_if *cif;
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	KASSERT(ifp != NULL);
 
 	if (ifp->if_type == IFT_CARP)
 		cif = (struct carp_if *)ifp->if_carpdev->if_carp;
@@ -1470,7 +1489,7 @@ carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst)
 {
 	struct ifnet *ifp;
 	struct carp_softc *sc;
-	int match;
+	int match = 1;
 	u_int32_t fold;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
@@ -1478,13 +1497,13 @@ carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst)
 
 	sc = ifp->if_softc;
 	if (sc->sc_balancing < CARP_BAL_IP)
-		return (0);
+		goto done;
 	/*
 	 * Never drop carp advertisements.
 	 * XXX Bad idea to pass all broadcast / multicast traffic?
 	 */
 	if (m->m_flags & (M_BCAST|M_MCAST))
-		return (0);
+		goto done;
 
 	fold = src[0] ^ dst[0];
 #ifdef INET6
@@ -1495,9 +1514,12 @@ carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst)
 	}
 #endif
 	if (sc->sc_lscount == 0) /* just to be safe */
-		return (1);
-	match = (1 << (ntohl(fold) % sc->sc_lscount)) & sc->sc_lsmask;
+		match = 0;
+	else
+		match = (1 << (ntohl(fold) % sc->sc_lscount)) & sc->sc_lsmask;
 
+done:
+	if_put(ifp);
 	return (!match);
 }
 
