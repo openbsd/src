@@ -1532,8 +1532,10 @@ twalk
 unlockpt
 unsetenv
 
-/* string */
+/* exposed due to paranoia over future link-time optimizations */
 __explicit_bzero_hook
+
+/* string */
 bcmp
 bcopy
 bzero
