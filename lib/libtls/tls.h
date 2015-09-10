@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.17 2015/09/10 10:22:28 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.18 2015/09/10 10:26:49 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -36,8 +36,8 @@ extern "C" {
 #define TLS_PROTOCOLS_ALL TLS_PROTOCOL_TLSv1
 #define TLS_PROTOCOLS_DEFAULT TLS_PROTOCOL_TLSv1_2
 
-#define TLS_READ_AGAIN	-2
-#define TLS_WRITE_AGAIN	-3
+#define TLS_WANT_POLLIN		-2
+#define TLS_WANT_POLLOUT	-3
 
 struct tls;
 struct tls_config;

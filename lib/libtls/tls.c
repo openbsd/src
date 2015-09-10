@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.21 2015/09/10 10:22:28 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.22 2015/09/10 10:26:49 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -337,10 +337,10 @@ tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret, const char *prefix)
 		return (0);
 
 	case SSL_ERROR_WANT_READ:
-		return (TLS_READ_AGAIN);
+		return (TLS_WANT_POLLIN);
 
 	case SSL_ERROR_WANT_WRITE:
-		return (TLS_WRITE_AGAIN);
+		return (TLS_WANT_POLLOUT);
 
 	case SSL_ERROR_SYSCALL:
 		if ((err = ERR_peek_error()) != 0) {
@@ -448,7 +448,7 @@ tls_close(struct tls *ctx)
 		if (ssl_ret < 0) {
 			rv = tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret,
 			    "shutdown");
-			if (rv == TLS_READ_AGAIN || rv == TLS_WRITE_AGAIN)
+			if (rv == TLS_WANT_POLLIN || rv == TLS_WANT_POLLOUT)
 				goto out;
 		}
 	}
