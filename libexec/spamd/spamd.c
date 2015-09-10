@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.128 2015/05/18 16:04:21 reyk Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.129 2015/09/10 10:32:16 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1068,10 +1068,7 @@ handler(struct con *cp)
 
 	if (cp->r) {
 		if (cp->cctx) {
-			size_t outlen;
-			n = -1;
-			if (tls_read(cp->cctx, cp->ip, cp->il, &outlen) == 0)
-				n = outlen;
+			n = tls_read(cp->cctx, cp->ip, cp->il);
 		} else
 			n = read(cp->pfd->fd, cp->ip, cp->il);
 
@@ -1080,6 +1077,10 @@ handler(struct con *cp)
 		else if (n == -1) {
 			if (debug > 0)
 				warn("read");
+			closecon(cp);
+		} if (n < 0) {
+			if (debug > 0)
+				warn("tls_read unexpected POLLIN/POLLOUT");
 			closecon(cp);
 		} else {
 			cp->ip[n] = '\0';
@@ -1104,7 +1105,6 @@ void
 handlew(struct con *cp, int one)
 {
 	int n;
-	size_t outlen;
 
 	/* kill stutter on greylisted connections after initial delay */
 	if (cp->stutter && greylist && cp->blacklists == NULL &&
@@ -1115,9 +1115,7 @@ handlew(struct con *cp, int one)
 		if (*cp->op == '\n' && !cp->sr) {
 			/* insert \r before \n */
 			if (cp->cctx) {
-				n = -1;
-				if (tls_write(cp->cctx, "\r", 1, &outlen) == 0)
-					n = outlen;
+				n = tls_write(cp->cctx, "\r", 1);
 			} else
 				n = write(cp->pfd->fd, "\r", 1);
 
@@ -1129,6 +1127,11 @@ handlew(struct con *cp, int one)
 					warn("write");
 				closecon(cp);
 				goto handled;
+			} else if (n < 0) {
+				if (debug > 0)
+					warn("tls_read unexpected POLLIN/POLLOUT");
+				closecon(cp);
+				goto handled;
 			}
 		}
 		if (*cp->op == '\r')
@@ -1136,9 +1139,7 @@ handlew(struct con *cp, int one)
 		else
 			cp->sr = 0;
 		if (cp->cctx) {
-			n = -1;
-			if (tls_write(cp->cctx, cp->op, cp->ol, &outlen) == 0)
-				n = outlen;
+			n = tls_write(cp->cctx, cp->op, cp->ol);
 		} else
 			n = write(cp->pfd->fd, cp->op,
 			   (one && cp->stutter) ? 1 : cp->ol);
@@ -1148,6 +1149,10 @@ handlew(struct con *cp, int one)
 		else if (n == -1) {
 			if (debug > 0 && errno != EPIPE)
 				warn("write");
+			closecon(cp);
+		} else if (n < 0) {
+			if (debug > 0)
+				warn("tls_read unexpected POLLIN/POLLOUT");
 			closecon(cp);
 		} else {
 			cp->op += n;
