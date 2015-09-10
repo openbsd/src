@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.4 2015/09/10 13:32:19 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.5 2015/09/10 16:41:30 mikeb Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -62,7 +62,7 @@ int	mpw_ioctl(struct ifnet *, u_long, caddr_t);
 int	mpw_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 void	mpw_start(struct ifnet *);
-int	mpw_input(struct ifnet *, struct mbuf *);
+int	mpw_input(struct ifnet *, struct mbuf *, void *);
 #if NVLAN > 0
 struct	mbuf *mpw_vlan_handle(struct mbuf *, struct mpw_softc *);
 #endif /* NVLAN */
@@ -109,7 +109,7 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
 	sc->sc_smpls.smpls_family = AF_MPLS;
 
-	if_ih_insert(ifp, mpw_input);
+	if_ih_insert(ifp, mpw_input, NULL);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
@@ -133,7 +133,7 @@ mpw_clone_destroy(struct ifnet *ifp)
 		splx(s);
 	}
 
-	if_ih_remove(ifp, mpw_input);
+	if_ih_remove(ifp, mpw_input, NULL);
 
 	if_detach(ifp);
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -142,7 +142,7 @@ mpw_clone_destroy(struct ifnet *ifp)
 }
 
 int
-mpw_input(struct ifnet *ifp, struct mbuf *m)
+mpw_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
 	/* Don't have local broadcast. */
 	m_freem(m);

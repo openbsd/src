@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.37 2015/09/10 14:56:41 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.38 2015/09/10 16:41:30 mikeb Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -409,7 +409,7 @@ void	if_input(struct ifnet *, struct mbuf_list *);
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
-int	ether_input(struct ifnet *, struct mbuf *);
+int	ether_input(struct ifnet *, struct mbuf *, void *);
 int	ether_output(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
 char	*ether_sprintf(u_char *);
@@ -441,8 +441,10 @@ void	ifa_del(struct ifnet *, struct ifaddr *);
 void	ifa_update_broadaddr(struct ifnet *, struct ifaddr *,
 	    struct sockaddr *);
 
-void	if_ih_insert(struct ifnet *, int (*)(struct ifnet *, struct mbuf *));
-void	if_ih_remove(struct ifnet *, int (*)(struct ifnet *, struct mbuf *));
+void	if_ih_insert(struct ifnet *, int (*)(struct ifnet *, struct mbuf *,
+	    void *), void *);
+void	if_ih_remove(struct ifnet *, int (*)(struct ifnet *, struct mbuf *,
+	    void *), void *);
 
 void	if_rxr_init(struct if_rxring *, u_int, u_int);
 u_int	if_rxr_get(struct if_rxring *, u_int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.367 2015/09/10 14:06:43 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.368 2015/09/10 16:41:30 mikeb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -488,7 +488,9 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 
 struct ifih {
 	struct srpl_entry	  ifih_next;
-	int			(*ifih_input)(struct ifnet *, struct mbuf *);
+	int			(*ifih_input)(struct ifnet *, struct mbuf *,
+				      void *);
+	void			 *ifih_cookie;
 	int			  ifih_refcnt;
 	int			  ifih_srpcnt;
 };
@@ -499,7 +501,8 @@ void	if_ih_unref(void *, void *);
 struct srpl_rc ifih_rc = SRPL_RC_INITIALIZER(if_ih_ref, if_ih_unref, NULL);
 
 void
-if_ih_insert(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *))
+if_ih_insert(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
+    void *), void *cookie)
 {
 	struct ifih *ifih;
 
@@ -507,7 +510,7 @@ if_ih_insert(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *))
 	KERNEL_ASSERT_LOCKED();
 
 	SRPL_FOREACH_LOCKED(ifih, &ifp->if_inputs, ifih_next) {
-		if (ifih->ifih_input == input) {
+		if (ifih->ifih_input == input && ifih->ifih_cookie == cookie) {
 			ifih->ifih_refcnt++;
 			break;
 		}
@@ -517,6 +520,7 @@ if_ih_insert(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *))
 		ifih = malloc(sizeof(*ifih), M_DEVBUF, M_WAITOK);
 
 		ifih->ifih_input = input;
+		ifih->ifih_cookie = cookie;
 		ifih->ifih_refcnt = 1;
 		ifih->ifih_srpcnt = 0;
 		SRPL_INSERT_HEAD_LOCKED(&ifih_rc, &ifp->if_inputs,
@@ -542,7 +546,8 @@ if_ih_unref(void *null, void *i)
 }
 
 void
-if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *))
+if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
+    void *), void *cookie)
 {
 	struct sleep_state sls;
 	struct ifih *ifih;
@@ -552,7 +557,7 @@ if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *))
 	KERNEL_ASSERT_LOCKED();
 
 	SRPL_FOREACH_LOCKED(ifih, &ifp->if_inputs, ifih_next) {
-		if (ifih->ifih_input == input)
+		if (ifih->ifih_input == input && ifih->ifih_cookie == cookie)
 			break;
 	}
 
@@ -617,7 +622,7 @@ if_input_process(void *xmq)
 		 * interface until it is consumed.
 		 */
 		SRPL_FOREACH(ifih, &ifp->if_inputs, &i, ifih_next) {
-			if ((*ifih->ifih_input)(ifp, m))
+			if ((*ifih->ifih_input)(ifp, m, ifih->ifih_cookie))
 				break;
 		}
 		SRPL_LEAVE(&i, ifih);

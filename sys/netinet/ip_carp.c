@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.266 2015/09/10 15:09:16 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.267 2015/09/10 16:41:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -193,7 +193,7 @@ void	carp_hmac_generate(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *, u_int8_t);
 int	carp_hmac_verify(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *);
-int	carp_input(struct ifnet *ifp, struct mbuf *);
+int	carp_input(struct ifnet *ifp, struct mbuf *, void *);
 void	carp_proto_input_c(struct ifnet *ifp, struct mbuf *,
 	    struct carp_header *, int, sa_family_t);
 void	carp_proto_input_if(struct ifnet *, struct mbuf *, int);
@@ -883,7 +883,7 @@ carpdetach(struct carp_softc *sc)
 		return;
 
 	/* Restore previous input handler. */
-	if_ih_remove(ifp, carp_input);
+	if_ih_remove(ifp, carp_input, NULL);
 
 	s = splnet();
 	if (sc->lh_cookie != NULL)
@@ -1430,7 +1430,7 @@ carp_ourether(void *v, u_int8_t *ena)
 }
 
 int
-carp_input(struct ifnet *ifp0, struct mbuf *m)
+carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 {
 	struct carp_softc *sc;
 	struct ether_header *eh;
@@ -1741,7 +1741,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 	    carp_carpdev_state, ifp);
 
 	/* Change input handler of the physical interface. */
-	if_ih_insert(ifp, carp_input);
+	if_ih_insert(ifp, carp_input, NULL);
 
 	s = splnet();
 	carp_carpdev_state(ifp);

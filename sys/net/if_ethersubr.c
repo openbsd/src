@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.222 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.223 2015/09/10 16:41:30 mikeb Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ bad:
  * the ether header, which is provided separately.
  */
 int
-ether_input(struct ifnet *ifp, struct mbuf *m)
+ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
 	struct ether_header *eh;
 	struct niqueue *inq;
@@ -506,7 +506,7 @@ ether_ifattach(struct ifnet *ifp)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 
-	if_ih_insert(ifp, ether_input);
+	if_ih_insert(ifp, ether_input, NULL);
 
 	if (ifp->if_hardmtu == 0)
 		ifp->if_hardmtu = ETHERMTU;
@@ -528,7 +528,7 @@ ether_ifdetach(struct ifnet *ifp)
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
 
-	if_ih_remove(ifp, ether_input);
+	if_ih_remove(ifp, ether_input, NULL);
 
 	KASSERT(SRPL_EMPTY_LOCKED(&ifp->if_inputs));
 

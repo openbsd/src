@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.136 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.137 2015/09/10 16:41:30 mikeb Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -79,7 +79,7 @@ u_long vlan_tagmask, svlan_tagmask;
 LIST_HEAD(vlan_taghash, ifvlan)	*vlan_tagh, *svlan_tagh;
 
 
-int	vlan_input(struct ifnet *, struct mbuf *);
+int	vlan_input(struct ifnet *, struct mbuf *, void *);
 void	vlan_start(struct ifnet *ifp);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
 int	vlan_unconfig(struct ifnet *ifp, struct ifnet *newp);
@@ -255,7 +255,7 @@ vlan_start(struct ifnet *ifp)
  * vlan_input() returns 1 if it has consumed the packet, 0 otherwise.
  */
 int
-vlan_input(struct ifnet *ifp, struct mbuf *m)
+vlan_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
 	struct ifvlan			*ifv;
 	struct ether_vlan_header	*evl;
@@ -429,7 +429,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	splx(s);
 
         /* Change input handler of the physical interface. */
-	if_ih_insert(p, vlan_input);
+	if_ih_insert(p, vlan_input, NULL);
 
 	return (0);
 }
@@ -455,9 +455,9 @@ vlan_unconfig(struct ifnet *ifp, struct ifnet *newp)
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
 	splx(s);
- 
+
 	/* Restore previous input handler. */
-	if_ih_remove(p, vlan_input);
+	if_ih_remove(p, vlan_input, NULL);
 
 	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
 	hook_disestablish(p->if_detachhooks, ifv->dh_cookie);

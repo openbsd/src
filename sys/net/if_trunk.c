@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.110 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.111 2015/09/10 16:41:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -75,7 +75,7 @@ int	 trunk_ether_delmulti(struct trunk_softc *, struct ifreq *);
 void	 trunk_ether_purgemulti(struct trunk_softc *);
 int	 trunk_ether_cmdmulti(struct trunk_port *, u_long);
 int	 trunk_ioctl_allports(struct trunk_softc *, u_long, caddr_t);
-int	 trunk_input(struct ifnet *, struct mbuf *);
+int	 trunk_input(struct ifnet *, struct mbuf *, void *);
 void	 trunk_start(struct ifnet *);
 void	 trunk_init(struct ifnet *);
 void	 trunk_stop(struct ifnet *);
@@ -344,7 +344,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	ifp->if_type = IFT_IEEE8023ADLAG;
 
 	/* Change input handler of the physical interface. */
-	if_ih_insert(ifp, trunk_input);
+	if_ih_insert(ifp, trunk_input, NULL);
 
 	ifp->if_tp = (caddr_t)tp;
 	tp->tp_ioctl = ifp->if_ioctl;
@@ -437,7 +437,7 @@ trunk_port_destroy(struct trunk_port *tp)
 	ifp->if_type = tp->tp_iftype;
 
 	/* Restore previous input handler. */
-	if_ih_remove(ifp, trunk_input);
+	if_ih_remove(ifp, trunk_input, NULL);
 
 	ifp->if_watchdog = tp->tp_watchdog;
 	ifp->if_ioctl = tp->tp_ioctl;
@@ -1079,7 +1079,7 @@ trunk_watchdog(struct ifnet *ifp)
 }
 
 int
-trunk_input(struct ifnet *ifp, struct mbuf *m)
+trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
 	struct trunk_softc *tr;
 	struct trunk_port *tp;

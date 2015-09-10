@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.263 2015/09/10 15:27:00 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.264 2015/09/10 16:41:30 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -223,7 +223,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	    DLT_EN10MB, ETHER_HDR_LEN);
 #endif
 
-	if_ih_insert(ifp, ether_input);
+	if_ih_insert(ifp, ether_input, NULL);
 
 	return (0);
 }
@@ -248,7 +248,7 @@ bridge_clone_destroy(struct ifnet *ifp)
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
 
-	if_ih_remove(ifp, ether_input);
+	if_ih_remove(ifp, ether_input, NULL);
 
 	KASSERT(SRPL_EMPTY_LOCKED(&ifp->if_inputs));
 
