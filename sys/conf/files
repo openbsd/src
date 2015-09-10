@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.600 2015/09/03 09:16:33 mpi Exp $
+#	$OpenBSD: files,v 1.601 2015/09/10 16:30:23 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -673,7 +673,7 @@ file kern/kern_synch.c
 file kern/kern_tc.c
 file kern/kern_time.c
 file kern/kern_timeout.c
-file kern/kern_uuid.c			gpt
+file kern/kern_uuid.c
 file kern/kern_watchdog.c		!small_kernel
 file kern/kern_task.c
 file kern/kern_srp.c
@@ -1018,7 +1018,7 @@ file lib/libkern/arch/${MACHINE_ARCH}/htons.S | lib/libkern/htons.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncasecmp.S | lib/libkern/strncasecmp.c
 
 file lib/libz/adler32.c			ppp_deflate | ipsec | crypto | bios
-file lib/libz/crc32.c			ppp_deflate | ipsec | crypto | gpt
+file lib/libz/crc32.c			ppp_deflate | ipsec | crypto
 file lib/libz/infback.c			ppp_deflate | ipsec | crypto
 file lib/libz/inffast.c			ppp_deflate | ipsec | crypto
 file lib/libz/inflate.c			ppp_deflate | ipsec | crypto
