@@ -682,13 +682,16 @@ add_m6if(struct mif6ctl *mifcp)
 			reg_mif_num = mifcp->mif6c_mifi;
 		}
 
-		ifp = &multicast_register_if;
+		if_put(ifp);
+		ifp = if_ref(&multicast_register_if);
 
 	} /* if REGISTER */
 	else {
 		/* Make sure the interface supports multicast */
-		if ((ifp->if_flags & IFF_MULTICAST) == 0)
+		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+			if_put(ifp);
 			return EOPNOTSUPP;
+		}
 
 		s = splsoftnet();
 
@@ -702,8 +705,10 @@ add_m6if(struct mif6ctl *mifcp)
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
 
 		splx(s);
-		if (error)
+		if (error) {
+			if_put(ifp);
 			return error;
+		}
 	}
 
 	s = splsoftnet();
@@ -732,6 +737,8 @@ add_m6if(struct mif6ctl *mifcp)
 		    mifcp->mif6c_mifi,
 		    ifp->if_xname);
 #endif
+
+	if_put(ifp);
 
 	return 0;
 }
