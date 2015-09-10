@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.51 2015/04/18 18:28:36 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.52 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  * execute command tree
@@ -83,7 +83,7 @@ execute(struct op *volatile t,
 				PS4_SUBSTITUTE(str_val(global("PS4"))));
 			for (i = 0; ap[i]; i++)
 				shf_fprintf(shl_out, "%s%s", ap[i],
-				    ap[i + 1] ? space : newline);
+				    ap[i + 1] ? " " : "\n");
 			shf_flush(shl_out);
 		}
 		if (ap[0])
@@ -499,7 +499,7 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 				shf_fprintf(shl_out, "%s",
 				    PS4_SUBSTITUTE(str_val(global("PS4"))));
 			shf_fprintf(shl_out, "%s%s", cp,
-			    t->vars[i + 1] ? space : newline);
+			    t->vars[i + 1] ? " " : "\n");
 			if (!t->vars[i + 1])
 				shf_flush(shl_out);
 		}

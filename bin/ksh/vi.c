@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.29 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: vi.c,v 1.30 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  *	vi command editing
@@ -1067,7 +1067,7 @@ vi_cmd(int argcnt, const char *cmd)
 				argcnt++;
 				p++;
 			}
-			if (putbuf(space, 1, 0) != 0)
+			if (putbuf(" ", 1, 0) != 0)
 				argcnt = -1;
 			else if (putbuf(sp, argcnt, 0) != 0)
 				argcnt = -1;
@@ -1930,7 +1930,7 @@ expand_word(int command)
 			rval = -1;
 			break;
 		}
-		if (++i < nwords && putbuf(space, 1, 0) != 0) {
+		if (++i < nwords && putbuf(" ", 1, 0) != 0) {
 			rval = -1;
 			break;
 		}
@@ -2038,7 +2038,7 @@ complete_word(int command, int count)
 
 		/* If not a directory, add a space to the end... */
 		if (match_len > 0 && match[match_len - 1] != '/')
-			rval = putbuf(space, 1, 0);
+			rval = putbuf(" ", 1, 0);
 	}
 	x_free_words(nwords, words);
 

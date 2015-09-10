@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.34 2015/09/10 13:04:52 nicm Exp $	*/
+/*	$OpenBSD: sh.h,v 1.35 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -212,8 +212,6 @@ enum sh_flag {
 EXTERN	char shell_flags [FNFLAGS];
 
 EXTERN	char	null [] I__("");	/* null value for variable */
-EXTERN	char	space [] I__(" ");
-EXTERN	char	newline [] I__("\n");
 
 enum temp_type {
 	TT_HEREDOC_EXP,	/* expanded heredoc */

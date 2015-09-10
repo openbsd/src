@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.50 2015/07/30 14:59:12 zhuk Exp $	*/
+/*	$OpenBSD: lex.c,v 1.51 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -971,10 +971,10 @@ getsc__(void)
 
 		case SWORDSEP:
 			if (*s->u.strv == NULL) {
-				s->start = s->str = newline;
+				s->start = s->str = "\n";
 				s->type = SEOF;
 			} else {
-				s->start = s->str = space;
+				s->start = s->str = " ";
 				s->type = SWORDS;
 			}
 			break;

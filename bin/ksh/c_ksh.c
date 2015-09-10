@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.36 2015/09/08 11:35:57 jca Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.37 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -515,7 +515,7 @@ c_whence(char **wp)
 			break;
 		}
 		if (vflag || !ret)
-			shprintf(newline);
+			shprintf("\n");
 	}
 	return ret;
 }
@@ -816,7 +816,7 @@ c_typeset(char **wp)
 							else
 								print_value_quoted(s);
 						}
-						shprintf(newline);
+						shprintf("\n");
 					}
 					/* Only report first `element' of an array with
 					* no set elements.
@@ -906,7 +906,7 @@ c_alias(char **wp)
 					shf_putc('=', shl_stdout);
 					print_value_quoted(ap->val.s);
 				}
-				shprintf(newline);
+				shprintf("\n");
 			}
 	}
 
@@ -930,7 +930,7 @@ c_alias(char **wp)
 					shf_putc('=', shl_stdout);
 					print_value_quoted(ap->val.s);
 				}
-				shprintf(newline);
+				shprintf("\n");
 			} else {
 				shprintf("%s alias not found\n", alias);
 				rv = 1;
@@ -1184,10 +1184,10 @@ c_kill(char **wp)
 			}
 		} else if (Flag(FPOSIX)) {
 			p = null;
-			for (i = 1; i < NSIG; i++, p = space)
+			for (i = 1; i < NSIG; i++, p = " ")
 				if (sigtraps[i].name)
 					shprintf("%s%s", p, sigtraps[i].name);
-			shprintf(newline);
+			shprintf("\n");
 		} else {
 			int w, i;
 			int mess_width;

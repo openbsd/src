@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.51 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.52 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1758,7 +1758,7 @@ x_expand(int c)
 	x_delete(end - start, false);
 	for (i = 0; i < nwords;) {
 		if (x_escape(words[i], strlen(words[i]), x_emacs_putbuf) < 0 ||
-		    (++i < nwords && x_ins(space) < 0)) {
+		    (++i < nwords && x_ins(" ") < 0)) {
 			x_e_putc(BEL);
 			return KSTD;
 		}
@@ -1806,7 +1806,7 @@ do_complete(int flags,	/* XCF_{COMMAND,FILE,COMMAND_FILE} */
 	}
 	/* add space if single non-dir match */
 	if (nwords == 1 && words[0][nlen - 1] != '/') {
-		x_ins(space);
+		x_ins(" ");
 		completed = 1;
 	}
 
@@ -1914,7 +1914,7 @@ x_debug_info(int c)
 	shellf("\txbp == 0x%lx,\txbuf == 0x%lx\n", (long) xbp, (long) xbuf);
 	shellf("\txlp == 0x%lx\n", (long) xlp);
 	shellf("\txlp == 0x%lx\n", (long) x_lastcp());
-	shellf(newline);
+	shellf("\n");
 	x_redraw(-1);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.40 2015/03/18 15:12:36 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.41 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -236,7 +236,7 @@ printoptions(int verbose)
 		for (i = 0; i < NELEM(options); i++)
 			if (Flag(i) && options[i].name)
 				shprintf(" -o %s", options[i].name);
-		shprintf(newline);
+		shprintf("\n");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.42 2015/09/10 13:04:52 nicm Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.43 2015/09/10 22:48:58 nicm Exp $	*/
 
 /*
  * Process and job control
@@ -741,7 +741,7 @@ j_resume(const char *cp, int bg)
 		}
 		shprintf("%s%s", p->command, p->next ? "| " : null);
 	}
-	shprintf(newline);
+	shprintf("\n");
 	shf_flush(shl_stdout);
 	if (running)
 		j->state = PRUNNING;
@@ -1409,7 +1409,7 @@ j_print(Job *j, int how, struct shf *shf)
 		while (p && p->state == state && p->status == status) {
 			if (how == JP_LONG)
 				shf_fprintf(shf, "%s%5d %-20s %s%s", filler, p->pid,
-				    space, p->command, p->next ? "|" : null);
+				    " ", p->command, p->next ? "|" : null);
 			else if (how == JP_MEDIUM)
 				shf_fprintf(shf, " %s%s", p->command,
 				    p->next ? "|" : null);
@@ -1417,7 +1417,7 @@ j_print(Job *j, int how, struct shf *shf)
 		}
 	}
 	if (output)
-		shf_fprintf(shf, newline);
+		shf_fprintf(shf, "\n");
 }
 
 /* Convert % sequence to job
