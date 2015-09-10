@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.62 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.63 2015/09/10 10:36:04 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -57,6 +57,8 @@
 #ifndef PCI_MEM_END
 #define PCI_MEM_END	0xffffffff
 #endif
+
+#define PPB_EXNAMLEN	32
 
 struct ppb_softc {
 	struct device sc_dev;		/* generic device glue */
@@ -242,9 +244,9 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iobase |= (blr & 0x0000ffff) << 16;
 	sc->sc_iolimit |= (blr & 0xffff0000);
 	if (sc->sc_iolimit > sc->sc_iobase) {
-		name = malloc(32, M_DEVBUF, M_NOWAIT);
+		name = malloc(PPB_EXNAMLEN, M_DEVBUF, M_NOWAIT);
 		if (name) {
-			snprintf(name, 32, "%s pciio", sc->sc_dev.dv_xname);
+			snprintf(name, PPB_EXNAMLEN, "%s pciio", sc->sc_dev.dv_xname);
 			sc->sc_ioex = extent_create(name, 0, 0xffffffff,
 			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 			extent_free(sc->sc_ioex, sc->sc_iobase,
@@ -257,9 +259,9 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_membase = (blr & 0x0000fff0) << 16;
 	sc->sc_memlimit = (blr & 0xfff00000) | 0x000fffff;
 	if (sc->sc_memlimit > sc->sc_membase) {
-		name = malloc(32, M_DEVBUF, M_NOWAIT);
+		name = malloc(PPB_EXNAMLEN, M_DEVBUF, M_NOWAIT);
 		if (name) {
-			snprintf(name, 32, "%s pcimem", sc->sc_dev.dv_xname);
+			snprintf(name, PPB_EXNAMLEN, "%s pcimem", sc->sc_dev.dv_xname);
 			sc->sc_memex = extent_create(name, 0, (u_long)-1L,
 			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 			extent_free(sc->sc_memex, sc->sc_membase,
@@ -279,9 +281,9 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pmemlimit |= ((uint64_t)blr) << 32;
 #endif
 	if (sc->sc_pmemlimit > sc->sc_pmembase) {
-		name = malloc(32, M_DEVBUF, M_NOWAIT);
+		name = malloc(PPB_EXNAMLEN, M_DEVBUF, M_NOWAIT);
 		if (name) {
-			snprintf(name, 32, "%s pcipmem", sc->sc_dev.dv_xname);
+			snprintf(name, PPB_EXNAMLEN, "%s pcipmem", sc->sc_dev.dv_xname);
 			sc->sc_pmemex = extent_create(name, 0, (u_long)-1L,
 			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 			extent_free(sc->sc_pmemex, sc->sc_pmembase,
@@ -339,19 +341,19 @@ ppbdetach(struct device *self, int flags)
 	if (sc->sc_ioex) {
 		name = sc->sc_ioex->ex_name;
 		extent_destroy(sc->sc_ioex);
-		free(name, M_DEVBUF, 0);
+		free(name, M_DEVBUF, PPB_EXNAMLEN);
 	}
 
 	if (sc->sc_memex) {
 		name = sc->sc_memex->ex_name;
 		extent_destroy(sc->sc_memex);
-		free(name, M_DEVBUF, 0);
+		free(name, M_DEVBUF, PPB_EXNAMLEN);
 	}
 
 	if (sc->sc_pmemex) {
 		name = sc->sc_pmemex->ex_name;
 		extent_destroy(sc->sc_pmemex);
-		free(name, M_DEVBUF, 0);
+		free(name, M_DEVBUF, PPB_EXNAMLEN);
 	}
 
 	return (rv);
