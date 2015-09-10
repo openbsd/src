@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.15 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.16 2015/09/10 16:01:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1608,7 +1608,7 @@ err:
 	}
 	BIO_printf(bio_s_out, "CONNECTION CLOSED\n");
 	if (buf != NULL) {
-		OPENSSL_cleanse(buf, bufsize);
+		explicit_bzero(buf, bufsize);
 		free(buf);
 	}
 	if (ret >= 0)

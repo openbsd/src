@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.33 2015/07/21 03:47:17 bcook Exp $ */
+/* $OpenBSD: apps.c,v 1.34 2015/09/10 16:01:06 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -431,7 +431,7 @@ password_callback(char *buf, int bufsiz, int verify, void *arg)
 			    UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
 
 		if (buff) {
-			OPENSSL_cleanse(buff, (unsigned int) bufsiz);
+			explicit_bzero(buff, (unsigned int) bufsiz);
 			free(buff);
 		}
 		if (ok >= 0)
@@ -439,12 +439,12 @@ password_callback(char *buf, int bufsiz, int verify, void *arg)
 		if (ok == -1) {
 			BIO_printf(bio_err, "User interface error\n");
 			ERR_print_errors(bio_err);
-			OPENSSL_cleanse(buf, (unsigned int) bufsiz);
+			explicit_bzero(buf, (unsigned int) bufsiz);
 			res = 0;
 		}
 		if (ok == -2) {
 			BIO_printf(bio_err, "aborted!\n");
-			OPENSSL_cleanse(buf, (unsigned int) bufsiz);
+			explicit_bzero(buf, (unsigned int) bufsiz);
 			res = 0;
 		}
 		UI_free(ui);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.10 2015/09/10 02:17:17 lteo Exp $ */
+/* $OpenBSD: ca.c,v 1.11 2015/09/10 16:01:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -641,7 +641,7 @@ bad:
 	}
 	pkey = load_key(bio_err, keyfile, keyform, 0, key, e, "CA private key");
 	if (key)
-		OPENSSL_cleanse(key, strlen(key));
+		explicit_bzero(key, strlen(key));
 	if (pkey == NULL) {
 		/* load_key() has already printed an appropriate message */
 		goto err;

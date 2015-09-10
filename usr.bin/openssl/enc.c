@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: enc.c,v 1.6 2015/09/10 16:01:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -623,9 +623,9 @@ enc_main(int argc, char **argv)
 			 * Jr. <hughes@indiana.edu>
 			 */
 			if (enc_config.keystr == strbuf)
-				OPENSSL_cleanse(enc_config.keystr, SIZE);
+				explicit_bzero(enc_config.keystr, SIZE);
 			else
-				OPENSSL_cleanse(enc_config.keystr,
+				explicit_bzero(enc_config.keystr,
 				    strlen(enc_config.keystr));
 		}
 		if (enc_config.hiv != NULL &&
