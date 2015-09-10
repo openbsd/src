@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.5 2015/09/10 06:36:45 bcook Exp $ */
+/* $OpenBSD: s_cb.c,v 1.6 2015/09/10 19:08:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -372,9 +372,6 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 	case DTLS1_VERSION:
 		str_version = "DTLS 1.0 ";
 		break;
-	case DTLS1_BAD_VER:
-		str_version = "DTLS 1.0 (bad) ";
-		break;
 	default:
 		str_version = "???";
 	}
@@ -435,7 +432,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 	}
 	if (version == SSL3_VERSION || version == TLS1_VERSION ||
 	    version == TLS1_1_VERSION || version == TLS1_2_VERSION ||
-	    version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
+	    version == DTLS1_VERSION) {
 		switch (content_type) {
 		case 20:
 			str_content_type = "ChangeCipherSpec";
