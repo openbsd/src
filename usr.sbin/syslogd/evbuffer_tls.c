@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.5 2015/07/18 22:33:46 bluhm Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.6 2015/09/10 10:58:48 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -95,11 +95,11 @@ buffertls_readcb(int fd, short event, void *arg)
 
 	res = evtls_read(bufev->input, fd, howmuch, ctx);
 	switch (res) {
-	case TLS_READ_AGAIN:
+	case TLS_WANT_POLLIN:
 		event_set(&bufev->ev_read, fd, EV_READ, buffertls_readcb,
 		    buftls);
 		goto reschedule;
-	case TLS_WRITE_AGAIN:
+	case TLS_WANT_POLLOUT:
 		event_set(&bufev->ev_read, fd, EV_WRITE, buffertls_readcb,
 		    buftls);
 		goto reschedule;
@@ -162,11 +162,11 @@ buffertls_writecb(int fd, short event, void *arg)
 	if (EVBUFFER_LENGTH(bufev->output) != 0) {
 		res = evtls_write(bufev->output, fd, ctx);
 		switch (res) {
-		case TLS_READ_AGAIN:
+		case TLS_WANT_POLLIN:
 			event_set(&bufev->ev_write, fd, EV_READ,
 			    buffertls_writecb, buftls);
 			goto reschedule;
-		case TLS_WRITE_AGAIN:
+		case TLS_WANT_POLLOUT:
 			event_set(&bufev->ev_write, fd, EV_WRITE,
 			    buffertls_writecb, buftls);
 			goto reschedule;
@@ -226,11 +226,11 @@ buffertls_connectcb(int fd, short event, void *arg)
 
 	res = tls_connect_socket(ctx, fd, hostname);
 	switch (res) {
-	case TLS_READ_AGAIN:
+	case TLS_WANT_POLLIN:
 		event_set(&bufev->ev_write, fd, EV_READ,
 		    buffertls_connectcb, buftls);
 		goto reschedule;
-	case TLS_WRITE_AGAIN:
+	case TLS_WANT_POLLOUT:
 		event_set(&bufev->ev_write, fd, EV_WRITE,
 		    buffertls_connectcb, buftls);
 		goto reschedule;
@@ -300,7 +300,7 @@ int
 evtls_read(struct evbuffer *buf, int fd, int howmuch, struct tls *ctx)
 {
 	u_char *p;
-	size_t len, oldoff = buf->off;
+	size_t oldoff = buf->off;
 	int n = EVBUFFER_MAX_READ;
 
 	if (ioctl(fd, FIONREAD, &n) == -1 || n <= 0) {
@@ -328,30 +328,28 @@ evtls_read(struct evbuffer *buf, int fd, int howmuch, struct tls *ctx)
 	/* We can append new data at this point */
 	p = buf->buffer + buf->off;
 
-	n = tls_read(ctx, p, howmuch, &len);
-	if (n < 0 || len == 0)
+	n = tls_read(ctx, p, howmuch);
+	if (n <= 0)
 		return (n);
 
-	buf->off += len;
+	buf->off += n;
 
 	/* Tell someone about changes in this buffer */
 	if (buf->off != oldoff && buf->cb != NULL)
 		(*buf->cb)(buf, oldoff, buf->off, buf->cbarg);
 
-	return (len);
+	return (n);
 }
 
 int
 evtls_write(struct evbuffer *buffer, int fd, struct tls *ctx)
 {
-	size_t len;
 	int n;
 
-	n = tls_write(ctx, buffer->buffer, buffer->off, &len);
-	if (n < 0 || len == 0)
+	n = tls_write(ctx, buffer->buffer, buffer->off);
+	if (n <= 0)
 		return (n);
+	evbuffer_drain(buffer, n);
 
-	evbuffer_drain(buffer, len);
-
-	return (len);
+	return (n);
 }
