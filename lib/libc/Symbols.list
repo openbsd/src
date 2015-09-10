@@ -516,13 +516,6 @@ __signbitf
 __signbitl
 _ctype_
 _longjmp
-_ng_makekey
-_ng_parse
-_ng_print
-_ng_sl_add
-_ng_sl_find
-_ng_sl_free
-_ng_sl_init
 _setjmp
 _sys_errlist
 _sys_nerr

@@ -1,4 +1,5 @@
-/*	$OpenBSD: netgroup.h,v 1.8 2015/09/10 18:59:34 deraadt Exp $ */
+/*	$OpenBSD: stringlist.h,v 1.1 2015/09/10 18:59:34 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -28,40 +29,25 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
-#ifndef _NETGROUP_H_
-#define	_NETGROUP_H_
 
-#define	_PATH_NETGROUP		"/etc/netgroup"
+#define _NG_STAR(s)	(((s) == NULL || *(s) == '\0') ? _ngstar : s)
+#define _NG_EMPTY(s)	((s) == NULL ? "" : s)
+#define _NG_ISSPACE(p)	(isspace((unsigned char) (p)) || (p) == '\n')
 
-#define	_PATH_NETGROUP_DB	"/etc/netgroup.db"
-
-#define	_PATH_NETGROUP_MKDB	"/usr/sbin/netgroup_mkdb"
-
-#define	_NG_KEYBYNAME		'1'	/* stored by name */
-#define	_NG_KEYBYUSER		'2'	/* stored by user */
-#define	_NG_KEYBYHOST		'3'	/* stored by host */
-
-#define _NG_ERROR	-1
-#define _NG_NONE	 0
-#define _NG_NAME	 1
-#define _NG_GROUP	 2
-
-struct netgroup {
-	char		*ng_host;	/* host name */
-	char		*ng_user;	/* user name */
-	char		*ng_domain;	/* domain name */
-	struct netgroup	*ng_next;	/* thread */
+/*
+ * Simple string list
+ */
+struct stringlist {
+	char		**sl_str;
+	size_t		  sl_max;
+	size_t		  sl_cur;
 };
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-void	setnetgrent(const char *);
-int	getnetgrent(const char **, const char **, const char **);
-void	endnetgrent(void);
-int	innetgr(const char *, const char *, const char *, const char *);
-__END_DECLS
-
-#endif /* !_NETGROUP_H_ */
+struct stringlist *_ng_sl_init(void);
+int	 _ng_sl_add(struct stringlist *, char *);
+void	  _ng_sl_free(struct stringlist *, int);
+char	*_ng_sl_find(struct stringlist *, char *);
+char	*_ng_makekey(const char *, const char *, size_t);
+int	 _ng_parse(char **, char **, struct netgroup **);
+void	 _ng_print(char *, size_t, const struct netgroup *);

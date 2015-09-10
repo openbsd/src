@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.18 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.19 2015/09/10 18:59:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -42,11 +42,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#define _NETGROUP_PRIVATE
 #include <netgroup.h>
 #include <assert.h>
 
 #include "str.h"
+#include "stringlist.h"
 #include "util.h"
 
 #define DEBUG_NG
