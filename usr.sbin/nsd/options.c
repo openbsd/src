@@ -1198,7 +1198,7 @@ key_options_setup(region_type* region, key_options_t* key)
 		key->tsig_key->size = 0;
 		key->tsig_key->data = NULL;
 	}
-	size = b64_pton(key->secret, data, sizeof(data));
+	size = __b64_pton(key->secret, data, sizeof(data));
 	if(size == -1) {
 		log_msg(LOG_ERR, "Failed to parse tsig key data %s",
 			key->name);

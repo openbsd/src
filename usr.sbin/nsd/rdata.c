@@ -397,7 +397,7 @@ rdata_base64_to_string(buffer_type *output, rdata_atom_type rdata,
 	if(size == 0)
 		return 1;
 	buffer_reserve(output, size * 2 + 1);
-	length = b64_ntop(rdata_atom_data(rdata), size,
+	length = __b64_ntop(rdata_atom_data(rdata), size,
 			  (char *) buffer_current(output), size * 2);
 	if (length > 0) {
 		buffer_skip(output, length);

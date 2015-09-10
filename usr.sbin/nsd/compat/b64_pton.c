@@ -378,7 +378,7 @@ b64_pton_len(unsigned char const *src)
 
 
 int
-b64_pton(char const *src, uint8_t *target, size_t targsize)
+__b64_pton(char const *src, uint8_t *target, size_t targsize)
 {
 	if (!b64rmap_initialized)
 		b64_initialize_rmap ();

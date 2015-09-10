@@ -654,11 +654,44 @@ AC_REPLACE_FUNCS(snprintf)
 AC_REPLACE_FUNCS(strlcat)
 AC_REPLACE_FUNCS(strlcpy)
 AC_REPLACE_FUNCS(strptime)
-AC_REPLACE_FUNCS(b64_pton)
-AC_REPLACE_FUNCS(b64_ntop)
 AC_REPLACE_FUNCS(pselect)
 AC_REPLACE_FUNCS(memmove)
 AC_REPLACE_FUNCS(reallocarray)
+
+#
+# Check for b64_ntop (and assume result applies to b64_pton as well).
+# The functions are actually prefixed with __ and resolv.h defines
+# macros for the unprefixed versions, however including this header
+# causes conflicts with our T_xx defines.
+#
+AC_MSG_CHECKING(for __b64_ntop)
+AC_TRY_LINK([#include <stddef.h>],
+	[__b64_ntop(NULL, 0, NULL, 0);],
+	found_b64_ntop=yes,
+	found_b64_ntop=no
+)
+if test "x$found_b64_ntop" = xno; then
+	AC_MSG_RESULT(no)
+
+	AC_MSG_CHECKING(for __b64_ntop with -lresolv)
+	LIBS="$LIBS -lresolv"
+	AC_TRY_LINK([#include <stddef.h>],
+		[__b64_ntop(NULL, 0, NULL, 0);],
+		found_b64_ntop=yes,
+		found_b64_ntop=no
+	)
+	if test "x$found_b64_ntop" = xno; then
+		AC_MSG_RESULT(no)
+	fi
+fi
+if test "x$found_b64_ntop" = xyes; then
+	AC_DEFINE(HAVE_B64_NTOP)
+	AC_DEFINE(HAVE_B64_PTON)
+	AC_MSG_RESULT(yes)
+else
+	AC_LIBOBJ([b64_ntop])
+	AC_LIBOBJ([b64_pton])
+fi
 
 AC_MSG_CHECKING(for pselect prototype in sys/select.h)
 AC_EGREP_HEADER([[^a-zA-Z_]*pselect[^a-zA-Z_]], sys/select.h, AC_DEFINE(HAVE_PSELECT_PROTO, 1, 
@@ -941,13 +974,11 @@ AH_BOTTOM([
 ])
 
 AH_BOTTOM([
-#ifndef HAVE_B64_NTOP
-int b64_ntop(uint8_t const *src, size_t srclength,
+int __b64_ntop(uint8_t const *src, size_t srclength,
 	     char *target, size_t targsize);
-#endif /* !HAVE_B64_NTOP */
-#ifndef HAVE_B64_PTON
-int b64_pton(char const *src, uint8_t *target, size_t targsize);
-#endif /* !HAVE_B64_PTON */
+int __b64_pton(char const *src, uint8_t *target, size_t targsize);
+])
+AH_BOTTOM([
 #ifndef HAVE_FSEEKO
 #define fseeko fseek
 #define ftello ftell

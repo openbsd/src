@@ -639,7 +639,7 @@ zparser_conv_b64(region_type *region, const char *b64)
 	uint16_t *r = NULL;
 	int i;
 
-	i = b64_pton(b64, buffer, B64BUFSIZE);
+	i = __b64_pton(b64, buffer, B64BUFSIZE);
 	if (i == -1) {
 		zc_error_prev_line("invalid base64 data");
 	} else {

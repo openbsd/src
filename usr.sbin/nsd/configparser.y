@@ -828,7 +828,7 @@ key_secret: VAR_SECRET STRING
 		assert(cfg_parser->current_key);
 #endif
 		cfg_parser->current_key->secret = region_strdup(cfg_parser->opt->region, $2);
-		size = b64_pton($2, data, sizeof(data));
+		size = __b64_pton($2, data, sizeof(data));
 		if(size == -1) {
 			c_error_msg("Cannot base64 decode tsig secret %s",
 				cfg_parser->current_key->name?
