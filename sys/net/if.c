@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.366 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.367 2015/09/10 14:06:43 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -604,8 +604,10 @@ if_input_process(void *xmq)
 #if NBRIDGE > 0
 		if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0) {
 			m = bridge_input(ifp, m);
-			if (m == NULL)
+			if (m == NULL) {
+				if_put(ifp);
 				continue;
+			}
 		}
 		m->m_flags &= ~M_PROTO1;	/* Loop prevention */
 #endif
@@ -622,6 +624,8 @@ if_input_process(void *xmq)
 
 		if (ifih == NULL)
 			m_freem(m);
+
+		if_put(ifp);
 	}
 	splx(s);
 	KERNEL_UNLOCK();
