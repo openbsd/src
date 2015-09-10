@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.33 2013/12/18 13:53:12 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.34 2015/09/10 13:04:52 nicm Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -28,12 +28,6 @@
 
 #include <paths.h>
 
-/* Find a integer type that is at least 32 bits (or die) - SIZEOF_* defined
- * by autoconf (assumes an 8 bit byte, but I'm not concerned).
- * NOTE: INT32 may end up being more than 32 bits.
- */
-# define INT32	int
-
 /* end of common headers */
 
 /* some useful #defines */
@@ -53,7 +47,7 @@
 #define	BIT(i)	(1<<(i))	/* define bit in flag */
 
 /* Table flag type - needs > 16 and < 32 bits */
-typedef INT32 Tflag;
+typedef int Tflag;
 
 #define	NUFILE	32		/* Number of user-accessible files */
 #define	FDBASE	10		/* First file usable by Shell */
@@ -353,7 +347,7 @@ EXTERN Getopt user_opt;		/* parsing state for getopts builtin command */
 
 /* This for co-processes */
 
-typedef INT32 Coproc_id; /* something that won't (realisticly) wrap */
+typedef int Coproc_id; /* something that won't (realistically) wrap */
 struct coproc {
 	int	read;		/* pipe from co-process's stdout */
 	int	readw;		/* other side of read (saved temporarily) */
