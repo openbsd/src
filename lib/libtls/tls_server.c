@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.15 2015/09/10 10:14:20 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.16 2015/09/11 08:31:26 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -173,6 +173,7 @@ tls_handshake_server(struct tls *ctx)
 	}
 
 	ctx->state |= TLS_HANDSHAKE_COMPLETE;
+	rv = 0;
 
  err:
 	return (rv);
