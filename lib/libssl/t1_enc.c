@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.81 2015/09/10 15:56:26 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.82 2015/09/11 17:54:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,6 +142,128 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
+
+void
+ssl3_cleanup_key_block(SSL *s)
+{
+	if (s->s3->tmp.key_block != NULL) {
+		explicit_bzero(s->s3->tmp.key_block,
+		    s->s3->tmp.key_block_length);
+		free(s->s3->tmp.key_block);
+		s->s3->tmp.key_block = NULL;
+	}
+	s->s3->tmp.key_block_length = 0;
+}
+
+int
+ssl3_init_finished_mac(SSL *s)
+{
+	BIO_free(s->s3->handshake_buffer);
+	ssl3_free_digest_list(s);
+
+	s->s3->handshake_buffer = BIO_new(BIO_s_mem());
+	if (s->s3->handshake_buffer == NULL)
+		return (0);
+
+	(void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
+
+	return (1);
+}
+
+void
+ssl3_free_digest_list(SSL *s)
+{
+	int i;
+
+	if (s == NULL)
+		return;
+
+	if (s->s3->handshake_dgst == NULL)
+		return;
+	for (i = 0; i < SSL_MAX_DIGEST; i++) {
+		if (s->s3->handshake_dgst[i])
+			EVP_MD_CTX_destroy(s->s3->handshake_dgst[i]);
+	}
+	free(s->s3->handshake_dgst);
+	s->s3->handshake_dgst = NULL;
+}
+
+void
+ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
+{
+	if (s->s3->handshake_buffer &&
+	    !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
+		BIO_write(s->s3->handshake_buffer, (void *)buf, len);
+	} else {
+		int i;
+		for (i = 0; i < SSL_MAX_DIGEST; i++) {
+			if (s->s3->handshake_dgst[i]!= NULL)
+				EVP_DigestUpdate(s->s3->handshake_dgst[i], buf, len);
+		}
+	}
+}
+
+int
+ssl3_digest_cached_records(SSL *s)
+{
+	int i;
+	long mask;
+	const EVP_MD *md;
+	long hdatalen;
+	void *hdata;
+
+	ssl3_free_digest_list(s);
+
+	s->s3->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
+	if (s->s3->handshake_dgst == NULL) {
+		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+	if (hdatalen <= 0) {
+		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS,
+		    SSL_R_BAD_HANDSHAKE_LENGTH);
+		return 0;
+	}
+
+	/* Loop through bits of the algorithm2 field and create MD contexts. */
+	for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
+		if ((mask & ssl_get_algorithm2(s)) && md) {
+			s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
+			if (s->s3->handshake_dgst[i] == NULL) {
+				SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS,
+				    ERR_R_MALLOC_FAILURE);
+				return 0;
+			}
+			if (!EVP_DigestInit_ex(s->s3->handshake_dgst[i],
+			    md, NULL)) {
+				EVP_MD_CTX_destroy(s->s3->handshake_dgst[i]);
+				return 0;
+			}
+			if (!EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata,
+			    hdatalen))
+				return 0;
+		}
+	}
+
+	if (!(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
+		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
+	}
+
+	return 1;
+}
+
+void
+ssl3_record_sequence_increment(unsigned char *seq)
+{
+	int i;
+
+	for (i = SSL3_SEQUENCE_SIZE - 1; i >= 0; i--) {
+		if (++seq[i] != 0)
+			break;
+	}
+}
 
 /* seed1 through seed5 are virtually concatenated */
 static int

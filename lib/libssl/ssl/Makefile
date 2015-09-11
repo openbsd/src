@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.55 2015/09/11 14:52:17 jsing Exp $
+# $OpenBSD: Makefile,v 1.56 2015/09/11 17:54:23 jsing Exp $
 
 LIB=	ssl
 
@@ -16,7 +16,7 @@ CFLAGS+= -I${SSL_SRC}
 LDADD+= -L${BSDOBJDIR}/lib/libcrypto/crypto -lcrypto
 
 SRCS=\
-	s3_srvr.c s3_clnt.c s3_lib.c s3_enc.c s3_pkt.c s3_both.c \
+	s3_srvr.c s3_clnt.c s3_lib.c s3_pkt.c s3_both.c \
 	s23_srvr.c s23_clnt.c s23_lib.c s23_pkt.c \
 	t1_meth.c t1_srvr.c t1_clnt.c t1_lib.c t1_enc.c \
 	d1_meth.c d1_srvr.c d1_clnt.c d1_lib.c d1_pkt.c \
