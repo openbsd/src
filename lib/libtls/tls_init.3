@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.40 2015/09/11 14:15:19 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.41 2015/09/11 14:20:14 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -118,7 +118,7 @@
 .Fn tls_peer_cert_provided "struct tls *ctx"
 .Ft "int"
 .Fn tls_peer_cert_contains_name "struct tls *ctx" "const char *name"
-.Ft "int
+.Ft "int"
 .Fn tls_peer_cert_issuer "struct tls *ctx" "char **issuer"
 .Ft "int"
 .Fn tls_peer_cert_subject "struct tls *ctx" "char **subject"
@@ -369,7 +369,7 @@ checks if the peer of
 .Ar ctx
 has provided a certificate.
 .Fn tls_peer_cert_provided
-can only succeed after the handshake is complete. 
+can only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_contains_name
@@ -379,7 +379,7 @@ has povided a certificate that contains a
 SAN or CN that matches
 .Ar name .
 .Fn tls_peer_cert_contains_name
-can only succeed after the handshake is complete. 
+can only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_subject
@@ -388,19 +388,19 @@ returns a string in
 corresponding to the subject of the peer certificate from
 .Ar ctx .
 .Fn tls_peer_cert_subject
-will only succeed after the handshake is complete. 
-Callers must free the string returned in 
+will only succeed after the handshake is complete.
+Callers must free the string returned in
 .Ar subject .
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_issuer
-returns a string in 
+returns a string in
 .Ar subject
 corresponding to the issuer of the peer certificate from
 .Ar ctx .
 .Fn tls_peer_cert_issuer
-will only succeed after the handshake is complete. 
-Callers must free the string returned in 
+will only succeed after the handshake is complete.
+Callers must free the string returned in
 .Ar issuer .
 .Em (Server and client)
 .It
@@ -410,10 +410,10 @@ in
 .Ar hash
 corresponding to a hash of the raw peer certificate from
 .Ar ctx
-prefixed by a hash name followed by a colon. 
-The hash currently used is SHA256, however this
-can change in the future. The hash string for a certificate
-in file
+prefixed by a hash name followed by a colon.
+The hash currently used is SHA256, though this
+could change in the future.
+The hash string for a certificate in file
 .Ar mycert.crt
 can be generated using the commands:
 .Bd -literal -offset indent
@@ -422,8 +422,8 @@ printf "SHA256:${h}\\n"
 .Ed
 .Pp
 .Fn tls_peer_cert_subject
-will only succeed after the handshake is complete. 
-Callers must free the string returned in 
+will only succeed after the handshake is complete.
+Callers must free the string returned in
 .Ar hash .
 .Em (Server and client)
 .It
@@ -589,7 +589,6 @@ while (len > 0) {
 }
 \&...
 .Ed
-.Bd -literal -offset indent
 .Pp
 The following example demonstrates how to handle TLS writes on a
 non-blocking file descriptor using
