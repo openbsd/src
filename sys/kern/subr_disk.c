@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.209 2015/09/11 12:40:05 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.210 2015/09/11 14:08:22 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -692,8 +692,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	struct gpt_partition *gp, *gp_tmp;
 	struct partition *pp;
 	size_t gpsz;
-	u_int64_t gptpartoff = 0, gptpartend = DL_GETBEND(lp), sector;
-	int i, altheader = 0, error, n = 0, ourpart = -1, offset;
+	u_int64_t gptpartoff, gptpartend, sector;
+	int i, altheader = 0, error, n = 0, offset;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
 
@@ -811,6 +811,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 
 	/* Find OpenBSD partition and spoof others along the way. */
+	gptpartoff = 0;
+	gptpartend = DL_GETBEND(lp);
 	for (gp_tmp = gp, i = 0; i < letoh32(gh.gh_part_num); gp_tmp++, i++) {
 		if (letoh64(gp_tmp->gp_lba_start) > letoh64(gp_tmp->gp_lba_end)
 		    || letoh64(gp_tmp->gp_lba_start) < letoh64(gh.gh_lba_start)
@@ -819,8 +821,10 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 
 		uuid_dec_le(&gp_tmp->gp_type, &uuid_part);
 		if (!memcmp(&uuid_part, &uuid_openbsd, sizeof(struct uuid))) {
-			if (ourpart == -1)
-				ourpart = i; /* found it */
+			if (gptpartoff == 0) {
+				gptpartoff = letoh64(gp_tmp->gp_lba_start);
+				gptpartend = letoh64(gp_tmp->gp_lba_end) + 1;
+			}
 			continue; /* Do *NOT* spoof OpenBSD partitions! */
 		}
 
@@ -848,12 +852,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		    - letoh64(gp_tmp->gp_lba_start) + 1);
 	}
 
-	if (ourpart != -1) {
-		/* found our OpenBSD partition, so use it */
-		gp_tmp = &gp[ourpart];
-		gptpartoff = letoh64(gp_tmp->gp_lba_start);
-		gptpartend = letoh64(gp_tmp->gp_lba_end) + 1;
-	} else
+	if (gptpartoff == 0)
 		spoofonly = 1;	/* No disklabel to read from disk. */
 
 	free(gp, M_DEVBUF, gpsz);
