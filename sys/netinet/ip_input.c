@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.253 2015/08/19 15:30:25 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.254 2015/09/11 10:06:52 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ ipv4_input(struct mbuf *m)
 	if (m->m_len < sizeof (struct ip) &&
 	    (m = m_pullup(m, sizeof (struct ip))) == NULL) {
 		ipstat.ips_toosmall++;
-		return;
+		goto out;
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {
@@ -248,7 +248,7 @@ ipv4_input(struct mbuf *m)
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
 			ipstat.ips_badhlen++;
-			return;
+			goto out;
 		}
 		ip = mtod(m, struct ip *);
 	}
@@ -318,7 +318,7 @@ ipv4_input(struct mbuf *m)
 	if (pf_test(AF_INET, PF_IN, ifp, &m) != PF_PASS)
 		goto bad;
 	if (m == NULL)
-		return;
+		goto out;
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
@@ -332,12 +332,12 @@ ipv4_input(struct mbuf *m)
 	 * to be sent and the original packet to be freed).
 	 */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m, ifp)) {
-	        return;
+	        goto out;
 	}
 
 	if (in_ouraddr(m, ifp, ip->ip_dst)) {
 		ip_ours(m);
-		return;
+		goto out;
 	}
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
@@ -355,7 +355,7 @@ ipv4_input(struct mbuf *m)
 			if (m->m_flags & M_EXT) {
 				if ((m = m_pullup(m, hlen)) == NULL) {
 					ipstat.ips_toosmall++;
-					return;
+					goto out;
 				}
 				ip = mtod(m, struct ip *);
 			}
@@ -383,7 +383,7 @@ ipv4_input(struct mbuf *m)
 			 */
 			if (ip->ip_p == IPPROTO_IGMP) {
 				ip_ours(m);
-				return;
+				goto out;
 			}
 			ipstat.ips_forward++;
 		}
@@ -400,13 +400,13 @@ ipv4_input(struct mbuf *m)
 			goto bad;
 		}
 		ip_ours(m);
-		return;
+		goto out;
 	}
 
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
 	    ip->ip_dst.s_addr == INADDR_ANY) {
 		ip_ours(m);
-		return;
+		goto out;
 	}
 
 #if NCARP > 0
@@ -451,9 +451,12 @@ ipv4_input(struct mbuf *m)
 #endif /* IPSEC */
 
 	ip_forward(m, ifp, pfrdr);
+	if_put(ifp);
 	return;
 bad:
 	m_freem(m);
+out:
+	if_put(ifp);
 }
 
 /*
