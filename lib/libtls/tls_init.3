@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.36 2015/09/11 07:09:05 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.37 2015/09/11 09:02:10 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -281,6 +281,16 @@ sets the public certificate directly from memory.
 .It
 .Fn tls_config_set_ciphers
 sets the list of ciphers that may be used.
+Lists of ciphers are specified by name, and the
+permitted names are: 
+.Pp
+.Bl -tag -width "default" -offset indent -compact
+.It Dv "secure"
+.It Dv "default" (an alias for secure)
+.It Dv "legacy" 
+.It Dv "compat" (an alias for legacy)
+.El
+.Pp
 .Em (Client and server)
 .It
 .Fn tls_config_set_key_file
