@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_peer.c,v 1.2 2015/09/11 12:56:55 beck Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.3 2015/09/11 13:22:39 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -108,7 +108,7 @@ tls_peer_cert_issuer(struct tls *ctx,  char **issuer)
 	X509_NAME *name = NULL;
 
 	*issuer = NULL;
-	if (ctx->ssl_peer_cert != NULL)
+	if (ctx->ssl_peer_cert == NULL)
 		return (-1);
 	if ((name = X509_get_issuer_name(ctx->ssl_peer_cert)) == NULL)
 		return (-1);
