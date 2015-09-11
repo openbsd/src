@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.161 2015/09/08 21:28:36 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.162 2015/09/11 22:02:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -489,15 +489,26 @@ pmap_enter_pv(struct pte_desc *pted, struct vm_page *pg)
 		return;
 	}
 
+	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_INSERT_HEAD(&(pg->mdpage.pv_list), pted, pted_pv_list);
 	pted->pted_va |= PTED_VA_MANAGED_M;
+	mtx_leave(&pg->mdpage.pv_mtx);
 }
 
 void
 pmap_remove_pv(struct pte_desc *pted)
 {
+	struct vm_page *pg;
+
+	if (ppc_proc_is_64b)
+		pg = PHYS_TO_VM_PAGE(pted->p.pted_pte64.pte_lo & PTE_RPGN_64);
+	else
+		pg = PHYS_TO_VM_PAGE(pted->p.pted_pte32.pte_lo & PTE_RPGN_32);
+
+	mtx_enter(&pg->mdpage.pv_mtx);
 	pted->pted_va &= ~PTED_VA_MANAGED_M;
 	LIST_REMOVE(pted, pted_pv_list);
+	mtx_leave(&pg->mdpage.pv_mtx);
 }
 
 
@@ -642,7 +653,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	struct pte_desc *pted;
 	vaddr_t va;
 
-	KERNEL_LOCK();
 	PMAP_VP_LOCK(pm);
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pted = pmap_vp_lookup(pm, va);
@@ -650,7 +660,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			pmap_remove_pted(pm, pted);
 	}
 	PMAP_VP_UNLOCK(pm);
-	KERNEL_UNLOCK();
 }
 
 /*
@@ -963,6 +972,7 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 	if ((bits == flagbit))
 		return bits;
 
+	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		void *pte;
 
@@ -981,11 +991,13 @@ pmap_test_attrs(struct vm_page *pg, u_int flagbit)
 		if (bits == flagbit)
 			break;
 	}
+	mtx_leave(&pg->mdpage.pv_mtx);
 
 	atomic_setbits_int(&pg->pg_flags,  bits);
 
 	return bits;
 }
+
 int
 pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 {
@@ -999,6 +1011,7 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 
 	bits = pg->pg_flags & flagbit;
 
+	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
 		void *pte;
 
@@ -1030,6 +1043,7 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 		}
 		PMAP_HASH_UNLOCK(s);
 	}
+	mtx_leave(&pg->mdpage.pv_mtx);
 
 	/*
 	 * this is done a second time, because while walking the list
@@ -1148,7 +1162,7 @@ again:
 void
 pmap_reference(pmap_t pm)
 {
-	pm->pm_refs++;
+	atomic_inc_int(&pm->pm_refs);
 }
 
 /*
@@ -1160,7 +1174,7 @@ pmap_destroy(pmap_t pm)
 {
 	int refs;
 
-	refs = --pm->pm_refs;
+	refs = atomic_dec_int_nv(&pm->pm_refs);
 	if (refs == -1)
 		panic("re-entering pmap_destroy");
 	if (refs > 0)
@@ -2030,19 +2044,54 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	pmap_t pm;
 
 	if (prot == PROT_NONE) {
+		mtx_enter(&pg->mdpage.pv_mtx);
 		while ((pted = LIST_FIRST(&(pg->mdpage.pv_list))) != NULL) {
+			pmap_reference(pted->pted_pmap);
 			pm = pted->pted_pmap;
+			mtx_leave(&pg->mdpage.pv_mtx);
+
 			PMAP_VP_LOCK(pm);
+
+			/*
+			 * We dropped the pvlist lock before grabbing
+			 * the pmap lock to avoid lock ordering
+			 * problems.  This means we have to check the
+			 * pvlist again since somebody else might have
+			 * modified it.  All we care about is that the
+			 * pvlist entry matches the pmap we just
+			 * locked.  If it doesn't, unlock the pmap and
+			 * try again.
+			 */
+			mtx_enter(&pg->mdpage.pv_mtx);
+			if ((pted = LIST_FIRST(&(pg->mdpage.pv_list))) == NULL ||
+			    pted->pted_pmap != pm) {
+				mtx_leave(&pg->mdpage.pv_mtx);
+				PMAP_VP_UNLOCK(pm);
+				pmap_destroy(pm);
+				mtx_enter(&pg->mdpage.pv_mtx);
+				continue;
+			}
+
+			pted->pted_va &= ~PTED_VA_MANAGED_M;
+			LIST_REMOVE(pted, pted_pv_list);
+			mtx_leave(&pg->mdpage.pv_mtx);
+
 			pmap_remove_pted(pm, pted);
+
 			PMAP_VP_UNLOCK(pm);
+			pmap_destroy(pm);
+			mtx_enter(&pg->mdpage.pv_mtx);
 		}
+		mtx_leave(&pg->mdpage.pv_mtx);
 		/* page is being reclaimed, sync icache next use */
 		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 		return;
 	}
 
+	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list)
 		pmap_pted_ro(pted, prot);
+	mtx_leave(&pg->mdpage.pv_mtx);
 }
 
 void

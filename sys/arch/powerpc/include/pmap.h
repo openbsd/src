@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.57 2015/06/05 11:38:19 mpi Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.58 2015/09/11 22:02:18 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -163,11 +163,15 @@ int reserve_dumppages(caddr_t p);
 
 #endif	/* _KERNEL */
 
+#include <sys/mutex.h>
+
 struct vm_page_md {
+	struct mutex pv_mtx;
 	LIST_HEAD(,pte_desc) pv_list;
 };
 
 #define VM_MDPAGE_INIT(pg) do {                 \
+	mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM); \
 	LIST_INIT(&((pg)->mdpage.pv_list)); 	\
 } while (0)
 
