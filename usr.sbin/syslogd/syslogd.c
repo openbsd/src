@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.186 2015/09/10 19:02:09 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.187 2015/09/11 12:42:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -277,15 +277,12 @@ int		 fd_ctlsock, fd_ctlconn, fd_klog, fd_sendsys,
 		 fd_udp, fd_udp6, fd_bind, fd_listen, fd_unix[MAXUNIX];
 struct event	 *ev_ctlaccept, *ev_ctlread, *ev_ctlwrite;
 
-LIST_HEAD(peer_list, peer) peers;
 struct peer {
-	LIST_ENTRY(peer)	 p_entry;
 	struct bufferevent	*p_bufev;
 	char			*p_peername;
 	char			*p_hostname;
 	int			 p_fd;
 };
-int peernum = 0;
 char hostname_unknown[] = "???";
 
 void	 klog_readcb(int, short, void *);
@@ -971,8 +968,6 @@ tcp_acceptcb(int fd, short event, void *arg)
 		p->p_hostname = hostname_unknown;
 	dprintf("Peer hostname %s\n", hostname);
 	p->p_peername = peername;
-	LIST_INSERT_HEAD(&peers, p, p_entry);
-	peernum++;
 	bufferevent_enable(p->p_bufev, EV_READ);
 
 	snprintf(ebuf, sizeof(ebuf), "syslogd: tcp logger \"%s\" accepted",
@@ -1112,8 +1107,6 @@ tcp_closecb(struct bufferevent *bufev, short event, void *arg)
 		logmsg(LOG_SYSLOG|LOG_NOTICE, ebuf, LocalHostName, ADDDATE);
 	}
 
-	peernum--;
-	LIST_REMOVE(p, p_entry);
 	if (p->p_peername != hostname_unknown)
 		free(p->p_peername);
 	if (p->p_hostname != hostname_unknown)
