@@ -1050,13 +1050,10 @@ _getlong
 _getnetbyaddr
 _getnetbyname
 _getshort
-_net_stayopen
-_protoent_data
 _res
 _res_ext
 _res_opcodes
 _res_resultcodes
-_servent_data
 dn_expand
 endhostent
 endnetent
