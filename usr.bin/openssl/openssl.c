@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: openssl.c,v 1.8 2015/09/11 20:55:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -320,13 +320,6 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_RC4
 	{ FUNC_TYPE_CIPHER, "rc4", enc_main },
 	{ FUNC_TYPE_CIPHER, "rc4-40", enc_main },
-#endif
-#ifndef OPENSSL_NO_RC5
-	{ FUNC_TYPE_CIPHER, "rc5", enc_main },
-	{ FUNC_TYPE_CIPHER, "rc5-cbc", enc_main },
-	{ FUNC_TYPE_CIPHER, "rc5-ecb", enc_main },
-	{ FUNC_TYPE_CIPHER, "rc5-cfb", enc_main },
-	{ FUNC_TYPE_CIPHER, "rc5-ofb", enc_main },
 #endif
 #ifdef ZLIB
 	{ FUNC_TYPE_CIPHER, "zlib", enc_main },

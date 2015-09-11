@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.11 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: speed.c,v 1.12 2015/09/11 20:55:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,9 +136,6 @@
 #ifndef OPENSSL_NO_RC4
 #include <openssl/rc4.h>
 #endif
-#ifndef OPENSSL_NO_RC5
-#include <openssl/rc5.h>
-#endif
 #include <openssl/rsa.h>
 #ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
@@ -259,9 +256,6 @@ speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_RC4
 	RC4_KEY rc4_ks;
-#endif
-#ifndef OPENSSL_NO_RC5
-	RC5_32_KEY rc5_ks;
 #endif
 #ifndef OPENSSL_NO_RC2
 	RC2_KEY rc2_ks;
@@ -670,13 +664,6 @@ speed_main(int argc, char **argv)
 			doit[D_CBC_RC2] = 1;
 		else
 #endif
-#ifndef OPENSSL_NO_RC5
-		if (strcmp(*argv, "rc5-cbc") == 0)
-			doit[D_CBC_RC5] = 1;
-		else if (strcmp(*argv, "rc5") == 0)
-			doit[D_CBC_RC5] = 1;
-		else
-#endif
 #ifndef OPENSSL_NO_IDEA
 		if (strcmp(*argv, "idea-cbc") == 0)
 			doit[D_CBC_IDEA] = 1;
@@ -848,9 +835,6 @@ speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err, "rc2-cbc  ");
 #endif
-#ifndef OPENSSL_NO_RC5
-			BIO_printf(bio_err, "rc5-cbc  ");
-#endif
 #ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err, "bf-cbc");
 #endif
@@ -988,9 +972,6 @@ speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_RC2
 	RC2_set_key(&rc2_ks, 16, key16, 128);
-#endif
-#ifndef OPENSSL_NO_RC5
-	RC5_32_set_key(&rc5_ks, 16, key16, 12);
 #endif
 #ifndef OPENSSL_NO_BF
 	BF_set_key(&bf_ks, 16, key16);
@@ -1303,20 +1284,6 @@ speed_main(int argc, char **argv)
 				    iv, RC2_ENCRYPT);
 			d = Time_F(STOP);
 			print_result(D_CBC_RC2, j, count, d);
-		}
-	}
-#endif
-#ifndef OPENSSL_NO_RC5
-	if (doit[D_CBC_RC5]) {
-		for (j = 0; j < SIZE_NUM; j++) {
-			print_message(names[D_CBC_RC5], c[D_CBC_RC5][j], lengths[j]);
-			Time_F(START);
-			for (count = 0, run = 1; COND(c[D_CBC_RC5][j]); count++)
-				RC5_32_cbc_encrypt(buf, buf,
-				    (unsigned long) lengths[j], &rc5_ks,
-				    iv, RC5_ENCRYPT);
-			d = Time_F(STOP);
-			print_result(D_CBC_RC5, j, count, d);
 		}
 	}
 #endif
