@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwritev.c,v 1.9 2011/10/16 06:29:56 guenther Exp $	*/
+/*	$OpenBSD: pwritev.c,v 1.10 2015/09/11 13:26:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -29,15 +29,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <unistd.h>
 #include "thread_private.h"
 
-register_t __syscall(quad_t, ...);
+ssize_t	__syscall(quad_t, ...);
+PROTO_NORMAL(__syscall);
 
-/* pwritev is weak to support libpthread cancellation */
 
 STUB_PROTOTYPE(pwritev);
 
@@ -51,5 +50,5 @@ ssize_t
 STUB_NAME(pwritev)(int fd, const struct iovec *iovp, int iovcnt, off_t offset)
 {
 
-	return (__syscall((quad_t)SYS_pwritev, fd, iovp, iovcnt, 0, offset));
+	return (__syscall(SYS_pwritev, fd, iovp, iovcnt, 0, offset));
 }

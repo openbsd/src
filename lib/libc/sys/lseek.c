@@ -1,4 +1,4 @@
-/*	$OpenBSD: lseek.c,v 1.15 2011/10/16 06:29:56 guenther Exp $ */
+/*	$OpenBSD: lseek.c,v 1.16 2015/09/11 13:26:20 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,22 +30,19 @@
 
 #include <sys/syscall.h>
 #include <unistd.h>
-#include "thread_private.h"
 
-off_t __syscall(quad_t, ...);
+off_t	__syscall(quad_t, ...);
+PROTO_NORMAL(__syscall);
 
-/* lseek is weak to support libpthread locking */
-
-STUB_PROTOTYPE(lseek);
-
-STUB_ALIAS(lseek);
+DEF_SYS(lseek);
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 off_t
-STUB_NAME(lseek)(int fd, off_t offset, int whence)
+lseek(int fd, off_t offset, int whence)
 {
-	return (__syscall((quad_t)SYS_lseek, fd, 0, offset, whence));
+	return (__syscall(SYS_lseek, fd, 0, offset, whence));
 }
+DEF_WEAK(lseek);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: truncate.c,v 1.13 2011/10/16 06:29:56 guenther Exp $ */
+/*	$OpenBSD: truncate.c,v 1.14 2015/09/11 13:26:20 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,24 +28,22 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include "thread_private.h"
 
-register_t __syscall(quad_t, ...);
+int	__syscall(quad_t, ...);
+PROTO_NORMAL(__syscall);
 
-STUB_PROTOTYPE(truncate);
+DEF_SYS(truncate);
 
-STUB_ALIAS(truncate);
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 int
-STUB_NAME(truncate)(const char *path, off_t length)
+truncate(const char *path, off_t length)
 {
-
-	return(__syscall((quad_t)SYS_truncate, path, 0, length));
+	return (__syscall(SYS_truncate, path, 0, length));
 }
+DEF_WEAK(truncate);
