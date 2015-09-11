@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.109 2015/09/11 17:29:36 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.110 2015/09/11 17:35:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2531,14 +2531,6 @@ ssl_undefined_const_function(const SSL *s)
 	SSLerr(SSL_F_SSL_UNDEFINED_CONST_FUNCTION,
 	    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 	return (0);
-}
-
-SSL_METHOD *
-ssl_bad_method(int ver)
-{
-	SSLerr(SSL_F_SSL_BAD_METHOD,
-	    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-	return (NULL);
 }
 
 const char *

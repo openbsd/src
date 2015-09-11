@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.116 2015/09/11 17:32:23 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.117 2015/09/11 17:35:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -543,7 +543,6 @@ struct ssl_aead_ctx_st {
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 extern SSL_CIPHER ssl3_ciphers[];
 
-SSL_METHOD *ssl_bad_method(int ver);
 const char *ssl_version_string(int ver);
 uint16_t ssl_max_server_version(SSL *s);
 
