@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.153 2015/07/20 06:59:39 rpe Exp $
+#	$OpenBSD: netstart,v 1.154 2015/09/11 12:21:52 sthen Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -151,6 +151,21 @@ ifmstart() {
 	done
 }
 
+# IPv6 autoconf the interfaces in the list at $rtsolif
+# Usage: ifautoconf
+ifautoconf() {
+	printf 'IPv6 autoconf:'
+	# $ip6kernel will not have been set if we were invoked with a
+	# list of interface names
+	if ifconfig lo0 inet6 >/dev/null 2>&1; then
+		for curif in $rtsolif; do
+			printf ' %s' $curif
+			ifconfig $curif inet6 autoconf
+		done
+	fi
+	echo
+}
+
 # Get network related vars from rc.conf using the parsing routine from rc.subr.
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
@@ -165,6 +180,7 @@ if [ $# -gt 0 ]; then
 		ifstart $1
 		shift
 	done
+	ifautoconf
 	return
 fi
 
@@ -246,10 +262,8 @@ ifmstart "" "trunk svlan vlan carp gif gre pfsync pppoe tun bridge pflow"
 # Configure all the carp interfaces which we know about before default route.
 ifmstart "trunk svlan vlan carp"
 
-if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
-	echo "IPv6 autoconf:$rtsolif"
-	ifconfig $rtsolif inet6 autoconf
-fi
+# Now that $rtsolif has been populated, IPv6 autoconf those interfaces
+ifautoconf
 
 # Look for default routes in /etc/mygate.
 [[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
