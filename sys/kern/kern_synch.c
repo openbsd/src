@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.122 2015/09/07 15:38:45 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.123 2015/09/11 19:13:22 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/pool.h>
+#include <sys/refcnt.h>
 
 #include <machine/spinlock.h>
 
@@ -589,4 +590,25 @@ sys___thrwakeup(struct proc *p, void *v, register_t *retval)
 	}
 
 	return (0);
+}
+
+void
+refcnt_rele_wake(struct refcnt *r)
+{
+	if (refcnt_rele(r))
+		wakeup_one(r);
+}
+
+void
+refcnt_finalize(struct refcnt *r, const char *wmesg)
+{
+	struct sleep_state sls;
+	u_int refcnt;
+
+	refcnt = atomic_dec_int_nv(&r->refs);
+	while (refcnt) {
+		sleep_setup(&sls, r, PWAIT, wmesg);
+		refcnt = r->refs;
+		sleep_finish(&sls, refcnt);
+	}
 }
