@@ -29,7 +29,7 @@ our %args = (
     syslogd => {
 	loggrep => {
 	    get_firstlog() => 0,
-	    $kerngrep => 1,
+	    qr/msg $kerngrep/ => 1,
 	    get_testgrep() => 1,
 	},
     },
