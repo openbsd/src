@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.68 2015/08/04 22:25:54 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.69 2015/09/11 22:44:30 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -394,8 +394,12 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 		if (grd->grd_gas.register_bit_width == 0) {
 			method = CST_METH_HALT;
 			addr = 0;
-		} else if (grd->grd_gas.register_bit_width == 1) {
-			/* vendor == Intel */
+		} else if (grd->grd_gas.register_bit_width == 1 ||
+		           grd->grd_gas.register_bit_width == 8) {
+			/*
+			 * vendor 1 == Intel
+			 * vendor 8 == "AML author used the bitwidth"
+			 */
 			switch (grd->grd_gas.register_bit_offset) {
 			case 0x1:
 				method = CST_METH_IO_HALT;
