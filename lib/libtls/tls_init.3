@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.35 2015/09/10 16:59:00 deraadt Exp $
+.\" $OpenBSD: tls_init.3,v 1.36 2015/09/11 07:09:05 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -41,6 +41,8 @@
 .Nm tls_config_insecure_noverifycert ,
 .Nm tls_config_insecure_noverifyname ,
 .Nm tls_config_verify ,
+.Nm tls_config_verify_client ,
+.Nm tls_config_verify_client_optional ,
 .Nm tls_load_file ,
 .Nm tls_client ,
 .Nm tls_server ,
@@ -326,7 +328,7 @@ clears any secret keys from memory.
 .Fn tls_config_insecure_noverifycert
 disables certificate verification.
 Be extremely careful when using this option.
-.Em (Client and server) 
+.Em (Client and server)
 .It
 .Fn tls_config_insecure_noverifyname
 disables server name verification.
@@ -445,8 +447,8 @@ or
 .Sh RETURN VALUES
 Functions that return
 .Vt int
-or 
-.Vt ssize_t 
+or
+.Vt ssize_t
 will return 0 on success and -1 on error.
 Functions that return a pointer will return NULL on error, which indicates an
 out of memory condition.
@@ -471,7 +473,7 @@ repeated immediately.
 In the case of non-blocking file descriptors, the same function call should be
 repeated when the required condition has been met.
 .Pp
-Callers of these functions can not rely on the value of the global
+Callers of these functions cannot rely on the value of the global
 .Ar errno .
 To prevent mishandling of error conditions,
 .Fn tls_handshake ,
