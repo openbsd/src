@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.12 2015/09/11 12:56:55 beck Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.13 2015/09/11 13:12:29 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -69,6 +69,9 @@ tls_match_name(const char *cert_name, const char *name)
 
 		domain = strchr(name, '.');
 
+		/* No wildcard match against a name with no host part. */
+		if (name[0] == '.')
+			return -1;
 		/* No wildcard match against a name with no domain part. */
 		if (domain == NULL || strlen(domain) == 1)
 			return -1;
