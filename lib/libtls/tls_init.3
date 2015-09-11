@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.39 2015/09/11 13:59:20 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.40 2015/09/11 14:15:19 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -43,6 +43,8 @@
 .Nm tls_config_verify ,
 .Nm tls_config_verify_client ,
 .Nm tls_config_verify_client_optional ,
+.Nm tls_peer_cert_provided ,
+.Nm tls_peer_cert_contains_name ,
 .Nm tls_load_file ,
 .Nm tls_client ,
 .Nm tls_server ,
@@ -172,9 +174,7 @@ function returns a new default configuration that can be used for future
 connections.
 Several functions exist to change the options of the configuration; see below.
 .Pp
-A
-.Em tls
-connection is represented as a
+A TLS connection is represented as a
 .Em context .
 A new
 .Em context
@@ -221,7 +221,7 @@ and
 Both of these functions will result in the TLS handshake being performed if it
 has not already completed.
 .Pp
-After use, a tls
+After use, a TLS
 .Em context
 should be closed with
 .Fn tls_close ,
@@ -292,12 +292,12 @@ sets the public certificate directly from memory.
 .Fn tls_config_set_ciphers
 sets the list of ciphers that may be used.
 Lists of ciphers are specified by name, and the
-permitted names are: 
+permitted names are:
 .Pp
 .Bl -tag -width "default" -offset indent -compact
 .It Dv "secure"
 .It Dv "default" (an alias for secure)
-.It Dv "legacy" 
+.It Dv "legacy"
 .It Dv "compat" (an alias for legacy)
 .El
 .Pp
@@ -365,19 +365,19 @@ a certificate.
 .Em (Server)
 .It
 .Fn tls_peer_cert_provided
-checks if the peer of 
-.Ar ctx 
+checks if the peer of
+.Ar ctx
 has provided a certificate.
 .Fn tls_peer_cert_provided
 can only succeed after the handshake is complete. 
 .Em (Server and client)
 .It
-.Fn tls_peer_cert_constains_name
-checks if the peer of a tls 
+.Fn tls_peer_cert_contains_name
+checks if the peer of a TLS
 .Ar ctx
- has povided a certificate that contains a 
+has povided a certificate that contains a
 SAN or CN that matches
-.Ar name
+.Ar name .
 .Fn tls_peer_cert_contains_name
 can only succeed after the handshake is complete. 
 .Em (Server and client)
@@ -448,17 +448,17 @@ The following functions create, prepare, and free a connection context.
 .Bl -bullet -offset four
 .It
 .Fn tls_client
-creates a new tls context for client connections.
+creates a new TLS context for client connections.
 .It
 .Fn tls_server
-creates a new tls context for server connections.
+creates a new TLS context for server connections.
 .It
 .Fn tls_configure
-readies a tls context for use by applying the configuration
+readies a TLS context for use by applying the configuration
 options.
 .It
 .Fn tls_free
-frees a tls context after use.
+frees a TLS context after use.
 .El
 .Pp
 The following functions initiate a connection and perform input and output
@@ -528,11 +528,11 @@ or
 .Fn tls_connect_servername .
 .El
 .Sh RETURN VALUES
-The 
+The
 .Fn tls_peer_cert_provided
 and
-.Fn tls_peer_cert_contain_name
-functions return 1 if the check succeeds, and 0 if it does not. 
+.Fn tls_peer_cert_contains_name
+functions return 1 if the check succeeds, and 0 if it does not.
 All other functions that return
 .Vt int
 or
