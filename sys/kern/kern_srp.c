@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.4 2015/09/11 14:08:03 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.5 2015/09/11 19:22:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -19,9 +19,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/atomic.h>
-
+#include <sys/timeout.h>
 #include <sys/srp.h>
 
 void	srp_v_gc_start(struct srp_gc *, struct srp *, void *);
@@ -39,7 +37,7 @@ srp_gc_init(struct srp_gc *srp_gc, void (*dtor)(void *, void *), void *cookie)
 {
 	srp_gc->srp_gc_dtor = dtor;
 	srp_gc->srp_gc_cookie = cookie;
-	srp_gc->srp_gc_refcount = 1;
+	refcnt_init(&srp_gc->srp_gc_refcnt);
 }
 
 void
@@ -54,7 +52,7 @@ srp_update_locked(struct srp_gc *srp_gc, struct srp *srp, void *nv)
 	void *ov;
 
 	if (nv != NULL)
-		atomic_inc_int(&srp_gc->srp_gc_refcount);
+		refcnt_take(&srp_gc->srp_gc_refcnt);
 
 	/*
 	 * this doesn't have to be as careful as the caller has already
@@ -129,8 +127,7 @@ srp_v_dtor(struct srp_gc *srp_gc, void *v)
 {
 	(*srp_gc->srp_gc_dtor)(srp_gc->srp_gc_cookie, v);
 
-	if (atomic_dec_int_nv(&srp_gc->srp_gc_refcount) == 0)
-		wakeup_one(&srp_gc->srp_gc_refcount);
+	refcnt_rele_wake(&srp_gc->srp_gc_refcnt);
 }
 
 void
@@ -174,7 +171,7 @@ void
 srp_update(struct srp_gc *srp_gc, struct srp *srp, void *v)
 {
 	if (v != NULL)
-		atomic_inc_int(&srp_gc->srp_gc_refcount);
+		refcnt_take(&srp_gc->srp_gc_refcnt);
 
 	v = atomic_swap_ptr(&srp->ref, v);
 	if (v != NULL)
@@ -184,15 +181,7 @@ srp_update(struct srp_gc *srp_gc, struct srp *srp, void *v)
 void
 srp_finalize(struct srp_gc *srp_gc)
 {
-	struct sleep_state sls;
-	u_int r;
-
-	r = atomic_dec_int_nv(&srp_gc->srp_gc_refcount);
-	while (r > 0) {
-		sleep_setup(&sls, &srp_gc->srp_gc_refcount, PWAIT, "srpfini");
-		r = srp_gc->srp_gc_refcount;
-		sleep_finish(&sls, r);
-	}
+	refcnt_finalize(&srp_gc->srp_gc_refcnt, "srpfini");
 }
 
 static inline void *

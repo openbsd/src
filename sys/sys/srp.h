@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.3 2015/09/09 11:21:51 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.4 2015/09/11 19:22:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -19,6 +19,8 @@
 #ifndef _SYS_SRP_H_
 #define _SYS_SRP_H_
 
+#include <sys/refcnt.h>
+
 struct srp {
 	void			*ref;
 };
@@ -33,13 +35,13 @@ struct srp_hazard {
 struct srp_gc {
 	void			(*srp_gc_dtor)(void *, void *);
 	void			*srp_gc_cookie;
-	u_int			srp_gc_refcount;
+	struct refcnt		srp_gc_refcnt;
 };
 
 #ifdef _KERNEL
 
 #define SRP_INITIALIZER() { NULL }
-#define SRP_GC_INITIALIZER(_d, _c) { (_d), (_c), 1 }
+#define SRP_GC_INITIALIZER(_d, _c) { (_d), (_c), REFCNT_INITIALIZER() }
 
 void		 srp_startup(void);
 void		 srp_gc_init(struct srp_gc *, void (*)(void *, void *), void *);
