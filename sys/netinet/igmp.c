@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.51 2015/09/10 13:19:25 dlg Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.52 2015/09/11 19:31:38 dlg Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -508,10 +508,9 @@ igmp_joingroup(struct in_multi *inm)
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 	    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
-		if ((i = rti_fill(inm)) == -1) {
-			splx(s);
-			return;
-		}
+		if ((i = rti_fill(inm)) == -1)
+			goto out;
+		
 		igmp_sendpkt(inm, i, 0);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
 		inm->inm_timer = IGMP_RANDOM_DELAY(
@@ -519,7 +518,10 @@ igmp_joingroup(struct in_multi *inm)
 		igmp_timers_are_running = 1;
 	} else
 		inm->inm_timer = 0;
+
+out:
 	splx(s);
+	if_put(ifp);
 }
 
 void
