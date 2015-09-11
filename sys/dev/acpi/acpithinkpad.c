@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.44 2015/04/24 14:44:17 deraadt Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.45 2015/09/11 07:25:04 guenther Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -91,6 +91,7 @@
 #define	THINKPAD_TABLET_PEN_INSERTED	0x500b
 #define	THINKPAD_TABLET_PEN_REMOVED	0x500c
 #define	THINKPAD_SWITCH_NUMLOCK		0x6000
+#define	THINKPAD_BUTTON_ROTATION_LOCK	0x6020
 #define	THINKPAD_THERMAL_TABLE_CHANGED	0x6030
 #define	THINKPAD_POWER_CHANGED		0x6040
 #define	THINKPAD_BACKLIGHT_CHANGED	0x6050
@@ -395,6 +396,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		case THINKPAD_TABLET_PEN_INSERTED:
 		case THINKPAD_TABLET_PEN_REMOVED:
 		case THINKPAD_SWITCH_NUMLOCK:
+		case THINKPAD_BUTTON_ROTATION_LOCK:
 		case THINKPAD_TABLET_SCREEN_NORMAL:
 		case THINKPAD_TABLET_SCREEN_ROTATED:
 		case THINKPAD_TABLET_SCREEN_CHANGED:
