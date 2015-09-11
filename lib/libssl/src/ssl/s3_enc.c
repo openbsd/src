@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.68 2015/09/11 17:04:39 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.69 2015/09/11 17:08:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,27 +142,6 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 
-static unsigned char ssl3_pad_1[48] = {
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
-};
-
-static unsigned char ssl3_pad_2[48] = {
-	0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-	0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-	0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-	0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-	0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-	0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
-};
-
-static int ssl3_handshake_mac(SSL *s, int md_nid, const char *sender,
-    int len, unsigned char *p);
-
 void
 ssl3_cleanup_key_block(SSL *s)
 {
@@ -272,66 +251,6 @@ ssl3_digest_cached_records(SSL *s)
 	}
 
 	return 1;
-}
-
-int
-ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
-{
-	return (ssl3_handshake_mac(s, md_nid, NULL, 0, p));
-}
-
-static int
-ssl3_handshake_mac(SSL *s, int md_nid, const char *sender, int len,
-    unsigned char *p)
-{
-	unsigned int ret;
-	int npad, n;
-	unsigned int i;
-	unsigned char md_buf[EVP_MAX_MD_SIZE];
-	EVP_MD_CTX ctx, *d = NULL;
-
-	if (s->s3->handshake_buffer)
-		if (!ssl3_digest_cached_records(s))
-			return 0;
-
-	/* Search for digest of specified type in the handshake_dgst array. */
-	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (s->s3->handshake_dgst[i] &&
-		    EVP_MD_CTX_type(s->s3->handshake_dgst[i]) == md_nid) {
-			d = s->s3->handshake_dgst[i];
-			break;
-		}
-	}
-	if (!d) {
-		SSLerr(SSL_F_SSL3_HANDSHAKE_MAC, SSL_R_NO_REQUIRED_DIGEST);
-		return 0;
-	}
-	EVP_MD_CTX_init(&ctx);
-	if (!EVP_MD_CTX_copy_ex(&ctx, d))
-		return 0;
-	n = EVP_MD_CTX_size(&ctx);
-	if (n < 0)
-		return 0;
-
-	npad = (48 / n) * n;
-	if (sender != NULL)
-		EVP_DigestUpdate(&ctx, sender, len);
-	EVP_DigestUpdate(&ctx, s->session->master_key,
-	    s->session->master_key_length);
-	EVP_DigestUpdate(&ctx, ssl3_pad_1, npad);
-	EVP_DigestFinal_ex(&ctx, md_buf, &i);
-
-	if (!EVP_DigestInit_ex(&ctx, EVP_MD_CTX_md(&ctx), NULL))
-		return 0;
-	EVP_DigestUpdate(&ctx, s->session->master_key,
-	    s->session->master_key_length);
-	EVP_DigestUpdate(&ctx, ssl3_pad_2, npad);
-	EVP_DigestUpdate(&ctx, md_buf, i);
-	EVP_DigestFinal_ex(&ctx, p, &ret);
-
-	EVP_MD_CTX_cleanup(&ctx);
-
-	return ((int)ret);
 }
 
 void
