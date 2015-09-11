@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.38 2015/09/09 17:56:59 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.39 2015/09/11 08:22:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -44,6 +44,7 @@
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
+#include <sys/tame.h>
 
 int canonpath(const char *input, char *buf, size_t bufsize);
 

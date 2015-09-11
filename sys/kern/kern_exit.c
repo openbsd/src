@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.151 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.152 2015/09/11 08:22:31 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
+#include <sys/tame.h>
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif

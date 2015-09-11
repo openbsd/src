@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.291 2015/09/10 18:10:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.292 2015/09/11 08:22:31 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@
 #include <sys/socket.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/tame.h>
 #include <sys/timetc.h>
 #include <sys/evcount.h>
 #include <sys/un.h>

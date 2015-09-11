@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.72 2015/09/11 07:42:35 claudio Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.73 2015/09/11 08:22:31 guenther Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -109,6 +109,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/tame.h>
 
 #include <net/if.h>
 #include <net/if_var.h>

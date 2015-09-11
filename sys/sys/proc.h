@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.204 2015/08/22 20:18:50 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.205 2015/09/11 08:22:31 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 #include <sys/timeout.h>		/* For struct timeout */
 #include <sys/event.h>			/* For struct klist */
 #include <sys/mutex.h>			/* For struct mutex */
-#include <sys/tame.h>
 #include <sys/resource.h>		/* For struct rusage */
 #include <machine/atomic.h>
 
@@ -85,6 +84,7 @@ struct exec_package;
 struct proc;
 struct ps_strings;
 struct uvm_object;
+struct whitepaths;
 union sigval;
 
 struct	emul {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.8 2015/08/22 20:18:50 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.9 2015/09/11 08:22:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/tame.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>

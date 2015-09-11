@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.101 2015/08/22 20:18:49 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.102 2015/09/11 08:22:31 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/ktrace.h>
 #endif
 #include <sys/sched.h>
+#include <sys/tame.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
