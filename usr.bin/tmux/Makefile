@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.79 2015/08/29 08:30:54 nicm Exp $
+# $OpenBSD: Makefile,v 1.80 2015/09/11 14:41:50 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -17,7 +17,6 @@ SRCS=	alerts.c \
 	cmd-command-prompt.c \
 	cmd-confirm-before.c \
 	cmd-copy-mode.c \
-	cmd-delete-buffer.c \
 	cmd-detach-client.c \
 	cmd-display-message.c \
 	cmd-display-panes.c \

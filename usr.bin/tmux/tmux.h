@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.555 2015/09/10 08:58:14 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.556 2015/09/11 14:41:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1435,8 +1435,7 @@ const char	*paste_buffer_data(struct paste_buffer *, size_t *);
 struct paste_buffer *paste_walk(struct paste_buffer *);
 struct paste_buffer *paste_get_top(const char **);
 struct paste_buffer *paste_get_name(const char *);
-int		 paste_free_top(void);
-int		 paste_free_name(const char *);
+void		 paste_free(struct paste_buffer *);
 void		 paste_add(char *, size_t);
 int		 paste_rename(const char *, const char *, char **);
 int		 paste_set(char *, size_t, const char *, char **);
