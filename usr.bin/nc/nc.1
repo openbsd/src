@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.68 2015/03/26 10:35:04 tobias Exp $
+.\"     $OpenBSD: nc.1,v 1.69 2015/09/11 21:07:01 beck Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2015 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Op Fl P Ar proxy_username
 .Op Fl p Ar source_port
 .Op Fl s Ar source
-.Op Fl T Ar toskeyword
+.Op Fl T Ar keyword
 .Op Fl V Ar rtable
 .Op Fl w Ar timeout
 .Op Fl X Ar proxy_protocol
@@ -98,10 +98,18 @@ to use IPv4 addresses only.
 Forces
 .Nm
 to use IPv6 addresses only.
+.It Fl C Ar certificate_filename
+Specifies the filename from which the public key part of the TLS
+certificate is loaded, in PEM format. May only be used with TLS.
+.It Fl c
+If using a TCP socket to connect or listen, use TLS. Illegal if not using TCP sockets.
 .It Fl D
 Enable debugging on the socket.
 .It Fl d
 Do not attempt to read from stdin.
+.It Fl e Ar name
+specify the name that must be present in the peer certificate when using TLS.
+Illegal if not using TLS.
 .It Fl F
 Pass the first connected socket using
 .Xr sendmsg 2
@@ -117,6 +125,11 @@ using the
 .Xr ssh_config 5
 .Cm ProxyUseFdpass
 option).
+.It Fl H Ar hash_string
+Specifies the required hash string of the peer certificate when using TLS.
+The string format required is that used by
+.Xr tls_peer_cert_hash 3 .
+Illegal if not using TLS, and may not be used with -T noverify.
 .It Fl h
 Prints out
 .Nm
@@ -126,6 +139,9 @@ Specifies the size of the TCP receive buffer.
 .It Fl i Ar interval
 Specifies a delay time interval between lines of text sent and received.
 Also causes a delay time between connections to multiple ports.
+.It Fl K Ar key_filename
+Specifies the filename from which the private key
+is loaded in PEM format. May only be used with TLS.
 .It Fl k
 Forces
 .Nm
@@ -172,6 +188,11 @@ should use, subject to privilege restrictions and availability.
 It is an error to use this option in conjunction with the
 .Fl l
 option.
+.It Fl R Ar CA_filename
+Specifies the filename from which the root CA bundle for Certificate
+verification is loaded in pem format. Illegal if not using TLS.
+Default value is
+.Pa /etc/ssl/cert.pem .
 .It Fl r
 Specifies that source and/or destination ports should be chosen randomly
 instead of sequentially within a range or in the order that the system
@@ -187,9 +208,22 @@ to create and use so that datagrams can be received.
 It is an error to use this option in conjunction with the
 .Fl l
 option.
-.It Fl T Ar toskeyword
-Change IPv4 TOS value.
-.Ar toskeyword
+.It Fl T Ar keyword
+Change IPv4 TOS value or TLS options.
+For TLS options
+.Ar keyword
+may be one of
+.Ar tlslegacy ,
+which allows legacy TLS protocols,
+.Ar noverify ,
+which disables certificate verification
+.Ar noname ,
+which disables certificate name checking, or
+.Ar clientcert,
+which requires a client certificate on incoming connections .
+It is illegal to specify TLS options if not using TLS.
+For IPv4 TOS value
+.Ar keyword
 may be one of
 .Ar critical ,
 .Ar inetcontrol ,
@@ -428,6 +462,11 @@ Open a TCP connection to port 42 of host.example.com, using port 31337 as
 the source port, with a timeout of 5 seconds:
 .Pp
 .Dl $ nc -p 31337 -w 5 host.example.com 42
+.Pp
+Open a TCP connection to port 443 of www.google.ca, and negotiate
+TLS. Check for a different name in the certificate for validation.
+.Pp
+.Dl $  nc -v -c -e adsf.au.doubleclick.net www.google.ca 443
 .Pp
 Open a UDP connection to port 53 of host.example.com:
 .Pp
