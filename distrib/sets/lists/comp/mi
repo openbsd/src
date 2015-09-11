@@ -5698,7 +5698,10 @@
 ./usr/share/man/man3/tls_init.3
 ./usr/share/man/man3/tls_load_file.3
 ./usr/share/man/man3/tls_peer_cert_contains_name.3
+./usr/share/man/man3/tls_peer_cert_hash.3
+./usr/share/man/man3/tls_peer_cert_issuer.3
 ./usr/share/man/man3/tls_peer_cert_provided.3
+./usr/share/man/man3/tls_peer_cert_subject.3
 ./usr/share/man/man3/tls_read.3
 ./usr/share/man/man3/tls_reset.3
 ./usr/share/man/man3/tls_server.3
