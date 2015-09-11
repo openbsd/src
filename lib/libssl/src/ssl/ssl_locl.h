@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.115 2015/09/11 17:29:36 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.116 2015/09/11 17:32:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -654,7 +654,6 @@ int ssl3_handshake_write(SSL *s);
 
 void ssl3_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
-long ssl3_default_timeout(void);
 
 int ssl23_read(SSL *s, void *buf, int len);
 int ssl23_peek(SSL *s, void *buf, int len);

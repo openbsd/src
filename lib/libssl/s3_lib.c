@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.102 2015/09/11 16:50:46 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.103 2015/09/11 17:32:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1895,16 +1895,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 
 	/* end of list */
 };
-
-long
-ssl3_default_timeout(void)
-{
-	/*
-	 * 2 hours, the 24 hours mentioned in the SSLv3 spec
-	 * is way too long for http, the cache would over fill
-	 */
-	return (60 * 60 * 2);
-}
 
 int
 ssl3_num_ciphers(void)
