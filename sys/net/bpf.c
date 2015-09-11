@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.124 2015/09/09 11:55:37 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.125 2015/09/11 08:59:48 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1498,7 +1498,7 @@ bpfdetach(struct ifnet *ifp)
 				if (cdevsw[maj].d_open == bpfopen)
 					break;
 
-			SRPL_FOREACH_LOCKED(bd, &bp->bif_dlist, bd_next) {
+			while ((bd = SRPL_FIRST_LOCKED(&bp->bif_dlist))) {
 				struct bpf_d *d;
 
 				/*
