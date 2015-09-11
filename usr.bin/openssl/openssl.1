@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.19 2015/08/11 05:01:03 landry Exp $
+.\" $OpenBSD: openssl.1,v 1.20 2015/09/11 02:10:32 lteo Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: August 11 2015 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -7074,6 +7074,7 @@ unknown cipher suites a client says it supports.
 .Op Fl key Ar keyfile
 .Op Fl nbio
 .Op Fl new
+.Op Fl no_shutdown
 .Op Fl reuse
 .Op Fl time Ar seconds
 .Op Fl verify Ar depth
@@ -7135,6 +7136,10 @@ nor
 .Fl reuse
 are specified,
 they are both on by default and executed in sequence.
+.It Fl no_shutdown
+Shutdown the connection without sending a
+.Dq close notify
+shutdown alert to the server.
 .It Fl reuse
 Performs the timing test using the same session ID;
 this can be used as a test that session caching is working.
