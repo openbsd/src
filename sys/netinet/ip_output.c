@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.291 2015/09/03 14:59:23 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.292 2015/09/11 18:48:50 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
-	u_int8_t sproto = 0, donerouting = 0;
+	u_int8_t sproto = 0;
 	u_long mtu;
 #ifdef IPSEC
 	u_int32_t icmp_mtu = 0;
@@ -149,76 +149,70 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		goto bad;
 	}
 
+#if NPF > 0
+reroute:
+#endif
+
 	/*
-	 * If we're missing the IP source address, do a route lookup. We'll
-	 * remember this result, in case we don't need to do any IPsec
-	 * processing on the packet. We need the source address so we can
+	 * Do a route lookup now in case we need the source address to
 	 * do an SPD lookup in IPsec; for most packets, the source address
 	 * is set at a higher level protocol. ICMPs and other packets
 	 * though (e.g., traceroute) have a source address of zeroes.
 	 */
-	if (ip->ip_src.s_addr == INADDR_ANY) {
-		donerouting = 1;
-
-		if (ro == NULL) {
-			ro = &iproute;
-			memset(ro, 0, sizeof(*ro));
-		}
-
-		dst = satosin(&ro->ro_dst);
-
-		/*
-		 * If there is a cached route, check that it is to the same
-		 * destination and is still up.  If not, free it and try again.
-		 */
-		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
-		    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
-			rtfree(ro->ro_rt);
-			ro->ro_rt = NULL;
-		}
-
-		if (ro->ro_rt == NULL) {
-			dst->sin_family = AF_INET;
-			dst->sin_len = sizeof(*dst);
-			dst->sin_addr = ip->ip_dst;
-			ro->ro_tableid = m->m_pkthdr.ph_rtableid;
-		}
-
-		if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
-		    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
-		    imo != NULL && (ifp = if_get(imo->imo_ifidx)) != NULL) {
-			mtu = ifp->if_mtu;
-			IFP_TO_IA(ifp, ia);
-		} else {
-			if (ro->ro_rt == NULL)
-				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
-				    NULL, ro->ro_tableid);
-
-			if (ro->ro_rt == NULL) {
-				ipstat.ips_noroute++;
-				error = EHOSTUNREACH;
-				goto bad;
-			}
-
-			ia = ifatoia(ro->ro_rt->rt_ifa);
-			ifp = ro->ro_rt->rt_ifp;
-			if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
-				mtu = ifp->if_mtu;
-			ro->ro_rt->rt_use++;
-
-			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-				dst = satosin(ro->ro_rt->rt_gateway);
-		}
-
-		/* Set the source IP address */
-		if (!IN_MULTICAST(ip->ip_dst.s_addr))
-			ip->ip_src = ia->ia_addr.sin_addr;
+	if (ro == NULL) {
+		ro = &iproute;
+		memset(ro, 0, sizeof(*ro));
 	}
 
-#if NPF > 0
-reroute:
-#endif
+	dst = satosin(&ro->ro_dst);
+
+	/*
+	 * If there is a cached route, check that it is to the same
+	 * destination and is still up.  If not, free it and try again.
+	 */
+	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
+	    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
+		rtfree(ro->ro_rt);
+		ro->ro_rt = NULL;
+	}
+
+	if (ro->ro_rt == NULL) {
+		dst->sin_family = AF_INET;
+		dst->sin_len = sizeof(*dst);
+		dst->sin_addr = ip->ip_dst;
+		ro->ro_tableid = m->m_pkthdr.ph_rtableid;
+	}
+
+	if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
+	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
+	    imo != NULL && (ifp = if_get(imo->imo_ifidx)) != NULL) {
+		mtu = ifp->if_mtu;
+		IFP_TO_IA(ifp, ia);
+	} else {
+		if (ro->ro_rt == NULL)
+			ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
+			    &ip->ip_src.s_addr, ro->ro_tableid);
+
+		if (ro->ro_rt == NULL) {
+			ipstat.ips_noroute++;
+			error = EHOSTUNREACH;
+			goto bad;
+		}
+
+		ia = ifatoia(ro->ro_rt->rt_ifa);
+		ifp = ro->ro_rt->rt_ifp;
+		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+			mtu = ifp->if_mtu;
+		ro->ro_rt->rt_use++;
+
+		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
+			dst = satosin(ro->ro_rt->rt_gateway);
+	}
+
+	/* Set the source IP address */
+	if (ip->ip_src.s_addr == INADDR_ANY && ia)
+		ip->ip_src = ia->ia_addr.sin_addr;
 
 #ifdef IPSEC
 	if (!ipsec_in_use && inp == NULL)
@@ -286,63 +280,6 @@ reroute:
 	/* Fall through to the routing/multicast handling code */
  done_spd:
 #endif /* IPSEC */
-
-	if (donerouting == 0) {
-		if (ro == NULL) {
-			ro = &iproute;
-			memset(ro, 0, sizeof(*ro));
-		}
-
-		dst = satosin(&ro->ro_dst);
-
-		/*
-		 * If there is a cached route, check that it is to the same
-		 * destination and is still up.  If not, free it and try again.
-		 */
-		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-		    dst->sin_addr.s_addr != ip->ip_dst.s_addr ||
-		    ro->ro_tableid != m->m_pkthdr.ph_rtableid)) {
-			rtfree(ro->ro_rt);
-			ro->ro_rt = NULL;
-		}
-
-		if (ro->ro_rt == NULL) {
-			dst->sin_family = AF_INET;
-			dst->sin_len = sizeof(*dst);
-			dst->sin_addr = ip->ip_dst;
-			ro->ro_tableid = m->m_pkthdr.ph_rtableid;
-		}
-
-		if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
-		    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
-		    imo != NULL && (ifp = if_get(imo->imo_ifidx)) != NULL) {
-			mtu = ifp->if_mtu;
-			IFP_TO_IA(ifp, ia);
-		} else {
-			if (ro->ro_rt == NULL)
-				ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
-				    &ip->ip_src.s_addr, ro->ro_tableid);
-
-			if (ro->ro_rt == NULL) {
-				ipstat.ips_noroute++;
-				error = EHOSTUNREACH;
-				goto bad;
-			}
-
-			ia = ifatoia(ro->ro_rt->rt_ifa);
-			ifp = ro->ro_rt->rt_ifp;
-			if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
-				mtu = ifp->if_mtu;
-			ro->ro_rt->rt_use++;
-
-			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-				dst = satosin(ro->ro_rt->rt_gateway);
-		}
-
-		/* Set the source IP address */
-		if (ip->ip_src.s_addr == INADDR_ANY)
-			ip->ip_src = ia->ia_addr.sin_addr;
-	}
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
@@ -600,7 +537,6 @@ sendit:
 		/* tag as generated to skip over pf_test on rerun */
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		ro = NULL;
-		donerouting = 0;
 		goto reroute;
 	}
 #endif
