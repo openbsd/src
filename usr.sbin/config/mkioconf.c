@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.33 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.34 2015/09/11 07:13:58 miod Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ emitloc(FILE *fp)
 	int i;
 
 	if (fprintf(fp, "\n/* locators */\n\
-static int loc[%d] = {", locators.used) < 0)
+static long loc[%d] = {", locators.used) < 0)
 		return (1);
 	for (i = 0; i < locators.used; i++)
 		if (fprintf(fp, "%s%s,", SEP(i, 8), locators.vec[i]) < 0)
@@ -184,7 +184,7 @@ static int loc[%d] = {", locators.used) < 0)
 	return (fprintf(fp, "\n#ifndef MAXEXTRALOC\n\
 #define MAXEXTRALOC 32\n\
 #endif\n\
-int extraloc[MAXEXTRALOC] = { -1 };\n\
+long extraloc[MAXEXTRALOC] = { -1 };\n\
 int nextraloc = MAXEXTRALOC;\n\
 int uextraloc = 0;\n") < 0);
 }

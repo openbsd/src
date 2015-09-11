@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.43 2014/11/03 03:08:00 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.44 2015/09/11 07:13:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -61,28 +61,27 @@ char userconf_histbuf[40];
 
 void userconf_init(void);
 int userconf_more(void);
-void userconf_modify(char *, int *);
+void userconf_modify(char *, long *, long);
 void userconf_hist_cmd(char);
-void userconf_hist_int(int);
+void userconf_hist_int(long);
 void userconf_hist_eoc(void);
-void userconf_pnum(int);
+void userconf_pnum(long);
 void userconf_pdevnam(short);
 void userconf_pdev(short);
-int userconf_number(char *, int *);
-int userconf_device(char *, int *, short *, short *);
-int userconf_attr(char *, int *);
-void userconf_modify(char *, int *);
+int userconf_number(char *, long *, long);
+int userconf_device(char *, long *, short *, short *);
+int userconf_attr(char *, long *);
 void userconf_change(int);
 void userconf_disable(int);
 void userconf_enable(int);
 void userconf_help(void);
 void userconf_list(void);
 void userconf_show(void);
-void userconf_common_attr_val(short, int *, char);
+void userconf_common_attr_val(short, long *, char);
 void userconf_show_attr(char *);
 void userconf_common_dev(char *, int, short, short, char);
 void userconf_common_attr(char *, int, char);
-void userconf_add_read(char *, char, char *, int, int *);
+void userconf_add_read(char *, char, char *, int, long *);
 void userconf_add(char *, int, short, short);
 int userconf_parse(char *);
 
@@ -173,9 +172,9 @@ userconf_hist_cmd(char cmd)
 }
 
 void
-userconf_hist_int(int val)
+userconf_hist_int(long val)
 {
-	snprintf(userconf_histbuf, sizeof userconf_histbuf, " %d",val);
+	snprintf(userconf_histbuf, sizeof userconf_histbuf, " %ld", val);
 	if (userconf_histcur + strlen(userconf_histbuf) < userconf_histsz) {
 		bcopy(userconf_histbuf,
 		    &userconf_history[userconf_histcur],
@@ -195,23 +194,23 @@ userconf_hist_eoc(void)
 }
 
 void
-userconf_pnum(int val)
+userconf_pnum(long val)
 {
 	if (val > -2 && val < 16) {
-		printf("%d",val);
+		printf("%ld",val);
 		return;
 	}
 
 	switch (userconf_base) {
 	case 8:
-		printf("0%o",val);
+		printf("0%lo",val);
 		break;
 	case 10:
-		printf("%d",val);
+		printf("%ld",val);
 		break;
 	case 16:
 	default:
-		printf("0x%x",val);
+		printf("0x%lx",val);
 		break;
 	}
 }
@@ -246,7 +245,7 @@ userconf_pdev(short devno)
 {
 	struct cfdata *cd;
 	short *p;
-	int   *l;
+	long  *l;
 	int   ln;
 	char c;
 
@@ -309,9 +308,9 @@ userconf_pdev(short devno)
 }
 
 int
-userconf_number(char *c, int *val)
+userconf_number(char *c, long *val, long limit)
 {
-	u_int num = 0;
+	u_long num = 0;
 	int neg = 0;
 	int base = 10;
 
@@ -345,14 +344,14 @@ userconf_number(char *c, int *val)
 		c++;
 	}
 
-	if (neg && num > INT_MAX)	/* overflow */
+	if (neg && num > limit)	/* overflow */
 		return (1);
 	*val = neg ? - num : num;
 	return (0);
 }
 
 int
-userconf_device(char *cmd, int *len, short *unit, short *state)
+userconf_device(char *cmd, long *len, short *unit, short *state)
 {
 	short u = 0, s = FSTATE_FOUND;
 	int l = 0;
@@ -387,7 +386,7 @@ userconf_device(char *cmd, int *len, short *unit, short *state)
 }
 
 int
-userconf_attr(char *cmd, int *val)
+userconf_attr(char *cmd, long *val)
 {
 	char *c;
 	short attr = -1, i = 0, l = 0;
@@ -416,10 +415,10 @@ userconf_attr(char *cmd, int *val)
 }
 
 void
-userconf_modify(char *item, int *val)
+userconf_modify(char *item, long *val, long limit)
 {
 	int ok = 0;
-	int a;
+	long a;
 	char *c;
 	int i;
 
@@ -434,7 +433,7 @@ userconf_modify(char *item, int *val)
 		while (*c == ' ' || *c == '\t' || *c == '\n') c++;
 
 		if (*c != '\0') {
-			if (userconf_number(c, &a) == 0) {
+			if (userconf_number(c, &a, limit) == 0) {
 				*val = a;
 				ok = 1;
 			} else {
@@ -451,7 +450,7 @@ userconf_change(int devno)
 {
 	struct cfdata *cd;
 	char c = '\0';
-	int   *l;
+	long  *l, tmp;
 	int   ln;
 
 	if (devno <=  userconf_maxdev) {
@@ -464,7 +463,8 @@ userconf_change(int devno)
 		}
 
 		if (c == 'y' || c == 'Y') {
-			int share = 0, i, *lk, lklen;
+			int share = 0, i, lklen;
+			long *lk;
 
 			/* XXX add cmd 'c' <devno> */
 			userconf_hist_cmd('c');
@@ -485,18 +485,19 @@ userconf_change(int devno)
 			if (share) {
 				for (i = 0; locnamp[ln+i] != -1 ; i++)
 					;
-				lk = l = mallocarray(i, sizeof(int),
+				lk = l = mallocarray(i, sizeof(long),
 				    M_TEMP, M_NOWAIT);
 				if (lk == NULL) {
 					printf("out of memory.\n");
 					return;
 				}
-				lklen = i * sizeof(int);
+				lklen = i * sizeof(long);
 				bcopy(cd->cf_loc, l, lklen);
 			}
 
 			while (locnamp[ln] != -1) {
-				userconf_modify(locnames[locnamp[ln]], l);
+				userconf_modify(locnames[locnamp[ln]], l,
+				    LONG_MAX);
 
 				/* XXX add *l */
 				userconf_hist_int(*l);
@@ -504,8 +505,10 @@ userconf_change(int devno)
 				ln++;
 				l++;
 			}
-			userconf_modify("flags", &cd->cf_flags);
-			userconf_hist_int(cd->cf_flags);
+			tmp = cd->cf_flags;
+			userconf_modify("flags", &tmp, INT_MAX);
+			userconf_hist_int(tmp);
+			cd->cf_flags = tmp;
 
 			if (share) {
 				if (memcmp(cd->cf_loc, lk, lklen))
@@ -541,9 +544,10 @@ userconf_change(int devno)
 			userconf_hist_cmd('c');
 			userconf_hist_int(devno);
 
-			userconf_modify("count",
-			    &pdevinit[devno-userconf_totdev-1].pdev_count);
-			userconf_hist_int(pdevinit[devno-userconf_totdev-1].pdev_count);
+			tmp = pdevinit[devno-userconf_totdev-1].pdev_count;
+			userconf_modify("count", &tmp, INT_MAX);
+			userconf_hist_int(tmp);
+			pdevinit[devno-userconf_totdev-1].pdev_count = tmp;
 
 			printf("%3d %s changed\n", devno,
 			    pdevnames[devno-userconf_totdev-1]);
@@ -780,10 +784,10 @@ userconf_show(void)
 }
 
 void
-userconf_common_attr_val(short attr, int *val, char routine)
+userconf_common_attr_val(short attr, long *val, char routine)
 {
 	struct cfdata *cd;
-	int   *l;
+	long  *l;
 	int   ln;
 	int i = 0, quit = 0;
 
@@ -837,7 +841,7 @@ userconf_show_attr(char *cmd)
 {
 	char *c;
 	short attr = -1, i = 0, l = 0;
-	int a;
+	long a;
 
 	c = cmd;
 	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') {
@@ -864,7 +868,7 @@ userconf_show_attr(char *cmd)
 	if (*c == '\0') {
 		userconf_common_attr_val(attr, NULL, UC_SHOW);
 	} else {
-		if (userconf_number(c, &a) == 0) {
+		if (userconf_number(c, &a, INT_MAX) == 0) {
 			userconf_common_attr_val(attr, &a, UC_SHOW);
 		} else {
 			printf("Unknown argument\n");
@@ -966,7 +970,7 @@ userconf_common_attr(char *cmd, int attr, char routine)
 {
 	char *c;
 	short l = 0;
-	int a;
+	long a;
 
 	c = cmd;
 	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\0') {
@@ -981,7 +985,7 @@ userconf_common_attr(char *cmd, int attr, char routine)
 		return;
 	}
 
-	if (userconf_number(c, &a) == 0) {
+	if (userconf_number(c, &a, INT_MAX) == 0) {
 		userconf_common_attr_val(attr, &a, routine);
 	} else {
 		printf("Unknown argument\n");
@@ -989,10 +993,10 @@ userconf_common_attr(char *cmd, int attr, char routine)
 }
 
 void
-userconf_add_read(char *prompt, char field, char *dev, int len, int *val)
+userconf_add_read(char *prompt, char field, char *dev, int len, long *val)
 {
 	int ok = 0;
-	int a;
+	long a;
 	char *c;
 	int i;
 
@@ -1008,7 +1012,7 @@ userconf_add_read(char *prompt, char field, char *dev, int len, int *val)
 			c++;
 
 		if (*c != '\0') {
-			if (userconf_number(c, &a) == 0) {
+			if (userconf_number(c, &a, INT_MAX) == 0) {
 				if (a > userconf_maxdev) {
 					printf("Unknown devno (max is %d)\n",
 					    userconf_maxdev);
@@ -1037,9 +1041,10 @@ userconf_add_read(char *prompt, char field, char *dev, int len, int *val)
 void
 userconf_add(char *dev, int len, short unit, short state)
 {
-	int i = 0, found = 0;
+	int found = 0;
 	struct cfdata new;
-	int  val, max_unit, star_unit, orig;
+	int max_unit, star_unit;
+	long i = 0, val, orig;
 
 	memset(&new, 0, sizeof(struct cfdata));
 
@@ -1181,7 +1186,8 @@ int
 userconf_parse(char *cmd)
 {
 	char *c, *v;
-	int i = 0, j = 0, k, a;
+	int i = 0, j = 0, k;
+	long a;
 	short unit, state;
 
 	c = cmd;
@@ -1213,7 +1219,7 @@ userconf_parse(char *cmd)
 		case 'L':
 			if (*c == '\0')
 				printf("Argument expected\n");
-			else if (userconf_number(c, &a) == 0)
+			else if (userconf_number(c, &a, INT_MAX) == 0)
 				userconf_lines = a;
 			else
 				printf("Unknown argument\n");
@@ -1229,7 +1235,7 @@ userconf_parse(char *cmd)
 		case 'b':
 			if (*c == '\0')
 				printf("8|10|16 expected\n");
-			else if (userconf_number(c, &a) == 0) {
+			else if (userconf_number(c, &a, INT_MAX) == 0) {
 				if (a == 8 || a == 10 || a == 16) {
 					userconf_base = a;
 				} else {
@@ -1241,7 +1247,7 @@ userconf_parse(char *cmd)
 		case 'c':
 			if (*c == '\0')
 				printf("DevNo or Dev expected\n");
-			else if (userconf_number(c, &a) == 0)
+			else if (userconf_number(c, &a, INT_MAX) == 0)
 				userconf_change(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
 				userconf_common_dev(c, a, unit, state, UC_CHANGE);
@@ -1258,7 +1264,7 @@ userconf_parse(char *cmd)
 				printf("Attr, DevNo or Dev expected\n");
 			else if (userconf_attr(c, &a) == 0)
 				userconf_common_attr(c, a, UC_DISABLE);
-			else if (userconf_number(c, &a) == 0)
+			else if (userconf_number(c, &a, INT_MAX) == 0)
 				userconf_disable(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
 				userconf_common_dev(c, a, unit, state, UC_DISABLE);
@@ -1270,7 +1276,7 @@ userconf_parse(char *cmd)
 				printf("Attr, DevNo or Dev expected\n");
 			else if (userconf_attr(c, &a) == 0)
 				userconf_common_attr(c, a, UC_ENABLE);
-			else if (userconf_number(c, &a) == 0)
+			else if (userconf_number(c, &a, INT_MAX) == 0)
 				userconf_enable(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
 				userconf_common_dev(c, a, unit, state, UC_ENABLE);
@@ -1280,7 +1286,7 @@ userconf_parse(char *cmd)
 		case 'f':
 			if (*c == '\0')
 				printf("DevNo or Dev expected\n");
-			else if (userconf_number(c, &a) == 0)
+			else if (userconf_number(c, &a, INT_MAX) == 0)
 				userconf_pdev(a);
 			else if (userconf_device(c, &a, &unit, &state) == 0)
 				userconf_common_dev(c, a, unit, state, UC_FIND);
@@ -1309,7 +1315,8 @@ userconf_parse(char *cmd)
 				userconf_show_attr(c);
 			break;
 		case 't':
-			if (*c == '\0' || userconf_number(c, &a) == 0) {
+			if (*c == '\0' ||
+			    userconf_number(c, &a, INT_MAX) == 0) {
 				if (*c != '\0') {
 					tz.tz_minuteswest = a;
 					while (*c != '\n' && *c != '\t' &&
@@ -1317,8 +1324,8 @@ userconf_parse(char *cmd)
 						c++;
 					while (*c == '\t' || *c == ' ')
 						c++;
-					if (*c != '\0' &&
-					    userconf_number(c, &a) == 0)
+					if (*c != '\0' && userconf_number(c,
+					    &a, INT_MAX) == 0)
 						tz.tz_dsttime = a;
 					userconf_hist_cmd('t');
 					userconf_hist_int(tz.tz_minuteswest);

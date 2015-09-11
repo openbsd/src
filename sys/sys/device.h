@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.50 2014/09/18 18:54:29 kettenis Exp $	*/
+/*	$OpenBSD: device.h,v 1.51 2015/09/11 07:13:58 miod Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ struct cfdata {
 	struct	cfdriver *cf_driver;	/* config driver */
 	short	cf_unit;		/* unit number */
 	short	cf_fstate;		/* finding state (below) */
-	int	*cf_loc;		/* locators (machine dependent) */
+	long	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
 	short	*cf_parents;		/* potential parents */
 	int	cf_locnames;		/* start of names */
