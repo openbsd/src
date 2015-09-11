@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.21 2014/10/26 02:43:50 guenther Exp $
+ *	$Id: amd.c,v 1.22 2015/09/11 19:03:30 millert Exp $
  */
 
 /*
@@ -76,7 +76,7 @@ char *endian = ARCH_ENDIAN;		/* Big or Little endian */
 char *wire;
 int foreground = 1;			/* This is the top-level server */
 pid_t mypid;				/* Current process id */
-int immediate_abort;			/* Should close-down unmounts be retried */
+volatile sig_atomic_t immediate_abort;	/* Should close-down unmounts be retried */
 struct in_addr myipaddr;		/* (An) IP address of this host */
 serv_state amd_state;
 struct amd_stats amd_stats;		/* Server statistics */
