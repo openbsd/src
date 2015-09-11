@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.112 2015/09/11 17:08:50 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.113 2015/09/11 17:11:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -782,7 +782,6 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,
     int use_context);
 int tls1_alert_code(int code);
-int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
