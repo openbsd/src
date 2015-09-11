@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.235 2015/09/11 15:38:13 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.236 2015/09/11 16:58:00 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -408,6 +408,12 @@ rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
 #endif /* SMALL_KERNEL */
 
 void
+rtref(struct rtentry *rt)
+{
+	rt->rt_refcnt++;
+}
+
+void
 rtfree(struct rtentry *rt)
 {
 	struct ifaddr	*ifa;
@@ -807,8 +813,10 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		 * a matching gateway.
 		 */
 		if ((rt->rt_flags & RTF_MPATH) &&
-		    info->rti_info[RTAX_GATEWAY] == NULL)
+		    info->rti_info[RTAX_GATEWAY] == NULL) {
+		    	rtfree(rt);
 			return (ESRCH);
+		}
 #endif
 
 		/*
@@ -817,19 +825,17 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		 * kernel.
 		 */
 		if ((rt->rt_flags & (RTF_LOCAL|RTF_BROADCAST)) &&
-		    prio != RTP_LOCAL)
+		    prio != RTP_LOCAL) {
+		    	rtfree(rt);
 			return (EINVAL);
+		}
 
 		error = rtable_delete(tableid, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK], prio, rt);
-		if (error != 0)
+		if (error != 0) {
+		    	rtfree(rt);
 			return (ESRCH);
-
-		/*
-		 * We need to hold a reference to ensure rtflushclone()
-		 * wont free us through rt->rt_parent.
-		 */
-		rt->rt_refcnt++;
+		}
 
 		/* clean up any cloned children */
 		if ((rt->rt_flags & RTF_CLONING) != 0)

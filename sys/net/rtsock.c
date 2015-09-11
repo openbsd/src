@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.169 2015/08/24 22:11:33 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.170 2015/09/11 16:58:00 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -654,13 +654,13 @@ route_output(struct mbuf *m, ...)
 			 */
 			if (info.rti_info[RTAX_GATEWAY] == NULL &&
 			    rtm->rtm_type != RTM_GET) {
+			    	rtfree(rt);
 				rt = NULL;
 				error = ESRCH;
 				goto flush;
 			}
 		}
 #endif
-		rt->rt_refcnt++;
 
 		/*
 		 * RTM_CHANGE/LOCK need a perfect match, rn_lookup()

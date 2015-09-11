@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.111 2015/09/01 12:50:03 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.112 2015/09/11 16:58:00 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -384,6 +384,7 @@ int	 rtisvalid(struct rtentry *);
 struct	 rtentry *rtalloc_mpath(struct sockaddr *, uint32_t *, u_int);
 #endif
 struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
+void	 rtref(struct rtentry *);
 void	 rtfree(struct rtentry *);
 
 int	 rt_getifa(struct rt_addrinfo *, u_int);

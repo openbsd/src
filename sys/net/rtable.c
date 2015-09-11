@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.4 2015/09/04 08:43:39 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.5 2015/09/11 16:58:00 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -54,6 +54,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 {
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
+	struct rtentry		*rt;
 
 	rnh = rtable_get(rtableid, dst->sa_family);
 	if (rnh == NULL)
@@ -63,7 +64,10 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
 		return (NULL);
 
-	return ((struct rtentry *)rn);
+	rt = ((struct rtentry *)rn);
+	rtref(rt);
+
+	return (rt);
 }
 
 struct rtentry *
@@ -163,16 +167,21 @@ rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 }
 
 struct rtentry *
-rtable_mpath_match(unsigned int rtableid, struct rtentry *rt,
+rtable_mpath_match(unsigned int rtableid, struct rtentry *rt0,
     struct sockaddr *gateway, uint8_t prio)
 {
 	struct radix_node_head	*rnh;
+	struct rtentry		*rt;
 
-	rnh = rtable_get(rtableid, rt_key(rt)->sa_family);
+	rnh = rtable_get(rtableid, rt_key(rt0)->sa_family);
 	if (rnh == NULL || rnh->rnh_multipath == 0)
-		return (rt);
+		return (rt0);
 
-	rt = rt_mpath_matchgate(rt, gateway, prio);
+	rt = rt_mpath_matchgate(rt0, gateway, prio);
+
+	if (rt != NULL)
+		rtref(rt);
+	rtfree(rt0);
 
 	return (rt);
 }
@@ -233,6 +242,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 {
 	struct art_root			*ar;
 	struct art_node			*an;
+	struct rtentry			*rt;
 	uint8_t				*addr;
 	int				 plen;
 
@@ -260,7 +270,10 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	if (an == NULL)
 		return (NULL);
 
-	return (LIST_FIRST(&an->an_rtlist));
+	rt = LIST_FIRST(&an->an_rtlist);
+	rtref(rt);
+
+	return (rt);
 }
 
 struct rtentry *
@@ -525,12 +538,16 @@ rtable_mpath_match(unsigned int rtableid, struct rtentry *rt0,
 			continue;
 
 		if (gateway == NULL)
-			return (rt);
+			break;
 
 		if (rt->rt_gateway->sa_len == gateway->sa_len &&
 		    memcmp(rt->rt_gateway, gateway, gateway->sa_len) == 0)
 			break;
 	}
+
+	if (rt != NULL)
+		rtref(rt);
+	rtfree(rt0);
 
 	return (rt);
 }
