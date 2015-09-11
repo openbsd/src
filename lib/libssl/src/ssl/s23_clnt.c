@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.44 2015/09/02 17:53:54 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.45 2015/09/11 14:39:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,59 +117,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-static const SSL_METHOD *ssl23_get_client_method(int ver);
 static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
-
-const SSL_METHOD SSLv23_client_method_data = {
-	.version = TLS1_2_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl23_connect,
-	.ssl_read = ssl23_read,
-	.ssl_peek = ssl23_peek,
-	.ssl_write = ssl23_write,
-	.ssl_shutdown = ssl_undefined_function,
-	.ssl_renegotiate = ssl_undefined_function,
-	.ssl_renegotiate_check = ssl_ok,
-	.ssl_get_message = ssl3_get_message,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.ssl_ctrl = ssl3_ctrl,
-	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.ssl_pending = ssl_undefined_const_function,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_ssl_method = ssl23_get_client_method,
-	.get_timeout = ssl23_default_timeout,
-	.ssl3_enc = &ssl3_undef_enc_method,
-	.ssl_version = ssl_undefined_void_function,
-	.ssl_callback_ctrl = ssl3_callback_ctrl,
-	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
-};
-
-const SSL_METHOD *
-SSLv23_client_method(void)
-{
-	return &SSLv23_client_method_data;
-}
-
-static const SSL_METHOD *
-ssl23_get_client_method(int ver)
-{
-	if (ver == TLS1_VERSION)
-		return (TLSv1_client_method());
-	if (ver == TLS1_1_VERSION)
-		return (TLSv1_1_client_method());
-	if (ver == TLS1_2_VERSION)
-		return (TLSv1_2_client_method());
-	return (NULL);
-}
 
 int
 ssl23_connect(SSL *s)
@@ -528,10 +477,4 @@ ssl23_get_server_hello(SSL *s)
 	return (SSL_connect(s));
 err:
 	return (-1);
-}
-
-const SSL_METHOD *
-TLS_client_method(void)
-{
-	return &SSLv23_client_method_data;
 }
