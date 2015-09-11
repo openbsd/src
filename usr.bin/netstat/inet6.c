@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.48 2015/02/12 01:49:02 claudio Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.49 2015/09/11 19:35:37 mpi Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -490,64 +490,6 @@ ip6_stats(char *name)
 #undef p1
 }
 
-/*
- * Dump IPv6 per-interface statistics based on RFC 2465.
- */
-void
-ip6_ifstats(char *ifname)
-{
-	struct in6_ifreq ifr;
-	int s;
-
-#define	p(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
-	printf(m, (unsigned long long)ifr.ifr_ifru.ifru_stat.f, \
-	    plural(ifr.ifr_ifru.ifru_stat.f))
-#define	p_5(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
-	printf(m, (unsigned long long)ip6stat.f)
-
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		perror("Warning: socket(AF_INET6)");
-		return;
-	}
-
-	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
-	printf("ip6 on %s:\n", ifr.ifr_name);
-
-	if (ioctl(s, SIOCGIFSTAT_IN6, &ifr) < 0) {
-		perror("Warning: ioctl(SIOCGIFSTAT_IN6)");
-		goto end;
-	}
-
-	p(ifs6_in_receive, "\t%llu total input datagram%s\n");
-	p(ifs6_in_hdrerr, "\t%llu datagram%s with invalid header received\n");
-	p(ifs6_in_toobig, "\t%llu datagram%s exceeded MTU received\n");
-	p(ifs6_in_noroute, "\t%llu datagram%s with no route received\n");
-	p(ifs6_in_addrerr, "\t%llu datagram%s with invalid dst received\n");
-	p(ifs6_in_truncated, "\t%llu truncated datagram%s received\n");
-	p(ifs6_in_protounknown, "\t%llu datagram%s with unknown proto received\n");
-	p(ifs6_in_discard, "\t%llu input datagram%s discarded\n");
-	p(ifs6_in_deliver,
-	    "\t%llu datagram%s delivered to an upper layer protocol\n");
-	p(ifs6_out_forward, "\t%llu datagram%s forwarded to this interface\n");
-	p(ifs6_out_request,
-	    "\t%llu datagram%s sent from an upper layer protocol\n");
-	p(ifs6_out_discard, "\t%llu total discarded output datagram%s\n");
-	p(ifs6_out_fragok, "\t%llu output datagram%s fragmented\n");
-	p(ifs6_out_fragfail, "\t%llu output datagram%s failed on fragment\n");
-	p(ifs6_out_fragcreat, "\t%llu output datagram%s succeeded on fragment\n");
-	p(ifs6_reass_reqd, "\t%llu incoming datagram%s fragmented\n");
-	p(ifs6_reass_ok, "\t%llu datagram%s reassembled\n");
-	p(ifs6_reass_fail, "\t%llu datagram%s failed on reassembling\n");
-	p(ifs6_in_mcast, "\t%llu multicast datagram%s received\n");
-	p(ifs6_out_mcast, "\t%llu multicast datagram%s sent\n");
-
-  end:
-	close(s);
-
-#undef p
-#undef p_5
-}
-
 static	char *icmp6names[] = {
 	"#0",
 	"unreach",
@@ -884,73 +826,6 @@ icmp6_stats(char *name)
 	p(icp6s_pmtuchg, "\t%llu path MTU change%s\n");
 #undef p
 #undef p_5
-}
-
-/*
- * Dump ICMPv6 per-interface statistics based on RFC 2466.
- */
-void
-icmp6_ifstats(char *ifname)
-{
-	struct in6_ifreq ifr;
-	int s;
-
-#define	p(f, m) if (ifr.ifr_ifru.ifru_icmp6stat.f || sflag <= 1) \
-	printf(m, (unsigned long long)ifr.ifr_ifru.ifru_icmp6stat.f, \
-	    plural(ifr.ifr_ifru.ifru_icmp6stat.f))
-
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		perror("Warning: socket(AF_INET6)");
-		return;
-	}
-
-	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
-	printf("icmp6 on %s:\n", ifr.ifr_name);
-
-	if (ioctl(s, SIOCGIFSTAT_ICMP6, &ifr) < 0) {
-		perror("Warning: ioctl(SIOCGIFSTAT_ICMP6)");
-		goto end;
-	}
-
-	p(ifs6_in_msg, "\t%llu total input message%s\n");
-	p(ifs6_in_error, "\t%llu total input error message%s\n");
-	p(ifs6_in_dstunreach, "\t%llu input destination unreachable error%s\n");
-	p(ifs6_in_adminprohib, "\t%llu input administratively prohibited error%s\n");
-	p(ifs6_in_timeexceed, "\t%llu input time exceeded error%s\n");
-	p(ifs6_in_paramprob, "\t%llu input parameter problem error%s\n");
-	p(ifs6_in_pkttoobig, "\t%llu input packet too big error%s\n");
-	p(ifs6_in_echo, "\t%llu input echo request%s\n");
-	p(ifs6_in_echoreply, "\t%llu input echo reply%s\n");
-	p(ifs6_in_routersolicit, "\t%llu input router solicitation%s\n");
-	p(ifs6_in_routeradvert, "\t%llu input router advertisement%s\n");
-	p(ifs6_in_neighborsolicit, "\t%llu input neighbor solicitation%s\n");
-	p(ifs6_in_neighboradvert, "\t%llu input neighbor advertisement%s\n");
-	p(ifs6_in_redirect, "\t%llu input redirect%s\n");
-	p(ifs6_in_mldquery, "\t%llu input MLD query%s\n");
-	p(ifs6_in_mldreport, "\t%llu input MLD report%s\n");
-	p(ifs6_in_mlddone, "\t%llu input MLD done%s\n");
-
-	p(ifs6_out_msg, "\t%llu total output message%s\n");
-	p(ifs6_out_error, "\t%llu total output error message%s\n");
-	p(ifs6_out_dstunreach, "\t%llu output destination unreachable error%s\n");
-	p(ifs6_out_adminprohib, "\t%llu output administratively prohibited error%s\n");
-	p(ifs6_out_timeexceed, "\t%llu output time exceeded error%s\n");
-	p(ifs6_out_paramprob, "\t%llu output parameter problem error%s\n");
-	p(ifs6_out_pkttoobig, "\t%llu output packet too big error%s\n");
-	p(ifs6_out_echo, "\t%llu output echo request%s\n");
-	p(ifs6_out_echoreply, "\t%llu output echo reply%s\n");
-	p(ifs6_out_routersolicit, "\t%llu output router solicitation%s\n");
-	p(ifs6_out_routeradvert, "\t%llu output router advertisement%s\n");
-	p(ifs6_out_neighborsolicit, "\t%llu output neighbor solicitation%s\n");
-	p(ifs6_out_neighboradvert, "\t%llu output neighbor advertisement%s\n");
-	p(ifs6_out_redirect, "\t%llu output redirect%s\n");
-	p(ifs6_out_mldquery, "\t%llu output MLD query%s\n");
-	p(ifs6_out_mldreport, "\t%llu output MLD report%s\n");
-	p(ifs6_out_mlddone, "\t%llu output MLD done%s\n");
-
-  end:
-	close(s);
-#undef p
 }
 
 /*
