@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2015/09/11 15:38:33 guenther Exp $	*/
+/*	$OpenBSD: ioctl.h,v 1.1 2015/09/11 15:38:33 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -15,23 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _LIBC_SIGNAL_H
-#define _LIBC_SIGNAL_H
+#ifndef	_LIBC_SYS_IOCTL_H_
+#define	_LIBC_SYS_IOCTL_H_
 
-#include_next <signal.h>
+#include_next <sys/ioctl.h>
 
-__BEGIN_HIDDEN_DECLS
-extern sigset_t __sigintr;
-__END_HIDDEN_DECLS
+PROTO_NORMAL(ioctl);
 
-extern PROTO_NORMAL(sys_siglist);
-extern PROTO_NORMAL(sys_signame);
-
-PROTO_NORMAL(signal);
-
-PROTO_NORMAL(kill);             /* wrap to ban SIGTHR? */
-PROTO_NORMAL(sigaltstack);
-PROTO_NORMAL(sigpending);
-PROTO_NORMAL(sigreturn);
-
-#endif	/* !_LIBC_SIGNAL_H */
+#endif /* !_LIBC_SYS_IOCTL_H_ */

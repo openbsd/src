@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.3 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.4 2015/09/11 15:38:33 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -87,8 +87,8 @@ PROTO_NORMAL(putchar_unlocked);
 PROTO_NORMAL(puts);
 PROTO_NORMAL(putw);
 PROTO_NORMAL(remove);
-/*PROTO_NORMAL(rename);*/
-/*PROTO_NORMAL(renameat);*/
+PROTO_NORMAL(rename);
+PROTO_NORMAL(renameat);
 PROTO_NORMAL(rewind);
 PROTO_NORMAL(scanf);
 PROTO_NORMAL(setbuf);
