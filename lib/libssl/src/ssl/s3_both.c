@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.44 2015/09/11 15:59:21 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.45 2015/09/11 16:27:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,28 +127,38 @@
 
 #include "bytestring.h"
 
-/* send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or SSL3_RT_CHANGE_CIPHER_SPEC) */
+/*
+ * Send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
+ * SSL3_RT_CHANGE_CIPHER_SPEC).
+ */
 int
 ssl3_do_write(SSL *s, int type)
 {
 	int ret;
 
 	ret = ssl3_write_bytes(s, type, &s->init_buf->data[s->init_off],
-	s->init_num);
+	    s->init_num);
 	if (ret < 0)
 		return (-1);
 	if (type == SSL3_RT_HANDSHAKE)
-		/* should not be done for 'Hello Request's, but in that case
-		 * we'll ignore the result anyway */
-		ssl3_finish_mac(s,(unsigned char *)&s->init_buf->data[s->init_off], ret);
+		/*
+		 * Should not be done for 'Hello Request's, but in that case
+		 * we'll ignore the result anyway.
+		 */
+		ssl3_finish_mac(s,
+		    (unsigned char *)&s->init_buf->data[s->init_off], ret);
 
 	if (ret == s->init_num) {
 		if (s->msg_callback)
-			s->msg_callback(1, s->version, type, s->init_buf->data, (size_t)(s->init_off + s->init_num), s, s->msg_callback_arg);
+			s->msg_callback(1, s->version, type, s->init_buf->data,
+			    (size_t)(s->init_off + s->init_num), s,
+			    s->msg_callback_arg);
 		return (1);
 	}
+
 	s->init_off += ret;
 	s->init_num -= ret;
+
 	return (0);
 }
 
@@ -191,17 +201,23 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 	return (ssl3_handshake_write(s));
 }
 
-/* ssl3_take_mac calculates the Finished MAC for the handshakes messages seen to far. */
+/*
+ * ssl3_take_mac calculates the Finished MAC for the handshakes messages seen
+ * so far.
+ */
 static void
 ssl3_take_mac(SSL *s)
 {
 	const char *sender;
 	int slen;
-	/* If no new cipher setup return immediately: other functions will
+
+	/*
+	 * If no new cipher setup return immediately: other functions will
 	 * set the appropriate error.
 	 */
 	if (s->s3->tmp.new_cipher == NULL)
 		return;
+
 	if (s->state & SSL_ST_CONNECT) {
 		sender = s->method->ssl3_enc->server_finished_label;
 		slen = s->method->ssl3_enc->server_finished_label_len;
@@ -210,8 +226,9 @@ ssl3_take_mac(SSL *s)
 		slen = s->method->ssl3_enc->client_finished_label_len;
 	}
 
-	s->s3->tmp.peer_finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
-	sender, slen, s->s3->tmp.peer_finish_md);
+	s->s3->tmp.peer_finish_md_len =
+	    s->method->ssl3_enc->final_finish_mac(s, sender, slen,
+		s->s3->tmp.peer_finish_md);
 }
 
 int
@@ -221,9 +238,8 @@ ssl3_get_finished(SSL *s, int a, int b)
 	long n;
 	CBS cbs;
 
-	n = s->method->ssl_get_message(s, a, b, SSL3_MT_FINISHED,
-	    64, /* should actually be 36+4 :-) */ &ok);
-
+	/* should actually be 36+4 :-) */
+	n = s->method->ssl_get_message(s, a, b, SSL3_MT_FINISHED, 64, &ok);
 	if (!ok)
 		return ((int)n);
 
@@ -347,16 +363,18 @@ ssl3_output_cert_chain(SSL *s, X509 *x)
 		} else {
 			X509_STORE_CTX xs_ctx;
 
-			if (!X509_STORE_CTX_init(&xs_ctx, s->ctx->cert_store, x, NULL)) {
-				SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_X509_LIB);
+			if (!X509_STORE_CTX_init(&xs_ctx, s->ctx->cert_store,
+			    x, NULL)) {
+				SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,
+				    ERR_R_X509_LIB);
 				return (0);
 			}
 			X509_verify_cert(&xs_ctx);
-			/* Don't leave errors in the queue */
+
+			/* Don't leave errors in the queue. */
 			ERR_clear_error();
 			for (i = 0; i < sk_X509_num(xs_ctx.chain); i++) {
 				x = sk_X509_value(xs_ctx.chain, i);
-
 				if (ssl3_add_cert_to_buf(buf, &l, x)) {
 					X509_STORE_CTX_cleanup(&xs_ctx);
 					return 0;
@@ -383,7 +401,8 @@ ssl3_output_cert_chain(SSL *s, X509 *x)
 	return (l);
 }
 
-/* Obtain handshake message of message type 'mt' (any if mt == -1),
+/*
+ * Obtain handshake message of message type 'mt' (any if mt == -1),
  * maximum acceptable body length 'max'.
  * The first four bytes (msg_type and length) are read in state 'st1',
  * the body is read in state 'stn'.
@@ -402,7 +421,8 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		s->s3->tmp.reuse_message = 0;
 		if ((mt >= 0) && (s->s3->tmp.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+			SSLerr(SSL_F_SSL3_GET_MESSAGE,
+			    SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 		}
 		*ok = 1;
@@ -413,8 +433,8 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 	p = (unsigned char *)s->init_buf->data;
 
-	if (s->state == st1) /* s->init_num < 4 */
-	{
+	/* s->init_num < 4 */
+	if (s->state == st1) {
 		int skip_message;
 
 		do {
@@ -443,17 +463,19 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 					skip_message = 1;
 
 					if (s->msg_callback)
-						s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, p, 4, s, s->msg_callback_arg);
+						s->msg_callback(0, s->version,
+						    SSL3_RT_HANDSHAKE, p, 4, s,
+						    s->msg_callback_arg);
 				}
 			}
-
 		} while (skip_message);
 
 		/* s->init_num == 4 */
 
 		if ((mt >= 0) && (*p != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+			SSLerr(SSL_F_SSL3_GET_MESSAGE,
+			    SSL_R_UNEXPECTED_MESSAGE);
 			goto f_err;
 		}
 
@@ -468,7 +490,8 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 		if (l > (unsigned long)max) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+			SSLerr(SSL_F_SSL3_GET_MESSAGE,
+			    SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto f_err;
 		}
 		if (l && !BUF_MEM_grow_clean(s->init_buf, l + 4)) {
@@ -505,9 +528,13 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	/* Feed this message into MAC computation. */
 	ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
 	if (s->msg_callback)
-		s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data, (size_t)s->init_num + 4, s, s->msg_callback_arg);
+		s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
+		    s->init_buf->data, (size_t)s->init_num + 4, s,
+		    s->msg_callback_arg);
+
 	*ok = 1;
-	return s->init_num;
+	return (s->init_num);
+
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
@@ -533,12 +560,13 @@ ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 		ret = SSL_PKEY_RSA_ENC;
 	} else if (i == EVP_PKEY_DSA) {
 		ret = SSL_PKEY_DSA_SIGN;
-	}
-	else if (i == EVP_PKEY_EC) {
+	} else if (i == EVP_PKEY_EC) {
 		ret = SSL_PKEY_ECC;
-	} else if (i == NID_id_GostR3410_2001 || i == NID_id_GostR3410_2001_cc) {
+	} else if (i == NID_id_GostR3410_2001 ||
+	    i == NID_id_GostR3410_2001_cc) {
 		ret = SSL_PKEY_GOST01;
 	}
+
 err:
 	if (!pkey)
 		EVP_PKEY_free(pk);
