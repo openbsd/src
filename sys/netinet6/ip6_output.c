@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.182 2015/09/11 09:58:33 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.183 2015/09/11 13:53:04 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
     int flags, struct ip6_moptions *im6o, struct inpcb *inp)
 {
 	struct ip6_hdr *ip6;
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;
 	struct mbuf *m = m0;
 	int hlen, tlen;
 	struct route_in6 ip6route;
@@ -528,17 +528,27 @@ reroute:
 	dstsock.sin6_addr = ip6->ip6_dst;
 	dstsock.sin6_len = sizeof(dstsock);
 	ro->ro_tableid = m->m_pkthdr.ph_rtableid;
-	if ((error = in6_selectroute(&dstsock, opt, im6o, ro, &ifp,
-	    &rt, 0, m->m_pkthdr.ph_rtableid)) != 0) {
-		switch (error) {
-		case EHOSTUNREACH:
+
+	if (IN6_IS_ADDR_MULTICAST(&dstsock.sin6_addr)) {
+		struct in6_pktinfo *pi = NULL;
+
+		/*
+		 * If the caller specify the outgoing interface
+		 * explicitly, use it.
+		 */
+		if (opt != NULL && (pi = opt->ip6po_pktinfo) != NULL)
+			ifp = if_get(pi->ipi6_ifindex);
+
+		if (ifp == NULL && im6o != NULL)
+			ifp = if_get(im6o->im6o_ifidx);
+	}
+
+	if (ifp == NULL) {
+		if ((error = in6_selectroute(&dstsock, opt, ro, &ifp,
+		    &rt, m->m_pkthdr.ph_rtableid)) != 0) {
 			ip6stat.ip6s_noroute++;
-			break;
-		case EADDRNOTAVAIL:
-		default:
-			break;	/* XXX statistics? */
+			goto bad;
 		}
-		goto bad;
 	}
 	if (rt == NULL) {
 		/*

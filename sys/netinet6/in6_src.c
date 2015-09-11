@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.58 2015/09/11 09:58:33 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.59 2015/09/11 13:53:04 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -295,43 +295,17 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 
 int
 in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
-    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
-    struct rtentry **retrt, int norouteok, u_int rtableid)
+    struct route_in6 *ro, struct ifnet **retifp,
+    struct rtentry **retrt, unsigned int rtableid)
 {
 	int error = 0;
 	struct ifnet *ifp = NULL;
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *sin6_next;
-	struct in6_pktinfo *pi = NULL;
 	struct in6_addr *dst;
 
 	dst = &dstsock->sin6_addr;
 
-	/* If the caller specify the outgoing interface explicitly, use it. */
-	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
-		ifp = if_get(pi->ipi6_ifindex);
-		if (ifp != NULL &&
-		    (norouteok || retrt == NULL ||
-		     IN6_IS_ADDR_MULTICAST(dst))) {
-			/*
-			 * we do not have to check or get the route for
-			 * multicast.
-			 */
-			goto done;
-		} else
-			goto getroute;
-	}
-
-	/*
-	 * If the destination address is a multicast address and the outgoing
-	 * interface for the address is specified by the caller, use it.
-	 */
-	if (IN6_IS_ADDR_MULTICAST(dst) &&
-	    mopts != NULL && (ifp = if_get(mopts->im6o_ifidx)) != NULL) {
-		goto done; /* we do not need a route for multicast. */
-	}
-
-  getroute:
 	/*
 	 * If the next hop address for the packet is specified by the caller,
 	 * use it as the gateway.
@@ -467,8 +441,6 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 */
 		error = EHOSTUNREACH;
 	}
-	if (error == EHOSTUNREACH)
-		ip6stat.ip6s_noroute++;
 
 	if (retifp != NULL)
 		*retifp = ifp;
@@ -484,10 +456,26 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
     u_int rtableid)
 {
 	struct rtentry *rt = NULL;
+	struct in6_pktinfo *pi = NULL;
 	int error;
 
-	if ((error = in6_selectroute(dstsock, opts, mopts, ro, retifp,
-	    &rt, 1, rtableid)) != 0)
+	/* If the caller specify the outgoing interface explicitly, use it. */
+	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
+		*retifp = if_get(pi->ipi6_ifindex);
+		if (*retifp != NULL)
+			return (0);
+	}
+
+	/*
+	 * If the destination address is a multicast address and the outgoing
+	 * interface for the address is specified by the caller, use it.
+	 */
+	if (IN6_IS_ADDR_MULTICAST(&dstsock->sin6_addr) &&
+	    mopts != NULL && (*retifp = if_get(mopts->im6o_ifidx)) != NULL)
+	    	return (0);
+
+	if ((error = in6_selectroute(dstsock, opts, ro, retifp,
+	    &rt, rtableid)) != 0)
 		return (error);
 
 	/*
