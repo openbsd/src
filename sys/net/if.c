@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.371 2015/09/11 09:00:40 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.372 2015/09/11 09:15:56 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -788,7 +788,7 @@ if_detach(struct ifnet *ifp)
 #endif
 	rt_if_remove(ifp);
 	rti_delete(ifp);
-#if NETHER > 0 && defined(NFSCLIENT) 
+#if NETHER > 0 && defined(NFSCLIENT)
 	if (ifp == revarp_ifp)
 		revarp_ifp = NULL;
 #endif
@@ -1593,7 +1593,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		    !ISSET(ifp->if_xflags, IFXF_MPLS)) {
 			s = splnet();
 			ifp->if_xflags |= IFXF_MPLS;
-			ifp->if_ll_output = ifp->if_output; 
+			ifp->if_ll_output = ifp->if_output;
 			ifp->if_output = mpls_output;
 			splx(s);
 		}
@@ -1601,7 +1601,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		    !ISSET(ifr->ifr_flags, IFXF_MPLS)) {
 			s = splnet();
 			ifp->if_xflags &= ~IFXF_MPLS;
-			ifp->if_output = ifp->if_ll_output; 
+			ifp->if_output = ifp->if_ll_output;
 			ifp->if_ll_output = NULL;
 			splx(s);
 		}
