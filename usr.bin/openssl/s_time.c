@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.10 2015/09/10 06:36:45 bcook Exp $ */
+/* $OpenBSD: s_time.c,v 1.11 2015/09/11 02:08:34 lteo Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,8 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#define NO_SHUTDOWN
-
 /*-----------------------------------------
    s_time - SSL client connection timer program
    Written and donated by Larry Streepy <streepy@healthcare.com>
@@ -114,6 +112,7 @@ struct {
 	char *keyfile;
 	int maxtime;
 	int nbio;
+	int no_shutdown;
 	int perform;
 	int verify;
 	int verify_depth;
@@ -184,6 +183,12 @@ struct option s_time_options[] = {
 		.value = 1,
 	},
 	{
+		.name = "no_shutdown",
+		.desc = "Shutdown the connection without notifying the server",
+		.type = OPTION_FLAG,
+		.opt.flag = &s_time_config.no_shutdown,
+	},
+	{
 		.name = "reuse",
 		.desc = "Reuse the same session ID for each connection",
 		.type = OPTION_VALUE,
@@ -221,7 +226,7 @@ s_time_usage(void)
 	    "usage: s_time "
 	    "[-bugs] [-CAfile file] [-CApath directory] [-cert file]\n"
 	    "    [-cipher cipherlist] [-connect host:port] [-key keyfile]\n"
-	    "    [-nbio] [-new] [-reuse] [-time seconds]\n"
+	    "    [-nbio] [-new] [-no_shutdown] [-reuse] [-time seconds]\n"
 	    "    [-verify depth] [-www page]\n\n");
 	options_usage(s_time_options);
 }
@@ -342,11 +347,11 @@ s_time_main(int argc, char **argv)
 			while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
 				bytes_read += i;
 		}
-#ifdef NO_SHUTDOWN
-		SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
-		SSL_shutdown(scon);
-#endif
+		if (s_time_config.no_shutdown)
+			SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
+			    SSL_RECEIVED_SHUTDOWN);
+		else
+			SSL_shutdown(scon);
 		shutdown(SSL_get_fd(scon), SHUT_RDWR);
 		close(SSL_get_fd(scon));
 
@@ -401,11 +406,11 @@ next:
 		SSL_write(scon, buf, strlen(buf));
 		while (SSL_read(scon, buf, sizeof(buf)) > 0);
 	}
-#ifdef NO_SHUTDOWN
-	SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
-	SSL_shutdown(scon);
-#endif
+	if (s_time_config.no_shutdown)
+		SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
+		    SSL_RECEIVED_SHUTDOWN);
+	else
+		SSL_shutdown(scon);
 	shutdown(SSL_get_fd(scon), SHUT_RDWR);
 	close(SSL_get_fd(scon));
 
@@ -435,11 +440,11 @@ next:
 			while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
 				bytes_read += i;
 		}
-#ifdef NO_SHUTDOWN
-		SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
-		SSL_shutdown(scon);
-#endif
+		if (s_time_config.no_shutdown)
+			SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
+			    SSL_RECEIVED_SHUTDOWN);
+		else
+			SSL_shutdown(scon);
 		shutdown(SSL_get_fd(scon), SHUT_RDWR);
 		close(SSL_get_fd(scon));
 
