@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.234 2015/09/11 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.235 2015/09/11 15:38:13 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1737,8 +1737,9 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 {
 	struct ifnet *ifp = arg;
 
-	if (rt->rt_ifp != ifp)
-		return (0);
+	if ((rt->rt_ifp != ifp) &&
+	    (rt->rt_ifa == NULL || rt->rt_ifa->ifa_ifp != ifp))
+	    	return (0);
 
 	if (LINK_STATE_IS_UP(ifp->if_link_state) && ifp->if_flags & IFF_UP) {
 		if (!(rt->rt_flags & RTF_UP)) {
