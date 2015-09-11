@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.254 2015/09/11 10:06:52 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.255 2015/09/11 19:34:20 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1709,6 +1709,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		}
 		if (*mp)
 			mp = &(*mp)->m_next;
+		if_put(ifp);
 	}
 	if (inp->inp_flags & INP_RECVTTL) {
 		*mp = sbcreatecontrol((caddr_t) &ip->ip_ttl,
