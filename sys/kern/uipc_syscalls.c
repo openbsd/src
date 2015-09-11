@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.108 2015/09/11 08:22:31 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.109 2015/09/11 15:29:47 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	int fd, error;
 
 	if (tame_socket_check(p, SCARG(uap, domain)))
-		return (tame_fail(p, EPERM, _TM_UNIX));
+		return (tame_fail(p, EPERM, TAME_UNIX));
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
@@ -125,7 +125,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	int error;
 
 	if (tame_bind_check(p, SCARG(uap, name)))
-		return (tame_fail(p, EPERM, _TM_UNIX));
+		return (tame_fail(p, EPERM, TAME_UNIX));
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -323,7 +323,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	int error, s;
 
 	if (tame_connect_check(p))
-		return (tame_fail(p, EPERM, _TM_UNIX));
+		return (tame_fail(p, EPERM, TAME_UNIX));
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -466,7 +466,7 @@ sys_sendto(struct proc *p, void *v, register_t *retval)
 	struct iovec aiov;
 
 	if (tame_sendto_check(p, SCARG(uap, to)))
-		return (tame_fail(p, EPERM, _TM_UNIX));
+		return (tame_fail(p, EPERM, TAME_UNIX));
 
 	msg.msg_name = (caddr_t)SCARG(uap, to);
 	msg.msg_namelen = SCARG(uap, tolen);
@@ -500,7 +500,7 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 #endif
 
 	if (tame_sendto_check(p, msg.msg_name))
-		return (tame_fail(p, EPERM, _TM_UNIX));
+		return (tame_fail(p, EPERM, TAME_UNIX));
 
 	if (msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
@@ -645,7 +645,7 @@ sys_recvfrom(struct proc *p, void *v, register_t *retval)
 	int error;
 
 	if (tame_recvfrom_check(p, SCARG(uap, from)))
-		return (tame_fail(p, EPERM, _TM_UNIX));
+		return (tame_fail(p, EPERM, TAME_UNIX));
 
 	if (SCARG(uap, fromlenaddr)) {
 		error = copyin(SCARG(uap, fromlenaddr),
@@ -682,7 +682,7 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	if (tame_recvfrom_check(p, msg.msg_name))
-		return (tame_fail(p, EPERM, _TM_UNIX));
+		return (tame_fail(p, EPERM, TAME_UNIX));
 
 	if (msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
@@ -881,7 +881,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	int error;
 
 	if (tame_setsockopt_check(p, SCARG(uap, level), SCARG(uap, name)))
-		return (tame_fail(p, EPERM, _TM_INET));
+		return (tame_fail(p, EPERM, TAME_INET));
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);

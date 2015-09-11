@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.6 2015/09/09 17:56:59 deraadt Exp $	*/
+/*	$OpenBSD: tame.h,v 1.7 2015/09/11 15:29:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -24,46 +24,29 @@
 
 #include <sys/cdefs.h>
 
-#define _TM_SELF	0x00000001	/* operate on own pid */
-#define _TM_RW		0x00000002	/* basic io operations */
-#define _TM_MALLOC	0x00000004	/* enough for malloc */
-#define _TM_DNSPATH	0x00000008	/* access to DNS pathnames */
-#define _TM_RPATH	0x00000010	/* allow open for read */
-#define _TM_WPATH	0x00000020	/* allow open for write */
-#define _TM_TMPPATH	0x00000040	/* for mk*temp() */
-#define _TM_INET	0x00000080	/* AF_INET/AF_INET6 sockets */
-#define _TM_UNIX	0x00000100	/* AF_UNIX sockets */
-#define _TM_CMSG	0x00000200	/* AF_UNIX CMSG fd passing */
-#define _TM_IOCTL	0x00000400	/* scary */
-#define _TM_GETPW	0x00000800	/* enough to enable YP */
-#define _TM_PROC	0x00001000	/* fork, waitpid, etc */
-#define _TM_CPATH	0x00002000	/* allow creat, mkdir, path creations */
-#define _TM_FATTR	0x00004000	/* allow explicit file st_* mods */
+#define TAME_SELF	0x00000001	/* operate on own pid */
+#define TAME_RW		0x00000002	/* basic io operations */
+#define TAME_MALLOC	0x00000004	/* enough for malloc */
+#define TAME_DNSPATH	0x00000008	/* access to DNS pathnames */
+#define TAME_RPATH	0x00000010	/* allow open for read */
+#define TAME_WPATH	0x00000020	/* allow open for write */
+#define TAME_TMPPATH	0x00000040	/* for mk*temp() */
+#define TAME_INET	0x00000080	/* AF_INET/AF_INET6 sockets */
+#define TAME_UNIX	0x00000100	/* AF_UNIX sockets */
+#define TAME_CMSG	0x00000200	/* AF_UNIX CMSG fd passing */
+#define TAME_IOCTL	0x00000400	/* scary */
+#define TAME_GETPW	0x00000800	/* enough to enable YP */
+#define TAME_PROC	0x00001000	/* fork, waitpid, etc */
+#define TAME_CPATH	0x00002000	/* allow creat, mkdir, path creations */
+#define TAME_FATTR	0x00004000	/* allow explicit file st_* mods */
 
-#define _TM_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
+#define TAME_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
 
 /* Following flags are set by kernel, as it learns things.
  * Not user settable. Should be moved to a seperate variable */
-#define _TM_USERSET	0x0fffffff
-#define _TM_YP_ACTIVE	0x10000000	/* YP use detected and allowed */
-#define _TM_DNS_ACTIVE	0x20000000	/* DNS use detected and allowed */
-
-#define TAME_MALLOC	(_TM_SELF | _TM_MALLOC)
-#define TAME_RW		(_TM_SELF | _TM_RW)
-#define TAME_STDIO	(_TM_SELF | _TM_MALLOC | _TM_RW)
-#define TAME_RPATH	(_TM_SELF | _TM_RW | _TM_RPATH)
-#define TAME_WPATH	(_TM_SELF | _TM_RW | _TM_WPATH)
-#define TAME_TMPPATH	(_TM_SELF | _TM_RW | _TM_TMPPATH)
-#define TAME_INET	(_TM_SELF | _TM_RW | _TM_INET)
-#define TAME_UNIX	(_TM_SELF | _TM_RW | _TM_UNIX)
-#define TAME_CMSG	(_TM_SELF | _TM_RW | _TM_UNIX | _TM_CMSG)
-#define TAME_DNS	(_TM_SELF | _TM_MALLOC | _TM_DNSPATH)
-#define TAME_IOCTL	(_TM_IOCTL)
-#define TAME_GETPW	(_TM_SELF | _TM_MALLOC | _TM_RW | _TM_GETPW)
-#define TAME_PROC	(_TM_PROC)
-#define TAME_CPATH	(_TM_CPATH)
-#define TAME_ABORT	(_TM_ABORT)
-#define TAME_FATTR	(_TM_FATTR)
+#define TAME_USERSET	0x0fffffff
+#define TAME_YP_ACTIVE	0x10000000	/* YP use detected and allowed */
+#define TAME_DNS_ACTIVE	0x20000000	/* DNS use detected and allowed */
 
 int	tame_check(struct proc *, int);
 int	tame_fail(struct proc *, int, int);

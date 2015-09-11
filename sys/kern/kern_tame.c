@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.39 2015/09/11 08:22:31 guenther Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.40 2015/09/11 15:29:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -52,180 +52,180 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_exit] = 0xffffffff,
 	[SYS_kbind] = 0xffffffff,
 
-	[SYS_getuid] = _TM_SELF,
-	[SYS_geteuid] = _TM_SELF,
-	[SYS_getresuid] = _TM_SELF,
-	[SYS_getgid] = _TM_SELF,
-	[SYS_getegid] = _TM_SELF,
-	[SYS_getresgid] = _TM_SELF,
-	[SYS_getgroups] = _TM_SELF,
-	[SYS_getlogin] = _TM_SELF,
-	[SYS_getpgrp] = _TM_SELF,
-	[SYS_getpgid] = _TM_SELF,
-	[SYS_getppid] = _TM_SELF,
-	[SYS_getsid] = _TM_SELF,
-	[SYS_getthrid] = _TM_SELF,
-	[SYS_getrlimit] = _TM_SELF,
-	[SYS_gettimeofday] = _TM_SELF,
-	[SYS_getdtablecount] = _TM_SELF,
-	[SYS_issetugid] = _TM_SELF,
-	[SYS_clock_getres] = _TM_SELF,
-	[SYS_clock_gettime] = _TM_SELF,
-	[SYS_getpid] = _TM_SELF,
-	[SYS_umask] = _TM_SELF,
-	[SYS___sysctl] = _TM_SELF,	/* read-only; narrow subset */
-	[SYS_adjtime] = _TM_SELF,	/* read-only */
+	[SYS_getuid] = TAME_SELF,
+	[SYS_geteuid] = TAME_SELF,
+	[SYS_getresuid] = TAME_SELF,
+	[SYS_getgid] = TAME_SELF,
+	[SYS_getegid] = TAME_SELF,
+	[SYS_getresgid] = TAME_SELF,
+	[SYS_getgroups] = TAME_SELF,
+	[SYS_getlogin] = TAME_SELF,
+	[SYS_getpgrp] = TAME_SELF,
+	[SYS_getpgid] = TAME_SELF,
+	[SYS_getppid] = TAME_SELF,
+	[SYS_getsid] = TAME_SELF,
+	[SYS_getthrid] = TAME_SELF,
+	[SYS_getrlimit] = TAME_SELF,
+	[SYS_gettimeofday] = TAME_SELF,
+	[SYS_getdtablecount] = TAME_SELF,
+	[SYS_issetugid] = TAME_SELF,
+	[SYS_clock_getres] = TAME_SELF,
+	[SYS_clock_gettime] = TAME_SELF,
+	[SYS_getpid] = TAME_SELF,
+	[SYS_umask] = TAME_SELF,
+	[SYS___sysctl] = TAME_SELF,	/* read-only; narrow subset */
+	[SYS_adjtime] = TAME_SELF,	/* read-only */
 
-	[SYS_fchdir] = _TM_SELF,	/* careful of directory fd inside jails */
+	[SYS_fchdir] = TAME_SELF,	/* careful of directory fd inside jails */
 
 	/* needed by threaded programs */
-	[SYS_sched_yield] = _TM_SELF,
-	[SYS___thrsleep] = _TM_SELF,
-	[SYS___thrwakeup] = _TM_SELF,
-	[SYS___threxit] = _TM_SELF,
-	[SYS___thrsigdivert] = _TM_SELF,
+	[SYS_sched_yield] = TAME_SELF,
+	[SYS___thrsleep] = TAME_SELF,
+	[SYS___thrwakeup] = TAME_SELF,
+	[SYS___threxit] = TAME_SELF,
+	[SYS___thrsigdivert] = TAME_SELF,
 
-	[SYS_sendsyslog] = _TM_SELF,
-	[SYS_nanosleep] = _TM_SELF,
-	[SYS_sigprocmask] = _TM_SELF,
-	[SYS_sigaction] = _TM_SELF,
-	[SYS_sigreturn] = _TM_SELF,
-	[SYS_getitimer] = _TM_SELF,
-	[SYS_setitimer] = _TM_SELF,
+	[SYS_sendsyslog] = TAME_SELF,
+	[SYS_nanosleep] = TAME_SELF,
+	[SYS_sigprocmask] = TAME_SELF,
+	[SYS_sigaction] = TAME_SELF,
+	[SYS_sigreturn] = TAME_SELF,
+	[SYS_getitimer] = TAME_SELF,
+	[SYS_setitimer] = TAME_SELF,
 
-	[SYS_tame] = _TM_SELF,
+	[SYS_tame] = TAME_SELF,
 
-	[SYS_wait4] = _TM_SELF,
+	[SYS_wait4] = TAME_SELF,
 
-	[SYS_poll] = _TM_RW,
-	[SYS_kevent] = _TM_RW,
-	[SYS_kqueue] = _TM_RW,
-	[SYS_select] = _TM_RW,
+	[SYS_poll] = TAME_RW,
+	[SYS_kevent] = TAME_RW,
+	[SYS_kqueue] = TAME_RW,
+	[SYS_select] = TAME_RW,
 
-	[SYS_close] = _TM_RW,
-	[SYS_dup] = _TM_RW,
-	[SYS_dup2] = _TM_RW,
-	[SYS_dup3] = _TM_RW,
-	[SYS_closefrom] = _TM_RW,
-	[SYS_shutdown] = _TM_RW,
-	[SYS_read] = _TM_RW,
-	[SYS_readv] = _TM_RW,
-	[SYS_pread] = _TM_RW,
-	[SYS_preadv] = _TM_RW,
-	[SYS_write] = _TM_RW,
-	[SYS_writev] = _TM_RW,
-	[SYS_pwrite] = _TM_RW,
-	[SYS_pwritev] = _TM_RW,
-	[SYS_ftruncate] = _TM_RW,
-	[SYS_lseek] = _TM_RW,
-	[SYS_fstat] = _TM_RW,
+	[SYS_close] = TAME_RW,
+	[SYS_dup] = TAME_RW,
+	[SYS_dup2] = TAME_RW,
+	[SYS_dup3] = TAME_RW,
+	[SYS_closefrom] = TAME_RW,
+	[SYS_shutdown] = TAME_RW,
+	[SYS_read] = TAME_RW,
+	[SYS_readv] = TAME_RW,
+	[SYS_pread] = TAME_RW,
+	[SYS_preadv] = TAME_RW,
+	[SYS_write] = TAME_RW,
+	[SYS_writev] = TAME_RW,
+	[SYS_pwrite] = TAME_RW,
+	[SYS_pwritev] = TAME_RW,
+	[SYS_ftruncate] = TAME_RW,
+	[SYS_lseek] = TAME_RW,
+	[SYS_fstat] = TAME_RW,
 
-	[SYS_fcntl] = _TM_RW,
-	[SYS_fsync] = _TM_RW,
-	[SYS_pipe] = _TM_RW,
-	[SYS_pipe2] = _TM_RW,
-	[SYS_socketpair] = _TM_RW,
-	[SYS_getdents] = _TM_RW,
+	[SYS_fcntl] = TAME_RW,
+	[SYS_fsync] = TAME_RW,
+	[SYS_pipe] = TAME_RW,
+	[SYS_pipe2] = TAME_RW,
+	[SYS_socketpair] = TAME_RW,
+	[SYS_getdents] = TAME_RW,
 
-	[SYS_sendto] = _TM_RW | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
-	[SYS_sendmsg] = _TM_RW,
-	[SYS_recvmsg] = _TM_RW,
-	[SYS_recvfrom] = _TM_RW | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
+	[SYS_sendto] = TAME_RW | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
+	[SYS_sendmsg] = TAME_RW,
+	[SYS_recvmsg] = TAME_RW,
+	[SYS_recvfrom] = TAME_RW | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
 
-	[SYS_fork] = _TM_PROC,
-	[SYS_vfork] = _TM_PROC,
-	[SYS_kill] = _TM_PROC,
+	[SYS_fork] = TAME_PROC,
+	[SYS_vfork] = TAME_PROC,
+	[SYS_kill] = TAME_PROC,
 
-	[SYS_setgroups] = _TM_PROC,
-	[SYS_setresgid] = _TM_PROC,
-	[SYS_setresuid] = _TM_PROC,
+	[SYS_setgroups] = TAME_PROC,
+	[SYS_setresgid] = TAME_PROC,
+	[SYS_setresuid] = TAME_PROC,
 
-	[SYS_ioctl] = _TM_IOCTL,		/* very limited subset */
+	[SYS_ioctl] = TAME_IOCTL,		/* very limited subset */
 
-	[SYS_getentropy] = _TM_MALLOC,
-	[SYS_madvise] = _TM_MALLOC,
-	[SYS_minherit] = _TM_MALLOC,
-	[SYS_mmap] = _TM_MALLOC,
-	[SYS_mprotect] = _TM_MALLOC,
-	[SYS_mquery] = _TM_MALLOC,
-	[SYS_munmap] = _TM_MALLOC,
+	[SYS_getentropy] = TAME_MALLOC,
+	[SYS_madvise] = TAME_MALLOC,
+	[SYS_minherit] = TAME_MALLOC,
+	[SYS_mmap] = TAME_MALLOC,
+	[SYS_mprotect] = TAME_MALLOC,
+	[SYS_mquery] = TAME_MALLOC,
+	[SYS_munmap] = TAME_MALLOC,
 
-	[SYS_open] = _TM_SELF,
-	[SYS_stat] = _TM_SELF,
-	[SYS_access] = _TM_SELF,
-	[SYS_readlink] = _TM_SELF,
+	[SYS_open] = TAME_SELF,
+	[SYS_stat] = TAME_SELF,
+	[SYS_access] = TAME_SELF,
+	[SYS_readlink] = TAME_SELF,
 
-	[SYS_chdir] = _TM_RPATH,
-	[SYS___getcwd] = _TM_RPATH | _TM_WPATH,
-	[SYS_openat] = _TM_RPATH | _TM_WPATH,
-	[SYS_fstatat] = _TM_RPATH | _TM_WPATH,
-	[SYS_faccessat] = _TM_RPATH | _TM_WPATH,
-	[SYS_readlinkat] = _TM_RPATH | _TM_WPATH,
-	[SYS_lstat] = _TM_RPATH | _TM_WPATH | _TM_TMPPATH | _TM_DNSPATH,
-	[SYS_rename] = _TM_CPATH,
-	[SYS_rmdir] = _TM_CPATH,
-	[SYS_renameat] = _TM_CPATH,
-	[SYS_link] = _TM_CPATH,
-	[SYS_linkat] = _TM_CPATH,
-	[SYS_symlink] = _TM_CPATH,
-	[SYS_unlink] = _TM_CPATH | _TM_TMPPATH,
-	[SYS_unlinkat] = _TM_CPATH,
-	[SYS_mkdir] = _TM_CPATH,
-	[SYS_mkdirat] = _TM_CPATH,
+	[SYS_chdir] = TAME_RPATH,
+	[SYS___getcwd] = TAME_RPATH | TAME_WPATH,
+	[SYS_openat] = TAME_RPATH | TAME_WPATH,
+	[SYS_fstatat] = TAME_RPATH | TAME_WPATH,
+	[SYS_faccessat] = TAME_RPATH | TAME_WPATH,
+	[SYS_readlinkat] = TAME_RPATH | TAME_WPATH,
+	[SYS_lstat] = TAME_RPATH | TAME_WPATH | TAME_TMPPATH | TAME_DNSPATH,
+	[SYS_rename] = TAME_CPATH,
+	[SYS_rmdir] = TAME_CPATH,
+	[SYS_renameat] = TAME_CPATH,
+	[SYS_link] = TAME_CPATH,
+	[SYS_linkat] = TAME_CPATH,
+	[SYS_symlink] = TAME_CPATH,
+	[SYS_unlink] = TAME_CPATH | TAME_TMPPATH,
+	[SYS_unlinkat] = TAME_CPATH,
+	[SYS_mkdir] = TAME_CPATH,
+	[SYS_mkdirat] = TAME_CPATH,
 
 	/* Classify so due to info leak */
-	[SYS_getfsstat] = _TM_RPATH,
+	[SYS_getfsstat] = TAME_RPATH,
 	/* XXX Consider statfs and fstatfs */
 
-	[SYS_utimes] = _TM_FATTR,
-	[SYS_futimes] = _TM_FATTR,
-	[SYS_utimensat] = _TM_FATTR,
-	[SYS_futimens] = _TM_FATTR,
-	[SYS_chmod] = _TM_FATTR,
-	[SYS_fchmod] = _TM_FATTR,
-	[SYS_fchmodat] = _TM_FATTR,
-	[SYS_chflags] = _TM_FATTR,
-	[SYS_chflagsat] = _TM_FATTR,
-	[SYS_chown] = _TM_FATTR,
-	[SYS_fchownat] = _TM_FATTR,
-	[SYS_lchown] = _TM_FATTR,
-	[SYS_fchown] = _TM_FATTR,
+	[SYS_utimes] = TAME_FATTR,
+	[SYS_futimes] = TAME_FATTR,
+	[SYS_utimensat] = TAME_FATTR,
+	[SYS_futimens] = TAME_FATTR,
+	[SYS_chmod] = TAME_FATTR,
+	[SYS_fchmod] = TAME_FATTR,
+	[SYS_fchmodat] = TAME_FATTR,
+	[SYS_chflags] = TAME_FATTR,
+	[SYS_chflagsat] = TAME_FATTR,
+	[SYS_chown] = TAME_FATTR,
+	[SYS_fchownat] = TAME_FATTR,
+	[SYS_lchown] = TAME_FATTR,
+	[SYS_fchown] = TAME_FATTR,
 
-	[SYS_socket] = _TM_INET | _TM_UNIX | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
-	[SYS_connect] = _TM_INET | _TM_UNIX | _TM_DNS_ACTIVE | _TM_YP_ACTIVE,
+	[SYS_socket] = TAME_INET | TAME_UNIX | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
+	[SYS_connect] = TAME_INET | TAME_UNIX | TAME_DNS_ACTIVE | TAME_YP_ACTIVE,
 
-	[SYS_listen] = _TM_INET | _TM_UNIX,
-	[SYS_bind] = _TM_INET | _TM_UNIX,
-	[SYS_accept4] = _TM_INET | _TM_UNIX,
-	[SYS_accept] = _TM_INET | _TM_UNIX,
-	[SYS_getpeername] = _TM_INET | _TM_UNIX,
-	[SYS_getsockname] = _TM_INET | _TM_UNIX,
-	[SYS_setsockopt] = _TM_INET | _TM_UNIX,
-	[SYS_getsockopt] = _TM_INET | _TM_UNIX,
+	[SYS_listen] = TAME_INET | TAME_UNIX,
+	[SYS_bind] = TAME_INET | TAME_UNIX,
+	[SYS_accept4] = TAME_INET | TAME_UNIX,
+	[SYS_accept] = TAME_INET | TAME_UNIX,
+	[SYS_getpeername] = TAME_INET | TAME_UNIX,
+	[SYS_getsockname] = TAME_INET | TAME_UNIX,
+	[SYS_setsockopt] = TAME_INET | TAME_UNIX,
+	[SYS_getsockopt] = TAME_INET | TAME_UNIX,
 
-	[SYS_flock] = _TM_GETPW,
+	[SYS_flock] = TAME_GETPW,
 };
 
 static const struct {
 	char *name;
 	int flags;
 } tamereq[] = {
-	{ "malloc",		_TM_SELF | _TM_MALLOC },
-	{ "rw",			_TM_SELF | _TM_RW },
-	{ "stdio",		_TM_SELF | _TM_MALLOC | _TM_RW },
-	{ "rpath",		_TM_SELF | _TM_RW | _TM_RPATH },
-	{ "wpath",		_TM_SELF | _TM_RW | _TM_WPATH },
-	{ "tmppath",		_TM_SELF | _TM_RW | _TM_TMPPATH },
-	{ "inet",		_TM_SELF | _TM_RW | _TM_INET },
-	{ "unix",		_TM_SELF | _TM_RW | _TM_UNIX },
-	{ "cmsg",		TAME_UNIX | _TM_CMSG },
-	{ "dns",		TAME_MALLOC | _TM_DNSPATH },
-	{ "ioctl",		_TM_IOCTL },
-	{ "getpw",		TAME_STDIO | _TM_GETPW },
-	{ "proc",		_TM_PROC },
-	{ "cpath",		_TM_CPATH },
-	{ "abort",		_TM_ABORT },
-	{ "fattr",		_TM_FATTR }
+	{ "malloc",		TAME_SELF | TAME_MALLOC },
+	{ "rw",			TAME_SELF | TAME_RW },
+	{ "stdio",		TAME_SELF | TAME_MALLOC | TAME_RW },
+	{ "rpath",		TAME_SELF | TAME_RW | TAME_RPATH },
+	{ "wpath",		TAME_SELF | TAME_RW | TAME_WPATH },
+	{ "tmppath",		TAME_SELF | TAME_RW | TAME_TMPPATH },
+	{ "inet",		TAME_SELF | TAME_RW | TAME_INET },
+	{ "unix",		TAME_SELF | TAME_RW | TAME_UNIX },
+	{ "cmsg",		TAME_UNIX | TAME_CMSG },
+	{ "dns",		TAME_MALLOC | TAME_DNSPATH },
+	{ "ioctl",		TAME_IOCTL },
+	{ "getpw",		TAME_SELF | TAME_MALLOC | TAME_RW | TAME_GETPW },
+	{ "proc",		TAME_PROC },
+	{ "cpath",		TAME_CPATH },
+	{ "abort",		TAME_ABORT },
+	{ "fattr",		TAME_FATTR }
 };
 
 int
@@ -275,20 +275,20 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 		free(rbuf, M_TEMP, MAXPATHLEN);
 	}
 
-	if (flags & ~_TM_USERSET)
+	if (flags & ~TAME_USERSET)
 		return (EINVAL);
 
 	if ((p->p_p->ps_flags & PS_TAMED)) {
 		/* Already tamed, only allow reductions */
-		if (((flags | p->p_p->ps_tame) & _TM_USERSET) !=
-		    (p->p_p->ps_tame & _TM_USERSET)) {
+		if (((flags | p->p_p->ps_tame) & TAME_USERSET) !=
+		    (p->p_p->ps_tame & TAME_USERSET)) {
 			printf("%s(%d): fail change %x %x\n", p->p_comm, p->p_pid,
 			    flags, p->p_p->ps_tame);
 			return (EPERM);
 		}
 
 		flags &= p->p_p->ps_tame;
-		flags &= _TM_USERSET;		/* Relearn _ACTIVE */
+		flags &= TAME_USERSET;		/* Relearn _ACTIVE */
 	}
 
 	if (SCARG(uap, paths)) {
@@ -429,7 +429,7 @@ int
 tame_fail(struct proc *p, int error, int code)
 {
 	printf("%s(%d): syscall %d\n", p->p_comm, p->p_pid, p->p_tame_syscall);
-	if (p->p_p->ps_tame & _TM_ABORT) {	/* Core dump requested */
+	if (p->p_p->ps_tame & TAME_ABORT) {	/* Core dump requested */
 		struct sigaction sa;
 
 		memset(&sa, 0, sizeof sa);
@@ -459,14 +459,14 @@ tame_namei(struct proc *p, char *origpath)
 		return (tame_fail(p, EPERM, TAME_RPATH));
 
 	if ((p->p_tamenote & TMN_FATTR) &&
-	    (p->p_p->ps_tame & _TM_FATTR) == 0) {
+	    (p->p_p->ps_tame & TAME_FATTR) == 0) {
 		printf("%s(%d): inode syscall%d, not allowed\n",
 		    p->p_comm, p->p_pid, p->p_tame_syscall);
 		return (tame_fail(p, EPERM, TAME_FATTR));
 	}
 
 	/* Detect what looks like a mkstemp(3) family operation */
-	if ((p->p_p->ps_tame & _TM_TMPPATH) &&
+	if ((p->p_p->ps_tame & TAME_TMPPATH) &&
 	    (p->p_tame_syscall == SYS_open) &&
 	    (p->p_tamenote & TMN_CPATH) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
@@ -476,7 +476,7 @@ tame_namei(struct proc *p, char *origpath)
 	/* Allow unlinking of a mkstemp(3) file...
 	 * Good opportunity for strict checks here.
 	 */
-	if ((p->p_p->ps_tame & _TM_TMPPATH) &&
+	if ((p->p_p->ps_tame & TAME_TMPPATH) &&
 	    (p->p_tame_syscall == SYS_unlink) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
 		return (0);
@@ -484,11 +484,11 @@ tame_namei(struct proc *p, char *origpath)
 
 	/* open, mkdir, or other path creation operation */
 	if ((p->p_tamenote & TMN_CPATH) &&
-	    ((p->p_p->ps_tame & _TM_CPATH) == 0))
+	    ((p->p_p->ps_tame & TAME_CPATH) == 0))
 		return (tame_fail(p, EPERM, TAME_CPATH));
 
 	if ((p->p_tamenote & TMN_WPATH) &&
-	    (p->p_p->ps_tame & _TM_WPATH) == 0)
+	    (p->p_p->ps_tame & TAME_WPATH) == 0)
 		return (tame_fail(p, EPERM, TAME_WPATH));
 
 	/* Read-only paths used occasionally by libc */
@@ -502,7 +502,7 @@ tame_namei(struct proc *p, char *origpath)
 	case SYS_open:
 		/* getpw* and friends need a few files */
 		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & _TM_GETPW)) {
+		    (p->p_p->ps_tame & TAME_GETPW)) {
 			if (strcmp(path, "/etc/spwd.db") == 0)
 				return (0);
 			if (strcmp(path, "/etc/pwd.db") == 0)
@@ -513,7 +513,7 @@ tame_namei(struct proc *p, char *origpath)
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
 		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & _TM_DNSPATH)) {
+		    (p->p_p->ps_tame & TAME_DNSPATH)) {
 			if (strcmp(path, "/etc/resolv.conf") == 0) {
 				p->p_tameafter |= TMA_DNSRESOLV;
 				return (0);
@@ -524,7 +524,7 @@ tame_namei(struct proc *p, char *origpath)
 				return (0);
 		}
 		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & _TM_GETPW)) {
+		    (p->p_p->ps_tame & TAME_GETPW)) {
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
 				p->p_tameafter |= TMA_YPLOCK;
 				return (0);
@@ -558,7 +558,7 @@ tame_namei(struct proc *p, char *origpath)
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
 		if ((p->p_tamenote == TMN_RPATH) &&
-		    (p->p_p->ps_tame & _TM_DNSPATH)) {
+		    (p->p_p->ps_tame & TAME_DNSPATH)) {
 			if (strcmp(path, "/etc/resolv.conf") == 0) {
 				p->p_tameafter |= TMA_DNSRESOLV;
 				return (0);
@@ -636,10 +636,10 @@ tame_namei(struct proc *p, char *origpath)
 		return (error);			/* Don't hint why it failed */
 	}
 
-	if (p->p_p->ps_tame & _TM_RPATH)
+	if (p->p_p->ps_tame & TAME_RPATH)
 		return (0);
 
-	if (p->p_p->ps_tame & _TM_WPATH)
+	if (p->p_p->ps_tame & TAME_WPATH)
 		return (0);
 
 	return (tame_fail(p, EPERM, TAME_RPATH));
@@ -649,9 +649,9 @@ void
 tame_aftersyscall(struct proc *p, int code, int error)
 {
 	if ((p->p_tameafter & TMA_YPLOCK) && error == 0)
-		atomic_setbits_int(&p->p_p->ps_tame, _TM_YP_ACTIVE | TAME_INET);
+		atomic_setbits_int(&p->p_p->ps_tame, TAME_YP_ACTIVE | TAME_INET);
 	if ((p->p_tameafter & TMA_DNSRESOLV) && error == 0)
-		atomic_setbits_int(&p->p_p->ps_tame, _TM_DNS_ACTIVE);
+		atomic_setbits_int(&p->p_p->ps_tame, TAME_DNS_ACTIVE);
 }
 
 /*
@@ -695,7 +695,7 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 	if (cmsg == NULL)
 		return (0);
 
-	if ((p->p_p->ps_tame & _TM_CMSG) == 0)
+	if ((p->p_p->ps_tame & TAME_CMSG) == 0)
 		return tame_fail(p, EPERM, TAME_CMSG);
 
 	/* In OpenBSD, a CMSG only contains one SCM_RIGHTS.  Check it. */
@@ -747,7 +747,7 @@ tame_cmsg_send(struct proc *p, void *v, int controllen)
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & _TM_CMSG) == 0)
+	if ((p->p_p->ps_tame & TAME_CMSG) == 0)
 		return tame_fail(p, EPERM, TAME_CMSG);
 
 	/* Scan the cmsg */
@@ -810,7 +810,7 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 		return (EFAULT);
 
 	/* getifaddrs() */
-	if ((p->p_p->ps_tame & _TM_INET) &&
+	if ((p->p_p->ps_tame & TAME_INET) &&
 	    namelen == 6 &&
 	    name[0] == CTL_NET && name[1] == PF_ROUTE &&
 	    name[2] == 0 && name[3] == 0 &&
@@ -819,7 +819,7 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 
 	/* used by arp(8).  Exposes MAC addresses known on local nets */
 	/* XXX Put into a special catagory. */
-	if ((p->p_p->ps_tame & _TM_INET) &&
+	if ((p->p_p->ps_tame & TAME_INET) &&
 	    namelen == 7 &&
 	    name[0] == CTL_NET && name[1] == PF_ROUTE &&
 	    name[2] == 0 && name[3] == AF_INET &&
@@ -883,10 +883,10 @@ tame_connect_check(struct proc *p)
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & _TM_DNS_ACTIVE))
+	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE))
 		return (0);	/* A port check happens inside sys_connect() */
 
-	if ((p->p_p->ps_tame & (_TM_INET | _TM_UNIX)))
+	if ((p->p_p->ps_tame & (TAME_INET | TAME_UNIX)))
 		return (0);
 	return (EPERM);
 }
@@ -899,11 +899,11 @@ tame_recvfrom_check(struct proc *p, void *v)
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & _TM_DNS_ACTIVE) && from == NULL)
+	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && from == NULL)
 		return (0);
-	if (p->p_p->ps_tame & _TM_INET)
+	if (p->p_p->ps_tame & TAME_INET)
 		return (0);
-	if (p->p_p->ps_tame & _TM_UNIX)
+	if (p->p_p->ps_tame & TAME_UNIX)
 		return (0);
 	if (from == NULL)
 		return (0);		/* behaves just like write */
@@ -918,12 +918,12 @@ tame_sendto_check(struct proc *p, const void *v)
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & _TM_DNS_ACTIVE) && to == NULL)
+	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && to == NULL)
 		return (0);
 
-	if ((p->p_p->ps_tame & _TM_INET))
+	if ((p->p_p->ps_tame & TAME_INET))
 		return (0);
-	if ((p->p_p->ps_tame & _TM_UNIX))
+	if ((p->p_p->ps_tame & TAME_UNIX))
 		return (0);
 	if (to == NULL)
 		return (0);		/* behaves just like write */
@@ -935,9 +935,9 @@ tame_socket_check(struct proc *p, int domain)
 {
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
-	if ((p->p_p->ps_tame & (_TM_INET | _TM_UNIX)))
+	if ((p->p_p->ps_tame & (TAME_INET | TAME_UNIX)))
 		return (0);
-	if ((p->p_p->ps_tame & _TM_DNS_ACTIVE) && domain == AF_INET)
+	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && domain == AF_INET)
 		return (0);
 	return (EPERM);
 }
@@ -948,7 +948,7 @@ tame_bind_check(struct proc *p, const void *v)
 
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
-	if ((p->p_p->ps_tame & _TM_INET))
+	if ((p->p_p->ps_tame & TAME_INET))
 		return (0);
 	return (EPERM);
 }
@@ -995,7 +995,7 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		break;
 	}
 
-	if ((p->p_p->ps_tame & _TM_IOCTL) == 0)
+	if ((p->p_p->ps_tame & TAME_IOCTL) == 0)
 		return (EPERM);
 
 	/*
@@ -1025,7 +1025,7 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		break;
 
 	case SIOCGIFGROUP:
-		if ((p->p_p->ps_tame & _TM_INET) &&
+		if ((p->p_p->ps_tame & TAME_INET) &&
 		    fp->f_type == DTYPE_SOCKET)
 			return (0);
 		break;
@@ -1083,9 +1083,9 @@ tame_dns_check(struct proc *p, in_port_t port)
 	if ((p->p_p->ps_flags & PS_TAMED) == 0)
 		return (0);
 
-	if ((p->p_p->ps_tame & _TM_INET))
+	if ((p->p_p->ps_tame & TAME_INET))
 		return (0);
-	if ((p->p_p->ps_tame & _TM_DNS_ACTIVE) && port == htons(53))
+	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && port == htons(53))
 		return (0);	/* Allow a DNS connect outbound */
 	return (EPERM);
 }

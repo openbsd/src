@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.292 2015/09/11 08:22:31 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.293 2015/09/11 15:29:47 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -175,7 +175,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	if (tame_sysctl_check(p, SCARG(uap, namelen), name, SCARG(uap, new)))
-		return (tame_fail(p, EPERM, _TM_SELF));
+		return (tame_fail(p, EPERM, TAME_SELF));
 
 	switch (name[0]) {
 	case CTL_KERN:
