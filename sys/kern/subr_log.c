@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.31 2015/09/02 13:21:37 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.32 2015/09/11 12:33:36 bluhm Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ sys_sendsyslog(struct proc *p, void *v, register_t *retval)
 
 	if (dropped_count) {
 		len = snprintf(buf, sizeof(buf),
-		    "<%d> sendsyslog: dropped %d message%s, error %d",
+		    "<%d>sendsyslog: dropped %d message%s, error %d",
 		    LOG_KERN|LOG_WARNING, dropped_count,
 		    dropped_count == 1 ? "" : "s", orig_error);
 		error = dosendsyslog(p, buf, MIN((size_t)len, sizeof(buf) - 1),
