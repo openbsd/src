@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.177 2015/09/11 08:22:31 guenther Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.178 2015/09/11 13:59:27 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -302,14 +302,10 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		sin = mtod(nam, struct sockaddr_in *);
 		if (nam->m_len != sizeof(*sin))
 			return (EINVAL);
-#ifdef notdef
-		/*
-		 * We should check the family, but old programs
-		 * incorrectly fail to initialize it.
-		 */
+
 		if (sin->sin_family != AF_INET)
 			return (EAFNOSUPPORT);
-#endif
+
 		lport = sin->sin_port;
 		if (IN_MULTICAST(sin->sin_addr.s_addr)) {
 			/*
