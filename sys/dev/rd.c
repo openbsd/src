@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.11 2015/09/11 20:25:32 dlg Exp $	*/
+/*	$OpenBSD: rd.c,v 1.12 2015/09/11 20:43:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew Dempsky <matthew@dempsky.org>
@@ -104,7 +104,7 @@ rdattach(int num)
 	        if (snprintf(sc->sc_dev.dv_xname, sizeof(sc->sc_dev.dv_xname),
 		    "rd%d", i) >= sizeof(sc->sc_dev.dv_xname))
 			panic("rdattach: device name too long");
-		refcnt_init(&sc->sc_dev.dv_ref);
+		sc->sc_dev.dv_ref = 1;
 
 		/* Attach it to the device tree. */
 		rd_cd.cd_devs[i] = sc;
