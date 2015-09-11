@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.205 2015/09/11 08:06:48 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.206 2015/09/11 09:22:07 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -693,7 +693,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	int i, altheader = 0, error, n=0, ourpart = -1, offset;
 
 	static const u_int8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
-	u_int8_t fstype;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
 
@@ -833,7 +832,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		 * In case the disklabel read below fails, we want to
 		 * provide a fake label in i-p.
 		 */
-		fstype = get_fstype(&uuid_part);
 
 		/*
 		 * Don't set fstype/offset/size when just looking for
@@ -848,7 +846,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 
 		pp = &lp->d_partitions[8+n];
 		n++;
-		pp->p_fstype = fstype;
+		pp->p_fstype = get_fstype(&uuid_part);
 		DL_SETPOFFSET(pp, letoh64(gp_tmp->gp_lba_start));
 		DL_SETPSIZE(pp, letoh64(gp_tmp->gp_lba_end)
 		    - letoh64(gp_tmp->gp_lba_start) + 1);
