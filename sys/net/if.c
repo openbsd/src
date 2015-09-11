@@ -1,10 +1,10 @@
-/*	$OpenBSD: if.c,v 1.370 2015/09/11 08:54:54 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.371 2015/09/11 09:00:40 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -159,17 +159,17 @@ void	ifa_print_all(void);
  *
  * the map is an array of struct ifnet pointers prefixed by an if_map
  * structure. the if_map structure stores the length of its array.
- * 
+ *
  * as interfaces are attached to the system, the map is grown on demand
  * up to USHRT_MAX entries.
- * 
+ *
  * interface index 0 is reserved and represents no interface. this
  * supports the use of the interface index as the scope for IPv6 link
  * local addresses, where scope 0 means no scope has been specified.
  * it also supports the use of interface index as the unique identifier
  * for network interfaces in SNMP applications as per RFC2863. therefore
  * if_get(0) returns NULL.
- */ 
+ */
 
 struct if_map {
 	unsigned long		 limit;
@@ -291,7 +291,7 @@ if_idxmap_insert(struct ifnet *ifp)
 	for (i = 0; i < USHRT_MAX; i++) {
 		if (index != 0 && map[index] == NULL)
 			break;
-		
+
 		index = if_idxmap.serial++ & USHRT_MAX;
 	}
 
