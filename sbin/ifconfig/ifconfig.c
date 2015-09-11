@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.299 2015/07/26 22:37:40 chl Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.300 2015/09/11 13:02:59 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -285,9 +285,9 @@ void	setignore(const char *, int);
  * only modify the set and clear words.  They then operate on the
  * current media word later.
  */
-int	media_current;
-int	mediaopt_set;
-int	mediaopt_clear;
+uint64_t	media_current;
+uint64_t	mediaopt_set;
+uint64_t	mediaopt_clear;
 
 int	actions;			/* Actions performed */
 
@@ -539,14 +539,14 @@ const char *get_string(const char *, const char *, u_int8_t *, int *);
 void	print_string(const u_int8_t *, int);
 char	*sec2str(time_t);
 
-const char *get_media_type_string(int);
-const char *get_media_subtype_string(int);
-int	get_media_mode(int, const char *);
-int	get_media_subtype(int, const char *);
-int	get_media_options(int, const char *);
-int	lookup_media_word(const struct ifmedia_description *, int,
+const char *get_media_type_string(uint64_t);
+const char *get_media_subtype_string(uint64_t);
+uint64_t	get_media_mode(uint64_t, const char *);
+uint64_t	get_media_subtype(uint64_t, const char *);
+uint64_t	get_media_options(uint64_t, const char *);
+uint64_t	lookup_media_word(const struct ifmedia_description *, uint64_t,
 	    const char *);
-void	print_media_word(int, int, int);
+void	print_media_word(uint64_t, int, int);
 void	process_media_commands(void);
 void	init_current_media(void);
 
@@ -2435,7 +2435,7 @@ process_media_commands(void)
 void
 setmedia(const char *val, int d)
 {
-	int type, subtype, inst;
+	uint64_t type, subtype, inst;
 
 	if (val == NULL) {
 		if (showmediaflag)
@@ -2479,7 +2479,7 @@ setmedia(const char *val, int d)
 void
 setmediamode(const char *val, int d)
 {
-	int type, subtype, options, inst, mode;
+	uint64_t type, subtype, options, inst, mode;
 
 	init_current_media();
 
@@ -2546,7 +2546,7 @@ unsetmediaopt(const char *val, int d)
 void
 setmediainst(const char *val, int d)
 {
-	int type, subtype, options, inst;
+	uint64_t type, subtype, options, inst;
 	const char *errmsg = NULL;
 
 	init_current_media();
@@ -2690,7 +2690,7 @@ const struct ifmedia_description ifm_option_descriptions[] =
     IFM_OPTION_DESCRIPTIONS;
 
 const char *
-get_media_type_string(int mword)
+get_media_type_string(uint64_t mword)
 {
 	const struct ifmedia_description *desc;
 
@@ -2703,7 +2703,7 @@ get_media_type_string(int mword)
 }
 
 const char *
-get_media_subtype_string(int mword)
+get_media_subtype_string(uint64_t mword)
 {
 	const struct ifmedia_description *desc;
 
@@ -2716,10 +2716,10 @@ get_media_subtype_string(int mword)
 	return ("<unknown subtype>");
 }
 
-int
-get_media_subtype(int type, const char *val)
+uint64_t
+get_media_subtype(uint64_t type, const char *val)
 {
-	int rval;
+	uint64_t rval;
 
 	rval = lookup_media_word(ifm_subtype_descriptions, type, val);
 	if (rval == -1)
@@ -2729,10 +2729,10 @@ get_media_subtype(int type, const char *val)
 	return (rval);
 }
 
-int
-get_media_mode(int type, const char *val)
+uint64_t
+get_media_mode(uint64_t type, const char *val)
 {
-	int rval;
+	uint64_t rval;
 
 	rval = lookup_media_word(ifm_mode_descriptions, type, val);
 	if (rval == -1)
@@ -2741,11 +2741,11 @@ get_media_mode(int type, const char *val)
 	return (rval);
 }
 
-int
-get_media_options(int type, const char *val)
+uint64_t
+get_media_options(uint64_t type, const char *val)
 {
 	char *optlist, *str;
-	int option, rval = 0;
+	uint64_t option, rval = 0;
 
 	/* We muck with the string, so copy it. */
 	optlist = strdup(val);
@@ -2768,8 +2768,8 @@ get_media_options(int type, const char *val)
 	return (rval);
 }
 
-int
-lookup_media_word(const struct ifmedia_description *desc, int type,
+uint64_t
+lookup_media_word(const struct ifmedia_description *desc, uint64_t type,
     const char *val)
 {
 
@@ -2782,10 +2782,10 @@ lookup_media_word(const struct ifmedia_description *desc, int type,
 }
 
 void
-print_media_word(int ifmw, int print_type, int as_syntax)
+print_media_word(uint64_t ifmw, int print_type, int as_syntax)
 {
 	const struct ifmedia_description *desc;
-	int seen_option = 0;
+	uint64_t seen_option = 0;
 
 	if (print_type)
 		printf("%s ", get_media_type_string(ifmw));
@@ -2880,7 +2880,7 @@ phys_status(int force)
 }
 
 #ifndef SMALL
-const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
+const uint64_t ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 
 const struct ifmedia_status_description ifm_status_descriptions[] =
 	IFM_STATUS_DESCRIPTIONS;
@@ -2917,7 +2917,8 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	struct ifkalivereq ikardesc;
 	char ifdescr[IFDESCRSIZE];
 #endif
-	int *media_list, i;
+	uint64_t *media_list;
+	int i;
 
 	printf("%s: ", name);
 	printb("flags", flags | (xflags << 16), IFFBITS);
@@ -2986,7 +2987,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 		goto proto_status;
 	}
 
-	media_list = calloc(ifmr.ifm_count, sizeof(int));
+	media_list = calloc(ifmr.ifm_count, sizeof(*media_list));
 	if (media_list == NULL)
 		err(1, "calloc");
 	ifmr.ifm_ulist = media_list;
@@ -3041,7 +3042,8 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	ieee80211_status();
 
 	if (showmediaflag) {
-		int type, printed_type = 0;
+		uint64_t type;
+		int printed_type = 0;
 
 		for (type = IFM_NMIN; type <= IFM_NMAX; type += IFM_NMIN) {
 			for (i = 0, printed_type = 0; i < ifmr.ifm_count; i++) {
