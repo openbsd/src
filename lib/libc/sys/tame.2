@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.26 2015/09/09 21:54:02 jmc Exp $
+.\" $OpenBSD: tame.2,v 1.27 2015/09/11 09:01:16 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2015 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt TAME 2
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ management, read-write operations on file descriptors, opening of files,
 networking.
 In general, these modes were selected by studying the operation
 of many programs using libc and other such interfaces, and setting
-.Ar flags
+.Ar request
 or
 .Ar paths .
 .Pp
@@ -54,8 +54,8 @@ is delivered instead, possibly resulting in a
 file.
 .Pp
 A
-.Fa flags
-value of 0 restricts the process to the
+.Fa request
+value of "" restricts the process to the
 .Xr _exit 2
 system call.
 This can be used for pure computation operating on memory shared
@@ -356,9 +356,9 @@ environment, so a successful
 .Xr open 2
 of
 .Pa /var/run/ypbind.lock
-enables the
+enables
 .Va "inet"
-flag.
+operations.
 .It Va "cmsg"
 Allows passing of file descriptors using the
 .Xr sendmsg 2
