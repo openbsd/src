@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.64 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.65 2015/09/11 08:27:39 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -416,14 +416,14 @@ void
 db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	char *mode;
-	int doingzomb = 0;
+	int skipzomb = 0;
 	struct proc *p;
 	struct process *pr, *ppr;
     
 	if (modif[0] == 0)
 		modif[0] = 'n';			/* default == normal mode */
 
-	mode = "mawn";
+	mode = "mawno";
 	while (*mode && *mode != modif[0])
 		mode++;
 	if (*mode == 0 || *mode == 'm') {
@@ -431,6 +431,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		db_printf("\t/a == show process address info\n");
 		db_printf("\t/n == show normal process info [default]\n");
 		db_printf("\t/w == show process wait/emul info\n");
+		db_printf("\t/o == show normal info for non-idle SONPROC\n");
 		return;
 	}
 	
@@ -439,16 +440,21 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	switch (*mode) {
 
 	case 'a':
-		db_printf("   PID  %-10s  %18s  %18s  %18s\n",
+		db_printf("   TID  %-10s  %18s  %18s  %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'n':
-		db_printf("   PID  %5s  %5s  %5s  S  %10s  %-12s  %-16s\n",
+		db_printf("   TID  %5s  %5s  %5s  S  %10s  %-12s  %-16s\n",
 		    "PPID", "PGRP", "UID", "FLAGS", "WAIT", "COMMAND");
 		break;
 	case 'w':
-		db_printf("   PID  %-16s  %-8s  %18s  %s\n",
+		db_printf("   TID  %-16s  %-8s  %18s  %s\n",
 		    "COMMAND", "EMUL", "WAIT-CHANNEL", "WAIT-MSG");
+		break;
+	case 'o':
+		skipzomb = 1;
+		db_printf("   TID  %5s  %5s  %10s %10s  %3s  %-31s\n",
+		    "PID", "UID", "PRFLAGS", "PFLAGS", "CPU", "COMMAND");
 		break;
 	}
 
@@ -457,6 +463,13 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 			if (p->p_stat) {
+				if (*mode == 'o') {
+					if (p->p_stat != SONPROC)
+						continue;
+					if (p->p_cpu != NULL && p->p_cpu->
+					    ci_schedstate.spc_idleproc == p)
+						continue;
+				}
 				db_printf("%c%5d  ", p == curproc ? '*' : ' ',
 					p->p_pid);
 
@@ -485,12 +498,21 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 						p->p_wmesg : "");
 					break;
 
+				case 'o':
+					db_printf("%5d  %5d  %#10x %#10x  %3d"
+					    "  %-31s\n",
+					    pr->ps_pid, pr->ps_ucred->cr_ruid,
+					    pr->ps_flags, p->p_flag,
+					    CPU_INFO_UNIT(p->p_cpu),
+					    p->p_comm);
+					break;
+
 				}
 			}
 		}
 		pr = LIST_NEXT(pr, ps_list);
-		if (pr == NULL && doingzomb == 0) {
-			doingzomb = 1;
+		if (pr == NULL && skipzomb == 0) {
+			skipzomb = 1;
 			pr = LIST_FIRST(&zombprocess);
 		}
 	}
