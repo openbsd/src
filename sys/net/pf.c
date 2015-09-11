@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.940 2015/09/11 08:17:06 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.941 2015/09/11 15:21:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5418,8 +5418,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	} else
 		ret = 0;
 out:
-	if (rt0 != NULL)
-		rtfree(rt0);
+	rtfree(rt0);
 	return (ret);
 }
 
@@ -5615,8 +5614,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 done:
 	if (r->rt != PF_DUPTO)
 		*m = NULL;
-	if (rt != NULL)
-		rtfree(rt);
+	rtfree(rt);
 	return;
 
 bad:
