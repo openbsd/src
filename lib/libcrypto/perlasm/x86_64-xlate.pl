@@ -121,7 +121,7 @@ my %globals;
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /^v/) { # VEX
 		$self->{sz} = "";
-	    } elsif ($self->{op} =~ /movq/ && $line =~ /%xmm/) {
+	    } elsif ($self->{op} =~ /mov[dq]/ && $line =~ /%xmm/) {
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
@@ -696,6 +696,20 @@ my $pinsrd = sub {
     } else {
 	();
     }
+};
+
+my $pclmulqdq = sub {
+	if (shift =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+		my @opcode=(0x66);
+		rex(\@opcode,$3,$2);
+		push @opcode,0x0f,0x3a,0x44;
+		push @opcode,0xc0|($2&7)|(($3&7)<<3);           # ModR/M
+		my $c=$1;
+		push @opcode,$c=~/^0/?oct($c):$c;
+		@opcode;
+	} else {
+		();
+	}
 };
 
 if ($nasm) {

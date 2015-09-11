@@ -120,7 +120,7 @@ $code.=<<___;
 	lea	$STRIDE($bp),$bp
 	por	%xmm3,%xmm0
 
-	movq	%xmm0,$m0		# m0=bp[0]
+	movd	%xmm0,$m0		# m0=bp[0]
 
 	mov	($n0),$n0		# pull n0[0] value
 	mov	($ap),%rax
@@ -183,7 +183,7 @@ $code.=<<___;
 	cmp	$num,$j
 	jl	.L1st
 
-	movq	%xmm0,$m0		# bp[1]
+	movd	%xmm0,$m0		# bp[1]
 
 	add	%rax,$hi1
 	mov	($ap),%rax		# ap[0]
@@ -266,7 +266,7 @@ $code.=<<___;
 	cmp	$num,$j
 	jl	.Linner
 
-	movq	%xmm0,$m0		# bp[i+1]
+	movd	%xmm0,$m0		# bp[i+1]
 
 	add	%rax,$hi1
 	mov	($ap),%rax		# ap[0]
@@ -403,7 +403,7 @@ $code.=<<___;
 	lea	$STRIDE($bp),$bp
 	por	%xmm3,%xmm0
 
-	movq	%xmm0,$m0		# m0=bp[0]
+	movd	%xmm0,$m0		# m0=bp[0]
 	mov	($n0),$n0		# pull n0[0] value
 	mov	($ap),%rax
 
@@ -550,7 +550,7 @@ $code.=<<___;
 	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
-	movq	%xmm0,$m0		# bp[1]
+	movd	%xmm0,$m0		# bp[1]
 
 	xor	$N[1],$N[1]
 	add	$A[0],$N[0]
@@ -718,7 +718,7 @@ $code.=<<___;
 	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
-	movq	%xmm0,$m0		# bp[i+1]
+	movd	%xmm0,$m0		# bp[i+1]
 	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
 
 	xor	$N[1],$N[1]
