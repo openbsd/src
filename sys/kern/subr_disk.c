@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.204 2015/09/10 16:30:23 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.205 2015/09/11 08:06:48 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -824,7 +824,9 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 
 		uuid_dec_le(&gp_tmp->gp_type, &uuid_part);
 		if (!memcmp(&uuid_part, &uuid_openbsd, sizeof(struct uuid))) {
-			ourpart = i; /* found it */
+			if (ourpart == -1)
+				ourpart = i; /* found it */
+			continue; /* Do *NOT* spoof OpenBSD partitions! */
 		}
 
 		/*
