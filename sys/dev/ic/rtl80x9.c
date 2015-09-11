@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: rtl80x9.c,v 1.11 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ void
 rtl80x9_media_init(sc)
 	struct dp8390_softc *sc;
 {
-	static int rtl80x9_media[] = {
+	static uint64_t rtl80x9_media[] = {
 		IFM_ETHER|IFM_AUTO,
 		IFM_ETHER|IFM_10_T,
 		IFM_ETHER|IFM_10_T|IFM_FDX,
@@ -168,7 +168,8 @@ rtl80x9_media_init(sc)
 	static const int rtl80x9_nmedia =
 	    sizeof(rtl80x9_media) / sizeof(rtl80x9_media[0]);
 
-	int i, defmedia;
+	int i;
+	uint64_t defmedia;
 	u_int8_t conf2, conf3;
 
 	/* Set NIC to page 3 registers. */

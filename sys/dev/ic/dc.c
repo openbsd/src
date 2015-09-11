@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.142 2015/08/30 02:12:23 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.143 2015/09/11 13:02:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -182,7 +182,7 @@ void dc_decode_leaf_mii(struct dc_softc *,
 				     struct dc_eblock_mii *);
 void dc_decode_leaf_sym(struct dc_softc *,
 				     struct dc_eblock_sym *);
-void dc_apply_fixup(struct dc_softc *, int);
+void dc_apply_fixup(struct dc_softc *, uint64_t);
 
 #define DC_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | (x))
@@ -1359,7 +1359,7 @@ dc_reset(struct dc_softc *sc)
 }
 
 void
-dc_apply_fixup(struct dc_softc *sc, int media)
+dc_apply_fixup(struct dc_softc *sc, uint64_t media)
 {
 	struct dc_mediainfo *m;
 	u_int8_t *p;

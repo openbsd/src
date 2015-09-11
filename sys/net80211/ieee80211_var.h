@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.62 2012/01/21 19:42:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.63 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -387,9 +387,9 @@ int	ieee80211_ioctl(struct ifnet *, u_long, caddr_t);
 int	ieee80211_get_rate(struct ieee80211com *);
 void	ieee80211_watchdog(struct ifnet *);
 int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_node *, int);
-int	ieee80211_rate2media(struct ieee80211com *, int,
-		enum ieee80211_phymode);
-int	ieee80211_media2rate(int);
+uint64_t	ieee80211_rate2media(struct ieee80211com *, int,
+		    enum ieee80211_phymode);
+int	ieee80211_media2rate(uint64_t);
 u_int8_t ieee80211_rate2plcp(u_int8_t, enum ieee80211_phymode);
 u_int8_t ieee80211_plcp2rate(u_int8_t, enum ieee80211_phymode);
 u_int	ieee80211_mhz2ieee(u_int, u_int);

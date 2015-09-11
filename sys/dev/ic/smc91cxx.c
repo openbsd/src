@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.40 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.41 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -135,7 +135,7 @@ const char *smc91cxx_idstrs[] = {
 };
 
 /* Supported media types. */
-const int smc91cxx_media[] = {
+const uint64_t smc91cxx_media[] = {
 	IFM_ETHER|IFM_10_T,
 	IFM_ETHER|IFM_10_5,
 };
@@ -172,7 +172,7 @@ void	smc91cxx_tick(void *);
 int	smc91cxx_mediachange(struct ifnet *);
 void	smc91cxx_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int	smc91cxx_set_media(struct smc91cxx_softc *, int);
+int	smc91cxx_set_media(struct smc91cxx_softc *, uint64_t);
 
 void	smc91cxx_read(struct smc91cxx_softc *);
 void	smc91cxx_reset(struct smc91cxx_softc *);
@@ -330,7 +330,7 @@ smc91cxx_mediachange(ifp)
 int
 smc91cxx_set_media(sc, media)
 	struct smc91cxx_softc *sc;
-	int media;
+	uint64_t media;
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;

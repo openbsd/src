@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.86 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.87 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ struct ep_media {
 	int	epm_eeprom_data;	/* bitmask for eeprom config */
 	int	epm_conn;		/* sc->ep_connectors code for medium */
 	char   *epm_name;		/* name of medium */
-	int	epm_ifmedia;		/* ifmedia word for medium */
+	uint64_t	epm_ifmedia;		/* ifmedia word for medium */
 	int	epm_ifdata;
 };
 
@@ -118,7 +118,7 @@ struct ep_media ep_isa_media[] = {
 };
 
 /* Map vortex reset_options bits to if_media codes. */
-const u_int ep_default_to_media[] = {
+const uint64_t ep_default_to_media[] = {
 	IFM_ETHER | IFM_10_T,
 	IFM_ETHER | IFM_10_5,
 	0, 			/* reserved by 3Com */

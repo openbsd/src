@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.16 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.17 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: if_le.c,v 1.17 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ void	leattach_sbus(struct device *, struct device *, void *);
 /*
  * Media types supported.
  */
-static int lemedia[] = {
+static uint64_t lemedia[] = {
 	IFM_ETHER | IFM_10_5
 };
 

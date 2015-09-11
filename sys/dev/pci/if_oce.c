@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.85 2015/06/29 18:58:04 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.86 2015/09/11 13:02:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -322,7 +322,7 @@ struct oce_softc {
 	struct ifmedia		sc_media;
 	ushort			sc_link_up;
 	ushort			sc_link_speed;
-	uint			sc_fc;
+	uint64_t		sc_fc;
 
 	struct oce_dma_mem	sc_mbx;
 	struct oce_dma_mem	sc_pld;
@@ -472,7 +472,7 @@ int	oce_check_native_mode(struct oce_softc *);
 int	oce_create_iface(struct oce_softc *, uint8_t *macaddr);
 int	oce_config_vlan(struct oce_softc *, struct normal_vlan *vtags,
 	    int nvtags, int untagged, int promisc);
-int	oce_set_flow_control(struct oce_softc *, uint flags);
+int	oce_set_flow_control(struct oce_softc *, uint64_t);
 int	oce_config_rss(struct oce_softc *, int enable);
 int	oce_update_mcast(struct oce_softc *, uint8_t multi[][ETHER_ADDR_LEN],
 	    int naddr);
@@ -3032,7 +3032,7 @@ oce_config_vlan(struct oce_softc *sc, struct normal_vlan *vtags, int nvtags,
  * @returns		0 on success, EIO on failure
  */
 int
-oce_set_flow_control(struct oce_softc *sc, uint flags)
+oce_set_flow_control(struct oce_softc *sc, uint64_t flags)
 {
 	struct mbx_common_get_set_flow_control cmd;
 	int err;

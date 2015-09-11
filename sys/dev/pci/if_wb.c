@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.61 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.62 2015/09/11 13:02:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -155,7 +155,7 @@ void wb_mii_send(struct wb_softc *, u_int32_t, int);
 int wb_mii_readreg(struct wb_softc *, struct wb_mii_frame *);
 int wb_mii_writereg(struct wb_softc *, struct wb_mii_frame *);
 
-void wb_setcfg(struct wb_softc *, u_int32_t);
+void wb_setcfg(struct wb_softc *, uint64_t);
 u_int8_t wb_calchash(caddr_t);
 void wb_setmulti(struct wb_softc *);
 void wb_reset(struct wb_softc *);
@@ -580,7 +580,7 @@ void wb_setmulti(sc)
 void
 wb_setcfg(sc, media)
 	struct wb_softc *sc;
-	u_int32_t media;
+	uint64_t media;
 {
 	int			i, restart = 0;
 
@@ -654,7 +654,7 @@ wb_fixmedia(sc)
 	struct wb_softc *sc;
 {
 	struct mii_data *mii = &sc->sc_mii;
-	u_int32_t media;
+	uint64_t media;
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL)
 		return;

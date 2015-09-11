@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.73 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: hme.c,v 1.74 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -259,7 +259,7 @@ hme_config(struct hme_softc *sc)
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
 				printf("%s: cannot accommodate MII device %s"
-				    " at phy %d, instance %d\n",
+				    " at phy %d, instance %lld\n",
 				    sc->sc_dev.dv_xname,
 				    child->mii_dev.dv_xname,
 				    child->mii_phy, child->mii_inst);
@@ -1104,7 +1104,7 @@ hme_mediachange(struct ifnet *ifp)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
-	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+	uint64_t instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 	int phy = sc->sc_phys[instance];
 	u_int32_t v;
 

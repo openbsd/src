@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.50 2015/08/30 02:12:23 deraadt Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.51 2015/09/11 13:02:28 stsp Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -505,7 +505,7 @@ struct dc_chain_data {
 };
 
 struct dc_mediainfo {
-	int			dc_media;
+	uint64_t		dc_media;
 	u_int8_t		*dc_gp_ptr;
 	u_int8_t		dc_gp_len;
 	u_int8_t		*dc_reset_ptr;
@@ -742,7 +742,7 @@ struct dc_softc {
 	u_int			dc_revision;
 	struct timeout		dc_tick_tmo;
 #ifdef SRM_MEDIA
-	int			dc_srm_media;
+	uint64_t		dc_srm_media;
 #endif
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_listmap;

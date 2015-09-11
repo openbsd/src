@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.112 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: gem.c,v 1.113 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1315,7 +1315,7 @@ gem_mii_statchg(struct device *dev)
 {
 	struct gem_softc *sc = (void *)dev;
 #ifdef GEM_DEBUG
-	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+	uint64_t instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 #endif
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_h1;
@@ -1323,7 +1323,7 @@ gem_mii_statchg(struct device *dev)
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
-		printf("gem_mii_statchg: status change: phy = %d\n", instance);
+		printf("gem_mii_statchg: status change: phy = %lld\n", instance);
 #endif
 
 	/* Set tx full duplex options */

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.303 2015/09/01 09:48:50 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.304 2015/09/11 13:02:28 stsp Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -209,7 +209,7 @@ void em_init(void *);
 void em_stop(void *, int);
 void em_media_status(struct ifnet *, struct ifmediareq *);
 int  em_media_change(struct ifnet *);
-int  em_flowstatus(struct em_softc *);
+uint64_t  em_flowstatus(struct em_softc *);
 void em_identify_hardware(struct em_softc *);
 int  em_allocate_pci_resources(struct em_softc *);
 void em_free_pci_resources(struct em_softc *);
@@ -958,7 +958,7 @@ void
 em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct em_softc *sc = ifp->if_softc;
-	u_char fiber_type = IFM_1000_SX;
+	uint64_t fiber_type = IFM_1000_SX;
 	u_int16_t gsr;
 
 	INIT_DEBUGOUT("em_media_status: begin");
@@ -1068,7 +1068,7 @@ em_media_change(struct ifnet *ifp)
 	return (0);
 }
 
-int
+uint64_t
 em_flowstatus(struct em_softc *sc)
 {
 	u_int16_t ar, lpar;
@@ -1870,7 +1870,7 @@ void
 em_setup_interface(struct em_softc *sc)
 {
 	struct ifnet   *ifp;
-	u_char fiber_type = IFM_1000_SX;
+	uint64_t fiber_type = IFM_1000_SX;
 
 	INIT_DEBUGOUT("em_setup_interface: begin");
 

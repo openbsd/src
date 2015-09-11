@@ -1,4 +1,4 @@
-/*	$OpenBSD: lancevar.h,v 1.2 2015/05/01 14:56:18 mpi Exp $	*/
+/*	$OpenBSD: lancevar.h,v 1.3 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: lancevar.h,v 1.15 2012/02/02 19:43:03 tls Exp $	*/
 
 /*-
@@ -70,9 +70,9 @@ struct lance_softc {
 	 * Media-supported by this interface.  If this is NULL,
 	 * the only supported media is assumed to be "manual".
 	 */
-	const int	*sc_supmedia;
-	int	sc_nsupmedia;
-	int	sc_defaultmedia;
+	const uint64_t	*sc_supmedia;
+	int		sc_nsupmedia;
+	uint64_t	sc_defaultmedia;
 
 	/* PCnet bit to use software selection of a port */
 	int	sc_initmodemedia;

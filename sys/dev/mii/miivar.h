@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.32 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.33 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -70,13 +70,13 @@ struct mii_data {
 	 * request is made.
 	 */
 	LIST_HEAD(mii_listhead, mii_softc) mii_phys;
-	int mii_instance;
+	uint64_t mii_instance;
 
 	/*
 	 * PHY driver fills this in with active media status.
 	 */
-	int mii_media_status;
-	int mii_media_active;
+	uint64_t mii_media_status;
+	uint64_t mii_media_active;
 
 	/*
 	 * Calls from MII layer into network interface driver.
@@ -116,7 +116,7 @@ struct mii_softc {
 	int mii_model;			/* MII_MODEL(ma->mii_id2) */
 	int mii_rev;			/* MII_REV(ma->mii_id2) */
 	int mii_offset;			/* first PHY, second PHY, etc. */
-	int mii_inst;			/* instance for ifmedia */
+	uint64_t mii_inst;		/* instance for ifmedia */
 
 	/* Our PHY functions. */
 	const struct mii_phy_funcs *mii_funcs;
@@ -240,7 +240,7 @@ int	mii_mediachg(struct mii_data *);
 void	mii_tick(struct mii_data *);
 void	mii_pollstat(struct mii_data *);
 void	mii_down(struct mii_data *);
-int	mii_anar(int);
+int	mii_anar(uint64_t);
 
 int	mii_phy_detach(struct device *, int);
 
@@ -261,7 +261,7 @@ void	mii_phy_status(struct mii_softc *);
 void	mii_phy_update(struct mii_softc *, int);
 int	mii_phy_statusmsg(struct mii_softc *);
 
-int	mii_phy_flowstatus(struct mii_softc *);
+uint64_t	mii_phy_flowstatus(struct mii_softc *);
 
 void	ukphy_status(struct mii_softc *);
 

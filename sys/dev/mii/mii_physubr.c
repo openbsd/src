@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.44 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.45 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -509,7 +509,7 @@ mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
 /*
  * Return the flow control status flag from MII_ANAR & MII_ANLPAR.
  */
-int
+uint64_t
 mii_phy_flowstatus(struct mii_softc *sc)
 {
 	int anar, anlpar;
@@ -561,7 +561,7 @@ mii_phy_flowstatus(struct mii_softc *sc)
  * Given an ifmedia word, return the corresponding ANAR value.
  */
 int
-mii_anar(int media)
+mii_anar(uint64_t media)
 {
 	int rv;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.166 2015/09/09 16:01:10 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.167 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -348,12 +348,13 @@ struct ifgroupreq {
 struct	ifreq {
 	char	ifr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	union {
-		struct	sockaddr ifru_addr;
-		struct	sockaddr ifru_dstaddr;
-		struct	sockaddr ifru_broadaddr;
-		short	ifru_flags;
-		int	ifru_metric;
-		caddr_t	ifru_data;
+		struct	sockaddr	ifru_addr;
+		struct	sockaddr	ifru_dstaddr;
+		struct	sockaddr	ifru_broadaddr;
+		short			ifru_flags;
+		int			ifru_metric;
+		uint64_t		ifru_media;
+		caddr_t			ifru_data;
 	} ifr_ifru;
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
@@ -362,7 +363,7 @@ struct	ifreq {
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_metric	/* mtu (overload) */
 #define	ifr_hardmtu	ifr_ifru.ifru_metric	/* hardmtu (overload) */
-#define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
+#define	ifr_media	ifr_ifru.ifru_media	/* media options */
 #define	ifr_rdomainid	ifr_ifru.ifru_metric	/* VRF instance (overload) */
 #define ifr_vnetid	ifr_ifru.ifru_metric	/* Virtual Net Id (overload) */
 #define ifr_ttl		ifr_ifru.ifru_metric	/* tunnel TTL (overload) */
@@ -384,14 +385,14 @@ struct ifaliasreq {
 };
 
 struct ifmediareq {
-	char	ifm_name[IFNAMSIZ];		/* if name, e.g. "en0" */
-	int	ifm_current;			/* current media options */
-	int	ifm_mask;			/* don't care mask */
-	int	ifm_status;			/* media status */
-	int	ifm_active;			/* active options */ 
-	int	ifm_count;			/* # entries in ifm_ulist
-							array */
-	int	*ifm_ulist;			/* media words */
+	char		ifm_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	uint64_t	ifm_current;		/* get/set current media options */
+	uint64_t	ifm_mask;		/* don't care mask */
+	uint64_t	ifm_status;		/* media status */
+	uint64_t	ifm_active;		/* active options */ 
+	int		ifm_count;		/* # entries in ifm_ulist
+						array */
+	uint64_t	*ifm_ulist;		/* media words */
 };
 
 struct ifkalivereq {

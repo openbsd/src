@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.36 2014/12/22 02:26:54 tedu Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.37 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -93,18 +93,18 @@ int	lemediachange(struct lance_softc *);
 void	lemediastatus(struct lance_softc *, struct ifmediareq *);
 
 #if defined(SUN4C) || defined(SUN4D) || defined(SUN4E) || defined(SUN4M)
-static int lebufmedia[] = {
+static uint64_t lebufmedia[] = {
 	IFM_ETHER | IFM_10_T
 };
 #endif
 #if defined(SUN4M)
-static int ledmamedia[] = {
+static uint64_t ledmamedia[] = {
 	IFM_ETHER | IFM_10_T,
 	IFM_ETHER | IFM_10_5,
 	IFM_ETHER | IFM_AUTO
 };
 #endif
-static int lebaremedia[] = {
+static uint64_t lebaremedia[] = {
 	IFM_ETHER | IFM_10_5
 };
 

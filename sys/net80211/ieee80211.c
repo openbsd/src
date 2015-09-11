@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.44 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.45 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -250,7 +250,8 @@ ieee80211_media_init(struct ifnet *ifp,
 		IFM_MAKEWORD(IFM_IEEE80211, (_s), (_o), 0), 0, NULL)
 	struct ieee80211com *ic = (void *)ifp;
 	struct ifmediareq imr;
-	int i, j, mode, rate, maxrate, mword, mopt, r;
+	int i, j, mode, rate, maxrate, r;
+	uint64_t mword, mopt;
 	const struct ieee80211_rateset *rs;
 	struct ieee80211_rateset allrates;
 
@@ -267,7 +268,7 @@ ieee80211_media_init(struct ifnet *ifp,
 	maxrate = 0;
 	memset(&allrates, 0, sizeof(allrates));
 	for (mode = IEEE80211_MODE_AUTO; mode < IEEE80211_MODE_MAX; mode++) {
-		static const u_int mopts[] = {
+		static const uint64_t mopts[] = {
 			IFM_AUTO,
 			IFM_IEEE80211_11A,
 			IFM_IEEE80211_11B,
@@ -816,13 +817,13 @@ ieee80211_chan2mode(struct ieee80211com *ic,
  * convert IEEE80211 rate value to ifmedia subtype.
  * ieee80211 rate is in unit of 0.5Mbps.
  */
-int
+uint64_t
 ieee80211_rate2media(struct ieee80211com *ic, int rate,
     enum ieee80211_phymode mode)
 {
 	static const struct {
-		u_int	m;	/* rate + mode */
-		u_int	r;	/* if_media rate */
+		uint64_t	m;	/* rate + mode */
+		uint64_t	r;	/* if_media rate */
 	} rates[] = {
 		{   2 | IFM_IEEE80211_11B, IFM_IEEE80211_DS1 },
 		{   4 | IFM_IEEE80211_11B, IFM_IEEE80211_DS2 },
@@ -851,7 +852,8 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 		{ 108 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM54 },
 		/* NB: OFDM72 doesn't really exist so we don't handle it */
 	};
-	u_int mask, i;
+	uint64_t mask;
+	int i;
 
 	mask = rate & IEEE80211_RATE_VAL;
 	switch (mode) {
@@ -876,11 +878,11 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 }
 
 int
-ieee80211_media2rate(int mword)
+ieee80211_media2rate(uint64_t mword)
 {
 	int i;
 	static const struct {
-		int subtype;
+		uint64_t subtype;
 		int rate;
 	} ieeerates[] = {
 		{ IFM_AUTO,		-1	},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.28 2015/09/11 12:09:10 claudio Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.29 2015/09/11 13:02:28 stsp Exp $	*/
 
 /******************************************************************************
 
@@ -246,7 +246,7 @@ struct ix_softc {
 	uint32_t		shadow_vfta[IXGBE_VFTA_SIZE];
 
 	/* Info about the interface */
-	uint			optics;
+	uint64_t		optics;
 	uint32_t		fc; /* local flow ctrl setting */
 	int			advertise;  /* link speeds */
 	uint16_t		max_frame_size;

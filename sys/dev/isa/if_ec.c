@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.13 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.14 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@ struct cfattach ec_ca = {
 	sizeof(struct ec_softc), ec_probe, ec_attach
 };
 
-int	ec_set_media(struct ec_softc *, int);
+int	ec_set_media(struct ec_softc *, uint64_t);
 
 void	ec_media_init(struct dp8390_softc *);
 
@@ -739,7 +739,7 @@ ec_init_card(struct dp8390_softc *sc)
 }
 
 int
-ec_set_media(struct ec_softc *esc, int media)
+ec_set_media(struct ec_softc *esc, uint64_t media)
 {
 	u_int8_t new;
 

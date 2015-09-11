@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.125 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: xl.c,v 1.126 2015/09/11 13:02:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -166,7 +166,7 @@ int xl_mii_readreg(struct xl_softc *, struct xl_mii_frame *);
 int xl_mii_writereg(struct xl_softc *, struct xl_mii_frame *);
 
 void xl_setcfg(struct xl_softc *);
-void xl_setmode(struct xl_softc *, int);
+void xl_setmode(struct xl_softc *, uint64_t);
 void xl_iff(struct xl_softc *);
 void xl_iff_90x(struct xl_softc *);
 void xl_iff_905b(struct xl_softc *);
@@ -676,7 +676,7 @@ xl_setcfg(struct xl_softc *sc)
 }
 
 void
-xl_setmode(struct xl_softc *sc, int media)
+xl_setmode(struct xl_softc *sc, uint64_t media)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int32_t icfg;
@@ -2349,7 +2349,8 @@ xl_attach(struct xl_softc *sc)
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int16_t		xcvr[2];
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
+	int i;
+	uint64_t media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	struct ifmedia *ifm;
 
 	i = splnet();

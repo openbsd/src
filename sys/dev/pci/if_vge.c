@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.63 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.64 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1739,7 +1739,7 @@ vge_miibus_statchg(struct device *dev)
 		}
 		break;
 	default:
-		printf("%s: unknown media type: %x\n",
+		printf("%s: unknown media type: %llx\n",
 		    sc->vge_dev.dv_xname, IFM_SUBTYPE(ife->ifm_media));
 		break;
 	}

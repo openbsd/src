@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.35 2015/06/26 11:50:39 kettenis Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.36 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -644,7 +644,7 @@ static const char * const tulip_mediums[] = {
 };
 #endif
 
-static const int tulip_media_to_ifmedia[] = {
+static const uint64_t tulip_media_to_ifmedia[] = {
     IFM_ETHER | IFM_NONE,		/* TULIP_MEDIA_UNKNOWN */
     IFM_ETHER | IFM_10_T,		/* TULIP_MEDIA_10BASET */
     IFM_ETHER | IFM_10_T | IFM_FDX,	/* TULIP_MEDIA_10BASET_FD */

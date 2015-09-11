@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.59 2015/07/21 04:14:52 rzalamena Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.60 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -76,8 +76,9 @@
 #define	SIOCGETVIFCNT	_IOWR('u', 51, struct sioc_vif_req)/* vif pkt cnt */
 #define	SIOCGETSGCNT	_IOWR('u', 52, struct sioc_sg_req) /* sg pkt cnt */
 
-#define	SIOCSIFMEDIA	_IOWR('i', 53, struct ifreq)	/* set net media */
-#define	SIOCGIFMEDIA	_IOWR('i', 54, struct ifmediareq) /* get net media */
+/* 53 and 54 used to be SIOC[SG]IFMEDIA with a 32 bit media word */
+#define	SIOCSIFMEDIA	_IOWR('i', 55, struct ifreq)	/* set net media */
+#define	SIOCGIFMEDIA	_IOWR('i', 56, struct ifmediareq) /* get net media */
 
 #define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif address */
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */

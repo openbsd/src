@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.41 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.42 2015/09/11 13:02:28 stsp Exp $	*/
 
 /*
  *
@@ -560,7 +560,7 @@ cas_config(struct cas_softc *sc)
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
 				printf("%s: cannot accommodate MII device %s"
-				       " at phy %d, instance %d\n",
+				       " at phy %d, instance %lld\n",
 				       sc->sc_dev.dv_xname,
 				       child->mii_dev.dv_xname,
 				       child->mii_phy, child->mii_inst);
@@ -1489,7 +1489,7 @@ cas_mii_statchg(struct device *dev)
 {
 	struct cas_softc *sc = (void *)dev;
 #ifdef CAS_DEBUG
-	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+	uint64_t instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 #endif
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t mac = sc->sc_memh;

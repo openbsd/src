@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.23 2014/08/11 12:45:45 mpi Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.24 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -747,7 +747,7 @@ void
 we_media_init(struct dp8390_softc *sc)
 {
 	struct we_softc *wsc = (void *)sc;
-	int defmedia = IFM_ETHER;
+	uint64_t defmedia = IFM_ETHER;
 	u_int8_t x;
 
 	if (sc->is790) {

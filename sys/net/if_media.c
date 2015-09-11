@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.26 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.27 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -96,14 +96,14 @@
 
 #ifdef IFMEDIA_DEBUG
 int	ifmedia_debug = 0;
-static	void ifmedia_printword(int);
+static	void ifmedia_printword(uint64_t);
 #endif
 
 /*
  * Initialize if_media struct for a specific interface instance.
  */
 void
-ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
+ifmedia_init(struct ifmedia *ifm, uint64_t dontcare_mask,
     ifm_change_cb_t change_callback, ifm_stat_cb_t status_callback)
 {
 	TAILQ_INIT(&ifm->ifm_list);
@@ -119,7 +119,7 @@ ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
  * for a specific interface instance.
  */
 void
-ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux)
+ifmedia_add(struct ifmedia *ifm, uint64_t mword, int data, void *aux)
 {
 	struct ifmedia_entry *entry;
 
@@ -167,7 +167,7 @@ ifmedia_list_add(struct ifmedia *ifm, struct ifmedia_entry *lp, int count)
  * media-change callback.
  */
 void
-ifmedia_set(struct ifmedia *ifm, int target)
+ifmedia_set(struct ifmedia *ifm, uint64_t target)
 {
 	struct ifmedia_entry *match;
 
@@ -188,7 +188,7 @@ ifmedia_set(struct ifmedia *ifm, int target)
 	 * In either case, it makes sense to select no media.
 	 */
 	if (match == NULL) {
-		printf("ifmedia_set: no match for 0x%x/0x%x\n",
+		printf("ifmedia_set: no match for 0x%llx/0x%llx\n",
 		    target, ~ifm->ifm_mask);
 		target = (target & IFM_NMASK) | IFM_NONE;
 		match = ifmedia_match(ifm, target, ifm->ifm_mask);
@@ -219,7 +219,6 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
     u_long cmd)
 {
 	struct ifmedia_entry *match;
-	struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
 	int error = 0;
 
 	if (ifp == NULL || ifr == NULL || ifm == NULL)
@@ -230,11 +229,11 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	/*
 	 * Set the current media.
 	 */
-	case  SIOCSIFMEDIA:
+	case SIOCSIFMEDIA:
 	{
 		struct ifmedia_entry *oldentry;
-		u_int oldmedia;
-		u_int newmedia = ifr->ifr_media;
+		uint64_t oldmedia;
+		uint64_t newmedia = ifr->ifr_media;
 
 		match = ifmedia_match(ifm, newmedia, ifm->ifm_mask);
 		if (match == NULL) {
@@ -287,6 +286,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	 */
 	case  SIOCGIFMEDIA: 
 	{
+		struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
 		struct ifmedia_entry *ep;
 		size_t nwords;
 
@@ -309,11 +309,11 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 
 		if (ifmr->ifm_count != 0) {
 			size_t minwords;
-			int *kptr;
+			uint64_t *kptr;
 
 			minwords = nwords > (size_t)ifmr->ifm_count ?
 			    (size_t)ifmr->ifm_count : nwords;
-			kptr = mallocarray(nwords, sizeof(int), M_TEMP,
+			kptr = mallocarray(nwords, sizeof(*kptr), M_TEMP,
 			    M_WAITOK | M_ZERO);
 			/*
 			 * Get the media words from the interface's list.
@@ -324,7 +324,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 				kptr[nwords++] = ep->ifm_media;
 			if (ep == NULL)
 				error = copyout(kptr, ifmr->ifm_ulist,
-				    nwords * sizeof(int));
+				    nwords * sizeof(*kptr));
 			else
 				error = E2BIG;
 			free(kptr, M_TEMP, 0);
@@ -344,7 +344,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
  * Find media entry matching a given ifm word.
  */
 struct ifmedia_entry *
-ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
+ifmedia_match(struct ifmedia *ifm, uint64_t target, uint64_t mask)
 {
 	struct ifmedia_entry *match, *next;
 
@@ -356,7 +356,7 @@ ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
 			if (match) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 				printf("ifmedia_match: multiple match for "
-				    "0x%x/0x%x, selected instance %d\n",
+				    "0x%llx/0x%llx, selected instance %lld\n",
 				    target, mask, IFM_INST(match->ifm_media));
 #endif
 				break;
@@ -372,7 +372,7 @@ ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
  * Delete all media for a given instance.
  */
 void
-ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
+ifmedia_delete_instance(struct ifmedia *ifm, uint64_t inst)
 {
 	struct ifmedia_entry *ife, *nife;
 
@@ -392,8 +392,8 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
     IFM_BAUDRATE_DESCRIPTIONS;
 
-u_int64_t
-ifmedia_baudrate(int mword)
+uint64_t
+ifmedia_baudrate(uint64_t mword)
 {
 	int i;
 
@@ -422,10 +422,10 @@ struct ifmedia_description ifm_option_descriptions[] =
  * print a media word.
  */
 static void
-ifmedia_printword(int ifmw)
+ifmedia_printword(uint64_t ifmw)
 {
 	struct ifmedia_description *desc;
-	int seen_option = 0;
+	uint64_t seen_option = 0;
 
 	/* Print the top-level interface type. */
 	for (desc = ifm_type_descriptions; desc->ifmt_string != NULL;

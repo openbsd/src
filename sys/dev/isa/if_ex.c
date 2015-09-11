@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.39 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.40 2015/09/11 13:02:28 stsp Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -109,7 +109,7 @@ int ex_ioctl(struct ifnet *, u_long, caddr_t);
 void ex_setmulti(struct ex_softc *);
 void ex_reset(struct ex_softc *);
 void ex_watchdog(struct ifnet *);
-int ex_get_media(struct ex_softc *);
+uint64_t ex_get_media(struct ex_softc *);
 
 int ex_ifmedia_upd(struct ifnet *);
 void ex_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -900,7 +900,7 @@ ex_watchdog(struct ifnet *ifp)
 	DODEBUG(Start_End, printf("ex_watchdog: finish\n"););
 }
 
-int
+uint64_t
 ex_get_media(struct ex_softc *sc)
 {
 	int	current, media;

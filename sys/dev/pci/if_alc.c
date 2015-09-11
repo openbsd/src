@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.33 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.34 2015/09/11 13:02:28 stsp Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -79,7 +79,7 @@ void	alc_watchdog(struct ifnet *);
 int	alc_mediachange(struct ifnet *);
 void	alc_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	alc_aspm(struct alc_softc *, int);
+void	alc_aspm(struct alc_softc *, uint64_t);
 void	alc_disable_l0s_l1(struct alc_softc *);
 int	alc_dma_alloc(struct alc_softc *);
 void	alc_dma_free(struct alc_softc *);
@@ -550,7 +550,7 @@ alc_phy_down(struct alc_softc *sc)
 }
 
 void
-alc_aspm(struct alc_softc *sc, int media)
+alc_aspm(struct alc_softc *sc, uint64_t media)
 {
 	uint32_t pmcfg;
 	uint16_t linkcfg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.32 2015/07/08 07:21:50 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.33 2015/09/11 13:02:28 stsp Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -210,7 +210,7 @@ beattach(struct device *parent, struct device *self, void *aux)
 	bus_dma_tag_t dmatag = sa->sa_dmatag;
 	bus_dma_segment_t seg;
 	bus_size_t size;
-	int instance;
+	uint64_t instance;
 	int rseg, error;
 	u_int32_t v;
 	extern void myetheraddr(u_char *);
@@ -371,7 +371,7 @@ beattach(struct device *parent, struct device *self, void *aux)
 			if (child->mii_phy != BE_PHY_EXTERNAL ||
 			    child->mii_inst > 0) {
 				printf("%s: cannot accommodate MII device %s"
-				    " at phy %d, instance %d\n",
+				    " at phy %d, instance %lld\n",
 				    sc->sc_dev.dv_xname,
 				    child->mii_dev.dv_xname,
 				    child->mii_phy, child->mii_inst);
@@ -1335,13 +1335,13 @@ be_mii_statchg(struct device *self)
 	struct be_softc *sc = (struct be_softc *)self;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
-	u_int instance;
+	u_int64_t instance;
 	u_int32_t v;
 
 	instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 #ifdef DIAGNOSTIC
 	if (instance > 1)
-		panic("be_mii_statchg: instance %d out of range", instance);
+		panic("be_mii_statchg: instance %lld out of range", instance);
 #endif
 
 	/* Update duplex mode in TX configuration */
@@ -1550,7 +1550,7 @@ void
 be_intphy_status(struct be_softc *sc)
 {
 	struct mii_data *mii = &sc->sc_mii;
-	int media_active, media_status;
+	uint64_t media_active, media_status;
 	int bmcr, bmsr;
 
 	media_status = IFM_AVALID;
@@ -1580,7 +1580,7 @@ be_intphy_status(struct be_softc *sc)
 	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
 	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
 	if (bmsr & BMSR_LINK)
-		media_status |=  IFM_ACTIVE;
+		media_status |= IFM_ACTIVE;
 
 	mii->mii_media_status = media_status;
 	mii->mii_media_active = media_active;
