@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.208 2015/09/11 11:04:40 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.209 2015/09/11 12:40:05 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -686,17 +686,14 @@ int
 readgptlabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
-	struct gpt_header gh;
-	struct gpt_partition *gp, *gp_tmp;
-	size_t gpsz;
-	struct uuid uuid_part, uuid_openbsd;
-	struct partition *pp;
-
-	u_int64_t sector;
-	u_int64_t gptpartoff = 0, gptpartend = DL_GETBEND(lp);
-	int i, altheader = 0, error, n=0, ourpart = -1, offset;
-
 	static const u_int8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
+	struct gpt_header gh;
+	struct uuid uuid_part, uuid_openbsd;
+	struct gpt_partition *gp, *gp_tmp;
+	struct partition *pp;
+	size_t gpsz;
+	u_int64_t gptpartoff = 0, gptpartend = DL_GETBEND(lp), sector;
+	int i, altheader = 0, error, n = 0, ourpart = -1, offset;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
 
