@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.207 2015/09/11 09:44:28 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.208 2015/09/11 11:04:40 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -699,11 +699,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	static const u_int8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
-
-	if (lp->d_secpercyl == 0)
-		return (EINVAL);	/* invalid label */
-	if (lp->d_secsize == 0)
-		return (ENOSPC);	/* disk too small */
 
 	for (sector = GPTSECTOR; ; sector = DL_GETDSIZE(lp)-1, altheader = 1) {
 		uint32_t ghsize;
