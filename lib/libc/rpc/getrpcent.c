@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrpcent.c,v 1.19 2015/08/20 21:49:29 deraadt Exp $ */
+/*	$OpenBSD: getrpcent.c,v 1.20 2015/09/11 11:33:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 /*
  * Internet version.
  */
-struct rpcdata {
+static struct rpcdata {
 	FILE	*rpcf;
 	int	stayopen;
 #define	MAXALIASES	35

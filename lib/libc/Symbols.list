@@ -1228,7 +1228,6 @@ pmap_set
 pmap_unset
 registerrpc
 rpc_createerr
-rpcdata
 set_rpc_maxgrouplist
 setrpcent
 svc_fdset
