@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_srvr.c,v 1.18 2015/02/06 08:30:23 jsing Exp $ */
+/* $OpenBSD: t1_srvr.c,v 1.19 2015/09/11 14:47:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,38 @@
 #include <openssl/x509.h>
 
 static const SSL_METHOD *tls1_get_server_method(int ver);
+
+const SSL_METHOD TLS_server_method_data = {
+	.version = TLS1_2_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = ssl23_accept,
+	.ssl_connect = ssl_undefined_function,
+	.ssl_read = ssl23_read,
+	.ssl_peek = ssl23_peek,
+	.ssl_write = ssl23_write,
+	.ssl_shutdown = ssl_undefined_function,
+	.ssl_renegotiate = ssl_undefined_function,
+	.ssl_renegotiate_check = ssl_ok,
+	.ssl_get_message = ssl3_get_message,
+	.ssl_read_bytes = ssl3_read_bytes,
+	.ssl_write_bytes = ssl3_write_bytes,
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.ssl_ctrl = ssl3_ctrl,
+	.ssl_ctx_ctrl = ssl3_ctx_ctrl,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.ssl_pending = ssl_undefined_const_function,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_ssl_method = tls1_get_server_method,
+	.get_timeout = ssl23_default_timeout,
+	.ssl3_enc = &ssl3_undef_enc_method,
+	.ssl_version = ssl_undefined_void_function,
+	.ssl_callback_ctrl = ssl3_callback_ctrl,
+	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
+};
 
 const SSL_METHOD TLSv1_server_method_data = {
 	.version = TLS1_VERSION,
@@ -163,24 +195,6 @@ const SSL_METHOD TLSv1_2_server_method_data = {
 	.ssl_ctx_callback_ctrl = ssl3_ctx_callback_ctrl,
 };
 
-const SSL_METHOD *
-TLSv1_server_method(void)
-{
-	return &TLSv1_server_method_data;
-}
-
-const SSL_METHOD *
-TLSv1_1_server_method(void)
-{
-	return &TLSv1_1_server_method_data;
-}
-
-const SSL_METHOD *
-TLSv1_2_server_method(void)
-{
-	return &TLSv1_2_server_method_data;
-}
-
 static const SSL_METHOD *
 tls1_get_server_method(int ver)
 {
@@ -191,4 +205,34 @@ tls1_get_server_method(int ver)
 	if (ver == TLS1_VERSION)
 		return (TLSv1_server_method());
 	return (NULL);
+}
+
+const SSL_METHOD *
+SSLv23_server_method(void)
+{
+	return (TLS_server_method());
+}
+
+const SSL_METHOD *
+TLS_server_method(void)
+{
+	return (&TLS_server_method_data);
+}
+
+const SSL_METHOD *
+TLSv1_server_method(void)
+{
+	return (&TLSv1_server_method_data);
+}
+
+const SSL_METHOD *
+TLSv1_1_server_method(void)
+{
+	return (&TLSv1_1_server_method_data);
+}
+
+const SSL_METHOD *
+TLSv1_2_server_method(void)
+{
+	return (&TLSv1_2_server_method_data);
 }
