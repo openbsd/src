@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_passwd.8,v 1.9 2012/02/01 17:32:59 sobrado Exp $
+.\" $OpenBSD: login_passwd.8,v 1.10 2015/09/11 21:19:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 1 2012 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt LOGIN_PASSWD 8
 .Os
 .Sh NAME
@@ -23,8 +23,8 @@
 .Sh SYNOPSIS
 .Nm login_passwd
 .Op Fl s Ar service
-.Op Fl v Ar wheel Ns = Ns Li yes Ns | Ns Li no
-.Op Fl v Ar lastchance Ns = Ns Li yes Ns | Ns Li no
+.Op Fl v Cm wheel Ns = Ns Cm yes Ns | Ns Cm no
+.Op Fl v Cm lastchance Ns = Ns Cm yes Ns | Ns Cm no
 .Ar user
 .Op Ar class
 .Sh DESCRIPTION
@@ -57,18 +57,18 @@ protocol is silently ignored but will report success as passwd-style
 authentication is not challenge-response based).
 .Pp
 If the
-.Ar wheel
+.Cm wheel
 argument is specified and is not set to
-.Dq yes ,
+.Cm yes ,
 then the user will be rejected as not being in group
 .Dq wheel .
 This is used by
 .Xr su 1 .
 .Pp
 If the
-.Ar lastchance
+.Cm lastchance
 argument is specified and is equal to
-.Dq yes ,
+.Cm yes ,
 then if the user's password has expired, and it has not been
 expired longer than
 .Dq password-dead

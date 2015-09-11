@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.23 2013/11/20 22:34:13 jmc Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.24 2015/09/11 21:19:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2013 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -25,23 +25,23 @@
 .Op Fl q
 .Ar device
 .Ar pin
-.Op Ar 0 | 1 | 2 | on | off | toggle
+.Op Cm 0 | 1 | 2 | on | off | toggle
 .Nm gpioctl
 .Op Fl q
 .Ar device
 .Ar pin
-set
+.Cm set
 .Op Ar flags
 .Op Ar name
 .Nm gpioctl
 .Op Fl q
 .Ar device
 .Ar pin
-unset
+.Cm unset
 .Nm gpioctl
 .Op Fl q
 .Ar device
-attach
+.Cm attach
 .Ar device
 .Ar offset
 .Ar mask
@@ -49,7 +49,7 @@ attach
 .Nm gpioctl
 .Op Fl q
 .Ar device
-detach
+.Cm detach
 .Ar device
 .Sh DESCRIPTION
 The
@@ -86,15 +86,20 @@ from the GPIO controller and displayed.
 To write to a pin, a value must be specified after the
 .Ar pin
 number.
-Values can be either 0 or 1.
-A value of 2 has a special meaning: it
+Values can be either
+.Cm 0
+or
+.Cm 1 .
+A value of
+.Cm 2
+has a special meaning: it
 .Dq toggles
 the pin, i.e. changes its state to the opposite.
 Instead of the numerical values, the word
-.Ar on ,
-.Ar off ,
+.Cm on ,
+.Cm off ,
 or
-.Ar toggle
+.Cm toggle
 can be used.
 .Pp
 Only pins that have been configured at securelevel 0, typically during system
@@ -151,7 +156,9 @@ reads information about the
 .Tn GPIO
 device and displays it.
 At securelevel 0 the number of physically available pins is displayed,
-at higher securelevels the number of configured (set) pins is displayed.
+at higher securelevels the number of configured
+.Pq Cm set
+pins is displayed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
