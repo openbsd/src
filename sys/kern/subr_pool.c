@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.192 2015/09/08 21:28:36 kettenis Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.193 2015/09/11 09:26:13 kettenis Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1458,9 +1458,7 @@ pool_multi_alloc(struct pool *pp, int flags, int *slowdown)
 	kd.kd_slowdown = slowdown;
 
 	s = splvm();
-	KERNEL_LOCK();
 	v = km_alloc(pp->pr_pgsize, &kv, pp->pr_crange, &kd);
-	KERNEL_UNLOCK();
 	splx(s);
 
 	return (v);
@@ -1476,9 +1474,7 @@ pool_multi_free(struct pool *pp, void *v)
 		kv.kv_align = pp->pr_pgsize;
 
 	s = splvm();
-	KERNEL_LOCK();
 	km_free(v, pp->pr_pgsize, &kv, pp->pr_crange);
-	KERNEL_UNLOCK();
 	splx(s);
 }
 
