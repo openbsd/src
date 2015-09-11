@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.26 2015/09/10 10:14:20 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.27 2015/09/11 12:56:55 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -262,7 +262,7 @@ tls_handshake_client(struct tls *ctx)
 			tls_set_errorx(ctx, "no server certificate");
 			goto err;
 		}
-		if ((rv = tls_check_servername(ctx, cert,
+		if ((rv = tls_check_name(ctx, cert,
 		    ctx->servername)) != 0) {
 			if (rv != -2)
 				tls_set_errorx(ctx, "name `%s' not present in"

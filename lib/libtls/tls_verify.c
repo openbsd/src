@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.11 2015/09/09 19:49:07 jsing Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.12 2015/09/11 12:56:55 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -246,13 +246,13 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name)
 }
 
 int
-tls_check_servername(struct tls *ctx, X509 *cert, const char *servername)
+tls_check_name(struct tls *ctx, X509 *cert, const char *name)
 {
 	int	rv;
 
-	rv = tls_check_subject_altname(ctx, cert, servername);
+	rv = tls_check_subject_altname(ctx, cert, name);
 	if (rv == 0 || rv == -2)
 		return rv;
 
-	return tls_check_common_name(ctx, cert, servername);
+	return tls_check_common_name(ctx, cert, name);
 }

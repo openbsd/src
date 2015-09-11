@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.37 2015/09/11 09:02:10 beck Exp $
+.\" $OpenBSD: tls_init.3,v 1.38 2015/09/11 12:56:55 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -112,6 +112,10 @@
 .Fn tls_config_verify_client "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_verify_client_optional "struct tls_config *config"
+.Ft "int"
+.Fn tls_peer_cert_provided "struct tls *ctx"
+.Ft "int"
+.Fn tls_peer_cert_contains_name "struct tls *ctx" "const char *name"
 .Ft "uint8_t *"
 .Fn tls_load_file "const char *file" "size_t *len" "char *password"
 .Ft "struct tls *"
@@ -354,6 +358,24 @@ enables client certificate verification, requiring the client to send
 a certificate.
 .Em (Server)
 .It
+.Fn tls_peer_cert_provided
+checks if the peer of 
+.Ar ctx 
+has provided a certificate.
+.Fn tls_peer_cert_provided
+will only succeed after the handshake is complete. 
+.Em (Server and client)
+.It
+.Fn tls_peer_cert_constains_name
+checks if the peer of a tls 
+.Ar ctx
+ has povided a certificate that contains a 
+SAN or CN that matches
+.Ar name
+.Fn tls_peer_cert_contains_name
+will only succeed after the handshake is complete. 
+.Em (Server and client)
+.It
 .Fn tls_config_verify_client_opional
 enables client certificate verification, without requiring the client
 to send a certificate.
@@ -455,7 +477,12 @@ or
 .Fn tls_connect_servername .
 .El
 .Sh RETURN VALUES
-Functions that return
+The 
+.Fn tls_peer_cert_provided
+and
+.Fn tls_peer_cert_contain_name
+functions return 1 if the check succeeds, and 0 if it does not. 
+All other functions that return
 .Vt int
 or
 .Vt ssize_t

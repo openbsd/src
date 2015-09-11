@@ -1,6 +1,7 @@
-/* $OpenBSD: tls_peer.c,v 1.1 2015/09/11 11:28:01 jsing Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.2 2015/09/11 12:56:55 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -84,4 +85,51 @@ err:
 	free(dhex);
 
 	return (rv);
+}
+
+int
+tls_peer_cert_provided(struct tls *ctx)
+{
+	return (ctx->ssl_peer_cert != NULL);
+}
+
+int
+tls_peer_cert_contains_name(struct tls *ctx, const char *name)
+{
+	if (ctx->ssl_peer_cert == NULL)
+		return (0);
+
+	return (tls_check_name(ctx, ctx->ssl_peer_cert, name) == 0);
+}
+
+int
+tls_peer_cert_issuer(struct tls *ctx,  char **issuer)
+{
+	X509_NAME *name = NULL;
+
+	*issuer = NULL;
+	if (ctx->ssl_peer_cert != NULL)
+		return (-1);
+	if ((name = X509_get_issuer_name(ctx->ssl_peer_cert)) == NULL)
+		return (-1);
+	*issuer = X509_NAME_oneline(name, 0, 0);
+	if (*issuer == NULL)
+		return (-1);
+	return (0);
+}
+
+int
+tls_peer_cert_subject(struct tls *ctx, char **subject)
+{
+	X509_NAME *name = NULL;
+
+	*subject = NULL;
+	if (ctx->ssl_peer_cert == NULL)
+		return (-1);
+	if ((name = X509_get_subject_name(ctx->ssl_peer_cert)) == NULL)
+		return (-1);
+	*subject = X509_NAME_oneline(name, 0, 0);
+	if (*subject == NULL)
+		return (-1);
+	return (0);
 }
