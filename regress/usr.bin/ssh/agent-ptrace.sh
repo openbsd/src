@@ -1,7 +1,12 @@
-#	$OpenBSD: agent-ptrace.sh,v 1.2 2014/02/27 21:21:25 djm Exp $
+#	$OpenBSD: agent-ptrace.sh,v 1.3 2015/09/11 04:55:01 djm Exp $
 #	Placed in the Public Domain.
 
 tid="disallow agent ptrace attach"
+
+if [ "x$USER" = "xroot" ]; then
+	echo "Skipped: running as root"
+	exit 0
+fi
 
 trace "start agent"
 eval `${SSHAGENT} -s` > /dev/null
