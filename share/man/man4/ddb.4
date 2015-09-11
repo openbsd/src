@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.78 2015/08/29 00:01:54 guenther Exp $
+.\"	$OpenBSD: ddb.4,v 1.79 2015/09/11 08:34:35 guenther Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: August 29 2015 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -817,7 +817,7 @@ Displays all watchpoints set with the
 .Ic watch
 command.
 .\" --------------------
-.It Ic show all procs Op Cm /anw
+.It Ic show all procs Op Cm /anow
 Display information on all processes.
 .Pp
 .Bl -tag -width foo -compact
@@ -825,7 +825,7 @@ Display information on all processes.
 (Default) Show process information in a
 .Xr ps 1 Ns \&-like
 format.
-Information printed includes process ID, parent
+Information printed includes thread ID, parent
 process ID, process group, UID, process status, process flags, process
 command name, and process wait channel message.
 .It Cm /a
@@ -837,8 +837,12 @@ structure
 and can be used in the
 .Ic show map
 command.
+.It Cm /o
+Shows non-idle threads that were on CPU when ddb was entered.
+Information printed includes thread ID, process ID, UID, process flags,
+thread flags, current CPU, and command name.
 .It Cm /w
-Shows each process' PID, command, system call emulation,
+Shows each thread's ID, command, system call emulation,
 wait channel address, and wait channel message.
 .El
 .\" --------------------
