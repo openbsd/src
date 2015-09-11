@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.41 2015/09/11 14:20:14 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.42 2015/09/11 14:22:53 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -45,6 +45,9 @@
 .Nm tls_config_verify_client_optional ,
 .Nm tls_peer_cert_provided ,
 .Nm tls_peer_cert_contains_name ,
+.Nm tls_peer_cert_issuer ,
+.Nm tls_peer_cert_subject ,
+.Nm tls_peer_cert_hash ,
 .Nm tls_load_file ,
 .Nm tls_client ,
 .Nm tls_server ,
