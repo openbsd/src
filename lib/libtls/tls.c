@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.24 2015/09/10 18:43:03 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.25 2015/09/11 09:24:54 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -308,9 +308,11 @@ tls_reset(struct tls *ctx)
 {
 	SSL_CTX_free(ctx->ssl_ctx);
 	SSL_free(ctx->ssl_conn);
+	X509_free(ctx->ssl_peer_cert);
 
 	ctx->ssl_conn = NULL;
 	ctx->ssl_ctx = NULL;
+	ctx->ssl_peer_cert = NULL;
 
 	ctx->socket = -1;
 	ctx->state = 0;
@@ -378,6 +380,9 @@ tls_handshake(struct tls *ctx)
 		rv = tls_handshake_client(ctx);
 	else if ((ctx->flags & TLS_SERVER_CONN) != 0)
 		rv = tls_handshake_server(ctx);
+
+	if (rv == 0)
+		ctx->ssl_peer_cert = SSL_get_peer_certificate(ctx->ssl_conn);
 
 	/* Prevent callers from performing incorrect error handling */
 	errno = 0;

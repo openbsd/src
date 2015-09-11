@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.18 2015/09/10 10:14:20 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.19 2015/09/11 09:24:54 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -67,6 +67,7 @@ struct tls {
 
 	SSL *ssl_conn;
 	SSL_CTX *ssl_ctx;
+	X509 *ssl_peer_cert;
 };
 
 struct tls *tls_new(void);
