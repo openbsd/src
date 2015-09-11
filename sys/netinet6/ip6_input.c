@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.145 2015/09/10 09:14:59 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.146 2015/09/11 09:54:46 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -184,7 +184,6 @@ ip6_input(struct mbuf *m)
 	u_int16_t src_scope, dst_scope;
 	u_int32_t plen, rtalert = ~0;
 	int nxt, ours = 0;
-	struct ifnet *deliverifp = NULL;
 #if NPF > 0
 	struct in6_addr odst;
 #endif
@@ -217,6 +216,7 @@ ip6_input(struct mbuf *m)
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6stat.ip6s_toosmall++;
+			if_put(ifp);
 			return;
 		}
 	}
@@ -328,7 +328,7 @@ ip6_input(struct mbuf *m)
 	if (pf_test(AF_INET6, PF_IN, ifp, &m) != PF_PASS)
 		goto bad;
 	if (m == NULL)
-		return;
+		goto bad;
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
@@ -359,19 +359,18 @@ ip6_input(struct mbuf *m)
 		ip6stat.ip6s_badoptions++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, off);
 		/* m is already freed */
+		if_put(ifp);
 		return;
 	}
 
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
 		ours = 1;
-		deliverifp = ifp;
 		goto hbhcheck;
 	}
 
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		ours = 1;
-		deliverifp = ifp;
 		goto hbhcheck;
 	}
 
@@ -406,7 +405,6 @@ ip6_input(struct mbuf *m)
 				ip6stat.ip6s_cantforward++;
 			goto bad;
 		}
-		deliverifp = ifp;
 		goto hbhcheck;
 	}
 
@@ -460,7 +458,6 @@ ip6_input(struct mbuf *m)
 		if (!(ia6->ia6_flags & IN6_IFF_NOTREADY)) {
 			/* this address is ready */
 			ours = 1;
-			deliverifp = ia6->ia_ifp;	/* correct? */
 			goto hbhcheck;
 		} else {
 			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
@@ -502,8 +499,10 @@ ip6_input(struct mbuf *m)
 	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
 		struct ip6_hbh *hbh;
 
-		if (ip6_hopopts_input(&plen, &rtalert, &m, &off))
+		if (ip6_hopopts_input(&plen, &rtalert, &m, &off)) {
+			if_put(ifp);
 			return;	/* m have already been freed */
+		}
 
 		/* adjust pointer */
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -523,12 +522,14 @@ ip6_input(struct mbuf *m)
 			icmp6_error(m, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
+			if_put(ifp);
 			return;
 		}
 		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
 			sizeof(struct ip6_hbh));
 		if (hbh == NULL) {
 			ip6stat.ip6s_tooshort++;
+			if_put(ifp);
 			return;
 		}
 		nxt = hbh->ip6h_nxt;
@@ -576,16 +577,14 @@ ip6_input(struct mbuf *m)
 		if (ip6_mforwarding && ip6_mrouter &&
 		    ip6_mforward(ip6, ifp, m)) {
 			ip6stat.ip6s_cantforward++;
-			m_freem(m);
-			return;
+			goto bad;
 		}
 #endif
-		if (!ours) {
-			m_freem(m);
-			return;
-		}
+		if (!ours)
+			goto bad;
 	} else if (!ours) {
 		ip6_forward(m, srcrt);
+		if_put(ifp);
 		return;
 	}
 
@@ -644,8 +643,10 @@ ip6_input(struct mbuf *m)
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
+	if_put(ifp);
 	return;
  bad:
+	if_put(ifp);
 	m_freem(m);
 }
 
