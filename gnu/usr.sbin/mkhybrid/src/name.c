@@ -211,7 +211,7 @@ int FDECL3(iso9660_file_length,
 	    }
 	  if(current_length < 30) 
 	    {
-	      if(!isascii(*pnt))
+	      if(!isascii((unsigned char)*pnt))
 		{
 		  *result++ = '_';
 		}
@@ -279,7 +279,7 @@ int FDECL3(iso9660_file_length,
 		      switch (*pnt) 
 			{
 			default:
-			  if(!isascii(*pnt))
+			  if(!isascii((unsigned char)*pnt))
 			    {
 			      *result++ = '_';
 			    }
