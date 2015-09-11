@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.124 2015/09/02 16:08:49 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.125 2015/09/11 12:09:10 claudio Exp $	*/
 
 /******************************************************************************
 
@@ -209,6 +209,8 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->osdep.os_sc = sc;
 	sc->osdep.os_pa = *pa;
+
+	mtx_init(&sc->rx_mtx, IPL_NET);
 
 	/* Set up the timer callout */
 	timeout_set(&sc->timer, ixgbe_local_timer, sc);
@@ -862,7 +864,7 @@ ixgbe_intr(void *arg)
 	struct tx_ring	*txr = sc->tx_rings;
 	struct ixgbe_hw	*hw = &sc->hw;
 	uint32_t	 reg_eicr;
-	int		 i, refill = 0;
+	int		 i, refill = 0, was_active = 0;
 
 	reg_eicr = IXGBE_READ_REG(&sc->hw, IXGBE_EICR);
 	if (reg_eicr == 0) {
@@ -870,21 +872,53 @@ ixgbe_intr(void *arg)
 		return (0);
 	}
 
-	/* Link status change */
-	if (reg_eicr & IXGBE_EICR_LSC)
-		ixgbe_update_link_status(sc);
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		ixgbe_rxeof(que);
+		refill = 1;
 
+		if (ISSET(ifp->if_flags, IFF_OACTIVE))
+			was_active = 1;
+		ixgbe_txeof(txr);
+	}
+
+	if (refill) {
+		if (ixgbe_rxfill(que->rxr)) {
+			/* Advance the Rx Queue "Tail Pointer" */
+			IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
+			    que->rxr->last_desc_filled);
+		} else
+			timeout_add(&sc->rx_refill, 1);
+	}
+
+	/* Link status change */
+	if (reg_eicr & IXGBE_EICR_LSC) {
+		KERNEL_LOCK();
+		ixgbe_update_link_status(sc);
+		KERNEL_UNLOCK();
+	}
+
+	/* ... more link status change */
 	if (hw->mac.type != ixgbe_mac_82598EB) {
 		if (reg_eicr & IXGBE_EICR_GPI_SDP2) {
 			/* Clear the interrupt */
 			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP2);
+			KERNEL_LOCK();
 			ixgbe_handle_mod(sc);
+			KERNEL_UNLOCK();
 		} else if ((hw->phy.media_type != ixgbe_media_type_copper) &&
 		    (reg_eicr & IXGBE_EICR_GPI_SDP1)) {
 			/* Clear the interrupt */
 			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1);
+			KERNEL_LOCK();
 			ixgbe_handle_msf(sc);
+			KERNEL_UNLOCK();
 		}
+	}
+
+	if (was_active) {
+		KERNEL_LOCK();
+		ixgbe_start(ifp);
+		KERNEL_UNLOCK();
 	}
 
 	/* Check for fan failure */
@@ -902,24 +936,6 @@ ixgbe_intr(void *arg)
 		    "PHY IS SHUT DOWN!!\n", ifp->if_xname);
 		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_TS);
 	}
-
-	if (ifp->if_flags & IFF_RUNNING) {
-		ixgbe_rxeof(que);
-		ixgbe_txeof(txr);
-		refill = 1;
-	}
-
-	if (refill) {
-		if (ixgbe_rxfill(que->rxr)) {
-			/* Advance the Rx Queue "Tail Pointer" */
-			IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
-			    que->rxr->last_desc_filled);
-		} else
-			timeout_add(&sc->rx_refill, 1);
-	}
-
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		ixgbe_start(ifp);
 
 	for (i = 0; i < sc->num_queues; i++, que++)
 		ixgbe_enable_queue(sc, que->msix);
@@ -1449,7 +1465,7 @@ ixgbe_allocate_legacy(struct ix_softc *sc)
 #endif
 
 	intrstr = pci_intr_string(pc, ih);
-	sc->tag = pci_intr_establish(pc, ih, IPL_NET,
+	sc->tag = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
 	    ixgbe_intr, sc, sc->dev.dv_xname);
 	if (sc->tag == NULL) {
 		printf(": couldn't establish interrupt");
@@ -2333,19 +2349,31 @@ ixgbe_txeof(struct tx_ring *txr)
 	struct ixgbe_tx_buf		*tx_buffer;
 	struct ixgbe_legacy_tx_desc *tx_desc, *eop_desc;
 
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return FALSE;
+
 	if (txr->tx_avail == sc->num_tx_desc) {
 		txr->queue_status = IXGBE_QUEUE_IDLE;
 		return FALSE;
 	}
 
+	KERNEL_LOCK();
+
 	processed = 0;
 	first = txr->next_to_clean;
+	/* was the txt queue cleaned up in the meantime */
+	if (txr->tx_buffers == NULL) {
+		KERNEL_UNLOCK();
+		return FALSE;
+	}
 	tx_buffer = &txr->tx_buffers[first];
 	/* For cleanup we just use legacy struct */
 	tx_desc = (struct ixgbe_legacy_tx_desc *)&txr->tx_base[first];
 	last = tx_buffer->eop_index;
-	if (last == -1)
+	if (last == -1) {
+		KERNEL_UNLOCK();
 		return FALSE;
+	}
 	eop_desc = (struct ixgbe_legacy_tx_desc *)&txr->tx_base[last];
 
 	/*
@@ -2422,6 +2450,7 @@ ixgbe_txeof(struct tx_ring *txr)
 		if (txr->tx_avail == sc->num_tx_desc) {
 			ifp->if_timer = 0;
 			txr->watchdog_timer = 0;
+			KERNEL_UNLOCK();
 			return FALSE;
 		}
 		/* Some were cleaned, so reset timer */
@@ -2430,6 +2459,8 @@ ixgbe_txeof(struct tx_ring *txr)
 			txr->watchdog_timer = IXGBE_TX_TIMEOUT;
 		}
 	}
+
+	KERNEL_UNLOCK();
 
 	return TRUE;
 }
@@ -2580,6 +2611,8 @@ ixgbe_rxfill(struct rx_ring *rxr)
 	u_int		 slots;
 	int		 i;
 
+	mtx_enter(&sc->rx_mtx);
+
 	i = rxr->last_desc_filled;
 	for (slots = if_rxr_get(&rxr->rx_ring, sc->num_rx_desc);
 	    slots > 0; slots--) {
@@ -2594,6 +2627,8 @@ ixgbe_rxfill(struct rx_ring *rxr)
 	}
 
 	if_rxr_put(&rxr->rx_ring, slots);
+
+	mtx_leave(&sc->rx_mtx);
 
 	return (post);
 }
@@ -2759,10 +2794,15 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 void
 ixgbe_free_receive_structures(struct ix_softc *sc)
 {
-	struct rx_ring *rxr = sc->rx_rings;
+	struct rx_ring *rxr;
 	int		i;
 
-	for (i = 0; i < sc->num_queues; i++, rxr++)
+	mtx_enter(&sc->rx_mtx);
+	for (i = 0, rxr = sc->rx_rings; i < sc->num_queues; i++, rxr++)
+		if_rxr_init(&rxr->rx_ring, 0, 0);
+	mtx_leave(&sc->rx_mtx);
+
+	for (i = 0, rxr = sc->rx_rings; i < sc->num_queues; i++, rxr++)
 		ixgbe_free_receive_buffers(rxr);
 }
 
@@ -2814,6 +2854,7 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct rx_ring		*rxr = que->rxr;
 	struct ifnet   		*ifp = &sc->arpcom.ac_if;
 	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
+	struct mbuf_list	 free_ml = MBUF_LIST_INITIALIZER();
 	struct mbuf    		*mp, *sendmp;
 	uint8_t		    	 eop = 0;
 	uint16_t		 len, vtag;
@@ -2826,6 +2867,7 @@ ixgbe_rxeof(struct ix_queue *que)
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return FALSE;
 
+	mtx_enter(&sc->rx_mtx);
 	i = rxr->next_to_check;
 	while (if_rxr_inuse(&rxr->rx_ring) > 0) {
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
@@ -2860,11 +2902,11 @@ ixgbe_rxeof(struct ix_queue *que)
 			sc->dropped_pkts++;
 
 			if (rxbuf->fmp) {
-				m_freem(rxbuf->fmp);
+				ml_enqueue(&free_ml, rxbuf->fmp);
 				rxbuf->fmp = NULL;
 			}
 
-			m_freem(mp);
+			ml_enqueue(&free_ml, mp);
 			rxbuf->buf = NULL;
 			goto next_desc;
 		}
@@ -2942,6 +2984,10 @@ next_desc:
 			i = 0;
 	}
 	rxr->next_to_check = i;
+	mtx_leave(&sc->rx_mtx);
+
+	while ((mp = ml_dequeue(&free_ml)))
+		m_freem(mp);
 
 	if_input(ifp, &ml);
 
