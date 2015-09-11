@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.77 2015/07/18 00:05:02 phessler Exp $
+.\"	$OpenBSD: route.8,v 1.78 2015/09/11 20:08:40 mpi Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 18 2015 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -404,7 +404,6 @@ by indicating the following corresponding modifiers:
 .It Fl proto2    Ta Dv RTF_PROTO2    Ta "set protocol specific routing flag #2"
 .It Fl reject    Ta Dv RTF_REJECT    Ta "emit an ICMP unreachable when matched"
 .It Fl static    Ta Dv RTF_STATIC    Ta "manually added route"
-.It Fl xresolve  Ta Dv RTF_XRESOLVE  Ta "emit mesg on use (for external lookup)"
 .El
 .Pp
 The optional modifiers

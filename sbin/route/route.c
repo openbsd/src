@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.176 2015/07/18 21:26:03 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.177 2015/09/11 20:08:40 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -512,9 +512,6 @@ newroute(int argc, char **argv)
 				break;
 			case K_CLONING:
 				flags |= RTF_CLONING;
-				break;
-			case K_XRESOLVE:
-				flags |= RTF_XRESOLVE;
 				break;
 			case K_STATIC:
 				flags |= RTF_STATIC;
