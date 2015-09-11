@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.11 2015/09/11 02:08:34 lteo Exp $ */
+/* $OpenBSD: s_time.c,v 1.12 2015/09/11 14:43:57 lteo Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,7 +184,7 @@ struct option s_time_options[] = {
 	},
 	{
 		.name = "no_shutdown",
-		.desc = "Shutdown the connection without notifying the server",
+		.desc = "Shut down the connection without notifying the server",
 		.type = OPTION_FLAG,
 		.opt.flag = &s_time_config.no_shutdown,
 	},
