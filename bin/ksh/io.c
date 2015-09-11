@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.25 2014/08/11 20:28:47 guenther Exp $	*/
+/*	$OpenBSD: io.c,v 1.26 2015/09/11 08:00:27 guenther Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -296,7 +296,7 @@ check_fd(char *name, int mode, const char **emsgp)
 
 	if (isdigit((unsigned char)name[0]) && !name[1]) {
 		fd = name[0] - '0';
-		if ((fl = fcntl(fd = name[0] - '0', F_GETFL, 0)) < 0) {
+		if ((fl = fcntl(fd, F_GETFL, 0)) < 0) {
 			if (emsgp)
 				*emsgp = "bad file descriptor";
 			return -1;
