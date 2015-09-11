@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.5 2015/09/11 19:22:37 dlg Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.6 2015/09/11 20:21:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -70,6 +70,12 @@ void *
 srp_get_locked(struct srp *srp)
 {
 	return (srp->ref);
+}
+
+void
+srp_finalize(struct srp_gc *srp_gc)
+{
+	refcnt_finalize(&srp_gc->srp_gc_refcnt, "srpfini");
 }
 
 #ifdef MULTIPROCESSOR
@@ -178,12 +184,6 @@ srp_update(struct srp_gc *srp_gc, struct srp *srp, void *v)
 		srp_v_gc_start(srp_gc, srp, v);
 }
 
-void
-srp_finalize(struct srp_gc *srp_gc)
-{
-	refcnt_finalize(&srp_gc->srp_gc_refcnt, "srpfini");
-}
-
 static inline void *
 srp_v(struct srp_hazard *hzrd, struct srp *srp)
 {
@@ -268,18 +268,10 @@ srp_startup(void)
 }
 
 void
-srp_finalize(struct srp_gc *srp_gc)
-{
-	KASSERT(srp_gc->srp_gc_refcount == 1);
-
-	srp_gc->srp_gc_refcount--;
-}
-
-void
 srp_v_gc_start(struct srp_gc *srp_gc, struct srp *srp, void *v)
 {
 	(*srp_gc->srp_gc_dtor)(srp_gc->srp_gc_cookie, v);
-	srp_gc->srp_gc_refcount--;
+	refcnt_rele_wake(&srp_gc->srp_gc_refcnt);
 }
 
 #endif /* MULTIPROCESSOR */
