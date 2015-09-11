@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.211 2015/09/11 14:14:36 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.212 2015/09/11 14:54:46 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -692,15 +692,17 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	struct gpt_partition *gp, *gp_tmp;
 	struct partition *pp;
 	size_t gpsz;
-	u_int64_t gptpartoff, gptpartend, sector;
+	u_int64_t ghlbaend, ghlbastart, gptpartoff, gptpartend, sector;
+	u_int64_t start, end;
 	int i, altheader = 0, error, n, offset;
+	uint32_t ghpartnum;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
 
 	for (sector = GPTSECTOR; ; sector = DL_GETDSIZE(lp)-1, altheader = 1) {
+		uint64_t ghpartlba;
 		uint32_t ghsize;
 		uint32_t ghpartsize;
-		uint32_t ghpartnum;
 		uint32_t ghpartspersec;
 
 		error = readdisksector(bp, strat, lp, sector);
@@ -716,6 +718,9 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		ghpartsize = letoh32(gh.gh_part_size);
 		ghpartspersec = lp->d_secsize / ghpartsize;
 		ghpartnum = letoh32(gh.gh_part_num);
+		ghpartlba = letoh64(gh.gh_part_lba);
+		ghlbaend = letoh64(gh.gh_lba_end);
+		ghlbastart = letoh64(gh.gh_lba_start);
 
 		if (letoh64(gh.gh_sig) != GPTSIGNATURE)
 			return (EINVAL);
@@ -747,9 +752,9 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		if (ghsize < GPTMINHDRSIZE || ghsize > lp->d_secsize)
 			return (EINVAL);
 
-		if (letoh64(gh.gh_lba_start) >= DL_GETDSIZE(lp) ||
-		    letoh64(gh.gh_lba_end) >= DL_GETDSIZE(lp) ||
-		    letoh64(gh.gh_part_lba) >= DL_GETDSIZE(lp))
+		if (ghlbastart >= DL_GETDSIZE(lp) ||
+		    ghlbaend >= DL_GETDSIZE(lp) ||
+		    ghpartlba >= DL_GETDSIZE(lp))
 			return (EINVAL);
 
 		/*
@@ -780,7 +785,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		* XXX:	Fails if # of partition entries is not a multiple of
 		*	ghpartspersec.
 		*/
-		sector = letoh64(gh.gh_part_lba);
+		sector = ghpartlba;
 		for (i = 0; i < ghpartnum / ghpartspersec; i++, sector++) {
 			error = readdisksector(bp, strat, lp, sector);
 			if (error) {
@@ -814,17 +819,17 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	n = 0;
 	gptpartoff = 0;
 	gptpartend = DL_GETBEND(lp);
-	for (gp_tmp = gp, i = 0; i < letoh32(gh.gh_part_num); gp_tmp++, i++) {
-		if (letoh64(gp_tmp->gp_lba_start) > letoh64(gp_tmp->gp_lba_end)
-		    || letoh64(gp_tmp->gp_lba_start) < letoh64(gh.gh_lba_start)
-		    || letoh64(gp_tmp->gp_lba_end) > letoh64(gh.gh_lba_end))
+	for (gp_tmp = gp, i = 0; i < ghpartnum; gp_tmp++, i++) {
+		start = letoh64(gp_tmp->gp_lba_start);
+		end = letoh64(gp_tmp->gp_lba_end);
+		if (start > end || start < ghlbastart || end > ghlbaend)
 			continue; /* entry invalid */
 
 		uuid_dec_le(&gp_tmp->gp_type, &uuid_part);
 		if (!memcmp(&uuid_part, &uuid_openbsd, sizeof(struct uuid))) {
 			if (gptpartoff == 0) {
-				gptpartoff = letoh64(gp_tmp->gp_lba_start);
-				gptpartend = letoh64(gp_tmp->gp_lba_end) + 1;
+				gptpartoff = start;
+				gptpartend = end + 1;
 			}
 			continue; /* Do *NOT* spoof OpenBSD partitions! */
 		}
@@ -848,9 +853,8 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		pp = &lp->d_partitions[8+n];
 		n++;
 		pp->p_fstype = get_fstype(&uuid_part);
-		DL_SETPOFFSET(pp, letoh64(gp_tmp->gp_lba_start));
-		DL_SETPSIZE(pp, letoh64(gp_tmp->gp_lba_end)
-		    - letoh64(gp_tmp->gp_lba_start) + 1);
+		DL_SETPOFFSET(pp, start);
+		DL_SETPSIZE(pp, end - start + 1);
 	}
 
 	if (gptpartoff == 0)
