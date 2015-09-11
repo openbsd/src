@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.300 2015/09/11 13:02:59 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.301 2015/09/11 15:59:40 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3048,6 +3048,17 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 		for (type = IFM_NMIN; type <= IFM_NMAX; type += IFM_NMIN) {
 			for (i = 0, printed_type = 0; i < ifmr.ifm_count; i++) {
 				if (IFM_TYPE(media_list[i]) == type) {
+
+					/* 
+					 * Don't advertise media with fixed
+					 * data rates for wireless interfaces.
+					 * Normal people don't need these.
+					 */
+					if (type == IFM_IEEE80211 &&
+					    (media_list[i] & IFM_TMASK) !=
+					    IFM_AUTO)
+						continue;
+
 					if (printed_type == 0) {
 					    printf("\tsupported media:\n");
 					    printed_type = 1;
