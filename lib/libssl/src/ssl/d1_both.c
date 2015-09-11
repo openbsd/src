@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.36 2015/09/11 15:59:21 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.37 2015/09/11 16:28:37 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -900,47 +900,6 @@ f_err:
 
 	*ok = 0;
 	return (-1);
-}
-
-int
-dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen)
-{
-	unsigned char *p;
-	int i;
-	unsigned long l;
-
-	if (s->state == a) {
-		p = ssl3_handshake_msg_start(s, SSL3_MT_FINISHED);
-
-		i = s->method->ssl3_enc->final_finish_mac(s, sender, slen,
-		    s->s3->tmp.finish_md);
-		s->s3->tmp.finish_md_len = i;
-		memcpy(p, s->s3->tmp.finish_md, i);
-		p += i;
-		l = i;
-
-		/*
-		 * Copy the finished so we can use it for
-		 * renegotiation checks
-		 */
-		if (s->type == SSL_ST_CONNECT) {
-			OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-			memcpy(s->s3->previous_client_finished,
-			    s->s3->tmp.finish_md, i);
-			s->s3->previous_client_finished_len = i;
-		} else {
-			OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-			memcpy(s->s3->previous_server_finished,
-			    s->s3->tmp.finish_md, i);
-			s->s3->previous_server_finished_len = i;
-		}
-
-		ssl3_handshake_msg_finish(s, l);
-
-		s->state = b;
-	}
-
-	return (ssl3_handshake_write(s));
 }
 
 /*

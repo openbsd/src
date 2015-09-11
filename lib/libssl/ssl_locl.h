@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.103 2015/09/02 17:59:15 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.104 2015/09/11 16:28:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -685,7 +685,6 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 
 int dtls1_send_change_cipher_spec(SSL *s, int a, int b);
-int dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 unsigned long dtls1_output_cert_chain(SSL *s, X509 *x);
 int dtls1_read_failed(SSL *s, int code);
 int dtls1_buffer_message(SSL *s, int ccs);

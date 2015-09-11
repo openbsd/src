@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.50 2015/09/10 17:57:50 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.51 2015/09/11 16:28:37 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -457,7 +457,7 @@ dtls1_connect(SSL *s)
 		case SSL3_ST_CW_FINISHED_B:
 			if (!s->hit)
 				dtls1_start_timer(s);
-			ret = dtls1_send_finished(s,
+			ret = ssl3_send_finished(s,
 			    SSL3_ST_CW_FINISHED_A, SSL3_ST_CW_FINISHED_B,
 			    s->method->ssl3_enc->client_finished_label,
 			    s->method->ssl3_enc->client_finished_label_len);
