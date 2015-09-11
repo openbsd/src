@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.167 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.168 2015/09/11 09:14:06 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -377,7 +377,9 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 int
 icmp6_input(struct mbuf **mp, int *offp, int proto)
 {
+#if NCARP > 0
 	struct ifnet *ifp;
+#endif
 	struct mbuf *m = *mp, *n;
 	struct ip6_hdr *ip6, *nip6;
 	struct icmp6_hdr *icmp6, *nicmp6;
@@ -385,10 +387,6 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	int icmp6len = m->m_pkthdr.len - *offp;
 	int code, sum, noff;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL)
-		goto freeit;
 
 	/*
 	 * Locate icmp6 structure in mbuf, and check
@@ -439,11 +437,17 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 #endif /* NPF */
 
 #if NCARP > 0
+	ifp = if_get(m->m_pkthdr.ph_ifidx);
+	if (ifp == NULL)
+		goto freeit;
+
 	if (ifp->if_type == IFT_CARP &&
 	    icmp6->icmp6_type == ICMP6_ECHO_REQUEST &&
 	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32))
 		goto freeit;
+
+	if_put(ifp);
 #endif
 	icmp6stat.icp6s_inhist[icmp6->icmp6_type]++;
 
@@ -720,11 +724,11 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 
 	default:
 		nd6log((LOG_DEBUG,
-		    "icmp6_input: unknown type %d(src=%s, dst=%s, ifid=%d)\n",
+		    "icmp6_input: unknown type %d(src=%s, dst=%s, ifid=%u)\n",
 		    icmp6->icmp6_type,
 		    inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src)),
 		    inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst)),
-		    ifp ? ifp->if_index : 0));
+		    m->m_pkthdr.ph_ifidx));
 		if (icmp6->icmp6_type < ICMP6_ECHO_REQUEST) {
 			/* ICMPv6 error: MUST deliver it by spec... */
 			code = PRC_NCMDS;
@@ -1276,11 +1280,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
-	if (if_get(m->m_pkthdr.ph_ifidx) != NULL) {
-		/* XXX: This may not be the outgoing interface */
-		ip6->ip6_hlim = ND_IFINFO(if_get(m->m_pkthdr.ph_ifidx))->chlim;
-	} else
-		ip6->ip6_hlim = ip6_defhlim;
+	ip6->ip6_hlim = ip6_defhlim;
 
 	icmp6->icmp6_cksum = 0;
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
@@ -1362,6 +1362,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	IP6_EXTHDR_GET(nd_rd, struct nd_redirect *, m, off, icmp6len);
 	if (nd_rd == NULL) {
 		icmp6stat.icp6s_tooshort++;
+		if_put(ifp);
 		return;
 	}
 	redtgt6 = nd_rd->nd_rd_target;
@@ -1536,10 +1537,12 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	}
 
  freeit:
+	if_put(ifp);
 	m_freem(m);
 	return;
 
  bad:
+	if_put(ifp);
 	icmp6stat.icp6s_badredirect++;
 	m_freem(m);
 }
