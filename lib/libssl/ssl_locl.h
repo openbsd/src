@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.105 2015/09/11 16:50:46 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.106 2015/09/11 16:53:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -629,7 +629,6 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
     unsigned char *p);
 int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
-int ssl3_enc(SSL *s, int send_data);
 int n_ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
 void ssl3_free_digest_list(SSL *s);
 unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);

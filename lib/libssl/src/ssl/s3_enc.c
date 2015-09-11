@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.62 2015/09/10 15:56:26 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.63 2015/09/11 16:53:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -398,77 +398,6 @@ ssl3_cleanup_key_block(SSL *s)
 		s->s3->tmp.key_block = NULL;
 	}
 	s->s3->tmp.key_block_length = 0;
-}
-
-/* ssl3_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
- *
- * Returns:
- *   0: (in non-constant time) if the record is publically invalid (i.e. too
- *       short etc).
- *   1: if the record's padding is valid / the encryption was successful.
- *   -1: if the record's padding is invalid or, if sending, an internal error
- *       occured.
- */
-int
-ssl3_enc(SSL *s, int send)
-{
-	SSL3_RECORD *rec;
-	EVP_CIPHER_CTX *ds;
-	unsigned long l;
-	int bs, i, mac_size = 0;
-	const EVP_CIPHER *enc;
-
-	if (send) {
-		ds = s->enc_write_ctx;
-		rec = &(s->s3->wrec);
-		if (s->enc_write_ctx == NULL)
-			enc = NULL;
-		else
-			enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
-	} else {
-		ds = s->enc_read_ctx;
-		rec = &(s->s3->rrec);
-		if (s->enc_read_ctx == NULL)
-			enc = NULL;
-		else
-			enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
-	}
-
-	if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
-		memmove(rec->data, rec->input, rec->length);
-		rec->input = rec->data;
-	} else {
-		l = rec->length;
-		bs = EVP_CIPHER_block_size(ds->cipher);
-
-		/* COMPRESS */
-
-		if ((bs != 1) && send) {
-			i = bs - ((int)l % bs);
-
-			/* we need to add 'i-1' padding bytes */
-			l += i;
-			/* the last of these zero bytes will be overwritten
-			 * with the padding length. */
-			memset(&rec->input[rec->length], 0, i);
-			rec->length += i;
-			rec->input[l - 1] = (i - 1);
-		}
-
-		if (!send) {
-			if (l == 0 || l % bs != 0)
-				return 0;
-			/* otherwise, rec->length >= bs */
-		}
-
-		EVP_Cipher(ds, rec->data, rec->input, l);
-
-		if (EVP_MD_CTX_md(s->read_hash) != NULL)
-			mac_size = EVP_MD_CTX_size(s->read_hash);
-		if ((bs != 1) && !send)
-			return ssl3_cbc_remove_padding(s, rec, bs, mac_size);
-	}
-	return (1);
 }
 
 int
