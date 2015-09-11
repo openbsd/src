@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.18 2015/09/10 10:26:49 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.19 2015/09/11 11:28:01 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -98,6 +98,8 @@ int tls_handshake(struct tls *_ctx);
 ssize_t tls_read(struct tls *_ctx, void *_buf, size_t _buflen);
 ssize_t tls_write(struct tls *_ctx, const void *_buf, size_t _buflen);
 int tls_close(struct tls *_ctx);
+
+int tls_peer_cert_hash(struct tls *_ctx, char **_hash);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
 

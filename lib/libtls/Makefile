@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/09/11 07:07:23 jmc Exp $
+#	$OpenBSD: Makefile,v 1.15 2015/09/11 11:28:01 jsing Exp $
 
 CFLAGS+= -Wall -Werror -Wimplicit
 CFLAGS+= -DLIBRESSL_INTERNAL
@@ -15,6 +15,7 @@ HDRS=	tls.h
 SRCS=	tls.c \
 	tls_client.c \
 	tls_config.c \
+	tls_peer.c \
 	tls_server.c \
 	tls_util.c \
 	tls_verify.c
