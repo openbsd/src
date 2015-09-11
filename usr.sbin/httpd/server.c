@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.79 2015/09/10 13:53:13 beck Exp $	*/
+/*	$OpenBSD: server.c,v 1.80 2015/09/11 13:21:09 jsing Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -953,11 +953,13 @@ server_handshake_tls(int fd, short event, void *arg)
 		return;
 	}
 
-	if (srv->srv_tls_ctx == NULL)
+	if (srv->srv_tls_ctx == NULL || clt->clt_tls_ctx == NULL)
 		fatalx("NULL tls context");
 
 	ret = tls_handshake(clt->clt_tls_ctx);
-	if (ret == TLS_WANT_POLLIN) {
+	if (ret == 0) {
+		server_input(clt);
+	} else if (ret == TLS_WANT_POLLIN) {
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_READ,
 		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
@@ -965,15 +967,11 @@ server_handshake_tls(int fd, short event, void *arg)
 		event_again(&clt->clt_ev, clt->clt_s, EV_TIMEOUT|EV_WRITE,
 		    server_handshake_tls, &clt->clt_tv_start,
 		    &srv->srv_conf.timeout, clt);
-	} else if (ret != 0) {
+	} else {
 		log_warnx("%s: TLS handshake failed - %s", __func__,
 		    tls_error(clt->clt_tls_ctx));
 		server_close(clt, "TLS handshake failed");
-		return;
 	}
-
-	server_input(clt);
-	return;
 }
 
 void
