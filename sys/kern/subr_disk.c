@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.212 2015/09/11 14:54:46 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.213 2015/09/11 15:04:01 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -104,7 +104,11 @@ void disk_attach_callback(void *);
 
 int readdisksector(struct buf *, void (*)(struct buf *), struct disklabel *,
     u_int64_t);
+
 int gpt_chk_mbr(struct dos_partition *, struct disklabel *);
+int gpt_chk_hdr(struct gpt_header *);
+int gpt_chk_parts(struct gpt_header *, struct gpt_partition *);
+int gpt_get_fstype(struct uuid *);
 
 /*
  * Compute checksum for disk label.
@@ -565,10 +569,6 @@ notfat:
 	return (error);
 }
 
-int gpt_chk_hdr(struct gpt_header *);
-int gpt_chk_parts(struct gpt_header *, struct gpt_partition *);
-int get_fstype(struct uuid *);
-
 /*
  * Returns 0 if the MBR with the provided partition array is a GPT protective
  * MBR, and returns 1 otherwise. A GPT protective MBR would have one and only
@@ -633,7 +633,7 @@ gpt_chk_parts(struct gpt_header *gh, struct gpt_partition *gp)
 }
 
 int
-get_fstype(struct uuid *uuid_part)
+gpt_get_fstype(struct uuid *uuid_part)
 {
 	static int init = 0;
 	static struct uuid uuid_openbsd, uuid_msdos, uuid_chromefs,
@@ -852,7 +852,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 
 		pp = &lp->d_partitions[8+n];
 		n++;
-		pp->p_fstype = get_fstype(&uuid_part);
+		pp->p_fstype = gpt_get_fstype(&uuid_part);
 		DL_SETPOFFSET(pp, start);
 		DL_SETPSIZE(pp, end - start + 1);
 	}
