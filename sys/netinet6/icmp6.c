@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.165 2015/09/10 17:52:05 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.166 2015/09/11 07:42:35 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -908,8 +908,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 			icmp6dst.sin6_addr = *finaldst;
 		icmp6dst.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
 		    &icmp6dst.sin6_addr);
-		if (in6_embedscope(&icmp6dst.sin6_addr, &icmp6dst,
-				   NULL, NULL)) {
+		if (in6_embedscope(&icmp6dst.sin6_addr, &icmp6dst, NULL)) {
 			/* should be impossbile */
 			nd6log((LOG_DEBUG,
 			    "icmp6_notify_error: in6_embedscope failed\n"));
@@ -926,8 +925,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		icmp6src.sin6_addr = eip6->ip6_src;
 		icmp6src.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
 		    &icmp6src.sin6_addr);
-		if (in6_embedscope(&icmp6src.sin6_addr, &icmp6src,
-				   NULL, NULL)) {
+		if (in6_embedscope(&icmp6src.sin6_addr, &icmp6src, NULL)) {
 			/* should be impossbile */
 			nd6log((LOG_DEBUG,
 			    "icmp6_notify_error: in6_embedscope failed\n"));
@@ -1217,13 +1215,13 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	sa6_src.sin6_len = sizeof(sa6_src);
 	sa6_src.sin6_addr = ip6->ip6_dst;
 	in6_recoverscope(&sa6_src, &ip6->ip6_dst);
-	in6_embedscope(&ip6->ip6_dst, &sa6_src, NULL, NULL);
+	in6_embedscope(&ip6->ip6_dst, &sa6_src, NULL);
 	bzero(&sa6_dst, sizeof(sa6_dst));
 	sa6_dst.sin6_family = AF_INET6;
 	sa6_dst.sin6_len = sizeof(sa6_dst);
 	sa6_dst.sin6_addr = t;
 	in6_recoverscope(&sa6_dst, &t);
-	in6_embedscope(&t, &sa6_dst, NULL, NULL);
+	in6_embedscope(&t, &sa6_dst, NULL);
 
 	/*
 	 * If the incoming packet was addressed directly to us (i.e. unicast),

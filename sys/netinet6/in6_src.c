@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.56 2015/09/10 17:52:05 claudio Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.57 2015/09/11 07:42:35 claudio Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -586,15 +586,13 @@ in6_selecthlim(struct inpcb *in6p, struct ifnet *ifp)
  */
 int
 in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
-    struct inpcb *in6p, struct ifnet **ifpp)
+    struct inpcb *in6p)
 {
 	struct ifnet *ifp = NULL;
 	u_int32_t scopeid;
 
 	*in6 = sin6->sin6_addr;
 	scopeid = sin6->sin6_scope_id;
-	if (ifpp)
-		*ifpp = NULL;
 
 	/*
 	 * don't try to read sin6->sin6_addr beyond here, since the caller may
@@ -616,8 +614,8 @@ in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
 				return ENXIO;  /* XXX EINVAL? */
 			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
 		} else if (in6p && IN6_IS_ADDR_MULTICAST(in6) &&
-			   in6p->inp_moptions6 &&
-			   (ifp = if_get(in6p->inp_moptions6->im6o_ifidx))) {
+		    in6p->inp_moptions6 &&
+		    (ifp = if_get(in6p->inp_moptions6->im6o_ifidx))) {
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
 			ifp = if_get(scopeid);
@@ -626,9 +624,7 @@ in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
 			/*XXX assignment to 16bit from 32bit variable */
 			in6->s6_addr16[1] = htons(scopeid & 0xffff);
 		}
-
-		if (ifpp)
-			*ifpp = ifp;
+		if_put(ifp);
 	}
 
 	return 0;

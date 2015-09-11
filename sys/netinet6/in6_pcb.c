@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.71 2015/09/10 17:52:05 claudio Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.72 2015/09/11 07:42:35 claudio Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -194,7 +194,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			return EAFNOSUPPORT;
 
 		/* KAME hack: embed scopeid */
-		if (in6_embedscope(&sin6->sin6_addr, sin6, inp, NULL) != 0)
+		if (in6_embedscope(&sin6->sin6_addr, sin6, inp) != 0)
 			return EINVAL;
 		/* this must be cleared for ifa_ifwithaddr() */
 		sin6->sin6_scope_id = 0;
@@ -418,7 +418,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	sin6 = &tmp;
 
 	/* KAME hack: embed scopeid */
-	if (in6_embedscope(&sin6->sin6_addr, sin6, inp, &ifp) != 0)
+	if (in6_embedscope(&sin6->sin6_addr, sin6, inp) != 0)
 		return EINVAL;
 	/* this must be cleared for ifa_ifwithaddr() */
 	sin6->sin6_scope_id = 0;

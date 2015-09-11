@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.54 2015/06/11 15:59:17 mikeb Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.55 2015/09/11 07:42:35 claudio Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -483,9 +483,9 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 #ifdef INET6
 	case AF_INET6:
 		in6_embedscope(&src->sin6.sin6_addr, &src->sin6,
-		    NULL, NULL);
+		    NULL);
 		in6_embedscope(&dst->sin6.sin6_addr, &dst->sin6,
-		    NULL, NULL);
+		    NULL);
 
 		/* netmask handling */
 		rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
