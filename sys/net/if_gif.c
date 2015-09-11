@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.78 2015/09/01 21:24:04 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.79 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ gif_start(struct ifnet *ifp)
 			 * of inner packet, to achieve path MTU discovery for
 			 * encapsulated packets.
 			 */
-			ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL, NULL);
+			ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL);
 			break;
 #endif
 		default:

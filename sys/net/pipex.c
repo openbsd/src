@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.77 2015/09/11 07:42:35 claudio Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.78 2015/09/11 08:17:06 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1979,7 +1979,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		    &session->peer.sin6, NULL);
 		/* ip6->ip6_plen will be filled in ip6_output. */
 
-		if (ip6_output(m0, NULL, NULL, 0, NULL, NULL, NULL) != 0) {
+		if (ip6_output(m0, NULL, NULL, 0, NULL, NULL) != 0) {
 			PIPEX_DBG((session, LOG_DEBUG, "ip6_output failed."));
 			goto drop;
 		}

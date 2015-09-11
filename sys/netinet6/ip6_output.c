@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.180 2015/09/10 09:11:11 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.181 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -149,13 +149,10 @@ struct idgen32_ctx ip6_id_ctx;
  * type of "mtu": rt_rmx.rmx_mtu is u_long, ifnet.ifr_mtu is int, and
  * nd_ifinfo.linkmtu is u_int32_t.  so we use u_long to hold largest one,
  * which is rt_rmx.rmx_mtu.
- *
- * ifpp - XXX: just for statistics
  */
 int
 ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
-    int flags, struct ip6_moptions *im6o, struct ifnet **ifpp,
-    struct inpcb *inp)
+    int flags, struct ip6_moptions *im6o, struct inpcb *inp)
 {
 	struct ip6_hdr *ip6;
 	struct ifnet *ifp;
@@ -653,13 +650,6 @@ reroute:
 			dst_scope = ip6->ip6_dst.s6_addr16[1];
 		ip6->ip6_dst.s6_addr16[1] = 0;
 	}
-
-	/*
-	 * Fill the outgoing interface to tell the upper layer
-	 * to increment per-interface statistics.
-	 */
-	if (ifpp)
-		*ifpp = ifp;
 
 	/* Determine path MTU. */
 	if ((error = ip6_getpmtu(ro_pmtu, ro, ifp, &finaldst, &mtu,

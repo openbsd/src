@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.51 2014/12/17 09:57:13 mpi Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.52 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ void	ip6_forward(struct mbuf *, int);
 
 void	ip6_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in6 *);
 int	ip6_output(struct mbuf *, struct ip6_pktopts *, struct route_in6 *, int,
-	    struct ip6_moptions *, struct ifnet **, struct inpcb *);
+	    struct ip6_moptions *, struct inpcb *);
 int	ip6_fragment(struct mbuf *, int, u_char, u_long);
 int	ip6_ctloutput(int, struct socket *, int, int, struct mbuf **);
 int	ip6_raw_ctloutput(int, struct socket *, int, int, struct mbuf **);

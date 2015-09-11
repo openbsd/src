@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.122 2015/09/10 09:17:16 claudio Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.123 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	ip6->ip6_plen = htons((u_short)icmp6len);
 
 	s = splsoftnet();
-	ip6_output(m, NULL, NULL, 0, &im6o, NULL, NULL);
+	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
 	splx(s);
 
 	icmp6stat.icp6s_outhist[ND_ROUTER_SOLICIT]++;

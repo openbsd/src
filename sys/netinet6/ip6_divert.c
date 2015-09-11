@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.37 2015/09/10 08:46:17 claudio Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.38 2015/09/11 08:17:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -167,7 +167,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		niq_enqueue(&ip6intrq, m); /* return error on q full? */
 	} else {
 		error = ip6_output(m, NULL, &inp->inp_route6,
-		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, NULL);
+		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);
 	}
 
 	div6stat.divs_opackets++;

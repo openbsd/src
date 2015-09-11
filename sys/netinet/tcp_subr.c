@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.147 2015/09/01 21:24:04 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.148 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
 		ip6->ip6_plen = htons(ip6->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
-		    (struct route_in6 *)ro, 0, NULL, NULL,
+		    (struct route_in6 *)ro, 0, NULL,
 		    tp ? tp->t_inpcb : NULL);
 		break;
 #endif /* INET6 */

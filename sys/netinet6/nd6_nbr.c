@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.93 2015/09/09 15:51:40 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.94 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -534,7 +534,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	nd_ns->nd_ns_cksum = 0;
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
-	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL, NULL);
+	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
 
 	if (ro.ro_rt) {		/* we don't cache this route. */
@@ -1059,7 +1059,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	nd_na->nd_na_cksum = 0;
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
-	ip6_output(m, NULL, &ro, 0, &im6o, NULL, NULL);
+	ip6_output(m, NULL, &ro, 0, &im6o, NULL);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
 
 	if (ro.ro_rt) {		/* we don't cache this route. */

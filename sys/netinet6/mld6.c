@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.44 2015/09/10 09:10:42 claudio Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.45 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -464,6 +464,6 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 #endif
 
 	icmp6stat.icp6s_outhist[type]++;
-	ip6_output(mh, &ip6_opts, NULL, ia6 ? 0 : IPV6_UNSPECSRC, &im6o, NULL,
+	ip6_output(mh, &ip6_opts, NULL, ia6 ? 0 : IPV6_UNSPECSRC, &im6o,
 	    NULL);
 }

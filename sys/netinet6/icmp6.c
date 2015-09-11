@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.166 2015/09/11 07:42:35 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.167 2015/09/11 08:17:06 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1300,7 +1300,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL, NULL);
+	ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 	return;
 
  bad:
@@ -1789,7 +1789,7 @@ noredhdropt:
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	/* send the packet to outside... */
-	ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
+	ip6_output(m, NULL, NULL, 0, NULL, NULL);
 
 	icmp6stat.icp6s_outhist[ND_REDIRECT]++;
 
