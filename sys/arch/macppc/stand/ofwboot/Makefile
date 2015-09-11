@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.13 2014/11/19 20:02:50 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2015/09/11 17:46:59 miod Exp $
 #	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 R=../
 
 PROG=		ofwboot
+CFLAGS+=	-D_STANDALONE
 SRCS=		Locore.c main.c ofdev.c net.c netif_of.c netudp.c
 SRCS+=		alloc.c cache.c hfs.c
 SRCS+=		boot.c conf.c cmd.c vars.c ctime.c strtol.c
