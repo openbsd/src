@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.36 2015/06/22 20:06:11 bluhm Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.37 2015/09/11 14:26:12 sf Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -52,6 +52,7 @@
 #include <machine/param.h>
 #include <machine/segments.h>
 #include <dev/acpi/acpivar.h>
+#include "lapic.h"
 
 #define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + \
 	ACPI_TRAMPOLINE
@@ -245,6 +246,13 @@ _C_LABEL(acpi_long_mode_resume):
 	movw	%ax, %gs
 
 	/* Restore registers - start with the MSRs */
+#if NLAPIC > 0
+	movl	$MSR_APICBASE, %ecx
+	movl	acpi_saved_apicbase, %eax
+	movl	acpi_saved_apicbase+4, %edx
+	wrmsr
+#endif
+
 	movl	$MSR_STAR, %ecx
 	movl	acpi_saved_star, %eax
 	movl	acpi_saved_star+4, %edx
@@ -623,6 +631,10 @@ _ACPI_TRMP_DATA_LABEL(acpi_saved_cstar)
 	.quad 0
 _ACPI_TRMP_DATA_LABEL(acpi_saved_sfmask)
 	.quad 0
+#if NLAPIC > 0
+_ACPI_TRMP_DATA_LABEL(acpi_saved_apicbase)
+	.quad 0
+#endif
 
 	.align 4
 _ACPI_TRMP_DATA_LABEL(acpi_pdirpa)
@@ -682,6 +694,13 @@ NENTRY(acpi_savecpu)
 	
 	pushq	%rcx
 	pushq	%rdx
+#if NLAPIC > 0
+	movl	$MSR_APICBASE, %ecx
+	rdmsr
+	movl	%eax, acpi_saved_apicbase
+	movl	%edx, acpi_saved_apicbase+4
+#endif
+
 	movl	$MSR_STAR, %ecx
 	rdmsr
 	movl	%eax, acpi_saved_star
