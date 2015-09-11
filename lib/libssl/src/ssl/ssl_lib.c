@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.108 2015/09/10 17:57:50 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.109 2015/09/11 17:29:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3073,26 +3073,6 @@ SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version,
     int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
 {
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_MSG_CALLBACK, (void (*)(void))cb);
-}
-
-/*
- * Allocates new EVP_MD_CTX and sets pointer to it into given pointer
- * variable, freeing EVP_MD_CTX previously stored in that variable, if
- * any. If EVP_MD pointer is passed, initializes ctx with this md
- * Returns newly allocated ctx;
- */
-EVP_MD_CTX *
-ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
-{
-	ssl_clear_hash_ctx(hash);
-	*hash = EVP_MD_CTX_create();
-	if (*hash != NULL && md != NULL) {
-		if (!EVP_DigestInit_ex(*hash, md, NULL)) {
-			ssl_clear_hash_ctx(hash);
-			return (NULL);
-		}
-	}
-	return (*hash);
 }
 
 void

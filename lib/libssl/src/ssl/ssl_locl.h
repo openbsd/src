@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.114 2015/09/11 17:17:44 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.115 2015/09/11 17:29:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -815,7 +815,6 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
 int tls12_get_sigid(const EVP_PKEY *pk);
 const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 
-EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p,
     int *len, int maxlen);
