@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_netbsd.c,v 1.1 2015/01/19 20:21:40 bcook Exp $	*/
+/*	$OpenBSD: getentropy_netbsd.c,v 1.2 2015/09/11 11:52:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -55,10 +55,10 @@ int
 getentropy(void *buf, size_t len)
 {
 	if (len <= 256 &&
-			getentropy_sysctl(buf, len) == len) {
-		return 0;
+	    getentropy_sysctl(buf, len) == len) {
+		return (0);
 	}
 
 	errno = EIO;
-	return -1;
+	return (-1);
 }

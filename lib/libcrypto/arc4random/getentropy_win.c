@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_win.c,v 1.3 2014/11/11 13:54:33 bcook Exp $	*/
+/*	$OpenBSD: getentropy_win.c,v 1.4 2015/09/11 11:52:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014, Theo de Raadt <deraadt@openbsd.org> 
@@ -40,7 +40,7 @@ getentropy(void *buf, size_t len)
 
 	if (len > 256) {
 		errno = EIO;
-		return -1;
+		return (-1);
 	}
 
 	if (CryptAcquireContext(&provider, NULL, NULL, PROV_RSA_FULL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_aix.c,v 1.3 2015/08/25 17:26:43 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_aix.c,v 1.4 2015/09/11 11:52:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Michael Felt <aixtools@gmail.com>
@@ -72,7 +72,7 @@ getentropy(void *buf, size_t len)
 
 	if (len > 256) {
 		errno = EIO;
-		return -1;
+		return (-1);
 	}
 
 	/*
@@ -130,8 +130,8 @@ gotdata(char *buf, size_t len)
 	for (i = 0; i < len; ++i)
 		any_set |= buf[i];
 	if (any_set == 0)
-		return -1;
-	return 0;
+		return (-1);
+	return (0);
 }
 
 static int
@@ -181,11 +181,11 @@ start:
 	close(fd);
 	if (gotdata(buf, len) == 0) {
 		errno = save_errno;
-		return 0;		/* satisfied */
+		return (0);		/* satisfied */
 	}
 nodevrandom:
 	errno = EIO;
-	return -1;
+	return (-1);
 }
 
 static const int cl[] = {
@@ -418,8 +418,8 @@ getentropy_fallback(void *buf, size_t len)
 	explicit_bzero(results, sizeof results);
 	if (gotdata(buf, len) == 0) {
 		errno = save_errno;
-		return 0;		/* satisfied */
+		return (0);		/* satisfied */
 	}
 	errno = EIO;
-	return -1;
+	return (-1);
 }

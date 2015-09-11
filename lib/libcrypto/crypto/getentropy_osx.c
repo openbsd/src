@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_osx.c,v 1.8 2014/07/21 20:19:47 guenther Exp $	*/
+/*	$OpenBSD: getentropy_osx.c,v 1.9 2015/09/11 11:52:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -88,7 +88,7 @@ getentropy(void *buf, size_t len)
 
 	if (len > 256) {
 		errno = EIO;
-		return -1;
+		return (-1);
 	}
 
 	/*
@@ -149,8 +149,8 @@ gotdata(char *buf, size_t len)
 	for (i = 0; i < len; ++i)
 		any_set |= buf[i];
 	if (any_set == 0)
-		return -1;
-	return 0;
+		return (-1);
+	return (0);
 }
 
 static int
@@ -200,11 +200,11 @@ start:
 	close(fd);
 	if (gotdata(buf, len) == 0) {
 		errno = save_errno;
-		return 0;		/* satisfied */
+		return (0);		/* satisfied */
 	}
 nodevrandom:
 	errno = EIO;
-	return -1;
+	return (-1);
 }
 
 static int tcpmib[] = { CTL_NET, AF_INET, IPPROTO_TCP, TCPCTL_STATS };
@@ -422,8 +422,8 @@ getentropy_fallback(void *buf, size_t len)
 	explicit_bzero(results, sizeof results);
 	if (gotdata(buf, len) == 0) {
 		errno = save_errno;
-		return 0;		/* satisfied */
+		return (0);		/* satisfied */
 	}
 	errno = EIO;
-	return -1;
+	return (-1);
 }

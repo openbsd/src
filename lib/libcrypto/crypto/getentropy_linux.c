@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.40 2015/08/25 17:26:43 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.41 2015/09/11 11:52:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -91,7 +91,7 @@ getentropy(void *buf, size_t len)
 
 	if (len > 256) {
 		errno = EIO;
-		return -1;
+		return (-1);
 	}
 
 #ifdef SYS_getrandom
@@ -186,8 +186,8 @@ gotdata(char *buf, size_t len)
 	for (i = 0; i < len; ++i)
 		any_set |= buf[i];
 	if (any_set == 0)
-		return -1;
-	return 0;
+		return (-1);
+	return (0);
 }
 
 #ifdef SYS_getrandom
@@ -260,11 +260,11 @@ start:
 	close(fd);
 	if (gotdata(buf, len) == 0) {
 		errno = save_errno;
-		return 0;		/* satisfied */
+		return (0);		/* satisfied */
 	}
 nodevrandom:
 	errno = EIO;
-	return -1;
+	return (-1);
 }
 
 #ifdef SYS__sysctl
@@ -295,7 +295,7 @@ getentropy_sysctl(void *buf, size_t len)
 	}
 sysctlfailed:
 	errno = EIO;
-	return -1;
+	return (-1);
 }
 #endif /* SYS__sysctl */
 
@@ -330,7 +330,7 @@ getentropy_phdr(struct dl_phdr_info *info, size_t size, void *data)
 	SHA512_CTX *ctx = data;
 
 	SHA512_Update(ctx, &info->dlpi_addr, sizeof (info->dlpi_addr));
-	return 0;
+	return (0);
 }
 
 static int
@@ -540,8 +540,8 @@ getentropy_fallback(void *buf, size_t len)
 	explicit_bzero(results, sizeof results);
 	if (gotdata(buf, len) == 0) {
 		errno = save_errno;
-		return 0;		/* satisfied */
+		return (0);		/* satisfied */
 	}
 	errno = EIO;
-	return -1;
+	return (-1);
 }
