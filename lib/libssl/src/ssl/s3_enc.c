@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.67 2015/09/11 17:03:03 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.68 2015/09/11 17:04:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,21 +278,6 @@ int
 ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
 {
 	return (ssl3_handshake_mac(s, md_nid, NULL, 0, p));
-}
-
-int
-ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
-{
-	int ret_md5, ret_sha1;
-
-	ret_md5 = ssl3_handshake_mac(s, NID_md5, sender, len, p);
-	if (ret_md5 == 0)
-		return 0;
-	p += ret_md5;
-	ret_sha1 = ssl3_handshake_mac(s, NID_sha1, sender, len, p);
-	if (ret_sha1 == 0)
-		return 0;
-	return (ret_md5 + ret_sha1);
 }
 
 static int
