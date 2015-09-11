@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.60 2015/09/11 19:23:00 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.61 2015/09/11 20:16:03 claudio Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 
 		if (ifp && IN6_IS_SCOPE_EMBED(&sa6.sin6_addr))
 			sa6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+		if_put(ifp); /* put reference from in6_selectif */
 
 		ia6 = ifatoia6(ifa_ifwithaddr(sin6tosa(&sa6), rtableid));
 		if (ia6 == NULL ||
@@ -159,6 +160,8 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 			return (ENXIO); /* XXX: better error? */
 
 		ia6 = in6_ifawithscope(ifp, dst, rtableid);
+		if_put(ifp);
+
 		if (ia6 == NULL)
 			return (EADDRNOTAVAIL);
 
@@ -182,6 +185,8 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 			return (ENXIO); /* XXX: better error? */
 
 		ia6 = in6_ifawithscope(ifp, dst, rtableid);
+		if_put(ifp);
+
 		if (ia6 == NULL)
 			return (EADDRNOTAVAIL);
 
@@ -204,6 +209,8 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 
 		if (ifp) {
 			ia6 = in6_ifawithscope(ifp, dst, rtableid);
+			if_put(ifp);
+
 			if (ia6 == NULL)
 				return (EADDRNOTAVAIL);
 
@@ -459,7 +466,7 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * addresses.)
 	 */
 	if (rt && rt->rt_ifa && rt->rt_ifa->ifa_ifp)
-		*retifp = rt->rt_ifa->ifa_ifp;
+		*retifp = if_ref(rt->rt_ifa->ifa_ifp);
 
 	return (0);
 }
