@@ -1,8 +1,8 @@
-.\" $OpenBSD: rpcgen.1,v 1.16 2014/01/20 05:07:48 schwarze Exp $
+.\" $OpenBSD: rpcgen.1,v 1.17 2015/09/11 20:07:27 schwarze Exp $
 .\" $NetBSD: rpcgen.1,v 1.5.2.1 1995/12/05 02:51:02 jtc Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: September 11 2015 $
 .Dt RPCGEN 1
 .Os
 .Sh NAME
@@ -11,7 +11,7 @@
 .Sh SYNOPSIS
 .Nm rpcgen
 .Op Fl aALTNbC
-.Op Fl D Op Ar name Ns Op =value
+.Op Fl D Ns Ar name Ns Op = Ns Ar value
 .Op Fl K Ar secs
 .Op Fl i Ar lines
 .Ar infile
@@ -210,16 +210,16 @@ routines.
 Generate code in ANSI C.
 This option also generates code that could be
 compiled with the C++ compiler.
-.It Fl D Ar name Ns Op Ar =value
+.It Fl D Ns Ar name Ns Op = Ns Ar value
 Define a symbol
 .Dv name .
 Equivalent to the
 .Dv #define
 directive in the source.
 If no
-.Dv value
+.Ar value
 is given,
-.Dv value
+.Ar value
 is defined as 1.
 This option may be specified more than once.
 .It Fl h
