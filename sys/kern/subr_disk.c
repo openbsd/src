@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.210 2015/09/11 14:08:22 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.211 2015/09/11 14:14:36 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	struct partition *pp;
 	size_t gpsz;
 	u_int64_t gptpartoff, gptpartend, sector;
-	int i, altheader = 0, error, n = 0, offset;
+	int i, altheader = 0, error, n, offset;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
 
@@ -811,6 +811,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 
 	/* Find OpenBSD partition and spoof others along the way. */
+	n = 0;
 	gptpartoff = 0;
 	gptpartend = DL_GETBEND(lp);
 	for (gp_tmp = gp, i = 0; i < letoh32(gh.gh_part_num); gp_tmp++, i++) {
