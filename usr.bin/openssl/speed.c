@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.9 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: speed.c,v 1.10 2015/09/11 09:38:30 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,7 +153,7 @@
 #include "./testdsa.h"
 #include "./testrsa.h"
 
-#define BUFSIZE	((long)1024*8+1)
+#define BUFSIZE	(1024*8+1)
 int run = 0;
 
 static int mr = 0;
@@ -485,11 +485,11 @@ speed_main(int argc, char **argv)
 	for (i = 0; i < RSA_NUM; i++)
 		rsa_key[i] = NULL;
 
-	if ((buf = malloc((int) BUFSIZE)) == NULL) {
+	if ((buf = malloc(BUFSIZE)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
 	}
-	if ((buf2 = malloc((int) BUFSIZE)) == NULL) {
+	if ((buf2 = malloc(BUFSIZE)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
 	}
