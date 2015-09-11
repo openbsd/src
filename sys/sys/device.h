@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.51 2015/09/11 07:13:58 miod Exp $	*/
+/*	$OpenBSD: device.h,v 1.52 2015/09/11 19:14:51 dlg Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #define	_SYS_DEVICE_H_
 
 #include <sys/queue.h>
+#include <sys/refcnt.h>
 
 /*
  * Minimal device structures.
@@ -77,7 +78,7 @@ struct device {
 	char	dv_xname[16];		/* external name (name + unit) */
 	struct	device *dv_parent;	/* pointer to parent device */
 	int	dv_flags;		/* misc. flags; see below */
-	int	dv_ref;			/* ref count */
+	struct	refcnt dv_ref;		/* ref count */
 };
 
 /* dv_flags */

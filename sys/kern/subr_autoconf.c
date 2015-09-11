@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.87 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.88 2015/09/11 19:14:51 dlg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -475,7 +475,7 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 	if (cd->cd_devs[dev->dv_unit])
 		panic("config_make_softc: duplicate %s", dev->dv_xname);
 
-	dev->dv_ref = 1;
+	refcnt_init(&dev->dv_ref);
 
 	return (dev);
 }
@@ -922,7 +922,7 @@ device_mpath(void)
 void
 device_ref(struct device *dv)
 {
-	atomic_inc_int(&dv->dv_ref);
+	refcnt_take(&dv->dv_ref);
 }
 
 /*
@@ -937,7 +937,7 @@ device_unref(struct device *dv)
 {
 	struct cfattach *ca;
 
-	if (atomic_dec_int_nv(&dv->dv_ref) == 0) {
+	if (refcnt_rele(&dv->dv_ref)) {
 		ca = dv->dv_cfdata->cf_attach;
 		free(dv, M_DEVBUF, ca->ca_devsize);
 	}
