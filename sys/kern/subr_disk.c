@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.206 2015/09/11 09:22:07 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.207 2015/09/11 09:44:28 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -637,13 +637,14 @@ get_fstype(struct uuid *uuid_part)
 {
 	static int init = 0;
 	static struct uuid uuid_openbsd, uuid_msdos, uuid_chromefs,
-	    uuid_linux, uuid_hfs, uuid_unused;
+	    uuid_linux, uuid_hfs, uuid_unused, uuid_efi_system;
 	static const uint8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	static const uint8_t gpt_uuid_msdos[] = GPT_UUID_MSDOS;
 	static const uint8_t gpt_uuid_chromerootfs[] = GPT_UUID_CHROMEROOTFS;
 	static const uint8_t gpt_uuid_linux[] = GPT_UUID_LINUX;
 	static const uint8_t gpt_uuid_hfs[] = GPT_UUID_APPLE_HFS;
 	static const uint8_t gpt_uuid_unused[] = GPT_UUID_UNUSED;
+	static const uint8_t gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 
 	if (init == 0) {
 		uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
@@ -652,6 +653,7 @@ get_fstype(struct uuid *uuid_part)
 		uuid_dec_be(gpt_uuid_linux, &uuid_linux);
 		uuid_dec_be(gpt_uuid_hfs, &uuid_hfs);
 		uuid_dec_be(gpt_uuid_unused, &uuid_unused);
+		uuid_dec_be(gpt_uuid_efi_system, &uuid_efi_system);
 		init = 1;
 	}
 
@@ -667,6 +669,8 @@ get_fstype(struct uuid *uuid_part)
 		return FS_EXT2FS;
 	else if (!memcmp(uuid_part, &uuid_hfs, sizeof(struct uuid)))
 		return FS_HFS;
+	else if (!memcmp(uuid_part, &uuid_efi_system, sizeof(struct uuid)))
+		return FS_MSDOS;
 	else
 		return FS_OTHER;
 }
