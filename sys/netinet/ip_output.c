@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.292 2015/09/11 18:48:50 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.293 2015/09/11 19:17:47 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ reroute:
 		}
 
 		ia = ifatoia(ro->ro_rt->rt_ifa);
-		ifp = ro->ro_rt->rt_ifp;
+		ifp = if_ref(ro->ro_rt->rt_ifp);
 		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
 			mtu = ifp->if_mtu;
 		ro->ro_rt->rt_use++;
@@ -512,6 +512,7 @@ sendit:
 
 		/* Callee frees mbuf */
 		error = ipsp_process_packet(m, tdb, AF_INET, 0);
+		if_put(ifp);
 		return error;  /* Nothing more to be done */
 	}
 #endif /* IPSEC */
@@ -537,6 +538,7 @@ sendit:
 		/* tag as generated to skip over pf_test on rerun */
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 		ro = NULL;
+		if_put(ifp); /* drop reference since target changed */
 		goto reroute;
 	}
 #endif
@@ -616,6 +618,7 @@ sendit:
 done:
 	if (ro == &iproute && ro->ro_rt)
 		rtfree(ro->ro_rt);
+	if_put(ifp);
 	return (error);
 bad:
 #ifdef IPSEC
@@ -1617,6 +1620,7 @@ ip_getmoptions(int optname, struct ip_moptions *imo, struct mbuf **mp)
 			addr->s_addr = (ia == NULL) ? INADDR_ANY
 					: ia->ia_addr.sin_addr.s_addr;
 		}
+		if_put(ifp);
 		return (0);
 
 	case IP_MULTICAST_TTL:
