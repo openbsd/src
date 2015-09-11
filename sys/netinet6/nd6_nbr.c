@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.94 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.95 2015/09/11 20:13:22 claudio Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
 	if (nd_ns == NULL) {
 		icmp6stat.icp6s_tooshort++;
+		if_put(ifp);
 		return;
 	}
 	ip6 = mtod(m, struct ip6_hdr *); /* adjust pointer for safety */
@@ -328,6 +329,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	    tlladdr, (struct sockaddr *)proxydl);
  freeit:
 	m_freem(m);
+	if_put(ifp);
 	return;
 
  bad:
@@ -339,6 +341,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	    inet_ntop(AF_INET6, &taddr6, addr, sizeof(addr))));
 	icmp6stat.icp6s_badns++;
 	m_freem(m);
+	if_put(ifp);
 }
 
 /*
@@ -599,6 +602,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
 	if (nd_na == NULL) {
 		icmp6stat.icp6s_tooshort++;
+		if_put(ifp);
 		return;
 	}
 	taddr6 = nd_na->nd_na_target;
@@ -885,11 +889,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 
  freeit:
 	m_freem(m);
+	if_put(ifp);
 	return;
 
  bad:
 	icmp6stat.icp6s_badna++;
 	m_freem(m);
+	if_put(ifp);
 }
 
 /*
