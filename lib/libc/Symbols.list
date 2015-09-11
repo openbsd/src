@@ -1047,8 +1047,6 @@ __res_randomid
 __res_send
 __sym_ntos
 _getlong
-_getnetbyaddr
-_getnetbyname
 _getshort
 _res
 _res_ext

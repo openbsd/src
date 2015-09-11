@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.57 2015/09/10 08:55:03 mpi Exp $
+#	$OpenBSD: Makefile.inc,v 1.58 2015/09/11 09:54:00 deraadt Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/net ${LIBCSRCDIR}/net
@@ -7,7 +7,7 @@ CFLAGS+=-DRESOLVSORT
 
 SRCS+=	base64.c ethers.c freeaddrinfo.c \
 	gai_strerror.c getaddrinfo.c gethostnamadr.c \
-	getifaddrs.c getnameinfo.c getnetbyaddr.c getnetbyname.c getnetent.c \
+	getifaddrs.c getnameinfo.c getnetent.c \
 	getnetnamadr.c getpeereid.c getproto.c getprotoent.c getprotoname.c \
 	getservbyname.c getservbyport.c getservent.c getrrsetbyname.c \
 	herror.c if_indextoname.c if_nameindex.c if_nametoindex.c inet_addr.c \
