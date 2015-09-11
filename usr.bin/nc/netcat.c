@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.133 2015/09/11 21:07:01 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.134 2015/09/11 21:22:54 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -136,12 +136,12 @@ void	set_common_sockopts(int, int);
 int	map_tos(char *, int *);
 int	map_tls(char *, int *);
 void	report_connect(const struct sockaddr *, socklen_t);
-void	report_tls(struct tls * tls_ctx, char * host, char *tls_expectname);
+void	report_tls(struct tls *tls_ctx, char * host, char *tls_expectname);
 void	usage(int);
 ssize_t drainbuf(int, unsigned char *, size_t *, struct tls *);
 ssize_t fillbuf(int, unsigned char *, size_t *, struct tls *);
 void	tls_setup_client(struct tls *, int, char *);
-struct tls * tls_setup_server(struct tls *, int, char *);
+struct tls *tls_setup_server(struct tls *, int, char *);
 
 int
 main(int argc, char *argv[])
@@ -502,8 +502,7 @@ main(int argc, char *argv[])
 				if (vflag)
 					report_connect((struct sockaddr *)&cliaddr, len);
 				if ((usetls) &&
-				    (tls_cctx = tls_setup_server(tls_ctx, connfd,
-					host)))
+				    (tls_cctx = tls_setup_server(tls_ctx, connfd, host)))
 					readwrite(connfd, tls_cctx);
 				if (!usetls)
 					readwrite(connfd, NULL);
@@ -707,7 +706,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 		    strcmp(tls_expecthash, tls_peerhash) != 0)
 			warnx("peer certificate is not %s", tls_expecthash);
 		else if (gotcert && tls_expectname &&
-		    (! tls_peer_cert_contains_name(tls_cctx, tls_expectname)))
+		    (!tls_peer_cert_contains_name(tls_cctx, tls_expectname)))
 			warnx("name (%s) not found in client cert",
 			    tls_expectname);
 		else {
@@ -957,8 +956,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 
 	while (1) {
 		/* both inputs are gone, buffers are empty, we are done */
-		if (pfd[POLL_STDIN].fd == -1 && pfd[POLL_NETIN].fd == -1
-		    && stdinbufpos == 0 && netinbufpos == 0) {
+		if (pfd[POLL_STDIN].fd == -1 && pfd[POLL_NETIN].fd == -1 &&
+		    stdinbufpos == 0 && netinbufpos == 0) {
 			close(net_fd);
 			return;
 		}
@@ -968,8 +967,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			return;
 		}
 		/* listen and net in gone, queues empty, done */
-		if (lflag && pfd[POLL_NETIN].fd == -1
-		    && stdinbufpos == 0 && netinbufpos == 0) {
+		if (lflag && pfd[POLL_NETIN].fd == -1 &&
+		    stdinbufpos == 0 && netinbufpos == 0) {
 			close(net_fd);
 			return;
 		}
@@ -1002,13 +1001,13 @@ readwrite(int net_fd, struct tls *tls_ctx)
 		/* reading is possible after HUP */
 		if (pfd[POLL_STDIN].events & POLLIN &&
 		    pfd[POLL_STDIN].revents & POLLHUP &&
-		    ! (pfd[POLL_STDIN].revents & POLLIN))
-				pfd[POLL_STDIN].fd = -1;
+		    !(pfd[POLL_STDIN].revents & POLLIN))
+			pfd[POLL_STDIN].fd = -1;
 
 		if (pfd[POLL_NETIN].events & POLLIN &&
 		    pfd[POLL_NETIN].revents & POLLHUP &&
-		    ! (pfd[POLL_NETIN].revents & POLLIN))
-				pfd[POLL_NETIN].fd = -1;
+		    !(pfd[POLL_NETIN].revents & POLLIN))
+			pfd[POLL_NETIN].fd = -1;
 
 		if (pfd[POLL_NETOUT].revents & POLLHUP) {
 			if (Nflag)
@@ -1411,7 +1410,7 @@ map_tos(char *s, int *val)
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
 		{ "reliability",	IPTOS_RELIABILITY },
 		{ "throughput",		IPTOS_THROUGHPUT },
-		{ NULL, 		-1 },
+		{ NULL,			-1 },
 	};
 
 	for (t = toskeywords; t->keyword != NULL; t++) {
@@ -1435,7 +1434,7 @@ map_tls(char *s, int *val)
 		{ "noverify",		TLS_NOVERIFY },
 		{ "noname",		TLS_NONAME },
 		{ "clientcert",		TLS_CCERT},
-		{ NULL, 		-1 },
+		{ NULL,			-1 },
 	};
 
 	for (t = tlskeywords; t->keyword != NULL; t++) {
@@ -1474,10 +1473,10 @@ report_connect(const struct sockaddr *sa, socklen_t salen)
 	char remote_port[NI_MAXSERV];
 	int herr;
 	int flags = NI_NUMERICSERV;
-	
+
 	if (nflag)
 		flags |= NI_NUMERICHOST;
-	
+
 	if ((herr = getnameinfo(sa, salen,
 	    remote_host, sizeof(remote_host),
 	    remote_port, sizeof(remote_port),
@@ -1487,7 +1486,7 @@ report_connect(const struct sockaddr *sa, socklen_t salen)
 		else
 			errx(1, "getnameinfo: %s", gai_strerror(herr));
 	}
-	
+
 	fprintf(stderr,
 	    "Connection from %s %s "
 	    "received!\n", remote_host, remote_port);
