@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.126 2015/09/10 15:56:26 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.127 2015/09/11 18:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,7 +234,7 @@ ssl3_connect(SSL *s)
 
 			/* don't push the buffering BIO quite yet */
 
-			if (!ssl3_init_finished_mac(s)) {
+			if (!tls1_init_finished_mac(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -517,7 +517,7 @@ ssl3_connect(SSL *s)
 
 		case SSL_ST_OK:
 			/* clean a few things up */
-			ssl3_cleanup_key_block(s);
+			tls1_cleanup_key_block(s);
 
 			if (s->init_buf != NULL) {
 				BUF_MEM_free(s->init_buf);
@@ -885,7 +885,7 @@ ssl3_get_server_hello(SSL *s)
 	 */
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) &&
-	    !ssl3_digest_cached_records(s)) {
+	    !tls1_digest_cached_records(s)) {
 		al = SSL_AD_INTERNAL_ERROR;
 		goto f_err;
 	}
@@ -1524,7 +1524,7 @@ ssl3_get_certificate_request(SSL *s)
 		 * as we wont be doing client auth.
 		 */
 		if (s->s3->handshake_buffer) {
-			if (!ssl3_digest_cached_records(s))
+			if (!tls1_digest_cached_records(s))
 				goto err;
 		}
 		return (1);
@@ -2309,7 +2309,7 @@ ssl3_send_client_verify(SSL *s)
 			}
 			s2n(u, p);
 			n = u + 4;
-			if (!ssl3_digest_cached_records(s))
+			if (!tls1_digest_cached_records(s))
 				goto err;
 		} else if (pkey->type == EVP_PKEY_RSA) {
 			s->method->ssl3_enc->cert_verify_mac(
@@ -2381,7 +2381,7 @@ ssl3_send_client_verify(SSL *s)
 				    ERR_R_EVP_LIB);
 				goto err;
 			}
-			if (!ssl3_digest_cached_records(s))
+			if (!tls1_digest_cached_records(s))
 				goto err;
 			j = sigsize;
 			s2n(j, p);

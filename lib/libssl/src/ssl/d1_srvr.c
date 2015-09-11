@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.57 2015/09/11 16:28:37 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.58 2015/09/11 18:08:21 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -249,7 +249,7 @@ dtls1_accept(SSL *s)
 					goto end;
 				}
 
-				if (!ssl3_init_finished_mac(s)) {
+				if (!tls1_init_finished_mac(s)) {
 					ret = -1;
 					goto end;
 				}
@@ -278,7 +278,7 @@ dtls1_accept(SSL *s)
 			s->state = SSL3_ST_SW_FLUSH;
 			s->init_num = 0;
 
-			if (!ssl3_init_finished_mac(s)) {
+			if (!tls1_init_finished_mac(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -335,7 +335,7 @@ dtls1_accept(SSL *s)
 			s->s3->tmp.next_state = SSL3_ST_SR_CLNT_HELLO_A;
 
 			/* HelloVerifyRequest resets Finished MAC */
-			if (!ssl3_init_finished_mac(s)) {
+			if (!tls1_init_finished_mac(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -602,7 +602,7 @@ dtls1_accept(SSL *s)
 
 		case SSL_ST_OK:
 			/* clean a few things up */
-			ssl3_cleanup_key_block(s);
+			tls1_cleanup_key_block(s);
 
 			/* remove buffering on output */
 			ssl_free_wbio_buffer(s);

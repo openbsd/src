@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.117 2015/09/10 17:57:50 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.118 2015/09/11 18:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,7 +239,7 @@ ssl3_accept(SSL *s)
 					goto end;
 				}
 
-				if (!ssl3_init_finished_mac(s)) {
+				if (!tls1_init_finished_mac(s)) {
 					ret = -1;
 					goto end;
 				}
@@ -279,7 +279,7 @@ ssl3_accept(SSL *s)
 			s->state = SSL3_ST_SW_FLUSH;
 			s->init_num = 0;
 
-			if (!ssl3_init_finished_mac(s)) {
+			if (!tls1_init_finished_mac(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -393,7 +393,7 @@ ssl3_accept(SSL *s)
 				s->s3->tmp.cert_request = 0;
 				s->state = SSL3_ST_SW_SRVR_DONE_A;
 				if (s->s3->handshake_buffer)
-					if (!ssl3_digest_cached_records(s))
+					if (!tls1_digest_cached_records(s))
 						return (-1);
 			} else {
 				s->s3->tmp.cert_request = 1;
@@ -485,7 +485,7 @@ ssl3_accept(SSL *s)
 					return (-1);
 				}
 				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-				if (!ssl3_digest_cached_records(s))
+				if (!tls1_digest_cached_records(s))
 					return (-1);
 			} else {
 				int offset = 0;
@@ -502,7 +502,7 @@ ssl3_accept(SSL *s)
 				 * But it is next step
 				 */
 				if (s->s3->handshake_buffer)
-					if (!ssl3_digest_cached_records(s))
+					if (!tls1_digest_cached_records(s))
 						return (-1);
 				for (dgst_num = 0; dgst_num < SSL_MAX_DIGEST;
 				    dgst_num++)
@@ -633,7 +633,7 @@ ssl3_accept(SSL *s)
 
 		case SSL_ST_OK:
 			/* clean a few things up */
-			ssl3_cleanup_key_block(s);
+			tls1_cleanup_key_block(s);
 
 			BUF_MEM_free(s->init_buf);
 			s->init_buf = NULL;
@@ -1035,7 +1035,7 @@ ssl3_get_client_hello(SSL *s)
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) ||
 	    !(s->verify_mode & SSL_VERIFY_PEER)) {
-		if (!ssl3_digest_cached_records(s)) {
+		if (!tls1_digest_cached_records(s)) {
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}
@@ -2384,7 +2384,7 @@ ssl3_get_client_certificate(SSL *s)
 			goto f_err;
 		}
 		/* No client certificate so digest cached records */
-		if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s)) {
+		if (s->s3->handshake_buffer && !tls1_digest_cached_records(s)) {
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.82 2015/09/11 17:54:23 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.83 2015/09/11 18:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,7 +144,7 @@
 #include <openssl/md5.h>
 
 void
-ssl3_cleanup_key_block(SSL *s)
+tls1_cleanup_key_block(SSL *s)
 {
 	if (s->s3->tmp.key_block != NULL) {
 		explicit_bzero(s->s3->tmp.key_block,
@@ -156,10 +156,10 @@ ssl3_cleanup_key_block(SSL *s)
 }
 
 int
-ssl3_init_finished_mac(SSL *s)
+tls1_init_finished_mac(SSL *s)
 {
 	BIO_free(s->s3->handshake_buffer);
-	ssl3_free_digest_list(s);
+	tls1_free_digest_list(s);
 
 	s->s3->handshake_buffer = BIO_new(BIO_s_mem());
 	if (s->s3->handshake_buffer == NULL)
@@ -171,7 +171,7 @@ ssl3_init_finished_mac(SSL *s)
 }
 
 void
-ssl3_free_digest_list(SSL *s)
+tls1_free_digest_list(SSL *s)
 {
 	int i;
 
@@ -189,7 +189,7 @@ ssl3_free_digest_list(SSL *s)
 }
 
 void
-ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
+tls1_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
 	if (s->s3->handshake_buffer &&
 	    !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
@@ -204,7 +204,7 @@ ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 }
 
 int
-ssl3_digest_cached_records(SSL *s)
+tls1_digest_cached_records(SSL *s)
 {
 	int i;
 	long mask;
@@ -212,7 +212,7 @@ ssl3_digest_cached_records(SSL *s)
 	long hdatalen;
 	void *hdata;
 
-	ssl3_free_digest_list(s);
+	tls1_free_digest_list(s);
 
 	s->s3->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
 	if (s->s3->handshake_dgst == NULL) {
@@ -255,7 +255,7 @@ ssl3_digest_cached_records(SSL *s)
 }
 
 void
-ssl3_record_sequence_increment(unsigned char *seq)
+tls1_record_sequence_increment(unsigned char *seq)
 {
 	int i;
 
@@ -738,7 +738,7 @@ tls1_setup_key_block(SSL *s)
 	s->s3->tmp.new_mac_pkey_type = mac_type;
 	s->s3->tmp.new_mac_secret_size = mac_secret_size;
 
-	ssl3_cleanup_key_block(s);
+	tls1_cleanup_key_block(s);
 
 	if ((key_block = reallocarray(NULL, mac_secret_size + key_len + iv_len,
 	    2)) == NULL) {
@@ -827,7 +827,7 @@ tls1_enc(SSL *s, int send)
 			    send ? s->d1->w_epoch : s->d1->r_epoch);
 		} else {
 			memcpy(ad, seq, SSL3_SEQUENCE_SIZE);
-			ssl3_record_sequence_increment(seq);
+			tls1_record_sequence_increment(seq);
 		}
 
 		ad[8] = rec->type;
@@ -975,7 +975,7 @@ tls1_enc(SSL *s, int send)
 				    send ? s->d1->w_epoch : s->d1->r_epoch);
 			} else {
 				memcpy(buf, seq, SSL3_SEQUENCE_SIZE);
-				ssl3_record_sequence_increment(seq);
+				tls1_record_sequence_increment(seq);
 			}
 
 			buf[8] = rec->type;
@@ -1035,7 +1035,7 @@ tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 	int i;
 
 	if (s->s3->handshake_buffer)
-		if (!ssl3_digest_cached_records(s))
+		if (!tls1_digest_cached_records(s))
 			return 0;
 
 	for (i = 0; i < SSL_MAX_DIGEST; i++) {
@@ -1074,7 +1074,7 @@ tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 	q = buf;
 
 	if (s->s3->handshake_buffer)
-		if (!ssl3_digest_cached_records(s))
+		if (!tls1_digest_cached_records(s))
 			return 0;
 
 	EVP_MD_CTX_init(&ctx);
@@ -1188,7 +1188,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 		EVP_MD_CTX_cleanup(&hmac);
 
 	if (!SSL_IS_DTLS(ssl))
-		ssl3_record_sequence_increment(seq);
+		tls1_record_sequence_increment(seq);
 
 	return (md_size);
 }

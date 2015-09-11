@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.103 2015/09/11 17:32:23 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.104 2015/09/11 18:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2023,7 +2023,7 @@ ssl3_free(SSL *s)
 	if (s == NULL)
 		return;
 
-	ssl3_cleanup_key_block(s);
+	tls1_cleanup_key_block(s);
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
 
@@ -2033,7 +2033,7 @@ ssl3_free(SSL *s)
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 	BIO_free(s->s3->handshake_buffer);
-	ssl3_free_digest_list(s);
+	tls1_free_digest_list(s);
 	free(s->s3->alpn_selected);
 
 	explicit_bzero(s->s3, sizeof *s->s3);
@@ -2047,7 +2047,7 @@ ssl3_clear(SSL *s)
 	unsigned char	*rp, *wp;
 	size_t		 rlen, wlen;
 
-	ssl3_cleanup_key_block(s);
+	tls1_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
 		sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
 
@@ -2064,7 +2064,7 @@ ssl3_clear(SSL *s)
 	BIO_free(s->s3->handshake_buffer);
 	s->s3->handshake_buffer = NULL;
 
-	ssl3_free_digest_list(s);
+	tls1_free_digest_list(s);
 
 	free(s->s3->alpn_selected);
 	s->s3->alpn_selected = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.51 2015/09/11 16:28:37 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.52 2015/09/11 18:08:21 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -256,7 +256,7 @@ dtls1_connect(SSL *s)
 			s->shutdown = 0;
 
 			/* every DTLS ClientHello resets Finished MAC */
-			if (!ssl3_init_finished_mac(s)) {
+			if (!tls1_init_finished_mac(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -541,7 +541,7 @@ dtls1_connect(SSL *s)
 
 		case SSL_ST_OK:
 			/* clean a few things up */
-			ssl3_cleanup_key_block(s);
+			tls1_cleanup_key_block(s);
 
 			/* If we are not 'joining' the last two packets,
 			 * remove the buffering now */

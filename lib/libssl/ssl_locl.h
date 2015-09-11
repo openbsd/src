@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.118 2015/09/11 17:37:47 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.119 2015/09/11 18:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -595,13 +595,11 @@ void ssl_load_ciphers(void);
 
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
-int ssl3_init_finished_mac(SSL *s);
 int ssl3_send_server_certificate(SSL *s);
 int ssl3_send_newsession_ticket(SSL *s);
 int ssl3_send_cert_status(SSL *s);
 int ssl3_get_finished(SSL *s, int state_a, int state_b);
 int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);
-void ssl3_cleanup_key_block(SSL *s);
 int ssl3_do_write(SSL *s, int type);
 int ssl3_send_alert(SSL *s, int level, int desc);
 int ssl3_get_req_cert_type(SSL *s, unsigned char *p);
@@ -619,8 +617,6 @@ int ssl3_renegotiate_check(SSL *ssl);
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
-void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
-void ssl3_free_digest_list(SSL *s);
 unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);
 SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
@@ -630,7 +626,6 @@ int	ssl3_setup_read_buffer(SSL *s);
 int	ssl3_setup_write_buffer(SSL *s);
 int	ssl3_release_read_buffer(SSL *s);
 int	ssl3_release_write_buffer(SSL *s);
-int	ssl3_digest_cached_records(SSL *s);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);
 int	ssl3_accept(SSL *s);
@@ -650,7 +645,7 @@ unsigned char *ssl3_handshake_msg_start(SSL *s, uint8_t htype);
 void ssl3_handshake_msg_finish(SSL *s, unsigned int len);
 int ssl3_handshake_write(SSL *s);
 
-void ssl3_record_sequence_increment(unsigned char *seq);
+void tls1_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
 
 int ssl23_read(SSL *s, void *buf, int len);
@@ -767,6 +762,11 @@ int dtls1_enc(SSL *s, int snd);
 int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);
 
+int tls1_init_finished_mac(SSL *s);
+void tls1_finish_mac(SSL *s, const unsigned char *buf, int len);
+void tls1_free_digest_list(SSL *s);
+void tls1_cleanup_key_block(SSL *s);
+int tls1_digest_cached_records(SSL *s);
 int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
 int tls1_enc(SSL *s, int snd);

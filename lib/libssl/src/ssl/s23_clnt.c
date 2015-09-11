@@ -1,4 +1,4 @@
-/* $OpenBSD: s23_clnt.c,v 1.45 2015/09/11 14:39:05 jsing Exp $ */
+/* $OpenBSD: s23_clnt.c,v 1.46 2015/09/11 18:08:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,7 +168,7 @@ ssl23_connect(SSL *s)
 				ret = -1;
 				goto end;
 			}
-			if (!ssl3_init_finished_mac(s)) {
+			if (!tls1_init_finished_mac(s)) {
 				ret = -1;
 				goto end;
 			}
@@ -348,7 +348,7 @@ ssl23_client_hello(SSL *s)
 		s->init_num = p - buf;
 		s->init_off = 0;
 
-		ssl3_finish_mac(s, &(buf[SSL3_RT_HEADER_LENGTH]),
+		tls1_finish_mac(s, &(buf[SSL3_RT_HEADER_LENGTH]),
 		    s->init_num - SSL3_RT_HEADER_LENGTH);
 
 		s->state = SSL23_ST_CW_CLNT_HELLO_B;
