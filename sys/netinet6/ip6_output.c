@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.183 2015/09/11 13:53:04 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.184 2015/09/11 19:23:00 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -544,18 +544,15 @@ reroute:
 	}
 
 	if (ifp == NULL) {
-		if ((error = in6_selectroute(&dstsock, opt, ro, &ifp,
-		    &rt, m->m_pkthdr.ph_rtableid)) != 0) {
+		rt = in6_selectroute(&dstsock, opt, ro, ro->ro_tableid);
+		if (rt == NULL) {
 			ip6stat.ip6s_noroute++;
+			error = EHOSTUNREACH;
 			goto bad;
 		}
-	}
-	if (rt == NULL) {
-		/*
-		 * If in6_selectroute() does not return a route entry,
-		 * dst may not have been updated.
-		 */
-		*dst = dstsock;	/* XXX */
+		ifp = rt->rt_ifp;
+	} else {
+		*dst = dstsock;
 	}
 
 	/*

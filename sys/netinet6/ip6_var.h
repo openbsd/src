@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.54 2015/09/11 13:53:04 mpi Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.55 2015/09/11 19:23:00 mpi Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -310,9 +310,8 @@ int	none_input(struct mbuf **, int *, int);
 int	in6_selectsrc(struct in6_addr **, struct sockaddr_in6 *,
 	    struct ip6_pktopts *, struct ip6_moptions *, struct route_in6 *,
 	    struct in6_addr *, u_int);
-int	in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
-	    struct route_in6 *, struct ifnet **,
-	    struct rtentry **, unsigned int rtableid);
+struct rtentry *in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
+	    struct route_in6 *, unsigned int rtableid);
 
 u_int32_t ip6_randomflowlabel(void);
 #endif /* _KERNEL */

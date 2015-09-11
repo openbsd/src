@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.59 2015/09/11 13:53:04 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.60 2015/09/11 19:23:00 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -293,14 +293,10 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	return (EADDRNOTAVAIL);
 }
 
-int
+struct rtentry *
 in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
-    struct route_in6 *ro, struct ifnet **retifp,
-    struct rtentry **retrt, unsigned int rtableid)
+    struct route_in6 *ro, unsigned int rtableid)
 {
-	int error = 0;
-	struct ifnet *ifp = NULL;
-	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *sin6_next;
 	struct in6_addr *dst;
 
@@ -315,11 +311,9 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 		sin6_next = satosin6(opts->ip6po_nexthop);
 
-		/* at this moment, we only support AF_INET6 next hops */
-		if (sin6_next->sin6_family != AF_INET6) {
-			error = EAFNOSUPPORT; /* or should we proceed? */
-			goto done;
-		}
+		/* We only support AF_INET6 next hops */
+		if (sin6_next->sin6_family != AF_INET6)
+			return (NULL);
 
 		/*
 		 * If the next hop is an IPv6 address, then the node identified
@@ -348,25 +342,16 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 					rtfree(ron->ro_rt);
 					ron->ro_rt = NULL;
 				}
-				error = EHOSTUNREACH;
-				goto done;
+				return (NULL);
 			}
 		}
 		if (!nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
 			rtfree(ron->ro_rt);
 			ron->ro_rt = NULL;
-			error = EHOSTUNREACH;
-			goto done;
+			return (NULL);
 		}
-		rt = ron->ro_rt;
-		ifp = rt->rt_ifp;
 
-		/*
-		 * When cloning is required, try to allocate a route to the
-		 * destination so that the caller can store path MTU
-		 * information.
-		 */
-		goto done;
+		return (ron->ro_rt);
 	}
 
 	/*
@@ -397,25 +382,6 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		}
 
 		/*
-		 * do not care about the result if we have the nexthop
-		 * explicitly specified.
-		 */
-		if (opts && opts->ip6po_nexthop)
-			goto done;
-
-		if (ro->ro_rt) {
-			ifp = ro->ro_rt->rt_ifp;
-
-			if (ifp == NULL) { /* can this really happen? */
-				rtfree(ro->ro_rt);
-				ro->ro_rt = NULL;
-			}
-		}
-		if (ro->ro_rt == NULL)
-			error = EHOSTUNREACH;
-		rt = ro->ro_rt;
-
-		/*
 		 * Check if the outgoing interface conflicts with
 		 * the interface specified by ipi6_ifindex (if specified).
 		 * Note that loopback interface is always okay.
@@ -424,30 +390,18 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 */
 		if (opts && opts->ip6po_pktinfo &&
 		    opts->ip6po_pktinfo->ipi6_ifindex) {
-			if (!(ifp->if_flags & IFF_LOOPBACK) &&
-			    ifp->if_index !=
+			if (ro->ro_rt != NULL &&
+			    (ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0 &&
+			    ro->ro_rt->rt_ifp->if_index !=
 			    opts->ip6po_pktinfo->ipi6_ifindex) {
-				error = EHOSTUNREACH;
-				goto done;
+			    	return (NULL);
 			}
 		}
+
+		return (ro->ro_rt);
 	}
 
-  done:
-	if (ifp == NULL && rt == NULL) {
-		/*
-		 * This can happen if the caller did not pass a cached route
-		 * nor any other hints.  We treat this case an error.
-		 */
-		error = EHOSTUNREACH;
-	}
-
-	if (retifp != NULL)
-		*retifp = ifp;
-	if (retrt != NULL)
-		*retrt = rt;	/* rt may be NULL */
-
-	return (error);
+	return (NULL);
 }
 
 int
@@ -457,7 +411,6 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 {
 	struct rtentry *rt = NULL;
 	struct in6_pktinfo *pi = NULL;
-	int error;
 
 	/* If the caller specify the outgoing interface explicitly, use it. */
 	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
@@ -474,9 +427,9 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	    mopts != NULL && (*retifp = if_get(mopts->im6o_ifidx)) != NULL)
 	    	return (0);
 
-	if ((error = in6_selectroute(dstsock, opts, ro, retifp,
-	    &rt, rtableid)) != 0)
-		return (error);
+	rt = in6_selectroute(dstsock, opts, ro, rtableid);
+	if (rt == NULL)
+		return (EHOSTUNREACH);
 
 	/*
 	 * do not use a rejected or black hole route.
