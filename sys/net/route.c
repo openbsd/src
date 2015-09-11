@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.233 2015/09/10 17:35:46 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.234 2015/09/11 14:30:30 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -825,6 +825,12 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (error != 0)
 			return (ESRCH);
 
+		/*
+		 * We need to hold a reference to ensure rtflushclone()
+		 * wont free us through rt->rt_parent.
+		 */
+		rt->rt_refcnt++;
+
 		/* clean up any cloned children */
 		if ((rt->rt_flags & RTF_CLONING) != 0)
 			rtflushclone(tableid, rt);
@@ -840,7 +846,6 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			ifa->ifa_rtrequest(RTM_DELETE, rt);
 		rttrash++;
 
-		rt->rt_refcnt++;
 		if (ret_nrt != NULL)
 			*ret_nrt = rt;
 		else
