@@ -3498,7 +3498,8 @@ output_filter(isc_buffer_t *buffer, unsigned int used_org,
 	 */
 	if (idn_decodename(IDN_DECODE_APP, tmp1, tmp2, MAXDLEN) != idn_success)
 		return (ISC_R_SUCCESS);
-	strcpy(tmp1, tmp2);
+	if (strlcpy(tmp1, tmp2, MAXDLEN) >= sizeof(tmp1))
+		return(ISC_R_NOSPACE);
 
 	/*
 	 * Copy the converted contents in 'tmp1' back to 'buffer'.
