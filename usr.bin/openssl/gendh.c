@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: gendh.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,9 +87,6 @@
 static int dh_cb(int p, int n, BN_GENCB * cb);
 
 static struct {
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	int g;
 	char *outfile;
 } gendh_config;
@@ -110,15 +107,6 @@ static struct option gendh_options[] = {
 		.value = 5,
 		.opt.value = &gendh_config.g,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &gendh_config.engine,
-	},
-#endif
 	{
 		.name = "out",
 		.argname = "file",
@@ -133,7 +121,7 @@ static void
 gendh_usage(void)
 {
 	fprintf(stderr,
-	    "usage: gendh [-2 | -5] [-engine id] [-out file] [numbits]\n\n");
+	    "usage: gendh [-2 | -5] [-out file] [numbits]\n\n");
 	options_usage(gendh_options);
 }
 
@@ -165,10 +153,6 @@ gendh_main(int argc, char **argv)
 			goto end;
 		}
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, gendh_config.engine, 0);
-#endif
 
 	out = BIO_new(BIO_s_file());
 	if (out == NULL) {

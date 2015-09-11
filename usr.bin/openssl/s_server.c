@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.16 2015/09/10 16:01:06 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.17 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,9 +226,6 @@ static int s_quiet = 0;
 static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 
-#ifndef OPENSSL_NO_ENGINE
-static char *engine_id = NULL;
-#endif
 static const char *session_id_prefix = NULL;
 
 static int enable_timeouts = 0;
@@ -262,9 +259,6 @@ s_server_init(void)
 	s_debug = 0;
 	s_msg = 0;
 	s_quiet = 0;
-#ifndef OPENSSL_NO_ENGINE
-	engine_id = NULL;
-#endif
 }
 
 static void
@@ -286,12 +280,12 @@ sv_usage(void)
 	BIO_printf(bio_err, " -certform arg - certificate format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err, " -key arg      - Private Key file to use, in cert file if\n");
 	BIO_printf(bio_err, "                 not specified (default is %s)\n", TEST_CERT);
-	BIO_printf(bio_err, " -keyform arg  - key format (PEM, DER or ENGINE) PEM default\n");
+	BIO_printf(bio_err, " -keyform arg  - key format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err, " -pass arg     - private key file pass phrase source\n");
 	BIO_printf(bio_err, " -dcert arg    - second certificate file to use (usually for DSA)\n");
 	BIO_printf(bio_err, " -dcertform x  - second certificate format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err, " -dkey arg     - second private key file to use (usually for DSA)\n");
-	BIO_printf(bio_err, " -dkeyform arg - second key format (PEM, DER or ENGINE) PEM default\n");
+	BIO_printf(bio_err, " -dkeyform arg - second key format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err, " -dpass arg    - second private key file pass phrase source\n");
 	BIO_printf(bio_err, " -dhparam arg  - DH parameter file to use, in cert file if not specified\n");
 	BIO_printf(bio_err, "                 or a default set of parameters is used\n");
@@ -331,9 +325,6 @@ sv_usage(void)
 	BIO_printf(bio_err, " -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	BIO_printf(bio_err, " -HTTP         - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
 	BIO_printf(bio_err, "                 with the assumption it contains a complete HTTP response.\n");
-#ifndef OPENSSL_NO_ENGINE
-	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
-#endif
 	BIO_printf(bio_err, " -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
 	BIO_printf(bio_err, " -servername host - servername for HostName TLS extension\n");
 	BIO_printf(bio_err, " -servername_fatal - on mismatch send fatal alert (default warning alert)\n");
@@ -598,7 +589,6 @@ s_server_main(int argc, char *argv[])
 	int state = 0;
 	const SSL_METHOD *meth = NULL;
 	int socket_type = SOCK_STREAM;
-	ENGINE *e = NULL;
 	int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
 	char *passarg = NULL, *pass = NULL;
 	char *dpassarg = NULL, *dpass = NULL;
@@ -832,13 +822,6 @@ s_server_main(int argc, char *argv[])
 				goto bad;
 			session_id_prefix = *(++argv);
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine_id = *(++argv);
-		}
-#endif
 		else if (strcmp(*argv, "-servername") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -899,10 +882,6 @@ bad:
 		goto end;
 	}
 
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine_id, 1);
-#endif
-
 	if (!app_passwd(bio_err, passarg, dpassarg, &pass, &dpass)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
@@ -913,28 +892,28 @@ bad:
 		s_key_file2 = s_cert_file2;
 
 	if (nocert == 0) {
-		s_key = load_key(bio_err, s_key_file, s_key_format, 0, pass, e,
+		s_key = load_key(bio_err, s_key_file, s_key_format, 0, pass,
 		    "server certificate private key file");
 		if (!s_key) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 		s_cert = load_cert(bio_err, s_cert_file, s_cert_format,
-		    NULL, e, "server certificate file");
+		    NULL, "server certificate file");
 
 		if (!s_cert) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 		if (tlsextcbp.servername) {
-			s_key2 = load_key(bio_err, s_key_file2, s_key_format, 0, pass, e,
+			s_key2 = load_key(bio_err, s_key_file2, s_key_format, 0, pass,
 			    "second server certificate private key file");
 			if (!s_key2) {
 				ERR_print_errors(bio_err);
 				goto end;
 			}
 			s_cert2 = load_cert(bio_err, s_cert_file2, s_cert_format,
-			    NULL, e, "second server certificate file");
+			    NULL, "second server certificate file");
 
 			if (!s_cert2) {
 				ERR_print_errors(bio_err);
@@ -966,14 +945,13 @@ bad:
 			s_dkey_file = s_dcert_file;
 
 		s_dkey = load_key(bio_err, s_dkey_file, s_dkey_format,
-		    0, dpass, e,
-		    "second certificate private key file");
+		    0, dpass, "second certificate private key file");
 		if (!s_dkey) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 		s_dcert = load_cert(bio_err, s_dcert_file, s_dcert_format,
-		    NULL, e, "second server certificate file");
+		    NULL, "second server certificate file");
 
 		if (!s_dcert) {
 			ERR_print_errors(bio_err);

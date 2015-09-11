@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.5 2015/08/19 18:25:31 deraadt Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -69,9 +69,6 @@
 
 static struct {
 	const EVP_CIPHER *cipher;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *infile;
 	int informat;
 	int iter;
@@ -115,15 +112,6 @@ static struct option pkcs8_options[] = {
 		.value = PKCS8_EMBEDDED_PARAM,
 		.opt.value = &pkcs8_config.p8_broken,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &pkcs8_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -220,7 +208,7 @@ static struct option pkcs8_options[] = {
 static void
 pkcs8_usage()
 {
-	fprintf(stderr, "usage: pkcs8 [-embed] [-engine id] [-in file] "
+	fprintf(stderr, "usage: pkcs8 [-embed] [-in file] "
 	    "[-inform fmt] [-nocrypt]\n"
 	    "    [-noiter] [-nooct] [-nsdb] [-out file] [-outform fmt] "
 	    "[-passin src]\n"
@@ -231,7 +219,6 @@ pkcs8_usage()
 int
 pkcs8_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	BIO *in = NULL, *out = NULL;
 	X509_SIG *p8 = NULL;
 	PKCS8_PRIV_KEY_INFO *p8inf = NULL;
@@ -251,10 +238,6 @@ pkcs8_main(int argc, char **argv)
 		pkcs8_usage();
 		return (1);
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, pkcs8_config.engine, 0);
-#endif
 
 	if (!app_passwd(bio_err, pkcs8_config.passargin,
 	    pkcs8_config.passargout, &passin, &passout)) {
@@ -285,7 +268,7 @@ pkcs8_main(int argc, char **argv)
 	}
 	if (pkcs8_config.topk8) {
 		pkey = load_key(bio_err, pkcs8_config.infile,
-		    pkcs8_config.informat, 1, passin, e, "key");
+		    pkcs8_config.informat, 1, passin, "key");
 		if (!pkey)
 			goto end;
 		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey,

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyutl.c,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: pkeyutl.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -72,7 +72,7 @@ static void usage(void);
 
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
     char *keyfile, int keyform, int key_type,
-    char *passargin, int pkey_op, ENGINE * e);
+    char *passargin, int pkey_op);
 
 static int setup_peer(BIO * err, EVP_PKEY_CTX * ctx, int peerform,
     const char *file);
@@ -86,7 +86,6 @@ pkeyutl_main(int argc, char **argv)
 {
 	BIO *in = NULL, *out = NULL;
 	char *infile = NULL, *outfile = NULL, *sigfile = NULL;
-	ENGINE *e = NULL;
 	int pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
 	int keyform = FORMAT_PEM, peerform = FORMAT_PEM;
 	char badarg = 0, rev = 0;
@@ -126,7 +125,7 @@ pkeyutl_main(int argc, char **argv)
 			else {
 				ctx = init_ctx(&keysize,
 				    *(++argv), keyform, key_type,
-				    passargin, pkey_op, e);
+				    passargin, pkey_op);
 				if (!ctx) {
 					BIO_puts(bio_err,
 					    "Error initializing context\n");
@@ -155,14 +154,6 @@ pkeyutl_main(int argc, char **argv)
 			else
 				keyform = str2fmt(*(++argv));
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (!strcmp(*argv, "-engine")) {
-			if (--argc < 1)
-				badarg = 1;
-			else
-				e = setup_engine(bio_err, *(++argv), 0);
-		}
-#endif
 		else if (!strcmp(*argv, "-pubin"))
 			key_type = KEY_PUBKEY;
 		else if (!strcmp(*argv, "-certin"))
@@ -342,9 +333,6 @@ usage()
 	BIO_printf(bio_err, "-decrypt        decrypt with private key\n");
 	BIO_printf(bio_err, "-derive         derive shared secret\n");
 	BIO_printf(bio_err, "-hexdump        hex dump output\n");
-#ifndef OPENSSL_NO_ENGINE
-	BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
-#endif
 	BIO_printf(bio_err, "-passin arg     pass phrase source\n");
 
 }
@@ -352,7 +340,7 @@ usage()
 static EVP_PKEY_CTX *
 init_ctx(int *pkeysize,
     char *keyfile, int keyform, int key_type,
-    char *passargin, int pkey_op, ENGINE * e)
+    char *passargin, int pkey_op)
 {
 	EVP_PKEY *pkey = NULL;
 	EVP_PKEY_CTX *ctx = NULL;
@@ -372,17 +360,17 @@ init_ctx(int *pkeysize,
 	switch (key_type) {
 	case KEY_PRIVKEY:
 		pkey = load_key(bio_err, keyfile, keyform, 0,
-		    passin, e, "Private Key");
+		    passin, "Private Key");
 		break;
 
 	case KEY_PUBKEY:
 		pkey = load_pubkey(bio_err, keyfile, keyform, 0,
-		    NULL, e, "Public Key");
+		    NULL, "Public Key");
 		break;
 
 	case KEY_CERT:
 		x = load_cert(bio_err, keyfile, keyform,
-		    NULL, e, "Certificate");
+		    NULL, "Certificate");
 		if (x) {
 			pkey = X509_get_pubkey(x);
 			X509_free(x);
@@ -396,7 +384,7 @@ init_ctx(int *pkeysize,
 	if (!pkey)
 		goto end;
 
-	ctx = EVP_PKEY_CTX_new(pkey, e);
+	ctx = EVP_PKEY_CTX_new(pkey, NULL);
 
 	EVP_PKEY_free(pkey);
 
@@ -452,7 +440,7 @@ setup_peer(BIO * err, EVP_PKEY_CTX * ctx, int peerform,
 		BIO_puts(err, "-peerkey command before -inkey\n");
 		return 0;
 	}
-	peer = load_pubkey(bio_err, file, peerform, 0, NULL, NULL, "Peer Key");
+	peer = load_pubkey(bio_err, file, peerform, 0, NULL, "Peer Key");
 
 	if (!peer) {
 		BIO_printf(bio_err, "Error reading peer key %s\n", file);

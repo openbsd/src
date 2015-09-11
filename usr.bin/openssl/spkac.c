@@ -1,4 +1,4 @@
-/* $OpenBSD: spkac.c,v 1.4 2015/08/19 18:25:31 deraadt Exp $ */
+/* $OpenBSD: spkac.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999. Based on an original idea by Massimiliano Pala
  * (madwolf@openca.org).
@@ -75,9 +75,6 @@
 
 static struct {
 	char *challenge;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *infile;
 	char *keyfile;
 	int noout;
@@ -97,15 +94,6 @@ static struct option spkac_options[] = {
 		.type = OPTION_ARG,
 		.opt.arg = &spkac_config.challenge,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -174,7 +162,7 @@ static void
 spkac_usage(void)
 {
 	fprintf(stderr,
-	    "usage: spkac [-challenge string] [-engine id] [-in file] "
+	    "usage: spkac [-challenge string] [-in file] "
 	    "[-key file] [-noout]\n"
 	    "    [-out file] [-passin src] [-pubkey] [-spkac name] "
 	    "[-spksect section]\n"
@@ -185,7 +173,6 @@ spkac_usage(void)
 int
 spkac_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	int i, ret = 1;
 	BIO *in = NULL, *out = NULL;
 	char *passin = NULL;
@@ -207,14 +194,11 @@ spkac_main(int argc, char **argv)
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, spkac_config.engine, 0);
-#endif
 
 	if (spkac_config.keyfile) {
 		pkey = load_key(bio_err,
 		    strcmp(spkac_config.keyfile, "-") ? spkac_config.keyfile
-		    : NULL, FORMAT_PEM, 1, passin, e, "private key");
+		    : NULL, FORMAT_PEM, 1, passin, "private key");
 		if (!pkey) {
 			goto end;
 		}

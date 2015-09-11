@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.18 2015/09/10 16:01:06 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.19 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,9 +238,6 @@ sc_usage(void)
 	BIO_printf(bio_err, "                 only \"smtp\", \"lmtp\", \"pop3\", \"imap\", \"ftp\" and \"xmpp\"\n");
 	BIO_printf(bio_err, "                 are supported.\n");
 	BIO_printf(bio_err, " -xmpphost host - connect to this virtual host on the xmpp server\n");
-#ifndef OPENSSL_NO_ENGINE
-	BIO_printf(bio_err, " -engine id    - Initialise and use the specified engine\n");
-#endif
 	BIO_printf(bio_err, " -sess_out arg - file to write SSL session to\n");
 	BIO_printf(bio_err, " -sess_in arg  - file to read SSL session from\n");
 	BIO_printf(bio_err, " -servername host  - Set TLS extension servername in ClientHello\n");
@@ -356,12 +353,6 @@ s_client_main(int argc, char **argv)
 	int mbuf_len = 0;
 	struct timeval timeout;
 	const char *errstr = NULL;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine_id = NULL;
-	char *ssl_client_engine_id = NULL;
-	ENGINE *ssl_client_engine = NULL;
-#endif
-	ENGINE *e = NULL;
 	char *servername = NULL;
 	tlsextctx tlsextcbp =
 	{NULL, 0};
@@ -578,17 +569,6 @@ s_client_main(int argc, char **argv)
 			else
 				goto bad;
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine_id = *(++argv);
-		} else if (strcmp(*argv, "-ssl_client_engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			ssl_client_engine_id = *(++argv);
-		}
-#endif
 		else if (strcmp(*argv, "-4") == 0) {
 			af = AF_INET;
 		} else if (strcmp(*argv, "-6") == 0) {
@@ -654,17 +634,6 @@ bad:
 	} else
 		next_proto.data = NULL;
 
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine_id, 1);
-	if (ssl_client_engine_id) {
-		ssl_client_engine = ENGINE_by_id(ssl_client_engine_id);
-		if (!ssl_client_engine) {
-			BIO_printf(bio_err,
-			    "Error getting client auth engine\n");
-			goto end;
-		}
-	}
-#endif
 	if (!app_passwd(bio_err, passarg, NULL, &pass, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
@@ -675,7 +644,7 @@ bad:
 
 	if (key_file) {
 
-		key = load_key(bio_err, key_file, key_format, 0, pass, e,
+		key = load_key(bio_err, key_file, key_format, 0, pass,
 		    "client certificate private key file");
 		if (!key) {
 			ERR_print_errors(bio_err);
@@ -684,7 +653,7 @@ bad:
 	}
 	if (cert_file) {
 		cert = load_cert(bio_err, cert_file, cert_format,
-		    NULL, e, "client certificate file");
+		    NULL, "client certificate file");
 
 		if (!cert) {
 			ERR_print_errors(bio_err);
@@ -707,18 +676,6 @@ bad:
 	}
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
-
-#ifndef OPENSSL_NO_ENGINE
-	if (ssl_client_engine) {
-		if (!SSL_CTX_set_client_cert_engine(ctx, ssl_client_engine)) {
-			BIO_puts(bio_err, "Error setting client auth engine\n");
-			ERR_print_errors(bio_err);
-			ENGINE_free(ssl_client_engine);
-			goto end;
-		}
-		ENGINE_free(ssl_client_engine);
-	}
-#endif
 
 #ifndef OPENSSL_NO_SRTP
 	if (srtp_profiles != NULL)

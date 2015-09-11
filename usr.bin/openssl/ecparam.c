@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.12 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.13 2015/09/11 14:30:23 bcook Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -95,7 +95,6 @@ static struct {
 	int asn1_flag;
 	int check;
 	char *curve_name;
-	char *engine;
 	point_conversion_form_t form;
 	int genkey;
 	char *infile;
@@ -161,15 +160,6 @@ struct option ecparam_options[] = {
 		.type = OPTION_ARG_FUNC,
 		.opt.argfunc = ecparam_opt_form,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &ecparam_config.engine,
-	},
-#endif
 	{
 		.name = "genkey",
 		.desc = "Generate an EC private key using the specified "
@@ -252,7 +242,7 @@ static void
 ecparam_usage(void)
 {
 	fprintf(stderr, "usage: ecparam [-C] [-check] [-conv_form arg] "
-	    "[-engine id] [-genkey]\n"
+	    " [-genkey]\n"
 	    "    [-in file] [-inform DER | PEM] [-list_curves] [-name arg]\n"
 	    "    [-no_seed] [-noout] [-out file] [-outform DER | PEM]\n"
 	    "    [-param_enc arg] [-text]\n\n");
@@ -302,10 +292,6 @@ ecparam_main(int argc, char **argv)
 			goto end;
 		}
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, ecparam_config.engine, 0);
-#endif
 
 	if (ecparam_config.list_curves) {
 		EC_builtin_curve *curves = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.7 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: rand.c,v 1.8 2015/09/11 14:30:23 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -64,7 +64,6 @@
 
 struct {
 	int base64;
-	char *engine;
 	int hex;
 	char *outfile;
 } rand_config;
@@ -76,15 +75,6 @@ struct option rand_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &rand_config.base64,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &rand_config.engine,
-	},
-#endif
 	{
 		.name = "hex",
 		.desc = "Hexadecimal output",
@@ -105,7 +95,7 @@ static void
 rand_usage()
 {
 	fprintf(stderr,
-	    "usage: rand [-base64 | -hex] [-engine id] [-out file] num\n");
+	    "usage: rand [-base64 | -hex] [-out file] num\n");
 	options_usage(rand_options);
 }
 
@@ -140,10 +130,6 @@ rand_main(int argc, char **argv)
 		rand_usage();
 		goto err;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, rand_config.engine, 0);
-#endif
 
 	out = BIO_new(BIO_s_file());
 	if (out == NULL)

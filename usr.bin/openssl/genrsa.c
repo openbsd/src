@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: genrsa.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,9 +89,6 @@ int
 genrsa_main(int argc, char **argv)
 {
 	BN_GENCB cb;
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE *e = NULL;
-#endif
 	int ret = 1;
 	int i, num = DEFBITS;
 	long l;
@@ -99,9 +96,6 @@ genrsa_main(int argc, char **argv)
 	unsigned long f4 = RSA_F4;
 	char *outfile = NULL;
 	char *passargout = NULL, *passout = NULL;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 	BIO *out = NULL;
 	BIGNUM *bn = BN_new();
 	RSA *rsa = NULL;
@@ -128,13 +122,6 @@ genrsa_main(int argc, char **argv)
 			f4 = 3;
 		else if (strcmp(*argv, "-F4") == 0 || strcmp(*argv, "-f4") == 0)
 			f4 = RSA_F4;
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine = *(++argv);
-		}
-#endif
 #ifndef OPENSSL_NO_DES
 		else if (strcmp(*argv, "-des") == 0)
 			enc = EVP_des_cbc();
@@ -190,9 +177,6 @@ bad:
 		BIO_printf(bio_err, " -passout arg    output file pass phrase source\n");
 		BIO_printf(bio_err, " -f4             use F4 (0x10001) for the E value\n");
 		BIO_printf(bio_err, " -3              use 3 for the E value\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, " -engine e       use engine e, possibly a hardware device.\n");
-#endif
 		goto err;
 	}
 
@@ -200,9 +184,6 @@ bad:
 		BIO_printf(bio_err, "Error getting password\n");
 		goto err;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
 
 	if (outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
@@ -215,11 +196,7 @@ bad:
 
 	BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
 	    num);
-#ifdef OPENSSL_NO_ENGINE
 	rsa = RSA_new();
-#else
-	rsa = RSA_new_method(e);
-#endif
 	if (!rsa)
 		goto err;
 

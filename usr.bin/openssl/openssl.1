@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.21 2015/09/11 06:43:05 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.22 2015/09/11 14:30:23 bcook Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -284,8 +284,6 @@ Elliptic curve (EC) key processing.
 EC parameter manipulation and generation.
 .It Cm enc
 Encoding with ciphers.
-.It Cm engine
-Engine (loadable module) information and manipulation.
 .It Cm errstr
 Error number to error string conversion.
 .It Cm gendh
@@ -703,7 +701,6 @@ The output of some ASN.1 types is not well handled
 .Op Fl crlhours Ar hours
 .Op Fl days Ar arg
 .Op Fl enddate Ar date
-.Op Fl engine Ar id
 .Op Fl extensions Ar section
 .Op Fl extfile Ar section
 .Op Fl gencrl
@@ -711,7 +708,7 @@ The output of some ASN.1 types is not well handled
 .Op Fl infiles
 .Op Fl key Ar keyfile
 .Op Fl keyfile Ar arg
-.Op Fl keyform Ar ENGINE | PEM
+.Op Fl keyform Ar PEM
 .Op Fl md Ar arg
 .Op Fl msie_hack
 .Op Fl name Ar section
@@ -757,14 +754,6 @@ The number of days to certify the certificate for.
 This allows the expiry date to be explicitly set.
 The format of the date is YYMMDDHHMMSSZ
 .Pq the same as an ASN1 UTCTime structure .
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm ca
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl extensions Ar section
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to
@@ -800,7 +789,7 @@ with the
 utility) this option should be used with caution.
 .It Fl keyfile Ar file
 The private key to sign requests with.
-.It Fl keyform Ar ENGINE | PEM
+.It Fl keyform Ar PEM
 Private key file format.
 .It Fl md Ar alg
 The message digest to use.
@@ -1811,10 +1800,9 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Oc
 .Op Fl binary
 .Op Fl cd
-.Op Fl engine Ar id
 .Op Fl hex
 .Op Fl hmac Ar key
-.Op Fl keyform Ar ENGINE | PEM
+.Op Fl keyform Ar PEM
 .Op Fl mac Ar algorithm
 .Op Fl macopt Ar nm : Ns Ar v
 .Op Fl out Ar file
@@ -1853,16 +1841,6 @@ Print out the digest in two-digit groups separated by colons; only relevant if
 format output is used.
 .It Fl d
 Print out BIO debugging information.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm dgst
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
-This engine is not used as a source for digest algorithms
-unless it is also specified in the configuration file.
 .It Fl hex
 Digest is to be output as a hex dump.
 This is the default case for a
@@ -1871,7 +1849,7 @@ digest as opposed to a digital signature.
 .It Fl hmac Ar key
 Create a hashed MAC using
 .Ar key .
-.It Fl keyform Ar ENGINE | PEM
+.It Fl keyform Ar PEM
 Specifies the key format to sign the digest with.
 .It Fl mac Ar algorithm
 Create a keyed Message Authentication Code (MAC).
@@ -1963,7 +1941,6 @@ below.
 .Op Fl C
 .Op Fl check
 .Op Fl dsaparam
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
 .Op Fl noout
@@ -2008,14 +1985,6 @@ which makes DH key exchange more efficient.
 Beware that with such DSA-style DH parameters,
 a fresh DH key should be created for each use to
 avoid small-subgroup attacks that may be possible otherwise.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm dhparam
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
@@ -2109,7 +2078,6 @@ option was added in
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
 .Oc
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
 .Op Fl modulus
@@ -2154,14 +2122,6 @@ remove the pass phrase from a key,
 or by setting the encryption options it can be use to add or change
 the pass phrase.
 These options can only be used with PEM format output files.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm dsa
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
@@ -2267,7 +2227,6 @@ To just output the public part of a private key:
 .Nm "openssl dsaparam"
 .Bk -words
 .Op Fl C
-.Op Fl engine Ar id
 .Op Fl genkey
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
@@ -2290,14 +2249,6 @@ This option converts the parameters into C code.
 The parameters can then be loaded by calling the
 .Cm get_dsa Ns Ar XXX Ns Li ()
 function.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm dsaparam
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl genkey
 This option will generate a DSA either using the specified or generated
 parameters.
@@ -2362,7 +2313,6 @@ DSA parameters is often used to generate several distinct keys.
 .Op Fl conv_form Ar arg
 .Op Fl des
 .Op Fl des3
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
 .Op Fl noout
@@ -2428,14 +2378,6 @@ encryption option can be used to remove the pass phrase from a key,
 or by setting the encryption options
 it can be use to add or change the pass phrase.
 These options can only be used with PEM format output files.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm ec
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input filename to read a key from,
 or standard input if this option is not specified.
@@ -2567,7 +2509,6 @@ command was first introduced in
 .Op Fl C
 .Op Fl check
 .Op Fl conv_form Ar arg
-.Op Fl engine Ar id
 .Op Fl genkey
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
@@ -2611,14 +2552,6 @@ option is disabled by default for binary curves
 and can be enabled by defining the preprocessor macro
 .Ar OPENSSL_EC_BIN_PT_COMP
 at compile time.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm ecparam
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl genkey
 Generate an EC private key using the specified parameters.
 .It Fl in Ar file
@@ -2736,7 +2669,6 @@ command was first introduced in
 .Op Fl base64
 .Op Fl bufsize Ar number
 .Op Fl debug
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl iv Ar IV
 .Op Fl K Ar key
@@ -2779,14 +2711,6 @@ Decrypt the input data.
 Debug the BIOs used for I/O.
 .It Fl e
 Encrypt the input data: this is the default.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm enc
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 The input
 .Ar file ;
@@ -2918,25 +2842,6 @@ The program can be called either as
 .Nm openssl ciphername
 or
 .Nm openssl enc -ciphername .
-But the first form doesn't work with engine-provided ciphers,
-because this form is processed before the
-configuration file is read and any engines loaded.
-.Pp
-Engines which provide entirely new encryption algorithms
-should be configured in the configuration file.
-Engines, specified on the command line using the
-.Fl engine
-option,
-can only be used for hardware-assisted implementations of ciphers,
-supported by
-.Nm OpenSSL
-core, or by other engines specified in the configuration file.
-.Pp
-When
-.Nm enc
-lists supported ciphers,
-ciphers provided by engines specified in the configuration files
-are listed too.
 .Pp
 A password will be prompted for to derive the
 .Ar key
@@ -3077,56 +2982,6 @@ program only supports a fixed number of algorithms with certain parameters.
 Therefore it is not possible to use RC2 with a 76-bit key
 or RC4 with an 84-bit key with this program.
 .\"
-.\" ENGINE
-.\"
-.Sh ENGINE
-.Nm openssl engine
-.Op Fl ctv
-.Op Fl post Ar cmd
-.Op Fl pre Ar cmd
-.Op Ar engine ...
-.Pp
-The
-.Nm engine
-command provides loadable module information and manipulation
-of various engines.
-Any options are applied to all engines supplied on the command line,
-or all supported engines if none are specified.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl c
-For each engine, also list the capabilities.
-.It Fl post Ar cmd
-Run command
-.Ar cmd
-against the engine after loading it
-(only used if
-.Fl t
-is also provided).
-.It Fl pre Ar cmd
-Run command
-.Ar cmd
-against the engine before any attempts
-to load it
-(only used if
-.Fl t
-is also provided).
-.It Fl t
-For each engine, check that they are really available.
-.Fl tt
-will display an error trace for unavailable engines.
-.It Fl v
-Verbose mode.
-For each engine, list its 'control commands'.
-.Fl vv
-will additionally display each command's description.
-.Fl vvv
-will also add the input flags for each command.
-.Fl vvvv
-will also show internal input flags.
-.El
-.\"
 .\" ERRSTR
 .\"
 .Sh ERRSTR
@@ -3192,7 +3047,6 @@ above.
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
 .Oc
-.Op Fl engine Ar id
 .Op Fl out Ar file
 .Op Ar paramfile
 .Ek
@@ -3215,14 +3069,6 @@ These options encrypt the private key with the AES, DES,
 or the triple DES ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
 If none of these options are specified, no encryption is used.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm gendsa
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl out Ar file
 The output
 .Ar file .
@@ -3246,7 +3092,6 @@ much quicker than RSA key generation, for example.
 .Bk -words
 .Op Fl algorithm Ar alg
 .Op Ar cipher
-.Op Fl engine Ar id
 .Op Fl genparam
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
@@ -3262,8 +3107,7 @@ The
 command generates private keys.
 The use of this
 program is encouraged over the algorithm specific utilities
-because additional algorithm options
-and engine-provided algorithms can be used.
+because additional algorithm options can be used.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -3284,14 +3128,6 @@ Any algorithm name accepted by
 .Fn EVP_get_cipherbyname
 is acceptable, such as
 .Cm des3 .
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm genpkey
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl genparam
 Generate a set of parameters instead of a private key.
 If used this option must precede any
@@ -3422,7 +3258,6 @@ $ openssl genpkey -paramfile dhp.pem -out dhkey.pem
 .Fl aes128 | aes192 | aes256 |
 .Fl des | des3
 .Oc
-.Op Fl engine Ar id
 .Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Ar numbits
@@ -3449,14 +3284,6 @@ If encryption is used, a pass phrase is prompted for,
 if it is not supplied via the
 .Fl passout
 option.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm genrsa
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl out Ar file
 The output
 .Ar file .
@@ -4129,7 +3956,6 @@ prints
 .nr nS 1
 .Nm "openssl pkcs7"
 .Bk -words
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
 .Op Fl noout
@@ -4146,14 +3972,6 @@ command processes PKCS#7 files in DER or PEM format.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm pkcs7
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
@@ -4218,7 +4036,6 @@ They cannot currently parse, for example, the new CMS as described in RFC 2630.
 .Nm "openssl pkcs8"
 .Bk -words
 .Op Fl embed
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
 .Op Fl nocrypt
@@ -4254,14 +4071,6 @@ In this form the OCTET STRING contains an ASN1 SEQUENCE consisting of
 two structures:
 a SEQUENCE containing the parameters and an ASN1 INTEGER containing
 the private key.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm pkcs8
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
@@ -4484,7 +4293,6 @@ compatibility, several of the utilities use the old format at present.
 .Op Fl clcerts
 .Op Fl CSP Ar name
 .Op Fl descert
-.Op Fl engine Ar id
 .Op Fl export
 .Op Fl in Ar file
 .Op Fl info
@@ -4631,14 +4439,6 @@ file unreadable by some
 software.
 By default, the private key is encrypted using triple DES and the
 certificate using 40-bit RC2.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm pkcs12
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl export
 This option specifies that a PKCS#12 file will be created rather than
 parsed.
@@ -4844,7 +4644,6 @@ $ openssl -in keycerts.pem -export -name "My PKCS#12 file" \e
 .Nm "openssl pkey"
 .Bk -words
 .Op Ar cipher
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
 .Op Fl noout
@@ -4873,14 +4672,6 @@ Any algorithm name accepted by
 .Fn EVP_get_cipherbyname
 is acceptable, such as
 .Cm des3 .
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm pkey
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input filename to read a key from,
 or standard input if this option is not specified.
@@ -4966,7 +4757,6 @@ $ openssl pkey -in key.pem -pubout -out pubkey.pem
 .\"
 .Sh PKEYPARAM
 .Cm openssl pkeyparam
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl noout
 .Op Fl out Ar file
@@ -4979,14 +4769,6 @@ They can be converted between various forms and their components printed out.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm pkeyparam
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input filename to read parameters from,
 or standard input if this option is not specified.
@@ -5022,14 +4804,13 @@ because the key type is determined by the PEM headers.
 .Op Fl decrypt
 .Op Fl derive
 .Op Fl encrypt
-.Op Fl engine Ar id
 .Op Fl hexdump
 .Op Fl in Ar file
 .Op Fl inkey Ar file
-.Op Fl keyform Ar DER | ENGINE | PEM
+.Op Fl keyform Ar DER | PEM
 .Op Fl out Ar file
 .Op Fl passin Ar arg
-.Op Fl peerform Ar DER | ENGINE | PEM
+.Op Fl peerform Ar DER | PEM
 .Op Fl peerkey Ar file
 .Op Fl pkeyopt Ar opt : Ns Ar value
 .Op Fl pubin
@@ -5061,14 +4842,6 @@ Decrypt the input data using a private key.
 Derive a shared secret using the peer key.
 .It Fl encrypt
 Encrypt the input data using a public key.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm pkeyutl
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl hexdump
 Hex dump the output data.
 .It Fl in Ar file
@@ -5077,8 +4850,8 @@ or standard input if this option is not specified.
 .It Fl inkey Ar file
 The input key file.
 By default it should be a private key.
-.It Fl keyform Ar DER | ENGINE | PEM
-The key format DER, ENGINE, or PEM.
+.It Fl keyform Ar DER | PEM
+The key format DER or PEM.
 .It Fl out Ar file
 Specify the output filename to write to,
 or standard output by default.
@@ -5089,8 +4862,8 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl peerform Ar DER | ENGINE | PEM
-The peer key format DER, ENGINE, or PEM.
+.It Fl peerform Ar DER | PEM
+The peer key format DER or PEM.
 .It Fl peerkey Ar file
 The peer key file, used by key derivation (agreement) operations.
 .It Fl pkeyopt Ar opt : Ns Ar value
@@ -5271,7 +5044,6 @@ is prime.
 .nr nS 1
 .Nm "openssl rand"
 .Op Fl base64
-.Op Fl engine Ar id
 .Op Fl hex
 .Op Fl out Ar file
 .Ar num
@@ -5289,14 +5061,6 @@ The options are as follows:
 Perform
 .Em base64
 encoding on the output.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm rand
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl hex
 Specify hexadecimal output.
 .It Fl out Ar file
@@ -5315,7 +5079,6 @@ instead of standard output.
 .Op Fl batch
 .Op Fl config Ar file
 .Op Fl days Ar n
-.Op Fl engine Ar id
 .Op Fl extensions Ar section
 .Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
@@ -5392,14 +5155,6 @@ When the
 option is being used, this specifies the number of
 days to certify the certificate for.
 The default is 30 days.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm req
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl extensions Ar section , Fl reqexts Ar section
 These options specify alternative sections to include certificate
 extensions (if the
@@ -6067,7 +5822,6 @@ should be input by the user.
 .Fl des | des3
 .Oc
 .Op Fl check
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inform Ar DER | NET | PEM
 .Op Fl modulus
@@ -6114,14 +5868,6 @@ it can be used to add or change the pass phrase.
 These options can only be used with PEM format output files.
 .It Fl check
 This option checks the consistency of an RSA private key.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm rsa
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
@@ -6264,7 +6010,6 @@ without having to manually edit them.
 .Op Fl certin
 .Op Fl decrypt
 .Op Fl encrypt
-.Op Fl engine Ar id
 .Op Fl hexdump
 .Op Fl in Ar file
 .Op Fl inkey Ar file
@@ -6294,14 +6039,6 @@ The input is a certificate containing an RSA public key.
 Decrypt the input data using an RSA private key.
 .It Fl encrypt
 Encrypt the input data using an RSA public key.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm rsautl
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl hexdump
 Hex dump the output data.
 .It Fl in Ar file
@@ -6458,7 +6195,6 @@ which it can be seen agrees with the recovered value above.
 .Op Fl crl_check_all
 .Op Fl crlf
 .Op Fl debug
-.Op Fl engine Ar id
 .Op Fl extended_crl
 .Op Fl ign_eof
 .Op Fl ignore_critical
@@ -6570,14 +6306,6 @@ This option translates a line feed from the terminal into CR+LF as required
 by some servers.
 .It Fl debug
 Print extensive debugging information including a hex dump of all traffic.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm s_client
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl ign_eof
 Inhibit shutting down the connection when end of file is reached in the
 input.
@@ -6782,7 +6510,6 @@ We should really report information whenever a session is renegotiated.
 .Op Fl debug
 .Op Fl dhparam Ar file
 .Op Fl dkey Ar file
-.Op Fl engine Ar id
 .Op Fl hack
 .Op Fl HTTP
 .Op Fl id_prefix Ar arg
@@ -6897,14 +6624,6 @@ load the parameters from the server certificate file.
 If this fails, a static set of parameters hard coded into the
 .Nm s_server
 program will be used.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm s_server
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl hack
 This option enables a further workaround for some early Netscape
 SSL code
@@ -7386,7 +7105,6 @@ The cipher and start time should be printed out in human readable form.
 .Op Fl crl_check_all
 .Op Fl decrypt
 .Op Fl encrypt
-.Op Fl engine Ar id
 .Op Fl extended_crl
 .Op Fl from Ar addr
 .Op Fl ignore_critical
@@ -7395,7 +7113,7 @@ The cipher and start time should be printed out in human readable form.
 .Op Fl inform Ar DER | PEM | SMIME
 .Op Fl inkey Ar file
 .Op Fl issuer_checks
-.Op Fl keyform Ar ENGINE | PEM
+.Op Fl keyform Ar PEM
 .Op Fl md Ar digest
 .Op Fl noattr
 .Op Fl nocerts
@@ -7542,14 +7260,6 @@ This option will override any content if the input format is
 and it uses the multipart/signed
 .Em MIME
 content type.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm smime
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Xo
 .Fl from Ar addr ,
 .Fl subject Ar s ,
@@ -7605,7 +7315,7 @@ or
 file.
 When signing,
 this option can be used multiple times to specify successive keys.
-.It Fl keyform Ar ENGINE | PEM
+.It Fl keyform Ar PEM
 Input private key format.
 .It Fl md Ar digest
 The digest algorithm to use when signing or resigning.
@@ -7968,7 +7678,6 @@ command were first added in
 .Op Cm sha1
 .Op Fl decrypt
 .Op Fl elapsed
-.Op Fl engine Ar id
 .Op Fl evp Ar e
 .Op Fl mr
 .Op Fl multi Ar number
@@ -7986,14 +7695,6 @@ tests those algorithms, otherwise all of the above are tested.
 .It Fl decrypt
 Time decryption instead of encryption
 .Pq only EVP .
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm speed
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl elapsed
 Measure time in real time instead of CPU user time.
 .It Fl evp Ar e
@@ -8033,7 +7734,6 @@ benchmarks in parallel.
 .Fl reply
 .Op Fl chain Ar certs_file.pem
 .Op Fl config Ar configfile
-.Op Fl engine Ar id
 .Op Fl in Ar response.tsr
 .Op Fl inkey Ar private.pem
 .Op Fl out Ar response.tsr
@@ -8194,14 +7894,6 @@ environment variable.
 See
 .Sx TS CONFIGURATION FILE OPTIONS
 for configurable variables.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm ts
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar response.tsr
 Specifies a previously created time stamp response or time stamp token, if
 .Fl token_in
@@ -8379,11 +8071,6 @@ This number is incremented by 1 for each response.
 If the file does not exist at the time of response
 generation a new file is created with serial number 1.
 This parameter is mandatory.
-.It Cm crypto_device
-Specifies the
-.Nm OpenSSL
-engine that will be set as the default for
-all available algorithms.
 .It Cm signer_cert
 TSA signing certificate, in PEM format.
 The same as the
@@ -8611,7 +8298,6 @@ OpenTSA project
 .Nm "openssl spkac"
 .Bk -words
 .Op Fl challenge Ar string
-.Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl key Ar keyfile
 .Op Fl noout
@@ -8636,14 +8322,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl challenge Ar string
 Specifies the challenge string if an SPKAC is being created.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm spkac
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file
@@ -8743,7 +8421,6 @@ to be used in a
 .Op Fl check_ss_sig
 .Op Fl crl_check
 .Op Fl crl_check_all
-.Op Fl engine Ar id
 .Op Fl explicit_policy
 .Op Fl extended_crl
 .Op Fl help
@@ -8800,14 +8477,6 @@ If a valid CRL cannot be found an error occurs.
 .It Fl crl_check_all
 Checks the validity of all certificates in the chain by attempting
 to look up valid CRLs.
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm verify
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl explicit_policy
 Set policy variable require-explicit-policy (see RFC 3280 et al).
 .It Fl extended_crl
@@ -9181,7 +8850,6 @@ option was added in
 .Op Fl days Ar arg
 .Op Fl email
 .Op Fl enddate
-.Op Fl engine Ar id
 .Op Fl extensions Ar section
 .Op Fl extfile Ar file
 .Op Fl fingerprint
@@ -9230,14 +8898,6 @@ Since there are a large number of options, they are split up into
 various sections.
 .Sh X509 INPUT, OUTPUT, AND GENERAL PURPOSE OPTIONS
 .Bl -tag -width "XXXX"
-.It Fl engine Ar id
-Specifying an engine (by its unique
-.Ar id
-string) will cause
-.Nm x509
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 .It Fl in Ar file
 This specifies the input
 .Ar file

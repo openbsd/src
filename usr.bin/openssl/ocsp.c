@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: ocsp.c,v 1.4 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -105,7 +105,6 @@ static OCSP_RESPONSE *query_responder(BIO * err, BIO * cbio, char *path,
 int
 ocsp_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	char **args;
 	char *host = NULL, *port = NULL, *path = "/";
 	char *reqin = NULL, *respin = NULL;
@@ -335,7 +334,7 @@ ocsp_main(int argc, char **argv)
 				args++;
 				X509_free(issuer);
 				issuer = load_cert(bio_err, *args, FORMAT_PEM,
-				    NULL, e, "issuer certificate");
+				    NULL, "issuer certificate");
 				if (!issuer)
 					goto end;
 			} else
@@ -345,7 +344,7 @@ ocsp_main(int argc, char **argv)
 				args++;
 				X509_free(cert);
 				cert = load_cert(bio_err, *args, FORMAT_PEM,
-				    NULL, e, "certificate");
+				    NULL, "certificate");
 				if (!cert)
 					goto end;
 				if (!cert_id_md)
@@ -531,20 +530,20 @@ ocsp_main(int argc, char **argv)
 		if (!rkeyfile)
 			rkeyfile = rsignfile;
 		rsigner = load_cert(bio_err, rsignfile, FORMAT_PEM,
-		    NULL, e, "responder certificate");
+		    NULL, "responder certificate");
 		if (!rsigner) {
 			BIO_printf(bio_err, "Error loading responder certificate\n");
 			goto end;
 		}
 		rca_cert = load_cert(bio_err, rca_filename, FORMAT_PEM,
-		    NULL, e, "CA certificate");
+		    NULL, "CA certificate");
 		if (rcertfile) {
 			rother = load_certs(bio_err, rcertfile, FORMAT_PEM,
-			    NULL, e, "responder other certificates");
+			    NULL, "responder other certificates");
 			if (!rother)
 				goto end;
 		}
-		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, 0, NULL, NULL,
+		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, 0, NULL,
 		    "responder private key");
 		if (!rkey)
 			goto end;
@@ -574,18 +573,18 @@ redo_accept:
 		if (!keyfile)
 			keyfile = signfile;
 		signer = load_cert(bio_err, signfile, FORMAT_PEM,
-		    NULL, e, "signer certificate");
+		    NULL, "signer certificate");
 		if (!signer) {
 			BIO_printf(bio_err, "Error loading signer certificate\n");
 			goto end;
 		}
 		if (sign_certfile) {
 			sign_other = load_certs(bio_err, sign_certfile, FORMAT_PEM,
-			    NULL, e, "signer certificates");
+			    NULL, "signer certificates");
 			if (!sign_other)
 				goto end;
 		}
-		key = load_key(bio_err, keyfile, FORMAT_PEM, 0, NULL, NULL,
+		key = load_key(bio_err, keyfile, FORMAT_PEM, 0, NULL,
 		    "signer private key");
 		if (!key)
 			goto end;
@@ -690,7 +689,7 @@ done_resp:
 		goto end;
 	if (verify_certfile) {
 		verify_other = load_certs(bio_err, verify_certfile, FORMAT_PEM,
-		    NULL, e, "validator certificate");
+		    NULL, "validator certificate");
 		if (!verify_other)
 			goto end;
 	}

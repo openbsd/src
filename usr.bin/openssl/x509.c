@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: x509.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,9 +140,6 @@ static const char *x509_usage[] = {
 	" -extensions     - section from config file with X509V3 extensions to add\n",
 	" -clrext         - delete extensions before signing and input certificate\n",
 	" -nameopt arg    - various certificate name options\n",
-#ifndef OPENSSL_NO_ENGINE
-	" -engine e       - use engine e, possibly a hardware device.\n",
-#endif
 	" -certopt arg    - various certificate text options\n",
 	NULL
 };
@@ -160,7 +157,6 @@ static int reqfile = 0;
 int
 x509_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	int ret = 1;
 	X509_REQ *req = NULL;
 	X509 *x = NULL, *xca = NULL;
@@ -200,9 +196,6 @@ x509_main(int argc, char **argv)
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int checkend = 0, checkoffset = 0;
 	unsigned long nmflag = 0, certflag = 0;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 	const char *errstr = NULL;
 
 	reqfile = 0;
@@ -345,13 +338,6 @@ x509_main(int argc, char **argv)
 			if (!set_name_ex(&nmflag, *(++argv)))
 				goto bad;
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine = *(++argv);
-		}
-#endif
 		else if (strcmp(*argv, "-C") == 0)
 			C = ++num;
 		else if (strcmp(*argv, "-email") == 0)
@@ -441,9 +427,6 @@ bad:
 			BIO_printf(bio_err, "%s", *pp);
 		goto end;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
 
 	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
@@ -575,12 +558,12 @@ bad:
 		X509_set_pubkey(x, pkey);
 		EVP_PKEY_free(pkey);
 	} else
-		x = load_cert(bio_err, infile, informat, NULL, e, "Certificate");
+		x = load_cert(bio_err, infile, informat, NULL, "Certificate");
 
 	if (x == NULL)
 		goto end;
 	if (CA_flag) {
-		xca = load_cert(bio_err, CAfile, CAformat, NULL, e, "CA Certificate");
+		xca = load_cert(bio_err, CAfile, CAformat, NULL, "CA Certificate");
 		if (xca == NULL)
 			goto end;
 	}
@@ -813,7 +796,7 @@ bad:
 				if (Upkey == NULL) {
 					Upkey = load_key(bio_err,
 					    keyfile, keyformat, 0,
-					    passin, e, "Private key");
+					    passin, "Private key");
 					if (Upkey == NULL)
 						goto end;
 				}
@@ -825,8 +808,7 @@ bad:
 				if (CAkeyfile != NULL) {
 					CApkey = load_key(bio_err,
 					    CAkeyfile, CAkeyformat,
-					    0, passin, e,
-					    "CA Private Key");
+					    0, passin, "CA Private Key");
 					if (CApkey == NULL)
 						goto end;
 				}
@@ -845,7 +827,7 @@ bad:
 				} else {
 					pk = load_key(bio_err,
 					    keyfile, keyformat, 0,
-					    passin, e, "request key");
+					    passin, "request key");
 					if (pk == NULL)
 						goto end;
 				}

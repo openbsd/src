@@ -1,4 +1,4 @@
-/* $OpenBSD: progs.h,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: progs.h,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
 /* Public domain */
 
 int asn1parse_main(int argc, char **argv);
@@ -16,7 +16,6 @@ int dsaparam_main(int argc, char **argv);
 int ec_main(int argc, char **argv);
 int ecparam_main(int argc, char **argv);
 int enc_main(int argc, char **argv);
-int engine_main(int argc, char **argv);
 int errstr_main(int argc, char **argv);
 int gendh_main(int argc, char **argv);
 int gendsa_main(int argc, char **argv);

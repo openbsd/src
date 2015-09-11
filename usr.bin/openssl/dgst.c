@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.5 2015/09/10 16:01:06 jsing Exp $ */
+/* $OpenBSD: dgst.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,7 +101,6 @@ list_md_fn(const EVP_MD * m, const char *from, const char *to, void *arg)
 int
 dgst_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	unsigned char *buf = NULL;
 	int i, err = 1;
 	const EVP_MD *md = NULL, *m;
@@ -120,9 +119,6 @@ dgst_main(int argc, char **argv)
 	unsigned char *sigbuf = NULL;
 	int siglen = 0;
 	char *passargin = NULL, *passin = NULL;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 	char *hmac_key = NULL;
 	char *mac_name = NULL;
 	STACK_OF(OPENSSL_STRING) * sigopts = NULL, *macopts = NULL;
@@ -178,14 +174,6 @@ dgst_main(int argc, char **argv)
 				break;
 			keyform = str2fmt(*(++argv));
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				break;
-			engine = *(++argv);
-			e = setup_engine(bio_err, engine, 0);
-		}
-#endif
 		else if (strcmp(*argv, "-hex") == 0)
 			out_bin = 0;
 		else if (strcmp(*argv, "-binary") == 0)
@@ -238,16 +226,13 @@ dgst_main(int argc, char **argv)
 		BIO_printf(bio_err, "-sign   file    sign digest using private key in file\n");
 		BIO_printf(bio_err, "-verify file    verify a signature using public key in file\n");
 		BIO_printf(bio_err, "-prverify file  verify a signature using private key in file\n");
-		BIO_printf(bio_err, "-keyform arg    key file format (PEM or ENGINE)\n");
+		BIO_printf(bio_err, "-keyform arg    key file format (PEM)\n");
 		BIO_printf(bio_err, "-out filename   output to filename rather than stdout\n");
 		BIO_printf(bio_err, "-signature file signature to verify\n");
 		BIO_printf(bio_err, "-sigopt nm:v    signature parameter\n");
 		BIO_printf(bio_err, "-hmac key       create hashed MAC with key\n");
 		BIO_printf(bio_err, "-mac algorithm  create MAC (not neccessarily HMAC)\n");
 		BIO_printf(bio_err, "-macopt nm:v    MAC algorithm parameters or key\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
-#endif
 
 		EVP_MD_do_all_sorted(list_md_fn, bio_err);
 		goto end;
@@ -298,10 +283,10 @@ dgst_main(int argc, char **argv)
 	if (keyfile) {
 		if (want_pub)
 			sigkey = load_pubkey(bio_err, keyfile, keyform, 0, NULL,
-			    e, "key file");
+			    "key file");
 		else
 			sigkey = load_key(bio_err, keyfile, keyform, 0, passin,
-			    e, "key file");
+			    "key file");
 		if (!sigkey) {
 			/*
 			 * load_[pub]key() has already printed an appropriate
@@ -313,7 +298,7 @@ dgst_main(int argc, char **argv)
 	if (mac_name) {
 		EVP_PKEY_CTX *mac_ctx = NULL;
 		int r = 0;
-		if (!init_gen_str(bio_err, &mac_ctx, mac_name, e, 0))
+		if (!init_gen_str(bio_err, &mac_ctx, mac_name, 0))
 			goto mac_end;
 		if (macopts) {
 			char *macopt;
@@ -341,7 +326,7 @@ mac_end:
 			goto end;
 	}
 	if (hmac_key) {
-		sigkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, e,
+		sigkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
 		    (unsigned char *) hmac_key, -1);
 		if (!sigkey)
 			goto end;

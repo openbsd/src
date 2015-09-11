@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.6 2015/09/10 16:43:06 jsing Exp $ */
+/* $OpenBSD: openssl.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,10 +126,6 @@
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 #include "progs.h"
 #include "s_apps.h"
 
@@ -162,9 +158,6 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_GENERAL, "crl", crl_main },
 	{ FUNC_TYPE_GENERAL, "dgst", dgst_main },
 	{ FUNC_TYPE_GENERAL, "enc", enc_main },
-#ifndef OPENSSL_NO_ENGINE
-	{ FUNC_TYPE_GENERAL, "engine", engine_main },
-#endif
 	{ FUNC_TYPE_GENERAL, "errstr", errstr_main },
 	{ FUNC_TYPE_GENERAL, "genpkey", genpkey_main },
 	{ FUNC_TYPE_GENERAL, "nseq", nseq_main },
@@ -419,10 +412,6 @@ openssl_startup(void)
 	SSL_library_init();
 	SSL_load_error_strings();
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_load_builtin_engines();
-#endif
-
 	setup_ui_method();
 }
 
@@ -433,11 +422,6 @@ openssl_shutdown(void)
 	destroy_ui_method();
 	OBJ_cleanup();
 	EVP_cleanup();
-
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_cleanup();
-#endif
-
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
 	ERR_free_strings();

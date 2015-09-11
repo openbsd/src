@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.6 2015/09/10 16:01:06 jsing Exp $ */
+/* $OpenBSD: enc.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,9 +85,6 @@ static struct {
 	int do_zlib;
 #endif
 	int enc;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *hiv;
 	char *hkey;
 	char *hsalt;
@@ -171,15 +168,6 @@ static struct option enc_options[] = {
 		.opt.value = &enc_config.enc,
 		.value = 1,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &enc_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -317,7 +305,7 @@ enc_usage(void)
 {
 	fprintf(stderr, "usage: enc -ciphername [-AadePp] [-base64] "
 	    "[-bufsize number] [-debug]\n"
-	    "    [-engine id] [-in file] [-iv IV] [-K key] [-k password]\n"
+	    "    [-in file] [-iv IV] [-K key] [-k password]\n"
 	    "    [-kfile file] [-md digest] [-none] [-nopad] [-nosalt]\n"
 	    "    [-out file] [-pass arg] [-S salt] [-salt]\n\n");
 	options_usage(enc_options);
@@ -412,10 +400,6 @@ enc_main(int argc, char **argv)
 		}
 		enc_config.keystr = buf;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, enc_config.engine, 0);
-#endif
 
 	if (enc_config.md != NULL &&
 	    (dgst = EVP_get_digestbyname(enc_config.md)) == NULL) {

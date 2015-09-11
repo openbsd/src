@@ -1,4 +1,4 @@
-/* $OpenBSD: genpkey.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: genpkey.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -65,19 +65,13 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 static int
-init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx, const char *file,
-    ENGINE * e);
+init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx, const char *file);
 static int genpkey_cb(EVP_PKEY_CTX * ctx);
 
 int
 genpkey_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	char **args, *outfile = NULL;
 	char *passarg = NULL;
 	BIO *in = NULL, *out = NULL;
@@ -107,20 +101,13 @@ genpkey_main(int argc, char **argv)
 				goto bad;
 			passarg = *(++args);
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*args, "-engine") == 0) {
-			if (!args[1])
-				goto bad;
-			e = setup_engine(bio_err, *(++args), 0);
-		}
-#endif
 		else if (!strcmp(*args, "-paramfile")) {
 			if (!args[1])
 				goto bad;
 			args++;
 			if (do_param == 1)
 				goto bad;
-			if (!init_keygen_file(bio_err, &ctx, *args, e))
+			if (!init_keygen_file(bio_err, &ctx, *args))
 				goto end;
 		} else if (!strcmp(*args, "-out")) {
 			if (args[1]) {
@@ -131,7 +118,7 @@ genpkey_main(int argc, char **argv)
 		} else if (strcmp(*args, "-algorithm") == 0) {
 			if (!args[1])
 				goto bad;
-			if (!init_gen_str(bio_err, &ctx, *(++args), e, do_param))
+			if (!init_gen_str(bio_err, &ctx, *(++args), do_param))
 				goto end;
 		} else if (strcmp(*args, "-pkeyopt") == 0) {
 			if (!args[1])
@@ -174,9 +161,6 @@ bad:
 		BIO_printf(bio_err, "-outform X         output format (DER or PEM)\n");
 		BIO_printf(bio_err, "-pass arg          output file pass phrase source\n");
 		BIO_printf(bio_err, "-<cipher>          use cipher <cipher> to encrypt the key\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, "-engine e          use engine e, possibly a hardware device.\n");
-#endif
 		BIO_printf(bio_err, "-paramfile file    parameters file\n");
 		BIO_printf(bio_err, "-algorithm alg     the public key algorithm\n");
 		BIO_printf(bio_err, "-pkeyopt opt:value set the public key algorithm option <opt>\n"
@@ -261,7 +245,7 @@ end:
 
 static int
 init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx,
-    const char *file, ENGINE * e)
+    const char *file)
 {
 	BIO *pbio;
 	EVP_PKEY *pkey = NULL;
@@ -282,7 +266,7 @@ init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx,
 		BIO_printf(bio_err, "Error reading parameter file %s\n", file);
 		return 0;
 	}
-	ctx = EVP_PKEY_CTX_new(pkey, e);
+	ctx = EVP_PKEY_CTX_new(pkey, NULL);
 	if (!ctx)
 		goto err;
 	if (EVP_PKEY_keygen_init(ctx) <= 0)
@@ -304,23 +288,17 @@ err:
 
 int
 init_gen_str(BIO * err, EVP_PKEY_CTX ** pctx,
-    const char *algname, ENGINE * e, int do_param)
+    const char *algname, int do_param)
 {
 	EVP_PKEY_CTX *ctx = NULL;
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	ENGINE *tmpeng = NULL;
 	int pkey_id;
 
 	if (*pctx) {
 		BIO_puts(err, "Algorithm already set!\n");
 		return 0;
 	}
-	ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
-
-#ifndef OPENSSL_NO_ENGINE
-	if (!ameth && e)
-		ameth = ENGINE_get_pkey_asn1_meth_str(e, algname, -1);
-#endif
+	ameth = EVP_PKEY_asn1_find_str(NULL, algname, -1);
 
 	if (!ameth) {
 		BIO_printf(bio_err, "Algorithm %s not found\n", algname);
@@ -329,11 +307,7 @@ init_gen_str(BIO * err, EVP_PKEY_CTX ** pctx,
 	ERR_clear_error();
 
 	EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
-#ifndef OPENSSL_NO_ENGINE
-	if (tmpeng)
-		ENGINE_finish(tmpeng);
-#endif
-	ctx = EVP_PKEY_CTX_new_id(pkey_id, e);
+	ctx = EVP_PKEY_CTX_new_id(pkey_id, NULL);
 
 	if (!ctx)
 		goto err;

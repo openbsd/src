@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.4 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -95,7 +95,6 @@ static int set_pbe(BIO * err, int *ppbe, const char *str);
 int
 pkcs12_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	char *infile = NULL, *outfile = NULL, *keyname = NULL;
 	char *certfile = NULL;
 	BIO *in = NULL, *out = NULL;
@@ -124,9 +123,6 @@ pkcs12_main(int argc, char **argv)
 	char *passin = NULL, *passout = NULL;
 	char *macalg = NULL;
 	char *CApath = NULL, *CAfile = NULL;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 
 	cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
 
@@ -285,14 +281,6 @@ pkcs12_main(int argc, char **argv)
 					CAfile = *args;
 				} else
 					badarg = 1;
-#ifndef OPENSSL_NO_ENGINE
-			} else if (!strcmp(*args, "-engine")) {
-				if (args[1]) {
-					args++;
-					engine = *args;
-				} else
-					badarg = 1;
-#endif
 			} else
 				badarg = 1;
 
@@ -349,16 +337,10 @@ pkcs12_main(int argc, char **argv)
 		BIO_printf(bio_err, "-password p   set import/export password source\n");
 		BIO_printf(bio_err, "-passin p     input file pass phrase source\n");
 		BIO_printf(bio_err, "-passout p    output file pass phrase source\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, "-engine e     use engine e, possibly a hardware device.\n");
-#endif
 		BIO_printf(bio_err, "-CSP name     Microsoft CSP name\n");
 		BIO_printf(bio_err, "-LMK          Add local machine keyset attribute to private key\n");
 		goto end;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
 
 	if (passarg) {
 		if (export_cert)
@@ -428,14 +410,14 @@ pkcs12_main(int argc, char **argv)
 
 		if (!(options & NOKEYS)) {
 			key = load_key(bio_err, keyname ? keyname : infile,
-			    FORMAT_PEM, 1, passin, e, "private key");
+			    FORMAT_PEM, 1, passin, "private key");
 			if (!key)
 				goto export_end;
 		}
 
 		/* Load in all certs in input file */
 		if (!(options & NOCERTS)) {
-			certs = load_certs(bio_err, infile, FORMAT_PEM, NULL, e,
+			certs = load_certs(bio_err, infile, FORMAT_PEM, NULL,
 			    "certificates");
 			if (!certs)
 				goto export_end;
@@ -465,8 +447,7 @@ pkcs12_main(int argc, char **argv)
 		if (certfile) {
 			STACK_OF(X509) * morecerts = NULL;
 			if (!(morecerts = load_certs(bio_err, certfile, FORMAT_PEM,
-				    NULL, e,
-				    "certificates from certfile")))
+			    NULL, "certificates from certfile")))
 				goto export_end;
 			while (sk_X509_num(morecerts) > 0)
 				sk_X509_push(certs, sk_X509_shift(morecerts));

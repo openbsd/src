@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,9 +81,6 @@
 
 static struct {
 	int C;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	int genkey;
 	char *infile;
 	int informat;
@@ -100,15 +97,6 @@ static struct option dsaparam_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &dsaparam_config.C,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &dsaparam_config.engine,
-	},
-#endif
 	{
 		.name = "genkey",
 		.desc = "Generate a DSA key",
@@ -162,7 +150,7 @@ static void
 dsaparam_usage(void)
 {
 	fprintf(stderr,
-	    "usage: dsaparam [-C] [-engine id] [-genkey] [-in file]\n"
+	    "usage: dsaparam [-C] [-genkey] [-in file]\n"
 	    "    [-inform format] [-noout] [-out file] [-outform format]\n"
 	    "    [-text] [numbits]\n\n");
 	options_usage(dsaparam_options);
@@ -221,10 +209,6 @@ dsaparam_main(int argc, char **argv)
 			goto end;
 		}
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, dsaparam_config.engine, 0);
-#endif
 
 	if (numbits > 0) {
 		BN_GENCB cb;

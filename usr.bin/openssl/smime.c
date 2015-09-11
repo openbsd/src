@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: smime.c,v 1.4 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -85,7 +85,6 @@ static int smime_cb(int ok, X509_STORE_CTX * ctx);
 int
 smime_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	int operation = 0;
 	int ret = 0;
 	char **args;
@@ -110,9 +109,6 @@ smime_main(int argc, char **argv)
 	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
 	int keyform = FORMAT_PEM;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 
 	X509_VERIFY_PARAM *vpm = NULL;
 
@@ -192,13 +188,6 @@ smime_main(int argc, char **argv)
 			flags |= PKCS7_NOOLDMIMETYPE;
 		else if (!strcmp(*args, "-crlfeol"))
 			flags |= PKCS7_CRLFEOL;
-#ifndef OPENSSL_NO_ENGINE
-		else if (!strcmp(*args, "-engine")) {
-			if (!args[1])
-				goto argerr;
-			engine = *++args;
-		}
-#endif
 		else if (!strcmp(*args, "-passin")) {
 			if (!args[1])
 				goto argerr;
@@ -384,7 +373,7 @@ argerr:
 		BIO_printf(bio_err, "-in file       input file\n");
 		BIO_printf(bio_err, "-inform arg    input format SMIME (default), PEM or DER\n");
 		BIO_printf(bio_err, "-inkey file    input private key (if not signer or recipient)\n");
-		BIO_printf(bio_err, "-keyform arg   input private key format (PEM or ENGINE)\n");
+		BIO_printf(bio_err, "-keyform arg   input private key format (PEM)\n");
 		BIO_printf(bio_err, "-out file      output file\n");
 		BIO_printf(bio_err, "-outform arg   output format SMIME (default), PEM or DER\n");
 		BIO_printf(bio_err, "-content file  supply or override content for detached signature\n");
@@ -396,16 +385,10 @@ argerr:
 		BIO_printf(bio_err, "-CAfile file   trusted certificates file\n");
 		BIO_printf(bio_err, "-crl_check     check revocation status of signer's certificate using CRLs\n");
 		BIO_printf(bio_err, "-crl_check_all check revocation status of signer's certificate chain using CRLs\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, "-engine e      use engine e, possibly a hardware device.\n");
-#endif
 		BIO_printf(bio_err, "-passin arg    input file pass phrase source\n");
 		BIO_printf(bio_err, "cert.pem       recipient certificate(s) for encryption\n");
 		goto end;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
 
 	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
@@ -444,7 +427,7 @@ argerr:
 		encerts = sk_X509_new_null();
 		while (*args) {
 			if (!(cert = load_cert(bio_err, *args, FORMAT_PEM,
-			    NULL, e, "recipient certificate file"))) {
+			    NULL, "recipient certificate file"))) {
 				goto end;
 			}
 			sk_X509_push(encerts, cert);
@@ -454,14 +437,14 @@ argerr:
 	}
 	if (certfile) {
 		if (!(other = load_certs(bio_err, certfile, FORMAT_PEM, NULL,
-			    e, "certificate file"))) {
+		    "certificate file"))) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 	if (recipfile && (operation == SMIME_DECRYPT)) {
 		if (!(recip = load_cert(bio_err, recipfile, FORMAT_PEM, NULL,
-			    e, "recipient certificate file"))) {
+		    "recipient certificate file"))) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -476,7 +459,7 @@ argerr:
 		keyfile = NULL;
 
 	if (keyfile) {
-		key = load_key(bio_err, keyfile, keyform, 0, passin, e,
+		key = load_key(bio_err, keyfile, keyform, 0, passin,
 		    "signing key file");
 		if (!key)
 			goto end;
@@ -559,10 +542,10 @@ argerr:
 			signerfile = sk_OPENSSL_STRING_value(sksigners, i);
 			keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 			signer = load_cert(bio_err, signerfile, FORMAT_PEM, NULL,
-			    e, "signer certificate");
+			    "signer certificate");
 			if (!signer)
 				goto end;
-			key = load_key(bio_err, keyfile, keyform, 0, passin, e,
+			key = load_key(bio_err, keyfile, keyform, 0, passin,
 			    "signing key file");
 			if (!key)
 				goto end;

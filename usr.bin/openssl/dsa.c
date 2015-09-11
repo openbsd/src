@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: dsa.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,9 +76,6 @@
 
 static struct {
 	const EVP_CIPHER *enc;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *infile;
 	int informat;
 	int modulus;
@@ -110,15 +107,6 @@ dsa_opt_enc(int argc, char **argv, int *argsused)
 }
 
 static struct option dsa_options[] = {
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &dsa_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -231,7 +219,7 @@ static void
 dsa_usage(void)
 {
 	fprintf(stderr,
-	    "usage: dsa [-engine id] [-in file] [-inform format] [-noout]\n"
+	    "usage: dsa [-in file] [-inform format] [-noout]\n"
 	    "    [-out file] [-outform format] [-passin src] [-passout src]\n"
 	    "    [-pubin] [-pubout] [-pvk-none | -pvk-strong | -pvk-weak]\n"
 	    "    [-text] [-ciphername]\n\n");
@@ -246,7 +234,6 @@ dsa_usage(void)
 int
 dsa_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	int ret = 1;
 	DSA *dsa = NULL;
 	int i;
@@ -263,10 +250,6 @@ dsa_main(int argc, char **argv)
 		dsa_usage();
 		goto end;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, dsa_config.engine, 0);
-#endif
 
 	if (!app_passwd(bio_err, dsa_config.passargin, dsa_config.passargout,
 	    &passin, &passout)) {
@@ -296,10 +279,10 @@ dsa_main(int argc, char **argv)
 
 		if (dsa_config.pubin)
 			pkey = load_pubkey(bio_err, dsa_config.infile,
-			    dsa_config.informat, 1, passin, e, "Public Key");
+			    dsa_config.informat, 1, passin, "Public Key");
 		else
 			pkey = load_key(bio_err, dsa_config.infile,
-			    dsa_config.informat, 1, passin, e, "Private Key");
+			    dsa_config.informat, 1, passin, "Private Key");
 
 		if (pkey) {
 			dsa = EVP_PKEY_get1_DSA(pkey);

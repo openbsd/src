@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: dhparam.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,9 +135,6 @@ struct {
 	int C;
 	int check;
 	int dsaparam;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	int g;
 	char *infile;
 	int informat;
@@ -181,15 +178,6 @@ struct option dhparam_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &dhparam_config.dsaparam,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &dhparam_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -237,7 +225,7 @@ static void
 dhparam_usage()
 {
 	fprintf(stderr,
-	    "usage: dhparam [-2 | -5] [-C] [-check] [-dsaparam] [-engine id]\n"
+	    "usage: dhparam [-2 | -5] [-C] [-check] [-dsaparam]\n"
 	    "    [-in file] [-inform DER | PEM] [-noout] [-out file]\n"
 	    "    [-outform DER | PEM] [-text] [numbits]\n\n");
 	options_usage(dhparam_options);
@@ -272,10 +260,6 @@ dhparam_main(int argc, char **argv)
 			return (1);
 		}
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, dhparam_config.engine, 0);
-#endif
 
 	if (dhparam_config.g && !num)
 		num = DEFBITS;

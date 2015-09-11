@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -66,9 +66,6 @@
 #include <openssl/pem.h>
 
 struct {
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *infile;
 	int noout;
 	char *outfile;
@@ -76,15 +73,6 @@ struct {
 } pkeyparam_config;
 
 struct option pkeyparam_options[] = {
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &pkeyparam_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -118,7 +106,7 @@ static void
 pkeyparam_usage()
 {
 	fprintf(stderr,
-	    "usage: pkeyparam [-engine id] [-in file] [-noout] [-out file] "
+	    "usage: pkeyparam [-in file] [-noout] [-out file] "
 	    "[-text]\n");
 	options_usage(pkeyparam_options);
 }
@@ -136,10 +124,6 @@ pkeyparam_main(int argc, char **argv)
 		pkeyparam_usage();
 		return (1);
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, pkeyparam_config.engine, 0);
-#endif
 
 	if (pkeyparam_config.infile) {
 		if (!(in = BIO_new_file(pkeyparam_config.infile, "r"))) {

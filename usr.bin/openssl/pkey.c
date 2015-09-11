@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: pkey.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -68,7 +68,6 @@
 int
 pkey_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	char **args, *infile = NULL, *outfile = NULL;
 	char *passargin = NULL, *passargout = NULL;
 	BIO *in = NULL, *out = NULL;
@@ -78,9 +77,6 @@ pkey_main(int argc, char **argv)
 	EVP_PKEY *pkey = NULL;
 	char *passin = NULL, *passout = NULL;
 	int badarg = 0;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 	int ret = 1;
 
 	informat = FORMAT_PEM;
@@ -109,13 +105,6 @@ pkey_main(int argc, char **argv)
 				goto bad;
 			passargout = *(++args);
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*args, "-engine") == 0) {
-			if (!args[1])
-				goto bad;
-			engine = *(++args);
-		}
-#endif
 		else if (!strcmp(*args, "-in")) {
 			if (args[1]) {
 				args++;
@@ -162,14 +151,8 @@ bad:
 		BIO_printf(bio_err, "-outform X      output format (DER or PEM)\n");
 		BIO_printf(bio_err, "-out file       output file\n");
 		BIO_printf(bio_err, "-passout arg    output file pass phrase source\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
-#endif
 		return 1;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
 
 	if (!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
@@ -187,10 +170,9 @@ bad:
 
 	if (pubin)
 		pkey = load_pubkey(bio_err, infile, informat, 1,
-		    passin, e, "Public Key");
+		    passin, "Public Key");
 	else
-		pkey = load_key(bio_err, infile, informat, 1,
-		    passin, e, "key");
+		pkey = load_key(bio_err, infile, informat, 1, passin, "key");
 	if (!pkey)
 		goto end;
 

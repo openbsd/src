@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: req.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,15 +140,13 @@ static int genpkey_cb(EVP_PKEY_CTX * ctx);
 static int req_check_len(int len, int n_min, int n_max);
 static int check_end(const char *str, const char *end);
 static EVP_PKEY_CTX *set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
-    long *pkeylen, char **palgnam,
-    ENGINE * keygen_engine);
+    long *pkeylen, char **palgnam);
 static CONF *req_conf = NULL;
 static int batch = 0;
 
 int
 req_main(int argc, char **argv)
 {
-	ENGINE *e = NULL, *gen_eng = NULL;
 	unsigned long nmflag = 0, reqflag = 0;
 	int ex = 1, x509 = 0, days = 30;
 	X509 *x509ss = NULL;
@@ -165,9 +163,6 @@ req_main(int argc, char **argv)
 	int nodes = 0, kludge = 0, newhdr = 0, subject = 0, pubkey = 0;
 	char *infile, *outfile, *prog, *keyfile = NULL, *template = NULL,
 	*keyout = NULL;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 	char *extensions = NULL;
 	char *req_exts = NULL;
 	const EVP_CIPHER *cipher = NULL;
@@ -203,21 +198,6 @@ req_main(int argc, char **argv)
 				goto bad;
 			outformat = str2fmt(*(++argv));
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if (strcmp(*argv, "-engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			engine = *(++argv);
-		} else if (strcmp(*argv, "-keygen_engine") == 0) {
-			if (--argc < 1)
-				goto bad;
-			gen_eng = ENGINE_by_id(*(++argv));
-			if (gen_eng == NULL) {
-				BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
-				goto end;
-			}
-		}
-#endif
 		else if (strcmp(*argv, "-key") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -366,9 +346,6 @@ bad:
 		BIO_printf(bio_err, " -verify        verify signature on REQ\n");
 		BIO_printf(bio_err, " -modulus       RSA modulus\n");
 		BIO_printf(bio_err, " -nodes         don't encrypt the output key\n");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, " -engine e      use engine e, possibly a hardware device\n");
-#endif
 		BIO_printf(bio_err, " -subject       output the request's subject\n");
 		BIO_printf(bio_err, " -passin        private key password source\n");
 		BIO_printf(bio_err, " -key file      use the private key contained in file\n");
@@ -520,12 +497,8 @@ bad:
 	if ((in == NULL) || (out == NULL))
 		goto end;
 
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
-
 	if (keyfile != NULL) {
-		pkey = load_key(bio_err, keyfile, keyform, 0, passin, e,
+		pkey = load_key(bio_err, keyfile, keyform, 0, passin,
 		    "Private Key");
 		if (!pkey) {
 			/*
@@ -541,7 +514,7 @@ bad:
 		}
 		if (keyalg) {
 			genctx = set_keygen_ctx(bio_err, keyalg, &pkey_type, &newkey,
-			    &keyalgstr, gen_eng);
+			    &keyalgstr);
 			if (!genctx)
 				goto end;
 		}
@@ -552,7 +525,7 @@ bad:
 		}
 		if (!genctx) {
 			genctx = set_keygen_ctx(bio_err, NULL, &pkey_type, &newkey,
-			    &keyalgstr, gen_eng);
+			    &keyalgstr);
 			if (!genctx)
 				goto end;
 		}
@@ -893,10 +866,6 @@ end:
 		sk_OPENSSL_STRING_free(pkeyopts);
 	if (sigopts)
 		sk_OPENSSL_STRING_free(sigopts);
-#ifndef OPENSSL_NO_ENGINE
-	if (gen_eng)
-		ENGINE_free(gen_eng);
-#endif
 	free(keyalgstr);
 	X509_REQ_free(req);
 	X509_free(x509ss);
@@ -1370,8 +1339,7 @@ check_end(const char *str, const char *end)
 
 static EVP_PKEY_CTX *
 set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
-    long *pkeylen, char **palgnam,
-    ENGINE * keygen_engine)
+    long *pkeylen, char **palgnam)
 {
 	EVP_PKEY_CTX *gctx = NULL;
 	EVP_PKEY *param = NULL;
@@ -1396,19 +1364,14 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 	else {
 		const char *p = strchr(gstr, ':');
 		int len;
-		ENGINE *tmpeng;
 		const EVP_PKEY_ASN1_METHOD *ameth;
 
 		if (p)
 			len = p - gstr;
 		else
 			len = strlen(gstr);
-		/*
-		 * The lookup of a the string will cover all engines so keep
-		 * a note of the implementation.
-		 */
 
-		ameth = EVP_PKEY_asn1_find_str(&tmpeng, gstr, len);
+		ameth = EVP_PKEY_asn1_find_str(NULL, gstr, len);
 
 		if (!ameth) {
 			BIO_printf(err, "Unknown algorithm %.*s\n", len, gstr);
@@ -1416,10 +1379,6 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 		}
 		EVP_PKEY_asn1_get0_info(NULL, pkey_type, NULL, NULL, NULL,
 		    ameth);
-#ifndef OPENSSL_NO_ENGINE
-		if (tmpeng)
-			ENGINE_finish(tmpeng);
-#endif
 		if (*pkey_type == EVP_PKEY_RSA) {
 			if (p) {
 				keylen = strtonum(p + 1, 0, LONG_MAX, &errstr);
@@ -1470,26 +1429,21 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 	}
 	if (palgnam) {
 		const EVP_PKEY_ASN1_METHOD *ameth;
-		ENGINE *tmpeng;
 		const char *anam;
-		ameth = EVP_PKEY_asn1_find(&tmpeng, *pkey_type);
+		ameth = EVP_PKEY_asn1_find(NULL, *pkey_type);
 		if (!ameth) {
 			BIO_puts(err, "Internal error: can't find key algorithm\n");
 			return NULL;
 		}
 		EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
 		*palgnam = strdup(anam);
-#ifndef OPENSSL_NO_ENGINE
-		if (tmpeng)
-			ENGINE_finish(tmpeng);
-#endif
 	}
 	if (param) {
-		gctx = EVP_PKEY_CTX_new(param, keygen_engine);
+		gctx = EVP_PKEY_CTX_new(param, NULL);
 		*pkeylen = EVP_PKEY_bits(param);
 		EVP_PKEY_free(param);
 	} else
-		gctx = EVP_PKEY_CTX_new_id(*pkey_type, keygen_engine);
+		gctx = EVP_PKEY_CTX_new_id(*pkey_type, NULL);
 
 	if (!gctx) {
 		BIO_puts(err, "Error allocating keygen context\n");

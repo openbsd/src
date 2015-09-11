@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.c,v 1.4 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: ec.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -75,9 +75,6 @@
 static struct {
 	int asn1_flag;
 	const EVP_CIPHER *enc;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	point_conversion_form_t form;
 	char *infile;
 	int informat;
@@ -153,15 +150,6 @@ static struct option ec_options[] = {
 		.type = OPTION_ARG_FUNC,
 		.opt.argfunc = ec_opt_form,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &ec_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -266,7 +254,7 @@ static void
 ec_usage(void)
 {
 	fprintf(stderr,
-	    "usage: ec [-conv_form form] [-engine id] [-in file]\n"
+	    "usage: ec [-conv_form form] [-in file]\n"
 	    "    [-inform format] [-noout] [-out file] [-outform format]\n"
 	    "    [-param_enc type] [-param_out] [-passin file]\n"
 	    "    [-passout file] [-pubin] [-pubout] [-text] [-ciphername]\n\n");
@@ -300,10 +288,6 @@ ec_main(int argc, char **argv)
 		ec_usage();
 		goto end;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, ec_config.engine, 0);
-#endif
 
 	if (!app_passwd(bio_err, ec_config.passargin, ec_config.passargout,
 	    &passin, &passout)) {

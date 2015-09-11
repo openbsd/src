@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.34 2015/09/10 16:01:06 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.35 2015/09/11 14:30:23 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -146,10 +146,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 #include <openssl/rsa.h>
 
 typedef struct {
@@ -190,8 +186,6 @@ str2fmt(char *s)
 	    (strcmp(s, "PKCS12") == 0) || (strcmp(s, "pkcs12") == 0) ||
 	    (strcmp(s, "P12") == 0) || (strcmp(s, "p12") == 0))
 		return (FORMAT_PKCS12);
-	else if ((*s == 'E') || (*s == 'e'))
-		return (FORMAT_ENGINE);
 	else if ((*s == 'P') || (*s == 'p')) {
 		if (s[1] == 'V' || s[1] == 'v')
 			return FORMAT_PVK;
@@ -626,7 +620,7 @@ die:
 }
 
 X509 *
-load_cert(BIO *err, const char *file, int format, const char *pass, ENGINE *e,
+load_cert(BIO *err, const char *file, int format, const char *pass,
     const char *cert_descrip)
 {
 	X509 *x = NULL;
@@ -690,7 +684,7 @@ end:
 
 EVP_PKEY *
 load_key(BIO *err, const char *file, int format, int maybe_stdin,
-    const char *pass, ENGINE *e, const char *key_descrip)
+    const char *pass, const char *key_descrip)
 {
 	BIO *key = NULL;
 	EVP_PKEY *pkey = NULL;
@@ -699,26 +693,10 @@ load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	cb_data.password = pass;
 	cb_data.prompt_info = file;
 
-	if (file == NULL && (!maybe_stdin || format == FORMAT_ENGINE)) {
+	if (file == NULL && (!maybe_stdin)) {
 		BIO_printf(err, "no keyfile specified\n");
 		goto end;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	if (format == FORMAT_ENGINE) {
-		if (!e)
-			BIO_printf(err, "no engine specified\n");
-		else {
-			pkey = ENGINE_load_private_key(e, file,
-			    ui_method, &cb_data);
-			if (!pkey) {
-				BIO_printf(err, "cannot load %s from engine\n",
-				    key_descrip);
-				ERR_print_errors(err);
-			}
-		}
-		goto end;
-	}
-#endif
 	key = BIO_new(BIO_s_file());
 	if (key == NULL) {
 		ERR_print_errors(err);
@@ -769,7 +747,7 @@ end:
 
 EVP_PKEY *
 load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
-    const char *pass, ENGINE *e, const char *key_descrip)
+    const char *pass, const char *key_descrip)
 {
 	BIO *key = NULL;
 	EVP_PKEY *pkey = NULL;
@@ -778,20 +756,10 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	cb_data.password = pass;
 	cb_data.prompt_info = file;
 
-	if (file == NULL && (!maybe_stdin || format == FORMAT_ENGINE)) {
+	if (file == NULL && !maybe_stdin) {
 		BIO_printf(err, "no keyfile specified\n");
 		goto end;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	if (format == FORMAT_ENGINE) {
-		if (!e)
-			BIO_printf(bio_err, "no engine specified\n");
-		else
-			pkey = ENGINE_load_public_key(e, file,
-			    ui_method, &cb_data);
-		goto end;
-	}
-#endif
 	key = BIO_new(BIO_s_file());
 	if (key == NULL) {
 		ERR_print_errors(err);
@@ -899,7 +867,7 @@ error:
 
 static int
 load_certs_crls(BIO *err, const char *file, int format, const char *pass,
-    ENGINE *e, const char *desc, STACK_OF(X509) **pcerts,
+    const char *desc, STACK_OF(X509) **pcerts,
     STACK_OF(X509_CRL) **pcrls)
 {
 	int i;
@@ -983,22 +951,22 @@ end:
 
 STACK_OF(X509) *
 load_certs(BIO *err, const char *file, int format, const char *pass,
-    ENGINE *e, const char *desc)
+    const char *desc)
 {
 	STACK_OF(X509) *certs;
 
-	if (!load_certs_crls(err, file, format, pass, e, desc, &certs, NULL))
+	if (!load_certs_crls(err, file, format, pass, desc, &certs, NULL))
 		return NULL;
 	return certs;
 }
 
 STACK_OF(X509_CRL) *
-load_crls(BIO *err, const char *file, int format, const char *pass, ENGINE *e,
+load_crls(BIO *err, const char *file, int format, const char *pass,
     const char *desc)
 {
 	STACK_OF(X509_CRL) *crls;
 
-	if (!load_certs_crls(err, file, format, pass, e, desc, NULL, &crls))
+	if (!load_certs_crls(err, file, format, pass, desc, NULL, &crls))
 		return NULL;
 	return crls;
 }
@@ -1247,55 +1215,6 @@ end:
 	X509_STORE_free(store);
 	return NULL;
 }
-
-#ifndef OPENSSL_NO_ENGINE
-
-ENGINE *
-setup_engine(BIO *err, const char *engine, int debug)
-{
-	ENGINE *e = NULL;
-
-	if (engine) {
-		if (strcmp(engine, "auto") == 0) {
-			BIO_printf(err, "enabling auto ENGINE support\n");
-			ENGINE_register_all_complete();
-			return NULL;
-		}
-		if ((e = ENGINE_by_id(engine)) == NULL) {
-			BIO_printf(err, "invalid engine \"%s\"\n", engine);
-			ERR_print_errors(err);
-			return NULL;
-		}
-		if (debug) {
-			if (ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
-			    0, err, 0) <= 0) {
-				BIO_printf(err, "Cannot set logstream for "
-				    "engine \"%s\"\n", engine);
-				ERR_print_errors(err);
-				ENGINE_free(e);
-				return NULL;
-			}
-		}
-		if (!ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, ui_method, 0, 1)) {
-			BIO_printf(err, "can't set user interface\n");
-			ERR_print_errors(err);
-			ENGINE_free(e);
-			return NULL;
-		}
-		if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
-			BIO_printf(err, "can't use that engine\n");
-			ERR_print_errors(err);
-			ENGINE_free(e);
-			return NULL;
-		}
-		BIO_printf(err, "engine \"%s\" set.\n", ENGINE_get_id(e));
-
-		/* Free our "structural" reference. */
-		ENGINE_free(e);
-	}
-	return e;
-}
-#endif
 
 int
 load_config(BIO *err, CONF *cnf)

@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.3 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.4 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,13 +70,12 @@
 
 static int cb(int ok, X509_STORE_CTX * ctx);
 static int check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
-    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls, ENGINE * e);
+    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls);
 static int v_verbose = 0, vflags = 0;
 
 int
 verify_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	int i, ret = 1, badarg = 0;
 	char *CApath = NULL, *CAfile = NULL;
 	char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
@@ -85,9 +84,6 @@ verify_main(int argc, char **argv)
 	X509_STORE *cert_ctx = NULL;
 	X509_LOOKUP *lookup = NULL;
 	X509_VERIFY_PARAM *vpm = NULL;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 
 	cert_ctx = X509_STORE_new();
 	if (cert_ctx == NULL)
@@ -124,13 +120,6 @@ verify_main(int argc, char **argv)
 					goto end;
 				crlfile = *(++argv);
 			}
-#ifndef OPENSSL_NO_ENGINE
-			else if (strcmp(*argv, "-engine") == 0) {
-				if (--argc < 1)
-					goto end;
-				engine = *(++argv);
-			}
-#endif
 			else if (strcmp(*argv, "-help") == 0)
 				goto end;
 			else if (strcmp(*argv, "-verbose") == 0)
@@ -144,10 +133,6 @@ verify_main(int argc, char **argv)
 		} else
 			break;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
 
 	if (vpm)
 		X509_STORE_set1_param(cert_ctx, vpm);
@@ -182,30 +167,30 @@ verify_main(int argc, char **argv)
 
 	if (untfile) {
 		untrusted = load_certs(bio_err, untfile, FORMAT_PEM,
-		    NULL, e, "untrusted certificates");
+		    NULL, "untrusted certificates");
 		if (!untrusted)
 			goto end;
 	}
 	if (trustfile) {
 		trusted = load_certs(bio_err, trustfile, FORMAT_PEM,
-		    NULL, e, "trusted certificates");
+		    NULL, "trusted certificates");
 		if (!trusted)
 			goto end;
 	}
 	if (crlfile) {
 		crls = load_crls(bio_err, crlfile, FORMAT_PEM,
-		    NULL, e, "other CRLs");
+		    NULL, "other CRLs");
 		if (!crls)
 			goto end;
 	}
 	ret = 0;
 	if (argc < 1) {
-		if (1 != check(cert_ctx, NULL, untrusted, trusted, crls, e))
+		if (1 != check(cert_ctx, NULL, untrusted, trusted, crls))
 			ret = -1;
 	} else {
 		for (i = 0; i < argc; i++)
 			if (1 != check(cert_ctx, argv[i], untrusted, trusted,
-			    crls, e))
+			    crls))
 				ret = -1;
 	}
 
@@ -213,9 +198,6 @@ end:
 	if (ret == 1) {
 		BIO_printf(bio_err, "usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check]");
 		BIO_printf(bio_err, " [-attime timestamp]");
-#ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, " [-engine e]");
-#endif
 		BIO_printf(bio_err, " cert1 cert2 ...\n");
 
 		BIO_printf(bio_err, "recognized usages:\n");
@@ -240,13 +222,13 @@ end:
 
 static int
 check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
-    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls, ENGINE * e)
+    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls)
 {
 	X509 *x = NULL;
 	int i = 0, ret = 0;
 	X509_STORE_CTX *csc;
 
-	x = load_cert(bio_err, file, FORMAT_PEM, NULL, e, "certificate file");
+	x = load_cert(bio_err, file, FORMAT_PEM, NULL, "certificate file");
 	if (x == NULL)
 		goto end;
 	fprintf(stdout, "%s: ", (file == NULL) ? "stdin" : file);

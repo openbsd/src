@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,9 +71,6 @@
 #include <openssl/x509.h>
 
 static struct {
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *infile;
 	int informat;
 	int noout;
@@ -85,15 +82,6 @@ static struct {
 } pkcs7_config;
 
 static struct option pkcs7_options[] = {
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &pkcs7_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -152,7 +140,7 @@ static struct option pkcs7_options[] = {
 static void
 pkcs7_usage()
 {
-	fprintf(stderr, "usage: pkcs7 [-engine id] [-in file] "
+	fprintf(stderr, "usage: pkcs7 [-in file] "
 	    "[-inform DER | PEM] [-noout]\n"
 	    "    [-out file] [-outform DER | PEM] [-print_certs] [-text]\n\n");
         options_usage(pkcs7_options);
@@ -175,10 +163,6 @@ pkcs7_main(int argc, char **argv)
 		pkcs7_usage();
 		goto end;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, pkcs7_config.engine, 0);
-#endif
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.6 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: rsautl.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -81,12 +81,8 @@ static void usage(void);
 int
 rsautl_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	BIO *in = NULL, *out = NULL;
 	char *infile = NULL, *outfile = NULL;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine = NULL;
-#endif
 	char *keyfile = NULL;
 	char rsa_mode = RSA_VERIFY, key_type = KEY_PRIVKEY;
 	int keyform = FORMAT_PEM;
@@ -133,13 +129,6 @@ rsautl_main(int argc, char **argv)
 				badarg = 1;
 			else
 				keyform = str2fmt(*(++argv));
-#ifndef OPENSSL_NO_ENGINE
-		} else if (!strcmp(*argv, "-engine")) {
-			if (--argc < 1)
-				badarg = 1;
-			else
-				engine = *(++argv);
-#endif
 		} else if (!strcmp(*argv, "-pubin")) {
 			key_type = KEY_PUBKEY;
 		} else if (!strcmp(*argv, "-certin")) {
@@ -184,9 +173,6 @@ rsautl_main(int argc, char **argv)
 		BIO_printf(bio_err, "A private key is needed for this operation\n");
 		goto end;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
-#endif
 	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
@@ -195,17 +181,17 @@ rsautl_main(int argc, char **argv)
 	switch (key_type) {
 	case KEY_PRIVKEY:
 		pkey = load_key(bio_err, keyfile, keyform, 0,
-		    passin, e, "Private Key");
+		    passin, "Private Key");
 		break;
 
 	case KEY_PUBKEY:
 		pkey = load_pubkey(bio_err, keyfile, keyform, 0,
-		    NULL, e, "Public Key");
+		    NULL, "Public Key");
 		break;
 
 	case KEY_CERT:
 		x = load_cert(bio_err, keyfile, keyform,
-		    NULL, e, "Certificate");
+		    NULL, "Certificate");
 		if (x) {
 			pkey = X509_get_pubkey(x);
 			X509_free(x);
@@ -336,10 +322,4 @@ usage()
 	BIO_printf(bio_err, "-encrypt        encrypt with public key\n");
 	BIO_printf(bio_err, "-decrypt        decrypt with private key\n");
 	BIO_printf(bio_err, "-hexdump        hex dump output\n");
-#ifndef OPENSSL_NO_ENGINE
-	BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
-	BIO_printf(bio_err, "-passin arg    pass phrase source\n");
-#endif
-
 }
-

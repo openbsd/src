@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.4 2015/08/19 18:25:31 deraadt Exp $ */
+/* $OpenBSD: rsa.c,v 1.5 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,9 +77,6 @@
 static struct {
 	int check;
 	const EVP_CIPHER *enc;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *infile;
 	int informat;
 	int modulus;
@@ -119,15 +116,6 @@ static struct option rsa_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &rsa_config.check,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &rsa_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -258,7 +246,7 @@ static void
 rsa_usage()
 {
 	fprintf(stderr,
-	    "usage: rsa [-ciphername] [-check] [-engine id] [-in file] "
+	    "usage: rsa [-ciphername] [-check] [-in file] "
 	    "[-inform fmt]\n"
 	    "    [-modulus] [-noout] [-out file] [-outform fmt] "
 	    "[-passin src]\n"
@@ -274,7 +262,6 @@ rsa_usage()
 int
 rsa_main(int argc, char **argv)
 {
-	ENGINE *e = NULL;
 	int ret = 1;
 	RSA *rsa = NULL;
 	int i;
@@ -290,10 +277,6 @@ rsa_main(int argc, char **argv)
 		rsa_usage();
 		goto end;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, rsa_config.engine, 0);
-#endif
 
 	if (!app_passwd(bio_err, rsa_config.passargin, rsa_config.passargout,
 	    &passin, &passout)) {
@@ -323,12 +306,12 @@ rsa_main(int argc, char **argv)
 				tmpformat = rsa_config.informat;
 
 			pkey = load_pubkey(bio_err, rsa_config.infile,
-			    tmpformat, 1, passin, e, "Public Key");
+			    tmpformat, 1, passin, "Public Key");
 		} else
 			pkey = load_key(bio_err, rsa_config.infile,
 			    (rsa_config.informat == FORMAT_NETSCAPE &&
 			    rsa_config.sgckey ? FORMAT_IISSGC :
-			    rsa_config.informat), 1, passin, e, "Private Key");
+			    rsa_config.informat), 1, passin, "Private Key");
 
 		if (pkey != NULL)
 			rsa = EVP_PKEY_get1_RSA(pkey);

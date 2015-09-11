@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: dh.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,9 +77,6 @@
 static struct {
 	int C;
 	int check;
-#ifndef OPENSSL_NO_ENGINE
-	char *engine;
-#endif
 	char *infile;
 	int informat;
 	int noout;
@@ -101,15 +98,6 @@ static struct option dh_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &dh_config.check,
 	},
-#ifndef OPENSSL_NO_ENGINE
-	{
-		.name = "engine",
-		.argname = "id",
-		.desc = "Use the engine specified by the given identifier",
-		.type = OPTION_ARG,
-		.opt.arg = &dh_config.engine,
-	},
-#endif
 	{
 		.name = "in",
 		.argname = "file",
@@ -157,7 +145,7 @@ static void
 dh_usage(void)
 {
 	fprintf(stderr,
-	    "usage: dh [-C] [-check] [-engine id] [-in file] [-inform format]\n"
+	    "usage: dh [-C] [-check] [-in file] [-inform format]\n"
 	    "    [-noout] [-out file] [-outform format] [-text]\n\n");
 	options_usage(dh_options);
 }
@@ -179,10 +167,6 @@ dh_main(int argc, char **argv)
 		dh_usage();
 		goto end;
 	}
-
-#ifndef OPENSSL_NO_ENGINE
-	setup_engine(bio_err, dh_config.engine, 0);
-#endif
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());

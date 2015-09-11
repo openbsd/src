@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.14 2015/07/15 13:54:34 jsing Exp $ */
+/* $OpenBSD: apps.h,v 1.15 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,10 +121,6 @@
 #include <openssl/txt_db.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 #ifndef OPENSSL_NO_OCSP
 #include <openssl/ocsp.h>
 #endif
@@ -166,19 +162,16 @@ int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, CONF *conf);
 X509 *load_cert(BIO *err, const char *file, int format,
-    const char *pass, ENGINE *e, const char *cert_descrip);
+    const char *pass, const char *cert_descrip);
 EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
-    const char *pass, ENGINE *e, const char *key_descrip);
+    const char *pass, const char *key_descrip);
 EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
-    const char *pass, ENGINE *e, const char *key_descrip);
+    const char *pass, const char *key_descrip);
 STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
-    const char *pass, ENGINE *e, const char *cert_descrip);
+    const char *pass, const char *cert_descrip);
 STACK_OF(X509_CRL) *load_crls(BIO *err, const char *file, int format,
-    const char *pass, ENGINE *e, const char *cert_descrip);
+    const char *pass, const char *cert_descrip);
 X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
-#ifndef OPENSSL_NO_ENGINE
-ENGINE *setup_engine(BIO *err, const char *engine, int debug);
-#endif
 
 #ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
@@ -236,7 +229,7 @@ int args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 void policies_print(BIO *out, X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
-int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx, const char *algname, ENGINE *e,
+int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx, const char *algname,
     int do_param);
 int do_X509_sign(BIO *err, X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
     STACK_OF(OPENSSL_STRING) *sigopts);
@@ -254,7 +247,7 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #define FORMAT_NETSCAPE 4
 #define FORMAT_PKCS12   5
 #define FORMAT_SMIME    6
-#define FORMAT_ENGINE   7
+
 #define FORMAT_IISSGC	8	/* XXX this stupid macro helps us to avoid
 				 * adding yet another param to load_*key() */
 #define FORMAT_PEMRSA	9	/* PEM RSAPubicKey format */

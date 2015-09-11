@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.5 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: ts.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -92,13 +92,13 @@ static int create_digest(BIO * input, char *digest,
 static ASN1_INTEGER *create_nonce(int bits);
 
 /* Reply related functions. */
-static int reply_command(CONF * conf, char *section, char *engine,
+static int reply_command(CONF * conf, char *section,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy,
     char *in, int token_in, char *out, int token_out,
     int text);
 static TS_RESP *read_PKCS7(BIO * in_bio);
-static TS_RESP *create_response(CONF * conf, const char *section, char *engine,
+static TS_RESP *create_response(CONF * conf, const char *section,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy);
 static ASN1_INTEGER *serial_cb(TS_RESP_CTX * ctx, void *data);
@@ -144,7 +144,6 @@ ts_main(int argc, char **argv)
 	char *ca_path = NULL;
 	char *ca_file = NULL;
 	char *untrusted = NULL;
-	char *engine = NULL;
 	/* Input is ContentInfo instead of TimeStampResp. */
 	int token_in = 0;
 	/* Output is ContentInfo instead of TimeStampResp. */
@@ -233,10 +232,6 @@ ts_main(int argc, char **argv)
 			if (argc-- < 1)
 				goto usage;
 			untrusted = *++argv;
-		} else if (strcmp(*argv, "-engine") == 0) {
-			if (argc-- < 1)
-				goto usage;
-			engine = *++argv;
 		} else if ((md = EVP_get_digestbyname(*argv + 1)) != NULL) {
 			/* empty. */
 		} else
@@ -282,7 +277,7 @@ ts_main(int argc, char **argv)
 				goto usage;
 		}
 
-		ret = !reply_command(conf, section, engine, queryfile,
+		ret = !reply_command(conf, section, queryfile,
 		    password, inkey, signer, chain, policy,
 		    in, token_in, out, token_out, text);
 		break;
@@ -312,7 +307,7 @@ usage:
 	    "[-signer tsa_cert.pem] [-inkey private_key.pem] "
 	    "[-chain certs_file.pem] [-policy object_id] "
 	    "[-in response.tsr] [-token_in] "
-	    "[-out response.tsr] [-token_out] [-text] [-engine id]\n");
+	    "[-out response.tsr] [-token_out] [-text]\n");
 	BIO_printf(bio_err, "or\n"
 	    "ts -verify [-data file_to_hash] [-digest digest_bytes] "
 	    "[-queryfile request.tsq] "
@@ -615,7 +610,7 @@ err:
  */
 
 static int
-reply_command(CONF * conf, char *section, char *engine, char *queryfile,
+reply_command(CONF * conf, char *section, char *queryfile,
     char *passin, char *inkey, char *signer, char *chain, const char *policy,
     char *in, int token_in, char *out, int token_out, int text)
 {
@@ -642,7 +637,7 @@ reply_command(CONF * conf, char *section, char *engine, char *queryfile,
 			response = d2i_TS_RESP_bio(in_bio, NULL);
 		}
 	} else {
-		response = create_response(conf, section, engine, queryfile,
+		response = create_response(conf, section, queryfile,
 		    passin, inkey, signer, chain,
 		    policy);
 		if (response)
@@ -740,7 +735,7 @@ end:
 }
 
 static TS_RESP *
-create_response(CONF * conf, const char *section, char *engine,
+create_response(CONF * conf, const char *section,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy)
 {
@@ -763,11 +758,6 @@ create_response(CONF * conf, const char *section, char *engine,
 	/* Setting serial number provider callback. */
 	if (!TS_CONF_set_serial(conf, section, serial_cb, resp_ctx))
 		goto end;
-#ifndef OPENSSL_NO_ENGINE
-	/* Setting default OpenSSL engine. */
-	if (!TS_CONF_set_crypto_device(conf, section, engine))
-		goto end;
-#endif
 
 	/* Setting TSA signer certificate. */
 	if (!TS_CONF_set_signer_cert(conf, section, signer, resp_ctx))

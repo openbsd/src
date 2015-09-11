@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.10 2015/09/11 09:38:30 deraadt Exp $ */
+/* $OpenBSD: speed.c,v 1.11 2015/09/11 14:30:23 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -538,24 +538,6 @@ speed_main(int argc, char **argv)
 			j--;	/* Otherwise, -elapsed gets confused with an
 				 * algorithm. */
 		}
-#ifndef OPENSSL_NO_ENGINE
-		else if ((argc > 0) && (strcmp(*argv, "-engine") == 0)) {
-			argc--;
-			argv++;
-			if (argc == 0) {
-				BIO_printf(bio_err, "no engine given\n");
-				goto end;
-			}
-			setup_engine(bio_err, *argv, 0);
-			/*
-			 * j will be increased again further down.  We just
-			 * don't want speed to confuse an engine with an
-			 * algorithm, especially when none is given (which
-			 * means all of them should be run)
-			 */
-			j--;
-		}
-#endif
 		else if ((argc > 0) && (strcmp(*argv, "-multi") == 0)) {
 			argc--;
 			argv++;
@@ -933,9 +915,6 @@ speed_main(int argc, char **argv)
 			BIO_printf(bio_err, "\n");
 			BIO_printf(bio_err, "Available options:\n");
 			BIO_printf(bio_err, "-elapsed        measure time in real time instead of CPU user time.\n");
-#ifndef OPENSSL_NO_ENGINE
-			BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
-#endif
 			BIO_printf(bio_err, "-evp e          use EVP e.\n");
 			BIO_printf(bio_err, "-decrypt        time decryption instead of encryption (only EVP).\n");
 			BIO_printf(bio_err, "-mr             produce machine readable output.\n");
