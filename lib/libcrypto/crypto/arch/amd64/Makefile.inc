@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.4 2014/11/17 20:31:21 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2015/09/11 14:48:06 miod Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -63,7 +63,7 @@ SRCS+=	${f}.S
 GENERATED+=${f}.S
 ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl
 	(cd ${LCRYPTO_SRC}/${dir} ; \
-		/usr/bin/perl ./asm/${f}.pl openbsd-elf) > ${.TARGET}
+		/usr/bin/perl ./asm/${f}.pl openbsd) > ${.TARGET}
 .endfor
 
 CFLAGS+= -DOPENSSL_CPUID_OBJ
