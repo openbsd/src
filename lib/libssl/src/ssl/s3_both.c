@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.45 2015/09/11 16:27:40 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.46 2015/09/11 16:41:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,6 +140,7 @@ ssl3_do_write(SSL *s, int type)
 	    s->init_num);
 	if (ret < 0)
 		return (-1);
+
 	if (type == SSL3_RT_HANDSHAKE)
 		/*
 		 * Should not be done for 'Hello Request's, but in that case
@@ -166,23 +167,18 @@ int
 ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 {
 	unsigned char *p;
-	unsigned long l;
 	int md_len;
 
 	if (s->state == a) {
-		p = ssl3_handshake_msg_start(s, SSL3_MT_FINISHED);
-
 		md_len = s->method->ssl3_enc->finish_mac_length;
+		OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
+
 		if (s->method->ssl3_enc->final_finish_mac(s, sender, slen,
 		    s->s3->tmp.finish_md) != md_len)
 			return (0);
 		s->s3->tmp.finish_md_len = md_len;
-		memcpy(p, s->s3->tmp.finish_md, md_len);
-		p += md_len;
-		l = md_len;
 
 		/* Copy finished so we can use it for renegotiation checks. */
-		OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 		if (s->type == SSL_ST_CONNECT) {
 			memcpy(s->s3->previous_client_finished,
 			    s->s3->tmp.finish_md, md_len);
@@ -193,7 +189,9 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 			s->s3->previous_server_finished_len = md_len;
 		}
 
-		ssl3_handshake_msg_finish(s, l);
+		p = ssl3_handshake_msg_start(s, SSL3_MT_FINISHED);
+		memcpy(p, s->s3->tmp.finish_md, md_len);
+		ssl3_handshake_msg_finish(s, md_len);
 
 		s->state = b;
 	}
