@@ -1687,5 +1687,3 @@ yperr_string
 ypprot_err
 _yp_check		/* chpass, passwd, login_chpass */
 yp_unbind		/* passwd */
-ypresp_allfn		/* ypserv */
-ypresp_data		/* ypserv */

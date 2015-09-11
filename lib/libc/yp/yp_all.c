@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: yp_all.c,v 1.12 2015/09/11 12:42:47 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -35,6 +35,9 @@
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
+
+static int (*ypresp_allfn)(u_long, char *, int, char *, int, void *);
+static void *ypresp_data;
 
 bool_t
 xdr_ypresp_all_seq(XDR *xdrs, u_long *objp)

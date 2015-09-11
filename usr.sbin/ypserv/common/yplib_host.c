@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.18 2015/01/16 06:40:22 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.19 2015/09/11 12:42:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -43,9 +43,6 @@
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include "yplib_host.h"
-
-extern int (*ypresp_allfn)(u_long, char *, int, char *, int, void *);
-extern void *ypresp_data;
 
 int _yplib_host_timeout = 10;
 
@@ -237,6 +234,65 @@ yp_next_host(CLIENT *client, char *indomain, char *inmap, char *inkey,
 	return r;
 }
 
+int (*ypserv_ypresp_allfn)(u_long, char *, int, char *, int, void *);
+void *ypserv_ypresp_data;
+
+bool_t
+ypserv_xdr_ypresp_all_seq(XDR *xdrs, u_long *objp)
+{
+	struct ypresp_all out;
+	u_long status;
+	char *key, *val;
+	int size;
+	int done = 0;  /* set to 1 when the user does not want more data */
+	bool_t rc = TRUE;  /* FALSE at the end of loop signals failure */
+
+	memset(&out, 0, sizeof out);
+	while (rc && !done) {
+		rc = FALSE;
+		if (!xdr_ypresp_all(xdrs, &out)) {
+			*objp = (u_long)YP_YPERR;
+			goto fail;
+		}
+		if (out.more == 0)
+			goto fail;
+		status = out.ypresp_all_u.val.stat;
+		if (status == YP_TRUE) {
+			size = out.ypresp_all_u.val.key.keydat_len;
+			if ((key = malloc(size + 1)) == NULL) {
+				*objp = (u_long)YP_YPERR;
+				goto fail;
+			}
+			(void)memcpy(key, out.ypresp_all_u.val.key.keydat_val,
+			    size);
+			key[size] = '\0';
+
+			size = out.ypresp_all_u.val.val.valdat_len;
+			if ((val = malloc(size + 1)) == NULL) {
+				free(key);
+				*objp = (u_long)YP_YPERR;
+				goto fail;
+			}
+			(void)memcpy(val, out.ypresp_all_u.val.val.valdat_val,
+			    size);
+			val[size] = '\0';
+
+			done = (*ypserv_ypresp_allfn)(status, key,
+			    out.ypresp_all_u.val.key.keydat_len, val,
+			    out.ypresp_all_u.val.val.valdat_len, ypserv_ypresp_data);
+			free(key);
+			free(val);
+		} else
+			done = 1;
+		if (status != YP_NOMORE)
+			*objp = status;
+		rc = TRUE;
+fail:
+		xdr_free(xdr_ypresp_all, (char *)&out);
+	}
+	return rc;
+}
+
 int
 yp_all_host(CLIENT *client, char *indomain, char *inmap,
     struct ypall_callback *incallback)
@@ -250,11 +306,11 @@ yp_all_host(CLIENT *client, char *indomain, char *inmap,
 
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
-	ypresp_allfn = incallback->foreach;
-	ypresp_data = (void *)incallback->data;
+	ypserv_ypresp_allfn = incallback->foreach;
+	ypserv_ypresp_data = (void *)incallback->data;
 
 	(void) clnt_call(client, YPPROC_ALL,
-	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
+	    xdr_ypreq_nokey, &yprnk, ypserv_xdr_ypresp_all_seq, &status, tv);
 	if (status != YP_FALSE)
 		return ypprot_err(status);
 	return 0;
