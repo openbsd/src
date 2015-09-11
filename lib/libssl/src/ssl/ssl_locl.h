@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.107 2015/09/11 16:56:17 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.108 2015/09/11 16:59:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -602,7 +602,6 @@ int ssl3_send_server_certificate(SSL *s);
 int ssl3_send_newsession_ticket(SSL *s);
 int ssl3_send_cert_status(SSL *s);
 int ssl3_get_finished(SSL *s, int state_a, int state_b);
-int ssl3_setup_key_block(SSL *s);
 int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);
 int ssl3_change_cipher_state(SSL *s, int which);
 void ssl3_cleanup_key_block(SSL *s);

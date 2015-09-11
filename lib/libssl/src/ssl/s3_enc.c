@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.64 2015/09/11 16:56:17 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.65 2015/09/11 16:59:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,58 +163,6 @@ static unsigned char ssl3_pad_2[48] = {
 static int ssl3_handshake_mac(SSL *s, int md_nid, const char *sender,
     int len, unsigned char *p);
 
-static int
-ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
-{
-	EVP_MD_CTX m5;
-	EVP_MD_CTX s1;
-	unsigned char buf[16], smd[SHA_DIGEST_LENGTH];
-	unsigned char c = 'A';
-	unsigned int i, j, k;
-
-	k = 0;
-	EVP_MD_CTX_init(&m5);
-	EVP_MD_CTX_init(&s1);
-	for (i = 0; (int)i < num; i += MD5_DIGEST_LENGTH) {
-		k++;
-		if (k > sizeof buf) {
-			/* bug: 'buf' is too small for this ciphersuite */
-			SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK,
-			    ERR_R_INTERNAL_ERROR);
-			return 0;
-		}
-
-		for (j = 0; j < k; j++)
-			buf[j] = c;
-		c++;
-		if (!EVP_DigestInit_ex(&s1, EVP_sha1(), NULL))
-			return 0;
-		EVP_DigestUpdate(&s1, buf, k);
-		EVP_DigestUpdate(&s1, s->session->master_key,
-		    s->session->master_key_length);
-		EVP_DigestUpdate(&s1, s->s3->server_random, SSL3_RANDOM_SIZE);
-		EVP_DigestUpdate(&s1, s->s3->client_random, SSL3_RANDOM_SIZE);
-		EVP_DigestFinal_ex(&s1, smd, NULL);
-
-		if (!EVP_DigestInit_ex(&m5, EVP_md5(), NULL))
-			return 0;
-		EVP_DigestUpdate(&m5, s->session->master_key,
-		    s->session->master_key_length);
-		EVP_DigestUpdate(&m5, smd, SHA_DIGEST_LENGTH);
-		if ((int)(i + MD5_DIGEST_LENGTH) > num) {
-			EVP_DigestFinal_ex(&m5, smd, NULL);
-			memcpy(km, smd, (num - i));
-		} else
-			EVP_DigestFinal_ex(&m5, km, NULL);
-
-		km += MD5_DIGEST_LENGTH;
-	}
-	explicit_bzero(smd, SHA_DIGEST_LENGTH);
-	EVP_MD_CTX_cleanup(&m5);
-	EVP_MD_CTX_cleanup(&s1);
-	return 1;
-}
-
 int
 ssl3_change_cipher_state(SSL *s, int which)
 {
@@ -320,71 +268,6 @@ ssl3_change_cipher_state(SSL *s, int which)
 err:
 	SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
 err2:
-	return (0);
-}
-
-int
-ssl3_setup_key_block(SSL *s)
-{
-	int key_block_len, mac_len, key_len, iv_len;
-	unsigned char *key_block;
-	const EVP_CIPHER *cipher;
-	const EVP_MD *mac;
-	int ret = 0;
-
-	if (s->s3->tmp.key_block_length != 0)
-		return (1);
-
-	if (!ssl_cipher_get_evp(s->session, &cipher, &mac, NULL, NULL)) {
-		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,
-		    SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
-		return (0);
-	}
-
-	s->s3->tmp.new_sym_enc = cipher;
-	s->s3->tmp.new_hash = mac;
-
-	mac_len = EVP_MD_size(mac);
-	key_len = EVP_CIPHER_key_length(cipher);
-	iv_len = EVP_CIPHER_iv_length(cipher);
-
-	if (mac_len < 0)
-		return 0;
-
-	ssl3_cleanup_key_block(s);
-
-	if ((key_block = reallocarray(NULL, mac_len + key_len + iv_len, 2))
-	    == NULL)
-		goto err;
-	key_block_len = (mac_len + key_len + iv_len) * 2;
-
-	s->s3->tmp.key_block_length = key_block_len;
-	s->s3->tmp.key_block = key_block;
-
-	ret = ssl3_generate_key_block(s, key_block, key_block_len);
-
-	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)) {
-		/*
-		 * Enable vulnerability countermeasure for CBC ciphers with
-		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
-		 */
-		s->s3->need_empty_fragments = 1;
-
-		if (s->session->cipher != NULL) {
-			if (s->session->cipher->algorithm_enc == SSL_eNULL)
-				s->s3->need_empty_fragments = 0;
-
-#ifndef OPENSSL_NO_RC4
-			if (s->session->cipher->algorithm_enc == SSL_RC4)
-				s->s3->need_empty_fragments = 0;
-#endif
-		}
-	}
-
-	return ret;
-
-err:
-	SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
 	return (0);
 }
 
