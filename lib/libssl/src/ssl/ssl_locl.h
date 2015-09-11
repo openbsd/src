@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.117 2015/09/11 17:35:36 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.118 2015/09/11 17:37:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -559,7 +559,6 @@ int ssl_cert_inst(CERT **o);
 void ssl_cert_free(CERT *c);
 SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);
-int ssl_set_peer_cert_type(SESS_CERT *c, int type);
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, unsigned char *session, int len,
     const unsigned char *limit);
