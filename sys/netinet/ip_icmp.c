@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.139 2015/09/10 12:10:52 dlg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.140 2015/09/11 15:12:29 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -846,7 +846,7 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	hlen = ip->ip_hl << 2;
 	icp = (struct icmp *)(mtod(m, caddr_t) + hlen);
 	icp->icmp_cksum = 0;
-	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
+	m->m_pkthdr.csum_flags = M_ICMP_CSUM_OUT;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
 		char dst[INET_ADDRSTRLEN], src[INET_ADDRSTRLEN];
