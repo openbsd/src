@@ -25,9 +25,18 @@ if a and a.payload.payload.type==3 and a.payload.payload.code==4:
 	if mtu != expect:
 		print "MTU!=%d" % (expect)
 		exit(1)
-	len=a.payload.payload.payload.len
-	if len != iplen:
-		print "IP len %d!=%d" % (len, iplen)
+	iip=a.payload.payload.payload
+	iiplen=iip.len
+	if iiplen != iplen:
+		print "inner IP len %d!=%d" % (iiplen, iplen)
+		exit(1)
+	isrc=iip.src
+	if isrc != srcaddr:
+		print "inner IP src %d!=%d" % (isrc, srcaddr)
+		exit(1)
+	idst=iip.dst
+	if idst != dstaddr:
+		print "inner IP dst %d!=%d" % (idst, dstaddr)
 		exit(1)
 	exit(0)
 print "MTU=UNKNOWN"

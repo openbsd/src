@@ -39,9 +39,18 @@ if a and a.type == ETH_P_IPV6 and \
 	if mtu != expect:
 		print "MTU!=%d" % (expect)
 		exit(1)
-	len=a.payload.payload.payload.plen
-	if len != iplen:
-		print "IPv6 plen %d!=%d" % (len, iplen)
+	iip=a.payload.payload.payload
+	iiplen=iip.plen
+	if iiplen != iplen:
+		print "inner IPv6 plen %d!=%d" % (iiplen, iplen)
+		exit(1)
+	isrc=iip.src
+	if isrc != srcaddr:
+		print "inner IPv6 src %d!=%d" % (isrc, srcaddr)
+		exit(1)
+	idst=iip.dst
+	if idst != dstaddr:
+		print "inner IPv6 dst %d!=%d" % (idst, dstaddr)
 		exit(1)
 	exit(0)
 print "MTU=UNKNOWN"
