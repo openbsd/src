@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_enc.c,v 1.65 2015/09/11 16:59:17 jsing Exp $ */
+/* $OpenBSD: s3_enc.c,v 1.66 2015/09/11 17:01:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -466,38 +466,6 @@ ssl3_record_sequence_increment(unsigned char *seq)
 		if (++seq[i] != 0)
 			break;
 	}
-}
-
-int
-ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
-    int len)
-{
-	static const unsigned char *salt[3] = { "A", "BB", "CCC", };
-	unsigned char buf[EVP_MAX_MD_SIZE];
-	EVP_MD_CTX ctx;
-	int i, ret = 0;
-	unsigned int n;
-
-	EVP_MD_CTX_init(&ctx);
-	for (i = 0; i < 3; i++) {
-		if (!EVP_DigestInit_ex(&ctx, s->ctx->sha1, NULL))
-			return 0;
-		EVP_DigestUpdate(&ctx, salt[i], strlen((const char *)salt[i]));
-		EVP_DigestUpdate(&ctx, p, len);
-		EVP_DigestUpdate(&ctx, s->s3->client_random, SSL3_RANDOM_SIZE);
-		EVP_DigestUpdate(&ctx, s->s3->server_random, SSL3_RANDOM_SIZE);
-		EVP_DigestFinal_ex(&ctx, buf, &n);
-
-		if (!EVP_DigestInit_ex(&ctx, s->ctx->md5, NULL))
-			return 0;
-		EVP_DigestUpdate(&ctx, p, len);
-		EVP_DigestUpdate(&ctx, buf, n);
-		EVP_DigestFinal_ex(&ctx, out, &n);
-		out += n;
-		ret += n;
-	}
-	EVP_MD_CTX_cleanup(&ctx);
-	return (ret);
 }
 
 int
