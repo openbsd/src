@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.318 2015/06/19 11:12:24 jmatthew Exp $
+#	$OpenBSD: files.pci,v 1.319 2015/09/11 13:35:15 claudio Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -380,13 +380,6 @@ attach	thtc at pci
 device	tht: ether, ifnet, ifmedia, firmload
 attach	tht at thtc   
 file	dev/pci/if_tht.c		thtc | tht
-
-# Chelsio 10Gb Ethernet
-device	cheg {}
-attach	cheg at pci
-device	che: ether, ifnet, ifmedia, firmload
-attach	che at cheg   
-file	dev/pci/if_che.c		cheg | che
 
 # Myricom Myri-10G Ethernet
 device	myx: ether, ifnet, ifmedia
