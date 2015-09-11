@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.25 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.26 2015/09/11 09:18:27 guenther Exp $	*/
 
 /*
  * SHA-1 in C
@@ -98,6 +98,7 @@ SHA1Transform(u_int32_t state[5], const u_int8_t buffer[SHA1_BLOCK_LENGTH])
 	/* Wipe variables */
 	a = b = c = d = e = 0;
 }
+DEF_WEAK(SHA1Transform);
 
 
 /*
@@ -115,6 +116,7 @@ SHA1Init(SHA1_CTX *context)
 	context->state[3] = 0x10325476;
 	context->state[4] = 0xC3D2E1F0;
 }
+DEF_WEAK(SHA1Init);
 
 
 /*
@@ -138,6 +140,7 @@ SHA1Update(SHA1_CTX *context, const u_int8_t *data, size_t len)
 	}
 	(void)memcpy(&context->buffer[j], &data[i], len - i);
 }
+DEF_WEAK(SHA1Update);
 
 
 /*
@@ -158,6 +161,7 @@ SHA1Pad(SHA1_CTX *context)
 		SHA1Update(context, (u_int8_t *)"\0", 1);
 	SHA1Update(context, finalcount, 8); /* Should cause a SHA1Transform() */
 }
+DEF_WEAK(SHA1Pad);
 
 void
 SHA1Final(u_int8_t digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
@@ -171,3 +175,4 @@ SHA1Final(u_int8_t digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
 	}
 	explicit_bzero(context, sizeof(*context));
 }
+DEF_WEAK(SHA1Final);

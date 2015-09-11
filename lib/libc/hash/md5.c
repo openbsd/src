@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.10 2015/01/15 13:05:59 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.11 2015/09/11 09:18:27 guenther Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -56,6 +56,7 @@ MD5Init(MD5_CTX *ctx)
 	ctx->state[2] = 0x98badcfe;
 	ctx->state[3] = 0x10325476;
 }
+DEF_WEAK(MD5Init);
 
 /*
  * Update context to reflect the concatenation of another buffer full
@@ -94,6 +95,7 @@ MD5Update(MD5_CTX *ctx, const unsigned char *input, size_t len)
 	if (len != 0)
 		memcpy(ctx->buffer + have, input, len);
 }
+DEF_WEAK(MD5Update);
 
 /*
  * Pad pad to 64-byte boundary with the bit pattern
@@ -116,6 +118,7 @@ MD5Pad(MD5_CTX *ctx)
 	MD5Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
 	MD5Update(ctx, count, 8);
 }
+DEF_WEAK(MD5Pad);
 
 /*
  * Final wrapup--call MD5Pad, fill in digest and zero out ctx.
@@ -130,6 +133,7 @@ MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 		PUT_32BIT_LE(digest + i * 4, ctx->state[i]);
 	explicit_bzero(ctx, sizeof(*ctx));
 }
+DEF_WEAK(MD5Final);
 
 
 /* The four core functions - F1 is optimized somewhat */
@@ -244,3 +248,4 @@ MD5Transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH])
 	state[2] += c;
 	state[3] += d;
 }
+DEF_WEAK(MD5Transform);

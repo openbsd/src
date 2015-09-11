@@ -1,4 +1,4 @@
-/*	$OpenBSD: siphash.c,v 1.4 2015/02/20 11:51:03 tedu Exp $ */
+/*	$OpenBSD: siphash.c,v 1.5 2015/09/11 09:18:27 guenther Exp $ */
 
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
@@ -68,6 +68,7 @@ SipHash_Init(SIPHASH_CTX *ctx, const SIPHASH_KEY *key)
 	memset(ctx->buf, 0, sizeof(ctx->buf));
 	ctx->bytes = 0;
 }
+DEF_WEAK(SipHash_Init);
 
 void
 SipHash_Update(SIPHASH_CTX *ctx, int rc, int rf, const void *src, size_t len)
@@ -105,6 +106,7 @@ SipHash_Update(SIPHASH_CTX *ctx, int rc, int rf, const void *src, size_t len)
 	if (len > 0)
 		memcpy(&ctx->buf[used], ptr, len);
 }
+DEF_WEAK(SipHash_Update);
 
 void
 SipHash_Final(void *dst, SIPHASH_CTX *ctx, int rc, int rf)
@@ -115,6 +117,7 @@ SipHash_Final(void *dst, SIPHASH_CTX *ctx, int rc, int rf)
 
 	*(uint64_t *)dst = htole64(r);
 }
+DEF_WEAK(SipHash_Final);
 
 uint64_t
 SipHash_End(SIPHASH_CTX *ctx, int rc, int rf)
@@ -135,6 +138,7 @@ SipHash_End(SIPHASH_CTX *ctx, int rc, int rf)
 	explicit_bzero(ctx, sizeof(*ctx));
 	return (r);
 }
+DEF_WEAK(SipHash_End);
 
 uint64_t
 SipHash(const SIPHASH_KEY *key, int rc, int rf, const void *src, size_t len)
@@ -145,6 +149,7 @@ SipHash(const SIPHASH_KEY *key, int rc, int rf, const void *src, size_t len)
 	SipHash_Update(&ctx, rc, rf, src, len);
 	return (SipHash_End(&ctx, rc, rf));
 }
+DEF_WEAK(SipHash);
 
 #define SIP_ROTL(x, b) ((x) << (b)) | ( (x) >> (64 - (b)))
 
