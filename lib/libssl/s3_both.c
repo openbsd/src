@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.43 2015/07/18 19:41:54 doug Exp $ */
+/* $OpenBSD: s3_both.c,v 1.44 2015/09/11 15:59:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,13 +155,12 @@ ssl3_do_write(SSL *s, int type)
 int
 ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 {
-	unsigned char *p, *d;
+	unsigned char *p;
 	unsigned long l;
 	int md_len;
 
 	if (s->state == a) {
-		d = (unsigned char *)s->init_buf->data;
-		p = &(d[4]);
+		p = ssl3_handshake_msg_start(s, SSL3_MT_FINISHED);
 
 		md_len = s->method->ssl3_enc->finish_mac_length;
 		if (s->method->ssl3_enc->final_finish_mac(s, sender, slen,
@@ -184,16 +183,12 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 			s->s3->previous_server_finished_len = md_len;
 		}
 
-		*(d++) = SSL3_MT_FINISHED;
-		l2n3(l, d);
-		s->init_num = (int)l + 4;
-		s->init_off = 0;
+		ssl3_handshake_msg_finish(s, l);
 
 		s->state = b;
 	}
 
-	/* SSL3_ST_SEND_xxxxxx_HELLO_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 /* ssl3_take_mac calculates the Finished MAC for the handshakes messages seen to far. */

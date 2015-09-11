@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.35 2015/09/10 17:57:50 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.36 2015/09/11 15:59:21 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -905,13 +905,12 @@ f_err:
 int
 dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 {
-	unsigned char *p, *d;
+	unsigned char *p;
 	int i;
 	unsigned long l;
 
 	if (s->state == a) {
-		d = (unsigned char *)s->init_buf->data;
-		p = &(d[DTLS1_HM_HEADER_LENGTH]);
+		p = ssl3_handshake_msg_start(s, SSL3_MT_FINISHED);
 
 		i = s->method->ssl3_enc->final_finish_mac(s, sender, slen,
 		    s->s3->tmp.finish_md);
@@ -936,18 +935,12 @@ dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 			s->s3->previous_server_finished_len = i;
 		}
 
-		d = dtls1_set_message_header(s, d, SSL3_MT_FINISHED, l, 0, l);
-		s->init_num = (int)l + DTLS1_HM_HEADER_LENGTH;
-		s->init_off = 0;
-
-		/* buffer the message to handle re-xmits */
-		dtls1_buffer_message(s, 0);
+		ssl3_handshake_msg_finish(s, l);
 
 		s->state = b;
 	}
 
-	/* SSL3_ST_SEND_xxxxxx_HELLO_B */
-	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 /*
