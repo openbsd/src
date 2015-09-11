@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.57 2015/09/11 07:42:35 claudio Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.58 2015/09/11 09:58:33 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -85,9 +85,6 @@
 
 int in6_selectif(struct sockaddr_in6 *, struct ip6_pktopts *,
     struct ip6_moptions *, struct route_in6 *, struct ifnet **, u_int);
-int selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
-    struct ip6_moptions *, struct route_in6 *, struct ifnet **,
-    struct rtentry **, int, u_int);
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
@@ -297,7 +294,7 @@ in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 }
 
 int
-selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
     struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
     struct rtentry **retrt, int norouteok, u_int rtableid)
 {
@@ -309,21 +306,6 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct in6_addr *dst;
 
 	dst = &dstsock->sin6_addr;
-
-#if 0
-	char ip[INET6_ADDRSTRLEN];
-
-	if (dstsock->sin6_addr.s6_addr32[0] == 0 &&
-	    dstsock->sin6_addr.s6_addr32[1] == 0 &&
-	    !IN6_IS_ADDR_LOOPBACK(&dstsock->sin6_addr)) {
-		printf("in6_selectroute: strange destination %s\n",
-		    inet_ntop(AF_INET6, &dstsock->sin6_addr, ip, sizeof(ip)));
-	} else {
-		printf("in6_selectroute: destination = %s%%%d\n",
-		    inet_ntop(AF_INET6, &dstsock->sin6_addr, ip, sizeof(ip)),
-		    dstsock->sin6_scope_id); /* for debug */
-	}
-#endif
 
 	/* If the caller specify the outgoing interface explicitly, use it. */
 	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
@@ -504,7 +486,7 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct rtentry *rt = NULL;
 	int error;
 
-	if ((error = selectroute(dstsock, opts, mopts, ro, retifp,
+	if ((error = in6_selectroute(dstsock, opts, mopts, ro, retifp,
 	    &rt, 1, rtableid)) != 0)
 		return (error);
 
@@ -539,16 +521,6 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		*retifp = rt->rt_ifa->ifa_ifp;
 
 	return (0);
-}
-
-int
-in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
-    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
-    struct rtentry **retrt, u_int rtableid)
-{
-
-	return (selectroute(dstsock, opts, mopts, ro, retifp, retrt, 0,
-	    rtableid));
 }
 
 /*
