@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.369 2015/09/10 18:11:05 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.370 2015/09/11 08:54:54 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -275,8 +275,10 @@ if_idxmap_insert(struct ifnet *ifp)
 		for (i = 0; i < if_map->limit; i++)
 			nmap[i] = map[i];
 
-		while (i < nlimit)
+		while (i < nlimit) {
 			nmap[i] = NULL;
+			i++;
+		}
 
 		if_idxmap.map = nif_map;
 		free(if_map, M_IFADDR, sizeof(*nif_map) +
