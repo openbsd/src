@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.236 2015/09/11 16:58:00 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.237 2015/09/11 20:03:40 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 	struct rtentry		*rt;
 	struct rtentry		*newrt = NULL;
 	struct rt_addrinfo	 info;
-	int			 s, error = 0, msgtype = RTM_MISS;
+	int			 s, error = 0;
 
 	s = splsoftnet();
 
@@ -358,10 +358,6 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 				goto miss;
 			}
 			rt = newrt;
-			if (rt->rt_flags & RTF_XRESOLVE) {
-				msgtype = RTM_RESOLVE;
-				goto miss;
-			}
 			/* Inform listeners of the new route */
 			rt_sendmsg(rt, RTM_ADD, tableid);
 		} else
@@ -369,11 +365,8 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 	} else {
 		rtstat.rts_unreach++;
 miss:
-		if (ISSET(flags, RT_REPORT)) {
-			bzero((caddr_t)&info, sizeof(info));
-			info.rti_info[RTAX_DST] = dst;
-			rt_missmsg(msgtype, &info, 0, NULL, error, tableid);
-		}
+		if (ISSET(flags, RT_REPORT))
+			rt_missmsg(RTM_MISS, &info, 0, NULL, error, tableid);
 	}
 	splx(s);
 	return (newrt);
