@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.66 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.67 2015/09/11 20:14:58 mpi Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -2357,7 +2357,6 @@ do { \
 #ifdef RTF_WASCLONED
 	RTFLAG("W", RTF_WASCLONED);
 #endif
-	RTFLAG("X", RTF_XRESOLVE);
 	RTFLAG("L", RTF_LLINFO);
 	RTFLAG("S", RTF_STATIC);
 	RTFLAG("B", RTF_BLACKHOLE);
@@ -2492,7 +2491,7 @@ rt_entry(struct rt_msghdr *rtm, int again)
 
 	sin6_dst = sin6_gw = sin6_mask = sin6_ifp = 0;
 	if ((rtm->rtm_flags & RTF_UP) == 0 || rtm->rtm_flags &
-		(RTF_CLONING|RTF_XRESOLVE|RTF_LLINFO|RTF_BLACKHOLE)) {
+		(RTF_CLONING|RTF_LLINFO|RTF_BLACKHOLE)) {
 		return;		/* not interested in the link route */
 	}
 	/* do not look at cloned routes */
