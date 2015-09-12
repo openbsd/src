@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.17 2011/03/18 06:21:40 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 2015/09/12 09:04:57 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.5 1996/02/01 22:33:01 mycroft Exp $
 
 BINDIR=	/usr/mdec
@@ -39,7 +39,9 @@ BINDIR=	/usr/mdec
 RELOC=		0x358000
 RELOC2=		0x398000
 
-CFLAGS+=	-fno-stack-protector
+CFLAGS+=	-fno-stack-protector \
+		-fno-builtin-exit -fno-builtin-printf -fno-builtin-putchar \
+		-fno-builtin-vprintf
 
 # XXX <machine/param.h> incorrectly uses STANDALONE instead of _STANDALONE
 DEFS=		-DSTANDALONE -D_STANDALONE -DRELOC=${RELOC} -DSUN_BOOTPARAMS \
