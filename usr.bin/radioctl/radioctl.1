@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radioctl.1,v 1.15 2008/10/16 14:32:57 jmc Exp $
+.\"	$OpenBSD: radioctl.1,v 1.16 2015/09/12 16:35:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 16 2008 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt RADIOCTL 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nm radioctl
 .Op Fl n
 .Op Fl f Ar file
-.Ar name Ns Li = Ns Ar value
+.Ar name Ns = Ns Ar value
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,7 +67,7 @@ Specify an alternative radio tuner device.
 Suppress printing of the variable name.
 .It Fl v
 Show the possible values of queries.
-.It Ar name Ns Li = Ns Ar value
+.It Ar name Ns = Ns Ar value
 Attempt to set the specified variable
 .Ar name
 to
@@ -85,7 +85,7 @@ The exact set of controls that can be manipulated depends on
 the tuner.
 The general format (in both getting and setting a value) is:
 .Bd -filled -offset indent
-.Ar name Ns Li = Ns Ar value
+.Ar name Ns = Ns Ar value
 .Ed
 .Pp
 The
