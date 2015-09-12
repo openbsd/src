@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.129 2015/09/12 10:25:38 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.130 2015/09/12 12:17:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1978,7 +1978,7 @@ ssl3_send_client_key_exchange(SSL *s)
 				s->session->master_key, p, n);
 
 			/* Clean up. */
-			memset(p, 0, n);
+			explicit_bzero(p, n);
 
 			/* Send off the data. */
 			n = BN_num_bytes(dh_clnt->pub_key);
@@ -2071,7 +2071,8 @@ ssl3_send_client_key_exchange(SSL *s)
 			    s->method->ssl3_enc->generate_master_secret(s,
 				s->session->master_key, p, n);
 
-			memset(p, 0, n); /* clean up */
+			/* Clean up. */
+			explicit_bzero(p, n);
 
 			/*
 			 * First check the size of encoding and
