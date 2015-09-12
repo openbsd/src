@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.269 2015/09/12 09:36:31 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.270 2015/09/12 09:57:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -169,8 +169,6 @@ int	carp_send_all_recur = 0;
 
 struct carp_if {
 	TAILQ_HEAD(, carp_softc) vhif_vrs;
-
-	struct ifnet *vhif_ifp;
 };
 
 #define	CARP_LOG(l, sc, s)						\
@@ -1695,7 +1693,6 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			return (error);
 		}
 
-		ncif->vhif_ifp = ifp;
 		TAILQ_INIT(&ncif->vhif_vrs);
 	} else {
 		cif = (struct carp_if *)ifp->if_carp;
