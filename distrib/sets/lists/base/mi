@@ -145,6 +145,7 @@
 ./etc/rc.d/dvmrpd
 ./etc/rc.d/ftpd
 ./etc/rc.d/ftpproxy
+./etc/rc.d/ftpproxy6
 ./etc/rc.d/hostapd
 ./etc/rc.d/hotplugd
 ./etc/rc.d/httpd

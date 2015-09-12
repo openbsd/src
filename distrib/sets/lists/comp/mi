@@ -6453,7 +6453,6 @@
 ./usr/share/man/man9/kthread_create_deferred.9
 ./usr/share/man/man9/kthread_exit.9
 ./usr/share/man/man9/ktrace.9
-./usr/share/man/man9/ktrcsw.9
 ./usr/share/man/man9/ktremul.9
 ./usr/share/man/man9/ktrgenio.9
 ./usr/share/man/man9/ktrnamei.9
