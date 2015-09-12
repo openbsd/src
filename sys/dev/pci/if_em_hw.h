@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.66 2015/08/05 18:31:14 sf Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.67 2015/09/12 02:38:14 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2802,6 +2802,15 @@ struct em_host_command_info {
 #define M88E1000_PHY_VCO_REG_BIT8  0x100 /* Bits 8 & 11 are adjusted for */
 #define M88E1000_PHY_VCO_REG_BIT11 0x800    /* improved BER performance */
 
+#define M88E1543_PAGE_ADDR         0x16    /* Page Offset Register */
+#define M88E1543_EEE_CTRL_1        0x0
+#define M88E1543_EEE_CTRL_1_MS     0x0001  /* EEE Master/Slave */
+
+#define M88E1512_CFG_REG_1         0x0010
+#define M88E1512_CFG_REG_2         0x0011
+#define M88E1512_CFG_REG_3         0x0007
+#define M88E1512_MODE              0x0014
+
 /* BME1000 PHY Specific Control Register */
 #define BME1000_PSCR_ENABLE_DOWNSHIFT   0x0800 /* 1 = enable downshift */
 #define BM_PHY_PAGE_SELECT                22   /* Page Select for BM */
@@ -3424,6 +3433,7 @@ struct em_host_command_info {
 #define I210_I_PHY_ID        0x01410C00
 #define IGP04E1000_E_PHY_ID  0x02A80391
 #define M88E1141_E_PHY_ID    0x01410CD0
+#define M88E1512_E_PHY_ID    0x01410DD0
 
 /* Bits...
  * 15-5: page

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.87 2015/08/05 18:31:14 sf Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.88 2015/09/12 02:38:14 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -182,7 +182,7 @@ int32_t		em_get_pcs_speed_and_duplex_82575(struct em_hw *, uint16_t *,
 int32_t		em_set_eee_i350(struct em_hw *);
 int32_t		em_set_eee_pchlan(struct em_hw *);
 int32_t		em_valid_nvm_bank_detect_ich8lan(struct em_hw *, uint32_t *);
-
+int32_t		em_initialize_M88E1512_phy(struct em_hw *);
 
 /* IGP cable length table */
 static const uint16_t 
@@ -229,6 +229,7 @@ em_set_phy_type(struct em_hw *hw)
 	case M88E1111_I_PHY_ID:
 	case M88E1112_E_PHY_ID:
 	case M88E1543_E_PHY_ID:
+	case M88E1512_E_PHY_ID:
 	case I210_I_PHY_ID:
 	case I347AT4_E_PHY_ID:
 		hw->phy_type = em_phy_m88;
@@ -5272,6 +5273,12 @@ em_phy_reset(struct em_hw *hw)
 		em_gate_hw_phy_config_ich8lan(hw, FALSE);
 	}
 
+	if (hw->phy_id == M88E1512_E_PHY_ID) {
+		ret_val = em_initialize_M88E1512_phy(hw);
+		if (ret_val)
+			return ret_val;
+	}
+
 	return E1000_SUCCESS;
 }
 
@@ -5410,7 +5417,8 @@ em_match_gig_phy(struct em_hw *hw)
 		    hw->phy_id == I347AT4_E_PHY_ID ||
 		    hw->phy_id == I350_I_PHY_ID ||
 		    hw->phy_id == M88E1112_E_PHY_ID ||
-		    hw->phy_id == M88E1543_E_PHY_ID) {
+		    hw->phy_id == M88E1543_E_PHY_ID ||
+		    hw->phy_id == M88E1512_E_PHY_ID) {
 			uint32_t mdic;
 
 			mdic = EM_READ_REG(hw, E1000_MDICNFG);
@@ -10894,5 +10902,94 @@ em_set_eee_pchlan(struct em_hw *hw)
        ret_val = em_write_phy_reg(hw, I82579_LPI_CTRL, phy_reg);
 out:
        return ret_val;
+}
+
+/**
+ *  em_initialize_M88E1512_phy - Initialize M88E1512 PHY
+ *  @hw: pointer to the HW structure
+ *
+ *  Initialize Marvell 1512 to work correctly with Avoton.
+ **/
+int32_t
+em_initialize_M88E1512_phy(struct em_hw *hw)
+{
+	int32_t ret_val = E1000_SUCCESS;
+
+	DEBUGFUNC("e1000_initialize_M88E1512_phy");
+
+	/* Check if this is correct PHY. */
+	if (hw->phy_id != M88E1512_E_PHY_ID)
+		goto out;
+
+	/* Switch to PHY page 0xFF. */
+	ret_val = em_write_phy_reg(hw, M88E1543_PAGE_ADDR, 0x00FF);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_2, 0x214B);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_1, 0x2144);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_2, 0x0C28);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_1, 0x2146);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_2, 0xB233);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_1, 0x214D);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_2, 0xCC0C);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_1, 0x2159);
+	if (ret_val)
+		goto out;
+
+	/* Switch to PHY page 0xFB. */
+	ret_val = em_write_phy_reg(hw, M88E1543_PAGE_ADDR, 0x00FB);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_write_phy_reg(hw, M88E1512_CFG_REG_3, 0x000D);
+	if (ret_val)
+		goto out;
+
+	/* Switch to PHY page 0x12. */
+	ret_val = em_write_phy_reg(hw, M88E1543_PAGE_ADDR, 0x12);
+	if (ret_val)
+		goto out;
+
+	/* Change mode to SGMII-to-Copper */
+	ret_val = em_write_phy_reg(hw, M88E1512_MODE, 0x8001);
+	if (ret_val)
+		goto out;
+
+	/* Return the PHY to page 0. */
+	ret_val = em_write_phy_reg(hw, M88E1543_PAGE_ADDR, 0);
+	if (ret_val)
+		goto out;
+
+	ret_val = em_phy_hw_reset(hw);
+	if (ret_val) {
+		DEBUGOUT("Error committing the PHY changes\n");
+		return ret_val;
+	}
+
+	msec_delay(1000);
+out:
+	return ret_val;
 }
 
