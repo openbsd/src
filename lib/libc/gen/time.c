@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.5 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: time.c,v 1.6 2015/09/12 14:35:40 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,8 +28,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/time.h>
+#include <time.h>
 
 time_t
 time(time_t *t)
@@ -42,3 +42,4 @@ time(time_t *t)
 		*t = (time_t)tt.tv_sec;
 	return (tt.tv_sec);
 }
+DEF_STRONG(time);

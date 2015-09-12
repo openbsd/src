@@ -1,4 +1,4 @@
-/*	$OpenBSD: asctime.c,v 1.21 2015/02/16 17:35:38 tedu Exp $ */
+/*	$OpenBSD: asctime.c,v 1.22 2015/09/12 14:35:40 guenther Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -117,6 +117,7 @@ asctime_r(const struct tm *timeptr, char *buf)
 	*/
 	return asctime3(timeptr, buf, STD_ASCTIME_BUF_SIZE);
 }
+DEF_WEAK(asctime_r);
 
 /*
 ** A la ISO/IEC 9945-1, ANSI/IEEE Std 1003.1, 2004 Edition.
@@ -134,3 +135,4 @@ asctime(const struct tm *timeptr)
 	else
 		return asctime3(timeptr, resultp, sizeof(result));
 }
+DEF_STRONG(asctime);

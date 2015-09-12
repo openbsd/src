@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.52 2015/04/07 01:47:04 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.53 2015/09/12 14:35:40 guenther Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -168,6 +168,15 @@ static int		tzload(const char * name, struct state * sp,
 static int		tzparse(const char * name, struct state * sp,
 				int lastditch);
 
+#ifdef STD_INSPIRED
+struct tm	*offtime(const time_t *, long);
+time_t		time2posix(time_t);
+time_t		posix2time(time_t);
+PROTO_DEPRECATED(offtime);
+PROTO_DEPRECATED(time2posix);
+PROTO_DEPRECATED(posix2time);
+#endif
+
 static struct state *	lclptr;
 static struct state *	gmtptr;
 
@@ -186,6 +195,7 @@ char *			tzname[2] = {
 	wildabbr,
 	wildabbr
 };
+DEF_WEAK(tzname);
 
 /*
 ** Section 4.12.3 of X3.159-1989 requires that
@@ -1169,6 +1179,7 @@ tzset(void)
 	tzset_basic();
 	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
 }
+DEF_WEAK(tzset);
 
 /*
 ** The easy way to behave "as if no library function calls" localtime
@@ -1285,6 +1296,7 @@ localtime_r(const time_t *timep, struct tm *p_tm)
 	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
 	return p_tm;
 }
+DEF_WEAK(localtime_r);
 
 struct tm *
 localtime(const time_t *timep)
@@ -1296,6 +1308,7 @@ localtime(const time_t *timep)
 		return NULL;
 	return localtime_r(timep, p_tm);
 }
+DEF_STRONG(localtime);
 
 /*
 ** gmtsub is to gmtime as localsub is to localtime.
@@ -1343,6 +1356,7 @@ gmtime_r(const time_t *timep, struct tm *p_tm)
 	gmtsub(timep, 0L, p_tm);
 	return p_tm;
 }
+DEF_WEAK(gmtime_r);
 
 struct tm *
 gmtime(const time_t *timep)
@@ -1355,6 +1369,7 @@ gmtime(const time_t *timep)
 	return gmtime_r(timep, p_tm);
 
 }
+DEF_WEAK(gmtime);
 
 #ifdef STD_INSPIRED
 
@@ -1876,6 +1891,7 @@ mktime(struct tm *tmp)
 	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
 	return ret;
 }
+DEF_STRONG(mktime);
 
 #ifdef STD_INSPIRED
 

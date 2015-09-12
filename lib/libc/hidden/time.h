@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.1 2015/09/11 15:38:33 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.2 2015/09/12 14:35:40 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,8 +20,31 @@
 
 #include_next <time.h>
 
+extern PROTO_NORMAL(tzname);
+
+PROTO_NORMAL(asctime);
+PROTO_NORMAL(asctime_r);
+PROTO_STD_DEPRECATED(clock);
+PROTO_DEPRECATED(clock_getcpuclockid);
 PROTO_NORMAL(clock_getres);
 PROTO_NORMAL(clock_gettime);
 PROTO_NORMAL(clock_settime);
+PROTO_STD_DEPRECATED(ctime);
+PROTO_DEPRECATED(ctime_r);
+PROTO_STD_DEPRECATED(difftime);
+PROTO_NORMAL(gmtime);
+PROTO_NORMAL(gmtime_r);
+PROTO_NORMAL(localtime);
+PROTO_NORMAL(localtime_r);
+PROTO_NORMAL(mktime);
+/*PROTO_CANCEL(nanosleep);*/
+PROTO_NORMAL(strftime);
+PROTO_NORMAL(strptime);
+PROTO_NORMAL(time);
+PROTO_DEPRECATED(timegm);
+PROTO_DEPRECATED(timelocal);
+PROTO_DEPRECATED(timeoff);
+PROTO_NORMAL(tzset);
+PROTO_DEPRECATED(tzsetwall);
 
 #endif /* !_LIBC_TIME_H_ */
