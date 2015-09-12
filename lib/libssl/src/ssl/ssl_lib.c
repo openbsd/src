@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.110 2015/09/11 17:35:36 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.111 2015/09/12 16:10:07 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1731,9 +1731,6 @@ SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,
     int use_context)
 {
-	if (s->version < TLS1_VERSION)
-		return (-1);
-
 	return (s->method->ssl3_enc->export_keying_material(s, out, olen,
 	    label, llen, p, plen, use_context));
 }

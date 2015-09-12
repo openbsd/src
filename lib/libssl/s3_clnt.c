@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.130 2015/09/12 12:17:00 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.131 2015/09/12 16:10:07 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -795,7 +795,7 @@ ssl3_get_server_hello(SSL *s)
 	 * Check if we want to resume the session based on external
 	 * pre-shared secret
 	 */
-	if (s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
+	if (s->tls_session_secret_cb) {
 		SSL_CIPHER *pref_cipher = NULL;
 		s->session->master_key_length = sizeof(s->session->master_key);
 		if (s->tls_session_secret_cb(s, s->session->master_key,
@@ -901,19 +901,14 @@ ssl3_get_server_hello(SSL *s)
 	}
 
 	/* TLS extensions*/
-	if (s->version >= SSL3_VERSION) {
-		if (!ssl_parse_serverhello_tlsext(s, &p, d, n, &al)) {
-			/* 'al' set by ssl_parse_serverhello_tlsext */
-			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
-			    SSL_R_PARSE_TLSEXT);
-			goto f_err;
-
-		}
-		if (ssl_check_serverhello_tlsext(s) <= 0) {
-			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
-			    SSL_R_SERVERHELLO_TLSEXT);
-			goto err;
-		}
+	if (!ssl_parse_serverhello_tlsext(s, &p, d, n, &al)) {
+		/* 'al' set by ssl_parse_serverhello_tlsext */
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_PARSE_TLSEXT);
+		goto f_err;
+	}
+	if (ssl_check_serverhello_tlsext(s) <= 0) {
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_SERVERHELLO_TLSEXT);
+		goto err;
 	}
 
 	if (p != d + n)
@@ -1538,14 +1533,11 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	/* TLS does not like anon-DH with client cert */
-	if (s->version > SSL3_VERSION) {
-		if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
-			ssl3_send_alert(s, SSL3_AL_FATAL,
-			    SSL_AD_UNEXPECTED_MESSAGE);
-			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
-			    SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER);
-			goto err;
-		}
+	if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
+		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
+		    SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER);
+		goto err;
 	}
 
 	if (n < 0)
@@ -1914,8 +1906,8 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			q = p;
 			/* Fix buf for TLS and beyond */
-			if (s->version > SSL3_VERSION)
-				p += 2;
+			p += 2;
+
 			n = RSA_public_encrypt(sizeof tmp_buf,
 			tmp_buf, p, rsa, RSA_PKCS1_PADDING);
 			if (n <= 0) {
@@ -1925,10 +1917,8 @@ ssl3_send_client_key_exchange(SSL *s)
 			}
 
 			/* Fix buf for TLS and beyond */
-			if (s->version > SSL3_VERSION) {
-				s2n(n, q);
-				n += 2;
-			}
+			s2n(n, q);
+			n += 2;
 
 			s->session->master_key_length =
 			    s->method->ssl3_enc->generate_master_secret(
@@ -2448,16 +2438,8 @@ ssl3_send_client_certificate(SSL *s)
 		if (x509 != NULL)
 			X509_free(x509);
 		EVP_PKEY_free(pkey);
-		if (i == 0) {
-			if (s->version == SSL3_VERSION) {
-				s->s3->tmp.cert_req = 0;
-				ssl3_send_alert(s, SSL3_AL_WARNING,
-				    SSL_AD_NO_CERTIFICATE);
-				return (1);
-			} else {
-				s->s3->tmp.cert_req = 2;
-			}
-		}
+		if (i == 0)
+			s->s3->tmp.cert_req = 2;
 
 		/* Ok, we have a cert */
 		s->state = SSL3_ST_CW_CERT_C;

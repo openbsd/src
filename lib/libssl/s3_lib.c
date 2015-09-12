@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.105 2015/09/12 15:03:39 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.106 2015/09/12 16:10:07 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2598,7 +2598,7 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
-	if ((alg_k & SSL_kGOST) && (s->version >= TLS1_VERSION)) {
+	if ((alg_k & SSL_kGOST)) {
 		p[ret++] = TLS_CT_GOST94_SIGN;
 		p[ret++] = TLS_CT_GOST01_SIGN;
 		p[ret++] = TLS_CT_GOST12_256_SIGN;
@@ -2610,13 +2610,9 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 		p[ret++] = SSL3_CT_RSA_FIXED_DH;
 		p[ret++] = SSL3_CT_DSS_FIXED_DH;
 	}
-	if (s->version == SSL3_VERSION && (alg_k & SSL_kDHE)) {
-		p[ret++] = SSL3_CT_RSA_EPHEMERAL_DH;
-		p[ret++] = SSL3_CT_DSS_EPHEMERAL_DH;
-	}
 	p[ret++] = SSL3_CT_RSA_SIGN;
 	p[ret++] = SSL3_CT_DSS_SIGN;
-	if ((alg_k & (SSL_kECDHr|SSL_kECDHe)) && (s->version >= TLS1_VERSION)) {
+	if ((alg_k & (SSL_kECDHr|SSL_kECDHe))) {
 		p[ret++] = TLS_CT_RSA_FIXED_ECDH;
 		p[ret++] = TLS_CT_ECDSA_FIXED_ECDH;
 	}
@@ -2625,9 +2621,8 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	 * ECDSA certs can be used with RSA cipher suites as well
 	 * so we don't need to check for SSL_kECDH or SSL_kECDHE
 	 */
-	if (s->version >= TLS1_VERSION) {
-		p[ret++] = TLS_CT_ECDSA_SIGN;
-	}
+	p[ret++] = TLS_CT_ECDSA_SIGN;
+
 	return (ret);
 }
 

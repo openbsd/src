@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.54 2015/09/12 12:58:15 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.55 2015/09/12 16:10:07 doug Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -700,16 +700,8 @@ dtls1_send_client_certificate(SSL *s)
 		if (x509 != NULL)
 			X509_free(x509);
 		EVP_PKEY_free(pkey);
-		if (i == 0) {
-			if (s->version == SSL3_VERSION) {
-				s->s3->tmp.cert_req = 0;
-				ssl3_send_alert(s, SSL3_AL_WARNING,
-				    SSL_AD_NO_CERTIFICATE);
-				return (1);
-			} else {
-				s->s3->tmp.cert_req = 2;
-			}
-		}
+		if (i == 0)
+			s->s3->tmp.cert_req = 2;
 
 		/* Ok, we have a cert */
 		s->state = SSL3_ST_CW_CERT_C;

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.84 2015/09/01 13:38:27 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.85 2015/09/12 16:10:08 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -659,11 +659,6 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		}
 	}
 
-	/* don't add extensions for SSLv3 unless doing secure renegotiation */
-	if (s->client_version == SSL3_VERSION &&
-	    !s->s3->send_connection_binding)
-		return p;
-
 	ret += 2;
 
 	if (ret >= limit)
@@ -972,10 +967,6 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	using_ecc = (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe) ||
 	    alg_a & SSL_aECDSA) &&
 	    s->session->tlsext_ecpointformatlist != NULL;
-
-	/* don't add extensions for SSLv3, unless doing secure renegotiation */
-	if (s->version == SSL3_VERSION && !s->s3->send_connection_binding)
-		return p;
 
 	ret += 2;
 	if (ret >= limit)
@@ -2048,7 +2039,7 @@ tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
 	 */
 	if (SSL_get_options(s) & SSL_OP_NO_TICKET)
 		return 0;
-	if (s->version <= SSL3_VERSION || !limit)
+	if (!limit)
 		return 0;
 
 	if (limit < session)
