@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.128 2015/09/12 10:09:16 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.129 2015/09/12 10:25:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1974,8 +1974,8 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			/* Generate master key from the result. */
 			s->session->master_key_length =
-			s->method->ssl3_enc->generate_master_secret(s,
-			    s->session->master_key, p, n);
+			    s->method->ssl3_enc->generate_master_secret(s,
+				s->session->master_key, p, n);
 
 			/* Clean up. */
 			memset(p, 0, n);
@@ -2131,9 +2131,8 @@ ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 			}
 
-			pkey_ctx = EVP_PKEY_CTX_new(
-			    pub_key = X509_get_pubkey(peer_cert),
-			    NULL);
+			pub_key = X509_get_pubkey(peer_cert);
+			pkey_ctx = EVP_PKEY_CTX_new(pub_key, NULL);
 
 			/*
 			 * If we have send a certificate, and certificate key
@@ -2232,9 +2231,9 @@ ssl3_send_client_key_exchange(SSL *s)
 			goto err;
 		}
 
-		s->state = SSL3_ST_CW_KEY_EXCH_B;
-
 		ssl3_handshake_msg_finish(s, n);
+
+		s->state = SSL3_ST_CW_KEY_EXCH_B;
 	}
 
 	/* SSL3_ST_CW_KEY_EXCH_B */
