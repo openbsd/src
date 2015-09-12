@@ -30,8 +30,6 @@
 #include <string.h>
 #include <limits.h>
 
-extern char *__strsignal(int, char *);
-
 char *
 strsignal(int sig)
 {
