@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.131 2015/09/12 16:10:07 doug Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.132 2015/09/12 20:23:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2159,6 +2159,8 @@ ssl3_send_client_key_exchange(SSL *s)
 			if (ukm_hash == NULL) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    ERR_R_MALLOC_FAILURE);
+				explicit_bzero(premaster_secret,
+				    sizeof(premaster_secret));
 				goto err;
 			}
 
@@ -2178,6 +2180,8 @@ ssl3_send_client_key_exchange(SSL *s)
 			    EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    SSL_R_LIBRARY_BUG);
+				explicit_bzero(premaster_secret,
+				    sizeof(premaster_secret));
 				goto err;
 			}
 
@@ -2213,7 +2217,8 @@ ssl3_send_client_key_exchange(SSL *s)
 			    s->method->ssl3_enc->generate_master_secret(s,
 			    s->session->master_key, premaster_secret, 32);
 			EVP_PKEY_free(pub_key);
-
+			explicit_bzero(premaster_secret,
+			    sizeof(premaster_secret));
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_HANDSHAKE_FAILURE);
