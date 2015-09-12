@@ -1,4 +1,4 @@
-/*	$OpenBSD: raise.c,v 1.6 2012/11/10 03:46:11 guenther Exp $ */
+/*	$OpenBSD: raise.c,v 1.7 2015/09/12 16:46:12 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,10 +31,9 @@
 #include <signal.h>
 #include <unistd.h>
 
-int	_thread_sys_getthrid(void);
-
 int
 raise(int s)
 {
-	return(kill(_thread_sys_getthrid(), s));
+	return (kill(getthrid(), s));
 }
+DEF_STRONG(raise);

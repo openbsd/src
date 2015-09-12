@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2015/09/11 15:38:33 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 2015/09/12 16:46:12 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -27,11 +27,28 @@ __END_HIDDEN_DECLS
 extern PROTO_NORMAL(sys_siglist);
 extern PROTO_NORMAL(sys_signame);
 
-PROTO_NORMAL(signal);
-
+PROTO_DEPRECATED(bsd_signal);
 PROTO_NORMAL(kill);             /* wrap to ban SIGTHR? */
+PROTO_DEPRECATED(killpg);
+PROTO_DEPRECATED(psignal);
+/*PROTO_NORMAL(pthread_sigmask);*/
+PROTO_NORMAL(raise);
+/*PROTO_WRAP(sigaction);	wrap to hide SIGTHR */
+PROTO_NORMAL(sigaddset);
 PROTO_NORMAL(sigaltstack);
-PROTO_NORMAL(sigpending);
+PROTO_DEPRECATED(sigblock);
+PROTO_NORMAL(sigdelset);
+PROTO_NORMAL(sigemptyset);
+PROTO_NORMAL(sigfillset);
+PROTO_DEPRECATED(siginterrupt);
+PROTO_NORMAL(sigismember);
+PROTO_NORMAL(signal);
+PROTO_DEPRECATED(sigpause);
+/*PROTO_NORMAL(sigpending);	wrap to hide SIGTHR */
+/*PROTO_WRAP(sigprocmask);	wrap to hide SIGTHR */
 PROTO_NORMAL(sigreturn);
+PROTO_DEPRECATED(sigsetmask);
+/*PROTO_CANCEL(sigsuspend);	wrap to hide SIGTHR */
+PROTO_DEPRECATED(sigvec);
 
 #endif	/* !_LIBC_SIGNAL_H */
