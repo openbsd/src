@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.29 2015/01/16 00:03:37 deraadt Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.30 2015/09/12 15:59:36 deraadt Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -98,23 +98,21 @@ field_view views_pg[] = {
 	{NULL, NULL, 0, NULL}
 };
 
+int	fscale;
 
-#ifdef FSCALE
-# define FIXED_LOADAVG FSCALE
-# define FIXED_PCTCPU FSCALE
-#endif
+#define pctdouble(p) ((double)(p) / fscale)
 
-#ifdef FIXED_PCTCPU
-  typedef long pctcpu;
-# define pctdouble(p) ((double)(p) / FIXED_PCTCPU)
-#else
-typedef double pctcpu;
-# define pctdouble(p) (p)
-#endif
+typedef long pctcpu;
 
 int
 select_pg(void)
 {
+	int mib[] = { CTL_KERN, KERN_FSCALE };
+	size_t size = sizeof(fscale);
+
+        if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+            &fscale, &size, NULL, 0) < 0)
+                return (-1);
 	num_disp = pigs_cnt;
 	return (0);
 }
