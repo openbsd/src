@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2013/06/13 04:13:47 brad Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.20 2015/09/12 16:07:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -30,14 +30,17 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/unistd.h>
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+
+int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 void _dl_bind_start(void); /* XXX */
 Elf_Addr _dl_bind(elf_object_t *object, int reloff);
@@ -415,12 +418,15 @@ Elf_Addr
 _dl_bind(elf_object_t *object, int relidx)
 {
 	Elf_Rel *rel;
-	Elf_Word *addr;
 	const Elf_Sym *sym, *this;
 	const char *symn;
 	const elf_object_t *sobj;
-	Elf_Addr ooff, newval;
-	sigset_t savedmask;
+	Elf_Addr ooff;
+	int64_t cookie = pcookie;
+	struct {
+		struct __kbind param;
+		Elf_Word newval;
+	} buf;
 
 	rel = ((Elf_Rel *)object->Dyn.info[DT_JMPREL]) + (relidx);
 
@@ -436,27 +442,26 @@ _dl_bind(elf_object_t *object, int relidx)
 		*(volatile int *)0 = 0;		/* XXX */
 	}
 
-	addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
-	newval = ooff + this->st_value;
+	buf.newval = ooff + this->st_value;
 
-	if (sobj->traced && _dl_trace_plt(sobj, symn))
-		return newval;
+	if (__predict_false(sobj->traced) && _dl_trace_plt(sobj, symn))
+		return (buf.newval);
 
-	/* if GOT is protected, allow the write */
-	if (object->got_size != 0) {
-		_dl_thread_bind_lock(0, &savedmask);
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ|PROT_WRITE);
+	buf.param.kb_addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
+	buf.param.kb_size = sizeof(Elf_Word);
+
+	/* directly code the syscall, so that it's actually inline here */
+	{
+		register long syscall_num __asm("r12") = SYS_kbind;
+		register void *arg1 __asm("r0") = &buf;
+		register long  arg2 __asm("r1") = sizeof(buf);
+		register long  arg3 __asm("r2") = 0xffffffff &  cookie;
+		register long  arg4 __asm("r3") = 0xffffffff & (cookie >> 32);
+
+		__asm volatile("swi 0" : "+r" (arg1), "+r" (arg2)
+		    : "r" (syscall_num), "r" (arg3), "r" (arg4)
+		    : "cc", "memory");
 	}
 
-	if (*addr != newval)
-		*addr = newval;
-
-	/* put the GOT back to RO */
-	if (object->got_size != 0) {
-		_dl_mprotect((void*)object->got_start, object->got_size,
-		    PROT_READ);
-		_dl_thread_bind_lock(1, &savedmask);
-	}
-	return newval;
+	return (buf.newval);
 }
