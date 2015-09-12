@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.134 2015/09/11 21:22:54 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.135 2015/09/12 07:56:56 jmc Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1499,12 +1499,17 @@ help(void)
 	fprintf(stderr, "\tCommand Summary:\n\
 	\t-4		Use IPv4\n\
 	\t-6		Use IPv6\n\
+	\t-C certfile	Public key file\n\
+	\t-c		Use TLS\n\
 	\t-D		Enable the debug socket option\n\
 	\t-d		Detach from stdin\n\
+	\t-e name\t	Required name in peer certificate\n\
 	\t-F		Pass socket fd\n\
+	\t-H hash\t	Hash string of peer certificate\n\
 	\t-h		This help text\n\
 	\t-I length	TCP receive buffer length\n\
-	\t-i secs\t	Delay interval for lines sent, ports scanned\n\
+	\t-i interval	Delay interval for lines sent, ports scanned\n\
+	\t-K keyfile	Private key file\n\
 	\t-k		Keep inbound sockets open for multiple connects\n\
 	\t-l		Listen mode, for inbound connects\n\
 	\t-N		Shutdown the network socket after EOF on stdin\n\
@@ -1512,16 +1517,17 @@ help(void)
 	\t-O length	TCP send buffer length\n\
 	\t-P proxyuser\tUsername for proxy authentication\n\
 	\t-p port\t	Specify local port for remote connects\n\
+	\t-R CAfile	CA bundle\n\
 	\t-r		Randomize remote ports\n\
 	\t-S		Enable the TCP MD5 signature option\n\
-	\t-s addr\t	Local source address\n\
-	\t-T toskeyword\tSet IP Type of Service\n\
+	\t-s source	Local source address\n\
+	\t-T keyword	TOS value or TLS options\n\
 	\t-t		Answer TELNET negotiation\n\
 	\t-U		Use UNIX domain socket\n\
 	\t-u		UDP mode\n\
 	\t-V rtable	Specify alternate routing table\n\
 	\t-v		Verbose\n\
-	\t-w secs\t	Timeout for connects and final net reads\n\
+	\t-w timeout	Timeout for connects and final net reads\n\
 	\t-X proto	Proxy protocol: \"4\", \"5\" (SOCKS) or \"connect\"\n\
 	\t-x addr[:port]\tSpecify proxy address and port\n\
 	\t-z		Zero-I/O mode [used for scanning]\n\
@@ -1533,11 +1539,12 @@ void
 usage(int ret)
 {
 	fprintf(stderr,
-	    "usage: nc [-46cDdFhklNnrStUuvz] [-C certfile] [-e name] \n"
-	    "\t  [-I length] [-i interval] [-H hash] [-K keyfile] [-O length]\n"
-	    "\t  [-P proxy_username] [-p source_port] [-R cafile] [-s source]\n"
-	    "\t  [-T tls|toskeyword] [-V rtable] [-w timeout]\n"
-	    "\t  [-X proxy_protocol] [-x proxy_address[:port]]\n"
+	    "usage: nc [-46cDdFhklNnrStUuvz] [-C certfile] [-e name] "
+	    "[-H hash] [-I length]\n"
+	    "\t  [-i interval] [-K keyfile] [-O length] [-P proxy_username]\n"
+	    "\t  [-p source_port] [-R CAfile] [-s source] "
+	    "[-T keyword] [-V rtable]\n"
+	    "\t  [-w timeout] [-X proxy_protocol] [-x proxy_address[:port]]\n"
 	    "\t  [destination] [port]\n");
 	if (ret)
 		exit(1);
