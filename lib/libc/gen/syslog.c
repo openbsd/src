@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.c,v 1.31 2011/05/30 18:48:33 martynas Exp $ */
+/*	$OpenBSD: syslog.c,v 1.32 2015/09/12 14:30:31 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,25 +29,11 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/syslog.h>
-#include <sys/uio.h>
-#include <sys/un.h>
-#include <netdb.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
 #include <stdarg.h>
+#include <syslog.h>
+#include <time.h>
 
 static struct syslog_data sdata = SYSLOG_DATA_INIT;
-
-void	__vsyslog_r(int pri, struct syslog_data *, size_t (*)(char *, size_t),
-    const char *, va_list);
 
 static size_t
 gettime(char *buf, size_t maxsize)
@@ -63,7 +49,6 @@ gettime(char *buf, size_t maxsize)
  * syslog, vsyslog --
  *	print message on log file; output is intended for syslogd(8).
  */
-/* PRINTFLIKE2 */
 void
 syslog(int pri, const char *fmt, ...)
 {
@@ -73,12 +58,14 @@ syslog(int pri, const char *fmt, ...)
 	vsyslog(pri, fmt, ap);
 	va_end(ap);
 }
+DEF_WEAK(syslog);
 
 void
 vsyslog(int pri, const char *fmt, va_list ap)
 {
 	__vsyslog_r(pri, &sdata, &gettime, fmt, ap);
 }
+DEF_WEAK(vsyslog);
 
 void
 openlog(const char *ident, int logstat, int logfac)
@@ -96,7 +83,7 @@ closelog(void)
 int
 setlogmask(int pmask)
 {
-	return setlogmask_r(pmask, &sdata);
+	return (setlogmask_r(pmask, &sdata));
 }
 
 /* setlogmask -- set the log mask level */
@@ -110,3 +97,4 @@ setlogmask_r(int pmask, struct syslog_data *data)
 		data->log_mask = pmask;
 	return (omask);
 }
+DEF_WEAK(setlogmask_r);

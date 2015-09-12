@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.8 2015/09/09 10:50:59 bluhm Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.9 2015/09/12 14:30:31 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/syslog.h>
 #include <sys/uio.h>
 #include <netdb.h>
 
@@ -38,6 +37,7 @@
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 #include <limits.h>
@@ -45,14 +45,8 @@
 
 extern char	*__progname;		/* Program name, from crt0. */
 
-int	sendsyslog(const char *, size_t);
-
-void	__vsyslog_r(int pri, struct syslog_data *, size_t (*)(char *, size_t),
-    const char *, va_list);
 
 /* Reentrant version of syslog, i.e. syslog_r() */
-
-/* PRINTFLIKE3 */
 void
 syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
 {
@@ -62,19 +56,14 @@ syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
 	vsyslog_r(pri, data, fmt, ap);
 	va_end(ap);
 }
+DEF_WEAK(syslog_r);
 
 void
 vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 {
-	const char *ident;
-
 	__vsyslog_r(pri, data, NULL, fmt, ap);
-
-	/* close the socket without losing log_tag */
-	ident = data->log_tag;
-	closelog_r(data);
-	data->log_tag = ident;
 }
+DEF_WEAK(vsyslog_r);
 
 /*
  * This is used by both syslog_r and syslog.  The latter supplies
@@ -247,10 +236,11 @@ openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
 	if (logfac != 0 && (logfac &~ LOG_FACMASK) == 0)
 		data->log_fac = logfac;
 }
+DEF_WEAK(openlog_r);
 
 void
 closelog_r(struct syslog_data *data)
 {
 	data->log_tag = NULL;
 }
-
+DEF_WEAK(closelog_r);
