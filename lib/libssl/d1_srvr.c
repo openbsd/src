@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.65 2015/09/12 20:27:27 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.66 2015/09/12 20:51:33 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -509,7 +509,7 @@ dtls1_accept(SSL *s)
 					goto end;
 				}
 				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-				if (!ssl3_digest_cached_records(s)) {
+				if (!tls1_digest_cached_records(s)) {
 					ret = -1;
 					goto end;
 				}
