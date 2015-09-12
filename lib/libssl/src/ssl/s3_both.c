@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_both.c,v 1.47 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: s3_both.c,v 1.48 2015/09/12 15:03:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,6 +326,7 @@ ssl3_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
 		SSLerr(SSL_F_SSL3_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
 		return (-1);
 	}
+	/* XXX */
 	p = (unsigned char *)&(buf->data[*l]);
 	l2n3(n, p);
 	i2d_X509(x, &p);
@@ -338,10 +339,10 @@ unsigned long
 ssl3_output_cert_chain(SSL *s, X509 *x)
 {
 	unsigned char *p;
-	int i;
-	unsigned long l = 7;
+	unsigned long l = ssl3_handshake_msg_hdr_len(s) + 3;
 	BUF_MEM *buf;
 	int no_chain;
+	int i;
 
 	if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
 		no_chain = 1;
@@ -350,7 +351,7 @@ ssl3_output_cert_chain(SSL *s, X509 *x)
 
 	/* TLSv1 sends a chain with nothing in it, instead of an alert */
 	buf = s->init_buf;
-	if (!BUF_MEM_grow_clean(buf, 10)) {
+	if (!BUF_MEM_grow_clean(buf, ssl3_handshake_msg_hdr_len(s) + 6)) {
 		SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_BUF_LIB);
 		return (0);
 	}
@@ -388,14 +389,14 @@ ssl3_output_cert_chain(SSL *s, X509 *x)
 			return (0);
 	}
 
-	l -= 7;
+	l -= ssl3_handshake_msg_hdr_len(s) + 3;
 	p = (unsigned char *)&(buf->data[4]);
 	l2n3(l, p);
 	l += 3;
 	p = (unsigned char *)&(buf->data[0]);
 	*(p++) = SSL3_MT_CERTIFICATE;
 	l2n3(l, p);
-	l += 4;
+	l += 4; /* XXX */
 	return (l);
 }
 

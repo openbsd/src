@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.119 2015/09/12 13:03:06 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.120 2015/09/12 15:03:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1398,7 +1398,8 @@ ssl3_send_server_key_exchange(SSL *s)
 			kn = 0;
 		}
 
-		if (!BUF_MEM_grow_clean(buf, n + 4 + kn)) {
+		if (!BUF_MEM_grow_clean(buf, ssl3_handshake_msg_hdr_len(s) +
+		    n + kn)) {
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
 			    ERR_LIB_BUF);
 			goto err;
@@ -1570,7 +1571,9 @@ ssl3_send_certificate_request(SSL *s)
 			for (i = 0; i < sk_X509_NAME_num(sk); i++) {
 				name = sk_X509_NAME_value(sk, i);
 				j = i2d_X509_NAME(name, NULL);
-				if (!BUF_MEM_grow_clean(buf, 4 + n + j + 2)) {
+				if (!BUF_MEM_grow_clean(buf,
+				    ssl3_handshake_msg_hdr_len(s) + n + j
+				    + 2)) {
 					SSLerr(
 					    SSL_F_SSL3_SEND_CERTIFICATE_REQUEST,
 					    ERR_R_BUF_LIB);
@@ -2523,8 +2526,8 @@ ssl3_send_newsession_ticket(SSL *s)
  		 * session_length + max_enc_block_size (max encrypted session
  		 * length) + max_md_size (HMAC).
  		 */
-		if (!BUF_MEM_grow(s->init_buf,
-		    26 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
+		if (!BUF_MEM_grow(s->init_buf, ssl3_handshake_msg_hdr_len(s) +
+		    22 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
 		    EVP_MAX_MD_SIZE + slen)) {
 			free(senc);
 			return (-1);

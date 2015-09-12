@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.104 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.105 2015/09/12 15:03:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1947,22 +1947,25 @@ ssl3_pending(const SSL *s)
 	    s->s3->rrec.length : 0;
 }
 
+int
+ssl3_handshake_msg_hdr_len(SSL *s)
+{
+	return (SSL_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH :
+            SSL3_HM_HEADER_LENGTH);
+}
+
 unsigned char *
 ssl3_handshake_msg_start(SSL *s, uint8_t msg_type)
 {
 	unsigned char *d, *p;
-	int hdr_len;
 
 	d = p = (unsigned char *)s->init_buf->data;
-
-	hdr_len = SSL_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH :
-	    SSL3_HM_HEADER_LENGTH;
 
 	/* Handshake message type and length. */
 	*(p++) = msg_type;
 	l2n3(0, p);
 
-	return (d + hdr_len);
+	return (d + ssl3_handshake_msg_hdr_len(s));
 }
 
 void
@@ -1970,18 +1973,14 @@ ssl3_handshake_msg_finish(SSL *s, unsigned int len)
 {
 	unsigned char *d, *p;
 	uint8_t msg_type;
-	int hdr_len;
 
 	d = p = (unsigned char *)s->init_buf->data;
-
-	hdr_len = SSL_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH :
-	    SSL3_HM_HEADER_LENGTH;
 
 	/* Handshake message length. */
 	msg_type = *(p++);
 	l2n3(len, p);
 
-	s->init_num = hdr_len + (int)len;
+	s->init_num = ssl3_handshake_msg_hdr_len(s) + (int)len;
 	s->init_off = 0;
 
 	if (SSL_IS_DTLS(s)) {
