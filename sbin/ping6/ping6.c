@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.114 2015/09/12 09:44:08 tobias Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.115 2015/09/12 11:52:23 naddy Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1351,7 +1351,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		case NI_QTYPE_FQDN:
 		default:	/* XXX: for backward compatibility */
 			cp = (u_char *)ni + ICMP6_NIRLEN;
-			if (off + ICMP_NIRLEN < cc && buf[off + ICMP6_NIRLEN] ==
+			if (off + ICMP6_NIRLEN < cc &&
+			    buf[off + ICMP6_NIRLEN] ==
 			    cc - off - ICMP6_NIRLEN - 1)
 				oldfqdn = 1;
 			else
