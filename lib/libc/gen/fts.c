@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.50 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: fts.c,v 1.51 2015/09/12 13:32:24 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -176,6 +176,7 @@ mem2:	free(sp->fts_path);
 mem1:	free(sp);
 	return (NULL);
 }
+DEF_WEAK(fts_open);
 
 static void
 fts_load(FTS *sp, FTSENT *p)
@@ -243,6 +244,7 @@ fts_close(FTS *sp)
 
 	return (error);
 }
+DEF_WEAK(fts_close);
 
 /*
  * Special case of "/" at the end of the path so that slashes aren't
@@ -440,6 +442,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 	p->fts_info = p->fts_errno ? FTS_ERR : FTS_DP;
 	return (sp->fts_cur = p);
 }
+DEF_WEAK(fts_read);
 
 /*
  * Fts_set takes the stream as an argument although it's not used in this
@@ -459,6 +462,7 @@ fts_set(FTS *sp, FTSENT *p, int instr)
 	p->fts_instr = instr;
 	return (0);
 }
+DEF_WEAK(fts_set);
 
 FTSENT *
 fts_children(FTS *sp, int instr)
@@ -527,6 +531,7 @@ fts_children(FTS *sp, int instr)
 	(void)close(fd);
 	return (sp->fts_child);
 }
+DEF_WEAK(fts_children);
 
 /*
  * This is the tricky part -- do not casually change *anything* in here.  The
