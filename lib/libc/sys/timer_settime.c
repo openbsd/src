@@ -1,12 +1,12 @@
-/*	$OpenBSD: timer_settime.c,v 1.6 2005/08/08 08:05:38 espie Exp $ */
+/*	$OpenBSD: timer_settime.c,v 1.7 2015/09/12 13:13:34 guenther Exp $ */
 
-#include <signal.h>
 #include <time.h>
 #include <errno.h>
 
-struct itimerspec;
+int	timer_settime(timer_t, int, const struct itimerspec *,
+	    struct itimerspec *);
+PROTO_DEPRECATED(timer_settime);
 
-/* ARGSUSED */
 int
 timer_settime(timer_t timerid, int flags, const struct itimerspec *value,
     struct itimerspec *ovalue)

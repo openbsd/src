@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer_create.c,v 1.6 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: timer_create.c,v 1.7 2015/09/12 13:13:34 guenther Exp $ */
 
 #include <signal.h>
 #include <time.h>
@@ -6,7 +6,9 @@
 
 struct sigevent;
 
-/* ARGSUSED */
+int	timer_create(clockid_t, struct sigevent *, timer_t *);
+PROTO_DEPRECATED(timer_create);
+
 int
 timer_create(clockid_t clock_id, struct sigevent *evp, timer_t *timerid)
 {
