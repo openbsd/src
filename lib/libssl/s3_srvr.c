@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.118 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.119 2015/09/12 13:03:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1256,8 +1256,7 @@ ssl3_send_server_key_exchange(SSL *s)
 			r[0] = dh->p;
 			r[1] = dh->g;
 			r[2] = dh->pub_key;
-		} else
-		if (type & SSL_kECDHE) {
+		} else if (type & SSL_kECDHE) {
 			const EC_GROUP *group;
 
 			ecdhp = cert->ecdh_tmp;
@@ -1404,8 +1403,9 @@ ssl3_send_server_key_exchange(SSL *s)
 			    ERR_LIB_BUF);
 			goto err;
 		}
-		d = (unsigned char *)s->init_buf->data;
-		p = &d[4];
+
+		d = p = ssl3_handshake_msg_start(s,
+		    SSL3_MT_SERVER_KEY_EXCHANGE);
 
 		for (i = 0; i < 4 && r[i] != NULL; i++) {
 			s2n(nr[i], p);
@@ -1458,7 +1458,7 @@ ssl3_send_server_key_exchange(SSL *s)
 					EVP_DigestUpdate(&md_ctx,
 					    s->s3->server_random,
 					    SSL3_RANDOM_SIZE);
-					EVP_DigestUpdate(&md_ctx, &d[4], n);
+					EVP_DigestUpdate(&md_ctx, d, n);
 					EVP_DigestFinal_ex(&md_ctx, q,
 					    (unsigned int *)&i);
 					q += i;
@@ -1493,7 +1493,7 @@ ssl3_send_server_key_exchange(SSL *s)
 				EVP_SignUpdate(&md_ctx,
 				    s->s3->server_random,
 				    SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx, &d[4], n);
+				EVP_SignUpdate(&md_ctx, d, n);
 				if (!EVP_SignFinal(&md_ctx, &p[2],
 					(unsigned int *)&i, pkey)) {
 					SSLerr(
@@ -1514,17 +1514,14 @@ ssl3_send_server_key_exchange(SSL *s)
 			}
 		}
 
-		*(d++) = SSL3_MT_SERVER_KEY_EXCHANGE;
-		l2n3(n, d);
-
-		/* we should now have things packed up, so lets send it off */
-		s->init_num = n + 4;
-		s->init_off = 0;
+		ssl3_handshake_msg_finish(s, n);
 	}
 
 	s->state = SSL3_ST_SW_KEY_EXCH_B;
 	EVP_MD_CTX_cleanup(&md_ctx);
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+
+	return (ssl3_handshake_write(s));
+	
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
@@ -1546,7 +1543,8 @@ ssl3_send_certificate_request(SSL *s)
 	if (s->state == SSL3_ST_SW_CERT_REQ_A) {
 		buf = s->init_buf;
 
-		d = p = (unsigned char *)&(buf->data[4]);
+		d = p = ssl3_handshake_msg_start(s,
+		    SSL3_MT_CERTIFICATE_REQUEST);
 
 		/* get the list of acceptable cert types */
 		p++;
@@ -1578,7 +1576,8 @@ ssl3_send_certificate_request(SSL *s)
 					    ERR_R_BUF_LIB);
 					goto err;
 				}
-				p = (unsigned char *)&(buf->data[4 + n]);
+				p = ssl3_handshake_msg_start(s,
+				    SSL3_MT_CERTIFICATE_REQUEST) + n;
 				s2n(j, p);
 				i2d_X509_NAME(name, &p);
 				n += 2 + j;
@@ -1586,22 +1585,17 @@ ssl3_send_certificate_request(SSL *s)
 			}
 		}
 		/* else no CA names */
-		p = (unsigned char *)&(buf->data[4 + off]);
+		p = ssl3_handshake_msg_start(s,
+		    SSL3_MT_CERTIFICATE_REQUEST) + off;
 		s2n(nl, p);
 
-		d = (unsigned char *)buf->data;
-		*(d++) = SSL3_MT_CERTIFICATE_REQUEST;
-		l2n3(n, d);
-
-		/* we should now have things packed up, so lets send it off */
-		s->init_num = n + 4;
-		s->init_off = 0;
+		ssl3_handshake_msg_finish(s, n);
 
 		s->state = SSL3_ST_SW_CERT_REQ_B;
 	}
 
 	/* SSL3_ST_SW_CERT_REQ_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 err:
 	return (-1);
 }
@@ -2464,7 +2458,7 @@ ssl3_send_server_certificate(SSL *s)
 	}
 
 	/* SSL3_ST_SW_CERT_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 /* send a new session ticket (not necessarily for a new session) */
@@ -2472,7 +2466,7 @@ int
 ssl3_send_newsession_ticket(SSL *s)
 {
 	if (s->state == SSL3_ST_SW_SESSION_TICKET_A) {
-		unsigned char *p, *senc, *macstart;
+		unsigned char *d, *p, *senc, *macstart;
 		const unsigned char *const_p;
 		int len, slen_full, slen;
 		SSL_SESSION *sess;
@@ -2536,13 +2530,11 @@ ssl3_send_newsession_ticket(SSL *s)
 			return (-1);
 		}
 
-		p = (unsigned char *)s->init_buf->data;
-		/* do the header */
-		*(p++) = SSL3_MT_NEWSESSION_TICKET;
-		/* Skip message length for now */
-		p += 3;
+		d = p = ssl3_handshake_msg_start(s, SSL3_MT_NEWSESSION_TICKET);
+
 		EVP_CIPHER_CTX_init(&ctx);
 		HMAC_CTX_init(&hctx);
+
 		/*
 		 * Initialize HMAC and cipher contexts. If callback present
 		 * it does all the work otherwise use generated values
@@ -2591,26 +2583,25 @@ ssl3_send_newsession_ticket(SSL *s)
 		HMAC_Update(&hctx, macstart, p - macstart);
 		HMAC_Final(&hctx, p, &hlen);
 		HMAC_CTX_cleanup(&hctx);
-
 		p += hlen;
+
 		/* Now write out lengths: p points to end of data written */
 		/* Total length */
-		len = p - (unsigned char *)s->init_buf->data;
-		p = (unsigned char *)s->init_buf->data + 1;
-		l2n3(len - 4, p); /* Message length */
-		p += 4;
-		s2n(len - 10, p);
-		/* Ticket length */
+		len = p - d;
 
-		/* number of bytes to write */
-		s->init_num = len;
+		/* Skip ticket lifetime hint. */
+		p = d + 4;
+		s2n(len - 6, p); /* Message length */
+
+		ssl3_handshake_msg_finish(s, len);
+
 		s->state = SSL3_ST_SW_SESSION_TICKET_B;
-		s->init_off = 0;
+
 		free(senc);
 	}
 
 	/* SSL3_ST_SW_SESSION_TICKET_B */
-	return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+	return (ssl3_handshake_write(s));
 }
 
 int
