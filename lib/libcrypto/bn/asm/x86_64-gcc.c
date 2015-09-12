@@ -1,8 +1,5 @@
-/* $OpenBSD: x86_64-gcc.c,v 1.5 2015/02/25 15:39:49 bcook Exp $ */
+/* $OpenBSD: x86_64-gcc.c,v 1.6 2015/09/12 09:04:12 miod Exp $ */
 #include "../bn_lcl.h"
-#if !(defined(__GNUC__) && __GNUC__>=2)
-# include "../bn_asm.c"	/* kind of dirty hack for Sun Studio */
-#else
 /*
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
  *
@@ -203,7 +200,6 @@ BN_ULONG bn_add_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int 
   return ret&1;
 }
 
-#ifndef SIMICS
 BN_ULONG bn_sub_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int n)
 { BN_ULONG ret=0,i=0;
 
@@ -225,45 +221,6 @@ BN_ULONG bn_sub_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int 
 
   return ret&1;
 }
-#else
-/* Simics 1.4<7 has buggy sbbq:-( */
-#define BN_MASK2 0xffffffffffffffffL
-BN_ULONG bn_sub_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
-        {
-	BN_ULONG t1,t2;
-	int c=0;
-
-	if (n <= 0) return((BN_ULONG)0);
-
-	for (;;)
-		{
-		t1=a[0]; t2=b[0];
-		r[0]=(t1-t2-c)&BN_MASK2;
-		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
-		t1=a[1]; t2=b[1];
-		r[1]=(t1-t2-c)&BN_MASK2;
-		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
-		t1=a[2]; t2=b[2];
-		r[2]=(t1-t2-c)&BN_MASK2;
-		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
-		t1=a[3]; t2=b[3];
-		r[3]=(t1-t2-c)&BN_MASK2;
-		if (t1 != t2) c=(t1 < t2);
-		if (--n <= 0) break;
-
-		a+=4;
-		b+=4;
-		r+=4;
-		}
-	return(c);
-	}
-#endif
 
 /* mul_add_c(a,b,c0,c1,c2)  -- c+=a*b for three word number c=(c2,c1,c0) */
 /* mul_add_c2(a,b,c0,c1,c2) -- c+=2*a*b for three word number c=(c2,c1,c0) */
@@ -595,4 +552,3 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 	r[6]=c1;
 	r[7]=c2;
 	}
-#endif
