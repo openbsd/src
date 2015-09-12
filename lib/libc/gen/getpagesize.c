@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpagesize.c,v 1.7 2015/01/14 23:03:50 deraadt Exp $ */
+/*	$OpenBSD: getpagesize.c,v 1.8 2015/09/12 14:56:50 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,3 +49,4 @@ getpagesize(void)
 	}
 	return (pagsz);
 }
+DEF_WEAK(getpagesize);

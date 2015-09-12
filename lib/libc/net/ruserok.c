@@ -174,6 +174,7 @@ again:
 	}
 	return (-1);
 }
+DEF_WEAK(iruserok_sa);
 
 /*
  * XXX

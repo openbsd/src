@@ -1,4 +1,4 @@
-/* $OpenBSD: rresvport.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $ */
+/* $OpenBSD: rresvport.c,v 1.11 2015/09/12 14:56:50 guenther Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1998 Theo de Raadt.  All rights reserved.
  * Copyright (c) 1983, 1993, 1994
@@ -104,3 +104,4 @@ rresvport_af(int *alport, int af)
 	*alport = ntohs(*portp);
 	return (s);
 }
+DEF_WEAK(rresvport_af);

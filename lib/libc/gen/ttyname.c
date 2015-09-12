@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyname.c,v 1.14 2015/06/19 23:54:15 jca Exp $ */
+/*	$OpenBSD: ttyname.c,v 1.15 2015/09/12 14:56:50 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 #include "thread_private.h"
 
 static char buf[TTY_NAME_MAX];
-static int oldttyname(int, struct stat *, char *, size_t);
+static int oldttyname(struct stat *, char *, size_t);
 
 char *
 ttyname(int fd)
@@ -62,6 +62,7 @@ ttyname(int fd)
 
 	return bufp;
 }
+DEF_WEAK(ttyname);
 
 int
 ttyname_r(int fd, char *buf, size_t len)
@@ -106,12 +107,12 @@ ttyname_r(int fd, char *buf, size_t len)
 		}
 		(void)(db->close)(db);
 	}
-	return (oldttyname(fd, &sb, buf, len));
+	return (oldttyname(&sb, buf, len));
 }
+DEF_WEAK(ttyname_r);
 
-/* ARGSUSED */
 static int
-oldttyname(int fd, struct stat *sb, char *buf, size_t len)
+oldttyname(struct stat *sb, char *buf, size_t len)
 {
 	struct dirent *dirp;
 	DIR *dp;

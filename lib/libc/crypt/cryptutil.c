@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptutil.c,v 1.10 2015/07/23 22:19:03 tedu Exp $ */
+/* $OpenBSD: cryptutil.c,v 1.11 2015/09/12 14:56:50 guenther Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -50,6 +50,7 @@ fail:
 	errno = EACCES;
 	return -1;
 }
+DEF_WEAK(crypt_checkpass);
 
 int
 crypt_newhash(const char *pass, const char *pref, char *hash, size_t hashlen)
@@ -95,3 +96,4 @@ crypt_newhash(const char *pass, const char *pref, char *hash, size_t hashlen)
 err:
 	return rv;
 }
+DEF_WEAK(crypt_newhash);

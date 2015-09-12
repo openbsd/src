@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.21 2013/09/30 12:02:33 millert Exp $ */
+/*	$OpenBSD: exec.c,v 1.22 2015/09/12 14:56:50 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,7 @@ execl(const char *name, const char *arg, ...)
 	va_end(ap);
 	return (execve(name, argv, environ));
 }
+DEF_WEAK(execl);
 
 int
 execle(const char *name, const char *arg, ...)
@@ -242,10 +243,12 @@ retry:		(void)execve(bp, argv, envp);
 done:
 	return (-1);
 }
+DEF_WEAK(execvpe);
 
 int
 execvp(const char *name, char *const *argv)
 {
     return execvpe(name, argv, environ);
 }
+DEF_WEAK(execvp);
 

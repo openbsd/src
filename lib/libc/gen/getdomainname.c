@@ -1,4 +1,4 @@
-/*	$OpenBSD: getdomainname.c,v 1.8 2015/01/14 23:03:50 deraadt Exp $ */
+/*	$OpenBSD: getdomainname.c,v 1.9 2015/09/12 14:56:50 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,3 +45,4 @@ getdomainname(char *name, size_t namelen)
 		return (-1);
 	return (0);
 }
+DEF_WEAK(getdomainname);

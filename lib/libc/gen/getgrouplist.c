@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.25 2015/06/03 02:24:36 millert Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.26 2015/09/12 14:56:50 guenther Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -239,3 +239,4 @@ out:
 	*grpcnt = ngroups;
 	return (ret);
 }
+DEF_WEAK(getgrouplist);

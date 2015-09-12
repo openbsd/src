@@ -1,7 +1,8 @@
-/*	$OpenBSD: crypt.c,v 1.30 2015/07/18 01:18:50 jeremy Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.31 2015/09/12 14:56:50 guenther Exp $	*/
 
 #include <errno.h>
 #include <pwd.h>
+#include <unistd.h>
 
 char *
 crypt(const char *key, const char *setting)
@@ -18,3 +19,4 @@ crypt(const char *key, const char *setting)
 	errno = EINVAL;
 	return (NULL);
 }
+DEF_WEAK(crypt);

@@ -292,4 +292,5 @@ bad:
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	return (-1);
 }
+DEF_WEAK(rcmd_af);
 

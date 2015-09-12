@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlogin.c,v 1.12 2013/09/30 12:02:33 millert Exp $ */
+/*	$OpenBSD: getlogin.c,v 1.13 2015/09/12 14:56:50 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,6 +83,7 @@ getlogin_r(char *name, size_t namelen)
 	_THREAD_PRIVATE_MUTEX_UNLOCK(logname);
 	return 0;
 }
+DEF_WEAK(getlogin_r);
 
 int
 setlogin(const char *name)
