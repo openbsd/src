@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.1 2015/09/11 13:26:20 guenther Exp $	*/
+/*	$OpenBSD: mman.h,v 1.2 2015/09/12 15:01:33 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -33,8 +33,8 @@ PROTO_NORMAL(munlock);
 PROTO_NORMAL(munlockall);
 PROTO_NORMAL(munmap);
 PROTO_DEPRECATED(posix_madvise);
-/*PROTO_NORMAL(shm_mkstemp); */
-/*PROTO_NORMAL(shm_open); */
-/*PROTO_NORMAL(shm_unlink); */
+PROTO_DEPRECATED(shm_mkstemp);
+PROTO_NORMAL(shm_open);
+PROTO_DEPRECATED(shm_unlink);
 
 #endif /* _LIBC_SYS_MMAN_H_ */

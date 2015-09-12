@@ -1,4 +1,4 @@
-/* $OpenBSD: shm_open.c,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
+/* $OpenBSD: shm_open.c,v 1.7 2015/09/12 15:01:33 guenther Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -76,6 +76,7 @@ shm_open(const char *path, int flags, mode_t mode)
 	}
 	return fd;
 }
+DEF_WEAK(shm_open);
 
 int
 shm_unlink(const char *path)
