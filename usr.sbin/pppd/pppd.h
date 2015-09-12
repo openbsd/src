@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.19 2015/06/12 14:18:25 mikeb Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.20 2015/09/12 12:42:36 miod Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -309,7 +309,6 @@ void unlock(void);		/* Delete previously-created lock file */
 int  daemon(int, int);		/* Detach us from terminal session */
 void logwtmp(const char *, const char *, const char *);
 				/* Write entry to wtmp file */
-int  get_host_seed(void);	/* Get host-dependent random number seed */
 #ifdef PPP_FILTER
 int  set_filters(struct bpf_program *pass, struct bpf_program *active);
 				/* Set filter programs in kernel */
