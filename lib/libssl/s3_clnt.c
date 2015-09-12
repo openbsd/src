@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.127 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.128 2015/09/12 10:09:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1965,7 +1965,6 @@ ssl3_send_client_key_exchange(SSL *s)
 			 * make sure to clear it out afterwards.
 			 */
 			n = DH_compute_key(p, dh_srvr->pub_key, dh_clnt);
-
 			if (n <= 0) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    ERR_R_DH_LIB);
@@ -1994,7 +1993,6 @@ ssl3_send_client_key_exchange(SSL *s)
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;
 			int field_size = 0;
-
 
 			/* Ensure that we have an ephemeral key for ECDHE. */
 			if ((alg_k & SSL_kECDHE) &&
@@ -2045,8 +2043,7 @@ ssl3_send_client_key_exchange(SSL *s)
 
 			/* Generate a new ECDH key pair */
 			if (!(EC_KEY_generate_key(clnt_ecdh))) {
-				SSLerr(
-				    SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    ERR_R_ECDH_LIB);
 				goto err;
 			}
@@ -2061,7 +2058,7 @@ ssl3_send_client_key_exchange(SSL *s)
 				    ERR_R_ECDH_LIB);
 				goto err;
 			}
-			n = ECDH_compute_key(p, (field_size + 7)/8,
+			n = ECDH_compute_key(p, (field_size + 7) / 8,
 			    srvr_ecpoint, clnt_ecdh, NULL);
 			if (n <= 0) {
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -2070,9 +2067,9 @@ ssl3_send_client_key_exchange(SSL *s)
 			}
 
 			/* generate master key from the result */
-			s->session->master_key_length = s->method->ssl3_enc \
-			    -> generate_master_secret(s,
-			    s->session->master_key, p, n);
+			s->session->master_key_length =
+			    s->method->ssl3_enc->generate_master_secret(s,
+				s->session->master_key, p, n);
 
 			memset(p, 0, n); /* clean up */
 
@@ -2080,19 +2077,15 @@ ssl3_send_client_key_exchange(SSL *s)
 			 * First check the size of encoding and
 			 * allocate memory accordingly.
 			 */
-			encoded_pt_len = EC_POINT_point2oct(
-				srvr_group,
-				EC_KEY_get0_public_key(clnt_ecdh),
-				POINT_CONVERSION_UNCOMPRESSED,
-				NULL, 0, NULL);
+			encoded_pt_len = EC_POINT_point2oct(srvr_group,
+			    EC_KEY_get0_public_key(clnt_ecdh),
+			    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
 
 			encodedPoint = malloc(encoded_pt_len);
 
 			bn_ctx = BN_CTX_new();
-			if ((encodedPoint == NULL) ||
-			    (bn_ctx == NULL)) {
-				SSLerr(
-				    SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+			if ((encodedPoint == NULL) || (bn_ctx == NULL)) {
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 				    ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
@@ -2100,8 +2093,8 @@ ssl3_send_client_key_exchange(SSL *s)
 			/* Encode the public key */
 			n = EC_POINT_point2oct(srvr_group,
 			    EC_KEY_get0_public_key(clnt_ecdh),
-			    POINT_CONVERSION_UNCOMPRESSED,
-			    encodedPoint, encoded_pt_len, bn_ctx);
+			    POINT_CONVERSION_UNCOMPRESSED, encodedPoint,
+			    encoded_pt_len, bn_ctx);
 
 			*p = n; /* length of encoded point */
 			/* Encoded point will be copied here */
@@ -2141,34 +2134,36 @@ ssl3_send_client_key_exchange(SSL *s)
 			pkey_ctx = EVP_PKEY_CTX_new(
 			    pub_key = X509_get_pubkey(peer_cert),
 			    NULL);
+
 			/*
 			 * If we have send a certificate, and certificate key
 			 * parameters match those of server certificate, use
 			 * certificate key for key exchange.
 			 * Otherwise, generate ephemeral key pair.
 			 */
-
 			EVP_PKEY_encrypt_init(pkey_ctx);
+
 			/* Generate session key. */
 			arc4random_buf(premaster_secret, 32);
+
 			/*
-			 * If we have client certificate, use its secret
-			 * as peer key.
+			 * If we have client certificate, use its secret as
+			 * peer key.
 			 */
 			if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
 				if (EVP_PKEY_derive_set_peer(pkey_ctx,
 				    s->cert->key->privatekey) <=0) {
 					/*
-					 * If there was an error -
-					 * just ignore it. Ephemeral key
-					 * would be used
+					 * If there was an error - just ignore
+					 * it. Ephemeral key would be used.
 					 */
 					ERR_clear_error();
 				}
 			}
+
 			/*
 			 * Compute shared IV and store it in algorithm-specific
-			 * context data
+			 * context data.
 			 */
 			ukm_hash = EVP_MD_CTX_create();
 			if (ukm_hash == NULL) {
@@ -2195,9 +2190,10 @@ ssl3_send_client_key_exchange(SSL *s)
 				    SSL_R_LIBRARY_BUG);
 				goto err;
 			}
+
 			/*
-			 * Make GOST keytransport blob message,
-			 * encapsulate it into sequence.
+			 * Make GOST keytransport blob message, encapsulate it
+			 * into sequence.
 			 */
 			*(p++) = V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
 			msglen = 255;
