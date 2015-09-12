@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.28 2015/03/18 15:11:31 tedu Exp $ */
+/*	$OpenBSD: opendir.c,v 1.29 2015/09/12 13:34:22 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,7 @@ opendir(const char *name)
 		close(fd);
 	return (dirp);
 }
+DEF_WEAK(opendir);
 
 /*
  * Open a directory specified by file descriptor.
@@ -86,6 +87,7 @@ fdopendir(int fd)
 	}
 	return (dirp);
 }
+DEF_WEAK(fdopendir);
 
 static DIR *
 __fdopendir(int fd)

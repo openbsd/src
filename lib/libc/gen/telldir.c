@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.17 2013/11/05 20:36:51 schwarze Exp $ */
+/*	$OpenBSD: telldir.c,v 1.18 2015/09/12 13:34:22 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,3 +46,4 @@ telldir(DIR *dirp)
 
 	return (i);
 }
+DEF_WEAK(telldir);

@@ -11,3 +11,4 @@ dirfd(DIR *dirp)
 {
 	return (dirp->dd_fd);
 }
+DEF_WEAK(dirfd);
