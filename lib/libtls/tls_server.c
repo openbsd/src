@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.16 2015/09/11 08:31:26 beck Exp $ */
+/* $OpenBSD: tls_server.c,v 1.17 2015/09/12 19:54:31 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <openssl/ec.h>
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 
 #include <tls.h>
@@ -167,6 +168,7 @@ tls_handshake_server(struct tls *ctx)
 		goto err;
 	}
 
+	ERR_clear_error();
 	if ((ssl_ret = SSL_accept(ctx->ssl_conn)) != 1) {
 		rv = tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "handshake");
 		goto err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.25 2015/09/11 09:24:54 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.26 2015/09/12 19:54:31 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -405,12 +405,13 @@ tls_read(struct tls *ctx, void *buf, size_t buflen)
 		goto out;
 	}
 
+	ERR_clear_error();
 	if ((ssl_ret = SSL_read(ctx->ssl_conn, buf, buflen)) > 0) {
 		rv = (ssize_t)ssl_ret;
 		goto out;
 	}
-
 	rv = (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "read");
+
  out:
 	/* Prevent callers from performing incorrect error handling */
 	errno = 0;
@@ -433,12 +434,13 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen)
 		goto out;
 	}
 
+	ERR_clear_error();
 	if ((ssl_ret = SSL_write(ctx->ssl_conn, buf, buflen)) > 0) {
 		rv = (ssize_t)ssl_ret;
 		goto out;
 	}
-
 	rv =  (ssize_t)tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret, "write");
+
  out:
 	/* Prevent callers from performing incorrect error handling */
 	errno = 0;
@@ -452,6 +454,7 @@ tls_close(struct tls *ctx)
 	int rv = 0;
 
 	if (ctx->ssl_conn != NULL) {
+		ERR_clear_error();
 		ssl_ret = SSL_shutdown(ctx->ssl_conn);
 		if (ssl_ret < 0) {
 			rv = tls_ssl_error(ctx, ctx->ssl_conn, ssl_ret,
