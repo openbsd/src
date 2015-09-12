@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.21 2015/09/12 08:26:01 guenther Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.22 2015/09/12 10:27:45 deraadt Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -73,7 +73,7 @@ db_trap(int type, int code)
 			/* show on-proc threads */
 			db_show_all_procs(0, 0, 0, "o");
 			/* then the backtrace */
-			db_stack_trace_print(db_dot, 0, 10 /* arbitrary */, "",
+			db_stack_trace_print(db_dot, 0, 14 /* arbitrary */, "",
 			    db_printf);
 
 			if (db_print_position() != 0)
