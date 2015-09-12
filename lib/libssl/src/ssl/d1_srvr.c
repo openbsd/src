@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.64 2015/09/12 15:08:54 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.65 2015/09/12 20:27:27 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -492,6 +492,27 @@ dtls1_accept(SSL *s)
 				 */
 				s->state = SSL3_ST_SR_FINISHED_A;
 				s->init_num = 0;
+			} else if (SSL_USE_SIGALGS(s)) {
+				s->state = SSL3_ST_SR_CERT_VRFY_A;
+				s->init_num = 0;
+				if (!s->session->peer)
+					break;
+
+				/*
+				 * For sigalgs freeze the handshake buffer
+				 * at this point and digest cached records.
+				 */
+				if (!s->s3->handshake_buffer) {
+					SSLerr(SSL_F_SSL3_ACCEPT,
+					    ERR_R_INTERNAL_ERROR);
+					ret = -1;
+					goto end;
+				}
+				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
+				if (!ssl3_digest_cached_records(s)) {
+					ret = -1;
+					goto end;
+				}
 			} else {
 				s->state = SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num = 0;
@@ -663,6 +684,7 @@ end:
 
 	if (cb != NULL)
 		cb(s, SSL_CB_ACCEPT_EXIT, ret);
+
 	return (ret);
 }
 
