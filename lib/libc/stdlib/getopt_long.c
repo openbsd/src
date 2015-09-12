@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.26 2013/06/08 22:47:56 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.27 2015/09/12 14:48:14 guenther Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -60,6 +60,11 @@ int	optind = 1;		/* index into parent argv vector */
 int	optopt = '?';		/* character checked for validity */
 int	optreset;		/* reset getopt */
 char    *optarg;		/* argument associated with option */
+
+/* DEF_* only work on initialized (non-COMMON) variables */
+DEF_WEAK(opterr);
+DEF_WEAK(optind);
+DEF_WEAK(optopt);
 
 #define PRINT_ERROR	((opterr) && (*options != ':'))
 
