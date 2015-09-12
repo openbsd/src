@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.136 2015/09/12 08:38:33 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.137 2015/09/12 21:01:14 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -109,7 +109,6 @@ char    *Rflag = DEFAULT_CA_FILE;		/* Root CA file */
 int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
-char	*tls_peerhash;				/* hash of peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
 
 int timeout = -1;
@@ -617,7 +616,6 @@ main(int argc, char *argv[])
 	if (s)
 		close(s);
 
-	free(tls_peerhash);
 	tls_config_free(tls_cfg);
 
 	exit(ret);
@@ -671,12 +669,10 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 			errx(1, "tls handshake failed (%s)",
 			    tls_error(tls_ctx));
 	} while (i == TLS_WANT_POLLIN || i == TLS_WANT_POLLOUT);
-	if (tls_peer_cert_hash(tls_ctx, &tls_peerhash) == -1)
-		errx(1, "hash of peer certificate failed");
 	if (vflag)
 		report_tls(tls_ctx, host, tls_expectname);
-	if (tls_expecthash && tls_peerhash &&
-	    strcmp(tls_expecthash, tls_peerhash) != 0)
+	if (tls_expecthash && tls_peer_cert_hash(tls_ctx) &&
+	    strcmp(tls_expecthash, tls_peer_cert_hash(tls_ctx)) != 0)
 		errx(1, "peer certificate is not %s", tls_expecthash);
 }
 struct tls *
@@ -701,14 +697,12 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 	if (tls_cctx) {
 		int gotcert = tls_peer_cert_provided(tls_cctx);
 
-		if (gotcert && tls_peer_cert_hash(tls_cctx, &tls_peerhash) == -1)
-			warn("hash of peer certificate failed");
 		if (vflag && gotcert)
 			report_tls(tls_cctx, host, tls_expectname);
 		if ((TLSopt & TLS_CCERT) && !gotcert)
 			warnx("No client certificate provided");
-		else if (gotcert && tls_peerhash && tls_expecthash &&
-		    strcmp(tls_expecthash, tls_peerhash) != 0)
+		else if (gotcert && tls_peer_cert_hash(tls_ctx) && tls_expecthash &&
+		    strcmp(tls_expecthash, tls_peer_cert_hash(tls_ctx)) != 0)
 			warnx("peer certificate is not %s", tls_expecthash);
 		else if (gotcert && tls_expectname &&
 		    (!tls_peer_cert_contains_name(tls_cctx, tls_expectname)))
@@ -1454,19 +1448,18 @@ void
 report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 {
 	char *subject = NULL, *issuer = NULL;
-	if (tls_peer_cert_subject(tls_ctx, &subject) == -1)
-		errx(1, "unable to get certificate subject");
-	if (tls_peer_cert_issuer(tls_ctx, &issuer) == -1)
-		errx(1, "unable to get certificate issuer");
 	fprintf(stderr, "TLS handshake completed with %s\n", host);
 	fprintf(stderr, "Peer name %s\n",
 	    tls_expectname ? tls_expectname : host);
-	if (subject)
-		fprintf(stderr, "Subject: %s\n", subject);
-	if (issuer)
-		fprintf(stderr, "Issuer: %s\n", issuer);
-	if (tls_peerhash)
-		fprintf(stderr, "Cert Hash: %s\n", tls_peerhash);
+	if (tls_peer_cert_subject(tls_ctx))
+		fprintf(stderr, "Subject: %s\n",
+		    tls_peer_cert_subject(tls_ctx));
+	if (tls_peer_cert_issuer(tls_ctx))
+		fprintf(stderr, "Issuer: %s\n",
+		    tls_peer_cert_issuer(tls_ctx));
+	if (tls_peer_cert_hash(tls_ctx))
+		fprintf(stderr, "Cert Hash: %s\n",
+		    tls_peer_cert_hash(tls_ctx));
 	free(subject);
 	free(issuer);
 }
