@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.125 2015/09/11 08:59:48 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.126 2015/09/12 20:26:06 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -556,7 +556,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
 
 	s = splsoftnet();
-	error = (*ifp->if_output)(ifp, m, (struct sockaddr *)&dst, NULL);
+	error = if_output(ifp, m, (struct sockaddr *)&dst, NULL);
 	splx(s);
 	/*
 	 * The driver frees the mbuf.

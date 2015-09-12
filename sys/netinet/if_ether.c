@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.165 2015/09/10 13:21:41 dlg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.166 2015/09/12 20:26:07 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -242,13 +242,6 @@ arp_rtrequest(int req, struct rtentry *rt)
 		if (ifa) {
 			rt->rt_expire = 0;
 			/*
-			 * XXX Since lo0 is in the default rdomain we
-			 * should not (ab)use it for any route related
-			 * to an interface of a different rdomain.
-			 */
-			rt->rt_ifp = lo0ifp;
-
-			/*
 			 * make sure to set rt->rt_ifa to the interface
 			 * address we are using, otherwise we will have trouble
 			 * with source address selection.
@@ -313,7 +306,7 @@ arprequest(struct ifnet *ifp, u_int32_t *sip, u_int32_t *tip, u_int8_t *enaddr)
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
 	m->m_flags |= M_BCAST;
-	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	if_output(ifp, m, &sa, NULL);
 }
 
 /*
@@ -710,7 +703,7 @@ in_arpinput(struct mbuf *m)
 			mh = ml_dequeue(&la->la_ml);
 			la_hold_total--;
 
-			(*ifp->if_output)(ifp, mh, rt_key(rt), rt);
+			if_output(ifp, mh, rt_key(rt), rt);
 
 			if (ml_len(&la->la_ml) == len) {
 				/* mbuf is back in queue. Discard. */
@@ -760,7 +753,7 @@ out:
 	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
-	(*ifp->if_output)(ifp, m, &sa, NULL);
+	if_output(ifp, m, &sa, NULL);
 	if_put(ifp);
 	return;
 }
@@ -975,7 +968,7 @@ revarprequest(struct ifnet *ifp)
 	sa.sa_family = pseudo_AF_HDRCMPLT;
 	sa.sa_len = sizeof(sa);
 	m->m_flags |= M_BCAST;
-	ifp->if_output(ifp, m, &sa, (struct rtentry *)0);
+	if_output(ifp, m, &sa, NULL);
 }
 
 #ifdef NFSCLIENT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.375 2015/09/12 19:36:37 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.376 2015/09/12 20:26:06 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -682,6 +682,16 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	return (0);
 }
 
+int
+if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+	if (rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL))
+		return (if_input_local(lo0ifp, m, dst->sa_family));
+
+	return (ifp->if_output(ifp, m, dst, rt));
+}
+
 struct ifih {
 	struct srpl_entry	  ifih_next;
 	int			(*ifih_input)(struct ifnet *, struct mbuf *,
@@ -1345,7 +1355,6 @@ p2p_rtrequest(int req, struct rtentry *rt)
 		if (lo0ifa == NULL)
 			break;
 
-		rt->rt_ifp = lo0ifp;
 		rt->rt_flags &= ~RTF_LLINFO;
 
 		/*

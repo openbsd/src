@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.295 2015/09/12 13:34:12 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.296 2015/09/12 20:26:07 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ sendit:
 			ip->ip_sum = in_cksum(m, hlen);
 		}
 
-		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
+		error = if_output(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
 
@@ -606,8 +606,7 @@ sendit:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0)
-			error = (*ifp->if_output)(ifp, m, sintosa(dst),
-			    ro->ro_rt);
+			error = if_output(ifp, m, sintosa(dst), ro->ro_rt);
 		else
 			m_freem(m);
 	}
@@ -1660,9 +1659,7 @@ ip_freemoptions(struct ip_moptions *imo)
 
 /*
  * Routine called from ip_output() to loop back a copy of an IP multicast
- * packet to the input queue of a specified interface.  Note that this
- * calls the output routine of the loopback "driver", but with an interface
- * pointer that might NOT be &loif -- easier than replicating that code here.
+ * packet to the input queue of a specified interface.
  */
 void
 ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.46 2015/06/16 11:09:39 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.47 2015/09/12 20:26:06 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -883,7 +883,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	m->m_pkthdr.ph_rtableid = sc->sc_eth_if->if_rdomain;
 
 	sc->sc_sppp.pp_if.if_opackets++;
-	return (sc->sc_eth_if->if_output(sc->sc_eth_if, m, &dst, NULL));
+	return if_output(sc->sc_eth_if, m, &dst, NULL);
 }
 
 /* The ioctl routine. */
@@ -1383,7 +1383,7 @@ pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const u_int8_t *dest)
 	/* encapsulated packet is forced into rdomain of physical interface */
 	m0->m_pkthdr.ph_rtableid = outgoing_if->if_rdomain;
 
-	return (outgoing_if->if_output(outgoing_if, m0, &dst, NULL));
+	return if_output(outgoing_if, m0, &dst, NULL);
 }
 
 #ifdef PPPOE_SERVER

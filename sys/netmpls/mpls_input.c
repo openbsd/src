@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.47 2015/07/29 00:04:03 rzalamena Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.48 2015/09/12 20:26:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -240,7 +240,7 @@ do_v6:
 			}
 #endif
 			if (ifp->if_type == IFT_MPLSTUNNEL) {
-				ifp->if_output(ifp, m, rt_key(rt), rt);
+				if_output(ifp, m, rt_key(rt), rt);
 				goto done;
 			}
 
