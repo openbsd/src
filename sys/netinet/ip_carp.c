@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.268 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.269 2015/09/12 09:36:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -169,7 +169,6 @@ int	carp_send_all_recur = 0;
 
 struct carp_if {
 	TAILQ_HEAD(, carp_softc) vhif_vrs;
-	int vhif_nvrs;
 
 	struct ifnet *vhif_ifp;
 };
@@ -891,7 +890,7 @@ carpdetach(struct carp_softc *sc)
 		    sc->lh_cookie);
 	cif = (struct carp_if *)ifp->if_carp;
 	TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
-	if (!--cif->vhif_nvrs) {
+	if (TAILQ_EMPTY(&cif->vhif_vrs)) {
 		ifpromisc(ifp, 0);
 		ifp->if_carp = NULL;
 		free(cif, M_IFADDR, sizeof(*cif));
@@ -1731,7 +1730,6 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			TAILQ_INSERT_AFTER(&cif->vhif_vrs, after,
 			    sc, sc_list);
 		}
-		cif->vhif_nvrs++;
 	}
 	if (sc->sc_naddrs || sc->sc_naddrs6)
 		sc->sc_if.if_flags |= IFF_UP;
