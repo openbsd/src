@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.20 2015/09/11 12:56:55 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.21 2015/09/12 16:46:43 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -76,11 +76,6 @@ void tls_config_verify(struct tls_config *_config);
 void tls_config_verify_client(struct tls_config *_config);
 void tls_config_verify_client_optional(struct tls_config *_config);
 
-int tls_peer_cert_provided(struct tls *ctx);
-int tls_peer_cert_contains_name(struct tls *ctx, const char *name);
-int tls_peer_cert_issuer(struct tls *ctx, char **name);
-int tls_peer_cert_subject(struct tls *ctx, char **subject);
-
 void tls_config_clear_keys(struct tls_config *_config);
 int tls_config_parse_protocols(uint32_t *_protocols, const char *_protostr);
 
@@ -104,7 +99,12 @@ ssize_t tls_read(struct tls *_ctx, void *_buf, size_t _buflen);
 ssize_t tls_write(struct tls *_ctx, const void *_buf, size_t _buflen);
 int tls_close(struct tls *_ctx);
 
+int tls_peer_cert_provided(struct tls *ctx);
+int tls_peer_cert_contains_name(struct tls *ctx, const char *name);
+
 int tls_peer_cert_hash(struct tls *_ctx, char **_hash);
+int tls_peer_cert_issuer(struct tls *ctx, char **name);
+int tls_peer_cert_subject(struct tls *ctx, char **subject);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
 
