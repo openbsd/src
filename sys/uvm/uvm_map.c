@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.198 2015/09/09 23:33:37 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.199 2015/09/12 18:54:47 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -317,6 +317,8 @@ vaddr_t uvm_maxkaddr;
 	do {								\
 		if (((_map)->flags & VM_MAP_INTRSAFE) == 0)		\
 			rw_assert_wrlock(&(_map)->lock);		\
+		else							\
+			MUTEX_ASSERT_LOCKED(&(_map)->mtx);		\
 	} while (0)
 
 /*
@@ -2409,11 +2411,14 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
 		if (rw_enter(&map->lock, RW_NOSLEEP|RW_WRITE) != 0)
 			panic("uvm_map_setup: rw_enter failed on new map");
-	}
+	} else
+		mtx_enter(&map->mtx);
 	uvm_map_setup_entries(map);
 	uvm_tree_sanity(map, __FILE__, __LINE__);
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
 		rw_exit(&map->lock);
+	else
+		mtx_leave(&map->mtx);
 }
 
 /*
