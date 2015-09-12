@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.185 2015/09/11 20:16:03 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.186 2015/09/12 13:34:12 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -3070,7 +3070,7 @@ ip6_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in6 *dst)
 	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
-	(void)looutput(ifp, copym, sin6tosa(dst), NULL);
+	if_input_local(ifp, copym, dst->sin6_family);
 }
 
 /*

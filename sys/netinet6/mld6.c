@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.45 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.46 2015/09/12 13:34:12 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -287,7 +287,7 @@ mld6_input(struct mbuf *m, int off)
 		 * router, so discard reports sourced by me.
 		 * Note that it is impossible to check IFF_LOOPBACK flag of
 		 * ifp for this purpose, since ip6_mloopback pass the physical
-		 * interface to looutput.
+		 * interface to if_input_local().
 		 */
 		if (m->m_flags & M_LOOP) /* XXX: grotty flag, but efficient */
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.373 2015/09/11 16:58:00 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.374 2015/09/12 13:34:12 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -560,6 +560,62 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 
 	mq_enlist(&if_input_queue, ml);
 	task_add(softnettq, &if_input_task);
+}
+
+int
+if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
+{
+	struct niqueue *ifq = NULL;
+
+#if NBPFILTER > 0
+	/*
+	 * Only send packets to bpf if they are destinated to local
+	 * addresses.
+	 *
+	 * if_input_local() is also called for SIMPLEX interfaces to
+	 * duplicate packets for local use.  But don't dup them to bpf.
+	 */
+	if (ifp->if_flags & IFF_LOOPBACK) {
+		caddr_t if_bpf = ifp->if_bpf;
+
+		if (if_bpf)
+			bpf_mtap_af(if_bpf, af, m, BPF_DIRECTION_OUT);
+	}
+#endif
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+
+	ifp->if_opackets++;
+	ifp->if_obytes += m->m_pkthdr.len;
+
+	switch (af) {
+	case AF_INET:
+		ifq = &ipintrq;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ifq = &ip6intrq;
+		break;
+#endif /* INET6 */
+#ifdef MPLS
+	case AF_MPLS:
+		ifp->if_ipackets++;
+		ifp->if_ibytes += m->m_pkthdr.len;
+		mpls_input(ifp, m);
+		return (0);
+#endif /* MPLS */
+	default:
+		printf("%s: can't handle af%d\n", ifp->if_xname, af);
+		m_freem(m);
+		return (EAFNOSUPPORT);
+	}
+
+	if (niq_enqueue(ifq, m) != 0)
+		return (ENOBUFS);
+
+	ifp->if_ipackets++;
+	ifp->if_ibytes += m->m_pkthdr.len;
+
+	return (0);
 }
 
 struct ifih {

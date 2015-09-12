@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.70 2015/07/29 00:04:03 rzalamena Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.71 2015/09/12 13:34:12 mpi Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -203,20 +203,8 @@ int
 looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
-	struct niqueue *ifq = NULL;
-
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
-#if NBPFILTER > 0
-	/*
-	 * only send packets to bpf if they are real loopback packets;
-	 * looutput() is also called for SIMPLEX interfaces to duplicate
-	 * packets for local use. But don't dup them to bpf.
-	 */
-	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK))
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m, BPF_DIRECTION_OUT);
-#endif
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);
@@ -224,39 +212,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
 
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
-	switch (dst->sa_family) {
-
-	case AF_INET:
-		ifq = &ipintrq;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		ifq = &ip6intrq;
-		break;
-#endif /* INET6 */
-#ifdef MPLS
-	case AF_MPLS:
-		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
-		mpls_input(ifp, m);
-		return (0);
-#endif /* MPLS */
-	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-			dst->sa_family);
-		m_freem(m);
-		return (EAFNOSUPPORT);
-	}
-
-	if (niq_enqueue(ifq, m) != 0)
-		return (ENOBUFS);
-
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
-
-	return (0);
+	return (if_input_local(ifp, m, dst->sa_family));
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.294 2015/09/12 11:40:04 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.295 2015/09/12 13:34:12 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1679,7 +1679,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
 		ip = mtod(copym, struct ip *);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
-		(void) looutput(ifp, copym, sintosa(dst), NULL);
+		if_input_local(ifp, copym, dst->sin_family);
 	}
 }
 

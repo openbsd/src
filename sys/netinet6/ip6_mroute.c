@@ -1899,8 +1899,8 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 		}
 #endif
 
-		looutput(mif6table[reg_mif_num].m6_ifp, m,
-		    sin6tosa(&dst), NULL);
+		if_input_local(mif6table[reg_mif_num].m6_ifp, m,
+		    dst->sin6_family);
 
 		/* prepare the register head to send to the mrouting daemon */
 		m = mcp;

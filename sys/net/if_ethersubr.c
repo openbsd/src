@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.223 2015/09/10 16:41:30 mikeb Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.224 2015/09/12 13:34:12 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	/* XXX Should we feed-back an unencrypted IPsec packet ? */
 	if (mcopy)
-		(void) looutput(ifp, mcopy, dst, rt);
+		if_input_local(ifp, mcopy, dst->sa_family);
 
 	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
 	if (m == NULL)
