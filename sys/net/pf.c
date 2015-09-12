@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.941 2015/09/11 15:21:31 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.942 2015/09/12 16:32:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1915,8 +1915,10 @@ pf_translate_af(struct pf_pdesc *pd)
 	m_adj(pd->m, pd->off);
 
 	/* prepend a new one */
-	if ((M_PREPEND(pd->m, hlen, M_DONTWAIT)) == NULL)
+	if ((M_PREPEND(pd->m, hlen, M_DONTWAIT)) == NULL) {
+		pd->m = NULL;
 		return (-1);
+	}
 
 	switch (pd->naf) {
 	case AF_INET:
