@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.113 2015/09/09 14:37:07 claudio Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.114 2015/09/12 09:44:08 tobias Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1216,6 +1216,11 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 			SIPHASH_CTX ctx;
 			u_int8_t mac[SIPHASH_DIGEST_LENGTH];
 
+			if (cc - sizeof(*cp) < sizeof(payload)) {
+				(void)printf("signature missing!\n");
+				return;
+			}
+
 			memcpy(&payload, icp + 1, sizeof(payload));
 			tv64 = &payload.tv64;
 
@@ -1300,7 +1305,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				}
 			}
 		}
-	} else if (icp->icmp6_type == ICMP6_NI_REPLY && mynireply(ni)) {
+	} else if (icp->icmp6_type == ICMP6_NI_REPLY &&
+	    cc >= sizeof(*ni) && mynireply(ni)) {
 		seq = ntohs(*(u_int16_t *)ni->icmp6_ni_nonce);
 		++nreceived;
 		if (TST(seq % mx_dup_ck)) {
@@ -1345,7 +1351,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		case NI_QTYPE_FQDN:
 		default:	/* XXX: for backward compatibility */
 			cp = (u_char *)ni + ICMP6_NIRLEN;
-			if (buf[off + ICMP6_NIRLEN] ==
+			if (off + ICMP_NIRLEN < cc && buf[off + ICMP6_NIRLEN] ==
 			    cc - off - ICMP6_NIRLEN - 1)
 				oldfqdn = 1;
 			else
@@ -1432,7 +1438,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 					}
 				}
 
-				if (buf[off + ICMP6_NIRLEN] !=
+				if (off + ICMP6_NIRLEN < cc &&
+				    buf[off + ICMP6_NIRLEN] !=
 				    cc - off - ICMP6_NIRLEN - 1 && oldfqdn) {
 					if (comma)
 						printf(",");
