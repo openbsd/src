@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.4 2015/09/07 05:10:52 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.5 2015/09/12 21:55:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -100,8 +100,10 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	case F_READ:
 		/* allocate the space for reading unaligned blocks */
 		if (ed->blkio->Media->BlockSize != DEV_BSIZE) {
-			if (iblk && iblksz < ed->blkio->Media->BlockSize)
+			if (iblk && iblksz < ed->blkio->Media->BlockSize) {
 				free(iblk, iblksz);
+				iblk = NULL;
+			}
 			if (iblk == NULL) {
 				iblk = alloc(ed->blkio->Media->BlockSize);
 				iblksz = ed->blkio->Media->BlockSize;
