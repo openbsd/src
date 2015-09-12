@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.21 2015/07/15 22:16:42 deraadt Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.22 2015/09/12 14:21:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	struct sockaddr_mpls	*smpls;
 	struct sockaddr_mpls	 sa_mpls;
 	struct shim_hdr		*shim;
-	struct rtentry		*rt = rt0;
+	struct rtentry		*rt;
 	struct rt_mpls		*rt_mpls;
 	int			 i, error;
 	u_int8_t		 ttl;
@@ -58,9 +58,9 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	if (rt0 == NULL || (dst->sa_family != AF_INET &&
 	    dst->sa_family != AF_INET6 && dst->sa_family != AF_MPLS)) {
 		if (!ISSET(ifp->if_xflags, IFXF_MPLS))
-			return (ifp->if_output(ifp, m, dst, rt));
+			return (ifp->if_output(ifp, m, dst, rt0));
 		else
-			return (ifp->if_ll_output(ifp, m, dst, rt));
+			return (ifp->if_ll_output(ifp, m, dst, rt0));
 	}
 
 	/* need to calculate checksums now if necessary */
@@ -74,6 +74,7 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 
 	ttl = mpls_getttl(m, dst->sa_family);
 
+	rt = rt0;
 	for (i = 0; i < mpls_inkloop; i++) {
 		rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
 		if (rt_mpls == NULL || (rt->rt_flags & RTF_MPLS) == 0) {
@@ -120,6 +121,8 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 			break;
 
 		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
+		if (rt != rt0)
+			rtfree(rt);
 		rt = rtalloc(smplstosa(smpls), RT_REPORT|RT_RESOLVE, 0);
 		if (rt == NULL) {
 			/* no entry for this label */
@@ -131,7 +134,6 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 			goto bad;
 		}
 		rt->rt_use++;
-		rt->rt_refcnt--;
 	}
 
 	/* write back TTL */
@@ -157,7 +159,10 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	m->m_flags &= ~(M_BCAST | M_MCAST);
 
 	smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
-	return (ifp->if_ll_output(ifp, m, smplstosa(smpls), rt));
+	error = ifp->if_ll_output(ifp, m, smplstosa(smpls), rt);
+	if (rt != rt0)
+		rtfree(rt);
+	return (error);
 bad:
 	m_freem(m);
 	return (error);
