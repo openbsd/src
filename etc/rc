@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.460 2015/08/28 18:10:46 rpe Exp $
+#	$OpenBSD: rc,v 1.461 2015/09/12 14:48:06 sthen Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -488,7 +488,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 fi
 
 start_daemon hostapd lpd smtpd slowcgi httpd ftpd
-start_daemon ftpproxy tftpd tftpproxy identd inetd rarpd bootparamd
+start_daemon ftpproxy ftpproxy6 tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd spamd spamlogd sndiod
 echo '.'
 

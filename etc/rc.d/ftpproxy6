@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: ftpproxy6,v 1.1 2015/09/12 14:48:06 sthen Exp $
+
+daemon="/usr/sbin/ftp-proxy -6"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1
