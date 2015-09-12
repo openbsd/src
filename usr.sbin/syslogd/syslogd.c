@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.188 2015/09/11 21:33:16 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.189 2015/09/12 13:50:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -452,7 +452,6 @@ main(int argc, char *argv[])
 
 	if (socket_bind("udp", NULL, "syslog", SecureMode,
 	    &fd_udp, &fd_udp6) == -1) {
-		errno = 0;
 		logerrorx("socket bind *");
 		if (!Debug)
 			die(0);
@@ -460,7 +459,6 @@ main(int argc, char *argv[])
 	fd_bind = -1;
 	if (bind_host && socket_bind("udp", bind_host, bind_port, 0,
 	    &fd_bind, &fd_bind) == -1) {
-		errno = 0;
 		logerrorx("socket bind udp");
 		if (!Debug)
 			die(0);
@@ -468,7 +466,6 @@ main(int argc, char *argv[])
 	fd_listen = -1;
 	if (listen_host && socket_bind("tcp", listen_host, listen_port, 0,
 	    &fd_listen, &fd_listen) == -1) {
-		errno = 0;
 		logerrorx("socket listen tcp");
 		if (!Debug)
 			die(0);
@@ -531,7 +528,6 @@ main(int argc, char *argv[])
 
 		fd = -1;
 		p = NULL;
-		errno = 0;
 		if ((fd = open(CAfile, O_RDONLY)) == -1) {
 			logerror("open CAfile");
 		} else if (fstat(fd, &sb) == -1) {
