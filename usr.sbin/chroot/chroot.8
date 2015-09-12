@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.8,v 1.15 2015/05/19 16:05:12 millert Exp $
+.\"	$OpenBSD: chroot.8,v 1.16 2015/09/12 15:52:37 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 19 2015 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt CHROOT 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd change root directory
 .Sh SYNOPSIS
 .Nm chroot
-.Op Fl g Ar group,group,...
+.Op Fl g Ar group Ns Op Pf , Ar group Ns Op Pf , Ar ...
 .Op Fl u Ar user
 .Ar newroot
 .Op Ar command
@@ -56,7 +56,7 @@ command is restricted to the superuser.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl g Ar group,group,...
+.It Fl g Ar group Ns Op Pf , Ar group Ns Op Pf , Ar ...
 Override the primary and supplemental group IDs.
 The primary group ID is set to the first group in the list.
 Any remaining groups are placed in the supplemental group ID vector.

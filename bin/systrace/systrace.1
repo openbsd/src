@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.45 2014/09/08 01:27:54 schwarze Exp $
+.\"	$OpenBSD: systrace.1,v 1.46 2015/09/12 15:52:37 schwarze Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt SYSTRACE 1
 .Os
 .Sh NAME
@@ -38,16 +38,14 @@
 .Nd generate and enforce system call policies
 .Sh SYNOPSIS
 .Nm systrace
-.Bk -words
 .Op Fl AaCeitUuV
-.Op Fl c Ar user:group
+.Op Fl c Ar user : Ns Ar group
 .Op Fl d Ar policydir
 .Op Fl E Ar logfile
 .Op Fl f Ar file
 .Op Fl g Ar gui
 .Op Fl p Ar pid
 .Ar command ...
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -109,11 +107,11 @@ This may be useful, for example, in scenarios where
 .Nm
 is being heavily used.
 If a cradle server is not running, one is launched.
-.It Fl c Ar user:group
+.It Fl c Ar user : Ns Ar group
 Specifies the
-.Va user
+.Ar user
 and
-.Va group
+.Ar group
 that the monitored application should be executed with,
 which may be either non-negative integers or names.
 This is useful in conjunction with privilege elevation and requires
