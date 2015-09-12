@@ -2029,6 +2029,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/queue.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/reboot.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/refcnt.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/resourcevar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/rwlock.ph

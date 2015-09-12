@@ -1369,6 +1369,7 @@
 ./usr/include/sys/queue.h
 ./usr/include/sys/radioio.h
 ./usr/include/sys/reboot.h
+./usr/include/sys/refcnt.h
 ./usr/include/sys/resource.h
 ./usr/include/sys/resourcevar.h
 ./usr/include/sys/rwlock.h
@@ -6055,6 +6056,7 @@
 ./usr/share/man/man9/M_TRAILINGSPACE.9
 ./usr/share/man/man9/NDINIT.9
 ./usr/share/man/man9/NDINITAT.9
+./usr/share/man/man9/REFCNT_INITIALIZER.9
 ./usr/share/man/man9/RWLOCK_INITIALIZER.9
 ./usr/share/man/man9/SRPL_EMPTY_LOCKED.9
 ./usr/share/man/man9/SRPL_ENTER.9
@@ -6612,6 +6614,11 @@
 ./usr/share/man/man9/rasops_reconfig.9
 ./usr/share/man/man9/ratecheck.9
 ./usr/share/man/man9/readdisklabel.9
+./usr/share/man/man9/refcnt_finalize.9
+./usr/share/man/man9/refcnt_init.9
+./usr/share/man/man9/refcnt_rele.9
+./usr/share/man/man9/refcnt_rele_wake.9
+./usr/share/man/man9/refcnt_take.9
 ./usr/share/man/man9/resettodr.9
 ./usr/share/man/man9/route.9
 ./usr/share/man/man9/rrw_enter.9
@@ -6646,6 +6653,7 @@
 ./usr/share/man/man9/rtlabel_name2id.9
 ./usr/share/man/man9/rtlabel_unref.9
 ./usr/share/man/man9/rtredirect.9
+./usr/share/man/man9/rtref.9
 ./usr/share/man/man9/rtrequest1.9
 ./usr/share/man/man9/runtime.9
 ./usr/share/man/man9/rw_assert_rdlock.9

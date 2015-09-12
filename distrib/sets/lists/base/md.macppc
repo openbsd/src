@@ -2076,6 +2076,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/queue.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/reboot.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/refcnt.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/resourcevar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/rwlock.ph

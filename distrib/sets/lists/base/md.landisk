@@ -2044,6 +2044,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/queue.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/reboot.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sys/refcnt.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/resourcevar.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sys/rwlock.ph

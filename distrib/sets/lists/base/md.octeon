@@ -2013,6 +2013,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/queue.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/reboot.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sys/refcnt.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/resourcevar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/rwlock.ph

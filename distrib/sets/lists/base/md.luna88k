@@ -1942,6 +1942,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/queue.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/reboot.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/refcnt.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/resourcevar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/rwlock.ph

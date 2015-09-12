@@ -1408,6 +1408,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/queue.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/reboot.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/refcnt.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/resourcevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/rwlock.ph

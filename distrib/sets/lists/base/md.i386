@@ -2067,6 +2067,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/queue.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/reboot.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/refcnt.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/resourcevar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/rwlock.ph
