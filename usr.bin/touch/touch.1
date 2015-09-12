@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.32 2014/06/03 15:56:53 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.33 2015/09/12 16:25:32 schwarze Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: June 3 2014 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -42,8 +42,9 @@
 .Sh SYNOPSIS
 .Nm touch
 .Op Fl acm
+.Op Fl d
 .Sm off
-.Op Fl "d " Ar ccyy No - Ar mm No - Ar dd Li T Ar HH : Ar MM : Ar SS Oo \&. Ar frac Oc Op Li Z
+.Ar ccyy No - Ar mm No - Ar dd Cm T Ar HH : MM : SS Oo \&. Ar frac Oc Op Cm Z
 .Sm on
 .Op Fl r Ar file
 .Op Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
@@ -68,9 +69,11 @@ The
 .Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
+.It Xo Fl d
 .Sm off
-.It Fl "d " Ar ccyy No - Ar mm No - Ar dd Li T Ar HH : Ar MM : Ar SS Oo \&. Ar frac Oc Op Li Z
+.Ar ccyy No - Ar mm No - Ar dd Cm T Ar HH : MM : SS Oo \&. Ar frac Oc Op Cm Z
 .Sm on
+.Xc
 Change the access and modification times to the specified time,
 in a format compliant with the
 .St -iso8601
@@ -86,7 +89,7 @@ a number from 1 to 12.
 .It Ar dd
 Day:
 a number from 1 to 31.
-.It Li T
+.It Cm T
 Either the capital letter
 .Sq T
 or a single space.
@@ -106,7 +109,7 @@ a number from 0 to 60
 The decimal fraction of the second,
 either a period or comma,
 followed by one or more decimal digits.
-.It Li Z
+.It Cm Z
 The timezone specifier: a capital letter
 .Sq Z
 indicating that the time is in UTC.
