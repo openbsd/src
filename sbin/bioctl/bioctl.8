@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.96 2015/05/29 00:33:37 uebayasi Exp $
+.\"	$OpenBSD: bioctl.8,v 1.97 2015/09/12 14:21:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 29 2015 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -31,30 +31,26 @@
 .Nd RAID management interface
 .Sh SYNOPSIS
 .Nm bioctl
-.Bk -words
 .Op Fl hiqv
 .Op Fl a Ar alarm-function
-.Op Fl b Ar channel:target[.lun]
-.Op Fl H Ar channel:target[.lun]
-.Op Fl R Ar device | channel:target[.lun]
+.Op Fl b Ar channel : Ns Ar target Ns Op Pf . Ar lun
+.Op Fl H Ar channel : Ns Ar target Ns Op Pf . Ar lun
+.Op Fl R Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
 .Op Fl t Ar patrol-function
-.Op Fl u Ar channel:target[.lun]
+.Op Fl u Ar channel : Ns Ar target Ns Op Pf . Ar lun
 .Ar device
-.Ek
 .Pp
 .Nm bioctl
-.Bk -words
 .Op Fl dhiPqsv
-.Op Fl C Ar flag[,flag,...]
+.Op Fl C Ar flag Ns Op Pf , Ar flag Ns Op Pf , Ar ...
 .Op Fl c Ar raidlevel
 .Op Fl k Ar keydisk
-.Op Fl l Ar special[,special,...]
-.Op Fl O Ar device | channel:target[.lun]
+.Op Fl l Ar special Ns Op Pf , Ar special Ns Op Pf , Ar ...
+.Op Fl O Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
 .Op Fl p Ar passfile
-.Op Fl R Ar device | channel:target[.lun]
+.Op Fl R Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
 .Op Fl r Ar rounds
 .Ar device
-.Ek
 .Sh DESCRIPTION
 RAID device drivers which support management functionality can
 register their services with the
@@ -90,13 +86,13 @@ Control the RAID card's alarm functionality, if supported.
 may be one of:
 .Pp
 .Bl -tag -width disable -compact
-.It Ar disable
+.It Cm disable
 Disable the alarm on the RAID controller.
-.It Ar enable
+.It Cm enable
 Enable the alarm on the RAID controller.
-.It Ar get
+.It Cm get
 Retrieve the current alarm state (enabled or disabled).
-.It Ar silence | Ar quiet
+.It Cm silence | quiet
 Silence the alarm if it is currently beeping.
 .El
 .Pp
@@ -105,17 +101,17 @@ The
 may be specified as given above,
 or by the first letter only
 (e.g. -a e).
-.It Fl b Ar channel:target[.lun]
+.It Fl b Ar channel : Ns Ar target Ns Op Pf . Ar lun
 Instruct the device at
-.Ar channel:target[.lun]
+.Ar channel : Ns Ar target Ns Op Pf . Ar lun
 to start blinking, if there is
 .Xr ses 4
 or
 .Xr safte 4
 support in the enclosure.
-.It Fl H Ar channel:target[.lun]
+.It Fl H Ar channel : Ns Ar target Ns Op Pf . Ar lun
 If the device at
-.Ar channel:target[.lun]
+.Ar channel : Ns Ar target Ns Op Pf . Ar lun
 is currently marked
 .Dq Unused ,
 promote it to being a
@@ -132,11 +128,11 @@ Enumerate the selected RAID devices.
 This is the default if no other option is given.
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
-.It Fl R Ar device | channel:target[.lun]
+.It Fl R Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
 Manually kick off a rebuild of a RAID volume, using
 .Ar device
 or
-.Ar channel:target[.lun]
+.Ar channel : Ns Ar target Ns Op Pf . Ar lun
 as a new chunk (with
 .Xr softraid 4 ,
 a partition of fstype
@@ -151,26 +147,26 @@ Control the RAID card's patrol functionality, if supported.
 may be one of:
 .Pp
 .Bl -tag -width disable -compact
-.It Ar stop
+.It Cm stop
 Stop the patrol on the RAID controller.
-.It Ar start
+.It Cm start
 Start the patrol on the RAID controller.
-.It Ar get
+.It Cm get
 Retrieve the current patrol configuration.
-.It Ar disable
+.It Cm disable
 Disable the patrol functionality.
-.It Ar manual
+.It Cm manual
 Enable the patrol functionality to start/stop manually.
-.It Ar auto[.interval[.start]]
+.It Cm auto Ns Op Pf . Ar interval Ns Op Pf . Ar start
 Enable the patrol functionality to start/stop automatically in every
 .Ar interval
 seconds, starting the first iteration after
 .Ar start
 seconds.
 .El
-.It Fl u Ar channel:target[.lun]
+.It Fl u Ar channel : Ns Ar target Ns Op Pf . Ar lun
 Instruct the device at
-.Ar channel:target[.lun]
+.Ar channel : Ns Ar target Ns Op Pf . Ar lun
 to cease blinking, if there is
 .Xr ses 4
 or
@@ -185,7 +181,7 @@ the options for
 .Xr softraid 4
 devices are as follows:
 .Bl -tag -width Ds
-.It Fl C Ar flag[,flag,...]
+.It Fl C Ar flag Ns Op Pf , Ar flag Ns Op Pf , Ar ...
 Pass
 .Ar flag
 to
@@ -193,11 +189,11 @@ to
 May be one of:
 .Pp
 .Bl -tag -width disable -compact
-.It Ar force
+.It Cm force
 Force the operation;
 for example, force the creation of volumes
 with unclean data in the metadata areas.
-.It Ar noauto
+.It Cm noauto
 Do not automatically assemble this volume at boot time.
 .El
 .It Fl c Ar raidlevel
@@ -211,20 +207,20 @@ followed by a number.
 .Pp
 Valid raidlevels are:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It 0
+.Bl -tag -width 2n -offset 3n -compact
+.It Cm 0
 RAID 0:
 A striping discipline.
-.It 1
+.It Cm 1
 RAID 1:
 A mirroring discipline.
-.It 5
+.It Cm 5
 RAID 5:
 A striping discipline with floating parity chunk.
-.It C
+.It Cm C
 CRYPTO:
 An encrypting discipline.
-.It c
+.It Cm c
 CONCAT:
 A concatenating discipline.
 .El
@@ -240,7 +236,7 @@ Delete volume specified by device.
 Use special device
 .Ar keydisk
 as a key disk for a crypto volume.
-.It Fl l Ar special[,special,...]
+.It Fl l Ar special Ns Op Pf , Ar special Ns Op Pf , Ar ...
 Use
 .Ar special
 device list to create within the
@@ -248,11 +244,11 @@ device list to create within the
 framework.
 Requires
 .Fl c .
-.It Fl O Ar device | channel:target[.lun]
+.It Fl O Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
 Set the state of
 .Ar device
 or
-.Ar channel:target[.lun]
+.Ar channel : Ns Ar target Ns Op Pf . Ar lun
 to offline.
 The state of the RAID volume will change in the same way that it would if the
 disk physically went offline.
