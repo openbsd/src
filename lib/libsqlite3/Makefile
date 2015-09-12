@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2015/03/16 00:15:03 jturner Exp $
+# $OpenBSD: Makefile,v 1.15 2015/09/12 02:08:34 jturner Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ LIB = sqlite3
 
 SRCS =	alter.c analyze.c attach.c auth.c \
 	backup.c bitvec.c btmutex.c btree.c build.c \
-	callback.c complete.c ctime.c date.c delete.c \
+	callback.c complete.c ctime.c date.c dbstat.c delete.c \
 	expr.c fault.c fkey.c \
 	fts3.c fts3_aux.c fts3_expr.c fts3_hash.c fts3_icu.c fts3_porter.c \
 	fts3_snippet.c fts3_tokenize_vtab.c fts3_tokenizer.c fts3_tokenizer1.c \
@@ -27,10 +27,10 @@ SRCS =	alter.c analyze.c attach.c auth.c \
 	notify.c opcodes.c os.c os_unix.c \
 	pager.c parse.c pcache.c pcache1.c pragma.c prepare.c printf.c \
 	random.c resolve.c rowset.c rtree.c select.c status.c \
-	table.c threads.c tokenize.c trigger.c \
+	table.c threads.c tokenize.c treeview.c trigger.c \
 	update.c util.c vacuum.c \
 	vdbe.c vdbeapi.c vdbeaux.c vdbeblob.c vdbemem.c vdbesort.c \
-	vdbetrace.c wal.c walker.c where.c utf.c vtab.c
+	vdbetrace.c wal.c walker.c where.c wherecode.c whereexpr.c utf.c vtab.c
 
 # so that it works with NO THREADS
 SRCS +=	pthread_stub.c
@@ -42,6 +42,7 @@ FEATURE_FLAGS =	-DSQLITE_ENABLE_COLUMN_METADATA \
 		-DSQLITE_ENABLE_UNLOCK_NOTIFY \
 		-DSQLITE_ENABLE_FTS3 \
 		-DSQLITE_ENABLE_FTS3_PARENTHESIS \
+		-DSQLITE_ENABLE_DBSTAT_VTAB \
 		-DSQLITE_OMIT_BUILTIN_TEST
 
 CPPFLAGS += 	$(FEATURE_FLAGS) -DSQLITE_THREADSAFE=1 \

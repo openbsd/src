@@ -166,7 +166,7 @@ create_table_args ::= AS select(S). {
 table_options(A) ::= .    {A = 0;}
 table_options(A) ::= WITHOUT nm(X). {
   if( X.n==5 && sqlite3_strnicmp(X.z,"rowid",5)==0 ){
-    A = TF_WithoutRowid;
+    A = TF_WithoutRowid | TF_NoVisibleRowid;
   }else{
     A = 0;
     sqlite3ErrorMsg(pParse, "unknown table option: %.*s", X.n, X.z);
@@ -409,28 +409,35 @@ cmd ::= select(X).  {
 %type oneselect {Select*}
 %destructor oneselect {sqlite3SelectDelete(pParse->db, $$);}
 
-select(A) ::= with(W) selectnowith(X). {
-  Select *p = X, *pNext, *pLoop;
-  if( p ){
-    int cnt = 0, mxSelect;
-    p->pWith = W;
+%include {
+  /*
+  ** For a compound SELECT statement, make sure p->pPrior->pNext==p for
+  ** all elements in the list.  And make sure list length does not exceed
+  ** SQLITE_LIMIT_COMPOUND_SELECT.
+  */
+  static void parserDoubleLinkSelect(Parse *pParse, Select *p){
     if( p->pPrior ){
-      u16 allValues = SF_Values;
-      pNext = 0;
+      Select *pNext = 0, *pLoop;
+      int mxSelect, cnt = 0;
       for(pLoop=p; pLoop; pNext=pLoop, pLoop=pLoop->pPrior, cnt++){
         pLoop->pNext = pNext;
         pLoop->selFlags |= SF_Compound;
-        allValues &= pLoop->selFlags;
       }
-      if( allValues ){
-        p->selFlags |= SF_AllValues;
-      }else if(
-        (mxSelect = pParse->db->aLimit[SQLITE_LIMIT_COMPOUND_SELECT])>0
-        && cnt>mxSelect
+      if( (p->selFlags & SF_MultiValue)==0 && 
+        (mxSelect = pParse->db->aLimit[SQLITE_LIMIT_COMPOUND_SELECT])>0 &&
+        cnt>mxSelect
       ){
         sqlite3ErrorMsg(pParse, "too many terms in compound SELECT");
       }
     }
+  }
+}
+
+select(A) ::= with(W) selectnowith(X). {
+  Select *p = X;
+  if( p ){
+    p->pWith = W;
+    parserDoubleLinkSelect(pParse, p);
   }else{
     sqlite3WithDelete(pParse->db, W);
   }
@@ -441,19 +448,23 @@ selectnowith(A) ::= oneselect(X).                      {A = X;}
 %ifndef SQLITE_OMIT_COMPOUND_SELECT
 selectnowith(A) ::= selectnowith(X) multiselect_op(Y) oneselect(Z).  {
   Select *pRhs = Z;
+  Select *pLhs = X;
   if( pRhs && pRhs->pPrior ){
     SrcList *pFrom;
     Token x;
     x.n = 0;
+    parserDoubleLinkSelect(pParse, pRhs);
     pFrom = sqlite3SrcListAppendFromTerm(pParse,0,0,0,&x,pRhs,0,0);
     pRhs = sqlite3SelectNew(pParse,0,pFrom,0,0,0,0,0,0,0);
   }
   if( pRhs ){
     pRhs->op = (u8)Y;
-    pRhs->pPrior = X;
+    pRhs->pPrior = pLhs;
+    if( ALWAYS(pLhs) ) pLhs->selFlags &= ~SF_MultiValue;
+    pRhs->selFlags &= ~SF_MultiValue;
     if( Y!=TK_ALL ) pParse->hasCompound = 1;
   }else{
-    sqlite3SelectDelete(pParse->db, X);
+    sqlite3SelectDelete(pParse->db, pLhs);
   }
   A = pRhs;
 }
@@ -498,13 +509,16 @@ values(A) ::= VALUES LP nexprlist(X) RP. {
   A = sqlite3SelectNew(pParse,X,0,0,0,0,0,SF_Values,0,0);
 }
 values(A) ::= values(X) COMMA LP exprlist(Y) RP. {
-  Select *pRight = sqlite3SelectNew(pParse,Y,0,0,0,0,0,SF_Values,0,0);
+  Select *pRight, *pLeft = X;
+  pRight = sqlite3SelectNew(pParse,Y,0,0,0,0,0,SF_Values|SF_MultiValue,0,0);
+  if( ALWAYS(pLeft) ) pLeft->selFlags &= ~SF_MultiValue;
   if( pRight ){
     pRight->op = TK_ALL;
-    pRight->pPrior = X;
+    pLeft = X;
+    pRight->pPrior = pLeft;
     A = pRight;
   }else{
-    A = X;
+    A = pLeft;
   }
 }
 
@@ -513,7 +527,7 @@ values(A) ::= values(X) COMMA LP exprlist(Y) RP. {
 //
 %type distinct {u16}
 distinct(A) ::= DISTINCT.   {A = SF_Distinct;}
-distinct(A) ::= ALL.        {A = 0;}
+distinct(A) ::= ALL.        {A = SF_All;}
 distinct(A) ::= .           {A = 0;}
 
 // selcollist is a list of expressions that are to become the return
@@ -876,7 +890,7 @@ expr(A) ::= id(X) LP distinct(D) exprlist(Y) RP(E). {
   }
   A.pExpr = sqlite3ExprFunction(pParse, Y, &X);
   spanSet(&A,&X,&E);
-  if( D && A.pExpr ){
+  if( D==SF_Distinct && A.pExpr ){
     A.pExpr->flags |= EP_Distinct;
   }
 }
