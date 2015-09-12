@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.84 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.85 2015/09/12 10:15:10 miod Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1455,7 +1455,8 @@ nge_init(void *xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct mii_data		*mii;
 	u_int32_t		txcfg, rxcfg;
-	int			s, media;
+	uint64_t		media;
+	int			s;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;

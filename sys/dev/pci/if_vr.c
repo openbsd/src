@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.141 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.142 2015/09/12 10:15:10 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -138,7 +138,7 @@ int vr_miibus_readreg(struct device *, int, int);
 void vr_miibus_writereg(struct device *, int, int, int);
 void vr_miibus_statchg(struct device *);
 
-void vr_setcfg(struct vr_softc *, int);
+void vr_setcfg(struct vr_softc *, uint64_t);
 void vr_iff(struct vr_softc *);
 void vr_reset(struct vr_softc *);
 int vr_list_rx_init(struct vr_softc *);
@@ -389,7 +389,7 @@ vr_iff(struct vr_softc *sc)
  * first have to put the transmit and/or receive logic in the idle state.
  */
 void
-vr_setcfg(struct vr_softc *sc, int media)
+vr_setcfg(struct vr_softc *sc, uint64_t media)
 {
 	int i;
 
