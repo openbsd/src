@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.5 2015/09/11 16:58:00 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.6 2015/09/12 09:22:29 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -75,6 +75,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 {
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
+	struct rtentry		*rt;
 
 	rnh = rtable_get(rtableid, dst->sa_family);
 	if (rnh == NULL)
@@ -84,7 +85,10 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 	if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
 		return (NULL);
 
-	return ((struct rtentry *)rn);
+	rt = ((struct rtentry *)rn);
+	rtref(rt);
+
+	return (rt);
 }
 
 int
@@ -279,6 +283,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 struct rtentry *
 rtable_match(unsigned int rtableid, struct sockaddr *dst)
 {
+	struct rtentry			*rt;
 	struct art_root			*ar;
 	struct art_node			*an;
 	uint8_t				*addr;
@@ -292,7 +297,10 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 	if (an == NULL)
 		return (NULL);
 
-	return (LIST_FIRST(&an->an_rtlist));
+	rt = LIST_FIRST(&an->an_rtlist);
+	rtref(rt);
+
+	return (rt);
 }
 
 int
