@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.55 2015/02/07 23:29:29 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.56 2015/09/12 08:42:47 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -139,27 +139,24 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 {
 	int def_linebytes;
 
-	switch (bustype) {
-	case BUS_VME16:
-	case BUS_VME32:
-	case BUS_OBIO:
 #if defined(SUN4M)
-		/* 4m may have SBus-like framebuffer on obio */
-		if (CPU_ISSUN4M) {
-			goto obpsize;
-		}
+	/* 4m may have SBus-like framebuffer on obio */
+	if (CPU_ISSUN4M && bustype == BUS_OBIO)
+		bustype = BUS_SBUS;
 #endif
-		/* Set up some defaults. */
-		sf->sf_width = def_width;
-		sf->sf_height = def_height;
-		sf->sf_depth = def_depth;
 
+	/* Set up some defaults. */
+	sf->sf_width = def_width;
+	sf->sf_height = def_height;
+	sf->sf_depth = def_depth;
+
+	switch (bustype) {
+	case BUS_OBIO:
 #if defined(SUN4)
 		/*
-		 * This is not particularly useful on Sun 4 VME framebuffers.
-		 * The EEPROM only contains info about the built-in.
+		 * The EEPROM contains info about the built-in framebuffer.
 		 */
-		if (CPU_ISSUN4 && bustype == BUS_OBIO) {
+		if (CPU_ISSUN4) {
 			struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 			if (ISSET(sf->sf_flags, FB_PFOUR)) {
@@ -238,19 +235,20 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 			}
 		}
 #endif /* SUN4 */
+		sf->sf_linebytes = (sf->sf_width * sf->sf_depth) / 8;
+		break;
+
+	case BUS_VME16:
+	case BUS_VME32:
 #if defined(SUN4M)
 		if (CPU_ISSUN4M) {
 			/* XXX: need code to find 4/600 vme screen size */
 		}
 #endif /* SUN4M */
-
 		sf->sf_linebytes = (sf->sf_width * sf->sf_depth) / 8;
 		break;
 
 	case BUS_SBUS:
-#if defined(SUN4M)
-obpsize:
-#endif
 		sf->sf_depth = getpropint(node, "depth", def_depth);
 		sf->sf_width = getpropint(node, "width", def_width);
 		sf->sf_height = getpropint(node, "height", def_height);
