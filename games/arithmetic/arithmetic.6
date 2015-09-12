@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arithmetic.6,v 1.11 2007/05/31 19:19:16 jmc Exp $
+.\"	$OpenBSD: arithmetic.6,v 1.12 2015/09/12 16:10:25 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)arithmetic.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt ARITHMETIC 6
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd quiz on simple arithmetic
 .Sh SYNOPSIS
 .Nm arithmetic
-.Op Fl o Ar +\-x/
+.Op Fl o Cm +\-x/
 .Op Fl r Ar range
 .Sh DESCRIPTION
 .Nm
@@ -51,13 +51,13 @@ You can quit at any time by typing the interrupt or end-of-file character.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl o Ar +\-x/
+.It Fl o Cm +\-x/
 By default,
 .Nm
 asks questions on addition of numbers from 0 to 10, and corresponding
 subtraction.
 By supplying one or more of the characters
-.Ar +\-x/ ,
+.Cm +\-x/ ,
 you can ask for problems in addition, subtraction, multiplication, and
 division, respectively.
 If you give one of these characters more than once, that kind of problem

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boggle.6,v 1.20 2014/12/04 06:12:33 deraadt Exp $
+.\"	$OpenBSD: boggle.6,v 1.21 2015/09/12 16:10:25 schwarze Exp $
 .\"	$NetBSD: boggle.6,v 1.2 1995/03/21 12:14:35 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"	@(#)boggle.6	8.1 (Berkeley) 6/11/93
 .\"
-.Dd $Mdocdate: December 4 2014 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt BOGGLE 6
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@
 .Op Fl Bbcd
 .Op Fl t Ar time
 .Op Fl w Ar length
-.Op Ar + Ns Op Ar +
+.Op Cm + Ns Op Cm +
 .Op Ar boardspec
 .Sh DESCRIPTION
 The object of
@@ -120,9 +120,9 @@ seconds.
 .It Fl w Ar length
 Change the minimum word length from 3 letters to
 .Ar length .
-.It Ar +
+.It Cm +
 Allow a cube to be used multiple times, but not in succession.
-.It Ar ++
+.It Cm ++
 Allow a cube to be considered adjacent to itself.
 .El
 .Pp
@@ -155,8 +155,8 @@ that is not immediately followed by a
 .Sq u .
 .Pp
 When using the
-.Ar +
+.Cm +
 or
-.Ar ++
+.Cm ++
 options the display of words found in the board doesn't clearly indicate
 reused cubes.
