@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.42 2015/09/11 14:22:53 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.43 2015/09/12 21:00:38 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2015 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -121,12 +121,12 @@
 .Fn tls_peer_cert_provided "struct tls *ctx"
 .Ft "int"
 .Fn tls_peer_cert_contains_name "struct tls *ctx" "const char *name"
-.Ft "int"
-.Fn tls_peer_cert_issuer "struct tls *ctx" "char **issuer"
-.Ft "int"
-.Fn tls_peer_cert_subject "struct tls *ctx" "char **subject"
-.Ft "int"
-.Fn tls_peer_cert_hash "struct tls *ctx" "char **hash"
+.Ft "const char *"
+.Fn tls_peer_cert_issuer "struct tls *ctx"
+.Ft "const char *"
+.Fn tls_peer_cert_subject "struct tls *ctx"
+.Ft "const char *"
+.Fn tls_peer_cert_hash "struct tls *ctx"
 .Ft "uint8_t *"
 .Fn tls_load_file "const char *file" "size_t *len" "char *password"
 .Ft "struct tls *"
@@ -386,31 +386,23 @@ can only succeed after the handshake is complete.
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_subject
-returns a string in
-.Ar subject
+returns a string
 corresponding to the subject of the peer certificate from
 .Ar ctx .
 .Fn tls_peer_cert_subject
 will only succeed after the handshake is complete.
-Callers must free the string returned in
-.Ar subject .
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_issuer
-returns a string in
-.Ar subject
+returns a string
 corresponding to the issuer of the peer certificate from
 .Ar ctx .
 .Fn tls_peer_cert_issuer
 will only succeed after the handshake is complete.
-Callers must free the string returned in
-.Ar issuer .
 .Em (Server and client)
 .It
 .Fn tls_peer_cert_hash
 returns a string
-in
-.Ar hash
 corresponding to a hash of the raw peer certificate from
 .Ar ctx
 prefixed by a hash name followed by a colon.
@@ -426,8 +418,6 @@ printf "SHA256:${h}\\n"
 .Pp
 .Fn tls_peer_cert_subject
 will only succeed after the handshake is complete.
-Callers must free the string returned in
-.Ar hash .
 .Em (Server and client)
 .It
 .Fn tls_config_verify_client_opional
