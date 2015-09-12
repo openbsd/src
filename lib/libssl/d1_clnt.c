@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.52 2015/09/11 18:08:21 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.53 2015/09/12 12:26:56 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -376,8 +376,7 @@ dtls1_connect(SSL *s)
 			else
 				s->s3->tmp.next_state = SSL3_ST_CW_KEY_EXCH_A;
 			s->init_num = 0;
-
-				s->state = s->s3->tmp.next_state;
+			s->state = s->s3->tmp.next_state;
 			break;
 
 		case SSL3_ST_CW_CERT_A:
@@ -395,10 +394,9 @@ dtls1_connect(SSL *s)
 		case SSL3_ST_CW_KEY_EXCH_A:
 		case SSL3_ST_CW_KEY_EXCH_B:
 			dtls1_start_timer(s);
-			ret = dtls1_send_client_key_exchange(s);
+			ret = ssl3_send_client_key_exchange(s);
 			if (ret <= 0)
 				goto end;
-
 
 			/* EAY EAY EAY need to check for DH fix cert
 			 * sent back */
@@ -407,7 +405,7 @@ dtls1_connect(SSL *s)
 			if (s->s3->tmp.cert_req == 1) {
 				s->state = SSL3_ST_CW_CERT_VRFY_A;
 			} else {
-					s->state = SSL3_ST_CW_CHANGE_A;
+				s->state = SSL3_ST_CW_CHANGE_A;
 				s->s3->change_cipher_spec = 0;
 			}
 
@@ -658,267 +656,6 @@ truncated:
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return -1;
-}
-
-int
-dtls1_send_client_key_exchange(SSL *s)
-{
-	unsigned char *p, *q;
-	int n;
-	unsigned long alg_k;
-	EVP_PKEY *pkey = NULL;
-	EC_KEY *clnt_ecdh = NULL;
-	const EC_POINT *srvr_ecpoint = NULL;
-	EVP_PKEY *srvr_pub_pkey = NULL;
-	unsigned char *encodedPoint = NULL;
-	int encoded_pt_len = 0;
-	BN_CTX * bn_ctx = NULL;
-
-	if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
-		p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_KEY_EXCHANGE);
-
-		alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-
-		if (s->session->sess_cert == NULL) {
-			ssl3_send_alert(s, SSL3_AL_FATAL,
-			    SSL_AD_HANDSHAKE_FAILURE);
-			SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-			    ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-
-		if (alg_k & SSL_kRSA) {
-			RSA *rsa;
-			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
-
-			pkey = X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
-			if ((pkey == NULL) ||
-			    (pkey->type != EVP_PKEY_RSA) ||
-			    (pkey->pkey.rsa == NULL)) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			rsa = pkey->pkey.rsa;
-			EVP_PKEY_free(pkey);
-
-			tmp_buf[0] = s->client_version >> 8;
-			tmp_buf[1] = s->client_version&0xff;
-			arc4random_buf(&tmp_buf[2], sizeof(tmp_buf) - 2);
-
-			s->session->master_key_length = sizeof tmp_buf;
-
-			q = p;
-			/* Fix buf for TLS and [incidentally] DTLS */
-			if (s->version > SSL3_VERSION)
-				p += 2;
-			n = RSA_public_encrypt(sizeof tmp_buf,
-			    tmp_buf, p, rsa, RSA_PKCS1_PADDING);
-			if (n <= 0) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_BAD_RSA_ENCRYPT);
-				goto err;
-			}
-
-			/* Fix buf for TLS and [incidentally] DTLS */
-			if (s->version > SSL3_VERSION) {
-				s2n(n, q);
-				n += 2;
-			}
-
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(s,
-			    s->session->master_key,
-			    tmp_buf, sizeof tmp_buf);
-			explicit_bzero(tmp_buf, sizeof tmp_buf);
-		} else if (alg_k & SSL_kDHE) {
-			DH *dh_srvr, *dh_clnt;
-
-			if (s->session->sess_cert->peer_dh_tmp != NULL)
-				dh_srvr = s->session->sess_cert->peer_dh_tmp;
-			else {
-				/* we get them from the cert */
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_HANDSHAKE_FAILURE);
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
-				goto err;
-			}
-
-			/* generate a new random key */
-			if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				goto err;
-			}
-			if (!DH_generate_key(dh_clnt)) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				goto err;
-			}
-
-			/* use the 'p' output buffer for the DH key, but
-			 * make sure to clear it out afterwards */
-
-			n = DH_compute_key(p, dh_srvr->pub_key, dh_clnt);
-
-			if (n <= 0) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				goto err;
-			}
-
-			/* generate master key from the result */
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(
-				s, s->session->master_key, p, n);
-			/* clean up */
-			memset(p, 0, n);
-
-			/* send off the data */
-			n = BN_num_bytes(dh_clnt->pub_key);
-			s2n(n, p);
-			BN_bn2bin(dh_clnt->pub_key, p);
-			n += 2;
-
-			DH_free(dh_clnt);
-
-			/* perhaps clean things up a bit EAY EAY EAY EAY*/
-		} else if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
-			const EC_GROUP *srvr_group = NULL;
-			EC_KEY *tkey;
-			int field_size = 0;
-
-			if (s->session->sess_cert->peer_ecdh_tmp != NULL) {
-				tkey = s->session->sess_cert->peer_ecdh_tmp;
-			} else {
-				/* Get the Server Public Key from Cert */
-				srvr_pub_pkey = X509_get_pubkey(s->session-> \
-				    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
-				if ((srvr_pub_pkey == NULL) ||
-				    (srvr_pub_pkey->type != EVP_PKEY_EC) ||
-				    (srvr_pub_pkey->pkey.ec == NULL)) {
-					SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-					    ERR_R_INTERNAL_ERROR);
-					goto err;
-				}
-
-				tkey = srvr_pub_pkey->pkey.ec;
-			}
-
-			srvr_group = EC_KEY_get0_group(tkey);
-			srvr_ecpoint = EC_KEY_get0_public_key(tkey);
-
-			if ((srvr_group == NULL) || (srvr_ecpoint == NULL)) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-
-			if ((clnt_ecdh = EC_KEY_new()) == NULL) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-			if (!EC_KEY_set_group(clnt_ecdh, srvr_group)) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_EC_LIB);
-				goto err;
-			}
-
-			/* Generate a new ECDH key pair */
-			if (!(EC_KEY_generate_key(clnt_ecdh))) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-
-			/* use the 'p' output buffer for the ECDH key, but
-			 * make sure to clear it out afterwards
-			 */
-
-			field_size = EC_GROUP_get_degree(srvr_group);
-			if (field_size <= 0) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-			n = ECDH_compute_key(p, (field_size + 7)/8, srvr_ecpoint, clnt_ecdh, NULL);
-			if (n <= 0) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-
-			/* generate master key from the result */
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(
-				s, s->session->master_key, p, n);
-			memset(p, 0, n); /* clean up */
-
-			/* First check the size of encoding and
-			 * allocate memory accordingly.
-			 */
-			encoded_pt_len = EC_POINT_point2oct(srvr_group,
-			    EC_KEY_get0_public_key(clnt_ecdh),
-			    POINT_CONVERSION_UNCOMPRESSED,
-			    NULL, 0, NULL);
-
-			encodedPoint = malloc(encoded_pt_len);
-
-			bn_ctx = BN_CTX_new();
-			if ((encodedPoint == NULL) ||
-			    (bn_ctx == NULL)) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-			/* Encode the public key */
-			n = EC_POINT_point2oct(srvr_group,
-			    EC_KEY_get0_public_key(clnt_ecdh),
-			    POINT_CONVERSION_UNCOMPRESSED,
-			    encodedPoint, encoded_pt_len, bn_ctx);
-
-			*p = n; /* length of encoded point */
-			/* Encoded point will be copied here */
-			p += 1;
-
-			/* copy the point */
-			memcpy((unsigned char *)p, encodedPoint, n);
-			/* increment n to account for length field */
-			n += 1;
-
-			/* Free allocated memory */
-			BN_CTX_free(bn_ctx);
-			free(encodedPoint);
-			EC_KEY_free(clnt_ecdh);
-			EVP_PKEY_free(srvr_pub_pkey);
-		}
-
-		else {
-			ssl3_send_alert(s, SSL3_AL_FATAL,
-			    SSL_AD_HANDSHAKE_FAILURE);
-			SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE,
-			    ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-
-		ssl3_handshake_msg_finish(s, n);
-
-		s->state = SSL3_ST_CW_KEY_EXCH_B;
-	}
-
-	/* SSL3_ST_CW_KEY_EXCH_B */
-	return (ssl3_handshake_write(s));
-
-err:
-	BN_CTX_free(bn_ctx);
-	free(encodedPoint);
-	EC_KEY_free(clnt_ecdh);
-	EVP_PKEY_free(srvr_pub_pkey);
-	return (-1);
 }
 
 int
