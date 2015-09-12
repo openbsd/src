@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.97 2015/09/08 10:21:50 deraadt Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.98 2015/09/12 08:40:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -3570,6 +3570,12 @@ xbridge_ddb()
 			printf("IRQ%u to %p\n", intrbit,
 			    (void *)xbridge_read_reg(xb,
 			      BRIDGE_INT_ADDR(intrbit)));
+
+		printf("%s: PCICFG %08llx ERR %08llx:%08llx\n",
+		    xb->xb_dev.dv_xname,
+		    xbridge_read_reg(xb, BRIDGE_PCI_CFG),
+		    xbridge_read_reg(xb, BRIDGE_PCI_ERR_UPPER),
+		    xbridge_read_reg(xb, BRIDGE_PCI_ERR_LOWER));
 	}
 }
 #endif
