@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.135 2015/09/12 07:56:56 jmc Exp $ */
+/* $OpenBSD: netcat.c,v 1.136 2015/09/12 08:38:33 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -45,7 +45,6 @@
 
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <limits.h>
 #include <netdb.h>
 #include <poll.h>
@@ -129,7 +128,7 @@ int	timeout_connect(int, const struct sockaddr *, socklen_t);
 int	socks_connect(const char *, const char *, struct addrinfo,
 	    const char *, const char *, struct addrinfo, int, const char *);
 int	udptest(int);
-int	unix_bind(char *);
+int	unix_bind(char *, int);
 int	unix_connect(char *);
 int	unix_listen(char *);
 void	set_common_sockopts(int, int);
@@ -363,7 +362,7 @@ main(int argc, char *argv[])
 			unix_dg_tmp_socket = sflag;
 		} else {
 			strlcpy(unix_dg_tmp_socket_buf, "/tmp/nc.XXXXXXXXXX",
-				UNIX_DG_TMP_SOCKET_SIZE);
+			    UNIX_DG_TMP_SOCKET_SIZE);
 			if (mktemp(unix_dg_tmp_socket_buf) == NULL)
 				err(1, "mktemp");
 			unix_dg_tmp_socket = unix_dg_tmp_socket_buf;
@@ -441,7 +440,7 @@ main(int argc, char *argv[])
 
 		if (family == AF_UNIX) {
 			if (uflag)
-				s = unix_bind(host);
+				s = unix_bind(host, 0);
 			else
 				s = unix_listen(host);
 		}
@@ -508,6 +507,7 @@ main(int argc, char *argv[])
 					readwrite(connfd, NULL);
 				if (tls_cctx) {
 					int i;
+
 					do {
 						i = tls_close(tls_cctx);
 					} while (i == TLS_WANT_POLLIN ||
@@ -602,6 +602,7 @@ main(int argc, char *argv[])
 					readwrite(s, tls_ctx);
 				if (tls_ctx) {
 					int j;
+
 					do {
 						j = tls_close(tls_ctx);
 					} while (j == TLS_WANT_POLLIN ||
@@ -627,14 +628,14 @@ main(int argc, char *argv[])
  * Returns a unix socket bound to the given path
  */
 int
-unix_bind(char *path)
+unix_bind(char *path, int flags)
 {
 	struct sockaddr_un sun;
 	int s;
 
 	/* Create unix domain socket. */
-	if ((s = socket(AF_UNIX, uflag ? SOCK_DGRAM : SOCK_STREAM,
-	     0)) < 0)
+	if ((s = socket(AF_UNIX, flags | (uflag ? SOCK_DGRAM : SOCK_STREAM),
+	    0)) < 0)
 		return (-1);
 
 	memset(&sun, 0, sizeof(struct sockaddr_un));
@@ -659,6 +660,7 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 
 {
 	int i;
+
 	if (tls_connect_socket(tls_ctx, s,
 		tls_expectname ? tls_expectname : host) == -1) {
 		errx(1, "tls connection failed (%s)",
@@ -681,6 +683,7 @@ struct tls *
 tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 {
 	struct tls *tls_cctx;
+
 	if (tls_accept_socket(tls_ctx, &tls_cctx,
 		connfd) == -1) {
 		warnx("tls accept failed (%s)",
@@ -688,6 +691,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 		tls_cctx = NULL;
 	} else {
 		int i;
+
 		do {
 			if ((i = tls_handshake(tls_cctx)) == -1)
 				warnx("tls handshake failed (%s)",
@@ -696,6 +700,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 	}
 	if (tls_cctx) {
 		int gotcert = tls_peer_cert_provided(tls_cctx);
+
 		if (gotcert && tls_peer_cert_hash(tls_cctx, &tls_peerhash) == -1)
 			warn("hash of peer certificate failed");
 		if (vflag && gotcert)
@@ -726,13 +731,12 @@ unix_connect(char *path)
 	int s;
 
 	if (uflag) {
-		if ((s = unix_bind(unix_dg_tmp_socket)) < 0)
+		if ((s = unix_bind(unix_dg_tmp_socket, SOCK_CLOEXEC)) < 0)
 			return (-1);
 	} else {
-		if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+		if ((s = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0)
 			return (-1);
 	}
-	(void)fcntl(s, F_SETFD, FD_CLOEXEC);
 
 	memset(&sun, 0, sizeof(struct sockaddr_un));
 	sun.sun_family = AF_UNIX;
@@ -759,7 +763,7 @@ int
 unix_listen(char *path)
 {
 	int s;
-	if ((s = unix_bind(path)) < 0)
+	if ((s = unix_bind(path, 0)) < 0)
 		return (-1);
 
 	if (listen(s, 5) < 0) {
