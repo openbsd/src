@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.374 2015/09/12 13:34:12 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.375 2015/09/12 19:36:37 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -171,18 +171,34 @@ void	ifa_print_all(void);
  * if_get(0) returns NULL.
  */
 
+void if_ifp_dtor(void *, void *);
+void if_map_dtor(void *, void *);
+
+/*
+ * struct if_map
+ *
+ * bounded array of ifnet srp pointers used to fetch references of live
+ * interfaces with if_get().
+ */
+
 struct if_map {
 	unsigned long		 limit;
-	/* followed by limit ifnet * pointers */
+	/* followed by limit ifnet srp pointers */
 };
+
+/*
+ * struct if_idxmap
+ *
+ * infrastructure to manage updates and accesses to the current if_map.
+ */
 
 struct if_idxmap {
 	unsigned int		 serial;
 	unsigned int		 count;
-	struct if_map		*map;
+	struct srp		 map;
 };
 
-void	if_idxmap_init(void);
+void	if_idxmap_init(unsigned int);
 void	if_idxmap_insert(struct ifnet *);
 void	if_idxmap_remove(struct ifnet *);
 
@@ -206,7 +222,11 @@ struct taskq *softnettq;
 void
 ifinit()
 {
-	if_idxmap_init();
+	/*
+	 * most machines boot with 4 or 5 interfaces, so size the initial map
+	 * to accomodate this
+	 */
+	if_idxmap_init(8);
 
 	timeout_set(&net_tick_to, net_tick, &net_tick_to);
 
@@ -221,27 +241,42 @@ ifinit()
 static struct if_idxmap if_idxmap = {
 	0,
 	0,
-	NULL
+	SRP_INITIALIZER()
 };
+
+struct srp_gc if_ifp_gc = SRP_GC_INITIALIZER(if_ifp_dtor, NULL);
+struct srp_gc if_map_gc = SRP_GC_INITIALIZER(if_map_dtor, NULL);
 
 struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
 struct ifnet_head iftxlist = TAILQ_HEAD_INITIALIZER(iftxlist);
 struct ifnet *lo0ifp;
 
 void
-if_idxmap_init(void)
+if_idxmap_init(unsigned int limit)
 {
+	struct if_map *if_map;
+	struct srp *map;
+	unsigned int i;
+
 	if_idxmap.serial = 1; /* skip ifidx 0 so it can return NULL */
-	if_idxmap.map = malloc(sizeof(*if_idxmap.map) +
-	    8 * sizeof(struct ifnet *), M_IFADDR, M_WAITOK | M_ZERO);
-	if_idxmap.map->limit = 8;
+
+	if_map = malloc(sizeof(*if_map) + limit * sizeof(*map),
+	    M_IFADDR, M_WAITOK);
+
+	if_map->limit = limit;
+	map = (struct srp *)(if_map + 1);
+	for (i = 0; i < limit; i++)
+		srp_init(&map[i]);
+
+	/* this is called early so there's nothing to race with */
+	srp_update_locked(&if_map_gc, &if_idxmap.map, if_map);
 }
 
 void
 if_idxmap_insert(struct ifnet *ifp)
 {
 	struct if_map *if_map;
-	struct ifnet **map;
+	struct srp *map;
 	unsigned int index, i;
 
 	/*
@@ -256,40 +291,45 @@ if_idxmap_insert(struct ifnet *ifp)
 	if (++if_idxmap.count > USHRT_MAX)
 		panic("too many interfaces");
 
-	if_map = if_idxmap.map;
-	map = (struct ifnet **)(if_map + 1);
+	if_map = srp_get_locked(&if_idxmap.map);
+	map = (struct srp *)(if_map + 1);
 
 	index = if_idxmap.serial++ & USHRT_MAX;
 
 	if (index >= if_map->limit) {
 		struct if_map *nif_map;
-		struct ifnet **nmap;
+		struct srp *nmap;
 		unsigned int nlimit;
+		struct ifnet *nifp;
 
 		nlimit = if_map->limit * 2;
 		nif_map = malloc(sizeof(*nif_map) + nlimit * sizeof(*nmap),
 		    M_IFADDR, M_WAITOK);
-		nmap = (struct ifnet **)(nif_map + 1);
+		nmap = (struct srp *)(nif_map + 1);
 
 		nif_map->limit = nlimit;
-		for (i = 0; i < if_map->limit; i++)
-			nmap[i] = map[i];
+		for (i = 0; i < if_map->limit; i++) {
+			srp_init(&nmap[i]);
+			nifp = srp_get_locked(&map[i]);
+			if (nifp != NULL) {
+				srp_update_locked(&if_ifp_gc, &nmap[i],
+				    if_ref(nifp));
+			}
+		}
 
 		while (i < nlimit) {
-			nmap[i] = NULL;
+			srp_init(&nmap[i]);
 			i++;
 		}
 
-		if_idxmap.map = nif_map;
-		free(if_map, M_IFADDR, sizeof(*nif_map) +
-		    if_map->limit * sizeof(*map));
+		srp_update_locked(&if_map_gc, &if_idxmap.map, nif_map);
 		if_map = nif_map;
 		map = nmap;
 	}
 
 	/* pick the next free index */
 	for (i = 0; i < USHRT_MAX; i++) {
-		if (index != 0 && map[index] == NULL)
+		if (index != 0 && srp_get_locked(&map[index]) == NULL)
 			break;
 
 		index = if_idxmap.serial++ & USHRT_MAX;
@@ -297,27 +337,28 @@ if_idxmap_insert(struct ifnet *ifp)
 
 	/* commit */
 	ifp->if_index = index;
-	map[index] = if_ref(ifp);
+	srp_update_locked(&if_ifp_gc, &map[index], if_ref(ifp));
 }
 
 void
 if_idxmap_remove(struct ifnet *ifp)
 {
 	struct if_map *if_map;
-	struct ifnet **map;
+	struct srp *map;
 	unsigned int index, r;
 
-	index = ifp->if_index & USHRT_MAX;
+	index = ifp->if_index;
 
 	/* the kernel lock guarantees serialised modifications to if_idxmap */
 	KERNEL_ASSERT_LOCKED();
 
-	if_map = if_idxmap.map;
-	map = (struct ifnet **)(if_map + 1);
-	KASSERT(ifp == map[index]);
+	if_map = srp_get_locked(&if_idxmap.map);
+	KASSERT(index < if_map->limit);
 
-	map[index] = NULL;
-	if_put(ifp);
+	map = (struct srp *)(if_map + 1);
+	KASSERT(ifp == (struct ifnet *)srp_get_locked(&map[index]));
+
+	srp_update_locked(&if_ifp_gc, &map[index], NULL);
 	if_idxmap.count--;
 	/* end of if_idxmap modifications */
 
@@ -325,6 +366,29 @@ if_idxmap_remove(struct ifnet *ifp)
 	r = atomic_dec_int_nv(&ifp->if_refcnt);
 	if (r != 0)
 		printf("%s: refcnt %u\n", ifp->if_xname, r);
+}
+
+void
+if_ifp_dtor(void *null, void *ifp)
+{
+	if_put(ifp);
+}
+
+void
+if_map_dtor(void *null, void *m)
+{
+	struct if_map *if_map = m;
+	struct srp *map = (struct srp *)(if_map + 1);
+	unsigned int i;
+
+	/*
+	 * dont need the kernel lock to use update_locked since this is
+	 * the last reference to this map. there's nothing to race against.
+	 */
+	for (i = 0; i < if_map->limit; i++)
+		srp_update_locked(&if_ifp_gc, &map[i], NULL);
+
+	free(if_map, M_IFADDR, sizeof(*if_map) + if_map->limit * sizeof(*map));
 }
 
 /*
@@ -1460,17 +1524,22 @@ ifunit(const char *name)
 struct ifnet *
 if_get(unsigned int index)
 {
-	struct if_map *if_map = if_idxmap.map;
-	struct ifnet **map = (struct ifnet **)(if_map + 1);
+	struct if_map *if_map;
+	struct srp *map;
 	struct ifnet *ifp = NULL;
 
+	if_map = srp_enter(&if_idxmap.map);
 	if (index < if_map->limit) {
-		ifp = map[index];
+		map = (struct srp *)(if_map + 1);
+
+		ifp = srp_follow(&if_idxmap.map, if_map, &map[index]);
 		if (ifp != NULL) {
 			KASSERT(ifp->if_index == index);
 			if_ref(ifp);
 		}
-	}
+		srp_leave(&map[index], ifp);
+	} else
+		srp_leave(&if_idxmap.map, if_map);
 
 	return (ifp);
 }
