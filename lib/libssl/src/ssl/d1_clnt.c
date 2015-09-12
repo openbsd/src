@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.53 2015/09/12 12:26:56 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.54 2015/09/12 12:58:15 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -415,7 +415,7 @@ dtls1_connect(SSL *s)
 		case SSL3_ST_CW_CERT_VRFY_A:
 		case SSL3_ST_CW_CERT_VRFY_B:
 			dtls1_start_timer(s);
-			ret = dtls1_send_client_verify(s);
+			ret = ssl3_send_client_verify(s);
 			if (ret <= 0)
 				goto end;
 			s->state = SSL3_ST_CW_CHANGE_A;
@@ -656,76 +656,6 @@ truncated:
 f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return -1;
-}
-
-int
-dtls1_send_client_verify(SSL *s)
-{
-	unsigned char *p;
-	unsigned char data[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
-	EVP_PKEY *pkey;
-	unsigned u = 0;
-	unsigned long n;
-	int j;
-
-	if (s->state == SSL3_ST_CW_CERT_VRFY_A) {
-		p = ssl3_handshake_msg_start(s, SSL3_MT_CERTIFICATE_VERIFY);
-
-		pkey = s->cert->key->privatekey;
-
-		s->method->ssl3_enc->cert_verify_mac(s, NID_sha1,
-		    &(data[MD5_DIGEST_LENGTH]));
-
-		if (pkey->type == EVP_PKEY_RSA) {
-			s->method->ssl3_enc->cert_verify_mac(s,
-			    NID_md5, &(data[0]));
-			if (RSA_sign(NID_md5_sha1, data,
-			    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH,
-			    &(p[2]), &u, pkey->pkey.rsa) <= 0 ) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,
-				    ERR_R_RSA_LIB);
-				goto err;
-			}
-			s2n(u, p);
-			n = u + 2;
-		} else if (pkey->type == EVP_PKEY_DSA) {
-			if (!DSA_sign(pkey->save_type,
-			    &(data[MD5_DIGEST_LENGTH]),
-			    SHA_DIGEST_LENGTH, &(p[2]),
-			    (unsigned int *)&j, pkey->pkey.dsa)) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,
-				    ERR_R_DSA_LIB);
-				goto err;
-			}
-			s2n(j, p);
-			n = j + 2;
-		} else if (pkey->type == EVP_PKEY_EC) {
-			if (!ECDSA_sign(pkey->save_type,
-			    &(data[MD5_DIGEST_LENGTH]),
-			    SHA_DIGEST_LENGTH, &(p[2]),
-			    (unsigned int *)&j, pkey->pkey.ec)) {
-				SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,
-				    ERR_R_ECDSA_LIB);
-				goto err;
-			}
-			s2n(j, p);
-			n = j + 2;
-		} else {
-			SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,
-			    ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-
-		ssl3_handshake_msg_finish(s, n);
-
-		s->state = SSL3_ST_CW_CERT_VRFY_B;
-	}
-
-	/* s->state = SSL3_ST_CW_CERT_VRFY_B */
-	return (ssl3_handshake_write(s));
-
-err:
-	return (-1);
 }
 
 int
