@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.69 2015/09/11 22:44:30 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.70 2015/09/12 07:52:27 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -510,19 +510,14 @@ acpicpu_getcst(struct acpicpu_softc *sc)
 		return (1);
 
 	/*
-	 * Scan the list for states that are neither lower power nor
-	 * lower latency than the next state; mark them to be skipped.
-	 * Also skip states >=C2 if the CPU's LAPIC timer stops in deep
+	 * Skip states >= C2 if the CPU's LAPIC timer stops in deep
 	 * states (i.e., it doesn't have the 'ARAT' bit set).
 	 * Also keep track if all the states we'll use use mwait.
 	 */
 	use_nonmwait = 0;
 	while ((next_cx = SLIST_NEXT(cx, link)) != NULL) {
-		if ((next_cx->power != -1 &&
-		    cx->power >= next_cx->power &&
-		    cx->latency >= next_cx->latency) ||
-		    (cx->state > 1 &&
-		    (sc->sc_ci->ci_feature_tpmflags & TPM_ARAT) == 0))
+		if (cx->state > 1 &&
+		    (sc->sc_ci->ci_feature_tpmflags & TPM_ARAT) == 0)
 			cx->flags |= CST_FLAG_SKIP;
 		else if (cx->method != CST_METH_MWAIT)
 			use_nonmwait = 1;
