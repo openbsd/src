@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.132 2015/09/12 20:23:56 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.133 2015/09/12 20:56:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1853,26 +1853,381 @@ ssl3_get_server_done(SSL *s)
 	return (ret);
 }
 
+static int
+ssl3_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
+{
+	unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
+	EVP_PKEY *pkey = NULL;
+	unsigned char *q;
+	int ret = -1;
+	int n;
+
+	pkey = X509_get_pubkey(sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+	if (pkey == NULL || pkey->type != EVP_PKEY_RSA ||
+	    pkey->pkey.rsa == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+	tmp_buf[0] = s->client_version >> 8;
+	tmp_buf[1] = s->client_version & 0xff;
+	arc4random_buf(&tmp_buf[2], sizeof(tmp_buf) - 2);
+
+	s->session->master_key_length = sizeof(tmp_buf);
+
+	q = p;
+	p += 2;
+
+	n = RSA_public_encrypt(sizeof(tmp_buf), tmp_buf, p, pkey->pkey.rsa,
+	    RSA_PKCS1_PADDING);
+	if (n <= 0) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    SSL_R_BAD_RSA_ENCRYPT);
+		goto err;
+	}
+
+	s2n(n, q);
+	n += 2;
+
+	s->session->master_key_length =
+	    s->method->ssl3_enc->generate_master_secret(s,
+		s->session->master_key, tmp_buf, sizeof(tmp_buf));
+
+	*outlen = n;
+	ret = 1;
+
+err:
+	explicit_bzero(tmp_buf, sizeof(tmp_buf));
+	EVP_PKEY_free(pkey);
+
+	return (ret);
+}
+
+static int
+ssl3_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
+{
+	DH *dh_srvr = NULL, *dh_clnt = NULL;
+	int ret = -1;
+	int n;
+
+	/* Ensure that we have an ephemeral key for DHE. */
+	if (sess_cert->peer_dh_tmp == NULL) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
+		goto err;
+	}
+	dh_srvr = sess_cert->peer_dh_tmp;
+
+	/* Generate a new random key. */
+	if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
+		goto err;
+	}
+	if (!DH_generate_key(dh_clnt)) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
+		goto err;
+	}
+
+	/*
+	 * Use the 'p' output buffer for the DH key, but make sure to clear
+	 * it out afterwards.
+	 */
+	n = DH_compute_key(p, dh_srvr->pub_key, dh_clnt);
+	if (n <= 0) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
+		goto err;
+	}
+
+	/* Generate master key from the result. */
+	s->session->master_key_length =
+	    s->method->ssl3_enc->generate_master_secret(s,
+		s->session->master_key, p, n);
+
+	/* Clean up. */
+	explicit_bzero(p, n);
+
+	/* Send off the data. */
+	n = BN_num_bytes(dh_clnt->pub_key);
+	s2n(n, p);
+	BN_bn2bin(dh_clnt->pub_key, p);
+	n += 2;
+
+	*outlen = n;
+	ret = 1;
+
+err:
+	DH_free(dh_clnt);
+
+	return (ret);
+}
+
+static int
+ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
+    int *outlen)
+{
+	EC_KEY *clnt_ecdh = NULL;
+	const EC_GROUP *srvr_group = NULL;
+	const EC_POINT *srvr_ecpoint = NULL;
+	EVP_PKEY *srvr_pub_pkey = NULL;
+	BN_CTX *bn_ctx = NULL;
+	unsigned char *encodedPoint = NULL;
+	unsigned long alg_k;
+	int encoded_pt_len = 0;
+	int field_size = 0;
+	EC_KEY *tkey;
+	int ret = -1;
+	int n;
+
+	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+
+	/* Ensure that we have an ephemeral key for ECDHE. */
+	if ((alg_k & SSL_kECDHE) && sess_cert->peer_ecdh_tmp == NULL) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+	tkey = sess_cert->peer_ecdh_tmp;
+
+	if (alg_k & (SSL_kECDHr|SSL_kECDHe)) {
+		/* Get the Server Public Key from certificate. */
+		srvr_pub_pkey = X509_get_pubkey(
+		    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+		if (srvr_pub_pkey != NULL && srvr_pub_pkey->type == EVP_PKEY_EC)
+			tkey = srvr_pub_pkey->pkey.ec;
+	}
+
+	if (tkey == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+	srvr_group = EC_KEY_get0_group(tkey);
+	srvr_ecpoint = EC_KEY_get0_public_key(tkey);
+
+	if (srvr_group == NULL || srvr_ecpoint == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+
+	if ((clnt_ecdh = EC_KEY_new()) == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	if (!EC_KEY_set_group(clnt_ecdh, srvr_group)) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
+		goto err;
+	}
+
+	/* Generate a new ECDH key pair */
+	if (!(EC_KEY_generate_key(clnt_ecdh))) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+		goto err;
+	}
+
+	/*
+	 * Use the 'p' output buffer for the ECDH key, but make sure to clear
+	 * it out afterwards.
+	 */
+	field_size = EC_GROUP_get_degree(srvr_group);
+	if (field_size <= 0) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+		goto err;
+	}
+	n = ECDH_compute_key(p, (field_size + 7) / 8, srvr_ecpoint, clnt_ecdh,
+	    NULL);
+	if (n <= 0) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+		goto err;
+	}
+
+	/* Generate master key from the result. */
+	s->session->master_key_length =
+	    s->method->ssl3_enc->generate_master_secret(s,
+		s->session->master_key, p, n);
+
+	/* Clean up. */
+	explicit_bzero(p, n);
+
+	/*
+	 * First check the size of encoding and allocate memory accordingly.
+	 */
+	encoded_pt_len = EC_POINT_point2oct(srvr_group,
+	    EC_KEY_get0_public_key(clnt_ecdh),
+	    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+
+	bn_ctx = BN_CTX_new();
+	encodedPoint = malloc(encoded_pt_len);
+	if (encodedPoint == NULL || bn_ctx == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	/* Encode the public key */
+	n = EC_POINT_point2oct(srvr_group, EC_KEY_get0_public_key(clnt_ecdh),
+	    POINT_CONVERSION_UNCOMPRESSED, encodedPoint, encoded_pt_len,
+	    bn_ctx);
+
+	*p = n; /* length of encoded point */
+	/* Encoded point will be copied here */
+	p += 1;
+
+	/* copy the point */
+	memcpy((unsigned char *)p, encodedPoint, n);
+	/* increment n to account for length field */
+	n += 1;
+
+	*outlen = n;
+	ret = 1;
+
+err:
+	/* Free allocated memory */
+	BN_CTX_free(bn_ctx);
+	free(encodedPoint);
+	EC_KEY_free(clnt_ecdh);
+	EVP_PKEY_free(srvr_pub_pkey);
+
+	return (ret);
+}
+
+static int
+ssl3_client_kex_gost(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
+    int *outlen)
+{
+	unsigned char premaster_secret[32], shared_ukm[32], tmp[256];
+	EVP_PKEY *pub_key = NULL;
+	EVP_PKEY_CTX *pkey_ctx;
+	X509 *peer_cert;
+	size_t msglen;
+	unsigned int md_len;
+	EVP_MD_CTX *ukm_hash;
+	int ret = -1;
+	int nid;
+	int n;
+
+	/* Get server sertificate PKEY and create ctx from it */
+	peer_cert = sess_cert->peer_pkeys[SSL_PKEY_GOST01].x509;
+	if (peer_cert == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
+		goto err;
+	}
+
+	pub_key = X509_get_pubkey(peer_cert);
+	pkey_ctx = EVP_PKEY_CTX_new(pub_key, NULL);
+
+	/*
+	 * If we have send a certificate, and certificate key parameters match
+	 * those of server certificate, use certificate key for key exchange.
+	 * Otherwise, generate ephemeral key pair.
+	 */
+	EVP_PKEY_encrypt_init(pkey_ctx);
+
+	/* Generate session key. */
+	arc4random_buf(premaster_secret, 32);
+
+	/*
+	 * If we have client certificate, use its secret as peer key.
+	 */
+	if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
+		if (EVP_PKEY_derive_set_peer(pkey_ctx,
+		    s->cert->key->privatekey) <=0) {
+			/*
+			 * If there was an error - just ignore it.
+			 * Ephemeral key would be used.
+			 */
+			ERR_clear_error();
+		}
+	}
+
+	/*
+	 * Compute shared IV and store it in algorithm-specific context data.
+	 */
+	ukm_hash = EVP_MD_CTX_create();
+	if (ukm_hash == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	if (ssl_get_algorithm2(s) & SSL_HANDSHAKE_MAC_GOST94)
+		nid = NID_id_GostR3411_94;
+	else
+		nid = NID_id_tc26_gost3411_2012_256;
+	if (!EVP_DigestInit(ukm_hash, EVP_get_digestbynid(nid)))
+		goto err;
+	EVP_DigestUpdate(ukm_hash, s->s3->client_random, SSL3_RANDOM_SIZE);
+	EVP_DigestUpdate(ukm_hash, s->s3->server_random, SSL3_RANDOM_SIZE);
+	EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len);
+	EVP_MD_CTX_destroy(ukm_hash);
+	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
+	    EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, SSL_R_LIBRARY_BUG);
+		goto err;
+	}
+
+	/*
+	 * Make GOST keytransport blob message, encapsulate it into sequence.
+	 */
+	*(p++) = V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
+	msglen = 255;
+	if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, premaster_secret,
+	    32) < 0) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, SSL_R_LIBRARY_BUG);
+		goto err;
+	}
+	if (msglen >= 0x80) {
+		*(p++) = 0x81;
+		*(p++) = msglen & 0xff;
+		n = msglen + 3;
+	} else {
+		*(p++) = msglen & 0xff;
+		n = msglen + 2;
+	}
+	memcpy(p, tmp, msglen);
+
+	/* Check if pubkey from client certificate was used. */
+	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
+	    NULL) > 0) {
+		/* Set flag "skip certificate verify". */
+		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
+	}
+	EVP_PKEY_CTX_free(pkey_ctx);
+	s->session->master_key_length =
+	    s->method->ssl3_enc->generate_master_secret(s,
+		s->session->master_key, premaster_secret, 32);
+
+	*outlen = n;
+	ret = 1;
+
+err:
+	explicit_bzero(premaster_secret, sizeof(premaster_secret));
+	EVP_PKEY_free(pub_key);
+
+	return (ret);
+}
+
 int
 ssl3_send_client_key_exchange(SSL *s)
 {
-	unsigned char	*p, *q;
-	int		 n;
-	unsigned long	 alg_k;
-	EVP_PKEY	*pkey = NULL;
-	EC_KEY		*clnt_ecdh = NULL;
-	const EC_POINT	*srvr_ecpoint = NULL;
-	EVP_PKEY	*srvr_pub_pkey = NULL;
-	unsigned char	*encodedPoint = NULL;
-	int		 encoded_pt_len = 0;
-	BN_CTX		*bn_ctx = NULL;
+	SESS_CERT *sess_cert;
+	unsigned long alg_k;
+	unsigned char *p;
+	int n;
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
 		p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_KEY_EXCHANGE);
 
 		alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
-		if (s->session->sess_cert == NULL) {
+		if ((sess_cert = s->session->sess_cert) == NULL) {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_UNEXPECTED_MESSAGE);
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
@@ -1881,344 +2236,17 @@ ssl3_send_client_key_exchange(SSL *s)
 		}
 
 		if (alg_k & SSL_kRSA) {
-			RSA *rsa;
-			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
-
-			pkey = X509_get_pubkey(
-			    s->session->sess_cert->peer_pkeys[
-			    SSL_PKEY_RSA_ENC].x509);
-			if ((pkey == NULL) ||
-			    (pkey->type != EVP_PKEY_RSA) ||
-			    (pkey->pkey.rsa == NULL)) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				EVP_PKEY_free(pkey);
+			if (ssl3_client_kex_rsa(s, sess_cert, p, &n) != 1)
 				goto err;
-			}
-			rsa = pkey->pkey.rsa;
-			EVP_PKEY_free(pkey);
-
-			tmp_buf[0] = s->client_version >> 8;
-			tmp_buf[1] = s->client_version & 0xff;
-			arc4random_buf(&tmp_buf[2], sizeof(tmp_buf) - 2);
-
-			s->session->master_key_length = sizeof tmp_buf;
-
-			q = p;
-			/* Fix buf for TLS and beyond */
-			p += 2;
-
-			n = RSA_public_encrypt(sizeof tmp_buf,
-			tmp_buf, p, rsa, RSA_PKCS1_PADDING);
-			if (n <= 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_BAD_RSA_ENCRYPT);
-				goto err;
-			}
-
-			/* Fix buf for TLS and beyond */
-			s2n(n, q);
-			n += 2;
-
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(
-			    s, s->session->master_key, tmp_buf, sizeof tmp_buf);
-			explicit_bzero(tmp_buf, sizeof tmp_buf);
 		} else if (alg_k & SSL_kDHE) {
-			DH *dh_srvr, *dh_clnt;
-
-			/* Ensure that we have an ephemeral key for DHE. */
-			if (s->session->sess_cert->peer_dh_tmp == NULL) {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_HANDSHAKE_FAILURE);
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
+			if (ssl3_client_kex_dhe(s, sess_cert, p, &n) != 1)
 				goto err;
-			}
-			dh_srvr = s->session->sess_cert->peer_dh_tmp;
-
-			/* Generate a new random key. */
-			if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				goto err;
-			}
-			if (!DH_generate_key(dh_clnt)) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				DH_free(dh_clnt);
-				goto err;
-			}
-
-			/*
-			 * Use the 'p' output buffer for the DH key, but
-			 * make sure to clear it out afterwards.
-			 */
-			n = DH_compute_key(p, dh_srvr->pub_key, dh_clnt);
-			if (n <= 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_DH_LIB);
-				DH_free(dh_clnt);
-				goto err;
-			}
-
-			/* Generate master key from the result. */
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(s,
-				s->session->master_key, p, n);
-
-			/* Clean up. */
-			explicit_bzero(p, n);
-
-			/* Send off the data. */
-			n = BN_num_bytes(dh_clnt->pub_key);
-			s2n(n, p);
-			BN_bn2bin(dh_clnt->pub_key, p);
-			n += 2;
-
-			DH_free(dh_clnt);
-
-			/* perhaps clean things up a bit EAY EAY EAY EAY*/
 		} else if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
-			const EC_GROUP *srvr_group = NULL;
-			EC_KEY *tkey;
-			int field_size = 0;
-
-			/* Ensure that we have an ephemeral key for ECDHE. */
-			if ((alg_k & SSL_kECDHE) &&
-			    s->session->sess_cert->peer_ecdh_tmp == NULL) {
-				ssl3_send_alert(s, SSL3_AL_FATAL,
-				    SSL_AD_HANDSHAKE_FAILURE);
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
+			if (ssl3_client_kex_ecdh(s, sess_cert, p, &n) != 1)
 				goto err;
-			}
-			tkey = s->session->sess_cert->peer_ecdh_tmp;
-
-			if (alg_k & (SSL_kECDHr|SSL_kECDHe)) {
-				/* Get the Server Public Key from Cert */
-				srvr_pub_pkey = X509_get_pubkey(s->session-> \
-				    sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
-				if (srvr_pub_pkey != NULL &&
-				    srvr_pub_pkey->type == EVP_PKEY_EC)
-					tkey = srvr_pub_pkey->pkey.ec;
-			}
-
-			if (tkey == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-
-			srvr_group = EC_KEY_get0_group(tkey);
-			srvr_ecpoint = EC_KEY_get0_public_key(tkey);
-
-			if ((srvr_group == NULL) || (srvr_ecpoint == NULL)) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-
-			if ((clnt_ecdh = EC_KEY_new()) == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-			if (!EC_KEY_set_group(clnt_ecdh, srvr_group)) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_EC_LIB);
-				goto err;
-			}
-
-			/* Generate a new ECDH key pair */
-			if (!(EC_KEY_generate_key(clnt_ecdh))) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-
-			/*
-			 * Use the 'p' output buffer for the ECDH key, but
-			 * make sure to clear it out afterwards.
-			 */
-			field_size = EC_GROUP_get_degree(srvr_group);
-			if (field_size <= 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-			n = ECDH_compute_key(p, (field_size + 7) / 8,
-			    srvr_ecpoint, clnt_ecdh, NULL);
-			if (n <= 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_ECDH_LIB);
-				goto err;
-			}
-
-			/* generate master key from the result */
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(s,
-				s->session->master_key, p, n);
-
-			/* Clean up. */
-			explicit_bzero(p, n);
-
-			/*
-			 * First check the size of encoding and
-			 * allocate memory accordingly.
-			 */
-			encoded_pt_len = EC_POINT_point2oct(srvr_group,
-			    EC_KEY_get0_public_key(clnt_ecdh),
-			    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
-
-			encodedPoint = malloc(encoded_pt_len);
-
-			bn_ctx = BN_CTX_new();
-			if ((encodedPoint == NULL) || (bn_ctx == NULL)) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-
-			/* Encode the public key */
-			n = EC_POINT_point2oct(srvr_group,
-			    EC_KEY_get0_public_key(clnt_ecdh),
-			    POINT_CONVERSION_UNCOMPRESSED, encodedPoint,
-			    encoded_pt_len, bn_ctx);
-
-			*p = n; /* length of encoded point */
-			/* Encoded point will be copied here */
-			p += 1;
-
-			/* copy the point */
-			memcpy((unsigned char *)p, encodedPoint, n);
-			/* increment n to account for length field */
-			n += 1;
-
-			/* Free allocated memory */
-			BN_CTX_free(bn_ctx);
-			free(encodedPoint);
-			EC_KEY_free(clnt_ecdh);
-			EVP_PKEY_free(srvr_pub_pkey);
 		} else if (alg_k & SSL_kGOST) {
-			/* GOST key exchange message creation */
-			EVP_PKEY_CTX *pkey_ctx;
-			X509 *peer_cert;
-
-			size_t msglen;
-			unsigned int md_len;
-			unsigned char premaster_secret[32], shared_ukm[32],
-			    tmp[256];
-			EVP_MD_CTX *ukm_hash;
-			EVP_PKEY *pub_key;
-			int nid;
-
-			/* Get server sertificate PKEY and create ctx from it */
-			peer_cert = s->session->sess_cert->peer_pkeys[SSL_PKEY_GOST01].x509;
-			if (!peer_cert) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
+			if (ssl3_client_kex_gost(s, sess_cert, p, &n) != 1)
 				goto err;
-			}
-
-			pub_key = X509_get_pubkey(peer_cert);
-			pkey_ctx = EVP_PKEY_CTX_new(pub_key, NULL);
-
-			/*
-			 * If we have send a certificate, and certificate key
-			 * parameters match those of server certificate, use
-			 * certificate key for key exchange.
-			 * Otherwise, generate ephemeral key pair.
-			 */
-			EVP_PKEY_encrypt_init(pkey_ctx);
-
-			/* Generate session key. */
-			arc4random_buf(premaster_secret, 32);
-
-			/*
-			 * If we have client certificate, use its secret as
-			 * peer key.
-			 */
-			if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
-				if (EVP_PKEY_derive_set_peer(pkey_ctx,
-				    s->cert->key->privatekey) <=0) {
-					/*
-					 * If there was an error - just ignore
-					 * it. Ephemeral key would be used.
-					 */
-					ERR_clear_error();
-				}
-			}
-
-			/*
-			 * Compute shared IV and store it in algorithm-specific
-			 * context data.
-			 */
-			ukm_hash = EVP_MD_CTX_create();
-			if (ukm_hash == NULL) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    ERR_R_MALLOC_FAILURE);
-				explicit_bzero(premaster_secret,
-				    sizeof(premaster_secret));
-				goto err;
-			}
-
-			if (ssl_get_algorithm2(s) & SSL_HANDSHAKE_MAC_GOST94)
-				nid = NID_id_GostR3411_94;
-			else
-				nid = NID_id_tc26_gost3411_2012_256;
-			if (!EVP_DigestInit(ukm_hash, EVP_get_digestbynid(nid)))
-				goto err;
-			EVP_DigestUpdate(ukm_hash,
-			    s->s3->client_random, SSL3_RANDOM_SIZE);
-			EVP_DigestUpdate(ukm_hash,
-			    s->s3->server_random, SSL3_RANDOM_SIZE);
-			EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len);
-			EVP_MD_CTX_destroy(ukm_hash);
-			if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
-			    EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_LIBRARY_BUG);
-				explicit_bzero(premaster_secret,
-				    sizeof(premaster_secret));
-				goto err;
-			}
-
-			/*
-			 * Make GOST keytransport blob message, encapsulate it
-			 * into sequence.
-			 */
-			*(p++) = V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
-			msglen = 255;
-			if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen,
-			    premaster_secret, 32) < 0) {
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
-				    SSL_R_LIBRARY_BUG);
-				goto err;
-			}
-			if (msglen >= 0x80) {
-				*(p++) = 0x81;
-				*(p++) = msglen & 0xff;
-				n = msglen + 3;
-			} else {
-				*(p++) = msglen & 0xff;
-				n = msglen + 2;
-			}
-			memcpy(p, tmp, msglen);
-			/* Check if pubkey from client certificate was used. */
-			if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1,
-			    EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0) {
-				/* Set flag "skip certificate verify". */
-				s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-			}
-			EVP_PKEY_CTX_free(pkey_ctx);
-			s->session->master_key_length =
-			    s->method->ssl3_enc->generate_master_secret(s,
-			    s->session->master_key, premaster_secret, 32);
-			EVP_PKEY_free(pub_key);
-			explicit_bzero(premaster_secret,
-			    sizeof(premaster_secret));
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_HANDSHAKE_FAILURE);
@@ -2236,10 +2264,6 @@ ssl3_send_client_key_exchange(SSL *s)
 	return (ssl3_handshake_write(s));
 
 err:
-	BN_CTX_free(bn_ctx);
-	free(encodedPoint);
-	EC_KEY_free(clnt_ecdh);
-	EVP_PKEY_free(srvr_pub_pkey);
 	return (-1);
 }
 
