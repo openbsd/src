@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.23 2013/09/30 12:02:31 millert Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.24 2015/09/12 15:20:52 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -235,6 +235,7 @@ dbm_close(db)
 
 	(void)(db->close)(db);
 }
+DEF_WEAK(dbm_close);
 
 /*
  * Returns:
@@ -261,6 +262,7 @@ dbm_fetch(db, key)
 	retdata.dsize = dbtretdata.size;
 	return (retdata);
 }
+DEF_WEAK(dbm_fetch);
 
 /*
  * Returns:
@@ -282,6 +284,7 @@ dbm_firstkey(db)
 	retkey.dsize = dbtretkey.size;
 	return (retkey);
 }
+DEF_WEAK(dbm_firstkey);
 
 /*
  * Returns:
@@ -303,6 +306,7 @@ dbm_nextkey(db)
 	retkey.dsize = dbtretkey.size;
 	return (retkey);
 }
+DEF_WEAK(dbm_nextkey);
 
 /*
  * Returns:
@@ -325,6 +329,7 @@ dbm_delete(db, key)
 	else
 		return (0);
 }
+DEF_WEAK(dbm_delete);
 
 /*
  * Returns:
@@ -347,6 +352,7 @@ dbm_store(db, key, data, flags)
 	return ((db->put)(db, &dbtkey, &dbtdata,
 	    (flags == DBM_INSERT) ? R_NOOVERWRITE : 0));
 }
+DEF_WEAK(dbm_store);
 
 int
 dbm_error(db)
@@ -386,3 +392,4 @@ dbm_rdonly(dbp)
 	/* Could use DBM_RDONLY instead if we wanted... */
 	return ((hashp->flags & O_ACCMODE) == O_RDONLY);
 }
+DEF_WEAK(dbm_rdonly);
