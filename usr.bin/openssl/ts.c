@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.6 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: ts.c,v 1.7 2015/09/12 19:34:07 lteo Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -347,8 +347,6 @@ load_config_file(const char *configfile)
 
 	if (!configfile)
 		configfile = getenv("OPENSSL_CONF");
-	if (!configfile)
-		configfile = getenv("SSLEAY_CONF");
 
 	if (configfile &&
 	    (!(conf = NCONF_new(NULL)) ||

@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.8 2015/09/11 20:55:59 jsing Exp $ */
+/* $OpenBSD: openssl.c,v 1.9 2015/09/12 19:34:07 lteo Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -455,8 +455,6 @@ main(int argc, char **argv)
 
 	/* Lets load up our environment a little */
 	p = getenv("OPENSSL_CONF");
-	if (p == NULL)
-		p = getenv("SSLEAY_CONF");
 	if (p == NULL) {
 		p = to_free = make_config_name();
 		if (p == NULL) {

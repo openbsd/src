@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.13 2015/09/11 18:07:06 beck Exp $ */
+/* $OpenBSD: ca.c,v 1.14 2015/09/12 19:34:07 lteo Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -497,8 +497,6 @@ bad:
 	tofree = NULL;
 	if (configfile == NULL)
 		configfile = getenv("OPENSSL_CONF");
-	if (configfile == NULL)
-		configfile = getenv("SSLEAY_CONF");
 	if (configfile == NULL) {
 		if ((tofree = make_config_name()) == NULL) {
 			BIO_printf(bio_err, "error making config file name\n");
