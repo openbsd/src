@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6var.h,v 1.16 2003/08/15 23:41:47 fgsch Exp $	*/
+/*	$OpenBSD: smc93cx6var.h,v 1.17 2015/09/12 16:24:14 deraadt Exp $	*/
 /* $FreeBSD: sys/dev/aic7xxx/93cx6.h,v 1.3 1999/12/29 04:35:33 peter Exp $ */
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
@@ -38,8 +38,6 @@
  */
 #ifndef _SMC93CX6VAR_H_
 #define _SMC93CX6VAR_H_
-
-#include <sys/param.h>
 
 #ifdef _KERNEL
 
