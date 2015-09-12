@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.33 2015/09/12 16:25:32 schwarze Exp $
+.\"	$OpenBSD: touch.1,v 1.34 2015/09/12 16:28:14 schwarze Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -42,10 +42,11 @@
 .Sh SYNOPSIS
 .Nm touch
 .Op Fl acm
-.Op Fl d
+.Oo Fl d
 .Sm off
 .Ar ccyy No - Ar mm No - Ar dd Cm T Ar HH : MM : SS Oo \&. Ar frac Oc Op Cm Z
 .Sm on
+.Oc
 .Op Fl r Ar file
 .Op Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
 .Ar
