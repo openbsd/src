@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.58 2015/09/09 16:02:31 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.59 2015/09/12 22:07:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -117,44 +117,17 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet		*ifp;
 	struct pflow_softc	*pflowif;
-	struct socket		*so;
 	struct sockaddr_in	*sin;
-	struct mbuf		*m;
-	int			 error;
-
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
-	if (error)
-		return (error);
-
-	MGET(m, M_WAIT, MT_SONAME);
-	sin = mtod(m, struct sockaddr_in *);
-	memset(sin, 0 , sizeof(*sin));
-	sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_ANY;
-	sin->sin_port = htons(0);
-	error = sobind(so, m, curproc);
-	m_freem(m);
-	if (error) {
-		soclose(so);
-		return (error);
-	}
 
 	if ((pflowif = malloc(sizeof(*pflowif),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
-		soclose(so);
+	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
-	}
-
-	pflowif->so = so;
 
 	MGET(pflowif->send_nam, M_WAIT, MT_SONAME);
 	sin = mtod(pflowif->send_nam, struct sockaddr_in *);
 	memset(sin, 0 , sizeof(*sin));
 	sin->sin_len = pflowif->send_nam->m_len = sizeof (struct sockaddr_in);
 	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_ANY;
-	sin->sin_port = 0;
 
 	pflowif->sc_receiver_ip.s_addr = INADDR_ANY;
 	pflowif->sc_receiver_port = 0;
@@ -318,9 +291,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) &&
-		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
-		    sc->sc_receiver_port != 0 && sc->so != NULL) {
+		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			/* send templates on startup */
@@ -387,31 +358,48 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sin->sin_port = pflowr.receiver_port;
 		}
 		if (pflowr.addrmask & PFLOW_MASK_SRCIP) {
-			error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
-			if (error) {
-				splx(s);
-				return (error);
-			}
-			
-			MGET(m, M_WAIT, MT_SONAME);
-			sin = mtod(m, struct sockaddr_in *);
-			memset(sin, 0 , sizeof(*sin));
-			sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
-			sin->sin_family = AF_INET;
-			sin->sin_addr.s_addr = pflowr.sender_ip.s_addr;
-			sin->sin_port = 0;
-
-			error = sobind(so, m, p);
-			m_freem(m);
-			if (error) {
-				soclose(so);
-				splx(s);
-				return (error);
-			}
-
 			sc->sc_sender_ip.s_addr = pflowr.sender_ip.s_addr;
-			soclose(sc->so);
-			sc->so = so;
+			if (sc->so != NULL) {
+				soclose(sc->so);
+				sc->so = NULL;
+			}
+		}
+
+		if (sc->so == NULL) {
+			if (sc->sc_receiver_ip.s_addr != INADDR_ANY &&
+			    sc->sc_receiver_port != 0) {
+				error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+				if (error) {
+					splx(s);
+					return (error);
+				}
+				if (sc->sc_sender_ip.s_addr != INADDR_ANY) {
+					MGET(m, M_WAIT, MT_SONAME);
+					sin = mtod(m, struct sockaddr_in *);
+					memset(sin, 0 , sizeof(*sin));
+					sin->sin_len = m->m_len = sizeof
+					    (struct sockaddr_in);
+					sin->sin_family = AF_INET;
+					sin->sin_addr.s_addr =
+					    pflowr.sender_ip.s_addr;
+					sin->sin_port = 0;
+
+					error = sobind(so, m, p);
+					m_freem(m);
+					if (error) {
+						soclose(so);
+						splx(s);
+						return (error);
+					}
+				}
+				sc->so = so;
+			}
+		} else {
+			if (sc->sc_receiver_ip.s_addr == INADDR_ANY ||
+			    sc->sc_receiver_port == 0) {
+				soclose(sc->so);
+				sc->so = NULL;
+			}
 		}
 
 		/* error check is above */
@@ -423,9 +411,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		splx(s);
 
-		if ((ifp->if_flags & IFF_UP) &&
-		    sc->sc_receiver_ip.s_addr != INADDR_ANY &&
-		    sc->sc_receiver_port != 0 && sc->so != NULL) {
+		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			if (sc->sc_version == PFLOW_PROTO_10) {
