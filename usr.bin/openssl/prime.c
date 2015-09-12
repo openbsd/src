@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.7 2015/08/22 16:36:05 jsing Exp $ */
+/* $OpenBSD: prime.c,v 1.8 2015/09/12 15:04:06 lteo Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -177,8 +177,7 @@ prime_main(int argc, char **argv)
 			}
 		}
 
-		BN_print(bio_out, bn);
-		BIO_printf(bio_out, " is %sprime\n",
+		BIO_printf(bio_out, "%s is %sprime\n", prime,
 		    BN_is_prime_ex(bn, prime_config.checks,
 			NULL, NULL) ? "" : "not ");
 	}
