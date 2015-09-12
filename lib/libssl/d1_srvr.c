@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.62 2015/09/12 14:28:23 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.63 2015/09/12 14:32:24 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -429,7 +429,7 @@ dtls1_accept(SSL *s)
 			} else {
 				s->s3->tmp.cert_request = 1;
 				dtls1_start_timer(s);
-				ret = dtls1_send_certificate_request(s);
+				ret = ssl3_send_certificate_request(s);
 				if (ret <= 0)
 					goto end;
 				s->state = SSL3_ST_SW_SRVR_DONE_A;
@@ -697,82 +697,6 @@ dtls1_send_hello_verify_request(SSL *s)
 
 	/* s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B */
 	return (ssl3_handshake_write(s));
-}
-
-int
-dtls1_send_certificate_request(SSL *s)
-{
-	unsigned char *p, *d;
-	int i, j, nl, off, n;
-	STACK_OF(X509_NAME) *sk = NULL;
-	X509_NAME *name;
-	BUF_MEM *buf;
-	unsigned int msg_len;
-
-	if (s->state == SSL3_ST_SW_CERT_REQ_A) {
-		buf = s->init_buf;
-
-		d = p=(unsigned char *)&(buf->data[DTLS1_HM_HEADER_LENGTH]);
-
-		/* get the list of acceptable cert types */
-		p++;
-		n = ssl3_get_req_cert_type(s, p);
-		d[0] = n;
-		p += n;
-		n++;
-
-		off = n;
-		p += 2;
-		n += 2;
-
-		sk = SSL_get_client_CA_list(s);
-		nl = 0;
-		if (sk != NULL) {
-			for (i = 0; i < sk_X509_NAME_num(sk); i++) {
-				name = sk_X509_NAME_value(sk, i);
-				j = i2d_X509_NAME(name, NULL);
-				if (!BUF_MEM_grow_clean(buf, DTLS1_HM_HEADER_LENGTH + n + j + 2)) {
-					SSLerr(SSL_F_DTLS1_SEND_CERTIFICATE_REQUEST, ERR_R_BUF_LIB);
-					goto err;
-				}
-				p = (unsigned char *)&(buf->data[DTLS1_HM_HEADER_LENGTH + n]);
-				s2n(j, p);
-				i2d_X509_NAME(name, &p);
-				n += 2 + j;
-				nl += 2 + j;
-			}
-		}
-		/* else no CA names */
-		p = (unsigned char *)&(buf->data[DTLS1_HM_HEADER_LENGTH + off]);
-		s2n(nl, p);
-
-		d = (unsigned char *)buf->data;
-		*(d++) = SSL3_MT_CERTIFICATE_REQUEST;
-		l2n3(n, d);
-		s2n(s->d1->handshake_write_seq, d);
-		s->d1->handshake_write_seq++;
-
-		/* we should now have things packed up, so lets send
-		 * it off */
-
-		s->init_num = n + DTLS1_HM_HEADER_LENGTH;
-		s->init_off = 0;
-
-		/* XDTLS:  set message header ? */
-		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
-		dtls1_set_message_header(s, (void *)s->init_buf->data,
-		    SSL3_MT_CERTIFICATE_REQUEST, msg_len, 0, msg_len);
-
-		/* buffer the message to handle re-xmits */
-		dtls1_buffer_message(s, 0);
-
-		s->state = SSL3_ST_SW_CERT_REQ_B;
-	}
-
-	/* SSL3_ST_SW_CERT_REQ_B */
-	return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
-err:
-	return (-1);
 }
 
 int
