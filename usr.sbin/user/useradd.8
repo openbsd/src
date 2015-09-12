@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.32 2015/03/13 19:58:41 jmc Exp $
+.\" $OpenBSD: useradd.8,v 1.33 2015/09/12 15:14:11 schwarze Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -39,19 +39,16 @@
 .Nd add a user to the system
 .Sh SYNOPSIS
 .Nm useradd
-.Bk -words
 .Fl D
 .Op Fl b Ar base-directory
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Op Fl g Ar gid | name | Li =uid
+.Op Fl g Ar gid | name | Cm =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
 .Op Fl r Ar low Ns .. Ns Ar high
 .Op Fl s Ar shell
-.Ek
 .Nm useradd
-.Bk -words
 .Op Fl mov
 .Op Fl b Ar base-directory
 .Op Fl c Ar comment
@@ -59,7 +56,7 @@
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
 .Op Fl G Ar secondary-group Ns Op , Ns Ar group , Ns ...
-.Op Fl g Ar gid | name | Li =uid
+.Op Fl g Ar gid | name | Cm =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
 .Op Fl p Ar password
@@ -67,7 +64,6 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
-.Ek
 .Sh DESCRIPTION
 The
 .Nm useradd
@@ -134,7 +130,7 @@ Sets the time at which passwords of new accounts will expire.
 Also see the
 .Fl e
 option above.
-.It Fl g Ar gid | name | Li =uid
+.It Fl g Ar gid | name | Cm =uid
 Sets the default group for new users.
 .It Fl k Ar skel-directory
 Sets the skeleton directory in which to find files with
@@ -193,10 +189,10 @@ option above.
 Sets the secondary groups to which the user will be added in the
 .Pa /etc/group
 file.
-.It Fl g Ar gid | name | Li =uid
+.It Fl g Ar gid | name | Cm =uid
 Gives the group name or identifier to be used for the new user's primary group.
-If this is
-.Ql =uid ,
+If this is the special string
+.Cm =uid ,
 then a UID and GID will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group

@@ -1,4 +1,4 @@
-.\" $OpenBSD: user.8,v 1.21 2013/07/16 11:13:34 schwarze Exp $
+.\" $OpenBSD: user.8,v 1.22 2015/09/12 15:14:11 schwarze Exp $
 .\" $NetBSD: user.8,v 1.9 2001/06/05 11:31:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 12 2015 $
 .Dt USER 8
 .Os
 .Sh NAME
@@ -39,20 +39,17 @@
 .Nd manage user login information on the system
 .Sh SYNOPSIS
 .Nm user
-.Bk -words
 .Cm add
 .Fl D
 .Op Fl b Ar base-directory
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
-.Op Fl g Ar gid | name | Li =uid
+.Op Fl g Ar gid | name | Cm =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
 .Op Fl r Ar low Ns .. Ns Ar high
 .Op Fl s Ar shell
-.Ek
 .Nm user
-.Bk -words
 .Cm add
 .Op Fl mov
 .Op Fl b Ar base-directory
@@ -61,7 +58,7 @@
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
 .Op Fl G Ar secondary-group Ns Op , Ns Ar group , Ns ...
-.Op Fl g Ar gid | name | Li =uid
+.Op Fl g Ar gid | name | Cm =uid
 .Op Fl k Ar skel-directory
 .Op Fl L Ar login-class
 .Op Fl p Ar password
@@ -69,7 +66,6 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
-.Ek
 .Nm user
 .Cm del
 .Fl D
@@ -83,7 +79,6 @@
 .Op Fl e
 .Ar user
 .Nm user
-.Bk -words
 .Cm mod
 .Op Fl mov
 .Op Fl c Ar comment
@@ -91,14 +86,13 @@
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
 .Op Fl G Ar secondary-group Ns Op , Ns Ar group , Ns ...
-.Op Fl g Ar gid | name | Li =uid
+.Op Fl g Ar gid | name | Cm =uid
 .Op Fl L Ar login-class
 .Op Fl l Ar new-login
 .Op Fl p Ar password
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
