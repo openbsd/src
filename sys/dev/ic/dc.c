@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.143 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: dc.c,v 1.144 2015/09/12 09:56:36 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -160,7 +160,7 @@ int dc_miibus_readreg(struct device *, int, int);
 void dc_miibus_writereg(struct device *, int, int, int);
 void dc_miibus_statchg(struct device *);
 
-void dc_setcfg(struct dc_softc *, int);
+void dc_setcfg(struct dc_softc *, uint64_t);
 u_int32_t dc_crc_le(struct dc_softc *, caddr_t);
 u_int32_t dc_crc_be(caddr_t);
 void dc_setfilt_21143(struct dc_softc *);
@@ -1159,7 +1159,7 @@ dc_setfilt(struct dc_softc *sc)
  * first have to put the transmit and/or receive logic in the idle state.
  */
 void
-dc_setcfg(struct dc_softc *sc, int media)
+dc_setcfg(struct dc_softc *sc, uint64_t media)
 {
 	int i, restart = 0;
 	u_int32_t isr;
