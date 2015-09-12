@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcscspn.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcscspn.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wcscspn.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -51,3 +51,4 @@ wcscspn(const wchar_t *s, const wchar_t *set)
 done:
 	return (p - s);
 }
+DEF_STRONG(wcscspn);

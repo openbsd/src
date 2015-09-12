@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcspbrk.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcspbrk.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wcspbrk.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -51,3 +51,4 @@ wcspbrk(const wchar_t *s, const wchar_t *set)
 	}
 	return NULL;
 }
+DEF_STRONG(wcspbrk);

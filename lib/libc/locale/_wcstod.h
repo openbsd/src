@@ -1,4 +1,4 @@
-/*	$OpenBSD: _wcstod.h,v 1.2 2013/06/02 15:22:20 matthew Exp $	*/
+/*	$OpenBSD: _wcstod.h,v 1.3 2015/09/12 16:23:14 guenther Exp $	*/
 /* $NetBSD: wcstod.c,v 1.4 2001/10/28 12:08:43 yamt Exp $ */
 
 /*-
@@ -151,3 +151,4 @@ fail:
 
 	return 0;
 }
+DEF_STRONG(FUNCNAME);

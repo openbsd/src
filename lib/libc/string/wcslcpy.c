@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcslcpy.c,v 1.6 2015/01/15 03:54:12 millert Exp $	*/
+/*	$OpenBSD: wcslcpy.c,v 1.7 2015/09/12 16:23:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -48,3 +48,4 @@ wcslcpy(wchar_t *dst, const wchar_t *src, size_t dsize)
 
 	return(src - osrc - 1);	/* count does not include NUL */
 }
+DEF_WEAK(wcslcpy);

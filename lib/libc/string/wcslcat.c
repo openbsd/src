@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcslcat.c,v 1.5 2015/01/15 03:54:12 millert Exp $	*/
+/*	$OpenBSD: wcslcat.c,v 1.6 2015/09/12 16:23:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -53,3 +53,4 @@ wcslcat(wchar_t *dst, const wchar_t *src, size_t dsize)
 
 	return(dlen + (src - osrc));	/* count does not include NUL */
 }
+DEF_WEAK(wcslcat);

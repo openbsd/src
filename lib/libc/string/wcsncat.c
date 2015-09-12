@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsncat.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcsncat.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wcsncat.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -50,3 +50,4 @@ wcsncat(wchar_t *s1, const wchar_t *s2, size_t n)
 	*q = '\0';
 	return s1;
 }
+DEF_STRONG(wcsncat);

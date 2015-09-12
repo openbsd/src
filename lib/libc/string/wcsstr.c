@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsstr.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcsstr.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wcsstr.c,v 1.3 2003/03/05 20:18:17 tshiozak Exp $	*/
 
 /*-
@@ -68,3 +68,6 @@ wcsstr(const wchar_t *big, const wchar_t *little)
 	}
 	return NULL;
 }
+#ifndef WCSWCS
+DEF_STRONG(wcsstr);
+#endif

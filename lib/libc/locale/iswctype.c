@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype.c,v 1.4 2014/03/16 18:38:30 guenther Exp $ */
+/*	$OpenBSD: iswctype.c,v 1.5 2015/09/12 16:23:14 guenther Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -168,6 +168,7 @@ wcwidth(wchar_t c)
 		return (((unsigned)__runetype_w(c) & _CTYPE_SWM) >> _CTYPE_SWS);
 	return -1;
 }
+DEF_WEAK(wcwidth);
 
 wctrans_t
 wctrans(const char *charclass)

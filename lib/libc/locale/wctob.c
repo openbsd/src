@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctob.c,v 1.2 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: wctob.c,v 1.3 2015/09/12 16:23:14 guenther Exp $ */
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
  * All rights reserved.
@@ -41,3 +41,4 @@ wctob(wint_t c)
 		return (EOF);
 	return ((unsigned char)*buf);
 }
+DEF_STRONG(wctob);

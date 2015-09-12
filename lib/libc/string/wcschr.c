@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcschr.c,v 1.4 2008/08/23 05:34:36 djm Exp $	*/
+/*	$OpenBSD: wcschr.c,v 1.5 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wcschr.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -48,3 +48,4 @@ wcschr(const wchar_t *s, wchar_t c)
 	}
 	/* NOTREACHED */
 }
+DEF_STRONG(wcschr);

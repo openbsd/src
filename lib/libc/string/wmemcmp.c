@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemcmp.c,v 1.4 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wmemcmp.c,v 1.5 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wmemcmp.c,v 1.3 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*-
@@ -48,3 +48,4 @@ wmemcmp(const wchar_t *s1, const wchar_t *s2, size_t n)
 	}
 	return 0;
 }
+DEF_STRONG(wmemcmp);

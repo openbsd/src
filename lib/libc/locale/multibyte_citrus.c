@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_citrus.c,v 1.5 2015/02/05 12:59:57 millert Exp $ */
+/*	$OpenBSD: multibyte_citrus.c,v 1.6 2015/09/12 16:23:14 guenther Exp $ */
 /*	$NetBSD: multibyte_amd1.c,v 1.7 2009/01/11 02:46:28 christos Exp $ */
 
 /*-
@@ -51,6 +51,7 @@ mbsinit(const mbstate_t *ps)
 	cc = rl->rl_citrus_ctype;
 	return (*cc->cc_ops->co_mbsinit)(ps);
 }
+DEF_STRONG(mbsinit);
 
 size_t
 mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
@@ -63,6 +64,7 @@ mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 	cc = _CurrentRuneLocale->rl_citrus_ctype;
 	return (*cc->cc_ops->co_mbrtowc)(pwc, s, n, _ps_to_private(ps));
 }
+DEF_STRONG(mbrtowc);
 
 size_t
 mbsrtowcs(wchar_t *dst, const char **src, size_t len, mbstate_t *ps)
@@ -73,6 +75,7 @@ mbsrtowcs(wchar_t *dst, const char **src, size_t len, mbstate_t *ps)
 		ps = &mbs;
 	return (mbsnrtowcs(dst, src, SIZE_MAX, len, ps));
 }
+DEF_STRONG(mbsrtowcs);
 
 size_t
 mbsnrtowcs(wchar_t *dst, const char **src, size_t nmc, size_t len,
@@ -87,6 +90,7 @@ mbsnrtowcs(wchar_t *dst, const char **src, size_t nmc, size_t len,
 	return (*cc->cc_ops->co_mbsnrtowcs)(dst, src, nmc, len,
 	    _ps_to_private(ps));
 }
+DEF_WEAK(mbsnrtowcs);
 
 size_t
 wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
@@ -99,6 +103,7 @@ wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 	cc = _CurrentRuneLocale->rl_citrus_ctype;
 	return (*cc->cc_ops->co_wcrtomb)(s, wc, _ps_to_private(ps));
 }
+DEF_STRONG(wcrtomb);
 
 size_t
 wcsrtombs(char *dst, const wchar_t **src, size_t len, mbstate_t *ps)
@@ -109,6 +114,7 @@ wcsrtombs(char *dst, const wchar_t **src, size_t len, mbstate_t *ps)
 		ps = &mbs;
 	return (wcsnrtombs(dst, src, SIZE_MAX, len, ps));
 }
+DEF_STRONG(wcsrtombs);
 
 size_t
 wcsnrtombs(char *dst, const wchar_t **src, size_t nwc, size_t len,
@@ -123,3 +129,4 @@ wcsnrtombs(char *dst, const wchar_t **src, size_t nwc, size_t len,
 	return (*cc->cc_ops->co_wcsnrtombs)(dst, src, nwc, len,
 	    _ps_to_private(ps));
 }
+DEF_WEAK(wcsnrtombs);

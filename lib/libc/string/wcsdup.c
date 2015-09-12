@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsdup.c,v 1.2 2014/10/08 05:27:17 deraadt Exp $	*/
+/*	$OpenBSD: wcsdup.c,v 1.3 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wcsdup.c,v 1.3 2008/05/26 13:17:48 haad Exp $	*/
 
 /*
@@ -29,3 +29,4 @@ wcsdup(const wchar_t *str)
 
 	return (wmemcpy(copy, str, len));
 }
+DEF_WEAK(wcsdup);

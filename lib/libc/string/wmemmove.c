@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemmove.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wmemmove.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wmemmove.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -38,3 +38,4 @@ wmemmove(wchar_t *d, const wchar_t *s, size_t n)
 
 	return (wchar_t *)memmove(d, s, n * sizeof(wchar_t));
 }
+DEF_STRONG(wmemmove);

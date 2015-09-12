@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcslen.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcslen.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
 /*	$NetBSD: wcslen.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -42,3 +42,4 @@ wcslen(const wchar_t *s)
 
 	return p - s;
 }
+DEF_STRONG(wcslen);

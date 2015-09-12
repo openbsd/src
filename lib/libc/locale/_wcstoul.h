@@ -1,4 +1,4 @@
-/*	$OpenBSD: _wcstoul.h,v 1.1 2005/07/01 08:59:27 espie Exp $	*/
+/*	$OpenBSD: _wcstoul.h,v 1.2 2015/09/12 16:23:14 guenther Exp $	*/
 /* $NetBSD: _wcstoul.h,v 1.2 2003/08/07 16:43:03 agc Exp $ */
 
 /*
@@ -114,3 +114,4 @@ FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
 		*endptr = (wchar_t *)(any ? s - 1 : nptr);
 	return (acc);
 }
+DEF_STRONG(FUNCNAME);
