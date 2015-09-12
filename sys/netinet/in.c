@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.122 2015/09/09 20:12:36 dlg Exp $	*/
+/*	$OpenBSD: in.c,v 1.123 2015/09/12 20:50:17 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -713,7 +713,7 @@ in_purgeaddr(struct ifaddr *ifa)
 int
 in_addhost(struct in_ifaddr *ia, struct sockaddr_in *dst)
 {
-	return rt_ifa_add(&ia->ia_ifa, RTF_UP|RTF_HOST, sintosa(dst));
+	return rt_ifa_add(&ia->ia_ifa, RTF_HOST, sintosa(dst));
 }
 
 int
@@ -731,13 +731,12 @@ in_insert_prefix(struct in_ifaddr *ia)
 	struct ifaddr *ifa = &ia->ia_ifa;
 	int error;
 
-	error = rt_ifa_add(ifa, RTF_UP | RTF_CLONING | RTF_CONNECTED,
-	    ifa->ifa_addr);
+	error = rt_ifa_add(ifa, RTF_CLONING | RTF_CONNECTED, ifa->ifa_addr);
 	if (error)
 		return (error);
 
 	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
-		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST | RTF_BROADCAST,
+		error = rt_ifa_add(ifa, RTF_HOST | RTF_BROADCAST,
 		    ifa->ifa_broadaddr);
 
 	return (error);

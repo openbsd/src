@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.46 2015/06/30 13:54:42 mpi Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.47 2015/09/12 20:50:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -124,7 +124,7 @@ mpe_clone_destroy(struct ifnet *ifp)
 
 	if (mpeif->sc_smpls.smpls_label) {
 		s = splsoftnet();
-		rt_ifa_del(&mpeif->sc_ifa, RTF_MPLS | RTF_UP,
+		rt_ifa_del(&mpeif->sc_ifa, RTF_MPLS,
 		    smplstosa(&mpeif->sc_smpls));
 		splx(s);
 	}
@@ -323,12 +323,12 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		s = splsoftnet();
 		if (ifm->sc_smpls.smpls_label) {
 			/* remove old MPLS route */
-			rt_ifa_del(&ifm->sc_ifa, RTF_MPLS | RTF_UP,
+			rt_ifa_del(&ifm->sc_ifa, RTF_MPLS,
 			    smplstosa(&ifm->sc_smpls));
 		}
 		/* add new MPLS route */
 		ifm->sc_smpls.smpls_label = shim.shim_label;
-		error = rt_ifa_add(&ifm->sc_ifa, RTF_MPLS | RTF_UP,
+		error = rt_ifa_add(&ifm->sc_ifa, RTF_MPLS,
 		    smplstosa(&ifm->sc_smpls));
 		splx(s);
 		if (error) {
@@ -342,7 +342,7 @@ mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
 			if (ifm->sc_smpls.smpls_label) {
 				s = splsoftnet();
-				rt_ifa_add(&ifm->sc_ifa, RTF_MPLS | RTF_UP,
+				rt_ifa_add(&ifm->sc_ifa, RTF_MPLS,
 				    smplstosa(&ifm->sc_smpls));
 				splx(s);
 			}

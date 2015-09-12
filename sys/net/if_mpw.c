@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.5 2015/09/10 16:41:30 mikeb Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.6 2015/09/12 20:50:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -128,7 +128,7 @@ mpw_clone_destroy(struct ifnet *ifp)
 
 	if (sc->sc_smpls.smpls_label) {
 		s = splsoftnet();
-		rt_ifa_del(&sc->sc_ifa, RTF_MPLS | RTF_UP,
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
 		    smplstosa(&sc->sc_smpls));
 		splx(s);
 	}
@@ -189,7 +189,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sin = (struct sockaddr_in *) &imr.imr_nexthop;
 		if (sin->sin_addr.s_addr == 0) {
 			s = splsoftnet();
-			if (rt_ifa_del(&sc->sc_ifa, RTF_MPLS | RTF_UP,
+			if (rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
 			    smplstosa(&sc->sc_smpls)) == 0)
 				sc->sc_smpls.smpls_label = 0;
 			splx(s);
@@ -220,11 +220,11 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (sc->sc_smpls.smpls_label != imr.imr_lshim.shim_label) {
 			s = splsoftnet();
 			if (sc->sc_smpls.smpls_label)
-				rt_ifa_del(&sc->sc_ifa, RTF_MPLS | RTF_UP,
+				rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
 				    smplstosa(&sc->sc_smpls));
 
 			sc->sc_smpls.smpls_label = imr.imr_lshim.shim_label;
-			error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS | RTF_UP,
+			error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS,
 			    smplstosa(&sc->sc_smpls));
 			splx(s);
 			if (error != 0) {

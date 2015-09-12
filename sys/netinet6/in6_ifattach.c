@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.95 2015/09/03 16:42:01 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.96 2015/09/12 20:50:17 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	}
 
 	s = splsoftnet();
-	error = rt_ifa_add(&ia6->ia_ifa, RTF_UP|RTF_CLONING|RTF_CONNECTED,
+	error = rt_ifa_add(&ia6->ia_ifa, RTF_CLONING | RTF_CONNECTED,
 	    ia6->ia_ifa.ifa_addr);
 	if (error) {
 		in6_purgeaddr(&ia6->ia_ifa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.151 2015/09/12 20:26:07 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.152 2015/09/12 20:50:17 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			 * called in rtrequest1 via ifa->ifa_rtrequest.
 			 */
 			bzero(&info, sizeof(info));
-			info.rti_flags = RTF_UP | RTF_HOST | RTF_LLINFO;
+			info.rti_flags = RTF_HOST | RTF_LLINFO;
 			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
 			info.rti_info[RTAX_GATEWAY] =
 			    (struct sockaddr *)ifp->if_sadl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.123 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.124 2015/09/12 20:50:17 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1723,7 +1723,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	struct nd_prefix *opr;
 	struct rtentry *rt;
 	char addr[INET6_ADDRSTRLEN];
-	u_long rtflags;
+	u_long rtflags = 0;
 	int error;
 
 	/* sanity check */
@@ -1788,9 +1788,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	mask6.sin6_addr = pr->ndpr_mask;
 
 	if (nd6_need_cache(ifp))
-		rtflags = (RTF_UP | RTF_CLONING | RTF_CONNECTED);
-	else
-		rtflags = RTF_UP;
+		rtflags = RTF_CLONING | RTF_CONNECTED;
 
 	bzero(&info, sizeof(info));
 	info.rti_flags = rtflags;

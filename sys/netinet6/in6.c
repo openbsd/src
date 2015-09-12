@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.174 2015/09/10 16:39:39 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.175 2015/09/12 20:50:17 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -501,8 +501,8 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 
 		s = splsoftnet();
-		error = rt_ifa_add(&ia6->ia_ifa,
-		    RTF_UP|RTF_CLONING|RTF_CONNECTED, ia6->ia_ifa.ifa_addr);
+		error = rt_ifa_add(&ia6->ia_ifa, RTF_CLONING | RTF_CONNECTED,
+		    ia6->ia_ifa.ifa_addr);
 		if (error) {
 			in6_purgeaddr(&ia6->ia_ifa);
 			splx(s);
@@ -807,7 +807,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
 			info.rti_info[RTAX_IFA] = sin6tosa(&ia6->ia_addr);
 			/* XXX: we need RTF_CLONING to fake nd6_rtrequest */
-			info.rti_flags = RTF_UP | RTF_CLONING;
+			info.rti_flags = RTF_CLONING;
 			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, NULL,
 			    ifp->if_rdomain);
 			if (error)
@@ -863,7 +863,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia6->ia_addr);
 			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
 			info.rti_info[RTAX_IFA] = sin6tosa(&ia6->ia_addr);
-			info.rti_flags = RTF_UP | RTF_CLONING;
+			info.rti_flags = RTF_CLONING;
 			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, NULL,
 			    ifp->if_rdomain);
 			if (error)
@@ -1255,7 +1255,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	if ((ifp->if_flags & IFF_POINTOPOINT) && plen == 128 &&
 	    ia6->ia_dstaddr.sin6_family == AF_INET6) {
 		ifa = &ia6->ia_ifa;
-		error = rt_ifa_add(ifa, RTF_UP | RTF_HOST, ifa->ifa_dstaddr);
+		error = rt_ifa_add(ifa, RTF_HOST, ifa->ifa_dstaddr);
 		if (error != 0)
 			return (error);
 		ia6->ia_flags |= IFA_ROUTE;
