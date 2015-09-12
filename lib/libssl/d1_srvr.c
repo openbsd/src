@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.60 2015/09/12 13:25:26 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.61 2015/09/12 13:35:34 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -440,7 +440,7 @@ dtls1_accept(SSL *s)
 		case SSL3_ST_SW_SRVR_DONE_A:
 		case SSL3_ST_SW_SRVR_DONE_B:
 			dtls1_start_timer(s);
-			ret = dtls1_send_server_done(s);
+			ret = ssl3_send_server_done(s);
 			if (ret <= 0)
 				goto end;
 			s->s3->tmp.next_state = SSL3_ST_SR_CERT_A;
@@ -696,20 +696,6 @@ dtls1_send_hello_verify_request(SSL *s)
 	}
 
 	/* s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B */
-	return (ssl3_handshake_write(s));
-}
-
-int
-dtls1_send_server_done(SSL *s)
-{
-	if (s->state == SSL3_ST_SW_SRVR_DONE_A) {
-		ssl3_handshake_msg_start(s, SSL3_MT_SERVER_DONE);
-		ssl3_handshake_msg_finish(s, 0);
-
-		s->state = SSL3_ST_SW_SRVR_DONE_B;
-	}
-
-	/* SSL3_ST_SW_SRVR_DONE_B */
 	return (ssl3_handshake_write(s));
 }
 
