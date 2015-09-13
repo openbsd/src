@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.4 2015/09/13 12:27:14 jsing Exp $ */
+/* $OpenBSD: ech_key.c,v 1.5 2015/09/13 14:11:57 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -162,7 +162,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	if (outlen < buflen) {
+	if (KDF == NULL && outlen < buflen) {
 		/* The resulting key would be truncated. */
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KEY_TRUNCATION);
 		goto err;
@@ -178,14 +178,14 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		goto err;
 	}
 
-	if (KDF != 0) {
+	if (KDF != NULL) {
 		if (KDF(buf, buflen, out, &outlen) == NULL) {
 			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KDF_FAILED);
 			goto err;
 		}
 		ret = outlen;
 	} else {
-		/* No KDF, just copy as much as we can and zero the rest. */
+		/* No KDF, just copy out the key and zero the rest. */
 		if (outlen > buflen) {
 			memset(out + buflen, 0, outlen - buflen);
 			outlen = buflen;
