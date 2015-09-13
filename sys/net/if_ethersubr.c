@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.224 2015/09/12 13:34:12 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.225 2015/09/13 10:42:32 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -296,6 +296,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	struct ether_header *eh_tmp;
 #endif
 
+	ac = (struct arpcom *)ifp;
 	eh = mtod(m, struct ether_header *);
 	m_adj(m, ETHER_HDR_LEN);
 
@@ -305,7 +306,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		 * if it came from us.
 		 */
 		if ((ifp->if_flags & IFF_SIMPLEX) == 0) {
-			if (memcmp(LLADDR(ifp->if_sadl), eh->ether_shost,
+			if (memcmp(ac->ac_enaddr, eh->ether_shost,
 			    ETHER_ADDR_LEN) == 0) {
 				m_freem(m);
 				return (1);
@@ -319,10 +320,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	}
-
-	etype = ntohs(eh->ether_type);
-
-	ac = (struct arpcom *)ifp;
 
 	/*
 	 * If packet has been filtered by the bpf listener, drop it now
@@ -346,6 +343,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		}
 	}
 
+	etype = ntohs(eh->ether_type);
+
 decapsulate:
 	switch (etype) {
 	case ETHERTYPE_IP:
@@ -361,7 +360,7 @@ decapsulate:
 	case ETHERTYPE_REVARP:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
-		revarpinput(m);	/* XXX queue? */
+		inq = &rarpintrq;
 		return (1);
 
 #ifdef INET6

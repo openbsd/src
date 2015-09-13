@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.58 2015/09/10 07:43:18 mpi Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.59 2015/09/13 10:42:32 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -189,6 +189,7 @@ extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 extern struct niqueue arpintrq;
+extern struct niqueue rarpintrq;
 
 void	arpwhohas(struct arpcom *, struct in_addr *);
 void	arpintr(void);
@@ -273,8 +274,6 @@ extern struct ifnet *revarp_ifp;
 
 void arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
 int arpproxy(struct in_addr, unsigned int);
-void revarpinput(struct mbuf *);
-void in_revarpinput(struct mbuf *);
 void revarprequest(struct ifnet *);
 int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 int revarpwhoami(struct in_addr *, struct ifnet *);

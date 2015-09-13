@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.166 2015/09/12 20:26:07 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.167 2015/09/13 10:42:32 dlg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -95,11 +95,14 @@ void arptfree(struct llinfo_arp *);
 void arptimer(void *);
 struct rtentry *arplookup(u_int32_t, int, int, u_int);
 void in_arpinput(struct mbuf *);
+void revarpinput(struct mbuf *);
+void in_revarpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	pool arp_pool;		/* pool for llinfo_arp structures */
 /* XXX hate magic numbers */
 struct	niqueue arpintrq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
+struct	niqueue rarpintrq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
 int	arpinit_done;
@@ -498,6 +501,9 @@ arpintr(void)
 		}
 		m_freem(m);
 	}
+
+	while ((m = niq_dequeue(&rarpintrq)) != NULL)
+		revarpinput(m);
 }
 
 /*
