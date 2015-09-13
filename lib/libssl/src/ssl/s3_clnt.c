@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.133 2015/09/12 20:56:14 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.134 2015/09/13 12:39:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1975,7 +1975,7 @@ ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	unsigned char *encodedPoint = NULL;
 	unsigned long alg_k;
 	int encoded_pt_len = 0;
-	int field_size = 0;
+	int key_size;
 	EC_KEY *tkey;
 	int ret = -1;
 	int n;
@@ -2035,13 +2035,12 @@ ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	 * Use the 'p' output buffer for the ECDH key, but make sure to clear
 	 * it out afterwards.
 	 */
-	field_size = EC_GROUP_get_degree(srvr_group);
-	if (field_size <= 0) {
+	key_size = ECDH_size(clnt_ecdh);
+	if (key_size <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
 	}
-	n = ECDH_compute_key(p, (field_size + 7) / 8, srvr_ecpoint, clnt_ecdh,
-	    NULL);
+	n = ECDH_compute_key(p, key_size, srvr_ecpoint, clnt_ecdh, NULL);
 	if (n <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;

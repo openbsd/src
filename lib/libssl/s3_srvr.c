@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.122 2015/09/13 09:20:19 jsing Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.123 2015/09/13 12:39:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1778,7 +1778,7 @@ ssl3_get_client_key_exchange(SSL *s)
 
 	if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
 		int ret = 1;
-		int field_size = 0;
+		int key_size;
 		const EC_KEY   *tkey;
 		const EC_GROUP *group;
 		const BIGNUM *priv_key;
@@ -1891,14 +1891,14 @@ ssl3_get_client_key_exchange(SSL *s)
 		}
 
 		/* Compute the shared pre-master secret */
-		field_size = EC_GROUP_get_degree(group);
-		if (field_size <= 0) {
+		key_size = ECDH_size(srvr_ecdh);
+		if (key_size <= 0) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 			    ERR_R_ECDH_LIB);
 			goto err;
 		}
-		i = ECDH_compute_key(p, (field_size + 7)/8, clnt_ecpoint,
-		    srvr_ecdh, NULL);
+		i = ECDH_compute_key(p, key_size, clnt_ecpoint, srvr_ecdh,
+		    NULL);
 		if (i <= 0) {
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
 			    ERR_R_ECDH_LIB);
