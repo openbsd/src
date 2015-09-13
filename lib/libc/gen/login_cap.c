@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.30 2014/04/01 02:16:37 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.31 2015/09/13 19:58:50 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -150,6 +150,7 @@ login_getclass(char *class)
 	}
 	return (lc);
 }
+DEF_WEAK(login_getclass);
 
 char *
 login_getstyle(login_cap_t *lc, char *style, char *atype)
@@ -214,6 +215,7 @@ login_getstyle(login_cap_t *lc, char *style, char *atype)
 		free(f2);
 	return (lc->lc_style);
 }
+DEF_WEAK(login_getstyle);
 
 char *
 login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
@@ -250,6 +252,7 @@ login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
 		free(res);
 	return(str);
 }
+DEF_WEAK(login_getcapstr);
 
 quad_t
 login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
@@ -338,6 +341,7 @@ invalid:
 	free(sres);
 	return (q);
 }
+DEF_WEAK(login_getcaptime);
 
 quad_t
 login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
@@ -395,6 +399,7 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	free(res);
 	return (q);
 }
+DEF_WEAK(login_getcapnum);
 
 quad_t
 login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
@@ -446,6 +451,7 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	free(res);
 	return (q);
 }
+DEF_WEAK(login_getcapsize);
 
 int
 login_getcapbool(login_cap_t *lc, char *cap, u_int def)
@@ -455,6 +461,7 @@ login_getcapbool(login_cap_t *lc, char *cap, u_int def)
 
 	return (cgetcap(lc->lc_cap, cap, ':') != NULL);
 }
+DEF_WEAK(login_getcapbool);
 
 void
 login_close(login_cap_t *lc)
@@ -469,6 +476,7 @@ login_close(login_cap_t *lc)
 		free(lc);
 	}
 }
+DEF_WEAK(login_close);
 
 #define	CTIME	1
 #define	CSIZE	2
@@ -683,6 +691,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	login_close(flc);
 	return (0);
 }
+DEF_WEAK(setusercontext);
 
 /*
  * Look up "path" for this user in login.conf and replace whitespace
@@ -1006,6 +1015,7 @@ secure_path(char *path)
 	}
 	return (0);
 }
+DEF_WEAK(secure_path);
 
 /*
  * Check whether or not a tilde in a string should be expanded.
