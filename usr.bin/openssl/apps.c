@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.35 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: apps.c,v 1.36 2015/09/13 12:41:01 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -142,7 +142,6 @@
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/safestack.h>
-#include <openssl/ui.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -154,7 +153,7 @@ typedef struct {
 	unsigned long mask;
 } NAME_EX_TBL;
 
-static UI_METHOD *ui_method = NULL;
+UI_METHOD *ui_method = NULL;
 
 static int set_table_opts(unsigned long *flags, const char *arg,
     const NAME_EX_TBL *in_tbl);
@@ -297,82 +296,56 @@ dump_cert_text(BIO *out, X509 *x)
 	return 0;
 }
 
-static int
+int
 ui_open(UI *ui)
 {
 	return UI_method_get_opener(UI_OpenSSL()) (ui);
 }
 
-static int
+int
 ui_read(UI *ui, UI_STRING *uis)
 {
+	const char *password;
+	int string_type;
+
 	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD &&
 	    UI_get0_user_data(ui)) {
-		switch (UI_get_string_type(uis)) {
-		case UIT_PROMPT:
-		case UIT_VERIFY:
-			{
-				const char *password =
-				    ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-				if (password && password[0] != '\0') {
-					UI_set_result(ui, uis, password);
-					return 1;
-				}
+		string_type = UI_get_string_type(uis);
+		if (string_type == UIT_PROMPT || string_type == UIT_VERIFY) {
+			password =
+			    ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
+			if (password && password[0] != '\0') {
+				UI_set_result(ui, uis, password);
+				return 1;
 			}
-			break;
-		default:
-			break;
 		}
 	}
 	return UI_method_get_reader(UI_OpenSSL()) (ui, uis);
 }
 
-static int
+int
 ui_write(UI *ui, UI_STRING *uis)
 {
+	const char *password;
+	int string_type;
+
 	if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD &&
 	    UI_get0_user_data(ui)) {
-		switch (UI_get_string_type(uis)) {
-		case UIT_PROMPT:
-		case UIT_VERIFY:
-			{
-				const char *password =
-				    ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-				if (password && password[0] != '\0')
-					return 1;
-			}
-			break;
-		default:
-			break;
+		string_type = UI_get_string_type(uis);
+		if (string_type == UIT_PROMPT || string_type == UIT_VERIFY) {
+			password =
+			    ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
+			if (password && password[0] != '\0')
+				return 1;
 		}
 	}
 	return UI_method_get_writer(UI_OpenSSL()) (ui, uis);
 }
 
-static int
+int
 ui_close(UI *ui)
 {
 	return UI_method_get_closer(UI_OpenSSL()) (ui);
-}
-
-int
-setup_ui_method(void)
-{
-	ui_method = UI_create_method("OpenSSL application user interface");
-	UI_method_set_opener(ui_method, ui_open);
-	UI_method_set_reader(ui_method, ui_read);
-	UI_method_set_writer(ui_method, ui_write);
-	UI_method_set_closer(ui_method, ui_close);
-	return 0;
-}
-
-void
-destroy_ui_method(void)
-{
-	if (ui_method) {
-		UI_destroy_method(ui_method);
-		ui_method = NULL;
-	}
 }
 
 int

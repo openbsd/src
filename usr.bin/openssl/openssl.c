@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.9 2015/09/12 19:34:07 lteo Exp $ */
+/* $OpenBSD: openssl.c,v 1.10 2015/09/13 12:41:01 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -405,14 +405,14 @@ openssl_startup(void)
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	setup_ui_method();
+	setup_ui();
 }
 
 static void
 openssl_shutdown(void)
 {
 	CONF_modules_unload(1);
-	destroy_ui_method();
+	destroy_ui();
 	OBJ_cleanup();
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();

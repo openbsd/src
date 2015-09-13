@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.15 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: apps.h,v 1.16 2015/09/13 12:41:01 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,6 +120,7 @@
 #include <openssl/ossl_typ.h>
 #include <openssl/txt_db.h>
 #include <openssl/x509.h>
+#include <openssl/ui.h>
 
 #ifndef OPENSSL_NO_OCSP
 #include <openssl/ocsp.h>
@@ -142,8 +143,14 @@ typedef struct pw_cb_data {
 
 int password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 
-int setup_ui_method(void);
-void destroy_ui_method(void);
+int setup_ui(void);
+void destroy_ui(void);
+
+extern UI_METHOD *ui_method;
+int ui_open(UI *ui);
+int ui_read(UI *ui, UI_STRING *uis);
+int ui_write(UI *ui, UI_STRING *uis);
+int ui_close(UI *ui);
 
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);
