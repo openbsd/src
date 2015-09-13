@@ -100,14 +100,12 @@ KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 static int
 test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 {
-	EC_KEY *a = NULL;
-	EC_KEY *b = NULL;
-	BIGNUM *x_a = NULL, *y_a = NULL,
-	    *x_b = NULL, *y_b = NULL;
-	char buf[12];
+	BIGNUM *x_a = NULL, *y_a = NULL, *x_b = NULL, *y_b = NULL;
+	EC_KEY *a = NULL, *b = NULL;
+	const EC_GROUP *group;
 	unsigned char *abuf = NULL, *bbuf = NULL;
 	int i, alen, blen, aout, bout, ret = 0;
-	const EC_GROUP *group;
+	char buf[12];
 
 	a = EC_KEY_new_by_curve_name(nid);
 	b = EC_KEY_new_by_curve_name(nid);
@@ -217,6 +215,7 @@ test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 		BIO_printf(out, " ok\n");
 		ret = 1;
 	}
+
 err:
 	ERR_print_errors_fp(stderr);
 
@@ -365,7 +364,7 @@ ecdh_kat(BIO *out, const char *cname, int nid,
 	key2 = mk_eckey(nid, k2, k2_len);
 	if (!key1 || !key2)
 		goto err;
-	Ztmplen = (EC_GROUP_get_degree(EC_KEY_get0_group(key1)) + 7)/8;
+	Ztmplen = ECDH_size(key1);
 	if (Ztmplen != Zlen)
 		goto err;
 	Ztmp = malloc(Ztmplen);
