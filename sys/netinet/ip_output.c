@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.296 2015/09/12 20:26:07 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.297 2015/09/13 13:57:07 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -201,7 +201,10 @@ reroute:
 		}
 
 		ia = ifatoia(ro->ro_rt->rt_ifa);
-		ifp = if_ref(ro->ro_rt->rt_ifp);
+		if (ISSET(ro->ro_rt->rt_flags, RTF_LOCAL))
+			ifp = if_ref(lo0ifp);
+		else
+			ifp = if_ref(ro->ro_rt->rt_ifp);
 		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
 			mtu = ifp->if_mtu;
 		ro->ro_rt->rt_use++;

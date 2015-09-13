@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.187 2015/09/12 20:26:07 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.188 2015/09/13 13:57:07 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -550,7 +550,10 @@ reroute:
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		ifp = if_ref(rt->rt_ifp);
+		if (ISSET(rt->rt_flags, RTF_LOCAL))
+			ifp = if_ref(lo0ifp);
+		else
+			ifp = if_ref(rt->rt_ifp);
 	} else {
 		*dst = dstsock;
 	}
