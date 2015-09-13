@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat-specialize.h,v 1.1 2006/11/06 15:11:37 drahn Exp $	*/
+/*	$OpenBSD: softfloat-specialize.h,v 1.2 2015/09/13 14:23:43 miod Exp $	*/
 /*	$NetBSD: softfloat-specialize,v 1.3 2002/05/12 13:12:45 bjh21 Exp $	*/
 
 /* This is a derivative work. */
@@ -64,6 +64,7 @@ void float_raise( fp_except flags )
 	raise( SIGFPE );
     }
 }
+DEF_STRONG(float_raise);
 
 /*
 -------------------------------------------------------------------------------
