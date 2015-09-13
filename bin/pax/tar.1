@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.58 2015/05/18 20:26:16 czarkoff Exp $
+.\"	$OpenBSD: tar.1,v 1.59 2015/09/13 15:42:11 guenther Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2015 $
+.Dd $Mdocdate: September 13 2015 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -192,8 +192,8 @@ The default is to strip leading slashes.
 Preserve user and group ID as well as file mode regardless of
 the current
 .Xr umask 2 .
-The setuid and setgid bits are only preserved if the user is
-the superuser.
+The setuid and setgid bits are only preserved if the user and group ID
+could be preserved.
 Only meaningful in conjunction with the
 .Fl x
 flag.
