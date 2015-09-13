@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.38 2015/09/13 10:02:49 miod Exp $ */
+/* $OpenBSD: crypto.h,v 1.39 2015/09/13 16:56:11 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -493,9 +493,6 @@ void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 /* die if we have to */
 void OpenSSLDie(const char *file, int line, const char *assertion);
 #define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
-
-unsigned long *OPENSSL_ia32cap_loc(void);
-#define OPENSSL_ia32cap (*(OPENSSL_ia32cap_loc()))
 
 uint64_t OPENSSL_cpu_caps(void);
 

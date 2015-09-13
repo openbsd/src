@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.36 2015/09/13 10:02:49 miod Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.37 2015/09/13 16:56:11 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -628,18 +628,6 @@ CRYPTO_get_lock_name(int type)
 	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
 unsigned int  OPENSSL_ia32cap_P[2];
-unsigned long *
-OPENSSL_ia32cap_loc(void)
-{
-	if (sizeof(long) == 4)
-		/*
-		 * If 32-bit application pulls address of OPENSSL_ia32cap_P[0]
-		 * clear second element to maintain the illusion that vector
-		 * is 32-bit.
-		 */
-		OPENSSL_ia32cap_P[1] = 0;
-	return (unsigned long *)OPENSSL_ia32cap_P;
-}
 
 uint64_t
 OPENSSL_cpu_caps(void)
