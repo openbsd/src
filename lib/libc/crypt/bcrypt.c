@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.53 2015/07/18 00:56:37 tedu Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.54 2015/09/13 12:42:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -138,7 +138,7 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	if (!isdigit((unsigned char)salt[0]) ||
 	    !isdigit((unsigned char)salt[1]) || salt[2] != '$')
 		goto inval;
-	logr = atoi(salt);
+	logr = (salt[1] - '0') + ((salt[0] - '0') * 10);
 	if (logr < BCRYPT_MINLOGROUNDS || logr > 31)
 		goto inval;
 	/* Computer power doesn't increase linearly, 2^x should be fine */
