@@ -221,18 +221,13 @@ err:
 
 	free(abuf);
 	free(bbuf);
-	if (x_a)
-		BN_free(x_a);
-	if (y_a)
-		BN_free(y_a);
-	if (x_b)
-		BN_free(x_b);
-	if (y_b)
-		BN_free(y_b);
-	if (b)
-		EC_KEY_free(b);
-	if (a)
-		EC_KEY_free(a);
+	BN_free(x_a);
+	BN_free(y_a);
+	BN_free(x_b);
+	BN_free(y_b);
+	EC_KEY_free(b);
+	EC_KEY_free(a);
+
 	return (ret);
 }
 
@@ -310,11 +305,12 @@ static const unsigned char bp512_Z[] = {
 static EC_KEY *
 mk_eckey(int nid, const unsigned char *p, size_t plen)
 {
-	int ok = 0;
 	EC_KEY *k = NULL;
 	BIGNUM *priv = NULL;
 	EC_POINT *pub = NULL;
 	const EC_GROUP *grp;
+	int ok = 0;
+
 	k = EC_KEY_new_by_curve_name(nid);
 	if (!k)
 		goto err;
@@ -333,15 +329,13 @@ mk_eckey(int nid, const unsigned char *p, size_t plen)
 		goto err;
 	ok = 1;
 err:
-	if (priv)
-		BN_clear_free(priv);
-	if (pub)
-		EC_POINT_free(pub);
-	if (ok)
-		return k;
-	else if (k)
+	BN_clear_free(priv);
+	EC_POINT_free(pub);
+	if (!ok) {
 		EC_KEY_free(k);
-	return NULL;
+		k = NULL;
+	}
+	return (k);
 }
 
 /* Known answer test: compute shared secret and check it matches
@@ -380,18 +374,19 @@ ecdh_kat(BIO *out, const char *cname, int nid,
 	if (memcmp(Ztmp, Z, Zlen))
 		goto err;
 	rv = 1;
+
 err:
-	if (key1)
-		EC_KEY_free(key1);
-	if (key2)
-		EC_KEY_free(key2);
-	free(Ztmp);
 	if (rv)
 		BIO_puts(out, " ok\n");
 	else {
 		fprintf(stderr, "Error in ECDH routines\n");
 		ERR_print_errors_fp(stderr);
 	}
+
+	EC_KEY_free(key1);
+	EC_KEY_free(key2);
+	free(Ztmp);
+
 	return rv;
 }
 
@@ -473,8 +468,7 @@ main(int argc, char *argv[])
 
 err:
 	ERR_print_errors_fp(stderr);
-	if (ctx)
-		BN_CTX_free(ctx);
+	BN_CTX_free(ctx);
 	BIO_free(out);
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
