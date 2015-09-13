@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.16 2013/05/17 18:26:37 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.17 2015/09/13 11:47:59 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -83,6 +83,8 @@ void    intr_establish(int, struct intrhand *);
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 
 #define	IPL_MPSAFE	0x100
+
+void	 intr_barrier(void *);
 
 void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_disestablish(void *);
