@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.37 2015/09/10 16:35:15 jsing Exp $ */
+/* $OpenBSD: crypto.h,v 1.38 2015/09/13 10:02:49 miod Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -496,6 +496,9 @@ void OpenSSLDie(const char *file, int line, const char *assertion);
 
 unsigned long *OPENSSL_ia32cap_loc(void);
 #define OPENSSL_ia32cap (*(OPENSSL_ia32cap_loc()))
+
+uint64_t OPENSSL_cpu_caps(void);
+
 int OPENSSL_isservice(void);
 
 void OPENSSL_init(void);
