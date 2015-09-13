@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.180 2015/07/19 06:57:27 guenther Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.181 2015/09/13 11:13:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -68,8 +68,8 @@ void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
 void		 show_interface_head(void);
 int		 ift2ifm(int);
-const char *	 get_media_descr(int);
-const char *	 get_linkstate(int, int);
+const char *	 get_media_descr(uint64_t);
+const char *	 get_linkstate(uint64_t, int);
 const char *	 get_baudrate(u_int64_t, char *);
 int		 show_interface_msg(struct imsg *);
 void		 show_rib_summary_head(void);
@@ -1113,7 +1113,7 @@ ift2ifm(int media_type)
 }
 
 const char *
-get_media_descr(int media_type)
+get_media_descr(uint64_t media_type)
 {
 	const struct ifmedia_description	*p;
 
@@ -1125,7 +1125,7 @@ get_media_descr(int media_type)
 }
 
 const char *
-get_linkstate(int media_type, int link_state)
+get_linkstate(uint64_t media_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];

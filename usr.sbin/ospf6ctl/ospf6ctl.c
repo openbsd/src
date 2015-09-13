@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.38 2013/11/13 22:52:41 sthen Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.39 2015/09/13 11:13:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -67,8 +67,8 @@ const char	*print_ospf_rtr_flags(u_int8_t);
 int		 show_rib_detail_msg(struct imsg *);
 void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
-const char *	 get_media_descr(int);
-const char *	 get_linkstate(int, int);
+const char *	 get_media_descr(uint64_t);
+const char *	 get_linkstate(uint64_t, int);
 void		 print_baudrate(u_int64_t);
 
 struct imsgbuf	*ibuf;
@@ -1311,7 +1311,7 @@ const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
 const char *
-get_media_descr(int media_type)
+get_media_descr(uint64_t media_type)
 {
 	const struct ifmedia_description	*p;
 
@@ -1323,7 +1323,7 @@ get_media_descr(int media_type)
 }
 
 const char *
-get_linkstate(int media_type, int link_state)
+get_linkstate(uint64_t media_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];

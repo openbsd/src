@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.12 2013/11/14 20:48:52 deraadt Exp $
+/*	$OpenBSD: ripctl.c,v 1.13 2015/09/13 11:13:12 deraadt Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,7 @@
 
 __dead void	 usage(void);
 const char	*fmt_timeframe_core(time_t);
-const char	*get_linkstate(int, int);
+const char	*get_linkstate(uint64_t, int);
 int		 show_interface_msg(struct imsg *);
 int		 get_ifms_type(int);
 int		 show_rib_msg(struct imsg *);
@@ -49,7 +49,7 @@ void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
 void		 show_interface_head(void);
 int		 show_fib_interface_msg(struct imsg *);
-const char	*get_media_descr(int);
+const char	*get_media_descr(uint64_t);
 void		 print_baudrate(u_int64_t);
 
 struct imsgbuf	*ibuf;
@@ -477,7 +477,7 @@ const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
 const char *
-get_media_descr(int media_type)
+get_media_descr(uint64_t media_type)
 {
 	const struct ifmedia_description	*p;
 
@@ -489,7 +489,7 @@ get_media_descr(int media_type)
 }
 
 const char *
-get_linkstate(int media_type, int link_state)
+get_linkstate(uint64_t media_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];

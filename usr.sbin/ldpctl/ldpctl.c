@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.21 2015/07/21 09:34:57 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.22 2015/09/13 11:13:12 deraadt Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -42,7 +42,7 @@
 
 __dead void	 usage(void);
 const char	*fmt_timeframe_core(time_t);
-const char	*get_linkstate(int, int);
+const char	*get_linkstate(uint64_t, int);
 int		 show_interface_msg(struct imsg *);
 int		 show_discovery_msg(struct imsg *);
 int		 get_ifms_type(int);
@@ -54,7 +54,7 @@ void		 show_interface_head(void);
 int		 show_fib_interface_msg(struct imsg *);
 int		 show_l2vpn_pw_msg(struct imsg *);
 int		 show_l2vpn_binding_msg(struct imsg *);
-const char	*get_media_descr(int);
+const char	*get_media_descr(uint64_t);
 void		 print_baudrate(u_int64_t);
 const char	*print_pw_type(u_int16_t);
 
@@ -618,7 +618,7 @@ const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
 const char *
-get_media_descr(int media_type)
+get_media_descr(uint64_t media_type)
 {
 	const struct ifmedia_description	*p;
 
@@ -630,7 +630,7 @@ get_media_descr(int media_type)
 }
 
 const char *
-get_linkstate(int media_type, int link_state)
+get_linkstate(uint64_t media_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];
