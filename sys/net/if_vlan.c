@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.141 2015/09/13 09:46:45 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.142 2015/09/13 10:02:36 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -57,8 +57,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/atomic.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 
 #include <net/if.h>
@@ -159,7 +157,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	else
 		ifv->ifv_type = ETHERTYPE_VLAN;
 
-	ifv->ifv_refs = 1;
+	refcnt_init(&ifv->ifv_refcnt);
 
 	ifp->if_start = vlan_start;
 	ifp->if_ioctl = vlan_ioctl;
@@ -177,7 +175,7 @@ vlan_ref(void *null, void *v)
 {
 	struct ifvlan *ifv = v;
 
-	atomic_inc_int(&ifv->ifv_refs);
+	refcnt_take(&ifv->ifv_refcnt);
 }
 
 void
@@ -185,31 +183,18 @@ vlan_unref(void *null, void *v)
 {
 	struct ifvlan *ifv = v;
 
-	if (atomic_dec_int_nv(&ifv->ifv_refs) == 0)
-		wakeup(&ifv->ifv_refs);
+	refcnt_rele_wake(&ifv->ifv_refcnt);
 }
 
 int
 vlan_clone_destroy(struct ifnet *ifp)
 {
 	struct ifvlan	*ifv = ifp->if_softc;
-	struct sleep_state sls;
-	u_int refs;
 
 	vlan_unconfig(ifp, NULL);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	refs = atomic_dec_int_nv(&ifv->ifv_refs);
-	while (refs) {
-		sleep_setup(&sls, &ifv->ifv_refs, PWAIT, "vlandel");
-
-		membar_consumer();
-		refs = ifv->ifv_refs;
-
-		sleep_finish(&sls, refs);
-	}
-
+	refcnt_finalize(&ifv->ifv_refcnt, "vlanrefs");
 	free(ifv, M_DEVBUF, sizeof(*ifv));
 
 	return (0);
