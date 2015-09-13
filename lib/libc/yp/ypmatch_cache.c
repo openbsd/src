@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch_cache.c,v 1.16 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: ypmatch_cache.c,v 1.17 2015/09/13 20:57:28 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -209,6 +209,7 @@ out:
 	_yp_unbind(ysd);
 	return r;
 }
+DEF_WEAK(yp_match);
 
 int
 yp_next(const char *indomain, const char *inmap, const char *inkey,
@@ -268,3 +269,4 @@ again:
 	_yp_unbind(ysd);
 	return r;
 }
+DEF_WEAK(yp_next);

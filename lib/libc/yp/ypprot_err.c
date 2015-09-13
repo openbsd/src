@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypprot_err.c,v 1.8 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: ypprot_err.c,v 1.9 2015/09/13 20:57:28 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -60,3 +60,4 @@ ypprot_err(unsigned int incode)
 	}
 	return YPERR_YPERR;
 }
+DEF_WEAK(ypprot_err);

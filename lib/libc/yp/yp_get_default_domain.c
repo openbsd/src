@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_get_default_domain.c,v 1.8 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: yp_get_default_domain.c,v 1.9 2015/09/13 20:57:28 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -46,3 +46,4 @@ yp_get_default_domain(char **domp)
 		return YPERR_NODOM;
 	return 0;
 }
+DEF_WEAK(yp_get_default_domain);
