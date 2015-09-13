@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.215 2015/09/13 12:53:08 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.216 2015/09/13 14:38:17 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ void disk_attach_callback(void *);
 
 int readdisksector(struct buf *, void (*)(struct buf *), struct disklabel *,
     u_int64_t);
+int spoofgptlabel(struct buf *, void (*)(struct buf *), struct disklabel *);
 
 int gpt_chk_mbr(struct dos_partition *, struct disklabel *);
 int gpt_chk_hdr(struct gpt_header *, struct disklabel *);
