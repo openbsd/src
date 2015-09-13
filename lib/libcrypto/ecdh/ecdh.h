@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.h,v 1.3 2015/09/13 10:46:20 jsing Exp $ */
+/* $OpenBSD: ecdh.h,v 1.4 2015/09/13 11:49:44 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -116,6 +116,7 @@ void ERR_load_ECDH_strings(void);
 
 /* Reason codes. */
 #define ECDH_R_KDF_FAILED				 102
+#define ECDH_R_KEY_TRUNCATION				 104
 #define ECDH_R_NON_FIPS_METHOD				 103
 #define ECDH_R_NO_PRIVATE_VALUE				 100
 #define ECDH_R_POINT_ARITHMETIC_FAILURE			 101

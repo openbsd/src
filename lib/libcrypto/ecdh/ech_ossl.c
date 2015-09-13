@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_ossl.c,v 1.10 2015/09/13 10:46:20 jsing Exp $ */
+/* $OpenBSD: ech_ossl.c,v 1.11 2015/09/13 11:49:44 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -115,7 +115,8 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	unsigned char *buf = NULL;
 
 	if (outlen > INT_MAX) {
-		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,ERR_R_MALLOC_FAILURE); /* sort of, anyway */
+		/* Sort of, anyway. */
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
 		return -1;
 	}
 
@@ -171,6 +172,11 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
+	if (outlen < buflen) {
+		/* The resulting key would be truncated. */
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KEY_TRUNCATION);
+		goto err;
+	}
 	if ((buf = malloc(buflen)) == NULL) {
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -189,9 +195,11 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		}
 		ret = outlen;
 	} else {
-		/* no KDF, just copy as much as we can */
-		if (outlen > buflen)
+		/* No KDF, just copy as much as we can and zero the rest. */
+		if (outlen > buflen) {
+			memset(out + buflen, 0, outlen - buflen);
 			outlen = buflen;
+		}
 		memcpy(out, buf, outlen);
 		ret = outlen;
 	}
