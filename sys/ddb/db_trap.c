@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.22 2015/09/12 10:27:45 deraadt Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.23 2015/09/13 08:28:10 guenther Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -70,17 +70,24 @@ db_trap(int type, int code)
 		db_print_loc_and_inst(db_dot);
 
 		if (panicstr != NULL) {
-			/* show on-proc threads */
-			db_show_all_procs(0, 0, 0, "o");
+			static int ddb_msg_shown;
+
+			if (! ddb_msg_shown) {
+				/* show on-proc threads */
+				db_show_all_procs(0, 0, 0, "o");
+			}
 			/* then the backtrace */
 			db_stack_trace_print(db_dot, 0, 14 /* arbitrary */, "",
 			    db_printf);
 
 			if (db_print_position() != 0)
 				db_printf("\n");
-			db_printf(
+			if (! ddb_msg_shown) {
+				db_printf(
 "http://www.openbsd.org/ddb.html describes the minimum info required in bug\n"
 "reports.  Insufficient info makes it difficult to find and fix bugs.\n");
+				ddb_msg_shown = 1;
+			}
 		}
 
 		db_command_loop();
