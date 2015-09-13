@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.81 2015/02/07 04:17:11 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.82 2015/09/13 09:10:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1358,6 +1358,16 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 	return (retval);
 }
 
+static inline int
+ssl_aes_is_accelerated(void)
+{
+#if defined(__x86_64__)
+	return ((OPENSSL_ia32cap_loc()[0] & (1UL << 57)) != 0);
+#else
+	return (0);
+#endif
+}
+
 STACK_OF(SSL_CIPHER) *
 ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     STACK_OF(SSL_CIPHER) **cipher_list,
@@ -1406,12 +1416,25 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
-	/*
-	 * CHACHA20 is fast and safe on all hardware and is thus our preferred
-	 * symmetric cipher, with AES second.
-	 */
-	ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20POLY1305, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
-	ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+	if (ssl_aes_is_accelerated() == 1) {
+		/*
+		 * We have hardware assisted AES - prefer AES as a symmetric
+		 * cipher, with CHACHA20 second.
+		 */
+		ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0,
+		    CIPHER_ADD, -1, &head, &tail);
+		ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20POLY1305, 0, 0, 0,
+		    CIPHER_ADD, -1, &head, &tail);
+	} else {
+		/*
+		 * CHACHA20 is fast and safe on all hardware and is thus our
+		 * preferred symmetric cipher, with AES second.
+		 */
+		ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20POLY1305, 0, 0, 0,
+		    CIPHER_ADD, -1, &head, &tail);
+		ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0,
+		    CIPHER_ADD, -1, &head, &tail);
+	}
 
 	/* Temporarily enable everything else for sorting */
 	ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
