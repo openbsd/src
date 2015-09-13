@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.82 2015/09/13 09:10:01 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.83 2015/09/13 12:34:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1361,8 +1361,8 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 static inline int
 ssl_aes_is_accelerated(void)
 {
-#if defined(__x86_64__)
-	return ((OPENSSL_ia32cap_loc()[0] & (1UL << 57)) != 0);
+#if defined(__i386__) || defined(__x86_64__)
+	return ((OPENSSL_cpu_caps() & (1ULL << 57)) != 0);
 #else
 	return (0);
 #endif
