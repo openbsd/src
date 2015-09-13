@@ -1818,7 +1818,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/dtls1.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/openssl/ecdsa.ph

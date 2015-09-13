@@ -1807,7 +1807,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/dtls1.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/openssl/ecdsa.ph

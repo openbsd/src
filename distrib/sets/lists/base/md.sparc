@@ -1299,7 +1299,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/dtls1.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/openssl/ecdsa.ph

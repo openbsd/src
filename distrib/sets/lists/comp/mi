@@ -1,3 +1,4 @@
+./usr/share/man/man9/intr_barrier.9
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1130,7 +1131,6 @@
 ./usr/include/openssl/dsa.h
 ./usr/include/openssl/dso.h
 ./usr/include/openssl/dtls1.h
-./usr/include/openssl/e_os2.h
 ./usr/include/openssl/ec.h
 ./usr/include/openssl/ecdh.h
 ./usr/include/openssl/ecdsa.h

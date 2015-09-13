@@ -1807,7 +1807,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/dtls1.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl/ecdsa.ph

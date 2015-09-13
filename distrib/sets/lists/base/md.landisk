@@ -1764,7 +1764,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/dsa.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/dso.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/dtls1.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ec.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ecdh.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/ecdsa.ph
