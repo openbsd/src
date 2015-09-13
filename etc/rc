@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.461 2015/09/12 14:48:06 sthen Exp $
+#	$OpenBSD: rc,v 1.462 2015/09/13 09:22:05 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -158,60 +158,29 @@ make_keys() {
 	ssh-keygen -A
 }
 
-# Create Unix sockets directories for X if needed and make sure they have
-# correct permissions.
-setup_X_sockets() {
-	if [ -d /usr/X11R6/lib ]; then
-		for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
-			if [ -d $d ]; then
-				if [ `ls -ld $d | cut -d' ' -f4` \
-				    != root ]; then
-					chown root $d
-				fi
-				if [ `ls -ld $d | cut -d' ' -f1` \
-				    != drwxrwxrwt ]; then
-					chmod 1777 $d
-				fi
-			elif [ -e $d ]; then
-				echo "Error: $d exists and isn't a directory."
-			else
-				mkdir -m 1777 $d
-			fi
-		done
-	fi
-}
-
-# Check filesystems, optionally by using a flag for fsck(8) passed as $1.
+# Check filesystems, optionally by using a fsck(8) flag.
+# Usage: do_fsck [-flag]
 do_fsck() {
-	local _flags=$1
-
-	fsck -p $_flags
+	fsck -p "$@"
 	case $? in
-	0)
+	0)	;;
+	2)	exit 1
 		;;
-	2)
-		exit 1
-		;;
-	4)
-		echo "Rebooting..."
+	4)	echo "Rebooting..."
 		reboot
 		echo "Reboot failed; help!"
 		exit 1
 		;;
-	8)
-		echo "Automatic file system check failed; help!"
+	8)	echo "Automatic file system check failed; help!"
 		exit 1
 		;;
-	12)
-		echo "Boot interrupted."
+	12)	echo "Boot interrupted."
 		exit 1
 		;;
-	130)
-		# Interrupt before catcher installed.
+	130)	# Interrupt before catcher installed.
 		exit 1
 		;;
-	*)
-		echo "Unknown error; help!"
+	*)	echo "Unknown error; help!"
 		exit 1
 		;;
 	esac
@@ -436,7 +405,9 @@ echo clearing /tmp
     find . -maxdepth 1 ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group ! -name vi.recover -execdir rm -rf -- {} \;)
 
-setup_X_sockets
+# Create Unix sockets directories for X if needed and make sure they have
+# correct permissions.
+[[ -d /usr/X11R6/lib ]] && mkdir -m 1777 /tmp/.{X11,ICE}-unix
 
 [ -f /etc/rc.securelevel ] && sh /etc/rc.securelevel
 # rc.securelevel did not specifically set -1 or 2, so select the default: 1.
