@@ -13,3 +13,4 @@ ENTRY(div)
 	movl	%eax,4(%esp)
 	movl	%edx,8(%esp)
 	ret
+END_STRONG(div)

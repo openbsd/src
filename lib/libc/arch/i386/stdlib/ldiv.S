@@ -13,3 +13,4 @@ ENTRY(ldiv)
 	movl	%eax,4(%esp)
 	movl	%edx,8(%esp)
 	ret
+END_STRONG(ldiv)

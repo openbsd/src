@@ -38,3 +38,4 @@ ENTRY(labs)
 	jns	1f
 	negl	%eax
 1:	ret
+END_STRONG(labs)
