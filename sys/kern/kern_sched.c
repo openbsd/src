@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.36 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.37 2015/09/13 11:15:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/mutex.h>
+#include <sys/task.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -632,6 +633,50 @@ sched_stop_secondary_cpus(void)
 			    (spc->spc_schedflags & SPCF_HALTED) == 0);
 		}
 	}
+}
+
+void
+sched_barrier_task(void *arg)
+{
+	struct cpu_info *ci = arg;
+
+	sched_peg_curproc(ci);
+	ci->ci_schedstate.spc_barrier = 1;
+	wakeup(&ci->ci_schedstate.spc_barrier);
+	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
+}
+
+void
+sched_barrier(struct cpu_info *ci)
+{
+	struct sleep_state sls;
+	struct task task;
+	CPU_INFO_ITERATOR cii;
+	struct schedstate_percpu *spc;
+
+	if (ci == NULL) {
+		CPU_INFO_FOREACH(cii, ci) {
+			if (CPU_IS_PRIMARY(ci))
+				break;
+		}
+	}
+	KASSERT(ci != NULL);
+	spc = &ci->ci_schedstate;
+
+	task_set(&task, sched_barrier_task, ci);
+	spc->spc_barrier = 0;
+	task_add(systq, &task);
+	while (!spc->spc_barrier) {
+		sleep_setup(&sls, &spc->spc_barrier, PWAIT, "sbar");
+		sleep_finish(&sls, !spc->spc_barrier);
+	}
+}
+
+#else
+
+void
+sched_barrier(struct cpu_info *ci)
+{
 }
 
 #endif

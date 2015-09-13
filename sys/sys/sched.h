@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.38 2015/01/11 19:34:52 guenther Exp $	*/
+/*	$OpenBSD: sched.h,v 1.39 2015/09/13 11:15:11 kettenis Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -114,6 +114,8 @@ struct schedstate_percpu {
 	struct proc *spc_reaper;	/* dead proc reaper */
 #endif
 	LIST_HEAD(,proc) spc_deadproc;
+
+	volatile int spc_barrier;	/* for sched_barrier() */
 };
 
 #ifdef	_KERNEL
@@ -152,6 +154,7 @@ void cpu_idle_enter(void);
 void cpu_idle_cycle(void);
 void cpu_idle_leave(void);
 void sched_peg_curproc(struct cpu_info *ci);
+void sched_barrier(struct cpu_info *ci);
 
 int sysctl_hwsetperf(void *, size_t *, void *, size_t);
 int sysctl_hwperfpolicy(void *, size_t *, void *, size_t);
