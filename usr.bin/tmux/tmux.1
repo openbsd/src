@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.449 2015/09/10 08:58:14 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.450 2015/09/13 13:31:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 13 2015 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1133,7 +1133,7 @@ The synopsis for the
 command is:
 .Bl -tag -width Ds
 .It Xo Ic copy-mode
-.Op Fl Mu
+.Op Fl Meu
 .Op Fl t Ar target-pane
 .Xc
 Enter copy mode.
@@ -1143,6 +1143,16 @@ option scrolls one page up.
 .Fl M
 begins a mouse drag (only valid if bound to a mouse key binding, see
 .Sx MOUSE SUPPORT ) .
+.Fl e
+specifies that scrolling to the bottom of the history (to the visible screen)
+should exit copy mode.
+While in copy mode, pressing a key other than those used for scrolling will
+disable this behaviour.
+This is intended to allow fast scrolling through a pane's history, for
+example with:
+.Bd -literal -offset indent
+bind PageUp copy-mode -eu
+.Ed
 .El
 .Pp
 Each window displayed by
