@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_auth_unix.c,v 1.11 2015/09/02 02:52:26 deraadt Exp $ */
+/*	$OpenBSD: svc_auth_unix.c,v 1.12 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -113,6 +113,7 @@ done:
 	XDR_DESTROY(&xdrs);
 	return (stat);
 }
+DEF_STRONG(_svcauth_unix);
 
 
 /*
@@ -125,3 +126,4 @@ _svcauth_short(struct svc_req *rqst, struct rpc_msg *msg)
 {
 	return (AUTH_REJECTEDCRED);
 }
+DEF_STRONG(_svcauth_short);

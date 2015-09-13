@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.32 2015/08/20 21:49:29 deraadt Exp $ */
+/*	$OpenBSD: pmap_rmt.c,v 1.33 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -124,6 +124,7 @@ xdr_rmtcall_args(XDR *xdrs, struct rmtcallargs *cap)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_rmtcall_args);
 
 /*
  * XDR remote call results
@@ -142,6 +143,7 @@ xdr_rmtcallres(XDR *xdrs, struct rmtcallres *crp)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_rmtcallres);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_unix.c,v 1.24 2015/09/02 06:47:19 deraadt Exp $ */
+/*	$OpenBSD: auth_unix.c,v 1.25 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -158,6 +158,7 @@ authfail:
 	free(auth);
 	return (NULL);
 }
+DEF_WEAK(authunix_create);
 
 
 /*
@@ -201,6 +202,7 @@ authunix_create_default(void)
 		gids2[i] = gids[i];
 	return (authunix_create(machname, uid, gid, len, gids2));
 }
+DEF_WEAK(authunix_create_default);
 
 /*
  * authunix operations

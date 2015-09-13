@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_prot2.c,v 1.7 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: pmap_prot2.c,v 1.8 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -110,3 +110,4 @@ xdr_pmaplist(XDR *xdrs, struct pmaplist **rp)
 		rp = (freeing) ? next : &((*rp)->pml_next);
 	}
 }
+DEF_WEAK(xdr_pmaplist);

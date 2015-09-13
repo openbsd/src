@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_clnt.c,v 1.18 2015/09/02 06:47:19 deraadt Exp $ */
+/*	$OpenBSD: pmap_clnt.c,v 1.19 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -81,6 +81,7 @@ pmap_set(u_long program, u_long version, u_int protocol, int iport)
 	errno = save_errno;
 	return (rslt);
 }
+DEF_WEAK(pmap_set);
 
 /*
  * Remove the mapping between program,version and port.
@@ -110,3 +111,4 @@ pmap_unset(u_long program, u_long version)
 	CLNT_DESTROY(client);
 	return (rslt);
 }
+DEF_WEAK(pmap_unset);

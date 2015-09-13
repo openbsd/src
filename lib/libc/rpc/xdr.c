@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.c,v 1.13 2015/09/01 19:54:01 deraadt Exp $ */
+/*	$OpenBSD: xdr.c,v 1.14 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -70,6 +70,7 @@ xdr_free(xdrproc_t proc, char *objp)
 	x.x_op = XDR_FREE;
 	(*proc)(&x, objp);
 }
+DEF_WEAK(xdr_free);
 
 /*
  * XDR nothing
@@ -82,6 +83,7 @@ xdr_void(void)
 
 	return (TRUE);
 }
+DEF_WEAK(xdr_void);
 
 
 /*
@@ -110,6 +112,7 @@ xdr_int(XDR *xdrs, int *ip)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_int);
 
 /*
  * XDR unsigned integers
@@ -137,6 +140,7 @@ xdr_u_int(XDR *xdrs, u_int *up)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_u_int);
 
 
 /*
@@ -157,6 +161,7 @@ xdr_long(XDR *xdrs, long int *lp)
 
 	return (FALSE);
 }
+DEF_WEAK(xdr_long);
 
 /*
  * XDR unsigned long integers
@@ -175,6 +180,7 @@ xdr_u_long(XDR *xdrs, u_long *ulp)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_u_long);
 
 
 /*
@@ -232,6 +238,7 @@ xdr_u_int32_t(XDR *xdrs, u_int32_t *u_int32_p)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_u_int32_t);
 
 
 /*
@@ -260,6 +267,7 @@ xdr_short(XDR *xdrs, short int *sp)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_short);
 
 /*
  * XDR unsigned short integers
@@ -287,6 +295,7 @@ xdr_u_short(XDR *xdrs, u_short *usp)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_u_short);
 
 
 /*
@@ -402,6 +411,7 @@ xdr_bool(XDR *xdrs, int32_t *bp)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_bool);
 
 /*
  * XDR enumerations
@@ -424,6 +434,7 @@ xdr_enum(XDR *xdrs, int32_t *ep)
 		return (FALSE);
 	}
 }
+DEF_WEAK(xdr_enum);
 
 /*
  * XDR opaque data
@@ -473,6 +484,7 @@ xdr_opaque(XDR *xdrs, caddr_t cp, u_int cnt)
 
 	return (FALSE);
 }
+DEF_WEAK(xdr_opaque);
 
 /*
  * XDR counted bytes
@@ -524,6 +536,7 @@ xdr_bytes(XDR *xdrs, char **cpp, u_int *sizep, u_int maxsize)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_bytes);
 
 /*
  * Implemented here due to commonality of the object.
@@ -578,6 +591,7 @@ xdr_union(XDR *xdrs,
 	return ((dfault == NULL) ? FALSE :
 	    (*dfault)(xdrs, unp));
 }
+DEF_WEAK(xdr_union);
 
 
 /*
@@ -648,6 +662,7 @@ xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_string);
 
 /* 
  * Wrapper for xdr_string that can be called directly from 

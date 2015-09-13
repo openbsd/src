@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_prot.c,v 1.12 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: rpc_prot.c,v 1.13 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -61,6 +61,7 @@ xdr_opaque_auth(XDR *xdrs, struct opaque_auth *ap)
 		    &ap->oa_length, MAX_AUTH_BYTES));
 	return (FALSE);
 }
+DEF_WEAK(xdr_opaque_auth);
 
 /*
  * XDR a DES block
@@ -97,6 +98,7 @@ xdr_accepted_reply(XDR *xdrs, struct accepted_reply *ar)
 		return (TRUE);  /* TRUE => open ended set of problems */
 	}
 }
+DEF_WEAK(xdr_accepted_reply);
 
 /*
  * XDR the MSG_DENIED part of a reply message union
@@ -119,6 +121,7 @@ xdr_rejected_reply(XDR *xdrs, struct rejected_reply *rr)
 	}
 	return (FALSE);
 }
+DEF_WEAK(xdr_rejected_reply);
 
 static struct xdr_discrim reply_dscrm[3] = {
 	{ (int)MSG_ACCEPTED, xdr_accepted_reply },
@@ -138,7 +141,7 @@ xdr_replymsg(XDR *xdrs, struct rpc_msg *rmsg)
 		   (caddr_t)&(rmsg->rm_reply.ru), reply_dscrm, NULL));
 	return (FALSE);
 }
-
+DEF_WEAK(xdr_replymsg);
 
 /*
  * Serializes the "static part" of a call message header.
@@ -159,6 +162,7 @@ xdr_callhdr(XDR *xdrs, struct rpc_msg *cmsg)
 		return (xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_vers)));
 	return (FALSE);
 }
+DEF_WEAK(xdr_callhdr);
 
 /* ************************** Client utility routine ************* */
 
@@ -262,3 +266,4 @@ _seterr_reply(struct rpc_msg *msg, struct rpc_err *error)
 		break;
 	}
 }
+DEF_STRONG(_seterr_reply);

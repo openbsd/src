@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_reference.c,v 1.10 2015/09/01 19:54:01 deraadt Exp $ */
+/*	$OpenBSD: xdr_reference.c,v 1.11 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -82,6 +82,7 @@ xdr_reference(XDR *xdrs,
 	}
 	return (stat);
 }
+DEF_WEAK(xdr_reference);
 
 
 /*
@@ -119,3 +120,4 @@ xdr_pointer(XDR *xdrs, char **objpp, u_int obj_size, xdrproc_t xdr_obj)
 	}
 	return (xdr_reference(xdrs,objpp,obj_size,xdr_obj));
 }
+DEF_WEAK(xdr_pointer);

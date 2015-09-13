@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_getport.c,v 1.12 2014/11/11 04:51:49 guenther Exp $ */
+/*	$OpenBSD: pmap_getport.c,v 1.13 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -80,3 +80,4 @@ pmap_getport(struct sockaddr_in *address, u_long program, u_long version,
 	address->sin_port = 0;
 	return (port);
 }
+DEF_WEAK(pmap_getport);

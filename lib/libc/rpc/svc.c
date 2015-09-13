@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.c,v 1.27 2015/08/20 21:49:29 deraadt Exp $ */
+/*	$OpenBSD: svc.c,v 1.28 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -278,6 +278,7 @@ xprt_unregister(SVCXPRT *xprt)
 		svc_fd_remove(sock);
 	}
 }
+DEF_WEAK(xprt_unregister);
 
 
 /* ********************** CALLOUT list related stuff ************* */
@@ -315,6 +316,7 @@ pmap_it:
 	}
 	return (TRUE);
 }
+DEF_WEAK(svc_register);
 
 /*
  * Remove a service program from the callout list.
@@ -376,6 +378,7 @@ svc_sendreply(SVCXPRT *xprt, xdrproc_t xdr_results, caddr_t xdr_location)
 	rply.acpted_rply.ar_results.proc = xdr_results;
 	return (SVC_REPLY(xprt, &rply)); 
 }
+DEF_WEAK(svc_sendreply);
 
 /*
  * No procedure error reply
@@ -406,6 +409,7 @@ svcerr_decode(SVCXPRT *xprt)
 	rply.acpted_rply.ar_stat = GARBAGE_ARGS;
 	SVC_REPLY(xprt, &rply); 
 }
+DEF_WEAK(svcerr_decode);
 
 /*
  * Some system error
@@ -436,6 +440,7 @@ svcerr_auth(SVCXPRT *xprt, enum auth_stat why)
 	rply.rjcted_rply.rj_why = why;
 	SVC_REPLY(xprt, &rply);
 }
+DEF_WEAK(svcerr_auth);
 
 /*
  * Auth too weak error reply
@@ -461,6 +466,7 @@ svcerr_noprog(SVCXPRT *xprt)
 	rply.acpted_rply.ar_stat = PROG_UNAVAIL;
 	SVC_REPLY(xprt, &rply);
 }
+DEF_WEAK(svcerr_noprog);
 
 /*
  * Program version mismatch error reply
@@ -478,6 +484,7 @@ svcerr_progvers(SVCXPRT *xprt, u_long low_vers, u_long high_vers)
 	rply.acpted_rply.ar_vers.high = high_vers;
 	SVC_REPLY(xprt, &rply);
 }
+DEF_WEAK(svcerr_progvers);
 
 /* ******************* SERVER INPUT STUFF ******************* */
 
@@ -505,6 +512,7 @@ svc_getreq(int rdfds)
 	for (; (bit = ffs(rdfds)); rdfds ^= (1 << (bit - 1)))
 		svc_getreq_common(bit - 1);
 }
+DEF_WEAK(svc_getreq);
 
 void
 svc_getreqset(fd_set *readfds)
@@ -525,6 +533,7 @@ svc_getreqset2(fd_set *readfds, int width)
 			svc_getreq_common(sock + bit - 1);
 	}
 }
+DEF_WEAK(svc_getreqset2);
 
 void
 svc_getreq_poll(struct pollfd *pfd, const int nready)
@@ -541,6 +550,7 @@ svc_getreq_poll(struct pollfd *pfd, const int nready)
 		svc_getreq_common(pfd[i].fd);
 	}
 }
+DEF_WEAK(svc_getreq_poll);
 
 void
 svc_getreq_common(int fd)
@@ -614,3 +624,4 @@ svc_getreq_common(int fd)
 		}
 	} while (stat == XPRT_MOREREQS);
 }
+DEF_WEAK(svc_getreq_common);

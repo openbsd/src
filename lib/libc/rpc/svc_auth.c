@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_auth.c,v 1.8 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: svc_auth.c,v 1.9 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -55,10 +55,7 @@
 
 /* no authentication */
 enum auth_stat _svcauth_null(void);
-/* unix style (uid, gids) */
-enum auth_stat _svcauth_unix(struct svc_req *rqst, struct rpc_msg *msg);
-/* short hand unix style */
-enum auth_stat _svcauth_short(struct svc_req *rqst, struct rpc_msg *msg);
+PROTO_NORMAL(_svcauth_null);
 
 static struct {
 	enum auth_stat (*authenticator)();
@@ -112,3 +109,4 @@ _svcauth_null(void)
 
 	return (AUTH_OK);
 }
+DEF_STRONG(_svcauth_null);

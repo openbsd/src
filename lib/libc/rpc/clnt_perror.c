@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_perror.c,v 1.23 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: clnt_perror.c,v 1.24 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -140,12 +140,14 @@ truncated:
 	snprintf(buf + CLNT_PERROR_BUFLEN - 5, 5, "...\n");
 	return (buf);
 }
+DEF_WEAK(clnt_sperror);
 
 void
 clnt_perror(CLIENT *rpch, char *s)
 {
 	(void) fprintf(stderr, "%s", clnt_sperror(rpch, s));
 }
+DEF_WEAK(clnt_perror);
 
 static const char *const rpc_errlist[] = {
 	"RPC: Success",				/*  0 - RPC_SUCCESS */
@@ -182,6 +184,7 @@ clnt_sperrno(enum clnt_stat stat)
 
 	return ("RPC: (unknown error code)");
 }
+DEF_WEAK(clnt_sperrno);
 
 void
 clnt_perrno(enum clnt_stat num)
@@ -215,12 +218,14 @@ clnt_spcreateerror(char *s)
 	buf[CLNT_PERROR_BUFLEN-1] = '\0';
 	return (buf);
 }
+DEF_WEAK(clnt_spcreateerror);
 
 void
 clnt_pcreateerror(char *s)
 {
 	fprintf(stderr, "%s", clnt_spcreateerror(s));
 }
+DEF_WEAK(clnt_pcreateerror);
 
 static const char *const auth_errlist[] = {
 	"Authentication OK",			/* 0 - AUTH_OK */

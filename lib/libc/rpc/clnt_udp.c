@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.30 2015/09/09 15:40:04 guenther Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.31 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -186,6 +186,7 @@ fooy:
 		mem_free((caddr_t)cl, sizeof(CLIENT));
 	return (NULL);
 }
+DEF_WEAK(clntudp_bufcreate);
 
 CLIENT *
 clntudp_create(struct sockaddr_in *raddr, u_long program, u_long version,
@@ -195,6 +196,7 @@ clntudp_create(struct sockaddr_in *raddr, u_long program, u_long version,
 	return(clntudp_bufcreate(raddr, program, version, wait, sockp,
 	    UDPMSGSIZE, UDPMSGSIZE));
 }
+DEF_WEAK(clntudp_create);
 
 static enum clnt_stat 
 clntudp_call(CLIENT *cl,	/* client handle */

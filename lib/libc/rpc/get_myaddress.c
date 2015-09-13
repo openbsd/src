@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_myaddress.c,v 1.14 2013/11/12 06:09:50 deraadt Exp $ */
+/*	$OpenBSD: get_myaddress.c,v 1.15 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -82,3 +82,4 @@ get_myaddress(struct sockaddr_in *addr)
 	freeifaddrs(ifap);
 	return (0);
 }
+DEF_WEAK(get_myaddress);

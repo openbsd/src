@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrpcent.c,v 1.20 2015/09/11 11:33:03 deraadt Exp $ */
+/*	$OpenBSD: getrpcent.c,v 1.21 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -116,6 +116,7 @@ setrpcent(int f)
 		rewind(d->rpcf);
 	d->stayopen |= f;
 }
+DEF_WEAK(setrpcent);
 
 void
 endrpcent(void)
@@ -129,6 +130,7 @@ endrpcent(void)
 		d->rpcf = NULL;
 	}
 }
+DEF_WEAK(endrpcent);
 
 struct rpcent *
 getrpcent(void)
@@ -144,6 +146,7 @@ getrpcent(void)
 		return (NULL);
 	return (interpret(d->line, strlen(d->line)));
 }
+DEF_WEAK(getrpcent);
 
 static struct rpcent *
 interpret(char *val, int len)

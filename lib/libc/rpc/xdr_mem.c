@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_mem.c,v 1.15 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: xdr_mem.c,v 1.16 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -97,6 +97,7 @@ xdrmem_create(XDR *xdrs, caddr_t addr, u_int size, enum xdr_op op)
 	xdrs->x_private = xdrs->x_base = addr;
 	xdrs->x_handy = size;
 }
+DEF_WEAK(xdrmem_create);
 
 /*ARGSUSED*/
 static void

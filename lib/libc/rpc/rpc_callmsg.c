@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_callmsg.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: rpc_callmsg.c,v 1.12 2015/09/13 15:36:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -183,4 +183,4 @@ xdr_callmsg(XDR *xdrs, struct rpc_msg *cmsg)
 	    return (xdr_opaque_auth(xdrs, &(cmsg->rm_call.cb_verf)));
 	return (FALSE);
 }
-
+DEF_WEAK(xdr_callmsg);
