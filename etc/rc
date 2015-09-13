@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.462 2015/09/13 09:22:05 rpe Exp $
+#	$OpenBSD: rc,v 1.463 2015/09/13 13:29:22 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -195,14 +195,13 @@ stty status '^T'
 trap : 2
 trap : 3	# Shouldn't be needed.
 
-HOME=/; export HOME
-INRC=1; export INRC
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-export PATH
+export HOME=/
+export INRC=1
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 # Must set the domainname before rc.conf, so YP startup choices can be made.
-if [ -f /etc/defaultdomain ]; then
-	domainname `stripcom /etc/defaultdomain`
+if [[ -s /etc/defaultdomain ]]; then
+	domainname "$(stripcom /etc/defaultdomain)"
 fi
 
 # Need to get local functions from rc.subr.
@@ -211,7 +210,7 @@ FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 # Load rc.conf into scope.
 _rc_parse_conf
 
-if [ X"$1" = X"shutdown" ]; then
+if [[ $1 == shutdown ]]; then
 	if echo 2>/dev/null >>/var/db/host.random || \
 	    echo 2>/dev/null >>/etc/random.seed; then
 		random_seed
@@ -219,39 +218,40 @@ if [ X"$1" = X"shutdown" ]; then
 		echo warning: cannot write random seed to disk
 	fi
 
-	# If we are in secure level 0, assume single user mode.
-	if [ `sysctl -n kern.securelevel` -ne 0 ]; then
+	# If we are in secure level 0, asume single user mode.
+	if (($(sysctl -n kern.securelevel) == 0)); then
+		echo 'single user: not running shutdown scripts'
+	else
 		pkg_scripts=${pkg_scripts%%*( )}
-		if [ -n "${pkg_scripts}" ]; then
+		if [[ -n $pkg_scripts ]]; then
 			echo -n 'stopping package daemons:'
-			while [ -n "${pkg_scripts}" ]; do
-				_r=${pkg_scripts##* }
-				pkg_scripts=${pkg_scripts%%*( )${_r}}
-				[ -x /etc/rc.d/${_r} ] && /etc/rc.d/${_r} stop
+			while [[ -n $pkg_scripts ]]; do
+				_d=${pkg_scripts##* }
+				pkg_scripts=${pkg_scripts%%*( )$_d}
+				[[ -x /etc/rc.d/$_d ]] && /etc/rc.d/$_d stop
 			done
 			echo '.'
 		fi
 
-		[ -f /etc/rc.shutdown ] && sh /etc/rc.shutdown
-	else
-		echo single user: not running shutdown scripts
+		[[ -f /etc/rc.shutdown ]] && sh /etc/rc.shutdown
 	fi
 
 	# Bring carp interfaces down gracefully.
-	ifconfig | while read a b; do
-		case $a in
-		carp+([0-9]):) ifconfig ${a%:} down ;;
+	ifconfig | while read _if _junk; do
+		case $_if in
+		carp+([0-9]):) ifconfig ${_if%:} down ;;
 		esac
 	done
 
 	exit 0
 fi
 
+# Add swap block-devices. 
 swapctl -A -t blk
 
-if [ -e /fastboot ]; then
+if [[ -e /fastboot ]]; then
 	echo "Fast boot: skipping disk checks."
-elif [ X"$1" = X"autoboot" ]; then
+elif [[ $1 == autoboot ]]; then
 	echo "Automatic boot in progress: starting file system checks."
 	do_fsck
 fi
