@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.22 2015/09/12 21:00:38 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.23 2015/09/13 10:32:46 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -105,6 +105,8 @@ int tls_peer_cert_contains_name(struct tls *ctx, const char *name);
 const char * tls_peer_cert_hash(struct tls *_ctx);
 const char * tls_peer_cert_issuer(struct tls *ctx);
 const char * tls_peer_cert_subject(struct tls *ctx);
+const char * tls_conn_version(struct tls *ctx);
+const char * tls_conn_cipher(struct tls *ctx);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
 

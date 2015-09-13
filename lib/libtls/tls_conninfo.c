@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.1 2015/09/12 21:00:38 beck Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.2 2015/09/13 10:32:46 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -130,6 +130,12 @@ tls_get_conninfo(struct tls *ctx) {
 			goto err;
 		if (tls_get_peer_cert_issuer(ctx, &ctx->conninfo->issuer) == -1)
 			goto err;
+		ctx->conninfo->version = strdup(SSL_get_version(ctx->ssl_conn));
+		if (ctx->conninfo->version == NULL)
+			goto err;
+		ctx->conninfo->cipher = strdup(SSL_get_cipher(ctx->ssl_conn));
+		if (ctx->conninfo->cipher == NULL)
+			goto err;
 	}
 	rv = 0;
 err:
@@ -145,5 +151,25 @@ tls_free_conninfo(struct tls_conninfo *conninfo) {
 		conninfo->subject = NULL;
 		free(conninfo->issuer);
 		conninfo->issuer = NULL;
+		free(conninfo->version);
+		conninfo->version = NULL;
+		free(conninfo->cipher);
+		conninfo->cipher = NULL;
 	}
+}
+
+const char *
+tls_conn_cipher(struct tls *ctx)
+{
+	if (ctx->conninfo)
+		return (ctx->conninfo->cipher);
+	return NULL;
+}
+
+const char *
+tls_conn_version(struct tls *ctx)
+{
+	if (ctx->conninfo)
+		return (ctx->conninfo->version);
+	return NULL;
 }
