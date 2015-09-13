@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.10 2015/09/13 10:46:20 jsing Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.11 2015/09/13 12:03:07 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -238,4 +238,10 @@ ECDH_get_ex_data(EC_KEY *d, int idx)
 	if (ecdh == NULL)
 		return NULL;
 	return (CRYPTO_get_ex_data(&ecdh->ex_data, idx));
+}
+
+int
+ECDH_size(const EC_KEY *d)
+{
+	return ((EC_GROUP_get_degree(EC_KEY_get0_group(d)) + 7) / 8);
 }

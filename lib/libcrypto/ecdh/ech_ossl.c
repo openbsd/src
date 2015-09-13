@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_ossl.c,v 1.11 2015/09/13 11:49:44 jsing Exp $ */
+/* $OpenBSD: ech_ossl.c,v 1.12 2015/09/13 12:03:07 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -166,7 +166,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	}
 #endif
 
-	buflen = (EC_GROUP_get_degree(group) + 7)/8;
+	buflen = ECDH_size(ecdh);
 	len = BN_num_bytes(x);
 	if (len > buflen) {
 		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);

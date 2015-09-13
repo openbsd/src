@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.h,v 1.4 2015/09/13 11:49:44 jsing Exp $ */
+/* $OpenBSD: ecdh.h,v 1.5 2015/09/13 12:03:07 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -91,6 +91,7 @@ void ECDH_set_default_method(const ECDH_METHOD *);
 const ECDH_METHOD *ECDH_get_default_method(void);
 int ECDH_set_method(EC_KEY *, const ECDH_METHOD *);
 
+int ECDH_size(const EC_KEY *ecdh);
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     EC_KEY *ecdh,
     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
