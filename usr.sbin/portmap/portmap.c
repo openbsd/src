@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.43 2015/09/01 17:31:59 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.44 2015/09/13 14:57:33 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -497,8 +497,11 @@ struct rmtcallargs {
 	struct encap_parms rmt_args;
 };
 
+/*
+ * Version of xdr_rmtcall_args() that supports both directions
+ */
 static bool_t
-xdr_rmtcall_args(XDR *xdrs, struct rmtcallargs *cap)
+portmap_xdr_rmtcall_args(XDR *xdrs, struct rmtcallargs *cap)
 {
 
 	/* does not get a port number */
@@ -510,8 +513,11 @@ xdr_rmtcall_args(XDR *xdrs, struct rmtcallargs *cap)
 	return (FALSE);
 }
 
+/*
+ * Version of xdr_rmtcallres() that supports both directions
+ */
 static bool_t
-xdr_rmtcall_result(XDR *xdrs, struct rmtcallargs *cap)
+portmap_xdr_rmtcallres(XDR *xdrs, struct rmtcallargs *cap)
 {
 	if (xdr_u_long(xdrs, &(cap->rmt_port)))
 		return (xdr_encap_parms(xdrs, &(cap->rmt_args)));
@@ -581,7 +587,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
 	a.rmt_args.args = buf;
-	if (!svc_getargs(xprt, xdr_rmtcall_args, (caddr_t)&a))
+	if (!svc_getargs(xprt, portmap_xdr_rmtcall_args, (caddr_t)&a))
 		return;
 	if (!check_callit(svc_getcaller(xprt), a.rmt_prog, a.rmt_proc))
 		return;
@@ -618,7 +624,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 		a.rmt_port = (u_long)port;
 		if (clnt_call(client, a.rmt_proc, xdr_opaque_parms, &a,
 		    xdr_len_opaque_parms, &a, timeout) == RPC_SUCCESS)
-			svc_sendreply(xprt, xdr_rmtcall_result, (caddr_t)&a);
+			svc_sendreply(xprt, portmap_xdr_rmtcallres, (caddr_t)&a);
 		AUTH_DESTROY(client->cl_auth);
 		clnt_destroy(client);
 	}
