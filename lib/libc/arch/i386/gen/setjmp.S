@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.9 2012/08/22 17:19:34 pascal Exp $ */
+/* $OpenBSD: setjmp.S,v 1.10 2015/09/13 07:36:58 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,9 +47,9 @@ ENTRY(setjmp)
 	PIC_PROLOGUE
 	pushl	$0
 #ifdef __PIC__
-	call	PIC_PLT(_C_LABEL(sigblock))
+	call	PIC_PLT(_C_LABEL(_libc_sigblock))
 #else
-	call	_C_LABEL(sigblock)
+	call	_C_LABEL(_libc_sigblock)
 #endif
 	addl	$4,%esp
 	PIC_EPILOGUE 
@@ -71,9 +71,9 @@ ENTRY(longjmp)
 	PIC_PROLOGUE
 	pushl	24(%edx)
 #ifdef __PIC__
-	call	PIC_PLT(_C_LABEL(sigsetmask))
+	call	PIC_PLT(_C_LABEL(_libc_sigsetmask))
 #else
-	call	_C_LABEL(sigsetmask)
+	call	_C_LABEL(_libc_sigsetmask)
 #endif
 	addl	$4,%esp
 	PIC_EPILOGUE 

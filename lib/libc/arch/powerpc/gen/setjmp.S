@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.7 2015/08/23 15:42:01 kettenis Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.8 2015/09/13 07:36:58 guenther Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -55,7 +55,7 @@
 #define JMP_sig	0x60
 
 
-.extern sigblock
+.extern _libc_sigblock
 
 ENTRY(setjmp)
 	/* r31, mask */
@@ -71,7 +71,7 @@ ENTRY(setjmp)
 #endif
 	mr 31, 3
 	li 3, 0
-	bl PIC_PLT(sigblock)
+	bl PIC_PLT(_libc_sigblock)
 	stw 3, JMP_sig(31)
 	/* should sigaltstack be checked and saved */
 	mr 3, 31
@@ -116,7 +116,7 @@ ENTRY(_setjmp)
 	blr
 
 
-.extern sigsetmask
+.extern _libc_sigsetmask
 ENTRY(longjmp)
 	/* r31, mask */
 	mr 29, 3
@@ -130,7 +130,7 @@ ENTRY(longjmp)
 	mtlr 0
 #endif
 	lwz 3, JMP_sig(3)
-	bl PIC_PLT(sigsetmask)
+	bl PIC_PLT(_libc_sigsetmask)
 	/* should we deal with sigonstack here ?? */
 	mr 4, 31
 	mr 3, 29

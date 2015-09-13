@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.3 2011/04/21 14:02:42 jsing Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.4 2015/09/13 07:36:58 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,7 +64,7 @@ ALTENTRY(setjmp)
 	copy	%sp, %r3
 	std,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
-	bl	sigblock, %rp
+	bl	_libc_sigblock, %rp
 	copy	%r0, %arg0
 
 	ldo	HPPA_FRAME_SIZE(%r3), %sp
@@ -145,7 +145,7 @@ ALTENTRY(longjmp)
 	copy	%sp, %r3
 	std,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
-	bl	sigsetmask, %rp
+	bl	_libc_sigsetmask, %rp
 	ldd	8(%arg0), %arg0
 
 	ldo	HPPA_FRAME_SIZE(%r3), %sp

@@ -56,6 +56,7 @@ sigsetmask(int mask)
 		return (n);
 	return (omask);
 }
+DEF_WEAK(sigsetmask);
 
 int
 sigblock(int mask)
@@ -67,6 +68,7 @@ sigblock(int mask)
 		return (n);
 	return (omask);
 }
+DEF_WEAK(sigblock);
 
 int
 sigpause(int mask)

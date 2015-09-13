@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.7 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.8 2015/09/13 07:36:58 guenther Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.2 1996/10/17 03:08:06 cgd Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ LEAF(setjmp, 1)
 
 	/* see what's blocked */
 	mov	zero, a0
-	CALL(sigblock)				/* see what's blocked */
+	CALL(_libc_sigblock)			/* see what's blocked */
 	stq	v0, (1 * 8)(s0)			/* and remember it in sc_mask */
 
 	lda	sp, -24(sp)			/* padded struct sigaltstack */
