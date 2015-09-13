@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctoint.h,v 1.1 2005/07/01 08:59:27 espie Exp $	*/
+/*	$OpenBSD: wctoint.h,v 1.2 2015/09/13 11:38:08 guenther Exp $	*/
 /* $NetBSD: __wctoint.h,v 1.1 2001/09/28 11:25:37 yamt Exp $ */
 
 /*-
@@ -30,7 +30,7 @@
  */
 
 
-__inline static int
+inline static int
 wctoint(wchar_t wc)
 {
 	int n;

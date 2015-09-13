@@ -1,4 +1,4 @@
-/*	$OpenBSD: isctype.c,v 1.11 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: isctype.c,v 1.12 2015/09/13 11:38:08 guenther Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -43,6 +43,7 @@ isalnum(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N)));
 }
+DEF_STRONG(isalnum);
 
 #undef isalpha
 int
@@ -50,6 +51,7 @@ isalpha(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L)));
 }
+DEF_STRONG(isalpha);
 
 #undef isblank
 int
@@ -57,6 +59,7 @@ isblank(int c)
 {
 	return (c == ' ' || c == '\t');
 }
+DEF_STRONG(isblank);
 
 #undef iscntrl
 int
@@ -64,6 +67,7 @@ iscntrl(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _C));
 }
+DEF_STRONG(iscntrl);
 
 #undef isdigit
 int
@@ -71,6 +75,7 @@ isdigit(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _N));
 }
+DEF_STRONG(isdigit);
 
 #undef isgraph
 int
@@ -78,6 +83,7 @@ isgraph(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N)));
 }
+DEF_STRONG(isgraph);
 
 #undef islower
 int
@@ -85,6 +91,7 @@ islower(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _L));
 }
+DEF_STRONG(islower);
 
 #undef isprint
 int
@@ -92,6 +99,7 @@ isprint(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B)));
 }
+DEF_STRONG(isprint);
 
 #undef ispunct
 int
@@ -99,6 +107,7 @@ ispunct(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _P));
 }
+DEF_STRONG(ispunct);
 
 #undef isspace
 int
@@ -106,6 +115,7 @@ isspace(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _S));
 }
+DEF_STRONG(isspace);
 
 #undef isupper
 int
@@ -113,6 +123,7 @@ isupper(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _U));
 }
+DEF_STRONG(isupper);
 
 #undef isxdigit
 int
@@ -120,6 +131,7 @@ isxdigit(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_N|_X)));
 }
+DEF_STRONG(isxdigit);
 
 #undef isascii
 int
@@ -127,6 +139,7 @@ isascii(int c)
 {
 	return ((unsigned int)c <= 0177);
 }
+DEF_WEAK(isascii);
 
 #undef toascii
 int

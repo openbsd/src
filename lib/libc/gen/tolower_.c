@@ -1,4 +1,4 @@
-/*	$OpenBSD: tolower_.c,v 1.9 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: tolower_.c,v 1.10 2015/09/13 11:38:08 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -46,6 +46,7 @@ const short _C_tolower_[1 + CTYPE_NUM_CHARS] = {
 };
 
 const short *_tolower_tab_ = _C_tolower_;
+DEF_STRONG(_tolower_tab_);
 
 #undef tolower
 int
@@ -55,3 +56,4 @@ tolower(int c)
 		return(c);
 	return((_tolower_tab_ + 1)[c]);
 }
+DEF_STRONG(tolower);

@@ -29,17 +29,19 @@
 #ifndef _WCTRANS_LOCAL_H_
 #define _WCTRANS_LOCAL_H_
 
-extern wint_t	_towctrans_ext(wint_t, _WCTransEntry *);
-extern void	_wctrans_init(_RuneLocale *);
+__BEGIN_HIDDEN_DECLS
+wint_t	_towctrans_ext(wint_t, _WCTransEntry *);
+void	_wctrans_init(_RuneLocale *);
+__END_HIDDEN_DECLS
 
-static __inline wint_t
+static inline wint_t
 _towctrans(wint_t c, _WCTransEntry *te)
 {
 	return (_RUNE_ISCACHED(c) ?
 		te->te_cached[(rune_t)c]:_towctrans_ext(c, te));
 }
 
-static __inline struct _WCTransEntry *
+static inline struct _WCTransEntry *
 _wctrans_lower(_RuneLocale *rl)
 {
 	if (rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name==NULL)
@@ -47,7 +49,7 @@ _wctrans_lower(_RuneLocale *rl)
 	return (&rl->rl_wctrans[_WCTRANS_INDEX_LOWER]);
 }
 
-static __inline struct _WCTransEntry *
+static inline struct _WCTransEntry *
 _wctrans_upper(_RuneLocale *rl)
 {
 	if (rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name==NULL)

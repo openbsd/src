@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype.c,v 1.5 2015/09/12 16:23:14 guenther Exp $ */
+/*	$OpenBSD: iswctype.c,v 1.6 2015/09/13 11:38:08 guenther Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -45,12 +45,12 @@
 #include "rune_local.h"
 #include "_wctrans_local.h"
 
-static __inline _RuneType __runetype_w(wint_t);
-static __inline int __isctype_w(wint_t, _RuneType);
-static __inline wint_t __toupper_w(wint_t);
-static __inline wint_t __tolower_w(wint_t);
+static inline _RuneType __runetype_w(wint_t);
+static inline int __isctype_w(wint_t, _RuneType);
+static inline wint_t __toupper_w(wint_t);
+static inline wint_t __tolower_w(wint_t);
 
-static __inline _RuneType
+static inline _RuneType
 __runetype_w(wint_t c)
 {
 	_RuneLocale *rl = _CurrentRuneLocale;
@@ -59,19 +59,19 @@ __runetype_w(wint_t c)
 		rl->rl_runetype[c] : ___runetype_mb(c));
 }
 
-static __inline int
+static inline int
 __isctype_w(wint_t c, _RuneType f)
 {
 	return (!!(__runetype_w(c) & f));
 }
 
-static __inline wint_t
+static inline wint_t
 __toupper_w(wint_t c)
 {
 	return (_towctrans(c, _wctrans_upper(_CurrentRuneLocale)));
 }
 
-static __inline wint_t
+static inline wint_t
 __tolower_w(wint_t c)
 {
 	return (_towctrans(c, _wctrans_lower(_CurrentRuneLocale)));
@@ -136,12 +136,14 @@ iswspace(wint_t c)
 {
 	return (__isctype_w((c), _CTYPE_S));
 }
+DEF_STRONG(iswspace);
 
 int
 iswupper(wint_t c)
 {
 	return (__isctype_w((c), _CTYPE_U));
 }
+DEF_STRONG(iswupper);
 
 int
 iswxdigit(wint_t c)
@@ -160,6 +162,7 @@ towlower(wint_t c)
 {
 	return (__tolower_w(c));
 }
+DEF_STRONG(towlower);
 
 int
 wcwidth(wchar_t c)
