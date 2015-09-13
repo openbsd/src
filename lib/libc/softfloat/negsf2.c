@@ -1,4 +1,4 @@
-/*	$OpenBSD: negsf2.c,v 1.2 2012/12/05 23:20:01 deraadt Exp $	*/
+/*	$OpenBSD: negsf2.c,v 1.3 2015/09/13 14:21:46 miod Exp $	*/
 /* $NetBSD: negsf2.c,v 1.1 2000/06/06 08:15:07 bjh21 Exp $ */
 
 /*
@@ -7,7 +7,7 @@
 
 #include "softfloat-for-gcc.h"
 #include "milieu.h"
-#include "softfloat.h"
+#include <softfloat.h>
 
 float32 __negsf2(float32);
 

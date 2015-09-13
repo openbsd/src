@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetmask.c,v 1.4 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: fpgetmask.c,v 1.5 2015/09/13 14:21:46 miod Exp $	*/
 /* $NetBSD: fpgetmask.c,v 1.3 2002/05/12 13:12:45 bjh21 Exp $ */
 
 /*-
@@ -36,7 +36,7 @@
 #endif
 
 #include "milieu.h"
-#include "softfloat.h"
+#include <softfloat.h>
 
 #ifdef __weak_alias
 __weak_alias(_fpgetmask,fpgetmask);
