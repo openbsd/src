@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.14 2015/02/01 15:27:11 miod Exp $	*/
+/*	$OpenBSD: uba.c,v 1.15 2015/09/13 12:31:35 miod Exp $	*/
 /*	$NetBSD: uba.c,v 1.57 2001/04/26 19:16:07 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -279,7 +279,7 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 
 fail:
-	printf("%s%d at %s csr %o %s\n",
+	printf("%s%d at %s csr %lo %s\n",
 	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 

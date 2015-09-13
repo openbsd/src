@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.23 2011/09/11 19:29:01 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.24 2015/09/13 12:31:35 miod Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -273,7 +273,7 @@ vsbus_search(parent, cfd, aux)
 	return rc;
 
 fail:
-	printf("%s%d at %s csr 0x%x %s\n",
+	printf("%s%d at %s csr 0x%lx %s\n",
 	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 forgetit:
