@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.379 2015/09/13 17:53:44 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.380 2015/09/13 18:15:03 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2431,8 +2431,8 @@ if_group_egress_build(void)
 #endif
 		} while (rt != NULL);
 	}
-#endif
 	rtfree(rt0);
+#endif /* INET6 */
 
 	return (0);
 }
