@@ -1,4 +1,4 @@
-/*	$OpenBSD: unvis.c,v 1.16 2015/07/20 01:52:28 millert Exp $ */
+/*	$OpenBSD: unvis.c,v 1.17 2015/09/13 11:32:51 guenther Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -204,6 +204,7 @@ unvis(char *cp, char c, int *astate, int flag)
 		return (UNVIS_SYNBAD);
 	}
 }
+DEF_WEAK(unvis);
 
 /*
  * strunvis - decode src into dst 

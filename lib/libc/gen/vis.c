@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.24 2015/07/20 01:52:28 millert Exp $ */
+/*	$OpenBSD: vis.c,v 1.25 2015/09/13 11:32:51 guenther Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -136,6 +136,7 @@ done:
 	*dst = '\0';
 	return (dst);
 }
+DEF_WEAK(vis);
 
 /*
  * strvis, strnvis, strvisx - visually encode characters from src into dst
@@ -161,6 +162,7 @@ strvis(char *dst, const char *src, int flag)
 	*dst = '\0';
 	return (dst - start);
 }
+DEF_WEAK(strvis);
 
 int
 strnvis(char *dst, const char *src, size_t siz, int flag)
