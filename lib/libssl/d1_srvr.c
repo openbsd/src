@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.66 2015/09/12 20:51:33 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.67 2015/09/13 09:20:19 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -202,7 +202,8 @@ dtls1_accept(SSL *s)
 
 	if (s->cert == NULL) {
 		SSLerr(SSL_F_DTLS1_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
-		return (-1);
+		ret = -1;
+		goto end;
 	}
 
 	for (;;) {
@@ -224,7 +225,8 @@ dtls1_accept(SSL *s)
 
 			if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
 				SSLerr(SSL_F_DTLS1_ACCEPT, ERR_R_INTERNAL_ERROR);
-				return -1;
+				ret = -1;
+				goto end;
 			}
 			s->type = SSL_ST_ACCEPT;
 

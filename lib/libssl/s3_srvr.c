@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_srvr.c,v 1.121 2015/09/12 16:10:07 doug Exp $ */
+/* $OpenBSD: s3_srvr.c,v 1.122 2015/09/13 09:20:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,9 +188,9 @@ ssl3_accept(SSL *s)
 		SSL_clear(s);
 
 	if (s->cert == NULL) {
-		SSLerr(SSL_F_SSL3_ACCEPT,
-		    SSL_R_NO_CERTIFICATE_SET);
-		return (-1);
+		SSLerr(SSL_F_SSL3_ACCEPT, SSL_R_NO_CERTIFICATE_SET);
+		ret = -1;
+		goto end;
 	}
 
 	for (;;) {
@@ -211,9 +211,9 @@ ssl3_accept(SSL *s)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
 			if ((s->version >> 8) != 3) {
-				SSLerr(SSL_F_SSL3_ACCEPT,
-				    ERR_R_INTERNAL_ERROR);
-				return (-1);
+				SSLerr(SSL_F_SSL3_ACCEPT, ERR_R_INTERNAL_ERROR);
+				ret = -1;
+				goto end;
 			}
 			s->type = SSL_ST_ACCEPT;
 
@@ -392,9 +392,12 @@ ssl3_accept(SSL *s)
 				skip = 1;
 				s->s3->tmp.cert_request = 0;
 				s->state = SSL3_ST_SW_SRVR_DONE_A;
-				if (s->s3->handshake_buffer)
-					if (!tls1_digest_cached_records(s))
-						return (-1);
+				if (s->s3->handshake_buffer) {
+					if (!tls1_digest_cached_records(s)) {
+						ret = -1;
+						goto end;
+					}
+				}
 			} else {
 				s->s3->tmp.cert_request = 1;
 				ret = ssl3_send_certificate_request(s);
@@ -482,11 +485,14 @@ ssl3_accept(SSL *s)
 				if (!s->s3->handshake_buffer) {
 					SSLerr(SSL_F_SSL3_ACCEPT,
 					    ERR_R_INTERNAL_ERROR);
-					return (-1);
+					ret = -1;
+					goto end;
 				}
 				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-				if (!tls1_digest_cached_records(s))
-					return (-1);
+				if (!tls1_digest_cached_records(s)) {
+					ret = -1;
+					goto end;
+				}
 			} else {
 				int offset = 0;
 				int dgst_num;
@@ -501,9 +507,12 @@ ssl3_accept(SSL *s)
 				 * CertificateVerify should be generalized.
 				 * But it is next step
 				 */
-				if (s->s3->handshake_buffer)
-					if (!tls1_digest_cached_records(s))
-						return (-1);
+				if (s->s3->handshake_buffer) {
+					if (!tls1_digest_cached_records(s)) {
+						ret = -1;
+						goto end;
+					}
+				}
 				for (dgst_num = 0; dgst_num < SSL_MAX_DIGEST;
 				    dgst_num++)
 					if (s->s3->handshake_dgst[dgst_num]) {
