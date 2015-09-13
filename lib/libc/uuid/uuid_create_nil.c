@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid_create_nil.c,v 1.2 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: uuid_create_nil.c,v 1.3 2015/09/13 11:36:16 guenther Exp $	*/
 /*	$NetBSD: uuid_create_nil.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*
@@ -46,3 +46,4 @@ uuid_create_nil(uuid_t *u, uint32_t *status)
 	if (status)
 		*status = uuid_s_ok;
 }
+DEF_WEAK(uuid_create_nil);

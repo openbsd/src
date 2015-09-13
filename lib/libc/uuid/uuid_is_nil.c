@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid_is_nil.c,v 1.2 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: uuid_is_nil.c,v 1.3 2015/09/13 11:36:16 guenther Exp $	*/
 /*	$NetBSD: uuid_is_nil.c,v 1.4 2008/04/23 07:52:32 plunky Exp $	*/
 
 /*
@@ -51,3 +51,4 @@ uuid_is_nil(const uuid_t *u, uint32_t *status)
 
 	return (memcmp(u, &nil, sizeof(uuid_t)) == 0 ? 1 : 0);
 }
+DEF_WEAK(uuid_is_nil);
