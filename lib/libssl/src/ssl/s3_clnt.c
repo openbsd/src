@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.134 2015/09/13 12:39:16 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.135 2015/09/13 12:52:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1908,8 +1908,9 @@ static int
 ssl3_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
 {
 	DH *dh_srvr = NULL, *dh_clnt = NULL;
+	unsigned char *key = NULL;
+	int key_size, n;
 	int ret = -1;
-	int n;
 
 	/* Ensure that we have an ephemeral key for DHE. */
 	if (sess_cert->peer_dh_tmp == NULL) {
@@ -1929,12 +1930,13 @@ ssl3_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
 		goto err;
 	}
-
-	/*
-	 * Use the 'p' output buffer for the DH key, but make sure to clear
-	 * it out afterwards.
-	 */
-	n = DH_compute_key(p, dh_srvr->pub_key, dh_clnt);
+	key_size = DH_size(dh_clnt);
+	if ((key = malloc(key_size)) == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	n = DH_compute_key(key, dh_srvr->pub_key, dh_clnt);
 	if (n <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
 		goto err;
@@ -1943,10 +1945,7 @@ ssl3_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
 	/* Generate master key from the result. */
 	s->session->master_key_length =
 	    s->method->ssl3_enc->generate_master_secret(s,
-		s->session->master_key, p, n);
-
-	/* Clean up. */
-	explicit_bzero(p, n);
+		s->session->master_key, key, n);
 
 	/* Send off the data. */
 	n = BN_num_bytes(dh_clnt->pub_key);
@@ -1959,6 +1958,9 @@ ssl3_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
 
 err:
 	DH_free(dh_clnt);
+	if (key != NULL)
+		explicit_bzero(key, key_size);
+	free(key);
 
 	return (ret);
 }
@@ -1967,18 +1969,17 @@ static int
 ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
     int *outlen)
 {
-	EC_KEY *clnt_ecdh = NULL;
+	EC_KEY *tkey, *clnt_ecdh = NULL;
 	const EC_GROUP *srvr_group = NULL;
 	const EC_POINT *srvr_ecpoint = NULL;
 	EVP_PKEY *srvr_pub_pkey = NULL;
 	BN_CTX *bn_ctx = NULL;
 	unsigned char *encodedPoint = NULL;
+	unsigned char *key = NULL;
 	unsigned long alg_k;
 	int encoded_pt_len = 0;
-	int key_size;
-	EC_KEY *tkey;
+	int key_size, n;
 	int ret = -1;
-	int n;
 
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -2025,22 +2026,21 @@ ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 		goto err;
 	}
 
-	/* Generate a new ECDH key pair */
+	/* Generate a new ECDH key pair. */
 	if (!(EC_KEY_generate_key(clnt_ecdh))) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
 	}
-
-	/*
-	 * Use the 'p' output buffer for the ECDH key, but make sure to clear
-	 * it out afterwards.
-	 */
 	key_size = ECDH_size(clnt_ecdh);
 	if (key_size <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
 	}
-	n = ECDH_compute_key(p, key_size, srvr_ecpoint, clnt_ecdh, NULL);
+	if ((key = malloc(key_size)) == NULL) {
+		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+		    ERR_R_MALLOC_FAILURE);
+	}
+	n = ECDH_compute_key(key, key_size, srvr_ecpoint, clnt_ecdh, NULL);
 	if (n <= 0) {
 		SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
 		goto err;
@@ -2049,10 +2049,7 @@ ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	/* Generate master key from the result. */
 	s->session->master_key_length =
 	    s->method->ssl3_enc->generate_master_secret(s,
-		s->session->master_key, p, n);
-
-	/* Clean up. */
-	explicit_bzero(p, n);
+		s->session->master_key, key, n);
 
 	/*
 	 * First check the size of encoding and allocate memory accordingly.
@@ -2087,7 +2084,10 @@ ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
 	ret = 1;
 
 err:
-	/* Free allocated memory */
+	if (key != NULL)
+		explicit_bzero(key, key_size);
+	free(key);
+
 	BN_CTX_free(bn_ctx);
 	free(encodedPoint);
 	EC_KEY_free(clnt_ecdh);
@@ -2219,7 +2219,7 @@ ssl3_send_client_key_exchange(SSL *s)
 	SESS_CERT *sess_cert;
 	unsigned long alg_k;
 	unsigned char *p;
-	int n;
+	int n = 0;
 
 	if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
 		p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_KEY_EXCHANGE);
