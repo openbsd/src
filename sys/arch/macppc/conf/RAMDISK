@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.113 2015/08/30 09:49:41 mpi Exp $
+#	$OpenBSD: RAMDISK,v 1.114 2015/09/13 14:43:42 deraadt Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -180,7 +180,7 @@ ath*		at cardbus?		# Atheros AR5k (802.11a/b/g)
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 dc*		at cardbus?		# 21143, "tulip" clone ethernet
 fxp*		at cardbus?		# Intel PRO/100 ethernet
-xl*		at cardbus?		# 3C575/3C656 ethernet
+xl*		at cardbus?		# 3C575 ethernet
 rl*		at cardbus?		# Realtek 81[23]9 ethernet
 re*		at cardbus?		# Realtek 8169/8169S/8110S
 wdc*		at pcmcia?
