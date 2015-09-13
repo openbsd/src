@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.54 2015/06/03 02:24:36 millert Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.55 2015/09/13 15:33:48 guenther Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -753,6 +753,7 @@ fail:
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (my_errno);
 }
+DEF_WEAK(getpwnam_r);
 
 struct passwd *
 getpwnam(const char *name)
@@ -768,6 +769,7 @@ getpwnam(const char *name)
 	}
 	return (pw);
 }
+DEF_WEAK(getpwnam);
 
 int
 getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
@@ -812,6 +814,7 @@ fail:
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (my_errno);
 }
+DEF_WEAK(getpwuid_r);
 
 struct passwd *
 getpwuid(uid_t uid)
@@ -827,6 +830,7 @@ getpwuid(uid_t uid)
 	}
 	return (pw);
 }
+DEF_WEAK(getpwuid);
 
 int
 setpassent(int stayopen)
@@ -845,6 +849,7 @@ setpassent(int stayopen)
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (1);
 }
+DEF_WEAK(setpassent);
 
 void
 setpwent(void)

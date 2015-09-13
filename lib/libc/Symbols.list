@@ -819,7 +819,6 @@ arc4random
 arc4random_buf
 arc4random_uniform
 bcrypt
-bcrypt_autorounds
 bcrypt_checkpass
 bcrypt_gensalt
 bcrypt_newhash

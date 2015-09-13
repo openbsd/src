@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_dup.c,v 1.7 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: pw_dup.c,v 1.8 2015/09/13 15:33:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -80,3 +80,4 @@ pw_dup(const struct passwd *pw)
 
 	return (newpw);
 }
+DEF_WEAK(pw_dup);

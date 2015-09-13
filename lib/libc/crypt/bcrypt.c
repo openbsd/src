@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.54 2015/09/13 12:42:39 millert Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.55 2015/09/13 15:33:48 guenther Exp $	*/
 
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -215,6 +215,7 @@ bcrypt_newhash(const char *pass, int log_rounds, char *hash, size_t hashlen)
 	explicit_bzero(salt, sizeof(salt));
 	return 0;
 }
+DEF_WEAK(bcrypt_newhash);
 
 int
 bcrypt_checkpass(const char *pass, const char *goodhash)
@@ -232,13 +233,14 @@ bcrypt_checkpass(const char *pass, const char *goodhash)
 	explicit_bzero(hash, sizeof(hash));
 	return 0;
 }
+DEF_WEAK(bcrypt_checkpass);
 
 /*
  * Measure this system's performance by measuring the time for 8 rounds.
  * We are aiming for something that takes around 0.1s, but not too much over.
  */
 int
-bcrypt_autorounds(void)
+_bcrypt_autorounds(void)
 {
 	struct timespec before, after;
 	int r = 8;
@@ -391,3 +393,4 @@ bcrypt(const char *pass, const char *salt)
 
 	return gencrypted;
 }
+DEF_WEAK(bcrypt);
