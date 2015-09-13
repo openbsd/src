@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstab.c,v 1.20 2014/09/15 06:15:48 guenther Exp $ */
+/*	$OpenBSD: fstab.c,v 1.21 2015/09/13 21:02:26 guenther Exp $ */
 /*
  * Copyright (c) 1980, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -202,6 +202,7 @@ setfsent(void)
 fail:
 	return(0);
 }
+DEF_WEAK(setfsent);
 
 void
 endfsent(void)
