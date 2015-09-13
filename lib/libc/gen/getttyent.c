@@ -1,4 +1,4 @@
-/*	$OpenBSD: getttyent.c,v 1.14 2014/09/15 06:15:48 guenther Exp $ */
+/*	$OpenBSD: getttyent.c,v 1.15 2015/09/13 11:47:54 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -127,6 +127,7 @@ getttyent(void)
 		*p = '\0';
 	return (&tty);
 }
+DEF_WEAK(getttyent);
 
 #define	QUOTED	1
 
@@ -185,6 +186,7 @@ setttyent(void)
 		return (1);
 	return (0);
 }
+DEF_WEAK(setttyent);
 
 int
 endttyent(void)
@@ -198,3 +200,4 @@ endttyent(void)
 	}
 	return (1);
 }
+DEF_WEAK(endttyent);
