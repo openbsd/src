@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.42 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.43 2015/09/13 12:20:12 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -170,6 +170,7 @@ getgrgid(gid_t gid)
 
 	return getgrgid_gs(gid, p_gr, gs);
 }
+DEF_WEAK(getgrgid);
 
 int
 getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t bufsize,
@@ -219,6 +220,7 @@ setgrent(void)
 	setgroupent(0);
 	errno = saved_errno;
 }
+DEF_WEAK(setgrent);
 
 int
 setgroupent(int stayopen)
@@ -235,6 +237,7 @@ setgroupent(int stayopen)
 	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
 	return (retval);
 }
+DEF_WEAK(setgroupent);
 
 static
 void
@@ -266,6 +269,7 @@ endgrent(void)
 	endgrent_basic();
 	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
 }
+DEF_WEAK(endgrent);
 
 static int
 grscan(int search, gid_t gid, const char *name, struct group *p_gr,
