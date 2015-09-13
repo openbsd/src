@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.h,v 1.2 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: ecdh.h,v 1.3 2015/09/13 10:46:20 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -21,7 +21,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -87,15 +87,16 @@ extern "C" {
 
 const ECDH_METHOD *ECDH_OpenSSL(void);
 
-void	  ECDH_set_default_method(const ECDH_METHOD *);
+void ECDH_set_default_method(const ECDH_METHOD *);
 const ECDH_METHOD *ECDH_get_default_method(void);
-int 	  ECDH_set_method(EC_KEY *, const ECDH_METHOD *);
+int ECDH_set_method(EC_KEY *, const ECDH_METHOD *);
 
-int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-                     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
+int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+    EC_KEY *ecdh,
+    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
 
-int 	  ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new 
-		*new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+int 	  ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new
+*new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int 	  ECDH_set_ex_data(EC_KEY *d, int idx, void *arg);
 void 	  *ECDH_get_ex_data(EC_KEY *d, int idx);
 

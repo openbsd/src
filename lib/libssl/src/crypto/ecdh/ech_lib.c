@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.9 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.10 2015/09/13 10:46:20 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -21,7 +21,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -83,22 +83,24 @@ static void *ecdh_data_new(void);
 static void *ecdh_data_dup(void *);
 static void  ecdh_data_free(void *);
 
-void ECDH_set_default_method(const ECDH_METHOD *meth)
-	{
+void
+ECDH_set_default_method(const ECDH_METHOD *meth)
+{
 	default_ECDH_method = meth;
-	}
+}
 
-const ECDH_METHOD *ECDH_get_default_method(void)
-	{
-	if(!default_ECDH_method) 
-		{
+const ECDH_METHOD *
+ECDH_get_default_method(void)
+{
+	if (!default_ECDH_method) {
 		default_ECDH_method = ECDH_OpenSSL();
-		}
-	return default_ECDH_method;
 	}
+	return default_ECDH_method;
+}
 
-int ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
-	{
+int
+ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
+{
 	ECDH_DATA *ecdh;
 
 	ecdh = ecdh_check(eckey);
@@ -107,26 +109,25 @@ int ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
 		return 0;
 
 #ifndef OPENSSL_NO_ENGINE
-	if (ecdh->engine)
-		{
+	if (ecdh->engine) {
 		ENGINE_finish(ecdh->engine);
 		ecdh->engine = NULL;
-		}
-#endif
-        ecdh->meth = meth;
-        return 1;
 	}
+#endif
+	ecdh->meth = meth;
+	return 1;
+}
 
-static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
-	{
+static ECDH_DATA *
+ECDH_DATA_new_method(ENGINE *engine)
+{
 	ECDH_DATA *ret;
 
 	ret = malloc(sizeof(ECDH_DATA));
-	if (ret == NULL)
-		{
+	if (ret == NULL) {
 		ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-		return(NULL);
-		}
+		return (NULL);
+	}
 
 	ret->init = NULL;
 
@@ -135,30 +136,30 @@ static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 #ifndef OPENSSL_NO_ENGINE
 	if (!ret->engine)
 		ret->engine = ENGINE_get_default_ECDH();
-	if (ret->engine)
-		{
+	if (ret->engine) {
 		ret->meth = ENGINE_get_ECDH(ret->engine);
-		if (!ret->meth)
-			{
+		if (!ret->meth) {
 			ECDHerr(ECDH_F_ECDH_DATA_NEW_METHOD, ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
 			return NULL;
-			}
 		}
+	}
 #endif
 
 	ret->flags = ret->meth->flags;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ECDH, ret, &ret->ex_data);
-	return(ret);
-	}
+	return (ret);
+}
 
-static void *ecdh_data_new(void)
-	{
+static void *
+ecdh_data_new(void)
+{
 	return (void *)ECDH_DATA_new_method(NULL);
-	}
+}
 
-static void *ecdh_data_dup(void *data)
+static void *
+ecdh_data_dup(void *data)
 {
 	ECDH_DATA *r = (ECDH_DATA *)data;
 
@@ -169,8 +170,9 @@ static void *ecdh_data_dup(void *data)
 	return (void *)ecdh_data_new();
 }
 
-void ecdh_data_free(void *data)
-	{
+void
+ecdh_data_free(void *data)
+{
 	ECDH_DATA *r = (ECDH_DATA *)data;
 
 #ifndef OPENSSL_NO_ENGINE
@@ -183,56 +185,57 @@ void ecdh_data_free(void *data)
 	explicit_bzero((void *)r, sizeof(ECDH_DATA));
 
 	free(r);
-	}
+}
 
-ECDH_DATA *ecdh_check(EC_KEY *key)
-	{
+ECDH_DATA *
+ecdh_check(EC_KEY *key)
+{
 	ECDH_DATA *ecdh_data;
- 
+
 	void *data = EC_KEY_get_key_method_data(key, ecdh_data_dup,
-					ecdh_data_free, ecdh_data_free);
-	if (data == NULL)
-	{
+	    ecdh_data_free, ecdh_data_free);
+	if (data == NULL) {
 		ecdh_data = (ECDH_DATA *)ecdh_data_new();
 		if (ecdh_data == NULL)
 			return NULL;
 		data = EC_KEY_insert_key_method_data(key, (void *)ecdh_data,
-			   ecdh_data_dup, ecdh_data_free, ecdh_data_free);
-		if (data != NULL)
-			{
+		    ecdh_data_dup, ecdh_data_free, ecdh_data_free);
+		if (data != NULL) {
 			/* Another thread raced us to install the key_method
 			 * data and won. */
 			ecdh_data_free(ecdh_data);
 			ecdh_data = (ECDH_DATA *)data;
-			}
-	}
-	else
+		}
+	} else
 		ecdh_data = (ECDH_DATA *)data;
 
 	return ecdh_data;
-	}
+}
 
-int ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-	{
+int
+ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+    CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
+{
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ECDH, argl, argp,
-				new_func, dup_func, free_func);
-	}
+	    new_func, dup_func, free_func);
+}
 
-int ECDH_set_ex_data(EC_KEY *d, int idx, void *arg)
-	{
+int
+ECDH_set_ex_data(EC_KEY *d, int idx, void *arg)
+{
 	ECDH_DATA *ecdh;
 	ecdh = ecdh_check(d);
 	if (ecdh == NULL)
 		return 0;
-	return(CRYPTO_set_ex_data(&ecdh->ex_data,idx,arg));
-	}
+	return (CRYPTO_set_ex_data(&ecdh->ex_data, idx, arg));
+}
 
-void *ECDH_get_ex_data(EC_KEY *d, int idx)
-	{
+void *
+ECDH_get_ex_data(EC_KEY *d, int idx)
+{
 	ECDH_DATA *ecdh;
 	ecdh = ecdh_check(d);
 	if (ecdh == NULL)
 		return NULL;
-	return(CRYPTO_get_ex_data(&ecdh->ex_data,idx));
-	}
+	return (CRYPTO_get_ex_data(&ecdh->ex_data, idx));
+}
