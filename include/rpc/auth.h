@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.7 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: auth.h,v 1.8 2015/09/13 12:29:03 guenther Exp $	*/
 /*	$NetBSD: auth.h,v 1.7 1995/04/29 05:27:55 cgd Exp $	*/
 
 /*
@@ -172,8 +172,6 @@ struct sockaddr_in;
 extern AUTH *authunix_create(char *, int, int, int, int *);
 extern AUTH *authunix_create_default(void);
 extern AUTH *authnone_create(void);
-extern AUTH *authdes_create(char *, unsigned int, struct sockaddr_in *, 
-    des_block *);
 extern void set_rpc_maxgrouplist(int);
 __END_DECLS
 
