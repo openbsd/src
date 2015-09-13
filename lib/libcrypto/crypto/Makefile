@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.60 2015/07/19 22:34:27 doug Exp $
+# $OpenBSD: Makefile,v 1.61 2015/09/13 12:13:02 jsing Exp $
 
 LIB=	crypto
 
@@ -312,7 +312,6 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/x509v3
 
 HDRS=\
-	e_os2.h \
 	crypto/aes/aes.h \
 	crypto/asn1/asn1.h \
 	crypto/asn1/asn1_mac.h \
