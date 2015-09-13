@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.418 2015/07/30 08:03:50 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.419 2015/09/13 10:05:22 zhuk Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: September 13 2015 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1735,10 +1735,12 @@ See also
 .Ev NO_IGNORE ,
 .Ev ONLY_FOR_ARCHS .
 .It Ev IGNORE_IS_FATAL
+User settings.
 If set to
 .Sq Yes ,
 ignored ports will become fatal errors.
 .It Ev IGNORE_SILENT
+User settings.
 If set to
 .Sq Yes ,
 do not print anything when ignoring a port.
