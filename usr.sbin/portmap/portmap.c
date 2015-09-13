@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.44 2015/09/13 14:57:33 guenther Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.45 2015/09/13 15:44:47 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -67,7 +67,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 
@@ -578,7 +577,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 	u_short port;
 	struct sockaddr_in me;
 	pid_t pid;
-	int so = -1, dontblock = 1;
+	int so = -1;
 	CLIENT *client;
 	struct authunix_parms *au = (struct authunix_parms *)rqstp->rq_clntcred;
 	struct timeval timeout;
@@ -610,10 +609,8 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 	me.sin_port = htons(port);
 
 	/* Avoid implicit binding to reserved port by clntudp_create() */
-	so = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	so = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP);
 	if (so == -1)
-		exit(1);
-	if (ioctl(so, FIONBIO, &dontblock) == -1)
 		exit(1);
 
 	client = clntudp_create(&me, a.rmt_prog, a.rmt_vers, timeout, &so);

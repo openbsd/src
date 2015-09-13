@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rpc_fwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: rpc_fwd.c,v 1.9 2014/10/26 03:28:41 guenther Exp $
+ *	$Id: rpc_fwd.c,v 1.10 2015/09/13 15:44:47 guenther Exp $
  */
 
 /*
@@ -41,12 +41,6 @@
 
 #include "am.h"
 #include <sys/ioctl.h>
-#ifndef F_SETFL
-#include <fcntl.h>
-#endif /* F_SETFL */
-#ifndef FNDELAY
-#include <sys/file.h>
-#endif /* FNDELAY */
 
 /*
  * Note that the ID field in the external packet is only
@@ -164,12 +158,10 @@ fwd_free(rpc_forward *p)
  */
 int fwd_init()
 {
-	int on = 1;
-
 	/*
 	 * Create ping socket
 	 */
-	fwd_sock = socket(AF_INET, SOCK_DGRAM, 0);
+	fwd_sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 	if (fwd_sock < 0) {
 		plog(XLOG_ERROR, "Unable to create RPC forwarding socket: %m");
 		return errno;
@@ -180,12 +172,6 @@ int fwd_init()
 	 */
 	if (bind_resv_port(fwd_sock, (unsigned short *) 0) < 0)
 		plog(XLOG_ERROR, "can't bind privileged port");
-
-	if (fcntl(fwd_sock, F_SETFL, FNDELAY) < 0 &&
-			ioctl(fwd_sock, FIONBIO, &on) < 0) {
-		plog(XLOG_ERROR, "Can't set non-block on forwarding socket: %m");
-		return errno;
-	}
 
 	return 0;
 }
