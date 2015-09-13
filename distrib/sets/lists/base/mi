@@ -224,7 +224,6 @@
 ./etc/skel/.ssh
 ./etc/ssh
 ./etc/ssl
-./etc/ssl/cert.pem
 ./etc/ssl/lib
 ./etc/ssl/private
 ./etc/systrace
