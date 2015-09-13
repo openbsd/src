@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.574 2015/07/21 03:38:22 reyk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.575 2015/09/13 12:28:31 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3973,3 +3973,8 @@ intr_handler(struct intrframe *frame, struct intrhand *ih)
 	return rc;
 }
 
+void
+intr_barrier(void *ih)
+{
+	sched_barrier(NULL);
+}
