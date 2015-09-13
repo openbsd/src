@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.45 2015/08/28 16:16:44 tedu Exp $	*/
+/*	$OpenBSD: intr.c,v 1.46 2015/09/13 11:48:17 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -651,6 +651,12 @@ intr_printconfig(void)
 		}
 	}
 #endif
+}
+
+void
+intr_barrier(void *ih)
+{
+	sched_barrier(NULL);
 }
 
 /*

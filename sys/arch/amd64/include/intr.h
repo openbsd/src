@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.28 2015/07/19 18:44:15 sf Exp $	*/
+/*	$OpenBSD: intr.h,v 1.29 2015/09/13 11:48:17 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -209,6 +209,7 @@ int intr_handler(struct intrframe *, struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int bus, int pin, int *handle);
 void intr_printconfig(void);
+void intr_barrier(void *);
 
 #ifdef MULTIPROCESSOR
 void x86_send_ipi(struct cpu_info *, int);
