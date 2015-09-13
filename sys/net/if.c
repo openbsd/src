@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.377 2015/09/13 09:58:03 kettenis Exp $	*/
+/*	$OpenBSD: if.c,v 1.378 2015/09/13 10:33:34 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
 #include <sys/domain.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
-#include <sys/proc.h>
 #include <sys/atomic.h>
 
 #include <dev/rndvar.h>
@@ -702,7 +701,7 @@ struct ifih {
 				      void *);
 	void			 *ifih_cookie;
 	int			  ifih_refcnt;
-	int			  ifih_srpcnt;
+	struct refcnt		  ifih_srpcnt;
 };
 
 void	if_ih_ref(void *, void *);
@@ -732,7 +731,7 @@ if_ih_insert(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
 		ifih->ifih_input = input;
 		ifih->ifih_cookie = cookie;
 		ifih->ifih_refcnt = 1;
-		ifih->ifih_srpcnt = 0;
+		refcnt_init(&ifih->ifih_srpcnt);
 		SRPL_INSERT_HEAD_LOCKED(&ifih_rc, &ifp->if_inputs,
 		    ifih, ifih_next);
 	}
@@ -743,7 +742,7 @@ if_ih_ref(void *null, void *i)
 {
 	struct ifih *ifih = i;
 
-	atomic_inc_int(&ifih->ifih_srpcnt);
+	refcnt_take(&ifih->ifih_srpcnt);
 }
 
 void
@@ -751,17 +750,14 @@ if_ih_unref(void *null, void *i)
 {
 	struct ifih *ifih = i;
 
-	if (atomic_dec_int_nv(&ifih->ifih_srpcnt) == 0)
-		wakeup_one(&ifih->ifih_srpcnt);
+	refcnt_rele_wake(&ifih->ifih_srpcnt);
 }
 
 void
 if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
     void *), void *cookie)
 {
-	struct sleep_state sls;
 	struct ifih *ifih;
-	int refs;
 
 	/* the kernel lock guarantees serialised modifications to if_inputs */
 	KERNEL_ASSERT_LOCKED();
@@ -777,13 +773,7 @@ if_ih_remove(struct ifnet *ifp, int (*input)(struct ifnet *, struct mbuf *,
 		SRPL_REMOVE_LOCKED(&ifih_rc, &ifp->if_inputs, ifih,
 		    ifih, ifih_next);
 
-		refs = ifih->ifih_srpcnt;
-		while (refs) {
-			sleep_setup(&sls, &ifih->ifih_srpcnt, PWAIT, "ifihrm");
-			refs = ifih->ifih_srpcnt;
-			sleep_finish(&sls, refs);
-		}
-
+		refcnt_finalize(&ifih->ifih_srpcnt, "ifihrm");
 		free(ifih, M_DEVBUF, sizeof(*ifih));
 	}
 }
