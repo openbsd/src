@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.23 2014/07/12 16:03:36 miod Exp $ */
+/* $OpenBSD: bn_print.c,v 1.24 2015/09/13 15:59:29 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,13 +77,13 @@ BN_bn2hex(const BIGNUM *a)
 	char *buf;
 	char *p;
 
-	buf = malloc(a->top * BN_BYTES * 2 + 2);
+	buf = malloc(BN_is_negative(a) + a->top * BN_BYTES * 2 + 2);
 	if (buf == NULL) {
 		BNerr(BN_F_BN_BN2HEX, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	p = buf;
-	if (a->neg)
+	if (BN_is_negative(a))
 		*(p++) = '-';
 	if (BN_is_zero(a))
 		*(p++) = '0';
