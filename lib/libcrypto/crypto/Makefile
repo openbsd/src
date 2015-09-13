@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.61 2015/09/13 12:13:02 jsing Exp $
+# $OpenBSD: Makefile,v 1.62 2015/09/13 12:27:14 jsing Exp $
 
 LIB=	crypto
 
@@ -122,7 +122,7 @@ SRCS+= ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
 SRCS+= ecp_oct.c ec2_oct.c ec_oct.c
 
 # ecdh/
-SRCS+= ech_lib.c ech_ossl.c ech_key.c ech_err.c
+SRCS+= ech_lib.c ech_key.c ech_err.c
 
 # ecdsa/
 SRCS+= ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c

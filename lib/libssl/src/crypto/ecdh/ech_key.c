@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.3 2015/09/13 10:46:20 jsing Exp $ */
+/* $OpenBSD: ech_key.c,v 1.4 2015/09/13 12:27:14 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -67,7 +67,152 @@
  *
  */
 
+#include <limits.h>
+#include <string.h>
+
+#include <openssl/opensslconf.h>
+
+#include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/obj_mac.h>
+#include <openssl/sha.h>
+
 #include "ech_locl.h"
+
+static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
+    EC_KEY *ecdh,
+    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
+
+/*
+ * This implementation is based on the following primitives in the IEEE 1363
+ * standard:
+ *  - ECKAS-DH1
+ *  - ECSVDP-DH
+ * Finally an optional KDF is applied.
+ */
+static int
+ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+    EC_KEY *ecdh,
+    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
+{
+	BN_CTX *ctx;
+	EC_POINT *tmp = NULL;
+	BIGNUM *x = NULL, *y = NULL;
+	const BIGNUM *priv_key;
+	const EC_GROUP* group;
+	int ret = -1;
+	size_t buflen, len;
+	unsigned char *buf = NULL;
+
+	if (outlen > INT_MAX) {
+		/* Sort of, anyway. */
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+		return -1;
+	}
+
+	if ((ctx = BN_CTX_new()) == NULL)
+		goto err;
+	BN_CTX_start(ctx);
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((y = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	priv_key = EC_KEY_get0_private_key(ecdh);
+	if (priv_key == NULL) {
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_NO_PRIVATE_VALUE);
+		goto err;
+	}
+
+	group = EC_KEY_get0_group(ecdh);
+	if ((tmp = EC_POINT_new(group)) == NULL) {
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx)) {
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,
+		    ECDH_R_POINT_ARITHMETIC_FAILURE);
+		goto err;
+	}
+
+	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
+	    NID_X9_62_prime_field) {
+		if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y,
+		    ctx)) {
+			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,
+			    ECDH_R_POINT_ARITHMETIC_FAILURE);
+			goto err;
+		}
+	}
+#ifndef OPENSSL_NO_EC2M
+	else {
+		if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y,
+		    ctx)) {
+			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY,
+			    ECDH_R_POINT_ARITHMETIC_FAILURE);
+			goto err;
+		}
+	}
+#endif
+
+	buflen = ECDH_size(ecdh);
+	len = BN_num_bytes(x);
+	if (len > buflen) {
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+	if (outlen < buflen) {
+		/* The resulting key would be truncated. */
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KEY_TRUNCATION);
+		goto err;
+	}
+	if ((buf = malloc(buflen)) == NULL) {
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	memset(buf, 0, buflen - len);
+	if (len != (size_t)BN_bn2bin(x, buf + buflen - len)) {
+		ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ERR_R_BN_LIB);
+		goto err;
+	}
+
+	if (KDF != 0) {
+		if (KDF(buf, buflen, out, &outlen) == NULL) {
+			ECDHerr(ECDH_F_ECDH_COMPUTE_KEY, ECDH_R_KDF_FAILED);
+			goto err;
+		}
+		ret = outlen;
+	} else {
+		/* No KDF, just copy as much as we can and zero the rest. */
+		if (outlen > buflen) {
+			memset(out + buflen, 0, outlen - buflen);
+			outlen = buflen;
+		}
+		memcpy(out, buf, outlen);
+		ret = outlen;
+	}
+
+err:
+	EC_POINT_free(tmp);
+	if (ctx)
+		BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+	free(buf);
+	return (ret);
+}
+
+static ECDH_METHOD openssl_ecdh_meth = {
+	.name = "OpenSSL ECDH method",
+	.compute_key = ecdh_compute_key
+};
+
+const ECDH_METHOD *
+ECDH_OpenSSL(void)
+{
+	return &openssl_ecdh_meth;
+}
 
 int
 ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
