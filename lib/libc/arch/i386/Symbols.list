@@ -1,8 +1,6 @@
-__ULtox_D2A
 __divsi3
 __fixdfsi
 __fixunsdfsi
 __mcount
-__strtorx
 __udivsi3
 mcount

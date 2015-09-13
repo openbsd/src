@@ -1,4 +1,4 @@
-/*	$OpenBSD: devname.c,v 1.11 2015/08/26 01:54:09 guenther Exp $ */
+/*	$OpenBSD: devname.c,v 1.12 2015/09/13 08:31:47 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -106,3 +106,4 @@ devname(dev_t dev, mode_t type)
 	}
 	return (name ? name : "??");
 }
+DEF_WEAK(devname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtol.c,v 1.10 2014/09/13 20:10:12 schwarze Exp $ */
+/*	$OpenBSD: strtol.c,v 1.11 2015/09/13 08:31:48 guenther Exp $ */
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -148,3 +148,4 @@ strtol(const char *nptr, char **endptr, int base)
 		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);
 }
+DEF_STRONG(strtol);

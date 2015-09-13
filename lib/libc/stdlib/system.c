@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.8 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: system.c,v 1.9 2015/09/13 08:31:48 guenther Exp $ */
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -72,3 +72,4 @@ system(const char *command)
 	(void)signal(SIGQUIT, quitsave);
 	return (pid == -1 ? -1 : pstat);
 }
+DEF_STRONG(system);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abs.c,v 1.5 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: abs.c,v 1.6 2015/09/13 08:31:47 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,3 +35,4 @@ abs(int j)
 {
 	return(j < 0 ? -j : j);
 }
+DEF_STRONG(abs);

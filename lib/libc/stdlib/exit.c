@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.12 2007/09/03 14:40:16 millert Exp $ */
+/*	$OpenBSD: exit.c,v 1.13 2015/09/13 08:31:47 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -57,3 +57,4 @@ exit(int status)
 	__cxa_finalize(NULL);
 	_exit(status);
 }
+DEF_STRONG(exit);

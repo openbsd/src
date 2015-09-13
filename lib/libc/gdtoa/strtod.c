@@ -1102,4 +1102,4 @@ strtod
 		*se = (char *)s;
 	return sign ? -dval(&rv) : dval(&rv);
 	}
-
+DEF_STRONG(strtod);

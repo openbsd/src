@@ -1,4 +1,4 @@
-/*	$OpenBSD: atoi.c,v 1.5 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: atoi.c,v 1.6 2015/09/13 08:31:47 guenther Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -35,3 +35,4 @@ atoi(const char *str)
 {
 	return((int)strtol(str, (char **)NULL, 10));
 }
+DEF_STRONG(atoi);

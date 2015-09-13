@@ -1,4 +1,4 @@
-/*	$OpenBSD: abort.c,v 1.17 2014/05/14 21:54:20 tedu Exp $ */
+/*	$OpenBSD: abort.c,v 1.18 2015/09/13 08:31:47 guenther Exp $ */
 /*
  * Copyright (c) 1985 Regents of the University of California.
  * All rights reserved.
@@ -61,3 +61,4 @@ abort(void)
 	(void)raise(SIGABRT);
 	_exit(1);
 }
+DEF_STRONG(abort);

@@ -73,3 +73,4 @@ strtof(CONST char *s, char **sp)
 		u.L[0] |= 0x00008000L;
 	return u.f;
 	}
+DEF_STRONG(strtof);

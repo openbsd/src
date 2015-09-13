@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsort.c,v 1.12 2014/06/12 14:54:25 millert Exp $ */
+/*	$OpenBSD: qsort.c,v 1.13 2015/09/13 08:31:47 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -149,3 +149,4 @@ loop:	SWAPINIT(a, es);
 	}
 /*		qsort(pn - r, r / es, es, cmp);*/
 }
+DEF_STRONG(qsort);

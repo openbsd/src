@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcong48.c,v 1.5 2015/08/27 04:33:31 guenther Exp $ */
+/*	$OpenBSD: lcong48.c,v 1.6 2015/09/13 08:31:47 guenther Exp $ */
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
@@ -33,3 +33,4 @@ lcong48_deterministic(unsigned short p[7])
 	__rand48_mult[2] = p[5];
 	__rand48_add = p[6];
 }
+DEF_WEAK(lcong48_deterministic);

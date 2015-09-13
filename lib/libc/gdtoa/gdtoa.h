@@ -113,6 +113,7 @@ extern float  strtof ANSI((CONST char *, char **));
 extern double strtod ANSI((CONST char *, char **));
 extern int __strtodg ANSI((CONST char*, char**, FPI*, Long*, ULong*));
 
+__BEGIN_HIDDEN_DECLS
 extern char*	__g_ddfmt  ANSI((char*, double*, int, size_t));
 extern char*	__g_dfmt   ANSI((char*, double*, int, size_t));
 extern char*	__g_ffmt   ANSI((char*, float*,  int, size_t));
@@ -148,6 +149,7 @@ extern int	__strtopxL ANSI((CONST char*, char**, void*));
 #define __strtopx(s,se,x) strtorx(s,se,1,x)
 #define __strtopxL(s,se,x) strtorxL(s,se,1,x)
 #endif
+__END_HIDDEN_DECLS
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.31 2014/09/15 06:15:48 guenther Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.32 2015/09/13 08:31:47 guenther Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,6 +76,7 @@ cgetusedb(int new_usedb)
 	usedb = new_usedb;
 	return(old_usedb);
 }
+DEF_WEAK(cgetusedb);
 
 /*
  * Cgetset() allows the addition of a user specified buffer to be added
@@ -99,6 +100,7 @@ cgetset(const char *ent)
 	memcpy(toprec, ent, topreclen + 1);
 	return (0);
 }
+DEF_WEAK(cgetset);
 
 /*
  * Cgetcap searches the capability record buf for the capability cap with
@@ -153,6 +155,7 @@ cgetcap(char *buf, const char *cap, int type)
 	}
 	/* NOTREACHED */
 }
+DEF_WEAK(cgetcap);
 
 /*
  * Cgetent extracts the capability record name from the NULL terminated file
@@ -170,6 +173,7 @@ cgetent(char **buf, char **db_array, const char *name)
 
 	return (getent(buf, &dummy, db_array, NULL, name, 0, NULL));
 }
+DEF_WEAK(cgetent);
 
 /*
  * Getent implements the functions of cgetent.  If fp is non-NULL,
@@ -623,6 +627,7 @@ cgetmatch(char *buf, const char *name)
 					break;	/* found next name */
 	}
 }
+DEF_WEAK(cgetmatch);
 
 int
 cgetfirst(char **buf, char **db_array)
@@ -631,6 +636,7 @@ cgetfirst(char **buf, char **db_array)
 	(void)cgetclose();
 	return (cgetnext(buf, db_array));
 }
+DEF_WEAK(cgetfirst);
 
 static FILE *pfp;
 static int slash;
@@ -649,6 +655,7 @@ cgetclose(void)
 	slash = 0;
 	return(0);
 }
+DEF_WEAK(cgetclose);
 
 /*
  * Cgetnext() gets either the first or next entry in the logical database
@@ -799,6 +806,7 @@ done:
 
 	return (status);
 }
+DEF_WEAK(cgetnext);
 
 /*
  * Cgetstr retrieves the value of the string capability cap from the
@@ -931,6 +939,7 @@ cgetstr(char *buf, const char *cap, char **str)
 	*str = mem;
 	return (len);
 }
+DEF_WEAK(cgetstr);
 
 /*
  * Cgetustr retrieves the value of the string capability cap from the
@@ -1013,6 +1022,7 @@ cgetustr(char *buf, const char *cap, char **str)
 	*str = mem;
 	return (len);
 }
+DEF_WEAK(cgetustr);
 
 /*
  * Cgetnum retrieves the value of the numeric capability cap from the
@@ -1077,6 +1087,7 @@ cgetnum(char *buf, const char *cap, long *num)
 	*num = n;
 	return (0);
 }
+DEF_WEAK(cgetnum);
 
 /*
  * Compare name field of record.

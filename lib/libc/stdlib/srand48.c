@@ -1,4 +1,4 @@
-/*	$OpenBSD: srand48.c,v 1.5 2015/08/27 04:33:31 guenther Exp $ */
+/*	$OpenBSD: srand48.c,v 1.6 2015/09/13 08:31:48 guenther Exp $ */
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
@@ -35,3 +35,4 @@ srand48_deterministic(long seed)
 	__rand48_mult[2] = RAND48_MULT_2;
 	__rand48_add = RAND48_ADD;
 }
+DEF_WEAK(srand48_deterministic);

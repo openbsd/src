@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random_uniform.c,v 1.1 2014/07/12 13:24:54 deraadt Exp $	*/
+/*	$OpenBSD: arc4random_uniform.c,v 1.2 2015/09/13 08:31:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008, Damien Miller <djm@openbsd.org>
@@ -54,3 +54,4 @@ arc4random_uniform(uint32_t upper_bound)
 
 	return r % upper_bound;
 }
+DEF_WEAK(arc4random_uniform);

@@ -39,6 +39,7 @@ rand_r(u_int *seed)
 	*seed = *seed * 1103515245 + 12345;
 	return (*seed % ((u_int)RAND_MAX + 1));
 }
+DEF_WEAK(rand_r);
 
 #if defined(APIWARN)
 __warn_references(rand_r,

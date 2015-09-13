@@ -1,4 +1,4 @@
-/*	$OpenBSD: div.c,v 1.5 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: div.c,v 1.6 2015/09/13 08:31:47 guenther Exp $ */
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -69,3 +69,4 @@ div(int num, int denom)
 	}
 	return (r);
 }
+DEF_STRONG(div);

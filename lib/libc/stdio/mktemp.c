@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.37 2015/09/12 14:56:50 guenther Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.38 2015/09/13 08:31:47 guenther Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -145,6 +145,7 @@ mkostemp(char *path, int flags)
 {
 	return(mktemp_internal(path, 0, MKTEMP_FILE, flags));
 }
+DEF_WEAK(mkostemp);
 
 int
 mkstemps(char *path, int slen)
@@ -160,4 +161,3 @@ mkdtemp(char *path)
 	error = mktemp_internal(path, 0, MKTEMP_DIR, 0);
 	return(error ? NULL : path);
 }
-DEF_WEAK(mkdtemp);

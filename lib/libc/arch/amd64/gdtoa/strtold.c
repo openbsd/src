@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtold.c,v 1.1 2008/09/07 20:36:07 martynas Exp $	*/
+/*	$OpenBSD: strtold.c,v 1.2 2015/09/13 08:31:47 guenther Exp $	*/
 /*-
  * Copyright (c) 2003 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -43,3 +43,4 @@ strtold(const char * __restrict s, char ** __restrict sp)
 	strtorx(s, sp, FLT_ROUNDS, &result);
 	return result;
 }
+DEF_STRONG(strtold);
