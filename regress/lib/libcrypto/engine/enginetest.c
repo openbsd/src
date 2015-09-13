@@ -58,7 +58,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/e_os2.h>
 
 #include <openssl/buffer.h>
 #include <openssl/crypto.h>

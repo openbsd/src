@@ -161,7 +161,6 @@
 #include <ctype.h>
 
 #include <openssl/opensslconf.h>
-#include <openssl/e_os2.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
