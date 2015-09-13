@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.1 2015/09/13 08:31:47 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.2 2015/09/13 15:20:40 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ PROTO_NORMAL(realloc);
 PROTO_NORMAL(reallocarray);
 PROTO_DEPRECATED(realpath);
 PROTO_DEPRECATED(seed48);
-PROTO_DEPRECATED(seed48_deterministic);
+PROTO_NORMAL(seed48_deterministic);
 PROTO_NORMAL(setenv);
 PROTO_DEPRECATED(setproctitle);
 PROTO_DEPRECATED(setprogname);
