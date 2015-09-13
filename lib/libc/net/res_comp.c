@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.16 2015/01/16 18:18:58 millert Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.17 2015/09/13 21:36:08 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -440,6 +440,7 @@ _getshort(const u_char *msgp)
 	GETSHORT(u, msgp);
 	return (u);
 }
+DEF_STRONG(_getshort);
 
 #ifdef NeXT
 /*
@@ -461,6 +462,7 @@ _getlong(const u_char *msgp)
 	GETLONG(u, msgp);
 	return (u);
 }
+DEF_STRONG(_getlong);
 
 void
 __putshort(u_int16_t s, u_char *msgp)

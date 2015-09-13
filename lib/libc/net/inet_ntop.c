@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.11 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.12 2015/09/13 21:36:08 guenther Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -55,6 +55,7 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 	}
 	/* NOTREACHED */
 }
+DEF_WEAK(inet_ntop);
 
 /* const char *
  * inet_ntop4(src, dst, size)
