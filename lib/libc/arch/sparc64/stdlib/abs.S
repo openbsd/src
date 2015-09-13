@@ -1,4 +1,4 @@
-/*	$OpenBSD: abs.S,v 1.3 2003/06/02 20:18:32 millert Exp $	*/
+/*	$OpenBSD: abs.S,v 1.4 2015/09/13 16:16:30 guenther Exp $	*/
 /*	$NetBSD: abs.S,v 1.1 1998/09/11 04:56:32 eeh Exp $	*/
 
 /*
@@ -45,3 +45,4 @@ ENTRY(abs)
 	neg	%o0, %o1
 	retl
 	 movrlz	%o0, %o1, %o0
+END_STRONG(abs)

@@ -41,3 +41,4 @@ ENTRY(abs)
 	neg	%o0
 1:	retl
 	nop
+END_STRONG(abs)
