@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.70 2015/09/13 14:38:17 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.71 2015/09/13 15:18:14 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -427,9 +427,6 @@ struct gpt_partition {
 	/* the rest of the GPT partition entry, if any, is reserved by UEFI
 	   and must be zero */
 };
-
-#define GPT_PARTSPERSEC(gh)	(DEV_BSIZE / letoh32((gh)->gh_part_size))
-#define GPT_SECOFFSET(gh, n)	((gh)->gh_part_size * n)
 
 #define GPT_UUID_UNUSED \
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
