@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.297 2015/09/13 13:57:07 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.298 2015/09/13 17:53:44 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -569,7 +569,7 @@ sendit:
 			ip->ip_sum = in_cksum(m, hlen);
 		}
 
-		error = if_output(ifp, m, sintosa(dst), ro->ro_rt);
+		error = ifp->if_output(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
 
@@ -609,7 +609,7 @@ sendit:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0)
-			error = if_output(ifp, m, sintosa(dst), ro->ro_rt);
+			error = ifp->if_output(ifp, m, sintosa(dst), ro->ro_rt);
 		else
 			m_freem(m);
 	}

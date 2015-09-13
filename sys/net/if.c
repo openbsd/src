@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.378 2015/09/13 10:33:34 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.379 2015/09/13 17:53:44 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -683,16 +683,6 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	return (0);
-}
-
-int
-if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rt)
-{
-	if (rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL))
-		return (if_input_local(lo0ifp, m, dst->sa_family));
-
-	return (ifp->if_output(ifp, m, dst, rt));
 }
 
 struct ifih {

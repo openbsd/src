@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.152 2015/09/12 20:50:17 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.153 2015/09/13 17:53:44 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1692,7 +1692,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	return (0);
 
   sendpkt:
-	return (if_output(ifp, m, sin6tosa(dst), rt));
+	return (ifp->if_output(ifp, m, sin6tosa(dst), rt));
 
   bad:
 	m_freem(m);

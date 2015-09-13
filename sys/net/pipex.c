@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.79 2015/09/12 20:26:07 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.80 2015/09/13 17:53:44 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1431,7 +1431,8 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 	session->stat.opackets++;
 	session->stat.obytes += len;
 
-	if_output(over_ifp, m0, (struct sockaddr *)&session->peer, NULL);
+	over_ifp->if_output(over_ifp, m0, (struct sockaddr *)&session->peer,
+	    NULL);
 }
 #endif /* PIPEX_PPPOE */
 

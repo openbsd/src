@@ -1581,7 +1581,8 @@ phyint_send6(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 		 * We just call if_output instead of nd6_output here, since
 		 * we need no ND for a multicast forwarded packet...right?
 		 */
-		error = if_output(ifp, mb_copy, sin6tosa(&ro.ro_dst), NULL);
+		error = ifp->if_output(ifp, mb_copy, sin6tosa(&ro.ro_dst),
+		    NULL);
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send6 on mif %d err %d\n",
