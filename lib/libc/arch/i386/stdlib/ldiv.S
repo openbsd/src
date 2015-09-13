@@ -3,7 +3,7 @@
  * Public domain.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(ldiv)
 	movl	4(%esp),%eax

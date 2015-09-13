@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "SYS.h"
 
 ENTRY(labs)
 	movl	4(%esp),%eax
