@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.376 2015/09/12 20:26:06 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.377 2015/09/13 09:58:03 kettenis Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -143,6 +143,7 @@ struct if_clone	*if_clone_lookup(const char *, int *);
 
 int	if_group_egress_build(void);
 
+void	if_watchdog_task(void *);
 void	if_link_state_change_task(void *);
 
 void	if_input_process(void *);
@@ -410,6 +411,7 @@ if_attachsetup(struct ifnet *ifp)
 	pfi_attach_ifnet(ifp);
 #endif
 
+	task_set(ifp->if_watchdogtask, if_watchdog_task, ifp);
 	timeout_set(ifp->if_slowtimo, if_slowtimo, ifp);
 	if_slowtimo(ifp);
 
@@ -526,6 +528,8 @@ if_attach_common(struct ifnet *ifp)
 
 	ifp->if_slowtimo = malloc(sizeof(*ifp->if_slowtimo), M_TEMP,
 	    M_WAITOK|M_ZERO);
+	ifp->if_watchdogtask = malloc(sizeof(*ifp->if_watchdogtask),
+	    M_TEMP, M_WAITOK|M_ZERO);
 	ifp->if_linkstatetask = malloc(sizeof(*ifp->if_linkstatetask),
 	    M_TEMP, M_WAITOK|M_ZERO);
 
@@ -907,8 +911,9 @@ if_detach(struct ifnet *ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
 
-	/* Remove the watchdog timeout */
+	/* Remove the watchdog timeout & task */
 	timeout_del(ifp->if_slowtimo);
+	task_del(systq, ifp->if_watchdogtask);
 
 	/* Remove the link state task */
 	task_del(systq, ifp->if_linkstatetask);
@@ -960,6 +965,7 @@ if_detach(struct ifnet *ifp)
 	free(ifp->if_detachhooks, M_TEMP, 0);
 
 	free(ifp->if_slowtimo, M_TEMP, sizeof(*ifp->if_slowtimo));
+	free(ifp->if_watchdogtask, M_TEMP, sizeof(*ifp->if_watchdogtask));
 	free(ifp->if_linkstatetask, M_TEMP, sizeof(*ifp->if_linkstatetask));
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
@@ -1506,9 +1512,21 @@ if_slowtimo(void *arg)
 
 	if (ifp->if_watchdog) {
 		if (ifp->if_timer > 0 && --ifp->if_timer == 0)
-			(*ifp->if_watchdog)(ifp);
+			task_add(systq, ifp->if_watchdogtask);
 		timeout_add(ifp->if_slowtimo, hz / IFNET_SLOWHZ);
 	}
+	splx(s);
+}
+
+void
+if_watchdog_task(void *arg)
+{
+	struct ifnet *ifp = arg;
+	int s;
+
+	s = splnet();
+	if (ifp->if_watchdog)
+		(*ifp->if_watchdog)(ifp);
 	splx(s);
 }
 

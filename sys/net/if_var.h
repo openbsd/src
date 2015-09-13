@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.41 2015/09/12 20:26:06 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.42 2015/09/13 09:58:03 kettenis Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -150,6 +150,7 @@ struct ifnet {				/* and the entries */
 	u_short	if_rtlabelid;		/* next route label */
 	u_int8_t if_priority;
 	struct	timeout *if_slowtimo;	/* watchdog timeout */
+	struct	task *if_watchdogtask;	/* watchdog task */
 	struct	task *if_linkstatetask; /* task to do route updates */
 
 	/* procedure handles */
