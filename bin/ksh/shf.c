@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.16 2013/04/19 17:36:09 millert Exp $	*/
+/*	$OpenBSD: shf.c,v 1.17 2015/09/13 19:43:42 tedu Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -705,15 +705,7 @@ shf_smprintf(const char *fmt, ...)
 	return shf_sclose(&shf); /* null terminates */
 }
 
-#undef FP			/* if you want floating point stuff */
-
 #define BUF_SIZE	128
-#define FPBUF_SIZE	(DMAXEXP+16)/* this must be >
-				 *	MAX(DMAXEXP, log10(pow(2, DSIGNIF)))
-				 *    + ceil(log10(DMAXEXP)) + 8 (I think).
-				 * Since this is hard to express as a
-				 * constant, just use a large buffer.
-				 */
 
 /*
  *	What kinda of machine we on?  Hopefully the C compiler will optimize
@@ -746,18 +738,6 @@ shf_smprintf(const char *fmt, ...)
 #define FL_NUMBER	0x400	/* a number was formated %[douxefg] */
 
 
-#ifdef FP
-#include <math.h>
-
-static double
-my_ceil(double d)
-{
-	double		i;
-
-	return d - modf(d, &i) + (d < 0 ? -1 : 1);
-}
-#endif /* FP */
-
 int
 shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 {
@@ -771,17 +751,6 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 	char		numbuf[(BITS(long long) + 2) / 3 + 1];
 	/* this stuff for dealing with the buffer */
 	int		nwritten = 0;
-#ifdef FP
-	/* should be in <math.h>
-	 *  extern double frexp();
-	 */
-	extern char *ecvt();
-
-	double		fpnum;
-	int		expo, decpt;
-	char		style;
-	char		fpbuf[FPBUF_SIZE];
-#endif /* FP */
 
 	if (!fmt)
 		return 0;
@@ -952,134 +921,6 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 					precision = len; /* no loss */
 			}
 			break;
-
-#ifdef FP
-		case 'e':
-		case 'g':
-		case 'f':
-		    {
-			char *p;
-
-			/*
-			 *	This could probably be done better,
-			 *  but it seems to work.  Note that gcvt()
-			 *  is not used, as you cannot tell it to
-			 *  not strip the zeros.
-			 */
-			flags |= FL_NUMBER;
-			if (!(flags & FL_DOT))
-				precision = 6;	/* default */
-			/*
-			 *	Assumes doubles are pushed on
-			 *  the stack.  If this is not so, then
-			 *  FL_LLONG/FL_LONG/FL_SHORT should be checked.
-			 */
-			fpnum = va_arg(args, double);
-			s = fpbuf;
-			style = c;
-			/*
-			 *  This is the same as
-			 *	expo = ceil(log10(fpnum))
-			 *  but doesn't need -lm.  This is an
-			 *  approximation as expo is rounded up.
-			 */
-			(void) frexp(fpnum, &expo);
-			expo = my_ceil(expo / LOG2_10);
-
-			if (expo < 0)
-				expo = 0;
-
-			p = ecvt(fpnum, precision + 1 + expo,
-				 &decpt, &tmp);
-			if (c == 'g') {
-				if (decpt < -4 || decpt > precision)
-					style = 'e';
-				else
-					style = 'f';
-				if (decpt > 0 && (precision -= decpt) < 0)
-					precision = 0;
-			}
-			if (tmp)
-				*s++ = '-';
-			else if (flags & FL_PLUS)
-				*s++ = '+';
-			else if (flags & FL_BLANK)
-				*s++ = ' ';
-
-			if (style == 'e')
-				*s++ = *p++;
-			else {
-				if (decpt > 0) {
-					/* Overflow check - should
-					 * never have this problem.
-					 */
-					if (decpt > &fpbuf[sizeof(fpbuf)] - s - 8)
-						decpt = &fpbuf[sizeof(fpbuf)] - s - 8;
-					(void) memcpy(s, p, decpt);
-					s += decpt;
-					p += decpt;
-				} else
-					*s++ = '0';
-			}
-
-			/* print the fraction? */
-			if (precision > 0) {
-				*s++ = '.';
-				/* Overflow check - should
-				 * never have this problem.
-				 */
-				if (precision > &fpbuf[sizeof(fpbuf)] - s - 7)
-					precision = &fpbuf[sizeof(fpbuf)] - s - 7;
-				for (tmp = decpt;  tmp++ < 0 &&
-					    precision > 0 ; precision--)
-					*s++ = '0';
-				tmp = strlen(p);
-				if (precision > tmp)
-					precision = tmp;
-				/* Overflow check - should
-				 * never have this problem.
-				 */
-				if (precision > &fpbuf[sizeof(fpbuf)] - s - 7)
-					precision = &fpbuf[sizeof(fpbuf)] - s - 7;
-				(void) memcpy(s, p, precision);
-				s += precision;
-				/*
-				 *	`g' format strips trailing
-				 *  zeros after the decimal.
-				 */
-				if (c == 'g' && !(flags & FL_HASH)) {
-					while (*--s == '0')
-						;
-					if (*s != '.')
-						s++;
-				}
-			} else if (flags & FL_HASH)
-				*s++ = '.';
-
-			if (style == 'e') {
-				*s++ = (flags & FL_UPPER) ? 'E' : 'e';
-				if (--decpt >= 0)
-					*s++ = '+';
-				else {
-					*s++ = '-';
-					decpt = -decpt;
-				}
-				p = &numbuf[sizeof(numbuf)];
-				for (tmp = 0; tmp < 2 || decpt ; tmp++) {
-					*--p = '0' + decpt % 10;
-					decpt /= 10;
-				}
-				tmp = &numbuf[sizeof(numbuf)] - p;
-				(void) memcpy(s, p, tmp);
-				s += tmp;
-			}
-
-			len = s - fpbuf;
-			s = fpbuf;
-			precision = len;
-			break;
-		    }
-#endif /* FP */
 
 		case 's':
 			if (!(s = va_arg(args, char *)))
