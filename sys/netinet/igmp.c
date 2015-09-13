@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.52 2015/09/11 19:31:38 dlg Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.53 2015/09/13 17:47:07 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -548,6 +548,7 @@ igmp_leavegroup(struct in_multi *inm)
 		break;
 	}
 	splx(s);
+	if_put(ifp);
 }
 
 void
