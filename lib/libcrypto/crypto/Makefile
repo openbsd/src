@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.62 2015/09/13 12:27:14 jsing Exp $
+# $OpenBSD: Makefile,v 1.63 2015/09/13 21:09:56 doug Exp $
 
 LIB=	crypto
 
@@ -144,7 +144,7 @@ SRCS+= encode.c digest.c evp_enc.c evp_key.c
 SRCS+= e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c
 SRCS+= e_rc4.c e_aes.c names.c
 SRCS+= e_xcbc_d.c e_rc2.c e_cast.c
-SRCS+= m_null.c m_md4.c m_md5.c m_sha.c m_sha1.c m_wp.c
+SRCS+= m_null.c m_md4.c m_md5.c m_sha1.c m_wp.c
 SRCS+= m_dss.c m_dss1.c m_ripemd.c m_ecdsa.c
 SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
 SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
@@ -221,7 +221,7 @@ SRCS+= rsa_pss.c rsa_x931.c rsa_asn1.c rsa_depr.c rsa_ameth.c rsa_prn.c
 SRCS+= rsa_pmeth.c rsa_crpt.c
 
 # sha/
-SRCS+= sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
+SRCS+= sha1dgst.c sha1_one.c sha256.c sha512.c
 
 # stack/
 SRCS+= stack.c

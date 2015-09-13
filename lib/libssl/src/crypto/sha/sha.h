@@ -1,4 +1,4 @@
-/* $OpenBSD: sha.h,v 1.20 2014/10/20 13:06:54 bcook Exp $ */
+/* $OpenBSD: sha.h,v 1.21 2015/09/13 21:09:56 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,7 +70,7 @@
 extern "C" {
 #endif
 
-#if defined(OPENSSL_NO_SHA) || (defined(OPENSSL_NO_SHA0) && defined(OPENSSL_NO_SHA1))
+#if defined(OPENSSL_NO_SHA) || defined(OPENSSL_NO_SHA1)
 #error SHA is disabled.
 #endif
 
@@ -97,15 +97,6 @@ typedef struct SHAstate_st
 	unsigned int num;
 	} SHA_CTX;
 
-#ifndef OPENSSL_NO_SHA0
-int SHA_Init(SHA_CTX *c);
-int SHA_Update(SHA_CTX *c, const void *data, size_t len)
-	__attribute__ ((__bounded__(__buffer__,2,3)));
-int SHA_Final(unsigned char *md, SHA_CTX *c);
-unsigned char *SHA(const unsigned char *d, size_t n, unsigned char *md)
-	__attribute__ ((__bounded__(__buffer__,1,2)));
-void SHA_Transform(SHA_CTX *c, const unsigned char *data);
-#endif
 #ifndef OPENSSL_NO_SHA1
 int SHA1_Init(SHA_CTX *c);
 int SHA1_Update(SHA_CTX *c, const void *data, size_t len)

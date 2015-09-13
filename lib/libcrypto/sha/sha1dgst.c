@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1dgst.c,v 1.13 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: sha1dgst.c,v 1.14 2015/09/13 21:09:56 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,9 +61,6 @@
 #include <openssl/crypto.h>
 
 #if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_SHA)
-
-#undef  SHA_0
-#define SHA_1
 
 #include <openssl/opensslv.h>
 

@@ -13,6 +13,7 @@
 # define OPENSSL_NO_RSAX
 # define OPENSSL_NO_SCTP
 # define OPENSSL_NO_SEED
+# define OPENSSL_NO_SHA0
 # define OPENSSL_NO_SRP
 # define OPENSSL_NO_SSL2
 # define OPENSSL_NO_SSL3
