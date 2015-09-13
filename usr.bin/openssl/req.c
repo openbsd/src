@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.7 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: req.c,v 1.8 2015/09/13 23:36:21 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -354,7 +354,7 @@ bad:
 		BIO_printf(bio_err, " -newkey rsa:bits generate a new RSA key of 'bits' in size\n");
 		BIO_printf(bio_err, " -newkey dsa:file generate a new DSA key, parameters taken from CA in 'file'\n");
 		BIO_printf(bio_err, " -newkey ec:file generate a new EC key, parameters taken from CA in 'file'\n");
-		BIO_printf(bio_err, " -[digest]      Digest to sign with (md5, sha1, md4)\n");
+		BIO_printf(bio_err, " -[digest]      Digest to sign with (md5, sha1)\n");
 		BIO_printf(bio_err, " -config file   request template file.\n");
 		BIO_printf(bio_err, " -subj arg      set or modify request subject\n");
 		BIO_printf(bio_err, " -multivalue-rdn enable support for multivalued RDNs\n");
