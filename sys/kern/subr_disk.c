@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.214 2015/09/11 17:51:30 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.215 2015/09/13 12:53:08 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -328,6 +328,7 @@ int
 readdoslabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
+	struct disklabel *gptlp;
 	u_int64_t dospartoff = 0, dospartend = DL_GETBEND(lp);
 	int i, ourpart = -1, wander = 1, n = 0, loop = 0, offset;
 	struct dos_partition dp[NDOSPART], *dp2;
@@ -370,23 +371,37 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			    (bp->b_data[511] & 0xff);
 			if (mbrtest != 0x55aa)
 				goto notmbr;
-			if (gpt_chk_mbr(dp, lp) == 0) {
-				error = readgptlabel(bp, strat, lp,
-				    partoffp ? &dospartoff : NULL, spoofonly);
-				if (error == 0) {
-					if (partoffp)
-						*partoffp = dospartoff;
-					return (0);
-				} else {
-					/* Restore all potentially tweakee's */
-					dospartoff = 0;
-					DL_SETBSTART(lp, 0);
-					DL_SETBEND(lp, DL_GETDSIZE(lp));
-					goto notmbr;
+
+			if (gpt_chk_mbr(dp, lp) != 0)
+				goto notgpt;
+
+			gptlp = malloc(sizeof(struct disklabel), M_DEVBUF,
+			    M_NOWAIT);
+			if (gptlp == NULL)
+				return (ENOMEM);
+			*gptlp = *lp;
+			error = spoofgptlabel(bp, strat, gptlp);
+			if (error == 0) {
+				dospartoff = DL_GETBSTART(gptlp);
+				dospartoff = DL_GETBEND(gptlp);
+				if (partoffp) {
+					if (dospartoff == 0)
+						return (ENXIO);
+					else
+						goto notfat;
 				}
+				*lp = *gptlp;
+				free(gptlp, M_DEVBUF,
+				    sizeof(struct disklabel));
+				goto notfat;
+			} else {
+				free(gptlp, M_DEVBUF,
+				    sizeof(struct disklabel));
+				goto notmbr;
 			}
 		}
 
+notgpt:
 		if (ourpart == -1) {
 			/* Search for our MBR partition */
 			for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
@@ -729,15 +744,11 @@ gpt_get_fstype(struct uuid *uuid_part)
 }
 
 /*
- * If gpt partition table requested, attempt to load it and
- * find disklabel inside a GPT partition. Return buffer
- * for use in signalling errors if requested.
- *
- * XXX: readgptlabel() is based on readdoslabel(), so they should be merged
+ * Spoof a disklabel based on the GPT information on the disk.
  */
 int
-readgptlabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, daddr_t *partoffp, int spoofonly)
+spoofgptlabel(struct buf *bp, void (*strat)(struct buf *),
+    struct disklabel *lp)
 {
 	static const u_int8_t gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	struct gpt_header gh;
@@ -747,7 +758,7 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 	size_t gpsz;
 	u_int64_t ghlbaend, ghlbastart, gptpartoff, gptpartend, sector;
 	u_int64_t start, end;
-	int i, altheader = 0, error, n, offset;
+	int i, altheader = 0, error, n;
 	uint32_t ghpartnum;
 
 	uuid_dec_be(gpt_uuid_openbsd, &uuid_openbsd);
@@ -760,8 +771,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		error = readdisksector(bp, strat, lp, sector);
 		if (error) {
 			DPRINTF("error reading from disk\n");
-	/*wrong*/	if (partoffp)
-	/*wrong*/		*partoffp = -1;
 			return (error);
 		}
 
@@ -797,8 +806,6 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		for (i = 0; i < ghpartnum / ghpartspersec; i++, sector++) {
 			error = readdisksector(bp, strat, lp, sector);
 			if (error) {
-	/*wrong*/		if (partoffp)
-	/*wrong*/			*partoffp = -1;
 				free(gp, M_DEVBUF, gpsz);
 				return (error);
 			}
@@ -838,20 +845,11 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 			continue; /* Do *NOT* spoof OpenBSD partitions! */
 		}
 
-		/*
-		 * In case the disklabel read below fails, we want to
-		 * provide a fake label in i-p.
-		 */
-
-		/*
-		 * Don't set fstype/offset/size when just looking for
-		 * the offset of the OpenBSD partition. It would
-		 * invalidate the disklabel checksum!
-		 *
+		 /*
 		 * Don't try to spoof more than 8 partitions, i.e.
 		 * 'i' -'p'.
 		 */
-		if (partoffp || n >= 8)
+		if (n >= 8)
 			continue;
 
 		pp = &lp->d_partitions[8+n];
@@ -861,35 +859,13 @@ readgptlabel(struct buf *bp, void (*strat)(struct buf *),
 		DL_SETPSIZE(pp, end - start + 1);
 	}
 
-	if (gptpartoff == 0)
-		spoofonly = 1;	/* No disklabel to read from disk. */
-
 	free(gp, M_DEVBUF, gpsz);
 
-	/* record the OpenBSD partition's placement for the caller */
-	if (partoffp)
-		*partoffp = DL_SECTOBLK(lp, gptpartoff);
-	else {
-		DL_SETBSTART(lp, gptpartoff);
-		DL_SETBEND(lp, (gptpartend < DL_GETDSIZE(lp)) ? gptpartend :
-		    DL_GETDSIZE(lp));
-	}
+	DL_SETBSTART(lp, gptpartoff);
+	DL_SETBEND(lp, (gptpartend < DL_GETDSIZE(lp)) ? gptpartend :
+	    DL_GETDSIZE(lp));
 
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
-		return (0);
-
-	error = readdisksector(bp, strat, lp, gptpartoff +
-	    DL_BLKTOSEC(lp, DOS_LABELSECTOR));
-	if (error)
-		return (bp->b_error);
-
-	offset = DL_BLKOFFSET(lp, DOS_LABELSECTOR);
-	error = checkdisklabel(bp->b_data + offset, lp,
-	    DL_GETBSTART((struct disklabel*)(bp->b_data+offset)),
-	    DL_GETBEND((struct disklabel *)(bp->b_data+offset)));
-
-	return (error);
+	return (0);
 }
 
 /*
