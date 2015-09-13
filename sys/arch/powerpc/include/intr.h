@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.51 2015/06/24 11:58:06 mpi Exp $ */
+/*	$OpenBSD: intr.h,v 1.52 2015/09/13 14:06:40 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -147,7 +147,6 @@ struct soft_intrq {
 	struct mutex siq_mtx;
 };
 
-
 void	softintr_disestablish(void *);
 void	softintr_dispatch(int);
 void	*softintr_establish(int, void (*)(void *), void *);
@@ -188,6 +187,8 @@ struct intrq {
 extern int ppc_configed_intr_cnt;
 #define	MAX_PRECONF_INTR 16
 extern struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
+
+void intr_barrier(void *);
 
 #define PPC_IPI_NOP		0
 #define PPC_IPI_DDB		1

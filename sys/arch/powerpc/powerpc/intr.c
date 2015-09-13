@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.8 2015/01/04 13:01:42 mpi Exp $	*/
+/*	$OpenBSD: intr.c,v 1.9 2015/09/13 14:06:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -146,6 +146,12 @@ ppc_intr_typename(int type)
 	default:
 		return ("unknown");
 	}
+}
+
+void
+intr_barrier(void *ih)
+{
+	sched_barrier(NULL);
 }
 
 #ifdef DIAGNOSTIC
