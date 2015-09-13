@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.44 2015/02/11 01:13:22 dlg Exp $ */
+/* $OpenBSD: intr.h,v 1.45 2015/09/13 20:37:28 kettenis Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -140,6 +140,8 @@ struct scbvec {
 #define	SI_NSOFT	4
 
 #ifdef	_KERNEL
+
+void intr_barrier(void *);
 
 /* SPL asserts */
 #ifdef DIAGNOSTIC

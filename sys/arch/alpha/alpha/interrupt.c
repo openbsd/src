@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.36 2015/09/02 14:07:41 deraadt Exp $ */
+/* $OpenBSD: interrupt.c,v 1.37 2015/09/13 20:37:28 kettenis Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -593,6 +593,12 @@ softintr_schedule(void *arg)
 		setsoft(si->softintr_siq);
 	}
 	mtx_leave(&si->softintr_mtx);
+}
+
+void
+intr_barrier(void *cookie)
+{
+	sched_barrier(NULL);
 }
 
 int
