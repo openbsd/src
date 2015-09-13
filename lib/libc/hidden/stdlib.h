@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.2 2015/09/13 15:20:40 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.3 2015/09/13 20:29:23 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ PROTO_NORMAL(atoi);
 PROTO_STD_DEPRECATED(atol);
 PROTO_STD_DEPRECATED(atoll);
 PROTO_STD_DEPRECATED(bsearch);
-PROTO_NORMAL(calloc);
+/*PROTO_NORMAL(calloc);			not yet, breaks emacs */
 PROTO_NORMAL(cgetcap);
 PROTO_NORMAL(cgetclose);
 PROTO_NORMAL(cgetent);
@@ -77,7 +77,7 @@ PROTO_DEPRECATED(ecvt);
 PROTO_NORMAL(erand48);
 PROTO_NORMAL(exit);
 PROTO_DEPRECATED(fcvt);
-PROTO_NORMAL(free);
+/*PROTO_NORMAL(free);			not yet, breaks emacs */
 PROTO_DEPRECATED(gcvt);
 PROTO_DEPRECATED(getbsize);
 PROTO_NORMAL(getenv);
@@ -96,7 +96,7 @@ PROTO_DEPRECATED(ldiv);
 PROTO_STD_DEPRECATED(llabs);
 PROTO_STD_DEPRECATED(lldiv);
 PROTO_DEPRECATED(lrand48);
-PROTO_NORMAL(malloc);
+/*PROTO_NORMAL(malloc);			not yet, breaks emacs */
 PROTO_STD_DEPRECATED(mblen);
 PROTO_STD_DEPRECATED(mbstowcs);
 PROTO_STD_DEPRECATED(mbtowc);
@@ -109,7 +109,7 @@ PROTO_DEPRECATED(mkstemps);
 PROTO_DEPRECATED(mktemp);
 PROTO_DEPRECATED(mrand48);
 PROTO_DEPRECATED(nrand48);
-PROTO_NORMAL(posix_memalign);
+/*PROTO_NORMAL(posix_memalign);		not yet, breaks emacs */
 PROTO_DEPRECATED(posix_openpt);
 PROTO_DEPRECATED(ptsname);
 PROTO_NORMAL(putenv);
@@ -120,7 +120,7 @@ PROTO_DEPRECATED(radixsort);
 PROTO_STD_DEPRECATED(rand);
 PROTO_NORMAL(rand_r);
 PROTO_DEPRECATED(random);
-PROTO_NORMAL(realloc);
+/*PROTO_NORMAL(realloc);		not yet, breaks emacs */
 PROTO_NORMAL(reallocarray);
 PROTO_DEPRECATED(realpath);
 PROTO_DEPRECATED(seed48);
