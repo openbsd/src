@@ -1,4 +1,4 @@
-.\" $OpenBSD: intr_barrier.9,v 1.1 2015/09/13 12:13:34 kettenis Exp $
+.\" $OpenBSD: intr_barrier.9,v 1.2 2015/09/13 17:55:42 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mark Kettenis
 .\"
@@ -31,7 +31,7 @@ interrupt handler specified by
 has finished before it returns.
 The cookie passed to
 .Fn intr_barrier
-should be the vallue returned when the interrupt handler was established,
+should be the value returned when the interrupt handler was established,
 for example the return value of
 .Xr pci_intr_establish 9 .
 .Sh CONTEXT
