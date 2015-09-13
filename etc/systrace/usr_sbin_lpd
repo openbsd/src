@@ -1,10 +1,9 @@
-# $OpenBSD: usr_sbin_lpd,v 1.8 2014/11/22 18:15:41 deraadt Exp $
+# $OpenBSD: usr_sbin_lpd,v 1.9 2015/09/13 17:08:04 guenther Exp $
 #
 # Policy for lpd.
 # This policy works for the default configuration of lpd.
 #
 Policy: /usr/sbin/lpd, Emulation: native
-	native-__sysctl: permit
 	native-accept: permit
 	native-bind: sockaddr eq "/var/run/printer" then permit
 	native-bind: sockaddr eq "inet-[0.0.0.0]:0" then permit
@@ -56,6 +55,7 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-getsockopt: permit
 	native-gettimeofday: permit
 	native-issetugid: permit
+	native-kbind: permit
 	native-kill: permit
 	native-listen: permit
 	native-lseek: permit
@@ -82,6 +82,7 @@ Policy: /usr/sbin/lpd, Emulation: native
 	native-sigprocmask: permit
 	native-sigreturn: permit
 	native-socket: permit
+	native-sysctl: permit
 	native-umask: permit
 	native-wait4: permit
 	native-write: permit

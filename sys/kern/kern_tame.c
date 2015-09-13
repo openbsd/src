@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.40 2015/09/11 15:29:47 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.41 2015/09/13 17:08:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -73,7 +73,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_clock_gettime] = TAME_SELF,
 	[SYS_getpid] = TAME_SELF,
 	[SYS_umask] = TAME_SELF,
-	[SYS___sysctl] = TAME_SELF,	/* read-only; narrow subset */
+	[SYS_sysctl] = TAME_SELF,	/* read-only; narrow subset */
 	[SYS_adjtime] = TAME_SELF,	/* read-only */
 
 	[SYS_fchdir] = TAME_SELF,	/* careful of directory fd inside jails */

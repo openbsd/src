@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.129 2015/09/09 09:16:39 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.130 2015/09/13 17:08:03 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -25,7 +25,7 @@ SRCS+=	stack_protector.c
 # modules with default implementations on all architectures, unless overridden
 # below:
 ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
-	__sysctl.o __threxit.o __thrsigdivert.o __thrsleep.o \
+	__threxit.o __thrsigdivert.o __thrsleep.o \
 	__thrwakeup.o accept.o accept4.o access.o acct.o adjfreq.o adjtime.o \
 	bind.o chdir.o chflags.o chflagsat.o chmod.o chown.o chroot.o \
 	clock_getres.o clock_gettime.o clock_settime.o close.o \
@@ -55,8 +55,8 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	setreuid.o setrlimit.o setrtable.o setsid.o setsockopt.o \
 	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o \
 	shmget.o shutdown.o sigaction.o sigaltstack.o socket.o \
-	socketpair.o stat.o statfs.o swapctl.o symlink.o \
-	symlinkat.o sync.o sysarch.o tame.o umask.o unlink.o unlinkat.o \
+	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
+	sync.o sysarch.o sysctl.o tame.o umask.o unlink.o unlinkat.o \
 	unmount.o utimensat.o utimes.o utrace.o wait4.o write.o writev.o
 
 SRCS+=	${SRCS_${MACHINE_CPU}}

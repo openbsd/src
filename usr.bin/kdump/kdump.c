@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.104 2015/09/07 15:38:45 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.105 2015/09/13 17:08:03 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -830,7 +830,7 @@ static const formatter scargs[][8] = {
     [SYS_lseek]		= { Pfd, PAD, Poff_t, Whencename },
     [SYS_truncate]	= { Ppath, PAD, Poff_t },
     [SYS_ftruncate]	= { Pfd, PAD, Poff_t },
-    /* [SYS___sysctl]	= { }, Magic */
+    /* [SYS_sysctl]	= { }, Magic */
     [SYS_mlock]		= { Pptr, Pbigsize },
     [SYS_munlock]	= { Pptr, Pbigsize },
     [SYS_getpgid]	= { Ppid_t },
@@ -910,7 +910,7 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 	if (current != &emulations[0])
 		goto nonnative;
 
-	if (ktr->ktr_code == SYS___sysctl) {
+	if (ktr->ktr_code == SYS_sysctl) {
 		const char *s;
 		int n, i, *top;
 

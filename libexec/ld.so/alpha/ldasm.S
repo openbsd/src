@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.29 2015/05/29 19:12:26 miod Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.30 2015/09/13 17:08:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -343,6 +343,6 @@ DL_SYSCALL(open)
 DL_SYSCALL(read)
 DL_SYSCALL(readlink)
 DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL2(sysctl,__sysctl)
+DL_SYSCALL(sysctl)
 DL_SYSCALL(utrace)
 DL_SYSCALL(write)

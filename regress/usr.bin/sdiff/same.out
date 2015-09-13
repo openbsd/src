@@ -1,5 +1,5 @@
 Policy: /usr/bin/lynx, Emulation: native                          Policy: /usr/bin/lynx, Emulation: native
-    native-__sysctl: permit                                           native-__sysctl: permit
+    native-sysctl: permit                                             native-sysctl: permit
     native-close: permit                                              native-close: permit
     native-connect: sockaddr eq "inet-[127.0.0.1]:53" then perm       native-connect: sockaddr eq "inet-[127.0.0.1]:53" then perm
     native-connect: sockaddr match "inet-\\\[*\\\]:80" then per       native-connect: sockaddr match "inet-\\\[*\\\]:80" then per

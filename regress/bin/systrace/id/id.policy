@@ -1,8 +1,6 @@
-# $OpenBSD: id.policy,v 1.4 2014/07/14 05:49:14 guenther Exp $
+# $OpenBSD: id.policy,v 1.5 2015/09/13 17:08:04 guenther Exp $
 Policy: /usr/bin/id, Emulation: native
-	native-__kbind: permit
 	native-__set_tcb: permit
-	native-__sysctl: permit
 	native-break: permit
 	native-close: permit
 	native-exit: permit
@@ -24,6 +22,7 @@ Policy: /usr/bin/id, Emulation: native
 	native-getuid: permit
 	native-ioctl: permit
 	native-issetugid: permit
+	native-kbind: permit
 	native-minherit: permit
 	native-mmap: permit
 	native-mprotect: permit
@@ -33,4 +32,5 @@ Policy: /usr/bin/id, Emulation: native
 	native-read: permit
 	native-sendsyslog: permit
 	native-sigprocmask: permit
+	native-sysctl: permit
 	native-write: permit

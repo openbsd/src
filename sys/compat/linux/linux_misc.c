@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.94 2015/05/07 08:53:32 mpi Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.95 2015/09/13 17:08:03 guenther Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1453,7 +1453,7 @@ linux_sys___sysctl(p, v, retval)
 		syscallarg(struct linux___sysctl *) lsp;
 	} */ *uap = v;
 	struct linux___sysctl ls;
-	struct sys___sysctl_args bsa;
+	struct sys_sysctl_args bsa;
 	int error;
 
 	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof ls)))
@@ -1465,7 +1465,7 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, new) = ls.new;
 	SCARG(&bsa, newlen) = ls.newlen;
 
-	return sys___sysctl(p, &bsa, retval);
+	return sys_sysctl(p, &bsa, retval);
 }
 
 /*

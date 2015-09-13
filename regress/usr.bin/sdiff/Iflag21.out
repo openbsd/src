@@ -2,7 +2,7 @@ Policy: /usr/bin/lynx, Emulation: native                        Policy: /usr/bin
     native-issetugid: permit                                  <
     native-mprotect: permit                                   <
     native-mmap: permit                                       <
-    native-__sysctl: permit                                         native-__sysctl: permit
+    native-sysctl: permit                                           native-sysctl: permit
     native-fsread: filename eq "/var/run/ld.so.hints" then pe <
     native-fstat: permit                                      <
     native-close: permit                                            native-close: permit

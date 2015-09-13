@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.13 2014/07/14 03:54:51 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.14 2015/09/13 17:08:04 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -180,6 +180,6 @@ DL_SYSCALL(open)
 DL_SYSCALL(read)
 DL_SYSCALL(readlink)
 DL_SYSCALL2(_syscall,__syscall)
-DL_SYSCALL2(sysctl,__sysctl)
+DL_SYSCALL(sysctl)
 DL_SYSCALL(utrace)
 DL_SYSCALL(write)

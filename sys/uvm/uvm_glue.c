@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.69 2014/12/15 20:38:22 tedu Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.70 2015/09/13 17:08:03 guenther Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -140,7 +140,7 @@ uvm_chgkprot(caddr_t addr, size_t len, int rw)
 /*
  * uvm_vslock: wire user memory for I/O
  *
- * - called from physio and sys___sysctl
+ * - called from physio and sys_sysctl
  */
 
 int
@@ -164,7 +164,7 @@ uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 /*
  * uvm_vsunlock: unwire user memory wired by uvm_vslock()
  *
- * - called from physio and sys___sysctl
+ * - called from physio and sys_sysctl
  */
 
 void
