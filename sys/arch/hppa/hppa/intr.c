@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.48 2015/09/08 07:14:04 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.49 2015/09/13 14:58:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -306,6 +306,12 @@ cpu_intr(void *v)
 	ci->ci_cpl = s;
 
 	mtctl(frame->tf_eiem, CR_EIEM);
+}
+
+void
+intr_barrier(void *cookie)
+{
+	sched_barrier(NULL);
 }
 
 void *
