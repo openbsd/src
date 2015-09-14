@@ -104,6 +104,7 @@ freedtoa(char *s)
 		dtoa_result = 0;
 #endif
 	}
+DEF_STRONG(freedtoa);
 
  int
 quorem

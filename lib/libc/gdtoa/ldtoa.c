@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldtoa.c,v 1.2 2014/08/10 02:15:18 guenther Exp $	*/
+/*	$OpenBSD: ldtoa.c,v 1.3 2015/09/14 12:49:33 guenther Exp $	*/
 /*-
  * Copyright (c) 2003 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -106,6 +106,7 @@ __ldtoa(long double *ld, int mode, int ndigits, int *decpt, int *sign,
 		*decpt = INT_MAX;
 	return ret;
 }
+DEF_STRONG(__ldtoa);
 
 #else   /* (LDBL_MANT_DIG == DBL_MANT_DIG) */
 
@@ -120,5 +121,6 @@ __ldtoa(long double *ld, int mode, int ndigits, int *decpt, int *sign,
 		*decpt = INT_MAX;
 	return ret;
 }
+DEF_STRONG(__ldtoa);
 
 #endif  /* (LDBL_MANT_DIG == DBL_MANT_DIG) */

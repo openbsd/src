@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdtoa.c,v 1.2 2009/10/16 12:15:03 martynas Exp $	*/
+/*	$OpenBSD: hdtoa.c,v 1.3 2015/09/14 12:49:33 guenther Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -210,6 +210,7 @@ __hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 
 	return (s0);
 }
+DEF_STRONG(__hdtoa);
 
 #if (LDBL_MANT_DIG > DBL_MANT_DIG)
 
@@ -319,6 +320,7 @@ __hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 
 	return (s0);
 }
+DEF_STRONG(__hldtoa);
 
 #else	/* (LDBL_MANT_DIG == DBL_MANT_DIG) */
 
@@ -328,5 +330,6 @@ __hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 {
 	return (__hdtoa((double)e, xdigs, ndigits, decpt, sign, rve));
 }
+DEF_STRONG(__hldtoa);
 
 #endif	/* (LDBL_MANT_DIG == DBL_MANT_DIG) */

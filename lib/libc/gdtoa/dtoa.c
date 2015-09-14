@@ -837,3 +837,4 @@ dtoa
 		*rve = s;
 	return s0;
 	}
+DEF_STRONG(dtoa);

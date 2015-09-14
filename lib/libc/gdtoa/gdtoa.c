@@ -827,3 +827,4 @@ gdtoa
 	*kindp |= inex;
 	return s0;
 	}
+DEF_STRONG(gdtoa);

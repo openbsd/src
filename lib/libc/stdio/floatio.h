@@ -1,4 +1,4 @@
-/*	$OpenBSD: floatio.h,v 1.4 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: floatio.h,v 1.5 2015/09/14 12:49:33 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,7 +52,3 @@
 #if LDBL_MAX_EXP > 999999
 #error "floating point buffers too small"
 #endif
-
-char *__hdtoa(double, const char *, int, int *, int *, char **);
-char *__hldtoa(long double, const char *, int, int *, int *, char **);
-char *__ldtoa(long double *, int, int, int *, int *, char **);
