@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.23 2015/09/12 15:20:14 guenther Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.24 2015/09/14 16:09:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -259,8 +259,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 			login_close(lc);
 		syslog(LOG_ERR, "%m");
 		warn(NULL);
-		if (approve)
-			free(approve);
+		free(approve);
 		return (0);
 	}
 
@@ -294,8 +293,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		    lc->lc_class, type, (char *)NULL);
 
 out:
-	if (approve)
-		free(approve);
+	free(approve);
 	if (close_lc_on_exit)
 		login_close(lc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.44 2015/09/12 15:20:14 guenther Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.45 2015/09/14 16:09:13 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -284,14 +284,10 @@ auth_close(auth_session_t *as)
 	 */
 	if (as->service && as->service != defservice)
 		free(as->service);
-	if (as->challenge)
-		free(as->challenge);
-	if (as->class)
-		free(as->class);
-	if (as->style)
-		free(as->style);
-	if (as->name)
-		free(as->name);
+	free(as->challenge);
+	free(as->class);
+	free(as->style);
+	free(as->name);
 
 	free(as);
 	return (s);
@@ -466,8 +462,7 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 			return (0);
 		if (value != NULL && (value = strdup(value)) == NULL)
 			return (-1);
-		if (as->challenge)
-			free(as->challenge);
+		free(as->challenge);
 		as->challenge = value;
 		return (0);
 
@@ -476,8 +471,7 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 			return (0);
 		if (value != NULL && (value = strdup(value)) == NULL)
 			return (-1);
-		if (as->class)
-			free(as->class);
+		free(as->class);
 		as->class = value;
 		return (0);
 
@@ -486,8 +480,7 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 			return (0);
 		if (value != NULL && (value = strdup(value)) == NULL)
 			return (-1);
-		if (as->name)
-			free(as->name);
+		free(as->name);
 		as->name = value;
 		return (0);
 
@@ -509,8 +502,7 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 		if (value == NULL || strchr(value, '/') != NULL ||
 		    (value = strdup(value)) == NULL)
 			return (-1);
-		if (as->style)
-			free(as->style);
+		free(as->style);
 		as->style = value;
 		return (0);
 

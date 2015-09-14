@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.51 2015/09/12 13:32:24 guenther Exp $	*/
+/*	$OpenBSD: fts.c,v 1.52 2015/09/14 16:09:13 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -228,8 +228,7 @@ fts_close(FTS *sp)
 	/* Free up child linked list, sort array, path buffer, stream ptr.*/
 	if (sp->fts_child)
 		fts_lfree(sp->fts_child);
-	if (sp->fts_array)
-		free(sp->fts_array);
+	free(sp->fts_array);
 	free(sp->fts_path);
 	free(sp);
 
@@ -668,8 +667,7 @@ fts_build(FTS *sp, int type)
 				 * structures already allocated.
 				 */
 mem1:				saved_errno = errno;
-				if (p)
-					free(p);
+				free(p);
 				fts_lfree(head);
 				(void)closedir(dirp);
 				cur->fts_info = FTS_ERR;
@@ -889,8 +887,7 @@ fts_sort(FTS *sp, FTSENT *head, int nitems)
 		sp->fts_nitems = nitems + 40;
 		if ((a = reallocarray(sp->fts_array,
 		    sp->fts_nitems, sizeof(FTSENT *))) == NULL) {
-			if (sp->fts_array)
-				free(sp->fts_array);
+			free(sp->fts_array);
 			sp->fts_array = NULL;
 			sp->fts_nitems = 0;
 			return (head);
@@ -964,8 +961,7 @@ fts_palloc(FTS *sp, size_t more)
 	 */
 	more += 256;
 	if (sp->fts_pathlen + more < sp->fts_pathlen) {
-		if (sp->fts_path)
-			free(sp->fts_path);
+		free(sp->fts_path);
 		sp->fts_path = NULL;
 		errno = ENAMETOOLONG;
 		return (1);
@@ -973,8 +969,7 @@ fts_palloc(FTS *sp, size_t more)
 	sp->fts_pathlen += more;
 	p = realloc(sp->fts_path, sp->fts_pathlen);
 	if (p == NULL) {
-		if (sp->fts_path)
-			free(sp->fts_path);
+		free(sp->fts_path);
 		sp->fts_path = NULL;
 		return (1);
 	}

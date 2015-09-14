@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.32 2015/09/13 08:31:47 guenther Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.33 2015/09/14 16:09:13 tedu Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -87,8 +87,7 @@ int
 cgetset(const char *ent)
 {
 	if (ent == NULL) {
-		if (toprec)
-			free(toprec);
+		free(toprec);
 		toprec = NULL;
 		topreclen = 0;
 		return (0);
@@ -354,8 +353,7 @@ getent(char **cap, u_int *len, char **db_array, FILE *fp,
 					newsize = r_end - record + BFRAG;
 					nrecord = realloc(record, newsize);
 					if (nrecord == NULL) {
-						if (record)
-							free(record);
+						free(record);
 						if (myfd)
 							(void)fclose(fp);
 						errno = ENOMEM;
@@ -498,8 +496,7 @@ tc_exp:	{
 				tcposend = tcend - record;
 				nrecord = realloc(record, newsize);
 				if (nrecord == NULL) {
-					if (record)
-						free(record);
+					free(record);
 					if (myfd)
 						(void)fclose(fp);
 					free(ibuf);
@@ -542,8 +539,7 @@ tc_exp:	{
 
 		if ((nrecord =
 		     realloc(record, (size_t)(rp - record))) == NULL) {
-			if (record)
-				free(record);
+			free(record);
 			errno = ENOMEM;
 			return (-2);
 		}
@@ -910,8 +906,7 @@ cgetstr(char *buf, const char *cap, char **str)
 			char *nmem;
 
 			if ((nmem = realloc(mem, size + SFRAG)) == NULL) {
-				if (mem)
-					free(mem);
+				free(mem);
 				return (-2);
 			}
 			mem = nmem;
@@ -930,8 +925,7 @@ cgetstr(char *buf, const char *cap, char **str)
 		char *nmem;
 
 		if ((nmem = realloc(mem, (size_t)(mp - mem))) == NULL) {
-			if (mem)
-				free(mem);
+			free(mem);
 			return (-2);
 		}
 		mem = nmem;
@@ -993,8 +987,7 @@ cgetustr(char *buf, const char *cap, char **str)
 			char *nmem;
 
 			if ((nmem = realloc(mem, size + SFRAG)) == NULL) {
-				if (mem)
-					free(mem);
+				free(mem);
 				return (-2);
 			}
 			mem = nmem;
@@ -1013,8 +1006,7 @@ cgetustr(char *buf, const char *cap, char **str)
 		char *nmem;
 
 		if ((nmem = realloc(mem, mp - mem)) == NULL) {
-			if (mem)
-				free(mem);
+			free(mem);
 			return (-2);
 		}
 		mem = nmem;

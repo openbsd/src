@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.31 2015/09/13 19:58:50 guenther Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.32 2015/09/14 16:09:13 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -209,10 +209,8 @@ login_getstyle(login_cap_t *lc, char *style, char *atype)
 		if (lc->lc_style == NULL)
 			syslog(LOG_ERR, "strdup: %m");
 	}
-	if (f1)
-		free(f1);
-	if (f2)
-		free(f2);
+	free(f1);
+	free(f2);
 	return (lc->lc_style);
 }
 DEF_WEAK(login_getstyle);
@@ -270,12 +268,10 @@ login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 
 	switch (stat = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
-		if (res)
-			free(res);
+		free(res);
 		return (def);
 	case -2:
-		if (res)
-			free(res);
+		free(res);
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -283,8 +279,7 @@ login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	default:
 		if (stat >= 0) 
 			break;
-		if (res)
-			free(res);
+		free(res);
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -359,12 +354,10 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 
 	switch (stat = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
-		if (res)
-			free(res);
+		free(res);
 		return (def);
 	case -2:
-		if (res)
-			free(res);
+		free(res);
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -372,8 +365,7 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	default:
 		if (stat >= 0) 
 			break;
-		if (res)
-			free(res);
+		free(res);
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -417,12 +409,10 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 
 	switch (stat = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
-		if (res)
-			free(res);
+		free(res);
 		return (def);
 	case -2:
-		if (res)
-			free(res);
+		free(res);
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -430,8 +420,7 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	default:
 		if (stat >= 0) 
 			break;
-		if (res)
-			free(res);
+		free(res);
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -467,12 +456,9 @@ void
 login_close(login_cap_t *lc)
 {
 	if (lc) {
-		if (lc->lc_class)
-			free(lc->lc_class);
-		if (lc->lc_cap)
-			free(lc->lc_cap);
-		if (lc->lc_style)
-			free(lc->lc_style);
+		free(lc->lc_class);
+		free(lc->lc_cap);
+		free(lc->lc_style);
 		free(lc);
 	}
 }
