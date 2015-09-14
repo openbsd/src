@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nametoindex.c,v 1.8 2002/03/07 22:40:23 millert Exp $	*/
+/*	$OpenBSD: if_nametoindex.c,v 1.9 2015/09/14 10:47:01 guenther Exp $	*/
 /*	$KAME: if_nametoindex.c,v 1.5 2000/11/24 08:04:40 itojun Exp $	*/
 
 /*-
@@ -79,3 +79,4 @@ if_nametoindex(const char *ifname)
 		errno = ENXIO;
 	return(ni);
 }
+DEF_WEAK(if_nametoindex);

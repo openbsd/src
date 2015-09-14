@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_indextoname.c,v 1.9 2002/03/07 22:40:23 millert Exp $	*/
+/*	$OpenBSD: if_indextoname.c,v 1.10 2015/09/14 10:47:01 guenther Exp $	*/
 /*	$KAME: if_indextoname.c,v 1.6 2000/11/07 22:33:25 jinmei Exp $	*/
 
 /*-
@@ -84,3 +84,4 @@ if_indextoname(unsigned int ifindex, char *ifname)
 	errno = error;
 	return(ifname);
 }
+DEF_WEAK(if_indextoname);
