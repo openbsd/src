@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.23 2015/08/14 14:30:40 stsp Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.24 2015/09/14 12:21:03 guenther Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -166,6 +166,7 @@ setlocale(int category, const char *locale)
 
 	return (currentlocale());
 }
+DEF_STRONG(setlocale);
 
 static char *
 currentlocale(void)
