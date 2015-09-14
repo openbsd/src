@@ -1,4 +1,4 @@
-/*	$OpenBSD: semctl.c,v 1.8 2014/11/15 22:38:47 guenther Exp $ */
+/*	$OpenBSD: semctl.c,v 1.9 2015/09/14 12:08:22 guenther Exp $ */
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -34,7 +34,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-int semctl(int semid, int semnum, int cmd, ...)
+int
+semctl(int semid, int semnum, int cmd, ...)
 {
 	va_list ap;
 	union semun semun;
