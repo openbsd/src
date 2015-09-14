@@ -1,4 +1,4 @@
-/*	$OpenBSD: erand48.c,v 1.4 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: erand48.c,v 1.5 2015/09/14 13:30:17 guenther Exp $ */
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
@@ -12,6 +12,7 @@
  * to anyone/anything when using this software.
  */
 
+#include <math.h>
 #include "rand48.h"
 
 double

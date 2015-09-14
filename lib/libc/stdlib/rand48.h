@@ -10,13 +10,12 @@
  * of any kind. I shall in no event be liable for anything that happens
  * to anyone/anything when using this software.
  *
- *	$OpenBSD: rand48.h,v 1.5 2015/08/27 04:33:31 guenther Exp $
+ *	$OpenBSD: rand48.h,v 1.6 2015/09/14 13:30:17 guenther Exp $
  */
 
 #ifndef _RAND48_H_
 #define _RAND48_H_
 
-#include <math.h>
 #include <stdlib.h>
 
 __BEGIN_HIDDEN_DECLS
