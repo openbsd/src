@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.30 2015/09/14 12:20:40 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.31 2015/09/14 12:29:16 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -352,7 +352,8 @@ tls_ssl_error(struct tls *ctx, SSL *ssl_conn, int ssl_ret, const char *prefix)
 		if ((err = ERR_peek_error()) != 0) {
 			errstr = ERR_error_string(err, NULL);
 		} else if (ssl_ret == 0) {
-			errstr = "EOF";
+			ctx->state |= TLS_EOF_NO_CLOSE_NOTIFY;
+			return (0);
 		} else if (ssl_ret == -1) {
 			errstr = strerror(errno);
 		}
@@ -421,7 +422,7 @@ tls_read(struct tls *ctx, void *buf, size_t buflen)
 	}
 
 	ERR_clear_error();
-	if ((ssl_ret = SSL_read(ctx->ssl_conn, buf, buflen)) >= 0) {
+	if ((ssl_ret = SSL_read(ctx->ssl_conn, buf, buflen)) > 0) {
 		rv = (ssize_t)ssl_ret;
 		goto out;
 	}
@@ -450,7 +451,7 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen)
 	}
 
 	ERR_clear_error();
-	if ((ssl_ret = SSL_write(ctx->ssl_conn, buf, buflen)) >= 0) {
+	if ((ssl_ret = SSL_write(ctx->ssl_conn, buf, buflen)) > 0) {
 		rv = (ssize_t)ssl_ret;
 		goto out;
 	}
@@ -501,6 +502,12 @@ tls_close(struct tls *ctx)
 		}
 		ctx->socket = -1;
 	}
+
+	if ((ctx->state & TLS_EOF_NO_CLOSE_NOTIFY) != 0) {
+		tls_set_errorx(ctx, "EOF without close notify");
+		rv = -1;
+	}
+
  out:
 	/* Prevent callers from performing incorrect error handling */
 	errno = 0;
