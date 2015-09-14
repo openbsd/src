@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.24 2015/05/06 23:52:49 jsg Exp $ */
+/*	$OpenBSD: gmon.c,v 1.25 2015/09/14 14:17:10 guenther Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,6 +49,7 @@ static int	s_scale;
 #define ERR(s) write(STDERR_FILENO, s, sizeof(s))
 
 void	moncontrol(int);
+PROTO_NORMAL(moncontrol);
 static int hertz(void);
 void	monstartup(u_long lowpc, u_long highpc);
 void	_mcleanup(void);
@@ -306,6 +307,7 @@ moncontrol(int mode)
 		p->state = GMON_PROF_OFF;
 	}
 }
+DEF_WEAK(moncontrol);
 
 /*
  * discover the tick frequency of the machine
