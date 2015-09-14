@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.204 2015/09/14 08:16:14 guenther Exp $
+#	$OpenBSD: Makefile,v 1.205 2015/09/14 08:24:37 guenther Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -117,9 +117,6 @@ copies:
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 			${DESTDIR}/usr/include/$$i ; \
 	done
-	${MAKE} just-sys
-
-just-sys:
 	cd ../sys; \
 	pax -rw -pa -L \
 	    `find ${LDIRS} -follow -type f -name '*.h' '!' \
