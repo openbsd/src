@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.47 2015/09/13 23:36:21 doug Exp $ */
+/* $OpenBSD: evp.h,v 1.48 2015/09/14 01:45:03 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -648,6 +648,9 @@ void BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
 #endif
 
 const EVP_MD *EVP_md_null(void);
+#ifndef OPENSSL_NO_MD4
+const EVP_MD *EVP_md4(void);
+#endif
 #ifndef OPENSSL_NO_MD5
 const EVP_MD *EVP_md5(void);
 #endif

@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.27 2015/09/13 23:36:21 doug Exp $
+.\" $OpenBSD: openssl.1,v 1.28 2015/09/14 01:45:03 doug Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 13 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -383,6 +383,8 @@ Streebog-256 digest.
 Streebog-512 digest.
 .It Cm md_gost94
 GOST R 34.11-94 digest.
+.It Cm md4
+MD4 digest.
 .It Cm md5
 MD5 digest.
 .It Cm ripemd160
@@ -1793,7 +1795,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Bk -words
 .Oo
 .Fl gost-mac | streebog256 | streebog512 | md_gost94 |
-.Fl md5 | ripemd160 | sha1 |
+.Fl md4 | md5 | ripemd160 | sha | sha1 |
 .Fl sha224 | sha256 | sha384 | sha512 | whirlpool
 .Oc
 .Op Fl binary
@@ -1816,7 +1818,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Pp
 .Nm openssl
 .Cm gost-mac | streebog256 | streebog512 | md_gost94 |
-.Cm md5 | ripemd160 | sha | sha1 |
+.Cm md4 | md5 | ripemd160 | sha | sha1 |
 .Cm sha224 | sha256 | sha384 | sha512 | whirlpool
 .Op Fl c
 .Op Fl d
@@ -5083,7 +5085,7 @@ instead of standard output.
 .Op Fl key Ar keyfile
 .Op Fl keyform Ar DER | PEM
 .Op Fl keyout Ar file
-.Op Fl md5 | sha1
+.Op Fl md4 | md5 | sha1
 .Op Fl modulus
 .Op Fl nameopt Ar option
 .Op Fl new
@@ -7662,6 +7664,7 @@ command were first added in
 .Op Cm dsa2048
 .Op Cm hmac
 .Op Cm md2
+.Op Cm md4
 .Op Cm md5
 .Op Cm rc2
 .Op Cm rc2-cbc
@@ -7712,7 +7715,7 @@ benchmarks in parallel.
 .Nm "openssl ts"
 .Bk -words
 .Fl query
-.Op Fl md5 | ripemd160 | sha1
+.Op Fl md4 | md5 | ripemd160 | sha | sha1
 .Op Fl cert
 .Op Fl config Ar configfile
 .Op Fl data Ar file_to_hash
@@ -7833,7 +7836,7 @@ This option specifies a previously created time stamp request in DER
 format that will be printed into the output file.
 Useful when you need to examine the content of a request in human-readable
 format.
-.It Fl md5|ripemd160|sha1
+.It Fl md4|md5|ripemd160|sha|sha1
 The message digest to apply to the data file.
 It supports all the message digest algorithms that are supported by the
 .Nm dgst

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2015/09/13 23:36:21 doug Exp $
+# $OpenBSD: Makefile,v 1.23 2015/09/14 01:45:03 doug Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -642,9 +642,11 @@ MLINKS+=\
 	EVP_DigestInit.3 EVP_get_digestbyname.3 \
 	EVP_DigestInit.3 EVP_get_digestbynid.3 \
 	EVP_DigestInit.3 EVP_get_digestbyobj.3 \
+	EVP_DigestInit.3 EVP_md2.3 \
 	EVP_DigestInit.3 EVP_md5.3 \
 	EVP_DigestInit.3 EVP_md_null.3 \
 	EVP_DigestInit.3 EVP_ripemd160.3 \
+	EVP_DigestInit.3 EVP_sha.3 \
 	EVP_DigestInit.3 EVP_sha1.3 \
 	EVP_DigestSignInit.3 EVP_DigestSignUpdate.3 \
 	EVP_DigestSignInit.3 EVP_DigestSignFinal.3 \
@@ -793,6 +795,14 @@ MLINKS+=\
 	HMAC.3 HMAC_Init.3 \
 	HMAC.3 HMAC_Update.3 \
 	HMAC.3 HMAC_cleanup.3 \
+	MD5.3 MD2.3 \
+	MD5.3 MD2_Final.3 \
+	MD5.3 MD2_Init.3 \
+	MD5.3 MD2_Update.3 \
+	MD5.3 MD4.3 \
+	MD5.3 MD4_Final.3 \
+	MD5.3 MD4_Init.3 \
+	MD5.3 MD4_Update.3 \
 	MD5.3 MD5_Final.3 \
 	MD5.3 MD5_Init.3 \
 	MD5.3 MD5_Update.3 \

@@ -27,6 +27,12 @@ Implemented:
 These are documents that describe things that are implemented (in
 whole or at least great parts) in OpenSSL.
 
+1319 The MD2 Message-Digest Algorithm. B. Kaliski. April 1992.
+     (Format: TXT=25661 bytes) (Status: INFORMATIONAL)
+
+1320 The MD4 Message-Digest Algorithm. R. Rivest. April 1992. (Format:
+     TXT=32407 bytes) (Status: INFORMATIONAL)
+
 1321 The MD5 Message-Digest Algorithm. R. Rivest. April 1992. (Format:
      TXT=35222 bytes) (Status: INFORMATIONAL)
 

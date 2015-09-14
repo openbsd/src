@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.14 2015/09/13 23:36:21 doug Exp $ */
+/* $OpenBSD: speed.c,v 1.15 2015/09/14 01:45:03 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,6 +124,9 @@
 #ifndef OPENSSL_NO_IDEA
 #include <openssl/idea.h>
 #endif
+#ifndef OPENSSL_NO_MD4
+#include <openssl/md4.h>
+#endif
 #ifndef OPENSSL_NO_MD5
 #include <openssl/md5.h>
 #endif
@@ -170,8 +173,7 @@ static int do_multi(int multi);
 #define MAX_ECDH_SIZE 256
 
 static const char *names[ALGOR_NUM] = {
-	"md2", NULL /* was mdc2 */, NULL /* was md4 */, "md5", "hmac(md5)",
-	"sha1", "rmd160",
+	"md2", NULL /* was mdc2 */, "md4", "md5", "hmac(md5)", "sha1", "rmd160",
 	"rc4", "des cbc", "des ede3", "idea cbc", "seed cbc",
 	"rc2 cbc", "rc5-32/12 cbc", "blowfish cbc", "cast cbc",
 	"aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
@@ -232,6 +234,9 @@ speed_main(int argc, char **argv)
 	long rsa_count;
 	unsigned rsa_num;
 	unsigned char md[EVP_MAX_MD_SIZE];
+#ifndef OPENSSL_NO_MD4
+	unsigned char md4[MD4_DIGEST_LENGTH];
+#endif
 #ifndef OPENSSL_NO_MD5
 	unsigned char md5[MD5_DIGEST_LENGTH];
 	unsigned char hmac[MD5_DIGEST_LENGTH];
@@ -313,6 +318,7 @@ speed_main(int argc, char **argv)
 	CAMELLIA_KEY camellia_ks1, camellia_ks2, camellia_ks3;
 #endif
 #define	D_MD2		0
+#define	D_MD4		2
 #define	D_MD5		3
 #define	D_HMAC		4
 #define	D_SHA1		5
@@ -551,6 +557,11 @@ speed_main(int argc, char **argv)
 			j--;	/* Otherwise, -mr gets confused with an
 				 * algorithm. */
 		} else
+#ifndef OPENSSL_NO_MD4
+		if (strcmp(*argv, "md4") == 0)
+			doit[D_MD4] = 1;
+		else
+#endif
 #ifndef OPENSSL_NO_MD5
 		if (strcmp(*argv, "md5") == 0)
 			doit[D_MD5] = 1;
@@ -801,6 +812,9 @@ speed_main(int argc, char **argv)
 			BIO_printf(bio_err, "Error: bad option or value\n");
 			BIO_printf(bio_err, "\n");
 			BIO_printf(bio_err, "Available values:\n");
+#ifndef OPENSSL_NO_MD4
+			BIO_printf(bio_err, "md4      ");
+#endif
 #ifndef OPENSSL_NO_MD5
 			BIO_printf(bio_err, "md5      ");
 #ifndef OPENSSL_NO_HMAC
@@ -823,7 +837,7 @@ speed_main(int argc, char **argv)
 			BIO_printf(bio_err, "rmd160");
 #endif
 #if !defined(OPENSSL_NO_MD2) || \
-    !defined(OPENSSL_NO_MD5) || \
+    !defined(OPENSSL_NO_MD4) || !defined(OPENSSL_NO_MD5) || \
     !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160) || \
     !defined(OPENSSL_NO_WHIRLPOOL)
 			BIO_printf(bio_err, "\n");
@@ -981,6 +995,19 @@ speed_main(int argc, char **argv)
 #define COND(c)	(run && count<0x7fffffff)
 #define COUNT(d) (count)
 	signal(SIGALRM, sig_done);
+
+#ifndef OPENSSL_NO_MD4
+	if (doit[D_MD4]) {
+		for (j = 0; j < SIZE_NUM; j++) {
+			print_message(names[D_MD4], c[D_MD4][j], lengths[j]);
+			Time_F(START);
+			for (count = 0, run = 1; COND(c[D_MD4][j]); count++)
+				EVP_Digest(&(buf[0]), (unsigned long) lengths[j], &(md4[0]), NULL, EVP_md4(), NULL);
+			d = Time_F(STOP);
+			print_result(D_MD4, j, count, d);
+		}
+	}
+#endif
 
 #ifndef OPENSSL_NO_MD5
 	if (doit[D_MD5]) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.11 2015/09/13 23:36:21 doug Exp $ */
+/* $OpenBSD: openssl.c,v 1.12 2015/09/14 01:45:03 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -216,6 +216,9 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_MD, "md_gost94", dgst_main },
 	{ FUNC_TYPE_MD, "streebog256", dgst_main },
 	{ FUNC_TYPE_MD, "streebog512", dgst_main },
+#endif
+#ifndef OPENSSL_NO_MD4
+	{ FUNC_TYPE_MD, "md4", dgst_main },
 #endif
 #ifndef OPENSSL_NO_MD5
 	{ FUNC_TYPE_MD, "md5", dgst_main },

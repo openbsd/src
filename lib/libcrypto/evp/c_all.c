@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.19 2015/09/13 23:36:21 doug Exp $ */
+/* $OpenBSD: c_all.c,v 1.20 2015/09/14 01:45:03 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -228,6 +228,10 @@ OpenSSL_add_all_ciphers(void)
 void
 OpenSSL_add_all_digests(void)
 {
+#ifndef OPENSSL_NO_MD4
+	EVP_add_digest(EVP_md4());
+#endif
+
 #ifndef OPENSSL_NO_MD5
 	EVP_add_digest(EVP_md5());
 	EVP_add_digest_alias(SN_md5, "ssl2-md5");
