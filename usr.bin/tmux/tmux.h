@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.559 2015/09/14 11:34:50 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.560 2015/09/14 11:57:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2073,7 +2073,7 @@ extern const char window_clock_table[14][5][5];
 
 /* window-copy.c */
 extern const struct window_mode window_copy_mode;
-void		 window_copy_init_from_pane(struct window_pane *, u_int);
+void		 window_copy_init_from_pane(struct window_pane *, int);
 void		 window_copy_init_for_output(struct window_pane *);
 void printflike(2, 3) window_copy_add(struct window_pane *, const char *, ...);
 void		 window_copy_vadd(struct window_pane *, const char *, va_list);
