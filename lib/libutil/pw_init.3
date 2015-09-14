@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_init.3,v 1.12 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: pw_init.3,v 1.13 2015/09/14 13:45:25 schwarze Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt PW_INIT 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .In pwd.h
 .In util.h
 .Ft void
-.Fn pw_init
+.Fn pw_init void
 .Ft void
 .Fn pw_setdir "const char *directory"
 .Ft char *
@@ -56,7 +56,7 @@
 .Ft void
 .Fn pw_edit "int notsetuid" "const char *filename"
 .Ft void
-.Fn pw_prompt
+.Fn pw_prompt void
 .Ft void
 .Fn pw_copy "int ffd" "int tfd" "const struct passwd *pw" "const struct passwd *opw"
 .Ft int
