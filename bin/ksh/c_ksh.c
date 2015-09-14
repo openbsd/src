@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.37 2015/09/10 22:48:58 nicm Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.38 2015/09/14 16:08:50 nicm Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -536,14 +536,10 @@ c_typeset(char **wp)
 {
 	struct block *l;
 	struct tbl *vp, **p;
-	Tflag fset = 0, fclr = 0;
-	int thing = 0, func = 0, local = 0;
+	int fset = 0, fclr = 0, thing = 0, func = 0, local = 0, pflag = 0;
 	const char *options = "L#R#UZ#fi#lprtux";	/* see comment below */
 	char *fieldstr, *basestr;
-	int field, base;
-	int optc;
-	Tflag flag;
-	int pflag = 0;
+	int field, base, optc, flag;
 
 	switch (**wp) {
 	case 'e':		/* export */
@@ -834,9 +830,8 @@ int
 c_alias(char **wp)
 {
 	struct table *t = &aliases;
-	int rv = 0, rflag = 0, tflag, Uflag = 0, pflag = 0;
-	int prefix = 0;
-	Tflag xflag = 0;
+	int rv = 0, rflag = 0, tflag, Uflag = 0, pflag = 0, prefix = 0;
+	int xflag = 0;
 	int optc;
 
 	builtin_opt.flags |= GF_PLUSOPT;

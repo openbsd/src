@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.45 2015/09/14 09:42:33 nicm Exp $	*/
+/*	$OpenBSD: var.c,v 1.46 2015/09/14 16:08:50 nicm Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -583,7 +583,7 @@ export(struct tbl *vp, const char *val)
  * LCASEV, UCASEV_AL), and optionally set its value if an assignment.
  */
 struct tbl *
-typeset(const char *var, Tflag set, Tflag clr, int field, int base)
+typeset(const char *var, int set, int clr, int field, int base)
 {
 	struct tbl *vp;
 	struct tbl *vpbase, *t;

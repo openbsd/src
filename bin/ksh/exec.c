@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.52 2015/09/10 22:48:58 nicm Exp $	*/
+/*	$OpenBSD: exec.c,v 1.53 2015/09/14 16:08:50 nicm Exp $	*/
 
 /*
  * execute command tree
@@ -527,8 +527,7 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 
 	case CFUNC:			/* function call */
 	    {
-		volatile int old_xflag;
-		volatile Tflag old_inuse;
+		volatile int old_xflag, old_inuse;
 		const char *volatile old_kshname;
 
 		if (!(tp->flag & ISSET)) {
@@ -791,7 +790,7 @@ void
 builtin(const char *name, int (*func) (char **))
 {
 	struct tbl *tp;
-	Tflag flag;
+	int flag;
 
 	/* see if any flags should be set for this builtin */
 	for (flag = 0; ; name++) {

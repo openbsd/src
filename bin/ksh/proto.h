@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.35 2013/09/04 15:49:19 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.36 2015/09/14 16:08:50 nicm Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -252,7 +252,7 @@ int	setstr(struct tbl *, const char *, int);
 struct tbl *setint_v(struct tbl *, struct tbl *, bool);
 void	setint(struct tbl *, long);
 int	getint(struct tbl *, long *, bool);
-struct tbl *	typeset(const char *, Tflag, Tflag, int, int);
+struct tbl *typeset(const char *, int, int, int, int);
 void	unset(struct tbl *, int);
 char  * skip_varname(const char *, int);
 char	*skip_wdvarname(const char *, int);
