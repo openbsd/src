@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.25 2015/09/10 18:59:34 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.26 2015/09/14 10:44:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -619,6 +619,7 @@ endnetgrent(void)
 		_ng_db = NULL;
 	}
 }
+DEF_WEAK(endnetgrent);
 
 
 void
@@ -657,6 +658,7 @@ setnetgrent(const char *ng)
 	_nghead = _nglist;
 	_ng_sl_free(sl, 1);
 }
+DEF_WEAK(setnetgrent);
 
 
 int
@@ -673,6 +675,7 @@ getnetgrent(const char **host, const char **user, const char **domain)
 
 	return 1;
 }
+DEF_WEAK(getnetgrent);
 
 
 int
@@ -729,3 +732,4 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 
 	return found;
 }
+DEF_WEAK(innetgr);
