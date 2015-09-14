@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.33 2015/09/10 17:55:21 schwarze Exp $
+.\" $OpenBSD: keynote.4,v 1.34 2015/09/14 20:06:58 schwarze Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt KEYNOTE 4
 .\" .TH KeyNote 4 local
 .Os
@@ -557,7 +557,7 @@ the possible compliance value set would contain the values
 (by clause (4)).
 If the ordered set of compliance values
 given in the query (in ascending order) is
-.Pf { Ns Qo no_access Qc ,
+.Pf { Qo no_access Qc ,
 .Qq guest_access ,
 .Qq user_access ,
 .Qo full_access Qc Ns } ,
@@ -822,7 +822,7 @@ A log entry is made if the amount is at least 100.
 .Ed
 .Pp
 Assume a query in which the ordered set of Compliance Values is
-.Pf { Ns Qo Reject Qc ,
+.Pf { Qo Reject Qc ,
 .Qq ApproveAndLog ,
 .Qo Approve Qc Ns } .
 Under policies E and G, and

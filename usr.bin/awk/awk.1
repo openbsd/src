@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.43 2015/01/16 15:53:24 schwarze Exp $
+.\"	$OpenBSD: awk.1,v 1.44 2015/09/14 20:06:58 schwarze Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -285,9 +285,9 @@ The
 .Ic print
 statement prints its arguments on the standard output
 (or on a file if
-.Pf > Ns Ar file
+.Pf > Ar file
 or
-.Pf >> Ns Ar file
+.Pf >> Ar file
 is present or on a pipe if
 .Pf |\ \& Ar cmd
 is present), separated by the current output field separator,
@@ -322,7 +322,7 @@ relational expressions, using the operators
 .Ic ~
 and
 .Ic !~ .
-.Pf / Ns Ar re Ns /
+.Pf / Ar re Ns /
 is a constant regular expression;
 any string (constant or variable) may be used
 as a regular expression, except in the position of an isolated regular expression

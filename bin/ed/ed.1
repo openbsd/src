@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.64 2015/06/22 14:46:59 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.65 2015/09/14 20:06:58 schwarze Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 22 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt ED 1
 .Os
 .Sh NAME
@@ -235,8 +235,8 @@ This is equivalent to
 .Ad \-1
 and may be repeated with cumulative effect.
 .It Xo
-.Pf - Ns Ar n No or\ \&
-.Pf ^ Ns Ar n
+.Pf - Ar n No or\ \&
+.Pf ^ Ar n
 .Xc
 The
 .Ar n Ns th
@@ -547,7 +547,7 @@ in
 .Ar replacement
 is replaced by the currently matched text.
 The character sequence
-.Pf \e Ns Ar m ,
+.Pf \e Ar m ,
 where
 .Ar m
 is a number in the range [1,9], is replaced by the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.128 2015/05/04 19:34:13 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.129 2015/09/14 20:06:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1339,7 +1339,7 @@ In that case the shell attempts arithmetic expansion first,
 then attempts command substitution if that fails.
 Or a non-ambiguous version can be used:
 .Pp
-.D1 $( Pf ( Ar command Ns Pf ) \ \&)
+.D1 "$( (" Ns Ar command Ns ") )"
 .Pp
 Arithmetic expansion works similarly,
 with an arithmetic expression being evaluated and substituted.

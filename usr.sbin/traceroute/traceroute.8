@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.62 2014/09/08 01:27:55 schwarze Exp $
+.\"	$OpenBSD: traceroute.8,v 1.63 2015/09/14 20:06:59 schwarze Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -352,12 +352,8 @@ That is, rip is really only 7 hops away.
 A reply that returns with a TTL of 1 is a clue this problem exists.
 .Nm
 prints a "!" after the time if the TTL is <= 1.
-Since vendors ship a lot of obsolete
-.Pf ( Tn DEC Ns \'s
-Ultrix, Sun 3.x) or
-non-standard
-.Pq Tn HP-UX
-software, expect to see this problem
+Since vendors ship a lot of obsolete (DEC's Ultrix, Sun 3.x) or
+non-standard (HP-UX) software, expect to see this problem
 frequently and/or take care picking the target host of your
 probes.
 .Pp

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.44 2015/07/27 17:28:39 sobrado Exp $
+.\" $OpenBSD: pppd.8,v 1.45 2015/09/14 20:06:59 schwarze Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -836,14 +836,14 @@ Options can be taken from files as well as the command line.
 reads options from the files
 .Pa /etc/ppp/options , ~/.ppprc
 and
-.Pf /etc/ppp/options. Ns Ar ttyname
+.Pf /etc/ppp/options. Ar ttyname
 (in that order) before processing the options on the command line.
 (In fact, the command-line options are scanned to find the terminal name
 before the
-.Pf options. Ns Ar ttyname
+.Pf options. Ar ttyname
 file is read.)
 In forming the name of the
-.Pf options. Ns Ar ttyname
+.Pf options. Ar ttyname
 file,
 the initial /dev/ is removed from the terminal name, and any remaining
 / characters are replaced with dots.
@@ -966,7 +966,7 @@ if it has no secrets which could be used to do so.
 .Pp
 .Nm
 stores secrets for use in authentication in secrets files
-.Pf ( Ns Pa /etc/ppp/pap-secrets
+.Pf ( Pa /etc/ppp/pap-secrets
 for PAP,
 .Pa /etc/ppp/chap-secrets
 for CHAP).
@@ -1269,7 +1269,7 @@ System default options for
 read before user default options or command-line options.
 .It Pa ~/.ppprc
 User default options, read before
-.Pf /etc/ppp/options. Ns Ar ttyname .
+.Pf /etc/ppp/options. Ar ttyname .
 .It Pa /etc/ppp/options. Ns Ar ttyname
 System default options for the serial port being used, read after
 .Pa ~/.ppprc .
@@ -1382,7 +1382,7 @@ In particular, it is often useful to escape XON (^Q) and
 XOFF (^S), using
 .Cm asyncmap a0000 .
 If the path includes a telnet, you probably should escape ^] as well
-.Pf ( Ns Cm asyncmap 200a0000 ) .
+.Cm ( asyncmap 200a0000 ) .
 If the path includes an rlogin, you will need to use the
 .Cm escape ff
 option on the end which is running the rlogin client, since many

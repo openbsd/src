@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.59 2015/03/17 10:08:18 bentley Exp $
+.\"	$OpenBSD: vi.1,v 1.60 2015/09/14 20:06:58 schwarze Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: March 17 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -365,7 +365,7 @@ for later use.
 .Nm vi
 buffers are named with a single character preceded by a double quote,
 for example
-.Pf \&" Ns Aq c ;
+.Pf \&" Aq c ;
 .Nm ex
 buffers are the same,
 but without the double quote.
@@ -919,21 +919,21 @@ of the
 command.
 .Pp
 .It Xo
-.Pf / Ns Ar RE
+.Pf / Ar RE
 .Aq Li carriage-return
 .Xc
 .It Xo
-.Pf / Ns Ar RE Ns /
+.Pf / Ar RE Ns /
 .Op Ar offset
 .Op Cm z
 .Aq Li carriage-return
 .Xc
 .It Xo
-.Pf ?\& Ns Ar RE
+.Pf ? Ar RE
 .Aq Li carriage-return
 .Xc
 .It Xo
-.Pf ?\& Ns Ar RE Ns ?\&
+.Pf ? Ar RE Ns ?
 .Op Ar offset
 .Op Cm z
 .Aq Li carriage-return

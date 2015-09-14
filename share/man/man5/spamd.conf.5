@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.14 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.15 2015/09/14 20:06:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -24,7 +24,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt SPAMD.CONF 5
 .Os
 .Sh NAME
@@ -80,9 +80,9 @@ which specifies the order in which lists
 are to be applied.
 Lists are constructed by name:
 blacklists are identified by the capability
-.Pf : Ns Ar black : .
+.Pf : Ar black : .
 If a list is instead given the
-.Pf : Ns Ar white :
+.Pf : Ar white :
 capability,
 addresses in it will not be blacklisted.
 The addresses in such a list are removed from the preceding blacklist.
