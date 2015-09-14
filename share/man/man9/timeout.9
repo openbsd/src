@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.40 2015/06/11 16:04:55 mikeb Exp $
+.\"	$OpenBSD: timeout.9,v 1.41 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt TIMEOUT 9
 .Os
 .Sh NAME
@@ -46,32 +46,32 @@
 .In sys/types.h
 .In sys/timeout.h
 .Ft void
-.Fn "timeout_set" "struct timeout *to" "void (*fn)(void *)" "void *arg"
+.Fn timeout_set "struct timeout *to" "void (*fn)(void *)" "void *arg"
 .Ft int
-.Fn "timeout_add" "struct timeout *to" "int ticks"
+.Fn timeout_add "struct timeout *to" "int ticks"
 .Ft int
-.Fn "timeout_del" "struct timeout *to"
+.Fn timeout_del "struct timeout *to"
 .Ft int
-.Fn "timeout_pending" "struct timeout *to"
+.Fn timeout_pending "struct timeout *to"
 .Ft int
-.Fn "timeout_initialized" "struct timeout *to"
+.Fn timeout_initialized "struct timeout *to"
 .Ft int
-.Fn "timeout_triggered" "struct timeout *to"
+.Fn timeout_triggered "struct timeout *to"
 .Ft int
-.Fn "timeout_add_tv" "struct timeout *to" "struct timeval *"
+.Fn timeout_add_tv "struct timeout *to" "struct timeval *"
 .Ft int
-.Fn "timeout_add_ts" "struct timeout *to" "struct timespec *"
+.Fn timeout_add_ts "struct timeout *to" "struct timespec *"
 .Ft int
-.Fn "timeout_add_bt" "struct timeout *to" "struct bintime *"
+.Fn timeout_add_bt "struct timeout *to" "struct bintime *"
 .Ft int
-.Fn "timeout_add_sec" "struct timeout *to" "int sec"
+.Fn timeout_add_sec "struct timeout *to" "int sec"
 .Ft int
-.Fn "timeout_add_msec" "struct timeout *to" "int msec"
+.Fn timeout_add_msec "struct timeout *to" "int msec"
 .Ft int
-.Fn "timeout_add_usec" "struct timeout *to" "int usec"
+.Fn timeout_add_usec "struct timeout *to" "int usec"
 .Ft int
-.Fn "timeout_add_nsec" "struct timeout *to" "int nsec"
-.Fn "TIMEOUT_INITIALIZER" "void (*fn)(void *)" "void *arg"
+.Fn timeout_add_nsec "struct timeout *to" "int nsec"
+.Fn TIMEOUT_INITIALIZER "void (*fn)(void *)" "void *arg"
 .Sh DESCRIPTION
 The
 .Nm timeout

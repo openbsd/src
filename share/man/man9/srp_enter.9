@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.4 2015/09/01 03:47:58 dlg Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.5 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -33,29 +33,29 @@
 .Sh SYNOPSIS
 .In sys/srp.h
 .Ft void
-.Fn "srp_init" "struct srp *p"
+.Fn srp_init "struct srp *p"
 .Ft void
-.Fo "srp_gc_init"
+.Fo srp_gc_init
 .Fa "struct srp_gc *gc"
 .Fa "void (*dtor)(void *, void *)"
 .Fa "void *ctx"
 .Fc
 .Ft void
-.Fn "srp_update" "struct srp_gc *gc" "struct srp *p" "void *v"
+.Fn srp_update "struct srp_gc *gc" "struct srp *p" "void *v"
 .Ft void
-.Fn "srp_update_locked" "struct srp_gc *gc" "struct srp *p" "void *v"
+.Fn srp_update_locked "struct srp_gc *gc" "struct srp *p" "void *v"
 .Ft void *
-.Fn "srp_enter" "struct srp *p"
+.Fn srp_enter "struct srp *p"
 .Ft void *
-.Fn "srp_follow" "struct srp *p" "void *v" "struct srp *n"
+.Fn srp_follow "struct srp *p" "void *v" "struct srp *n"
 .Ft void
-.Fn "srp_leave" "struct srp *p" "void *v"
+.Fn srp_leave "struct srp *p" "void *v"
 .Ft void *
-.Fn "srp_get_locked" "struct srp *p"
+.Fn srp_get_locked "struct srp *p"
 .Ft void
-.Fn "srp_finalize" "struct srp_gc *gc"
-.Fn "SRP_INITIALIZER"
-.Fo "SRP_GC_INITIALIZER"
+.Fn srp_finalize "struct srp_gc *gc"
+.Fn SRP_INITIALIZER
+.Fo SRP_GC_INITIALIZER
 .Fa "void (*dtor)(void *, void *)"
 .Fa "void *ctx"
 .Fc

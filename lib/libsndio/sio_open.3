@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.42 2014/12/02 11:09:28 schwarze Exp $
+.\" $OpenBSD: sio_open.3,v 1.43 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 2 2014 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -39,39 +39,39 @@
 .Sh SYNOPSIS
 .In sndio.h
 .Ft "struct sio_hdl *"
-.Fn "sio_open" "const char *name" "unsigned int mode" "int nbio_flag"
+.Fn sio_open "const char *name" "unsigned int mode" "int nbio_flag"
 .Ft "void"
-.Fn "sio_close" "struct sio_hdl *hdl"
+.Fn sio_close "struct sio_hdl *hdl"
 .Ft "int"
-.Fn "sio_setpar" "struct sio_hdl *hdl" "struct sio_par *par"
+.Fn sio_setpar "struct sio_hdl *hdl" "struct sio_par *par"
 .Ft "int"
-.Fn "sio_getpar" "struct sio_hdl *hdl" "struct sio_par *par"
+.Fn sio_getpar "struct sio_hdl *hdl" "struct sio_par *par"
 .Ft "int"
-.Fn "sio_getcap" "struct sio_hdl *hdl" "struct sio_cap *cap"
+.Fn sio_getcap "struct sio_hdl *hdl" "struct sio_cap *cap"
 .Ft "int"
-.Fn "sio_start" "struct sio_hdl *hdl"
+.Fn sio_start "struct sio_hdl *hdl"
 .Ft "int"
-.Fn "sio_stop" "struct sio_hdl *hdl"
+.Fn sio_stop "struct sio_hdl *hdl"
 .Ft "size_t"
-.Fn "sio_read" "struct sio_hdl *hdl" "void *addr" "size_t nbytes"
+.Fn sio_read "struct sio_hdl *hdl" "void *addr" "size_t nbytes"
 .Ft "size_t"
-.Fn "sio_write" "struct sio_hdl *hdl" "const void *addr" "size_t nbytes"
+.Fn sio_write "struct sio_hdl *hdl" "const void *addr" "size_t nbytes"
 .Ft "void"
-.Fn "sio_onmove" "struct sio_hdl *hdl" "void (*cb)(void *arg, int delta)" "void *arg"
+.Fn sio_onmove "struct sio_hdl *hdl" "void (*cb)(void *arg, int delta)" "void *arg"
 .Ft "int"
-.Fn "sio_nfds" "struct sio_hdl *hdl"
+.Fn sio_nfds "struct sio_hdl *hdl"
 .Ft "int"
-.Fn "sio_pollfd" "struct sio_hdl *hdl" "struct pollfd *pfd" "int events"
+.Fn sio_pollfd "struct sio_hdl *hdl" "struct pollfd *pfd" "int events"
 .Ft "int"
-.Fn "sio_revents" "struct sio_hdl *hdl" "struct pollfd *pfd"
+.Fn sio_revents "struct sio_hdl *hdl" "struct pollfd *pfd"
 .Ft "int"
-.Fn "sio_eof" "struct sio_hdl *hdl"
+.Fn sio_eof "struct sio_hdl *hdl"
 .Ft "int"
-.Fn "sio_setvol" "struct sio_hdl *hdl" "unsigned int vol"
+.Fn sio_setvol "struct sio_hdl *hdl" "unsigned int vol"
 .Ft "int"
-.Fn "sio_onvol" "struct sio_hdl *hdl" "void (*cb)(void *arg, unsigned int vol)" "void *arg"
+.Fn sio_onvol "struct sio_hdl *hdl" "void (*cb)(void *arg, unsigned int vol)" "void *arg"
 .Ft "void"
-.Fn "sio_initpar" "struct sio_par *par"
+.Fn sio_initpar "struct sio_par *par"
 .\"Fd #define SIO_BPS(bits)
 .\"Fd #define SIO_LE_NATIVE
 .Sh DESCRIPTION

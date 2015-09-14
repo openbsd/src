@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.21 2013/12/29 18:46:09 jmc Exp $
+.\"	$OpenBSD: printf.9,v 1.22 2015/09/14 15:14:55 schwarze Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 29 2013 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt PRINTF 9
 .Os
 .Sh NAME
@@ -45,36 +45,36 @@
 .In sys/types.h
 .In sys/systm.h
 .Ft int
-.Fo "printf"
+.Fo printf
 .Fa "const char *format"
 .Fa "..."
 .Fc
 .Ft int
-.Fo "snprintf"
+.Fo snprintf
 .Fa "char *buf"
 .Fa "size_t size"
 .Fa "const char *format"
 .Fa "..."
 .Fc
 .Ft int
-.Fo "vprintf"
+.Fo vprintf
 .Fa "const char *format"
 .Fa "va_list ap"
 .Fc
 .Ft int
-.Fo "vsnprintf"
+.Fo vsnprintf
 .Fa "char *buf"
 .Fa "size_t size"
 .Fa "const char *fmt"
 .Fa "va_list ap"
 .Fc
 .Ft void
-.Fo "uprintf"
+.Fo uprintf
 .Fa "const char *format"
 .Fa "..."
 .Fc
 .Ft void
-.Fo "ttyprintf"
+.Fo ttyprintf
 .Fa "struct tty *tty"
 .Fa "const char *format"
 .Fa "..."

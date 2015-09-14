@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aml_evalnode.9,v 1.10 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: aml_evalnode.9,v 1.11 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt AML_EVALNODE 9
 .Os
 .Sh NAME
@@ -31,19 +31,19 @@
 .In dev/acpi/amltypes.h
 .In dev/acpi/dsdt.h
 .Ft int
-.Fn "aml_evalnode" "struct acpi_softc *sc" "struct aml_node *node" \
+.Fn aml_evalnode "struct acpi_softc *sc" "struct aml_node *node" \
 "int argc" "struct aml_value *argv" "struct aml_value *res"
 .Ft int
-.Fn "aml_evalname" "struct acpi_softc *sc" "struct aml_node *parent" \
+.Fn aml_evalname "struct acpi_softc *sc" "struct aml_node *parent" \
 "const char *name" "int argc" "struct aml_value *argv" \
 "struct aml_value *res"
 .Ft int
-.Fn "aml_find_node" "struct aml_node *node" "const char *name" \
+.Fn aml_find_node "struct aml_node *node" "const char *name" \
 "int (*cbproc)(struct aml_node *, void *arg)" "void *arg"
 .Ft void
-.Fn "aml_freevalue" "struct aml_value *val"
+.Fn aml_freevalue "struct aml_value *val"
 .Ft int64_t
-.Fn "aml_val2int" "struct aml_value *rval"
+.Fn aml_val2int "struct aml_value *rval"
 .Sh DESCRIPTION
 The AML API handles decoding and evaluation of the AML
 code embedded in a machine's ACPI tables.

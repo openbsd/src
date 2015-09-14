@@ -1,4 +1,4 @@
-.\"	$OpenBSD: psignal.9,v 1.4 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: psignal.9,v 1.5 2015/09/14 15:14:55 schwarze Exp $
 .\"	$NetBSD: psignal.9,v 1.5 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt PSIGNAL 9
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .Nd post signal to a process
 .Sh SYNOPSIS
 .Ft void
-.Fn "psignal" "struct proc *p" "int signum"
+.Fn psignal "struct proc *p" "int signum"
 .Ft void
-.Fn "pgsignal" "struct pgrp *pgrp" "int signum" "int checkctty"
+.Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
 .Ft void
-.Fn "gsignal" "int pgid" "int signum"
+.Fn gsignal "int pgid" "int signum"
 .Sh DESCRIPTION
 These functions post a signal to one or more processes.
 The argument

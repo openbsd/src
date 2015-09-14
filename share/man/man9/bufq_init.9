@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bufq_init.9,v 1.4 2014/08/08 20:49:38 jmc Exp $
+.\"	$OpenBSD: bufq_init.9,v 1.5 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2014 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt BUFQ_INIT 9
 .Os
 .Sh NAME
@@ -34,21 +34,21 @@
 .Sh SYNOPSIS
 .In sys/buf.h
 .Ft int
-.Fn "bufq_init" "struct bufq *bufq" "int type"
+.Fn bufq_init "struct bufq *bufq" "int type"
 .Ft int
-.Fn "bufq_switch" "struct bufq *bufq" "int type"
+.Fn bufq_switch "struct bufq *bufq" "int type"
 .Ft void
-.Fn "bufq_destroy" "struct bufq *bufq"
+.Fn bufq_destroy "struct bufq *bufq"
 .Ft void
-.Fn "bufq_queue" "struct bufq *bufq" "struct buf *bp"
+.Fn bufq_queue "struct bufq *bufq" "struct buf *bp"
 .Ft struct buf *
-.Fn "bufq_dequeue" "struct bufq *bufq"
+.Fn bufq_dequeue "struct bufq *bufq"
 .Ft void
-.Fn "bufq_requeue" "struct bufq *bufq" "struct buf *bp"
+.Fn bufq_requeue "struct bufq *bufq" "struct buf *bp"
 .Ft int
-.Fn "bufq_peek" "struct bufq *bufq"
+.Fn bufq_peek "struct bufq *bufq"
 .Ft void
-.Fn "bufq_drain" "struct bufq *bufq"
+.Fn bufq_drain "struct bufq *bufq"
 .Sh DESCRIPTION
 The bufq API implements queueing and scheduling of I/O operations on disk
 devices.

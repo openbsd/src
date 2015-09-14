@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.46 2015/09/14 14:29:30 jmc Exp $
+.\" $OpenBSD: tls_init.3,v 1.47 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -88,7 +88,7 @@
 .Ft "int"
 .Fn tls_config_set_cert_file "struct tls_config *config" "const char *cert_file"
 .Ft "int"
-.Fn tls_config_set_cert_mem  "struct tls_config *config" "const uint8_t *cert" "size_t len"
+.Fn tls_config_set_cert_mem "struct tls_config *config" "const uint8_t *cert" "size_t len"
 .Ft "int"
 .Fn tls_config_set_ciphers "struct tls_config *config" "const char *ciphers"
 .Ft "int"
@@ -595,7 +595,7 @@ while (len > 0) {
 	ret = tls_write(ctx, buf, len);
 	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 		continue;
-        if (ret < 0)
+	if (ret < 0)
 		err(1, "tls_write: %s", tls_error(ctx));
 	buf += ret;
 	len -= ret;
@@ -630,7 +630,7 @@ while (len > 0) {
 			buf += ret;
 			len -= ret;
 		}
-        }
+	}
 }
 \&...
 .Ed

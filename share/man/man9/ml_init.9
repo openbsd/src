@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ml_init.9,v 1.3 2015/09/10 15:59:18 schwarze Exp $
+.\"     $OpenBSD: ml_init.9,v 1.4 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt ML_INIT 9
 .Os
 .Sh NAME
@@ -30,15 +30,15 @@
 .Nd mbuf list API
 .Sh SYNOPSIS
 .In sys/mbuf.h
-.Fn "ml_init" "struct mbuf_list *ml"
+.Fn ml_init "struct mbuf_list *ml"
 .Ft void
-.Fn "ml_enqueue" "struct mbuf_list *ml" "struct mbuf *m"
+.Fn ml_enqueue "struct mbuf_list *ml" "struct mbuf *m"
 .Ft struct mbuf *
-.Fn "ml_dequeue" "struct mbuf_list *ml"
+.Fn ml_dequeue "struct mbuf_list *ml"
 .Ft void
-.Fn "ml_requeue" "struct mbuf_list *ml" "struct mbuf *m"
+.Fn ml_requeue "struct mbuf_list *ml" "struct mbuf *m"
 .Ft struct mbuf *
-.Fn "ml_dechain" "struct mbuf_list *ml"
+.Fn ml_dechain "struct mbuf_list *ml"
 .Ft struct mbuf *
 .Fo ml_filter
 .Fa "struct mbuf_list *ml"
@@ -46,12 +46,12 @@
 .Fa "void *context"
 .Fc
 .Ft unsigned int
-.Fn "ml_len" "struct mbuf_list *ml"
+.Fn ml_len "struct mbuf_list *ml"
 .Ft int
-.Fn "ml_empty" "struct mbuf_list *ml"
+.Fn ml_empty "struct mbuf_list *ml"
 .Ft struct mbuf_list
-.Fn "MBUF_LIST_INITIALIZER"
-.Fn "MBUF_LIST_FOREACH" "struct mbuf_list *ml" "VARNAME"
+.Fn MBUF_LIST_INITIALIZER
+.Fn MBUF_LIST_FOREACH "struct mbuf_list *ml" "VARNAME"
 .Sh DESCRIPTION
 The mbuf list API provides implementions of data structures and operations
 for managing lists of mbufs between contexts.
@@ -69,29 +69,29 @@ Reinsertion of an mbuf at the head of the list.
 Removal of the entire chain of mbufs on the list.
 .El
 .Bl -tag -width Ds
-.It Fn "ml_init" "struct mbuf_list *ml"
+.It Fn ml_init "struct mbuf_list *ml"
 Initialise the
 .Fa ml
 mbuf_list structure.
-.It Fn "MBUF_LIST_INITIALIZER"
+.It Fn MBUF_LIST_INITIALIZER
 An initialiser for an mbuf_list structure declaration.
-.It Fn "ml_enqueue" "struct mbuf_list *ml" "struct mbuf *m"
+.It Fn ml_enqueue "struct mbuf_list *ml" "struct mbuf *m"
 Enqueue mbuf
 .Fa m
 on the end of the
 .Fa ml
 mbuf list.
-.It Fn "ml_dequeue" "struct mbuf_list *ml"
+.It Fn ml_dequeue "struct mbuf_list *ml"
 Dequeue an mbuf from the front of the
 .Fa ml
 mbuf list.
-.It Fn "ml_requeue" "struct mbuf_list *ml" "struct mbuf *m"
+.It Fn ml_requeue "struct mbuf_list *ml" "struct mbuf *m"
 Enqueue mbuf
 .Fa m
 at the head of the
 .Fa ml
 mbuf list.
-.It Fn "ml_dechain" "struct mbuf_list *ml"
+.It Fn ml_dechain "struct mbuf_list *ml"
 Dequeues all mbufs from the
 .Fa ml
 mbuf list.
@@ -114,15 +114,15 @@ mbuf list to be returned as part of an mbuf chain by
 .Fa context
 is passed as the first argument to each call of
 .Fa filter .
-.It Fn "ml_len" "struct mbuf_list *ml"
+.It Fn ml_len "struct mbuf_list *ml"
 Return the number of mbufs on the
 .Fa ml
 mbuf list.
-.It Fn "ml_empty" "struct mbuf_list *ml"
+.It Fn ml_empty "struct mbuf_list *ml"
 Return if the
 .Fa ml
 mbuf list is empty.
-.It Fn "MBUF_LIST_FOREACH" "struct mbuf_list *ml" "VARNAME"
+.It Fn MBUF_LIST_FOREACH "struct mbuf_list *ml" "VARNAME"
 A convenience macro that can be used to iterate over the contents of the
 .Fa ml
 mbuf list.

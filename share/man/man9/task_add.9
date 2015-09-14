@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.15 2015/02/09 08:36:53 jmc Exp $
+.\"	$OpenBSD: task_add.9,v 1.16 2015/09/14 15:14:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 9 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -28,23 +28,23 @@
 .Sh SYNOPSIS
 .In sys/task.h
 .Ft struct taskq *
-.Fo "taskq_create"
+.Fo taskq_create
 .Fa "const char *name"
 .Fa "unsigned int nthreads"
 .Fa "int ipl"
 .Fa "unsigned int flags"
 .Fc
 .Ft void
-.Fn "taskq_destroy" "struct taskq *tq"
+.Fn taskq_destroy "struct taskq *tq"
 .Ft void
-.Fn "task_set" "struct task *t" "void (*fn)(void *)" "void *arg"
+.Fn task_set "struct task *t" "void (*fn)(void *)" "void *arg"
 .Ft int
-.Fn "task_add" "struct taskq *tq" "struct task *t"
+.Fn task_add "struct taskq *tq" "struct task *t"
 .Ft int
-.Fn "task_del" "struct taskq *tq" "struct task *t"
+.Fn task_del "struct taskq *tq" "struct task *t"
 .Vt extern struct taskq *const systq;
 .Vt extern struct taskq *const systqmp;
-.Fn "TASK_INITIALIZER" "void (*fn)(void *)" "void *arg"
+.Fn TASK_INITIALIZER "void (*fn)(void *)" "void *arg"
 .Sh DESCRIPTION
 The
 taskq
