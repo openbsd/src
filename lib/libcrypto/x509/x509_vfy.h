@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.15 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.16 2015/09/14 16:13:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -383,7 +383,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_FLAG_USE_DELTAS			0x2000
 /* Check selfsigned CA signature */
 #define X509_V_FLAG_CHECK_SS_SIGNATURE		0x4000
-
+/* Do not check certificate or CRL validity against current time. */
+#define X509_V_FLAG_NO_CHECK_TIME		0x200000
 
 #define X509_VP_FLAG_DEFAULT			0x1
 #define X509_VP_FLAG_OVERWRITE			0x2
