@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio_register.9,v 1.5 2013/07/17 20:21:52 schwarze Exp $
+.\"	$OpenBSD: bio_register.9,v 1.6 2015/09/14 12:05:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt BIO_REGISTER 9
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .In dev/biovar.h
 .Ft int
 .Fn bio_register "struct device *dev" "int (*bioctl)(struct device *, u_long, caddr_t)"
+.Ft void
 .Fn bio_unregister "struct device *dev"
 .Sh DESCRIPTION
 The block I/O ioctl tunnelling interface is used by drivers to register and
