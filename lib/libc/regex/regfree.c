@@ -1,4 +1,4 @@
-/*	$OpenBSD: regfree.c,v 1.8 2013/04/17 17:39:29 tedu Exp $ */
+/*	$OpenBSD: regfree.c,v 1.9 2015/09/14 12:22:49 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -70,3 +70,4 @@ regfree(regex_t *preg)
 		free(g->must);
 	free((char *)g);
 }
+DEF_WEAK(regfree);
