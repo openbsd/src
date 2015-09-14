@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.43 2014/01/23 08:15:13 otto Exp $
+.\"	$OpenBSD: ctime.3,v 1.44 2015/09/14 13:08:01 schwarze Exp $
 .\"
 .\"
-.Dd $Mdocdate: January 23 2014 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -21,8 +21,7 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .In time.h
-.Pp
-.Fd extern char *tzname[2];
+.Vt extern char *tzname[2] ;
 .Ft "char *"
 .Fn ctime "const time_t *clock"
 .Ft "char *"
@@ -86,7 +85,7 @@ Unlike
 the thread-safe version
 .Fn ctime_r
 is not required to set
-.Fa tzname .
+.Va tzname .
 .Pp
 The
 .Fn localtime
@@ -105,7 +104,7 @@ structure,
 sets the
 .Fa tm_isdst Ns 'th
 element of
-.Fa tzname
+.Va tzname
 to a pointer to an
 ASCII string that's the time zone abbreviation to be used with
 the return value of
@@ -130,7 +129,7 @@ but instead store the result directly into the structure pointed to by
 Unlike
 .Fn localtime ,
 the reentrant version is not required to set
-.Fa tzname .
+.Va tzname .
 .Pp
 .Fn asctime
 converts a time value contained in a

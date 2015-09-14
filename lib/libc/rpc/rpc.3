@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.46 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: rpc.3,v 1.47 2015/09/14 13:08:01 schwarze Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\"   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt RPC 3
 .Os
 .Sh NAME
@@ -175,22 +175,15 @@
 .Fn pmap_unset "u_long prognum" "u_long versnum"
 .Ft int
 .Fn registerrpc "u_long prognum" "u_long versnum" "u_long procnum" "char *(*procname)() " "xdrproc_t inproc" "xdrproc_t outproc"
-.Ft struct rpc_createerr
-.Fa rpc_createerr ;
+.Vt struct rpc_createerr rpc_createerr ;
 .Ft int
 .Fn svc_destroy "SVCXPRT *xprt"
-.Ft struct pollfd *
-.Fa svc_pollfd ;
-.Ft int
-.Fa svc_max_pollfd ;
-.Ft fd_set
-.Fa svc_fdset ;
-.Ft fd_set
-.Fa *__svc_fdset ;
-.Ft int
-.Fa __svc_fdsetsize ;
-.Ft int
-.Fa svc_fds ;
+.Vt struct pollfd *svc_pollfd ;
+.Vt int svc_max_pollfd ;
+.Vt fd_set svc_fdset ;
+.Vt fd_set *__svc_fdset ;
+.Vt int __svc_fdsetsize ;
+.Vt int svc_fds ;
 .Ft int
 .Fn svc_freeargs "SVCXPRT *xprt" "xdrproc_t inproc" "char *in"
 .Ft int
@@ -661,7 +654,7 @@ the RPC system failured to contact the remote
 .Xr portmap 8
 service.
 In the latter case, the global variable
-.Fn rpc_createerr
+.Va rpc_createerr
 contains the RPC status.
 .Pp
 .Fn pmap_rmtcall
@@ -746,7 +739,7 @@ are accessed using the UDP/IP transport; see
 .Fn svcudp_create
 for restrictions.
 .Pp
-.Fa rpc_createerr
+.Va rpc_createerr
 is a global variable whose value is set by any RPC client creation routine
 that does not succeed.
 Use the routine
@@ -764,7 +757,7 @@ Use of
 .Fa xprt
 is undefined after calling this routine.
 .Pp
-.Fa svc_pollfd
+.Va svc_pollfd
 is a global variable reflecting the RPC service side's
 read file descriptor array.
 This variable is only of interest if service implementors do not call
@@ -777,30 +770,30 @@ Do not pass it directly to
 .Xr poll 2 !
 Instead, make a copy and pass that instead.
 .Pp
-.Fa svc_max_pollfd
+.Va svc_max_pollfd
 is a global variable containing the maximum length of the
-.Fa svc_pollfd
+.Va svc_pollfd
 array.
-.Fa svc_max_pollfd
+.Va svc_max_pollfd
 is not a hard limit; it will grow automatically as needed.
 This variable is read-only, and it may change after calls to
 .Fn svc_getreq_poll
 or any creation routines.
 The purpose of
-.Fa svc_max_pollfd
+.Va svc_max_pollfd
 is to allow a service implementor to make a copy of
-.Fa svc_pollfd
+.Va svc_pollfd
 that may in turn be passed to
 .Xr poll 2 .
 .Pp
-.Fa __svc_fdset
+.Va __svc_fdset
 and
-.Fa __svc_fdsetsize
+.Va __svc_fdsetsize
 are global variables reflecting the RPC service side's
 read file descriptor bit mask.
-.Fa __svc_fdsetsize
+.Va __svc_fdsetsize
 is a count of the number of checkable bits in
-.Fa __svc_fdset ,
+.Va __svc_fdset ,
 and can expand to the full size that
 .Xr select 2
 supports, hence exceeding
@@ -817,14 +810,14 @@ Do not pass its address to
 .Xr select 2 !
 Instead, pass the address of a copy.
 These variables are considered obsolete; new programs should use
-.Fa svc_pollfd
+.Va svc_pollfd
 and
-.Fa svc_max_pollfd
+.Va svc_max_pollfd
 instead.
 .Pp
-.Fa svc_fdset
+.Va svc_fdset
 is similar to
-.Fa __svc_fdset
+.Va __svc_fdset
 but limited to
 .Fa FD_SETSIZE
 descriptors.
@@ -846,15 +839,15 @@ this variable will only be usable for the first
 .Fa FD_SETSIZE
 descriptors.
 This variable is considered obsolete; new programs should use
-.Fa svc_pollfd
+.Va svc_pollfd
 which does not have this limit.
 .Pp
-.Fa svc_fds
+.Va svc_fds
 is similar to
-.Fa svc_fedset ,
+.Va svc_fdset ,
 but limited to 32 descriptors.
 This interface is obsoleted by
-.Fa svc_fdset
+.Va svc_fdset
 and is included for source compatibility only.
 .Pp
 .Fn svc_freeargs
@@ -1187,13 +1180,13 @@ is used to register transport handles.
 After RPC service transport handles are created,
 they should register themselves with the RPC service package.
 This routine modifies the global variables
-.Fa svc_pollfd ,
-.Fa svc_fdset ,
-.Fa __svc_fdset
+.Va svc_pollfd ,
+.Va svc_fdset ,
+.Va __svc_fdset
 and may modify
-.Fa svc_max_pollfd
+.Va svc_max_pollfd
 and
-.Fa __svc_fdsetsize .
+.Va __svc_fdsetsize .
 Service implementors usually do not need this routine.
 .Pp
 .Fn xprt_unregister
@@ -1201,10 +1194,10 @@ is used to unregister a transport handle.
 Before an RPC service transport handle is destroyed,
 it should unregister itself with the RPC service package.
 This routine modifies the global variable
-.Fa svc_pollfd ,
-.Fa svc_fdset ,
+.Va svc_pollfd ,
+.Va svc_fdset ,
 and
-.Fa __svc_fdset .
+.Va __svc_fdset .
 Service implementors usually do not need this routine.
 .Sh SEE ALSO
 .\"Xr rpc_secure 3 ,

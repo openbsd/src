@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_once.3,v 1.14 2014/01/21 03:15:45 schwarze Exp $
+.\" $OpenBSD: pthread_once.3,v 1.15 2015/09/14 13:08:01 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: pthread_once.3,v 1.5 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt PTHREAD_ONCE 3
 .Os
 .Sh NAME
@@ -40,12 +40,7 @@
 .Nd dynamic package initialization
 .Sh SYNOPSIS
 .In pthread.h
-.Pp
-.Ft pthread_once_t
-.Fa once_control
-\&=
-.Dv PTHREAD_ONCE_INIT ;
-.Pp
+.Vt pthread_once_t once_control No = Dv PTHREAD_ONCE_INIT ;
 .Ft int
 .Fn pthread_once "pthread_once_t *once_control" "void (*init_routine)(void)"
 .Sh DESCRIPTION
@@ -78,7 +73,7 @@ is not a cancellation point.
 However, if
 .Fn init_routine
 is a cancellation point and is cancelled, the effect on
-.Fa once_control
+.Va once_control
 is as if
 .Fn pthread_once
 was never called.
