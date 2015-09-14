@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.14 2015/05/27 13:28:04 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.15 2015/09/14 10:25:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -65,10 +65,13 @@ cmd_refresh_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		}
 		if (tty_set_size(&c->tty, w, h))
 			recalculate_sizes();
-	} else if (args_has(args, 'S'))
+	} else if (args_has(args, 'S')) {
+		c->flags |= CLIENT_STATUSFORCE;
 		server_status_client(c);
-	else
+	} else {
+		c->flags |= CLIENT_STATUSFORCE;
 		server_redraw_client(c);
+	}
 
 	return (CMD_RETURN_NORMAL);
 }

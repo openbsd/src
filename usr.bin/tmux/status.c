@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.134 2015/08/29 09:25:00 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.135 2015/09/14 10:25:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -503,7 +503,10 @@ status_replace(struct client *c, struct winlink *wl, const char *fmt, time_t t)
 	if (fmt == NULL)
 		return (xstrdup(""));
 
-	ft = format_create_status(1);
+	if (c->flags & CLIENT_STATUSFORCE)
+		ft = format_create_flags(FORMAT_STATUS|FORMAT_FORCE);
+	else
+		ft = format_create_flags(FORMAT_STATUS);
 	format_defaults(ft, c, NULL, wl, NULL);
 
 	expanded = format_expand_time(ft, fmt, t);

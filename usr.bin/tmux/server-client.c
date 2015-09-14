@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.152 2015/09/01 19:50:09 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.153 2015/09/14 10:25:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -937,7 +937,8 @@ server_client_check_redraw(struct client *c)
 	tty->flags = (tty->flags & ~(TTY_FREEZE|TTY_NOCURSOR)) | flags;
 	tty_update_mode(tty, tty->mode, NULL);
 
-	c->flags &= ~(CLIENT_REDRAW|CLIENT_STATUS|CLIENT_BORDERS);
+	c->flags &= ~(CLIENT_REDRAW|CLIENT_BORDERS|CLIENT_STATUS|
+	    CLIENT_STATUSFORCE);
 }
 
 /* Set client title. */
