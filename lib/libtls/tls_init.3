@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.45 2015/09/14 12:05:33 schwarze Exp $
+.\" $OpenBSD: tls_init.3,v 1.46 2015/09/14 14:29:30 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -48,6 +48,8 @@
 .Nm tls_peer_cert_issuer ,
 .Nm tls_peer_cert_subject ,
 .Nm tls_peer_cert_hash ,
+.Nm tls_conn_version ,
+.Nm tls_conn_cipher ,
 .Nm tls_load_file ,
 .Nm tls_client ,
 .Nm tls_server ,
@@ -420,23 +422,20 @@ can be generated using the commands:
 h=$(openssl x509 -outform der -in mycert.crt | sha256)
 printf "SHA256:${h}\\n"
 .Ed
-.Pp
 .It
 .Fn tls_conn_version
 returns a string
 corresponding to a TLS version negotiated with the peer
-connected to 
-.Ar ctx
-.It
+connected to
+.Ar ctx .
 .Fn tls_conn_version
 will only succeed after the handshake is complete.
 .It
 .Fn tls_conn_cipher
 returns a string
 corresponding to a the cipher suite negotated with the peer
-connected to 
-.Ar ctx
-.It
+connected to
+.Ar ctx .
 .Fn tls_conn_cipher
 will only succeed after the handshake is complete.
 .Em (Server and client)
