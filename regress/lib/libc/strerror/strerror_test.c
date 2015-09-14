@@ -1,4 +1,4 @@
-/* $OpenBSD: strerror_test.c,v 1.4 2005/05/13 07:06:20 otto Exp $ */
+/* $OpenBSD: strerror_test.c,v 1.5 2015/09/14 06:31:25 guenther Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -38,13 +38,7 @@ check_strerror_r(int val)
 void
 check_strsignal(int val)
 {
-	char buffer[NL_TEXTMAX + 1];
-	int i, r;
-
-	memset(buffer, 'X', sizeof(buffer) - 1);
-	buffer[sizeof(buffer) - 1] = '\0';
-	(void)__strsignal(val, buffer);
-	printf("%s\n", buffer);
+	printf("%s\n", strsignal(val));
 }
 
 int 
