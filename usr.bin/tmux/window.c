@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.144 2015/08/29 23:55:55 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.145 2015/09/14 11:34:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -421,6 +421,30 @@ window_set_active_pane(struct window *w, struct window_pane *wp)
 	w->active->active_point = next_active_point++;
 	w->active->flags |= PANE_CHANGED;
 	return (1);
+}
+
+void
+window_redraw_active_switch(struct window *w, struct window_pane *wp)
+{
+	const struct grid_cell	*agc, *wgc;
+
+	if (wp == w->active)
+		return;
+
+	/*
+	 * If window-style and window-active-style are the same, we don't need
+	 * to redraw panes when switching active panes. Otherwise, if the
+	 * active or inactive pane do not have a custom style, they will need
+	 * to be redrawn.
+	 */
+	agc = options_get_style(&w->options, "window-active-style");
+	wgc = options_get_style(&w->options, "window-style");
+	if (style_equal(agc, wgc))
+		return;
+	if (style_equal(&grid_default_cell, &w->active->colgc))
+		w->active->flags |= PANE_REDRAW;
+	if (style_equal(&grid_default_cell, &wp->colgc))
+		wp->flags |= PANE_REDRAW;
 }
 
 struct window_pane *
