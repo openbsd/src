@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.15 2015/09/01 19:14:43 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.16 2015/09/14 12:12:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -48,8 +48,6 @@ log_open(const char *path)
 
 	setvbuf(log_file, NULL, _IOLBF, 0);
 	event_set_log_callback(log_event_cb);
-
-	tzset();
 }
 
 /* Close logging. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.143 2015/09/03 14:30:23 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.144 2015/09/14 12:12:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -199,6 +199,7 @@ main(int argc, char **argv)
 #endif
 
 	setlocale(LC_TIME, "");
+	tzset();
 
 	if (**argv == '-')
 		flags = CLIENT_LOGIN;
