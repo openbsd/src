@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.h,v 1.1 2015/09/13 11:51:36 guenther Exp $	*/
+/*	$OpenBSD: termios.h,v 1.2 2015/09/14 08:13:01 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -26,7 +26,7 @@ PROTO_DEPRECATED(cfmakeraw);
 PROTO_DEPRECATED(cfsetispeed);
 PROTO_DEPRECATED(cfsetospeed);
 PROTO_DEPRECATED(cfsetspeed);
-/*PROTO_CANCEL(tcdrain);*/
+PROTO_DEPRECATED/*PROTO_CANCEL*/(tcdrain);
 PROTO_DEPRECATED(tcflow);
 PROTO_DEPRECATED(tcflush);
 PROTO_NORMAL(tcgetattr);
