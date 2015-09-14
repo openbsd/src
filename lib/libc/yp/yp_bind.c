@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.24 2015/09/13 20:57:28 guenther Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.25 2015/09/14 12:09:35 guenther Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -271,6 +271,7 @@ _yp_unbind(struct dom_binding *ypb)
 	ypb->dom_client = NULL;
 	ypb->dom_socket = -1;
 }
+DEF_WEAK(_yp_unbind);
 
 int
 yp_bind(const char *dom)

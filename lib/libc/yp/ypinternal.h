@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypinternal.h,v 1.9 2015/09/11 12:42:47 deraadt Exp $	 */
+/*	$OpenBSD: ypinternal.h,v 1.10 2015/09/14 12:09:35 guenther Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -48,6 +48,8 @@ extern struct dom_binding *_ypbindlist;
 extern char _yp_domain[HOST_NAME_MAX+1];
 extern int _yplib_timeout;
 
-void _yp_unbind(struct dom_binding *);
-int _yp_check(char **);
+void	_yp_unbind(struct dom_binding *);
+int	_yp_check(char **);
+PROTO_NORMAL(_yp_unbind);
+PROTO_NORMAL(_yp_check);
 
