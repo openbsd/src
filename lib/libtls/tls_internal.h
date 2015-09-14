@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.23 2015/09/14 12:29:16 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.24 2015/09/14 16:16:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -46,6 +46,7 @@ struct tls_config {
 	int verify_client;
 	int verify_depth;
 	int verify_name;
+	int verify_time;
 };
 
 struct tls_conninfo {

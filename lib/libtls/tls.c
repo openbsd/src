@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.31 2015/09/14 12:29:16 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.32 2015/09/14 16:16:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -255,6 +255,11 @@ tls_configure_ssl(struct tls *ctx)
 			tls_set_errorx(ctx, "failed to set ciphers");
 			goto err;
 		}
+	}
+
+	if (ctx->config->verify_time == 0) {
+		X509_VERIFY_PARAM_set_flags(ctx->ssl_ctx->param,
+		    X509_V_FLAG_NO_CHECK_TIME);
 	}
 
 	return (0);

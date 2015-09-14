@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.47 2015/09/14 15:14:55 schwarze Exp $
+.\" $OpenBSD: tls_init.3,v 1.48 2015/09/14 16:16:38 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -40,6 +40,7 @@
 .Nm tls_config_clear_keys ,
 .Nm tls_config_insecure_noverifycert ,
 .Nm tls_config_insecure_noverifyname ,
+.Nm tls_config_insecure_noverifytime ,
 .Nm tls_config_verify ,
 .Nm tls_config_verify_client ,
 .Nm tls_config_verify_client_optional ,
@@ -113,6 +114,8 @@
 .Fn tls_config_insecure_noverifycert "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_insecure_noverifyname "struct tls_config *config"
+.Ft "void"
+.Fn tls_config_insecure_noverifytime "struct tls_config *config"
 .Ft "void"
 .Fn tls_config_verify "struct tls_config *config"
 .Ft "void"
@@ -364,6 +367,11 @@ Be extremely careful when using this option.
 disables server name verification.
 Be careful when using this option.
 .Em (Client)
+.It
+.Fn tls_config_insecure_noverifytime
+disables validity checking of certificate.
+Be careful when using this option.
+.Em (Client and server)
 .It
 .Fn tls_config_verify
 reenables server name and certificate verification.
