@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.146 2015/07/19 05:59:07 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.147 2015/09/14 15:35:47 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -86,7 +86,6 @@ enum	mandocerr {
 	MANDOCERR_BLK_NEST, /* blocks badly nested: macro ... */
 	MANDOCERR_BD_NEST, /* nested displays are not portable: macro ... */
 	MANDOCERR_BL_MOVE, /* moving content out of list: macro */
-	MANDOCERR_VT_CHILD, /* .Vt block has child macro: macro */
 	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping: fi */
 	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping: nf */
 	MANDOCERR_BLK_LINE, /* line scope broken: macro breaks macro */

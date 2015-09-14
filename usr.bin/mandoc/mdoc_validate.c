@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.207 2015/04/23 16:17:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.208 2015/09/14 15:35:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -105,7 +105,6 @@ static	void	 post_sh_see_also(POST_ARGS);
 static	void	 post_sh_authors(POST_ARGS);
 static	void	 post_sm(POST_ARGS);
 static	void	 post_st(POST_ARGS);
-static	void	 post_vt(POST_ARGS);
 
 static	void	 pre_an(PRE_ARGS);
 static	void	 pre_bd(PRE_ARGS);
@@ -159,7 +158,7 @@ static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ pre_std, NULL },			/* Rv */
 	{ NULL, post_st },			/* St */
 	{ NULL, NULL },				/* Va */
-	{ NULL, post_vt },			/* Vt */
+	{ NULL, NULL },				/* Vt */
 	{ NULL, NULL },				/* Xr */
 	{ NULL, NULL },				/* %A */
 	{ NULL, post_hyph },			/* %B */ /* FIXME: can be used outside Rs/Re. */
@@ -921,28 +920,6 @@ post_fa(POST_ARGS)
 			break;
 		}
 	}
-}
-
-static void
-post_vt(POST_ARGS)
-{
-	const struct roff_node *n;
-
-	/*
-	 * The Vt macro comes in both ELEM and BLOCK form, both of which
-	 * have different syntaxes (yet more context-sensitive
-	 * behaviour).  ELEM types must have a child, which is already
-	 * guaranteed by the in_line parsing routine; BLOCK types,
-	 * specifically the BODY, should only have TEXT children.
-	 */
-
-	if (mdoc->last->type != ROFFT_BODY)
-		return;
-
-	for (n = mdoc->last->child; n; n = n->next)
-		if (n->type != ROFFT_TEXT)
-			mandoc_msg(MANDOCERR_VT_CHILD, mdoc->parse,
-			    n->line, n->pos, mdoc_macronames[n->tok]);
 }
 
 static void

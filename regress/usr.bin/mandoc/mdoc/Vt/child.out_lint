@@ -1,2 +1,0 @@
-mandoc: child.in:8:12: WARNING: .Vt block has child macro: Sy
-mandoc: child.in:8:19: WARNING: .Vt block has child macro: Li

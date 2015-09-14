@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.115 2015/07/19 05:59:07 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.116 2015/09/14 15:35:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -124,7 +124,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"blocks badly nested",
 	"nested displays are not portable",
 	"moving content out of list",
-	".Vt block has child macro",
 	"fill mode already enabled, skipping",
 	"fill mode already disabled, skipping",
 	"line scope broken",

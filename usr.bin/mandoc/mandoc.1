@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.83 2015/04/03 08:45:27 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.84 2015/09/14 15:35:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -934,13 +934,6 @@ list block contains text or macros before the first
 .Ic \&It
 macro.
 The offending children are moved before the beginning of the list.
-.It Sy ".Vt block has child macro"
-.Pq mdoc
-The
-.Ic \&Vt
-macro supports plain text arguments only.
-Formatting may be ugly and semantic searching
-for the affected content might not work.
 .It Sy "fill mode already enabled, skipping"
 .Pq man
 A
