@@ -1,4 +1,4 @@
-/*	$OpenBSD: getprotoent.c,v 1.12 2014/10/11 03:12:13 doug Exp $ */
+/*	$OpenBSD: getprotoent.c,v 1.13 2015/09/14 07:38:38 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,7 @@ setprotoent_r(int f, struct protoent_data *pd)
 		rewind(pd->fp);
 	pd->stayopen |= f;
 }
+DEF_WEAK(setprotoent_r);
 
 void
 endprotoent_r(struct protoent_data *pd)
@@ -62,6 +63,7 @@ endprotoent_r(struct protoent_data *pd)
 	pd->line = NULL;
 	pd->stayopen = 0;
 }
+DEF_WEAK(endprotoent_r);
 
 int
 getprotoent_r(struct protoent *pe, struct protoent_data *pd)
@@ -140,6 +142,7 @@ again:
 	*q = NULL;
 	return (0);
 }
+DEF_WEAK(getprotoent_r);
 
 struct protoent_data _protoent_data;	/* shared with getproto{,name}.c */
 

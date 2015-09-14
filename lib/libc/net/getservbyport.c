@@ -1,4 +1,4 @@
-/*	$OpenBSD: getservbyport.c,v 1.7 2005/08/06 20:30:03 espie Exp $ */
+/*	$OpenBSD: getservbyport.c,v 1.8 2015/09/14 07:38:38 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,7 @@ getservbyport_r(int port, const char *proto, struct servent *se,
 	}
 	return (error);
 }
+DEF_WEAK(getservbyport_r);
 
 struct servent *
 getservbyport(int port, const char *proto)

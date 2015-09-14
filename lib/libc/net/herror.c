@@ -1,4 +1,4 @@
-/*	$OpenBSD: herror.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: herror.c,v 1.10 2015/09/14 07:38:38 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1987, 1993
@@ -103,3 +103,4 @@ hstrerror(int err)
 		return (h_errlist[err]);
 	return ("Unknown resolver error");
 }
+DEF_WEAK(hstrerror);

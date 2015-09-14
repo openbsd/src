@@ -1,4 +1,4 @@
-/*	$OpenBSD: getservent.c,v 1.14 2014/10/11 04:22:03 doug Exp $ */
+/*	$OpenBSD: getservent.c,v 1.15 2015/09/14 07:38:38 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,7 @@ setservent_r(int f, struct servent_data *sd)
 		rewind(sd->fp);
 	sd->stayopen |= f;
 }
+DEF_WEAK(setservent_r);
 
 void
 endservent_r(struct servent_data *sd)
@@ -62,6 +63,7 @@ endservent_r(struct servent_data *sd)
 	sd->line = NULL;
 	sd->stayopen = 0;
 }
+DEF_WEAK(endservent_r);
 
 int
 getservent_r(struct servent *se, struct servent_data *sd)
@@ -142,6 +144,7 @@ again:
 	*q = NULL;
 	return (0);
 }
+DEF_WEAK(getservent_r);
 
 struct servent_data _servent_data;	/* shared with getservby{name,port}.c */
 

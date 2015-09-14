@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.6 2015/05/25 19:16:08 eric Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.7 2015/09/14 07:38:37 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -199,3 +199,4 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 
 	return (ar.ar_gai_errno);
 }
+DEF_WEAK(getnameinfo);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.1 2015/09/11 08:48:33 deraadt Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.2 2015/09/14 07:38:38 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -25,5 +25,45 @@ extern int _net_stayopen;
 extern struct protoent_data _protoent_data;
 extern struct servent_data _servent_data;
 __END_HIDDEN_DECLS
+
+PROTO_DEPRECATED(endhostent);
+PROTO_DEPRECATED(endnetent);
+PROTO_DEPRECATED(endprotoent);
+PROTO_NORMAL(endprotoent_r);
+PROTO_DEPRECATED(endservent);
+PROTO_NORMAL(endservent_r);
+PROTO_NORMAL(freeaddrinfo);
+PROTO_NORMAL(freerrset);
+PROTO_NORMAL(gai_strerror);
+PROTO_NORMAL(getaddrinfo);
+PROTO_DEPRECATED(gethostbyaddr);
+PROTO_NORMAL(gethostbyname);
+PROTO_NORMAL(gethostbyname2);
+PROTO_DEPRECATED(gethostent);
+PROTO_NORMAL(getnameinfo);
+PROTO_DEPRECATED(getnetbyaddr);
+PROTO_DEPRECATED(getnetbyname);
+PROTO_DEPRECATED(getnetent);
+PROTO_NORMAL(getprotobyname);
+PROTO_NORMAL(getprotobyname_r);
+PROTO_DEPRECATED(getprotobynumber);
+PROTO_NORMAL(getprotobynumber_r);
+PROTO_DEPRECATED(getprotoent);
+PROTO_NORMAL(getprotoent_r);
+PROTO_DEPRECATED(getrrsetbyname);
+PROTO_NORMAL(getservbyname);
+PROTO_NORMAL(getservbyname_r);
+PROTO_DEPRECATED(getservbyport);
+PROTO_NORMAL(getservbyport_r);
+PROTO_DEPRECATED(getservent);
+PROTO_NORMAL(getservent_r);
+PROTO_DEPRECATED(herror);
+PROTO_NORMAL(hstrerror);
+PROTO_DEPRECATED(sethostent);
+PROTO_DEPRECATED(setnetent);
+PROTO_DEPRECATED(setprotoent);
+PROTO_NORMAL(setprotoent_r);
+PROTO_DEPRECATED(setservent);
+PROTO_NORMAL(setservent_r);
 
 #endif	/* !_LIBC_NETDB_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gai_strerror.c,v 1.7 2009/06/02 16:47:50 jasper Exp $	*/
+/*	$OpenBSD: gai_strerror.c,v 1.8 2015/09/14 07:38:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997-1999, Craig Metz, All rights reserved.
@@ -76,3 +76,4 @@ gai_strerror(int errnum)
 		return "unknown/invalid error";
 	}
 }
+DEF_WEAK(gai_strerror);
