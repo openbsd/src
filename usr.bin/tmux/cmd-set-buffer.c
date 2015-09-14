@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.22 2015/09/11 14:41:50 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.23 2015/09/14 12:52:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,11 +56,13 @@ cmd_set_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	bufname = args_get(args, 'b');
 	if (bufname == NULL)
-		pb = paste_get_top(&bufname);
+		pb = NULL;
 	else
 		pb = paste_get_name(bufname);
 
 	if (self->entry == &cmd_delete_buffer_entry) {
+		if (pb == NULL)
+			pb = paste_get_top(&bufname);
 		if (pb == NULL) {
 			cmdq_error(cmdq, "no buffer");
 			return (CMD_RETURN_ERROR);
@@ -70,6 +72,8 @@ cmd_set_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	if (args_has(args, 'n')) {
+		if (pb == NULL)
+			pb = paste_get_top(&bufname);
 		if (pb == NULL) {
 			cmdq_error(cmdq, "no buffer");
 			return (CMD_RETURN_ERROR);
