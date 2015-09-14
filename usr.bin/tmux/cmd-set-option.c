@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.82 2015/08/29 08:30:54 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.83 2015/09/14 13:22:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -262,7 +262,6 @@ cmd_set_option_user(struct cmd *self, struct cmd_q *cmdq, const char *optstr,
 	}
 	return (CMD_RETURN_NORMAL);
 }
-
 
 /* Unset an option. */
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.12 2015/08/13 15:02:23 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.13 2015/09/14 13:22:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -561,7 +561,6 @@ cmd_find_get_window_with_session(struct cmd_find_state *fs, const char *window)
 		fs->w = fs->wl->window;
 		return (0);
 	}
-
 
 	/* Stop now if exact only. */
 	if (exact)

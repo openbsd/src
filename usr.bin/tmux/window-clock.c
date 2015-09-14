@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.12 2015/08/28 12:25:42 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.13 2015/09/14 13:22:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -232,7 +232,6 @@ window_clock_draw_screen(struct window_pane *wp)
 			colour_set_fg(&gc, colour);
 			screen_write_puts(&ctx, &gc, "%s", tim);
 		}
-
 
 		screen_write_stop(&ctx);
 		return;
