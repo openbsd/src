@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.35 2015/09/10 22:48:58 nicm Exp $	*/
+/*	$OpenBSD: sh.h,v 1.36 2015/09/14 09:42:33 nicm Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -51,6 +51,8 @@ typedef int Tflag;
 
 #define	NUFILE	32		/* Number of user-accessible files */
 #define	FDBASE	10		/* First file usable by Shell */
+
+#define BITS(t)	(CHAR_BIT * sizeof(t))
 
 /* Make MAGIC a char that might be printed to make bugs more obvious, but
  * not a char that is used often.  Also, can't use the high bit as it causes

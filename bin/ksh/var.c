@@ -1,8 +1,7 @@
-/*	$OpenBSD: var.c,v 1.44 2015/09/10 11:37:42 jca Exp $	*/
+/*	$OpenBSD: var.c,v 1.45 2015/09/14 09:42:33 nicm Exp $	*/
 
 #include "sh.h"
 #include <time.h>
-#include "ksh_limval.h"
 #include <sys/stat.h>
 #include <ctype.h>
 

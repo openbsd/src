@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.17 2015/09/13 19:43:42 tedu Exp $	*/
+/*	$OpenBSD: shf.c,v 1.18 2015/09/14 09:42:33 nicm Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,6 @@
 
 #include "sh.h"
 #include <sys/stat.h>
-#include "ksh_limval.h"
 
 
 /* flags to shf_emptybuf() */
