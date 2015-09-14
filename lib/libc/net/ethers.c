@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.23 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.24 2015/09/14 11:01:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -232,3 +232,4 @@ bad:
 	errno = EINVAL;
 	return (-1);
 }
+DEF_WEAK(ether_line);

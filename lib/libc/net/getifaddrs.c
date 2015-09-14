@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.12 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.13 2015/09/14 11:01:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -288,9 +288,11 @@ getifaddrs(struct ifaddrs **pif)
 	}
 	return (0);
 }
+DEF_WEAK(getifaddrs);
 
 void
 freeifaddrs(struct ifaddrs *ifp)
 {
 	free(ifp);
 }
+DEF_WEAK(freeifaddrs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthdr.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: rthdr.c,v 1.11 2015/09/14 11:01:47 guenther Exp $	*/
 /*	$KAME: rthdr.c,v 1.22 2006/02/09 08:18:58 keiichi Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ inet6_rth_space(int type, int segments)
 		return (0);	/* type not suppported */
 	}
 }
+DEF_WEAK(inet6_rth_space);
 
 void *
 inet6_rth_init(void *bp, socklen_t bp_len, int type, int segments)
