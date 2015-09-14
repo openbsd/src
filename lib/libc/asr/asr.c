@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.40 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.41 2015/09/14 11:52:49 guenther Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -211,6 +211,7 @@ asr_run(struct asr_query *as, struct asr_result *ar)
 
 	return (r);
 }
+DEF_WEAK(asr_run);
 
 /*
  * Same as above, but run in a loop that handles the fd conditions result.
@@ -238,6 +239,7 @@ asr_run_sync(struct asr_query *as, struct asr_result *ar)
 
 	return (r);
 }
+DEF_WEAK(asr_run_sync);
 
 /*
  * Create a new async request of the given "type" on the async context "ac".

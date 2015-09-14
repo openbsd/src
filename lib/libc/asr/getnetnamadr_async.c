@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.21 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.22 2015/09/14 11:52:49 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -79,6 +79,7 @@ getnetbyname_async(const char *name, void *asr)
 	_asr_ctx_unref(ac);
 	return (NULL);
 }
+DEF_WEAK(getnetbyname_async);
 
 struct asr_query *
 getnetbyaddr_async(in_addr_t net, int family, void *asr)
@@ -103,6 +104,7 @@ getnetbyaddr_async(in_addr_t net, int family, void *asr)
 	_asr_ctx_unref(ac);
 	return (NULL);
 }
+DEF_WEAK(getnetbyaddr_async);
 
 static int
 getnetnamadr_async_run(struct asr_query *as, struct asr_result *ar)

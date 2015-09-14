@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.8 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.9 2015/09/14 11:52:49 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -63,6 +63,7 @@ getrrsetbyname_async(const char *hostname, unsigned int rdclass,
 	_asr_ctx_unref(ac);
 	return (NULL);
 }
+DEF_WEAK(getrrsetbyname_async);
 
 static int
 getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
@@ -170,7 +171,7 @@ getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.8 2015/09/09 15:49:34 deraadt Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.9 2015/09/14 11:52:49 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.

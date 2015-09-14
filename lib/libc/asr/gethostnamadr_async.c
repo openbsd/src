@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.38 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.39 2015/09/14 11:52:49 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -71,6 +71,7 @@ gethostbyname_async(const char *name, void *asr)
 {
 	return gethostbyname2_async(name, AF_INET, asr);
 }
+DEF_WEAK(gethostbyname_async);
 
 struct asr_query *
 gethostbyname2_async(const char *name, int af, void *asr)
@@ -107,6 +108,7 @@ gethostbyname2_async(const char *name, int af, void *asr)
 	_asr_ctx_unref(ac);
 	return (NULL);
 }
+DEF_WEAK(gethostbyname2_async);
 
 struct asr_query *
 gethostbyaddr_async(const void *addr, socklen_t len, int af, void *asr)
@@ -120,6 +122,7 @@ gethostbyaddr_async(const void *addr, socklen_t len, int af, void *asr)
 
 	return (as);
 }
+DEF_WEAK(gethostbyaddr_async);
 
 struct asr_query *
 _gethostbyaddr_async_ctx(const void *addr, socklen_t len, int af,

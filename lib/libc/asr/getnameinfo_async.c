@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.10 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.11 2015/09/14 11:52:49 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -69,6 +69,7 @@ getnameinfo_async(const struct sockaddr *sa, socklen_t slen, char *host,
 	_asr_ctx_unref(ac);
 	return (NULL);
 }
+DEF_WEAK(getnameinfo_async);
 
 static int
 getnameinfo_async_run(struct asr_query *as, struct asr_result *ar)

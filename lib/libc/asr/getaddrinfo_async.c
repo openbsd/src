@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.42 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.43 2015/09/14 11:52:49 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -118,6 +118,7 @@ getaddrinfo_async(const char *hostname, const char *servname,
 	_asr_ctx_unref(ac);
 	return (NULL);
 }
+DEF_WEAK(getaddrinfo_async);
 
 static int
 getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
