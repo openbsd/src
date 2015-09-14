@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.14 2011/03/14 21:20:00 okan Exp $	*/
+/*	$OpenBSD: config.h,v 1.15 2015/09/14 16:10:55 nicm Exp $	*/
 
 /* config.h.  NOT generated automatically. */
 
@@ -31,9 +31,6 @@
 
 /* Specify default $ENV? */
 /* #undef DEFAULT_ENV */
-
-/* The number of bytes in a int.  */
-#define SIZEOF_INT 4
 
 /*
  * End of configuration stuff for PD ksh.
