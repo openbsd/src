@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.71 2015/03/19 21:48:05 bcallah Exp $	*/
+/*	$OpenBSD: dired.c,v 1.72 2015/09/14 16:37:19 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -816,8 +816,10 @@ dired_(char *dname)
 
 	/* Find the line with ".." on it. */
 	bp->b_dotp = bfirstlp(bp);
+	bp->b_dotline = 1;
 	for (i = 0; i < bp->b_lines; i++) {
 		bp->b_dotp = lforw(bp->b_dotp);
+		bp->b_dotline++;
 		if (d_warpdot(bp->b_dotp, &bp->b_doto) == FALSE)
 			continue;
 		if (strcmp(ltext(bp->b_dotp) + bp->b_doto, "..") == 0)
@@ -825,8 +827,10 @@ dired_(char *dname)
 	}
 
 	/* We want dot on the entry right after "..", if possible. */
-	if (++i < bp->b_lines - 2)
+	if (++i < bp->b_lines - 2) {
 		bp->b_dotp = lforw(bp->b_dotp);
+		bp->b_dotline++;
+	}
 	d_warpdot(bp->b_dotp, &bp->b_doto);
 
 	(void)strlcpy(bp->b_fname, dname, sizeof(bp->b_fname));
