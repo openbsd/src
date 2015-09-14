@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.h,v 1.17 2014/08/31 04:04:01 guenther Exp $	*/
+/*	$OpenBSD: inet.h,v 1.18 2015/09/14 08:16:14 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -61,9 +61,9 @@
 
 /* External definitions for functions in inet(3) */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+#include <sys/_endian.h>
 
-/* <sys/_endian.h> is pulled in by <sys/types.h> */
 #ifndef htons
 #define htons(x)	__htobe16(x)
 #define htonl(x)	__htobe32(x)
@@ -74,6 +74,12 @@
 #ifndef	_SOCKLEN_T_DEFINED_
 #define	_SOCKLEN_T_DEFINED_
 typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
+#endif
+
+#ifndef _IN_TYPES_DEFINED_
+#define _IN_TYPES_DEFINED_
+typedef __in_addr_t	in_addr_t;	/* base type for internet address */
+typedef __in_port_t	in_port_t;	/* IP port type */
 #endif
 
 /*
@@ -94,6 +100,15 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
 struct in_addr {
 	in_addr_t s_addr;
 };
+#endif
+
+
+#if __BSD_VISIBLE
+/* need this for the non-standard stuff */
+#ifndef _SIZE_T_DEFINED_
+#define _SIZE_T_DEFINED_
+typedef __size_t	size_t;
+#endif
 #endif
 
 

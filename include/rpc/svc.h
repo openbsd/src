@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.14 2015/09/13 15:36:57 guenther Exp $	*/
+/*	$OpenBSD: svc.h,v 1.15 2015/09/14 08:16:14 guenther Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #ifndef _RPC_SVC_H
 #define _RPC_SVC_H
 #include <sys/cdefs.h>
-#include <sys/poll.h>
+#include <poll.h>
 
 /*
  * This interface must manage two items concerning remote procedure calling:
