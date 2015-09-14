@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.8 2015/06/23 06:21:53 yasuoka Exp $
+.\"	$OpenBSD: pipex.4,v 1.9 2015/09/14 17:09:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2015 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt PIPEX 4
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Sh SYNOPSIS
 .Cd "option PIPEX"
 .Pp
-.Fd #include <sys/socket.h>
-.Fd #include <sys/ioctl.h>
-.Fd #include <net/pipex.h>
+.In sys/socket.h
+.In sys/ioctl.h
+.In net/pipex.h
 .Sh DESCRIPTION
 .Nm
 is used with

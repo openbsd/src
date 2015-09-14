@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplug.4,v 1.5 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: hotplug.4,v 1.6 2015/09/14 17:09:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: September 14 2015 $
 .Dt HOTPLUG 4
 .Os
 .Sh NAME
@@ -23,9 +23,9 @@
 .Sh SYNOPSIS
 .Cd "pseudo-device hotplug 1"
 .Pp
-.Fd #include <sys/types.h>
-.Fd #include <sys/device.h>
-.Fd #include <sys/hotplug.h>
+.In sys/types.h
+.In sys/device.h
+.In sys/hotplug.h
 .Sh DESCRIPTION
 The
 .Nm
