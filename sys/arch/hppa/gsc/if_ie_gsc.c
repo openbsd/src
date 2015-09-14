@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.26 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.27 2015/09/14 11:18:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -76,7 +76,7 @@ struct cfattach ie_gsc_ca = {
 	sizeof(struct ie_softc), ie_gsc_probe, ie_gsc_attach
 };
 
-static int ie_gsc_media[] = {
+static uint64_t ie_gsc_media[] = {
 	IFM_ETHER | IFM_10_2,
 };
 #define	IE_NMEDIA	(sizeof(ie_gsc_media) / sizeof(ie_gsc_media[0]))

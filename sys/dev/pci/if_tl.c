@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.64 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.65 2015/09/14 11:18:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -272,7 +272,7 @@ int tl_miibus_readreg(struct device *, int, int);
 void tl_miibus_writereg(struct device *, int, int, int);
 void tl_miibus_statchg(struct device *);
 
-void tl_setmode(struct tl_softc *, int);
+void tl_setmode(struct tl_softc *, uint64_t);
 int tl_calchash(caddr_t);
 void tl_iff(struct tl_softc *);
 void tl_setfilt(struct tl_softc *, caddr_t, int);
@@ -722,7 +722,7 @@ tl_miibus_statchg(struct device *dev)
  * Set modes for bitrate devices.
  */
 void
-tl_setmode(struct tl_softc *sc, int media)
+tl_setmode(struct tl_softc *sc, uint64_t media)
 {
 	if (IFM_SUBTYPE(media) == IFM_10_5)
 		tl_dio_setbit(sc, TL_ACOMMIT, TL_AC_MTXD1);
