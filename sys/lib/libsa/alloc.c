@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.10 2009/05/14 18:54:03 miod Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.11 2015/09/14 17:34:04 semarie Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
 
 /*
@@ -213,8 +213,12 @@ found:
 void
 free(void *ptr, unsigned int size)
 {
-	struct fl *f = (struct fl *)((char *)ptr -
-	    ALIGN(sizeof(unsigned)));
+	struct fl *f;
+
+	if (ptr == NULL)
+		return;
+
+	f = (struct fl *)((char *)ptr - ALIGN(sizeof(unsigned)));
 
 #ifdef ALLOC_TRACE
 	printf("free(%p, %u) (origsize %u)\n", ptr, size, f->size);
