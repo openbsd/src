@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.19 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: shf.c,v 1.20 2015/09/15 20:59:05 nicm Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -705,23 +705,7 @@ shf_smprintf(const char *fmt, ...)
 }
 
 #define BUF_SIZE	128
-
-/*
- *	What kinda of machine we on?  Hopefully the C compiler will optimize
- *  this out...
- *
- *	For shorts, we want sign extend for %d but not for %[oxu] - on 16 bit
- *  machines it don't matter.  Assumes C compiler has converted shorts to
- *  ints before pushing them.
- */
-#define POP_INT(f, s, a) \
-	(((f) & FL_LLONG) ? va_arg((a), unsigned long long) :		\
-	    ((f) & FL_LONG) ? va_arg((a), unsigned long) :		\
-	    (sizeof(int) < sizeof(long) ? ((s) ?			\
-	    (long) va_arg((a), int) : va_arg((a), unsigned)) :		\
-	    va_arg((a), unsigned)))
-
-#define ABIGNUM		32000	/* big numer that will fit in a short */
+#define ABIGNUM		32000	/* big number that will fit in a short */
 #define LOG2_10		3.321928094887362347870319429	/* log base 2 of 10 */
 
 #define	FL_HASH		0x001	/* `#' seen */
@@ -847,9 +831,8 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 
 		switch (c) {
 		case 'p': /* pointer */
-			flags &= ~(FL_LLONG | FL_LONG | FL_SHORT);
-			if (sizeof(char *) > sizeof(int))
-				flags |= FL_LONG; /* hope it fits.. */
+			flags &= ~(FL_LLONG | FL_SHORT);
+			flags |= FL_LONG;
 			/* aaahhh... */
 		case 'd':
 		case 'i':
@@ -858,7 +841,19 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 		case 'x':
 			flags |= FL_NUMBER;
 			s = &numbuf[sizeof(numbuf)];
-			llnum = POP_INT(flags, c == 'd', args);
+			if (flags & FL_LLONG)
+				llnum = va_arg(args, unsigned long long);
+			else if (flags & FL_LONG) {
+				if (c == 'd' || c == 'i')
+					llnum = va_arg(args, long);
+				else
+					llnum = va_arg(args, unsigned long);
+			} else {
+				if (c == 'd' || c == 'i')
+					llnum = va_arg(args, int);
+				else
+					llnum = va_arg(args, unsigned int);
+			}
 			switch (c) {
 			case 'd':
 			case 'i':
