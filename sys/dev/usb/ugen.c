@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.88 2015/09/07 19:58:42 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.89 2015/09/15 13:37:44 dcoppa Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -557,7 +557,9 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			    flags, sce->timeout, NULL);
 			err = usbd_transfer(xfer);
 			if (err) {
-				usbd_clear_endpoint_stall(sce->pipeh);
+				if (err == USBD_STALLED)
+					usbd_clear_endpoint_stall(sce->pipeh);
+
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
 				else if (err == USBD_TIMEOUT)
@@ -691,7 +693,9 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			    flags, sce->timeout, NULL);
 			err = usbd_transfer(xfer);
 			if (err) {
-				usbd_clear_endpoint_stall(sce->pipeh);
+				if (err == USBD_STALLED)
+					usbd_clear_endpoint_stall(sce->pipeh);
+
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
 				else if (err == USBD_TIMEOUT)
