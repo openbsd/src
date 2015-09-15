@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.656 2015/08/24 04:05:12 jsg Exp $
+$OpenBSD: usbdevs,v 1.657 2015/09/15 19:33:14 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4304,6 +4304,8 @@ product	VALIDITY VFS301		0x0005	VFS301 Fingerprint Reader
 product	VALIDITY VFS451		0x0007	VFS451 Fingerprint Reader
 product	VALIDITY VFS300		0x0008	VFS300 Fingerprint Reader
 product	VALIDITY VFS5011	0x0011	VFS5011 Fingerprint Reader
+product	VALIDITY VFS5011_2	0x0017	VFS5011 Fingerprint Reader
+product	VALIDITY VFS5011_3	0x0018	VFS5011 Fingerprint Reader
 product	VALIDITY VFS5471	0x003c	VFS471 Fingerprint Reader
 
 /* Van Ooijen Technische Informatica products */
