@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.98 2014/09/08 01:27:55 schwarze Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.99 2015/09/15 17:20:53 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: September 8 2014 $
+.Dd $Mdocdate: September 15 2015 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl L Ar localbase
 .Op Fl M Ar displayfile
-.Op Fl P Ar pkgpath Ns : Ns Ar pkgspec Ns : Ns Ar default
+.Op Fl P Ar pkgpath : Ns Ar pkgspec : Ns Ar default
 .Op Fl s Ar signature-parameter
 .Op Fl U Ar undisplayfile
 .Op Fl W Ar libspec
@@ -189,7 +189,7 @@ Causes
 to always display the progress meter in cases it would not do so by default.
 .It Fl n
 Don't actually create a package.
-.It Fl P Ar pkgpath Ns : Ns Ar pkgspec Ns : Ns Ar default
+.It Fl P Ar pkgpath : Ns Ar pkgspec : Ns Ar default
 Declare a dependency on a package matching
 .Ar pkgspec
 .Pq see Xr packages-specs 7 .
