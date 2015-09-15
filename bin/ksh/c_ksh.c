@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.38 2015/09/14 16:08:50 nicm Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.39 2015/09/15 18:07:22 tedu Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -466,8 +466,7 @@ c_whence(char **wp)
 		case CALIAS:
 			if (vflag)
 				shprintf(" is an %salias for ",
-				    (tp->flag & EXPORT) ? "exported " :
-				    null);
+				    (tp->flag & EXPORT) ? "exported " : "");
 			if (!iam_whence && !vflag)
 				shprintf("alias %s=", id);
 			print_value_quoted(tp->val.s);
@@ -491,7 +490,7 @@ c_whence(char **wp)
 		case CSHELL:
 			if (vflag)
 				shprintf(" is a%s shell builtin",
-				    (tp->flag & SPEC_BI) ? " special" : null);
+				    (tp->flag & SPEC_BI) ? " special" : "");
 			break;
 		case CTALIAS:
 		case CEXEC:
@@ -501,7 +500,7 @@ c_whence(char **wp)
 					if (tp->type == CTALIAS)
 						shprintf("a tracked %salias for ",
 						    (tp->flag & EXPORT) ?
-						    "exported " : null);
+						    "exported " : "");
 				}
 				shprintf("%s", tp->val.s);
 			} else {

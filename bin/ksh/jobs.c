@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.43 2015/09/10 22:48:58 nicm Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.44 2015/09/15 18:07:22 tedu Exp $	*/
 
 /*
  * Process and job control
@@ -739,7 +739,7 @@ j_resume(const char *cp, int bg)
 			p->status = 0;
 			running = 1;
 		}
-		shprintf("%s%s", p->command, p->next ? "| " : null);
+		shprintf("%s%s", p->command, p->next ? "| " : "");
 	}
 	shprintf("\n");
 	shf_flush(shl_stdout);
@@ -1394,13 +1394,13 @@ j_print(Job *j, int how, struct shf *shf)
 			if (buf[0]) {
 				output = 1;
 				shf_fprintf(shf, "%s%s ",
-				    buf, coredumped ? " (core dumped)" : null);
+				    buf, coredumped ? " (core dumped)" : "");
 			}
 		} else {
 			output = 1;
 			shf_fprintf(shf, "%-20s %s%s%s", buf, p->command,
-			    p->next ? "|" : null,
-			    coredumped ? " (core dumped)" : null);
+			    p->next ? "|" : "",
+			    coredumped ? " (core dumped)" : "");
 		}
 
 		state = p->state;
@@ -1409,10 +1409,10 @@ j_print(Job *j, int how, struct shf *shf)
 		while (p && p->state == state && p->status == status) {
 			if (how == JP_LONG)
 				shf_fprintf(shf, "%s%5d %-20s %s%s", filler, p->pid,
-				    " ", p->command, p->next ? "|" : null);
+				    " ", p->command, p->next ? "|" : "");
 			else if (how == JP_MEDIUM)
 				shf_fprintf(shf, " %s%s", p->command,
-				    p->next ? "|" : null);
+				    p->next ? "|" : "");
 			p = p->next;
 		}
 	}
