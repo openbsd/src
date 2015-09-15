@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.39 2015/02/11 12:09:18 miod Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.40 2015/09/15 21:04:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -1518,7 +1518,7 @@ vdsp_set_vtoc(void *arg1, void *arg2)
 	sl = (struct sun_vtoc_preamble *)sc->sc_label;
 	memcpy(sl->sl_text, vt->ascii_label, sizeof(sl->sl_text));
 	sl->sl_version = 0x01;
-	memcpy(sl->sl_volume, sl->sl_volume, sizeof(sl->sl_volume));
+	memcpy(sl->sl_volume, vt->volume_name, sizeof(sl->sl_volume));
 	sl->sl_nparts = vt->num_partitions;
 	for (i = 0; i < vt->num_partitions; i++) {
 		sl->sl_part[i].spi_tag = vt->partition[i].id_tag;
