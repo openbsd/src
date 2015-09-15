@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nm.1,v 1.29 2015/08/13 21:18:12 jmc Exp $
+.\"	$OpenBSD: nm.1,v 1.30 2015/09/15 15:44:07 schwarze Exp $
 .\"	$NetBSD: nm.1,v 1.3 1995/08/31 23:41:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)nm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 13 2015 $
+.Dd $Mdocdate: September 15 2015 $
 .Dt NM 1
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm nm
 .Op Fl AaCDegnoPprsuw
-.Op Fl t Ar d|o|x
+.Op Fl t Cm d Ns | Ns Cm o Ns | Ns Cm x
 .Op Ar
 .Sh DESCRIPTION
 The symbol table (name list) of each object in
@@ -96,15 +96,15 @@ Do not sort at all.
 Reverse order sort.
 .It Fl s
 Show archive index.
-.It Fl t Ar d|o|x
+.It Fl t Cm d Ns | Ns Cm o Ns | Ns Cm x
 In POSIX format output, choose the numeric radix as follows:
 .Pp
 .Bl -tag -width 3n -compact -offset indent
-.It d
+.It Cm d
 Decimal.
-.It o
+.It Cm o
 Octal.
-.It x
+.It Cm x
 Hexadecimal.
 .El
 .It Fl u
