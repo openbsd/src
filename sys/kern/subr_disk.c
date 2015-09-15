@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.216 2015/09/13 14:38:17 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.217 2015/09/15 05:35:42 yasuoka Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			error = spoofgptlabel(bp, strat, gptlp);
 			if (error == 0) {
 				dospartoff = DL_GETBSTART(gptlp);
-				dospartoff = DL_GETBEND(gptlp);
+				dospartend = DL_GETBEND(gptlp);
 				if (partoffp) {
 					if (dospartoff == 0)
 						return (ENXIO);
