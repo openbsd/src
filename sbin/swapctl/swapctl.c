@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.21 2015/08/14 08:56:21 semarie Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.22 2015/09/15 17:46:23 schwarze Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -457,7 +457,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s -A [-p priority] [-t blk|noblk]\n",
+	fprintf(stderr, "usage: %s -A [-p priority] [-t blk | noblk]\n",
 	    __progname);
 	fprintf(stderr, "       %s -a [-p priority] path\n", __progname);
 	fprintf(stderr, "       %s -c -p priority path\n", __progname);
