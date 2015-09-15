@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.33 2013/07/16 09:45:28 schwarze Exp $
+.\"	$OpenBSD: swapctl.8,v 1.34 2015/09/15 16:23:25 schwarze Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: September 15 2015 $
 .Dt SWAPCTL 8
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm swapctl
 .Fl A
 .Op Fl p Ar priority
-.Op Fl t Ar blk|noblk
+.Op Fl t Cm blk | noblk
 .Nm swapctl
 .Fl a
 .Op Fl p Ar priority
@@ -132,7 +132,7 @@ argument.
 The
 .Fl s
 option displays a single line summary of current swap statistics.
-.It Fl t Ar blk|noblk
+.It Fl t Cm blk | noblk
 This flag modifies the function of the
 .Fl A
 option.
@@ -140,12 +140,12 @@ The
 .Fl t
 option allows the type of device to add to be specified.
 An argument of
-.Ar blk
+.Cm blk
 causes all block devices in
 .Pa /etc/fstab
 to be added.
 An argument of
-.Ar noblk
+.Cm noblk
 causes all non-block devices in
 .Pa /etc/fstab
 to be added.
