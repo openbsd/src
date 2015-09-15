@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.39 2015/09/15 18:07:22 tedu Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.40 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -77,7 +77,7 @@ c_cd(char **wp)
 		 * we could try to find another substitution. For now
 		 * we don't
 		 */
-		if ((cp = strstr(current_wd, wp[0])) == (char *) 0) {
+		if ((cp = strstr(current_wd, wp[0])) == NULL) {
 			bi_errorf("bad substitution");
 			return 1;
 		}
@@ -99,7 +99,7 @@ c_cd(char **wp)
 	/* xp will have a bogus value after make_path() - set it to 0
 	 * so that if it's used, it will cause a dump
 	 */
-	xp = (char *) 0;
+	xp = NULL;
 
 	cdpath = str_val(global("CDPATH"));
 	do {
@@ -110,7 +110,7 @@ c_cd(char **wp)
 			simplify_path(Xstring(xs, xp));
 			rval = chdir(try = Xstring(xs, xp));
 		}
-	} while (rval < 0 && cdpath != (char *) 0);
+	} while (rval < 0 && cdpath != NULL);
 
 	if (rval < 0) {
 		if (cdnode)
@@ -133,7 +133,7 @@ c_cd(char **wp)
 		setstr(oldpwd_s, current_wd, KSH_RETURN_ERROR);
 
 	if (Xstring(xs, xp)[0] != '/') {
-		pwd = (char *) 0;
+		pwd = NULL;
 	} else
 	if (!physical || !(pwd = get_phys_path(Xstring(xs, xp))))
 		pwd = Xstring(xs, xp);
@@ -183,11 +183,11 @@ c_pwd(char **wp)
 		return 1;
 	}
 	p = current_wd[0] ? (physical ? get_phys_path(current_wd) : current_wd) :
-	    (char *) 0;
+	    NULL;
 	if (p && access(p, R_OK) < 0)
-		p = (char *) 0;
+		p = NULL;
 	if (!p) {
-		freep = p = ksh_get_wd((char *) 0, 0);
+		freep = p = ksh_get_wd(NULL, 0);
 		if (!p) {
 			bi_errorf("can't get current directory - %s",
 			    strerror(errno));
@@ -557,7 +557,7 @@ c_typeset(char **wp)
 		break;
 	}
 
-	fieldstr = basestr = (char *) 0;
+	fieldstr = basestr = NULL;
 	builtin_opt.flags |= GF_PLUSOPT;
 	/* at&t ksh seems to have 0-9 as options, which are multiplied
 	 * to get a number that is used with -L, -R, -Z or -i (eg, -1R2
@@ -1018,7 +1018,7 @@ c_let(char **wp)
 	int rv = 1;
 	long val;
 
-	if (wp[1] == (char *) 0) /* at&t ksh does this */
+	if (wp[1] == NULL) /* at&t ksh does this */
 		bi_errorf("no arguments");
 	else
 		for (wp++; *wp; wp++)
@@ -1057,7 +1057,7 @@ c_jobs(char **wp)
 		}
 	wp += builtin_opt.optind;
 	if (!*wp) {
-		if (j_jobs((char *) 0, flag, nflag))
+		if (j_jobs(NULL, flag, nflag))
 			rv = 1;
 	} else {
 		for (; *wp; wp++)
@@ -1275,7 +1275,7 @@ c_getopts(char **wp)
 		return 1;
 	}
 	/* Which arguments are we parsing... */
-	if (*wp == (char *) 0)
+	if (*wp == NULL)
 		wp = e->loc->next->argv;
 	else
 		*--wp = e->loc->next->argv[0];
@@ -1290,7 +1290,7 @@ c_getopts(char **wp)
 		return 1;
 	}
 
-	user_opt.optarg = (char *) 0;
+	user_opt.optarg = NULL;
 	optc = ksh_getopt(wp, &user_opt, options);
 
 	if (optc >= 0 && optc != '?' && (user_opt.info & GI_PLUS)) {
@@ -1318,7 +1318,7 @@ c_getopts(char **wp)
 	/* Paranoia: ensure no bizarre results. */
 	if (voptarg->flag & INTEGER)
 	    typeset("OPTARG", 0, INTEGER, 0, 0);
-	if (user_opt.optarg == (char *) 0)
+	if (user_opt.optarg == NULL)
 		unset(voptarg, 0);
 	else
 		/* This can't fail (have cleared readonly/integer) */

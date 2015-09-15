@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.18 2015/09/14 09:42:33 nicm Exp $	*/
+/*	$OpenBSD: shf.c,v 1.19 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -469,7 +469,7 @@ shf_getse(char *buf, int bsize, struct shf *shf)
 		internal_errorf(1, "shf_getse: flags %x", shf->flags);
 
 	if (bsize <= 0)
-		return (char *) 0;
+		return NULL;
 
 	--bsize;	/* save room for null */
 	do {
@@ -697,7 +697,7 @@ shf_smprintf(const char *fmt, ...)
 	struct shf shf;
 	va_list args;
 
-	shf_sopen((char *) 0, 0, SHF_WR|SHF_DYNAMIC, &shf);
+	shf_sopen(NULL, 0, SHF_WR|SHF_DYNAMIC, &shf);
 	va_start(args, fmt);
 	shf_vfprintf(&shf, fmt, args);
 	va_end(args);

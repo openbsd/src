@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.53 2015/09/14 16:08:50 nicm Exp $	*/
+/*	$OpenBSD: exec.c,v 1.54 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * execute command tree
@@ -840,7 +840,7 @@ findcom(const char *name, int flags)
 		tp = findfunc(name, h, false);
 		if (tp && !(tp->flag & ISSET)) {
 			if ((fpath = str_val(global("FPATH"))) == null) {
-				tp->u.fpath = (char *) 0;
+				tp->u.fpath = NULL;
 				tp->u2.errno_ = 0;
 			} else
 				tp->u.fpath = search(name, fpath, R_OK,
@@ -897,7 +897,7 @@ findcom(const char *name, int flags)
 		} else if ((flags & FC_FUNC) &&
 		    (fpath = str_val(global("FPATH"))) != null &&
 		    (npath = search(name, fpath, R_OK,
-		    &tp->u2.errno_)) != (char *) 0) {
+		    &tp->u2.errno_)) != NULL) {
 			/* An undocumented feature of at&t ksh is that it
 			 * searches FPATH if a command is not found, even
 			 * if the command hasn't been set up as an autoloaded
@@ -1016,7 +1016,7 @@ call_builtin(struct tbl *tp, char **wp)
 	shf_flush(shl_stdout);
 	shl_stdout_ok = 0;
 	builtin_flag = 0;
-	builtin_argv0 = (char *) 0;
+	builtin_argv0 = NULL;
 	return rv;
 }
 
@@ -1038,13 +1038,13 @@ iosetup(struct ioword *iop, struct tbl *tp)
 
 	/* Used for tracing and error messages to print expanded cp */
 	iotmp = *iop;
-	iotmp.name = (iotype == IOHERE) ? (char *) 0 : cp;
+	iotmp.name = (iotype == IOHERE) ? NULL : cp;
 	iotmp.flag |= IONAMEXP;
 
 	if (Flag(FXTRACE))
 		shellf("%s%s\n",
 		    PS4_SUBSTITUTE(str_val(global("PS4"))),
-		    snptreef((char *) 0, 32, "%R", &iotmp));
+		    snptreef(NULL, 32, "%R", &iotmp));
 
 	switch (iotype) {
 	case IOREAD:
@@ -1088,7 +1088,7 @@ iosetup(struct ioword *iop, struct tbl *tp)
 		    X_OK | ((iop->flag & IORDUP) ? R_OK : W_OK),
 		    &emsg)) < 0) {
 			warningf(true, "%s: %s",
-			    snptreef((char *) 0, 32, "%R", &iotmp), emsg);
+			    snptreef(NULL, 32, "%R", &iotmp), emsg);
 			return -1;
 		}
 		if (u == iop->unit)
@@ -1134,7 +1134,7 @@ iosetup(struct ioword *iop, struct tbl *tp)
 		if (ksh_dup2(u, iop->unit, true) < 0) {
 			warningf(true,
 			    "could not finish (dup) redirection %s: %s",
-			    snptreef((char *) 0, 32, "%R", &iotmp),
+			    snptreef(NULL, 32, "%R", &iotmp),
 			    strerror(errno));
 			if (iotype != IODUP)
 				close(u);
@@ -1171,7 +1171,7 @@ herein(const char *content, int sub)
 	int i;
 
 	/* ksh -c 'cat << EOF' can cause this... */
-	if (content == (char *) 0) {
+	if (content == NULL) {
 		warningf(true, "here document missing");
 		return -2; /* special to iosetup(): don't print error */
 	}
@@ -1231,7 +1231,7 @@ static char *
 do_selectargs(char **ap, bool print_menu)
 {
 	static const char *const read_args[] = {
-		"read", "-r", "REPLY", (char *) 0
+		"read", "-r", "REPLY", NULL
 	};
 	const char *errstr;
 	char *s;
@@ -1249,7 +1249,7 @@ do_selectargs(char **ap, bool print_menu)
 			pr_menu(ap);
 		shellf("%s", str_val(global("PS3")));
 		if (call_builtin(findcom("read", FC_BI), (char **) read_args))
-			return (char *) 0;
+			return NULL;
 		s = str_val(global("REPLY"));
 		if (*s) {
 			i = strtonum(s, 1, argct, &errstr);
@@ -1405,7 +1405,7 @@ dbteste_getopnd(Test_env *te, Test_op op, int do_eval)
 	char *s = *te->pos.wp;
 
 	if (!s)
-		return (char *) 0;
+		return NULL;
 
 	te->pos.wp++;
 

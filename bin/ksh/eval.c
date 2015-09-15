@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.40 2013/09/14 20:09:30 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.41 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -861,7 +861,7 @@ comsub(Expand *xp, char *cp)
 
 		if ((io->flag&IOTYPE) != IOREAD)
 			errorf("funny $() command: %s",
-			    snptreef((char *) 0, 32, "%R", io));
+			    snptreef(NULL, 32, "%R", io));
 		shf = shf_open(name = evalstr(io->name, DOTILDE), O_RDONLY, 0,
 			SHF_MAPHI|SHF_CLEXEC);
 		if (shf == NULL)
@@ -1190,7 +1190,7 @@ maybe_expand_tilde(char *p, XString *dsp, char **dpp, int isassign)
 	}
 	*tp = '\0';
 	r = (p[0] == EOS || p[0] == CHAR || p[0] == CSUBST) ?
-	    tilde(Xstring(ts, tp)) : (char *) 0;
+	    tilde(Xstring(ts, tp)) : NULL;
 	Xfree(ts, tp);
 	if (r) {
 		while (*r) {
@@ -1226,7 +1226,7 @@ tilde(char *cp)
 		dp = homedir(cp);
 	/* If HOME, PWD or OLDPWD are not set, don't expand ~ */
 	if (dp == null)
-		dp = (char *) 0;
+		dp = NULL;
 	return dp;
 }
 
@@ -1271,7 +1271,7 @@ alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo)
 
 	/* find matching close brace, if any */
 	if (p) {
-		comma = (char *) 0;
+		comma = NULL;
 		count = 1;
 		for (p += 2; *p && count; p++) {
 			if (ISMAGIC(*p)) {

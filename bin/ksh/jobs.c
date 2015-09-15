@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.44 2015/09/15 18:07:22 tedu Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.45 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * Process and job control
@@ -100,7 +100,7 @@ static const char	*const lookup_msgs[] = {
 	"no such job",
 	"ambiguous",
 	"argument must be %job or process id",
-	(char *) 0
+	NULL
 };
 
 struct timeval	j_systime, j_usrtime;	/* user and system time of last j_waitjed job */
@@ -628,7 +628,7 @@ waitfor(const char *cp, int *sigp)
 
 	*sigp = 0;
 
-	if (cp == (char *) 0) {
+	if (cp == NULL) {
 		/* wait for an unspecified job - always returns 0, so
 		 * don't have to worry about exited/signaled jobs
 		 */
@@ -1485,7 +1485,7 @@ j_lookup(const char *cp, int *ecodep)
 		last_match = (Job *) 0;
 		for (j = job_list; j != (Job *) 0; j = j->next)
 			for (p = j->proc_list; p != (Proc *) 0; p = p->next)
-				if (strstr(p->command, cp+1) != (char *) 0) {
+				if (strstr(p->command, cp+1) != NULL) {
 					if (last_match) {
 						if (ecodep)
 							*ecodep = JL_AMBIG;

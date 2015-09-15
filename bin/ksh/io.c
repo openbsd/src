@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.26 2015/09/11 08:00:27 guenther Exp $	*/
+/*	$OpenBSD: io.c,v 1.27 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -75,7 +75,7 @@ bi_errorf(const char *fmt, ...)
 	 */
 	if ((builtin_flag & SPEC_BI) ||
 	    (Flag(FPOSIX) && (builtin_flag & KEEPASN))) {
-		builtin_argv0 = (char *) 0;
+		builtin_argv0 = NULL;
 		unwind(LERROR);
 	}
 }

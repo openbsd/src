@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.24 2014/12/08 14:26:31 otto Exp $	*/
+/*	$OpenBSD: expr.c,v 1.25 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -203,7 +203,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok,
 	v = intvar(es, evalexpr(es, MAX_PREC));
 
 	if (es->tok != END)
-		evalerr(es, ET_UNEXPECTED, (char *) 0);
+		evalerr(es, ET_UNEXPECTED, NULL);
 
 	if (vp->flag & INTEGER)
 		setint_v(vp, v, es->arith);
@@ -307,7 +307,7 @@ evalexpr(Expr_state *es, enum prec prec)
 			vl = es->val;
 			token(es);
 		} else {
-			evalerr(es, ET_UNEXPECTED, (char *) 0);
+			evalerr(es, ET_UNEXPECTED, NULL);
 			/* NOTREACHED */
 		}
 		if (es->tok == O_PLUSPLUS || es->tok == O_MINUSMINUS) {

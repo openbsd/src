@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.30 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: syn.c,v 1.31 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * shell parser (C version)
@@ -66,7 +66,7 @@ yyparse(void)
 	if (c == 0 && !outtree)
 		outtree = newtp(TEOF);
 	else if (c != '\n' && c != 0)
-		syntaxerr((char *) 0);
+		syntaxerr(NULL);
 }
 
 static struct op *
@@ -78,7 +78,7 @@ pipeline(int cf)
 	if (t != NULL) {
 		while (token(0) == '|') {
 			if ((p = get_command(CONTIN)) == NULL)
-				syntaxerr((char *) 0);
+				syntaxerr(NULL);
 			if (tl == NULL)
 				t = tl = block(TPIPE, t, p, NOWORDS);
 			else
@@ -99,7 +99,7 @@ andor(void)
 	if (t != NULL) {
 		while ((c = token(0)) == LOGAND || c == LOGOR) {
 			if ((p = pipeline(CONTIN)) == NULL)
-				syntaxerr((char *) 0);
+				syntaxerr(NULL);
 			t = block(c == LOGAND? TAND: TOR, t, p, NOWORDS);
 		}
 		REJECT;
@@ -172,7 +172,7 @@ static void
 musthave(int c, int cf)
 {
 	if ((token(cf)) != c)
-		syntaxerr((char *) 0);
+		syntaxerr(NULL);
 }
 
 static struct op *
@@ -255,7 +255,7 @@ get_command(int cf)
 				/* Must be a function */
 				if (iopn != 0 || XPsize(args) != 1 ||
 				    XPsize(vars) != 0)
-					syntaxerr((char *) 0);
+					syntaxerr(NULL);
 				ACCEPT;
 				/*(*/
 				musthave(')', 0);
@@ -357,7 +357,7 @@ get_command(int cf)
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = pipeline(0);
 		if (t == (struct op *) 0)
-			syntaxerr((char *) 0);
+			syntaxerr(NULL);
 		t = block(TBANG, NOBLOCK, t, NOWORDS);
 		break;
 
@@ -424,7 +424,7 @@ dogroup(void)
 	else if (c == '{')
 		c = '}';
 	else
-		syntaxerr((char *) 0);
+		syntaxerr(NULL);
 	list = c_list(true);
 	musthave(c, KEYWORD|ALIAS);
 	return list;
@@ -439,7 +439,7 @@ thenpart(void)
 	t = newtp(0);
 	t->left = c_list(true);
 	if (t->left == NULL)
-		syntaxerr((char *) 0);
+		syntaxerr(NULL);
 	t->right = elsepart();
 	return (t);
 }
@@ -452,7 +452,7 @@ elsepart(void)
 	switch (token(KEYWORD|ALIAS|VARASN)) {
 	case ELSE:
 		if ((t = c_list(true)) == NULL)
-			syntaxerr((char *) 0);
+			syntaxerr(NULL);
 		return (t);
 
 	case ELIF:
@@ -480,7 +480,7 @@ caselist(void)
 	else if (c == '{')
 		c = '}';
 	else
-		syntaxerr((char *) 0);
+		syntaxerr(NULL);
 	t = tl = NULL;
 	while ((tpeek(CONTIN|KEYWORD|ESACONLY)) != c) { /* no ALIAS here */
 		struct op *tc = casepart(c);
@@ -570,9 +570,9 @@ function_body(char *name,
 		t->left->args[0][0] = CHAR;
 		t->left->args[0][1] = ':';
 		t->left->args[0][2] = EOS;
-		t->left->args[1] = (char *) 0;
+		t->left->args[1] = NULL;
 		t->left->vars = (char **) alloc(sizeof(char *), ATEMP);
-		t->left->vars[0] = (char *) 0;
+		t->left->vars[0] = NULL;
 		t->left->lineno = 1;
 	}
 	if (!old_func_parse)
@@ -597,7 +597,7 @@ wordlist(void)
 	while ((c = token(0)) == LWORD)
 		XPput(args, yylval.cp);
 	if (c != '\n' && c != ';')
-		syntaxerr((char *) 0);
+		syntaxerr(NULL);
 	XPput(args, NULL);
 	return (char **) XPclose(args);
 }
@@ -698,7 +698,7 @@ syntaxerr(const char *what)
 		/* NOTREACHED */
 
 	case LWORD:
-		s = snptreef((char *) 0, 32, "%S", yylval.cp);
+		s = snptreef(NULL, 32, "%S", yylval.cp);
 		break;
 
 	case REDIR:
@@ -823,7 +823,7 @@ dbtestp_isa(Test_env *te, Test_meta meta)
 {
 	int c = tpeek(ARRAYVAR | (meta == TM_BINOP ? 0 : CONTIN));
 	int uqword = 0;
-	char *save = (char *) 0;
+	char *save = NULL;
 	int ret = 0;
 
 	/* unquoted word? */

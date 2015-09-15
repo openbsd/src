@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2010/05/19 17:36:08 jasper Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * signal handling
@@ -198,7 +198,7 @@ runtraps(int flag)
 		fatal_trap = 0;
 	for (p = sigtraps, i = NSIG+1; --i >= 0; p++)
 		if (p->set && (!flag ||
-		    ((p->flags & flag) && p->trap == (char *) 0)))
+		    ((p->flags & flag) && p->trap == NULL)))
 			runtrap(p);
 }
 
@@ -211,7 +211,7 @@ runtrap(Trap *p)
 	int	old_changed = 0;
 
 	p->set = 0;
-	if (trapstr == (char *) 0) { /* SIG_DFL */
+	if (trapstr == NULL) { /* SIG_DFL */
 		if (p->flags & TF_FATAL) {
 			/* eg, SIGHUP */
 			exstat = 128 + i;
@@ -229,7 +229,7 @@ runtrap(Trap *p)
 	if (i == SIGEXIT_ || i == SIGERR_) {	/* avoid recursion on these */
 		old_changed = p->flags & TF_CHANGED;
 		p->flags &= ~TF_CHANGED;
-		p->trap = (char *) 0;
+		p->trap = NULL;
 	}
 	oexstat = exstat;
 	/* Note: trapstr is fully parsed before anything is executed, thus
@@ -260,7 +260,7 @@ cleartraps(void)
 	for (i = NSIG+1, p = sigtraps; --i >= 0; p++) {
 		p->set = 0;
 		if ((p->flags & TF_USER_SET) && (p->trap && p->trap[0]))
-			settrap(p, (char *) 0);
+			settrap(p, NULL);
 	}
 }
 

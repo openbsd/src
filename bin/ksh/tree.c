@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.21 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: tree.c,v 1.22 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  * command tree climbing
@@ -565,7 +565,7 @@ wdstrip(const char *wp)
 	struct shf shf;
 	int c;
 
-	shf_sopen((char *) 0, 32, SHF_WR | SHF_DYNAMIC, &shf);
+	shf_sopen(NULL, 32, SHF_WR | SHF_DYNAMIC, &shf);
 
 	/* problems:
 	 *	`...` -> $(...)
@@ -641,11 +641,11 @@ iocopy(struct ioword **iow, Area *ap)
 		q = (struct ioword *) alloc(sizeof(*p), ap);
 		ior[i] = q;
 		*q = *p;
-		if (p->name != (char *) 0)
+		if (p->name != NULL)
 			q->name = wdcopy(p->name, ap);
-		if (p->delim != (char *) 0)
+		if (p->delim != NULL)
 			q->delim = wdcopy(p->delim, ap);
-		if (p->heredoc != (char *) 0)
+		if (p->heredoc != NULL)
 			q->heredoc = str_save(p->heredoc, ap);
 	}
 	ior[i] = NULL;

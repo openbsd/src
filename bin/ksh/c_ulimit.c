@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.19 2013/11/28 10:33:37 sobrado Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.20 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -51,7 +51,7 @@ c_ulimit(char **wp)
 #ifdef RLIMIT_VMEM
 		{ "vmemory(kbytes)", RLIMIT_VMEM, 1024, 'v' },
 #endif /* RLIMIT_VMEM */
-		{ (char *) 0 }
+		{ NULL }
 	};
 	static char	options[4 + NELEM(limits) * 2];
 	int		how = SOFT | HARD;

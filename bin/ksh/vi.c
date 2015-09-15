@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.30 2015/09/10 22:48:58 nicm Exp $	*/
+/*	$OpenBSD: vi.c,v 1.31 2015/09/15 18:15:05 tedu Exp $	*/
 
 /*
  *	vi command editing
@@ -2001,12 +2001,12 @@ complete_word(int command, int count)
 		 */
 		if (is_command) {
 			match = words[count] +
-			    x_basename(words[count], (char *) 0);
+			    x_basename(words[count], NULL);
 			/* If more than one possible match, use full path */
 			for (i = 0; i < nwords; i++)
 				if (i != count &&
 				    strcmp(words[i] + x_basename(words[i],
-				    (char *) 0), match) == 0) {
+				    NULL), match) == 0) {
 					match = words[count];
 					break;
 				}

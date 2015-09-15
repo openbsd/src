@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.13 2015/09/05 09:47:08 jsg Exp $	*/
+/*	$OpenBSD: path.c,v 1.14 2015/09/15 18:15:05 tedu Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -67,7 +67,7 @@ make_path(const char *cwd, const char *file,
 			for (pend = plist; *pend && *pend != ':'; pend++)
 				;
 			plen = pend - plist;
-			*cdpathp = *pend ? ++pend : (char *) 0;
+			*cdpathp = *pend ? ++pend : NULL;
 		}
 
 		if ((use_cdpath == 0 || !plen || plist[0] != '/') &&
@@ -95,7 +95,7 @@ make_path(const char *cwd, const char *file,
 	memcpy(xp, file, len);
 
 	if (!use_cdpath)
-		*cdpathp = (char *) 0;
+		*cdpathp = NULL;
 
 	return rval;
 }
@@ -177,7 +177,7 @@ set_current_wd(char *path)
 	int len;
 	char *p = path;
 
-	if (!p && !(p = ksh_get_wd((char *) 0, 0)))
+	if (!p && !(p = ksh_get_wd(NULL, 0)))
 		p = null;
 
 	len = strlen(p) + 1;
@@ -200,7 +200,7 @@ get_phys_path(const char *path)
 	xp = do_phys_path(&xs, xp, path);
 
 	if (!xp)
-		return (char *) 0;
+		return NULL;
 
 	if (Xlength(xs, xp) == 0)
 		Xput(xs, xp, '/');
@@ -246,7 +246,7 @@ do_phys_path(XString *xsp, char *xp, const char *path)
 		if (llen < 0) {
 			/* EINVAL means it wasn't a symlink... */
 			if (errno != EINVAL)
-				return (char *) 0;
+				return NULL;
 			continue;
 		}
 		lbuf[llen] = '\0';
@@ -255,7 +255,7 @@ do_phys_path(XString *xsp, char *xp, const char *path)
 		xp = lbuf[0] == '/' ? Xstring(*xsp, xp) :
 		    Xrestpos(*xsp, xp, savepos);
 		if (!(xp = do_phys_path(xsp, xp, lbuf)))
-			return (char *) 0;
+			return NULL;
 	}
 	return xp;
 }

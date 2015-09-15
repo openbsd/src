@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.46 2015/09/14 16:08:50 nicm Exp $	*/
+/*	$OpenBSD: var.c,v 1.47 2015/09/15 18:15:05 tedu Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -105,7 +105,7 @@ initvar(void)
 		{ "SECONDS",		V_SECONDS },
 		{ "TMOUT",		V_TMOUT },
 		{ "LINENO",		V_LINENO },
-		{ (char *) 0,	0 }
+		{ NULL,	0 }
 	};
 	int i;
 	struct tbl *tp;
@@ -664,11 +664,11 @@ typeset(const char *var, int set, int clr, int field, int base)
 			if (fake_assign) {
 				if (t->flag & INTEGER) {
 					s = str_val(t);
-					free_me = (char *) 0;
+					free_me = NULL;
 				} else {
 					s = t->val.s + t->type;
 					free_me = (t->flag & ALLOC) ? t->val.s :
-					    (char *) 0;
+					    NULL;
 				}
 				t->flag &= ~ALLOC;
 			}
@@ -966,7 +966,7 @@ setspec(struct tbl *vp)
 	case V_TMPDIR:
 		if (tmpdir) {
 			afree(tmpdir, APERM);
-			tmpdir = (char *) 0;
+			tmpdir = NULL;
 		}
 		/* Use tmpdir iff it is an absolute path, is writable and
 		 * searchable and is a directory...
@@ -1065,14 +1065,14 @@ unsetspec(struct tbl *vp)
 		/* should not become unspecial */
 		if (tmpdir) {
 			afree(tmpdir, APERM);
-			tmpdir = (char *) 0;
+			tmpdir = NULL;
 		}
 		break;
 	case V_MAIL:
-		mbset((char *) 0);
+		mbset(NULL);
 		break;
 	case V_MAILPATH:
-		mpset((char *) 0);
+		mpset(NULL);
 		break;
 	case V_LINENO:
 	case V_MAILCHECK:	/* at&t ksh leaves previous value in place */
