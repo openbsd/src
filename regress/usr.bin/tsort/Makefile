@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2015/08/30 16:42:48 espie Exp $
+# $OpenBSD: Makefile,v 1.10 2015/09/16 05:19:22 daniel Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7
 REGRESS_SLOW_TARGETS=t4
@@ -40,7 +40,7 @@ t6.out: pairs6
 	tsort <${.CURDIR}/pairs6 >$@ 2>&1
 
 t7:
-	tsort -hhints1 -h hints2 pairs7 2>&1|diff - ${.CURDIR}/t7.canonical
+	tsort -h${.CURDIR}/hints1 -h ${.CURDIR}/hints2 ${.CURDIR}/pairs7 2>&1|diff - ${.CURDIR}/t7.canonical
 
 pairs3:
 	perl ${.CURDIR}/build-tree 4 8 >$@
