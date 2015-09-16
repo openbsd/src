@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.115 2015/09/12 11:52:23 naddy Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.116 2015/09/16 10:12:03 florian Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -131,7 +131,6 @@ struct payload {
 #define	EXTRA		256	/* for AH and various other headers. weird. */
 #define	DEFDATALEN	ICMP6ECHOTMLEN
 #define MAXDATALEN	MAXPACKETLEN - IP6LEN - ICMP6ECHOLEN
-#define	NROUTES		9		/* number of record route slots */
 
 #define	A(bit)		rcvd_tbl[(bit)>>3]	/* identify byte in array */
 #define	B(bit)		(1 << ((bit) & 0x07))	/* identify bit in byte */
@@ -143,7 +142,6 @@ struct payload {
 #define	F_INTERVAL	0x0002
 #define	F_PINGFILLED	0x0008
 #define	F_QUIET		0x0010
-#define	F_RROUTE	0x0020
 #define	F_SO_DEBUG	0x0040
 #define	F_VERBOSE	0x0100
 #define F_NODEADDR	0x0800
@@ -154,14 +152,11 @@ struct payload {
 #define F_FQDNOLD	0x20000
 #define F_NIGROUP	0x40000
 #define F_SUPTYPES	0x80000
-#define F_NOMINMTU	0x100000
 #define F_AUD_RECV	0x200000
 #define F_AUD_MISS	0x400000
 #define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
 u_int options;
 
-#define IN6LEN		sizeof(struct in6_addr)
-#define SA6LEN		sizeof(struct sockaddr_in6)
 #define DUMMY_PORT	10101
 
 /*
@@ -224,7 +219,7 @@ void	 retransmit(void);
 void	 onint(int);
 size_t	 pingerlen(void);
 int	 pinger(void);
-const char *pr_addr(struct sockaddr *, int);
+const char *pr_addr(struct sockaddr *, socklen_t);
 void	 pr_icmph(struct icmp6_hdr *, u_char *);
 void	 pr_iph(struct ip6_hdr *);
 void	 pr_suptypes(struct icmp6_nodeinfo *, size_t);
@@ -1165,7 +1160,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	int i;
 	int hoplim;
 	struct sockaddr *from;
-	int fromlen;
+	socklen_t fromlen;
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct timespec ts, tp;
@@ -2197,7 +2192,7 @@ pr_iph(struct ip6_hdr *ip6)
  * a hostname.
  */
 const char *
-pr_addr(struct sockaddr *addr, int addrlen)
+pr_addr(struct sockaddr *addr, socklen_t addrlen)
 {
 	static char buf[NI_MAXHOST];
 	int flag = 0;
