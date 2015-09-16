@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.12 2013/05/08 15:30:38 miod Exp $
+# $OpenBSD: Makefile,v 1.13 2015/09/16 10:55:39 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -60,6 +60,7 @@ TARGET_INC+=	openbsd.h
 TARGET_INC+=	openbsd-libpthread.h
 TARGET_INC+=	openbsd-native.h
 .if ${TARGET_ARCH} == "powerpc"
+TARGET_INC+=	rs6000/secureplt.h
 TARGET_INC+=	freebsd-spec.h
 .endif
 .if ${TARGET_ARCH} != "i386" && ${TARGET_ARCH} != "amd64"
