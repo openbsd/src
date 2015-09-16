@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.560 2015/09/14 11:57:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.561 2015/09/16 22:24:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1305,7 +1305,8 @@ TAILQ_HEAD(cmd_q_items, cmd_q_item);
 /* Command queue. */
 struct cmd_q {
 	int			 references;
-	int			 dead;
+	int			 flags;
+#define CMD_Q_DEAD 0x1
 
 	struct client		*client;
 	int			 client_exit;

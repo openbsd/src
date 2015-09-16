@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.32 2015/04/24 22:19:36 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.33 2015/09/16 22:24:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -143,7 +143,7 @@ cmd_if_shell_callback(struct job *job)
 	struct cmd_list			*cmdlist;
 	char				*cause, *cmd;
 
-	if (cmdq->dead)
+	if (cmdq->flags & CMD_Q_DEAD)
 		return;
 
 	if (!WIFEXITED(job->status) || WEXITSTATUS(job->status) != 0)
