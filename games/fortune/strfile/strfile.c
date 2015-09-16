@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.21 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.22 2015/09/16 16:32:11 tedu Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -172,8 +172,7 @@ main(int ac, char *av[])
 			if (Tbl.str_shortlen > (u_int32_t)length)
 				Tbl.str_shortlen = length;
 			first = Oflag;
-		}
-		else if (first) {
+		} else if (first) {
 			for (nsp = sp; !isalnum(*nsp); nsp++)
 				continue;
 			ALLOC(Firstch, Num_pts);
@@ -230,11 +229,12 @@ main(int ac, char *av[])
 	(void) fwrite(&Tbl.str_shortlen, sizeof(Tbl.str_shortlen), 1, outf);
 	(void) fwrite(&Tbl.str_flags,    sizeof(Tbl.str_flags),    1, outf);
 	(void) fwrite( Tbl.stuff,	 sizeof(Tbl.stuff),	   1, outf);
-	if (STORING_PTRS)
+	if (STORING_PTRS) {
 		for (p = Seekpts, cnt = Num_pts; cnt--; ++p) {
 			*p = htonl(*p);
 			(void) fwrite(p, sizeof(*p), 1, outf);
 		}
+	}
 	if (fclose(outf))
 		err(1, "fclose `%s'", Outfile);
 	exit(0);
@@ -250,7 +250,7 @@ getargs(int argc, char *argv[])
 	extern int	optind;
 	int	ch;
 
-	while ((ch = getopt(argc, argv, "c:iorsx")) != -1)
+	while ((ch = getopt(argc, argv, "c:iorsx")) != -1) {
 		switch(ch) {
 		case 'c':			/* new delimiting char */
 			Delimch = *optarg;
@@ -278,6 +278,7 @@ getargs(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 	argv += optind;
 
 	if (*argv) {
@@ -359,12 +360,10 @@ unctrl(char c)
 	if (isprint(c)) {
 		buf[0] = c;
 		buf[1] = '\0';
-	}
-	else if (c == 0177) {
+	} else if (c == 0177) {
 		buf[0] = '^';
 		buf[1] = '?';
-	}
-	else {
+	} else {
 		buf[0] = '^';
 		buf[1] = c + 'A' - 1;
 	}
