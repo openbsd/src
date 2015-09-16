@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.148 2015/07/19 05:59:07 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.149 2015/09/16 09:49:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -2190,7 +2190,7 @@ dbclose(int real)
 		return;
 	case 0:
 		execlp("cmp", "cmp", "-s",
-		    tempfilename, MANDOC_DB, NULL);
+		    tempfilename, MANDOC_DB, (char *)NULL);
 		say("", "&exec cmp");
 		exit(0);
 	default:
@@ -2215,7 +2215,7 @@ dbclose(int real)
 		say("", "&fork rm");
 		return;
 	case 0:
-		execlp("rm", "rm", "-rf", tempfilename, NULL);
+		execlp("rm", "rm", "-rf", tempfilename, (char *)NULL);
 		say("", "&exec rm");
 		exit((int)MANDOCLEVEL_SYSERR);
 	default:
