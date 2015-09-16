@@ -1,4 +1,3 @@
-./usr/share/man/man9/intr_barrier.9
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -5669,6 +5668,7 @@
 ./usr/share/man/man3/tls_config_free.3
 ./usr/share/man/man3/tls_config_insecure_noverifycert.3
 ./usr/share/man/man3/tls_config_insecure_noverifyname.3
+./usr/share/man/man3/tls_config_insecure_noverifytime.3
 ./usr/share/man/man3/tls_config_new.3
 ./usr/share/man/man3/tls_config_parse_protocols.3
 ./usr/share/man/man3/tls_config_prefer_ciphers_client.3
@@ -5689,6 +5689,8 @@
 ./usr/share/man/man3/tls_config_verify_client.3
 ./usr/share/man/man3/tls_config_verify_client_optional.3
 ./usr/share/man/man3/tls_configure.3
+./usr/share/man/man3/tls_conn_cipher.3
+./usr/share/man/man3/tls_conn_version.3
 ./usr/share/man/man3/tls_connect.3
 ./usr/share/man/man3/tls_connect_fds.3
 ./usr/share/man/man3/tls_connect_servername.3
@@ -6442,6 +6444,7 @@
 ./usr/share/man/man9/imin.9
 ./usr/share/man/man9/incore.9
 ./usr/share/man/man9/inittodr.9
+./usr/share/man/man9/intr_barrier.9
 ./usr/share/man/man9/intro.9
 ./usr/share/man/man9/kcopy.9
 ./usr/share/man/man9/kern.9
