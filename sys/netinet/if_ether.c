@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.168 2015/09/13 17:53:44 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.169 2015/09/16 06:58:08 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -367,10 +367,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 			    "local address\n", __func__, inet_ntop(AF_INET,
 				&satosin(dst)->sin_addr, addr, sizeof(addr)));
 	} else {
+		la = NULL;
 		if ((rt = arplookup(satosin(dst)->sin_addr.s_addr, 1, 0,
 		    ifp->if_rdomain)) != NULL)
 			la = ((struct llinfo_arp *)rt->rt_llinfo);
-		else
+		if (la == NULL)
 			log(LOG_DEBUG, "%s: %s: can't allocate llinfo\n",
 			    __func__,
 			    inet_ntop(AF_INET, &satosin(dst)->sin_addr,
