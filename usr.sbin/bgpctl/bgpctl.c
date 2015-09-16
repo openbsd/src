@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.181 2015/09/13 11:13:12 deraadt Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.182 2015/09/16 20:25:41 stsp Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -67,9 +67,9 @@ int		 show_fib_msg(struct imsg *);
 void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
 void		 show_interface_head(void);
-int		 ift2ifm(int);
+uint64_t	 ift2ifm(uint8_t);
 const char *	 get_media_descr(uint64_t);
-const char *	 get_linkstate(uint64_t, int);
+const char *	 get_linkstate(uint8_t, int);
 const char *	 get_baudrate(u_int64_t, char *);
 int		 show_interface_msg(struct imsg *);
 void		 show_rib_summary_head(void);
@@ -1061,7 +1061,7 @@ show_nexthop_msg(struct imsg *imsg)
 				    "bps")) == -1)
 					err(1, NULL);
 			} else if (asprintf(&s1, ", %s", get_linkstate(
-			    p->kif.media_type, p->kif.link_state)) == -1)
+			    p->kif.if_type, p->kif.link_state)) == -1)
 					err(1, NULL);
 			if (asprintf(&s, "%s (%s%s)", p->kif.ifname,
 			    p->kif.flags & IFF_UP ? "UP" : "DOWN", s1) == -1)
@@ -1095,10 +1095,10 @@ const struct if_status_description
 const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
-int
-ift2ifm(int media_type)
+uint64_t
+ift2ifm(uint8_t if_type)
 {
-	switch (media_type) {
+	switch (if_type) {
 	case IFT_ETHER:
 		return (IFM_ETHER);
 	case IFT_FDDI:
@@ -1125,13 +1125,13 @@ get_media_descr(uint64_t media_type)
 }
 
 const char *
-get_linkstate(uint64_t media_type, int link_state)
+get_linkstate(uint8_t if_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];
 
 	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
 			return (p->ifs_string);
 	}
 	snprintf(buf, sizeof(buf), "[#%d]", link_state);
@@ -1163,7 +1163,7 @@ int
 show_interface_msg(struct imsg *imsg)
 {
 	struct kif	*k;
-	int		 ifms_type;
+	uint64_t	 ifms_type;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE:
@@ -1172,10 +1172,10 @@ show_interface_msg(struct imsg *imsg)
 		printf("%-15s", k->nh_reachable ? "ok" : "invalid");
 		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
 
-		if ((ifms_type = ift2ifm(k->media_type)) != 0)
+		if ((ifms_type = ift2ifm(k->if_type)) != 0)
 			printf("%s, ", get_media_descr(ifms_type));
 
-		printf("%s", get_linkstate(k->media_type, k->link_state));
+		printf("%s", get_linkstate(k->if_type, k->link_state));
 
 		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0)
 			printf(", %s", get_baudrate(k->baudrate, "Bit/s"));
