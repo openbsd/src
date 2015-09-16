@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.419 2015/09/13 10:05:22 zhuk Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.420 2015/09/16 19:59:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 13 2015 $
+.Dd $Mdocdate: September 16 2015 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -216,9 +216,11 @@ or
 .Va package ,
 clean subpackages as well.
 .It Va packages
-Shorthand for `sub package'.
+Shorthand for
+.Sq sub package .
 .It Va all
-Shorthand for `work flavors packages plist'.
+Shorthand for
+.Sq work flavors packages plist .
 .El
 .It Ar clean-depends
 Shorthand for make clean=depends.
@@ -858,7 +860,7 @@ may not handle flavor and multi-packages situations correctly yet, so beware.
 .It Ar verbose-show
 Similar to
 .Ar show ,
-except that it prefixes each value with the variable name, e.g.
+except that it prefixes each value with the variable name, e.g.,
 .Li VAR=value .
 Also note that it does not show undefined variables, contrary to
 .Ar show
@@ -3162,7 +3164,7 @@ before building ports.
 xshare*.tgz file set.
 If xenocara was not fully installed before packages were added, it may
 have been created as a directory instead.
-.It "Fatal: the licencing info for <pkgname> is incomplete..."
+.It "Fatal: the licensing info for <pkgname> is incomplete..."
 Every port must have explicit defines of all
 .Ev PERMIT_*
 values.
