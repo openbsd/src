@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.112 2015/09/03 03:13:56 yasuoka Exp $	*/
+/*	$OpenBSD: bios.c,v 1.113 2015/09/16 04:18:52 daniel Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -480,10 +480,10 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 			va += len - 512;
 		}
+		if (str)
+			printf("\n");
 	}
 
-	if (str)
-		printf("\n");
 }
 
 void
