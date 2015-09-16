@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.20 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.21 2015/09/16 20:24:12 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -368,7 +368,7 @@ int
 ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct ieee80211_eapol_key *key;
-	struct ieee80211_key *k;
+	struct ieee80211_key *k = NULL;
 	struct mbuf *m;
 	u_int16_t info, keylen;
 	u_int8_t *frm;
@@ -380,14 +380,16 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ieee80211_node_leave(ic, ni);
 		return 0;
 	}
-	if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN)
+	if (ni->ni_rsnprotos == IEEE80211_PROTO_RSN) {
 		k = &ic->ic_nw_keys[ic->ic_def_txkey];
-
-	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    ((ni->ni_rsnprotos == IEEE80211_PROTO_WPA) ?
-		2 + IEEE80211_WPAIE_MAXLEN :
-		2 + IEEE80211_RSNIE_MAXLEN + 2 + 6 + k->k_len + 15) +
-	    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0));
+		m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
+		    2 + IEEE80211_RSNIE_MAXLEN + 2 + 6 + k->k_len + 15 +
+		    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0));
+	} else { /* WPA */
+		m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
+		    2 + IEEE80211_WPAIE_MAXLEN +
+		    ((ni->ni_flags & IEEE80211_NODE_MFP) ? 2 + 28 : 0));
+	}
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
