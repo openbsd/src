@@ -1,4 +1,4 @@
-.\"  $OpenBSD: od.1,v 1.30 2014/04/19 09:24:28 sobrado Exp $
+.\"  $OpenBSD: od.1,v 1.31 2015/09/16 08:47:26 schwarze Exp $
 .\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: April 19 2014 $
+.Dd $Mdocdate: September 16 2015 $
 .Dt OD 1
 .Os
 .Sh NAME
@@ -36,22 +36,12 @@
 .Nd octal, decimal, hex, ascii dump
 .Sh SYNOPSIS
 .Nm od
-.Bk -words
 .Op Fl aBbcDdeFfHhIiLlOosvXx
 .Op Fl A Ar base
 .Op Fl j Ar offset
 .Op Fl N Ar length
 .Op Fl t Ar type_string
-.Sm off
-.Oo
-.Op Cm \&+
-.Li offset
-.Op Cm \&.
-.Op Cm Bb
-.Sm on
-.Oc
 .Op Ar
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -166,6 +156,21 @@ causes it to be interpreted as a multiple of
 or
 .Li 1048576 ,
 respectively.
+.Pp
+As an alternative to
+.Nm
+.Fl j Ar offset
+.Op Ar file ,
+the X/Open System Interfaces syntax
+.Nm
+.Op Ar file
+.Sm off
+.Op Cm \&+
+.Ar offset
+.Op Cm \&.
+.Op Cm Bb
+.Sm on
+is also supported.
 .It Fl L
 Same as
 .Fl I .

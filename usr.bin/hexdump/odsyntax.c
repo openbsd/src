@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.25 2014/04/19 09:28:20 sobrado Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.26 2015/09/16 08:47:26 schwarze Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -299,7 +299,7 @@ oldusage(void)
 	extern char *__progname;
 	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOosvXx] [-A base] "
 	    "[-j offset] [-N length]\n"
-	    "\t[-t type_string] [[+]offset[.][Bb]] [file ...]\n", __progname);
+	    "\t[-t type_string] [file ...]\n", __progname);
 	exit(1);
 }
 
@@ -371,6 +371,8 @@ odoffset(int argc, char ***argvp)
 		return;
 	}
 
+	if (*p == '.')
+		++p;
 	if (*p) {
 		if (*p == 'B') {
 			skip *= 1024;
@@ -397,7 +399,7 @@ odoffset(int argc, char ***argvp)
 	}
 
 	/* Terminate file list. */
-	(*argvp)[1] = NULL;
+	(*argvp)[argc > 1] = NULL;
 }
 
 static void
