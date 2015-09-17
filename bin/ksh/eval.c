@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.41 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: eval.c,v 1.42 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -292,7 +292,7 @@ expand(char *cp,	/* input word */
 					if (!st->next) {
 						SubType *newst;
 
-						newst = (SubType *) alloc(
+						newst = alloc(
 						    sizeof(SubType), ATEMP);
 						newst->next = (SubType *) 0;
 						newst->prev = st;
@@ -406,7 +406,7 @@ expand(char *cp,	/* input word */
 					 */
 					len = strlen(dp) + 1;
 					setstr(st->var,
-					    debunk((char *) alloc(len, ATEMP),
+					    debunk(alloc(len, ATEMP),
 					    dp, len), KSH_UNWIND_ERROR);
 					x.str = str_val(st->var);
 					type = XSUB;
@@ -1317,7 +1317,7 @@ alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo)
 				l1 = brace_start - start;
 				l2 = (p - 1) - field_start;
 				l3 = end - brace_end;
-				new = (char *) alloc(l1 + l2 + l3 + 1, ATEMP);
+				new = alloc(l1 + l2 + l3 + 1, ATEMP);
 				memcpy(new, start, l1);
 				memcpy(new + l1, field_start, l2);
 				memcpy(new + l1 + l2, brace_end, l3);

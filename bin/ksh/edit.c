@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.42 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: edit.c,v 1.43 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * Command line editing - common code
@@ -473,8 +473,8 @@ x_command_glob(int flags, const char *str, int slen, char ***wordsp)
 		int path_order = 0;
 		int i;
 
-		info = (struct path_order_info *)
-			alloc(sizeof(struct path_order_info) * nwords, ATEMP);
+		info = alloc(sizeof(struct path_order_info) * nwords, ATEMP);
+
 		for (i = 0; i < nwords; i++) {
 			info[i].word = words[i];
 			info[i].base = x_basename(words[i], NULL);

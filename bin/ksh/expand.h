@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.h,v 1.7 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: expand.h,v 1.8 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * Expanding strings
@@ -82,7 +82,7 @@ typedef struct XPtrV {
 
 #define	XPinit(x, n) do { \
 			void **vp__; \
-			vp__ = (void**) alloc(sizeofN(void*, n), ATEMP); \
+			vp__ = alloc(sizeofN(void*, n), ATEMP); \
 			(x).cur = (x).beg = vp__; \
 			(x).end = vp__ + n; \
 		} while (0)

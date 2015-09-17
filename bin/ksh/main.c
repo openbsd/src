@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -645,7 +645,7 @@ newenv(int type)
 {
 	struct env *ep;
 
-	ep = (struct env *) alloc(sizeof(*ep), ATEMP);
+	ep = alloc(sizeof(*ep), ATEMP);
 	ep->type = type;
 	ep->flags = 0;
 	ainit(&ep->area);

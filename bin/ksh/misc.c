@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.43 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.44 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -502,7 +502,7 @@ gmatch(const char *s, const char *p, int isfile)
 		int len = pe - p + 1;
 		char tbuf[64];
 		char *t = len <= sizeof(tbuf) ? tbuf :
-		    (char *) alloc(len, ATEMP);
+		    alloc(len, ATEMP);
 		debunk(t, p, len);
 		return !strcmp(t, s);
 	}
@@ -1001,7 +1001,7 @@ void
 print_columns(struct shf *shf, int n, char *(*func) (void *, int, char *, int),
     void *arg, int max_width, int prefcol)
 {
-	char *str = (char *) alloc(max_width + 1, ATEMP);
+	char *str = alloc(max_width + 1, ATEMP);
 	int i;
 	int r, c;
 	int rows, cols;

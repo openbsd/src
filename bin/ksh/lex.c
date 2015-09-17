@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.52 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: lex.c,v 1.53 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -700,7 +700,7 @@ Done:
 	if ((c == '<' || c == '>') && state == SBASE &&
 	    ((c2 = Xlength(ws, wp)) == 0 ||
 	    (c2 == 2 && dp[0] == CHAR && digit(dp[1])))) {
-		struct ioword *iop = (struct ioword *) alloc(sizeof(*iop), ATEMP);
+		struct ioword *iop = alloc(sizeof(*iop), ATEMP);
 
 		if (c2 == 2)
 			iop->unit = dp[1] - '0';
@@ -921,7 +921,7 @@ pushs(int type, Area *areap)
 {
 	Source *s;
 
-	s = (Source *) alloc(sizeof(Source), areap);
+	s = alloc(sizeof(Source), areap);
 	s->type = type;
 	s->str = null;
 	s->start = NULL;

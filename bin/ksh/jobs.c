@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.45 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.46 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * Process and job control
@@ -1535,7 +1535,7 @@ new_job(void)
 		newj = free_jobs;
 		free_jobs = free_jobs->next;
 	} else
-		newj = (Job *) alloc(sizeof(Job), APERM);
+		newj = alloc(sizeof(Job), APERM);
 
 	/* brute force method */
 	for (i = 1; ; i++) {
@@ -1562,7 +1562,7 @@ new_proc(void)
 		p = free_procs;
 		free_procs = free_procs->next;
 	} else
-		p = (Proc *) alloc(sizeof(Proc), APERM);
+		p = alloc(sizeof(Proc), APERM);
 
 	return p;
 }

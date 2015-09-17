@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.20 2015/09/15 20:59:05 nicm Exp $	*/
+/*	$OpenBSD: shf.c,v 1.21 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -33,7 +33,7 @@ shf_open(const char *name, int oflags, int mode, int sflags)
 	int fd;
 
 	/* Done before open so if alloca fails, fd won't be lost. */
-	shf = (struct shf *) alloc(sizeof(struct shf) + bsize, ATEMP);
+	shf = alloc(sizeof(struct shf) + bsize, ATEMP);
 	shf->areap = ATEMP;
 	shf->buf = (unsigned char *) &shf[1];
 	shf->bsize = bsize;
@@ -96,12 +96,12 @@ shf_fdopen(int fd, int sflags, struct shf *shf)
 
 	if (shf) {
 		if (bsize) {
-			shf->buf = (unsigned char *) alloc(bsize, ATEMP);
+			shf->buf = alloc(bsize, ATEMP);
 			sflags |= SHF_ALLOCB;
 		} else
 			shf->buf = (unsigned char *) 0;
 	} else {
-		shf = (struct shf *) alloc(sizeof(struct shf) + bsize, ATEMP);
+		shf = alloc(sizeof(struct shf) + bsize, ATEMP);
 		shf->buf = (unsigned char *) &shf[1];
 		sflags |= SHF_ALLOCS;
 	}
@@ -184,7 +184,7 @@ shf_sopen(char *buf, int bsize, int sflags, struct shf *shf)
 		internal_errorf(1, "shf_sopen: flags 0x%x", sflags);
 
 	if (!shf) {
-		shf = (struct shf *) alloc(sizeof(struct shf), ATEMP);
+		shf = alloc(sizeof(struct shf), ATEMP);
 		sflags |= SHF_ALLOCS;
 	}
 	shf->areap = ATEMP;

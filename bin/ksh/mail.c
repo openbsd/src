@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.18 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: mail.c,v 1.19 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -162,7 +162,7 @@ mballoc(char *p, char *m)
 	struct stat	stbuf;
 	mbox_t	*mbp;
 
-	mbp = (mbox_t *)alloc(sizeof(mbox_t), APERM);
+	mbp = alloc(sizeof(mbox_t), APERM);
 	mbp->mb_next = NULL;
 	mbp->mb_path = p;
 	mbp->mb_msg = m;

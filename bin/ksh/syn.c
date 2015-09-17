@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.31 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: syn.c,v 1.32 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * shell parser (C version)
@@ -197,7 +197,7 @@ get_command(int cf)
 	XPtrV args, vars;
 	struct nesting_state old_nesting;
 
-	iops = (struct ioword **) alloc(sizeofN(struct ioword *, NUFILE+1),
+	iops = alloc(sizeofN(struct ioword *, NUFILE+1),
 	    ATEMP);
 	XPinit(args, 16);
 	XPinit(vars, 16);
@@ -565,13 +565,13 @@ function_body(char *name,
 		 * be used as input), we pretend there is a colon here.
 		 */
 		t->left = newtp(TCOM);
-		t->left->args = (char **) alloc(sizeof(char *) * 2, ATEMP);
+		t->left->args = alloc(sizeof(char *) * 2, ATEMP);
 		t->left->args[0] = alloc(sizeof(char) * 3, ATEMP);
 		t->left->args[0][0] = CHAR;
 		t->left->args[0][1] = ':';
 		t->left->args[0][2] = EOS;
 		t->left->args[1] = NULL;
-		t->left->vars = (char **) alloc(sizeof(char *), ATEMP);
+		t->left->vars = alloc(sizeof(char *), ATEMP);
 		t->left->vars[0] = NULL;
 		t->left->lineno = 1;
 	}
@@ -743,7 +743,7 @@ newtp(int type)
 {
 	struct op *t;
 
-	t = (struct op *) alloc(sizeof(*t), ATEMP);
+	t = alloc(sizeof(*t), ATEMP);
 	t->type = type;
 	t->u.evalflags = 0;
 	t->args = t->vars = NULL;

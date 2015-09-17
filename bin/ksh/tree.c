@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.22 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: tree.c,v 1.23 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * command tree climbing
@@ -457,7 +457,7 @@ tcopy(struct op *t, Area *ap)
 	if (t == NULL)
 		return NULL;
 
-	r = (struct op *) alloc(sizeof(struct op), ap);
+	r = alloc(sizeof(struct op), ap);
 
 	r->type = t->type;
 	r->u.evalflags = t->u.evalflags;
@@ -469,8 +469,7 @@ tcopy(struct op *t, Area *ap)
 	else {
 		for (tw = t->vars; *tw++ != NULL; )
 			;
-		rw = r->vars = (char **)
-			alloc((tw - t->vars + 1) * sizeof(*tw), ap);
+		rw = r->vars = alloc((tw - t->vars + 1) * sizeof(*tw), ap);
 		for (tw = t->vars; *tw != NULL; )
 			*rw++ = wdcopy(*tw++, ap);
 		*rw = NULL;
@@ -481,8 +480,7 @@ tcopy(struct op *t, Area *ap)
 	else {
 		for (tw = t->args; *tw++ != NULL; )
 			;
-		rw = r->args = (char **)
-			alloc((tw - t->args + 1) * sizeof(*tw), ap);
+		rw = r->args = alloc((tw - t->args + 1) * sizeof(*tw), ap);
 		for (tw = t->args; *tw != NULL; )
 			*rw++ = wdcopy(*tw++, ap);
 		*rw = NULL;
@@ -632,13 +630,13 @@ iocopy(struct ioword **iow, Area *ap)
 
 	for (ior = iow; *ior++ != NULL; )
 		;
-	ior = (struct ioword **) alloc((ior - iow + 1) * sizeof(*ior), ap);
+	ior = alloc((ior - iow + 1) * sizeof(*ior), ap);
 
 	for (i = 0; iow[i] != NULL; i++) {
 		struct ioword *p, *q;
 
 		p = iow[i];
-		q = (struct ioword *) alloc(sizeof(*p), ap);
+		q = alloc(sizeof(*p), ap);
 		ior[i] = q;
 		*q = *p;
 		if (p->name != NULL)

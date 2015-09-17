@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.27 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: io.c,v 1.28 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -422,7 +422,7 @@ maketemp(Area *ap, Temp_type type, struct temp **tlist)
 	dir = tmpdir ? tmpdir : "/tmp";
 	/* The 20 + 20 is a paranoid worst case for pid/inc */
 	len = strlen(dir) + 3 + 20 + 20 + 1;
-	tp = (struct temp *) alloc(sizeof(struct temp) + len, ap);
+	tp = alloc(sizeof(struct temp) + len, ap);
 	tp->name = path = (char *) &tp[1];
 	tp->shf = (struct shf *) 0;
 	tp->type = type;

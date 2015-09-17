@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.54 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: exec.c,v 1.55 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * execute command tree
@@ -92,7 +92,7 @@ execute(struct op *volatile t,
 	flags &= ~XTIME;
 
 	if (t->ioact != NULL || t->type == TPIPE || t->type == TCOPROC) {
-		e->savefd = (short *) alloc(sizeofN(short, NUFILE), ATEMP);
+		e->savefd = alloc(sizeofN(short, NUFILE), ATEMP);
 		/* initialize to not redirected */
 		memset(e->savefd, 0, sizeofN(short, NUFILE));
 	}

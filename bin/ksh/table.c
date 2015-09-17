@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.16 2015/09/01 13:12:31 tedu Exp $	*/
+/*	$OpenBSD: table.c,v 1.17 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -40,7 +40,7 @@ texpand(struct table *tp, int nsize)
 	struct tbl **ntblp, **otblp = tp->tbls;
 	int osize = tp->size;
 
-	ntblp = (struct tbl**) alloc(sizeofN(struct tbl *, nsize), tp->areap);
+	ntblp = alloc(sizeofN(struct tbl *, nsize), tp->areap);
 	for (i = 0; i < nsize; i++)
 		ntblp[i] = NULL;
 	tp->size = nsize;
@@ -117,7 +117,7 @@ ktenter(struct table *tp, const char *n, unsigned int h)
 
 	/* create new tbl entry */
 	len = strlen(n) + 1;
-	p = (struct tbl *) alloc(offsetof(struct tbl, name[0]) + len,
+	p = alloc(offsetof(struct tbl, name[0]) + len,
 				 tp->areap);
 	p->flag = 0;
 	p->type = 0;
@@ -170,7 +170,7 @@ ktsort(struct table *tp)
 	int i;
 	struct tbl **p, **sp, **dp;
 
-	p = (struct tbl **)alloc(sizeofN(struct tbl *, tp->size+1), ATEMP);
+	p = alloc(sizeofN(struct tbl *, tp->size+1), ATEMP);
 	sp = tp->tbls;		/* source */
 	dp = p;			/* dest */
 	for (i = 0; i < tp->size; i++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.47 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: var.c,v 1.48 2015/09/17 14:21:33 nicm Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -35,7 +35,7 @@ newblock(void)
 	struct block *l;
 	static char *const empty[] = {null};
 
-	l = (struct block *) alloc(sizeof(struct block), ATEMP);
+	l = alloc(sizeof(struct block), ATEMP);
 	l->flags = 0;
 	ainit(&l->area); /* todo: could use e->area (l->area => l->areap) */
 	if (!e->loc) {
@@ -512,7 +512,7 @@ formatstr(struct tbl *vp, const char *s)
 	} else
 		nlen = olen;
 
-	p = (char *) alloc(nlen + 1, ATEMP);
+	p = alloc(nlen + 1, ATEMP);
 	if (vp->flag & (RJUST|LJUST)) {
 		int slen;
 
@@ -568,7 +568,7 @@ export(struct tbl *vp, const char *val)
 	int vallen = strlen(val) + 1;
 
 	vp->flag |= ALLOC;
-	xp = (char*)alloc(namelen + 1 + vallen, vp->areap);
+	xp = alloc(namelen + 1 + vallen, vp->areap);
 	memcpy(vp->val.s = xp, vp->name, namelen);
 	xp += namelen;
 	*xp++ = '=';
@@ -1123,7 +1123,7 @@ arraysearch(struct tbl *vp, int val)
 		else
 			new = curr;
 	} else
-		new = (struct tbl *)alloc(sizeof(struct tbl) + namelen,
+		new = alloc(sizeof(struct tbl) + namelen,
 		    vp->areap);
 	strlcpy(new->name, vp->name, namelen);
 	new->flag = vp->flag & ~(ALLOC|DEFINED|ISSET|SPECIAL);

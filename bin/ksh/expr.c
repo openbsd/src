@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.25 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: expr.c,v 1.26 2015/09/17 14:21:33 nicm Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -560,7 +560,7 @@ tempvar(void)
 {
 	struct tbl *vp;
 
-	vp = (struct tbl*) alloc(sizeof(struct tbl), ATEMP);
+	vp = alloc(sizeof(struct tbl), ATEMP);
 	vp->flag = ISSET|INTEGER;
 	vp->type = 0;
 	vp->areap = ATEMP;
