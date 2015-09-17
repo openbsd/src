@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2015/09/14 01:45:03 doug Exp $
+# $OpenBSD: Makefile,v 1.24 2015/09/17 14:43:23 bcook Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -646,7 +646,6 @@ MLINKS+=\
 	EVP_DigestInit.3 EVP_md5.3 \
 	EVP_DigestInit.3 EVP_md_null.3 \
 	EVP_DigestInit.3 EVP_ripemd160.3 \
-	EVP_DigestInit.3 EVP_sha.3 \
 	EVP_DigestInit.3 EVP_sha1.3 \
 	EVP_DigestSignInit.3 EVP_DigestSignUpdate.3 \
 	EVP_DigestSignInit.3 EVP_DigestSignFinal.3 \
