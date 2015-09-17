@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.29 2015/08/28 00:03:53 deraadt Exp $ */
+/*	$OpenBSD: qlw.c,v 1.30 2015/09/17 17:59:15 miod Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -38,7 +38,9 @@
 #include <dev/ic/qlwreg.h>
 #include <dev/ic/qlwvar.h>
 
+#ifndef SMALL_KERNEL
 #define QLW_DEBUG
+#endif
 
 #ifdef QLW_DEBUG
 #define DPRINTF(m, f...) do { if ((qlwdebug & (m)) == (m)) printf(f); } \
@@ -117,8 +119,13 @@ void		qlw_free_ccbs(struct qlw_softc *);
 void		*qlw_get_ccb(void *);
 void		qlw_put_ccb(void *, void *);
 
+#ifdef QLW_DEBUG
 void		qlw_dump_iocb(struct qlw_softc *, void *, int);
 void		qlw_dump_iocb_segs(struct qlw_softc *, void *, int);
+#else
+#define qlw_dump_iocb(sc, h, fl)	do { /* nothing */ } while (0)
+#define qlw_dump_iocb_segs(sc, h, fl)	do { /* nothing */ } while (0)
+#endif
 
 static inline int
 qlw_xs_bus(struct qlw_softc *sc, struct scsi_xfer *xs)
@@ -1225,10 +1232,10 @@ qlw_async(struct qlw_softc *sc, u_int16_t info)
 	return (1);
 }
 
+#ifdef QLW_DEBUG
 void
 qlw_dump_iocb(struct qlw_softc *sc, void *buf, int flags)
 {
-#ifdef QLW_DEBUG
 	u_int8_t *iocb = buf;
 	int l;
 	int b;
@@ -1243,13 +1250,11 @@ qlw_dump_iocb(struct qlw_softc *sc, void *buf, int flags)
 		}
 		printf("\n");
 	}
-#endif
 }
 
 void
 qlw_dump_iocb_segs(struct qlw_softc *sc, void *segs, int n)
 {
-#ifdef QLW_DEBUG
 	u_int8_t *buf = segs;
 	int s, b;
 	if ((qlwdebug & QLW_D_IOCB) == 0)
@@ -1263,8 +1268,8 @@ qlw_dump_iocb_segs(struct qlw_softc *sc, void *segs, int n)
 		}
 		printf("\n");
 	}
-#endif
 }
+#endif
 
 /*
  * The PCI bus is little-endian whereas SBus is big-endian.  This
