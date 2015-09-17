@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.43 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: history.c,v 1.44 2015/09/17 21:39:54 nicm Exp $	*/
 
 /*
  * command history
@@ -346,7 +346,7 @@ hist_replace(char **hp, const char *pat, const char *rep, int global)
 static char **
 hist_get(const char *str, int approx, int allow_cur)
 {
-	char **hp = (char **) 0;
+	char **hp = NULL;
 	int n;
 
 	if (getn(str, &n)) {
@@ -356,18 +356,18 @@ hist_get(const char *str, int approx, int allow_cur)
 				hp = hist_get_oldest();
 			else {
 				bi_errorf("%s: not in history", str);
-				hp = (char **) 0;
+				hp = NULL;
 			}
 		} else if (hp > histptr) {
 			if (approx)
 				hp = hist_get_newest(allow_cur);
 			else {
 				bi_errorf("%s: not in history", str);
-				hp = (char **) 0;
+				hp = NULL;
 			}
 		} else if (!allow_cur && hp == histptr) {
 			bi_errorf("%s: invalid range", str);
-			hp = (char **) 0;
+			hp = NULL;
 		}
 	} else {
 		int anchored = *str == '?' ? (++str, 0) : 1;
@@ -376,7 +376,7 @@ hist_get(const char *str, int approx, int allow_cur)
 		n = findhist(histptr - history - 1, 0, str, anchored);
 		if (n < 0) {
 			bi_errorf("%s: not in history", str);
-			hp = (char **) 0;
+			hp = NULL;
 		} else
 			hp = &history[n];
 	}
@@ -389,7 +389,7 @@ hist_get_newest(int allow_cur)
 {
 	if (histptr < history || (!allow_cur && histptr == history)) {
 		bi_errorf("no history (yet)");
-		return (char **) 0;
+		return NULL;
 	}
 	if (allow_cur)
 		return histptr;
@@ -402,7 +402,7 @@ hist_get_oldest(void)
 {
 	if (histptr <= history) {
 		bi_errorf("no history (yet)");
-		return (char **) 0;
+		return NULL;
 	}
 	return history;
 }

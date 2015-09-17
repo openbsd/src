@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.46 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.47 2015/09/17 21:39:54 nicm Exp $	*/
 
 /*
  * Process and job control
@@ -146,7 +146,7 @@ j_init(int mflagset)
 	child_max = CHILD_MAX; /* so syscon() isn't always being called */
 
 	sigemptyset(&sm_default);
-	sigprocmask(SIG_SETMASK, &sm_default, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &sm_default, NULL);
 
 	sigemptyset(&sm_sigchld);
 	sigaddset(&sm_sigchld, SIGCHLD);
@@ -161,7 +161,7 @@ j_init(int mflagset)
 	/* shl_j is used to do asynchronous notification (used in
 	 * an interrupt handler, so need a distinct shf)
 	 */
-	shl_j = shf_fdopen(2, SHF_WR, (struct shf *) 0);
+	shl_j = shf_fdopen(2, SHF_WR, NULL);
 
 	if (Flag(FMONITOR) || Flag(FTALKING)) {
 		int i;
@@ -247,7 +247,7 @@ j_exit(void)
 	Job	*j;
 	int	killed = 0;
 
-	for (j = job_list; j != (Job *) 0; j = j->next) {
+	for (j = job_list; j != NULL; j = j->next) {
 		if (j->ppid == procpid &&
 		    (j->state == PSTOPPED ||
 		    (j->state == PRUNNING &&
@@ -407,7 +407,7 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 	sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
 
 	p = new_proc();
-	p->next = (Proc *) 0;
+	p->next = NULL;
 	p->state = PRUNNING;
 	p->status = 0;
 	p->pid = 0;
@@ -454,7 +454,7 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 	if (i < 0) {
 		kill_job(j, SIGKILL);
 		remove_job(j, "fork failed");
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		errorf("cannot fork - try again");
 	}
 	ischild = i == 0;
@@ -494,7 +494,7 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 		/* Do this before restoring signal */
 		if (flags & XCOPROC)
 			coproc_cleanup(false);
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		cleanup_parents_env();
 #ifdef JOBS
 		/* If FMONITOR or FTALKING is set, these signals are ignored,
@@ -566,7 +566,7 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 			rv = j_waitj(j, JW_NONE, "jw:last proc");
 	}
 
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	return rv;
 }
@@ -584,7 +584,7 @@ startlast(void)
 		last_job->flags |= JF_WAITING;
 		j_startjob(last_job);
 	}
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 /* wait for last job: only used for `command` jobs */
@@ -603,13 +603,13 @@ waitlast(void)
 			warningf(true, "waitlast: no last job");
 		else
 			internal_errorf(0, "waitlast: not started");
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		return 125; /* not so arbitrary, non-zero value */
 	}
 
 	rv = j_waitj(j, JW_NONE, "jw:waitlast");
 
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	return rv;
 }
@@ -637,18 +637,18 @@ waitfor(const char *cp, int *sigp)
 			if (j->ppid == procpid && j->state == PRUNNING)
 				break;
 		if (!j) {
-			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+			sigprocmask(SIG_SETMASK, &omask, NULL);
 			return -1;
 		}
 	} else if ((j = j_lookup(cp, &ecode))) {
 		/* don't report normal job completion */
 		flags &= ~JW_ASYNCNOTIFY;
 		if (j->ppid != procpid) {
-			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+			sigprocmask(SIG_SETMASK, &omask, NULL);
 			return -1;
 		}
 	} else {
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (ecode != JL_NOSUCH)
 			bi_errorf("%s: %s", cp, lookup_msgs[ecode]);
 		return -1;
@@ -657,7 +657,7 @@ waitfor(const char *cp, int *sigp)
 	/* at&t ksh will wait for stopped jobs - we don't */
 	rv = j_waitj(j, flags, "jw:waitfor");
 
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	if (rv < 0) /* we were interrupted */
 		*sigp = 128 + -rv;
@@ -676,8 +676,8 @@ j_kill(const char *cp, int sig)
 
 	sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
 
-	if ((j = j_lookup(cp, &ecode)) == (Job *) 0) {
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	if ((j = j_lookup(cp, &ecode)) == NULL) {
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		bi_errorf("%s: %s", cp, lookup_msgs[ecode]);
 		return 1;
 	}
@@ -698,7 +698,7 @@ j_kill(const char *cp, int sig)
 		}
 	}
 
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	return rv;
 }
@@ -717,14 +717,14 @@ j_resume(const char *cp, int bg)
 
 	sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
 
-	if ((j = j_lookup(cp, &ecode)) == (Job *) 0) {
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	if ((j = j_lookup(cp, &ecode)) == NULL) {
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		bi_errorf("%s: %s", cp, lookup_msgs[ecode]);
 		return 1;
 	}
 
 	if (j->pgrp == 0) {
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		bi_errorf("job not job-controlled");
 		return 1;
 	}
@@ -733,7 +733,7 @@ j_resume(const char *cp, int bg)
 		shprintf("[%d] ", j->job);
 
 	running = 0;
-	for (p = j->proc_list; p != (Proc *) 0; p = p->next) {
+	for (p = j->proc_list; p != NULL; p = p->next) {
 		if (p->state == PSTOPPED) {
 			p->state = PRUNNING;
 			p->status = 0;
@@ -761,8 +761,7 @@ j_resume(const char *cp, int bg)
 			    j->saved_ttypgrp : j->pgrp) < 0) {
 				if (j->flags & JF_SAVEDTTY)
 					tcsetattr(tty_fd, TCSADRAIN, &tty_state);
-				sigprocmask(SIG_SETMASK, &omask,
-				    (sigset_t *) 0);
+				sigprocmask(SIG_SETMASK, &omask, NULL);
 				bi_errorf("1st tcsetpgrp(%d, %d) failed: %s",
 				    tty_fd,
 				    (int) ((j->flags & JF_SAVEDTTYPGRP) ?
@@ -775,7 +774,7 @@ j_resume(const char *cp, int bg)
 		j->flags |= JF_FG;
 		j->flags &= ~JF_KNOWN;
 		if (j == async_job)
-			async_job = (Job *) 0;
+			async_job = NULL;
 	}
 
 	if (j->state == PRUNNING && killpg(j->pgrp, SIGCONT) < 0) {
@@ -794,7 +793,7 @@ j_resume(const char *cp, int bg)
 			}
 # endif /* JOBS */
 		}
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		bi_errorf("cannot continue job %s: %s",
 		    cp, strerror(err));
 		return 1;
@@ -807,7 +806,7 @@ j_resume(const char *cp, int bg)
 # endif /* JOBS */
 		rv = j_waitj(j, JW_NONE, "jw:resume");
 	}
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	return rv;
 }
 #endif /* JOBS */
@@ -819,7 +818,7 @@ j_stopped_running(void)
 	Job	*j;
 	int	which = 0;
 
-	for (j = job_list; j != (Job *) 0; j = j->next) {
+	for (j = job_list; j != NULL; j = j->next) {
 #ifdef JOBS
 		if (j->ppid == procpid && j->state == PSTOPPED)
 			which |= 1;
@@ -850,7 +849,7 @@ j_njobs(void)
 	for (j = job_list; j; j = j->next)
 		nj++;
 
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	return nj;
 }
 
@@ -874,8 +873,8 @@ j_jobs(const char *cp, int slp,
 	if (cp) {
 		int	ecode;
 
-		if ((j = j_lookup(cp, &ecode)) == (Job *) 0) {
-			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		if ((j = j_lookup(cp, &ecode)) == NULL) {
+			sigprocmask(SIG_SETMASK, &omask, NULL);
 			bi_errorf("%s: %s", cp, lookup_msgs[ecode]);
 			return 1;
 		}
@@ -898,7 +897,7 @@ j_jobs(const char *cp, int slp,
 		if (j->flags & JF_REMOVE)
 			remove_job(j, "jobs");
 	}
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	return 0;
 }
 
@@ -927,7 +926,7 @@ j_notify(void)
 			remove_job(j, "notify");
 	}
 	shf_flush(shl_out);
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
 /* Return pid of last process in last asynchronous job */
@@ -941,7 +940,7 @@ j_async(void)
 	if (async_job)
 		async_job->flags |= JF_KNOWN;
 
-	sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 	return async_pid;
 }
@@ -964,7 +963,7 @@ j_set_async(Job *j)
 	async_job = j;
 	async_pid = j->last_proc->pid;
 	while (nzombie > child_max) {
-		oldest = (Job *) 0;
+		oldest = NULL;
 		for (jl = job_list; jl; jl = jl->next)
 			if (jl != async_job && (jl->flags & JF_ZOMBIE) &&
 			    (!oldest || jl->age < oldest->age))
@@ -1168,12 +1167,12 @@ j_sigchld(int sig)
 		getrusage(RUSAGE_CHILDREN, &ru1);
 
 		/* find job and process structures for this pid */
-		for (j = job_list; j != (Job *) 0; j = j->next)
-			for (p = j->proc_list; p != (Proc *) 0; p = p->next)
+		for (j = job_list; j != NULL; j = j->next)
+			for (p = j->proc_list; p != NULL; p = p->next)
 				if (p->pid == pid)
 					goto found;
 found:
-		if (j == (Job *) 0) {
+		if (j == NULL) {
 			/* Can occur if process has kids, then execs shell
 			warningf(true, "bad process waited for (pid = %d)",
 				pid);
@@ -1227,7 +1226,7 @@ check_job(Job *j)
 	}
 
 	jstate = PRUNNING;
-	for (p=j->proc_list; p != (Proc *) 0; p = p->next) {
+	for (p=j->proc_list; p != NULL; p = p->next) {
 		if (p->state == PRUNNING)
 			return;	/* some processes still running */
 		if (p->state > jstate)
@@ -1256,7 +1255,7 @@ check_job(Job *j)
 		 * (at least, this is what ksh93d thinks)
 		 */
 		if (coproc.job == j) {
-			coproc.job = (void *) 0;
+			coproc.job = NULL;
 			/* XXX would be nice to get the closes out of here
 			 * so they aren't done in the signal handler.
 			 * Would mean a check in coproc_getfd() to
@@ -1345,7 +1344,7 @@ j_print(Job *j, int how, struct shf *shf)
 	else if (j == job_list->next)
 		jobchar = '-';
 
-	for (p = j->proc_list; p != (Proc *) 0;) {
+	for (p = j->proc_list; p != NULL;) {
 		coredumped = 0;
 		switch (p->state) {
 		case PRUNNING:
@@ -1437,37 +1436,37 @@ j_lookup(const char *cp, int *ecodep)
 		if (errstr) {
 			if (ecodep)
 				*ecodep = JL_NOSUCH;
-			return (Job *) 0;
+			return NULL;
 		}
 		/* Look for last_proc->pid (what $! returns) first... */
-		for (j = job_list; j != (Job *) 0; j = j->next)
+		for (j = job_list; j != NULL; j = j->next)
 			if (j->last_proc && j->last_proc->pid == job)
 				return j;
 		/* ...then look for process group (this is non-POSIX),
 		 * but should not break anything (so FPOSIX isn't used).
 		 */
-		for (j = job_list; j != (Job *) 0; j = j->next)
+		for (j = job_list; j != NULL; j = j->next)
 			if (j->pgrp && j->pgrp == job)
 				return j;
 		if (ecodep)
 			*ecodep = JL_NOSUCH;
-		return (Job *) 0;
+		return NULL;
 	}
 	if (*cp != '%') {
 		if (ecodep)
 			*ecodep = JL_INVALID;
-		return (Job *) 0;
+		return NULL;
 	}
 	switch (*++cp) {
 	case '\0': /* non-standard */
 	case '+':
 	case '%':
-		if (job_list != (Job *) 0)
+		if (job_list != NULL)
 			return job_list;
 		break;
 
 	case '-':
-		if (job_list != (Job *) 0 && job_list->next)
+		if (job_list != NULL && job_list->next)
 			return job_list->next;
 		break;
 
@@ -1476,20 +1475,20 @@ j_lookup(const char *cp, int *ecodep)
 		job = strtonum(cp, 1, INT_MAX, &errstr);
 		if (errstr)
 			break;
-		for (j = job_list; j != (Job *) 0; j = j->next)
+		for (j = job_list; j != NULL; j = j->next)
 			if (j->job == job)
 				return j;
 		break;
 
 	case '?':		/* %?string */
-		last_match = (Job *) 0;
-		for (j = job_list; j != (Job *) 0; j = j->next)
-			for (p = j->proc_list; p != (Proc *) 0; p = p->next)
+		last_match = NULL;
+		for (j = job_list; j != NULL; j = j->next)
+			for (p = j->proc_list; p != NULL; p = p->next)
 				if (strstr(p->command, cp+1) != NULL) {
 					if (last_match) {
 						if (ecodep)
 							*ecodep = JL_AMBIG;
-						return (Job *) 0;
+						return NULL;
 					}
 					last_match = j;
 				}
@@ -1499,13 +1498,13 @@ j_lookup(const char *cp, int *ecodep)
 
 	default:		/* %string */
 		len = strlen(cp);
-		last_match = (Job *) 0;
-		for (j = job_list; j != (Job *) 0; j = j->next)
+		last_match = NULL;
+		for (j = job_list; j != NULL; j = j->next)
 			if (strncmp(cp, j->proc_list->command, len) == 0) {
 				if (last_match) {
 					if (ecodep)
 						*ecodep = JL_AMBIG;
-					return (Job *) 0;
+					return NULL;
 				}
 				last_match = j;
 			}
@@ -1515,7 +1514,7 @@ j_lookup(const char *cp, int *ecodep)
 	}
 	if (ecodep)
 		*ecodep = JL_NOSUCH;
-	return (Job *) 0;
+	return NULL;
 }
 
 static Job	*free_jobs;
@@ -1531,7 +1530,7 @@ new_job(void)
 	int	i;
 	Job	*newj, *j;
 
-	if (free_jobs != (Job *) 0) {
+	if (free_jobs != NULL) {
 		newj = free_jobs;
 		free_jobs = free_jobs->next;
 	} else
@@ -1541,7 +1540,7 @@ new_job(void)
 	for (i = 1; ; i++) {
 		for (j = job_list; j && j->job != i; j = j->next)
 			;
-		if (j == (Job *) 0)
+		if (j == NULL)
 			break;
 	}
 	newj->job = i;
@@ -1558,7 +1557,7 @@ new_proc(void)
 {
 	Proc	*p;
 
-	if (free_procs != (Proc *) 0) {
+	if (free_procs != NULL) {
 		p = free_procs;
 		free_procs = free_procs->next;
 	} else
@@ -1580,7 +1579,7 @@ remove_job(Job *j, const char *where)
 
 	prev = &job_list;
 	curr = *prev;
-	for (; curr != (Job *) 0 && curr != j; prev = &curr->next, curr = *prev)
+	for (; curr != NULL && curr != j; prev = &curr->next, curr = *prev)
 		;
 	if (curr != j) {
 		internal_errorf(0, "remove_job: job not found (%s)", where);
@@ -1589,7 +1588,7 @@ remove_job(Job *j, const char *where)
 	*prev = curr->next;
 
 	/* free up proc structures */
-	for (p = j->proc_list; p != (Proc *) 0; ) {
+	for (p = j->proc_list; p != NULL; ) {
 		tmp = p;
 		p = p->next;
 		tmp->next = free_procs;
@@ -1602,9 +1601,9 @@ remove_job(Job *j, const char *where)
 	free_jobs = j;
 
 	if (j == last_job)
-		last_job = (Job *) 0;
+		last_job = NULL;
 	if (j == async_job)
-		async_job = (Job *) 0;
+		async_job = NULL;
 }
 
 /* put j in a particular location (taking it out job_list if it is there
@@ -1653,7 +1652,7 @@ kill_job(Job *j, int sig)
 	Proc	*p;
 	int	rval = 0;
 
-	for (p = j->proc_list; p != (Proc *) 0; p = p->next)
+	for (p = j->proc_list; p != NULL; p = p->next)
 		if (p->pid != 0)
 			if (kill(p->pid, sig) < 0)
 				rval = -1;
