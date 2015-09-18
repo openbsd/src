@@ -2605,7 +2605,6 @@
 ./usr/share/man/man3/EVP_rc5_32_12_16_ecb.3
 ./usr/share/man/man3/EVP_rc5_32_12_16_ofb.3
 ./usr/share/man/man3/EVP_ripemd160.3
-./usr/share/man/man3/EVP_sha.3
 ./usr/share/man/man3/EVP_sha1.3
 ./usr/share/man/man3/FD_CLR.3
 ./usr/share/man/man3/FD_ISSET.3
