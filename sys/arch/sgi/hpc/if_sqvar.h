@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sqvar.h,v 1.5 2015/09/05 21:13:24 miod Exp $	*/
+/*	$OpenBSD: if_sqvar.h,v 1.6 2015/09/18 20:50:02 miod Exp $	*/
 /*	$NetBSD: sqvar.h,v 1.12 2011/01/25 13:12:39 tsutsui Exp $	*/
 
 /*
@@ -161,55 +161,29 @@ struct sq_softc {
 #define	SQ_CDRXADDR(sc, x)	((sc)->sc_cddma + SQ_CDRXOFF((x)))
 
 static inline void
-SQ_CDTXSYNC(struct sq_softc *sc, int __x, int __n, int ops)
-{
-	if (!ip22_ecc)
-		return;
-
-	/* If it will wrap around, sync to the end of the ring. */
-	if ((__x + __n) > SQ_NTXDESC) {
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,
-		    SQ_CDTXOFF(__x), sizeof(struct hpc_dma_desc) *
-		    (SQ_NTXDESC - __x), (ops));
-		__n -= (SQ_NTXDESC - __x);
-		__x = 0;
-	}
-
-	/* Now sync whatever is left. */
-	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,
-	    SQ_CDTXOFF(__x), sizeof(struct hpc_dma_desc) * __n, (ops));
-}
-
-#define	SQ_CDRXSYNC(sc, x, ops)						\
-do {									\
-	if (ip22_ecc)							\
-		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cdmap,		\
-		    SQ_CDRXOFF((x)), sizeof(struct hpc_dma_desc), (ops)); \
-} while (0)
-
-static inline void
 SQ_INIT_RXDESC(struct sq_softc *sc, unsigned int x)
 {
-	struct hpc_dma_desc *__rxd;
+	struct hpc_dma_desc *__rxd, *__active, __store;
 	struct mbuf *__m = (sc)->sc_rxmbuf[(x)];
 
 	__rxd = &(sc)->sc_rxdesc[(x)];
-	hpc_sync_dma_desc(__rxd);
+	__active = hpc_sync_dma_desc(__rxd, &__store);
 	__m->m_data = __m->m_ext.ext_buf;
 	if (sc->hpc_regs->revision == 3) {
-		__rxd->hpc3_hdd_bufptr =
+		__active->hpc3_hdd_bufptr =
 		    (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr;
-		__rxd->hpc3_hdd_ctl = __m->m_ext.ext_size | HPC3_HDD_CTL_OWN |
-		    HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOPACKET |
+		__active->hpc3_hdd_ctl = __m->m_ext.ext_size |
+		    HPC3_HDD_CTL_OWN | HPC3_HDD_CTL_INTR |
+		    HPC3_HDD_CTL_EOPACKET |
 		    ((x) == (SQ_NRXDESC  - 1) ? HPC3_HDD_CTL_EOCHAIN : 0);
 	} else {
-		__rxd->hpc1_hdd_bufptr =
+		__active->hpc1_hdd_bufptr =
 		    (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr |
 		    ((x) == (SQ_NRXDESC - 1) ? HPC1_HDD_CTL_EOCHAIN : 0);
-		__rxd->hpc1_hdd_ctl = __m->m_ext.ext_size | HPC1_HDD_CTL_OWN |
-		    HPC1_HDD_CTL_INTR | HPC1_HDD_CTL_EOPACKET;
+		__active->hpc1_hdd_ctl = __m->m_ext.ext_size |
+		    HPC1_HDD_CTL_OWN | HPC1_HDD_CTL_INTR |
+		    HPC1_HDD_CTL_EOPACKET;
 	}
-	__rxd->hdd_descptr = SQ_CDRXADDR((sc), SQ_NEXTRX((x)));
-	hpc_update_dma_desc(__rxd);
-	SQ_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	__active->hdd_descptr = SQ_CDRXADDR((sc), SQ_NEXTRX((x)));
+	hpc_update_dma_desc(__rxd, __active);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpc.c,v 1.17 2015/09/05 21:13:24 miod Exp $	*/
+/*	$OpenBSD: hpc.c,v 1.18 2015/09/18 20:50:02 miod Exp $	*/
 /*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
 /*	$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
 
@@ -88,6 +88,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <mips64/cache.h>
 #include <machine/cpu.h>
 
 #include <sgi/gio/gioreg.h>
@@ -363,14 +364,17 @@ void	hpc_blink_ioc(void *);
 int	hpc_read_eeprom(int, bus_space_tag_t, bus_space_handle_t, uint8_t *,
 	    size_t);
 
-void	hpc_sync_dma_desc_par(struct hpc_dma_desc *);
-void	hpc_sync_dma_desc_ecc(struct hpc_dma_desc *);
-void	hpc_update_dma_desc_par(struct hpc_dma_desc *);
-void	hpc_update_dma_desc_ecc(struct hpc_dma_desc *);
+struct hpc_dma_desc *hpc_sync_dma_desc_par(struct hpc_dma_desc *,
+	    struct hpc_dma_desc *);
+struct hpc_dma_desc *hpc_sync_dma_desc_ecc(struct hpc_dma_desc *,
+	    struct hpc_dma_desc *);
+void	hpc_update_dma_desc_par(struct hpc_dma_desc *, struct hpc_dma_desc *);
+void	hpc_update_dma_desc_ecc(struct hpc_dma_desc *, struct hpc_dma_desc *);
 
 /* globals since they depend upon the system type, not the hpc version */
-void	(*hpc_sync_dma_desc_fn)(struct hpc_dma_desc *);
-void	(*hpc_update_dma_desc_fn)(struct hpc_dma_desc *);
+struct hpc_dma_desc *(*hpc_sync_dma_desc_fn)(struct hpc_dma_desc *,
+	    struct hpc_dma_desc *);
+void	(*hpc_update_dma_desc_fn)(struct hpc_dma_desc *, struct hpc_dma_desc *);
 
 const struct cfattach hpc_ca = {
 	sizeof(struct hpc_softc), hpc_match, hpc_attach
@@ -975,16 +979,16 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
  * Routines to update HPC DMA descriptors.
  */
 
-void
-hpc_sync_dma_desc(struct hpc_dma_desc *desc)
+struct hpc_dma_desc *
+hpc_sync_dma_desc(struct hpc_dma_desc *desc, struct hpc_dma_desc *store)
 {
-	(*hpc_sync_dma_desc_fn)(desc);
+	return (*hpc_sync_dma_desc_fn)(desc, store);
 }
 
 void
-hpc_update_dma_desc(struct hpc_dma_desc *desc)
+hpc_update_dma_desc(struct hpc_dma_desc *desc, struct hpc_dma_desc *store)
 {
-	(*hpc_update_dma_desc_fn)(desc);
+	(*hpc_update_dma_desc_fn)(desc, store);
 }
 
 /*
@@ -992,33 +996,49 @@ hpc_update_dma_desc(struct hpc_dma_desc *desc)
  * accesses are allowed. No cache operation is needed.
  */
 
-void
-hpc_sync_dma_desc_par(struct hpc_dma_desc *desc)
+struct hpc_dma_desc *
+hpc_sync_dma_desc_par(struct hpc_dma_desc *desc, struct hpc_dma_desc *store)
 {
 	/* nothing to do */
+	return desc;
 }
 
 void
-hpc_update_dma_desc_par(struct hpc_dma_desc *desc)
+hpc_update_dma_desc_par(struct hpc_dma_desc *desc, struct hpc_dma_desc *store)
 {
 	/* nothing to do */
+	KDASSERT(desc == store);
 }
 
 /*
  * ECC MC flavour: descriptor are in cacheable memory, and need to be
  * evicted from cache before reading, and flushed from cache after updating.
+ *
+ * In addition, on R1000 systems, an actual copy of the descriptor needs
+ * to be performed, to prevent speculative execution from writing to the
+ * cached descriptor.
  */
 
-void
-hpc_sync_dma_desc_ecc(struct hpc_dma_desc *desc)
+struct hpc_dma_desc *
+hpc_sync_dma_desc_ecc(struct hpc_dma_desc *desc, struct hpc_dma_desc *store)
 {
-	Mips_HitInvalidateDCache(curcpu(),
-	    (vaddr_t)desc, sizeof(struct hpc_dma_desc));
+	Mips_IOSyncDCache(curcpu(),
+	    (vaddr_t)desc, sizeof(struct hpc_dma_desc), CACHE_SYNC_R);
+
+	store->hdd_bufptr = desc->hdd_bufptr;
+	store->hdd_ctl = desc->hdd_ctl;
+	store->hdd_descptr = desc->hdd_descptr;
+
+	return store;
 }
 
 void
-hpc_update_dma_desc_ecc(struct hpc_dma_desc *desc)
+hpc_update_dma_desc_ecc(struct hpc_dma_desc *desc, struct hpc_dma_desc *store)
 {
-	Mips_HitSyncDCache(curcpu(),
-	    (vaddr_t)desc, sizeof(struct hpc_dma_desc));
+	desc->hdd_bufptr = store->hdd_bufptr;
+	desc->hdd_ctl = store->hdd_ctl;
+	desc->hdd_descptr = store->hdd_descptr;
+
+	Mips_IOSyncDCache(curcpu(),
+	    (vaddr_t)desc, sizeof(struct hpc_dma_desc), CACHE_SYNC_X);
 }

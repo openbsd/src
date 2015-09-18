@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.16 2015/09/14 11:18:49 stsp Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.17 2015/09/18 20:50:02 miod Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ sq_start(struct ifnet *ifp)
 {
 	struct sq_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
-	struct hpc_dma_desc *txd;
+	struct hpc_dma_desc *txd, *active, store;
 	bus_dmamap_t dmamap;
 	uint32_t status;
 	int err, len, totlen, nexttx, firsttx, lasttx = -1, ofree, seg;
@@ -784,31 +784,33 @@ sq_start(struct ifnet *ifp)
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = SQ_NEXTTX(nexttx)) {
 			txd = sc->sc_txdesc + nexttx;
-			hpc_sync_dma_desc(txd);
+			active = hpc_sync_dma_desc(txd, &store);
 			if (sc->hpc_regs->revision == 3) {
-				txd->hpc3_hdd_bufptr =
+				active->hpc3_hdd_bufptr =
 				    dmamap->dm_segs[seg].ds_addr;
-				txd->hpc3_hdd_ctl = dmamap->dm_segs[seg].ds_len;
+				active->hpc3_hdd_ctl =
+				    dmamap->dm_segs[seg].ds_len;
 			} else {
-				txd->hpc1_hdd_bufptr =
+				active->hpc1_hdd_bufptr =
 				    dmamap->dm_segs[seg].ds_addr;
-				txd->hpc1_hdd_ctl = dmamap->dm_segs[seg].ds_len;
+				active->hpc1_hdd_ctl =
+				    dmamap->dm_segs[seg].ds_len;
 			}
-			txd->hdd_descptr = SQ_CDTXADDR(sc, SQ_NEXTTX(nexttx));
-			hpc_update_dma_desc(txd);
+			active->hdd_descptr = SQ_CDTXADDR(sc, SQ_NEXTTX(nexttx));
+			hpc_update_dma_desc(txd, active);
 			lasttx = nexttx;
 			totlen += dmamap->dm_segs[seg].ds_len;
 		}
 
 		/* Last descriptor gets end-of-packet */
 		KASSERT(lasttx != -1);
-		/* txd = sc->sc_txdesc + lasttx; */
-		/* hpc_sync_dma_desc(txd); */
+		txd = sc->sc_txdesc + lasttx;
+		active = hpc_sync_dma_desc(txd, &store);
 		if (sc->hpc_regs->revision == 3)
-			txd->hpc3_hdd_ctl |= HPC3_HDD_CTL_EOPACKET;
+			active->hpc3_hdd_ctl |= HPC3_HDD_CTL_EOPACKET;
 		else
-			txd->hpc1_hdd_ctl |= HPC1_HDD_CTL_EOPACKET;
-		hpc_update_dma_desc(txd);
+			active->hpc1_hdd_ctl |= HPC1_HDD_CTL_EOPACKET;
+		hpc_update_dma_desc(txd, active);
 
 		SQ_DPRINTF(("%s: transmit %d-%d, len %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_nexttx, lasttx, totlen));
@@ -816,26 +818,24 @@ sq_start(struct ifnet *ifp)
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("     transmit chain:\n");
 			for (seg = sc->sc_nexttx;; seg = SQ_NEXTTX(seg)) {
+				active = hpc_sync_dma_desc(&sc->sc_txdesc[seg],
+				    &store);
 				printf("     descriptor %d:\n", seg);
 				printf("       hdd_bufptr:      0x%08x\n",
 				    (sc->hpc_regs->revision == 3) ?
-				    sc->sc_txdesc[seg].hpc3_hdd_bufptr :
-				    sc->sc_txdesc[seg].hpc1_hdd_bufptr);
+				    active->hpc3_hdd_bufptr :
+				    active->hpc1_hdd_bufptr);
 				printf("       hdd_ctl: 0x%08x\n",
 				    (sc->hpc_regs->revision == 3) ?
-				    sc->sc_txdesc[seg].hpc3_hdd_ctl:
-				    sc->sc_txdesc[seg].hpc1_hdd_ctl);
+				    active->hpc3_hdd_ctl:
+				    active->hpc1_hdd_ctl);
 				printf("       hdd_descptr:      0x%08x\n",
-				    sc->sc_txdesc[seg].hdd_descptr);
+				    active->hdd_descptr);
 
 				if (seg == lasttx)
 					break;
 			}
 		}
-
-		/* Sync the descriptors we're using. */
-		SQ_CDTXSYNC(sc, sc->sc_nexttx, dmamap->dm_nsegs,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Store a pointer to the packet so we can free it later */
 		sc->sc_txmbuf[sc->sc_nexttx] = m0;
@@ -865,17 +865,15 @@ sq_start(struct ifnet *ifp)
 		 */
 		KASSERT(lasttx != -1);
 		txd = sc->sc_txdesc + lasttx;
-		hpc_sync_dma_desc(txd);
+		active = hpc_sync_dma_desc(txd, &store);
 		if (sc->hpc_regs->revision == 3) {
-			txd->hpc3_hdd_ctl |=
+			active->hpc3_hdd_ctl |=
 			    HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOCHAIN;
 		} else {
-			txd->hpc1_hdd_ctl |= HPC1_HDD_CTL_INTR;
-			txd->hpc1_hdd_bufptr |= HPC1_HDD_CTL_EOCHAIN;
+			active->hpc1_hdd_ctl |= HPC1_HDD_CTL_INTR;
+			active->hpc1_hdd_bufptr |= HPC1_HDD_CTL_EOCHAIN;
 		}
-		hpc_update_dma_desc(txd);
-		SQ_CDTXSYNC(sc, lasttx, 1,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		hpc_update_dma_desc(txd, active);
 
 		/*
 		 * There is a potential race condition here if the HPC
@@ -895,18 +893,16 @@ sq_start(struct ifnet *ifp)
 			SQ_TRACE(SQ_ADD_TO_DMA, sc, firsttx, status);
 
 			txd = sc->sc_txdesc + SQ_PREVTX(firsttx);
-			hpc_sync_dma_desc(txd);
+			active = hpc_sync_dma_desc(txd, &store);
 			/*
 			 * NB: hpc3_hdd_ctl == hpc1_hdd_bufptr, and
 			 * HPC1_HDD_CTL_EOCHAIN == HPC3_HDD_CTL_EOCHAIN
 			 */
-			txd->hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
+			active->hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
 			if (sc->hpc_regs->revision != 3)
-				txd->hpc1_hdd_ctl &= ~HPC1_HDD_CTL_INTR;
+				active->hpc1_hdd_ctl &= ~HPC1_HDD_CTL_INTR;
 
-			hpc_update_dma_desc(txd);
-			SQ_CDTXSYNC(sc, SQ_PREVTX(firsttx),  1,
-			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			hpc_update_dma_desc(txd, active);
 		} else if (sc->hpc_regs->revision == 3) {
 			SQ_TRACE(SQ_START_DMA, sc, firsttx, status);
 
@@ -1104,7 +1100,7 @@ sq_rxintr(struct sq_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf* m;
-	struct hpc_dma_desc *rxd;
+	struct hpc_dma_desc *rxd, *active, store;
 	int i, framelen;
 	uint8_t pktstat;
 	uint32_t status;
@@ -1113,15 +1109,14 @@ sq_rxintr(struct sq_softc *sc)
 
 	for (i = sc->sc_nextrx; ; i = SQ_NEXTRX(i)) {
 		rxd = sc->sc_rxdesc + i;
-		SQ_CDRXSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		active = hpc_sync_dma_desc(rxd, &store);
 		/*
 		 * If this is a CPU-owned buffer, we're at the end of the list.
 		 */
 		if (sc->hpc_regs->revision == 3)
-			ctl_reg = rxd->hpc3_hdd_ctl & HPC3_HDD_CTL_OWN;
+			ctl_reg = active->hpc3_hdd_ctl & HPC3_HDD_CTL_OWN;
 		else
-			ctl_reg = rxd->hpc1_hdd_ctl & HPC1_HDD_CTL_OWN;
+			ctl_reg = active->hpc1_hdd_ctl & HPC1_HDD_CTL_OWN;
 
 		if (ctl_reg) {
 #if defined(SQ_DEBUG)
@@ -1138,10 +1133,10 @@ sq_rxintr(struct sq_softc *sc)
 		framelen = m->m_ext.ext_size - 3;
 		if (sc->hpc_regs->revision == 3)
 		    framelen -=
-			HPC3_HDD_CTL_BYTECNT(rxd->hpc3_hdd_ctl);
+			HPC3_HDD_CTL_BYTECNT(active->hpc3_hdd_ctl);
 		else
 		    framelen -=
-			HPC1_HDD_CTL_BYTECNT(rxd->hpc1_hdd_ctl);
+			HPC1_HDD_CTL_BYTECNT(active->hpc1_hdd_ctl);
 
 		/* Now sync the actual packet data */
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
@@ -1191,22 +1186,21 @@ sq_rxintr(struct sq_softc *sc)
 
 	/* If anything happened, move ring start/end pointers to new spot */
 	if (i != sc->sc_nextrx) {
+		new_end = SQ_PREVRX(i);
+		rxd = sc->sc_rxdesc + new_end;
+		active = hpc_sync_dma_desc(rxd, &store);
 		/*
 		 * NB: hpc3_hdd_ctl == hpc1_hdd_bufptr, and
 		 * HPC1_HDD_CTL_EOCHAIN == HPC3_HDD_CTL_EOCHAIN
 		 */
-
-		new_end = SQ_PREVRX(i);
-		rxd = sc->sc_rxdesc + new_end;
-		rxd->hpc3_hdd_ctl |= HPC3_HDD_CTL_EOCHAIN;
-		SQ_CDRXSYNC(sc, new_end,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		active->hpc3_hdd_ctl |= HPC3_HDD_CTL_EOCHAIN;
+		hpc_update_dma_desc(rxd, active);
 
 		orig_end = SQ_PREVRX(sc->sc_nextrx);
 		rxd = sc->sc_rxdesc + orig_end;
-		rxd->hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
-		SQ_CDRXSYNC(sc, orig_end,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		active = hpc_sync_dma_desc(rxd, &store);
+		active->hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
+		hpc_update_dma_desc(rxd, active);
 
 		sc->sc_nextrx = i;
 	}
@@ -1320,9 +1314,6 @@ sq_txring_hpc1(struct sq_softc *sc)
 		if (SQ_CDTXADDR(sc, i) == reclaimto && !reclaimall)
 			break;
 
-		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
 		/* Sync the packet data, unload DMA map, free mbuf */
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i],
 		    0, sc->sc_txmap[i]->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1373,7 +1364,7 @@ sq_txring_hpc3(struct sq_softc *sc)
 	 * descriptors are left over.
 	 */
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct hpc_dma_desc *txd;
+	struct hpc_dma_desc *txd, *active, store;
 	int i;
 	uint32_t status = 0;
 
@@ -1387,12 +1378,10 @@ sq_txring_hpc3(struct sq_softc *sc)
 		status = sq_hpc_read(sc, HPC3_ENETX_CTL);
 
 		txd = sc->sc_txdesc + i;
-		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		hpc_sync_dma_desc(txd);
+		active = hpc_sync_dma_desc(txd, &store);
 
 		/* Check for used descriptor and restart DMA chain if needed */
-		if ((txd->hpc3_hdd_ctl & HPC3_HDD_CTL_XMITDONE) == 0) {
+		if ((active->hpc3_hdd_ctl & HPC3_HDD_CTL_XMITDONE) == 0) {
 			if ((status & HPC3_ENETX_CTL_ACTIVE) == 0) {
 				SQ_TRACE(SQ_RESTART_DMA, sc, i, status);
 

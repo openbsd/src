@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpcvar.h,v 1.9 2015/09/05 21:13:24 miod Exp $	*/
+/*	$OpenBSD: hpcvar.h,v 1.10 2015/09/18 20:50:02 miod Exp $	*/
 /*	$NetBSD: hpcvar.h,v 1.12 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
@@ -116,7 +116,8 @@ void	 hpc_intr_enable(void *);
  */
 struct hpc_dma_desc;
 
-void	hpc_sync_dma_desc(struct hpc_dma_desc *desc);
-void	hpc_update_dma_desc(struct hpc_dma_desc *desc);
+struct hpc_dma_desc *hpc_sync_dma_desc(struct hpc_dma_desc *,
+	    struct hpc_dma_desc *);
+void	hpc_update_dma_desc(struct hpc_dma_desc *, struct hpc_dma_desc *);
 
 extern bus_space_t hpc3bus_tag;
