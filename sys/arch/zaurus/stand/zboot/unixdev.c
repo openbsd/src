@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.8 2015/09/18 13:40:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -38,7 +38,7 @@
 #undef open
 #include "disk.h"
 #include "libsa.h"
-#include <lib/libsa/unixdev.h>
+#include "unixdev.h"
 
 int
 unixstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
