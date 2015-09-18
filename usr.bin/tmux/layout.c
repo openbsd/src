@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.23 2015/04/19 21:34:21 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.24 2015/09/18 09:55:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -686,6 +686,8 @@ layout_split_pane(
 	case LAYOUT_LEFTRIGHT:
 		if (size < 0)
 			size2 = ((sx + 1) / 2) - 1;
+		else if (insert_before)
+			size2 = sx - size - 1;
 		else
 			size2 = size;
 		if (size2 < PANE_MINIMUM)
@@ -699,6 +701,8 @@ layout_split_pane(
 	case LAYOUT_TOPBOTTOM:
 		if (size < 0)
 			size2 = ((sy + 1) / 2) - 1;
+		else if (insert_before)
+			size2 = sy - size - 1;
 		else
 			size2 = size;
 		if (size2 < PANE_MINIMUM)
