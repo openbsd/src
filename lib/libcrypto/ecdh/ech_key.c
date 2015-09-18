@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.5 2015/09/13 14:11:57 jsing Exp $ */
+/* $OpenBSD: ech_key.c,v 1.6 2015/09/18 13:04:41 bcook Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -187,7 +187,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	} else {
 		/* No KDF, just copy out the key and zero the rest. */
 		if (outlen > buflen) {
-			memset(out + buflen, 0, outlen - buflen);
+			memset((void *)((uintptr_t)out + buflen), 0, outlen - buflen);
 			outlen = buflen;
 		}
 		memcpy(out, buf, outlen);
