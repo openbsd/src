@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.210 2015/09/18 17:03:44 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.211 2015/09/18 18:03:47 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -38,6 +38,7 @@ stripcom() {
 
 sm_error() {
 	(($#)) && echo "---- Error: $@"
+	rm -f /var/sysmerge/{etc,pkg,xetc}sum
 	rm -rf ${_TMPROOT}
 	exit 1
 }
