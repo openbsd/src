@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.207 2015/09/09 09:44:31 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.208 2015/09/18 10:55:26 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -332,7 +332,7 @@ sm_install() {
 }
 
 sm_add_user_grp() {
-	local _g _p _gid _l _u _rest _newgrp _newusr
+	local _g _p _gid _l _u _rest
 	local _gr=./etc/group
 	local _pw=./etc/master.passwd
 
@@ -341,8 +341,7 @@ sm_add_user_grp() {
 	while IFS=: read -r -- _g _p _gid _rest; do
 		if ! grep -Eq "^${_g}:" /etc/group; then
 			echo "===> Adding the ${_g} group"
-			groupadd -g ${_gid} ${_g} && \
-				set -A _newgrp -- ${_newgrp[@]} ${_g}
+			groupadd -g ${_gid} ${_g}
 		fi
 	done <${_gr}
 
@@ -351,8 +350,7 @@ sm_add_user_grp() {
 		if [[ ${_u} != root ]]; then
 			if ! grep -Eq "^${_u}:" /etc/master.passwd; then
 				echo "===> Adding the ${_u} user"
-				chpass -la "${_l}" && \
-					set -A _newusr -- ${_newusr[@]} ${_u}
+				chpass -la "${_l}"
 			fi
 		fi
 	done <${_pw}
@@ -542,7 +540,6 @@ sm_diff_loop() {
 		esac
 	done
 }
-
 
 sm_check_an_eg() {
 	${PKGMODE} && return
