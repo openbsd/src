@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2015/09/02 04:09:24 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.58 2015/09/18 13:30:56 miod Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -19,14 +19,9 @@ LD?=	ld
 SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic -nopie
 
-.if defined(DEBUGFLAGS) && !empty(DEBUGFLAGS:M-D_TEST)
-CLEANFILES+=	srt0.o
-SRCS=	crt0.c conf.c
-.else
 CLEANFILES+=	crt0.o
 SRCS=	srt0.S conf.c
 LDFLAGS+=-Ttext $(LINKADDR) -N -x
-.endif
 
 .PATH:	${S}/stand/boot
 SRCS+=	boot.c bootarg.c cmd.c vars.c

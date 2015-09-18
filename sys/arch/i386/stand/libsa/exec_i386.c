@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.41 2015/09/02 04:25:39 yasuoka Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.42 2015/09/18 13:30:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -56,7 +56,6 @@ void
 run_loadfile(u_long *marks, int howto)
 {
 	u_long entry;
-#ifndef _TEST
 #ifdef EXEC_DEBUG
 	extern int debug;
 #endif
@@ -142,6 +141,5 @@ run_loadfile(u_long *marks, int howto)
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
 	    extmem, cnvmem, ac, (int)av);
 	/* not reached */
-#endif
 #endif
 }

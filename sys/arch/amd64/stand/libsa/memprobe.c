@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.14 2015/09/02 01:52:26 yasuoka Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.15 2015/09/18 13:30:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -296,7 +296,6 @@ badprobe(bios_memmap_t *mp)
 	return ++mp;
 }
 
-#ifndef _TEST
 void
 memprobe(void)
 {
@@ -375,7 +374,6 @@ memprobe(void)
 	/* Check if gate A20 is on */
 	printf("a20=o%s] ", checkA20()? "n" : "ff!");
 }
-#endif
 #endif
 
 void

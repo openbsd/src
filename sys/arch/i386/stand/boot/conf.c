@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.56 2015/09/02 04:09:24 yasuoka Exp $	*/
+/*	$OpenBSD: conf.c,v 1.57 2015/09/18 13:30:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,6 @@
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/netif.h>
 #endif
-#include <lib/libsa/unixdev.h>
 #include <biosdev.h>
 #include <dev/cons.h>
 #include "debug.h"
@@ -76,19 +75,11 @@ struct fs_ops file_system[] = {
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
 #endif
-#ifdef _TEST
-	{ null_open,   null_close,   null_read,   null_write,   null_seek,
-	  null_stat,   null_readdir   }
-#endif
 };
 int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
-#ifdef _TEST
-	{ "UNIX", unixstrategy, unixopen, unixclose, unixioctl },
-#else
 	{ "BIOS", biosstrategy, biosopen, biosclose, biosioctl },
-#endif
 #if 0
 	{ "TFTP", tftpstrategy, tftpopen, tftpclose, tftpioctl },
 #endif
@@ -103,12 +94,8 @@ int n_netif_drivers = nitems(netif_drivers);
 #endif
 
 struct consdev constab[] = {
-#ifdef _TEST
-	{ unix_probe, unix_init, unix_getc, unix_putc },
-#else
 	{ pc_probe, pc_init, pc_getc, pc_putc },
 	{ com_probe, com_init, com_getc, com_putc },
-#endif
 	{ NULL }
 };
 struct consdev *cn_tab = constab;
