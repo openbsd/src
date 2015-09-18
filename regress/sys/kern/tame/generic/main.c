@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2015/09/10 11:18:10 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.3 2015/09/18 08:34:22 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -36,10 +36,6 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		errx(1, "usage: %s", argv[0]);
-
-	/* check for env */
-	if (getenv("LD_BIND_NOW") == NULL)
-		warnx("depending of your arch, LD_BIND_NOW=1 in env may be needed");
 
 	/*
 	 * testsuite
