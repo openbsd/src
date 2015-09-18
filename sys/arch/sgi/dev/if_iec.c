@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.14 2015/06/24 09:40:53 mpi Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.15 2015/09/18 11:15:20 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -318,7 +318,7 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg1;
 	bus_dma_segment_t seg2;
 	bus_size_t control_size;
-	int i, rc, rseg;
+	int i, rc;
 
 	sc->sc_st = iaa->iaa_memt;
 	sc->sc_sh = iaa->iaa_memh;
@@ -435,13 +435,13 @@ fail_4:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
 	    control_size);
-	bus_dmamem_free(sc->sc_dmat, &seg2, rseg);
+	bus_dmamem_free(sc->sc_dmat, &seg2, 1);
 fail_1:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_rxarrmap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxarrmap);
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_rxarr,
 	    IEC_NRXDESC_MAX * sizeof(uint64_t));
-	bus_dmamem_free(sc->sc_dmat, &seg1, rseg);
+	bus_dmamem_free(sc->sc_dmat, &seg1, 1);
 }
 
 /*
@@ -493,7 +493,7 @@ iec_alloc_physical(struct iec_softc *sc, bus_dmamap_t *dmamap,
 fail4:
 	bus_dmamap_destroy(sc->sc_dmat, *dmamap);
 fail3:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)*va, PAGE_SIZE);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)*va, len);
 fail2:
 	bus_dmamem_free(sc->sc_dmat, dmaseg, 1);
 fail1:
