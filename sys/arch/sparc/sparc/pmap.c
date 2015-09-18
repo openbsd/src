@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.177 2015/03/27 20:25:39 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.178 2015/09/18 12:50:28 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -81,26 +81,6 @@
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
-
-#ifdef SMALL_KERNEL
-/*
- * Force the SRMMU code to be limited to the Sun-4 compatible VM layout.
- * (this is done here to allow installation kernels to be loaded by older
- *  boot blocks which do not map enough data after the kernel image to
- *  cover pmap_bootstrap() needs.)
- */
-#define	NKREG_OLD \
-	((unsigned int)(-VM_MIN_KERNEL_ADDRESS_OLD / NBPRG))	/* 8 */
-#define	NUREG_OLD	(256 - NKREG_OLD)			/* 248 */
-#undef	NKREG_4C
-#undef	NUREG_4C
-#undef	NKREG_4M
-#undef	NUREG_4M
-#define	NKREG_4C	NKREG_OLD
-#define	NUREG_4C	NUREG_OLD
-#define	NKREG_4M	NKREG_OLD
-#define	NUREG_4M	NUREG_OLD
-#endif
 
 #ifdef DEBUG
 #define PTE_BITS "\20\40V\37W\36S\35NC\33IO\32U\31M"

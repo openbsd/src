@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.100 2015/03/30 20:30:22 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.101 2015/09/18 12:50:28 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -160,7 +160,7 @@ struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 #endif
 
 #if (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && \
-    (defined(SUN4D) || defined(SUN4M)) && !defined(SMALL_KERNEL)
+    (defined(SUN4D) || defined(SUN4M))
 vaddr_t vm_kernel_space_size;
 #endif
 
@@ -249,7 +249,7 @@ bootstrap()
 	 * both the old Sun MMU and the SRMMU).
 	 */
 #if (defined(SUN4) || defined(SUN4C) || defined(SUN4E)) && \
-    (defined(SUN4D) || defined(SUN4M)) && !defined(SMALL_KERNEL)
+    (defined(SUN4D) || defined(SUN4M))
 	if (CPU_ISSUN4OR4COR4E)
 		vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_SUN4;
 	else
