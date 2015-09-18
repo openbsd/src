@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.208 2015/09/18 10:55:26 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.209 2015/09/18 16:00:19 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -37,15 +37,19 @@ stripcom() {
 }
 
 sm_error() {
-	(($#)) && echo "!!!! ERROR: $@"
+	(($#)) && echo "---- Error: $@"
 	rm -rf ${_WRKDIR}
 	exit 1
 }
 
 trap "sm_error; exit 1" 1 2 3 13 15
 
+sm_info() {
+	(($#)) && echo "---- Info: $@" || true
+}
+
 sm_warn() {
-	(($#)) && echo "**** WARNING: $@" || true
+	(($#)) && echo "---- Warning: $@" || true
 }
 
 sm_extract_sets() {
@@ -165,7 +169,7 @@ sm_cp_pkg_samples() {
 		sm_error "failed to populate packages @samples and create sum file"
 }
 
-sm_init() {
+sm_run() {
 	local _auto_upg _c _c1 _c2 _cursum _diff _i _k _j _cfdiff _cffiles
 	local _ignorefiles _cvsid1 _cvsid2 _matchsum _mismatch
 
@@ -177,7 +181,6 @@ sm_init() {
 
 	sm_extract_sets
 	sm_add_user_grp
-	sm_check_an_eg
 	sm_cp_pkg_samples
 
 	for _i in etcsum xetcsum pkgsum; do
@@ -247,9 +250,11 @@ sm_init() {
 		rm -f ./${_i}
 	done
 
-	# aliases(5) needs to be handled last in case mailer.conf(5) changes
-	_c1=$(find . -type f -or -type l | grep -vE '^./etc/mail/aliases$')
-	_c2=$(find . -type f -name aliases)
+	# aliases(5) needs to be handled last in case mailer.conf(5) changes;
+	# examples are checked later, we don't want to handle examplessum
+	_c1=$(find . -type f -or -type l | \
+		grep -vE '^./(etc/mail/aliases|var/sysmerge/examplessum)$')
+	[[ -f ./etc/mail/aliases ]] && _c2="./etc/mail/aliases"
 	for COMPFILE in ${_c1} ${_c2}; do
 		IS_BIN=false
 		IS_LINK=false
@@ -281,6 +286,8 @@ sm_init() {
 
 		sm_diff_loop
 	done
+
+	sm_check_an_eg
 }
 
 sm_install() {
@@ -554,9 +561,8 @@ sm_check_an_eg() {
 		_i=${_i##*/}
 		# only check files we care about
 		[[ -f /etc/${_i} ]] && \
-			_managed="${_managed:+${_managed} }${_i}"
+			sm_info "updated /etc/examples/${_i}, syntax may have changed"
 	done
-	[[ -n ${_managed} ]] && sm_warn "example(s) changed for: ${_managed}"
 	mv ./var/sysmerge/examplessum \
 		/var/sysmerge/examplessum
 }
@@ -569,7 +575,7 @@ sm_post() {
 	rmdir ${_WRKDIR} 2>/dev/null
 
 	if [[ -d ${_TMPROOT} ]]; then
-		sm_warn "file(s) left for comparison:"
+		sm_info "file(s) left for comparison:"
 		for _f in $(find ${_TMPROOT} ! -type d ! -name \*.merged -size +0)
 		do
 			echo "${_f}" && ${BATCHMODE} && [[ -f ${_f} ]] && \
@@ -612,4 +618,4 @@ PAGER=${PAGER:=/usr/bin/more}
 mkdir -p ${_TMPROOT} || sm_error "cannot create ${_TMPROOT}"
 cd ${_TMPROOT} || sm_error "cannot enter ${_TMPROOT}"
 
-sm_init && sm_post
+sm_run && sm_post
