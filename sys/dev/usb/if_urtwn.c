@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.51 2015/09/10 11:53:05 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.52 2015/09/18 11:24:15 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2713,7 +2713,7 @@ urtwn_r88e_dma_init(struct urtwn_softc *sc)
 {
 	usb_interface_descriptor_t      *id;
 	uint32_t reg;
-	int nrempages, nqpages, nqueues = 1;
+	int nqueues = 1;
 	int error;
 
 	/* Initialize LLT table. */
@@ -2724,11 +2724,6 @@ urtwn_r88e_dma_init(struct urtwn_softc *sc)
 	/* Get Tx queues to USB endpoints mapping. */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	nqueues = id->bNumEndpoints - 1;
-
-	/* Get the number of pages for each queue. */
-	nqpages = (R92C_TX_PAGE_COUNT - R92C_PUBQ_NPAGES) / nqueues;
-	/* The remaining pages are assigned to the high priority queue. */
-	nrempages = (R92C_TX_PAGE_COUNT - R92C_PUBQ_NPAGES) % nqueues;
 
 	/* Set number of pages for normal priority queue. */
 	urtwn_write_2(sc, R92C_RQPN_NPQ, 0x000d);
