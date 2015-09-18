@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.48 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.49 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -204,7 +204,7 @@ c_dot(char **wp)
 			;
 	} else {
 		argc = 0;
-		argv = (char **) 0;
+		argv = NULL;
 	}
 	i = include(file, argc, argv, 0);
 	if (i < 0) { /* should not happen */
@@ -351,7 +351,7 @@ c_read(char **wp)
 						/* set prompt in case this is
 						 * called from .profile or $ENV
 						 */
-						set_prompt(PS2, (Source *) 0);
+						set_prompt(PS2, NULL);
 						pprompt(prompt, 0);
 					}
 				} else if (c != EOF)
@@ -542,7 +542,7 @@ int
 c_brkcont(char **wp)
 {
 	int n, quit;
-	struct env *ep, *last_ep = (struct env *) 0;
+	struct env *ep, *last_ep = NULL;
 	char *arg;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')

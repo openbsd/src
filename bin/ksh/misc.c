@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.44 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: misc.c,v 1.45 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -807,7 +807,7 @@ pat_scan(const unsigned char *p, const unsigned char *pe, int match_sep)
 		if ((*p & 0x80) && strchr("*+?@! ", *p & 0x7f))
 			nest++;
 	}
-	return (const unsigned char *) 0;
+	return NULL;
 }
 
 /*

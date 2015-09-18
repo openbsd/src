@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.43 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: edit.c,v 1.44 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * Command line editing - common code
@@ -459,7 +459,7 @@ x_command_glob(int flags, const char *str, int slen, char ***wordsp)
 	nwords = XPsize(w);
 
 	if (!nwords) {
-		*wordsp = (char **) 0;
+		*wordsp = NULL;
 		XPfree(w);
 		return 0;
 	}
@@ -593,7 +593,7 @@ x_cf_glob(int flags, const char *buf, int buflen, int pos, int *startp,
 	nwords = (is_command ? x_command_glob : x_file_glob)(flags,
 	    buf + *startp, len, &words);
 	if (nwords == 0) {
-		*wordsp = (char **) 0;
+		*wordsp = NULL;
 		return 0;
 	}
 

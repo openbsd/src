@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.55 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: exec.c,v 1.56 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * execute command tree
@@ -168,7 +168,7 @@ execute(struct op *volatile t,
 		e->type = E_ERRH;
 		i = sigsetjmp(e->jbuf, 0);
 		if (i) {
-			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+			sigprocmask(SIG_SETMASK, &omask, NULL);
 			quitenv(NULL);
 			unwind(i);
 			/* NOTREACHED */
@@ -190,7 +190,7 @@ execute(struct op *volatile t,
 			close(pv[0]);
 		}
 		coproc.write = pv[1];
-		coproc.job = (void *) 0;
+		coproc.job = NULL;
 
 		if (coproc.readw >= 0)
 			ksh_dup2(coproc.readw, 1, false);
@@ -203,7 +203,7 @@ execute(struct op *volatile t,
 			/* create new coprocess id */
 			++coproc.id;
 		}
-		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		e->type = E_EXEC; /* no more need for error handler */
 
 		/* exchild() closes coproc.* in child after fork,
@@ -548,7 +548,7 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 				}
 				break;
 			}
-			if (include(tp->u.fpath, 0, (char **) 0, 0) < 0) {
+			if (include(tp->u.fpath, 0, NULL, 0) < 0) {
 				warningf(true,
 				    "%s: can't open function definition file %s - %s",
 				    cp, tp->u.fpath, strerror(errno));
@@ -690,7 +690,7 @@ scriptexec(struct op *tp, char **ap)
 
 	shell = str_val(global(EXECSHELL_STR));
 	if (shell && *shell)
-		shell = search(shell, path, X_OK, (int *) 0);
+		shell = search(shell, path, X_OK, NULL);
 	if (!shell || !*shell)
 		shell = EXECSHELL;
 
@@ -722,7 +722,7 @@ struct tbl *
 findfunc(const char *name, unsigned int h, int create)
 {
 	struct block *l;
-	struct tbl *tp = (struct tbl *) 0;
+	struct tbl *tp = NULL;
 
 	for (l = e->loc; l; l = l->next) {
 		tp = ktsearch(&l->funs, name, h);
@@ -732,7 +732,7 @@ findfunc(const char *name, unsigned int h, int create)
 			tp = ktenter(&l->funs, name, h);
 			tp->flag = DEFINED;
 			tp->type = CFUNC;
-			tp->val.t = (struct op *) 0;
+			tp->val.t = NULL;
 			break;
 		}
 	}

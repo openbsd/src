@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.32 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: syn.c,v 1.33 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * shell parser (C version)
@@ -356,7 +356,7 @@ get_command(int cf)
 	case BANG:
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = pipeline(0);
-		if (t == (struct op *) 0)
+		if (t == NULL)
 			syntaxerr(NULL);
 		t = block(TBANG, NOBLOCK, t, NOWORDS);
 		break;
@@ -557,7 +557,7 @@ function_body(char *name,
 
 	old_func_parse = e->flags & EF_FUNC_PARSE;
 	e->flags |= EF_FUNC_PARSE;
-	if ((t->left = get_command(CONTIN)) == (struct op *) 0) {
+	if ((t->left = get_command(CONTIN)) == NULL) {
 		/*
 		 * Probably something like foo() followed by eof or ;.
 		 * This is accepted by sh and ksh88.
@@ -866,7 +866,7 @@ dbtestp_getopnd(Test_env *te, Test_op op, int do_eval)
 	int c = tpeek(ARRAYVAR);
 
 	if (c != LWORD)
-		return (const char *) 0;
+		return NULL;
 
 	ACCEPT;
 	XPput(*te->pos.av, yylval.cp);

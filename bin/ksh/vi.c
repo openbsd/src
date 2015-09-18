@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.32 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: vi.c,v 1.33 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  *	vi command editing
@@ -1915,7 +1915,7 @@ expand_word(int command)
 
 	nwords = x_cf_glob(XCF_COMMAND_FILE|XCF_FULLPATH,
 	    es->cbuf, es->linelen, es->cursor,
-	    &start, &end, &words, (int *) 0);
+	    &start, &end, &words, NULL);
 	if (nwords == 0) {
 		vi_error();
 		return -1;

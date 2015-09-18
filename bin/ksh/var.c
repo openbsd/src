@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.48 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: var.c,v 1.49 2015/09/18 07:28:24 nicm Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -257,7 +257,7 @@ local(const char *n, bool copy)
 	vp = ktenter(&l->vars, n, h);
 	if (copy && !(vp->flag & DEFINED)) {
 		struct block *ll = l;
-		struct tbl *vq = (struct tbl *) 0;
+		struct tbl *vq = NULL;
 
 		while ((ll = ll->next) && !(vq = ktsearch(&ll->vars, n, h)))
 			;
@@ -746,7 +746,7 @@ unset(struct tbl *vp, int array_ref)
 				afree(tmp->val.s, tmp->areap);
 			afree(tmp, tmp->areap);
 		}
-		vp->u.array = (struct tbl *) 0;
+		vp->u.array = NULL;
 	}
 	/* If foo[0] is being unset, the remainder of the array is kept... */
 	vp->flag &= SPECIAL | (array_ref ? ARRAY|DEFINED : 0);

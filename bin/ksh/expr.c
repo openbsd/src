@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.26 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: expr.c,v 1.27 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -174,8 +174,8 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok,
 	curstate.expression = curstate.tokp = expr;
 	curstate.noassign = 0;
 	curstate.arith = arith;
-	curstate.evaling = (struct tbl *) 0;
-	curstate.val = (struct tbl *) 0;
+	curstate.evaling = NULL;
+	curstate.val = NULL;
 
 	newenv(E_ERRH);
 	i = sigsetjmp(e->jbuf, 0);
@@ -588,7 +588,7 @@ intvar(Expr_state *es, struct tbl *vp)
 		vp->flag |= EXPRINEVAL;
 		v_evaluate(vq, str_val(vp), KSH_UNWIND_ERROR, es->arith);
 		vp->flag &= ~EXPRINEVAL;
-		es->evaling = (struct tbl *) 0;
+		es->evaling = NULL;
 	}
 	return vq;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.19 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.20 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -471,7 +471,7 @@ test_primary(Test_env *te, int do_eval)
 				return 0;
 			}
 
-			return (*te->eval)(te, op, opnd1, (const char *) 0,
+			return (*te->eval)(te, op, opnd1, NULL,
 			    do_eval);
 		}
 	}
@@ -494,7 +494,7 @@ test_primary(Test_env *te, int do_eval)
 		(*te->error)(te, -1, "missing expression operator");
 		return 0;
 	}
-	return (*te->eval)(te, TO_STNZE, opnd1, (const char *) 0, do_eval);
+	return (*te->eval)(te, TO_STNZE, opnd1, NULL, do_eval);
 }
 
 /*
@@ -535,7 +535,7 @@ static const char *
 ptest_getopnd(Test_env *te, Test_op op, int do_eval)
 {
 	if (te->pos.wp >= te->wp_end)
-		return op == TO_FILTT ? "1" : (const char *) 0;
+		return op == TO_FILTT ? "1" : NULL;
 	return *te->pos.wp++;
 }
 
@@ -550,7 +550,7 @@ static void
 ptest_error(Test_env *te, int offset, const char *msg)
 {
 	const char *op = te->pos.wp + offset >= te->wp_end ?
-	    (const char *) 0 : te->pos.wp[offset];
+	    NULL : te->pos.wp[offset];
 
 	te->flags |= TEF_ERROR;
 	if (op)

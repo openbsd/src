@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.42 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: eval.c,v 1.43 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -187,7 +187,7 @@ expand(char *cp,	/* input word */
 	doblank = 0;
 	make_magic = 0;
 	word = (f&DOBLANK) ? IFS_WS : IFS_WORD;
-	st_head.next = (SubType *) 0;
+	st_head.next = NULL;
 	st = &st_head;
 
 	while (1) {
@@ -294,7 +294,7 @@ expand(char *cp,	/* input word */
 
 						newst = alloc(
 						    sizeof(SubType), ATEMP);
-						newst->next = (SubType *) 0;
+						newst->next = NULL;
 						newst->prev = st;
 						st->next = newst;
 					}
@@ -704,7 +704,7 @@ varsub(Expand *xp, char *sp, char *word,
 	if (sp[0] == '\0')	/* Bad variable name */
 		return -1;
 
-	xp->var = (struct tbl *) 0;
+	xp->var = NULL;
 
 	/* ${#var}, string length or array size */
 	if (sp[0] == '#' && (c = sp[1]) != '\0') {
@@ -871,7 +871,7 @@ comsub(Expand *xp, char *cp)
 	} else {
 		int ofd1, pv[2];
 		openpipe(pv);
-		shf = shf_fdopen(pv[0], SHF_RD, (struct shf *) 0);
+		shf = shf_fdopen(pv[0], SHF_RD, NULL);
 		ofd1 = savefd(1);
 		if (pv[1] != 1) {
 			ksh_dup2(pv[1], 1, false);

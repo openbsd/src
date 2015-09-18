@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.40 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.41 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -876,7 +876,7 @@ c_alias(char **wp)
 	/* "hash -r" means reset all the tracked aliases.. */
 	if (rflag) {
 		static const char *const args[] = {
-			"unalias", "-ta", (const char *) 0
+			"unalias", "-ta", NULL
 		};
 
 		if (!tflag || *wp) {
@@ -940,7 +940,7 @@ c_alias(char **wp)
 				afree(ap->val.s, APERM);
 			}
 			/* ignore values for -t (at&t ksh does this) */
-			newval = tflag ? search(alias, path, X_OK, (int *) 0) :
+			newval = tflag ? search(alias, path, X_OK, NULL) :
 			    val;
 			if (newval) {
 				ap->val.s = str_save(newval, APERM);
@@ -1123,7 +1123,7 @@ kill_fmt_entry(void *arg, int i, char *buf, int buflen)
 int
 c_kill(char **wp)
 {
-	Trap *t = (Trap *) 0;
+	Trap *t = NULL;
 	char *p;
 	int lflag = 0;
 	int i, n, rv, sig;
@@ -1270,7 +1270,7 @@ c_getopts(char **wp)
 		return 1;
 	}
 
-	if (e->loc->next == (struct block *) 0) {
+	if (e->loc->next == NULL) {
 		internal_errorf(0, "c_getopts: no argv");
 		return 1;
 	}

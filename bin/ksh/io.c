@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.28 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: io.c,v 1.29 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -424,12 +424,12 @@ maketemp(Area *ap, Temp_type type, struct temp **tlist)
 	len = strlen(dir) + 3 + 20 + 20 + 1;
 	tp = alloc(sizeof(struct temp) + len, ap);
 	tp->name = path = (char *) &tp[1];
-	tp->shf = (struct shf *) 0;
+	tp->shf = NULL;
 	tp->type = type;
 	shf_snprintf(path, len, "%s/shXXXXXXXX", dir);
 	fd = mkstemp(path);
 	if (fd >= 0)
-		tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
+		tp->shf = shf_fdopen(fd, SHF_WR, NULL);
 	tp->pid = procpid;
 
 	tp->next = *tlist;

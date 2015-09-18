@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2015/09/15 18:15:05 tedu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * signal handling
@@ -387,7 +387,7 @@ setsig(Trap *p, sig_t f, int flags)
 		sigemptyset(&sigact.sa_mask);
 		sigact.sa_flags = 0 /* interruptible */;
 		sigact.sa_handler = f;
-		sigaction(p->signal, &sigact, (struct sigaction *) 0);
+		sigaction(p->signal, &sigact, NULL);
 	}
 
 	return 1;

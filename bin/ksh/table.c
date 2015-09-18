@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.17 2015/09/17 14:21:33 nicm Exp $	*/
+/*	$OpenBSD: table.c,v 1.18 2015/09/18 07:28:24 nicm Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -123,7 +123,7 @@ ktenter(struct table *tp, const char *n, unsigned int h)
 	p->type = 0;
 	p->areap = tp->areap;
 	p->u2.field = 0;
-	p->u.array = (struct tbl *)0;
+	p->u.array = NULL;
 	memcpy(p->name, n, len);
 
 	/* enter in tp->tbls */
