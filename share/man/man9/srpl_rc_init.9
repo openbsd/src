@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srpl_rc_init.9,v 1.4 2015/09/13 08:58:07 dlg Exp $
+.\"	$OpenBSD: srpl_rc_init.9,v 1.5 2015/09/18 08:30:23 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2015 $
+.Dd $Mdocdate: September 18 2015 $
 .Dt SRPL_RC_INIT 9
 .Os
 .Sh NAME
@@ -29,6 +29,7 @@
 .Nm SRPL_NEXT_LOCKED ,
 .Nm SRPL_FOREACH_LOCKED ,
 .Nm SRPL_INSERT_HEAD_LOCKED ,
+.Nm SRPL_INSERT_AFTER_LOCKED ,
 .Nm SRPL_REMOVE_LOCKED ,
 .Nm SRPL_RC_INITIALIZER
 .Nd singly-linked shared reference pointer list
@@ -66,6 +67,12 @@
 .Fo "SRPL_INSERT_HEAD_LOCKED"
 .Fa "struct srpl_rc *rc"
 .Fa "struct srpl *sl"
+.Fa "struct TYPE *elm"
+.Fa "FIELDNAME"
+.Fc
+.Fo "SRPL_INSERT_AFTER_LOCKED"
+.Fa "struct srpl_rc *rc"
+.Fa "struct TYPE *listelm"
 .Fa "struct TYPE *elm"
 .Fa "FIELDNAME"
 .Fc
@@ -181,6 +188,16 @@ into the SRP list
 Reference counts are adjusted on the list items using the functions
 specified by
 .Fa rc .
+.Pp
+.Fn SRPL_INSERT_AFTER_LOCKED
+inserts
+.Fa elm
+into a SRP list after the element
+.Fa listelm .
+Reference counts are adjusted on the list items using the functions
+specified by
+.Fa rc .
+.Pp
 .Fn SRPL_REMOVE_LOCKED
 iterates over the SRP list
 .Fa sl
@@ -210,6 +227,7 @@ context.
 .Fn SRPL_NEXT_LOCKED ,
 .Fn SRPL_FOREACH_LOCKED ,
 .Fn SRPL_INSERT_HEAD_LOCKED ,
+.Fn SRPL_INSERT_AFTER_LOCKED ,
 and
 .Fn SRPL_REMOVE_LOCKED
 may be called during autoconf or from process context.

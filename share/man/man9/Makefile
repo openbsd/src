@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.245 2015/09/13 12:13:34 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.246 2015/09/18 08:30:23 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -380,6 +380,7 @@ MLINKS+=srpl_rc_init.9 SRPL_HEAD_INIT.9 srpl_rc_init.9 SRPL_HEAD_INIT.9 \
 	srpl_rc_init.9 SRPL_FIRST_LOCKED.9 srpl_rc_init.9 SRPL_NEXT_LOCKED.9 \
 	srpl_rc_init.9 SRPL_FOREACH_LOCKED.9 \
 	srpl_rc_init.9 SRPL_INSERT_HEAD_LOCKED.9 \
+	srpl_rc_init.9 SRPL_INSERT_AFTER_LOCKED.9 \
 	srpl_rc_init.9 SRPL_REMOVE_LOCKED.9 \
 	srpl_rc_init.9 SRPL_RC_INITIALIZER.9 \
 

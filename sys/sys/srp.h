@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.4 2015/09/11 19:22:37 dlg Exp $ */
+/*	$OpenBSD: srp.h,v 1.5 2015/09/18 08:30:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -151,6 +151,23 @@ _srpl_next(struct srpl_iter *si, void *elm, struct srp *nref)
 									\
 	(_rc)->srpl_ref(&(_rc)->srpl_cookie, _e);			\
 	srp_update_locked(&(_rc)->srpl_gc, &(_sl)->sl_head, (_e));	\
+} while (0)
+
+#define SRPL_INSERT_AFTER_LOCKED(_rc, _se, _e, _ENTRY) do {		\
+	void *next;							\
+									\
+	srp_init(&(_e)->_ENTRY.se_next);				\
+									\
+	next = SRPL_NEXT_LOCKED(_se, _ENTRY);				\
+	if (next != NULL) {						\
+		(_rc)->srpl_ref(&(_rc)->srpl_cookie, next);		\
+		srp_update_locked(&(_rc)->srpl_gc,			\
+		    &(_e)->_ENTRY.se_next, next);	 		\
+	}								\
+									\
+	(_rc)->srpl_ref(&(_rc)->srpl_cookie, _e);			\
+	srp_update_locked(&(_rc)->srpl_gc,				\
+	    &(_se)->_ENTRY.se_next, (_e));				\
 } while (0)
 
 #define SRPL_REMOVE_LOCKED(_rc, _sl, _e, _type, _ENTRY) do {		\
