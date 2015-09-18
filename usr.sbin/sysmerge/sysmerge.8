@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.72 2015/09/07 10:02:04 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.73 2015/09/18 17:03:44 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2015 $
+.Dd $Mdocdate: September 18 2015 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -33,14 +33,9 @@ script designed to help the administrator update configuration files
 after upgrading to a new release or snapshot.
 .Pp
 .Nm
-works by comparing a temporary reference root directory
-against currently installed files.
-All work is done under
+works by comparing the reference root directory
 .Pa ${TMPDIR}/sysmerge.XXXXXXXXXX
-(known as the
-.Em work directory )
-which contains the temporary root directory
-.Pa temproot .
+against currently installed files.
 .Pp
 .Nm
 will work through the fileset,
@@ -143,17 +138,14 @@ the default is
 .It Ev PAGER
 Specifies the pagination program to use.
 .It Ev TMPDIR
-Directory in which the work directory is created.
+Path in which to store temporary files.
 If unset, this defaults to
 .Pa /tmp .
 .El
 .Sh FILES
 .Bl -tag -width "${TMPDIR}/sysmerge.XXXXXXXXXX" -compact
 .It Pa ${TMPDIR}/sysmerge.XXXXXXXXXX
-Default work directory.
-The
-.Sy temproot
-directory is created relative to this.
+Directory in which the reference root directory is created.
 .It Pa /etc/sysmerge.ignore
 Files and directories to ignore from comparison.
 .It Pa /var/sysmerge/backups

@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.209 2015/09/18 16:00:19 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.210 2015/09/18 17:03:44 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -38,7 +38,7 @@ stripcom() {
 
 sm_error() {
 	(($#)) && echo "---- Error: $@"
-	rm -rf ${_WRKDIR}
+	rm -rf ${_TMPROOT}
 	exit 1
 }
 
@@ -570,15 +570,15 @@ sm_check_an_eg() {
 sm_post() {
 	local _f
 
-	cd ${_WRKDIR} && \
+	cd ${_TMPROOT} && \
 		find . -type d -depth -empty -exec rmdir -p '{}' + 2>/dev/null
-	rmdir ${_WRKDIR} 2>/dev/null
+	rmdir ${_TMPROOT} 2>/dev/null
 
 	if [[ -d ${_TMPROOT} ]]; then
-		sm_info "file(s) left for comparison:"
 		for _f in $(find ${_TMPROOT} ! -type d ! -name \*.merged -size +0)
 		do
-			echo "${_f}" && ${BATCHMODE} && [[ -f ${_f} ]] && \
+			sm_info "${_f} left for comparison"
+			${BATCHMODE} && [[ -f ${_f} ]] && \
 				sed -i "/$(sha256 -q ${_f})/d" /var/sysmerge/*sum
 		done
 	fi
@@ -608,9 +608,8 @@ shift $(( OPTIND -1 ))
 # global constants
 _BKPDIR=/var/sysmerge/backups
 _RELINT=$(uname -r | tr -d '.') || exit 1
-_WRKDIR=$(mktemp -d -p ${TMPDIR:=/tmp} sysmerge.XXXXXXXXXX) || exit 1
-_TMPROOT=${_WRKDIR}/temproot
-readonly _BKPDIR _RELINT _TMPROOT _WRKDIR
+_TMPROOT=$(mktemp -d -p ${TMPDIR:=/tmp} sysmerge.XXXXXXXXXX) || exit 1
+readonly _BKPDIR _RELINT _TMPROOT
 
 [[ -z ${VISUAL} ]] && EDITOR=${EDITOR:=/usr/bin/vi} || EDITOR=${VISUAL}
 PAGER=${PAGER:=/usr/bin/more}
