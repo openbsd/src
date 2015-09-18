@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.43 2015/06/24 09:40:54 mpi Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.44 2015/09/18 09:54:08 miod Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -268,11 +268,8 @@ i82596_probe(sc)
  *
  */
 void
-i82596_attach(sc, name, etheraddr, media, nmedia, defmedia)
-	struct ie_softc *sc;
-	const char *name;
-	u_int8_t *etheraddr;
-        int *media, nmedia, defmedia;
+i82596_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr,
+    uint64_t *media, int nmedia, uint64_t defmedia)
 {
 	int i;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
