@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530ms.c,v 1.2 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: z8530ms.c,v 1.3 2015/09/18 20:22:22 kettenis Exp $	*/
 /*	$NetBSD: ms.c,v 1.12 1997/07/17 01:17:47 jtk Exp $	*/
 
 /*
@@ -397,7 +397,6 @@ zsms_softint(struct zs_chanstate *cs)
 	if (ISSET(intr_flags, INTR_BPS_CHANGE)) {
 		CLR(intr_flags, INTR_RX_OVERRUN);
 		sunms_speed_change(&sc->sc_base);
-		splx(s);
 	}
 
 	/*
