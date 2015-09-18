@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.124 2015/09/12 20:50:17 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.125 2015/09/18 14:26:22 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -804,12 +804,15 @@ defrouter_select(void)
 	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
 		if (!(dr->ifp->if_xflags & IFXF_AUTOCONF6))
 			continue;
-		if (!selected_dr &&
-		    (rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp,
-		     dr->ifp->if_rdomain)) &&
-		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
-		    ND6_IS_LLINFO_PROBREACH(ln)) {
-			selected_dr = dr;
+		if (!selected_dr) {
+			rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp,
+			    dr->ifp->if_rdomain);
+			if ((rt != NULL) &&
+			    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
+			    ND6_IS_LLINFO_PROBREACH(ln)) {
+				selected_dr = dr;
+			}
+			rtfree(rt);
 		}
 
 		if (dr->installed && !installed_dr)
@@ -833,13 +836,15 @@ defrouter_select(void)
 			selected_dr = TAILQ_FIRST(&nd_defrouter);
 		else
 			selected_dr = TAILQ_NEXT(installed_dr, dr_entry);
-	} else if (installed_dr &&
-	    (rt = nd6_lookup(&installed_dr->rtaddr, 0, installed_dr->ifp,
-	     installed_dr->ifp->if_rdomain)) &&
-	    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
-	    ND6_IS_LLINFO_PROBREACH(ln) &&
-	    rtpref(selected_dr) <= rtpref(installed_dr)) {
-		selected_dr = installed_dr;
+	} else if (installed_dr) {
+		rt = nd6_lookup(&installed_dr->rtaddr, 0, installed_dr->ifp,
+		    installed_dr->ifp->if_rdomain);
+		if ((rt != NULL) && (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
+		    ND6_IS_LLINFO_PROBREACH(ln) &&
+		    rtpref(selected_dr) <= rtpref(installed_dr)) {
+			selected_dr = installed_dr;
+		}
+		rtfree(rt);
 	}
 
 	/*
@@ -1536,15 +1541,18 @@ struct nd_pfxrouter *
 find_pfxlist_reachable_router(struct nd_prefix *pr)
 {
 	struct nd_pfxrouter *pfxrtr;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln;
 
 	LIST_FOREACH(pfxrtr, &pr->ndpr_advrtrs, pfr_entry) {
 		if ((rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
 		    pfxrtr->router->ifp, pfxrtr->router->ifp->if_rdomain)) &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
-		    ND6_IS_LLINFO_PROBREACH(ln))
+		    ND6_IS_LLINFO_PROBREACH(ln)) {
+			rtfree(rt);
 			break;	/* found */
+		}
+		rtfree(rt);
 	}
 
 	return (pfxrtr);

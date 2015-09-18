@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.171 2015/09/11 22:00:36 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.172 2015/09/18 14:26:22 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1677,24 +1677,22 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 
 	{
 		/* target lladdr option */
-		struct rtentry *rt_nexthop = NULL;
+		struct rtentry *nrt;
 		int len;
 		struct sockaddr_dl *sdl;
 		struct nd_opt_hdr *nd_opt;
 		char *lladdr;
 
-		rt_nexthop = nd6_lookup(nexthop, 0, ifp, ifp->if_rdomain);
-		if (!rt_nexthop)
-			goto nolladdropt;
 		len = sizeof(*nd_opt) + ifp->if_addrlen;
 		len = (len + 7) & ~7;	/* round by 8 */
 		/* safety check */
 		if (len + (p - (u_char *)ip6) > maxlen)
 			goto nolladdropt;
-		if (!(rt_nexthop->rt_flags & RTF_GATEWAY) &&
-		    (rt_nexthop->rt_flags & RTF_LLINFO) &&
-		    (rt_nexthop->rt_gateway->sa_family == AF_LINK) &&
-		    (sdl = (struct sockaddr_dl *)rt_nexthop->rt_gateway) &&
+		nrt = nd6_lookup(nexthop, 0, ifp, ifp->if_rdomain);
+		if ((nrt != NULL) &&
+		    (nrt->rt_flags & (RTF_GATEWAY|RTF_LLINFO)) == RTF_LLINFO &&
+		    (nrt->rt_gateway->sa_family == AF_LINK) &&
+		    (sdl = (struct sockaddr_dl *)nrt->rt_gateway) &&
 		    sdl->sdl_alen) {
 			nd_opt = (struct nd_opt_hdr *)p;
 			nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
@@ -1703,6 +1701,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 			bcopy(LLADDR(sdl), lladdr, ifp->if_addrlen);
 			p += len;
 		}
+		rtfree(nrt);
 	}
   nolladdropt:;
 

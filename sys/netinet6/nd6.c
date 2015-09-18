@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.153 2015/09/13 17:53:44 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.154 2015/09/18 14:26:22 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -631,7 +631,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 	flags = (create) ? (RT_REPORT|RT_RESOLVE) : 0;
 
 	rt = rtalloc(sin6tosa(&sin6), flags, rtableid);
-	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
+	if (rt != NULL && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
 		 * This is the case for the default route.
 		 * If we want to create a neighbor cache for the address, we
@@ -643,7 +643,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			rt = NULL;
 		}
 	}
-	if (!rt) {
+	if (rt == NULL) {
 		if (create && ifp) {
 			struct rt_addrinfo info;
 			int error;
@@ -683,7 +683,6 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 		} else
 			return (NULL);
 	}
-	rt->rt_refcnt--;
 	/*
 	 * Validation for the entry.
 	 * Note that the check for rt_llinfo is necessary because a cloned
@@ -706,6 +705,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
 			    inet_ntop(AF_INET6, addr6, addr, sizeof(addr)),
 			    ifp ? ifp->if_xname : "unspec"));
 		}
+		rtfree(rt);
 		return (NULL);
 	}
 	return (rt);
@@ -769,9 +769,11 @@ nd6_is_addr_neighbor(struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * Even if the address matches none of our addresses, it might be
 	 * in the neighbor cache.
 	 */
-	if ((rt = nd6_lookup(&addr->sin6_addr, 0, ifp,
-	    ifp->if_rdomain)) != NULL)
+	rt = nd6_lookup(&addr->sin6_addr, 0, ifp, ifp->if_rdomain);
+	if (rt != NULL) {
+		rtfree(rt);
 		return (1);
+	}
 
 	return (0);
 }
@@ -1274,9 +1276,11 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 
 		s = splsoftnet();
-		if ((rt = nd6_lookup(&nb_addr, 0, ifp, ifp->if_rdomain)) == NULL ||
+		rt = nd6_lookup(&nb_addr, 0, ifp, ifp->if_rdomain);
+		if (rt == NULL ||
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) {
 			error = EINVAL;
+			rtfree(rt);
 			splx(s);
 			break;
 		}
@@ -1284,6 +1288,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		nbi->asked = ln->ln_asked;
 		nbi->isrouter = ln->ln_router;
 		nbi->expire = ln->ln_expire;
+		rtfree(rt);
 		splx(s);
 
 		break;
@@ -1332,7 +1337,7 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 	 */
 
 	rt = nd6_lookup(from, 0, ifp, ifp->if_rdomain);
-	if (!rt) {
+	if (rt == NULL) {
 #if 0
 		/* nothing must be done if there's no lladdr */
 		if (!lladdr || !lladdrlen)
@@ -1343,8 +1348,10 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 		is_newentry = 1;
 	} else {
 		/* do nothing if static ndp is set */
-		if (rt->rt_flags & RTF_STATIC)
+		if (rt->rt_flags & RTF_STATIC) {
+			rtfree(rt);
 			return;
+		}
 		is_newentry = 0;
 	}
 
@@ -1353,6 +1360,7 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) != RTF_LLINFO) {
 fail:
 		(void)nd6_free(rt, 0);
+		rtfree(rt);
 		return;
 	}
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
@@ -1528,6 +1536,8 @@ fail:
 	 */
 	if (do_update && ln->ln_router && (ifp->if_xflags & IFXF_AUTOCONF6))
 		defrouter_select();
+
+	rtfree(rt);
 }
 
 void
@@ -1556,7 +1566,6 @@ nd6_slowtimo(void *ignored_arg)
 	splx(s);
 }
 
-#define senderr(e) { error = (e); goto bad;}
 int
 nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
     struct rtentry *rt0)
@@ -1564,7 +1573,7 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 	struct mbuf *m = m0;
 	struct rtentry *rt = rt0;
 	struct llinfo_nd6 *ln = NULL;
-	int error = 0;
+	int created = 0, error = 0;
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -1613,10 +1622,14 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 		 * the condition below is not very efficient.  But we believe
 		 * it is tolerable, because this should be a rare case.
 		 */
-		if (nd6_is_addr_neighbor(dst, ifp) &&
-		    (rt = nd6_lookup(&dst->sin6_addr, 1, ifp,
-		     ifp->if_rdomain)) != NULL)
-			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+		if (nd6_is_addr_neighbor(dst, ifp)) {
+			rt = nd6_lookup(&dst->sin6_addr, 1, ifp,
+			    ifp->if_rdomain);
+			if (rt != NULL) {
+				created = 1;
+				ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+			}
+		}
 	}
 	if (!ln || !rt) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
@@ -1628,7 +1641,10 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 			    inet_ntop(AF_INET6, &dst->sin6_addr,
 				addr, sizeof(addr)),
 			    ln, rt);
-			senderr(EIO);	/* XXX: good error? */
+			m_freem(m);
+			if (created)
+				rtfree(rt);
+			return (EIO);	/* XXX: good error? */
 		}
 
 		goto sendpkt;	/* send anyway */
@@ -1689,16 +1705,16 @@ nd6_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr_in6 *dst,
 		    (long)ND_IFINFO(ifp)->retrans * hz / 1000);
 		nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 	}
+	if (created)
+		rtfree(rt);
 	return (0);
 
   sendpkt:
-	return (ifp->if_output(ifp, m, sin6tosa(dst), rt));
-
-  bad:
-	m_freem(m);
+	error = ifp->if_output(ifp, m, sin6tosa(dst), rt);
+	if (created)
+		rtfree(rt);
 	return (error);
 }
-#undef senderr
 
 int
 nd6_need_cache(struct ifnet *ifp)

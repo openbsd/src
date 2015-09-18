@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.95 2015/09/11 20:13:22 claudio Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.96 2015/09/18 14:26:22 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -580,7 +580,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	int lladdrlen = 0;
 	struct ifaddr *ifa;
 	struct llinfo_nd6 *ln;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
 	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
@@ -888,6 +888,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 
  freeit:
+ 	rtfree(rt);
 	m_freem(m);
 	if_put(ifp);
 	return;
