@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.19 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.20 2015/09/19 21:07:04 semarie Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -117,14 +117,10 @@ fhc_attach(struct fhc_softc *sc)
 
 		(void)config_found(&sc->sc_dv, (void *)&fa, fhc_print);
 
-		if (fa.fa_name != NULL)
-			free(fa.fa_name, M_DEVBUF, 0);
-		if (fa.fa_reg != NULL)
-			free(fa.fa_reg, M_DEVBUF, 0);
-		if (fa.fa_intr != NULL)
-			free(fa.fa_intr, M_DEVBUF, 0);
-		if (fa.fa_promvaddrs != NULL)
-			free(fa.fa_promvaddrs, M_DEVBUF, 0);
+		free(fa.fa_name, M_DEVBUF, 0);
+		free(fa.fa_reg, M_DEVBUF, 0);
+		free(fa.fa_intr, M_DEVBUF, 0);
+		free(fa.fa_promvaddrs, M_DEVBUF, 0);
 	}
 
 	sc->sc_blink.bl_func = fhc_led_blink;

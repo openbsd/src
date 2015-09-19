@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.10 2015/09/08 10:21:50 deraadt Exp $	*/
+/*	$OpenBSD: l1.c,v 1.11 2015/09/19 21:07:04 semarie Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -770,8 +770,7 @@ l1_read_board_ia(int16_t nasid, int type, u_char **ria, size_t *rialen)
 	return 0;
 
 fail:
-	if (ia != NULL)
-		free(ia, M_DEVBUF, ialen);
+	free(ia, M_DEVBUF, ialen);
 	return rc;
 }
 
@@ -1187,8 +1186,7 @@ l1_get_brick_spd_record(int16_t nasid, int dimm, u_char **rspd, size_t *rspdlen)
 	return 0;
 
 fail:
-	if (spd != NULL)
-		free(spd, M_DEVBUF, spdlen);
+	free(spd, M_DEVBUF, spdlen);
 	return rc;
 }
 

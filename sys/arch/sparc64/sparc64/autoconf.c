@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.123 2014/11/30 22:26:14 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.124 2015/09/19 21:07:04 semarie Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1077,8 +1077,7 @@ extern bus_space_tag_t mainbus_space_tag;
 			&ma.ma_naddress, (void **)&ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF, 0);
-			if (ma.ma_ninterrupts)
-				free(ma.ma_interrupts, M_DEVBUF, 0);
+			free(ma.ma_interrupts, M_DEVBUF, 0);
 			continue;
 		}
 #ifdef DEBUG
@@ -1092,10 +1091,8 @@ extern bus_space_tag_t mainbus_space_tag;
 #endif
 		config_found(dev, &ma, mbprint);
 		free(ma.ma_reg, M_DEVBUF, 0);
-		if (ma.ma_ninterrupts)
-			free(ma.ma_interrupts, M_DEVBUF, 0);
-		if (ma.ma_naddress)
-			free(ma.ma_address, M_DEVBUF, 0);
+		free(ma.ma_interrupts, M_DEVBUF, 0);
+		free(ma.ma_address, M_DEVBUF, 0);
 	}
 
 	extern int prom_cngetc(dev_t);

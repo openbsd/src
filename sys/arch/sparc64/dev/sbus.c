@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.43 2014/12/09 06:58:29 doug Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.44 2015/09/19 21:07:04 semarie Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -485,17 +485,10 @@ sbus_setup_attach_args(struct sbus_softc *sc, bus_space_tag_t bustag,
 void
 sbus_destroy_attach_args(struct sbus_attach_args *sa)
 {
-	if (sa->sa_name != NULL)
-		free(sa->sa_name, M_DEVBUF, 0);
-
-	if (sa->sa_nreg != 0)
-		free(sa->sa_reg, M_DEVBUF, 0);
-
-	if (sa->sa_intr)
-		free(sa->sa_intr, M_DEVBUF, 0);
-
-	if (sa->sa_promvaddrs)
-		free((void *)sa->sa_promvaddrs, M_DEVBUF, 0);
+	free(sa->sa_name, M_DEVBUF, 0);
+	free(sa->sa_reg, M_DEVBUF, 0);
+	free(sa->sa_intr, M_DEVBUF, 0);
+	free((void *)sa->sa_promvaddrs, M_DEVBUF, 0);
 
 	bzero(sa, sizeof(struct sbus_attach_args)); /*DEBUG*/
 }
