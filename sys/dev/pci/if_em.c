@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.304 2015/09/11 13:02:28 stsp Exp $ */
+/* $OpenBSD: if_em.c,v 1.305 2015/09/19 12:48:26 kettenis Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -347,8 +347,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	sc = (struct em_softc *)self;
 	sc->osdep.em_pa = *pa;
-
-	mtx_init(&sc->rx_mtx, IPL_NET);
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
@@ -919,6 +917,9 @@ em_intr(void *arg)
 		refill = 1;
 	}
 
+	if (reg_icr & E1000_ICR_RXO)
+		sc->rx_overruns++;
+
 	KERNEL_LOCK();
 
 	/* Link status change */
@@ -928,20 +929,15 @@ em_intr(void *arg)
 		em_update_link_status(sc);
 	}
 
-	if (reg_icr & E1000_ICR_RXO) {
-		sc->rx_overruns++;
-		refill = 1;
-	}
-
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
 		em_start(ifp);
+
+	KERNEL_UNLOCK();
 
 	if (refill && em_rxfill(sc)) {
 		/* Advance the Rx Queue #0 "Tail Pointer". */
 		E1000_WRITE_REG(&sc->hw, RDT, sc->last_rx_desc_filled);
 	}
-
-	KERNEL_UNLOCK();
 
 	return (1);
 }
@@ -1575,6 +1571,10 @@ em_stop(void *arg, int softonly)
 		em_disable_intr(sc);
 		em_reset_hw(&sc->hw);
 	}
+
+	intr_barrier(sc->sc_intrhand);
+
+	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
 
 	em_free_transmit_structures(sc);
 	em_free_receive_structures(sc);
@@ -2750,9 +2750,7 @@ em_free_receive_structures(struct em_softc *sc)
 
 	INIT_DEBUGOUT("free_receive_structures: begin");
 
-	mtx_enter(&sc->rx_mtx);
 	if_rxr_init(&sc->rx_ring, 0, 0);
-	mtx_leave(&sc->rx_mtx);
 
 	if (sc->rx_buffer_area != NULL) {
 		rx_buffer = sc->rx_buffer_area;
@@ -2790,8 +2788,6 @@ em_rxfill(struct em_softc *sc)
 	int post = 0;
 	int i;
 
-	mtx_enter(&sc->rx_mtx);
-
 	i = sc->last_rx_desc_filled;
 
 	for (slots = if_rxr_get(&sc->rx_ring, sc->num_rx_desc);
@@ -2808,8 +2804,6 @@ em_rxfill(struct em_softc *sc)
 
 	if_rxr_put(&sc->rx_ring, slots);
 
-	mtx_leave(&sc->rx_mtx);
-
 	return (post);
 }
 
@@ -2825,7 +2819,6 @@ em_rxeof(struct em_softc *sc)
 {
 	struct ifnet	    *ifp = &sc->interface_data.ac_if;
 	struct mbuf_list    ml = MBUF_LIST_INITIALIZER();
-	struct mbuf_list    free_ml = MBUF_LIST_INITIALIZER();
 	struct mbuf	    *m;
 	u_int8_t	    accept_frame = 0;
 	u_int8_t	    eop = 0;
@@ -2837,11 +2830,8 @@ em_rxeof(struct em_softc *sc)
 	struct em_buffer    *pkt;
 	u_int8_t	    status;
 
-	mtx_enter(&sc->rx_mtx);
-	if (if_rxr_inuse(&sc->rx_ring) == 0) {
-		mtx_leave(&sc->rx_mtx);
+	if (if_rxr_inuse(&sc->rx_ring) == 0)
 		return;
-	}
 
 	i = sc->next_rx_desc_to_check;
 
@@ -2959,12 +2949,12 @@ em_rxeof(struct em_softc *sc)
 			sc->dropped_pkts++;
 
 			if (sc->fmp != NULL) {
-				ml_enqueue(&free_ml, sc->fmp);
+				m_freem(sc->fmp);
 				sc->fmp = NULL;
 				sc->lmp = NULL;
 			}
 
-			ml_enqueue(&free_ml, m);
+			m_freem(m);
 		}
 
 		/* Advance our pointers to the next descriptor. */
@@ -2977,11 +2967,6 @@ em_rxeof(struct em_softc *sc)
 	    BUS_DMASYNC_PREREAD);
 
 	sc->next_rx_desc_to_check = i;
-
-	mtx_leave(&sc->rx_mtx);
-
-	while ((m = ml_dequeue(&free_ml)))
-		m_freem(m);
 
 	if_input(ifp, &ml);
 }
