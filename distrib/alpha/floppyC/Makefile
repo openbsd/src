@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 2013/03/09 17:25:24 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2015/09/19 10:42:10 miod Exp $
 
-.PATH: ${.CURDIR}/../ramdisk
 RAMDISK=RAMDISKC
 XNAME=floppyC
 
