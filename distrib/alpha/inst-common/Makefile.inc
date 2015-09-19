@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.11 2013/10/15 22:46:48 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2015/09/19 10:44:01 miod Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -35,7 +35,7 @@ do_files:
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    *.o *.lo *.c \
-	    lib*.a lib*.olist ${CBIN}.map
+	    lib*.a lib*.olist ${CBIN}.map ${CLEANFILES}
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
