@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.6 2015/09/09 09:46:53 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.7 2015/09/19 20:27:51 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -103,16 +103,9 @@ __asm(									\
 "	stw	%r27, 4(%r19)		# save in normal location	\n" \
 "									\n" \
 "	bcl	20, 31, 1f						\n" \
-"1:	mflr	%r28							\n" \
-"	addis	%r28, %r28, _GLOBAL_OFFSET_TABLE_-1b@ha			\n" \
-"	addi	%r28, %r28, _GLOBAL_OFFSET_TABLE_-1b@l			\n" \
-"									\n" \
-"	bcl	20, 31, 1f						\n" \
 "1:	mflr	%r18							\n" \
 "	addis	%r18, %r18, _DYNAMIC-1b@ha				\n" \
 "	addi	%r18, %r18, _DYNAMIC-1b@l				\n" \
-"	lwz	%r4, 4(%r28)	# load addr of _DYNAMIC according to got. \n" \
-"	sub	%r4, %r18, %r4	# determine load offset			\n" \
 "									\n" \
 "	subi	%r3, %r21, 4	# Get stack pointer (arg0 for _dl_boot). \n" \
 "	addi	%r4, %r1, 8	# dl_data				\n" \
