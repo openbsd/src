@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.98 2015/08/15 19:07:09 miod Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.99 2015/09/19 10:41:05 miod Exp $
 
 machine		alpha
 maxusers	4
@@ -213,11 +213,10 @@ atapiscsi*	at pciide?
 #wsdisplay*	at sfb?
 wsdisplay*	at vga?
 wsdisplay*	at tga?
-wskbd*		at pckbd? mux 1
+wskbd*		at pckbd?
 
 pseudo-device	bpfilter 1
 pseudo-device	vlan
 pseudo-device	loop 1
 pseudo-device	rd 1
-pseudo-device	wsmux 2
 pseudo-device	bio 1
