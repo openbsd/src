@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.23 2015/09/13 17:08:04 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.24 2015/09/19 20:09:08 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -44,57 +44,19 @@ ENTRY(_dl_start)
 	mr	22, 5	#envp
 	mr	23, 6	# ???
 
-	bl	1f
-	# this instruction never gets executed but can be used
-	# to find the virtual address where the page is loaded.
-	bl _GLOBAL_OFFSET_TABLE_@local-4
-	bl _DYNAMIC@local
-1:
-	mflr	5		# this stores where we are (+4)
-	lwz	18, 0(5)	# load the instruction at offset_sym
-				# it contains an offset to the location
-				# of the GOT.
+	bcl	20, 31, 1f
+1:	mflr	30
+	addis	30, 30, _GLOBAL_OFFSET_TABLE_-1b@ha
+	addi	30, 30, _GLOBAL_OFFSET_TABLE_-1b@l
 
-	rlwinm	18,18,0,8,30	# mask off the offset portion of the instr.
-
-	/*
-	 * these adds effectively calculate the value the
-	 * bl _GLOBAL_OFFSET_TABLE_@local-4
-	 * operation that would be below would calculate.
-	 */
-	add	28, 18, 5
-	mr	6, 5		# save offset for later use
-
-	/* mprotect GOT-4 for correct execution of blrl instruction */
-	li	0, SYS_mprotect
-	mr	3, 28
-	li	4, 4
-	li	5, 7 /* (PROT_READ|PROT_WRITE|PROT_EXEC) */
-	sc
-
-	mr	5, 6
-
-	li	0, 0
-	dcbf	5, 18
-	sync
-	isync
-	icbi	5, 18		# make certain that the got table addr is
-				# not in the icache
-	sync
-	isync
-
-	/* This calculates the address of _DYNAMIC the same way
-	 * that the GLOBAL_OFFSET_TABLE was calculated.
-	 */
-	lwz	18, 4(5)
-	rlwinm	18,18,0,8,30	# mask off the offset portion of the instr.
-	add	8, 18, 5	# address of _DYNAMIC (arg6 for _dl_boot)
-	addi	18, 8, 4	# correction.
-	lwz	4, 4(28)	# load address of _DYNAMIC according to got.
+	bcl	20, 31, 1f
+1:	mflr	18,
+	addis	18, 18, _DYNAMIC-1b@ha
+	addi	18, 18, _DYNAMIC-1b@l
+	lwz	4, 0(30)	# load address of _DYNAMIC according to got.
 	sub	4, 18, 4	# determine load offset
 
 	mr	17, 4		# save for _dl_boot
-
 
 	subi	3, 21, 4	# Get stack pointer (arg0 for _dl_boot).
 	addi	4, 1, 8		# dl_data
@@ -117,9 +79,7 @@ ENTRY(_dl_start)
 	mr	5, 22
 	mr	6, 23
 
-	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	31
-	lwz	7, _dl_dtors@got(31)
+	lwz	7, _dl_dtors@got(30)
 
 	mtlr	27
 	lwz	1, 0(1)		# Restore stack pointer.
