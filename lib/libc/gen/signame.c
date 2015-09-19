@@ -1,4 +1,4 @@
-/*	$OpenBSD: signame.c,v 1.6 2015/09/06 20:26:20 guenther Exp $ */
+/*	$OpenBSD: signame.c,v 1.7 2015/09/19 04:02:21 guenther Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -66,4 +66,6 @@ const char *const sys_signame[NSIG] = {
 	"USR2",		/* SIGUSR2 */
 	"THR",		/* SIGTHR */
 };
+#if 0
 DEF_WEAK(sys_signame);
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: toupper_.c,v 1.11 2015/09/13 11:38:08 guenther Exp $ */
+/*	$OpenBSD: toupper_.c,v 1.12 2015/09/19 04:02:21 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -47,7 +47,9 @@ const short _C_toupper_[1 + CTYPE_NUM_CHARS] = {
 };
 
 const short *_toupper_tab_ = _C_toupper_;
+#if 0
 DEF_STRONG(_toupper_tab_);
+#endif
 
 #undef toupper
 int

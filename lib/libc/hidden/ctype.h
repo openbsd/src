@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.1 2015/09/13 11:38:08 guenther Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.2 2015/09/19 04:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,9 +20,11 @@
 
 #include_next <ctype.h>
 
+#if 0
 extern PROTO_NORMAL(_ctype_);
 extern PROTO_NORMAL(_tolower_tab_);
 extern PROTO_NORMAL(_toupper_tab_);
+#endif
 
 PROTO_NORMAL(isalnum);
 PROTO_NORMAL(isalpha);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.4 2015/09/11 15:38:33 guenther Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.5 2015/09/19 04:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -30,8 +30,10 @@ __END_HIDDEN_DECLS
 extern const int sys_nerr;
 extern const char *const sys_errlist[];
 
+#if 0
 extern PROTO_NORMAL(sys_nerr);
 extern PROTO_NORMAL(sys_errlist);
+#endif
 
 PROTO_NORMAL(__srget);
 PROTO_NORMAL(__swbuf);

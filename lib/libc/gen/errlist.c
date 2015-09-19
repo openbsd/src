@@ -1,4 +1,4 @@
-/*	$OpenBSD: errlist.c,v 1.16 2015/09/06 20:26:20 guenther Exp $ */
+/*	$OpenBSD: errlist.c,v 1.17 2015/09/19 04:02:21 guenther Exp $ */
 /*
  * Copyright (c) 1982, 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -143,9 +143,11 @@ const char *const sys_errlist[] = {
 	"No message of desired type",		/* 90 - ENOMSG */
 	"Not supported",			/* 91 - ENOTSUP */
 };
-DEF_WEAK(sys_errlist);
 const int sys_nerr = { sizeof sys_errlist/sizeof sys_errlist[0] };
+#if 0
+DEF_WEAK(sys_errlist);
 DEF_WEAK(sys_nerr);
+#endif
 
 __strong_alias(_sys_errlist, sys_errlist);  
 __strong_alias(_sys_nerr, sys_nerr);  

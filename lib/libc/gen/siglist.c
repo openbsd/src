@@ -1,4 +1,4 @@
-/*	$OpenBSD: siglist.c,v 1.7 2015/09/06 20:26:20 guenther Exp $ */
+/*	$OpenBSD: siglist.c,v 1.8 2015/09/19 04:02:21 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -65,5 +65,7 @@ const char *const sys_siglist[NSIG] = {
 	"User defined signal 2",	/* SIGUSR2 */
 	"Thread AST",			/* SIGTHR */
 };
+#if 0
 DEF_WEAK(sys_siglist);
+#endif
 __strong_alias(_sys_siglist, sys_siglist);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype_.c,v 1.11 2015/09/13 11:38:08 guenther Exp $ */
+/*	$OpenBSD: ctype_.c,v 1.12 2015/09/19 04:02:21 guenther Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -74,4 +74,6 @@ const char _C_ctype_[1 + CTYPE_NUM_CHARS] = {
 };
 
 const char *_ctype_ = _C_ctype_;
+#if 0
 DEF_STRONG(_ctype_);
+#endif

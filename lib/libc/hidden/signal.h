@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.6 2015/09/13 07:36:58 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.7 2015/09/19 04:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -24,8 +24,10 @@ __BEGIN_HIDDEN_DECLS
 extern sigset_t __sigintr;
 __END_HIDDEN_DECLS
 
+#if 0
 extern PROTO_NORMAL(sys_siglist);
 extern PROTO_NORMAL(sys_signame);
+#endif
 
 PROTO_DEPRECATED(bsd_signal);
 PROTO_NORMAL(kill);             /* wrap to ban SIGTHR? */

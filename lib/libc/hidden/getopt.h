@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt.h,v 1.1 2015/09/12 14:48:14 guenther Exp $	*/
+/*	$OpenBSD: getopt.h,v 1.2 2015/09/19 04:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,11 +20,11 @@
 
 #include_next <getopt.h>
 
+#if 0
 extern PROTO_NORMAL(opterr);
 extern PROTO_NORMAL(optind);
 extern PROTO_NORMAL(optopt);
 
-#if 0
 /* alas, COMMON symbols alias differently */
 extern PROTO_NORMAL(optarg);
 extern PROTO_NORMAL(optreset);

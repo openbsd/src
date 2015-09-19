@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.3 2015/09/13 20:29:23 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.4 2015/09/19 04:02:21 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -41,8 +41,10 @@ __BEGIN_HIDDEN_DECLS
 char	*__findenv(const char *, int, int *);
 __END_HIDDEN_DECLS
 
+#if 0
 extern PROTO_NORMAL(__mb_cur_max);
 /*extern PROTO_NORMAL(suboptarg);*/
+#endif
 
 PROTO_STD_DEPRECATED(_Exit);
 PROTO_DEPRECATED(a64l);
