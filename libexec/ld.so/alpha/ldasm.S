@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.30 2015/09/13 17:08:03 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.31 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -306,26 +306,6 @@ LEAF_NOPROFILE(_dl_mmap, 6)
 1:
 	RET
 END(_dl_mmap)
-
-LEAF_NOPROFILE(_dl_sigprocmask, 4)
-	/* _dl_sigprocmask does not support NULL new mask */
-	mov	a2, a5
-#if 0
-	cmoveq	a1, 1, a0	/* if set is NULL, set how to SIG_BLOCK */
-	beq	a1, 1f
-#endif
-	ldl	a1, 0(a1)	/* load the set from *set */
-1:
-	CALLSYS_NOERROR(sigprocmask)
-	beq	a3, 1f
-	jmp	zero, _dl_cerror
-1:
-	beq	a5, 1f
-	stl	v0, 0(a5)
-1:
-	mov	zero, v0
-	RET
-END(_dl_sigprocmask)
 
 DL_SYSCALL(close)
 DL_SYSCALL_NOERR(exit)

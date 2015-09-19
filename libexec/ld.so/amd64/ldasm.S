@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.19 2015/09/13 17:08:03 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.20 2015/09/19 20:56:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -107,23 +107,6 @@ DL_SYSCALL(sysctl)
 	neg	%rax
 	ret
 
-
-	/* _dl_sigprocmask: does not handle NULL new set */
-
-	.align 4
-	.global _dl_sigprocmask
-	.type _dl_sigprocmask,@function
-_dl_sigprocmask:
-	movl	(%rsi),%esi		# fetch indirect...
-	movl	$SYS_sigprocmask, %eax
-	movq	%rcx, %r10
-	syscall
-	jc	1b		 /* error: result = -errno */
-	testq	%rdx,%rdx		# test if old mask requested
-	jz	2f
-	movl	%eax,(%rdx)		# store old mask
-	xorq	%rax,%rax
-2:	ret
 
 	.align 4
 	.global _dl_bind_start

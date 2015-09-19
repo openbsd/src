@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.38 2015/09/13 17:08:04 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.39 2015/09/19 20:56:47 guenther Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -285,19 +285,6 @@ _ENTRY(_dl_getdents)
 	t ST_SYSCALL					! off to wonderland
 	retl
 	 sub %g0, %o0, %o0				! error: result = -errno
-
-	/* _dl_sigprocmask does not support NULL new mask */
-_ENTRY(_dl_sigprocmask)
-	ld	[%o1], %o1			! indirect for new mask
-	mov	SYS_sigprocmask, %g1		! call sys_sigprocmask
-	t ST_SYSCALL				! off to wonderland
-						! what about errors?
-	cmp	%o2, 0
-	bne,a	1f				! if oset != NULL
-	 st	%o0, [%o2]			!   *oset = oldmask
-1:
-	retl
-	 clr %o0
 
 _ENTRY(_dl_sysctl)
 	mov  SYS_sysctl | SYSCALL_G2RFLAG, %g1		! call sys_sysctl

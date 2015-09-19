@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.16 2015/09/13 17:08:03 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.17 2015/09/19 20:56:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -277,27 +277,5 @@ ENTRY(_dl_sendsyslog,0)
 	bv	r0(rp)
 	nop
 EXIT(_dl_sendsyslog)
-
-ENTRY(_dl_sigprocmask,0)
-	stw	arg2, HPPA_FRAME_ARG(2)(sp)
-
-	comb,<>,n r0, arg1, _dl_sigprocmask$nblock
-
-	b	_dl_sigprocmask$call
-	ldi	1, arg0
-
-_dl_sigprocmask$nblock
-	ldw	0(arg1), arg1
-	stw	arg1, HPPA_FRAME_ARG(1)(sp)
-
-_dl_sigprocmask$call
-	SYSCALL(sigprocmask)
-
-	ldw	HPPA_FRAME_ARG(2)(sp), arg2
-	add,=	r0, arg2, r0
-	stw	ret0, 0(arg2)
-	bv	r0(rp)
-	copy	r0, ret0
-EXIT(_dl_sigprocmask)
 
 	.end

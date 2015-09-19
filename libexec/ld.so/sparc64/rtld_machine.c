@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.54 2015/08/23 20:45:14 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.55 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -73,7 +73,6 @@
 
 #include <nlist.h>
 #include <link.h>
-#include <signal.h>
 
 #include "syscall.h"
 #include "archdep.h"

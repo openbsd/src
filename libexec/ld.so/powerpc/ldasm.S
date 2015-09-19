@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.24 2015/09/19 20:09:08 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.25 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -139,28 +139,6 @@ ENTRY(_dl_##n)								\
 
 _dl_cerror:
 	neg	3, 3
-	blr
-
-ENTRY(_dl_sigprocmask)
-	/* _dl_sigprocmask does not support NULL as the new mask */
-#if 0
-	cmpwi	4, 0
-	bne+	1f
-	li	3, 1		/* SIG_BLOCK */
-	b	2f
-1:
-#endif
-	lwz	4, 0(4)
-2:
-	li	0, SYS_sigprocmask
-	sc
-	cmpwi	0, 0
-	bne-	_dl_cerror
-	cmpwi	5, 0
-	beq-	1f
-	stw	3, 0(5)
-1:
-	li	3, 0
 	blr
 
 DL_SYSCALL(close)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.14 2015/09/13 17:08:04 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.15 2015/09/19 20:56:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -220,23 +220,6 @@ DL_SYSCALL(sysctl)
 
 DL_SYSCALL(getdents)
 	jmp	%r1
-
-ENTRY(_dl_sigprocmask)
-	bcnd	ne0, %r3, 1f
-	or	%r2, %r0, 1		/* SIG_BLOCK */
-	br	2f
-1:
-	ld	%r3, %r3, 0
-2:
-	or	%r13, %r0, SYS_sigprocmask
-	tb0	0, %r0, 450
-	br	_dl_cerror
-	bcnd	eq0, %r4, 3f
-	st	%r2, %r4, 0
-3:
-	jmp.n	%r1
-	 or	%r2, %r0, 0
-END(_dl_sigprocmask)
 
 _dl_cerror:
 	jmp.n	%r1

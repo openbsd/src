@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.21 2014/09/01 05:09:53 doug Exp $ */
+/*	$OpenBSD: syscall.h,v 1.22 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -31,7 +31,6 @@
 
 #include <sys/syscall.h>
 #include <sys/stat.h>
-#include <sys/signal.h>
 
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 512L
@@ -50,7 +49,6 @@ int	_dl_open(const char *, int);
 ssize_t	_dl_read(int, const char *, size_t);
 int	_dl_fstat(int, struct stat *);
 ssize_t	_dl_getdents(int, char *, size_t);
-int	_dl_sigprocmask(int, const sigset_t *, sigset_t *);
 int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 int	_dl_gettimeofday(struct timeval *, struct timezone *);
 ssize_t	_dl_readlink(const char *, char *, size_t);

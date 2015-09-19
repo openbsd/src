@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.19 2015/09/13 17:08:04 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.20 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -196,29 +196,3 @@ DL_SYSCALL(sysctl)
 
 DL_SYSCALL(getdents)
 
-	.global		_dl_sigprocmask
-	.type		_dl_sigprocmask%function
-_dl_sigprocmask:
-	mov	r5, r2			/* fetch new sigset pointer */
-	tst	r2, r2			/* check new sigset pointer */
-	bf	1f			/* if not null, indirect */
-	 mov	#1, r4			/* SIG_BLOCK */
-	bra	2f
-	 nop
-1:	mov.l	@r2, r2			/* fetch indirect ... */
-	mov	r2, r5			/* to new mask arg */
-2:	mov.l	LSYS_sigprocmask, r0
-	trapa	#0x80
-	bf	.L_cerr
-	 mov	r6, r2			/* fetch old mask requested */
-	tst	r2, r2			/* test if old mask requested */
-	bt	out
-	 mov.l	r0, @r2			/* store old mask */
-out:
-	xor	r0, r0
-	rts
-	 nop
-
-	.align	2
-LSYS_sigprocmask:
-	.long	SYS_sigprocmask

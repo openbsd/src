@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.17 2015/09/13 17:08:03 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.18 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -130,20 +130,6 @@ DL_SYSCALL2(getcwd,__getcwd)
 DL_SYSCALL(sysctl)
 
 DL_SYSCALL(getdents)
-
-	.global		_dl_sigprocmask
-	.type		_dl_sigprocmask%function
-_dl_sigprocmask:
-	teq	r1, #0
-	moveq	r0, #1
-	moveq	r1, #0
-	ldrne	r1, [r1]
-	SYSTRAP(sigprocmask)
-	bcs	.L_cerr
-	teq	r2, #0
-	strne	r0, [r2]
-	mov	r0, #0
-	mov	pc, lr
 
 .L_cerr:
 	rsb	r0, r0, #0		/* r0 = -errno */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.72 2015/08/17 20:04:56 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.73 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,7 +32,6 @@
 #include <sys/queue.h>
 #include <link.h>
 #include <dlfcn.h>
-#include <signal.h>
 
 struct load_list {
 	struct load_list *next;
@@ -237,8 +236,6 @@ void	_dl_debug_state(void);
 
 void	_dl_thread_kern_go(void);
 void	_dl_thread_kern_stop(void);
-
-void	_dl_thread_bind_lock(int, sigset_t *);
 
 char	*_dl_getenv(const char *, char **);
 void	_dl_unsetenv(const char *, char **);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.14 2015/09/13 17:08:04 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.15 2015/09/19 20:56:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -144,25 +144,6 @@ END(_dl_##n)
 _dl_cerror:
 	subu	v0, zero, v0
 	j	ra
-
-NLEAF(_dl_sigprocmask,0)
-	/* _dl_sigprocmask does not support NULL as the new mask */
-#if 0
-	bnez	a1, 1f
-	li	a0, 1	/* SIG_BLOCK */
-	b	2f
-1:
-#endif
-	lw	a1, 0(a1)
-2:
-	__DO_SYSCALL(sigprocmask)
-	bnez	a3, _dl_cerror
-	beqz	a2, 1f
-	sw	v0, 0(a2)
-1:
-	li	v0, 0
-	j	ra
-END(_dl_sigprocmask)
 
 DL_SYSCALL(close)
 DL_SYSCALL_NOERR(exit)
