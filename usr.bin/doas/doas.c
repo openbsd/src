@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.41 2015/09/03 20:05:58 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.42 2015/09/19 02:47:46 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -322,6 +322,8 @@ main(int argc, char **argv, char **envp)
 	int nflag = 0;
 	char cwdpath[PATH_MAX];
 	const char *cwd;
+
+	closefrom(STDERR_FILENO + 1);
 
 	uid = getuid();
 
