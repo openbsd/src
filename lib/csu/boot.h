@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.12 2015/08/17 17:13:58 kettenis Exp $ */
+/*	$OpenBSD: boot.h,v 1.13 2015/09/19 20:11:22 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -50,6 +50,8 @@
 #include "stdlib.h"
 #include "dl_prebind.h"
 
+#define	DT_PROC(n)	((n) - DT_LOPROC + DT_NUM)
+
 #ifdef RCRT0
 
 /*
@@ -75,6 +77,7 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	int		n, argc;
 	char **argv, **envp;
 	long loff;
+	int prot_exec = 0;
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -287,9 +290,14 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 	mprotect((void *)start, size, PROT_READ);
 #endif
 
+#if defined(__powerpc__)
+	if (dynld.Dyn.info[DT_PROC(DT_PPC_GOT)] == 0)
+		prot_exec = PROT_EXEC;
+#endif
+
 	start = ELF_TRUNC((Elf_Addr)__got_start, pagesize);
 	size = ELF_ROUND((Elf_Addr)__got_end - start, pagesize);
-	mprotect((void *)start, size, GOT_PERMS);
+	mprotect((void *)start, size, GOT_PERMS | prot_exec);
 }
 
 #ifdef __alpha__
