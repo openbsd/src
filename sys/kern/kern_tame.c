@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.41 2015/09/13 17:08:03 guenther Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.42 2015/09/19 20:39:06 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -218,8 +218,8 @@ static const struct {
 	{ "tmppath",		TAME_SELF | TAME_RW | TAME_TMPPATH },
 	{ "inet",		TAME_SELF | TAME_RW | TAME_INET },
 	{ "unix",		TAME_SELF | TAME_RW | TAME_UNIX },
-	{ "cmsg",		TAME_UNIX | TAME_CMSG },
-	{ "dns",		TAME_MALLOC | TAME_DNSPATH },
+	{ "cmsg",		TAME_SELF | TAME_RW | TAME_UNIX | TAME_CMSG },
+	{ "dns",		TAME_SELF | TAME_MALLOC | TAME_DNSPATH },
 	{ "ioctl",		TAME_IOCTL },
 	{ "getpw",		TAME_SELF | TAME_MALLOC | TAME_RW | TAME_GETPW },
 	{ "proc",		TAME_PROC },
