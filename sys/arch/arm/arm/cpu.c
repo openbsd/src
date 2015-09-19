@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.21 2015/05/29 05:48:07 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.22 2015/09/19 02:13:05 jsg Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -50,8 +50,10 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/sched.h>
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
@@ -579,5 +581,11 @@ cpu_alloc_idlepcb(struct cpu_info *ci)
 	return 0;
 }
 #endif /* MULTIPROCESSOR */
+
+void
+intr_barrier(void *ih)
+{
+	sched_barrier(NULL);
+}
 
 /* End of cpu.c */
