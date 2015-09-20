@@ -1,10 +1,14 @@
-dnl	$OpenBSD: contents,v 1.26 2014/11/10 07:15:42 jsg Exp $
+dnl	$OpenBSD: contents,v 1.27 2015/09/20 15:24:39 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
-dnl five flavours of OpenBSDbsd
+dnl six flavours of OpenBSDbsd
 	bsd.IP22	A stock GENERIC-IP22 MACHINE kernel for IP22 class
+			machines, which will be installed on such systems
+			during the install.
+
+	bsd.IP26	A stock GENERIC-IP26 MACHINE kernel for IP26 class
 			machines, which will be installed on such systems
 			during the install.
 
@@ -30,8 +34,12 @@ dnl one flavour of OpenBSDbsdmp so far...
 			which can be used instead of the GENERIC-IP30 kernel
 			after the install.
 
-dnl five flavours of OpenBSDrd
+dnl six flavours of OpenBSDrd
 	bsd.rd.IP22	A RAMDISK-IP22 kernel; the embedded filesystem
+			contains the installation tools.
+			Used for installation and upgrades.
+
+	bsd.rd.IP26	A RAMDISK-IP26 kernel; the embedded filesystem
 			contains the installation tools.
 			Used for installation and upgrades.
 
@@ -64,9 +72,9 @@ dnl can't use OpenBSDcd because of the multiple bsd.rd
 			installed into the ``volume header'' of the boot
 			disk.
 
-	boot64		A 64-bit relocatable ELF boot block for IP27, IP28,
-			IP30 and IP35 systems; will be installed into the
-			``volume header'' of the boot disk.
+	boot64		A 64-bit relocatable ELF boot block for IP26, IP27,
+			IP28, IP30 and IP35 systems; will be installed into
+			the ``volume header'' of the boot disk.
 
 	bootecoff	A 32-bit ECOFF boot block for IP22 systems, also
 			used to boot ELF kernels over the network on
