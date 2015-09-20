@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2013/10/18 14:04:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2015/09/20 12:55:11 miod Exp $
 
 REV=		${OSrev}
 
@@ -33,7 +33,7 @@ all ${IMAGE}:
 	@false
 .else
 
-ALLIP=		22 27 28 30 32
+ALLIP=		22 26 27 28 30 32
 ALLBSD=
 ALLBSDRD=
 .for IP in ${ALLIP}

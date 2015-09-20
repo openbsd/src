@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2012/05/25 17:32:38 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2015/09/20 12:55:11 miod Exp $
 
-ALLIP=	22 27 28 30 32
+ALLIP=	22 26 27 28 30 32
 KERNELS=
 MDEXT=
 
