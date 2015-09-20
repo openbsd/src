@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.5 2014/05/19 21:18:42 miod Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.6 2015/09/20 12:49:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -165,6 +165,7 @@ tcc_SyncCache(struct cpu_info *ci)
 	uint64_t idx;
 
 	mips_sync();
+	tcc_prefetch_invalidate();
 	tfp_InvalidateICache(ci, 0, ci->ci_l1inst.size);
 
 	/*
@@ -188,6 +189,7 @@ tcc_SyncDCachePage(struct cpu_info *ci, vaddr_t va, paddr_t pa)
 	vaddr_t epa;
 
 	mips_sync();
+	tcc_prefetch_invalidate();
 	epa = pa + PAGE_SIZE;
 	do {
 		tcc_cache_hit(pa,
@@ -242,12 +244,12 @@ tcc_HitSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	vaddr_t va;
 	vsize_t sz;
 
-	mips_sync();
-
 	/* extend the range to integral cache lines */
 	va = _va & ~(TCC_CACHE_LINE - 1);
 	sz = ((_va + _sz + TCC_CACHE_LINE - 1) & ~(TCC_CACHE_LINE - 1)) - va;
 
+	mips_sync();
+	tcc_prefetch_invalidate();
 	tcc_virtual(ci, va, sz, TCC_CACHEOP_WRITEBACK | TCC_CACHEOP_INVALIDATE);
 	tcc_prefetch_invalidate();
 }
@@ -258,12 +260,12 @@ tcc_HitInvalidateDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	vaddr_t va;
 	vsize_t sz;
 
-	mips_sync();
-
 	/* extend the range to integral cache lines */
 	va = _va & ~(TCC_CACHE_LINE - 1);
 	sz = ((_va + _sz + TCC_CACHE_LINE - 1) & ~(TCC_CACHE_LINE - 1)) - va;
 
+	mips_sync();
+	tcc_prefetch_invalidate();
 	tcc_virtual(ci, va, sz, TCC_CACHEOP_INVALIDATE);
 	tcc_prefetch_invalidate();
 }
@@ -275,11 +277,11 @@ tcc_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 	vsize_t sz;
 	int partial_start, partial_end;
 
-	mips_sync();
-
 	/* extend the range to integral cache lines */
 	va = _va & ~(TCC_CACHE_LINE - 1);
 	sz = ((_va + _sz + TCC_CACHE_LINE - 1) & ~(TCC_CACHE_LINE - 1)) - va;
+
+	mips_sync();
 
 	switch (how) {
 	default:
@@ -291,6 +293,7 @@ tcc_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 		} else {
 			partial_start = partial_end = 0;
 		}
+		tcc_prefetch_invalidate();
 		if (partial_start) {
 			tcc_virtual(ci, va, TCC_CACHE_LINE,
 			    TCC_CACHEOP_WRITEBACK | TCC_CACHEOP_INVALIDATE);
@@ -304,18 +307,20 @@ tcc_IOSyncDCache(struct cpu_info *ci, vaddr_t _va, size_t _sz, int how)
 		}
 		if (sz != 0)
 			tcc_virtual(ci, va, sz, TCC_CACHEOP_INVALIDATE);
-
-		tcc_prefetch_invalidate();
 		break;
 
 	case CACHE_SYNC_X:
+		tcc_prefetch_invalidate();
 		tcc_virtual(ci, va, sz, TCC_CACHEOP_WRITEBACK);
 		break;
 
 	case CACHE_SYNC_W:
+		tcc_prefetch_invalidate();
 		tcc_virtual(ci, va, sz,
 		    TCC_CACHEOP_WRITEBACK | TCC_CACHEOP_INVALIDATE);
-		tcc_prefetch_invalidate();
 		break;
 	}
+	tcc_prefetch_invalidate();
+
+	tfp_IOSyncDCache(ci, _va, _sz, how);
 }
