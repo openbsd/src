@@ -6066,6 +6066,7 @@
 ./usr/share/man/man9/SRPL_FOREACH.9
 ./usr/share/man/man9/SRPL_FOREACH_LOCKED.9
 ./usr/share/man/man9/SRPL_HEAD_INIT.9
+./usr/share/man/man9/SRPL_INSERT_AFTER_LOCKED.9
 ./usr/share/man/man9/SRPL_INSERT_HEAD_LOCKED.9
 ./usr/share/man/man9/SRPL_LEAVE.9
 ./usr/share/man/man9/SRPL_NEXT.9

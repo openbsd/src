@@ -1528,6 +1528,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/memconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/mips_cpu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/mips_opcode.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/mplock.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/mutex.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/param.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/pcb.ph
