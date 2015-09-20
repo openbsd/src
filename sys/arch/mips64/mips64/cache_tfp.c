@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp.c,v 1.4 2014/03/31 20:21:19 miod Exp $	*/
+/*	$OpenBSD: cache_tfp.c,v 1.5 2015/09/20 11:50:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -66,9 +66,9 @@ tfp_ConfigCache(struct cpu_info *ci)
 		ci->ci_l1data.linesize = 16;
 #else
 	ci->ci_l1inst.size = 16384;
-	ci->ci_l1inst.linesize = 32;
+	ci->ci_l1inst.linesize = TFP_DCTW_STEP;	/* but handled in 32b chunks */
 	ci->ci_l1data.size = 16384;
-	ci->ci_l1data.linesize = 32;
+	ci->ci_l1data.linesize = TFP_DCTW_STEP;
 #endif
 
 	/* R8000 L1 caches are direct */
@@ -80,6 +80,10 @@ tfp_ConfigCache(struct cpu_info *ci)
 	cache_valias_mask =
 	    (max(ci->ci_l1inst.size, ci->ci_l1data.size) - 1) &
 	    ~PAGE_MASK;
+#ifdef DIAGNOSTIC
+	if (cache_valias_mask != 0)
+		panic("page size is too small");
+#endif
 
 	/* R8000 L2 cache are platform-specific, and not covered here */
 	memset(&ci->ci_l2, 0, sizeof(struct cache_info));
@@ -125,6 +129,7 @@ tfp_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 
 	if (_sz >= ci->ci_l1inst.size) {
 		tfp_inval_icache(ci->ci_l1inst.size);
+		ci->ci_cachepending_l1i = 0;
 	} else {
 		/* extend the range to multiple of 32 bytes */
 		va = _va & ~(32UL - 1);
