@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.43 2015/09/14 11:52:49 guenther Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.44 2015/09/20 12:18:47 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -560,23 +560,6 @@ iter_family(struct asr_query *as, int first)
 	as->as_family_idx++;
 
 	return AS_FAMILY(as);
-}
-
-/*
- * Concatenate a name and a domain name. The result has no trailing dot.
- * Return the resulting string length, or 0 in case of error.
- */
-static size_t
-domcat(const char *name, const char *domain, char *buf, size_t buflen)
-{
-	size_t	r;
-
-	r = _asr_make_fqdn(name, domain, buf, buflen);
-	if (r == 0)
-		return (0);
-	buf[r - 1] = '\0';
-
-	return (r - 1);
 }
 
 /*
