@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.31 2015/09/18 03:53:44 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.32 2015/09/20 02:01:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1076,6 +1076,11 @@ vmxnet3_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 
 		ifp->if_opackets++;
 		used += n;
