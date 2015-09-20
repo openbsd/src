@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.41 2015/09/14 11:52:49 guenther Exp $	*/
+/*	$OpenBSD: asr.c,v 1.42 2015/09/20 12:50:58 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -57,7 +57,6 @@
 #include "thread_private.h"
 #endif
 
-#define DEFAULT_CONFFILE	_PATH_RESCONF
 #define DEFAULT_CONF		"lookup file\n"
 #define DEFAULT_LOOKUP		"lookup bind file"
 
@@ -111,7 +110,7 @@ _asr_resolver(const char *conf)
 #endif
 
 	if (conf == NULL)
-		conf = DEFAULT_CONFFILE;
+		conf = _PATH_RESCONF;
 
 	if (conf[0] == '!') {
 		/* Use the rest of the string as config file */
