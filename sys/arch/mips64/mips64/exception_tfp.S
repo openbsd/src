@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception_tfp.S,v 1.3 2014/04/09 21:10:35 miod Exp $	*/
+/*	$OpenBSD: exception_tfp.S,v 1.4 2015/09/20 11:52:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -59,6 +59,13 @@
 
 #include "assym.h"
 
+#ifdef MIPS_PTE64
+#error "R8000 doesn't need 64-bit PTE"
+#else
+#define	PTE_LOG		2
+#define	PTE_LOAD	lwu
+#endif
+
 #define	TLBW	.align 4; .word 0x43000002
 
 	.set	mips4
@@ -96,10 +103,10 @@ utlb_miss:
 	DMFC0	k0, COP_0_WORK0		# saved COP_0_VADDR
 	MFC0_HAZARD
 	beqz	k1, _inv_seg
-	 PTR_SRL k0, PAGE_SHIFT - 2
-	andi	k0, ((NPTEPG / 2) - 1) << 2
+	 PTR_SRL k0, PAGE_SHIFT - PTE_LOG
+	andi	k0, (NPTEPG - 1) << PTE_LOG
 	PTR_ADDU k1, k0
-	lwu	k0, 0(k1)		# get pte
+	PTE_LOAD k0, 0(k1)		# get pte
 	DMTC0	k0, COP_0_TLB_LO
 	MTC0_HAZARD
 	TLBW
@@ -162,7 +169,7 @@ kv1tlb_miss:
 	DMFC0	k1, COP_0_GBASE		# Sysmap
 	MFC0_HAZARD
 	PTR_ADDU k1, k0
-	lwu	k0, 0(k1)		# get pte
+	PTE_LOAD k0, 0(k1)		# get pte
 	DMTC0	k0, COP_0_TLB_LO
 	MTC0_HAZARD
 	TLBW
@@ -220,7 +227,7 @@ k_tlb_inv:
 	DMFC0	k1, COP_0_GBASE		# Sysmap
 	MFC0_HAZARD
 	PTR_ADDU k1, k0
-	lwu	k0, 0(k1)		# get pte
+	PTE_LOAD k0, 0(k1)		# get pte
 	andi	k1, k0, PG_V
 	beqz	k1, k_general		# if not valid
 	 NOP
