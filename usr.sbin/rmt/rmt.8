@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmt.8,v 1.12 2011/07/23 15:40:13 schwarze Exp $
+.\"	$OpenBSD: rmt.8,v 1.13 2015/09/20 10:05:48 halex Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,25 +29,45 @@
 .\"
 .\"     from: @(#)rmt.8	6.5 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: July 23 2011 $
+.Dd $Mdocdate: September 20 2015 $
 .Dt RMT 8
 .Os
 .Sh NAME
 .Nm rmt
 .Nd remote magtape protocol module
 .Sh SYNOPSIS
-.Nm rmt
+.Nm
+.Op Fl r | w
+.Op Fl d Ar directory
 .Sh DESCRIPTION
 .Nm
 is a program used by the remote dump and restore programs
-in manipulating a magnetic tape drive through an interprocess
-communication connection.
+through an interprocess communication connection.
+Traditionally it is used for manipulating a magnetic tape drive but it may
+be used for regular file access as well.
 .Nm
 is normally started up with an
 .Xr rcmd 3
 or
 .Xr rcmdsh 3
 call.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d Ar directory
+Confine file access to
+.Ar directory .
+Forward slashes in filenames are disallowed and symlinks are not followed.
+.It Fl r
+Read-only mode, suitable for use with
+.Xr rrestore 8 .
+.It Fl w
+File write mode, suitable for use with
+.Xr rdump 8
+for dumping to regular files.
+Creates missing files and refuses to open existing ones.
+The file permission bits are set to readonly.
+.El
 .Pp
 The
 .Nm

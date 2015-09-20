@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.15 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.16 2015/09/20 10:05:48 halex Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
@@ -52,6 +53,7 @@ int	maxrecsize = -1;
 
 #define	STRSIZE	64
 char	device[PATH_MAX];
+char	lastdevice[PATH_MAX] = "";
 char	count[STRSIZE], mode[STRSIZE], pos[STRSIZE], op[STRSIZE];
 
 char	resp[BUFSIZ];
@@ -61,9 +63,10 @@ FILE	*debug;
 #define	DEBUG1(f,a)	if (debug) fprintf(debug, f, a)
 #define	DEBUG2(f,a1,a2)	if (debug) fprintf(debug, f, a1, a2)
 
-char	*checkbuf(char *, int);
-void	getstring(char *, int);
-void	error(int);
+char		*checkbuf(char *, int);
+void		getstring(char *, int);
+void		error(int);
+__dead void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -72,14 +75,50 @@ main(int argc, char *argv[])
 	int rval;
 	char c;
 	int n, i, cc;
+	int ch, rflag = 0, wflag = 0;
+	int f, acc;
+	mode_t m;
+	char *dir = NULL;
+	char *devp;
+	size_t dirlen;
 
-	argc--, argv++;
+	while ((ch = getopt(argc, argv, "d:rw")) != -1) {
+		switch (ch) {
+		case 'd':
+			dir = optarg;
+			if (*dir != '/')
+				errx(1, "directory must be absolute");
+			break;
+		case 'r':
+			rflag = 1;
+			break;
+		case 'w':
+			wflag = 1;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (rflag && wflag)
+		usage();
+
 	if (argc > 0) {
 		debug = fopen(*argv, "w");
 		if (debug == 0)
-			exit(1);
+			err(1, "cannot open debug file");
 		(void) setbuf(debug, (char *)0);
 	}
+
+	if (dir) {
+		if (chdir(dir) != 0)
+			err(1, "chdir");
+		dirlen = strlen(dir);
+	}
+
 top:
 	errno = 0;
 	rval = 0;
@@ -93,10 +132,66 @@ top:
 		getstring(device, sizeof(device));
 		getstring(mode, sizeof(mode));
 		DEBUG2("rmtd: O %s %s\n", device, mode);
-		tape = open(device, atoi(mode),
-		    S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+
+		devp = device;
+		f = atoi(mode);
+		m = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+		acc = f & O_ACCMODE;
+		if (dir) {
+			/* Strip away valid directory prefix. */
+			if (strncmp(dir, devp, dirlen) == 0 &&
+			    (devp[dirlen - 1] == '/' ||
+			     devp[dirlen] == '/')) {
+			     devp += dirlen;
+			     while (*devp == '/')
+				devp++;
+			}
+			/* Don't allow directory traversal. */
+			if (strchr(devp, '/')) {
+				errno = EACCES;
+				goto ioerror;
+			}
+			f |= O_NOFOLLOW;
+		}
+		if (rflag) {
+			/*
+			 * Only allow readonly open and ignore file
+			 * creation requests.
+			 */
+			if (acc != O_RDONLY) {
+				errno = EPERM;
+				goto ioerror;
+			}
+			f &= ~O_CREAT;
+		} else if (wflag) {
+			/*
+			 * Require, and force creation of, a nonexistant file,
+			 * unless we are reopening the last opened file again,
+			 * in which case it is opened read-only.
+			 */
+			if (strcmp(devp, lastdevice) != 0) {
+				/*
+				 * Disallow read-only open since that would
+				 * only result in an empty file.
+				 */
+				if (acc == O_RDONLY) {
+					errno = EPERM;
+					goto ioerror;
+				}
+				f |= O_CREAT | O_EXCL;
+			} else {
+				acc = O_RDONLY;
+			}
+			/* Create readonly file */
+			m = S_IRUSR|S_IRGRP|S_IROTH;
+		}
+		/* Apply new access mode. */
+		f = (f & ~O_ACCMODE) | acc;
+
+		tape = open(devp, f, m);
 		if (tape == -1)
 			goto ioerror;
+		(void)strlcpy(lastdevice, devp, sizeof(lastdevice));
 		goto respond;
 
 	case 'C':
@@ -224,4 +319,14 @@ error(int num)
 	DEBUG2("rmtd: E %d (%s)\n", num, strerror(num));
 	(void) snprintf(resp, sizeof (resp), "E%d\n%s\n", num, strerror(num));
 	(void) write(STDOUT_FILENO, resp, strlen(resp));
+}
+
+__dead void
+usage(void)
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-r | -w] [-d directory]\n",
+	    __progname);
+	exit(1);
 }
