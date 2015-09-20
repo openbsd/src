@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.17 2015/09/14 11:52:49 guenther Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.18 2015/09/20 14:19:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -22,7 +22,6 @@
 #include <netdb.h>
 
 #include <asr.h>
-#include <err.h>
 #include <errno.h>
 #include <resolv.h>
 #include <stdlib.h>

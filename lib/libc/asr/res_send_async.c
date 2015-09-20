@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.26 2015/09/14 11:52:49 guenther Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.27 2015/09/20 14:19:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -23,7 +23,6 @@
 #include <netdb.h>
 
 #include <asr.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>

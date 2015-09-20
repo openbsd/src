@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.39 2015/09/14 11:52:49 guenther Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.40 2015/09/20 14:19:21 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -24,7 +24,6 @@
 
 #include <asr.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <resolv.h> /* for res_hnok */
 #include <stdlib.h>
