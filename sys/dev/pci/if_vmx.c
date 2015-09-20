@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.32 2015/09/20 02:01:22 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.33 2015/09/20 22:26:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1079,7 +1079,7 @@ vmxnet3_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		ifp->if_opackets++;
