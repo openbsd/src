@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.37 2015/09/13 11:15:11 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.38 2015/09/20 22:05:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -661,9 +661,12 @@ sched_barrier(struct cpu_info *ci)
 		}
 	}
 	KASSERT(ci != NULL);
-	spc = &ci->ci_schedstate;
+
+	if (ci == curcpu())
+		return;
 
 	task_set(&task, sched_barrier_task, ci);
+	spc = &ci->ci_schedstate;
 	spc->spc_barrier = 0;
 	task_add(systq, &task);
 	while (!spc->spc_barrier) {
