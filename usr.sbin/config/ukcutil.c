@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.20 2011/10/02 22:20:50 edd Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.21 2015/09/21 14:45:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -28,6 +28,8 @@
 #include <sys/time.h>
 #include <sys/device.h>
 
+#include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <nlist.h>
 #include <stdio.h>
@@ -55,21 +57,21 @@ get_locnamp(int idx)
 	    idx * sizeof(short)));
 }
 
-caddr_t *
+static caddr_t *
 get_locnames(int idx)
 {
 	return((caddr_t *)(adjust((caddr_t)nl[P_LOCNAMES].n_value) +
 	    idx * sizeof(caddr_t)));
 }
 
-int *
+static long *
 get_extraloc(int idx)
 {
-	return((int *)(adjust((caddr_t)nl[IA_EXTRALOC].n_value) +
-	    idx * sizeof(int)));
+	return((long *)(adjust((caddr_t)nl[IA_EXTRALOC].n_value) +
+	    idx * sizeof(long)));
 }
 
-char *
+static char *
 get_pdevnames(int idx)
 {
 	caddr_t *p;
@@ -80,7 +82,7 @@ get_pdevnames(int idx)
 
 }
 
-struct pdevinit *
+static struct pdevinit *
 get_pdevinit(int idx)
 {
 	return((struct pdevinit *)(adjust((caddr_t)nl[S_PDEVINIT].n_value) +
@@ -107,29 +109,29 @@ more(void)
 	return (quit);
 }
 
-void
-pnum(int val)
+static void
+pnum(long val)
 {
 	if (val > -2 && val < 16) {
-		printf("%d", val);
+		printf("%ld", val);
 		return;
 	}
 
 	switch (base) {
 	case 8:
-		printf("0%o", val);
+		printf("0%lo", val);
 		break;
 	case 10:
-		printf("%d", val);
+		printf("%ld", val);
 		break;
 	case 16:
 	default:
-		printf("0x%x", val);
+		printf("0x%lx", val);
 		break;
 	}
 }
 
-void
+static void
 pdevnam(short devno)
 {
 	struct cfdata *cd;
@@ -169,7 +171,7 @@ pdev(short devno)
 	struct pdevinit *pi;
 	struct cfdata *cd;
 	short	*s, *ln;
-	int	*i;
+	long	*i;
 	caddr_t	*p;
 	char	c;
 
@@ -225,7 +227,7 @@ pdev(short devno)
 		break;
 	}
 
-	i = (int *)adjust((caddr_t)cd->cf_loc);
+	i = (long *)adjust((caddr_t)cd->cf_loc);
 	ln = get_locnamp(cd->cf_locnames);
 	while (*ln != -1) {
 		p = get_locnames(*ln);
@@ -237,46 +239,32 @@ pdev(short devno)
 	printf(" flags 0x%x\n", cd->cf_flags);
 }
 
+static int
+numberl(const char *c, long *val)
+{
+	char *ep;
+
+	errno = 0;
+	*val = strtol(c, &ep, 0);
+	if (*c == '\0' || (!isspace((unsigned char)*ep) && *ep != '\0') ||
+	    (errno == ERANGE && (*val == LONG_MAX || *val == LONG_MIN)))
+		return (-1);
+	return (0);
+}
+
 int
 number(const char *c, int *val)
 {
-	int neg = 0, base = 10;
-	u_int num = 0;
+	long v;
+	int ret = numberl(c, &v);
 
-	if (*c == '-') {
-		neg = 1;
-		c++;
-	}
-	if (*c == '0') {
-		base = 8;
-		c++;
-		if (*c == 'x' || *c == 'X') {
-			base = 16;
-			c++;
-		}
-	}
-	while (*c != '\n' && *c != '\t' && *c != ' ' && *c != '\0') {
-		u_char cc = *c;
-
-		if (cc >= '0' && cc <= '9')
-			cc = cc - '0';
-		else if (cc >= 'a' && cc <= 'f')
-			cc = cc - 'a' + 10;
-		else if (cc >= 'A' && cc <= 'F')
-			cc = cc - 'A' + 10;
+	if (ret == 0) {
+		if (v <= INT_MAX && v >= INT_MIN)
+			*val = (int)v;
 		else
-			return (-1);
-
-		if (cc > base)
-			return (-1);
-		num = num * base + cc;
-		c++;
+			ret = -1;
 	}
-
-	if (neg && num > INT_MAX)	/* overflow */
-		return (1);
-	*val = neg ? - num : num;
-	return (0);
+	return (ret);
 }
 
 int
@@ -344,11 +332,11 @@ attr(char *cmd, int *val)
 	return(0);
 }
 
-void
-modify(char *item, int *val)
+static int
+modifyl(char *item, long *val)
 {
 	cmd_t cmd;
-	int a;
+	long a;
 
 	ukc_mod_kernel = 1;
 	while (1) {
@@ -361,22 +349,37 @@ modify(char *item, int *val)
 
 		if (strlen(cmd.cmd) != 0) {
 			if (strlen(cmd.args) == 0) {
-				if (number(cmd.cmd, &a) == 0) {
+				if (numberl(cmd.cmd, &a) == 0) {
 					*val = a;
-					break;
+					return (1);
 				} else
 					printf("Unknown argument\n");
 			} else
 				printf("Too many arguments\n");
 		} else
+			return (0);
+	}
+}
+
+void
+modify(char *item, int *val)
+{
+	long a = *val;
+
+	while (modifyl(item, &a)) {
+		if (a <= INT_MAX && a >= INT_MIN) {
+			*val = (int)a;
 			break;
+		}
+		printf("Out of range argument\n");
 	}
 }
 
 void
 change(int devno)
 {
-	int	i, share = 0, *j = NULL, *k = NULL, *l;
+	int	i, share = 0;
+	long	*j = NULL, *k = NULL, *l;
 	struct cfdata *cd, *c;
 	struct pdevinit *pi;
 	short	*ln, *lk;
@@ -403,7 +406,7 @@ change(int devno)
 		}
 
 		ln = get_locnamp(cd->cf_locnames);
-		l = (int *)adjust((caddr_t)cd->cf_loc);
+		l = (long *)adjust((caddr_t)cd->cf_loc);
 
 		if (share) {
 			if (oldkernel) {
@@ -419,8 +422,8 @@ change(int devno)
 			}
 			lk = ln;
 
-			j = (int *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
-			k = (int *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
+			j = (long *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
+			k = (long *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
 			if ((i + *k) > *j) {
 				printf("Not enough space to change device.\n");
 				return;
@@ -428,12 +431,12 @@ change(int devno)
 
 			j = l = get_extraloc(*k);
 			bcopy(adjust((caddr_t)cd->cf_loc),
-			    l, sizeof(int) * i);
+			    l, sizeof(long) * i);
 		}
 
 		while (*ln != -1) {
 			p = get_locnames(*ln);
-			modify((char *)adjust(*p), l);
+			modifyl((char *)adjust(*p), l);
 			ln++;
 			l++;
 		}
@@ -441,8 +444,8 @@ change(int devno)
 
 		if (share) {
 			if (bcmp(adjust((caddr_t)cd->cf_loc), j,
-			    sizeof(int) * i)) {
-				cd->cf_loc = (int *)readjust((caddr_t)j);
+			    sizeof(long) * i)) {
+				cd->cf_loc = (long *)readjust((caddr_t)j);
 				*k = *k + i;
 			}
 		}
@@ -479,7 +482,8 @@ change(int devno)
 void
 change_history(int devno, char *str)
 {
-	int	i, share = 0, *j = NULL, *k = NULL, *l;
+	int	i, share = 0;
+	long	*j = NULL, *k = NULL, *l;
 	struct cfdata *cd, *c;
 	struct pdevinit *pi;
 	short	*ln, *lk;
@@ -504,7 +508,7 @@ change_history(int devno, char *str)
 		}
 
 		ln = get_locnamp(cd->cf_locnames);
-		l = (int *)adjust((caddr_t)cd->cf_loc);
+		l = (long *)adjust((caddr_t)cd->cf_loc);
 
 		if (share) {
 			if (oldkernel) {
@@ -520,8 +524,8 @@ change_history(int devno, char *str)
 			}
 			lk = ln;
 
-			j = (int *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
-			k = (int *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
+			j = (long *)adjust((caddr_t)nl[I_NEXTRALOC].n_value);
+			k = (long *)adjust((caddr_t)nl[I_UEXTRALOC].n_value);
 			if ((i + *k) > *j) {
 				printf("Not enough space to change device.\n");
 				return;
@@ -529,7 +533,7 @@ change_history(int devno, char *str)
 
 			j = l = get_extraloc(*k);
 			bcopy(adjust((caddr_t)cd->cf_loc),
-			    l, sizeof(int) * i);
+			    l, sizeof(long) * i);
 		}
 
 		while (*ln != -1) {
@@ -556,8 +560,8 @@ change_history(int devno, char *str)
 
 		if (share) {
 			if (bcmp(adjust((caddr_t)cd->cf_loc),
-			    j, sizeof(int) * i)) {
-				cd->cf_loc = (int *)readjust((caddr_t)j);
+			    j, sizeof(long) * i)) {
+				cd->cf_loc = (long *)readjust((caddr_t)j);
 				*k = *k + i;
 			}
 		}
@@ -750,7 +754,7 @@ common_attr_val(short attr, int *val, char routine)
 {
 	int	i = 0;
 	struct cfdata *cd;
-	int   *l;
+	long	*l;
 	short *ln;
 	int quit = 0;
 
@@ -759,7 +763,7 @@ common_attr_val(short attr, int *val, char routine)
 	cd = get_cfdata(0);
 
 	while (cd->cf_attach != 0) {
-		l = (int *)adjust((caddr_t)cd->cf_loc);
+		l = (long *)adjust((caddr_t)cd->cf_loc);
 		ln = get_locnamp(cd->cf_locnames);
 		while (*ln != -1) {
 			if (*ln == attr) {

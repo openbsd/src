@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.12 2009/12/10 22:07:19 kettenis Exp $ */
+/*	$OpenBSD: ukc.h,v 1.13 2015/09/21 14:45:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -123,14 +123,8 @@ extern int nopdev;
 
 struct cfdata   *get_cfdata(int);
 short	        *get_locnamp(int);
-caddr_t	        *get_locnames(int);
-int	        *get_extraloc(int);
-char	        *get_pdevnames(int);
-struct pdevinit *get_pdevinit(int);
 
 int	more(void);
-void	pnum(int);
-void	pdevnam(short);
 void	pdev(short);
 int	number(const char *, int *);
 int	device(char *, int *, short *, short *);
