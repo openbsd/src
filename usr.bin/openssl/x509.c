@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.7 2015/09/21 13:13:06 bcook Exp $ */
+/* $OpenBSD: x509.c,v 1.8 2015/09/21 13:32:55 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -721,6 +721,10 @@ bad:
 
 				z = i2d_X509(x, NULL);
 				m = malloc(z);
+				if (m == NULL) {
+					BIO_printf(bio_err, "out of mem\n");
+					goto end;
+				}
 
 				d = (unsigned char *) m;
 				z = i2d_X509_NAME(X509_get_subject_name(x), &d);
