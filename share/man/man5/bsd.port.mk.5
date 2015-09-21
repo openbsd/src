@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.421 2015/09/20 18:20:37 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.422 2015/09/21 09:06:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 20 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -291,10 +291,9 @@ to change behavior.
 Do not touch
 .Ar pre-fake
 unless you really know what you are doing.
-Described in a separate section below
-.Po
-.Qq THE FAKE FRAMEWORK
-.Pc .
+See
+.Sx THE FAKE FRAMEWORK
+section below.
 .It Ar fake-wantlib-args
 Check
 .Ev WANTLIB
@@ -379,7 +378,7 @@ Top-level target, see
 .It Ar install
 Install the package after building.
 See the description of
-.Qq THE FAKE FRAMEWORK
+.Sx THE FAKE FRAMEWORK
 for the non-intuitive details of the way
 .Ar {pre,do,post}-install
 hooks are actually used by the ports tree.
@@ -573,7 +572,7 @@ In
 .Ev MULTI_PACKAGES
 setups,
 see
-.Qq Flavors and multi-packages .
+.Sx FLAVORS AND MULTI_PACKAGES .
 .It Ar print-package-args
 Print all dependency-related information that will be passed as parameters
 to
@@ -885,7 +884,7 @@ In a
 .Ev MULTI_PACKAGES
 setup, some variables have settings specific to a given subpackage.
 See
-.Qq Flavors and multi-packages .
+.Sx FLAVORS AND MULTI_PACKAGES .
 .Bl -tag -width MASTER_SITES
 .It Ev show
 Invoked as make show=name, show the contents of ${name}.
@@ -1005,7 +1004,7 @@ and
 The actual list of packages that will be built, once architecture problems
 and pseudo-flavors have been taken into account.
 See
-.Qq Flavors and multi-packages .
+.Sx FLAVORS AND MULTI_PACKAGES .
 .It Ev BROKEN
 Define only for broken ports, set to reason the port is broken.
 See also
@@ -1584,8 +1583,8 @@ Exposed so that modules may provide their own
 .Ar do-install .
 Read-only,
 see
-.Qq THE FAKE FRAMEWORK
-for details.
+.Sx THE FAKE FRAMEWORK
+section for details.
 .It Ev FAKE_TARGET
 Target built by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
@@ -2009,7 +2008,7 @@ See
 .It Ev MULTI_PACKAGES
 Set to a list of subpackage extensions for ports that create multiple packages.
 See
-.Qq Flavors and multi-packages
+.Sx FLAVORS AND MULTI_PACKAGES
 below.
 Especially read the part about
 .Ev ONLY_FOR_ARCHS
@@ -2117,7 +2116,7 @@ Can hold both processor-specific information (e.g., powerpc), and more
 specific model information (e.g., macppc).
 This is subpackage dependent.
 Read the corresponding part of
-.Qq Flavors and multi-packages
+.Sx FLAVORS AND MULTI_PACKAGES
 if some subpackages should only be built on some architectures.
 .It Ev OSREV
 Revision number of
@@ -2272,7 +2271,7 @@ Special arguments to pass to
 .Xr pkg_create 1 ,
 in addition to the default ones.
 For mips64 and pic libraries, see
-.Qq The generation of package information .
+.Sx THE GENERATION OF PACKAGE INFORMATION .
 .It Ev PKG_CREATE
 User settings.
 Path to
@@ -2886,8 +2885,8 @@ Mostly the same as ${PREFIX}, except it never gets ${DESTDIR} prepended
 during
 .Ar fake .
 Refer to
-.Qq THE FAKE FRAMEWORK
-for details.
+.Sx THE FAKE FRAMEWORK
+section for details.
 .It Ev TRY_BROKEN
 User settings.
 If set to
@@ -3407,7 +3406,9 @@ get copied to
 .Pa ${WRKINST}
 at the end of
 .Ar fake
-(see the FILES section above for details).
+(see the
+.Sx FILES
+section above for details).
 .Sh FLAVORS AND MULTI_PACKAGES
 Starting with
 .Ox 2.7 ,
