@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.137 2015/09/21 09:47:15 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.138 2015/09/21 10:06:47 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -850,11 +850,11 @@ is given,
 .Xr bgpd 8
 binds to this address first.
 .Pp
-.It Ic log updates
-Log received and sent updates for this neighbor.
-.Pp
 .It Ic log no
 Disable neighbor specific logging.
+.Pp
+.It Ic log updates
+Log received and sent updates for this neighbor.
 .Pp
 .It Xo
 .Ic max-prefix Ar number
