@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.170 2015/09/11 16:58:00 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.171 2015/09/21 11:27:08 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		else
 			error = raw_attach(so, (int)(long)nam);
 		if (error) {
-			free(rp, M_PCB, 0);
+			free(rop, M_PCB, sizeof(struct routecb));
 			splx(s);
 			return (error);
 		}
