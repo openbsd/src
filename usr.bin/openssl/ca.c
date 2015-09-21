@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.14 2015/09/12 19:34:07 lteo Exp $ */
+/* $OpenBSD: ca.c,v 1.15 2015/09/21 13:13:06 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,7 @@ static const char *ca_usage[] = {
 	" -startdate YYMMDDHHMMSSZ  - certificate validity notBefore\n",
 	" -enddate YYMMDDHHMMSSZ    - certificate validity notAfter (overrides -days)\n",
 	" -days arg       - number of days to certify the certificate for\n",
-	" -md arg         - md to use, one of md2, md5, sha or sha1\n",
+	" -md arg         - md to use, one of md5 or sha1\n",
 	" -policy arg     - The CA 'policy' to support\n",
 	" -keyfile arg    - private key file\n",
 	" -keyform arg    - private key file format (PEM)\n",

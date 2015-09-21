@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.12 2015/09/14 01:45:03 doug Exp $ */
+/* $OpenBSD: openssl.c,v 1.13 2015/09/21 13:13:06 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -225,9 +225,6 @@ FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_RIPEMD160
 	{ FUNC_TYPE_MD, "ripemd160", dgst_main },
-#endif
-#ifndef OPENSSL_NO_SHA
-	{ FUNC_TYPE_MD, "sha", dgst_main },
 #endif
 #ifndef OPENSSL_NO_SHA1
 	{ FUNC_TYPE_MD, "sha1", dgst_main },

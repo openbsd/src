@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.28 2015/09/14 01:45:03 doug Exp $
+.\" $OpenBSD: openssl.1,v 1.29 2015/09/21 13:13:06 bcook Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1795,7 +1795,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Bk -words
 .Oo
 .Fl gost-mac | streebog256 | streebog512 | md_gost94 |
-.Fl md4 | md5 | ripemd160 | sha | sha1 |
+.Fl md4 | md5 | ripemd160 | sha1 |
 .Fl sha224 | sha256 | sha384 | sha512 | whirlpool
 .Oc
 .Op Fl binary
@@ -1818,7 +1818,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Pp
 .Nm openssl
 .Cm gost-mac | streebog256 | streebog512 | md_gost94 |
-.Cm md4 | md5 | ripemd160 | sha | sha1 |
+.Cm md4 | md5 | ripemd160 | sha1 |
 .Cm sha224 | sha256 | sha384 | sha512 | whirlpool
 .Op Fl c
 .Op Fl d
@@ -2780,9 +2780,7 @@ Use
 to create a key from a pass phrase.
 .Ar digest
 may be one of
-.Dq md2 ,
-.Dq md5 ,
-.Dq sha ,
+.Dq md5
 or
 .Dq sha1 .
 .It Fl none
@@ -4210,11 +4208,11 @@ command line option, including PKCS#5 v1.5 and PKCS#12.
 These are described in more detail below.
 .Pp
 .Bl -tag -width "XXXX" -compact
-.It Ar PBE-MD2-DES | PBE-MD5-DES
+.It Ar PBE-MD5-DES
 These algorithms were included in the original PKCS#5 v1.5 specification.
 They only offer 56 bits of protection since they both use DES.
 .Pp
-.It Ar PBE-SHA1-RC2-64 | PBE-MD2-RC2-64 | PBE-MD5-RC2-64 | PBE-SHA1-DES
+.It Ar PBE-SHA1-RC2-64 | PBE-MD5-RC2-64 | PBE-SHA1-DES
 These algorithms are not mentioned in the original PKCS#5 v1.5 specification
 but they use the same key derivation algorithm and are supported by some
 software.
@@ -7663,7 +7661,6 @@ command were first added in
 .Op Cm dsa1024
 .Op Cm dsa2048
 .Op Cm hmac
-.Op Cm md2
 .Op Cm md4
 .Op Cm md5
 .Op Cm rc2
@@ -7715,7 +7712,7 @@ benchmarks in parallel.
 .Nm "openssl ts"
 .Bk -words
 .Fl query
-.Op Fl md4 | md5 | ripemd160 | sha | sha1
+.Op Fl md4 | md5 | ripemd160 | sha1
 .Op Fl cert
 .Op Fl config Ar configfile
 .Op Fl data Ar file_to_hash
@@ -8860,7 +8857,7 @@ option was added in
 .Op Fl issuer_hash
 .Op Fl issuer_hash_old
 .Op Fl keyform Ar DER | PEM
-.Op Fl md2 | md5 | sha1
+.Op Fl md5 | sha1
 .Op Fl modulus
 .Op Fl nameopt Ar option
 .Op Fl noout
@@ -8917,7 +8914,7 @@ The
 .Ar NET
 option is an obscure Netscape server format that is now
 obsolete.
-.It Fl md2 | md5 | sha1
+.It Fl md5 | sha1
 The digest to use.
 This affects any signing or display option that uses a message digest,
 such as the
