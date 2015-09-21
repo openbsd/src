@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.1 2015/07/08 13:37:31 dlg Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.2 2015/09/21 06:23:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -64,12 +64,12 @@ mtx_enter_try(struct mutex *mtx)
 		panic("mtx %p: locking against myself", mtx);
 #endif
 	if (owner == NULL) {
+		membar_enter();
 		if (mtx->mtx_wantipl != IPL_NONE)
 			mtx->mtx_oldipl = s;
 #ifdef DIAGNOSTIC
 		ci->ci_mutex_level++;
 #endif
-		membar_enter();
 		return (1);
 	}
 
@@ -114,14 +114,14 @@ mtx_leave(struct mutex *mtx)
 
 	MUTEX_ASSERT_LOCKED(mtx);
 
-#ifdef MULTIPROCESSOR
-	membar_exit();
-#endif
 #ifdef DIAGNOSTIC
 	curcpu()->ci_mutex_level--;
 #endif
 
 	s = mtx->mtx_oldipl;
+#ifdef MULTIPROCESSOR
+	membar_exit();
+#endif
 	mtx->mtx_owner = NULL;
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(s);
