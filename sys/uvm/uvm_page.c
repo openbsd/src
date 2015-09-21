@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.141 2015/08/21 16:04:35 visa Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.142 2015/09/21 12:59:01 visa Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1008,13 +1008,11 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->uanon) {
 		pg->uanon->an_page = NULL;
 		pg->uanon = NULL;
-		flags_to_clear |= PQ_ANON;
 	}
 
 	/* Clean page state bits. */
-	flags_to_clear |= PQ_AOBJ; /* XXX: find culprit */
-	flags_to_clear |= PQ_ENCRYPT|PG_ZERO|PG_FAKE|PG_BUSY|PG_RELEASED|
-	    PG_CLEAN|PG_CLEANCHK;
+	flags_to_clear |= PQ_ANON|PQ_AOBJ|PQ_ENCRYPT|PG_ZERO|PG_FAKE|PG_BUSY|
+	    PG_RELEASED|PG_CLEAN|PG_CLEANCHK;
 	atomic_clearbits_int(&pg->pg_flags, flags_to_clear);
 
 	/* and put on free queue */
