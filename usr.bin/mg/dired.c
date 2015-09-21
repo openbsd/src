@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.72 2015/09/14 16:37:19 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.73 2015/09/21 06:59:54 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -802,13 +802,16 @@ dired_(char *dname)
 		}
 		return (NULL);
 	}
-	if ((bp = findbuffer(dname)) == NULL) {
-		dobeep();
-		ewprintf("Could not create buffer");
-		return (NULL);
+	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
+		if (strcmp(bp->b_fname, dname) == 0) {
+			if (fchecktime(bp) != TRUE)
+				ewprintf("Directory has changed on disk;"
+				    " type g to update Dired");
+			return (bp);
+		}
+
 	}
-	if (bclear(bp) != TRUE)
-		return (NULL);
+	bp = bfind(dname, TRUE);
 	bp->b_flag |= BFREADONLY | BFIGNDIRTY;
 
 	if ((d_exec(2, bp, NULL, "ls", "-al", dname, NULL)) != TRUE)
@@ -841,6 +844,7 @@ dired_(char *dname)
 		ewprintf("Could not find mode dired");
 		return (NULL);
 	}
+	(void)fupdstat(bp);
 	bp->b_nmodes = 1;
 	return (bp);
 }
