@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.104 2015/09/21 21:27:51 schwarze Exp $
+.\" $OpenBSD: ports.7,v 1.105 2015/09/21 21:43:23 schwarze Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd $Mdocdate: September 21 2015 $
@@ -439,7 +439,7 @@ normally as
 In particular, it can take advantage of machine clusters (same architecture
 and same installation), and of multi-core machines.
 .Pp
-A few remarks may save a lot of time
+A few remarks may save a lot of time:
 .Bl -bullet
 .It
 The default limits in
@@ -451,7 +451,7 @@ For instance, a lot of C++-based ports will require a
 .Va datasize
 over 1G.
 .It
-cluster builds should have shared
+Cluster builds should have shared
 .Ev PORTSDIR
 and local
 .Ev WRKOBJDIR .
@@ -461,10 +461,10 @@ partitions mounted
 .Sq noatime,async
 will help.
 .It
-as far as possible, the log directory should be local to the machine running
+As far as possible, the log directory should be local to the machine running
 .Xr dpb 1 .
 .It
-a full bulk will fetch over 20G of distfiles, create over 17G of packages.
+A full bulk will fetch over 20G of distfiles and create over 17G of packages.
 The largest work directories are about 10G each.
 .It
 Take notice of
@@ -634,7 +634,7 @@ Location of the ports tree
 .Pa /usr/ports ) .
 .It Ev DISTDIR
 Where to find/put distfiles, normally
-.Pa ${PORTSDIR}/distfiles
+.Pa ${PORTSDIR}/distfiles .
 .It Ev PACKAGE_REPOSITORY
 Used only for the
 .Cm package
