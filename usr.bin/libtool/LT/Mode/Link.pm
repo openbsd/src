@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.29 2014/04/27 18:08:35 zhuk Exp $
+# $OpenBSD: Link.pm,v 1.30 2015/09/21 08:49:06 ajacoutot Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -608,6 +608,15 @@ sub internal_parse_linkargs1
 				} elsif ($type eq 'LT::Library') {
 					$libs->{$key}->{fullpath} = $file;
 					my @deps = $libs->{$key}->inspect;
+					# add RPATH dirs to our search_dirs in case the dependent
+					# library is installed under a non-standard path
+					my @rpdirs = $libs->{$key}->findrpaths;
+					foreach my $r (@rpdirs) {
+						if (!LT::OSConfig->is_search_dir($r)) {
+							push @$dirs, $r;
+							$gp->add_R($r);
+						}
+					}
 					foreach my $d (@deps) {
 						my $k = basename($d);
 						# XXX will fail for (_pic)?\.a$

@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.11 2014/04/16 14:39:05 zhuk Exp $
+# $OpenBSD: Library.pm,v 1.12 2015/09/21 08:49:06 ajacoutot Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -158,6 +158,12 @@ sub findbest
 		}
 		closedir($dir);
 	}
+	if (!defined $best) {
+		my $cand = "$sd/lib$name.so";
+		if (-e $cand) {
+			$best = $cand;
+		}
+	}
 	return $best;
 }
 
@@ -183,6 +189,31 @@ sub inspect
 	tsay {"found ", (@deps == 0) ? 'no ' : '',
 		"deps for $filename\n@deps"};
 	return @deps;
+}
+
+# give the list of RPATH directories
+sub findrpaths
+{
+	my $self = shift;
+
+	my $filename = $self->{fullpath};
+	my @dirs;
+
+	if (!defined($filename)){
+		say "warning: library was specified that could not be found: $self->{key}";
+		return;
+	}
+	tsay {"inspecting $filename for non standard RPATH..."};
+	open(my $fh, '-|', "objdump", "-p", "--", $filename);
+	while (<$fh>) {
+		if (m/RPATH\s+(.*)$/) {
+			@dirs = split(":", $1);
+			last;
+		}
+	}
+	tsay {"found ", (@dirs == 0) ? 'none ' : '',
+		"RPATH for $filename\n@dirs"};
+	return @dirs;
 }
 
 sub new
