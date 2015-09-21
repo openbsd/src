@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.281 2015/07/16 18:26:04 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.282 2015/09/21 09:41:48 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -959,7 +959,7 @@ peeropts_l	: peeropts_l peeroptsl
 		;
 
 peeroptsl	: peeropts nl
-		| error nl
+		| /* allow empty blocks */
 		;
 
 peeropts	: REMOTEAS as4number	{
