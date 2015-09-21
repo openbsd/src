@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.95 2015/07/16 18:26:04 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.96 2015/09/21 09:47:15 phessler Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -419,6 +419,9 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tdepend on \"%s\"\n", c, p->if_depend);
 	if (p->flags & PEERFLAG_TRANS_AS)
 		printf("%s\ttransparent-as yes\n", c);
+
+	if (p->flags & PEERFLAG_LOG_UPDATES)
+		printf("%s\tlog updates\n", c);
 
 	if (p->auth.method == AUTH_MD5SIG)
 		printf("%s\ttcp md5sig\n", c);

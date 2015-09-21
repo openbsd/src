@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.282 2015/09/21 09:41:48 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.283 2015/09/21 09:47:15 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1323,6 +1323,17 @@ peeropts	: REMOTEAS as4number	{
 				curpeer->conf.flags |= PEERFLAG_TRANS_AS;
 			else
 				curpeer->conf.flags &= ~PEERFLAG_TRANS_AS;
+		}
+		| LOG STRING		{
+			if (!strcmp($2, "updates"))
+				curpeer->conf.flags |= PEERFLAG_LOG_UPDATES;
+			else if (!strcmp($2, "no"))
+				curpeer->conf.flags &= ~PEERFLAG_LOG_UPDATES;
+			else {
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		;
 

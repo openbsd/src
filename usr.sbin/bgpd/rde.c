@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.338 2015/09/19 16:24:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.339 2015/09/21 09:47:15 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1977,7 +1977,8 @@ rde_update_log(const char *message, u_int16_t rid,
 	char		*n = NULL;
 	char		*p = NULL;
 
-	if (!(conf->log & BGPD_LOG_UPDATES))
+	if ( !((conf->log & BGPD_LOG_UPDATES) ||
+	       (peer->conf.flags & PEERFLAG_LOG_UPDATES)) )
 		return;
 
 	if (next != NULL)

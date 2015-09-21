@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.136 2015/07/19 14:35:41 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.137 2015/09/21 09:47:15 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 19 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -849,6 +849,12 @@ If a
 is given,
 .Xr bgpd 8
 binds to this address first.
+.Pp
+.It Ic log updates
+Log received and sent updates for this neighbor.
+.Pp
+.It Ic log no
+Disable neighbor specific logging.
 .Pp
 .It Xo
 .Ic max-prefix Ar number
