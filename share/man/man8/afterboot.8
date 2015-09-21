@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.147 2015/07/30 08:03:49 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.148 2015/09/21 09:23:35 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -400,7 +400,10 @@ is in turn influenced by the configuration variables present in
 Again this script should not be changed by administrators:
 site-specific changes should be made to
 .Pq freshly created if necessary
-.Pa /etc/rc.conf.local .
+.Pa /etc/rc.conf.local
+or by using the
+.Xr rcctl 8
+utility.
 .Pp
 Any commands which should be run before the system sets its
 secure level should be made to
@@ -605,6 +608,7 @@ is contained within
 .Xr dmesg 8 ,
 .Xr ifconfig 8 ,
 .Xr intro 8 ,
+.Xr rcctl 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 This document first appeared in

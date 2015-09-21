@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.26 2015/05/04 22:29:04 schwarze Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.27 2015/09/21 09:23:35 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 4 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt RC.CONF 8
 .Os
 .Sh NAME
@@ -50,7 +50,9 @@ It is advisable to leave
 .Nm rc.conf
 untouched, and instead create and edit a new
 .Nm rc.conf.local
-file.
+file or use the
+.Xr rcctl 8
+utility.
 Since only the last assignment to any variable takes effect,
 variables set in this file override variables previously set in
 .Nm rc.conf .
@@ -219,7 +221,8 @@ amd_master=/etc/amd/master	# AMD 'master' map
 .Xr init 8 ,
 .Xr intro 8 ,
 .Xr rc 8 ,
-.Xr rc.d 8
+.Xr rc.d 8 ,
+.Xr rcctl 8
 .Sh HISTORY
 The
 .Nm
