@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setlocale.3,v 1.18 2015/08/12 09:38:23 zhuk Exp $
+.\"	$OpenBSD: setlocale.3,v 1.19 2015/09/21 14:46:59 guenther Exp $
 .\"	$NetBSD: setlocale.3,v 1.3 1997/07/14 23:19:47 kleink Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: August 12 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
@@ -70,9 +70,9 @@ Set the entire locale generically.
 .It Dv LC_COLLATE
 Set a locale for string collation routines.
 This controls alphabetic ordering in
-.Fn strcoll
+.Xr strcoll 3
 and
-.Fn strxfrm .
+.Xr strxfrm 3 .
 .It Dv LC_CTYPE
 Set a locale for the functions declared in
 .In ctype.h
@@ -80,9 +80,6 @@ and
 .In wctype.h .
 This controls recognition of upper and lower case,
 alphabetic or non-alphabetic characters, and so on.
-The real work is done by the
-.Fn setrunelocale
-function.
 .It Dv LC_MESSAGES
 Set a locale for message strings.
 Controls the behaviour of
@@ -98,14 +95,14 @@ Set a locale for formatting numbers.
 This controls the formatting of decimal points
 in input and output of floating point numbers
 in functions such as
-.Fn printf
+.Xr printf 3
 and
-.Fn scanf ,
+.Xr scanf 3 ,
 as well as values returned by
 .Fn localeconv .
 .It Dv LC_TIME
 Set a locale for formatting dates and times using the
-.Fn strftime
+.Xr strftime 3
 function.
 .El
 .Pp
@@ -308,7 +305,11 @@ or
 .\" .El
 .Sh SEE ALSO
 .Xr mklocale 1 ,
+.Xr catopen 3 ,
+.Xr printf 3 ,
+.Xr scanf 3 ,
 .Xr strcoll 3 ,
+.Xr strftime 3 ,
 .Xr strxfrm 3
 .Sh STANDARDS
 The
