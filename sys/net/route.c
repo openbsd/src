@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.239 2015/09/12 20:50:17 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.240 2015/09/21 11:15:27 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1194,6 +1194,9 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
+
+	if (flags & RTF_CONNECTED)
+		prio = RTP_CONNECTED;
 
 	error = rtrequest1(RTM_ADD, &info, prio, &rt, rtableid);
 	if (error == 0) {
