@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.88 2015/07/08 07:21:49 mpi Exp $
+.\"     $OpenBSD: mbuf.9,v 1.89 2015/09/21 11:30:50 mpi Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 8 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -392,6 +392,13 @@ Free the mbuf pointed to by
 .Fa m .
 A pointer to the successor of the mbuf,
 if it exists, is returned by the function.
+If
+.Fa m
+is a
+.Dv NULL
+pointer, no action occurs and
+.Dv NULL
+is returned.
 .It Fn m_get "int how" "int type"
 Return a pointer to an mbuf of the type specified.
 If the
@@ -565,6 +572,11 @@ remains in existence and unchanged on failure.
 .It Fn m_freem "struct mbuf *m"
 Free the mbuf chain pointed to by
 .Fa m .
+If
+.Fa m
+is a
+.Dv NULL
+pointer, no action occurs.
 .It Fn m_reclaim "void"
 Ask protocols to free unused memory space.
 .It Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
