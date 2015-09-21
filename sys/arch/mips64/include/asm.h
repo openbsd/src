@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.21 2014/03/14 16:57:21 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.22 2015/09/21 21:22:44 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -361,9 +361,9 @@ x: ;				\
  */
 #define	PRE_MFC0_ADDR_HAZARD	.align 5; SSNOP
 #define	MFC0_HAZARD		SSNOP
-#define	MTC0_HAZARD		SSNOP; SSNOP; SSNOP
-#define	MTC0_SR_IE_HAZARD	MTC0_HAZARD; SSNOP
-#define	MTC0_SR_CU_HAZARD	MTC0_HAZARD; SSNOP
+#define	MTC0_HAZARD		SSNOP; SSNOP; SSNOP; SSNOP
+#define	MTC0_SR_IE_HAZARD	MTC0_HAZARD
+#define	MTC0_SR_CU_HAZARD	MTC0_HAZARD
 #endif
 
 /* Hazard between {d,}mfc0 of COP_0_VADDR */
