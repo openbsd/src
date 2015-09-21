@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.41 2015/09/07 15:28:06 sobrado Exp $
+.\"	$OpenBSD: flex.1,v 1.42 2015/09/21 09:24:13 nicm Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,11 +29,13 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: September 7 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt FLEX 1
 .Os
 .Sh NAME
-.Nm flex
+.Nm flex ,
+.Nm flex++ ,
+.Nm lex
 .Nd fast lexical analyzer generator
 .Sh SYNOPSIS
 .Nm
@@ -69,6 +71,15 @@ library to produce an executable.
 When the executable is run, it analyzes its input for occurrences
 of the regular expressions.
 Whenever it finds one, it executes the corresponding C code.
+.Pp
+.Nm lex
+is a synonym for
+.Nm flex .
+.Pp
+.Nm flex++
+is a synonym for
+.Nm
+.Fl + .
 .Pp
 The manual includes both tutorial and reference sections:
 .Bl -ohang
