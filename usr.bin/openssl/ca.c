@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.15 2015/09/21 13:13:06 bcook Exp $ */
+/* $OpenBSD: ca.c,v 1.16 2015/09/21 13:31:26 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1928,7 +1928,7 @@ again2:
 
 	tm = X509_get_notAfter(ret);
 	row[DB_exp_date] = malloc(tm->length + 1);
-	if (row[DB_exp_date] == NULL) {
+	if (row[DB_type] == NULL || row[DB_exp_date] == NULL) {
 		BIO_printf(bio_err, "Memory allocation failure\n");
 		goto err;
 	}
@@ -2181,7 +2181,7 @@ do_revoke(X509 * x509, CA_DB * db, int type, char *value)
 
 		tm = X509_get_notAfter(x509);
 		row[DB_exp_date] = malloc(tm->length + 1);
-		if (row[DB_exp_date] == NULL) {
+		if (row[DB_type] == NULL || row[DB_exp_date] == NULL) {
 			BIO_printf(bio_err, "Memory allocation failure\n");
 			goto err;
 		}
