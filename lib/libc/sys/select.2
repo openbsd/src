@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.38 2015/03/02 21:15:34 millert Exp $
+.\"	$OpenBSD: select.2,v 1.39 2015/09/21 06:06:54 guenther Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: March 2 2015 $
+.Dd $Mdocdate: September 21 2015 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -182,6 +182,9 @@ before any of the selected descriptors became ready.
 .It Bq Er EINVAL
 The specified time limit is invalid.
 One of its components is negative or too large.
+.It Bq Er EINVAL
+.Fa nfds
+was less than 0.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
@@ -194,6 +197,13 @@ One of its components is negative or too large.
 .Xr send 2 ,
 .Xr write 2 ,
 .Xr getdtablesize 3
+.Sh STANDARDS
+The
+.Fn select
+and
+.Fn pselect
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn select
