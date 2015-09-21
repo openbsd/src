@@ -1,31 +1,42 @@
-.TH IP-SPACING 1 "September 21, 2015" OpenBSD
+.TH TP-SPACING 1 "September 21, 2015" OpenBSD
 .SH NAME
-IP-spacing \- spacing in indentend paragraphs
+TP-spacing \- spacing in tagged paragraphs
 .SH DESCRIPTION
 Normal text.
-.IP tag
+.TP
+tag
 Indented text.
-.IP four
+.TP
+four
 Indented text.
-.IP ffive
+.TP
+ffive
 Indented text.
-.IP sixsix
+.TP
+sixsix
 Indented text.
-.IP seseven
+.TP
+seseven
 Indented text.
-.IP "a much longer tag"
+.TP
+a much longer tag
 Indented text.
 .LP
 Tags with trailing space:
-.IP "tag "
+.TP
+tag\ \&
 Three plus one makes four.
-.IP "tag  "
+.TP
+tag\ \ \&
 Three plus two makes five.
-.IP "tag   "
+.TP
+tag\ \ \ \&
 Three plus three makes six.
-.IP "tag    "
+.TP
+tag\ \ \ \ \ \&
 Three plus four makes seven.
-.IP "tag     "
+.TP
+tag\ \ \ \ \ \ \&
 Three plus five makes eight.
 .LP
 Normal text.

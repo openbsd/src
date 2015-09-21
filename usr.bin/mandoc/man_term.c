@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.136 2015/04/19 19:43:50 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.137 2015/09/21 13:24:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -669,7 +669,7 @@ pre_TP(DECL_ARGS)
 
 	switch (n->type) {
 	case ROFFT_HEAD:
-		p->flags |= TERMP_NOBREAK;
+		p->flags |= TERMP_NOBREAK | TERMP_BRTRSP;
 		p->trailspace = 1;
 		break;
 	case ROFFT_BODY:
@@ -721,7 +721,7 @@ pre_TP(DECL_ARGS)
 		p->offset = mt->offset + len;
 		p->rmargin = p->maxrmargin;
 		p->trailspace = 0;
-		p->flags &= ~TERMP_NOBREAK;
+		p->flags &= ~(TERMP_NOBREAK | TERMP_BRTRSP);
 		break;
 	default:
 		break;

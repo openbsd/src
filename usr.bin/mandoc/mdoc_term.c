@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.224 2015/09/14 12:57:30 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.225 2015/09/21 13:24:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -800,7 +800,7 @@ termp_it_pre(DECL_ARGS)
 		if (n->type != ROFFT_HEAD)
 			break;
 
-		p->flags |= TERMP_NOBREAK | TERMP_BRIND;
+		p->flags |= TERMP_NOBREAK | TERMP_BRTRSP | TERMP_BRIND;
 		p->trailspace = 2;
 
 		if (NULL == n->next || NULL == n->next->child)
@@ -972,7 +972,7 @@ termp_it_post(DECL_ARGS)
 	 * has munged them in the meanwhile.
 	 */
 
-	p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND |
+	p->flags &= ~(TERMP_NOBREAK | TERMP_BRTRSP | TERMP_BRIND |
 			TERMP_DANGLE | TERMP_HANG);
 	p->trailspace = 0;
 }

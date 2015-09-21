@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.59 2015/07/17 22:35:36 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.60 2015/09/21 13:24:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -77,12 +77,13 @@ struct	termp {
 #define	TERMP_BACKAFTER	 (1 << 6)	/* Back up after next character. */
 #define	TERMP_BACKBEFORE (1 << 7)	/* Back up before next character. */
 #define	TERMP_NOBREAK	 (1 << 8)	/* See term_flushln(). */
-#define	TERMP_BRIND	 (1 << 9)	/* See term_flushln(). */
-#define	TERMP_DANGLE	 (1 << 10)	/* See term_flushln(). */
-#define	TERMP_HANG	 (1 << 11)	/* See term_flushln(). */
-#define	TERMP_NOSPLIT	 (1 << 12)	/* Do not break line before .An. */
-#define	TERMP_SPLIT	 (1 << 13)	/* Break line before .An. */
-#define	TERMP_NONEWLINE	 (1 << 14)	/* No line break in nofill mode. */
+#define	TERMP_BRTRSP	 (1 << 9)	/* See term_flushln(). */
+#define	TERMP_BRIND	 (1 << 10)	/* See term_flushln(). */
+#define	TERMP_DANGLE	 (1 << 11)	/* See term_flushln(). */
+#define	TERMP_HANG	 (1 << 12)	/* See term_flushln(). */
+#define	TERMP_NOSPLIT	 (1 << 13)	/* Do not break line before .An. */
+#define	TERMP_SPLIT	 (1 << 14)	/* Break line before .An. */
+#define	TERMP_NONEWLINE	 (1 << 15)	/* No line break in nofill mode. */
 	int		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	const struct mchars *symtab;	/* Character table. */

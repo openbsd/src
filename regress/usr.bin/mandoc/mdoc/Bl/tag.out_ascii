@@ -76,13 +76,23 @@ DDEESSCCRRIIPPTTIIOONN
 
      Trailing white space in the head:
 
-     a      b
+     a      none
 
-     a      b
+     a      one
+
+     a      two
+
+     a      three
+
+     a      four
+
+     a
+            five
+
+     a
+            six
 
             white space only
-
-     a      b
 
      Non-numeric width specification:
 
@@ -111,4 +121,4 @@ DDEESSCCRRIIPPTTIIOONN
 
              second paragraph
 
-OpenBSD                        December 25, 2014                       OpenBSD
+OpenBSD                       September 21, 2015                       OpenBSD

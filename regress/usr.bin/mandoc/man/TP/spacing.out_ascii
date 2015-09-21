@@ -1,9 +1,9 @@
-IP-SPACING(1)               General Commands Manual              IP-SPACING(1)
+TP-SPACING(1)               General Commands Manual              TP-SPACING(1)
 
 
 
 NNAAMMEE
-       IP-spacing - spacing in indentend paragraphs
+       TP-spacing - spacing in tagged paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
        Normal text.
@@ -30,12 +30,14 @@ DDEESSCCRRIIPPTTIIOONN
 
        tag    Three plus three makes six.
 
-       tag    Three plus four makes seven.
+       tag
+              Three plus four makes seven.
 
-       tag    Three plus five makes eight.
+       tag
+              Three plus five makes eight.
 
        Normal text.
 
 
 
-OpenBSD                       September 21, 2015                 IP-SPACING(1)
+OpenBSD                       September 21, 2015                 TP-SPACING(1)

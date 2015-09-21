@@ -1,4 +1,4 @@
-.Dd December 25, 2014
+.Dd September 21, 2015
 .Dt BL-TAG 1
 .Os OpenBSD
 .Sh NAME
@@ -86,13 +86,21 @@ text text
 Trailing white space in the head:
 .Bl -tag -width 5n
 .It "a"
-b
+none
 .It "a "
-b
+one
+.It "a  "
+two
+.It "a   "
+three
+.It "a    "
+four
+.It "a     "
+five
+.It "a      "
+six
 .It " "
 white space only
-.It "a  "
-b
 .El
 .Pp
 Non-numeric width specification:

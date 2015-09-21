@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.109 2015/08/30 21:10:40 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.110 2015/09/21 13:24:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -76,6 +76,8 @@ term_end(struct termp *p)
  *    the next column.  However, if less than p->trailspace blanks,
  *    which can be 0, 1, or 2, remain to the right margin, the line
  *    will be broken.
+ *  - TERMP_BRTRSP: Consider trailing whitespace significant
+ *    when deciding whether the chunk fits or not.
  *  - TERMP_BRIND: If the chunk does not fit and the output line has
  *    to be broken, start the next line at the right margin instead
  *    of at the offset.  Used together with TERMP_NOBREAK for the tags
@@ -288,6 +290,10 @@ term_flushln(struct termp *p)
 
 	} else if (TERMP_DANGLE & p->flags)
 		return;
+
+	/* Trailing whitespace is significant in some columns. */
+	if (vis && vbl && (TERMP_BRTRSP & p->flags))
+		vis += vbl;
 
 	/* If the column was overrun, break the line. */
 	if (maxvis < vis + p->trailspace * (*p->width)(p, ' ')) {
