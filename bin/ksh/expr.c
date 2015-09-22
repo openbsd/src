@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.27 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: expr.c,v 1.28 2015/09/22 21:50:40 millert Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -187,7 +187,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok,
 		if (i == LAEXPR) {
 			if (error_ok == KSH_RETURN_ERROR)
 				return 0;
-			errorf(null);
+			errorf(NULL);
 		}
 		unwind(i);
 		/* NOTREACHED */

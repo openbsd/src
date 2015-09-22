@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.49 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: var.c,v 1.50 2015/09/22 21:50:40 millert Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -354,7 +354,7 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 	if ((vq->flag & RDONLY) && !no_ro_check) {
 		warningf(true, "%s: is read only", vq->name);
 		if (!error_ok)
-			errorf(null);
+			errorf(NULL);
 		return 0;
 	}
 	if (!(vq->flag&INTEGER)) { /* string dest */
@@ -704,7 +704,7 @@ typeset(const char *var, int set, int clr, int field, int base)
 			}
 		}
 		if (!ok)
-		    errorf(null);
+		    errorf(NULL);
 	}
 
 	if (val != NULL) {

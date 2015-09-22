@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.54 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: lex.c,v 1.55 2015/09/22 21:50:40 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -909,7 +909,7 @@ yyerror(const char *fmt, ...)
 	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
-	errorf(null);
+	errorf(NULL);
 }
 
 /*

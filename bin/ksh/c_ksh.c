@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.41 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.42 2015/09/22 21:50:40 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1160,7 +1160,7 @@ c_kill(char **wp)
 		shf_fprintf(shl_out,
 		    "usage: kill [-s signame | -signum | -signame] { job | pid | pgrp } ...\n"
 		    "       kill -l [exit_status ...]\n");
-		bi_errorf(null);
+		bi_errorf(NULL);
 		return 1;
 	}
 

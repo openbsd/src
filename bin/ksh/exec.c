@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.56 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: exec.c,v 1.57 2015/09/22 21:50:40 millert Exp $	*/
 
 /*
  * execute command tree
@@ -107,7 +107,7 @@ execute(struct op *volatile t,
 				 */
 				if (tp && tp->type == CSHELL &&
 				    (tp->flag & SPEC_BI))
-					errorf(null);
+					errorf(NULL);
 				/* Deal with FERREXIT, quitenv(), etc. */
 				goto Break;
 			}

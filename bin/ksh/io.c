@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.29 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: io.c,v 1.30 2015/09/22 21:50:40 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -23,7 +23,7 @@ errorf(const char *fmt, ...)
 
 	shl_stdout_ok = 0;	/* debugging: note that stdout not valid */
 	exstat = 1;
-	if (*fmt) {
+	if (fmt != NULL && *fmt != '\0') {
 		error_prefix(true);
 		va_start(va, fmt);
 		shf_vfprintf(shl_out, fmt, va);
@@ -58,7 +58,7 @@ bi_errorf(const char *fmt, ...)
 
 	shl_stdout_ok = 0;	/* debugging: note that stdout not valid */
 	exstat = 1;
-	if (*fmt) {
+	if (fmt != NULL && *fmt != '\0') {
 		error_prefix(true);
 		/* not set when main() calls parse_args() */
 		if (builtin_argv0)
