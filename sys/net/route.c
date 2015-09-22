@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.240 2015/09/21 11:15:27 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.241 2015/09/22 10:05:00 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1267,6 +1267,9 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	if (flags & (RTF_LOCAL|RTF_BROADCAST))
 		prio = RTP_LOCAL;
+
+	if (flags & RTF_CONNECTED)
+		prio = RTP_CONNECTED;
 
 	error = rtrequest1(RTM_DELETE, &info, prio, &rt, rtableid);
 	if (error == 0) {
