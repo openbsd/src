@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.20 2013/11/21 15:54:46 deraadt Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.21 2015/09/22 15:37:06 tedu Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <locale.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,8 +52,6 @@ main(int argc, char *argv[])
 	long nsecs = 0;
 	struct timespec rqtp;
 	int i;
-
-	setlocale(LC_ALL, "");
 
 	signal(SIGALRM, alarmh);
 
