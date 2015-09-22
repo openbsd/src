@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pthread_barrier_wait.3,v 1.3 2013/06/05 03:44:50 tedu Exp $
+.\"	$OpenBSD: pthread_barrier_wait.3,v 1.4 2015/09/22 08:22:05 sobrado Exp $
 .\"
 .\" Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 22 2015 $
 .Dt PTHREAD_BARRIER_WAIT 3
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ The
 function blocks the calling thread until the required number of threads
 call
 .Fn pthread_barrier_wait ,
-as specified at the object's intialization.
+as specified at the object's initialization.
 .Sh RETURN VALUES
 If successful,
 .Fn pthread_barrier_wait
