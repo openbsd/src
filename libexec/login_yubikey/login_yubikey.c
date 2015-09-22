@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.10 2015/01/16 06:39:50 deraadt Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.11 2015/09/22 21:47:37 millert Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 	}
 
 	ret = yubikey_login(username, password);
-	memset(password, 0, strlen(password));
+	explicit_bzero(password, strlen(password));
 	if (ret == AUTH_OK) {
 		syslog(LOG_INFO, "user %s: authorize", username);
 		fprintf(f, "%s\n", BI_AUTH);
