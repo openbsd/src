@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.9 2015/09/14 17:09:26 schwarze Exp $
+.\"	$OpenBSD: pipex.4,v 1.10 2015/09/22 11:27:13 sobrado Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: September 22 2015 $
 .Dt PIPEX 4
 .Os
 .Sh NAME
@@ -163,7 +163,7 @@ struct pipex_mppe_req {
                                       1 for stateless */
     int16_t  keylenbits;           /* mppe key length(in bits)*/
     u_char   master_key[PIPEX_MPPE_KEYLEN];
-                                   /* mppe mastter key */
+                                   /* mppe master key */
 };
 .Ed
 .It Dv PIPEXDSESSION Fa "struct pipex_session_close_req *"
@@ -221,7 +221,7 @@ The
 .Va psr_protocol
 and
 .Va psr_session_id
-fields used to specify the session are mandoatory.
+fields used to specify the session are mandatory.
 On successful return, the
 .Va psr_stat
 field is filled by the kernel.
