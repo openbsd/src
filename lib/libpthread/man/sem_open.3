@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_open.3,v 1.10 2013/11/20 18:31:23 jmc Exp $
+.\" $OpenBSD: sem_open.3,v 1.11 2015/09/22 08:43:12 sobrado Exp $
 .\"
 .\" Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2013 $
+.Dd $Mdocdate: September 22 2015 $
 .Dt SEM_OPEN 3
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ to indicate an error.
 It is an error to call
 .Fn sem_close
 with an unnamed semaphore or to call
-.Fn sem_destory
+.Fn sem_destroy
 with a named semaphore.
 .Pp
 .Fn sem_open
