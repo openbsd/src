@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.179 2015/09/11 15:29:47 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.180 2015/09/22 09:34:38 vgross Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -199,7 +199,6 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 	    &table->inpt_lhash);
 	if (table->inpt_lhashtbl == NULL)
 		panic("in_pcbinit: hashinit failed for lport");
-	table->inpt_lastport = 0;
 	table->inpt_count = 0;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 }
@@ -281,8 +280,8 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
-	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
 	struct sockaddr_in *sin;
+	u_int16_t lastport = 0;
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
@@ -391,16 +390,16 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			 */
 			count = first - last;
 			if (count)
-				*lastport = first - arc4random_uniform(count);
+				lastport = first - arc4random_uniform(count);
 
 			do {
 				if (count-- < 0)	/* completely used? */
 					return (EADDRNOTAVAIL);
-				--*lastport;
-				if (*lastport > first || *lastport < last)
-					*lastport = first;
-				lport = htons(*lastport);
-			} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
+				--lastport;
+				if (lastport > first || lastport < last)
+					lastport = first;
+				lport = htons(lastport);
+			} while (in_baddynamic(lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, &zeroin_addr, 0,
 			    &inp->inp_laddr, lport, wild, inp->inp_rtableid));
 		} else {
@@ -409,16 +408,16 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			 */
 			count = last - first;
 			if (count)
-				*lastport = first + arc4random_uniform(count);
+				lastport = first + arc4random_uniform(count);
 
 			do {
 				if (count-- < 0)	/* completely used? */
 					return (EADDRNOTAVAIL);
-				++*lastport;
-				if (*lastport < first || *lastport > last)
-					*lastport = first;
-				lport = htons(*lastport);
-			} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
+				++lastport;
+				if (lastport < first || lastport > last)
+					lastport = first;
+				lport = htons(lastport);
+			} while (in_baddynamic(lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, &zeroin_addr, 0,
 			    &inp->inp_laddr, lport, wild, inp->inp_rtableid));
 		}

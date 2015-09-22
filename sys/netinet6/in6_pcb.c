@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.74 2015/09/11 15:29:47 deraadt Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.75 2015/09/22 09:34:39 vgross Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -294,7 +294,7 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
 	u_int16_t first, last;
-	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
+	u_int16_t lastport = 0;
 	u_int16_t lport = 0;
 	int count;
 	int wild = INPLOOKUP_IPV6;
@@ -334,16 +334,16 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
 		 */
 		count = first - last;
 		if (count)
-			*lastport = first - arc4random_uniform(count);
+			lastport = first - arc4random_uniform(count);
 
 		do {
 			if (count-- < 0)	/* completely used? */
 				return (EADDRNOTAVAIL);
-			--*lastport;
-			if (*lastport > first || *lastport < last)
-				*lastport = first;
-			lport = htons(*lastport);
-		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
+			--lastport;
+			if (lastport > first || lastport < last)
+				lastport = first;
+			lport = htons(lastport);
+		} while (in_baddynamic(lastport, so->so_proto->pr_protocol) ||
 		    in_pcblookup(table, &zeroin6_addr, 0,
 		    &inp->inp_laddr6, lport, wild, inp->inp_rtableid));
 	} else {
@@ -352,16 +352,16 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
 		 */
 		count = last - first;
 		if (count)
-			*lastport = first + arc4random_uniform(count);
+			lastport = first + arc4random_uniform(count);
 
 		do {
 			if (count-- < 0)	/* completely used? */
 				return (EADDRNOTAVAIL);
-			++*lastport;
-			if (*lastport < first || *lastport > last)
-				*lastport = first;
-			lport = htons(*lastport);
-		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
+			++lastport;
+			if (lastport < first || lastport > last)
+				lastport = first;
+			lport = htons(lastport);
+		} while (in_baddynamic(lastport, so->so_proto->pr_protocol) ||
 		    in_pcblookup(table, &zeroin6_addr, 0,
 		    &inp->inp_laddr6, lport, wild, inp->inp_rtableid));
 	}
