@@ -43,7 +43,7 @@ for the object B<o>, the long name <ln> or the short name <sn> respectively
 or NID_undef if an error occurred.
 
 OBJ_txt2nid() returns NID corresponding to text string <s>. B<s> can be
-a long name, a short name or the numerical respresentation of an object.
+a long name, a short name or the numerical representation of an object.
 
 OBJ_txt2obj() converts the text string B<s> into an ASN1_OBJECT structure.
 If B<no_name> is 0 then long names and short names will be interpreted

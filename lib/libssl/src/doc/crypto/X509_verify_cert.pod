@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_verify_cert - discover and verify X509 certificte chain
+X509_verify_cert - discover and verify X509 certificate chain
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ for <= 0 return value on error.
 =head1 BUGS
 
 This function uses the header B<x509.h> as opposed to most chain verification
-functiosn which use B<x509_vfy.h>.
+functions which use B<x509_vfy.h>.
 
 =head1 SEE ALSO
 

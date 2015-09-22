@@ -105,7 +105,7 @@ EVP_aes_192_ccm, EVP_aes_256_ccm - EVP cipher routines
 The EVP cipher routines are a high level interface to certain
 symmetric ciphers.
 
-EVP_CIPHER_CTX_init() initializes cipher contex B<ctx>.
+EVP_CIPHER_CTX_init() initializes cipher context B<ctx>.
 
 EVP_EncryptInit_ex() sets up cipher context B<ctx> for encryption
 with cipher B<type> from ENGINE B<impl>. B<ctx> must be initialized

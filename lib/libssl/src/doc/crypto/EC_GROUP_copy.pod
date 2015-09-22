@@ -74,7 +74,7 @@ If the asn1_flag is 1 then this is a named curve with an associated ASN1 OID. If
 EC_GROUP_get_asn1_flag and EC_GROUP_set_asn1_flag get and set the status of the asn1_flag for the curve. If set then
 the curve_name must also be set.
 
-The point_coversion_form for a curve controls how EC_POINT data is encoded as ASN1 as defined in X9.62 (ECDSA).
+The point_conversion_form for a curve controls how EC_POINT data is encoded as ASN1 as defined in X9.62 (ECDSA).
 point_conversion_form_t is an enum defined as follows: 
 
  typedef enum {
@@ -135,7 +135,7 @@ or a pentanomial of the form:
 f(x) = x^m + x^k3 + x^k2 + x^k1 + 1 with m > k3 > k2 > k1 >= 1
 
 The function EC_GROUP_get_basis_type returns a NID identifying whether a trinomial or pentanomial is in use for the field. The
-function EC_GROUP_get_trinomial_basis must only be called where f(x) is of the trinomial form, and returns the value of B<k>. Similary
+function EC_GROUP_get_trinomial_basis must only be called where f(x) is of the trinomial form, and returns the value of B<k>. Similarly
 the function EC_GROUP_get_pentanomial_basis must only be called where f(x) is of the pentanomial form, and returns the values of B<k1>,
 B<k2> and B<k3> respectively.
 
