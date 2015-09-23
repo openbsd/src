@@ -25,7 +25,6 @@
 
 #include <sys/param.h>	/* MACHINE MACHINE_ARCH */
 
-#include <err.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,13 +72,10 @@ main(int argc, char *argv[])
 		usage();
 		/* NOTREACHED */
 	}
-	if (!short_form) {
-		fputs("OpenBSD", stdout);
-		fputc('.', stdout);
-	}
-	fputs(arch, stdout);
-	fputc('\n', stdout);
-	exit(0);
+	if (!short_form)
+		fputs("OpenBSD.", stdout);
+	puts(arch);
+	return 0;
 }
 
 static void
