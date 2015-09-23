@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.49 2015/09/10 17:55:21 schwarze Exp $
+.\" $OpenBSD: keynote.3,v 1.50 2015/09/23 16:23:32 sobrado Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 23 2015 $
 .Dt KEYNOTE 3
 .\" .TH KeyNote 3 local
 .Os
@@ -92,7 +92,7 @@ struct keynote_keylist {
 .Fa "int *untrustedlen"
 .Fa "int numuntrusted"
 .Fa "char **authorizers"
-.Fa "int numauthauthorizers"
+.Fa "int numauthorizers"
 .Fc
 .Ft char **
 .Fn kn_read_asserts "char *array" "int arraylen" "int *numassertions"
