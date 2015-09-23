@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlb_tfp.S,v 1.3 2014/02/08 09:34:04 miod Exp $	*/
+/*	$OpenBSD: tlb_tfp.S,v 1.4 2015/09/23 19:13:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -22,11 +22,11 @@
 #include <mips64/mips_cpu.h>
 #include <machine/pte.h>
 
+#include "assym.h"
+
 #ifdef MIPS_PTE64
 #error "R8000 doesn't need 64-bit PTE"
 #endif
-
-#include "assym.h"
 
 #define	TLBR	.align 4; .word 0x43000001; SSNOP; SSNOP; SSNOP; SSNOP
 #define	TLBW	.align 4; .word 0x43000002; SSNOP; SSNOP; SSNOP
@@ -158,8 +158,17 @@ LEAF(TLBOP(update), 0)	/* { */
 	xori	v0, v0, SR_INT_ENAB
 	DMTC0	v0, COP_0_STATUS_REG	# Disable interrupts
 	MTC0_SR_IE_HAZARD
+
 	DMFC0	a2, COP_0_TLB_HI	# Read current ASID
 	MFC0_HAZARD
+	/*
+	 * If setting up a kernel mapping (va < 0), merge the ASID field
+	 * so that we do not need to write it back.
+	 */
+	bgez	a0, 1f
+	 andi	a2, PG_ASID_MASK
+	or	a0, a2
+1:
 
 	DMTC0	a0, COP_0_TLB_HI
 	MTC0_HAZARD
@@ -170,27 +179,33 @@ LEAF(TLBOP(update), 0)	/* { */
 	DMFC0	v0, COP_0_TLB_SET
 	MFC0_HAZARD
 
-	bgez	v0, 1f
-	 NOP
+	bgez	v0, 2f
 
-	/* Page not found: pick a random set */
+	/*
+	 * Page not found: pick a random set. This algorithm is biased as it
+	 * will select set #0 with a 1/2 probability, and sets #1 and #2 with
+	 * 1/4 probability. But it's simple, fast, and still better than
+	 * always picking set #0.
+	 */
+	 li	a3, 1			# delay slot from above
 	DMFC0	v0, COP_0_COUNT
 	MFC0_HAZARD
 	and	v0, 3
-	beqz	v0, 9f
-	 NOP
-	subu	v0, 1
-9:
+	movz	a3, zero, v0		# a3 = v0 == 0 ? 0 : 1
+	subu	v0, a3
 	DMTC0	v0, COP_0_TLB_SET
 	MTC0_HAZARD
 
-1:
+2:
 	DMTC0	a1, COP_0_TLB_LO
 	MTC0_HAZARD
 	TLBW
 
-	DMTC0	a2, COP_0_TLB_HI	# restore PID
+	blez	a0, 3f
+	 NOP
+	DMTC0	a2, COP_0_TLB_HI	# restore ASID
 	MTC0_HAZARD
+3:
 	DMTC0	v1, COP_0_STATUS_REG	# Restore the status register
 	MTC0_SR_IE_HAZARD
 
