@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.114 2015/09/06 17:06:43 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.115 2015/09/23 00:16:44 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1183,9 +1183,9 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 
 	/*
 	 * The param argument points to an array of __kbind structures
-	 * followed by the corresponding new and old data areas for them
-	 * in alternation.  Verify that the sizes in the __kbind structures
-	 * add up to the total size and find the start of the old+new area.
+	 * followed by the corresponding new data areas for them.  Verify
+	 * that the sizes in the __kbind structures add up to the total
+	 * size and find the start of the new area.
 	 */
 	paramp = &param.uk[0];
 	s = psize;
