@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.113 2015/09/23 12:42:45 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.114 2015/09/23 12:50:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -343,9 +343,6 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	tp->tp_iftype = ifp->if_type;
 	ifp->if_type = IFT_IEEE8023ADLAG;
 
-	/* Change input handler of the physical interface. */
-	if_ih_insert(ifp, trunk_input, NULL);
-
 	ifp->if_tp = (caddr_t)tp;
 	tp->tp_ioctl = ifp->if_ioctl;
 	ifp->if_ioctl = trunk_port_ioctl;
@@ -390,6 +387,9 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	if (tr->tr_port_create != NULL)
 		error = (*tr->tr_port_create)(tp);
 
+	/* Change input handler of the physical interface. */
+	if_ih_insert(ifp, trunk_input, tp);
+
 	return (error);
 }
 
@@ -417,6 +417,9 @@ trunk_port_destroy(struct trunk_port *tp)
 	struct trunk_port *tp_ptr;
 	struct ifnet *ifp = tp->tp_if;
 
+	/* Restore previous input handler. */
+	if_ih_remove(ifp, trunk_input, tp);
+
 	if (tr->tr_port_destroy != NULL)
 		(*tr->tr_port_destroy)(tp);
 
@@ -431,9 +434,6 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	/* Restore interface type. */
 	ifp->if_type = tp->tp_iftype;
-
-	/* Restore previous input handler. */
-	if_ih_remove(ifp, trunk_input, NULL);
 
 	ifp->if_ioctl = tp->tp_ioctl;
 	ifp->if_output = tp->tp_output;
@@ -659,6 +659,8 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EPROTONOSUPPORT;
 			break;
 		}
+		SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
+			if_ih_remove(tp->tp_if, trunk_input, tp);
 		if (tr->tr_proto != TRUNK_PROTO_NONE)
 			error = tr->tr_detach(tr);
 		if (error != 0)
@@ -673,6 +675,9 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				tr->tr_proto = trunk_protos[i].ti_proto;
 				if (tr->tr_proto != TRUNK_PROTO_NONE)
 					error = trunk_protos[i].ti_attach(tr);
+				SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
+					if_ih_insert(tp->tp_if,
+					    trunk_input, tp);
 				goto out;
 			}
 		}
