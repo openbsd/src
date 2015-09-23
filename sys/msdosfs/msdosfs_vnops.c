@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.100 2015/04/17 04:43:21 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.101 2015/09/23 15:37:26 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1833,7 +1833,6 @@ msdosfs_print(void *v)
 	    major(dep->de_dev), minor(dep->de_dev),
 	    VOP_ISLOCKED(ap->a_vp) ? "(LOCKED)" : "");
 #ifdef DIAGNOSTIC
-	lockmgr_printinfo(&dep->de_lock);
 	printf("\n");
 #endif
 

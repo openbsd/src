@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.24 2015/04/17 04:43:21 guenther Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.25 2015/09/23 15:37:26 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -874,7 +874,6 @@ fusefs_print(void *v)
 
 	/* Complete the information given by vprint(). */
 	printf("tag VT_FUSE, hash id %u ", ip->ufs_ino.i_number);
-	lockmgr_printinfo(&ip->ufs_ino.i_lock);
 	printf("\n");
 	return (0);
 }
