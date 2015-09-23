@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_hashtab.c,v 1.2 2014/03/09 11:07:18 jsg Exp $	*/
+/*	$OpenBSD: drm_hashtab.c,v 1.3 2015/09/23 23:12:11 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND. USA.
@@ -69,14 +69,13 @@ void drm_ht_verbose_list(struct drm_open_hash *ht, unsigned long key)
 #ifdef notyet
 	struct drm_hash_item *entry;
 	struct hlist_head *h_list;
-	struct hlist_node *list;
 	unsigned int hashed_key;
 	int count = 0;
 
 	hashed_key = hash_long(key, ht->order);
 	DRM_DEBUG("Key is 0x%08lx, Hashed key is 0x%08x\n", key, hashed_key);
 	h_list = &ht->table[hashed_key];
-	hlist_for_each_entry(entry, list, h_list, head)
+	hlist_for_each_entry(entry, h_list, head)
 		DRM_DEBUG("count %d, key: 0x%08lx\n", count++, entry->key);
 #endif
 }
@@ -90,14 +89,13 @@ drm_ht_find_key(struct drm_open_hash *ht,
 #ifdef notyet
 	struct drm_hash_item *entry;
 	struct hlist_head *h_list;
-	struct hlist_node *list;
 	unsigned int hashed_key;
 
 	hashed_key = hash_long(key, ht->order);
 	h_list = &ht->table[hashed_key];
-	hlist_for_each_entry(entry, list, h_list, head) {
+	hlist_for_each_entry(entry, h_list, head) {
 		if (entry->key == key)
-			return list;
+			return &entry->head;
 		if (entry->key > key)
 			break;
 	}
@@ -114,14 +112,13 @@ drm_ht_find_key_rcu(struct drm_open_hash *ht,
 #ifdef notyet
 	struct drm_hash_item *entry;
 	struct hlist_head *h_list;
-	struct hlist_node *list;
 	unsigned int hashed_key;
 
 	hashed_key = hash_long(key, ht->order);
 	h_list = &ht->table[hashed_key];
-	hlist_for_each_entry_rcu(entry, list, h_list, head) {
+	hlist_for_each_entry_rcu(entry, h_list, head) {
 		if (entry->key == key)
-			return list;
+			return &entry->head;
 		if (entry->key > key)
 			break;
 	}
@@ -136,19 +133,19 @@ int drm_ht_insert_item(struct drm_open_hash *ht, struct drm_hash_item *item)
 #ifdef notyet
 	struct drm_hash_item *entry;
 	struct hlist_head *h_list;
-	struct hlist_node *list, *parent;
+	struct hlist_node *parent;
 	unsigned int hashed_key;
 	unsigned long key = item->key;
 
 	hashed_key = hash_long(key, ht->order);
 	h_list = &ht->table[hashed_key];
 	parent = NULL;
-	hlist_for_each_entry(entry, list, h_list, head) {
+	hlist_for_each_entry(entry, h_list, head) {
 		if (entry->key == key)
 			return -EINVAL;
 		if (entry->key > key)
 			break;
-		parent = list;
+		parent = &entry->head;
 	}
 	if (parent) {
 		hlist_add_after_rcu(parent, &item->head);

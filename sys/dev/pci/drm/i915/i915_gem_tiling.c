@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.18 2015/04/18 14:47:34 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.19 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -237,9 +237,12 @@ i915_tiling_ok(struct drm_device *dev, int stride, int size, int tiling_mode)
 		tile_width = 512;
 
 	/* check maximum stride & object size */
-	if (INTEL_INFO(dev)->gen >= 4) {
-		/* i965 stores the end address of the gtt mapping in the fence
-		 * reg, so dont bother to check the size */
+	/* i965+ stores the end address of the gtt mapping in the fence
+	 * reg, so dont bother to check the size */
+	if (INTEL_INFO(dev)->gen >= 7) {
+		if (stride / 128 > GEN7_FENCE_MAX_PITCH_VAL)
+			return false;
+	} else if (INTEL_INFO(dev)->gen >= 4) {
 		if (stride / 128 > I965_FENCE_MAX_PITCH_VAL)
 			return false;
 	} else {
@@ -255,6 +258,9 @@ i915_tiling_ok(struct drm_device *dev, int stride, int size, int tiling_mode)
 		}
 	}
 
+	if (stride < tile_width)
+		return false;
+
 	/* 965+ just needs multiples of tile width */
 	if (INTEL_INFO(dev)->gen >= 4) {
 		if (stride & (tile_width - 1))
@@ -263,9 +269,6 @@ i915_tiling_ok(struct drm_device *dev, int stride, int size, int tiling_mode)
 	}
 
 	/* Pre-965 needs power of two tile widths */
-	if (stride < tile_width)
-		return false;
-
 	if (stride & (stride - 1))
 		return false;
 
@@ -285,29 +288,18 @@ i915_gem_object_fence_ok(struct drm_i915_gem_object *obj, int tiling_mode)
 		return true;
 
 	if (INTEL_INFO(obj->base.dev)->gen == 3) {
-		if (obj->gtt_offset & ~I915_FENCE_START_MASK)
+		if (i915_gem_obj_ggtt_offset(obj) & ~I915_FENCE_START_MASK)
 			return false;
 	} else {
-		if (obj->gtt_offset & ~I830_FENCE_START_MASK)
+		if (i915_gem_obj_ggtt_offset(obj) & ~I830_FENCE_START_MASK)
 			return false;
 	}
 
-	/*
-	 * Previous chips need to be aligned to the size of the smallest
-	 * fence register that can contain the object.
-	 */
-	if (INTEL_INFO(obj->base.dev)->gen == 3)
-		size = 1024*1024;
-	else
-		size = 512*1024;
-
-	while (size < obj->base.size)
-		size <<= 1;
-
-	if (obj->gtt_space->size != size)
+	size = i915_gem_get_gtt_size(obj->base.dev, obj->base.size, tiling_mode);
+	if (i915_gem_obj_ggtt_size(obj) != size)
 		return false;
 
-	if (obj->gtt_offset & (size - 1))
+	if (i915_gem_obj_ggtt_offset(obj) & (size - 1))
 		return false;
 
 	return true;
@@ -336,7 +328,7 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 		return -EINVAL;
 	}
 
-	if (obj->pin_count) {
+	if (obj->pin_count || obj->framebuffer_references) {
 		drm_gem_object_unreference_unlocked(&obj->base);
 		return -EBUSY;
 	}
@@ -387,18 +379,19 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 		 */
 
 		obj->map_and_fenceable =
-			obj->gtt_space == NULL ||
-			(obj->gtt_offset + obj->base.size <= dev_priv->mm.gtt_mappable_end &&
+			!i915_gem_obj_ggtt_bound(obj) ||
+			(i915_gem_obj_ggtt_offset(obj) +
+			 obj->base.size <= dev_priv->gtt.mappable_end &&
 			 i915_gem_object_fence_ok(obj, args->tiling_mode));
 
 		/* Rebind if we need a change of alignment */
 		if (!obj->map_and_fenceable) {
-			u32 unfenced_alignment =
-				i915_gem_get_unfenced_gtt_alignment(dev,
-								    obj->base.size,
-								    args->tiling_mode);
-			if (obj->gtt_offset & (unfenced_alignment - 1))
-				ret = i915_gem_object_unbind(obj);
+			u32 unfenced_align =
+				i915_gem_get_gtt_alignment(dev, obj->base.size,
+							    args->tiling_mode,
+							    false);
+			if (i915_gem_obj_ggtt_offset(obj) & (unfenced_align - 1))
+				ret = i915_gem_object_ggtt_unbind(obj);
 		}
 
 		if (ret == 0) {
@@ -416,6 +409,18 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 	/* we have to maintain this existing ABI... */
 	args->stride = obj->stride;
 	args->tiling_mode = obj->tiling_mode;
+
+	/* Try to preallocate memory required to save swizzling on put-pages */
+	if (i915_gem_object_needs_bit17_swizzle(obj)) {
+		if (obj->bit_17 == NULL) {
+			obj->bit_17 = kcalloc(BITS_TO_LONGS(obj->base.size >> PAGE_SHIFT),
+					      sizeof(long), GFP_KERNEL);
+		}
+	} else {
+		kfree(obj->bit_17);
+		obj->bit_17 = NULL;
+	}
+
 	drm_gem_object_unreference(&obj->base);
 	mutex_unlock(&dev->struct_mutex);
 
@@ -516,12 +521,8 @@ i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
 	int i;
 
 	if (obj->bit_17 == NULL) {
-		/* round up number of pages to a multiple of 32 so we know what
-		 * size to make the bitmask. XXX this is wasteful with malloc
-		 * and a better way should be done
-		 */
-		size_t nb17 = ((page_count + 31) & ~31)/32;
-		obj->bit_17 = kmalloc(nb17 * sizeof(u_int32_t), GFP_KERNEL);
+		obj->bit_17 = kcalloc(BITS_TO_LONGS(page_count),
+				      sizeof(long), GFP_KERNEL);
 		if (obj->bit_17 == NULL) {
 			DRM_ERROR("Failed to allocate memory for bit 17 "
 				  "record\n");

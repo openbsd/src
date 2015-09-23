@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.85 2015/06/26 15:22:23 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.86 2015/09/23 23:12:11 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -14,54 +14,42 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*-
- * Copyright © 2008 Intel Corporation
+/*
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
- * copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
  *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- *
- * Authors:
- *    Gareth Hughes <gareth@valinux.com>
- *    Eric Anholt <eric@anholt.net>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/drm.h>
 #include <dev/pci/drm/i915_drm.h>
+#include <dev/pci/drm/i915_pciids.h> /* XXX */
 #include "i915_drv.h"
 #include "i915_trace.h"
 #include "intel_drv.h"
 
 #include <machine/pmap.h>
-
-#include <sys/queue.h>
-#include <sys/task.h>
-#if 0
-#	define INTELDRM_WATCH_COHERENCY
-#	define WATCH_INACTIVE
-#endif
-
-extern struct mutex mchdev_lock;
 
 #define IS_I9XX(dev)	(INTEL_INFO(dev)->gen >= 3)
 /* MCH IFP BARs */
@@ -97,7 +85,7 @@ MODULE_PARM_DESC(powersave,
 		"Enable powersavings, fbc, downclocking, etc. (default: true)");
 
 int i915_semaphores __read_mostly = -1;
-module_param_named(semaphores, i915_semaphores, int, 0600);
+module_param_named(semaphores, i915_semaphores, int, 0400);
 MODULE_PARM_DESC(semaphores,
 		"Use semaphores for inter-ring sync (default: -1 (use per-chip defaults))");
 
@@ -152,16 +140,45 @@ MODULE_PARM_DESC(enable_hangcheck,
 		"(default: true)");
 
 int i915_enable_ppgtt __read_mostly = -1;
-module_param_named(i915_enable_ppgtt, i915_enable_ppgtt, int, 0600);
+module_param_named(i915_enable_ppgtt, i915_enable_ppgtt, int, 0400);
 MODULE_PARM_DESC(i915_enable_ppgtt,
 		"Enable PPGTT (default: true)");
 
-unsigned int i915_preliminary_hw_support __read_mostly = 0;
+int i915_enable_psr __read_mostly = 0;
+module_param_named(enable_psr, i915_enable_psr, int, 0600);
+MODULE_PARM_DESC(enable_psr, "Enable PSR (default: false)");
+
+unsigned int i915_preliminary_hw_support __read_mostly = IS_ENABLED(CONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT);
 module_param_named(preliminary_hw_support, i915_preliminary_hw_support, int, 0600);
 MODULE_PARM_DESC(preliminary_hw_support,
-		"Enable preliminary hardware support. "
-		"Enable Haswell and ValleyView Support. "
-		"(default: false)");
+		"Enable preliminary hardware support.");
+
+int i915_disable_power_well __read_mostly = 1;
+module_param_named(disable_power_well, i915_disable_power_well, int, 0600);
+MODULE_PARM_DESC(disable_power_well,
+		 "Disable the power well when possible (default: true)");
+
+int i915_enable_ips __read_mostly = 1;
+module_param_named(enable_ips, i915_enable_ips, int, 0600);
+MODULE_PARM_DESC(enable_ips, "Enable IPS (default: true)");
+
+bool i915_fastboot __read_mostly = 0;
+module_param_named(fastboot, i915_fastboot, bool, 0600);
+MODULE_PARM_DESC(fastboot, "Try to skip unnecessary mode sets at boot time "
+		 "(default: false)");
+
+int i915_enable_pc8 __read_mostly = 1;
+module_param_named(enable_pc8, i915_enable_pc8, int, 0600);
+MODULE_PARM_DESC(enable_pc8, "Enable support for low power package C states (PC8+) (default: true)");
+
+int i915_pc8_timeout __read_mostly = 5000;
+module_param_named(pc8_timeout, i915_pc8_timeout, int, 0600);
+MODULE_PARM_DESC(pc8_timeout, "Number of msecs of idleness required to enter PC8+ (default: 5000)");
+
+bool i915_prefault_disable __read_mostly;
+module_param_named(prefault_disable, i915_prefault_disable, bool, 0600);
+MODULE_PARM_DESC(prefault_disable,
+		"Disable page prefaulting for pread/pwrite/reloc (default:false). For developers only.");
 
 const struct intel_device_info *
 	i915_get_device_id(int);
@@ -169,6 +186,7 @@ int	inteldrm_probe(struct device *, void *, void *);
 void	inteldrm_attach(struct device *, struct device *, void *);
 int	inteldrm_detach(struct device *, int);
 int	inteldrm_activate(struct device *, int);
+int	inteldrm_intr(void *);
 int	inteldrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	inteldrm_doioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
@@ -176,7 +194,13 @@ int	inteldrm_gmch_match(struct pci_attach_args *);
 
 void	i915_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 void	i965_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
+void	intel_gtt_chipset_setup(struct drm_device *);
 
+/* i915_dma.c */
+void	intel_setup_mchbar(struct drm_device *);
+int	i915_load_modeset_init(struct drm_device *);
+
+#undef INTEL_VGA_DEVICE
 #define INTEL_VGA_DEVICE(id, info) {		\
 	.class = PCI_CLASS_DISPLAY << 16,	\
 	.class_mask = 0xff0000,			\
@@ -186,52 +210,74 @@ void	i965_alloc_ifp(struct inteldrm_softc *, struct pci_attach_args *);
 	.subdevice = PCI_ANY_ID,		\
 	.driver_data = (unsigned long) info }
 
+#undef INTEL_QUANTA_VGA_DEVICE
+#define INTEL_QUANTA_VGA_DEVICE(info) {		\
+	.class = PCI_CLASS_DISPLAY << 16,	\
+	.class_mask = 0xff0000,			\
+	.vendor = 0x8086,			\
+	.device = 0x16a,			\
+	.subvendor = 0x152d,			\
+	.subdevice = 0x8990,			\
+	.driver_data = (unsigned long) info }
+
 static const struct intel_device_info intel_i830_info = {
 	.gen = 2, .is_mobile = 1, .cursor_needs_physical = 1, .num_pipes = 2,
 	.has_overlay = 1, .overlay_needs_physical = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_845g_info = {
 	.gen = 2, .num_pipes = 1,
 	.has_overlay = 1, .overlay_needs_physical = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_i85x_info = {
 	.gen = 2, .is_i85x = 1, .is_mobile = 1, .num_pipes = 2,
 	.cursor_needs_physical = 1,
 	.has_overlay = 1, .overlay_needs_physical = 1,
+	.has_fbc = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_i865g_info = {
 	.gen = 2, .num_pipes = 1,
 	.has_overlay = 1, .overlay_needs_physical = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_i915g_info = {
 	.gen = 3, .is_i915g = 1, .cursor_needs_physical = 1, .num_pipes = 2,
 	.has_overlay = 1, .overlay_needs_physical = 1,
+	.ring_mask = RENDER_RING,
 };
 static const struct intel_device_info intel_i915gm_info = {
 	.gen = 3, .is_mobile = 1, .num_pipes = 2,
 	.cursor_needs_physical = 1,
 	.has_overlay = 1, .overlay_needs_physical = 1,
 	.supports_tv = 1,
+	.has_fbc = 1,
+	.ring_mask = RENDER_RING,
 };
 static const struct intel_device_info intel_i945g_info = {
 	.gen = 3, .has_hotplug = 1, .cursor_needs_physical = 1, .num_pipes = 2,
 	.has_overlay = 1, .overlay_needs_physical = 1,
+	.ring_mask = RENDER_RING,
 };
 static const struct intel_device_info intel_i945gm_info = {
 	.gen = 3, .is_i945gm = 1, .is_mobile = 1, .num_pipes = 2,
 	.has_hotplug = 1, .cursor_needs_physical = 1,
 	.has_overlay = 1, .overlay_needs_physical = 1,
 	.supports_tv = 1,
+	.has_fbc = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_i965g_info = {
 	.gen = 4, .is_broadwater = 1, .num_pipes = 2,
 	.has_hotplug = 1,
 	.has_overlay = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_i965gm_info = {
@@ -239,18 +285,20 @@ static const struct intel_device_info intel_i965gm_info = {
 	.is_mobile = 1, .has_fbc = 1, .has_hotplug = 1,
 	.has_overlay = 1,
 	.supports_tv = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_g33_info = {
 	.gen = 3, .is_g33 = 1, .num_pipes = 2,
 	.need_gfx_hws = 1, .has_hotplug = 1,
 	.has_overlay = 1,
+	.ring_mask = RENDER_RING,
 };
 
 static const struct intel_device_info intel_g45_info = {
 	.gen = 4, .is_g4x = 1, .need_gfx_hws = 1, .num_pipes = 2,
 	.has_pipe_cxsr = 1, .has_hotplug = 1,
-	.has_bsd_ring = 1,
+	.ring_mask = RENDER_RING | BSD_RING,
 };
 
 static const struct intel_device_info intel_gm45_info = {
@@ -258,7 +306,7 @@ static const struct intel_device_info intel_gm45_info = {
 	.is_mobile = 1, .need_gfx_hws = 1, .has_fbc = 1,
 	.has_pipe_cxsr = 1, .has_hotplug = 1,
 	.supports_tv = 1,
-	.has_bsd_ring = 1,
+	.ring_mask = RENDER_RING | BSD_RING,
 };
 
 static const struct intel_device_info intel_pineview_info = {
@@ -270,221 +318,172 @@ static const struct intel_device_info intel_pineview_info = {
 static const struct intel_device_info intel_ironlake_d_info = {
 	.gen = 5, .num_pipes = 2,
 	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_bsd_ring = 1,
+	.ring_mask = RENDER_RING | BSD_RING,
 };
 
 static const struct intel_device_info intel_ironlake_m_info = {
 	.gen = 5, .is_mobile = 1, .num_pipes = 2,
 	.need_gfx_hws = 1, .has_hotplug = 1,
 	.has_fbc = 1,
-	.has_bsd_ring = 1,
+	.ring_mask = RENDER_RING | BSD_RING,
 };
 
 static const struct intel_device_info intel_sandybridge_d_info = {
 	.gen = 6, .num_pipes = 2,
 	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
+	.has_fbc = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING,
 	.has_llc = 1,
-	.has_force_wake = 1,
 };
 
 static const struct intel_device_info intel_sandybridge_m_info = {
 	.gen = 6, .is_mobile = 1, .num_pipes = 2,
 	.need_gfx_hws = 1, .has_hotplug = 1,
 	.has_fbc = 1,
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING,
 	.has_llc = 1,
-	.has_force_wake = 1,
 };
 
+#define GEN7_FEATURES  \
+	.gen = 7, .num_pipes = 3, \
+	.need_gfx_hws = 1, .has_hotplug = 1, \
+	.has_fbc = 1, \
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING, \
+	.has_llc = 1
+
 static const struct intel_device_info intel_ivybridge_d_info = {
-	.is_ivybridge = 1, .gen = 7, .num_pipes = 3,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
-	.has_llc = 1,
-	.has_force_wake = 1,
+	GEN7_FEATURES,
+	.is_ivybridge = 1,
 };
 
 static const struct intel_device_info intel_ivybridge_m_info = {
-	.is_ivybridge = 1, .gen = 7, .is_mobile = 1, .num_pipes = 3,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_fbc = 0,	/* FBC is not enabled on Ivybridge mobile yet */
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
-	.has_llc = 1,
-	.has_force_wake = 1,
+	GEN7_FEATURES,
+	.is_ivybridge = 1,
+	.is_mobile = 1,
+};
+
+static const struct intel_device_info intel_ivybridge_q_info = {
+	GEN7_FEATURES,
+	.is_ivybridge = 1,
+	.num_pipes = 0, /* legal, last one wins */
 };
 
 static const struct intel_device_info intel_valleyview_m_info = {
-	.gen = 7, .is_mobile = 1, .num_pipes = 2,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_fbc = 0,
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
+	GEN7_FEATURES,
+	.is_mobile = 1,
+	.num_pipes = 2,
 	.is_valleyview = 1,
+	.display_mmio_offset = VLV_DISPLAY_BASE,
+	.has_fbc = 0, /* legal, last one wins */
+	.has_llc = 0, /* legal, last one wins */
 };
 
 static const struct intel_device_info intel_valleyview_d_info = {
-	.gen = 7, .num_pipes = 2,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_fbc = 0,
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
+	GEN7_FEATURES,
+	.num_pipes = 2,
 	.is_valleyview = 1,
+	.display_mmio_offset = VLV_DISPLAY_BASE,
+	.has_fbc = 0, /* legal, last one wins */
+	.has_llc = 0, /* legal, last one wins */
 };
 
 static const struct intel_device_info intel_haswell_d_info = {
-	.is_haswell = 1, .gen = 7, .num_pipes = 3,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
-	.has_llc = 1,
-	.has_force_wake = 1,
+	GEN7_FEATURES,
+	.is_haswell = 1,
+	.has_ddi = 1,
+	.has_fpga_dbg = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING,
 };
 
 static const struct intel_device_info intel_haswell_m_info = {
-	.is_haswell = 1, .gen = 7, .is_mobile = 1, .num_pipes = 3,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.has_bsd_ring = 1,
-	.has_blt_ring = 1,
-	.has_llc = 1,
-	.has_force_wake = 1,
+	GEN7_FEATURES,
+	.is_haswell = 1,
+	.is_mobile = 1,
+	.has_ddi = 1,
+	.has_fpga_dbg = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING,
 };
 
-static const struct drm_pcidev inteldrm_pciidlist[] = {		/* aka */
-	INTEL_VGA_DEVICE(0x3577, &intel_i830_info),		/* I830_M */
-	INTEL_VGA_DEVICE(0x2562, &intel_845g_info),		/* 845_G */
-	INTEL_VGA_DEVICE(0x3582, &intel_i85x_info),		/* I855_GM */
-	INTEL_VGA_DEVICE(0x358e, &intel_i85x_info),
-	INTEL_VGA_DEVICE(0x2572, &intel_i865g_info),		/* I865_G */
-	INTEL_VGA_DEVICE(0x2582, &intel_i915g_info),		/* I915_G */
-	INTEL_VGA_DEVICE(0x258a, &intel_i915g_info),		/* E7221_G */
-	INTEL_VGA_DEVICE(0x2592, &intel_i915gm_info),		/* I915_GM */
-	INTEL_VGA_DEVICE(0x2772, &intel_i945g_info),		/* I945_G */
-	INTEL_VGA_DEVICE(0x27a2, &intel_i945gm_info),		/* I945_GM */
-	INTEL_VGA_DEVICE(0x27ae, &intel_i945gm_info),		/* I945_GME */
-	INTEL_VGA_DEVICE(0x2972, &intel_i965g_info),		/* I946_GZ */
-	INTEL_VGA_DEVICE(0x2982, &intel_i965g_info),		/* G35_G */
-	INTEL_VGA_DEVICE(0x2992, &intel_i965g_info),		/* I965_Q */
-	INTEL_VGA_DEVICE(0x29a2, &intel_i965g_info),		/* I965_G */
-	INTEL_VGA_DEVICE(0x29b2, &intel_g33_info),		/* Q35_G */
-	INTEL_VGA_DEVICE(0x29c2, &intel_g33_info),		/* G33_G */
-	INTEL_VGA_DEVICE(0x29d2, &intel_g33_info),		/* Q33_G */
-	INTEL_VGA_DEVICE(0x2a02, &intel_i965gm_info),		/* I965_GM */
-	INTEL_VGA_DEVICE(0x2a12, &intel_i965gm_info),		/* I965_GME */
-	INTEL_VGA_DEVICE(0x2a42, &intel_gm45_info),		/* GM45_G */
-	INTEL_VGA_DEVICE(0x2e02, &intel_g45_info),		/* IGD_E_G */
-	INTEL_VGA_DEVICE(0x2e12, &intel_g45_info),		/* Q45_G */
-	INTEL_VGA_DEVICE(0x2e22, &intel_g45_info),		/* G45_G */
-	INTEL_VGA_DEVICE(0x2e32, &intel_g45_info),		/* G41_G */
-	INTEL_VGA_DEVICE(0x2e42, &intel_g45_info),		/* B43_G */
-	INTEL_VGA_DEVICE(0x2e92, &intel_g45_info),		/* B43_G.1 */
-	INTEL_VGA_DEVICE(0xa001, &intel_pineview_info),
-	INTEL_VGA_DEVICE(0xa011, &intel_pineview_info),
-	INTEL_VGA_DEVICE(0x0042, &intel_ironlake_d_info),
-	INTEL_VGA_DEVICE(0x0046, &intel_ironlake_m_info),
-	INTEL_VGA_DEVICE(0x0102, &intel_sandybridge_d_info),
-	INTEL_VGA_DEVICE(0x0112, &intel_sandybridge_d_info),
-	INTEL_VGA_DEVICE(0x0122, &intel_sandybridge_d_info),
-	INTEL_VGA_DEVICE(0x0106, &intel_sandybridge_m_info),
-	INTEL_VGA_DEVICE(0x0116, &intel_sandybridge_m_info),
-	INTEL_VGA_DEVICE(0x0126, &intel_sandybridge_m_info),
-	INTEL_VGA_DEVICE(0x010A, &intel_sandybridge_d_info),
-	INTEL_VGA_DEVICE(0x0156, &intel_ivybridge_m_info), /* GT1 mobile */
-	INTEL_VGA_DEVICE(0x0166, &intel_ivybridge_m_info), /* GT2 mobile */
-	INTEL_VGA_DEVICE(0x0152, &intel_ivybridge_d_info), /* GT1 desktop */
-	INTEL_VGA_DEVICE(0x0162, &intel_ivybridge_d_info), /* GT2 desktop */
-	INTEL_VGA_DEVICE(0x015a, &intel_ivybridge_d_info), /* GT1 server */
-	INTEL_VGA_DEVICE(0x016a, &intel_ivybridge_d_info), /* GT2 server */
-	INTEL_VGA_DEVICE(0x0402, &intel_haswell_d_info), /* GT1 desktop */
-	INTEL_VGA_DEVICE(0x0412, &intel_haswell_d_info), /* GT2 desktop */
-	INTEL_VGA_DEVICE(0x0422, &intel_haswell_d_info), /* GT3 desktop */
-	INTEL_VGA_DEVICE(0x040a, &intel_haswell_d_info), /* GT1 server */
-	INTEL_VGA_DEVICE(0x041a, &intel_haswell_d_info), /* GT2 server */
-	INTEL_VGA_DEVICE(0x042a, &intel_haswell_d_info), /* GT3 server */
-	INTEL_VGA_DEVICE(0x0406, &intel_haswell_m_info), /* GT1 mobile */
-	INTEL_VGA_DEVICE(0x0416, &intel_haswell_m_info), /* GT2 mobile */
-	INTEL_VGA_DEVICE(0x0426, &intel_haswell_m_info), /* GT2 mobile */
-	INTEL_VGA_DEVICE(0x040B, &intel_haswell_d_info), /* GT1 reserved */
-	INTEL_VGA_DEVICE(0x041B, &intel_haswell_d_info), /* GT2 reserved */
-	INTEL_VGA_DEVICE(0x042B, &intel_haswell_d_info), /* GT3 reserved */
-	INTEL_VGA_DEVICE(0x040E, &intel_haswell_d_info), /* GT1 reserved */
-	INTEL_VGA_DEVICE(0x041E, &intel_haswell_d_info), /* GT2 reserved */
-	INTEL_VGA_DEVICE(0x042E, &intel_haswell_d_info), /* GT3 reserved */
-	INTEL_VGA_DEVICE(0x0C02, &intel_haswell_d_info), /* SDV GT1 desktop */
-	INTEL_VGA_DEVICE(0x0C12, &intel_haswell_d_info), /* SDV GT2 desktop */
-	INTEL_VGA_DEVICE(0x0C22, &intel_haswell_d_info), /* SDV GT3 desktop */
-	INTEL_VGA_DEVICE(0x0C0A, &intel_haswell_d_info), /* SDV GT1 server */
-	INTEL_VGA_DEVICE(0x0C1A, &intel_haswell_d_info), /* SDV GT2 server */
-	INTEL_VGA_DEVICE(0x0C2A, &intel_haswell_d_info), /* SDV GT3 server */
-	INTEL_VGA_DEVICE(0x0C06, &intel_haswell_m_info), /* SDV GT1 mobile */
-	INTEL_VGA_DEVICE(0x0C16, &intel_haswell_m_info), /* SDV GT2 mobile */
-	INTEL_VGA_DEVICE(0x0C26, &intel_haswell_m_info), /* SDV GT3 mobile */
-	INTEL_VGA_DEVICE(0x0C0B, &intel_haswell_d_info), /* SDV GT1 reserved */
-	INTEL_VGA_DEVICE(0x0C1B, &intel_haswell_d_info), /* SDV GT2 reserved */
-	INTEL_VGA_DEVICE(0x0C2B, &intel_haswell_d_info), /* SDV GT3 reserved */
-	INTEL_VGA_DEVICE(0x0C0E, &intel_haswell_d_info), /* SDV GT1 reserved */
-	INTEL_VGA_DEVICE(0x0C1E, &intel_haswell_d_info), /* SDV GT2 reserved */
-	INTEL_VGA_DEVICE(0x0C2E, &intel_haswell_d_info), /* SDV GT3 reserved */
-	INTEL_VGA_DEVICE(0x0A02, &intel_haswell_d_info), /* ULT GT1 desktop */
-	INTEL_VGA_DEVICE(0x0A12, &intel_haswell_d_info), /* ULT GT2 desktop */
-	INTEL_VGA_DEVICE(0x0A22, &intel_haswell_d_info), /* ULT GT3 desktop */
-	INTEL_VGA_DEVICE(0x0A0A, &intel_haswell_d_info), /* ULT GT1 server */
-	INTEL_VGA_DEVICE(0x0A1A, &intel_haswell_d_info), /* ULT GT2 server */
-	INTEL_VGA_DEVICE(0x0A2A, &intel_haswell_d_info), /* ULT GT3 server */
-	INTEL_VGA_DEVICE(0x0A06, &intel_haswell_m_info), /* ULT GT1 mobile */
-	INTEL_VGA_DEVICE(0x0A16, &intel_haswell_m_info), /* ULT GT2 mobile */
-	INTEL_VGA_DEVICE(0x0A26, &intel_haswell_m_info), /* ULT GT3 mobile */
-	INTEL_VGA_DEVICE(0x0A0B, &intel_haswell_d_info), /* ULT GT1 reserved */
-	INTEL_VGA_DEVICE(0x0A1B, &intel_haswell_d_info), /* ULT GT2 reserved */
-	INTEL_VGA_DEVICE(0x0A2B, &intel_haswell_d_info), /* ULT GT3 reserved */
-	INTEL_VGA_DEVICE(0x0A0E, &intel_haswell_m_info), /* ULT GT1 reserved */
-	INTEL_VGA_DEVICE(0x0A1E, &intel_haswell_m_info), /* ULT GT2 reserved */
-	INTEL_VGA_DEVICE(0x0A2E, &intel_haswell_m_info), /* ULT GT3 reserved */
-	INTEL_VGA_DEVICE(0x0D02, &intel_haswell_d_info), /* CRW GT1 desktop */
-	INTEL_VGA_DEVICE(0x0D12, &intel_haswell_d_info), /* CRW GT2 desktop */
-	INTEL_VGA_DEVICE(0x0D22, &intel_haswell_d_info), /* CRW GT3 desktop */
-	INTEL_VGA_DEVICE(0x0D0A, &intel_haswell_d_info), /* CRW GT1 server */
-	INTEL_VGA_DEVICE(0x0D1A, &intel_haswell_d_info), /* CRW GT2 server */
-	INTEL_VGA_DEVICE(0x0D2A, &intel_haswell_d_info), /* CRW GT3 server */
-	INTEL_VGA_DEVICE(0x0D06, &intel_haswell_m_info), /* CRW GT1 mobile */
-	INTEL_VGA_DEVICE(0x0D16, &intel_haswell_m_info), /* CRW GT2 mobile */
-	INTEL_VGA_DEVICE(0x0D26, &intel_haswell_m_info), /* CRW GT3 mobile */
-	INTEL_VGA_DEVICE(0x0D0B, &intel_haswell_d_info), /* CRW GT1 reserved */
-	INTEL_VGA_DEVICE(0x0D1B, &intel_haswell_d_info), /* CRW GT2 reserved */
-	INTEL_VGA_DEVICE(0x0D2B, &intel_haswell_d_info), /* CRW GT3 reserved */
-	INTEL_VGA_DEVICE(0x0D0E, &intel_haswell_d_info), /* CRW GT1 reserved */
-	INTEL_VGA_DEVICE(0x0D1E, &intel_haswell_d_info), /* CRW GT2 reserved */
-	INTEL_VGA_DEVICE(0x0D2E, &intel_haswell_d_info), /* CRW GT3 reserved */
+static const struct intel_device_info intel_broadwell_d_info = {
+	.gen = 8, .num_pipes = 3,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING,
+	.has_llc = 1,
+	.has_ddi = 1,
+};
+
+static const struct intel_device_info intel_broadwell_m_info = {
+	.gen = 8, .is_mobile = 1, .num_pipes = 3,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING,
+	.has_llc = 1,
+	.has_ddi = 1,
+};
+
+/*
+ * Make sure any device matches here are from most specific to most
+ * general.  For example, since the Quanta match is based on the subsystem
+ * and subvendor IDs, we need it to come before the more general IVB
+ * PCI ID matches, otherwise we'll use the wrong info struct above.
+ */
+#define INTEL_PCI_IDS \
+	INTEL_I830_IDS(&intel_i830_info),	\
+	INTEL_I845G_IDS(&intel_845g_info),	\
+	INTEL_I85X_IDS(&intel_i85x_info),	\
+	INTEL_I865G_IDS(&intel_i865g_info),	\
+	INTEL_I915G_IDS(&intel_i915g_info),	\
+	INTEL_I915GM_IDS(&intel_i915gm_info),	\
+	INTEL_I945G_IDS(&intel_i945g_info),	\
+	INTEL_I945GM_IDS(&intel_i945gm_info),	\
+	INTEL_I965G_IDS(&intel_i965g_info),	\
+	INTEL_G33_IDS(&intel_g33_info),		\
+	INTEL_I965GM_IDS(&intel_i965gm_info),	\
+	INTEL_GM45_IDS(&intel_gm45_info), 	\
+	INTEL_G45_IDS(&intel_g45_info), 	\
+	INTEL_PINEVIEW_IDS(&intel_pineview_info),	\
+	INTEL_IRONLAKE_D_IDS(&intel_ironlake_d_info),	\
+	INTEL_IRONLAKE_M_IDS(&intel_ironlake_m_info),	\
+	INTEL_SNB_D_IDS(&intel_sandybridge_d_info),	\
+	INTEL_SNB_M_IDS(&intel_sandybridge_m_info),	\
+	INTEL_IVB_Q_IDS(&intel_ivybridge_q_info), /* must be first IVB */ \
+	INTEL_IVB_M_IDS(&intel_ivybridge_m_info),	\
+	INTEL_IVB_D_IDS(&intel_ivybridge_d_info),	\
+	INTEL_HSW_D_IDS(&intel_haswell_d_info), \
+	INTEL_HSW_M_IDS(&intel_haswell_m_info), \
+	INTEL_VLV_M_IDS(&intel_valleyview_m_info),	\
+	INTEL_VLV_D_IDS(&intel_valleyview_d_info),	\
+	INTEL_BDW_M_IDS(&intel_broadwell_m_info),	\
+	INTEL_BDW_D_IDS(&intel_broadwell_d_info)
+
+static const struct drm_pcidev pciidlist[] = {		/* aka */
+	INTEL_PCI_IDS,
 	{0, 0, 0}
 };
 
 static struct drm_driver_info inteldrm_driver = {
 	.buf_priv_size		= 1,	/* No dev_priv */
 	.file_priv_size		= sizeof(struct inteldrm_file),
-	.open 			= i915_driver_open,
-	.close			= i915_driver_close,
-	.lastclose		= i915_driver_lastclose,
+	.open = i915_driver_open,
+	.lastclose = i915_driver_lastclose,
+	.preclose = i915_driver_preclose,
+	.postclose = i915_driver_postclose,
 
-	.gem_init_object	= i915_gem_init_object,
+//	.gem_init_object	= i915_gem_init_object,
 	.gem_free_object	= i915_gem_free_object,
 	.gem_fault		= i915_gem_fault,
 	.gem_size		= sizeof(struct drm_i915_gem_object),
 
-	.dumb_create		= i915_gem_dumb_create,
-	.dumb_map_offset	= i915_gem_mmap_gtt,
-	.dumb_destroy		= i915_gem_dumb_destroy,
+	.dumb_create = i915_gem_dumb_create,
+	.dumb_map_offset = i915_gem_mmap_gtt,
+	.dumb_destroy = drm_gem_dumb_destroy,
+	.ioctls	= i915_ioctls,
 
-	.ioctls			= i915_ioctls,
-	.name			= DRIVER_NAME,
-	.desc			= DRIVER_DESC,
-	.date			= DRIVER_DATE,
-	.major			= DRIVER_MAJOR,
-	.minor			= DRIVER_MINOR,
-	.patchlevel		= DRIVER_PATCHLEVEL,
+	.name = DRIVER_NAME,
+	.desc = DRIVER_DESC,
+	.date = DRIVER_DATE,
+	.major = DRIVER_MAJOR,
+	.minor = DRIVER_MINOR,
+	.patchlevel = DRIVER_PATCHLEVEL,
 
 	.flags			= DRIVER_AGP | DRIVER_AGP_REQUIRE |
 				    DRIVER_MTRR | DRIVER_IRQ | DRIVER_GEM |
@@ -496,7 +495,7 @@ i915_get_device_id(int device)
 {
 	const struct drm_pcidev *did;
 
-	for (did = &inteldrm_pciidlist[0]; did->device != 0; did++) {
+	for (did = &pciidlist[0]; did->device != 0; did++) {
 		if (did->device != device)
 			continue;
 		return ((const struct intel_device_info *)did->driver_data);
@@ -507,14 +506,93 @@ i915_get_device_id(int device)
 int
 inteldrm_probe(struct device *parent, void *match, void *aux)
 {
-	return (drm_pciprobe((struct pci_attach_args *)aux,
-	    inteldrm_pciidlist));
+	return (drm_pciprobe((struct pci_attach_args *)aux, pciidlist));
+}
+
+static int
+intel_pch_match(struct pci_attach_args *pa)
+{
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA)
+		return (1);
+	return (0);
+}
+
+void intel_detect_pch(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct pci_attach_args pa;
+
+	/* In all current cases, num_pipes is equivalent to the PCH_NOP setting
+	 * (which really amounts to a PCH but no South Display).
+	 */
+	if (INTEL_INFO(dev)->num_pipes == 0) {
+		dev_priv->pch_type = PCH_NOP;
+		return;
+	}
+
+	/*
+	 * The reason to probe ISA bridge instead of Dev31:Fun0 is to
+	 * make graphics device passthrough work easy for VMM, that only
+	 * need to expose ISA bridge to let driver know the real hardware
+	 * underneath. This is a requirement from virtualization team.
+	 *
+	 * In some virtualized environments (e.g. XEN), there is irrelevant
+	 * ISA bridge in the system. To work reliably, we should scan trhough
+	 * all the ISA bridge devices and check for the first match, instead
+	 * of only checking the first one.
+	 */
+	if (pci_find_device(&pa, intel_pch_match)) {
+		if (PCI_VENDOR(pa.pa_id) == PCI_VENDOR_ID_INTEL) {
+			unsigned short id = PCI_PRODUCT(pa.pa_id) & INTEL_PCH_DEVICE_ID_MASK;
+			dev_priv->pch_id = id;
+
+			if (id == INTEL_PCH_IBX_DEVICE_ID_TYPE) {
+				dev_priv->pch_type = PCH_IBX;
+				DRM_DEBUG_KMS("Found Ibex Peak PCH\n");
+				WARN_ON(!IS_GEN5(dev));
+			} else if (id == INTEL_PCH_CPT_DEVICE_ID_TYPE) {
+				dev_priv->pch_type = PCH_CPT;
+				DRM_DEBUG_KMS("Found CougarPoint PCH\n");
+				WARN_ON(!(IS_GEN6(dev) || IS_IVYBRIDGE(dev)));
+			} else if (id == INTEL_PCH_PPT_DEVICE_ID_TYPE) {
+				/* PantherPoint is CPT compatible */
+				dev_priv->pch_type = PCH_CPT;
+				DRM_DEBUG_KMS("Found PantherPoint PCH\n");
+				WARN_ON(!(IS_GEN6(dev) || IS_IVYBRIDGE(dev)));
+			} else if (id == INTEL_PCH_LPT_DEVICE_ID_TYPE) {
+				dev_priv->pch_type = PCH_LPT;
+				DRM_DEBUG_KMS("Found LynxPoint PCH\n");
+				WARN_ON(!IS_HASWELL(dev));
+				WARN_ON(IS_ULT(dev));
+			} else if (IS_BROADWELL(dev)) {
+				dev_priv->pch_type = PCH_LPT;
+				dev_priv->pch_id =
+					INTEL_PCH_LPT_LP_DEVICE_ID_TYPE;
+				DRM_DEBUG_KMS("This is Broadwell, assuming "
+					      "LynxPoint LP PCH\n");
+			} else if (id == INTEL_PCH_LPT_LP_DEVICE_ID_TYPE) {
+				dev_priv->pch_type = PCH_LPT;
+				DRM_DEBUG_KMS("Found LynxPoint LP PCH\n");
+				WARN_ON(!IS_HASWELL(dev));
+				WARN_ON(!IS_ULT(dev));
+			}
+		}
+	} else
+		DRM_DEBUG_KMS("No PCH found.\n");
 }
 
 bool i915_semaphore_is_enabled(struct drm_device *dev)
 {
 	if (INTEL_INFO(dev)->gen < 6)
-		return 0;
+		return false;
+
+	/* Until we get further testing... */
+	if (IS_GEN8(dev)) {
+		WARN_ON(!i915_preliminary_hw_support);
+		return false;
+	}
 
 	if (i915_semaphores >= 0)
 		return i915_semaphores;
@@ -525,22 +603,37 @@ bool i915_semaphore_is_enabled(struct drm_device *dev)
 		return false;
 #endif
 
-	return 1;
+	return true;
 }
 
 static int i915_drm_freeze(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_crtc *crtc;
+
+	intel_runtime_pm_get(dev_priv);
+
+	/* ignore lid events during suspend */
+	mutex_lock(&dev_priv->modeset_restore_lock);
+	dev_priv->modeset_restore = MODESET_SUSPENDED;
+	mutex_unlock(&dev_priv->modeset_restore_lock);
+
+	/* We do a lot of poking in a lot of registers, make sure they work
+	 * properly. */
+	hsw_disable_package_c8(dev_priv);
+	intel_display_set_init_power(dev, true);
 
 	drm_kms_helper_poll_disable(dev);
 
-#if 0
+#ifdef __linux__
 	pci_save_state(dev->pdev);
 #endif
 
 	/* If KMS is active, we do the leavevt stuff here */
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
-		int error = i915_gem_idle(dev);
+		int error;
+
+		error = i915_gem_suspend(dev);
 		if (error) {
 			dev_err(&dev->pdev->dev,
 				"GEM idle failed, resume might fail\n");
@@ -549,25 +642,124 @@ static int i915_drm_freeze(struct drm_device *dev)
 
 		cancel_delayed_work_sync(&dev_priv->rps.delayed_resume_work);
 
-		intel_modeset_disable(dev);
-
 		drm_irq_uninstall(dev);
+		dev_priv->enable_hotplug_processing = false;
+		/*
+		 * Disable CRTCs directly since we want to preserve sw state
+		 * for _thaw.
+		 */
+		mutex_lock(&dev->mode_config.mutex);
+		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head)
+			dev_priv->display.crtc_disable(crtc);
+		mutex_unlock(&dev->mode_config.mutex);
+
+		intel_modeset_suspend_hw(dev);
 	}
+
+	i915_gem_suspend_gtt_mappings(dev);
 
 	i915_save_state(dev);
 
 	intel_opregion_fini(dev);
 
-	/* Modeset on resume, not lid events */
-	dev_priv->modeset_on_lid = 0;
+#ifdef __linux__
+	console_lock();
+	intel_fbdev_set_suspend(dev, FBINFO_STATE_SUSPENDED);
+	console_unlock();
+#endif
 
 	return 0;
 }
 
-static int __i915_drm_thaw(struct drm_device *dev)
+#ifdef __linux__
+int i915_suspend(struct drm_device *dev, pm_message_t state)
+{
+	int error;
+
+	if (!dev || !dev->dev_private) {
+		DRM_ERROR("dev: %p\n", dev);
+		DRM_ERROR("DRM not initialized, aborting suspend.\n");
+		return -ENODEV;
+	}
+
+	if (state.event == PM_EVENT_PRETHAW)
+		return 0;
+
+
+	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
+		return 0;
+
+	error = i915_drm_freeze(dev);
+	if (error)
+		return error;
+
+	if (state.event == PM_EVENT_SUSPEND) {
+		/* Shut down the device */
+		pci_disable_device(dev->pdev);
+		pci_set_power_state(dev->pdev, PCI_D3hot);
+	}
+
+	return 0;
+}
+
+void intel_console_resume(struct work_struct *work)
+{
+	struct drm_i915_private *dev_priv =
+		container_of(work, struct drm_i915_private,
+			     console_resume_work);
+	struct drm_device *dev = dev_priv->dev;
+
+	console_lock();
+	intel_fbdev_set_suspend(dev, FBINFO_STATE_RUNNING);
+	console_unlock();
+}
+
+#else
+
+void intel_console_resume(struct work_struct *work)
+{
+}
+
+#endif
+
+static void intel_resume_hotplug(struct drm_device *dev)
+{
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct intel_encoder *encoder;
+
+	mutex_lock(&mode_config->mutex);
+	DRM_DEBUG_KMS("running encoder hotplug functions\n");
+
+	list_for_each_entry(encoder, &mode_config->encoder_list, base.head)
+		if (encoder->hot_plug)
+			encoder->hot_plug(encoder);
+
+	mutex_unlock(&mode_config->mutex);
+
+	/* Just fire off a uevent and let userspace tell us what to do */
+	drm_helper_hpd_irq_event(dev);
+}
+
+static int i915_drm_thaw_early(struct drm_device *dev)
+{
+	intel_uncore_early_sanitize(dev);
+	intel_uncore_sanitize(dev);
+	intel_power_domains_init_hw(dev);
+
+	return 0;
+}
+
+static int __i915_drm_thaw(struct drm_device *dev, bool restore_gtt_mappings)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int error = 0;
+
+	if (drm_core_check_feature(dev, DRIVER_MODESET) &&
+	    restore_gtt_mappings) {
+		mutex_lock(&dev->struct_mutex);
+		i915_gem_restore_gtt_mappings(dev);
+		mutex_unlock(&dev->struct_mutex);
+	}
 
 	i915_restore_state(dev);
 	intel_opregion_setup(dev);
@@ -577,54 +769,200 @@ static int __i915_drm_thaw(struct drm_device *dev)
 		intel_init_pch_refclk(dev);
 
 		mutex_lock(&dev->struct_mutex);
-		dev_priv->mm.suspended = 0;
 
 		error = i915_gem_init_hw(dev);
 		mutex_unlock(&dev->struct_mutex);
 
-		intel_modeset_init_hw(dev);
-		drm_mode_config_reset(dev);
-		intel_modeset_setup_hw_state(dev, false);
+		/* We need working interrupts for modeset enabling ... */
 		drm_irq_install(dev);
+
+		intel_modeset_init_hw(dev);
+
+		drm_modeset_lock_all(dev);
+		drm_mode_config_reset(dev);
+		intel_modeset_setup_hw_state(dev, true);
+		drm_modeset_unlock_all(dev);
+
+		/*
+		 * ... but also need to make sure that hotplug processing
+		 * doesn't cause havoc. Like in the driver load code we don't
+		 * bother with the tiny race here where we might loose hotplug
+		 * notifications.
+		 * */
+		intel_hpd_init(dev);
+		dev_priv->enable_hotplug_processing = true;
+		/* Config may have changed between suspend and resume */
+		intel_resume_hotplug(dev);
 	}
 
 	intel_opregion_init(dev);
 
-	dev_priv->modeset_on_lid = 0;
+#ifdef __linux__
+	/*
+	 * The console lock can be pretty contented on resume due
+	 * to all the printk activity.  Try to keep it out of the hot
+	 * path of resume if possible.
+	 */
+	if (console_trylock()) {
+		intel_fbdev_set_suspend(dev, FBINFO_STATE_RUNNING);
+		console_unlock();
+	} else {
+		schedule_work(&dev_priv->console_resume_work);
+	}
+#endif
 
+	/* Undo what we did at i915_drm_freeze so the refcount goes back to the
+	 * expected level. */
+	hsw_enable_package_c8(dev_priv);
+
+	mutex_lock(&dev_priv->modeset_restore_lock);
+	dev_priv->modeset_restore = MODESET_DONE;
+	mutex_unlock(&dev_priv->modeset_restore_lock);
+
+	intel_runtime_pm_put(dev_priv);
 	return error;
 }
 
 static int i915_drm_thaw(struct drm_device *dev)
 {
-	int error = 0;
+	if (drm_core_check_feature(dev, DRIVER_MODESET))
+		i915_check_and_clear_faults(dev);
 
-	intel_gt_sanitize(dev);
+	return __i915_drm_thaw(dev, true);
+}
 
-	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
-		mutex_lock(&dev->struct_mutex);
-		i915_gem_restore_gtt_mappings(dev);
+#ifdef __linux__
+static int i915_resume_early(struct drm_device *dev)
+{
+	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
+		return 0;
+
+	/*
+	 * We have a resume ordering issue with the snd-hda driver also
+	 * requiring our device to be power up. Due to the lack of a
+	 * parent/child relationship we currently solve this with an early
+	 * resume hook.
+	 *
+	 * FIXME: This should be solved with a special hdmi sink device or
+	 * similar so that power domains can be employed.
+	 */
+	if (pci_enable_device(dev->pdev))
+		return -EIO;
+
+	pci_set_master(dev->pdev);
+
+	return i915_drm_thaw_early(dev);
+}
+
+int i915_resume(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	int ret;
+
+	/*
+	 * Platforms with opregion should have sane BIOS, older ones (gen3 and
+	 * earlier) need to restore the GTT mappings since the BIOS might clear
+	 * all our scratch PTEs.
+	 */
+	ret = __i915_drm_thaw(dev, !dev_priv->opregion.header);
+	if (ret)
+		return ret;
+
+	drm_kms_helper_poll_enable(dev);
+	return 0;
+}
+
+static int i915_resume_legacy(struct drm_device *dev)
+{
+	i915_resume_early(dev);
+	i915_resume(dev);
+
+	return 0;
+}
+#endif
+
+/**
+ * i915_reset - reset chip after a hang
+ * @dev: drm device to reset
+ *
+ * Reset the chip.  Useful if a hang is detected. Returns zero on successful
+ * reset or otherwise an error code.
+ *
+ * Procedure is fairly simple:
+ *   - reset the chip using the reset reg
+ *   - re-init context state
+ *   - re-init hardware status page
+ *   - re-init ring buffer
+ *   - re-init interrupt state
+ *   - re-init display
+ */
+int i915_reset(struct drm_device *dev)
+{
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	bool simulated;
+	int ret;
+
+	if (!i915_try_reset)
+		return 0;
+
+	mutex_lock(&dev->struct_mutex);
+
+	i915_gem_reset(dev);
+
+	simulated = dev_priv->gpu_error.stop_rings != 0;
+
+	ret = intel_gpu_reset(dev);
+
+	/* Also reset the gpu hangman. */
+	if (simulated) {
+		DRM_INFO("Simulated gpu hang, resetting stop_rings\n");
+		dev_priv->gpu_error.stop_rings = 0;
+		if (ret == -ENODEV) {
+			DRM_INFO("Reset not implemented, but ignoring "
+				 "error for simulated gpu hangs\n");
+			ret = 0;
+		}
+	}
+
+	if (ret) {
+		DRM_ERROR("Failed to reset chip: %i\n", ret);
+		mutex_unlock(&dev->struct_mutex);
+		return ret;
+	}
+
+	/* Ok, now get things going again... */
+
+	/*
+	 * Everything depends on having the GTT running, so we need to start
+	 * there.  Fortunately we don't need to do this unless we reset the
+	 * chip at a PCI level.
+	 *
+	 * Next we need to restore the context, but we don't use those
+	 * yet either...
+	 *
+	 * Ring buffer needs to be re-initialized in the KMS case, or if X
+	 * was running at the time of the reset (i.e. we weren't VT
+	 * switched away).
+	 */
+	if (drm_core_check_feature(dev, DRIVER_MODESET) ||
+			!dev_priv->ums.mm_suspended) {
+		dev_priv->ums.mm_suspended = 0;
+
+		ret = i915_gem_init_hw(dev);
+		mutex_unlock(&dev->struct_mutex);
+		if (ret) {
+			DRM_ERROR("Failed hw init on reset %d\n", ret);
+			return ret;
+		}
+
+		drm_irq_uninstall(dev);
+		drm_irq_install(dev);
+		intel_hpd_init(dev);
+	} else {
 		mutex_unlock(&dev->struct_mutex);
 	}
 
-	__i915_drm_thaw(dev);
-
-	return error;
-}
-
-/*
- * We're intel IGD, bus 0 function 0 dev 0 should be the GMCH, so it should
- * be Intel
- */
-int
-inteldrm_gmch_match(struct pci_attach_args *pa)
-{
-	if (pa->pa_bus == 0 && pa->pa_device == 0 && pa->pa_function == 0 &&
-	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
-	    PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
-		return (1);
-	return (0);
+	return 0;
 }
 
 
@@ -679,7 +1017,6 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct inteldrm_softc *dev_priv = v;
 	struct drm_device *dev = dev_priv->dev;
 	struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
-	extern u32 _intel_panel_get_max_backlight(struct drm_device *);
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -689,11 +1026,14 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (ws_get_param && ws_get_param(dp) == 0)
 			return 0;
 
+		if (dev_priv->backlight.connector == NULL)
+			return -1;
+
 		switch (dp->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			dp->min = 0;
-			dp->max = _intel_panel_get_max_backlight(dev);
-			dp->curval = dev_priv->backlight_level;
+			dp->max = dev_priv->backlight.props.max_brightness;
+			dp->curval = dev_priv->backlight.props.brightness;
 			return (dp->max > dp->min) ? 0 : -1;
 		}
 		break;
@@ -701,9 +1041,16 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (ws_set_param && ws_set_param(dp) == 0)
 			return 0;
 
+		if (dev_priv->backlight.connector == NULL ||
+		    dp->curval > dev_priv->backlight.props.max_brightness)
+			return -1;
+
 		switch (dp->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			intel_panel_set_backlight(dev, dp->curval);
+			mutex_lock(&dev->mode_config.mutex);
+			intel_panel_set_backlight(dev_priv->backlight.connector,
+			    dp->curval, dev_priv->backlight.props.max_brightness);
+			mutex_unlock(&dev->mode_config.mutex);
 			return 0;
 		}
 		break;
@@ -768,7 +1115,7 @@ inteldrm_doswitch(void *v)
 	struct drm_device *dev = dev_priv->dev;
 
 	rasops_show_screen(ri, dev_priv->switchcookie, 0, NULL, NULL);
-	intel_fb_restore_mode(dev);
+	intel_fbdev_restore_mode(dev);
 
 	if (dev_priv->switchcb)
 		(*dev_priv->switchcb)(dev_priv->switchcbarg, 0, 0);
@@ -820,73 +1167,13 @@ inteldrm_burner(void *v, u_int on, u_int flags)
 	drm_fb_helper_dpms(helper, dpms_mode);
 }
 
-/*
- * Accelerated routines.
- */
-
-int inteldrm_copyrows(void *, int, int, int);
-
 int
-inteldrm_copyrows(void *cookie, int src, int dst, int num)
+inteldrm_intr(void *arg)
 {
-	struct rasops_info *ri = cookie;
-	struct inteldrm_softc *sc = ri->ri_hw;
+	struct inteldrm_softc *dev_priv = arg;
+	struct drm_device *dev = dev_priv->dev;
 
-	if ((dst == 0 && (src + num) == ri->ri_rows) ||
-	    (src == 0 && (dst + num) == ri->ri_rows)) {
-		struct inteldrm_softc *dev_priv = sc;
-		struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
-		size_t size = dev_priv->fbdev->ifb.obj->base.size / 2;
-		int stride = ri->ri_font->fontheight * ri->ri_stride;
-		int i;
-
-		if (dst == 0) {
-			int delta = src * stride;
-			bzero(ri->ri_bits, delta);
-
-			sc->sc_offset += delta;
-			ri->ri_bits += delta;
-			ri->ri_origbits += delta;
-			if (sc->sc_offset > size) {
-				sc->sc_offset -= size;
-				ri->ri_bits -= size;
-				ri->ri_origbits -= size;
-			}
-		} else {
-			int delta = dst * stride;
-			bzero(ri->ri_bits + num * stride, delta);
-
-			sc->sc_offset -= delta;
-			ri->ri_bits -= delta;
-			ri->ri_origbits -= delta;
-			if (sc->sc_offset < 0) {
-				sc->sc_offset += size;
-				ri->ri_bits += size;
-				ri->ri_origbits += size;
-			}
-		}
-
-		for (i = 0; i < helper->crtc_count; i++) {
-			struct drm_mode_set *mode_set =
-			    &helper->crtc_info[i].mode_set;
-			struct drm_crtc *crtc = mode_set->crtc;
-			struct drm_framebuffer *fb = helper->fb;
-
-			if (!crtc->enabled)
-				continue;
-
-			mode_set->x = (sc->sc_offset % ri->ri_stride) /
-			    (ri->ri_depth / 8);
-			mode_set->y = sc->sc_offset / ri->ri_stride;
-			if (fb == crtc->fb)
-				dev_priv->display.update_plane(crtc, fb,
-				    mode_set->x, mode_set->y);
-		}
-
-		return 0;
-	}
-
-	return sc->sc_copyrows(cookie, src, dst, num);
+	return dev->driver->irq_handler(0, dev);
 }
 
 void
@@ -894,19 +1181,23 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct inteldrm_softc	*dev_priv = (struct inteldrm_softc *)self;
 	struct vga_pci_softc	*vga_sc = (struct vga_pci_softc *)parent;
-	struct pci_attach_args	*pa = aux, bpa;
+	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
 	struct drm_device	*dev;
 	const struct drm_pcidev	*id_entry;
 	int			 i;
 	uint16_t		 pci_device;
-	uint32_t		 aperture_size;
+	const struct intel_device_info *info;
+	int ret = 0, mmio_bar, mmio_size;
+	uint32_t aperture_size;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
-	    PCI_PRODUCT(pa->pa_id), inteldrm_pciidlist);
+	    PCI_PRODUCT(pa->pa_id), pciidlist);
 	pci_device = PCI_PRODUCT(pa->pa_id);
-	dev_priv->info = i915_get_device_id(pci_device);
-	KASSERT(dev_priv->info->gen != 0);
+	info = i915_get_device_id(pci_device);
+	KASSERT(info->gen != 0);
+
+	dev_priv->info = info;
 
 	dev_priv->pc = pa->pa_pc;
 	dev_priv->tag = pa->pa_tag;
@@ -924,33 +1215,186 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev = dev_priv->dev = (struct drm_device *)
 	    drm_attach_pci(&inteldrm_driver, pa, 1, 1, self);
 
-	mtx_init(&dev_priv->irq_lock, IPL_TTY);
-	mtx_init(&dev_priv->rps.lock, IPL_TTY);
-	mtx_init(&dev_priv->dpio_lock, IPL_TTY);
-	mtx_init(&dev_priv->gt_lock, IPL_TTY);
+	intel_gtt_chipset_setup(dev);
 	mtx_init(&mchdev_lock, IPL_TTY);
-	rw_init(&dev_priv->rps.hw_lock, "rpshw");
 
-	task_set(&dev_priv->switchtask, inteldrm_doswitch, dev_priv);
+	mtx_init(&dev_priv->irq_lock, IPL_TTY);
+	mtx_init(&dev_priv->gpu_error.lock, IPL_TTY);
+	mtx_init(&dev_priv->backlight_lock, IPL_TTY);
+	mtx_init(&dev_priv->uncore.lock, IPL_TTY);
+	mtx_init(&dev_priv->mm.object_stat_lock, IPL_TTY);
+	rw_init(&dev_priv->dpio_lock, "dpio");
+	rw_init(&dev_priv->modeset_restore_lock, "rest");
+
+	intel_pm_setup(dev);
+
+#ifdef __linux__
+	intel_display_crc_init(dev);
+
+	i915_dump_device_info(dev_priv);
+#endif
+
+	/* Not all pre-production machines fall into this category, only the
+	 * very first ones. Almost everything should work, except for maybe
+	 * suspend/resume. And we don't implement workarounds that affect only
+	 * pre-production machines. */
+	if (IS_HSW_EARLY_SDV(dev))
+		DRM_INFO("This is an early pre-production Haswell machine. "
+			 "It may not be fully functional.\n");
+
+#ifdef __linux__
+	if (i915_get_bridge_dev(dev)) {
+		ret = -EIO;
+		goto free_priv;
+	}
+#endif
+
+	mmio_bar = IS_GEN2(dev) ? 1 : 0;
+	/* Before gen4, the registers and the GTT are behind different BARs.
+	 * However, from gen4 onwards, the registers and the GTT are shared
+	 * in the same BAR, so we want to restrict this ioremap from
+	 * clobbering the GTT which we want ioremap_wc instead. Fortunately,
+	 * the register BAR remains the same size for all the earlier
+	 * generations up to Ironlake.
+	 */
+	if (info->gen < 5)
+		mmio_size = 512*1024;
+	else
+		mmio_size = 2*1024*1024;
 
 	/* we need to use this api for now due to sharing with intagp */
-	bar = vga_pci_bar_info(vga_sc, (IS_I9XX(dev) ? 0 : 1));
+	bar = vga_pci_bar_info(vga_sc, mmio_bar);
 	if (bar == NULL) {
 		printf(": can't get BAR info\n");
 		return;
 	}
 
-	dev_priv->regs = vga_pci_bar_map(vga_sc, bar->addr, 0, 0);
+	dev_priv->regs = vga_pci_bar_map(vga_sc, bar->addr, mmio_size, 0);
 	if (dev_priv->regs == NULL) {
 		printf(": can't map mmio space\n");
 		return;
 	}
 
+	intel_uncore_early_sanitize(dev);
+
+	/* This must be called before any calls to HAS_PCH_* */
 	intel_detect_pch(dev);
 
+	intel_uncore_init(dev);
+
+	ret = i915_gem_gtt_init(dev);
+	if (ret)
+		goto out_regs;
+
+#ifdef __linux__
+	if (drm_core_check_feature(dev, DRIVER_MODESET))
+		i915_kick_out_firmware_fb(dev_priv);
+
+	pci_set_master(dev->pdev);
+
+	/* overlay on gen2 is broken and can't address above 1G */
+	if (IS_GEN2(dev))
+		dma_set_coherent_mask(&dev->pdev->dev, DMA_BIT_MASK(30));
+
+	/* 965GM sometimes incorrectly writes to hardware status page (HWS)
+	 * using 32bit addressing, overwriting memory if HWS is located
+	 * above 4GB.
+	 *
+	 * The documentation also mentions an issue with undefined
+	 * behaviour if any general state is accessed within a page above 4GB,
+	 * which also needs to be handled carefully.
+	 */
+	if (IS_BROADWATER(dev) || IS_CRESTLINE(dev))
+		dma_set_coherent_mask(&dev->pdev->dev, DMA_BIT_MASK(32));
+#endif
+
+	aperture_size = dev_priv->gtt.mappable_end;
+
+#ifdef __linux__
+	dev_priv->gtt.mappable =
+		io_mapping_create_wc(dev_priv->gtt.mappable_base,
+				     aperture_size);
+	if (dev_priv->gtt.mappable == NULL) {
+		ret = -EIO;
+		goto out_gtt;
+	}
+
+	dev_priv->gtt.mtrr = arch_phys_wc_add(dev_priv->gtt.mappable_base,
+					      aperture_size);
+#else
+	/* XXX would be a lot nicer to get agp info before now */
+	uvm_page_physload(atop(dev_priv->gtt.mappable_base),
+	    atop(dev_priv->gtt.mappable_base + aperture_size),
+	    atop(dev_priv->gtt.mappable_base),
+	    atop(dev_priv->gtt.mappable_base + aperture_size),
+	    PHYSLOAD_DEVICE);
+	/* array of vm pages that physload introduced. */
+	dev_priv->pgs = PHYS_TO_VM_PAGE(dev_priv->gtt.mappable_base);
+	KASSERT(dev_priv->pgs != NULL);
 	/*
-	 * i945G/GM report MSI capability despite not actually supporting it.
-	 * so explicitly disable it.
+	 * XXX mark all pages write combining so user mmaps get the right
+	 * bits. We really need a proper MI api for doing this, but for now
+	 * this allows us to use PAT where available.
+	 */
+	for (i = 0; i < atop(aperture_size); i++)
+		atomic_setbits_int(&(dev_priv->pgs[i].pg_flags), PG_PMAP_WC);
+	if (agp_init_map(dev_priv->bst, dev_priv->gtt.mappable_base,
+	    aperture_size, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+	    &dev_priv->agph))
+		panic("can't map aperture");
+#endif
+
+	/* The i915 workqueue is primarily used for batched retirement of
+	 * requests (and thus managing bo) once the task has been completed
+	 * by the GPU. i915_gem_retire_requests() is called directly when we
+	 * need high-priority retirement, such as waiting for an explicit
+	 * bo.
+	 *
+	 * It is also used for periodic low-priority events, such as
+	 * idle-timers and recording error state.
+	 *
+	 * All tasks on the workqueue are expected to acquire the dev mutex
+	 * so there is no point in running more than one instance of the
+	 * workqueue at any time.  Use an ordered one.
+	 */
+#ifdef __linux__
+	dev_priv->wq = alloc_ordered_workqueue("i915", 0);
+	if (dev_priv->wq == NULL) {
+		DRM_ERROR("Failed to create our workqueue.\n");
+		ret = -ENOMEM;
+		goto out_mtrrfree;
+	}
+#else
+	dev_priv->wq = (struct workqueue_struct *)
+	    taskq_create("intelrel", 1, IPL_TTY, 0);
+	if (dev_priv->wq == NULL) {
+		printf(": couldn't create taskq\n");
+		goto out_mtrrfree;
+	}
+#endif
+
+	intel_irq_init(dev);
+	intel_uncore_sanitize(dev);
+
+	/* Try to make sure MCHBAR is enabled before poking at it */
+	intel_setup_mchbar(dev);
+	intel_setup_gmbus(dev);
+	intel_opregion_setup(dev);
+
+	intel_setup_bios(dev);
+
+	i915_gem_load(dev);
+
+	/* On the 945G/GM, the chipset reports the MSI capability on the
+	 * integrated graphics even though the support isn't actually there
+	 * according to the published specs.  It doesn't appear to function
+	 * correctly in testing on 945G.
+	 * This may be a side effect of MSI having been made available for PEG
+	 * and the registers being closely associated.
+	 *
+	 * According to chipset errata, on the 965GM, MSI interrupts may
+	 * be lost or delayed, but we use them anyways to avoid
+	 * stuck interrupts on some machines.
 	 */
 	if (IS_I945G(dev) || IS_I945GM(dev))
 		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
@@ -960,109 +1404,56 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	i915_gem_gtt_init(dev);
-
-	intel_irq_init(dev);
-
 	/*
 	 * set up interrupt handler, note that we don't switch the interrupt
 	 * on until the X server talks to us, kms will change this.
 	 */
-	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_TTY,
-	    inteldrm_driver.irq_handler,
-	    dev_priv, dev_priv->sc_dev.dv_xname);
+	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih,
+	    IPL_TTY, inteldrm_intr, dev_priv, dev_priv->sc_dev.dv_xname);
 	if (dev_priv->irqh == NULL) {
 		printf(": couldn't  establish interrupt\n");
 		return;
 	}
 
-	dev_priv->wq = (struct workqueue_struct *)
-	    taskq_create("intelrel", 1, IPL_TTY, 0);
-	if (dev_priv->wq == NULL) {
-		printf("couldn't create taskq\n");
-		return;
+	dev_priv->num_plane = 1;
+	if (IS_VALLEYVIEW(dev))
+		dev_priv->num_plane = 2;
+
+	if (INTEL_INFO(dev)->num_pipes) {
+		ret = drm_vblank_init(dev, INTEL_INFO(dev)->num_pipes);
+		if (ret)
+			goto out_gem_unload;
 	}
 
-	/* GEM init */
-	timeout_set(&dev_priv->hangcheck_timer, i915_hangcheck_elapsed, dev_priv);
-	dev_priv->next_seqno = 1;
-	dev_priv->mm.suspended = 1;
+	intel_power_domains_init(dev);
 
-	if (pci_find_device(&bpa, inteldrm_gmch_match) == 0) {
-		printf(": can't find GMCH\n");
-		return;
-	}
-
-	/* Set up the IFP for chipset flushing */
-	if (IS_I915G(dev) || IS_I915GM(dev) || IS_I945G(dev) ||
-	    IS_I945GM(dev)) {
-		i915_alloc_ifp(dev_priv, &bpa);
-	} else if (INTEL_INFO(dev)->gen >= 4 || IS_G33(dev)) {
-		i965_alloc_ifp(dev_priv, &bpa);
-	} else {
-		int nsegs;
-		/*
-		 * I8XX has no flush page mechanism, we fake it by writing until
-		 * the cache is empty. allocate a page to scribble on
-		 */
-		dev_priv->ifp.i8xx.kva = NULL;
-		if (bus_dmamem_alloc(pa->pa_dmat, PAGE_SIZE, 0, 0,
-		    &dev_priv->ifp.i8xx.seg, 1, &nsegs, BUS_DMA_WAITOK) == 0) {
-			if (bus_dmamem_map(pa->pa_dmat, &dev_priv->ifp.i8xx.seg,
-			    1, PAGE_SIZE, &dev_priv->ifp.i8xx.kva, 0) != 0) {
-				bus_dmamem_free(pa->pa_dmat,
-				    &dev_priv->ifp.i8xx.seg, nsegs);
-				dev_priv->ifp.i8xx.kva = NULL;
-			}
+	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
+		ret = i915_load_modeset_init(dev);
+		if (ret < 0) {
+			DRM_ERROR("failed to init modeset\n");
+			goto out_power_well;
 		}
+	} else {
+		/* Start out suspended in ums mode. */
+		dev_priv->ums.mm_suspended = 1;
 	}
 
-        /* Try to make sure MCHBAR is enabled before poking at it */
-        intel_setup_mchbar(dev_priv, &bpa);
+#ifdef __linux__
+	i915_setup_sysfs(dev);
+#endif
 
-	i915_gem_load(dev);
-
-	if (drm_vblank_init(dev, INTEL_INFO(dev)->num_pipes)) {
-		printf(": vblank init failed\n");
-		return;
+	if (INTEL_INFO(dev)->num_pipes) {
+		/* Must be done after probing outputs */
+		intel_opregion_init(dev);
+#ifdef __linux__
+		acpi_video_register();
+#endif
 	}
 
-	aperture_size = dev_priv->mm.gtt->gtt_mappable_entries << PAGE_SHIFT;
-	dev_priv->mm.gtt_base_addr = dev_priv->mm.gtt->gma_bus_addr;
+	if (IS_GEN5(dev))
+		intel_gpu_ips_init(dev_priv);
 
-	intel_pm_init(dev);
-	intel_gt_sanitize(dev);
-	intel_gt_init(dev);
-
-	intel_opregion_setup(dev);
-	intel_setup_bios(dev);
-	intel_setup_gmbus(dev);
-
-	/* XXX would be a lot nicer to get agp info before now */
-	uvm_page_physload(atop(dev_priv->mm.gtt_base_addr),
-	    atop(dev_priv->mm.gtt_base_addr + aperture_size),
-	    atop(dev_priv->mm.gtt_base_addr),
-	    atop(dev_priv->mm.gtt_base_addr + aperture_size),
-	    PHYSLOAD_DEVICE);
-	/* array of vm pages that physload introduced. */
-	dev_priv->pgs = PHYS_TO_VM_PAGE(dev_priv->mm.gtt_base_addr);
-	KASSERT(dev_priv->pgs != NULL);
-	/*
-	 * XXX mark all pages write combining so user mmaps get the right
-	 * bits. We really need a proper MI api for doing this, but for now
-	 * this allows us to use PAT where available.
-	 */
-	for (i = 0; i < atop(aperture_size); i++)
-		atomic_setbits_int(&(dev_priv->pgs[i].pg_flags), PG_PMAP_WC);
-	if (agp_init_map(dev_priv->bst, dev_priv->mm.gtt_base_addr,
-	    aperture_size, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
-	    &dev_priv->agph))
-		panic("can't map aperture");
-
-	/* XXX */
-	if (drm_core_check_feature(dev, DRIVER_MODESET))
-		i915_load_modeset_init(dev);
-	intel_opregion_init(dev);
+	intel_init_runtime_pm(dev_priv);
 
 #if 1
 {
@@ -1073,25 +1464,13 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (ri->ri_bits == NULL)
 		return;
 
-	intel_fb_restore_mode(dev);
+	intel_fbdev_restore_mode(dev);
 
-	ri->ri_flg = RI_CENTER | RI_VCONS;
+	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS;
+	ri->ri_hw = dev_priv;
 	rasops_init(ri, 160, 160);
 
-	ri->ri_hw = dev_priv;
-	dev_priv->sc_copyrows = ri->ri_copyrows;
-	ri->ri_copyrows = inteldrm_copyrows;
-
-	/*
-	 * On older hardware the fast scrolling code causes page table
-	 * errors.  As a workaround, we set the "avoid framebuffer
-	 * reads" flag, which has the side-effect of disabling the
-	 * fast scrolling code, but still gives us a half-decent
-	 * scrolling speed.
-	 */
-	if (INTEL_INFO(dev)->gen < 3 || IS_I915G(dev) || IS_I915GM(dev))
-		ri->ri_flg |= RI_WRONLY;
-	ri->ri_flg |= RI_WRONLY;
+	task_set(&dev_priv->switchtask, inteldrm_doswitch, dev_priv);
 
 	inteldrm_stdscreen.capabilities = ri->ri_caps;
 	inteldrm_stdscreen.nrows = ri->ri_rows;
@@ -1121,6 +1500,12 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	config_found(parent, &aa, wsemuldisplaydevprint);
 }
 #endif
+
+out_power_well:
+out_gem_unload:
+out_mtrrfree:
+out_regs:
+	return;
 }
 
 int
@@ -1173,8 +1558,9 @@ inteldrm_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		break;
 	case DVACT_WAKEUP:
+		i915_drm_thaw_early(dev);
 		i915_drm_thaw(dev);
-		intel_fb_restore_mode(dev);
+		intel_fbdev_restore_mode(dev);
 		rv = config_activate_children(self, act);
 		break;
 	}
@@ -1190,6 +1576,21 @@ struct cfattach inteldrm_ca = {
 struct cfdriver inteldrm_cd = {
 	0, "inteldrm", DV_DULL
 };
+
+/*
+ * We're intel IGD, bus 0 function 0 dev 0 should be the GMCH, so it should
+ * be Intel
+ */
+int
+inteldrm_gmch_match(struct pci_attach_args *pa)
+{
+	if (pa->pa_bus == 0 && pa->pa_device == 0 && pa->pa_function == 0 &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
+		return (1);
+	return (0);
+}
 
 void
 i915_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
@@ -1262,15 +1663,54 @@ nope:
 }
 
 void
-intel_gtt_chipset_flush(struct drm_device *dev)
+intel_gtt_chipset_setup(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct pci_attach_args bpa;
+
+	if (INTEL_INFO(dev)->gen >= 6)
+		return;
+
+	if (pci_find_device(&bpa, inteldrm_gmch_match) == 0) {
+		printf(": can't find GMCH\n");
+		return;
+	}
+
+	/* Set up the IFP for chipset flushing */
+	if (IS_I915G(dev) || IS_I915GM(dev) || IS_I945G(dev) ||
+	    IS_I945GM(dev)) {
+		i915_alloc_ifp(dev_priv, &bpa);
+	} else if (INTEL_INFO(dev)->gen >= 4 || IS_G33(dev)) {
+		i965_alloc_ifp(dev_priv, &bpa);
+	} else {
+		int nsegs;
+		/*
+		 * I8XX has no flush page mechanism, we fake it by writing until
+		 * the cache is empty. allocate a page to scribble on
+		 */
+		dev_priv->ifp.i8xx.kva = NULL;
+		if (bus_dmamem_alloc(dev_priv->dmat, PAGE_SIZE, 0, 0,
+		    &dev_priv->ifp.i8xx.seg, 1, &nsegs, BUS_DMA_WAITOK) == 0) {
+			if (bus_dmamem_map(dev_priv->dmat, &dev_priv->ifp.i8xx.seg,
+			    1, PAGE_SIZE, &dev_priv->ifp.i8xx.kva, 0) != 0) {
+				bus_dmamem_free(dev_priv->dmat,
+				    &dev_priv->ifp.i8xx.seg, nsegs);
+				dev_priv->ifp.i8xx.kva = NULL;
+			}
+		}
+	}
+}
+
+void
+intel_gtt_chipset_flush(void)
+{
+	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
 
 	/*
 	 * Write to this flush page flushes the chipset write cache.
 	 * The write will return when it is done.
 	 */
-	if (IS_I9XX(dev)) {
+	if (IS_I9XX(dev_priv->dev)) {
 	    if (dev_priv->ifp.i9xx.bsh != 0)
 		bus_space_write_4(dev_priv->ifp.i9xx.bst,
 		    dev_priv->ifp.i9xx.bsh, 0, 1);
@@ -1291,519 +1731,27 @@ intel_gtt_chipset_flush(struct drm_device *dev)
 	}
 }
 
-static int i8xx_do_reset(struct drm_device *dev)
+int
+intel_gmch_probe(struct pci_dev *bridge_pdev, struct pci_dev *gpu_pdev,
+		 void *bridge)
 {
-	struct drm_i915_private *dev_priv = dev->dev_private;
-
-	if (IS_I85X(dev))
-		return -ENODEV;
-
-	I915_WRITE(D_STATE, I915_READ(D_STATE) | DSTATE_GFX_RESET_I830);
-	POSTING_READ(D_STATE);
-
-	if (IS_I830(dev) || IS_845G(dev)) {
-		I915_WRITE(DEBUG_RESET_I830,
-			   DEBUG_RESET_DISPLAY |
-			   DEBUG_RESET_RENDER |
-			   DEBUG_RESET_FULL);
-		POSTING_READ(DEBUG_RESET_I830);
-		drm_msleep(1, "8res1");
-
-		I915_WRITE(DEBUG_RESET_I830, 0);
-		POSTING_READ(DEBUG_RESET_I830);
-	}
-
-	drm_msleep(1, "8res2");
-
-	I915_WRITE(D_STATE, I915_READ(D_STATE) & ~DSTATE_GFX_RESET_I830);
-	POSTING_READ(D_STATE);
-
-	return 0;
-}
-
-static int i965_reset_complete(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	u8 gdrst;
-	gdrst = (pci_conf_read(dev_priv->pc, dev_priv->tag, I965_GDRST) >> 24);
-	return (gdrst & GRDOM_RESET_ENABLE) == 0;
-}
-
-static int i965_do_reset(struct drm_device *dev)
-{
-	int ret;
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	pcireg_t reg;
-
-	/*
-	 * Set the domains we want to reset (GRDOM/bits 2 and 3) as
-	 * well as the reset bit (GR/bit 0).  Setting the GR bit
-	 * triggers the reset; when done, the hardware will clear it.
-	 */
-	reg = pci_conf_read(dev_priv->pc, dev_priv->tag, I965_GDRST);
-	reg |= ((GRDOM_RENDER | GRDOM_RESET_ENABLE) << 24);
-	pci_conf_write(dev_priv->pc, dev_priv->tag, I965_GDRST, reg);
-
-	ret =  wait_for(i965_reset_complete(dev), 500);
-	if (ret)
-		return ret;
-
-	/* We can't reset render&media without also resetting display ... */
-	reg = pci_conf_read(dev_priv->pc, dev_priv->tag, I965_GDRST);
-	reg |= ((GRDOM_MEDIA | GRDOM_RESET_ENABLE) << 24);
-	pci_conf_write(dev_priv->pc, dev_priv->tag, I965_GDRST, reg);
-
-	return wait_for(i965_reset_complete(dev), 500);
-}
-
-static int ironlake_do_reset(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	u32 gdrst;
-	int ret;
-
-	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
-	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
-		   gdrst | GRDOM_RENDER | GRDOM_RESET_ENABLE);
-	ret = wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
-	if (ret)
-		return ret;
-
-	/* We can't reset render&media without also resetting display ... */
-	gdrst = I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR);
-	I915_WRITE(MCHBAR_MIRROR_BASE + ILK_GDSR,
-		   gdrst | GRDOM_MEDIA | GRDOM_RESET_ENABLE);
-	return wait_for(I915_READ(MCHBAR_MIRROR_BASE + ILK_GDSR) & 0x1, 500);
-}
-
-static int gen6_do_reset(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	int ret = 0;
-	unsigned long irqflags;
-
-	/* Hold gt_lock across reset to prevent any register access
-	 * with forcewake not set correctly
-	 */
-	spin_lock_irqsave(&dev_priv->gt_lock, irqflags);
-
-	/* Reset the chip */
-
-	/* GEN6_GDRST is not in the gt power well, no need to check
-	 * for fifo space for the write or forcewake the chip for
-	 * the read
-	 */
-	I915_WRITE_NOTRACE(GEN6_GDRST, GEN6_GRDOM_FULL);
-
-	/* Spin waiting for the device to ack the reset request */
-	ret = wait_for((I915_READ_NOTRACE(GEN6_GDRST) & GEN6_GRDOM_FULL) == 0, 500);
-
-	/* If reset with a user forcewake, try to restore, otherwise turn it off */
-	if (dev_priv->forcewake_count)
-		dev_priv->gt.force_wake_get(dev_priv);
-	else
-		dev_priv->gt.force_wake_put(dev_priv);
-
-	/* Restore fifo count */
-	dev_priv->gt_fifo_count = I915_READ_NOTRACE(GT_FIFO_FREE_ENTRIES);
-
-	spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags);
-	return ret;
-}
-
-int intel_gpu_reset(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	int ret = -ENODEV;
-
-	switch (INTEL_INFO(dev)->gen) {
-	case 7:
-	case 6:
-		ret = gen6_do_reset(dev);
-		break;
-	case 5:
-		ret = ironlake_do_reset(dev);
-		break;
-	case 4:
-		ret = i965_do_reset(dev);
-		break;
-	case 2:
-		ret = i8xx_do_reset(dev);
-		break;
-	}
-
-	/* Also reset the gpu hangman. */
-	if (dev_priv->stop_rings) {
-		DRM_DEBUG("Simulated gpu hang, resetting stop_rings\n");
-		dev_priv->stop_rings = 0;
-		if (ret == -ENODEV) {
-			DRM_ERROR("Reset not implemented, but ignoring "
-				  "error for simulated gpu hangs\n");
-			ret = 0;
-		}
-	}
-
-	return ret;
-}
-
-/**
- * i915_reset - reset chip after a hang
- * @dev: drm device to reset
- *
- * Reset the chip.  Useful if a hang is detected. Returns zero on successful
- * reset or otherwise an error code.
- *
- * Procedure is fairly simple:
- *   - reset the chip using the reset reg
- *   - re-init context state
- *   - re-init hardware status page
- *   - re-init ring buffer
- *   - re-init interrupt state
- *   - re-init display
- */
-int i915_reset(struct drm_device *dev)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	int ret;
-
-	if (!i915_try_reset)
-		return 0;
-
-	mutex_lock(&dev->struct_mutex);
-
-	i915_gem_reset(dev);
-
-	ret = -ENODEV;
-	if (get_seconds() - dev_priv->last_gpu_reset < 5)
-		DRM_ERROR("GPU hanging too fast, declaring wedged!\n");
-	else
-		ret = intel_gpu_reset(dev);
-
-	dev_priv->last_gpu_reset = get_seconds();
-	if (ret) {
-		DRM_ERROR("Failed to reset chip.\n");
-		mutex_unlock(&dev->struct_mutex);
-		return ret;
-	}
-
-	/* Ok, now get things going again... */
-
-	/*
-	 * Everything depends on having the GTT running, so we need to start
-	 * there.  Fortunately we don't need to do this unless we reset the
-	 * chip at a PCI level.
-	 *
-	 * Next we need to restore the context, but we don't use those
-	 * yet either...
-	 *
-	 * Ring buffer needs to be re-initialized in the KMS case, or if X
-	 * was running at the time of the reset (i.e. we weren't VT
-	 * switched away).
-	 */
-	if (drm_core_check_feature(dev, DRIVER_MODESET) ||
-			!dev_priv->mm.suspended) {
-		struct intel_ring_buffer *ring;
-		int i;
-
-		dev_priv->mm.suspended = 0;
-
-		i915_gem_init_swizzling(dev);
-
-		for_each_ring(ring, dev_priv, i)
-			ring->init(ring);
-
-		i915_gem_context_init(dev);
-#ifdef notyet
-		i915_gem_init_ppgtt(dev);
-#endif
-
-		/*
-		 * It would make sense to re-init all the other hw state, at
-		 * least the rps/rc6/emon init done within modeset_init_hw. For
-		 * some unknown reason, this blows up my ilk, so don't.
-		 */
-
-		mutex_unlock(&dev->struct_mutex);
-
-		drm_irq_uninstall(dev);
-		drm_irq_install(dev);
-	} else {
-		mutex_unlock(&dev->struct_mutex);
-	}
-
-	return 0;
-}
-
-static int
-intel_pch_match(struct pci_attach_args *pa)
-{
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
-	    PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA)
-		return (1);
-	return (0);
+	return 1;
 }
 
 void
-intel_detect_pch(struct drm_device *dev)
+intel_gtt_get(size_t *gtt_total, size_t *stolen_size,
+    phys_addr_t *mappable_base, unsigned long *mappable_end)
 {
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct pci_attach_args	pa;
-	unsigned short id;
-	if (pci_find_device(&pa, intel_pch_match) == 0) {
-		DRM_DEBUG_KMS("No Intel PCI-ISA bridge found\n");
-	}
-	id = PCI_PRODUCT(pa.pa_id) & INTEL_PCH_DEVICE_ID_MASK;
-	dev_priv->pch_id = id;
-
-	switch (id) {
-	case INTEL_PCH_IBX_DEVICE_ID_TYPE:
-		dev_priv->pch_type = PCH_IBX;
-		dev_priv->num_pch_pll = 2;
-		DRM_DEBUG_KMS("Found Ibex Peak PCH\n");
-		break;
-	case INTEL_PCH_CPT_DEVICE_ID_TYPE:
-		dev_priv->pch_type = PCH_CPT;
-		dev_priv->num_pch_pll = 2;
-		DRM_DEBUG_KMS("Found CougarPoint PCH\n");
-		break;
-	case INTEL_PCH_PPT_DEVICE_ID_TYPE:
-		/* PantherPoint is CPT compatible */
-		dev_priv->pch_type = PCH_CPT;
-		dev_priv->num_pch_pll = 2;
-		DRM_DEBUG_KMS("Found PatherPoint PCH\n");
-		break;
-	case INTEL_PCH_LPT_DEVICE_ID_TYPE:
-		dev_priv->pch_type = PCH_LPT;
-		dev_priv->num_pch_pll = 0;
-		DRM_DEBUG_KMS("Found LynxPoint PCH\n");
-		break;
-	case INTEL_PCH_LPT_LP_DEVICE_ID_TYPE:
-		dev_priv->pch_type = PCH_LPT;
-		dev_priv->num_pch_pll = 0;
-		DRM_DEBUG_KMS("Found LynxPoint LP PCH\n");
-		break;
-	default:
-		DRM_DEBUG_KMS("No PCH detected\n");
-	}
+	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
+	struct agp_info *ai = &dev_priv->dev->agp->info;
+	
+	*gtt_total = ai->ai_aperture_size;
+	*stolen_size = 0;
+	*mappable_base = ai->ai_aperture_base;
+	*mappable_end = ai->ai_aperture_size;
 }
 
-/* We give fast paths for the really cool registers */
-#define NEEDS_FORCE_WAKE(dev, reg) \
-	((HAS_FORCE_WAKE(dev)) && \
-	 ((reg) < 0x40000) &&            \
-	 ((reg) != FORCEWAKE))
-
-static bool IS_DISPLAYREG(u32 reg)
+void
+intel_gmch_remove(void)
 {
-	/*
-	 * This should make it easier to transition modules over to the
-	 * new register block scheme, since we can do it incrementally.
-	 */
-	if (reg >= VLV_DISPLAY_BASE)
-		return false;
-
-	if (reg >= RENDER_RING_BASE &&
-	    reg < RENDER_RING_BASE + 0xff)
-		return false;
-	if (reg >= GEN6_BSD_RING_BASE &&
-	    reg < GEN6_BSD_RING_BASE + 0xff)
-		return false;
-	if (reg >= BLT_RING_BASE &&
-	    reg < BLT_RING_BASE + 0xff)
-		return false;
-
-	if (reg == PGTBL_ER)
-		return false;
-
-	if (reg >= IPEIR_I965 &&
-	    reg < HWSTAM)
-		return false;
-
-	if (reg == MI_MODE)
-		return false;
-
-	if (reg == GFX_MODE_GEN7)
-		return false;
-
-	if (reg == RENDER_HWS_PGA_GEN7 ||
-	    reg == BSD_HWS_PGA_GEN7 ||
-	    reg == BLT_HWS_PGA_GEN7)
-		return false;
-
-	if (reg == GEN6_BSD_SLEEP_PSMI_CONTROL ||
-	    reg == GEN6_BSD_RNCID)
-		return false;
-
-	if (reg == GEN6_BLITTER_ECOSKPD)
-		return false;
-
-	if (reg >= 0x4000c &&
-	    reg <= 0x4002c)
-		return false;
-
-	if (reg >= 0x4f000 &&
-	    reg <= 0x4f08f)
-		return false;
-
-	if (reg >= 0x4f100 &&
-	    reg <= 0x4f11f)
-		return false;
-
-	if (reg >= VLV_MASTER_IER &&
-	    reg <= GEN6_PMIER)
-		return false;
-
-	if (reg >= FENCE_REG_SANDYBRIDGE_0 &&
-	    reg < (FENCE_REG_SANDYBRIDGE_0 + (16*8)))
-		return false;
-
-	if (reg >= VLV_IIR_RW &&
-	    reg <= VLV_ISR)
-		return false;
-
-	if (reg == FORCEWAKE_VLV ||
-	    reg == FORCEWAKE_ACK_VLV)
-		return false;
-
-	if (reg == GEN6_GDRST)
-		return false;
-
-	switch (reg) {
-	case _3D_CHICKEN3:
-	case IVB_CHICKEN3:
-	case GEN7_COMMON_SLICE_CHICKEN1:
-	case GEN7_L3CNTLREG1:
-	case GEN7_L3_CHICKEN_MODE_REGISTER:
-	case GEN7_ROW_CHICKEN2:
-	case GEN7_L3SQCREG4:
-	case GEN7_SQ_CHICKEN_MBCUNIT_CONFIG:
-	case GEN7_HALF_SLICE_CHICKEN1:
-	case GEN6_MBCTL:
-	case GEN6_UCGCTL2:
-		return false;
-	default:
-		break;
-	}
-
-	return true;
-}
-
-static void
-ilk_dummy_write(struct drm_i915_private *dev_priv)
-{
-	/* WaIssueDummyWriteToWakeupFromRC6: Issue a dummy write to wake up the
-	 * chip from rc6 before touching it for real. MI_MODE is masked, hence
-	 * harmless to write 0 into. */
-	I915_WRITE_NOTRACE(MI_MODE, 0);
-}
-
-#define __i915_read(x, y) \
-u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
-	unsigned long irqflags; \
-	u##x val = 0; \
-	spin_lock_irqsave(&dev_priv->gt_lock, irqflags); \
-	if (IS_GEN5(dev_priv->dev)) \
-		ilk_dummy_write(dev_priv); \
-	if (NEEDS_FORCE_WAKE((dev_priv->dev), (reg))) { \
-		if (dev_priv->forcewake_count == 0) \
-			dev_priv->gt.force_wake_get(dev_priv); \
-		val = read##x(dev_priv, reg); \
-		if (dev_priv->forcewake_count == 0) \
-			dev_priv->gt.force_wake_put(dev_priv); \
-	} else if (IS_VALLEYVIEW(dev_priv->dev) && IS_DISPLAYREG(reg)) { \
-		val = read##x(dev_priv, reg + 0x180000);		\
-	} else { \
-		val = read##x(dev_priv, reg); \
-	} \
-	spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags); \
-	trace_i915_reg_rw(false, reg, val, sizeof(val)); \
-	return val; \
-}
-
-__i915_read(8, b)
-__i915_read(16, w)
-__i915_read(32, l)
-__i915_read(64, q)
-#undef __i915_read
-
-#define __i915_write(x, y) \
-void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
-	unsigned long irqflags; \
-	u32 __fifo_ret = 0; \
-	trace_i915_reg_rw(true, reg, val, sizeof(val)); \
-	spin_lock_irqsave(&dev_priv->gt_lock, irqflags); \
-	if (NEEDS_FORCE_WAKE((dev_priv->dev), (reg))) { \
-		__fifo_ret = __gen6_gt_wait_for_fifo(dev_priv); \
-	} \
-	if (IS_GEN5(dev_priv->dev)) \
-		ilk_dummy_write(dev_priv); \
-	if (IS_HASWELL(dev_priv->dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
-		DRM_ERROR("Unknown unclaimed register before writing to %x\n", reg); \
-		I915_WRITE_NOTRACE(GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED); \
-	} \
-	if (IS_VALLEYVIEW(dev_priv->dev) && IS_DISPLAYREG(reg)) { \
-		write##x(dev_priv, reg + 0x180000, val);		\
-	} else {							\
-		write##x(dev_priv, reg, val);			\
-	}								\
-	if (unlikely(__fifo_ret)) { \
-		gen6_gt_check_fifodbg(dev_priv); \
-	} \
-	if (IS_HASWELL(dev_priv->dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
-		DRM_ERROR("Unclaimed write to %x\n", reg); \
-		write32(dev_priv, GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED);	\
-	} \
-	spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags); \
-}
-__i915_write(8, b)
-__i915_write(16, w)
-__i915_write(32, l)
-__i915_write(64, q)
-#undef __i915_write
-
-static const struct register_whitelist {
-	uint64_t offset;
-	uint32_t size;
-	uint32_t gen_bitmask; /* support gens, 0x10 for 4, 0x30 for 4 and 5, etc. */
-} whitelist[] = {
-	{ RING_TIMESTAMP(RENDER_RING_BASE), 8, 0xF0 },
-};
-
-int i915_reg_read_ioctl(struct drm_device *dev,
-			void *data, struct drm_file *file)
-{
-	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct drm_i915_reg_read *reg = data;
-	struct register_whitelist const *entry = whitelist;
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(whitelist); i++, entry++) {
-		if (entry->offset == reg->offset &&
-		    (1 << INTEL_INFO(dev)->gen & entry->gen_bitmask))
-			break;
-	}
-
-	if (i == ARRAY_SIZE(whitelist))
-		return -EINVAL;
-
-	switch (entry->size) {
-	case 8:
-		reg->val = I915_READ64(reg->offset);
-		break;
-	case 4:
-		reg->val = I915_READ(reg->offset);
-		break;
-	case 2:
-		reg->val = I915_READ16(reg->offset);
-		break;
-	case 1:
-		reg->val = I915_READ8(reg->offset);
-		break;
-	default:
-		WARN_ON(1);
-		return -EINVAL;
-	}
-
-	return 0;
 }

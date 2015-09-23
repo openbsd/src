@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc_helper.h,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_crtc_helper.h,v 1.2 2015/09/23 23:12:11 kettenis Exp $	*/
 /*
  * Copyright © 2006 Keith Packard
  * Copyright © 2007-2008 Dave Airlie
@@ -115,8 +115,8 @@ struct drm_encoder_helper_funcs {
  */
 struct drm_connector_helper_funcs {
 	int (*get_modes)(struct drm_connector *connector);
-	int (*mode_valid)(struct drm_connector *connector,
-			  struct drm_display_mode *mode);
+	enum drm_mode_status (*mode_valid)(struct drm_connector *connector,
+					   struct drm_display_mode *mode);
 	struct drm_encoder *(*best_encoder)(struct drm_connector *connector);
 };
 
@@ -158,7 +158,7 @@ static inline void drm_connector_helper_add(struct drm_connector *connector,
 extern int drm_helper_resume_force_mode(struct drm_device *dev);
 extern void drm_kms_helper_poll_init(struct drm_device *dev);
 extern void drm_kms_helper_poll_fini(struct drm_device *dev);
-extern void drm_helper_hpd_irq_event(struct drm_device *dev);
+extern bool drm_helper_hpd_irq_event(struct drm_device *dev);
 extern void drm_kms_helper_hotplug_event(struct drm_device *dev);
 
 extern void drm_kms_helper_poll_disable(struct drm_device *dev);

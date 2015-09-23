@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_legacy_encoders.c,v 1.3 2014/04/07 06:43:11 jsg Exp $	*/
+/*	$OpenBSD: radeon_legacy_encoders.c,v 1.4 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1500,7 +1500,7 @@ static bool radeon_legacy_ext_dac_detect(struct drm_encoder *encoder,
 		if (!drm_can_sleep())
 			mdelay(1);
 		else
-			drm_msleep(1, "extdac");
+			drm_msleep(1);
 	}
 
 	/* restore the regs we used */

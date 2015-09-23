@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.h,v 1.3 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.h,v 1.4 2015/09/23 23:12:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -47,6 +47,19 @@ struct drm_fb_helper_surface_size {
 	u32 surface_depth;
 };
 
+/**
+ * struct drm_fb_helper_funcs - driver callbacks for the fbdev emulation library
+ * @gamma_set: Set the given gamma lut register on the given crtc.
+ * @gamma_get: Read the given gamma lut register on the given crtc, used to
+ *             save the current lut when force-restoring the fbdev for e.g.
+ *             kdbg.
+ * @fb_probe: Driver callback to allocate and initialize the fbdev info
+ *            structure. Futhermore it also needs to allocate the drm
+ *            framebuffer used to back the fbdev.
+ * @initial_config: Setup an initial fbdev display configuration
+ *
+ * Driver callbacks used by the fbdev emulation helper library.
+ */
 struct drm_fb_helper_funcs {
 	void (*gamma_set)(struct drm_crtc *crtc, u16 red, u16 green,
 			  u16 blue, int regno);
@@ -55,6 +68,10 @@ struct drm_fb_helper_funcs {
 
 	int (*fb_probe)(struct drm_fb_helper *helper,
 			struct drm_fb_helper_surface_size *sizes);
+	bool (*initial_config)(struct drm_fb_helper *fb_helper,
+			       struct drm_fb_helper_crtc **crtcs,
+			       struct drm_display_mode **modes,
+			       bool *enabled, int width, int height);
 };
 
 struct drm_fb_helper_connector {
@@ -64,9 +81,7 @@ struct drm_fb_helper_connector {
 
 struct drm_fb_helper {
 	struct drm_framebuffer *fb;
-	struct drm_framebuffer *saved_fb;
 	struct drm_device *dev;
-	struct drm_display_mode *mode;
 	int crtc_count;
 	struct drm_fb_helper_crtc *crtc_info;
 	int connector_count;
@@ -84,9 +99,6 @@ struct drm_fb_helper {
 struct fb_var_screeninfo;
 struct fb_cmap;
 
-int drm_fb_helper_single_fb_probe(struct drm_fb_helper *helper,
-				  int preferred_bpp);
-
 int drm_fb_helper_init(struct drm_device *dev,
 		       struct drm_fb_helper *helper, int crtc_count,
 		       int max_conn);
@@ -96,12 +108,6 @@ int drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 			      struct fb_info *info);
 int drm_fb_helper_set_par(struct fb_info *info);
 int drm_fb_helper_check_var(struct fb_var_screeninfo *var,
-			    struct fb_info *info);
-int drm_fb_helper_setcolreg(unsigned regno,
-			    unsigned red,
-			    unsigned green,
-			    unsigned blue,
-			    unsigned transp,
 			    struct fb_info *info);
 
 bool drm_fb_helper_restore_fbdev_mode(struct drm_fb_helper *fb_helper);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.64 2015/04/18 14:47:34 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.65 2015/09/23 23:12:11 kettenis Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -450,41 +450,41 @@ int drm_control(struct drm_device *dev, void *data,
 }
 
 /**
- * drm_calc_timestamping_constants - Calculate and
- * store various constants which are later needed by
- * vblank and swap-completion timestamping, e.g, by
- * drm_calc_vbltimestamp_from_scanoutpos().
- * They are derived from crtc's true scanout timing,
- * so they take things like panel scaling or other
- * adjustments into account.
+ * drm_calc_timestamping_constants - Calculate vblank timestamp constants
  *
  * @crtc drm_crtc whose timestamp constants should be updated.
+ * @mode display mode containing the scanout timings
  *
+ * Calculate and store various constants which are later
+ * needed by vblank and swap-completion timestamping, e.g,
+ * by drm_calc_vbltimestamp_from_scanoutpos(). They are
+ * derived from crtc's true scanout timing, so they take
+ * things like panel scaling or other adjustments into account.
  */
-void drm_calc_timestamping_constants(struct drm_crtc *crtc)
+void drm_calc_timestamping_constants(struct drm_crtc *crtc,
+				     const struct drm_display_mode *mode)
 {
-	s64 linedur_ns = 0, pixeldur_ns = 0, framedur_ns = 0;
-	u64 dotclock;
-
-	/* Dot clock in Hz: */
-	dotclock = (u64) crtc->hwmode.clock * 1000;
-
-	/* Fields of interlaced scanout modes are only halve a frame duration.
-	 * Double the dotclock to get halve the frame-/line-/pixelduration.
-	 */
-	if (crtc->hwmode.flags & DRM_MODE_FLAG_INTERLACE)
-		dotclock *= 2;
+	int linedur_ns = 0, pixeldur_ns = 0, framedur_ns = 0;
+	int dotclock = mode->crtc_clock;
 
 	/* Valid dotclock? */
 	if (dotclock > 0) {
-		/* Convert scanline length in pixels and video dot clock to
-		 * line duration, frame duration and pixel duration in
-		 * nanoseconds:
+		int frame_size = mode->crtc_htotal * mode->crtc_vtotal;
+
+		/*
+		 * Convert scanline length in pixels and video
+		 * dot clock to line duration, frame duration
+		 * and pixel duration in nanoseconds:
 		 */
-		pixeldur_ns = (s64) div64_u64(1000000000, dotclock);
-		linedur_ns  = (s64) div64_u64(((u64) crtc->hwmode.crtc_htotal *
-					      1000000000), dotclock);
-		framedur_ns = (s64) crtc->hwmode.crtc_vtotal * linedur_ns;
+		pixeldur_ns = 1000000 / dotclock;
+		linedur_ns  = div_u64((u64) mode->crtc_htotal * 1000000, dotclock);
+		framedur_ns = div_u64((u64) frame_size * 1000000, dotclock);
+
+		/*
+		 * Fields of interlaced scanout modes are only half a frame duration.
+		 */
+		if (mode->flags & DRM_MODE_FLAG_INTERLACE)
+			framedur_ns /= 2;
 	} else
 		DRM_ERROR("crtc %d: Can't calculate constants, dotclock = 0!\n",
 			  crtc->base.id);
@@ -493,12 +493,12 @@ void drm_calc_timestamping_constants(struct drm_crtc *crtc)
 	crtc->linedur_ns  = linedur_ns;
 	crtc->framedur_ns = framedur_ns;
 
-	DPRINTF("crtc %d: hwmode: htotal %d, vtotal %d, vdisplay %d\n",
-		  crtc->base.id, crtc->hwmode.crtc_htotal,
-		  crtc->hwmode.crtc_vtotal, crtc->hwmode.crtc_vdisplay);
-	DPRINTF("crtc %d: clock %d kHz framedur %d linedur %d, pixeldur %d\n",
-		  crtc->base.id, (int) dotclock/1000, (int) framedur_ns,
-		  (int) linedur_ns, (int) pixeldur_ns);
+	DRM_DEBUG("crtc %d: hwmode: htotal %d, vtotal %d, vdisplay %d\n",
+		  crtc->base.id, mode->crtc_htotal,
+		  mode->crtc_vtotal, mode->crtc_vdisplay);
+	DRM_DEBUG("crtc %d: clock %d kHz framedur %d linedur %d, pixeldur %d\n",
+		  crtc->base.id, dotclock, framedur_ns,
+		  linedur_ns, pixeldur_ns);
 }
 EXPORT_SYMBOL(drm_calc_timestamping_constants);
 
@@ -550,13 +550,13 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
 					  int *max_error,
 					  struct timeval *vblank_time,
 					  unsigned flags,
-					  struct drm_crtc *refcrtc)
+					  const struct drm_crtc *refcrtc,
+					  const struct drm_display_mode *mode)
 {
 	struct timeval stime, etime;
 #ifdef notyet
 	struct timeval mono_time_offset;
 #endif
-	struct drm_display_mode *mode;
 	int vbl_status, vtotal, vdisplay;
 	int vpos, hpos, i;
 	s64 framedur_ns, linedur_ns, pixeldur_ns, delta_ns, duration_ns;
@@ -609,7 +609,8 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
 		getmicrouptime(&stime);
 
 		/* Get vertical and horizontal scanout pos. vpos, hpos. */
-		vbl_status = dev->driver->get_scanout_position(dev, crtc, &vpos, &hpos);
+		vbl_status = dev->driver->get_scanout_position(dev, crtc, flags, &vpos,
+							       &hpos, &stime, &etime);
 
 		/* Get system timestamp after query. */
 		getmicrouptime(&etime);

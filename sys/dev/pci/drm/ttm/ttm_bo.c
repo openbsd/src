@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.16 2015/07/11 04:00:46 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.17 2015/09/23 23:12:12 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -1575,9 +1575,7 @@ int ttm_bo_device_init(struct ttm_bo_device *bdev,
 		goto out_no_sys;
 
 	RB_INIT(&bdev->addr_space_rb);
-	ret = drm_mm_init(&bdev->addr_space_mm, file_page_offset, 0x10000000);
-	if (unlikely(ret != 0))
-		goto out_no_addr_mm;
+	drm_mm_init(&bdev->addr_space_mm, file_page_offset, 0x10000000);
 
 	INIT_DELAYED_WORK(&bdev->wq, ttm_bo_delayed_workqueue);
 	INIT_LIST_HEAD(&bdev->ddestroy);
@@ -1591,8 +1589,6 @@ int ttm_bo_device_init(struct ttm_bo_device *bdev,
 	mutex_unlock(&glob->device_list_mutex);
 
 	return 0;
-out_no_addr_mm:
-	ttm_bo_clean_mm(bdev, 0);
 out_no_sys:
 	return ret;
 }

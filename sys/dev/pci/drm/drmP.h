@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.196 2015/05/30 18:09:26 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.197 2015/09/23 23:12:11 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -37,6 +37,7 @@
 
 #if defined(_KERNEL) || defined(__KERNEL__)
 
+//#define DRMDEBUG
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -93,7 +94,7 @@
 
 extern int ticks;
 
-#define drm_msleep(x, msg)	mdelay(x)
+#define drm_msleep(x)		mdelay(x)
 
 extern struct cfdriver drm_cd;
 
@@ -190,8 +191,10 @@ drm_can_sleep(void)
 
 #ifdef DRMDEBUG
 #define DRM_INFO(fmt, arg...)  printf("drm: " fmt, ## arg)
+#define DRM_INFO_ONCE(fmt, arg...)  printf("drm: " fmt, ## arg)
 #else
 #define DRM_INFO(fmt, arg...) do { } while(/* CONSTCOND */ 0)
+#define DRM_INFO_ONCE(fmt, arg...) do { } while(/* CONSTCOND */ 0)
 #endif
 
 #ifdef DRMDEBUG
@@ -269,6 +272,7 @@ typedef int drm_ioctl_compat_t(struct file *filp, unsigned int cmd,
 #define DRM_ROOT_ONLY	0x4
 #define DRM_CONTROL_ALLOW 0x8
 #define DRM_UNLOCKED	0x10
+#define DRM_RENDER_ALLOW 0x20
 
 struct drm_ioctl_desc {
 	unsigned int cmd;
@@ -338,6 +342,8 @@ struct drm_file {
 	struct selinfo				 rsel;
 	SPLAY_ENTRY(drm_file)			 link;
 	int					 authenticated;
+	/* true when the client has asked us to expose stereo 3D mode flags */
+	int					 stereo_allowed;
 	unsigned long				 ioctl_count;
 	dev_t					 kdev;
 	drm_magic_t				 magic;
@@ -347,6 +353,7 @@ struct drm_file {
 	int					 minor;
 	u_int					 obj_id; /*next gem id*/
 	struct list_head			 fbs;
+	struct rwlock				 fbs_lock;
 	void					*driver_priv;
 };
 
@@ -495,11 +502,13 @@ struct drm_driver_info {
 	int	(*firstopen)(struct drm_device *);
 	int	(*open)(struct drm_device *, struct drm_file *);
 	void	(*close)(struct drm_device *, struct drm_file *);
+	void	(*preclose)(struct drm_device *, struct drm_file *);
+	void	(*postclose)(struct drm_device *, struct drm_file *);
 	void	(*lastclose)(struct drm_device *);
 	struct uvm_object *(*mmap)(struct drm_device *, voff_t, vsize_t);
 	int	(*dma_ioctl)(struct drm_device *, struct drm_dma *,
 		    struct drm_file *);
-	int	(*irq_handler)(void *);
+	int	(*irq_handler)(int, void *);
 	void	(*irq_preinstall) (struct drm_device *);
 	int	(*irq_install)(struct drm_device *);
 	int	(*irq_postinstall) (struct drm_device *);
@@ -508,7 +517,8 @@ struct drm_driver_info {
 	u_int32_t (*get_vblank_counter)(struct drm_device *, int);
 	int	(*enable_vblank)(struct drm_device *, int);
 	void	(*disable_vblank)(struct drm_device *, int);
-	int	(*get_scanout_position)(struct drm_device *, int, int *, int *);
+	int	(*get_scanout_position)(struct drm_device *, int,
+		    unsigned int, int *, int *, ktime_t *, ktime_t *);
 	int	(*get_vblank_timestamp)(struct drm_device *, int, int *,
 		    struct timeval *, unsigned);;
 
@@ -544,7 +554,7 @@ struct drm_driver_info {
 	const char *desc;		/* Longer driver name		   */
 	const char *date;		/* Date of last major changes.	   */
 
-	struct drm_ioctl_desc *ioctls;
+	const struct drm_ioctl_desc *ioctls;
 	int num_ioctls;
 
 #define DRIVER_AGP		0x1
@@ -679,6 +689,7 @@ struct drm_attach_args {
 	u_int16_t			 pci_subvendor;
 	u_int16_t			 pci_subdevice;
 	pci_chipset_tag_t		 pc;
+	pcitag_t			 tag;
 	pcitag_t			*bridgetag;
 	int				 console;
 };
@@ -744,9 +755,14 @@ void	drm_vblank_pre_modeset(struct drm_device *, int);
 void	drm_vblank_post_modeset(struct drm_device *, int);
 int	drm_modeset_ctl(struct drm_device *, void *, struct drm_file *);
 bool	drm_handle_vblank(struct drm_device *, int);
-void	drm_calc_timestamping_constants(struct drm_crtc *);
-int	drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *,
-	    int, int *, struct timeval *, unsigned, struct drm_crtc *);
+void	drm_calc_timestamping_constants(struct drm_crtc *,
+	    const struct drm_display_mode *);
+extern int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev,
+						 int crtc, int *max_error,
+						 struct timeval *vblank_time,
+						 unsigned flags,
+						 const struct drm_crtc *refcrtc,
+						 const struct drm_display_mode *mode);
 bool	drm_mode_parse_command_line_for_connector(const char *,
 	    struct drm_connector *, struct drm_cmdline_mode *);
 struct drm_display_mode *
@@ -825,6 +841,7 @@ int drm_gem_create_mmap_offset(struct drm_gem_object *obj);
 struct drm_gem_object *drm_gem_object_lookup(struct drm_device *dev,
 					     struct drm_file *filp,
 					     u32 handle);
+struct drm_gem_object *drm_gem_object_find(struct drm_file *, u32);
 int	drm_gem_close_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_gem_flink_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_gem_open_ioctl(struct drm_device *, void *, struct drm_file *);
@@ -850,6 +867,10 @@ drm_gem_object_unreference_unlocked(struct drm_gem_object *obj)
 	drm_unref(&obj->uobj);
 	mutex_unlock(&dev->struct_mutex);
 }
+
+int drm_gem_dumb_destroy(struct drm_file *file,
+			 struct drm_device *dev,
+			 uint32_t handle);
 
 static __inline__ int drm_core_check_feature(struct drm_device *dev,
 					     int feature)

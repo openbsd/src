@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo.h,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: dvo.h,v 1.2 2015/09/23 23:12:11 kettenis Exp $	*/
 /*
  * Copyright © 2006 Eric Anholt
  *
@@ -78,17 +78,6 @@ struct intel_dvo_dev_ops {
 	 */
 	int (*mode_valid)(struct intel_dvo_device *dvo,
 			  struct drm_display_mode *mode);
-
-	/*
-	 * Callback to adjust the mode to be set in the CRTC.
-	 *
-	 * This allows an output to adjust the clock or even the entire set of
-	 * timings, which is used for panels with fixed timings or for
-	 * buses with clock limitations.
-	 */
-	bool (*mode_fixup)(struct intel_dvo_device *dvo,
-			   const struct drm_display_mode *mode,
-			   struct drm_display_mode *adjusted_mode);
 
 	/*
 	 * Callback for preparing mode changes on an output

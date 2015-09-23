@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_modes.c,v 1.6 2015/02/12 06:52:11 jsg Exp $	*/
+/*	$OpenBSD: intel_modes.c,v 1.7 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007, 2010 Intel Corporation
@@ -27,10 +27,9 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/drm.h>
 #include <dev/pci/drm/i915_drm.h>
-#include "i915_drv.h"
 #include "intel_drv.h"
+#include "i915_drv.h"
 #include <dev/pci/drm/drm_edid.h>
-#include <dev/pci/drm/drm_crtc.h>
 
 /**
  * intel_connector_update_modes - update connector from edid
@@ -57,7 +56,7 @@ int intel_connector_update_modes(struct drm_connector *connector,
  * Fetch the EDID information from @connector using the DDC bus.
  */
 int intel_ddc_get_modes(struct drm_connector *connector,
-			struct i2c_controller *adapter)
+			struct i2c_adapter *adapter)
 {
 	struct edid *edid;
 	int ret;
@@ -101,8 +100,9 @@ intel_attach_force_audio_property(struct drm_connector *connector)
 }
 
 static const struct drm_prop_enum_list broadcast_rgb_names[] = {
-	{ 0, "Full" },
-	{ 1, "Limited 16:235" },
+	{ INTEL_BROADCAST_RGB_AUTO, "Automatic" },
+	{ INTEL_BROADCAST_RGB_FULL, "Full" },
+	{ INTEL_BROADCAST_RGB_LIMITED, "Limited 16:235" },
 };
 
 void

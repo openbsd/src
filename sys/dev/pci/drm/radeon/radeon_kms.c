@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.39 2015/04/18 11:05:32 jsg Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.40 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -230,7 +230,6 @@ static struct drm_driver_info kms_driver = {
 	.irq_preinstall = radeon_driver_irq_preinstall_kms,
 	.irq_postinstall = radeon_driver_irq_postinstall_kms,
 	.irq_uninstall = radeon_driver_irq_uninstall_kms,
-	.irq_handler = radeon_driver_irq_handler_kms,
 	.ioctls = radeon_ioctls_kms,
 	.gem_init_object = radeon_gem_object_init,
 	.gem_free_object = radeon_gem_object_free,
@@ -419,7 +418,9 @@ radeondrm_doswitch(void *v)
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
+	drm_modeset_lock_all(rdev->ddev);
 	drm_fb_helper_restore();
+	drm_modeset_unlock_all(rdev->ddev);
 
 	if (rdev->switchcb)
 		(rdev->switchcb)(rdev->switchcbarg, 0, 0);
@@ -717,7 +718,9 @@ radeondrm_attachhook(void *xsc)
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
+	drm_modeset_lock_all(rdev->ddev);
 	drm_fb_helper_restore();
+	drm_modeset_unlock_all(rdev->ddev);
 
 #ifndef __sparc64__
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
@@ -1092,7 +1095,9 @@ void radeon_driver_lastclose_kms(struct drm_device *dev)
 
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
+	drm_modeset_lock_all(dev);
 	drm_fb_helper_restore();
+	drm_modeset_unlock_all(dev);
 #ifdef notyet
 	vga_switcheroo_process_delayed_switch();
 #endif
@@ -1316,7 +1321,7 @@ int radeon_get_vblank_timestamp_kms(struct drm_device *dev, int crtc,
 	/* Helper routine in DRM core does all the work: */
 	return drm_calc_vbltimestamp_from_scanoutpos(dev, crtc, max_error,
 						     vblank_time, flags,
-						     drmcrtc);
+						     drmcrtc, &drmcrtc->hwmode);
 }
 
 /*

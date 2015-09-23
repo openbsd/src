@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.19 2015/07/15 22:39:20 jsg Exp $ */
+/* $OpenBSD: drm.h,v 1.20 2015/09/23 23:12:11 kettenis Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -618,6 +618,19 @@ struct drm_gem_open {
 	uint64_t size;
 };
 
+#define DRM_CAP_DUMB_BUFFER		0x1
+#define DRM_CAP_VBLANK_HIGH_CRTC	0x2
+#define DRM_CAP_DUMB_PREFERRED_DEPTH	0x3
+#define DRM_CAP_DUMB_PREFER_SHADOW	0x4
+#define DRM_CAP_PRIME			0x5
+#define  DRM_PRIME_CAP_IMPORT		0x1
+#define  DRM_PRIME_CAP_EXPORT		0x2
+#define DRM_CAP_TIMESTAMP_MONOTONIC	0x6
+#define DRM_CAP_ASYNC_PAGE_FLIP		0x7
+#define DRM_CAP_CURSOR_WIDTH		0x8
+#define DRM_CAP_CURSOR_HEIGHT		0x9
+
+/* DRM_IOCTL_GET_CAP ioctl argument type */
 struct drm_get_cap {
 	uint64_t capability;
 	uint64_t value;
@@ -692,17 +705,6 @@ struct drm_event_vblank {
 	u_int32_t		 sequence;
 	u_int32_t		 reserved;
 };
-
-#define DRM_CAP_DUMB_BUFFER 0x1
-#define DRM_CAP_VBLANK_HIGH_CRTC 0x2
-#define DRM_CAP_DUMB_PREFERRED_DEPTH 0x3
-#define DRM_CAP_DUMB_PREFER_SHADOW 0x4
-#define DRM_CAP_PRIME 0x5
-#define DRM_CAP_TIMESTAMP_MONOTONIC 0x6
-#define DRM_CAP_ASYNC_PAGE_FLIP 0x7
-
-#define DRM_PRIME_CAP_IMPORT 0x1
-#define DRM_PRIME_CAP_EXPORT 0x2
 
 #include "drm_mode.h"
 

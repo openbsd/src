@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_i2c.c,v 1.5 2015/04/03 13:10:59 jsg Exp $	*/
+/*	$OpenBSD: intel_i2c.c,v 1.6 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -14,9 +14,38 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+/*
+ * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
+ * Copyright © 2006-2008,2010 Intel Corporation
+ *   Jesse Barnes <jesse.barnes@intel.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *	Eric Anholt <eric@anholt.net>
+ *	Chris Wilson <chris@chris-wilson.co.uk>
+ */
 
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/drm.h>
+#include "intel_drv.h"
 #include "i915_drv.h"
 #include "i915_reg.h"
 
@@ -38,12 +67,75 @@ int	intel_gpio_initiate_xfer(void *, i2c_addr_t, int);
 int	intel_gpio_read_byte(void *, u_int8_t *, int);
 int	intel_gpio_write_byte(void *, u_int8_t, int);
 
+enum disp_clk {
+	CDCLK,
+	CZCLK
+};
+
 int	gmbus_ports[] = { GPIOB, GPIOA, GPIOC, GPIOD, GPIOE, GPIOF };
 
 static inline struct intel_gmbus *
 to_intel_gmbus(struct i2c_controller *i2c)
 {
 	return container_of(i2c, struct intel_gmbus, controller);
+}
+
+static int get_disp_clk_div(struct drm_i915_private *dev_priv,
+			    enum disp_clk clk)
+{
+	u32 reg_val;
+	int clk_ratio;
+
+	reg_val = I915_READ(CZCLK_CDCLK_FREQ_RATIO);
+
+	if (clk == CDCLK)
+		clk_ratio =
+			((reg_val & CDCLK_FREQ_MASK) >> CDCLK_FREQ_SHIFT) + 1;
+	else
+		clk_ratio = (reg_val & CZCLK_FREQ_MASK) + 1;
+
+	return clk_ratio;
+}
+
+static void gmbus_set_freq(struct drm_i915_private *dev_priv)
+{
+	int vco, gmbus_freq = 0, cdclk_div;
+
+	BUG_ON(!IS_VALLEYVIEW(dev_priv->dev));
+
+	vco = valleyview_get_vco(dev_priv);
+
+	/* Get the CDCLK divide ratio */
+	cdclk_div = get_disp_clk_div(dev_priv, CDCLK);
+
+	/*
+	 * Program the gmbus_freq based on the cdclk frequency.
+	 * BSpec erroneously claims we should aim for 4MHz, but
+	 * in fact 1MHz is the correct frequency.
+	 */
+	if (cdclk_div)
+		gmbus_freq = (vco << 1) / cdclk_div;
+
+	if (WARN_ON(gmbus_freq == 0))
+		return;
+
+	I915_WRITE(GMBUSFREQ_VLV, gmbus_freq);
+}
+
+void
+intel_i2c_reset(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+
+	/*
+	 * In BIOS-less system, program the correct gmbus frequency
+	 * before reading edid.
+	 */
+	if (IS_VALLEYVIEW(dev))
+		gmbus_set_freq(dev_priv);
+
+	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS0, 0);
+	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS4, 0);
 }
 
 int

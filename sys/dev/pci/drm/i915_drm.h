@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.23 2015/07/15 22:39:20 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.24 2015/09/23 23:12:11 kettenis Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -621,6 +621,9 @@ struct drm_i915_gem_exec_object2 {
 	u_int64_t offset;
 
 #define EXEC_OBJECT_NEEDS_FENCE (1<<0)
+#define EXEC_OBJECT_NEEDS_GTT	(1<<1)
+#define EXEC_OBJECT_WRITE	(1<<2)
+#define __EXEC_OBJECT_UNKNOWN_FLAGS -(EXEC_OBJECT_WRITE<<1)
 	u_int64_t flags;
 	u_int64_t rsvd1;
 	u_int64_t rsvd2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux_list.h,v 1.5 2013/08/12 04:11:52 jsg Exp $	*/
+/*	$OpenBSD: drm_linux_list.h,v 1.6 2015/09/23 23:12:11 kettenis Exp $	*/
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -38,7 +38,6 @@ struct list_head {
 };
 
 #define list_entry(ptr, type, member) container_of(ptr,type,member)
-#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
 
 static inline void
 INIT_LIST_HEAD(struct list_head *head) {
@@ -54,6 +53,11 @@ INIT_LIST_HEAD(struct list_head *head) {
 static inline int
 list_empty(const struct list_head *head) {
 	return (head)->next == head;
+}
+
+static inline int
+list_is_singular(const struct list_head *head) {
+	return !list_empty(head) && ((head)->next == (head)->prev);
 }
 
 static inline void
@@ -174,7 +178,27 @@ list_splice(const struct list_head *list, struct list_head *head)
 	__list_splice(list, head, head->next);
 }
 
+static inline void
+list_splice_tail(const struct list_head *list, struct list_head *head)
+{
+	if (list_empty(list))
+		return;
+
+	__list_splice(list, head->prev, head);
+}
+
 void drm_list_sort(void *priv, struct list_head *head, int (*cmp)(void *priv,
     struct list_head *a, struct list_head *b));
+
+struct hlist_node {
+	LIST_ENTRY(hlist_node) link;
+};
+
+LIST_HEAD(hlist_head, hlist_node);
+
+#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
+
+#define hlist_add_head(elm, head) LIST_INSERT_HEAD(head, elm, link)
+#define hlist_for_each(var, head) LIST_FOREACH(var, head, link)
 
 #endif /* _DRM_LINUX_LIST_H_ */

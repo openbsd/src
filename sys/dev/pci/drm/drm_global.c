@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_global.c,v 1.2 2014/03/09 11:07:18 jsg Exp $	*/
+/*	$OpenBSD: drm_global.c,v 1.3 2015/09/23 23:12:11 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright 2008-2009 VMware, Inc., Palo Alto, CA., USA
@@ -34,7 +34,7 @@
 #include <sys/rwlock.h>
 
 struct drm_global_item {
-	struct rwlock rwlock;
+	struct rwlock mutex;
 	void *object;
 	int refcount;
 };
@@ -47,7 +47,7 @@ void drm_global_init(void)
 
 	for (i = 0; i < DRM_GLOBAL_NUM; ++i) {
 		struct drm_global_item *item = &glob[i];
-		rw_init(&item->rwlock, "gblitm");
+		rw_init(&item->mutex, "gblitm");
 		item->object = NULL;
 		item->refcount = 0;
 	}
@@ -67,9 +67,8 @@ int drm_global_item_ref(struct drm_global_reference *ref)
 {
 	int ret;
 	struct drm_global_item *item = &glob[ref->global_type];
-	void *object;
 
-	rw_enter_write(&item->rwlock);
+	mutex_lock(&item->mutex);
 	if (item->refcount == 0) {
 		item->object = kzalloc(ref->size, GFP_KERNEL);
 		if (unlikely(item->object == NULL)) {
@@ -85,11 +84,10 @@ int drm_global_item_ref(struct drm_global_reference *ref)
 	}
 	++item->refcount;
 	ref->object = item->object;
-	object = item->object;
-	rw_exit_write(&item->rwlock);
+	mutex_unlock(&item->mutex);
 	return 0;
 out_err:
-	rw_exit_write(&item->rwlock);
+	mutex_unlock(&item->mutex);
 	item->object = NULL;
 	return ret;
 }
@@ -99,14 +97,14 @@ void drm_global_item_unref(struct drm_global_reference *ref)
 {
 	struct drm_global_item *item = &glob[ref->global_type];
 
-	rw_enter_write(&item->rwlock);
+	mutex_lock(&item->mutex);
 	BUG_ON(item->refcount == 0);
 	BUG_ON(ref->object != item->object);
 	if (--item->refcount == 0) {
 		ref->release(ref);
 		item->object = NULL;
 	}
-	rw_exit_write(&item->rwlock);
+	mutex_unlock(&item->mutex);
 }
 EXPORT_SYMBOL(drm_global_item_unref);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7xxx.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ch7xxx.c,v 1.5 2015/09/23 23:12:11 kettenis Exp $	*/
 /**************************************************************************
 
 Copyright © 2006 Dave Airlie
@@ -33,12 +33,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define CH7xxx_REG_DID		0x4b
 
 #define CH7011_VID		0x83 /* 7010 as well */
+#define CH7010B_VID		0x05
 #define CH7009A_VID		0x84
 #define CH7009B_VID		0x85
 #define CH7301_VID		0x95
 
 #define CH7xxx_VID		0x84
 #define CH7xxx_DID		0x17
+#define CH7010_DID		0x16
 
 #define CH7xxx_NUM_REGS		0x4c
 
@@ -88,9 +90,18 @@ static struct ch7xxx_id_struct {
 	char *name;
 } ch7xxx_ids[] = {
 	{ CH7011_VID, "CH7011" },
+	{ CH7010B_VID, "CH7010B" },
 	{ CH7009A_VID, "CH7009A" },
 	{ CH7009B_VID, "CH7009B" },
 	{ CH7301_VID, "CH7301" },
+};
+
+static struct ch7xxx_did_struct {
+	uint8_t did;
+	char *name;
+} ch7xxx_dids[] = {
+	{ CH7xxx_DID, "CH7XXX" },
+	{ CH7010_DID, "CH7010B" },
 };
 
 struct ch7xxx_priv {
@@ -104,6 +115,18 @@ static char *ch7xxx_get_id(uint8_t vid)
 	for (i = 0; i < ARRAY_SIZE(ch7xxx_ids); i++) {
 		if (ch7xxx_ids[i].vid == vid)
 			return ch7xxx_ids[i].name;
+	}
+
+	return NULL;
+}
+
+static char *ch7xxx_get_did(uint8_t did)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(ch7xxx_dids); i++) {
+		if (ch7xxx_dids[i].did == did)
+			return ch7xxx_dids[i].name;
 	}
 
 	return NULL;
@@ -134,8 +157,8 @@ static bool ch7xxx_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
 read_err:
 	iic_release_bus(adapter, 0);
 	if (!ch7xxx->quiet) {
-		DRM_DEBUG_KMS("Unable to read register 0x%02x from %02x.\n",
-			  addr, dvo->slave_addr);
+		DRM_DEBUG_KMS("Unable to read register 0x%02x from %s:%02x.\n",
+			  addr, adapter->name, dvo->slave_addr);
 	}
 	return false;
 }
@@ -162,8 +185,8 @@ static bool ch7xxx_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 
 write_err:
 	if (!ch7xxx->quiet) {
-		DRM_DEBUG_KMS("Unable to write register 0x%02x to %d.\n",
-			  addr, dvo->slave_addr);
+		DRM_DEBUG_KMS("Unable to write register 0x%02x to %s:%d.\n",
+			  addr, adapter->name, dvo->slave_addr);
 	}
 
 	return false;
@@ -175,7 +198,7 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 	/* this will detect the CH7xxx chip on the specified i2c bus */
 	struct ch7xxx_priv *ch7xxx;
 	uint8_t vendor, device;
-	char *name;
+	char *name, *devid;
 
 	ch7xxx = kzalloc(sizeof(struct ch7xxx_priv), GFP_KERNEL);
 	if (ch7xxx == NULL)
@@ -190,9 +213,9 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 
 	name = ch7xxx_get_id(vendor);
 	if (!name) {
-		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from "
+		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from %s "
 				"slave %d.\n",
-			  vendor, dvo->slave_addr);
+			  vendor, adapter->name, dvo->slave_addr);
 		goto out;
 	}
 
@@ -200,10 +223,11 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 	if (!ch7xxx_readb(dvo, CH7xxx_REG_DID, &device))
 		goto out;
 
-	if (device != CH7xxx_DID) {
-		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x "
+	devid = ch7xxx_get_did(device);
+	if (!devid) {
+		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from %s "
 				"slave %d.\n",
-			  vendor, dvo->slave_addr);
+			  vendor, adapter->name, dvo->slave_addr);
 		goto out;
 	}
 
@@ -279,7 +303,7 @@ static void ch7xxx_mode_set(struct intel_dvo_device *dvo,
 		idf |= CH7xxx_IDF_HSP;
 
 	if (mode->flags & DRM_MODE_FLAG_PVSYNC)
-		idf |= CH7xxx_IDF_HSP;
+		idf |= CH7xxx_IDF_VSP;
 
 	ch7xxx_writeb(dvo, CH7xxx_IDF, idf);
 }

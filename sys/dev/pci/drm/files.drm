@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.32 2015/04/05 11:53:53 kettenis Exp $
+# $OpenBSD: files.drm,v 1.33 2015/09/23 23:12:11 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[console = -1]}
@@ -18,7 +18,9 @@ file   dev/pci/drm/drm_crtc_helper.c	drm
 file   dev/pci/drm/drm_edid.c		drm
 file   dev/pci/drm/drm_dp_helper.c	drm
 file   dev/pci/drm/drm_fb_helper.c	drm
+file   dev/pci/drm/drm_rect.c		drm
 file   dev/pci/drm/drm_linux.c		drm
+file   dev/pci/drm/linux_hdmi.c		drm
 
 define	ttm
 file	dev/pci/drm/ttm/ttm_agp_backend.c	ttm & agp
@@ -42,7 +44,9 @@ file	dev/pci/drm/i915/i915_gem_context.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_evict.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_execbuffer.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_gtt.c		inteldrm
+file	dev/pci/drm/i915/i915_gem_stolen.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_tiling.c	inteldrm
+file	dev/pci/drm/i915/i915_gpu_error.c	inteldrm
 file	dev/pci/drm/i915/i915_irq.c		inteldrm
 file	dev/pci/drm/i915/i915_suspend.c		inteldrm
 file	dev/pci/drm/i915/intel_bios.c		inteldrm
@@ -51,7 +55,7 @@ file	dev/pci/drm/i915/intel_ddi.c		inteldrm
 file	dev/pci/drm/i915/intel_display.c	inteldrm
 file	dev/pci/drm/i915/intel_dp.c		inteldrm
 file	dev/pci/drm/i915/intel_dvo.c		inteldrm
-file	dev/pci/drm/i915/intel_fb.c		inteldrm
+file	dev/pci/drm/i915/intel_fbdev.c		inteldrm
 file	dev/pci/drm/i915/intel_hdmi.c		inteldrm
 file	dev/pci/drm/i915/intel_i2c.c		inteldrm
 file	dev/pci/drm/i915/intel_lvds.c		inteldrm
@@ -62,8 +66,10 @@ file	dev/pci/drm/i915/intel_panel.c		inteldrm
 file	dev/pci/drm/i915/intel_pm.c		inteldrm
 file	dev/pci/drm/i915/intel_ringbuffer.c	inteldrm
 file	dev/pci/drm/i915/intel_sdvo.c		inteldrm
+file	dev/pci/drm/i915/intel_sideband.c	inteldrm
 file	dev/pci/drm/i915/intel_sprite.c		inteldrm
 file	dev/pci/drm/i915/intel_tv.c		inteldrm
+file	dev/pci/drm/i915/intel_uncore.c		inteldrm
 file	dev/pci/drm/i915/dvo_ch7017.c		inteldrm
 file	dev/pci/drm/i915/dvo_ch7xxx.c		inteldrm
 file	dev/pci/drm/i915/dvo_ivch.c		inteldrm

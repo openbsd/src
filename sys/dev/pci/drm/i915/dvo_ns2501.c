@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ns2501.c,v 1.6 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ns2501.c,v 1.7 2015/09/23 23:12:11 kettenis Exp $	*/
 /*
  *
  * Copyright (c) 2012 Gilles Dartiguelongue, Thomas Richter
@@ -88,49 +88,6 @@ struct ns2501_priv {
  * when switching the resolution.
  */
 
-static void enable_dvo(struct intel_dvo_device *dvo)
-{
-	struct ns2501_priv *ns = (struct ns2501_priv *)(dvo->dev_priv);
-	struct i2c_controller *adapter = dvo->i2c_bus;
-	struct intel_gmbus *bus = container_of(adapter,
-					       struct intel_gmbus,
-					       controller);
-	struct drm_i915_private *dev_priv = bus->dev_priv;
-
-	DRM_DEBUG_KMS("%s: Trying to re-enable the DVO\n", __FUNCTION__);
-
-	ns->dvoc = I915_READ(DVO_C);
-	ns->pll_a = I915_READ(_DPLL_A);
-	ns->srcdim = I915_READ(DVOC_SRCDIM);
-	ns->fw_blc = I915_READ(FW_BLC);
-
-	I915_WRITE(DVOC, 0x10004084);
-	I915_WRITE(_DPLL_A, 0xd0820000);
-	I915_WRITE(DVOC_SRCDIM, 0x400300);	// 1024x768
-	I915_WRITE(FW_BLC, 0x1080304);
-
-	I915_WRITE(DVOC, 0x90004084);
-}
-
-/*
- * Restore the I915 registers modified by the above
- * trigger function.
- */
-static void restore_dvo(struct intel_dvo_device *dvo)
-{
-	struct i2c_controller *adapter = dvo->i2c_bus;
-	struct intel_gmbus *bus = container_of(adapter,
-					       struct intel_gmbus,
-					       controller);
-	struct drm_i915_private *dev_priv = bus->dev_priv;
-	struct ns2501_priv *ns = (struct ns2501_priv *)(dvo->dev_priv);
-
-	I915_WRITE(DVOC, ns->dvoc);
-	I915_WRITE(_DPLL_A, ns->pll_a);
-	I915_WRITE(DVOC_SRCDIM, ns->srcdim);
-	I915_WRITE(FW_BLC, ns->fw_blc);
-}
-
 /*
 ** Read a register from the ns2501.
 ** Returns true if successful, false otherwise.
@@ -162,8 +119,8 @@ read_err:
 	iic_release_bus(adapter, 0);
 	if (!ns->quiet) {
 		DRM_DEBUG_KMS
-		    ("Unable to read register 0x%02x from 0x%02x.\n", addr,
-		     dvo->slave_addr);
+		    ("Unable to read register 0x%02x from %s:0x%02x.\n", addr,
+		     adapter->name, dvo->slave_addr);
 	}
 
 	return false;
@@ -196,8 +153,8 @@ static bool ns2501_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 
 write_err:
 	if (!ns->quiet) {
-		DRM_DEBUG_KMS("Unable to write register 0x%02x to %d\n",
-			      addr, dvo->slave_addr);
+		DRM_DEBUG_KMS("Unable to write register 0x%02x to %s:%d\n",
+			      addr, adapter->name, dvo->slave_addr);
 	}
 
 	return false;
@@ -228,8 +185,8 @@ static bool ns2501_init(struct intel_dvo_device *dvo,
 		goto out;
 
 	if (ch != (NS2501_VID & 0xff)) {
-		DRM_DEBUG_KMS("ns2501 not detected got %d: from Slave %d.\n",
-			      ch, dvo->slave_addr);
+		DRM_DEBUG_KMS("ns2501 not detected got %d: from %s Slave %d.\n",
+			      ch, adapter->name, dvo->slave_addr);
 		goto out;
 	}
 
@@ -237,8 +194,8 @@ static bool ns2501_init(struct intel_dvo_device *dvo,
 		goto out;
 
 	if (ch != (NS2501_DID & 0xff)) {
-		DRM_DEBUG_KMS("ns2501 not detected got %d: from Slave %d.\n",
-			      ch, dvo->slave_addr);
+		DRM_DEBUG_KMS("ns2501 not detected got %d: from %s Slave %d.\n",
+			      ch, adapter->name, dvo->slave_addr);
 		goto out;
 	}
 	ns->quiet = false;
@@ -294,7 +251,7 @@ static void ns2501_mode_set(struct intel_dvo_device *dvo,
 			    struct drm_display_mode *adjusted_mode)
 {
 	bool ok;
-	bool restore = false;
+	int retries = 10;
 	struct ns2501_priv *ns = (struct ns2501_priv *)(dvo->dev_priv);
 
 	DRM_DEBUG_KMS
@@ -470,20 +427,7 @@ static void ns2501_mode_set(struct intel_dvo_device *dvo,
 			ns->reg_8_shadow |= NS2501_8_BPAS;
 		}
 		ok &= ns2501_writeb(dvo, NS2501_REG8, ns->reg_8_shadow);
-
-		if (!ok) {
-			if (restore)
-				restore_dvo(dvo);
-			enable_dvo(dvo);
-			restore = true;
-		}
-	} while (!ok);
-	/*
-	 * Restore the old i915 registers before
-	 * forcing the ns2501 on.
-	 */
-	if (restore)
-		restore_dvo(dvo);
+	} while (!ok && retries--);
 }
 
 /* set the NS2501 power state */
@@ -504,7 +448,7 @@ static bool ns2501_get_hw_state(struct intel_dvo_device *dvo)
 static void ns2501_dpms(struct intel_dvo_device *dvo, bool enable)
 {
 	bool ok;
-	bool restore = false;
+	int retries = 10;
 	struct ns2501_priv *ns = (struct ns2501_priv *)(dvo->dev_priv);
 	unsigned char ch;
 
@@ -531,16 +475,7 @@ static void ns2501_dpms(struct intel_dvo_device *dvo, bool enable)
 			ok &=
 			    ns2501_writeb(dvo, 0x35,
 					  enable ? 0xff : 0x00);
-			if (!ok) {
-				if (restore)
-					restore_dvo(dvo);
-				enable_dvo(dvo);
-				restore = true;
-			}
-		} while (!ok);
-
-		if (restore)
-			restore_dvo(dvo);
+		} while (!ok && retries--);
 	}
 }
 

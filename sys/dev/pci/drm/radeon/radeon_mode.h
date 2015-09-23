@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_mode.h,v 1.2 2013/12/05 13:29:56 kettenis Exp $	*/
+/*	$OpenBSD: radeon_mode.h,v 1.3 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -630,7 +630,9 @@ extern int radeon_crtc_cursor_move(struct drm_crtc *crtc,
 				   int x, int y);
 
 extern int radeon_get_crtc_scanoutpos(struct drm_device *dev, int crtc,
-				      int *vpos, int *hpos);
+				      unsigned int flags,
+				      int *vpos, int *hpos, ktime_t *stime,
+				      ktime_t *etime);
 
 extern bool radeon_combios_check_hardcoded_edid(struct radeon_device *rdev);
 extern struct edid *

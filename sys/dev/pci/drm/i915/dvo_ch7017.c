@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7017.c,v 1.4 2014/01/21 08:57:22 kettenis Exp $	*/
+/*	$OpenBSD: dvo_ch7017.c,v 1.5 2015/09/23 23:12:11 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -226,14 +226,14 @@ static bool ch7017_init(struct intel_dvo_device *dvo,
 		str = "ch7019";
 		break;
 	default:
-		DRM_DEBUG_KMS("ch701x not detected, got %d: from "
+		DRM_DEBUG_KMS("ch701x not detected, got %d: from %s "
 			      "slave %d.\n",
-			      val, dvo->slave_addr);
+			      val, adapter->name, dvo->slave_addr);
 		goto fail;
 	}
 
-	DRM_DEBUG_KMS("%s detected, addr %d\n",
-		      str, dvo->slave_addr);
+	DRM_DEBUG_KMS("%s detected on %s, addr %d\n",
+		      str, adapter->name, dvo->slave_addr);
 	return true;
 
 fail:
@@ -357,7 +357,7 @@ static void ch7017_dpms(struct intel_dvo_device *dvo, bool enable)
 	}
 
 	/* XXX: Should actually wait for update power status somehow */
-	drm_msleep(20, "chdmps");
+	drm_msleep(20);
 }
 
 static bool ch7017_get_hw_state(struct intel_dvo_device *dvo)
