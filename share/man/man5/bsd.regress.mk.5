@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.8 2015/07/30 08:03:50 jmc Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.9 2015/09/23 01:11:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: September 23 2015 $
 .Dt BSD.REGRESS.MK 5
 .Os
 .Sh NAME
@@ -47,23 +47,23 @@ Makefile variables may be used to build the regression
 test programs.
 .Sh TARGETS
 .Bl -tag -width regress
-.It Ar depend
+.It Cm depend
 Build any dependencies required to carry out the current set
 of regression tests.
-.It Ar regress
+.It Cm regress
 Executes all of the regression targets defined in the Makefile.
-.It Ar run-regress-*
+.It Cm run-regress-*
 Runs an individual regression test.
 If the exit status of the program indicates an error or timeout,
 then a failure is logged, otherwise the test is marked as a success.
 .El
 .Sh VARIABLES
-.Bl -tag -width REGRESS_LOG
+.Bl -tag -width Ds
 .It Ev REGRESS_FAIL_EARLY
 If this variable is set to anything but
 .Dq no ,
 the
-.Ar regress
+.Cm regress
 target will abort as soon as a test fails.
 .It Ev REGRESS_LOG
 Points to the fully-qualified path of a file to which regression
@@ -94,7 +94,7 @@ variable.
 Targets which are invoked to run the set of regression tests
 for this Makefile.
 Defaults to
-.Ar run-regress-${PROG} .
+.Cm run-regress-${PROG} .
 .It Ev SUDO
 Location of a command used to switch to root for certain
 test targets which require it.

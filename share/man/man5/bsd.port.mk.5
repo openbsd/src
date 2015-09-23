@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.423 2015/09/22 22:27:28 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.424 2015/09/23 01:11:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 22 2015 $
+.Dd $Mdocdate: September 23 2015 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -77,61 +77,61 @@ instead.
 .Xr packages 7
 provides an overview of the result.
 .Sh TARGETS
-.Bl -tag -width do-configure
-.It Ar {build,run,all,test}-dir-depends
+.Bl -tag -width Ds
+.It Cm {build,run,all,test}-dir-depends
 Print all dependencies for a port in order to build it, run it, build and
 run it, or to run regression tests.
 The output is formatted as package specification pairs, in a form suitable
 for
 .Xr tsort 1 .
-.It Ar full-{all,build,run,test}-depends
+.It Cm full-{build,run,all,test}-depends
 Print all dependencies a package depends upon for building, running,
 or both, as a list of package names, sorted by dependency order with
 .Xr tsort 1 ,
 most dependent port first.
-.It Ar {build,lib,test,run}-depends-list
+.It Cm {build,lib,test,run}-depends-list
 Print a list of first level package specifications a port depends as
 build dependencies, library dependencies, test dependencies or
 run dependencies.
-.It Ar print-{build,run}-depends
+.It Cm print-{build,run}-depends
 User convenience target that displays the result of
-.Ar full-{build,run}-depends
+.Cm full-{build,run}-depends
 in a more readable way.
-.It Ar {pre,do,post}-*
+.It Cm {pre,do,post}-*
 Most standard targets can be specialized according to a given port's needs.
 If defined,
 the
-.Ar pre-*
+.Cm pre-*
 hook will be invoked before running the normal action;
 the
-.Ar do-*
+.Cm do-*
 hook will be invoked instead of the normal action;
 the
-.Ar post-*
+.Cm post-*
 hook will be invoked after the normal action.
 Specialization hooks exist for
-.Ar build ,
-.Ar configure ,
-.Ar distpatch ,
-.Ar extract ,
-.Ar fake ,
-.Ar install ,
-.Ar patch ,
-.Ar test .
+.Cm build ,
+.Cm configure ,
+.Cm distpatch ,
+.Cm extract ,
+.Cm fake ,
+.Cm install ,
+.Cm patch ,
+.Cm test .
 See individual targets for exceptions.
-.It Ar addsum
+.It Cm addsum
 Complete the ${CHECKSUM_FILE} record of checksums with files that have been
 added since
-.Ar makesum .
+.Cm makesum .
 Complain if anything does not match.
-.It Ar all-lib-depends-args
+.It Cm all-lib-depends-args
 Process the full
 .Ev LIB_DEPENDS
 list into a form suitable for
 .Xr pkg_create 1 ,
 see
-.Ar print-package-args .
-.It Ar build , Ar all
+.Cm print-package-args .
+.It Cm build , Cm all
 Default target.
 Build the port.
 Essentially invoke
@@ -139,14 +139,14 @@ Essentially invoke
 env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \e
 	-f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
-.It Ar build-depends
+.It Cm build-depends
 Verify the ports mentioned in
 .Ev BUILD_DEPENDS ,
 by checking the corresponding packages are actually installed,
 and install the missing ports by recursing through the ports tree.
 Deprecated, see
-.Ar prepare .
-.It Ar check-register
+.Cm prepare .
+.It Cm check-register
 Introspection target.
 Verify from the ports tree, without building anything, that the current
 subpackage will register okay
@@ -154,23 +154,23 @@ subpackage will register okay
 see
 .Ev PLIST_DB
 .Pc .
-.It Ar check-register-all
+.It Cm check-register-all
 Apply
-.Ar check-register
+.Cm check-register
 to all subpackages of the current port.
-.It Ar checkpatch
+.It Cm checkpatch
 Debugging version of the
-.Ar patch
+.Cm patch
 target that simulates invoking
 .Xr patch 1 .
-.It Ar checksum
+.It Cm checksum
 Check distribution archives and distribution patches control sum against
 the results recorded in ${CHECKSUM_FILE},
 using the message digest (checksum) utilities listed in ${PREFERRED_CIPHERS}.
 All the files needed to recreate a port should be in ${CHECKSUMFILES} and
 checksummed.
 Invoking
-.Ar checksum
+.Cm checksum
 with
 .Ev REFETCH Ns = Ns Cm true
 will try to fetch a version with the correct checksum from the
@@ -178,7 +178,7 @@ will try to fetch a version with the correct checksum from the
 main archive site in the case of a checksum mismatch.
 .Ev NO_CHECKSUM
 can be used to avoid all checksumming steps.
-.It Ar clean
+.It Cm clean
 Clean ports contents.
 By default, it will clean the work directory.
 It can be invoked as
@@ -222,37 +222,38 @@ Shorthand for
 Shorthand for
 .Sq work flavors packages plist .
 .El
-.It Ar clean-depends
+.It Cm clean-depends
 Shorthand for make clean=depends.
-.It Ar configure
+.It Cm configure
 Configure the port.
 Might be a void operation.
-Unless overridden, configure creates the ${WRKBUILD}
-directory (see SEPARATE_BUILD),
+Unless overridden,
+.Cm configure
+creates the ${WRKBUILD} directory (see SEPARATE_BUILD),
 and runs whatever configuration methods are recorded in
 .Ev CONFIGURE_STYLE .
-.It Ar depends
+.It Cm depends
 Check all the port's dependencies, that is:
-.Ar build-depends ,
-.Ar lib-depends ,
-.Ar run-depends ,
-.Ar test-depends .
-.It Ar describe
+.Cm build-depends ,
+.Cm lib-depends ,
+.Cm run-depends ,
+.Cm test-depends .
+.It Cm describe
 Prints a one-line index entry of the port, suitable for
 .Pa ${PORTSDIR}/INDEX .
-.It Ar distclean
+.It Cm distclean
 Shorthand for make clean=dist.
-.It Ar distpatch
+.It Cm distpatch
 Apply distribution patches only.
 See
-.Ar patch
+.Cm patch
 and
 .Ev PATCH_CASES
 for details.
-.It Ar dump-vars
+.It Cm dump-vars
 Dump the values of all relevant variables in a port, prepended with the
 port's FULLPKGPATH.
-.It Ar extract
+.It Cm extract
 Extract the distribution files under
 .Pa ${WRKDIR}
 (but see
@@ -263,44 +264,44 @@ Refer to
 .Ev EXTRACT_CASES
 for a complete description.
 Do not use
-.Ar pre-extract
+.Cm pre-extract
 and
-.Ar do-extract
+.Cm do-extract
 hooks.
-.It Ar fake
+.It Cm fake
 Do a fake port installation, that is, simulate the port installation under
 ${WRKINST}.
 There is no
-.Ar do-fake
+.Cm do-fake
 and
-.Ar post-fake
+.Cm post-fake
 hooks.
-.Ar fake
+.Cm fake
 actually uses
-.Ar pre-fake ,
-.Ar pre-install ,
-.Ar do-install
+.Cm pre-fake ,
+.Cm pre-install ,
+.Cm do-install
 and
-.Ar post-install .
+.Cm post-install .
 Override
-.Ar pre-install ,
-.Ar do-install ,
+.Cm pre-install ,
+.Cm do-install ,
 or
-.Ar post-install
+.Cm post-install
 to change behavior.
 Do not touch
-.Ar pre-fake
+.Cm pre-fake
 unless you really know what you are doing.
 See
 .Sx THE FAKE FRAMEWORK
 section below.
-.It Ar fake-wantlib-args
+.It Cm fake-wantlib-args
 Check
 .Ev WANTLIB
 against the list of installed packages and libraries in the ports tree.
 See
-.Ar print-package-args .
-.It Ar fetch
+.Cm print-package-args .
+.It Cm fetch
 Fetch the distribution files and patchfiles, using ${FETCH_CMD}.
 Each file of the
 .Ev DISTFILES
@@ -348,7 +349,7 @@ with the
 option.
 .Pp
 Use of
-.Ar {pre,do,post}-fetch
+.Cm {pre,do,post}-fetch
 hooks is forbidden, as this would make mirroring of distfiles very complicated.
 See
 .Ev CHECKSUMFILES ,
@@ -367,27 +368,27 @@ See
 .Ev PATCHFILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
-.It Ar fetch-all
+.It Cm fetch-all
 also fetches
 .Ev SUPDISTFILES ,
 for use with e.g.,
-.Ar makesum .
-.It Ar index
+.Cm makesum .
+.It Cm index
 Top-level target, see
 .Xr ports 7 .
-.It Ar install
+.It Cm install
 Install the package after building.
 See the description of
 .Sx THE FAKE FRAMEWORK
 for the non-intuitive details of the way
-.Ar {pre,do,post}-install
+.Cm {pre,do,post}-install
 hooks are actually used by the ports tree.
-.It Ar install-all
+.It Cm install-all
 Install all packages in a multi-packages port.
-.It Ar lib-depends
+.It Cm lib-depends
 Verify that the library dependencies a port needs are actually there,
 by checking the library specifications.
-.It Ar lib-depends-args
+.It Cm lib-depends-args
 Filter
 .Ev LIB_DEPENDS
 to keep only entries required by
@@ -395,17 +396,17 @@ to keep only entries required by
 and output a list of dependencies suitable for
 .Xr pkg_create 1 ,
 see
-.Ar print-package-args .
-.It Ar lib-depends-check
+.Cm print-package-args .
+.It Cm lib-depends-check
 Verify that the
 .Ev LIB_DEPENDS
 and
 .Ev WANTLIB
 are accurate for the port.
 See
-.Ar port-lib-depends-check ,
+.Cm port-lib-depends-check ,
 which is quicker.
-.It Ar license-check
+.It Cm license-check
 Check that
 .Ev PERMIT_PACKAGE_*
 settings match:
@@ -413,53 +414,53 @@ if any dependency has a more restrictive setting, warn about it.
 This warning is advisory, because the automated license checking cannot
 figure out which ports were used only for building and did not taint
 the current port.
-.It Ar link-categories
+.It Cm link-categories
 Create symbolic links in other directories that correspond to the port's
 .Ev CATEGORIES .
 Note that this does not affect bulk package building, since those links
 don't appear in the upper-level Makefiles.
 See also
-.Ar unlink-categories .
-.It Ar lock
+.Cm unlink-categories .
+.It Cm lock
 Manually obtain a lock on a given directory.
 Output must be used to update environment variables.
 The lock can be released with
-.Ar unlock .
+.Cm unlock .
 Seldom used, see
 .Xr ports 7
 for details.
-.It Ar makesum
+.It Cm makesum
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
 cryptographic fingerprint sha256 on ${MAKESUMFILES}.
 That normally includes ${DISTFILES}, ${SUPDISTFILES} and ${PATCHFILES}.
 .Ev NO_CHECKSUM
 can be used to avoid all checksumming steps.
-.It Ar manpages-check
+.It Cm manpages-check
 Verify that
 .Xr makewhatis 8
 can do a correct job with the port's manpages.
-.It Ar mirror-maker
+.It Cm mirror-maker
 Top-level target, see
 .Xr mirroring-ports 7 .
-.It Ar mirror-maker-fetch
+.It Cm mirror-maker-fetch
 Debug target: generate the
-.Ar mirror-maker
+.Cm mirror-maker
 makefile fragment and use it
 to fetch files, see
 .Xr mirroring-ports 7 .
-.It Ar no-lib-depends-args
+.It Cm no-lib-depends-args
 Degenerate form of
-.Ar lib-depends-args
+.Cm lib-depends-args
 that does not do anything.
 See
-.Ar print-package-args .
-.It Ar no-wantlib-args
+.Cm print-package-args .
+.It Cm no-wantlib-args
 Degenerate form of
-.Ar wantlib-args
+.Cm wantlib-args
 that does not do anything.
 See
-.Ar print-package-args .
-.It Ar package
+.Cm print-package-args .
+.It Cm package
 Build a port package (or packages in a
 .Ev MULTI_PACKAGES
 case) from the fake installation.
@@ -486,38 +487,38 @@ If ${PERMIT_PACKAGE_CDROM} is set to
 .Sq Yes ,
 copies built packages into ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom, using
 hard links if possible.
-.It Ar patch
+.It Cm patch
 Apply distribution and
 .Ox
 specific patches.
 Because of historical accident,
-.Ar patch
+.Cm patch
 does not follow the exact same scheme other standard targets do.
 Namely,
-.Ar patch
+.Cm patch
 invokes
-.Ar pre-patch
+.Cm pre-patch
 (if defined),
-.Ar do-patch ,
+.Cm do-patch ,
 and
-.Ar post-patch ,
+.Cm post-patch ,
 but the default
-.Ar do-patch
+.Cm do-patch
 target invokes
-.Ar distpatch
+.Cm distpatch
 directly.
 So, if the
-.Ar do-patch
+.Cm do-patch
 target is overridden, it should still begin by calling
 make distpatch, before applying
 .Ox
 specific patches.
 Accordingly, the exact sequence of hooks is:
-.Ar pre-patch ,
-.Ar do-distpatch ,
-.Ar post-distpatch ,
-.Ar do-patch ,
-.Ar post-patch .
+.Cm pre-patch ,
+.Cm do-distpatch ,
+.Cm post-distpatch ,
+.Cm do-patch ,
+.Cm post-patch .
 If
 .Pa ${PATCHDIR}
 exists, the files described under
@@ -527,18 +528,18 @@ will be applied under
 See also
 .Ev REORDER_DEPENDENCIES
 for possible
-.Ar post-patch
+.Cm post-patch
 clean-up.
-.It Ar peek-ftp
+.It Cm peek-ftp
 Connect to the first site in
 .Ev MASTER_SITES ,
 in the right directory, and leaves user at
 .Xr ftp 1 Ns 's
 prompt.
-.It Ar pkglocatedb
+.It Cm pkglocatedb
 Top-level target, see
 .Xr ports 7 .
-.It Ar port-lib-depends-check
+.It Cm port-lib-depends-check
 Verify that the
 .Ev LIB_DEPENDS
 and
@@ -547,22 +548,22 @@ hold all shared libraries used for every package in the port.
 See
 .Xr library-specs 7 .
 This makes use of
-.Ar print-plist-with-depends
+.Cm print-plist-with-depends
 to avoid actually building the packages, it only needs the
 completion of the
-.Ar fake
+.Cm fake
 stage, and thus is quicker than
-.Ar lib-depends-check ,
+.Cm lib-depends-check ,
 unless you already have all binary packages.
-.It Ar port-wantlib-args
+.It Cm port-wantlib-args
 Resolve
 .Ev WANTLIB
 against the ports tree itself and system libraries, without looking at built
 or installed packages, and writes a list of options suitable for
 .Xr pkg_create 1 .
 See
-.Ar print-package-args .
-.It Ar prepare
+.Cm print-package-args .
+.It Cm prepare
 Prepare a port for building, by checking and installing all required
 dependencies, constructed from
 .Ev LIB_DEPENDS
@@ -573,7 +574,7 @@ In
 setups,
 see
 .Sx FLAVORS AND MULTI_PACKAGES .
-.It Ar print-package-args
+.It Cm print-package-args
 Print all dependency-related information that will be passed as parameters
 to
 .Xr pkg_create 1 ,
@@ -584,18 +585,18 @@ and
 lines.
 .Pp
 Those parameters are generated by
-.Ar run-depends-args
+.Cm run-depends-args
 for
 .Ev RUN_DEPENDENCIES
 handling, a form of
-.Ar lib-depends-args
+.Cm lib-depends-args
 for
 .Ev LIB_DEPENDS
 and
 .Ev WANTLIB
 interaction,
 and a form of
-.Ar wantlib-args
+.Cm wantlib-args
 for
 .Ev WANTLIB
 resolution.
@@ -607,56 +608,56 @@ and
 control the exact behavior:
 .Ev lib_depends_args
 is normally set to
-.Ar lib-depends-args ,
+.Cm lib-depends-args ,
 but will be set to
-.Ar all-lib-depends-args
+.Cm all-lib-depends-args
 by
-.Ar port-lib-depends-check ,
+.Cm port-lib-depends-check ,
 in order to have access to the full list of LIB_DEPENDS for figuring
 out missing WANTLIB.
 .Ev wantlib_args
 is normally set to
-.Ar wantlib-args
+.Cm wantlib-args
 but it may be set to
-.Ar port-wantlib-args
+.Cm port-wantlib-args
 for introspection purposes,
 to
-.Ar fake-wantlib-args
+.Cm fake-wantlib-args
 to avoid some checks, or to
-.Ar no-wantlib-args
+.Cm no-wantlib-args
 to avoid expensive WANTLIB checks entirely.
-.It Ar print-update-signature
+.It Cm print-update-signature
 Print the update signature, as computed using information from the ports tree,
 in the same format used for
 .Xr pkg_info 1
 .Fl S .
-.It Ar print-plist
+.It Cm print-plist
 Generate and print a package packing-list from the static information
 present in the port.
-.It Ar print-plist-all
+.It Cm print-plist-all
 Iterate over
-.Ar print-plist
+.Cm print-plist
 for all subpackages in a given port.
-.It Ar print-plist-all-with-depends
+.It Cm print-plist-all-with-depends
 Iterate over
-.Ar print-plist-with-depends
+.Cm print-plist-with-depends
 for all subpackages in a given port.
-.It Ar print-plist-contents
+.It Cm print-plist-contents
 Generate and print package contents from the static information
 present in the port.
 In contrast with
-.Ar print-plist ,
+.Cm print-plist ,
 the package contents only consists of files, all tagged with category
 markers such as @file.
 See
 .Xr pkg_create 1 .
-.It Ar print-plist-libs
+.It Cm print-plist-libs
 Generate and print the list of static and dynamic libraries present in the port.
 See
 .Xr pkg_create 1 .
-.It Ar print-plist-libs-with-depends
+.It Cm print-plist-libs-with-depends
 Like
-.Ar print-plist-libs ,
+.Cm print-plist-libs ,
 but slower.
 It also handles
 .Ev LIB_DEPENDS ,
@@ -664,9 +665,9 @@ It also handles
 and
 .Ev WANTLIB ,
 so that the packing-list has complete dependency information.
-.It Ar print-plist-with-depends
+.It Cm print-plist-with-depends
 Like
-.Ar print-plist ,
+.Cm print-plist ,
 but slower.
 It also handles
 .Ev LIB_DEPENDS ,
@@ -674,74 +675,74 @@ It also handles
 and
 .Ev WANTLIB ,
 so that the packing-list is complete.
-.It Ar rebuild
+.It Cm rebuild
 Force rebuild of the port.
-.It Ar reinstall
+.It Cm reinstall
 Force reinstallation of a port, by first cleaning the old installation.
 Seldom needed, as
-.Ar update
+.Cm update
 will often do the right thing.
-.It Ar repackage
+.It Cm repackage
 Rebuild the packages of a port after removing existing packages.
-.It Ar run-depends
+.It Cm run-depends
 Verify the ports mentioned in
 .Ev RUN_DEPENDS ,
 by checking the corresponding packages are actually installed,
 and install the missing ports by recursing through the ports tree.
 Invoked right before installing the package.
-.It Ar run-depends-args
+.It Cm run-depends-args
 Process
 .Ev RUN_DEPENDS
 and outputs a list of dependencies suitable for
 .Xr pkg_create 1 ,
 see
-.Ar print-package-args .
-.It Ar show
+.Cm print-package-args .
+.It Cm show
 Invoked as make show=name, show the contents of ${name}.
 Invoked as make show="name1 name2 ...",
 show the contents of ${name1} ${name2} ...,
 one variable value per line.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
-.It Ar show-fake-size
+.It Cm show-fake-size
 Print the size of ${WRKINST}.
 Used by some options of
 .Xr dpb 1 ,
 suitable for
 .Ev BULK_TARGETS .
-.It Ar show-prepare-results
+.It Cm show-prepare-results
 Print the list of actual installed packages found out by
-.Ar prepare .
-.It Ar show-prepare-test-results
+.Cm prepare .
+.It Cm show-prepare-test-results
 Print the list of actual installed packages found out by
-.Ar prepare
+.Cm prepare
 and
-.Ar test-depends .
-.It Ar show-required-by
+.Cm test-depends .
+.It Cm show-required-by
 Print the list of
 .Xr pkgpath 7
 for all ports that will be affected by the
 current port changing.
 Works by walking the list of dependencies, in reverse.
-.It Ar show-run-depends
+.It Cm show-run-depends
 Print all running dependencies for a port, one per-line, without duplicates.
-.It Ar subpackage
+.It Cm subpackage
 Build a port package.
 Exactly like
-.Ar package ,
+.Cm package ,
 but affects only one single subpackage in multi-packages ports.
-.It Ar show-size
+.It Cm show-size
 Prints the size of the work directory.
 Used by some options of
 .Xr dpb 1 ,
 suitable for
 .Ev BULK_TARGETS .
-.It Ar subupdate
+.It Cm subupdate
 Update an existing installation to a newer package, exactly
 like
-.Ar update ,
+.Cm update ,
 but affects only one single subpackage in multi-packages ports.
-.It Ar test
+.It Cm test
 Run regression tests for the port.
 Essentially depend on a correct build and invoke
 .Bd -literal
@@ -756,21 +757,21 @@ If a port needs special configuration or build options to enable regression
 testing, define a
 .Sq test
 .Ev FLAVOR .
-.It Ar test-depends
+.It Cm test-depends
 Verify packages needed for regression tests, using the same scheme as
-.Ar build-depends .
+.Cm build-depends .
 Only invoked when regression tests are run, or explicitly through
-.Ar depends .
-.It Ar unlink-categories
+.Cm depends .
+.It Cm unlink-categories
 Remove symbolic links in other directories that correspond to the port's
 .Ev CATEGORIES .
 See also
-.Ar link-categories .
-.It Ar unlock
+.Cm link-categories .
+.It Cm unlock
 Manually release a lock on a given directory.
 See
-.Ar lock .
-.It Ar update-patches
+.Cm lock .
+.It Cm update-patches
 Create or update patches for a port, using
 .Xr update-patches 1 ,
 which invokes
@@ -792,8 +793,8 @@ patches/ directory.
 It moves existing patches from
 .Pa patch-file
 to
-.Pa patch-file.orig
-.It Ar update
+.Pa patch-file.orig .
+.It Cm update
 Update an existing installation to a newer package:
 scan the installation for a package with the same
 .Ev FULLPKGPATH ,
@@ -806,7 +807,7 @@ See
 and
 .Ev FORCE_UPDATE
 as well.
-.It Ar update-or-install
+.It Cm update-or-install
 Update an installed package or perform a fresh installation,
 by using
 .Sq pkg_add -r .
@@ -816,7 +817,7 @@ See
 and
 .Ev FORCE_UPDATE
 as well.
-.It Ar update-or-install-all
+.It Cm update-or-install-all
 Update installed packages or perform a fresh installation,
 by using
 .Sq pkg_add -r .
@@ -826,10 +827,10 @@ See
 and
 .Ev FORCE_UPDATE
 as well.
-.It Ar update-plist
+.It Cm update-plist
 Update the packing lists for a port, using the fake installation and the
 existing packing lists.
-.Ar update-plist
+.Cm update-plist
 should produce mostly correct
 .Pa PLIST ,
 .Pa PFRAG.shared
@@ -851,27 +852,27 @@ included, comment these like this:
 .Ed
 .Pp
 Subsequent calls to
-.Ar update-plist
+.Cm update-plist
 will automatically recognize and handle such lines correctly.
 .Pp
-.Ar update-plist
+.Cm update-plist
 may not handle flavor and multi-packages situations correctly yet, so beware.
-.It Ar verbose-show
+.It Cm verbose-show
 Similar to
-.Ar show ,
+.Cm show ,
 except that it prefixes each value with the variable name, e.g.,
 .Li VAR=value .
 Also note that it does not show undefined variables, contrary to
-.Ar show
+.Cm show
 which outputs blank lines for these.
-.It Ar wantlib-args
+.It Cm wantlib-args
 Call
-.Ar port-wantlib-args
+.Cm port-wantlib-args
 and
-.Ar fake-wantlib-args
+.Cm fake-wantlib-args
 and compare the results, errors out in case of discrepancies.
 See
-.Ar print-package-args .
+.Cm print-package-args .
 .El
 .Sh VARIABLES
 Note that some variables are marked as
@@ -885,7 +886,7 @@ In a
 setup, some variables have settings specific to a given subpackage.
 See
 .Sx FLAVORS AND MULTI_PACKAGES .
-.Bl -tag -width MASTER_SITES
+.Bl -tag -width Ds
 .It Ev show
 Invoked as make show=name, show the contents of ${name}.
 Invoked as make show="name1 name2 ...", show the contents of
@@ -957,7 +958,7 @@ Note that even if
 .Ev CONFIGURE_STYLE
 includes automake,
 automake should still be run manually during the right
-.Ar configure
+.Cm configure
 stage.
 .It Ev AUTOUPDATE
 Location of the autoupdate binary.
@@ -1045,15 +1046,15 @@ see
 .Xr pkgpath 7
 for details.
 Build dependencies are checked before the
-.Ar extract
+.Cm extract
 stage during
-.Ar prepare .
+.Cm prepare .
 .Pp
 Build dependencies with a
-.Ar patch ,
-.Ar configure
+.Cm patch ,
+.Cm configure
 or
-.Ar build
+.Cm build
 target will be processed in a subdirectory of the working directory,
 specifically, in ${WRKDIR}/some/directory,
 with
@@ -1172,8 +1173,8 @@ must belong to the
 .Sq devel
 category.
 See
-.Ar link-categories ,
-.Ar unlink-categories .
+.Cm link-categories ,
+.Cm unlink-categories .
 .It Ev CCACHE_DIR
 Sets the cache directory used when
 .Ev USE_CCACHE
@@ -1223,7 +1224,7 @@ Defaults to
 as this can be a big performance hit.
 .It Ev CHECKSUMFILES
 List of all files that need to be retrieved by
-.Ar fetch ,
+.Cm fetch ,
 with
 .Ev DIST_SUBDIR
 prepended and with the master site selection extension removed.
@@ -1232,10 +1233,10 @@ See also
 .Ev MAKESUMFILES .
 .It Ev CHECKSUM_FILE
 Location for this port's checksums, used by
-.Ar addsum ,
-.Ar checksum ,
+.Cm addsum ,
+.Cm checksum ,
 and
-.Ar makesum .
+.Cm makesum .
 Defaults to
 .Pa distinfo .
 .It Ev CHECKSUM_PACKAGES
@@ -1302,8 +1303,8 @@ GNU-style configure, where prefix and sysconfdir are set.
 Basic environment passed to configure script (path and libtool setup).
 GNU-style configure adds a lot more variables.
 .It Ev CONFIGURE_SCRIPT
-Set to name of script invoked by
-.Ar configure
+Set to name of script invoked by the
+.Cm configure
 target, if appropriate.
 Should be either an absolute path, or relative to ${WRKSRC}.
 .It Ev CONFIGURE_SHARED
@@ -1362,7 +1363,7 @@ In order to use it,
 should include
 .Sq automake
 and there should be a
-.Ar {pre,do}-configure
+.Cm {pre,do}-configure
 target running automake.
 .Pp
 If
@@ -1423,10 +1424,10 @@ into account.
 The main port's distribution files (the actual software source, except
 for binary-only ports).
 Will be retrieved from the MASTER_SITES (see
-.Ar fetch ) ,
+.Cm fetch ) ,
 checksummed and extracted (see
-.Ar checksum ,
-.Ar extract ) .
+.Cm checksum ,
+.Cm extract ) .
 .Ev DISTFILES
 normally holds a list of files, possibly with
 .Sq :0
@@ -1448,7 +1449,7 @@ DISTFILES = minetest-{minetest/archive/}${V}${EXTRACT_SUFX}
 .Ed
 .Pp
 then
-.Ar fetch
+.Cm fetch
 will retrieve from url
 .Sq minetest/archive/${V}${EXTRACT_SUFX}
 into
@@ -1458,7 +1459,7 @@ If ${DISTFILES} varies depending on FLAVORS or architecture,
 use
 .Ev SUPDISTFILES
 to ensure distfiles mirroring and
-.Ar makesum
+.Cm makesum
 proper operation.
 .It Ev DISTNAME
 Name used to identify the port.
@@ -1468,23 +1469,23 @@ and
 .Ev PKGNAME .
 .It Ev DISTORIG
 Suffix used by
-.Ar distpatch
+.Cm distpatch
 to rename original files.
 Defaults to
 .Pa .bak.orig .
 Distinct from
 .Pa .orig
 to avoid confusing
-.Ar update-patches .
+.Cm update-patches .
 .It Ev DIST_SUBDIR
 Optional subdirectory of ${DISTDIR} where the current port's distribution
 files and patchfiles will be located.
 See target
-.Ar fetch .
+.Cm fetch .
 .It Ev DPB
 Set by the distributed ports builder to only get the information it needs
 from
-.Ar dump-vars .
+.Cm dump-vars .
 .It Ev ECHO_MSG
 User settings.
 Used to display
@@ -1565,7 +1566,7 @@ done
 .It Ev EXTRACT_ONLY
 Set to the list of distfiles to actually extract if some distfiles
 should not be extracted during the
-.Ar do-extract
+.Cm do-extract
 stage.
 Defaults to all distfiles, can even be set to empty.
 .It Ev EXTRACT_SUFX
@@ -1580,7 +1581,7 @@ Also see
 .It Ev FAKE_SETUP
 List of environment values normally set during fake invocations.
 Exposed so that modules may provide their own
-.Ar do-install .
+.Cm do-install .
 Read-only,
 see
 .Sx THE FAKE FRAMEWORK
@@ -1625,7 +1626,7 @@ User settings.
 If set to
 .Sq Yes ,
 the
-.Ar package
+.Cm package
 target will download packages missing from the repository from locations in
 ${PKG_PATH} and place them into
 .Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache/ .
@@ -1658,7 +1659,7 @@ User settings.
 If set to
 .Sq Yes ,
 the
-.Ar update
+.Cm update
 target will always update an installed package,
 as soon as its signature differs,
 and all dependencies that install packages will
@@ -1666,7 +1667,7 @@ also force an update.
 If set to
 .Sq hard ,
 the
-.Ar update
+.Cm update
 target will also update installed packages even when the signature
 did not change.
 .It Ev FULLDISTDIR
@@ -1720,9 +1721,9 @@ URL to the homepage of the software, if applicable.
 .It Ev IGNORE
 For ignored ports, set to the reasons for which the port is ignored.
 If non-empty, most common targets that do something (e.g.,
-.Ar fetch ,
-.Ar build ,
-.Ar install ...)
+.Cm fetch ,
+.Cm build ,
+.Cm install No ... )
 will be ignored.
 See also
 .Ev BATCH ,
@@ -1804,7 +1805,7 @@ for more details.
 Controls the behavior of
 .Xr pkg_create 1
 related targets, see
-.Ar print-package-args
+.Cm print-package-args
 for details.
 .It Ev LIBTOOL
 Location of the libtool binary.
@@ -1858,12 +1859,14 @@ Sets at least PATH, PREFIX, LOCALBASE, X11BASE, CFLAGS, TRUEPREFIX, DESTDIR,
 and the BSD_INSTALL_* macros.
 .It Ev MAKE_FLAGS
 Flags used for all make invocations, except for the
-.Ar fake
+.Cm fake
 stage, which adds
 .Ev FAKE_FLAGS
 (see
 .Ev ALL_FAKE_FLAGS )
-and for the test stage, which adds
+and for the
+.Cm test
+stage, which adds
 .Ev TEST_FLAGS
 (see
 .Ev ALL_TEST_FLAGS ) .
@@ -1880,7 +1883,7 @@ Introspection variable, see
 .Xr make 1 .
 .It Ev MAKESUMFILES
 List of all files that need to be retrieved by
-.Ar fetch-all ,
+.Cm fetch-all ,
 with
 .Ev DIST_SUBDIR
 prepended and with master site selection extension removed.
@@ -1909,7 +1912,7 @@ Defaults to
 List of primary locations from which distribution files and patchfiles are
 retrieved.
 See the
-.Ar fetch
+.Cm fetch
 target for details.
 Defaults to ${MASTER_SITES_GITHUB} for GitHub-hosted projects,
 see
@@ -1935,7 +1938,7 @@ Read-only.
 .It Ev MTREE_FILE
 .Xr mtree 8
 specification to check when creating a PLIST with the
-.Ar update-plist
+.Cm update-plist
 target.
 .Ev MTREE_FILE
 can hold a list of file names, to which
@@ -1964,26 +1967,26 @@ list them in
 File paths here should be relative to
 .Ev WRKSRC .
 These files are patched automatically at the end of
-.Ar pre-configure .
+.Cm pre-configure .
 .It Ev MODPERL_BIN_ADJ
 Shell fragment to patch the Perl interpreter path in executable scripts.
 Used by
 .Ev MODPERL_ADJ_FILES .
 .It Ev MODPERL_BUILD_TARGET
 Normal content of
-.Ar do-build
+.Cm do-build
 when
 .Ev CONFIGURE_STYLE
 uses perl.
 Provided as a separate variable if a port wants to override
-.Ar do-build
+.Cm do-build
 for its own reasons.
 .It Ev MODPERL_INSTALL_TARGET
 Likewise for
-.Ar do-install .
+.Cm do-install .
 .It Ev MODPERL_TEST_TARGET
 Likewise for
-.Ar do-test .
+.Cm do-test .
 .It Ev MODULES
 External modules mechanism, documented separately.
 Modules such as
@@ -2045,10 +2048,10 @@ User settings.
 Set to
 .Sq Yes
 to avoid
-.Ar checksum ,
-.Ar makesum ,
+.Cm checksum ,
+.Cm makesum ,
 and
-.Ar addsum
+.Cm addsum
 actions entirely.
 Beware of the full implications of this mechanism, namely that it disables
 the basic authentication mechanisms of the ports tree entirely.
@@ -2128,7 +2131,7 @@ Location for built packages.
 Defaults to
 .Pa ${PORTSDIR}/packages .
 See
-.Ar package
+.Cm package
 for details.
 .It Ev PATCH
 Command to use to apply all patches.
@@ -2136,9 +2139,9 @@ Defaults to
 .Pa /usr/bin/patch .
 .It Ev PATCHORIG
 Suffix used by
-.Ar patch
+.Cm patch
 to rename original files, and
-.Ar update-patches
+.Cm update-patches
 to re-generate
 .Pa ${PATCHDIR}/${PATCH_LIST}
 by looking for files using this suffix.
@@ -2150,10 +2153,12 @@ files in the ${DISTFILES},
 set this to something else, such as
 .Pa .pat.orig .
 See also
-.Ar distpatch ,
+.Cm distpatch ,
 .Ev DISTORIG .
 .It Ev PATCH_CASES
-In the normal distpatch stage (when
+In the normal
+.Cm distpatch
+stage (when
 .Ev PATCHFILES
 is not empty), this is the contents of a case statement, used to apply
 distribution patches.
@@ -2178,7 +2183,9 @@ do
 done
 .Ed
 .It Ev PATCHDIR
-Location for patches applied by patch target.
+Location for patches applied by the
+.Cm patch
+target.
 Default:
 .Pa patches .
 .It Ev PATCHFILES
@@ -2186,7 +2193,7 @@ Files to fetch from the master sites like
 .Ev DISTFILES ,
 but serving a different purpose, as they hold distribution patches that
 will be applied at the
-.Ar patch
+.Cm patch
 stage.
 See also
 .Ev SUPDISTFILES .
@@ -2196,10 +2203,10 @@ Full list of options used while applying port's patches.
 Set to
 .Sq Yes
 by the
-.Ar checkpatch
+.Cm checkpatch
 target.
 Don't touch unless the default
-.Ar checkpatch
+.Cm checkpatch
 target needs to be redefined.
 Ideally, user-defined patch subtargets ought to test checkpatch.
 In practice, they don't.
@@ -2207,7 +2214,7 @@ In practice, they don't.
 If set to
 .Sq Yes ,
 the
-.Ar patch
+.Cm patch
 stage will output extra debug information.
 .It Ev PATCH_DIST_ARGS
 Full list of options used while applying distribution patches.
@@ -2287,7 +2294,7 @@ to avoid checking the ports tree when solving
 .Ev WANTLIB
 .Po
 see
-.Ar wantlib-args
+.Cm wantlib-args
 .Pc .
 May result in bogus packages that mix
 .Cm @depends
@@ -2440,13 +2447,13 @@ Additionally, firmware files generally install under
 .It Ev PREPARE_CHECK_ONLY
 Build settings.
 Prevent the
-.Ar prepare
+.Cm prepare
 stage from installing anything, let it just check dependencies, and
 handle [:target] dependencies.
 Mostly used by
 .Xr dpb 1 ,
 which already installs everything before running
-.Ar prepare .
+.Cm prepare .
 .It Ev PROGRESS_METER
 User-settings.
 Defaults to
@@ -2564,7 +2571,7 @@ See
 .It Ev REFETCH
 User settings.
 If set to true,
-.Ar checksum
+.Cm checksum
 will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
 checksum off
 .Pa ftp.openbsd.org ,
@@ -2576,7 +2583,7 @@ Points to a list of files that specify inter-dependencies for
 If defined, each line of the file is either a comment (starting with #)
 or a pair of two files: most_recent older.
 At the end of
-.Ar post-patch ,
+.Cm post-patch ,
 .Xr touch 1
 will be used to ensure those files are put in the proper order.
 The files are assumed to be under
@@ -2607,7 +2614,7 @@ Specification of ports this port needs installed to be functional.
 Same format as
 .Ev LIB_DEPENDS .
 The corresponding packages will be built right before the
-.Ar install
+.Cm install
 stage, and
 .Xr pkg_add 1
 will take care of installing them.
@@ -2773,7 +2780,7 @@ Add other
 variables as needed.
 Some variable names are prefixed by a ^.
 This is only relevant for
-.Ar update-plist ,
+.Cm update-plist ,
 where it means the variable will only be substituted at the beginning of
 a path.
 .It Ev SUDO
@@ -2791,7 +2798,7 @@ For instance, a port might need architecture-specific files.
 .Ev SUPDISTFILES
 should hold a list of all distribution files and patchfiles that are not
 always needed, so that a mirror will be able to grab all files, or that
-.Ar makesum
+.Cm makesum
 will work.
 Having an overlap between
 .Ev SUPDISTFILES
@@ -2833,13 +2840,13 @@ Name of the tar binary.
 Read-only.
 Set to the list of special targets for a port
 .Po
-.Ar {pre,do,post}-*
+.Cm {pre,do,post}-*
 and module hooks
 .Pc .
 Used by introspection tools such as the sqlports package.
 .It Ev TEMPLATES
 Base location for the templates used in the
-.Ar readmes
+.Cm readmes
 target.
 User settings.
 Defaults to
@@ -2848,7 +2855,9 @@ Defaults to
 See
 .Ev BUILD_DEPENDS
 for specification.
-Test dependencies are only checked if the test stage is invoked.
+Test dependencies are only checked if the
+.Cm test
+stage is invoked.
 .It Ev TEST_ENV
 Additional environment variables passed to tests.
 Empty by default.
@@ -2883,7 +2892,7 @@ respectively.
 Read-only.
 Mostly the same as ${PREFIX}, except it never gets ${DESTDIR} prepended
 during
-.Ar fake .
+.Cm fake .
 Refer to
 .Sx THE FAKE FRAMEWORK
 section for details.
@@ -2999,7 +3008,7 @@ Use with caution, this is very seldom needed.
 Controls the behavior of
 .Xr pkg_create 1
 related targets, see
-.Ar print-package-args
+.Cm print-package-args
 for details.
 .It Ev WARNINGS
 User settings.
@@ -3046,8 +3055,8 @@ Subdirectory of ${WRKDIR} where the actual source is.
 Base for configuration (default: ${WRKDIST}).
 Note that WRKSRC may be a symbolic link, if set to ${WRKDIR}.
 .It Ev WRKINST
-Subdirectory of ${WRKDIR} where port normally installs (see
-.Ar fake
+Subdirectory of ${WRKDIR} where port normally installs (see the
+.Cm fake
 target).
 .It Ev WRKOBJDIR
 Used as a base for the actual port working directory.
@@ -3123,7 +3132,9 @@ or build and install new packages).
 Developers may use
 .Ev PKG_CREATE_NO_CHECKS
 instead, assuming they understand the implications.
-See print-package-args (wantlib-args) for details.
+See
+.Cm print-package-args Pq Cm wantlib-args
+for details.
 .It "Fatal: can't flavor a SUBDIR"
 A dependency mentions top_subdir,flavor.
 Flavor would then be ignored, as it is only applied to individual ports.
@@ -3189,7 +3200,7 @@ running
 Some tools such as GNU libtool will add directories living under
 .Pa ${WRKINST}
 to the shared library path during the
-.Ar fake
+.Cm fake
 stage.
 Of course,
 .Xr ldconfig 8
@@ -3208,7 +3219,9 @@ for instance.
 Also, will happen for multi-packages, where one sets LIB_DEPENDS to have
 a given build dependency (and corresponding WANTLIB for a given SUBPACKAGE).
 .Pp
-See print-package-args (lib-depends-args) for details.
+See
+.Cm print-package-args Pq Cm lib-depends-args
+for details.
 .It "Warning: FULLPKGNAME-sub defined but not FULLPKGPATH-sub"
 .Ev FULLPKGNAME-sub
 has been explicitly defined by the port, instead of relying on the default,
@@ -3257,7 +3270,7 @@ still produces a package, but leaves the manpage unformatted, in the hope
 that something will be able to make sense of it.
 .El
 .Sh FILES
-.Bl -tag -width files/md5
+.Bl -tag -width Ds
 .It Pa ../Makefile.inc
 Common Makefile fragment for a set of ports, included automatically.
 .It Pa /cdrom/distfiles
@@ -3285,7 +3298,7 @@ Multi-package ports will use DESCR${SUBPACKAGE}.
 specific documentation for a port, that will be installed as
 .Pa ${LOCALBASE}/share/doc/pkg-readmes/${FULLPKGNAME}
 at the end of
-.Ar fake .
+.Cm fake .
 Variables from
 .Ev SUBST_VARS
 will be expanded.
@@ -3296,15 +3309,15 @@ Startup script for <foo>.
 Will be installed as
 .Ar ${RCDIR}/<foo>
 at the end of
-.Ar fake .
+.Cm fake .
 Variables from
 .Ev SUBST_VARS
 will be expanded.
 .It Pa ${PORTSDIR}/infrastructure/db/fake.mtree
 Specification used for populating ${WRKINST} at the start of
-.Ar fake .
+.Cm fake .
 Use
-.Ar pre-fake
+.Cm pre-fake
 if this is incomplete.
 .It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}
 Default setup of ${PACKAGE_REPOSITORY}.
@@ -3337,32 +3350,30 @@ List of additional port specific policies, included automatically.
 .El
 .Sh THE FAKE FRAMEWORK
 The
-.Ar fake
+.Cm fake
 target is used to install the port in a private directory first, ready for
 packaging by the
-.Ar package
+.Cm package
 target, so that the actual installation will use the package.
 .Pp
 Essentially,
-.Ar fake
-invokes a real
-.Ar install
-process after tweaking a few variables.
+.Cm fake
+invokes a real install process after tweaking a few variables.
 .Pp
-.Ar fake
+.Cm fake
 first creates a skeleton tree under ${WRKINST}, using the
 .Xr mtree 8
 specification
 .Pa ${PORTSDIR}/infrastructure/db/fake.mtree .
 .Pp
 A
-.Ar pre-fake
+.Cm pre-fake
 target may be used to complete that skeleton tree.
 For instance, a few ports may need supplementary stuff to be present (as
 it would be installed if the port's dependencies were present).
 .Pp
 If
-.Ar {pre,do,post}-install
+.Cm {pre,do,post}-install
 overrides are present, they are used with some
 important changes, listed in
 .Ev FAKE_SETUP :
@@ -3379,7 +3390,7 @@ be taken care of by the package itself (for instance, ldconfig, or
 texinfo's install-info).
 .Pp
 If no
-.Ar do-install
+.Cm do-install
 override is present, the port is installed using
 .Bd -literal -offset 2n
 env -i ${MAKE_ENV} ${FAKE_SETUP} ${MAKE_PROGRAM} ${ALL_FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
@@ -3405,7 +3416,7 @@ or
 get copied to
 .Pa ${WRKINST}
 at the end of
-.Ar fake
+.Cm fake
 (see the
 .Sx FILES
 section above for details).
@@ -3468,8 +3479,8 @@ they cannot be confused with FLAVORS.
 In dependency checking and bulk builds, a subpackage can be
 specified after a comma, e.g., SUBDIR+=quake,-server.
 MULTI_PACKAGES only affects the actual package building step (and the
-describe step, since a MULTI_PACKAGES port will produce several
-descriptions).
+.Cm describe
+step, since a MULTI_PACKAGES port will produce several descriptions).
 .Pp
 If MULTI_PACKAGES is set, the packaging stage happens once for every
 subpackage, using subpackage-specific variables.
@@ -3533,7 +3544,7 @@ and
 .Ev LIB_DEPENDS
 are special.
 At the beginning of the build, during
-.Ar prepare ,
+.Cm prepare ,
 all build dependencies will be checked,
 which includes
 .Ev LIB_DEPENDS ,
@@ -3563,19 +3574,19 @@ settings that affect other subpackages, e.g., for include files packs).
 In terms of using the port, quite a few targets will have a subpackage
 specific subtarget:
 invoking
-.Ar package
+.Cm package
 is the same as invoking
-.Ar subpackage
+.Cm subpackage
 for all subpackages,
 invoking
-.Ar install-all
+.Cm install-all
 is the same as invoking
-.Ar install
+.Cm install
 for all subpackages,
 and invoking
-.Ar update
+.Cm update
 is the same as invoking
-subupdate
+.Cm subupdate
 for all subpackages.
 .Pp
 .Ev ONLY_FOR_ARCHS
@@ -3659,7 +3670,7 @@ and applying the same variable substitutions as other package information.
 .El
 .Pp
 Note that ${COMMENT} is currently not substituted, to speed up
-.Ar describe
+.Cm describe
 generation.
 .Pp
 To avoid substitution, variables can be escaped as follows:
@@ -3723,7 +3734,7 @@ do not need to be visible.
 Some programs will prefer to use rpath to find their own libraries.
 .Pp
 The special
-.Ar update-plist
+.Cm update-plist
 target does a fairly good job of automatically generating PLIST and
 PFRAG.shared fragments.
 .Pp
@@ -3732,7 +3743,7 @@ If
 points to a directory, all packing-lists from packages generated by
 .Xr pkg_create 1
 during the
-.Ar package
+.Cm package
 stage are saved in that location by a script:
 .Pa ${PORTSDIR}/infrastructure/bin/register-plist .
 This script strips some irrelevant information and normalizes the
@@ -3749,57 +3760,57 @@ This contrasts with the FLAVORS
 situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
 .Sh OBSOLETE TARGETS
-.Bl -tag -width do-configure
-.It Ar cdrom-packages , ftp-packages
+.Bl -tag -width Ds
+.It Cm cdrom-packages , ftp-packages
 Links are now created during the
-.Ar package
+.Cm package
 target.
-.It Ar depends-list
+.It Cm depends-list
 Renamed into
-.Ar full-build-depends
-.It Ar {pre,do}-extract
+.Cm full-build-depends .
+.It Cm {pre,do}-extract
 Don't override.
 Set
 .Ev EXTRACT_ONLY
 to nothing and override
-.Ar post-extract
+.Cm post-extract
 instead.
-.It Ar {pre,do,post}-fetch
+.It Cm {pre,do,post}-fetch
 These prevented bulk mechanisms from running properly.
-.It Ar {pre,do,post}-package
+.It Cm {pre,do,post}-package
 There is no port that requires special treatment during packaging,
 as
-.Ar {pre,do,post}-install
+.Cm {pre,do,post}-install
 should take care of every necessity.
-.It Ar fetch-list , Ar mirror-distfiles , Ar fetch-makefile
+.It Cm fetch-list , mirror-distfiles , fetch-makefile
 See
 .Xr mirroring-ports 7
 for more efficient and flexible ways to build mirrors.
-.It Ar obj
+.It Cm obj
 Starting with
 .Ox 3.3 ,
 using
 .Ev WRKOBJDIR
 no longer creates a symlink between the current directory and
 a subdirectory of ${WRKOBJDIR}, so
-.Ar obj
+.Cm obj
 is no longer applicable.
-.It Ar print-depends
+.It Cm print-depends
 Use
-.Ar print-build-depends
+.Cm print-build-depends
 and
-.Ar print-run-depends
+.Cm print-run-depends
 instead.
-.It Ar print-depends-list
+.It Cm print-depends-list
 Renamed into
-.Ar print-build-depends
-.It Ar print-package-depends
+.Cm print-build-depends .
+.It Cm print-package-depends
 Renamed into
-.Ar print-run-depends
-.It Ar print-package-signature
+.Cm print-run-depends .
+.It Cm print-package-signature
 Renamed into
-.Ar print-update-signature
-.It Ar readme , readmes
+.Cm print-update-signature .
+.It Cm readme , readmes
 replaced by the
 .Pa databases/ports-readmes
 port, using the Template Toolkit
@@ -3809,7 +3820,7 @@ port, using the Template Toolkit
 instead of hand-coded substitutions.
 .El
 .Sh OBSOLETE VARIABLES
-.Bl -tag -width MASTER_SITES
+.Bl -tag -width Ds
 .It Ev BIN_PACKAGES
 Old user settings.
 The infrastructure always trusts the repository to contain correct packages.
@@ -4109,7 +4120,7 @@ This information is now built on the fly by
 .Xr pkg_create 1 .
 .El
 .Sh OBSOLETE FILES
-.Bl -tag -width files/md5
+.Bl -tag -width Ds
 .It Pa {files,patches,pkg}.${ARCH}
 Offensive to introspection, makes it impossible to build a decent sqlports
 on a given arch.
@@ -4127,12 +4138,13 @@ to match other
 .Bx ,
 and save directories.
 .It Pa ${SCRIPTDIR}/{pre,do,post}-*
-Identical functionality can be obtained through a {pre,do,post}-* target,
-invoking the script manually if necessary.
+Identical functionality can be obtained through a
+.Cm {pre,do,post}-*
+target, invoking the script manually if necessary.
 .It Pa ${SCRIPTDIR}/configure
 No longer invoked automatically.
 Just inline the instructions in
-.Ar do-configure
+.Cm do-configure
 in the Makefile, or put the script in ${FILESDIR} and
 invoke it.
 .It Pa ${PKGDIR}/COMMENT

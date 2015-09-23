@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.195 2015/08/31 19:51:17 kili Exp $
+.\"	$OpenBSD: port-modules.5,v 1.196 2015/09/23 01:11:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2015 $
+.Dd $Mdocdate: September 23 2015 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -141,31 +141,31 @@ to be needed were added.
 If several modules define the same hook, hook behaviors will be
 invoked in sequence.
 .Bl -tag -width do-configure
-.It Ar patch
+.It Cm patch
 There is a
-.Ar post-patch
+.Cm post-patch
 hook that can be activated by defining
 .Ev MODFOO_post-patch .
 It will be run right after
-.Ar post-patch
+.Cm post-patch
 and before
 .Ev REORDER_DEPENDENCIES
 touches things.
-.It Ar configure
+.It Cm configure
 There is a
-.Ar pre-configure
+.Cm pre-configure
 hook that can be activated by defining
 .Ev MODFOO_pre-configure .
 It will be run right after
-.Ar pre-configure .
+.Cm pre-configure .
 The normal
-.Ar do-configure
+.Cm do-configure
 behavior is to invoke all
 .Ev MODFOO_configure
 contents that are defined in
 .Ev CONFIGURE_STYLE .
 By default,
-.Ar configure
+.Cm configure
 will do nothing.
 .Pp
 Some
@@ -178,56 +178,56 @@ and import the correct module to override behavior.
 .Pp
 Contrary to other hooks, module behavior is not invoked in
 addition to
-.Ar do-configure ,
+.Cm do-configure ,
 but as the normal configure process.
 If
-.Ar do-configure
+.Cm do-configure
 is overridden, normal hook processing will not happen.
-.It Ar fake
+.It Cm fake
 There is a
-.Ar pre-fake
+.Cm pre-fake
 hook that can be activated by defining
 .Ev MODFOO_pre-fake .
 This will be invoked right after
 .Xr mtree 8 ,
 and before the normal
-.Ar pre-fake
+.Cm pre-fake
 behavior.
 .Pp
 This can occasionnally be used for ports that require some specific
 fake installation setup that will be provided by runtime dependencies.
-.It Ar install
+.It Cm install
 There is a
-.Ar post-install
+.Cm post-install
 hook that can be activated by defining
 .Ev MODFOO_post-install .
 This will be invoked at the end of
-.Ar install ,
+.Cm install ,
 right after the normal
-.Ar post-install
+.Cm post-install
 behavior.
 .El
 .Pp
 Some targets, such as
-.Ar do-build
+.Cm do-build
 or
-.Ar do-install ,
+.Cm do-install ,
 can't be overridden simply.
 A module that, for instance, requires specific
-.Ar do-build
+.Cm do-build
 behavior should do so in two steps:
 .Bl -bullet
 .It
 Define a variable named
 .Ev MODFOO_BUILD_TARGET
 that contains the commands necessary for
-.Ar do-build :
+.Cm do-build :
 .Bd -literal -offset indent
 MODFOO_BUILD_TARGET = cmd1; cmd2
 .Ed
 .It
 Override
-.Ar do-build
+.Cm do-build
 only if it's not already defined by the port proper:
 .Bd -literal -offset indent
 \&.if !target(do-build)
@@ -423,7 +423,7 @@ example scripts.
 will be set to the standard installation directory for
 examples.
 Sets the
-.Ar post-install
+.Cm post-install
 target if none has been defined to install the examples,
 otherwise
 .Ev MODCPAN_POST_INSTALL
@@ -438,7 +438,7 @@ Adds small framework for testing ports that require running MariaDB.
 Defines
 .Ev MODMARIADB_TEST_TARGET
 which consists actual commands to run in
-.Ar do-test
+.Cm do-test
 target.
 If this target isn't defined, it will be added automatically.
 .Pp
@@ -483,7 +483,7 @@ Adds small framework for testing ports that require running Postgres.
 Defines
 .Ev MODPOSTGRESQL_TEST_TARGET
 which consists actual commands to run in
-.Ar do-test
+.Cm do-test
 target.
 If this target isn't defined, it will be added automatically.
 .Pp
@@ -526,7 +526,7 @@ and fills up
 and
 .Ev MAKE_ENV .
 Sets up
-.Ar configure
+.Cm configure
 target.
 If
 .Ev CONFIGURE_STYLE
@@ -610,9 +610,9 @@ and
 Also defines an overridable
 .Ev MODSCONS_FLAGS .
 It provides a
-.Ar do-build
+.Cm do-build
 and
-.Ar do-install
+.Cm do-install
 targets that can be overridden in the port Makefile.
 .It devel/waf
 Adds
@@ -623,16 +623,16 @@ to
 to
 .Ev MODULES ,
 and provides
-.Ar do-configure ,
-.Ar do-build ,
-.Ar do-install
+.Cm do-configure ,
+.Cm do-build ,
+.Cm do-install
 and
-.Ar post-install
+.Cm post-install
 targets.
-.Ar do-build ,
-.Ar do-install
+.Cm do-build ,
+.Cm do-install
 and
-.Ar post-install
+.Cm post-install
 can be overridden in the port Makefile.
 .It fortran
 Sets
@@ -709,7 +709,7 @@ then this module provides
 and
 .Ev MODJAVA_BUILD_TARGET_NAME ,
 as well as a
-.Ar do-build
+.Cm do-build
 target (if not already defined).
 It heeds
 .Ev NO_BUILD .
@@ -758,10 +758,10 @@ Also affects
 .Ev CONFIGURE_STYLE
 and
 .Ev SUBST_VARS .
-.Ar do-build ,
-.Ar do-install
+.Cm do-build ,
+.Cm do-install
 and
-.Ar do-test
+.Cm do-test
 targets are provided if the port itself didn't set them.
 If
 .Ar register
@@ -793,7 +793,7 @@ and
 macros.)
 .Pp
 During execution of
-.Ar post-patch
+.Cm post-patch
 target module moves source code from
 .Pa ${MODGO_SUBDIR}
 to
@@ -803,7 +803,7 @@ subdirectory of
 - specially-crafted Go workspace located at
 .Pa ${WRKDIR}/go .
 During
-.Ar do-build
+.Cm do-build
 module calls
 .Dq go install
 with
@@ -815,7 +815,7 @@ runs its output through sed to prevent writes outside
 sandbox and sends output to
 .Xr sh 1 .
 During
-.Ar do-install
+.Cm do-install
 it copies executables from
 .Pa ${MODGO_WORKSPACE}/bin
 to
@@ -870,7 +870,7 @@ Defaults to
 .It Ev MODGO_SETUP_WORKSPACE
 Commands setting up Go workspace for building ports.
 By default, happens during execution of
-.Ar post-patch
+.Cm post-patch
 target.
 .It Ev MODGO_BUILDDEP
 Controls whether contents of
@@ -977,9 +977,9 @@ are set,
 is appended to
 .Ev BUILD_DEPENDS
 and a
-.Ar do-build
+.Cm do-build
 and
-.Ar do-install
+.Cm do-install
 targets are provided to use nant for building.
 If these targets are already defined, one can use
 .Ev MODMONO_BUILD_TARGET
@@ -989,7 +989,7 @@ instead in the corresponding target.
 .Ev DLLMAP_FILES
 defines in which files the module will substitute hardcoded
 shared library versions using a
-.Ar post-configure
+.Cm post-configure
 target.
 .It lang/node
 Adds common dependencies to
@@ -1011,8 +1011,9 @@ will be appened to
 .Ev TEST_DEPENDS
 and a default
 .Ev MODNODE_TEST_TARGET
-will be defined, along with a do-test target if it has not
-already been set.
+will be defined, along with a
+.Cm do-test
+target if it has not already been set.
 If "expresso" isn't appended to
 .Ev CONFIGURE_STYLE ,
 .Ev TEST_TARGET
@@ -1039,8 +1040,11 @@ and
 If the npm package depends on other npm packages, the npm package names it
 depends on should be listed in
 .Ev MODNODE_DEPENDS .
-Adds default do_build and do_install tasks, and you can reference the default
-implementations via
+Adds default
+.Cm do_build
+and
+.Cm do_install
+tasks, and you can reference the default implementations via
 .Ev MODNODE_BUILD_TARGET
 and
 .Ev MODNODE_INSTALL_TARGET .
@@ -1060,7 +1064,12 @@ property is set.
 When
 .Ev CONFIGURE_STYLE
 is set to `oasis',
-overrides for the do\-build, do\-install and do\-test targets are added.
+overrides for the
+.Cm do-build ,
+.Cm do-install ,
+and
+.Cm do-test
+targets are added.
 .It lang/php/pecl
 Used for ports for PHP PECL extensions.
 Sets default
@@ -1080,7 +1089,7 @@ and
 unless
 .Ev NO_TEST
 or a
-.Ar do-test
+.Cm do-test
 target is defined.
 Adds common dependencies to
 .Ev RUN_DEPENDS
@@ -1133,7 +1142,7 @@ using MODPY_BIN, list them in
 .Ev MODPY_ADJ_FILES .
 These are prefixed with WRKSRC and replaced automatically
 at the end of
-.Ar pre-configure .
+.Cm pre-configure .
 Also affects
 .Ev CATEGORIES ,
 .Ev MAKE_ENV ,
@@ -1142,7 +1151,7 @@ Also affects
 and
 .Ev SUBST_VARS .
 May affect the
-.Ar test
+.Cm test
 target.
 If
 .Ev MODPY_PI
@@ -1319,7 +1328,7 @@ variable as source directory
 and
 .Ev MOZ
 as target directory within
-.Ar do-install .
+.Cm do-install .
 .Pp
 Individual port Makefile must set
 .Ev MOZILLA_PROJECT ,
@@ -1336,14 +1345,14 @@ which contains the list of
 files to run
 .Ev SUBST_CMD
 on during
-.Ar pre-configure ,
+.Cm pre-configure ,
 and
 .Ev MOZILLA_AUTOCONF_DIRS
 which
 contains the list of dirs where
 .Ev AUTOCONF
 will be run during
-.Ar pre-configure .
+.Cm pre-configure .
 .It www/pear
 Used for PHP PEAR ports.
 Sets default
@@ -1357,7 +1366,7 @@ to
 Sets
 .Ev NO_TEST
 unless a
-.Ar do-test
+.Cm do-test
 target is defined.
 Adds common dependencies to
 .Ev RUN_DEPENDS
