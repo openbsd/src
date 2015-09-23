@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.9 2015/05/11 08:41:43 mpi Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.10 2015/09/23 12:43:52 mikeb Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -254,13 +254,6 @@ struct lacp_softc {
 
 #define	LACP_PORT(_lp)	((struct lacp_port *)(_lp)->tp_psc)
 #define	LACP_SOFTC(_sc)	((struct lacp_softc *)(_sc)->tr_psc)
-
-#define LACP_LOCK_INIT(_lsc)		mtx_init(&(_lsc)->lsc_mtx, \
-					    "lacp mtx", NULL, MTX_DEF)
-#define LACP_LOCK_DESTROY(_lsc)		mtx_destroy(&(_lsc)->lsc_mtx)
-#define LACP_LOCK(_lsc)			mtx_lock(&(_lsc)->lsc_mtx)
-#define LACP_UNLOCK(_lsc)		mtx_unlock(&(_lsc)->lsc_mtx)
-#define LACP_LOCK_ASSERT(_lsc)		mtx_assert(&(_lsc)->lsc_mtx, MA_OWNED)
 
 int		lacp_input(struct trunk_port *, struct mbuf *);
 struct trunk_port *lacp_select_tx_port(struct trunk_softc *, struct mbuf *);
