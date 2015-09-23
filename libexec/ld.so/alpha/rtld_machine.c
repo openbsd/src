@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.54 2015/08/26 02:04:41 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.55 2015/09/23 22:52:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -289,11 +289,15 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			object->got_addr = ooff + this->st_value;
 	}
 
-	this = NULL;
-	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
-	if (this != NULL)
-		object->got_size = ooff + this->st_value  - object->got_addr;
+	if (object->got_addr != 0) {
+		this = NULL;
+		ooff = _dl_find_symbol("__got_end", &this,
+		    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
+		    object, NULL);
+		if (this != NULL)
+			object->got_size = ooff + this->st_value
+			    - object->got_addr;
+	}
 
 	plt_addr = 0;
 	object->plt_size = 0;
@@ -313,24 +317,23 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				plt_addr = ooff + this->st_value;
 		}
 
-		this = NULL;
-		ooff = _dl_find_symbol("__plt_end", &this,
-		    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT, NULL,
-		    object, NULL);
-		if (this != NULL)
-			object->plt_size = ooff + this->st_value  - plt_addr;
+		if (plt_addr != 0) {
+			this = NULL;
+			ooff = _dl_find_symbol("__plt_end", &this,
+			    SYM_SEARCH_OBJ | SYM_NOWARNNOTFOUND | SYM_PLT,
+			    NULL, object, NULL);
+			if (this != NULL)
+				object->plt_size = ooff + this->st_value
+				    - plt_addr;
+		}
 	}
 
-	if (object->got_addr == 0)
-		object->got_start = 0;
-	else {
+	if (object->got_size != 0) {
 		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
 		object->got_size += object->got_addr - object->got_start;
 		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
 	}
-	if (plt_addr == 0)
-		object->plt_start = 0;
-	else {
+	if (object->plt_size != 0) {
 		object->plt_start = ELF_TRUNC(plt_addr, _dl_pagesz);
 		object->plt_size += plt_addr - object->plt_start;
 		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
