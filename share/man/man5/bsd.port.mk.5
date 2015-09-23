@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.424 2015/09/23 01:11:13 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.425 2015/09/23 01:29:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -223,7 +223,8 @@ Shorthand for
 .Sq work flavors packages plist .
 .El
 .It Cm clean-depends
-Shorthand for make clean=depends.
+Shorthand for
+.Ql make clean=depends .
 .It Cm configure
 Configure the port.
 Might be a void operation.
@@ -242,7 +243,8 @@ Check all the port's dependencies, that is:
 Prints a one-line index entry of the port, suitable for
 .Pa ${PORTSDIR}/INDEX .
 .It Cm distclean
-Shorthand for make clean=dist.
+Shorthand for
+.Ql make clean=dist .
 .It Cm distpatch
 Apply distribution patches only.
 See
@@ -510,7 +512,8 @@ directly.
 So, if the
 .Cm do-patch
 target is overridden, it should still begin by calling
-make distpatch, before applying
+.Ql make distpatch ,
+before applying
 .Ox
 specific patches.
 Accordingly, the exact sequence of hooks is:
@@ -1217,7 +1220,7 @@ If set to
 every package build will verify that shared libraries are correctly
 registered.
 This is essentially the same as running
-.Nm make Ar lib-depends-check
+.Ql make lib-depends-check
 after each package build.
 Defaults to
 .Sq \&No ,
@@ -1262,8 +1265,9 @@ which does not compute a checksum at all.
 .It Ev CLEANDEPENDS
 If set to
 .Sq Yes ,
-.Sq make clean
-will also clean dependencies.
+the
+.Cm clean
+target will also clean dependencies.
 Can be overridden on a per-${PKGPATH} basis,
 by setting CLEANDEPENDS_${PKGPATH}.
 .It Ev COMMENT
@@ -2376,7 +2380,7 @@ and
 .Ev BUILD_PACKAGES
 taken into account.
 Mostly used as
-.Sq make show=PKGNAMES
+.Ql make show=PKGNAMES
 to verify that bumped package names are correct.
 .It Ev PKGNAME-foo
 Package name for sub-package foo, if the default value
@@ -2416,7 +2420,7 @@ package or its dependencies goes backward, thus catching
 .Ev EPOCH
 issues.
 This directory is never cleaned during normal operation.
-.Sq make clean=plist
+.Ql make clean=plist
 should only ever be used during debugging by port maintainers.
 Defaults to
 .Pa ${PORTSDIR}/plist/${MACHINE_ARCH} .
@@ -3238,7 +3242,7 @@ This is only a warning because the symlink may point to a run-time dependency,
 which obviously won't exist under
 .Pa ${WRKINST}
 at the time
-.Li make package
+.Ql make package
 is run.
 .It "Warning: @option no-default-conflict with no @conflict"
 Warning message comes from
