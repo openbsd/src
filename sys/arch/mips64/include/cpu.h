@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.105 2015/07/02 01:33:59 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.106 2015/09/23 21:18:38 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -300,7 +300,7 @@ void	cp0_calibrate(struct cpu_info *);
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the PICA, request an ast to send us
+ * buffer pages are invalid.  On MIPS designs, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
 #define	need_proftick(p)	aston(p)
