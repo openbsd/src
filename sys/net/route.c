@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.241 2015/09/22 10:05:00 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.242 2015/09/23 08:49:46 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -350,12 +350,15 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int tableid)
 			rt0 = rt;
 			error = rtrequest1(RTM_RESOLVE, &info, RTP_DEFAULT,
 			    &rt, tableid);
-			if (error)
+			if (error) {
+				rt0->rt_use++;
 				goto miss;
+			}
 			/* Inform listeners of the new route */
 			rt_sendmsg(rt, RTM_ADD, tableid);
 			rtfree(rt0);
 		}
+		rt->rt_use++;
 	} else {
 		rtstat.rts_unreach++;
 miss:

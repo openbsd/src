@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.298 2015/09/13 17:53:44 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.299 2015/09/23 08:49:46 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -207,7 +207,6 @@ reroute:
 			ifp = if_ref(ro->ro_rt->rt_ifp);
 		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
 			mtu = ifp->if_mtu;
-		ro->ro_rt->rt_use++;
 
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.140 2015/09/11 15:12:29 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.141 2015/09/23 08:49:46 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -758,7 +758,6 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		}
 
 		ia = ifatoia(rt->rt_ifa);
-		rt->rt_use++;
 		rtfree(rt);
 	}
 

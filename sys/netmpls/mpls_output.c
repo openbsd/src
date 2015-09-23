@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.24 2015/09/13 17:53:44 mpi Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.25 2015/09/23 08:49:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -133,7 +133,6 @@ mpls_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		rt->rt_use++;
 	}
 
 	/* write back TTL */

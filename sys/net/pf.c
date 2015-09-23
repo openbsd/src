@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.944 2015/09/13 17:53:44 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.945 2015/09/23 08:49:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5520,7 +5520,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		}
 
 		ifp = rt->rt_ifp;
-		rt->rt_use++;
 
 		if (rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(rt->rt_gateway);
