@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.3 2015/09/03 09:22:40 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.4 2015/09/23 03:19:55 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -42,7 +42,7 @@ EFI_RUNTIME_SERVICES	*RS;
 EFI_HANDLE		 IH, efi_bootdp = NULL;
 EFI_PHYSICAL_ADDRESS	 heap;
 EFI_LOADED_IMAGE	*loadedImage;
-UINTN			 heapsiz = 3 * 1024 * 1024;
+UINTN			 heapsiz = 1 * 1024 * 1024;
 UINTN			 mmap_key;
 static EFI_GUID		 imgdp_guid = { 0xbc62157e, 0x3e33, 0x4fec,
 			  { 0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf }};
@@ -199,7 +199,7 @@ efi_heap_init(void)
 {
 	EFI_STATUS	 status;
 
-	heap = 0x1000000;	/* Below kernel base address */
+	heap = HEAP_LIMIT;
 	status = EFI_CALL(BS->AllocatePages, AllocateMaxAddress, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(heapsiz), &heap);
 	if (status != EFI_SUCCESS)

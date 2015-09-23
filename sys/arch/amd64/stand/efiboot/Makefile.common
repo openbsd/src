@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.1 2015/09/02 01:52:25 yasuoka Exp $
+#	$OpenBSD: Makefile.common,v 1.2 2015/09/23 03:19:55 yasuoka Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -6,6 +6,8 @@ EFIDIR=		${.CURDIR}/../../efi
 
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
+
+EFI_HEAP_LIMIT=	0xc00000
 
 LDFLAGS+=	-nostdlib -T${.CURDIR}/../${LDSCRIPT} -Bsymbolic -shared
 
@@ -65,6 +67,7 @@ ${PROG}: ${PROG.so}
 .include <bsd.prog.mk>
 CFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
+CPPFLAGS+=	-DHEAP_LIMIT=${EFI_HEAP_LIMIT}
 
 ${PROG.so}: ${OBJS}
 	${LD} ${LDFLAGS} -o ${.TARGET}.tmp ${OBJS} ${LDADD}
