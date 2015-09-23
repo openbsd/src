@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.46 2015/07/19 21:40:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.47 2015/09/23 17:21:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -4718,7 +4718,7 @@ iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	if (in->in_assoc) {
 		IEEE80211_ADDR_COPY(cmd->bssid_addr, ni->ni_bssid);
 	} else {
-		memset(cmd->bssid_addr, 0, sizeof(cmd->bssid_addr));
+		IEEE80211_ADDR_COPY(cmd->bssid_addr, etherbroadcastaddr);
 	}
 	iwm_mvm_ack_rates(sc, in, &cck_ack_rates, &ofdm_ack_rates);
 	cmd->cck_rates = htole32(cck_ack_rates);
