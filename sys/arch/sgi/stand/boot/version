@@ -1,10 +1,10 @@
-/*	$OpenBSD: version,v 1.6 2014/02/22 20:27:21 miod Exp $	*/
-/* Public domain. Come on, it can hardly be considered as code. */
+/*	$OpenBSD: version,v 1.7 2015/09/23 21:22:27 miod Exp $	*/
+/* Public domain. Come on, this can hardly be considered as code. */
 
 #if 0
 
 No version strings up to 2012
-	many changes, but nothing to tell bootblocks about, except perhaps
+	many changes, but nothing to tell bootblocks apart, except perhaps
 	their size (har, har)
 
 1.1

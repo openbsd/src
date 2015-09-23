@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22.h,v 1.10 2015/09/05 21:14:07 miod Exp $	*/
+/*	$OpenBSD: ip22.h,v 1.11 2015/09/23 21:22:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -39,7 +39,7 @@
 
 extern int hpc_old;	/* nonzero if at least one HPC 1.x device found */
 extern int bios_year;
-extern int ip22_ecc;	/* nonzero if runinng with an ECC memory system */
+extern int ip22_ecc;	/* nonzero if running with an ECC memory system */
 
 void	ip22_ConfigCache(struct cpu_info *);
 extern void (*ip22_extsync)(struct cpu_info *, paddr_t, size_t, int);
