@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp_subr.S,v 1.2 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: cache_tfp_subr.S,v 1.3 2015/09/23 19:04:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -45,12 +45,12 @@
 LEAF(tfp_inval_icache, 0)						/* { */
 
 #define	ICACHE_CHUNK_INVALIDATE \
-	beqz	a0, 9f; \
-	 NOP; \
-	NOP; \
-	NOP; \
 	subu	a0, 32; \
 	NOP; \
+	NOP; \
+	NOP; \
+	blez	a0, 9f; \
+	 NOP; \
 	NOP; \
 	NOP
 
@@ -74,7 +74,7 @@ LEAF(tfp_inval_icache, 0)						/* { */
 	
 	ICACHE_16KB_INVALIDATE
 
-	bnez	a0, tfp_inval_icache	/* wrap around */
+	b	tfp_inval_icache	/* wrap around */
 	 NOP
 9:
 	j	ra
