@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.2 2015/09/23 03:19:55 yasuoka Exp $
+#	$OpenBSD: Makefile.common,v 1.3 2015/09/23 03:27:59 yasuoka Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -11,7 +11,7 @@ EFI_HEAP_LIMIT=	0xc00000
 
 LDFLAGS+=	-nostdlib -T${.CURDIR}/../${LDSCRIPT} -Bsymbolic -shared
 
-COPTS+=		-DEFIBOOT -DNEEDS_HEAP_H -DLINKADDR=${LINKADDR} -I${.CURDIR}/..
+COPTS+=		-DEFIBOOT -DNEEDS_HEAP_H -I${.CURDIR}/..
 COPTS+=		-I${EFIDIR}/include -I${S}/stand/boot
 COPTS+=		-ffreestanding -std=gnu99
 COPTS+=		-fshort-wchar -fPIC
