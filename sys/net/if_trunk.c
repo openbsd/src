@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.112 2015/09/23 12:40:12 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.113 2015/09/23 12:42:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -98,9 +98,12 @@ int	 trunk_rr_input(struct trunk_softc *, struct trunk_port *,
 /* Active failover */
 int	 trunk_fail_attach(struct trunk_softc *);
 int	 trunk_fail_detach(struct trunk_softc *);
+int	 trunk_fail_port_create(struct trunk_port *);
+void	 trunk_fail_port_destroy(struct trunk_port *);
 int	 trunk_fail_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_fail_input(struct trunk_softc *, struct trunk_port *,
 	    struct mbuf *);
+void	 trunk_fail_linkstate(struct trunk_port *);
 
 /* Loadbalancing */
 int	 trunk_lb_attach(struct trunk_softc *);
@@ -1292,11 +1295,14 @@ trunk_fail_attach(struct trunk_softc *tr)
 	tr->tr_input = trunk_fail_input;
 	tr->tr_init = NULL;
 	tr->tr_stop = NULL;
-	tr->tr_port_create = NULL;
-	tr->tr_port_destroy = NULL;
-	tr->tr_linkstate = NULL;
+	tr->tr_port_create = trunk_fail_port_create;
+	tr->tr_port_destroy = trunk_fail_port_destroy;
+	tr->tr_linkstate = trunk_fail_linkstate;
 	tr->tr_req = NULL;
 	tr->tr_portreq = NULL;
+
+	/* Get primary or the next active port */
+	tr->tr_psc = (caddr_t)trunk_link_active(tr, tr->tr_primary);
 
 	return (0);
 }
@@ -1304,16 +1310,46 @@ trunk_fail_attach(struct trunk_softc *tr)
 int
 trunk_fail_detach(struct trunk_softc *tr)
 {
+	tr->tr_psc = NULL;
 	return (0);
+}
+
+int
+trunk_fail_port_create(struct trunk_port *tp)
+{
+	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
+
+	/* Get primary or the next active port */
+	tr->tr_psc = (caddr_t)trunk_link_active(tr, tr->tr_primary);
+	return (0);
+}
+
+void
+trunk_fail_port_destroy(struct trunk_port *tp)
+{
+	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
+	struct trunk_port *tp_next;
+
+	if ((caddr_t)tp == tr->tr_psc) {
+		/* Get the next active port */
+		tp_next = trunk_link_active(tr, SLIST_NEXT(tp, tp_entries));
+		if (tp_next == tp)
+			tr->tr_psc = NULL;
+		else
+			tr->tr_psc = (caddr_t)tp_next;
+	} else {
+		/* Get primary or the next active port */
+		tr->tr_psc = (caddr_t)trunk_link_active(tr, tr->tr_primary);
+	}
 }
 
 int
 trunk_fail_start(struct trunk_softc *tr, struct mbuf *m)
 {
-	struct trunk_port *tp;
+	struct trunk_port *tp = (struct trunk_port *)tr->tr_psc;
 
 	/* Use the master port if active or the next available port */
-	if ((tp = trunk_link_active(tr, tr->tr_primary)) == NULL) {
+	if (tp == NULL) {
 		m_freem(m);
 		return (ENOENT);
 	}
@@ -1324,24 +1360,17 @@ trunk_fail_start(struct trunk_softc *tr, struct mbuf *m)
 int
 trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp, struct mbuf *m)
 {
-	struct trunk_port *tmp_tp;
-	int accept = 0;
+	if ((caddr_t)tp == tr->tr_psc)
+		return (0);
+	return (-1);
+}
 
-	if (tp == tr->tr_primary) {
-		accept = 1;
-	} else if (tr->tr_primary->tp_link_state == LINK_STATE_DOWN) {
-		tmp_tp = trunk_link_active(tr, NULL);
-		/*
-		 * If tmp_tp is null, we've received a packet when all
-		 * our links are down. Weird, but process it anyways.
-		 */
-		if ((tmp_tp == NULL || tmp_tp == tp))
-			accept = 1;
-	}
-	if (!accept)
-		return (-1);
+void
+trunk_fail_linkstate(struct trunk_port *tp)
+{
+	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
 
-	return (0);
+	tr->tr_psc = (caddr_t)trunk_link_active(tr, tr->tr_primary);
 }
 
 /*
