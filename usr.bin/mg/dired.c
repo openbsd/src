@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.73 2015/09/21 06:59:54 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.74 2015/09/23 05:03:03 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -273,8 +273,10 @@ d_del(int f, int n)
 	while (n--) {
 		if (llength(curwp->w_dotp) > 0)
 			lputc(curwp->w_dotp, 0, 'D');
-		if (lforw(curwp->w_dotp) != curbp->b_headp)
+		if (lforw(curwp->w_dotp) != curbp->b_headp) {
 			curwp->w_dotp = lforw(curwp->w_dotp);
+			curwp->w_dotline++;
+		}
 	}
 	curwp->w_rflag |= WFEDIT | WFMOVE;
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
@@ -289,8 +291,10 @@ d_undel(int f, int n)
 	while (n--) {
 		if (llength(curwp->w_dotp) > 0)
 			lputc(curwp->w_dotp, 0, ' ');
-		if (lforw(curwp->w_dotp) != curbp->b_headp)
+		if (lforw(curwp->w_dotp) != curbp->b_headp) {
 			curwp->w_dotp = lforw(curwp->w_dotp);
+			curwp->w_dotline++;
+		}
 	}
 	curwp->w_rflag |= WFEDIT | WFMOVE;
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
@@ -303,8 +307,10 @@ d_undelbak(int f, int n)
 	if (n < 0)
 		return (d_undel(f, -n));
 	while (n--) {
-		if (lback(curwp->w_dotp) != curbp->b_headp)
+		if (lback(curwp->w_dotp) != curbp->b_headp) {
 			curwp->w_dotp = lback(curwp->w_dotp);
+			curwp->w_dotline--;
+		}
 		if (llength(curwp->w_dotp) > 0)
 			lputc(curwp->w_dotp, 0, ' ');
 	}
@@ -364,20 +370,27 @@ d_expunge(int f, int n)
 {
 	struct line	*lp, *nlp;
 	char		 fname[NFILEN], sname[NFILEN];
+	int		 tmp;
+
+	tmp = curwp->w_dotline;
+	curwp->w_dotline = 0;
 
 	for (lp = bfirstlp(curbp); lp != curbp->b_headp; lp = nlp) {
+		curwp->w_dotline++;
 		nlp = lforw(lp);
 		if (llength(lp) && lgetc(lp, 0) == 'D') {
 			switch (d_makename(lp, fname, sizeof(fname))) {
 			case ABORT:
 				dobeep();
 				ewprintf("Bad line in dired buffer");
+				curwp->w_dotline = tmp;
 				return (FALSE);
 			case FALSE:
 				if (unlink(fname) < 0) {
 					(void)xbasename(sname, fname, NFILEN);
 					dobeep();
 					ewprintf("Could not delete '%s'", sname);
+					curwp->w_dotline = tmp;
 					return (FALSE);
 				}
 				break;
@@ -387,15 +400,19 @@ d_expunge(int f, int n)
 					dobeep();
 					ewprintf("Could not delete directory "
 					    "'%s'", sname);
+					curwp->w_dotline = tmp;
 					return (FALSE);
 				}
 				break;
 			}
 			lfree(lp);
 			curwp->w_bufp->b_lines--;
+			if (tmp > curwp->w_dotline)
+				tmp--;
 			curwp->w_rflag |= WFFULL;
 		}
 	}
+	curwp->w_dotline = tmp;
 	return (TRUE);
 }
 
