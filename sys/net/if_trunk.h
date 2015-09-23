@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.24 2015/09/10 13:32:19 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.25 2015/09/23 12:40:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -139,7 +139,6 @@ struct trunk_port {
 	void				*dh_cookie;	/* if detach hook */
 
 	/* Redirected callbacks */
-	void	(*tp_watchdog)(struct ifnet *);
 	int	(*tp_ioctl)(struct ifnet *, u_long, caddr_t);
 	int	(*tp_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
@@ -194,7 +193,6 @@ struct trunk_softc {
 	/* Trunk protocol callbacks */
 	int	(*tr_detach)(struct trunk_softc *);
 	int	(*tr_start)(struct trunk_softc *, struct mbuf *);
-	int	(*tr_watchdog)(struct trunk_softc *);
 	int	(*tr_input)(struct trunk_softc *, struct trunk_port *,
 		    struct mbuf *);
 	int	(*tr_port_create)(struct trunk_port *);

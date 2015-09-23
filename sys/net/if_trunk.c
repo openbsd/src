@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.111 2015/09/10 16:41:30 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.112 2015/09/23 12:40:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -60,7 +60,6 @@ int	 trunk_capabilities(struct trunk_softc *);
 void	 trunk_port_lladdr(struct trunk_port *, u_int8_t *);
 int	 trunk_port_create(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_destroy(struct trunk_port *);
-void	 trunk_port_watchdog(struct ifnet *);
 void	 trunk_port_state(void *);
 void	 trunk_port_ifdetach(void *);
 int	 trunk_port_ioctl(struct ifnet *, u_long, caddr_t);
@@ -79,7 +78,6 @@ int	 trunk_input(struct ifnet *, struct mbuf *, void *);
 void	 trunk_start(struct ifnet *);
 void	 trunk_init(struct ifnet *);
 void	 trunk_stop(struct ifnet *);
-void	 trunk_watchdog(struct ifnet *);
 int	 trunk_media_change(struct ifnet *);
 void	 trunk_media_status(struct ifnet *, struct ifmediareq *);
 struct trunk_port *trunk_link_active(struct trunk_softc *,
@@ -182,7 +180,6 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	ifp = &tr->tr_ac.ac_if;
 	ifp->if_softc = tr;
 	ifp->if_start = trunk_start;
-	ifp->if_watchdog = trunk_watchdog;
 	ifp->if_ioctl = trunk_ioctl;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_capabilities = trunk_capabilities(tr);
@@ -350,10 +347,6 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	tp->tp_ioctl = ifp->if_ioctl;
 	ifp->if_ioctl = trunk_port_ioctl;
 
-	timeout_del(ifp->if_slowtimo);
-	tp->tp_watchdog = ifp->if_watchdog;
-	ifp->if_watchdog = trunk_port_watchdog;
-
 	tp->tp_output = ifp->if_output;
 	ifp->if_output = trunk_port_output;
 
@@ -439,7 +432,6 @@ trunk_port_destroy(struct trunk_port *tp)
 	/* Restore previous input handler. */
 	if_ih_remove(ifp, trunk_input, NULL);
 
-	ifp->if_watchdog = tp->tp_watchdog;
 	ifp->if_ioctl = tp->tp_ioctl;
 	ifp->if_output = tp->tp_output;
 	ifp->if_tp = NULL;
@@ -478,28 +470,8 @@ trunk_port_destroy(struct trunk_port *tp)
 	/* Update trunk capabilities */
 	tr->tr_capabilities = trunk_capabilities(tr);
 
-	/* Reestablish watchdog timeout */
-	if_slowtimo(ifp);
-
 	return (0);
 }
-
-void
-trunk_port_watchdog(struct ifnet *ifp)
-{
-	struct trunk_port *tp;
-
-	/* Should be checked by the caller */
-	if (ifp->if_type != IFT_IEEE8023ADLAG)
-		return;
-	if ((tp = (struct trunk_port *)ifp->if_tp) == NULL ||
-	    tp->tp_trunk == NULL)
-		return;
-
-	if (tp->tp_watchdog != NULL)
-		(*tp->tp_watchdog)(ifp);
-}
-
 
 int
 trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
@@ -1064,18 +1036,6 @@ trunk_stop(struct ifnet *ifp)
 		(*tr->tr_stop)(tr);
 
 	splx(s);
-}
-
-void
-trunk_watchdog(struct ifnet *ifp)
-{
-	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
-
-	if (tr->tr_proto != TRUNK_PROTO_NONE &&
-	    (*tr->tr_watchdog)(tr) != 0) {
-		ifp->if_oerrors++;
-	}
-
 }
 
 int
