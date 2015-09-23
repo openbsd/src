@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.47 2015/09/23 17:21:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.48 2015/09/23 17:22:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -1046,6 +1046,12 @@ iwm_reset_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 		iwm_nic_unlock(sc);
 	}
 	ring->cur = 0;
+	bus_dmamap_sync(sc->sc_dmat, ring->stat_dma.map, 0,
+	    ring->stat_dma.size, BUS_DMASYNC_PREWRITE);
+	memset(ring->stat, 0, sizeof(*ring->stat));
+	bus_dmamap_sync(sc->sc_dmat, ring->stat_dma.map, 0,
+	    ring->stat_dma.size, BUS_DMASYNC_POSTWRITE);
+
 }
 
 void
