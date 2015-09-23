@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.425 2015/09/23 01:29:47 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.426 2015/09/23 01:38:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2578,7 +2578,7 @@ If set to true,
 .Cm checksum
 will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
 checksum off
-.Pa ftp.openbsd.org ,
+.Lk ftp.openbsd.org ,
 in the directory
 .Pa /pub/OpenBSD/distfiles/$cipher/$value/$file .
 .It Ev REORDER_DEPENDENCIES
@@ -3454,7 +3454,7 @@ FLAVOR?=
 \&.endif
 .Ed
 .Pp
-.Pa bsd.port.mk
+.Nm
 takes care of a few details, such as generating a distinct work directory for
 each flavor, or creating a FULLPKGNAME by adding a dash separated list of
 flavors to the base package name.
