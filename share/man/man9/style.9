@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.59 2015/01/23 13:02:49 sthen Exp $
+.\"	$OpenBSD: style.9,v 1.60 2015/09/23 17:49:16 tedu Exp $
 .\"
-.Dd $Mdocdate: January 23 2015 $
+.Dd $Mdocdate: September 23 2015 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -521,11 +521,12 @@ Routines returning
 .Li void *
 should not have their return values cast to any pointer type.
 .Pp
-Use
+Use the
 .Xr err 3
-or
-.Xr warn 3 ,
-don't roll your own!
+and
+.Xr warn 3
+family of functions.
+Don't roll your own!
 .Bd -literal -offset indent
 if ((four = malloc(sizeof(struct foo))) == NULL)
 	err(1, NULL);
