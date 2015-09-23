@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.16 2012/09/29 21:37:03 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.17 2015/09/23 17:03:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,7 +51,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.16 2012/09/29 21:37:03 miod Exp $
+ *      $Id: db_disasm.c,v 1.17 2015/09/23 17:03:27 miod Exp $
  */
 
 #ifdef _KERNEL
@@ -640,8 +640,6 @@ dbmd_print_insn(uint32_t ins, db_addr_t mdbdot, int (*pr)(const char *, ...))
 		case OP_SLLV:
 		case OP_SRLV:
 		case OP_SRAV:
-		case OP_MOVZ:
-		case OP_MOVN:
 		case OP_DSLLV:
 		case OP_DSRLV:
 		case OP_DSRAV:
@@ -694,6 +692,8 @@ dbmd_print_insn(uint32_t ins, db_addr_t mdbdot, int (*pr)(const char *, ...))
 		case OP_BREAK:
 			(*pr)("\t%d", ins >> 16);
 			break;
+		case OP_MOVZ:
+		case OP_MOVN:
 		default:
 			(*pr)("\t%s,%s,%s",
 			    reg_name[i.RType.rd], reg_name[i.RType.rs],
@@ -843,6 +843,7 @@ unknown:
 				goto unknown;
 			else
 				(*pr)("%s", insn);
+			break;
 		case OP_TFP_C0MISC:
 			if (i.FRType.func < nitems(cop0_tfp_miscname))
 				insn = cop0_tfp_miscname[i.FRType.func];
@@ -852,6 +853,7 @@ unknown:
 				goto unknown;
 			else
 				(*pr)("%s", insn);
+			break;
 		default:
 			goto unknown;
 		};
