@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.54 2015/08/29 22:39:59 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.55 2015/09/23 09:23:49 sobrado Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 29 2015 $
+.Dd $Mdocdate: September 23 2015 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1066,7 +1066,7 @@ COND evaluates to false.
 .It
 If the first character of COND is
 .Sq r ,
-it evalutes to true if the rest of COND is the name of an existing
+it evaluates to true if the rest of COND is the name of an existing
 number register; otherwise, it evaluates to false.
 .It
 If COND starts with a parenthesis or with an optionally signed
@@ -1340,7 +1340,7 @@ Currently unsupported.
 Temporarily turn off line numbering.
 Currently unsupported.
 .Ss \&nop
-Exexute the rest of the input line as a request or macro line.
+Execute the rest of the input line as a request or macro line.
 Currently unsupported.
 .Ss \&nr
 Define or change a register.
@@ -1582,7 +1582,7 @@ Set tab stops.
 Takes an arbitrary number of arguments.
 Currently unsupported.
 .Ss \&tc
-Change tab repetion character.
+Change tab repetition character.
 Currently unsupported.
 .Ss \&TE
 End a table context.
@@ -1682,7 +1682,7 @@ Notify on change of string or macro.
 This is a Heirloom extension and currently ignored.
 .Ss \&watchlength
 On change, report the contents of macros and strings
-up to the sepcified length.
+up to the specified length.
 This is a Heirloom extension and currently ignored.
 .Ss \&watchn
 Notify on change of register.
@@ -1777,7 +1777,7 @@ minimum (not available in C)
 maximum (not available in C)
 .El
 .Pp
-There is no concept of precendence; evaluation proceeds from left to right,
+There is no concept of precedence; evaluation proceeds from left to right,
 except when subexpressions are enclosed in parantheses.
 Inside parentheses, whitespace is ignored.
 .Sh ESCAPE SEQUENCE REFERENCE
