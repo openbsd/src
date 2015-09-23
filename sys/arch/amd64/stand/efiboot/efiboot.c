@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.4 2015/09/23 03:19:55 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.5 2015/09/23 03:29:26 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -45,7 +45,7 @@ EFI_LOADED_IMAGE	*loadedImage;
 UINTN			 heapsiz = 1 * 1024 * 1024;
 UINTN			 mmap_key;
 static EFI_GUID		 imgdp_guid = { 0xbc62157e, 0x3e33, 0x4fec,
-			  { 0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf }};
+			    { 0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf }};
 
 static void	 efi_heap_init(void);
 static void	 efi_memprobe_internal(void);
@@ -54,7 +54,7 @@ static void	 efi_video_reset(void);
 EFI_STATUS	 efi_main(EFI_HANDLE, EFI_SYSTEM_TABLE *);
 
 void (*run_i386)(u_long, u_long, int, int, int, int, int, int, int, int)
-    __attribute__ ((noreturn));
+    __attribute__((noreturn));
 
 extern int bios_bootdev;
 
@@ -73,7 +73,8 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	efi_video_init();
 	efi_heap_init();
 
-	status = EFI_CALL(BS->HandleProtocol, image, &imgdp_guid, (void **)&dp0);
+	status = EFI_CALL(BS->HandleProtocol, image, &imgdp_guid,
+	    (void **)&dp0);
 	if (status == EFI_SUCCESS) {
 		for (dp = dp0; !IsDevicePathEnd(dp);
 		    dp = NextDevicePathNode(dp)) {
@@ -241,7 +242,8 @@ efi_memprobe_internal(void)
 	bios_memmap[0].type = BIOS_MAP_END;
 
 	siz = 0;
-	status = EFI_CALL(BS->GetMemoryMap, &siz, NULL, &mapkey, &mmsiz, &mmver);
+	status = EFI_CALL(BS->GetMemoryMap, &siz, NULL, &mapkey, &mmsiz,
+	    &mmver);
 	if (status != EFI_BUFFER_TOO_SMALL)
 		panic("cannot get the size of memory map");
 	mm0 = alloc(siz);
@@ -332,28 +334,28 @@ efi_video_init(void)
 	conout = ST->ConOut;
 	status = EFI_CALL(BS->LocateProtocol, &con_guid, NULL,
 	    (void **)&conctrl);
-        if (status == EFI_SUCCESS)
+	if (status == EFI_SUCCESS)
 		(void)EFI_CALL(conctrl->SetMode, conctrl,
-		    EfiConsoleControlScreenText);
-        mode80x25 = -1;
-        mode100x31 = -1;
-        for (i = 0; ; i++) {
-                status = EFI_CALL(conout->QueryMode, conout, i, &cols, &rows);
-                if (EFI_ERROR(status))
-                        break;
+			EfiConsoleControlScreenText);
+	mode80x25 = -1;
+	mode100x31 = -1;
+	for (i = 0; ; i++) {
+		status = EFI_CALL(conout->QueryMode, conout, i, &cols, &rows);
+		if (EFI_ERROR(status))
+			break;
 		if (mode80x25 < 0 && cols == 80 && rows == 25)
-                        mode80x25 = i;
+			mode80x25 = i;
 		if (mode100x31 < 0 && cols == 100 && rows == 31)
-                        mode100x31 = i;
+			mode100x31 = i;
 		if (i < nitems(efi_video)) {
 			efi_video[i].cols = cols;
 			efi_video[i].rows = rows;
 		}
-        }
+	}
 	if (mode100x31 >= 0)
-                EFI_CALL(conout->SetMode, conout, mode100x31);
-        else if (mode80x25 >= 0)
-                EFI_CALL(conout->SetMode, conout, mode80x25);
+		EFI_CALL(conout->SetMode, conout, mode100x31);
+	else if (mode80x25 >= 0)
+		EFI_CALL(conout->SetMode, conout, mode80x25);
 	conin = ST->ConIn;
 	efi_video_reset();
 }
