@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.38 2015/09/24 07:07:59 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.39 2015/09/24 07:20:12 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -257,7 +257,9 @@ cleanup:
 }
 
 /*
- * Delete a paragraph.  Delete n paragraphs starting with the current one.
+ * Delete n paragraphs. Move to the beginning of the current paragraph, or if
+ * the cursor is on an empty line, move down the buffer to the first line with
+ * non-space characters. Then mark n paragraphs and delete.
  */
 /* ARGSUSED */
 int
@@ -286,7 +288,7 @@ killpara(int f, int n)
 }
 
 /*
- * Mark n paragraphs starting with the last one and working our way backwards.
+ * Mark n paragraphs starting with the n'th and working our way backwards.
  * This leaves the cursor at the beginning of the paragraph where markpara()
  * was invoked.
  */
@@ -313,7 +315,7 @@ markpara(int f, int n)
 }
 
 /*
- * Go down the buffer until we find text.
+ * Go down the buffer until we find a line with non-space characters.
  */
 int
 findpara(void)
