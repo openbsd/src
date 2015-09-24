@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.206 2015/09/24 19:49:38 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.207 2015/09/24 22:03:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -544,7 +544,7 @@ makebootarea(char *boot, struct disklabel *dp)
 		warnx("bootstrap: xxboot = %s", xxboot);
 
 	/*
-	 * For NUMBOOT > 0 architectures (hppa/hppa64/landisk/vax)
+	 * For NUMBOOT > 0 architectures (landisk/vax)
 	 * up to d_bbsize bytes of ``xxboot'' go in bootarea, the rest
 	 * is remembered and written later following the bootarea.
 	 */
