@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.115 2015/09/24 14:01:20 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.116 2015/09/24 14:46:22 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -659,6 +659,13 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EPROTONOSUPPORT;
 			break;
 		}
+		/*
+		 * Serialize modifications to the trunk and trunk
+		 * ports via the ifih SRP: detaching trunk_input
+		 * from the trunk port will require all currently
+		 * running trunk_input's on this port to finish
+		 * granting us an exclusive access to it.
+		 */
 		SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
 			if_ih_remove(tp->tp_if, trunk_input, tp);
 		if (tr->tr_proto != TRUNK_PROTO_NONE)
