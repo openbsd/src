@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.1 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.2 2015/09/24 18:38:58 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -171,7 +171,7 @@
 #define	CR_NMI			0x08000000
 
 #ifdef CPU_R8000
-#define	CR_INT_MASK		0x0407ff00	/* contains CR_BERR */
+#define	CR_INT_MASK		0x0007ff00
 #else
 #define	CR_INT_MASK		0x003fff00
 #endif
