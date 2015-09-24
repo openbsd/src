@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.94 2015/09/09 12:09:21 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.95 2015/09/24 12:06:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -153,15 +153,19 @@ retry:
 		}
 		fd = server_start(base, lockfd, lockfile);
 	}
+
 	if (locked) {
 		free(lockfile);
 		close(lockfd);
 	}
-
 	setblocking(fd, 0);
 	return (fd);
 
 failed:
+	if (locked) {
+		free(lockfile);
+		close(lockfd);
+	}
 	close(fd);
 	return (-1);
 }
