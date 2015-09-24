@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vio.4,v 1.14 2014/08/10 12:28:09 sf Exp $
+.\"     $OpenBSD: vio.4,v 1.15 2015/09/24 13:11:48 sobrado Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2014 $
+.Dd $Mdocdate: September 24 2015 $
 .Dt VIO 4
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ This can be tried as a workaround for possible bugs in host implementations of
 at the cost of slightly reduced performance.
 .Pp
 Setting the bit 0x100 in the flags forces the interface to be always in
-promiscous mode.
+promiscuous mode.
 This can be used as a workaround for a bug in QEMU before version 1.7.2 that
 prevents packets with a VLAN tag from being sent to the guest.
 .Sh SEE ALSO
