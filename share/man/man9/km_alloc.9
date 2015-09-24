@@ -1,4 +1,4 @@
-.\"	$OpenBSD: km_alloc.9,v 1.7 2015/07/28 18:59:20 mikeb Exp $
+.\"	$OpenBSD: km_alloc.9,v 1.8 2015/09/24 13:18:39 sobrado Exp $
 .\" Copyright (c) 2011 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2015 $
+.Dd $Mdocdate: September 24 2015 $
 .Dt KM_ALLOC 9
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ Fail if the allocator cannot obtain locks without waiting.
 .Pp
 In case the predefined allocation modes are not sufficient, a custom allocation
 mode can be created.
-The structure controlling the virtual space alloction is:
+The structure controlling the virtual space allocation is:
 .Bd -literal
 struct kmem_va_mode {
 	struct vm_map **kv_map;
@@ -175,7 +175,7 @@ allocator needs the caller to back off to allow the allocator to catch up.
 .Fn km_alloc
 returns a kernel virtual address or
 .Dv NULL
-if the allocation cannot be satisifed.
+if the allocation cannot be satisfied.
 .Sh SEE ALSO
 .Xr malloc 9 ,
 .Xr uvm 9
