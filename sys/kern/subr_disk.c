@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.217 2015/09/15 05:35:42 yasuoka Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.218 2015/09/24 11:12:56 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -631,7 +631,8 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 	uint32_t ghsize, ghpartsize, ghpartspersec, ghpartnum;
 
 	gh->gh_csum = 0;
-	gh->gh_csum = crc32(0, (unsigned char *)gh, gh->gh_size);
+	gh->gh_csum = crc32(0, (unsigned char *)gh,
+	    letoh32(gh->gh_size));
 
 	if (orig_gh_csum != gh->gh_csum)
 		return (EINVAL);
@@ -693,7 +694,7 @@ gpt_chk_parts(struct gpt_header *gh, struct gpt_partition *gp)
 {
 	u_int32_t checksum;
 	checksum = crc32(0, (unsigned char *)gp,
-	    gh->gh_part_num * gh->gh_part_size);
+	    letoh32(gh->gh_part_num) * letoh32(gh->gh_part_size));
 
 	if (checksum != gh->gh_part_csum)
 		return (EINVAL);
