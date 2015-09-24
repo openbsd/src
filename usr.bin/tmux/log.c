@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.16 2015/09/14 12:12:24 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.17 2015/09/24 12:03:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,6 +42,9 @@ log_event_cb(unused int severity, const char *msg)
 void
 log_open(const char *path)
 {
+	if (log_file != NULL)
+		fclose(log_file);
+
 	log_file = fopen(path, "w");
 	if (log_file == NULL)
 		return;
