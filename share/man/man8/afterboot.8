@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.148 2015/09/21 09:23:35 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.149 2015/09/24 15:07:55 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 21 2015 $
+.Dd $Mdocdate: September 24 2015 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -510,11 +510,6 @@ or
 You might wish to tighten up security more by editing
 .Pa /etc/fbtab
 as when installing X.
-In
-.Pa /etc/inetd.conf
-comment out any extra entries you do not need,
-and only add things that are really needed.
-.Ss Other files in /etc
 Look at the other files in
 .Pa /etc
 and edit them as needed.
