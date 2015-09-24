@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.37 2015/09/24 01:24:10 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.38 2015/09/24 07:07:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -21,6 +21,7 @@ static int	fillcol = 70;
 #define MAXWORD 256
 
 static int	findpara(void);
+static int 	do_gotoeop(int, int, int *);
 
 /*
  * Move to start of paragraph.
@@ -72,7 +73,15 @@ gotobop(int f, int n)
 int
 gotoeop(int f, int n)
 {
-	int col, nospace;
+	int i;
+
+	return(do_gotoeop(f, n, &i));
+}
+
+int
+do_gotoeop(int f, int n, int *i)
+{
+	int col, nospace, j = 0;
 
 	/* the other way... */
 	if (n < 0)
@@ -80,6 +89,7 @@ gotoeop(int f, int n)
 
 	/* for each one asked for */
 	while (n-- > 0) {
+		*i = ++j;
 		nospace = 0;
 		while (lforw(curwp->w_dotp) != curbp->b_headp) {
 			col = 0;
@@ -272,6 +282,33 @@ killpara(int f, int n)
 		return (status);
 
 	curwp->w_dotline = lineno;
+	return (TRUE);
+}
+
+/*
+ * Mark n paragraphs starting with the last one and working our way backwards.
+ * This leaves the cursor at the beginning of the paragraph where markpara()
+ * was invoked.
+ */
+/* ARGSUSED */
+int
+markpara(int f, int n)
+{
+	int i = 0;
+
+	clearmark(FFARG, 0);
+
+	if (findpara() == FALSE)
+		return (TRUE);
+
+	(void)do_gotoeop(FFRAND, n, &i);
+
+	/* set the mark here */
+	curwp->w_markp = curwp->w_dotp;
+	curwp->w_marko = curwp->w_doto;
+
+	(void)gotobop(FFRAND, i);
+
 	return (TRUE);
 }
 

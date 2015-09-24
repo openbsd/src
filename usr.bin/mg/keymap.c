@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.55 2015/03/19 21:48:05 bcallah Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.56 2015/09/24 07:07:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -268,7 +268,9 @@ static PF metasqf[] = {
 	capword,		/* c */
 	delfword,		/* d */
 	rescan,			/* e */
-	forwword		/* f */
+	forwword,		/* f */
+	rescan,			/* g */
+	markpara		/* h */
 };
 
 static PF metal[] = {
@@ -333,7 +335,7 @@ struct KEYMAPE (8) metamap = {
 			'*', '>', metami, NULL
 		},
 		{
-			'[', 'f', metasqf, (KEYMAP *) &metasqlmap
+			'[', 'h', metasqf, (KEYMAP *) &metasqlmap
 		},
 		{
 			'l', '}', metal, NULL

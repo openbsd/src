@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.91 2015/09/09 19:03:13 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.92 2015/09/24 07:07:59 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: September 9 2015 $
+.Dd $Mdocdate: September 24 2015 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -292,6 +292,8 @@ capitalize-word
 kill-word
 .It M-f
 forward-word
+.It M-h
+mark-paragraph
 .It M-l
 downcase-word
 .It M-m
@@ -672,6 +674,8 @@ Unbind a key mapping in the local (topmost) mode.
 Toggle generation of backup files.
 .It make-directory
 Prompt the user for a path or directory name which is then created.
+.It mark-paragraph
+Mark n paragraphs.
 .It mark-whole-buffer
 Marks whole buffer as a region by putting dot at the beginning and mark
 at the end of buffer.
