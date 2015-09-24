@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1770 2015/09/22 09:27:09 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1771 2015/09/24 15:46:53 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3332,12 +3332,26 @@
 #define	PCI_PRODUCT_INTEL_I218_V_2	0x15a1		/* I218-V */
 #define	PCI_PRODUCT_INTEL_I218_LM_3	0x15a2		/* I218-LM */
 #define	PCI_PRODUCT_INTEL_I218_V_3	0x15a3		/* I218-V */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT1_1	0x1602		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE5G_HB_1	0x1604		/* Core 5G Host */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT1_2	0x1606		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_D_GT1_1	0x160a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT1_3	0x160b		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE5G_HDA_1	0x160c		/* Core 5G HD Audio */
-#define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_1	0x1616		/* HD Graphics 5500 */
-#define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_2	0x161e		/* HD Graphics 5300 */
+#define	PCI_PRODUCT_INTEL_CORE5G_D_GT1_2	0x160d		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT1_4	0x160e		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_1	0x1612		/* HD Graphics 5600 */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_2	0x1616		/* HD Graphics 5500 */
+#define	PCI_PRODUCT_INTEL_CORE5G_D_GT2_1	0x161a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_3	0x161b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_D_GT2_2	0x161d		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT2_4	0x161e		/* HD Graphics 5300 */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_1	0x1622		/* Iris Pro Graphics 6200 */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_15W	0x1626		/* HD Graphics 6000 */
+#define	PCI_PRODUCT_INTEL_CORE5G_D_GT3_1	0x162a		/* Iris Pro Graphics P6300 */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_28W	0x162b		/* Iris Graphics 6100 */
+#define	PCI_PRODUCT_INTEL_CORE5G_D_GT3_2	0x162d		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE5G_M_GT3_4	0x162e		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_80960RP_ATU	0x1960		/* 80960RP ATU */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
 #define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
