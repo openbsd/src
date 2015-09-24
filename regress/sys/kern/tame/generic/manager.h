@@ -1,4 +1,4 @@
-/*	$OpenBSD: actions.h,v 1.1 2015/08/24 09:21:10 semarie Exp $ */
+/*	$OpenBSD: manager.h,v 1.1 2015/09/24 06:25:54 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -14,16 +14,19 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef _ACTIONS_H_
-#define _ACTIONS_H_
+#ifndef _MANAGER_H_
+#define _MANAGER_H_
 
-typedef enum {
-	AC_EXIT,
-	AC_KILL,
-	AC_INET,
-	AC_TAME,
-	AC_ALLOWED_SYSCALLS,
-	AC_OPENFILE_RDONLY,
-} action_t;
+void _start_test(int *ret, const char *test_name, const char *request,
+    const char *paths[], void (*test_func)(void));
 
-#endif /* _ACTIONS_H_ */
+#define start_test(ret,req,paths,func) \
+    _start_test(ret,#func,req,paths,func)
+
+#define start_test1(ret,req,path,func) \
+    do { \
+	    const char *_paths[] = {path, NULL}; \
+	    start_test(ret,req,_paths,func); \
+    } while (0)
+
+#endif /* _MANAGER_H_ */

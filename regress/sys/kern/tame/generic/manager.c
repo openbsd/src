@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.2 2015/09/10 11:18:10 semarie Exp $ */
+/*	$OpenBSD: manager.c,v 1.3 2015/09/24 06:25:54 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -28,11 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "actions.h"
-
 extern char *__progname;
-
-int	execute_action(action_t, va_list);
 
 static const char *
 coredump_name()
@@ -71,13 +67,13 @@ check_coredump()
 
 
 static int
-clear_coredump(int *ret, int ntest)
+clear_coredump(int *ret, const char *test_name)
 {
 	int saved_errno = errno;
 	int u;
 
 	if (((u = unlink(coredump_name())) != 0) && (errno != ENOENT)) {
-		warn("test(%d): clear_coredump", ntest);
+		warn("test(%s): clear_coredump", test_name);
 		*ret = EXIT_FAILURE;
 		return (-1);
 	}
@@ -151,70 +147,116 @@ out:
 	return (ret);
 }
 
+/* mainly stolen from src/bin/cat/cat.c */
+static int
+drainfd(int rfd, int wfd)
+{
+	char buf[1024];
+	ssize_t nr, nw, off;
+
+	while ((nr = read(rfd, buf, sizeof(buf))) != -1 && nr != 0)
+		for (off = 0; nr; nr -= nw, off += nw)
+			if ((nw = write(wfd, buf + off, (size_t)nr)) == 0 ||
+			    nw == -1)
+				return (-1);
+	if (nr < 0)
+		return (-1);
+
+	return (0);
+}
 
 void
-start_test(int *ret, int ntest, const char *request, const char *paths[], ...)
+_start_test(int *ret, const char *test_name, const char *request,
+    const char *paths[], void (*test_func)(void))
 {
-	static int ntest_check = 0;
+	int fildes[2];
 	pid_t pid;
 	int status;
-	va_list ap;
-	action_t action;
 	int i;
 
-#ifndef DEBUG
-	/* check ntest (useful for dev) */
-	if (ntest != ++ntest_check)
-		errx(EXIT_FAILURE,
-		    "invalid test number: should be %d but is %d",
-		    ntest_check, ntest);
-#endif /* DEBUG */
+	/* early print testname */
+	printf("test(%s): tame=(\"%s\",{", test_name, request);
+	for (i = 0; paths && paths[i] != NULL; i++)
+		printf("\"%s\",", paths[i]);
+	printf("NULL})");
 
 	/* unlink previous coredump (if exists) */
-	if (clear_coredump(ret, ntest) == -1)
+	if (clear_coredump(ret, test_name) == -1)
 		return;
-	
+
+	/* flush outputs (for STDOUT_FILENO manipulation) */
+	if (fflush(NULL) != 0) {
+		warn("test(%s) fflush", test_name);
+		*ret = EXIT_FAILURE;
+		return;
+	}
+
+	/* make pipe to grab output */
+	if (pipe(fildes) != 0) {
+		warn("test(%s) pipe", test_name);
+		*ret = EXIT_FAILURE;
+		return;
+	}
+
 	/* fork and launch the test */
 	switch (pid = fork()) {
 	case -1:
-		warn("test(%d) fork", ntest);
+		(void)close(fildes[0]);
+		(void)close(fildes[1]);
+
+		warn("test(%s) fork", test_name);
 		*ret = EXIT_FAILURE;
 		return;
 
 	case 0:
-		/* create a new session (for AC_KILL) */
+		/* output to pipe */
+		(void)close(fildes[0]);
+		while (dup2(fildes[1], STDOUT_FILENO) == -1)
+			if (errno != EINTR)
+				err(errno, "dup2");
+
+		/* create a new session (for kill) */
 		setsid();
 
-		/* XXX redirect output to /dev/null ? */
+		/* set tame policy */
 		if (tame(request, paths) != 0)
 			err(errno, "tame");
-		
-		va_start(ap, paths);
-		while ((action = va_arg(ap, action_t)) != AC_EXIT) {
-			execute_action(action, ap);
-			if (errno != 0)
-				_exit(errno);
-		}
-		va_end(ap);
+
+		/* reset errno and launch test */
+		errno = 0;
+		test_func();
+
+		if (errno != 0)
+			_exit(errno);
 
 		_exit(EXIT_SUCCESS);
 		/* NOTREACHED */
+	}
+
+	/* copy pipe to output */
+	(void)close(fildes[1]);
+	if (drainfd(fildes[0], STDOUT_FILENO) != 0) {
+		warn("test(%s): drainfd", test_name);
+		*ret = EXIT_FAILURE;
+		return;
+	}
+	if (close(fildes[0]) != 0) {
+		warn("test(%s): close", test_name);
+		*ret = EXIT_FAILURE;
+		return;
 	}
 
 	/* wait for test to terminate */
 	while (waitpid(pid, &status, 0) < 0) {
 		if (errno == EAGAIN)
 			continue;
-		warn("test(%d): waitpid", ntest);
+		warn("test(%s): waitpid", test_name);
 		*ret = EXIT_FAILURE;
 		return;
 	}
 
 	/* show status and details */
-	printf("test(%d): tame=(\"%s\",{", ntest, request);
-	for (i = 0; paths && paths[i] != NULL; i++)
-		printf("\"%s\",", paths[i]);
-	printf("NULL}) status=%d", status);
+	printf(" status=%d", status);
 
 	if (WIFCONTINUED(status))
 		printf(" continued");
@@ -236,7 +278,7 @@ start_test(int *ret, int ntest, const char *request, const char *paths[], ...)
 
 			switch(coredump) {
 			case -1: /* error */
-				warn("test(%d): check_coredump", ntest);
+				warn("test(%s): check_coredump", test_name);
 				*ret = EXIT_FAILURE;
 				return;
 
@@ -249,8 +291,8 @@ start_test(int *ret, int ntest, const char *request, const char *paths[], ...)
 				break;
 
 			default:
-				warnx("test(%d): unknown coredump code %d",
-				    ntest, coredump);
+				warnx("test(%s): unknown coredump code %d",
+				    test_name, coredump);
 				*ret = EXIT_FAILURE;
 				return;
 			}
@@ -262,7 +304,7 @@ start_test(int *ret, int ntest, const char *request, const char *paths[], ...)
 			int syscall = grab_syscall(pid);
 			switch (syscall) {
 			case -1:	/* error */
-				warn("test(%d): grab_syscall pid=%d", ntest,
+				warn("test(%s): grab_syscall pid=%d", test_name,
 				    pid);
 				*ret = EXIT_FAILURE;
 				return;

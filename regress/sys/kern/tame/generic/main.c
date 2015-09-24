@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 2015/09/18 08:34:22 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.4 2015/09/24 06:25:54 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -15,19 +15,124 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/resource.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "actions.h"
+#include "manager.h"
 
-void start_test(int *ret, int ntest, const char *req, const char *paths[], ...);
+static void
+test_nop()
+{
+	/* nop */
+}
 
-#define start_test1(ret,ntest,req,path,...) \
-    do { \
-	    const char *_paths[] = {path, NULL}; \
-	    start_test(ret,ntest,req,_paths,__VA_ARGS__); \
-    } while (0)
+static void
+test_inet()
+{
+	int fd = socket(AF_INET, SOCK_STREAM, 0);
+	int saved_errno = errno;
+	close(fd);
+	errno = saved_errno ? saved_errno : errno;
+}
 
+static void
+test_kill()
+{
+	kill(0, SIGINT);
+}
+
+static void
+test_allowed_syscalls()
+{
+	clock_getres(CLOCK_MONOTONIC, NULL);
+	clock_gettime(CLOCK_MONOTONIC, NULL);
+	/* fchdir(); */
+	getdtablecount();
+	getegid();
+	geteuid();
+	getgid();
+	getgroups(0, NULL);
+	getitimer(ITIMER_REAL, NULL);
+	getlogin();
+	getpgid(0);
+	getpgrp();
+	getpid();
+	getppid();
+	/* getresgid(); */
+	/* getresuid(); */
+	{ struct rlimit rl; getrlimit(RLIMIT_CORE, &rl); }
+	getsid(0);
+	getthrid();
+	{ struct timeval tp; gettimeofday(&tp, NULL); }
+	getuid();
+	geteuid();
+	issetugid();
+	/* nanosleep(); */
+	/* sigreturn(); */
+	umask(0000);
+	/* wait4(); */
+}
+
+
+static void
+open_close(const char *filename)
+{
+	int fd;
+	int saved_errno;
+
+	errno = 0;
+	printf("\n open_close(\"%s\")", filename);
+	fd = open(filename, O_RDONLY);
+	saved_errno = errno;
+	printf(" fd=%d errno=%d", fd, errno);
+	if (fd != -1)
+		close(fd);
+	errno = saved_errno;
+}
+
+static void
+test_wpaths()
+{
+	/* absolute file */
+	open_close("/etc/passwd");
+
+	/* relative */
+	open_close("generic");
+
+	/* relative */
+	open_close("../../../../../../../../../../../../../../../etc/passwd");
+
+	/* ENOENT */
+	open_close("/nonexistent");
+
+	/* calling exit to flush stdout */
+	printf("\n");
+	exit(EXIT_SUCCESS);
+}
+
+static void
+test_tame()
+{
+	const char *wpaths[] = { "/sbin", NULL };
+
+	if (tame("stdio rpath", wpaths) != 0)
+		_exit(errno);
+}
 
 int
 main(int argc, char *argv[])
@@ -42,91 +147,72 @@ main(int argc, char *argv[])
 	 */
 
 	/* _exit is always allowed, and nothing else under flags=0 */
-	start_test(&ret, 1, "", NULL, AC_EXIT);
-	start_test(&ret, 2, "", NULL, AC_INET, AC_EXIT);
+	start_test(&ret, "", NULL, test_nop);
+	start_test(&ret, "", NULL, test_inet);
 
 	/* test coredump */
-	start_test(&ret, 3, "abort", NULL, AC_INET, AC_EXIT);
+	start_test(&ret, "abort", NULL, test_inet);
 
 	/* inet under inet is ok */
-	start_test(&ret, 4, "inet", NULL, AC_INET, AC_EXIT);
+	start_test(&ret, "inet", NULL, test_inet);
 
 	/* kill under inet is forbidden */
-	start_test(&ret, 5, "inet", NULL, AC_KILL, AC_EXIT);
+	start_test(&ret, "inet", NULL, test_kill);
 
 	/* kill under proc is allowed */
-	start_test(&ret, 6, "proc", NULL, AC_KILL, AC_EXIT);
+	start_test(&ret, "proc", NULL, test_kill);
 
-	/* tests several permitted syscalls */
-	start_test(&ret, 7, "dns",  NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
-	start_test(&ret, 8, "inet", NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
+	/* tests TAME_SELF for permitted syscalls */
+	start_test(&ret, "malloc",  NULL, test_allowed_syscalls);
+	start_test(&ret, "rw",      NULL, test_allowed_syscalls);
+	start_test(&ret, "stdio",   NULL, test_allowed_syscalls);
+	start_test(&ret, "rpath",   NULL, test_allowed_syscalls);
+	start_test(&ret, "wpath",   NULL, test_allowed_syscalls);
+	start_test(&ret, "tmppath", NULL, test_allowed_syscalls);
+	start_test(&ret, "inet",    NULL, test_allowed_syscalls);
+	start_test(&ret, "unix",    NULL, test_allowed_syscalls);
+	start_test(&ret, "cmsg",    NULL, test_allowed_syscalls);
+	start_test(&ret, "dns",     NULL, test_allowed_syscalls);
+	start_test(&ret, "getpw",   NULL, test_allowed_syscalls);
 
-	/* these TAME_* don't have "permitted syscalls" */
+	/* tests req without TAME_SELF for "permitted syscalls" */
 	// XXX it is a documentation bug
-	start_test(&ret, 9, "proc", NULL, AC_ALLOWED_SYSCALLS, AC_EXIT);
+	start_test(&ret, "ioctl", NULL, test_allowed_syscalls);
+	start_test(&ret, "proc",  NULL, test_allowed_syscalls);
+	start_test(&ret, "cpath", NULL, test_allowed_syscalls);
+	start_test(&ret, "abort", NULL, test_allowed_syscalls);
+	start_test(&ret, "fattr", NULL, test_allowed_syscalls);
 
 	/*
-	 * test absolute whitelist path
+	 * test whitelist path
 	 */
-	/* without wpaths */
-	start_test(&ret, 10, "rpath", NULL,
-	    AC_OPENFILE_RDONLY, "/etc/passwd",
-	    AC_EXIT);
-	/* exact match */
-	start_test1(&ret, 11, "rpath", "/etc/passwd",
-	    AC_OPENFILE_RDONLY, "/etc/passwd",
-	    AC_EXIT);
-	/* subdir match */
-	start_test1(&ret, 12, "rpath", "/etc/",
-	    AC_OPENFILE_RDONLY, "/etc/passwd",
-	    AC_EXIT);
-	/* same without trailing '/' */
-	start_test1(&ret, 13, "rpath", "/etc",
-	    AC_OPENFILE_RDONLY, "/etc/passwd",
-	    AC_EXIT);
-	/* failing one */
-	start_test1(&ret, 14, "rpath", "/bin",
-	    AC_OPENFILE_RDONLY, "/etc/passwd",
-	    AC_EXIT);
+	start_test(&ret, "stdio rpath", NULL, test_wpaths);
+	// XXX start_test1(&ret, "stdio rpath", "/", test_wpaths);
+	start_test1(&ret, "stdio rpath", "/etc", test_wpaths);
+	start_test1(&ret, "stdio rpath", "/etc/", test_wpaths);
+	start_test1(&ret, "stdio rpath", "/etc/passwd", test_wpaths);
+	// XXX start_test1(&ret, "stdio rpath", "/etc/passwd/", test_wpaths);
+	start_test1(&ret, "stdio rpath", "/bin", test_wpaths);
+	start_test1(&ret, "stdio rpath", "generic", test_wpaths);
+	start_test1(&ret, "stdio rpath", "", test_wpaths);
+	start_test1(&ret, "stdio rpath", ".", test_wpaths);
 
 	/*
-	 * test relative whitelist path
+	 * test tame(2) arguments
 	 */
-	/* without wpaths */
-	start_test(&ret, 15, "rpath", NULL,
-	    AC_OPENFILE_RDONLY, "generic",
-	    AC_EXIT);
-	/* exact match */
-	start_test1(&ret, 16, "rpath", "generic",
-	    AC_OPENFILE_RDONLY, "generic",
-	    AC_EXIT);
-	/* subdir match */
-	start_test1(&ret, 17, "rpath", "./",
-	    AC_OPENFILE_RDONLY, "generic",
-	    AC_EXIT);
-	/* same without trailing '/' */
-	start_test1(&ret, 18, "rpath", ".",
-	    AC_OPENFILE_RDONLY, "generic",
-	    AC_EXIT);
-	/* failing one */
-	start_test1(&ret, 19, "rpath", ".",
-	    AC_OPENFILE_RDONLY, "../../../../../../../../../../../../../../../etc/passwd",
-	    AC_EXIT);
-
-	/* tame: test reducing flags */
-	start_test1(&ret, 20, "rpath wpath", NULL,
-	    AC_TAME, "rpath",
-	    AC_EXIT);
-
-	/* tame: test adding flags */
-	start_test1(&ret, 21, "rpath", NULL,
-	    AC_TAME, "rpath wpath",
-	    AC_EXIT);
-
-	/* tame: test replacing flags */
-	start_test1(&ret, 22, "rpath", NULL,
-	    AC_TAME, "wpath",
-	    AC_EXIT);
+	/* same request */
+	start_test(&ret, "stdio rpath", NULL, test_tame);
+	/* same request (stdio = malloc rw) */
+	start_test(&ret, "malloc rw rpath", NULL, test_tame);
+	/* reduce request */
+	start_test(&ret, "stdio rpath wpath", NULL, test_tame);
+	/* reduce request (with same/other wpaths) */
+	start_test1(&ret, "stdio rpath wpath", "/sbin", test_tame);
+	start_test1(&ret, "stdio rpath wpath", "/", test_tame);
+	/* add request */
+	start_test(&ret, "stdio", NULL, test_tame);
+	/* change request */
+	start_test(&ret, "cmsg", NULL, test_tame);
 
 	return (ret);
 }

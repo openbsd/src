@@ -1,23 +1,78 @@
-#	$OpenBSD: tests.out,v 1.2 2015/09/10 11:18:10 semarie Exp $
-test(1): tame=("",{NULL}) status=0 exit=0
-test(2): tame=("",{NULL}) status=9 signal=9 tamed_syscall=97
-test(3): tame=("abort",{NULL}) status=134 signal=6 coredump=present tamed_syscall=97
-test(4): tame=("inet",{NULL}) status=0 exit=0
-test(5): tame=("inet",{NULL}) status=9 signal=9 tamed_syscall=37
-test(6): tame=("proc",{NULL}) status=2 signal=2 tamed_syscall=not_found
-test(7): tame=("dns",{NULL}) status=0 exit=0
-test(8): tame=("inet",{NULL}) status=0 exit=0
-test(9): tame=("proc",{NULL}) status=9 signal=9 tamed_syscall=89
-test(10): tame=("rpath",{NULL}) status=0 exit=0
-test(11): tame=("rpath",{"/etc/passwd",NULL}) status=0 exit=0
-test(12): tame=("rpath",{"/etc/",NULL}) status=0 exit=0
-test(13): tame=("rpath",{"/etc",NULL}) status=0 exit=0
-test(14): tame=("rpath",{"/bin",NULL}) status=512 exit=2 (errno: "No such file or directory")
-test(15): tame=("rpath",{NULL}) status=0 exit=0
-test(16): tame=("rpath",{"generic",NULL}) status=0 exit=0
-test(17): tame=("rpath",{"./",NULL}) status=0 exit=0
-test(18): tame=("rpath",{".",NULL}) status=0 exit=0
-test(19): tame=("rpath",{".",NULL}) status=512 exit=2 (errno: "No such file or directory")
-test(20): tame=("rpath wpath",{NULL}) status=0 exit=0
-test(21): tame=("rpath",{NULL}) status=256 exit=1 (errno: "Operation not permitted")
-test(22): tame=("rpath",{NULL}) status=256 exit=1 (errno: "Operation not permitted")
+#	$OpenBSD: tests.out,v 1.3 2015/09/24 06:25:54 semarie Exp $
+test(test_nop): tame=("",{NULL}) status=0 exit=0
+test(test_inet): tame=("",{NULL}) status=9 signal=9 tamed_syscall=97
+test(test_inet): tame=("abort",{NULL}) status=134 signal=6 coredump=present tamed_syscall=97
+test(test_inet): tame=("inet",{NULL}) status=0 exit=0
+test(test_kill): tame=("inet",{NULL}) status=9 signal=9 tamed_syscall=37
+test(test_kill): tame=("proc",{NULL}) status=2 signal=2 tamed_syscall=not_found
+test(test_allowed_syscalls): tame=("malloc",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("rw",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("stdio",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("rpath",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("wpath",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("tmppath",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("inet",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("unix",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("cmsg",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("dns",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("getpw",{NULL}) status=0 exit=0
+test(test_allowed_syscalls): tame=("ioctl",{NULL}) status=9 signal=9 tamed_syscall=89
+test(test_allowed_syscalls): tame=("proc",{NULL}) status=9 signal=9 tamed_syscall=89
+test(test_allowed_syscalls): tame=("cpath",{NULL}) status=9 signal=9 tamed_syscall=89
+test(test_allowed_syscalls): tame=("abort",{NULL}) status=134 signal=6 coredump=present tamed_syscall=89
+test(test_allowed_syscalls): tame=("fattr",{NULL}) status=9 signal=9 tamed_syscall=89
+test(test_wpaths): tame=("stdio rpath",{NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{"/etc",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{"/etc/",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{"/etc/passwd",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{"/bin",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=-1 errno=2
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{"generic",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{"",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{".",NULL})
+ open_close("/etc/passwd") fd=-1 errno=2
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_tame): tame=("stdio rpath",{NULL}) status=0 exit=0
+test(test_tame): tame=("malloc rw rpath",{NULL}) status=0 exit=0
+test(test_tame): tame=("stdio rpath wpath",{NULL}) status=0 exit=0
+test(test_tame): tame=("stdio rpath wpath",{"/sbin",NULL}) status=256 exit=1 (errno: "Operation not permitted")
+test(test_tame): tame=("stdio rpath wpath",{"/",NULL}) status=256 exit=1 (errno: "Operation not permitted")
+test(test_tame): tame=("stdio",{NULL}) status=256 exit=1 (errno: "Operation not permitted")
+test(test_tame): tame=("cmsg",{NULL}) status=256 exit=1 (errno: "Operation not permitted")
