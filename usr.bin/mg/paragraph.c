@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.36 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.37 2015/09/24 01:24:10 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -19,6 +19,8 @@
 static int	fillcol = 70;
 
 #define MAXWORD 256
+
+static int	findpara(void);
 
 /*
  * Move to start of paragraph.
@@ -251,32 +253,57 @@ cleanup:
 int
 killpara(int f, int n)
 {
-	int	status, end = FALSE;	/* returned status of functions */
+	int	lineno, status;
 
-	/* for each paragraph to delete */
-	while (n--) {
+	if (findpara() == FALSE)
+		return (TRUE);
 
-		/* mark out the end and beginning of the para to delete */
-		if (!gotoeop(FFRAND, 1))
-			end = TRUE;
+	/* go to the beginning of the paragraph */
+	(void)gotobop(FFRAND, 1);
 
-		/* set the mark here */
-		curwp->w_markp = curwp->w_dotp;
-		curwp->w_marko = curwp->w_doto;
+	/* take a note of the line number for after deletions and set mark */
+	lineno = curwp->w_dotline;
+	curwp->w_markp = curwp->w_dotp;
+	curwp->w_marko = curwp->w_doto;
 
-		/* go to the beginning of the paragraph */
-		(void)gotobop(FFRAND, 1);
+	(void)gotoeop(FFRAND, n);
 
-		/* force us to the beginning of line */
+	if ((status = killregion(FFRAND, 1)) != TRUE)
+		return (status);
+
+	curwp->w_dotline = lineno;
+	return (TRUE);
+}
+
+/*
+ * Go down the buffer until we find text.
+ */
+int
+findpara(void)
+{
+	int	col, nospace = 0;
+
+	/* we move forward to find a para to mark */
+	do {
 		curwp->w_doto = 0;
+		col = 0;
 
-		/* and delete it */
-		if ((status = killregion(FFRAND, 1)) != TRUE)
-			return (status);
+		/* check if we are on a blank line */
+		while (col < llength(curwp->w_dotp)) {
+			if (!isspace(lgetc(curwp->w_dotp, col)))
+				nospace = 1;
+			col++;
+		}
+		if (nospace)
+			break;
 
-		if (end)
-			return (TRUE);
-	}
+		if (lforw(curwp->w_dotp) == curbp->b_headp)
+			return (FALSE);
+
+		curwp->w_dotp = lforw(curwp->w_dotp);	
+		curwp->w_dotline++;
+	} while (1);
+
 	return (TRUE);
 }
 
