@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.205 2015/09/09 13:51:55 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.206 2015/09/24 19:49:38 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -400,20 +400,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 			return (1);
 		}
 	}
-#ifdef __vax__
-	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
-		off_t alt;
-		int i;
 
-		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
-		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			(void)lseek(f, (alt + i) * lp->d_secsize, SEEK_SET);
-			if (!donothing)
-				if (write(f, boot, lp->d_secsize) != lp->d_secsize)
-					warn("alternate label %d write", i/2);
-		}
-	}
-#endif
 	/* Finally, write out any mount point information. */
 	if (!donothing) {
 		/* First refresh our copy of the current label to get UID. */
