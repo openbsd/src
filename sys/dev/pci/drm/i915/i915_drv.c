@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.86 2015/09/23 23:12:11 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.87 2015/09/24 21:31:22 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1215,6 +1215,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev = dev_priv->dev = (struct drm_device *)
 	    drm_attach_pci(&inteldrm_driver, pa, 1, 1, self);
 
+	printf("%s", dev_priv->sc_dev.dv_xname);
+
 	intel_gtt_chipset_setup(dev);
 	mtx_init(&mchdev_lock, IPL_TTY);
 
@@ -1399,15 +1401,14 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_I945G(dev) || IS_I945GM(dev))
 		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
 
-	if (pci_intr_map(pa, &dev_priv->ih) != 0) {
+	if (pci_intr_map_msi(pa, &dev_priv->ih) != 0 &&
+	    pci_intr_map(pa, &dev_priv->ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
 
-	/*
-	 * set up interrupt handler, note that we don't switch the interrupt
-	 * on until the X server talks to us, kms will change this.
-	 */
+	printf(": %s", pci_intr_string(dev_priv->pc, dev_priv->ih));
+
 	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih,
 	    IPL_TTY, inteldrm_intr, dev_priv, dev_priv->sc_dev.dv_xname);
 	if (dev_priv->irqh == NULL) {
@@ -1494,7 +1495,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		aa.console = 1;
 	}
 
-	printf("%s: %dx%d\n", dev_priv->sc_dev.dv_xname, ri->ri_width, ri->ri_height);
+	printf(", %dx%d\n", ri->ri_width, ri->ri_height);
 
 	vga_sc->sc_type = -1;
 	config_found(parent, &aa, wsemuldisplaydevprint);
