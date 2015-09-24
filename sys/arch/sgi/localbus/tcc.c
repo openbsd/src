@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcc.c,v 1.6 2015/09/20 12:49:15 miod Exp $	*/
+/*	$OpenBSD: tcc.c,v 1.7 2015/09/24 18:37:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -79,7 +79,7 @@ tcc_attach(struct device *parent, struct device *self, void *aux)
 	tcc_bus_reset();
 
 	/* Enable bus error and machine check interrupts. */
-	set_intr(INTPRI_BUSERR_TCC, CR_BERR, tcc_bus_error);
+	set_intr(INTPRI_BUSERR_TCC, CR_INT_4, tcc_bus_error);
 	tcc_write(TCC_INTR, TCC_INTR_MCHECK_ENAB | TCC_INTR_BERR_ENAB);
 
 	/* Enable all cache sets. */
@@ -121,7 +121,6 @@ tcc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 	    (intr & (TCC_INTR_MCHECK | TCC_INTR_BERR)));
 	tcc_write(TCC_ERROR, errack);
 
-	cp0_reset_cause(CR_BERR);
 	return hwpend;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.19 2014/12/10 12:27:56 mikeb Exp $	*/
+/*	$OpenBSD: imc.c,v 1.20 2015/09/24 18:37:50 miod Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -742,9 +742,21 @@ imc_bus_error(uint32_t hwpend, struct trap_frame *tf)
 	int cpuquiet = 0, gioquiet = 0;
 
 	cpustat = imc_read(IMC_CPU_ERRSTAT);
-	cpuaddr = imc_read(IMC_CPU_ERRADDR);
 	giostat = imc_read(IMC_GIO_ERRSTAT);
-	gioaddr = imc_read(IMC_GIO_ERRADDR);
+
+	if (sys_config.system_type == SGI_IP26) {
+		/*
+		 * We are sharing the bus error interrupt with the streaming
+		 * cache controller. This interrupt might not be ours.
+		 */
+		if (cpustat == 0 && giostat == 0)
+			return 0;
+	}
+
+	if (cpustat != 0)
+		cpuaddr = imc_read(IMC_CPU_ERRADDR);
+	if (giostat != 0)
+		gioaddr = imc_read(IMC_GIO_ERRADDR);
 
 	switch (sys_config.system_type) {
 	case SGI_IP28:
