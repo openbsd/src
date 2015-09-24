@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.67 2015/01/20 19:43:21 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.68 2015/09/24 20:35:18 tedu Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -488,9 +488,9 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 
 #ifdef PT_STEP
 		/*
-		 * Arrange for a single-step, if that's requested and possible.
+		 * Stop single stepping.
 		 */
-		error = process_sstep(t, req == PT_STEP);
+		error = process_sstep(t, 0);
 		if (error)
 			goto relebad;
 #endif
