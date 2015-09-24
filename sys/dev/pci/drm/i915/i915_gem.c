@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.100 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.101 2015/09/24 20:52:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1228,6 +1228,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	trace_i915_gem_request_wait_begin(ring, seqno);
 	getrawmonotonic(&before);
 	for (;;) {
+		atomic_inc_int(&ring->irq_queue.count);
 		sleep_setup(&sls, &ring->irq_queue, interruptible ? PCATCH : 0, "wseq");
 
 		/* We need to check whether any gpu reset happened in between
@@ -1272,6 +1273,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 		sleep_finish(&sls, 1);
 		sleep_finish_timeout(&sls);
 		ret = sleep_finish_signal(&sls);
+		atomic_dec_int(&ring->irq_queue.count);
 	}
 	getrawmonotonic(&now);
 	trace_i915_gem_request_wait_end(ring, seqno);
@@ -1282,6 +1284,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	sleep_finish(&sls, 0);
 	sleep_finish_timeout(&sls);
 	sleep_finish_signal(&sls);
+	atomic_dec_int(&ring->irq_queue.count);
 
 	if (timeout) {
 		struct timespec sleep_time = timespec_sub(now, before);

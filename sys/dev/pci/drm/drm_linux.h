@@ -1,6 +1,6 @@
-/*	$OpenBSD: drm_linux.h,v 1.34 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.35 2015/09/24 20:52:28 kettenis Exp $	*/
 /*
- * Copyright (c) 2013, 2014 Mark Kettenis
+ * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -290,6 +290,7 @@ spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
 
 struct wait_queue_head {
 	struct mutex lock;
+	unsigned int count;
 };
 typedef struct wait_queue_head wait_queue_head_t;
 
@@ -297,6 +298,7 @@ static inline void
 init_waitqueue_head(wait_queue_head_t *wq)
 {
 	mtx_init(&wq->lock, IPL_NONE);
+	wq->count = 0;
 }
 
 #define wait_event(wq, condition) \
@@ -305,8 +307,10 @@ do {						\
 						\
 	if (condition)				\
 		break;				\
+	atomic_inc_int(&(wq).count);		\
 	sleep_setup(&sls, &wq, 0, "drmwe");	\
 	sleep_finish(&sls, !(condition));	\
+	atomic_dec_int(&(wq).count);		\
 } while (!(condition))
 
 #define __wait_event_timeout(wq, condition, ret) \
@@ -314,12 +318,14 @@ do {						\
 	struct sleep_state sls;			\
 	int deadline, __error;			\
 						\
+	atomic_inc_int(&(wq).count);		\
 	sleep_setup(&sls, &wq, 0, "drmwet");	\
 	sleep_setup_timeout(&sls, ret);		\
 	deadline = ticks + ret;			\
 	sleep_finish(&sls, !(condition));	\
 	ret = deadline - ticks;			\
 	__error = sleep_finish_timeout(&sls);	\
+	atomic_dec_int(&(wq).count);		\
 	if (ret < 0 || __error == EWOULDBLOCK)	\
 		ret = 0;			\
 	if (ret == 0 && (condition)) {		\
@@ -341,6 +347,7 @@ do {						\
 	struct sleep_state sls;			\
 	int deadline, __error, __error1;		\
 						\
+	atomic_inc_int(&(wq).count);		\
 	sleep_setup(&sls, &wq, PCATCH, "drmweti"); \
 	sleep_setup_timeout(&sls, ret);		\
 	sleep_setup_signal(&sls, PCATCH);	\
@@ -349,6 +356,7 @@ do {						\
 	ret = deadline - ticks;			\
 	__error1 = sleep_finish_timeout(&sls);	\
 	__error = sleep_finish_signal(&sls);	\
+	atomic_dec_int(&(wq).count);		\
 	if (ret < 0 || __error1 == EWOULDBLOCK)	\
 		ret = 0;			\
 	if (__error == ERESTART)			\
@@ -373,7 +381,7 @@ do {						\
 #define wake_up_all(x)			wakeup(x)
 #define wake_up_all_locked(x)		wakeup(x)
 
-#define waitqueue_active(x)		true
+#define waitqueue_active(wq)		((wq)->count > 0)
 
 struct completion {
 	u_int done;
