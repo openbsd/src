@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.24 2015/06/30 13:54:42 mpi Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.25 2015/09/24 14:01:20 mikeb Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -260,8 +260,10 @@ lacp_input(struct trunk_port *tp, struct mbuf *m)
 	 */
 	/* This port is joined to the active aggregator */
 	if ((lp->lp_state & LACP_STATE_COLLECTING) == 0 ||
-	    la == NULL || la != lsc->lsc_active_aggregator)
+	    la == NULL || la != lsc->lsc_active_aggregator) {
+		m_freem(m);
 		return (-1);
+	}
 
 	/* Not a subtype we are interested in */
 	return (0);
@@ -281,9 +283,8 @@ lacp_pdu_input(struct lacp_port *lp, struct mbuf *m)
 
 	if (m->m_len < sizeof(*du)) {
 		m = m_pullup(m, sizeof(*du));
-		if (m == NULL) {
+		if (m == NULL)
 			return (ENOMEM);
-		}
 	}
 	du = mtod(m, struct lacpdu *);
 
@@ -315,9 +316,11 @@ lacp_pdu_input(struct lacp_port *lp, struct mbuf *m)
 
 	lacp_sm_rx(lp, du);
 
+	m_freem(m);
 	return (error);
 
 bad:
+	m_freem(m);
 	return (EINVAL);
 }
 
@@ -1700,10 +1703,12 @@ lacp_marker_input(struct lacp_port *lp, struct mbuf *m)
 		goto bad;
 	}
 
+	m_freem(m);
 	return (error);
 
 bad:
 	LACP_DPRINTF((lp, "bad marker frame\n"));
+	m_freem(m);
 	return (EINVAL);
 }
 

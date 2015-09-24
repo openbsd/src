@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.114 2015/09/23 12:50:06 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.115 2015/09/24 14:01:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1076,7 +1076,6 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		 * We stop here if the packet has been consumed
 		 * by the protocol routine.
 		 */
-		m_freem(m);
 		return (1);
 	}
 
@@ -1367,6 +1366,7 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp, struct mbuf *m)
 {
 	if ((caddr_t)tp == tr->tr_psc)
 		return (0);
+	m_freem(m);
 	return (-1);
 }
 
