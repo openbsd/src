@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.19 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.20 2015/09/25 23:32:51 guenther Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -249,39 +249,18 @@ extern const struct res_sym __p_type_syms[];
 #define	res_ownok	__res_ownok
 #define	res_mailok	__res_mailok
 #define	res_dnok	__res_dnok
-#define	sym_ston	__sym_ston
 #define	sym_ntos	__sym_ntos
-#define	sym_ntop	__sym_ntop
 #define b64_ntop	__b64_ntop
 #define	b64_pton	__b64_pton
-#define	loc_ntoa	__loc_ntoa
-#define	loc_aton	__loc_aton
 #define	dn_skipname	__dn_skipname
-#define	fp_resstat	__fp_resstat
-#define	fp_query	__fp_query
-#define	fp_nquery	__fp_nquery
-#define	hostalias	__hostalias
 #define	putlong		__putlong
 #define	putshort	__putshort
 #define p_class		__p_class
-#define p_time		__p_time
 #define p_type		__p_type
-#define	p_query		__p_query
-#define	p_cdnname	__p_cdnname
-#define	p_cdname	__p_cdname
-#define	p_fqnname	__p_fqnname
-#define	p_fqname	__p_fqname
-#define	p_rr		__p_rr
-#define	p_option	__p_option
-#define	p_secstodate	__p_secstodate
 #define	dn_count_labels	__dn_count_labels
 #define	dn_comp		__dn_comp
 #define	res_randomid	__res_randomid
 #define	res_send	__res_send
-#define	res_isourserver	__res_isourserver
-#define	res_nameinquery	__res_nameinquery
-#define	res_queriesmatch __res_queriesmatch
-#define	res_close	__res_close
 #define	res_opt		__res_opt
 
 #ifdef BIND_RES_POSIX3
@@ -298,44 +277,20 @@ int			res_hnok(const char *);
 int			res_ownok(const char *);
 int			res_mailok(const char *);
 int			res_dnok(const char *);
-int			sym_ston(const struct res_sym *, char *, int *);
 const char *		sym_ntos(const struct res_sym *, int, int *);
-const char *		sym_ntop(const struct res_sym *, int, int *);
 int			b64_ntop(unsigned char const *, size_t, char *, size_t);
 int			b64_pton(char const *, unsigned char *, size_t);
-int			loc_aton(const char *, unsigned char *);
-const char *		loc_ntoa(const unsigned char *, char *);
 int			dn_skipname(const unsigned char *, 
 			    const unsigned char *);
-void			fp_resstat(struct __res_state *, FILE *);
-void			fp_query(const unsigned char *, FILE *);
-void			fp_nquery(const unsigned char *, int, FILE *);
-const char *		hostalias(const char *);
 void			putlong(u_int32_t, unsigned char *);
 void			putshort(u_int16_t, unsigned char *);
 const char *		p_class(int);
-const char *		p_time(u_int32_t);
 const char *		p_type(int);
-void			p_query(const unsigned char *);
-const unsigned char *	p_cdnname(const unsigned char *, const unsigned char *,
-			    int, FILE *);
-const unsigned char *	p_cdname(const unsigned char *, const unsigned char *, 
-			    FILE *);
-const unsigned char *	p_fqnname(const unsigned char *, const unsigned char *,
-			    int, char *, int);
-const unsigned char *	p_fqname(const unsigned char *, const unsigned char *, 
-			    FILE *);
-const unsigned char *	p_rr(const unsigned char *, const unsigned char *, 
-			    FILE *);
-const char *		p_option(unsigned long);
-char *			p_secstodate(unsigned long);
-int			dn_count_labels(char *);
 int			dn_comp(const char *, unsigned char *, int,
 			    unsigned char **, unsigned char **);
 int			dn_expand(const unsigned char *, const unsigned char *, 
 			    const unsigned char *, char *, int);
 int			res_init(void);
-int			_res_init(int);
 unsigned int		res_randomid(void);
 int			res_query(const char *, int, int, unsigned char *, int)
 			__attribute__((__bounded__(__string__,4,5)));
@@ -352,13 +307,6 @@ int			res_mkquery(int, const char *, int, int,
 int			res_send(const unsigned char *, int, unsigned char *, 
 			    int)
 			__attribute__((__bounded__(__string__,3,4)));
-int			res_isourserver(const struct sockaddr_in *);
-int			res_nameinquery(const char *, int, int,
-			    const unsigned char *, const unsigned char *);
-int			res_queriesmatch(const unsigned char *, 
-			    const unsigned char *, const unsigned char *, 
-			    const unsigned char *);
-void			res_close(void);
 __END_DECLS
 
 #endif /* !_RESOLV_H_ */
