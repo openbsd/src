@@ -49,7 +49,7 @@ our %args = (
 	})},
 	loggrep => {
 	    qr/Accepted/ => 2,
-	    qr/syslogd: loghost .* connection error/ => 1,
+	    qr/syslogd: loghost .* connection close/ => 1,
 	    qr/syslogd: connect .*: $errors/ => 1,
 	    get_between2loggrep(),
 	},

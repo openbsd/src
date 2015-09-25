@@ -14,8 +14,8 @@ our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 5)
-		or die "no connection error in syslogd.log";
+	    ${$self->{syslogd}}->loggrep("loghost .* connection close", 5)
+		or die "no connection close in syslogd.log";
 	    write_log($self);
 	},
     },
@@ -24,7 +24,7 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/127.0.0.1:\d+/ => '>=4',
 	    get_testgrep() => 1,
-	    qr/syslogd: loghost .* connection error/ => '>=2',
+	    qr/syslogd: loghost .* connection close/ => '>=2',
 	},
     },
     server => {
@@ -33,14 +33,14 @@ our %args = (
 	    my $self = shift;
 	    shutdown(\*STDOUT, 1)
 		or die "shutdown write failed: $!";
-	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 5)
-		or die "no connection error in syslogd.log";
+	    ${$self->{syslogd}}->loggrep("loghost .* connection close", 5)
+		or die "no connection close in syslogd.log";
 	},
 	loggrep => {},
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: read failed: EOF/ => 1,
+	    qr/syslogd: loghost .* connection close/ => 1,
 	},
     },
 );
