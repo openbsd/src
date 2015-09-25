@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.58 2013/01/18 11:21:09 guenther Exp $
+.\"	$OpenBSD: rcs.1,v 1.59 2015/09/25 15:31:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 18 2013 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt RCS 1
 .Os
 .Sh NAME
@@ -40,8 +40,7 @@
 .Op Fl e Ns Op Ar users
 .Op Fl k Ns Ar mode
 .Op Fl l Ns Op Ar rev
-.Oo Fl m Ns Ar rev :
-.Ar msg Oc
+.Op Fl m Ns Ar rev : Ns Ar msg
 .Op Fl o Ns Ar rev
 .Op Fl t Ns Op Ar str
 .Op Fl u Ns Op Ar rev
