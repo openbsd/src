@@ -1,10 +1,12 @@
-/*	$OpenBSD: tty.c,v 1.11 2015/09/13 19:46:36 tedu Exp $	*/
+/*	$OpenBSD: tty.c,v 1.12 2015/09/25 11:58:14 nicm Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
-#define EXTERN
 #include "tty.h"
-#undef EXTERN
+
+int		tty_fd = -1;	/* dup'd tty file descriptor */
+int		tty_devtty;	/* true if tty_fd is from /dev/tty */
+struct termios	tty_state;	/* saved tty state */
 
 void
 tty_close(void)
