@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.13 2011/10/02 22:20:49 edd Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.14 2015/09/25 03:17:02 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -38,6 +38,7 @@
 
 #include "ukc.h"
 #include "config.h"
+#include "exec.h"
 
 caddr_t		ptr, rest, pre;
 Elf_Ehdr	elf_ex;
@@ -47,14 +48,8 @@ char		*elf_total;
 char		*elf_shstrtab;
 off_t		elf_size;
 
-caddr_t		elf_adjust(caddr_t);
-caddr_t		elf_readjust(caddr_t);
-int		elf_check(char *);
-void		elf_loadkernel(char *);
-void		elf_savekernel(char *);
-
 caddr_t
-elf_adjust(caddr_t x)
+adjust(caddr_t x)
 {
 	int i;
 	Elf_Shdr *s;
@@ -77,7 +72,7 @@ elf_adjust(caddr_t x)
 }
 
 caddr_t
-elf_readjust(caddr_t x)
+readjust(caddr_t x)
 {
 	int i;
 	Elf_Shdr *s;
@@ -97,28 +92,8 @@ elf_readjust(caddr_t x)
 	return((caddr_t)y);
 }
 
-int
-elf_check(char *file)
-{
-	int fd, ret = 1;
-
-	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
-		return (0);
-
-	if (read(fd, (char *)&elf_ex, sizeof(elf_ex)) != sizeof(elf_ex))
-		ret = 0;
-
-	if (ret) {
-		if (!IS_ELF(elf_ex))
-			ret = 0;
-	}
-
-	close(fd);
-	return (ret);
-}
-
 void
-elf_loadkernel(char *file)
+loadkernel(char *file)
 {
 	int fd;
 
@@ -161,7 +136,7 @@ elf_loadkernel(char *file)
 }
 
 void
-elf_savekernel(char *outfile)
+savekernel(char *outfile)
 {
 	int fd;
 
