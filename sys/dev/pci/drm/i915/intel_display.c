@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.55 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.56 2015/09/25 09:42:14 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -3009,7 +3009,7 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 	if (crtc->fb == NULL)
 		return;
 
-//	WARN_ON(waitqueue_active(&dev_priv->pending_flip_queue));
+	WARN_ON(waitqueue_active(&dev_priv->pending_flip_queue));
 
 	wait_event(dev_priv->pending_flip_queue,
 		   !intel_crtc_has_pending_flip(crtc));
