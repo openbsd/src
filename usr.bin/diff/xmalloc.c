@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.7 2015/06/17 20:50:10 nicm Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.8 2015/09/25 16:16:26 tedu Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -27,11 +27,9 @@ xmalloc(size_t size)
 {
 	void *ptr;
 
-	if (size == 0)
-		errx(2, "xmalloc: zero size");
 	ptr = malloc(size);
 	if (ptr == NULL)
-		err(2, NULL);
+		err(2, "xmalloc %zu", size);
 	return ptr;
 }
 
@@ -40,14 +38,10 @@ xcalloc(size_t nmemb, size_t size)
 {
 	void *ptr;
 
-	if (size == 0 || nmemb == 0)
-		errx(2, "xcalloc: zero size");
-	if (SIZE_MAX / nmemb < size)
-		errx(2, "xcalloc: nmemb * size > SIZE_MAX");
 	ptr = calloc(nmemb, size);
 	if (ptr == NULL)
-		errx(2, "xcalloc: out of memory (allocating %lu bytes)",
-		    (u_long)(size * nmemb));
+		err(2, "xcalloc: out of memory (allocating %zu*%zu bytes)",
+		    nmemb, size);
 	return ptr;
 }
 
@@ -58,16 +52,8 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 
 	new_ptr = reallocarray(ptr, nmemb, size);
 	if (new_ptr == NULL)
-		err(2, NULL);
+		err(2, "xrealloc %zu*%zu", nmemb, size);
 	return new_ptr;
-}
-
-void
-xfree(void *ptr)
-{
-	if (ptr == NULL)
-		err(2, NULL);
-	free(ptr);
 }
 
 char *
@@ -91,7 +77,7 @@ xasprintf(char **ret, const char *fmt, ...)
 	va_end(ap);
 
 	if (i < 0 || *ret == NULL)
-		err(2, NULL);
+		err(2, "xasprintf");
 
 	return (i);
 }

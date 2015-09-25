@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.86 2015/04/29 04:00:25 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.87 2015/09/25 16:16:26 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -385,7 +385,7 @@ diffreg(char *file1, char *file2, int flags)
 		case -1:
 			warnx("No more processes");
 			status |= 2;
-			xfree(header);
+			free(header);
 			rval = D_ERROR;
 			goto closem;
 		case 0:
@@ -406,7 +406,7 @@ diffreg(char *file1, char *file2, int flags)
 			}
 			close(pfd[0]);
 			rewind(stdout);
-			xfree(header);
+			free(header);
 		}
 	}
 	prepare(0, f1, stb1.st_size, flags);
@@ -429,13 +429,13 @@ diffreg(char *file1, char *file2, int flags)
 	clistlen = 100;
 	clist = xcalloc(clistlen, sizeof(*clist));
 	i = stone(class, slen[0], member, klist, flags);
-	xfree(member);
-	xfree(class);
+	free(member);
+	free(class);
 
 	J = xreallocarray(J, len[0] + 2, sizeof(*J));
 	unravel(klist[i]);
-	xfree(clist);
-	xfree(klist);
+	free(clist);
+	free(klist);
 
 	ixold = xreallocarray(ixold, len[0] + 2, sizeof(*ixold));
 	ixnew = xreallocarray(ixnew, len[1] + 2, sizeof(*ixnew));
@@ -899,7 +899,7 @@ unsort(struct line *f, int l, int *b)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)
 		b[i] = a[i];
-	xfree(a);
+	free(a);
 }
 
 static int
@@ -1006,7 +1006,7 @@ ignoreline(char *line)
 	int ret;
 
 	ret = regexec(&ignore_re, line, 0, NULL, 0);
-	xfree(line);
+	free(line);
 	return (ret == 0);	/* if it matched, it should be ignored. */
 }
 
