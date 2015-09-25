@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.86 2015/09/14 20:06:59 schwarze Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.87 2015/09/25 14:56:33 schwarze Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -27,12 +27,10 @@
 .Nd dump traffic on a network
 .Sh SYNOPSIS
 .Nm tcpdump
-.Bk -words
 .Op Fl AadefILlNnOopqStvXx
 .Op Fl c Ar count
 .Op Fl D Ar direction
-.Oo Fl E Oo Ar espalg : Oc Ns
-.Ar espkey Oc
+.Op Fl E Oo Ar espalg : Oc Ns Ar espkey
 .Op Fl F Ar file
 .Op Fl i Ar interface
 .Op Fl r Ar file
@@ -41,7 +39,6 @@
 .Op Fl w Ar file
 .Op Fl y Ar datalinktype
 .Op Ar expression
-.Ek
 .Sh DESCRIPTION
 .Nm
 prints out the headers of packets on a network interface that match the boolean
@@ -81,13 +78,7 @@ Dump packet-matching code as a C program fragment.
 .It Fl ddd
 Dump packet-matching code as decimal numbers
 preceded with a count.
-.It Xo
-.Fl E
-.Sm off
-.Op Ar espalg No \&:
-.Ar espkey
-.Xc
-.Sm on
+.It Fl E Oo Ar espalg : Oc Ns Ar espkey
 Try to decrypt RFC 4835 ESP
 .Pq Encapsulating Security Payload
 traffic using the specified hex key
