@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.99 2015/09/25 13:51:52 schwarze Exp $
+.\"	$OpenBSD: ftp.1,v 1.100 2015/09/25 20:32:39 schwarze Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -50,8 +50,7 @@
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
 .Sm off
-.Cm ftp No ://
-.Op Ar user : password No @
+.Pf ftp:// Op Ar user : password No @
 .Ar host Op : Ar port
 .No / Ar file Op /
 .Sm on
@@ -64,7 +63,7 @@
 .Op Fl s Ar srcaddr
 .Op Fl U Ar useragent
 .Sm off
-.Cm http Oo Cm s Oc ://
+.Pf http Oo s Oc ://
 .Op Ar user : password No @
 .Ar host Op : Ar port
 .No / Ar file
@@ -74,7 +73,7 @@
 .Op Fl C
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
-.Cm file : Ns Ar
+.Pf file: Ar
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
@@ -1315,8 +1314,7 @@ The following formats are valid syntax for an auto-fetch element:
 format.
 .Sm off
 .It Xo
-.Cm ftp No ://
-.Op Ar user : password No @
+.Pf ftp:// Op Ar user : password No @
 .Ar host Op : Ar port
 .No / Ar file Op /
 .Xc
@@ -1339,8 +1337,7 @@ with a password of
 .Ar password .
 .Sm off
 .It Xo
-.Cm http No ://
-.Op Ar user : password No @
+.Pf http:// Op Ar user : password No @
 .Ar host Op : Ar port
 .No / Ar file
 .Xc
@@ -1363,8 +1360,7 @@ with a password of
 using Basic authentication.
 .Sm off
 .It Xo
-.Cm https No ://
-.Op Ar user : password No @
+.Pf https:// Op Ar user : password No @
 .Ar host Op : Ar port
 .No / Ar file
 .Xc
@@ -1386,7 +1382,7 @@ log in as
 with a password of
 .Ar password
 using Basic authentication.
-.It Cm file : Ns Ar file
+.It Pf file: Ar file
 .Ar file
 is retrieved from a mounted file system.
 .El
