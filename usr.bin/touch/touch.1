@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.34 2015/09/12 16:28:14 schwarze Exp $
+.\"	$OpenBSD: touch.1,v 1.35 2015/09/25 17:02:57 schwarze Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: September 12 2015 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Sm on
 .Oc
 .Op Fl r Ar file
-.Op Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
+.Op Fl t Oo Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op Pf . Ar SS
 .Ar
 .Sh DESCRIPTION
 The
@@ -124,7 +124,7 @@ flag is also specified.
 .It Fl r Ar file
 Use the access and modification times from the specified file
 instead of the current time of day.
-.It Fl t Oo Ns Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op \&. Ns Ar SS
+.It Fl t Oo Oo Ar cc Oc Ns Ar yy Oc Ns Ar mmddHHMM Ns Op Pf . Ar SS
 Change the access and modification times to the specified time,
 where the parts of the argument represent the following:
 .Pp
