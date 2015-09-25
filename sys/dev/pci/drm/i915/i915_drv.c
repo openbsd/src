@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.87 2015/09/24 21:31:22 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.88 2015/09/25 16:05:59 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -158,7 +158,7 @@ module_param_named(disable_power_well, i915_disable_power_well, int, 0600);
 MODULE_PARM_DESC(disable_power_well,
 		 "Disable the power well when possible (default: true)");
 
-int i915_enable_ips __read_mostly = 1;
+int i915_enable_ips __read_mostly = 0;
 module_param_named(enable_ips, i915_enable_ips, int, 0600);
 MODULE_PARM_DESC(enable_ips, "Enable IPS (default: true)");
 
