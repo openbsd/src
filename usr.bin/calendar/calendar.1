@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.37 2015/09/14 18:17:42 schwarze Exp $
+.\"	$OpenBSD: calendar.1,v 1.38 2015/09/25 16:36:00 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1  8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -41,9 +41,7 @@
 .Op Fl A Ar num
 .Op Fl B Ar num
 .Op Fl f Ar calendarfile
-.Sm off
-.Op Fl "t " Oo Oo Oo Ar cc Oc Ar yy Oc Ar mm Oc Ar dd
-.Sm on
+.Op Fl t Oo Oo Oo Ar cc Oc Ns Ar yy Oc Ns Ar mm Oc Ns Ar dd
 .Sh DESCRIPTION
 The
 .Nm
@@ -77,9 +75,7 @@ Enforce special date calculation mode for KOI8 calendars.
 Use
 .Ar calendarfile
 as the default calendar file.
-.Sm off
-.It Fl "t " Oo Oo Oo Ar cc Oc Ar yy Oc Ar mm Oc Ar dd
-.Sm on
+.It Fl t Oo Oo Oo Ar cc Oc Ns Ar yy Oc Ns Ar mm Oc Ns Ar dd
 Act like the specified value is
 .Dq today
 instead of using the current date.
