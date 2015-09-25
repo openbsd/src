@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.7 2014/10/11 08:41:06 espie Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.8 2015/09/25 16:56:26 schwarze Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2014 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt PKG_SIGN 1
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl j Ar maxjobs
 .Op Fl o Ar dir
-.Fl s Ar signify|x509
+.Fl s Cm signify Ns | Ns Cm x509
 .Op Fl s Ar cert
 .Fl s Ar privkey
 .Op Fl S Ar source
@@ -80,14 +80,14 @@ pkg_sign -s signify -s mykey-pkg.sec \e
 	-o output -S scp://build-machine/packages/
 .Ed
 .It Xo
-.Fl s Ar signify|x509
+.Fl s Cm signify Ns | Ns Cm x509
 .Op Fl s Ar cert
 .Fl s Ar privkey
 .Xc
 Specify signature parameters for signed packages.
 Option parameters are as follows:
-.Bl -tag -width ArsignifyDx509 -compact
-.It Ar signify|x509
+.Bl -tag -width signify|x509 -compact
+.It Cm signify Ns | Ns Cm x509
 choose
 .Xr signify 1
 or X.509-style signatures.
@@ -96,9 +96,9 @@ the path to the signer's certificate (X.509 only)
 .It Ar privkey
 the path to the signer's private key.
 For
-.Xr signify ,
+.Cm signify ,
 the private key name is used to set the
-.Cm \@signer
+.Cm @signer
 annotation.
 If a corresponding public key is found, the first signatures will be
 checked for key mismatches.
@@ -121,9 +121,9 @@ it already contains a complete manifest of files within the package,
 checksummed with
 .Xr sha256 1
 and annotated with proper
-.Cm \@mode ,
-.Cm \@user ,
-.Cm \@group
+.Cm @mode ,
+.Cm @user ,
+.Cm @group
 annotations, so that
 .Xr pkg_add 1
 will refuse to give special rights to any file which isn't properly annotated,
@@ -132,7 +132,7 @@ match.
 .Pp
 That packing list is a text file that is signed using the provided method,
 adding a
-.Cm \@digital-signature
+.Cm @digital-signature
 annotation.
 The signed package is then created, by putting the signed packing-list at
 the start of the new package, and then blindly copying the rest of the source
