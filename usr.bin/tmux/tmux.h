@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.561 2015/09/16 22:24:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.562 2015/09/25 15:53:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1842,6 +1842,7 @@ int	 grid_compare(struct grid *, struct grid *);
 void	 grid_collect_history(struct grid *);
 void	 grid_scroll_history(struct grid *);
 void	 grid_scroll_history_region(struct grid *, u_int, u_int);
+void	 grid_clear_history(struct grid *);
 void	 grid_expand_line(struct grid *, u_int, u_int);
 const struct grid_cell *grid_peek_cell(struct grid *, u_int, u_int);
 const struct grid_line *grid_peek_line(struct grid *, u_int);

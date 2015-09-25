@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.45 2015/09/02 17:12:07 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.46 2015/09/25 15:53:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -168,6 +168,18 @@ grid_scroll_history(struct grid *gd)
 	memset(&gd->linedata[yy], 0, sizeof gd->linedata[yy]);
 
 	gd->hsize++;
+}
+
+/* Clear the history. */
+void
+grid_clear_history(struct grid *gd)
+{
+	grid_clear_lines(gd, 0, gd->hsize);
+	grid_move_lines(gd, 0, gd->hsize, gd->sy);
+
+	gd->hsize = 0;
+	gd->linedata = xreallocarray(gd->linedata, gd->sy,
+	    sizeof *gd->linedata);
 }
 
 /* Scroll a region up, moving the top line into the history. */
@@ -344,8 +356,8 @@ grid_move_lines(struct grid *gd, u_int dy, u_int py, u_int ny)
 		grid_clear_lines(gd, yy, 1);
 	}
 
-	memmove(
-	    &gd->linedata[dy], &gd->linedata[py], ny * (sizeof *gd->linedata));
+	memmove(&gd->linedata[dy], &gd->linedata[py],
+	    ny * (sizeof *gd->linedata));
 
 	/* Wipe any lines that have been moved (without freeing them). */
 	for (yy = py; yy < py + ny; yy++) {
@@ -371,8 +383,8 @@ grid_move_cells(struct grid *gd, u_int dx, u_int px, u_int py, u_int nx)
 
 	grid_expand_line(gd, py, px + nx);
 	grid_expand_line(gd, py, dx + nx);
-	memmove(
-	    &gl->celldata[dx], &gl->celldata[px], nx * sizeof *gl->celldata);
+	memmove(&gl->celldata[dx], &gl->celldata[px],
+	    nx * sizeof *gl->celldata);
 
 	/* Wipe any cells that have been moved. */
 	for (xx = px; xx < px + nx; xx++) {
