@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.88 2015/09/25 16:05:59 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.89 2015/09/25 16:15:19 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -589,10 +589,8 @@ bool i915_semaphore_is_enabled(struct drm_device *dev)
 		return false;
 
 	/* Until we get further testing... */
-	if (IS_GEN8(dev)) {
-		WARN_ON(!i915_preliminary_hw_support);
+	if (IS_GEN8(dev))
 		return false;
-	}
 
 	if (i915_semaphores >= 0)
 		return i915_semaphores;

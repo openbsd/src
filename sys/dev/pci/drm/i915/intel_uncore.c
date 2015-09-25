@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_uncore.c,v 1.1 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_uncore.c,v 1.2 2015/09/25 16:15:19 jsg Exp $	*/
 /*
  * Copyright © 2013 Intel Corporation
  *
@@ -308,13 +308,13 @@ static void intel_uncore_forcewake_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
-	if (IS_VALLEYVIEW(dev)) {
+	if (IS_VALLEYVIEW(dev))
 		vlv_force_wake_reset(dev_priv);
-	} else if (INTEL_INFO(dev)->gen >= 6) {
+	else if (IS_GEN6(dev) || IS_GEN7(dev))
 		__gen6_gt_force_wake_reset(dev_priv);
-		if (IS_IVYBRIDGE(dev) || IS_HASWELL(dev))
-			__gen6_gt_force_wake_mt_reset(dev_priv);
-	}
+
+	if (IS_IVYBRIDGE(dev) || IS_HASWELL(dev) || IS_GEN8(dev))
+		__gen6_gt_force_wake_mt_reset(dev_priv);
 }
 
 void intel_uncore_early_sanitize(struct drm_device *dev)
@@ -637,16 +637,17 @@ static bool is_gen8_shadowed(struct drm_i915_private *dev_priv, u32 reg)
 #define __gen8_write(x) \
 static void \
 gen8_write##x(struct drm_i915_private *dev_priv, off_t reg, u##x val, bool trace) { \
-	bool __needs_put = reg < 0x40000 && !is_gen8_shadowed(dev_priv, reg); \
 	REG_WRITE_HEADER; \
-	if (__needs_put) { \
-		dev_priv->uncore.funcs.force_wake_get(dev_priv, \
-							FORCEWAKE_ALL); \
-	} \
-	__raw_i915_write##x(dev_priv, reg, val); \
-	if (__needs_put) { \
-		dev_priv->uncore.funcs.force_wake_put(dev_priv, \
-							FORCEWAKE_ALL); \
+	if (reg < 0x40000 && !is_gen8_shadowed(dev_priv, reg)) { \
+		if (dev_priv->uncore.forcewake_count == 0) \
+			dev_priv->uncore.funcs.force_wake_get(dev_priv,	\
+							      FORCEWAKE_ALL); \
+		__raw_i915_write##x(dev_priv, reg, val); \
+		if (dev_priv->uncore.forcewake_count == 0) \
+			dev_priv->uncore.funcs.force_wake_put(dev_priv, \
+							      FORCEWAKE_ALL); \
+	} else { \
+		__raw_i915_write##x(dev_priv, reg, val); \
 	} \
 	REG_WRITE_FOOTER; \
 }

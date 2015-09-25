@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.37 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.38 2015/09/25 16:15:19 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -4723,6 +4723,13 @@ static void gen8_init_clock_gating(struct drm_device *dev)
 
 	WARN(!i915_preliminary_hw_support,
 	     "GEN8_CENTROID_PIXEL_OPT_DIS not be needed for production\n");
+
+	/* WaDisablePartialInstShootdown:bdw */
+	/* WaDisableThreadStallDopClockGating:bdw */
+	I915_WRITE(GEN8_ROW_CHICKEN,
+		   _MASKED_BIT_ENABLE(PARTIAL_INSTRUCTION_SHOOTDOWN_DISABLE |
+				      STALL_DOP_GATING_DISABLE));
+
 	I915_WRITE(HALF_SLICE_CHICKEN3,
 		   _MASKED_BIT_ENABLE(GEN8_CENTROID_PIXEL_OPT_DIS));
 	I915_WRITE(HALF_SLICE_CHICKEN3,
@@ -4748,8 +4755,8 @@ static void gen8_init_clock_gating(struct drm_device *dev)
 	/* WaPsrDPRSUnmaskVBlankInSRD:bdw */
 	for_each_pipe(i) {
 		I915_WRITE(CHICKEN_PIPESL_1(i),
-			   I915_READ(CHICKEN_PIPESL_1(i) |
-				     DPRS_MASK_VBLANK_SRD));
+			   I915_READ(CHICKEN_PIPESL_1(i)) |
+			   DPRS_MASK_VBLANK_SRD);
 	}
 
 	/* Use Force Non-Coherent whenever executing a 3D context. This is a
@@ -4765,6 +4772,13 @@ static void gen8_init_clock_gating(struct drm_device *dev)
 	I915_WRITE(GEN7_FF_THREAD_MODE,
 		   I915_READ(GEN7_FF_THREAD_MODE) &
 		   ~(GEN8_FF_DS_REF_CNT_FFME | GEN7_FF_VS_REF_CNT_FFME));
+
+	I915_WRITE(GEN6_RC_SLEEP_PSMI_CONTROL,
+		   _MASKED_BIT_ENABLE(GEN8_RC_SEMA_IDLE_MSG_DISABLE));
+
+	/* WaDisableSDEUnitClockGating:bdw */
+	I915_WRITE(GEN8_UCGCTL6, I915_READ(GEN8_UCGCTL6) |
+		   GEN8_SDEUNIT_CLOCK_GATE_DISABLE);
 }
 
 static void haswell_init_clock_gating(struct drm_device *dev)

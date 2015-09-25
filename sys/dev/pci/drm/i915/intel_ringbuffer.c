@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.30 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.31 2015/09/25 16:15:19 jsg Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -582,7 +582,7 @@ static int init_render_ring(struct intel_ring_buffer *ring)
 	 * to use MI_WAIT_FOR_EVENT within the CS. It should already be
 	 * programmed to '1' on all products.
 	 *
-	 * WaDisableAsyncFlipPerfMode:snb,ivb,hsw,vlv
+	 * WaDisableAsyncFlipPerfMode:snb,ivb,hsw,vlv,bdw
 	 */
 	if (INTEL_INFO(dev)->gen >= 6)
 		I915_WRITE(MI_MODE, _MASKED_BIT_ENABLE(ASYNC_FLIP_PERF_DISABLE));
@@ -991,8 +991,14 @@ void intel_ring_setup_status_page(struct intel_ring_buffer *ring)
 	I915_WRITE(mmio, (u32)ring->status_page.gfx_addr);
 	POSTING_READ(mmio);
 
-	/* Flush the TLB for this page */
-	if (INTEL_INFO(dev)->gen >= 6) {
+	/*
+	 * Flush the TLB for this page
+	 *
+	 * FIXME: These two bits have disappeared on gen8, so a question
+	 * arises: do we still need this and if so how should we go about
+	 * invalidating the TLB?
+	 */
+	if (INTEL_INFO(dev)->gen >= 6 && INTEL_INFO(dev)->gen < 8) {
 		u32 reg = RING_INSTPM(ring->mmio_base);
 		I915_WRITE(reg,
 			   _MASKED_BIT_ENABLE(INSTPM_TLB_INVALIDATE |

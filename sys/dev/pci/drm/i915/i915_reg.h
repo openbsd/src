@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_reg.h,v 1.10 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: i915_reg.h,v 1.11 2015/09/25 16:15:19 jsg Exp $	*/
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -945,6 +945,9 @@
 #define GEN6_BLITTER_ECOSKPD	0x221d0
 #define   GEN6_BLITTER_LOCK_SHIFT			16
 #define   GEN6_BLITTER_FBC_NOTIFY			(1<<3)
+
+#define GEN6_RC_SLEEP_PSMI_CONTROL	0x2050
+#define   GEN8_RC_SEMA_IDLE_MSG_DISABLE	(1 << 12)
 
 #define GEN6_BSD_SLEEP_PSMI_CONTROL	0x12050
 #define   GEN6_BSD_SLEEP_MSG_DISABLE	(1 << 0)
@@ -4871,6 +4874,9 @@
 #define GEN7_UCGCTL4				0x940c
 #define  GEN7_L3BANK2X_CLOCK_GATE_DISABLE	(1<<25)
 
+#define GEN8_UCGCTL6				0x9430
+#define   GEN8_SDEUNIT_CLOCK_GATE_DISABLE	(1<<14)
+
 #define GEN6_RPNSWREQ				0xA008
 #define   GEN6_TURBO_DISABLE			(1<<31)
 #define   GEN6_FREQUENCY(x)			((x)<<25)
@@ -5011,6 +5017,10 @@
 #define   GEN7_MAX_PS_THREAD_DEP		(8<<12)
 #define   GEN7_SINGLE_SUBSCAN_DISPATCH_ENABLE	(1<<10)
 #define   GEN7_PSD_SINGLE_PORT_DISPATCH_ENABLE	(1<<3)
+
+#define GEN8_ROW_CHICKEN		0xe4f0
+#define   PARTIAL_INSTRUCTION_SHOOTDOWN_DISABLE	(1<<8)
+#define   STALL_DOP_GATING_DISABLE		(1<<5)
 
 #define GEN7_ROW_CHICKEN2		0xe4f4
 #define GEN7_ROW_CHICKEN2_GT2		0xf4f4

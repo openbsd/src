@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_gtt.c,v 1.10 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_gtt.c,v 1.11 2015/09/25 16:15:19 jsg Exp $	*/
 /*
  * Copyright © 2010 Daniel Vetter
  *
@@ -35,6 +35,8 @@
 #define _PAGE_PAT	PG_PAT
 #define _PAGE_PWT	PG_WT
 #define _PAGE_PCD	PG_N
+
+static void gen8_setup_private_ppat(struct drm_i915_private *dev_priv);
 
 #define GEN6_PPGTT_PD_ENTRIES 512
 #define I915_PPGTT_PT_ENTRIES (PAGE_SIZE / sizeof(gen6_gtt_pte_t))
@@ -368,6 +370,7 @@ static void gen8_ppgtt_cleanup(struct i915_address_space *vm)
  **/
 static int gen8_ppgtt_init(struct i915_hw_ppgtt *ppgtt, uint64_t size)
 {
+	struct drm_i915_private *dev_priv = ppgtt->base.dev->dev_private;
 	struct page *pt_pages;
 	int i, j, ret = -ENOMEM;
 	const int max_pdp = DIV_ROUND_UP(size, 1 << 30);
@@ -398,6 +401,7 @@ static int gen8_ppgtt_init(struct i915_hw_ppgtt *ppgtt, uint64_t size)
 	ppgtt->base.clear_range = gen8_ppgtt_clear_range;
 	ppgtt->base.insert_entries = gen8_ppgtt_insert_entries;
 	ppgtt->base.cleanup = gen8_ppgtt_cleanup;
+	ppgtt->base.scratch = dev_priv->gtt.base.scratch;
 	ppgtt->base.start = 0;
 	ppgtt->base.total = ppgtt->num_pt_pages * GEN8_PTES_PER_PAGE * PAGE_SIZE;
 
@@ -889,6 +893,9 @@ void i915_gem_restore_gtt_mappings(struct drm_device *dev)
 		i915_gem_clflush_object(obj, obj->pin_display);
 		i915_gem_gtt_bind_object(obj, obj->cache_level);
 	}
+
+	if (INTEL_INFO(dev)->gen >= 8)
+		gen8_setup_private_ppat(dev_priv);
 
 	i915_ggtt_flush(dev_priv);
 }
