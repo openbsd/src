@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.4 2013/11/15 22:20:04 millert Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.5 2015/09/25 16:23:18 schwarze Exp $	*/
 
 /*
  * Copyright (c) 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -172,8 +172,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-b boolean | -c capability | -n number | -s string] -a -f path\n"
-	    "       %s [-b boolean | -c capability | -n number | -s string] -f path record ...\n",
-	    __progname, __progname);
+	fprintf(stderr, "usage: %s [-b boolean | -c capability | "
+	    "-n number | -s string] -f path\n"
+	    "              -a | record ...\n",
+	    __progname);
 	exit(1);
 }
