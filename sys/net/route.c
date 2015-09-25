@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.242 2015/09/23 08:49:46 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.243 2015/09/25 09:51:20 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1742,6 +1742,12 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 	if ((rt->rt_ifp != ifp) &&
 	    (rt->rt_ifa == NULL || rt->rt_ifa->ifa_ifp != ifp))
 	    	return (0);
+
+	/* Local routes are always usable. */
+	if (rt->rt_flags & RTF_LOCAL) {
+		rt->rt_flags |= RTF_UP;
+		return (0);
+	}
 
 	if (LINK_STATE_IS_UP(ifp->if_link_state) && ifp->if_flags & IFF_UP) {
 		if (!(rt->rt_flags & RTF_UP)) {

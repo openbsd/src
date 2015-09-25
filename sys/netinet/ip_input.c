@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.255 2015/09/11 19:34:20 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.256 2015/09/25 09:51:20 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -725,7 +725,7 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct in_addr ina)
 			m->m_flags |= M_BCAST;
 	}
 
-	return (ISSET(ia->ia_ifp->if_flags, IFF_UP));
+	return (1);
 }
 
 /*
