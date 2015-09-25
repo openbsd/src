@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.35 2015/09/24 20:52:28 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.36 2015/09/25 20:27:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -1002,7 +1002,7 @@ roundup_pow_of_two(unsigned long x)
 	return (1UL << flsl(x - 1));
 }
 
-#define is_power_of_2(x)	((((x)-1)&(x))==0)
+#define is_power_of_2(x)	(x != 0 && (((x) - 1) & (x)) == 0)
 
 #define PAGE_ALIGN(addr)	(((addr) + PAGE_MASK) & ~PAGE_MASK)
 #define IS_ALIGNED(x, y)	(((x) & ((y) - 1)) == 0)
