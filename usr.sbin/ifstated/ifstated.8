@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.8,v 1.8 2007/05/31 19:20:25 jmc Exp $
+.\" $OpenBSD: ifstated.8,v 1.9 2015/09/25 14:27:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt IFSTATED 8
 .Os
 .Sh NAME
@@ -22,14 +22,9 @@
 .Nd Interface State daemon
 .Sh SYNOPSIS
 .Nm ifstated
-.Bk -words
 .Op Fl dhinv
-.Xo
-.Oo Fl D
-.Ar macro Ns = Ns Ar value Oc
-.Xc
+.Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
-.Ek
 .Sh DESCRIPTION
 The
 .Nm

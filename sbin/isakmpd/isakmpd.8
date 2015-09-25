@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.116 2015/01/16 14:19:07 schwarze Exp $
+.\" $OpenBSD: isakmpd.8,v 1.117 2015/09/25 14:27:26 schwarze Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: January 16 2015 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -38,20 +38,15 @@
 .Nd ISAKMP/Oakley a.k.a. IKEv1 key management daemon
 .Sh SYNOPSIS
 .Nm isakmpd
-.Bk -words
 .Op Fl 46adKLnSTv
 .Op Fl c Ar config-file
-.Xo
-.Oo Fl D
-.Ar class Ns = Ns Ar level Oc
-.Xc
+.Op Fl D Ar class Ns = Ns Ar level
 .Op Fl f Ar fifo
 .Op Fl i Ar pid-file
 .Op Fl l Ar packetlog-file
 .Op Fl N Ar udpencap-port
 .Op Fl p Ar listen-port
 .Op Fl R Ar report-file
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -330,46 +325,11 @@ All commands start with a single letter, followed by command-specific options.
 Available commands are:
 .Pp
 .Bl -tag -width Ds -compact
-.It Xo
-.Ic C add
-.Sm off
-.Op Ar section :
-.Ar tag No = Ar value
-.Sm on
-.Xc
-.It Xo
-.Ic C rmv
-.Sm off
-.Op Ar section :
-.Ar tag No = Ar value
-.Sm on
-.Xc
-.It Xo
-.Ic C rm
-.Sm off
-.Op Ar section :
-.Ar tag
-.Sm on
-.Xc
-.It Xo
-.Ic C rms
-.Op Ar section
-.Xc
-.It Xo
-.Ic C set
-.Sm off
-.Op Ar section :
-.Ar tag No = Ar value
-.Sm on
-.Xc
-.It Xo
-.Ic C set
-.Sm off
-.Op Ar section :
-.Ar tag No = Ar value
-.Sm on
-.Ic force
-.Xc
+.It Ic C add Oo Ar section Oc : Ns Ar tag Ns = Ns Ar value
+.It Ic C rmv Oo Ar section Oc : Ns Ar tag Ns = Ns Ar value
+.It Ic C rm Oo Ar section Oc : Ns Ar tag
+.It Ic C rms Op Ar section
+.It Ic C set Oo Ar section Oc : Ns Ar tag Ns = Ns Ar value Op Ic force
 Update the running
 .Nm
 configuration atomically.
@@ -398,13 +358,7 @@ a
 .Dv SIGHUP
 or an "R" through the FIFO will void any updates done to the configuration.
 .Pp
-.It Xo
-.Ic C get
-.Sm off
-.Op Ar section :
-.Ar tag
-.Sm on
-.Xc
+.It Ic C get Oo Ar section Oc : Ns Ar tag
 Get the configuration value of the specified section and tag.
 The result is stored in
 .Pa /var/run/isakmpd.result .
@@ -412,15 +366,8 @@ The result is stored in
 .It Ic c Ar name
 Start the named connection, if stopped or inactive.
 .Pp
-.It Xo
-.Ic D
-.Ar class
-.Ar level
-.Xc
-.It Xo
-.Ic D A
-.Ar level
-.Xc
+.It Ic D Ar class level
+.It Ic D A Ar level
 .It Ic D T
 Set debug class
 .Ar class
@@ -437,11 +384,7 @@ Another
 .Ic D T
 command will toggle them back to the earlier levels.
 .Pp
-.It Xo
-.Ic d
-.Ar cookies
-.Ar msgid
-.Xc
+.It Ic d Ar cookies msgid
 Delete the specified SA from the system.
 Specify
 .Ar msgid
@@ -456,13 +399,7 @@ Set
 to active or passive mode.
 In passive mode no packets are sent to peers.
 .Pp
-.It Xo
-.Ic p
-.Sm off
-.Ic on
-.Op No = Ar path
-.Sm on
-.Xc
+.It Ic p on Ns Op = Ns Ar path
 .It Ic p off
 Enable or disable cleartext IKE packet capture.
 When enabling, optionally specify which file
@@ -506,11 +443,7 @@ file.
 .It Ic T
 Tear down all active quick mode connections.
 .Pp
-.It Xo
-.Ic t
-.Op Ar phase
-.Ar name
-.Xc
+.It Ic t Oo Ar phase Oc Ar name
 Tear down the named connection, if active.
 For
 .Ar name ,
