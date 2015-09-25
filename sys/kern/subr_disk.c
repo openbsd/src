@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.219 2015/09/24 19:28:33 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.220 2015/09/25 11:56:21 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -625,20 +625,12 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 {
 	uint64_t ghpartlba;
 	uint64_t ghlbaend, ghlbastart;
-	uint32_t orig_gh_csum = gh->gh_csum;
+	uint32_t orig_gh_csum;
 	uint32_t ghsize, ghpartsize, ghpartspersec, ghpartnum;
-
-	gh->gh_csum = 0;
-	gh->gh_csum = crc32(0, (unsigned char *)gh,
-	    letoh32(gh->gh_size));
-
-	if (orig_gh_csum != gh->gh_csum)
-		return (EINVAL);
 
 	if (letoh64(gh->gh_sig) != GPTSIGNATURE)
 		return (EINVAL);
 
-	/* we only support version 1.0 */
 	if (letoh32(gh->gh_rev) != GPTREVISION)
 		return (EINVAL);
 
@@ -650,11 +642,14 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 	ghlbaend = letoh64(gh->gh_lba_end);
 	ghlbastart = letoh64(gh->gh_lba_start);
 
-	/*
-	 * Header size must be greater than or equal to 92 and less
-	 * than or equal to the logical block size.
-	 */
-	if (ghsize < GPTMINHDRSIZE || ghsize > lp->d_secsize)
+	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header))
+		return (EINVAL);
+
+	orig_gh_csum = gh->gh_csum;
+	gh->gh_csum = 0;
+	gh->gh_csum = crc32(0, (unsigned char *)gh, ghsize);
+
+	if (orig_gh_csum != gh->gh_csum)
 		return (EINVAL);
 
 	if (ghlbastart >= DL_GETDSIZE(lp) ||
