@@ -31,7 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static void usage(void);
+static void __dead usage(void);
 
 static int machine;
 
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 		arch = MACHINE_ARCH;
 		opts = "ks";
 	}
-	while ((c = getopt(argc, argv, opts)) != -1)
+	while ((c = getopt(argc, argv, opts)) != -1) {
 		switch (c) {
 		case 'a':
 			arch = MACHINE_ARCH;
@@ -66,19 +66,16 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			/* NOTREACHED */
 		}
-	if (optind != argc) {
-		usage();
-		/* NOTREACHED */
 	}
-	if (!short_form)
-		fputs("OpenBSD.", stdout);
-	puts(arch);
-	return 0;
+	if (optind != argc)
+		usage();
+
+	printf("%s%s\n", short_form ? "" : "OpenBSD.", arch);
+	return (0);
 }
 
-static void
+static void __dead
 usage(void)
 {
 	if (machine)
