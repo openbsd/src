@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.98 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: ftp.1,v 1.99 2015/09/25 13:51:52 schwarze Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -50,10 +50,10 @@
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
 .Sm off
-.No ftp:// Oo Ar user : password No @
-.Oc Ar host Oo : Ar port
-.Oc No / Ar file Oo /
-.Oc
+.Cm ftp No ://
+.Op Ar user : password No @
+.Ar host Op : Ar port
+.No / Ar file Op /
 .Sm on
 .Ar ...
 .Nm ftp
@@ -64,27 +64,22 @@
 .Op Fl s Ar srcaddr
 .Op Fl U Ar useragent
 .Sm off
-.No http[s]:// Oo Ar user : password No @
-.Oc Ar host Oo : Ar port
-.Oc No / Ar file
+.Cm http Oo Cm s Oc ://
+.Op Ar user : password No @
+.Ar host Op : Ar port
+.No / Ar file
 .Sm on
 .Ar ...
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
-.Sm off
-.No file: Ar file
-.Sm on
-.Ar ...
+.Cm file : Ns Ar
 .Nm ftp
 .Op Fl C
 .Op Fl o Ar output
 .Op Fl s Ar srcaddr
-.Sm off
-.Ar host : No / Ar file Oo /
-.Oc
-.Sm on
+.Ar host : Ns / Ns Ar file Ns Op /
 .Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -1314,11 +1309,18 @@ on the command line.
 .Pp
 The following formats are valid syntax for an auto-fetch element:
 .Bl -tag -width Ds
-.It host:/file[/]
+.It Ar host : Ns / Ns Ar file Ns Op /
 .Dq Classic
 .Nm
 format.
-.It ftp://[user:password@]host[:port]/file[/]
+.Sm off
+.It Xo
+.Cm ftp No ://
+.Op Ar user : password No @
+.Ar host Op : Ar port
+.No / Ar file Op /
+.Xc
+.Sm on
 An FTP URL, retrieved using the FTP protocol if
 .Ev ftp_proxy
 isn't defined.
@@ -1335,7 +1337,14 @@ log in as
 .Ar user
 with a password of
 .Ar password .
-.It http://[user:password@]host[:port]/file
+.Sm off
+.It Xo
+.Cm http No ://
+.Op Ar user : password No @
+.Ar host Op : Ar port
+.No / Ar file
+.Xc
+.Sm on
 An HTTP URL, retrieved using the HTTP protocol.
 If
 .Ev http_proxy
@@ -1352,7 +1361,14 @@ log in as
 with a password of
 .Ar password
 using Basic authentication.
-.It https://[user:password@]host[:port]/file
+.Sm off
+.It Xo
+.Cm https No ://
+.Op Ar user : password No @
+.Ar host Op : Ar port
+.No / Ar file
+.Xc
+.Sm on
 An HTTPS URL, retrieved using the HTTPS protocol.
 If
 .Ev http_proxy
@@ -1370,7 +1386,7 @@ log in as
 with a password of
 .Ar password
 using Basic authentication.
-.It file:file
+.It Cm file : Ns Ar file
 .Ar file
 is retrieved from a mounted file system.
 .El
