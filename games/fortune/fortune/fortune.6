@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fortune.6,v 1.13 2015/02/06 09:30:04 tedu Exp $
+.\"	$OpenBSD: fortune.6,v 1.14 2015/09/25 17:37:23 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)fortune.6	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 6 2015 $
+.Dd $Mdocdate: September 25 2015 $
 .Dt FORTUNE 6
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Oo
 .Op Ar N Ns %
 .Sm off
-.Ar file No / Ar directory No / Ar all
+.Ar file | Ar directory | Cm all
 .Sm on
 .Oc
 .Sh DESCRIPTION
@@ -108,9 +108,12 @@ to guarantee that the message can be read before the screen is cleared.
 .El
 .Pp
 The user may specify alternate sayings.
-You can specify a specific file, a directory which contains one or
-more files, or the special word
-.Em all ,
+You can specify a specific
+.Ar file ,
+a
+.Ar directory
+which contains one or more files, or the special word
+.Cm all ,
 which says to use all the standard databases.
 Any of these may be preceded by a percentage, which is a number
 .Ar N
@@ -119,26 +122,28 @@ between 0 and 100 inclusive, followed by a
 character.
 If it is, there will be an
 .Ar N
-percent probability that an adage will be picked from that file
-or directory.
+percent probability that an adage will be picked from that
+.Ar file
+or
+.Ar directory .
 If the percentages do not sum to 100, and there are specifications
 without percentages, the remaining percent will apply to those files
 and/or directories, in which case the probability of selecting from
 one of them will be based on their relative sizes.
 .Pp
 As an example, given two databases
-.Em funny
+.Pa funny
 and
-.Em not-funny ,
+.Pa not-funny ,
 with
-.Em funny
+.Pa funny
 twice as big, saying
 .Bd -literal -offset indent
 $ fortune funny not-funny
 .Ed
 .Pp
 will get you fortunes out of
-.Em funny
+.Pa funny
 two-thirds of the time.
 The command
 .Bd -literal -offset indent
@@ -146,7 +151,7 @@ $ fortune 90% funny 10% not-funny
 .Ed
 .Pp
 will pick out 90% of its fortunes from
-.Em funny
+.Pa funny
 (the
 .Dq 10%
 is unnecessary, since 10% is all that's left).
