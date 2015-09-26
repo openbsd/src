@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.84 2015/09/14 15:35:47 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.85 2015/09/26 12:54:39 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: September 26 2015 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -284,6 +284,8 @@ See
 .Sx PostScript Output .
 .It Fl T Cm tree
 Produce an indented parse tree.
+See
+.Sx Syntax tree output .
 .It Fl T Cm utf8
 Encode output in the UTF\-8 multi-byte format.
 See
@@ -490,6 +492,44 @@ to force a UTF\-8 locale.
 See
 .Sx Locale Output
 for details and options.
+.Ss Syntax tree output
+Use
+.Fl T Cm tree
+to show a human readable representation of the syntax tree.
+It is useful for debugging the source code of manual pages.
+The exact format is subject to change, don't write parsers for it.
+Each output line shows one syntax tree node.
+Child nodes are indented with respect to their parent node.
+The columns are:
+.Pp
+.Bl -enum -compact
+.It
+For macro nodes, the macro name; for text and
+.Xr tbl 7
+nodes, the content.  There is a special format for
+.Xr eqn 7
+nodes.
+.It
+Node type (text, elem, block, head, body, body-end, tail, tbl, eqn).
+.It
+Flags:
+.Bl -dash -compact
+.It
+An opening parenthesis if the node is an opening delimiter.
+.It
+An asterisk if the node starts a new input line.
+.It
+The input line number (starting at one).
+.It
+A colon.
+.It
+The input column number (starting at one).
+.It
+A closing parenthesis if the node is a closing delimiter.
+.It
+A full stop if the node ends a sentence.
+.El
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width MANPAGER
 .It Ev MANPAGER
