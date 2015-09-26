@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.37 2015/09/26 11:17:15 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.38 2015/09/26 19:52:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -380,6 +380,7 @@ do {						\
 #define wake_up(x)			wakeup(x)
 #define wake_up_all(x)			wakeup(x)
 #define wake_up_all_locked(x)		wakeup(x)
+#define wake_up_interruptible(x)	wakeup(x)
 
 #define waitqueue_active(wq)		((wq)->count > 0)
 
@@ -617,6 +618,7 @@ timespec_valid(const struct timespec *ts)
 }
 
 typedef struct timeval ktime_t;
+
 static inline struct timeval
 ktime_get(void)
 {
@@ -624,6 +626,41 @@ ktime_get(void)
 	
 	getmicrouptime(&tv);
 	return tv;
+}
+
+static inline struct timeval
+ktime_get_monotonic_offset(void)
+{
+	struct timeval tv = {0, 0};
+	return tv;
+}
+
+static inline int64_t
+ktime_to_ns(struct timeval tv)
+{
+	return timeval_to_ns(&tv);
+}
+
+#define ktime_to_timeval(tv) (tv)
+
+static inline struct timeval
+ktime_sub(struct timeval a, struct timeval b)
+{
+	struct timeval res;
+	timersub(&a, &b, &res);
+	return res;
+}
+
+static inline struct timeval
+ktime_add_ns(struct timeval tv, int64_t ns)
+{
+	return ns_to_timeval(timeval_to_ns(&tv) + ns);
+}
+
+static inline struct timeval
+ktime_sub_ns(struct timeval tv, int64_t ns)
+{
+	return ns_to_timeval(timeval_to_ns(&tv) - ns);
 }
 
 #define GFP_ATOMIC	M_NOWAIT

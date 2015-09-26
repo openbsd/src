@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.137 2015/09/23 23:12:11 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.138 2015/09/26 19:52:16 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -111,8 +111,8 @@ static struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, DRM_UNLOCKED|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_UNIQUE, drm_getunique, 0),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAGIC, drm_getmagic, 0),
-	DRM_IOCTL_DEF(DRM_IOCTL_IRQ_BUSID, drm_irq_by_busid, DRM_MASTER|DRM_ROOT_ONLY),
 #ifdef __linux__
+	DRM_IOCTL_DEF(DRM_IOCTL_IRQ_BUSID, drm_irq_by_busid, DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAP, drm_getmap, DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_CLIENT, drm_getclient, DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_GET_STATS, drm_getstats, DRM_UNLOCKED),
@@ -179,11 +179,10 @@ static struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_MAP_BUFS, drm_mapbufs, DRM_AUTH),
 	DRM_IOCTL_DEF(DRM_IOCTL_FREE_BUFS, drm_freebufs, DRM_AUTH),
 	DRM_IOCTL_DEF(DRM_IOCTL_DMA, drm_dma_ioctl, DRM_AUTH),
-#endif
 
 	DRM_IOCTL_DEF(DRM_IOCTL_CONTROL, drm_control, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 
-#if defined(__linux__) && defined(__OS_HAS_AGP)
+#if __OS_HAS_AGP
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ACQUIRE, drm_agp_acquire_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_RELEASE, drm_agp_release_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ENABLE, drm_agp_enable_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
@@ -194,7 +193,6 @@ static struct drm_ioctl_desc drm_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_IOCTL_AGP_UNBIND, drm_agp_unbind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 #endif
 
-#ifdef __linux__
 	DRM_IOCTL_DEF(DRM_IOCTL_SG_ALLOC, drm_sg_alloc, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF(DRM_IOCTL_SG_FREE, drm_sg_free, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 #endif
@@ -394,7 +392,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&dev->maplist);
 	SPLAY_INIT(&dev->files);
-	TAILQ_INIT(&dev->vbl_events);
+	INIT_LIST_HEAD(&dev->vblank_event_list);
 
 	/*
 	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
@@ -635,7 +633,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	file_priv->flags = flags;
 	file_priv->minor = minor(kdev);
 	INIT_LIST_HEAD(&file_priv->fbs);
-	TAILQ_INIT(&file_priv->evlist);
+	INIT_LIST_HEAD(&file_priv->event_list);
 	file_priv->event_space = 4096; /* 4k for event buffer */
 	DRM_DEBUG("minor = %d\n", file_priv->minor);
 
@@ -683,8 +681,8 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 {
 	struct drm_device		*dev = drm_get_device_from_kdev(kdev);
 	struct drm_file			*file_priv;
-	struct drm_pending_event	*ev, *evtmp;
-	struct drm_pending_vblank_event	*vev;
+	struct drm_pending_event *e, *et;
+	struct drm_pending_vblank_event	*v, *vt;
 	int				 retcode = 0;
 
 	if (dev == NULL)
@@ -710,20 +708,21 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 	    DRM_CURRENTPID, (long)&dev->device, dev->open_count);
 
 	mtx_enter(&dev->event_lock);
-	struct drmevlist *list = &dev->vbl_events;
-	for (ev = TAILQ_FIRST(list); ev != NULL; ev = evtmp) {
-		evtmp = TAILQ_NEXT(ev, link);
-		vev = (struct drm_pending_vblank_event *)ev;
-		if (ev->file_priv == file_priv) {
-			TAILQ_REMOVE(list, ev, link);
-			drm_vblank_put(dev, vev->pipe);
-			ev->destroy(ev);
+
+	/* Remove pending flips */
+	list_for_each_entry_safe(v, vt, &dev->vblank_event_list, base.link)
+		if (v->base.file_priv == file_priv) {
+			list_del(&v->base.link);
+			drm_vblank_put(dev, v->pipe);
+			v->base.destroy(&v->base);
 		}
+
+	/* Remove unconsumed events */
+	list_for_each_entry_safe(e, et, &file_priv->event_list, link) {
+		list_del(&e->link);
+		e->destroy(e);
 	}
-	while ((ev = TAILQ_FIRST(&file_priv->evlist)) != NULL) {
-		TAILQ_REMOVE(&file_priv->evlist, ev, link);
-		ev->destroy(ev);
-	}
+
 	mtx_leave(&dev->event_lock);
 
 	if (dev->driver->flags & DRIVER_MODESET)
@@ -899,12 +898,12 @@ drmread(dev_t kdev, struct uio *uio, int ioflag)
 	 * a whole event, we won't read any of it out.
 	 */
 	mtx_enter(&dev->event_lock);
-	while (error == 0 && TAILQ_EMPTY(&file_priv->evlist)) {
+	while (error == 0 && list_empty(&file_priv->event_list)) {
 		if (ioflag & IO_NDELAY) {
 			mtx_leave(&dev->event_lock);
 			return (EAGAIN);
 		}
-		error = msleep(&file_priv->evlist, &dev->event_lock,
+		error = msleep(&file_priv->event_list, &dev->event_lock,
 		    PWAIT | PCATCH, "drmread", 0);
 	}
 	if (error) {
@@ -938,17 +937,22 @@ int
 drm_dequeue_event(struct drm_device *dev, struct drm_file *file_priv,
     size_t resid, struct drm_pending_event **out)
 {
-	struct drm_pending_event	*ev = NULL;
-	int				 gotone = 0;
+	struct drm_pending_event *e = NULL;
+	int gotone = 0;
 
 	MUTEX_ASSERT_LOCKED(&dev->event_lock);
-	if ((ev = TAILQ_FIRST(&file_priv->evlist)) == NULL ||
-	    ev->event->length > resid)
+
+	*out = NULL;
+	if (list_empty(&file_priv->event_list))
+		goto out;
+	e = list_first_entry(&file_priv->event_list,
+			     struct drm_pending_event, link);
+	if (e->event->length > resid)
 		goto out;
 
-	TAILQ_REMOVE(&file_priv->evlist, ev, link);
-	file_priv->event_space += ev->event->length;
-	*out = ev;
+	file_priv->event_space += e->event->length;
+	list_del(&e->link);
+	*out = e;
 	gotone = 1;
 
 out:
@@ -976,7 +980,7 @@ drmpoll(dev_t kdev, int events, struct proc *p)
 
 	mtx_enter(&dev->event_lock);
 	if (events & (POLLIN | POLLRDNORM)) {
-		if (!TAILQ_EMPTY(&file_priv->evlist))
+		if (!list_empty(&file_priv->event_list))
 			revents |=  events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &file_priv->rsel);

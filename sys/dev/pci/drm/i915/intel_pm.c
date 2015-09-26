@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.38 2015/09/25 16:15:19 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.39 2015/09/26 19:52:16 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -5257,7 +5257,7 @@ static void hsw_power_well_post_disable(struct drm_i915_private *dev_priv)
 	spin_lock_irqsave(&dev->vbl_lock, irqflags);
 	for_each_pipe(p)
 		if (p != PIPE_A)
-			dev->last_vblank[p] = 0;
+			dev->vblank[p].last = 0;
 	spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
 }
 

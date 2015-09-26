@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.197 2015/09/23 23:12:11 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.198 2015/09/26 19:52:16 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -173,16 +173,13 @@ drm_can_sleep(void)
 	return true;
 }
 
-#define DRM_WAIT_ON(ret, queue, lock,  timeout, msg, condition ) do {	\
-	mtx_enter(lock);						\
-	while ((ret) == 0) {						\
-		if (condition)						\
-			break;						\
-		ret = msleep((queue), (lock), PZERO | PCATCH,		\
-		    (msg), (timeout));					\
-	}								\
-	mtx_leave(lock);						\
-} while (/* CONSTCOND */ 0)
+#define DRM_WAIT_ON(ret, wq, timo, condition) do {			\
+	ret = wait_event_interruptible_timeout(wq, condition, timo);	\
+	if (ret == 0)							\
+		ret = -EBUSY;						\
+	if (ret > 0)							\
+		ret = 0;						\
+} while (0)
 
 #define DRM_ERROR(fmt, arg...) \
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
@@ -320,24 +317,21 @@ struct drm_buf_entry {
 };
 
 struct drm_pending_event {
-	TAILQ_ENTRY(drm_pending_event)	 link;
-	struct drm_event		*event;
-	struct drm_file			*file_priv;
-	pid_t				 pid;
-	void				(*destroy)(struct drm_pending_event *);
+	struct drm_event *event;
+	struct list_head link;
+	struct drm_file *file_priv;
+	pid_t pid; /* pid of requester, no guarantee it's valid by the time
+		      we deliver the event, for tracing only */
+	void (*destroy)(struct drm_pending_event *event);
 };
-
-struct drm_pending_vblank_event {
-	struct drm_pending_event	base;
-	int				pipe;
-	struct drm_event_vblank		event;
-};
-
-TAILQ_HEAD(drmevlist, drm_pending_event);
 
 struct drm_file {
 	SPLAY_HEAD(drm_obj_tree, drm_handle)	 obj_tree;
-	struct drmevlist			 evlist;
+
+	wait_queue_head_t event_wait;
+	struct list_head event_list;
+	int event_space;
+
 	struct mutex				 table_lock;
 	struct selinfo				 rsel;
 	SPLAY_ENTRY(drm_file)			 link;
@@ -347,7 +341,6 @@ struct drm_file {
 	unsigned long				 ioctl_count;
 	dev_t					 kdev;
 	drm_magic_t				 magic;
-	int					 event_space;
 	int					 flags;
 	int					 master;
 	int					 minor;
@@ -559,13 +552,13 @@ struct drm_driver_info {
 
 #define DRIVER_AGP		0x1
 #define DRIVER_AGP_REQUIRE	0x2
-#define DRIVER_MTRR		0x4
-#define DRIVER_DMA		0x8
-#define DRIVER_PCI_DMA		0x10
-#define DRIVER_SG		0x20
-#define DRIVER_IRQ		0x40
-#define DRIVER_GEM		0x80
-#define DRIVER_MODESET		0x100
+#define DRIVER_PCI_DMA     0x8
+#define DRIVER_SG          0x10
+#define DRIVER_HAVE_DMA    0x20
+#define DRIVER_HAVE_IRQ    0x40
+#define DRIVER_IRQ_SHARED  0x80
+#define DRIVER_GEM         0x1000
+#define DRIVER_MODESET     0x2000
 
 	u_int	flags;
 };
@@ -585,6 +578,25 @@ struct drm_cmdline_mode {
 	bool cvt;
 	bool margins;
 	enum drm_connector_force force;
+};
+
+struct drm_pending_vblank_event {
+	struct drm_pending_event base;
+	int pipe;
+	struct drm_event_vblank event;
+};
+
+struct drm_vblank_crtc {
+	wait_queue_head_t queue;	/**< VBLANK wait queue */
+	struct timeval time[DRM_VBLANKTIME_RBSIZE];	/**< timestamp of current count */
+	atomic_t count;			/**< number of VBLANK interrupts */
+	atomic_t refcount;		/* number of users of vblank interruptsper crtc */
+	u32 last;			/* protected by dev->vbl_lock, used */
+					/* for wraparound handling */
+	u32 last_wait;			/* Last vblank seqno waited per CRTC */
+	unsigned int inmodeset;		/* Display driver is setting mode */
+	bool enabled;			/* so we don't call enable more than
+					   once per disable */
 };
 
 /** 
@@ -635,25 +647,37 @@ struct drm_device {
 	int		  irq;		/* Interrupt used by board	   */
 	int		  irq_enabled;	/* True if the irq handler is enabled */
 
-	/* VBLANK support */
-	struct drmevlist	vbl_events;		/* vblank events */
-	int			 vblank_disable_allowed;
-	/**< size of vblank counter register */
-	uint32_t		 max_vblank_count;
-	struct mutex		 event_lock;
+	/** \name VBLANK IRQ support */
+	/*@{ */
 
-	wait_queue_head_t	*vbl_queue;
-	atomic_t		*_vblank_count;
-	struct timeval		*_vblank_time;
-	struct mutex		 vblank_time_lock;
-	struct mutex		 vbl_lock;
-	atomic_t		*vblank_refcount;
-	uint32_t		*last_vblank;
+	/*
+	 * At load time, disabling the vblank interrupt won't be allowed since
+	 * old clients may not call the modeset ioctl and therefore misbehave.
+	 * Once the modeset ioctl *has* been called though, we can safely
+	 * disable them when unused.
+	 */
+	bool vblank_disable_allowed;
+
+	/* array of size num_crtcs */
+	struct drm_vblank_crtc *vblank;
+
+	struct mutex vblank_time_lock;    /**< Protects vblank count and time updates during vblank enable/disable */
+	struct mutex vbl_lock;
+	struct timeout vblank_disable_timer;
+
+	u32 max_vblank_count;           /**< size of vblank counter register */
+
+	/**
+	 * List of events
+	 */
+	struct list_head vblank_event_list;
+	spinlock_t event_lock;
+
+	/*@} */
 
 	int			*vblank_enabled;
 	int			*vblank_inmodeset;
 	u32			*last_vblank_wait;
-	struct timeout		 vblank_disable_timer;
 
 	int			 num_crtcs;
 
@@ -876,6 +900,11 @@ static __inline__ int drm_core_check_feature(struct drm_device *dev,
 					     int feature)
 {
 	return ((dev->driver->flags & feature) ? 1 : 0);
+}
+
+static inline int drm_dev_to_irq(struct drm_device *dev)
+{
+	return dev->irq;
 }
 
 #define DRM_PCIE_SPEED_25 1

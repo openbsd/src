@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.89 2015/09/25 16:15:19 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.90 2015/09/26 19:52:16 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -486,7 +486,7 @@ static struct drm_driver_info inteldrm_driver = {
 	.patchlevel = DRIVER_PATCHLEVEL,
 
 	.flags			= DRIVER_AGP | DRIVER_AGP_REQUIRE |
-				    DRIVER_MTRR | DRIVER_IRQ | DRIVER_GEM |
+				    DRIVER_HAVE_IRQ | DRIVER_GEM |
 				    DRIVER_MODESET,
 };
 
