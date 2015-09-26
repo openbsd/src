@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.108 2015/08/30 18:59:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.109 2015/09/26 00:18:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -640,7 +640,6 @@ mdoc_nm_pre(MDOC_ARGS)
 
 	switch (n->type) {
 	case ROFFT_ELEM:
-		synopsis_pre(h, n);
 		PAIR_CLASS_INIT(&tag, "name");
 		print_otag(h, TAG_B, 1, &tag);
 		if (NULL == n->child && meta->name)
@@ -648,6 +647,8 @@ mdoc_nm_pre(MDOC_ARGS)
 		return(1);
 	case ROFFT_HEAD:
 		print_otag(h, TAG_TD, 0, NULL);
+		PAIR_CLASS_INIT(&tag, "name");
+		print_otag(h, TAG_B, 1, &tag);
 		if (NULL == n->child && meta->name)
 			print_text(h, meta->name);
 		return(1);
@@ -662,7 +663,7 @@ mdoc_nm_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag, "synopsis");
 	print_otag(h, TAG_TABLE, 1, &tag);
 
-	for (len = 0, n = n->child; n; n = n->next)
+	for (len = 0, n = n->head->child; n; n = n->next)
 		if (n->type == ROFFT_TEXT)
 			len += html_strlen(n->string);
 
