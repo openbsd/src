@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.9 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.10 2015/09/26 21:51:58 jasper Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -168,18 +168,18 @@ cscreatelist(int f, int n)
 	char dir[NFILEN], cmd[BUFSIZ], title[BUFSIZ], *line, *bufp;
 	size_t len;
 	int clen;
-	
+
 	if (getbufcwd(dir, sizeof(dir)) == FALSE)
 		dir[0] = '\0';
-	
-	bufp = eread("Index files in directory: ", dir, 
+
+	bufp = eread("Index files in directory: ", dir,
 	    sizeof(dir), EFCR | EFDEF | EFNEW | EFNUL);
-	
+
 	if (bufp == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-		
+
 	if (stat(dir, &sb) == -1) {
 		dobeep();
 		ewprintf("stat: %s", strerror(errno));
@@ -189,13 +189,13 @@ cscreatelist(int f, int n)
 		ewprintf("%s: Not a directory", dir);
 		return (FALSE);
 	}
-	
+
 	if (csexists("cscope-indexer") == FALSE) {
 		dobeep();
 		ewprintf("no such file or directory, cscope-indexer");
 		return (FALSE);
 	}
-	
+
 	clen = snprintf(cmd, sizeof(cmd), "cscope-indexer -v %s", dir);
 	if (clen < 0 || clen >= sizeof(cmd))
 		return (FALSE);
@@ -205,7 +205,7 @@ cscreatelist(int f, int n)
 		ewprintf("problem opening pipe");
 		return (FALSE);
 	}
-	
+
 	bp = bfind("*cscope*", TRUE);
 	if (bclear(bp) != TRUE) {
 		pclose(fpipe);
@@ -227,7 +227,7 @@ cscreatelist(int f, int n)
 		addline(bp, line);
 	}
 	pclose(fpipe);
-	return (popbuftop(bp, WNONE));	
+	return (popbuftop(bp, WNONE));
 }
 
 /*
@@ -239,7 +239,7 @@ csnextmatch(int f, int n)
 {
 	struct csrecord *r;
 	struct csmatch *m;
-	
+
 	if (curmatch == NULL) {
 		if ((r = TAILQ_FIRST(&csrecords)) == NULL) {
 			dobeep();
@@ -307,7 +307,7 @@ int
 csnextfile(int f, int n)
 {
 	struct csrecord *r;
-	
+
 	if (curmatch == NULL) {
 		if ((r = TAILQ_FIRST(&csrecords)) == NULL) {
 			dobeep();
@@ -324,7 +324,7 @@ csnextfile(int f, int n)
 	}
 	currecord = r;
 	curmatch = TAILQ_FIRST(&currecord->matches);
-	return (jumptomatch());	
+	return (jumptomatch());
 }
 
 /*
@@ -334,7 +334,7 @@ int
 csprevfile(int f, int n)
 {
 	struct csrecord *r;
-	
+
 	if (curmatch == NULL) {
 		if ((r = TAILQ_FIRST(&csrecords)) == NULL) {
 			dobeep();
@@ -352,12 +352,12 @@ csprevfile(int f, int n)
 	}
 	currecord = r;
 	curmatch = TAILQ_FIRST(&currecord->matches);
-	return (jumptomatch());	
+	return (jumptomatch());
 }
 
 /*
- * The current symbol location is extracted from currecord->filename and 
- * curmatch->lineno. Load the file similar to filevisit and goto the 
+ * The current symbol location is extracted from currecord->filename and
+ * curmatch->lineno. Load the file similar to filevisit and goto the
  * lineno recorded.
  */
 int
@@ -365,7 +365,7 @@ jumptomatch(void)
 {
 	struct buffer *bp;
 	char *adjf;
-	
+
 	if (curmatch == NULL || currecord == NULL)
 		return (FALSE);
 	adjf = adjustname(currecord->filename, TRUE);
@@ -382,12 +382,11 @@ jumptomatch(void)
 	}
 	gotoline(FFARG, curmatch->lineno);
 	return (TRUE);
-	
 }
 
 /*
  * Ask for the symbol, construct cscope commandline with the symbol
- * and passed in index. Popen cscope, read the output into *cscope* 
+ * and passed in index. Popen cscope, read the output into *cscope*
  * buffer and pop it.
  */
 int
@@ -406,9 +405,9 @@ do_cscope(int i)
 		ewprintf("C-c s not defined");
 		return (FALSE);
 	}
-	
+
 	if (curtoken(0, 1, pattern) == FALSE)
-		return (FALSE);	
+		return (FALSE);
 	p = eread(csprompt[i], pattern, MAX_TOKEN, EFNEW | EFCR | EFDEF);
 	if (p == NULL)
 		return (ABORT);
@@ -420,7 +419,7 @@ do_cscope(int i)
 		ewprintf("no such file or directory, cscope");
 		return (FALSE);
 	}
-	
+
 	csflush();
 	clen = snprintf(cmd, sizeof(cmd), "cscope -L -%d %s 2>/dev/null",
 	    i, pattern);
@@ -432,7 +431,7 @@ do_cscope(int i)
 		ewprintf("problem opening pipe");
 		return (FALSE);
 	}
-	
+
 	bp = bfind("*cscope*", TRUE);
 	if (bclear(bp) != TRUE) {
 		pclose(fpipe);
@@ -454,7 +453,7 @@ do_cscope(int i)
 		if (addentry(bp, buf) != TRUE)
 			return (FALSE);
 		nores = 1;
-	}; 
+	};
 	pclose(fpipe);
 	addline(bp, "-------------------------------------------------------------------------------");
 	if (nores == 0)
@@ -483,7 +482,7 @@ addentry(struct buffer *bp, char *csline)
 	lineno = strtonum(t.lineno, INT_MIN, INT_MAX, &errstr);
 	if (errstr)
 		return (FALSE);
-		
+
 	if (addentryfn == NULL || strcmp(addentryfn, t.fname) != 0) {
 		if ((r = malloc(sizeof(struct csrecord))) == NULL)
 			return (FALSE);
@@ -570,7 +569,7 @@ csflush(void)
 {
 	struct csrecord *r;
 	struct csmatch *m;
-	
+
 	while ((r = TAILQ_FIRST(&csrecords)) != NULL) {
 		free(r->filename);
 		while ((m = TAILQ_FIRST(&r->matches)) != NULL) {

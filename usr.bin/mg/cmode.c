@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.15 2015/03/19 21:48:05 bcallah Exp $ */
+/* $OpenBSD: cmode.c,v 1.16 2015/09/26 21:51:58 jasper Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -145,7 +145,7 @@ int
 cc_tab(int f, int n)
 {
 	int inwhitep = FALSE;	/* In leading whitespace? */
-	
+
 	inwhitep = in_whitespace(curwp->w_dotp, llength(curwp->w_dotp));
 
 	/* If empty line, or in whitespace */
@@ -165,7 +165,7 @@ cc_indent(int f, int n)
 	int ci;				/* current indent */
 	struct line *lp;
 	int ret;
-	
+
 	if (n < 0)
 		return (FALSE);
 
@@ -186,14 +186,14 @@ cc_indent(int f, int n)
 	delleadwhite(FFRAND, 1);
 	/* current indent is computed only to current position */
 	(void)getindent(curwp->w_dotp, &ci);
-	
+
 	if (pi + ci < 0)
 		ret = indent(FFOTHARG, 0);
 	else
 		ret = indent(FFOTHARG, pi + ci);
-	
+
 	undo_boundary_enable(FFRAND, 1);
-	
+
 	return (ret);
 }
 
@@ -236,7 +236,7 @@ getindent(const struct line *lp, int *curi)
 	int astp = FALSE;	/* Asterisk? */
 	int cpos = -1;		/* comment position */
 	int cppp  = FALSE;	/* Preprocessor command? */
-	
+
 	*curi = 0;
 
 	/* Compute leading space */

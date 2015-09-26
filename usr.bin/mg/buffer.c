@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.98 2015/03/23 12:31:19 bcallah Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.99 2015/09/26 21:51:58 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -698,7 +698,7 @@ popbuf(struct buffer *bp, int flags)
 	struct mgwin	*wp;
 
 	if (bp->b_nwnd == 0) {	/* Not on screen yet.	 */
-		/* 
+		/*
 		 * Pick a window for a pop-up.
 		 * If only one window, split the screen.
 		 * Flag the new window as ephemeral
@@ -710,7 +710,7 @@ popbuf(struct buffer *bp, int flags)
 		/*
 		 * Pick the uppermost window that isn't
 		 * the current window. An LRU algorithm
-		 * might be better. Return a pointer, or NULL on error. 
+		 * might be better. Return a pointer, or NULL on error.
 		 */
 		wp = wheadp;
 

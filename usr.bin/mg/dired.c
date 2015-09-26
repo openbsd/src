@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.75 2015/09/24 18:20:52 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.76 2015/09/26 21:51:58 jasper Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -132,7 +132,7 @@ static PF direddl[] = {
 };
 
 static PF diredbp[] = {
-	d_backpage		/* v */	
+	d_backpage		/* v */
 };
 
 static PF dirednull[] = {
@@ -142,7 +142,7 @@ static PF dirednull[] = {
 static struct KEYMAPE (1) d_backpagemap = {
 	1,
 	1,
-	rescan,                 
+	rescan,
 	{
 		{
 		'v', 'v', diredbp, NULL
@@ -162,7 +162,7 @@ static struct KEYMAPE (7) diredmap = {
 			CCHR('L'), CCHR('X'), diredcl, (KEYMAP *) & cXmap
 		},
 		{
-			CCHR('['), CCHR('['), dirednull, (KEYMAP *) & 
+			CCHR('['), CCHR('['), dirednull, (KEYMAP *) &
 			d_backpagemap
 		},
 		{
@@ -441,7 +441,7 @@ d_copy(int f, int n)
 	(void)xbasename(sname, frname, NFILEN);
 	bufp = eread("Copy %s to: ", toname, sizeof(toname),
 	    EFDEF | EFNEW | EFCR, sname);
-	if (bufp == NULL) 
+	if (bufp == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
@@ -765,13 +765,13 @@ d_warpdot(struct line *dotp, int *doto)
 }
 
 static int
-d_forwpage(int f, int n) 
+d_forwpage(int f, int n)
 {
 	forwpage(f | FFRAND, n);
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
 }
 
-static int 
+static int
 d_backpage (int f, int n)
 {
 	backpage(f | FFRAND, n);
