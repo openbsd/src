@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.208 2015/09/14 15:35:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.209 2015/09/26 00:53:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -655,7 +655,6 @@ pre_bd(PRE_ARGS)
 			break;
 		default:
 			abort();
-			/* NOTREACHED */
 		}
 		if (DISP__NONE == dt)
 			continue;
@@ -1029,7 +1028,6 @@ post_defaults(POST_ARGS)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 	mdoc->last = nn;
 }
@@ -2079,7 +2077,6 @@ pre_literal(PRE_ARGS)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 }
 

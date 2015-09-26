@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.147 2015/08/29 23:55:53 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.148 2015/09/26 00:53:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1020,7 +1020,6 @@ roff_node_append(struct roff_man *man, struct roff_node *n)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 	n->parent->nchild++;
 	n->parent->last = n;
@@ -2058,12 +2057,12 @@ roff_getnum(const char *v, int *pos, int *res, int flags)
 		scaled = *res * 240 / 2.54;
 		break;
 	case 'v':
-		/* FALLTROUGH */
+		/* FALLTHROUGH */
 	case 'P':
 		scaled = *res * 40;
 		break;
 	case 'm':
-		/* FALLTROUGH */
+		/* FALLTHROUGH */
 	case 'n':
 		scaled = *res * 24;
 		break;

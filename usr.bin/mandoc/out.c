@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.31 2015/01/30 04:08:37 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.32 2015/09/26 00:53:15 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -260,7 +260,6 @@ tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 }
 

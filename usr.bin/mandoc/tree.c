@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.33 2015/04/18 17:50:02 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.34 2015/09/26 00:53:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,7 +96,6 @@ print_mdoc(const struct roff_node *n, int indent)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 
 	switch (n->type) {
@@ -136,7 +135,6 @@ print_mdoc(const struct roff_node *n, int indent)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 
 	if (n->span) {
@@ -210,7 +208,6 @@ print_man(const struct roff_node *n, int indent)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 
 	switch (n->type) {
@@ -236,7 +233,6 @@ print_man(const struct roff_node *n, int indent)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 
 	if (n->span) {

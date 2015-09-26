@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.70 2015/04/18 17:50:02 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.71 2015/09/26 00:53:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -425,7 +425,6 @@ man_alt_pre(MAN_ARGS)
 			break;
 		default:
 			abort();
-			/* NOTREACHED */
 		}
 
 		if (i)

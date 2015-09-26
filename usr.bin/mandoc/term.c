@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.110 2015/09/21 13:24:32 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.111 2015/09/26 00:53:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -818,7 +818,6 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 		break;
 	default:
 		abort();
-		/* NOTREACHED */
 	}
 	ri = r > 0.0 ? r + 0.4995 : r - 0.4995;
 	return(ri < 66 ? ri : 1);
