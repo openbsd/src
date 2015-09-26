@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfind.c,v 1.6 2014/03/16 18:38:30 guenther Exp $	*/
+/*	$OpenBSD: tfind.c,v 1.7 2015/09/26 16:03:48 guenther Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -10,7 +10,6 @@
  *
  * Totally public domain.
  */
-/*LINTLIBRARY*/
 #include <search.h>
 
 typedef struct node_t

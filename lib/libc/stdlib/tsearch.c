@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsearch.c,v 1.9 2015/08/20 21:49:29 deraadt Exp $	*/
+/*	$OpenBSD: tsearch.c,v 1.10 2015/09/26 16:03:48 guenther Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -10,7 +10,6 @@
  *
  * Totally public domain.
  */
-/*LINTLIBRARY*/
 
 #include <search.h>
 #include <stdlib.h>
