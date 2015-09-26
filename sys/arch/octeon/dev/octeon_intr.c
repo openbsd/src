@@ -91,12 +91,16 @@ octeon_intr_establish(int irq, int level,
 {
 	int cpuid = cpu_number();
 	struct intrhand **p, *q, *ih;
+	int flags;
 	int s;
 
 #ifdef DIAGNOSTIC
 	if (irq >= OCTEON_NINTS || irq < 0)
 		panic("intr_establish: illegal irq %d", irq);
 #endif
+
+	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
+	level &= ~IPL_MPSAFE;
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
@@ -106,6 +110,7 @@ octeon_intr_establish(int irq, int level,
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_level = level;
+	ih->ih_flags = flags;
 	ih->ih_irq = irq;
 	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq);
 
@@ -272,15 +277,21 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 				    ih = ih->ih_next) {
 #ifdef MULTIPROCESSOR
 					register_t sr;
+					int need_lock;
 #endif
 					splraise(ih->ih_level);
 #ifdef MULTIPROCESSOR
 					if (ih->ih_level < IPL_IPI) {
 						sr = getsr();
 						ENABLEIPI();
-						if (ih->ih_level < IPL_CLOCK)
-							__mp_lock(&kernel_lock);
 					}
+					if (ih->ih_flags & IH_MPSAFE)
+						need_lock = 0;
+					else
+						need_lock =
+						    ih->ih_level < IPL_CLOCK;
+					if (need_lock)
+						__mp_lock(&kernel_lock);
 #endif
 					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
 						rc = 1;
@@ -288,11 +299,10 @@ octeon_iointr(uint32_t hwpend, struct trap_frame *frame)
 						    &ih->ih_count.ec_count);
 					}
 #ifdef MULTIPROCESSOR
-					if (ih->ih_level < IPL_IPI) {
-						if (ih->ih_level < IPL_CLOCK)
-							__mp_unlock(&kernel_lock);
+					if (need_lock)
+						__mp_unlock(&kernel_lock);
+					if (ih->ih_level < IPL_IPI)
 						setsr(sr);
-					}
 #endif
 					__asm__ (".set noreorder\n");
 					ci->ci_ipl = ipl;

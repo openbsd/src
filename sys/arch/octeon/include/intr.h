@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2015/09/13 20:38:45 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.6 2015/09/26 04:05:42 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,7 +62,7 @@
 #define IPL_MPFLOOR	IPL_TTY
 
 /* Interrupt priority 'flags'. */
-#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
+#define	IPL_MPSAFE	0x100
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -171,6 +171,7 @@ struct intrhand {
 	struct evcount		 ih_count;
 	int			 ih_flags;
 #define	IH_ALLOCATED		0x01
+#define	IH_MPSAFE		0x02
 };
 
 void	intr_barrier(void *);
