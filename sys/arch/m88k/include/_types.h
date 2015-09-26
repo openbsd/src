@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.16 2014/03/19 05:14:13 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.17 2015/09/26 16:01:00 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,9 +67,7 @@ typedef	short			__int16_t;
 typedef	unsigned short		__uint16_t;
 typedef	int			__int32_t;
 typedef	unsigned int		__uint32_t;
-/* LONGLONG */
 typedef	long long		__int64_t;
-/* LONGLONG */
 typedef	unsigned long long	__uint64_t;
 
 /* 7.18.1.2 Minimum-width integer types */
