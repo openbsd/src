@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.12 2015/06/28 02:42:13 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.13 2015/09/26 15:59:25 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -93,18 +93,18 @@
  * Below is used for TSS and LDT.
  */
 struct sys_segment_descriptor {
-/*BITFIELDTYPE*/ u_int64_t sd_lolimit:16;/* segment extent (lsb) */
-/*BITFIELDTYPE*/ u_int64_t sd_lobase:24;/* segment base address (lsb) */
-/*BITFIELDTYPE*/ u_int64_t sd_type:5;	/* segment type */
-/*BITFIELDTYPE*/ u_int64_t sd_dpl:2;	/* segment descriptor priority level */
-/*BITFIELDTYPE*/ u_int64_t sd_p:1;	/* segment descriptor present */
-/*BITFIELDTYPE*/ u_int64_t sd_hilimit:4;/* segment extent (msb) */
-/*BITFIELDTYPE*/ u_int64_t sd_xx1:3;	/* avl, long and def32 (not used) */
-/*BITFIELDTYPE*/ u_int64_t sd_gran:1;	/* limit granularity (byte/page) */
-/*BITFIELDTYPE*/ u_int64_t sd_hibase:40;/* segment base address (msb) */
-/*BITFIELDTYPE*/ u_int64_t sd_xx2:8;	/* reserved */
-/*BITFIELDTYPE*/ u_int64_t sd_zero:5;	/* must be zero */
-/*BITFIELDTYPE*/ u_int64_t sd_xx3:19;	/* reserved */
+	u_int64_t sd_lolimit:16;	/* segment extent (lsb) */
+	u_int64_t sd_lobase:24;		/* segment base address (lsb) */
+	u_int64_t sd_type:5;		/* segment type */
+	u_int64_t sd_dpl:2;		/* segment descriptor priority level */
+	u_int64_t sd_p:1;		/* segment descriptor present */
+	u_int64_t sd_hilimit:4;		/* segment extent (msb) */
+	u_int64_t sd_xx1:3;		/* avl, long and def32 (not used) */
+	u_int64_t sd_gran:1;		/* limit granularity (byte/page) */
+	u_int64_t sd_hibase:40;		/* segment base address (msb) */
+	u_int64_t sd_xx2:8;		/* reserved */
+	u_int64_t sd_zero:5;		/* must be zero */
+	u_int64_t sd_xx3:19;		/* reserved */
 } __packed;
 
 /*
