@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.92 2015/09/24 07:07:59 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.93 2015/09/26 15:03:15 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: September 24 2015 $
+.Dd $Mdocdate: September 26 2015 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -874,6 +874,10 @@ Toggle the read-only flag on the current buffer.
 Transpose the two characters in front of and under dot,
 then move forward one character.
 Treat newline characters the same as any other.
+.It transpose-paragraphs
+Transpose adjacent paragraphs.
+If multiple iterations are requested, the current paragraph will
+be moved n paragraphs forward.
 .It undo
 Undo the most recent action.
 If invoked again without an intervening command,
