@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_gtt.c,v 1.12 2015/09/26 11:17:15 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_gtt.c,v 1.13 2015/09/26 13:15:25 kettenis Exp $	*/
 /*
  * Copyright © 2010 Daniel Vetter
  *
@@ -1557,10 +1557,12 @@ static int ggtt_probe_common(struct drm_device *dev,
 	bus_space_handle_t gsm;
 	bus_addr_t addr;
 	bus_size_t size;
+	pcireg_t type;
 	int ret;
 
-	ret = -pci_mapreg_info(dev_priv->pc, dev_priv->tag, 0x10,
-	    PCI_MAPREG_MEM_TYPE_64BIT, &addr, &size, NULL);
+	type = pci_mapreg_type(dev_priv->pc, dev_priv->tag, 0x10);
+	ret = -pci_mapreg_info(dev_priv->pc, dev_priv->tag, 0x10, type,
+	    &addr, &size, NULL);
 	if (ret)
 		return ret;
 
@@ -1634,8 +1636,9 @@ static int gen8_gmch_probe(struct drm_device *dev,
 	if (!pci_set_dma_mask(dev->pdev, DMA_BIT_MASK(39)))
 		pci_set_consistent_dma_mask(dev->pdev, DMA_BIT_MASK(39));
 #else
-	ret = -pci_mapreg_info(dev_priv->pc, dev_priv->tag, 0x18,
-	    PCI_MAPREG_MEM_TYPE_64BIT, mappable_base, mappable_end, NULL);
+	pcireg_t type = pci_mapreg_type(dev_priv->pc, dev_priv->tag, 0x18);
+	ret = -pci_mapreg_info(dev_priv->pc, dev_priv->tag, 0x18, type,
+	    mappable_base, mappable_end, NULL);
 	if (ret)
 		return ret;
 #endif
@@ -1672,8 +1675,9 @@ static int gen6_gmch_probe(struct drm_device *dev,
 	*mappable_base = pci_resource_start(dev->pdev, 2);
 	*mappable_end = pci_resource_len(dev->pdev, 2);
 #else
-	ret = -pci_mapreg_info(dev_priv->pc, dev_priv->tag, 0x18,
-	    PCI_MAPREG_MEM_TYPE_64BIT, mappable_base, mappable_end, NULL);
+	pcireg_t type = pci_mapreg_type(dev_priv->pc, dev_priv->tag, 0x18);
+	ret = -pci_mapreg_info(dev_priv->pc, dev_priv->tag, 0x18, type,
+	    mappable_base, mappable_end, NULL);
 	if (ret)
 		return ret;
 #endif
