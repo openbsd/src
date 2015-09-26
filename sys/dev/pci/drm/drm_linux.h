@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.36 2015/09/25 20:27:52 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.37 2015/09/26 11:17:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -934,6 +934,29 @@ typedef enum {
 	PCI_D3cold
 } pci_power_t;
 
+#if defined(__amd64__) || defined(__i386__)
+
+#define PCI_DMA_BIDIRECTIONAL	0
+
+static inline dma_addr_t
+pci_map_page(struct pci_dev *pdev, struct vm_page *page, unsigned long offset, size_t size, int direction)
+{
+	return VM_PAGE_TO_PHYS(page);
+}
+
+static inline void
+pci_unmap_page(struct pci_dev *pdev, dma_addr_t dma_address, size_t size, int direction)
+{
+}
+
+static inline int
+pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
+{
+	return 0;
+}
+
+#endif
+
 #define memcpy_toio(d, s, n)	memcpy(d, s, n)
 #define memcpy_fromio(d, s, n)	memcpy(d, s, n)
 #define memset_io(d, b, n)	memset(d, b, n)
@@ -957,6 +980,7 @@ iowrite32(u32 val, volatile void __iomem *addr)
 }
 
 #define readl(p) ioread32(p)
+#define writel(v, p) iowrite32(v, p)
 #define readq(p) ioread64(p)
 
 #define page_to_phys(page)	(VM_PAGE_TO_PHYS(page))
@@ -1095,6 +1119,27 @@ of_machine_is_compatible(const char *model)
 	return (strcmp(model, hw_prod) == 0);
 }
 #endif
+
+struct vm_page *alloc_pages(unsigned int, unsigned int);
+void	__free_pages(struct vm_page *, unsigned int);
+
+static inline struct vm_page *
+alloc_page(unsigned int gfp_mask)
+{
+	return alloc_pages(gfp_mask, 0);
+}
+
+static inline void
+__free_page(struct vm_page *page)
+{
+	return __free_pages(page, 0);
+}
+
+static inline unsigned int
+get_order(size_t size)
+{
+	return flsl((size - 1) >> PAGE_SHIFT);
+}
 
 #if defined(__i386__) || defined(__amd64__)
 

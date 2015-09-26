@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_gtt.c,v 1.11 2015/09/25 16:15:19 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_gtt.c,v 1.12 2015/09/26 11:17:15 kettenis Exp $	*/
 /*
  * Copyright © 2010 Daniel Vetter
  *
@@ -207,7 +207,6 @@ static gen6_gtt_pte_t iris_pte_encode(dma_addr_t addr,
 	return pte;
 }
 
-#ifdef notyet
 /* Broadwell Page Directory Pointer Descriptors */
 static int gen8_write_pdp(struct intel_ring_buffer *ring, unsigned entry,
 			   uint64_t val)
@@ -279,7 +278,7 @@ static void gen8_ppgtt_clear_range(struct i915_address_space *vm,
 				      I915_CACHE_LLC, use_scratch);
 
 	while (num_entries) {
-		struct page *page_table = &ppgtt->gen8_pt_pages[act_pt];
+		struct vm_page *page_table = &ppgtt->gen8_pt_pages[act_pt];
 
 		last_pte = first_pte + num_entries;
 		if (last_pte > GEN8_PTES_PER_PAGE)
@@ -298,6 +297,7 @@ static void gen8_ppgtt_clear_range(struct i915_address_space *vm,
 	}
 }
 
+#ifdef __linux__
 static void gen8_ppgtt_insert_entries(struct i915_address_space *vm,
 				      struct sg_table *pages,
 				      unsigned first_entry,
@@ -328,6 +328,39 @@ static void gen8_ppgtt_insert_entries(struct i915_address_space *vm,
 	if (pt_vaddr)
 		kunmap_atomic(pt_vaddr);
 }
+#else
+static void gen8_ppgtt_insert_entries(struct i915_address_space *vm,
+				      struct vm_page **pages,
+				      unsigned int num_entries,
+				      unsigned first_entry,
+				      enum i915_cache_level cache_level)
+{
+	struct i915_hw_ppgtt *ppgtt =
+		container_of(vm, struct i915_hw_ppgtt, base);
+	gen8_gtt_pte_t *pt_vaddr;
+	unsigned act_pt = first_entry / GEN8_PTES_PER_PAGE;
+	unsigned act_pte = first_entry % GEN8_PTES_PER_PAGE;
+	int i;
+
+	pt_vaddr = NULL;
+	for (i = 0; i < num_entries; i++) {
+		if (pt_vaddr == NULL)
+			pt_vaddr = kmap_atomic(&ppgtt->gen8_pt_pages[act_pt]);
+
+		pt_vaddr[act_pte] =
+			gen8_pte_encode(VM_PAGE_TO_PHYS(pages[i]),
+					cache_level, true);
+		if (++act_pte == GEN8_PTES_PER_PAGE) {
+			kunmap_atomic(pt_vaddr);
+			pt_vaddr = NULL;
+			act_pt++;
+			act_pte = 0;
+		}
+	}
+	if (pt_vaddr)
+		kunmap_atomic(pt_vaddr);
+}
+#endif
 
 static void gen8_ppgtt_cleanup(struct i915_address_space *vm)
 {
@@ -371,7 +404,7 @@ static void gen8_ppgtt_cleanup(struct i915_address_space *vm)
 static int gen8_ppgtt_init(struct i915_hw_ppgtt *ppgtt, uint64_t size)
 {
 	struct drm_i915_private *dev_priv = ppgtt->base.dev->dev_private;
-	struct page *pt_pages;
+	struct vm_page *pt_pages;
 	int i, j, ret = -ENOMEM;
 	const int max_pdp = DIV_ROUND_UP(size, 1 << 30);
 	const int num_pt_pages = GEN8_PDES_PER_PAGE * max_pdp;
@@ -428,7 +461,7 @@ static int gen8_ppgtt_init(struct i915_hw_ppgtt *ppgtt, uint64_t size)
 			goto err_out;
 
 		for (j = 0; j < GEN8_PDES_PER_PAGE; j++) {
-			struct page *p = &pt_pages[i * GEN8_PDES_PER_PAGE + j];
+			struct vm_page *p = &pt_pages[i * GEN8_PDES_PER_PAGE + j];
 			temp = pci_map_page(ppgtt->base.dev->pdev,
 					    p, 0, PAGE_SIZE,
 					    PCI_DMA_BIDIRECTIONAL);
@@ -584,6 +617,7 @@ static void gen6_ppgtt_clear_range(struct i915_address_space *vm,
 	}
 }
 
+#ifdef __linux__
 static void gen6_ppgtt_insert_entries(struct i915_address_space *vm,
 				      struct sg_table *pages,
 				      unsigned first_entry,
@@ -614,6 +648,39 @@ static void gen6_ppgtt_insert_entries(struct i915_address_space *vm,
 	if (pt_vaddr)
 		kunmap_atomic(pt_vaddr);
 }
+#else
+static void gen6_ppgtt_insert_entries(struct i915_address_space *vm,
+				      struct vm_page **pages,
+				      unsigned int num_entries,
+				      unsigned first_entry,
+				      enum i915_cache_level cache_level)
+{
+	struct i915_hw_ppgtt *ppgtt =
+		container_of(vm, struct i915_hw_ppgtt, base);
+	gen6_gtt_pte_t *pt_vaddr;
+	unsigned act_pt = first_entry / I915_PPGTT_PT_ENTRIES;
+	unsigned act_pte = first_entry % I915_PPGTT_PT_ENTRIES;
+	int i;
+
+	pt_vaddr = NULL;
+	for (i = 0; i < num_entries; i++) {
+		if (pt_vaddr == NULL)
+			pt_vaddr = kmap_atomic(ppgtt->pt_pages[act_pt]);
+
+		pt_vaddr[act_pte] =
+			vm->pte_encode(VM_PAGE_TO_PHYS(pages[i]),
+				       cache_level, true);
+		if (++act_pte == I915_PPGTT_PT_ENTRIES) {
+			kunmap_atomic(pt_vaddr);
+			pt_vaddr = NULL;
+			act_pt++;
+			act_pte = 0;
+		}
+	}
+	if (pt_vaddr)
+		kunmap_atomic(pt_vaddr);
+}
+#endif
 
 static void gen6_ppgtt_cleanup(struct i915_address_space *vm)
 {
@@ -712,11 +779,9 @@ err_pt_alloc:
 
 	return ret;
 }
-#endif
 
 static int i915_gem_init_aliasing_ppgtt(struct drm_device *dev)
 {
-#ifdef notyet
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct i915_hw_ppgtt *ppgtt;
 	int ret;
@@ -743,9 +808,6 @@ static int i915_gem_init_aliasing_ppgtt(struct drm_device *dev)
 	}
 
 	return ret;
-#else
-	return 0;
-#endif
 }
 
 void i915_gem_cleanup_aliasing_ppgtt(struct drm_device *dev)

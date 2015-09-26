@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.4 2015/04/08 15:01:33 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.5 2015/09/26 11:17:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  *
@@ -116,6 +116,34 @@ dmi_check_system(const struct dmi_system_id *sysid)
 		}
 	}
 	return (num);
+}
+
+struct vm_page *
+alloc_pages(unsigned int gfp_mask, unsigned int order)
+{
+	int flags = (gfp_mask & M_NOWAIT) ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK;
+	struct pglist mlist;
+
+	if (gfp_mask & M_CANFAIL)
+		flags |= UVM_PLA_FAILOK;
+
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(PAGE_SIZE << order, 0, -1, PAGE_SIZE, 0,
+	    &mlist, 1, flags))
+		return NULL;
+	return TAILQ_FIRST(&mlist);
+}
+
+void
+__free_pages(struct vm_page *page, unsigned int order)
+{
+	struct pglist mlist;
+	int i;
+	
+	TAILQ_INIT(&mlist);
+	for (i = 0; i < (1 << order); i++)
+		TAILQ_INSERT_TAIL(&mlist, &page[i], pageq);
+	uvm_pglistfree(&mlist);
 }
 
 void *
