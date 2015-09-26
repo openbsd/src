@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.60 2015/09/23 17:49:16 tedu Exp $
+.\"	$OpenBSD: style.9,v 1.61 2015/09/26 15:40:28 guenther Exp $
 .\"
-.Dd $Mdocdate: September 23 2015 $
+.Dd $Mdocdate: September 26 2015 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -263,7 +263,6 @@ call and the switch statement, unless
 parts of the switch cascade.
 Elements in a switch statement that cascade should have a FALLTHROUGH comment.
 Numerical arguments should be checked for accuracy.
-Code that cannot be reached should have a NOTREACHED comment.
 .Bd -literal -offset indent
 while ((ch = getopt(argc, argv, "abn:")) != -1)
 	switch (ch) {		/* Indent the switch. */
@@ -282,7 +281,6 @@ while ((ch = getopt(argc, argv, "abn:")) != -1)
 		break;
 	default:
 		usage();
-		/* NOTREACHED */
 	}
 argc -= optind;
 argv += optind;
@@ -615,6 +613,10 @@ Whenever possible, code should be run through a code checker
 (e.g.,
 .Dq Li gcc -Wall -W -Wpointer-arith -Wbad-function-cast ...\&
 or splint from the ports tree) and produce minimal warnings.
+Since lint has been removed, the only lint-style comment that should
+be used is FALLTHROUGH, as it's useful to humans.
+Other lint-style comments such as ARGSUSED, LINTED, NOTREACHED, and
+PRINTFLIKE may be deleted.
 .Pp
 Note that documentation follows its own style guide,
 as documented in
