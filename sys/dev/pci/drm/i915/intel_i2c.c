@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_i2c.c,v 1.6 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_i2c.c,v 1.7 2015/09/26 22:00:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -401,6 +401,11 @@ intel_setup_gmbus(struct drm_device *dev)
 	}
 
 	return (0);
+}
+
+void
+intel_teardown_gmbus(struct drm_device *dev)
+{
 }
 
 struct i2c_controller *

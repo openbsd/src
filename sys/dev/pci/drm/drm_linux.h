@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.38 2015/09/26 19:52:16 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.39 2015/09/26 22:00:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -425,6 +425,19 @@ complete_all(struct completion *x)
 }
 
 struct workqueue_struct;
+
+static inline struct workqueue_struct *
+alloc_ordered_workqueue(const char *name, int flags)
+{
+	struct taskq *tq = taskq_create(name, 1, IPL_TTY, 0);
+	return (struct workqueue_struct *)tq;
+}
+
+static inline void
+destroy_workqueue(struct workqueue_struct *wq)
+{
+	taskq_destroy((struct taskq *)wq);
+}
 
 struct work_struct {
 	struct task task;

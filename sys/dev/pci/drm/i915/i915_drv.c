@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.90 2015/09/26 19:52:16 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.91 2015/09/26 22:00:00 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -198,6 +198,7 @@ void	intel_gtt_chipset_setup(struct drm_device *);
 
 /* i915_dma.c */
 void	intel_setup_mchbar(struct drm_device *);
+void	intel_teardown_mchbar(struct drm_device *);
 int	i915_load_modeset_init(struct drm_device *);
 
 #undef INTEL_VGA_DEVICE
@@ -1177,22 +1178,20 @@ inteldrm_intr(void *arg)
 void
 inteldrm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct inteldrm_softc	*dev_priv = (struct inteldrm_softc *)self;
-	struct vga_pci_softc	*vga_sc = (struct vga_pci_softc *)parent;
-	struct pci_attach_args	*pa = aux;
-	struct vga_pci_bar	*bar;
-	struct drm_device	*dev;
-	const struct drm_pcidev	*id_entry;
-	int			 i;
-	uint16_t		 pci_device;
+	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
+	struct vga_pci_softc *vga_sc = (struct vga_pci_softc *)parent;
+	struct pci_attach_args *pa = aux;
+	struct rasops_info *ri = &dev_priv->ro;
+	struct wsemuldisplaydev_attach_args aa;
+	extern int wsdisplay_console_initted;
+	struct vga_pci_bar *bar;
+	struct drm_device *dev;
 	const struct intel_device_info *info;
 	int ret = 0, mmio_bar, mmio_size;
 	uint32_t aperture_size;
+	int i;
 
-	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
-	    PCI_PRODUCT(pa->pa_id), pciidlist);
-	pci_device = PCI_PRODUCT(pa->pa_id);
-	info = i915_get_device_id(pci_device);
+	info = i915_get_device_id(PCI_PRODUCT(pa->pa_id));
 	KASSERT(info->gen != 0);
 
 	dev_priv->info = info;
@@ -1213,8 +1212,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev = dev_priv->dev = (struct drm_device *)
 	    drm_attach_pci(&inteldrm_driver, pa, 1, 1, self);
 
-	printf("%s", dev_priv->sc_dev.dv_xname);
-
 	intel_gtt_chipset_setup(dev);
 	mtx_init(&mchdev_lock, IPL_TTY);
 
@@ -1232,7 +1229,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	intel_display_crc_init(dev);
 
 	i915_dump_device_info(dev_priv);
-#endif
 
 	/* Not all pre-production machines fall into this category, only the
 	 * very first ones. Almost everything should work, except for maybe
@@ -1242,7 +1238,6 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		DRM_INFO("This is an early pre-production Haswell machine. "
 			 "It may not be fully functional.\n");
 
-#ifdef __linux__
 	if (i915_get_bridge_dev(dev)) {
 		ret = -EIO;
 		goto free_priv;
@@ -1265,14 +1260,16 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	/* we need to use this api for now due to sharing with intagp */
 	bar = vga_pci_bar_info(vga_sc, mmio_bar);
 	if (bar == NULL) {
-		printf(": can't get BAR info\n");
-		return;
+		printf("%s: can't get BAR info\n",
+		    dev_priv->sc_dev.dv_xname);
+		goto free_priv;
 	}
 
 	dev_priv->regs = vga_pci_bar_map(vga_sc, bar->addr, mmio_size, 0);
 	if (dev_priv->regs == NULL) {
-		printf(": can't map mmio space\n");
-		return;
+		printf("%s: can't map mmio space\n",
+		    dev_priv->sc_dev.dv_xname);
+		goto free_priv;
 	}
 
 	intel_uncore_early_sanitize(dev);
@@ -1357,21 +1354,12 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	 * so there is no point in running more than one instance of the
 	 * workqueue at any time.  Use an ordered one.
 	 */
-#ifdef __linux__
 	dev_priv->wq = alloc_ordered_workqueue("i915", 0);
 	if (dev_priv->wq == NULL) {
 		DRM_ERROR("Failed to create our workqueue.\n");
 		ret = -ENOMEM;
 		goto out_mtrrfree;
 	}
-#else
-	dev_priv->wq = (struct workqueue_struct *)
-	    taskq_create("intelrel", 1, IPL_TTY, 0);
-	if (dev_priv->wq == NULL) {
-		printf(": couldn't create taskq\n");
-		goto out_mtrrfree;
-	}
-#endif
 
 	intel_irq_init(dev);
 	intel_uncore_sanitize(dev);
@@ -1401,17 +1389,20 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map_msi(pa, &dev_priv->ih) != 0 &&
 	    pci_intr_map(pa, &dev_priv->ih) != 0) {
-		printf(": couldn't map interrupt\n");
-		return;
+		printf("%s: couldn't map interrupt\n",
+		    dev_priv->sc_dev.dv_xname);
+		goto out_gem_unload;
 	}
 
-	printf(": %s", pci_intr_string(dev_priv->pc, dev_priv->ih));
+	printf("%s: %s\n", dev_priv->sc_dev.dv_xname,
+	    pci_intr_string(dev_priv->pc, dev_priv->ih));
 
 	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih,
 	    IPL_TTY, inteldrm_intr, dev_priv, dev_priv->sc_dev.dv_xname);
 	if (dev_priv->irqh == NULL) {
-		printf(": couldn't  establish interrupt\n");
-		return;
+		printf("%s: couldn't establish interrupt\n",
+		    dev_priv->sc_dev.dv_xname);
+		goto out_gem_unload;
 	}
 
 	dev_priv->num_plane = 1;
@@ -1454,14 +1445,12 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	intel_init_runtime_pm(dev_priv);
 
-#if 1
-{
-	extern int wsdisplay_console_initted;
-	struct wsemuldisplaydev_attach_args aa;
-	struct rasops_info *ri = &dev_priv->ro;
-
+	/* Check if we managed to set up a framebuffer. */
 	if (ri->ri_bits == NULL)
 		return;
+
+	printf("%s: %dx%d\n", dev_priv->sc_dev.dv_xname,
+	    ri->ri_width, ri->ri_height);
 
 	intel_fbdev_restore_mode(dev);
 
@@ -1493,17 +1482,46 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		aa.console = 1;
 	}
 
-	printf(", %dx%d\n", ri->ri_width, ri->ri_height);
-
 	vga_sc->sc_type = -1;
 	config_found(parent, &aa, wsemuldisplaydevprint);
-}
-#endif
+	return;
 
 out_power_well:
+	intel_power_domains_remove(dev);
+	drm_vblank_cleanup(dev);
 out_gem_unload:
+#ifdef notyet
+	if (dev_priv->mm.inactive_shrinker.scan_objects)
+		unregister_shrinker(&dev_priv->mm.inactive_shrinker);
+#endif
+
+	if (dev_priv->irqh)
+		pci_intr_disestablish(dev_priv->pc, dev_priv->irqh);
+
+	list_del(&dev_priv->gtt.base.global_link);
+	drm_mm_takedown(&dev_priv->gtt.base.mm);
+	dev_priv->gtt.base.cleanup(&dev_priv->gtt.base);
+
+	intel_teardown_gmbus(dev);
+	intel_teardown_mchbar(dev);
+#ifdef notyet
+	pm_qos_remove_request(&dev_priv->pm_qos);
+#endif
+	destroy_workqueue(dev_priv->wq);
 out_mtrrfree:
+#ifdef __linux__
+	arch_phys_wc_del(dev_priv->gtt.mtrr);
+	io_mapping_free(dev_priv->gtt.mappable);
+#endif
 out_regs:
+	intel_uncore_fini(dev);
+#ifdef __linux__
+	pci_iounmap(dev->pdev, dev_priv->regs);
+#else
+	vga_pci_bar_unmap(dev_priv->regs);
+#endif
+free_priv:
+	dev->dev_private = NULL;
 	return;
 }
 
@@ -1621,7 +1639,7 @@ i915_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 
 nope:
 	dev_priv->ifp.i9xx.bsh = 0;
-	printf(": no ifp ");
+	printf("%s: no ifp\n", dev_priv->sc_dev.dv_xname);
 }
 
 void
@@ -1658,7 +1676,7 @@ i965_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 
 nope:
 	dev_priv->ifp.i9xx.bsh = 0;
-	printf(": no ifp ");
+	printf("%s: no ifp\n", dev_priv->sc_dev.dv_xname);
 }
 
 void
@@ -1671,7 +1689,8 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 		return;
 
 	if (pci_find_device(&bpa, inteldrm_gmch_match) == 0) {
-		printf(": can't find GMCH\n");
+		printf("%s: can't find GMCH\n",
+		    dev_priv->sc_dev.dv_xname);
 		return;
 	}
 
