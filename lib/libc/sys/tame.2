@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.27 2015/09/11 09:01:16 deraadt Exp $
+.\" $OpenBSD: tame.2,v 1.28 2015/09/26 15:41:31 semarie Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2015 $
+.Dd $Mdocdate: September 26 2015 $
 .Dt TAME 2
 .Os
 .Sh NAME
@@ -431,3 +431,9 @@ The
 .Fn tame
 system call appeared in
 .Ox 5.8 .
+.Sh CAVEATS
+It is not possible to
+.Xr systrace 4
+a
+.Xr tame 2
+program.
