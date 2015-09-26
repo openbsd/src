@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.48 2015/09/23 17:22:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.49 2015/09/26 10:52:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -5279,7 +5279,9 @@ iwm_newstate_cb(void *wk)
 
 	free(iwmns, M_DEVBUF, sizeof(*iwmns));
 
-	DPRINTF(("Prepare to switch state %d->%d\n", ic->ic_state, nstate));
+	DPRINTF(("Prepare to switch state %s->%s\n",
+	    ieee80211_state_name[ic->ic_state],
+	    ieee80211_state_name[nstate]));
 	if (sc->sc_generation != generation) {
 		DPRINTF(("newstate_cb: someone pulled the plug meanwhile\n"));
 		if (nstate == IEEE80211_S_INIT) {
@@ -5289,7 +5291,9 @@ iwm_newstate_cb(void *wk)
 		return;
 	}
 
-	DPRINTF(("switching state %d->%d\n", ic->ic_state, nstate));
+	DPRINTF(("switching state %s->%s\n",
+	    ieee80211_state_name[ic->ic_state],
+	    ieee80211_state_name[nstate]));
 
 	if (ic->ic_state == IEEE80211_S_SCAN && nstate != ic->ic_state)
 		iwm_led_blink_stop(sc);
@@ -6229,7 +6233,8 @@ iwm_intr(void *arg)
 			    i, ring->qid, ring->cur, ring->queued));
 		}
 		DPRINTF(("  rx ring: cur=%d\n", sc->rxq.cur));
-		DPRINTF(("  802.11 state %d\n", sc->sc_ic.ic_state));
+		DPRINTF(("  802.11 state %s\n",
+		    ieee80211_state_name[sc->sc_ic.ic_state]));
 #endif
 
 		printf("%s: fatal firmware error\n", DEVNAME(sc));
