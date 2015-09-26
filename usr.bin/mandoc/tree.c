@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.34 2015/09/26 00:53:15 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.35 2015/09/26 12:54:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,16 +72,16 @@ print_mdoc(const struct roff_node *n, int indent)
 		t = "block";
 		break;
 	case ROFFT_HEAD:
-		t = "block-head";
+		t = "head";
 		break;
 	case ROFFT_BODY:
 		if (n->end)
 			t = "body-end";
 		else
-			t = "block-body";
+			t = "body";
 		break;
 	case ROFFT_TAIL:
-		t = "block-tail";
+		t = "tail";
 		break;
 	case ROFFT_ELEM:
 		t = "elem";
@@ -157,9 +157,16 @@ print_mdoc(const struct roff_node *n, int indent)
 		}
 
 		putchar(' ');
+		if (MDOC_DELIMO & n->flags)
+			putchar('(');
 		if (MDOC_LINE & n->flags)
 			putchar('*');
-		printf("%d:%d\n", n->line, n->pos + 1);
+		printf("%d:%d", n->line, n->pos + 1);
+		if (MDOC_DELIMC & n->flags)
+			putchar(')');
+		if (MDOC_EOS & n->flags)
+			putchar('.');
+		putchar('\n');
 	}
 
 	if (n->eqn)
@@ -196,10 +203,10 @@ print_man(const struct roff_node *n, int indent)
 		t = "block";
 		break;
 	case ROFFT_HEAD:
-		t = "block-head";
+		t = "head";
 		break;
 	case ROFFT_BODY:
-		t = "block-body";
+		t = "body";
 		break;
 	case ROFFT_TBL:
 		break;
@@ -244,7 +251,10 @@ print_man(const struct roff_node *n, int indent)
 		printf("%s (%s) ", p, t);
 		if (MAN_LINE & n->flags)
 			putchar('*');
-		printf("%d:%d\n", n->line, n->pos + 1);
+		printf("%d:%d", n->line, n->pos + 1);
+		if (MAN_EOS & n->flags)
+			putchar('.');
+		putchar('\n');
 	}
 
 	if (n->eqn)
