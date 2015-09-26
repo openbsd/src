@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.h,v 1.6 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: ocsp.h,v 1.7 2015/09/26 17:38:41 jsing Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -388,9 +388,8 @@ typedef struct ocsp_service_locator_st {
 #define ASN1_BIT_STRING_digest(data,type,md,len) \
     ASN1_item_digest(ASN1_ITEM_rptr(ASN1_BIT_STRING),type,data,md,len)
 
-#define OCSP_CERTSTATUS_dup(cs)\
-    (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
-	(char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
+#define OCSP_CERTSTATUS_dup(cs) \
+	ASN1_item_dup(&OCSP_CERTSTATUS_it, cs)
 
 OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
 
