@@ -151,8 +151,8 @@ octeon_splx(int newipl)
 	ci->ci_ipl = newipl;
 	mips_sync();
 	__asm__ (".set reorder\n");
-	if (CPU_IS_PRIMARY(ci))
-		octeon_setintrmask(newipl);
+	octeon_setintrmask(newipl);
+
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
