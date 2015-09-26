@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.2 2015/09/21 06:23:03 kettenis Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.3 2015/09/26 04:03:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -32,6 +32,7 @@
 
 #include <machine/intr.h>
 
+#include <ddb/db_output.h>
 
 void
 __mtx_init(struct mutex *mtx, int wantipl)
@@ -42,11 +43,32 @@ __mtx_init(struct mutex *mtx, int wantipl)
 }
 
 #ifdef MULTIPROCESSOR
+
+#ifdef MP_LOCKDEBUG
+#ifndef DDB
+#error "MP_LOCKDEBUG requires DDB"
+#endif
+
+/* CPU-dependent timing, needs this to be settable from ddb. */
+extern int __mp_lock_spinout;
+#endif
+
 void
 mtx_enter(struct mutex *mtx)
 {
-	while (mtx_enter_try(mtx) == 0)
-		;
+#ifdef MP_LOCKDEBUG
+	int ticks = __mp_lock_spinout;
+#endif
+
+	while (mtx_enter_try(mtx) == 0) {
+#ifdef MP_LOCKDEBUG
+		if (--ticks == 0) {
+			db_printf("%s(%p): lock spun out", __func__, mtx);
+			Debugger();
+			ticks = __mp_lock_spinout;
+		}
+#endif
+	}
 }
 
 int
