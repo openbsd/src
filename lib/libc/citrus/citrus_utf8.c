@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_utf8.c,v 1.10 2015/09/05 15:22:04 semarie Exp $ */
+/*	$OpenBSD: citrus_utf8.c,v 1.11 2015/09/26 14:22:40 semarie Exp $ */
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins
@@ -313,7 +313,7 @@ _citrus_utf8_ctype_wcrtomb(char * __restrict s,
 	} else if ((wc & ~0xffff) == 0) {
 		lead = 0xe0;
 		len = 3;
-	} else if ((wc & ~0x1fffff) == 0) {
+	} else if ((wc & ~0x10ffff) == 0) {
 		lead = 0xf0;
 		len = 4;
 	} else {
