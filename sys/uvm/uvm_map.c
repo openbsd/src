@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.199 2015/09/12 18:54:47 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.200 2015/09/26 17:55:00 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -285,6 +285,7 @@ int uvm_map_printlocks = 0;
 #define LPRINTF(_args)	do {} while (0)
 #endif
 
+static struct mutex uvm_kmapent_mtx;
 static struct timeval uvm_kmapent_last_warn_time;
 static struct timeval uvm_kmapent_warn_rate = { 10, 0 };
 
@@ -1638,15 +1639,15 @@ struct vm_map_entry *
 uvm_mapent_alloc(struct vm_map *map, int flags)
 {
 	struct vm_map_entry *me, *ne;
-	int s, i;
 	int pool_flags;
+	int i;
 
 	pool_flags = PR_WAITOK;
 	if (flags & UVM_FLAG_TRYLOCK)
 		pool_flags = PR_NOWAIT;
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
-		s = splvm();
+		mtx_enter(&uvm_kmapent_mtx);
 		me = uvm.kentry_free;
 		if (me == NULL) {
 			ne = km_alloc(PAGE_SIZE, &kv_page, &kp_dirty,
@@ -1667,7 +1668,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 		}
 		uvm.kentry_free = RB_LEFT(me, daddrs.addr_entry);
 		uvmexp.kmapent++;
-		splx(s);
+		mtx_leave(&uvm_kmapent_mtx);
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
 		splassert(IPL_NONE);
@@ -1701,14 +1702,12 @@ out:
 void
 uvm_mapent_free(struct vm_map_entry *me)
 {
-	int s;
-
 	if (me->flags & UVM_MAP_STATIC) {
-		s = splvm();
+		mtx_enter(&uvm_kmapent_mtx);
 		RB_LEFT(me, daddrs.addr_entry) = uvm.kentry_free;
 		uvm.kentry_free = me;
 		uvmexp.kmapent--;
-		splx(s);
+		mtx_leave(&uvm_kmapent_mtx);
 	} else if (me->flags & UVM_MAP_KMEM) {
 		splassert(IPL_NONE);
 		pool_put(&uvm_map_entry_kmem_pool, me);
@@ -2778,6 +2777,7 @@ uvm_map_init(void)
 	int lcv;
 
 	/* now set up static pool of kernel map entries ... */
+	mtx_init(&uvm_kmapent_mtx, IPL_VM);
 	uvm.kentry_free = NULL;
 	for (lcv = 0 ; lcv < MAX_KMAPENT ; lcv++) {
 		RB_LEFT(&kernel_map_entry[lcv], daddrs.addr_entry) =
