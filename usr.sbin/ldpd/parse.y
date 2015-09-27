@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2015/07/21 04:56:44 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.31 2015/09/27 17:30:38 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -350,7 +350,7 @@ pseudowire	: PSEUDOWIRE STRING {
 			}
 			free($2);
 
-			if (kif->media_type != IFT_MPLSTUNNEL) {
+			if (kif->if_type != IFT_MPLSTUNNEL) {
 				yyerror("unsupported interface type on "
 				    "interface %s", kif->ifname);
 				YYERROR;
@@ -422,7 +422,7 @@ l2vpnopts	: PWTYPE pw_type {
 				YYERROR;
 			}
 
-			if (kif->media_type != IFT_BRIDGE) {
+			if (kif->if_type != IFT_BRIDGE) {
 				yyerror("unsupported interface type on "
 				    "interface %s", kif->ifname);
 				YYERROR;
@@ -452,9 +452,9 @@ l2vpnopts	: PWTYPE pw_type {
 			}
 			free($2);
 
-			if (kif->media_type == IFT_BRIDGE
-			    || kif->media_type == IFT_LOOP
-			    || kif->media_type == IFT_CARP) {
+			if (kif->if_type == IFT_BRIDGE
+			    || kif->if_type == IFT_LOOP
+			    || kif->if_type == IFT_CARP) {
 				yyerror("unsupported interface type on "
 				    "interface %s", kif->ifname);
 				YYERROR;
@@ -487,9 +487,9 @@ interface	: INTERFACE STRING	{
 			iface = conf_get_if(kif);
 			if (iface == NULL)
 				YYERROR;
-			if (iface->media_type == IFT_LOOP ||
-			    iface->media_type == IFT_CARP ||
-			    iface->media_type == IFT_MPLSTUNNEL) {
+			if (iface->if_type == IFT_LOOP ||
+			    iface->if_type == IFT_CARP ||
+			    iface->if_type == IFT_MPLSTUNNEL) {
 				yyerror("unsupported interface type on "
 				    "interface %s", iface->name);
 				YYERROR;

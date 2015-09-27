@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.25 2015/07/21 04:43:28 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.26 2015/09/27 17:30:38 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -71,7 +71,7 @@ if_new(struct kif *kif)
 	iface->ifindex = kif->ifindex;
 	iface->flags = kif->flags;
 	iface->linkstate = kif->link_state;
-	iface->media_type = kif->media_type;
+	iface->if_type = kif->if_type;
 
 	return (iface);
 }
@@ -265,7 +265,7 @@ if_to_ctl(struct iface *iface)
 	ictl.flags = iface->flags;
 	ictl.type = iface->type;
 	ictl.linkstate = iface->linkstate;
-	ictl.mediatype = iface->media_type;
+	ictl.if_type = iface->if_type;
 
 	gettimeofday(&now, NULL);
 	if (iface->state != IF_STA_DOWN &&
