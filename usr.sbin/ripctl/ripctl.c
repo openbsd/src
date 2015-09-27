@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.13 2015/09/13 11:13:12 deraadt Exp $
+/*	$OpenBSD: ripctl.c,v 1.14 2015/09/27 17:32:36 stsp Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,9 +40,9 @@
 
 __dead void	 usage(void);
 const char	*fmt_timeframe_core(time_t);
-const char	*get_linkstate(uint64_t, int);
+const char	*get_linkstate(uint8_t, int);
 int		 show_interface_msg(struct imsg *);
-int		 get_ifms_type(int);
+uint64_t	 get_ifms_type(uint8_t);
 int		 show_rib_msg(struct imsg *);
 int		 show_nbr_msg(struct imsg *);
 void		 show_fib_head(void);
@@ -50,7 +50,7 @@ int		 show_fib_msg(struct imsg *);
 void		 show_interface_head(void);
 int		 show_fib_interface_msg(struct imsg *);
 const char	*get_media_descr(uint64_t);
-void		 print_baudrate(u_int64_t);
+void		 print_baudrate(uint64_t);
 
 struct imsgbuf	*ibuf;
 
@@ -217,10 +217,10 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-int
-get_ifms_type(int mediatype)
+uint64_t
+get_ifms_type(uint8_t if_type)
 {
-	switch (mediatype) {
+	switch (if_type) {
 	case IFT_ETHER:
 		return (IFM_ETHER);
 		break;
@@ -301,7 +301,7 @@ show_interface_msg(struct imsg *imsg)
 			err(1, NULL);
 		printf("%-11s %-18s %-10s %-10s %-8s\n",
 		    iface->name, netid, if_state_name(iface->state),
-		    get_linkstate(iface->mediatype, iface->linkstate),
+		    get_linkstate(iface->if_type, iface->linkstate),
 		    iface->uptime == 0 ? "00:00:00" :
 		    fmt_timeframe_core(iface->uptime));
 		free(netid);
@@ -442,18 +442,18 @@ int
 show_fib_interface_msg(struct imsg *imsg)
 {
 	struct kif	*k;
-	int		 ifms_type;
+	uint64_t	 ifms_type;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_IFINFO:
 		k = imsg->data;
 		printf("%-15s", k->ifname);
 		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
-		ifms_type = get_ifms_type(k->media_type);
+		ifms_type = get_ifms_type(k->if_type);
 		if (ifms_type)
 			printf("%s, ", get_media_descr(ifms_type));
 
-		printf("%s", get_linkstate(k->media_type, k->link_state));
+		printf("%s", get_linkstate(k->if_type, k->link_state));
 
 		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
 			printf(", ");
@@ -489,13 +489,13 @@ get_media_descr(uint64_t media_type)
 }
 
 const char *
-get_linkstate(uint64_t media_type, int link_state)
+get_linkstate(uint8_t if_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];
 
 	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
 			return (p->ifs_string);
 	}
 	snprintf(buf, sizeof(buf), "[#%d]", link_state);
@@ -503,7 +503,7 @@ get_linkstate(uint64_t media_type, int link_state)
 }
 
 void
-print_baudrate(u_int64_t baudrate)
+print_baudrate(uint64_t baudrate)
 {
 	if (baudrate > IF_Gbps(1))
 		printf("%llu GBit/s", baudrate / IF_Gbps(1));

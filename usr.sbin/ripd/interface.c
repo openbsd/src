@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.12 2015/02/09 12:13:42 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.13 2015/09/27 17:32:36 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -425,7 +425,7 @@ if_new(struct kif *kif)
 	iface->ifindex = kif->ifindex;
 	iface->flags = kif->flags;
 	iface->linkstate = kif->link_state;
-	iface->media_type = kif->media_type;
+	iface->if_type = kif->if_type;
 	iface->baudrate = kif->baudrate;
 
 	/* get address */
@@ -494,7 +494,7 @@ if_to_ctl(struct iface *iface)
 	ictl.type = iface->type;
 	ictl.linkstate = iface->linkstate;
 	ictl.passive = iface->passive;
-	ictl.mediatype = iface->media_type;
+	ictl.if_type = iface->if_type;
 
 	gettimeofday(&now, NULL);
 

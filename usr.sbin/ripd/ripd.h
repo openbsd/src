@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.21 2009/11/02 20:28:49 claudio Exp $ */
+/*	$OpenBSD: ripd.h,v 1.22 2015/09/27 17:32:36 stsp Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -181,7 +181,7 @@ struct iface {
 	enum iface_type		 type;
 	enum auth_type		 auth_type;
 	u_int8_t		 linktype;
-	u_int8_t		 media_type;
+	u_int8_t		 if_type;
 	u_int8_t		 passive;
 	u_int8_t		 linkstate;
 	u_int8_t		 auth_keyid;
@@ -259,7 +259,7 @@ struct kif {
 	int		 flags;
 	int		 mtu;
 	u_short		 ifindex;
-	u_int8_t	 media_type;
+	u_int8_t	 if_type;
 	u_int8_t	 link_state;
 	u_int8_t	 nh_reachable;	/* for nexthop verification */
 };
@@ -282,7 +282,7 @@ struct ctl_iface {
 	u_int16_t		 metric;
 	enum iface_type		 type;
 	u_int8_t		 linkstate;
-	u_int8_t		 mediatype;
+	u_int8_t		 if_type;
 	u_int8_t		 passive;
 };
 
