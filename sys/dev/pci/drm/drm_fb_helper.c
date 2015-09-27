@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.10 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.11 2015/09/27 21:28:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -308,6 +308,7 @@ bool drm_fb_helper_restore_fbdev_mode(struct drm_fb_helper *fb_helper)
 }
 EXPORT_SYMBOL(drm_fb_helper_restore_fbdev_mode);
 
+#ifdef __linux__
 /*
  * restore fbcon display for all kms driver's using this helper, used for sysrq
  * and panic handling.
@@ -333,7 +334,6 @@ static bool drm_fb_helper_force_kernel_mode(void)
 	return error;
 }
 
-#if 0
 static int drm_fb_helper_panic(struct notifier_block *n, unsigned long ununsed,
 			void *panic_str)
 {
@@ -379,21 +379,7 @@ static bool drm_fb_helper_is_bound(struct drm_fb_helper *fb_helper)
 	return true;
 }
 
-/**
- * drm_fb_helper_restore - restore the framebuffer console (kernel) config
- *
- * Restore's the kernel's fbcon mode, used for lastclose & panic paths.
- */
-void drm_fb_helper_restore(void)
-{
-	bool ret;
-	ret = drm_fb_helper_force_kernel_mode();
-	if (ret == true)
-		DRM_ERROR("Failed to restore crtc configuration\n");
-}
-EXPORT_SYMBOL(drm_fb_helper_restore);
-
-#if 0
+#ifdef __linux__
 #ifdef CONFIG_MAGIC_SYSRQ
 static void drm_fb_helper_restore_work_fn(struct work_struct *ignored)
 {
@@ -817,6 +803,7 @@ int drm_fb_helper_check_var(struct fb_var_screeninfo *var,
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_check_var);
+#endif
 
 /**
  * drm_fb_helper_set_par - implementation for ->fb_set_par
@@ -857,6 +844,7 @@ int drm_fb_helper_set_par(struct fb_info *info)
 }
 EXPORT_SYMBOL(drm_fb_helper_set_par);
 
+#ifdef __linux__
 /**
  * drm_fb_helper_pan_display - implementation for ->fb_pan_display
  * @var: updated screen information
@@ -908,9 +896,7 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	int ret = 0;
 	int crtc_count = 0;
 	int i;
-#if 0
 	struct fb_info *info;
-#endif
 	struct drm_fb_helper_surface_size sizes;
 	int gamma_size = 0;
 
@@ -989,9 +975,7 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 	if (ret < 0)
 		return ret;
 
-#if 0
 	info = fb_helper->fbdev;
-#endif
 
 	/*
 	 * Set the fb pointer - usually drm_setup_crtcs does this for hotplug
@@ -1004,8 +988,9 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
 		if (fb_helper->crtc_info[i].mode_set.num_connectors)
 			fb_helper->crtc_info[i].mode_set.fb = fb_helper->fb;
 
-#if 0
+
 	info->var.pixclock = 0;
+#ifdef __linux__
 	if (register_framebuffer(info) < 0)
 		return -EINVAL;
 
@@ -1628,9 +1613,7 @@ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 	drm_modeset_lock_all(dev);
 	drm_setup_crtcs(fb_helper);
 	drm_modeset_unlock_all(dev);
-#if 0
 	drm_fb_helper_set_par(fb_helper->fbdev);
-#endif
 
 	return 0;
 }

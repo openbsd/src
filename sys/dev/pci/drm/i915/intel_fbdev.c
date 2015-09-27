@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fbdev.c,v 1.1 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_fbdev.c,v 1.2 2015/09/27 21:28:14 kettenis Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -112,7 +112,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	struct intel_framebuffer *intel_fb = &ifbdev->ifb;
 	struct drm_device *dev = helper->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-//	struct fb_info *info;
+	struct fb_info *info;
 	struct drm_framebuffer *fb;
 	struct drm_i915_gem_object *obj;
 	int size, ret;
@@ -133,7 +133,6 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	obj = intel_fb->obj;
 	size = obj->base.size;
 
-#ifdef __linux__
 	info = framebuffer_alloc(0, &dev->pdev->dev);
 	if (!info) {
 		ret = -ENOMEM;
@@ -141,14 +140,13 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	}
 
 	info->par = helper;
-#endif
 
 	fb = &ifbdev->ifb.base;
 
 	ifbdev->helper.fb = fb;
-#ifdef __linux__
 	ifbdev->helper.fbdev = info;
 
+#ifdef __linux__
 	strcpy(info->fix.id, "inteldrmfb");
 
 	info->flags = FBINFO_DEFAULT | FBINFO_CAN_FORCE_OUTPUT;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.40 2015/09/27 11:09:26 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.41 2015/09/27 21:28:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -1343,3 +1343,15 @@ __copy_from_user_inatomic_nocache(void *to, const void *from, unsigned len)
 }
 
 #endif
+
+struct fb_var_screeninfo {
+	int pixclock;
+};
+
+struct fb_info {
+	struct fb_var_screeninfo var;
+	void *par;
+};
+
+#define framebuffer_alloc(flags, device) \
+	kzalloc(sizeof(struct fb_info), GFP_KERNEL)

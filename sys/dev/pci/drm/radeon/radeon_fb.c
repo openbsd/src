@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.8 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.9 2015/09/27 21:28:14 kettenis Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -190,11 +190,8 @@ static int radeonfb_create(struct radeon_fbdev *rfbdev,
 			   struct drm_fb_helper_surface_size *sizes)
 {
 	struct radeon_device *rdev = rfbdev->rdev;
-#if 0
 	struct fb_info *info;
-#else
 	struct rasops_info *ri = &rdev->ro;
-#endif
 	struct drm_framebuffer *fb = NULL;
 	struct drm_mode_fb_cmd2 mode_cmd;
 	struct drm_gem_object *gobj = NULL;
@@ -225,7 +222,6 @@ static int radeonfb_create(struct radeon_fbdev *rfbdev,
 
 	rbo = gem_to_radeon_bo(gobj);
 
-#ifdef notyet
 	/* okay we have an object now allocate the framebuffer */
 	info = framebuffer_alloc(0, device);
 	if (info == NULL) {
@@ -234,7 +230,6 @@ static int radeonfb_create(struct radeon_fbdev *rfbdev,
 	}
 
 	info->par = rfbdev;
-#endif
 
 	ret = radeon_framebuffer_init(rdev->ddev, &rfbdev->rfb, &mode_cmd, gobj);
 	if (ret) {
@@ -246,9 +241,9 @@ static int radeonfb_create(struct radeon_fbdev *rfbdev,
 
 	/* setup helper */
 	rfbdev->helper.fb = fb;
-#ifdef notyet
 	rfbdev->helper.fbdev = info;
 
+#ifdef notyet
 	memset_io(rbo->kptr, 0x0, radeon_bo_size(rbo));
 
 	strcpy(info->fix.id, "radeondrmfb");
