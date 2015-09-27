@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.13 2013/11/26 13:21:17 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.14 2015/09/27 17:00:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -524,9 +524,8 @@ count_spaces(int current, char *buffer)
 
 int	found_err;
 
-/* VARARGS2 */
 void
-diag(int level, char *msg, ...)
+diag(int level, const char *msg, ...)
 {
     va_list ap;
 

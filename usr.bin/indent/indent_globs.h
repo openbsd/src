@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent_globs.h,v 1.13 2015/08/20 22:32:41 deraadt Exp $ */
+/*	$OpenBSD: indent_globs.h,v 1.14 2015/09/27 17:00:46 guenther Exp $ */
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -323,7 +323,7 @@ struct parser_state match_state[5];
 int compute_code_target(void);
 int compute_label_target(void);
 int count_spaces(int, char *);
-void diag(int, char *, ...);
+void diag(int, const char *, ...) __attribute__((__format__ (printf, 2, 3)));
 void dump_line(void);
 int eqin(char *, char *);
 void fill_buffer(void);
