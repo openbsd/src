@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.857 2015/09/09 23:07:10 halex Exp $
+#	$OpenBSD: install.sub,v 1.858 2015/09/27 19:00:32 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1248,10 +1248,6 @@ install_files() {
 		$AUTO && exit 1
 		return
 	fi
-
-	# XXX Delete this chunk after 5.8 (not a supported upgrade path).
-	# XXX Undo old configurations where /var/tmp is a directory.
-	[[ $MODE == upgrade ]] && rm -rf /mnt/var/tmp
 
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
