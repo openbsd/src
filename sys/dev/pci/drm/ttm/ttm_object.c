@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_object.c,v 1.8 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: ttm_object.c,v 1.9 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2009 VMware, Inc., Palo Alto, CA., USA
@@ -55,14 +55,13 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/ttm/ttm_object.h>
 #include <dev/pci/drm/ttm/ttm_module.h>
-#include <dev/pci/drm/refcount.h>
 
 struct ttm_object_file {
 	struct ttm_object_device *tdev;
 	rwlock_t lock;
 	struct list_head ref_list;
 	struct drm_open_hash ref_hash[TTM_REF_NUM];
-	int refcount;
+	struct kref refcount;
 };
 
 /**
@@ -108,7 +107,7 @@ struct ttm_object_device {
 struct ttm_ref_object {
 	struct drm_hash_item hash;
 	struct list_head head;
-	u_int kref;
+	struct kref kref;
 	enum ttm_ref_type ref_type;
 	struct ttm_base_object *obj;
 	struct ttm_object_file *tfile;
@@ -117,12 +116,14 @@ struct ttm_ref_object {
 static inline struct ttm_object_file *
 ttm_object_file_ref(struct ttm_object_file *tfile)
 {
-	refcount_acquire(&tfile->refcount);
+	kref_get(&tfile->refcount);
 	return tfile;
 }
 
-static void ttm_object_file_destroy(struct ttm_object_file *tfile)
+static void ttm_object_file_destroy(struct kref *kref)
 {
+	struct ttm_object_file *tfile =
+		container_of(kref, struct ttm_object_file, refcount);
 
 	kfree(tfile);
 }
@@ -133,8 +134,7 @@ static inline void ttm_object_file_unref(struct ttm_object_file **p_tfile)
 	struct ttm_object_file *tfile = *p_tfile;
 
 	*p_tfile = NULL;
-	if (refcount_release(&tfile->refcount))
-		ttm_object_file_destroy(tfile);
+	kref_put(&tfile->refcount, ttm_object_file_destroy);
 }
 
 
@@ -154,7 +154,7 @@ int ttm_base_object_init(struct ttm_object_file *tfile,
 	base->refcount_release = refcount_release;
 	base->ref_obj_release = ref_obj_release;
 	base->object_type = object_type;
-	refcount_init(&base->refcount, 1);
+	kref_init(&base->refcount);
 	spin_lock(&tdev->object_lock);
 	ret = drm_ht_just_insert_please_rcu(&tdev->object_hash,
 					    &base->hash,
@@ -179,8 +179,10 @@ out_err0:
 }
 EXPORT_SYMBOL(ttm_base_object_init);
 
-static void ttm_release_base(struct ttm_base_object *base)
+static void ttm_release_base(struct kref *kref)
 {
+	struct ttm_base_object *base =
+	    container_of(kref, struct ttm_base_object, refcount);
 	struct ttm_object_device *tdev = base->tfile->tdev;
 
 	spin_lock(&tdev->object_lock);
@@ -205,8 +207,7 @@ void ttm_base_object_unref(struct ttm_base_object **p_base)
 
 	*p_base = NULL;
 
-	if (refcount_release(&base->refcount))
-		ttm_release_base(base);
+	kref_put(&base->refcount, ttm_release_base);
 }
 EXPORT_SYMBOL(ttm_base_object_unref);
 
@@ -223,7 +224,7 @@ struct ttm_base_object *ttm_base_object_lookup(struct ttm_object_file *tfile,
 
 	if (likely(ret == 0)) {
 		base = drm_hash_entry(hash, struct ttm_base_object, hash);
-		refcount_acquire(&base->refcount);
+		ret = kref_get_unless_zero(&base->refcount) ? 0 : -EINVAL;
 	}
 	mtx_leave(&tdev->object_lock);
 
@@ -259,7 +260,7 @@ int ttm_ref_object_add(struct ttm_object_file *tfile,
 
 		if (ret == 0) {
 			ref = drm_hash_entry(hash, struct ttm_ref_object, hash);
-			refcount_acquire(&ref->kref);
+			kref_get(&ref->kref);
 			read_unlock(&tfile->lock);
 			break;
 		}
@@ -279,14 +280,14 @@ int ttm_ref_object_add(struct ttm_object_file *tfile,
 		ref->obj = base;
 		ref->tfile = tfile;
 		ref->ref_type = ref_type;
-		refcount_init(&ref->kref, 1);
+		kref_init(&ref->kref);
 
 		write_lock(&tfile->lock);
 		ret = drm_ht_insert_item(ht, &ref->hash);
 
 		if (likely(ret == 0)) {
 			list_add_tail(&ref->head, &tfile->ref_list);
-			refcount_acquire(&base->refcount);
+			kref_get(&base->refcount);
 			write_unlock(&tfile->lock);
 			if (existed != NULL)
 				*existed = false;
@@ -304,8 +305,10 @@ int ttm_ref_object_add(struct ttm_object_file *tfile,
 }
 EXPORT_SYMBOL(ttm_ref_object_add);
 
-static void ttm_ref_object_release(struct ttm_ref_object *ref)
+static void ttm_ref_object_release(struct kref *kref)
 {
+	struct ttm_ref_object *ref =
+	    container_of(kref, struct ttm_ref_object, kref);
 	struct ttm_base_object *base = ref->obj;
 	struct ttm_object_file *tfile = ref->tfile;
 	struct drm_open_hash *ht;
@@ -340,8 +343,7 @@ int ttm_ref_object_base_unref(struct ttm_object_file *tfile,
 		return -EINVAL;
 	}
 	ref = drm_hash_entry(hash, struct ttm_ref_object, hash);
-	if (refcount_release(&ref->kref))
-		ttm_ref_object_release(ref);
+	kref_put(&ref->kref, ttm_ref_object_release);
 	write_unlock(&tfile->lock);
 	return 0;
 }
@@ -365,7 +367,7 @@ void ttm_object_file_release(struct ttm_object_file **p_tfile)
 	while (!list_empty(&tfile->ref_list)) {
 		list = tfile->ref_list.next;
 		ref = list_entry(list, struct ttm_ref_object, head);
-		ttm_ref_object_release(ref);
+		ttm_ref_object_release(&ref->kref);
 	}
 
 	for (i = 0; i < TTM_REF_NUM; ++i)
@@ -389,7 +391,7 @@ struct ttm_object_file *ttm_object_file_init(struct ttm_object_device *tdev,
 
 	rw_init(&tfile->lock, "ttmfl");
 	tfile->tdev = tdev;
-	refcount_init(&tfile->refcount, 1);
+	kref_init(&tfile->refcount);
 	INIT_LIST_HEAD(&tfile->ref_list);
 
 	for (i = 0; i < TTM_REF_NUM; ++i) {

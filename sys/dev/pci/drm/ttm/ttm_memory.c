@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_memory.c,v 1.9 2015/04/06 12:25:10 jsg Exp $	*/
+/*	$OpenBSD: ttm_memory.c,v 1.10 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -29,7 +29,6 @@
 #define pr_fmt(fmt) "[TTM] " fmt
 
 #include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/refcount.h>
 #include <dev/pci/drm/ttm/ttm_memory.h>
 #include <dev/pci/drm/ttm/ttm_module.h>
 #include <dev/pci/drm/ttm/ttm_page_alloc.h>
@@ -37,7 +36,7 @@
 #define TTM_MEMORY_ALLOC_RETRIES 4
 
 struct ttm_mem_zone {
-	u_int kobj_ref;
+	struct kobject kobj;
 	struct ttm_mem_global *glob;
 	const char *name;
 	uint64_t zone_mem;
@@ -70,8 +69,10 @@ static struct attribute ttm_mem_used = {
 };
 #endif
 
-static void ttm_mem_zone_kobj_release(struct ttm_mem_zone *zone)
+static void ttm_mem_zone_kobj_release(struct kobject *kobj)
 {
+	struct ttm_mem_zone *zone =
+		container_of(kobj, struct ttm_mem_zone, kobj);
 
 	pr_info("Zone %7s: Used memory at exit: %llu kiB\n",
 		zone->name, (unsigned long long)zone->used_mem >> 10);
@@ -159,25 +160,27 @@ static const struct sysfs_ops ttm_mem_zone_ops = {
 	.show = &ttm_mem_zone_show,
 	.store = &ttm_mem_zone_store
 };
+#endif
 
 static struct kobj_type ttm_mem_zone_kobj_type = {
 	.release = &ttm_mem_zone_kobj_release,
+#ifdef __linux__
 	.sysfs_ops = &ttm_mem_zone_ops,
 	.default_attrs = ttm_mem_zone_attrs,
-};
 #endif
+};
 
-static void ttm_mem_global_kobj_release(struct ttm_mem_global *glob)
+static void ttm_mem_global_kobj_release(struct kobject *kobj)
 {
+	struct ttm_mem_global *glob =
+		container_of(kobj, struct ttm_mem_global, kobj);
 
 	kfree(glob);
 }
 
-#ifdef notyet
 static struct kobj_type ttm_mem_glob_kobj_type = {
 	.release = &ttm_mem_global_kobj_release,
 };
-#endif
 
 static bool ttm_zones_above_swap_target(struct ttm_mem_global *glob,
 					bool from_wq, uint64_t extra)
@@ -245,6 +248,7 @@ static int ttm_mem_init_kernel_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
 	struct ttm_mem_zone *zone = kzalloc(sizeof(*zone), GFP_KERNEL);
+	int ret;
 
 	if (unlikely(!zone))
 		return -ENOMEM;
@@ -257,7 +261,12 @@ static int ttm_mem_init_kernel_zone(struct ttm_mem_global *glob,
 	zone->used_mem = 0;
 	zone->glob = glob;
 	glob->zone_kernel = zone;
-	refcount_init(&zone->kobj_ref, 1);
+	ret = kobject_init_and_add(
+		&zone->kobj, &ttm_mem_zone_kobj_type, &glob->kobj, zone->name);
+	if (unlikely(ret != 0)) {
+		kobject_put(&zone->kobj);
+		return ret;
+	}
 	glob->zones[glob->num_zones++] = zone;
 	return 0;
 }
@@ -267,6 +276,7 @@ static int ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
 	struct ttm_mem_zone *zone;
+	int ret;
 
 	if (si->totalhigh == 0)
 		return 0;
@@ -283,7 +293,12 @@ static int ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
 	zone->used_mem = 0;
 	zone->glob = glob;
 	glob->zone_highmem = zone;
-	refcount_init(&zone->kobj_ref, 1);
+	ret = kobject_init_and_add(
+		&zone->kobj, &ttm_mem_zone_kobj_type, &glob->kobj, zone->name);
+	if (unlikely(ret != 0)) {
+		kobject_put(&zone->kobj);
+		return ret;
+	}
 	glob->zones[glob->num_zones++] = zone;
 	return 0;
 }
@@ -292,6 +307,7 @@ static int ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
     uint64_t mem)
 {
 	struct ttm_mem_zone *zone = kzalloc(sizeof(*zone), GFP_KERNEL);
+	int ret;
 
 	if (unlikely(!zone))
 		return -ENOMEM;
@@ -320,7 +336,12 @@ static int ttm_mem_init_dma32_zone(struct ttm_mem_global *glob,
 	zone->used_mem = 0;
 	zone->glob = glob;
 	glob->zone_dma32 = zone;
-	refcount_init(&zone->kobj_ref, 1);
+	ret = kobject_init_and_add(
+		&zone->kobj, &ttm_mem_zone_kobj_type, &glob->kobj, zone->name);
+	if (unlikely(ret != 0)) {
+		kobject_put(&zone->kobj);
+		return ret;
+	}
 	glob->zones[glob->num_zones++] = zone;
 	return 0;
 }
@@ -340,7 +361,12 @@ int ttm_mem_global_init(struct ttm_mem_global *glob)
 	glob->task_queued = false;
 	task_set(&glob->task, ttm_shrink_work, glob);
 
-	refcount_init(&glob->kobj_ref, 1);
+	ret = kobject_init_and_add(
+		&glob->kobj, &ttm_mem_glob_kobj_type, ttm_get_kobj(), "memory_accounting");
+	if (unlikely(ret != 0)) {
+		kobject_put(&glob->kobj);
+		return ret;
+	}
 
 	mem = ptoa(physmem);
 
@@ -385,11 +411,11 @@ void ttm_mem_global_release(struct ttm_mem_global *glob)
 	glob->swap_queue = NULL;
 	for (i = 0; i < glob->num_zones; ++i) {
 		zone = glob->zones[i];
-		if (refcount_release(&zone->kobj_ref))
-			ttm_mem_zone_kobj_release(zone);
+		kobject_del(&zone->kobj);
+		kobject_put(&zone->kobj);
 	}
-	if (refcount_release(&glob->kobj_ref))
-		ttm_mem_global_kobj_release(glob);
+	kobject_del(&glob->kobj);
+	kobject_put(&glob->kobj);
 }
 EXPORT_SYMBOL(ttm_mem_global_release);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo.c,v 1.17 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: ttm_bo.c,v 1.18 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -34,7 +34,6 @@
 #include <dev/pci/drm/ttm/ttm_module.h>
 #include <dev/pci/drm/ttm/ttm_bo_driver.h>
 #include <dev/pci/drm/ttm/ttm_placement.h>
-#include <dev/pci/drm/refcount.h>
 
 #define TTM_ASSERT_LOCKED(param)
 #define TTM_DEBUG(fmt, arg...)
@@ -42,7 +41,7 @@
 
 static int ttm_bo_setup_vm(struct ttm_buffer_object *bo);
 static int ttm_bo_swapout(struct ttm_mem_shrink *shrink);
-static void ttm_bo_global_kobj_release(struct ttm_bo_global *glob);
+static void ttm_bo_global_kobj_release(struct kobject *kobj);
 
 int ttm_bo_move_buffer(struct ttm_buffer_object *, struct ttm_placement *,
     bool, bool);
@@ -53,6 +52,12 @@ static struct attribute ttm_bo_count = {
 	.mode = S_IRUGO
 };
 #endif
+
+struct kobject *
+ttm_get_kobj(void)
+{
+	return (NULL);
+}
 
 static inline int ttm_mem_type_from_flags(uint32_t flags, uint32_t *mem_type)
 {
@@ -120,27 +125,30 @@ static struct attribute *ttm_bo_global_attrs[] = {
 static const struct sysfs_ops ttm_bo_global_ops = {
 	.show = &ttm_bo_global_show
 };
+#endif
 
 static struct kobj_type ttm_bo_glob_kobj_type  = {
 	.release = &ttm_bo_global_kobj_release,
+#ifdef __linux__
 	.sysfs_ops = &ttm_bo_global_ops,
 	.default_attrs = ttm_bo_global_attrs
-};
 #endif
-
+};
 
 static inline uint32_t ttm_bo_type_flags(unsigned type)
 {
 	return 1 << (type);
 }
 
-static void ttm_bo_release_list(struct ttm_buffer_object *bo)
+static void ttm_bo_release_list(struct kref *list_kref)
 {
+	struct ttm_buffer_object *bo =
+	    container_of(list_kref, struct ttm_buffer_object, list_kref);
 	struct ttm_bo_device *bdev = bo->bdev;
 	size_t acc_size = bo->acc_size;
 
-	BUG_ON(atomic_read(&bo->list_kref));
-	BUG_ON(atomic_read(&bo->kref));
+	BUG_ON(atomic_read(&bo->list_kref.refcount));
+	BUG_ON(atomic_read(&bo->kref.refcount));
 	BUG_ON(atomic_read(&bo->cpu_writers));
 	BUG_ON(bo->sync_obj != NULL);
 	BUG_ON(bo->mem.mm_node != NULL);
@@ -187,11 +195,11 @@ void ttm_bo_add_to_lru(struct ttm_buffer_object *bo)
 
 		man = &bdev->man[bo->mem.mem_type];
 		list_add_tail(&bo->lru, &man->lru);
-		refcount_acquire(&bo->list_kref);
+		kref_get(&bo->list_kref);
 
 		if (bo->ttm != NULL) {
 			list_add_tail(&bo->swap, &bo->glob->swap_lru);
-			refcount_acquire(&bo->list_kref);
+			kref_get(&bo->list_kref);
 		}
 	}
 }
@@ -273,17 +281,16 @@ int ttm_bo_reserve_locked(struct ttm_buffer_object *bo,
 }
 EXPORT_SYMBOL(ttm_bo_reserve);
 
+static void ttm_bo_ref_bug(struct kref *list_kref)
+{
+	BUG();
+}
+
 void ttm_bo_list_ref_sub(struct ttm_buffer_object *bo, int count,
 			 bool never_free)
 {
-	u_int old;
-
-	old = atomic_fetchadd_int(&bo->list_kref, -count);
-	if (old <= count) {
-		if (never_free)
-			panic("ttm_bo_ref_buf");
-		ttm_bo_release_list(bo);
-	}
+	kref_sub(&bo->list_kref, count,
+		 (never_free) ? ttm_bo_ref_bug : ttm_bo_release_list);
 }
 
 int ttm_bo_reserve(struct ttm_buffer_object *bo,
@@ -544,7 +551,7 @@ static void ttm_bo_cleanup_refs_or_queue(struct ttm_buffer_object *bo)
 		wake_up_all(&bo->event_queue);
 	}
 
-	refcount_acquire(&bo->list_kref);
+	kref_get(&bo->list_kref);
 	list_add_tail(&bo->ddestroy, &bdev->ddestroy);
 	spin_unlock(&glob->lru_lock);
 
@@ -666,7 +673,7 @@ static int ttm_bo_delayed_delete(struct ttm_bo_device *bdev, bool remove_all)
 
 	entry = list_first_entry(&bdev->ddestroy,
 		struct ttm_buffer_object, ddestroy);
-	refcount_acquire(&entry->list_kref);
+	kref_get(&entry->list_kref);
 
 	for (;;) {
 		struct ttm_buffer_object *nentry = NULL;
@@ -674,7 +681,7 @@ static int ttm_bo_delayed_delete(struct ttm_bo_device *bdev, bool remove_all)
 		if (entry->ddestroy.next != &bdev->ddestroy) {
 			nentry = list_first_entry(&entry->ddestroy,
 				struct ttm_buffer_object, ddestroy);
-			refcount_acquire(&nentry->list_kref);
+			kref_get(&nentry->list_kref);
 		}
 
 		ret = ttm_bo_reserve_locked(entry, false, !remove_all, false, 0);
@@ -684,8 +691,7 @@ static int ttm_bo_delayed_delete(struct ttm_bo_device *bdev, bool remove_all)
 		else
 			spin_unlock(&glob->lru_lock);
 
-		if (refcount_release(&entry->list_kref))
-			ttm_bo_release_list(entry);
+		kref_put(&entry->list_kref, ttm_bo_release_list);
 		entry = nentry;
 
 		if (ret || !entry)
@@ -699,8 +705,8 @@ static int ttm_bo_delayed_delete(struct ttm_bo_device *bdev, bool remove_all)
 out_unlock:
 	spin_unlock(&glob->lru_lock);
 out:
-	if (entry && refcount_release(&entry->list_kref))
-		ttm_bo_release_list(entry);
+	if (entry)
+		kref_put(&entry->list_kref, ttm_bo_release_list);
 	return ret;
 }
 
@@ -715,8 +721,10 @@ static void ttm_bo_delayed_workqueue(struct work_struct *work)
 	}
 }
 
-static void ttm_bo_release(struct ttm_buffer_object *bo)
+static void ttm_bo_release(struct kref *kref)
 {
+	struct ttm_buffer_object *bo =
+	    container_of(kref, struct ttm_buffer_object, kref);
 	struct ttm_bo_device *bdev = bo->bdev;
 	struct ttm_mem_type_manager *man = &bdev->man[bo->mem.mem_type];
 
@@ -732,8 +740,7 @@ static void ttm_bo_release(struct ttm_buffer_object *bo)
 	ttm_mem_io_free_vm(bo);
 	ttm_mem_io_unlock(man);
 	ttm_bo_cleanup_refs_or_queue(bo);
-	if (refcount_release(&bo->list_kref))
-		ttm_bo_release_list(bo);
+	kref_put(&bo->list_kref, ttm_bo_release_list);
 }
 
 void ttm_bo_unref(struct ttm_buffer_object **p_bo)
@@ -741,8 +748,7 @@ void ttm_bo_unref(struct ttm_buffer_object **p_bo)
 	struct ttm_buffer_object *bo = *p_bo;
 
 	*p_bo = NULL;
-	if (refcount_release(&bo->kref))
-		ttm_bo_release(bo);
+	kref_put(&bo->kref, ttm_bo_release);
 }
 EXPORT_SYMBOL(ttm_bo_unref);
 
@@ -837,13 +843,12 @@ static int ttm_mem_evict_first(struct ttm_bo_device *bdev,
 		return ret;
 	}
 
-	refcount_acquire(&bo->list_kref);
+	kref_get(&bo->list_kref);
 
 	if (!list_empty(&bo->ddestroy)) {
 		ret = ttm_bo_cleanup_refs_and_unlock(bo, interruptible,
 						     no_wait_gpu);
-		if (refcount_release(&bo->list_kref))
-			ttm_bo_release_list(bo);
+		kref_put(&bo->list_kref, ttm_bo_release_list);
 		return ret;
 	}
 
@@ -857,8 +862,7 @@ static int ttm_mem_evict_first(struct ttm_bo_device *bdev,
 	ret = ttm_bo_evict(bo, interruptible, no_wait_gpu);
 	ttm_bo_unreserve(bo);
 
-	if (refcount_release(&bo->list_kref))
-		ttm_bo_release_list(bo);
+	kref_put(&bo->list_kref, ttm_bo_release_list);
 	return ret;
 }
 
@@ -1221,8 +1225,8 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 	bo->destroy = destroy;
 
 	uvm_objinit(&bo->uobj, NULL, 1);
-	refcount_init(&bo->kref, 1);
-	refcount_init(&bo->list_kref, 1);
+	kref_init(&bo->kref);
+	kref_init(&bo->list_kref);
 	atomic_set(&bo->cpu_writers, 0);
 	atomic_set(&bo->reserved, 1);
 	init_waitqueue_head(&bo->event_queue);
@@ -1448,8 +1452,10 @@ int ttm_bo_init_mm(struct ttm_bo_device *bdev, unsigned type,
 }
 EXPORT_SYMBOL(ttm_bo_init_mm);
 
-static void ttm_bo_global_kobj_release(struct ttm_bo_global *glob)
+static void ttm_bo_global_kobj_release(struct kobject *kobj)
 {
+	struct ttm_bo_global *glob =
+		container_of(kobj, struct ttm_bo_global, kobj);
 
 	ttm_mem_unregister_shrink(glob->mem_glob, &glob->shrink);
 	km_free(glob->dummy_read_page, PAGE_SIZE, &kv_any, &kp_dma_zero);
@@ -1460,8 +1466,8 @@ void ttm_bo_global_release(struct drm_global_reference *ref)
 {
 	struct ttm_bo_global *glob = ref->object;
 
-	if (refcount_release(&glob->kobj_ref))
-		ttm_bo_global_kobj_release(glob);
+	kobject_del(&glob->kobj);
+	kobject_put(&glob->kobj);
 }
 EXPORT_SYMBOL(ttm_bo_global_release);
 
@@ -1495,9 +1501,11 @@ int ttm_bo_global_init(struct drm_global_reference *ref)
 
 	atomic_set(&glob->bo_count, 0);
 
-	refcount_init(&glob->kobj_ref, 1);
-	return (0);
-
+	ret = kobject_init_and_add(
+		&glob->kobj, &ttm_bo_glob_kobj_type, ttm_get_kobj(), "buffer_objects");
+	if (unlikely(ret != 0))
+		kobject_put(&glob->kobj);
+	return ret;
 out_no_shrink:
 	km_free(glob->dummy_read_page, PAGE_SIZE, &kv_any, &kp_dma_zero);
 out_no_drp:
@@ -1822,12 +1830,11 @@ static int ttm_bo_swapout(struct ttm_mem_shrink *shrink)
 		return ret;
 	}
 
-	refcount_acquire(&bo->list_kref);
+	kref_get(&bo->list_kref);
 
 	if (!list_empty(&bo->ddestroy)) {
 		ret = ttm_bo_cleanup_refs_and_unlock(bo, false, false);
-		if (refcount_release(&bo->list_kref))
-			ttm_bo_release_list(bo);
+		kref_put(&bo->list_kref, ttm_bo_release_list);
 		return ret;
 	}
 
@@ -1882,8 +1889,7 @@ out:
 
 	atomic_set(&bo->reserved, 0);
 	wake_up_all(&bo->event_queue);
-	if (refcount_release(&bo->list_kref))
-		ttm_bo_release_list(bo);
+	kref_put(&bo->list_kref, ttm_bo_release_list);
 	return ret;
 }
 

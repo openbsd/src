@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_page_alloc.c,v 1.9 2015/04/11 05:10:13 jsg Exp $	*/
+/*	$OpenBSD: ttm_page_alloc.c,v 1.10 2015/09/27 11:09:26 jsg Exp $	*/
 /*
  * Copyright (c) Red Hat Inc.
 
@@ -35,7 +35,6 @@
 #define pr_fmt(fmt) "[TTM] " fmt
 
 #include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/refcount.h>
 #include <dev/pci/drm/ttm/ttm_bo_driver.h>
 #include <dev/pci/drm/ttm/ttm_page_alloc.h>
 
@@ -101,7 +100,7 @@ struct ttm_pool_opts {
  * @pools: All pool objects in use.
  **/
 struct ttm_pool_manager {
-	unsigned int		kobj_ref;
+	struct kobject		kobj;
 #ifdef notyet
 	struct shrinker		mm_shrink;
 #endif
@@ -170,8 +169,10 @@ ttm_uvm_free_page(struct vm_page *m)
 	uvm_pagefree(m);
 }
 
-static void ttm_pool_kobj_release(struct ttm_pool_manager *m)
+static void ttm_pool_kobj_release(struct kobject *kobj)
 {
+	struct ttm_pool_manager *m =
+		container_of(kobj, struct ttm_pool_manager, kobj);
 	kfree(m);
 }
 
@@ -233,13 +234,15 @@ static const struct sysfs_ops ttm_pool_sysfs_ops = {
 	.show = &ttm_pool_show,
 	.store = &ttm_pool_store,
 };
+#endif // notyet
 
 static struct kobj_type ttm_pool_kobj_type = {
 	.release = &ttm_pool_kobj_release,
+#ifdef __linux__
 	.sysfs_ops = &ttm_pool_sysfs_ops,
 	.default_attrs = ttm_pool_attrs,
+#endif
 };
-#endif // notyet
 
 static struct ttm_pool_manager *_manager;
 
@@ -828,6 +831,8 @@ static void ttm_page_pool_init_locked(struct ttm_page_pool *pool, int flags,
 
 int ttm_page_alloc_init(struct ttm_mem_global *glob, unsigned max_pages)
 {
+	int ret;
+
 	WARN_ON(_manager);
 
 	pr_info("Initializing pool allocator\n");
@@ -848,7 +853,14 @@ int ttm_page_alloc_init(struct ttm_mem_global *glob, unsigned max_pages)
 	_manager->options.small = SMALL_ALLOCATION;
 	_manager->options.alloc_size = NUM_PAGES_TO_ALLOC;
 
-	refcount_init(&_manager->kobj_ref, 1);
+	ret = kobject_init_and_add(&_manager->kobj, &ttm_pool_kobj_type,
+				   &glob->kobj, "pool");
+	if (unlikely(ret != 0)) {
+		kobject_put(&_manager->kobj);
+		_manager = NULL;
+		return ret;
+	}
+
 	ttm_pool_mm_shrink_init(_manager);
 
 	return 0;
@@ -864,8 +876,7 @@ void ttm_page_alloc_fini(void)
 	for (i = 0; i < NUM_POOLS; ++i)
 		ttm_page_pool_free(&_manager->pools[i], FREE_ALL_PAGES);
 
-	if (refcount_release(&_manager->kobj_ref))
-		ttm_pool_kobj_release(_manager);
+	kobject_put(&_manager->kobj);
 	_manager = NULL;
 }
 

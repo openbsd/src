@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.39 2015/09/26 22:00:00 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.40 2015/09/27 11:09:26 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -738,26 +738,96 @@ vfree(void *objp)
 }
 
 struct kref {
-	uint32_t count;
+	uint32_t refcount;
 };
 
 static inline void
 kref_init(struct kref *ref)
 {
-	ref->count = 1;
+	ref->refcount = 1;
 }
 
 static inline void
 kref_get(struct kref *ref)
 {
-	atomic_inc_int(&ref->count);
+	atomic_inc_int(&ref->refcount);
+}
+
+static inline int
+kref_get_unless_zero(struct kref *ref)
+{
+	if (ref->refcount != 0) {
+		atomic_inc_int(&ref->refcount);
+		return (1);
+	} else {
+		return (0);
+	}
 }
 
 static inline void
 kref_put(struct kref *ref, void (*release)(struct kref *ref))
 {
-	if (atomic_dec_int_nv(&ref->count) == 0)
+	if (atomic_dec_int_nv(&ref->refcount) == 0)
 		release(ref);
+}
+
+static inline void
+kref_sub(struct kref *ref, unsigned int v, void (*release)(struct kref *ref))
+{
+	if (atomic_sub_int_nv(&ref->refcount, v) == 0)
+		release(ref);
+}
+
+struct kobject {
+	struct kref kref;
+	struct kobj_type *type;
+};
+
+struct kobj_type {
+	void (*release)(struct kobject *);
+};
+
+static inline void
+kobject_init(struct kobject *obj, struct kobj_type *type)
+{
+	kref_init(&obj->kref);
+	obj->type = type;
+}
+
+static inline int
+kobject_init_and_add(struct kobject *obj, struct kobj_type *type,
+    struct kobject *parent, const char *fmt, ...)
+{
+	kobject_init(obj, type);
+	return (0);
+}
+
+static inline struct kobject *
+kobject_get(struct kobject *obj)
+{
+	if (obj != NULL)
+		kref_get(&obj->kref);
+	return (obj);
+}
+
+static inline void
+kobject_release(struct kref *ref)
+{
+	struct kobject *obj = container_of(ref, struct kobject, kref);
+	if (obj->type && obj->type->release)
+		obj->type->release(obj);
+}
+
+static inline void
+kobject_put(struct kobject *obj)
+{
+	if (obj != NULL)
+		kref_put(&obj->kref, kobject_release);
+}
+
+static inline void
+kobject_del(struct kobject *obj)
+{
 }
 
 #define min_t(t, a, b) ({ \

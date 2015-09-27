@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.14 2015/04/12 05:31:23 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.15 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -31,7 +31,6 @@
 
 #include <dev/pci/drm/ttm/ttm_bo_driver.h>
 #include <dev/pci/drm/ttm/ttm_placement.h>
-#include <dev/pci/drm/refcount.h>
 
 int	 ttm_mem_reg_ioremap(struct ttm_bo_device *, struct ttm_mem_reg *,
 	     void **);
@@ -457,8 +456,8 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	else
 		fbo->sync_obj = NULL;
 	spin_unlock(&bdev->fence_lock);
-	refcount_init(&fbo->list_kref, 1);
-	refcount_init(&fbo->kref, 1);
+	kref_init(&fbo->list_kref);
+	kref_init(&fbo->kref);
 	fbo->destroy = &ttm_transfered_destroy;
 	fbo->acc_size = 0;
 

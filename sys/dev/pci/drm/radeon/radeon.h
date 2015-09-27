@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.16 2015/07/11 04:00:46 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.17 2015/09/27 11:09:26 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -224,7 +224,7 @@ struct radeon_fence_driver {
 
 struct radeon_fence {
 	struct radeon_device		*rdev;
-	unsigned int			kref;
+	struct kref			kref;
 	/* protected by radeon_fence.lock */
 	uint64_t			seq;
 	/* RB, DMA, etc. */

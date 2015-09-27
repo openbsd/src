@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_api.h,v 1.4 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_api.h,v 1.5 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -33,7 +33,6 @@
 #define _TTM_BO_API_H_
 
 #include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/refcount.h>
 
 struct ttm_bo_device;
 
@@ -205,8 +204,8 @@ struct ttm_buffer_object {
 	* Members not needing protection.
 	*/
 
-	u_int kref;
-	u_int list_kref;
+	struct kref kref;
+	struct kref list_kref;
 	wait_queue_head_t event_queue;
 
 	/**
@@ -309,7 +308,7 @@ struct ttm_bo_kmap_obj {
 static inline struct ttm_buffer_object *
 ttm_bo_reference(struct ttm_buffer_object *bo)
 {
-	refcount_acquire(&bo->kref);
+	kref_get(&bo->kref);
 	return bo;
 }
 

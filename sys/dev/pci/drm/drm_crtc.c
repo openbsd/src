@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.18 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.19 2015/09/27 11:09:26 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -34,7 +34,6 @@
 #include "drm_crtc.h"
 #include "drm_edid.h"
 #include "drm_fourcc.h"
-#include "refcount.h"
 
 /**
  * drm_modeset_lock_all - take all modeset locks
@@ -413,7 +412,7 @@ int drm_framebuffer_init(struct drm_device *dev, struct drm_framebuffer *fb,
 	int ret;
 
 	mutex_lock(&dev->mode_config.fb_lock);
-	refcount_init(&fb->refcount, 1);
+	kref_init(&fb->refcount);
 	INIT_LIST_HEAD(&fb->filp_head);
 	fb->dev = dev;
 	fb->funcs = funcs;
@@ -434,8 +433,10 @@ out:
 }
 EXPORT_SYMBOL(drm_framebuffer_init);
 
-static void drm_framebuffer_free(struct drm_framebuffer *fb)
+static void drm_framebuffer_free(struct kref *kref)
 {
+	struct drm_framebuffer *fb =
+			container_of(kref, struct drm_framebuffer, refcount);
 	fb->funcs->destroy(fb);
 }
 
@@ -497,8 +498,7 @@ EXPORT_SYMBOL(drm_framebuffer_lookup);
 void drm_framebuffer_unreference(struct drm_framebuffer *fb)
 {
 	DRM_DEBUG("FB ID: %d\n", fb->base.id);
-	if (refcount_release(&fb->refcount))
-		drm_framebuffer_free(fb);
+	kref_put(&fb->refcount, drm_framebuffer_free);
 }
 EXPORT_SYMBOL(drm_framebuffer_unreference);
 
@@ -509,11 +509,11 @@ EXPORT_SYMBOL(drm_framebuffer_unreference);
 void drm_framebuffer_reference(struct drm_framebuffer *fb)
 {
 	DRM_DEBUG("FB ID: %d\n", fb->base.id);
-	refcount_acquire(&fb->refcount);
+	kref_get(&fb->refcount);
 }
 EXPORT_SYMBOL(drm_framebuffer_reference);
 
-static void drm_framebuffer_free_bug(struct drm_framebuffer *fb)
+static void drm_framebuffer_free_bug(struct kref *kref)
 {
 	BUG();
 }
@@ -521,8 +521,7 @@ static void drm_framebuffer_free_bug(struct drm_framebuffer *fb)
 static void __drm_framebuffer_unreference(struct drm_framebuffer *fb)
 {
 	DRM_DEBUG("FB ID: %d\n", fb->base.id);
-	if (refcount_release(&fb->refcount))
-		drm_framebuffer_free_bug(fb);
+	kref_put(&fb->refcount, drm_framebuffer_free_bug);
 }
 
 /* dev->mode_config.fb_lock must be held! */
@@ -626,7 +625,7 @@ void drm_framebuffer_remove(struct drm_framebuffer *fb)
 	 * in-use fb with fb-id == 0. Userspace is allowed to shoot its own foot
 	 * in this manner.
 	 */
-	if (atomic_read(&fb->refcount) > 1) {
+	if (atomic_read(&fb->refcount.refcount) > 1) {
 		drm_modeset_lock_all(dev);
 		/* remove from any CRTC */
 		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {

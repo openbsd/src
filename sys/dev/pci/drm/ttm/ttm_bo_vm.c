@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_vm.c,v 1.7 2015/04/05 11:53:53 kettenis Exp $	*/
+/*	$OpenBSD: ttm_bo_vm.c,v 1.8 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -307,8 +307,8 @@ ttm_bo_mmap(voff_t off, vsize_t size, struct ttm_bo_device *bdev)
 
 	read_lock(&bdev->vm_lock);
 	bo = ttm_bo_vm_lookup_rb(bdev, off >> PAGE_SHIFT, size >> PAGE_SHIFT);
-	if (likely(bo != NULL))
-		refcount_acquire(&bo->kref);
+	if (likely(bo != NULL) && !kref_get_unless_zero(&bo->kref))
+		bo = NULL;
 	read_unlock(&bdev->vm_lock);
 
 	if (unlikely(bo == NULL)) {

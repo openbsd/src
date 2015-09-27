@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_object.h,v 1.2 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: ttm_object.h,v 1.3 2015/09/27 11:09:26 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -126,7 +126,7 @@ struct ttm_base_object {
 	enum ttm_object_type object_type;
 	bool shareable;
 	struct ttm_object_file *tfile;
-	u_int refcount;
+	struct kref refcount;
 	void (*refcount_release) (struct ttm_base_object **base);
 	void (*ref_obj_release) (struct ttm_base_object *base,
 				 enum ttm_ref_type ref_type);

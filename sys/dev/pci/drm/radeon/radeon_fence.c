@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fence.c,v 1.9 2015/07/11 04:00:46 jsg Exp $	*/
+/*	$OpenBSD: radeon_fence.c,v 1.10 2015/09/27 11:09:26 jsg Exp $	*/
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
@@ -33,8 +33,6 @@
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "radeon_trace.h"
-
-#include <dev/pci/drm/refcount.h>
 
 /*
  * Fences
@@ -107,7 +105,7 @@ int radeon_fence_emit(struct radeon_device *rdev,
 	if ((*fence) == NULL) {
 		return -ENOMEM;
 	}
-	refcount_init(&((*fence)->kref), 1);
+	kref_init(&((*fence)->kref));
 	(*fence)->rdev = rdev;
 	(*fence)->seq = ++rdev->fence_drv[ring].sync_seq[ring];
 	(*fence)->ring = ring;
@@ -194,9 +192,11 @@ void radeon_fence_process(struct radeon_device *rdev, int ring)
  *
  * Frees the fence object (all asics).
  */
-static void radeon_fence_destroy(struct radeon_fence *fence)
+static void radeon_fence_destroy(struct kref *kref)
 {
+	struct radeon_fence *fence;
 
+	fence = container_of(kref, struct radeon_fence, kref);
 	kfree(fence);
 }
 
@@ -638,7 +638,7 @@ int radeon_fence_wait_empty_locked(struct radeon_device *rdev, int ring)
  */
 struct radeon_fence *radeon_fence_ref(struct radeon_fence *fence)
 {
-	refcount_acquire(&fence->kref);
+	kref_get(&fence->kref);
 	return fence;
 }
 
@@ -655,9 +655,7 @@ void radeon_fence_unref(struct radeon_fence **fence)
 
 	*fence = NULL;
 	if (tmp) {
-		if (refcount_release(&tmp->kref)) {
-			radeon_fence_destroy(tmp);
-		}
+		kref_put(&tmp->kref, radeon_fence_destroy);
 	}
 }
 
