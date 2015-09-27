@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.21 2015/04/18 11:12:33 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.22 2015/09/27 05:23:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -646,17 +646,14 @@ hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 	if ((cl = hfsc_clh2cph(hif, m->m_pkthdr.pf.qid)) == NULL ||
 	    cl->cl_children != NULL) {
 		cl = hif->hif_defaultclass;
-		if (cl == NULL) {
-			m_freem(m);
+		if (cl == NULL)
 			return (ENOBUFS);
-		}
 		cl->cl_pktattr = NULL;
 	}
 
 	if (hfsc_addq(cl, m) != 0) {
 		/* drop occurred.  mbuf needs to be freed */
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
-		m_freem(m);
 		return (ENOBUFS);
 	}
 	ifq->ifq_len++;
