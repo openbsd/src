@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.12 2014/07/09 18:32:34 tobias Exp $	*/
+/*	$OpenBSD: ext.h,v 1.13 2015/09/27 16:56:06 guenther Exp $	*/
 /*	$NetBSD: ext.h,v 1.5 1997/10/17 11:19:48 ws Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ extern struct disklabel lab;
 /*
  * function declarations
  */
-int ask(int, const char *, ...);
+int ask(int, const char *, ...) __attribute__((__format__ (printf, 2, 3)));
 
 /*
  * Check filesystem given as arg

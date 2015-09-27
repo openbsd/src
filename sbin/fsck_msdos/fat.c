@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.25 2014/07/10 20:11:12 tobias Exp $	*/
+/*	$OpenBSD: fat.c,v 1.26 2015/09/27 16:56:06 guenther Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -118,22 +118,23 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 		&& ((buffer[3]&0x0f) != 0x0f
 		    || buffer[4] != 0xff || buffer[5] != 0xff
 		    || buffer[6] != 0xff || (buffer[7]&0x0f) != 0x0f))) {
-		char *msg;
+		static const char msg[] = "FAT starts with odd byte sequence ";
 
 		switch (boot->ClustMask) {
 		case CLUST32_MASK:
-			msg = "FAT starts with odd byte sequence (%02x%02x%02x%02x%02x%02x%02x%02x)\n";
+			pwarn("%s(%02x%02x%02x%02x%02x%02x%02x%02x)\n", msg,
+			    buffer[0], buffer[1], buffer[2], buffer[3],
+			    buffer[4], buffer[5], buffer[6], buffer[7]);
 			break;
 		case CLUST16_MASK:
-			msg = "FAT starts with odd byte sequence (%02x%02x%02x%02x)\n";
+			pwarn("%s(%02x%02x%02x%02x)\n", msg,
+			    buffer[0], buffer[1], buffer[2], buffer[3]);
 			break;
 		default:
-			msg = "FAT starts with odd byte sequence (%02x%02x%02x)\n";
+			pwarn("%s(%02x%02x%02x)\n", msg,
+			    buffer[0], buffer[1], buffer[2]);
 			break;
 		}
-		pwarn(msg,
-		      buffer[0], buffer[1], buffer[2], buffer[3],
-		      buffer[4], buffer[5], buffer[6], buffer[7]);
 		if (ask(1, "Correct"))
 			ret |= FSFATMOD;
 	}
