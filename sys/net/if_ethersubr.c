@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.226 2015/09/17 04:53:27 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.227 2015/09/27 16:50:40 stsp Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -121,8 +121,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netmpls/mpls.h>
 #endif /* MPLS */
 
-u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
+u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+u_int8_t etheranyaddr[ETHER_ADDR_LEN] =
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 #define senderr(e) { error = (e); goto bad;}
 
 int

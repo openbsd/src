@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.59 2015/09/13 10:42:32 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.60 2015/09/27 16:50:40 stsp Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -186,6 +186,7 @@ struct sockaddr_inarp {
 
 #ifdef	_KERNEL
 extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
+extern u_int8_t etheranyaddr[ETHER_ADDR_LEN];
 extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 extern struct niqueue arpintrq;
