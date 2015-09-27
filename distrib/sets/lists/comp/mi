@@ -509,8 +509,12 @@
 ./usr/include/dev/pci/drm/drm_mm.h
 ./usr/include/dev/pci/drm/drm_mode.h
 ./usr/include/dev/pci/drm/drm_pciids.h
+./usr/include/dev/pci/drm/drm_rect.h
 ./usr/include/dev/pci/drm/drm_sarea.h
 ./usr/include/dev/pci/drm/i915_drm.h
+./usr/include/dev/pci/drm/i915_pciids.h
+./usr/include/dev/pci/drm/i915_powerwell.h
+./usr/include/dev/pci/drm/linux_hdmi.h
 ./usr/include/dev/pci/drm/nouveau_drm.h
 ./usr/include/dev/pci/drm/radeon_drm.h
 ./usr/include/dev/pci/drm/refcount.h
