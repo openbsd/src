@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.28 2015/02/08 06:09:50 tedu Exp $       */
+/*    $OpenBSD: func.c,v 1.29 2015/09/27 05:25:00 guenther Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -573,7 +573,6 @@ srchx(Char *cp)
 static Char Stype;
 static Char *Sgoal;
 
-/*VARARGS2*/
 static void
 search(int type, int level, Char *goal)
 {

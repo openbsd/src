@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.21 2015/05/29 15:57:36 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.22 2015/09/27 05:25:00 guenther Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -73,7 +73,6 @@ hotroot(void)
 	return hot;
 }
 
-/*VARARGS*/
 void
 errexit(const char *fmt, ...)
 {
@@ -109,7 +108,6 @@ vmsg(int fatal, const char *fmt, va_list ap)
 	}
 }
 
-/*VARARGS*/
 void
 pfatal(const char *fmt, ...)
 {
@@ -120,7 +118,6 @@ pfatal(const char *fmt, ...)
 	va_end(ap);
 }
 
-/*VARARGS*/
 void
 pwarn(const char *fmt, ...)
 {

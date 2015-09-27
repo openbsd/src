@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.40 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.41 2015/09/27 05:25:00 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -77,7 +77,6 @@ int	pcap_fddipad = PCAP_FDDIPAD;
 int	pcap_fddipad;
 #endif
 
-/* VARARGS */
 __dead void
 bpf_error(const char *fmt, ...)
 {

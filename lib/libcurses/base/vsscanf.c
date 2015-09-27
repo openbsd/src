@@ -1,4 +1,4 @@
-/* $OpenBSD: vsscanf.c,v 1.1 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: vsscanf.c,v 1.2 2015/09/27 05:25:00 guenther Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
@@ -40,7 +40,7 @@
 
 #if !HAVE_VSSCANF
 
-MODULE_ID("$Id: vsscanf.c,v 1.1 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: vsscanf.c,v 1.2 2015/09/27 05:25:00 guenther Exp $")
 
 #if !(HAVE_VFSCANF || HAVE__DOSCAN)
 
@@ -161,7 +161,6 @@ other_ch(int ch)
 }
 #endif
 
-/*VARARGS2*/
 NCURSES_EXPORT(int)
 vsscanf(const char *str, const char *format, va_list ap)
 {
