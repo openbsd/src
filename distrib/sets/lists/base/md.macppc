@@ -1001,7 +1001,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/linux_hdmi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/nouveau_drm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/radeon_drm.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/refcount.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/emuxkireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/emuxkivar.ph

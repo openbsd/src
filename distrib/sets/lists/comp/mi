@@ -518,7 +518,6 @@
 ./usr/include/dev/pci/drm/linux_hdmi.h
 ./usr/include/dev/pci/drm/nouveau_drm.h
 ./usr/include/dev/pci/drm/radeon_drm.h
-./usr/include/dev/pci/drm/refcount.h
 ./usr/include/dev/pci/eapreg.h
 ./usr/include/dev/pci/emuxkireg.h
 ./usr/include/dev/pci/emuxkivar.h
