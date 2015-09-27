@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.70 2015/09/27 12:29:21 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.71 2015/09/27 15:23:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -98,7 +98,8 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	struct lifdir *p;
 	struct lifvol *lvp;
 	int error = 0;
-	int fsoff = 0, openbsdstart = MAXLIFSPACE, i;
+	daddr_t fsoff = 0, openbsdstart = MAXLIFSPACE;
+	int i;
 
 	/* read LIF volume header */
 	bp->b_blkno = btodb(LIF_VOLSTART);
@@ -212,7 +213,7 @@ finished:
 	if (partoffp)
 		*partoffp = fsoff;
 	else {
-		DL_SETBSTART(lp, openbsdstart);
+		DL_SETBSTART(lp, DL_BLKTOSEC(lp, openbsdstart));
 		DL_SETBEND(lp, DL_GETDSIZE(lp));	/* XXX */
 	}
 
