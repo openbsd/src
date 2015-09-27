@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.45 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.46 2015/09/27 16:51:31 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -72,23 +72,11 @@ void ieee80211_setbasicrates(struct ieee80211com *);
 int ieee80211_findrate(struct ieee80211com *, enum ieee80211_phymode, int);
 
 void
-ieee80211_ifattach(struct ifnet *ifp)
+ieee80211_channel_init(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_channel *c;
 	int i;
-
-	memcpy(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr,
-		ETHER_ADDR_LEN);
-	ether_ifattach(ifp);
-
-	ifp->if_output = ieee80211_output;
-
-#if NBPFILTER > 0
-	bpfattach(&ic->ic_rawbpf, ifp, DLT_IEEE802_11,
-	    sizeof(struct ieee80211_frame_addr4));
-#endif
-	ieee80211_crypto_attach(ifp);
 
 	/*
 	 * Fill in 802.11 available channel set, mark
@@ -130,6 +118,26 @@ ieee80211_ifattach(struct ifnet *ifp)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+}
+
+void
+ieee80211_ifattach(struct ifnet *ifp)
+{
+	struct ieee80211com *ic = (void *)ifp;
+
+	memcpy(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr,
+		ETHER_ADDR_LEN);
+	ether_ifattach(ifp);
+
+	ifp->if_output = ieee80211_output;
+
+#if NBPFILTER > 0
+	bpfattach(&ic->ic_rawbpf, ifp, DLT_IEEE802_11,
+	    sizeof(struct ieee80211_frame_addr4));
+#endif
+	ieee80211_crypto_attach(ifp);
+
+	ieee80211_channel_init(ifp);
 
 	/* IEEE 802.11 defines a MTU >= 2290 */
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;

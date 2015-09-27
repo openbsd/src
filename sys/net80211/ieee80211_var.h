@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.63 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.64 2015/09/27 16:51:31 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -380,6 +380,7 @@ extern struct ieee80211com_head ieee80211com_head;
 
 void	ieee80211_ifattach(struct ifnet *);
 void	ieee80211_ifdetach(struct ifnet *);
+void	ieee80211_channel_init(struct ifnet *);
 void	ieee80211_media_init(struct ifnet *, ifm_change_cb_t, ifm_stat_cb_t);
 int	ieee80211_media_change(struct ifnet *);
 void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
