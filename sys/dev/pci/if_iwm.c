@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.49 2015/09/26 10:52:09 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.50 2015/09/27 16:52:35 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -4634,7 +4634,8 @@ iwm_mvm_ack_rates(struct iwm_softc *sc, struct iwm_node *in,
 	uint8_t ofdm = 0;
 	int i;
 
-	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
+	if (ni->ni_chan == IEEE80211_CHAN_ANYC ||
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
 		for (i = 0; i <= IWM_LAST_CCK_RATE; i++) {
 			cck |= (1 << i);
 			if (lowest_present_cck > i)
@@ -4997,11 +4998,6 @@ iwm_auth(struct iwm_softc *sc)
 	error = iwm_allow_mcast(sc);
 	if (error)
 		return error;
-
-	if ((error = iwm_mvm_mac_ctxt_add(sc, in)) != 0) {
-		DPRINTF(("%s: failed to add MAC\n", DEVNAME(sc)));
-		return error;
-	}
 
 	if ((error = iwm_mvm_phy_ctxt_changed(sc, &sc->sc_phyctxt[0],
 	    in->in_ni.ni_chan, 1, 1)) != 0) {
@@ -5455,6 +5451,7 @@ int
 iwm_init_hw(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
 	int error, i, qid;
 
 	if ((error = iwm_preinit(sc)) != 0)
@@ -5517,6 +5514,12 @@ iwm_init_hw(struct iwm_softc *sc)
 	for (qid = 0; qid < 4; qid++) {
 		iwm_enable_txq(sc, qid, qid);
 	}
+
+	/* Add the MAC context. */
+	if ((error = iwm_mvm_mac_ctxt_add(sc, in)) != 0) {
+		printf("%s: failed to add MAC\n", DEVNAME(sc));
+		goto error;
+ 	}
 
 	return 0;
 
