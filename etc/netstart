@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.155 2015/09/13 13:51:57 sthen Exp $
+#	$OpenBSD: netstart,v 1.156 2015/09/27 20:32:33 sthen Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -154,17 +154,12 @@ ifmstart() {
 # IPv6 autoconf the interfaces in the list at $rtsolif
 # Usage: ifautoconf
 ifautoconf() {
-	if [[ -n $rtsolif ]]; then
-		printf 'IPv6 autoconf:'
-		# $ip6kernel will not have been set if we were invoked with a
-		# list of interface names
-		if ifconfig lo0 inet6 >/dev/null 2>&1; then
-			for curif in $rtsolif; do
-				printf ' %s' $curif
-				ifconfig $curif inet6 autoconf
-			done
-		fi
-		echo
+	# $ip6kernel will not have been set if we were invoked with a
+	# list of interface names
+	if ifconfig lo0 inet6 >/dev/null 2>&1; then
+		for curif in $rtsolif; do
+			ifconfig $curif inet6 autoconf
+		done
 	fi
 }
 
