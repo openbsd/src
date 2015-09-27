@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.53 2015/09/13 11:47:59 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.54 2015/09/27 11:29:20 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -200,6 +200,7 @@ intr_establish(int level, struct intrhand *ih)
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
+	ih->ih_cpu = cpus;
 	if (ih->ih_clr)
 		ih->ih_ack = intr_ack;
 	else
@@ -313,9 +314,11 @@ intr_establish(int level, struct intrhand *ih)
 }
 
 void
-intr_barrier(void *ih)
+intr_barrier(void *cookie)
 {
-	sched_barrier(NULL);
+	struct intrhand *ih = cookie;
+
+	sched_barrier(ih->ih_cpu);
 }
 
 void *

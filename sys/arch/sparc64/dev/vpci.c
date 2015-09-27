@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.18 2014/12/09 06:58:29 doug Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.19 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -562,7 +562,7 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	intr_establish(ih->ih_pil, ih);
 	ih->ih_ack = vpci_intr_ack;
 
-	err = hv_intr_settarget(sysino, cpus->ci_upaid);
+	err = hv_intr_settarget(sysino, ih->ih_cpu->ci_upaid);
 	if (err != H_EOK)
 		return (NULL);
 

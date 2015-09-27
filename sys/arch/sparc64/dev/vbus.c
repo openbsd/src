@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.7 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.8 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -207,7 +207,7 @@ vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	intr_establish(ih->ih_pil, ih);
 	ih->ih_ack = vbus_intr_ack;
 
-	err = hv_intr_settarget(sysino, cpus->ci_upaid);
+	err = hv_intr_settarget(sysino, ih->ih_cpu->ci_upaid);
 	if (err != H_EOK)
 		return (NULL);
 

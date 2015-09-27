@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2015/09/13 11:47:59 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.18 2015/09/27 11:29:20 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -57,6 +57,7 @@ struct intrhand {
 	void			(*ih_ack)(struct intrhand *);
 	struct evcount		ih_count;	/* # of interrupts */
 	const void		*ih_bus;	/* parent bus */
+	struct cpu_info		*ih_cpu;	/* target */
 	char			ih_name[32];	/* device name */
 };
 
