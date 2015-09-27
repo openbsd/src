@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.27 2015/02/18 23:41:31 tedu Exp $	*/
+/*	$OpenBSD: bs.c,v 1.28 2015/09/27 05:27:42 guenther Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -296,13 +296,19 @@ static void intro(void)
 #endif /* NCURSES_MOUSE_VERSION*/
 }
 
-/* VARARGS1 */
-static void prompt(int n, char *f, char *s)
 /* print a message at the prompt line */
+static void prompt(int, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
+static void
+prompt(int n, const char *f, ...)
 {
+    va_list va;
+
     (void) move(PROMPTLINE + n, 0);
     (void) clrtoeol();
-    (void) printw(f, s);
+    va_start(va, f);
+    (void) vw_printw(stdscr, f, va);
+    va_end(va);
     (void) refresh();
 }
 
@@ -500,7 +506,7 @@ regetchar:
 	    ss->placed = TRUE;
 	    break;
 	case 'R':
-	    prompt(1, "Placing the rest of your fleet at random...", "");
+	    prompt(1, "Placing the rest of your fleet at random...");
 	    for (ss = plyship; ss < plyship + SHIPTYPES; ss++)
 		if (!ss->placed)
 		{
@@ -556,7 +562,7 @@ regetchar:
     (void) mvprintw(HYBASE+5,  HXBASE,
 		    "                                                       ");
 
-    (void) prompt(0, "Press any key to start...", "");
+    (void) prompt(0, "Press any key to start...");
     (void) getch();
 }
 
@@ -842,13 +848,13 @@ static int plyturn(void)
     int hit;
     char *m = NULL;
 
-    prompt(1, "Where do you want to shoot? ", "");
+    prompt(1, "Where do you want to shoot? ");
     for (;;)
     {
 	(void) getcoord(COMPUTER);
 	if (hits[PLAYER][curx][cury])
 	{
-	    prompt(1, "You shelled this spot already! Try again.", "");
+	    prompt(1, "You shelled this spot already! Try again.");
 	    beep();
 	}
 	else
