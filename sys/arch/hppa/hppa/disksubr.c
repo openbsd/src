@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.84 2013/10/19 09:32:13 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.85 2015/09/27 12:29:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -95,7 +95,6 @@ int
 readliflabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
-	struct buf *dbp = NULL;
 	struct lifdir *p;
 	struct lifvol *lvp;
 	int error = 0;
@@ -117,22 +116,19 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		goto done;
 	}
 
-	dbp = geteblk(LIF_DIRSIZE);
-	dbp->b_dev = bp->b_dev;
-
 	/* read LIF directory */
-	dbp->b_blkno = lifstodb(lvp->vol_addr);
-	dbp->b_bcount = lp->d_secsize;
-	CLR(dbp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(dbp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(dbp);
-	if (biowait(dbp)) {
-		error = dbp->b_error;
+	bp->b_blkno = lifstodb(lvp->vol_addr);
+	bp->b_bcount = lp->d_secsize;
+	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+	(*strat)(bp);
+	if (biowait(bp)) {
+		error = bp->b_error;
 		goto done;
 	}
 
 	/* scan for LIF_DIR_FS dir entry */
-	for (i=0, p=(struct lifdir *)dbp->b_data; i < LIF_NUMDIR; p++, i++) {
+	for (i=0, p=(struct lifdir *)bp->b_data; i < LIF_NUMDIR; p++, i++) {
 		if (p->dir_type == LIF_DIR_FS || p->dir_type == LIF_DIR_HPLBL)
 			break;
 	}
@@ -154,18 +150,18 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		int i;
 
 		/* read LIF directory */
-		dbp->b_blkno = lifstodb(p->dir_addr);
-		dbp->b_bcount = lp->d_secsize;
-		CLR(dbp->b_flags, B_READ | B_WRITE | B_DONE);
-		SET(dbp->b_flags, B_BUSY | B_READ | B_RAW);
-		(*strat)(dbp);
+		bp->b_blkno = lifstodb(p->dir_addr);
+		bp->b_bcount = lp->d_secsize;
+		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
+		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
+		(*strat)(bp);
 
-		if (biowait(dbp)) {
-			error = dbp->b_error;
+		if (biowait(bp)) {
+			error = bp->b_error;
 			goto done;
 		}
 
-		hl = (struct hpux_label *)dbp->b_data;
+		hl = (struct hpux_label *)bp->b_data;
 		if (hl->hl_magic1 != hl->hl_magic2 ||
 		    hl->hl_magic != HPUX_MAGIC || hl->hl_version != 1) {
 			error = EINVAL;	 /* HPUX label magic mismatch */
@@ -246,10 +242,6 @@ finished:
 	error = 0;
 
 done:
-	if (dbp) {
-		dbp->b_flags |= B_INVAL;
-		brelse(dbp);
-	}
 	return (error);
 }
 
