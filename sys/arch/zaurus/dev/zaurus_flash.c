@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.13 2014/07/12 18:44:43 tedu Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.14 2015/09/27 10:12:09 semarie Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -583,15 +583,13 @@ zflash_write_strategy(struct zflash_softc *sc, struct buf *bp,
 	}
 
 	bp->b_resid = bp->b_bcount - sc->sc_flash.sc_flashdev->pagesize;
-	free(oob, M_DEVBUF, 0);
-	free(buf, M_DEVBUF, 0);
+	free(oob, M_DEVBUF, oobsize);
+	free(buf, M_DEVBUF, bufsize);
 	return;
 bad:
 	bp->b_flags |= B_ERROR;
-	if (oob != NULL)
-		free(oob, M_DEVBUF, 0);
-	if (buf != NULL)
-		free(buf, M_DEVBUF, 0);
+	free(oob, M_DEVBUF, oobsize);
+	free(buf, M_DEVBUF, bufsize);
 }
 
 int

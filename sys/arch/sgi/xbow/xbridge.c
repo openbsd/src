@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.98 2015/09/12 08:40:02 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.99 2015/09/27 10:12:09 semarie Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -884,14 +884,12 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 fail2:
 	free(xb->xb_dmat, M_DEVBUF, 0);
 fail1:
-	if (xb->xb_io_bus_space_sw != NULL)
-		free(xb->xb_io_bus_space_sw, M_DEVBUF, 0);
-	if (xb->xb_io_bus_space != NULL)
-		free(xb->xb_io_bus_space, M_DEVBUF, 0);
-	if (xb->xb_mem_bus_space_sw != NULL)
-		free(xb->xb_mem_bus_space_sw, M_DEVBUF, 0);
-	if (xb->xb_mem_bus_space != NULL)
-		free(xb->xb_mem_bus_space, M_DEVBUF, 0);
+	free(xb->xb_io_bus_space_sw, M_DEVBUF,
+	    sizeof (*xb->xb_io_bus_space_sw));
+	free(xb->xb_io_bus_space, M_DEVBUF, sizeof (*xb->xb_io_bus_space));
+	free(xb->xb_mem_bus_space_sw, M_DEVBUF,
+	    sizeof (*xb->xb_mem_bus_space_sw));
+	free(xb->xb_mem_bus_space, M_DEVBUF, sizeof (*xb->xb_mem_bus_space));
 	if (errmsg == NULL)
 		errmsg = "not enough memory to build bus access structures";
 	printf("%s\n", errmsg);
