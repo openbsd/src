@@ -7,6 +7,8 @@ ssltest="${4-./ssltest} -key $key -cert $cert -c_key $key -c_cert $cert"
 openssl=${5-openssl}
 extra="$6"
 
+$openssl version || exit 1
+
 if $openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
   dsa_cert=YES
 else
