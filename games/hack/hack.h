@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.h,v 1.10 2014/03/11 08:05:15 guenther Exp $*/
+/*	$OpenBSD: hack.h,v 1.11 2015/09/27 05:13:11 guenther Exp $*/
 /*	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $*/
 
 /*
@@ -65,6 +65,7 @@
 #include "config.h"
 #include <string.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 #define	Null(type)	((struct type *) 0)
 
@@ -403,7 +404,7 @@ void mklev(void);
 /* hack.main.c */
 void glo(int);
 void askname(void);
-void impossible(char *, ...);
+void impossible(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 /* ... stuff: fix in files; printf-like ones have spec _attrib or
  * something */
 void stop_occupation(void);
@@ -519,7 +520,7 @@ int  dodip(void);
 
 /* hack.pri.c */
 void swallowed(void);
-void panic(char *, ...);
+void panic(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 void atl(int, int, int);
 void on_scr(int, int);
 void tmp_at(schar, schar);
@@ -631,7 +632,8 @@ void addtopl(char *);
 void more(void);
 void cmore(char *);
 void clrlin(void);
-void pline(char *, ...);
+void pline(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void vpline(const char *, va_list) __attribute__((__format__ (printf, 1, 0)));
 void putsym(char);
 void putstr(char *);
 
@@ -658,7 +660,7 @@ void drown(void);
 void gettty(void);
 void settty(char *);
 void setftty(void);
-void error(char *, ...);
+void error(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 void getlin(char *);
 void getret(void);
 void cgetret(char *);

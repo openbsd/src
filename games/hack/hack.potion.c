@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.potion.c,v 1.5 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.potion.c,v 1.6 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -273,7 +273,7 @@ strange_feeling(struct obj *obj, char *txt)
 	if(flags.beginner)
 	    pline("You have a strange feeling for a moment, then it passes.");
 	else
-	    pline(txt);
+	    pline("%s", txt);
 	if(!objects[obj->otyp].oc_name_known && !objects[obj->otyp].oc_uname)
 		docall(obj);
 	useup(obj);

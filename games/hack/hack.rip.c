@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.rip.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.rip.c,v 1.8 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -66,7 +66,7 @@
 
 extern char plname[];
 
-static char *riptop= "\
+static const char riptop[] = "\
                        ----------\n\
                       /          \\\n\
                      /    REST    \\\n\
@@ -74,9 +74,9 @@ static char *riptop= "\
                    /     PEACE      \\\n\
                   /                  \\";
 
-static char *ripmid = "                  | %*s%*s |\n";
+static const char ripmid[] = "                  | %*s%*s |\n";
 
-static char *ripbot = "\
+static const char ripbot[] = "\
                  *|     *  *  *      | *\n\
         _________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______";
 

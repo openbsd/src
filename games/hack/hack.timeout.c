@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.timeout.c,v 1.5 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.timeout.c,v 1.6 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -120,7 +120,7 @@ stoned_dialogue()
 	long i = (Stoned & TIMEOUT);
 
 	if(i > 0 && i <= SIZE(stoned_texts))
-		pline(stoned_texts[SIZE(stoned_texts) - i]);
+		pline("%s", stoned_texts[SIZE(stoned_texts) - i]);
 	if(i == 5)
 		Fast = 0;
 	if(i == 3)

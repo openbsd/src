@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.topl.c,v 1.10 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.topl.c,v 1.11 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -196,19 +196,25 @@ clrlin()
 	flags.toplin = 0;
 }
 
-/*VARARGS1*/
 void
-pline(char *line, ...)
+pline(const char *line, ...)
+{
+	va_list ap;
+
+	va_start(ap, line);
+	vpline(line, ap);
+	va_end(ap);
+}
+
+void
+vpline(const char *line, va_list ap)
 {
 	char pbuf[BUFSZ];
 	char *bp = pbuf, *tl;
 	int n,n0;
-	va_list ap;
 
 	if(!line || !*line) return;
-	va_start(ap, line);
 	(void) vsnprintf(pbuf, sizeof pbuf, line, ap);
-	va_end(ap);
 	if(flags.toplin == 1 && !strcmp(pbuf, toplines)) return;
 	nscr();		/* %% */
 

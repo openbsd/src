@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.lev.c,v 1.8 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.lev.c,v 1.9 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -132,7 +132,7 @@ void
 bwrite(int fd, const void *loc, ssize_t num)
 {
 	if(write(fd, loc, num) != num)
-		panic("cannot write %u bytes to file #%d", num, fd);
+		panic("cannot write %zd bytes to file #%d", num, fd);
 }
 
 void

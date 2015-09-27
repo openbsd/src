@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.20 2014/03/11 08:05:15 guenther Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.21 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -107,7 +107,7 @@ dowhatis()
 						(void) strncpy(buf+1, "       ", 7);
 						len = strlen(buf);
 					}
-					pline(buf);
+					pline("%s", buf);
 					if (buf[len - 1] == ';') {
 						pline("More info? ");
 						if (readchar() == 'y') {
@@ -294,7 +294,7 @@ cornline(int mode, char *text)
 
 	/* --- now we really do it --- */
 	if(mode == 2 && linect == 1)			    /* topline only */
-		pline(texthead->line_text);
+		pline("%s", texthead->line_text);
 	else
 	if(mode == 2) {
 	    int curline, lth;

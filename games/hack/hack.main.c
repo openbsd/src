@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.16 2014/12/08 21:56:27 deraadt Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.17 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -403,7 +403,7 @@ not_recovered:
 		}
 		if(multi < 0) {
 			if(!++multi){
-				pline(nomovemsg ? nomovemsg :
+				pline("%s", nomovemsg ? nomovemsg :
 					"You can move again.");
 				nomovemsg = 0;
 				if(afternmv) (*afternmv)();
@@ -500,12 +500,12 @@ askname()
 }
 
 void
-impossible(char *s, ...)
+impossible(const char *s, ...)
 {
 	va_list ap;
 
 	va_start(ap, s);
-	pline(s, ap);
+	vpline(s, ap);
 	va_end(ap);
 	pline("Program in disorder - perhaps you'd better Quit.");
 }

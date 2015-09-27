@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.eat.c,v 1.8 2009/10/27 23:59:25 deraadt Exp $	*/
+/*	$OpenBSD: hack.eat.c,v 1.9 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -134,7 +134,7 @@ opentin()
 	useup(tin.tin);
 	r = rn2(2*TTSZ);
 	if(r < TTSZ){
-	    pline(tintxts[r].txt);
+	    pline("%s", tintxts[r].txt);
 	    lesshungry(tintxts[r].nut);
 	    if(r == 1)	/* SALMON */ {
 		Glib = rnd(15);

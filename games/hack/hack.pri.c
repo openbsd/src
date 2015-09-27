@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pri.c,v 1.11 2014/03/11 07:41:10 guenther Exp $	*/
+/*	$OpenBSD: hack.pri.c,v 1.12 2015/09/27 05:13:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -96,11 +96,10 @@ swallowed()
 }
 
 
-/*VARARGS1*/
 boolean panicking;
 
 void
-panic(char *str, ...)
+panic(const char *str, ...)
 {
 	va_list ap;
 
