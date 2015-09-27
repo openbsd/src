@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1771 2015/09/24 15:46:53 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1772 2015/09/27 14:31:04 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1696,11 +1696,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RS780 PCIE",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_7,
+	    "RS780 PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_8,
 	    "RS780 PCIE",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_7,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_9,
 	    "RS780 PCIE",
 	},
 	{
