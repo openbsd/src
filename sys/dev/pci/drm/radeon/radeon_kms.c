@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.41 2015/09/26 19:52:16 kettenis Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.42 2015/09/27 16:13:23 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -419,7 +419,7 @@ radeondrm_doswitch(void *v)
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
 	drm_modeset_lock_all(rdev->ddev);
-	drm_fb_helper_restore();
+	drm_fb_helper_restore_fbdev_mode((void *)rdev->mode_info.rfbdev);
 	drm_modeset_unlock_all(rdev->ddev);
 
 	if (rdev->switchcb)
@@ -719,7 +719,7 @@ radeondrm_attachhook(void *xsc)
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
 	drm_modeset_lock_all(rdev->ddev);
-	drm_fb_helper_restore();
+	drm_fb_helper_restore_fbdev_mode((void *)rdev->mode_info.rfbdev);
 	drm_modeset_unlock_all(rdev->ddev);
 
 #ifndef __sparc64__
@@ -1090,13 +1090,13 @@ int radeon_driver_firstopen_kms(struct drm_device *dev)
  */
 void radeon_driver_lastclose_kms(struct drm_device *dev)
 {
-#ifdef __sparc64__
 	struct radeon_device *rdev = dev->dev_private;
 
+#ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
 	drm_modeset_lock_all(dev);
-	drm_fb_helper_restore();
+	drm_fb_helper_restore_fbdev_mode((void *)rdev->mode_info.rfbdev);
 	drm_modeset_unlock_all(dev);
 #ifdef notyet
 	vga_switcheroo_process_delayed_switch();
