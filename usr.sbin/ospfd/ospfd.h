@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.91 2013/01/17 10:07:56 markus Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.92 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -345,7 +345,7 @@ struct iface {
 	u_int16_t		 metric;
 	enum iface_type		 type;
 	enum auth_type		 auth_type;
-	u_int8_t		 media_type;
+	u_int8_t		 if_type;
 	u_int8_t		 auth_keyid;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
@@ -416,7 +416,7 @@ struct kif {
 	int			 flags;
 	int			 mtu;
 	u_short			 ifindex;
-	u_int8_t		 media_type;
+	u_int8_t		 if_type;
 	u_int8_t		 link_state;
 	u_int8_t		 nh_reachable;	/* for nexthop verification */
 };
@@ -461,7 +461,7 @@ struct ctl_iface {
 	u_int16_t		 rxmt_interval;
 	enum iface_type		 type;
 	u_int8_t		 linkstate;
-	u_int8_t		 mediatype;
+	u_int8_t		 if_type;
 	u_int8_t		 priority;
 	u_int8_t		 passive;
 	enum auth_type		 auth_type;

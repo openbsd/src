@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.21 2013/11/01 17:18:29 deraadt Exp $ */
+/*	$OpenBSD: interface.c,v 1.22 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -239,7 +239,7 @@ if_update(struct iface *iface, int mtu, int flags, u_int8_t type,
 {
 	iface->mtu = mtu;
 	iface->flags = flags;
-	iface->media_type = type;
+	iface->if_type = type;
 	iface->linkstate = state;
 	iface->baudrate = rate;
 
@@ -376,7 +376,7 @@ if_act_start(struct iface *iface)
 		return (0);
 	}
 
-	if (iface->media_type == IFT_CARP &&
+	if (iface->if_type == IFT_CARP &&
 	    !(iface->cflags & F_IFACE_PASSIVE)) {
 		/* force passive mode on carp interfaces */
 		log_warnx("if_act_start: forcing interface %s to passive",
@@ -678,7 +678,7 @@ if_to_ctl(struct iface *iface)
 	ictl.rxmt_interval = iface->rxmt_interval;
 	ictl.type = iface->type;
 	ictl.linkstate = iface->linkstate;
-	ictl.mediatype = iface->media_type;
+	ictl.if_type = iface->if_type;
 	ictl.priority = iface->priority;
 	ictl.passive = (iface->cflags & F_IFACE_PASSIVE) == F_IFACE_PASSIVE;
 

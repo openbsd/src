@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.27 2015/02/10 05:39:10 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.28 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -778,7 +778,7 @@ merge_interfaces(struct area *a, struct area *xa)
 		i->priority = xi->priority;
 		i->flags = xi->flags; /* needed? */
 		i->type = xi->type; /* needed? */
-		i->media_type = xi->media_type; /* needed? */
+		i->if_type = xi->if_type; /* needed? */
 		i->linkstate = xi->linkstate; /* needed? */
 
 #if 0 /* XXX needs some kind of love */

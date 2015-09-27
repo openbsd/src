@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.45 2015/02/10 05:39:10 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.46 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -288,7 +288,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			if (iface == NULL)
 				fatalx("interface lost in ospfe");
 
-			if_update(iface, ifp->mtu, ifp->flags, ifp->media_type,
+			if_update(iface, ifp->mtu, ifp->flags, ifp->if_type,
 			    ifp->linkstate, ifp->baudrate);
 
 			if ((iface->flags & IFF_UP) &&

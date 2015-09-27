@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.85 2015/07/20 23:45:39 benno Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.86 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -862,7 +862,7 @@ merge_interfaces(struct area *a, struct area *xa)
 			i->self->priority = i->priority;
 		i->flags = xi->flags; /* needed? */
 		i->type = xi->type; /* needed? */
-		i->media_type = xi->media_type; /* needed? */
+		i->if_type = xi->if_type; /* needed? */
 		i->linkstate = xi->linkstate; /* needed? */
 
 		i->auth_type = xi->auth_type;

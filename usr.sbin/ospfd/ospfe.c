@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.90 2015/02/10 05:24:48 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.91 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -879,7 +879,7 @@ orig_rtr_lsa(struct area *area)
 			 */
 			if (!(iface->flags & IFF_UP) ||
 			    (!LINK_STATE_IS_UP(iface->linkstate) &&
-			    !(iface->media_type == IFT_CARP &&
+			    !(iface->if_type == IFT_CARP &&
 			    iface->linkstate == LINK_STATE_DOWN)))
 				continue;
 			log_debug("orig_rtr_lsa: stub net, "
@@ -895,7 +895,7 @@ orig_rtr_lsa(struct area *area)
 			 * backup carp interfaces are anounced with high metric
 			 * for faster failover.
 			 */
-			if (iface->media_type == IFT_CARP &&
+			if (iface->if_type == IFT_CARP &&
 			    iface->linkstate == LINK_STATE_DOWN)
 				rtr_link.metric = MAX_METRIC;
 			else

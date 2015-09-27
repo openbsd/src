@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.63 2015/01/16 06:40:19 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.64 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -720,7 +720,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			wasvalid = (iface->flags & IFF_UP) &&
 			    LINK_STATE_IS_UP(iface->linkstate);
 
-			if_update(iface, ifp->mtu, ifp->flags, ifp->media_type,
+			if_update(iface, ifp->mtu, ifp->flags, ifp->if_type,
 			    ifp->linkstate, ifp->baudrate);
 
 			/* Resend LSAs if interface state changes. */

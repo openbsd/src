@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.39 2015/09/13 11:13:12 deraadt Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.40 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -41,7 +41,7 @@
 
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
-int		 get_ifms_type(int);
+uint64_t	 get_ifms_type(uint8_t);
 int		 show_interface_msg(struct imsg *);
 int		 show_interface_detail_msg(struct imsg *);
 const char	*print_link(int);
@@ -68,7 +68,7 @@ int		 show_rib_detail_msg(struct imsg *);
 void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
 const char *	 get_media_descr(uint64_t);
-const char *	 get_linkstate(uint64_t, int);
+const char *	 get_linkstate(uint8_t, int);
 void		 print_baudrate(u_int64_t);
 
 struct imsgbuf	*ibuf;
@@ -347,10 +347,10 @@ show_summary_msg(struct imsg *imsg)
 	return (0);
 }
 
-int
-get_ifms_type(int mediatype)
+uint64_t
+get_ifms_type(uint8_t if_type)
 {
-	switch (mediatype) {
+	switch (if_type) {
 	case IFT_ETHER:
 		return (IFM_ETHER);
 	case IFT_FDDI:
@@ -379,7 +379,7 @@ show_interface_msg(struct imsg *imsg)
 		printf("%-11s %-29s %-6s %-10s %-10s %s\n",
 		    iface->name, netid, if_state_name(iface->state),
 		    fmt_timeframe_core(iface->hello_timer),
-		    get_linkstate(iface->mediatype, iface->linkstate),
+		    get_linkstate(iface->if_type, iface->linkstate),
 		    fmt_timeframe_core(iface->uptime));
 		free(netid);
 		break;
@@ -407,8 +407,8 @@ show_interface_detail_msg(struct imsg *imsg)
 		printf("  Internet address %s Area %s\n",
 		    log_in6addr(&iface->addr), inet_ntoa(iface->area));
 		printf("  Link type %s, state %s",
-		    get_media_descr(get_ifms_type(iface->mediatype)),
-		    get_linkstate(iface->mediatype, iface->linkstate));
+		    get_media_descr(get_ifms_type(iface->if_type)),
+		    get_linkstate(iface->if_type, iface->linkstate));
 		if (iface->linkstate != LINK_STATE_DOWN &&
 		    iface->baudrate > 0) {
 		    printf(", ");
@@ -1323,13 +1323,13 @@ get_media_descr(uint64_t media_type)
 }
 
 const char *
-get_linkstate(uint64_t media_type, int link_state)
+get_linkstate(uint8_t if_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];
 
 	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
 			return (p->ifs_string);
 	}
 	snprintf(buf, sizeof(buf), "[#%d]", link_state);

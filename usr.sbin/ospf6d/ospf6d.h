@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.28 2013/03/25 14:29:35 markus Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.29 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -316,7 +316,7 @@ struct iface {
 	u_int16_t		 dead_interval;
 	u_int16_t		 metric;
 	enum iface_type		 type;
-	u_int8_t		 media_type;
+	u_int8_t		 if_type;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
 	u_int8_t		 cflags;
@@ -435,7 +435,7 @@ struct ctl_iface {
 	u_int16_t		 rxmt_interval;
 	enum iface_type		 type;
 	u_int8_t		 linkstate;
-	u_int8_t		 mediatype;
+	u_int8_t		 if_type;
 	u_int8_t		 priority;
 	u_int8_t		 passive;
 };

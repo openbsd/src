@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.59 2015/09/13 11:13:12 deraadt Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.60 2015/09/27 17:31:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,7 @@
 
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
-int		 get_ifms_type(int);
+uint64_t	 get_ifms_type(uint8_t);
 int		 show_interface_msg(struct imsg *);
 int		 show_interface_detail_msg(struct imsg *);
 const char	*print_link(int);
@@ -66,7 +66,7 @@ void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
 void		 show_interface_head(void);
 const char *	 get_media_descr(uint64_t);
-const char *	 get_linkstate(uint64_t, int);
+const char *	 get_linkstate(uint8_t, int);
 void		 print_baudrate(u_int64_t);
 int		 show_fib_interface_msg(struct imsg *);
 
@@ -367,10 +367,10 @@ show_summary_msg(struct imsg *imsg)
 	return (0);
 }
 
-int
-get_ifms_type(int mediatype)
+uint64_t
+get_ifms_type(uint8_t if_type)
 {
-	switch (mediatype) {
+	switch (if_type) {
 	case IFT_ETHER:
 		return (IFM_ETHER);
 	case IFT_FDDI:
@@ -401,7 +401,7 @@ show_interface_msg(struct imsg *imsg)
 		    iface->name, netid, if_state_name(iface->state),
 		    iface->hello_timer.tv_sec < 0 ? "-" :
 		    fmt_timeframe_core(iface->hello_timer.tv_sec),
-		    get_linkstate(iface->mediatype, iface->linkstate),
+		    get_linkstate(iface->if_type, iface->linkstate),
 		    fmt_timeframe_core(iface->uptime),
 		    iface->nbr_cnt, iface->adj_cnt);
 		free(netid);
@@ -432,7 +432,7 @@ show_interface_detail_msg(struct imsg *imsg)
 		    mask2prefixlen(iface->mask.s_addr));
 		printf("Area %s\n", inet_ntoa(iface->area));
 		printf("  Linkstate %s\n",
-		    get_linkstate(iface->mediatype, iface->linkstate));
+		    get_linkstate(iface->if_type, iface->linkstate));
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    if_type_name(iface->type), iface->metric);
@@ -1289,13 +1289,13 @@ get_media_descr(uint64_t media_type)
 }
 
 const char *
-get_linkstate(uint64_t media_type, int link_state)
+get_linkstate(uint8_t if_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];
 
 	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
 			return (p->ifs_string);
 	}
 	snprintf(buf, sizeof(buf), "[#%d]", link_state);
@@ -1326,11 +1326,11 @@ show_fib_interface_msg(struct imsg *imsg)
 		k = imsg->data;
 		printf("%-15s", k->ifname);
 		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
-		ifms_type = get_ifms_type(k->media_type);
+		ifms_type = get_ifms_type(k->if_type);
 		if (ifms_type)
 			printf("%s, ", get_media_descr(ifms_type));
 
-		printf("%s", get_linkstate(k->media_type, k->link_state));
+		printf("%s", get_linkstate(k->if_type, k->link_state));
 
 		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
 			printf(", ");
