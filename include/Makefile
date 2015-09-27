@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.205 2015/09/14 08:24:37 guenther Exp $
+#	$OpenBSD: Makefile,v 1.206 2015/09/27 14:52:47 kettenis Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -120,7 +120,7 @@ copies:
 	cd ../sys; \
 	pax -rw -pa -L \
 	    `find ${LDIRS} -follow -type f -name '*.h' '!' \
-	    '(' -path 'dev/microcode/*' -or -path 'dev/pci/drm/*/*' ')' \
+	    '(' -path 'dev/microcode/*' -or -path 'dev/pci/drm/*' ')' \
 	    -print` ${DESTDIR}/usr/include
 	cd ${DESTDIR}/usr/include && rm -rf ${MACHINE} ${MACHINE_CPU} machine
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
