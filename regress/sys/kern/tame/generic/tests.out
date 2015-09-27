@@ -1,4 +1,4 @@
-#	$OpenBSD: tests.out,v 1.4 2015/09/24 06:52:22 semarie Exp $
+#	$OpenBSD: tests.out,v 1.5 2015/09/27 17:55:39 semarie Exp $
 test(test_nop): tame=("",NULL) status=0 exit=0
 test(test_inet): tame=("",NULL) status=9 signal=9 tamed_syscall=97
 test(test_inet): tame=("abort",NULL) status=134 signal=6 coredump=present tamed_syscall=97
@@ -82,3 +82,12 @@ test(test_tame): tame=("stdio rpath wpath",{"/sbin",NULL}) status=256 exit=1 (er
 test(test_tame): tame=("stdio rpath wpath",{"/",NULL}) status=256 exit=1 (errno: "Operation not permitted")
 test(test_tame): tame=("stdio",NULL) status=256 exit=1 (errno: "Operation not permitted")
 test(test_tame): tame=("cmsg",NULL) status=256 exit=1 (errno: "Operation not permitted")
+test(test_stat): tame=("stdio rpath",{"/usr/share/man",NULL})
+ stat("/usr/share/man/man8/afterboot.8"): realpath=failed(2) uid=0 gid=7 mode=100444
+ stat("/usr/share/man/man8/"): realpath=failed(2) uid=0 gid=0 mode=40755
+ stat("/usr/share/man"): realpath=failed(2) uid=0 gid=0 mode=40755
+ stat("/usr/share"): realpath=failed(2) errno=2
+ stat("/usr"): realpath="/usr" errno=2
+ stat("/"): realpath="/" errno=2
+ stat("/usr/bin/gzip"): realpath=failed(2) errno=2
+ status=0 exit=0

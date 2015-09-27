@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2015/09/24 06:52:22 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.6 2015/09/27 17:55:39 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -134,6 +135,51 @@ test_tame()
 		_exit(errno);
 }
 
+static void
+do_stat(const char *path)
+{
+	char resolved[PATH_MAX];
+	struct stat sb;
+
+	printf("\n stat(\"%s\"):", path);
+
+	/* call realpath(3) */
+	errno = 0;
+	if (realpath(path, resolved) != NULL)
+		printf(" realpath=\"%s\"", resolved);
+	else
+		printf(" realpath=failed(%d)", errno);
+
+	/* call stat(2) */
+	errno = 0;
+	if (stat(path, &sb) == 0)
+		printf(" uid=%d gid=%d mode=%04o", sb.st_uid, sb.st_gid,
+		    sb.st_mode);
+	else
+		printf(" errno=%d", errno);
+}
+
+static void
+test_stat()
+{
+	/* in whitelisted path */
+	do_stat("/usr/share/man/man8/afterboot.8");
+	do_stat("/usr/share/man/man8/");
+	do_stat("/usr/share/man");
+
+	/* parent of whitelisted path */
+	do_stat("/usr/share");
+	do_stat("/usr");
+	do_stat("/");
+
+	/* outside whitelisted path */
+	do_stat("/usr/bin/gzip");
+
+	/* calling exit to flush stdout */
+	printf("\n");
+	exit(EXIT_SUCCESS);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -214,6 +260,9 @@ main(int argc, char *argv[])
 	start_test(&ret, "stdio", NULL, test_tame);
 	/* change request */
 	start_test(&ret, "cmsg", NULL, test_tame);
+
+	/* test stat(2) */
+	start_test1(&ret, "stdio rpath", "/usr/share/man", test_stat);
 
 	return (ret);
 }
