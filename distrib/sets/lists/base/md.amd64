@@ -1073,6 +1073,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/drm/drm_pciids.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/drm/drm_rect.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/drm/drm_sarea.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/drm/drm_trace.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/drm/i915_drm.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/drm/i915_pciids.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/drm/i915_powerwell.ph
