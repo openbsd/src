@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2014/03/15 04:07:39 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2015/09/27 19:11:36 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -8,10 +8,10 @@ BSDRD=	bsd.rd
 CDROM=	cd${REV}.iso
 FFS=	ffs.img
 # must match the size of `minicdroot' in disktab
-CDFSMB=	13
+CDFSMB=	15
 all: ${CDROM}
 
-ALLIP=		22 27 28 30 32
+ALLIP=		22 26 27 28 30 32
 
 # Note regarding sgivol -h value:
 # boot32 currently (2012/05/25) needs 87 512 byte sectors, boot64 needs 200,

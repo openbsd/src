@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2014/09/21 13:44:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2015/09/27 19:11:37 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -8,7 +8,7 @@ CDROM=		install${REV}.iso
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
-ALLIP=		22 27 28 30 32
+ALLIP=		22 26 27 28 30 32
 
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/game${OSrev}.tgz ${RELDIR}/man${OSrev}.tgz \
@@ -80,7 +80,9 @@ ${CDROM}:
 	cp ${DESTDIR}/usr/mdec/bootecoff ${.OBJDIR}/cd-dir/bootecoff
 	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
 	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/cd-dir/boot64
+
 	ln ${.OBJDIR}/cd-dir/bootecoff ${.OBJDIR}/cd-dir/boot-IP22
+	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP26
 	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP27
 	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP28
 	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP30
