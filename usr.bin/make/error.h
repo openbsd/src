@@ -1,6 +1,6 @@
 #ifndef ERROR_H
 #define ERROR_H
-/*	$OpenBSD: error.h,v 1.12 2012/09/21 07:55:20 espie Exp $ */
+/*	$OpenBSD: error.h,v 1.13 2015/09/27 16:58:16 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -41,9 +41,12 @@
  *				errors which occurred, as passed to it, and
  *				exiting.
  */
-extern void Error(char *, ...);
-extern void Fatal(char *, ...);
-extern void Punt(char *, ...);
+extern void Error(const char *, ...)
+				__attribute__((__format__ (printf, 1, 2)));
+extern void Fatal(const char *, ...)
+				__attribute__((__format__ (printf, 1, 2)));
+extern void Punt(const char *, ...)
+				__attribute__((__format__ (printf, 1, 2)));
 extern void Finish(void);
 
 /*
@@ -53,7 +56,8 @@ extern void Finish(void);
  */
 #define PARSE_WARNING	2
 #define PARSE_FATAL	1
-extern void Parse_Error(int, const char *, ...);
+extern void Parse_Error(int, const char *, ...)
+				__attribute__((__format__ (printf, 2, 3)));
 extern int fatal_errors;
 /* Needed for fatal errors: we have to know whether we must abort other jobs
  * or not */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.98 2014/05/12 19:11:19 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.99 2015/09/27 16:58:16 guenther Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -755,7 +755,7 @@ find_pos(int c)
 		return find_ket;
 	default:
 		Parse_Error(PARSE_FATAL,
-		    "Wrong character in variable spec %c (can't happen)");
+		    "Wrong character in variable spec %c (can't happen)", c);
 		return find_rparen;
 	}
 }
@@ -1071,7 +1071,7 @@ Var_Subst(const char *str,	/* the string in which to substitute */
 				if (!errorReported)
 					Parse_Error(PARSE_FATAL,
 					     "Undefined variable \"%.*s\"",
-					     length, str);
+					     (int)length, str);
 				str += length;
 				errorReported = true;
 			} else {

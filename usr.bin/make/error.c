@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.24 2012/10/18 17:54:43 espie Exp $ */
+/*	$OpenBSD: error.c,v 1.25 2015/09/27 16:58:16 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -46,14 +46,14 @@
 
 int fatal_errors = 0;
 
-static void ParseVErrorInternal(const Location *, int, const char *, va_list);
+static void ParseVErrorInternal(const Location *, int, const char *, va_list)
+			__attribute__((__format__ (printf, 3, 0)));
 /*-
  * Error --
  *	Print an error message given its format.
  */
-/* VARARGS */
 void
-Error(char *fmt, ...)
+Error(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -71,9 +71,8 @@ Error(char *fmt, ...)
  * Side Effects:
  *	The program exits
  */
-/* VARARGS */
 void
-Fatal(char *fmt, ...)
+Fatal(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -97,9 +96,8 @@ Fatal(char *fmt, ...)
  * Side Effects:
  *	All children are killed indiscriminately and the program Lib_Exits
  */
-/* VARARGS */
 void
-Punt(char *fmt, ...)
+Punt(const char *fmt, ...)
 {
 	if (fmt) {
 		va_list ap;
@@ -144,7 +142,6 @@ Finish()
  * Side Effects:
  *	"fatals" is incremented if the level is PARSE_FATAL.
  */
-/* VARARGS */
 static void
 ParseVErrorInternal(const Location *origin, int type, const char *fmt, 
     va_list ap)
@@ -171,7 +168,6 @@ ParseVErrorInternal(const Location *origin, int type, const char *fmt,
  *	External interface to ParseVErrorInternal; uses the default filename
  *	Line number.
  */
-/* VARARGS */
 void
 Parse_Error(int type, const char *fmt, ...)
 {
