@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpustate.h,v 1.10 2014/07/09 12:58:08 miod Exp $ */
+/*	$OpenBSD: cpustate.h,v 1.11 2015/09/27 18:17:08 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,16 +54,20 @@
 	SAVE_REG(a2, A2, frame, bo)		;\
 	SAVE_REG(a3, A3, frame, bo)		;\
 	MFC0	a0, COP_0_CAUSE_REG		;\
+	MFC0_HAZARD				;\
 	SAVE_REG(a4, A4, frame, bo)		;\
 	SAVE_REG(a5, A5, frame, bo)		;\
 	MFC0	a1, COP_0_STATUS_REG		;\
+	MFC0_HAZARD				;\
 	SAVE_REG(a6, A6, frame, bo)		;\
 	SAVE_REG(a7, A7, frame, bo)		;\
 	PRE_MFC0_ADDR_HAZARD			;\
 	DMFC0	a2, COP_0_BAD_VADDR		;\
+	MFC0_HAZARD				;\
 	SAVE_REG(t0, T0, frame, bo)		;\
 	SAVE_REG(t1, T1, frame, bo)		;\
 	DMFC0	a3, COP_0_EXC_PC		;\
+	MFC0_HAZARD				;\
 	SAVE_REG(t2, T2, frame, bo)		;\
 	SAVE_REG(t3, T3, frame, bo)		;\
 	SAVE_REG(t8, T8, frame, bo)		;\
