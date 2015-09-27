@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.11 2015/02/11 05:56:27 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.12 2015/09/27 17:29:46 stsp Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -237,7 +237,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 	kif->k.flags = flags;
 	kif->k.link_state = ifd->ifi_link_state;
-	kif->k.media_type = ifd->ifi_type;
+	kif->k.if_type = ifd->ifi_type;
 	kif->k.baudrate = ifd->ifi_baudrate;
 
 	if ((reachable = (flags & IFF_UP) &&
@@ -345,7 +345,7 @@ fetchifs(int ifindex)
 		kif->k.ifindex = ifm.ifm_index;
 		kif->k.flags = ifm.ifm_flags;
 		kif->k.link_state = ifm.ifm_data.ifi_link_state;
-		kif->k.media_type = ifm.ifm_data.ifi_type;
+		kif->k.if_type = ifm.ifm_data.ifi_type;
 		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
 		kif->k.mtu = ifm.ifm_data.ifi_mtu;
 		kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&

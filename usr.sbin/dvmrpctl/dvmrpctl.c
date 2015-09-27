@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpctl.c,v 1.11 2013/11/14 20:48:51 deraadt Exp $ */
+/*	$OpenBSD: dvmrpctl.c,v 1.12 2015/09/27 17:29:45 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -24,7 +24,6 @@
 #include <netinet/in.h>
 #include <netinet/ip_mroute.h>
 #include <arpa/inet.h>
-#include <net/if_media.h>
 #include <net/if_types.h>
 
 #include <err.h>
@@ -43,7 +42,6 @@
 
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
-int		 get_ifms_type(int);
 int		 show_interface_msg(struct imsg *);
 int		 show_interface_detail_msg(struct imsg *);
 int		 show_igmp_msg(struct imsg *);
@@ -59,7 +57,7 @@ int		 show_rib_msg(struct imsg *);
 int		 show_rib_detail_msg(struct imsg *);
 int		 show_mfc_msg(struct imsg *);
 int		 show_mfc_detail_msg(struct imsg *);
-const char *	 get_linkstate(int, int);
+const char *	 get_linkstate(uint8_t, int);
 
 struct imsgbuf	*ibuf;
 
@@ -256,25 +254,6 @@ show_summary_msg(struct imsg *imsg)
 }
 
 int
-get_ifms_type(int mediatype)
-{
-	switch (mediatype) {
-	case IFT_ETHER:
-		return (IFM_ETHER);
-		break;
-	case IFT_FDDI:
-		return (IFM_FDDI);
-		break;
-	case IFT_CARP:
-		return (IFM_CARP);
-		break;
-	default:
-		return (0);
-		break;
-	}
-}
-
-int
 show_interface_msg(struct imsg *imsg)
 {
 	struct ctl_iface	*iface;
@@ -291,7 +270,7 @@ show_interface_msg(struct imsg *imsg)
 		    iface->name, netid, if_state_name(iface->state),
 		    iface->probe_timer == 0 ? "00:00:00" :
 		    fmt_timeframe_core(iface->probe_timer),
-		    get_linkstate(iface->mediatype, iface->linkstate),
+		    get_linkstate(iface->if_type, iface->linkstate),
 		    iface->uptime == 0 ? "00:00:00" :
 		    fmt_timeframe_core(iface->uptime), iface->group_cnt);
 		free(netid);
@@ -322,7 +301,7 @@ show_interface_detail_msg(struct imsg *imsg)
 		    inet_ntoa(iface->addr),
 		    mask2prefixlen(iface->mask.s_addr));
 		printf("  Linkstate %s\n",
-		    get_linkstate(iface->mediatype, iface->linkstate));
+		    get_linkstate(iface->if_type, iface->linkstate));
 		printf("  Network type %s, cost: %d\n",
 		    if_type_name(iface->type), iface->metric);
 		printf("  State %s, querier ", if_state_name(iface->state));
@@ -668,13 +647,13 @@ const struct if_status_description
 		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 
 const char *
-get_linkstate(int media_type, int link_state)
+get_linkstate(uint8_t if_type, int link_state)
 {
 	const struct if_status_description *p;
 	static char buf[8];
 
 	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
 			return (p->ifs_string);
 	}
 	snprintf(buf, sizeof(buf), "[#%d]", link_state);

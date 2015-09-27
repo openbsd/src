@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.20 2009/11/02 20:31:50 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.21 2015/09/27 17:29:45 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -222,7 +222,7 @@ struct iface {
 
 	u_int8_t		 robustness;
 	u_int8_t		 linkstate;
-	u_int8_t		 media_type;
+	u_int8_t		 if_type;
 	u_int8_t		 passive;
 	u_int8_t		 igmp_version;
 };
@@ -264,7 +264,7 @@ struct kif {
 	int			 flags;
 	int			 mtu;
 	u_short			 ifindex;
-	u_int8_t		 media_type;
+	u_int8_t		 if_type;
 	u_int8_t		 link_state;
 	u_int8_t		 nh_reachable;	/* for nexthop verification */
 };
@@ -310,7 +310,7 @@ struct ctl_iface {
 	enum iface_type		 type;
 	u_int8_t		 robustness;
 	u_int8_t		 linkstate;
-	u_int8_t		 mediatype;
+	u_int8_t		 if_type;
 	u_int8_t		 passive;
 	u_int8_t		 igmp_version;
 };
