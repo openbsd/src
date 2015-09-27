@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.11 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: sync.c,v 1.12 2015/09/27 05:09:01 guenther Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -82,7 +82,6 @@ fmtship(buf, len, fmt, ship)
 }
 
 
-/*VARARGS3*/
 void
 makesignal(struct ship *from, const char *fmt, struct ship *ship, ...)
 {

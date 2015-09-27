@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_7.c,v 1.10 2014/11/16 04:49:48 guenther Exp $	*/
+/*	$OpenBSD: pl_7.c,v 1.11 2015/09/27 05:09:01 guenther Exp $	*/
 /*	$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ newturn(n)
 	(void) alarm(7);
 }
 
-/*VARARGS2*/
 void
 Signal(char *fmt, struct ship *ship, ...)
 {
@@ -169,7 +168,6 @@ Signal(char *fmt, struct ship *ship, ...)
 	Scroll();
 }
 
-/*VARARGS2*/
 void
 Msg(char *fmt, ...)
 {
