@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.380 2015/09/13 18:15:03 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.381 2015/09/27 16:50:03 stsp Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1568,6 +1568,18 @@ if_put(struct ifnet *ifp)
 	atomic_dec_int(&ifp->if_refcnt);
 }
 
+int
+if_setlladdr(struct ifnet *ifp, const uint8_t *lladdr)
+{
+	if (ifp->if_sadl == NULL)
+		return (EINVAL);
+
+	memcpy(((struct arpcom *)ifp)->ac_enaddr, lladdr, ETHER_ADDR_LEN);
+	memcpy(LLADDR(ifp->if_sadl), lladdr, ETHER_ADDR_LEN);
+
+	return (0);
+}
+
 /*
  * Interface ioctls.
  */
@@ -1969,11 +1981,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		case IFT_CARP:
 		case IFT_XETHER:
 		case IFT_ISO88025:
-			bcopy((caddr_t)ifr->ifr_addr.sa_data,
-			    (caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-			    ETHER_ADDR_LEN);
-			bcopy((caddr_t)ifr->ifr_addr.sa_data,
-			    LLADDR(sdl), ETHER_ADDR_LEN);
+			if_setlladdr(ifp, ifr->ifr_addr.sa_data);
 			error = (*ifp->if_ioctl)(ifp, cmd, data);
 			if (error == ENOTTY)
 				error = 0;
