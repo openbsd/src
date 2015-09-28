@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_prot.h,v 1.8 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: yp_prot.h,v 1.9 2015/09/28 20:49:24 deraadt Exp $	*/
 /*	$NetBSD: yp_prot.h,v 1.6 1995/07/14 21:10:58 christos Exp $	*/
 
 /*
@@ -329,7 +329,6 @@ bool_t xdr_ypresp_val(XDR *, struct ypresp_val *);
 bool_t xdr_ypbind_setdom(XDR *, struct ypbind_setdom *);
 bool_t xdr_ypresp_key_val(XDR *, struct ypresp_key_val *);
 bool_t xdr_ypresp_all(XDR *, struct ypresp_all *);
-bool_t xdr_ypresp_all_seq(XDR *, unsigned long *);
 bool_t xdr_ypresp_master(XDR *, struct ypresp_master *);
 bool_t xdr_ypmaplist_str(XDR *, char *);
 bool_t xdr_ypmaplist(XDR *, struct ypmaplist *);
