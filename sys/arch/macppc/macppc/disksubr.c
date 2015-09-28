@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.78 2013/10/19 09:32:14 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.79 2015/09/28 00:31:50 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -101,18 +101,14 @@ int
 readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, daddr_t *partoffp, int spoofonly)
 {
-	int i, part_cnt, n, hfspartoff = -1;
+	int error, i, part_cnt, n, hfspartoff = -1;
 	long long hfspartend = DL_GETDSIZE(lp);
 	struct part_map_entry *part;
 
 	/* First check for a DPME (HFS) disklabel */
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp))
-		return (bp->b_error);
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, LABELSECTOR));
+	if (error)
+		return (error);
 
 	/* if successful, wander through DPME partition table */
 	part = (struct part_map_entry *)bp->b_data;
@@ -125,13 +121,10 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		struct partition *pp;
 		char *s;
 
-		bp->b_blkno = LABELSECTOR + i;
-		bp->b_bcount = lp->d_secsize;
-		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-		(*strat)(bp);
-		if (biowait(bp))
-			return (bp->b_error);
+		error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp,
+		    LABELSECTOR + i));
+		if (error)
+			return (error);
 
 		part = (struct part_map_entry *)bp->b_data;
 		/* toupper the string, in case caps are different... */
@@ -175,13 +168,9 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		return (0);
 
 	/* next, dig out disk label */
-	bp->b_blkno = hfspartoff;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp))
-		return(bp->b_error);
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, hfspartoff));
+	if (error)
+		return (error);
 
 	/*
 	 * Do OpenBSD disklabel validation/adjustment.
