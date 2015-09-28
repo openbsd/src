@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.85 2015/09/27 12:29:21 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.86 2015/09/28 01:17:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -102,13 +102,10 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	int i;
 
 	/* read LIF volume header */
-	bp->b_blkno = btodb(LIF_VOLSTART);
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp))
-		return (bp->b_error);
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp,
+	    btodb(LIF_VOLSTART)));
+	if (error)
+		return (error);
 
 	lvp = (struct lifvol *)bp->b_data;
 	if (lvp->vol_id != LIF_VOL_ID) {
@@ -117,15 +114,10 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 
 	/* read LIF directory */
-	bp->b_blkno = lifstodb(lvp->vol_addr);
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp)) {
-		error = bp->b_error;
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp,
+	    lifstodb(lvp->vol_addr)));
+	if (error)
 		goto done;
-	}
 
 	/* scan for LIF_DIR_FS dir entry */
 	for (i=0, p=(struct lifdir *)bp->b_data; i < LIF_NUMDIR; p++, i++) {
@@ -150,16 +142,10 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		int i;
 
 		/* read LIF directory */
-		bp->b_blkno = lifstodb(p->dir_addr);
-		bp->b_bcount = lp->d_secsize;
-		CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-		SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-		(*strat)(bp);
-
-		if (biowait(bp)) {
-			error = bp->b_error;
+		error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp,
+		    lifstodb(p->dir_addr)));
+		if (error)
 			goto done;
-		}
 
 		hl = (struct hpux_label *)bp->b_data;
 		if (hl->hl_magic1 != hl->hl_magic2 ||
@@ -221,15 +207,10 @@ finished:
 	if (spoofonly)
 		goto done;
 
-	bp->b_blkno = fsoff + LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp)) {
-		error = bp->b_error;
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, fsoff +
+	    LABELSECTOR));
+	if (error)
 		goto done;
-	}
 
 	/*
 	 * Do OpenBSD disklabel validation/adjustment.
