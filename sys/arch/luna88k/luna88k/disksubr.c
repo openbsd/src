@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.57 2015/01/16 20:17:05 miod Exp $ */
+/* $OpenBSD: disksubr.c,v 1.58 2015/09/28 15:17:08 krw Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -119,15 +119,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (spoofonly)
 		goto done;
 
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp)) {
-		error = bp->b_error;
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, LABELSECTOR));
+	if (error)
 		goto done;
-	}
 
 	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.98 2011/04/16 03:21:15 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.99 2015/09/28 15:17:08 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -63,15 +63,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (spoofonly)
 		goto doslabel;
 
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp)) {
-		error = bp->b_error;
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, LABELSECTOR));
+	if (error)
 		goto done;
-	}
 
 	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0,
 	    DL_GETDSIZE(lp));
@@ -118,12 +112,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if ((error = biowait(bp)) != 0)
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, LABELSECTOR));
+	if (error)
 		goto done;
 
 	/* Write it in the regular place. */

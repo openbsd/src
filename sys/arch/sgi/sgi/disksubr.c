@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.30 2014/01/06 21:00:55 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.31 2015/09/28 15:17:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -113,17 +113,12 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	struct sgilabel *dlp;
 	int i, *p, cs = 0;
 	daddr_t fsoffs, fsend;
-	int offset;
-
-	bp->b_blkno = 0;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
+	int error, offset;
 
 	/* if successful, locate disk label within block and validate */
-	if (biowait(bp))
-		return (bp->b_error);
+	error = readdisksector(bp, strat, lp, 0);
+	if (error)
+		return (error);
 
 	fsoffs = DL_SECTOBLK(lp, DL_GETBSTART(lp));
 	fsend = DL_SECTOBLK(lp, DL_GETBEND(lp));
@@ -192,15 +187,11 @@ finished:
 	if (spoofonly)
 		return (0);
 
-	bp->b_blkno = DL_BLKTOSEC(lp, fsoffs + LABELSECTOR) *
-	    DL_BLKSPERSEC(lp);
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, fsoffs +
+	    LABELSECTOR));
+	if (error)
+		return (error);
 	offset = DL_BLKOFFSET(lp, fsoffs + LABELSECTOR) + LABELOFFSET;
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if (biowait(bp))
-		return (bp->b_error);
 
 	/*
 	 * Do OpenBSD disklabel validation/adjustment.
@@ -234,15 +225,11 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
-	bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
-	    DL_BLKSPERSEC(lp);
-	offset = DL_BLKOFFSET(lp, partoff + DOS_LABELSECTOR);
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if ((error = biowait(bp)) != 0)
+	error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, partoff +
+	    DOS_LABELSECTOR));
+	if (error)
 		goto done;
+	offset = DL_BLKOFFSET(lp, partoff + DOS_LABELSECTOR);
 
 	dlp = (struct disklabel *)(bp->b_data + offset);
 	*dlp = *lp;
