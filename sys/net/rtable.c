@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.7 2015/09/28 08:36:24 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.8 2015/09/28 08:47:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -63,7 +63,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	if (rnh == NULL)
 		return (NULL);
 
-	rn = rnh->rnh_lookup(dst, mask, rnh);
+	rn = rn_lookup(dst, mask, rnh);
 	if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
 		return (NULL);
 
@@ -84,7 +84,7 @@ rtable_match(unsigned int rtableid, struct sockaddr *dst)
 	if (rnh == NULL)
 		return (NULL);
 
-	rn = rnh->rnh_matchaddr(dst, rnh);
+	rn = rn_match(dst, rnh);
 	if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
 		return (NULL);
 
@@ -105,7 +105,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	if (rnh == NULL)
 		return (EAFNOSUPPORT);
 
-	rn = rnh->rnh_addaddr(dst, mask, rnh, rn, prio);
+	rn = rn_addroute(dst, mask, rnh, rn, prio);
 	if (rn == NULL)
 		return (ESRCH);
 
@@ -123,7 +123,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	if (rnh == NULL)
 		return (EAFNOSUPPORT);
 
-	rn = rnh->rnh_deladdr(dst, mask, rnh, rn);
+	rn = rn_delete(dst, mask, rnh, rn);
 	if (rn == NULL)
 		return (ESRCH);
 
@@ -157,7 +157,7 @@ rtable_walk(unsigned int rtableid, sa_family_t af,
 	if (rnh == NULL)
 		return (EAFNOSUPPORT);
 
-	return (*rnh->rnh_walktree)(rnh, f, arg);
+	return (rn_walktree(rnh, f, arg));
 }
 
 #ifndef SMALL_KERNEL
