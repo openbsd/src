@@ -3534,7 +3534,9 @@ append_textname(char *name, const char *origin, size_t namesize) {
 		return idn_buffer_overflow;
 
 	name[namelen++] = '.';
-	(void)strcpy(name + namelen, origin);
+	name[namelen++] = '\0';
+	if (strlcat(name, origin, namesize) >= namesize)
+		return idn_buffer_overflow;
 	return idn_success;
 }
  
