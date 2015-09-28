@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.27 2015/09/27 19:41:37 miod Exp $ */
+/* $OpenBSD: bn_print.c,v 1.28 2015/09/28 18:58:33 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,16 +84,16 @@ BN_bn2hex(const BIGNUM *a)
 	}
 	p = buf;
 	if (BN_is_negative(a))
-		*(p++) = '-';
+		*p++ = '-';
 	if (BN_is_zero(a))
-		*(p++) = '0';
+		*p++ = '0';
 	for (i = a->top - 1; i >=0; i--) {
 		for (j = BN_BITS2 - 8; j >= 0; j -= 8) {
 			/* strip leading zeros */
 			v = ((int)(a->d[i] >> (long)j)) & 0xff;
 			if (z || (v != 0)) {
-				*(p++) = Hex[v >> 4];
-				*(p++) = Hex[v & 0x0f];
+				*p++ = Hex[v >> 4];
+				*p++ = Hex[v & 0x0f];
 				z = 1;
 			}
 		}
@@ -122,9 +122,9 @@ BN_bn2dec(const BIGNUM *a)
 		}		
 		p = buf;
 		if (BN_is_negative(a))
-			*(p++) = '-';
-		*(p++) = '0';
-		*(p++) = '\0';
+			*p++ = '-';
+		*p++ = '0';
+		*p++ = '\0';
 		return (buf);
 	}
 		
