@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.91 2015/09/26 22:00:00 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.92 2015/09/28 06:47:23 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -209,16 +209,6 @@ int	i915_load_modeset_init(struct drm_device *);
 	.device = id,				\
 	.subvendor = PCI_ANY_ID,		\
 	.subdevice = PCI_ANY_ID,		\
-	.driver_data = (unsigned long) info }
-
-#undef INTEL_QUANTA_VGA_DEVICE
-#define INTEL_QUANTA_VGA_DEVICE(info) {		\
-	.class = PCI_CLASS_DISPLAY << 16,	\
-	.class_mask = 0xff0000,			\
-	.vendor = 0x8086,			\
-	.device = 0x16a,			\
-	.subvendor = 0x152d,			\
-	.subdevice = 0x8990,			\
 	.driver_data = (unsigned long) info }
 
 static const struct intel_device_info intel_i830_info = {
@@ -446,7 +436,6 @@ static const struct intel_device_info intel_broadwell_m_info = {
 	INTEL_IRONLAKE_M_IDS(&intel_ironlake_m_info),	\
 	INTEL_SNB_D_IDS(&intel_sandybridge_d_info),	\
 	INTEL_SNB_M_IDS(&intel_sandybridge_m_info),	\
-	INTEL_IVB_Q_IDS(&intel_ivybridge_q_info), /* must be first IVB */ \
 	INTEL_IVB_M_IDS(&intel_ivybridge_m_info),	\
 	INTEL_IVB_D_IDS(&intel_ivybridge_d_info),	\
 	INTEL_HSW_D_IDS(&intel_haswell_d_info), \
