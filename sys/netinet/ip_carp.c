@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.272 2015/09/27 04:27:57 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.273 2015/09/28 08:36:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1298,20 +1298,19 @@ carp_send_na(struct carp_softc *sc)
 #endif /* INET6 */
 
 /*
- * Based on bridge_hash() in if_bridge.c
+ * Originated from bridge_hash() in if_bridge.c
  */
-#define	mix(a,b,c) \
-	do {						\
-		a -= b; a -= c; a ^= (c >> 13);		\
-		b -= c; b -= a; b ^= (a << 8);		\
-		c -= a; c -= b; c ^= (b >> 13);		\
-		a -= b; a -= c; a ^= (c >> 12);		\
-		b -= c; b -= a; b ^= (a << 16);		\
-		c -= a; c -= b; c ^= (b >> 5);		\
-		a -= b; a -= c; a ^= (c >> 3);		\
-		b -= c; b -= a; b ^= (a << 10);		\
-		c -= a; c -= b; c ^= (b >> 15);		\
-	} while (0)
+#define	mix(a, b, c) do {						\
+	a -= b; a -= c; a ^= (c >> 13);					\
+	b -= c; b -= a; b ^= (a << 8);					\
+	c -= a; c -= b; c ^= (b >> 13);					\
+	a -= b; a -= c; a ^= (c >> 12);					\
+	b -= c; b -= a; b ^= (a << 16);					\
+	c -= a; c -= b; c ^= (b >> 5);					\
+	a -= b; a -= c; a ^= (c >> 3);					\
+	b -= c; b -= a; b ^= (a << 10);					\
+	c -= a; c -= b; c ^= (b >> 15);					\
+} while (0)
 
 u_int32_t
 carp_hash(struct carp_softc *sc, u_char *src)

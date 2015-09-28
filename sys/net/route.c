@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.243 2015/09/25 09:51:20 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.244 2015/09/28 08:36:24 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -136,6 +136,9 @@
 #include <net/if_enc.h>
 #endif
 
+/* Give some jitter to hash, to avoid synchronization between routers. */
+static uint32_t		   rt_hashjitter;
+
 struct	rtstat		   rtstat;
 void			***rt_tables;
 u_int8_t		   af2rtafidx[AF_MAX+1];
@@ -226,6 +229,9 @@ route_init(void)
 		if (dom->dom_rtattach)
 			af2rtafidx[dom->dom_family] = rtafidx_max++;
 	}
+
+	while (rt_hashjitter == 0)
+		rt_hashjitter = arc4random();
 
 	if (rtable_add(0) != 0)
 		panic("route_init rtable_add");
@@ -370,6 +376,72 @@ miss:
 }
 
 #ifndef SMALL_KERNEL
+
+/*
+ * Originated from bridge_hash() in if_bridge.c
+ */
+#define mix(a, b, c) do {						\
+	a -= b; a -= c; a ^= (c >> 13);					\
+	b -= c; b -= a; b ^= (a << 8); 					\
+	c -= a; c -= b; c ^= (b >> 13);					\
+	a -= b; a -= c; a ^= (c >> 12);					\
+	b -= c; b -= a; b ^= (a << 16);					\
+	c -= a; c -= b; c ^= (b >> 5); 					\
+	a -= b; a -= c; a ^= (c >> 3); 					\
+	b -= c; b -= a; b ^= (a << 10);					\
+	c -= a; c -= b; c ^= (b >> 15);					\
+} while (0)
+
+static uint32_t
+rt_hash(struct rtentry *rt, uint32_t *src)
+{
+	struct sockaddr *dst = rt_key(rt);
+	uint32_t a, b, c;
+
+	a = b = 0x9e3779b9;
+	c = rt_hashjitter;
+
+	switch (dst->sa_family) {
+	case AF_INET:
+	    {
+		struct sockaddr_in *sin;
+
+		sin = satosin(dst);
+		a += sin->sin_addr.s_addr;
+		b += (src != NULL) ? src[0] : 0;
+		mix(a, b, c);
+		break;
+	    }
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *sin6;
+
+		sin6 = satosin6(dst);
+		a += sin6->sin6_addr.s6_addr32[0];
+		b += sin6->sin6_addr.s6_addr32[2];
+		c += (src != NULL) ? src[0] : 0;
+		mix(a, b, c);
+		a += sin6->sin6_addr.s6_addr32[1];
+		b += sin6->sin6_addr.s6_addr32[3];
+		c += (src != NULL) ? src[1] : 0;
+		mix(a, b, c);
+		a += sin6->sin6_addr.s6_addr32[2];
+		b += sin6->sin6_addr.s6_addr32[1];
+		c += (src != NULL) ? src[2] : 0;
+		mix(a, b, c);
+		a += sin6->sin6_addr.s6_addr32[3];
+		b += sin6->sin6_addr.s6_addr32[0];
+		c += (src != NULL) ? src[3] : 0;
+		mix(a, b, c);
+		break;
+	    }
+#endif /* INET6 */
+	}
+
+	return (c);
+}
+
 /*
  * Allocate a route, potentially using multipath to select the peer.
  */
@@ -393,7 +465,7 @@ rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
 	    ))
 		return (rt);
 
-	return (rtable_mpath_select(rt, src));
+	return (rtable_mpath_select(rt, rt_hash(rt, src) & 0xffff));
 }
 #endif /* SMALL_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.6 2015/09/12 09:22:29 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.7 2015/09/28 08:36:24 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -39,11 +39,14 @@ rtable_attach(void **head, int off)
 {
 	int rv;
 
-#ifndef SMALL_KERNEL
-	rv = rn_mpath_inithead(head, off);
-#else
 	rv = rn_inithead(head, off);
-#endif
+
+#ifndef SMALL_KERNEL
+	if (rv == 1) {
+		struct radix_node_head *rnh = (struct radix_node_head *)*head;
+		rnh->rnh_multipath = 1;
+	}
+#endif /* SMALL_KERNEL */
 
 	return (rv);
 }
@@ -206,10 +209,34 @@ rtable_mpath_conflict(unsigned int rtableid, struct sockaddr *dst,
 	return (rt_mpath_conflict(rnh, dst, mask, gateway, prio, mpathok));
 }
 
+/* Gateway selection by Hash-Threshold (RFC 2992) */
 struct rtentry *
-rtable_mpath_select(struct rtentry *rt, uint32_t *src)
+rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 {
-	return (rn_mpath_select(rt, src));
+	struct rtentry *mrt = rt;
+	int npaths, threshold;
+
+	npaths = 1;
+	while ((mrt = rt_mpath_next(mrt)) != NULL)
+		npaths++;
+
+	threshold = (0xffff / npaths) + 1;
+
+	mrt = rt;
+	while (hash > threshold && mrt != NULL) {
+		/* stay within the multipath routes */
+		mrt = rt_mpath_next(mrt);
+		hash -= threshold;
+	}
+
+	/* if gw selection fails, use the first match (default) */
+	if (mrt != NULL) {
+		rtref(mrt);
+		rtfree(rt);
+		rt = mrt;
+	}
+
+	return (rt);
 }
 
 void
@@ -391,27 +418,13 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 		rt->rt_mask = msk;
 	}
 
+	LIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
+
 #ifndef SMALL_KERNEL
-	if ((mrt = LIST_FIRST(&an->an_rtlist)) != NULL) {
-		/*
-		 * Select the order of the MPATH routes.
-		 */
-		while (LIST_NEXT(mrt, rt_next) != NULL) {
-			if (mrt->rt_priority > prio)
-				break;
-			mrt = LIST_NEXT(mrt, rt_next);
-		}
-
-		if (mrt->rt_priority > prio)
-			LIST_INSERT_BEFORE(mrt, rt, rt_next);
-		else
-			LIST_INSERT_AFTER(mrt, rt, rt_next);
-
-		return (0);
-	}
+	/* Put newly inserted entry at the right place. */
+	rtable_mpath_reprio(rt, rt->rt_priority);
 #endif /* SMALL_KERNEL */
 
-	LIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
 	return (0);
 }
 
@@ -602,21 +615,65 @@ rtable_mpath_conflict(unsigned int rtableid, struct sockaddr *dst,
 	return (0);
 }
 
+/* Gateway selection by Hash-Threshold (RFC 2992) */
 struct rtentry *
-rtable_mpath_select(struct rtentry *rt, uint32_t *src)
+rtable_mpath_select(struct rtentry *rt, uint32_t hash)
 {
 	struct art_node			*an = rt->rt_node;
+	struct rtentry			*mrt;
+	int				 npaths, threshold;
 
-	/*
-	 * XXX consider using ``src'' (8
-	 */
-	return (LIST_FIRST(&an->an_rtlist));
+	npaths = 0;
+	LIST_FOREACH(mrt, &an->an_rtlist, rt_next) {
+		/* Only count nexthops with the same priority. */
+		if (mrt->rt_priority == rt->rt_priority)
+			npaths++;
+	}
+
+	threshold = (0xffff / npaths) + 1;
+
+	mrt = LIST_FIRST(&an->an_rtlist);
+	while (hash > threshold && mrt != NULL) {
+		if (mrt->rt_priority == rt->rt_priority)
+			hash -= threshold;
+		mrt = LIST_NEXT(mrt, rt_next);
+	}
+
+	if (mrt != NULL) {
+		rtref(mrt);
+		rtfree(rt);
+		rt = mrt;
+	}
+
+	return (rt);
 }
 
 void
-rtable_mpath_reprio(struct rtentry *rt, uint8_t newprio)
+rtable_mpath_reprio(struct rtentry *rt, uint8_t prio)
 {
-	/* XXX */
+	struct art_node			*an = rt->rt_node;
+	struct rtentry			*mrt;
+
+	LIST_REMOVE(rt, rt_next);
+	rt->rt_priority = prio;
+
+	if ((mrt = LIST_FIRST(&an->an_rtlist)) != NULL) {
+		/*
+		 * Select the order of the MPATH routes.
+		 */
+		while (LIST_NEXT(mrt, rt_next) != NULL) {
+			if (mrt->rt_priority > prio)
+				break;
+			mrt = LIST_NEXT(mrt, rt_next);
+		}
+
+		if (mrt->rt_priority > prio)
+			LIST_INSERT_BEFORE(mrt, rt, rt_next);
+		else
+			LIST_INSERT_AFTER(mrt, rt, rt_next);
+	} else {
+		LIST_INSERT_HEAD(&an->an_rtlist, rt, rt_next);
+	}
 }
 #endif /* SMALL_KERNEL */
 

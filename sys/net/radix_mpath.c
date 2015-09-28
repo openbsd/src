@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.32 2015/09/01 21:24:04 bluhm Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.33 2015/09/28 08:36:24 mpi Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -51,13 +51,6 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
-
-u_int32_t rn_mpath_hash(struct sockaddr *, u_int32_t *);
-
-/*
- * give some jitter to hash, to avoid synchronization between routers
- */
-static u_int32_t hashjitter;
 
 int
 rn_mpath_capable(struct radix_node_head *rnh)
@@ -379,111 +372,4 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 			rn->rn_mklist->rm_leaf = head;
 		}
 	}
-}
-
-/* Gateway selection by Hash-Threshold (RFC 2992) */
-struct rtentry *
-rn_mpath_select(struct rtentry *rt, uint32_t *srcaddrp)
-{
-	struct radix_node *rn;
-	int hash, npaths, threshold;
-
-	rn = (struct radix_node *)rt;
-	npaths = rn_mpath_active_count(rn);
-	hash = rn_mpath_hash(rt_key(rt), srcaddrp) & 0xffff;
-	threshold = 1 + (0xffff / npaths);
-	while (hash > threshold && rn) {
-		/* stay within the multipath routes */
-		rn = rn_mpath_next(rn, RMP_MODE_ACTIVE);
-		hash -= threshold;
-	}
-
-	/* if gw selection fails, use the first match (default) */
-	if (rn != NULL) {
-		rtfree(rt);
-		rt = (struct rtentry *)rn;
-		rt->rt_refcnt++;
-	}
-
-	return (rt);
-}
-
-int
-rn_mpath_inithead(void **head, int off)
-{
-	struct radix_node_head *rnh;
-
-	while (hashjitter == 0)
-		hashjitter = arc4random();
-	if (rn_inithead(head, off) == 1) {
-		rnh = (struct radix_node_head *)*head;
-		rnh->rnh_multipath = 1;
-		return 1;
-	} else
-		return 0;
-}
-
-/*
- * hash function based on pf_hash in pf.c
- */
-#define mix(a,b,c) \
-	do {					\
-		a -= b; a -= c; a ^= (c >> 13);	\
-		b -= c; b -= a; b ^= (a << 8);	\
-		c -= a; c -= b; c ^= (b >> 13);	\
-		a -= b; a -= c; a ^= (c >> 12);	\
-		b -= c; b -= a; b ^= (a << 16);	\
-		c -= a; c -= b; c ^= (b >> 5);	\
-		a -= b; a -= c; a ^= (c >> 3);	\
-		b -= c; b -= a; b ^= (a << 10);	\
-		c -= a; c -= b; c ^= (b >> 15);	\
-	} while (0)
-
-u_int32_t
-rn_mpath_hash(struct sockaddr *dst, u_int32_t *srcaddrp)
-{
-	u_int32_t a, b, c;
-
-	a = b = 0x9e3779b9;
-	c = hashjitter;
-
-	switch (dst->sa_family) {
-	case AF_INET:
-	    {
-		struct sockaddr_in *sin_dst;
-
-		sin_dst = satosin(dst);
-		a += sin_dst->sin_addr.s_addr;
-		b += srcaddrp ? srcaddrp[0] : 0;
-		mix(a, b, c);
-		break;
-	    }
-#ifdef INET6
-	case AF_INET6:
-	    {
-		struct sockaddr_in6 *sin6_dst;
-
-		sin6_dst = satosin6(dst);
-		a += sin6_dst->sin6_addr.s6_addr32[0];
-		b += sin6_dst->sin6_addr.s6_addr32[2];
-		c += srcaddrp ? srcaddrp[0] : 0;
-		mix(a, b, c);
-		a += sin6_dst->sin6_addr.s6_addr32[1];
-		b += sin6_dst->sin6_addr.s6_addr32[3];
-		c += srcaddrp ? srcaddrp[1] : 0;
-		mix(a, b, c);
-		a += sin6_dst->sin6_addr.s6_addr32[2];
-		b += sin6_dst->sin6_addr.s6_addr32[1];
-		c += srcaddrp ? srcaddrp[2] : 0;
-		mix(a, b, c);
-		a += sin6_dst->sin6_addr.s6_addr32[3];
-		b += sin6_dst->sin6_addr.s6_addr32[0];
-		c += srcaddrp ? srcaddrp[3] : 0;
-		mix(a, b, c);
-		break;
-	    }
-#endif /* INET6 */
-	}
-
-	return c;
 }
