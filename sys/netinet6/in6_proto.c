@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.80 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.81 2015/09/28 08:32:05 mpi Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 #include "gif.h"
 #if NGIF > 0
 #include <netinet/ip_ether.h>
-#include <netinet6/in6_gif.h>
+#include <net/if_gif.h>
 #endif
 
 #include "carp.h"

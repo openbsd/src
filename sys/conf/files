@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.602 2015/09/10 18:39:57 deraadt Exp $
+#	$OpenBSD: files,v 1.603 2015/09/28 08:32:04 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -937,8 +937,6 @@ file uvm/uvm_vnode.c
 # IPv6
 file net/if_gif.c			gif			needs-count
 file netinet/ip_ecn.c
-file netinet/in_gif.c			gif
-file netinet6/in6_gif.c			gif & inet6
 file netinet6/in6_pcb.c			inet6
 file netinet6/in6.c			inet6
 file netinet6/ip6_divert.c		inet6 & pf

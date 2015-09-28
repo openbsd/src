@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.66 2015/09/04 08:43:39 mpi Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.67 2015/09/28 08:32:05 mpi Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -134,7 +134,7 @@
 
 #include "gif.h"
 #if NGIF > 0
-#include <netinet/in_gif.h>
+#include <net/if_gif.h>
 #endif
 
 #ifdef INET6

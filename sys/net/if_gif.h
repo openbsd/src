@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.h,v 1.13 2015/07/17 18:05:59 mpi Exp $	*/
+/*	$OpenBSD: if_gif.h,v 1.14 2015/09/28 08:32:05 mpi Exp $	*/
 /*	$KAME: if_gif.h,v 1.17 2000/09/11 11:36:41 sumikawa Exp $	*/
 
 /*
@@ -48,5 +48,8 @@ struct gif_softc {
 extern LIST_HEAD(gif_softc_head, gif_softc) gif_softc_list;
 
 int gif_encap(struct ifnet *, struct mbuf **, sa_family_t);
+
+void in_gif_input(struct mbuf *, ...);
+int in6_gif_input(struct mbuf **, int *, int);
 
 #endif /* _NET_IF_GIF_H_ */
