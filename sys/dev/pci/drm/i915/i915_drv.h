@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.68 2015/09/26 11:17:15 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.69 2015/09/28 17:29:56 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1465,6 +1465,9 @@ typedef struct inteldrm_softc {
 	void *switchcookie;
 	struct task switchtask;
 	struct rasops_info ro;
+
+	struct task burner_task;
+	int burner_dpms_mode;
 
 	struct backlight_device {
 		struct intel_connector *connector;

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.92 2015/09/28 06:47:23 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.93 2015/09/28 17:29:56 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -966,6 +966,7 @@ int inteldrm_load_font(void *, void *, struct wsdisplay_font *);
 int inteldrm_list_font(void *, struct wsdisplay_font *);
 int inteldrm_getchar(void *, int, int, struct wsdisplay_charcell *);
 void inteldrm_burner(void *, u_int, u_int);
+void inteldrm_burner_cb(void *);
 
 struct wsscreen_descr inteldrm_stdscreen = {
 	"std",
@@ -1140,19 +1141,32 @@ void
 inteldrm_burner(void *v, u_int on, u_int flags)
 {
 	struct inteldrm_softc *dev_priv = v;
-	struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
-	int dpms_mode;
+
+	task_del(systq, &dev_priv->burner_task);
 
 	if (on)
-		dpms_mode = DRM_MODE_DPMS_ON;
+		dev_priv->burner_dpms_mode = DRM_MODE_DPMS_ON;
 	else {
 		if (flags & WSDISPLAY_BURN_VBLANK)
-			dpms_mode = DRM_MODE_DPMS_OFF;
+			dev_priv->burner_dpms_mode = DRM_MODE_DPMS_OFF;
 		else
-			dpms_mode = DRM_MODE_DPMS_STANDBY;
+			dev_priv->burner_dpms_mode = DRM_MODE_DPMS_STANDBY;
 	}
 
-	drm_fb_helper_dpms(helper, dpms_mode);
+	/*
+	 * Setting the DPMS mode may sleep while waiting for the display
+	 * to come back on so hand things off to a taskq.
+	 */
+	task_add(systq, &dev_priv->burner_task);
+}
+
+void
+inteldrm_burner_cb(void *arg1)
+{
+	struct inteldrm_softc *dev_priv = arg1;
+	struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
+
+	drm_fb_helper_dpms(helper, dev_priv->burner_dpms_mode);
 }
 
 int
@@ -1448,6 +1462,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	rasops_init(ri, 160, 160);
 
 	task_set(&dev_priv->switchtask, inteldrm_doswitch, dev_priv);
+	task_set(&dev_priv->burner_task, inteldrm_burner_cb, dev_priv);
 
 	inteldrm_stdscreen.capabilities = ri->ri_caps;
 	inteldrm_stdscreen.nrows = ri->ri_rows;
