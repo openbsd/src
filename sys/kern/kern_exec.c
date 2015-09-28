@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.163 2015/07/22 05:31:33 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.164 2015/09/28 20:32:59 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -686,7 +686,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (pr->ps_flags & PS_TRACED)
 		psignal(p, SIGTRAP);
 
-	free(pack.ep_hdr, M_EXEC, 0);
+	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 
 	/*
 	 * Call emulation specific exec hook. This can setup per-process
@@ -748,14 +748,14 @@ bad:
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
-		free(pack.ep_emul_arg, M_TEMP, 0);
+		free(pack.ep_emul_arg, M_TEMP, pack.ep_emul_argsize);
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
 
  freehdr:
-	free(pack.ep_hdr, M_EXEC, 0);
+	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 #if NSYSTRACE > 0
  clrflag:
 #endif
@@ -778,13 +778,13 @@ exec_abort:
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
-		free(pack.ep_emul_arg, M_TEMP, 0);
+		free(pack.ep_emul_arg, M_TEMP, pack.ep_emul_argsize);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
 
 free_pack_abort:
-	free(pack.ep_hdr, M_EXEC, 0);
+	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 	if (pathbuf != NULL)
 		pool_put(&namei_pool, pathbuf);
 	exit1(p, W_EXITCODE(0, SIGABRT), EXIT_NORMAL);

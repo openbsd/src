@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.30 2015/02/09 11:52:47 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.31 2015/09/28 20:32:59 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -132,6 +132,7 @@ struct exec_package {
 	int	ep_fd;			/* a file descriptor we're holding */
 	struct  emul *ep_emul;		/* os emulation */
 	void	*ep_emul_arg;		/* emulation argument */
+	size_t	ep_emul_argsize;	/* emulation argument size */
 	void	*ep_emul_argp;		/* emulation argument pointer */
 	char	*ep_interp;		/* name of interpreter if any */
 	u_long	ep_interp_pos;		/* interpreter load position */

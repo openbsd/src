@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.116 2015/04/30 11:15:28 jsg Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.117 2015/09/28 20:32:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -759,6 +759,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		ap->arg_interp = exe_base;
 
 		epp->ep_emul_arg = ap;
+		epp->ep_emul_argsize = sizeof *ap;
 		epp->ep_interp_pos = pos;
 	}
 
@@ -798,7 +799,7 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 
 	if (interp &&
 	    (error = ELFNAME(load_file)(p, interp, epp, ap, &pos)) != 0) {
-		free(ap, M_TEMP, 0);
+		free(ap, M_TEMP, epp->ep_emul_argsize);
 		pool_put(&namei_pool, interp);
 		kill_vmcmds(&epp->ep_vmcmds);
 		return (error);
@@ -849,7 +850,7 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 
 		error = copyout(ai, epp->ep_emul_argp, sizeof ai);
 	}
-	free(ap, M_TEMP, 0);
+	free(ap, M_TEMP, epp->ep_emul_argsize);
 	if (interp)
 		pool_put(&namei_pool, interp);
 	return (error);
