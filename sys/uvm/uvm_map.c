@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.200 2015/09/26 17:55:00 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.201 2015/09/28 18:33:42 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1012,6 +1012,8 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		KASSERT((*addr & PAGE_MASK) == 0);
 
 		/* Check that the space is available. */
+		if (flags & UVM_FLAG_UNMAP)
+			uvm_unmap_remove(map, *addr, *addr + sz, &dead, FALSE, TRUE);
 		if (!uvm_map_isavail(map, NULL, &first, &last, *addr, sz)) {
 			error = ENOMEM;
 			goto unlock;
@@ -1210,8 +1212,9 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 			error = EFAULT;
 			goto out;
 		}
-	} else
+	} else {
 		vm_map_lock(map);
+	}
 
 	first = last = NULL;
 	if (flags & UVM_FLAG_FIXED) {
@@ -1234,6 +1237,8 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		}
 
 		/* Check that the space is available. */
+		if (flags & UVM_FLAG_UNMAP)
+			uvm_unmap_remove(map, *addr, *addr + sz, &dead, FALSE, TRUE);
 		if (!uvm_map_isavail(map, NULL, &first, &last, *addr, sz)) {
 			error = ENOMEM;
 			goto unlock;

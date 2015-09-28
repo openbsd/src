@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.134 2015/09/09 14:52:12 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.135 2015/09/28 18:33:42 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -112,6 +112,8 @@ typedef int		vm_prot_t;
 #define UVM_FLAG_HOLE    0x0400000 /* no backend */
 #define UVM_FLAG_QUERY   0x0800000 /* do everything, except actual execution */
 #define UVM_FLAG_NOFAULT 0x1000000 /* don't fault */
+#define UVM_FLAG_UNMAP   0x2000000 /* unmap to make space */
+
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & PROT_MASK)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.116 2015/09/26 15:37:28 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.117 2015/09/28 18:33:42 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -990,10 +990,8 @@ uvm_mmapanon(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			return(EINVAL);
 
 		uvmflag |= UVM_FLAG_FIXED;
-		if ((flags & __MAP_NOREPLACE) == 0) {
-			/* KERNEL_LOCK held above */
-			uvm_unmap(map, *addr, *addr + size);	/* zap! */
-		}
+		if ((flags & __MAP_NOREPLACE) == 0)
+			uvmflag |= UVM_FLAG_UNMAP;
 	}
 
 	if ((flags & MAP_FIXED) == 0 && size >= __LDPGSZ)
@@ -1046,7 +1044,7 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 
 		uvmflag |= UVM_FLAG_FIXED;
 		if ((flags & __MAP_NOREPLACE) == 0)
-			uvm_unmap(map, *addr, *addr + size);	/* zap! */
+			uvmflag |= UVM_FLAG_UNMAP;
 	}
 
 	/*
