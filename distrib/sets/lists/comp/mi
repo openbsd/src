@@ -997,7 +997,6 @@
 ./usr/include/netinet/igmp.h
 ./usr/include/netinet/igmp_var.h
 ./usr/include/netinet/in.h
-./usr/include/netinet/in_gif.h
 ./usr/include/netinet/in_pcb.h
 ./usr/include/netinet/in_systm.h
 ./usr/include/netinet/in_var.h
@@ -1029,7 +1028,6 @@
 ./usr/include/netinet/udp_var.h
 ./usr/include/netinet6
 ./usr/include/netinet6/in6.h
-./usr/include/netinet6/in6_gif.h
 ./usr/include/netinet6/in6_ifattach.h
 ./usr/include/netinet6/in6_var.h
 ./usr/include/netinet6/ip6_divert.h

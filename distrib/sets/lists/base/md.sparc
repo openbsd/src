@@ -1164,7 +1164,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/igmp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/igmp_var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/in.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/in_gif.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/in_pcb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/in_systm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/in_var.ph
@@ -1196,7 +1195,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/udp_var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6_gif.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6_ifattach.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6_var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/ip6_divert.ph
