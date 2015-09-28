@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.294 2015/09/06 16:47:48 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.295 2015/09/28 18:36:36 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2316,7 +2316,7 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 
 	s = splhigh();
 	disable_intr();	/* PSL_I for resume; PIC/APIC broken until repair */
-	cold = 1;	/* Force other code to delay() instead of tsleep() */
+	cold = 2;	/* Force other code to delay() instead of tsleep() */
 
 	if (config_suspend_all(DVACT_SUSPEND) != 0)
 		goto fail_suspend;

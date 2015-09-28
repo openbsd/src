@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.33 2015/02/11 07:05:39 dlg Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.34 2015/09/28 18:36:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -656,6 +656,7 @@ zapm_poweroff(void)
 #endif /* NWSDISPLAY > 0 */
 
 	s = splhigh();
+	cold = 2;
 	config_suspend_all(DVACT_SUSPEND);
 
 	suspend_randomness();
@@ -687,6 +688,7 @@ zapm_poweroff(void)
 	zapm_restart();
 
 	/* NOTREACHED */
+	cold = 0;
 	config_suspend_all(DVACT_RESUME);
 	splx(s);
 

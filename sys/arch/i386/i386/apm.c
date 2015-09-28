@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.113 2015/02/07 01:19:40 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.114 2015/09/28 18:36:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -253,6 +253,7 @@ apm_suspend(int state)
 
 	s = splhigh();
 	disable_intr();
+	cold = 2;
 	config_suspend_all(DVACT_SUSPEND);
 	suspend_randomness();
 
@@ -275,6 +276,7 @@ apm_suspend(int state)
 	inittodr(time_second);
 
 	config_suspend_all(DVACT_RESUME);
+	cold = 0;
 	enable_intr();
 	splx(s);
 
