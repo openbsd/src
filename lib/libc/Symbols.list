@@ -1662,7 +1662,6 @@ uuid_is_nil
 uuid_to_string
 
 /* yp */
-xdr_ypresp_all_seq
 yp_all
 yp_bind
 yp_first

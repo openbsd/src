@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.12 2015/09/11 12:42:47 deraadt Exp $ */
+/*	$OpenBSD: yp_all.c,v 1.13 2015/09/28 14:51:04 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -39,8 +39,8 @@
 static int (*ypresp_allfn)(u_long, char *, int, char *, int, void *);
 static void *ypresp_data;
 
-bool_t
-xdr_ypresp_all_seq(XDR *xdrs, u_long *objp)
+static bool_t
+_xdr_ypresp_all_seq(XDR *xdrs, u_long *objp)
 {
 	struct ypresp_all out;
 	u_long status;
@@ -132,7 +132,7 @@ yp_all(const char *indomain, const char *inmap, struct ypall_callback *incallbac
 	ypresp_data = (void *) incallback->data;
 
 	(void) clnt_call(clnt, YPPROC_ALL,
-	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
+	    xdr_ypreq_nokey, &yprnk, _xdr_ypresp_all_seq, &status, tv);
 	clnt_destroy(clnt);
 	if (status != YP_FALSE)
 		r = ypprot_err(status);
