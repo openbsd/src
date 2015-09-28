@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.116 2015/09/24 14:46:22 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.117 2015/09/28 08:24:53 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -343,7 +343,6 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	tp->tp_iftype = ifp->if_type;
 	ifp->if_type = IFT_IEEE8023ADLAG;
 
-	ifp->if_tp = (caddr_t)tp;
 	tp->tp_ioctl = ifp->if_ioctl;
 	ifp->if_ioctl = trunk_port_ioctl;
 
@@ -437,7 +436,6 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	ifp->if_ioctl = tp->tp_ioctl;
 	ifp->if_output = tp->tp_output;
-	ifp->if_tp = NULL;
 
 	hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
 	hook_disestablish(ifp->if_detachhooks, tp->dh_cookie);
@@ -488,7 +486,7 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	/* Should be checked by the caller */
 	if (ifp->if_type != IFT_IEEE8023ADLAG ||
-	    (tp = (struct trunk_port *)ifp->if_tp) == NULL ||
+	    (tp = trunk_port_get(NULL, ifp)) == NULL ||
 	    (tr = (struct trunk_softc *)tp->tp_trunk) == NULL) {
 		error = EINVAL;
 		goto fallback;
@@ -1070,8 +1068,8 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	if (ifp->if_type != IFT_IEEE8023ADLAG)
 		goto bad;
 
-	if ((tp = (struct trunk_port *)ifp->if_tp) == NULL ||
-	    (tr = (struct trunk_softc *)tp->tp_trunk) == NULL)
+	tp = (struct trunk_port *)cookie;
+	if ((tr = (struct trunk_softc *)tp->tp_trunk) == NULL)
 		goto bad;
 
 	trifp = &tr->tr_ac.ac_if;
