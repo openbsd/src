@@ -1,4 +1,4 @@
-#	$OpenBSD: tests.out,v 1.5 2015/09/27 17:55:39 semarie Exp $
+#	$OpenBSD: tests.out,v 1.6 2015/09/28 15:40:18 semarie Exp $
 test(test_nop): tame=("",NULL) status=0 exit=0
 test(test_inet): tame=("",NULL) status=9 signal=9 tamed_syscall=97
 test(test_inet): tame=("abort",NULL) status=134 signal=6 coredump=present tamed_syscall=97
@@ -31,6 +31,12 @@ test(test_wpaths): tame=("stdio rpath",{NULL})
  open_close("/etc/passwd") fd=-1 errno=2
  open_close("generic") fd=-1 errno=2
  open_close("../../../../../../../../../../../../../../../etc/passwd") fd=-1 errno=2
+ open_close("/nonexistent") fd=-1 errno=2
+ status=0 exit=0
+test(test_wpaths): tame=("stdio rpath",{"/",NULL})
+ open_close("/etc/passwd") fd=3 errno=0
+ open_close("generic") fd=3 errno=0
+ open_close("../../../../../../../../../../../../../../../etc/passwd") fd=3 errno=0
  open_close("/nonexistent") fd=-1 errno=2
  status=0 exit=0
 test(test_wpaths): tame=("stdio rpath",{"/etc",NULL})

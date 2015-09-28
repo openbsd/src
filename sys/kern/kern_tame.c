@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.42 2015/09/19 20:39:06 semarie Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.43 2015/09/28 15:40:18 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -626,7 +626,8 @@ tame_namei(struct proc *p, char *origpath)
 			    wl->wl_paths[i].len - 1) == 0) {
 				u_char term = canopath[wl->wl_paths[i].len - 1];
 
-				if (term == '\0' || term == '/')
+				if (term == '\0' || term == '/' ||
+				    wl->wl_paths[i].name[1] == '\0')
 					error = 0;
 			}
 		}
