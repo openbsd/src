@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.72 2015/09/28 01:17:57 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.73 2015/09/28 21:52:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -242,22 +242,19 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	/* Read it in, slap the new label in, and write it back out */
 	if (readliflabel(bp, strat, lp, &partoff, 1) == 0) {
-		bp->b_blkno = partoff + LABELSECTOR;
+		error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp,
+		    partoff + LABELSECTOR));
 		offset = LABELOFFSET;
 	} else if (readdoslabel(bp, strat, lp, &partoff, 1) == 0) {
-		bp->b_blkno = DL_BLKTOSEC(lp, partoff + DOS_LABELSECTOR) *
-		    DL_BLKSPERSEC(lp);
+		error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp,
+		    partoff + DOS_LABELSECTOR));
 		offset = DL_BLKOFFSET(lp, partoff + DOS_LABELSECTOR);
 	} else
 		goto done;
 
-	/* Read it in, slap the new label in, and write it back out */
-	bp->b_bcount = lp->d_secsize;
-	CLR(bp->b_flags, B_READ | B_WRITE | B_DONE);
-	SET(bp->b_flags, B_BUSY | B_READ | B_RAW);
-	(*strat)(bp);
-	if ((error = biowait(bp)) != 0)
+	if (error)
 		goto done;
 
 	dlp = (struct disklabel *)(bp->b_data + offset);
