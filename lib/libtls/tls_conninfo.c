@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.2 2015/09/13 10:32:46 beck Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.3 2015/09/28 15:18:08 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -161,15 +161,15 @@ tls_free_conninfo(struct tls_conninfo *conninfo) {
 const char *
 tls_conn_cipher(struct tls *ctx)
 {
-	if (ctx->conninfo)
-		return (ctx->conninfo->cipher);
-	return NULL;
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	return (ctx->conninfo->cipher);
 }
 
 const char *
 tls_conn_version(struct tls *ctx)
 {
-	if (ctx->conninfo)
-		return (ctx->conninfo->version);
-	return NULL;
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	return (ctx->conninfo->version);
 }
