@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.124 2015/09/28 18:36:36 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.125 2015/09/28 21:02:12 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -116,8 +116,10 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 	KASSERT(timo || __mp_lock_held(&kernel_lock));
 #endif
 
+#ifdef DDB
 	if (cold == 2)
 		db_stack_dump();
+#endif
 	if (cold || panicstr) {
 		int s;
 		/*
