@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.24 2015/09/14 16:16:38 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.25 2015/09/29 13:10:53 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -19,12 +19,20 @@
 #ifndef HEADER_TLS_INTERNAL_H
 #define HEADER_TLS_INTERNAL_H
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
 #include <openssl/ssl.h>
 
 #define _PATH_SSL_CA_FILE "/etc/ssl/cert.pem"
 
 #define TLS_CIPHERS_COMPAT	"ALL:!aNULL:!eNULL"
 #define TLS_CIPHERS_DEFAULT	"TLSv1.2+AEAD+ECDHE:TLSv1.2+AEAD+DHE"
+
+union tls_addr {
+	struct in_addr ip4;
+	struct in6_addr ip6;
+};
 
 struct tls_config {
 	const char *ca_file;
