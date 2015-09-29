@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.32 2015/09/14 16:16:38 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.33 2015/09/29 10:17:04 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -285,7 +285,7 @@ tls_configure_ssl_verify(struct tls *ctx, int verify)
 			goto err;
 		}
 	} else if (SSL_CTX_load_verify_locations(ctx->ssl_ctx,
-            ctx->config->ca_file, ctx->config->ca_path) != 1) {
+	    ctx->config->ca_file, ctx->config->ca_path) != 1) {
 		tls_set_errorx(ctx, "ssl verify setup failure");
 		goto err;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.13 2015/09/14 16:16:38 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.14 2015/09/29 10:17:04 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -79,7 +79,7 @@ tls_config_new(void)
 
 	tls_config_set_protocols(config, TLS_PROTOCOLS_DEFAULT);
 	tls_config_set_verify_depth(config, 6);
-	
+
 	tls_config_prefer_ciphers_server(config);
 
 	tls_config_verify(config);

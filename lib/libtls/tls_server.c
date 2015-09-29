@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.17 2015/09/12 19:54:31 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.18 2015/09/29 10:17:04 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -91,7 +91,7 @@ tls_configure_server(struct tls *ctx)
 
 	if (ctx->config->ciphers_server == 1)
 		SSL_CTX_set_options(ctx->ssl_ctx,
-		    SSL_OP_CIPHER_SERVER_PREFERENCE); 
+		    SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	/*
 	 * Set session ID context to a random value.  We don't support
@@ -120,7 +120,7 @@ int
 tls_accept_fds(struct tls *ctx, struct tls **cctx, int fd_read, int fd_write)
 {
 	struct tls *conn_ctx = NULL;
-	
+
 	if ((ctx->flags & TLS_SERVER) == 0) {
 		tls_set_errorx(ctx, "not a server context");
 		goto err;
