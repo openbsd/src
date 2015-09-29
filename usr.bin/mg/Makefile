@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2015/03/17 18:08:52 bcallah Exp $
+# $OpenBSD: Makefile,v 1.31 2015/09/29 03:50:58 tedu Exp $
 
 PROG=	mg
 
@@ -14,9 +14,9 @@ CFLAGS+=-Wall -DREGEX
 
 SRCS=	autoexec.c basic.c bell.c buffer.c cinfo.c dir.c display.c \
 	echo.c extend.c file.c fileio.c funmap.c help.c kbd.c keymap.c \
-	line.c macro.c main.c match.c modes.c paragraph.c random.c \
+	line.c macro.c main.c match.c modes.c paragraph.c \
 	re_search.c region.c search.c spawn.c tty.c ttyio.c ttykbd.c \
-	undo.c version.c window.c word.c yank.c
+	undo.c util.c version.c window.c word.c yank.c
 
 #
 # More or less standalone extensions.
