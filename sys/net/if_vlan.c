@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.142 2015/09/13 10:02:36 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.143 2015/09/29 10:11:40 deraadt Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -733,7 +733,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
  ioctl_failed:
 	LIST_REMOVE(mc, mc_entries);
-	free(mc, M_DEVBUF, 0);
+	free(mc, M_DEVBUF, sizeof *mc);
  alloc_failed:
 	(void)ether_delmulti(ifr, (struct arpcom *)&ifv->ifv_ac);
 
@@ -774,7 +774,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	if ((error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr)) != 0) {
 		/* And forget about this address. */
 		LIST_REMOVE(mc, mc_entries);
-		free(mc, M_DEVBUF, 0);
+		free(mc, M_DEVBUF, sizeof *mc);
 	} else
 		(void)ether_addmulti(ifr, (struct arpcom *)&ifv->ifv_ac);
 	return (error);
@@ -803,7 +803,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 		LIST_REMOVE(mc, mc_entries);
-		free(mc, M_DEVBUF, 0);
+		free(mc, M_DEVBUF, sizeof *mc);
 	}
 }
 

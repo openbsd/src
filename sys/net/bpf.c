@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.127 2015/09/13 17:53:44 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.128 2015/09/29 10:11:40 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1513,7 +1513,7 @@ bpfdetach(struct ifnet *ifp)
 					}
 			}
 
-			free(bp, M_DEVBUF, 0);
+			free(bp, M_DEVBUF, sizeof *bp);
 		} else
 			pbp = &bp->bif_next;
 	}

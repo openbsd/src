@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.117 2015/09/28 08:24:53 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.118 2015/09/29 10:11:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -156,8 +156,7 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	int i, error = 0;
 
-	if ((tr = malloc(sizeof(struct trunk_softc),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+	if ((tr = malloc(sizeof *tr, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
 	tr->tr_unit = unit;
@@ -166,7 +165,7 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 		if (trunk_protos[i].ti_proto == TRUNK_PROTO_DEFAULT) {
 			tr->tr_proto = trunk_protos[i].ti_proto;
 			if ((error = trunk_protos[i].ti_attach(tr)) != 0) {
-				free(tr, M_DEVBUF, 0);
+				free(tr, M_DEVBUF, sizeof *tr);
 				return (error);
 			}
 			break;
@@ -231,7 +230,7 @@ trunk_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	SLIST_REMOVE(&trunk_list, tr, trunk_softc, tr_entries);
-	free(tr, M_DEVBUF, 0);
+	free(tr, M_DEVBUF, sizeof *tr);
 
 	splx(s);
 
@@ -323,8 +322,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	if ((error = ifpromisc(ifp, 1)) != 0)
 		return (error);
 
-	if ((tp = malloc(sizeof(struct trunk_port),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+	if ((tp = malloc(sizeof *tp, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
 	/* Check if port is a stacked trunk */
@@ -333,7 +331,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 			tp->tp_flags |= TRUNK_PORT_STACK;
 			if (trunk_port_checkstacking(tr_ptr) >=
 			    TRUNK_MAX_STACKING) {
-				free(tp, M_DEVBUF, 0);
+				free(tp, M_DEVBUF, sizeof *tp);
 				return (E2BIG);
 			}
 		}
@@ -466,7 +464,7 @@ trunk_port_destroy(struct trunk_port *tp)
 	/* Reset the port lladdr */
 	trunk_port_lladdr(tp, tp->tp_lladdr);
 
-	free(tp, M_DEVBUF, 0);
+	free(tp, M_DEVBUF, sizeof *tp);
 
 	/* Update trunk capabilities */
 	tr->tr_capabilities = trunk_capabilities(tr);
@@ -1417,8 +1415,8 @@ int
 trunk_lb_detach(struct trunk_softc *tr)
 {
 	struct trunk_lb *lb = (struct trunk_lb *)tr->tr_psc;
-	if (lb != NULL)
-		free(lb, M_DEVBUF, 0);
+
+	free(lb, M_DEVBUF, sizeof *lb);
 	return (0);
 }
 

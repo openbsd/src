@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.27 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.28 2015/09/29 10:11:40 deraadt Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -308,13 +308,14 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 			nwords++;
 
 		if (ifmr->ifm_count != 0) {
-			size_t minwords;
+			size_t minwords, ksiz;
 			uint64_t *kptr;
 
 			minwords = nwords > (size_t)ifmr->ifm_count ?
 			    (size_t)ifmr->ifm_count : nwords;
 			kptr = mallocarray(nwords, sizeof(*kptr), M_TEMP,
 			    M_WAITOK | M_ZERO);
+			ksiz = nwords * sizeof(*kptr);
 			/*
 			 * Get the media words from the interface's list.
 			 */
@@ -327,7 +328,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 				    nwords * sizeof(*kptr));
 			else
 				error = E2BIG;
-			free(kptr, M_TEMP, 0);
+			free(kptr, M_TEMP, ksiz);
 		}
 		ifmr->ifm_count = nwords;
 		break;
@@ -380,7 +381,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, uint64_t inst)
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-			free(ife, M_IFADDR, 0);
+			free(ife, M_IFADDR, sizeof *ife);
 		}
 	}
 }
