@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.27 2015/08/20 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.28 2015/09/29 03:19:24 guenther Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ main(int argc, char **argv)
 		err(1, "cannot read %s", _PATH_UTMP);
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
-	/* NOSTRICT */
 	while (fread(&utmp, sizeof(utmp), 1, fp) == 1) {
 		if (!utmp.ut_name[0])
 			continue;

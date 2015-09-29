@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.13 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.14 2015/09/29 03:19:24 guenther Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -812,7 +812,6 @@ fp_common:
 			 * defined manner.''
 			 *	-- ANSI X3J11
 			 */
-			/* NOSTRICT */
 			_umax = (u_long)GETARG(void *);
 			base = HEX;
 			xdigs = xdigs_lower;

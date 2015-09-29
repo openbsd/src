@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.99 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.100 2015/09/29 03:19:24 guenther Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -640,7 +640,6 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 #endif	/*__vax__*/
 }
 
-/*VARARGS*/
 void
 fatal(const char *fmt, ...)
 {

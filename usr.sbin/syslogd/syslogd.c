@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.189 2015/09/12 13:50:29 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.190 2015/09/29 03:19:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1799,8 +1799,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 		reenter = 0;
 		return;
 	}
-	/* NOSTRICT */
-	while (fread((char *)&ut, sizeof(ut), 1, uf) == 1) {
+	while (fread(&ut, sizeof(ut), 1, uf) == 1) {
 		if (ut.ut_name[0] == '\0')
 			continue;
 		/* must use strncpy since ut_* may not be NUL terminated */
