@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.10 2015/09/26 21:51:58 jasper Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.11 2015/09/29 02:07:49 guenther Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -408,7 +408,7 @@ do_cscope(int i)
 
 	if (curtoken(0, 1, pattern) == FALSE)
 		return (FALSE);
-	p = eread(csprompt[i], pattern, MAX_TOKEN, EFNEW | EFCR | EFDEF);
+	p = eread("%s", pattern, MAX_TOKEN, EFNEW | EFCR | EFDEF, csprompt[i]);
 	if (p == NULL)
 		return (ABORT);
 	else if (p[0] == '\0')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.59 2015/05/08 12:35:08 bcallah Exp $	*/
+/*	$OpenBSD: echo.c,v 1.60 2015/09/29 02:07:49 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,10 +22,12 @@
 #include "key.h"
 #include "macro.h"
 
-static char	*veread(const char *, char *, size_t, int, va_list);
+static char	*veread(const char *, char *, size_t, int, va_list)
+			__attribute__((__format__ (printf, 1, 0)));
 static int	 complt(int, int, char *, size_t, int, int *);
 static int	 complt_list(int, char *, int);
-static void	 eformat(const char *, va_list);
+static void	 eformat(const char *, va_list)
+			__attribute__((__format__ (printf, 1, 0)));;
 static void	 eputi(int, int);
 static void	 eputl(long, int);
 static void	 eputs(const char *);
@@ -154,7 +156,6 @@ eyesno(const char *sp)
  * XXX: When checking for an empty return value, always check rep, *not* buf
  * as buf may be freed in pathological cases.
  */
-/* VARARGS */
 char *
 eread(const char *fmt, char *buf, size_t nbuf, int flag, ...)
 {
@@ -801,7 +802,6 @@ getxtra(struct list *lp1, struct list *lp2, int cpos, int wflag)
  * line.  The formatting is done by a call to the standard formatting
  * routine.
  */
-/* VARARGS */
 void
 ewprintf(const char *fmt, ...)
 {
