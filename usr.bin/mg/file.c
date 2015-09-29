@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.97 2015/03/25 12:25:36 bcallah Exp $	*/
+/*	$OpenBSD: file.c,v 1.98 2015/09/29 08:53:53 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -19,6 +19,8 @@
 #include "def.h"
 
 size_t xdirname(char *, const char *, size_t);
+
+static	int do_dired(char *);
 
 /*
  * Insert a file into the current buffer.  Real easy - just call the
@@ -45,10 +47,10 @@ fileinsert(int f, int n)
 }
 
 /*
- * Select a file for editing.  Look around to see if you can find the file
- * in another buffer; if you can find it, just switch to the buffer.  If
- * you cannot find the file, create a new buffer, read in the text, and
- * switch to the new buffer.
+ * Select a file for editing.  If the file is a directory, invoke dired.
+ * Otherwise, look around to see if you can find the file in another buffer;
+ * if you can find it, just switch to the buffer.  If you cannot find the
+ * file, create a new buffer, read in the text, and switch to the new buffer.
  */
 /* ARGSUSED */
 int
@@ -69,6 +71,8 @@ filevisit(int f, int n)
 	adjf = adjustname(fname, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
+	if (fisdir(adjf) == TRUE)
+		return (do_dired(adjf));
 	if ((bp = findbuffer(adjf)) == NULL)
 		return (FALSE);
 	curbp = bp;
@@ -112,6 +116,8 @@ filevisitalt(int f, int n)
 	adjf = adjustname(fname, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
+	if (fisdir(adjf) == TRUE)
+		return (do_dired(adjf));
 	if ((bp = findbuffer(adjf)) == NULL)
 		return (FALSE);
 	curbp = bp;
@@ -160,6 +166,8 @@ poptofile(int f, int n)
 	adjf = adjustname(fname, TRUE);
 	if (adjf == NULL)
 		return (FALSE);
+	if (fisdir(adjf) == TRUE)
+		return (do_dired(adjf));
 	if ((bp = findbuffer(adjf)) == NULL)
 		return (FALSE);
 	if (bp == curbp)
@@ -739,4 +747,18 @@ xbasename(char *bp, const char *path, size_t bplen)
 
 	(void)strlcpy(ts, path, NFILEN);
 	return (strlcpy(bp, basename(ts), bplen));
+}
+
+/*
+ * The adjusted file name refers to a directory, so open dired mode.
+ */
+int
+do_dired(char *adjf)
+{
+	struct buffer	*bp;
+
+	if ((bp = dired_(adjf)) == FALSE)
+		return (FALSE);
+	curbp = bp;
+	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
