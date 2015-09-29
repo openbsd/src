@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.22 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.23 2015/09/29 13:54:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,7 +140,7 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 	}
 
 	if ((a == NULL) || ((*a) == NULL)) {
-		if ((ret = M_ASN1_BIT_STRING_new()) == NULL)
+		if ((ret = ASN1_BIT_STRING_new()) == NULL)
 			return (NULL);
 	} else
 		ret = (*a);
@@ -178,7 +178,7 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 err:
 	ASN1err(ASN1_F_C2I_ASN1_BIT_STRING, i);
 	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-		M_ASN1_BIT_STRING_free(ret);
+		ASN1_BIT_STRING_free(ret);
 	return (NULL);
 }
 

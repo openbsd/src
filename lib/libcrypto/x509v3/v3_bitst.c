@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_bitst.c,v 1.11 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_bitst.c,v 1.12 2015/09/29 13:54:40 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -144,7 +144,7 @@ v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	int i;
 	BIT_STRING_BITNAME *bnam;
 
-	if (!(bs = M_ASN1_BIT_STRING_new())) {
+	if (!(bs = ASN1_BIT_STRING_new())) {
 		X509V3err(X509V3_F_V2I_ASN1_BIT_STRING, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -157,7 +157,7 @@ v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 				    bnam->bitnum, 1)) {
 					X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
 					    ERR_R_MALLOC_FAILURE);
-					M_ASN1_BIT_STRING_free(bs);
+					ASN1_BIT_STRING_free(bs);
 					return NULL;
 				}
 				break;
@@ -167,7 +167,7 @@ v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
 			    X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT);
 			X509V3_conf_err(val);
-			M_ASN1_BIT_STRING_free(bs);
+			ASN1_BIT_STRING_free(bs);
 			return NULL;
 		}
 	}
