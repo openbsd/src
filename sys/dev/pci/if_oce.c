@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.86 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.87 2015/09/29 17:04:20 chris Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -602,8 +602,8 @@ oce_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, oce_intr, sc,
-	    sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET | IPL_MPSAFE,
+	    oce_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");
 		if (intrstr != NULL)
@@ -1145,6 +1145,10 @@ oce_stop(struct oce_softc *sc)
 	/* Stop intrs and finish any bottom halves pending */
 	oce_intr_disable(sc);
 
+	intr_barrier(sc->sc_ih);
+
+	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
+
 	/* Invalidate any pending cq and eq entries */
 	OCE_EQ_FOREACH(sc, eq, i)
 		oce_drain_eq(eq);
@@ -1443,6 +1447,7 @@ oce_intr_wq(void *arg)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int ncqe = 0;
 
+	KERNEL_LOCK();
 	oce_dma_sync(&cq->ring->dma, BUS_DMASYNC_POSTREAD);
 	OCE_RING_FOREACH(cq->ring, cqe, WQ_CQE_VALID(cqe)) {
 		oce_txeof(wq);
@@ -1459,6 +1464,8 @@ oce_intr_wq(void *arg)
 	}
 	if (wq->ring->nused == 0)
 		ifp->if_timer = 0;
+
+	KERNEL_UNLOCK();
 
 	if (ncqe)
 		oce_arm_cq(cq, ncqe, FALSE);
@@ -1551,6 +1558,9 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 	struct mbuf *m = NULL, *tail = NULL;
 	int i, len, frag_len;
 	uint16_t vtag;
+
+	if (if_rxr_inuse(&rq->rxring) == 0)
+		return;
 
 	len = cqe->u0.s.pkt_size;
 
@@ -1892,12 +1902,14 @@ oce_intr_mq(void *arg)
 void
 oce_link_event(struct oce_softc *sc, struct oce_async_cqe_link_state *acqe)
 {
+	KERNEL_LOCK();
 	/* Update Link status */
 	sc->sc_link_up = ((acqe->u0.s.link_status & ~ASYNC_EVENT_LOGICAL) ==
 	    ASYNC_EVENT_LINK_UP);
 	/* Update speed */
 	sc->sc_link_speed = acqe->u0.s.speed;
 	oce_link_status(sc);
+	KERNEL_UNLOCK();
 }
 
 int
