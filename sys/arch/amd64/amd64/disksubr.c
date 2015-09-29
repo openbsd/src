@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.76 2015/09/27 18:03:18 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.77 2015/09/29 20:24:25 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #endif
 
 #include <machine/biosvar.h>
+
+bios_diskinfo_t *bios_getdiskinfo(dev_t dev);
 
 /*
  * Attempt to read a disk label from a device
