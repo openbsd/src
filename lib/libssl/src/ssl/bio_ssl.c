@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.21 2014/11/16 14:12:47 jsing Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.22 2015/09/29 18:08:57 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,7 @@ typedef struct bio_ssl_st {
 	unsigned long renegotiate_count;
 	unsigned long byte_count;
 	unsigned long renegotiate_timeout;
-	unsigned long last_time;
+	time_t last_time;
 } BIO_SSL;
 
 static BIO_METHOD methods_sslp = {
@@ -169,9 +169,9 @@ ssl_read(BIO *b, char *out, int outl)
 			}
 		}
 		if ((sb->renegotiate_timeout > 0) && (!r)) {
-			unsigned long tm;
+			time_t tm;
 
-			tm = (unsigned long)time(NULL);
+			tm = time(NULL);
 			if (tm > sb->last_time + sb->renegotiate_timeout) {
 				sb->last_time = tm;
 				sb->num_renegotiates++;
@@ -242,9 +242,9 @@ ssl_write(BIO *b, const char *out, int outl)
 			}
 		}
 		if ((bs->renegotiate_timeout > 0) && (!r)) {
-			unsigned long tm;
+			time_t tm;
 
-			tm = (unsigned long)time(NULL);
+			tm = time(NULL);
 			if (tm > bs->last_time + bs->renegotiate_timeout) {
 				bs->last_time = tm;
 				bs->num_renegotiates++;
@@ -319,7 +319,7 @@ ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 		if (num < 60)
 			num = 5;
 		bs->renegotiate_timeout = (unsigned long)num;
-		bs->last_time = (unsigned long)time(NULL);
+		bs->last_time = time(NULL);
 		break;
 	case BIO_C_SET_SSL_RENEGOTIATE_BYTES:
 		ret = bs->renegotiate_count;
