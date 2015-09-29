@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.463 2015/09/13 13:29:22 rpe Exp $
+#	$OpenBSD: rc,v 1.464 2015/09/29 17:40:56 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -267,13 +267,15 @@ rm -f /fastboot		# XXX (root now writeable)
 echo 'setting tty flags'
 ttyflags -a
 
-if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
-	kbd `cat /etc/kbdtype`
+# Set keyboard encoding.
+if [[ -x /sbin/kbd && -s /etc/kbdtype ]]; then
+	kbd "$(cat /etc/kbdtype)"
 fi
 
 wsconsctl_conf
 
-if [ X"${pf}" != X"NO" ]; then
+# Set initial temporary pf rule set.
+if [[ $pf != NO ]]; then
 	RULES="block all"
 	RULES="$RULES\npass on lo0"
 	RULES="$RULES\npass in proto tcp from any to any port ssh keep state"
@@ -291,7 +293,7 @@ if [ X"${pf}" != X"NO" ]; then
 	fi
 	RULES="$RULES\npass in proto carp keep state (no-sync)"
 	RULES="$RULES\npass out proto carp !received-on any keep state (no-sync)"
-	case `sysctl vfs.mounts.nfs 2>/dev/null` in
+	case $(sysctl vfs.mounts.nfs 2>/dev/null) in
 	*[1-9]*)
 		# Don't kill NFS.
 		RULES="set reassemble yes no-df\n$RULES"
@@ -299,7 +301,7 @@ if [ X"${pf}" != X"NO" ]; then
 		RULES="$RULES\npass out proto { tcp, udp } from any to any port { sunrpc, nfsd } !received-on any"
 		;;
 	esac
-	echo $RULES | pfctl -f -
+	print -- "$RULES" | pfctl -f -
 	pfctl -e
 fi
 
@@ -309,23 +311,28 @@ fill_baddynamic tcp
 
 sysctl_conf
 
-# Set hostname, turn on network.
 echo 'starting network'
+
+# Set carp interlock by increasing the demotion counter.
+# Prevents carp from preempting until the system is booted.
 ifconfig -g carp carpdemote 128
-if [ -f /etc/resolv.conf.save ]; then
+
+# Recover resolv.conf in case dhclient died hard.
+if [[ -f /etc/resolv.conf.save ]]; then
 	mv -f /etc/resolv.conf.save /etc/resolv.conf
 	touch /etc/resolv.conf
 fi
+
 sh /etc/netstart
+
 dmesg >/dev/random	# Any write triggers a rekey.
 
 # Load pf rules and bring up pfsync interface.
-if [ X"${pf}" != X"NO" ]; then
-	if [ -f /etc/pf.conf ]; then
+if [[ $pf != NO ]]; then
+	if [[ -f /etc/pf.conf ]]; then
 		pfctl -f /etc/pf.conf
 	fi
-	# Bring up pfsync after the working ruleset has been loaded.
-	if [ -f /etc/hostname.pfsync0 ]; then
+	if [[ -f /etc/hostname.pfsync0 ]]; then
 		sh /etc/netstart pfsync0
 	fi
 fi
@@ -340,8 +347,7 @@ rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 (cd /var/authpf && rm -rf -- *)
 
-# Save a copy of the boot messages.
-dmesg >/var/run/dmesg.boot
+dmesg >/var/run/dmesg.boot	# Save a copy of the boot messages.
 
 make_keys
 
@@ -351,42 +357,42 @@ start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
 # Load IPsec rules.
-if [ X"${ipsec}" != X"NO" ]; then
-	if [ -f /etc/ipsec.conf ]; then
-		ipsecctl -f /etc/ipsec.conf
-	fi
+if [[ $ipsec != NO && -f /etc/ipsec.conf ]]; then
+	ipsecctl -f /etc/ipsec.conf
 fi
 
 echo -n 'starting RPC daemons:'
 start_daemon portmap ypldap
-if [ X"`domainname`" != X"" ]; then
+if [[ -n $(domainname) ]]; then
 	start_daemon ypserv ypbind yppasswdd
 fi
 start_daemon mountd nfsd lockd statd amd
 echo '.'
 
+# Check and mount remaining file systems and enable additional swap.
 mount -a
 swapctl -A -t noblk
-
-# Check and mount networked filesystems.
 do_fsck -N
 mount -a -N
 
 # /var/crash should be a directory or a symbolic link to the crash directory
 # if core dumps are to be saved.
-if [ -d /var/crash ]; then
-	savecore ${savecore_flags} /var/crash
+if [[ -d /var/crash ]]; then
+	savecore $savecore_flags /var/crash
 fi
 
-if [ X"${check_quotas}" = X"YES" ]; then
+if [[ $check_quotas == YES ]]; then
 	echo -n 'checking quotas:'
 	quotacheck -a
 	echo ' done.'
 	quotaon -a
 fi
 
-kvm_mkdb			# build kvm(3) databases
+# Build kvm(3) and /dev databases.
+kvm_mkdb
 dev_mkdb
+
+# Set proper permission for the tty device files.
 chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
 chown root:wheel /dev/tty[pqrstuvwxyzPQRST]*
 
