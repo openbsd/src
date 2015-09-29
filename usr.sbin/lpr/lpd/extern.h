@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2013/12/10 16:38:04 naddy Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2015/09/29 02:37:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,6 +32,8 @@
  */
 
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <stdio.h>
 #include <termios.h>
 
 /*
@@ -48,6 +50,7 @@ struct info {
 	struct winsize win;                     /* window info */
 }; 
 
+int	   allowedhost(FILE *, struct sockaddr *, socklen_t);
 int	   ksearch(char ***, struct info *);
 int	   msearch(char ***, struct info *);
 void       printjob(void);

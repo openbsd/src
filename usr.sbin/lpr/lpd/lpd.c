@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.58 2015/02/09 23:00:14 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.59 2015/09/29 02:37:29 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -110,9 +110,6 @@ static void		chkhost(struct sockaddr *);
 static int		ckqueue(char *);
 static __dead void	usage(void);
 static int		*socksetup(int, int, const char *);
-
-extern int		__ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
-			    const char *, const char *);
 
 /* unused, needed for lpc */
 volatile sig_atomic_t gotintr;
@@ -650,8 +647,6 @@ ckqueue(char *cap)
 	return (0);
 }
 
-#define DUMMY ":nobody::"
-
 /*
  * Check to see if the from host has access to the line printer.
  */
@@ -715,7 +710,7 @@ chkhost(struct sockaddr *f)
 	hostf = fopen(_PATH_HOSTSLPD, "r");
 	PRIV_END;
 	if (hostf) {
-		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
+		if (allowedhost(hostf, f, f->sa_len) == 0) {
 			(void)fclose(hostf);
 			return;
 		}
