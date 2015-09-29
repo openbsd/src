@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2013/11/21 15:54:46 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2015/09/29 20:11:36 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -120,41 +120,18 @@ strrpl(char *str, size_t size, char *match, char *value)
  * os2+cyg	../foo		no		no		yes
  * cyg 		//foo		yes		yes		no
  */
-#ifdef OS2
-# define PATHSEP	';'
-# define DIRSEP		'/'	/* even though \ is native */
-# define DIRSEPSTR	"\\"
-# define ISDIRSEP(c)    ((c) == '\\' || (c) == '/')
-# define ISABSPATH(s)	(((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])))
-# define ISROOTEDPATH(s) (ISDIRSEP((s)[0]) || ISABSPATH(s))
-# define ISRELPATH(s)	(!(s)[0] || ((s)[1] != ':' && !ISDIRSEP((s)[0])))
-# define FILECHCONV(c)	(isascii(c) && isupper(c) ? tolower(c) : c)
-# define FILECMP(s1, s2) stricmp(s1, s2)
-# define FILENCMP(s1, s2, n) strnicmp(s1, s2, n)
-extern char *ksh_strchr_dirsep(const char *path);
-extern char *ksh_strrchr_dirsep(const char *path);
-# define chdir		_chdir2
-# define getcwd		_getcwd2
-#else
 # define PATHSEP	':'
 # define DIRSEP		'/'
 # define DIRSEPSTR	"/"
 # define ISDIRSEP(c)    ((c) == '/')
-#ifdef __CYGWIN__
-#  define ISABSPATH(s) \
-	(((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])) || ISDIRSEP((s)[0]))
-#  define ISRELPATH(s) (!(s)[0] || ((s)[1] != ':' && !ISDIRSEP((s)[0])))
-#else /* __CYGWIN__ */
 # define ISABSPATH(s)	ISDIRSEP((s)[0])
 # define ISRELPATH(s)	(!ISABSPATH(s))
-#endif /* __CYGWIN__ */
 # define ISROOTEDPATH(s) ISABSPATH(s)
 # define FILECHCONV(c)	c
 # define FILECMP(s1, s2) strcmp(s1, s2)
 # define FILENCMP(s1, s2, n) strncmp(s1, s2, n)
 # define ksh_strchr_dirsep(p)   strchr(p, DIRSEP)
 # define ksh_strrchr_dirsep(p)  strrchr(p, DIRSEP)
-#endif
 
 /* simplify_path is from pdksh */
 
@@ -177,10 +154,6 @@ simplify_path(path)
 
 	if ((isrooted = ISROOTEDPATH(path)))
 		very_start++;
-#if defined (OS2) || defined (__CYGWIN__)
-	if (path[0] && path[1] == ':')	/* skip a: */
-		very_start += 2;
-#endif /* OS2 || __CYGWIN__ */
 
 	/* Before			After
 	 *  /foo/			/foo
@@ -197,11 +170,6 @@ simplify_path(path)
 	 *  a:foo/../../blah		a:../blah
 	 */
 
-#ifdef __CYGWIN__
-	/* preserve leading double-slash on pathnames (for UNC paths) */
-	if (path[0] && ISDIRSEP(path[0]) && path[1] && ISDIRSEP(path[1]))
-		very_start++;
-#endif /* __CYGWIN__ */
 
 	for (cur = t = start = very_start; ; ) {
 		/* treat multiple '/'s as one '/' */
