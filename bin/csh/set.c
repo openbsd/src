@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.15 2015/06/17 03:48:21 deraadt Exp $	*/
+/*	$OpenBSD: set.c,v 1.16 2015/09/29 20:10:41 guenther Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@ static struct varent
 		*getvx(Char *, int);
 static Char	*xset(Char *, Char ***);
 static Char	*operate(int, Char *, Char *);
-static void	 putn1(int);
 static struct varent
 		*madrof(Char *, struct varent *);
 static void	 unsetv1(struct varent *);
@@ -326,46 +325,16 @@ operate(int op, Char *vp, Char *p)
     return (putn(i));
 }
 
-static Char *putp;
-
 Char   *
 putn(int n)
 {
-    int     num;
-    static Char number[15];
+    char number[15];
+    int i;
 
-    putp = number;
-    if (n < 0) {
-	n = -n;
-	*putp++ = '-';
-    }
-    num = 2;			/* confuse lint */
-    if (sizeof(int) == num && ((unsigned int) n) == 0x8000) {
-	*putp++ = '3';
-	n = 2768;
-#ifdef pdp11
-    }
-#else
-    }
-    else {
-	num = 4;		/* confuse lint */
-	if (sizeof(int) == num && ((unsigned int) n) == 0x80000000) {
-	    *putp++ = '2';
-	    n = 147483648;
-	}
-    }
-#endif
-    putn1(n);
-    *putp = 0;
-    return (Strsave(number));
-}
-
-static void
-putn1(int n)
-{
-    if (n > 9)
-	putn1(n / 10);
-    *putp++ = n % 10 + '0';
+    i = snprintf(number, sizeof(number), "%d", n);
+    if (i == -1 || i >= sizeof(number))
+	return (STRNULL);
+    return (SAVE(number));
 }
 
 int
