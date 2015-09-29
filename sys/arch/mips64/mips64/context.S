@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.53 2014/03/22 00:01:04 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.54 2015/09/29 17:07:53 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -287,7 +287,8 @@ ctx3:
 #if PG_ASID_SHIFT != 0
 	dsll	v0, PG_ASID_SHIFT
 #endif
-	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
+	DMTC0	v0, COP_0_TLB_HI		# init high entry (tlbid)
+	MTC0_HAZARD
 #endif	/* } UPAGES > 1 */
 
 #ifdef CPU_LOONGSON2
