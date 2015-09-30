@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.9 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.10 2015/09/30 17:30:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -69,7 +69,7 @@ X509_CRL_set_version(X509_CRL *x, long version)
 	if (x == NULL)
 		return (0);
 	if (x->crl->version == NULL) {
-		if ((x->crl->version = M_ASN1_INTEGER_new()) == NULL)
+		if ((x->crl->version = ASN1_INTEGER_new()) == NULL)
 			return (0);
 	}
 	return (ASN1_INTEGER_set(x->crl->version, version));
@@ -163,9 +163,9 @@ X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial)
 		return (0);
 	in = x->serialNumber;
 	if (in != serial) {
-		in = ASN1_STRING_dup(serial);
+		in = ASN1_INTEGER_dup(serial);
 		if (in != NULL) {
-			M_ASN1_INTEGER_free(x->serialNumber);
+			ASN1_INTEGER_free(x->serialNumber);
 			x->serialNumber = in;
 		}
 	}

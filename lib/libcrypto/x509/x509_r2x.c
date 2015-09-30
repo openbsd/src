@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_r2x.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_r2x.c,v 1.10 2015/09/30 17:30:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,7 +82,7 @@ X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 	xi = ret->cert_info;
 
 	if (sk_X509_ATTRIBUTE_num(r->req_info->attributes) != 0) {
-		if ((xi->version = M_ASN1_INTEGER_new()) == NULL)
+		if ((xi->version = ASN1_INTEGER_new()) == NULL)
 			goto err;
 		if (!ASN1_INTEGER_set(xi->version, 2))
 			goto err;

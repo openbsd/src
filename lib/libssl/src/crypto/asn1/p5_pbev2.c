@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.21 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.22 2015/09/30 17:30:15 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -330,9 +330,9 @@ PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
 	/* If have a key len set it up */
 
 	if (keylen > 0) {
-		if (!(kdf->keylength = M_ASN1_INTEGER_new()))
+		if (!(kdf->keylength = ASN1_INTEGER_new()))
 			goto merr;
-		if (!ASN1_INTEGER_set (kdf->keylength, keylen))
+		if (!ASN1_INTEGER_set(kdf->keylength, keylen))
 			goto merr;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.15 2015/09/10 14:29:22 jsing Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.16 2015/09/30 17:30:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,6 +194,6 @@ err:
 		    ASN1_R_DATA_IS_WRONG);
 	}
 	M_ASN1_OCTET_STRING_free(os);
-	M_ASN1_INTEGER_free(ai);
+	ASN1_INTEGER_free(ai);
 	return (ret);
 }

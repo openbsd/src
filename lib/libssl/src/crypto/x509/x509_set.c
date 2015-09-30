@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.10 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: x509_set.c,v 1.11 2015/09/30 17:30:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,7 @@ X509_set_version(X509 *x, long version)
 	if (x == NULL)
 		return (0);
 	if (x->cert_info->version == NULL) {
-		if ((x->cert_info->version = M_ASN1_INTEGER_new()) == NULL)
+		if ((x->cert_info->version = ASN1_INTEGER_new()) == NULL)
 			return (0);
 	}
 	return (ASN1_INTEGER_set(x->cert_info->version, version));
@@ -84,9 +84,9 @@ X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 		return (0);
 	in = x->cert_info->serialNumber;
 	if (in != serial) {
-		in = ASN1_STRING_dup(serial);
+		in = ASN1_INTEGER_dup(serial);
 		if (in != NULL) {
-			M_ASN1_INTEGER_free(x->cert_info->serialNumber);
+			ASN1_INTEGER_free(x->cert_info->serialNumber);
 			x->cert_info->serialNumber = in;
 		}
 	}

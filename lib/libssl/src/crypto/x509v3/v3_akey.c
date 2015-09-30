@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.15 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.16 2015/09/30 17:30:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -175,7 +175,7 @@ v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 	if ((issuer && !ikeyid) || (issuer == 2)) {
 		isname = X509_NAME_dup(X509_get_issuer_name(cert));
-		serial = ASN1_STRING_dup(X509_get_serialNumber(cert));
+		serial = ASN1_INTEGER_dup(X509_get_serialNumber(cert));
 		if (!isname || !serial) {
 			X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,
 			    X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);
@@ -209,7 +209,7 @@ err:
 	GENERAL_NAME_free(gen);
 	sk_GENERAL_NAME_free(gens);
 	X509_NAME_free(isname);
-	M_ASN1_INTEGER_free(serial);
+	ASN1_INTEGER_free(serial);
 	M_ASN1_OCTET_STRING_free(ikeyid);
 	return NULL;
 }

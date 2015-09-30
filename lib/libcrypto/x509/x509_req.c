@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.17 2015/03/15 22:52:17 doug Exp $ */
+/* $OpenBSD: x509_req.c,v 1.18 2015/09/30 17:30:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,7 @@ X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
 	ri = ret->req_info;
 
-	if ((ri->version = M_ASN1_INTEGER_new()) == NULL)
+	if ((ri->version = ASN1_INTEGER_new()) == NULL)
 		goto err;
 	if (ASN1_INTEGER_set(ri->version, 0) == 0)
 		goto err;

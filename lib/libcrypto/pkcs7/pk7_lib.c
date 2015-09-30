@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.16 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.17 2015/09/30 17:30:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -378,7 +378,7 @@ PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 
 	/* because ASN1_INTEGER_set is used to set a 'long' we will do
 	 * things the ugly way. */
-	M_ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
+	ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
 	if (!(p7i->issuer_and_serial->serial =
 	    ASN1_STRING_dup(X509_get_serialNumber(x509))))
 		goto err;
@@ -543,7 +543,7 @@ PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 	    X509_get_issuer_name(x509)))
 		return 0;
 
-	M_ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
+	ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
 	if (!(p7i->issuer_and_serial->serial =
 	    ASN1_STRING_dup(X509_get_serialNumber(x509))))
 		return 0;
