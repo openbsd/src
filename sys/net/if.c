@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.381 2015/09/27 16:50:03 stsp Exp $	*/
+/*	$OpenBSD: if.c,v 1.382 2015/09/30 11:33:51 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -279,11 +279,7 @@ if_idxmap_insert(struct ifnet *ifp)
 	struct srp *map;
 	unsigned int index, i;
 
-	/*
-	 * give the ifp an initial refcnt of 1 to ensure it will not
-	 * be freed until if_idxmap_remove returns.
-	 */
-	ifp->if_refcnt = 1;
+	refcnt_init(&ifp->if_refcnt);
 
 	/* the kernel lock guarantees serialised modifications to if_idxmap */
 	KERNEL_ASSERT_LOCKED();
@@ -345,7 +341,7 @@ if_idxmap_remove(struct ifnet *ifp)
 {
 	struct if_map *if_map;
 	struct srp *map;
-	unsigned int index, r;
+	unsigned int index;
 
 	index = ifp->if_index;
 
@@ -362,10 +358,8 @@ if_idxmap_remove(struct ifnet *ifp)
 	if_idxmap.count--;
 	/* end of if_idxmap modifications */
 
-	/* release the initial ifp refcnt */
-	r = atomic_dec_int_nv(&ifp->if_refcnt);
-	if (r != 0)
-		printf("%s: refcnt %u\n", ifp->if_xname, r);
+	/* sleep until the last reference is released */
+	refcnt_finalize(&ifp->if_refcnt, "ifidxrm");
 }
 
 void
@@ -1554,7 +1548,7 @@ if_get(unsigned int index)
 struct ifnet *
 if_ref(struct ifnet *ifp)
 {
-	atomic_inc_int(&ifp->if_refcnt);
+	refcnt_take(&ifp->if_refcnt);
 
 	return (ifp);
 }
@@ -1565,7 +1559,7 @@ if_put(struct ifnet *ifp)
 	if (ifp == NULL)
 		return;
 
-	atomic_dec_int(&ifp->if_refcnt);
+	refcnt_rele_wake(&ifp->if_refcnt);
 }
 
 int
