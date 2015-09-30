@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.138 2015/09/30 09:45:20 sthen Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.139 2015/09/30 12:19:34 sthen Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -595,23 +595,9 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		s = splnet();
 	}
 
-	/*
-	 * Put low delay, telnet, rlogin and ftp control packets
-	 * in front of the queue.
-	 */
 	if (dst->sa_family == AF_INET) {
 		struct ip *ip = NULL;
-		struct tcphdr *th = NULL;
 
-		if (m->m_len >= sizeof(struct ip)) {
-			ip = mtod(m, struct ip *);
-			if (ip->ip_p == IPPROTO_TCP &&
-			    m->m_len >= sizeof(struct ip) + (ip->ip_hl << 2) +
-			    sizeof(struct tcphdr)) {
-				th = (struct tcphdr *)
-				    ((caddr_t)ip + (ip->ip_hl << 2));
-			}
-		}
 		/*
 		 * When using dynamic local IP address assignment by using
 		 * 0.0.0.0 as a local address, the first TCP session will
