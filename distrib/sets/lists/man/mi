@@ -1254,6 +1254,7 @@
 ./usr/share/man/man4/armv7/vexpress.4
 ./usr/share/man/man4/arp.4
 ./usr/share/man/man4/asbtm.4
+./usr/share/man/man4/asmc.4
 ./usr/share/man/man4/ast.4
 ./usr/share/man/man4/atapiscsi.4
 ./usr/share/man/man4/ath.4
