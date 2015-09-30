@@ -1,7 +1,6 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.137 2015/08/24 15:58:35 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.138 2015/09/30 09:45:20 sthen Exp $	*/
 /*
- * Synchronous PPP/Cisco link level subroutines.
- * Keepalive protocol implemented in both Cisco and PPP modes.
+ * Synchronous PPP link level subroutines.
  *
  * Copyright (C) 1994-1996 Cronyx Engineering Ltd.
  * Author: Serge Vakulenko, <vak@cronyx.ru>
@@ -93,7 +92,7 @@
  *   <if-name><unit>: <proto-name> <additional info...>
  *
  * with <if-name><unit> being something like "bppp0", and <proto-name>
- * being one of "lcp", "ipcp", "cisco", "chap", "pap", etc.
+ * being one of "lcp", "ipcp", "chap", "pap", etc.
  */
 
 #define IFF_PASSIVE	IFF_LINK0	/* wait passively for connection */
@@ -151,13 +150,6 @@
 
 #define CHAP_MD5		5	/* hash algorithm - MD5 */
 
-#define CISCO_MULTICAST		0x8f	/* Cisco multicast address */
-#define CISCO_UNICAST		0x0f	/* Cisco unicast address */
-#define CISCO_KEEPALIVE		0x8035	/* Cisco keepalive protocol */
-#define CISCO_ADDR_REQ		0	/* Cisco address request */
-#define CISCO_ADDR_REPLY	1	/* Cisco address reply */
-#define CISCO_KEEPALIVE_REQ	2	/* Cisco keepalive request */
-
 /* states are named and numbered according to RFC 1661 */
 #define STATE_INITIAL	0
 #define STATE_STARTING	1
@@ -183,16 +175,6 @@ struct lcp_header {
 	u_short len;
 };
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
-
-struct cisco_packet {
-	u_int32_t type;
-	u_int32_t par1;
-	u_int32_t par2;
-	u_short rel;
-	u_short time0;
-	u_short time1;
-};
-#define CISCO_PACKET_LEN 18
 
 /*
  * We follow the spelling and capitalization of RFC 1661 here, to make
@@ -239,9 +221,6 @@ static struct timeout keepalive_ch;
 
 int sppp_output(struct ifnet *ifp, struct mbuf *m,
 		       struct sockaddr *dst, struct rtentry *rt);
-
-void sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2);
-void sppp_cisco_input(struct sppp *sp, struct mbuf *m);
 
 void sppp_cp_input(const struct cp *cp, struct sppp *sp,
 			  struct mbuf *m);
@@ -495,15 +474,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_ALLSTATIONS:
 		if (ht.control != PPP_UI)
 			goto invalid;
-		if (sp->pp_flags & PP_CISCO) {
-			if (debug)
-				log(LOG_DEBUG,
-				    SPP_FMT "PPP packet in Cisco mode "
-				    "<addr=0x%x ctrl=0x%x proto=0x%x>\n",
-				    SPP_ARGS(ifp),
-				    ht.address, ht.control, ntohs(ht.protocol));
-			goto drop;
-		}
 		switch (ntohs (ht.protocol)) {
 		default:
 			if (sp->state[IDX_LCP] == STATE_OPENED)
@@ -553,36 +523,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				inq = &ip6intrq;
 				sp->pp_last_activity = tv.tv_sec;
 			}
-			break;
-#endif
-		}
-		break;
-	case CISCO_MULTICAST:
-	case CISCO_UNICAST:
-		/* Don't check the control field here (RFC 1547). */
-		if (! (sp->pp_flags & PP_CISCO)) {
-			if (debug)
-				log(LOG_DEBUG,
-				    SPP_FMT "Cisco packet in PPP mode "
-				    "<addr=0x%x ctrl=0x%x proto=0x%x>\n",
-				    SPP_ARGS(ifp),
-				    ht.address, ht.control, ntohs(ht.protocol));
-			goto drop;
-		}
-		switch (ntohs (ht.protocol)) {
-		default:
-			++ifp->if_noproto;
-			goto invalid;
-		case CISCO_KEEPALIVE:
-			sppp_cisco_input ((struct sppp*) ifp, m);
-			m_freem (m);
-			return;
-		case ETHERTYPE_IP:
-			inq = &ipintrq;
-			break;
-#ifdef INET6
-		case ETHERTYPE_IPV6:
-			inq = &ip6intrq;
 			break;
 #endif
 		}
@@ -714,52 +654,39 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	 * (albeit due to the implementation it's always enough)
 	 */
 	h = mtod (m, struct ppp_header*);
-	if (sp->pp_flags & PP_CISCO) {
-		h->address = CISCO_UNICAST;        /* unicast address */
-		h->control = 0;
-	} else {
-		h->address = PPP_ALLSTATIONS;        /* broadcast address */
-		h->control = PPP_UI;                 /* Unnumbered Info */
-	}
+	h->address = PPP_ALLSTATIONS;        /* broadcast address */
+	h->control = PPP_UI;                 /* Unnumbered Info */
 
  skip_header:
 	switch (dst->sa_family) {
 	case AF_INET:   /* Internet Protocol */
-		if (sp->pp_flags & PP_CISCO)
-			protocol = htons (ETHERTYPE_IP);
-		else {
-			/*
-			 * Don't choke with an ENETDOWN early.  It's
-			 * possible that we just started dialing out,
-			 * so don't drop the packet immediately.  If
-			 * we notice that we run out of buffer space
-			 * below, we will however remember that we are
-			 * not ready to carry IP packets, and return
-			 * ENETDOWN, as opposed to ENOBUFS.
-			 */
-			protocol = htons(PPP_IP);
-			if (sp->state[IDX_IPCP] != STATE_OPENED)
-				rv = ENETDOWN;
-		}
+		/*
+		 * Don't choke with an ENETDOWN early.  It's
+		 * possible that we just started dialing out,
+		 * so don't drop the packet immediately.  If
+		 * we notice that we run out of buffer space
+		 * below, we will however remember that we are
+		 * not ready to carry IP packets, and return
+		 * ENETDOWN, as opposed to ENOBUFS.
+		 */
+		protocol = htons(PPP_IP);
+		if (sp->state[IDX_IPCP] != STATE_OPENED)
+			rv = ENETDOWN;
 		break;
 #ifdef INET6
 	case AF_INET6:   /* Internet Protocol v6 */
-		if (sp->pp_flags & PP_CISCO)
-			protocol = htons (ETHERTYPE_IPV6);
-		else {
-			/*
-			 * Don't choke with an ENETDOWN early.  It's
-			 * possible that we just started dialing out,
-			 * so don't drop the packet immediately.  If
-			 * we notice that we run out of buffer space
-			 * below, we will however remember that we are
-			 * not ready to carry IPv6 packets, and return
-			 * ENETDOWN, as opposed to ENOBUFS.
-			 */
-			protocol = htons(PPP_IPV6);
-			if (sp->state[IDX_IPV6CP] != STATE_OPENED)
-				rv = ENETDOWN;
-		}
+		/*
+		 * Don't choke with an ENETDOWN early.  It's
+		 * possible that we just started dialing out,
+		 * so don't drop the packet immediately.  If
+		 * we notice that we run out of buffer space
+		 * below, we will however remember that we are
+		 * not ready to carry IPv6 packets, and return
+		 * ENETDOWN, as opposed to ENOBUFS.
+		 */
+		protocol = htons(PPP_IPV6);
+		if (sp->state[IDX_IPV6CP] != STATE_OPENED)
+			rv = ENETDOWN;
 		break;
 #endif
 	default:
@@ -922,12 +849,9 @@ sppp_dequeue(struct ifnet *ifp)
 	/*
 	 * Process only the control protocol queue until we have at
 	 * least one NCP open.
-	 *
-	 * Do always serve all queues in Cisco mode.
 	 */
 	IF_DEQUEUE(&sp->pp_cpq, m);
-	if (m == NULL &&
-	    (sppp_ncp_check(sp) || (sp->pp_flags & PP_CISCO) != 0)) {
+	if (m == NULL && sppp_ncp_check(sp)) {
 		IFQ_DEQUEUE (&sp->pp_if.if_snd, m);
 	}
 	splx(s);
@@ -947,8 +871,7 @@ sppp_pick(struct ifnet *ifp)
 	s = splnet();
 	IF_POLL(&sp->pp_cpq, m);
 	if (m == NULL &&
-	    (sp->pp_phase == PHASE_NETWORK ||
-	     (sp->pp_flags & PP_CISCO) != 0)) {
+	    (sp->pp_phase == PHASE_NETWORK)) {
 		IFQ_POLL(&sp->pp_if.if_snd, m);
 	}
 	splx (s);
@@ -991,14 +914,12 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 
 		if (going_up || going_down)
-			if (!(sp->pp_flags & PP_CISCO))
-				lcp.Close(sp);
+			lcp.Close(sp);
 
 		if (going_up && newmode == 0) {
 			/* neither auto-dial nor passive */
 			ifp->if_flags |= IFF_RUNNING;
-			if (!(sp->pp_flags & PP_CISCO))
-				lcp.Open(sp);
+			lcp.Open(sp);
 		} else if (going_down) {
 			sppp_flush(ifp);
 			ifp->if_flags &= ~IFF_RUNNING;
@@ -1059,134 +980,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 	splx(s);
 	return rv;
-}
-
-
-/*
- * Cisco framing implementation.
- */
-
-/*
- * Handle incoming Cisco keepalive protocol packets.
- */
-void
-sppp_cisco_input(struct sppp *sp, struct mbuf *m)
-{
-	STDDCL;
-	struct cisco_packet *h;
-	u_int32_t me, mymask;
-
-	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
-		if (debug)
-			log(LOG_DEBUG,
-			    SPP_FMT "cisco invalid packet length: %d bytes\n",
-			    SPP_ARGS(ifp), m->m_pkthdr.len);
-		return;
-	}
-	h = mtod (m, struct cisco_packet*);
-	if (debug)
-		log(LOG_DEBUG,
-		    SPP_FMT "cisco input: %d bytes "
-		    "<0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
-		    SPP_ARGS(ifp), m->m_pkthdr.len,
-		    ntohl(h->type), h->par1, h->par2, (u_int)h->rel,
-		    (u_int)h->time0, (u_int)h->time1);
-	switch (ntohl (h->type)) {
-	default:
-		if (debug)
-			addlog(SPP_FMT "cisco unknown packet type: 0x%x\n",
-			       SPP_ARGS(ifp), ntohl(h->type));
-		break;
-	case CISCO_ADDR_REPLY:
-		/* Reply on address request, ignore */
-		break;
-	case CISCO_KEEPALIVE_REQ:
-		sp->pp_alivecnt = 0;
-		sp->pp_rseq = ntohl (h->par1);
-		if (sp->pp_seq == sp->pp_rseq) {
-			/* Local and remote sequence numbers are equal.
-			 * Probably, the line is in loopback mode. */
-			if (sp->pp_loopcnt >= LOOPALIVECNT) {
-				log(LOG_INFO, SPP_FMT "loopback\n",
-					SPP_ARGS(ifp));
-				sp->pp_loopcnt = 0;
-				if (ifp->if_flags & IFF_UP) {
-					if_down (ifp);
-					sppp_qflush (&sp->pp_cpq);
-				}
-			}
-			++sp->pp_loopcnt;
-
-			/* Generate new local sequence number */
-			sp->pp_seq = arc4random();
-			break;
-		}
-		sp->pp_loopcnt = 0;
-		if (! (ifp->if_flags & IFF_UP) &&
-		    (ifp->if_flags & IFF_RUNNING)) {
-			if_up(ifp);
-			if (debug)
-				log(LOG_INFO, SPP_FMT "up\n", SPP_ARGS(ifp));
-		}
-		break;
-	case CISCO_ADDR_REQ:
-		sppp_get_ip_addrs(sp, &me, 0, &mymask);
-		if (me != 0)
-			sppp_cisco_send(sp, CISCO_ADDR_REPLY, me, mymask);
-		break;
-	}
-}
-
-/*
- * Send Cisco keepalive packet.
- */
-void
-sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2)
-{
-	STDDCL;
-	struct ppp_header *h;
-	struct cisco_packet *ch;
-	struct mbuf *m;
-	struct timeval tv;	
-
-	getmicrouptime(&tv);
-
-	MGETHDR (m, M_DONTWAIT, MT_DATA);
-	if (! m)
-		return;
-	m->m_pkthdr.len = m->m_len = PPP_HEADER_LEN + CISCO_PACKET_LEN;
-	m->m_pkthdr.ph_ifidx = 0;
-
-	h = mtod (m, struct ppp_header*);
-	h->address = CISCO_MULTICAST;
-	h->control = 0;
-	h->protocol = htons (CISCO_KEEPALIVE);
-
-	ch = (struct cisco_packet*) (h + 1);
-	ch->type = htonl (type);
-	ch->par1 = htonl (par1);
-	ch->par2 = htonl (par2);
-	ch->rel = -1;
-
-	ch->time0 = htons ((u_short) (tv.tv_sec >> 16));
-	ch->time1 = htons ((u_short) tv.tv_sec);
-
-	if (debug)
-		log(LOG_DEBUG, SPP_FMT
-		    "cisco output: <0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
-			SPP_ARGS(ifp), ntohl(ch->type), ch->par1, ch->par2,
-			(u_int)ch->rel, (u_int)ch->time0, (u_int)ch->time1);
-
-	if (IF_QFULL (&sp->pp_cpq)) {
-		IF_DROP (&ifp->if_snd);
-		m_freem (m);
-		m = NULL;
-	} else
-		IF_ENQUEUE (&sp->pp_cpq, m);
-	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start) (ifp);
-	if (m != NULL)
-		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
 /*
@@ -1936,14 +1729,6 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 	struct timeval tv;
 
-	if (sp->pp_flags & PP_CISCO) {
-		int s = splsoftnet();
-		sp->pp_if.if_link_state = LINK_STATE_UP;
-		if_link_state_change(&sp->pp_if);
-		splx(s);
-		return;
-	}
-
 	sp->pp_alivecnt = 0;
 	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
 	sp->lcp.magic = 0;
@@ -1988,14 +1773,6 @@ void
 sppp_lcp_down(struct sppp *sp)
 {
 	STDDCL;
-
-	if (sp->pp_flags & PP_CISCO) {
-		int s = splsoftnet();
-		sp->pp_if.if_link_state = LINK_STATE_DOWN;
-		if_link_state_change(&sp->pp_if);
-		splx(s);
-		return;
-	}
 
 	sppp_down_event(&lcp, sp);
 
@@ -4407,14 +4184,12 @@ sppp_keepalive(void *dummy)
 		    ! (ifp->if_flags & IFF_RUNNING))
 			continue;
 
-		/* No keepalive in PPP mode if LCP not opened yet. */
-		if (! (sp->pp_flags & PP_CISCO) &&
-		    sp->pp_phase < PHASE_AUTHENTICATE)
+		/* No keepalive if LCP not opened yet. */
+		if (sp->pp_phase < PHASE_AUTHENTICATE)
 			continue;
 
 		/* No echo reply, but maybe user data passed through? */
-		if (!(sp->pp_flags & PP_CISCO) &&
-		    (tv.tv_sec - sp->pp_last_receive) < NORECV_TIME) {
+		if ((tv.tv_sec - sp->pp_last_receive) < NORECV_TIME) {
 			sp->pp_alivecnt = 0;
 			continue;
 		}
@@ -4423,29 +4198,25 @@ sppp_keepalive(void *dummy)
 			/* No keepalive packets got.  Stop the interface. */
 			if_down (ifp);
 			sppp_qflush (&sp->pp_cpq);
-			if (! (sp->pp_flags & PP_CISCO)) {
-				log(LOG_INFO, SPP_FMT "LCP keepalive timeout\n",
-				    SPP_ARGS(ifp));
-				sp->pp_alivecnt = 0;
+			log(LOG_INFO, SPP_FMT "LCP keepalive timeout\n",
+			    SPP_ARGS(ifp));
+			sp->pp_alivecnt = 0;
 
-				/* we are down, close all open protocols */
-				lcp.Close(sp);
+			/* we are down, close all open protocols */
+			lcp.Close(sp);
 
-				/* And now prepare LCP to reestablish the link, if configured to do so. */
-				sppp_cp_change_state(&lcp, sp, STATE_STOPPED);
+			/* And now prepare LCP to reestablish the link,
+			 * if configured to do so. */
+			sppp_cp_change_state(&lcp, sp, STATE_STOPPED);
 
-				/* Close connection immediately, completition of this
-				 * will summon the magic needed to reestablish it. */
-				if (sp->pp_tlf)
-					sp->pp_tlf(sp);
-				continue;
-			}
+			/* Close connection immediately, completion of this
+			 * will summon the magic needed to reestablish it. */
+			if (sp->pp_tlf)
+				sp->pp_tlf(sp);
+			continue;
 		}
 		if (sp->pp_alivecnt < MAXALIVECNT)
 			++sp->pp_alivecnt;
-		if (sp->pp_flags & PP_CISCO)
-			sppp_cisco_send (sp, CISCO_KEEPALIVE_REQ, ++sp->pp_seq,
-				sp->pp_rseq);
 		else if (sp->pp_phase >= PHASE_AUTHENTICATE) {
 			u_int32_t nmagic = htonl(sp->lcp.magic);
 			sp->lcp.echoid = ++sp->pp_seq;

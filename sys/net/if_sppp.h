@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_sppp.h,v 1.20 2013/11/20 08:21:33 stsp Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.21 2015/09/30 09:45:20 sthen Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
- * Defines for synchronous PPP/Cisco link level subroutines.
+ * Defines for synchronous PPP link level subroutines.
  *
  * Copyright (C) 1994 Cronyx Ltd.
  * Author: Serge Vakulenko, <vak@cronyx.ru>
@@ -156,7 +156,7 @@ struct sppp {
 	struct  ifnet pp_if;    /* network interface data */
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */
-	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
+	u_int   pp_flags;
 	u_int   pp_framebytes;	/* number of bytes added by hardware framing */
  	u_short pp_alivecnt;    /* keepalive packets counter */
 	u_short pp_loopcnt;     /* loopback detection counter */
@@ -208,7 +208,7 @@ struct sppp {
 };
 
 #define PP_KEEPALIVE    0x01    /* use keepalive protocol */
-#define PP_CISCO        0x02    /* use Cisco protocol instead of PPP */
+				/* 0x02 was PP_CISCO */
 				/* 0x04 was PP_TIMO */
 #define PP_CALLIN	0x08	/* we are being called */
 #define PP_NEEDAUTH	0x10	/* remote requested authentication */
