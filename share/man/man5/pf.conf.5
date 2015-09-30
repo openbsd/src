@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.546 2015/09/14 20:06:59 schwarze Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.547 2015/09/30 16:35:53 sobrado Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: September 30 2015 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1478,7 +1478,7 @@ The maximum bandwidth that should be assigned to a given queue can be limited
 using the
 .Ar max
 keyword.
-Similarily, a minimum (reserved) bandwidth can be specified.
+Similarly, a minimum (reserved) bandwidth can be specified.
 .Bd -literal -offset indent
 queue ssh parent std bandwidth 10M, min 5M, max 25M
 .Ed
@@ -1512,7 +1512,7 @@ Specifies the interface the queue operates on.
 If not given, it operates on all matching interfaces.
 .It Ar parent Aq Ar name
 Defines which parent queue the queue should be attached to.
-Mandantory for all queues except root queues.
+Mandatory for all queues except root queues.
 The parent queue must exist.
 .It Ar qlimit Aq Ar limit
 The maximum number of packets held in the queue.
