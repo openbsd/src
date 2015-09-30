@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.101 2015/09/24 20:52:28 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.102 2015/09/30 06:29:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -3084,12 +3084,10 @@ int i915_vma_unbind(struct i915_vma *vma)
 
 	if (obj->has_global_gtt_mapping)
 		i915_gem_gtt_unbind_object(obj);
-#ifdef notyet
 	if (obj->has_aliasing_ppgtt_mapping) {
 		i915_ppgtt_unbind_object(dev_priv->mm.aliasing_ppgtt, obj);
 		obj->has_aliasing_ppgtt_mapping = 0;
 	}
-#endif
 	i915_gem_gtt_finish_object(obj);
 
 	list_del(&vma->mm_list);
