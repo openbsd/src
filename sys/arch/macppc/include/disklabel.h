@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.15 2015/09/30 14:57:03 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.16 2015/09/30 15:13:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,8 +40,8 @@
 /* HFS/DPME */
 
 /* partition map structure from Inside Macintosh: Devices, SCSI Manager
- * pp. 13-14.  The partition map always begins on physical block 1.  
- * 
+ * pp. 13-14.  The partition map always begins on physical block 1.
+ *
  * With the exception of block 0, all blocks on the disk must belong to
  * exactly one partition.  The partition map itself belongs to a partition
  * of type `APPLE_PARTITION_MAP', and is not limited in size by anything
@@ -50,7 +50,7 @@
  */
 struct part_map_entry {
 #define PART_ENTRY_MAGIC        0x504d
-	u_int16_t       pmSig;          /* partition signature */   
+	u_int16_t       pmSig;          /* partition signature */
 	u_int16_t       pmSigPad;       /* (reserved) */
 	u_int32_t       pmMapBlkCnt;    /* number of blocks in partition map */
 	u_int32_t       pmPyPartStart;  /* first physical block of partition */
