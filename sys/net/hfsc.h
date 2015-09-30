@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.8 2015/04/12 09:58:46 dlg Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.9 2015/09/30 11:36:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -121,6 +121,7 @@ int		 hfsc_detach(struct ifnet *);
 void		 hfsc_purge(struct ifqueue *);
 int		 hfsc_enqueue(struct ifqueue *, struct mbuf *);
 struct mbuf	*hfsc_dequeue(struct ifqueue *, int);
+void		 hfsc_requeue(struct ifqueue *, struct mbuf *);
 u_int64_t	 hfsc_microuptime(void);
 int		 hfsc_addqueue(struct pf_queuespec *);
 int		 hfsc_delqueue(struct pf_queuespec *);

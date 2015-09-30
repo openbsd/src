@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.22 2015/09/27 05:23:50 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.23 2015/09/30 11:36:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -211,7 +211,10 @@ struct hfsc_class	*hfsc_class_create(struct hfsc_if *,
 int			 hfsc_class_destroy(struct hfsc_class *);
 struct hfsc_class	*hfsc_nextclass(struct hfsc_class *);
 
+int		 hfsc_queue(struct ifqueue *, struct mbuf *,
+		     int (*)(struct hfsc_class *, struct mbuf *));
 int		 hfsc_addq(struct hfsc_class *, struct mbuf *);
+int		 hfsc_prependq(struct hfsc_class *, struct mbuf *);
 struct mbuf	*hfsc_getq(struct hfsc_class *);
 struct mbuf	*hfsc_pollq(struct hfsc_class *);
 void		 hfsc_purgeq(struct hfsc_class *);
@@ -640,6 +643,19 @@ hfsc_nextclass(struct hfsc_class *cl)
 int
 hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 {
+	return (hfsc_queue(ifq, m, hfsc_addq));
+}
+
+void
+hfsc_requeue(struct ifqueue *ifq, struct mbuf *m)
+{
+	(void)hfsc_queue(ifq, m, hfsc_prependq);
+}
+
+int
+hfsc_queue(struct ifqueue *ifq, struct mbuf *m,
+    int (*queue)(struct hfsc_class *, struct mbuf *))
+{
 	struct hfsc_if	*hif = ifq->ifq_hfsc;
 	struct hfsc_class *cl;
 
@@ -651,7 +667,7 @@ hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 		cl->cl_pktattr = NULL;
 	}
 
-	if (hfsc_addq(cl, m) != 0) {
+	if ((*queue)(cl, m) != 0) {
 		/* drop occurred.  mbuf needs to be freed */
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
 		return (ENOBUFS);
@@ -781,6 +797,14 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 		return (-1);
 
 	ml_enqueue(&cl->cl_q.q, m);
+
+	return (0);
+}
+
+int
+hfsc_prependq(struct hfsc_class *cl, struct mbuf *m)
+{
+	ml_requeue(&cl->cl_q.q, m);
 
 	return (0);
 }
