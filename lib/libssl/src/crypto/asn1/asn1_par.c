@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.24 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.25 2015/09/30 19:01:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,7 +339,7 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 					if (BIO_write(bp, "BAD ENUMERATED", 14) <= 0)
 						goto end;
 				}
-				M_ASN1_ENUMERATED_free(bs);
+				ASN1_ENUMERATED_free(bs);
 			} else if (len > 0 && dump) {
 				if (!nl) {
 					if (BIO_write(bp, "\n", 1) <= 0)
