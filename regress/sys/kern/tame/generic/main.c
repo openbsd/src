@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2015/09/28 15:40:18 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.8 2015/09/30 11:36:07 semarie Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -180,6 +181,25 @@ test_stat()
 	exit(EXIT_SUCCESS);
 }
 
+static void
+test_mmap()
+{
+	int fd;
+	void * data;
+
+	if ((fd = open("/dev/zero", O_RDONLY, 0)) == -1)
+		_exit(errno);
+
+	data = mmap(NULL, 4096, PROT_READ|PROT_WRITE|PROT_EXEC,
+	    MAP_FILE|MAP_SHARED, fd, 0);
+
+	if (data == MAP_FAILED)
+		_exit(errno);
+
+	munmap(data, 4096);
+	close(fd);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -263,6 +283,10 @@ main(int argc, char *argv[])
 
 	/* test stat(2) */
 	start_test1(&ret, "stdio rpath", "/usr/share/man", test_stat);
+
+	/* mmap */
+	start_test1(&ret, "rpath malloc prot_exec", "/dev/zero", test_mmap);
+	start_test1(&ret, "rpath malloc", "/dev/zero", test_mmap);
 
 	return (ret);
 }

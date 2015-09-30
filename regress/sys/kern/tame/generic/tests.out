@@ -1,4 +1,4 @@
-#	$OpenBSD: tests.out,v 1.6 2015/09/28 15:40:18 semarie Exp $
+#	$OpenBSD: tests.out,v 1.7 2015/09/30 11:36:07 semarie Exp $
 test(test_nop): tame=("",NULL) status=0 exit=0
 test(test_inet): tame=("",NULL) status=9 signal=9 tamed_syscall=97
 test(test_inet): tame=("abort",NULL) status=134 signal=6 coredump=present tamed_syscall=97
@@ -97,3 +97,5 @@ test(test_stat): tame=("stdio rpath",{"/usr/share/man",NULL})
  stat("/"): realpath="/" errno=2
  stat("/usr/bin/gzip"): realpath=failed(2) errno=2
  status=0 exit=0
+test(test_mmap): tame=("rpath malloc prot_exec",{"/dev/zero",NULL}) status=0 exit=0
+test(test_mmap): tame=("rpath malloc",{"/dev/zero",NULL}) status=9 signal=9 tamed_syscall=197

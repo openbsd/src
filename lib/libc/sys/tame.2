@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.29 2015/09/26 17:16:10 jmc Exp $
+.\" $OpenBSD: tame.2,v 1.30 2015/09/30 11:36:07 semarie Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2015 $
+.Dd $Mdocdate: September 30 2015 $
 .Dt TAME 2
 .Os
 .Sh NAME
@@ -120,6 +120,11 @@ Read-only, for
 .It Xr fchownat 2
 Setuid/setgid/sticky bits are ignored.
 The user or group cannot be changed on a file.
+.Pp
+.It Xr mmap 2
+.It Xr mprotect 2
+.Dv PROT_EXEC
+isn't allowed.
 .Pp
 .It Xr open 2
 May open
@@ -387,7 +392,14 @@ Allows the following process relationship operations:
 .Xr kill 2 ,
 .Xr setgroups 2 ,
 .Xr setresgid 2 ,
-.Xr setresuid 2 ,
+.Xr setresuid 2 .
+.It Va "prot_exec"
+Allows the use of
+.Dv PROT_EXEC
+with
+.Xr mmap 2
+and
+.Xr mprotect 2 .
 .It Va "abort"
 Deliver an unblockable
 .Dv SIGABRT

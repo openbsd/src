@@ -1,4 +1,4 @@
-/*	$OpenBSD: tame.h,v 1.7 2015/09/11 15:29:47 deraadt Exp $	*/
+/*	$OpenBSD: tame.h,v 1.8 2015/09/30 11:36:07 semarie Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -39,6 +39,7 @@
 #define TAME_PROC	0x00001000	/* fork, waitpid, etc */
 #define TAME_CPATH	0x00002000	/* allow creat, mkdir, path creations */
 #define TAME_FATTR	0x00004000	/* allow explicit file st_* mods */
+#define TAME_PROTEXEC	0x00008000	/* allow use of PROT_EXEC */
 
 #define TAME_ABORT	0x08000000	/* SIGABRT instead of SIGKILL */
 
