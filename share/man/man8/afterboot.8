@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.149 2015/09/24 15:07:55 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.150 2015/09/30 14:40:52 sobrado Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 24 2015 $
+.Dd $Mdocdate: September 30 2015 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -483,8 +483,9 @@ file that will work for simple installations.
 See
 .Xr smtpd.conf 5
 for information on configuring more complex setups.
-For the default installation, smptd is configured to only accept
-connections from the local host.
+For the default installation,
+.Xr smtpd 8
+is configured to only accept connections from the local host.
 This makes it possible to send mail locally, but not receive mail from remote
 servers, which is ideal if you have one central incoming mail machine and
 several clients.
