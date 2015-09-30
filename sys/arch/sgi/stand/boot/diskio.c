@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.9 2014/07/12 21:03:38 tedu Exp $ */
+/*	$OpenBSD: diskio.c,v 1.10 2015/09/30 22:45:57 krw Exp $ */
 
 /*
  * Copyright (c) 2000 Opsycon AB  (www.opsycon.se)
@@ -73,7 +73,6 @@ dioopen(struct open_file *f, ...)
 	struct dio_softc *sc;
 	struct disklabel *lp;
 	long fd;
-	daddr32_t labelsector;
 	va_list ap;
 
 	va_start(ap, f);
@@ -100,23 +99,6 @@ dioopen(struct open_file *f, ...)
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_partitions[partition].p_offset = 0;
 	lp->d_partitions[0].p_size = 0x7fff0000;
-
-	labelsector = LABELSECTOR;
-
-#if 0
-	/* Try to read disk label and partition table information. */
-	i = diostrategy(sc, F_READ, (daddr32_t)labelsector, DEV_BSIZE, buf, &cnt);
-
-	if (i == 0 && cnt == DEV_BSIZE)
-		msg = getdisklabel(buf, lp);
-	else
-		msg = "rd err";
-
-	if (msg) {
-		printf("%s: %s\n", ctlr, msg);
-		return (ENXIO);
-	}
-#endif
 
 	return (0);
 }
