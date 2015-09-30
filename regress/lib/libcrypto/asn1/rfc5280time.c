@@ -1,4 +1,4 @@
-/* $OpenBSD: rfc5280time.c,v 1.1 2015/09/29 04:54:23 beck Exp $ */
+/* $OpenBSD: rfc5280time.c,v 1.2 2015/09/30 14:11:22 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@opebsd.org>
@@ -79,34 +79,39 @@ struct rfc5280_time_test rfc5280_invtime_tests[] = {
 	{
 		.str = "aaaaaaaaaaaaaaZ",
 	},
-};
-
-struct rfc5280_time_test rfc5280_gentime_tests[] = {
 	{
+		/* Must be a UTC time per RFC 5280*/
 		.str = "19700101000000Z",
 		.data = "19700101000000Z",
 		.time = 0,
 	},
 	{
+		/* (times before 2050 must be UTCTIME) Per RFC 5280 4.1.2.5 */
 		.str = "20150923032700Z",
 		.data = "20150923032700Z",
 		.time = 1442978820,
 	},
 	{
-		.str = "20150922162712Z",
-		.data = "20150922162712Z",
-		.time = 1442939232,
+		/* (times before 2050 must be UTCTIME) Per RFC 5280 4.1.2.5 */
+		.str = "00000101000000Z",
+		.data = "00000101000000Z",
+		.time = -62167219200,
 	},
 	{
-		.str = "20150922161212Z",
-		.data = "20150922161212Z",
-		.time = 1442938332,
+		/* (times before 2050 must be UTCTIME) Per RFC 5280 4.1.2.5 */
+		.str = "20491231235959Z",
+		.data = "20491231235959Z",
+		.time = 2524607999,
 	},
 	{
-		.str = "20150923032700Z",
-		.data = "20150923032700Z",
-		.time = 1442978820,
+		/* (times before 2050 must be UTCTIME) Per RFC 5280 4.1.2.5 */
+		.str = "19500101000000Z",
+		.data = "19500101000000Z",
+		.time = -631152000,
 	},
+};
+
+struct rfc5280_time_test rfc5280_gentime_tests[] = {
 	{
 		/* Biggest RFC 5280 time */
 		.str = "99991231235959Z",
@@ -114,14 +119,33 @@ struct rfc5280_time_test rfc5280_gentime_tests[] = {
 		.time = 253402300799,
 	},
 	{
-		/* Smallest RFC 5280 time */
-		.str = "00000101000000Z",
-		.data = "00000101000000Z",
-		.time = -62167219200,
+		.str = "21600218104000Z",
+		.data = "21600218104000Z",
+		.time = 6000000000,
+	},
+	{
+		/* Smallest RFC 5280 gen time */
+		.str = "20500101000000Z",
+		.data = "20500101000000Z",
+		.time =  2524608000,
 	},
 };
-
 struct rfc5280_time_test rfc5280_utctime_tests[] = {
+	{
+		.str = "500101000000Z",
+		.data = "500101000000Z",
+		.time = -631152000,
+	},
+	{
+		.str = "540226230640Z",
+		.data = "540226230640Z",
+		.time = -500000000,
+	},
+	{
+		.str = "491231235959Z",
+		.data = "491231235959Z",
+		.time = 2524607999,
+	},
 	{
 		.str = "700101000000Z",
 		.data = "700101000000Z",
@@ -247,14 +271,14 @@ rfc5280_gentime_test(int test_no, struct rfc5280_time_test *att)
 	if (asn1_compare_str(test_no, gt, att->str) != 0)
 		goto done;
 
-	if ((i = X509_cmp_time(gt, &att->time) != -1)) {
+	if ((i = X509_cmp_time(gt, &att->time)) != -1) {
 		fprintf(stderr, "FAIL: test %i - X509_cmp_time failed - returned %d compared to %lld\n",
 		    test_no, i, att->time);
 		goto done;
 	}
 
 	att->time--;
-	if ((i = X509_cmp_time(gt, &att->time) != 1)) {
+	if ((i = X509_cmp_time(gt, &att->time)) != 1) {
 		fprintf(stderr, "FAIL: test %i - X509_cmp_time failed - returned %d compared to %lld\n",
 		    test_no, i, att->time);
 		goto done;
@@ -299,14 +323,14 @@ rfc5280_utctime_test(int test_no, struct rfc5280_time_test *att)
 	if (asn1_compare_str(test_no, ut, att->str) != 0)
 		goto done;
 
-	if ((i = X509_cmp_time(ut, &att->time) != -1)) {
+	if ((i = X509_cmp_time(ut, &att->time)) != -1) {
 		fprintf(stderr, "FAIL: test %i - X509_cmp_time failed - returned %d compared to %lld\n",
 		    test_no, i, att->time);
 		goto done;
 	}
 
 	att->time--;
-	if ((i = X509_cmp_time(ut, &att->time) != 1)) {
+	if ((i = X509_cmp_time(ut, &att->time)) != 1) {
 		fprintf(stderr, "FAIL: test %i - X509_cmp_time failed - returned %d compared to %lld\n",
 		    test_no, i, att->time);
 		goto done;
