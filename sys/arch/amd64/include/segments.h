@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.13 2015/09/26 15:59:25 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.14 2015/09/30 05:44:32 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -128,17 +128,17 @@ struct mem_segment_descriptor {
  * Gate descriptors (e.g. indirect descriptors)
  */
 struct gate_descriptor {
-/*BITFIELDTYPE*/ u_int64_t gd_looffset:16;/* gate offset (lsb) */
-/*BITFIELDTYPE*/ u_int64_t gd_selector:16;/* gate segment selector */
-/*BITFIELDTYPE*/ u_int64_t gd_ist:3;	/* IST select */
-/*BITFIELDTYPE*/ u_int64_t gd_xx1:5;	/* reserved */
-/*BITFIELDTYPE*/ u_int64_t gd_type:5;	/* segment type */
-/*BITFIELDTYPE*/ u_int64_t gd_dpl:2;	/* segment descriptor priority level */
-/*BITFIELDTYPE*/ u_int64_t gd_p:1;	/* segment descriptor present */
-/*BITFIELDTYPE*/ u_int64_t gd_hioffset:48;/* gate offset (msb) */
-/*BITFIELDTYPE*/ u_int64_t gd_xx2:8;	/* reserved */
-/*BITFIELDTYPE*/ u_int64_t gd_zero:5;	/* must be zero */
-/*BITFIELDTYPE*/ u_int64_t gd_xx3:19;	/* reserved */
+	u_int64_t gd_looffset:16;	/* gate offset (lsb) */
+	u_int64_t gd_selector:16;	/* gate segment selector */
+	u_int64_t gd_ist:3;		/* IST select */
+	u_int64_t gd_xx1:5;		/* reserved */
+	u_int64_t gd_type:5;		/* segment type */
+	u_int64_t gd_dpl:2;		/* segment descriptor priority level */
+	u_int64_t gd_p:1;		/* segment descriptor present */
+	u_int64_t gd_hioffset:48;	/* gate offset (msb) */
+	u_int64_t gd_xx2:8;		/* reserved */
+	u_int64_t gd_zero:5;		/* must be zero */
+	u_int64_t gd_xx3:19;		/* reserved */
 } __packed;
 
 /*
