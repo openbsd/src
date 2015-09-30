@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.23 2015/09/30 11:36:20 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.24 2015/09/30 22:57:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -213,11 +213,12 @@ struct hfsc_class	*hfsc_nextclass(struct hfsc_class *);
 
 int		 hfsc_queue(struct ifqueue *, struct mbuf *,
 		     int (*)(struct hfsc_class *, struct mbuf *));
-int		 hfsc_addq(struct hfsc_class *, struct mbuf *);
-int		 hfsc_prependq(struct hfsc_class *, struct mbuf *);
-struct mbuf	*hfsc_getq(struct hfsc_class *);
-struct mbuf	*hfsc_pollq(struct hfsc_class *);
-void		 hfsc_purgeq(struct hfsc_class *);
+int		 hfsc_cl_enqueue(struct hfsc_class *, struct mbuf *);
+struct mbuf	*hfsc_cl_dequeue(struct hfsc_class *);
+int		 hfsc_cl_requeue(struct hfsc_class *, struct mbuf *);
+struct mbuf	*hfsc_cl_poll(struct hfsc_class *);
+void		 hfsc_cl_purge(struct hfsc_class *);
+
 void		 hfsc_deferred(void *);
 void		 hfsc_update_cfmin(struct hfsc_class *);
 void		 hfsc_set_active(struct hfsc_class *, int);
@@ -453,7 +454,7 @@ hfsc_purge(struct ifqueue *ifq)
 
 	for (cl = hif->hif_rootclass; cl != NULL; cl = hfsc_nextclass(cl))
 		if (ml_len(&cl->cl_q.q) > 0)
-			hfsc_purgeq(cl);
+			hfsc_cl_purge(cl);
 	hif->hif_ifq->ifq_len = 0;
 }
 
@@ -574,7 +575,7 @@ hfsc_class_destroy(struct hfsc_class *cl)
 	s = splnet();
 
 	if (ml_len(&cl->cl_q.q) > 0)
-		hfsc_purgeq(cl);
+		hfsc_cl_purge(cl);
 
 	if (cl->cl_parent != NULL) {
 		struct hfsc_class *p = cl->cl_parent->cl_children;
@@ -643,13 +644,13 @@ hfsc_nextclass(struct hfsc_class *cl)
 int
 hfsc_enqueue(struct ifqueue *ifq, struct mbuf *m)
 {
-	return (hfsc_queue(ifq, m, hfsc_addq));
+	return (hfsc_queue(ifq, m, hfsc_cl_enqueue));
 }
 
 void
 hfsc_requeue(struct ifqueue *ifq, struct mbuf *m)
 {
-	(void)hfsc_queue(ifq, m, hfsc_prependq);
+	(void)hfsc_queue(ifq, m, hfsc_cl_requeue);
 }
 
 int
@@ -741,12 +742,12 @@ hfsc_dequeue(struct ifqueue *ifq, int remove)
 
 		if (!remove) {
 			hif->hif_pollcache = cl;
-			m = hfsc_pollq(cl);
+			m = hfsc_cl_poll(cl);
 			return (m);
 		}
 	}
 
-	if ((m = hfsc_getq(cl)) == NULL)
+	if ((m = hfsc_cl_dequeue(cl)) == NULL)
 		panic("hfsc_dequeue");
 
 	cl->cl_hif->hif_packets--;
@@ -791,7 +792,7 @@ hfsc_deferred(void *arg)
 }
 
 int
-hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
+hfsc_cl_enqueue(struct hfsc_class *cl, struct mbuf *m)
 {
 	if (ml_len(&cl->cl_q.q) >= cl->cl_q.qlimit)
 		return (-1);
@@ -802,7 +803,7 @@ hfsc_addq(struct hfsc_class *cl, struct mbuf *m)
 }
 
 int
-hfsc_prependq(struct hfsc_class *cl, struct mbuf *m)
+hfsc_cl_requeue(struct hfsc_class *cl, struct mbuf *m)
 {
 	ml_requeue(&cl->cl_q.q, m);
 
@@ -810,27 +811,27 @@ hfsc_prependq(struct hfsc_class *cl, struct mbuf *m)
 }
 
 struct mbuf *
-hfsc_getq(struct hfsc_class *cl)
+hfsc_cl_dequeue(struct hfsc_class *cl)
 {
 	return (ml_dequeue(&cl->cl_q.q));
 }
 
 struct mbuf *
-hfsc_pollq(struct hfsc_class *cl)
+hfsc_cl_poll(struct hfsc_class *cl)
 {
 	/* XXX */
 	return (cl->cl_q.q.ml_head);
 }
 
 void
-hfsc_purgeq(struct hfsc_class *cl)
+hfsc_cl_purge(struct hfsc_class *cl)
 {
 	struct mbuf *m;
 
 	if (ml_empty(&cl->cl_q.q))
 		return;
 
-	while ((m = hfsc_getq(cl)) != NULL) {
+	while ((m = hfsc_cl_dequeue(cl)) != NULL) {
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
 		m_freem(m);
 		cl->cl_hif->hif_packets--;
