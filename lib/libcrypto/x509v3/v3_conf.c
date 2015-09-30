@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_conf.c,v 1.17 2015/02/17 05:14:38 miod Exp $ */
+/* $OpenBSD: v3_conf.c,v 1.18 2015/09/30 18:41:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -203,7 +203,7 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 		p = ext_der;
 		method->i2d(ext_struc, &p);
 	}
-	if (!(ext_oct = M_ASN1_OCTET_STRING_new()))
+	if (!(ext_oct = ASN1_OCTET_STRING_new()))
 		goto merr;
 	ext_oct->data = ext_der;
 	ext_oct->length = ext_len;
@@ -211,12 +211,12 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 	ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
 	if (!ext)
 		goto merr;
-	M_ASN1_OCTET_STRING_free(ext_oct);
+	ASN1_OCTET_STRING_free(ext_oct);
 
 	return ext;
 
 merr:
-	M_ASN1_OCTET_STRING_free(ext_oct);
+	ASN1_OCTET_STRING_free(ext_oct);
 	X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
 	return NULL;
 
@@ -302,7 +302,7 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 		goto err;
 	}
 
-	if (!(oct = M_ASN1_OCTET_STRING_new())) {
+	if (!(oct = ASN1_OCTET_STRING_new())) {
 		X509V3err(X509V3_F_V3_GENERIC_EXTENSION, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -315,7 +315,7 @@ v3_generic_extension(const char *ext, char *value, int crit, int gen_type,
 
 err:
 	ASN1_OBJECT_free(obj);
-	M_ASN1_OCTET_STRING_free(oct);
+	ASN1_OCTET_STRING_free(oct);
 	free(ext_der);
 	return extension;
 }

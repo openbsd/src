@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.16 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.17 2015/09/30 18:41:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -159,7 +159,7 @@ PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *it,
 	unsigned char *in = NULL;
 	int inlen;
 
-	if (!(oct = M_ASN1_OCTET_STRING_new ())) {
+	if (!(oct = ASN1_OCTET_STRING_new ())) {
 		PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT,
 		    ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -183,7 +183,7 @@ PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *it,
 
 err:
 	free(in);
-	M_ASN1_OCTET_STRING_free(oct);
+	ASN1_OCTET_STRING_free(oct);
 	return NULL;
 }
 

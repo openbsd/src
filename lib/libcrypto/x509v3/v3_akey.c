@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.16 2015/09/30 17:30:16 jsing Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.17 2015/09/30 18:41:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -210,6 +210,6 @@ err:
 	sk_GENERAL_NAME_free(gens);
 	X509_NAME_free(isname);
 	ASN1_INTEGER_free(serial);
-	M_ASN1_OCTET_STRING_free(ikeyid);
+	ASN1_OCTET_STRING_free(ikeyid);
 	return NULL;
 }

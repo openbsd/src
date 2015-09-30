@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.17 2015/09/30 17:30:15 jsing Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.18 2015/09/30 18:41:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -181,7 +181,7 @@ PKCS7_set_type(PKCS7 *p7, int type)
 		break;
 	case NID_pkcs7_data:
 		p7->type = obj;
-		if ((p7->d.data = M_ASN1_OCTET_STRING_new()) == NULL)
+		if ((p7->d.data = ASN1_OCTET_STRING_new()) == NULL)
 			goto err;
 		break;
 	case NID_pkcs7_signedAndEnveloped:
@@ -636,7 +636,7 @@ PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 	case NID_pkcs7_signedAndEnveloped:
 		os = p7->d.signed_and_enveloped->enc_data->enc_data;
 		if (os == NULL) {
-			os = M_ASN1_OCTET_STRING_new();
+			os = ASN1_OCTET_STRING_new();
 			p7->d.signed_and_enveloped->enc_data->enc_data = os;
 		}
 		break;
@@ -644,7 +644,7 @@ PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 	case NID_pkcs7_enveloped:
 		os = p7->d.enveloped->enc_data->enc_data;
 		if (os == NULL) {
-			os = M_ASN1_OCTET_STRING_new();
+			os = ASN1_OCTET_STRING_new();
 			p7->d.enveloped->enc_data->enc_data = os;
 		}
 		break;

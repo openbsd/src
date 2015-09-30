@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.22 2015/09/30 17:30:15 jsing Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.23 2015/09/30 18:41:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -303,7 +303,7 @@ PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
 
 	if (!(kdf = PBKDF2PARAM_new()))
 		goto merr;
-	if (!(osalt = M_ASN1_OCTET_STRING_new()))
+	if (!(osalt = ASN1_OCTET_STRING_new()))
 		goto merr;
 
 	kdf->salt->value.octet_string = osalt;

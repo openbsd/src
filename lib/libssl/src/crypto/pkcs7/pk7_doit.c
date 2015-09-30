@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.37 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.38 2015/09/30 18:41:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -745,7 +745,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		si_sk = p7->d.signed_and_enveloped->signer_info;
 		os = p7->d.signed_and_enveloped->enc_data->enc_data;
 		if (!os) {
-			os = M_ASN1_OCTET_STRING_new();
+			os = ASN1_OCTET_STRING_new();
 			if (!os) {
 				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
 				    ERR_R_MALLOC_FAILURE);
@@ -758,7 +758,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		/* XXX */
 		os = p7->d.enveloped->enc_data->enc_data;
 		if (!os) {
-			os = M_ASN1_OCTET_STRING_new();
+			os = ASN1_OCTET_STRING_new();
 			if (!os) {
 				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
 				    ERR_R_MALLOC_FAILURE);
@@ -776,7 +776,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		}
 		/* If detached data then the content is excluded */
 		if (PKCS7_type_is_data(p7->d.sign->contents) && p7->detached) {
-			M_ASN1_OCTET_STRING_free(os);
+			ASN1_OCTET_STRING_free(os);
 			os = NULL;
 			p7->d.sign->contents->d.data = NULL;
 		}
@@ -791,7 +791,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		/* If detached data then the content is excluded */
 		if (PKCS7_type_is_data(p7->d.digest->contents) &&
 		    p7->detached) {
-			M_ASN1_OCTET_STRING_free(os);
+			ASN1_OCTET_STRING_free(os);
 			os = NULL;
 			p7->d.digest->contents->d.data = NULL;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ocsp.c,v 1.12 2015/07/29 16:13:49 jsing Exp $ */
+/* $OpenBSD: v3_ocsp.c,v 1.13 2015/09/30 18:41:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -312,7 +312,7 @@ d2i_ocsp_nonce(void *a, const unsigned char **pp, long length)
 
 err:
 	if (pos == NULL || *pos != os)
-		M_ASN1_OCTET_STRING_free(os);
+		ASN1_OCTET_STRING_free(os);
 	OCSPerr(OCSP_F_D2I_OCSP_NONCE, ERR_R_MALLOC_FAILURE);
 	return NULL;
 }
@@ -320,7 +320,7 @@ err:
 static void
 ocsp_nonce_free(void *a)
 {
-	M_ASN1_OCTET_STRING_free(a);
+	ASN1_OCTET_STRING_free(a);
 }
 
 static int

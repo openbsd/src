@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pkey.c,v 1.18 2015/07/27 12:53:56 jsing Exp $ */
+/* $OpenBSD: x_pkey.c,v 1.19 2015/09/30 18:41:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,7 +78,7 @@ X509_PKEY_new(void)
 		ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if ((ret->enc_pkey = M_ASN1_OCTET_STRING_new()) == NULL) {
+	if ((ret->enc_pkey = ASN1_OCTET_STRING_new()) == NULL) {
 		ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -113,7 +113,7 @@ X509_PKEY_free(X509_PKEY *x)
 
 	if (x->enc_algor != NULL)
 		X509_ALGOR_free(x->enc_algor);
-	M_ASN1_OCTET_STRING_free(x->enc_pkey);
+	ASN1_OCTET_STRING_free(x->enc_pkey);
 	EVP_PKEY_free(x->dec_pkey);
 	if ((x->key_data != NULL) && (x->key_free))
 		free(x->key_data);

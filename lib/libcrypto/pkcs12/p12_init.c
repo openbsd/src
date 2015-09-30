@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_init.c,v 1.9 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_init.c,v 1.10 2015/09/30 18:41:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -77,7 +77,7 @@ PKCS12_init(int mode)
 	switch (mode) {
 	case NID_pkcs7_data:
 		if (!(pkcs12->authsafes->d.data =
-		    M_ASN1_OCTET_STRING_new())) {
+		    ASN1_OCTET_STRING_new())) {
 			PKCS12err(PKCS12_F_PKCS12_INIT, ERR_R_MALLOC_FAILURE);
 			goto err;
 		}

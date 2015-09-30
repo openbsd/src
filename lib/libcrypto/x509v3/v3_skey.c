@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_skey.c,v 1.12 2015/07/29 16:13:49 jsing Exp $ */
+/* $OpenBSD: v3_skey.c,v 1.13 2015/09/30 18:41:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -94,13 +94,13 @@ s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
 	ASN1_OCTET_STRING *oct;
 	long length;
 
-	if (!(oct = M_ASN1_OCTET_STRING_new())) {
+	if (!(oct = ASN1_OCTET_STRING_new())) {
 		X509V3err(X509V3_F_S2I_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
 	if (!(oct->data = string_to_hex(str, &length))) {
-		M_ASN1_OCTET_STRING_free(oct);
+		ASN1_OCTET_STRING_free(oct);
 		return NULL;
 	}
 
@@ -120,7 +120,7 @@ s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
 	if (strcmp(str, "hash"))
 		return s2i_ASN1_OCTET_STRING(method, ctx, str);
 
-	if (!(oct = M_ASN1_OCTET_STRING_new())) {
+	if (!(oct = ASN1_OCTET_STRING_new())) {
 		X509V3err(X509V3_F_S2I_SKEY_ID, ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -155,6 +155,6 @@ s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
 	return oct;
 
 err:
-	M_ASN1_OCTET_STRING_free(oct);
+	ASN1_OCTET_STRING_free(oct);
 	return NULL;
 }
