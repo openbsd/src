@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.11 2015/09/30 17:30:16 jsing Exp $ */
+/* $OpenBSD: x509_set.c,v 1.12 2015/09/30 17:49:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,7 +120,7 @@ X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
 	if (in != tm) {
 		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
-			M_ASN1_TIME_free(x->cert_info->validity->notBefore);
+			ASN1_TIME_free(x->cert_info->validity->notBefore);
 			x->cert_info->validity->notBefore = in;
 		}
 	}
@@ -138,7 +138,7 @@ X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
 	if (in != tm) {
 		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
-			M_ASN1_TIME_free(x->cert_info->validity->notAfter);
+			ASN1_TIME_free(x->cert_info->validity->notAfter);
 			x->cert_info->validity->notAfter = in;
 		}
 	}

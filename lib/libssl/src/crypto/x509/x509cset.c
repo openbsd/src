@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.10 2015/09/30 17:30:16 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.11 2015/09/30 17:49:59 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -94,7 +94,7 @@ X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 	if (in != tm) {
 		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
-			M_ASN1_TIME_free(x->crl->lastUpdate);
+			ASN1_TIME_free(x->crl->lastUpdate);
 			x->crl->lastUpdate = in;
 		}
 	}
@@ -112,7 +112,7 @@ X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 	if (in != tm) {
 		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
-			M_ASN1_TIME_free(x->crl->nextUpdate);
+			ASN1_TIME_free(x->crl->nextUpdate);
 			x->crl->nextUpdate = in;
 		}
 	}
@@ -147,7 +147,7 @@ X509_REVOKED_set_revocationDate(X509_REVOKED *x, ASN1_TIME *tm)
 	if (in != tm) {
 		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
-			M_ASN1_TIME_free(x->revocationDate);
+			ASN1_TIME_free(x->revocationDate);
 			x->revocationDate = in;
 		}
 	}
