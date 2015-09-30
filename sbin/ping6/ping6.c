@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.116 2015/09/16 10:12:03 florian Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.117 2015/09/30 12:21:46 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1855,9 +1855,6 @@ void
 onint(int signo)
 {
 	summary(signo);
-
-	(void)signal(SIGINT, SIG_DFL);
-	(void)kill(getpid(), SIGINT);
 
 	if (signo)
 		_exit(nreceived ? 0 : 1);
