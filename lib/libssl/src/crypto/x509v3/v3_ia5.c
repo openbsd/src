@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_ia5.c,v 1.14 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_ia5.c,v 1.15 2015/09/30 18:21:50 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -224,11 +224,11 @@ s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str)
 		    X509V3_R_INVALID_NULL_ARGUMENT);
 		return NULL;
 	}
-	if (!(ia5 = M_ASN1_IA5STRING_new()))
+	if (!(ia5 = ASN1_IA5STRING_new()))
 		goto err;
 	if (!ASN1_STRING_set((ASN1_STRING *)ia5, (unsigned char*)str,
 	    strlen(str))) {
-		M_ASN1_IA5STRING_free(ia5);
+		ASN1_IA5STRING_free(ia5);
 		goto err;
 	}
 	return ia5;

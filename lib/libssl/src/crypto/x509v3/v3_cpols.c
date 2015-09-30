@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_cpols.c,v 1.22 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_cpols.c,v 1.23 2015/09/30 18:21:50 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -497,7 +497,7 @@ policy_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 			if ((nqual = POLICYQUALINFO_new()) == NULL)
 				goto merr;
 			nqual->pqualid = OBJ_nid2obj(NID_id_qt_cps);
-			nqual->d.cpsuri = M_ASN1_IA5STRING_new();
+			nqual->d.cpsuri = ASN1_IA5STRING_new();
 			if (nqual->d.cpsuri == NULL)
 				goto merr;
 			if (ASN1_STRING_set(nqual->d.cpsuri, cnf->value,
@@ -583,7 +583,7 @@ notice_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *unot, int ia5org)
 		cnf = sk_CONF_VALUE_value(unot, i);
 		if (!strcmp(cnf->name, "explicitText")) {
 			if (not->exptext == NULL) {
-				not->exptext = M_ASN1_VISIBLESTRING_new();
+				not->exptext = ASN1_VISIBLESTRING_new();
 				if (not->exptext == NULL)
 					goto merr;
 			}

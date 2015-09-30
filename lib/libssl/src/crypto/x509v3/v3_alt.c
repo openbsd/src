@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.24 2015/07/29 16:13:48 jsing Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.25 2015/09/30 18:21:50 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -439,7 +439,7 @@ copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 
 err:
 	GENERAL_NAME_free(gen);
-	M_ASN1_IA5STRING_free(email);
+	ASN1_IA5STRING_free(email);
 	return 0;
 }
 
@@ -557,7 +557,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	}
 
 	if (is_string) {
-		if (!(gen->d.ia5 = M_ASN1_IA5STRING_new()) ||
+		if (!(gen->d.ia5 = ASN1_IA5STRING_new()) ||
 		    !ASN1_STRING_set(gen->d.ia5, (unsigned char*)value,
 			strlen(value))) {
 			X509V3err(X509V3_F_A2I_GENERAL_NAME,
