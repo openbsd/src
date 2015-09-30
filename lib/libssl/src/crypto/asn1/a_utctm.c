@@ -1,4 +1,4 @@
-/* $OpenBSD: a_utctm.c,v 1.27 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_utctm.c,v 1.28 2015/09/30 18:26:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -197,7 +197,7 @@ ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t, int offset_day, long offset_sec)
 	ASN1_UTCTIME *tmp = NULL, *ret;
 
 	if (s == NULL) {
-		tmp = M_ASN1_UTCTIME_new();
+		tmp = ASN1_UTCTIME_new();
 		if (tmp == NULL)
 			return NULL;
 		s = tmp;
@@ -205,7 +205,7 @@ ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t, int offset_day, long offset_sec)
 
 	ret = ASN1_UTCTIME_adj_internal(s, t, offset_day, offset_sec);
 	if (ret == NULL && tmp != NULL)
-		M_ASN1_UTCTIME_free(tmp);
+		ASN1_UTCTIME_free(tmp);
 
 	return ret;
 }
