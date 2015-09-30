@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.28 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.29 2015/09/30 17:04:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,7 +198,6 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
 	if ((a == NULL) || ((*a) == NULL)) {
 		if ((ret = M_ASN1_INTEGER_new()) == NULL)
 			return (NULL);
-		ret->type = V_ASN1_INTEGER;
 	} else
 		ret = (*a);
 
@@ -292,7 +291,6 @@ d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp, long length)
 	if ((a == NULL) || ((*a) == NULL)) {
 		if ((ret = M_ASN1_INTEGER_new()) == NULL)
 			return (NULL);
-		ret->type = V_ASN1_INTEGER;
 	} else
 		ret = (*a);
 
