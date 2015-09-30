@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.62 2015/09/28 21:52:28 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.63 2015/09/30 00:43:44 krw Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -235,7 +235,7 @@ readvdmlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	if (error)
 		return (error);
 
-	return checkdisklabel(bp->b_data + LABELOFFSET, lp, 
+	return checkdisklabel(bp->b_data + LABELOFFSET, lp,
 	    DL_GETBSTART(lp), DL_GETBEND(lp));
 }
 
@@ -268,7 +268,7 @@ readvditlabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	vdit_size = largest_chunk = 0;
 	expected_kind = VDIT_BLOCK_HEAD_BE;
 	blkno = VDIT_SECTOR;
-	for (;;) { 
+	for (;;) {
 		error = readdisksector(bp, strat, lp, DL_BLKTOSEC(lp, blkno));
 		if (error)
 			return (error);
