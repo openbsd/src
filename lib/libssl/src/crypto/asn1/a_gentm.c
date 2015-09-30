@@ -1,4 +1,4 @@
-/* $OpenBSD: a_gentm.c,v 1.23 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: a_gentm.c,v 1.24 2015/09/30 18:04:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -218,7 +218,7 @@ ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
 	ASN1_GENERALIZEDTIME *tmp = NULL, *ret;
 
 	if (s == NULL) {
-		tmp = M_ASN1_GENERALIZEDTIME_new();
+		tmp = ASN1_GENERALIZEDTIME_new();
 		if (tmp == NULL)
 			return NULL;
 		s = tmp;
@@ -226,7 +226,7 @@ ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
 
 	ret = ASN1_GENERALIZEDTIME_adj_internal(s, t, offset_day, offset_sec);
 	if (ret == NULL && tmp != NULL)
-		M_ASN1_GENERALIZEDTIME_free(tmp);
+		ASN1_GENERALIZEDTIME_free(tmp);
 
 	return ret;
 

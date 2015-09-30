@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.24 2015/07/24 13:49:58 jsing Exp $ */
+/* $OpenBSD: a_time.c,v 1.25 2015/09/30 18:04:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -173,7 +173,7 @@ ASN1_TIME_to_generalizedtime_internal(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
 	i = snprintf(str, newlen, "%s%s", (t->data[0] >= '5') ? "19" : "20",
 	    (char *) t->data);
 	if (i == -1 || i >= newlen) {
-		M_ASN1_GENERALIZEDTIME_free(ret);
+		ASN1_GENERALIZEDTIME_free(ret);
 		*out = NULL;
 		return NULL;
 	}
