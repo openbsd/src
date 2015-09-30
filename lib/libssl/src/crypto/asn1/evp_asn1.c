@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.17 2015/09/30 18:41:06 jsing Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.18 2015/09/30 19:07:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,8 @@ ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
 	os.length = len;
 	ASN1_INTEGER_set(&in, num);
 	n = i2d_ASN1_INTEGER(&in, NULL);
-	n += M_i2d_ASN1_OCTET_STRING(&os, NULL);
+	n += i2d_ASN1_bytes((ASN1_STRING *)&os, NULL, V_ASN1_OCTET_STRING,
+	    V_ASN1_UNIVERSAL);
 
 	size = ASN1_object_size(1, n, V_ASN1_SEQUENCE);
 
@@ -134,7 +135,8 @@ ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
 
 	ASN1_put_object(&p, 1,n, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
 	i2d_ASN1_INTEGER(&in, &p);
-	M_i2d_ASN1_OCTET_STRING(&os, &p);
+	i2d_ASN1_bytes((ASN1_STRING *)&os, &p, V_ASN1_OCTET_STRING,
+	    V_ASN1_UNIVERSAL);
 
 	ASN1_TYPE_set(a, V_ASN1_SEQUENCE, osp);
 	return (1);
