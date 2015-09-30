@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.244 2015/09/28 08:36:24 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.245 2015/09/30 10:47:39 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1171,14 +1171,8 @@ rt_checkgate(struct ifnet *ifp, struct rtentry *rt, struct sockaddr *dst,
 
 	KASSERT(rt != NULL);
 
-	if ((rt->rt_flags & RTF_UP) == 0) {
-		rt = rtalloc(dst, RT_REPORT|RT_RESOLVE, rtableid);
-		if (rt == NULL)
-			return (EHOSTUNREACH);
-		rt->rt_refcnt--;
-		if (rt->rt_ifp != ifp)
-			return (EHOSTUNREACH);
-	}
+	if ((rt->rt_flags & RTF_UP) == 0)
+		return (EHOSTUNREACH);
 
 	rt0 = rt;
 
