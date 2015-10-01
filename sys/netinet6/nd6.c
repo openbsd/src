@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.154 2015/09/18 14:26:22 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.155 2015/10/01 09:10:22 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -787,7 +787,6 @@ nd6_is_addr_neighbor(struct sockaddr_in6 *addr, struct ifnet *ifp)
 struct llinfo_nd6 *
 nd6_free(struct rtentry *rt, int gc)
 {
-	struct rt_addrinfo info;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
@@ -879,11 +878,7 @@ nd6_free(struct rtentry *rt, int gc)
 	 * caches, and disable the route entry not to be used in already
 	 * cached routes.
 	 */
-	bzero(&info, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_key(rt);
-	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL,
-	    rt->rt_ifp->if_rdomain);
+	rtdeletemsg(rt, rt->rt_ifp->if_rdomain);
 	splx(s);
 
 	return (next);
