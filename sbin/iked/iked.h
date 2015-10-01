@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.88 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.89 2015/10/01 10:59:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -322,17 +322,19 @@ struct iked_id {
 	struct ibuf	*id_buf;
 };
 
-#define IKED_REQ_CERT		0x01	/* get local certificate (if required) */
-#define IKED_REQ_CERTVALID	0x02	/* validated the peer cert */
-#define IKED_REQ_AUTH		0x04	/* AUTH payload */
-#define IKED_REQ_AUTHVALID	0x08	/* AUTH payload has been verified */
-#define IKED_REQ_SA		0x10	/* SA available */
-#define IKED_REQ_EAPVALID	0x20	/* EAP payload has been verified */
-#define IKED_REQ_CHILDSA	0x40	/* Child SA initiated */
-#define IKED_REQ_INF		0x80	/* Informational exchange initiated */
+#define IKED_REQ_CERT		0x0001	/* get local certificate (if required) */
+#define IKED_REQ_CERTVALID	0x0002	/* validated the peer cert */
+#define IKED_REQ_CERTREQ	0x0004	/* CERTREQ has been received */
+#define IKED_REQ_AUTH		0x0008	/* AUTH payload */
+#define IKED_REQ_AUTHVALID	0x0010	/* AUTH payload has been verified */
+#define IKED_REQ_SA		0x0020	/* SA available */
+#define IKED_REQ_EAPVALID	0x0040	/* EAP payload has been verified */
+#define IKED_REQ_CHILDSA	0x0080	/* Child SA initiated */
+#define IKED_REQ_INF		0x0100	/* Informational exchange initiated */
 
 #define IKED_REQ_BITS	\
-    "\20\01CERT\02CERTVALID\03AUTH\04AUTHVALID\05SA\06EAP"
+    "\20\01CERT\02CERTVALID\03CERTREQ\04AUTH\05AUTHVALID\06SA\07EAPVALID" \
+    "\10CHILDSA\11INF"
 
 TAILQ_HEAD(iked_msgqueue, iked_message);
 
@@ -838,7 +840,7 @@ void	 pfkey_init(struct iked *, int fd);
 
 /* ca.c */
 pid_t	 caproc(struct privsep *, struct privsep_proc *);
-int	 ca_setreq(struct iked *, struct iked_sahdr *, struct iked_static_id *,
+int	 ca_setreq(struct iked *, struct iked_sa *, struct iked_static_id *,
 	    uint8_t, uint8_t *, size_t, enum privsep_procid);
 int	 ca_setcert(struct iked *, struct iked_sahdr *, struct iked_id *,
 	    uint8_t, uint8_t *, size_t, enum privsep_procid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.123 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.124 2015/10/01 10:59:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -652,6 +652,8 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 int
 ikev2_ike_auth(struct iked *env, struct iked_sa *sa)
 {
+	struct iked_policy	*pol = sa->sa_policy;
+
 	/* Attempt state transition */
 	if (sa->sa_state == IKEV2_STATE_EAP_SUCCESS)
 		sa_state(env, sa, IKEV2_STATE_EAP_VALID);
@@ -664,6 +666,24 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa)
 		else
 			return (ikev2_init_ike_auth(env, sa));
 	}
+
+	/*
+	 * If we have to send a local certificate but did not receive an
+	 * optional CERTREQ, use our own certreq to find a local certificate.
+	 * We could alternatively extract the CA from the peer certificate
+	 * to find a matching local one.
+	 */
+	if (sa->sa_statevalid & IKED_REQ_CERT) {
+		if ((sa->sa_stateflags & IKED_REQ_CERTREQ) == 0) {
+			log_debug("%s: no CERTREQ, using default", __func__);
+			return (ca_setreq(env, sa,
+			    &pol->pol_localid, pol->pol_certreqtype,
+			    ibuf_data(env->sc_certreq),
+			    ibuf_size(env->sc_certreq), PROC_CERT));
+		} else if ((sa->sa_stateflags & IKED_REQ_CERT) == 0)
+			return (0);	/* ignored, wait for cert */
+	}
+
 	return (ikev2_resp_ike_auth(env, sa));
 }
 

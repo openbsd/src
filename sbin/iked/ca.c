@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.36 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.37 2015/10/01 10:59:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -248,7 +248,7 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 }
 
 int
-ca_setreq(struct iked *env, struct iked_sahdr *sh,
+ca_setreq(struct iked *env, struct iked_sa *sa,
     struct iked_static_id *localid, uint8_t type, uint8_t *data,
     size_t len, enum privsep_procid procid)
 {
@@ -273,8 +273,8 @@ ca_setreq(struct iked *env, struct iked_sahdr *sh,
 	iov[iovcnt].iov_len = sizeof(idb);
 	iovcnt++;
 
-	iov[iovcnt].iov_base = sh;
-	iov[iovcnt].iov_len = sizeof(*sh);
+	iov[iovcnt].iov_base = &sa->sa_hdr;
+	iov[iovcnt].iov_len = sizeof(sa->sa_hdr);
 	iovcnt++;
 	iov[iovcnt].iov_base = &type;
 	iov[iovcnt].iov_len = sizeof(type);
@@ -286,6 +286,8 @@ ca_setreq(struct iked *env, struct iked_sahdr *sh,
 	if (proc_composev_imsg(&env->sc_ps, procid, -1,
 	    IMSG_CERTREQ, -1, iov, iovcnt) == -1)
 		goto done;
+
+	sa_stateflags(sa, IKED_REQ_CERTREQ);
 
 	ret = 0;
  done:

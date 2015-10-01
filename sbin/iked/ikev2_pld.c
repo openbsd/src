@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.52 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.53 2015/10/01 10:59:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -931,7 +931,7 @@ ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
 	else
 		sa->sa_statevalid |= IKED_REQ_CERT;
 
-	ca_setreq(env, &sa->sa_hdr, &sa->sa_policy->pol_localid,
+	ca_setreq(env, sa, &sa->sa_policy->pol_localid,
 	    cert.cert_type, buf, len, PROC_CERT);
 
 	return (0);

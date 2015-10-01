@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.39 2015/08/21 11:59:28 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.40 2015/10/01 10:59:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -272,7 +272,7 @@ sa_stateflags(struct iked_sa *sa, unsigned int flags)
 	else
 		require = sa->sa_stateinit;
 
-	log_debug("%s: 0x%02x -> 0x%02x %s (required 0x%02x %s)", __func__,
+	log_debug("%s: 0x%04x -> 0x%04x %s (required 0x%04x %s)", __func__,
 	    sa->sa_stateflags, sa->sa_stateflags | flags,
 	    print_bits(sa->sa_stateflags | flags, IKED_REQ_BITS), require,
 	    print_bits(require, IKED_REQ_BITS));
@@ -296,7 +296,7 @@ sa_stateok(struct iked_sa *sa, int state)
 	if (state == IKEV2_STATE_SA_INIT ||
 	    state == IKEV2_STATE_VALID ||
 	    state == IKEV2_STATE_EAP_VALID) {
-		log_debug("%s: %s flags 0x%02x, require 0x%02x %s", __func__,
+		log_debug("%s: %s flags 0x%04x, require 0x%04x %s", __func__,
 		    print_map(state, ikev2_state_map),
 		    (sa->sa_stateflags & require), require,
 		    print_bits(require, IKED_REQ_BITS));
