@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.24 2014/12/09 18:05:16 stsp Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.25 2015/10/01 16:08:20 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ filename(char *str, char *ppart)
 	char savec;
 	int dhandle;
 	char devtype[16];
-	
+
 	lp = str;
 	devtype[0] = 0;
 	*ppart = 0;
@@ -119,7 +119,7 @@ strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
 	int n;
-	
+
 	if (rw != F_READ)
 		return EPERM;
 #ifdef SOFTRAID
@@ -130,13 +130,13 @@ strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 #endif
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
-	
+
 	DNPRINTF(BOOT_D_OFDEV, "strategy: block %lx, partition offset %lx, "
 	    "blksz %lx\n", (long)blk, (long)dev->partoff, (long)dev->bsize);
-	DNPRINTF(BOOT_D_OFDEV, "strategy: seek position should be: %lx\n", 
+	DNPRINTF(BOOT_D_OFDEV, "strategy: seek position should be: %lx\n",
 	    (long)((blk + dev->partoff) * dev->bsize));
 	pos = (u_quad_t)(blk + dev->partoff) * dev->bsize;
-	
+
 	for (;;) {
 		DNPRINTF(BOOT_D_OFDEV, "strategy: seeking to %lx\n", (long)pos);
 		if (OF_seek(dev->handle, pos) < 0)
@@ -159,7 +159,7 @@ devclose(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
 
-#ifdef NETBOOT	
+#ifdef NETBOOT
 	if (op->type == OFDEV_NET)
 		net_close(op);
 #endif
@@ -213,7 +213,7 @@ static u_long
 get_long(const void *p)
 {
 	const unsigned char *cp = p;
-	
+
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
 
@@ -430,7 +430,7 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
 	int error;
-	
+
 	/* minimal requirements for archetypal disk label */
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, 0x1fffffff);
@@ -487,7 +487,7 @@ load_disklabel(struct of_dev *ofdev, struct disklabel *label)
 		/* Else try MBR partitions */
 		errmsg = search_label(ofdev, LABELSECTOR, buf,
 		    label, 0);
-		if (errmsg) { 
+		if (errmsg) {
 			printf("load_disklabel: search_label says %s\n",
 			    errmsg);
 			error = ERDLAB;
@@ -608,13 +608,13 @@ devopen(struct open_file *of, const char *name, char **file)
 		if (partition) {
 			if (partition < 'a' ||
 			    partition >= 'a' + MAXPARTITIONS) {
-			    	printf("invalid partition '%c'\n", partition);
+				printf("invalid partition '%c'\n", partition);
 				return EINVAL;
 			}
 			part = partition - 'a';
 			pp = &bootdev_dip->disklabel.d_partitions[part];
 			if (pp->p_fstype == FS_UNUSED || pp->p_size == 0) {
-			    	printf("invalid partition '%c'\n", partition);
+				printf("invalid partition '%c'\n", partition);
 				return EINVAL;
 			}
 			bootdev_dip->sr_vol->sbv_part = partition;
@@ -667,7 +667,7 @@ devopen(struct open_file *of, const char *name, char **file)
 			DNPRINTF(BOOT_D_OFDEV, "devopen: setting partition %d "
 			    "offset %x\n", part, ofdev.partoff);
 		}
-		
+
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS

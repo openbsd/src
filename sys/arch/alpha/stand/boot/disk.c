@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.16 2015/07/17 16:13:26 miod Exp $	*/
+/*	$OpenBSD: disk.c,v 1.17 2015/10/01 16:08:19 krw Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ diskstrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addrvoid,
 	if ((reqcnt & 0xffffff) != reqcnt ||
 	    reqcnt == 0)
 		asm("call_pal 0");
-	    
+
 	twiddle();
 
 	/* Partial-block transfers not handled. */
@@ -97,7 +97,7 @@ diskopen(struct open_file *f, int ctlr, int unit, int part)
 
 	if (unit >= 16 || part >= MAXPARTITIONS)
 		return (ENXIO);
-	/* 
+	/*
 	 * XXX
 	 * We don't know what device names look like yet,
 	 * so we can't change them.

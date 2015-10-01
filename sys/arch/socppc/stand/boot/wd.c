@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.7 2013/11/05 00:51:58 krw Exp $	*/
+/*	$OpenBSD: wd.c,v 1.8 2015/10/01 16:08:20 krw Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ wd_get_params(wd)
 #endif
 
 	wd->sc_params = *(struct ataparams *)buf;
-	
+
 	/* 48-bit LBA addressing */
 	if ((wd->sc_params.atap_cmd2_en & ATAPI_CMD2_48AD) != 0) {
 		DPRINTF(("Drive supports LBA48.\n"));
@@ -190,7 +190,7 @@ wdgetdisklabel(wd)
 		 * Lookup OpenBSD slice. If there is none, go ahead
 		 * and try to read the disklabel off sector #0.
 		 */
-		
+
 		memcpy(dp, &buf[DOSPARTOFF], NDOSPART * sizeof(*dp));
 		for (i = 0; i < NDOSPART; i++) {
 			if (dp[i].dp_typ == DOSPTYP_OPENBSD) {
@@ -291,7 +291,7 @@ wdstrategy(f, rw, dblk, size, buf, rsize)
 
 	if (size == 0)
 		return (0);
-    
+
 	if (rw != F_READ)
 		return EOPNOTSUPP;
 

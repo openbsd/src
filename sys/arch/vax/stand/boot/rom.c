@@ -1,4 +1,4 @@
-/*	$OpenBSD: rom.c,v 1.5 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: rom.c,v 1.6 2015/10/01 16:08:20 krw Exp $ */
 /*	$NetBSD: rom.c,v 1.3 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -17,7 +17,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission

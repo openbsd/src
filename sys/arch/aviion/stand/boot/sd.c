@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.7 2014/07/12 19:01:49 tedu Exp $	*/
+/*	$OpenBSD: sd.c,v 1.8 2015/10/01 16:08:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -54,7 +54,7 @@ sdopen(struct open_file *f, const char *ctrlname, int ctrl, int unit, int lun,
 		vdl = (struct vdm_label *)(buf + VDM_LABEL_OFFSET_ALT);
 	if (vdl->signature != VDM_LABEL_SIGNATURE)
 		return EINVAL;
-	
+
 	/* XXX ought to search for an OpenBSD vdmpart too. Too lazy for now */
 	rc = scsi_read(priv, LABELSECTOR, sizeof buf, buf, &z);
 	if (rc != 0 || z != sizeof buf)
