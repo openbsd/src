@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.1 2015/09/10 18:59:34 deraadt Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.2 2015/10/01 13:04:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -36,6 +36,7 @@
 #include <netgroup.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "stringlist.h"
 
 static const char _ngstar[] = "*";
