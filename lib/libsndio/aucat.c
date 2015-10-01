@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.63 2015/05/05 13:36:22 jsg Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.64 2015/10/01 06:38:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -206,21 +206,17 @@ static int
 aucat_mkcookie(unsigned char *cookie)
 {
 	struct stat sb;
-	char buf[PATH_MAX], tmp[PATH_MAX], *path;
+	char *home, path[PATH_MAX], tmp[PATH_MAX];
 	ssize_t len;
 	int fd;
 
 	/*
 	 * try to load the cookie
 	 */
-	path = issetugid() ? NULL : getenv("AUCAT_COOKIE");
-	if (path == NULL) {
-		path = issetugid() ? NULL : getenv("HOME");
-		if (path == NULL)
-			goto bad_gen;
-		snprintf(buf, PATH_MAX, "%s/.aucat_cookie", path);
-		path = buf;
-	}
+	home = issetugid() ? NULL : getenv("HOME");
+	if (home == NULL)
+		goto bad_gen;
+	snprintf(path, PATH_MAX, "%s/.aucat_cookie", home);
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		if (errno != ENOENT)
@@ -257,7 +253,7 @@ bad_gen:
 	/*
 	 * try to save the cookie
 	 */
-	if (path == NULL)
+	if (home == NULL)
 		return 1;
 	if (strlcpy(tmp, path, PATH_MAX) >= PATH_MAX ||
 	    strlcat(tmp, ".XXXXXXXX", PATH_MAX) >= PATH_MAX) {
