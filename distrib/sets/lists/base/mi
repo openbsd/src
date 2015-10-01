@@ -2779,6 +2779,7 @@
 ./usr/share/zoneinfo/America/Eirunepe
 ./usr/share/zoneinfo/America/El_Salvador
 ./usr/share/zoneinfo/America/Ensenada
+./usr/share/zoneinfo/America/Fort_Nelson
 ./usr/share/zoneinfo/America/Fort_Wayne
 ./usr/share/zoneinfo/America/Fortaleza
 ./usr/share/zoneinfo/America/Glace_Bay
@@ -3390,6 +3391,7 @@
 ./usr/share/zoneinfo/posix/America/Eirunepe
 ./usr/share/zoneinfo/posix/America/El_Salvador
 ./usr/share/zoneinfo/posix/America/Ensenada
+./usr/share/zoneinfo/posix/America/Fort_Nelson
 ./usr/share/zoneinfo/posix/America/Fort_Wayne
 ./usr/share/zoneinfo/posix/America/Fortaleza
 ./usr/share/zoneinfo/posix/America/Glace_Bay
@@ -4002,6 +4004,7 @@
 ./usr/share/zoneinfo/right/America/Eirunepe
 ./usr/share/zoneinfo/right/America/El_Salvador
 ./usr/share/zoneinfo/right/America/Ensenada
+./usr/share/zoneinfo/right/America/Fort_Nelson
 ./usr/share/zoneinfo/right/America/Fort_Wayne
 ./usr/share/zoneinfo/right/America/Fortaleza
 ./usr/share/zoneinfo/right/America/Glace_Bay
