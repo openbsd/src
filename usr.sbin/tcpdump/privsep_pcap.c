@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.18 2015/08/21 02:07:32 deraadt Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.19 2015/10/01 13:18:40 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -287,19 +287,6 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 		    pcap_strerror(errno));
 		goto bad;
 	}
-#if _BSDI_VERSION - 0 >= 199510
-	/* The SLIP and PPP link layer header changed in BSD/OS 2.1 */
-	switch (v) {
-
-	case DLT_SLIP:
-		v = DLT_SLIP_BSDOS;
-		break;
-
-	case DLT_PPP:
-		v = DLT_PPP_BSDOS;
-		break;
-	}
-#endif
 	p->linktype = v;
 
 	/* XXX hack */
