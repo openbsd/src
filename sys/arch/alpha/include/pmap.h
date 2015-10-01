@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.36 2015/02/15 21:34:33 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.37 2015/10/01 16:03:48 kettenis Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -98,6 +98,7 @@ struct pmap {
 	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
 	int			pm_count;	/* pmap reference count */
+	struct mutex		pm_mtx;		/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
@@ -300,12 +301,14 @@ do {									\
  * pmap-specific data stored in the vm_page structure.
  */
 struct vm_page_md {
+	struct mutex pvh_mtx;
 	struct pv_entry *pvh_list;	/* pv entry list */
 	int pvh_attrs;			/* page attributes */
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
+	mtx_init(&(pg)->mdpage.pvh_mtx, IPL_VM);			\
 	(pg)->mdpage.pvh_list = NULL;					\
 	(pg)->mdpage.pvh_attrs = 0;					\
 } while (0)
