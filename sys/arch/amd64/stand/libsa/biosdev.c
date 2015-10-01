@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.25 2015/10/01 16:08:19 krw Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.26 2015/10/01 16:16:23 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -438,7 +438,7 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 		if (start == (u_int)-1) {
 			if (err != NULL)
 				return (err);
- 			return "no OpenBSD partition\n";
+			return "no OpenBSD partition\n";
 		}
 	}
 	start = LABELSECTOR + start;
