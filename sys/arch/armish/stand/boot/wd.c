@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.12 2015/10/01 16:08:19 krw Exp $	*/
+/*	$OpenBSD: wd.c,v 1.13 2015/10/01 20:28:12 krw Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -181,7 +181,7 @@ wdgetdisklabel(wd)
 		}
 	}
 
-	if (wdstrategy(wd, F_READ, sector + LABELSECTOR, DEV_BSIZE,
+	if (wdstrategy(wd, F_READ, sector + DOS_LABELSECTOR, DEV_BSIZE,
 				buf, &rsize))
 		return EOFFSET;
 

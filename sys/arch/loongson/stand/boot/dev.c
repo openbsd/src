@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.7 2014/07/12 21:03:38 tedu Exp $	*/
+/*	$OpenBSD: dev.c,v 1.8 2015/10/01 20:28:12 krw Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -206,7 +206,7 @@ pmon_getdisklabel(struct pmon_iodata *pi)
 		}
 	}
 
-	if (pmon_iostrategy(pi, F_READ, sector + LABELSECTOR, DEV_BSIZE,
+	if (pmon_iostrategy(pi, F_READ, sector + DOS_LABELSECTOR, DEV_BSIZE,
 				buf, &rsize))
 		return ENXIO;
 
