@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.3 2015/10/01 18:24:28 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.4 2015/10/01 18:31:40 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -79,7 +79,7 @@ int	asmc_match(struct device *, void *, void *);
 void	asmc_attach(struct device *, struct device *, void *);
 int 	asmc_detach(struct device *, int);
 
-struct cfattach asmc_ca = {
+const struct cfattach asmc_ca = {
 	sizeof(struct asmc_softc), asmc_match, asmc_attach
 };
 
