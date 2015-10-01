@@ -1,4 +1,4 @@
-/*	$OpenBSD: ashrdi3.c,v 1.6 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: ashrdi3.c,v 1.7 2015/10/01 02:32:07 guenther Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,15 +55,12 @@ __ashrdi3(quad_t a, qshift_t shift)
 		 * INT_BITS is undefined, so we shift (INT_BITS-1),
 		 * then 1 more, to get our answer.
 		 */
-		/* LINTED inherits machine dependency */
 		s = (aa.sl[H] >> (INT_BITS - 1)) >> 1;
-		/* LINTED inherits machine dependency*/
 		aa.ul[L] = aa.sl[H] >> (shift - INT_BITS);
 		aa.ul[H] = s;
 	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
 		    (aa.ul[H] << (INT_BITS - shift));
-		/* LINTED inherits machine dependency */
 		aa.sl[H] >>= shift;
 	}
 	return (aa.q);

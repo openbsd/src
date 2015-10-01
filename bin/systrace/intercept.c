@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.63 2015/01/16 00:19:12 deraadt Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.64 2015/10/01 02:32:07 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -1120,9 +1120,7 @@ loop:
 		return (NULL);
 	}
 	p[0] = '/';
-	memcpy(&p[1], path,
-	    /* LINTED We know q > path. */
-	    q - path);
+	memcpy(&p[1], path, q - path);
 	p[1 + q - path] = 0;
 
 	/*

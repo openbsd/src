@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.28 2015/09/19 04:02:21 guenther Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.29 2015/10/01 02:32:07 guenther Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -149,9 +149,7 @@ permute_args(int panonopt_start, int panonopt_end, int opt_end,
 			else
 				pos += nopts;
 			swap = nargv[pos];
-			/* LINTED const cast */
-			((char **) nargv)[pos] = nargv[cstart];
-			/* LINTED const cast */
+			((char **)nargv)[pos] = nargv[cstart];
 			((char **)nargv)[cstart] = swap;
 		}
 	}

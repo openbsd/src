@@ -1,4 +1,4 @@
-/*	$OpenBSD: _wcstod.h,v 1.3 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: _wcstod.h,v 1.4 2015/10/01 02:32:07 guenther Exp $	*/
 /* $NetBSD: wcstod.c,v 1.4 2001/10/28 12:08:43 yamt Exp $ */
 
 /*-
@@ -134,8 +134,6 @@ match:
 			const char *s = buf;
 			memset(&st, 0, sizeof(st));
 			size = mbsnrtowcs(NULL, &s, end - buf, 0, &st);
-
-			/* LINTED bad interface */
 			*endptr = (wchar_t*)start + size;
 		}
 
@@ -146,7 +144,6 @@ match:
 
 fail:
 	if (endptr)
-		/* LINTED bad interface */
 		*endptr = (wchar_t*)nptr;
 
 	return 0;

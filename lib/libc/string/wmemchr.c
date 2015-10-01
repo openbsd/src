@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemchr.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: wmemchr.c,v 1.5 2015/10/01 02:32:07 guenther Exp $	*/
 /*	$NetBSD: wmemchr.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@ wmemchr(const wchar_t *s, wchar_t c, size_t n)
 
 	for (i = 0; i < n; i++) {
 		if (*s == c) {
-			/* LINTED const castaway */
 			return (wchar_t *)s;
 		}
 		s++;

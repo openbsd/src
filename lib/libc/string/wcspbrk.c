@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcspbrk.c,v 1.4 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: wcspbrk.c,v 1.5 2015/10/01 02:32:07 guenther Exp $	*/
 /*	$NetBSD: wcspbrk.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@ wcspbrk(const wchar_t *s, const wchar_t *set)
 		q = set;
 		while (*q) {
 			if (*p == *q) {
-				/* LINTED interface specification */
 				return (wchar_t *)p;
 			}
 			q++;

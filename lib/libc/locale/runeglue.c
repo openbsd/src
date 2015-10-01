@@ -1,4 +1,4 @@
-/*	$OpenBSD: runeglue.c,v 1.3 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: runeglue.c,v 1.4 2015/10/01 02:32:07 guenther Exp $ */
 /*	$NetBSD: runeglue.c,v 1.10 2003/03/10 21:18:49 tshiozak Exp $	*/
 
 /*-
@@ -117,15 +117,9 @@ void
 __install_currentrunelocale_ctype()
 {
 	if (_CurrentRuneLocale->rl_tabs != NULL) {
-		/* LINTED const cast */
-		_ctype_ = (const unsigned char *)
-		    &(_CurrentRuneLocale->rl_tabs->ctype_tab);
-		/* LINTED const cast */
-		_toupper_tab_ = (const short *)
-		    &(_CurrentRuneLocale->rl_tabs->toupper_tab);
-		/* LINTED const cast */
-		_tolower_tab_ = (const short *)
-		    &(_CurrentRuneLocale->rl_tabs->tolower_tab);
+		_ctype_       = _CurrentRuneLocale->rl_tabs->ctype_tab;
+		_toupper_tab_ = _CurrentRuneLocale->rl_tabs->toupper_tab;
+		_tolower_tab_ = _CurrentRuneLocale->rl_tabs->tolower_tab;
 	} else {
 		_ctype_ = _C_ctype_;
 		_toupper_tab_ = _C_toupper_;

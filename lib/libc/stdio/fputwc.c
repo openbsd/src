@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputwc.c,v 1.5 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: fputwc.c,v 1.6 2015/10/01 02:32:07 guenther Exp $	*/
 /* $NetBSD: fputwc.c,v 1.3 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -46,8 +46,7 @@ __fputwc_unlock(wchar_t wc, FILE *fp)
 	struct __suio uio;
 	struct __siov iov;
 
-	/* LINTED we don't play with buf */
-	iov.iov_base = (void *)buf;
+	iov.iov_base = buf;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 

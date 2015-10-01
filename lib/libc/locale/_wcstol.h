@@ -1,4 +1,4 @@
-/*	$OpenBSD: _wcstol.h,v 1.2 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: _wcstol.h,v 1.3 2015/10/01 02:32:07 guenther Exp $	*/
 /* $NetBSD: _wcstol.h,v 1.2 2003/08/07 16:43:03 agc Exp $ */
 
 /*-
@@ -130,7 +130,6 @@ FUNCNAME(const wchar_t *nptr, wchar_t **endptr, int base)
 		}
 	}
 	if (endptr != 0)
-		/* LINTED interface specification */
 		*endptr = (wchar_t *)(any ? s - 1 : nptr);
 	return (acc);
 }
