@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.45 2015/09/30 11:36:07 semarie Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.46 2015/10/01 10:17:27 sthen Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1074,6 +1074,14 @@ tame_setsockopt_check(struct proc *p, int level, int optname)
 	case IPPROTO_ICMP:
 		break;
 	case IPPROTO_IPV6:
+		switch (optname) {
+		case IPV6_UNICAST_HOPS:
+		case IPV6_RECVHOPLIMIT:
+		case IPV6_PORTRANGE:
+		case IPV6_RECVPKTINFO:
+			return (0);
+		}
+		break;
 	case IPPROTO_ICMPV6:
 		break;
 	}
