@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.201 2015/09/28 18:33:42 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.202 2015/10/01 20:27:51 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2573,16 +2573,21 @@ uvm_map_splitentry(struct vm_map *map, struct vm_map_entry *orig,
 		orig->guard = 0;
 		orig->end = next->start = split;
 
-		if (next->aref.ar_amap)
+		if (next->aref.ar_amap) {
+			KERNEL_LOCK();
 			amap_splitref(&orig->aref, &next->aref, adj);
+			KERNEL_UNLOCK();
+		}
 		if (UVM_ET_ISSUBMAP(orig)) {
 			uvm_map_reference(next->object.sub_map);
 			next->offset += adj;
 		} else if (UVM_ET_ISOBJ(orig)) {
 			if (next->object.uvm_obj->pgops &&
 			    next->object.uvm_obj->pgops->pgo_reference) {
+				KERNEL_LOCK();
 				next->object.uvm_obj->pgops->pgo_reference(
 				    next->object.uvm_obj);
+				KERNEL_UNLOCK();
 			}
 			next->offset += adj;
 		}
