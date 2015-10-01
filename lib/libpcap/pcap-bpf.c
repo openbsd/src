@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.29 2015/09/11 13:03:30 stsp Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.30 2015/10/01 13:29:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -543,27 +543,6 @@ pcap_activate(pcap_t *p)
 		status = PCAP_ERROR;
 		goto bad;
 	}
-#if _BSDI_VERSION - 0 >= 199510
-	/* The SLIP and PPP link layer header changed in BSD/OS 2.1 */
-	switch (v) {
-
-	case DLT_SLIP:
-		v = DLT_SLIP_BSDOS;
-		break;
-
-	case DLT_PPP:
-		v = DLT_PPP_BSDOS;
-		break;
-
-	case 11:	/*DLT_FR*/
-		v = DLT_FRELAY;
-		break;
-
-	case 12:	/*DLT_C_HDLC*/
-		v = DLT_CHDLC;
-		break;
-	}
-#endif
 
 	/*
 	 * We know the default link type -- now determine all the DLTs
