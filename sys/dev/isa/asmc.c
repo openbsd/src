@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.2 2015/10/01 15:57:08 jsg Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.3 2015/10/01 18:24:28 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -451,7 +451,6 @@ asmc_fans(struct asmc_softc *sc, uint8_t *n)
 		sc->sc_sensor_fan[i].flags &= ~SENSOR_FINVALID;
 		sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor_fan[i]);
 	}
-	sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor_fan[3]);
 	return 0;
 }
 
