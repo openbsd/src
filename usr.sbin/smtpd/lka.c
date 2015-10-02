@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.175 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: lka.c,v 1.176 2015/10/02 00:28:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -185,6 +185,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			free(req_ca_vrfy_smtp->chain_cert_len);
 			free(req_ca_vrfy_smtp->cert);
 			free(req_ca_vrfy_smtp);
+			req_ca_vrfy_smtp = NULL;
 			return;
 
 		case IMSG_SMTP_AUTHENTICATE:
@@ -306,6 +307,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			free(req_ca_vrfy_mta->chain_cert_len);
 			free(req_ca_vrfy_mta->cert);
 			free(req_ca_vrfy_mta);
+			req_ca_vrfy_mta = NULL;
 			return;
 
 		case IMSG_MTA_LOOKUP_CREDENTIALS:
