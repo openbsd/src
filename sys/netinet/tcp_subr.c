@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.148 2015/09/11 08:17:06 claudio Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.149 2015/10/02 09:51:54 tedu Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -933,6 +933,9 @@ tcp_mtudisc_increase(inp, errno)
 	}
 }
 
+/*
+ * Generate new ISNs with a method based on RFC1948
+ */
 #define TCP_ISS_CONN_INC 4096
 int tcp_secret_init;
 u_char tcp_secret[16];
