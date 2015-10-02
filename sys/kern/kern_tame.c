@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.47 2015/10/01 23:50:37 doug Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.48 2015/10/02 01:44:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -505,8 +505,6 @@ tame_namei(struct proc *p, char *origpath)
 		/* getpw* and friends need a few files */
 		if ((p->p_tamenote == TMN_RPATH) &&
 		    (p->p_p->ps_tame & TAME_GETPW)) {
-			if (strcmp(path, "/etc/spwd.db") == 0)
-				return (0);
 			if (strcmp(path, "/etc/pwd.db") == 0)
 				return (0);
 			if (strcmp(path, "/etc/group") == 0)
