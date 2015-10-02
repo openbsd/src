@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.16 2015/10/02 09:30:04 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.17 2015/10/02 09:40:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -30,6 +30,7 @@
 #include "debug.h"
 #include "mio_priv.h"
 
+#define DEVPATH_PREFIX	"/dev/rmidi"
 struct mio_rmidi_hdl {
 	struct mio_hdl mio;
 	int fd;
@@ -71,7 +72,7 @@ _mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 		return NULL;
 	_mio_create(&hdl->mio, &mio_rmidi_ops, mode, nbio);
 
-	snprintf(path, sizeof(path), "/dev/rmidi%s", str);
+	snprintf(path, sizeof(path), DEVPATH_PREFIX "%s", str);
 	if (mode == (MIO_OUT | MIO_IN))
 		flags = O_RDWR;
 	else

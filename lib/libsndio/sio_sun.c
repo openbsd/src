@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.16 2015/07/28 20:48:49 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.17 2015/10/02 09:40:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,6 +32,7 @@
 #include "debug.h"
 #include "sio_priv.h"
 
+#define DEVPATH_PREFIX	"/dev/audio"
 struct sio_sun_hdl {
 	struct sio_hdl sio;
 	int fd;
@@ -345,7 +346,7 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 		return NULL;
 	_sio_create(&hdl->sio, &sio_sun_ops, mode, nbio);
 
-	snprintf(path, sizeof(path), "/dev/audio%s", str);
+	snprintf(path, sizeof(path), DEVPATH_PREFIX "%s", str);
 	if (mode == (SIO_PLAY | SIO_REC))
 		flags = O_RDWR;
 	else
