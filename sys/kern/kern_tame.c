@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.51 2015/10/02 05:30:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.52 2015/10/02 20:42:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -929,7 +929,8 @@ tame_socket_check(struct proc *p, int domain)
 		return (0);
 	if ((p->p_p->ps_tame & (TAME_INET | TAME_UNIX)))
 		return (0);
-	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) && domain == AF_INET)
+	if ((p->p_p->ps_tame & TAME_DNS_ACTIVE) &&
+	    (domain == AF_INET || domain == AF_INET6))
 		return (0);
 	return (EPERM);
 }
