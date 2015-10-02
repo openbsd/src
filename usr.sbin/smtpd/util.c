@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.114 2015/08/16 20:53:19 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.115 2015/10/02 00:41:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -500,9 +500,6 @@ valid_domainpart(const char *s)
 	return res_hnok(s);
 }
 
-/*
- * Check file for security. Based on usr.bin/ssh/auth.c.
- */
 int
 secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 {
@@ -520,7 +517,7 @@ secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 	/* Check the open file to avoid races. */
 	if (fstat(fd, &st) < 0 ||
 	    !S_ISREG(st.st_mode) ||
-	    (st.st_uid != 0 && st.st_uid != uid) ||
+	    st.st_uid != uid ||
 	    (st.st_mode & (mayread ? 022 : 066)) != 0)
 		return 0;
 
