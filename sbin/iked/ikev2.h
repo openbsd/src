@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.20 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.21 2015/10/02 17:50:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -180,6 +180,7 @@ extern struct iked_constmap ikev2_xformtype_map[];
 #define IKEV2_XFORMENCR_CAMELLIA_CCM_8	25	/* RFC5529 */
 #define IKEV2_XFORMENCR_CAMELLIA_CCM_12	26	/* RFC5529 */
 #define IKEV2_XFORMENCR_CAMELLIA_CCM_16	27	/* RFC5529 */
+#define IKEV2_XFORMENCR_CHACHA20_POLY1305 28	/* RFC7634 */
 
 extern struct iked_constmap ikev2_xformencr_map[];
 
@@ -455,6 +456,7 @@ struct ikev2_auth {
 #define IKEV2_AUTH_ECDSA_384		10	/* RFC4754 */
 #define IKEV2_AUTH_ECDSA_512		11	/* RFC4754 */
 #define IKEV2_AUTH_GSPM			12	/* RFC6467 */
+#define IKEV2_AUTH_NULL			13	/* RFC7619 */
 #define IKEV2_AUTH_SIG			14	/* RFC7427 */
 
 extern struct iked_constmap ikev2_auth_map[];
