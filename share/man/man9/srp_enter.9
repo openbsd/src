@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.5 2015/09/14 15:14:55 schwarze Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.6 2015/10/02 09:26:16 sobrado Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: October 2 2015 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -158,11 +158,11 @@ That in turn means the
 .Fa gc
 structure will no longer be referenced and can itself be destroyed.
 .Pp
-A srp structure declaraction can be initialised with the
+A srp structure declaration can be initialised with the
 .Fn SRP_INITIALIZER
 macro.
 .Pp
-A srp_gc structure declaraction can be initialised with the
+A srp_gc structure declaration can be initialised with the
 .Fn SRP_GC_INITIALIZER
 macro.
 Data will be destroyed by the garbage collector by a call to
