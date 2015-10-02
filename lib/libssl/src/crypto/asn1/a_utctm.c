@@ -1,4 +1,4 @@
-/* $OpenBSD: a_utctm.c,v 1.28 2015/09/30 18:26:07 jsing Exp $ */
+/* $OpenBSD: a_utctm.c,v 1.29 2015/10/02 15:04:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,66 +64,14 @@
 #include <openssl/err.h>
 
 #include "o_time.h"
+#include "asn1_locl.h"
 
 int
 ASN1_UTCTIME_check(ASN1_UTCTIME *d)
 {
-	static const int min[8] = {0, 1, 1, 0, 0, 0, 0, 0};
-	static const int max[8] = {99, 12, 31, 23, 59, 59, 12, 59};
-	char *a;
-	int n, i, l, o;
-
 	if (d->type != V_ASN1_UTCTIME)
 		return (0);
-	l = d->length;
-	a = (char *)d->data;
-	o = 0;
-
-	if (l < 11)
-
-		goto err;
-	for (i = 0; i < 6; i++) {
-		if ((i == 5) && ((a[o] == 'Z') ||
-		    (a[o] == '+') || (a[o] == '-'))) {
-			i++;
-			break;
-		}
-		if ((a[o] < '0') || (a[o] > '9'))
-			goto err;
-		n = a[o]-'0';
-		if (++o > l)
-			goto err;
-		if ((a[o] < '0') || (a[o] > '9'))
-			goto err;
-		n = (n * 10) + a[o] - '0';
-		if (++o > l)
-			goto err;
-		if ((n < min[i]) || (n > max[i]))
-			goto err;
-	}
-	if (a[o] == 'Z')
-		o++;
-	else if ((a[o] == '+') || (a[o] == '-')) {
-		o++;
-		if (o + 4 > l)
-			goto err;
-		for (i = 6; i < 8; i++) {
-			if ((a[o] < '0') || (a[o] > '9'))
-				goto err;
-			n = a[o] -'0';
-			o++;
-			if ((a[o] < '0') || (a[o] > '9'))
-				goto err;
-			n = (n * 10) + a[o] - '0';
-			if ((n < min[i]) || (n > max[i]))
-				goto err;
-			o++;
-		}
-	}
-	return (o == l);
-
-err:
-	return (0);
+	return(d->type == asn1_time_parse(d->data, d->length, NULL, d->type));
 }
 
 int
@@ -159,7 +107,6 @@ ASN1_UTCTIME_adj_internal(ASN1_UTCTIME *s, time_t t, int offset_day,
 	char *p;
 	struct tm *ts;
 	struct tm data;
-	size_t len = 20;
 
 	ts = gmtime_r(&t, &data);
 	if (ts == NULL)
@@ -170,23 +117,14 @@ ASN1_UTCTIME_adj_internal(ASN1_UTCTIME *s, time_t t, int offset_day,
 			return NULL;
 	}
 
-	if ((ts->tm_year < 50) || (ts->tm_year >= 150))
-		return NULL;
-
-	p = (char *)s->data;
-	if ((p == NULL) || ((size_t)s->length < len)) {
-		p = malloc(len);
-		if (p == NULL) {
-			ASN1err(ASN1_F_ASN1_UTCTIME_ADJ, ERR_R_MALLOC_FAILURE);
-			return (NULL);
-		}
-		free(s->data);
-		s->data = (unsigned char *)p;
+	if ((p = utctime_string_from_tm(ts)) == NULL) {
+		ASN1err(ASN1_F_ASN1_UTCTIME_ADJ, ERR_R_MALLOC_FAILURE);
+		return (NULL);
 	}
-
-	snprintf(p, len, "%02d%02d%02d%02d%02d%02dZ", ts->tm_year % 100,
-	    ts->tm_mon + 1, ts->tm_mday, ts->tm_hour, ts->tm_min, ts->tm_sec);
+	free(s->data);
+	s->data = p;
 	s->length = strlen(p);
+
 	s->type = V_ASN1_UTCTIME;
 	return (s);
 }

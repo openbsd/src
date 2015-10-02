@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.45 2015/09/14 16:13:39 jsing Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.46 2015/10/02 15:04:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1631,106 +1631,50 @@ X509_cmp_current_time(const ASN1_TIME *ctm)
 	return X509_cmp_time(ctm, NULL);
 }
 
+/*
+ * Compare a possibly unvalidated ASN1_TIME string against a time_t
+ * using RFC 5280 rules for the time string. If *cmp_time is NULL
+ * the current system time is used.
+ *
+ * XXX NOTE that unlike what you expect a "cmp" function to do in C,
+ * XXX this one is "special", and returns 0 for error.
+ *
+ * Returns:
+ * -1 if the ASN1_time is earlier than OR the same as *cmp_time.
+ * 1 if the ASN1_time is later than *cmp_time.
+ * 0 on error.
+ */
 int
 X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 {
-	char *str;
-	ASN1_TIME atm;
-	long offset;
-	char buff1[24], buff2[24], *p;
-	int i, j;
+	time_t time1, time2;
+	struct tm tm1;
+	int ret = 0;
 
-	p = buff1;
-	i = ctm->length;
-	str = (char *)ctm->data;
-	if (ctm->type == V_ASN1_UTCTIME) {
-		if ((i < 11) || (i > 17))
-			return 0;
-		memcpy(p, str, 10);
-		p += 10;
-		str += 10;
-		i -= 10;
-	} else {
-		if (i < 13)
-			return 0;
-		memcpy(p, str, 12);
-		p += 12;
-		str += 12;
-		i -= 12;
-	}
-
-	if (i < 1)
-		return 0;
-	if ((*str == 'Z') || (*str == '-') || (*str == '+')) {
-		*(p++) = '0';
-		*(p++) = '0';
-	} else {
-		if (i < 2)
-			return 0;
-		*(p++) = *(str++);
-		*(p++) = *(str++);
-		i -= 2;
-		if (i < 1)
-			return 0;
-		/* Skip any fractional seconds... */
-		if (*str == '.') {
-			str++;
-			i--;
-			while (i > 1 && (*str >= '0') && (*str <= '9')) {
-				str++;
-				i--;
-			}
-		}
-	}
-	*(p++) = 'Z';
-	*(p++) = '\0';
-
-	if (i < 1)
-		return 0;
-	if (*str == 'Z') {
-		if (i != 1)
-			return 0;
-		offset = 0;
-	} else {
-		if (i != 5)
-			return 0;
-		if ((*str != '+') && (*str != '-'))
-			return 0;
-		if (str[1] < '0' || str[1] > '9' ||
-		    str[2] < '0' || str[2] > '9' ||
-		    str[3] < '0' || str[3] > '9' ||
-		    str[4] < '0' || str[4] > '9')
-			return 0;
-		offset = ((str[1] - '0') * 10 + (str[2] - '0')) * 60;
-		offset += (str[3] - '0') * 10 + (str[4] - '0');
-		if (*str == '-')
-			offset = -offset;
-	}
-	atm.type = ctm->type;
-	atm.flags = 0;
-	atm.length = sizeof(buff2);
-	atm.data = (unsigned char *)buff2;
-
-	if (X509_time_adj(&atm, offset * 60, cmp_time) == NULL)
-		return 0;
-
-	if (ctm->type == V_ASN1_UTCTIME) {
-		i = (buff1[0] - '0') * 10 + (buff1[1] - '0');
-		if (i < 50)
-			i += 100; /* cf. RFC 2459 */
-		j = (buff2[0] - '0') * 10 + (buff2[1] - '0');
-		if (j < 50)
-			j += 100;
-		if (i < j)
-			return -1;
-		if (i > j)
-			return 1;
-	}
-	i = strcmp(buff1, buff2);
-	if (i == 0) /* wait a second then return younger :-) */
-		return -1;
+	if (cmp_time == NULL)
+		time2 = time(NULL);
 	else
-		return i;
+		time2 = *cmp_time;
+
+	memset(&tm1, 0, sizeof(tm1));
+
+	if (asn1_time_parse(ctm->data, ctm->length, &tm1, 0) == -1)
+		goto out; /* invalid time */
+
+	/*
+	 * Defensively fail if the time string is not representable as
+	 * a time_t. A time_t must be sane if you care about times after
+	 * Jan 19 2038.
+	 */
+	if ((time1 = timegm(&tm1)) == -1)
+		goto out;
+
+	if (time1 <= time2)
+		ret = -1;
+	else
+		ret = 1;
+ out:
+	return (ret);
 }
 
 ASN1_TIME *

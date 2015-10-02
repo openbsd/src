@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.65 2015/09/14 01:45:03 doug Exp $
+# $OpenBSD: Makefile,v 1.66 2015/10/02 15:04:45 beck Exp $
 
 LIB=	crypto
 
@@ -49,6 +49,7 @@ SRCS+= f_enum.c x_pkey.c a_bool.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c
 SRCS+= asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_bytes.c a_strnid.c
 SRCS+= evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c
 SRCS+= a_set.c
+SRCS+= a_time_tm.c
 
 # bf/
 SRCS+= bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c
