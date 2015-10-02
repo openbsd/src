@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.15 2015/02/16 06:07:56 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.16 2015/10/02 09:30:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -63,7 +63,7 @@ _mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 		str++;
 		break;
 	default:
-		DPRINTF("_sio_sun_open: %s: '/<devnum>' expected\n", str);
+		DPRINTF("_mio_rmidi_open: %s: '/<devnum>' expected\n", str);
 		return NULL;
 	}
 	hdl = malloc(sizeof(struct mio_rmidi_hdl));
