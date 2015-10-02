@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.6 2012/11/23 06:40:26 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.7 2015/10/02 09:04:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,7 +24,6 @@
  */
 #define AUCAT_PATH		"aucat"
 #define AUCAT_PORT		11025
-#define DEFAULT_OPT		"default"
 
 /*
  * WARNING: since the protocol may be simultaneously used by static
