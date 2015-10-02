@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.165 2015/10/02 05:07:41 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.166 2015/10/02 15:49:22 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -734,7 +734,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (pr->ps_emul != pack.ep_emul || pack.ep_emul != &emul_native) {
 		pr->ps_emul = pack.ep_emul;
 
-		if (KTRPOINT(p, KTR_EMUL)
+		if (KTRPOINT(p, KTR_EMUL))
 			ktremul(p);
 	}
 #else
