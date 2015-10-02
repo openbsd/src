@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.330 2015/06/12 16:10:43 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.331 2015/10/02 15:32:17 krw Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2330,6 +2330,8 @@ main(int argc, char *argv[])
 
 			pfctl_show_rules(dev, path, opts, 0, anchorname,
 			    0, 0, -1);
+			pfctl_show_queues(dev, ifaceopt, opts,
+			    opts & PF_OPT_VERBOSE2);
 			pfctl_show_states(dev, ifaceopt, opts, -1);
 			pfctl_show_src_nodes(dev, opts);
 			pfctl_show_status(dev, opts);
