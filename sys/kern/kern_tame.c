@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.48 2015/10/02 01:44:52 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.49 2015/10/02 02:12:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -267,8 +267,6 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 				}
 			}
 			if (f == 0) {
-				printf("%s(%d): unknown req %s\n",
-				    p->p_comm, p->p_pid, rp);
 				free(rbuf, M_TEMP, MAXPATHLEN);
 				return (EINVAL);
 			}
@@ -284,8 +282,6 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 		/* Already tamed, only allow reductions */
 		if (((flags | p->p_p->ps_tame) & TAME_USERSET) !=
 		    (p->p_p->ps_tame & TAME_USERSET)) {
-			printf("%s(%d): fail change %x %x\n", p->p_comm, p->p_pid,
-			    flags, p->p_p->ps_tame);
 			return (EPERM);
 		}
 
@@ -392,8 +388,6 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 		free(cwdpath, M_TEMP, cwdpathlen);
 
 		if (error) {
-			printf("%s(%d): path load error %d\n",
-			    p->p_comm, p->p_pid, error);
 			for (i = 0; i < wl->wl_count; i++)
 				free(wl->wl_paths[i].name,
 				    M_TEMP, wl->wl_paths[i].len);
@@ -401,11 +395,13 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 			return (error);
 		}
 		p->p_p->ps_tamepaths = wl;
+#if 0
 		printf("tame: %s(%d): paths loaded:\n", p->p_comm, p->p_pid);
 		for (i = 0; i < wl->wl_count; i++)
 			if (wl->wl_paths[i].name)
 				printf("tame: %d=%s %lld\n", i, wl->wl_paths[i].name,
 				    (long long)wl->wl_paths[i].len);
+#endif
 	}
 
 	p->p_p->ps_tame = flags;
@@ -631,8 +627,6 @@ tame_namei(struct proc *p, char *origpath)
 					error = 0;
 			}
 		}
-		if (error)
-			printf("bad path: %s\n", canopath);
 		free(canopath, M_TEMP, MAXPATHLEN);
 		return (error);			/* Don't hint why it failed */
 	}
@@ -712,21 +706,18 @@ tame_cmsg_recv(struct proc *p, void *v, int controllen)
 			return tame_fail(p, EBADF, TAME_CMSG);
 
 		/* Only allow passing of sockets, pipes, and pure files */
-		printf("f_type %d\n", fp->f_type);
 		switch (fp->f_type) {
 		case DTYPE_SOCKET:
 		case DTYPE_PIPE:
 			continue;
 		case DTYPE_VNODE:
 			vp = (struct vnode *)fp->f_data;
-			printf("v_type %d\n", vp->v_type);
 			if (vp->v_type == VREG)
 				continue;
 			break;
 		default:
 			break;
 		}
-		printf("bad fd type\n");
 		return tame_fail(p, EPERM, TAME_CMSG);
 	}
 	return (0);
@@ -781,14 +772,12 @@ tame_cmsg_send(struct proc *p, void *v, int controllen)
 			return tame_fail(p, EBADF, TAME_CMSG);
 
 		/* Only allow passing of sockets, pipes, and pure files */
-		printf("f_type %d\n", fp->f_type);
 		switch (fp->f_type) {
 		case DTYPE_SOCKET:
 		case DTYPE_PIPE:
 			continue;
 		case DTYPE_VNODE:
 			vp = (struct vnode *)fp->f_data;
-			printf("v_type %d\n", vp->v_type);
 			if (vp->v_type == VREG)
 				continue;
 			break;
@@ -1032,7 +1021,7 @@ tame_ioctl_check(struct proc *p, long com, void *v)
 		break;
 
 	default:
-		printf("ioctl %lx\n", com);
+		printf("tame: ioctl %lx\n", com);
 		break;
 	}
 	return (EPERM);
