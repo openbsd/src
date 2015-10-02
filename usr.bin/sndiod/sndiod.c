@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.9 2015/10/02 09:21:46 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.10 2015/10/02 09:36:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -260,10 +260,10 @@ getbasepath(char *base, size_t size)
 	uid = geteuid();
 	if (uid == 0) {
 		mask = 022;
-		snprintf(base, PATH_MAX, SOCKPATH_DIR);
+		snprintf(base, SOCKPATH_MAX, SOCKPATH_DIR);
 	} else {
 		mask = 077;
-		snprintf(base, PATH_MAX, SOCKPATH_DIR "-%u", uid);
+		snprintf(base, SOCKPATH_MAX, SOCKPATH_DIR "-%u", uid);
 	}
 	if (mkdir(base, 0777 & ~mask) < 0) {
 		if (errno != EEXIST)
@@ -333,7 +333,7 @@ main(int argc, char **argv)
 {
 	int c, background, unit;
 	int pmin, pmax, rmin, rmax;
-	char base[PATH_MAX], path[PATH_MAX];
+	char base[SOCKPATH_MAX], path[SOCKPATH_MAX];
 	unsigned int mode, dup, mmc, vol;
 	unsigned int hold, autovol, bufsz, round, rate;
 	const char *str;
@@ -466,7 +466,7 @@ main(int argc, char **argv)
 		    mode, vol, mmc, dup);
 	}
 	getbasepath(base, sizeof(base));
-	snprintf(path, PATH_MAX, "%s/%s%u", base, SOCKPATH_FILE, unit);
+	snprintf(path, SOCKPATH_MAX, "%s/%s%u", base, SOCKPATH_FILE, unit);
 	listen_new_un(path);
 	if (geteuid() == 0)
 		privdrop();
