@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_radius.8,v 1.13 2015/10/01 20:35:55 jmc Exp $
+.\" $OpenBSD: login_radius.8,v 1.14 2015/10/02 13:50:17 sthen Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -32,12 +32,12 @@
 .\"
 .\"	BSDI $From: login_radius.8,v 1.2 1996/11/11 18:42:02 prb Exp $
 .\"
-.Dd $Mdocdate: October 1 2015 $
+.Dd $Mdocdate: October 2 2015 $
 .Dt LOGIN_RADIUS 8
 .Os
 .Sh NAME
 .Nm login_radius
-.Nd contact radiusd for authentication
+.Nd provide RADIUS authentication type
 .Sh SYNOPSIS
 .Nm login_radius
 .Op Fl d
@@ -48,9 +48,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility contacts the
-.Xr radiusd 8
-daemon to authenticate a
+utility contacts a RADIUS server to authenticate a
 .Ar user .
 If no
 .Ar class
@@ -59,9 +57,7 @@ is specified, the login class will be obtained from the password database.
 When executed as the name
 .Pa login_ Ns Ar style ,
 .Nm
-will request
-.Xr radiusd 8
-use the authentication specified by
+will request that the RADIUS server use the authentication specified by
 .Ar style .
 .Pp
 The options are as follows:
@@ -85,7 +81,7 @@ This option and its value are ignored.
 .Pp
 The
 .Nm
-utility needs to know a shared secret for each radius server it talks to.
+utility needs to know a shared secret for each RADIUS server it talks to.
 Shared secrets are stored in the file
 .Pa /etc/raddb/servers
 with the format:
@@ -93,11 +89,8 @@ with the format:
 server shared_secret
 .Ed
 .Pp
-It is expected that rather than requesting the radius style directly
-(in which case the
-.Xr radiusd 8
-server uses a default style)
-that
+It is expected that rather than requesting the RADIUS style directly
+(in which case the server uses a default style) that
 .Nm
 will be linked to the various mechanisms desired.
 For instance, to have all CRYPTOCard and ActivCard authentication take
@@ -110,36 +103,35 @@ modules and link
 to both of those names.
 Now when the user requests one of those authentication styles,
 .Nm
-will automatically forward the request to the remote
-.Xr radiusd 8
+will automatically forward the request to the remote RADIUS server
 and request it do the requested style of authentication.
 .Sh LOGIN.CONF VARIABLES
 The
 .Nm
-utility uses the following radius-specific
+utility uses the following RADIUS-specific
 .Pa /etc/login.conf
 variables:
 .Bl -tag -width radius-challenge-styles
 .It radius-port
-Port name or number to connect to on the radius server.
+Port name or number to connect to on the RADIUS server.
 .It radius-server
-Hostname of the radius server to contact.
+Hostname of the RADIUS server to contact.
 .It radius-server-alt
-Alternate radius server to use when the primary is not responding.
+Alternate RADIUS server to use when the primary is not responding.
 .It radius-challenge-styles
-Comma-separated list of authentication styles that the radius server
+Comma-separated list of authentication styles that the RADIUS server
 knows about.
 If the user's authentication style is in this list the challenge will
-be provided by the radius server.
+be provided by the RADIUS server.
 If not,
 .Nm
 will prompt the user for the password before sending the request
-(along with the password) to the radius server.
+(along with the password) to the RADIUS server.
 .It radius-timeout
-Number of seconds to wait for a response from the radius server.
+Number of seconds to wait for a response from the RADIUS server.
 Defaults to 2 seconds.
 .It radius-retries
-Number of times to attempt to contact the radius server before giving up
+Number of times to attempt to contact the RADIUS server before giving up
 (or falling back to the alternate server if there is one).
 Defaults to 6 tries.
 .El
@@ -148,11 +140,22 @@ Defaults to 6 tries.
 .It Pa /etc/login.conf
 login configuration database
 .It Pa /etc/raddb/servers
-list of radius servers and their associated shared secrets
+list of RADIUS servers and their associated shared secrets
 .El
 .Sh SEE ALSO
 .Xr login 1 ,
-.Xr login.conf 5
+.Xr login.conf 5 ,
+.Xr radiusd 8
+.Sh STANDARDS
+.Rs
+.%A C. Rigney
+.%A S. Willens
+.%A A. Rubens
+.%A W. Simpson
+.%D June 2000
+.%R RFC 2865
+.%T "Remote Authentication Dial In User Service (RADIUS)"
+.Re
 .Sh CAVEATS
 For
 .Nm
