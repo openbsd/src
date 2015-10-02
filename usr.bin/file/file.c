@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.47 2015/07/12 09:51:25 tobias Exp $ */
+/* $OpenBSD: file.c,v 1.48 2015/10/02 18:06:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "file.h"
 #include "magic.h"
