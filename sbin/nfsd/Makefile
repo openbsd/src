@@ -1,8 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2002/06/11 15:45:44 hin Exp $
+#	$OpenBSD: Makefile,v 1.8 2015/10/02 00:47:48 deraadt Exp $
 
 PROG=	nfsd
 MAN=	nfsd.8
-
-.include <bsd.own.mk>	# For KERBEROS
 
 .include <bsd.prog.mk>
