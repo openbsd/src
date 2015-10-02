@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.49 2015/10/02 02:12:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.50 2015/10/02 02:13:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -150,10 +150,10 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mquery] = TAME_MALLOC,
 	[SYS_munmap] = TAME_MALLOC,
 
-	[SYS_open] = TAME_SELF,
-	[SYS_stat] = TAME_SELF,
-	[SYS_access] = TAME_SELF,
-	[SYS_readlink] = TAME_SELF,
+	[SYS_open] = TAME_SELF,			/* further checks in namei */
+	[SYS_stat] = TAME_SELF,			/* further checks in namei */
+	[SYS_access] = TAME_SELF,		/* further checks in namei */
+	[SYS_readlink] = TAME_SELF,		/* further checks in namei */
 
 	[SYS_chdir] = TAME_RPATH,
 	[SYS___getcwd] = TAME_RPATH | TAME_WPATH,
