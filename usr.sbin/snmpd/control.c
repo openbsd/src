@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.29 2015/05/28 17:08:09 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.30 2015/10/02 13:13:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,7 @@ void	 control_dispatch_imsg(int, short, void *);
 void	 control_dispatch_agentx(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 void	 control_event_add(struct ctl_conn *, int, int, struct timeval *);
+ssize_t	 imsg_read_nofd(struct imsgbuf *);
 
 int
 control_init(struct privsep *ps, struct control_sock *cs)
@@ -231,7 +232,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	int			 n, v, i;
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
+		if ((n = imsg_read_nofd(&c->iev.ibuf)) == -1 || n == 0) {
 			control_close(c);
 			return;
 		}
@@ -662,4 +663,27 @@ control_event_add(struct ctl_conn *c, int fd, int wflag, struct timeval *tv)
 	event_del(&c->iev.ev);
 	event_set(&c->iev.ev, fd, EV_READ|wflag, control_dispatch_agentx, c);
 	event_add(&c->iev.ev, tv);
+}
+
+/* This should go into libutil, from smtpd/mproc.c */
+ssize_t
+imsg_read_nofd(struct imsgbuf *ibuf)
+{
+	ssize_t	 n;
+	char	*buf;
+	size_t	 len;
+
+	buf = ibuf->r.buf + ibuf->r.wpos;
+	len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
+
+ again:
+	if ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
+		if (errno != EINTR && errno != EAGAIN)
+			goto fail;
+		goto again;
+	}
+
+        ibuf->r.wpos += n;
+ fail:
+        return (n);
 }
