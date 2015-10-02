@@ -1,4 +1,4 @@
-/* $OpenBSD: sandbox-systrace.c,v 1.17 2015/07/27 16:29:23 guenther Exp $ */
+/* $OpenBSD: sandbox-systrace.c,v 1.18 2015/10/02 01:39:26 deraadt Exp $ */
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
  *
@@ -46,29 +46,36 @@ struct sandbox_policy {
 
 /* Permitted syscalls in preauth. Unlisted syscalls get SYSTR_POLICY_KILL */
 static const struct sandbox_policy preauth_policy[] = {
-	{ SYS_clock_gettime, SYSTR_POLICY_PERMIT },
-	{ SYS_close, SYSTR_POLICY_PERMIT },
 	{ SYS_exit, SYSTR_POLICY_PERMIT },
-	{ SYS_getentropy, SYSTR_POLICY_PERMIT },
-	{ SYS_getpid, SYSTR_POLICY_PERMIT },
-	{ SYS_getpgid, SYSTR_POLICY_PERMIT },
-	{ SYS_gettimeofday, SYSTR_POLICY_PERMIT },
 #ifdef SYS_kbind
 	{ SYS_kbind, SYSTR_POLICY_PERMIT },
 #endif
+
+	{ SYS_getpid, SYSTR_POLICY_PERMIT },
+	{ SYS_getpgid, SYSTR_POLICY_PERMIT },
+	{ SYS_clock_gettime, SYSTR_POLICY_PERMIT },
+	{ SYS_gettimeofday, SYSTR_POLICY_PERMIT },
+	{ SYS_sigprocmask, SYSTR_POLICY_PERMIT },
+
+	{ SYS_getentropy, SYSTR_POLICY_PERMIT },
+
+	{ SYS_sendsyslog, SYSTR_POLICY_PERMIT },
+
 	{ SYS_madvise, SYSTR_POLICY_PERMIT },
 	{ SYS_mmap, SYSTR_POLICY_PERMIT },
 	{ SYS_mprotect, SYSTR_POLICY_PERMIT },
 	{ SYS_mquery, SYSTR_POLICY_PERMIT },
 	{ SYS_munmap, SYSTR_POLICY_PERMIT },
-	{ SYS_open, SYSTR_POLICY_NEVER },
+
 	{ SYS_poll, SYSTR_POLICY_PERMIT },
-	{ SYS_read, SYSTR_POLICY_PERMIT },
 	{ SYS_select, SYSTR_POLICY_PERMIT },
-	{ SYS_sendsyslog, SYSTR_POLICY_PERMIT },
-	{ SYS_shutdown, SYSTR_POLICY_PERMIT },
-	{ SYS_sigprocmask, SYSTR_POLICY_PERMIT },
+	{ SYS_read, SYSTR_POLICY_PERMIT },
 	{ SYS_write, SYSTR_POLICY_PERMIT },
+	{ SYS_shutdown, SYSTR_POLICY_PERMIT },
+	{ SYS_close, SYSTR_POLICY_PERMIT },
+
+	{ SYS_open, SYSTR_POLICY_NEVER },
+
 	{ -1, -1 }
 };
 
