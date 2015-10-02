@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.52 2015/10/02 20:42:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.53 2015/10/02 20:48:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -161,7 +161,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_fstatat] = TAME_RPATH | TAME_WPATH,
 	[SYS_faccessat] = TAME_RPATH | TAME_WPATH,
 	[SYS_readlinkat] = TAME_RPATH | TAME_WPATH,
-	[SYS_lstat] = TAME_RPATH | TAME_WPATH | TAME_TMPPATH | TAME_DNSPATH,
+	[SYS_lstat] = TAME_RPATH | TAME_WPATH | TAME_TMPPATH,
 	[SYS_rename] = TAME_CPATH,
 	[SYS_rmdir] = TAME_CPATH,
 	[SYS_renameat] = TAME_CPATH,
