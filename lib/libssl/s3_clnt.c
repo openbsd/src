@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_clnt.c,v 1.135 2015/09/13 12:52:07 jsing Exp $ */
+/* $OpenBSD: s3_clnt.c,v 1.136 2015/10/02 14:30:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1854,7 +1854,8 @@ ssl3_get_server_done(SSL *s)
 }
 
 static int
-ssl3_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
+ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
+    int *outlen)
 {
 	unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 	EVP_PKEY *pkey = NULL;
@@ -1905,7 +1906,8 @@ err:
 }
 
 static int
-ssl3_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p, int *outlen)
+ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
+    int *outlen)
 {
 	DH *dh_srvr = NULL, *dh_clnt = NULL;
 	unsigned char *key = NULL;
@@ -1966,7 +1968,7 @@ err:
 }
 
 static int
-ssl3_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
+ssl3_send_client_kex_ecdh(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
     int *outlen)
 {
 	EC_KEY *tkey, *clnt_ecdh = NULL;
@@ -2097,7 +2099,7 @@ err:
 }
 
 static int
-ssl3_client_kex_gost(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
+ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, unsigned char *p,
     int *outlen)
 {
 	unsigned char premaster_secret[32], shared_ukm[32], tmp[256];
@@ -2235,16 +2237,16 @@ ssl3_send_client_key_exchange(SSL *s)
 		}
 
 		if (alg_k & SSL_kRSA) {
-			if (ssl3_client_kex_rsa(s, sess_cert, p, &n) != 1)
+			if (ssl3_send_client_kex_rsa(s, sess_cert, p, &n) != 1)
 				goto err;
 		} else if (alg_k & SSL_kDHE) {
-			if (ssl3_client_kex_dhe(s, sess_cert, p, &n) != 1)
+			if (ssl3_send_client_kex_dhe(s, sess_cert, p, &n) != 1)
 				goto err;
 		} else if (alg_k & (SSL_kECDHE|SSL_kECDHr|SSL_kECDHe)) {
-			if (ssl3_client_kex_ecdh(s, sess_cert, p, &n) != 1)
+			if (ssl3_send_client_kex_ecdh(s, sess_cert, p, &n) != 1)
 				goto err;
 		} else if (alg_k & SSL_kGOST) {
-			if (ssl3_client_kex_gost(s, sess_cert, p, &n) != 1)
+			if (ssl3_send_client_kex_gost(s, sess_cert, p, &n) != 1)
 				goto err;
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
