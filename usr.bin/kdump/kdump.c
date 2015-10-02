@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.106 2015/10/02 05:07:41 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.107 2015/10/02 19:12:45 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1433,7 +1433,7 @@ usage(void)
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
 	    "[-dHlnRTXx] [-e emulation] [-f file] [-m maxdata] [-p pid]\n"
-	    "%*s[-t [ceinstuw]]\n",
+	    "%*s[-t [ceinstuxX+]]\n",
 	    __progname, (int)(sizeof("usage: ") + strlen(__progname)), "");
 	exit(1);
 }
