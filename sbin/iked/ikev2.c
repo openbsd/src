@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.124 2015/10/01 10:59:23 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.125 2015/10/02 16:13:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -653,6 +653,7 @@ int
 ikev2_ike_auth(struct iked *env, struct iked_sa *sa)
 {
 	struct iked_policy	*pol = sa->sa_policy;
+	uint8_t			 certreqtype;
 
 	/* Attempt state transition */
 	if (sa->sa_state == IKEV2_STATE_EAP_SUCCESS)
@@ -676,8 +677,12 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa)
 	if (sa->sa_statevalid & IKED_REQ_CERT) {
 		if ((sa->sa_stateflags & IKED_REQ_CERTREQ) == 0) {
 			log_debug("%s: no CERTREQ, using default", __func__);
+			if (pol->pol_certreqtype)
+				certreqtype = pol->pol_certreqtype;
+			else
+				certreqtype = env->sc_certreqtype;
 			return (ca_setreq(env, sa,
-			    &pol->pol_localid, pol->pol_certreqtype,
+			    &pol->pol_localid, certreqtype,
 			    ibuf_data(env->sc_certreq),
 			    ibuf_size(env->sc_certreq), PROC_CERT));
 		} else if ((sa->sa_stateflags & IKED_REQ_CERT) == 0)
