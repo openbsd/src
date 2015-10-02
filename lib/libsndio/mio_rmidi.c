@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.18 2015/10/02 09:45:26 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.19 2015/10/02 09:48:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -62,6 +62,7 @@ _mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 	int fd, flags;
 	struct mio_rmidi_hdl *hdl;
 	char path[DEVPATH_MAX];
+	unsigned int devnum;
 
 	switch (*str) {
 	case '/':
@@ -71,12 +72,16 @@ _mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 		DPRINTF("_mio_rmidi_open: %s: '/<devnum>' expected\n", str);
 		return NULL;
 	}
+	str = _sndio_parsenum(str, &devnum, 255);
+	if (str == NULL || *str != '\0') {
+		DPRINTF("_mio_rmidi_open: can't determine device number\n");
+		return NULL;
+	}
 	hdl = malloc(sizeof(struct mio_rmidi_hdl));
 	if (hdl == NULL)
 		return NULL;
 	_mio_create(&hdl->mio, &mio_rmidi_ops, mode, nbio);
-
-	snprintf(path, sizeof(path), DEVPATH_PREFIX "%s", str);
+	snprintf(path, sizeof(path), DEVPATH_PREFIX "%u", devnum);
 	if (mode == (MIO_OUT | MIO_IN))
 		flags = O_RDWR;
 	else

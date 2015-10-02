@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.3 2013/11/13 22:38:22 ratchov Exp $	*/
+/*	$OpenBSD: debug.c,v 1.4 2015/10/02 09:48:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,4 +52,28 @@ _sndio_parsetype(const char *str, char *type)
 	if (*str >= 'a' && *str <= 'z')
 		return NULL;
 	return str;
+}
+
+const char *
+_sndio_parsenum(const char *str, unsigned int *num, unsigned int max)
+{
+	const char *p = str;
+	unsigned int dig, maxq, maxr, val;
+
+	val = 0;
+	maxq = max / 10;
+	maxr = max % 10;
+	for (;;) {
+		dig = *p - '0';
+		if (dig >= 10)
+			break;
+		if (val > maxq || (val == maxq && dig > maxr))
+			return NULL;
+		val = val * 10 + dig;
+		p++;
+	}
+	if (p == str)
+		return NULL;
+	*num = val;
+	return p;
 }

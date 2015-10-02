@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.18 2015/10/02 09:45:26 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.19 2015/10/02 09:48:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -336,6 +336,7 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 	struct sio_sun_hdl *hdl;
 	struct sio_par par;
 	char path[DEVPATH_MAX];
+	unsigned int devnum;
 
 	switch (*str) {
 	case '/':
@@ -345,12 +346,17 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 		DPRINTF("_sio_sun_open: %s: '/<devnum>' expected\n", str);
 		return NULL;
 	}
+	str = _sndio_parsenum(str, &devnum, 255);
+	if (str == NULL || *str != '\0') {
+		DPRINTF("_sio_sun_open: can't determine device number\n");
+		return NULL;
+	}
 	hdl = malloc(sizeof(struct sio_sun_hdl));
 	if (hdl == NULL)
 		return NULL;
 	_sio_create(&hdl->sio, &sio_sun_ops, mode, nbio);
 
-	snprintf(path, sizeof(path), DEVPATH_PREFIX "%s", str);
+	snprintf(path, sizeof(path), DEVPATH_PREFIX "%u", devnum);
 	if (mode == (SIO_PLAY | SIO_REC))
 		flags = O_RDWR;
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.h,v 1.4 2015/10/02 09:07:09 ratchov Exp $	*/
+/*	$OpenBSD: debug.h,v 1.5 2015/10/02 09:48:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,5 +47,6 @@ extern int _sndio_debug;
 #endif
 
 const char *_sndio_parsetype(const char *, char *);
+const char *_sndio_parsenum(const char *, unsigned int *, unsigned int);
 
 #endif
