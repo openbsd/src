@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.17 2015/10/02 09:40:57 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.18 2015/10/02 09:45:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,6 +31,10 @@
 #include "mio_priv.h"
 
 #define DEVPATH_PREFIX	"/dev/rmidi"
+#define DEVPATH_MAX 	(1 +		\
+	sizeof(DEVPATH_PREFIX) - 1 +	\
+	sizeof(int) * 3)
+
 struct mio_rmidi_hdl {
 	struct mio_hdl mio;
 	int fd;
@@ -57,7 +61,7 @@ _mio_rmidi_open(const char *str, unsigned int mode, int nbio)
 {
 	int fd, flags;
 	struct mio_rmidi_hdl *hdl;
-	char path[PATH_MAX];
+	char path[DEVPATH_MAX];
 
 	switch (*str) {
 	case '/':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.17 2015/10/02 09:40:57 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.18 2015/10/02 09:45:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,6 +33,10 @@
 #include "sio_priv.h"
 
 #define DEVPATH_PREFIX	"/dev/audio"
+#define DEVPATH_MAX 	(1 +		\
+	sizeof(DEVPATH_PREFIX) - 1 +	\
+	sizeof(int) * 3)
+
 struct sio_sun_hdl {
 	struct sio_hdl sio;
 	int fd;
@@ -331,7 +335,7 @@ _sio_sun_open(const char *str, unsigned int mode, int nbio)
 	struct audio_info aui;
 	struct sio_sun_hdl *hdl;
 	struct sio_par par;
-	char path[PATH_MAX];
+	char path[DEVPATH_MAX];
 
 	switch (*str) {
 	case '/':
