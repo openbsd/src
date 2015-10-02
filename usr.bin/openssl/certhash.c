@@ -474,7 +474,7 @@ static int
 certhash_link(struct dirent *dep, struct hashinfo **links)
 {
 	struct hashinfo *hi = NULL;
-	char target[MAXPATHLEN];
+	char target[PATH_MAX];
 	struct stat sb;
 	int n;
 
