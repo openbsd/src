@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.64 2015/10/01 06:38:19 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.65 2015/10/02 09:21:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -337,7 +337,7 @@ aucat_connect_un(struct aucat *hdl, unsigned int unit)
 
 	uid = geteuid();
 	snprintf(ca.sun_path, sizeof(ca.sun_path),
-	    "/tmp/aucat-%u/%s%u", uid, AUCAT_PATH, unit);
+	    SOCKPATH_DIR "-%u/%s%u", uid, SOCKPATH_FILE, unit);
 	ca.sun_family = AF_UNIX;
 	s = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	if (s < 0)
@@ -348,7 +348,7 @@ aucat_connect_un(struct aucat *hdl, unsigned int unit)
 		DPERROR(ca.sun_path);
 		/* try shared server */
 		snprintf(ca.sun_path, sizeof(ca.sun_path),
-		    "/tmp/aucat/%s%u", AUCAT_PATH, unit);
+		    SOCKPATH_DIR "/%s%u", SOCKPATH_FILE, unit);
 		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
 			if (errno == EINTR)
 				continue;
