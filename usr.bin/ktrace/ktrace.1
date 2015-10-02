@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.26 2015/09/07 15:38:45 guenther Exp $
+.\"	$OpenBSD: ktrace.1,v 1.27 2015/10/02 05:07:41 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 7 2015 $
+.Dd $Mdocdate: October 2 2015 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -118,8 +118,9 @@ The default flags are
 .Cm n ,
 .Cm s ,
 .Cm t ,
+.Cm u ,
 and
-.Cm u .
+.Cm x .
 The following table equates the letters with the tracepoints:
 .Pp
 .Bl -tag -width flag -offset indent -compact
@@ -138,6 +139,12 @@ trace various structures
 .It Cm u
 trace user data coming from
 .Xr utrace 2
+.It Cm x
+trace argument vector in
+.Xr execve 2
+.It Cm X
+trace environment in
+.Xr execve 2
 .It Cm +
 trace the default points
 .El

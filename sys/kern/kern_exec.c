@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.164 2015/09/28 20:32:59 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.165 2015/10/02 05:07:41 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -249,6 +249,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	struct ucred *cred = p->p_ucred;
 	char *argp;
 	char * const *cpp, *dp, *sp;
+#ifdef KTRACE
+	char *env_start;
+#endif
 	struct process *pr = p->p_p;
 	long argc, envc;
 	size_t len, sgap;
@@ -377,9 +380,17 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	}
 
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_EXECARGS))
+		ktrexec(p, KTR_EXECARGS, argp, dp - argp);
+#endif
+
 	envc = 0;
 	/* environment does not need to be there */
 	if ((cpp = SCARG(uap, envp)) != NULL ) {
+#ifdef KTRACE
+		env_start = dp;
+#endif
 		while (1) {
 			len = argp + ARG_MAX - dp;
 			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
@@ -395,6 +406,11 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			cpp++;
 			envc++;
 		}
+
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_EXECENV))
+			ktrexec(p, KTR_EXECENV, env_start, dp - env_start);
+#endif
 	}
 
 	dp = (char *)(((long)dp + _STACKALIGNBYTES) & ~_STACKALIGNBYTES);
@@ -713,12 +729,17 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (pack.ep_emul->e_proc_exec)
 		(*pack.ep_emul->e_proc_exec)(p, &pack);
 
+#if defined(KTRACE) && defined(COMPAT_LINUX)
+	/* update ps_emul, but don't ktrace it if native-execing-native */
+	if (pr->ps_emul != pack.ep_emul || pack.ep_emul != &emul_native) {
+		pr->ps_emul = pack.ep_emul;
+
+		if (KTRPOINT(p, KTR_EMUL)
+			ktremul(p);
+	}
+#else
 	/* update ps_emul, the old value is no longer needed */
 	pr->ps_emul = pack.ep_emul;
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p);
 #endif
 
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);

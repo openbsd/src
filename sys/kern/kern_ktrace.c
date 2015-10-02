@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.78 2015/09/13 17:08:03 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.79 2015/10/02 05:07:41 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -361,6 +361,42 @@ ktruser(struct proc *p, const char *id, const void *addr, size_t len)
 	return (error);
 }
 
+void
+ktrexec(struct proc *p, int type, const char *data, ssize_t len)
+{
+	struct ktr_header kth;
+	int count;
+	int buflen;
+	
+	assert(type == KTR_EXECARGS || type == KTR_EXECENV);
+	atomic_setbits_int(&p->p_flag, P_INKTR);
+
+	/* beware overflow */
+	if (len > PAGE_SIZE)
+		buflen = PAGE_SIZE;
+	else
+		buflen = len;
+
+	ktrinitheader(&kth, p, type);
+
+	while (len > 0) {
+		/*
+		 * Don't allow this process to hog the cpu when doing
+		 * huge I/O.
+		 */
+		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD)
+			preempt(NULL);
+
+		count = lmin(len, buflen);
+		if (ktrwrite(p, &kth, data, count) != 0)
+			break;
+
+		len -= count;
+		data += count;
+	}
+
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
+}
 
 /* Interface and common routines */
 

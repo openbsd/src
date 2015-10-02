@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.105 2015/09/13 17:08:03 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.106 2015/10/02 05:07:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -147,6 +147,7 @@ static void ktrsyscall(struct ktr_syscall *, size_t);
 static const char *kresolvsysctl(int, const int *);
 static void ktrsysret(struct ktr_sysret *, size_t);
 static void ktruser(struct ktr_user *, size_t);
+static void ktrexec(const char*, size_t);
 static void setemul(const char *);
 static void usage(void);
 static void ioctldecode(int);
@@ -301,6 +302,10 @@ main(int argc, char *argv[])
 		case KTR_USER:
 			ktruser(m, ktrlen);
 			break;
+		case KTR_EXECARGS:
+		case KTR_EXECENV:
+			ktrexec(m, ktrlen);
+			break;
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -383,6 +388,12 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_USER:
 		type = "USER";
+		break;
+	case KTR_EXECARGS:
+		type = "ARGS";
+		break;
+	case KTR_EXECENV:
+		type = "ENV ";
 		break;
 	default:
 		(void)snprintf(unknown, sizeof unknown, "UNKNOWN(%d)",
@@ -1200,6 +1211,59 @@ ktremul(char *cp, size_t len)
 }
 
 static void
+showbufc(const char *prefix, unsigned char *dp, size_t datalen)
+{
+	int i, j;
+	int col, width, bpl;
+	unsigned char visbuf[5], *cp, c;
+
+	(void)printf("       ");
+
+	col = 8;
+	if (prefix != NULL) {
+		printf("%s", prefix);
+		col += strlen(prefix);
+	}
+
+	putchar('"');
+	for (; datalen > 0; datalen--, dp++) {
+		(void)vis(visbuf, *dp, VIS_CSTYLE, *(dp+1));
+		cp = visbuf;
+
+		/*
+		 * Keep track of printables and
+		 * space chars (like fold(1)).
+		 */
+		if (col == 0) {
+			(void)putchar('\t');
+			col = 8;
+		}
+		switch (*cp) {
+		case '\n':
+			col = 0;
+			(void)putchar('\n');
+			continue;
+		case '\t':
+			width = 8 - (col&07);
+			break;
+		default:
+			width = strlen(cp);
+		}
+		if (col + width > (screenwidth-2)) {
+			(void)printf("\\\n\t");
+			col = 8;
+		}
+		col += width;
+		do {
+			(void)putchar(*cp++);
+		} while (*cp);
+	}
+	if (col == 0)
+		(void)printf("       ");
+	(void)printf("\"\n");
+}
+
+static void
 showbuf(unsigned char *dp, size_t datalen)
 {
 	int i, j;
@@ -1248,43 +1312,7 @@ showbuf(unsigned char *dp, size_t datalen)
 		}
 		return;
 	}
-	(void)printf("       \"");
-	col = 8;
-	for (; datalen > 0; datalen--, dp++) {
-		(void)vis(visbuf, *dp, VIS_CSTYLE, *(dp+1));
-		cp = visbuf;
-
-		/*
-		 * Keep track of printables and
-		 * space chars (like fold(1)).
-		 */
-		if (col == 0) {
-			(void)putchar('\t');
-			col = 8;
-		}
-		switch (*cp) {
-		case '\n':
-			col = 0;
-			(void)putchar('\n');
-			continue;
-		case '\t':
-			width = 8 - (col&07);
-			break;
-		default:
-			width = strlen(cp);
-		}
-		if (col + width > (screenwidth-2)) {
-			(void)printf("\\\n\t");
-			col = 8;
-		}
-		col += width;
-		do {
-			(void)putchar(*cp++);
-		} while (*cp);
-	}
-	if (col == 0)
-		(void)printf("       ");
-	(void)printf("\"\n");
+	showbufc(NULL, dp, datalen);
 }
 
 static void
@@ -1374,6 +1402,28 @@ ktruser(struct ktr_user *usr, size_t len)
 	printf("%.*s:", KTR_USER_MAXIDLEN, usr->ktr_id);
 	printf(" %zu bytes\n", len);
 	showbuf((unsigned char *)(usr + 1), len);
+}
+
+static void
+ktrexec(const char *ptr, size_t len)
+{
+	char buf[sizeof("[2147483648] = ")];
+	int i;
+	size_t l;
+
+	putchar('\n');
+	i = 0;
+	while (len > 0) {
+		l = strnlen(ptr, len);
+		snprintf(buf, sizeof(buf), "[%d] = ", i++);
+		showbufc(buf, (unsigned char *)ptr, l);
+		if (l == len) {
+			printf("\tunterminated argument\n");
+			break;
+		}
+		len -= l + 1;
+		ptr += l + 1;
+	}
 }
 
 static void
