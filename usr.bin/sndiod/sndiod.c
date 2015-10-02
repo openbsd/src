@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.10 2015/10/02 09:36:24 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.11 2015/10/02 12:21:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -466,7 +466,7 @@ main(int argc, char **argv)
 		    mode, vol, mmc, dup);
 	}
 	getbasepath(base, sizeof(base));
-	snprintf(path, SOCKPATH_MAX, "%s/%s%u", base, SOCKPATH_FILE, unit);
+	snprintf(path, SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u", base, unit);
 	listen_new_un(path);
 	if (geteuid() == 0)
 		privdrop();
