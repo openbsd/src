@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.104 2015/06/11 19:27:16 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.105 2015/10/02 00:26:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -71,7 +71,7 @@ static void control_broadcast_verbose(int, int);
 static struct stat_backend *stat_backend = NULL;
 extern const char *backend_stat;
 
-static uint32_t			connid = 0;
+static uint64_t			connid = 0;
 static struct tree		ctl_conns;
 static struct tree		ctl_count;
 static struct stat_digest	digest;
@@ -365,10 +365,14 @@ control_accept(int listenfd, short event, void *arg)
 	}
 	(*count)++;
 
+	do {
+		++connid;
+	} while (tree_get(&ctl_conns, connid));
+
 	c = xcalloc(1, sizeof(*c), "control_accept");
 	c->euid = euid;
 	c->egid = egid;
-	c->id = ++connid;
+	c->id = connid;
 	c->mproc.proc = PROC_CLIENT;
 	c->mproc.handler = control_dispatch_ext;
 	c->mproc.data = c;
