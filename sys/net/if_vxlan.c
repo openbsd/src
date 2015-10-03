@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.28 2015/09/09 20:05:21 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.29 2015/10/03 07:22:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -471,12 +471,14 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
     struct sockaddr *srcsa)
 {
 	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
-	struct vxlan_softc	*sc = NULL;
+	struct vxlan_softc	*sc = NULL, *sc_cand = NULL;
 	struct vxlan_header	 v;
 	u_int32_t		 vni;
 	struct ifnet		*ifp;
 	int			 skip;
 	struct ether_header	*eh;
+	struct sockaddr_in	*srcsin4, *scsin4;
+	struct sockaddr_in6	*srcsin6, *scsin6;
 #if NBRIDGE > 0
 	struct sockaddr		*sa;
 #endif
@@ -499,8 +501,34 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
 		if ((uh->uh_dport == sc->sc_dstport) &&
 		    vni == sc->sc_vnetid &&
-		    sc->sc_rdomain == rtable_l2(m->m_pkthdr.ph_rtableid))
-			goto found;
+		    sc->sc_rdomain == rtable_l2(m->m_pkthdr.ph_rtableid)) {
+			sc_cand = sc;
+			switch (srcsa->sa_family) {
+			case AF_INET:
+				srcsin4 = satosin(srcsa);
+				scsin4 = satosin(
+				    (struct sockaddr *)&sc->sc_dst);
+				if (srcsin4->sin_addr.s_addr ==
+				    scsin4->sin_addr.s_addr &&
+				    srcsin4->sin_port == scsin4->sin_port)
+					goto found;
+				break;
+			case AF_INET6:
+				srcsin6 = satosin6(srcsa);
+				scsin6 = satosin6(
+				    (struct sockaddr *)&sc->sc_dst);
+				if (IN6_ARE_ADDR_EQUAL(
+				    &srcsin6->sin6_addr, &scsin6->sin6_addr) &&
+				    srcsin6->sin6_port == scsin6->sin6_port)
+					goto found;
+				break;
+			}
+		}
+	}
+
+	if (sc_cand) {
+		sc = sc_cand;
+		goto found;
 	}
 
 	/* not found */
