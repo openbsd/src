@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.20 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.21 2015/10/03 09:57:30 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -33,7 +33,7 @@ static const char *print_header(const struct asr_dns_header *, char *, size_t);
 static const char *print_query(const struct asr_dns_query *, char *, size_t);
 static const char *print_rr(const struct asr_dns_rr *, char *, size_t);
 
-FILE *asr_debug = NULL;
+FILE *_asr_debug = NULL;
 
 #define OPCODE_SHIFT	11
 #define Z_SHIFT		 4

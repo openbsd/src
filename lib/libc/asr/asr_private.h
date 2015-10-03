@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.32 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.33 2015/10/03 09:57:30 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -334,13 +334,13 @@ int _asr_iter_domain(struct asr_query *, const char *, char *, size_t);
 
 #ifdef DEBUG
 
-#define DPRINT(...)		do { if(asr_debug) {		\
-		fprintf(asr_debug, __VA_ARGS__);		\
+#define DPRINT(...)		do { if(_asr_debug) {		\
+		fprintf(_asr_debug, __VA_ARGS__);		\
 	} } while (0)
-#define DPRINT_PACKET(n, p, s)	do { if(asr_debug) {		\
-		fprintf(asr_debug, "----- %s -----\n", n);	\
-		asr_dump_packet(asr_debug, (p), (s));		\
-		fprintf(asr_debug, "--------------\n");		\
+#define DPRINT_PACKET(n, p, s)	do { if(_asr_debug) {		\
+		fprintf(_asr_debug, "----- %s -----\n", n);	\
+		_asr_dump_packet(_asr_debug, (p), (s));		\
+		fprintf(_asr_debug, "--------------\n");		\
 	} } while (0)
 
 const char *_asr_querystr(int);
@@ -361,10 +361,10 @@ extern FILE *_asr_debug;
 
 #define async_set_state(a, s) do {		\
 	DPRINT("asr: [%s@%p] %s -> %s\n",	\
-		asr_querystr((a)->as_type),	\
+		_asr_querystr((a)->as_type),	\
 		as,				\
-		asr_statestr((a)->as_state),	\
-		asr_statestr((s)));		\
+		_asr_statestr((a)->as_state),	\
+		_asr_statestr((s)));		\
 	(a)->as_state = (s); } while (0)
 
 __END_HIDDEN_DECLS
