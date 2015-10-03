@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.58 2015/08/20 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.59 2015/10/03 13:10:47 tim Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -53,7 +53,6 @@ main(int argc, char **argv)
 	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
 	char    lastc, me[UT_NAMESIZE + 1], *p, *auth_type;
 	const char *errstr;
-	u_int32_t noise;
 	struct skey skey;
 	struct passwd *pp;
 
@@ -61,22 +60,15 @@ main(int argc, char **argv)
 	defaultsetup = 1;
 	ht = auth_type = NULL;
 
-	/* Build up a default seed based on the hostname and some noise */
+	/* Build up a default seed based on the hostname and some randomness */
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
 	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
-		if (isalpha((unsigned char)hostname[i])) {
-			if (isupper((unsigned char)hostname[i]))
-				hostname[i] = tolower((unsigned char)hostname[i]);
-			*p++ = hostname[i];
-		} else if (isdigit((unsigned char)hostname[i]))
-			*p++ = hostname[i];
+		if (isalnum((unsigned char)hostname[i]))
+			*p++ = tolower((unsigned char)hostname[i]);
 	}
-	noise = arc4random();
-	for (i = 0; i < 5; i++) {
-		*p++ = (noise % 10) + '0';
-		noise /= 10;
-	}
+	for (i = 0; i < 5; i++)
+		*p++ = arc4random_uniform(10) + '0';
 	*p = '\0';
 
 	if ((pp = getpwuid(getuid())) == NULL)
@@ -442,7 +434,7 @@ normal_mode(char *username, int n, char *key, char *seed)
 
 		/* Crunch seed and passphrase into starting key */
 		nn = keycrunch(key, seed, passwd);
-		memset(passwd, 0, sizeof(passwd));
+		explicit_bzero(passwd, sizeof(passwd));
 		if (nn != 0)
 			err(2, "key crunch failed");
 
@@ -452,7 +444,7 @@ normal_mode(char *username, int n, char *key, char *seed)
 
 		/* Crunch seed and passphrase into starting key */
 		nn = keycrunch(key2, seed, passwd);
-		memset(passwd, 0, sizeof(passwd));
+		explicit_bzero(passwd, sizeof(passwd));
 		if (nn != 0)
 			err(2, "key crunch failed");
 
