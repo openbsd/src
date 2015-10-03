@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.64 2015/06/03 08:10:53 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.65 2015/10/03 02:25:59 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -160,8 +160,12 @@ main(int argc, char *argv[])
 		func = F_GET;
 	rtn = 0;
 
+	getsocket();
+
 	switch (func) {
 	case F_GET:
+		if (tame("stdio dns inet", NULL) == -1)
+			err(1, "tame");
 		if (aflag && argc == 0)
 			dump();
 		else if (!aflag && argc == 1)
@@ -177,6 +181,8 @@ main(int argc, char *argv[])
 		rtn = set(argc, argv) ? 1 : 0;
 		break;
 	case F_DELETE:
+		if (tame("stdio dns inet", NULL) == -1)
+			err(1, "tame");
 		if (aflag && argc == 0)
 			search(0, nuke_entry);
 		else if (!aflag && argc == 1)
@@ -278,7 +284,6 @@ set(int argc, char *argv[])
 	sin = &sin_m;
 	rtm = &(m_rtmsg.m_rtm);
 
-	getsocket();
 	argc -= 2;
 	argv += 2;
 	sdl_m = blank_sdl;		/* struct copy */
@@ -408,7 +413,6 @@ delete(const char *host, const char *info)
 
 	if (info && strncmp(info, "pro", 3) )
 		export_only = 1;
-	getsocket();
 	sin_m = blank_sin;		/* struct copy */
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		return (1);
