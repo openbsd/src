@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.44 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.45 2015/10/03 22:36:56 deraadt Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 void cluster_wbuild(struct vnode *, struct buf *, long, daddr_t, int,
     daddr_t);
 struct cluster_save *cluster_collectbufs(struct vnode *, struct cluster_info *,
-    struct buf *);
+    struct buf *, size_t *);
 
 /*
  * Do clustered write for FFS.
@@ -89,8 +89,9 @@ cluster_write(struct buf *bp, struct cluster_info *ci, u_quad_t filesize)
 			} else {
 				struct buf **bpp, **endbp;
 				struct cluster_save *buflist;
+				size_t buflistsiz;
 
-				buflist = cluster_collectbufs(vp, ci, bp);
+				buflist = cluster_collectbufs(vp, ci, bp, &buflistsiz);
 				endbp = &buflist->bs_children
 				    [buflist->bs_nchildren - 1];
 				if (VOP_REALLOCBLKS(vp, buflist)) {
@@ -100,7 +101,7 @@ cluster_write(struct buf *bp, struct cluster_info *ci, u_quad_t filesize)
 					for (bpp = buflist->bs_children;
 					    bpp < endbp; bpp++)
 						brelse(*bpp);
-					free(buflist, M_VCLUSTER, 0);
+					free(buflist, M_VCLUSTER, buflistsiz);
 					cluster_wbuild(vp, NULL, bp->b_bcount,
 					    ci->ci_cstart, cursize, lbn);
 				} else {
@@ -110,7 +111,7 @@ cluster_write(struct buf *bp, struct cluster_info *ci, u_quad_t filesize)
 					for (bpp = buflist->bs_children;
 					    bpp <= endbp; bpp++)
 						bdwrite(*bpp);
-					free(buflist, M_VCLUSTER, 0);
+					free(buflist, M_VCLUSTER, buflistsiz);
 					ci->ci_lastw = lbn;
 					ci->ci_lasta = bp->b_blkno;
 					return;
@@ -219,15 +220,16 @@ redo:
  */
 struct cluster_save *
 cluster_collectbufs(struct vnode *vp, struct cluster_info *ci,
-    struct buf *last_bp)
+    struct buf *last_bp, size_t *buflistsizp)
 {
 	struct cluster_save *buflist;
+	size_t buflistsiz;
 	daddr_t lbn;
 	int i, len;
 
 	len = ci->ci_lastw - ci->ci_cstart + 1;
-	buflist = malloc(sizeof(struct buf *) * (len + 1) + sizeof(*buflist),
-	    M_VCLUSTER, M_WAITOK);
+	buflistsiz = sizeof(*buflist) + sizeof(struct buf *) * (len + 1);
+	buflist = malloc(buflistsiz, M_VCLUSTER, M_WAITOK);
 	buflist->bs_nchildren = 0;
 	buflist->bs_children = (struct buf **)(buflist + 1);
 	for (lbn = ci->ci_cstart, i = 0; i < len; lbn++, i++)
@@ -235,5 +237,6 @@ cluster_collectbufs(struct vnode *vp, struct cluster_info *ci,
 		    &buflist->bs_children[i]);
 	buflist->bs_children[i] = last_bp;
 	buflist->bs_nchildren = i + 1;
+	*buflistsizp = buflistsiz;
 	return (buflist);
 }
