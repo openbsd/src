@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc64.8,v 1.15 2014/11/27 14:57:36 schwarze Exp $
+.\"	$OpenBSD: boot_sparc64.8,v 1.16 2015/10/03 13:22:06 stsp Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 27 2014 $
+.Dd $Mdocdate: October 3 2015 $
 .Dt BOOT_SPARC64 8 sparc64
 .Os
 .Sh NAME
@@ -44,9 +44,32 @@ or
 the PROM will proceed to its initialization, and will boot an operating
 system if autoboot is enabled.
 .Ss Boot process description
-System boot blocks are installed near the start of the boot disk
-using the procedure described in
-.Xr installboot 8 .
+The sparc64 boot process is split into two parts: a small first-stage bootblock
+that is written into the superblock area of a partition
+.Po
+and hence is limited in size to SBSIZE - DEV_BSIZE bytes
+.Pc ,
+and a second-stage boot program that resides in the filesystem proper.
+The first-stage bootblock is loaded into memory by the PROM.
+After it receives control, it loads the second-stage boot program
+.Sy ofwboot
+from the filesystem.
+The second-stage boot program uses the device driver interface to
+the PROM and the stand-alone filesystem code in
+.Pa libsa.a
+to locate and load the kernel.
+The first-stage bootblock and second-stage boot program can be found in
+.Pa /usr/mdec/bootblk
+and
+.Pa /usr/mdec/ofwboot
+respectively.
+The second-stage boot program commonly resides in the root directory as
+.Pa /ofwboot .
+.Pp
+System boot blocks are installed using
+.Xr installboot 8 ,
+which prepares an FFS filesystem partition for boot-strapping from the PROM.
+.Pp
 The boot program attempts to load the kernel from the selected
 boot device, which must currently be an SCSI
 .Pq Pa sd
