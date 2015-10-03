@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.33 2015/10/03 09:57:30 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.34 2015/10/03 22:35:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -312,7 +312,7 @@ ssize_t _asr_dname_from_fqdn(const char *, char *, size_t);
 ssize_t _asr_addr_as_fqdn(const char *, int, char *, size_t);
 
 /* asr.c */
-void *_asr_resolver(const char *);
+static void *_asr_resolver(void);
 void _asr_resolver_done(void *);
 struct asr_ctx *_asr_use_resolver(void *);
 void _asr_ctx_unref(struct asr_ctx *);
