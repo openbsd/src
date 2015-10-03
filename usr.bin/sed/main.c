@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2015/07/19 17:21:21 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2015/10/03 00:58:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -158,6 +158,14 @@ main(int argc, char *argv[])
 		termwidth = win.ws_col;
 	if (termwidth == 0)
 		termwidth = 60;
+
+	if (inplace != NULL) {
+		if (tame("stdio wpath rpath cpath fattr", NULL) == -1)
+			err(1, "tame");
+	} else {
+		if (tame("stdio wpath rpath cpath", NULL) == -1)
+			err(1, "tame");
+	}
 
 	/* First usage case; script is the first arg */
 	if (!eflag && !fflag && *argv) {
