@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.12 2015/09/04 05:58:40 jasper Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.13 2015/10/03 01:05:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -269,7 +269,6 @@ acpi_find_rsd_ptr(void)
 	u_int8_t	buf[sizeof(struct ACPIrsdp)];
 	u_long		addr;
 
-	acpi_user_init();
 	if ((addr = bios_acpi_addr()) != 0) {
 		lseek(acpi_mem_fd, addr, SEEK_SET);
 		read(acpi_mem_fd, buf, 16);
@@ -532,6 +531,11 @@ asl_dump_from_devmem(void)
 
 	snprintf(name, sizeof(name), "%s.headers", aml_dumpfile);
 
+	acpi_user_init();
+
+	if (tame("stdio wpath cpath", NULL) == -1)
+		err(1, "tame");
+
 	rp = acpi_find_rsd_ptr();
 	if (!rp)
 		errx(1, "Can't find ACPI information");
@@ -566,10 +570,14 @@ main(int argc, char *argv[])
 	char		c;
 
 	while ((c = getopt(argc, argv, "o:")) != -1) {
-		if (c == 'o')
+		switch (c) {
+		case 'o':
 			aml_dumpfile = optarg;
-		else
+			break;
+		default:
 			usage();
+			break;
+		}
 	}
 
 	if (aml_dumpfile == NULL)
