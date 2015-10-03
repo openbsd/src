@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.34 2015/06/25 02:04:08 uebayasi Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.35 2015/10/03 03:30:04 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -261,8 +261,7 @@ done:
 			    getmode(set, p->fts_statp->st_mode), atflags)
 			    || fflag)
 				continue;
-		}
-		else if (!ischflags) {
+		} else if (!ischflags) {
 			if (!fchownat(AT_FDCWD, p->fts_accpath, uid, gid,
 			    atflags) || fflag)
 				continue;
