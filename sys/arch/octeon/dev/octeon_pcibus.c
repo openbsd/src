@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.16 2014/08/11 19:00:50 miod Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.17 2015/10/03 13:53:54 semarie Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -466,10 +466,9 @@ octeon_pcibus_get_resource_extent(pci_chipset_tag_t pc, int io)
 	struct extent *ex;
 	char *exname;
 	int exnamesz;
-	int errors;
 
 	exnamesz = 1 + 16 + 4;
-	exname = (char *)malloc(exnamesz, M_DEVBUF, M_NOWAIT);
+	exname = malloc(exnamesz, M_DEVBUF, M_NOWAIT);
 	if (exname == NULL)
 		return NULL;
 	snprintf(exname, exnamesz, "%s%s", sc->sc_dev.dv_xname,
@@ -478,34 +477,28 @@ octeon_pcibus_get_resource_extent(pci_chipset_tag_t pc, int io)
 	ex = extent_create(exname, 0, 0xffffffffffffffff, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT | EX_FILLED);
 	if (ex == NULL)
-		goto out;
+		goto error;
 
-	exname = NULL;
-	errors = 0;
 	if (io) {
-		if (extent_free(ex, _OCTEON_PCIBUS_PCIIO_BASE, _OCTEON_PCIBUS_PCIIO_SIZE,
-		    EX_NOWAIT) != 0)
-			errors++;
+		if (extent_free(ex, _OCTEON_PCIBUS_PCIIO_BASE,
+		    _OCTEON_PCIBUS_PCIIO_SIZE, EX_NOWAIT) != 0)
+			goto error;
 	} else {
-		if (extent_free(ex, _OCTEON_PCIBUS_PCIMEM_BASE, _OCTEON_PCIBUS_PCIMEM_SIZE,
-		    EX_NOWAIT) != 0)
-			errors++;
-	}
-
-	if (errors != 0) {
-		extent_destroy(ex);
-		ex = NULL;
+		if (extent_free(ex, _OCTEON_PCIBUS_PCIMEM_BASE,
+		    _OCTEON_PCIBUS_PCIMEM_SIZE, EX_NOWAIT) != 0)
+			goto error;
 	}
 
 #ifdef DEBUG
 	extent_print(ex);
 #endif
-
-out:
-	if (exname != NULL)
-		free(exname, M_DEVBUF, 0);
-
 	return ex;
+
+error:
+	if (ex != NULL)
+		extent_destroy(ex);
+	free(exname, M_DEVBUF, exnamesz);
+	return NULL;
 }
 
 /*
