@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.4 2015/09/11 14:30:23 bcook Exp $ */
+/* $OpenBSD: ocsp.c,v 1.5 2015/10/03 03:39:19 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -1110,7 +1110,7 @@ query_responder(BIO * err, BIO * cbio, char *path,
 		BIO_puts(err, "Error connecting BIO\n");
 		return NULL;
 	}
-	if (BIO_get_fd(cbio, &fd) <= 0) {
+	if (BIO_get_fd(cbio, &fd) < 0) {
 		BIO_puts(err, "Can't get connection fd\n");
 		goto err;
 	}
