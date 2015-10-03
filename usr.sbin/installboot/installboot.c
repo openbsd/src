@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.5 2015/09/10 16:53:28 miod Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.6 2015/10/03 16:56:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 		if (stage2)
 			fprintf(stderr, ", second-stage %s", stage2);
 		fprintf(stderr, "\n");
-	} 
+	}
 
 	md_loadboot();
 

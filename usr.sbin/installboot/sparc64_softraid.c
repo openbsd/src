@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_softraid.c,v 1.2 2015/01/16 00:05:12 deraadt Exp $	*/
+/*	$OpenBSD: sparc64_softraid.c,v 1.3 2015/10/03 16:56:52 krw Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -52,7 +52,7 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	if (bd.bd_status != BIOC_SDONLINE && bd.bd_status != BIOC_SDREBUILD) {
 		fprintf(stderr, "softraid chunk %u not online - skipping...\n",
 		    disk);
-		return;	
+		return;
 	}
 
 	if (strlen(bd.bd_vendor) < 1)

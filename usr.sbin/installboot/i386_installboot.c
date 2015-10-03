@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.8 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.9 2015/10/03 16:56:52 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -223,7 +223,7 @@ again:
 			    "Records (EBRs)\n", DOS_MAXEBR);
 		return ((u_int)-1);
 	}
-		
+
 	if (verbose)
 		fprintf(stderr, "%s boot record (%cBR) at sector %u\n",
 		    (mbroff == DOSBBSECTOR) ? "master" : "extended",
@@ -462,7 +462,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	 * (the partition boot record, a.k.a. the PBR).
 	 */
 	sym_set_value(pbr_symbols, "_fs_bsize_p", (fs->fs_bsize / 16));
-	sym_set_value(pbr_symbols, "_fs_bsize_s", (fs->fs_bsize / 
+	sym_set_value(pbr_symbols, "_fs_bsize_s", (fs->fs_bsize /
 	    dl->d_secsize));
 
 	/*
