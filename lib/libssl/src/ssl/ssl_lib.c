@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.112 2015/09/12 19:45:16 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.113 2015/10/03 06:47:32 doug Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -359,15 +359,10 @@ SSL_new(SSL_CTX *ctx)
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
-
 	return (s);
+
 err:
-	if (s != NULL) {
-		if (s->cert != NULL)
-			ssl_cert_free(s->cert);
-		SSL_CTX_free(s->ctx); /* decrement reference count */
-		free(s);
-	}
+	SSL_free(s);
 	SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
 	return (NULL);
 }
