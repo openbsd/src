@@ -19,6 +19,7 @@ const char *ioctlname(unsigned long);
 
 /* kdump.c */
 void sigset(int);
+void showbufc(int _column, unsigned char *_dp, size_t _datalen);
 
 /* ktrstruct.c */
 void ktrstruct(char *, size_t);

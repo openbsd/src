@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.10 2015/07/28 05:50:41 guenther Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.11 2015/10/03 23:52:30 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -560,6 +560,14 @@ ktrstruct(char *buf, size_t buflen)
 		memcpy(cmsg, data, datalen);
 		ktrcmsghdr(cmsg, datalen);
 		free(cmsg);
+	} else if (strcmp(name, "tamereq") == 0) {
+		printf("tame request=");
+		showbufc(basecol + sizeof("tame request=") - 1,
+		    (unsigned char *)data, datalen);
+	} else if (strcmp(name, "tamepath") == 0) {
+		printf("tame path=");
+		showbufc(basecol + sizeof("tame path=") - 1,
+		    (unsigned char *)data, datalen);
 	} else {
 		printf("unknown structure %s\n", name);
 	}

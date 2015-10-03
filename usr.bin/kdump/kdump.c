@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.110 2015/10/03 21:47:40 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.111 2015/10/03 23:52:30 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -72,7 +72,7 @@
 #include "extern.h"
 
 int timestamp, decimal, iohex, fancy = 1, maxdata = INT_MAX;
-int needtid, tail;
+int needtid, tail, basecol;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid_opt = -1;
@@ -404,20 +404,20 @@ dumpheader(struct ktr_header *kth)
 		type = unknown;
 	}
 
-	(void)printf("%6ld", (long)kth->ktr_pid);
+	basecol = printf("%6ld", (long)kth->ktr_pid);
 	if (needtid)
-		(void)printf("/%-7ld", (long)kth->ktr_tid);
-	(void)printf(" %-8.*s ", MAXCOMLEN, kth->ktr_comm);
+		basecol += printf("/%-7ld", (long)kth->ktr_tid);
+	basecol += printf(" %-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
 			timespecsub(&kth->ktr_time, &prevtime, &temp);
 			prevtime = kth->ktr_time;
 		} else
 			temp = kth->ktr_time;
-		printf("%lld.%06ld ", (long long)temp.tv_sec,
+		basecol += printf("%lld.%06ld ", (long long)temp.tv_sec,
 		    temp.tv_nsec / 1000);
 	}
-	(void)printf("%s  ", type);
+	basecol += printf("%s  ", type);
 }
 
 /*
@@ -1213,22 +1213,15 @@ ktremul(char *cp, size_t len)
 	setemul(name);
 }
 
-static void
-showbufc(const char *prefix, unsigned char *dp, size_t datalen)
+void
+showbufc(int col, unsigned char *dp, size_t datalen)
 {
 	int i, j;
-	int col, width, bpl;
+	int width, bpl;
 	unsigned char visbuf[5], *cp, c;
 
-	(void)printf("       ");
-
-	col = 8;
-	if (prefix != NULL) {
-		printf("%s", prefix);
-		col += strlen(prefix);
-	}
-
 	putchar('"');
+	col++;
 	for (; datalen > 0; datalen--, dp++) {
 		(void)vis(visbuf, *dp, VIS_CSTYLE, *(dp+1));
 		cp = visbuf;
@@ -1315,7 +1308,9 @@ showbuf(unsigned char *dp, size_t datalen)
 		}
 		return;
 	}
-	showbufc(NULL, dp, datalen);
+
+	(void)printf("       ");
+	showbufc(7, dp, datalen);
 }
 
 static void
@@ -1411,15 +1406,16 @@ static void
 ktrexec(const char *ptr, size_t len)
 {
 	char buf[sizeof("[2147483648] = ")];
-	int i;
+	int i, col;
 	size_t l;
 
 	putchar('\n');
 	i = 0;
 	while (len > 0) {
 		l = strnlen(ptr, len);
-		snprintf(buf, sizeof(buf), "[%d] = ", i++);
-		showbufc(buf, (unsigned char *)ptr, l);
+		col = printf("\t[%d] = ", i++);
+		col += 7;	/* tab expands from 1 to 8 columns */
+		showbufc(col, (unsigned char *)ptr, l);
 		if (l == len) {
 			printf("\tunterminated argument\n");
 			break;

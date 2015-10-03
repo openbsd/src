@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.53 2015/10/02 20:48:48 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.54 2015/10/03 23:52:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -252,6 +252,10 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 			free(rbuf, M_TEMP, MAXPATHLEN);
 			return (error);
 		}
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrstruct(p, "tamereq", rbuf, rbuflen-1);
+#endif
 
 		for (rp = rbuf; rp && *rp && error == 0; rp = pn) {
 			pn = strchr(rp, ' ');	/* find terminator */
@@ -328,6 +332,10 @@ sys_tame(struct proc *p, void *v, register_t *retval)
 				break;
 			if ((error = copyinstr(sp, path, MAXPATHLEN, &len)) != 0)
 				break;
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_STRUCT))
+				ktrstruct(p, "tamepath", path, len-1);
+#endif
 
 			/* If path is relative, prepend cwd */
 			if (path[0] != '/') {
