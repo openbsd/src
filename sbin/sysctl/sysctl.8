@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.186 2014/12/12 08:42:48 tedu Exp $
+.\"	$OpenBSD: sysctl.8,v 1.187 2015/10/03 09:17:13 zhuk Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: December 12 2014 $
+.Dd $Mdocdate: October 3 2015 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -523,8 +523,7 @@ programs (in this example
 .Xr bgpd 8 )
 into a safe place for debugging purposes:
 .Bd -literal -offset indent
-# mkdir /var/crash/bgpd
-# chmod 700 /var/crash/bgpd
+# mkdir -m 700 /var/crash/bgpd
 # sysctl kern.nosuidcoredump=3
 .Ed
 .Sh SEE ALSO
