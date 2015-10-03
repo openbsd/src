@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.17 2015/08/25 20:09:27 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.18 2015/10/03 19:47:21 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -48,7 +48,7 @@ int		job_runqueue(void),
 		swap_gids(void),
 		swap_gids_back(void),
 		load_env(char *, FILE *),
-		cron_pclose(FILE *),
+		cron_pclose(FILE *, pid_t),
 		glue_strings(char *, size_t, const char *, const char *, char),
 		strcmp_until(const char *, const char *, char),
 		allowed(const char *, const char *, const char *),
@@ -74,7 +74,7 @@ user		*load_user(int, struct passwd *, const char *),
 entry		*load_entry(FILE *,
 		    void (*)(const char *), struct passwd *, char **);
 
-FILE		*cron_popen(char *, char *, struct passwd *);
+FILE		*cron_popen(char *, char *, struct passwd *, pid_t *);
 
 #ifndef HAVE_TM_GMTOFF
 long		get_gmtoff(time_t *, struct tm *);

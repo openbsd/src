@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.30 2015/10/03 12:46:54 tedu Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.31 2015/10/03 19:47:21 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -465,6 +465,7 @@ run_job(atjob *job, char *atfile)
 	nread = fread(buf, 1, sizeof(buf), fp);
 	if (nread != 0 || always_mail) {
 		FILE	*mail;
+		pid_t	mailpid;
 		size_t	bytes = 0;
 		int	status = 0;
 		char	mailcmd[MAX_COMMAND];
@@ -477,7 +478,7 @@ run_job(atjob *job, char *atfile)
 			fprintf(stderr, "mailcmd too long\n");
 			(void) _exit(EXIT_FAILURE);
 		}
-		if (!(mail = cron_popen(mailcmd, "w", pw))) {
+		if (!(mail = cron_popen(mailcmd, "w", pw, &mailpid))) {
 			perror(mailcmd);
 			(void) _exit(EXIT_FAILURE);
 		}
@@ -502,7 +503,7 @@ run_job(atjob *job, char *atfile)
 		 * If the mailer exits with non-zero exit status, log
 		 * this fact so the problem can (hopefully) be debugged.
 		 */
-		if ((status = cron_pclose(mail)) != 0) {
+		if ((status = cron_pclose(mail, mailpid)) != 0) {
 			snprintf(buf, sizeof(buf), "mailed %lu byte%s of output"
 			    " but got status 0x%04x\n", (unsigned long)bytes,
 			    (bytes == 1) ? "" : "s", status);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.47 2015/10/03 12:46:54 tedu Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.48 2015/10/03 19:47:21 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -321,6 +321,7 @@ child_process(entry *e, user *u)
 			char	*mailto;
 			int	bytes = 1;
 			int	status = 0;
+			pid_t	mailpid;
 
 			/* get name of recipient.  this is MAILTO if set to a
 			 * valid local username; USER otherwise.
@@ -350,7 +351,8 @@ child_process(entry *e, user *u)
 					fprintf(stderr, "mailcmd too long\n");
 					(void) _exit(EXIT_FAILURE);
 				}
-				if (!(mail = cron_popen(mailcmd, "w", e->pwd))) {
+				if (!(mail = cron_popen(mailcmd, "w", e->pwd,
+				    &mailpid))) {
 					perror(mailcmd);
 					(void) _exit(EXIT_FAILURE);
 				}
@@ -396,7 +398,7 @@ child_process(entry *e, user *u)
 				 * it (the grandchild) is likely to exit
 				 * after closing its stdout.
 				 */
-				status = cron_pclose(mail);
+				status = cron_pclose(mail, mailpid);
 			}
 
 			/* if there was output and we could not mail it,

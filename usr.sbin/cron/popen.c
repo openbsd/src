@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.26 2015/10/03 12:46:54 tedu Exp $	*/
+/*	$OpenBSD: popen.c,v 1.27 2015/10/03 19:47:21 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,11 +47,8 @@
  * may create a pipe to a hidden program as a side effect of a list or dir
  * command.
  */
-static pid_t *pids;
-static int fds;
-
 FILE *
-cron_popen(char *program, char *type, struct passwd *pw)
+cron_popen(char *program, char *type, struct passwd *pw, pid_t *pidptr)
 {
 	char *cp;
 	FILE *iop;
@@ -62,12 +59,6 @@ cron_popen(char *program, char *type, struct passwd *pw)
 	if ((*type != 'r' && *type != 'w') || type[1] != '\0')
 		return (NULL);
 
-	if (!pids) {
-		if ((fds = sysconf(_SC_OPEN_MAX)) <= 0)
-			return (NULL);
-		if (!(pids = calloc(fds, sizeof(pid_t))))
-			return (NULL);
-	}
 	if (pipe(pdes) < 0)
 		return (NULL);
 
@@ -118,37 +109,29 @@ cron_popen(char *program, char *type, struct passwd *pw)
 		iop = fdopen(pdes[1], type);
 		(void)close(pdes[0]);
 	}
-	pids[fileno(iop)] = pid;
+	*pidptr = pid;
 
 	return (iop);
 }
 
 int
-cron_pclose(FILE *iop)
+cron_pclose(FILE *iop, pid_t pid)
 {
-	int fdes;
-	pid_t pid;
+	int rv;
 	int status;
 	sigset_t sigset, osigset;
 
-	/*
-	 * pclose returns -1 if stream is not associated with a
-	 * `popened' command, or, if already `pclosed'.
-	 */
-	if (pids == 0 || pids[fdes = fileno(iop)] == 0)
-		return (-1);
 	(void)fclose(iop);
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGQUIT);
 	sigaddset(&sigset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
-	while ((pid = waitpid(pids[fdes], &status, 0)) < 0 && errno == EINTR)
+	while ((rv = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
 		continue;
 	sigprocmask(SIG_SETMASK, &osigset, NULL);
-	pids[fdes] = 0;
-	if (pid < 0)
-		return (pid);
+	if (rv < 0)
+		return (rv);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));
 	return (1);
