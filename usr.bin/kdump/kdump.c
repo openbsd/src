@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.107 2015/10/02 19:12:45 jmc Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.108 2015/10/03 05:15:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -240,6 +240,9 @@ main(int argc, char *argv[])
 		}
 	if (argc > optind)
 		usage();
+
+	if (tame("stdio getpw rpath", NULL) == -1)
+		err(1, "tame");
 
 	m = malloc(size = 1025);
 	if (m == NULL)
