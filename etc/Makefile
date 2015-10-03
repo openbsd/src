@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.408 2015/09/12 14:48:06 sthen Exp $
+#	$OpenBSD: Makefile,v 1.409 2015/10/03 18:57:11 renato Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -46,13 +46,13 @@ EXAMPLES+= wsconsctl.conf
 .endif
 
 # -rw-------
-EXAMPLES_600=bgpd.conf dvmrpd.conf hostapd.conf iked.conf ipsec.conf \
-	ldapd.conf ldpd.conf ospf6d.conf ospfd.conf pf.conf radiusd.conf \
-	rc.local rc.securelevel rc.shutdown relayd.conf ripd.conf \
-	sasyncd.conf snmpd.conf ypldap.conf 
+EXAMPLES_600=bgpd.conf dvmrpd.conf eigrpd.conf hostapd.conf iked.conf \
+	ipsec.conf ldapd.conf ldpd.conf ospf6d.conf ospfd.conf pf.conf \
+	radiusd.conf rc.local rc.securelevel rc.shutdown relayd.conf \
+	ripd.conf sasyncd.conf snmpd.conf ypldap.conf 
 
 # -r-xr-xr-x
-RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd ftpd \
+RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd eigrpd ftpd \
 	ftpproxy ftpproxy6 hostapd hotplugd httpd identd ifstated \
 	iked inetd isakmpd iscsid ldapd ldattach ldomd ldpd lockd \
 	lpd mopd mountd mrouted nfsd npppd nsd ntpd ospf6d ospfd \

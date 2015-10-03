@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.2 2015/10/03 18:57:11 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -44,8 +44,6 @@
 #define	PKG_DEF_SIZE		512	/* compromise */
 #define	RT_BUF_SIZE		16384
 #define	MAX_RTSOCK_BUF		128 * 1024
-
-#define RTP_EIGRP		28	/* XXX move to sys/net/route.h */
 
 #define	F_EIGRPD_INSERTED	0x0001
 #define	F_KERNEL		0x0002

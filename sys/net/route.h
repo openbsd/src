@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.113 2015/09/11 21:27:49 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.114 2015/10/03 18:57:11 renato Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -152,6 +152,7 @@ struct rtentry {
 #define RTP_LOCAL	1	/* local address routes (must be the highest) */
 #define RTP_CONNECTED	4	/* directly connected routes */
 #define RTP_STATIC	8	/* static routes base priority */
+#define RTP_EIGRP	28	/* EIGRP routes */
 #define RTP_OSPF	32	/* OSPF routes */
 #define RTP_ISIS	36	/* IS-IS routes */
 #define RTP_RIP		40	/* RIP routes */

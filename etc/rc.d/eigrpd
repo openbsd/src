@@ -1,0 +1,9 @@
+#!/bin/sh
+
+daemon="/usr/sbin/eigrpd"
+
+. /etc/rc.d/rc.subr
+
+pexp="eigrpd: parent.*"
+
+rc_cmd $1
