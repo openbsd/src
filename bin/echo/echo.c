@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.8 2014/12/14 16:55:59 bcallah Exp $	*/
+/*	$OpenBSD: echo.c,v 1.9 2015/10/03 14:51:39 deraadt Exp $	*/
 /*	$NetBSD: echo.c,v 1.6 1995/03/21 09:04:27 cgd Exp $	*/
 
 /*
@@ -32,12 +32,17 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <err.h>
 
 /* ARGSUSED */
 int
 main(int argc, char *argv[])
 {
 	int nflag;
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	/* This utility may NOT do getopt(3) option parsing. */
 	if (*++argv && !strcmp(*argv, "-n")) {
