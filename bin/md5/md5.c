@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.79 2015/01/19 16:43:28 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.80 2015/10/03 03:28:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -200,6 +200,9 @@ main(int argc, char **argv)
 	int fl, error, base64, i;
 	int bflag, cflag, pflag, rflag, tflag, xflag;
 
+	if (tame("stdio cpath rpath wpath", NULL) == -1)
+		err(1, "tame");
+
 	TAILQ_INIT(&hl);
 	input_string = NULL;
 	selective_checklist = NULL;
@@ -310,6 +313,9 @@ main(int argc, char **argv)
 
 	if (ofile == NULL)
 		ofile = stdout;
+
+	if (tame("stdio rpath", NULL) != 0)
+		err(1, "tame");
 
 	/* Most arguments are mutually exclusive */
 	fl = pflag + (tflag ? 1 : 0) + xflag + cflag + (input_string != NULL);
