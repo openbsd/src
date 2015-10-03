@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.25 2015/01/23 19:07:27 tedu Exp $	*/
+/*	$OpenBSD: popen.c,v 1.26 2015/10/03 12:46:54 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -85,31 +85,12 @@ cron_popen(char *program, char *type, struct passwd *pw)
 		/* NOTREACHED */
 	case 0:				/* child */
 		if (pw) {
-#ifdef LOGIN_CAP
 			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0) {
 				fprintf(stderr,
 				    "setusercontext failed for %s\n",
 				    pw->pw_name);
 				_exit(EXIT_FAILURE);
 			}
-#else
-			if (setgid(pw->pw_gid) < 0 ||
-			    initgroups(pw->pw_name, pw->pw_gid) < 0) {
-				fprintf(stderr,
-				    "unable to set groups for %s\n",
-				    pw->pw_name);
-				_exit(1);
-			}
-#ifdef HAVE_SETLOGIN
-			setlogin(pw->pw_name);
-#endif
-			if (setuid(pw->pw_uid)) {
-				fprintf(stderr,
-				    "unable to set uid for %s\n",
-				    pw->pw_name);
-				_exit(1);
-			}
-#endif /* LOGIN_CAP */
 		}
 		if (*type == 'r') {
 			if (pdes[1] != STDOUT_FILENO) {

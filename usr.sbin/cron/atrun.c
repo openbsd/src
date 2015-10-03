@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.29 2015/08/25 20:09:27 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.30 2015/10/03 12:46:54 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -266,13 +266,11 @@ run_job(atjob *job, char *atfile)
 		log_it("CRON", getpid(), "ORPHANED JOB", atfile);
 		_exit(EXIT_FAILURE);
 	}
-#ifdef HAVE_PW_EXPIRE
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
 		log_it(pw->pw_name, getpid(), "ACCOUNT EXPIRED, JOB ABORTED",
 		    atfile);
 		_exit(EXIT_FAILURE);
 	}
-#endif
 
 	/* Sanity checks */
 	if (fstat(fd, &statbuf) < 0) {
@@ -397,12 +395,9 @@ run_job(atjob *job, char *atfile)
 
 		(void) setsid();
 
-#ifdef LOGIN_CAP
 		{
 			login_cap_t *lc;
-# ifdef BSD_AUTH
 			auth_session_t *as;
-# endif
 			if ((lc = login_getclass(pw->pw_class)) == NULL) {
 				fprintf(stderr,
 				    "Cannot get login class for %s\n",
@@ -417,7 +412,6 @@ run_job(atjob *job, char *atfile)
 				    pw->pw_name);
 				_exit(EXIT_FAILURE);
 			}
-# ifdef BSD_AUTH
 			as = auth_open();
 			if (as == NULL || auth_setpwd(as, pw) != 0) {
 				fprintf(stderr, "can't malloc\n");
@@ -429,25 +423,8 @@ run_job(atjob *job, char *atfile)
 				_exit(EXIT_FAILURE);
 			}
 			auth_close(as);
-# endif /* BSD_AUTH */
 			login_close(lc);
 		}
-#else
-		if (setgid(pw->pw_gid) || initgroups(pw->pw_name, pw->pw_gid)) {
-			fprintf(stderr,
-			    "unable to set groups for %s\n", pw->pw_name);
-			_exit(EXIT_FAILURE);
-		}
-#ifdef HAVE_SETLOGIN
-		setlogin(pw->pw_name);
-#endif
-		if (setuid(pw->pw_uid)) {
-			fprintf(stderr, "unable to set uid to %lu\n",
-			    (unsigned long)pw->pw_uid);
-			_exit(EXIT_FAILURE);
-		}
-
-#endif /* LOGIN_CAP */
 
 		chdir("/");		/* at job will chdir to correct place */
 

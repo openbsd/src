@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.46 2015/02/09 22:35:08 deraadt Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.47 2015/10/03 12:46:54 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -165,11 +165,8 @@ child_process(entry *e, user *u)
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privileges.
 		 */
-#ifdef LOGIN_CAP
 		{
-#ifdef BSD_AUTH
 			auth_session_t *as;
-#endif
 			login_cap_t *lc;
 			char **p;
 			extern char **environ;
@@ -187,7 +184,6 @@ child_process(entry *e, user *u)
 				    e->pwd->pw_name);
 				_exit(EXIT_FAILURE);
 			}
-#ifdef BSD_AUTH
 			as = auth_open();
 			if (as == NULL || auth_setpwd(as, e->pwd) != 0) {
 				fprintf(stderr, "can't malloc\n");
@@ -199,7 +195,6 @@ child_process(entry *e, user *u)
 				_exit(EXIT_FAILURE);
 			}
 			auth_close(as);
-#endif /* BSD_AUTH */
 			login_close(lc);
 
 			/* If no PATH specified in crontab file but
@@ -215,23 +210,6 @@ child_process(entry *e, user *u)
 				}
 			}
 		}
-#else
-		if (setgid(e->pwd->pw_gid) || initgroups(usernm, e->pwd->pw_gid)) {
-			fprintf(stderr,
-			    "unable to set groups for %s\n", e->pwd->pw_name);
-			_exit(EXIT_FAILURE);
-		}
-#ifdef HAVE_SETLOGIN
-		setlogin(usernm);
-#endif
-		if (setuid(e->pwd->pw_uid)) {
-			fprintf(stderr,
-			    "unable to set uid to %lu\n",
-			    (unsigned long)e->pwd->pw_uid);
-			_exit(EXIT_FAILURE);
-		}
-
-#endif /* LOGIN_CAP */
 		chdir(env_get("HOME", e->envp));
 
 		(void) signal(SIGPIPE, SIG_DFL);
