@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.36 2015/10/03 05:05:06 deraadt Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.37 2015/10/03 15:00:13 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -175,9 +175,6 @@ done:
 			oct = 0;
 		}
 	} else if (ischmod) {
-		if (tame("stdio rpath fattr", NULL) == -1)
-			err(1, "tame");
-
 		mode = *argv;
 		if (*mode >= '0' && *mode <= '7') {
 			errno = 0;
