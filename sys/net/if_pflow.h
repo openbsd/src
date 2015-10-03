@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.13 2015/07/20 23:15:54 florian Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.14 2015/10/03 10:44:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -186,9 +186,8 @@ struct pflow_softc {
 	struct timeout		 sc_tmo_tmpl;
 	struct socket		*so;
 	struct mbuf		*send_nam;
-	struct in_addr		 sc_sender_ip;
-	struct in_addr		 sc_receiver_ip;
-	u_int16_t		 sc_receiver_port;
+	struct sockaddr		*sc_flowsrc;
+	struct sockaddr		*sc_flowdst;
 	u_char			 sc_send_templates;
 	struct pflow_ipfix_tmpl	 sc_tmpl_ipfix;
 	u_int8_t		 sc_version;
@@ -254,15 +253,13 @@ struct pflow_protos {
  * Configuration structure for SIOCSETPFLOW SIOCGETPFLOW
  */
 struct pflowreq {
-	struct in_addr		sender_ip;
-	struct in_addr		receiver_ip;
-	u_int16_t		receiver_port;
+	struct sockaddr_storage	flowsrc;
+	struct sockaddr_storage	flowdst;
 	u_int16_t		addrmask;
 	u_int8_t		version;
 #define PFLOW_MASK_SRCIP	0x01
 #define PFLOW_MASK_DSTIP	0x02
-#define PFLOW_MASK_DSTPRT	0x04
-#define PFLOW_MASK_VERSION	0x08
+#define PFLOW_MASK_VERSION	0x04
 };
 
 #ifdef _KERNEL

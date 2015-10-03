@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.255 2015/07/31 15:36:15 mpi Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.256 2015/10/03 10:44:23 florian Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: July 31 2015 $
+.Dd $Mdocdate: October 3 2015 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1277,7 +1277,7 @@ network.
 .Nm ifconfig
 .Ar pflow-interface
 .Op Oo Fl Oc Ns Cm flowdst Ar addr : Ns Ar port
-.Op Oo Fl Oc Ns Cm flowsrc Ar addr
+.Op Oo Fl Oc Ns Cm flowsrc Ar addr Oo : Ns Ar port Oc
 .Op Cm pflowproto Ar n
 .Ek
 .nr nS 0
@@ -1298,7 +1298,7 @@ is the port number of the flow collector.
 Pflow data will be sent to this address/port.
 .It Fl flowdst
 Unset the receiver address and stop sending pflow data.
-.It Cm flowsrc Ar addr
+.It Cm flowsrc Ar addr Oo : Ns Ar port Oc
 Set the source IP address for pflow packets.
 .Ar addr
 is the IP address used as sender of the UDP packets and may be used to

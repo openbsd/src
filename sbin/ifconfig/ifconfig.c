@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.301 2015/09/11 15:59:40 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.302 2015/10/03 10:44:23 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -265,6 +265,7 @@ void	setifpowersave(const char *, int);
 void	setifmetric(const char *, int);
 void	notrailers(const char *, int);
 void	pflow_status(void);
+void	pflow_addr(const char*, struct sockaddr_storage *);
 void	setpflow_sender(const char *, int);
 void	unsetpflow_sender(const char *, int);
 void	setpflow_receiver(const char *, int);
@@ -4280,7 +4281,11 @@ pfsync_status(void)
 void
 pflow_status(void)
 {
-	struct pflowreq preq;
+	struct pflowreq		 preq;
+	struct sockaddr_in	*sin;
+	struct sockaddr_in6	*sin6;
+	int			 error;
+	char			 buf[INET6_ADDRSTRLEN];
 
 	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
@@ -4288,47 +4293,135 @@ pflow_status(void)
 	if (ioctl(s, SIOCGETPFLOW, (caddr_t)&ifr) == -1)
 		 return;
 
+	if (preq.flowsrc.ss_family == AF_INET || preq.flowsrc.ss_family ==
+	    AF_INET6) {
+		error = getnameinfo((struct sockaddr*)&preq.flowsrc,
+		    preq.flowsrc.ss_len, buf, sizeof(buf), NULL, 0,
+		    NI_NUMERICHOST);
+		if (error)
+			err(1, "sender: %s", gai_strerror(error));
+	}
+
 	printf("\tpflow: ");
-	if (preq.sender_ip.s_addr != INADDR_ANY)
-		printf("sender: %s ", inet_ntoa(preq.sender_ip));
-	printf("receiver: %s:", preq.receiver_ip.s_addr != INADDR_ANY ?
-	    inet_ntoa(preq.receiver_ip) : "INVALID");
-	if (preq.receiver_port == 0)
-		printf("%s ", "INVALID");
-	else
-		printf("%u ", ntohs(preq.receiver_port));
+	switch (preq.flowsrc.ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in*) &preq.flowsrc;
+		if (sin->sin_addr.s_addr != INADDR_ANY) {
+			printf("sender: %s", buf);
+			if (sin->sin_port != 0)
+				printf(":%u", ntohs(sin->sin_port));
+			printf(" ");
+		}
+		break;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6*) &preq.flowsrc;
+		if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+			printf("sender: [%s]", buf);
+			if (sin6->sin6_port != 0)
+				printf(":%u", ntohs(sin6->sin6_port));
+			printf(" ");
+		}
+	default:
+		break;
+	}
+	if (preq.flowdst.ss_family == AF_INET || preq.flowdst.ss_family ==
+	    AF_INET6) {
+		error = getnameinfo((struct sockaddr*)&preq.flowdst,
+		    preq.flowdst.ss_len, buf, sizeof(buf), NULL, 0,
+		    NI_NUMERICHOST);
+		if (error)
+			err(1, "receiver: %s", gai_strerror(error));
+	}
+	switch (preq.flowdst.ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in*)&preq.flowdst;
+		printf("receiver: %s:", sin->sin_addr.s_addr != INADDR_ANY ?
+		    buf : "INVALID");	
+		if (sin->sin_port == 0)
+			printf("%s ", "INVALID");
+		else
+			printf("%u ", ntohs(sin->sin_port));
+		break;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6*) &preq.flowdst;
+		printf("receiver: [%s]:",
+		    !IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ? buf :
+		    "INVALID");	
+		if (sin6->sin6_port == 0)
+			printf("%s ", "INVALID");
+		else
+			printf("%u ", ntohs(sin6->sin6_port));
+		break;
+	default:
+		printf("receiver: INVALID:INVALID ");
+		break;
+	}
 	printf("version: %d\n", preq.version);
 }
 
-/* ARGSUSED */
+void
+pflow_addr(const char *val, struct sockaddr_storage *ss) {
+	struct addrinfo hints, *res0;
+	int error, flag;
+	char *cp, *ip, *port, buf[HOST_NAME_MAX+1 + sizeof (":65535")];
+
+	if (strlcpy(buf, val, sizeof(buf)) >= sizeof(buf))
+		errx(1, "%s bad value", val);
+
+	port = NULL;
+	cp = buf;
+	if (*cp == '[')
+		flag = 1;
+	else
+		flag = 0;
+
+	for(; *cp; ++cp) {
+		if (*cp == ']' && *(cp + 1) == ':' && flag) {
+			*cp = '\0';
+			*(cp + 1) = '\0';
+			port = cp + 2;
+			break;
+		}
+		if (*cp == ']' && *(cp + 1) == '\0' && flag) {
+			*cp = '\0';
+			port = NULL;
+			break;
+		}
+		if (*cp == ':' && !flag) {
+			*cp = '\0';
+			port = cp + 1;
+			break;
+		}
+	}
+
+	ip = buf;
+	if (flag)
+		ip++;
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+
+	if ((error = getaddrinfo(ip, port, &hints, &res0)) != 0)
+		errx(1, "error in parsing address string: %s",
+		    gai_strerror(error));
+
+	memcpy(ss, res0->ai_addr, res0->ai_addr->sa_len);
+	freeaddrinfo(res0);
+}
+
 void
 setpflow_sender(const char *val, int d)
 {
 	struct pflowreq preq;
-	struct addrinfo hints, *sender;
-	int ecode;
-
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
-
-	if ((ecode = getaddrinfo(val, NULL, &hints, &sender)) != 0)
-		errx(1, "error in parsing address string: %s",
-		    gai_strerror(ecode));
-
-	if (sender->ai_addr->sa_family != AF_INET)
-		errx(1, "only IPv4 addresses supported for the sender");
 
 	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
 	preq.addrmask |= PFLOW_MASK_SRCIP;
-	preq.sender_ip.s_addr = ((struct sockaddr_in *)
-	    sender->ai_addr)->sin_addr.s_addr;
+	pflow_addr(val, &preq.flowsrc);
 
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFLOW");
-
-	freeaddrinfo(sender);
 }
 
 void
@@ -4343,47 +4436,18 @@ unsetpflow_sender(const char *val, int d)
 		err(1, "SIOCSETPFLOW");
 }
 
-/* ARGSUSED */
 void
 setpflow_receiver(const char *val, int d)
 {
 	struct pflowreq preq;
-	struct addrinfo hints, *receiver;
-	int ecode;
-	char *ip, *port, buf[HOST_NAME_MAX+1 + sizeof (":65535")];
-
-	if (strchr (val, ':') == NULL)
-		errx(1, "%s bad value", val);
-
-	if (strlcpy(buf, val, sizeof(buf)) >= sizeof(buf))
-		errx(1, "%s bad value", val);
-	port = strchr(buf, ':');
-	*port++ = '\0';
-	ip = buf;
-
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
-
-	if ((ecode = getaddrinfo(ip, port, &hints, &receiver)) != 0)
-		errx(1, "error in parsing address string: %s",
-		    gai_strerror(ecode));
-
-	if (receiver->ai_addr->sa_family != AF_INET)
-		errx(1, "only IPv4 addresses supported for the receiver");
 
 	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
-	preq.addrmask |= PFLOW_MASK_DSTIP | PFLOW_MASK_DSTPRT;
-	preq.receiver_ip.s_addr = ((struct sockaddr_in *)
-	    receiver->ai_addr)->sin_addr.s_addr;
-	preq.receiver_port = (u_int16_t) ((struct sockaddr_in *)
-	    receiver->ai_addr)->sin_port;
+	preq.addrmask |= PFLOW_MASK_DSTIP;
+	pflow_addr(val, &preq.flowdst);
 
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFLOW");
-
-	freeaddrinfo(receiver);
 }
 
 void
@@ -4393,7 +4457,7 @@ unsetpflow_receiver(const char *val, int d)
 
 	bzero(&preq, sizeof(struct pflowreq));
 	ifr.ifr_data = (caddr_t)&preq;
-	preq.addrmask |= PFLOW_MASK_DSTIP | PFLOW_MASK_DSTPRT;
+	preq.addrmask |= PFLOW_MASK_DSTIP;
 	if (ioctl(s, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFLOW");
 }

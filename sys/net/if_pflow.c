@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.59 2015/09/12 22:07:47 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.60 2015/10/03 10:44:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -70,6 +70,7 @@ int	pflow_clone_destroy(struct ifnet *);
 void	pflow_init_timeouts(struct pflow_softc *);
 int	pflow_calc_mtu(struct pflow_softc *, int, int);
 void	pflow_setmtu(struct pflow_softc *, int);
+int	pflowvalidsockaddr(const struct sockaddr *, int);
 int	pflowioctl(struct ifnet *, u_long, caddr_t);
 
 struct mbuf	*pflow_get_mbuf(struct pflow_softc *, u_int16_t);
@@ -117,21 +118,13 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet		*ifp;
 	struct pflow_softc	*pflowif;
-	struct sockaddr_in	*sin;
 
 	if ((pflowif = malloc(sizeof(*pflowif),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
 	MGET(pflowif->send_nam, M_WAIT, MT_SONAME);
-	sin = mtod(pflowif->send_nam, struct sockaddr_in *);
-	memset(sin, 0 , sizeof(*sin));
-	sin->sin_len = pflowif->send_nam->m_len = sizeof (struct sockaddr_in);
-	sin->sin_family = AF_INET;
 
-	pflowif->sc_receiver_ip.s_addr = INADDR_ANY;
-	pflowif->sc_receiver_port = 0;
-	pflowif->sc_sender_ip.s_addr = INADDR_ANY;
 	pflowif->sc_version = PFLOW_PROTO_DEFAULT;
 
 	/* ipfix template init */
@@ -267,6 +260,10 @@ pflow_clone_destroy(struct ifnet *ifp)
 		error = soclose(sc->so);
 		sc->so = NULL;
 	}
+	if (sc->sc_flowdst != NULL)
+		free(sc->sc_flowdst, M_DEVBUF, sc->sc_flowdst->sa_len);
+	if (sc->sc_flowsrc != NULL)
+		free(sc->sc_flowsrc, M_DEVBUF, sc->sc_flowsrc->sa_len);
 	if_detach(ifp);
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -275,6 +272,27 @@ pflow_clone_destroy(struct ifnet *ifp)
 }
 
 int
+pflowvalidsockaddr(const struct sockaddr *sa, int ignore_port)
+{
+	struct sockaddr_in6	*sin6;
+	struct sockaddr_in	*sin;
+
+	if (sa == NULL)
+		return (0);
+	switch(sa->sa_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in*) sa;
+		return (sin->sin_addr.s_addr != INADDR_ANY &&
+		    (ignore_port || sin->sin_port != 0));
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6*) sa;
+		return (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) &&
+		    (ignore_port || sin6->sin6_port != 0));
+	default:
+		return (0);
+	}
+}
+int
 pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc		*p = curproc;
@@ -282,7 +300,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct pflowreq		 pflowr;
 	struct socket		*so;
-	struct sockaddr_in	*sin;
+	struct sockaddr		*sa;
 	struct mbuf		*m;
 	int			 s, error;
 
@@ -318,9 +336,12 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGETPFLOW:
 		bzero(&pflowr, sizeof(pflowr));
 
-		pflowr.sender_ip = sc->sc_sender_ip;
-		pflowr.receiver_ip = sc->sc_receiver_ip;
-		pflowr.receiver_port = sc->sc_receiver_port;
+		if (sc->sc_flowsrc != NULL)
+			memcpy(&pflowr.flowsrc, sc->sc_flowsrc,
+			    sc->sc_flowsrc->sa_len);
+		if (sc->sc_flowdst != NULL)
+			memcpy(&pflowr.flowdst, sc->sc_flowdst,
+			    sc->sc_flowdst->sa_len);
 		pflowr.version = sc->sc_version;
 
 		if ((error = copyout(&pflowr, ifr->ifr_data,
@@ -348,17 +369,99 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		pflow_flush(sc);
 
 		if (pflowr.addrmask & PFLOW_MASK_DSTIP) {
-			sc->sc_receiver_ip.s_addr = pflowr.receiver_ip.s_addr;
-			sin = mtod(sc->send_nam, struct sockaddr_in *);
-			sin->sin_addr.s_addr = sc->sc_receiver_ip.s_addr;
+			if (sc->sc_flowdst != NULL &&
+			    sc->sc_flowdst->sa_family !=
+			    pflowr.flowdst.ss_family) {
+				free(sc->sc_flowdst, M_DEVBUF,
+				    sc->sc_flowdst->sa_len);
+				sc->sc_flowdst = NULL;
+				if (sc->so != NULL) {
+					soclose(sc->so);
+					sc->so = NULL;
+				}
+			}
+
+			if (sc->sc_flowdst == NULL) {
+				switch(pflowr.flowdst.ss_family) {
+				case AF_INET:
+					if ((sc->sc_flowdst = malloc(
+					    sizeof(struct sockaddr_in),
+					    M_DEVBUF,  M_NOWAIT)) == NULL) {
+						splx(s);
+						return (ENOMEM);
+					}
+					memcpy(sc->sc_flowdst, &pflowr.flowdst,
+					    sizeof(struct sockaddr_in));
+					sc->sc_flowdst->sa_len = sizeof(struct
+					    sockaddr_in);
+					break;
+				case AF_INET6:
+					if ((sc->sc_flowdst = malloc(
+					    sizeof(struct sockaddr_in6),
+					    M_DEVBUF, M_NOWAIT)) == NULL) {
+						splx(s);
+						return (ENOMEM);
+					}
+					memcpy(sc->sc_flowdst, &pflowr.flowdst,
+					    sizeof(struct sockaddr_in6));
+					sc->sc_flowdst->sa_len = sizeof(struct
+					    sockaddr_in6);
+					break;
+				default:
+					break;
+				}
+			}
+			if (sc->sc_flowdst != NULL) {
+				sc->send_nam->m_len = sc->sc_flowdst->sa_len;
+				sa = mtod(sc->send_nam, struct sockaddr *);
+				memcpy(sa, sc->sc_flowdst,
+				    sc->sc_flowdst->sa_len);
+			}
 		}
-		if (pflowr.addrmask & PFLOW_MASK_DSTPRT) {
-			sc->sc_receiver_port = pflowr.receiver_port;
-			sin = mtod(sc->send_nam, struct sockaddr_in *);
-			sin->sin_port = pflowr.receiver_port;
-		}
+
 		if (pflowr.addrmask & PFLOW_MASK_SRCIP) {
-			sc->sc_sender_ip.s_addr = pflowr.sender_ip.s_addr;
+			if (sc->sc_flowsrc != NULL &&
+			    sc->sc_flowsrc->sa_family !=
+			    pflowr.flowsrc.ss_family) {
+				free(sc->sc_flowsrc, M_DEVBUF,
+				    sc->sc_flowsrc->sa_len);
+				sc->sc_flowsrc = NULL;
+				if (sc->so != NULL) {
+					soclose(sc->so);
+					sc->so = NULL;
+				}
+			}
+
+			if (sc->sc_flowsrc == NULL) {
+				switch(pflowr.flowsrc.ss_family) {
+				case AF_INET:
+					if ((sc->sc_flowsrc = malloc(
+					    sizeof(struct sockaddr_in),
+					    M_DEVBUF, M_NOWAIT)) == NULL) {
+						splx(s);
+						return (ENOMEM);
+					}
+					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
+					    sizeof(struct sockaddr_in));
+					sc->sc_flowsrc->sa_len = sizeof(struct
+					    sockaddr_in);
+					break;
+				case AF_INET6:
+					if ((sc->sc_flowsrc = malloc(
+					    sizeof(struct sockaddr_in6),
+					    M_DEVBUF, M_NOWAIT)) == NULL) {
+						splx(s);
+						return (ENOMEM);
+					}
+					memcpy(sc->sc_flowsrc, &pflowr.flowsrc,
+					    sizeof(struct sockaddr_in6));
+					sc->sc_flowsrc->sa_len = sizeof(struct
+					    sockaddr_in6);
+					break;
+				default:
+					break;
+				}
+			}
 			if (sc->so != NULL) {
 				soclose(sc->so);
 				sc->so = NULL;
@@ -366,23 +469,19 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (sc->so == NULL) {
-			if (sc->sc_receiver_ip.s_addr != INADDR_ANY &&
-			    sc->sc_receiver_port != 0) {
-				error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+			if (pflowvalidsockaddr(sc->sc_flowdst, 0)) {
+				error = socreate(sc->sc_flowdst->sa_family,
+				    &so, SOCK_DGRAM, 0);
 				if (error) {
 					splx(s);
 					return (error);
 				}
-				if (sc->sc_sender_ip.s_addr != INADDR_ANY) {
+				if (pflowvalidsockaddr(sc->sc_flowsrc, 1)) {
 					MGET(m, M_WAIT, MT_SONAME);
-					sin = mtod(m, struct sockaddr_in *);
-					memset(sin, 0 , sizeof(*sin));
-					sin->sin_len = m->m_len = sizeof
-					    (struct sockaddr_in);
-					sin->sin_family = AF_INET;
-					sin->sin_addr.s_addr =
-					    pflowr.sender_ip.s_addr;
-					sin->sin_port = 0;
+					m->m_len = sc->sc_flowsrc->sa_len;
+					sa = mtod(m, struct sockaddr *);
+					memcpy(sa, sc->sc_flowsrc,
+					    sc->sc_flowsrc->sa_len);
 
 					error = sobind(so, m, p);
 					m_freem(m);
@@ -395,8 +494,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				sc->so = so;
 			}
 		} else {
-			if (sc->sc_receiver_ip.s_addr == INADDR_ANY ||
-			    sc->sc_receiver_port == 0) {
+			if (!pflowvalidsockaddr(sc->sc_flowdst, 0)) {
 				soclose(sc->so);
 				sc->so = NULL;
 			}
