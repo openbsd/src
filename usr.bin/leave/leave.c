@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.15 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: leave.c,v 1.16 2015/10/03 05:13:23 deraadt Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -62,7 +62,10 @@ main(int argc, char *argv[])
 	time_t now;
 	int plusnow = 0, twentyfour;
 	char buf[50];
-	
+
+	if (tame("stdio proc", NULL) == -1)
+		err(1, "tame");
+
 	if (setvbuf(stdout, NULL, _IOLBF, 0) != 0)
 		errx(1, "Cannot set stdout to line buffered.");
 
