@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.47 2015/02/16 20:53:34 jca Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.48 2015/10/03 16:24:53 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -87,7 +87,6 @@ static void		num_digits(void);
 static void		to_ascii(void);
 static void		push_line(void);
 static void		comment(void);
-static void		bexec(char *);
 static void		badd(void);
 static void		bsub(void);
 static void		bmul(void);
@@ -932,13 +931,6 @@ comment(void)
 }
 
 static void
-bexec(char *line)
-{
-	(void)system(line);
-	free(line);
-}
-
-static void
 badd(void)
 {
 	struct number	*a, *b;
@@ -1434,7 +1426,7 @@ not_compare(void)
 		break;
 	default:
 		unreadch();
-		bexec(readline());
+		(void)fprintf(stderr, "! command is deprecated\n");
 		break;
 	}
 }
