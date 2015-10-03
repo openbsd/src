@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.21 2015/01/16 06:39:28 deraadt Exp $	*/
+/*	$OpenBSD: cat.c,v 1.22 2015/10/03 18:56:20 deraadt Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -65,6 +65,9 @@ main(int argc, char *argv[])
 	int ch;
 
 	setlocale(LC_ALL, "");
+
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	while ((ch = getopt(argc, argv, "benstuv")) != -1)
 		switch (ch) {
