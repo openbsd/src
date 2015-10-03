@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.85 2015/03/03 21:21:13 djm Exp $
+#	$OpenBSD: Makefile,v 1.86 2015/10/03 02:37:30 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 .include "${.CURDIR}/../Makefile.inc"
@@ -17,7 +17,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
 	monitor_mm.c monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c \
-	roaming_common.c roaming_serv.c sandbox-systrace.c
+	roaming_common.c roaming_serv.c sandbox-tame.c
 
 .if (${SSH1:L} == "yes")
 SRCS+=	auth-rsa.c auth-rh-rsa.c auth1.c
