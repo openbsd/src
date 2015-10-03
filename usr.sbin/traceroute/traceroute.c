@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.141 2015/08/30 22:10:57 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.142 2015/10/03 02:22:38 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -843,6 +843,14 @@ main(int argc, char *argv[])
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 	    sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
+
+	if (nflag) {
+		if (tame("stdio inet", NULL) == -1)
+			err(1, "tame");
+	} else {
+		if (tame("stdio inet dns", NULL) == -1)
+			err(1, "tame");
+	}
 
 	if (getnameinfo(to, to->sa_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
