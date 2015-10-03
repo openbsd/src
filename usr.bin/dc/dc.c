@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.13 2014/11/26 18:34:51 millert Exp $	*/
+/*	$OpenBSD: dc.c,v 1.14 2015/10/03 18:39:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -47,6 +47,8 @@ main(int argc, char *argv[])
 	char		*buf, *p;
 	struct stat	st;
 
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	if ((buf = strdup("")) == NULL)
 		err(1, NULL);
@@ -89,6 +91,8 @@ main(int argc, char *argv[])
 		file = fopen(argv[0], "r");
 		if (file == NULL)
 			err(1, "cannot open file %s", argv[0]);
+		if (tame("stdio", NULL) == -1)
+			err(1, "tame");
 		if (fstat(fileno(file), &st) == -1)
 			err(1, "%s", argv[0]);
 		if (S_ISDIR(st.st_mode))
@@ -103,6 +107,8 @@ main(int argc, char *argv[])
 		 */
 		 return (0);
 	}
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 	src_setstream(&src, stdin);
 	reset_bmachine(&src);
 	eval();
