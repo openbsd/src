@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.27 2012/08/19 12:07:21 jmc Exp $
+.\"	$OpenBSD: dc.1,v 1.28 2015/10/03 17:15:26 deraadt Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)dc.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 19 2012 $
+.Dd $Mdocdate: October 3 2015 $
 .Dt DC 1
 .Os
 .Sh NAME
@@ -363,10 +363,6 @@ A one is pushed if the top of stack is less than or equal to the
 second number on the stack.
 A zero is pushed otherwise.
 This is a non-portable extension.
-.It Ic \&!
-Interprets the rest of the line as a
-.Ux
-command.
 .It Ic \&?
 A line of input is taken from the input source (usually the terminal)
 and executed.
