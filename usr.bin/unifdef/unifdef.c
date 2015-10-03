@@ -47,7 +47,7 @@
 
 static const char copyright[] =
     #include "version.h"
-    "@(#) $Author: deraadt $\n"
+    "@(#) $Author: tedu $\n"
     "@(#) $URL: http://dotat.at/prog/unifdef $\n"
 ;
 
@@ -350,6 +350,8 @@ main(int argc, char *argv[])
 		errx(2, "-o cannot be used with multiple input files");
 	if (argc > 1 && !inplace)
 		errx(2, "multiple input files require -m or -M");
+	if (argc == 0 && inplace)
+		errx(2, "can't edit stdin in place");
 	if (argc == 0)
 		argc = 1;
 	if (argc == 1 && !inplace && ofilename == NULL)
