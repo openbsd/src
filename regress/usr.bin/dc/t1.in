@@ -39,9 +39,6 @@ _1 3.0^p s.
 !=a
 c
 [OK] 0:a 0Sa [NOT OK] 0:a La 0;ap
-!echo ECHO
-[!echo STRING]sa
-lax
 [lip1+sili10>a]sa0silax
 c
 zp s.
