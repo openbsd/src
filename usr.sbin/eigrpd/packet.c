@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: packet.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -196,7 +196,7 @@ send_packet(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 		send_packet_v6(iface, nbr, buf);
 		break;
 	default:
-		break;
+		fatalx("send_packet: unknown af");
 	}
 
 	return (0);
@@ -278,13 +278,13 @@ recv_packet(int af, union eigrpd_addr *src, union eigrpd_addr *dest,
 {
 	struct eigrp_iface	*ei;
 	struct nbr		*nbr;
-	struct tlv_parameter	*tp;
-	struct tlv_sw_version	*tv;
-	struct tlv_mcast_seq	*tm;
+	struct tlv_parameter	*tp = NULL;
+	struct tlv_sw_version	*tv = NULL;
+	struct tlv_mcast_seq	*tm = NULL;
 	struct rinfo		 ri;
 	struct rinfo_entry	*re;
-	int			 route_af;
-	enum route_type		 route_type;
+	int			 route_af = 0;
+	enum route_type		 route_type = 0;
 	struct seq_addr_head	 seq_addr_list;
 	struct rinfo_head	 rinfo_list;
 
@@ -677,7 +677,7 @@ eigrp_hdr_sanity_check(int af, union eigrpd_addr *addr,
 			}
 			break;
 		default:
-			break;
+			fatalx("eigrp_hdr_sanity_check: unknown af");
 		}
 	}
 
@@ -722,7 +722,7 @@ find_iface(unsigned int ifindex, int af, union eigrpd_addr *src)
 			return (iface);
 		break;
 	default:
-		break;
+		fatalx("find_iface: unknown af");
 	}
 
 	return (NULL);

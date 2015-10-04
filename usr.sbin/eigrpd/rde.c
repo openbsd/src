@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -323,7 +323,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 void
 rde_dispatch_parent(int fd, short event, void *bula)
 {
-	struct iface		*niface;
+	struct iface		*niface = NULL;
 	static struct eigrp	*neigrp;
 	struct eigrp_iface	*nei;
 	struct imsg		 imsg;
@@ -408,6 +408,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			TAILQ_INSERT_TAIL(&nconf->iface_list, niface, entry);
 			break;
 		case IMSG_RECONF_EIGRP_IFACE:
+			if (niface == NULL)
+				break;
 			if ((nei = malloc(sizeof(struct eigrp_iface))) == NULL)
 				fatal(NULL);
 			memcpy(nei, imsg.data, sizeof(struct eigrp_iface));

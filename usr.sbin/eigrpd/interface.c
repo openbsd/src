@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -364,7 +364,7 @@ eigrp_if_start(struct eigrp_iface *ei)
 			return;
 		break;
 	default:
-		break;
+		fatalx("eigrp_if_start: unknown af");
 	}
 
 	eigrp_if_start_hello_timer(ei);
@@ -396,7 +396,7 @@ eigrp_if_reset(struct eigrp_iface *ei)
 		if_leave_ipv6_group(ei->iface, &addr6);
 		break;
 	default:
-		break;
+		fatalx("eigrp_if_reset: unknown af");
 	}
 
 	eigrp_if_stop_hello_timer(ei);
@@ -481,7 +481,7 @@ if_to_ctl(struct eigrp_iface *ei)
 		ictl.prefixlen = 64;
 		break;
 	default:
-		break;
+		fatalx("if_to_ctl: unknown af");
 	}
 	ictl.flags = ei->iface->flags;
 	ictl.linkstate = ei->iface->linkstate;

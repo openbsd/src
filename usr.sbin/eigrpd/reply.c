@@ -1,4 +1,4 @@
-/*	$OpenBSD: reply.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: reply.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -65,7 +65,7 @@ send_reply(struct nbr *nbr, struct rinfo_head *rinfo_list, int siareply)
 			size = sizeof(struct ip6_hdr);
 			break;
 		default:
-			break;
+			fatalx("send_reply: unknown af");
 		}
 		size += sizeof(struct eigrp_hdr);
 

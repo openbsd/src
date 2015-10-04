@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.2 2015/10/04 22:54:38 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.3 2015/10/04 23:00:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -168,8 +168,7 @@ rt_compare(struct rt_node *a, struct rt_node *b)
 			return (1);
 		break;
 	default:
-		log_debug("%s: unexpected address-family", __func__);
-		break;
+		fatalx("rt_compare: unknown af");
 	}
 
 	if (a->prefixlen < b->prefixlen)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: util.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -131,7 +131,7 @@ eigrp_applymask(int af, union eigrpd_addr *dest, const union eigrpd_addr *src,
 			    mask.s6_addr[i];
 		break;
 	default:
-		break;
+		fatalx("eigrp_applymask: unknown af");
 	}
 }
 
@@ -148,7 +148,7 @@ eigrp_addrcmp(int af, union eigrpd_addr *a, union eigrpd_addr *b)
 			return (1);
 		break;
 	default:
-		break;
+		fatalx("eigrp_addrcmp: unknown af");
 	}
 
 	return (0);
@@ -158,6 +158,8 @@ int
 eigrp_addrisset(int af, union eigrpd_addr *addr)
 {
 	switch (af) {
+	case AF_UNSPEC:
+		return (0);
 	case AF_INET:
 		if (addr->v4.s_addr != INADDR_ANY)
 			return (1);
@@ -167,7 +169,7 @@ eigrp_addrisset(int af, union eigrpd_addr *addr)
 			return (1);
 		break;
 	default:
-		break;
+		fatalx("eigrp_addrisset: unknown af");
 	}
 
 	return (0);

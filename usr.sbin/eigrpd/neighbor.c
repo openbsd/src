@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -68,8 +68,7 @@ nbr_compare(struct nbr *a, struct nbr *b)
 			return (-1);
 		break;
 	default:
-		log_debug("%s: unexpected address-family", __func__);
-		break;
+		fatalx("nbr_compare: unknown af");
 	}
 
 	return (0);
