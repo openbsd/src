@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.2 2015/10/04 23:08:57 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -167,7 +167,7 @@ int			 gen_mcast_seq_tlv(struct ibuf *, uint32_t);
 uint16_t		 len_route_tlv(struct rinfo *);
 int			 gen_route_tlv(struct ibuf *, struct rinfo *);
 struct tlv_parameter	*tlv_decode_parameter(struct tlv *, char *);
-int			 tlv_decode_seq(struct tlv *, char *,
+int			 tlv_decode_seq(int, struct tlv *, char *,
     struct seq_addr_head *);
 struct tlv_sw_version	*tlv_decode_sw_version(struct tlv *, char *);
 struct tlv_mcast_seq	*tlv_decode_mcast_seq(struct tlv *, char *);
