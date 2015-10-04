@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.56 2015/10/04 04:08:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.57 2015/10/04 17:55:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -156,7 +156,6 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_readlink] = TAME_SELF,		/* further checks in namei */
 
 	[SYS_chdir] = TAME_RPATH,
-	[SYS___getcwd] = TAME_RPATH | TAME_WPATH,
 	[SYS_openat] = TAME_RPATH | TAME_WPATH,
 	[SYS_fstatat] = TAME_RPATH | TAME_WPATH,
 	[SYS_faccessat] = TAME_RPATH | TAME_WPATH,
@@ -172,6 +171,12 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_unlinkat] = TAME_CPATH,
 	[SYS_mkdir] = TAME_CPATH,
 	[SYS_mkdirat] = TAME_CPATH,
+
+	/*
+	 * Classify as RPATH|WPATH, because of path information leakage.
+	 * WPATH due to unknown use of mk*temp(3) on non-/tmp paths..
+	 */
+	[SYS___getcwd] = TAME_RPATH | TAME_WPATH,
 
 	/* Classify as RPATH, because these leak path information */
 	[SYS_getfsstat] = TAME_RPATH,
