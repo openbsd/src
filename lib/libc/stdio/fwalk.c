@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwalk.c,v 1.10 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fwalk.c,v 1.11 2015/10/04 07:33:46 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,3 +51,4 @@ _fwalk(int (*function)(FILE *))
 		}
 	return (ret);
 }
+DEF_STRONG(_fwalk);
