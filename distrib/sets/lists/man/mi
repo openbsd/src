@@ -2159,6 +2159,7 @@
 ./usr/share/man/man5/doas.conf.5
 ./usr/share/man/man5/dvmrpd.conf.5
 ./usr/share/man/man5/editrc.5
+./usr/share/man/man5/eigrpd.conf.5
 ./usr/share/man/man5/elf.5
 ./usr/share/man/man5/ethers.5
 ./usr/share/man/man5/exports.5
@@ -2382,6 +2383,8 @@
 ./usr/share/man/man8/dvmrpctl.8
 ./usr/share/man/man8/dvmrpd.8
 ./usr/share/man/man8/edquota.8
+./usr/share/man/man8/eigrpctl.8
+./usr/share/man/man8/eigrpd.8
 ./usr/share/man/man8/fdisk.8
 ./usr/share/man/man8/fingerd.8
 ./usr/share/man/man8/fsck.8

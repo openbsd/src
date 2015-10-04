@@ -56,6 +56,7 @@
 ./etc/examples/dhclient.conf
 ./etc/examples/dhcpd.conf
 ./etc/examples/dvmrpd.conf
+./etc/examples/eigrpd.conf
 ./etc/examples/exports
 ./etc/examples/ftpchroot
 ./etc/examples/hostapd.conf
@@ -143,6 +144,7 @@
 ./etc/rc.d/dhcpd
 ./etc/rc.d/dhcrelay
 ./etc/rc.d/dvmrpd
+./etc/rc.d/eigrpd
 ./etc/rc.d/ftpd
 ./etc/rc.d/ftpproxy
 ./etc/rc.d/ftpproxy6
@@ -2282,6 +2284,8 @@
 ./usr/sbin/dvmrpctl
 ./usr/sbin/dvmrpd
 ./usr/sbin/edquota
+./usr/sbin/eigrpctl
+./usr/sbin/eigrpd
 ./usr/sbin/ftp-proxy
 ./usr/sbin/fw_update
 ./usr/sbin/group
