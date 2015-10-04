@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.6 2015/10/04 11:41:24 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.7 2015/10/04 12:07:58 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -471,7 +471,7 @@ asmc_lights(struct asmc_softc *sc, uint8_t *n)
 			printf(", read %s failed (0x%x)", key, s);
 			return 1;
 		}
-		if (s == ASMC_NOTFOUND)
+		if (s == ASMC_NOTFOUND || !buf[0]) /* valid data? */
 			continue;
 
 		(*n)++;
@@ -615,12 +615,7 @@ asmc_update(void *arg)
 	for (i = 0; i < ASMC_MAXLIGHT; i++) {
 		snprintf(key, sizeof(key), "ALV%d", i);
 		if (!(sc->sc_sensor_light[i].flags & SENSOR_FINVALID) &&
-		    !asmc_try(sc, ASMC_READ, key, buf, sc->sc_lightlen)) {
-			if (!buf[0]) { /* check if found data is valid */
-				sc->sc_sensor_light[i].flags |=
-				    SENSOR_FINVALID;
-				continue;
-			}
+		    !asmc_try(sc, ASMC_READ, key, buf, sc->sc_lightlen))
 			/* newer macbooks report an 10 bit big endian value */
 			sc->sc_sensor_light[i].value =
 			    (sc->sc_lightlen == 10) ?
@@ -637,7 +632,6 @@ asmc_update(void *arg)
 			     */
 			    ((sc->sc_sensor_light[i].flags |=
 			        SENSOR_FUNKNOWN), 0);
-		}
 	}
 
 #if 0 /* todo: implement motion sensors update */
