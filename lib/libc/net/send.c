@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.5 2005/08/06 20:30:04 espie Exp $ */
+/*	$OpenBSD: send.c,v 1.6 2015/10/04 07:17:27 guenther Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,3 +38,4 @@ send(int s, const void *msg, size_t len, int flags)
 {
 	return (sendto(s, msg, len, flags, NULL, 0));
 }
+DEF_WEAK(send);
