@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.7 2015/10/04 12:07:58 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.8 2015/10/04 20:00:50 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -567,7 +567,7 @@ asmc_init(struct asmc_softc *sc)
 		printf(", light sensors failed\n");
 		return 1;
 	}
-	printf(", %u light%s", n, (n == 1) ? "" : "s");
+	printf("%s", n ? ", lights" : "");
 
 	if (asmc_motions(sc, &n)) { /* motion sensors are optional */
 		printf(", sudden motion sensors failed\n");
@@ -581,7 +581,7 @@ asmc_init(struct asmc_softc *sc)
 		printf(", keyboard backlight failed (0x%x)\n", s);
 		return 1;
 	}
-	printf("%s\n", (s == ASMC_NOTFOUND) ? "" : ", kbdled");
+	printf("\n");
 
 	return 0;
 }
