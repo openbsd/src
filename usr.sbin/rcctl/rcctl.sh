@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: rcctl.sh,v 1.80 2015/10/03 10:39:21 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.81 2015/10/04 13:38:11 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -424,52 +424,78 @@ shift $((OPTIND-1))
 [ $# -gt 0 ] || usage
 
 action=$1
-if [ "${action}" = "ls" ]; then
-	lsarg=$2
-	[[ ${lsarg} == @(all|faulty|off|on|started|stopped) ]] || usage
-elif [ "${action}" = "order" ]; then
-	shift 1
-	svcs="$*"
-else
-	svc=$2
-	var=$3
-	[ $# -ge 3 ] && shift 3 || shift $#
-	args="$*"
-fi
+ret=0
 
-if [ -n "${svc}" ]; then
-	[[ ${action} == @(disable|enable|get|getdef|set|start|stop|restart|reload|check) ]] || \
-		usage
-	svc_is_avail ${svc} || \
-		rcctl_err "service ${svc} does not exist" 2
-elif [[ ${action} != @(ls|order) ]] ; then
-	usage
-fi
-
-if [ -n "${var}" ]; then
-	[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
-	[[ ${action} == set && ${var} = flags && ${args} = NO ]] && \
-		rcctl_err "\"flags NO\" contradicts \"${action}\""
-	[[ ${action} == set && ${var} == class ]] && \
-		rcctl_err "\"${svc}_class\" is a read-only variable set in login.conf(5)"
-	if svc_is_special ${svc}; then
-		if [[ ${action} == set && ${var} != status ]] || \
-			[[ ${action} == @(get|getdef) && ${var} == @(class|timeout|user) ]]; then
-			rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
+case ${action} in
+	ls)
+		lsarg=$2
+		[[ ${lsarg} == @(all|faulty|off|on|started|stopped) ]] || usage
+		;;
+	order)
+		shift 1
+		svcs="$*"
+		;;
+	# enable|disable: undocumented, deprecated
+	disable|enable|start|stop|restart|reload|check)
+		shift 1
+		svcs="$*"
+		[ -z "${svcs}" ] && usage
+		for svc in ${svcs}; do
+			svc_is_avail ${svc} || \
+				rcctl_err "service ${svc} does not exist" 2
+		done
+		;;
+	get|getdef)
+		svc=$2
+		var=$3
+		[ -z "${svc}" ] && usage
+		svc_is_avail ${svc} || \
+			rcctl_err "service ${svc} does not exist" 2
+		if [ -n "${var}" ]; then
+			[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
+			if svc_is_special ${svc}; then
+				[[ ${var} == @(class|timeout|user) ]] && \
+					rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
+			fi
 		fi
-	fi
-elif [ ${action} = "set" ]; then
-	usage
-fi
+		;;
+	set)
+		svc=$2
+		var=$3
+		[ $# -ge 3 ] && shift 3 || shift $#
+		args="$*"
+		[ -z "${svc}" ] && usage
+		svc_is_avail ${svc} || \
+			rcctl_err "service ${svc} does not exist" 2
+		[[ ${var} != @(class|flags|status|timeout|user) ]] && usage
+		[[ ${var} = flags && ${args} = NO ]] && \
+			rcctl_err "\"flags NO\" contradicts \"${action}\""
+		if svc_is_special ${svc}; then
+			[[ ${var} != status ]] && \
+				rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${svc} ${var}\""
+		fi
+		[[ ${var} == class ]] && \
+			rcctl_err "\"${svc}_class\" is a read-only variable set in login.conf(5)"
+		;;
+	*)
+		usage
+		;;
+esac
 
 case ${action} in
 	disable) # undocumented, deprecated
 		needs_root ${action}
-		svc_set ${svc} status off
+		for svc in ${svcs}; do
+			svc_set ${svc} status off || ret=$?;
+		done
+		exit ${ret}
 		;;
 	enable) # undocumented, deprecated
 		needs_root ${action}
-		svc_set ${svc} status on
+		for svc in ${svcs}; do
+			svc_set ${svc} status on || ret=$?;
+		done
+		exit ${ret}
 		;;
 	get)
 		svc_get ${svc} "${var}"
@@ -495,10 +521,13 @@ case ${action} in
 		svc_set ${svc} "${var}" "${args}"
 		;;
 	start|stop|restart|reload|check)
-		if svc_is_special ${svc}; then
-			rcctl_err "\"${svc}\" is a special variable, no rc.d(8) script"
-		fi
-		/etc/rc.d/${svc} ${_RC_DEBUG} ${_RC_FORCE} ${action}
+		for svc in ${svcs}; do
+			if svc_is_special ${svc}; then
+				rcctl_err "\"${svc}\" is a special variable, no rc.d(8) script"
+			fi
+			/etc/rc.d/${svc} ${_RC_DEBUG} ${_RC_FORCE} ${action} || ret=$?;
+		done
+		exit ${ret}
 		;;
 	*)
 		usage
