@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2015/10/04 22:54:38 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -90,6 +90,7 @@ struct eigrp_iface	*ei = NULL;
 
 struct config_defaults {
 	uint8_t		kvalues[6];
+	uint16_t	active_timeout;
 	uint8_t		maximum_hops;
 	uint8_t		maximum_paths;
 	uint8_t		variance;
@@ -124,7 +125,7 @@ typedef struct {
 
 %token	ROUTERID AS FIBUPDATE RDOMAIN REDISTRIBUTE METRIC DFLTMETRIC
 %token	MAXHOPS MAXPATHS VARIANCE FIBPRIORITY_INT FIBPRIORITY_EXT
-%token	AF IPV4 IPV6 HELLOINTERVAL HOLDTIME KVALUES
+%token	AF IPV4 IPV6 HELLOINTERVAL HOLDTIME KVALUES ACTIVETIMEOUT
 %token	INTERFACE PASSIVE DELAY BANDWIDTH SPLITHORIZON
 %token	YES NO
 %token	INCLUDE
@@ -332,6 +333,15 @@ defaults	: KVALUES NUMBER NUMBER NUMBER NUMBER NUMBER NUMBER {
 			defs->kvalues[4] = $6;
 			defs->kvalues[5] = $7;
 		}
+		| ACTIVETIMEOUT NUMBER {
+			if ($2 < MIN_ACTIVE_TIMEOUT ||
+			    $2 > MAX_ACTIVE_TIMEOUT) {
+				yyerror("active-timeout out of range (%d-%d)",
+				    MIN_ACTIVE_TIMEOUT, MAX_ACTIVE_TIMEOUT);
+				YYERROR;
+			}
+			defs->active_timeout = $2;
+		}
 		| MAXHOPS NUMBER {
 			if ($2 < MIN_MAXIMUM_HOPS ||
 			    $2 > MAX_MAXIMUM_HOPS) {
@@ -450,6 +460,7 @@ as		: AS NUMBER {
 		} as_block {
 			memcpy(eigrp->kvalues, defs->kvalues,
 			    sizeof(eigrp->kvalues));
+			eigrp->active_timeout = defs->active_timeout;
 			eigrp->maximum_hops = defs->maximum_hops;
 			eigrp->maximum_paths = defs->maximum_paths;
 			eigrp->variance = defs->variance;
@@ -548,6 +559,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{"active-timeout",		ACTIVETIMEOUT},
 		{"address-family",		AF},
 		{"autonomous-system",		AS},
 		{"bandwidth",			BANDWIDTH},
@@ -911,6 +923,7 @@ parse_config(char *filename, int opts)
 	memset(&globaldefs, 0, sizeof(globaldefs));
 	defs = &globaldefs;
 	defs->kvalues[0] = defs->kvalues[2] = 1;
+	defs->active_timeout = DEFAULT_ACTIVE_TIMEOUT;
 	defs->maximum_hops = DEFAULT_MAXIMUM_HOPS;
 	defs->maximum_paths = DEFAULT_MAXIMUM_PATHS;
 	defs->variance = DEFAULT_VARIANCE;

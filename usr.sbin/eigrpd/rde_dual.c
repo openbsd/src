@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.2 2015/10/04 22:54:38 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -441,10 +441,14 @@ reply_active_timer(int fd, short event, void *arg)
 void
 reply_active_start_timer(struct reply_node *reply)
 {
+	struct eigrp		*eigrp = reply->nbr->eigrp;
 	struct timeval		 tv;
 
+	if (eigrp->active_timeout == 0)
+		return;
+
 	timerclear(&tv);
-	tv.tv_sec = EIGRP_ACTIVE_TIMEOUT;
+	tv.tv_sec = eigrp->active_timeout * 60;
 	if (evtimer_add(&reply->ev_active_timeout, &tv) == -1)
 		fatal("reply_active_start_timer");
 }
@@ -500,7 +504,11 @@ reply_sia_timer(int fd, short event, void *arg)
 void
 reply_sia_start_timer(struct reply_node *reply)
 {
+	struct eigrp		*eigrp = reply->nbr->eigrp;
 	struct timeval		 tv;
+
+	if (eigrp->active_timeout == 0)
+		return;
 
 	/*
 	 * draft-savage-eigrp-04 - Section 4.4.1.1:
@@ -508,7 +516,7 @@ reply_sia_start_timer(struct reply_node *reply)
 	 * at one-half of the ACTIVE timeout period."
 	 */
 	timerclear(&tv);
-	tv.tv_sec = EIGRP_ACTIVE_TIMEOUT / 2;
+	tv.tv_sec = (eigrp->active_timeout * 60) / 2;
 	if (evtimer_add(&reply->ev_sia_timeout, &tv) == -1)
 		fatal("reply_sia_start_timer");
 }

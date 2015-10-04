@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.2 2015/10/03 18:57:11 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.3 2015/10/04 22:54:38 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -251,6 +251,7 @@ struct eigrp {
 	int			 af;
 	uint16_t		 as;
 	uint8_t			 kvalues[6];
+	uint16_t		 active_timeout;
 	uint8_t			 maximum_hops;
 	uint8_t			 maximum_paths;
 	uint8_t			 variance;

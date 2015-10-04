@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.2 2015/10/04 22:54:38 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -128,6 +128,7 @@ print_as(struct eigrp *eigrp)
 	printf("\t\tk-values %u %u %u %u %u %u\n", eigrp->kvalues[0],
 	    eigrp->kvalues[1], eigrp->kvalues[2], eigrp->kvalues[3],
 	    eigrp->kvalues[4], eigrp->kvalues[5]);
+	printf("\t\tactive-timeout %u\n", eigrp->active_timeout);
 	printf("\t\tmaximum-hops %u\n", eigrp->maximum_hops);
 	printf("\t\tmaximum-paths %u\n", eigrp->maximum_paths);
 	printf("\t\tvariance %u\n", eigrp->variance);

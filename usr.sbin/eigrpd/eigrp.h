@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrp.h,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: eigrp.h,v 1.2 2015/10/04 22:54:38 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -38,8 +38,6 @@
 
 #define RTP_ACK_TIMEOUT		100000
 
-#define EIGRP_ACTIVE_TIMEOUT	180
-
 #define EIGRP_VERSION_MAJOR	1
 #define EIGRP_VERSION_MINOR	2
 
@@ -77,6 +75,10 @@
 
 #define MIN_KVALUE		0
 #define MAX_KVALUE		254
+
+#define DEFAULT_ACTIVE_TIMEOUT	3
+#define MIN_ACTIVE_TIMEOUT	0
+#define MAX_ACTIVE_TIMEOUT	65535
 
 #define DEFAULT_MAXIMUM_HOPS	100
 #define MIN_MAXIMUM_HOPS	1
