@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.48 2015/10/02 18:06:27 deraadt Exp $ */
+/* $OpenBSD: file.c,v 1.49 2015/10/04 07:25:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -116,7 +116,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int			 opt, pair[2], fd, idx;
+	int			 opt, pair[2], fd, idx, mode;
 	char			*home;
 	struct passwd		*pw;
 	struct imsgbuf		 ibuf;
@@ -192,8 +192,10 @@ main(int argc, char **argv)
 	parent = getpid();
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
 		err(1, "socketpair");
-	pid = sandbox_fork(FILE_USER);
-	if (pid == 0) {
+	switch (pid = fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
 		close(pair[0]);
 		child(pair[1], parent, argc, argv);
 	}
@@ -220,10 +222,21 @@ main(int argc, char **argv)
 			fd = -1;
 			msg.error = errno;
 		} else {
-			fd = open(argv[idx], O_RDONLY|O_NONBLOCK);
-			if (fd == -1 && (errno == ENFILE || errno == EMFILE))
-				err(1, "open");
-			if (S_ISLNK(msg.sb.st_mode))
+			/*
+			 * tame(2) doesn't let us pass directory file
+			 * descriptors around - but in fact we don't need them,
+			 * so just don't open directories or symlinks (which
+			 * could be to directories).
+			 */
+			mode = msg.sb.st_mode;
+			if (!S_ISDIR(mode) && !S_ISLNK(mode)) {
+				fd = open(argv[idx], O_RDONLY|O_NONBLOCK);
+				if (fd == -1 &&
+				    (errno == ENFILE || errno == EMFILE))
+					err(1, "open");
+			} else
+				fd = -1;
+			if (S_ISLNK(mode))
 				read_link(&msg, argv[idx]);
 		}
 		send_message(&ibuf, &msg, sizeof msg, fd);
@@ -328,6 +341,7 @@ read_link(struct input_msg *msg, const char *path)
 static __dead void
 child(int fd, pid_t parent, int argc, char **argv)
 {
+	struct passwd		*pw;
 	struct magic		*m;
 	struct imsgbuf		 ibuf;
 	struct imsg		 imsg;
@@ -336,6 +350,24 @@ child(int fd, pid_t parent, int argc, char **argv)
 	struct input_file	 inf;
 	int			 i, idx;
 	size_t			 len, width = 0;
+
+	if (tame("stdio cmsg getpw proc", NULL) != 0)
+		err(1, "tame");
+
+	if (geteuid() == 0) {
+		pw = getpwnam(FILE_USER);
+		if (pw == NULL)
+			errx(1, "unknown user %s", FILE_USER);
+		if (setgroups(1, &pw->pw_gid) != 0)
+			err(1, "setgroups");
+		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) != 0)
+			err(1, "setresgid");
+		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
+			err(1, "setresuid");
+	}
+
+	if (tame("stdio cmsg", NULL) != 0)
+		err(1, "tame");
 
 	m = magic_load(magicfp, magicpath, cflag || Wflag);
 	if (cflag) {
@@ -524,6 +556,8 @@ try_access(struct input_file *inf)
 {
 	char tmp[256] = "";
 
+	if (inf->msg->sb.st_size == 0 && S_ISREG(inf->msg->sb.st_mode))
+		return (0); /* empty file */
 	if (inf->fd != -1)
 		return (0);
 
