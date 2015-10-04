@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.41 2015/06/25 02:04:07 uebayasi Exp $	*/
+/*	$OpenBSD: ls.c,v 1.42 2015/10/04 16:00:43 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -122,6 +122,9 @@ ls_main(int argc, char *argv[])
 		if (width)
 			termwidth = width;
 	}
+
+	if (tame("stdio rpath getpw", NULL) == -1)
+		err(1, "tame");
 
 	/* Root is -A automatically. */
 	if (!getuid())
