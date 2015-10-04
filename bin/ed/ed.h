@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.16 2015/07/14 19:16:33 deraadt Exp $	*/
+/*	$OpenBSD: ed.h,v 1.17 2015/10/04 15:03:24 millert Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -46,11 +46,7 @@
 
 #define MINBUFSZ 512		/* minimum buffer size - must be > 0 */
 #define SE_MAX 30		/* max subexpressions in a regular expression */
-#ifdef INT_MAX
-# define LINECHARS INT_MAX	/* max chars per line */
-#else
-# define LINECHARS MAXINT	/* max chars per line */
-#endif
+#define LINECHARS INT_MAX	/* max chars per line */
 
 /* gflags */
 #define GLB 001		/* global command */

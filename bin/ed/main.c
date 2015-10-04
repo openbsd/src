@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2015/07/28 17:46:52 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2015/10/04 15:03:24 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -52,11 +52,7 @@
 #include "ed.h"
 
 
-#ifdef _POSIX_SOURCE
 sigjmp_buf env;
-#else
-jmp_buf env;
-#endif
 
 /* static buffers */
 char stdinbuf[1];		/* stdin buffer */
@@ -149,21 +145,14 @@ top:
 	}
 
 	/* assert: reliable signals! */
-#ifdef SIGWINCH
 	if (isatty(STDIN_FILENO)) {
 		handle_winch(SIGWINCH);
 		signal(SIGWINCH, handle_winch);
 	}
-#endif
 	signal(SIGHUP, signal_hup);
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, signal_int);
-#ifdef _POSIX_SOURCE
-	if (status = sigsetjmp(env, 1))
-#else
-	if ((status = setjmp(env)) != 0)
-#endif
-	{
+	if (status = sigsetjmp(env, 1)) {
 		fputs("\n?\n", stderr);
 		seterrmsg("interrupt");
 	} else {
@@ -1405,11 +1394,7 @@ handle_int(int signo)
 	if (!sigactive)
 		_exit(1);
 	sigint = 0;
-#ifdef _POSIX_SOURCE
 	siglongjmp(env, -1);
-#else
-	longjmp(env, -1);
-#endif
 }
 
 
