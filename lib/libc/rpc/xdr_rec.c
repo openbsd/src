@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_rec.c,v 1.20 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: xdr_rec.c,v 1.21 2015/10/04 06:37:21 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -582,7 +582,7 @@ __xdrrec_getrec(XDR *xdrs, enum xprt_stat *statp, bool_t expectdata)
 	*statp = XPRT_MOREREQS;
 	return (FALSE);
 }
-DEF_WEAK(__xdrrec_getrec);
+DEF_STRONG(__xdrrec_getrec);
 
 bool_t
 __xdrrec_setnonblock(XDR *xdrs, int maxrec)
