@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.20 2015/10/03 02:18:20 deraadt Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.21 2015/10/04 04:56:50 deraadt Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	if (tame("stdio", NULL) != 0)
+	if (tame("stdio", NULL) == -1)
 		err(1, "tame");
 
 	prevline = malloc(MAXLINELEN);

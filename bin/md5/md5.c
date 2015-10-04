@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.80 2015/10/03 03:28:35 deraadt Exp $	*/
+/*	$OpenBSD: md5.c,v 1.81 2015/10/04 04:56:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -314,7 +314,7 @@ main(int argc, char **argv)
 	if (ofile == NULL)
 		ofile = stdout;
 
-	if (tame("stdio rpath", NULL) != 0)
+	if (tame("stdio rpath", NULL) == -1)
 		err(1, "tame");
 
 	/* Most arguments are mutually exclusive */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.118 2015/10/03 00:53:13 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.119 2015/10/04 04:56:50 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -750,7 +750,7 @@ main(int argc, char *argv[])
 		if (tame("stdio inet dns", NULL) == -1)
 			err(1, "tame");
 	} else {
-		if (tame("stdio inet", NULL) != 0)
+		if (tame("stdio inet", NULL) == -1)
 			err(1, "tame");
 	}
 
