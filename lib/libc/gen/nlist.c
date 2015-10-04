@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.61 2015/08/27 04:37:58 guenther Exp $ */
+/*	$OpenBSD: nlist.c,v 1.62 2015/10/04 06:59:57 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 int	__fdnlist(int, struct nlist *);
+PROTO_NORMAL(__fdnlist);
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
@@ -272,6 +273,7 @@ elf_done:
 		munmap(strtab, symstrsize);
 	return (nent);
 }
+DEF_STRONG(__fdnlist);
 
 int
 nlist(const char *name, struct nlist *list)
