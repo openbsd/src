@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.1 2015/09/11 15:38:33 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.2 2015/10/04 07:14:48 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include_next <sys/socket.h>
 
 PROTO_NORMAL(bind);
+PROTO_DEPRECATED(getpeereid);
 PROTO_NORMAL(getpeername);
 PROTO_NORMAL(getrtable);
 PROTO_NORMAL(getsockname);
@@ -29,6 +30,7 @@ PROTO_NORMAL(listen);
 PROTO_NORMAL(setrtable);
 PROTO_NORMAL(setsockopt);
 PROTO_NORMAL(shutdown);
+PROTO_DEPRECATED(sockatmark);
 PROTO_NORMAL(socket);
 PROTO_NORMAL(socketpair);
 
