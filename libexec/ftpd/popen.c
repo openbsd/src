@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.24 2010/03/08 19:34:44 kettenis Exp $	*/
+/*	$OpenBSD: popen.c,v 1.25 2015/10/04 11:58:09 tedu Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -56,14 +56,11 @@
  * may create a pipe to a hidden program as a side effect of a list or dir
  * command.
  */
-static pid_t *pids;
-static int fds;
-
 #define MAX_ARGV	100
 #define MAX_GARGV	1000
 
 FILE *
-ftpd_popen(char *program, char *type)
+ftpd_popen(char *program, char *type, pid_t *pidptr)
 {
 	char *cp;
 	FILE *iop;
@@ -74,12 +71,6 @@ ftpd_popen(char *program, char *type)
 	if ((*type != 'r' && *type != 'w') || type[1])
 		return (NULL);
 
-	if (!pids) {
-		if ((fds = getdtablesize()) <= 0)
-			return (NULL);
-		if ((pids = calloc(fds, sizeof(pid_t))) == NULL)
-			return (NULL);
-	}
 	if (pipe(pdes) < 0)
 		return (NULL);
 
@@ -160,7 +151,7 @@ ftpd_popen(char *program, char *type)
 		iop = fdopen(pdes[1], type);
 		(void)close(pdes[0]);
 	}
-	pids[fileno(iop)] = pid;
+	*pidptr = pid;
 
 pfree:	for (argc = 1; gargv[argc] != NULL; argc++)
 		free(gargv[argc]);
@@ -169,29 +160,22 @@ pfree:	for (argc = 1; gargv[argc] != NULL; argc++)
 }
 
 int
-ftpd_pclose(FILE *iop)
+ftpd_pclose(FILE *iop, pid_t pid)
 {
 	int fdes, status;
-	pid_t pid;
+	pid_t rv;
 	sigset_t sigset, osigset;
 
-	/*
-	 * pclose returns -1 if stream is not associated with a
-	 * `popened' command, or, if already `pclosed'.
-	 */
-	if (pids == 0 || pids[fdes = fileno(iop)] == 0)
-		return (-1);
 	(void)fclose(iop);
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGQUIT);
 	sigaddset(&sigset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
-	while ((pid = waitpid(pids[fdes], &status, 0)) < 0 && errno == EINTR)
+	while ((rv = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
 		continue;
 	sigprocmask(SIG_SETMASK, &osigset, NULL);
-	pids[fdes] = 0;
-	if (pid < 0)
+	if (rv < 0)
 		return (-1);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));

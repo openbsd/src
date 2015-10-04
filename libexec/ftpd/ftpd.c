@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.208 2015/09/01 06:50:53 jsg Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.209 2015/10/04 11:58:09 tedu Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1160,18 +1160,18 @@ retrieve(char *cmd, char *name)
 {
 	FILE *fin, *dout;
 	struct stat st;
-	int (*closefunc)(FILE *);
+	pid_t pid;
 	time_t start;
 
 	if (cmd == 0) {
-		fin = fopen(name, "r"), closefunc = fclose;
+		fin = fopen(name, "r");
 		st.st_size = 0;
 	} else {
 		char line[BUFSIZ];
 
 		(void) snprintf(line, sizeof(line), cmd, name);
 		name = line;
-		fin = ftpd_popen(line, "r"), closefunc = ftpd_pclose;
+		fin = ftpd_popen(line, "r", &pid);
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
 	}
@@ -1226,9 +1226,12 @@ done:
 	if (pdata >= 0)
 		(void) close(pdata);
 	pdata = -1;
-	if (cmd == 0)
+	if (cmd == 0) {
 		LOGBYTES("get", name, byte_count);
-	(*closefunc)(fin);
+		fclose(fin);
+	} else {
+		ftpd_pclose(fin, pid);
+	}
 }
 
 void
@@ -1771,10 +1774,11 @@ statfilecmd(char *filename)
 	FILE *fin;
 	int c;
 	int atstart;
+	pid_t pid;
 	char line[LINE_MAX];
 
 	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
-	fin = ftpd_popen(line, "r");
+	fin = ftpd_popen(line, "r", &pid);
 	if (fin == NULL) {
 		reply(451, "Local resource failure");
 		return;
@@ -1785,13 +1789,13 @@ statfilecmd(char *filename)
 		if (c == '\n') {
 			if (ferror(stdout)){
 				perror_reply(421, "control connection");
-				(void) ftpd_pclose(fin);
+				(void) ftpd_pclose(fin, pid);
 				dologout(1);
 				/* NOTREACHED */
 			}
 			if (ferror(fin)) {
 				perror_reply(551, filename);
-				(void) ftpd_pclose(fin);
+				(void) ftpd_pclose(fin, pid);
 				return;
 			}
 			(void) putc('\r', stdout);
@@ -1801,7 +1805,7 @@ statfilecmd(char *filename)
 		(void) putc(c, stdout);
 		atstart = (c == '\n');
 	}
-	(void) ftpd_pclose(fin);
+	(void) ftpd_pclose(fin, pid);
 	reply(211, "End of Status");
 }
 
