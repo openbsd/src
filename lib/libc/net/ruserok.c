@@ -51,6 +51,7 @@
 int	__ivaliduser(FILE *, in_addr_t, const char *, const char *);
 int	__ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
 	    const char *, const char *);
+PROTO_NORMAL(__ivaliduser_sa);
 static int __icheckhost(struct sockaddr *, socklen_t, const char *);
 static char *__gethostloop(struct sockaddr *, socklen_t);
 
@@ -336,6 +337,7 @@ __ivaliduser_sa(FILE *hostf, struct sockaddr *raddr, socklen_t salen,
 bail:
 	return (-1);
 }
+DEF_STRONG(__ivaliduser_sa);
 
 /*
  * Returns "true" if match, 0 if no match.  If we do not find any
