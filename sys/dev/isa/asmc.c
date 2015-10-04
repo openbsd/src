@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.5 2015/10/01 18:41:06 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.6 2015/10/04 11:41:24 jung Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -128,8 +128,8 @@ static struct asmc_prod asmc_prods[] = {
 		"TpPS", "TpTG", "Tv0S", "Tv1S", NULL }
 	},
 	{ "MacMini", {
-		"TC0D", "TC0H", "TC0P", "TH0P", "TN0D", "TN0P", "TN0P", "TN1P",
-		"TW0P", NULL }
+		"TC0D", "TC0H", "TC0P", "TH0P", "TN0D", "TN0P", "TN1P", "TW0P",
+		NULL }
 	},
 	{ "iMac", {
 		"TA0P", "TC0D", "TC0H", "TC0P", "TG0D", "TG0H", "TG0P", "TH0P",
