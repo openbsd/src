@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.13 2015/07/28 17:46:52 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.14 2015/10/04 15:23:24 millert Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
@@ -38,10 +38,10 @@ char errmsg[PATH_MAX + 40] = "";
 
 /* get_compiled_pattern: return pointer to compiled pattern from command
    buffer */
-pattern_t *
+regex_t *
 get_compiled_pattern(void)
 {
-	static pattern_t *exp = NULL;
+	static regex_t *exp = NULL;
 
 	char *exps;
 	char delimiter;
@@ -59,7 +59,7 @@ get_compiled_pattern(void)
 	/* buffer alloc'd && not reserved */
 	if (exp && !patlock)
 		regfree(exp);
-	else if ((exp = malloc(sizeof(pattern_t))) == NULL) {
+	else if ((exp = malloc(sizeof(regex_t))) == NULL) {
 		perror(NULL);
 		seterrmsg("out of memory");
 		return NULL;

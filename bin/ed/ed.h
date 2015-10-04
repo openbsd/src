@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.17 2015/10/04 15:03:24 millert Exp $	*/
+/*	$OpenBSD: ed.h,v 1.18 2015/10/04 15:23:24 millert Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -54,8 +54,6 @@
 #define GLS 004		/* list after command */
 #define GNP 010		/* enumerate after command */
 #define GSG 020		/* global substitute */
-
-typedef regex_t pattern_t;
 
 /* Line node */
 typedef struct	line {
@@ -170,11 +168,11 @@ char *extract_pattern(int);
 int extract_subst_tail(int *, int *);
 char *extract_subst_template(void);
 line_t *get_addressed_line_node(int);
-pattern_t *get_compiled_pattern(void);
+regex_t *get_compiled_pattern(void);
 char *get_extended_line(int *, int);
 char *get_filename(void);
 int get_line_node_addr(line_t *);
-int get_matching_node_addr(pattern_t *, int);
+int get_matching_node_addr(regex_t *, int);
 int get_marked_node_addr(int);
 char *get_sbuf_line(line_t *);
 int get_shell_command(void);
@@ -200,13 +198,13 @@ int put_tty_line(char *, int, int, int);
 void quit(int);
 int read_file(char *, int);
 int read_stream(FILE *, int);
-int search_and_replace(pattern_t *, int, int);
+int search_and_replace(regex_t *, int, int);
 int set_active_node(line_t *);
 void seterrmsg(char *);
 void signal_hup(int);
 void signal_int(int);
 char *strip_escapes(char *);
-int substitute_matching_text(pattern_t *, line_t *, int, int);
+int substitute_matching_text(regex_t *, line_t *, int, int);
 char *translit_text(char *, int, int, int);
 void unmark_line_node(line_t *);
 void unset_active_nodes(line_t *, line_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.14 2014/05/18 16:36:42 espie Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.15 2015/10/04 15:23:24 millert Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -39,7 +39,7 @@
 int
 build_active_list(int isgcmd)
 {
-	pattern_t *pat;
+	regex_t *pat;
 	line_t *lp;
 	int n;
 	char *s;

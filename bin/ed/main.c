@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2015/10/04 15:03:24 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2015/10/04 15:23:24 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -459,11 +459,11 @@ exec_command(void)
 	extern int u_current_addr;
 	extern int u_addr_last;
 
-	static pattern_t *pat = NULL;
+	static regex_t *pat = NULL;
 	static int sgflag = 0;
 	static int sgnum = 0;
 
-	pattern_t *tpat;
+	regex_t *tpat;
 	char *fnp;
 	int gflag = 0;
 	int sflags = 0;
@@ -911,7 +911,7 @@ check_addr_range(int n, int m)
    pattern in a given direction.  wrap around begin/end of editor buffer if
    necessary */
 int
-get_matching_node_addr(pattern_t *pat, int dir)
+get_matching_node_addr(regex_t *pat, int dir)
 {
 	char *s;
 	int n = current_addr;

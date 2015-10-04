@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.11 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: sub.c,v 1.12 2015/10/04 15:23:24 millert Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed
@@ -111,7 +111,7 @@ int rbufsz;			/* substitute_matching_text buffer size */
 /* search_and_replace: for each line in a range, change text matching a pattern
    according to a substitution template; return status  */
 int
-search_and_replace(pattern_t *pat, int gflag, int kth)
+search_and_replace(regex_t *pat, int gflag, int kth)
 {
 	undo_t *up;
 	char *txt;
@@ -165,7 +165,7 @@ search_and_replace(pattern_t *pat, int gflag, int kth)
 /* substitute_matching_text: replace text matched by a pattern according to
    a substitution template; return pointer to the modified text */
 int
-substitute_matching_text(pattern_t *pat, line_t *lp, int gflag, int kth)
+substitute_matching_text(regex_t *pat, line_t *lp, int gflag, int kth)
 {
 	int off = 0;
 	int changed = 0;
