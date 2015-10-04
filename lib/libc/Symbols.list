@@ -1,9 +1,9 @@
 /*
  * In order to guarantee that static and shared archs see the same "public"
  * symbols, this file should always include all the non-static symbols that
- * are in the application namespace.  So, if a symbol starts with a letter,
- * don't delete it from here without either making it static or renaming it
- * to have a leading underbar.
+ * are in the application namespace.  So if a symbol starts with a letter,
+ * only delete it from here if you've eliminated it completely, made it
+ * static, or renamed it to have a leading underbar.
  */
 
 /* symbols that no one should be using currently */
