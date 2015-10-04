@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.20 2015/08/11 17:15:46 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.21 2015/10/04 16:01:07 deraadt Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <locale.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <regex.h>
 #include <err.h>
 
@@ -499,6 +500,9 @@ main(int argc, char *argv[])
 	struct val     *vp;
 
 	(void) setlocale(LC_ALL, "");
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	if (argc > 1 && !strcmp(argv[1], "--"))
 		argv++;
