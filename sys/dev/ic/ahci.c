@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.22 2015/08/27 18:47:29 deraadt Exp $ */
+/*	$OpenBSD: ahci.c,v 1.23 2015/10/04 07:56:50 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -460,7 +460,8 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	if (ap->ap_err_scratch == NULL) {
 		printf("%s: unable to allocate DMA scratch buf for port %d\n",
 		    DEVNAME(sc), port);
-		goto freeport;
+		free(ap, M_DEVBUF, sizeof(*ap));
+		goto reterr;
 	}
 
 #ifdef AHCI_DEBUG
