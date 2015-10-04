@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.1 2015/10/02 15:04:45 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.2 2015/10/04 15:15:11 jsing Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -32,13 +32,16 @@ gentime_string_from_tm(struct tm *tm)
 {
 	char *ret = NULL;
 	int year;
+
 	year = tm->tm_year + 1900;
 	if (year < 0 || year > 9999)
 		return (NULL);
+
 	if (asprintf(&ret, "%04u%02u%02u%02u%02u%02uZ", year,
 	    tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
 	    tm->tm_sec) == -1)
 		ret = NULL;
+
 	return (ret);
 }
 
@@ -46,12 +49,15 @@ char *
 utctime_string_from_tm(struct tm *tm)
 {
 	char *ret = NULL;
+
 	if (tm->tm_year >= 150 || tm->tm_year < 50)
 		return (NULL);
+
 	if (asprintf(&ret, "%02u%02u%02u%02u%02u%02uZ",
 	    tm->tm_year % 100,  tm->tm_mon + 1, tm->tm_mday,
 	    tm->tm_hour, tm->tm_min, tm->tm_sec) == -1)
 		ret = NULL;
+
 	return (ret);
 }
 
@@ -74,10 +80,11 @@ utctime_string_from_tm(struct tm *tm)
  */
 #define RFC5280 0
 #define	ATOI2(ar)	((ar) += 2, ((ar)[-2] - '0') * 10 + ((ar)[-1] - '0'))
-int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
+int
+asn1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 {
 	char *p, *buf = NULL, *dot = NULL, *tz = NULL;
-	int i, offset, noseconds = 0, type = 0;
+	int i, offset = 0, noseconds = 0, type = 0, ret = -1;
 	struct tm ltm;
 	struct tm *lt;
 	size_t tlen;
@@ -89,12 +96,13 @@ int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
 	if (len > INT_MAX)
 		goto err;
 
-	/* Constrain the RFC5280 case within max/min valid lengths. */
-	if (mode == RFC5280 && (len > 15 || len < 13))
+	/* Constrain the RFC5280 case within min/max valid lengths. */
+	if (mode == RFC5280 && (len < 13 || len > 15))
 		goto err;
 
 	if ((buf = strndup(bytes, len)) == NULL)
 		goto err;
+
 	lt = tm;
 	if (lt == NULL) {
 		time_t t = time(NULL);
@@ -116,7 +124,7 @@ int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
 			dot = t;
 			continue;
 		}
-		if ((*t == 'Z' || *t == '+' || *t == '-')  && tz == NULL) {
+		if ((*t == 'Z' || *t == '+' || *t == '-') && tz == NULL) {
 			tz = t;
 			continue;
 		}
@@ -134,21 +142,20 @@ int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
 	if (tzc == 'Z') {
 		if (*tz != '\0')
 			goto err;
-		offset = 0;
 	} else if (mode != RFC5280 && (tzc == '+' || tzc == '-') &&
-	    (strlen(tz) == 4)) {
-		int hours, mins;
-		hours = ATOI2(tz);
-		mins = ATOI2(tz);
-		if (hours > 12 || mins > 59)
+	    strlen(tz) == 4) {
+		int hours = ATOI2(tz);
+		int mins = ATOI2(tz);
+
+		if (hours < 0 || hours > 12 || mins < 0 || mins > 59)
 			goto err;
 		offset = hours * 3600 + mins * 60;
 		if (tzc == '-')
 			offset = -offset;
 	} else
-	    goto err;
+		goto err;
 
-	if (mode != RFC5280) {
+	if (offset != 0) {
 		/* XXX - yuck - OPENSSL_gmtime_adj should go away */
 		if (!OPENSSL_gmtime_adj(lt, 0, offset))
 			goto err;
@@ -175,10 +182,9 @@ int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
 	switch (tlen) {
 	case 14:
 		lt->tm_year = (ATOI2(p) * 100) - 1900;	/* cc */
-		if (mode == RFC5280 || mode == V_ASN1_GENERALIZEDTIME)
-			type = V_ASN1_GENERALIZEDTIME;
-		else
+		if (mode != RFC5280 && mode != V_ASN1_GENERALIZEDTIME)
 			goto err;
+		type = V_ASN1_GENERALIZEDTIME;
 		/* FALLTHROUGH */
 	case 12:
 		if (type == 0 && mode == V_ASN1_GENERALIZEDTIME) {
@@ -203,10 +209,9 @@ int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
 			if (mode == V_ASN1_GENERALIZEDTIME)
 				goto err;
 			if (tlen == 10) {
-				if (mode == V_ASN1_UTCTIME)
-					noseconds = 1;
-				else
+				if (mode != V_ASN1_UTCTIME)
 					goto err;
+				noseconds = 1;
 			}
 			type = V_ASN1_UTCTIME;
 		}
@@ -215,25 +220,24 @@ int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
 			if (lt->tm_year < 50)
 				lt->tm_year += 100;
 		}
-		lt->tm_mon = ATOI2(p);			/* mm */
-		if ((lt->tm_mon > 12) || !lt->tm_mon)
+		lt->tm_mon = ATOI2(p) - 1;		/* mm */
+		if (lt->tm_mon < 0 || lt->tm_mon > 11)
 			goto err;
-		--lt->tm_mon;			/* struct tm is 0 - 11 */
 		lt->tm_mday = ATOI2(p);			/* dd */
-		if ((lt->tm_mday > 31) || !lt->tm_mday)
+		if (lt->tm_mday < 1 || lt->tm_mday > 31)
 			goto err;
 		lt->tm_hour = ATOI2(p);			/* HH */
-		if (lt->tm_hour > 23)
+		if (lt->tm_hour < 0 || lt->tm_hour > 23)
 			goto err;
 		lt->tm_min = ATOI2(p);			/* MM */
-		if (lt->tm_min > 59)
+		if (lt->tm_hour < 0 || lt->tm_min > 59)
 			goto err;
 		lt->tm_sec = 0;				/* SS */
 		if (noseconds)
 			break;
 		lt->tm_sec = ATOI2(p);
 		/* Leap second 60 is not accepted. Reconsider later? */
-		if (lt->tm_sec > 59)
+		if (lt->tm_hour < 0 || lt->tm_sec > 59)
 			goto err;
 		break;
 	default:
@@ -241,17 +245,17 @@ int asn1_time_parse(const char * bytes, size_t len, struct tm *tm, int mode)
 	}
 
 	/* RFC 5280 section 4.1.2.5 */
-	if (mode == RFC5280 && lt->tm_year < 150 &&
-	    type != V_ASN1_UTCTIME)
-		goto err;
-	if (mode == RFC5280 && lt->tm_year >= 150 &&
-	    type != V_ASN1_GENERALIZEDTIME)
-		goto err;
+	if (mode == RFC5280) {
+		if (lt->tm_year < 150 && type != V_ASN1_UTCTIME)
+			goto err;
+		if (lt->tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
+			goto err;
+	}
 
-	free(buf);
-	return type;
+	ret = type;
 
 err:
 	free(buf);
-	return -1;
+
+	return (ret);
 }
