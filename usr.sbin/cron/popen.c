@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.27 2015/10/03 19:47:21 tedu Exp $	*/
+/*	$OpenBSD: popen.c,v 1.28 2015/10/04 09:08:46 tedu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,9 +43,7 @@
 #define MAX_GARGV	1000
 
 /*
- * Special version of popen which avoids call to shell.  This ensures noone
- * may create a pipe to a hidden program as a side effect of a list or dir
- * command.
+ * Special version of popen which avoids call to shell
  */
 FILE *
 cron_popen(char *program, char *type, struct passwd *pw, pid_t *pidptr)
