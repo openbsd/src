@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.54 2015/10/03 23:52:30 guenther Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.55 2015/10/04 01:56:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -173,7 +173,7 @@ const u_int tame_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mkdir] = TAME_CPATH,
 	[SYS_mkdirat] = TAME_CPATH,
 
-	/* Classify as RPATH, becuase these leak path information */
+	/* Classify as RPATH, because these leak path information */
 	[SYS_getfsstat] = TAME_RPATH,
 	[SYS_statfs] = TAME_RPATH,
 	[SYS_fstatfs] = TAME_RPATH,
