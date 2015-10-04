@@ -1,4 +1,4 @@
-.\" $OpenBSD: tame.2,v 1.30 2015/09/30 11:36:07 semarie Exp $
+.\" $OpenBSD: tame.2,v 1.31 2015/10/04 20:47:16 djm Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2015 $
+.Dd $Mdocdate: October 4 2015 $
 .Dt TAME 2
 .Os
 .Sh NAME
@@ -207,6 +207,11 @@ libevent or handwritten async IO loops:
 .Xr recvmsg 2 ,
 .Xr recvfrom 2 ,
 .Xr fstat 2 .
+.Pp
+Note that
+.Xr sendto 2
+is only permitted if its destination socket address is
+.Dv NULL .
 .It Va "stdio"
 This subset is simply the combination of
 .Va "malloc"
