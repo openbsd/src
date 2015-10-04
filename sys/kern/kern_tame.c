@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tame.c,v 1.55 2015/10/04 01:56:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_tame.c,v 1.56 2015/10/04 04:08:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -808,6 +808,12 @@ tame_sysctl_check(struct proc *p, int namelen, int *name, void *new)
 
 	if (new)
 		return (EFAULT);
+
+	/* setproctitle() */
+	if (namelen == 2 &&
+	    name[0] == CTL_VM &&
+	    name[1] == VM_PSSTRINGS)
+		return (0);
 
 	/* getifaddrs() */
 	if ((p->p_p->ps_tame & TAME_INET) &&
