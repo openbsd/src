@@ -66,6 +66,7 @@ _iscsid:*:102:
 _smtpq:*:103:
 _file:*:104:
 _radiusd:*:105:
+_eigrpd:*:106:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
