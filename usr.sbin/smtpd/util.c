@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.115 2015/10/02 00:41:25 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.116 2015/10/05 22:08:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -735,6 +735,7 @@ getmailname(char *hostname, size_t len)
 			fatal("exiting");
 		}
 		memcpy(lbuf, buf, buflen);
+		buf = lbuf;
 	}
 
 	if (strlcpy(hostname, buf, len) >= len)
