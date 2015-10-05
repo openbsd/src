@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.44 2015/09/25 16:16:26 tedu Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.45 2015/10/05 20:15:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2003, 2010 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -132,8 +132,6 @@ diffdir(char *p1, char *p2, int flags)
 			if (Nflag)
 				diffit(dent1, path1, dirlen1, path2, dirlen2,
 				    flags);
-			else if (lflag)
-				dent1->d_status |= D_ONLY;
 			else
 				print_only(path1, dirlen1, dent1->d_name);
 			dp1++;
@@ -142,24 +140,9 @@ diffdir(char *p1, char *p2, int flags)
 			if (Nflag || Pflag)
 				diffit(dent2, path1, dirlen1, path2, dirlen2,
 				    flags);
-			else if (lflag)
-				dent2->d_status |= D_ONLY;
 			else
 				print_only(path2, dirlen2, dent2->d_name);
 			dp2++;
-		}
-	}
-	if (lflag) {
-		path1[dirlen1] = '\0';
-		path2[dirlen2] = '\0';
-		for (dp1 = dirp1; (dent1 = *dp1) != NULL; dp1++) {
-			print_status(dent1->d_status, path1, path2,
-			    dent1->d_name);
-		}
-		for (dp2 = dirp2; (dent2 = *dp2) != NULL; dp2++) {
-			if (dent2->d_status == D_ONLY)
-				print_status(dent2->d_status, path2, NULL,
-				    dent2->d_name);
 		}
 	}
 
@@ -210,8 +193,6 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
 		if (rflag)
 			diffdir(path1, path2, flags);
-		else if (lflag)
-			dp->d_status |= D_COMMON;
 		else
 			printf("Common subdirectories: %s and %s\n",
 			    path1, path2);
@@ -223,8 +204,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
 		dp->d_status = D_SKIPPED2;
 	else
 		dp->d_status = diffreg(path1, path2, flags);
-	if (!lflag)
-		print_status(dp->d_status, path1, path2, "");
+	print_status(dp->d_status, path1, path2, "");
 }
 
 /*

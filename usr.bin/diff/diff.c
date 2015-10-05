@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.61 2015/10/05 15:42:54 semarie Exp $	*/
+/*	$OpenBSD: diff.c,v 1.62 2015/10/05 20:15:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -26,7 +26,6 @@
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -37,7 +36,7 @@
 #include "diff.h"
 #include "xmalloc.h"
 
-int	 lflag, Nflag, Pflag, rflag, sflag, Tflag;
+int	 Nflag, Pflag, rflag, sflag, Tflag;
 int	 diff_format, diff_context, status;
 char	*start, *ifdefname, *diffargs, *label[2], *ignore_pats;
 struct stat stb1, stb2;
@@ -55,7 +54,6 @@ static struct option longopts[] = {
 	{ "forward-ed",			no_argument,		0,	'f' },
 	{ "ignore-matching-lines",	required_argument,	0,	'I' },
 	{ "ignore-case",		no_argument,		0,	'i' },
-	{ "paginate",			no_argument,		0,	'l' },
 	{ "label",			required_argument,	0,	'L' },
 	{ "new-file",			no_argument,		0,	'N' },
 	{ "rcs",			no_argument,		0,	'n' },
@@ -152,10 +150,6 @@ main(int argc, char **argv)
 			else
 				usage();
 			break;
-		case 'l':
-			lflag = 1;
-			signal(SIGPIPE, SIG_IGN);
-			break;
 		case 'N':
 			Nflag = 1;
 			break;
@@ -217,15 +211,14 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (lflag == 0) {
-		if (getenv("TMPDIR")) {
-			if (tame("stdio rpath wpath cpath", NULL) == -1)
-				err(1, "tame");
-		} else {
-			if (tame("stdio rpath tmppath", NULL) == -1)
-				err(1, "tame");
-		}
+	if (getenv("TMPDIR")) {
+		if (tame("stdio rpath wpath cpath", NULL) == -1)
+			err(1, "tame");
+	} else {
+		if (tame("stdio rpath tmppath", NULL) == -1)
+			err(1, "tame");
 	}
+
 	/*
 	 * Do sanity checks, fill in stb1 and stb2 and call the appropriate
 	 * driver routine.  Both drivers use the contents of stb1 and stb2.
@@ -364,13 +357,6 @@ void
 print_status(int val, char *path1, char *path2, char *entry)
 {
 	switch (val) {
-	case D_ONLY:
-		print_only(path1, strlen(path1), entry);
-		break;
-	case D_COMMON:
-		printf("Common subdirectories: %s%s and %s%s\n",
-		    path1, entry, path2, entry);
-		break;
 	case D_BINARY:
 		printf("Binary files %s%s and %s%s differ\n",
 		    path1, entry, path2, entry);
@@ -408,12 +394,12 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: diff [-abdilpTtw] [-c | -e | -f | -n | -q | -u] [-I pattern] [-L label]\n"
+	    "usage: diff [-abdipTtw] [-c | -e | -f | -n | -q | -u] [-I pattern] [-L label]\n"
 	    "            file1 file2\n"
-	    "       diff [-abdilpTtw] [-I pattern] [-L label] -C number file1 file2\n"
-	    "       diff [-abdiltw] [-I pattern] -D string file1 file2\n"
-	    "       diff [-abdilpTtw] [-I pattern] [-L label] -U number file1 file2\n"
-	    "       diff [-abdilNPprsTtw] [-c | -e | -f | -n | -q | -u] [-I pattern]\n"
+	    "       diff [-abdipTtw] [-I pattern] [-L label] -C number file1 file2\n"
+	    "       diff [-abditw] [-I pattern] -D string file1 file2\n"
+	    "       diff [-abdipTtw] [-I pattern] [-L label] -U number file1 file2\n"
+	    "       diff [-abdiNPprsTtw] [-c | -e | -f | -n | -q | -u] [-I pattern]\n"
 	    "            [-L label] [-S name] [-X file] [-x pattern] dir1 dir2\n");
 
 	exit(2);

@@ -1,6 +1,6 @@
-/*	$OpenBSD: diff.h,v 1.32 2009/06/07 08:39:13 ray Exp $	*/
 
-/*-
+
+/*ROR
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -71,20 +71,17 @@
 #define	D_SAME		0	/* Files are the same */
 #define	D_DIFFER	1	/* Files are different */
 #define	D_BINARY	2	/* Binary files are different */
-#define	D_COMMON	3	/* Subdirectory common to both dirs */
-#define	D_ONLY		4	/* Only exists in one directory */
-#define	D_MISMATCH1	5	/* path1 was a dir, path2 a file */
-#define	D_MISMATCH2	6	/* path1 was a file, path2 a dir */
-#define	D_ERROR		7	/* An error occurred */
-#define	D_SKIPPED1	8	/* path1 was a special file */
-#define	D_SKIPPED2	9	/* path2 was a special file */
+#define	D_MISMATCH1	3	/* path1 was a dir, path2 a file */
+#define	D_MISMATCH2	4	/* path1 was a file, path2 a dir */
+#define	D_SKIPPED1	5	/* path1 was a special file */
+#define	D_SKIPPED2	6	/* path2 was a special file */
 
 struct excludes {
 	char *pattern;
 	struct excludes *next;
 };
 
-extern int	lflag, Nflag, Pflag, rflag, sflag, Tflag;
+extern int	Nflag, Pflag, rflag, sflag, Tflag;
 extern int	diff_format, diff_context, status;
 extern char	*start, *ifdefname, *diffargs, *label[2], *ignore_pats;
 extern struct	stat stb1, stb2;
