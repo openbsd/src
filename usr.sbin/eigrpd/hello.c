@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: hello.c,v 1.2 2015/10/05 01:59:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -28,7 +28,7 @@
 
 void
 send_hello(struct eigrp_iface *ei, struct seq_addr_head *seq_addr_list,
-    uint32_t mcast_seq)
+    uint32_t mcast_seq, int peerterm)
 {
 	struct eigrp		*eigrp = ei->eigrp;
 	struct ibuf		*buf;
@@ -42,7 +42,7 @@ send_hello(struct eigrp_iface *ei, struct seq_addr_head *seq_addr_list,
 	if (gen_eigrp_hdr(buf, EIGRP_OPC_HELLO, flags, 0, eigrp->as))
 		goto fail;
 
-	if (gen_parameter_tlv(buf, ei))
+	if (gen_parameter_tlv(buf, ei, peerterm))
 		goto fail;
 
 	if (gen_sw_version_tlv(buf))
@@ -95,7 +95,7 @@ recv_hello(struct eigrp_iface *ei, union eigrpd_addr *src, struct nbr *nbr,
 		nbr = nbr_new(ei, src, ntohs(tp->holdtime), 0);
 
 		/* send an expedited hello */
-		send_hello(ei, NULL, 0);
+		send_hello(ei, NULL, 0, 0);
 
 		send_update(nbr->ei, nbr, EIGRP_HDR_FLAG_INIT, 0, NULL);
 	}

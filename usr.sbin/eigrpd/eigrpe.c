@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.3 2015/10/05 01:59:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -532,6 +532,17 @@ eigrpe_dispatch_rde(int fd, short event, void *bula)
 				message_list_clr(&ei->query_list);
 				break;
 			}
+			break;
+		case IMSG_NEIGHBOR_DOWN:
+			nbr = nbr_find_peerid(imsg.hdr.peerid);
+			if (nbr == NULL) {
+				log_debug("%s: cannot find rde neighbor",
+				    __func__);
+				break;
+			}
+			/* announce that this neighborship is dead */
+			send_hello(nbr->ei, NULL, 0, 1);
+			nbr_del(nbr);
 			break;
 		case IMSG_CTL_SHOW_TOPOLOGY:
 		case IMSG_CTL_END:

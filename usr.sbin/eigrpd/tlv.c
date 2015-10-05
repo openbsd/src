@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.3 2015/10/04 23:08:57 renato Exp $ */
+/*	$OpenBSD: tlv.c,v 1.4 2015/10/05 01:59:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -29,13 +29,21 @@
 #include "eigrpe.h"
 
 int
-gen_parameter_tlv(struct ibuf *buf, struct eigrp_iface *ei)
+gen_parameter_tlv(struct ibuf *buf, struct eigrp_iface *ei, int peerterm)
 {
 	struct tlv_parameter	 tp;
 
 	tp.type = htons(TLV_TYPE_PARAMETER);
 	tp.length = htons(TLV_TYPE_PARAMETER_LEN);
-	memcpy(tp.kvalues, ei->eigrp->kvalues, 6);
+	if (peerterm) {
+		tp.kvalues[0] = 255;
+		tp.kvalues[1] = 255;
+		tp.kvalues[2] = 255;
+		tp.kvalues[3] = 255;
+		tp.kvalues[4] = 255;
+		tp.kvalues[5] = 0;
+	} else
+		memcpy(tp.kvalues, ei->eigrp->kvalues, 6);
 	tp.holdtime = htons(ei->hello_holdtime);
 
 	return (ibuf_add(buf, &tp, sizeof(tp)));

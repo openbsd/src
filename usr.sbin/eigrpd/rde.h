@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.1 2015/10/02 04:26:47 renato Exp $ */
+/*	$OpenBSD: rde.h,v 1.2 2015/10/05 01:59:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -140,7 +140,7 @@ void		 rt_dump(struct ctl_show_topology_req *, pid_t);
 /* rde_nbr.c */
 struct rde_nbr		*rde_nbr_find(uint32_t);
 struct rde_nbr		*rde_nbr_new(uint32_t, struct rde_nbr *);
-void			 rde_nbr_del(struct rde_nbr *);
+void			 rde_nbr_del(struct rde_nbr *, int);
 
 /* rde_dual.c */
 int			 dual_fsm(struct rt_node *, enum dual_event);

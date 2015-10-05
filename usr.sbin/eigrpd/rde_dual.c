@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.3 2015/10/04 23:00:10 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.4 2015/10/05 01:59:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -434,7 +434,7 @@ reply_active_timer(int fd, short event, void *arg)
 	log_debug("%s: neighbor %s is stuck in active",
 	    log_addr(nbr->eigrp->af, &nbr->addr));
 
-	rde_nbr_del(reply->nbr);
+	rde_nbr_del(reply->nbr, 1);
 }
 
 void
@@ -475,7 +475,7 @@ reply_sia_timer(int fd, short event, void *arg)
 	if (reply->siaquery_sent > 0 && reply->siareply_recv == 0) {
 		log_debug("%s: neighbor %s is stuck in active",
 		    log_addr(nbr->eigrp->af, &nbr->addr));
-		rde_nbr_del(nbr);
+		rde_nbr_del(nbr, 1);
 		return;
 	}
 
@@ -1239,9 +1239,13 @@ rde_nbr_new(uint32_t peerid, struct rde_nbr *new)
 }
 
 void
-rde_nbr_del(struct rde_nbr *nbr)
+rde_nbr_del(struct rde_nbr *nbr, int send_peerterm)
 {
 	struct reply_node	*reply;
+
+	if (send_peerterm)
+		rde_imsg_compose_eigrpe(IMSG_NEIGHBOR_DOWN, nbr->peerid,
+		    0, NULL, 0);
 
 	while((reply = TAILQ_FIRST(&nbr->rijk)) != NULL)
 		reply_outstanding_remove(reply);

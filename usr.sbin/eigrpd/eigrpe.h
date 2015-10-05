@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.2 2015/10/04 23:08:57 renato Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.3 2015/10/05 01:59:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -159,7 +159,8 @@ void	 recv_packet_v4(int, short, void *);
 void	 recv_packet_v6(int, short, void *);
 
 /* tlv.c */
-int			 gen_parameter_tlv(struct ibuf *, struct eigrp_iface *);
+int			 gen_parameter_tlv(struct ibuf *, struct eigrp_iface *,
+    int);
 int			 gen_sequence_tlv(struct ibuf *,
     struct seq_addr_head *);
 int			 gen_sw_version_tlv(struct ibuf *);
@@ -177,7 +178,8 @@ void			 metric_encode_mtu(uint8_t *, int);
 int			 metric_decode_mtu(uint8_t *);
 
 /* hello.c */
-void	 send_hello(struct eigrp_iface *, struct seq_addr_head *, uint32_t);
+void	 send_hello(struct eigrp_iface *, struct seq_addr_head *, uint32_t,
+    int);
 void	 recv_hello(struct eigrp_iface *, union eigrpd_addr *, struct nbr *,
     struct tlv_parameter *);
 

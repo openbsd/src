@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.2 2015/10/04 23:00:10 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.3 2015/10/05 01:59:33 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -241,7 +241,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			rde_check_link_down_nbr(nbr);
 			rde_flush_queries();
-			rde_nbr_del(rde_nbr_find(imsg.hdr.peerid));
+			rde_nbr_del(rde_nbr_find(imsg.hdr.peerid), 0);
 			break;
 		case IMSG_RECV_UPDATE_INIT:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
@@ -473,9 +473,9 @@ rde_instance_del(struct eigrp *eigrp)
 	/* clear nbrs */
 	RB_FOREACH_SAFE(nbr, rde_nbr_head, &rde_nbrs, safe)
 		if (nbr->eigrp == eigrp)
-			rde_nbr_del(nbr);
-	rde_nbr_del(eigrp->rnbr_redist);
-	rde_nbr_del(eigrp->rnbr_summary);
+			rde_nbr_del(nbr, 0);
+	rde_nbr_del(eigrp->rnbr_redist, 0);
+	rde_nbr_del(eigrp->rnbr_summary, 0);
 
 	free(eigrp);
 }
