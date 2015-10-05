@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.28 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.29 2015/10/05 07:09:46 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	}
 
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
-	if ((freopen(path, "w", stdout)) == NULL)
+	if ((freopen(path, "r+", stdout)) == NULL)
 		err(1, "%s", path);
 
 	/* revoke privs, now that we have opened the tty */
