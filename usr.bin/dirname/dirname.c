@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.13 2010/08/10 22:05:36 sobrado Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.14 2015/10/05 13:30:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,6 +32,9 @@ main(int argc, char *argv[])
 	char *dir;
 
 	setlocale(LC_ALL, "");
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
