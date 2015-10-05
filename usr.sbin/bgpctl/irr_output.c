@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.18 2015/04/26 11:32:54 phessler Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.19 2015/10/05 14:18:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
