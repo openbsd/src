@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.15 2015/02/06 09:10:55 tedu Exp $	*/
+/*	$OpenBSD: fold.c,v 1.16 2015/10/05 06:26:33 deraadt Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -56,6 +56,9 @@ main(int argc, char *argv[])
 	unsigned int width;
 	const char *errstr;
 
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
+
 	width = 0;
 	lastch = '\0';
 	prevoptind = 1;
@@ -99,14 +102,19 @@ main(int argc, char *argv[])
 	if (width == 0)
 		width = DEFLINEWIDTH;
 
-	if (!*argv)
+	if (!*argv) {
+		if (tame("stdio", NULL) == -1)
+			err(1, "tame");
 		fold(width);
-	else for (; *argv; ++argv)
-		if (!freopen(*argv, "r", stdin)) {
-			err(1, "%s", *argv);
-			/* NOTREACHED */
-		} else
-			fold(width);
+	} else {
+		for (; *argv; ++argv) {
+			if (!freopen(*argv, "r", stdin))
+				err(1, "%s", *argv);
+				/* NOTREACHED */
+			else
+				fold(width);
+		}
+	}
 	exit(0);
 }
 
