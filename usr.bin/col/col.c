@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.17 2015/05/09 20:36:18 schwarze Exp $	*/
+/*	$OpenBSD: col.c,v 1.18 2015/10/05 06:04:18 deraadt Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -112,6 +112,9 @@ main(int argc, char *argv[])
 	int nflushd_lines;		/* number of lines that were flushed */
 	int adjust, opt, warned;
 	const char *errstr;
+
+	if (tame("stdio", NULL) == -1)
+		err(1, "tame");
 
 	max_bufd_lines = 256;
 	compress_spaces = 1;		/* compress spaces into tabs */
