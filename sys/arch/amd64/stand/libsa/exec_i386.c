@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.14 2015/09/02 04:09:24 yasuoka Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.15 2015/10/05 22:59:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -72,8 +72,11 @@ run_loadfile(u_long *marks, int howto)
 	bios_bootsr_t bootsr;
 	struct sr_boot_volume *bv;
 #endif
+#if defined(EFIBOOT)
+	int i;
+	u_long delta;
+	extern u_long efi_loadaddr;
 
-#ifdef EFIBOOT
 	if ((av = alloc(ac)) == NULL)
 		panic("alloc for bootarg");
 	efi_makebootargs();
@@ -131,17 +134,29 @@ run_loadfile(u_long *marks, int howto)
 	printf("entry point at 0x%lx [%x, %x, %x, %x]\n", entry,
 	    ((int *)entry)[0], ((int *)entry)[1],
 	    ((int *)entry)[2], ((int *)entry)[3]);
-
-#if defined(EFIBOOT)
-	efi_cleanup();
-#endif
-#if defined(EFIBOOT) && defined(__amd64__)
-	(*run_i386)((u_long)run_i386, entry, howto, bootdev, BOOTARG_APIVER,
-	    marks[MARK_END], extmem, cnvmem, ac, (intptr_t)av);
-#else
+#ifndef EFIBOOT
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
 	    extmem, cnvmem, ac, (int)av);
-	/* not reached */
+#else
+	/*
+	 * Move the loaded kernel image to the usual place after calling
+	 * ExitBootServervice()
+	 */
+	delta = DEFAULT_KERNEL_ADDRESS - efi_loadaddr;
+	efi_cleanup();
+	memcpy((void *)marks[MARK_START] + delta, (void *)marks[MARK_START],
+	    marks[MARK_END] - marks[MARK_START]);
+	for (i = 0; i < MARK_MAX; i++)
+		marks[i] += delta;
+	entry += delta;
+#ifdef __amd64__
+	(*run_i386)((u_long)run_i386, entry, howto, bootdev, BOOTARG_APIVER,
+	    marks[MARK_END], extmem, cnvmem, ac, (intptr_t)av);
+#else
+	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
+	    extmem, cnvmem, ac, (int)av);
 #endif
+#endif
+	/* not reached */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.5 2015/09/23 03:29:26 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.6 2015/10/05 22:59:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -36,6 +36,8 @@
 #include "eficall.h"
 #include "run_i386.h"
 
+#define	KERN_LOADSPACE_SIZE	(32 * 1024 * 1024)
+
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
 EFI_RUNTIME_SERVICES	*RS;
@@ -46,6 +48,7 @@ UINTN			 heapsiz = 1 * 1024 * 1024;
 UINTN			 mmap_key;
 static EFI_GUID		 imgdp_guid = { 0xbc62157e, 0x3e33, 0x4fec,
 			    { 0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf }};
+u_long			 efi_loadaddr;
 
 static void	 efi_heap_init(void);
 static void	 efi_memprobe_internal(void);
@@ -61,9 +64,10 @@ extern int bios_bootdev;
 EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 {
-	extern char	*progname;
-	EFI_DEVICE_PATH *dp0 = NULL, *dp;
-	EFI_STATUS	 status;
+	extern char		*progname;
+	EFI_DEVICE_PATH		*dp0 = NULL, *dp;
+	EFI_STATUS		 status;
+	EFI_PHYSICAL_ADDRESS	 stack;
 
 	ST = systab;
 	BS = ST->BootServices;
@@ -101,8 +105,23 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 
 	progname = "EFIBOOT";
 
-	boot(bios_bootdev);
-
+	/*
+	 * Move the stack before calling boot().  UEFI on some machines
+	 * locate the stack on our kernel load address.
+	 */
+	stack = heap + heapsiz;
+#if defined(__amd64__)
+	asm("movq	%0, %%rsp;"
+	    "mov	%1, %%edi;"
+	    "call	boot;"
+	    :: "r"(stack - 32), "r"(bios_bootdev));
+#else
+	asm("movl	%0, %%esp;"
+	    "movl	%1, (%%esp);"
+	    "call	boot;"
+	    :: "r"(stack - 32), "r"(bios_bootdev));
+#endif
+	/* must not reach here */
 	return (EFI_SUCCESS);
 }
 
@@ -212,6 +231,15 @@ efi_memprobe(void)
 {
 	u_int		 n = 0;
 	bios_memmap_t	*bm;
+	EFI_STATUS	 status;
+	EFI_PHYSICAL_ADDRESS
+			 addr = 0x10000000ULL;	/* Below 256MB */
+
+	status = EFI_CALL(BS->AllocatePages, AllocateMaxAddress, EfiLoaderData,
+	    EFI_SIZE_TO_PAGES(KERN_LOADSPACE_SIZE), &addr);
+	if (status != EFI_SUCCESS)
+		panic("BS->AllocatePages()");
+	efi_loadaddr = addr;
 
 	printf(" mem[");
 	efi_memprobe_internal();
@@ -236,7 +264,7 @@ efi_memprobe_internal(void)
 	UINT32			 mmver;
 	EFI_MEMORY_DESCRIPTOR	*mm0, *mm;
 	int			 i, n;
-	bios_memmap_t		 *bm, bm0;
+	bios_memmap_t		*bm, bm0;
 
 	cnvmem = extmem = 0;
 	bios_memmap[0].type = BIOS_MAP_END;

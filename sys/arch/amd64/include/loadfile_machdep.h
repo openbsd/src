@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: loadfile_machdep.h,v 1.5 2015/07/17 20:44:38 miod Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.6 2015/10/05 22:59:39 yasuoka Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -41,7 +41,13 @@
 #define LOAD_KERNEL		LOAD_ALL
 #define COUNT_KERNEL		COUNT_ALL
 
+#ifdef EFIBOOT
+extern u_long			efi_loadaddr;
+#define LOADADDR(a)		(((((u_long)(a)) + offset)&0xfffffff) + \
+				    efi_loadaddr)
+#else
 #define LOADADDR(a)		((((u_long)(a)) + offset)&0xfffffff)
+#endif
 #define ALIGNENTRY(a)		((u_long)(a))
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
