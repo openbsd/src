@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.59 2015/04/29 04:00:25 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.60 2015/10/05 15:16:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -217,6 +217,10 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (lflag == 0) {
+		if (tame("stdio wpath rpath cpath tmppath", NULL) == -1)
+			err(1, "tame");
+	}
 	/*
 	 * Do sanity checks, fill in stb1 and stb2 and call the appropriate
 	 * driver routine.  Both drivers use the contents of stb1 and stb2.
