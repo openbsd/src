@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.h,v 1.13 2013/03/03 19:11:34 guenther Exp $	*/
+/*	$OpenBSD: lex.h,v 1.14 2015/10/05 23:32:15 nicm Exp $	*/
 
 /*
  * Source input, lexer and parser
@@ -118,15 +118,16 @@ typedef union {
 
 #define	HERES	10		/* max << in line */
 
-EXTERN	Source *source;		/* yyparse/yylex source */
-EXTERN	YYSTYPE	yylval;		/* result from yylex */
-EXTERN	struct ioword *heres [HERES], **herep;
-EXTERN	char	ident [IDENT+1];
+extern Source  *source;		/* yyparse/yylex source */
+extern YYSTYPE	yylval;		/* result from yylex */
+extern struct ioword *heres[HERES], **herep;
+extern char	ident[IDENT+1];
 
 #ifdef HISTORY
 # define HISTORYSIZE	500	/* size of saved history */
 
-EXTERN	char  **history;	/* saved commands */
-EXTERN	char  **histptr;	/* last history item */
-EXTERN	int	histsize;	/* history size */
+extern char   **history;	/* saved commands */
+extern char   **histptr;	/* last history item */
+extern int	histsize;	/* history size */
+
 #endif /* HISTORY */

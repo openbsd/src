@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.56 2015/09/30 14:33:41 tedu Exp $	*/
+/*	$OpenBSD: lex.c,v 1.57 2015/10/05 23:32:15 nicm Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -69,6 +69,15 @@ int		promptlen(const char *cp, const char **spp);
 
 static int backslash_skip;
 static int ignore_backslash_newline;
+
+Source *source;		/* yyparse/yylex source */
+YYSTYPE	yylval;		/* result from yylex */
+struct ioword *heres[HERES], **herep;
+char	ident[IDENT+1];
+
+char  **history;	/* saved commands */
+char  **histptr;	/* last history item */
+int	histsize;	/* history size */
 
 /* optimized getsc_bn() */
 #define getsc()		(*source->str != '\0' && *source->str != '\\' \
