@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.382 2015/09/30 11:33:51 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.383 2015/10/05 15:39:01 uebayasi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -542,6 +542,8 @@ if_start(struct ifnet *ifp)
 			CLR(ifp->if_xflags, IFXF_TXREADY);
 		}
 		ifp->if_start(ifp);
+		ifp->if_oqdrops += ifp->if_snd.ifq_drops;
+		ifp->if_snd.ifq_drops = 0;
 		return;
 	}
 
