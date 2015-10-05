@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.18 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: option.c,v 1.19 2015/10/05 15:25:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -129,6 +129,7 @@ find_create(char ***argvp)
 		break;
 	case O_ARGVP:
 		new = (p->create)(NULL, &argv, p->token == N_OK);
+		mayexecve = 1;
 		break;
 	default:
 		abort();
