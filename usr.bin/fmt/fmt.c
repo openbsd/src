@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.31 2015/10/05 06:17:05 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.32 2015/10/05 06:21:15 deraadt Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -340,7 +340,7 @@ main(int argc, char *argv[])
 		while (argc-- > 0)
 			process_named_file(*argv++);
 	} else {
-		if (tame("stdio", NULL) != 0)
+		if (tame("stdio", NULL) == -1)
 			err(1, "tame");
 		process_stream(stdin, "standard input");
 	}
