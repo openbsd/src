@@ -1,4 +1,4 @@
-#	$OpenBSD: compress,v 1.6 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: compress,v 1.7 2015/10/05 22:36:23 nicm Exp $
 
 #------------------------------------------------------------------------------
 # compress:  file(1) magic for pure-compression formats (no archives)
@@ -10,8 +10,9 @@
 # because it tries to uncompress it to figure out what's inside.
 
 # standard unix compress
-#0	string		\037\235	compress'd data
-#!:mime	application/x-compress
+0	string		\037\235	compress'd data
+!:mime	application/x-compress
+!:apple	LZIVZIVU
 >2	byte&0x80	>0		block compressed
 >2	byte&0x1f	x		%d bits
 
@@ -19,9 +20,10 @@
 #   Edited by Chris Chittleborough <cchittleborough@yahoo.com.au>, March 2002
 #	* Original filename is only at offset 10 if "extra field" absent
 #	* Produce shorter output - notably, only report compression methods
-#	  other than 8 ("deflate", the only method defined in RFC 1952).
+#         other than 8 ("deflate", the only method defined in RFC 1952).
 0       string          \037\213        gzip compressed data
 !:mime	application/x-gzip
+!:strength * 2
 >2	byte		<8		\b, reserved method
 >2	byte		>8		\b, unknown method
 >3	byte		&0x01		\b, ASCII
@@ -30,6 +32,10 @@
 >3	byte&0xC	=0x08
 >>10	string		x		\b, was "%s"
 >3	byte		&0x10		\b, has comment
+>3	byte		&0x20		\b, encrypted
+>4	ledate		>0		\b, last modified: %s
+>8	byte		2		\b, max compression
+>8	byte		4		\b, max speed
 >9	byte		=0x00		\b, from FAT filesystem (MS-DOS, OS/2, NT)
 >9	byte		=0x01		\b, from Amiga
 >9	byte		=0x02		\b, from VMS
@@ -44,11 +50,6 @@
 >9	byte		=0x0B		\b, from NTFS filesystem (NT)
 >9	byte		=0x0C		\b, from QDOS
 >9	byte		=0x0D		\b, from Acorn RISCOS
->3	byte		&0x10		\b, comment
->3	byte		&0x20		\b, encrypted
->4	ledate		>0		\b, last modified: %s
->8	byte		2		\b, max compression
->8	byte		4		\b, max speed
 
 # packed data, Huffman (minimum redundancy) codes on a byte-by-byte basis
 0	string		\037\036	packed data
@@ -76,6 +77,11 @@
 0	string		BZh		bzip2 compressed data
 !:mime	application/x-bzip2
 >3	byte		>47		\b, block size = %c00k
+
+# lzip
+0	string		LZIP		lzip compressed data
+!:mime application/x-lzip
+>4	byte		x		\b, version: %d
 
 # squeeze and crunch
 # Michael Haardt <michael@cantor.informatik.rwth-aachen.de>
@@ -177,18 +183,42 @@
 >4	belong		0x090A0C0D	best compression
 
 # 7-zip archiver, from Thomas Klausner (wiz@danbala.tuwien.ac.at)
-# http://www.7-zip.org or DOC/7zFormat.txt 
+# http://www.7-zip.org or DOC/7zFormat.txt
 #
 0	string		7z\274\257\047\034	7-zip archive data,
 >6	byte		x			version %d
 >7	byte		x			\b.%d
+!:mime	application/x-7z-compressed
 
 # Type: LZMA
-# URL:  http://www.7-zip.org/sdk.html
-# From: Robert Millan <rmh@aybabtu.com> and Reuben Thomas <rrt@sc3d.org>
-# Commented out because apparently not reliable (according to Debian
-# bug #364260)
-#0	string		]\000\000\200\000	LZMA compressed data
+0	lelong&0xffffff	=0x5d
+>12	leshort		0xff			LZMA compressed data,
+!:mime	application/x-lzma
+>>5	lequad		=0xffffffffffffffff	streamed
+>>5	lequad		!0xffffffffffffffff	non-streamed, size %lld
+>12	leshort		0			LZMA compressed data,
+>>5	lequad		=0xffffffffffffffff	streamed
+>>5	lequad		!0xffffffffffffffff	non-streamed, size %lld
+
+# http://tukaani.org/xz/xz-file-format.txt
+0	ustring		\xFD7zXZ\x00		XZ compressed data
+!:strength * 2
+!:mime	application/x-xz
+
+# https://github.com/ckolivas/lrzip/blob/master/doc/magic.header.txt
+0	string		LRZI			LRZIP compressed data
+>4	byte		x			- version %d
+>5	byte		x			\b.%d
+!:mime	application/x-lrzip
+
+# http://fastcompression.blogspot.fi/2013/04/lz4-streaming-format-final.html
+0	lelong		0x184d2204	LZ4 compressed data (v1.4+)
+!:mime	application/x-lz4
+# Added by osm0sis@xda-developers.com
+0 	lelong		0x184c2103	LZ4 compressed data (v1.0-v1.3)
+!:mime	application/x-lz4
+0	lelong		0x184c2102	LZ4 compressed data (v0.1-v0.9)
+!:mime	application/x-lz4
 
 # AFX compressed files (Wolfram Kleff)
 2	string		-afx-		AFX compressed file data
@@ -203,3 +233,34 @@
 >4	byte		x		- version %d
 >5	byte		x		\b.%d
 >6	belong		x		(%d bytes)
+
+0	string		ArC\x01		FreeArc archive <http://freearc.org>
+
+# Type:	DACT compressed files
+0	long	0x444354C3	DACT compressed data
+>4	byte	>-1		(version %i.
+>5	byte	>-1		%i.
+>6	byte	>-1		%i)
+>7	long	>0		, original size: %i bytes
+>15	long	>30		, block size: %i bytes
+
+# Valve Pack (VPK) files
+0	lelong	0x55aa1234	Valve Pak file
+>0x4	lelong	x		\b, version %u
+>0x8	lelong	x		\b, %u entries
+
+# Snappy framing format
+# http://code.google.com/p/snappy/source/browse/trunk/framing_format.txt
+0	string	\377\006\0\0sNaPpY	snappy framed data
+!:mime	application/x-snappy-framed
+
+# qpress, http://www.quicklz.com/
+0	string	qpress10	qpress compressed data
+!:mime	application/x-qpress
+
+# Zlib https://www.ietf.org/rfc/rfc6713.txt
+0	string/b	x
+>0	beshort%31	=0	
+>>0	byte&0xf	=8
+>>>0	byte&0x80 	=0	zlib compressed data
+!:mime	application/zlib
