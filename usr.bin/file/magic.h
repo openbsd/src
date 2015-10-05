@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.h,v 1.10 2015/10/05 19:50:38 nicm Exp $ */
+/* $OpenBSD: magic.h,v 1.11 2015/10/05 20:05:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -105,6 +105,9 @@ struct magic_line {
 	u_int			 line;
 	u_int			 strength;
 	struct magic_line	*parent;
+
+	char			 strength_operator;
+	u_int			 strength_value;
 
 	int			 text;
 

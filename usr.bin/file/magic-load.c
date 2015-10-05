@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.17 2015/08/11 23:17:17 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.18 2015/10/05 20:05:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -285,8 +285,10 @@ magic_get_strength(struct magic_line *ml)
 	if (ml->type == MAGIC_TYPE_NONE)
 		return (0);
 
-	if (ml->test_not || ml->test_operator == 'x')
-		return (1);
+	if (ml->test_not || ml->test_operator == 'x') {
+		n = 1;
+		goto skip;
+	}
 
 	n = 2 * MAGIC_STRENGTH_MULTIPLIER;
 	switch (ml->type) {
@@ -383,6 +385,22 @@ magic_get_strength(struct magic_line *ml)
 	case '^':
 	case '&':
 		n -= MAGIC_STRENGTH_MULTIPLIER;
+		break;
+	}
+
+skip:
+	switch (ml->strength_operator) {
+	case '+':
+		n += ml->strength_value;
+		break;
+	case '-':
+		n -= ml->strength_value;
+		break;
+	case '*':
+		n *= ml->strength_value;
+		break;
+	case '/':
+		n /= ml->strength_value;
 		break;
 	}
 	return (n <= 0 ? 1 : n);
@@ -930,6 +948,41 @@ magic_compare(struct magic_line *ml1, struct magic_line *ml2)
 RB_GENERATE(magic_tree, magic_line, node, magic_compare);
 
 static void
+magic_adjust_strength(struct magic *m, u_int at, struct magic_line *ml,
+    char *line)
+{
+	char	*cp, *s;
+	int64_t	 value;
+
+	cp = line + (sizeof "!:strength") - 1;
+	while (isspace((u_char)*cp))
+		cp++;
+	s = cp;
+
+	cp = strchr(s, '#');
+	if (cp != NULL)
+		*cp = '\0';
+	cp = s;
+
+	if (strchr("+-*/", *s) == NULL) {
+		magic_warnm(m, at, "invalid strength operator: %s", s);
+		return;
+	}
+	ml->strength_operator = *cp++;
+
+	while (isspace((u_char)*cp))
+		cp++;
+	cp = magic_strtoll(cp, &value);
+	while (cp != NULL && isspace((u_char)*cp))
+		cp++;
+	if (cp == NULL || *cp != '\0' || value < 0 || value > 255) {
+		magic_warnm(m, at, "invalid strength value: %s", s);
+		return;
+	}
+	ml->strength_value = value;
+}
+
+static void
 magic_set_mimetype(struct magic *m, u_int at, struct magic_line *ml, char *line)
 {
 	char	*mimetype, *cp;
@@ -1003,6 +1056,10 @@ magic_load(FILE *f, const char *path, int warnings)
 
 		if (strncmp (line, "!:mime", 6) == 0) {
 			magic_set_mimetype(m, at, ml, line);
+			continue;
+		}
+		if (strncmp (line, "!:strength", 10) == 0) {
+			magic_adjust_strength(m, at, ml, line);
 			continue;
 		}
 		if (strncmp (line, "!:", 2) == 0) {
