@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.383 2015/10/05 15:39:01 uebayasi Exp $	*/
+/*	$OpenBSD: if.c,v 1.384 2015/10/05 15:57:27 uebayasi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -577,6 +577,7 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 	 */
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error) {
+		IF_DROP(&ifp->if_snd);
 		splx(s);
 		return (error);
 	}
