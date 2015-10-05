@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.76 2015/06/10 10:03:59 mikeb Exp $	*/
+/*	$OpenBSD: mib.c,v 1.77 2015/10/05 15:29:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1193,7 +1193,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 19:
-		ber = ber_add_integer(ber, 0);
+		ber = ber_add_integer(ber, (u_int32_t)kif->if_oqdrops);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 20:
