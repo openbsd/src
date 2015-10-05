@@ -31,7 +31,8 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	cp ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
+	installboot -vr ${MOUNT_POINT} ${VND} \
+	    ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/boot
 	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 
@@ -41,9 +42,7 @@ rd_setup:
 	fdisk -i -y ${VND}
 	fdisk -u -y -f ${DESTDIR}/usr/mdec/mbr ${VND}
 	disklabel -w ${VND} ${DISKTYPE}
-	disklabel -v -B -b ${DESTDIR}/usr/mdec/xxboot ${VND} 
 	newfs ${NEWFSARGS} ${VND_RDEV}
-	fsck ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 
 rd_teardown:

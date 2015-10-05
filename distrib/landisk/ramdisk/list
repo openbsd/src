@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.38 2015/04/13 21:27:07 deraadt Exp $
+#	$OpenBSD: list,v 1.39 2015/10/05 04:31:21 miod Exp $
 
 SRCDIRS distrib/special
 
@@ -60,6 +60,7 @@ LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
 LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
+LINK	instbin					usr/sbin/installboot
 
 # firmware we might need
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
@@ -90,10 +91,6 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # for fdisk(8)
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
-# for disklabel(8) -B
-COPY	${DESTDIR}/usr/mdec/xxboot		usr/mdec/xxboot
-LINK	usr/mdec/xxboot				usr/mdec/wdboot
-LINK	usr/mdec/xxboot				usr/mdec/sdboot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
