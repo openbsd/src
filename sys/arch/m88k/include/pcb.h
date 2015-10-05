@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.7 2015/05/05 02:13:46 guenther Exp $ */
+/*	$OpenBSD: pcb.h,v 1.8 2015/10/05 01:22:34 deraadt Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -38,7 +38,7 @@
 
 /*
  * Our PCB is the regular PCB+Save area for kernel frame.
- * Upon entering kernel mode from user land, save the user context
+ * Upon entering kernel mode from userland, save the user context
  * in the saved_state area - this is passed as the exception frame.
  * On a context switch, only registers that need to be saved by the
  * C calling convention and few other regs (pc, psr etc) are saved

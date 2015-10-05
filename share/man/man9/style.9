@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.61 2015/09/26 15:40:28 guenther Exp $
+.\"	$OpenBSD: style.9,v 1.62 2015/10/05 01:22:34 deraadt Exp $
 .\"
-.Dd $Mdocdate: September 26 2015 $
+.Dd $Mdocdate: October 5 2015 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 This file specifies the preferred style for kernel source files in the
 .Ox
 source tree.
-It is also a guide for preferred user land code style.
+It is also a guide for preferred userland code style.
 These guidelines should be followed for all new code.
 In general, code can be considered
 .Dq new code
@@ -110,7 +110,7 @@ All functions are prototyped somewhere.
 .Pp
 Function prototypes for private functions (i.e., functions not used
 elsewhere) go at the top of the first source module.
-In user land, functions local to one source module should be declared
+In userland, functions local to one source module should be declared
 .Ql static .
 This should not be done in kernel land since it makes it impossible
 to use the kernel debugger.
