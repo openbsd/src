@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.54 2015/09/04 19:02:49 kettenis Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.55 2015/10/05 01:39:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,14 +56,8 @@ void
 MBR_init(struct mbr *mbr)
 {
 	extern u_int32_t b_arg;
-	extern int g_flag;
 	u_int64_t adj;
 	daddr_t i;
-
-	if (g_flag) {
-		MBR_init_GPT(mbr);
-		return;
-	}
 
 	/* Fix up given mbr for this disk */
 	mbr->part[0].flag = 0;

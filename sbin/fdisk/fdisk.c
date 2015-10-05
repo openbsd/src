@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.77 2015/09/06 09:06:23 jmc Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.78 2015/10/05 01:39:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,6 +33,7 @@
 #include "misc.h"
 #include "cmd.h"
 #include "user.h"
+#include "gpt.h"
 
 #define _PATH_MBR _PATH_BOOTDIR "mbr"
 static unsigned char builtin_mbr[] = {
@@ -207,14 +208,28 @@ main(int argc, char *argv[])
 
 	query = NULL;
 	if (i_flag) {
-		MBR_init(&initial_mbr);
-		query = "Do you wish to write new MBR and partition table?";
+		if (g_flag) {
+			MBR_init_GPT(&initial_mbr);
+			GPT_init();
+			query = "Do you wish to write new GPT?";
+		} else {
+			MBR_init(&initial_mbr);
+			query = "Do you wish to write new MBR and "
+			    "partition table?";
+		}
 	} else if (u_flag) {
 		MBR_pcopy(&initial_mbr);
 		query = "Do you wish to write new MBR?";
 	}
-	if (query && ask_yn(query))
+	if (query && ask_yn(query)) {
 		Xwrite(NULL, &initial_mbr);
+		if (g_flag) {
+			fd = DISK_open(disk.name, O_RDWR);
+			if (GPT_write(fd) == -1)
+				warn("error writing GPT");
+			close(fd);
+		}
+	}
 
 	if (e_flag)
 		USER_edit(0, 0);

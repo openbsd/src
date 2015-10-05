@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.3 2015/03/14 20:42:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2015/10/05 01:39:07 krw Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 #
@@ -16,7 +16,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 PROG=	fdisk
-SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
+SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c gpt.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 CLEANFILES += fdisk.cat8 manual.c

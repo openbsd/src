@@ -1,7 +1,7 @@
-/*	$OpenBSD: mbr.h,v 1.25 2015/10/05 01:39:08 krw Exp $	*/
-
+/*	$OpenBSD: gpt.h,v 1.1 2015/10/05 01:39:08 krw Exp $	*/
 /*
- * Copyright (c) 1997 Tobias Weingartner
+ * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
+ * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,28 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _MBR_H
-#define _MBR_H
+int GPT_init(void);
+int GPT_write(int);
 
-struct mbr {
-	off_t reloffset;
-	off_t offset;
-	unsigned char code[DOSPARTOFF];
-	struct prt part[NDOSPART];
-	u_int16_t signature;
-};
-
-extern struct mbr initial_mbr;
-
-void MBR_print(struct mbr *, char *);
-void MBR_parse(struct dos_mbr *, off_t, off_t, struct mbr *);
-void MBR_make(struct mbr *, struct dos_mbr *);
-void MBR_init(struct mbr *);
-void MBR_init_GPT(struct mbr *);
-int MBR_read(int, off_t, struct dos_mbr *);
-int MBR_write(int, off_t, struct dos_mbr *);
-void MBR_pcopy(struct mbr *);
-void MBR_zapgpt(int, struct dos_mbr *, uint64_t);
-void MBR_init_GPT(struct mbr *);
-
-#endif /* _MBR_H */
+extern struct gpt_header gh;
+extern struct gpt_partition gp[NGPTPARTITIONS];
