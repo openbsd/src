@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.11 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.12 2015/10/05 17:31:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 #endif
 
 	if (password != NULL)
-		memset(password, 0, strlen(password));
+		explicit_bzero(password, strlen(password));
 	if (ret != AUTH_OK)
 		fprintf(back, BI_REJECT "\n");
 

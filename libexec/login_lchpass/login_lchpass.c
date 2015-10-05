@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.14 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.15 2015/10/05 17:31:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 		exit(1);
 
 	salt = crypt(p, salt);
-	memset(p, 0, strlen(p));
+	explicit_bzero(p, strlen(p));
 	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0)
 		exit(1);
 

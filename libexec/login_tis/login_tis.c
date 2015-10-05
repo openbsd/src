@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.12 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.13 2015/10/05 17:31:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -395,8 +395,8 @@ tis_getkey(struct tis_connection *tc)
 	}
 	DES_string_to_key(key, &cblock);
 	error = DES_set_key(&cblock, &tc->keysched);
-	memset(key, 0, len);
-	memset(&cblock, 0, sizeof(cblock));
+	explicit_bzero(key, len);
+	explicit_bzero(&cblock, sizeof(cblock));
 	free(tbuf);
 	return (error);
 }
@@ -508,10 +508,10 @@ tis_recv(struct tis_connection *tc, u_char *buf, size_t bufsiz)
 		    len, &ks, &iv, DES_DECRYPT);
 		if (strlcpy(buf, tbuf, bufsiz) >= bufsiz) {
 			syslog(LOG_ERR, "unencrypted data too large to store");
-			memset(tbuf, 0, sizeof(tbuf));
+			explicit_bzero(tbuf, sizeof(tbuf));
 			return (-1);
 		}
-		memset(tbuf, 0, sizeof(tbuf));
+		explicit_bzero(tbuf, sizeof(tbuf));
 	}
 	return (len);
 }
@@ -657,7 +657,7 @@ tis_authorize(struct tis_connection *tc, const char *user,
 		syslog(LOG_ERR, "unexpected response from authsrv: %s", obuf);
 		resp = error;
 	}
-	memset(buf, 0, sizeof(buf));
+	explicit_bzero(buf, sizeof(buf));
 
 	return (resp);
 }
@@ -685,10 +685,10 @@ tis_verify(struct tis_connection *tc, const char *response, char *ebuf)
 	if (strncmp(buf, "ok", 2) == 0) {
 		if (buf[2] != '\0')
 			strlcpy(ebuf, buf + 3, TIS_BUFSIZ);
-		memset(buf, 0, sizeof(buf));
+		explicit_bzero(buf, sizeof(buf));
 		return (0);
 	}
 	strlcpy(ebuf, buf, TIS_BUFSIZ);
-	memset(buf, 0, sizeof(buf));
+	explicit_bzero(buf, sizeof(buf));
 	return (-1);
 }

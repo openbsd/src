@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.9 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.10 2015/10/05 17:31:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -135,12 +135,10 @@ int
 tokendb_delrec(char *username)
 {
 	DBT	key;
-	DBT	data;
 	int	status = 0;
 
 	key.data = username;
 	key.size = strlen(username) + 1;
-	memset(&data, 0, sizeof(data));
 
 	if (!tokendb_open()) {
 		if (flock((tokendb->fd)(tokendb), LOCK_EX)) {

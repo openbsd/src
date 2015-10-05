@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.27 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.28 2015/10/05 17:31:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -397,6 +397,7 @@ rad_request(u_char id, char *name, char *password, int port, char *vector,
 		}
 		total_length += AUTH_VECTOR_LEN;
 	}
+	explicit_bzero(pass_buf, strlen(pass_buf));
 
 	/* Client id */
 	*ptr++ = PW_CLIENT_ID;

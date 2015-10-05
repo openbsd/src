@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.18 2013/12/03 01:29:00 deraadt Exp $	*/
+/*	$OpenBSD: token.c,v 1.19 2015/10/05 17:31:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -189,7 +189,7 @@ tokenverify(char *username, char *challenge, char *response)
 		return (-1);
 
 	h2cb(tokenrec.secret, &user_seed);
-	memset(&tokenrec.secret, 0, sizeof(tokenrec.secret));
+	explicit_bzero(&tokenrec.secret, sizeof(tokenrec.secret));
 
 	if (!(tokenrec.flags & TOKEN_ENABLED))
 		return (-1);
@@ -201,10 +201,10 @@ tokenverify(char *username, char *challenge, char *response)
 
 	DES_fixup_key_parity(&user_seed.cb);
 	DES_key_sched(&user_seed.cb, &key_schedule);
-	memset(user_seed.ct, 0, sizeof(user_seed.ct));
+	explicit_bzero(user_seed.ct, sizeof(user_seed.ct));
 	DES_ecb_encrypt(&tokennumber.cb, &cipher_text.cb, &key_schedule,
 	    DES_ENCRYPT);
-	memset(&key_schedule, 0, sizeof(key_schedule));
+	explicit_bzero(&key_schedule, sizeof(key_schedule));
 
 	/*
 	 * The token thinks it's descended from VAXen.  Deal with i386
@@ -304,7 +304,7 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	 */
 
 	if (!(flags & TOKEN_GENSECRET)) {
-		memset(&secret, 0, sizeof(secret));
+		explicit_bzero(&secret, sizeof(secret));
 		return (0);
 	}
 
@@ -314,10 +314,10 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	    secret.cb[4], secret.cb[5], secret.cb[6], secret.cb[7]);
 
 	DES_key_sched(&secret.cb, &key_schedule);
-	memset(&secret, 0, sizeof(secret));
+	explicit_bzero(&secret, sizeof(secret));
 	memset(&nulls, 0, sizeof(nulls));
 	DES_ecb_encrypt(&nulls.cb, &checksum.cb, &key_schedule, DES_ENCRYPT);
-	memset(&key_schedule, 0, sizeof(key_schedule));
+	explicit_bzero(&key_schedule, sizeof(key_schedule));
 	HTONL(checksum.ul[0]);
 	snprintf(checktxt.ct, sizeof(checktxt.ct), "%8.8x", checksum.ul[0]);
 	printf("Hex Checksum: \"%s\"", checktxt.ct);
