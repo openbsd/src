@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.12 2013/11/26 13:18:55 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.13 2015/10/05 13:24:39 deraadt Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -50,6 +50,9 @@ main(int argc, char *argv[])
 {
 	int c, column;
 	int n;
+
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	/* handle obsolete syntax */
 	while (argc > 1 && argv[1][0] == '-' &&
