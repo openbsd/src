@@ -1,4 +1,4 @@
-/*	$OpenBSD: landisk_installboot.c,v 1.1 2014/01/19 02:58:50 jsing Exp $	*/
+/*	$OpenBSD: landisk_installboot.c,v 1.2 2015/10/05 04:30:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -18,12 +18,16 @@
 
 #include "installboot.h"
 
+char	*bootldr;
+
 void
 md_init(void)
 {
 	stages = 2;
 	stage1 = "/usr/mdec/xxboot";
-	stage2 = "/boot";
+	stage2 = "/usr/mdec/boot";
+
+	bootldr = "/boot";
 }
 
 void
@@ -34,5 +38,13 @@ md_loadboot(void)
 void
 md_installboot(int devfd, char *dev)
 {
+	/* XXX - is this necessary? */
+	sync();
+
+	bootldr = fileprefix(root, bootldr);
+	if (!nowrite)
+		filecopy(stage2, bootldr);
+
+	/* Write bootblock into the superblock. */
 	bootstrap(devfd, dev, stage1);
 }
