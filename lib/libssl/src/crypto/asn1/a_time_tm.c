@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.2 2015/10/04 15:15:11 jsing Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.3 2015/10/05 06:13:58 jsing Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -120,7 +120,7 @@ asn1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 		char *t = buf + i;
 		if (isdigit((unsigned char)*t))
 			continue;
-		if (*t == '.' && dot == NULL) {
+		if (*t == '.' && dot == NULL && tz == NULL) {
 			dot = t;
 			continue;
 		}
