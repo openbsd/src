@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.65 2015/10/03 02:25:59 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.66 2015/10/05 14:58:37 semarie Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -417,7 +417,7 @@ delete(const char *host, const char *info)
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		return (1);
 tryagain:
-	if (rtget(&sin, &sdl) < 0) {
+	if (rtget(&sin, &sdl)) {
 		warn("%s", host);
 		return (1);
 	}
