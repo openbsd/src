@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.11 2015/02/09 11:39:17 tedu Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.12 2015/10/05 06:05:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -259,6 +259,9 @@ main(int ac, char **av)
 	int	i, ch;
 	int	errflg = 0;
 	int	kflag = NO;
+
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	iflag = NO;
 	wordflag = NO;
