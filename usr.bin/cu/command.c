@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.14 2015/10/05 17:53:56 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.15 2015/10/05 23:15:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -51,6 +51,7 @@ pipe_command(void)
 		return;
 
 	restore_termios();
+	set_blocking(line_fd, 1);
 
 	switch (pid = fork()) {
 	case -1:
@@ -81,6 +82,7 @@ pipe_command(void)
 		break;
 	}
 
+	set_blocking(line_fd, 0);
 	set_termios();
 }
 
@@ -102,6 +104,7 @@ connect_command(void)
 		return;
 
 	restore_termios();
+	set_blocking(line_fd, 1);
 
 	switch (pid = fork()) {
 	case -1:
@@ -129,6 +132,7 @@ connect_command(void)
 		break;
 	}
 
+	set_blocking(line_fd, 0);
 	set_termios();
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: xmodem.c,v 1.7 2014/09/21 05:29:47 daniel Exp $ */
+/* $OpenBSD: xmodem.c,v 1.8 2015/10/05 23:15:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -137,8 +137,9 @@ xmodem_send(const char *file)
 		if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tio) != 0)
 			cu_err(1, "tcsetattr");
 	}
-
+	set_blocking(line_fd, 1);
 	tcflush(line_fd, TCIFLUSH);
+
 	if (xmodem_read(&c) != 0)
 		goto fail;
 	if (c == XMODEM_C)
@@ -214,6 +215,7 @@ fail:
 	cu_warn("%s", file);
 
 out:
+	set_blocking(line_fd, 0);
 	set_termios();
 
 	sigaction(SIGINT, &oact, NULL);

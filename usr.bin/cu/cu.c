@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.22 2015/05/18 09:35:05 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.23 2015/10/05 23:15:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -186,6 +186,7 @@ main(int argc, char **argv)
 	    NULL);
 	bufferevent_enable(output_ev, EV_WRITE);
 
+	set_blocking(line_fd, 0);
 	line_ev = bufferevent_new(line_fd, line_read, NULL, line_error,
 	    NULL);
 	bufferevent_enable(line_ev, EV_READ|EV_WRITE);
@@ -206,6 +207,21 @@ signal_event(int fd, short events, void *data)
 	printf("\r\n[SIG%s]\n", sys_signame[fd]);
 
 	exit(0);
+}
+
+void
+set_blocking(int fd, int state)
+{
+	int mode;
+
+	state = state ? 0 : O_NONBLOCK;
+	if ((mode = fcntl(fd, F_GETFL)) == -1)
+		cu_err(1, "fcntl");
+	if ((mode & O_NONBLOCK) != state) {
+		mode = (mode & ~O_NONBLOCK) | state;
+		if (fcntl(fd, F_SETFL, mode) == -1)
+			cu_err(1, "fcntl");
+	}
 }
 
 void
@@ -342,7 +358,7 @@ try_remote(const char *host, const char *path, const char *entry)
 
 	if (entry != NULL && cgetset(entry) != 0)
 		cu_errx(1, "cgetset failed");
-	error = cgetent(&cp, (char**)paths, (char*)host);
+	error = cgetent(&cp, (char **)paths, (char *)host);
 	if (error < 0) {
 		switch (error) {
 		case -1:
