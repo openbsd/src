@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.51 2015/09/27 16:53:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.52 2015/10/05 13:05:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -194,14 +194,6 @@ const struct iwm_rate {
 #define IWM_RIDX_MAX	(nitems(iwm_rates)-1)
 #define IWM_RIDX_IS_CCK(_i_) ((_i_) < IWM_RIDX_OFDM)
 #define IWM_RIDX_IS_OFDM(_i_) ((_i_) >= IWM_RIDX_OFDM)
-
-struct iwm_newstate_state {
-	struct task ns_wk;
-	struct ieee80211com *ns_ic;
-	enum ieee80211_state ns_nstate;
-	int ns_arg;
-	int ns_generation;
-};
 
 int	iwm_store_cscheme(struct iwm_softc *, uint8_t *, size_t);
 int	iwm_firmware_store_section(struct iwm_softc *, enum iwm_ucode_type,
@@ -406,7 +398,7 @@ struct ieee80211_node *iwm_node_alloc(struct ieee80211com *);
 void	iwm_calib_timeout(void *);
 void	iwm_setrates(struct iwm_node *);
 int	iwm_media_change(struct ifnet *);
-void	iwm_newstate_cb(void *);
+void	iwm_newstate_task(void *);
 int	iwm_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	iwm_endscan_cb(void *);
 int	iwm_init_hw(struct iwm_softc *);
@@ -5263,43 +5255,29 @@ iwm_media_change(struct ifnet *ifp)
 }
 
 void
-iwm_newstate_cb(void *wk)
+iwm_newstate_task(void *psc)
 {
-	struct iwm_newstate_state *iwmns = (void *)wk;
-	struct ieee80211com *ic = iwmns->ns_ic;
-	enum ieee80211_state nstate = iwmns->ns_nstate;
-	int generation = iwmns->ns_generation;
+	struct iwm_softc *sc = (struct iwm_softc *)psc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	enum ieee80211_state nstate = sc->ns_nstate;
+	enum ieee80211_state ostate = ic->ic_state;
 	struct iwm_node *in;
-	int arg = iwmns->ns_arg;
-	struct ifnet *ifp = IC2IFP(ic);
-	struct iwm_softc *sc = ifp->if_softc;
+	int arg = sc->ns_arg;
 	int error;
 
-	free(iwmns, M_DEVBUF, sizeof(*iwmns));
-
-	DPRINTF(("Prepare to switch state %s->%s\n",
-	    ieee80211_state_name[ic->ic_state],
-	    ieee80211_state_name[nstate]));
-	if (sc->sc_generation != generation) {
-		DPRINTF(("newstate_cb: someone pulled the plug meanwhile\n"));
-		if (nstate == IEEE80211_S_INIT) {
-			DPRINTF(("newstate_cb: nstate == IEEE80211_S_INIT: calling sc_newstate()\n"));
-			sc->sc_newstate(ic, nstate, arg);
-		}
-		return;
-	}
-
 	DPRINTF(("switching state %s->%s\n",
-	    ieee80211_state_name[ic->ic_state],
+	    ieee80211_state_name[ostate],
 	    ieee80211_state_name[nstate]));
 
-	if (ic->ic_state == IEEE80211_S_SCAN && nstate != ic->ic_state)
+	if (ostate == IEEE80211_S_SCAN && nstate != ostate)
 		iwm_led_blink_stop(sc);
 
 	/* disable beacon filtering if we're hopping out of RUN */
-	if (ic->ic_state == IEEE80211_S_RUN && nstate != ic->ic_state) {
+	if (ostate == IEEE80211_S_RUN && nstate != ostate)
 		iwm_mvm_disable_beacon_filter(sc, (void *)ic->ic_bss);
 
+	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
+	if (ostate > IEEE80211_S_SCAN && nstate < ostate) {
 		if (((in = (void *)ic->ic_bss) != NULL))
 			in->in_assoc = 0;
 		iwm_release(sc, NULL);
@@ -5393,25 +5371,15 @@ iwm_newstate_cb(void *wk)
 int
 iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct iwm_newstate_state *iwmns;
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwm_softc *sc = ifp->if_softc;
 
 	timeout_del(&sc->sc_calib_to);
 
-	iwmns = malloc(sizeof(*iwmns), M_DEVBUF, M_NOWAIT);
-	if (!iwmns) {
-		DPRINTF(("%s: allocating state cb mem failed\n", DEVNAME(sc)));
-		return ENOMEM;
-	}
+	sc->ns_nstate = nstate;
+	sc->ns_arg = arg;
 
-	iwmns->ns_ic = ic;
-	iwmns->ns_nstate = nstate;
-	iwmns->ns_arg = arg;
-	iwmns->ns_generation = sc->sc_generation;
-
-	task_set(&iwmns->ns_wk, iwm_newstate_cb, iwmns);
-	task_add(sc->sc_nswq, &iwmns->ns_wk);
+	task_add(sc->sc_nswq, &sc->newstate_task);
 
 	return 0;
 }
@@ -5676,8 +5644,10 @@ iwm_stop(struct ifnet *ifp, int disable)
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	if (ic->ic_state != IEEE80211_S_INIT)
-		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+	task_del(systq, &sc->init_task);
+	task_del(sc->sc_nswq, &sc->newstate_task);
+	task_del(sc->sc_eswq, &sc->sc_eswk);
+	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
 	timeout_del(&sc->sc_calib_to);
 	iwm_led_blink_stop(sc);
@@ -6614,6 +6584,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_calib_to, iwm_calib_timeout, sc);
 	timeout_set(&sc->sc_led_blink_to, iwm_led_blink_timeout, sc);
 	task_set(&sc->init_task, iwm_init_task, sc);
+	task_set(&sc->newstate_task, iwm_newstate_task, sc);
 
 	/*
 	 * We cannot read the MAC address without loading the
@@ -6687,8 +6658,7 @@ iwm_wakeup(struct iwm_softc *sc)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
-	iwm_init_task(sc);
-
+	task_add(systq, &sc->init_task);
 }
 
 int
