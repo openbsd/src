@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.c,v 1.17 2015/01/16 06:40:08 deraadt Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.18 2015/10/05 06:36:18 deraadt Exp $	*/
 /*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include "hexdump.h"
 
@@ -52,6 +53,9 @@ main(int argc, char *argv[])
 {
 	FS *tfs;
 	char *p;
+
+	if (tame("stdio rpath", NULL) == -1)
+		err(1, "tame");
 
 	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))
 		newsyntax(argc, &argv);
