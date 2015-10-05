@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.81 2015/09/22 10:09:19 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.82 2015/10/05 06:51:50 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2876,6 +2876,7 @@ ip_is_idle_packet(struct mbuf *m0, int *ris_idle)
 		PIPEX_PULLUP(m0, len);
 		if (m0 == NULL)
 			goto error;
+		pip = mtod(m0, struct ip *);
 
 		switch (((unsigned char *) pip)[pip->ip_hl * 4]) {
 		case 0:	/* Echo Reply */
@@ -2891,7 +2892,8 @@ ip_is_idle_packet(struct mbuf *m0, int *ris_idle)
 		PIPEX_PULLUP(m0, len);
 		if (m0 == NULL)
 			goto error;
-		uh = mtod(m0, struct udphdr *);
+		pip = mtod(m0, struct ip *);
+		uh = (struct udphdr *)(mtod(m0, caddr_t) + pip->ip_hl * 4);
 
 		switch (ntohs(uh->uh_sport)) {
 		case 53:	/* DOMAIN */
