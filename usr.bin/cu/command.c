@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.13 2013/11/12 13:54:51 deraadt Exp $ */
+/* $OpenBSD: command.c,v 1.14 2015/10/05 17:53:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -73,7 +73,7 @@ pipe_command(void)
 		if (closefrom(STDERR_FILENO + 1) != 0)
 			_exit(1);
 
-		execl(_PATH_BSHELL, "sh", "-c", cmd, (void*)NULL);
+		execl(_PATH_BSHELL, "sh", "-c", cmd, (char *)NULL);
 		_exit(1);
 	default:
 		while (waitpid(pid, NULL, 0) == -1 && errno == EINTR)
@@ -121,7 +121,7 @@ connect_command(void)
 		if (closefrom(STDERR_FILENO + 1) != 0)
 			_exit(1);
 
-		execl(_PATH_BSHELL, "sh", "-c", cmd, (void*)NULL);
+		execl(_PATH_BSHELL, "sh", "-c", cmd, (char *)NULL);
 		_exit(1);
 	default:
 		while (waitpid(pid, NULL, 0) == -1 && errno == EINTR)
