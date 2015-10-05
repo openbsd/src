@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.8 2014/03/26 18:13:15 eric Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.9 2015/10/05 02:57:16 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -67,6 +67,7 @@ res_query(const char *name, int class, int type, u_char *ans, int anslen)
 
 	return (ar.ar_datalen);
 }
+DEF_WEAK(res_query);
 
 int
 res_search(const char *name, int class, int type, u_char *ans, int anslen)

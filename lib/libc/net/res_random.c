@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.22 2015/06/04 19:26:39 eric Exp $ */
+/* $OpenBSD: res_random.c,v 1.23 2015/10/05 02:57:16 guenther Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -225,7 +225,7 @@ res_initid(void)
 }
 
 u_int
-res_randomid(void)
+__res_randomid(void)
 {
 	struct timespec ts;
 	pid_t pid;
@@ -252,6 +252,7 @@ res_randomid(void)
 
 	return (r);
 }
+DEF_STRONG(__res_randomid);
 
 #if 0
 int

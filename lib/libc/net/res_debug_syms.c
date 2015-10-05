@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug_syms.c,v 1.1 2005/08/06 20:30:04 espie Exp $	*/
+/*	$OpenBSD: res_debug_syms.c,v 1.2 2015/10/05 02:57:16 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -168,6 +168,7 @@ __sym_ntos(const struct res_sym *syms, int number, int *success)
 		*success = 0;
 	return (unname);
 }
+DEF_STRONG(__sym_ntos);
 
 /*
  * Return a string for the type
@@ -177,6 +178,7 @@ __p_type(int type)
 {
 	return (__sym_ntos (__p_type_syms, type, (int *)0));
 }
+DEF_STRONG(__p_type);
 
 /*
  * Return a mnemonic for class
@@ -186,4 +188,5 @@ __p_class(int class)
 {
 	return (__sym_ntos (__p_class_syms, class, (int *)0));
 }
+DEF_STRONG(__p_class);
 

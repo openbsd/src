@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.17 2015/09/13 21:36:08 guenther Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.18 2015/10/05 02:57:16 guenther Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -141,6 +141,7 @@ dn_expand(const u_char *msg, const u_char *eomorig, const u_char *comp_dn,
 		len = cp - comp_dn;
 	return (len);
 }
+DEF_WEAK(dn_expand);
 
 /*
  * Compress domain name 'exp_dn' into 'comp_dn'.
@@ -344,7 +345,7 @@ dn_find(u_char *exp_dn, u_char *msg, u_char **dnptrs, u_char **lastdnptr)
 #define	domainchar(c) ((c) > 0x20 && (c) < 0x7f)
 
 int
-res_hnok(const char *dn)
+__res_hnok(const char *dn)
 {
 	int pch = PERIOD, ch = *dn++;
 
@@ -367,6 +368,7 @@ res_hnok(const char *dn)
 	}
 	return (1);
 }
+DEF_STRONG(__res_hnok);
 
 /*
  * hostname-like (A, MX, WKS) owners can have "*" as their first label

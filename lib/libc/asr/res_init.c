@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.5 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.6 2015/10/05 02:57:16 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -86,3 +86,4 @@ res_init(void)
 
 	return (0);
 }
+DEF_WEAK(res_init);
