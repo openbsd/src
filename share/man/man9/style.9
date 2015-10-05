@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.62 2015/10/05 01:22:34 deraadt Exp $
+.\"	$OpenBSD: style.9,v 1.63 2015/10/05 21:59:29 tedu Exp $
 .\"
 .Dd $Mdocdate: October 5 2015 $
 .Dt STYLE 9
@@ -264,7 +264,7 @@ parts of the switch cascade.
 Elements in a switch statement that cascade should have a FALLTHROUGH comment.
 Numerical arguments should be checked for accuracy.
 .Bd -literal -offset indent
-while ((ch = getopt(argc, argv, "abn:")) != -1)
+while ((ch = getopt(argc, argv, "abn:")) != -1) {
 	switch (ch) {		/* Indent the switch. */
 	case 'a':		/* Don't indent the case. */
 		aflag = 1;
@@ -282,6 +282,7 @@ while ((ch = getopt(argc, argv, "abn:")) != -1)
 	default:
 		usage();
 	}
+}
 argc -= optind;
 argv += optind;
 .Ed
@@ -377,11 +378,11 @@ k = !(l & FLAGS);
 .Pp
 Exits should be 0 on success, or non-zero for errors.
 .Bd -literal -offset indent
-exit(0);	/*
-		 * Avoid obvious comments such as
-		 * "Exit 0 on success."
-		 */
-}
+/*
+ * Avoid obvious comments such as
+ * "Exit 0 on success."
+ */
+exit(0);
 .Ed
 .Pp
 The function type should be on a line by itself
@@ -531,7 +532,6 @@ if ((four = malloc(sizeof(struct foo))) == NULL)
 if ((six = (int *)overflow()) == NULL)
 	errx(1, "Number overflowed.");
 return (eight);
-}
 .Ed
 .Pp
 Old-style function declarations look like this:
@@ -602,7 +602,6 @@ string may be used instead of hard-coding the program name.
 .Bd -literal -offset indent
 (void)fprintf(stderr, "usage: %s [-ab]\en", __progname);
 exit(1);
-}
 .Ed
 .Pp
 New core kernel code should be reasonably compliant with the style guides.
