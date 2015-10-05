@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.73 2015/02/12 13:06:47 sthen Exp $	*/
+/*	$OpenBSD: if.c,v 1.74 2015/10/05 15:40:39 uebayasi Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ intpr(int interval, int repeatcount)
 				if (tflag)
 					total += 0; // XXX ifnet.if_timer;
 				if (dflag)
-					total += 0; // XXX ifnet.if_snd.ifq_drops;
+					total += ifd->ifi_oqdrops;
 				if (total == 0)
 					continue;
 			}
@@ -277,7 +277,7 @@ hexprint:
 	if (tflag)
 		printf(" %4d", 0 /* XXX ifnet.if_timer */);
 	if (dflag)
-		printf(" %4d", 0 /* XXX ifnet.if_snd.ifq_drops */);
+		printf(" %5llu", ifd->ifi_oqdrops);
 	putchar('\n');
 }
 
@@ -386,8 +386,7 @@ loop:
 		    ip_cur.ift_co - ip_old.ift_co);
 	if (dflag)
 		printf(" %5llu",
-		    /* XXX ifnet.if_snd.ifq_drops - ip->ift_dr); */
-		    0LL);
+		    ip_cur.ift_dr - ip_old.ift_dr);
 
 	ip_old = ip_cur;
 
@@ -552,8 +551,7 @@ fetchifs(void)
 				ip_cur.ift_ob = ifd->ifi_obytes;
 				ip_cur.ift_oe = ifd->ifi_oerrors;
 				ip_cur.ift_co = ifd->ifi_collisions;
-				ip_cur.ift_dr = 0;
-				    /* XXX ifnet.if_snd.ifq_drops */
+				ip_cur.ift_dr = ifd->ifi_oqdrops;
 			}
 
 			sum_cur.ift_ip += ifd->ifi_ipackets;
@@ -563,7 +561,7 @@ fetchifs(void)
 			sum_cur.ift_ob += ifd->ifi_obytes;
 			sum_cur.ift_oe += ifd->ifi_oerrors;
 			sum_cur.ift_co += ifd->ifi_collisions;
-			sum_cur.ift_dr += 0; /* XXX ifnet.if_snd.ifq_drops */
+			sum_cur.ift_dr += ifd->ifi_oqdrops;
 			break;
 		}
 	}
@@ -577,8 +575,7 @@ fetchifs(void)
 		ip_cur.ift_ob = ifd->ifi_obytes;
 		ip_cur.ift_oe = ifd->ifi_oerrors;
 		ip_cur.ift_co = ifd->ifi_collisions;
-		ip_cur.ift_dr = 0;
-		    /* XXX ifnet.if_snd.ifq_drops */
+		ip_cur.ift_dr = ifd->ifi_oqdrops;
 	}
 	free(buf);
 }
