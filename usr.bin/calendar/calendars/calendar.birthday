@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.60 2015/04/30 09:12:49 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.61 2015/10/05 16:41:51 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -285,7 +285,7 @@
 10/02	Aristotle dies of indigestion, 322 BC
 10/02	Mohandas K. Gandhi born at Porbandar, Kathiawad, India, 1869
 10/04	John V. Atanasoff born, 1903
-10/05	Pablo Picasso born in Malaga, Spain, 1881
+10/25	Pablo Picasso born in Malaga, Spain, 1881
 10/05	Ray Kroc (founder of McDonald's) born, 1902
 10/09	Comandante Che Guevara "an artist of revolutionary warfare" executed
 	by CIA-supervised forces near Villagrande, Bolivia, 1967
