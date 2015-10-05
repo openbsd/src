@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.10 2015/09/23 12:43:52 mikeb Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.11 2015/10/05 13:00:04 mikeb Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -207,6 +207,7 @@ struct lacp_port {
 	u_int			lp_media; /* XXX redundant */
 	int			lp_timer[LACP_NTIMER];
 	struct ifmultiaddr	*lp_ifma;
+	struct mbuf_queue	lp_mq;
 
 	struct lacp_aggregator	*lp_aggregator;
 };
@@ -232,6 +233,7 @@ struct lacp_softc {
 	struct lacp_portmap	lsc_pmap[2];
 	volatile u_int		lsc_activemap;
 	SIPHASH_KEY		lsc_hashkey;
+	struct task		lsc_input;
 };
 
 #define	LACP_TYPE_ACTORINFO	1

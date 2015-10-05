@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.118 2015/09/29 10:11:40 deraadt Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.119 2015/10/05 13:00:04 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/task.h>
 #include <sys/timeout.h>
 
 #include <crypto/siphash.h>

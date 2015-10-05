@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.25 2015/09/24 14:01:20 mikeb Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.26 2015/10/05 13:00:04 mikeb Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -39,6 +39,7 @@
 #include <sys/lock.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
+#include <sys/task.h>
 #include <sys/timeout.h>
 
 #include <crypto/siphash.h>
@@ -127,6 +128,7 @@ void		lacp_aggregator_delref(struct lacp_softc *,
 
 /* receive machine */
 
+void		lacp_input_process(void *);
 int		lacp_pdu_input(struct lacp_port *, struct mbuf *);
 int		lacp_marker_input(struct lacp_port *, struct mbuf *);
 void		lacp_sm_rx(struct lacp_port *, const struct lacpdu *);
@@ -245,11 +247,9 @@ lacp_input(struct trunk_port *tp, struct mbuf *m)
 		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
 		switch (subtype) {
 		case SLOWPROTOCOLS_SUBTYPE_LACP:
-			lacp_pdu_input(lp, m);
-			return (1);
-
 		case SLOWPROTOCOLS_SUBTYPE_MARKER:
-			lacp_marker_input(lp, m);
+			mq_enqueue(&lp->lp_mq, m);
+			task_add(systq, &lsc->lsc_input);
 			return (1);
 		}
 	}
@@ -267,6 +267,32 @@ lacp_input(struct trunk_port *tp, struct mbuf *m)
 
 	/* Not a subtype we are interested in */
 	return (0);
+}
+
+void
+lacp_input_process(void *arg)
+{
+	struct lacp_softc *lsc = arg;
+	struct lacp_port *lp;
+	struct mbuf *m;
+	u_int8_t subtype;
+
+	LIST_FOREACH(lp, &lsc->lsc_ports, lp_next) {
+		while ((m = mq_dequeue(&lp->lp_mq)) != NULL) {
+			m_copydata(m, sizeof(struct ether_header),
+			    sizeof(subtype), &subtype);
+
+			switch (subtype) {
+			case SLOWPROTOCOLS_SUBTYPE_LACP:
+				lacp_pdu_input(lp, m);
+				break;
+
+			case SLOWPROTOCOLS_SUBTYPE_MARKER:
+				lacp_marker_input(lp, m);
+				break;
+			}
+		}
+	}
 }
 
 /*
@@ -523,6 +549,8 @@ lacp_port_create(struct trunk_port *tp)
 	lp->lp_trunk = tp;
 	lp->lp_lsc = lsc;
 
+	mq_init(&lp->lp_mq, 8, IPL_NET);
+
 	LIST_INSERT_HEAD(&lsc->lsc_ports, lp, lp_next);
 
 	lacp_fill_actorinfo(lp, &lp->lp_actor);
@@ -542,6 +570,7 @@ void
 lacp_port_destroy(struct trunk_port *tp)
 {
 	struct lacp_port *lp = LACP_PORT(tp);
+	struct mbuf *m;
 	int i;
 
 	for (i = 0; i < LACP_NTIMER; i++)
@@ -552,6 +581,10 @@ lacp_port_destroy(struct trunk_port *tp)
 	lacp_unselect(lp);
 
 	LIST_REMOVE(lp, lp_next);
+
+	while ((m = mq_dequeue(&lp->lp_mq)) != NULL)
+		m_freem(m);
+
 	free(lp, M_DEVBUF, sizeof(*lp));
 }
 
@@ -735,6 +768,7 @@ lacp_attach(struct trunk_softc *sc)
 
 	timeout_set(&lsc->lsc_transit_callout, lacp_transit_expire, lsc);
 	timeout_set(&lsc->lsc_callout, lacp_tick, lsc);
+	task_set(&lsc->lsc_input, lacp_input_process, lsc);
 
 	/* if the trunk is already up then do the same */
 	if (sc->tr_ac.ac_if.if_flags & IFF_RUNNING)
