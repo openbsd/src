@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.84 2015/09/09 15:20:22 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.85 2015/10/05 01:48:48 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2015 $
+.Dd $Mdocdate: October 5 2015 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -90,9 +90,17 @@ Specifies an alternate MBR template file.
 The default file is
 .Pa /usr/mdec/mbr .
 .It Fl g
-A protective MBR for GPT will be written to disk, instead of an MBR with an
+A protective MBR and a GPT label will be written to disk.
+The GPT label will have a single
 .Ox
-MBR partition.
+partition
+containing all available space.
+If
+.Fl b
+is specified, an EFI System partition of the requested size
+is created before the remaining space is put into the
+.Ox
+partition.
 Only valid with
 .Fl i .
 .It Fl i
@@ -112,7 +120,7 @@ for booting.
 This mode is designed to initialize the MBR the very first time.
 If the
 .Fl g
-flag is also specified, a protective MBR for GPT will be created.
+flag is also specified, a protective MBR and GPT label will be created.
 .Pp
 Only one of
 .Fl i
