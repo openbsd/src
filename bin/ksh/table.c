@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.18 2015/09/18 07:28:24 nicm Exp $	*/
+/*	$OpenBSD: table.c,v 1.19 2015/10/05 23:26:58 nicm Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -7,6 +7,19 @@
 #include "sh.h"
 
 #define	INIT_TBLS	8	/* initial table size (power of 2) */
+
+struct table taliases;	/* tracked aliases */
+struct table builtins;	/* built-in commands */
+struct table aliases;	/* aliases */
+struct table keywords;	/* keywords */
+struct table homedirs;	/* homedir() cache */
+
+char *path;		/* copy of either PATH or def_path */
+const char *def_path;	/* path to use if PATH not set */
+char *tmpdir;		/* TMPDIR value */
+const char *prompt;
+int cur_prompt;		/* PS1 or PS2 */
+int current_lineno;	/* LINENO value */
 
 static void	texpand(struct table *, int);
 static int	tnamecmp(const void *, const void *);
