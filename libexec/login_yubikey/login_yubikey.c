@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.11 2015/09/22 21:47:37 millert Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.12 2015/10/05 16:09:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -62,7 +62,7 @@ static int yubikey_login(const char *, const char *);
 int
 main(int argc, char *argv[])
 {
-	int ch, ret, mode = MODE_LOGIN;
+	int ch, ret, mode = MODE_LOGIN, count;
 	FILE *f = NULL;
 	char *username, *password = NULL;
 	char response[1024];
@@ -115,40 +115,37 @@ main(int argc, char *argv[])
 	}
 
 	switch (mode) {
-		case MODE_LOGIN:
-			if ((password = getpass("Password:")) == NULL) {
-				syslog(LOG_ERR, "user %s: getpass: %m",
-				    username);
-				exit(EXIT_FAILURE);
-			}
-			break;
-		case MODE_CHALLENGE:
-			/* see login.conf(5) section CHALLENGES */
-			fprintf(f, "%s\n", BI_SILENT);
-			exit(EXIT_SUCCESS);
-			break;
-		case MODE_RESPONSE: {
-			/* see login.conf(5) section RESPONSES */
-			/* this happens e.g. when called from sshd(8) */
-			int count;
-			mode = 0;
-			count = -1;
-			while (++count < sizeof(response) &&
-			    read(3, &response[count], (size_t)1) ==
-			    (ssize_t)1) {
-				if (response[count] == '\0' && ++mode == 2)
-					break;
-				if (response[count] == '\0' && mode == 1) {
-					password = response + count + 1;
-				}
-			}
-			if (mode < 2) {
-				syslog(LOG_ERR, "user %s: protocol error "
-				    "on back channel", username);
-				exit(EXIT_FAILURE);
-			}
-			break;
+	case MODE_LOGIN:
+		if ((password = getpass("Password:")) == NULL) {
+			syslog(LOG_ERR, "user %s: getpass: %m",
+			    username);
+			exit(EXIT_FAILURE);
 		}
+		break;
+	case MODE_CHALLENGE:
+		/* see login.conf(5) section CHALLENGES */
+		fprintf(f, "%s\n", BI_SILENT);
+		exit(EXIT_SUCCESS);
+		break;
+	case MODE_RESPONSE:
+		/* see login.conf(5) section RESPONSES */
+		/* this happens e.g. when called from sshd(8) */
+		mode = 0;
+		count = -1;
+		while (++count < sizeof(response) &&
+		    read(3, &response[count], (size_t)1) ==
+		    (ssize_t)1) {
+			if (response[count] == '\0' && ++mode == 2)
+				break;
+			if (response[count] == '\0' && mode == 1)
+				password = response + count + 1;
+		}
+		if (mode < 2) {
+			syslog(LOG_ERR, "user %s: protocol error "
+			    "on back channel", username);
+			exit(EXIT_FAILURE);
+		}
+		break;
 	}
 
 	ret = yubikey_login(username, password);
@@ -224,7 +221,7 @@ yubikey_login(const char *username, const char *password)
 	yubikey_hex_decode(uid, hexuid, YUBIKEY_UID_SIZE);
 	yubikey_hex_decode(key, hexkey, YUBIKEY_KEY_SIZE);
 
-	/* 
+	/*
 	 * Cycle through the key mapping table.
          * XXX brute force, unoptimized; a lookup table for valid mappings may
 	 * be appropriate.
@@ -236,7 +233,7 @@ yubikey_login(const char *username, const char *password)
 			syslog(LOG_INFO, "user %s failed: password too short.",
 			    username);
 			return (AUTH_FAILED);
-		case EINVAL: 	/* keyboard mapping invalid */
+		case EINVAL:	/* keyboard mapping invalid */
 			continue;
 		case 0:		/* found a valid keyboard mapping */
 			mapok++;
@@ -261,7 +258,7 @@ yubikey_login(const char *username, const char *password)
 			    "with any keymap (%d crc ok)",
 			    username, crcok);
 			return (AUTH_FAILED);
-		default: 
+		default:
 			syslog(LOG_DEBUG, "user %s failed: %s",
 			    username, strerror(r));
 			return (AUTH_FAILED);
