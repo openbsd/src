@@ -1,4 +1,4 @@
-#	$OpenBSD: sharc,v 1.3 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: sharc,v 1.4 2015/10/05 22:48:26 nicm Exp $
 
 #------------------------------------------------------------------------
 # file(1) magic for sharc files
@@ -19,5 +19,5 @@
 0	string			.system		SHARC architecture file
 
 0	leshort			0x521C		SHARC COFF binary
->2	leshort			>1		, %hd sections
+>2	leshort			>1		, %d sections
 >>12	lelong			>0		, not stripped

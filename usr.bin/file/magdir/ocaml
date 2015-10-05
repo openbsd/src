@@ -1,8 +1,8 @@
-#	$OpenBSD: ocaml,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: ocaml,v 1.2 2015/10/05 22:48:26 nicm Exp $
 
 #------------------------------------------------------------------------------
 # ocaml: file(1) magic for Objective Caml files.
-0	string	Caml1999	Objective caml
+0	string	Caml1999	OCaml
 >8	string	X		exec file
 >8	string	I		interface file (.cmi)
 >8	string	O		object file (.cmo)
@@ -11,4 +11,4 @@
 >8	string	Z		native library file (.cmxa)
 >8	string	M		abstract syntax tree implementation file
 >8	string	N		abstract syntax tree interface file
->9	string	>\0		(Version %3.3s).
+>9	string	>\0		(Version %3.3s)

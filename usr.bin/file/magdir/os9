@@ -1,6 +1,6 @@
-#	$OpenBSD: os9,v 1.5 2011/10/15 14:23:29 schwarze Exp $
+#	$OpenBSD: os9,v 1.6 2015/10/05 22:48:26 nicm Exp $
 
-# $NetBSD: os9,v 1.1 1996/05/06 18:24:01 is Exp $
+#------------------------------------------------------------------------------
 #
 # Copyright (c) 1996 Ignatios Souvatzis. All rights reserved.
 #

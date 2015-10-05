@@ -1,6 +1,6 @@
-#	$OpenBSD: ti-8x,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: ti-8x,v 1.2 2015/10/05 22:48:26 nicm Exp $
 
-# ------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 # ti-8x: file(1) magic for the TI-8x and TI-9x Graphing Calculators.
 #
 # From: Ryan McGuire (rmcguire@freenet.columbus.oh.us).
@@ -222,7 +222,7 @@
 >49		byte		0x24		type: application,
 >49		byte		0x25		type: certificate,
 >49		byte		0x3e		type: license,
->74		lelong		>0		size: %ld bytes
+>74		lelong		>0		size: %d bytes
 
 # VTi & TiEmu skins (TI Graphing Calculators).
 # From: Romain Lievin (roms@lpg.ticalc.org).

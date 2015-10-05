@@ -1,4 +1,4 @@
-#	$OpenBSD: clipper,v 1.2 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: clipper,v 1.3 2015/10/05 22:48:26 nicm Exp $
 
 #------------------------------------------------------------------------------
 # clipper:  file(1) magic for Intergraph (formerly Fairchild) Clipper.
@@ -35,7 +35,7 @@
 >20	short		0413		(demand paged)
 >20	short		0443		(target shared library)
 >12	long		>0		not stripped
->22	short		>0		- version %ld
+>22	short		>0		- version %d
 0	short		0577		CLIPPER COFF executable
 >18	short&074000	000000		C1 R1 
 >18	short&074000	004000		C2 R1
@@ -47,7 +47,7 @@
 >20	short		0413		(paged)
 >20	short		0443		(target shared library)
 >12	long		>0		not stripped
->22	short		>0		- version %ld
+>22	short		>0		- version %d
 >48	long&01		01		alignment trap enabled
 >52	byte		1		-Ctnc
 >52	byte		2		-Ctsw

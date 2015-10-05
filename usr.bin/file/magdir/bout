@@ -1,6 +1,6 @@
-#	$OpenBSD: bout,v 1.3 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: bout,v 1.4 2015/10/05 22:48:26 nicm Exp $
 
-#
+#------------------------------------------------------------------------------
 # i80960 b.out objects and archives
 #
 0	long		0x10d		i960 b.out relocatable object
