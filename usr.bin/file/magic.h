@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.h,v 1.9 2015/10/02 18:06:27 deraadt Exp $ */
+/* $OpenBSD: magic.h,v 1.10 2015/10/05 19:50:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -160,7 +160,7 @@ struct magic_state {
 
 	const char		*base;
 	size_t			 size;
-	int64_t			 offset;
+	size_t			 offset;
 };
 
 #define MAGIC_TEST_TEXT 0x1

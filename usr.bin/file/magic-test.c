@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.13 2015/08/12 09:39:43 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.14 2015/10/05 19:50:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1135,7 +1135,7 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 	else {
 		wanted = ml->indirect_offset;
 		if (ml->indirect_relative) {
-			if (wanted < 0 && -wanted > ms->offset)
+			if (wanted < 0 && (size_t)-wanted > ms->offset)
 				return (0);
 			if (wanted > 0 && ms->offset + wanted > ms->size)
 				return (0);
@@ -1186,14 +1186,14 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 	}
 
 	if (ml->offset_relative) {
-		if (wanted < 0 && -wanted > ms->offset)
+		if (wanted < 0 && (size_t)-wanted > ms->offset)
 			return (0);
 		if (wanted > 0 && ms->offset + wanted > ms->size)
 			return (0);
 		offset = ms->offset + wanted;
 	} else
 		offset = wanted;
-	if (offset < 0 || offset > ms->size)
+	if (offset < 0 || (size_t)offset > ms->size)
 		return (0);
 	ms->offset = offset;
 
@@ -1213,7 +1213,7 @@ magic_test_line(struct magic_line *ml, struct magic_state *ms)
 	if (ml->mimetype != NULL)
 		ms->mimetype = ml->mimetype;
 
-	magic_warn(ml, "test %s/%c matched at offset %llu: '%s'",
+	magic_warn(ml, "test %s/%c matched at offset %zu: '%s'",
 	    ml->type_string, ml->test_operator, ms->offset,
 	    ml->result == NULL ? "" : ml->result);
 
